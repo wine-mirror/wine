@@ -525,18 +525,14 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
             /* FIXME  delete failed */
         }
     }
-    else if (value_name)
+    else if (value_name || value_empty)
     {
-        if (RegDeleteValueW(subkey,value_name) != ERROR_SUCCESS)
+        if (RegDeleteValueW(subkey, value_empty ? NULL : value_name) != ERROR_SUCCESS)
         {
             RegCloseKey(subkey);
             output_message(STRING_CANNOT_FIND);
             return 1;
         }
-    }
-    else if (value_empty)
-    {
-        RegSetValueExW(subkey,NULL,0,REG_SZ,NULL,0);
     }
 
     RegCloseKey(subkey);

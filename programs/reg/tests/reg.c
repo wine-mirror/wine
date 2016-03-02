@@ -441,7 +441,7 @@ static void test_delete(void)
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /ve /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     err = RegQueryValueExA(hkey, "", NULL, NULL, NULL, NULL);
-    todo_wine ok(err == ERROR_FILE_NOT_FOUND, "got %d\n", err);
+    ok(err == ERROR_FILE_NOT_FOUND, "got %d, expected 2\n", err);
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /va /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
