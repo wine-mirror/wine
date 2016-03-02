@@ -44,8 +44,9 @@ static void test_DrawTextCalcRect(void)
     static WCHAR emptystringW[] = { 0 };
     static CHAR wordbreak_text[] = "line1 line2";
     static WCHAR wordbreak_textW[] = {'l','i','n','e','1',' ','l','i','n','e','2',0};
+    static char tabstring[] = "one\ttwo";
     INT textlen, textheight, heightcheck;
-    RECT rect = { 0, 0, 100, 0 };
+    RECT rect = { 0, 0, 100, 0 }, rect2;
     BOOL ret;
     DRAWTEXTPARAMS dtp;
     BOOL conform_xp = TRUE;
@@ -579,6 +580,42 @@ static void test_DrawTextCalcRect(void)
     textheight = DrawTextW(hdc, wordbreak_textW, -1, &rect, DT_CALCRECT | DT_WORDBREAK | DT_EDITCONTROL);
     ok(textheight >= heightcheck * 6, "Got unexpected textheight %d, expected at least %d.\n",
        textheight, heightcheck * 6);
+
+    /* DT_TABSTOP | DT_EXPANDTABS tests */
+    SetRect( &rect, 0,0, 10, 10);
+    textheight = DrawTextA(hdc, tabstring, -1, &rect, DT_TABSTOP | DT_EXPANDTABS );
+    ok(textheight >= heightcheck, "Got unexpected textheight %d\n", textheight);
+
+    SetRect( &rect, 0,0, 10, 10);
+    memset(&dtp, 0, sizeof(dtp));
+    dtp.cbSize = sizeof(dtp);
+    textheight = DrawTextExA(hdc, tabstring, -1, &rect, DT_CALCRECT, &dtp);
+    ok(textheight >= heightcheck, "Got unexpected textheight %d\n", textheight);
+    ok(dtp.iTabLength == 0, "invalid dtp.iTabLength = %i\n",dtp.iTabLength);
+
+    SetRect( &rect2, 0,0, 10, 10);
+    memset(&dtp, 0, sizeof(dtp));
+    dtp.cbSize = sizeof(dtp);
+    textheight = DrawTextExA(hdc, tabstring, -1, &rect2, DT_CALCRECT | DT_TABSTOP | DT_EXPANDTABS, &dtp);
+    ok(textheight >= heightcheck, "Got unexpected textheight %d\n", textheight);
+    ok(dtp.iTabLength == 0, "invalid dtp.iTabLength = %i\n",dtp.iTabLength);
+    ok(rect.left == rect2.left && rect.right != rect2.right && rect.top == rect2.top && rect.bottom == rect2.bottom,
+        "incorrect rect %d,%d-%d,%d rect2 %d,%d-%d,%d\n",
+        rect.left, rect.top, rect.right, rect.bottom, rect2.left, rect2.top, rect2.right, rect2.bottom );
+
+    SetRect( &rect, 0,0, 10, 10);
+    memset(&dtp, 0, sizeof(dtp));
+    dtp.cbSize = sizeof(dtp);
+    dtp.iTabLength = 8;
+    textheight = DrawTextExA(hdc, tabstring, -1, &rect, DT_CALCRECT | DT_TABSTOP | DT_EXPANDTABS, &dtp);
+    ok(textheight >= heightcheck, "Got unexpected textheight %d\n", textheight);
+    ok(dtp.iTabLength == 8, "invalid dtp.iTabLength = %i\n",dtp.iTabLength);
+    ok(rect.left == rect2.left, "unexpected value %d, got %d\n", rect.left, rect2.left);
+    /* XP, 2003 appear to not give the same values. */
+    ok(rect.right == rect2.right || broken(rect.right > rect2.right), "unexpected value %d, got %d\n",rect.right, rect2.right);
+    ok(rect.top == rect2.top, "unexpected value %d, got %d\n", rect.top, rect2.top);
+    ok(rect.bottom == rect2.bottom , "unexpected value %d, got %d\n", rect.bottom, rect2.bottom);
+
 
     SelectObject(hdc, hOldFont);
     ret = DeleteObject(hFont);
