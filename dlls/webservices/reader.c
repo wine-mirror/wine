@@ -1001,11 +1001,47 @@ error:
     return hr;
 }
 
+static int cmp_name( const unsigned char *name1, ULONG len1, const unsigned char *name2, ULONG len2 )
+{
+    ULONG i;
+    if (len1 != len2) return 1;
+    for (i = 0; i < len1; i++) { if (toupper( name1[i] ) != toupper( name2[i] )) return 1; }
+    return 0;
+}
+
+static struct node *read_find_parent( struct reader *reader, const WS_XML_STRING *prefix,
+                                      const WS_XML_STRING *localname )
+{
+    struct node *parent;
+    const WS_XML_STRING *str;
+
+    for (parent = reader->current; parent; parent = parent->parent)
+    {
+        if (parent->hdr.node.nodeType == WS_XML_NODE_TYPE_BOF)
+        {
+            if (!localname) return parent;
+            return NULL;
+        }
+        else if (parent->hdr.node.nodeType == WS_XML_NODE_TYPE_ELEMENT)
+        {
+            if (!localname) return parent;
+
+            str = parent->hdr.prefix;
+            if (cmp_name( str->bytes, str->length, prefix->bytes, prefix->length )) continue;
+            str = parent->hdr.localName;
+            if (cmp_name( str->bytes, str->length, localname->bytes, localname->length )) continue;
+            return parent;
+       }
+    }
+
+    return NULL;
+}
+
 static HRESULT read_element( struct reader *reader )
 {
     unsigned int len = 0, ch, skip;
     const unsigned char *start;
-    struct node *node;
+    struct node *node = NULL, *parent;
     WS_XML_ELEMENT_NODE *elem;
     WS_XML_ATTRIBUTE *attr;
     HRESULT hr = WS_E_INVALID_FORMAT;
@@ -1017,9 +1053,6 @@ static HRESULT read_element( struct reader *reader )
         reader->state   = READER_STATE_EOF;
         return S_OK;
     }
-
-    if (!(node = alloc_node( WS_XML_NODE_TYPE_ELEMENT ))) return E_OUTOFMEMORY;
-    elem = (WS_XML_ELEMENT_NODE *)node;
 
     if (read_cmp( reader, "<", 1 )) goto error;
     read_skip( reader, 1 );
@@ -1033,6 +1066,12 @@ static HRESULT read_element( struct reader *reader )
         len += skip;
     }
     if (!len) goto error;
+
+    if (!(parent = read_find_parent( reader, NULL, NULL ))) goto error;
+
+    hr = E_OUTOFMEMORY;
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_ELEMENT ))) goto error;
+    elem = (WS_XML_ELEMENT_NODE *)node;
 
     if ((hr = parse_name( start, len, &elem->prefix, &elem->localName )) != S_OK) goto error;
     hr = E_OUTOFMEMORY;
@@ -1053,26 +1092,8 @@ static HRESULT read_element( struct reader *reader )
         reader->current_attr++;
     }
 
-    read_skip_whitespace( reader );
-    if (read_cmp( reader, ">", 1 ) && read_cmp( reader, "/>", 2 ))
-    {
-        hr = WS_E_INVALID_FORMAT;
-        goto error;
-    }
-
-    read_insert_node( reader, reader->current, node );
-    if (!read_cmp( reader, "/>", 2 ))
-    {
-        read_skip( reader, 2 );
-        if (!(node = alloc_node( WS_XML_NODE_TYPE_END_ELEMENT ))) return E_OUTOFMEMORY;
-        read_insert_node( reader, reader->current, node );
-        reader->state = READER_STATE_ENDELEMENT;
-    }
-    else
-    {
-        read_skip( reader, 1 );
-        reader->state = READER_STATE_STARTELEMENT;
-    }
+    read_insert_node( reader, parent, node );
+    reader->state = READER_STATE_STARTELEMENT;
     return S_OK;
 
 error:
@@ -1112,10 +1133,27 @@ static HRESULT read_text( struct reader *reader )
     return S_OK;
 }
 
+static HRESULT read_node( struct reader * );
+
 static HRESULT read_startelement( struct reader *reader )
 {
-    if (!read_cmp( reader, "<", 1 )) return read_element( reader );
-    return read_text( reader );
+    struct node *node;
+
+    read_skip_whitespace( reader );
+    if (!read_cmp( reader, "/>", 2 ))
+    {
+        read_skip( reader, 2 );
+        if (!(node = alloc_node( WS_XML_NODE_TYPE_END_ELEMENT ))) return E_OUTOFMEMORY;
+        read_insert_node( reader, reader->current, node );
+        reader->state = READER_STATE_ENDELEMENT;
+        return S_OK;
+    }
+    else if (!read_cmp( reader, ">", 1 ))
+    {
+        read_skip( reader, 1 );
+        return read_node( reader );
+    }
+    return WS_E_INVALID_FORMAT;
 }
 
 static HRESULT read_to_startelement( struct reader *reader, BOOL *found )
@@ -1148,36 +1186,6 @@ static HRESULT read_to_startelement( struct reader *reader, BOOL *found )
     return hr;
 }
 
-static int cmp_name( const unsigned char *name1, ULONG len1, const unsigned char *name2, ULONG len2 )
-{
-    ULONG i;
-    if (len1 != len2) return 1;
-    for (i = 0; i < len1; i++) { if (toupper( name1[i] ) != toupper( name2[i] )) return 1; }
-    return 0;
-}
-
-struct node *find_parent_element( struct node *node, const WS_XML_STRING *prefix,
-                                  const WS_XML_STRING *localname )
-{
-    struct node *parent;
-    const WS_XML_STRING *str;
-
-    for (parent = node; parent; parent = parent->parent)
-    {
-        if (parent->hdr.node.nodeType != WS_XML_NODE_TYPE_ELEMENT) continue;
-        if (!localname) return parent;
-
-        str = parent->hdr.prefix;
-        if (cmp_name( str->bytes, str->length, prefix->bytes, prefix->length )) continue;
-
-        str = parent->hdr.localName;
-        if (cmp_name( str->bytes, str->length, localname->bytes, localname->length )) continue;
-
-        return parent;
-    }
-    return NULL;
-}
-
 static HRESULT read_endelement( struct reader *reader )
 {
     struct node *node, *parent;
@@ -1204,7 +1212,7 @@ static HRESULT read_endelement( struct reader *reader )
     }
 
     if ((hr = parse_name( start, len, &prefix, &localname )) != S_OK) return hr;
-    parent = find_parent_element( reader->current, prefix, localname );
+    parent = read_find_parent( reader, prefix, localname );
     heap_free( prefix );
     heap_free( localname );
     if (!parent) return WS_E_INVALID_FORMAT;
@@ -1333,7 +1341,8 @@ static HRESULT read_node( struct reader *reader )
         else if (!read_cmp( reader, "</", 2 )) return read_endelement( reader );
         else if (!read_cmp( reader, "<![CDATA[", 9 )) return read_startcdata( reader );
         else if (!read_cmp( reader, "<!--", 4 )) return read_comment( reader );
-        else if (!read_cmp( reader, "<", 1 )) return read_startelement( reader );
+        else if (!read_cmp( reader, "<", 1 )) return read_element( reader );
+        else if (!read_cmp( reader, "/>", 2 ) || !read_cmp( reader, ">", 1 )) return read_startelement( reader );
         else return read_text( reader );
     }
 }

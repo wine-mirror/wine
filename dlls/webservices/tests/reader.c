@@ -2045,7 +2045,7 @@ static void test_WsGetNamespaceFromPrefix(void)
     hr = set_input( reader, "<prefix:t xmlns:prefix2='ns'/>", sizeof("<prefix:t xmlns:prefix2='ns'/>") - 1 );
     ok( hr == S_OK, "got %08x\n", hr );
     hr = WsReadStartElement( reader, NULL );
-    todo_wine ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
 
     prepare_namespace_test( reader, "<t></t>" );
     ns = NULL;
@@ -2132,7 +2132,7 @@ static void test_WsGetNamespaceFromPrefix(void)
 
     prepare_namespace_test( reader, "<t xmlns:prefix='ns'></t>" );
     hr = WsReadStartElement( reader, NULL );
-    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08x\n", hr );
     hr = WsReadEndElement( reader, NULL );
     todo_wine ok( hr == S_OK, "got %08x\n", hr );
     hr = WsGetNamespaceFromPrefix( reader, &prefix, TRUE, &ns, NULL );

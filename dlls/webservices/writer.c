@@ -597,9 +597,18 @@ static HRESULT write_startelement( struct writer *writer )
     return S_OK;
 }
 
+static struct node *write_find_parent_element( struct writer *writer )
+{
+    struct node *node = writer->current;
+
+    if (node->hdr.node.nodeType == WS_XML_NODE_TYPE_ELEMENT) return node;
+    if (node->parent->hdr.node.nodeType == WS_XML_NODE_TYPE_ELEMENT) return node->parent;
+    return NULL;
+}
+
 static HRESULT write_endelement( struct writer *writer )
 {
-    struct node *node = find_parent_element( writer->current, NULL, NULL );
+    struct node *node = write_find_parent_element( writer );
     WS_XML_ELEMENT_NODE *elem = &node->hdr;
     ULONG size;
     HRESULT hr;
