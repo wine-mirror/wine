@@ -29,7 +29,6 @@ winemaker \- generate a build infrastructure for compiling Windows programs on U
 .br
   [
 .BR               "--generated-files " "] [ " "--nogenerated-files " "]
-]
 .br
   [
 .BR               "--wine32 " "]
