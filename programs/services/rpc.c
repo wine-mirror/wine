@@ -274,7 +274,6 @@ DWORD __cdecl svcctl_GetServiceDisplayNameW(
     {
         LPCWSTR name;
         int len;
-        service_lock(entry);
         name = get_display_name(entry);
         len = strlenW(name);
         if (len <= *cchBufSize)
@@ -285,7 +284,6 @@ DWORD __cdecl svcctl_GetServiceDisplayNameW(
         else
             err = ERROR_INSUFFICIENT_BUFFER;
         *cchBufSize = len;
-        service_unlock(entry);
     }
     else
         err = ERROR_SERVICE_DOES_NOT_EXIST;
@@ -319,7 +317,6 @@ DWORD __cdecl svcctl_GetServiceKeyNameW(
     if (entry != NULL)
     {
         int len;
-        service_lock(entry);
         len = strlenW(entry->name);
         if (len <= *cchBufSize)
         {
@@ -329,7 +326,6 @@ DWORD __cdecl svcctl_GetServiceKeyNameW(
         else
             err = ERROR_INSUFFICIENT_BUFFER;
         *cchBufSize = len;
-        service_unlock(entry);
     }
     else
         err = ERROR_SERVICE_DOES_NOT_EXIST;
@@ -539,9 +535,7 @@ static DWORD create_serviceW(
 
     if ((found = scmdatabase_find_service(manager->db, lpServiceName)))
     {
-        service_lock(found);
         err = is_marked_for_delete(found) ? ERROR_SERVICE_MARKED_FOR_DELETE : ERROR_SERVICE_EXISTS;
-        service_unlock(found);
         scmdatabase_unlock(manager->db);
         free_service_entry(entry);
         return err;

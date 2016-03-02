@@ -435,9 +435,7 @@ void release_service(struct service_entry *service)
     if (InterlockedDecrement(&service->ref_count) == 0 && is_marked_for_delete(service))
     {
         scmdatabase_lock(service->db);
-        service_lock(service);
         scmdatabase_remove_service(service->db, service);
-        service_unlock(service);
         scmdatabase_unlock(service->db);
         free_service_entry(service);
     }
