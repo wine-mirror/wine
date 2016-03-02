@@ -121,7 +121,7 @@ static void run_after_timeout(void (*func)(struct service_entry*), struct servic
     GetSystemTimeAsFileTime(&elem->time);
     time.u.LowPart = elem->time.dwLowDateTime;
     time.u.HighPart = elem->time.dwHighDateTime;
-    time.QuadPart += timeout*10000000;
+    time.QuadPart += (ULONGLONG)timeout * 10000;
     elem->time.dwLowDateTime = time.u.LowPart;
     elem->time.dwHighDateTime = time.u.HighPart;
 
