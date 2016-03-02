@@ -121,7 +121,7 @@ struct wow_handlers32
     HWND    (*get_win_handle)(HWND);
     WNDPROC (*alloc_winproc)(WNDPROC,BOOL);
     struct tagDIALOGINFO *(*get_dialog_info)(HWND,BOOL);
-    INT     (*dialog_box_loop)(HWND,HWND);
+    INT     (*dialog_box_loop)(HWND);
     ULONG_PTR (*get_icon_param)(HICON);
     ULONG_PTR (*set_icon_param)(HICON,ULONG_PTR);
 };
@@ -244,7 +244,7 @@ typedef struct tagDIALOGINFO
 #define DF_OWNERENABLED 0x0002
 
 extern DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create ) DECLSPEC_HIDDEN;
-extern INT DIALOG_DoDialogBox( HWND hwnd, HWND owner ) DECLSPEC_HIDDEN;
+extern INT DIALOG_DoDialogBox( HWND hwnd ) DECLSPEC_HIDDEN;
 
 HRGN set_control_clipping( HDC hdc, const RECT *rect ) DECLSPEC_HIDDEN;
 
