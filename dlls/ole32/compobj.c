@@ -5029,6 +5029,35 @@ HRESULT Handler_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 }
 
 /***********************************************************************
+ *           CoGetApartmentType [OLE32.@]
+ */
+HRESULT WINAPI CoGetApartmentType(APTTYPE *type, APTTYPEQUALIFIER *qualifier)
+{
+    struct oletls *info = COM_CurrentInfo();
+
+    FIXME("(%p, %p): semi-stub\n", type, qualifier);
+
+    if (!type || !qualifier)
+        return E_INVALIDARG;
+
+    if (!info)
+        return E_OUTOFMEMORY;
+
+    if (!info->apt)
+        *type = APTTYPE_CURRENT;
+    else if (info->apt->multi_threaded)
+        *type = APTTYPE_MTA;
+    else if (info->apt->main)
+        *type = APTTYPE_MAINSTA;
+    else
+        *type = APTTYPE_STA;
+
+    *qualifier = APTTYPEQUALIFIER_NONE;
+
+    return info->apt ? S_OK : CO_E_NOTINITIALIZED;
+}
+
+/***********************************************************************
  *		DllMain (OLE32.@)
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID reserved)

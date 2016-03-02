@@ -90,7 +90,7 @@
 @ stdcall CoFreeUnusedLibrariesEx(long long) ole32.CoFreeUnusedLibrariesEx
 @ stdcall CoGetActivationState(int128 long ptr) ole32.CoGetActivationState
 @ stub CoGetApartmentID
-@ stub CoGetApartmentType
+@ stdcall CoGetApartmentType(ptr ptr) ole32.CoGetApartmentType
 @ stdcall CoGetCallContext(ptr ptr) ole32.CoGetCallContext
 @ stdcall CoGetCallState(long ptr) ole32.CoGetCallState
 @ stdcall CoGetCallerTID(ptr) ole32.CoGetCallerTID
