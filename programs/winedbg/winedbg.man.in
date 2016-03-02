@@ -163,7 +163,7 @@ Adds a breakpoint at the line \fIN\fR inside symbol \fIid\fR.
 .IP \fBbreak\ \fIN\fR
 Adds a breakpoint at line \fIN\fR of current source file.
 .IP \fBbreak\fR
-Adds a breakpoint at current \f$PC\fR address.
+Adds a breakpoint at current \fB$PC\fR address.
 .IP \fBwatch\ *\ \fIN\fR
 Adds a watch command (on write) at address \fIN\fR (on 4 bytes).
 .IP \fBwatch\ \fIid\fR

@@ -24,25 +24,25 @@ Same as \fB/x\fR.
 \fR[\fBp\fR|\fBo\fR|\fBe\fR|\fBd\fR|\fBc\fR|\fBa\fR|\fBu\fR|\fBm\fR|\fBs\fR|\fBv\fR]\ \
 \fR{\fIpackage\fR|\fIproductcode\fR}
 Repair an installation. Default options are \'omus\'
-.IP "\flp\fR"
+.IP "\fBlp\fR"
 Reinstall the file if it is missing.
-.IP "\flo\fR"
+.IP "\fBlo\fR"
 Reinstall the file if it is missing or if any older version is installed.
-.IP "\fle\fR"
+.IP "\fBle\fR"
 Reinstall the file if it is missing, or if the installed version is equal or older.
-.IP "\fld\fR"
+.IP "\fBld\fR"
 Reinstall the file if it is missing or a different version is installed.
-.IP "\flc\fR"
+.IP "\fBlc\fR"
 Reinstall the file if it is missing or the checksum does not match.
-.IP "\fla\fR"
+.IP "\fBla\fR"
 Reinstall all files.
-.IP "\flu\fR"
+.IP "\fBlu\fR"
 Rewrite all required user registry entries.
-.IP "\flm\fR"
+.IP "\fBlm\fR"
 Rewrite all required machine registry entries.
-.IP "\fls\fR"
+.IP "\fBls\fR"
 Overwrite any conflicting shortcuts.
-.IP "\flv\fR"
+.IP "\fBlv\fR"
 Recache the local installation package from the source installation package.
 .SH PATCHING
 .IP \fB/p\ \fR{\fIpatch\fR}\ \fR[\fIproperty\fR=\fIfoobar\fR]
@@ -65,35 +65,35 @@ Shows a full UI.
 [\fBi\fR|\fBw\fR|\fBe\fR|\fBa\fR|\fBr\fR|\fBu\fR|\fBc\fR|\fBm\fR|\fBo\fR|\fBp\fR|\fBv\fR]\
 [\fB+\fR|\fB!\fR]\ {\fIlogfile\fR}
 Enable logging to \fIlogfile\fR. Defaults are \'iwearmo\'.
-.IP "\fl*\fR"
+.IP "\fBl*\fR"
 Enable all logging options except \'v\' and \'x\'.
-.IP "\fli\fR"
+.IP "\fBli\fR"
 Log status messages.
-.IP "\flw\fR"
+.IP "\fBlw\fR"
 Log nonfatal warnings.
-.IP "\fle\fR"
+.IP "\fBle\fR"
 Log all error messages.
-.IP "\fla\fR"
+.IP "\fBla\fR"
 Log start of actions.
-.IP "\flr\fR"
+.IP "\fBlr\fR"
 Log action specifc records.
-.IP "\flu\fR"
+.IP "\fBlu\fR"
 Log user requests.
-.IP "\flc\fR"
+.IP "\fBlc\fR"
 Log initial UI parameters.
-.IP "\flm\fR"
+.IP "\fBlm\fR"
 Log out of memory errors.
-.IP "\flo\fR"
+.IP "\fBlo\fR"
 Log out of diskspace messages.
-.IP "\flp \fR"
+.IP "\fBlp \fR"
 Log terminal properties.
-.IP "\flv \fR"
+.IP "\fBlv \fR"
 Verbose logging.
-.IP "\flx \fR"
+.IP "\fBlx \fR"
 Log extra debugging messages.
-.IP "\fl+ \fR"
+.IP "\fBl+ \fR"
 Append logging to existing file.
-.IP "\fl! \fR"
+.IP "\fBl! \fR"
 Flush each line to log.
 .SH OTHER OPTIONS
 .IP \fB/h
