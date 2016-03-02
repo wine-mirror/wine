@@ -299,7 +299,7 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
                 services_list = slist_new;
             }
             services_list[i] = service;
-            service->ref_count++;
+            InterlockedIncrement(&service->ref_count);
             i++;
         }
     }

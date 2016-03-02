@@ -114,7 +114,7 @@ static void run_after_timeout(void (*func)(struct service_entry*), struct servic
         return;
     }
 
-    service->ref_count++;
+    InterlockedIncrement(&service->ref_count);
     elem->func = func;
     elem->service_entry = service;
 
