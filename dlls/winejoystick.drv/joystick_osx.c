@@ -633,6 +633,25 @@ LRESULT driver_joyGetDevCaps(DWORD_PTR device_id, JOYCAPSW* caps, DWORD size)
     return JOYERR_NOERROR;
 }
 
+/*
+ * Helper to get the value from an element
+ */
+static LRESULT driver_getElementValue(IOHIDDeviceRef device, IOHIDElementRef element, IOHIDValueRef *pValueRef)
+{
+    IOReturn ret;
+    ret = IOHIDDeviceGetValue(device, element, pValueRef);
+    switch (ret)
+    {
+        case kIOReturnSuccess:
+            return JOYERR_NOERROR;
+        case kIOReturnNotAttached:
+            return JOYERR_UNPLUGGED;
+        default:
+            ERR("IOHIDDeviceGetValue returned 0x%x\n",ret);
+            return JOYERR_NOCANDO;
+    }
+}
+
 /**************************************************************************
  *                              driver_joyGetPosEx
  */
@@ -655,6 +674,7 @@ LRESULT driver_joyGetPosEx(DWORD_PTR device_id, JOYINFOEX* info)
     CFIndex i, count;
     IOHIDValueRef valueRef;
     long value;
+    LRESULT rc;
 
     if ((joystick = joystick_from_id(device_id)) == NULL)
         return MMSYSERR_NODRIVER;
@@ -673,7 +693,9 @@ LRESULT driver_joyGetPosEx(DWORD_PTR device_id, JOYINFOEX* info)
         for (i = 0; i < count; i++)
         {
             IOHIDElementRef button = (IOHIDElementRef)CFArrayGetValueAtIndex(joystick->buttons, i);
-            IOHIDDeviceGetValue(device, button, &valueRef);
+            rc = driver_getElementValue(device, button, &valueRef);
+            if (rc != JOYERR_NOERROR)
+                return rc;
             value = IOHIDValueGetIntegerValue(valueRef);
             if (value)
             {
@@ -690,7 +712,9 @@ LRESULT driver_joyGetPosEx(DWORD_PTR device_id, JOYINFOEX* info)
             DWORD* field = (DWORD*)((char*)info + axis_map[i].offset);
             if (joystick->axes[i].element)
             {
-                IOHIDDeviceGetValue(device, joystick->axes[i].element, &valueRef);
+                rc = driver_getElementValue(device, joystick->axes[i].element, &valueRef);
+                if (rc != JOYERR_NOERROR)
+                    return rc;
                 value = IOHIDValueGetIntegerValue(valueRef) - joystick->axes[i].min_value;
                 *field = MulDiv(value, 0xFFFF, joystick->axes[i].max_value - joystick->axes[i].min_value);
             }
@@ -706,7 +730,9 @@ LRESULT driver_joyGetPosEx(DWORD_PTR device_id, JOYINFOEX* info)
     {
         if (joystick->hatswitch)
         {
-            IOHIDDeviceGetValue(device, joystick->hatswitch, &valueRef);
+            rc = driver_getElementValue(device, joystick->hatswitch, &valueRef);
+            if (rc != JOYERR_NOERROR)
+                return rc;
             value = IOHIDValueGetIntegerValue(valueRef);
             if (value >= 8)
                 info->dwPOV = JOY_POVCENTERED;
