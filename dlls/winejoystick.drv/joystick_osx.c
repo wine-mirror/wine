@@ -715,7 +715,7 @@ LRESULT driver_joyGetPosEx(DWORD_PTR device_id, JOYINFOEX* info)
         }
         else
         {
-            info->dwPOV = 0;
+            info->dwPOV = JOY_POVCENTERED;
             info->dwFlags &= ~JOY_RETURNPOV;
         }
     }
