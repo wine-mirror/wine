@@ -48,13 +48,10 @@ static unsigned int surface_get_sub_resource_idx(const struct wined3d_surface *s
 void wined3d_surface_cleanup(struct wined3d_surface *surface)
 {
     struct wined3d_surface *overlay, *cur;
-    GLuint buffer_object;
 
     TRACE("surface %p.\n", surface);
 
-    buffer_object = surface->container->sub_resources[surface_get_sub_resource_idx(surface)].buffer_object;
-    if (buffer_object || surface->rb_multisample
-            || surface->rb_resolved || !list_empty(&surface->renderbuffers))
+    if (surface->rb_multisample || surface->rb_resolved || !list_empty(&surface->renderbuffers))
     {
         struct wined3d_renderbuffer_entry *entry, *entry2;
         const struct wined3d_gl_info *gl_info;
@@ -63,12 +60,6 @@ void wined3d_surface_cleanup(struct wined3d_surface *surface)
 
         context = context_acquire(device, NULL);
         gl_info = context->gl_info;
-
-        if (buffer_object)
-        {
-            TRACE("Deleting buffer object %u.\n", buffer_object);
-            GL_EXTCALL(glDeleteBuffers(1, &buffer_object));
-        }
 
         if (surface->rb_multisample)
         {

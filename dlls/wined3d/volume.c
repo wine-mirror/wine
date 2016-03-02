@@ -397,9 +397,6 @@ void wined3d_volume_cleanup(struct wined3d_volume *volume)
 {
     TRACE("volume %p.\n", volume);
 
-    if (volume->container->sub_resources[volume->texture_level].buffer_object)
-        wined3d_volume_free_pbo(volume);
-
     resource_cleanup(&volume->resource);
 }
 

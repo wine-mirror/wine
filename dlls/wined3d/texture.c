@@ -108,7 +108,34 @@ static void wined3d_texture_unload_gl_texture(struct wined3d_texture *texture)
 
 static void wined3d_texture_cleanup(struct wined3d_texture *texture)
 {
+    unsigned int sub_count = texture->level_count * texture->layer_count;
+    struct wined3d_device *device = texture->resource.device;
+    struct wined3d_context *context = NULL;
+    const struct wined3d_gl_info *gl_info;
+    GLuint buffer_object;
+    unsigned int i;
+
     TRACE("texture %p.\n", texture);
+
+    for (i = 0; i < sub_count; ++i)
+    {
+        if (!(buffer_object = texture->sub_resources[i].buffer_object))
+            continue;
+
+        TRACE("Deleting buffer object %u.\n", buffer_object);
+
+        /* We may not be able to get a context in wined3d_texture_cleanup() in
+         * general, but if a buffer object was previously created we can. */
+        if (!context)
+        {
+            context = context_acquire(device, NULL);
+            gl_info = context->gl_info;
+        }
+
+        GL_EXTCALL(glDeleteBuffers(1, &buffer_object));
+    }
+    if (context)
+        context_release(context);
 
     texture->texture_ops->texture_cleanup_sub_resources(texture);
     wined3d_texture_unload_gl_texture(texture);
