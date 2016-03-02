@@ -996,19 +996,6 @@ static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, DW
     return WINED3D_OK;
 }
 
-/* Context activation is done by the caller. */
-static void surface_remove_pbo(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
-{
-    GLuint *buffer_object;
-
-    buffer_object = &surface->container->sub_resources[surface_get_sub_resource_idx(surface)].buffer_object;
-    GL_EXTCALL(glDeleteBuffers(1, buffer_object));
-    checkGLcall("glDeleteBuffers(1, buffer_object)");
-
-    *buffer_object = 0;
-    surface_invalidate_location(surface, WINED3D_LOCATION_BUFFER);
-}
-
 static ULONG surface_resource_incref(struct wined3d_resource *resource)
 {
     struct wined3d_surface *surface = surface_from_resource(resource);
@@ -1070,10 +1057,6 @@ static void surface_unload(struct wined3d_resource *resource)
         surface_load_location(surface, context, surface->resource.map_binding);
         surface_invalidate_location(surface, ~surface->resource.map_binding);
     }
-
-    /* Destroy PBOs, but load them into real sysmem before */
-    if (surface->container->sub_resources[surface_get_sub_resource_idx(surface)].buffer_object)
-        surface_remove_pbo(surface, gl_info);
 
     /* Destroy fbo render buffers. This is needed for implicit render targets, for
      * all application-created targets the application has to release the surface
@@ -3681,7 +3664,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
 
         surface_prepare_map_memory(surface);
         surface_load_location(surface, context, surface->resource.map_binding);
-        surface_remove_pbo(surface, gl_info);
+        wined3d_texture_remove_buffer_object(texture, surface_get_sub_resource_idx(surface), gl_info);
     }
 
     surface_get_memory(surface, &data, surface->locations);

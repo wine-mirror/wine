@@ -74,6 +74,23 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     return WINED3D_OK;
 }
 
+/* Context activation is done by the caller. */
+void wined3d_texture_remove_buffer_object(struct wined3d_texture *texture,
+        unsigned int sub_resource_idx, const struct wined3d_gl_info *gl_info)
+{
+    GLuint *buffer_object;
+
+    buffer_object = &texture->sub_resources[sub_resource_idx].buffer_object;
+    GL_EXTCALL(glDeleteBuffers(1, buffer_object));
+    checkGLcall("glDeleteBuffers");
+    texture->texture_ops->texture_sub_resource_invalidate_location(
+            texture->sub_resources[sub_resource_idx].resource, WINED3D_LOCATION_BUFFER);
+    *buffer_object = 0;
+
+    TRACE("Deleted buffer object %u for texture %p, sub-resource %u.\n",
+            *buffer_object, texture, sub_resource_idx);
+}
+
 /* A GL context is provided by the caller */
 static void gltexture_delete(struct wined3d_device *device, const struct wined3d_gl_info *gl_info,
         struct gl_texture *tex)
@@ -979,6 +996,7 @@ static void wined3d_texture_unload(struct wined3d_resource *resource)
 {
     struct wined3d_texture *texture = wined3d_texture_from_resource(resource);
     UINT sub_count = texture->level_count * texture->layer_count;
+    struct wined3d_context *context = NULL;
     UINT i;
 
     TRACE("texture %p.\n", texture);
@@ -988,7 +1006,16 @@ static void wined3d_texture_unload(struct wined3d_resource *resource)
         struct wined3d_resource *sub_resource = texture->sub_resources[i].resource;
 
         sub_resource->resource_ops->resource_unload(sub_resource);
+
+        if (texture->sub_resources[i].buffer_object)
+        {
+            if (!context)
+                context = context_acquire(texture->resource.device, NULL);
+            wined3d_texture_remove_buffer_object(texture, i, context->gl_info);
+        }
     }
+    if (context)
+        context_release(context);
 
     wined3d_texture_force_reload(texture);
     wined3d_texture_unload_gl_texture(texture);

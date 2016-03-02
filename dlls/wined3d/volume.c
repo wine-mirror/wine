@@ -362,19 +362,6 @@ void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *
             srgb_mode ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB);
 }
 
-static void wined3d_volume_free_pbo(struct wined3d_volume *volume)
-{
-    GLuint *buffer_object = &volume->container->sub_resources[volume->texture_level].buffer_object;
-    struct wined3d_context *context = context_acquire(volume->resource.device, NULL);
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-
-    TRACE("Deleting PBO %u belonging to volume %p.\n", *buffer_object, volume);
-    GL_EXTCALL(glDeleteBuffers(1, buffer_object));
-    checkGLcall("glDeleteBuffers");
-    *buffer_object = 0;
-    context_release(context);
-}
-
 void wined3d_volume_cleanup(struct wined3d_volume *volume)
 {
     TRACE("volume %p.\n", volume);
@@ -405,15 +392,6 @@ static void volume_unload(struct wined3d_resource *resource)
         ERR("Out of memory when unloading volume %p.\n", volume);
         wined3d_volume_validate_location(volume, WINED3D_LOCATION_DISCARDED);
         wined3d_volume_invalidate_location(volume, ~WINED3D_LOCATION_DISCARDED);
-    }
-
-    if (volume->container->sub_resources[volume->texture_level].buffer_object)
-    {
-        /* Should not happen because only dynamic default pool volumes
-         * have a buffer, and those are not evicted by device_evit_managed_resources
-         * and must be freed before a non-ex device reset. */
-        ERR("Unloading a volume with a buffer\n");
-        wined3d_volume_free_pbo(volume);
     }
 
     /* The texture name is managed by the container. */
