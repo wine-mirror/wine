@@ -1315,7 +1315,7 @@ void context_restore(struct wined3d_context *context, struct wined3d_surface *re
     if (context->current_rt != restore)
     {
         context_release(context);
-        context = context_acquire(restore->resource.device, restore);
+        context = context_acquire(restore->container->resource.device, restore);
     }
 
     context_release(context);
