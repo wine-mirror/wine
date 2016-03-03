@@ -843,7 +843,7 @@ msgstr "Filen finns inte"
 
 #: comdlg32.rc:40
 msgid "The selection contains a non-folder object"
-msgstr ""
+msgstr "Du har valt en objekt som inte är en mapp"
 
 #: comdlg32.rc:45
 msgid "Up One Level"
@@ -1039,7 +1039,7 @@ msgstr "Välj mapp"
 
 #: comdlg32.rc:148
 msgid "Font size has to be a number."
-msgstr ""
+msgstr "Typsnitts storlek måste vara ett tal."
 
 #: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
@@ -1123,7 +1123,7 @@ msgstr "Ingen toner; "
 
 #: comdlg32.rc:103
 msgid "Page punt; "
-msgstr ""
+msgstr "Pappersproblem; "
 
 #: comdlg32.rc:104
 msgid "Interrupted by user; "
@@ -1216,7 +1216,7 @@ msgstr "Caps Lock är på"
 
 #: crypt32.rc:30
 msgid "Authority Key Identifier"
-msgstr ""
+msgstr "Utfärdarens nyckel-ID"
 
 #: crypt32.rc:31
 msgid "Key Attributes"
@@ -1228,11 +1228,11 @@ msgstr "Nyckelanvändningsbegränsning"
 
 #: crypt32.rc:33
 msgid "Subject Alternative Name"
-msgstr ""
+msgstr "Certifikatämnets andra namn"
 
 #: crypt32.rc:34
 msgid "Issuer Alternative Name"
-msgstr ""
+msgstr "Utfärdarens andra namn"
 
 #: crypt32.rc:35
 msgid "Basic Constraints"
@@ -1248,7 +1248,7 @@ msgstr "Certifikatpolicyer"
 
 #: crypt32.rc:38
 msgid "Subject Key Identifier"
-msgstr ""
+msgstr "Certifikatämnets nyckel-ID"
 
 #: crypt32.rc:39
 msgid "CRL Reason Code"
@@ -1264,7 +1264,7 @@ msgstr "Utökad nyckelanvändning"
 
 #: crypt32.rc:42
 msgid "Authority Information Access"
-msgstr ""
+msgstr "Åtkomst till auktoritetsinformation"
 
 #: crypt32.rc:43
 msgid "Certificate Extensions"
@@ -1272,11 +1272,11 @@ msgstr "Certifikattillägg"
 
 #: crypt32.rc:44
 msgid "Next Update Location"
-msgstr ""
+msgstr "Nästa uppdateringsplats"
 
 #: crypt32.rc:45
 msgid "Yes or No Trust"
-msgstr ""
+msgstr "Förtroende eller ej"
 
 #: crypt32.rc:46
 msgid "Email Address"
@@ -1292,7 +1292,7 @@ msgstr "Innehållstyp"
 
 #: crypt32.rc:49
 msgid "Message Digest"
-msgstr ""
+msgstr "Sammandrag av meddelande"
 
 #: crypt32.rc:50
 msgid "Signing Time"
@@ -1304,7 +1304,7 @@ msgstr "Counter Sign"
 
 #: crypt32.rc:52
 msgid "Challenge Password"
-msgstr ""
+msgstr "Kravets lösenord"
 
 #: crypt32.rc:53
 msgid "Unstructured Address"
@@ -1312,7 +1312,7 @@ msgstr "Ostrukturerad adress"
 
 #: crypt32.rc:54
 msgid "S/MIME Capabilities"
-msgstr ""
+msgstr "S/MIME-kapacitet"
 
 #: crypt32.rc:55
 msgid "Prefer Signed Data"
@@ -1329,7 +1329,7 @@ msgstr "Användarmeddelande"
 
 #: crypt32.rc:58
 msgid "On-line Certificate Status Protocol"
-msgstr ""
+msgstr "Online Certificate Status Protocol"
 
 #: crypt32.rc:59
 msgid "Certification Authority Issuer"
@@ -1337,7 +1337,7 @@ msgstr "Certifikatauktoritetsutfärdare"
 
 #: crypt32.rc:60
 msgid "Certification Template Name"
-msgstr ""
+msgstr "Certificatmallens namn"
 
 #: crypt32.rc:61
 msgid "Certificate Type"
@@ -1393,7 +1393,7 @@ msgstr "Organisationsenhet"
 
 #: crypt32.rc:74
 msgid "Common Name"
-msgstr ""
+msgstr "Vanligt namn"
 
 #: crypt32.rc:75
 msgid "Locality"
@@ -1441,7 +1441,7 @@ msgstr ""
 
 #: crypt32.rc:86
 msgid "Serialized Signature Serial Number"
-msgstr ""
+msgstr "Serienummer för serialiserad signatur"
 
 #: crypt32.rc:87
 msgid "Principal Name"
@@ -3369,6 +3369,8 @@ msgid ""
 "Temporary internet files\n"
 "Cached copies of web pages, images and certificates."
 msgstr ""
+"Temporära internetfiler\n"
+"Arkivkopior av webbsidor, bilder och certifikat."
 
 #: inetcpl.rc:73
 msgid ""
@@ -3376,24 +3378,33 @@ msgid ""
 "Files saved on your computer by websites, which store things like user "
 "preferences and login information."
 msgstr ""
+"Cookies\n"
+"Filer som webbplatser har lagrat på din dator för att spara t.ex. "
+"inställningar och inloggningsinformation."
 
 #: inetcpl.rc:75
 msgid ""
 "History\n"
 "List of websites you have accessed."
 msgstr ""
+"Historik\n"
+"Listan med webbplatser som du har besökt."
 
 #: inetcpl.rc:77
 msgid ""
 "Form data\n"
 "Usernames and other information you have entered into forms."
 msgstr ""
+"Formulärdata\n"
+"Användarnamn och annan information som du har skrivit in i formulär."
 
 #: inetcpl.rc:79
 msgid ""
 "Passwords\n"
 "Saved passwords you have entered into forms."
 msgstr ""
+"Lösenord\n"
+"Sparade lösenord som du har skrivit in i formulär."
 
 #: inetcpl.rc:82 progman.rc:67
 msgid "Delete"
@@ -7437,16 +7448,12 @@ msgid "&Convert..."
 msgstr ""
 
 #: oledlg.rc:36
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 %2 &Object"
-msgstr "&Objekt"
+msgstr "%1 %2 &Objekt"
 
 #: oledlg.rc:34
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 &Object"
-msgstr "&Objekt"
+msgstr "%1 &Objekt"
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
@@ -8550,22 +8557,16 @@ msgid "Wine"
 msgstr "Wine"
 
 #: winemac.rc:33
-#, fuzzy
-#| msgid "Hide"
 msgid "Hide %@"
-msgstr "Dölj"
+msgstr "Dölj %@"
 
 #: winemac.rc:35
-#, fuzzy
-#| msgid "Other"
 msgid "Hide Others"
-msgstr "Annan"
+msgstr "Dölj andra"
 
 #: winemac.rc:36
-#, fuzzy
-#| msgid "Show"
 msgid "Show All"
-msgstr "Visa"
+msgstr "Visa alla"
 
 #: winemac.rc:37
 msgid "Quit %@"
@@ -8576,32 +8577,24 @@ msgid "Quit"
 msgstr ""
 
 #: winemac.rc:40
-#, fuzzy
-#| msgid "&Window"
 msgid "Window"
-msgstr "&Fönster"
+msgstr "Fönster"
 
 #: winemac.rc:41
-#, fuzzy
-#| msgid "&Minimize"
 msgid "Minimize"
-msgstr "&Minimera"
+msgstr "Minimera"
 
 #: winemac.rc:42
-#, fuzzy
-#| msgid "Zoom in"
 msgid "Zoom"
-msgstr "Zooma in"
+msgstr "Zooma"
 
 #: winemac.rc:43
 msgid "Enter Full Screen"
 msgstr ""
 
 #: winemac.rc:44
-#, fuzzy
-#| msgid "&Bring To Front"
 msgid "Bring All to Front"
-msgstr "V&isa överst"
+msgstr "Visa alla överst"
 
 #: wineps.rc:31
 msgid "Paper Si&ze:"
@@ -10786,7 +10779,7 @@ msgstr "F"
 #: notepad.rc:135 wordpad.rc:280
 msgctxt "accelerator Replace"
 msgid "H"
-msgstr ""
+msgstr "H"
 
 #: notepad.rc:136 wordpad.rc:289
 msgctxt "accelerator New"
@@ -10801,7 +10794,7 @@ msgstr "O"
 #: notepad.rc:138 regedit.rc:324 wordpad.rc:292
 msgctxt "accelerator Print"
 msgid "P"
-msgstr ""
+msgstr "P"
 
 #: notepad.rc:139 wordpad.rc:291
 msgctxt "accelerator Save"
@@ -10811,17 +10804,17 @@ msgstr "S"
 #: notepad.rc:140
 msgctxt "accelerator Paste"
 msgid "V"
-msgstr ""
+msgstr "V"
 
 #: notepad.rc:141 wordpad.rc:282
 msgctxt "accelerator Cut"
 msgid "X"
-msgstr ""
+msgstr "X"
 
 #: notepad.rc:142 wordpad.rc:284
 msgctxt "accelerator Undo"
 msgid "Z"
-msgstr ""
+msgstr "Z"
 
 #: notepad.rc:69
 msgid "Page &p"
@@ -11478,37 +11471,26 @@ msgid "The operation completed successfully\n"
 msgstr "Operation slutfördes utan problem\n"
 
 #: reg.rc:35
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid key name\n"
-msgstr "Fel: Ogiltigt nyckelnamn\n"
+msgstr "reg: Ogiltigt nyckelnamn\n"
 
 #: reg.rc:36
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "reg: Invalid command line parameters\n"
-msgstr "Fel: Ogiltiga kommandoradsparametrar\n"
+msgstr "reg: Ogiltiga kommandoradsparametrar\n"
 
 #: reg.rc:37
-#, fuzzy
-#| msgid "Error: Unable to access remote machine\n"
 msgid "reg: Unable to access remote machine\n"
-msgstr "Fel: Kan inte få tillgång till fjärrmaskin\n"
+msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
 
 #: reg.rc:38
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
 "reg: The system was unable to find the specified registry key or value\n"
 msgstr ""
-"Fel: Systemet kunde inte hitta angiven nyckel eller värde i registret\n"
+"reg: Systemet kunde inte hitta angiven nyckel eller värde i registret\n"
 
 #: reg.rc:39
-#, fuzzy
-#| msgid "Error: Unsupported type\n"
 msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "Error: Ej stödd typ\n"
+msgstr "Error: Ej stödd typ [%1] i registret\n"
 
 #: reg.rc:40
 msgid "reg: The option [/d] must be followed by a valid integer\n"
@@ -11523,10 +11505,8 @@ msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
 msgstr ""
 
 #: reg.rc:43
-#, fuzzy
-#| msgid "The specified file already exists. Do you want to replace it?"
 msgid "The registry value '%1' already exists. Do you want to overwrite it?"
-msgstr "Den angivna filen existerar redan. Vill du ersätta den?"
+msgstr "Värdet '%1' finns redan i registret. Vill du ersätta det?"
 
 #: reg.rc:47
 msgid "The registry operation was cancelled\n"
@@ -11537,22 +11517,16 @@ msgid "(Default)"
 msgstr "(Standard)"
 
 #: reg.rc:49
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
-msgstr "Vill du verkligen ta bort dessa värden?"
+msgstr "Vill du verkligen ta bort registervärdet '%1'?"
 
 #: reg.rc:50
-#, fuzzy
-#| msgid "Are you sure you want to delete value '%s'?"
 msgid "Are you sure you want to delete all registry values in '%1'?"
-msgstr "Vill du verkligen ta bort värdet '%s'?"
+msgstr "Vill du verkligen ta bort alla registervärden i '%s'?"
 
 #: reg.rc:51
-#, fuzzy
-#| msgid "Are you sure you want to delete '%1'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
-msgstr "Är du säker du vill ta bort '%1'?"
+msgstr "Vill du verkligen ta bort registernyckeln '%1'?"
 
 #: reg.rc:52
 msgid "reg: The option [/d] must be followed by a valid string\n"
@@ -12857,10 +12831,8 @@ msgid ""
 msgstr ""
 
 #: uninstaller.rc:33
-#, fuzzy
-#| msgid "Error: Invalid option '%c'.\n"
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "Fel: Flaggan '%c' är ogiltig.\n"
+msgstr "uninstaller: Flaggan [%1] är ogiltig\n"
 
 #: uninstaller.rc:35
 msgid ""
@@ -12968,8 +12940,6 @@ msgstr ""
 "program."
 
 #: winecfg.rc:159
-#, fuzzy
-#| msgid "&Add application..."
 msgid "Add appli&cation..."
 msgstr "&Lägg till program..."
 
@@ -13033,7 +13003,7 @@ msgstr "&Ny åsidosättning för bibliotek:"
 
 #: winecfg.rc:196
 msgid "A&dd"
-msgstr ""
+msgstr "&Lägg till"
 
 #: winecfg.rc:197
 msgid "Existing &overrides:"
@@ -13060,8 +13030,6 @@ msgid "&Native (Windows)"
 msgstr "&Ursprunglig (Windows)"
 
 #: winecfg.rc:211
-#, fuzzy
-#| msgid "Bui&ltin then Native"
 msgid "Buil&tin then Native"
 msgstr "Inb&yggd sedan Ursprunglig"
 
@@ -13086,56 +13054,48 @@ msgstr ""
 "Enhetskonfigurationen kan inte redigeras."
 
 #: winecfg.rc:236
-#, fuzzy
-#| msgid "&Add..."
 msgid "A&dd..."
 msgstr "&Lägg till..."
 
 #: winecfg.rc:238
-#, fuzzy
-#| msgid "Autodetect"
 msgid "Aut&odetect"
-msgstr "Upptäck automatiskt"
+msgstr "&Upptäck automatiskt"
 
 #: winecfg.rc:241
 msgid "&Path:"
 msgstr "&Sökväg:"
 
 #: winecfg.rc:248 winecfg.rc:38
-#, fuzzy
-#| msgid "Show &Advanced"
 msgid "Show Advan&ced"
 msgstr "Visa &avancerat"
 
 #: winecfg.rc:249
 msgid "De&vice:"
-msgstr "E&nhet:"
+msgstr "&Enhet:"
 
 #: winecfg.rc:251
 msgid "Bro&wse..."
-msgstr "&Bläddra..."
+msgstr "B&läddra..."
 
 #: winecfg.rc:253
 msgid "&Label:"
-msgstr "&Etikett:"
+msgstr "Et&ikett:"
 
 #: winecfg.rc:255
 msgid "S&erial:"
-msgstr "S&erienr:"
+msgstr "Se&rienr:"
 
 #: winecfg.rc:258
-#, fuzzy
-#| msgid "Show &dot files"
 msgid "&Show dot files"
 msgstr "Visa &punktfiler"
 
 #: winecfg.rc:265
 msgid "Driver diagnostics"
-msgstr ""
+msgstr "Diagnostisera drivrutin"
 
 #: winecfg.rc:267
 msgid "Defaults"
-msgstr ""
+msgstr "Standardvärden"
 
 #: winecfg.rc:268
 msgid "Output device:"
@@ -13206,8 +13166,6 @@ msgid "Select the Unix target directory, please."
 msgstr "Välj unix-målkatalog, tack."
 
 #: winecfg.rc:37
-#, fuzzy
-#| msgid "Hide &Advanced"
 msgid "Hide Advan&ced"
 msgstr "Dölj &avancerat"
 
@@ -13257,7 +13215,7 @@ msgstr "Wine-konfiguration för %s"
 
 #: winecfg.rc:84
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "Vald drivrutin: %s"
 
 #: winecfg.rc:85
 msgid "(None)"
@@ -13967,7 +13925,7 @@ msgstr "Versionsinformation"
 #: winefile.rc:197
 msgctxt "accelerator Fullscreen"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: winefile.rc:90
 msgid "Applying font settings"
@@ -14407,17 +14365,17 @@ msgstr "Verktygsrader"
 #: wordpad.rc:276
 msgctxt "accelerator Align Left"
 msgid "L"
-msgstr ""
+msgstr "L"
 
 #: wordpad.rc:277
 msgctxt "accelerator Align Center"
 msgid "E"
-msgstr ""
+msgstr "E"
 
 #: wordpad.rc:278
 msgctxt "accelerator Align Right"
 msgid "R"
-msgstr ""
+msgstr "R"
 
 #: wordpad.rc:285
 msgctxt "accelerator Redo"
@@ -14427,17 +14385,17 @@ msgstr "Y"
 #: wordpad.rc:286
 msgctxt "accelerator Bold"
 msgid "B"
-msgstr ""
+msgstr "B"
 
 #: wordpad.rc:287
 msgctxt "accelerator Italic"
 msgid "I"
-msgstr ""
+msgstr "I"
 
 #: wordpad.rc:288
 msgctxt "accelerator Underline"
 msgid "U"
-msgstr ""
+msgstr "U"
 
 #: wordpad.rc:139
 msgid "All documents (*.*)"
