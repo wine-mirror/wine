@@ -57,6 +57,7 @@ static HRESULT WINAPI d3drm_viewport1_QueryInterface(IDirect3DRMViewport *iface,
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
     if (IsEqualGUID(riid, &IID_IDirect3DRMViewport)
+            || IsEqualGUID(riid, &IID_IDirect3DRMObject)
             || IsEqualGUID(riid, &IID_IUnknown))
     {
         *out = &viewport->IDirect3DRMViewport_iface;

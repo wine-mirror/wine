@@ -1221,6 +1221,7 @@ static void test_Viewport(void)
     IDirect3DRMFrame *frame;
     IDirect3DRMViewport *viewport;
     IDirect3DRMViewport2 *viewport2;
+    IDirect3DRMObject *obj, *obj2;
     GUID driver;
     HWND window;
     RECT rc;
@@ -1248,6 +1249,22 @@ static void test_Viewport(void)
 
     hr = IDirect3DRM_CreateViewport(d3drm, device, frame, rc.left, rc.top, rc.right, rc.bottom, &viewport);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMViewport interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRMViewport_QueryInterface(viewport, &IID_IDirect3DRMObject, (void**)&obj);
+    ok(hr == D3DRM_OK, "expected D3DRM_OK (hr = %x)\n", hr);
+    ok((IDirect3DRMObject*)viewport == obj, "got object pointer %p, expected %p\n", obj, viewport);
+
+    hr = IDirect3DRMViewport_QueryInterface(viewport, &IID_IDirect3DRMViewport2, (void**)&viewport2);
+    ok(hr == D3DRM_OK, "expected D3DRM_OK (hr = %x)\n", hr);
+
+    hr = IDirect3DRMViewport2_QueryInterface(viewport2, &IID_IDirect3DRMObject, (void**)&obj2);
+    ok(hr == D3DRM_OK, "expected D3DRM_OK (hr = %x)\n", hr);
+    ok(obj == obj2, "got object pointer %p, expected %p\n", obj2, obj);
+    ok((IUnknown*)viewport != (IUnknown*)viewport2, "got viewport1 %p, viewport2 %p\n", viewport, viewport2);
+
+    IDirect3DRMViewport2_Release(viewport2);
+    IDirect3DRMObject_Release(obj);
+    IDirect3DRMObject_Release(obj2);
 
     hr = IDirect3DRMViewport_GetClassName(viewport, NULL, cname);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
