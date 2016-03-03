@@ -95,9 +95,9 @@ static void WINAPI service_main(DWORD argc, char **argv)
     SERVICE_STATUS status;
     BOOL res;
 
-    service_ok(argc == 1, "argc = %d", argc);
+    service_ok(argc == 1, "argc = %d\n", argc);
     if(argc)
-        service_ok(!strcmp(argv[0], service_name), "argv[0] = %s, expected %s", argv[0], service_name);
+        service_ok(!strcmp(argv[0], service_name), "argv[0] = %s, expected %s\n", argv[0], service_name);
 
     service_handle = pRegisterServiceCtrlHandlerExA(service_name, service_handler, NULL);
     service_ok(service_handle != NULL, "RegisterServiceCtrlHandlerEx failed: %u\n", GetLastError());
@@ -112,7 +112,7 @@ static void WINAPI service_main(DWORD argc, char **argv)
     status.dwCheckPoint              = 0;
     status.dwWaitHint                = 10000;
     res = SetServiceStatus(service_handle, &status);
-    service_ok(res, "SetServiceStatus(SERVICE_RUNNING) failed: %u", GetLastError());
+    service_ok(res, "SetServiceStatus(SERVICE_RUNNING) failed: %u\n", GetLastError());
 
     service_event("RUNNING");
 
@@ -121,7 +121,7 @@ static void WINAPI service_main(DWORD argc, char **argv)
     status.dwCurrentState     = SERVICE_STOPPED;
     status.dwControlsAccepted = 0;
     res = SetServiceStatus(service_handle, &status);
-    service_ok(res, "SetServiceStatus(SERVICE_STOPPED) failed: %u", GetLastError());
+    service_ok(res, "SetServiceStatus(SERVICE_STOPPED) failed: %u\n", GetLastError());
 }
 
 static void service_process(void (WINAPI *p_service_main)(DWORD, char **))
@@ -141,7 +141,7 @@ static void service_process(void (WINAPI *p_service_main)(DWORD, char **))
     if(pipe_handle == INVALID_HANDLE_VALUE)
         return;
 
-    service_trace("Starting...");
+    service_trace("Starting...\n");
 
     service_stop_event = CreateEventA(NULL, TRUE, FALSE, NULL);
     service_ok(service_stop_event != NULL, "Could not create event: %u\n", GetLastError());
@@ -191,9 +191,9 @@ static void WINAPI no_stop_main(DWORD argc, char **argv)
     SERVICE_STATUS status;
     BOOL res;
 
-    service_ok(argc == 1, "argc = %d", argc);
+    service_ok(argc == 1, "argc = %d\n", argc);
     if(argc)
-        service_ok(!strcmp(argv[0], service_name), "argv[0] = %s, expected %s", argv[0], service_name);
+        service_ok(!strcmp(argv[0], service_name), "argv[0] = %s, expected %s\n", argv[0], service_name);
 
     service_handle = pRegisterServiceCtrlHandlerExA(service_name, no_stop_handler, NULL);
     service_ok(service_handle != NULL, "RegisterServiceCtrlHandlerEx failed: %u\n", GetLastError());
@@ -208,7 +208,7 @@ static void WINAPI no_stop_main(DWORD argc, char **argv)
     status.dwCheckPoint              = 0;
     status.dwWaitHint                = 10000;
     res = SetServiceStatus(service_handle, &status);
-    service_ok(res, "SetServiceStatus(SERVICE_RUNNING) failed: %u", GetLastError());
+    service_ok(res, "SetServiceStatus(SERVICE_RUNNING) failed: %u\n", GetLastError());
 
     service_event("RUNNING");
 }
@@ -292,11 +292,11 @@ static DWORD WINAPI pipe_thread(void *arg)
 
         for(ptr = buf; ptr < buf+read; ptr += strlen(ptr)+1) {
             if(!strncmp(ptr, "TRACE:", 6)) {
-                trace("service trace: %s\n", ptr+6);
+                trace("service trace: %s", ptr+6);
             }else if(!strncmp(ptr, "OK:", 3)) {
-                ok(1, "service: %s\n", ptr+3);
+                ok(1, "service: %s", ptr+3);
             }else if(!strncmp(ptr, "FAIL:", 5)) {
-                ok(0, "service: %s\n", ptr+5);
+                ok(0, "service: %s", ptr+5);
             }else if(!strncmp(ptr, "EVENT:", 6)) {
                 trace("service event: %s\n", ptr+6);
                 EnterCriticalSection(&event_cs);
