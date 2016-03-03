@@ -24,12 +24,20 @@
 #include "d3drm.h"
 #include "dxfile.h"
 
+#include "wine/list.h"
+
 struct d3drm_device;
 struct d3drm_object
 {
     LONG ref;
     DWORD appdata;
+    struct list destroy_callbacks;
 };
+
+void d3drm_object_init(struct d3drm_object *object) DECLSPEC_HIDDEN;
+HRESULT d3drm_object_add_destroy_callback(struct d3drm_object *object, D3DRMOBJECTCALLBACK cb, void *ctx) DECLSPEC_HIDDEN;
+HRESULT d3drm_object_delete_destroy_callback(struct d3drm_object *object, D3DRMOBJECTCALLBACK cb, void *ctx) DECLSPEC_HIDDEN;
+void d3drm_object_cleanup(IDirect3DRMObject *iface, struct d3drm_object *object) DECLSPEC_HIDDEN;
 
 HRESULT d3drm_device_create(struct d3drm_device **out) DECLSPEC_HIDDEN;
 IDirect3DRMDevice *IDirect3DRMDevice_from_impl(struct d3drm_device *device) DECLSPEC_HIDDEN;
