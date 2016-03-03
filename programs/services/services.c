@@ -852,6 +852,7 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
 
     CloseHandle(service->control_pipe);
     service->control_mutex = CreateMutexW(NULL, TRUE, NULL);
+    service->force_shutdown = FALSE;
 
     if (!service->status_changed_event)
         service->status_changed_event = CreateEventW(NULL, FALSE, FALSE, NULL);

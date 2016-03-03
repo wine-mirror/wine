@@ -1137,7 +1137,8 @@ DWORD __cdecl svcctl_ControlService(
         break;
     }
 
-    if (result==ERROR_SUCCESS && !service->service_entry->control_mutex) {
+    if (result == ERROR_SUCCESS && service->service_entry->force_shutdown)
+    {
         result = ERROR_SERVICE_CANNOT_ACCEPT_CTRL;
         service_terminate(service->service_entry);
     }
@@ -1164,45 +1165,35 @@ DWORD __cdecl svcctl_ControlService(
         return ERROR_INVALID_SERVICE_CONTROL;
     }
 
-    /* prevent races by caching control_mutex and clearing it on
-     * stop instead of outside the services lock */
-    control_mutex = service->service_entry->control_mutex;
+    /* Remember that we tried to shutdown this service. When the service is
+     * still running on the second invocation, it will be forcefully killed. */
     if (dwControl == SERVICE_CONTROL_STOP)
-        service->service_entry->control_mutex = NULL;
+        service->service_entry->force_shutdown = TRUE;
 
+    control_mutex = service->service_entry->control_mutex;
     service_unlock(service->service_entry);
 
     ret = WaitForSingleObject(control_mutex, 30000);
-    if (ret == WAIT_OBJECT_0)
-    {
-        service_send_control(service->service_entry, dwControl, &result);
-
-        if (lpServiceStatus)
-        {
-            service_lock(service->service_entry);
-            lpServiceStatus->dwServiceType = service->service_entry->status.dwServiceType;
-            lpServiceStatus->dwCurrentState = service->service_entry->status.dwCurrentState;
-            lpServiceStatus->dwControlsAccepted = service->service_entry->status.dwControlsAccepted;
-            lpServiceStatus->dwWin32ExitCode = service->service_entry->status.dwWin32ExitCode;
-            lpServiceStatus->dwServiceSpecificExitCode = service->service_entry->status.dwServiceSpecificExitCode;
-            lpServiceStatus->dwCheckPoint = service->service_entry->status.dwCheckPoint;
-            lpServiceStatus->dwWaitHint = service->service_entry->status.dwWaitHint;
-            service_unlock(service->service_entry);
-        }
-
-        if (dwControl == SERVICE_CONTROL_STOP)
-            CloseHandle(control_mutex);
-        else
-            ReleaseMutex(control_mutex);
-
-        return result;
-    }
-    else
-    {
-        if (dwControl == SERVICE_CONTROL_STOP)
-            CloseHandle(control_mutex);
+    if (ret != WAIT_OBJECT_0)
         return ERROR_SERVICE_REQUEST_TIMEOUT;
+
+    service_send_control(service->service_entry, dwControl, &result);
+
+    if (lpServiceStatus)
+    {
+        service_lock(service->service_entry);
+        lpServiceStatus->dwServiceType = service->service_entry->status.dwServiceType;
+        lpServiceStatus->dwCurrentState = service->service_entry->status.dwCurrentState;
+        lpServiceStatus->dwControlsAccepted = service->service_entry->status.dwControlsAccepted;
+        lpServiceStatus->dwWin32ExitCode = service->service_entry->status.dwWin32ExitCode;
+        lpServiceStatus->dwServiceSpecificExitCode = service->service_entry->status.dwServiceSpecificExitCode;
+        lpServiceStatus->dwCheckPoint = service->service_entry->status.dwCheckPoint;
+        lpServiceStatus->dwWaitHint = service->service_entry->status.dwWaitHint;
+        service_unlock(service->service_entry);
     }
+
+    ReleaseMutex(control_mutex);
+    return result;
 }
 
 DWORD __cdecl svcctl_CloseServiceHandle(

@@ -48,6 +48,7 @@ struct service_entry
     HANDLE control_pipe;
     HANDLE overlapped_event;
     HANDLE status_changed_event;
+    BOOL force_shutdown;
     BOOL marked_for_delete;
     BOOL is_wow64;
 };
