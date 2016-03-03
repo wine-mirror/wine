@@ -1651,10 +1651,8 @@ HRESULT CDECL wined3d_texture_update_overlay(struct wined3d_texture *texture, un
     else if (flags & WINEDDOVER_HIDE)
     {
         /* Tests show that the rectangles are erased on hide. */
-        surface->overlay_srcrect.left = 0; surface->overlay_srcrect.top = 0;
-        surface->overlay_srcrect.right = 0; surface->overlay_srcrect.bottom = 0;
-        surface->overlay_destrect.left = 0; surface->overlay_destrect.top = 0;
-        surface->overlay_destrect.right = 0; surface->overlay_destrect.bottom = 0;
+        SetRectEmpty(&surface->overlay_srcrect);
+        SetRectEmpty(&surface->overlay_destrect);
         surface->overlay_dest = NULL;
     }
 
