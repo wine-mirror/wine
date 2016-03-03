@@ -2910,11 +2910,11 @@ static void test_effect_states(IDirect3DDevice9 *device)
     }
 
     hr = IDirect3DDevice9_GetLightEnable(device, 2, &bval);
-    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
     if (hr == D3D_OK)
         ok(bval, "Got result %u, expected TRUE.\n", bval);
     hr = IDirect3DDevice9_GetLight(device, 2, &light);
-    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
     if (hr == D3D_OK)
         ok(light.Position.x == 4.0f && light.Position.y == 5.0f && light.Position.z == 6.0f,
                 "Got unexpected light position (%f, %f, %f).\n", light.Position.x, light.Position.y, light.Position.z);
@@ -2950,9 +2950,9 @@ static void test_effect_states(IDirect3DDevice9 *device)
     todo_wine ok(!memcmp(mat.m, test_mat.m, sizeof(mat)), "World matrix not restored.\n");
 
     hr = IDirect3DDevice9_GetLightEnable(device, 2, &bval);
-    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
     if (hr == D3D_OK)
-        ok(!bval, "Got result %u, expected 0.\n", bval);
+        todo_wine ok(!bval, "Got result %u, expected 0.\n", bval);
 
     if (effect)
         effect->lpVtbl->Release(effect);

@@ -2515,6 +2515,116 @@ static HRESULT d3dx9_get_param_value_ptr(struct ID3DXEffectImpl *effect, struct 
     return E_NOTIMPL;
 }
 
+static void d3dx9_set_light_parameter(enum LIGHT_TYPE op, D3DLIGHT9 *light, void *value)
+{
+    static const struct
+    {
+        unsigned int offset;
+        const char *name;
+    }
+    light_tbl[] =
+    {
+       {FIELD_OFFSET(D3DLIGHT9, Type),         "LC_TYPE"},
+       {FIELD_OFFSET(D3DLIGHT9, Diffuse),      "LT_DIFFUSE"},
+       {FIELD_OFFSET(D3DLIGHT9, Specular),     "LT_SPECULAR"},
+       {FIELD_OFFSET(D3DLIGHT9, Ambient),      "LT_AMBIENT"},
+       {FIELD_OFFSET(D3DLIGHT9, Position),     "LT_POSITION"},
+       {FIELD_OFFSET(D3DLIGHT9, Direction),    "LT_DIRECTION"},
+       {FIELD_OFFSET(D3DLIGHT9, Range),        "LT_RANGE"},
+       {FIELD_OFFSET(D3DLIGHT9, Falloff),      "LT_FALLOFF"},
+       {FIELD_OFFSET(D3DLIGHT9, Attenuation0), "LT_ATTENUATION0"},
+       {FIELD_OFFSET(D3DLIGHT9, Attenuation1), "LT_ATTENUATION1"},
+       {FIELD_OFFSET(D3DLIGHT9, Attenuation2), "LT_ATTENUATION2"},
+       {FIELD_OFFSET(D3DLIGHT9, Theta),        "LT_THETA"},
+       {FIELD_OFFSET(D3DLIGHT9, Phi),          "LT_PHI"}
+    };
+    switch (op)
+    {
+        case LT_TYPE:
+            TRACE("LT_TYPE %u.\n", *(D3DLIGHTTYPE *)value);
+            light->Type = *(D3DLIGHTTYPE *)value;
+            break;
+        case LT_DIFFUSE:
+        case LT_SPECULAR:
+        case LT_AMBIENT:
+        {
+            D3DCOLORVALUE c = *(D3DCOLORVALUE *)value;
+
+            TRACE("%s (%f %f %f %f).\n", light_tbl[op].name, c.r, c.g, c.b, c.a);
+            *(D3DCOLORVALUE *)((char *)light + light_tbl[op].offset) = c;
+            break;
+        }
+        case LT_POSITION:
+        case LT_DIRECTION:
+        {
+            D3DVECTOR v = *(D3DVECTOR *)value;
+
+            TRACE("%s (%f %f %f).\n", light_tbl[op].name, v.x, v.y, v.z);
+            *(D3DVECTOR *)((char *)light + light_tbl[op].offset) = v;
+            break;
+        }
+        case LT_RANGE:
+        case LT_FALLOFF:
+        case LT_ATTENUATION0:
+        case LT_ATTENUATION1:
+        case LT_ATTENUATION2:
+        case LT_THETA:
+        case LT_PHI:
+        {
+            float v = *(float *)value;
+            TRACE("%s %f.\n", light_tbl[op].name, v);
+            *(float *)((char *)light + light_tbl[op].offset) = v;
+            break;
+        }
+        default:
+            WARN("Unknown light parameter %u.\n", op);
+            break;
+    }
+}
+
+static void d3dx9_set_material_parameter(enum MATERIAL_TYPE op, D3DMATERIAL9 *material, void *value)
+{
+    static const struct
+    {
+        unsigned int offset;
+        const char *name;
+    }
+    material_tbl[] =
+    {
+       {FIELD_OFFSET(D3DMATERIAL9, Diffuse),  "MT_DIFFUSE"},
+       {FIELD_OFFSET(D3DMATERIAL9, Ambient),  "MT_AMBIENT"},
+       {FIELD_OFFSET(D3DMATERIAL9, Specular), "MT_SPECULAR"},
+       {FIELD_OFFSET(D3DMATERIAL9, Emissive), "MT_EMISSIVE"},
+       {FIELD_OFFSET(D3DMATERIAL9, Power),    "MT_POWER"}
+    };
+
+    switch (op)
+    {
+        case MT_POWER:
+        {
+            float v = *(float *)value;
+
+            TRACE("%s %f.\n", material_tbl[op].name, v);
+            material->Power = v;
+            break;
+        }
+        case MT_DIFFUSE:
+        case MT_AMBIENT:
+        case MT_SPECULAR:
+        case MT_EMISSIVE:
+        {
+            D3DCOLORVALUE c = *(D3DCOLORVALUE *)value;
+
+            TRACE("%s, value (%f %f %f %f).\n", material_tbl[op].name, c.r, c.g, c.b, c.a);
+            *(D3DCOLORVALUE *)((char *)material + material_tbl[op].offset) = c;
+            break;
+        }
+        default:
+            WARN("Unknown material parameter %u.\n", op);
+            break;
+    }
+}
+
 static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pass *pass, struct d3dx_state *state)
 {
     IDirect3DDevice9 *device = effect->device;
@@ -2558,6 +2668,39 @@ static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pas
             TRACE("%s, state %u.\n", state_table[state->operation].name, state->index);
             return IDirect3DDevice9_SetTransform(device, state_table[state->operation].op + state->index,
                     (D3DMATRIX *)param_value);
+        case SC_LIGHTENABLE:
+            TRACE("%s, index %u, value %u.\n", state_table[state->operation].name, state->index, *(BOOL *)param_value);
+            return IDirect3DDevice9_LightEnable(device, state->index, *(BOOL *)param_value);
+        case SC_LIGHT:
+        {
+            D3DLIGHT9 light;
+
+            TRACE("%s, index %u, op %u.\n", state_table[state->operation].name, state->index,
+                    state_table[state->operation].op);
+            hr = IDirect3DDevice9_GetLight(device, state->index, &light);
+            if (FAILED(hr))
+            {
+                WARN("Could not get light, hr %#x.\n", hr);
+                memset(&light, 0, sizeof(light));
+            }
+            d3dx9_set_light_parameter(state_table[state->operation].op, &light, param_value);
+            return IDirect3DDevice9_SetLight(device, state->index, &light);
+        }
+        case SC_MATERIAL:
+        {
+            D3DMATERIAL9 material;
+
+            TRACE("%s, index %u, op %u.\n", state_table[state->operation].name, state->index,
+                    state_table[state->operation].op);
+            hr = IDirect3DDevice9_GetMaterial(device, &material);
+            if (FAILED(hr))
+            {
+                WARN("Could not get material, hr %#x.\n", hr);
+                memset(&material, 0, sizeof(material));
+            }
+            d3dx9_set_material_parameter(state_table[state->operation].op, &material, param_value);
+            return IDirect3DDevice9_SetMaterial(device, &material);
+        }
         case SC_NPATCHMODE:
             TRACE("%s, nsegments %f.\n", state_table[state->operation].name, *(float *)param_value);
             return IDirect3DDevice9_SetNPatchMode(device, *(float *)param_value);
