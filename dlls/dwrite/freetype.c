@@ -217,14 +217,14 @@ void release_freetype(void)
     pFT_Done_FreeType(library);
 }
 
-void freetype_notify_cacheremove(IDWriteFontFace2 *fontface)
+void freetype_notify_cacheremove(IDWriteFontFace3 *fontface)
 {
     EnterCriticalSection(&freetype_cs);
     pFTC_Manager_RemoveFaceID(cache_manager, fontface);
     LeaveCriticalSection(&freetype_cs);
 }
 
-HRESULT freetype_get_design_glyph_metrics(IDWriteFontFace2 *fontface, UINT16 unitsperEm, UINT16 glyph, DWRITE_GLYPH_METRICS *ret)
+HRESULT freetype_get_design_glyph_metrics(IDWriteFontFace3 *fontface, UINT16 unitsperEm, UINT16 glyph, DWRITE_GLYPH_METRICS *ret)
 {
     FTC_ScalerRec scaler;
     FT_Size size;
@@ -255,7 +255,7 @@ HRESULT freetype_get_design_glyph_metrics(IDWriteFontFace2 *fontface, UINT16 uni
     return S_OK;
 }
 
-BOOL freetype_is_monospaced(IDWriteFontFace2 *fontface)
+BOOL freetype_is_monospaced(IDWriteFontFace3 *fontface)
 {
     BOOL is_monospaced = FALSE;
     FT_Face face;
@@ -412,7 +412,7 @@ static void decompose_outline(FT_Outline *outline, FLOAT xoffset, FLOAT yoffset,
         ID2D1SimplifiedGeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 }
 
-HRESULT freetype_get_glyphrun_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 const *glyphs, FLOAT const *advances,
+HRESULT freetype_get_glyphrun_outline(IDWriteFontFace3 *fontface, FLOAT emSize, UINT16 const *glyphs, FLOAT const *advances,
     DWRITE_GLYPH_OFFSET const *offsets, UINT32 count, BOOL is_rtl, IDWriteGeometrySink *sink)
 {
     FTC_ScalerRec scaler;
@@ -425,7 +425,7 @@ HRESULT freetype_get_glyphrun_outline(IDWriteFontFace2 *fontface, FLOAT emSize, 
 
     ID2D1SimplifiedGeometrySink_SetFillMode(sink, D2D1_FILL_MODE_WINDING);
 
-    simulations = IDWriteFontFace2_GetSimulations(fontface);
+    simulations = IDWriteFontFace3_GetSimulations(fontface);
 
     scaler.face_id = fontface;
     scaler.width  = emSize;
@@ -480,7 +480,7 @@ HRESULT freetype_get_glyphrun_outline(IDWriteFontFace2 *fontface, FLOAT emSize, 
     return hr;
 }
 
-UINT16 freetype_get_glyphcount(IDWriteFontFace2 *fontface)
+UINT16 freetype_get_glyphcount(IDWriteFontFace3 *fontface)
 {
     UINT16 count = 0;
     FT_Face face;
@@ -493,7 +493,7 @@ UINT16 freetype_get_glyphcount(IDWriteFontFace2 *fontface)
     return count;
 }
 
-void freetype_get_glyphs(IDWriteFontFace2 *fontface, INT charmap, UINT32 const *codepoints, UINT32 count,
+void freetype_get_glyphs(IDWriteFontFace3 *fontface, INT charmap, UINT32 const *codepoints, UINT32 count,
     UINT16 *glyphs)
 {
     UINT32 i;
@@ -514,7 +514,7 @@ void freetype_get_glyphs(IDWriteFontFace2 *fontface, INT charmap, UINT32 const *
     LeaveCriticalSection(&freetype_cs);
 }
 
-BOOL freetype_has_kerning_pairs(IDWriteFontFace2 *fontface)
+BOOL freetype_has_kerning_pairs(IDWriteFontFace3 *fontface)
 {
     BOOL has_kerning_pairs = FALSE;
     FT_Face face;
@@ -527,7 +527,7 @@ BOOL freetype_has_kerning_pairs(IDWriteFontFace2 *fontface)
     return has_kerning_pairs;
 }
 
-INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace2 *fontface, UINT16 left, UINT16 right)
+INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace3 *fontface, UINT16 left, UINT16 right)
 {
     INT32 adjustment = 0;
     FT_Face face;
@@ -554,7 +554,7 @@ static inline void ft_matrix_from_dwrite_matrix(const DWRITE_MATRIX *m, FT_Matri
 }
 
 /* Should be used only while holding 'freetype_cs' */
-static BOOL is_face_scalable(IDWriteFontFace2 *fontface)
+static BOOL is_face_scalable(IDWriteFontFace3 *fontface)
 {
     FT_Face face;
     if (pFTC_Manager_LookupFace(cache_manager, fontface, &face) == 0)
@@ -747,7 +747,7 @@ BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
     return ret;
 }
 
-INT freetype_get_charmap_index(IDWriteFontFace2 *fontface, BOOL *is_symbol)
+INT freetype_get_charmap_index(IDWriteFontFace3 *fontface, BOOL *is_symbol)
 {
     INT charmap_index = -1;
     FT_Face face;
@@ -779,7 +779,7 @@ INT freetype_get_charmap_index(IDWriteFontFace2 *fontface, BOOL *is_symbol)
     return charmap_index;
 }
 
-INT32 freetype_get_glyph_advance(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, DWRITE_MEASURING_MODE mode)
+INT32 freetype_get_glyph_advance(IDWriteFontFace3 *fontface, FLOAT emSize, UINT16 index, DWRITE_MEASURING_MODE mode)
 {
     FTC_ImageTypeRec imagetype;
     FT_Glyph glyph;
@@ -813,43 +813,43 @@ void release_freetype(void)
 {
 }
 
-void freetype_notify_cacheremove(IDWriteFontFace2 *fontface)
+void freetype_notify_cacheremove(IDWriteFontFace3 *fontface)
 {
 }
 
-HRESULT freetype_get_design_glyph_metrics(IDWriteFontFace2 *fontface, UINT16 unitsperEm, UINT16 glyph, DWRITE_GLYPH_METRICS *ret)
+HRESULT freetype_get_design_glyph_metrics(IDWriteFontFace3 *fontface, UINT16 unitsperEm, UINT16 glyph, DWRITE_GLYPH_METRICS *ret)
 {
     return E_NOTIMPL;
 }
 
-BOOL freetype_is_monospaced(IDWriteFontFace2 *fontface)
+BOOL freetype_is_monospaced(IDWriteFontFace3 *fontface)
 {
     return FALSE;
 }
 
-HRESULT freetype_get_glyphrun_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 const *glyphs, FLOAT const *advances,
+HRESULT freetype_get_glyphrun_outline(IDWriteFontFace3 *fontface, FLOAT emSize, UINT16 const *glyphs, FLOAT const *advances,
     DWRITE_GLYPH_OFFSET const *offsets, UINT32 count, BOOL is_rtl, IDWriteGeometrySink *sink)
 {
     return E_NOTIMPL;
 }
 
-UINT16 freetype_get_glyphcount(IDWriteFontFace2 *fontface)
+UINT16 freetype_get_glyphcount(IDWriteFontFace3 *fontface)
 {
     return 0;
 }
 
-void freetype_get_glyphs(IDWriteFontFace2 *fontface, INT charmap, UINT32 const *codepoints, UINT32 count,
+void freetype_get_glyphs(IDWriteFontFace3 *fontface, INT charmap, UINT32 const *codepoints, UINT32 count,
     UINT16 *glyphs)
 {
     memset(glyphs, 0, count * sizeof(*glyphs));
 }
 
-BOOL freetype_has_kerning_pairs(IDWriteFontFace2 *fontface)
+BOOL freetype_has_kerning_pairs(IDWriteFontFace3 *fontface)
 {
     return FALSE;
 }
 
-INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace2 *fontface, UINT16 left, UINT16 right)
+INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace3 *fontface, UINT16 left, UINT16 right)
 {
     return 0;
 }
@@ -864,13 +864,13 @@ BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
     return FALSE;
 }
 
-INT freetype_get_charmap_index(IDWriteFontFace2 *fontface, BOOL *is_symbol)
+INT freetype_get_charmap_index(IDWriteFontFace3 *fontface, BOOL *is_symbol)
 {
     *is_symbol = FALSE;
     return -1;
 }
 
-INT32 freetype_get_glyph_advance(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, DWRITE_MEASURING_MODE mode)
+INT32 freetype_get_glyph_advance(IDWriteFontFace3 *fontface, FLOAT emSize, UINT16 index, DWRITE_MEASURING_MODE mode)
 {
     return 0;
 }

@@ -806,7 +806,7 @@ static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory2 *iface,
     IDWriteFontFileLoader *loader;
     struct fontfacecached *cached;
     struct list *fontfaces;
-    IDWriteFontFace2 *face;
+    IDWriteFontFace3 *face;
     UINT32 key_size, count;
     BOOL is_supported;
     const void *key;
@@ -893,7 +893,7 @@ static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory2 *iface,
     /* new cache entry */
     cached = heap_alloc(sizeof(*cached));
     if (!cached) {
-        IDWriteFontFace2_Release(face);
+        IDWriteFontFace3_Release(face);
         return hr;
     }
 

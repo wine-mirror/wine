@@ -183,7 +183,7 @@ interface IDWriteFontFace3 : IDWriteFontFace2
     BOOL IsGlyphLocal(UINT16 glyph);
     HRESULT AreCharactersLocal(WCHAR const *characters,
         UINT32 count, BOOL enqueue_if_not, BOOL *are_local);
-    HRESULT AreGlyphsLocal(UINT16 *const glyphs, UINT32 count,
+    HRESULT AreGlyphsLocal(UINT16 const *glyphs, UINT32 count,
         BOOL enqueue_if_not, BOOL *are_local);
 }
 
