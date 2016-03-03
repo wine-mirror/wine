@@ -242,6 +242,7 @@ static const struct wined3d_typed_format_info typed_formats[] =
     {WINED3DFMT_BC3_UNORM_SRGB,         WINED3DFMT_BC3_TYPELESS,          ""},
     {WINED3DFMT_BC3_UNORM,              WINED3DFMT_BC3_TYPELESS,          ""},
     {WINED3DFMT_BC4_UNORM,              WINED3DFMT_BC4_TYPELESS,          ""},
+    {WINED3DFMT_BC5_UNORM,              WINED3DFMT_BC5_TYPELESS,          ""},
     {WINED3DFMT_B8G8R8A8_UNORM_SRGB,    WINED3DFMT_B8G8R8A8_TYPELESS,     "uuuu"},
     {WINED3DFMT_B8G8R8A8_UNORM,         WINED3DFMT_B8G8R8A8_TYPELESS,     "uuuu"},
     {WINED3DFMT_B8G8R8X8_UNORM_SRGB,    WINED3DFMT_B8G8R8X8_TYPELESS,     "uuu"},
@@ -296,6 +297,7 @@ static const struct wined3d_format_block_info format_block_info[] =
     {WINED3DFMT_BC2_UNORM, 4,  4,  16, TRUE},
     {WINED3DFMT_BC3_UNORM, 4,  4,  16, TRUE},
     {WINED3DFMT_BC4_UNORM, 4,  4,  8,  TRUE},
+    {WINED3DFMT_BC5_UNORM, 4,  4,  16, TRUE},
     {WINED3DFMT_ATI1N,     4,  4,  8,  FALSE},
     {WINED3DFMT_ATI2N,     4,  4,  16, FALSE},
     {WINED3DFMT_YUY2,      2,  1,  4,  FALSE},
@@ -1057,6 +1059,11 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             EXT_TEXTURE_COMPRESSION_S3TC, NULL},
     {WINED3DFMT_BC4_UNORM,              GL_COMPRESSED_RED_RGTC1,          GL_COMPRESSED_RED_RGTC1,                0,
             GL_RED,                     GL_UNSIGNED_BYTE,                 0,
+            WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
+            | WINED3DFMT_FLAG_COMPRESSED,
+            ARB_TEXTURE_COMPRESSION_RGTC, NULL},
+    {WINED3DFMT_BC5_UNORM,              GL_COMPRESSED_RG_RGTC2,           GL_COMPRESSED_RG_RGTC2,                 0,
+            GL_RG,                      GL_UNSIGNED_BYTE,                 0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
             | WINED3DFMT_FLAG_COMPRESSED,
             ARB_TEXTURE_COMPRESSION_RGTC, NULL},
