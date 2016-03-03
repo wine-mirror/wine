@@ -7658,21 +7658,21 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
 {
     GLenum shader;
     float size[4] = {(float) surface->pow2Width, (float) surface->pow2Height, 1.0f, 1.0f};
+    const struct wined3d_texture *texture = surface->container;
     struct arbfp_blit_priv *priv = blit_priv;
     enum complex_fixup fixup;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    GLenum gl_texture_type = surface->container->target;
     struct wine_rb_entry *entry;
     struct arbfp_blit_type type;
     struct arbfp_blit_desc *desc;
     struct wined3d_color float_color_key[2];
 
-    if (is_complex_fixup(surface->resource.format->color_fixup))
-        fixup = get_complex_fixup(surface->resource.format->color_fixup);
+    if (is_complex_fixup(texture->resource.format->color_fixup))
+        fixup = get_complex_fixup(texture->resource.format->color_fixup);
     else
         fixup = COMPLEX_FIXUP_NONE;
 
-    switch (gl_texture_type)
+    switch (texture->target)
     {
         case GL_TEXTURE_1D:
             type.res_type = WINED3D_GL_RES_TYPE_TEX_1D;
@@ -7695,7 +7695,7 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
             break;
 
         default:
-            ERR("Unexpected GL texture type %x.\n", gl_texture_type);
+            ERR("Unexpected GL texture type %#x.\n", texture->target);
             type.res_type = WINED3D_GL_RES_TYPE_TEX_2D;
     }
     type.fixup = fixup;
@@ -7713,7 +7713,7 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
         switch (fixup)
         {
             case COMPLEX_FIXUP_NONE:
-                if (!is_identity_fixup(surface->resource.format->color_fixup))
+                if (!is_identity_fixup(texture->resource.format->color_fixup))
                     FIXME("Implement support for sign or swizzle fixups.\n");
                 shader = arbfp_gen_plain_shader(priv, gl_info, &type);
                 break;
@@ -7756,7 +7756,7 @@ err_out:
     }
 
     if (fixup == COMPLEX_FIXUP_P8)
-        upload_palette(surface->container, context);
+        upload_palette(texture, context);
 
     gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_PROGRAM_ARB);
     checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB)");
@@ -7766,7 +7766,7 @@ err_out:
     checkGLcall("glProgramLocalParameter4fvARB");
     if (type.use_color_key)
     {
-        wined3d_format_get_float_color_key(surface->resource.format, color_key, float_color_key);
+        wined3d_format_get_float_color_key(texture->resource.format, color_key, float_color_key);
         GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB,
                 ARBFP_BLIT_PARAM_COLOR_KEY_LOW, &float_color_key[0].r));
         GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB,
