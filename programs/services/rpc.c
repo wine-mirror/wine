@@ -773,8 +773,8 @@ DWORD __cdecl svcctl_SetServiceStatus(
 
     if (lpServiceStatus->dwCurrentState == SERVICE_STOPPED)
         run_after_timeout(service_terminate, service->service_entry, service_kill_timeout);
-    else if (service->service_entry->status_changed_event)
-        SetEvent(service->service_entry->status_changed_event);
+    else if (service->service_entry->process->status_changed_event)
+        SetEvent(service->service_entry->process->status_changed_event);
 
     return ERROR_SUCCESS;
 }
@@ -984,26 +984,26 @@ static BOOL service_accepts_control(const struct service_entry *service, DWORD d
 }
 
 /******************************************************************************
- * service_send_command
+ * process_send_command
  */
-BOOL service_send_command( struct service_entry *service, const void *data, DWORD size, DWORD *result )
+BOOL process_send_command(struct process_entry *process, const void *data, DWORD size, DWORD *result)
 {
     OVERLAPPED overlapped;
     DWORD count, ret;
     BOOL r;
 
-    overlapped.hEvent = service->overlapped_event;
-    r = WriteFile(service->control_pipe, data, size, &count, &overlapped);
+    overlapped.hEvent = process->overlapped_event;
+    r = WriteFile(process->control_pipe, data, size, &count, &overlapped);
     if (!r && GetLastError() == ERROR_IO_PENDING)
     {
-        ret = WaitForSingleObject( service->overlapped_event, service_pipe_timeout );
+        ret = WaitForSingleObject(process->overlapped_event, service_pipe_timeout);
         if (ret == WAIT_TIMEOUT)
         {
             WINE_ERR("sending command timed out\n");
             *result = ERROR_SERVICE_REQUEST_TIMEOUT;
             return FALSE;
         }
-        r = GetOverlappedResult(service->control_pipe, &overlapped, &count, FALSE);
+        r = GetOverlappedResult(process->control_pipe, &overlapped, &count, FALSE);
     }
     if (!r || count != size)
     {
@@ -1011,17 +1011,17 @@ BOOL service_send_command( struct service_entry *service, const void *data, DWOR
         *result  = (!r ? GetLastError() : ERROR_WRITE_FAULT);
         return FALSE;
     }
-    r = ReadFile(service->control_pipe, result, sizeof *result, &count, &overlapped);
+    r = ReadFile(process->control_pipe, result, sizeof *result, &count, &overlapped);
     if (!r && GetLastError() == ERROR_IO_PENDING)
     {
-        ret = WaitForSingleObject( service->overlapped_event, service_pipe_timeout );
+        ret = WaitForSingleObject(process->overlapped_event, service_pipe_timeout);
         if (ret == WAIT_TIMEOUT)
         {
             WINE_ERR("receiving command result timed out\n");
             *result = ERROR_SERVICE_REQUEST_TIMEOUT;
             return FALSE;
         }
-        r = GetOverlappedResult(service->control_pipe, &overlapped, &count, FALSE);
+        r = GetOverlappedResult(process->control_pipe, &overlapped, &count, FALSE);
     }
     if (!r || count != sizeof *result)
     {
@@ -1054,7 +1054,7 @@ static BOOL service_send_control(struct service_entry *service, DWORD dwControl,
     ssi->name_size = strlenW(service->name) + 1;
     strcpyW( ssi->data, service->name );
 
-    r = service_send_command( service, ssi, ssi->total_size, result );
+    r = process_send_command(service->process, ssi, ssi->total_size, result);
     HeapFree( GetProcessHeap(), 0, ssi );
     return r;
 }
@@ -1170,7 +1170,7 @@ DWORD __cdecl svcctl_ControlService(
     if (dwControl == SERVICE_CONTROL_STOP)
         service->service_entry->force_shutdown = TRUE;
 
-    control_mutex = service->service_entry->control_mutex;
+    control_mutex = service->service_entry->process->control_mutex;
     service_unlock(service->service_entry);
 
     ret = WaitForSingleObject(control_mutex, 30000);
@@ -1926,7 +1926,7 @@ DWORD events_loop(void)
                 WINE_TRACE("Exceeded maximum wait object count\n");
                 break;
             }
-            wait_handles[num_handles] = iter->service_entry->process;
+            wait_handles[num_handles] = iter->service_entry->process->process;
             num_handles++;
         }
         LeaveCriticalSection(&timeout_queue_cs);
