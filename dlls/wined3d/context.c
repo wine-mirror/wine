@@ -2462,7 +2462,7 @@ void context_apply_blit_state(struct wined3d_context *context, const struct wine
             wined3d_texture_load(rt->container, context, FALSE);
 
             context_apply_fbo_state_blit(context, GL_FRAMEBUFFER, rt, NULL, rt->container->resource.draw_binding);
-            if (rt->resource.format->id != WINED3DFMT_NULL)
+            if (rt->container->resource.format->id != WINED3DFMT_NULL)
                 rt_mask = 1;
             else
                 rt_mask = 0;
