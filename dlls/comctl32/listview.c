@@ -10061,7 +10061,7 @@ static LRESULT LISTVIEW_KillFocus(LISTVIEW_INFO *infoPtr)
         LISTVIEW_InvalidateRect(infoPtr, &infoPtr->marqueeRect);
         ReleaseCapture();
 
-        SetRect(&infoPtr->marqueeRect, 0, 0, 0, 0);
+        SetRectEmpty(&infoPtr->marqueeRect);
 
         infoPtr->bMarqueeSelect = FALSE;
         infoPtr->bScrolling = FALSE;
@@ -10330,8 +10330,8 @@ static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT 
             ReleaseCapture();
         }
 
-        SetRect(&infoPtr->marqueeRect, 0, 0, 0, 0);
-        SetRect(&infoPtr->marqueeDrawRect, 0, 0, 0, 0);
+        SetRectEmpty(&infoPtr->marqueeRect);
+        SetRectEmpty(&infoPtr->marqueeDrawRect);
 
         infoPtr->bDragging = FALSE;
         infoPtr->bMarqueeSelect = FALSE;
