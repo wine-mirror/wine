@@ -3556,19 +3556,19 @@ static HRESULT WINAPI ID3DXEffectImpl_BeginPass(ID3DXEffect *iface, UINT pass)
     return D3DERR_INVALIDCALL;
 }
 
-static HRESULT WINAPI ID3DXEffectImpl_CommitChanges(ID3DXEffect* iface)
+static HRESULT WINAPI ID3DXEffectImpl_CommitChanges(ID3DXEffect *iface)
 {
-    struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
+    struct ID3DXEffectImpl *effect = impl_from_ID3DXEffect(iface);
 
-    FIXME("(%p)->(): stub\n", This);
+    TRACE("iface %p.\n", iface);
 
-    if (!This->active_pass)
+    if (!effect->active_pass)
     {
         WARN("Called without an active pass.\n");
         return D3D_OK;
     }
-
-    return E_NOTIMPL;
+    /* TODO: apply only changed states */
+    return d3dx9_apply_pass_states(effect, effect->active_pass);
 }
 
 static HRESULT WINAPI ID3DXEffectImpl_EndPass(ID3DXEffect *iface)
