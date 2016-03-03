@@ -212,8 +212,16 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     }
 
     ext->preparseData = ParseDescriptor(reportDescriptor, descriptor.DescriptorList[0].wReportLength);
-    ext->information.DescriptorSize = ext->preparseData->dwSize;
+
     HeapFree(GetProcessHeap(), 0, reportDescriptor);
+    if (!ext->preparseData)
+    {
+        ERR("Cannot parse Report Descriptor\n");
+        HID_DeleteDevice(&minidriver->minidriver, device);
+        return STATUS_NOT_SUPPORTED;
+    }
+
+    ext->information.DescriptorSize = ext->preparseData->dwSize;
 
     serial[0] = 0;
     status = call_minidriver(IOCTL_HID_GET_STRING, device,
