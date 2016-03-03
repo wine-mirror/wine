@@ -315,16 +315,16 @@ static void test_DrawTextCalcRect(void)
     dtp.cbSize = sizeof(dtp);
     dtp.iLeftMargin = 0;
     dtp.iRightMargin = 0;
-    SetRect( &rect, 0, 0, 0, 0);
+    SetRectEmpty(&rect);
     DrawTextExA(hdc, text, -1, &rect, DT_CALCRECT, &dtp);
     textlen = rect.right; /* Width without margin */
     dtp.iLeftMargin = 8;
-    SetRect( &rect, 0, 0, 0, 0);
+    SetRectEmpty(&rect);
     DrawTextExA(hdc, text, -1, &rect, DT_CALCRECT, &dtp);
     ok(rect.right==dtp.iLeftMargin+textlen  ,"Incorrect left margin calculated  rc(%d,%d)\n", rect.left, rect.right);
     dtp.iLeftMargin = 0;
     dtp.iRightMargin = 8;
-    SetRect( &rect, 0, 0, 0, 0);
+    SetRectEmpty(&rect);
     DrawTextExA(hdc, text, -1, &rect, DT_CALCRECT, &dtp);
     ok(rect.right==dtp.iRightMargin+textlen  ,"Incorrect right margin calculated rc(%d,%d)\n", rect.left, rect.right);
 
@@ -535,7 +535,7 @@ static void test_DrawTextCalcRect(void)
     }
 
     /* More test cases from bug 12226 */
-    SetRect(&rect, 0, 0, 0, 0);
+    SetRectEmpty(&rect);
     textheight = DrawTextA(hdc, emptystring, -1, &rect, DT_CALCRECT | DT_LEFT | DT_SINGLELINE);
     ok(textheight, "DrawTextA error %u\n", GetLastError());
     ok(0 == rect.left, "expected 0, got %d\n", rect.left);
@@ -543,7 +543,7 @@ static void test_DrawTextCalcRect(void)
     ok(0 == rect.top, "expected 0, got %d\n", rect.top);
     ok(rect.bottom, "rect.bottom should not be 0\n");
 
-    SetRect(&rect, 0, 0, 0, 0);
+    SetRectEmpty(&rect);
     textheight = DrawTextW(hdc, emptystringW, -1, &rect, DT_CALCRECT | DT_LEFT | DT_SINGLELINE);
     if (!textheight && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {

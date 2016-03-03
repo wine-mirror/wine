@@ -5687,7 +5687,7 @@ static void test_CreateWindow(void)
     DestroyWindow(hwnd);
 
     expected_cx = expected_cy = -10;
-    SetRect( &expected_rect, 0, 0, 0, 0 );
+    SetRectEmpty(&expected_rect);
     SetRect( &broken_rect, 0, 0, -10, -10 );
     hwnd = CreateWindowExA(0, "Sizes_WndClass", NULL, WS_CHILD, -20, -20, -10, -10, parent, 0, 0, NULL);
     ok( hwnd != 0, "creation failed err %u\n", GetLastError());
@@ -5697,7 +5697,7 @@ static void test_CreateWindow(void)
     DestroyWindow(hwnd);
 
     expected_cx = expected_cy = -200000;
-    SetRect( &expected_rect, 0, 0, 0, 0 );
+    SetRectEmpty(&expected_rect);
     SetRect( &broken_rect, 0, 0, -200000, -200000 );
     hwnd = CreateWindowExA(0, "Sizes_WndClass", NULL, WS_CHILD, -300000, -300000, -200000, -200000, parent, 0, 0, NULL);
     ok( hwnd != 0, "creation failed err %u\n", GetLastError());
@@ -6249,7 +6249,7 @@ static void test_GetUpdateRect(void)
     flush_events( TRUE );
 
     ShowWindow(hchild, SW_HIDE);
-    SetRect(&rc2, 0, 0, 0, 0);
+    SetRectEmpty(&rc2);
     ret = GetUpdateRect(hgrandparent, &rc1, FALSE);
     ok(!ret, "GetUpdateRect returned not empty region\n");
     ok(EqualRect(&rc1, &rc2), "rects do not match (%d,%d,%d,%d) / (%d,%d,%d,%d)\n",
@@ -6313,7 +6313,7 @@ static void test_GetUpdateRect(void)
 
     ShowWindow(hchild, SW_HIDE);
 
-    SetRect(&rc2, 0, 0, 0, 0);
+    SetRectEmpty(&rc2);
     ret = GetUpdateRect(hgrandparent, &rc1, FALSE);
     ok(!ret, "GetUpdateRect returned not empty region\n");
     ok(EqualRect(&rc1, &rc2), "rects do not match (%d,%d,%d,%d) / (%d,%d,%d,%d)\n",
