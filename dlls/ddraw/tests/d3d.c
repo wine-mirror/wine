@@ -1832,10 +1832,7 @@ static void DeviceLoadTest(void)
 
     /* First test some broken coordinates. */
     loadpoint.x = loadpoint.y = 0;
-    loadrect.left = 0;
-    loadrect.top = 0;
-    loadrect.right = 0;
-    loadrect.bottom = 0;
+    SetRectEmpty(&loadrect);
     hr = IDirect3DDevice7_Load(lpD3DDevice, texture_levels[1][0], &loadpoint, texture_levels[0][0], &loadrect, 0);
     ok(hr==DDERR_INVALIDPARAMS, "IDirect3DDevice7_Load returned: %x\n",hr);
 

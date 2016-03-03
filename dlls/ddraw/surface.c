@@ -1436,7 +1436,7 @@ static HRESULT ddraw_surface_blt_clipped(struct ddraw_surface *dst_surface, cons
     }
     else
     {
-        SetRect(&src_rect, 0, 0, 0, 0);
+        SetRectEmpty(&src_rect);
         wined3d_src_texture = NULL;
         src_sub_resource_idx = 0;
     }
