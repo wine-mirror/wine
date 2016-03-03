@@ -891,7 +891,7 @@ static void test_boundsrect(void)
     ret = GetBoundsRect(hdc, &rect, 0);
     ok(ret == DCB_RESET,
        "Expected GetBoundsRect to return DCB_RESET, got %u\n", ret);
-    SetRect(&expect, 0, 0, 0, 0);
+    SetRectEmpty(&expect);
     ok(EqualRect(&rect, &expect) ||
        broken(EqualRect(&rect, &set_rect)), /* nt4 sp1-5 */
        "Expected output rectangle (0,0)-(0,0), got (%d,%d)-(%d,%d)\n",
@@ -986,7 +986,7 @@ static void test_boundsrect(void)
        "GetBoundsRect returned %x\n", ret);
     if (ret == DCB_RESET)
     {
-        SetRect(&expect, 0, 0, 0, 0);
+        SetRectEmpty(&expect);
         ok(EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n",
            rect.left, rect.top, rect.right, rect.bottom);
 
@@ -995,7 +995,7 @@ static void test_boundsrect(void)
         ok(ret == (DCB_RESET | DCB_DISABLE), "SetBoundsRect returned %x\n", ret);
         ret = GetBoundsRect(hdc, &rect, 0);
         ok(ret == DCB_RESET, "GetBoundsRect returned %x\n", ret);
-        SetRect(&expect, 0, 0, 0, 0);
+        SetRectEmpty(&expect);
         ok(EqualRect(&rect, &expect), "Got (%d,%d)-(%d,%d)\n",
            rect.left, rect.top, rect.right, rect.bottom);
     }
