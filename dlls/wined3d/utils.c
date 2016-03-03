@@ -100,6 +100,7 @@ static const struct wined3d_format_channels formats[] =
     {WINED3DFMT_R8G8_SNORM_Cx,              0,  0,  0,  0,   0,  0,  0,  0,    2,   0,     0},
     {WINED3DFMT_R16G16_SINT,               16, 16,  0,  0,   0, 16,  0,  0,    4,   0,     0},
     {WINED3DFMT_R16G16B16A16_SINT,         16, 16, 16, 16,   0, 16, 32, 48,    8,   0,     0},
+    {WINED3DFMT_R11G11B10_FLOAT,           11, 11, 10,  0,   0, 11, 22,  0,    4,   0,     0},
     /* Palettized formats */
     {WINED3DFMT_P8_UINT_A8_UNORM,           0,  0,  0,  8,   0,  0,  0,  8,    2,   0,     0},
     {WINED3DFMT_P8_UINT,                    0,  0,  0,  0,   0,  0,  0,  0,    1,   0,     0},
@@ -273,6 +274,7 @@ static const struct wined3d_format_base_flags format_base_flags[] =
     {WINED3DFMT_R8G8B8X8_UNORM,     WINED3DFMT_FLAG_GETDC},
     {WINED3DFMT_ATI1N,              WINED3DFMT_FLAG_BROKEN_PITCH},
     {WINED3DFMT_ATI2N,              WINED3DFMT_FLAG_BROKEN_PITCH},
+    {WINED3DFMT_R11G11B10_FLOAT,    WINED3DFMT_FLAG_FLOAT},
     {WINED3DFMT_D32_FLOAT,          WINED3DFMT_FLAG_FLOAT},
     {WINED3DFMT_S8_UINT_D24_FLOAT,  WINED3DFMT_FLAG_FLOAT},
 };
@@ -1114,6 +1116,10 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_RENDERTARGET
             | WINED3DFMT_FLAG_VTF,
             ARB_TEXTURE_FLOAT,          NULL},
+    {WINED3DFMT_R11G11B10_FLOAT,        GL_R11F_G11F_B10F,                GL_R11F_G11F_B10F,                      0,
+            GL_RGB,                     GL_UNSIGNED_INT_10F_11F_11F_REV,  0,
+            WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_RENDERTARGET,
+            EXT_PACKED_FLOAT},
     /* Palettized formats */
     {WINED3DFMT_P8_UINT,                GL_ALPHA8,                        GL_ALPHA8,                              0,
             GL_ALPHA,                   GL_UNSIGNED_BYTE,                 0,

@@ -185,6 +185,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_EXT_gpu_program_parameters",       EXT_GPU_PROGRAM_PARAMETERS    },
     {"GL_EXT_gpu_shader4",                  EXT_GPU_SHADER4               },
     {"GL_EXT_packed_depth_stencil",         EXT_PACKED_DEPTH_STENCIL      },
+    {"GL_EXT_packed_float",                 EXT_PACKED_FLOAT              },
     {"GL_EXT_point_parameters",             EXT_POINT_PARAMETERS          },
     {"GL_EXT_provoking_vertex",             EXT_PROVOKING_VERTEX          },
     {"GL_EXT_secondary_color",              EXT_SECONDARY_COLOR           },
@@ -3411,6 +3412,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
         {ARB_TEXTURE_FLOAT,                MAKEDWORD_VERSION(3, 0)},
         {ARB_TEXTURE_RG,                   MAKEDWORD_VERSION(3, 0)},
         {EXT_DRAW_BUFFERS2,                MAKEDWORD_VERSION(3, 0)},
+        {EXT_PACKED_FLOAT,                 MAKEDWORD_VERSION(3, 0)},
         {EXT_TEXTURE_INTEGER,              MAKEDWORD_VERSION(3, 0)},
         /* We don't want to enable EXT_GPU_SHADER4: even though similar
          * functionality is available in core GL 3.0 / GLSL 1.30, it's different
