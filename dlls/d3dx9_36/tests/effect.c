@@ -2920,7 +2920,7 @@ static void test_effect_states(IDirect3DDevice9 *device)
                 "Got unexpected light position (%f, %f, %f).\n", light.Position.x, light.Position.y, light.Position.z);
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 3, float_data, 1);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
-    todo_wine ok(float_data[0] == 2.0f && float_data[1] == 2.0f && float_data[2] == 2.0f && float_data[3] == 2.0f,
+    ok(float_data[0] == 2.0f && float_data[1] == 2.0f && float_data[2] == 2.0f && float_data[3] == 2.0f,
             "Got unexpected vertex shader floats: (%f %f %f %f).\n",
             float_data[0], float_data[1], float_data[2], float_data[3]);
 

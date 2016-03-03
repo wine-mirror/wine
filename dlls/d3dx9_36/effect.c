@@ -2625,6 +2625,62 @@ static void d3dx9_set_material_parameter(enum MATERIAL_TYPE op, D3DMATERIAL9 *ma
     }
 }
 
+HRESULT d3dx_set_shader_const_state(IDirect3DDevice9 *device, enum SHADER_CONSTANT_TYPE op, UINT index,
+        struct d3dx_parameter *param, void *value_ptr)
+{
+    static const struct
+    {
+        D3DXPARAMETER_TYPE type;
+        UINT elem_size;
+        const char *name;
+    }
+    const_tbl[] =
+    {
+        {D3DXPT_FLOAT, sizeof(float) * 4, "SCT_VSFLOAT"},
+        {D3DXPT_BOOL,  sizeof(BOOL),      "SCT_VSBOOL"},
+        {D3DXPT_INT,   sizeof(int) * 4,   "SCT_VSINT"},
+        {D3DXPT_FLOAT, sizeof(float) * 4, "SCT_PSFLOAT"},
+        {D3DXPT_BOOL,  sizeof(BOOL),      "SCT_PSBOOL"},
+        {D3DXPT_INT,   sizeof(int) * 4,   "SCT_PSINT"},
+    };
+    UINT nelem;
+
+    if (op < 0 || op > SCT_PSINT)
+    {
+        FIXME("Unknown op %u.\n", op);
+        return D3DERR_INVALIDCALL;
+    }
+    nelem = param->bytes / const_tbl[op].elem_size;
+    TRACE("%s, index %u, %u elements.\n", const_tbl[op].name, index, nelem);
+    if (param->type != const_tbl[op].type)
+    {
+        FIXME("Unexpected param type %u.\n", param->type);
+        return D3DERR_INVALIDCALL;
+    }
+    if (param->bytes % const_tbl[op].elem_size != 0)
+    {
+        FIXME("Unexpected param size %u, rows %u, cols %u.\n", param->bytes, param->rows, param->columns);
+        return D3DERR_INVALIDCALL;
+    }
+
+    switch (op)
+    {
+        case SCT_VSFLOAT:
+            return IDirect3DDevice9_SetVertexShaderConstantF(device, index, (const float *)value_ptr, nelem);
+        case SCT_VSBOOL:
+            return IDirect3DDevice9_SetVertexShaderConstantB(device, index, (const BOOL *)value_ptr, nelem);
+        case SCT_VSINT:
+            return IDirect3DDevice9_SetVertexShaderConstantI(device, index, (const int *)value_ptr, nelem);
+        case SCT_PSFLOAT:
+            return IDirect3DDevice9_SetPixelShaderConstantF(device, index, (const float *)value_ptr, nelem);
+        case SCT_PSBOOL:
+            return IDirect3DDevice9_SetPixelShaderConstantB(device, index, (const BOOL *)value_ptr, nelem);
+        case SCT_PSINT:
+            return IDirect3DDevice9_SetPixelShaderConstantI(device, index, (const int *)value_ptr, nelem);
+    }
+    return D3D_OK;
+}
+
 static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pass *pass, struct d3dx_state *state)
 {
     IDirect3DDevice9 *device = effect->device;
@@ -2704,6 +2760,11 @@ static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pas
         case SC_NPATCHMODE:
             TRACE("%s, nsegments %f.\n", state_table[state->operation].name, *(float *)param_value);
             return IDirect3DDevice9_SetNPatchMode(device, *(float *)param_value);
+        case SC_SHADERCONST:
+            TRACE("%s, index %u, op %u.\n", state_table[state->operation].name, state->index,
+                state_table[state->operation].op);
+            return d3dx_set_shader_const_state(device, state_table[state->operation].op, state->index,
+                param, param_value);
         default:
             FIXME("%s not handled.\n", state_table[state->operation].name);
             break;
