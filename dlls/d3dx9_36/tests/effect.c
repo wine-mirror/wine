@@ -2853,7 +2853,7 @@ static void test_effect_states(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_BLENDOP, &value);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
-    todo_wine ok(value == 1, "Got result %u, expected %u.\n", value, 1);
+    ok(value == 1, "Got result %u, expected %u.\n", value, 1);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_ALPHAFUNC, &value);
     ok(value == 2, "Got result %u, expected %u.\n", value, 2);
 
@@ -2865,7 +2865,7 @@ static void test_effect_states(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
 
     hr = IDirect3DDevice9_GetLightEnable(device, 2, &bval);
-    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
     if (hr == D3D_OK)
         ok(!bval, "Got result %u, expected 0.", bval);
 
@@ -2947,15 +2947,29 @@ static void test_effect_states(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLDMATRIX(1), &mat);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
-    todo_wine ok(!memcmp(mat.m, test_mat.m, sizeof(mat)), "World matrix not restored.\n");
+    ok(!memcmp(mat.m, test_mat.m, sizeof(mat)), "World matrix not restored.\n");
 
     hr = IDirect3DDevice9_GetLightEnable(device, 2, &bval);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
     if (hr == D3D_OK)
-        todo_wine ok(!bval, "Got result %u, expected 0.\n", bval);
+        ok(!bval, "Got result %u, expected 0.\n", bval);
+
+    /* State is not restored if effect is released without End call */
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_BLENDOP, 1);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+
+    hr = effect->lpVtbl->Begin(effect, &npasses, 0);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_BLENDOP, 3);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
 
     if (effect)
         effect->lpVtbl->Release(effect);
+
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_BLENDOP, &value);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(value == 3, "Got result %u, expected %u.\n", value, 1);
 }
 
 START_TEST(effect)

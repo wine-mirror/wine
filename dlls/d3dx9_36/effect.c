@@ -162,6 +162,8 @@ struct d3dx_technique
 
     struct d3dx_parameter *annotations;
     struct d3dx_pass *passes;
+
+    struct IDirect3DStateBlock9 *saved_state;
 };
 
 struct param_table
@@ -641,6 +643,12 @@ static void free_technique(struct d3dx_technique *technique)
 
     if (!technique)
         return;
+
+    if (technique->saved_state)
+    {
+        IDirect3DStateBlock9_Release(technique->saved_state);
+        technique->saved_state = NULL;
+    }
 
     if (technique->annotations)
     {
@@ -3483,8 +3491,8 @@ static BOOL WINAPI ID3DXEffectImpl_IsParameterUsed(ID3DXEffect* iface, D3DXHANDL
 
 static HRESULT WINAPI ID3DXEffectImpl_Begin(ID3DXEffect *iface, UINT *passes, DWORD flags)
 {
-    struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
-    struct d3dx_technique *technique = This->active_technique;
+    struct ID3DXEffectImpl *effect = impl_from_ID3DXEffect(iface);
+    struct d3dx_technique *technique = effect->active_technique;
 
     TRACE("iface %p, passes %p, flags %#x.\n", iface, passes, flags);
 
@@ -3493,18 +3501,34 @@ static HRESULT WINAPI ID3DXEffectImpl_Begin(ID3DXEffect *iface, UINT *passes, DW
         if (flags & ~(D3DXFX_DONOTSAVESTATE | D3DXFX_DONOTSAVESAMPLERSTATE | D3DXFX_DONOTSAVESHADERSTATE))
             WARN("Invalid flags (%#x) specified.\n", flags);
 
-        if (This->manager || flags & D3DXFX_DONOTSAVESTATE)
+        if (effect->manager || flags & D3DXFX_DONOTSAVESTATE)
         {
             TRACE("State capturing disabled.\n");
         }
         else
         {
-            FIXME("State capturing not supported, yet!\n");
+            HRESULT hr;
+            unsigned int i;
+
+            if (!technique->saved_state)
+            {
+                hr = IDirect3DDevice9_BeginStateBlock(effect->device);
+                if (FAILED(hr))
+                    ERR("BeginStateBlock failed, hr %#x.\n", hr);
+                for (i = 0; i < technique->pass_count; i++)
+                    d3dx9_apply_pass_states(effect, &technique->passes[i]);
+                hr = IDirect3DDevice9_EndStateBlock(effect->device, &technique->saved_state);
+                if (FAILED(hr))
+                    ERR("EndStateBlock failed, hr %#x.\n", hr);
+            }
+            hr = IDirect3DStateBlock9_Capture(technique->saved_state);
+            if (FAILED(hr))
+                ERR("StateBlock Capture failed, hr %#x.\n", hr);
         }
 
         *passes = technique->pass_count;
-        This->started = TRUE;
-        This->flags = flags;
+        effect->started = TRUE;
+        effect->flags = flags;
 
         return D3D_OK;
     }
@@ -3566,23 +3590,33 @@ static HRESULT WINAPI ID3DXEffectImpl_EndPass(ID3DXEffect *iface)
 
 static HRESULT WINAPI ID3DXEffectImpl_End(ID3DXEffect *iface)
 {
-    struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
+    struct ID3DXEffectImpl *effect = impl_from_ID3DXEffect(iface);
+    struct d3dx_technique *technique = effect->active_technique;
 
     TRACE("iface %p.\n", iface);
 
-    if (!This->started)
+    if (!effect->started)
         return D3D_OK;
 
-    if (This->manager || This->flags & D3DXFX_DONOTSAVESTATE)
+    if (effect->manager || effect->flags & D3DXFX_DONOTSAVESTATE)
     {
         TRACE("State restoring disabled.\n");
     }
     else
     {
-        FIXME("State restoring not supported, yet!\n");
+        HRESULT hr;
+
+        if (technique && technique->saved_state)
+        {
+            hr = IDirect3DStateBlock9_Apply(technique->saved_state);
+            if (FAILED(hr))
+                ERR("State block apply failed, hr %#x.\n", hr);
+        }
+        else
+            ERR("No saved state.\n");
     }
 
-    This->started = FALSE;
+    effect->started = FALSE;
 
     return D3D_OK;
 }
