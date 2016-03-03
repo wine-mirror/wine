@@ -7863,6 +7863,8 @@ static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_
         struct wined3d_surface *dst_surface, const RECT *dst_rect_in,
         const struct wined3d_color_key *color_key)
 {
+    struct wined3d_texture *src_texture = src_surface->container;
+    struct wined3d_texture *dst_texture = dst_surface->container;
     struct wined3d_context *context;
     RECT src_rect = *src_rect_in;
     RECT dst_rect = *dst_rect_in;
@@ -7875,7 +7877,7 @@ static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
             && (src_surface->locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_DRAWABLE))
             == WINED3D_LOCATION_DRAWABLE
-            && !wined3d_resource_is_offscreen(&src_surface->container->resource))
+            && !wined3d_resource_is_offscreen(&src_texture->resource))
     {
         /* Without FBO blits transferring from the drawable to the texture is
          * expensive, because we have to flip the data in sysmem. Since we can
@@ -7888,16 +7890,16 @@ static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_
         src_rect.bottom = src_surface->resource.height - src_rect.bottom;
     }
     else
-        wined3d_texture_load(src_surface->container, context, FALSE);
+        wined3d_texture_load(src_texture, context, FALSE);
 
     context_apply_blit_state(context, device);
 
-    if (!wined3d_resource_is_offscreen(&dst_surface->container->resource))
+    if (!wined3d_resource_is_offscreen(&dst_texture->resource))
         surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
 
     if (op == WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST)
     {
-        const struct wined3d_format *fmt = src_surface->resource.format;
+        const struct wined3d_format *fmt = src_texture->resource.format;
         alpha_test_key.color_space_low_value = 0;
         alpha_test_key.color_space_high_value = ~(((1u << fmt->alpha_size) - 1) << fmt->alpha_offset);
         color_key = &alpha_test_key;
@@ -7912,14 +7914,13 @@ static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_
     arbfp_blit_unset(context->gl_info);
 
     if (wined3d_settings.strict_draw_ordering
-            || (dst_surface->container->swapchain
-            && (dst_surface->container->swapchain->front_buffer == dst_surface->container)))
+            || (dst_texture->swapchain && (dst_texture->swapchain->front_buffer == dst_texture)))
         context->gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
 
-    surface_validate_location(dst_surface, dst_surface->container->resource.draw_binding);
-    surface_invalidate_location(dst_surface, ~dst_surface->container->resource.draw_binding);
+    surface_validate_location(dst_surface, dst_texture->resource.draw_binding);
+    surface_invalidate_location(dst_surface, ~dst_texture->resource.draw_binding);
 }
 
 static HRESULT arbfp_blit_color_fill(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
