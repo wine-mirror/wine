@@ -881,7 +881,7 @@ static void test_initialization(void)
 
     /* empty rectangle */
     ebrowser_instantiate(&peb);
-    rc.left = 0; rc.top = 0; rc.right = 0; rc.bottom = 0;
+    SetRectEmpty(&rc);
     hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
     ok(hr == S_OK, "got (0x%08x)\n", hr);
     IExplorerBrowser_Destroy(peb);
@@ -1101,7 +1101,7 @@ static void test_basics(void)
     ebrowser_initialize(peb);
 
     /* SetRect */
-    rc.left = 0; rc.top = 0; rc.right = 0; rc.bottom = 0;
+    SetRectEmpty(&rc);
     hr = IExplorerBrowser_SetRect(peb, NULL, rc);
     ok(hr == S_OK, "got (0x%08x)\n", hr);
 
