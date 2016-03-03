@@ -2878,11 +2878,11 @@ static void test_effect_states(IDirect3DDevice9 *device)
     ok(!memcmp(mat.m, test_mat.m, sizeof(mat)), "World matrix does not match.\n");
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
 
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLDMATRIX(1), &mat);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
-    todo_wine ok(!memcmp(mat.m, test_mat_world1.m, sizeof(mat)), "World matrix does not match.\n");
+    ok(!memcmp(mat.m, test_mat_world1.m, sizeof(mat)), "World matrix does not match.\n");
 
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_VIEW, &mat);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
@@ -2890,11 +2890,11 @@ static void test_effect_states(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_BLENDOP, &value);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
-    todo_wine ok(value == 2, "Got result %u, expected %u\n", value, 2);
+    ok(value == 2, "Got result %u, expected %u\n", value, 2);
 
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
-    todo_wine ok(vshader != NULL, "Got NULL vshader.\n");
+    ok(vshader != NULL, "Got NULL vshader.\n");
     if (vshader)
     {
         hr = IDirect3DVertexShader9_GetFunction(vshader, NULL, &byte_code_size);
@@ -2928,11 +2928,11 @@ static void test_effect_states(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_BLENDOP, &value);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
-    todo_wine ok(value == 2, "Got result %u, expected %u\n", value, 2);
+    ok(value == 2, "Got result %u, expected %u\n", value, 2);
 
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_ZENABLE, &value);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
-    todo_wine ok(value, "Got result %u, expected TRUE.\n", value);
+    ok(value, "Got result %u, expected TRUE.\n", value);
 
     hr = IDirect3DDevice9_GetSamplerState(device, 1, D3DSAMP_MIPFILTER, &value);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
@@ -2940,14 +2940,14 @@ static void test_effect_states(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_GetTextureStageState(device, 3, D3DTSS_ALPHAOP, &value);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
-    todo_wine ok(value == 4, "Unexpected texture stage 3 AlphaOp %u.\n", value);
+    ok(value == 4, "Unexpected texture stage 3 AlphaOp %u.\n", value);
 
     hr = effect->lpVtbl->End(effect);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
 
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLDMATRIX(1), &mat);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
-    ok(!memcmp(mat.m, test_mat.m, sizeof(mat)), "World matrix not restored.\n");
+    todo_wine ok(!memcmp(mat.m, test_mat.m, sizeof(mat)), "World matrix not restored.\n");
 
     hr = IDirect3DDevice9_GetLightEnable(device, 2, &bval);
     todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
