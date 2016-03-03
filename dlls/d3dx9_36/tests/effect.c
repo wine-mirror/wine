@@ -2936,7 +2936,7 @@ static void test_effect_states(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_GetSamplerState(device, 1, D3DSAMP_MIPFILTER, &value);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
-    todo_wine ok(value == D3DTEXF_LINEAR, "Unexpected sampler 1 mipfilter %u.\n", value);
+    ok(value == D3DTEXF_LINEAR, "Unexpected sampler 1 mipfilter %u.\n", value);
 
     hr = IDirect3DDevice9_GetTextureStageState(device, 3, D3DTSS_ALPHAOP, &value);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);

@@ -2681,7 +2681,8 @@ HRESULT d3dx_set_shader_const_state(IDirect3DDevice9 *device, enum SHADER_CONSTA
     return D3D_OK;
 }
 
-static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pass *pass, struct d3dx_state *state)
+static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pass *pass,
+        struct d3dx_state *state, int parent_index)
 {
     IDirect3DDevice9 *device = effect->device;
     struct d3dx_parameter *param;
@@ -2702,10 +2703,46 @@ static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pas
         case SC_FVF:
             TRACE("%s, value %#x.\n", state_table[state->operation].name, *(DWORD *)param_value);
             return IDirect3DDevice9_SetFVF(device, *(DWORD *)param_value);
+        case SC_TEXTURE:
+        {
+            UINT unit;
+
+            unit = parent_index == -1 ? state->index : parent_index;
+            TRACE("%s, unit %u, value %p.\n", state_table[state->operation].name, unit,
+                    *(IDirect3DBaseTexture9 **)param_value);
+            return IDirect3DDevice9_SetTexture(device, unit, *(IDirect3DBaseTexture9 **)param_value);
+        }
         case SC_TEXTURESTAGE:
             TRACE("%s, stage %u, value %u.\n", state_table[state->operation].name, state->index, *(DWORD *)param_value);
             return IDirect3DDevice9_SetTextureStageState(device, state->index,
                     state_table[state->operation].op, *(DWORD *)param_value);
+        case SC_SETSAMPLER:
+        {
+            struct d3dx_sampler *sampler;
+            HRESULT ret, hr;
+            unsigned int i;
+
+            sampler = (struct d3dx_sampler *)param_value;
+            TRACE("%s, sampler %u, applying %u states.\n", state_table[state->operation].name, state->index,
+                    sampler->state_count);
+            ret = D3D_OK;
+            for (i = 0; i < sampler->state_count; i++)
+            {
+                hr = d3dx9_apply_state(effect, pass, &sampler->states[i], state->index);
+                if (FAILED(hr))
+                    ret = hr;
+            }
+            return ret;
+        }
+        case SC_SAMPLERSTATE:
+        {
+            UINT sampler;
+
+            sampler = parent_index == -1 ? state->index : parent_index;
+            TRACE("%s, sampler %u, value %u.\n", state_table[state->operation].name, sampler, *(DWORD *)param_value);
+            return IDirect3DDevice9_SetSamplerState(device, sampler, state_table[state->operation].op,
+                    *(DWORD *)param_value);
+        }
         case SC_VERTEXSHADER:
             TRACE("%s, shader %p.\n", state_table[state->operation].name, *(IDirect3DVertexShader9 **)param_value);
             hr = IDirect3DDevice9_SetVertexShader(device, *(IDirect3DVertexShader9 **)param_value);
@@ -2784,7 +2821,7 @@ static HRESULT d3dx9_apply_pass_states(struct ID3DXEffectImpl *effect, struct d3
     {
         HRESULT hr;
 
-        hr = d3dx9_apply_state(effect, pass, &pass->states[i]);
+        hr = d3dx9_apply_state(effect, pass, &pass->states[i], -1);
         if (FAILED(hr))
         {
             WARN("Error applying state, hr %#x.\n", hr);
