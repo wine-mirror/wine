@@ -2692,6 +2692,272 @@ static void test_effect_compilation_errors(IDirect3DDevice9 *device)
     effect->lpVtbl->Release(effect);
 }
 
+/*
+ * fxc.exe /Tfx_2_0
+ */
+#if 0
+vertexshader vs_arr1[2] =
+{
+    asm
+    {
+        vs_1_1
+        def c0, 1, 1, 1, 1
+        mov oPos, c0
+    },
+    asm
+    {
+        vs_2_0
+        def c0, 2, 2, 2, 2
+        mov oPos, c0
+    }
+};
+
+sampler sampler1 =
+    sampler_state
+    {
+        MipFilter = LINEAR;
+    };
+
+float4x4 camera : VIEW = {4.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0, 0.0,0.0,0.0,6.0};
+technique tech0
+{
+   pass p0
+   {
+       vertexshader = vs_arr1[1];
+       VertexShaderConstant1[3] = {2,2,2,2};
+       BlendOp = 2;
+       AlphaOp[3] = 4;
+       ZEnable = true;
+       WorldTransform[1]={2.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0, 0.0,0.0,0.0,4.0};
+       ViewTransform=(camera);
+       LightEnable[2] = TRUE;
+       LightType[2] = POINT;
+       LightPosition[2] = {4.0f, 5.0f, 6.0f};
+       Sampler[1] = sampler1;
+   }
+}
+#endif
+static const DWORD test_effect_states_effect_blob[] =
+{
+    0xfeff0901, 0x000002e8, 0x00000000, 0x00000010, 0x00000004, 0x00000020, 0x00000000, 0x00000002,
+    0x00000001, 0x00000002, 0x00000008, 0x615f7376, 0x00317272, 0x0000000a, 0x00000004, 0x00000074,
+    0x00000000, 0x00000000, 0x00000002, 0x00000002, 0x00000002, 0x00000000, 0x00000000, 0x00000000,
+    0x00000001, 0x00000001, 0x00000001, 0x000000ab, 0x00000100, 0x00000044, 0x00000040, 0x00000009,
+    0x706d6173, 0x3172656c, 0x00000000, 0x00000003, 0x00000002, 0x000000e0, 0x000000ec, 0x00000000,
+    0x00000004, 0x00000004, 0x40800000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x40c00000, 0x00000007, 0x656d6163, 0x00006172, 0x00000005, 0x57454956, 0x00000000,
+    0x00000003, 0x00000010, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0x40000000, 0x40000000,
+    0x40000000, 0x40000000, 0x00000003, 0x00000003, 0x00000000, 0x00000000, 0x00000000, 0x00000004,
+    0x00000001, 0x00000002, 0x00000002, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000001,
+    0x00000001, 0x00000004, 0x00000002, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000001,
+    0x00000001, 0x00000001, 0x00000002, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000001,
+    0x00000001, 0x40000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x40800000, 0x00000003, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000010, 0x00000001,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000003, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000004, 0x00000004, 0x00000001,
+    0x00000002, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001,
+    0x00000002, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x40800000,
+    0x40a00000, 0x40c00000, 0x00000003, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000003,
+    0x00000001, 0x00000000, 0x0000000a, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0x00000003,
+    0x00003070, 0x00000006, 0x68636574, 0x00000030, 0x00000003, 0x00000001, 0x00000005, 0x00000004,
+    0x00000004, 0x00000018, 0x00000000, 0x00000000, 0x0000002c, 0x00000060, 0x00000000, 0x00000000,
+    0x00000084, 0x000000a0, 0x00000000, 0x00000000, 0x000002dc, 0x00000000, 0x00000001, 0x000002d4,
+    0x00000000, 0x0000000b, 0x00000092, 0x00000000, 0x000000fc, 0x000000f8, 0x00000098, 0x00000003,
+    0x00000120, 0x00000110, 0x0000004b, 0x00000000, 0x00000140, 0x0000013c, 0x0000006b, 0x00000003,
+    0x00000160, 0x0000015c, 0x00000000, 0x00000000, 0x00000180, 0x0000017c, 0x0000007d, 0x00000001,
+    0x000001dc, 0x0000019c, 0x0000007c, 0x00000000, 0x00000238, 0x000001f8, 0x00000091, 0x00000002,
+    0x00000258, 0x00000254, 0x00000084, 0x00000002, 0x00000278, 0x00000274, 0x00000088, 0x00000002,
+    0x000002a0, 0x00000294, 0x000000b2, 0x00000001, 0x000002c0, 0x000002bc, 0x00000002, 0x00000003,
+    0x00000001, 0x0000002c, 0xfffe0101, 0x00000051, 0xa00f0000, 0x3f800000, 0x3f800000, 0x3f800000,
+    0x3f800000, 0x00000001, 0xc00f0000, 0xa0e40000, 0x0000ffff, 0x00000002, 0x0000002c, 0xfffe0200,
+    0x05000051, 0xa00f0000, 0x40000000, 0x40000000, 0x40000000, 0x40000000, 0x02000001, 0xc00f0000,
+    0xa0e40000, 0x0000ffff, 0x00000000, 0x00000000, 0xffffffff, 0x0000000a, 0x00000001, 0x00000009,
+    0x706d6173, 0x3172656c, 0x00000000, 0x00000000, 0x00000000, 0xffffffff, 0x00000006, 0x00000000,
+    0x0000016c, 0x46580200, 0x0030fffe, 0x42415443, 0x0000001c, 0x0000008b, 0x46580200, 0x00000001,
+    0x0000001c, 0x20000100, 0x00000088, 0x00000030, 0x00000002, 0x00000004, 0x00000038, 0x00000048,
+    0x656d6163, 0xab006172, 0x00030003, 0x00040004, 0x00000001, 0x00000000, 0x40800000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x40c00000, 0x4d007874, 0x6f726369,
+    0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072,
+    0x392e3932, 0x332e3235, 0x00313131, 0x0002fffe, 0x54494c43, 0x00000000, 0x0024fffe, 0x434c5846,
+    0x00000004, 0x10000004, 0x00000001, 0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000004,
+    0x00000000, 0x10000004, 0x00000001, 0x00000000, 0x00000002, 0x00000004, 0x00000000, 0x00000004,
+    0x00000004, 0x10000004, 0x00000001, 0x00000000, 0x00000002, 0x00000008, 0x00000000, 0x00000004,
+    0x00000008, 0x10000004, 0x00000001, 0x00000000, 0x00000002, 0x0000000c, 0x00000000, 0x00000004,
+    0x0000000c, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff, 0x00000000, 0x00000000, 0xffffffff, 0x00000000,
+    0x00000001, 0x0000000b, 0x615f7376, 0x5b317272, 0x00005d31,
+};
+#define TEST_EFFECT_STATES_VSHADER_POS 271
+
+static void test_effect_states(IDirect3DDevice9 *device)
+{
+    D3DMATRIX test_mat =
+    {{{
+        -1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 0.0f
+    }}};
+    D3DMATRIX test_mat_camera =
+    {{{
+        4.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 6.0f
+    }}};
+    D3DMATRIX test_mat_world1 =
+    {{{
+        2.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 4.0f
+    }}};
+    D3DMATRIX mat;
+    HRESULT hr;
+    ID3DXEffect *effect;
+    UINT npasses;
+    DWORD value;
+    IDirect3DVertexShader9 *vshader;
+    void *byte_code;
+    UINT byte_code_size;
+    BOOL bval;
+    D3DLIGHT9 light;
+    float float_data[4];
+
+    hr = D3DXCreateEffect(device, test_effect_states_effect_blob, sizeof(test_effect_states_effect_blob),
+            NULL, NULL, 0, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+
+    /* State affected in passes saved/restored even if no pass
+       was performed. States not present in passes are not saved &
+       restored */
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_BLENDOP, 1);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ALPHAFUNC, 1);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+
+    hr = effect->lpVtbl->Begin(effect, &npasses, 0);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(npasses == 1, "Expected 1 pass, got %u\n", npasses);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_BLENDOP, 3);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ALPHAFUNC, 2);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+
+    hr = effect->lpVtbl->End(effect);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_BLENDOP, &value);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    todo_wine ok(value == 1, "Got result %u, expected %u.\n", value, 1);
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_ALPHAFUNC, &value);
+    ok(value == 2, "Got result %u, expected %u.\n", value, 2);
+
+    /* Test states application in BeginPass. No states are restored
+       on EndPass. */
+    hr = IDirect3DDevice9_SetSamplerState(device, 1, D3DSAMP_MIPFILTER, 0);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, 0);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+
+    hr = IDirect3DDevice9_GetLightEnable(device, 2, &bval);
+    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    if (hr == D3D_OK)
+        ok(!bval, "Got result %u, expected 0.", bval);
+
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLDMATRIX(1), &test_mat);
+    hr = effect->lpVtbl->Begin(effect, &npasses, 0);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+
+    hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLDMATRIX(1), &mat);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(!memcmp(mat.m, test_mat.m, sizeof(mat)), "World matrix does not match.\n");
+
+    hr = effect->lpVtbl->BeginPass(effect, 0);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+
+    hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLDMATRIX(1), &mat);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    todo_wine ok(!memcmp(mat.m, test_mat_world1.m, sizeof(mat)), "World matrix does not match.\n");
+
+    hr = IDirect3DDevice9_GetTransform(device, D3DTS_VIEW, &mat);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    todo_wine ok(!memcmp(mat.m, test_mat_camera.m, sizeof(mat)), "View matrix does not match.\n");
+
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_BLENDOP, &value);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    todo_wine ok(value == 2, "Got result %u, expected %u\n", value, 2);
+
+    hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    todo_wine ok(vshader != NULL, "Got NULL vshader.\n");
+    if (vshader)
+    {
+        hr = IDirect3DVertexShader9_GetFunction(vshader, NULL, &byte_code_size);
+        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+        byte_code = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, byte_code_size);
+        hr = IDirect3DVertexShader9_GetFunction(vshader, byte_code, &byte_code_size);
+        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+        ok(byte_code_size > 1, "Got unexpected byte code size %u.\n", byte_code_size);
+        ok(!memcmp(byte_code, &test_effect_states_effect_blob[TEST_EFFECT_STATES_VSHADER_POS], byte_code_size),
+            "Incorrect shader selected.\n");
+        HeapFree(GetProcessHeap(), 0, byte_code);
+        IDirect3DVertexShader9_Release(vshader);
+    }
+
+    hr = IDirect3DDevice9_GetLightEnable(device, 2, &bval);
+    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    if (hr == D3D_OK)
+        ok(bval, "Got result %u, expected TRUE.\n", bval);
+    hr = IDirect3DDevice9_GetLight(device, 2, &light);
+    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    if (hr == D3D_OK)
+        ok(light.Position.x == 4.0f && light.Position.y == 5.0f && light.Position.z == 6.0f,
+                "Got unexpected light position (%f, %f, %f).\n", light.Position.x, light.Position.y, light.Position.z);
+    hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 3, float_data, 1);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    todo_wine ok(float_data[0] == 2.0f && float_data[1] == 2.0f && float_data[2] == 2.0f && float_data[3] == 2.0f,
+            "Got unexpected vertex shader floats: (%f %f %f %f).\n",
+            float_data[0], float_data[1], float_data[2], float_data[3]);
+
+    hr = effect->lpVtbl->EndPass(effect);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_BLENDOP, &value);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    todo_wine ok(value == 2, "Got result %u, expected %u\n", value, 2);
+
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_ZENABLE, &value);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    todo_wine ok(value, "Got result %u, expected TRUE.\n", value);
+
+    hr = IDirect3DDevice9_GetSamplerState(device, 1, D3DSAMP_MIPFILTER, &value);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    todo_wine ok(value == D3DTEXF_LINEAR, "Unexpected sampler 1 mipfilter %u.\n", value);
+
+    hr = IDirect3DDevice9_GetTextureStageState(device, 3, D3DTSS_ALPHAOP, &value);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    todo_wine ok(value == 4, "Unexpected texture stage 3 AlphaOp %u.\n", value);
+
+    hr = effect->lpVtbl->End(effect);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+
+    hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLDMATRIX(1), &mat);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(!memcmp(mat.m, test_mat.m, sizeof(mat)), "World matrix not restored.\n");
+
+    hr = IDirect3DDevice9_GetLightEnable(device, 2, &bval);
+    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    if (hr == D3D_OK)
+        ok(!bval, "Got result %u, expected 0.\n", bval);
+
+    if (effect)
+        effect->lpVtbl->Release(effect);
+}
+
 START_TEST(effect)
 {
     HWND wnd;
@@ -2730,6 +2996,7 @@ START_TEST(effect)
     test_effect_parameter_value(device);
     test_effect_variable_names(device);
     test_effect_compilation_errors(device);
+    test_effect_states(device);
 
     count = IDirect3DDevice9_Release(device);
     ok(count == 0, "The device was not properly freed: refcount %u\n", count);
