@@ -442,7 +442,6 @@ static void test_runner(void (*p_run_test)(void))
     if(pipe_handle == INVALID_HANDLE_VALUE)
         return;
 
-    InitializeCriticalSection(&event_cs);
     event_handle = CreateEventA(NULL, FALSE, FALSE, NULL);
     ok(event_handle != INVALID_HANDLE_VALUE, "CreateEvent failed: %u\n", GetLastError());
     if(event_handle == INVALID_HANDLE_VALUE)
@@ -464,6 +463,8 @@ START_TEST(service)
 {
     char **argv;
     int argc;
+
+    InitializeCriticalSection(&event_cs);
 
     pRegisterServiceCtrlHandlerExA = (void*)GetProcAddress(GetModuleHandleA("advapi32.dll"), "RegisterServiceCtrlHandlerExA");
     if(!pRegisterServiceCtrlHandlerExA) {
