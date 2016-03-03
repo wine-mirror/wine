@@ -3269,6 +3269,13 @@ static void test_texture(void)
         0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1f, 0x00, 0x1f, 0x00, 0x00, 0x00, 0x00, 0x00,
         0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
     };
+    static const BYTE bc4_data[4 * 8] =
+    {
+        0x10, 0x7f, 0x77, 0x39, 0x05, 0x00, 0x00, 0x00,
+        0x10, 0x7f, 0x49, 0x92, 0x24, 0x49, 0x92, 0x24,
+        0x10, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0x10, 0x7f, 0xb6, 0x6d, 0xdb, 0xb6, 0x6d, 0xdb,
+    };
     static const struct texture rgba_texture =
     {
         4, 4, 3, DXGI_FORMAT_R8G8B8A8_UNORM,
@@ -3283,6 +3290,7 @@ static void test_texture(void)
     static const struct texture bc1_texture = {8, 8, 1, DXGI_FORMAT_BC1_UNORM, {{bc1_data, 2 * 8}}};
     static const struct texture bc2_texture = {8, 8, 1, DXGI_FORMAT_BC2_UNORM, {{bc2_data, 2 * 16}}};
     static const struct texture bc3_texture = {8, 8, 1, DXGI_FORMAT_BC3_UNORM, {{bc3_data, 2 * 16}}};
+    static const struct texture bc4_texture = {8, 8, 1, DXGI_FORMAT_BC4_UNORM, {{bc4_data, 2 * 8}}};
     static const struct texture bc1_texture_srgb = {8, 8, 1, DXGI_FORMAT_BC1_UNORM_SRGB, {{bc1_data, 2 * 8}}};
     static const struct texture bc2_texture_srgb = {8, 8, 1, DXGI_FORMAT_BC2_UNORM_SRGB, {{bc2_data, 2 * 16}}};
     static const struct texture bc3_texture_srgb = {8, 8, 1, DXGI_FORMAT_BC3_UNORM_SRGB, {{bc3_data, 2 * 16}}};
@@ -3325,6 +3333,13 @@ static void test_texture(void)
         0xffff0000, 0xffff0000, 0xffffffff, 0xffffffff,
         0xffff0000, 0xffff0000, 0xffffffff, 0xffffffff,
     };
+    static const DWORD bc4_colors[] =
+    {
+        0xff000026, 0xff000010, 0xff00007f, 0xff00007f,
+        0xff000010, 0xff000010, 0xff00007f, 0xff00007f,
+        0xff0000ff, 0xff0000ff, 0xff000000, 0xff000000,
+        0xff0000ff, 0xff0000ff, 0xff000000, 0xff000000,
+    };
     static const DWORD sint8_colors[] =
     {
         0x7e80807e, 0x7e807e7e, 0x7e807e80, 0x7e7e7e80,
@@ -3362,11 +3377,13 @@ static void test_texture(void)
         {&ps_ld,       &bc1_texture_srgb, D3D11_FILTER_MIN_MAG_MIP_POINT,     0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
         {&ps_ld,       &bc2_texture_srgb, D3D11_FILTER_MIN_MAG_MIP_POINT,     0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
         {&ps_ld,       &bc3_texture_srgb, D3D11_FILTER_MIN_MAG_MIP_POINT,     0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
+        {&ps_ld,       &bc4_texture,   D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc4_colors},
         {&ps_ld_sint8, &sint8_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, sint8_colors},
         {&ps_ld_uint8, &uint8_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, rgba_level_0},
         {&ps_sample,   &bc1_texture,   D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
         {&ps_sample,   &bc2_texture,   D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
         {&ps_sample,   &bc3_texture,   D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
+        {&ps_sample,   &bc4_texture,   D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc4_colors},
         {&ps_sample,   &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, rgba_level_0},
         {&ps_sample,   &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  0.0f, rgba_level_0},
         {&ps_sample,   &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        2.0f, 0.0f, D3D11_FLOAT32_MAX,  0.0f, rgba_level_0},
