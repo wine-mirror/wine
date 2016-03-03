@@ -2439,7 +2439,7 @@ GLenum context_get_offscreen_gl_buffer(const struct wined3d_context *context)
 
 static DWORD context_generate_rt_mask_no_fbo(const struct wined3d_context *context, const struct wined3d_surface *rt)
 {
-    if (!rt || rt->resource.format->id == WINED3DFMT_NULL)
+    if (!rt || rt->container->resource.format->id == WINED3DFMT_NULL)
         return 0;
     else if (rt->container->swapchain)
         return context_generate_rt_mask_from_surface(rt);
