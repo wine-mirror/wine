@@ -480,15 +480,16 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context,
             WARN("Depth stencil is smaller than the primary color buffer, disabling\n");
             depth_stencil = NULL;
         }
-        else if (depth_stencil->resource.multisample_type
-                != render_targets[0]->resource.multisample_type
-                || depth_stencil->resource.multisample_quality
-                != render_targets[0]->resource.multisample_quality)
+        else if (depth_stencil->container->resource.multisample_type
+                != render_targets[0]->container->resource.multisample_type
+                || depth_stencil->container->resource.multisample_quality
+                != render_targets[0]->container->resource.multisample_quality)
         {
             WARN("Color multisample type %u and quality %u, depth stencil has %u and %u, disabling ds buffer.\n",
-                    render_targets[0]->resource.multisample_type,
-                    render_targets[0]->resource.multisample_quality,
-                    depth_stencil->resource.multisample_type, depth_stencil->resource.multisample_quality);
+                    render_targets[0]->container->resource.multisample_type,
+                    render_targets[0]->container->resource.multisample_quality,
+                    depth_stencil->container->resource.multisample_type,
+                    depth_stencil->container->resource.multisample_quality);
             depth_stencil = NULL;
         }
         else
@@ -505,21 +506,22 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context,
         {
             if (render_targets[i])
             {
-                TRACE("\tColor attachment %u: (%p) %s gl obj %u(%s) %ux%u %u samples.\n",
-                        i, render_targets[i], debug_d3dformat(render_targets[i]->resource.format->id),
+                TRACE("    Color attachment %u: (%p) %s gl obj %u(%s) %ux%u %u samples.\n",
+                        i, render_targets[i], debug_d3dformat(render_targets[i]->container->resource.format->id),
                         context->fbo_key->objects[i + 1].object,
                         context->fbo_key->rb_namespace & (1 << (i + 1)) ? "rb" : "texure",
                         render_targets[i]->pow2Width, render_targets[i]->pow2Height,
-                        render_targets[i]->resource.multisample_type);
+                        render_targets[i]->container->resource.multisample_type);
             }
         }
         if (depth_stencil)
         {
-            TRACE("\tDepth attachment: (%p) %s gl obj %u(%s) %ux%u %u samples.\n",
-                    depth_stencil, debug_d3dformat(depth_stencil->resource.format->id),
+            TRACE("    Depth attachment: (%p) %s gl obj %u(%s) %ux%u %u samples.\n",
+                    depth_stencil, debug_d3dformat(depth_stencil->container->resource.format->id),
                     context->fbo_key->objects[0].object,
                     context->fbo_key->rb_namespace & (1 << 0) ? "rb" : "texure",
-                    depth_stencil->pow2Width, depth_stencil->pow2Height, depth_stencil->resource.multisample_type);
+                    depth_stencil->pow2Width, depth_stencil->pow2Height,
+                    depth_stencil->container->resource.multisample_type);
         }
     }
 
