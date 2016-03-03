@@ -1099,8 +1099,17 @@ static HRESULT WINAPI dwritefontface3_GetInformationalStrings(IDWriteFontFace3 *
 static BOOL WINAPI dwritefontface3_HasCharacter(IDWriteFontFace3 *iface, UINT32 ch)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace3(iface);
-    FIXME("(%p)->(0x%x): stub\n", This, ch);
-    return FALSE;
+    UINT16 index;
+    HRESULT hr;
+
+    TRACE("(%p)->(0x%08x)\n", This, ch);
+
+    index = 0;
+    hr = IDWriteFontFace3_GetGlyphIndices(iface, &ch, 1, &index);
+    if (FAILED(hr))
+        return FALSE;
+
+    return index != 0;
 }
 
 static HRESULT WINAPI dwritefontface3_GetRecommendedRenderingMode(IDWriteFontFace3 *iface, FLOAT emsize, FLOAT dpi_x, FLOAT dpi_y,
