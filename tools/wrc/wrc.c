@@ -162,7 +162,6 @@ int parser_debug, yy_flex_debug;
 
 resource_t *resource_top;	/* The top of the parsed resources */
 
-int getopt (int argc, char *const *argv, const char *optstring);
 static void cleanup_files(void);
 static void segvhandler(int sig);
 
