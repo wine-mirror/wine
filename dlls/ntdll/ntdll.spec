@@ -410,7 +410,7 @@
 @ stdcall RtlAddAccessAllowedObjectAce(ptr long long long ptr ptr ptr)
 @ stdcall RtlAddAccessDeniedAce(ptr long long ptr)
 @ stdcall RtlAddAccessDeniedAceEx(ptr long long long ptr)
-# @ stub RtlAddAccessDeniedObjectAce
+@ stdcall RtlAddAccessDeniedObjectAce(ptr long long long ptr ptr ptr)
 @ stdcall RtlAddAce(ptr long long ptr long)
 @ stub RtlAddActionToRXact
 @ stdcall RtlAddAtomToAtomTable(ptr wstr ptr)
