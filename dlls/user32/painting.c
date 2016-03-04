@@ -1400,8 +1400,8 @@ INT WINAPI ExcludeUpdateRgn( HDC hdc, HWND hwnd )
         MapWindowPoints( 0, hwnd, &pt, 1 );
         OffsetRgn( update_rgn, -pt.x, -pt.y );
         ret = ExtSelectClipRgn( hdc, update_rgn, RGN_DIFF );
-        DeleteObject( update_rgn );
     }
+    DeleteObject( update_rgn );
     return ret;
 }
 
