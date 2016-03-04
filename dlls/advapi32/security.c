@@ -1683,6 +1683,22 @@ BOOL WINAPI AddAccessDeniedAceEx(
 }
 
 /******************************************************************************
+ *  AddAccessDeniedObjectAce [ADVAPI32.@]
+ */
+BOOL WINAPI AddAccessDeniedObjectAce(
+    IN OUT PACL pAcl,
+    IN DWORD dwAceRevision,
+    IN DWORD dwAceFlags,
+    IN DWORD dwAccessMask,
+    IN GUID* pObjectTypeGuid,
+    IN GUID* pInheritedObjectTypeGuid,
+    IN PSID pSid)
+{
+    return set_ntstatus( RtlAddAccessDeniedObjectAce(pAcl, dwAceRevision, dwAceFlags, dwAccessMask,
+                         pObjectTypeGuid, pInheritedObjectTypeGuid, pSid) );
+}
+
+/******************************************************************************
  *  AddAce [ADVAPI32.@]
  */
 BOOL WINAPI AddAce(
