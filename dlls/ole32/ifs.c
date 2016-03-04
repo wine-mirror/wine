@@ -464,8 +464,9 @@ HRESULT WINAPI CoRegisterMallocSpy(LPMALLOCSPY pMallocSpy)
 	IMallocSpy* pSpy;
         HRESULT hres = E_INVALIDARG;
 
-	TRACE("\n");
+	TRACE("%p\n", pMallocSpy);
 
+	if(!pMallocSpy) return E_INVALIDARG;
 	if(Malloc32.pSpy) return CO_E_OBJISREG;
 
         EnterCriticalSection(&IMalloc32_SpyCS);
@@ -504,7 +505,9 @@ HRESULT WINAPI CoRevokeMallocSpy(void)
 
         EnterCriticalSection(&IMalloc32_SpyCS);
 
-	if (Malloc32.SpyedAllocationsLeft) {
+	if (!Malloc32.pSpy)
+	    hres = CO_E_OBJNOTREG;
+	else if (Malloc32.SpyedAllocationsLeft) {
             TRACE("SpyReleasePending with %u allocations left\n", Malloc32.SpyedAllocationsLeft);
 	    Malloc32.SpyReleasePending = TRUE;
 	    hres = E_ACCESSDENIED;

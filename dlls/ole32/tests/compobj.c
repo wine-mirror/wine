@@ -3051,8 +3051,20 @@ static void test_IMallocSpy(void)
     IMalloc *imalloc;
     HRESULT hr;
 
+    hr = CoRegisterMallocSpy(NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = CoRevokeMallocSpy();
+    ok(hr == CO_E_OBJNOTREG, "got 0x%08x\n", hr);
+
     hr = CoRegisterMallocSpy(&testspy);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = CoRegisterMallocSpy(NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = CoRegisterMallocSpy(&testspy);
+    ok(hr == CO_E_OBJISREG, "got 0x%08x\n", hr);
 
     imalloc = NULL;
     hr = CoGetMalloc(MEMCTX_TASK, &imalloc);
@@ -3065,6 +3077,9 @@ static void test_IMallocSpy(void)
 
     hr = CoRevokeMallocSpy();
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = CoRevokeMallocSpy();
+    ok(hr == CO_E_OBJNOTREG, "got 0x%08x\n", hr);
 }
 
 static void init_funcs(void)
