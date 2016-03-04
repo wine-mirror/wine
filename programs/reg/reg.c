@@ -404,7 +404,7 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
             output_message(STRING_UNSUPPORTED_TYPE, type);
             return 1;
         }
-        if (reg_type == REG_DWORD && !data)
+        if ((reg_type == REG_DWORD || reg_type == REG_DWORD_BIG_ENDIAN) && !data)
         {
              RegCloseKey(subkey);
              output_message(STRING_INVALID_CMDLINE);
