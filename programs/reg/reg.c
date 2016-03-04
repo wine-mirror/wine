@@ -378,7 +378,7 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
         return 1;
     }
 
-    if (value_name || data)
+    if (value_name || value_empty || data)
     {
         DWORD reg_type;
         DWORD reg_count = 0;
