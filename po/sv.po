@@ -11490,7 +11490,7 @@ msgstr ""
 
 #: reg.rc:39
 msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "Error: Ej stödd typ [%1] i registret\n"
+msgstr "reg: Ej stödd typ [%1] i registret\n"
 
 #: reg.rc:40
 msgid "reg: The option [/d] must be followed by a valid integer\n"
@@ -11522,7 +11522,7 @@ msgstr "Vill du verkligen ta bort registervärdet '%1'?"
 
 #: reg.rc:50
 msgid "Are you sure you want to delete all registry values in '%1'?"
-msgstr "Vill du verkligen ta bort alla registervärden i '%s'?"
+msgstr "Vill du verkligen ta bort alla registervärden i '%1'?"
 
 #: reg.rc:51
 msgid "Are you sure you want to delete the registry key '%1'?"
