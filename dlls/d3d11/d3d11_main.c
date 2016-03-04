@@ -331,7 +331,7 @@ HRESULT WINAPI D3D11CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D_DRIVER_T
             goto cleanup;
         }
 
-        TRACE("Created IDXGISwapChain %p.\n", swapchain);
+        TRACE("Created IDXGISwapChain %p.\n", *swapchain);
     }
 
     if (device_out)
