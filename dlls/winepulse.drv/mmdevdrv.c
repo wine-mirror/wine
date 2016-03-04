@@ -573,6 +573,9 @@ static HRESULT pulse_test_connect(void)
             break;
     }
 
+    if (pa_context_get_state(pulse_ctx) != PA_CONTEXT_READY)
+        goto fail;
+
     TRACE("Test-connected to server %s with protocol version: %i.\n",
         pa_context_get_server(pulse_ctx),
         pa_context_get_server_protocol_version(pulse_ctx));
