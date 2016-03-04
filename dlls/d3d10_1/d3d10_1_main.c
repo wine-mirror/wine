@@ -73,6 +73,14 @@ HRESULT WINAPI D3D10CreateDevice1(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE drive
             adapter, debug_d3d10_driver_type(driver_type), swrast, flags,
             debug_d3d10_feature_level(hw_level), sdk_version, device);
 
+    if (!device)
+        return E_INVALIDARG;
+
+    *device = NULL;
+
+    if (!hw_level)
+        return E_INVALIDARG;
+
     if (adapter)
     {
         IDXGIAdapter_AddRef(adapter);
