@@ -1143,6 +1143,22 @@ static void test_create_shader_resource_view(void)
     if (SUCCEEDED(hr)) IUnknown_Release(iface);
 
     ID3D10ShaderResourceView_Release(srview);
+
+    srv_desc.Format = DXGI_FORMAT_UNKNOWN;
+    hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)texture, &srv_desc, &srview);
+    ok(SUCCEEDED(hr), "Failed to create a shader resource view, hr %#x.\n", hr);
+
+    memset(&srv_desc, 0, sizeof(srv_desc));
+    ID3D10ShaderResourceView_GetDesc(srview, &srv_desc);
+    todo_wine ok(srv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", srv_desc.Format);
+    ok(srv_desc.ViewDimension == D3D10_SRV_DIMENSION_TEXTURE2D,
+            "Got unexpected view dimension %#x.\n", srv_desc.ViewDimension);
+    ok(U(srv_desc).Texture2D.MostDetailedMip == 0, "Got unexpected MostDetailedMip %u.\n",
+            U(srv_desc).Texture2D.MostDetailedMip);
+    ok(U(srv_desc).Texture2D.MipLevels == 10, "Got unexpected MipLevels %u.\n", U(srv_desc).Texture2D.MipLevels);
+
+    ID3D10ShaderResourceView_Release(srview);
+
     ID3D10Texture2D_Release(texture);
 
     refcount = ID3D10Device_Release(device);
