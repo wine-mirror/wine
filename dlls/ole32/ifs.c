@@ -467,11 +467,12 @@ HRESULT WINAPI CoRegisterMallocSpy(LPMALLOCSPY pMallocSpy)
 	TRACE("%p\n", pMallocSpy);
 
 	if(!pMallocSpy) return E_INVALIDARG;
-	if(Malloc32.pSpy) return CO_E_OBJISREG;
 
         EnterCriticalSection(&IMalloc32_SpyCS);
 
-	if (SUCCEEDED(IMallocSpy_QueryInterface(pMallocSpy, &IID_IMallocSpy, (void**)&pSpy))) {
+	if (Malloc32.pSpy)
+	    hres = CO_E_OBJISREG;
+	else if (SUCCEEDED(IMallocSpy_QueryInterface(pMallocSpy, &IID_IMallocSpy, (void**)&pSpy))) {
 	    Malloc32.pSpy = pSpy;
 	    hres = S_OK;
 	}
