@@ -3486,7 +3486,7 @@ static BOOL WINAPI ID3DXEffectImpl_IsParameterUsed(ID3DXEffect* iface, D3DXHANDL
 
     FIXME("(%p)->(%p, %p): stub\n", This, parameter, technique);
 
-    return FALSE;
+    return TRUE;
 }
 
 static HRESULT WINAPI ID3DXEffectImpl_Begin(ID3DXEffect *iface, UINT *passes, DWORD flags)
