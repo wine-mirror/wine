@@ -2364,15 +2364,19 @@ static void test_OleRegGetUserType(void)
     StringFromGUID2(&CLSID_non_existent, clsidW, sizeof(clsidW)/sizeof(clsidW[0]));
 
     ret = RegCreateKeyExW(HKEY_CLASSES_ROOT, clsidkeyW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &clsidhkey, &disposition);
+    if (!ret)
+    {
+        ret = RegCreateKeyExW(clsidhkey, clsidW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &classkey, NULL);
+        if (ret)
+            RegCloseKey(clsidhkey);
+    }
+
     if (ret == ERROR_ACCESS_DENIED)
     {
-        skip("Failed to create test key, skipping some of OleRegGetUserType() tests.\n");
+        win_skip("Failed to create test key, skipping some of OleRegGetUserType() tests.\n");
         return;
     }
 
-    ok(!ret, "failed to create a key %d, error %d\n", ret, GetLastError());
-
-    ret = RegCreateKeyExW(clsidhkey, clsidW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &classkey, NULL);
     ok(!ret, "failed to create a key %d, error %d\n", ret, GetLastError());
 
     ret = RegSetValueExW(classkey, NULL, 0, REG_SZ, (const BYTE*)defvalueW, sizeof(defvalueW));
