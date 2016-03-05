@@ -2098,12 +2098,11 @@ static void test_TreatAsClass(void)
     ok (IsEqualGUID(&out,&deadbeef), "expected to get same clsid back\n");
 
     lr = RegOpenKeyExA(HKEY_CLASSES_ROOT, "CLSID", 0, KEY_READ, &clsidkey);
-    ok(lr == ERROR_SUCCESS, "Couldn't open CLSID key\n");
+    ok(!lr, "Couldn't open CLSID key, error %d\n", lr);
 
     lr = RegCreateKeyExA(clsidkey, deadbeefA, 0, NULL, 0, KEY_WRITE, NULL, &deadbeefkey, NULL);
     if (lr) {
-        win_skip("CoGetTreatAsClass() tests will be skipped (failed to create a test key, error %d)\n",
-            GetLastError());
+        win_skip("CoGetTreatAsClass() tests will be skipped (failed to create a test key, error %d)\n", lr);
         RegCloseKey(clsidkey);
         return;
     }
@@ -2377,13 +2376,13 @@ static void test_OleRegGetUserType(void)
         return;
     }
 
-    ok(!ret, "failed to create a key %d, error %d\n", ret, GetLastError());
+    ok(!ret, "failed to create a key, error %d\n", ret);
 
     ret = RegSetValueExW(classkey, NULL, 0, REG_SZ, (const BYTE*)defvalueW, sizeof(defvalueW));
-    ok(!ret, "got %d, error %d\n", ret, GetLastError());
+    ok(!ret, "got error %d\n", ret);
 
     ret = RegCreateKeyExA(classkey, "AuxUserType", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &auxhkey, NULL);
-    ok(!ret, "got %d, error %d\n", ret, GetLastError());
+    ok(!ret, "got error %d\n", ret);
 
     /* populate AuxUserType */
     for (i = 0; i <= 4; i++) {
@@ -2391,10 +2390,10 @@ static void test_OleRegGetUserType(void)
 
         sprintf(name, "AuxUserType\\%d", i);
         ret = RegCreateKeyExA(classkey, name, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL);
-        ok(!ret, "got %d, error %d\n", ret, GetLastError());
+        ok(!ret, "got error %d\n", ret);
 
         ret = RegSetValueExA(hkey, NULL, 0, REG_SZ, (const BYTE*)auxvalues[i], strlen(auxvalues[i]));
-        ok(!ret, "got %d, error %d\n", ret, GetLastError());
+        ok(!ret, "got error %d\n", ret);
         RegCloseKey(hkey);
     }
 
