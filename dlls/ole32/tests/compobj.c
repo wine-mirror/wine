@@ -1293,6 +1293,12 @@ static void test_CoGetPSClsid(void)
         ok(!res, "RegCreateKeyEx returned %d\n", res);
         res = RegCreateKeyExA(hkey_iface, clsidDeadBeef,
                               0, NULL, 0, KEY_ALL_ACCESS | opposite, NULL, &hkey, NULL);
+        if (res == ERROR_ACCESS_DENIED)
+        {
+            win_skip("Failed to create a key, skipping some of CoGetPSClsid() tests\n");
+            goto cleanup;
+        }
+
         ok(!res, "RegCreateKeyEx returned %d\n", res);
         res = RegCreateKeyExA(hkey, "ProxyStubClsid32",
                               0, NULL, 0, KEY_ALL_ACCESS | opposite, NULL, &hkey_psclsid, NULL);
@@ -1310,6 +1316,8 @@ static void test_CoGetPSClsid(void)
         RegCloseKey(hkey);
         res = pRegDeleteKeyExA(hkey_iface, clsidDeadBeef, opposite, 0);
         ok(!res, "RegDeleteKeyEx returned %d\n", res);
+
+    cleanup:
         RegCloseKey(hkey_iface);
     }
 
