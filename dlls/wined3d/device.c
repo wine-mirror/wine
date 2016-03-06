@@ -320,13 +320,15 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
      * checking all this if the dest surface is in the drawable anyway. */
     for (i = 0; i < rt_count; ++i)
     {
-        struct wined3d_surface *rt = wined3d_rendertarget_view_get_surface(fb->render_targets[i]);
-        if (rt && rt->resource.format->id != WINED3DFMT_NULL)
+        struct wined3d_rendertarget_view *rtv = fb->render_targets[i];
+        struct wined3d_surface *rt = wined3d_rendertarget_view_get_surface(rtv);
+
+        if (rt && rtv->format->id != WINED3DFMT_NULL)
         {
             if (flags & WINED3DCLEAR_TARGET && !is_full_clear(target, draw_rect, clear_rect))
-                surface_load_location(rt, context, rt->container->resource.draw_binding);
+                surface_load_location(rt, context, rtv->resource->draw_binding);
             else
-                wined3d_surface_prepare(rt, context, rt->container->resource.draw_binding);
+                wined3d_surface_prepare(rt, context, rtv->resource->draw_binding);
         }
     }
 
@@ -394,12 +396,13 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     {
         for (i = 0; i < rt_count; ++i)
         {
-            struct wined3d_surface *rt = wined3d_rendertarget_view_get_surface(fb->render_targets[i]);
+            struct wined3d_rendertarget_view *rtv = fb->render_targets[i];
+            struct wined3d_surface *rt = wined3d_rendertarget_view_get_surface(rtv);
 
             if (rt)
             {
-                surface_validate_location(rt, rt->container->resource.draw_binding);
-                surface_invalidate_location(rt, ~rt->container->resource.draw_binding);
+                surface_validate_location(rt, rtv->resource->draw_binding);
+                surface_invalidate_location(rt, ~rtv->resource->draw_binding);
             }
         }
 
