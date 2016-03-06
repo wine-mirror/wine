@@ -29,12 +29,11 @@ winemaker \- générer une infrastructure de construction pour la compilation de
 .br
   [
 .BR               "--generated-files " "] [ " "--nogenerated-files " "]
-]
 .br
   [
 .BR               "--wine32 " "]
 .br
-.IR               "  répertoire_de_travail" "| " "fichier_projet" "| " "fichier_espace_de_travail"
+.IR               "  répertoire_de_travail" " | " "fichier_projet" " | " "fichier_espace_de_travail"
 
 .SH DESCRIPTION
 .PP
@@ -49,7 +48,7 @@ convertis en majuscules durant le transfert.
 .PP
 -\ convertir les fins de ligne DOS en fins de ligne UNIX (CRLF vers LF).
 .PP
--\ balayer les directives d'inclusion et les références aux fichiers
+-\ parcourir les directives d'inclusion et les références aux fichiers
 de ressources pour y remplacer les backslashs par des slashs.
 .PP
 -\ durant l'étape ci-dessus,
@@ -182,7 +181,7 @@ L'ensemble standard de bibliothèques est : \fIodbc32.dll\fR, \fIodbccp32.dll\f
 \fIoleaut32.dll\fR et \fIwinspool.drv\fR.
 .TP
 .B --nomsvcrt
-Définir certaines options afin que winegcc n'utilise pas
+Définir certaines options afin que \fBwinegcc\fR n'utilise pas
 msvcrt durant la compilation. Utilisez cette option si certains fichiers cpp
 incluent \fI<string>\fR.
 .TP
@@ -192,7 +191,7 @@ Utiliser le mode interactif. Dans ce mode,
 demandera de confirmer la liste de cibles pour chaque répertoire, et ensuite
 de fournir des options spécifiques de répertoire et/ou de cible.
 .TP
-.BR --single-target " nom"
+.BI --single-target " nom"
 Spécifier qu'il n'y a qu'une seule cible, appelée \fInom\fR.
 .TP
 .B --generated-files
