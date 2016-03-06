@@ -4296,10 +4296,10 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
         device->cursor_texture = NULL;
     }
 
-    if (cursor_image->resource.format->id != WINED3DFMT_B8G8R8A8_UNORM)
+    if (texture->resource.format->id != WINED3DFMT_B8G8R8A8_UNORM)
     {
-        WARN("Surface %p has an invalid format %s.\n",
-                cursor_image, debug_d3dformat(cursor_image->resource.format->id));
+        WARN("Texture %p has invalid format %s.\n",
+                texture, debug_d3dformat(texture->resource.format->id));
         return WINED3DERR_INVALIDCALL;
     }
 
