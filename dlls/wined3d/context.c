@@ -3426,8 +3426,8 @@ static void context_setup_target(struct wined3d_context *context, struct wined3d
     }
     else
     {
-        const struct wined3d_format *old = context->current_rt->resource.format;
-        const struct wined3d_format *new = target->resource.format;
+        const struct wined3d_format *old = context->current_rt->container->resource.format;
+        const struct wined3d_format *new = target->container->resource.format;
 
         if (old->id != new->id)
         {
