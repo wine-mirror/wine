@@ -852,11 +852,11 @@ static void texture2d_sub_resource_add_dirty_region(struct wined3d_resource *sub
     struct wined3d_surface *surface = surface_from_resource(sub_resource);
     struct wined3d_context *context;
 
-    surface_prepare_map_memory(surface);
-    context = context_acquire(surface->resource.device, NULL);
-    surface_load_location(surface, context, surface->resource.map_binding);
+    context = context_acquire(surface->container->resource.device, NULL);
+    wined3d_surface_prepare(surface, context, sub_resource->map_binding);
+    surface_load_location(surface, context, sub_resource->map_binding);
     context_release(context);
-    surface_invalidate_location(surface, ~surface->resource.map_binding);
+    surface_invalidate_location(surface, ~sub_resource->map_binding);
 }
 
 static void texture2d_sub_resource_invalidate_location(struct wined3d_resource *sub_resource, DWORD location)

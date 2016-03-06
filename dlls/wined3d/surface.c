@@ -505,39 +505,6 @@ static void surface_prepare_system_memory(struct wined3d_surface *surface)
         ERR("Surface without system memory has WINED3D_LOCATION_SYSMEM set.\n");
 }
 
-void surface_prepare_map_memory(struct wined3d_surface *surface)
-{
-    struct wined3d_texture *texture = surface->container;
-    struct wined3d_context *context;
-
-    switch (surface->resource.map_binding)
-    {
-        case WINED3D_LOCATION_SYSMEM:
-            surface_prepare_system_memory(surface);
-            break;
-
-        case WINED3D_LOCATION_USER_MEMORY:
-            if (!texture->user_memory)
-                ERR("Map binding is set to WINED3D_LOCATION_USER_MEMORY but surface->user_memory is NULL.\n");
-            break;
-
-        case WINED3D_LOCATION_DIB:
-            if (!surface->dib.bitmap_data)
-                ERR("Map binding is set to WINED3D_LOCATION_DIB but surface->dib.bitmap_data is NULL.\n");
-            break;
-
-        case WINED3D_LOCATION_BUFFER:
-            context = context_acquire(texture->resource.device, NULL);
-            wined3d_texture_prepare_buffer_object(texture,
-                    surface_get_sub_resource_idx(surface), context->gl_info);
-            context_release(context);
-            break;
-
-        default:
-            ERR("Unexpected map binding %s.\n", wined3d_debug_location(surface->resource.map_binding));
-    }
-}
-
 static void surface_evict_sysmem(struct wined3d_surface *surface)
 {
     /* In some conditions the surface memory must not be freed:
@@ -1053,7 +1020,7 @@ static void surface_unload(struct wined3d_resource *resource)
     }
     else
     {
-        surface_prepare_map_memory(surface);
+        wined3d_surface_prepare(surface, context, surface->resource.map_binding);
         surface_load_location(surface, context, surface->resource.map_binding);
         surface_invalidate_location(surface, ~surface->resource.map_binding);
     }
@@ -2180,8 +2147,8 @@ HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_
     const struct wined3d_format *format = texture->resource.format;
     struct wined3d_device *device = texture->resource.device;
     unsigned int fmt_flags = texture->resource.format_flags;
-    struct wined3d_context *context;
-    const struct wined3d_gl_info *gl_info;
+    const struct wined3d_gl_info *gl_info = NULL;
+    struct wined3d_context *context = NULL;
     BYTE *base_memory;
 
     TRACE("surface %p, map_desc %p, box %s, flags %#x.\n",
@@ -2223,7 +2190,13 @@ HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_
         }
     }
 
-    surface_prepare_map_memory(surface);
+    if (device->d3d_initialized)
+    {
+        context = context_acquire(device, NULL);
+        gl_info = context->gl_info;
+    }
+
+    wined3d_surface_prepare(surface, context, surface->resource.map_binding);
     if (flags & WINED3D_MAP_DISCARD)
     {
         TRACE("WINED3D_MAP_DISCARD flag passed, marking %s as up to date.\n",
@@ -2232,16 +2205,10 @@ HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_
     }
     else
     {
-        struct wined3d_context *context = NULL;
-
         if (surface->resource.usage & WINED3DUSAGE_DYNAMIC)
             WARN_(d3d_perf)("Mapping a dynamic surface without WINED3D_MAP_DISCARD.\n");
 
-        if (surface->resource.device->d3d_initialized)
-            context = context_acquire(surface->resource.device, NULL);
         surface_load_location(surface, context, surface->resource.map_binding);
-        if (context)
-            context_release(context);
     }
 
     if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
@@ -2262,22 +2229,20 @@ HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_
             break;
 
         case WINED3D_LOCATION_BUFFER:
-            context = context_acquire(device, NULL);
-            gl_info = context->gl_info;
-
             GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER,
                     texture->sub_resources[surface_get_sub_resource_idx(surface)].buffer_object));
             base_memory = GL_EXTCALL(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE));
             GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
             checkGLcall("map PBO");
-
-            context_release(context);
             break;
 
         default:
             ERR("Unexpected map binding %s.\n", wined3d_debug_location(surface->resource.map_binding));
             base_memory = NULL;
     }
+
+    if (context)
+        context_release(context);
 
     if (fmt_flags & WINED3DFMT_FLAG_BROKEN_PITCH)
     {
@@ -3615,7 +3580,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         {
             /* Performance warning... */
             FIXME("Downloading RGB surface %p to reload it as sRGB.\n", surface);
-            surface_prepare_map_memory(surface);
+            wined3d_surface_prepare(surface, context, surface->resource.map_binding);
             surface_load_location(surface, context, surface->resource.map_binding);
         }
     }
@@ -3626,7 +3591,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         {
             /* Performance warning... */
             FIXME("Downloading sRGB surface %p to reload it as RGB.\n", surface);
-            surface_prepare_map_memory(surface);
+            wined3d_surface_prepare(surface, context, surface->resource.map_binding);
             surface_load_location(surface, context, surface->resource.map_binding);
         }
     }
@@ -3662,7 +3627,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         else
             surface->resource.map_binding = WINED3D_LOCATION_SYSMEM;
 
-        surface_prepare_map_memory(surface);
+        wined3d_surface_prepare(surface, context, surface->resource.map_binding);
         surface_load_location(surface, context, surface->resource.map_binding);
         wined3d_texture_remove_buffer_object(texture, surface_get_sub_resource_idx(surface), gl_info);
     }
@@ -5064,17 +5029,39 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
     return hr;
 }
 
-/* Context activation is done by the caller. */
+/* Context activation is done by the caller. Context may be NULL in
+ * WINED3D_NO3D mode. */
 void wined3d_surface_prepare(struct wined3d_surface *surface, struct wined3d_context *context, DWORD location)
 {
+    struct wined3d_texture *texture = surface->container;
+
     switch (location)
     {
+        case WINED3D_LOCATION_SYSMEM:
+            surface_prepare_system_memory(surface);
+            break;
+
+        case WINED3D_LOCATION_USER_MEMORY:
+            if (!texture->user_memory)
+                ERR("Map binding is set to WINED3D_LOCATION_USER_MEMORY but surface->user_memory is NULL.\n");
+            break;
+
+        case WINED3D_LOCATION_DIB:
+            if (!surface->dib.bitmap_data)
+                ERR("Map binding is set to WINED3D_LOCATION_DIB but surface->dib.bitmap_data is NULL.\n");
+            break;
+
+        case WINED3D_LOCATION_BUFFER:
+            wined3d_texture_prepare_buffer_object(texture,
+                    surface_get_sub_resource_idx(surface), context->gl_info);
+            break;
+
         case WINED3D_LOCATION_TEXTURE_RGB:
-            wined3d_texture_prepare_texture(surface->container, context, FALSE);
+            wined3d_texture_prepare_texture(texture, context, FALSE);
             break;
 
         case WINED3D_LOCATION_TEXTURE_SRGB:
-            wined3d_texture_prepare_texture(surface->container, context, TRUE);
+            wined3d_texture_prepare_texture(texture, context, TRUE);
             break;
 
         case WINED3D_LOCATION_RB_MULTISAMPLE:
