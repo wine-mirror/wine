@@ -4659,8 +4659,10 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
         struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
         const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter)
 {
+    struct wined3d_texture *dst_texture = dst_surface->container;
+    struct wined3d_device *device = dst_texture->resource.device;
     struct wined3d_swapchain *src_swapchain, *dst_swapchain;
-    struct wined3d_device *device = dst_surface->resource.device;
+    struct wined3d_texture *src_texture = NULL;
     DWORD src_ds_flags, dst_ds_flags;
     BOOL scale, convert;
 
@@ -4676,7 +4678,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
             dst_surface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
             flags, fx, debug_d3dtexturefiltertype(filter));
-    TRACE("Usage is %s.\n", debug_d3dusage(dst_surface->resource.usage));
+    TRACE("Usage is %s.\n", debug_d3dusage(dst_texture->resource.usage));
 
     if (fx)
     {
@@ -4717,6 +4719,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
             WARN("The application gave us a bad source rectangle.\n");
             return WINEDDERR_INVALIDRECT;
         }
+        src_texture = src_surface->container;
     }
 
     if (!fx || !(fx->fx))
@@ -4753,9 +4756,8 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     /* We want to avoid invalidating the sysmem location for converted
      * surfaces, since otherwise we'd have to convert the data back when
      * locking them. */
-    if (dst_surface->container->flags & WINED3D_TEXTURE_CONVERTED
-            || dst_surface->container->resource.format->convert
-            || wined3d_format_get_color_key_conversion(dst_surface->container, TRUE))
+    if (dst_texture->flags & WINED3D_TEXTURE_CONVERTED || dst_texture->resource.format->convert
+            || wined3d_format_get_color_key_conversion(dst_texture, TRUE))
     {
         WARN_(d3d_perf)("Converted surface, using CPU blit.\n");
         goto cpu;
@@ -4768,11 +4770,11 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     }
 
     if (src_surface)
-        src_swapchain = src_surface->container->swapchain;
+        src_swapchain = src_texture->swapchain;
     else
         src_swapchain = NULL;
 
-    dst_swapchain = dst_surface->container->swapchain;
+    dst_swapchain = dst_texture->swapchain;
 
     /* This isn't strictly needed. FBO blits for example could deal with
      * cross-swapchain blits by first downloading the source to a texture
@@ -4788,12 +4790,12 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     scale = src_surface
             && (src_rect->right - src_rect->left != dst_rect->right - dst_rect->left
             || src_rect->bottom - src_rect->top != dst_rect->bottom - dst_rect->top);
-    convert = src_surface && src_surface->resource.format->id != dst_surface->resource.format->id;
+    convert = src_surface && src_texture->resource.format->id != dst_texture->resource.format->id;
 
-    dst_ds_flags = dst_surface->container->resource.format_flags
+    dst_ds_flags = dst_texture->resource.format_flags
             & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
     if (src_surface)
-        src_ds_flags = src_surface->container->resource.format_flags
+        src_ds_flags = src_texture->resource.format_flags
                 & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
     else
         src_ds_flags = 0;
@@ -4820,8 +4822,8 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
                 return WINED3DERR_INVALIDCALL;
             }
 
-            if (SUCCEEDED(wined3d_surface_depth_blt(src_surface, src_surface->container->resource.draw_binding,
-                    src_rect, dst_surface, dst_surface->container->resource.draw_binding, dst_rect)))
+            if (SUCCEEDED(wined3d_surface_depth_blt(src_surface, src_texture->resource.draw_binding,
+                    src_rect, dst_surface, dst_texture->resource.draw_binding, dst_rect)))
                 return WINED3D_OK;
         }
     }
@@ -4849,7 +4851,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
 
             TRACE("Color fill.\n");
 
-            if (!wined3d_format_convert_color_to_float(dst_surface->resource.format,
+            if (!wined3d_format_convert_color_to_float(dst_texture->resource.format,
                     palette, fx->fill_color, &color))
                 goto fallback;
 
@@ -4869,7 +4871,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
             }
             else if (flags & WINED3D_BLT_SRC_CKEY)
             {
-                color_key = &src_surface->container->async.src_blt_color_key;
+                color_key = &src_texture->async.src_blt_color_key;
                 blit_op = WINED3D_BLIT_OP_COLOR_BLIT_CKEY;
             }
             else if (flags & WINED3D_BLT_ALPHA_TEST)
@@ -4890,10 +4892,10 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
 
                     if (SUCCEEDED(surface_upload_from_surface(dst_surface, &dst_point, src_surface, src_rect)))
                     {
-                        if (!wined3d_resource_is_offscreen(&dst_surface->container->resource))
+                        if (!wined3d_resource_is_offscreen(&dst_texture->resource))
                         {
                             struct wined3d_context *context = context_acquire(device, dst_surface);
-                            surface_load_location(dst_surface, context, dst_surface->container->resource.draw_binding);
+                            surface_load_location(dst_surface, context, dst_texture->resource.draw_binding);
                             context_release(context);
                         }
                         return WINED3D_OK;
@@ -4901,8 +4903,8 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
                 }
             }
             else if (dst_swapchain && dst_swapchain->back_buffers
-                    && dst_surface->container == dst_swapchain->front_buffer
-                    && src_surface->container == dst_swapchain->back_buffers[0])
+                    && dst_texture == dst_swapchain->front_buffer
+                    && src_texture == dst_swapchain->back_buffers[0])
             {
                 /* Use present for back -> front blits. The idea behind this is
                  * that present is potentially faster than a blit, in particular
@@ -4924,27 +4926,27 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
             }
 
             if (fbo_blit_supported(&device->adapter->gl_info, blit_op,
-                    src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
-                    dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format))
+                    src_rect, src_texture->resource.usage, src_texture->resource.pool, src_texture->resource.format,
+                    dst_rect, dst_texture->resource.usage, dst_texture->resource.pool, dst_texture->resource.format))
             {
                 struct wined3d_context *context;
                 TRACE("Using FBO blit.\n");
 
                 context = context_acquire(device, NULL);
                 surface_blt_fbo(device, context, filter,
-                        src_surface, src_surface->container->resource.draw_binding, src_rect,
-                        dst_surface, dst_surface->container->resource.draw_binding, dst_rect);
+                        src_surface, src_texture->resource.draw_binding, src_rect,
+                        dst_surface, dst_texture->resource.draw_binding, dst_rect);
                 context_release(context);
 
-                surface_validate_location(dst_surface, dst_surface->container->resource.draw_binding);
-                surface_invalidate_location(dst_surface, ~dst_surface->container->resource.draw_binding);
+                surface_validate_location(dst_surface, dst_texture->resource.draw_binding);
+                surface_invalidate_location(dst_surface, ~dst_texture->resource.draw_binding);
 
                 return WINED3D_OK;
             }
 
             blitter = wined3d_select_blitter(&device->adapter->gl_info, &device->adapter->d3d_info, blit_op,
-                    src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
-                    dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format);
+                    src_rect, src_texture->resource.usage, src_texture->resource.pool, src_texture->resource.format,
+                    dst_rect, dst_texture->resource.usage, dst_texture->resource.pool, dst_texture->resource.format);
             if (blitter)
             {
                 blitter->blit_surface(device, blit_op, filter, src_surface,
