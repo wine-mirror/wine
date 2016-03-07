@@ -151,3 +151,7 @@ const UINT D3D10_1_SDK_VERSION = 0x20;
 
 cpp_quote("HRESULT WINAPI D3D10CreateDevice1(IDXGIAdapter*,D3D10_DRIVER_TYPE,")
 cpp_quote("    HMODULE,UINT,D3D10_FEATURE_LEVEL1,UINT,ID3D10Device1**);")
+
+[local] HRESULT __stdcall D3D10CreateDeviceAndSwapChain1(IDXGIAdapter *adapter, enum D3D10_DRIVER_TYPE driver_type,
+        HMODULE swrast, UINT flags, D3D10_FEATURE_LEVEL1 feature_level, UINT sdk_version,
+        DXGI_SWAP_CHAIN_DESC *swapchain_desc, IDXGISwapChain **swapchain, ID3D10Device1 **device);
