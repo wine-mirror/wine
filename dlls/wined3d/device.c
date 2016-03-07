@@ -4228,7 +4228,7 @@ void CDECL wined3d_device_set_depth_stencil_view(struct wined3d_device *device, 
 }
 
 static struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined3d_device *device,
-        struct wined3d_surface *cursor_image)
+        struct wined3d_texture *cursor_image, unsigned int sub_resource_idx)
 {
     struct wined3d_sub_resource_data data;
     struct wined3d_resource_desc desc;
@@ -4236,9 +4236,9 @@ static struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined
     struct wined3d_texture *texture;
     HRESULT hr;
 
-    if (FAILED(wined3d_surface_map(cursor_image, &map_desc, NULL, WINED3D_MAP_READONLY)))
+    if (FAILED(wined3d_resource_map(&cursor_image->resource, sub_resource_idx, &map_desc, NULL, WINED3D_MAP_READONLY)))
     {
-        ERR("Failed to map source surface.\n");
+        ERR("Failed to map source texture.\n");
         return NULL;
     }
 
@@ -4252,14 +4252,14 @@ static struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined
     desc.multisample_quality = 0;
     desc.usage = WINED3DUSAGE_DYNAMIC;
     desc.pool = WINED3D_POOL_DEFAULT;
-    desc.width = cursor_image->resource.width;
-    desc.height = cursor_image->resource.height;
+    desc.width = cursor_image->sub_resources[sub_resource_idx].resource->width;
+    desc.height = cursor_image->sub_resources[sub_resource_idx].resource->height;
     desc.depth = 1;
     desc.size = 0;
 
     hr = wined3d_texture_create(device, &desc, 1, WINED3D_TEXTURE_CREATE_MAPPABLE,
             &data, NULL, &wined3d_null_parent_ops, &texture);
-    wined3d_surface_unmap(cursor_image);
+    wined3d_resource_unmap(&cursor_image->resource, sub_resource_idx);
     if (FAILED(hr))
     {
         ERR("Failed to create cursor texture.\n");
@@ -4320,7 +4320,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
      * release it after setting the cursor image. Windows doesn't
      * addref the set surface, so we can't do this either without
      * creating circular refcount dependencies. */
-    if (!(device->cursor_texture = wined3d_device_create_cursor_texture(device, cursor_image)))
+    if (!(device->cursor_texture = wined3d_device_create_cursor_texture(device, texture, sub_resource_idx)))
     {
         ERR("Failed to create cursor texture.\n");
         return WINED3DERR_INVALIDCALL;
