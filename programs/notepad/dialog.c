@@ -101,9 +101,9 @@ VOID ShowLastError(void)
  */
 void UpdateWindowCaption(void)
 {
-  WCHAR szCaption[MAX_STRING_LEN];
-  WCHAR szNotepad[MAX_STRING_LEN];
   static const WCHAR hyphenW[] = { ' ','-',' ',0 };
+  WCHAR szNotepad[64];
+  WCHAR szCaption[ARRAY_SIZE(Globals.szFileTitle) + ARRAY_SIZE(hyphenW) + ARRAY_SIZE(szNotepad)];
 
   if (Globals.szFileTitle[0] != '\0')
       lstrcpyW(szCaption, Globals.szFileTitle);
