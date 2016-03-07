@@ -51,8 +51,8 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
 
     while(TRUE)
     {
-        lenName = sizeof(WCHAR[MAX_LOAD_STRING])/sizeof(WCHAR);
-        lenData = sizeof(WCHAR[MAX_LOAD_STRING]);
+        lenName = sizeof(wszName)/sizeof(WCHAR);
+        lenData = sizeof(wszData);
 
         retEnum = RegEnumValueW(hKey, i, wszName, &lenName,
                 NULL, &valType, (LPBYTE)wszData, &lenData);
@@ -100,8 +100,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
             tvis.hParent = TVI_ROOT;
             tvis.hParent = TreeView_InsertItemW(details.hReg, &tvis);
 
-            lenName = sizeof(WCHAR[MAX_LOAD_STRING]);
-
+            lenName = sizeof(wszName);
             RegQueryValueW(hCurKey, NULL, wszName, (LONG *)&lenName);
             RegCloseKey(hCurKey);
 
@@ -116,13 +115,12 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
     }
 
     i=-1;
-    lenName = sizeof(WCHAR[MAX_LOAD_STRING]);
 
     while(TRUE)
     {
         i++;
 
-        if(RegEnumKeyW(hKey, i, wszName, lenName) != ERROR_SUCCESS) break;
+        if(RegEnumKeyW(hKey, i, wszName, sizeof(wszName)/sizeof(WCHAR)) != ERROR_SUCCESS) break;
 
         if(RegOpenKeyW(hKey, wszName, &hCurKey) != ERROR_SUCCESS) continue;
 
@@ -131,8 +129,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
 
         if(addings && !memcmp(wszName, wszProgID, sizeof(WCHAR[7])))
         {
-            lenData = sizeof(WCHAR[MAX_LOAD_STRING]);
-
+            lenData = sizeof(wszData);
             RegQueryValueW(hCurKey, NULL, wszData, (LONG *)&lenData);
             RegCloseKey(hCurKey);
 
@@ -149,7 +146,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
 
             RegOpenKeyW(HKEY_CLASSES_ROOT, wszCLSID, &hCurKey);
 
-            lenName = sizeof(WCHAR[MAX_LOAD_STRING]);
+            lenName = sizeof(wszName);
             RegQueryValueW(hCurKey, NULL, wszName, (LONG *)&lenName);
 
             tvis.hParent = TVI_ROOT;
@@ -171,14 +168,13 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
         }
         else if(addings && !memcmp(wszName, wszTypeLib, sizeof(WCHAR[8])))
         {
-            lenData = sizeof(WCHAR[MAX_LOAD_STRING]);
-
+            lenData = sizeof(wszData);
             RegQueryValueW(hCurKey, NULL, wszData, (LONG *)&lenData);
             RegCloseKey(hCurKey);
 
             RegOpenKeyW(HKEY_CLASSES_ROOT, wszTypeLib, &hCurKey);
 
-            lenName = sizeof(WCHAR[MAX_LOAD_STRING]);
+            lenName = sizeof(wszName);
             RegQueryValueW(hCurKey, NULL, wszName, (LONG *)&lenName);
 
             tvis.hParent = TVI_ROOT;
