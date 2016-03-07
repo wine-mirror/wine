@@ -1366,6 +1366,26 @@ static HRESULT d3dx9_base_effect_set_value(struct d3dx9_base_effect *base,
     {
         switch (param->type)
         {
+            case D3DXPT_TEXTURE:
+            case D3DXPT_TEXTURE1D:
+            case D3DXPT_TEXTURE2D:
+            case D3DXPT_TEXTURE3D:
+            case D3DXPT_TEXTURECUBE:
+            {
+                unsigned int i;
+
+                for (i = 0; i < (param->element_count ? param->element_count : 1); ++i)
+                {
+                    IUnknown *unk = ((IUnknown **)data)[i];
+                    if (unk)
+                        IUnknown_AddRef(unk);
+
+                    unk = ((IUnknown **)param->data)[i];
+                    if (unk)
+                        IUnknown_Release(unk);
+                }
+            }
+            /* fallthrough */
             case D3DXPT_VOID:
             case D3DXPT_BOOL:
             case D3DXPT_INT:
