@@ -4098,55 +4098,59 @@ static HRESULT surface_cpu_blt_compressed(const BYTE *src_data, BYTE *dst_data,
     return E_NOTIMPL;
 }
 
-static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect,
-        struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
-        const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter)
+static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
+        const struct wined3d_box *dst_box, struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx,
+        const struct wined3d_box *src_box, DWORD flags, const struct wined3d_blt_fx *fx,
+        enum wined3d_texture_filter_type filter)
 {
-    const struct wined3d_box dst_box = {dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, 0, 1};
-    int bpp, srcheight, srcwidth, dstheight, dstwidth, width;
+    unsigned int bpp, src_height, src_width, dst_height, dst_width, row_byte_count;
     const struct wined3d_format *src_format, *dst_format;
+    struct wined3d_texture *converted_texture = NULL;
     unsigned int src_fmt_flags, dst_fmt_flags;
-    struct wined3d_texture *src_texture = NULL;
     struct wined3d_map_desc dst_map, src_map;
     const BYTE *sbase = NULL;
     HRESULT hr = WINED3D_OK;
+    BOOL same_sub_resource;
     const BYTE *sbuf;
     BYTE *dbuf;
     int x, y;
 
-    TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
-            dst_surface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
-            flags, fx, debug_d3dtexturefiltertype(filter));
+    TRACE("dst_texture %p, dst_sub_resource_idx %u, dst_box %s, src_texture %p, "
+            "src_sub_resource_idx %u, src_box %s, flags %#x, fx %p, filter %s.\n",
+            dst_texture, dst_sub_resource_idx, debug_box(dst_box), src_texture,
+            src_sub_resource_idx, debug_box(src_box), flags, fx, debug_d3dtexturefiltertype(filter));
 
-    if (src_surface == dst_surface)
+    if (src_texture == dst_texture && src_sub_resource_idx == dst_sub_resource_idx)
     {
-        wined3d_surface_map(dst_surface, &dst_map, NULL, 0);
+        same_sub_resource = TRUE;
+        wined3d_resource_map(&dst_texture->resource, dst_sub_resource_idx, &dst_map, NULL, 0);
         src_map = dst_map;
-        src_format = dst_surface->resource.format;
+        src_format = dst_texture->resource.format;
         dst_format = src_format;
-        dst_fmt_flags = dst_surface->container->resource.format_flags;
+        dst_fmt_flags = dst_texture->resource.format_flags;
         src_fmt_flags = dst_fmt_flags;
     }
     else
     {
-        dst_format = dst_surface->resource.format;
-        dst_fmt_flags = dst_surface->container->resource.format_flags;
-        if (src_surface)
+        same_sub_resource = FALSE;
+        dst_format = dst_texture->resource.format;
+        dst_fmt_flags = dst_texture->resource.format_flags;
+        if (src_texture)
         {
-            if (dst_surface->resource.format->id != src_surface->resource.format->id)
+            if (dst_texture->resource.format->id != src_texture->resource.format->id)
             {
-                if (!(src_texture = surface_convert_format(src_surface->container,
-                        surface_get_sub_resource_idx(src_surface), dst_format->id)))
+                if (!(converted_texture = surface_convert_format(src_texture, src_sub_resource_idx, dst_format->id)))
                 {
                     /* The conv function writes a FIXME */
                     WARN("Cannot convert source surface format to dest format.\n");
                     goto release;
                 }
-                src_surface = surface_from_resource(wined3d_texture_get_sub_resource(src_texture, 0));
+                src_texture = converted_texture;
+                src_sub_resource_idx = 0;
             }
-            wined3d_surface_map(src_surface, &src_map, NULL, WINED3D_MAP_READONLY);
-            src_format = src_surface->resource.format;
-            src_fmt_flags = src_surface->container->resource.format_flags;
+            wined3d_resource_map(&src_texture->resource, src_sub_resource_idx, &src_map, NULL, WINED3D_MAP_READONLY);
+            src_format = src_texture->resource.format;
+            src_fmt_flags = src_texture->resource.format_flags;
         }
         else
         {
@@ -4154,53 +4158,55 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
             src_fmt_flags = dst_fmt_flags;
         }
 
-        wined3d_surface_map(dst_surface, &dst_map, &dst_box, 0);
+        wined3d_resource_map(&dst_texture->resource, dst_sub_resource_idx, &dst_map, dst_box, 0);
     }
 
-    bpp = dst_surface->resource.format->byte_count;
-    srcheight = src_rect->bottom - src_rect->top;
-    srcwidth = src_rect->right - src_rect->left;
-    dstheight = dst_rect->bottom - dst_rect->top;
-    dstwidth = dst_rect->right - dst_rect->left;
-    width = (dst_rect->right - dst_rect->left) * bpp;
+    bpp = dst_format->byte_count;
+    src_height = src_box->bottom - src_box->top;
+    src_width = src_box->right - src_box->left;
+    dst_height = dst_box->bottom - dst_box->top;
+    dst_width = dst_box->right - dst_box->left;
+    row_byte_count = dst_width * bpp;
 
-    if (src_surface)
+    if (src_texture)
         sbase = (BYTE *)src_map.data
-                + ((src_rect->top / src_format->block_height) * src_map.row_pitch)
-                + ((src_rect->left / src_format->block_width) * src_format->block_byte_count);
-    if (src_surface != dst_surface)
-        dbuf = dst_map.data;
-    else
+                + ((src_box->top / src_format->block_height) * src_map.row_pitch)
+                + ((src_box->left / src_format->block_width) * src_format->block_byte_count);
+    if (same_sub_resource)
         dbuf = (BYTE *)dst_map.data
-                + ((dst_rect->top / dst_format->block_height) * dst_map.row_pitch)
-                + ((dst_rect->left / dst_format->block_width) * dst_format->block_byte_count);
+                + ((dst_box->top / dst_format->block_height) * dst_map.row_pitch)
+                + ((dst_box->left / dst_format->block_width) * dst_format->block_byte_count);
+    else
+        dbuf = dst_map.data;
 
     if (src_fmt_flags & dst_fmt_flags & WINED3DFMT_FLAG_BLOCKS)
     {
         TRACE("%s -> %s copy.\n", debug_d3dformat(src_format->id), debug_d3dformat(dst_format->id));
 
-        if (src_surface == dst_surface)
+        if (same_sub_resource)
         {
             FIXME("Only plain blits supported on compressed surfaces.\n");
             hr = E_NOTIMPL;
             goto release;
         }
 
-        if (srcheight != dstheight || srcwidth != dstwidth)
+        if (src_height != dst_height || src_width != dst_width)
         {
             WARN("Stretching not supported on compressed surfaces.\n");
             hr = WINED3DERR_INVALIDCALL;
             goto release;
         }
 
-        if (!surface_check_block_align_rect(src_surface, src_rect))
+        if (!wined3d_texture_check_block_align(src_texture,
+                src_sub_resource_idx % src_texture->level_count, src_box))
         {
             WARN("Source rectangle not block-aligned.\n");
             hr = WINED3DERR_INVALIDCALL;
             goto release;
         }
 
-        if (!surface_check_block_align_rect(dst_surface, dst_rect))
+        if (!wined3d_texture_check_block_align(dst_texture,
+                dst_sub_resource_idx % dst_texture->level_count, dst_box))
         {
             WARN("Destination rectangle not block-aligned.\n");
             hr = WINED3DERR_INVALIDCALL;
@@ -4208,7 +4214,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
         }
 
         hr = surface_cpu_blt_compressed(sbase, dbuf,
-                src_map.row_pitch, dst_map.row_pitch, dstwidth, dstheight,
+                src_map.row_pitch, dst_map.row_pitch, dst_width, dst_height,
                 src_format, flags, fx);
         goto release;
     }
@@ -4216,7 +4222,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
     /* First, all the 'source-less' blits */
     if (flags & WINED3D_BLT_COLOR_FILL)
     {
-        hr = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp, dst_map.row_pitch, fx->fill_color);
+        hr = _Blt_ColorFill(dbuf, dst_width, dst_height, bpp, dst_map.row_pitch, fx->fill_color);
         flags &= ~WINED3D_BLT_COLOR_FILL;
     }
 
@@ -4224,64 +4230,64 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
         FIXME("WINED3D_BLT_DEPTH_FILL needs to be implemented!\n");
 
     /* Now the 'with source' blits. */
-    if (src_surface)
+    if (src_texture)
     {
         int sx, xinc, sy, yinc;
 
-        if (!dstwidth || !dstheight) /* Hmm... stupid program? */
+        if (!dst_width || !dst_height) /* Hmm... stupid program? */
             goto release;
 
         if (filter != WINED3D_TEXF_NONE && filter != WINED3D_TEXF_POINT
-                && (srcwidth != dstwidth || srcheight != dstheight))
+                && (src_width != dst_width || src_height != dst_height))
         {
             /* Can happen when d3d9 apps do a StretchRect() call which isn't handled in GL. */
             FIXME("Filter %s not supported in software blit.\n", debug_d3dtexturefiltertype(filter));
         }
 
-        xinc = (srcwidth << 16) / dstwidth;
-        yinc = (srcheight << 16) / dstheight;
+        xinc = (src_width << 16) / dst_width;
+        yinc = (src_height << 16) / dst_height;
 
         if (!flags)
         {
             /* No effects, we can cheat here. */
-            if (dstwidth == srcwidth)
+            if (dst_width == src_width)
             {
-                if (dstheight == srcheight)
+                if (dst_height == src_height)
                 {
                     /* No stretching in either direction. This needs to be as
                      * fast as possible. */
                     sbuf = sbase;
 
                     /* Check for overlapping surfaces. */
-                    if (src_surface != dst_surface || dst_rect->top < src_rect->top
-                            || dst_rect->right <= src_rect->left || src_rect->right <= dst_rect->left)
+                    if (!same_sub_resource || dst_box->top < src_box->top
+                            || dst_box->right <= src_box->left || src_box->right <= dst_box->left)
                     {
                         /* No overlap, or dst above src, so copy from top downwards. */
-                        for (y = 0; y < dstheight; ++y)
+                        for (y = 0; y < dst_height; ++y)
                         {
-                            memcpy(dbuf, sbuf, width);
+                            memcpy(dbuf, sbuf, row_byte_count);
                             sbuf += src_map.row_pitch;
                             dbuf += dst_map.row_pitch;
                         }
                     }
-                    else if (dst_rect->top > src_rect->top)
+                    else if (dst_box->top > src_box->top)
                     {
                         /* Copy from bottom upwards. */
-                        sbuf += src_map.row_pitch * dstheight;
-                        dbuf += dst_map.row_pitch * dstheight;
-                        for (y = 0; y < dstheight; ++y)
+                        sbuf += src_map.row_pitch * dst_height;
+                        dbuf += dst_map.row_pitch * dst_height;
+                        for (y = 0; y < dst_height; ++y)
                         {
                             sbuf -= src_map.row_pitch;
                             dbuf -= dst_map.row_pitch;
-                            memcpy(dbuf, sbuf, width);
+                            memcpy(dbuf, sbuf, row_byte_count);
                         }
                     }
                     else
                     {
                         /* Src and dst overlapping on the same line, use memmove. */
-                        for (y = 0; y < dstheight; ++y)
+                        for (y = 0; y < dst_height; ++y)
                         {
-                            memmove(dbuf, sbuf, width);
+                            memmove(dbuf, sbuf, row_byte_count);
                             sbuf += src_map.row_pitch;
                             dbuf += dst_map.row_pitch;
                         }
@@ -4290,10 +4296,10 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
                 else
                 {
                     /* Stretching in y direction only. */
-                    for (y = sy = 0; y < dstheight; ++y, sy += yinc)
+                    for (y = sy = 0; y < dst_height; ++y, sy += yinc)
                     {
                         sbuf = sbase + (sy >> 16) * src_map.row_pitch;
-                        memcpy(dbuf, sbuf, width);
+                        memcpy(dbuf, sbuf, row_byte_count);
                         dbuf += dst_map.row_pitch;
                     }
                 }
@@ -4302,7 +4308,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
             {
                 /* Stretching in X direction. */
                 int last_sy = -1;
-                for (y = sy = 0; y < dstheight; ++y, sy += yinc)
+                for (y = sy = 0; y < dst_height; ++y, sy += yinc)
                 {
                     sbuf = sbase + (sy >> 16) * src_map.row_pitch;
 
@@ -4310,7 +4316,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
                     {
                         /* This source row is the same as last source row -
                          * Copy the already stretched row. */
-                        memcpy(dbuf, dbuf - dst_map.row_pitch, width);
+                        memcpy(dbuf, dbuf - dst_map.row_pitch, row_byte_count);
                     }
                     else
                     {
@@ -4318,7 +4324,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
 do { \
     const type *s = (const type *)sbuf; \
     type *d = (type *)dbuf; \
-    for (x = sx = 0; x < dstwidth; ++x, sx += xinc) \
+    for (x = sx = 0; x < dst_width; ++x, sx += xinc) \
         d[x] = s[sx >> 16]; \
 } while(0)
 
@@ -4337,7 +4343,7 @@ do { \
                             {
                                 const BYTE *s;
                                 BYTE *d = dbuf;
-                                for (x = sx = 0; x < dstwidth; x++, sx+= xinc)
+                                for (x = sx = 0; x < dst_width; x++, sx+= xinc)
                                 {
                                     DWORD pixel;
 
@@ -4373,8 +4379,8 @@ do { \
                 /* The color keying flags are checked for correctness in ddraw */
                 if (flags & WINED3D_BLT_SRC_CKEY)
                 {
-                    keylow  = src_surface->container->async.src_blt_color_key.color_space_low_value;
-                    keyhigh = src_surface->container->async.src_blt_color_key.color_space_high_value;
+                    keylow  = src_texture->async.src_blt_color_key.color_space_low_value;
+                    keyhigh = src_texture->async.src_blt_color_key.color_space_high_value;
                 }
                 else if (flags & WINED3D_BLT_SRC_CKEY_OVERRIDE)
                 {
@@ -4385,8 +4391,8 @@ do { \
                 if (flags & WINED3D_BLT_DST_CKEY)
                 {
                     /* Destination color keys are taken from the source surface! */
-                    destkeylow = src_surface->container->async.dst_blt_color_key.color_space_low_value;
-                    destkeyhigh = src_surface->container->async.dst_blt_color_key.color_space_high_value;
+                    destkeylow = src_texture->async.dst_blt_color_key.color_space_low_value;
+                    destkeyhigh = src_texture->async.dst_blt_color_key.color_space_high_value;
                 }
                 else if (flags & WINED3D_BLT_DST_CKEY_OVERRIDE)
                 {
@@ -4415,9 +4421,9 @@ do { \
                 BYTE *dTopLeft, *dTopRight, *dBottomLeft, *dBottomRight, *tmp;
                 LONG tmpxy;
                 dTopLeft     = dbuf;
-                dTopRight    = dbuf + ((dstwidth - 1) * bpp);
-                dBottomLeft  = dTopLeft + ((dstheight - 1) * dst_map.row_pitch);
-                dBottomRight = dBottomLeft + ((dstwidth - 1) * bpp);
+                dTopRight    = dbuf + ((dst_width - 1) * bpp);
+                dBottomLeft  = dTopLeft + ((dst_height - 1) * dst_map.row_pitch);
+                dBottomRight = dBottomLeft + ((dst_width - 1) * bpp);
 
                 if (fx->fx & WINEDDBLTFX_ARITHSTRETCHY)
                 {
@@ -4497,11 +4503,11 @@ do { \
 do { \
     const type *s; \
     type *d = (type *)dbuf, *dx, tmp; \
-    for (y = sy = 0; y < dstheight; ++y, sy += yinc) \
+    for (y = sy = 0; y < dst_height; ++y, sy += yinc) \
     { \
         s = (const type *)(sbase + (sy >> 16) * src_map.row_pitch); \
         dx = d; \
-        for (x = sx = 0; x < dstwidth; ++x, sx += xinc) \
+        for (x = sx = 0; x < dst_width; ++x, sx += xinc) \
         { \
             tmp = s[sx >> 16]; \
             if (((tmp & keymask) < keylow || (tmp & keymask) > keyhigh) \
@@ -4530,11 +4536,11 @@ do { \
                 {
                     const BYTE *s;
                     BYTE *d = dbuf, *dx;
-                    for (y = sy = 0; y < dstheight; ++y, sy += yinc)
+                    for (y = sy = 0; y < dst_height; ++y, sy += yinc)
                     {
                         sbuf = sbase + (sy >> 16) * src_map.row_pitch;
                         dx = d;
-                        for (x = sx = 0; x < dstwidth; ++x, sx+= xinc)
+                        for (x = sx = 0; x < dst_width; ++x, sx+= xinc)
                         {
                             DWORD pixel, dpixel = 0;
                             s = sbuf + 3 * (sx>>16);
@@ -4570,12 +4576,11 @@ error:
     }
 
 release:
-    wined3d_surface_unmap(dst_surface);
-    if (src_surface && src_surface != dst_surface)
-        wined3d_surface_unmap(src_surface);
-    /* Release the converted surface, if any. */
-    if (src_texture)
-        wined3d_texture_decref(src_texture);
+    wined3d_resource_unmap(&dst_texture->resource, dst_sub_resource_idx);
+    if (src_texture && !same_sub_resource)
+        wined3d_resource_unmap(&src_texture->resource, src_sub_resource_idx);
+    if (converted_texture)
+        wined3d_texture_decref(converted_texture);
 
     return hr;
 }
@@ -4583,13 +4588,13 @@ release:
 static HRESULT cpu_blit_color_fill(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
         const RECT *rect, const struct wined3d_color *color)
 {
-    struct wined3d_surface *surface = wined3d_rendertarget_view_get_surface(view);
-    static const RECT src_rect;
+    const struct wined3d_box box = {rect->left, rect->top, rect->right, rect->bottom, 0, 1};
+    static const struct wined3d_box src_box;
     struct wined3d_blt_fx fx;
 
     fx.fill_color = wined3d_format_convert_from_float(view->format, color);
-    return surface_cpu_blt(surface, rect, NULL, &src_rect,
-            WINED3D_BLT_COLOR_FILL, &fx, WINED3D_TEXF_POINT);
+    return surface_cpu_blt(wined3d_texture_from_resource(view->resource), view->sub_resource_idx,
+            &box, NULL, 0, &src_box, WINED3D_BLT_COLOR_FILL, &fx, WINED3D_TEXF_POINT);
 }
 
 static HRESULT cpu_blit_depth_fill(struct wined3d_device *device,
@@ -4623,6 +4628,8 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
         struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
         const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter)
 {
+    struct wined3d_box dst_box = {dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, 0, 1};
+    struct wined3d_box src_box = {src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1};
     struct wined3d_texture *dst_texture = dst_surface->container;
     struct wined3d_device *device = dst_texture->resource.device;
     struct wined3d_swapchain *src_swapchain, *dst_swapchain;
@@ -4926,7 +4933,8 @@ fallback:
         return WINED3D_OK;
 
 cpu:
-    return surface_cpu_blt(dst_surface, dst_rect, src_surface, src_rect, flags, fx, filter);
+    return surface_cpu_blt(dst_texture, surface_get_sub_resource_idx(dst_surface), &dst_box,
+            src_texture, src_texture ? surface_get_sub_resource_idx(src_surface) : 0, &src_box, flags, fx, filter);
 }
 
 HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_texture *container,
