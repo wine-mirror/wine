@@ -120,7 +120,7 @@
 @ stdcall CopySid(long ptr ptr)
 # @ stub CreateCodeAuthzLevel
 @ stdcall CreatePrivateObjectSecurity(ptr ptr ptr long long ptr)
-# @ stub CreatePrivateObjectSecurityEx
+@ stdcall CreatePrivateObjectSecurityEx(ptr ptr ptr ptr long long long ptr)
 @ stdcall CreatePrivateObjectSecurityWithMultipleInheritance(ptr ptr ptr ptr long long long long ptr)
 @ stdcall CreateProcessAsUserA(long str str ptr ptr long long ptr str ptr ptr)
 # @ stub CreateProcessAsUserSecure
