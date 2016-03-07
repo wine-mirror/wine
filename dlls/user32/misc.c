@@ -729,6 +729,16 @@ BOOL WINAPI UnregisterPowerSettingNotification(HPOWERNOTIFY handle)
     return TRUE;
 }
 
+/*****************************************************************************
+ * GetGestureConfig (USER32.@)
+ */
+BOOL WINAPI GetGestureConfig( HWND hwnd, DWORD reserved, DWORD flags, UINT *count, GESTURECONFIG *config, UINT size )
+{
+    FIXME("(%p %08x %08x %p %p %u): stub\n", hwnd, reserved, flags, count, config, size);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
 /**********************************************************************
  * SetGestureConfig [USER32.@]
  */
