@@ -3535,49 +3535,56 @@ void CDECL wined3d_device_draw_indexed_primitive_instanced(struct wined3d_device
     wined3d_cs_emit_draw(device->cs, start_idx, index_count, start_instance, instance_count, TRUE);
 }
 
-/* This is a helper function for UpdateTexture, there is no UpdateVolume method in D3D. */
-static HRESULT device_update_volume(struct wined3d_device *device,
-        struct wined3d_volume *src_volume, struct wined3d_volume *dst_volume)
+static HRESULT wined3d_device_update_texture_3d(struct wined3d_device *device,
+        struct wined3d_texture *src_texture, unsigned int src_level,
+        struct wined3d_texture *dst_texture, unsigned int level_count)
 {
     struct wined3d_const_bo_address data;
-    struct wined3d_map_desc src;
-    HRESULT hr;
     struct wined3d_context *context;
+    struct wined3d_map_desc src;
+    HRESULT hr = WINED3D_OK;
+    unsigned int i;
 
-    TRACE("device %p, src_volume %p, dst_volume %p.\n",
-            device, src_volume, dst_volume);
+    TRACE("device %p, src_texture %p, src_level %u, dst_texture %p, level_count %u.\n",
+            device, src_texture, src_level, dst_texture, level_count);
 
-    if (src_volume->resource.format != dst_volume->resource.format)
+    if (src_texture->resource.format != dst_texture->resource.format)
     {
-        FIXME("Source and destination formats do not match.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-    if (src_volume->resource.width != dst_volume->resource.width
-            || src_volume->resource.height != dst_volume->resource.height
-            || src_volume->resource.depth != dst_volume->resource.depth)
-    {
-        FIXME("Source and destination sizes do not match.\n");
+        WARN("Source and destination formats do not match.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (FAILED(hr = wined3d_volume_map(src_volume, &src, NULL, WINED3D_MAP_READONLY)))
-        return hr;
+    if (src_texture->sub_resources[src_level].resource->width != dst_texture->resource.width
+            || src_texture->sub_resources[src_level].resource->height != dst_texture->resource.height
+            || src_texture->sub_resources[src_level].resource->depth != dst_texture->resource.depth)
+    {
+        WARN("Source and destination dimensions do not match.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
 
     context = context_acquire(device, NULL);
 
-    /* Only a prepare, since we're uploading the entire volume. */
-    wined3d_texture_prepare_texture(dst_volume->container, context, FALSE);
-    wined3d_texture_bind_and_dirtify(dst_volume->container, context, FALSE);
+    /* Only a prepare, since we're uploading entire volumes. */
+    wined3d_texture_prepare_texture(dst_texture, context, FALSE);
+    wined3d_texture_bind_and_dirtify(dst_texture, context, FALSE);
 
-    data.buffer_object = 0;
-    data.addr = src.data;
-    wined3d_volume_upload_data(dst_volume, context, &data);
-    wined3d_volume_invalidate_location(dst_volume, ~WINED3D_LOCATION_TEXTURE_RGB);
+    for (i = 0; i < level_count; ++i)
+    {
+        if (FAILED(hr = wined3d_resource_map(&src_texture->resource,
+                src_level + i, &src, NULL, WINED3D_MAP_READONLY)))
+            goto done;
 
+        data.buffer_object = 0;
+        data.addr = src.data;
+        wined3d_volume_upload_data(dst_texture->sub_resources[i].u.volume, context, &data);
+        wined3d_volume_invalidate_location(dst_texture->sub_resources[i].u.volume, ~WINED3D_LOCATION_TEXTURE_RGB);
+
+        if (FAILED(hr = wined3d_resource_unmap(&src_texture->resource, src_level + i)))
+            goto done;
+    }
+
+done:
     context_release(context);
-
-    hr = wined3d_volume_unmap(src_volume);
-
     return hr;
 }
 
@@ -3671,32 +3678,19 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
                     }
                 }
             }
-            break;
+            return WINED3D_OK;
         }
 
         case WINED3D_RTYPE_TEXTURE_3D:
-        {
-            for (i = 0; i < level_count; ++i)
-            {
-                hr = device_update_volume(device,
-                        volume_from_resource(wined3d_texture_get_sub_resource(src_texture,
-                                i + src_skip_levels)),
-                        volume_from_resource(wined3d_texture_get_sub_resource(dst_texture, i)));
-                if (FAILED(hr))
-                {
-                    WARN("Failed to update volume, hr %#x.\n", hr);
-                    return hr;
-                }
-            }
-            break;
-        }
+            if (FAILED(hr = wined3d_device_update_texture_3d(device,
+                    src_texture, src_skip_levels, dst_texture, level_count)))
+                WARN("Failed to update 3D texture, hr %#x.\n", hr);
+            return hr;
 
         default:
             FIXME("Unsupported texture type %#x.\n", type);
             return WINED3DERR_INVALIDCALL;
     }
-
-    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device, DWORD *num_passes)
