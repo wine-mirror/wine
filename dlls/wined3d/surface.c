@@ -1020,7 +1020,6 @@ static void surface_unload(struct wined3d_resource *resource)
     }
     else
     {
-        wined3d_surface_prepare(surface, context, surface->resource.map_binding);
         surface_load_location(surface, context, surface->resource.map_binding);
         surface_invalidate_location(surface, ~surface->resource.map_binding);
     }
@@ -2194,11 +2193,11 @@ HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_
         gl_info = context->gl_info;
     }
 
-    wined3d_surface_prepare(surface, context, surface->resource.map_binding);
     if (flags & WINED3D_MAP_DISCARD)
     {
         TRACE("WINED3D_MAP_DISCARD flag passed, marking %s as up to date.\n",
                 wined3d_debug_location(surface->resource.map_binding));
+        wined3d_surface_prepare(surface, context, surface->resource.map_binding);
         surface_validate_location(surface, surface->resource.map_binding);
     }
     else
@@ -3463,6 +3462,8 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
+    wined3d_surface_prepare(surface, context, dst_location);
+
     if (surface->locations & surface_simple_locations)
     {
         surface_copy_simple_location(surface, dst_location);
@@ -3578,7 +3579,6 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         {
             /* Performance warning... */
             FIXME("Downloading RGB surface %p to reload it as sRGB.\n", surface);
-            wined3d_surface_prepare(surface, context, surface->resource.map_binding);
             surface_load_location(surface, context, surface->resource.map_binding);
         }
     }
@@ -3589,7 +3589,6 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         {
             /* Performance warning... */
             FIXME("Downloading sRGB surface %p to reload it as RGB.\n", surface);
-            wined3d_surface_prepare(surface, context, surface->resource.map_binding);
             surface_load_location(surface, context, surface->resource.map_binding);
         }
     }
@@ -3598,7 +3597,6 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     {
         WARN("Trying to load a texture from sysmem, but no simple location is valid.\n");
         /* Lets hope we get it from somewhere... */
-        surface_prepare_system_memory(surface);
         surface_load_location(surface, context, WINED3D_LOCATION_SYSMEM);
     }
 
@@ -3625,7 +3623,6 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         else
             surface->resource.map_binding = WINED3D_LOCATION_SYSMEM;
 
-        wined3d_surface_prepare(surface, context, surface->resource.map_binding);
         surface_load_location(surface, context, surface->resource.map_binding);
         wined3d_texture_remove_buffer_object(texture, surface_get_sub_resource_idx(surface), gl_info);
     }
