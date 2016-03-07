@@ -26,7 +26,7 @@
 
 #include "windows.h"
 #include "winternl.h"
-#include "dwrite_2.h"
+#include "dwrite_3.h"
 #include "initguid.h"
 #include "d2d1.h"
 
@@ -2414,8 +2414,6 @@ static void test_GetFontFromFontFace(void)
     IDWriteFactory_Release(factory);
     DELETE_FONTFILE(path);
 }
-
-
 
 static void test_GetFirstMatchingFont(void)
 {
@@ -5268,6 +5266,39 @@ static void test_TranslateColorGlyphRun(void)
     IDWriteFactory2_Release(factory2);
 }
 
+static void test_HasCharacter(void)
+{
+    IDWriteFactory3 *factory3;
+    IDWriteFactory *factory;
+    IDWriteFont3 *font3;
+    IDWriteFont *font;
+    HRESULT hr;
+    BOOL ret;
+
+    factory = create_factory();
+
+    font = get_tahoma_instance(factory, DWRITE_FONT_STYLE_NORMAL);
+    ok(font != NULL, "failed to create font\n");
+
+    /* Win8 is broken, QI claims to support IDWriteFont3, but in fact it does not */
+    hr = IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory3, (void**)&factory3);
+    if (hr == S_OK) {
+        hr = IDWriteFont_QueryInterface(font, &IID_IDWriteFont3, (void**)&font3);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        ret = IDWriteFont3_HasCharacter(font3, 'A');
+        ok(ret, "got %d\n", ret);
+
+        IDWriteFont3_Release(font3);
+        IDWriteFactory3_Release(factory3);
+    }
+    else
+        skip("IDWriteFont3 is not supported.\n");
+
+    IDWriteFont_Release(font);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -5320,6 +5351,7 @@ START_TEST(font)
     test_IsSymbolFont();
     test_GetPaletteEntries();
     test_TranslateColorGlyphRun();
+    test_HasCharacter();
 
     IDWriteFactory_Release(factory);
 }

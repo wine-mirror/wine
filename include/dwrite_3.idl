@@ -252,3 +252,12 @@ interface IDWriteTextLayout3 : IDWriteTextLayout2
     HRESULT GetLineSpacing(DWRITE_LINE_SPACING *spacing);
     HRESULT GetLineMetrics(DWRITE_LINE_METRICS1 *metrics, UINT32 max_count, UINT32 *count);
 }
+
+[
+    local,
+    object,
+    uuid(9a1b41c3-d3bb-466a-87fc-fe67556a3b65)
+]
+interface IDWriteFactory3 : IDWriteFactory2
+{
+}
