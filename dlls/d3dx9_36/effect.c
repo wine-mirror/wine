@@ -3482,9 +3482,11 @@ static HRESULT WINAPI ID3DXEffectImpl_FindNextValidTechnique(ID3DXEffect* iface,
 
 static BOOL WINAPI ID3DXEffectImpl_IsParameterUsed(ID3DXEffect* iface, D3DXHANDLE parameter, D3DXHANDLE technique)
 {
-    struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
+    struct ID3DXEffectImpl *effect = impl_from_ID3DXEffect(iface);
+    struct d3dx_parameter *param = get_valid_parameter(&effect->base_effect, parameter);
 
-    FIXME("(%p)->(%p, %p): stub\n", This, parameter, technique);
+    FIXME("iface %p, parameter %p, technique %p stub.\n", iface, parameter, technique);
+    TRACE("param %p (%s).\n", param, param ? debugstr_a(param->name) : "");
 
     return TRUE;
 }
