@@ -1273,6 +1273,21 @@ static void test_create_depthstencil_view(void)
     ok(U(dsv_desc).Texture2D.MipSlice == 0, "Got Unexpected mip slice %u.\n", U(dsv_desc).Texture2D.MipSlice);
 
     ID3D11DepthStencilView_Release(dsview);
+
+    dsv_desc.Format = DXGI_FORMAT_UNKNOWN;
+    hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, &dsv_desc, &dsview);
+    ok(SUCCEEDED(hr), "Failed to create a depthstencil view, hr %#x.\n", hr);
+
+    memset(&dsv_desc, 0, sizeof(dsv_desc));
+    ID3D11DepthStencilView_GetDesc(dsview, &dsv_desc);
+    todo_wine ok(dsv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", dsv_desc.Format);
+    ok(dsv_desc.ViewDimension == D3D11_DSV_DIMENSION_TEXTURE2D,
+            "Got unexpected view dimension %#x.\n", dsv_desc.ViewDimension);
+    ok(!dsv_desc.Flags, "Got unexpected flags %#x.\n", dsv_desc.Flags);
+    ok(!U(dsv_desc).Texture2D.MipSlice, "Got Unexpected mip slice %u.\n", U(dsv_desc).Texture2D.MipSlice);
+
+    ID3D11DepthStencilView_Release(dsview);
+
     ID3D11Texture2D_Release(texture);
 
     refcount = ID3D11Device_Release(device);
