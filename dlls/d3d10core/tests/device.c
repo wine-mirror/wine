@@ -1040,6 +1040,20 @@ static void test_create_rendertarget_view(void)
     if (SUCCEEDED(hr)) IUnknown_Release(iface);
 
     ID3D10RenderTargetView_Release(rtview);
+
+    rtv_desc.Format = DXGI_FORMAT_UNKNOWN;
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, &rtv_desc, &rtview);
+    ok(SUCCEEDED(hr), "Failed to create a rendertarget view, hr %#x.\n", hr);
+
+    memset(&rtv_desc, 0, sizeof(rtv_desc));
+    ID3D10RenderTargetView_GetDesc(rtview, &rtv_desc);
+    todo_wine ok(rtv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", rtv_desc.Format);
+    ok(rtv_desc.ViewDimension == D3D10_RTV_DIMENSION_TEXTURE2D, "Got unexpected view dimension %#x.\n",
+            rtv_desc.ViewDimension);
+    ok(!U(rtv_desc).Texture2D.MipSlice, "Got unexpected mip slice %#x.\n", U(rtv_desc).Texture2D.MipSlice);
+
+    ID3D10RenderTargetView_Release(rtview);
+
     ID3D10Texture2D_Release(texture);
 
     refcount = ID3D10Device_Release(device);
