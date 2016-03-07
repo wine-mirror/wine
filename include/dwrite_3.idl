@@ -21,6 +21,7 @@ import "dwrite_2.idl";
 interface IDWriteFontFaceReference;
 interface IDWriteFontFace3;
 interface IDWriteFontSet;
+interface IDWriteFontSetBuilder;
 interface IDWriteFontDownloadQueue;
 
 typedef enum DWRITE_LOCALITY
@@ -260,4 +261,50 @@ interface IDWriteTextLayout3 : IDWriteTextLayout2
 ]
 interface IDWriteFactory3 : IDWriteFactory2
 {
+    HRESULT CreateGlyphRunAnalysis(
+        DWRITE_GLYPH_RUN const *run,
+        DWRITE_MATRIX const *transform,
+        DWRITE_RENDERING_MODE1 rendering_mode,
+        DWRITE_MEASURING_MODE measuring_mode,
+        DWRITE_GRID_FIT_MODE gridfit_mode,
+        DWRITE_TEXT_ANTIALIAS_MODE antialias_mode,
+        FLOAT origin_x,
+        FLOAT origin_y,
+        IDWriteGlyphRunAnalysis **analysis);
+
+    HRESULT CreateCustomRenderingParams(
+        FLOAT gamma,
+        FLOAT enhanced_contrast,
+        FLOAT grayscale_enhanced_contrast,
+        FLOAT cleartype_level,
+        DWRITE_PIXEL_GEOMETRY pixel_geometry,
+        DWRITE_RENDERING_MODE1 rendering_mode,
+        DWRITE_GRID_FIT_MODE gridfit_mode,
+        IDWriteRenderingParams3 **params);
+
+    HRESULT CreateFontFaceReference(
+        WCHAR const *path,
+        FILETIME const *writetime,
+        UINT32 index,
+        DWRITE_FONT_SIMULATIONS simulations,
+        IDWriteFontFaceReference **reference);
+
+    HRESULT CreateFontFaceReference_(
+        IDWriteFontFile *file,
+        UINT32 index,
+        DWRITE_FONT_SIMULATIONS simulations,
+        IDWriteFontFaceReference **reference);
+
+    HRESULT GetSystemFontSet(IDWriteFontSet **fontset);
+    HRESULT CreateFontSetBuilder(IDWriteFontSetBuilder **builder);
+    HRESULT CreateFontCollectionFromFontSet(
+        IDWriteFontSet *fontset,
+        IDWriteFontCollection1 **collection);
+
+    HRESULT GetSystemFontCollection(
+        BOOL include_downloadable,
+        IDWriteFontCollection1 **collection,
+        BOOL check_for_updates);
+
+    HRESULT GetFontDownloadQueue(IDWriteFontDownloadQueue **queue);
 }
