@@ -299,6 +299,10 @@ wine_fn_config_makefile ()
     ac_enable=$[2]
     ac_flags=$[3]
 
+    case $ac_dir in
+    dnl These are created as symlinks for wow64 builds
+    fonts|server) test -z "$with_wine64" || return ;;
+    esac
     AS_VAR_IF([$ac_enable],[no],[wine_fn_disabled_rules; return])
     wine_fn_all_rules
     wine_fn_install_rules

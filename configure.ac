@@ -3596,15 +3596,15 @@ fi
 if test -n "$with_wine64"
 then
     WINE_APPEND_RULE(
-[all: fonts server tools $with_wine64/loader/wine $with_wine64/loader/wine-preloader
-fonts server tools:
+[all: fonts server $with_wine64/loader/wine $with_wine64/loader/wine-preloader
+fonts server:
 	\$(RM) \$[@] && \$(LN_S) $with_wine64/\$[@] \$[@]
 $with_wine64/loader/wine:
 	\$(RM) \$[@] && \$(LN_S) $ac_pwd/loader/wine \$[@]
 $with_wine64/loader/wine-preloader:
 	\$(RM) \$[@] && \$(LN_S) $ac_pwd/loader/wine-preloader \$[@]
 clean::
-	\$(RM) fonts server tools $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
+	\$(RM) fonts server $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
 else
     AC_SUBST(WINELOADER_INSTALL,"wine.inf")
     WINE_APPEND_RULE(
