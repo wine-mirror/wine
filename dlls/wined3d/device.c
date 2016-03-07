@@ -4340,7 +4340,8 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
             return E_OUTOFMEMORY;
         memset(mask_bits, 0xff, mask_size);
 
-        wined3d_surface_map(cursor_image, &map_desc, NULL, WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY);
+        wined3d_resource_map(&texture->resource, sub_resource_idx, &map_desc, NULL,
+                WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY);
         cursor_info.fIcon = FALSE;
         cursor_info.xHotspot = x_hotspot;
         cursor_info.yHotspot = y_hotspot;
@@ -4348,7 +4349,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
                 cursor_image->resource.height, 1, 1, mask_bits);
         cursor_info.hbmColor = CreateBitmap(cursor_image->resource.width,
                 cursor_image->resource.height, 1, 32, map_desc.data);
-        wined3d_surface_unmap(cursor_image);
+        wined3d_resource_unmap(&texture->resource, sub_resource_idx);
 
         /* Create our cursor and clean up. */
         cursor = CreateIconIndirect(&cursor_info);
