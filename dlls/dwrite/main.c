@@ -894,7 +894,7 @@ static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory2 *iface,
     cached = heap_alloc(sizeof(*cached));
     if (!cached) {
         IDWriteFontFace3_Release(face);
-        return hr;
+        return E_OUTOFMEMORY;
     }
 
     cached->fontface = (IDWriteFontFace*)face;
