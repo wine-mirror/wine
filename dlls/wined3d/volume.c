@@ -27,7 +27,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
-BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
+static BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
 {
     if (volume->resource.heap_memory)
         return TRUE;
@@ -38,6 +38,36 @@ BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
         return FALSE;
     }
     return TRUE;
+}
+
+/* Context activation is done by the caller. Context may be NULL in
+ * WINED3D_NO3D mode. */
+static BOOL wined3d_volume_prepare_location(struct wined3d_volume *volume,
+        struct wined3d_context *context, DWORD location)
+{
+    struct wined3d_texture *texture = volume->container;
+
+    switch (location)
+    {
+        case WINED3D_LOCATION_SYSMEM:
+            return volume_prepare_system_memory(volume);
+
+        case WINED3D_LOCATION_BUFFER:
+            wined3d_texture_prepare_buffer_object(texture, volume->texture_level, context->gl_info);
+            return TRUE;
+
+        case WINED3D_LOCATION_TEXTURE_RGB:
+            wined3d_texture_prepare_texture(texture, context, FALSE);
+            return TRUE;
+
+        case WINED3D_LOCATION_TEXTURE_SRGB:
+            wined3d_texture_prepare_texture(texture, context, TRUE);
+            return TRUE;
+
+        default:
+            ERR("Invalid location %s.\n", wined3d_debug_location(location));
+            return FALSE;
+    }
 }
 
 /* This call just uploads data, the caller is responsible for binding the
@@ -384,11 +414,10 @@ static void volume_unload(struct wined3d_resource *resource)
 
     TRACE("texture %p.\n", resource);
 
-    if (volume_prepare_system_memory(volume))
+    context = context_acquire(device, NULL);
+    if (wined3d_volume_prepare_location(volume, context, WINED3D_LOCATION_SYSMEM))
     {
-        context = context_acquire(device, NULL);
         wined3d_volume_load_location(volume, context, WINED3D_LOCATION_SYSMEM);
-        context_release(context);
         wined3d_volume_invalidate_location(volume, ~WINED3D_LOCATION_SYSMEM);
     }
     else
@@ -397,6 +426,7 @@ static void volume_unload(struct wined3d_resource *resource)
         wined3d_volume_validate_location(volume, WINED3D_LOCATION_DISCARDED);
         wined3d_volume_invalidate_location(volume, ~WINED3D_LOCATION_DISCARDED);
     }
+    context_release(context);
 
     /* The texture name is managed by the container. */
 
@@ -465,17 +495,24 @@ HRESULT wined3d_volume_map(struct wined3d_volume *volume,
 
     flags = wined3d_resource_sanitize_map_flags(&volume->resource, flags);
 
+    context = context_acquire(device, NULL);
+    gl_info = context->gl_info;
+
+    if (!wined3d_volume_prepare_location(volume, context, volume->resource.map_binding))
+    {
+        ERR("Failed to prepare location.\n");
+        context_release(context);
+        map_desc->data = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    if (flags & WINED3D_MAP_DISCARD)
+        wined3d_volume_validate_location(volume, volume->resource.map_binding);
+    else
+        wined3d_volume_load_location(volume, context, volume->resource.map_binding);
+
     if (volume->resource.map_binding == WINED3D_LOCATION_BUFFER)
     {
-        context = context_acquire(device, NULL);
-        gl_info = context->gl_info;
-
-        wined3d_texture_prepare_buffer_object(texture, volume->texture_level, gl_info);
-        if (flags & WINED3D_MAP_DISCARD)
-            wined3d_volume_validate_location(volume, WINED3D_LOCATION_BUFFER);
-        else
-            wined3d_volume_load_location(volume, context, WINED3D_LOCATION_BUFFER);
-
         GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, texture->sub_resources[volume->texture_level].buffer_object));
 
         if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
@@ -493,30 +530,13 @@ HRESULT wined3d_volume_map(struct wined3d_volume *volume,
 
         GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
         checkGLcall("Map PBO");
-
-        context_release(context);
     }
     else
     {
-        if (!volume_prepare_system_memory(volume))
-        {
-            WARN("Out of memory.\n");
-            map_desc->data = NULL;
-            return E_OUTOFMEMORY;
-        }
-
-        if (flags & WINED3D_MAP_DISCARD)
-        {
-            wined3d_volume_validate_location(volume, WINED3D_LOCATION_SYSMEM);
-        }
-        else if (!(volume->locations & WINED3D_LOCATION_SYSMEM))
-        {
-            context = context_acquire(device, NULL);
-            wined3d_volume_load_location(volume, context, WINED3D_LOCATION_SYSMEM);
-            context_release(context);
-        }
         base_memory = volume->resource.heap_memory;
     }
+
+    context_release(context);
 
     TRACE("Base memory pointer %p.\n", base_memory);
 
