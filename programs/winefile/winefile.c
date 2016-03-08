@@ -2417,10 +2417,7 @@ static BOOL calc_widths(Pane* pane, BOOL anyway)
 		dis.itemState	  = 0;
 		dis.hwndItem	  = pane->hwnd;
 		dis.hDC			  = hdc;
-		dis.rcItem.left	  = 0;
-		dis.rcItem.top    = 0;
-		dis.rcItem.right  = 0;
-		dis.rcItem.bottom = 0;
+		SetRectEmpty(&dis.rcItem);
 		/*dis.itemData	  = 0; */
 
 		draw_item(pane, &dis, entry, COLUMNS);
@@ -2493,10 +2490,7 @@ static void calc_single_width(Pane* pane, int col)
 		dis.itemState	  = 0;
 		dis.hwndItem	  = pane->hwnd;
 		dis.hDC			  = hdc;
-		dis.rcItem.left	  = 0;
-		dis.rcItem.top    = 0;
-		dis.rcItem.right  = 0;
-		dis.rcItem.bottom = 0;
+		SetRectEmpty(&dis.rcItem);
 		/*dis.itemData	  = 0; */
 
 		draw_item(pane, &dis, entry, col);
