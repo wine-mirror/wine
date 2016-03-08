@@ -735,6 +735,7 @@ static void shader_sm1_read_instruction(void *data, const DWORD **ptr, struct wi
     ins->dst = &priv->dst_param;
     ins->src_count = opcode_info->param_count - opcode_info->dst_count;
     ins->src = priv->src_param;
+    memset(&ins->texel_offset, 0, sizeof(ins->texel_offset));
 
     p = *ptr;
     *ptr += shader_skip_opcode(priv, opcode_info, opcode_token);

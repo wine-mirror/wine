@@ -801,6 +801,11 @@ struct wined3d_shader_register_semantic
     enum wined3d_sysval_semantic sysval_semantic;
 };
 
+struct wined3d_shader_texel_offset
+{
+    signed char u, v, w;
+};
+
 struct wined3d_shader_instruction
 {
     const struct wined3d_shader_context *ctx;
@@ -812,6 +817,7 @@ struct wined3d_shader_instruction
     const struct wined3d_shader_dst_param *dst;
     UINT src_count;
     const struct wined3d_shader_src_param *src;
+    struct wined3d_shader_texel_offset texel_offset;
     union
     {
         struct wined3d_shader_semantic semantic;
@@ -823,6 +829,11 @@ struct wined3d_shader_instruction
         const struct wined3d_shader_immediate_constant_buffer *icb;
     } declaration;
 };
+
+static inline BOOL wined3d_shader_instruction_has_texel_offset(const struct wined3d_shader_instruction *ins)
+{
+    return ins->texel_offset.u || ins->texel_offset.v || ins->texel_offset.w;
+}
 
 struct wined3d_shader_attribute
 {

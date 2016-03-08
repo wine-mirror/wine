@@ -2091,6 +2091,9 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
                 }
             }
 
+            if (wined3d_shader_instruction_has_texel_offset(&ins))
+                shader_addline(&buffer, "(%d,%d,%d)", ins.texel_offset.u, ins.texel_offset.v, ins.texel_offset.w);
+
             for (i = 0; i < ins.dst_count; ++i)
             {
                 shader_dump_ins_modifiers(&buffer, &ins.dst[i]);
