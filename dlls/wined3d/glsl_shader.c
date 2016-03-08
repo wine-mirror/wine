@@ -4460,6 +4460,8 @@ static void shader_glsl_sample(const struct wined3d_shader_instruction *ins)
         flags |= WINED3D_GLSL_SAMPLE_GRAD;
     if (ins->handler_idx == WINED3DSIH_SAMPLE_LOD)
         flags |= WINED3D_GLSL_SAMPLE_LOD;
+    if (wined3d_shader_instruction_has_texel_offset(ins))
+        flags |= WINED3D_GLSL_SAMPLE_OFFSET;
 
     resource_idx = ins->src[1].reg.idx[0].offset;
     sampler_idx = ins->src[2].reg.idx[0].offset;
@@ -4492,7 +4494,7 @@ static void shader_glsl_sample(const struct wined3d_shader_instruction *ins)
 
     sampler_bind_idx = shader_glsl_find_sampler(&ins->ctx->reg_maps->sampler_map, resource_idx, sampler_idx);
     shader_glsl_gen_sample_code(ins, sampler_bind_idx, &sample_function, ins->src[1].swizzle,
-            dx_param_str, dy_param_str, lod_param_str, NULL, "%s", coord_param.param_str);
+            dx_param_str, dy_param_str, lod_param_str, &ins->texel_offset, "%s", coord_param.param_str);
     shader_glsl_release_sample_function(ins->ctx, &sample_function);
 }
 
