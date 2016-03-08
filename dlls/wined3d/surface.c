@@ -2184,6 +2184,8 @@ HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_
         }
     }
 
+    flags = wined3d_resource_sanitize_map_flags(&texture->resource, flags);
+
     if (device->d3d_initialized)
     {
         context = context_acquire(device, NULL);
