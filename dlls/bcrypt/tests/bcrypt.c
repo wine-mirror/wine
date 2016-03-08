@@ -404,6 +404,79 @@ static void test_sha512(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 }
 
+static void test_md5(void)
+{
+    static const char expected[] =
+        "e2a3e68d23ce348b8f68b3079de3d4c9";
+    BCRYPT_ALG_HANDLE alg;
+    BCRYPT_HASH_HANDLE hash;
+    UCHAR buf[512], md5[16];
+    ULONG size, len;
+    char str[65];
+    NTSTATUS ret;
+
+    alg = NULL;
+    ret = BCryptOpenAlgorithmProvider(&alg, BCRYPT_MD5_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(alg != NULL, "alg not set\n");
+
+    len = size = 0xdeadbeef;
+    ret = BCryptGetProperty(NULL, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(ret == STATUS_INVALID_HANDLE, "got %08x\n", ret);
+
+    len = size = 0xdeadbeef;
+    ret = BCryptGetProperty(alg, NULL, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+
+    len = size = 0xdeadbeef;
+    ret = BCryptGetProperty(alg, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), NULL, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+
+    len = size = 0xdeadbeef;
+    ret = BCryptGetProperty(alg, BCRYPT_OBJECT_LENGTH, NULL, sizeof(len), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == sizeof(len), "got %u\n", size);
+
+    len = size = 0xdeadbeef;
+    ret = BCryptGetProperty(alg, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, 0, &size, 0);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "got %08x\n", ret);
+    ok(len == 0xdeadbeef, "got %u\n", len);
+    ok(size == sizeof(len), "got %u\n", size);
+
+    len = size = 0xdeadbeef;
+    ret = BCryptGetProperty(alg, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len , sizeof(len), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(len != 0xdeadbeef, "len not set\n");
+    ok(size == sizeof(len), "got %u\n", size);
+
+    test_hash_length(alg, 16);
+    test_alg_name(alg, "MD5");
+
+    hash = NULL;
+    len = sizeof(buf);
+    ret = BCryptCreateHash(alg, &hash, buf, len, NULL, 0, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(hash != NULL, "hash not set\n");
+
+    ret = BCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    test_hash_length(hash, 16);
+    test_alg_name(hash, "MD5");
+
+    memset(md5, 0, sizeof(md5));
+    ret = BCryptFinishHash(hash, md5, sizeof(md5), 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    format_hash( md5, sizeof(md5), str );
+    ok(!strcmp(str, expected), "got %s\n", str);
+
+    ret = BCryptDestroyHash(hash);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    ret = BCryptCloseAlgorithmProvider(alg, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+}
+
 START_TEST(bcrypt)
 {
     test_BCryptGenRandom();
@@ -412,4 +485,5 @@ START_TEST(bcrypt)
     test_sha256();
     test_sha384();
     test_sha512();
+    test_md5();
 }
