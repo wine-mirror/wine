@@ -68,6 +68,25 @@ struct dll_fixup
     void *tokens; /* pointer into process heap */
 };
 
+static MonoDomain* domain_attach(MonoDomain *domain)
+{
+    MonoDomain *prev_domain = mono_domain_get();
+
+    if (prev_domain == domain)
+        /* Do not set or restore domain. */
+        return NULL;
+
+    mono_thread_attach(domain);
+
+    return prev_domain;
+}
+
+static void domain_restore(MonoDomain *prev_domain)
+{
+    if (prev_domain != NULL)
+        mono_domain_set(prev_domain, FALSE);
+}
+
 static HRESULT RuntimeHost_AddDefaultDomain(RuntimeHost *This, MonoDomain **result)
 {
     struct DomainEntry *entry;
@@ -267,15 +286,17 @@ static HRESULT RuntimeHost_Invoke(RuntimeHost *This, MonoDomain *domain,
     MonoObject *obj, void **args, int arg_count, MonoObject **result)
 {
     MonoMethod *method;
+    MonoDomain *prev_domain;
     HRESULT hr;
 
     *result = NULL;
 
-    mono_thread_attach(domain);
+    prev_domain = domain_attach(domain);
 
     if (!RuntimeHost_GetMethod(domain, assemblyname, namespace, typename, methodname,
             arg_count, &method))
     {
+        domain_restore(prev_domain);
         return E_FAIL;
     }
 
@@ -285,6 +306,8 @@ static HRESULT RuntimeHost_Invoke(RuntimeHost *This, MonoDomain *domain,
         ERR("Method %s.%s:%s raised an exception, hr=%x\n", namespace, typename, methodname, hr);
     }
 
+    domain_restore(prev_domain);
+
     return hr;
 }
 
@@ -293,6 +316,7 @@ static HRESULT RuntimeHost_VirtualInvoke(RuntimeHost *This, MonoDomain *domain,
     MonoObject *obj, void **args, int arg_count, MonoObject **result)
 {
     MonoMethod *method;
+    MonoDomain *prev_domain;
     HRESULT hr;
 
     *result = NULL;
@@ -303,11 +327,12 @@ static HRESULT RuntimeHost_VirtualInvoke(RuntimeHost *This, MonoDomain *domain,
         return E_POINTER;
     }
 
-    mono_thread_attach(domain);
+    prev_domain = domain_attach(domain);
 
     if (!RuntimeHost_GetMethod(domain, assemblyname, namespace, typename, methodname,
             arg_count, &method))
     {
+        domain_restore(prev_domain);
         return E_FAIL;
     }
 
@@ -315,6 +340,7 @@ static HRESULT RuntimeHost_VirtualInvoke(RuntimeHost *This, MonoDomain *domain,
     if (!method)
     {
         ERR("Object %p does not support method %s.%s:%s\n", obj, namespace, typename, methodname);
+        domain_restore(prev_domain);
         return E_FAIL;
     }
 
@@ -323,6 +349,8 @@ static HRESULT RuntimeHost_VirtualInvoke(RuntimeHost *This, MonoDomain *domain,
     {
         ERR("Method %s.%s:%s raised an exception, hr=%x\n", namespace, typename, methodname, hr);
     }
+
+    domain_restore(prev_domain);
 
     return hr;
 }
@@ -853,7 +881,7 @@ static HRESULT WINAPI CLRRuntimeHost_ExecuteInDefaultAppDomain(ICLRRuntimeHost* 
 {
     RuntimeHost *This = impl_from_ICLRRuntimeHost( iface );
     HRESULT hr;
-    MonoDomain *domain;
+    MonoDomain *domain, *prev_domain;
     MonoObject *result;
     MonoString *str;
     char *filenameA = NULL, *classA = NULL, *methodA = NULL;
@@ -864,10 +892,13 @@ static HRESULT WINAPI CLRRuntimeHost_ExecuteInDefaultAppDomain(ICLRRuntimeHost* 
 
     hr = RuntimeHost_GetDefaultDomain(This, NULL, &domain);
 
+    if (FAILED(hr))
+        return hr;
+
+    prev_domain = domain_attach(domain);
+
     if (SUCCEEDED(hr))
     {
-        mono_thread_attach(domain);
-
         filenameA = WtoA(pwzAssemblyPath);
         if (!filenameA) hr = E_OUTOFMEMORY;
     }
@@ -917,6 +948,8 @@ static HRESULT WINAPI CLRRuntimeHost_ExecuteInDefaultAppDomain(ICLRRuntimeHost* 
     if (SUCCEEDED(hr))
         *pReturnValue = *(DWORD*)mono_object_unbox(result);
 
+    domain_restore(prev_domain);
+
     HeapFree(GetProcessHeap(), 0, filenameA);
     HeapFree(GetProcessHeap(), 0, classA);
     HeapFree(GetProcessHeap(), 0, argsA);
@@ -952,9 +985,15 @@ HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name,
     MonoType *type;
     MonoClass *klass;
     MonoObject *obj;
+    MonoDomain *prev_domain;
 
     if (!domain)
         hr = RuntimeHost_GetDefaultDomain(This, NULL, &domain);
+
+    if (FAILED(hr))
+        return hr;
+
+    prev_domain = domain_attach(domain);
 
     if (SUCCEEDED(hr))
     {
@@ -965,8 +1004,6 @@ HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name,
 
     if (SUCCEEDED(hr))
     {
-        mono_thread_attach(domain);
-
         type = mono_reflection_type_from_name(nameA, NULL);
         if (!type)
         {
@@ -1002,6 +1039,8 @@ HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name,
         *result = obj;
     }
 
+    domain_restore(prev_domain);
+
     HeapFree(GetProcessHeap(), 0, nameA);
 
     return hr;
@@ -1014,9 +1053,7 @@ HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name,
  *
  * NOTE: The IUnknown* is created with a reference to the object.
  * Until they have a reference, objects must be in the stack to prevent the
- * garbage collector from freeing them.
- *
- * mono_thread_attach must have already been called for this thread. */
+ * garbage collector from freeing them. */
 HRESULT RuntimeHost_GetIUnknownForObject(RuntimeHost *This, MonoObject *obj,
     IUnknown **ppUnk)
 {
@@ -1230,35 +1267,39 @@ static void CDECL ReallyFixupVTable(struct dll_fixup *fixup)
 
     if (SUCCEEDED(hr))
     {
-        mono_thread_attach(domain);
+        MonoDomain *prev_domain;
+
+        prev_domain = domain_attach(domain);
 
         assembly = mono_assembly_open(filenameA, &status);
-    }
 
-    if (assembly)
-    {
-        int i;
+        if (assembly)
+        {
+            int i;
 
-        /* Mono needs an image that belongs to an assembly. */
-        image = mono_assembly_get_image(assembly);
+            /* Mono needs an image that belongs to an assembly. */
+            image = mono_assembly_get_image(assembly);
 
 #if __x86_64__
-        if (fixup->fixup->type & COR_VTABLE_64BIT)
+            if (fixup->fixup->type & COR_VTABLE_64BIT)
 #else
-        if (fixup->fixup->type & COR_VTABLE_32BIT)
+            if (fixup->fixup->type & COR_VTABLE_32BIT)
 #endif
-        {
-            void **vtable = fixup->vtable;
-            ULONG_PTR *tokens = fixup->tokens;
-            for (i=0; i<fixup->fixup->count; i++)
             {
-                TRACE("%#lx\n", tokens[i]);
-                vtable[i] = mono_marshal_get_vtfixup_ftnptr(
-                    image, tokens[i], fixup->fixup->type);
+                void **vtable = fixup->vtable;
+                ULONG_PTR *tokens = fixup->tokens;
+                for (i=0; i<fixup->fixup->count; i++)
+                {
+                    TRACE("%#lx\n", tokens[i]);
+                    vtable[i] = mono_marshal_get_vtfixup_ftnptr(
+                        image, tokens[i], fixup->fixup->type);
+                }
             }
+
+            fixup->done = TRUE;
         }
 
-        fixup->done = TRUE;
+        domain_restore(prev_domain);
     }
 
     if (info != NULL)
@@ -1686,13 +1727,14 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
             MonoImage *image;
             MonoClass *klass;
             MonoObject *result;
+            MonoDomain *prev_domain;
             IUnknown *unk = NULL;
             char *filenameA, *ns;
             char *classA;
 
             hr = CLASS_E_CLASSNOTAVAILABLE;
 
-            mono_thread_attach(domain);
+            prev_domain = domain_attach(domain);
 
             filenameA = WtoA(filename);
             assembly = mono_domain_assembly_open(domain, filenameA);
@@ -1700,6 +1742,7 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
             if (!assembly)
             {
                 ERR("Cannot open assembly %s\n", filenameA);
+                domain_restore(prev_domain);
                 goto cleanup;
             }
 
@@ -1707,6 +1750,7 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
             if (!image)
             {
                 ERR("Couldn't get assembly image\n");
+                domain_restore(prev_domain);
                 goto cleanup;
             }
 
@@ -1719,6 +1763,7 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
             if (!klass)
             {
                 ERR("Couldn't get class from image\n");
+                domain_restore(prev_domain);
                 goto cleanup;
             }
 
@@ -1737,6 +1782,8 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
             }
             else
                 hr = CLASS_E_CLASSNOTAVAILABLE;
+
+            domain_restore(prev_domain);
         }
         else
             hr = CLASS_E_CLASSNOTAVAILABLE;
