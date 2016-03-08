@@ -291,15 +291,10 @@ static void drawStridedSlow(const struct wined3d_device *device, struct wined3d_
 
             if (num_untracked_materials)
             {
-                DWORD diffuseColor = ((const DWORD *)ptrToCoords)[0];
                 unsigned char i;
                 float color[4];
 
-                color[0] = D3DCOLOR_B_R(diffuseColor) / 255.0f;
-                color[1] = D3DCOLOR_B_G(diffuseColor) / 255.0f;
-                color[2] = D3DCOLOR_B_B(diffuseColor) / 255.0f;
-                color[3] = D3DCOLOR_B_A(diffuseColor) / 255.0f;
-
+                D3DCOLORTOGLFLOAT4(*(const DWORD *)ptrToCoords, color);
                 for (i = 0; i < num_untracked_materials; ++i)
                 {
                     gl_info->gl_ops.gl.p_glMaterialfv(GL_FRONT_AND_BACK, context->untracked_materials[i], color);
