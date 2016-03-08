@@ -1606,6 +1606,7 @@ static void test_system_fontcollection(void)
 {
     IDWriteFontCollection *collection, *coll2;
     IDWriteLocalFontFileLoader *localloader;
+    IDWriteFontCollection1 *collection1;
     IDWriteFactory *factory, *factory2;
     IDWriteFontFileLoader *loader;
     IDWriteFontFamily *family;
@@ -1721,6 +1722,31 @@ static void test_system_fontcollection(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!ret, "got %d\n", ret);
     ok(i == (UINT32)-1, "got %u\n", i);
+
+    hr = IDWriteFontCollection_QueryInterface(collection, &IID_IDWriteFontCollection1, (void**)&collection1);
+    if (hr == S_OK) {
+        IDWriteFontFamily1 *family1;
+
+        hr = IDWriteFontCollection1_QueryInterface(collection1, &IID_IDWriteFontCollection, (void**)&coll2);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(coll2 == collection, "got %p, %p\n", collection, coll2);
+        IDWriteFontCollection_Release(coll2);
+
+        family1 = (void*)0xdeadbeef;
+        hr = IDWriteFontCollection1_GetFontFamily(collection1, ~0u, &family1);
+    todo_wine {
+        ok(hr == E_FAIL, "got 0x%08x\n", hr);
+        ok(family1 == NULL, "got %p\n", family1);
+    }
+        hr = IDWriteFontCollection1_GetFontFamily(collection1, 0, &family1);
+    todo_wine
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (hr == S_OK)
+        IDWriteFontFamily1_Release(family1);
+        IDWriteFontCollection1_Release(collection1);
+    }
+    else
+        win_skip("IDWriteFontCollection1 is not supported.\n");
 
     IDWriteFontCollection_Release(collection);
     IDWriteFactory_Release(factory);
