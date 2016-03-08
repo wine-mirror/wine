@@ -30,7 +30,6 @@ winemaker \- Erzeugt eine Build-Infrastruktur, um Windows Programme unter Unix z
 .br
   [
 .BR               "--generated-files " "] [ " "--nogenerated-files " "]
-]
 .br
   [
 .BR               "--wine32 " "]
@@ -43,7 +42,7 @@ winemaker \- Erzeugt eine Build-Infrastruktur, um Windows Programme unter Unix z
 ist ein Perl-Script um Ihnen das Konvertieren von Windows-Quellcode
 zu einem Winelib-Programm zu erleichtern.
 .PP
-Zu diesem Zweck beherrscht Winemaker folgende Operationen:
+Zu diesem Zweck beherrscht \fBwinemaker\fR folgende Operationen:
 .PP
 - Quellcodedateien und Verzeichnisse in Kleinbuchstaben umbenennen, falls
 diese beim Übertragen komplett in Großbuchstaben angekommen sind.
@@ -53,24 +52,24 @@ diese beim Übertragen komplett in Großbuchstaben angekommen sind.
 - Include-Anweisungen und Resourcenreferenzen durchsuchen, um Backslashes
 durch Slashes zu ersetzen.
 .PP
-- Während des obigen Schrittes wird Winemaker ebenfalls nach der angegebenen Datei
+- Während des obigen Schrittes wird \fBwinemaker\fR ebenfalls nach der angegebenen Datei
 im Includepfad suchen und die entsprechende Zeile, falls nötig, mit der korrekten
 Groß-/Kleinschreibweise austauschen.
 .PP
-- Winemaker wird ebenso andere, exotischere Probleme wie die Benutzung von
-\&'#pragma pack', 'afxres.h' in nicht-MFC-Projekten und mehr untersuchen.
-Sollte etwas ungwöhnliches vorkommen, wird Winemaker Sie warnen.
+- \fBwinemaker\fR wird ebenso andere, exotischere Probleme wie die Benutzung von
+\fI#pragma pack\fR, \fIafxres.h\fR in nicht-MFC-Projekten und mehr untersuchen.
+Sollte etwas ungwöhnliches vorkommen, wird \fBwinemaker\fR Sie warnen.
 .PP
-- Winemaker kann eine ganze Verzeichnisstruktur auf einmal durchsuchen,
+- \fBwinemaker\fR kann eine ganze Verzeichnisstruktur auf einmal durchsuchen,
 schätzen welche ausführbaren Dateien und Bibliotheken Sie zu erstellen
-gedenken, diese den passenden Quelldateien zuordnen und entsprechende Makefiles
+gedenken, diese den passenden Quelldateien zuordnen und entsprechende \fIMakefile\fR
 generieren.
 .PP
-- letztendlich wird Winemaker eine globale Makefile für den normalen Gebrauch erzeugen.
+- letztendlich wird \fBwinemaker\fR eine globale \fIMakefile\fR für den normalen Gebrauch erzeugen.
 .PP
-- Winemaker erkennt MFC-basierte Projekte und erstellt angepasste Dateien.
+- \fBwinemaker\fR erkennt MFC-basierte Projekte und erstellt angepasste Dateien.
 .PP
-- Existierende Projektdateien können von Winemaker gelesen werden.
+- Existierende Projektdateien können von \fBwinemaker\fR gelesen werden.
 Unterstützt sind dsp, dsw, vcproj und sln-Dateien.
 .PP
 .SH ARGUMENTE
@@ -79,14 +78,14 @@ Unterstützt sind dsp, dsw, vcproj und sln-Dateien.
 Unterdrückt die Anzeige des Banners.
 .TP
 .B --backup
-Lässt Winemaker Backups von allen Quellcodedateien anlegen, an denen
+Lässt \fBwinemaker\fR Backups von allen Quellcodedateien anlegen, an denen
 Änderungen vorgenommen werden. Diese Option ist Standard.
 .TP
 .B --nobackup
-Lässt Winemaker keine Backups anlegen.
+Lässt \fBwinemaker\fR keine Backups anlegen.
 .TP
 .B --nosource-fix
-Weist Winemaker an, keine Quellcodedateien zu ändern (z.B. DOS zu Unix
+Weist \fBwinemaker\fR an, keine Quellcodedateien zu ändern (z.B. DOS zu Unix
 Konvertierung). Verhindert Fehlermeldungen bei schreibgeschützten Dateien.
 .TP
 .B --lower-all
@@ -95,7 +94,7 @@ Alle Dateien und Verzeichnisse werden in Kleinschreibung umbenannt.
 .B --lower-uppercase
 Nur Dateien und Verzeichnisse, die komplett groß geschrieben sind, werden
 in Kleinschreibung umbenannt.
-"HALLO.C" würde beispielsweise umbenannt werden, "Welt.c" jedoch nicht.
+\fIHALLO.C\fR würde beispielsweise umbenannt werden, \fIWelt.c\fR jedoch nicht.
 .TP
 .B --lower-none
 Keine Dateien und Verzeichnisse werden in Kleinschreibung umbenannt.
@@ -122,22 +121,22 @@ Legt fest, dass für jedes gefundene, ausführbare Target, oder Target unbekannt
 Typs angenommen wird, dass es sich um eine Konsolenanwendung handelt.
 .TP
 .B --dll
-Winemaker wird im Zweifelsfall annehmen, dass es sich bei einem unbekannten
+\fBwinemaker\fR wird im Zweifelsfall annehmen, dass es sich bei einem unbekannten
 Target um eine DLL handelt.
 .TP
 .B --lib
-Winemaker wird im Zweifelsfall annehmen, dass es sich bei einem unbekannten
+\fBwinemaker\fR wird im Zweifelsfall annehmen, dass es sich bei einem unbekannten
 Target um eine statische Bibliothek handelt.
 .TP
 .B --mfc
-Teilt Winemaker mit, dass es sich um MFC-basierte Ziele handelt. In solch einem
-Fall passt Winemaker Pfade für Header und Bibliotheken entsprechend an und
+Teilt \fBwinemaker\fR mit, dass es sich um MFC-basierte Ziele handelt. In solch einem
+Fall passt \fBwinemaker\fR Pfade für Header und Bibliotheken entsprechend an und
 verlinkt die Ziele mit der MFC-Bibliothek.
 .TP
 .B --nomfc
-Teilt Winemaker mit, dass es sich nicht um MFC-basierte Ziele handelt. Diese
-Option verhindert die Benutzung von MFC-Bibliotheken, selbst wenn Winemaker
-Dateien wie "stdafx.cpp" oder "stdafx.h" begegnet, was normalerweise automatisch
+Teilt \fBwinemaker\fR mit, dass es sich nicht um MFC-basierte Ziele handelt. Diese
+Option verhindert die Benutzung von MFC-Bibliotheken, selbst wenn \fBwinemaker\fR
+Dateien wie \fIstdafx.cpp\fR oder \fIstdafx.h\fR begegnet, was normalerweise automatisch
 MFC aktivieren würde, wenn weder \fB--nomfc\fR noch \fB--mfc\fR angegeben wurden.
 .TP
 .BI -D macro "\fR[=\fIdefn\fR]"
@@ -161,18 +160,18 @@ Fügt die angegebene Bibliothek zur globalen Liste der zu verlinkenden
 Bibliotheken hinzu.
 .TP
 .B --nodlls
-Diese Option teilt Winemaker mit, nicht den Standardsatz an Winelib-Bibliotheken
+Diese Option teilt \fBwinemaker\fR mit, nicht den Standardsatz an Winelib-Bibliotheken
 zu importieren. Dies bedeutet, dass jede DLL, die Ihr Quellcode nutzt, explizit
-mit \fB-i\fR an Winemaker übergeben werden muss.
-Die Standard-Bibliotheken sind: odbc32.dll, odbccp32.dll, ole32.dll,
-oleaut32.dll und winspool.drv.
+mit \fB-i\fR an \fBwinemaker\fR übergeben werden muss.
+Die Standard-Bibliotheken sind: \fIodbc32.dll\fR, \fIodbccp32.dll\fR, \fIole32.dll\fR,
+\fIoleaut32.dll\fR und \fIwinspool.drv\fR.
 .TP
 .B --nomsvcrt
-Setzt einige Optionen, die winegcc daran hindern, gegen msvcrt zu kompilieren.
-Nutzen Sie diese Option bei cpp-Dateien, die <string> einbinden.
+Setzt einige Optionen, die \fBwinegcc\fR daran hindern, gegen msvcrt zu kompilieren.
+Nutzen Sie diese Option bei cpp-Dateien, die \fI<string>\fR einbinden.
 .TP
 .B --interactive
-Versetzt Winemaker in einen interaktiven Modus. In diesem Modus wird Winemaker
+Versetzt \fBwinemaker\fR in einen interaktiven Modus. In diesem Modus wird \fBwinemaker\fR
 Sie für die Targetliste jedes Verzeichnisses nach Bestätigung und jeweils
 target- und verzeichnisspezifischen Optionen fragen.
 .TP
@@ -180,27 +179,27 @@ target- und verzeichnisspezifischen Optionen fragen.
 Gibt an, dass es nur ein einziges Target gibt, namens \fIname\fR.
 .TP
 .B --generated-files
-Weist Winemaker an, eine Makefile zu erzeugen. Diese Option ist Standard.
+Weist \fBwinemaker\fR an, eine \fIMakefile\fR zu erzeugen. Diese Option ist Standard.
 .TP
 .B --nogenerated-files
-Weist Winemaker an, keine Makefile zu erzeugen.
+Weist \fBwinemaker\fR an, keine \fIMakefile\fR zu erzeugen.
 .TP
 .B --wine32
-Weist Winemaker an, ein 32-Bit Target zu erstellen. Dies ist nützlich bei
+Weist \fBwinemaker\fR an, ein 32-Bit Target zu erstellen. Dies ist nützlich bei
 wow64-Systemen. Ohne diese Option wird die Standardarchitektur benutzt.
 
 .SH BEISPIELE
 .PP
-Ein typischer Winemaker Aufruf:
+Ein typischer \fBwinemaker\fR Aufruf:
 .PP
 $ winemaker --lower-uppercase -DSTRICT .
 .PP
-Damit scannt Winemaker das aktuelle Verzeichnis und die Unterverzeichnisse nach
+Damit scannt \fBwinemaker\fR das aktuelle Verzeichnis und die Unterverzeichnisse nach
 Quellcodedateien. Jede Datei und jedes Verzeichnis, das ganz in Großbuchstaben
 geschrieben ist, wird in Kleinbuchstaben umbenannt. Danach werden alle Quellcodedateien
-an die Kompilierung mit Winelib angepasst und Makefiles erzeugt. '-DSTRICT' gibt
-an, dass das STRICT-Makro gesetzt sein muss, um diesen Quellcode zu kompilieren.
-Letztendlich wird Winemaker die globale Makefile erzeugen.
+an die Kompilierung mit Winelib angepasst und \fIMakefile\fRs erzeugt. \fB-DSTRICT\fR gibt
+an, dass das \fBSTRICT\fR-Makro gesetzt sein muss, um diesen Quellcode zu kompilieren.
+Letztendlich wird \fBwinemaker\fR die globale \fIMakefile\fR erzeugen.
 .PP
 Der nächste Schritt wäre dann:
 .PP
@@ -225,20 +224,20 @@ $ make
 
 .SH TODO / FEHLER
 .PP
-In einigen Fällen werden Sie die Makefile oder den Quellcode von Hand
+In einigen Fällen werden Sie die \fIMakefile\fR oder den Quellcode von Hand
 nachbearbeiten müssen.
 .PP
 Angenommen, die fertigen Windows-Bibliotheken oder Binärdateien sind vorhanden,
-könnte mit winedump ermittelt werden, um welche Art von ausführbarer Datei es
+könnte mit \fBwinedump\fR ermittelt werden, um welche Art von ausführbarer Datei es
 sich handelt (grafisch oder Konsole), gegen welche Bibliotheken sie gelinkt
 sind und welche Funktionen exportiert werden (bei Bibliotheken). All diese
 Informationen könnten dann für das Winelib-Projekt verwendet werden.
 .PP
-Weiterhin ist Winemaker nicht sehr gut darin, die Bibliothek zu finden, die
+Weiterhin ist \fBwinemaker\fR nicht sehr gut darin, die Bibliothek zu finden, die
 die Anwendung enthält: Sie muss entweder im aktuellen Verzeichnis oder im
 .IR LD_LIBRARY_PATH liegen.
 .PP
-Winemaker unterstützt noch keine Messagedateien und deren Compiler.
+\fBwinemaker\fR unterstützt noch keine Messagedateien und deren Compiler.
 .PP
 Fehler können im
 .UR http://bugs.winehq.org
@@ -252,7 +251,7 @@ Dimitrie O. Paun
 .br
 André Hentschel
 .SH VERFÜGBARKEIT
-.B Winemaker
+.B winemaker
 ist Teil der Wine-Distribution, verfügbar im WineHQ, dem
 .UR http://www.winehq.org/
 .B Hauptquartier der Wine-Entwicklung
