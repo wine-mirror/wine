@@ -390,8 +390,10 @@ static HRESULT WINAPI OleDocumentSite_ActivateMe(IOleDocumentSite *iface,
     if(FAILED(hres))
         return hres;
 
-    IOleDocument_CreateView(oledoc, (IOleInPlaceSite*) &This->IOleInPlaceSiteEx_iface, NULL, 0, &This->view);
+    hres = IOleDocument_CreateView(oledoc, (IOleInPlaceSite*) &This->IOleInPlaceSiteEx_iface, NULL, 0, &This->view);
     IOleDocument_Release(oledoc);
+    if(FAILED(hres))
+        return hres;
 
     GetClientRect(This->hwnd, &rect);
     IOleDocumentView_SetRect(This->view, &rect);
