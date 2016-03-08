@@ -5919,7 +5919,7 @@ static void state_texfactor_arbfp(struct wined3d_context *context,
 {
     struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    float col[4];
+    struct wined3d_color color;
 
     /* Don't load the parameter if we're using an arbfp pixel shader,
      * otherwise we'll overwrite application provided constants. */
@@ -5934,9 +5934,9 @@ static void state_texfactor_arbfp(struct wined3d_context *context,
         priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, ARB_FFP_CONST_TFACTOR + 1);
     }
 
-    D3DCOLORTOGLFLOAT4(state->render_states[WINED3D_RS_TEXTUREFACTOR], col);
-    GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR, col));
-    checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR, col)");
+    wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_TEXTUREFACTOR]);
+    GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR, &color.r));
+    checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR, &color.r)");
 }
 
 static void state_arb_specularenable(struct wined3d_context *context,

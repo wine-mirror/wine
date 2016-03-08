@@ -1137,10 +1137,10 @@ static void shader_glsl_ffp_vertex_lightambient_uniform(const struct wined3d_con
         const struct wined3d_state *state, struct glsl_shader_prog_link *prog)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    float col[4];
+    struct wined3d_color color;
 
-    D3DCOLORTOGLFLOAT4(state->render_states[WINED3D_RS_AMBIENT], col);
-    GL_EXTCALL(glUniform3fv(prog->vs.light_ambient_location, 1, col));
+    wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_AMBIENT]);
+    GL_EXTCALL(glUniform3fv(prog->vs.light_ambient_location, 1, &color.r));
     checkGLcall("glUniform3fv");
 }
 
@@ -1245,16 +1245,16 @@ static void shader_glsl_load_fog_uniform(const struct wined3d_context *context,
         const struct wined3d_state *state, struct glsl_shader_prog_link *prog)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_color color;
     float start, end, scale;
     union
     {
         DWORD d;
         float f;
     } tmpvalue;
-    float col[4];
 
-    D3DCOLORTOGLFLOAT4(state->render_states[WINED3D_RS_FOGCOLOR], col);
-    GL_EXTCALL(glUniform4fv(prog->ps.fog_color_location, 1, col));
+    wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_FOGCOLOR]);
+    GL_EXTCALL(glUniform4fv(prog->ps.fog_color_location, 1, &color.r));
     tmpvalue.d = state->render_states[WINED3D_RS_FOGDENSITY];
     GL_EXTCALL(glUniform1f(prog->ps.fog_density_location, tmpvalue.f));
     get_fog_start_end(context, state, &start, &end);
@@ -1426,12 +1426,12 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
 
     if (update_mask & WINED3D_SHADER_CONST_FFP_PS)
     {
-        float col[4];
+        struct wined3d_color color;
 
         if (prog->ps.tex_factor_location != -1)
         {
-            D3DCOLORTOGLFLOAT4(state->render_states[WINED3D_RS_TEXTUREFACTOR], col);
-            GL_EXTCALL(glUniform4fv(prog->ps.tex_factor_location, 1, col));
+            wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_TEXTUREFACTOR]);
+            GL_EXTCALL(glUniform4fv(prog->ps.tex_factor_location, 1, &color.r));
         }
 
         if (state->render_states[WINED3D_RS_SPECULARENABLE])
@@ -1444,8 +1444,8 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
             if (prog->ps.tss_constant_location[i] == -1)
                 continue;
 
-            D3DCOLORTOGLFLOAT4(state->texture_states[i][WINED3D_TSS_CONSTANT], col);
-            GL_EXTCALL(glUniform4fv(prog->ps.tss_constant_location[i], 1, col));
+            wined3d_color_from_d3dcolor(&color, state->texture_states[i][WINED3D_TSS_CONSTANT]);
+            GL_EXTCALL(glUniform4fv(prog->ps.tss_constant_location[i], 1, &color.r));
         }
 
         checkGLcall("fixed function uniforms");

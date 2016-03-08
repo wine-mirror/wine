@@ -291,13 +291,13 @@ static void drawStridedSlow(const struct wined3d_device *device, struct wined3d_
 
             if (num_untracked_materials)
             {
+                struct wined3d_color color;
                 unsigned char i;
-                float color[4];
 
-                D3DCOLORTOGLFLOAT4(*(const DWORD *)ptrToCoords, color);
+                wined3d_color_from_d3dcolor(&color, *(const DWORD *)ptrToCoords);
                 for (i = 0; i < num_untracked_materials; ++i)
                 {
-                    gl_info->gl_ops.gl.p_glMaterialfv(GL_FRONT_AND_BACK, context->untracked_materials[i], color);
+                    gl_info->gl_ops.gl.p_glMaterialfv(GL_FRONT_AND_BACK, context->untracked_materials[i], &color.r);
                 }
             }
         }

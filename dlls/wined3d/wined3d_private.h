@@ -989,12 +989,13 @@ extern const struct wined3d_shader_backend_ops none_shader_backend DECLSPEC_HIDD
 #define D3DCOLOR_B_B(dw) (((dw) >>  0) & 0xff)
 #define D3DCOLOR_B_A(dw) (((dw) >> 24) & 0xff)
 
-#define D3DCOLORTOGLFLOAT4(dw, vec) do { \
-  (vec)[0] = D3DCOLOR_B_R(dw) / 255.0f; \
-  (vec)[1] = D3DCOLOR_B_G(dw) / 255.0f; \
-  (vec)[2] = D3DCOLOR_B_B(dw) / 255.0f; \
-  (vec)[3] = D3DCOLOR_B_A(dw) / 255.0f; \
-} while(0)
+static inline void wined3d_color_from_d3dcolor(struct wined3d_color *wined3d_color, DWORD d3d_color)
+{
+    wined3d_color->r = D3DCOLOR_B_R(d3d_color) / 255.0f;
+    wined3d_color->g = D3DCOLOR_B_G(d3d_color) / 255.0f;
+    wined3d_color->b = D3DCOLOR_B_B(d3d_color) / 255.0f;
+    wined3d_color->a = D3DCOLOR_B_A(d3d_color) / 255.0f;
+}
 
 #define HIGHEST_TRANSFORMSTATE WINED3D_TS_WORLD_MATRIX(255) /* Highest value in wined3d_transform_state. */
 
