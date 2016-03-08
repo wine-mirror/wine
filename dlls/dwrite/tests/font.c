@@ -1128,15 +1128,12 @@ if (0) /* crashes on native */
 
         font3 = (void*)0xdeadbeef;
         hr = IDWriteFontFamily1_GetFont(family1, ~0u, &font3);
-    todo_wine {
         ok(hr == E_FAIL, "got 0x%08x\n", hr);
         ok(font3 == NULL, "got %p\n", font3);
-    }
+
         hr = IDWriteFontFamily1_GetFont(family1, 0, &font3);
-    todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    if (hr == S_OK) {
         hr = IDWriteFont3_QueryInterface(font3, &IID_IDWriteFont, (void**)&font);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         IDWriteFont_Release(font);
@@ -1146,7 +1143,6 @@ if (0) /* crashes on native */
         IDWriteFont1_Release(font1);
 
         IDWriteFont3_Release(font3);
-    }
         IDWriteFontFamily1_Release(family1);
     }
     else
