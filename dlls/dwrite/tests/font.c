@@ -1055,6 +1055,7 @@ static void test_GetFontFamily(void)
     IDWriteFontCollection *collection, *collection2;
     IDWriteFontCollection *syscoll;
     IDWriteFontFamily *family, *family2;
+    IDWriteFontFamily1 *family1;
     IDWriteGdiInterop *interop;
     IDWriteFont *font, *font2;
     IDWriteFactory *factory;
@@ -1117,13 +1118,45 @@ if (0) /* crashes on native */
     ok(collection == collection2, "got %p, %p\n", collection, collection2);
     ok(collection == syscoll, "got %p, %p\n", collection, syscoll);
 
+    IDWriteFont_Release(font);
+    IDWriteFont_Release(font2);
+
+    hr = IDWriteFontFamily_QueryInterface(family, &IID_IDWriteFontFamily1, (void**)&family1);
+    if (hr == S_OK) {
+        IDWriteFont3 *font3;
+        IDWriteFont1 *font1;
+
+        font3 = (void*)0xdeadbeef;
+        hr = IDWriteFontFamily1_GetFont(family1, ~0u, &font3);
+    todo_wine {
+        ok(hr == E_FAIL, "got 0x%08x\n", hr);
+        ok(font3 == NULL, "got %p\n", font3);
+    }
+        hr = IDWriteFontFamily1_GetFont(family1, 0, &font3);
+    todo_wine
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    if (hr == S_OK) {
+        hr = IDWriteFont3_QueryInterface(font3, &IID_IDWriteFont, (void**)&font);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        IDWriteFont_Release(font);
+
+        hr = IDWriteFont3_QueryInterface(font3, &IID_IDWriteFont1, (void**)&font1);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        IDWriteFont1_Release(font1);
+
+        IDWriteFont3_Release(font3);
+    }
+        IDWriteFontFamily1_Release(family1);
+    }
+    else
+        win_skip("IDWriteFontFamily1 is not supported.\n");
+
     IDWriteFontCollection_Release(syscoll);
     IDWriteFontCollection_Release(collection2);
     IDWriteFontCollection_Release(collection);
     IDWriteFontFamily_Release(family2);
     IDWriteFontFamily_Release(family);
-    IDWriteFont_Release(font);
-    IDWriteFont_Release(font2);
     IDWriteGdiInterop_Release(interop);
     IDWriteFactory_Release(factory);
 }
