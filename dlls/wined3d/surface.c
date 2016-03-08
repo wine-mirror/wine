@@ -2524,6 +2524,8 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         }
     }
 
+    flags = wined3d_resource_sanitize_map_flags(&surface->resource, flags);
+
     surface_prepare_map_memory(surface);
     if (flags & WINED3D_MAP_DISCARD)
     {
