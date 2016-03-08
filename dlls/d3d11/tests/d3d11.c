@@ -187,8 +187,23 @@ static void check_texture_color_(unsigned int line, ID3D11Texture2D *texture,
 
 static ID3D11Device *create_device(const D3D_FEATURE_LEVEL *feature_level)
 {
+    static const D3D_FEATURE_LEVEL default_feature_level[] =
+    {
+        D3D_FEATURE_LEVEL_11_0,
+        D3D_FEATURE_LEVEL_10_0,
+    };
+    unsigned int feature_level_count;
     ID3D11Device *device;
-    UINT feature_level_count = feature_level ? 1 : 0;
+
+    if (feature_level)
+    {
+        feature_level_count = 1;
+    }
+    else
+    {
+        feature_level = default_feature_level;
+        feature_level_count = sizeof(default_feature_level) / sizeof(default_feature_level[0]);
+    }
 
     if (SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, feature_level, feature_level_count,
             D3D11_SDK_VERSION, &device, NULL, NULL)))
