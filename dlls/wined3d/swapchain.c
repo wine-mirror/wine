@@ -545,10 +545,8 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
     }
     else
     {
-        src_rect.left = 0;
-        src_rect.top = 0;
-        src_rect.right = swapchain->desc.backbuffer_width;
-        src_rect.bottom = swapchain->desc.backbuffer_height;
+        SetRect(&src_rect, 0, 0, swapchain->desc.backbuffer_width,
+                swapchain->desc.backbuffer_height);
     }
 
     if (dst_rect_in)

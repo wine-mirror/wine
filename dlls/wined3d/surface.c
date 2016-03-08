@@ -1444,10 +1444,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
 
     if (!src_rect)
     {
-        r.left = 0;
-        r.top = 0;
-        r.right = src_surface->resource.width;
-        r.bottom = src_surface->resource.height;
+        SetRect(&r, 0, 0, src_surface->resource.width, src_surface->resource.height);
         src_rect = &r;
     }
     else if (src_rect->left < 0 || src_rect->left >= src_rect->right

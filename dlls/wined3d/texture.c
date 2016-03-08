@@ -880,10 +880,7 @@ static void texture2d_sub_resource_upload_data(struct wined3d_resource *sub_reso
     struct wined3d_const_bo_address addr;
     RECT src_rect;
 
-    src_rect.left = 0;
-    src_rect.top = 0;
-    src_rect.right = surface->resource.width;
-    src_rect.bottom = surface->resource.height;
+    SetRect(&src_rect, 0, 0, surface->resource.width, surface->resource.height);
 
     addr.buffer_object = 0;
     addr.addr = data->data;
