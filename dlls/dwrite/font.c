@@ -125,7 +125,6 @@ struct dwrite_fontcollection {
     struct dwrite_fontfamily_data **family_data;
     UINT32 family_count;
     UINT32 family_alloc;
-    BOOL   is_system;
 };
 
 struct dwrite_fontfamily {
@@ -1967,7 +1966,7 @@ BOOL is_system_collection(IDWriteFontCollection *collection)
     return IDWriteFontCollection_QueryInterface(collection, &IID_issystemcollection, (void**)&obj) == S_OK;
 }
 
-static HRESULT WINAPI dwritefontcollection_QueryInterface(IDWriteFontCollection1 *iface, REFIID riid, void **obj)
+static HRESULT WINAPI dwritesystemfontcollection_QueryInterface(IDWriteFontCollection1 *iface, REFIID riid, void **obj)
 {
     struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection1(iface);
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
@@ -1983,8 +1982,27 @@ static HRESULT WINAPI dwritefontcollection_QueryInterface(IDWriteFontCollection1
 
     *obj = NULL;
 
-    if (This->is_system && IsEqualIID(riid, &IID_issystemcollection))
+    if (IsEqualIID(riid, &IID_issystemcollection))
         return S_OK;
+
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI dwritefontcollection_QueryInterface(IDWriteFontCollection1 *iface, REFIID riid, void **obj)
+{
+    struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection1(iface);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IDWriteFontCollection1) ||
+        IsEqualIID(riid, &IID_IDWriteFontCollection) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IDWriteFontCollection1_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
 
     return E_NOINTERFACE;
 }
@@ -2165,6 +2183,18 @@ static const IDWriteFontCollection1Vtbl fontcollectionvtbl = {
     dwritefontcollection1_GetFontFamily
 };
 
+static const IDWriteFontCollection1Vtbl systemfontcollectionvtbl = {
+    dwritesystemfontcollection_QueryInterface,
+    dwritefontcollection_AddRef,
+    dwritefontcollection_Release,
+    dwritefontcollection_GetFontFamilyCount,
+    dwritefontcollection_GetFontFamily,
+    dwritefontcollection_FindFamilyName,
+    dwritefontcollection_GetFontFromFontFace,
+    dwritefontcollection1_GetFontSet,
+    dwritefontcollection1_GetFontFamily
+};
+
 static HRESULT fontfamily_add_font(struct dwrite_fontfamily_data *family_data, struct dwrite_font_data *font_data)
 {
     if (family_data->font_count + 1 >= family_data->font_alloc) {
@@ -2213,12 +2243,10 @@ static HRESULT fontcollection_add_family(struct dwrite_fontcollection *collectio
 
 static HRESULT init_font_collection(struct dwrite_fontcollection *collection, BOOL is_system)
 {
-    collection->IDWriteFontCollection1_iface.lpVtbl = &fontcollectionvtbl;
+    collection->IDWriteFontCollection1_iface.lpVtbl = is_system ? &systemfontcollectionvtbl : &fontcollectionvtbl;
     collection->ref = 1;
     collection->family_count = 0;
     collection->family_alloc = is_system ? 30 : 5;
-    collection->is_system = is_system;
-
     collection->family_data = heap_alloc(sizeof(*collection->family_data) * collection->family_alloc);
     if (!collection->family_data)
         return E_OUTOFMEMORY;
