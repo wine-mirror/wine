@@ -2536,9 +2536,11 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_SetPrivateDataInterface(ID3D11Devi
 
 static D3D_FEATURE_LEVEL STDMETHODCALLTYPE d3d11_device_GetFeatureLevel(ID3D11Device *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3d_device *device = impl_from_ID3D11Device(iface);
 
-    return D3D_FEATURE_LEVEL_10_0;
+    TRACE("iface %p.\n", iface);
+
+    return device->feature_level;
 }
 
 static UINT STDMETHODCALLTYPE d3d11_device_GetCreationFlags(ID3D11Device *iface)
@@ -4557,9 +4559,11 @@ static void STDMETHODCALLTYPE d3d10_device_GetTextFilterSize(ID3D10Device1 *ifac
 
 static D3D10_FEATURE_LEVEL1 STDMETHODCALLTYPE d3d10_device_GetFeatureLevel(ID3D10Device1 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3d_device *device = impl_from_ID3D10Device(iface);
 
-    return D3D10_FEATURE_LEVEL_10_1;
+    TRACE("iface %p.\n", iface);
+
+    return device->feature_level;
 }
 
 static const struct ID3D10Device1Vtbl d3d10_device1_vtbl =

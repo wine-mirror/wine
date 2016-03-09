@@ -394,6 +394,8 @@ struct d3d_device
     IUnknown *outer_unk;
     LONG refcount;
 
+    D3D_FEATURE_LEVEL feature_level;
+
     struct d3d11_immediate_context immediate_context;
 
     struct wined3d_device_parent device_parent;

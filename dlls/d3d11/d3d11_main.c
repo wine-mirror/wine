@@ -104,6 +104,8 @@ static HRESULT WINAPI layer_create(enum dxgi_device_layer_id id, void **layer_ba
 static void WINAPI layer_set_feature_level(enum dxgi_device_layer_id id, void *device,
         D3D_FEATURE_LEVEL feature_level)
 {
+    struct d3d_device *d3d_device = device;
+
     TRACE("id %#x, device %p, feature_level %u.\n", id, device, feature_level);
 
     if (id != DXGI_DEVICE_LAYER_D3D10_DEVICE)
@@ -111,6 +113,8 @@ static void WINAPI layer_set_feature_level(enum dxgi_device_layer_id id, void *d
         WARN("Unknown layer id %#x.\n", id);
         return;
     }
+
+    d3d_device->feature_level = feature_level;
 }
 
 HRESULT WINAPI D3D11CoreRegisterLayers(void)
