@@ -2207,7 +2207,20 @@ HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_
         case WINED3D_LOCATION_BUFFER:
             GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER,
                     texture->sub_resources[surface_get_sub_resource_idx(surface)].buffer_object));
-            base_memory = GL_EXTCALL(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE));
+
+            if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
+            {
+                GLbitfield map_flags = wined3d_resource_gl_map_flags(flags);
+                map_flags &= ~GL_MAP_FLUSH_EXPLICIT_BIT;
+                base_memory = GL_EXTCALL(glMapBufferRange(GL_PIXEL_UNPACK_BUFFER,
+                        0, surface->resource.size, map_flags));
+            }
+            else
+            {
+                GLenum access = wined3d_resource_gl_legacy_map_flags(flags);
+                base_memory = GL_EXTCALL(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, access));
+            }
+
             GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
             checkGLcall("map PBO");
             break;
