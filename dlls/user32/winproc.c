@@ -165,7 +165,7 @@ static inline WINDOWPROC *alloc_winproc( WNDPROC func, BOOL unicode )
                    proc_to_handle(proc), unicode ? 'W' : 'A', func,
                    winproc_used, MAX_WINPROCS );
         }
-        else FIXME( "too many winprocs, cannot allocate one for %p\n", func );
+        else WARN( "too many winprocs, cannot allocate one for %p\n", func );
     }
     else TRACE( "reusing %p for %p\n", proc_to_handle(proc), func );
 
@@ -309,7 +309,7 @@ WNDPROC WINPROC_AllocProc( WNDPROC func, BOOL unicode )
 {
     WINDOWPROC *proc;
 
-    if (!(proc = alloc_winproc( func, unicode ))) return NULL;
+    if (!(proc = alloc_winproc( func, unicode ))) return func;
     if (proc == WINPROC_PROC16) return func;
     return proc_to_handle( proc );
 }
