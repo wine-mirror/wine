@@ -8686,8 +8686,30 @@ static LRESULT WINAPI winproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     return 0;
 }
 
-static LRESULT WINAPI winproc2(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+static LRESULT WINAPI winproc_convA(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
+    if(msg == WM_SETTEXT)
+    {
+        const char *text = (const char*)lparam;
+
+        ok(!wparam, "wparam = %08lx\n", wparam);
+        ok(!strcmp(text, "text"), "WM_SETTEXT lparam = %s\n", text);
+        return 1;
+    }
+    return 0;
+}
+
+static const WCHAR textW[] = {'t','e','x','t',0};
+static LRESULT WINAPI winproc_convW(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if(msg == WM_SETTEXT)
+    {
+        const WCHAR *text = (const WCHAR*)lparam;
+
+        ok(!wparam, "wparam = %08lx\n", wparam);
+        ok(!lstrcmpW(text, textW), "WM_SETTEXT lparam = %s\n", wine_dbgstr_w(text));
+        return 1;
+    }
     return 0;
 }
 
@@ -8765,8 +8787,16 @@ static void test_winproc_limit(void)
             break;
     }
     ok(i != 0xffff, "unable to run out of winproc slots\n");
-    ok(SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)winproc2),
+
+    ok(SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)winproc_convA),
             "SetWindowLongPtr failed with error %d\n", GetLastError());
+    ok(SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"text"), "WM_SETTEXT failed\n");
+    ok(SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)textW), "WM_SETTEXT with conversion failed\n");
+
+    ok(SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)winproc_convW),
+            "SetWindowLongPtr failed with error %d\n", GetLastError());
+    ok(SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"text"), "WM_SETTEXT failed\n");
+    ok(SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)textW), "WM_SETTEXT with conversion failed\n");
 
     i = 0;
     CallWindowProcA(winproc_handle, 0, 0, 0, (LPARAM)&i);
