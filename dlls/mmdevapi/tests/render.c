@@ -2248,6 +2248,7 @@ static void test_endpointvolume(void)
     HRESULT hr;
     IAudioEndpointVolume *aev;
     float mindb, maxdb, increment, volume;
+    BOOL mute;
 
     hr = IMMDevice_Activate(dev, &IID_IAudioEndpointVolume,
             CLSCTX_INPROC_SERVER, NULL, (void**)&aev);
@@ -2270,6 +2271,12 @@ static void test_endpointvolume(void)
 
     hr = IAudioEndpointVolume_SetMasterVolumeLevel(aev, volume, NULL);
     ok(hr == S_OK, "SetMasterVolumeLevel failed: 0x%08x\n", hr);
+
+    hr = IAudioEndpointVolume_GetMute(aev, &mute);
+    ok(hr == S_OK, "GetMute failed: %08x\n", hr);
+
+    hr = IAudioEndpointVolume_SetMute(aev, mute, NULL);
+    ok(hr == S_OK || hr == S_FALSE, "SetMute failed: %08x\n", hr);
 
     IAudioEndpointVolume_Release(aev);
 }

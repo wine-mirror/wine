@@ -44,6 +44,7 @@ typedef struct AEVImpl {
     IAudioEndpointVolumeEx IAudioEndpointVolumeEx_iface;
     LONG ref;
     float master_vol;
+    BOOL mute;
 } AEVImpl;
 
 static inline AEVImpl *impl_from_IAudioEndpointVolumeEx(IAudioEndpointVolumeEx *iface)
@@ -197,18 +198,30 @@ static HRESULT WINAPI AEV_GetChannelVolumeLevelScalar(IAudioEndpointVolumeEx *if
 
 static HRESULT WINAPI AEV_SetMute(IAudioEndpointVolumeEx *iface, BOOL mute, const GUID *ctx)
 {
+    AEVImpl *This = impl_from_IAudioEndpointVolumeEx(iface);
+    HRESULT ret;
+
     TRACE("(%p)->(%u,%s)\n", iface, mute, debugstr_guid(ctx));
-    FIXME("stub\n");
-    return E_NOTIMPL;
+
+    ret = This->mute == mute ? S_FALSE : S_OK;
+
+    This->mute = mute;
+
+    return ret;
 }
 
 static HRESULT WINAPI AEV_GetMute(IAudioEndpointVolumeEx *iface, BOOL *mute)
 {
+    AEVImpl *This = impl_from_IAudioEndpointVolumeEx(iface);
+
     TRACE("(%p)->(%p)\n", iface, mute);
+
     if (!mute)
         return E_POINTER;
-    FIXME("stub\n");
-    return E_NOTIMPL;
+
+    *mute = This->mute;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI AEV_GetVolumeStepInfo(IAudioEndpointVolumeEx *iface, UINT *stepsize, UINT *stepcount)
