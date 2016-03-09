@@ -2414,6 +2414,24 @@ static inline struct gl_texture *wined3d_texture_get_gl_texture(struct wined3d_t
     return srgb ? &texture->texture_srgb : &texture->texture_rgb;
 }
 
+static inline unsigned int wined3d_texture_get_level_width(const struct wined3d_texture *texture,
+        unsigned int level)
+{
+    return max(1, texture->resource.width >> level);
+}
+
+static inline unsigned int wined3d_texture_get_level_height(const struct wined3d_texture *texture,
+        unsigned int level)
+{
+    return max(1, texture->resource.height >> level);
+}
+
+static inline unsigned int wined3d_texture_get_level_depth(const struct wined3d_texture *texture,
+        unsigned int level)
+{
+    return max(1, texture->resource.depth >> level);
+}
+
 void wined3d_texture_apply_sampler_desc(struct wined3d_texture *texture,
         const struct wined3d_sampler_desc *sampler_desc, const struct wined3d_context *context) DECLSPEC_HIDDEN;
 void wined3d_texture_bind(struct wined3d_texture *texture,

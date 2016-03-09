@@ -532,8 +532,8 @@ void CDECL wined3d_texture_get_pitch(const struct wined3d_texture *texture,
         unsigned int level, unsigned int *row_pitch, unsigned int *slice_pitch)
 {
     const struct wined3d_resource *resource = &texture->resource;
-    unsigned int width = max(1, texture->resource.width >> level);
-    unsigned int height = max(1, texture->resource.height >> level);
+    unsigned int width = wined3d_texture_get_level_width(texture, level);
+    unsigned int height = wined3d_texture_get_level_height(texture, level);
 
     if (texture->row_pitch)
     {
@@ -1322,8 +1322,8 @@ BOOL wined3d_texture_check_block_align(const struct wined3d_texture *texture,
         unsigned int level, const struct wined3d_box *box)
 {
     const struct wined3d_format *format = texture->resource.format;
-    unsigned int height = max(1, texture->resource.height >> level);
-    unsigned int width = max(1, texture->resource.width >> level);
+    unsigned int height = wined3d_texture_get_level_height(texture, level);
+    unsigned int width = wined3d_texture_get_level_width(texture, level);
     unsigned int width_mask, height_mask;
 
     if ((box->left >= box->right)
@@ -1709,9 +1709,9 @@ HRESULT CDECL wined3d_texture_get_sub_resource_desc(const struct wined3d_texture
     desc->pool = resource->pool;
 
     level_idx = sub_resource_idx % texture->level_count;
-    desc->width = max(1, resource->width >> level_idx);
-    desc->height = max(1, resource->height >> level_idx);
-    desc->depth = max(1, resource->depth >> level_idx);
+    desc->width = wined3d_texture_get_level_width(texture, level_idx);
+    desc->height = wined3d_texture_get_level_height(texture, level_idx);
+    desc->depth = wined3d_texture_get_level_depth(texture, level_idx);
     desc->size = texture->sub_resources[sub_resource_idx].resource->size;
 
     return WINED3D_OK;
