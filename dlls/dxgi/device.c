@@ -366,13 +366,15 @@ static const struct IWineDXGIDeviceVtbl dxgi_device_vtbl =
 };
 
 HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *layer,
-        IDXGIFactory *factory, IDXGIAdapter *adapter)
+        IDXGIFactory *factory, IDXGIAdapter *adapter,
+        const D3D_FEATURE_LEVEL *feature_levels, unsigned int level_count)
 {
     struct wined3d_device_parent *wined3d_device_parent;
     struct wined3d_swapchain_desc swapchain_desc;
     IWineDXGIDeviceParent *dxgi_device_parent;
     struct dxgi_adapter *dxgi_adapter;
     struct dxgi_factory *dxgi_factory;
+    D3D_FEATURE_LEVEL feature_level;
     void *layer_base;
     HRESULT hr;
 
@@ -416,12 +418,13 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     wined3d_device_parent = IWineDXGIDeviceParent_get_wined3d_device_parent(dxgi_device_parent);
     IWineDXGIDeviceParent_Release(dxgi_device_parent);
 
-    if (FAILED(hr = dxgi_check_d3d10_support(dxgi_factory, dxgi_adapter)))
+    if (!(feature_level = dxgi_check_feature_level_support(dxgi_factory, dxgi_adapter,
+            feature_levels, level_count)))
     {
         IUnknown_Release(device->child_layer);
         wined3d_private_store_cleanup(&device->private_store);
         wined3d_mutex_unlock();
-        return hr;
+        return E_FAIL;
     }
 
     FIXME("Ignoring adapter type.\n");
@@ -436,6 +439,8 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
         wined3d_mutex_unlock();
         return hr;
     }
+
+    layer->set_feature_level(layer->id, device->child_layer, feature_level);
 
     memset(&swapchain_desc, 0, sizeof(swapchain_desc));
     swapchain_desc.swap_effect = WINED3D_SWAP_EFFECT_DISCARD;

@@ -200,6 +200,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc(IDXGIAdapter1 *iface, DXGI
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_CheckInterfaceSupport(IDXGIAdapter1 *iface,
         REFGUID guid, LARGE_INTEGER *umd_version)
 {
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_10_0;
     struct dxgi_adapter *adapter = impl_from_IDXGIAdapter1(iface);
     struct wined3d_adapter_identifier adapter_id;
     HRESULT hr;
@@ -214,7 +215,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_CheckInterfaceSupport(IDXGIAdapter
         return DXGI_ERROR_UNSUPPORTED;
     }
 
-    if (FAILED(hr = dxgi_check_d3d10_support(adapter->parent, adapter)))
+    if (!dxgi_check_feature_level_support(adapter->parent, adapter, &feature_level, 1))
         return DXGI_ERROR_UNSUPPORTED;
 
     if (umd_version)

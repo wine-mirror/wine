@@ -453,10 +453,12 @@ struct dxgi_device_layer
     UINT (WINAPI *get_size)(enum dxgi_device_layer_id id, struct layer_get_size_args *args, DWORD unknown0);
     HRESULT (WINAPI *create)(enum dxgi_device_layer_id id, void **layer_base, DWORD unknown0,
             void *device_object, REFIID riid, void **device_layer);
+    void (WINAPI *set_feature_level)(enum dxgi_device_layer_id id, void *device,
+            D3D_FEATURE_LEVEL feature_level);
 };
 
 HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, IDXGIAdapter *adapter,
-        UINT flags, void *unknown0, void **device);
+        unsigned int flags, const D3D_FEATURE_LEVEL *feature_levels, unsigned int level_count, void **device);
 HRESULT WINAPI DXGID3D10RegisterLayers(const struct dxgi_device_layer *layers, UINT layer_count);
 
 #endif /* __WINE_D3D11_PRIVATE_H */

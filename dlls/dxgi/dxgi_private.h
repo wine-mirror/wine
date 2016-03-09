@@ -73,6 +73,8 @@ struct dxgi_device_layer
     UINT (WINAPI *get_size)(enum dxgi_device_layer_id id, struct layer_get_size_args *args, DWORD unknown0);
     HRESULT (WINAPI *create)(enum dxgi_device_layer_id id, void **layer_base, DWORD unknown0,
             void *device_object, REFIID riid, void **device_layer);
+    void (WINAPI *set_feature_level)(enum dxgi_device_layer_id id, void *device,
+            D3D_FEATURE_LEVEL feature_level);
 };
 
 /* TRACE helper functions */
@@ -120,7 +122,8 @@ struct dxgi_device
 };
 
 HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *layer,
-        IDXGIFactory *factory, IDXGIAdapter *adapter) DECLSPEC_HIDDEN;
+        IDXGIFactory *factory, IDXGIAdapter *adapter,
+        const D3D_FEATURE_LEVEL *feature_levels, unsigned int level_count) DECLSPEC_HIDDEN;
 
 /* IDXGIOutput */
 struct dxgi_output
@@ -174,6 +177,7 @@ struct dxgi_surface
 HRESULT dxgi_surface_init(struct dxgi_surface *surface, IDXGIDevice *device,
         IUnknown *outer, struct wined3d_resource *wined3d_resource) DECLSPEC_HIDDEN;
 
-HRESULT dxgi_check_d3d10_support(struct dxgi_factory *factory, struct dxgi_adapter *adapter) DECLSPEC_HIDDEN;
+D3D_FEATURE_LEVEL dxgi_check_feature_level_support(struct dxgi_factory *factory, struct dxgi_adapter *adapter,
+        const D3D_FEATURE_LEVEL *feature_levels, unsigned int level_count) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_DXGI_PRIVATE_H */

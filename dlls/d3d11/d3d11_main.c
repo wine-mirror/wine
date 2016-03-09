@@ -101,11 +101,23 @@ static HRESULT WINAPI layer_create(enum dxgi_device_layer_id id, void **layer_ba
     return S_OK;
 }
 
+static void WINAPI layer_set_feature_level(enum dxgi_device_layer_id id, void *device,
+        D3D_FEATURE_LEVEL feature_level)
+{
+    TRACE("id %#x, device %p, feature_level %u.\n", id, device, feature_level);
+
+    if (id != DXGI_DEVICE_LAYER_D3D10_DEVICE)
+    {
+        WARN("Unknown layer id %#x.\n", id);
+        return;
+    }
+}
+
 HRESULT WINAPI D3D11CoreRegisterLayers(void)
 {
     static const struct dxgi_device_layer layers[] =
     {
-        {DXGI_DEVICE_LAYER_D3D10_DEVICE, layer_init, layer_get_size, layer_create},
+        {DXGI_DEVICE_LAYER_D3D10_DEVICE, layer_init, layer_get_size, layer_create, layer_set_feature_level},
     };
 
     DXGID3D10RegisterLayers(layers, sizeof(layers)/sizeof(*layers));
@@ -116,6 +128,7 @@ HRESULT WINAPI D3D11CoreRegisterLayers(void)
 HRESULT WINAPI D3D11CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter, UINT flags,
         const D3D_FEATURE_LEVEL *feature_levels, UINT levels, ID3D11Device **device)
 {
+    static const D3D_FEATURE_LEVEL level = D3D_FEATURE_LEVEL_10_0;
     IUnknown *dxgi_device;
     HMODULE d3d11;
     HRESULT hr;
@@ -126,7 +139,7 @@ HRESULT WINAPI D3D11CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapte
     FIXME("Ignoring feature levels.\n");
 
     d3d11 = GetModuleHandleA("d3d11.dll");
-    hr = DXGID3D10CreateDevice(d3d11, factory, adapter, flags, 0, (void **)&dxgi_device);
+    hr = DXGID3D10CreateDevice(d3d11, factory, adapter, flags, &level, 1, (void **)&dxgi_device);
     if (FAILED(hr))
     {
         WARN("Failed to create device, returning %#x.\n", hr);

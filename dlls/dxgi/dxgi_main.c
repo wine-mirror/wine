@@ -125,7 +125,7 @@ static HRESULT register_d3d10core_layers(HMODULE d3d10core)
 }
 
 HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, IDXGIAdapter *adapter,
-        UINT flags, void *unknown0, void **device)
+        unsigned int flags, const D3D_FEATURE_LEVEL *feature_levels, unsigned int level_count, void **device)
 {
     struct layer_get_size_args get_size_args;
     struct dxgi_device *dxgi_device;
@@ -134,8 +134,10 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
     DWORD count;
     HRESULT hr;
 
-    TRACE("d3d10core %p, factory %p, adapter %p, flags %#x, unknown0 %p, device %p.\n",
-            d3d10core, factory, adapter, flags, unknown0, device);
+    TRACE("d3d10core %p, factory %p, adapter %p, flags %#x, feature_levels %p, level_count %u, device %p.\n",
+            d3d10core, factory, adapter, flags, feature_levels, level_count, device);
+
+    FIXME("Ignoring flags.\n");
 
     hr = register_d3d10core_layers(d3d10core);
     if (FAILED(hr))
@@ -178,7 +180,7 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
         return E_OUTOFMEMORY;
     }
 
-    hr = dxgi_device_init(dxgi_device, &d3d10_layer, factory, adapter);
+    hr = dxgi_device_init(dxgi_device, &d3d10_layer, factory, adapter, feature_levels, level_count);
     if (FAILED(hr))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);
