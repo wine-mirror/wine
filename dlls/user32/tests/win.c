@@ -8677,6 +8677,114 @@ static void test_activateapp(HWND window1)
     DestroyWindow(window2);
 }
 
+static LRESULT WINAPI winproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if(!hwnd) {
+        int *count = (int*)lparam;
+        (*count)++;
+    }
+    return 0;
+}
+
+static LRESULT WINAPI winproc2(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    return 0;
+}
+
+static void test_winproc_handles(const char *argv0)
+{
+    static const WCHAR winproc_testW[] = {'w','i','n','p','r','o','c','_','t','e','s','t',0};
+
+    HINSTANCE hinst = GetModuleHandleA(NULL);
+    WNDCLASSA wnd_classA;
+    WNDCLASSW wnd_classW;
+    int count;
+    PROCESS_INFORMATION info;
+    STARTUPINFOA startup;
+    char cmd[MAX_PATH];
+
+    memset(&wnd_classA, 0, sizeof(wnd_classA));
+    wnd_classA.lpszClassName = "winproc_test";
+    wnd_classA.lpfnWndProc = winproc;
+    ok(RegisterClassA(&wnd_classA),
+            "RegisterClass failed with error %d\n", GetLastError());
+
+    ok(GetClassInfoW(hinst, winproc_testW, &wnd_classW),
+            "GetClassInfoW failed with error %d\n", GetLastError());
+    ok(wnd_classA.lpfnWndProc != wnd_classW.lpfnWndProc,
+            "winproc pointers should not be identical\n");
+
+    count = 0;
+    CallWindowProcA(wnd_classW.lpfnWndProc, 0, 0, 0, (LPARAM)&count);
+    ok(count == 1, "winproc should be called once (%d)\n", count);
+    count = 0;
+    CallWindowProcW(wnd_classW.lpfnWndProc, 0, 0, 0, (LPARAM)&count);
+    ok(count == 1, "winproc should be called once (%d)\n", count);
+
+    ok(UnregisterClassW(winproc_testW, hinst),
+            "UnregisterClass failed with error %d\n", GetLastError());
+    /* crashes on 64-bit windows because lpfnWndProc handle is already freed */
+    if (sizeof(void*) == 4)
+    {
+        count = 0;
+        CallWindowProcA(wnd_classW.lpfnWndProc, 0, 0, 0, (LPARAM)&count);
+        todo_wine ok(!count, "winproc should not be called (%d)\n", count);
+        CallWindowProcW(wnd_classW.lpfnWndProc, 0, 0, 0, (LPARAM)&count);
+        todo_wine ok(!count, "winproc should not be called (%d)\n", count);
+    }
+
+    sprintf(cmd, "%s win winproc_limit", argv0);
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    ok(CreateProcessA(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL,
+                &startup, &info), "CreateProcess failed.\n");
+    winetest_wait_child_process(info.hProcess);
+    CloseHandle(info.hProcess);
+    CloseHandle(info.hThread);
+}
+
+static void test_winproc_limit(void)
+{
+    WNDPROC winproc_handle;
+    HWND hwnd;
+    int i;
+
+    hwnd = CreateWindowExA(0, "static", "test", WS_POPUP, 0, 0, 0, 0, 0, 0, 0, 0);
+    ok(hwnd != 0, "CreateWindowEx failed\n");
+
+    ok(SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)winproc),
+            "SetWindowLongPtr failed\n");
+    winproc_handle = (WNDPROC)GetWindowLongPtrW(hwnd, GWLP_WNDPROC);
+    ok(winproc_handle != winproc, "winproc pointers should not be identical\n");
+
+    /* run out of winproc slots */
+    for(i = 2; i<0xffff; i++)
+    {
+        ok(SetWindowLongPtrA(hwnd, GWLP_WNDPROC, i), "SetWindowLongPtr failed (%d)\n", i);
+        if(GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == i)
+            break;
+    }
+    ok(i != 0xffff, "unable to run out of winproc slots\n");
+    ok(SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)winproc2),
+            "SetWindowLongPtr failed with error %d\n", GetLastError());
+
+    i = 0;
+    CallWindowProcA(winproc_handle, 0, 0, 0, (LPARAM)&i);
+    ok(i == 1, "winproc should be called once (%d)\n", i);
+    i = 0;
+    CallWindowProcW(winproc_handle, 0, 0, 0, (LPARAM)&i);
+    ok(i == 1, "winproc should be called once (%d)\n", i);
+
+    DestroyWindow(hwnd);
+
+    i = 0;
+    CallWindowProcA(winproc_handle, 0, 0, 0, (LPARAM)&i);
+    ok(i == 1, "winproc should be called once (%d)\n", i);
+    i = 0;
+    CallWindowProcW(winproc_handle, 0, 0, 0, (LPARAM)&i);
+    ok(i == 1, "winproc should be called once (%d)\n", i);
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -8708,6 +8816,12 @@ START_TEST(win)
 
         sscanf(argv[3], "%p", &hwnd);
         window_from_point_proc(hwnd);
+        return;
+    }
+
+    if (argc==3 && !strcmp(argv[2], "winproc_limit"))
+    {
+        test_winproc_limit();
         return;
     }
 
@@ -8812,6 +8926,7 @@ START_TEST(win)
     test_smresult();
     test_GetMessagePos();
     test_activateapp(hwndMain);
+    test_winproc_handles(argv[0]);
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
