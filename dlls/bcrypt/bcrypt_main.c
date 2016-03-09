@@ -632,7 +632,7 @@ NTSTATUS WINAPI BCryptHashData( BCRYPT_HASH_HANDLE handle, UCHAR *input, ULONG s
     TRACE( "%p, %p, %u, %08x\n", handle, input, size, flags );
 
     if (!hash || hash->hdr.magic != MAGIC_HASH) return STATUS_INVALID_HANDLE;
-    if (!input) return STATUS_INVALID_PARAMETER;
+    if (!input) return STATUS_SUCCESS;
 
     return hash_update( hash, input, size );
 }

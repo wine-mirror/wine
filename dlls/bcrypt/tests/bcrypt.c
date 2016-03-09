@@ -165,6 +165,9 @@ static void test_sha1(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(hash != NULL, "hash not set\n");
 
+    ret = BCryptHashData(hash, NULL, 0, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
     ret = BCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
@@ -238,6 +241,9 @@ static void test_sha256(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(hash != NULL, "hash not set\n");
 
+    ret = BCryptHashData(hash, NULL, 0, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
     ret = BCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
@@ -310,6 +316,9 @@ static void test_sha384(void)
     ret = BCryptCreateHash(alg, &hash, buf, len, NULL, 0, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(hash != NULL, "hash not set\n");
+
+    ret = BCryptHashData(hash, NULL, 0, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
     ret = BCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
@@ -385,6 +394,9 @@ static void test_sha512(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(hash != NULL, "hash not set\n");
 
+    ret = BCryptHashData(hash, NULL, 0, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
     ret = BCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
@@ -457,6 +469,9 @@ static void test_md5(void)
     ret = BCryptCreateHash(alg, &hash, buf, len, NULL, 0, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(hash != NULL, "hash not set\n");
+
+    ret = BCryptHashData(hash, NULL, 0, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
     ret = BCryptHashData(hash, (UCHAR *)"test", sizeof("test"), 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
