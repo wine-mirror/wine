@@ -411,6 +411,15 @@ static void draw_quad_(unsigned int line, struct d3d11_test_context *context)
 
 static void test_create_device(void)
 {
+    static const D3D_FEATURE_LEVEL default_feature_levels[] =
+    {
+        D3D_FEATURE_LEVEL_11_0,
+        D3D_FEATURE_LEVEL_10_1,
+        D3D_FEATURE_LEVEL_10_0,
+        D3D_FEATURE_LEVEL_9_3,
+        D3D_FEATURE_LEVEL_9_2,
+        D3D_FEATURE_LEVEL_9_1,
+    };
     D3D_FEATURE_LEVEL feature_level, supported_feature_level;
     DXGI_SWAP_CHAIN_DESC swapchain_desc, obtained_desc;
     ID3D11DeviceContext *immediate_context;
@@ -435,6 +444,13 @@ static void test_create_device(void)
     ok(SUCCEEDED(hr), "D3D11CreateDevice failed %#x.\n", hr);
 
     hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION, NULL,
+            &feature_level, NULL);
+    ok(SUCCEEDED(hr), "D3D11CreateDevice failed %#x.\n", hr);
+    ok(feature_level == supported_feature_level, "Got feature level %#x, expected %#x.\n",
+            feature_level, supported_feature_level);
+
+    hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, default_feature_levels,
+            sizeof(default_feature_levels) / sizeof(default_feature_levels[0]), D3D11_SDK_VERSION, NULL,
             &feature_level, NULL);
     ok(SUCCEEDED(hr), "D3D11CreateDevice failed %#x.\n", hr);
     ok(feature_level == supported_feature_level, "Got feature level %#x, expected %#x.\n",
