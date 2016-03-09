@@ -482,11 +482,11 @@ EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT po
 			DWORD iType)
 {
     EMRPOLYPOLYLINE *emr;
-    DWORD cptl = 0, poly, size;
+    DWORD cptl = 0, poly, size, i;
     INT point;
     RECTL bounds;
     const POINT *pts;
-    BOOL ret;
+    BOOL ret, use_small_emr = TRUE;
 
     bounds.left = bounds.right = pt[0].x;
     bounds.top = bounds.bottom = pt[0].y;
@@ -495,6 +495,10 @@ EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT po
     for(poly = 0; poly < polys; poly++) {
         cptl += counts[poly];
 	for(point = 0; point < counts[poly]; point++) {
+            /* check whether all points fit in the SHORT int POINT structure */
+            if( ((pts->x+0x8000) & ~0xffff ) ||
+                ((pts->y+0x8000) & ~0xffff ) )
+                use_small_emr = FALSE;
 	    if(bounds.left > pts->x) bounds.left = pts->x;
 	    else if(bounds.right < pts->x) bounds.right = pts->x;
 	    if(bounds.top > pts->y) bounds.top = pts->y;
@@ -503,18 +507,41 @@ EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT po
 	}
     }
 
-    size = sizeof(EMRPOLYPOLYLINE) + (polys - 1) * sizeof(DWORD) +
-      (cptl - 1) * sizeof(POINTL);
+    size = FIELD_OFFSET(EMRPOLYPOLYLINE, aPolyCounts[polys]);
+    if(use_small_emr)
+        size += cptl * sizeof(POINTS);
+    else
+        size += cptl * sizeof(POINTL);
 
     emr = HeapAlloc( GetProcessHeap(), 0, size );
 
     emr->emr.iType = iType;
+    if(use_small_emr) emr->emr.iType += EMR_POLYPOLYLINE16 - EMR_POLYPOLYLINE;
+
     emr->emr.nSize = size;
     emr->rclBounds = bounds;
     emr->nPolys = polys;
     emr->cptl = cptl;
-    memcpy(emr->aPolyCounts, counts, polys * sizeof(DWORD));
-    memcpy(emr->aPolyCounts + polys, pt, cptl * sizeof(POINTL));
+
+    if(polys)
+    {
+        memcpy( emr->aPolyCounts, counts, polys * sizeof(DWORD) );
+        if(cptl)
+        {
+            if(use_small_emr)
+            {
+                POINTS *out_pts = (POINTS *)(emr->aPolyCounts + polys);
+                for(i = 0; i < cptl; i++ )
+                {
+                    out_pts[i].x = pt[i].x;
+                    out_pts[i].y = pt[i].y;
+                }
+            }
+            else
+                memcpy( emr->aPolyCounts + polys, pt, cptl * sizeof(POINTL) );
+        }
+    }
+
     ret = EMFDRV_WriteRecord( dev, &emr->emr );
     if(ret)
         EMFDRV_UpdateBBox( dev, &emr->rclBounds );
