@@ -8798,6 +8798,12 @@ static void test_winproc_limit(void)
     ok(SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"text"), "WM_SETTEXT failed\n");
     ok(SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)textW), "WM_SETTEXT with conversion failed\n");
 
+    /* Show that there's no message conversion when CallWindowProc is used */
+    ok(CallWindowProcA(winproc_convW, hwnd, WM_SETTEXT, 0, (LPARAM)textW) == 1,
+            "winproc_convW returned error\n");
+    ok(CallWindowProcW(winproc_convW, hwnd, WM_SETTEXT, 0, (LPARAM)textW) == 1,
+            "winproc_convW returned error\n");
+
     i = 0;
     CallWindowProcA(winproc_handle, 0, 0, 0, (LPARAM)&i);
     ok(i == 1, "winproc should be called once (%d)\n", i);
