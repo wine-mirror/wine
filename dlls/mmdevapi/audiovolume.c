@@ -233,10 +233,15 @@ static HRESULT WINAPI AEV_QueryHardwareSupport(IAudioEndpointVolumeEx *iface, DW
 static HRESULT WINAPI AEV_GetVolumeRange(IAudioEndpointVolumeEx *iface, float *mindb, float *maxdb, float *inc)
 {
     TRACE("(%p)->(%p,%p,%p)\n", iface, mindb, maxdb, inc);
+
     if (!mindb || !maxdb || !inc)
         return E_POINTER;
-    FIXME("stub\n");
-    return E_NOTIMPL;
+
+    *mindb = -100.f;
+    *maxdb = 0.f;
+    *inc = 1.f;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI AEV_GetVolumeRangeChannel(IAudioEndpointVolumeEx *iface, UINT chan, float *mindb, float *maxdb, float *inc)
@@ -273,17 +278,17 @@ static const IAudioEndpointVolumeExVtbl AEVImpl_Vtbl = {
     AEV_GetVolumeRangeChannel
 };
 
-HRESULT AudioEndpointVolume_Create(MMDevice *parent, IAudioEndpointVolume **ppv)
+HRESULT AudioEndpointVolume_Create(MMDevice *parent, IAudioEndpointVolumeEx **ppv)
 {
     AEVImpl *This;
 
     *ppv = NULL;
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This));
     if (!This)
         return E_OUTOFMEMORY;
     This->IAudioEndpointVolumeEx_iface.lpVtbl = &AEVImpl_Vtbl;
     This->ref = 1;
 
-    *ppv = (IAudioEndpointVolume*)&This->IAudioEndpointVolumeEx_iface;
+    *ppv = &This->IAudioEndpointVolumeEx_iface;
     return S_OK;
 }
