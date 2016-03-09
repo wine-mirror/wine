@@ -396,6 +396,12 @@ enum reader_state
     READER_STATE_EOF
 };
 
+struct prefix
+{
+    WS_XML_STRING str;
+    WS_XML_STRING ns;
+};
+
 struct reader
 {
     ULONG                    read_size;
@@ -405,6 +411,9 @@ struct reader
     struct node             *root;
     struct node             *current;
     ULONG                    current_attr;
+    struct prefix           *prefixes;
+    ULONG                    nb_prefixes;
+    ULONG                    nb_prefixes_allocated;
     WS_XML_READER_INPUT_TYPE input_type;
     const unsigned char     *input_data;
     ULONG                    input_size;
@@ -422,6 +431,13 @@ static struct reader *alloc_reader(void)
     for (i = 0; i < count; i++) size += reader_props[i].size;
     if (!(ret = heap_alloc_zero( size ))) return NULL;
 
+    if (!(ret->prefixes = heap_alloc_zero( sizeof(*ret->prefixes) )))
+    {
+        heap_free( ret );
+        return NULL;
+    }
+    ret->nb_prefixes = ret->nb_prefixes_allocated = 1;
+
     ptr = (char *)&ret->prop[count];
     for (i = 0; i < count; i++)
     {
@@ -431,6 +447,74 @@ static struct reader *alloc_reader(void)
     }
     ret->prop_count = count;
     return ret;
+}
+
+static void clear_prefixes( struct prefix *prefixes, ULONG count )
+{
+    ULONG i;
+    for (i = 0; i < count; i++)
+    {
+        heap_free( prefixes[i].str.bytes );
+        prefixes[i].str.bytes  = NULL;
+        prefixes[i].str.length = 0;
+
+        heap_free( prefixes[i].ns.bytes );
+        prefixes[i].ns.bytes  = NULL;
+        prefixes[i].ns.length = 0;
+    }
+}
+
+static HRESULT set_prefix( struct prefix *prefix, const WS_XML_STRING *str, const WS_XML_STRING *ns )
+{
+    if (str)
+    {
+        heap_free( prefix->str.bytes );
+        if (!(prefix->str.bytes = heap_alloc( str->length ))) return E_OUTOFMEMORY;
+        memcpy( prefix->str.bytes, str->bytes, str->length );
+        prefix->str.length = str->length;
+    }
+
+    heap_free( prefix->ns.bytes );
+    if (!(prefix->ns.bytes = heap_alloc( ns->length ))) return E_OUTOFMEMORY;
+    memcpy( prefix->ns.bytes, ns->bytes, ns->length );
+    prefix->ns.length = ns->length;
+
+    return S_OK;
+}
+
+static HRESULT bind_prefix( struct reader *reader, const WS_XML_STRING *prefix, const WS_XML_STRING *ns )
+{
+    ULONG i;
+    HRESULT hr;
+
+    for (i = 0; i < reader->nb_prefixes; i++)
+    {
+        if (WsXmlStringEquals( prefix, &reader->prefixes[i].str, NULL ) == S_OK)
+            return set_prefix( &reader->prefixes[i], NULL, ns );
+    }
+    if (i >= reader->nb_prefixes_allocated)
+    {
+        ULONG new_size = reader->nb_prefixes_allocated * sizeof(*reader->prefixes) * 2;
+        struct prefix *tmp = heap_realloc_zero( reader->prefixes, new_size  );
+        if (!tmp) return E_OUTOFMEMORY;
+        reader->prefixes = tmp;
+        reader->nb_prefixes_allocated *= 2;
+    }
+
+    if ((hr = set_prefix( &reader->prefixes[i], prefix, ns )) != S_OK) return hr;
+    reader->nb_prefixes++;
+    return S_OK;
+}
+
+static const WS_XML_STRING *get_namespace( struct reader *reader, const WS_XML_STRING *prefix )
+{
+    ULONG i;
+    for (i = 0; i < reader->nb_prefixes; i++)
+    {
+        if (WsXmlStringEquals( prefix, &reader->prefixes[i].str, NULL ) == S_OK)
+            return &reader->prefixes[i].ns;
+    }
+    return NULL;
 }
 
 static HRESULT set_reader_prop( struct reader *reader, WS_XML_READER_PROPERTY_ID id, const void *value, ULONG size )
@@ -487,6 +571,8 @@ static HRESULT read_init_state( struct reader *reader )
 
     destroy_nodes( reader->root );
     reader->root = NULL;
+    clear_prefixes( reader->prefixes, reader->nb_prefixes );
+    reader->nb_prefixes = 1;
     if (!(node = alloc_node( WS_XML_NODE_TYPE_EOF ))) return E_OUTOFMEMORY;
     read_insert_eof( reader, node );
     reader->state = READER_STATE_INITIAL;
@@ -548,6 +634,8 @@ void WINAPI WsFreeReader( WS_XML_READER *handle )
 
     if (!reader) return;
     destroy_nodes( reader->root );
+    clear_prefixes( reader->prefixes, reader->nb_prefixes );
+    heap_free( reader->prefixes );
     heap_free( reader );
 }
 
@@ -947,8 +1035,19 @@ static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
     hr = E_OUTOFMEMORY;
     if (WsXmlStringEquals( prefix, &xmlns, NULL ) == S_OK)
     {
+        heap_free( prefix );
         attr->isXmlNs   = 1;
-        if (!(attr->prefix = alloc_xml_string( localname->bytes, localname->length ))) goto error;
+        if (!(attr->prefix = alloc_xml_string( localname->bytes, localname->length )))
+        {
+            heap_free( localname );
+            goto error;
+        }
+        attr->localName = localname;
+    }
+    else if (!prefix->length && WsXmlStringEquals( localname, &xmlns, NULL ) == S_OK)
+    {
+        attr->isXmlNs   = 1;
+        attr->prefix    = prefix;
         attr->localName = localname;
     }
     else
@@ -982,15 +1081,12 @@ static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
     if (attr->isXmlNs)
     {
         if (!(attr->ns = alloc_xml_string( start, len ))) goto error;
+        if ((hr = bind_prefix( reader, attr->prefix, attr->ns )) != S_OK) goto error;
         if (!(text = alloc_utf8_text( NULL, 0 ))) goto error;
-        attr->value = &text->text;
     }
-    else
-    {
-        if (!(attr->ns = alloc_xml_string( NULL, 0 ))) goto error;
-        if (!(text = alloc_utf8_text( start, len ))) goto error;
-        attr->value = &text->text;
-    }
+    else if (!(text = alloc_utf8_text( start, len ))) goto error;
+
+    attr->value = &text->text;
     attr->singleQuote = (quote == '\'');
 
     *ret = attr;
@@ -1037,13 +1133,33 @@ static struct node *read_find_parent( struct reader *reader, const WS_XML_STRING
     return NULL;
 }
 
+static HRESULT set_namespaces( struct reader *reader, WS_XML_ELEMENT_NODE *elem )
+{
+    static const WS_XML_STRING xml = {3, (BYTE *)"xml"};
+    const WS_XML_STRING *ns;
+    ULONG i;
+
+    if (!(ns = get_namespace( reader, elem->prefix ))) return WS_E_INVALID_FORMAT;
+    if (!(elem->ns = alloc_xml_string( ns->bytes, ns->length ))) return E_OUTOFMEMORY;
+    if (!elem->ns->length) elem->ns->bytes = (BYTE *)(elem->ns + 1); /* quirk */
+
+    for (i = 0; i < elem->attributeCount; i++)
+    {
+        WS_XML_ATTRIBUTE *attr = elem->attributes[i];
+        if (attr->isXmlNs || WsXmlStringEquals( attr->prefix, &xml, NULL ) == S_OK) continue;
+        if (!(ns = get_namespace( reader, attr->prefix ))) return WS_E_INVALID_FORMAT;
+        if (!(attr->ns = alloc_xml_string( ns->bytes, ns->length ))) return E_OUTOFMEMORY;
+    }
+    return S_OK;
+}
+
 static HRESULT read_element( struct reader *reader )
 {
     unsigned int len = 0, ch, skip;
     const unsigned char *start;
     struct node *node = NULL, *parent;
     WS_XML_ELEMENT_NODE *elem;
-    WS_XML_ATTRIBUTE *attr;
+    WS_XML_ATTRIBUTE *attr = NULL;
     HRESULT hr = WS_E_INVALID_FORMAT;
 
     if (read_end_of_data( reader ))
@@ -1072,11 +1188,7 @@ static HRESULT read_element( struct reader *reader )
     hr = E_OUTOFMEMORY;
     if (!(node = alloc_node( WS_XML_NODE_TYPE_ELEMENT ))) goto error;
     elem = (WS_XML_ELEMENT_NODE *)node;
-
     if ((hr = parse_name( start, len, &elem->prefix, &elem->localName )) != S_OK) goto error;
-    hr = E_OUTOFMEMORY;
-    if (!(elem->ns = alloc_xml_string( NULL, 0 ))) goto error;
-    elem->ns->bytes = (BYTE *)(elem->ns + 1);
 
     reader->current_attr = 0;
     for (;;)
@@ -1091,6 +1203,7 @@ static HRESULT read_element( struct reader *reader )
         }
         reader->current_attr++;
     }
+    if ((hr = set_namespaces( reader, elem )) != S_OK) goto error;
 
     read_insert_node( reader, parent, node );
     reader->state = READER_STATE_STARTELEMENT;

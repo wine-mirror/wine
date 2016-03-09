@@ -2220,7 +2220,7 @@ static void test_WsGetNamespaceFromPrefix(void)
         ok( !memcmp( ns->bytes, "ns", 2 ), "wrong data\n" );
     }
 
-    prepare_namespace_test( reader, "<t xmlns:prefix='ns'>>/t>" );
+    prepare_namespace_test( reader, "<t xmlns:prefix='ns'></t>" );
     ns = NULL;
     hr = WsGetNamespaceFromPrefix( reader, &prefix, TRUE, &ns, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -2244,6 +2244,12 @@ static void test_WsGetNamespaceFromPrefix(void)
         WS_XML_UTF8_TEXT *text;
 
         ok( elem->node.nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", elem->node.nodeType );
+        ok( elem->prefix != NULL, "prefix not set\n" );
+        ok( !elem->prefix->length, "got %u\n", elem->prefix->length );
+        ok( elem->prefix->bytes == NULL, "bytes not set\n" );
+        ok( elem->ns != NULL, "ns not set\n" );
+        ok( !elem->ns->length, "got %u\n", elem->ns->length );
+        ok( elem->ns->bytes != NULL, "bytes not set\n" );
         ok( elem->attributeCount == 1, "got %u\n", elem->attributeCount );
         ok( elem->attributes != NULL, "attributes not set\n" );
 
@@ -2259,7 +2265,7 @@ static void test_WsGetNamespaceFromPrefix(void)
         ok( !memcmp( attr->localName->bytes, "prefix", 6 ), "wrong data\n" );
         ok( attr->ns != NULL, "ns not set\n" );
         ok( attr->ns->length == 2, "got %u\n", attr->ns->length );
-        ok( attr->ns->bytes != NULL, "bytes set\n" );
+        ok( attr->ns->bytes != NULL, "bytes not set\n" );
         ok( !memcmp( attr->ns->bytes, "ns", 2 ), "wrong data\n" );
         ok( attr->value != NULL, "value not set\n" );
 
@@ -2318,6 +2324,124 @@ static void test_WsGetNamespaceFromPrefix(void)
     hr = WsGetNamespaceFromPrefix( reader, &prefix, FALSE, &ns, NULL );
     ok( hr == S_FALSE, "got %08x\n", hr );
     ok( ns == NULL, "ns not set\n" );
+
+    hr = set_input( reader, "<t prefix:attr='' xmlns:prefix='ns'></t>", sizeof("<t prefix:attr='' xmlns:prefix='ns'></t>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    if (node)
+    {
+        WS_XML_ELEMENT_NODE *elem = (WS_XML_ELEMENT_NODE *)node;
+        WS_XML_ATTRIBUTE *attr;
+
+        ok( elem->node.nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", elem->node.nodeType );
+        ok( elem->attributeCount == 2, "got %u\n", elem->attributeCount );
+        ok( elem->attributes != NULL, "attributes not set\n" );
+
+        attr = elem->attributes[0];
+        ok( attr->singleQuote, "singleQuote not set\n" );
+        ok( !attr->isXmlNs, "isXmlNs is set\n" );
+        ok( attr->prefix != NULL, "prefix not set\n" );
+        ok( attr->prefix->length == 6, "got %u\n", attr->prefix->length );
+        ok( attr->prefix->bytes != NULL, "bytes not set\n" );
+        ok( !memcmp( attr->prefix->bytes, "prefix", 6 ), "wrong data\n" );
+        ok( attr->localName != NULL, "localName not set\n" );
+        ok( attr->localName->length == 4, "got %u\n", attr->localName->length );
+        ok( !memcmp( attr->localName->bytes, "attr", 4 ), "wrong data\n" );
+        ok( attr->ns != NULL, "ns not set\n" );
+        ok( attr->ns->length == 2, "got %u\n", attr->ns->length );
+        ok( attr->ns->bytes != NULL, "bytes not set\n" );
+        ok( !memcmp( attr->ns->bytes, "ns", 2 ), "wrong data\n" );
+    }
+
+    hr = set_input( reader, "<t xmlns:p='ns'><u xmlns:p='ns2'/></t>", sizeof("<t xmlns:p='ns'><u xmlns:p='ns2'/></t>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadStartElement( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_input( reader, "<t xmlns:p='ns'><p:u p:a=''/></t>", sizeof("<t xmlns:p='ns'><p:u p:a=''/></t>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadStartElement( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    if (node)
+    {
+        WS_XML_ELEMENT_NODE *elem = (WS_XML_ELEMENT_NODE *)node;
+        WS_XML_ATTRIBUTE *attr;
+
+        ok( elem->node.nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", elem->node.nodeType );
+        ok( elem->attributeCount == 1, "got %u\n", elem->attributeCount );
+        ok( elem->attributes != NULL, "attributes not set\n" );
+
+        attr = elem->attributes[0];
+        ok( attr->prefix != NULL, "prefix not set\n" );
+        ok( attr->prefix->length == 1, "got %u\n", attr->prefix->length );
+        ok( attr->prefix->bytes != NULL, "bytes set\n" );
+        ok( !memcmp( attr->prefix->bytes, "p", 1 ), "wrong data\n" );
+        ok( attr->localName != NULL, "localName not set\n" );
+        ok( attr->localName->length == 1, "got %u\n", attr->localName->length );
+        ok( !memcmp( attr->localName->bytes, "a", 1 ), "wrong data\n" );
+        ok( attr->ns != NULL, "ns not set\n" );
+        ok( attr->ns->length == 2, "got %u\n", attr->ns->length );
+        ok( attr->ns->bytes != NULL, "bytes not set\n" );
+        ok( !memcmp( attr->ns->bytes, "ns", 2 ), "wrong data\n" );
+    }
+
+    hr = set_input( reader, "<t xmlns='ns'></t>", sizeof("<t xmlns='ns'></t>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    if (node)
+    {
+        WS_XML_ELEMENT_NODE *elem = (WS_XML_ELEMENT_NODE *)node;
+        WS_XML_ATTRIBUTE *attr;
+
+        ok( elem->node.nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", elem->node.nodeType );
+        ok( elem->prefix != NULL, "prefix not set\n" );
+        ok( !elem->prefix->length, "got %u\n", elem->prefix->length );
+        ok( elem->prefix->bytes == NULL, "bytes not set\n" );
+        ok( elem->ns != NULL, "ns not set\n" );
+        ok( elem->ns->length == 2, "got %u\n", elem->ns->length );
+        ok( elem->ns->bytes != NULL, "bytes not set\n" );
+        ok( !memcmp( elem->ns->bytes, "ns", 2 ), "wrong data\n" );
+
+        attr = elem->attributes[0];
+        ok( attr->isXmlNs, "isXmlNs is not set\n" );
+        ok( attr->prefix != NULL, "prefix not set\n" );
+        ok( !attr->prefix->length, "got %u\n", attr->prefix->length );
+        ok( attr->prefix->bytes == NULL, "bytes set\n" );
+        ok( attr->localName != NULL, "localName not set\n" );
+        ok( attr->localName->length == 5, "got %u\n", attr->localName->length );
+        ok( !memcmp( attr->localName->bytes, "xmlns", 5 ), "wrong data\n" );
+        ok( attr->ns != NULL, "ns not set\n" );
+        ok( attr->ns->length == 2, "got %u\n", attr->ns->length );
+        ok( attr->ns->bytes != NULL, "bytes not set\n" );
+        ok( !memcmp( attr->ns->bytes, "ns", 2 ), "wrong data\n" );
+    }
+
+    hr = set_input( reader, "<t xmlns:p='ns' xmlns:p='ns2'></t>", sizeof("<t xmlns:p='ns' xmlns:p='ns2'></t>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    todo_wine ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    hr = set_input( reader, "<t xmlns:p='ns' xmlns:p='ns'></t>", sizeof("<t xmlns:p='ns' xmlns:p='ns'></t>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    todo_wine ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    hr = set_input( reader, "<t xmlns:p='ns' xmlns:P='ns2'></t>", sizeof("<t xmlns:p='ns' xmlns:P='ns2'></t>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
 
     WsFreeReader( reader );
 }

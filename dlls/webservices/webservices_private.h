@@ -60,6 +60,11 @@ static inline void *heap_realloc( void *mem, SIZE_T size )
     return HeapReAlloc( GetProcessHeap(), 0, mem, size );
 }
 
+static inline void *heap_realloc_zero( void *mem, SIZE_T size )
+{
+    return HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, mem, size );
+}
+
 static inline BOOL heap_free( void *mem )
 {
     return HeapFree( GetProcessHeap(), 0, mem );
