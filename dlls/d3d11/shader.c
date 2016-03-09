@@ -361,6 +361,27 @@ static const struct wined3d_parent_ops d3d_vertex_shader_wined3d_parent_ops =
     d3d_vertex_shader_wined3d_object_destroyed,
 };
 
+static unsigned int d3d_sm_from_feature_level(D3D_FEATURE_LEVEL feature_level)
+{
+    switch (feature_level)
+    {
+        case D3D_FEATURE_LEVEL_11_1:
+        case D3D_FEATURE_LEVEL_11_0:
+            return 5;
+        case D3D_FEATURE_LEVEL_10_1:
+        case D3D_FEATURE_LEVEL_10_0:
+            return 4;
+        case D3D_FEATURE_LEVEL_9_3:
+            return 3;
+        case D3D_FEATURE_LEVEL_9_2:
+        case D3D_FEATURE_LEVEL_9_1:
+            return 2;
+        default:
+            ERR("Unexpected feature_level %#x.\n", feature_level);
+    }
+    return 0;
+}
+
 static HRESULT d3d_vertex_shader_init(struct d3d_vertex_shader *shader, struct d3d_device *device,
         const void *byte_code, SIZE_T byte_code_length)
 {
@@ -389,7 +410,7 @@ static HRESULT d3d_vertex_shader_init(struct d3d_vertex_shader *shader, struct d
     desc.byte_code = shader_info.shader_code;
     desc.input_signature = &input_signature;
     desc.output_signature = &output_signature;
-    desc.max_version = 4;
+    desc.max_version = d3d_sm_from_feature_level(device->feature_level);
 
     hr = wined3d_shader_create_vs(device->wined3d_device, &desc, shader,
             &d3d_vertex_shader_wined3d_parent_ops, &shader->wined3d_shader);
@@ -708,7 +729,7 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader, stru
     desc.byte_code = shader_info.shader_code;
     desc.input_signature = &input_signature;
     desc.output_signature = &output_signature;
-    desc.max_version = 4;
+    desc.max_version = d3d_sm_from_feature_level(device->feature_level);
 
     hr = wined3d_shader_create_gs(device->wined3d_device, &desc, shader,
             &d3d_geometry_shader_wined3d_parent_ops, &shader->wined3d_shader);
@@ -1034,7 +1055,7 @@ static HRESULT d3d_pixel_shader_init(struct d3d_pixel_shader *shader, struct d3d
     desc.byte_code = shader_info.shader_code;
     desc.input_signature = &input_signature;
     desc.output_signature = &output_signature;
-    desc.max_version = 4;
+    desc.max_version = d3d_sm_from_feature_level(device->feature_level);
 
     hr = wined3d_shader_create_ps(device->wined3d_device, &desc, shader,
             &d3d_pixel_shader_wined3d_parent_ops, &shader->wined3d_shader);
