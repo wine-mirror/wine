@@ -484,28 +484,33 @@ EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT po
     EMRPOLYPOLYLINE *emr;
     DWORD cptl = 0, poly, size, i;
     INT point;
-    RECTL bounds;
+    const RECTL empty = {0, 0, -1, -1};
+    RECTL bounds = empty;
     const POINT *pts;
-    BOOL ret, use_small_emr = TRUE;
-
-    bounds.left = bounds.right = pt[0].x;
-    bounds.top = bounds.bottom = pt[0].y;
+    BOOL ret, use_small_emr = TRUE, bounds_valid = TRUE;
 
     pts = pt;
     for(poly = 0; poly < polys; poly++) {
         cptl += counts[poly];
+        if(counts[poly] < 2) bounds_valid = FALSE;
 	for(point = 0; point < counts[poly]; point++) {
             /* check whether all points fit in the SHORT int POINT structure */
             if( ((pts->x+0x8000) & ~0xffff ) ||
                 ((pts->y+0x8000) & ~0xffff ) )
                 use_small_emr = FALSE;
-	    if(bounds.left > pts->x) bounds.left = pts->x;
-	    else if(bounds.right < pts->x) bounds.right = pts->x;
-	    if(bounds.top > pts->y) bounds.top = pts->y;
-	    else if(bounds.bottom < pts->y) bounds.bottom = pts->y;
+            if(pts == pt) {
+                bounds.left = bounds.right = pts->x;
+                bounds.top = bounds.bottom = pts->y;
+            } else {
+                if(bounds.left > pts->x) bounds.left = pts->x;
+                else if(bounds.right < pts->x) bounds.right = pts->x;
+                if(bounds.top > pts->y) bounds.top = pts->y;
+                else if(bounds.bottom < pts->y) bounds.bottom = pts->y;
+            }
 	    pts++;
 	}
     }
+    if(!cptl) bounds_valid = FALSE;
 
     size = FIELD_OFFSET(EMRPOLYPOLYLINE, aPolyCounts[polys]);
     if(use_small_emr)
@@ -519,7 +524,10 @@ EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT po
     if(use_small_emr) emr->emr.iType += EMR_POLYPOLYLINE16 - EMR_POLYPOLYLINE;
 
     emr->emr.nSize = size;
-    emr->rclBounds = bounds;
+    if(bounds_valid)
+        emr->rclBounds = bounds;
+    else
+        emr->rclBounds = empty;
     emr->nPolys = polys;
     emr->cptl = cptl;
 
@@ -543,6 +551,11 @@ EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT po
     }
 
     ret = EMFDRV_WriteRecord( dev, &emr->emr );
+    if(ret && !bounds_valid)
+    {
+        ret = FALSE;
+        SetLastError( ERROR_INVALID_PARAMETER );
+    }
     if(ret)
         EMFDRV_UpdateBBox( dev, &emr->rclBounds );
     HeapFree( GetProcessHeap(), 0, emr );
