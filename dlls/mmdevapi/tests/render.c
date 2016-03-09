@@ -2247,7 +2247,7 @@ static void test_endpointvolume(void)
 {
     HRESULT hr;
     IAudioEndpointVolume *aev;
-    float mindb, maxdb, increment;
+    float mindb, maxdb, increment, volume;
 
     hr = IMMDevice_Activate(dev, &IID_IAudioEndpointVolume,
             CLSCTX_INPROC_SERVER, NULL, (void**)&aev);
@@ -2261,6 +2261,15 @@ static void test_endpointvolume(void)
     hr = IAudioEndpointVolume_GetVolumeRange(aev, &mindb, &maxdb, &increment);
     ok(hr == S_OK, "GetVolumeRange failed: 0x%08x\n", hr);
     trace("got range: [%f,%f]/%f\n", mindb, maxdb, increment);
+
+    hr = IAudioEndpointVolume_SetMasterVolumeLevel(aev, mindb - increment, NULL);
+    ok(hr == E_INVALIDARG, "SetMasterVolumeLevel failed: 0x%08x\n", hr);
+
+    hr = IAudioEndpointVolume_GetMasterVolumeLevel(aev, &volume);
+    ok(hr == S_OK, "GetMasterVolumeLevel failed: 0x%08x\n", hr);
+
+    hr = IAudioEndpointVolume_SetMasterVolumeLevel(aev, volume, NULL);
+    ok(hr == S_OK, "SetMasterVolumeLevel failed: 0x%08x\n", hr);
 
     IAudioEndpointVolume_Release(aev);
 }
