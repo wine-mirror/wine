@@ -3237,13 +3237,6 @@ static void surface_load_ds_location(struct wined3d_surface *surface, struct win
         h = surface->resource.height;
     }
 
-    if (surface->ds_current_size.cx == surface->resource.width
-            && surface->ds_current_size.cy == surface->resource.height)
-    {
-        TRACE("Location (%#x) is already up to date.\n", location);
-        return;
-    }
-
     if (surface->current_renderbuffer)
     {
         FIXME("Not supported with fixed up depth stencil.\n");
@@ -3251,24 +3244,6 @@ static void surface_load_ds_location(struct wined3d_surface *surface, struct win
     }
 
     wined3d_surface_prepare(surface, context, location);
-    if (surface->locations & WINED3D_LOCATION_DISCARDED)
-    {
-        TRACE("Surface was discarded, no need copy data.\n");
-        surface->locations &= ~WINED3D_LOCATION_DISCARDED;
-        surface->locations |= location;
-        surface->ds_current_size.cx = surface->resource.width;
-        surface->ds_current_size.cy = surface->resource.height;
-        return;
-    }
-
-    if (!surface->locations)
-    {
-        FIXME("No up to date depth stencil location.\n");
-        surface->locations |= location;
-        surface->ds_current_size.cx = surface->resource.width;
-        surface->ds_current_size.cy = surface->resource.height;
-        return;
-    }
 
     if (location == WINED3D_LOCATION_TEXTURE_RGB)
     {
@@ -3351,10 +3326,6 @@ static void surface_load_ds_location(struct wined3d_surface *surface, struct win
     {
         ERR("Invalid location (%#x) specified.\n", location);
     }
-
-    surface->locations |= location;
-    surface->ds_current_size.cx = surface->resource.width;
-    surface->ds_current_size.cy = surface->resource.height;
 }
 
 void surface_validate_location(struct wined3d_surface *surface, DWORD location)
@@ -3687,33 +3658,11 @@ HRESULT surface_load_location(struct wined3d_surface *surface, struct wined3d_co
 
     TRACE("surface %p, location %s.\n", surface, wined3d_debug_location(location));
 
-    if (surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
+    if (surface->locations & location && (!(surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
+            || (surface->ds_current_size.cx == surface->resource.width
+            && surface->ds_current_size.cy == surface->resource.height)))
     {
-        if ((location == WINED3D_LOCATION_TEXTURE_RGB
-                && surface->locations & (WINED3D_LOCATION_DRAWABLE | WINED3D_LOCATION_DISCARDED))
-                || (location == WINED3D_LOCATION_DRAWABLE
-                && surface->locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_DISCARDED)))
-        {
-            surface_load_ds_location(surface, context, location);
-            return WINED3D_OK;
-        }
-        else if (location & surface->locations
-                && surface->container->resource.draw_binding != WINED3D_LOCATION_DRAWABLE)
-        {
-            /* Already up to date, nothing to do. */
-            return WINED3D_OK;
-        }
-        else
-        {
-            FIXME("Unimplemented copy from %s to %s for depth/stencil buffers.\n",
-                    wined3d_debug_location(surface->locations), wined3d_debug_location(location));
-            return WINED3DERR_INVALIDCALL;
-        }
-    }
-
-    if (surface->locations & location)
-    {
-        TRACE("Location already up to date.\n");
+        TRACE("Location (%#x) is already up to date.\n", location);
         return WINED3D_OK;
     }
 
@@ -3725,9 +3674,33 @@ HRESULT surface_load_location(struct wined3d_surface *surface, struct wined3d_co
                     required_access, surface->resource.access_flags);
     }
 
+    if (surface->locations & WINED3D_LOCATION_DISCARDED)
+    {
+        TRACE("Surface previously discarded, nothing to do.\n");
+        wined3d_surface_prepare(surface, context, location);
+        surface_validate_location(surface, location);
+        surface_invalidate_location(surface, WINED3D_LOCATION_DISCARDED);
+        goto done;
+    }
+
     if (!surface->locations)
     {
         ERR("Surface %p does not have any up to date location.\n", surface);
+        surface_validate_location(surface, WINED3D_LOCATION_DISCARDED);
+        return surface_load_location(surface, context, location);
+    }
+
+    if (surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
+    {
+        if ((location == WINED3D_LOCATION_TEXTURE_RGB && surface->locations & WINED3D_LOCATION_DRAWABLE)
+                || (location == WINED3D_LOCATION_DRAWABLE && surface->locations & WINED3D_LOCATION_TEXTURE_RGB))
+        {
+            surface_load_ds_location(surface, context, location);
+            goto done;
+        }
+
+        FIXME("Unimplemented copy from %s to %s for depth/stencil buffers.\n",
+                wined3d_debug_location(surface->locations), wined3d_debug_location(location));
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -3762,7 +3735,14 @@ HRESULT surface_load_location(struct wined3d_surface *surface, struct wined3d_co
             break;
     }
 
+done:
     surface_validate_location(surface, location);
+
+    if (surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
+    {
+        surface->ds_current_size.cx = surface->resource.width;
+        surface->ds_current_size.cy = surface->resource.height;
+    }
 
     if (location != WINED3D_LOCATION_SYSMEM && (surface->locations & WINED3D_LOCATION_SYSMEM))
         surface_evict_sysmem(surface);
