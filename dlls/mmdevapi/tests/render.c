@@ -39,6 +39,7 @@
 #include "mmsystem.h"
 #include "audioclient.h"
 #include "audiopolicy.h"
+#include "endpointvolume.h"
 
 static const unsigned int win_formats[][4] = {
     { 8000,  8, 1},   { 8000,  8, 2},   { 8000, 16, 1},   { 8000, 16, 2},
@@ -2242,6 +2243,28 @@ static void test_marshal(void)
 
 }
 
+static void test_endpointvolume(void)
+{
+    HRESULT hr;
+    IAudioEndpointVolume *aev;
+    float mindb, maxdb, increment;
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioEndpointVolume,
+            CLSCTX_INPROC_SERVER, NULL, (void**)&aev);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioEndpointVolume_GetVolumeRange(aev, &mindb, NULL, NULL);
+    ok(hr == E_POINTER, "GetVolumeRange should have failed with E_POINTER: 0x%08x\n", hr);
+
+    hr = IAudioEndpointVolume_GetVolumeRange(aev, &mindb, &maxdb, &increment);
+    ok(hr == S_OK, "GetVolumeRange failed: 0x%08x\n", hr);
+    trace("got range: [%f,%f]/%f\n", mindb, maxdb, increment);
+
+    IAudioEndpointVolume_Release(aev);
+}
+
 START_TEST(render)
 {
     HRESULT hr;
@@ -2283,6 +2306,7 @@ START_TEST(render)
     test_volume_dependence();
     test_session_creation();
     test_worst_case();
+    test_endpointvolume();
 
     IMMDevice_Release(dev);
 
