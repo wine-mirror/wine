@@ -3213,7 +3213,7 @@ void surface_modify_ds_location(struct wined3d_surface *surface,
 }
 
 /* Context activation is done by the caller. */
-void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_context *context, DWORD location)
+static void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_context *context, DWORD location)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_device *device = surface->resource.device;
@@ -3689,8 +3689,10 @@ HRESULT surface_load_location(struct wined3d_surface *surface, struct wined3d_co
 
     if (surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
     {
-        if (location == WINED3D_LOCATION_TEXTURE_RGB
+        if ((location == WINED3D_LOCATION_TEXTURE_RGB
                 && surface->locations & (WINED3D_LOCATION_DRAWABLE | WINED3D_LOCATION_DISCARDED))
+                || (location == WINED3D_LOCATION_DRAWABLE
+                && surface->locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_DISCARDED)))
         {
             surface_load_ds_location(surface, context, location);
             return WINED3D_OK;

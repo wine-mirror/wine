@@ -661,7 +661,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
 
             IntersectRect(&r, &draw_rect, &current_rect);
             if (!EqualRect(&r, &draw_rect))
-                surface_load_ds_location(ds, context, location);
+                surface_load_location(ds, context, location);
             else
                 wined3d_surface_prepare(ds, context, location);
         }
