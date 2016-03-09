@@ -2078,57 +2078,6 @@ do { \
     return WINED3D_OK;
 }
 
-HRESULT wined3d_surface_unmap(struct wined3d_surface *surface)
-{
-    struct wined3d_device *device = surface->resource.device;
-    struct wined3d_texture *texture = surface->container;
-    const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context;
-
-    TRACE("surface %p.\n", surface);
-
-    if (!surface->resource.map_count)
-    {
-        WARN("Trying to unmap unmapped surface.\n");
-        return WINEDDERR_NOTLOCKED;
-    }
-    --surface->resource.map_count;
-
-    switch (surface->resource.map_binding)
-    {
-        case WINED3D_LOCATION_SYSMEM:
-        case WINED3D_LOCATION_USER_MEMORY:
-        case WINED3D_LOCATION_DIB:
-            break;
-
-        case WINED3D_LOCATION_BUFFER:
-            context = context_acquire(device, NULL);
-            gl_info = context->gl_info;
-
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER,
-                    texture->sub_resources[surface_get_sub_resource_idx(surface)].buffer_object));
-            GL_EXTCALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
-            checkGLcall("glUnmapBuffer");
-            context_release(context);
-            break;
-
-        default:
-            ERR("Unexpected map binding %s.\n", wined3d_debug_location(surface->resource.map_binding));
-            break;
-    }
-
-    if (!(surface->locations & (WINED3D_LOCATION_DRAWABLE | WINED3D_LOCATION_TEXTURE_RGB)))
-    {
-        if (texture->swapchain && texture->swapchain->front_buffer == texture)
-            texture->swapchain->swapchain_ops->swapchain_frontbuffer_updated(texture->swapchain);
-        else if (texture->resource.format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
-            FIXME("Depth / stencil buffer locking is not implemented.\n");
-    }
-
-    return WINED3D_OK;
-}
-
 HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_desc *map_desc,
         const struct wined3d_box *box, DWORD flags)
 {

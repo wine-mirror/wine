@@ -579,36 +579,6 @@ HRESULT wined3d_volume_map(struct wined3d_volume *volume,
     return WINED3D_OK;
 }
 
-HRESULT wined3d_volume_unmap(struct wined3d_volume *volume)
-{
-    TRACE("volume %p.\n", volume);
-
-    if (!volume->resource.map_count)
-    {
-        WARN("Trying to unlock an unlocked volume %p.\n", volume);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (volume->resource.map_binding == WINED3D_LOCATION_BUFFER)
-    {
-        struct wined3d_device *device = volume->resource.device;
-        struct wined3d_context *context = context_acquire(device, NULL);
-        const struct wined3d_gl_info *gl_info = context->gl_info;
-
-        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER,
-                volume->container->sub_resources[volume->texture_level].buffer_object));
-        GL_EXTCALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
-        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
-        checkGLcall("Unmap PBO");
-
-        context_release(context);
-    }
-
-    volume->resource.map_count--;
-
-    return WINED3D_OK;
-}
-
 static ULONG volume_resource_incref(struct wined3d_resource *resource)
 {
     struct wined3d_volume *volume = volume_from_resource(resource);

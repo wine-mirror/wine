@@ -1028,14 +1028,64 @@ static HRESULT texture2d_resource_sub_resource_map(struct wined3d_resource *reso
     return wined3d_surface_map(surface_from_resource(sub_resource), map_desc, box, flags);
 }
 
-static HRESULT texture2d_resource_sub_resource_unmap(struct wined3d_resource *resource, unsigned int sub_resource_idx)
+static HRESULT texture_resource_sub_resource_unmap(struct wined3d_resource *resource, unsigned int sub_resource_idx)
 {
+    const struct wined3d_gl_info *gl_info;
     struct wined3d_resource *sub_resource;
+    struct wined3d_texture *texture;
+    struct wined3d_context *context;
 
-    if (!(sub_resource = wined3d_texture_get_sub_resource(wined3d_texture_from_resource(resource), sub_resource_idx)))
+    TRACE("resource %p, sub_resource_idx %u.\n", resource, sub_resource_idx);
+
+    texture = wined3d_texture_from_resource(resource);
+    if (!(sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx)))
         return E_INVALIDARG;
 
-    return wined3d_surface_unmap(surface_from_resource(sub_resource));
+    if (!sub_resource->map_count)
+    {
+        WARN("Trying to unmap unmapped sub-resource.\n");
+        return WINEDDERR_NOTLOCKED;
+    }
+
+    switch (sub_resource->map_binding)
+    {
+        case WINED3D_LOCATION_SYSMEM:
+        case WINED3D_LOCATION_USER_MEMORY:
+        case WINED3D_LOCATION_DIB:
+            break;
+
+        case WINED3D_LOCATION_BUFFER:
+            context = context_acquire(resource->device, NULL);
+            gl_info = context->gl_info;
+
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER,
+                    texture->sub_resources[sub_resource_idx].buffer_object));
+            GL_EXTCALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+            checkGLcall("glUnmapBuffer");
+            context_release(context);
+            break;
+
+        default:
+            ERR("Unexpected map binding %s.\n", wined3d_debug_location(sub_resource->map_binding));
+            break;
+    }
+
+    if (texture->swapchain && texture->swapchain->front_buffer == texture)
+    {
+        struct wined3d_surface *surface = texture->sub_resources[sub_resource_idx].u.surface;
+
+        if (!(surface->locations & (WINED3D_LOCATION_DRAWABLE | WINED3D_LOCATION_TEXTURE_RGB)))
+            texture->swapchain->swapchain_ops->swapchain_frontbuffer_updated(texture->swapchain);
+    }
+    else if (resource->format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+    {
+        FIXME("Depth / stencil buffer locking is not implemented.\n");
+    }
+
+    --sub_resource->map_count;
+
+    return WINED3D_OK;
 }
 
 static const struct wined3d_resource_ops texture2d_resource_ops =
@@ -1044,7 +1094,7 @@ static const struct wined3d_resource_ops texture2d_resource_ops =
     texture_resource_decref,
     wined3d_texture_unload,
     texture2d_resource_sub_resource_map,
-    texture2d_resource_sub_resource_unmap,
+    texture_resource_sub_resource_unmap,
 };
 
 static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3d_resource_desc *desc,
@@ -1358,23 +1408,13 @@ static HRESULT texture3d_resource_sub_resource_map(struct wined3d_resource *reso
     return wined3d_volume_map(volume_from_resource(sub_resource), map_desc, box, flags);
 }
 
-static HRESULT texture3d_resource_sub_resource_unmap(struct wined3d_resource *resource, unsigned int sub_resource_idx)
-{
-    struct wined3d_resource *sub_resource;
-
-    if (!(sub_resource = wined3d_texture_get_sub_resource(wined3d_texture_from_resource(resource), sub_resource_idx)))
-        return E_INVALIDARG;
-
-    return wined3d_volume_unmap(volume_from_resource(sub_resource));
-}
-
 static const struct wined3d_resource_ops texture3d_resource_ops =
 {
     texture_resource_incref,
     texture_resource_decref,
     wined3d_texture_unload,
     texture3d_resource_sub_resource_map,
-    texture3d_resource_sub_resource_unmap,
+    texture_resource_sub_resource_unmap,
 };
 
 static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct wined3d_resource_desc *desc,

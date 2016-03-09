@@ -168,6 +168,8 @@ static HRESULT WINAPI d3d9_volume_UnlockBox(IDirect3DVolume9 *iface)
     hr = wined3d_resource_unmap(wined3d_texture_get_resource(volume->wined3d_texture), volume->sub_resource_idx);
     wined3d_mutex_unlock();
 
+    if (hr == WINEDDERR_NOTLOCKED)
+        return D3DERR_INVALIDCALL;
     return hr;
 }
 
