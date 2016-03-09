@@ -2352,8 +2352,7 @@ struct wined3d_texture_ops
 #define WINED3D_TEXTURE_SRGB_VALID          0x00000080
 #define WINED3D_TEXTURE_CONVERTED           0x00000100
 #define WINED3D_TEXTURE_PIN_SYSMEM          0x00000200
-#define WINED3D_TEXTURE_DYNAMIC_MAP         0x00000400
-#define WINED3D_TEXTURE_NORMALIZED_COORDS   0x00000800
+#define WINED3D_TEXTURE_NORMALIZED_COORDS   0x00000400
 
 #define WINED3D_TEXTURE_ASYNC_COLOR_KEY     0x00000001
 
@@ -2365,6 +2364,7 @@ struct wined3d_texture
     struct wined3d_swapchain *swapchain;
     UINT layer_count;
     UINT level_count;
+    unsigned int download_count;
     float pow2_matrix[16];
     UINT lod;
     enum wined3d_texture_filter_type filter_type;
@@ -2457,7 +2457,6 @@ struct wined3d_volume
 
     DWORD locations;
     GLint texture_level;
-    DWORD download_count;
 };
 
 static inline struct wined3d_volume *volume_from_resource(struct wined3d_resource *resource)
@@ -2537,7 +2536,6 @@ struct wined3d_surface
     GLenum texture_target;
     unsigned int texture_level;
     unsigned int texture_layer;
-    int                       lockCount;
 
     /* For GetDC */
     struct wined3d_surface_dib dib;

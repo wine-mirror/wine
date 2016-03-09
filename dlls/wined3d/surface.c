@@ -507,11 +507,10 @@ static void surface_prepare_system_memory(struct wined3d_surface *surface)
 
 static void surface_evict_sysmem(struct wined3d_surface *surface)
 {
-    /* In some conditions the surface memory must not be freed:
-     * WINED3D_TEXTURE_CONVERTED: Converting the data back would take too long
-     * WINED3D_TEXTURE_DYNAMIC_MAP: Avoid freeing the data for performance */
-    if (surface->resource.map_count || surface->container->flags & (WINED3D_TEXTURE_CONVERTED
-            | WINED3D_TEXTURE_PIN_SYSMEM | WINED3D_TEXTURE_DYNAMIC_MAP))
+    struct wined3d_texture *texture = surface->container;
+
+    if (surface->resource.map_count || texture->download_count > MAXLOCKCOUNT
+            || texture->flags & (WINED3D_TEXTURE_CONVERTED | WINED3D_TEXTURE_PIN_SYSMEM))
         return;
 
     wined3d_resource_free_sysmem(&surface->resource);
@@ -1259,11 +1258,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
              * standard texture with a non-power2 width instead of a texture boxed up to be a power2 texture.
              *
              * internally the texture is still stored in a boxed format so any references to textureName will
-             * get a boxed texture with width pow2width and not a texture of width resource.width.
-             *
-             * Performance should not be an issue, because applications normally do not lock the surfaces when
-             * rendering. If an app does, the WINED3D_TEXTURE_DYNAMIC_MAP flag will kick in and the memory copy
-             * won't be released, and doesn't have to be re-read. */
+             * get a boxed texture with width pow2width and not a texture of width resource.width. */
             src_data = mem;
             dst_data = data.addr;
             TRACE("Repacking the surface data from pitch %u to pitch %u.\n", src_row_pitch, dst_row_pitch);
@@ -2168,21 +2163,6 @@ HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_
 
     if (!(surface->resource.access_flags & WINED3D_RESOURCE_ACCESS_CPU))
         WARN("Trying to lock unlockable surface.\n");
-
-    /* Performance optimization: Count how often a surface is mapped, if it is
-     * mapped regularly do not throw away the system memory copy. This avoids
-     * the need to download the surface from OpenGL all the time. The surface
-     * is still downloaded if the OpenGL texture is changed. Note that this
-     * only really makes sense for managed textures.*/
-    if (!(texture->flags & WINED3D_TEXTURE_DYNAMIC_MAP)
-            && surface->resource.map_binding == WINED3D_LOCATION_SYSMEM)
-    {
-        if (++surface->lockCount > MAXLOCKCOUNT)
-        {
-            TRACE("Surface is mapped regularly, not freeing the system memory copy any more.\n");
-            texture->flags |= WINED3D_TEXTURE_DYNAMIC_MAP;
-        }
-    }
 
     flags = wined3d_resource_sanitize_map_flags(&texture->resource, flags);
 
@@ -3475,9 +3455,12 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
     /* Download the surface to system memory. */
     if (surface->locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
     {
-        wined3d_texture_bind_and_dirtify(surface->container, context,
+        struct wined3d_texture *texture = surface->container;
+
+        wined3d_texture_bind_and_dirtify(texture, context,
                 !(surface->locations & WINED3D_LOCATION_TEXTURE_RGB));
         surface_download_data(surface, gl_info, dst_location);
+        ++texture->download_count;
 
         return;
     }

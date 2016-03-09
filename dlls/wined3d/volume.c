@@ -234,11 +234,13 @@ static void wined3d_volume_srgb_transfer(struct wined3d_volume *volume,
 
 static BOOL wined3d_volume_can_evict(const struct wined3d_volume *volume)
 {
-    if (volume->resource.pool != WINED3D_POOL_MANAGED)
+    struct wined3d_texture *texture = volume->container;
+
+    if (texture->resource.pool != WINED3D_POOL_MANAGED)
         return FALSE;
-    if (volume->download_count >= 10)
+    if (texture->download_count >= 10)
         return FALSE;
-    if (volume->resource.format->convert)
+    if (texture->resource.format->convert)
         return FALSE;
 
     return TRUE;
@@ -324,8 +326,8 @@ static BOOL wined3d_volume_load_location(struct wined3d_volume *volume,
                 else
                     wined3d_texture_bind_and_dirtify(texture, context, TRUE);
 
-                volume->download_count++;
                 wined3d_volume_download_data(volume, context, &data);
+                ++texture->download_count;
             }
             else
             {
