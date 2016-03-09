@@ -1977,6 +1977,8 @@ static void test_create_shader(void)
     for (i = 0; i < sizeof(d3d11_feature_levels) / sizeof(*d3d11_feature_levels); ++i)
     {
         D3D_FEATURE_LEVEL feature_level = d3d11_feature_levels[i];
+        BOOL todo = feature_level <= D3D_FEATURE_LEVEL_9_3;
+
         if (!(device = create_device(&feature_level)))
         {
             skip("Failed to create device for feature level %#x.\n", feature_level);
@@ -1985,16 +1987,22 @@ static void test_create_shader(void)
 
         /* level_9 shaders */
         hr = ID3D11Device_CreatePixelShader(device, ps_4_0_level_9_0, sizeof(ps_4_0_level_9_0), NULL, &ps);
-        ok(SUCCEEDED(hr), "Failed to create ps_4_0_level_9_0 shader, hr %#x, feature level %#x.\n", hr, feature_level);
-        ID3D11PixelShader_Release(ps);
+        todo_wine_if(todo)
+            ok(SUCCEEDED(hr), "Failed to create ps_4_0_level_9_0 shader, hr %#x, feature level %#x.\n", hr, feature_level);
+        if (SUCCEEDED(hr))
+            ID3D11PixelShader_Release(ps);
 
         hr = ID3D11Device_CreatePixelShader(device, ps_4_0_level_9_1, sizeof(ps_4_0_level_9_1), NULL, &ps);
-        ok(SUCCEEDED(hr), "Failed to create ps_4_0_level_9_1 shader, hr %#x, feature level %#x.\n", hr, feature_level);
-        ID3D11PixelShader_Release(ps);
+        todo_wine_if(todo)
+            ok(SUCCEEDED(hr), "Failed to create ps_4_0_level_9_1 shader, hr %#x, feature level %#x.\n", hr, feature_level);
+        if (SUCCEEDED(hr))
+            ID3D11PixelShader_Release(ps);
 
         hr = ID3D11Device_CreatePixelShader(device, ps_4_0_level_9_3, sizeof(ps_4_0_level_9_3), NULL, &ps);
-        ok(SUCCEEDED(hr), "Failed to create ps_4_0_level_9_3 shader, hr %#x, feature level %#x.\n", hr, feature_level);
-        ID3D11PixelShader_Release(ps);
+        todo_wine_if(todo)
+            ok(SUCCEEDED(hr), "Failed to create ps_4_0_level_9_3 shader, hr %#x, feature level %#x.\n", hr, feature_level);
+        if (SUCCEEDED(hr))
+            ID3D11PixelShader_Release(ps);
 
         /* vertex shader */
         hr = ID3D11Device_CreateVertexShader(device, vs_2_0, sizeof(vs_2_0), NULL, &vs);

@@ -132,7 +132,6 @@ HRESULT WINAPI D3D11CoreRegisterLayers(void)
 HRESULT WINAPI D3D11CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter, UINT flags,
         const D3D_FEATURE_LEVEL *feature_levels, UINT levels, ID3D11Device **device)
 {
-    static const D3D_FEATURE_LEVEL level = D3D_FEATURE_LEVEL_10_0;
     IUnknown *dxgi_device;
     HMODULE d3d11;
     HRESULT hr;
@@ -140,10 +139,8 @@ HRESULT WINAPI D3D11CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapte
     TRACE("factory %p, adapter %p, flags %#x, feature_levels %p, levels %u, device %p.\n",
             factory, adapter, flags, feature_levels, levels, device);
 
-    FIXME("Ignoring feature levels.\n");
-
     d3d11 = GetModuleHandleA("d3d11.dll");
-    hr = DXGID3D10CreateDevice(d3d11, factory, adapter, flags, &level, 1, (void **)&dxgi_device);
+    hr = DXGID3D10CreateDevice(d3d11, factory, adapter, flags, feature_levels, levels, (void **)&dxgi_device);
     if (FAILED(hr))
     {
         WARN("Failed to create device, returning %#x.\n", hr);
@@ -165,6 +162,15 @@ HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_t
         const D3D_FEATURE_LEVEL *feature_levels, UINT levels, UINT sdk_version, ID3D11Device **device_out,
         D3D_FEATURE_LEVEL *obtained_feature_level, ID3D11DeviceContext **immediate_context)
 {
+    static const D3D_FEATURE_LEVEL default_feature_levels[] =
+    {
+        D3D_FEATURE_LEVEL_11_0,
+        D3D_FEATURE_LEVEL_10_1,
+        D3D_FEATURE_LEVEL_10_0,
+        D3D_FEATURE_LEVEL_9_3,
+        D3D_FEATURE_LEVEL_9_2,
+        D3D_FEATURE_LEVEL_9_1,
+    };
     IDXGIFactory *factory;
     ID3D11Device *device;
     HRESULT hr;
@@ -262,6 +268,11 @@ HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_t
         }
     }
 
+    if (!feature_levels)
+    {
+        feature_levels = default_feature_levels;
+        levels = sizeof(default_feature_levels) / sizeof(default_feature_levels[0]);
+    }
     hr = D3D11CoreCreateDevice(factory, adapter, flags, feature_levels, levels, &device);
     IDXGIAdapter_Release(adapter);
     IDXGIFactory_Release(factory);
