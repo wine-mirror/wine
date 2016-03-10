@@ -602,7 +602,7 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
 
     /* update the wine server Z-order */
 
-    if (window != x11drv_thread_data()->grab_window &&
+    if (hwnd != x11drv_thread_data()->grab_hwnd &&
         /* ignore event if a button is pressed, since the mouse is then grabbed too */
         !(state & (Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask|Button6Mask|Button7Mask)))
     {
@@ -1611,7 +1611,7 @@ void X11DRV_EnterNotify( HWND hwnd, XEvent *xev )
     TRACE( "hwnd %p/%lx pos %d,%d detail %d\n", hwnd, event->window, event->x, event->y, event->detail );
 
     if (event->detail == NotifyVirtual) return;
-    if (event->window == x11drv_thread_data()->grab_window) return;
+    if (hwnd == x11drv_thread_data()->grab_hwnd) return;
 
     /* simulate a mouse motion event */
     input.u.mi.dx          = event->x;

@@ -308,7 +308,7 @@ struct x11drv_thread_data
 {
     Display *display;
     XEvent  *current_event;        /* event currently being processed */
-    Window   grab_window;          /* window that currently grabs the mouse */
+    HWND     grab_hwnd;            /* window that currently grabs the mouse */
     HWND     last_focus;           /* last window that had focus */
     XIM      xim;                  /* input method */
     HWND     last_xic_hwnd;        /* last xic window */

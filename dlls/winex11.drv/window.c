@@ -2116,27 +2116,31 @@ BOOL CDECL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, HRGN update )
 void CDECL X11DRV_SetCapture( HWND hwnd, UINT flags )
 {
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
+    struct x11drv_win_data *data;
 
-    if (!thread_data) return;
     if (!(flags & (GUI_INMOVESIZE | GUI_INMENUMODE))) return;
 
     if (hwnd)
     {
-        Window grab_win = X11DRV_get_whole_window( GetAncestor( hwnd, GA_ROOT ) );
-
-        if (!grab_win) return;
-        XFlush( gdi_display );
-        XGrabPointer( thread_data->display, grab_win, False,
-                      PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
-                      GrabModeAsync, GrabModeAsync, None, None, CurrentTime );
-        thread_data->grab_window = grab_win;
+        if (!(data = get_win_data( GetAncestor( hwnd, GA_ROOT )))) return;
+        if (data->whole_window)
+        {
+            XFlush( gdi_display );
+            XGrabPointer( data->display, data->whole_window, False,
+                          PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
+                          GrabModeAsync, GrabModeAsync, None, None, CurrentTime );
+            thread_data->grab_hwnd = data->hwnd;
+        }
+        release_win_data( data );
     }
     else  /* release capture */
     {
+        if (!(data = get_win_data( thread_data->grab_hwnd ))) return;
         XFlush( gdi_display );
-        XUngrabPointer( thread_data->display, CurrentTime );
-        XFlush( thread_data->display );
-        thread_data->grab_window = None;
+        XUngrabPointer( data->display, CurrentTime );
+        XFlush( data->display );
+        thread_data->grab_hwnd = NULL;
+        release_win_data( data );
     }
 }
 
