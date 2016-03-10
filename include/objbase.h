@@ -285,6 +285,7 @@ HRESULT WINAPI CoInitialize(LPVOID lpReserved);
 HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit);
 void WINAPI CoUninitialize(void);
 DWORD WINAPI CoGetCurrentProcess(void);
+HRESULT WINAPI CoGetCurrentLogicalThreadId(GUID *id);
 HRESULT WINAPI CoGetApartmentType(APTTYPE *type, APTTYPEQUALIFIER *qualifier);
 
 HINSTANCE WINAPI CoLoadLibrary(LPOLESTR lpszLibName, BOOL bAutoFree);

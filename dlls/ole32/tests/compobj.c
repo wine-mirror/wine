@@ -3093,6 +3093,20 @@ static void test_IMallocSpy(void)
     ok(hr == CO_E_OBJNOTREG, "got 0x%08x\n", hr);
 }
 
+static void test_CoGetCurrentLogicalThreadId(void)
+{
+    HRESULT hr;
+    GUID id;
+
+    hr = CoGetCurrentLogicalThreadId(NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    id = GUID_NULL;
+    hr = CoGetCurrentLogicalThreadId(&id);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!IsEqualGUID(&id, &GUID_NULL), "got null id\n");
+}
+
 static void init_funcs(void)
 {
     HMODULE hOle32 = GetModuleHandleA("ole32");
@@ -3161,4 +3175,5 @@ START_TEST(compobj)
     test_OleRegGetUserType();
     test_CoGetApartmentType();
     test_IMallocSpy();
+    test_CoGetCurrentLogicalThreadId();
 }
