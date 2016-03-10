@@ -1505,13 +1505,11 @@ static HRESULT WINAPI Unknown_QueryInterface(IUnknown *iface, REFIID riid, void 
 
 static ULONG WINAPI Unknown_AddRef(IUnknown *iface)
 {
-    ok(0, "unexpected AddRef\n");
     return 2;
 }
 
 static ULONG WINAPI Unknown_Release(IUnknown *iface)
 {
-    ok(0, "unexpected Release\n");
     return 1;
 }
 
@@ -1528,7 +1526,9 @@ static void test_data_cache(void)
 {
     HRESULT hr;
     IOleCache2 *pOleCache;
+    IOleCache *olecache;
     IStorage *pStorage;
+    IUnknown *unk;
     IPersistStorage *pPS;
     IViewObject *pViewObject;
     IOleCacheControl *pOleCacheControl;
@@ -1601,9 +1601,32 @@ static void test_data_cache(void)
 todo_wine
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
-    hr = CreateDataCache(&unknown, &CLSID_NULL, &IID_IUnknown, (void**)&pOleCache);
+    hr = CreateDataCache(&unknown, &CLSID_NULL, &IID_IUnknown, (void**)&unk);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IOleCache, (void**)&olecache);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IUnknown_QueryInterface(unk, &IID_IOleCache2, (void**)&pOleCache);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(unk != (IUnknown*)olecache, "got %p, expected %p\n", olecache, unk);
+    ok(unk != (IUnknown*)pOleCache, "got %p, expected %p\n", pOleCache, unk);
     IOleCache2_Release(pOleCache);
+    IOleCache_Release(olecache);
+    IUnknown_Release(unk);
+
+    hr = CreateDataCache(NULL, &CLSID_NULL, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IUnknown_QueryInterface(unk, &IID_IOleCache, (void**)&olecache);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IUnknown_QueryInterface(unk, &IID_IOleCache2, (void**)&pOleCache);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine {
+    ok(unk == (IUnknown*)olecache, "got %p, expected %p\n", olecache, unk);
+    ok(unk == (IUnknown*)pOleCache, "got %p, expected %p\n", pOleCache, unk);
+}
+    IOleCache2_Release(pOleCache);
+    IOleCache_Release(olecache);
+    IUnknown_Release(unk);
 
     /* Test with new data */
 
