@@ -323,26 +323,22 @@ static void shader_glsl_append_imm_vec4(struct wined3d_string_buffer *buffer, co
 static void shader_glsl_append_imm_ivec(struct wined3d_string_buffer *buffer,
         const int *values, unsigned int size)
 {
-    const char *fmt = "%#x";
-    char str[4][17] = {{0}};
     int i;
 
-    if (1 > size || size > 4)
+    if (!size || size > 4)
     {
         ERR("Invalid vector size %u.\n", size);
         return;
     }
 
-    for (i = size - 1; i >= 0; --i)
-    {
-        sprintf(str[i], fmt, values[i]);
-        fmt = "%#x, ";
-    }
+    if (size > 1)
+        shader_addline(buffer, "ivec%u(", size);
+
+    for (i = 0; i < size; ++i)
+        shader_addline(buffer, i ? ", %#x" : "%#x", values[i]);
 
     if (size > 1)
-        shader_addline(buffer, "ivec%u(%s%s%s%s)", size, str[0], str[1], str[2], str[3]);
-    else
-        shader_addline(buffer, str[0]);
+        shader_addline(buffer, ")");
 }
 
 static const char *get_info_log_line(const char **ptr)
