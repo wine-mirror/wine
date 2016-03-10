@@ -746,6 +746,11 @@ static HRESULT itemize_para( ME_Context *c, ME_DisplayItem *p )
 
     assert( p->type == diParagraph );
 
+    if (para->pFmt->dwMask & PFM_RTLPARA && para->pFmt->wEffects & PFE_RTLPARA)
+        state.uBidiLevel = 1;
+
+    TRACE( "Base embedding level %d\n", state.uBidiLevel );
+
     while (1)
     {
         hr = ScriptItemize( para->text->szData, para->text->nLen, items_passed, &control,
