@@ -2743,7 +2743,7 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
     {
         static const DWORD texel_fetch_flags = WINED3D_GLSL_SAMPLE_LOAD | WINED3D_GLSL_SAMPLE_OFFSET;
         if (flags & ~texel_fetch_flags)
-            ERR("Unexpected flags for texelFetch %#x.\n", flags & ~texel_fetch_flags);
+            ERR("Unexpected flags %#x for texelFetch.\n", flags & ~texel_fetch_flags);
 
         base = "texelFetch";
         type_part = "";
