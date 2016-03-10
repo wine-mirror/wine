@@ -8284,10 +8284,12 @@ static void test_rtf_specials(void)
         "\\rquote\\ldblquote\\rdblquote\\ltrmark\\rtlmark\\zwj\\zwnj}";
     const WCHAR expect_specials[] = {' ',' ',0x2022,0x2018,0x2019,0x201c,
                                      0x201d,0x200e,0x200f,0x200d,0x200c};
+    const char *pard = "{\\rtf1 ABC\\rtlpar\\par DEF\\par HIJ\\pard\\par}";
     HWND edit = new_richeditW( NULL );
     EDITSTREAM es;
     WCHAR buf[80];
     LRESULT result;
+    PARAFORMAT2 fmt;
 
     es.dwCookie = (DWORD_PTR)&specials;
     es.dwError = 0;
@@ -8298,6 +8300,26 @@ static void test_rtf_specials(void)
     result = SendMessageW( edit, WM_GETTEXT, sizeof(buf)/sizeof(buf[0]), (LPARAM)buf );
     ok( result == sizeof(expect_specials)/sizeof(expect_specials[0]), "got %ld\n", result );
     ok( !memcmp( buf, expect_specials, sizeof(expect_specials) ), "got %s\n", wine_dbgstr_w(buf) );
+
+    /* Show that \rtlpar propagates to the second paragraph and is
+       reset by \pard in the third. */
+    es.dwCookie = (DWORD_PTR)&pard;
+    result = SendMessageA( edit, EM_STREAMIN, SF_RTF, (LPARAM)&es );
+    ok( result == 11, "got %ld\n", result );
+
+    fmt.cbSize = sizeof(fmt);
+    SendMessageW( edit, EM_SETSEL, 1, 1 );
+    SendMessageW( edit, EM_GETPARAFORMAT, 0, (LPARAM)&fmt );
+    ok( fmt.dwMask & PFM_RTLPARA, "rtl para mask not set\n" );
+    ok( fmt.wEffects & PFE_RTLPARA, "rtl para not set\n" );
+    SendMessageW( edit, EM_SETSEL, 5, 5 );
+    SendMessageW( edit, EM_GETPARAFORMAT, 0, (LPARAM)&fmt );
+    ok( fmt.dwMask & PFM_RTLPARA, "rtl para mask not set\n" );
+    ok( fmt.wEffects & PFE_RTLPARA, "rtl para not set\n" );
+    SendMessageW( edit, EM_SETSEL, 9, 9 );
+    SendMessageW( edit, EM_GETPARAFORMAT, 0, (LPARAM)&fmt );
+    ok( fmt.dwMask & PFM_RTLPARA, "rtl para mask not set\n" );
+    ok( !(fmt.wEffects & PFE_RTLPARA), "rtl para set\n" );
 
     DestroyWindow( edit );
 }
