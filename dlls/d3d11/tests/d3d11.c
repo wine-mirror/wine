@@ -3852,13 +3852,6 @@ static void test_multiple_render_targets(void)
         return;
     }
 
-    if (ID3D11Device_GetFeatureLevel(device) < D3D_FEATURE_LEVEL_9_3)
-    {
-        skip("Feature level 9_3 or higher is required.\n");
-        ID3D11Device_Release(device);
-        return;
-    }
-
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, sizeof(layout_desc) / sizeof(*layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
