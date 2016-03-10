@@ -4739,8 +4739,8 @@ static HRESULT WINAPI Context_CTI_GetCurrentThreadType(IComThreadingInfo *iface,
 
 static HRESULT WINAPI Context_CTI_GetCurrentLogicalThreadId(IComThreadingInfo *iface, GUID *logical_thread_id)
 {
-    FIXME("(%p): stub\n", logical_thread_id);
-    return E_NOTIMPL;
+    TRACE("(%p)\n", logical_thread_id);
+    return CoGetCurrentLogicalThreadId(logical_thread_id);
 }
 
 static HRESULT WINAPI Context_CTI_SetCurrentLogicalThreadId(IComThreadingInfo *iface, REFGUID logical_thread_id)

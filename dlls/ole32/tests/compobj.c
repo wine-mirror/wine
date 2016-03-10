@@ -1782,6 +1782,7 @@ static void test_CoGetObjectContext(void)
     struct info info;
     HANDLE thread;
     DWORD tid, exitcode;
+    GUID id, id2;
 
     if (!pCoGetObjectContext)
     {
@@ -1810,6 +1811,17 @@ static void test_CoGetObjectContext(void)
     pComThreadingInfo = NULL;
     hr = pCoGetObjectContext(&IID_IComThreadingInfo, (void **)&pComThreadingInfo);
     ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
+
+    hr = IComThreadingInfo_GetCurrentLogicalThreadId(pComThreadingInfo, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    id = id2 = GUID_NULL;
+    hr = IComThreadingInfo_GetCurrentLogicalThreadId(pComThreadingInfo, &id);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = CoGetCurrentLogicalThreadId(&id2);
+    ok(IsEqualGUID(&id, &id2), "got %s, expected %s\n", wine_dbgstr_guid(&id), wine_dbgstr_guid(&id2));
+
     IComThreadingInfo_Release(pComThreadingInfo);
 
     SetEvent(info.stop);
