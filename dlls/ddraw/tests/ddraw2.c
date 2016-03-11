@@ -6959,6 +6959,17 @@ static void test_specular_lighting(void)
     D3DVERTEX *quad;
     WORD *indices;
 
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
     quad = HeapAlloc(GetProcessHeap(), 0, vertices_side * vertices_side * sizeof(*quad));
     indices = HeapAlloc(GetProcessHeap(), 0, indices_count * sizeof(*indices));
     for (i = 0, y = 0; y < vertices_side; ++y)
@@ -6986,17 +6997,6 @@ static void test_specular_lighting(void)
             indices[i++] = (y + 1) * vertices_side + x;
             indices[i++] = (y + 1) * vertices_side + x + 1;
         }
-    }
-
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-    ddraw = create_ddraw();
-    ok(!!ddraw, "Failed to create a ddraw object.\n");
-    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
-    {
-        skip("Failed to create a 3D device, skipping test.\n");
-        DestroyWindow(window);
-        return;
     }
 
     hr = IDirect3DDevice2_GetDirect3D(device, &d3d);
