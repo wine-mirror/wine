@@ -4401,7 +4401,7 @@ static void D3DXCreateTextTest(void)
     ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
     number_of_vertices = d3dxmesh->lpVtbl->GetNumVertices(d3dxmesh);
     number_of_faces = d3dxmesh->lpVtbl->GetNumFaces(d3dxmesh);
-    if (SUCCEEDED(hr) && d3dxmesh) d3dxmesh->lpVtbl->Release(d3dxmesh);
+    d3dxmesh->lpVtbl->Release(d3dxmesh);
 
     hr = D3DXCreateTextA(device, hdc, "wine", 0.0f, 0.4f, &d3dxmesh, NULL, NULL);
     ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
@@ -4411,7 +4411,7 @@ static void D3DXCreateTextTest(void)
     ok(number_of_faces == d3dxmesh->lpVtbl->GetNumFaces(d3dxmesh),
        "Got %d faces, expected %d\n",
        d3dxmesh->lpVtbl->GetNumVertices(d3dxmesh), number_of_faces);
-    if (SUCCEEDED(hr) && d3dxmesh) d3dxmesh->lpVtbl->Release(d3dxmesh);
+    d3dxmesh->lpVtbl->Release(d3dxmesh);
 
 if (0)
 {
