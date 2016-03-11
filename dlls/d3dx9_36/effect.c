@@ -540,9 +540,6 @@ static void free_parameter(struct d3dx_parameter *param, BOOL element, BOOL chil
     TRACE("Free parameter %p, name %s, type %s, child %s\n", param, param->name,
             debug_d3dxparameter_type(param->type), child ? "yes" : "no");
 
-    if (!param)
-        return;
-
     if (param->annotations)
     {
         for (i = 0; i < param->annotation_count; ++i)
