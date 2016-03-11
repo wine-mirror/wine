@@ -42,7 +42,7 @@ static BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
 
 /* Context activation is done by the caller. Context may be NULL in
  * WINED3D_NO3D mode. */
-static BOOL wined3d_volume_prepare_location(struct wined3d_volume *volume,
+BOOL wined3d_volume_prepare_location(struct wined3d_volume *volume,
         struct wined3d_context *context, DWORD location)
 {
     struct wined3d_texture *texture = volume->container;
@@ -247,7 +247,7 @@ static BOOL wined3d_volume_can_evict(const struct wined3d_volume *volume)
 }
 
 /* Context activation is done by the caller. */
-static BOOL wined3d_volume_load_location(struct wined3d_volume *volume,
+BOOL wined3d_volume_load_location(struct wined3d_volume *volume,
         struct wined3d_context *context, DWORD location)
 {
     DWORD required_access = volume_access_from_location(location);
@@ -418,165 +418,6 @@ static void volume_unload(struct wined3d_resource *resource)
     /* The texture name is managed by the container. */
 
     resource_unload(resource);
-}
-
-static BOOL wined3d_volume_check_box_dimensions(const struct wined3d_volume *volume,
-        const struct wined3d_box *box)
-{
-    if (!box)
-        return TRUE;
-
-    if (box->left >= box->right)
-        return FALSE;
-    if (box->top >= box->bottom)
-        return FALSE;
-    if (box->front >= box->back)
-        return FALSE;
-    if (box->right > volume->resource.width)
-        return FALSE;
-    if (box->bottom > volume->resource.height)
-        return FALSE;
-    if (box->back > volume->resource.depth)
-        return FALSE;
-
-    return TRUE;
-}
-
-HRESULT wined3d_volume_map(struct wined3d_volume *volume,
-        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
-{
-    struct wined3d_device *device = volume->resource.device;
-    struct wined3d_texture *texture = volume->container;
-    struct wined3d_context *context;
-    const struct wined3d_gl_info *gl_info;
-    BYTE *base_memory;
-    const struct wined3d_format *format = volume->resource.format;
-    const unsigned int fmt_flags = texture->resource.format_flags;
-    BOOL ret;
-
-    TRACE("volume %p, map_desc %p, box %s, flags %#x.\n",
-            volume, map_desc, debug_box(box), flags);
-
-    map_desc->data = NULL;
-    if (!(volume->resource.access_flags & WINED3D_RESOURCE_ACCESS_CPU))
-    {
-        WARN("Volume %p is not CPU accessible.\n", volume);
-        return WINED3DERR_INVALIDCALL;
-    }
-    if (volume->resource.map_count)
-    {
-        WARN("Volume is already mapped.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-    if (!wined3d_volume_check_box_dimensions(volume, box))
-    {
-        WARN("Map box is invalid.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-    if ((fmt_flags & WINED3DFMT_FLAG_BLOCKS) && box
-            && !wined3d_texture_check_block_align(texture, volume->texture_level, box))
-    {
-        WARN("Map box %s is misaligned for %ux%u blocks.\n",
-                debug_box(box), format->block_width, format->block_height);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    flags = wined3d_resource_sanitize_map_flags(&volume->resource, flags);
-
-    context = context_acquire(device, NULL);
-    gl_info = context->gl_info;
-
-    if (flags & WINED3D_MAP_DISCARD)
-    {
-        wined3d_volume_validate_location(volume, volume->resource.map_binding);
-        ret = wined3d_volume_prepare_location(volume, context, volume->resource.map_binding);
-    }
-    else
-    {
-        ret = wined3d_volume_load_location(volume, context, volume->resource.map_binding);
-    }
-
-    if (!ret)
-    {
-        ERR("Failed to prepare location.\n");
-        context_release(context);
-        map_desc->data = NULL;
-        return E_OUTOFMEMORY;
-    }
-
-    if (volume->resource.map_binding == WINED3D_LOCATION_BUFFER)
-    {
-        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, texture->sub_resources[volume->texture_level].buffer_object));
-
-        if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
-        {
-            GLbitfield mapflags = wined3d_resource_gl_map_flags(flags);
-            mapflags &= ~GL_MAP_FLUSH_EXPLICIT_BIT;
-            base_memory = GL_EXTCALL(glMapBufferRange(GL_PIXEL_UNPACK_BUFFER,
-                    0, volume->resource.size, mapflags));
-        }
-        else
-        {
-            GLenum access = wined3d_resource_gl_legacy_map_flags(flags);
-            base_memory = GL_EXTCALL(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, access));
-        }
-
-        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
-        checkGLcall("Map PBO");
-    }
-    else
-    {
-        base_memory = volume->resource.heap_memory;
-    }
-
-    context_release(context);
-
-    TRACE("Base memory pointer %p.\n", base_memory);
-
-    if (fmt_flags & WINED3DFMT_FLAG_BROKEN_PITCH)
-    {
-        map_desc->row_pitch = volume->resource.width * format->byte_count;
-        map_desc->slice_pitch = map_desc->row_pitch * volume->resource.height;
-    }
-    else
-    {
-        wined3d_texture_get_pitch(texture, volume->texture_level,
-                &map_desc->row_pitch, &map_desc->slice_pitch);
-    }
-
-    if (!box)
-    {
-        map_desc->data = base_memory;
-    }
-    else
-    {
-        if ((fmt_flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_BLOCKS)
-        {
-            /* Compressed textures are block based, so calculate the offset of
-             * the block that contains the top-left pixel of the locked rectangle. */
-            map_desc->data = base_memory
-                    + (box->front * map_desc->slice_pitch)
-                    + ((box->top / format->block_height) * map_desc->row_pitch)
-                    + ((box->left / format->block_width) * format->block_byte_count);
-        }
-        else
-        {
-            map_desc->data = base_memory
-                    + (map_desc->slice_pitch * box->front)
-                    + (map_desc->row_pitch * box->top)
-                    + (box->left * volume->resource.format->byte_count);
-        }
-    }
-
-    if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
-        wined3d_volume_invalidate_location(volume, ~volume->resource.map_binding);
-
-    volume->resource.map_count++;
-
-    TRACE("Returning memory %p, row pitch %d, slice pitch %d.\n",
-            map_desc->data, map_desc->row_pitch, map_desc->slice_pitch);
-
-    return WINED3D_OK;
 }
 
 static ULONG volume_resource_incref(struct wined3d_resource *resource)
