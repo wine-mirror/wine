@@ -3001,8 +3001,7 @@ static void test_effect_states(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_BLENDOP, 3);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
 
-    if (effect)
-        effect->lpVtbl->Release(effect);
+    effect->lpVtbl->Release(effect);
 
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_BLENDOP, &value);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
