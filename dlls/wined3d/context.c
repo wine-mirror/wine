@@ -472,7 +472,7 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context,
     UINT object_count = gl_info->limits.buffers + 1;
     unsigned int i;
 
-    if (depth_stencil && render_targets && render_targets[0])
+    if (depth_stencil && render_targets[0])
     {
         if (depth_stencil->resource.width < render_targets[0]->resource.width ||
             depth_stencil->resource.height < render_targets[0]->resource.height)
