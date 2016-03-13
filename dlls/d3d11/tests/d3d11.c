@@ -438,6 +438,7 @@ static void test_create_device(void)
     }
 
     supported_feature_level = ID3D11Device_GetFeatureLevel(device);
+    trace("Feature level %#x.\n", supported_feature_level);
     ID3D11Device_Release(device);
 
     hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION, NULL, NULL, NULL);
