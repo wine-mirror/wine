@@ -745,7 +745,7 @@ static void surface_blt_fbo(const struct wined3d_device *device,
 
     /* Resolve the source surface first if needed. */
     if (src_location == WINED3D_LOCATION_RB_MULTISAMPLE
-            && (src_surface->resource.format->id != dst_surface->resource.format->id
+            && (src_surface->container->resource.format->id != dst_surface->container->resource.format->id
                 || abs(src_rect.bottom - src_rect.top) != abs(dst_rect.bottom - dst_rect.top)
                 || abs(src_rect.right - src_rect.left) != abs(dst_rect.right - dst_rect.left)))
         src_location = WINED3D_LOCATION_RB_RESOLVED;
