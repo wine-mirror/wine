@@ -28,7 +28,9 @@
 #include "wine/unicode.h"
 #include "wine/library.h"
 
-/* functions from libwine_port that are also exported from libwine for backwards compatibility */
+/* functions from libwine_port that are also exported from libwine for backwards compatibility,
+ * on platforms that require it */
+#ifndef __ANDROID__
 const void *libwine_port_functions[] =
 {
     wine_cp_enum_table,
@@ -41,6 +43,7 @@ const void *libwine_port_functions[] =
     wine_utf8_mbstowcs,
     wine_utf8_wcstombs
 };
+#endif
 
 /* no longer used, for backwards compatibility only */
 struct wine_pthread_functions;
