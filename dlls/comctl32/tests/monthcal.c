@@ -304,6 +304,9 @@ static void test_monthcal(void)
     expect(0, st[1].wSecond);
     expect(0, st[1].wMilliseconds);
 
+    limits = SendMessageA(hwnd, MCM_GETRANGE, 0, 0);
+    ok(limits == 0, "got %u\n", limits);
+
     GetSystemTime(&st[0]);
     st[1] = st[0];
 

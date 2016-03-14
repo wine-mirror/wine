@@ -1503,7 +1503,7 @@ MONTHCAL_GetRange(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *range)
 {
   TRACE("%p\n", range);
 
-  if(!range) return FALSE;
+  if (!range) return 0;
 
   range[1] = infoPtr->maxDate;
   range[0] = infoPtr->minDate;
