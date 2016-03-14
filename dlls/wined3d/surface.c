@@ -633,15 +633,15 @@ static void surface_depth_blt_fbo(const struct wined3d_device *device,
     if (src_mask != dst_mask)
     {
         ERR("Incompatible formats %s and %s.\n",
-                debug_d3dformat(src_surface->resource.format->id),
-                debug_d3dformat(dst_surface->resource.format->id));
+                debug_d3dformat(src_surface->container->resource.format->id),
+                debug_d3dformat(dst_surface->container->resource.format->id));
         return;
     }
 
     if (!src_mask)
     {
         ERR("Not a depth / stencil format: %s.\n",
-                debug_d3dformat(src_surface->resource.format->id));
+                debug_d3dformat(src_surface->container->resource.format->id));
         return;
     }
 
