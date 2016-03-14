@@ -2458,6 +2458,8 @@ void wined3d_texture_remove_buffer_object(struct wined3d_texture *texture,
 void wined3d_texture_set_dirty(struct wined3d_texture *texture) DECLSPEC_HIDDEN;
 void wined3d_texture_set_swapchain(struct wined3d_texture *texture,
         struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
+BOOL wined3d_texture_use_pbo(const struct wined3d_texture *texture,
+        const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 
 #define WINED3D_LOCATION_DISCARDED      0x00000001
 #define WINED3D_LOCATION_SYSMEM         0x00000002

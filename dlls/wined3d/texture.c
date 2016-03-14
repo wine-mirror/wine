@@ -28,6 +28,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+BOOL wined3d_texture_use_pbo(const struct wined3d_texture *texture, const struct wined3d_gl_info *gl_info)
+{
+    return texture->resource.pool == WINED3D_POOL_DEFAULT
+            && texture->resource.access_flags & WINED3D_RESOURCE_ACCESS_CPU
+            && gl_info->supported[ARB_PIXEL_BUFFER_OBJECT]
+            && !texture->resource.format->convert
+            && !(texture->flags & (WINED3D_TEXTURE_PIN_SYSMEM | WINED3D_TEXTURE_COND_NP2_EMULATED));
+}
+
 static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struct wined3d_texture_ops *texture_ops,
         UINT layer_count, UINT level_count, const struct wined3d_resource_desc *desc, DWORD flags,
         struct wined3d_device *device, void *parent, const struct wined3d_parent_ops *parent_ops,
@@ -61,6 +70,8 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
         return hr;
     }
     wined3d_resource_update_draw_binding(&texture->resource);
+    if ((flags & WINED3D_TEXTURE_CREATE_MAPPABLE) || desc->format == WINED3DFMT_D16_LOCKABLE)
+        texture->resource.access_flags |= WINED3D_RESOURCE_ACCESS_CPU;
 
     texture->texture_ops = texture_ops;
 

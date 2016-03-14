@@ -489,9 +489,7 @@ HRESULT wined3d_volume_init(struct wined3d_volume *volume, struct wined3d_textur
     volume->texture_level = level;
     volume->locations = WINED3D_LOCATION_DISCARDED;
 
-    if (desc->pool == WINED3D_POOL_DEFAULT && desc->usage & WINED3DUSAGE_DYNAMIC
-            && gl_info->supported[ARB_PIXEL_BUFFER_OBJECT]
-            && !format->convert)
+    if (wined3d_texture_use_pbo(container, gl_info))
     {
         wined3d_resource_free_sysmem(&volume->resource);
         volume->resource.map_binding = WINED3D_LOCATION_BUFFER;

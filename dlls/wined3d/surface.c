@@ -518,19 +518,6 @@ static void surface_evict_sysmem(struct wined3d_surface *surface)
     surface_invalidate_location(surface, WINED3D_LOCATION_SYSMEM);
 }
 
-static BOOL surface_use_pbo(const struct wined3d_surface *surface)
-{
-    const struct wined3d_gl_info *gl_info = &surface->resource.device->adapter->gl_info;
-    struct wined3d_texture *texture = surface->container;
-
-    return texture->resource.pool == WINED3D_POOL_DEFAULT
-                && surface->resource.access_flags & WINED3D_RESOURCE_ACCESS_CPU
-                && gl_info->supported[ARB_PIXEL_BUFFER_OBJECT]
-                && !texture->resource.format->convert
-                && !(texture->flags & WINED3D_TEXTURE_PIN_SYSMEM)
-                && !(texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED);
-}
-
 static HRESULT surface_private_setup(struct wined3d_surface *surface)
 {
     /* TODO: Check against the maximum texture sizes supported by the video card. */
@@ -597,7 +584,7 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
     if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
         surface->locations = WINED3D_LOCATION_DISCARDED;
 
-    if (surface_use_pbo(surface))
+    if (wined3d_texture_use_pbo(texture, gl_info))
         surface->resource.map_binding = WINED3D_LOCATION_BUFFER;
 
     return WINED3D_OK;
@@ -1743,7 +1730,8 @@ HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface, const struc
      * If the surface didn't use PBOs previously but could now, don't
      * change it - whatever made us not use PBOs might come back, e.g.
      * color keys. */
-    if (surface->resource.map_binding == WINED3D_LOCATION_BUFFER && !surface_use_pbo(surface))
+    if (surface->resource.map_binding == WINED3D_LOCATION_BUFFER
+            && !wined3d_texture_use_pbo(surface->container, gl_info))
         surface->resource.map_binding = create_dib ? WINED3D_LOCATION_DIB : WINED3D_LOCATION_SYSMEM;
 
     if (create_dib)
