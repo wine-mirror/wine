@@ -1226,12 +1226,13 @@ static HRESULT WINAPI schema_cache_add(IXMLDOMSchemaCollection2* iface, BSTR uri
             break;
 
         case VT_DISPATCH:
+        case VT_UNKNOWN:
             {
                 xmlDocPtr doc = NULL;
                 cache_entry* entry;
                 CacheEntryType type;
                 IXMLDOMNode* domnode = NULL;
-                IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IXMLDOMNode, (void**)&domnode);
+                IUnknown_QueryInterface(V_UNKNOWN(&var), &IID_IXMLDOMNode, (void**)&domnode);
 
                 if (domnode)
                     doc = xmlNodePtr_from_domnode(domnode, XML_DOCUMENT_NODE)->doc;
@@ -1275,10 +1276,9 @@ static HRESULT WINAPI schema_cache_add(IXMLDOMSchemaCollection2* iface, BSTR uri
             break;
 
         default:
-            {
-                heap_free(name);
-                return E_INVALIDARG;
-            }
+            FIXME("arg type is not supported, %s\n", debugstr_variant(&var));
+            heap_free(name);
+            return E_INVALIDARG;
     }
     heap_free(name);
     return S_OK;
