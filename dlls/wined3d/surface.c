@@ -534,7 +534,8 @@ static BOOL surface_use_pbo(const struct wined3d_surface *surface)
 static HRESULT surface_private_setup(struct wined3d_surface *surface)
 {
     /* TODO: Check against the maximum texture sizes supported by the video card. */
-    const struct wined3d_gl_info *gl_info = &surface->resource.device->adapter->gl_info;
+    struct wined3d_texture *texture = surface->container;
+    const struct wined3d_gl_info *gl_info = &texture->resource.device->adapter->gl_info;
     unsigned int pow2Width, pow2Height;
 
     TRACE("surface %p.\n", surface);
@@ -561,7 +562,7 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
     if (pow2Width > surface->resource.width || pow2Height > surface->resource.height)
     {
         /* TODO: Add support for non power two compressed textures. */
-        if (surface->container->resource.format_flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_HEIGHT_SCALE))
+        if (texture->resource.format_flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_HEIGHT_SCALE))
         {
             FIXME("(%p) Compressed or height scaled non-power-two textures are not supported w(%d) h(%d)\n",
                   surface, surface->resource.width, surface->resource.height);
@@ -570,7 +571,7 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
     }
 
     if ((surface->pow2Width > gl_info->limits.texture_size || surface->pow2Height > gl_info->limits.texture_size)
-            && !(surface->resource.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL)))
+            && !(texture->resource.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL)))
     {
         /* One of three options:
          * 1: Do the same as we do with NPOT and scale the texture, (any
@@ -582,7 +583,7 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
          *    Blts. Some apps (e.g. Swat 3) create textures with a Height of
          *    16 and a Width > 3000 and blt 16x16 letter areas from them to
          *    the render target. */
-        if (surface->resource.pool == WINED3D_POOL_DEFAULT || surface->resource.pool == WINED3D_POOL_MANAGED)
+        if (texture->resource.pool == WINED3D_POOL_DEFAULT || texture->resource.pool == WINED3D_POOL_MANAGED)
         {
             WARN("Unable to allocate a surface which exceeds the maximum OpenGL texture size.\n");
             return WINED3DERR_NOTAVAILABLE;
@@ -593,7 +594,7 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
                 surface->pow2Width, surface->pow2Height);
     }
 
-    if (surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
+    if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
         surface->locations = WINED3D_LOCATION_DISCARDED;
 
     if (surface_use_pbo(surface))
