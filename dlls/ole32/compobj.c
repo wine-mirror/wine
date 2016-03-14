@@ -4631,7 +4631,6 @@ typedef struct Context
     IContextCallback IContextCallback_iface;
     IObjContext IObjContext_iface;
     LONG refs;
-    APTTYPE apttype;
 } Context;
 
 static inline Context *impl_from_IComThreadingInfo( IComThreadingInfo *iface )
@@ -4710,21 +4709,26 @@ static ULONG WINAPI Context_CTI_Release(IComThreadingInfo *iface)
 
 static HRESULT WINAPI Context_CTI_GetCurrentApartmentType(IComThreadingInfo *iface, APTTYPE *apttype)
 {
-    Context *This = impl_from_IComThreadingInfo(iface);
+    APTTYPEQUALIFIER qualifier;
 
     TRACE("(%p)\n", apttype);
 
-    *apttype = This->apttype;
-    return S_OK;
+    return CoGetApartmentType(apttype, &qualifier);
 }
 
 static HRESULT WINAPI Context_CTI_GetCurrentThreadType(IComThreadingInfo *iface, THDTYPE *thdtype)
 {
-    Context *This = impl_from_IComThreadingInfo(iface);
+    APTTYPEQUALIFIER qualifier;
+    APTTYPE apttype;
+    HRESULT hr;
+
+    hr = CoGetApartmentType(&apttype, &qualifier);
+    if (FAILED(hr))
+        return hr;
 
     TRACE("(%p)\n", thdtype);
 
-    switch (This->apttype)
+    switch (apttype)
     {
     case APTTYPE_STA:
     case APTTYPE_MAINSTA:
@@ -4945,12 +4949,6 @@ HRESULT WINAPI CoGetObjectContext(REFIID riid, void **ppv)
     context->IContextCallback_iface.lpVtbl = &Context_Callback_Vtbl;
     context->IObjContext_iface.lpVtbl = &Context_Object_Vtbl;
     context->refs = 1;
-    if (apt->multi_threaded)
-        context->apttype = APTTYPE_MTA;
-    else if (apt->main)
-        context->apttype = APTTYPE_MAINSTA;
-    else
-        context->apttype = APTTYPE_STA;
 
     hr = IComThreadingInfo_QueryInterface(&context->IComThreadingInfo_iface, riid, ppv);
     IComThreadingInfo_Release(&context->IComThreadingInfo_iface);
