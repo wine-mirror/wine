@@ -29,8 +29,6 @@
 
 #include "objbase.h"
 #include "ocidl.h"
-#include "wincodec.h"
-#include "wincodecsdk.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"

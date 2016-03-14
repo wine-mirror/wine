@@ -27,7 +27,6 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "objbase.h"
-#include "wincodec.h"
 
 #include "wincodecs_private.h"
 

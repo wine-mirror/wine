@@ -28,7 +28,6 @@
 #include "winreg.h"
 #include "wingdi.h"
 #include "objbase.h"
-#include "wincodec.h"
 
 #include "wincodecs_private.h"
 

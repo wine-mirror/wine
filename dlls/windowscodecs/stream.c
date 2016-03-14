@@ -24,7 +24,6 @@
 #include "winreg.h"
 #include "objbase.h"
 #include "shlwapi.h"
-#include "wincodec.h"
 #include "wincodecs_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);

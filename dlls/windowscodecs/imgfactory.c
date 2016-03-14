@@ -28,8 +28,6 @@
 #include "winreg.h"
 #include "objbase.h"
 #include "shellapi.h"
-#include "wincodec.h"
-#include "wincodecsdk.h"
 
 #include "wincodecs_private.h"
 
@@ -1098,8 +1096,12 @@ static HRESULT WINAPI ComponentFactory_CreateMetadataWriterFromReader(IWICCompon
 static HRESULT WINAPI ComponentFactory_CreateQueryReaderFromBlockReader(IWICComponentFactory *iface,
         IWICMetadataBlockReader *block_reader, IWICMetadataQueryReader **query_reader)
 {
-    FIXME("%p,%p,%p: stub\n", iface, block_reader, query_reader);
-    return E_NOTIMPL;
+    TRACE("%p,%p,%p\n", iface, block_reader, query_reader);
+
+    if (!block_reader || !query_reader)
+        return E_INVALIDARG;
+
+    return MetadataQueryReader_CreateInstance(block_reader, query_reader);
 }
 
 static HRESULT WINAPI ComponentFactory_CreateQueryWriterFromBlockWriter(IWICComponentFactory *iface,

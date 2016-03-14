@@ -28,8 +28,6 @@
 #include "objbase.h"
 #include "ocidl.h"
 #include "initguid.h"
-#include "wincodec.h"
-#include "wincodecsdk.h"
 
 #include "wincodecs_private.h"
 

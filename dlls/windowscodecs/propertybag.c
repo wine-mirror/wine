@@ -26,7 +26,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
-#include "wincodec.h"
 #include "wine/unicode.h"
 
 #include "wincodecs_private.h"
