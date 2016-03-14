@@ -15373,7 +15373,7 @@ static void test_TrackPopupMenuEmpty(void)
     flush_sequence();
     ret = TrackPopupMenu(hpopupmenu, 0, 100,100, 0, hwnd, NULL);
     ok_sequence(WmTrackPopupMenuEmpty, "TrackPopupMenuEmpty", TRUE);
-    todo_wine ok(ret == 0, "TrackPopupMenu succeeded\n");
+    ok(ret == 0, "TrackPopupMenu succeeded\n");
 
     DestroyMenu(hpopupmenu);
     DestroyWindow(hwnd);
