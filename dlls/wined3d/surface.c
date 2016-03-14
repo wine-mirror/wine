@@ -53,10 +53,10 @@ void wined3d_surface_cleanup(struct wined3d_surface *surface)
 
     if (surface->rb_multisample || surface->rb_resolved || !list_empty(&surface->renderbuffers))
     {
+        struct wined3d_device *device = surface->container->resource.device;
         struct wined3d_renderbuffer_entry *entry, *entry2;
         const struct wined3d_gl_info *gl_info;
         struct wined3d_context *context;
-        struct wined3d_device *device = surface->resource.device;
 
         context = context_acquire(device, NULL);
         gl_info = context->gl_info;
