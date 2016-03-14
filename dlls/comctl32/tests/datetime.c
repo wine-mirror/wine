@@ -404,6 +404,13 @@ static void test_dtm_set_and_get_range(void)
 
     ok_sequence(sequences, DATETIME_SEQ_INDEX, test_dtm_set_and_get_range_seq, "test_dtm_set_and_get_range", FALSE);
 
+    /* DTM_SETRANGE with 0 flags */
+    r = SendMessageA(hWnd, DTM_SETRANGE, 0, (LPARAM)st);
+    ok(r, "got %lu\n", r);
+    r = SendMessageA(hWnd, DTM_GETRANGE, 0, (LPARAM)getSt);
+    ok(r == 0, "got %lu\n", r);
+    ok(getSt[0].wYear == 0 && getSt[1].wYear == 0, "got %u, %u\n", getSt[0].wYear, getSt[1].wYear);
+
     DestroyWindow(hWnd);
 }
 
