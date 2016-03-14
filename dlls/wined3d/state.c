@@ -1571,7 +1571,9 @@ void state_pointsprite(struct wined3d_context *context, const struct wined3d_sta
 
 static void state_wrap(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3D_RS_WRAP0]
+    static unsigned int once;
+
+    if ((state->render_states[WINED3D_RS_WRAP0]
             || state->render_states[WINED3D_RS_WRAP1]
             || state->render_states[WINED3D_RS_WRAP2]
             || state->render_states[WINED3D_RS_WRAP3]
@@ -1587,6 +1589,7 @@ static void state_wrap(struct wined3d_context *context, const struct wined3d_sta
             || state->render_states[WINED3D_RS_WRAP13]
             || state->render_states[WINED3D_RS_WRAP14]
             || state->render_states[WINED3D_RS_WRAP15])
+            && !once++)
         FIXME("(WINED3D_RS_WRAP0) Texture wrapping not yet supported.\n");
 }
 
