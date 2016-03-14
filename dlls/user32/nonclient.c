@@ -168,10 +168,10 @@ static HICON NC_IconForWindow( HWND hwnd )
     if (!hIcon) hIcon = (HICON) GetClassLongPtrW( hwnd, GCLP_HICONSM );
     if (!hIcon) hIcon = (HICON) GetClassLongPtrW( hwnd, GCLP_HICON );
 
-    /* If there is no hIcon specified and this is a modal dialog,
+    /* If there is no icon specified and this is not a modal dialog,
      * get the default one.
      */
-    if (!hIcon && (GetWindowLongW( hwnd, GWL_STYLE ) & DS_MODALFRAME))
+    if (!hIcon && !(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_DLGMODALFRAME))
         hIcon = LoadImageW(0, (LPCWSTR)IDI_WINLOGO, IMAGE_ICON, GetSystemMetrics(SM_CXSMICON),
                            GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
     return hIcon;
