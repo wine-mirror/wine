@@ -670,6 +670,8 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
     UINT resource_size = wined3d_format_calculate_size(format, device->surface_alignment, width, height, 1);
     struct wined3d_surface *surface;
+    DWORD valid_location = 0;
+    BOOL create_dib = FALSE;
 
     TRACE("texture %p, width %u, height %u, format %s, multisample_type %#x, multisample_quality %u, "
             "mem %p, pitch %u.\n",
@@ -713,13 +715,19 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     if (device->d3d_initialized)
         texture->resource.resource_ops->resource_unload(&texture->resource);
 
-    texture->resource.format = format;
-    texture->resource.multisample_type = multisample_type;
-    texture->resource.multisample_quality = multisample_quality;
-    texture->resource.width = width;
-    texture->resource.height = height;
+    if (surface->flags & SFLAG_DIBSECTION)
+    {
+        DeleteDC(surface->hDC);
+        surface->hDC = NULL;
+        DeleteObject(surface->dib.DIBsection);
+        surface->dib.DIBsection = NULL;
+        surface->dib.bitmap_data = NULL;
+        surface->flags &= ~SFLAG_DIBSECTION;
+        create_dib = TRUE;
+    }
 
-    texture->user_memory = mem;
+    wined3d_resource_free_sysmem(&surface->resource);
+
     if ((texture->row_pitch = pitch))
         texture->slice_pitch = height * pitch;
     else
@@ -727,12 +735,63 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         wined3d_format_calculate_pitch(format, 1, width, height,
                 &texture->row_pitch, &texture->slice_pitch);
 
-    texture->flags &= ~WINED3D_TEXTURE_COND_NP2_EMULATED;
+    texture->resource.format = format;
+    texture->resource.multisample_type = multisample_type;
+    texture->resource.multisample_quality = multisample_quality;
+    texture->resource.width = width;
+    texture->resource.height = height;
+
+    surface->resource.format = format;
+    surface->resource.multisample_type = multisample_type;
+    surface->resource.multisample_quality = multisample_quality;
+    surface->resource.width = width;
+    surface->resource.height = height;
+    surface->resource.size = texture->slice_pitch;
+
     if (((width & (width - 1)) || (height & (height - 1))) && !gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO]
             && !gl_info->supported[ARB_TEXTURE_RECTANGLE] && !gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
+    {
         texture->flags |= WINED3D_TEXTURE_COND_NP2_EMULATED;
+        surface->pow2Width = surface->pow2Height = 1;
+        while (surface->pow2Width < width)
+            surface->pow2Width <<= 1;
+        while (surface->pow2Height < height)
+            surface->pow2Height <<= 1;
+    }
+    else
+    {
+        texture->flags &= ~WINED3D_TEXTURE_COND_NP2_EMULATED;
+        surface->pow2Width = width;
+        surface->pow2Height = height;
+    }
 
-    return wined3d_surface_update_desc(surface, gl_info);
+    surface->locations = 0;
+
+    if ((texture->user_memory = mem))
+    {
+        surface->resource.map_binding = WINED3D_LOCATION_USER_MEMORY;
+        valid_location = WINED3D_LOCATION_USER_MEMORY;
+    }
+    else if (create_dib && SUCCEEDED(surface_create_dib_section(surface)))
+    {
+        valid_location = WINED3D_LOCATION_DIB;
+    }
+    else
+    {
+        wined3d_surface_prepare(surface, NULL, WINED3D_LOCATION_SYSMEM);
+        valid_location = WINED3D_LOCATION_SYSMEM;
+    }
+
+    /* The format might be changed to a format that needs conversion.
+     * If the surface didn't use PBOs previously but could now, don't
+     * change it - whatever made us not use PBOs might come back, e.g.
+     * color keys. */
+    if (surface->resource.map_binding == WINED3D_LOCATION_BUFFER && !wined3d_texture_use_pbo(texture, gl_info))
+        surface->resource.map_binding = surface->dib.DIBsection ? WINED3D_LOCATION_DIB : WINED3D_LOCATION_SYSMEM;
+
+    surface_validate_location(surface, valid_location);
+
+    return WINED3D_OK;
 }
 
 /* Context activation is done by the caller. */
