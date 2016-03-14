@@ -351,8 +351,9 @@ static void get_color_masks(const struct wined3d_format *format, DWORD *masks)
 
 HRESULT surface_create_dib_section(struct wined3d_surface *surface)
 {
-    const struct wined3d_format *format = surface->resource.format;
-    unsigned int format_flags = surface->container->resource.format_flags;
+    struct wined3d_texture *texture = surface->container;
+    const struct wined3d_format *format = texture->resource.format;
+    unsigned int format_flags = texture->resource.format_flags;
     unsigned int row_pitch, slice_pitch;
     BITMAPINFO *b_info;
     DWORD *masks;
@@ -388,7 +389,7 @@ HRESULT surface_create_dib_section(struct wined3d_surface *surface)
         return E_OUTOFMEMORY;
 
     b_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    wined3d_texture_get_pitch(surface->container, surface->texture_level, &row_pitch, &slice_pitch);
+    wined3d_texture_get_pitch(texture, surface->texture_level, &row_pitch, &slice_pitch);
     b_info->bmiHeader.biWidth = row_pitch / format->byte_count;
     b_info->bmiHeader.biHeight = 0 - surface->resource.height;
     b_info->bmiHeader.biSizeImage = slice_pitch;
@@ -402,7 +403,7 @@ HRESULT surface_create_dib_section(struct wined3d_surface *surface)
 
     /* Get the bit masks */
     masks = (DWORD *)b_info->bmiColors;
-    switch (surface->resource.format->id)
+    switch (format->id)
     {
         case WINED3DFMT_B8G8R8_UNORM:
             b_info->bmiHeader.biCompression = BI_RGB;
