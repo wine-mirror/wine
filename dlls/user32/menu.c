@@ -3003,7 +3003,6 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     INT executedMenuId = -1;
     MTRACKER mt;
     BOOL enterIdleSent = FALSE;
-    HWND capture_win;
 
     mt.trackFlags = 0;
     mt.hCurrentMenu = hmenu;
@@ -3031,9 +3030,8 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 
     if (wFlags & TF_ENDMENU) fEndMenu = TRUE;
 
-    /* owner may not be visible when tracking a popup, so use the menu itself */
-    capture_win = (wFlags & TPM_POPUPMENU) ? menu->hWnd : mt.hOwnerWnd;
-    set_capture_window( capture_win, GUI_INMENUMODE, NULL );
+    if (!(wFlags & TPM_POPUPMENU))
+        set_capture_window( mt.hOwnerWnd, GUI_INMENUMODE, NULL );
 
     __TRY while (!fEndMenu)
     {
@@ -3326,6 +3324,10 @@ static BOOL MENU_InitTracking(HWND hWnd, HMENU hMenu, BOOL bPopup, UINT wFlags)
 
     SendMessageW( hWnd, WM_SETCURSOR, (WPARAM)hWnd, HTCAPTION );
 
+    if (bPopup)
+        /* owner may not be visible when tracking a popup, so use the menu itself */
+        set_capture_window( menu->hWnd, GUI_INMENUMODE, NULL );
+
     if (!(wFlags & TPM_NONOTIFY))
     {
        SendMessageW( hWnd, WM_INITMENU, (WPARAM)hMenu, 0 );
@@ -3479,6 +3481,9 @@ BOOL WINAPI TrackPopupMenuEx( HMENU hMenu, UINT wFlags, INT x, INT y,
         if (MENU_ShowPopup( hWnd, hMenu, 0, wFlags, x, y, 0, 0 ))
             ret = MENU_TrackMenu( hMenu, wFlags | TPM_POPUPMENU, 0, 0, hWnd,
                                   lpTpm ? &lpTpm->rcExclude : NULL );
+
+        set_capture_window( 0, GUI_INMENUMODE, NULL );
+
         MENU_ExitTracking(hWnd, TRUE);
 
         if (menu->hWnd)
