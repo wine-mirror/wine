@@ -1774,7 +1774,7 @@ static void test_CoGetObjectContext(void)
 {
     HRESULT hr;
     ULONG refs;
-    IComThreadingInfo *pComThreadingInfo;
+    IComThreadingInfo *pComThreadingInfo, *threadinginfo2;
     IContextCallback *pContextCallback;
     IObjContext *pObjContext;
     APTTYPE apttype;
@@ -1786,7 +1786,7 @@ static void test_CoGetObjectContext(void)
 
     if (!pCoGetObjectContext)
     {
-        skip("CoGetObjectContext not present\n");
+        win_skip("CoGetObjectContext not present\n");
         return;
     }
 
@@ -1811,6 +1811,12 @@ static void test_CoGetObjectContext(void)
     pComThreadingInfo = NULL;
     hr = pCoGetObjectContext(&IID_IComThreadingInfo, (void **)&pComThreadingInfo);
     ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
+
+    threadinginfo2 = NULL;
+    hr = pCoGetObjectContext(&IID_IComThreadingInfo, (void **)&threadinginfo2);
+    ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
+    ok(pComThreadingInfo == threadinginfo2, "got different instance\n");
+    IComThreadingInfo_Release(threadinginfo2);
 
     hr = IComThreadingInfo_GetCurrentLogicalThreadId(pComThreadingInfo, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
@@ -1854,11 +1860,8 @@ static void test_CoGetObjectContext(void)
     hr = pCoGetObjectContext(&IID_IContextCallback, (void **)&pContextCallback);
     ok_ole_success(hr, "CoGetObjectContext(ContextCallback)");
 
-    if (hr == S_OK)
-    {
-        refs = IContextCallback_Release(pContextCallback);
-        ok(refs == 0, "pContextCallback should have 0 refs instead of %d refs\n", refs);
-    }
+    refs = IContextCallback_Release(pContextCallback);
+    ok(refs == 0, "pContextCallback should have 0 refs instead of %d refs\n", refs);
 
     CoUninitialize();
 
@@ -1881,11 +1884,8 @@ static void test_CoGetObjectContext(void)
     hr = pCoGetObjectContext(&IID_IContextCallback, (void **)&pContextCallback);
     ok_ole_success(hr, "CoGetObjectContext(ContextCallback)");
 
-    if (hr == S_OK)
-    {
-        refs = IContextCallback_Release(pContextCallback);
-        ok(refs == 0, "pContextCallback should have 0 refs instead of %d refs\n", refs);
-    }
+    refs = IContextCallback_Release(pContextCallback);
+    ok(refs == 0, "pContextCallback should have 0 refs instead of %d refs\n", refs);
 
     hr = pCoGetObjectContext(&IID_IObjContext, (void **)&pObjContext);
     ok_ole_success(hr, "CoGetObjectContext");
@@ -2007,7 +2007,7 @@ static void test_CoGetContextToken(void)
 {
     HRESULT hr;
     ULONG refs;
-    ULONG_PTR token;
+    ULONG_PTR token, token2;
     IObjContext *ctx;
     struct info info;
     HANDLE thread;
@@ -2042,6 +2042,11 @@ static void test_CoGetContextToken(void)
     hr = pCoGetContextToken(&token);
     ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
 
+    token2 = 0;
+    hr = pCoGetContextToken(&token2);
+    ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
+    ok(token == token2, "got different token\n");
+
     SetEvent(info.stop);
     ok( !WaitForSingleObject(thread, 10000), "wait timed out\n" );
 
@@ -2063,18 +2068,23 @@ static void test_CoGetContextToken(void)
     ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
     ok(token, "Expected token != 0\n");
 
+    token2 = 0;
+    hr = pCoGetContextToken(&token2);
+    ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
+    ok(token2 == token, "got different token\n");
+
     refs = IUnknown_AddRef((IUnknown *)token);
-    todo_wine ok(refs == 1, "Expected 1, got %u\n", refs);
+    ok(refs == 1, "Expected 1, got %u\n", refs);
 
     hr = pCoGetObjectContext(&IID_IObjContext, (void **)&ctx);
     ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
-    todo_wine ok(ctx == (IObjContext *)token, "Expected interface pointers to be the same\n");
+    ok(ctx == (IObjContext *)token, "Expected interface pointers to be the same\n");
 
     refs = IObjContext_AddRef(ctx);
-    todo_wine ok(refs == 3, "Expected 3, got %u\n", refs);
+    ok(refs == 3, "Expected 3, got %u\n", refs);
 
     refs = IObjContext_Release(ctx);
-    todo_wine ok(refs == 2, "Expected 2, got %u\n", refs);
+    ok(refs == 2, "Expected 2, got %u\n", refs);
 
     refs = IUnknown_Release((IUnknown *)token);
     ok(refs == 1, "Expected 1, got %u\n", refs);
@@ -2084,7 +2094,7 @@ static void test_CoGetContextToken(void)
     hr = pCoGetContextToken(&token);
     ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
     ok(token, "Expected token != 0\n");
-    todo_wine ok(ctx == (IObjContext *)token, "Expected interface pointers to be the same\n");
+    ok(ctx == (IObjContext *)token, "Expected interface pointers to be the same\n");
 
     refs = IObjContext_AddRef(ctx);
     ok(refs == 2, "Expected 1, got %u\n", refs);
