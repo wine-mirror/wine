@@ -884,7 +884,7 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
 
 static BOOL surface_convert_depth_to_float(const struct wined3d_surface *surface, DWORD depth, float *float_depth)
 {
-    const struct wined3d_format *format = surface->resource.format;
+    const struct wined3d_format *format = surface->container->resource.format;
 
     switch (format->id)
     {
