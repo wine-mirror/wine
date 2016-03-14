@@ -360,9 +360,7 @@ static void test_dtm_set_and_get_range(void)
     r = SendMessageA(hWnd, DTM_SETRANGE, GDTR_MAX, (LPARAM)st);
     expect(1, r);
     r = SendMessageA(hWnd, DTM_GETRANGE, 0, (LPARAM)getSt);
-    todo_wine {
-        ok(r == GDTR_MAX, "Expected %x, not %x(GDTR_MIN) or %x(GDTR_MIN | GDTR_MAX), got %lx\n", GDTR_MAX, GDTR_MIN, GDTR_MIN | GDTR_MAX, r);
-    }
+    ok(r == GDTR_MAX, "Expected %x, not %x(GDTR_MIN) or %x(GDTR_MIN | GDTR_MAX), got %lx\n", GDTR_MAX, GDTR_MIN, GDTR_MIN | GDTR_MAX, r);
     expect_systime(&st[1], &getSt[1]);
 
     r = SendMessageA(hWnd, DTM_SETRANGE, GDTR_MIN, (LPARAM)st);

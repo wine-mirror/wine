@@ -1452,6 +1452,9 @@ MONTHCAL_SetRange(MONTHCAL_INFO *infoPtr, SHORT limits, SYSTEMTIME *range)
         (limits & GDTR_MAX && !MONTHCAL_ValidateDate(&range[1])))
         return FALSE;
 
+    infoPtr->rangeValid = 0;
+    infoPtr->minDate = infoPtr->maxDate = st_null;
+
     if (limits & GDTR_MIN)
     {
         if (!MONTHCAL_ValidateTime(&range[0]))
