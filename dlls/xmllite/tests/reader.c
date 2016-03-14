@@ -386,8 +386,51 @@ static BOOL init_pointers(void)
     return TRUE;
 }
 
+static HRESULT WINAPI resolver_QI(IXmlResolver *iface, REFIID riid, void **obj)
+{
+    ok(0, "unexpected call, riid %s\n", wine_dbgstr_guid(riid));
+
+    if (IsEqualIID(riid, &IID_IXmlResolver) || IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IXmlResolver_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI resolver_AddRef(IXmlResolver *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI resolver_Release(IXmlResolver *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI resolver_ResolveUri(IXmlResolver *iface, const WCHAR *base_uri,
+    const WCHAR *public_id, const WCHAR *system_id, IUnknown **input)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IXmlResolverVtbl resolvervtbl =
+{
+    resolver_QI,
+    resolver_AddRef,
+    resolver_Release,
+    resolver_ResolveUri
+};
+
+static IXmlResolver testresolver = { &resolvervtbl };
+
 static void test_reader_create(void)
 {
+    IXmlResolver *resolver;
     HRESULT hr;
     IXmlReader *reader;
     IUnknown *input;
@@ -410,6 +453,26 @@ static void test_reader_create(void)
     hr = IXmlReader_GetNodeType(reader, &nodetype);
     ok(hr == S_FALSE, "got %08x\n", hr);
     ok(nodetype == XmlNodeType_None, "got %d\n", nodetype);
+
+    resolver = (void*)0xdeadbeef;
+    hr = IXmlReader_GetProperty(reader, XmlReaderProperty_XmlResolver, (LONG_PTR*)&resolver);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(resolver == NULL, "got %p\n", resolver);
+
+    hr = IXmlReader_SetProperty(reader, XmlReaderProperty_XmlResolver, 0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlReader_SetProperty(reader, XmlReaderProperty_XmlResolver, (LONG_PTR)&testresolver);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    resolver = NULL;
+    hr = IXmlReader_GetProperty(reader, XmlReaderProperty_XmlResolver, (LONG_PTR*)&resolver);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(resolver == &testresolver, "got %p\n", resolver);
+    IXmlResolver_Release(resolver);
+
+    hr = IXmlReader_SetProperty(reader, XmlReaderProperty_XmlResolver, 0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     dtd = 2;
     hr = IXmlReader_GetProperty(reader, XmlReaderProperty_DtdProcessing, (LONG_PTR*)&dtd);
