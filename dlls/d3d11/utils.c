@@ -593,6 +593,24 @@ DWORD wined3d_map_flags_from_d3d11_map_type(D3D11_MAP map_type)
     }
 }
 
+DWORD wined3d_clear_flags_from_d3d11_clear_flags(UINT clear_flags)
+{
+    DWORD wined3d_clear_flags = 0;
+
+    if (clear_flags & D3D11_CLEAR_DEPTH)
+        wined3d_clear_flags |= WINED3DCLEAR_ZBUFFER;
+    if (clear_flags & D3D11_CLEAR_STENCIL)
+        wined3d_clear_flags |= WINED3DCLEAR_STENCIL;
+
+    if (clear_flags & ~(D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL))
+    {
+        FIXME("Unhandled clear flags %#x.\n",
+                clear_flags & ~(D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL));
+    }
+
+    return wined3d_clear_flags;
+}
+
 HRESULT d3d_get_private_data(struct wined3d_private_store *store,
         REFGUID guid, UINT *data_size, void *data)
 {
