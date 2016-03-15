@@ -130,15 +130,16 @@ static void get_texture_readback(ID3D10Texture2D *texture, struct texture_readba
 
 static DWORD get_readback_color(struct texture_readback *rb, unsigned int x, unsigned int y)
 {
-    return rb->texture
-            ? ((DWORD *)rb->mapped_texture.pData)[rb->mapped_texture.RowPitch * y / sizeof(DWORD)  + x] : 0xdeadbeef;
+    return ((DWORD *)rb->mapped_texture.pData)[rb->mapped_texture.RowPitch * y / sizeof(DWORD)  + x];
+}
+
+static float get_readback_float(struct texture_readback *rb, unsigned int x, unsigned int y)
+{
+    return ((float *)rb->mapped_texture.pData)[rb->mapped_texture.RowPitch * y / sizeof(float) + x];
 }
 
 static void release_texture_readback(struct texture_readback *rb)
 {
-    if (!rb->texture)
-        return;
-
     ID3D10Texture2D_Unmap(rb->texture, 0);
     ID3D10Texture2D_Release(rb->texture);
 }
@@ -182,6 +183,35 @@ static void check_texture_color_(unsigned int line, ID3D10Texture2D *texture,
     release_texture_readback(&rb);
     ok_(__FILE__, line)(all_match,
             "Got unexpected color 0x%08x at (%u, %u).\n", color, x, y);
+}
+
+#define check_texture_float(r, f, d) check_texture_float_(__LINE__, r, f, d)
+static void check_texture_float_(unsigned int line, ID3D10Texture2D *texture,
+        float expected_value, BYTE max_diff)
+{
+    struct texture_readback rb;
+    unsigned int x = 0, y = 0;
+    BOOL all_match = TRUE;
+    float value = 0.0f;
+
+    get_texture_readback(texture, &rb);
+    for (y = 0; y < rb.height; ++y)
+    {
+        for (x = 0; x < rb.width; ++x)
+        {
+            value = get_readback_float(&rb, x, y);
+            if (!compare_float(value, expected_value, max_diff))
+            {
+                all_match = FALSE;
+                break;
+            }
+        }
+        if (!all_match)
+            break;
+    }
+    release_texture_readback(&rb);
+    ok_(__FILE__, line)(all_match,
+            "Got unexpected value %.8e at (%u, %u).\n", value, x, y);
 }
 
 static ID3D10Device *create_device(void)
@@ -5678,6 +5708,79 @@ static void test_swapchain_flip(void)
     DestroyWindow(window);
 }
 
+static void test_clear_depth_stencil_view(void)
+{
+    D3D10_TEXTURE2D_DESC texture_desc;
+    ID3D10Texture2D *depth_texture;
+    ID3D10DepthStencilView *dsv;
+    ID3D10Device *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    texture_desc.Width = 640;
+    texture_desc.Height = 480;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_D32_FLOAT;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D10_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D10_BIND_DEPTH_STENCIL;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &depth_texture);
+    ok(SUCCEEDED(hr), "Failed to create depth texture, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateDepthStencilView(device, (ID3D10Resource *)depth_texture, NULL, &dsv);
+    ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+
+    ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH, 1.0f, 0);
+    check_texture_float(depth_texture, 1.0f, 0);
+
+    ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH, 0.25f, 0);
+    check_texture_float(depth_texture, 0.25f, 0);
+
+    ID3D10Texture2D_Release(depth_texture);
+    ID3D10DepthStencilView_Release(dsv);
+
+    texture_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &depth_texture);
+    ok(SUCCEEDED(hr), "Failed to create depth texture, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateDepthStencilView(device, (ID3D10Resource *)depth_texture, NULL, &dsv);
+    ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+
+    ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH | D3D10_CLEAR_STENCIL, 1.0f, 0);
+    todo_wine check_texture_color(depth_texture, 0x00ffffff, 0);
+
+    ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH | D3D10_CLEAR_STENCIL, 0.0f, 0xff);
+    todo_wine check_texture_color(depth_texture, 0xff000000, 0);
+
+    ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH | D3D10_CLEAR_STENCIL, 1.0f, 0xff);
+    check_texture_color(depth_texture, 0xffffffff, 0);
+
+    ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH | D3D10_CLEAR_STENCIL, 0.0f, 0);
+    check_texture_color(depth_texture, 0x00000000, 0);
+
+    ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH, 1.0f, 0xff);
+    todo_wine check_texture_color(depth_texture, 0x00ffffff, 0);
+
+    ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_STENCIL, 0.0f, 0xff);
+    check_texture_color(depth_texture, 0xffffffff, 0);
+
+    ID3D10Texture2D_Release(depth_texture);
+    ID3D10DepthStencilView_Release(dsv);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(device)
 {
     test_feature_level();
@@ -5711,4 +5814,5 @@ START_TEST(device)
     test_check_multisample_quality_levels();
     test_cb_relative_addressing();
     test_swapchain_flip();
+    test_clear_depth_stencil_view();
 }
