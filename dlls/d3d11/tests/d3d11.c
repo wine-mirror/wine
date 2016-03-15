@@ -320,15 +320,16 @@ struct d3d11_test_context
     ID3D11Buffer *vb;
 };
 
-#define init_test_context(c) init_test_context_(__LINE__, c)
-static BOOL init_test_context_(unsigned int line, struct d3d11_test_context *context)
+#define init_test_context(c, l) init_test_context_(__LINE__, c, l)
+static BOOL init_test_context_(unsigned int line, struct d3d11_test_context *context,
+        const D3D_FEATURE_LEVEL *feature_level)
 {
     D3D11_VIEWPORT vp;
     HRESULT hr;
 
     memset(context, 0, sizeof(*context));
 
-    if (!(context->device = create_device(NULL)))
+    if (!(context->device = create_device(feature_level)))
     {
         skip_(__FILE__, line)("Failed to create device.\n");
         return FALSE;
@@ -3187,7 +3188,7 @@ static void test_blend(void)
     static const float blend_factor[] = {1.0f, 1.0f, 1.0f, 1.0f};
     static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
 
-    if (!init_test_context(&test_context))
+    if (!init_test_context(&test_context, NULL))
         return;
 
     device = test_context.device;
@@ -3756,7 +3757,7 @@ static void test_texture(void)
         {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        2.0f, 2.0f,              2.0f,  9.0f, level_2_colors},
     };
 
-    if (!init_test_context(&test_context))
+    if (!init_test_context(&test_context, NULL))
         return;
 
     device = test_context.device;
@@ -4109,7 +4110,7 @@ static void test_scissor(void)
         0x00000000, 0x00000000, 0x00000000, 0x00000000,
     };
 
-    if (!init_test_context(&test_context))
+    if (!init_test_context(&test_context, NULL))
         return;
 
     device = test_context.device;
@@ -4309,7 +4310,7 @@ static void test_il_append_aligned(void)
     };
     static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
 
-    if (!init_test_context(&test_context))
+    if (!init_test_context(&test_context, NULL))
         return;
 
     device = test_context.device;
@@ -4445,7 +4446,7 @@ static void test_fragment_coords(void)
     static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
     struct vec4 cutoff = {320.0f, 240.0f, 0.0f, 0.0f};
 
-    if (!init_test_context(&test_context))
+    if (!init_test_context(&test_context, NULL))
         return;
 
     device = test_context.device;
@@ -4577,7 +4578,7 @@ static void test_update_subresource(void)
         0xff000000, 0xff7f7f7f, 0xffffffff, 0x00000000,
     };
 
-    if (!init_test_context(&test_context))
+    if (!init_test_context(&test_context, NULL))
         return;
 
     device = test_context.device;
@@ -4746,7 +4747,7 @@ static void test_copy_subresource_region(void)
         0xffffffff, 0xffffffff, 0xff000000, 0x00000000,
     };
 
-    if (!init_test_context(&test_context))
+    if (!init_test_context(&test_context, NULL))
         return;
 
     device = test_context.device;
@@ -5014,7 +5015,7 @@ static void test_multisample_init(void)
     UINT count = 0;
     HRESULT hr;
 
-    if (!init_test_context(&test_context))
+    if (!init_test_context(&test_context, NULL))
         return;
 
     device = test_context.device;
