@@ -80,6 +80,7 @@ struct wined3d_settings wined3d_settings =
     0,              /* The default of memory is set in init_driver_info */
     NULL,           /* No wine logo by default */
     TRUE,           /* Multisampling enabled by default. */
+    ~0u,            /* Don't force a specific sample count by default. */
     FALSE,          /* No strict draw ordering. */
     TRUE,           /* Don't try to render onscreen by default. */
     FALSE,          /* Don't range check relative addressing indices in float constants. */
@@ -291,6 +292,9 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
                 wined3d_settings.allow_multisampling = FALSE;
             }
         }
+        if (!get_config_key_dword(hkey, appkey, "SampleCount", &wined3d_settings.sample_count))
+            ERR_(winediag)("Forcing sample count to %u. This may not be compatible with all applications.\n",
+                    wined3d_settings.sample_count);
         if (!get_config_key(hkey, appkey, "StrictDrawOrdering", buffer, size)
                 && !strcmp(buffer,"enabled"))
         {

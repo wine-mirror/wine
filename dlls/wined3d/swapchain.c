@@ -814,6 +814,28 @@ static void swapchain_update_render_to_fbo(struct wined3d_swapchain *swapchain)
     swapchain->render_to_fbo = TRUE;
 }
 
+static void wined3d_swapchain_apply_sample_count_override(const struct wined3d_swapchain *swapchain,
+        enum wined3d_format_id format_id, enum wined3d_multisample_type *type, DWORD *quality)
+{
+    const struct wined3d_gl_info *gl_info;
+    const struct wined3d_format *format;
+    enum wined3d_multisample_type t;
+
+    if (wined3d_settings.sample_count == ~0u)
+        return;
+
+    gl_info = &swapchain->device->adapter->gl_info;
+    if (!(format = wined3d_get_format(gl_info, format_id)))
+        return;
+
+    if ((t = min(wined3d_settings.sample_count, gl_info->limits.samples)))
+        while (!(format->multisample_types & 1u << (t - 1)))
+            ++t;
+    TRACE("Using sample count %u.\n", t);
+    *type = t;
+    *quality = 0;
+}
+
 static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3d_device *device,
         struct wined3d_swapchain_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -878,6 +900,8 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
         }
     }
     swapchain->desc = *desc;
+    wined3d_swapchain_apply_sample_count_override(swapchain, swapchain->desc.backbuffer_format,
+            &swapchain->desc.multisample_type, &swapchain->desc.multisample_quality);
     swapchain_update_render_to_fbo(swapchain);
 
     TRACE("Creating front buffer.\n");
@@ -1276,6 +1300,8 @@ HRESULT CDECL wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapcha
             "multisample_type %#x, multisample_quality %#x.\n",
             swapchain, buffer_count, width, height, debug_d3dformat(format_id),
             multisample_type, multisample_quality);
+
+    wined3d_swapchain_apply_sample_count_override(swapchain, format_id, &multisample_type, &multisample_quality);
 
     if (buffer_count && buffer_count != swapchain->desc.backbuffer_count)
         FIXME("Cannot change the back buffer count yet.\n");

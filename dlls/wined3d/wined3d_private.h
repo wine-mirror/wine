@@ -288,6 +288,7 @@ struct wined3d_settings
     UINT64 emulated_textureram;
     char *logo;
     int allow_multisampling;
+    unsigned int sample_count;
     BOOL strict_draw_ordering;
     BOOL always_offscreen;
     BOOL check_float_constants;
