@@ -17,10 +17,10 @@
  *
  */
 
-#include "wine/debug.h"
+#include "config.h"
+#include "wine/port.h"
 
-#define COBJMACROS
-#include "d3dx9.h"
+#include "d3dx9_private.h"
 #include "d3dx9xof.h"
 #undef MAKE_DDHRESULT
 #include "dxfile.h"

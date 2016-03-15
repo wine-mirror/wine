@@ -19,15 +19,13 @@
  *
  */
 
-#ifndef __WINE_D3DX9_36_PRIVATE_H
-#define __WINE_D3DX9_36_PRIVATE_H
+#ifndef __WINE_D3DX9_PRIVATE_H
+#define __WINE_D3DX9_PRIVATE_H
 
-#include <stdarg.h>
+#define NONAMELESSUNION
+#include "wine/debug.h"
 
 #define COBJMACROS
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
 #include "d3dx9.h"
 
 #define ARRAY_SIZE(array) (sizeof(array)/sizeof(*array))
@@ -110,4 +108,4 @@ const char *debug_d3dxparameter_registerset(D3DXREGISTER_SET r) DECLSPEC_HIDDEN;
 void set_number(void *outdata, D3DXPARAMETER_TYPE outtype,
         const void *indata, D3DXPARAMETER_TYPE intype) DECLSPEC_HIDDEN;
 
-#endif /* __WINE_D3DX9_36_PRIVATE_H */
+#endif /* __WINE_D3DX9_PRIVATE_H */

@@ -27,23 +27,18 @@
 #include "config.h"
 #include "wine/port.h"
 
-#define COBJMACROS
-#define NONAMELESSUNION
 #include <assert.h>
 #ifdef HAVE_FLOAT_H
 # include <float.h>
 #endif
-#include "windef.h"
-#include "wingdi.h"
-#include "d3dx9.h"
+
+#include "d3dx9_private.h"
 #undef MAKE_DDHRESULT
 #include "dxfile.h"
 #include "rmxfguid.h"
 #include "rmxftmpl.h"
-#include "wine/debug.h"
 #include "wine/unicode.h"
 #include "wine/list.h"
-#include "d3dx9_36_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 

@@ -18,9 +18,10 @@
  *
  */
 
-#include "wine/debug.h"
-#include "wine/unicode.h"
-#include "d3dx9_36_private.h"
+#include "config.h"
+#include "wine/port.h"
+
+#include "d3dx9_private.h"
 
 #include "initguid.h"
 #include "ole2.h"

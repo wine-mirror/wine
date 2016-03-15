@@ -19,13 +19,8 @@
 
 #include "config.h"
 #include "wine/port.h"
-#define NONAMELESSUNION
-#include "wine/debug.h"
-#include "wine/unicode.h"
 
-#include "windef.h"
-#include "wingdi.h"
-#include "d3dx9_36_private.h"
+#include "d3dx9_private.h"
 #include "d3dcompiler.h"
 
 /* Constants for special INT/FLOAT conversation */

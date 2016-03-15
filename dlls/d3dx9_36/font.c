@@ -20,9 +20,8 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include "wine/debug.h"
+#include "d3dx9_private.h"
 #include "wine/unicode.h"
-#include "d3dx9_36_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
