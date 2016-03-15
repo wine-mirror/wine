@@ -237,6 +237,9 @@ struct wgl_pbuffer
     GLenum     texture_type;
     GLuint     texture;
     int        texture_level;
+    GLXContext tmp_context;
+    GLXContext prev_context;
+    struct list entry;
 };
 
 enum dc_gl_type
@@ -275,6 +278,7 @@ static XContext gl_hwnd_context;
 static XContext gl_pbuffer_context;
 
 static struct list context_list = LIST_INIT( context_list );
+static struct list pbuffer_list = LIST_INIT( pbuffer_list );
 static struct WineGLInfo WineGLInfo = { 0 };
 static struct wgl_pixel_format *pixel_formats;
 static int nb_pixel_formats, nb_onscreen_formats;
@@ -1812,10 +1816,19 @@ static struct wgl_context *glxdrv_wglCreateContext( HDC hdc )
  */
 static void glxdrv_wglDeleteContext(struct wgl_context *ctx)
 {
+    struct wgl_pbuffer *pb;
+
     TRACE("(%p)\n", ctx);
 
     EnterCriticalSection( &context_section );
     list_remove( &ctx->entry );
+    LIST_FOR_EACH_ENTRY( pb, &pbuffer_list, struct wgl_pbuffer, entry )
+    {
+        if (pb->prev_context == ctx->ctx) {
+            pglXDestroyContext(gdi_display, pb->tmp_context);
+            pb->prev_context = pb->tmp_context = NULL;
+        }
+    }
     LeaveCriticalSection( &context_section );
 
     if (ctx->ctx) pglXDestroyContext( gdi_display, ctx->ctx );
@@ -2301,6 +2314,9 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat
         SetLastError(ERROR_NO_SYSTEM_RESOURCES);
         goto create_failed; /* unexpected error */
     }
+    EnterCriticalSection( &context_section );
+    list_add_head( &pbuffer_list, &object->entry );
+    LeaveCriticalSection( &context_section );
     TRACE("->(%p)\n", object);
     return object;
 
@@ -2319,7 +2335,12 @@ static BOOL X11DRV_wglDestroyPbufferARB( struct wgl_pbuffer *object )
 {
     TRACE("(%p)\n", object);
 
+    EnterCriticalSection( &context_section );
+    list_remove( &object->entry );
+    LeaveCriticalSection( &context_section );
     pglXDestroyPbuffer(gdi_display, object->drawable);
+    if (object->tmp_context)
+        pglXDestroyContext(gdi_display, object->tmp_context);
     HeapFree(GetProcessHeap(), 0, object);
     return GL_TRUE;
 }
@@ -2925,7 +2946,6 @@ static BOOL X11DRV_wglBindTexImageARB( struct wgl_pbuffer *object, int iBuffer )
         int prev_binded_texture = 0;
         GLXContext prev_context;
         Drawable prev_drawable;
-        GLXContext tmp_context;
 
         prev_context = pglXGetCurrentContext();
         prev_drawable = pglXGetCurrentDrawable();
@@ -2940,21 +2960,25 @@ static BOOL X11DRV_wglBindTexImageARB( struct wgl_pbuffer *object, int iBuffer )
         }
 
         TRACE("drawable=%lx, context=%p\n", object->drawable, prev_context);
-        tmp_context = pglXCreateNewContext(gdi_display, object->fmt->fbconfig, object->fmt->render_type, prev_context, True);
+        if (!object->tmp_context || object->prev_context != prev_context) {
+            if (object->tmp_context)
+                pglXDestroyContext(gdi_display, object->tmp_context);
+            object->tmp_context = pglXCreateNewContext(gdi_display, object->fmt->fbconfig, object->fmt->render_type, prev_context, True);
+            object->prev_context = prev_context;
+        }
 
         opengl_funcs.gl.p_glGetIntegerv(object->texture_bind_target, &prev_binded_texture);
 
         /* Switch to our pbuffer */
-        pglXMakeCurrent(gdi_display, object->drawable, tmp_context);
+        pglXMakeCurrent(gdi_display, object->drawable, object->tmp_context);
 
         /* Make sure that the prev_binded_texture is set as the current texture state isn't shared between contexts.
-         * After that upload the pbuffer texture data. */
+         * After that copy the pbuffer texture data. */
         opengl_funcs.gl.p_glBindTexture(object->texture_target, prev_binded_texture);
         opengl_funcs.gl.p_glCopyTexImage2D(object->texture_target, 0, object->use_render_texture, 0, 0, object->width, object->height, 0);
 
-        /* Switch back to the original drawable and upload the pbuffer-texture */
+        /* Switch back to the original drawable and context */
         pglXMakeCurrent(gdi_display, prev_drawable, prev_context);
-        pglXDestroyContext(gdi_display, tmp_context);
         return GL_TRUE;
     }
 
