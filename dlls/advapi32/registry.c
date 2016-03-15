@@ -1162,12 +1162,12 @@ LSTATUS WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDW
                                 (WCHAR *)(buf_ptr + info->ClassOffset), info->ClassLength );
         if (len)
         {
-            class[len - 1] = 0;
             if (*class_len + 1 > len)
             {
                 status = STATUS_BUFFER_OVERFLOW;
                 *class_len -= 1;
             }
+            class[*class_len] = 0;
         }
     }
     else status = STATUS_SUCCESS;
