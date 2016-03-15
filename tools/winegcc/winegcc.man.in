@@ -67,6 +67,13 @@ Do not add the winecrt0 library when linking.
 .IP \fB-Wb,\fIoption\fR
 Pass an option to winebuild.  If \fIoption\fR contains
 commas, it is split into multiple options at the commas.
+.SH ENVIRONMENT
+.TP
+.B WINEBUILD
+Specifies the path and name of the \fBwinebuild\fR binary that will be
+launched automatically by \fBwinegcc\fR.
+If not set, \fBwinegcc\fR will look for a file named \fIwinebuild\fR
+in the path.
 .SH DEFINES
 winegcc defines __WINE__, for code that needs to know when it is
 being compiled under Wine. It also defines WIN32, _WIN32, __WIN32, 
