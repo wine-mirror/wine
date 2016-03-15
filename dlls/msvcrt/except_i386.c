@@ -446,6 +446,7 @@ BOOL __cdecl _IsExceptionObjectToBeDestroyed(const void *obj)
 /* returns the address to continue execution to after the catch block was called */
 static inline void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame *frame,
                                      const cxx_function_descr *descr, int nested_trylevel,
+                                     EXCEPTION_REGISTRATION_RECORD *catch_frame,
                                      cxx_exception_type *info )
 {
     UINT i;
@@ -487,7 +488,7 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame 
             }
 
             /* unwind the stack */
-            RtlUnwind( frame, 0, rec, 0 );
+            RtlUnwind( catch_frame ? catch_frame : &frame->frame, 0, rec, 0 );
             cxx_local_unwind( frame, descr, tryblock->start_level );
             frame->trylevel = tryblock->end_level + 1;
 
@@ -511,7 +512,8 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame 
             __wine_pop_frame( &nested_frame.frame );
 
             ((DWORD*)frame)[-1] = save_esp;
-            if (info && info->destructor) call_dtor( info->destructor, object );
+            if (info && info->destructor && _IsExceptionObjectToBeDestroyed(object))
+                call_dtor( info->destructor, object );
             TRACE( "done, continuing at %p\n", addr );
 
             continue_after_catch( frame, addr );
@@ -655,7 +657,7 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
         }
     }
 
-    call_catch_block( rec, frame, descr, frame->trylevel, exc_type );
+    call_catch_block( rec, frame, descr, frame->trylevel, nested_frame, exc_type );
     return ExceptionContinueSearch;
 }
 
