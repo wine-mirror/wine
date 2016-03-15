@@ -7931,9 +7931,9 @@ static HRESULT arbfp_blit_color_fill(struct wined3d_device *device, struct wined
 }
 
 static HRESULT arbfp_blit_depth_fill(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
-        const RECT *rect, float depth)
+        const RECT *rect, DWORD clear_flags, float depth, DWORD stencil)
 {
-    FIXME("Depth filling not implemented by arbfp_blit.\n");
+    FIXME("Depth/stencil filling not implemented by arbfp_blit.\n");
     return WINED3DERR_INVALIDCALL;
 }
 

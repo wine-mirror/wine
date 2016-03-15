@@ -927,7 +927,7 @@ static HRESULT wined3d_surface_depth_fill(struct wined3d_surface *surface, const
         return hr;
     }
 
-    hr = blitter->depth_fill(device, view, rect, depth);
+    hr = blitter->depth_fill(device, view, rect, WINED3DCLEAR_ZBUFFER, depth, 0);
     wined3d_rendertarget_view_decref(view);
 
     return hr;
@@ -3584,12 +3584,13 @@ static HRESULT ffp_blit_color_fill(struct wined3d_device *device, struct wined3d
 }
 
 static HRESULT ffp_blit_depth_fill(struct wined3d_device *device,
-        struct wined3d_rendertarget_view *view, const RECT *rect, float depth)
+        struct wined3d_rendertarget_view *view, const RECT *rect, DWORD clear_flags,
+        float depth, DWORD stencil)
 {
     const RECT draw_rect = {0, 0, view->width, view->height};
     struct wined3d_fb_state fb = {NULL, view};
 
-    device_clear_render_targets(device, 0, &fb, 1, rect, &draw_rect, WINED3DCLEAR_ZBUFFER, 0, depth, 0);
+    device_clear_render_targets(device, 0, &fb, 1, rect, &draw_rect, clear_flags, NULL, depth, stencil);
 
     return WINED3D_OK;
 }
@@ -4279,9 +4280,10 @@ static HRESULT cpu_blit_color_fill(struct wined3d_device *device, struct wined3d
 }
 
 static HRESULT cpu_blit_depth_fill(struct wined3d_device *device,
-        struct wined3d_rendertarget_view *view, const RECT *rect, float depth)
+        struct wined3d_rendertarget_view *view,  const RECT *rect, DWORD clear_flags,
+        float depth, DWORD stencil)
 {
-    FIXME("Depth filling not implemented by cpu_blit.\n");
+    FIXME("Depth/stencil filling not implemented by cpu_blit.\n");
     return WINED3DERR_INVALIDCALL;
 }
 

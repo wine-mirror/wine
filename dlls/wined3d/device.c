@@ -4092,12 +4092,6 @@ HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *devi
     if (!flags)
         return WINED3D_OK;
 
-    if (flags & WINED3DCLEAR_STENCIL)
-    {
-        FIXME("Stencil clear not implemented.\n");
-        return E_NOTIMPL;
-    }
-
     resource = view->resource;
     if (resource->type != WINED3D_RTYPE_TEXTURE_2D)
     {
@@ -4132,7 +4126,7 @@ HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *devi
     if (blit_op == WINED3D_BLIT_OP_COLOR_FILL)
         return blitter->color_fill(device, view, rect, color);
     else
-        return blitter->depth_fill(device, view, rect, depth);
+        return blitter->depth_fill(device, view, rect, flags, depth, stencil);
 }
 
 struct wined3d_rendertarget_view * CDECL wined3d_device_get_rendertarget_view(const struct wined3d_device *device,
