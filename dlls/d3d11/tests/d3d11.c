@@ -725,7 +725,41 @@ static void test_create_texture2d(void)
     ID3D11Texture2D *texture;
     UINT quality_level_count;
     IDXGISurface *surface;
+    unsigned int i;
     HRESULT hr;
+
+    static const struct
+    {
+        DXGI_FORMAT format;
+        D3D11_BIND_FLAG bind_flags;
+        BOOL succeeds;
+        BOOL todo;
+    }
+    tests[] =
+    {
+        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_VERTEX_BUFFER,   FALSE, TRUE},
+        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_INDEX_BUFFER,    FALSE, TRUE},
+        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_CONSTANT_BUFFER, FALSE, TRUE},
+        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_RENDER_TARGET,   TRUE,  FALSE},
+        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_DEPTH_STENCIL,   FALSE, TRUE},
+        {DXGI_FORMAT_R32G32B32_TYPELESS,    D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R16G16B16A16_TYPELESS, D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R16G16B16A16_TYPELESS, D3D11_BIND_RENDER_TARGET,   TRUE,  FALSE},
+        {DXGI_FORMAT_R32G32_TYPELESS,       D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R32G8X24_TYPELESS,     D3D11_BIND_DEPTH_STENCIL,   TRUE,  TRUE},
+        {DXGI_FORMAT_R10G10B10A2_TYPELESS,  D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R10G10B10A2_TYPELESS,  D3D11_BIND_RENDER_TARGET,   TRUE,  FALSE},
+        {DXGI_FORMAT_R32_TYPELESS,          D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R24G8_TYPELESS,        D3D11_BIND_VERTEX_BUFFER,   FALSE, TRUE},
+        {DXGI_FORMAT_R24G8_TYPELESS,        D3D11_BIND_INDEX_BUFFER,    FALSE, TRUE},
+        {DXGI_FORMAT_R24G8_TYPELESS,        D3D11_BIND_CONSTANT_BUFFER, FALSE, TRUE},
+        {DXGI_FORMAT_R24G8_TYPELESS,        D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R24G8_TYPELESS,        D3D11_BIND_DEPTH_STENCIL,   TRUE,  FALSE},
+        {DXGI_FORMAT_R8G8_TYPELESS,         D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R16_TYPELESS,          D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R8_TYPELESS,           D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+    };
 
     if (!(device = create_device(NULL)))
     {
@@ -824,6 +858,20 @@ static void test_create_texture2d(void)
     desc.SampleDesc.Quality = 0;
     hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    desc.SampleDesc.Count = 1;
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        desc.Format = tests[i].format;
+        desc.BindFlags = tests[i].bind_flags;
+        hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, (ID3D11Texture2D **)&texture);
+
+        todo_wine_if(tests[i].todo)
+        ok(hr == (tests[i].succeeds ? S_OK : E_INVALIDARG), "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        if (SUCCEEDED(hr))
+            ID3D11Texture2D_Release(texture);
+    }
 
     refcount = ID3D11Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -1005,7 +1053,22 @@ static void test_create_texture3d(void)
     D3D11_TEXTURE3D_DESC desc;
     ID3D11Texture3D *texture;
     IDXGISurface *surface;
+    unsigned int i;
     HRESULT hr;
+
+    static const struct
+    {
+        DXGI_FORMAT format;
+        D3D11_BIND_FLAG bind_flags;
+        BOOL succeeds;
+        BOOL todo;
+    }
+    tests[] =
+    {
+        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R16G16B16A16_TYPELESS, D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R10G10B10A2_TYPELESS,  D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+    };
 
     if (!(device = create_device(NULL)))
     {
@@ -1071,6 +1134,20 @@ static void test_create_texture3d(void)
     hr = ID3D11Texture3D_QueryInterface(texture, &IID_IDXGISurface, (void **)&surface);
     ok(FAILED(hr), "Texture should not implement IDXGISurface.\n");
     ID3D11Texture3D_Release(texture);
+
+    desc.MipLevels = 1;
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        desc.Format = tests[i].format;
+        desc.BindFlags = tests[i].bind_flags;
+        hr = ID3D11Device_CreateTexture3D(device, &desc, NULL, (ID3D11Texture3D **)&texture);
+
+        todo_wine_if(tests[i].todo)
+        ok(hr == (tests[i].succeeds ? S_OK : E_INVALIDARG), "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        if (SUCCEEDED(hr))
+            ID3D11Texture3D_Release(texture);
+    }
 
     refcount = ID3D11Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -4996,108 +5073,6 @@ done:
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-static void test_create_typeless_resource(void)
-{
-    D3D11_TEXTURE2D_DESC texture2d_desc;
-    D3D11_TEXTURE3D_DESC texture3d_desc;
-    ID3D11Resource *resource;
-    ID3D11Device *device;
-    ULONG refcount;
-    unsigned int i;
-    HRESULT hr;
-
-    static const struct
-    {
-        DXGI_FORMAT format;
-        D3D11_BIND_FLAG bind_flags;
-        D3D11_RESOURCE_DIMENSION type;
-        BOOL succeeds;
-        BOOL todo;
-    }
-    tests[] =
-    {
-        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_VERTEX_BUFFER,   D3D11_RESOURCE_DIMENSION_TEXTURE2D, FALSE, TRUE},
-        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_INDEX_BUFFER,    D3D11_RESOURCE_DIMENSION_TEXTURE2D, FALSE, TRUE},
-        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_CONSTANT_BUFFER, D3D11_RESOURCE_DIMENSION_TEXTURE2D, FALSE, TRUE},
-        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_DIMENSION_TEXTURE3D, TRUE,  FALSE},
-        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_RENDER_TARGET,   D3D11_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_DEPTH_STENCIL,   D3D11_RESOURCE_DIMENSION_TEXTURE2D, FALSE, TRUE},
-        {DXGI_FORMAT_R32G32B32_TYPELESS,    D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R16G16B16A16_TYPELESS, D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R16G16B16A16_TYPELESS, D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_DIMENSION_TEXTURE3D, TRUE,  FALSE},
-        {DXGI_FORMAT_R16G16B16A16_TYPELESS, D3D11_BIND_RENDER_TARGET,   D3D11_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R32G32_TYPELESS,       D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R32G8X24_TYPELESS,     D3D11_BIND_DEPTH_STENCIL,   D3D11_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  TRUE},
-        {DXGI_FORMAT_R10G10B10A2_TYPELESS,  D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R10G10B10A2_TYPELESS,  D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_DIMENSION_TEXTURE3D, TRUE,  FALSE},
-        {DXGI_FORMAT_R10G10B10A2_TYPELESS,  D3D11_BIND_RENDER_TARGET,   D3D11_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R32_TYPELESS,          D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R24G8_TYPELESS,        D3D11_BIND_VERTEX_BUFFER,   D3D11_RESOURCE_DIMENSION_TEXTURE2D, FALSE, TRUE},
-        {DXGI_FORMAT_R24G8_TYPELESS,        D3D11_BIND_INDEX_BUFFER,    D3D11_RESOURCE_DIMENSION_TEXTURE2D, FALSE, TRUE},
-        {DXGI_FORMAT_R24G8_TYPELESS,        D3D11_BIND_CONSTANT_BUFFER, D3D11_RESOURCE_DIMENSION_TEXTURE2D, FALSE, TRUE},
-        {DXGI_FORMAT_R24G8_TYPELESS,        D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R24G8_TYPELESS,        D3D11_BIND_DEPTH_STENCIL,   D3D11_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R8G8_TYPELESS,         D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R16_TYPELESS,          D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R8_TYPELESS,           D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-    };
-
-    if (!(device = create_device(NULL)))
-    {
-        skip("Failed to create device.\n");
-        return;
-    }
-
-    texture2d_desc.Width = 512;
-    texture2d_desc.Height = 512;
-    texture2d_desc.MipLevels = 1;
-    texture2d_desc.ArraySize = 1;
-    texture2d_desc.SampleDesc.Count = 1;
-    texture2d_desc.SampleDesc.Quality = 0;
-    texture2d_desc.Usage = D3D11_USAGE_DEFAULT;
-    texture2d_desc.CPUAccessFlags = 0;
-    texture2d_desc.MiscFlags = 0;
-
-    texture3d_desc.Width = 64;
-    texture3d_desc.Height = 64;
-    texture3d_desc.Depth = 64;
-    texture3d_desc.MipLevels = 1;
-    texture3d_desc.Usage = D3D11_USAGE_DEFAULT;
-    texture3d_desc.CPUAccessFlags = 0;
-    texture3d_desc.MiscFlags = 0;
-
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
-    {
-        if (tests[i].type == D3D11_RESOURCE_DIMENSION_TEXTURE2D)
-        {
-            texture2d_desc.Format = tests[i].format;
-            texture2d_desc.BindFlags = tests[i].bind_flags;
-            hr = ID3D11Device_CreateTexture2D(device, &texture2d_desc, NULL, (ID3D11Texture2D **)&resource);
-        }
-        else if (tests[i].type == D3D11_RESOURCE_DIMENSION_TEXTURE3D)
-        {
-            texture3d_desc.Format = tests[i].format;
-            texture3d_desc.BindFlags = tests[i].bind_flags;
-            hr = ID3D11Device_CreateTexture3D(device, &texture3d_desc, NULL, (ID3D11Texture3D **)&resource);
-        }
-        else
-        {
-            trace("Test %u: Unknown resource type %#x.\n", i, tests[i].type);
-            continue;
-        }
-
-        todo_wine_if(tests[i].todo)
-        ok(hr == (tests[i].succeeds ? S_OK : E_INVALIDARG), "Test %u: Got unexpected hr %#x.\n", i, hr);
-
-        if (SUCCEEDED(hr))
-            ID3D11Resource_Release(resource);
-    }
-
-    refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
-}
-
 START_TEST(d3d11)
 {
     test_create_device();
@@ -5131,5 +5106,4 @@ START_TEST(d3d11)
     test_resource_map();
     test_multisample_init();
     test_check_multisample_quality_levels();
-    test_create_typeless_resource();
 }
