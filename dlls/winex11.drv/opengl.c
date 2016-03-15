@@ -172,6 +172,8 @@ typedef XID GLXPbuffer;
 /** GLX_ARB_pixel_format_float */
 #define GLX_RGBA_FLOAT_BIT                0x00000004
 #define GLX_RGBA_FLOAT_TYPE               0x20B9
+/** GLX_MESA_query_renderer */
+#define GLX_RENDERER_ID_MESA              0x818E
 /** GLX_NV_float_buffer */
 #define GLX_FLOAT_COMPONENTS_NV           0x20B0
 
@@ -405,6 +407,10 @@ static void  (*pglXFreeMemoryNV)(GLvoid *pointer);
 /* MESA GLX Extensions */
 static void (*pglXCopySubBufferMESA)(Display *dpy, GLXDrawable drawable, int x, int y, int width, int height);
 static int (*pglXSwapIntervalMESA)(unsigned int interval);
+static Bool (*pglXQueryCurrentRendererIntegerMESA)(int attribute, unsigned int *value);
+static const char *(*pglXQueryCurrentRendererStringMESA)(int attribute);
+static Bool (*pglXQueryRendererIntegerMESA)(Display *dpy, int screen, int renderer, int attribute, unsigned int *value);
+static const char *(*pglXQueryRendererStringMESA)(Display *dpy, int screen, int renderer, int attribute);
 
 /* Standard OpenGL */
 static void (*pglFinish)(void);
@@ -728,6 +734,16 @@ static BOOL has_opengl(void)
 
     if (has_extension( WineGLInfo.glxExtensions, "GLX_MESA_copy_sub_buffer")) {
         pglXCopySubBufferMESA = pglXGetProcAddressARB((const GLubyte *) "glXCopySubBufferMESA");
+    }
+
+    if (has_extension( WineGLInfo.glxExtensions, "GLX_MESA_query_renderer" ))
+    {
+        pglXQueryCurrentRendererIntegerMESA = pglXGetProcAddressARB(
+                (const GLubyte *)"glXQueryCurrentRendererIntegerMESA" );
+        pglXQueryCurrentRendererStringMESA = pglXGetProcAddressARB(
+                (const GLubyte *)"glXQueryCurrentRendererStringMESA" );
+        pglXQueryRendererIntegerMESA = pglXGetProcAddressARB( (const GLubyte *)"glXQueryRendererIntegerMESA" );
+        pglXQueryRendererStringMESA = pglXGetProcAddressARB( (const GLubyte *)"glXQueryRendererStringMESA" );
     }
 
     X11DRV_WineGL_LoadExtensions();
@@ -2069,6 +2085,12 @@ static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wg
                     pContextAttribList += 2;
                     ret->numAttribs++;
                     break;
+                case WGL_RENDERER_ID_WINE:
+                    pContextAttribList[0] = GLX_RENDERER_ID_MESA;
+                    pContextAttribList[1] = attribList[1];
+                    pContextAttribList += 2;
+                    ret->numAttribs++;
+                    break;
                 default:
                     ERR("Unhandled attribList pair: %#x %#x\n", attribList[0], attribList[1]);
                 }
@@ -3050,6 +3072,26 @@ static BOOL X11DRV_wglSetPixelFormatWINE(HDC hdc, int format)
     return set_pixel_format(hdc, format, TRUE);
 }
 
+static BOOL X11DRV_wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint *value )
+{
+    return pglXQueryCurrentRendererIntegerMESA( attribute, value );
+}
+
+static const char *X11DRV_wglQueryCurrentRendererStringWINE( GLenum attribute )
+{
+    return pglXQueryCurrentRendererStringMESA( attribute );
+}
+
+static BOOL X11DRV_wglQueryRendererIntegerWINE( HDC dc, GLint renderer, GLenum attribute, GLuint *value )
+{
+    return pglXQueryRendererIntegerMESA( gdi_display, DefaultScreen(gdi_display), renderer, attribute, value );
+}
+
+static const char *X11DRV_wglQueryRendererStringWINE( HDC dc, GLint renderer, GLenum attribute )
+{
+    return pglXQueryRendererStringMESA( gdi_display, DefaultScreen(gdi_display), renderer, attribute );
+}
+
 /**
  * glxRequireVersion (internal)
  *
@@ -3195,6 +3237,15 @@ static void X11DRV_WineGL_LoadExtensions(void)
      */
     register_extension( "WGL_WINE_pixel_format_passthrough" );
     opengl_funcs.ext.p_wglSetPixelFormatWINE = X11DRV_wglSetPixelFormatWINE;
+
+    if (has_extension( WineGLInfo.glxExtensions, "GLX_MESA_query_renderer" ))
+    {
+        register_extension( "WGL_WINE_query_renderer" );
+        opengl_funcs.ext.p_wglQueryCurrentRendererIntegerWINE = X11DRV_wglQueryCurrentRendererIntegerWINE;
+        opengl_funcs.ext.p_wglQueryCurrentRendererStringWINE = X11DRV_wglQueryCurrentRendererStringWINE;
+        opengl_funcs.ext.p_wglQueryRendererIntegerWINE = X11DRV_wglQueryRendererIntegerWINE;
+        opengl_funcs.ext.p_wglQueryRendererStringWINE = X11DRV_wglQueryRendererStringWINE;
+    }
 }
 
 
