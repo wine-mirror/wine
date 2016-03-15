@@ -531,7 +531,14 @@ static void ddraw_surface_cleanup(struct ddraw_surface *surface)
 
 ULONG ddraw_surface_release_iface(struct ddraw_surface *This)
 {
-    ULONG iface_count = InterlockedDecrement(&This->iface_count);
+    ULONG iface_count;
+
+    /* Prevent the surface from being destroyed if it's still attached to
+     * another surface. It will be destroyed when the root is destroyed. */
+    if (This->iface_count == 1 && This->attached_iface)
+        IUnknown_AddRef(This->attached_iface);
+    iface_count = InterlockedDecrement(&This->iface_count);
+
     TRACE("%p decreasing iface count to %u.\n", This, iface_count);
 
     if (iface_count == 0)
@@ -5623,20 +5630,10 @@ static void STDMETHODCALLTYPE ddraw_surface_wined3d_object_destroyed(void *paren
 
     TRACE("surface %p.\n", surface);
 
-    /* Check for attached surfaces and detach them. */
+    /* This shouldn't happen, ddraw_surface_release_iface() should prevent the
+     * surface from being destroyed in this case. */
     if (surface->first_attached != surface)
-    {
-        /* Well, this shouldn't happen: The surface being attached is
-         * referenced in AddAttachedSurface(), so it shouldn't be released
-         * until DeleteAttachedSurface() is called, because the refcount is
-         * held. It looks like the application released it often enough to
-         * force this. */
-        WARN("Surface is still attached to surface %p.\n", surface->first_attached);
-
-        /* The refcount will drop to -1 here */
-        if (FAILED(ddraw_surface_delete_attached_surface(surface->first_attached, surface, surface->attached_iface)))
-            ERR("DeleteAttachedSurface failed.\n");
-    }
+        ERR("Surface is still attached to surface %p.\n", surface->first_attached);
 
     while (surface->next_attached)
         if (FAILED(ddraw_surface_delete_attached_surface(surface,
