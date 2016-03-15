@@ -505,7 +505,41 @@ static void test_create_texture2d(void)
     ID3D10Texture2D *texture;
     UINT quality_level_count;
     IDXGISurface *surface;
+    unsigned int i;
     HRESULT hr;
+
+    static const struct
+    {
+        DXGI_FORMAT format;
+        D3D10_BIND_FLAG bind_flags;
+        BOOL succeeds;
+        BOOL todo;
+    }
+    tests[] =
+    {
+        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D10_BIND_VERTEX_BUFFER,   FALSE, TRUE},
+        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D10_BIND_INDEX_BUFFER,    FALSE, TRUE},
+        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D10_BIND_CONSTANT_BUFFER, FALSE, TRUE},
+        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D10_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D10_BIND_RENDER_TARGET,   TRUE,  FALSE},
+        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D10_BIND_DEPTH_STENCIL,   FALSE, TRUE},
+        {DXGI_FORMAT_R32G32B32_TYPELESS,    D3D10_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R16G16B16A16_TYPELESS, D3D10_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R16G16B16A16_TYPELESS, D3D10_BIND_RENDER_TARGET,   TRUE,  FALSE},
+        {DXGI_FORMAT_R32G32_TYPELESS,       D3D10_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R32G8X24_TYPELESS,     D3D10_BIND_DEPTH_STENCIL,   TRUE,  TRUE},
+        {DXGI_FORMAT_R10G10B10A2_TYPELESS,  D3D10_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R10G10B10A2_TYPELESS,  D3D10_BIND_RENDER_TARGET,   TRUE,  FALSE},
+        {DXGI_FORMAT_R32_TYPELESS,          D3D10_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R24G8_TYPELESS,        D3D10_BIND_VERTEX_BUFFER,   FALSE, TRUE},
+        {DXGI_FORMAT_R24G8_TYPELESS,        D3D10_BIND_INDEX_BUFFER,    FALSE, TRUE},
+        {DXGI_FORMAT_R24G8_TYPELESS,        D3D10_BIND_CONSTANT_BUFFER, FALSE, TRUE},
+        {DXGI_FORMAT_R24G8_TYPELESS,        D3D10_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R24G8_TYPELESS,        D3D10_BIND_DEPTH_STENCIL,   TRUE,  FALSE},
+        {DXGI_FORMAT_R8G8_TYPELESS,         D3D10_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R16_TYPELESS,          D3D10_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R8_TYPELESS,           D3D10_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+    };
 
     if (!(device = create_device()))
     {
@@ -606,6 +640,20 @@ static void test_create_texture2d(void)
     desc.SampleDesc.Quality = 0;
     hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, &texture);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    desc.SampleDesc.Count = 1;
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        desc.Format = tests[i].format;
+        desc.BindFlags = tests[i].bind_flags;
+        hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, (ID3D10Texture2D **)&texture);
+
+        todo_wine_if(tests[i].todo)
+        ok(hr == (tests[i].succeeds ? S_OK : E_INVALIDARG), "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        if (SUCCEEDED(hr))
+            ID3D10Texture2D_Release(texture);
+    }
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -759,7 +807,22 @@ static void test_create_texture3d(void)
     D3D10_TEXTURE3D_DESC desc;
     ID3D10Texture3D *texture;
     IDXGISurface *surface;
+    unsigned int i;
     HRESULT hr;
+
+    static const struct
+    {
+        DXGI_FORMAT format;
+        D3D10_BIND_FLAG bind_flags;
+        BOOL succeeds;
+        BOOL todo;
+    }
+    tests[] =
+    {
+        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D10_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R16G16B16A16_TYPELESS, D3D10_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+        {DXGI_FORMAT_R10G10B10A2_TYPELESS,  D3D10_BIND_SHADER_RESOURCE, TRUE,  FALSE},
+    };
 
     if (!(device = create_device()))
     {
@@ -827,6 +890,20 @@ static void test_create_texture3d(void)
     ok(FAILED(hr), "Texture should not implement IDXGISurface.\n");
     if (SUCCEEDED(hr)) IDXGISurface_Release(surface);
     ID3D10Texture3D_Release(texture);
+
+    desc.MipLevels = 1;
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        desc.Format = tests[i].format;
+        desc.BindFlags = tests[i].bind_flags;
+        hr = ID3D10Device_CreateTexture3D(device, &desc, NULL, (ID3D10Texture3D **)&texture);
+
+        todo_wine_if(tests[i].todo)
+        ok(hr == (tests[i].succeeds ? S_OK : E_INVALIDARG), "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        if (SUCCEEDED(hr))
+            ID3D10Texture3D_Release(texture);
+    }
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -5592,108 +5669,6 @@ static void test_swapchain_flip(void)
     DestroyWindow(window);
 }
 
-static void test_create_typeless_resource(void)
-{
-    D3D10_TEXTURE2D_DESC texture2d_desc;
-    D3D10_TEXTURE3D_DESC texture3d_desc;
-    ID3D10Resource *resource;
-    ID3D10Device *device;
-    ULONG refcount;
-    unsigned int i;
-    HRESULT hr;
-
-    static const struct
-    {
-        DXGI_FORMAT format;
-        D3D10_BIND_FLAG bind_flags;
-        D3D10_RESOURCE_DIMENSION type;
-        BOOL succeeds;
-        BOOL todo;
-    }
-    tests[] =
-    {
-        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D10_BIND_VERTEX_BUFFER,   D3D10_RESOURCE_DIMENSION_TEXTURE2D, FALSE, TRUE},
-        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D10_BIND_INDEX_BUFFER,    D3D10_RESOURCE_DIMENSION_TEXTURE2D, FALSE, TRUE},
-        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D10_BIND_CONSTANT_BUFFER, D3D10_RESOURCE_DIMENSION_TEXTURE2D, FALSE, TRUE},
-        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D10_BIND_SHADER_RESOURCE, D3D10_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D10_BIND_SHADER_RESOURCE, D3D10_RESOURCE_DIMENSION_TEXTURE3D, TRUE,  FALSE},
-        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D10_BIND_RENDER_TARGET,   D3D10_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D10_BIND_DEPTH_STENCIL,   D3D10_RESOURCE_DIMENSION_TEXTURE2D, FALSE, TRUE},
-        {DXGI_FORMAT_R32G32B32_TYPELESS,    D3D10_BIND_SHADER_RESOURCE, D3D10_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R16G16B16A16_TYPELESS, D3D10_BIND_SHADER_RESOURCE, D3D10_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R16G16B16A16_TYPELESS, D3D10_BIND_SHADER_RESOURCE, D3D10_RESOURCE_DIMENSION_TEXTURE3D, TRUE,  FALSE},
-        {DXGI_FORMAT_R16G16B16A16_TYPELESS, D3D10_BIND_RENDER_TARGET,   D3D10_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R32G32_TYPELESS,       D3D10_BIND_SHADER_RESOURCE, D3D10_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R32G8X24_TYPELESS,     D3D10_BIND_DEPTH_STENCIL,   D3D10_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  TRUE},
-        {DXGI_FORMAT_R10G10B10A2_TYPELESS,  D3D10_BIND_SHADER_RESOURCE, D3D10_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R10G10B10A2_TYPELESS,  D3D10_BIND_SHADER_RESOURCE, D3D10_RESOURCE_DIMENSION_TEXTURE3D, TRUE,  FALSE},
-        {DXGI_FORMAT_R10G10B10A2_TYPELESS,  D3D10_BIND_RENDER_TARGET,   D3D10_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R32_TYPELESS,          D3D10_BIND_SHADER_RESOURCE, D3D10_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R24G8_TYPELESS,        D3D10_BIND_VERTEX_BUFFER,   D3D10_RESOURCE_DIMENSION_TEXTURE2D, FALSE, TRUE},
-        {DXGI_FORMAT_R24G8_TYPELESS,        D3D10_BIND_INDEX_BUFFER,    D3D10_RESOURCE_DIMENSION_TEXTURE2D, FALSE, TRUE},
-        {DXGI_FORMAT_R24G8_TYPELESS,        D3D10_BIND_CONSTANT_BUFFER, D3D10_RESOURCE_DIMENSION_TEXTURE2D, FALSE, TRUE},
-        {DXGI_FORMAT_R24G8_TYPELESS,        D3D10_BIND_SHADER_RESOURCE, D3D10_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R24G8_TYPELESS,        D3D10_BIND_DEPTH_STENCIL,   D3D10_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R8G8_TYPELESS,         D3D10_BIND_SHADER_RESOURCE, D3D10_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R16_TYPELESS,          D3D10_BIND_SHADER_RESOURCE, D3D10_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-        {DXGI_FORMAT_R8_TYPELESS,           D3D10_BIND_SHADER_RESOURCE, D3D10_RESOURCE_DIMENSION_TEXTURE2D, TRUE,  FALSE},
-    };
-
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device.\n");
-        return;
-    }
-
-    texture2d_desc.Width = 512;
-    texture2d_desc.Height = 512;
-    texture2d_desc.MipLevels = 1;
-    texture2d_desc.ArraySize = 1;
-    texture2d_desc.SampleDesc.Count = 1;
-    texture2d_desc.SampleDesc.Quality = 0;
-    texture2d_desc.Usage = D3D10_USAGE_DEFAULT;
-    texture2d_desc.CPUAccessFlags = 0;
-    texture2d_desc.MiscFlags = 0;
-
-    texture3d_desc.Width = 64;
-    texture3d_desc.Height = 64;
-    texture3d_desc.Depth = 64;
-    texture3d_desc.MipLevels = 1;
-    texture3d_desc.Usage = D3D10_USAGE_DEFAULT;
-    texture3d_desc.CPUAccessFlags = 0;
-    texture3d_desc.MiscFlags = 0;
-
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
-    {
-        if (tests[i].type == D3D10_RESOURCE_DIMENSION_TEXTURE2D)
-        {
-            texture2d_desc.Format = tests[i].format;
-            texture2d_desc.BindFlags = tests[i].bind_flags;
-            hr = ID3D10Device_CreateTexture2D(device, &texture2d_desc, NULL, (ID3D10Texture2D **)&resource);
-        }
-        else if (tests[i].type == D3D10_RESOURCE_DIMENSION_TEXTURE3D)
-        {
-            texture3d_desc.Format = tests[i].format;
-            texture3d_desc.BindFlags = tests[i].bind_flags;
-            hr = ID3D10Device_CreateTexture3D(device, &texture3d_desc, NULL, (ID3D10Texture3D **)&resource);
-        }
-        else
-        {
-            trace("Test %u: Unknown resource type %#x.\n", i, tests[i].type);
-            continue;
-        }
-
-        todo_wine_if(tests[i].todo)
-        ok(hr == (tests[i].succeeds ? S_OK : E_INVALIDARG), "Test %u: Got unexpected hr %#x.\n", i, hr);
-
-        if (SUCCEEDED(hr))
-            ID3D10Resource_Release(resource);
-    }
-
-    refcount = ID3D10Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
-}
-
 START_TEST(device)
 {
     test_feature_level();
@@ -5727,5 +5702,4 @@ START_TEST(device)
     test_check_multisample_quality_levels();
     test_cb_relative_addressing();
     test_swapchain_flip();
-    test_create_typeless_resource();
 }
