@@ -263,7 +263,7 @@ static void state_ambient(struct wined3d_context *context, const struct wined3d_
     struct wined3d_color color;
 
     wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_AMBIENT]);
-    TRACE("Setting ambient to {%.8e, %.8e, %.8e, %.8e}.\n", color.r, color.g, color.b, color.a);
+    TRACE("Setting ambient to %s.\n", debug_color(&color));
     gl_info->gl_ops.gl.p_glLightModelfv(GL_LIGHT_MODEL_AMBIENT, &color.r);
     checkGLcall("glLightModel for MODEL_AMBIENT");
 }
@@ -712,18 +712,10 @@ static void state_specularenable(struct wined3d_context *context, const struct w
         }
     }
 
-    TRACE("diffuse {%.8e, %.8e, %.8e, %.8e}\n",
-            state->material.diffuse.r, state->material.diffuse.g,
-            state->material.diffuse.b, state->material.diffuse.a);
-    TRACE("ambient {%.8e, %.8e, %.8e, %.8e}\n",
-            state->material.ambient.r, state->material.ambient.g,
-            state->material.ambient.b, state->material.ambient.a);
-    TRACE("specular {%.8e, %.8e, %.8e, %.8e}\n",
-            state->material.specular.r, state->material.specular.g,
-            state->material.specular.b, state->material.specular.a);
-    TRACE("emissive {%.8e, %.8e, %.8e, %.8e}\n",
-            state->material.emissive.r, state->material.emissive.g,
-            state->material.emissive.b, state->material.emissive.a);
+    TRACE("diffuse %s\n", debug_color(&state->material.diffuse));
+    TRACE("ambient %s\n", debug_color(&state->material.ambient));
+    TRACE("specular %s\n", debug_color(&state->material.specular));
+    TRACE("emissive %s\n", debug_color(&state->material.emissive));
 
     gl_info->gl_ops.gl.p_glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float *)&state->material.ambient);
     checkGLcall("glMaterialfv(GL_AMBIENT)");

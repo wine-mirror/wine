@@ -1559,14 +1559,13 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
     }
 
     /* Initialize the object. */
-    TRACE("Light %d setting to type %d, Diffuse(%f,%f,%f,%f), Specular(%f,%f,%f,%f), Ambient(%f,%f,%f,%f)\n",
-            light_idx, light->type,
-            light->diffuse.r, light->diffuse.g, light->diffuse.b, light->diffuse.a,
-            light->specular.r, light->specular.g, light->specular.b, light->specular.a,
-            light->ambient.r, light->ambient.g, light->ambient.b, light->ambient.a);
-    TRACE("... Pos(%f,%f,%f), Dir(%f,%f,%f)\n", light->position.x, light->position.y, light->position.z,
-            light->direction.x, light->direction.y, light->direction.z);
-    TRACE("... Range(%f), Falloff(%f), Theta(%f), Phi(%f)\n",
+    TRACE("Light %u setting to type %#x, diffuse %s, specular %s, ambient %s, "
+            "position {%.8e, %.8e, %.8e}, direction {%.8e, %.8e, %.8e}, "
+            "range %.8e, falloff %.8e, theta %.8e, phi %.8e.\n",
+            light_idx, light->type, debug_color(&light->diffuse),
+            debug_color(&light->specular), debug_color(&light->ambient),
+            light->position.x, light->position.y, light->position.z,
+            light->direction.x, light->direction.y, light->direction.z,
             light->range, light->falloff, light->theta, light->phi);
 
     /* Update the live definitions if the light is currently assigned a glIndex. */
@@ -1900,18 +1899,10 @@ void CDECL wined3d_device_get_material(const struct wined3d_device *device, stru
 
     *material = device->state.material;
 
-    TRACE("diffuse {%.8e, %.8e, %.8e, %.8e}\n",
-            material->diffuse.r, material->diffuse.g,
-            material->diffuse.b, material->diffuse.a);
-    TRACE("ambient {%.8e, %.8e, %.8e, %.8e}\n",
-            material->ambient.r, material->ambient.g,
-            material->ambient.b, material->ambient.a);
-    TRACE("specular {%.8e, %.8e, %.8e, %.8e}\n",
-            material->specular.r, material->specular.g,
-            material->specular.b, material->specular.a);
-    TRACE("emissive {%.8e, %.8e, %.8e, %.8e}\n",
-            material->emissive.r, material->emissive.g,
-            material->emissive.b, material->emissive.a);
+    TRACE("diffuse %s\n", debug_color(&material->diffuse));
+    TRACE("ambient %s\n", debug_color(&material->ambient));
+    TRACE("specular %s\n", debug_color(&material->specular));
+    TRACE("emissive %s\n", debug_color(&material->emissive));
     TRACE("power %.8e.\n", material->power);
 }
 
@@ -3373,8 +3364,8 @@ HRESULT CDECL wined3d_device_end_scene(struct wined3d_device *device)
 HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_count,
         const RECT *rects, DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil)
 {
-    TRACE("device %p, rect_count %u, rects %p, flags %#x, color {%.8e, %.8e, %.8e, %.8e}, depth %.8e, stencil %u.\n",
-            device, rect_count, rects, flags, color->r, color->g, color->b, color->a, depth, stencil);
+    TRACE("device %p, rect_count %u, rects %p, flags %#x, color %s, depth %.8e, stencil %u.\n",
+            device, rect_count, rects, flags, debug_color(color), depth, stencil);
 
     if (!rect_count && rects)
     {
@@ -4092,8 +4083,8 @@ HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *devi
     struct wined3d_resource *resource;
     RECT r;
 
-    TRACE("device %p, view %p, rect %s, color {%.8e, %.8e, %.8e, %.8e}.\n",
-            device, view, wine_dbgstr_rect(rect), color->r, color->g, color->b, color->a);
+    TRACE("device %p, view %p, rect %s, color %s.\n",
+            device, view, wine_dbgstr_rect(rect), debug_color(color));
 
     resource = view->resource;
     if (resource->type != WINED3D_RTYPE_TEXTURE_2D)

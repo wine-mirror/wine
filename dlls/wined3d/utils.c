@@ -3278,6 +3278,14 @@ const char *debug_box(const struct wined3d_box *box)
             box->right, box->bottom, box->back);
 }
 
+const char *debug_color(const struct wined3d_color *color)
+{
+    if (!color)
+        return "(null)";
+    return wine_dbg_sprintf("{%.8e, %.8e, %.8e, %.8e}",
+            color->r, color->g, color->b, color->a);
+}
+
 const char *debug_d3dformat(enum wined3d_format_id format_id)
 {
     switch (format_id)
