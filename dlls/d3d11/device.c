@@ -4849,7 +4849,7 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
     FIXME("device_parent %p, container_parent %p, wined3d_desc %p, wined3d_texture %p partial stub!\n",
             device_parent, container_parent, wined3d_desc, wined3d_texture);
 
-    FIXME("Implement DXGI<->wined3d usage conversion\n");
+    FIXME("Implement DXGI<->wined3d usage conversion.\n");
 
     desc.Width = wined3d_desc->width;
     desc.Height = wined3d_desc->height;
@@ -4866,7 +4866,7 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
     if (FAILED(hr = d3d10_device_CreateTexture2D(&device->ID3D10Device1_iface,
             &desc, NULL, &texture_iface)))
     {
-        ERR("CreateTexture2D failed, returning %#x\n", hr);
+        WARN("CreateTexture2D failed, returning %#x.\n", hr);
         return hr;
     }
 

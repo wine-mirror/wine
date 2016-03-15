@@ -606,7 +606,7 @@ static void test_create_device(void)
     swapchain_desc.BufferDesc.Format = DXGI_FORMAT_BC5_UNORM;
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             &swapchain_desc, &swapchain, &device, &feature_level, &immediate_context);
-    todo_wine ok(hr == E_INVALIDARG, "D3D11CreateDeviceAndSwapChain returned %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "D3D11CreateDeviceAndSwapChain returned %#x.\n", hr);
     ok(!swapchain, "Got unexpected swapchain pointer %p.\n", swapchain);
     ok(!device, "Got unexpected device pointer %p.\n", device);
     ok(!feature_level, "Got unexpected feature level %#x.\n", feature_level);
@@ -742,7 +742,7 @@ static void test_create_texture2d(void)
         {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_CONSTANT_BUFFER, FALSE, TRUE},
         {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
         {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_RENDER_TARGET,   TRUE,  FALSE},
-        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_DEPTH_STENCIL,   FALSE, TRUE},
+        {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_DEPTH_STENCIL,   FALSE, FALSE},
         {DXGI_FORMAT_R32G32B32_TYPELESS,    D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
         {DXGI_FORMAT_R16G16B16A16_TYPELESS, D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
         {DXGI_FORMAT_R16G16B16A16_TYPELESS, D3D11_BIND_RENDER_TARGET,   TRUE,  FALSE},
@@ -759,9 +759,9 @@ static void test_create_texture2d(void)
         {DXGI_FORMAT_R8G8_TYPELESS,         D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
         {DXGI_FORMAT_R16_TYPELESS,          D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
         {DXGI_FORMAT_R8_TYPELESS,           D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
-        {DXGI_FORMAT_R8G8B8A8_UNORM,        D3D11_BIND_DEPTH_STENCIL,   FALSE, TRUE},
-        {DXGI_FORMAT_D24_UNORM_S8_UINT,     D3D11_BIND_RENDER_TARGET,   FALSE, TRUE},
-        {DXGI_FORMAT_D32_FLOAT,             D3D11_BIND_RENDER_TARGET,   FALSE, TRUE},
+        {DXGI_FORMAT_R8G8B8A8_UNORM,        D3D11_BIND_DEPTH_STENCIL,   FALSE, FALSE},
+        {DXGI_FORMAT_D24_UNORM_S8_UINT,     D3D11_BIND_RENDER_TARGET,   FALSE, FALSE},
+        {DXGI_FORMAT_D32_FLOAT,             D3D11_BIND_RENDER_TARGET,   FALSE, FALSE},
     };
 
     if (!(device = create_device(NULL)))
@@ -1074,9 +1074,9 @@ static void test_create_texture3d(void)
         {DXGI_FORMAT_R32G32B32A32_TYPELESS, D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
         {DXGI_FORMAT_R16G16B16A16_TYPELESS, D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
         {DXGI_FORMAT_R10G10B10A2_TYPELESS,  D3D11_BIND_SHADER_RESOURCE, TRUE,  FALSE},
-        {DXGI_FORMAT_R8G8B8A8_UNORM,        D3D11_BIND_DEPTH_STENCIL,   FALSE, TRUE},
-        {DXGI_FORMAT_D24_UNORM_S8_UINT,     D3D11_BIND_RENDER_TARGET,   FALSE, TRUE},
-        {DXGI_FORMAT_D32_FLOAT,             D3D11_BIND_RENDER_TARGET,   FALSE, TRUE},
+        {DXGI_FORMAT_R8G8B8A8_UNORM,        D3D11_BIND_DEPTH_STENCIL,   FALSE, FALSE},
+        {DXGI_FORMAT_D24_UNORM_S8_UINT,     D3D11_BIND_RENDER_TARGET,   FALSE, FALSE},
+        {DXGI_FORMAT_D32_FLOAT,             D3D11_BIND_RENDER_TARGET,   FALSE, FALSE},
     };
 
     if (!(device = create_device(NULL)))

@@ -221,7 +221,7 @@ static void test_create_device(void)
     swapchain_desc.BufferDesc.Format = DXGI_FORMAT_BC5_UNORM;
     hr = D3D10CreateDeviceAndSwapChain1(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0,
             supported_feature_level, D3D10_1_SDK_VERSION, &swapchain_desc, &swapchain, &device);
-    todo_wine ok(hr == E_INVALIDARG, "D3D10CreateDeviceAndSwapChain1 returned %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "D3D10CreateDeviceAndSwapChain1 returned %#x.\n", hr);
     ok(!swapchain, "Got unexpected swapchain pointer %p.\n", swapchain);
     ok(!device, "Got unexpected device pointer %p.\n", device);
 
