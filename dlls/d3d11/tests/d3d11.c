@@ -5208,6 +5208,204 @@ static void test_clear_depth_stencil_view(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_cb_relative_addressing(void)
+{
+    struct d3d11_test_context test_context;
+    D3D11_SUBRESOURCE_DATA resource_data;
+    ID3D11Buffer *colors_cb, *index_cb;
+    unsigned int i, index[4] = {0};
+    D3D11_BUFFER_DESC buffer_desc;
+    ID3D11DeviceContext *context;
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    DWORD color;
+    HRESULT hr;
+
+    static const D3D11_INPUT_ELEMENT_DESC layout_desc[] =
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    };
+    static const DWORD vs_code[] =
+    {
+#if 0
+int color_index;
+
+cbuffer colors
+{
+    float4 colors[8];
+};
+
+struct vs_in
+{
+    float4 position : POSITION;
+};
+
+struct vs_out
+{
+    float4 position : SV_POSITION;
+    float4 color : COLOR;
+};
+
+vs_out main(const vs_in v)
+{
+    vs_out o;
+
+    o.position = v.position;
+    o.color = colors[color_index];
+
+    return o;
+}
+#endif
+        0x43425844, 0xc2eb30bf, 0x2868c855, 0xaa34b609, 0x1f4957d4, 0x00000001, 0x00000164, 0x00000003,
+        0x0000002c, 0x00000060, 0x000000b4, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0xababab00,
+        0x4e47534f, 0x0000004c, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x0000000f,
+        0x505f5653, 0x5449534f, 0x004e4f49, 0x4f4c4f43, 0xabab0052, 0x58454853, 0x000000a8, 0x00010050,
+        0x0000002a, 0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x04000859, 0x00208e46,
+        0x00000001, 0x00000008, 0x0300005f, 0x001010f2, 0x00000000, 0x04000067, 0x001020f2, 0x00000000,
+        0x00000001, 0x03000065, 0x001020f2, 0x00000001, 0x02000068, 0x00000001, 0x05000036, 0x001020f2,
+        0x00000000, 0x00101e46, 0x00000000, 0x06000036, 0x00100012, 0x00000000, 0x0020800a, 0x00000000,
+        0x00000000, 0x07000036, 0x001020f2, 0x00000001, 0x04208e46, 0x00000001, 0x0010000a, 0x00000000,
+        0x0100003e,
+    };
+    static const DWORD ps_code[] =
+    {
+#if 0
+struct ps_in
+{
+    float4 position : SV_POSITION;
+    float4 color : COLOR;
+};
+
+float4 main(const ps_in v) : SV_TARGET
+{
+    return v.color;
+}
+#endif
+        0x43425844, 0x1a6def50, 0x9c069300, 0x7cce68f0, 0x621239b9, 0x00000001, 0x000000f8, 0x00000003,
+        0x0000002c, 0x00000080, 0x000000b4, 0x4e475349, 0x0000004c, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x4f4c4f43, 0xabab0052,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x58454853, 0x0000003c, 0x00000050,
+        0x0000000f, 0x0100086a, 0x03001062, 0x001010f2, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
+        0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000001, 0x0100003e,
+    };
+    static const struct
+    {
+        struct vec2 position;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f}},
+        {{-1.0f,  1.0f}},
+        {{ 1.0f, -1.0f}},
+        {{ 1.0f,  1.0f}},
+    };
+    static const struct
+    {
+        float color[4];
+    }
+    colors[10] =
+    {
+        {{0.0f, 0.0f, 0.0f, 1.0f}},
+        {{0.0f, 0.0f, 1.0f, 0.0f}},
+        {{0.0f, 0.0f, 1.0f, 1.0f}},
+        {{0.0f, 1.0f, 0.0f, 0.0f}},
+        {{0.0f, 1.0f, 0.0f, 1.0f}},
+        {{0.0f, 1.0f, 1.0f, 0.0f}},
+        {{0.0f, 1.0f, 1.0f, 1.0f}},
+        {{1.0f, 0.0f, 0.0f, 0.0f}},
+        {{1.0f, 0.0f, 0.0f, 1.0f}},
+        {{1.0f, 0.0f, 1.0f, 0.0f}},
+    };
+    static const struct
+    {
+        unsigned int index;
+        DWORD expected;
+    }
+    test_data[] =
+    {
+        {0, 0xff000000},
+        {1, 0x00ff0000},
+        {2, 0xffff0000},
+        {3, 0x0000ff00},
+        {4, 0xff00ff00},
+        {5, 0x00ffff00},
+        {6, 0xffffff00},
+        {7, 0x000000ff},
+
+        {8, 0xff0000ff},
+        {9, 0x00ff00ff},
+    };
+    static const float white_color[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+
+    if (!init_test_context(&test_context, &feature_level))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, sizeof(layout_desc) / sizeof(*layout_desc),
+            vs_code, sizeof(vs_code), &test_context.input_layout);
+    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+
+    buffer_desc.ByteWidth = sizeof(quad);
+    buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+    buffer_desc.StructureByteStride = 0;
+
+    resource_data.pSysMem = quad;
+    resource_data.SysMemPitch = 0;
+    resource_data.SysMemSlicePitch = 0;
+
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &test_context.vb);
+    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
+
+    buffer_desc.ByteWidth = sizeof(colors);
+    buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    resource_data.pSysMem = &colors;
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &colors_cb);
+    ok(SUCCEEDED(hr), "Failed to create constant buffer, hr %#x.\n", hr);
+
+    buffer_desc.ByteWidth = sizeof(index);
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &index_cb);
+    ok(SUCCEEDED(hr), "Failed to create constant buffer, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &test_context.vs);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_VSSetConstantBuffers(context, 0, 1, &index_cb);
+    ID3D11DeviceContext_VSSetConstantBuffers(context, 1, 1, &colors_cb);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    {
+        ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white_color);
+
+        index[0] = test_data[i].index;
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)index_cb, 0, NULL, &index, 0, 0);
+
+        draw_quad(&test_context);
+
+        color = get_texture_color(test_context.backbuffer, 319, 239);
+        ok(compare_color(color, test_data[i].expected, 1),
+                "Got unexpected color 0x%08x for index %u.\n", color, test_data[i].index);
+    }
+
+    ID3D11Buffer_Release(index_cb);
+    ID3D11Buffer_Release(colors_cb);
+    ID3D11PixelShader_Release(ps);
+
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -5242,4 +5440,5 @@ START_TEST(d3d11)
     test_multisample_init();
     test_check_multisample_quality_levels();
     test_clear_depth_stencil_view();
+    test_cb_relative_addressing();
 }
