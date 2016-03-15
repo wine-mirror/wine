@@ -574,6 +574,17 @@ my %ext_functions  =
     "glDeleteObjectBufferATI" => [ "void", [ [ "GLuint", "buffer" ] ], [ "GL_ATI_vertex_array_object" ] ],
     "wglSetPixelFormatWINE" => [ "BOOL", [ [ "HDC", "hdc" ],
                                            [ "int", "format" ] ], [ "WGL_WINE_pixel_format_passthrough" ] ],
+    "wglQueryCurrentRendererIntegerWINE" => [ "BOOL", [ [ "GLenum", "attribute" ],
+                                                        [ "GLuint *", "value" ] ], [ "WGL_WINE_query_renderer" ] ],
+    "wglQueryCurrentRendererStringWINE" => [ "const GLchar *", [ [ "GLenum", "attribute" ] ],
+                                             [ "WGL_WINE_query_renderer" ] ],
+    "wglQueryRendererIntegerWINE" => [ "BOOL", [ [ "HDC", "dc" ],
+                                                 [ "GLint", "renderer" ],
+                                                 [ "GLenum", "attribute" ],
+                                                 [ "GLuint *", "value" ] ], [ "WGL_WINE_query_renderer" ] ],
+    "wglQueryRendererStringWINE" => [ "const GLchar *", [ [ "HDC", "dc" ],
+                                                          [ "GLint", "renderer" ],
+                                                          [ "GLenum", "attribute" ] ], [ "WGL_WINE_query_renderer" ] ],
    );
 
 
@@ -614,7 +625,21 @@ my %supported_wgl_extensions =
     "WGL_WINE_pixel_format_passthrough" => 1,
    );
 
-my %enums = ();
+my %enums =
+   (
+    "WGL_RENDERER_VENDOR_ID_WINE" => "0x8183",
+    "WGL_RENDERER_DEVICE_ID_WINE" => "0x8184",
+    "WGL_RENDERER_VERSION_WINE" => "0x8185",
+    "WGL_RENDERER_ACCELERATED_WINE" => "0x8186",
+    "WGL_RENDERER_VIDEO_MEMORY_WINE" => "0x8187",
+    "WGL_RENDERER_UNIFIED_MEMORY_ARCHITECTURE_WINE" => "0x8188",
+    "WGL_RENDERER_PREFERRED_PROFILE_WINE" => "0x8189",
+    "WGL_RENDERER_OPENGL_CORE_PROFILE_VERSION_WINE" => "0x818A",
+    "WGL_RENDERER_OPENGL_COMPATIBILITY_PROFILE_VERSION_WINE" => "0x818B",
+    "WGL_RENDERER_OPENGL_ES_PROFILE_VERSION_WINE" => "0x818C",
+    "WGL_RENDERER_OPENGL_ES2_PROFILE_VERSION_WINE" => "0x818D",
+    "WGL_RENDERER_ID_WINE" => "0x818E",
+   );
 
 sub parse_variable($)
 {

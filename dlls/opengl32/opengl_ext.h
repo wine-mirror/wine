@@ -32,5 +32,10 @@ extern const OpenGL_extension extension_registry[] DECLSPEC_HIDDEN;
 extern const int extension_registry_size DECLSPEC_HIDDEN;
 
 extern BOOL WINAPI wglSetPixelFormatWINE( HDC hdc, int format ) DECLSPEC_HIDDEN;
+extern BOOL WINAPI wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint *value ) DECLSPEC_HIDDEN;
+extern const GLchar * WINAPI wglQueryCurrentRendererStringWINE( GLenum attribute );
+extern BOOL WINAPI wglQueryRendererIntegerWINE( HDC dc, GLint renderer,
+        GLenum attribute, GLuint *value ) DECLSPEC_HIDDEN;
+extern const GLchar * WINAPI wglQueryRendererStringWINE( HDC dc, GLint renderer, GLenum attribute ) DECLSPEC_HIDDEN;
 
 #endif /* __DLLS_OPENGL32_OPENGL_EXT_H */

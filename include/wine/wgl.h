@@ -5654,6 +5654,18 @@ typedef void                   GLvoid;
 #define GL_ZOOM_X                                                                0x0D16
 #define GL_ZOOM_Y                                                                0x0D17
 #define GL_Z_EXT                                                                 0x87D7
+#define WGL_RENDERER_ACCELERATED_WINE                                            0x8186
+#define WGL_RENDERER_DEVICE_ID_WINE                                              0x8184
+#define WGL_RENDERER_ID_WINE                                                     0x818E
+#define WGL_RENDERER_OPENGL_COMPATIBILITY_PROFILE_VERSION_WINE                   0x818B
+#define WGL_RENDERER_OPENGL_CORE_PROFILE_VERSION_WINE                            0x818A
+#define WGL_RENDERER_OPENGL_ES2_PROFILE_VERSION_WINE                             0x818D
+#define WGL_RENDERER_OPENGL_ES_PROFILE_VERSION_WINE                              0x818C
+#define WGL_RENDERER_PREFERRED_PROFILE_WINE                                      0x8189
+#define WGL_RENDERER_UNIFIED_MEMORY_ARCHITECTURE_WINE                            0x8188
+#define WGL_RENDERER_VENDOR_ID_WINE                                              0x8183
+#define WGL_RENDERER_VERSION_WINE                                                0x8185
+#define WGL_RENDERER_VIDEO_MEMORY_WINE                                           0x8187
 
 void       GLAPIENTRY glAccum(GLenum,GLfloat);
 void       GLAPIENTRY glAlphaFunc(GLenum,GLfloat);

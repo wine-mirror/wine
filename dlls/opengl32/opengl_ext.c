@@ -14,7 +14,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
-const int extension_registry_size = 2576;
+const int extension_registry_size = 2580;
 
 static void WINAPI glAccumxOES( GLenum op, GLfixed value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -15342,7 +15342,7 @@ static void WINAPI glWriteMaskEXT( GLuint res, GLuint in, GLenum outX, GLenum ou
   funcs->ext.p_glWriteMaskEXT( res, in, outX, outY, outZ, outW );
 }
 
-const OpenGL_extension extension_registry[2576] = {
+const OpenGL_extension extension_registry[2580] = {
   { "glAccumxOES", "GL_OES_fixed_point", glAccumxOES },
   { "glActiveProgramEXT", "GL_EXT_separate_shader_objects", glActiveProgramEXT },
   { "glActiveShaderProgram", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glActiveShaderProgram },
@@ -17913,7 +17913,11 @@ const OpenGL_extension extension_registry[2576] = {
   { "wglGetPixelFormatAttribivARB", "WGL_ARB_pixel_format", wglGetPixelFormatAttribivARB },
   { "wglGetSwapIntervalEXT", "WGL_EXT_swap_control", wglGetSwapIntervalEXT },
   { "wglMakeContextCurrentARB", "WGL_ARB_make_current_read", wglMakeContextCurrentARB },
+  { "wglQueryCurrentRendererIntegerWINE", "WGL_WINE_query_renderer", wglQueryCurrentRendererIntegerWINE },
+  { "wglQueryCurrentRendererStringWINE", "WGL_WINE_query_renderer", wglQueryCurrentRendererStringWINE },
   { "wglQueryPbufferARB", "WGL_ARB_pbuffer", wglQueryPbufferARB },
+  { "wglQueryRendererIntegerWINE", "WGL_WINE_query_renderer", wglQueryRendererIntegerWINE },
+  { "wglQueryRendererStringWINE", "WGL_WINE_query_renderer", wglQueryRendererStringWINE },
   { "wglReleasePbufferDCARB", "WGL_ARB_pbuffer", wglReleasePbufferDCARB },
   { "wglReleaseTexImageARB", "WGL_ARB_render_texture", wglReleaseTexImageARB },
   { "wglSetPbufferAttribARB", "WGL_ARB_render_texture", wglSetPbufferAttribARB },

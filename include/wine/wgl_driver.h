@@ -7,7 +7,7 @@
 #define WINE_GLAPI
 #endif
 
-#define WINE_WGL_DRIVER_VERSION 14
+#define WINE_WGL_DRIVER_VERSION 15
 
 struct wgl_context;
 struct wgl_pbuffer;
@@ -2940,7 +2940,11 @@ struct opengl_funcs
         BOOL       (WINE_GLAPI *p_wglGetPixelFormatAttribivARB)(HDC,int,int,UINT,const int*,int*);
         int        (WINE_GLAPI *p_wglGetSwapIntervalEXT)(void);
         BOOL       (WINE_GLAPI *p_wglMakeContextCurrentARB)(HDC,HDC,struct wgl_context *);
+        BOOL       (WINE_GLAPI *p_wglQueryCurrentRendererIntegerWINE)(GLenum,GLuint *);
+        const GLchar * (WINE_GLAPI *p_wglQueryCurrentRendererStringWINE)(GLenum);
         BOOL       (WINE_GLAPI *p_wglQueryPbufferARB)(struct wgl_pbuffer *,int,int*);
+        BOOL       (WINE_GLAPI *p_wglQueryRendererIntegerWINE)(HDC,GLint,GLenum,GLuint *);
+        const GLchar * (WINE_GLAPI *p_wglQueryRendererStringWINE)(HDC,GLint,GLenum);
         int        (WINE_GLAPI *p_wglReleasePbufferDCARB)(struct wgl_pbuffer *,HDC);
         BOOL       (WINE_GLAPI *p_wglReleaseTexImageARB)(struct wgl_pbuffer *,int);
         BOOL       (WINE_GLAPI *p_wglSetPbufferAttribARB)(struct wgl_pbuffer *,const int*);

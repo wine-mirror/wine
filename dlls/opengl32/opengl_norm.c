@@ -5932,7 +5932,11 @@ static BOOL null_wglGetPixelFormatAttribfvARB( HDC hdc, int iPixelFormat, int iL
 static BOOL null_wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int* piAttributes, int* piValues ) { return 0; }
 static int null_wglGetSwapIntervalEXT( void ) { return 0; }
 static BOOL null_wglMakeContextCurrentARB( HDC hDrawDC, HDC hReadDC, struct wgl_context * hglrc ) { return 0; }
+static BOOL null_wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint * value ) { return 0; }
+static const GLchar * null_wglQueryCurrentRendererStringWINE( GLenum attribute ) { return 0; }
 static BOOL null_wglQueryPbufferARB( struct wgl_pbuffer * hPbuffer, int iAttribute, int* piValue ) { return 0; }
+static BOOL null_wglQueryRendererIntegerWINE( HDC dc, GLint renderer, GLenum attribute, GLuint * value ) { return 0; }
+static const GLchar * null_wglQueryRendererStringWINE( HDC dc, GLint renderer, GLenum attribute ) { return 0; }
 static int null_wglReleasePbufferDCARB( struct wgl_pbuffer * hPbuffer, HDC hDC ) { return 0; }
 static BOOL null_wglReleaseTexImageARB( struct wgl_pbuffer * hPbuffer, int iBuffer ) { return 0; }
 static BOOL null_wglSetPbufferAttribARB( struct wgl_pbuffer * hPbuffer, const int* piAttribList ) { return 0; }
@@ -8862,7 +8866,11 @@ struct opengl_funcs null_opengl_funcs =
         null_wglGetPixelFormatAttribivARB,
         null_wglGetSwapIntervalEXT,
         null_wglMakeContextCurrentARB,
+        null_wglQueryCurrentRendererIntegerWINE,
+        null_wglQueryCurrentRendererStringWINE,
         null_wglQueryPbufferARB,
+        null_wglQueryRendererIntegerWINE,
+        null_wglQueryRendererStringWINE,
         null_wglReleasePbufferDCARB,
         null_wglReleaseTexImageARB,
         null_wglSetPbufferAttribARB,

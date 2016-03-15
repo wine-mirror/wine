@@ -1213,6 +1213,58 @@ BOOL WINAPI wglSetPixelFormatWINE( HDC hdc, int format )
 }
 
 /***********************************************************************
+ *              wglQueryCurrentRendererIntegerWINE
+ *
+ * Provided by the WGL_WINE_query_renderer extension.
+ */
+BOOL WINAPI wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint *value )
+{
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+
+    if (!funcs->ext.p_wglQueryCurrentRendererIntegerWINE) return FALSE;
+    return funcs->ext.p_wglQueryCurrentRendererIntegerWINE( attribute, value );
+}
+
+/***********************************************************************
+ *              wglQueryCurrentRendererStringWINE
+ *
+ * Provided by the WGL_WINE_query_renderer extension.
+ */
+const GLchar * WINAPI wglQueryCurrentRendererStringWINE( GLenum attribute )
+{
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+
+    if (!funcs->ext.p_wglQueryCurrentRendererStringWINE) return NULL;
+    return funcs->ext.p_wglQueryCurrentRendererStringWINE( attribute );
+}
+
+/***********************************************************************
+ *              wglQueryRendererIntegerWINE
+ *
+ * Provided by the WGL_WINE_query_renderer extension.
+ */
+BOOL WINAPI wglQueryRendererIntegerWINE( HDC dc, GLint renderer, GLenum attribute, GLuint *value )
+{
+    const struct opengl_funcs *funcs = get_dc_funcs( dc );
+
+    if (!funcs || !funcs->ext.p_wglQueryRendererIntegerWINE) return FALSE;
+    return funcs->ext.p_wglQueryRendererIntegerWINE( dc, renderer, attribute, value );
+}
+
+/***********************************************************************
+ *              wglQueryRendererStringWINE
+ *
+ * Provided by the WGL_WINE_query_renderer extension.
+ */
+const GLchar * WINAPI wglQueryRendererStringWINE( HDC dc, GLint renderer, GLenum attribute )
+{
+    const struct opengl_funcs *funcs = get_dc_funcs( dc );
+
+    if (!funcs || !funcs->ext.p_wglQueryRendererStringWINE) return NULL;
+    return funcs->ext.p_wglQueryRendererStringWINE( dc, renderer, attribute );
+}
+
+/***********************************************************************
  *		wglUseFontBitmaps_common
  */
 static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD listBase, BOOL unicode )
