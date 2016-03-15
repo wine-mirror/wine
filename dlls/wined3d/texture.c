@@ -505,8 +505,15 @@ void wined3d_texture_load(struct wined3d_texture *texture,
 
         TRACE("Reloading because of color key value change.\n");
         for (i = 0; i < sub_count; i++)
-            texture->texture_ops->texture_sub_resource_add_dirty_region(texture->sub_resources[i].resource, NULL);
-        wined3d_texture_set_dirty(texture);
+        {
+            struct wined3d_resource *sub_resource = texture->sub_resources[i].resource;
+
+            if (!texture->texture_ops->texture_load_location(texture, i, context, sub_resource->map_binding))
+                ERR("Failed to load location %s.\n", wined3d_debug_location(sub_resource->map_binding));
+            else
+                texture->texture_ops->texture_sub_resource_invalidate_location(sub_resource,
+                        ~sub_resource->map_binding);
+        }
 
         texture->async.gl_color_key = texture->async.src_blt_color_key;
     }
@@ -878,16 +885,30 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
         UINT layer, const struct wined3d_box *dirty_region)
 {
     struct wined3d_resource *sub_resource;
+    struct wined3d_context *context;
+    unsigned int sub_resource_idx;
 
     TRACE("texture %p, layer %u, dirty_region %s.\n", texture, layer, debug_box(dirty_region));
 
-    if (!(sub_resource = wined3d_texture_get_sub_resource(texture, layer * texture->level_count)))
+    sub_resource_idx = layer * texture->level_count;
+    if (!(sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    texture->texture_ops->texture_sub_resource_add_dirty_region(sub_resource, dirty_region);
+    if (dirty_region)
+        FIXME("Ignoring dirty_region %s.\n", debug_box(dirty_region));
+
+    context = context_acquire(texture->resource.device, NULL);
+    if (!texture->texture_ops->texture_load_location(texture, sub_resource_idx, context, sub_resource->map_binding))
+    {
+        ERR("Failed to load location %s.\n", wined3d_debug_location(sub_resource->map_binding));
+        context_release(context);
+        return E_OUTOFMEMORY;
+    }
+    texture->texture_ops->texture_sub_resource_invalidate_location(sub_resource, ~sub_resource->map_binding);
+    context_release(context);
 
     return WINED3D_OK;
 }
@@ -931,18 +952,6 @@ static void texture2d_sub_resource_load(struct wined3d_resource *sub_resource,
         struct wined3d_context *context, BOOL srgb)
 {
     surface_load(surface_from_resource(sub_resource), context, srgb);
-}
-
-static void texture2d_sub_resource_add_dirty_region(struct wined3d_resource *sub_resource,
-        const struct wined3d_box *dirty_region)
-{
-    struct wined3d_surface *surface = surface_from_resource(sub_resource);
-    struct wined3d_context *context;
-
-    context = context_acquire(surface->container->resource.device, NULL);
-    surface_load_location(surface, context, sub_resource->map_binding);
-    context_release(context);
-    surface_invalidate_location(surface, ~sub_resource->map_binding);
 }
 
 static void texture2d_sub_resource_invalidate_location(struct wined3d_resource *sub_resource, DWORD location)
@@ -1070,7 +1079,6 @@ static void texture2d_cleanup_sub_resources(struct wined3d_texture *texture)
 static const struct wined3d_texture_ops texture2d_ops =
 {
     texture2d_sub_resource_load,
-    texture2d_sub_resource_add_dirty_region,
     texture2d_sub_resource_invalidate_location,
     texture2d_sub_resource_validate_location,
     texture2d_sub_resource_upload_data,
@@ -1558,12 +1566,6 @@ static void texture3d_sub_resource_load(struct wined3d_resource *sub_resource,
     wined3d_volume_load(volume_from_resource(sub_resource), context, srgb);
 }
 
-static void texture3d_sub_resource_add_dirty_region(struct wined3d_resource *sub_resource,
-        const struct wined3d_box *dirty_region)
-{
-    wined3d_texture_set_dirty(volume_from_resource(sub_resource)->container);
-}
-
 static void texture3d_sub_resource_invalidate_location(struct wined3d_resource *sub_resource, DWORD location)
 {
     struct wined3d_volume *volume = volume_from_resource(sub_resource);
@@ -1650,7 +1652,6 @@ static void texture3d_cleanup_sub_resources(struct wined3d_texture *texture)
 static const struct wined3d_texture_ops texture3d_ops =
 {
     texture3d_sub_resource_load,
-    texture3d_sub_resource_add_dirty_region,
     texture3d_sub_resource_invalidate_location,
     texture3d_sub_resource_validate_location,
     texture3d_sub_resource_upload_data,

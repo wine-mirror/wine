@@ -2332,8 +2332,6 @@ struct wined3d_texture_ops
 {
     void (*texture_sub_resource_load)(struct wined3d_resource *sub_resource,
             struct wined3d_context *context, BOOL srgb);
-    void (*texture_sub_resource_add_dirty_region)(struct wined3d_resource *sub_resource,
-            const struct wined3d_box *dirty_region);
     void (*texture_sub_resource_invalidate_location)(struct wined3d_resource *sub_resource, DWORD location);
     void (*texture_sub_resource_validate_location)(struct wined3d_resource *sub_resource, DWORD location);
     void (*texture_sub_resource_upload_data)(struct wined3d_resource *sub_resource,
