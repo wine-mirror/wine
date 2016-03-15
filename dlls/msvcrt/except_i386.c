@@ -131,6 +131,7 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
                                PCONTEXT context, EXCEPTION_REGISTRATION_RECORD** dispatch,
                                const cxx_function_descr *descr,
                                EXCEPTION_REGISTRATION_RECORD* nested_frame, int nested_trylevel );
+BOOL __cdecl _IsExceptionObjectToBeDestroyed(const void*);
 
 /* call a function with a given ebp */
 static inline void *call_ebp_func( void *func, void *ebp )
@@ -361,9 +362,18 @@ static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_REG
                                             CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
     struct catch_func_nested_frame *nested_frame = (struct catch_func_nested_frame *)frame;
+    PEXCEPTION_RECORD prev_rec = nested_frame->rec;
 
     if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
     {
+        if (prev_rec->ExceptionCode == CXX_EXCEPTION)
+        {
+            void *object = (void*)prev_rec->ExceptionInformation[1];
+            cxx_exception_type *info = (cxx_exception_type*) prev_rec->ExceptionInformation[2];
+            if (info && info->destructor && _IsExceptionObjectToBeDestroyed(object))
+                call_dtor( info->destructor, object);
+        }
+
         msvcrt_get_thread_data()->exc_record = nested_frame->prev_rec;
         return ExceptionContinueSearch;
     }
@@ -372,7 +382,6 @@ static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_REG
 
     if(rec->ExceptionCode == CXX_EXCEPTION)
     {
-        PEXCEPTION_RECORD prev_rec = nested_frame->rec;
         if((rec->ExceptionInformation[1] == 0 && rec->ExceptionInformation[2] == 0) ||
                 (prev_rec->ExceptionCode == CXX_EXCEPTION &&
                  rec->ExceptionInformation[1] == prev_rec->ExceptionInformation[1] &&
@@ -387,22 +396,6 @@ static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_REG
                     TRACE("re-propage: obj: %lx, type: %lx\n",
                             rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
             }
-        }
-        else if (nested_frame->prev_rec && nested_frame->prev_rec->ExceptionCode == CXX_EXCEPTION &&
-                nested_frame->prev_rec->ExceptionInformation[1] == prev_rec->ExceptionInformation[1] &&
-                nested_frame->prev_rec->ExceptionInformation[2] == prev_rec->ExceptionInformation[2])
-        {
-            TRACE("detect threw new exception in catch block - not owning old(obj: %lx type: %lx)\n",
-                    prev_rec->ExceptionInformation[1], prev_rec->ExceptionInformation[2]);
-        }
-        else if (prev_rec->ExceptionCode == CXX_EXCEPTION) {
-            /* new exception in exception handler, destroy old */
-            void *object = (void*)prev_rec->ExceptionInformation[1];
-            cxx_exception_type *info = (cxx_exception_type*) prev_rec->ExceptionInformation[2];
-            TRACE("detect threw new exception in catch block - destroy old(obj: %p type: %p)\n",
-                    object, info);
-            if(info && info->destructor)
-                call_dtor( info->destructor, object );
         }
         else
         {
