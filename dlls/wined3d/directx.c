@@ -235,6 +235,7 @@ static const struct wined3d_extension_map wgl_extension_map[] =
     {"WGL_ARB_pixel_format",                WGL_ARB_PIXEL_FORMAT             },
     {"WGL_EXT_swap_control",                WGL_EXT_SWAP_CONTROL             },
     {"WGL_WINE_pixel_format_passthrough",   WGL_WINE_PIXEL_FORMAT_PASSTHROUGH},
+    {"WGL_WINE_query_renderer",             WGL_WINE_QUERY_RENDERER          },
 };
 
 /**********************************************************
@@ -1401,42 +1402,62 @@ static const struct gpu_description *get_gpu_description(enum wined3d_pci_vendor
     return NULL;
 }
 
+static const struct gpu_description *query_gpu_description(const struct wined3d_gl_info *gl_info, UINT64 *vram_bytes)
+{
+    enum wined3d_pci_vendor vendor = PCI_VENDOR_NONE;
+    enum wined3d_pci_device device = PCI_DEVICE_NONE;
+    const struct gpu_description *gpu_description;
+    static unsigned int once;
+
+    if (gl_info->supported[WGL_WINE_QUERY_RENDERER])
+    {
+        GLuint value;
+
+        if (GL_EXTCALL(wglQueryCurrentRendererIntegerWINE(WGL_RENDERER_VENDOR_ID_WINE, &value)))
+            vendor = value;
+        if (GL_EXTCALL(wglQueryCurrentRendererIntegerWINE(WGL_RENDERER_DEVICE_ID_WINE, &value)))
+            device = value;
+        if (GL_EXTCALL(wglQueryCurrentRendererIntegerWINE(WGL_RENDERER_VIDEO_MEMORY_WINE, &value)))
+            *vram_bytes = (UINT64)value * 1024 * 1024;
+        TRACE("Card reports vendor PCI ID 0x%04x, device PCI ID 0x%04x, 0x%s bytes of video memory.\n",
+                vendor, device, wine_dbgstr_longlong(*vram_bytes));
+    }
+
+    if (wined3d_settings.pci_vendor_id != PCI_VENDOR_NONE)
+    {
+        vendor = wined3d_settings.pci_vendor_id;
+        TRACE("Overriding vendor PCI ID with 0x%04x.\n", vendor);
+    }
+
+    if (wined3d_settings.pci_device_id != PCI_DEVICE_NONE)
+    {
+        device = wined3d_settings.pci_device_id;
+        TRACE("Overriding device PCI ID with 0x%04x.\n", vendor);
+    }
+
+    if (wined3d_settings.emulated_textureram)
+    {
+        *vram_bytes = wined3d_settings.emulated_textureram;
+        TRACE("Overriding amount of video memory with 0x%s bytes.\n",
+                wine_dbgstr_longlong(*vram_bytes));
+    }
+
+    if (!(gpu_description = get_gpu_description(vendor, device))
+            && (wined3d_settings.pci_vendor_id != PCI_VENDOR_NONE
+            || wined3d_settings.pci_device_id != PCI_DEVICE_NONE) && !once++)
+        ERR_(winediag)("Invalid GPU override %04x:%04x specified, ignoring.\n", vendor, device);
+
+    return gpu_description;
+}
+
 static void init_driver_info(struct wined3d_driver_info *driver_info,
-        enum wined3d_pci_vendor vendor, enum wined3d_pci_device device)
+        const struct gpu_description *gpu_desc, UINT64 vram_bytes)
 {
     OSVERSIONINFOW os_version;
     WORD driver_os_version;
     enum wined3d_display_driver driver;
     enum wined3d_driver_model driver_model;
     const struct driver_version_information *version_info;
-    const struct gpu_description *gpu_desc;
-
-    if (driver_info->vendor != PCI_VENDOR_NONE || driver_info->device != PCI_DEVICE_NONE)
-    {
-        static unsigned int once;
-
-        TRACE("GPU override %04x:%04x.\n", wined3d_settings.pci_vendor_id, wined3d_settings.pci_device_id);
-
-        driver_info->vendor = wined3d_settings.pci_vendor_id;
-        if (driver_info->vendor == PCI_VENDOR_NONE)
-            driver_info->vendor = vendor;
-
-        driver_info->device = wined3d_settings.pci_device_id;
-        if (driver_info->device == PCI_DEVICE_NONE)
-            driver_info->device = device;
-
-        if (get_gpu_description(driver_info->vendor, driver_info->device))
-        {
-            vendor = driver_info->vendor;
-            device = driver_info->device;
-        }
-        else if (!once++)
-            ERR_(winediag)("Invalid GPU override %04x:%04x specified, ignoring.\n",
-                    driver_info->vendor, driver_info->device);
-    }
-
-    driver_info->vendor = vendor;
-    driver_info->device = device;
 
     memset(&os_version, 0, sizeof(os_version));
     os_version.dwOSVersionInfoSize = sizeof(os_version);
@@ -1496,19 +1517,11 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
         }
     }
 
-    if ((gpu_desc = get_gpu_description(driver_info->vendor, driver_info->device)))
-    {
-        driver_info->description = gpu_desc->description;
-        driver_info->vram_bytes = (UINT64)gpu_desc->vidmem * 1024 * 1024;
-        driver = gpu_desc->driver;
-    }
-    else
-    {
-        ERR("Card %04x:%04x not found in driver DB.\n", vendor, device);
-        driver_info->description = "Direct3D HAL";
-        driver_info->vram_bytes = WINE_DEFAULT_VIDMEM;
-        driver = DRIVER_UNKNOWN;
-    }
+    driver_info->vendor = gpu_desc->vendor;
+    driver_info->device = gpu_desc->card;
+    driver_info->description = gpu_desc->description;
+    driver_info->vram_bytes = vram_bytes ? vram_bytes : (UINT64)gpu_desc->vidmem * 1024 * 1024;
+    driver = gpu_desc->driver;
 
     /**
      * Diablo 2 crashes when the amount of video memory is greater than 0x7fffffff.
@@ -1520,13 +1533,6 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
     {
         TRACE("Limiting amount of video memory to %#lx bytes for OS version older than Vista.\n", LONG_MAX);
         driver_info->vram_bytes = LONG_MAX;
-    }
-
-    if (wined3d_settings.emulated_textureram)
-    {
-        TRACE("Overriding amount of video memory with 0x%s bytes.\n",
-                wine_dbgstr_longlong(wined3d_settings.emulated_textureram));
-        driver_info->vram_bytes = wined3d_settings.emulated_textureram;
     }
 
     /* Try to obtain driver version information for the current Windows version. This fails in
@@ -1552,7 +1558,7 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
     else
     {
         ERR("No driver version info found for device %04x:%04x, driver model %#x.\n",
-                vendor, device, driver_model);
+                driver_info->vendor, driver_info->device, driver_model);
         driver_info->name = "Display";
         driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, 15);
         driver_info->version_low = MAKEDWORD_VERSION(8, 6); /* Nvidia RIVA TNT, arbitrary */
@@ -2915,6 +2921,10 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(wglGetExtensionsStringARB)
     USE_GL_FUNC(wglGetPixelFormatAttribfvARB)
     USE_GL_FUNC(wglGetPixelFormatAttribivARB)
+    USE_GL_FUNC(wglQueryCurrentRendererIntegerWINE)
+    USE_GL_FUNC(wglQueryCurrentRendererStringWINE)
+    USE_GL_FUNC(wglQueryRendererIntegerWINE)
+    USE_GL_FUNC(wglQueryRendererStringWINE)
     USE_GL_FUNC(wglSetPixelFormatWINE)
     USE_GL_FUNC(wglSwapIntervalEXT)
 
@@ -3466,14 +3476,14 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
     struct wined3d_driver_info *driver_info = &adapter->driver_info;
     const char *gl_vendor_str, *gl_renderer_str, *gl_version_str;
     struct wined3d_gl_info *gl_info = &adapter->gl_info;
+    const struct gpu_description *gpu_description;
     struct wined3d_vertex_caps vertex_caps;
-    enum wined3d_pci_vendor card_vendor;
     struct fragment_caps fragment_caps;
     struct shader_caps shader_caps;
     const char *WGL_Extensions = NULL;
     enum wined3d_gl_vendor gl_vendor;
-    enum wined3d_pci_device device;
     DWORD gl_version, gl_ext_emul_mask;
+    UINT64 vram_bytes = 0;
     HDC hdc;
     unsigned int i, j;
     GLint context_profile = 0;
@@ -3818,13 +3828,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
         }
     }
 
-    gl_vendor = wined3d_guess_gl_vendor(gl_info, gl_vendor_str, gl_renderer_str);
-    card_vendor = wined3d_guess_card_vendor(gl_vendor_str, gl_renderer_str);
-    TRACE("Found GL_VENDOR (%s)->(0x%04x/0x%04x).\n", debugstr_a(gl_vendor_str), gl_vendor, card_vendor);
-
-    device = wined3d_guess_card(&shader_caps, &fragment_caps, gl_info->glsl_version, gl_renderer_str, &gl_vendor, &card_vendor);
-    TRACE("Found (fake) card: 0x%x (vendor id), 0x%x (device id).\n", card_vendor, device);
-
     gl_info->wrap_lookup[WINED3D_TADDRESS_WRAP - WINED3D_TADDRESS_WRAP] = GL_REPEAT;
     gl_info->wrap_lookup[WINED3D_TADDRESS_MIRROR - WINED3D_TADDRESS_WRAP] =
             gl_info->supported[ARB_TEXTURE_MIRRORED_REPEAT] ? GL_MIRRORED_REPEAT_ARB : GL_REPEAT;
@@ -3847,8 +3850,32 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
         checkGLcall("creating VAO");
     }
 
-    fixup_extensions(gl_info, gl_renderer_str, gl_vendor, card_vendor, device);
-    init_driver_info(driver_info, card_vendor, device);
+    gl_vendor = wined3d_guess_gl_vendor(gl_info, gl_vendor_str, gl_renderer_str);
+    TRACE("Guessed GL vendor %#x.\n", gl_vendor);
+
+    if (!(gpu_description = query_gpu_description(gl_info, &vram_bytes)))
+    {
+        static const struct gpu_description default_gpu_description =
+                {HW_VENDOR_NVIDIA, CARD_NVIDIA_RIVA_128, "Direct3D HAL", DRIVER_UNKNOWN, WINE_DEFAULT_VIDMEM};
+        enum wined3d_pci_vendor vendor;
+        enum wined3d_pci_device device;
+
+        vendor = wined3d_guess_card_vendor(gl_vendor_str, gl_renderer_str);
+        TRACE("Guessed vendor PCI ID 0x%04x.\n", vendor);
+
+        device = wined3d_guess_card(&shader_caps, &fragment_caps, gl_info->glsl_version,
+                gl_renderer_str, &gl_vendor, &vendor);
+        TRACE("Guessed device PCI ID 0x%04x.\n", device);
+
+        if (!(gpu_description = get_gpu_description(vendor, device)))
+        {
+            ERR("Card %04x:%04x not found in driver DB.\n", vendor, device);
+            gpu_description = &default_gpu_description;
+        }
+    }
+    fixup_extensions(gl_info, gl_renderer_str, gl_vendor, gpu_description->vendor, gpu_description->card);
+    init_driver_info(driver_info, gpu_description, vram_bytes);
+
     gl_ext_emul_mask = adapter->vertex_pipe->vp_get_emul_mask(gl_info)
             | adapter->fragment_pipe->get_emul_mask(gl_info);
     if (gl_ext_emul_mask & GL_EXT_EMUL_ARB_MULTITEXTURE)
