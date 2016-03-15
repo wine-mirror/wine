@@ -1982,15 +1982,15 @@ static HRESULT ddraw_surface_delete_attached_surface(struct ddraw_surface *surfa
     }
 
     /* Find the predecessor of the detached surface */
-    while (prev)
+    while (prev->next_attached != attachment)
     {
-        if (prev->next_attached == attachment)
-            break;
-        prev = prev->next_attached;
+        if (!(prev = prev->next_attached))
+        {
+            ERR("Failed to find predecessor of %p.\n", attachment);
+            wined3d_mutex_unlock();
+            return DDERR_SURFACENOTATTACHED;
+        }
     }
-
-    /* There must be a surface, otherwise there's a bug */
-    assert(prev);
 
     /* Unchain the surface */
     prev->next_attached = attachment->next_attached;
