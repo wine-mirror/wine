@@ -225,10 +225,13 @@ static inline BYTE hexchar_to_byte(WCHAR ch)
         return -1;
 }
 
-static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *reg_count)
+static LPBYTE get_regdata(const WCHAR *data, DWORD reg_type, WCHAR separator, DWORD *reg_count)
 {
+    static const WCHAR empty;
     LPBYTE out_data = NULL;
     *reg_count = 0;
+
+    if (!data) data = &empty;
 
     switch (reg_type)
     {
@@ -411,7 +414,7 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
              return 1;
         }
 
-        if (data && !(reg_data = get_regdata(data, reg_type, separator, &reg_count)))
+        if (!(reg_data = get_regdata(data, reg_type, separator, &reg_count)))
         {
             RegCloseKey(subkey);
             return 1;
