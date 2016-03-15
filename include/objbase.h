@@ -370,6 +370,8 @@ HRESULT WINAPI CoGetTreatAsClass(REFCLSID clsidOld, LPCLSID pClsidNew);
 HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew);
 HRESULT WINAPI CoAllowSetForegroundWindow(IUnknown *pUnk, LPVOID lpvReserved);
 HRESULT WINAPI CoGetObjectContext(REFIID riid, LPVOID *ppv);
+HRESULT WINAPI CoRegisterInitializeSpy(IInitializeSpy *spy, ULARGE_INTEGER *cookie);
+HRESULT WINAPI CoRevokeInitializeSpy(ULARGE_INTEGER cookie);
 
 HRESULT WINAPI CoCreateGuid(GUID* pguid);
 BOOL WINAPI CoIsOle1Class(REFCLSID rclsid);

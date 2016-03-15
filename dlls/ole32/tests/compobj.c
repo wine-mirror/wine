@@ -3129,6 +3129,138 @@ static void test_CoGetCurrentLogicalThreadId(void)
     ok(!IsEqualGUID(&id, &GUID_NULL), "got null id\n");
 }
 
+static HRESULT WINAPI testinitialize_QI(IInitializeSpy *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IInitializeSpy) || IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IInitializeSpy_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI testinitialize_AddRef(IInitializeSpy *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI testinitialize_Release(IInitializeSpy *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI testinitialize_PreInitialize(IInitializeSpy *iface, DWORD coinit, DWORD aptrefs)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testinitialize_PostInitialize(IInitializeSpy *iface, HRESULT hr, DWORD coinit, DWORD aptrefs)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testinitialize_PreUninitialize(IInitializeSpy *iface, DWORD aptrefs)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testinitialize_PostUninitialize(IInitializeSpy *iface, DWORD aptrefs)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IInitializeSpyVtbl testinitializevtbl =
+{
+    testinitialize_QI,
+    testinitialize_AddRef,
+    testinitialize_Release,
+    testinitialize_PreInitialize,
+    testinitialize_PostInitialize,
+    testinitialize_PreUninitialize,
+    testinitialize_PostUninitialize
+};
+
+static IInitializeSpy testinitialize = { &testinitializevtbl };
+
+static void test_IInitializeSpy(void)
+{
+    ULARGE_INTEGER cookie, cookie1, cookie2;
+    HRESULT hr;
+
+    hr = CoRegisterInitializeSpy(NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    cookie.QuadPart = 1;
+    hr = CoRegisterInitializeSpy(NULL, &cookie);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(cookie.QuadPart == 1, "got wrong cookie\n");
+
+    hr = CoRegisterInitializeSpy(&testinitialize, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    cookie.HighPart = 0;
+    cookie.LowPart = 1;
+    hr = CoRegisterInitializeSpy(&testinitialize, &cookie);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine {
+    ok(cookie.HighPart == GetCurrentThreadId(), "got high part 0x%08x, expected 0x%08x\n", cookie.HighPart,
+        GetCurrentThreadId());
+    ok(cookie.LowPart == 0, "got wrong low part 0x%x\n", cookie.LowPart);
+}
+    /* register same instance one more time */
+    cookie1.HighPart = 0;
+    cookie1.LowPart = 0;
+    hr = CoRegisterInitializeSpy(&testinitialize, &cookie1);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(cookie1.HighPart == GetCurrentThreadId(), "got high part 0x%08x, expected 0x%08x\n", cookie1.HighPart,
+        GetCurrentThreadId());
+    ok(cookie1.LowPart == 1, "got wrong low part 0x%x\n", cookie1.LowPart);
+}
+    cookie2.HighPart = 0;
+    cookie2.LowPart = 0;
+    hr = CoRegisterInitializeSpy(&testinitialize, &cookie2);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(cookie2.HighPart == GetCurrentThreadId(), "got high part 0x%08x, expected 0x%08x\n", cookie2.HighPart,
+        GetCurrentThreadId());
+    ok(cookie2.LowPart == 2, "got wrong low part 0x%x\n", cookie2.LowPart);
+}
+    hr = CoRevokeInitializeSpy(cookie1);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = CoRevokeInitializeSpy(cookie1);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    cookie1.HighPart = 0;
+    cookie1.LowPart = 0;
+    hr = CoRegisterInitializeSpy(&testinitialize, &cookie1);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(cookie1.HighPart == GetCurrentThreadId(), "got high part 0x%08x, expected 0x%08x\n", cookie1.HighPart,
+        GetCurrentThreadId());
+    ok(cookie1.LowPart == 1, "got wrong low part 0x%x\n", cookie1.LowPart);
+}
+    hr = CoRevokeInitializeSpy(cookie);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = CoRevokeInitializeSpy(cookie1);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = CoRevokeInitializeSpy(cookie2);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+}
+
 static void init_funcs(void)
 {
     HMODULE hOle32 = GetModuleHandleA("ole32");
@@ -3198,4 +3330,5 @@ START_TEST(compobj)
     test_CoGetApartmentType();
     test_IMallocSpy();
     test_CoGetCurrentLogicalThreadId();
+    test_IInitializeSpy();
 }
