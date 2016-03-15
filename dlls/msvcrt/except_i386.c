@@ -461,6 +461,9 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame 
     {
         const tryblock_info *tryblock = &descr->tryblock[i];
 
+        /* only handle try blocks inside current catch block */
+        if (catch_frame && nested_trylevel > tryblock->start_level) continue;
+
         if (trylevel < tryblock->start_level) continue;
         if (trylevel > tryblock->end_level) continue;
 
