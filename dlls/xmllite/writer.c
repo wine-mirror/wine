@@ -556,13 +556,58 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmlwriter_WriteCData(IXmlWriter *iface, LPCWSTR pwszText)
+static void write_cdata_section(xmlwriteroutput *output, const WCHAR *data, int len)
+{
+    static const WCHAR cdataopenW[] = {'<','!','[','C','D','A','T','A','['};
+    static const WCHAR cdatacloseW[] = {']',']','>'};
+    write_output_buffer(output, cdataopenW, ARRAY_SIZE(cdataopenW));
+    if (data)
+        write_output_buffer(output, data, len);
+    write_output_buffer(output, cdatacloseW, ARRAY_SIZE(cdatacloseW));
+}
+
+static HRESULT WINAPI xmlwriter_WriteCData(IXmlWriter *iface, LPCWSTR data)
 {
     xmlwriter *This = impl_from_IXmlWriter(iface);
+    int len;
 
-    FIXME("%p %s\n", This, wine_dbgstr_w(pwszText));
+    TRACE("%p %s\n", This, debugstr_w(data));
 
-    return E_NOTIMPL;
+    switch (This->state)
+    {
+    case XmlWriterState_Initial:
+        return E_UNEXPECTED;
+    case XmlWriterState_ElemStarted:
+        writer_close_starttag(This);
+        break;
+    case XmlWriterState_DocClosed:
+        return WR_E_INVALIDACTION;
+    default:
+        ;
+    }
+
+    len = data ? strlenW(data) : 0;
+
+    if (!len)
+        write_cdata_section(This->output, NULL, 0);
+    else {
+        static const WCHAR cdatacloseW[] = {']',']','>',0};
+        while (len) {
+            const WCHAR *str = strstrW(data, cdatacloseW);
+            if (str) {
+                str += 2;
+                write_cdata_section(This->output, data, str - data);
+                len -= str - data;
+                data = str;
+            }
+            else {
+                write_cdata_section(This->output, data, len);
+                break;
+            }
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlwriter_WriteCharEntity(IXmlWriter *iface, WCHAR wch)
