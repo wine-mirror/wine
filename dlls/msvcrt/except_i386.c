@@ -415,6 +415,33 @@ static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_REG
                               nested_frame->trylevel );
 }
 
+/*********************************************************************
+ *              _IsExceptionObjectToBeDestroyed (MSVCR80.@)
+ */
+BOOL __cdecl _IsExceptionObjectToBeDestroyed(const void *obj)
+{
+    EXCEPTION_REGISTRATION_RECORD *reg = NtCurrentTeb()->Tib.ExceptionList;
+
+    TRACE( "%p\n", obj );
+
+    while (reg != (EXCEPTION_REGISTRATION_RECORD*)-1)
+    {
+        if (reg->Handler == catch_function_nested_handler)
+        {
+            EXCEPTION_RECORD *rec = ((struct catch_func_nested_frame*)reg)->rec;
+
+            if(!(rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
+                    && rec->ExceptionCode == CXX_EXCEPTION && rec->NumberParameters == 3
+                    && rec->ExceptionInformation[1] == (LONG_PTR)obj)
+                return FALSE;
+        }
+
+        reg = reg->Prev;
+    }
+
+    return TRUE;
+}
+
 /* find and call the appropriate catch block for an exception */
 /* returns the address to continue execution to after the catch block was called */
 static inline void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame *frame,

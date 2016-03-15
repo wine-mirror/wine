@@ -831,7 +831,7 @@
 @ cdecl _Getmonths() msvcr120._Getmonths
 @ cdecl _Gettnames() msvcr120._Gettnames
 @ extern _HUGE msvcr120._HUGE
-@ stub _IsExceptionObjectToBeDestroyed
+@ cdecl -arch=i386,x86_64,arm _IsExceptionObjectToBeDestroyed(ptr) msvcr120._IsExceptionObjectToBeDestroyed
 @ stub _LCbuild
 @ stub -arch=i386 _NLG_Dispatch2
 @ stub -arch=arm,win64 __NLG_Dispatch2

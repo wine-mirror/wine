@@ -4,7 +4,7 @@
 @ stub _FindAndUnlinkFrame
 @ stub _GetImageBase
 @ stub _GetThrowImageBase
-@ stub _IsExceptionObjectToBeDestroyed
+@ cdecl -arch=i386,x86_64,arm _IsExceptionObjectToBeDestroyed(ptr) ucrtbase._IsExceptionObjectToBeDestroyed
 @ stub _NLG_Dispatch2
 @ stub _NLG_Return
 @ stub _NLG_Return2

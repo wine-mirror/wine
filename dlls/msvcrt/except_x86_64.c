@@ -72,6 +72,15 @@ int CDECL __CxxExceptionFilter( PEXCEPTION_POINTERS ptrs,
 }
 
 /*********************************************************************
+ *              _IsExceptionObjectToBeDestroyed (MSVCR80.@)
+ */
+BOOL __cdecl _IsExceptionObjectToBeDestroyed(const void *obj)
+{
+    FIXME ( "%p not implemented\n", obj );
+    return FALSE;
+}
+
+/*********************************************************************
  *		__CxxFrameHandler (MSVCRT.@)
  */
 EXCEPTION_DISPOSITION CDECL __CxxFrameHandler( EXCEPTION_RECORD *rec, ULONG64 frame,
