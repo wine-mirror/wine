@@ -3324,8 +3324,21 @@ static void STDMETHODCALLTYPE d3d10_device_ClearRenderTargetView(ID3D10Device1 *
 static void STDMETHODCALLTYPE d3d10_device_ClearDepthStencilView(ID3D10Device1 *iface,
         ID3D10DepthStencilView *depth_stencil_view, UINT flags, FLOAT depth, UINT8 stencil)
 {
-    FIXME("iface %p, depth_stencil_view %p, flags %#x, depth %f, stencil %u stub!\n",
+    struct d3d_device *device = impl_from_ID3D10Device(iface);
+    struct d3d_depthstencil_view *view = unsafe_impl_from_ID3D10DepthStencilView(depth_stencil_view);
+    DWORD wined3d_flags;
+    HRESULT hr;
+
+    TRACE("iface %p, depth_stencil_view %p, flags %#x, depth %.8e, stencil %u.\n",
             iface, depth_stencil_view, flags, depth, stencil);
+
+    wined3d_flags = wined3d_clear_flags_from_d3d11_clear_flags(flags);
+
+    wined3d_mutex_lock();
+    if (FAILED(hr = wined3d_device_clear_rendertarget_view(device->wined3d_device, view->wined3d_view, NULL,
+            wined3d_flags, NULL, depth, stencil)))
+        ERR("Failed to clear view, hr %#x.\n", hr);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_GenerateMips(ID3D10Device1 *iface,
