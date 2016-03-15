@@ -21,6 +21,7 @@
 #include "initguid.h"
 #include "d3d11.h"
 #include "wine/test.h"
+#include <limits.h>
 
 static const D3D_FEATURE_LEVEL d3d11_feature_levels[] =
 {
@@ -62,6 +63,22 @@ static ULONG get_refcount(IUnknown *iface)
 {
     IUnknown_AddRef(iface);
     return IUnknown_Release(iface);
+}
+
+static BOOL compare_float(float f, float g, unsigned int ulps)
+{
+    int x = *(int *)&f;
+    int y = *(int *)&g;
+
+    if (x < 0)
+        x = INT_MIN - x;
+    if (y < 0)
+        y = INT_MIN - y;
+
+    if (abs(x - y) > ulps)
+        return FALSE;
+
+    return TRUE;
 }
 
 static BOOL compare_color(DWORD c1, DWORD c2, BYTE max_diff)
@@ -130,15 +147,16 @@ static void get_texture_readback(ID3D11Texture2D *texture, struct texture_readba
 
 static DWORD get_readback_color(struct texture_readback *rb, unsigned int x, unsigned int y)
 {
-    return rb->texture
-            ? ((DWORD *)rb->map_desc.pData)[rb->map_desc.RowPitch * y / sizeof(DWORD) + x] : 0xdeadbeef;
+    return ((DWORD *)rb->map_desc.pData)[rb->map_desc.RowPitch * y / sizeof(DWORD) + x];
+}
+
+static float get_readback_float(struct texture_readback *rb, unsigned int x, unsigned int y)
+{
+    return ((float *)rb->map_desc.pData)[rb->map_desc.RowPitch * y / sizeof(float) + x];
 }
 
 static void release_texture_readback(struct texture_readback *rb)
 {
-    if (!rb->texture)
-        return;
-
     ID3D11DeviceContext_Unmap(rb->immediate_context, rb->texture, 0);
     ID3D11Resource_Release(rb->texture);
     ID3D11DeviceContext_Release(rb->immediate_context);
@@ -183,6 +201,35 @@ static void check_texture_color_(unsigned int line, ID3D11Texture2D *texture,
     release_texture_readback(&rb);
     ok_(__FILE__, line)(all_match,
             "Got unexpected color 0x%08x at (%u, %u).\n", color, x, y);
+}
+
+#define check_texture_float(r, f, d) check_texture_float_(__LINE__, r, f, d)
+static void check_texture_float_(unsigned int line, ID3D11Texture2D *texture,
+        float expected_value, BYTE max_diff)
+{
+    struct texture_readback rb;
+    unsigned int x = 0, y = 0;
+    BOOL all_match = TRUE;
+    float value = 0.0f;
+
+    get_texture_readback(texture, &rb);
+    for (y = 0; y < rb.height; ++y)
+    {
+        for (x = 0; x < rb.width; ++x)
+        {
+            value = get_readback_float(&rb, x, y);
+            if (!compare_float(value, expected_value, max_diff))
+            {
+                all_match = FALSE;
+                break;
+            }
+        }
+        if (!all_match)
+            break;
+    }
+    release_texture_readback(&rb);
+    ok_(__FILE__, line)(all_match,
+            "Got unexpected value %.8e at (%u, %u).\n", value, x, y);
 }
 
 static ID3D11Device *create_device(const D3D_FEATURE_LEVEL *feature_level)
@@ -5082,6 +5129,84 @@ done:
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_clear_depth_stencil_view(void)
+{
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11Texture2D *depth_texture;
+    ID3D11DeviceContext *context;
+    ID3D11DepthStencilView *dsv;
+    ID3D11Device *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device(NULL)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    ID3D11Device_GetImmediateContext(device, &context);
+
+    texture_desc.Width = 640;
+    texture_desc.Height = 480;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_D32_FLOAT;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &depth_texture);
+    ok(SUCCEEDED(hr), "Failed to create depth texture, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)depth_texture, NULL, &dsv);
+    ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 1.0f, 0);
+    check_texture_float(depth_texture, 1.0f, 0);
+
+    ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 0.25f, 0);
+    check_texture_float(depth_texture, 0.25f, 0);
+
+    ID3D11Texture2D_Release(depth_texture);
+    ID3D11DepthStencilView_Release(dsv);
+
+    texture_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &depth_texture);
+    ok(SUCCEEDED(hr), "Failed to create depth texture, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)depth_texture, NULL, &dsv);
+    ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+    todo_wine check_texture_color(depth_texture, 0x00ffffff, 0);
+
+    ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.0f, 0xff);
+    todo_wine check_texture_color(depth_texture, 0xff000000, 0);
+
+    ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0xff);
+    check_texture_color(depth_texture, 0xffffffff, 0);
+
+    ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.0f, 0);
+    check_texture_color(depth_texture, 0x00000000, 0);
+
+    ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 1.0f, 0xff);
+    todo_wine check_texture_color(depth_texture, 0x00ffffff, 0);
+
+    ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_STENCIL, 0.0f, 0xff);
+    check_texture_color(depth_texture, 0xffffffff, 0);
+
+    ID3D11Texture2D_Release(depth_texture);
+    ID3D11DepthStencilView_Release(dsv);
+
+    ID3D11DeviceContext_Release(context);
+
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -5115,4 +5240,5 @@ START_TEST(d3d11)
     test_resource_map();
     test_multisample_init();
     test_check_multisample_quality_levels();
+    test_clear_depth_stencil_view();
 }
