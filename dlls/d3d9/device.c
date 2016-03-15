@@ -1450,7 +1450,8 @@ static HRESULT WINAPI d3d9_device_ColorFill(IDirect3DDevice9Ex *iface,
     }
 
     hr = wined3d_device_clear_rendertarget_view(device->wined3d_device,
-            d3d9_surface_get_rendertarget_view(surface_impl), rect, &c);
+            d3d9_surface_get_rendertarget_view(surface_impl), rect,
+            WINED3DCLEAR_TARGET, &c, 0.0f, 0);
 
     wined3d_mutex_unlock();
 

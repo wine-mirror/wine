@@ -4078,13 +4078,25 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
 }
 
 HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
-        struct wined3d_rendertarget_view *view, const RECT *rect, const struct wined3d_color *color)
+        struct wined3d_rendertarget_view *view, const RECT *rect, DWORD flags,
+        const struct wined3d_color *color, float depth, DWORD stencil)
 {
+    const struct blit_shader *blitter;
     struct wined3d_resource *resource;
+    enum wined3d_blit_op blit_op;
     RECT r;
 
-    TRACE("device %p, view %p, rect %s, color %s.\n",
-            device, view, wine_dbgstr_rect(rect), debug_color(color));
+    TRACE("device %p, view %p, rect %s, flags %#x, color %s, depth %.8e, stencil %u.\n",
+            device, view, wine_dbgstr_rect(rect), flags, debug_color(color), depth, stencil);
+
+    if (!flags)
+        return WINED3D_OK;
+
+    if (flags & WINED3DCLEAR_STENCIL)
+    {
+        FIXME("Stencil clear not implemented.\n");
+        return E_NOTIMPL;
+    }
 
     resource = view->resource;
     if (resource->type != WINED3D_RTYPE_TEXTURE_2D)
@@ -4105,9 +4117,22 @@ HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *devi
         rect = &r;
     }
 
-    resource = wined3d_texture_get_sub_resource(wined3d_texture_from_resource(resource), view->sub_resource_idx);
+    if (flags & WINED3DCLEAR_TARGET)
+        blit_op = WINED3D_BLIT_OP_COLOR_FILL;
+    else
+        blit_op = WINED3D_BLIT_OP_DEPTH_FILL;
 
-    return surface_color_fill(surface_from_resource(resource), rect, color);
+    if (!(blitter = wined3d_select_blitter(&device->adapter->gl_info, &device->adapter->d3d_info,
+            blit_op, NULL, 0, 0, NULL, rect, resource->usage, resource->pool, resource->format)))
+    {
+        FIXME("No blitter is capable of performing the requested fill operation.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if (blit_op == WINED3D_BLIT_OP_COLOR_FILL)
+        return blitter->color_fill(device, view, rect, color);
+    else
+        return blitter->depth_fill(device, view, rect, depth);
 }
 
 struct wined3d_rendertarget_view * CDECL wined3d_device_get_rendertarget_view(const struct wined3d_device *device,
