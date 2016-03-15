@@ -26,8 +26,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
-HRESULT WINAPI D3D11CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter, UINT flags,
-        const D3D_FEATURE_LEVEL *feature_levels, UINT levels, ID3D11Device **device);
+HRESULT WINAPI D3D11CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter, unsigned int flags,
+        const D3D_FEATURE_LEVEL *feature_levels, unsigned int level_count, ID3D11Device **device);
 
 HRESULT WINAPI D3D10CoreRegisterLayers(void)
 {
@@ -37,14 +37,13 @@ HRESULT WINAPI D3D10CoreRegisterLayers(void)
 }
 
 HRESULT WINAPI D3D10CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter,
-        UINT flags, void *unknown0, ID3D10Device **device)
+        unsigned int flags, D3D_FEATURE_LEVEL feature_level, ID3D10Device **device)
 {
-    D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_10_0;
     ID3D11Device *device11;
     HRESULT hr;
 
-    TRACE("factory %p, adapter %p, flags %#x, unknown0 %p, device %p.\n",
-            factory, adapter, flags, unknown0, device);
+    TRACE("factory %p, adapter %p, flags %#x, feature_level %#x, device %p.\n",
+            factory, adapter, flags, feature_level, device);
 
     if (FAILED(hr = D3D11CoreCreateDevice(factory, adapter, flags, &feature_level, 1, &device11)))
         return hr;

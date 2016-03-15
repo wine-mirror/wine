@@ -82,7 +82,7 @@ static void test_create_device(void)
     }
 
     feature_level = ID3D10Device1_GetFeatureLevel(device);
-    todo_wine ok(feature_level == supported_feature_level, "Got feature level %#x, expected %#x.\n",
+    ok(feature_level == supported_feature_level, "Got feature level %#x, expected %#x.\n",
             feature_level, supported_feature_level);
 
     ID3D10Device1_Release(device);
@@ -165,7 +165,7 @@ static void test_create_device(void)
     ok(!refcount, "Swapchain has %u references left.\n", refcount);
 
     feature_level = ID3D10Device1_GetFeatureLevel(device);
-    todo_wine ok(feature_level == supported_feature_level, "Got feature level %#x, expected %#x.\n",
+    ok(feature_level == supported_feature_level, "Got feature level %#x, expected %#x.\n",
             feature_level, supported_feature_level);
 
     refcount = ID3D10Device1_Release(device);

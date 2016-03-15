@@ -27,7 +27,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 
 HRESULT WINAPI D3D10CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter,
-        UINT flags, void *unknown0, ID3D10Device **device);
+        unsigned int flags, D3D_FEATURE_LEVEL feature_level, ID3D10Device **device);
 
 #define WINE_D3D10_TO_STR(x) case x: return #x
 
@@ -161,9 +161,7 @@ HRESULT WINAPI D3D10CreateDevice1(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE drive
         }
     }
 
-    FIXME("Ignoring feature level %s.\n", debug_d3d10_feature_level(hw_level));
-
-    hr = D3D10CoreCreateDevice(factory, adapter, flags, NULL, (ID3D10Device **)device);
+    hr = D3D10CoreCreateDevice(factory, adapter, flags, hw_level, (ID3D10Device **)device);
     IDXGIAdapter_Release(adapter);
     IDXGIFactory_Release(factory);
     if (FAILED(hr))
