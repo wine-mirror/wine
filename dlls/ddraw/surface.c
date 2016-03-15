@@ -1997,9 +1997,14 @@ static HRESULT ddraw_surface_delete_attached_surface(struct ddraw_surface *surfa
     attachment->next_attached = NULL;
     attachment->first_attached = attachment;
 
-    /* Check if the wined3d depth stencil needs updating. */
-    if (surface->ddraw->d3ddevice)
-        d3d_device_update_depth_stencil(surface->ddraw->d3ddevice);
+    /* Check if the wined3d depth stencil needs updating. Note that we don't
+     * just call d3d_device_update_depth_stencil() here since it uses
+     * QueryInterface(). Some applications, SCP - Containment Breach in
+     * particular, modify the QueryInterface() pointer in the surface vtbl
+     * but don't cleanup properly after the relevant dll is unloaded. */
+    if (attachment->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER
+            && wined3d_device_get_depth_stencil_view(surface->ddraw->wined3d_device) == surface->wined3d_rtv)
+        wined3d_device_set_depth_stencil_view(surface->ddraw->wined3d_device, NULL);
     wined3d_mutex_unlock();
 
     /* Set attached_iface to NULL before releasing it, the surface may go
