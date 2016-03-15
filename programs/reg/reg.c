@@ -602,7 +602,7 @@ int wmain(int argc, WCHAR *argvW[])
         {
             if (!lstrcmpiW(argvW[i], slashVW))
             {
-                if (!(value_name = argvW[++i]))
+                if (value_name || !(value_name = argvW[++i]))
                 {
                     output_message(STRING_INVALID_CMDLINE);
                     return 1;
@@ -659,7 +659,7 @@ int wmain(int argc, WCHAR *argvW[])
         {
             if (!lstrcmpiW(argvW[i], slashVW))
             {
-                if (!(value_name = argvW[++i]))
+                if (value_name || !(value_name = argvW[++i]))
                 {
                     output_message(STRING_INVALID_CMDLINE);
                     return 1;
@@ -696,7 +696,7 @@ int wmain(int argc, WCHAR *argvW[])
         {
             if (!lstrcmpiW(argvW[i], slashVW))
             {
-                if (!(value_name = argvW[++i]))
+                if (value_name || !(value_name = argvW[++i]))
                 {
                     output_message(STRING_INVALID_CMDLINE);
                     return 1;

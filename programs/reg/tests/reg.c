@@ -532,6 +532,13 @@ static void test_v_flags(void)
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /f /v", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
+    /* Multiple /v switches */
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v Wine /t REG_DWORD /d 0x1 /v Test /f", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
+    run_reg_exe("reg delete HKCU\\" KEY_BASE " /v Wine /v Test /f", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
 }
 
 START_TEST(reg)
