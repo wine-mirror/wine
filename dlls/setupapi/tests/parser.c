@@ -133,6 +133,18 @@ static const struct
     { STD_HEADER " [Test\x00Section]\n",                     ERROR_BAD_SECTION_NAME_LINE, 3,    FALSE },
     { STD_HEADER " [TestSection\x00]\n",                     ERROR_BAD_SECTION_NAME_LINE, 3,    FALSE },
     { STD_HEADER " [Test\x00Section]\n",                     ERROR_BAD_SECTION_NAME_LINE, 3,    FALSE },
+    { "garbage1\ngarbage2\n[abc]\n" STD_HEADER,              ERROR_EXPECTED_SECTION_NAME, 1,    FALSE },
+    { "garbage1\ngarbage2\n[Strings]\n" STD_HEADER,          0,                           0,    FALSE },
+    { ";comment\ngarbage1\ngarbage2\n[abc]\n" STD_HEADER,    ERROR_EXPECTED_SECTION_NAME, 2,    FALSE },
+    { ";comment\ngarbage1\ngarbage2\n[Strings]\n" STD_HEADER, 0,                          0,    FALSE },
+    { " \t\ngarbage1\ngarbage2\n[abc]\n" STD_HEADER,         ERROR_EXPECTED_SECTION_NAME, 2,    FALSE },
+    { " \t\ngarbage1\ngarbage2\n[Strings]\n" STD_HEADER,     0,                           0,    FALSE },
+    { "garbage1\ngarbage2\n" STD_HEADER "[abc]\n",           ERROR_EXPECTED_SECTION_NAME, 1,    FALSE },
+    { "garbage1\ngarbage2\n" STD_HEADER "[Strings]\n",       0,                           0,    FALSE },
+    { ";comment\ngarbage1\ngarbage2\n" STD_HEADER "[abc]\n", ERROR_EXPECTED_SECTION_NAME, 2,    FALSE },
+    { ";comment\ngarbage1\ngarbage2\n" STD_HEADER "[Strings]\n", 0,                       0,    FALSE },
+    { " \t\ngarbage1\ngarbage2\n" STD_HEADER "[abc]\n",      ERROR_EXPECTED_SECTION_NAME, 2,    FALSE },
+    { " \t\ngarbage1\ngarbage2\n" STD_HEADER "[Strings]\n",  0,                           0,    FALSE },
 };
 
 static void test_invalid_files(void)
