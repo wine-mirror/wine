@@ -416,3 +416,21 @@ BOOL CDECL __CxxRegisterExceptionObject(EXCEPTION_RECORD **rec, cxx_frame_info *
     _CreateFrameInfo(&frame_info->frame_info, (void*)(*rec)->ExceptionInformation[1]);
     return TRUE;
 }
+
+/*********************************************************************
+ *  __CxxUnregisterExceptionObject (MSVCRT.@)
+ */
+void CDECL __CxxUnregisterExceptionObject(cxx_frame_info *frame_info, BOOL in_use)
+{
+    thread_data_t *data = msvcrt_get_thread_data();
+
+    FIXME("(%p) semi-stub\n", frame_info);
+
+    if(frame_info->rec == (void*)-1)
+        return;
+
+    _FindAndUnlinkFrame(&frame_info->frame_info);
+    if(data->exc_record->ExceptionCode == CXX_EXCEPTION && !in_use) /* FIXME: use _IsExceptionObjectToBeDestroyed here */
+        __DestructExceptionObject(data->exc_record);
+    data->exc_record = frame_info->rec;
+}
