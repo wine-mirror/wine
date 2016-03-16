@@ -1606,7 +1606,7 @@ void surface_load(struct wined3d_surface *surface, struct wined3d_context *conte
 
     TRACE("surface %p, srgb %#x.\n", surface, srgb);
 
-    if (surface->resource.pool == WINED3D_POOL_SCRATCH)
+    if (surface->container->resource.pool == WINED3D_POOL_SCRATCH)
         ERR("Not supported on scratch surfaces.\n");
 
     if (surface->locations & location)
