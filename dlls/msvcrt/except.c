@@ -341,3 +341,31 @@ frame_info* CDECL _CreateFrameInfo(frame_info *fi, void *obj)
     fi->object = obj;
     return fi;
 }
+
+/*********************************************************************
+ * _FindAndUnlinkFrame (MSVCR80.@)
+ */
+void CDECL _FindAndUnlinkFrame(frame_info *fi)
+{
+    thread_data_t *data = msvcrt_get_thread_data();
+    frame_info *cur = data->frame_info_head;
+
+    TRACE("(%p)\n", fi);
+
+    if (cur == fi)
+    {
+        data->frame_info_head = cur->next;
+        return;
+    }
+
+    for (; cur->next; cur = cur->next)
+    {
+        if (cur->next == fi)
+        {
+            cur->next = fi->next;
+            return;
+        }
+    }
+
+    ERR("frame not found, native crashes in this case\n");
+}

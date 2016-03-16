@@ -24,7 +24,7 @@
 @ stub _FCbuild
 @ stub _FCmulcc
 @ stub _FCmulcr
-@ stub _FindAndUnlinkFrame
+@ cdecl _FindAndUnlinkFrame(ptr)
 @ stub _GetImageBase
 @ stub _GetThrowImageBase
 @ cdecl _Getdays()

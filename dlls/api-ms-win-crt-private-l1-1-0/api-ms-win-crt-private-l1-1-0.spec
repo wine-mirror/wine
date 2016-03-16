@@ -1,7 +1,7 @@
 @ cdecl _CreateFrameInfo(ptr ptr) ucrtbase._CreateFrameInfo
 @ stdcall _CxxThrowException(long long) ucrtbase._CxxThrowException
 @ cdecl -arch=i386 -norelay _EH_prolog() ucrtbase._EH_prolog
-@ stub _FindAndUnlinkFrame
+@ cdecl _FindAndUnlinkFrame(ptr) ucrtbase._FindAndUnlinkFrame
 @ stub _GetImageBase
 @ stub _GetThrowImageBase
 @ cdecl -arch=i386,x86_64,arm _IsExceptionObjectToBeDestroyed(ptr) ucrtbase._IsExceptionObjectToBeDestroyed

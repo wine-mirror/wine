@@ -155,7 +155,7 @@
 @ cdecl _CreateFrameInfo(ptr ptr)
 @ stdcall _CxxThrowException(long long)
 @ cdecl -arch=i386 -norelay _EH_prolog()
-@ stub _FindAndUnlinkFrame
+@ cdecl _FindAndUnlinkFrame(ptr)
 @ stub -arch=win64 _GetImageBase
 @ stub -arch=win64 _GetThrowImageBase
 @ cdecl _Getdays()
