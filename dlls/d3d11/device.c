@@ -3219,12 +3219,14 @@ static void STDMETHODCALLTYPE d3d10_device_OMSetDepthStencilState(ID3D10Device1 
         ID3D10DepthStencilState *depth_stencil_state, UINT stencil_ref)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
+    struct d3d_depthstencil_state *ds_state_object;
 
     TRACE("iface %p, depth_stencil_state %p, stencil_ref %u.\n",
             iface, depth_stencil_state, stencil_ref);
 
-    device->depth_stencil_state = unsafe_impl_from_ID3D10DepthStencilState(depth_stencil_state);
-    device->stencil_ref = stencil_ref;
+    ds_state_object = unsafe_impl_from_ID3D10DepthStencilState(depth_stencil_state);
+    d3d11_immediate_context_OMSetDepthStencilState(&device->immediate_context.ID3D11DeviceContext_iface,
+            ds_state_object ? &ds_state_object->ID3D11DepthStencilState_iface : NULL, stencil_ref);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_SOSetTargets(ID3D10Device1 *iface,
