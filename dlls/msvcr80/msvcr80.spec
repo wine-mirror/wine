@@ -152,7 +152,7 @@
 @ cdecl -arch=i386 _CItanh()
 @ cdecl _CRT_RTC_INIT(ptr ptr long long long)
 @ cdecl _CRT_RTC_INITW(ptr ptr long long long)
-@ stub _CreateFrameInfo
+@ cdecl _CreateFrameInfo(ptr ptr)
 @ stdcall _CxxThrowException(long long)
 @ cdecl -arch=i386 -norelay _EH_prolog()
 @ stub _FindAndUnlinkFrame

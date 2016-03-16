@@ -204,6 +204,11 @@ typedef struct MSVCRT_localeinfo_struct
     MSVCRT_pthreadmbcinfo mbcinfo;
 } MSVCRT__locale_tstruct, *MSVCRT__locale_t;
 
+typedef struct _frame_info
+{
+    void *object;
+    struct _frame_info *next;
+} frame_info;
 
 /* TLS data */
 extern DWORD msvcrt_tls_index DECLSPEC_HIDDEN;
@@ -242,7 +247,8 @@ struct __thread_data {
     void                           *unk6[3];
     int                             unk7;
     EXCEPTION_RECORD               *exc_record;
-    void                           *unk8[7];
+    frame_info                     *frame_info_head;
+    void                           *unk8[6];
     LCID                            cached_lcid;
     int                             unk9[3];
     DWORD                           cached_cp;

@@ -326,3 +326,18 @@ LPTOP_LEVEL_EXCEPTION_FILTER CDECL MSVCR110__crtSetUnhandledExceptionFilter(LPTO
 {
     return SetUnhandledExceptionFilter(filter);
 }
+
+/*********************************************************************
+ * _CreateFrameInfo (MSVCR80.@)
+ */
+frame_info* CDECL _CreateFrameInfo(frame_info *fi, void *obj)
+{
+    thread_data_t *data = msvcrt_get_thread_data();
+
+    TRACE("(%p, %p)\n", fi, obj);
+
+    fi->next = data->frame_info_head;
+    data->frame_info_head = fi;
+    fi->object = obj;
+    return fi;
+}

@@ -414,6 +414,7 @@ static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_REG
 BOOL __cdecl _IsExceptionObjectToBeDestroyed(const void *obj)
 {
     EXCEPTION_REGISTRATION_RECORD *reg = NtCurrentTeb()->Tib.ExceptionList;
+    frame_info *cur;
 
     TRACE( "%p\n", obj );
 
@@ -430,6 +431,12 @@ BOOL __cdecl _IsExceptionObjectToBeDestroyed(const void *obj)
         }
 
         reg = reg->Prev;
+    }
+
+    for (cur = msvcrt_get_thread_data()->frame_info_head; cur; cur = cur->next)
+    {
+        if (cur->object == obj)
+            return FALSE;
     }
 
     return TRUE;

@@ -819,7 +819,7 @@
 @ cdecl -arch=i386 _CItan() msvcr120._CItan
 @ cdecl -arch=i386 _CItanh() msvcr120._CItanh
 @ stub _Cbuild
-@ stub _CreateFrameInfo
+@ cdecl _CreateFrameInfo(ptr ptr) msvcr120._CreateFrameInfo
 @ stdcall _CxxThrowException(long long) msvcr120._CxxThrowException
 @ cdecl -arch=i386 -norelay _EH_prolog() msvcr120._EH_prolog
 @ stub -arch=arm _FPE_Raise

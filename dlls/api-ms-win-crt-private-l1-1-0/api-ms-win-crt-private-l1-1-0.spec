@@ -1,4 +1,4 @@
-@ stub _CreateFrameInfo
+@ cdecl _CreateFrameInfo(ptr ptr) ucrtbase._CreateFrameInfo
 @ stdcall _CxxThrowException(long long) ucrtbase._CxxThrowException
 @ cdecl -arch=i386 -norelay _EH_prolog() ucrtbase._EH_prolog
 @ stub _FindAndUnlinkFrame
