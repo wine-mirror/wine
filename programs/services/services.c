@@ -107,6 +107,7 @@ DWORD service_create(LPCWSTR name, struct service_entry **entry)
         HeapFree(GetProcessHeap(), 0, *entry);
         return err;
     }
+    (*entry)->ref_count = 1;
     (*entry)->status.dwCurrentState = SERVICE_STOPPED;
     (*entry)->status.dwWin32ExitCode = ERROR_SERVICE_NEVER_STARTED;
     (*entry)->preshutdown_timeout = default_preshutdown_timeout;
@@ -557,6 +558,7 @@ static DWORD scmdatabase_load_services(struct scmdatabase *db)
         entry->db = db;
 
         list_add_tail(&db->services, &entry->entry);
+        release_service(entry);
     }
     return ERROR_SUCCESS;
 }
