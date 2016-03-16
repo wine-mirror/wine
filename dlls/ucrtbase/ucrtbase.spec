@@ -30,7 +30,7 @@
 @ cdecl _Getdays()
 @ cdecl _Getmonths()
 @ cdecl _Gettnames()
-@ cdecl -arch=i386,x86_64,arm _IsExceptionObjectToBeDestroyed(ptr)
+@ cdecl _IsExceptionObjectToBeDestroyed(ptr)
 @ stub _LCbuild
 @ stub _LCmulcc
 @ stub _LCmulcr

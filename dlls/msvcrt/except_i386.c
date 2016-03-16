@@ -131,7 +131,6 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
                                PCONTEXT context, EXCEPTION_REGISTRATION_RECORD** dispatch,
                                const cxx_function_descr *descr,
                                EXCEPTION_REGISTRATION_RECORD* nested_frame, int nested_trylevel );
-BOOL __cdecl _IsExceptionObjectToBeDestroyed(const void*);
 
 /* call a function with a given ebp */
 static inline void *call_ebp_func( void *func, void *ebp )
@@ -350,11 +349,10 @@ static void cxx_local_unwind( cxx_exception_frame* frame, const cxx_function_des
 struct catch_func_nested_frame
 {
     EXCEPTION_REGISTRATION_RECORD frame;     /* standard exception frame */
-    EXCEPTION_RECORD             *prev_rec;  /* previous record to restore in thread data */
     cxx_exception_frame          *cxx_frame; /* frame of parent exception */
     const cxx_function_descr     *descr;     /* descriptor of parent exception */
     int                           trylevel;  /* current try level */
-    EXCEPTION_RECORD             *rec;       /* rec associated with frame */
+    cxx_frame_info                frame_info;
 };
 
 /* handler for exceptions happening while calling a catch function */
@@ -362,19 +360,10 @@ static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_REG
                                             CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
     struct catch_func_nested_frame *nested_frame = (struct catch_func_nested_frame *)frame;
-    PEXCEPTION_RECORD prev_rec = nested_frame->rec;
 
     if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
     {
-        if (prev_rec->ExceptionCode == CXX_EXCEPTION)
-        {
-            void *object = (void*)prev_rec->ExceptionInformation[1];
-            cxx_exception_type *info = (cxx_exception_type*) prev_rec->ExceptionInformation[2];
-            if (info && info->destructor && _IsExceptionObjectToBeDestroyed(object))
-                call_dtor( info->destructor, object);
-        }
-
-        msvcrt_get_thread_data()->exc_record = nested_frame->prev_rec;
+        __CxxUnregisterExceptionObject(&nested_frame->frame_info, FALSE);
         return ExceptionContinueSearch;
     }
 
@@ -382,6 +371,8 @@ static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_REG
 
     if(rec->ExceptionCode == CXX_EXCEPTION)
     {
+        PEXCEPTION_RECORD prev_rec = msvcrt_get_thread_data()->exc_record;
+
         if((rec->ExceptionInformation[1] == 0 && rec->ExceptionInformation[2] == 0) ||
                 (prev_rec->ExceptionCode == CXX_EXCEPTION &&
                  rec->ExceptionInformation[1] == prev_rec->ExceptionInformation[1] &&
@@ -408,40 +399,6 @@ static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_REG
                               nested_frame->trylevel );
 }
 
-/*********************************************************************
- *              _IsExceptionObjectToBeDestroyed (MSVCR80.@)
- */
-BOOL __cdecl _IsExceptionObjectToBeDestroyed(const void *obj)
-{
-    EXCEPTION_REGISTRATION_RECORD *reg = NtCurrentTeb()->Tib.ExceptionList;
-    frame_info *cur;
-
-    TRACE( "%p\n", obj );
-
-    while (reg != (EXCEPTION_REGISTRATION_RECORD*)-1)
-    {
-        if (reg->Handler == catch_function_nested_handler)
-        {
-            EXCEPTION_RECORD *rec = ((struct catch_func_nested_frame*)reg)->rec;
-
-            if(!(rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
-                    && rec->ExceptionCode == CXX_EXCEPTION && rec->NumberParameters == 3
-                    && rec->ExceptionInformation[1] == (LONG_PTR)obj)
-                return FALSE;
-        }
-
-        reg = reg->Prev;
-    }
-
-    for (cur = msvcrt_get_thread_data()->frame_info_head; cur; cur = cur->next)
-    {
-        if (cur->object == obj)
-            return FALSE;
-    }
-
-    return TRUE;
-}
-
 /* find and call the appropriate catch block for an exception */
 /* returns the address to continue execution to after the catch block was called */
 static inline void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame *frame,
@@ -454,7 +411,6 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame 
     void *addr, *object = (void *)rec->ExceptionInformation[1];
     struct catch_func_nested_frame nested_frame;
     int trylevel = frame->trylevel;
-    thread_data_t *thread_data = msvcrt_get_thread_data();
     DWORD save_esp = ((DWORD*)frame)[-1];
 
     for (i = 0; i < descr->tryblock_count; i++)
@@ -502,21 +458,17 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame 
             /* setup an exception block for nested exceptions */
 
             nested_frame.frame.Handler = catch_function_nested_handler;
-            nested_frame.prev_rec  = thread_data->exc_record;
             nested_frame.cxx_frame = frame;
             nested_frame.descr     = descr;
             nested_frame.trylevel  = nested_trylevel + 1;
-            nested_frame.rec = rec;
+            __CxxRegisterExceptionObject(&rec, &nested_frame.frame_info);
 
             __wine_push_frame( &nested_frame.frame );
-            thread_data->exc_record = rec;
             addr = call_ebp_func( catchblock->handler, &frame->ebp );
-            thread_data->exc_record = nested_frame.prev_rec;
             __wine_pop_frame( &nested_frame.frame );
 
             ((DWORD*)frame)[-1] = save_esp;
-            if (info && info->destructor && _IsExceptionObjectToBeDestroyed(object))
-                call_dtor( info->destructor, object );
+            __CxxUnregisterExceptionObject(&nested_frame.frame_info, FALSE);
             TRACE( "done, continuing at %p\n", addr );
 
             continue_after_catch( frame, addr );

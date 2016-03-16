@@ -373,6 +373,24 @@ void CDECL _FindAndUnlinkFrame(frame_info *fi)
 }
 
 /*********************************************************************
+ *              _IsExceptionObjectToBeDestroyed (MSVCR80.@)
+ */
+BOOL __cdecl _IsExceptionObjectToBeDestroyed(const void *obj)
+{
+    frame_info *cur;
+
+    TRACE( "%p\n", obj );
+
+    for (cur = msvcrt_get_thread_data()->frame_info_head; cur; cur = cur->next)
+    {
+        if (cur->object == obj)
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+/*********************************************************************
  * __DestructExceptionObject (MSVCRT.@)
  */
 void CDECL __DestructExceptionObject(EXCEPTION_RECORD *rec)
@@ -424,13 +442,14 @@ void CDECL __CxxUnregisterExceptionObject(cxx_frame_info *frame_info, BOOL in_us
 {
     thread_data_t *data = msvcrt_get_thread_data();
 
-    FIXME("(%p) semi-stub\n", frame_info);
+    TRACE("(%p)\n", frame_info);
 
     if(frame_info->rec == (void*)-1)
         return;
 
     _FindAndUnlinkFrame(&frame_info->frame_info);
-    if(data->exc_record->ExceptionCode == CXX_EXCEPTION && !in_use) /* FIXME: use _IsExceptionObjectToBeDestroyed here */
+    if(data->exc_record->ExceptionCode == CXX_EXCEPTION && !in_use
+            && _IsExceptionObjectToBeDestroyed((void*)data->exc_record->ExceptionInformation[1]))
         __DestructExceptionObject(data->exc_record);
     data->exc_record = frame_info->rec;
 }

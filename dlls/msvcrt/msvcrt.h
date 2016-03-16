@@ -217,6 +217,9 @@ typedef struct
     void *unk;
 } cxx_frame_info;
 
+BOOL __cdecl __CxxRegisterExceptionObject(EXCEPTION_RECORD**, cxx_frame_info*);
+void __cdecl __CxxUnregisterExceptionObject(cxx_frame_info*, BOOL);
+
 /* TLS data */
 extern DWORD msvcrt_tls_index DECLSPEC_HIDDEN;
 
