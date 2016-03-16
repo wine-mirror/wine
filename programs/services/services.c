@@ -73,6 +73,7 @@ static DWORD process_create(struct process_entry **entry)
     *entry = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**entry));
     if (!*entry)
         return ERROR_NOT_ENOUGH_SERVER_MEMORY;
+    (*entry)->ref_count = 1;
     (*entry)->control_pipe = INVALID_HANDLE_VALUE;
     /* all other fields are zero */
     return ERROR_SUCCESS;
@@ -126,7 +127,7 @@ void free_service_entry(struct service_entry *entry)
     HeapFree(GetProcessHeap(), 0, entry->description);
     HeapFree(GetProcessHeap(), 0, entry->dependOnServices);
     HeapFree(GetProcessHeap(), 0, entry->dependOnGroups);
-    free_process_entry(entry->process);
+    release_process(entry->process);
     HeapFree(GetProcessHeap(), 0, entry);
 }
 
@@ -453,6 +454,12 @@ struct service_entry *scmdatabase_find_service_by_displayname(struct scmdatabase
     }
 
     return NULL;
+}
+
+void release_process(struct process_entry *process)
+{
+    if (InterlockedDecrement(&process->ref_count) == 0)
+        free_process_entry(process);
 }
 
 void release_service(struct service_entry *service)

@@ -33,6 +33,7 @@ struct scmdatabase
 
 struct process_entry
 {
+    LONG ref_count;
     HANDLE process;
     HANDLE control_mutex;
     HANDLE control_pipe;
@@ -87,6 +88,7 @@ void service_terminate(struct service_entry *service);
 
 /* Process functions */
 
+void release_process(struct process_entry *process);
 BOOL process_send_command(struct process_entry *process, const void *data, DWORD size, DWORD *result);
 
 extern HANDLE g_hStartedEvent;
