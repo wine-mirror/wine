@@ -2233,13 +2233,37 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDepthStencilState(ID3D11Devi
      * it as a key in the rbtree. */
     memset(&tmp_desc, 0, sizeof(tmp_desc));
     tmp_desc.DepthEnable = desc->DepthEnable;
-    tmp_desc.DepthWriteMask = desc->DepthWriteMask;
-    tmp_desc.DepthFunc = desc->DepthFunc;
+    if (desc->DepthEnable)
+    {
+        tmp_desc.DepthWriteMask = desc->DepthWriteMask;
+        tmp_desc.DepthFunc = desc->DepthFunc;
+    }
+    else
+    {
+        tmp_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+        tmp_desc.DepthFunc = D3D11_COMPARISON_LESS;
+    }
     tmp_desc.StencilEnable = desc->StencilEnable;
-    tmp_desc.StencilReadMask = desc->StencilReadMask;
-    tmp_desc.StencilWriteMask = desc->StencilWriteMask;
-    tmp_desc.FrontFace = desc->FrontFace;
-    tmp_desc.BackFace = desc->BackFace;
+    if (desc->StencilEnable)
+    {
+        tmp_desc.StencilReadMask = desc->StencilReadMask;
+        tmp_desc.StencilWriteMask = desc->StencilWriteMask;
+        tmp_desc.FrontFace = desc->FrontFace;
+        tmp_desc.BackFace = desc->BackFace;
+    }
+    else
+    {
+        tmp_desc.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
+        tmp_desc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
+        tmp_desc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+        tmp_desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+        tmp_desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+        tmp_desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+        tmp_desc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+        tmp_desc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+        tmp_desc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+        tmp_desc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+    }
 
     wined3d_mutex_lock();
     if ((entry = wine_rb_get(&device->depthstencil_states, &tmp_desc)))
