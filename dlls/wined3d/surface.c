@@ -1391,6 +1391,8 @@ static BOOL surface_check_block_align_rect(struct wined3d_surface *surface, cons
 HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
         struct wined3d_surface *src_surface, const RECT *src_rect)
 {
+    struct wined3d_texture *src_texture = src_surface->container;
+    struct wined3d_texture *dst_texture = dst_surface->container;
     unsigned int src_row_pitch, src_slice_pitch;
     const struct wined3d_format *src_format;
     const struct wined3d_format *dst_format;
@@ -1407,10 +1409,10 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
             dst_surface, wine_dbgstr_point(dst_point),
             src_surface, wine_dbgstr_rect(src_rect));
 
-    src_format = src_surface->resource.format;
-    dst_format = dst_surface->resource.format;
-    src_fmt_flags = src_surface->container->resource.format_flags;
-    dst_fmt_flags = dst_surface->container->resource.format_flags;
+    src_format = src_texture->resource.format;
+    dst_format = dst_texture->resource.format;
+    src_fmt_flags = src_texture->resource.format_flags;
+    dst_fmt_flags = dst_texture->resource.format_flags;
 
     if (src_format->id != dst_format->id)
     {
@@ -1469,23 +1471,23 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     }
 
     /* Use wined3d_surface_blt() instead of uploading directly if we need conversion. */
-    if (dst_format->convert || wined3d_format_get_color_key_conversion(dst_surface->container, FALSE))
+    if (dst_format->convert || wined3d_format_get_color_key_conversion(dst_texture, FALSE))
         return wined3d_surface_blt(dst_surface, &dst_rect, src_surface, src_rect, 0, NULL, WINED3D_TEXF_POINT);
 
-    context = context_acquire(dst_surface->resource.device, NULL);
+    context = context_acquire(dst_texture->resource.device, NULL);
     gl_info = context->gl_info;
 
     /* Only load the surface for partial updates. For newly allocated texture
      * the texture wouldn't be the current location, and we'd upload zeroes
      * just to overwrite them again. */
     if (update_w == dst_w && update_h == dst_h)
-        wined3d_texture_prepare_texture(dst_surface->container, context, FALSE);
+        wined3d_texture_prepare_texture(dst_texture, context, FALSE);
     else
         surface_load_location(dst_surface, context, WINED3D_LOCATION_TEXTURE_RGB);
-    wined3d_texture_bind_and_dirtify(dst_surface->container, context, FALSE);
+    wined3d_texture_bind_and_dirtify(dst_texture, context, FALSE);
 
     surface_get_memory(src_surface, &data, src_surface->locations);
-    wined3d_texture_get_pitch(src_surface->container, src_surface->texture_level, &src_row_pitch, &src_slice_pitch);
+    wined3d_texture_get_pitch(src_texture, src_surface->texture_level, &src_row_pitch, &src_slice_pitch);
 
     wined3d_surface_upload_data(dst_surface, gl_info, src_format, src_rect,
             src_row_pitch, dst_point, FALSE, wined3d_const_bo_address(&data));
