@@ -1273,6 +1273,7 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
         const struct wined3d_format *format, const RECT *src_rect, UINT src_pitch, const POINT *dst_point,
         BOOL srgb, const struct wined3d_const_bo_address *data)
 {
+    struct wined3d_texture *texture = surface->container;
     UINT update_w = src_rect->right - src_rect->left;
     UINT update_h = src_rect->bottom - src_rect->top;
 
@@ -1283,7 +1284,7 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
     if (surface->resource.map_count)
     {
         WARN("Uploading a surface that is currently mapped, setting WINED3D_TEXTURE_PIN_SYSMEM.\n");
-        surface->container->flags |= WINED3D_TEXTURE_PIN_SYSMEM;
+        texture->flags |= WINED3D_TEXTURE_PIN_SYSMEM;
     }
 
     if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_HEIGHT_SCALE)
@@ -1310,8 +1311,8 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
 
         if (srgb)
             internal = format->glGammaInternal;
-        else if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET
-                && wined3d_resource_is_offscreen(&surface->container->resource))
+        else if (texture->resource.usage & WINED3DUSAGE_RENDERTARGET
+                && wined3d_resource_is_offscreen(&texture->resource))
             internal = format->rtInternal;
         else
             internal = format->glInternal;
@@ -1370,7 +1371,7 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
 
     if (gl_info->quirks & WINED3D_QUIRK_FBO_TEX_UPDATE)
     {
-        struct wined3d_device *device = surface->resource.device;
+        struct wined3d_device *device = texture->resource.device;
         unsigned int i;
 
         for (i = 0; i < device->context_count; ++i)
