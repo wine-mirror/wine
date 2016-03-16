@@ -867,7 +867,7 @@
 @ cdecl -arch=i386,x86_64,arm __CxxQueryExceptionSize()
 @ cdecl __CxxRegisterExceptionObject(ptr ptr)
 @ stub __CxxUnregisterExceptionObject
-@ stub __DestructExceptionObject
+@ cdecl __DestructExceptionObject(ptr)
 @ stub __FrameUnwindFilter
 @ stub __GetPlatformExceptionInfo
 @ cdecl __RTCastToVoid(ptr) MSVCRT___RTCastToVoid

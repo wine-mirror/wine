@@ -37,6 +37,8 @@
 #include "wincon.h"
 #include "wine/debug.h"
 
+#include "cppexcept.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
 static MSVCRT_security_error_handler security_error_handler;
@@ -368,6 +370,28 @@ void CDECL _FindAndUnlinkFrame(frame_info *fi)
     }
 
     ERR("frame not found, native crashes in this case\n");
+}
+
+/*********************************************************************
+ * __DestructExceptionObject (MSVCRT.@)
+ */
+void CDECL __DestructExceptionObject(EXCEPTION_RECORD *rec)
+{
+    cxx_exception_type *info = (cxx_exception_type*) rec->ExceptionInformation[2];
+    void *object = (void*)rec->ExceptionInformation[1];
+
+    TRACE("(%p)\n", rec);
+
+    if (!info || !info->destructor)
+        return;
+
+#if defined(__i386__)
+    __asm__ __volatile__("call *%0" : : "r" (info->destructor), "c" (object) : "eax", "edx", "memory" );
+#elif defined(__x86_64__)
+    ((void (__cdecl*)(void*))(info->destructor+rec->ExceptionInformation[3]))(object);
+#else
+    ((void (__cdecl*)(void*))info->destructor)(object);
+#endif
 }
 
 /*********************************************************************

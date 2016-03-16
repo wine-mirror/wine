@@ -21,7 +21,7 @@
 @ cdecl -arch=i386,x86_64,arm __CxxQueryExceptionSize() ucrtbase.__CxxQueryExceptionSize
 @ cdecl __CxxRegisterExceptionObject(ptr ptr) ucrtbase.__CxxRegisterExceptionObject
 @ stub __CxxUnregisterExceptionObject
-@ stub __DestructExceptionObject
+@ cdecl __DestructExceptionObject(ptr) ucrtbase.__DestructExceptionObject
 @ stub __FrameUnwindFilter
 @ stub __GetPlatformExceptionInfo
 @ stub __NLG_Dispatch2
