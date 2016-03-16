@@ -456,13 +456,15 @@ struct service_entry *scmdatabase_find_service_by_displayname(struct scmdatabase
 
 void release_service(struct service_entry *service)
 {
+    struct scmdatabase *db = service->db;
+
+    scmdatabase_lock(db);
     if (InterlockedDecrement(&service->ref_count) == 0 && is_marked_for_delete(service))
     {
-        scmdatabase_lock(service->db);
-        scmdatabase_remove_service(service->db, service);
-        scmdatabase_unlock(service->db);
+        scmdatabase_remove_service(db, service);
         free_service_entry(service);
     }
+    scmdatabase_unlock(db);
 }
 
 static DWORD scmdatabase_create(struct scmdatabase **db)
