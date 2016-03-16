@@ -56,7 +56,7 @@
 @ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler3(ptr ptr ptr ptr) __CxxFrameHandler
 @ stdcall -arch=i386 __CxxLongjmpUnwind(ptr)
 @ cdecl -arch=i386,x86_64,arm __CxxQueryExceptionSize()
-@ stub __CxxRegisterExceptionObject
+@ cdecl __CxxRegisterExceptionObject(ptr ptr)
 @ stub __CxxUnregisterExceptionObject
 @ stub __DestructExceptionObject
 @ stub __FrameUnwindFilter

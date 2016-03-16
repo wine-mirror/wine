@@ -369,3 +369,26 @@ void CDECL _FindAndUnlinkFrame(frame_info *fi)
 
     ERR("frame not found, native crashes in this case\n");
 }
+
+/*********************************************************************
+ *  __CxxRegisterExceptionObject (MSVCRT.@)
+ */
+BOOL CDECL __CxxRegisterExceptionObject(EXCEPTION_RECORD **rec, cxx_frame_info *frame_info)
+{
+    thread_data_t *data = msvcrt_get_thread_data();
+
+    TRACE("(%p, %p)\n", rec, frame_info);
+
+    if (!rec || !*rec)
+    {
+        frame_info->rec = (void*)-1;
+        frame_info->unk = (void*)-1;
+        return TRUE;
+    }
+
+    frame_info->rec = data->exc_record;
+    frame_info->unk = 0;
+    data->exc_record = *rec;
+    _CreateFrameInfo(&frame_info->frame_info, (void*)(*rec)->ExceptionInformation[1]);
+    return TRUE;
+}

@@ -210,6 +210,13 @@ typedef struct _frame_info
     struct _frame_info *next;
 } frame_info;
 
+typedef struct
+{
+    frame_info frame_info;
+    EXCEPTION_RECORD *rec;
+    void *unk;
+} cxx_frame_info;
+
 /* TLS data */
 extern DWORD msvcrt_tls_index DECLSPEC_HIDDEN;
 
