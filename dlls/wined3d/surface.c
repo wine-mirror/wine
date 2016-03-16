@@ -936,11 +936,13 @@ static HRESULT wined3d_surface_depth_fill(struct wined3d_surface *surface, const
 static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, DWORD src_location, const RECT *src_rect,
         struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect)
 {
-    struct wined3d_device *device = src_surface->resource.device;
+    struct wined3d_texture *src_texture = src_surface->container;
+    struct wined3d_texture *dst_texture = dst_surface->container;
+    struct wined3d_device *device = src_texture->resource.device;
 
     if (!fbo_blit_supported(&device->adapter->gl_info, WINED3D_BLIT_OP_DEPTH_BLIT,
-            src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
-            dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format))
+            src_rect, src_texture->resource.usage, src_texture->resource.pool, src_texture->resource.format,
+            dst_rect, dst_texture->resource.usage, dst_texture->resource.pool, dst_texture->resource.format))
         return WINED3DERR_INVALIDCALL;
 
     surface_depth_blt_fbo(device, src_surface, src_location, src_rect, dst_surface, dst_location, dst_rect);
