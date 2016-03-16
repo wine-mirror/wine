@@ -1243,7 +1243,7 @@ static const IHlinkFrameVtbl HlinkFrameVtbl = {
 
 static inline HlinkFrame *impl_from_ITargetFrame2(ITargetFrame2 *iface)
 {
-    return CONTAINING_RECORD(iface, HlinkFrame, IHlinkFrame_iface);
+    return CONTAINING_RECORD(iface, HlinkFrame, ITargetFrame2_iface);
 }
 
 static HRESULT WINAPI TargetFrame2_QueryInterface(ITargetFrame2 *iface, REFIID riid, void **ppv)
