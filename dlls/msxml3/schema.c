@@ -1105,6 +1105,18 @@ static HRESULT WINAPI schema_cache_QueryInterface(IXMLDOMSchemaCollection2* ifac
     {
         *ppvObject = iface;
     }
+    else if(This->version == MSXML6 && IsEqualIID(riid, &CLSID_XMLSchemaCache60))
+    {
+        /*
+         * Version 6 can be queried for an interface with IID equal to CLSID.
+         * There is no public interface with that IID and returned pointer
+         * is equal to returned IXMLDOMSchemaCollection2 iface. We assume
+         * that it's just another way for querying IXMLDOMSchemaCollection2
+         * interface. Office 2013 ClickToRun installer uses this.
+         */
+        WARN("riid CLSID_XMLSchemaCache60, returning IXMLDOMSchemaCollection2 interface.\n");
+        *ppvObject = iface;
+    }
     else if (dispex_query_interface(&This->dispex, riid, ppvObject))
     {
         return *ppvObject ? S_OK : E_NOINTERFACE;
