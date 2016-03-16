@@ -799,19 +799,18 @@ static DWORD service_wait_for_startup(struct service_entry *service_entry, HANDL
 }
 
 /******************************************************************************
- * service_send_start_message
+ * process_send_start_message
  */
-static BOOL service_send_start_message(struct service_entry *service, HANDLE process_handle,
+static BOOL process_send_start_message(struct process_entry *process, const WCHAR *name,
                                        LPCWSTR *argv, DWORD argc)
 {
-    struct process_entry *process = service->process;
     OVERLAPPED overlapped;
     DWORD i, len, result;
     service_start_info *ssi;
     LPWSTR p;
     BOOL r;
 
-    WINE_TRACE("%s %p %d\n", wine_dbgstr_w(service->name), argv, argc);
+    WINE_TRACE("%p %s %p %d\n", process, wine_dbgstr_w(name), argv, argc);
 
     overlapped.hEvent = process->overlapped_event;
     if (!ConnectNamedPipe(process->control_pipe, &overlapped))
@@ -820,12 +819,12 @@ static BOOL service_send_start_message(struct service_entry *service, HANDLE pro
         {
             HANDLE handles[2];
             handles[0] = process->overlapped_event;
-            handles[1] = process_handle;
+            handles[1] = process->process;
             if (WaitForMultipleObjects( 2, handles, FALSE, service_pipe_timeout ) != WAIT_OBJECT_0)
                 CancelIo(process->control_pipe);
             if (!HasOverlappedIoCompleted( &overlapped ))
             {
-                WINE_ERR( "service %s failed to start\n", wine_dbgstr_w( service->name ));
+                WINE_ERR("service %s failed to start\n", wine_dbgstr_w(name));
                 return FALSE;
             }
         }
@@ -837,7 +836,7 @@ static BOOL service_send_start_message(struct service_entry *service, HANDLE pro
     }
 
     /* calculate how much space do we need to send the startup info */
-    len = strlenW(service->name) + 1;
+    len = strlenW(name) + 1;
     for (i=0; i<argc; i++)
         len += strlenW(argv[i])+1;
     len++;
@@ -846,8 +845,8 @@ static BOOL service_send_start_message(struct service_entry *service, HANDLE pro
     ssi->cmd = WINESERV_STARTINFO;
     ssi->control = 0;
     ssi->total_size = FIELD_OFFSET(service_start_info, data[len]);
-    ssi->name_size = strlenW(service->name) + 1;
-    strcpyW( ssi->data, service->name );
+    ssi->name_size = strlenW(name) + 1;
+    strcpyW(ssi->data, name);
 
     /* copy service args into a single buffer*/
     p = &ssi->data[ssi->name_size];
@@ -911,7 +910,7 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
         err = service_start_process(service, &process_handle);
         if (err == ERROR_SUCCESS)
         {
-            if (!service_send_start_message(service, process_handle, service_argv, service_argc))
+            if (!process_send_start_message(process, service->name, service_argv, service_argc))
                 err = ERROR_SERVICE_REQUEST_TIMEOUT;
         }
 
