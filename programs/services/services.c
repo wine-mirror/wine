@@ -103,7 +103,7 @@ DWORD service_create(LPCWSTR name, struct service_entry **entry)
     }
     if ((err = process_create(&(*entry)->process)) != ERROR_SUCCESS)
     {
-        HeapFree(GetProcessHeap(), 0, (*entry)->process);
+        HeapFree(GetProcessHeap(), 0, (*entry)->name);
         HeapFree(GetProcessHeap(), 0, *entry);
         return err;
     }
