@@ -597,6 +597,15 @@ HRESULT d3d_depthstencil_state_init(struct d3d_depthstencil_state *state, struct
     return S_OK;
 }
 
+struct d3d_depthstencil_state *unsafe_impl_from_ID3D11DepthStencilState(ID3D11DepthStencilState *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d11_depthstencil_state_vtbl);
+
+    return impl_from_ID3D11DepthStencilState(iface);
+}
+
 struct d3d_depthstencil_state *unsafe_impl_from_ID3D10DepthStencilState(ID3D10DepthStencilState *iface)
 {
     if (!iface)

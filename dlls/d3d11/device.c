@@ -670,7 +670,55 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetBlendState(ID3D11Devi
 static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetDepthStencilState(ID3D11DeviceContext *iface,
         ID3D11DepthStencilState *depth_stencil_state, UINT stencil_ref)
 {
-    FIXME("iface %p, depth_stencil_state %p, stencil_ref %u stub!\n", iface, depth_stencil_state, stencil_ref);
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    const D3D11_DEPTH_STENCILOP_DESC *stencil_desc;
+    const D3D11_DEPTH_STENCIL_DESC *desc;
+
+    TRACE("iface %p, depth_stencil_state %p, stencil_ref %u.\n",
+            iface, depth_stencil_state, stencil_ref);
+
+    wined3d_mutex_lock();
+    device->stencil_ref = stencil_ref;
+    if (!(device->depth_stencil_state = unsafe_impl_from_ID3D11DepthStencilState(depth_stencil_state)))
+    {
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ZENABLE, TRUE);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ZWRITEENABLE, D3D11_DEPTH_WRITE_MASK_ALL);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ZFUNC, D3D11_COMPARISON_LESS);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_STENCILENABLE, FALSE);
+        wined3d_mutex_unlock();
+        return;
+    }
+
+    desc = &device->depth_stencil_state->desc;
+
+    if (desc->FrontFace.StencilFailOp != desc->BackFace.StencilFailOp
+            || desc->FrontFace.StencilDepthFailOp != desc->BackFace.StencilDepthFailOp
+            || desc->FrontFace.StencilPassOp != desc->BackFace.StencilPassOp
+            || desc->FrontFace.StencilFunc != desc->BackFace.StencilFunc)
+        FIXME("Two-sided stencil testing not supported.\n");
+
+    stencil_desc = &desc->FrontFace;
+
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ZENABLE, desc->DepthEnable);
+    if (desc->DepthEnable)
+    {
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ZWRITEENABLE, desc->DepthWriteMask);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ZFUNC, desc->DepthFunc);
+    }
+
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_STENCILENABLE, desc->StencilEnable);
+    if (desc->StencilEnable)
+    {
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_STENCILMASK, desc->StencilReadMask);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_STENCILWRITEMASK, desc->StencilWriteMask);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_STENCILFAIL, stencil_desc->StencilFailOp);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_STENCILZFAIL,
+                stencil_desc->StencilDepthFailOp);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_STENCILPASS, stencil_desc->StencilPassOp);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_STENCILFUNC, stencil_desc->StencilFunc);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_STENCILREF, stencil_ref);
+    }
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_SOSetTargets(ID3D11DeviceContext *iface, UINT buffer_count,

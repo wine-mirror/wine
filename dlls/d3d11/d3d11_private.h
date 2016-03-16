@@ -319,6 +319,8 @@ struct d3d_depthstencil_state
 
 HRESULT d3d_depthstencil_state_init(struct d3d_depthstencil_state *state, struct d3d_device *device,
         const D3D11_DEPTH_STENCIL_DESC *desc) DECLSPEC_HIDDEN;
+struct d3d_depthstencil_state *unsafe_impl_from_ID3D11DepthStencilState(
+        ID3D11DepthStencilState *iface) DECLSPEC_HIDDEN;
 struct d3d_depthstencil_state *unsafe_impl_from_ID3D10DepthStencilState(
         ID3D10DepthStencilState *iface) DECLSPEC_HIDDEN;
 
