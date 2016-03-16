@@ -26,6 +26,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL( vssapi );
 
+#undef __thiscall
 #ifdef __i386__  /* thiscall functions are i386-specific */
 
 #define THISCALL(func) __thiscall_ ## func
