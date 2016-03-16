@@ -603,21 +603,20 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetRenderTargetsAndUnord
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetBlendState(ID3D11DeviceContext *iface,
-        ID3D11BlendState *blend_state, const FLOAT blend_factor[4], UINT sample_mask)
+        ID3D11BlendState *blend_state, const float blend_factor[4], UINT sample_mask)
 {
     struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
     static const float default_blend_factor[] = {1.0f, 1.0f, 1.0f, 1.0f};
     const D3D11_BLEND_DESC *desc;
 
-    TRACE("iface %p, blend_state %p, blend_factor %p, sample_mask 0x%08x.\n",
-            iface, blend_state, blend_factor, sample_mask);
+    TRACE("iface %p, blend_state %p, blend_factor %s, sample_mask 0x%08x.\n",
+            iface, blend_state, debug_float4(blend_factor), sample_mask);
 
     if (!blend_factor)
         blend_factor = default_blend_factor;
 
     if (blend_factor[0] != 1.0f || blend_factor[1] != 1.0f || blend_factor[2] != 1.0f || blend_factor[3] != 1.0f)
-        FIXME("Ignoring blend factor {%.8e %.8e %.8e %.8e}.\n",
-                blend_factor[0], blend_factor[1], blend_factor[2], blend_factor[3]);
+        FIXME("Ignoring blend factor %s.\n", debug_float4(blend_factor));
 
     wined3d_mutex_lock();
     memcpy(device->blend_factor, blend_factor, 4 * sizeof(*blend_factor));
@@ -946,15 +945,15 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CopyStructureCount(ID3D11D
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_ClearRenderTargetView(ID3D11DeviceContext *iface,
-        ID3D11RenderTargetView *render_target_view, const FLOAT color_rgba[4])
+        ID3D11RenderTargetView *render_target_view, const float color_rgba[4])
 {
     struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
     struct d3d_rendertarget_view *view = unsafe_impl_from_ID3D11RenderTargetView(render_target_view);
     const struct wined3d_color color = {color_rgba[0], color_rgba[1], color_rgba[2], color_rgba[3]};
     HRESULT hr;
 
-    TRACE("iface %p, render_target_view %p, color_rgba {%.8e, %.8e, %.8e, %.8e}.\n",
-            iface, render_target_view, color_rgba[0], color_rgba[1], color_rgba[2], color_rgba[3]);
+    TRACE("iface %p, render_target_view %p, color_rgba %s.\n",
+            iface, render_target_view, debug_float4(color_rgba));
 
     wined3d_mutex_lock();
     if (FAILED(hr = wined3d_device_clear_rendertarget_view(device->wined3d_device, view->wined3d_view, NULL,
@@ -971,10 +970,10 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_ClearUnorderedAccessViewUi
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_ClearUnorderedAccessViewFloat(ID3D11DeviceContext *iface,
-        ID3D11UnorderedAccessView *unordered_access_view, const FLOAT values[4])
+        ID3D11UnorderedAccessView *unordered_access_view, const float values[4])
 {
-    FIXME("iface %p, unordered_access_view %p, values {%.8e %.8e %.8e %.8e} stub!\n",
-            iface, unordered_access_view, values[0], values[1], values[2], values[3]);
+    FIXME("iface %p, unordered_access_view %p, values %s stub!\n",
+            iface, unordered_access_view, debug_float4(values));
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_ClearDepthStencilView(ID3D11DeviceContext *iface,
@@ -3202,13 +3201,13 @@ static void STDMETHODCALLTYPE d3d10_device_OMSetRenderTargets(ID3D10Device1 *ifa
 }
 
 static void STDMETHODCALLTYPE d3d10_device_OMSetBlendState(ID3D10Device1 *iface,
-        ID3D10BlendState *blend_state, const FLOAT blend_factor[4], UINT sample_mask)
+        ID3D10BlendState *blend_state, const float blend_factor[4], UINT sample_mask)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
     struct d3d_blend_state *blend_state_object;
 
-    TRACE("iface %p, blend_state %p, blend_factor %p, sample_mask 0x%08x.\n",
-            iface, blend_state, blend_factor, sample_mask);
+    TRACE("iface %p, blend_state %p, blend_factor %s, sample_mask 0x%08x.\n",
+            iface, blend_state, debug_float4(blend_factor), sample_mask);
 
     blend_state_object = unsafe_impl_from_ID3D10BlendState(blend_state);
     d3d11_immediate_context_OMSetBlendState(&device->immediate_context.ID3D11DeviceContext_iface,
@@ -3378,15 +3377,15 @@ static void STDMETHODCALLTYPE d3d10_device_UpdateSubresource(ID3D10Device1 *ifac
 }
 
 static void STDMETHODCALLTYPE d3d10_device_ClearRenderTargetView(ID3D10Device1 *iface,
-        ID3D10RenderTargetView *render_target_view, const FLOAT color_rgba[4])
+        ID3D10RenderTargetView *render_target_view, const float color_rgba[4])
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
     struct d3d_rendertarget_view *view = unsafe_impl_from_ID3D10RenderTargetView(render_target_view);
     const struct wined3d_color color = {color_rgba[0], color_rgba[1], color_rgba[2], color_rgba[3]};
     HRESULT hr;
 
-    TRACE("iface %p, render_target_view %p, color_rgba {%.8e, %.8e, %.8e, %.8e}.\n",
-            iface, render_target_view, color_rgba[0], color_rgba[1], color_rgba[2], color_rgba[3]);
+    TRACE("iface %p, render_target_view %p, color_rgba %s.\n",
+            iface, render_target_view, debug_float4(color_rgba));
 
     wined3d_mutex_lock();
     if (FAILED(hr = wined3d_device_clear_rendertarget_view(device->wined3d_device, view->wined3d_view, NULL,

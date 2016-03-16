@@ -154,6 +154,14 @@ const char *debug_dxgi_format(DXGI_FORMAT format)
 
 #undef WINE_D3D_TO_STR
 
+const char *debug_float4(const float *values)
+{
+    if (!values)
+        return "(null)";
+    return wine_dbg_sprintf("{%.8e, %.8e, %.8e, %.8e}",
+            values[0], values[1], values[2], values[3]);
+}
+
 DXGI_FORMAT dxgi_format_from_wined3dformat(enum wined3d_format_id format)
 {
     switch(format)
