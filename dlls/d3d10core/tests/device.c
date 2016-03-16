@@ -2142,6 +2142,53 @@ static void test_create_depthstencil_state(void)
     refcount = ID3D10DepthStencilState_Release(ds_state1);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
 
+    ds_desc.DepthEnable = FALSE;
+    ds_desc.DepthWriteMask = D3D10_DEPTH_WRITE_MASK_ZERO;
+    ds_desc.DepthFunc = D3D10_COMPARISON_NEVER;
+    ds_desc.StencilEnable = FALSE;
+    ds_desc.StencilReadMask = 0;
+    ds_desc.StencilWriteMask = 0;
+    ds_desc.FrontFace.StencilFailOp = D3D10_STENCIL_OP_ZERO;
+    ds_desc.FrontFace.StencilDepthFailOp = D3D10_STENCIL_OP_ZERO;
+    ds_desc.FrontFace.StencilPassOp = D3D10_STENCIL_OP_ZERO;
+    ds_desc.FrontFace.StencilFunc = D3D10_COMPARISON_NEVER;
+    ds_desc.BackFace = ds_desc.FrontFace;
+
+    hr = ID3D10Device_CreateDepthStencilState(device, &ds_desc, &ds_state1);
+    ok(SUCCEEDED(hr), "Failed to create depthstencil state, hr %#x.\n", hr);
+
+    memset(&ds_desc, 0, sizeof(ds_desc));
+    ID3D10DepthStencilState_GetDesc(ds_state1, &ds_desc);
+    ok(!ds_desc.DepthEnable, "Got unexpected depth enable %#x.\n", ds_desc.DepthEnable);
+    ok(ds_desc.DepthWriteMask == D3D10_DEPTH_WRITE_MASK_ALL
+            || broken(ds_desc.DepthWriteMask == D3D10_DEPTH_WRITE_MASK_ZERO),
+            "Got unexpected depth write mask %#x.\n", ds_desc.DepthWriteMask);
+    ok(ds_desc.DepthFunc == D3D10_COMPARISON_LESS || broken(ds_desc.DepthFunc == D3D10_COMPARISON_NEVER),
+            "Got unexpected depth func %#x.\n", ds_desc.DepthFunc);
+    ok(!ds_desc.StencilEnable, "Got unexpected stencil enable %#x.\n", ds_desc.StencilEnable);
+    ok(ds_desc.StencilReadMask == D3D10_DEFAULT_STENCIL_READ_MASK,
+            "Got unexpected stencil read mask %#x.\n", ds_desc.StencilReadMask);
+    ok(ds_desc.StencilWriteMask == D3D10_DEFAULT_STENCIL_WRITE_MASK,
+            "Got unexpected stencil write mask %#x.\n", ds_desc.StencilWriteMask);
+    ok(ds_desc.FrontFace.StencilDepthFailOp == D3D10_STENCIL_OP_KEEP,
+            "Got unexpected front face stencil depth fail op %#x.\n", ds_desc.FrontFace.StencilDepthFailOp);
+    ok(ds_desc.FrontFace.StencilPassOp == D3D10_STENCIL_OP_KEEP,
+            "Got unexpected front face stencil pass op %#x.\n", ds_desc.FrontFace.StencilPassOp);
+    ok(ds_desc.FrontFace.StencilFailOp == D3D10_STENCIL_OP_KEEP,
+            "Got unexpected front face stencil fail op %#x.\n", ds_desc.FrontFace.StencilFailOp);
+    ok(ds_desc.FrontFace.StencilFunc == D3D10_COMPARISON_ALWAYS,
+            "Got unexpected front face stencil func %#x.\n", ds_desc.FrontFace.StencilFunc);
+    ok(ds_desc.BackFace.StencilDepthFailOp == D3D10_STENCIL_OP_KEEP,
+            "Got unexpected back face stencil depth fail op %#x.\n", ds_desc.BackFace.StencilDepthFailOp);
+    ok(ds_desc.BackFace.StencilPassOp == D3D10_STENCIL_OP_KEEP,
+            "Got unexpected back face stencil pass op %#x.\n", ds_desc.BackFace.StencilPassOp);
+    ok(ds_desc.BackFace.StencilFailOp == D3D10_STENCIL_OP_KEEP,
+            "Got unexpected back face stencil fail op %#x.\n", ds_desc.BackFace.StencilFailOp);
+    ok(ds_desc.BackFace.StencilFunc == D3D10_COMPARISON_ALWAYS,
+            "Got unexpected back face stencil func %#x.\n", ds_desc.BackFace.StencilFunc);
+
+    ID3D10DepthStencilState_Release(ds_state1);
+
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
