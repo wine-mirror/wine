@@ -1506,13 +1506,13 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
 /* Context activation is done by the caller. */
 void surface_set_compatible_renderbuffer(struct wined3d_surface *surface, const struct wined3d_surface *rt)
 {
-    const struct wined3d_gl_info *gl_info = &surface->resource.device->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &surface->container->resource.device->adapter->gl_info;
     struct wined3d_renderbuffer_entry *entry;
     GLuint renderbuffer = 0;
     unsigned int src_width, src_height;
     unsigned int width, height;
 
-    if (rt && rt->resource.format->id != WINED3DFMT_NULL)
+    if (rt && rt->container->resource.format->id != WINED3DFMT_NULL)
     {
         width = rt->pow2Width;
         height = rt->pow2Height;
@@ -1553,7 +1553,7 @@ void surface_set_compatible_renderbuffer(struct wined3d_surface *surface, const 
         gl_info->fbo_ops.glGenRenderbuffers(1, &renderbuffer);
         gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
         gl_info->fbo_ops.glRenderbufferStorage(GL_RENDERBUFFER,
-                surface->resource.format->glInternal, width, height);
+                surface->container->resource.format->glInternal, width, height);
 
         entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry));
         entry->width = width;
