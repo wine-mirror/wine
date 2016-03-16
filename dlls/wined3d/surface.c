@@ -1125,11 +1125,12 @@ static const struct wined3d_surface_ops gdi_surface_ops =
 static void surface_download_data(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
         DWORD dst_location)
 {
-    const struct wined3d_format *format = surface->resource.format;
+    struct wined3d_texture *texture = surface->container;
+    const struct wined3d_format *format = texture->resource.format;
     struct wined3d_bo_address data;
 
     /* Only support read back of converted P8 surfaces. */
-    if (surface->container->flags & WINED3D_TEXTURE_CONVERTED && format->id != WINED3DFMT_P8_UINT)
+    if (texture->flags & WINED3D_TEXTURE_CONVERTED && format->id != WINED3DFMT_P8_UINT)
     {
         ERR("Trying to read back converted surface %p with format %s.\n", surface, debug_d3dformat(format->id));
         return;
@@ -1137,7 +1138,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
 
     surface_get_memory(surface, &data, dst_location);
 
-    if (surface->container->resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
+    if (texture->resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
     {
         TRACE("(%p) : Calling glGetCompressedTexImage level %d, format %#x, type %#x, data %p.\n",
                 surface, surface->texture_level, format->glFormat, format->glType, data.addr);
@@ -1166,10 +1167,10 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         GLenum gl_type = format->glType;
         void *mem;
 
-        if (surface->container->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
+        if (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
         {
-            wined3d_texture_get_pitch(surface->container, surface->texture_level, &dst_row_pitch, &dst_slice_pitch);
-            wined3d_format_calculate_pitch(format, surface->resource.device->surface_alignment,
+            wined3d_texture_get_pitch(texture, surface->texture_level, &dst_row_pitch, &dst_slice_pitch);
+            wined3d_format_calculate_pitch(format, texture->resource.device->surface_alignment,
                     surface->pow2Width, surface->pow2Height, &src_row_pitch, &src_slice_pitch);
             mem = HeapAlloc(GetProcessHeap(), 0, src_slice_pitch);
         }
@@ -1200,7 +1201,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
             checkGLcall("glGetTexImage");
         }
 
-        if (surface->container->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
+        if (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
         {
             const BYTE *src_data;
             BYTE *dst_data;
