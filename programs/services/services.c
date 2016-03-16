@@ -714,7 +714,7 @@ static DWORD get_service_binary_path(const struct service_entry *service_entry, 
     return ERROR_SUCCESS;
 }
 
-static DWORD service_start_process(struct service_entry *service_entry, HANDLE *process)
+static DWORD service_start_process(struct service_entry *service_entry)
 {
     PROCESS_INFORMATION pi;
     STARTUPINFOW si;
@@ -765,37 +765,30 @@ static DWORD service_start_process(struct service_entry *service_entry, HANDLE *
 
     service_entry->status.dwProcessId = pi.dwProcessId;
     service_entry->process->process = pi.hProcess;
-    *process = pi.hProcess;
     CloseHandle( pi.hThread );
 
     return ERROR_SUCCESS;
 }
 
-static DWORD service_wait_for_startup(struct service_entry *service_entry, HANDLE process_handle)
+static DWORD process_wait_for_startup(struct process_entry *process)
 {
-    HANDLE handles[2] = { service_entry->process->status_changed_event, process_handle };
-    DWORD state, ret;
-
-    WINE_TRACE("%p\n", service_entry);
+    HANDLE handles[2] = { process->status_changed_event, process->process };
+    DWORD ret;
 
     ret = WaitForMultipleObjects( 2, handles, FALSE, service_pipe_timeout );
-    if (ret != WAIT_OBJECT_0)
-        return ERROR_SERVICE_REQUEST_TIMEOUT;
-    service_lock(service_entry);
-    state = service_entry->status.dwCurrentState;
-    service_unlock(service_entry);
-    if (state == SERVICE_START_PENDING)
-    {
-        WINE_TRACE("Service state changed to SERVICE_START_PENDING\n");
-        return ERROR_SUCCESS;
-    }
-    else if (state == SERVICE_RUNNING)
-    {
-        WINE_TRACE("Service started successfully\n");
-        return ERROR_SUCCESS;
-    }
+    return (ret == WAIT_OBJECT_0) ? ERROR_SUCCESS : ERROR_SERVICE_REQUEST_TIMEOUT;
+}
 
-    return ERROR_SERVICE_REQUEST_TIMEOUT;
+static DWORD service_is_running(struct service_entry *service)
+{
+    DWORD state;
+
+    service_lock(service);
+    state = service->status.dwCurrentState;
+    service_unlock(service);
+
+    return (state == SERVICE_START_PENDING || state == SERVICE_RUNNING) ?
+           ERROR_SUCCESS : ERROR_SERVICE_REQUEST_TIMEOUT;
 }
 
 /******************************************************************************
@@ -874,7 +867,6 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
     struct process_entry *process = service->process;
     DWORD err;
     LPWSTR name;
-    HANDLE process_handle = NULL;
 
     err = scmdatabase_lock_startup(service->db);
     if (err != ERROR_SUCCESS)
@@ -907,7 +899,7 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
     }
     else
     {
-        err = service_start_process(service, &process_handle);
+        err = service_start_process(service);
         if (err == ERROR_SUCCESS)
         {
             if (!process_send_start_message(process, service->name, service_argv, service_argc))
@@ -915,7 +907,10 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
         }
 
         if (err == ERROR_SUCCESS)
-            err = service_wait_for_startup(service, process_handle);
+            err = process_wait_for_startup(process);
+
+        if (err == ERROR_SUCCESS)
+            err = service_is_running(service);
     }
 
     if (err == ERROR_SUCCESS)
