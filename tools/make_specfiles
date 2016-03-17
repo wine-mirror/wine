@@ -214,6 +214,7 @@ my @dll_groups =
   "api-ms-win-core-wow64-l1-1-0",
   "api-ms-win-core-xstate-l2-1-0",
   "api-ms-win-core-errorhandling-l1-1-2",
+  "kernelbase",
  ],
  [
   "kernel32",
