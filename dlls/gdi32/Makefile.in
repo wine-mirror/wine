@@ -49,3 +49,5 @@ C_SRCS = \
 	vertical.c
 
 RC_SRCS = gdi32.rc
+
+freetype_EXTRADEFS = -DWINE_FONT_DIR=\"`$(MAKEDEP) -R ${datadir}/wine ${fontdir}`\"
