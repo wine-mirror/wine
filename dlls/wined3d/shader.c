@@ -82,6 +82,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DSX                           */ "dsx",
     /* WINED3DSIH_DSX_COARSE                    */ "deriv_rtx_coarse",
     /* WINED3DSIH_DSY                           */ "dsy",
+    /* WINED3DSIH_DSY_COARSE                    */ "deriv_rty_coarse",
     /* WINED3DSIH_ELSE                          */ "else",
     /* WINED3DSIH_EMIT                          */ "emit",
     /* WINED3DSIH_ENDIF                         */ "endif",
