@@ -1094,12 +1094,6 @@ static HRESULT gdi_surface_private_setup(struct wined3d_surface *surface)
 
     TRACE("surface %p.\n", surface);
 
-    if (surface->resource.usage & WINED3DUSAGE_OVERLAY)
-    {
-        ERR("Overlays not yet supported by GDI surfaces.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
     /* Sysmem textures have memory already allocated - release it,
      * this avoids an unnecessary memcpy. */
     hr = surface_create_dib_section(surface);
