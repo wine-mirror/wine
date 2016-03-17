@@ -2606,10 +2606,9 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
      * performance incredibly. */
     gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
     gl_info->gl_ops.gl.p_glEnable(GL_SCISSOR_TEST);
-    if (gl_info->supported[ARB_FRAMEBUFFER_SRGB])
+    if (rt_count && gl_info->supported[ARB_FRAMEBUFFER_SRGB])
     {
-        if (!(context->d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
-                || device->state.render_states[WINED3D_RS_SRGBWRITEENABLE])
+        if (needs_srgb_write(context, &device->state, fb))
             gl_info->gl_ops.gl.p_glEnable(GL_FRAMEBUFFER_SRGB);
         else
             gl_info->gl_ops.gl.p_glDisable(GL_FRAMEBUFFER_SRGB);
