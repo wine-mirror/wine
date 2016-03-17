@@ -242,7 +242,7 @@ struct wined3d_cs_set_clip_plane
 struct wined3d_cs_set_material
 {
     enum wined3d_cs_op opcode;
-    const struct wined3d_material *material;
+    struct wined3d_material material;
 };
 
 struct wined3d_cs_reset_state
@@ -979,7 +979,7 @@ static void wined3d_cs_exec_set_material(struct wined3d_cs *cs, const void *data
 {
     const struct wined3d_cs_set_material *op = data;
 
-    cs->state.material = *op->material;
+    cs->state.material = op->material;
     device_invalidate_state(cs->device, STATE_MATERIAL);
 }
 
@@ -989,7 +989,7 @@ void wined3d_cs_emit_set_material(struct wined3d_cs *cs, const struct wined3d_ma
 
     op = cs->ops->require_space(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_SET_MATERIAL;
-    op->material = material;
+    op->material = *material;
 
     cs->ops->submit(cs);
 }
