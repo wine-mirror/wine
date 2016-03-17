@@ -263,7 +263,7 @@ static void prepare_ds_clear(struct wined3d_surface *ds, struct wined3d_context 
     {
         /* draw_rect ⊇ current_rect, test if we're doing a full clear. */
 
-        if (!clear_rect)
+        if (!rect_count)
         {
             /* Full clear, modify only. */
             *out_rect = *draw_rect;
@@ -285,13 +285,12 @@ static void prepare_ds_clear(struct wined3d_surface *ds, struct wined3d_context 
 }
 
 void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, const struct wined3d_fb_state *fb,
-        UINT rect_count, const RECT *rects, const RECT *draw_rect, DWORD flags, const struct wined3d_color *color,
+        UINT rect_count, const RECT *clear_rect, const RECT *draw_rect, DWORD flags, const struct wined3d_color *color,
         float depth, DWORD stencil)
 {
     struct wined3d_surface *target = rt_count ? wined3d_rendertarget_view_get_surface(fb->render_targets[0]) : NULL;
     struct wined3d_surface *depth_stencil = fb->depth_stencil
             ? wined3d_rendertarget_view_get_surface(fb->depth_stencil) : NULL;
-    const RECT *clear_rect = (rect_count > 0 && rects) ? (const RECT *)rects : NULL;
     const struct wined3d_gl_info *gl_info;
     UINT drawable_width, drawable_height;
     struct wined3d_color corrected_color;
@@ -325,7 +324,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
 
         if (rt && rtv->format->id != WINED3DFMT_NULL)
         {
-            if (flags & WINED3DCLEAR_TARGET && !is_full_clear(target, draw_rect, clear_rect))
+            if (flags & WINED3DCLEAR_TARGET && !is_full_clear(target, draw_rect, rect_count ? clear_rect : NULL))
                 surface_load_location(rt, context, rtv->resource->draw_binding);
             else
                 wined3d_surface_prepare(rt, context, rtv->resource->draw_binding);
@@ -440,7 +439,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
         clear_mask = clear_mask | GL_COLOR_BUFFER_BIT;
     }
 
-    if (!clear_rect)
+    if (!rect_count)
     {
         if (render_offscreen)
         {

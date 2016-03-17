@@ -5157,6 +5157,12 @@ static HRESULT d3d_device7_Clear(IDirect3DDevice7 *iface, DWORD count,
     TRACE("iface %p, count %u, rects %p, flags %#x, color 0x%08x, z %.8e, stencil %#x.\n",
             iface, count, rects, flags, color, z, stencil);
 
+    if (count && !rects)
+    {
+        WARN("count %u with NULL rects.\n", count);
+        count = 0;
+    }
+
     wined3d_mutex_lock();
     hr = wined3d_device_clear(This->wined3d_device, count, (RECT *)rects, flags, &c, z, stencil);
     wined3d_mutex_unlock();
