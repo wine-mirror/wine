@@ -8094,6 +8094,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DP4                           */ shader_glsl_dot,
     /* WINED3DSIH_DST                           */ shader_glsl_dst,
     /* WINED3DSIH_DSX                           */ shader_glsl_map2gl,
+    /* WINED3DSIH_DSX_COARSE                    */ NULL,
     /* WINED3DSIH_DSY                           */ shader_glsl_map2gl,
     /* WINED3DSIH_ELSE                          */ shader_glsl_else,
     /* WINED3DSIH_EMIT                          */ shader_glsl_emit,
