@@ -2904,7 +2904,7 @@ static void test_effect_states(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_GetLightEnable(device, 2, &bval);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
     if (hr == D3D_OK)
-        ok(!bval, "Got result %u, expected 0.", bval);
+        ok(!bval, "Got result %u, expected 0.\n", bval);
 
     hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLDMATRIX(1), &test_mat);
     hr = effect->lpVtbl->Begin(effect, &npasses, 0);
