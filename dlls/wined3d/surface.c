@@ -558,7 +558,7 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
     }
 
     if ((surface->pow2Width > gl_info->limits.texture_size || surface->pow2Height > gl_info->limits.texture_size)
-            && !(texture->resource.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL)))
+            && (texture->resource.usage & WINED3DUSAGE_TEXTURE))
     {
         /* One of three options:
          * 1: Do the same as we do with NPOT and scale the texture, (any
