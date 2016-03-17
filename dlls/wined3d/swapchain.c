@@ -133,12 +133,11 @@ void CDECL wined3d_swapchain_set_window(struct wined3d_swapchain *swapchain, HWN
 }
 
 HRESULT CDECL wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
-        const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override,
-        const RGNDATA *dirty_region, DWORD flags)
+        const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override, DWORD flags)
 {
-    TRACE("swapchain %p, src_rect %s, dst_rect %s, dst_window_override %p, dirty_region %p, flags %#x.\n",
+    TRACE("swapchain %p, src_rect %s, dst_rect %s, dst_window_override %p, flags %#x.\n",
             swapchain, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect),
-            dst_window_override, dirty_region, flags);
+            dst_window_override, flags);
 
     if (flags)
         FIXME("Ignoring flags %#x.\n", flags);
@@ -150,7 +149,7 @@ HRESULT CDECL wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
     }
 
     wined3d_cs_emit_present(swapchain->device->cs, swapchain, src_rect,
-            dst_rect, dst_window_override, dirty_region, flags);
+            dst_rect, dst_window_override, flags);
 
     return WINED3D_OK;
 }
@@ -467,8 +466,8 @@ static void wined3d_swapchain_rotate(struct wined3d_swapchain *swapchain, struct
     device_invalidate_state(swapchain->device, STATE_FRAMEBUFFER);
 }
 
-static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT *src_rect_in,
-        const RECT *dst_rect_in, const RGNDATA *dirty_region, DWORD flags)
+static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
+        const RECT *src_rect_in, const RECT *dst_rect_in, DWORD flags)
 {
     struct wined3d_surface *back_buffer = surface_from_resource(
             wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0));
@@ -709,8 +708,8 @@ static void swapchain_gdi_frontbuffer_updated(struct wined3d_swapchain *swapchai
     SetRectEmpty(&swapchain->front_buffer_update);
 }
 
-static void swapchain_gdi_present(struct wined3d_swapchain *swapchain, const RECT *src_rect_in,
-        const RECT *dst_rect_in, const RGNDATA *dirty_region, DWORD flags)
+static void swapchain_gdi_present(struct wined3d_swapchain *swapchain,
+        const RECT *src_rect_in, const RECT *dst_rect_in, DWORD flags)
 {
     struct wined3d_surface *front, *back;
 

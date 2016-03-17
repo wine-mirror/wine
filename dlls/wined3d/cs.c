@@ -61,7 +61,6 @@ struct wined3d_cs_present
     struct wined3d_swapchain *swapchain;
     const RECT *src_rect;
     const RECT *dst_rect;
-    const RGNDATA *dirty_region;
     DWORD flags;
 };
 
@@ -259,13 +258,11 @@ static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
     swapchain = op->swapchain;
     wined3d_swapchain_set_window(swapchain, op->dst_window_override);
 
-    swapchain->swapchain_ops->swapchain_present(swapchain,
-            op->src_rect, op->dst_rect, op->dirty_region, op->flags);
+    swapchain->swapchain_ops->swapchain_present(swapchain, op->src_rect, op->dst_rect, op->flags);
 }
 
 void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *swapchain,
-        const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override,
-        const RGNDATA *dirty_region, DWORD flags)
+        const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override, DWORD flags)
 {
     struct wined3d_cs_present *op;
 
@@ -275,7 +272,6 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
     op->swapchain = swapchain;
     op->src_rect = src_rect;
     op->dst_rect = dst_rect;
-    op->dirty_region = dirty_region;
     op->flags = flags;
 
     cs->ops->submit(cs);

@@ -146,7 +146,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_Present(IDXGISwapChain *iface, U
     if (flags) FIXME("Unimplemented flags %#x\n", flags);
 
     wined3d_mutex_lock();
-    hr = wined3d_swapchain_present(This->wined3d_swapchain, NULL, NULL, NULL, NULL, 0);
+    hr = wined3d_swapchain_present(This->wined3d_swapchain, NULL, NULL, NULL, 0);
     wined3d_mutex_unlock();
 
     return hr;
