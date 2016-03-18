@@ -1,16 +1,15 @@
-The Wine development release 1.9.5 is now available.
+The Wine development release 1.9.6 is now available.
 
 What's new in this release (see below for details):
-  - New version of the Mono engine, with 64-bit support.
-  - Beginnings of the WineD3D command stream.
-  - Support for effect states in Direct3DX.
-  - Drag & drop improvements.
+  - Better video card detection when using Mesa.
+  - Support for Shader Model 5 shaders.
+  - C++ exception handling improvements.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://dl.winehq.org/wine/source/1.9/wine-1.9.5.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/1.9/wine-1.9.5.tar.bz2
+  http://dl.winehq.org/wine/source/1.9/wine-1.9.6.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.9/wine-1.9.6.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -26,438 +25,343 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.9.5 (total 24):
+Bugs fixed in 1.9.6 (total 32):
 
-  15473  Adobe After Effects 4 crashes on startup
-  17448  Impossible to insert an MPEG file in PowerPoint 2003
-  22039  LEGO Island (Mindscape) fails to start (Direct3DRMViewport::SetAppData() and IDirect3DRMViewport::GetAppData() are stubs)
-  29583  JScript is missing 'new XMLHttpRequest();' support
-  30687  Powerpoint 2003/2007: embedded video play/pause on click no longer works
-  34318  Multiple games and applications need ntdll.dll.EtwRegisterTraceGuidsW (Process Hacker 2.x, Far Cry 4)
-  34870  Multiple games and applications crash on unimplemented function msvcr100.dll _crt_debugger_hook (ArchiCAD 16, Far Cry 4)
-  35286  Borderlands (Steam) crashes on unimplemented function msvcr90.dll._crt_debugger_hook
-  36996  Multiple games need msvcp110.dll.??0_Pad@std@@QAE@XZ implementation (World of Tanks 9.2, Planetary Annihilation, Train Fever)
-  37115  Calling ReadFile from WINBASEAPI (WinBase.h) with zero read length causes hang
-  37694  Multiple applications (Kontakt 5.4.x, Trainz: A New Era, Reaktor 6.0.1) need msvcp120.dll.??0_Pad@std@@QEAA@XZ
-  38788  Malwarebytes Anti-Malware 2.1.x crashes on unimplemented function msvcp100.dll.?system_category@std@@YAABVerror_category@1@XZ
-  38963  Multiple applications (Minko Engine v3 based custom application, Format Factory v3.7) crash on unimplemented function msvcp120.dll.??0_Pad@std@@QAE@XZ
-  39242  oleaut32:typelib fails in the Korean locale
-  39591  Crimzon Clover: Page fault on launch
-  39636  Assassin's Creed Syndicate crashes due to lack of DisplayConfigGetDeviceInfo in user32.dll
-  39690  MAXQDA 12.0.2 installer crashes on unimplemented function ADVAPI32.dll.RegCopyTreeA (Windows Vista+ API)
-  39852  3DMark03: Mother Nature test: waterfall has no transparency if AllwaysOffScreen=disabled
-  39908  SuperTux 0.3.5a crashes on startup, needs msvcr120.dll.strtof
-  40083  Heroes of the Storm Freezes/Crashes after its recent updates
-  40186  mscoree:mscoree test regression
-  40191  ntdll:rtl test regression
-  40194  drag and drop doesn't work because of typo in xdnd.c
-  40204  Steam client fails to start with UmePlus font installed, when running in dwrite mode
+  17540  Zondervan Pradis 6.0 hangs due to ole32.dll.CoGetCurrentLogicalThreadId stub
+  21475  TI Interactive application fails when attempting to display the TI math palette
+  22533  Half-Life: Logo video rendering is wrong (msrle32 does not handle frames with 0 biClrUsed)
+  25086  Multiple games and applications need kernel32.GetLogicalProcessorInformationEx implementation (CPU-Z 1.72, Splinter Cell: Blacklist, Adobe CC 2015, Kontakt 5)
+  28177  Adventure games from Kheops Studio hang after the logo screen (Safecracker, Destination: Treasure Island, Nostradamus: Lost Prophecy, Dracula 3, Return to Mysterious Island 2)
+  29458  Explorer sometimes crashes on drag-and-drop in folders accessed from "/"
+  32237  A slower speed of light: Summer 2012 version crashes after Intro
+  32314  Pikachu Volleyball (English version) crashes on restart
+  32827  Legrand XlPro 3 (MFC app) crashes on startup (failure to load registry-free COM servers via app hook, 'OleCreate' must ignore HRESULT of 'IOleObject::GetMiscStatus')
+  33787  IE8 crashes on new tab
+  34303  underlined 8 point Times New Roman text doesn't display as underlined
+  35471  Telepone (MTSP FIM) needs msvcr100.dll._CreateFrameInfo
+  37949  eLicenser Control Center needs msvcr80.dll.__CxxRegisterExceptionObject
+  39239  ole32:compobj fails if privileges not high enough
+  39278  Multiple DirectX 10 games crash on unimplemented function d3d10_1.dll.D3D10CreateDeviceAndSwapChain1 (Assassin's Creed)
+  39461  Garmin Homeport 2.2.9 crashes on unimplemented function msvcr90.dll.__CxxRegisterExceptionObject
+  39510  EZCastPro 1.4/1.5 crashes on unimplemented function USER32.dll.QueryDisplayConfig
+  39577  Fallout 4 needs WINED3DFMT_R11G11B10_FLOAT render target
+  39674  3Dmark03, 05, 06 not started "System Info Error"
+  39797  The suffering does not start, needs wmasf.dll
+  39878  Diablo II does not start on 64bit system with more than 2GB VRAM cards
+  39918  Mail.Ru GameCenter installer does not work
+  40115  ole32:compobj regression (privilege issue)
+  40147  Assertion 'm->state == STATE_PASSIVE' failed at pulse/mainloop.c:827 on starting Skype 7.18.0.112
+  40190  7z fails at enumerating network places
+  40201  EccoPro only works on Wine 1.6.2
+  40221  Adobe Illustrator CC 2015 needs user32.GetGestureConfig
+  40222  IMalloc(Spy)::Free nullptr
+  40246  Please document WINEBUILD in the winegcc manpage
+  40253  Build regression: Can't remove fonts: is a directory (--with-wine64, shared wow64)
+  40287  steamwebhelper crashes in Windows 7 mode
+  40312  Please look for builtin *.fon fonts in fontdir
 
 ----------------------------------------------------------------
 
-Changes since 1.9.4:
+Changes since 1.9.5:
 
 Alex Henrie (1):
-      ntdll: Finish serial reads of size 0 immediately.
+      user32: Don't put a default icon on modal dialogs.
 
-Alexandre Julliard (32):
-      wrc: Don't convert class and menu names to uppercase in resource data.
-      wrc: Only allow control key characters ^A to ^Z.
-      wrc: Avoid locale- or Unicode-dependent case conversions.
-      wrc: Remove no longer needed use of libwine_static.
-      wmc: Remove no longer needed use of libwine_static.
-      sfnt2fon: Remove no longer needed use of libwine_static.
-      quartz: Remove forward declaration of removed variable.
-      makefiles: Also use dll flags when building a shared library.
-      makefiles: Get rid of libwine_static.
-      makefiles: Generate dependencies for static libraries.
-      makefiles: Directly return an array from the local variable helper function.
-      makefiles: Generate dependencies for default import libraries.
-      winepulse.drv: Avoid some printf format warnings.
-      shlwapi: Use the standard WideCharToMultiByte instead of wine_utf8_wcstombs.
-      makefiles: Explicitly import libwine only for Windows builds.
-      libport: Mark codepage tables as hidden.
-      libport: Mark internal functions and data tables as hidden.
-      make_unicode: Mark most data tables as hidden.
-      makefiles: Generate top-level rules for pot files.
-      makefiles: Parse the entire top-level makefile.
-      makefiles: Generate top-level rules for building mo files.
-      makefiles: Automatically create all directories that contain a target file.
-      makefiles: The tools no longer depend on libwine.
-      makefiles: Generate rules for import libraries symlinks.
-      makefiles: Expand the ln -s command into the makefiles.
-      makefiles: Generate the top-level .gitignore and the distclean rules.
-      configure: Only check for libgettextpo when explicitly requested.
-      makefiles: Don't generate global rules in disabled directories.
-      makefiles: Add a makefile for the po directory.
-      makefiles: Generate the LINGUAS file.
-      configure: Support setting the corresponding enable variable directly from the WINE_NOTICE_WITH macros.
-      makedep: Make the filename hashing more efficient.
+Alexandre Julliard (5):
+      configure: Don't create makefiles in directories that are symlinks in a Wow64 build.
+      libwine: Don't include backwards compatibility functions on Android.
+      advapi32: Fix null termination in RegQueryInfoKeyA.
+      vssapi: Undefine __thiscall before redefining it.
+      gdi32: Take into account the fontdir directory specified at build time.
 
 Alistair Leslie-Hughes (3):
-      gdi32/tests: Add tests for GetPath using metafile.
-      inetcpl: Implement default page button.
-      user32: Don't leak region on error.
+      d3d10_1: Implement D3D10CreateDeviceAndSwapChain1().
+      user32: Don't crash in DrawTextEx when tab length is zero.
+      include: Add authz.h.
 
-Andrew Eikum (5):
-      winepulse.drv: Avoid unrealistically low period sizes.
-      winepulse: Include a period in the stream latency.
-      winepulse.drv: Buffer data locally when needed.
-      mciqtz: Implement MCI_RESUME.
-      winegstreamer: Fix usage of gst_audio_format_build_integer.
+Andrew Eikum (7):
+      winepulse.drv: Check that the server connection actually succeeded.
+      mmdevapi: Implement IAudioEndpointVolume::GetVolumeRange.
+      mmdevapi: Implement Set/GetMasterVolumeLevel.
+      mmdevapi: Implement Set/GetMute.
+      dinput: Fix condition effect joystick offset calculation.
+      windowscodecs: Stub IWICMetadataQueryReader.
+      windowscodecs: Stub IMetadataBlockReader for jpegformat.
 
-André Hentschel (10):
-      urlmon/tests: Use todo_wine_if() in tests.
-      shlwapi/tests: Use todo_wine_if() in tests.
-      kernel32/tests: Use todo_wine_if() in tests.
-      ndis.sys: Implement NdisSystemProcessorCount.
-      ndis.sys: Add NdisRegisterProtocol stub.
-      webservices/tests: Use todo_wine_if() in tests.
-      wbemprox/tests: Use todo_wine_if() in tests.
-      windowscodecs/tests: Use todo_wine_if() in tests.
-      winmm/tests: Use todo_wine_if() in tests.
-      ntdll: Set TPIDRURW also on ARMv8-A.
+André Hentschel (3):
+      wrc: Remove getopt prototype.
+      winemaker: Markup fixes in German translation.
+      advapi32: Add CreatePrivateObjectSecurityEx.
 
-Aric Stewart (3):
-      winejoystick.drv: Initialize unhandled dwPOV to JOY_POVCENTERED.
-      winejoystick.drv: Gracefully handle polling an unplugged device.
-      hidclass.sys: Handle failure to parse preparseData.
+Austin English (8):
+      wmasf: Add stub dll.
+      api-ms-win-core-file-l1-2-1: Add dll.
+      api-ms-win-core-memory-l1-1-2: Add dll.
+      api-ms-win-core-version-l1-1-0: Add dll.
+      api-ms-win-core-string-l2-1-0: Add dll.
+      user32: Add GetGestureConfig stub.
+      user32: Add QueryDisplayConfig stub.
+      bthprops.cpl: Add BluetoothFindFirstRadio/BluetoothFindRadioClose stubs.
 
-Aurimas Fišeras (1):
-      po: Update Lithuanian translation.
+Bruno Jesus (1):
+      msrle32: Use the correct number of colors when biClrUsed = 0.
 
-Austin English (2):
-      user32: Add DisplayConfigGetDeviceInfo stub.
-      include: Fix tagLOGCOLORSPACEW indentation.
+François Gouget (3):
+      include: Don't use the visibility attribute on Solaris.
+      shlwapi/tests: Fix a test failure on Windows 10.
+      d3dx9/tests: Add a trailing '\n' to an ok() call.
 
-Charles Davis (9):
-      kernel32: Use setprogname(3) to set the program name if available.
-      winecoreaudio.drv: Don't use pointer constants with an integer type (Clang).
-      winecoreaudio.drv: Don't print 32-bit values as long integers (Clang).
-      d3d10core/tests: Silence absolute value warnings (Clang).
-      server: Fix int-to-pointer conversion warning (Clang).
-      Revert "winemac.drv: Actually make the GL context current even if no drawables were given.".
-      configure: Check for __builtin_ms_va_list on all x86_64 platforms.
-      winebuild: Specify an object format to windres.
-      winemac.drv: Fix our handling of bitmaps on the clipboard.
+Frédéric Delanoy (1):
+      winemaker: Markup fixes in French translation.
 
-Daniel Lehman (1):
-      winedbg: Handle the 4th parameter for 64-bit C++ exceptions.
-
-Detlef Riekenberg (1):
-      crypt32/tests: Accept Windows 10 error code.
-
-François Gouget (2):
-      mscoree/tests: Add a trailing '\n' to a win_skip() call.
-      shell32/tests: Test ShellExecute()'s URL handling.
-
-Frédéric Delanoy (15):
-      msi/tests: Use todo_wine_if() in tests.
-      msctf/tests: Use todo_wine_if() in tests.
-      ntdll/tests: Use todo_wine_if() in tests.
-      ole32/tests: Use todo_wine_if() in tests.
-      setupapi/tests: Use todo_wine_if() in tests.
-      shell32/tests: Use todo_wine_if() in tests.
-      shell32/tests: Get rid of redundant lok_todo_N macros.
-      user32/tests: Use todo_wine_if() in tests.
-      msvcr120/tests: Use todo_wine_if() in tests.
-      msvcrt/tests: Use todo_wine_if() in tests.
-      windowscodecs/tests: Use todo_wine_if() in tests.
-      advapi32/tests: Use todo_wine_if() in tests.
-      dxgi/tests: Use todo_wine_if() in tests.
-      ieframe/tests: Use todo_wine_if() in tests.
-      d3dx9/tests: Use todo_wine_if() in tests.
-
-Hans Leidekker (12):
-      webservices: Add support for namespace attributes in the writer.
-      webservices: Implement WsWriteXmlnsAttribute.
-      webservices: Implement WsGetPrefixFromNamespace.
-      webservices: Set bytes pointer to NULL if length is zero in alloc_xml_string and alloc_utf8_text.
-      webservices: Add support for namespace attributes in the reader.
-      webservices: Implement WsGetNamespaceFromPrefix.
-      webservices: Don't read past the closing bracket in read_element.
-      webservices: Move the reader to EOF at end of data in WsReadEndElement.
-      webservices: Add support for attribute field mappings in the reader.
-      webservices: Reject field mappings without name or namespace.
-      webservices: Add support for element and text field mappings in the writer.
-      msiexec: Fix manpage markup for repair and logging modifiers.
+Hans Leidekker (2):
+      webservices: Keep track of prefix bindings.
+      winhttp/tests: Fix test failures.
 
 Henri Verbeet (50):
-      d3d8: Use wined3d_texture_get_sub_resource_parent() in d3d8_texture_3d_GetVolumeLevel().
-      wined3d: Pass a format instead of a surface to wined3d_format_convert_from_float().
-      winex11: Get rid of the unused "old_screen_rect" field from struct desktop_resize_data.
-      d3d9: Use wined3d_texture_get_sub_resource_parent() in d3d9_device_create_surface().
-      d3d9: Use wined3d_texture_get_sub_resource_parent() in device_parent_create_swapchain_texture().
-      d3d9: Use wined3d_texture_get_sub_resource_parent() in d3d9_swapchain_GetBackBuffer().
-      d3d9: Use wined3d_texture_get_sub_resource_parent() in d3d9_texture_2d_LockRect().
-      d3d9: Use wined3d_texture_get_sub_resource_parent() in d3d9_texture_2d_UnlockRect().
-      d3d9: Use wined3d_texture_get_sub_resource_parent() in d3d9_texture_2d_GetSurfaceLevel().
-      d3d9: Use wined3d_texture_get_sub_resource_parent in d3d9_texture_cube_LockRect().
-      d3d9: Use wined3d_texture_get_sub_resource_parent() in d3d9_texture_cube_UnlockRect().
-      d3d9: Use wined3d_texture_get_sub_resource_parent() in d3d9_texture_cube_GetCubeMapSurface().
-      d3d9: Use wined3d_texture_get_sub_resource_parent() in d3d9_texture_3d_LockBox().
-      d3d9: Use wined3d_texture_get_sub_resource_parent() in d3d9_texture_3d_UnlockBox().
-      d3d9: Use wined3d_texture_get_sub_resource_parent() in d3d9_texture_3d_GetVolumeLevel().
-      wined3d: Introduce wined3d_texture_set_sub_resource_parent().
-      ddraw: Get the texture format from the texture in d3d_device3_GetRenderState().
-      ddraw: Get the texture format from the texture in d3d_device3_SetRenderState().
-      ddraw: Get the texture format from the texture in d3d_device3_SetTexture().
-      wined3d: Introduce wined3d_texture_get_sub_resource_desc().
-      ddraw: Use wined3d_texture_get_sub_resource_desc() in ddraw_surface_create().
-      d3d8: Use wined3d_texture_get_sub_resource_desc() in d3d8_device_CopyRects().
-      d3d8: Use wined3d_texture_get_sub_resource_desc() in d3d8_device_SetRenderTarget().
-      d3d8: Use wined3d_texture_get_sub_resource_desc() in d3d8_surface_GetDesc().
-      d3d8: Use wined3d_texture_get_sub_resource_desc() in d3d8_volume_GetDesc().
-      d3d8: Use wined3d_texture_get_sub_resource_desc() in d3d8_texture_2d_GetLevelDesc().
-      d3d8: Use wined3d_texture_get_sub_resource_desc() in d3d8_texture_cube_GetLevelDesc().
-      d3d8: Use wined3d_texture_get_sub_resource_desc() in d3d8_texture_3d_GetLevelDesc().
-      d3d9: Use wined3d_texture_get_sub_resource_desc() in d3d9_device_GetRenderTargetData().
-      d3d9: Use wined3d_texture_get_sub_resource_desc() in d3d9_device_StretchRect().
-      d3d9: Use wined3d_texture_get_sub_resource_desc() in d3d9_device_ColorFill().
-      d3d9: Use wined3d_texture_get_sub_resource_desc() in d3d9_surface_GetDesc().
-      d3d9: Use wined3d_texture_get_sub_resource_desc() in d3d9_volume_GetDesc().
-      d3d9: Use wined3d_texture_get_sub_resource_desc() in d3d9_texture_2d_GetLevelDesc().
-      d3d9: Use wined3d_texture_get_sub_resource_desc() in d3d9_texture_cube_GetLevelDesc().
-      wined3d: Keep track of front buffer updates in the swapchain.
-      d3d9: Use wined3d_texture_get_sub_resource_desc() in d3d9_texture_3d_GetLevelDesc().
-      wined3d: Use a single allocation for texture sub-resource objects.
-      wined3d: Avoid surface_from_resource() in wined3d_texture_update_desc().
-      wined3d: Avoid surface_from_resource() in texture2d_prepare_texture().
-      wined3d: Avoid surface_from_resource() in swapchain_gl_frontbuffer_updated().
-      wined3d: Avoid volume_from_resource() in texture3d_prepare_texture().
-      wined3d: Store surface/volume buffer objects in the sub-resource structure.
-      wined3d: Get resource info from the texture in arbfp_blit_set().
-      wined3d: Get resource info from the texture in arbfp_blit_surface().
-      wined3d: Get resource info from the texture in context_find_fbo_entry().
-      wined3d: Get resource info from the texture in context_restore().
-      wined3d: Get resource info from the texture in context_create().
-      wined3d: Get resource info from the texture in context_generate_rt_mask_no_fbo().
-      wined3d: Get resource info from the texture in context_apply_blit_state().
+      wined3d: Get resource info from the texture in context_setup_target().
+      wined3d: Get resource info from the texture in wined3d_device_set_cursor_properties().
+      wined3d: Get resource info from the rendertarget view in device_clear_render_targets().
+      wined3d: Get resource info from the rendertarget view in draw_primitive().
+      wined3d: Get resource info from the texture in wined3d_surface_blt().
+      wined3d: Replace device_update_volume() with a function to update multiple levels of a 3D texture.
+      wined3d: Pass a texture and sub-resource index to wined3d_device_create_cursor_texture().
+      wined3d: Use the resource map/unmap functions in wined3d_device_set_cursor_properties().
+      wined3d: Pass a texture and sub-resource index to surface_convert_format().
+      wined3d: Pass textures and sub-resource indices to surface_cpu_blt().
+      wined3d: Use D3DCOLORTOGLFLOAT4 in drawStridedSlow().
+      wined3d: Get rid of the D3DCOLOR_[RGBA] macros.
+      wined3d: Replace D3DCOLORTOGLFLOAT4 with an inline function.
+      wined3d: Sanitise map flags in wined3d_surface_map().
+      wined3d: Introduce wined3d_volume_prepare_location().
+      wined3d: Keep track of the download count in the texture.
+      wined3d: Introduce helpers functions to calculate texture level dimensions.
+      wined3d: Don't call surface_load_ds_location() directly.
+      wined3d: Properly handle discarded surfaces in surface_load_location().
+      wined3d: Use ARB_map_buffer_range in wined3d_surface_map() when available.
+      wined3d: "render_targets" is never NULL in context_find_fbo_entry().
+      ddraw/tests: Skip initialising "quad" and "indices" in test_specular_lighting() if a 3D device can't be created.
+      d3dx9: "param" should never be NULL in free_parameter().
+      d3dx9/tests: Get rid of a redundant NULL check in test_effect_states().
+      d3dx9/tests: Get rid of some redundant NULL checks in D3DXCreateTextTest().
+      wined3d: Get resource info from the texture in wined3d_surface_cleanup().
+      wined3d: Get resource info from the texture in surface_create_dib_section().
+      wined3d: Get resource info from the texture in surface_private_setup().
+      wined3d: Get resource info from the texture in surface_depth_blt_fbo().
+      wined3d: Get resource info from the texture in surface_blt_fbo().
+      wined3d: Get resource info from the texture in surface_convert_depth_to_float().
+      wined3d: Allow swapchain sample counts to be overridden with a registry key.
+      ddraw: Do not destroy surfaces that are still attached.
+      ddraw: Avoid d3d_device_update_depth_stencil() in ddraw_surface_delete_attached_surface().
+      ddraw: Just return an error if we failed to find the predecessor in ddraw_surface_delete_attached_surface().
+      opengl32: Introduce WGL_WINE_query_renderer.
+      winex11: Implement WGL_WINE_query_renderer on top of GLX_MESA_query_renderer.
+      wined3d: Use WGL_WINE_query_renderer to query GPU information.
+      wined3d: Get resource info from the texture in wined3d_surface_depth_fill().
+      wined3d: Get resource info from the texture in surface_download_data().
+      wined3d: Get resource info from the texture in wined3d_surface_upload_data().
+      wined3d: Get resource info from the texture in surface_upload_from_surface().
+      wined3d: Get resource info from the texture in surface_set_compatible_renderbuffer().
+      wined3d: Get resource info from the texture in surface_load().
+      wined3d: Properly check if sRGB writes should be enabled in context_apply_clear_state().
+      wined3d: Require a valid rectangle pointer if rect_count is non-zero in device_clear_render_targets().
+      wined3d: Ignore the dirty region for swapchain presents more explicitly.
+      wined3d: Handle NULL rectangles in wined3d_swapchain_present().
+      wined3d: Explicitly check for WINED3DUSAGE_TEXTURE when validating surface dimensions in surface_private_setup().
+      wined3d: Get rid of the WINED3DUSAGE_OVERLAY check in gdi_surface_private_setup().
 
-Hugh McMaster (20):
-      reg: Allow either lowercase or uppercase 'x' when used with REG_DWORD.
-      reg/tests: Add more tests for REG_MULTI_SZ.
-      libwine: strtoulW and strtolW should set errno to ERANGE if an overflow will occur.
-      reg: Fail if the data value passed with REG_DWORD will cause an overflow.
-      reg/tests: Add a test for base 10 overflow.
-      reg/tests: Add a test for REG_NONE with no data argument.
-      reg/tests: Add two more tests for REG_MULTI_SZ.
-      reg: Add support for REG_MULTI_SZ.
-      reg/tests: Test handling of null and user-specified separators.
-      reg: Ignore the slash zero character sequence if a custom separator is specified.
-      reg: Fail if the data for REG_MULTI_SZ contains two adjacent separators.
-      reg: Fail if the data for REG_MULTI_SZ begins with a separator.
-      advapi32/tests: Fix typos.
-      advapi32/tests: Add tests for deleting the default value.
-      reg: Delete the default registry value instead of overwriting it.
-      reg: Display the default value name when ask_confirm() is passed "" for reg_info.
-      reg/tests: Add more tests for all supported data types.
-      po: Fix two mistakes in the Swedish translation.
-      reg: Correctly handle /ve commands with no data.
-      reg: Fail if REG_DWORD_BIG_ENDIAN is passed with no data argument.
+Hugh McMaster (3):
+      reg: Correctly handle cases with no data argument.
+      reg: Fail if /v is passed without an argument.
+      reg: Fail if multiple /v switches are passed in.
 
-Huw D. M. Davies (12):
-      ole32: Remove curDragTargetHWND since it's never used.
-      ole32: Move the GiveFeedback handling to a separate function.
-      ole32: Release IDropTarget when the mouse leaves.
-      ole32: Move DragEnter handling to a separate function.
-      ole32: Move end-of-drag handling to a separate function.
-      ole32: Don't send DragOver if we're about to drop or cancel.
-      ole32/tests: Move tests to a table driven mechanism.
-      ole32/tests: Add more drag and drop tests.
-      riched20/tests: Actually copy something to the clipboard.
-      riched20/tests: wAlignment should be compared to the PFA_ values.
-      riched20: Don't apply paragraph formatting until the end of paragraph.
-      riched20: Add handling for a few more special characters.
+Huw D. M. Davies (5):
+      gdi32: Generate EMR_POLYPOLY{LINE|GON}16 records if the co-ords fit.
+      gdi32: Don't update the bounds if any poly{line|gon} has fewer than two points.
+      gdi32/tests: Add tests for EMF PolyPolyline record creation.
+      riched20: \pard resets the reading direction.
+      riched20: Set the base embedding level for RTL paragraphs.
 
-Jacek Caban (14):
-      user32: Don't use window's parent as an owner if WS_CHILD style is not set.
-      user32: Added debug traces to SetParent.
-      mshtml: Added HTMLXMLHttpRequestFactory DISPID_VALUE implementation.
-      mshtml: Expose XMLHttpRequest constructor to scripts.
-      mshtml/tests: Fixed tests on some IE versions.
-      mshtml: Added IHTMLXMLHttpRequest::getResponseHeader implementation.
-      ntdll: Moved RegisterTraceGuids[AW] implementation to ntdll.
-      user32: Always enable owner window in EndDialog.
-      user32: Ignore WM_CHILDACTIVATE on disabled windows in DefMDIChildProc.
-      mshtml: Always return false in IHTMLDOMAttribute2::get_expando for detached attributes.
-      mshtml: Added support for IHTMLDOMAttribute::nodeValue property on detached attributes.
-      user32: Use proper window as dialog owner.
-      user32/tests: Added more dialog owner tests.
-      user32: Removed unused owner argument.
+Jacek Caban (6):
+      winex11.drv: Use grabbed window display in SetCapture.
+      kernel32: Don't set unconditionally SECTION_QUERY flag in OpenFileMapping.
+      msxml3: Store xmlnode reference in xmlnodemap object.
+      msxml6: Added support for CLSID_XMLSchemaCache60 in XMLSchemaCache60::QueryInterface.
+      mshtml: Fixed cloning comment nodes.
+      mshtml: Fixed copy&paste typo in GetAsciiHostPort implementation.
 
-Jactry Zeng (1):
-      kernel32/tests: Reset current directory of current process.
+Jens Reyer (1):
+      winegcc: Document WINEBUILD in the manpage.
 
-Jens Reyer (2):
-      loader: Fix macro-not-defined error from man.
-      winemaker: Fix macro-not-defined errors from man.
+Józef Kucia (43):
+      d3d10_1/tests: Port test_create_device() from d3d11.
+      d3d10core/tests: Add test for creating RTV with DXGI_FORMAT_UNKNOWN.
+      d3d11/tests: Add test for creating RTV with DXGI_FORMAT_UNKNOWN.
+      d3d10core/tests: Add test for creating DSV with DXGI_FORMAT_UNKNOWN.
+      d3d11/tests: Add test for creating DSV with DXGI_FORMAT_UNKNOWN.
+      d3d11/tests: Introduce d3d11_test_context for visual tests.
+      d3d11/tests: Introduce draw_quad().
+      wined3d: Recognize aoffimmi shader instruction modifier.
+      wined3d: Extend shader_glsl_gen_sample_code() to support offsets.
+      wined3d: Implement aoffimmi modifier for SM4 ld instruction in GLSL backend.
+      wined3d: Implement aoffimmi modifier for SM4 sample instructions in GLSL backend.
+      wined3d: Simplify shader_glsl_append_imm_ivec().
+      wined3d: Improve ERR() message in shader_glsl_get_sample_function().
+      d3d10core/tests: Introduce d3d10core_test_context for visual tests.
+      d3d10core/tests: Introduce draw_quad().
+      d3d11/tests: Drop redundant feature level check.
+      wined3d: Advertise WINED3DFMT_BC{4, 5}_UNORM 3D textures as not supported.
+      wined3d: Limit amount of video memory for older Windows versions.
+      d3d11/tests: Trace feature level.
+      d3d10core/tests: Move typeless textures test to test_create_texture{2d, 3d}().
+      d3d11/tests: Move typeless textures test to test_create_texture{2d, 3d}().
+      d3d11/tests: Add more create texture tests.
+      d3d11: Translate WINED3DERR_INVALIDCALL to E_INVALIDARG in d3d_texture{2d, 3d}_init().
+      d3d10core/tests: Add more create texture tests.
+      wined3d: Introduce debug_color().
+      wined3d: Implement depth clear in wined3d_device_clear_rendertarget_view().
+      wined3d: Implement stencil clear in wined3d_device_clear_rendertarget_view().
+      d3d11: Implement d3d11_immediate_context_ClearDepthStencilView().
+      d3d11: Implement d3d10_device_ClearDepthStencilView().
+      d3d10core/tests: Add test for ClearDepthStencilView().
+      d3d11/tests: Add test for ClearDepthStencilView().
+      d3d11: Fill unused fields in D3D11_DEPTH_STENCIL_DESC with default values.
+      d3d10core/tests: Test values of unused fields in D3D10_DEPTH_STENCIL_DESC.
+      d3d11/tests: Test values of unused fields in D3D11_DEPTH_STENCIL_DESC.
+      d3d11: Implement d3d11_immediate_context_OMSetDepthStencilState().
+      d3d11: Forward d3d10_device_OMSetDepthStencilState() to d3d11_immediate_context_OMSetDepthStencilState().
+      d3d11: Introduce debug_float4().
+      wined3d: Recognize SM5 ld_structured opcode.
+      wined3d: Recognize SM5 deriv_rtx_coarse opcode.
+      wined3d: Recognize SM5 deriv_rty_coarse opcode.
+      wined3d: Recognize SM5 deriv_rtx_fine opcode.
+      wined3d: Recognize SM5 deriv_rty_fine opcode.
+      wined3d: Use GLuint instead of GLenum to store ARB blitter shaders.
 
-Juan Jose Gonzalez (1):
-      include: Add HidD_GetSerialNumberString to ddk/hidsdi.h.
+Louis Lenders (1):
+      ntdll: Add stub for RtlAddAccessDeniedObjectAce and forward to AddAccessDeniedObjectAce in advapi32.
 
-Józef Kucia (23):
-      d3d10core/tests: Port test_create_typeless_resource() from d3d11.
-      d3d10core/tests: Introduce check_texture_color().
-      wined3d: Fix SM4 pixel shader output registers mapping.
-      d3d11/tests: Add test for multiple render targets.
-      d3d11/tests: Introduce check_texture_color().
-      d3d10core/tests: Port test_multiple_render_targets() from d3d11.
-      d3d10core/tests: Viewport properties are integers.
-      wined3d: Add support for WINED3DFMT_BC4_UNORM format.
-      wined3d: Add support for WINED3DFMT_BC5_UNORM format.
-      d3d11/tests: Add test for DXGI_FORMAT_BC4_UNORM format.
-      d3d11/tests: Add test for DXGI_FORMAT_BC5_UNORM format.
-      d3d10core/tests: Add test for DXGI_FORMAT_BC4_UNORM format.
-      d3d10core/tests: Add test for DXGI_FORMAT_BC5_UNORM format.
-      wined3d: Add support for WINED3DFMT_R11G11B10_FLOAT format.
-      d3d11: Recognize more BGR formats.
-      dxgi: Add recently introduced wined3d formats.
-      d3d11: Sync formats with dxgi.
-      d3d11/tests: Add test for creating SRV with DXGI_FORMAT_UNKNOWN.
-      d3d10core/tests: Add test for creating SRV with DXGI_FORMAT_UNKNOWN.
-      d3d11: Trace actual swapchain pointer in D3D11CreateDeviceAndSwapChain().
-      d3d10_1: Validate parameters in D3D10CreateDevice1().
-      d3d11/tests: Remove unnecessary explicit array sizes.
-      d3d10core/tests: Remove unnecessary explicit array sizes.
+Matteo Bruni (13):
+      d3dx9: Trace the parameter passed to IsParameterUsed().
+      d3d11/tests: Require feature level 11_0 or 10_0 by default.
+      dxgi: Add feature level support.
+      d3d11: Implement device_GetFeatureLevel().
+      d3d11: Only accept shader versions supported by the feature level of the device.
+      d3d11: Pass the requested feature levels to dxgi.
+      d3d11/tests: Add a test for the default feature level selection.
+      d3d11/tests: Test creating SM4 shaders on feature level 9.
+      d3dx9: Cleanup header includes.
+      d3d10core: Add feature level support.
+      wined3d: Enable SM5 shaders in the GLSL backend, when possible.
+      d3d11/tests: Add a feature_level parameter to init_test_context().
+      d3d11/tests: Test relative addressing in constant buffers.
 
-Ken Thomases (1):
-      winemac: Simplify and optimize making a GL context current with no view.
+Michael Stefaniuc (7):
+      dbghelp: Use CONTAINING_RECORD instead of reimplementing it.
+      riched20: Use SetRectEmpty() instead of open coding it.
+      winefile: Use SetRectEmpty() instead of open coding it.
+      wined3d: Use SetRect() instead of open coding it.
+      winex11: Use debugstr_a to print strings that can be NULL.
+      d3drm: Use debugstr_a to print a string that can be NULL.
+      dinput: Support IUnknown in the IDirectInputEffect COM object.
 
-Lauri Kenttä (2):
-      po: Update Finnish translation.
-      po: Update Swedish translation.
+Miklós Máté (2):
+      wined3d: Warn only once about unsupported wrap state.
+      winex11: Don't create a temporary context each time X11DRV_wglBindTexImageARB is called.
 
-Louis Lenders (2):
-      ntdll: Add stub for RtlAddAuditAccessObjectAce and forward to AddAuditAccessObjectAce in advapi32.
-      ntdll: Add stub for RtlAddAccessAllowedObjectAce and forward to AddAccessAllowedObjectAce in advapi32.
+Nikolay Sivov (29):
+      ole32/tests: Fix tests failing on limited account.
+      ole32/tests: Don't trace last error when error code is returned directly.
+      ole32/tests: Fixed CoGetPSClsid() test failures when running on limited account.
+      dwrite: Use correct return code on allocation failure.
+      dwrite: Update to IDWriteFont3.
+      include: Added IDWriteFactory3 method definitions.
+      notepad: Make sure to use large enough buffer when composing window title (Coverity).
+      oleview: Fix buffer length passed to Reg* functions (Coverity).
+      dwrite: Update to IDWriteFontFamily1.
+      dwrite: Implement IDWriteFontFamily1::GetFont().
+      dwrite: Update to IDWriteFontCollection1.
+      dwrite: Remove flag marking system collections.
+      dwrite: Update to IDWriteFontList1.
+      ole32/tests: A test to show data cache QI problems.
+      avifil32: Use matching buffer length for dest string (Coverity).
+      ole32: Implement CoGetCurrentLogicalThreadId().
+      ole32: Implement IComThreadingInfo::GetCurrentLogicalThreadId().
+      mpr: Implement WNetUseConnectionA().
+      ieframe: Handle CreateView() failure in ActivateMe() (Coverity).
+      xmllite: Support get/set for XmlResolver property.
+      msxml3: Accept VT_UNKNOWN input for IXMLDOMSchemaCollection::add().
+      comctl32/monthcal: MCM_GETRANGE does not return BOOL values.
+      ole32: Use CoGetApartmentType() to implement IComThreadingInfo.
+      comctl32/monthcal: Always reset range flags and date limits on MCM_SETRANGE.
+      comctl32/datetime: Use MCM_GETRANGE result directly in DTM_GETRANGE.
+      xmllite/writer: Implement WriteComment().
+      ole32: Fix refcounting of IObjContext per-thread instance.
+      ole32/tests: Some tests for IInitializeSpy.
+      xmllite/writer: Implement WriteCData().
 
-Marcus Meissner (1):
-      manpages: Markup fixes.
+Patrick Armstrong (3):
+      bcrypt: Implement MD5 algorithm and add tests.
+      bcrypt: Make BCryptHashData behave more like Windows with empty input.
+      bcrypt: Implement support for HMAC.
 
-Matteo Bruni (3):
-      opengl32: Move a TRACE to the proper place.
-      makedep: Use an unsigned constant in hash_filename.
-      wined3d: Add a setting to check relative addressing indices when accessing uniforms.
+Paul Gofman (3):
+      d3dx9: IsParameterUsed stub should return TRUE.
+      d3dx9: Support setting texture through SetValue in effect.
+      d3dx9: Fix D3DXIntersectTri function.
 
-Michael Müller (4):
-      user32: Preserve beginning of extra data for MDI windows.
-      advapi32: Implement RegCopyTreeA/W.
-      shutdown: Add stub implementation.
-      ole32: Implement semi-stub for CoGetApartmentType.
+Pierre Schweitzer (1):
+      mpr: Don't send lpRemoteName when requesting network place.
 
-Michael Stefaniuc (11):
-      webservices: Print the debug string and not the pointer to it.
-      d3dx9/tests: Avoid a TRUE:FALSE conditional expression.
-      winegstreamer: Avoid a FALSE:TRUE conditional expression.
-      ddraw: Use SetRectEmpty() instead of open coding it.
-      wined3d: Use SetRectEmpty() instead of open coding it.
-      comctl32: Use SetRectEmty() instead of open coding it.
-      user32/tests: Use SetRectEmpty() instead of open coding it.
-      shell32/tests: Use SetRectEmpty() instead of open coding it.
-      d3dx9/tests: Avoid using an empty rect for a test.
-      d3dx9/tests: Use SetRectEmpty() instead of open coding it.
-      gdi32/tests: Use SetRectEmpty() instead of open coding it.
+Piotr Caban (17):
+      user32: Return window procedure pointer in WINPROC_AllocProc if it's not possible to allocate handle.
+      user32/tests: Add initial out of window procedure slots test.
+      user32: Call window procedure even if we're out of winproc handles.
+      user32/tests: Show that message conversion should work on window procedures without handles.
+      user32/tests: Show that messages are not converted when function pointer is passed to CallWindowProc.
+      msvcrt: Add i386 _IsExceptionObjectToBeDestroyed implementation.
+      msvcrt: Destroy exception object if it's no longer used when exiting catch.
+      msvcrt: Handle try blocks inside current catch block in nested frame handler.
+      msvcrt: Destroy exception object when frame storing it is unwound.
+      msvcr80: Add _CreateFrameInfo implementation.
+      msvcr80: Add _FindAndUnlinkFrame implementation.
+      msvcrt: Add __CxxRegisterExceptionObject implementation.
+      msvcrt: Add __DestructExceptionObject implementation.
+      msvcrt: Add __CxxUnregisterExceptionObject partial implementation.
+      msvcr80: Use Cxx(Un)RegisterExceptionObject helpers in i386 nested exception handler.
+      msvcrt: Handle non c++ exceptions in __DestructExceptionObject.
+      msvcrt: Destroy thrown c++ object before calling handler in _except_handler4_common.
 
-Miklós Máté (1):
-      winex11: Add 1280x960 resolution.
+Sebastian Lackner (9):
+      services: Fix a typo.
+      services: Hold scmdatabase lock while checking marked_for_delete.
+      services: Initialize service ref_count directly in service_create.
+      services: Introduce refcounting for processes.
+      services: Pass a process argument to send_start_message function.
+      services: Pass a process argument to send_control function.
+      services: Pass a process argument to wait_for_startup function.
+      setupapi: Fix parsing of inf files containing garbage at the beginning of the file.
+      ieframe: Fix implementation of impl_from_ITargetFrame2.
 
-Nikolay Sivov (14):
-      dwrite: Trace GetPaletteEntries() failure (Coverity).
-      dwrite: Handle font data initialization failure when building collections.
-      include: Fix IsBad* prototypes.
-      gdi32: Use a macro instead of accessing FT_Face flags directly.
-      d3drm: Implement SetAppData/GetAppData for a viewport.
-      dwrite: Update to IDWriteFontFace3.
-      dwrite: Implement HasCharacter() for a fontface.
-      po: Update Russian translation.
-      d3drm: Support IDirect3DRMObject in viewport QI.
-      d3drm: Implement AddDestroyCallback/DeleteDestroyCallback for a viewport.
-      ole32: Don't call spy on IMalloc::Free(NULL).
-      ole32: Improve CoRegisterMallocSpy/CoRevokeMallocSpy state and parameter validation.
-      ole32: Hold a lock when checking is spy is already registered.
-      d3drm: Remove first found callback, not all of them.
-
-Paul Gofman (10):
-      wined3d: Bind default sampler object when setting sampler state with no texture.
-      d3dx9: Don't pass usage flags when creating temporary texture
-      d3dx9: D3DXQuaternionToAxisAngle should not crash on NULLs in output parameters.
-      d3dx9: Add test for basic effect state management.
-      d3dx9: Implement simple effect states application.
-      d3dx9: Implement light and material effect states application.
-      d3dx9: Implement shader constants effect states application.
-      d3dx9: Implement sampler and texture effect states application.
-      d3dx9: Implement state save and restore in effect.
-      d3dx9: Implement CommitChanges in effect.
-
-Piotr Caban (11):
-      msvcrt: Don't close HANDLE if stdout or stderr is sharing it.
-      msvcrt/tests: Add close tests on file descriptors that use the same HANDLE.
-      msvcp120: Add _Thrd_start implementation.
-      msvcp110: Add _Pad class stub.
-      msvcp110: Add _Pad implementation.
-      msvcp120/tests: Added _Pad class tests.
-      msvcp120/tests: Run _Unlink tests inside temp directory.
-      msvcp110: Add _Thrd_detach implementation.
-      msvcp100: Add std::system_category() implementation.
-      msvcp100: Add std::generic_category() implementation.
-      msvcrt: Fix 64-bit _CxxThrowException implementation.
-
-Sebastian Lackner (19):
-      ntdll/tests: Allow broken SpinCount for some Win 8+ systems.
-      winedevice: Use LdrFindEntryForAddress to find LDR_MODULE address.
-      winedevice: Get rid of global driver_hkey variable and fix some leaks.
-      advapi32/tests: Improve RegDeleteTree tests.
-      advapi32/tests: Add tests for RegCopyTree.
-      advapi32: Simplify and clean up RegDeleteTree implementation.
-      oleaut32: Set DebugInfo for static CRITICAL_SECTION structure.
-      wined3d: Fix transposed lines in WARN message.
-      wined3d: Fix TRACE in wined3d_texture_update_desc function.
-      services: Consistently use InterlockedIncrement to increment refcount.
-      services: Remove pipe argument from service_send_command function.
-      services: Do not distinguish between shared/exclusive lock.
-      services: Get rid of unnecessary locks.
-      services: Fix calculation of service timeout.
-      advapi32: Fix RegDeleteTreeW when an empty string is passed.
-      services/tests: Consistently terminate service_{ok,trace} strings with linebreak.
-      services/tests: Initialize critical section just once.
-      services: Store a separate variable instead of clearing control_mutex.
-      services: Move process related fields into a separate struct.
-
-Shu Yokoyama (1):
-      winex11: Fix HRESULT handling in XdndPosition.
-
-Stefan Dösinger (16):
-      wined3d: Retrieve FBO attachments from GL in context_check_fbo_status.
-      wined3d: Keep track of FBOs through the GL names.
-      wined3d: Better integrate the fixed up DS in the new FBO cache handling.
-      wined3d: Simplify FBO cleanup on resource destruction.
-      wined3d: Check multisampling compatibility before finding the FBO key.
-      wined3d: Remove fbo_entry->d3d_depth_stencil.
-      wined3d: Rotate through swapchain buffers.
-      d3d9/tests: Test multisample flip.
-      d3d8/tests: Test multisample flip.
-      d3d10core/tests: Test swapchain buffer cycling.
-      wined3d: Get rid of the offscreenBuffer field in struct wined3d_device.
-      wined3d: Get rid of wined3d_surface_ops.surface_unmap().
-      wined3d: Cleanup sub-resource buffer objects in wined3d_texture_cleanup().
-      wined3d: Merge surface_prepare_buffer() and wined3d_volume_prepare_pbo().
-      wined3d: Merge surface_remove_pbo() and wined3d_volume_free_pbo().
-      wined3d: Call wined3d_texture_set_dirty() in wined3d_volume_invalidate_location().
-
-Thomas Faber (3):
-      ntdll/tests: Test NtOpenKey with zero access.
-      msi: Do not open registry keys with no access rights.
-      ole32: Do not open registry keys with no access rights.
+Stefan Dösinger (10):
+      wined3d: Merge surface_prepare_map_memory() into wined3d_surface_prepare().
+      wined3d: Call wined3d_surface_prepare() in surface_load_sysmem().
+      wined3d: Call wined3d_volume_prepare_location() in wined3d_volume_load_location().
+      wined3d: Merge wined3d_surface_unmap() and wined3d_volume_unmap().
+      wined3d: Merge wined3d_surface_map() and wined3d_volume_map().
+      wined3d: Introduce wined3d_texture_use_pbo().
+      wined3d: Merge wined3d_surface_update_desc() into wined3d_texture_update_desc().
+      wined3d: Get rid of texture_ops.texture_sub_resource_add_dirty_region().
+      wined3d: Get rid of state access in shader_generate_glsl_declarations().
+      wined3d: Avoid storing a material pointer in struct wined3d_cs_set_material.
 
 Vincent Povirk (3):
-      mscoree/tests: Check if the runtime is usable before loading it.
-      mscoree: Update Wine Mono to 4.6.0.
-      mscoree/tests: Loading the runtime works on x86-64 now.
+      mscoree: Restore previous domain whenever we set it.
+      user32: Set capture earlier on popup menus.
+      user32: Skip menu loop for empty popup menus.
 
-YongHao Hu (2):
-      msvcp110: Add tr2_sys__Unlink implementation and test.
-      msvcp110: Add tr2_sys__Stat_wchar and tr2_sys__Lstat_wchar implementation and test.
+Zhenbo Li (1):
+      authz: Stub AuthzAccessCheck, AuthzFreeContext, AuthzInitializeContextFromSid, AuthzInitializeContextFromToken.
 
 --
 Alexandre Julliard
