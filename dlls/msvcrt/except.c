@@ -400,6 +400,15 @@ void CDECL __DestructExceptionObject(EXCEPTION_RECORD *rec)
 
     TRACE("(%p)\n", rec);
 
+    if (rec->ExceptionCode != CXX_EXCEPTION) return;
+#ifndef __x86_64__
+    if (rec->NumberParameters != 3) return;
+#else
+    if (rec->NumberParameters != 4) return;
+#endif
+    if (rec->ExceptionInformation[0] < CXX_FRAME_MAGIC_VC6 ||
+            rec->ExceptionInformation[0] > CXX_FRAME_MAGIC_VC8) return;
+
     if (!info || !info->destructor)
         return;
 
