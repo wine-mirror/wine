@@ -219,6 +219,7 @@ typedef struct
 
 BOOL __cdecl __CxxRegisterExceptionObject(EXCEPTION_RECORD**, cxx_frame_info*);
 void __cdecl __CxxUnregisterExceptionObject(cxx_frame_info*, BOOL);
+void CDECL __DestructExceptionObject(EXCEPTION_RECORD*);
 
 /* TLS data */
 extern DWORD msvcrt_tls_index DECLSPEC_HIDDEN;
