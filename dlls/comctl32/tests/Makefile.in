@@ -2,6 +2,7 @@ TESTDLL   = comctl32.dll
 IMPORTS   = comctl32 ole32 user32 gdi32 advapi32
 
 C_SRCS = \
+	animate.c \
 	button.c \
 	comboex.c \
 	datetime.c \
