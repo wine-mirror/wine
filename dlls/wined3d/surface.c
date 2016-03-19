@@ -2210,7 +2210,9 @@ static void surface_prepare_rb(struct wined3d_surface *surface, const struct win
 static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struct wined3d_surface *src_surface,
         const RECT *src_rect, const RECT *dst_rect_in, enum wined3d_texture_filter_type filter)
 {
-    struct wined3d_device *device = dst_surface->resource.device;
+    struct wined3d_texture *src_texture = src_surface->container;
+    struct wined3d_texture *dst_texture = dst_surface->container;
+    struct wined3d_device *device = dst_texture->resource.device;
     const struct wined3d_gl_info *gl_info;
     float xrel, yrel;
     struct wined3d_context *context;
@@ -2230,11 +2232,11 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
     context = context_acquire(device, src_surface);
     gl_info = context->gl_info;
     context_apply_blit_state(context, device);
-    wined3d_texture_load(dst_surface->container, context, FALSE);
+    wined3d_texture_load(dst_texture, context, FALSE);
 
     /* Bind the target texture */
-    context_bind_texture(context, dst_surface->container->target, dst_surface->container->texture_rgb.name);
-    if (wined3d_resource_is_offscreen(&src_surface->container->resource))
+    context_bind_texture(context, dst_texture->target, dst_texture->texture_rgb.name);
+    if (wined3d_resource_is_offscreen(&src_texture->resource))
     {
         TRACE("Reading from an offscreen target\n");
         upsidedown = !upsidedown;
