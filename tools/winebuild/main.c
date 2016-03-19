@@ -84,10 +84,10 @@ const char *output_file_name = NULL;
 static const char *output_file_source_name;
 static int fake_module;
 
-struct strarray *as_command = NULL;
-struct strarray *cc_command = NULL;
-struct strarray *ld_command = NULL;
-struct strarray *nm_command = NULL;
+struct strarray as_command = { 0 };
+struct strarray cc_command = { 0 };
+struct strarray ld_command = { 0 };
+struct strarray nm_command = { 0 };
 char *cpu_option = NULL;
 char *arch_option = NULL;
 

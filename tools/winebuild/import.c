@@ -500,15 +500,14 @@ static char *create_undef_symbols_file( DLLSPEC *spec )
 static const char *ldcombine_files( DLLSPEC *spec, char **argv )
 {
     char *ld_tmp_file, *undef_file;
-    struct strarray *args = get_ld_command();
+    struct strarray args = get_ld_command();
 
     undef_file = create_undef_symbols_file( spec );
     ld_tmp_file = get_temp_file_name( output_file_name, ".o" );
 
-    strarray_add( args, "-r", "-o", ld_tmp_file, undef_file, NULL );
-    strarray_addv( args, argv );
+    strarray_add( &args, "-r", "-o", ld_tmp_file, undef_file, NULL );
+    strarray_addv( &args, argv );
     spawn( args );
-    strarray_free( args );
     return ld_tmp_file;
 }
 
@@ -1327,7 +1326,7 @@ void output_imports( DLLSPEC *spec )
 /* output an import library for a Win32 module and additional object files */
 void output_import_lib( DLLSPEC *spec, char **argv )
 {
-    struct strarray *args;
+    struct strarray args;
     char *def_file;
     const char *as_flags, *m_flag;
 
@@ -1357,19 +1356,17 @@ void output_import_lib( DLLSPEC *spec, char **argv )
             m_flag = NULL;
             break;
     }
-    strarray_add( args, "-k", "-l", output_file_name, "-d", def_file, NULL );
+    strarray_add( &args, "-k", "-l", output_file_name, "-d", def_file, NULL );
     if (m_flag)
-        strarray_add( args, "-m", m_flag, as_flags, NULL );
+        strarray_add( &args, "-m", m_flag, as_flags, NULL );
     spawn( args );
-    strarray_free( args );
 
     if (argv[0])
     {
         args = find_tool( "ar", NULL );
-        strarray_add( args, "rs", output_file_name, NULL );
-        strarray_addv( args, argv );
+        strarray_add( &args, "rs", output_file_name, NULL );
+        strarray_addv( &args, argv );
         spawn( args );
-        strarray_free( args );
     }
     output_file_name = NULL;
 }

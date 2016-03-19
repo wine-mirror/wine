@@ -229,10 +229,9 @@ extern char *xstrdup( const char *str );
 extern char *strupper(char *s);
 extern int strendswith(const char* str, const char* end);
 extern char *strmake(const char* fmt, ...) __attribute__((__format__ (__printf__, 1, 2 )));
-extern struct strarray *strarray_fromstring( const char *str, const char *delim );
+extern struct strarray strarray_fromstring( const char *str, const char *delim );
 extern void strarray_add( struct strarray *array, ... );
 extern void strarray_addv( struct strarray *array, char * const *argv );
-extern void strarray_free( struct strarray *array );
 extern DECLSPEC_NORETURN void fatal_error( const char *msg, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern DECLSPEC_NORETURN void fatal_perror( const char *msg, ... )
@@ -245,10 +244,10 @@ extern int output( const char *format, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern void output_cfi( const char *format, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
-extern void spawn( struct strarray *array );
-extern struct strarray *find_tool( const char *name, const char * const *names );
-extern struct strarray *get_as_command(void);
-extern struct strarray *get_ld_command(void);
+extern void spawn( struct strarray array );
+extern struct strarray find_tool( const char *name, const char * const *names );
+extern struct strarray get_as_command(void);
+extern struct strarray get_ld_command(void);
 extern const char *get_nm_command(void);
 extern void cleanup_tmp_files(void);
 extern char *get_temp_file_name( const char *prefix, const char *suffix );
@@ -357,10 +356,10 @@ extern FILE *output_file;
 extern const char *output_file_name;
 extern char **lib_path;
 
-extern struct strarray *as_command;
-extern struct strarray *cc_command;
-extern struct strarray *ld_command;
-extern struct strarray *nm_command;
+extern struct strarray as_command;
+extern struct strarray cc_command;
+extern struct strarray ld_command;
+extern struct strarray nm_command;
 extern char *cpu_option;
 extern char *arch_option;
 extern int thumb_mode;
