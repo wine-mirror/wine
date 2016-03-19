@@ -39,7 +39,6 @@
 #include "build.h"
 
 int UsePIC = 0;
-int nb_lib_paths = 0;
 int nb_errors = 0;
 int display_warnings = 0;
 int kill_at = 0;
@@ -75,7 +74,6 @@ enum target_platform target_platform = PLATFORM_UNSPECIFIED;
 #endif
 
 char *target_alias = NULL;
-char **lib_path = NULL;
 
 char *input_file_name = NULL;
 char *spec_file_name = NULL;
@@ -84,6 +82,7 @@ const char *output_file_name = NULL;
 static const char *output_file_source_name;
 static int fake_module;
 
+struct strarray lib_path = { 0 };
 struct strarray as_command = { 0 };
 struct strarray cc_command = { 0 };
 struct strarray ld_command = { 0 };
@@ -97,8 +96,7 @@ int thumb_mode = 1;
 int thumb_mode = 0;
 #endif
 
-static int nb_res_files;
-static char **res_files;
+static struct strarray res_files;
 
 /* execution mode */
 enum exec_mode_values
@@ -399,8 +397,7 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             /* ignored, because cc generates correct code. */
             break;
         case 'L':
-            lib_path = xrealloc( lib_path, (nb_lib_paths+1) * sizeof(*lib_path) );
-            lib_path[nb_lib_paths++] = xstrdup( optarg );
+            strarray_add( &lib_path, xstrdup( optarg ), NULL );
             break;
         case 'm':
             if (!strcmp( optarg, "16" )) spec->type = SPEC_WIN16;
@@ -465,8 +462,7 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             }
             break;
         case 'r':
-            res_files = xrealloc( res_files, (nb_res_files+1) * sizeof(*res_files) );
-            res_files[nb_res_files++] = xstrdup( optarg );
+            strarray_add( &res_files, xstrdup( optarg ), NULL );
             break;
         case 'u':
             add_extra_ld_symbol( optarg );
@@ -566,14 +562,14 @@ static void load_resources( char *argv[], DLLSPEC *spec )
     switch (spec->type)
     {
     case SPEC_WIN16:
-        for (i = 0; i < nb_res_files; i++) load_res16_file( res_files[i], spec );
+        for (i = 0; i < res_files.count; i++) load_res16_file( res_files.str[i], spec );
         break;
 
     case SPEC_WIN32:
-        for (i = 0; i < nb_res_files; i++)
+        for (i = 0; i < res_files.count; i++)
         {
-            if (!load_res32_file( res_files[i], spec ))
-                fatal_error( "%s is not a valid Win32 resource file\n", res_files[i] );
+            if (!load_res32_file( res_files.str[i], spec ))
+                fatal_error( "%s is not a valid Win32 resource file\n", res_files.str[i] );
         }
 
         /* load any resource file found in the remaining arguments */

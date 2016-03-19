@@ -45,10 +45,7 @@
 # define PATH_SEPARATOR ':'
 #endif
 
-static const char **tmp_files;
-static unsigned int nb_tmp_files;
-static unsigned int max_tmp_files;
-
+static struct strarray tmp_files;
 static struct strarray empty_strarray;
 
 static const struct
@@ -77,7 +74,7 @@ static const struct
 void cleanup_tmp_files(void)
 {
     unsigned int i;
-    for (i = 0; i < nb_tmp_files; i++) if (tmp_files[i]) unlink( tmp_files[i] );
+    for (i = 0; i < tmp_files.count; i++) if (tmp_files.str[i]) unlink( tmp_files.str[i] );
 }
 
 
@@ -497,12 +494,7 @@ char *get_temp_file_name( const char *prefix, const char *suffix )
     }
 
     close( fd );
-    if (nb_tmp_files >= max_tmp_files)
-    {
-        max_tmp_files = max( 2 * max_tmp_files, 8 );
-        tmp_files = xrealloc( tmp_files, max_tmp_files * sizeof(tmp_files[0]) );
-    }
-    tmp_files[nb_tmp_files++] = name;
+    strarray_add_one( &tmp_files, name );
     return name;
 }
 

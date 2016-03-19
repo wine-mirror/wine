@@ -341,7 +341,6 @@ extern void align_output( unsigned int align );
 
 extern int current_line;
 extern int UsePIC;
-extern int nb_lib_paths;
 extern int nb_errors;
 extern int display_warnings;
 extern int kill_at;
@@ -354,8 +353,8 @@ extern char *input_file_name;
 extern char *spec_file_name;
 extern FILE *output_file;
 extern const char *output_file_name;
-extern char **lib_path;
 
+extern struct strarray lib_path;
 extern struct strarray as_command;
 extern struct strarray cc_command;
 extern struct strarray ld_command;

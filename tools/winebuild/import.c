@@ -50,16 +50,10 @@ struct import
     int          nb_imports;  /* number of imported functions */
 };
 
-struct name_table
-{
-    char **names;
-    unsigned int count, size;
-};
-
-static struct name_table undef_symbols;    /* list of undefined symbols */
-static struct name_table extra_ld_symbols; /* list of extra symbols that ld should resolve */
-static struct name_table delayed_imports;  /* list of delayed import dlls */
-static struct name_table ext_link_imports; /* list of external symbols to link to */
+static struct strarray undef_symbols;    /* list of undefined symbols */
+static struct strarray extra_ld_symbols; /* list of extra symbols that ld should resolve */
+static struct strarray delayed_imports;  /* list of delayed import dlls */
+static struct strarray ext_link_imports; /* list of external symbols to link to */
 
 static struct import **dll_imports = NULL;
 static int nb_imports = 0;      /* number of imported dlls (delayed or not) */
@@ -93,41 +87,28 @@ static int func_cmp( const void *func1, const void *func2 )
                    odp2->name ? odp2->name : odp2->export_name );
 }
 
-/* add a name to a name table */
-static inline void add_name( struct name_table *table, const char *name )
-{
-    if (table->count == table->size)
-    {
-        table->size += (table->size / 2);
-        if (table->size < 32) table->size = 32;
-        table->names = xrealloc( table->names, table->size * sizeof(*table->names) );
-    }
-    table->names[table->count++] = xstrdup( name );
-}
-
 /* remove a name from a name table */
-static inline void remove_name( struct name_table *table, unsigned int idx )
+static inline void remove_name( struct strarray *table, unsigned int idx )
 {
     assert( idx < table->count );
-    free( table->names[idx] );
-    memmove( table->names + idx, table->names + idx + 1,
-             (table->count - idx - 1) * sizeof(*table->names) );
+    memmove( table->str + idx, table->str + idx + 1,
+             (table->count - idx - 1) * sizeof(*table->str) );
     table->count--;
 }
 
 /* locate a name in a (sorted) list */
-static inline const char *find_name( const char *name, const struct name_table *table )
+static inline const char *find_name( const char *name, const struct strarray *table )
 {
     char **res = NULL;
 
-    if (table->count) res = bsearch( &name, table->names, table->count, sizeof(*table->names), name_cmp );
+    if (table->count) res = bsearch( &name, table->str, table->count, sizeof(*table->str), name_cmp );
     return res ? *res : NULL;
 }
 
 /* sort a name table */
-static inline void sort_names( struct name_table *table )
+static inline void sort_names( struct strarray *table )
 {
-    if (table->count) qsort( table->names, table->count, sizeof(*table->names), name_cmp );
+    if (table->count) qsort( table->str, table->count, sizeof(*table->str), name_cmp );
 }
 
 /* locate an export in a (sorted) export list */
@@ -160,7 +141,7 @@ static int is_delayed_import( const char *name )
 
     for (i = 0; i < delayed_imports.count; i++)
     {
-        if (!strcmp( delayed_imports.names[i], name )) return 1;
+        if (!strcmp( delayed_imports.str[i], name )) return 1;
     }
     return 0;
 }
@@ -199,11 +180,11 @@ static char *try_library_path( const char *path, const char *name )
 static char *find_library( const char *name )
 {
     char *fullname;
-    int i;
+    unsigned int i;
 
-    for (i = 0; i < nb_lib_paths; i++)
+    for (i = 0; i < lib_path.count; i++)
     {
-        if ((fullname = try_library_path( lib_path[i], name ))) return fullname;
+        if ((fullname = try_library_path( lib_path.str[i], name ))) return fullname;
     }
     fatal_error( "could not open .def file for %s\n", name );
     return NULL;
@@ -310,13 +291,12 @@ void add_delayed_import( const char *name )
     struct import *imp;
     char *fullname = get_dll_name( name, NULL );
 
-    add_name( &delayed_imports, fullname );
+    strarray_add( &delayed_imports, fullname, NULL );
     if ((imp = is_already_imported( fullname )) && !imp->delay)
     {
         imp->delay = 1;
         nb_delayed++;
     }
-    free( fullname );
 }
 
 /* remove an imported dll, based on its index in the dll_imports array */
@@ -333,7 +313,7 @@ static void remove_import_dll( int index )
 /* add a symbol to the list of extra symbols that ld must resolve */
 void add_extra_ld_symbol( const char *name )
 {
-    add_name( &extra_ld_symbols, name );
+    strarray_add( &extra_ld_symbols, name, NULL );
 }
 
 /* add a function to the list of imports from a given dll */
@@ -453,7 +433,7 @@ static void check_undefined_exports( DLLSPEC *spec )
                 if (link_ext_symbols)
                 {
                     odp->flags |= FLAG_EXT_LINK;
-                    add_name( &ext_link_imports, odp->link_name );
+                    strarray_add( &ext_link_imports, odp->link_name, NULL );
                 }
                 else error( "%s:%d: function '%s' not defined\n",
                             spec->src_name, odp->lineno, odp->link_name );
@@ -487,7 +467,7 @@ static char *create_undef_symbols_file( DLLSPEC *spec )
         fprintf( f, "\t%s %s\n", get_asm_ptr_keyword(), asm_name(odp->link_name) );
     }
     for (j = 0; j < extra_ld_symbols.count; j++)
-        fprintf( f, "\t%s %s\n", get_asm_ptr_keyword(), asm_name(extra_ld_symbols.names[j]) );
+        fprintf( f, "\t%s %s\n", get_asm_ptr_keyword(), asm_name(extra_ld_symbols.str[j]) );
     fclose( f );
 
     obj_file = get_temp_file_name( output_file_name, ".o" );
@@ -543,7 +523,7 @@ void read_undef_symbols( DLLSPEC *spec, char **argv )
         while (*p == ' ') p++;
         if (p[0] == 'U' && p[1] == ' ' && p[2]) p += 2;
         if (prefix_len && !strncmp( p, name_prefix, prefix_len )) p += prefix_len;
-        add_name( &undef_symbols, p );
+        strarray_add( &undef_symbols, xstrdup( p ), NULL );
     }
     if ((err = pclose( f ))) warning( "%s failed with status %d\n", cmd, err );
     free( cmd );
@@ -564,7 +544,7 @@ void resolve_imports( DLLSPEC *spec )
 
         for (j = removed = 0; j < undef_symbols.count; j++)
         {
-            odp = find_export( undef_symbols.names[j], imp->exports, imp->nb_exports );
+            odp = find_export( undef_symbols.str[j], imp->exports, imp->nb_exports );
             if (odp)
             {
                 if (odp->flags & FLAG_PRIVATE) continue;
@@ -1145,7 +1125,7 @@ static void output_external_link_imports( DLLSPEC *spec )
     /* get rid of duplicate names */
     for (i = 1; i < ext_link_imports.count; i++)
     {
-        if (!strcmp( ext_link_imports.names[i-1], ext_link_imports.names[i] ))
+        if (!strcmp( ext_link_imports.str[i-1], ext_link_imports.str[i] ))
             remove_name( &ext_link_imports, i-- );
     }
 
@@ -1154,7 +1134,7 @@ static void output_external_link_imports( DLLSPEC *spec )
     output( "\t.align %d\n", get_alignment(get_ptr_size()) );
     output( ".L__wine_spec_external_links:\n" );
     for (i = 0; i < ext_link_imports.count; i++)
-        output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name(ext_link_imports.names[i]) );
+        output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name(ext_link_imports.str[i]) );
 
     output( "\n\t.text\n" );
     output( "\t.align %d\n", get_alignment(get_ptr_size()) );
@@ -1162,7 +1142,7 @@ static void output_external_link_imports( DLLSPEC *spec )
 
     for (i = pos = 0; i < ext_link_imports.count; i++)
     {
-        char *buffer = strmake( "__wine_spec_ext_link_%s", ext_link_imports.names[i] );
+        char *buffer = strmake( "__wine_spec_ext_link_%s", ext_link_imports.str[i] );
         output_import_thunk( buffer, ".L__wine_spec_external_links", pos );
         free( buffer );
         pos += get_ptr_size();
