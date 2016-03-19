@@ -2110,7 +2110,8 @@ error:
  * switch to a different context and restore the original one before return. */
 void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb, struct wined3d_context *old_ctx)
 {
-    struct wined3d_device *device = surface->resource.device;
+    struct wined3d_texture *texture = surface->container;
+    struct wined3d_device *device = texture->resource.device;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context = old_ctx;
     struct wined3d_surface *restore_rt = NULL;
@@ -2124,12 +2125,12 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb, struct 
     gl_info = context->gl_info;
     device_invalidate_state(device, STATE_FRAMEBUFFER);
 
-    wined3d_texture_prepare_texture(surface->container, context, srgb);
-    wined3d_texture_bind_and_dirtify(surface->container, context, srgb);
+    wined3d_texture_prepare_texture(texture, context, srgb);
+    wined3d_texture_bind_and_dirtify(texture, context, srgb);
 
     TRACE("Reading back offscreen render target %p.\n", surface);
 
-    if (wined3d_resource_is_offscreen(&surface->container->resource))
+    if (wined3d_resource_is_offscreen(&texture->resource))
         gl_info->gl_ops.gl.p_glReadBuffer(context_get_offscreen_gl_buffer(context));
     else
         gl_info->gl_ops.gl.p_glReadBuffer(surface_get_gl_buffer(surface));
