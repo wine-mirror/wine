@@ -1992,7 +1992,8 @@ do { \
 static void read_from_framebuffer(struct wined3d_surface *surface,
         struct wined3d_context *old_ctx, DWORD dst_location)
 {
-    struct wined3d_device *device = surface->resource.device;
+    struct wined3d_texture *texture = surface->container;
+    struct wined3d_device *device = texture->resource.device;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context = old_ctx;
     struct wined3d_surface *restore_rt = NULL;
@@ -2018,7 +2019,7 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
      * There is no need to keep track of the current read buffer or reset it, every part of the code
      * that reads sets the read buffer as desired.
      */
-    if (wined3d_resource_is_offscreen(&surface->container->resource))
+    if (wined3d_resource_is_offscreen(&texture->resource))
     {
         /* Mapping the primary render target which is not on a swapchain.
          * Read from the back buffer. */
@@ -2042,16 +2043,16 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
         checkGLcall("glBindBuffer");
     }
 
-    wined3d_texture_get_pitch(surface->container, surface->texture_level, &row_pitch, &slice_pitch);
+    wined3d_texture_get_pitch(texture, surface->texture_level, &row_pitch, &slice_pitch);
 
     /* Setup pixel store pack state -- to glReadPixels into the correct place */
-    gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_ROW_LENGTH, row_pitch / surface->resource.format->byte_count);
+    gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_ROW_LENGTH, row_pitch / texture->resource.format->byte_count);
     checkGLcall("glPixelStorei");
 
     gl_info->gl_ops.gl.p_glReadPixels(0, 0,
             surface->resource.width, surface->resource.height,
-            surface->resource.format->glFormat,
-            surface->resource.format->glType, data.addr);
+            texture->resource.format->glFormat,
+            texture->resource.format->glType, data.addr);
     checkGLcall("glReadPixels");
 
     /* Reset previous pixel store pack state */
