@@ -2146,6 +2146,9 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb, struct 
 
 static void surface_prepare_rb(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info, BOOL multisample)
 {
+    struct wined3d_texture *texture = surface->container;
+    const struct wined3d_format *format = texture->resource.format;
+
     if (multisample)
     {
         DWORD samples;
@@ -2162,16 +2165,15 @@ static void surface_prepare_rb(struct wined3d_surface *surface, const struct win
 
         /* We advertise as many WINED3D_MULTISAMPLE_NON_MASKABLE quality levels
          * as the count of advertised multisample types for the surface format. */
-        if (surface->resource.multisample_type == WINED3D_MULTISAMPLE_NON_MASKABLE)
+        if (texture->resource.multisample_type == WINED3D_MULTISAMPLE_NON_MASKABLE)
         {
-            const struct wined3d_format *format = surface->resource.format;
             unsigned int i, count = 0;
 
             for (i = 0; i < sizeof(format->multisample_types) * 8; ++i)
             {
                 if (format->multisample_types & 1u << i)
                 {
-                    if (surface->resource.multisample_quality == count++)
+                    if (texture->resource.multisample_quality == count++)
                         break;
                 }
             }
@@ -2179,13 +2181,13 @@ static void surface_prepare_rb(struct wined3d_surface *surface, const struct win
         }
         else
         {
-            samples = surface->resource.multisample_type;
+            samples = texture->resource.multisample_type;
         }
 
         gl_info->fbo_ops.glGenRenderbuffers(1, &surface->rb_multisample);
         gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, surface->rb_multisample);
         gl_info->fbo_ops.glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples,
-                surface->resource.format->glInternal, surface->pow2Width, surface->pow2Height);
+                format->glInternal, surface->pow2Width, surface->pow2Height);
         checkGLcall("glRenderbufferStorageMultisample()");
         TRACE("Created multisample rb %u.\n", surface->rb_multisample);
     }
@@ -2196,7 +2198,7 @@ static void surface_prepare_rb(struct wined3d_surface *surface, const struct win
 
         gl_info->fbo_ops.glGenRenderbuffers(1, &surface->rb_resolved);
         gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, surface->rb_resolved);
-        gl_info->fbo_ops.glRenderbufferStorage(GL_RENDERBUFFER, surface->resource.format->glInternal,
+        gl_info->fbo_ops.glRenderbufferStorage(GL_RENDERBUFFER, format->glInternal,
                 surface->pow2Width, surface->pow2Height);
         checkGLcall("glRenderbufferStorage()");
         TRACE("Created resolved rb %u.\n", surface->rb_resolved);
