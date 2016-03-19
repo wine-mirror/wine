@@ -236,7 +236,7 @@ struct wined3d_cs_set_clip_plane
 {
     enum wined3d_cs_op opcode;
     UINT plane_idx;
-    const struct wined3d_vec4 *plane;
+    struct wined3d_vec4 plane;
 };
 
 struct wined3d_cs_set_material
@@ -876,7 +876,7 @@ static void wined3d_cs_exec_set_clip_plane(struct wined3d_cs *cs, const void *da
 {
     const struct wined3d_cs_set_clip_plane *op = data;
 
-    cs->state.clip_planes[op->plane_idx] = *op->plane;
+    cs->state.clip_planes[op->plane_idx] = op->plane;
     device_invalidate_state(cs->device, STATE_CLIPPLANE(op->plane_idx));
 }
 
@@ -887,7 +887,7 @@ void wined3d_cs_emit_set_clip_plane(struct wined3d_cs *cs, UINT plane_idx, const
     op = cs->ops->require_space(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_SET_CLIP_PLANE;
     op->plane_idx = plane_idx;
-    op->plane = plane;
+    op->plane = *plane;
 
     cs->ops->submit(cs);
 }
