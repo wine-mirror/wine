@@ -4736,12 +4736,15 @@ static void test_copy_subresource_region(void)
 {
     ID3D11Texture2D *dst_texture, *src_texture;
     struct d3d11_test_context test_context;
+    ID3D11Buffer *dst_buffer, *src_buffer;
     D3D11_SUBRESOURCE_DATA resource_data;
     D3D11_TEXTURE2D_DESC texture_desc;
     ID3D11SamplerState *sampler_state;
     ID3D11ShaderResourceView *ps_srv;
     D3D11_SAMPLER_DESC sampler_desc;
+    D3D11_BUFFER_DESC buffer_desc;
     ID3D11DeviceContext *context;
+    struct vec4 float_colors[16];
     struct texture_readback rb;
     ID3D11PixelShader *ps;
     ID3D11Device *device;
@@ -4775,6 +4778,31 @@ static void test_copy_subresource_region(void)
         0x00000001, 0x0a000038, 0x00100032, 0x00000000, 0x00101046, 0x00000000, 0x00004002, 0x3acccccd,
         0x3b088889, 0x00000000, 0x00000000, 0x09000045, 0x001020f2, 0x00000000, 0x00100046, 0x00000000,
         0x00107e46, 0x00000000, 0x00106000, 0x00000000, 0x0100003e,
+    };
+    static const DWORD ps_buffer_code[] =
+    {
+#if 0
+        float4 buffer[16];
+
+        float4 main(float4 position : SV_POSITION) : SV_TARGET
+        {
+            float2 p = (float2)4;
+            p *= float2(position.x / 640.0f, position.y / 480.0f);
+            return buffer[(int)p.y * 4 + (int)p.x];
+        }
+#endif
+        0x43425844, 0x57e7139f, 0x4f0c9e52, 0x598b77e3, 0x5a239132, 0x00000001, 0x0000016c, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x000000d0, 0x00000040,
+        0x00000034, 0x04000859, 0x00208e46, 0x00000000, 0x00000010, 0x04002064, 0x00101032, 0x00000000,
+        0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x0a000038, 0x00100032,
+        0x00000000, 0x00101516, 0x00000000, 0x00004002, 0x3c088889, 0x3bcccccd, 0x00000000, 0x00000000,
+        0x0500001b, 0x00100032, 0x00000000, 0x00100046, 0x00000000, 0x07000029, 0x00100012, 0x00000000,
+        0x0010000a, 0x00000000, 0x00004001, 0x00000002, 0x0700001e, 0x00100012, 0x00000000, 0x0010000a,
+        0x00000000, 0x0010001a, 0x00000000, 0x07000036, 0x001020f2, 0x00000000, 0x04208e46, 0x00000000,
+        0x0010000a, 0x00000000, 0x0100003e,
     };
     static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
     static const DWORD bitmap_data[] =
@@ -4900,10 +4928,91 @@ static void test_copy_subresource_region(void)
     release_texture_readback(&rb);
 
     ID3D11PixelShader_Release(ps);
-    ID3D11SamplerState_Release(sampler_state);
+    hr = ID3D11Device_CreatePixelShader(device, ps_buffer_code, sizeof(ps_buffer_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+
     ID3D11ShaderResourceView_Release(ps_srv);
+    ps_srv = NULL;
+
+    ID3D11SamplerState_Release(sampler_state);
+    sampler_state = NULL;
+
     ID3D11Texture2D_Release(dst_texture);
     ID3D11Texture2D_Release(src_texture);
+
+    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &ps_srv);
+    ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler_state);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    buffer_desc.ByteWidth = sizeof(float_colors);
+    buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+    buffer_desc.StructureByteStride = 0;
+
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &dst_buffer);
+    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &dst_buffer);
+
+    buffer_desc.ByteWidth = 256 * sizeof(*float_colors);
+    buffer_desc.BindFlags = 0;
+
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &src_buffer);
+    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+
+    for (i = 0; i < 4; ++i)
+    {
+        for (j = 0; j < 4; ++j)
+        {
+            float_colors[j + i * 4].x = ((bitmap_data[j + i * 4] >>  0) & 0xff) / 255.0f;
+            float_colors[j + i * 4].y = ((bitmap_data[j + i * 4] >>  8) & 0xff) / 255.0f;
+            float_colors[j + i * 4].z = ((bitmap_data[j + i * 4] >> 16) & 0xff) / 255.0f;
+            float_colors[j + i * 4].w = ((bitmap_data[j + i * 4] >> 24) & 0xff) / 255.0f;
+        }
+    }
+    set_box(&box, 0, 0, 0, sizeof(float_colors), 1, 1);
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)src_buffer, 0, &box, float_colors, 0, 0);
+
+    set_box(&box, 0, 0, 0, sizeof(float_colors), 0, 1);
+    ID3D11DeviceContext_CopySubresourceRegion(context, (ID3D11Resource *)dst_buffer, 0,
+            0, 0, 0, (ID3D11Resource *)src_buffer, 0, &box);
+    draw_quad(&test_context);
+    check_texture_color(test_context.backbuffer, 0x00000000, 0);
+
+    set_box(&box, 0, 0, 0, sizeof(float_colors), 1, 0);
+    ID3D11DeviceContext_CopySubresourceRegion(context, (ID3D11Resource *)dst_buffer, 0,
+            0, 0, 0, (ID3D11Resource *)src_buffer, 0, &box);
+    draw_quad(&test_context);
+    check_texture_color(test_context.backbuffer, 0x00000000, 0);
+
+    set_box(&box, 0, 0, 0, sizeof(float_colors), 0, 0);
+    ID3D11DeviceContext_CopySubresourceRegion(context, (ID3D11Resource *)dst_buffer, 0,
+            0, 0, 0, (ID3D11Resource *)src_buffer, 0, &box);
+    draw_quad(&test_context);
+    check_texture_color(test_context.backbuffer, 0x00000000, 0);
+
+    set_box(&box, 0, 0, 0, sizeof(float_colors), 1, 1);
+    ID3D11DeviceContext_CopySubresourceRegion(context, (ID3D11Resource *)dst_buffer, 0,
+            0, 0, 0, (ID3D11Resource *)src_buffer, 0, &box);
+    draw_quad(&test_context);
+    get_texture_readback(test_context.backbuffer, &rb);
+    for (i = 0; i < 4; ++i)
+    {
+        for (j = 0; j < 4; ++j)
+        {
+            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120);
+            ok(compare_color(color, bitmap_data[j + i * 4], 1),
+                    "Got unexpected color 0x%08x at (%u, %u), expected 0x%08x.\n",
+                    color, j, i, bitmap_data[j + i * 4]);
+        }
+    }
+    release_texture_readback(&rb);
+
+    ID3D11Buffer_Release(dst_buffer);
+    ID3D11Buffer_Release(src_buffer);
+    ID3D11PixelShader_Release(ps);
     release_test_context(&test_context);
 }
 
