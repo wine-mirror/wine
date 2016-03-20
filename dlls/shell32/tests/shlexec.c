@@ -1818,6 +1818,9 @@ static fileurl_tests_t fileurl_tests[]=
     /* Test shortcuts vs. URLs */
     {"file://///", "%s\\test_shortcut_shlexec.lnk", 0, 0x1d},
 
+    /* Confuse things by mixing protocols */
+    {"file://", "shlproto://foo/bar", USE_COLON, 0},
+
     {NULL, NULL, 0, 0}
 };
 
@@ -1988,10 +1991,6 @@ static void test_urls(void)
     rc = shell_execute(NULL, "%urlprefix%foo", NULL, NULL);
     todo_wine ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
     SetEnvironmentVariableA("urlprefix", NULL);
-
-    /* Try to confuse ShellExecute() by mixing protocols */
-    rc = shell_execute(NULL, "file://shlproto://foo/bar", NULL, NULL);
-    ok(rc == SE_ERR_FNF || rc == SE_ERR_PNF, "%s returned %lu\n", shell_call, rc);
 
     delete_test_class("fakeproto");
     delete_test_class("shlpaverb");
