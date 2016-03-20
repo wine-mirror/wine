@@ -2831,6 +2831,7 @@ static void cleanup_test(void)
 
     /* Delete the test association */
     delete_test_association(".shlexec");
+    delete_test_class("shlproto");
 
     CloseHandle(hEvent);
 
