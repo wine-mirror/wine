@@ -47,7 +47,7 @@ static void buffer_invalidate_bo_range(struct wined3d_buffer *buffer, unsigned i
     if (!offset && (!size || size == buffer->resource.size))
         goto invalidate_all;
 
-    if (offset > buffer->resource.size || offset + size > buffer->resource.size)
+    if (offset > buffer->resource.size || size > buffer->resource.size - offset)
     {
         WARN("Invalid range specified, invalidating entire buffer.\n");
         goto invalidate_all;
