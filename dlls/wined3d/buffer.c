@@ -42,9 +42,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define VB_MAXFULLCONVERSIONS 5       /* Number of full conversions before we stop converting */
 #define VB_RESETFULLCONVS     20      /* Reset full conversion counts after that number of draws */
 
-static void buffer_invalidate_bo_range(struct wined3d_buffer *buffer, UINT offset, UINT size)
+static void buffer_invalidate_bo_range(struct wined3d_buffer *buffer, unsigned int offset, unsigned int size)
 {
-    if (!offset && !size)
+    if (!offset && (!size || size == buffer->resource.size))
         goto invalidate_all;
 
     if (offset > buffer->resource.size || offset + size > buffer->resource.size)
@@ -1111,6 +1111,88 @@ void CDECL wined3d_buffer_unmap(struct wined3d_buffer *buffer)
     {
         wined3d_buffer_preload(buffer);
     }
+}
+
+HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_offset,
+        struct wined3d_buffer *src_buffer, unsigned int src_offset, unsigned int size)
+{
+    BYTE *dst_buffer_mem, *src_buffer_mem, *dst_ptr, *src_ptr;
+    struct wined3d_bo_address dst_bo_address, src_bo_address;
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context *context;
+    struct wined3d_device *device;
+    HRESULT hr;
+
+    device = dst_buffer->resource.device;
+
+    context = context_acquire(device, NULL);
+    gl_info = context->gl_info;
+
+    buffer_get_memory(dst_buffer, context, &dst_bo_address);
+    buffer_get_memory(src_buffer, context, &src_bo_address);
+
+    dst_buffer_mem = dst_buffer->resource.heap_memory;
+    src_buffer_mem = src_buffer->resource.heap_memory;
+
+    if (!dst_buffer_mem && !src_buffer_mem)
+    {
+        if (gl_info->supported[ARB_COPY_BUFFER])
+        {
+            GL_EXTCALL(glBindBuffer(GL_COPY_READ_BUFFER, src_bo_address.buffer_object));
+            GL_EXTCALL(glBindBuffer(GL_COPY_WRITE_BUFFER, dst_bo_address.buffer_object));
+            GL_EXTCALL(glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, src_offset, dst_offset, size));
+            checkGLcall("direct buffer copy");
+        }
+        else
+        {
+            if (FAILED(hr = wined3d_buffer_map(dst_buffer, dst_offset, size, &dst_ptr, 0)))
+            {
+                WARN("Failed to map dst_buffer, hr %#x.\n", hr);
+                context_release(context);
+                return WINED3DERR_INVALIDCALL;
+            }
+            if (FAILED(hr = wined3d_buffer_map(src_buffer, src_offset, size, &src_ptr, WINED3D_MAP_READONLY)))
+            {
+                WARN("Failed to map src_buffer, hr %#x.\n", hr);
+                wined3d_buffer_unmap(dst_buffer);
+                context_release(context);
+                return WINED3DERR_INVALIDCALL;
+            }
+
+            memcpy(dst_ptr, src_ptr, size);
+
+            wined3d_buffer_unmap(src_buffer);
+            wined3d_buffer_unmap(dst_buffer);
+        }
+    }
+    else if (dst_buffer_mem && !src_buffer_mem)
+    {
+        if (src_buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
+            context_invalidate_state(context, STATE_INDEXBUFFER);
+        GL_EXTCALL(glBindBuffer(src_buffer->buffer_type_hint, src_bo_address.buffer_object));
+
+        GL_EXTCALL(glGetBufferSubData(src_buffer->buffer_type_hint, src_offset, size, dst_buffer_mem + dst_offset));
+        checkGLcall("buffer download");
+    }
+    else if (!dst_buffer_mem && src_buffer_mem)
+    {
+        if (dst_buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
+            context_invalidate_state(context, STATE_INDEXBUFFER);
+        GL_EXTCALL(glBindBuffer(dst_buffer->buffer_type_hint, dst_bo_address.buffer_object));
+
+        GL_EXTCALL(glBufferSubData(dst_buffer->buffer_type_hint, dst_offset, size, src_buffer_mem + src_offset));
+        checkGLcall("buffer upload");
+    }
+    else
+    {
+        memcpy(dst_buffer_mem + dst_offset, src_buffer_mem + src_offset, size);
+    }
+
+    if (dst_buffer_mem)
+        buffer_invalidate_bo_range(dst_buffer, dst_offset, size);
+
+    context_release(context);
+    return WINED3D_OK;
 }
 
 HRESULT wined3d_buffer_upload_data(struct wined3d_buffer *buffer,

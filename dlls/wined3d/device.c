@@ -3865,6 +3865,15 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
         return;
     }
 
+    if (dst_resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        if (FAILED(hr = wined3d_buffer_copy(buffer_from_resource(dst_resource), 0,
+                buffer_from_resource(src_resource), 0,
+                dst_resource->size)))
+            ERR("Failed to copy buffer, hr %#x.\n", hr);
+        return;
+    }
+
     if (dst_resource->type != WINED3D_RTYPE_TEXTURE_2D)
     {
         FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(dst_resource->type));
