@@ -1016,6 +1016,7 @@ static const char* testfiles[]=
     "%s\\test_shortcut_exe.lnk",
     "%s\\test file.shl",
     "%s\\test file.shlfoo",
+    "%s\\test file.sha",
     "%s\\test file.sfe",
     "%s\\test file.shlproto",
     "%s\\masked file.shlexec",
@@ -1065,6 +1066,8 @@ static filename_tests_t filename_tests[]=
     {"QuotedUpperL", "%s\\test file.shlexec",   0x0, 33},
 
     {"notaverb",     "%s\\test file.shlexec",   0x10, SE_ERR_NOASSOC},
+
+    {"averb",        "%s\\test file.sha",       0x10, 33},
 
     /* Test file masked due to space */
     {NULL,           "%s\\masked file.shlexec",   0x0, 33},
@@ -1774,6 +1777,14 @@ static void test_filename(void)
         sprintf(filename, "%s\\test file.shlexec", tmpdir);
         okChildPath("argvA4", filename);
     }
+
+    sprintf(filename, "\"%s\\test file.sha\"", tmpdir);
+    rc=shell_execute(NULL, filename, NULL, NULL);
+    todo_wine okShell(rc > 32, "failed: rc=%ld err=%u\n", rc, GetLastError());
+    okChildInt("argcA", 5);
+    todo_wine okChildString("argvA3", "averb");
+    sprintf(filename, "%s\\test file.sha", tmpdir);
+    todo_wine okChildPath("argvA4", filename);
 }
 
 typedef struct
@@ -1940,10 +1951,15 @@ static void test_urls(void)
 
     /* Check default verb detection */
     rc = shell_execute(NULL, "shlpaverb://foo/bar", NULL, NULL);
-    todo_wine ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
-    okChildInt("argcA", 5);
-    todo_wine okChildString("argvA3", "PAVerb");
-    todo_wine okChildString("argvA4", "shlpaverb://foo/bar");
+    todo_wine ok(rc > 32 || /* XP+IE7 - Win10 */
+                 broken(rc == SE_ERR_NOASSOC), /* XP+IE6 */
+                 "%s failed: rc=%lu\n", shell_call, rc);
+    if (rc > 32)
+    {
+        okChildInt("argcA", 5);
+        todo_wine okChildString("argvA3", "PAVerb");
+        todo_wine okChildString("argvA4", "shlpaverb://foo/bar");
+    }
 
     /* But alternative verbs are a recent feature! */
     rc = shell_execute("averb", "shlproto://foo/bar", NULL, NULL);
@@ -2802,6 +2818,9 @@ static void init_test(void)
     create_test_verb("shlexec.shlexec", "UpperL", 0, "UpperL %L");
     create_test_verb("shlexec.shlexec", "QuotedUpperL", 0, "QuotedUpperL \"%L\"");
 
+    create_test_association(".sha");
+    create_test_verb("shlexec.sha", "averb", 0, "AVerb \"%1\"");
+
     create_test_class("shlproto", TRUE);
     create_test_verb("shlproto", "open", 0, "URL \"%1\"");
     create_test_verb("shlproto", "averb", 0, "AVerb \"%1\"");
@@ -2830,6 +2849,7 @@ static void cleanup_test(void)
 
     /* Delete the test association */
     delete_test_association(".shlexec");
+    delete_test_association(".sha");
     delete_test_class("shlproto");
 
     CloseHandle(hEvent);
