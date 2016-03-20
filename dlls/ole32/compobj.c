@@ -3203,14 +3203,14 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstance(
     return hres;
 }
 
-static void init_multi_qi(DWORD count, MULTI_QI *mqi)
+static void init_multi_qi(DWORD count, MULTI_QI *mqi, HRESULT hr)
 {
   ULONG i;
 
   for (i = 0; i < count; i++)
   {
       mqi[i].pItf = NULL;
-      mqi[i].hr = E_NOINTERFACE;
+      mqi[i].hr = hr;
   }
 }
 
@@ -3266,7 +3266,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstanceEx(
     if (pServerInfo)
         FIXME("() non-NULL pServerInfo not supported!\n");
 
-    init_multi_qi(cmq, pResults);
+    init_multi_qi(cmq, pResults, E_NOINTERFACE);
 
     hres = CoGetTreatAsClass(rclsid, &clsid);
     if(FAILED(hres))
@@ -3350,7 +3350,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetInstanceFromFile(
   if (server_info)
     FIXME("() non-NULL server_info not supported\n");
 
-  init_multi_qi(count, results);
+  init_multi_qi(count, results, E_NOINTERFACE);
 
   /* optionally get CLSID from a file */
   if (!rclsid)
@@ -3372,20 +3372,30 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetInstanceFromFile(
 			(void**)&unk);
 
   if (hr != S_OK)
-    return hr;
+  {
+      init_multi_qi(count, results, hr);
+      return hr;
+  }
 
   /* init from file */
   hr = IUnknown_QueryInterface(unk, &IID_IPersistFile, (void**)&pf);
   if (FAILED(hr))
-      ERR("failed to get IPersistFile\n");
-
-  if (pf)
   {
-      IPersistFile_Load(pf, filename, grfmode);
-      IPersistFile_Release(pf);
+      init_multi_qi(count, results, hr);
+      IUnknown_Release(unk);
+      return hr;
   }
 
-  return return_multi_qi(unk, count, results, FALSE);
+  hr = IPersistFile_Load(pf, filename, grfmode);
+  IPersistFile_Release(pf);
+  if (SUCCEEDED(hr))
+      return return_multi_qi(unk, count, results, FALSE);
+  else
+  {
+      init_multi_qi(count, results, hr);
+      IUnknown_Release(unk);
+      return hr;
+  }
 }
 
 /***********************************************************************
@@ -3412,7 +3422,7 @@ HRESULT WINAPI CoGetInstanceFromIStorage(
   if (server_info)
     FIXME("() non-NULL server_info not supported\n");
 
-  init_multi_qi(count, results);
+  init_multi_qi(count, results, E_NOINTERFACE);
 
   /* optionally get CLSID from a file */
   if (!rclsid)

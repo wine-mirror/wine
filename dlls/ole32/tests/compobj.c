@@ -95,6 +95,7 @@ static const GUID IID_Testiface6 = { 0x72222222, 0x1234, 0x1234, { 0x12, 0x34, 0
 static const GUID IID_TestPS = { 0x66666666, 0x8888, 0x7777, { 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55 } };
 
 DEFINE_GUID(CLSID_InProcFreeMarshaler, 0x0000033a,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
+DEFINE_GUID(CLSID_testclsid, 0xacd014c7,0x9535,0x4fac,0x8b,0x53,0xa4,0x8c,0xa7,0xf4,0xd7,0x26);
 
 static const WCHAR stdfont[] = {'S','t','d','F','o','n','t',0};
 static const WCHAR wszNonExistent[] = {'N','o','n','E','x','i','s','t','e','n','t',0};
@@ -2966,7 +2967,6 @@ static void test_CoGetApartmentType(void)
     CoUninitialize();
 }
 
-
 static HRESULT WINAPI testspy_QI(IMallocSpy *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IMallocSpy) || IsEqualIID(riid, &IID_IUnknown))
@@ -3261,6 +3261,255 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 }
 
+static HRESULT g_persistfile_qi_ret;
+static HRESULT g_persistfile_load_ret;
+static HRESULT WINAPI testinstance_QI(IPersistFile *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown)) {
+        *obj = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    if (IsEqualIID(riid, &IID_IPersistFile)) {
+        if (SUCCEEDED(g_persistfile_qi_ret)) {
+            *obj = iface;
+            IUnknown_AddRef(iface);
+        }
+        else
+            *obj = NULL;
+        return g_persistfile_qi_ret;
+    }
+
+    ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI testinstance_AddRef(IPersistFile *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI testinstance_Release(IPersistFile *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI testinstance_GetClassID(IPersistFile *iface, CLSID *clsid)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testinstance_IsDirty(IPersistFile *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testinstance_Load(IPersistFile *iface, LPCOLESTR filename, DWORD mode)
+{
+    return g_persistfile_load_ret;
+}
+
+static HRESULT WINAPI testinstance_Save(IPersistFile *iface, LPCOLESTR filename, BOOL remember)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testinstance_SaveCompleted(IPersistFile *iface, LPCOLESTR filename)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testinstance_GetCurFile(IPersistFile *iface, LPOLESTR *filename)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IPersistFileVtbl testpersistfilevtbl = {
+    testinstance_QI,
+    testinstance_AddRef,
+    testinstance_Release,
+    testinstance_GetClassID,
+    testinstance_IsDirty,
+    testinstance_Load,
+    testinstance_Save,
+    testinstance_SaveCompleted,
+    testinstance_GetCurFile
+};
+
+static IPersistFile testpersistfile = { &testpersistfilevtbl };
+
+static HRESULT WINAPI getinstance_cf_QI(IClassFactory *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IClassFactory)) {
+        *obj = iface;
+        IClassFactory_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI getinstance_cf_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI getinstance_cf_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI getinstance_cf_CreateInstance(IClassFactory *iface, IUnknown *outer,
+    REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown)) {
+        *obj = &testpersistfile;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call, riid %s\n", wine_dbgstr_guid(riid));
+    *obj = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI getinstance_cf_LockServer(IClassFactory *iface, BOOL lock)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IClassFactoryVtbl getinstance_cf_vtbl = {
+    getinstance_cf_QI,
+    getinstance_cf_AddRef,
+    getinstance_cf_Release,
+    getinstance_cf_CreateInstance,
+    getinstance_cf_LockServer
+};
+
+static IClassFactory getinstance_cf = { &getinstance_cf_vtbl  };
+
+static void test_CoGetInstanceFromFile(void)
+{
+    static const WCHAR filenameW[] = {'d','u','m','m','y','p','a','t','h',0};
+    CLSID *clsid = (CLSID*)&CLSID_testclsid;
+    MULTI_QI mqi[2];
+    DWORD cookie;
+    HRESULT hr;
+
+    hr = pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* CLSID is not specified, file does not exist */
+    mqi[0].pIID = &IID_IUnknown;
+    mqi[0].pItf = NULL;
+    mqi[0].hr = E_NOTIMPL;
+    hr = CoGetInstanceFromFile(NULL, NULL, NULL, CLSCTX_INPROC_SERVER, STGM_READ, (OLECHAR*)filenameW, 1, mqi);
+todo_wine
+    ok(hr == MK_E_CANTOPENFILE, "got 0x%08x\n", hr);
+    ok(mqi[0].pItf == NULL, "got %p\n", mqi[0].pItf);
+    ok(mqi[0].hr == E_NOINTERFACE, "got 0x%08x\n", mqi[0].hr);
+
+    /* class is not available */
+    mqi[0].pIID = &IID_IUnknown;
+    mqi[0].pItf = NULL;
+    mqi[0].hr = E_NOTIMPL;
+    hr = CoGetInstanceFromFile(NULL, clsid, NULL, CLSCTX_INPROC_SERVER, STGM_READ, (OLECHAR*)filenameW, 1, mqi);
+    ok(hr == REGDB_E_CLASSNOTREG, "got 0x%08x\n", hr);
+    ok(mqi[0].pItf == NULL, "got %p\n", mqi[0].pItf);
+    ok(mqi[0].hr == REGDB_E_CLASSNOTREG, "got 0x%08x\n", mqi[0].hr);
+
+    hr = CoRegisterClassObject(clsid, (IUnknown*)&getinstance_cf, CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE,
+        &cookie);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    mqi[0].pIID = &IID_IUnknown;
+    mqi[0].pItf = (void*)0xdeadbeef;
+    mqi[0].hr = S_OK;
+    hr = CoGetInstanceFromFile(NULL, clsid, NULL, CLSCTX_INPROC_SERVER, STGM_READ, (OLECHAR*)filenameW, 1, mqi);
+todo_wine {
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(mqi[0].pItf == (void*)0xdeadbeef, "got %p\n", mqi[0].pItf);
+}
+    ok(mqi[0].hr == S_OK, "got 0x%08x\n", mqi[0].hr);
+
+    mqi[0].pIID = &IID_IUnknown;
+    mqi[0].pItf = (void*)0xdeadbeef;
+    mqi[0].hr = E_NOTIMPL;
+    hr = CoGetInstanceFromFile(NULL, clsid, NULL, CLSCTX_INPROC_SERVER, STGM_READ, (OLECHAR*)filenameW, 1, mqi);
+todo_wine {
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(mqi[0].pItf == (void*)0xdeadbeef, "got %p\n", mqi[0].pItf);
+    ok(mqi[0].hr == E_NOTIMPL, "got 0x%08x\n", mqi[0].hr);
+}
+    mqi[0].pIID = &IID_IUnknown;
+    mqi[0].pItf = NULL;
+    mqi[0].hr = E_NOTIMPL;
+    hr = CoGetInstanceFromFile(NULL, clsid, NULL, CLSCTX_INPROC_SERVER, STGM_READ, (OLECHAR*)filenameW, 1, mqi);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(mqi[0].pItf != NULL, "got %p\n", mqi[0].pItf);
+    ok(mqi[0].hr == S_OK, "got 0x%08x\n", mqi[0].hr);
+
+    mqi[0].pIID = &IID_IUnknown;
+    mqi[0].pItf = NULL;
+    mqi[0].hr = S_OK;
+    hr = CoGetInstanceFromFile(NULL, clsid, NULL, CLSCTX_INPROC_SERVER, STGM_READ, (OLECHAR*)filenameW, 1, mqi);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(mqi[0].pItf != NULL, "got %p\n", mqi[0].pItf);
+    ok(mqi[0].hr == S_OK, "got 0x%08x\n", mqi[0].hr);
+
+    mqi[0].pIID = &IID_IUnknown;
+    mqi[0].pItf = NULL;
+    mqi[0].hr = S_OK;
+    g_persistfile_qi_ret = S_FALSE;
+    hr = CoGetInstanceFromFile(NULL, clsid, NULL, CLSCTX_INPROC_SERVER, STGM_READ, (OLECHAR*)filenameW, 1, mqi);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(mqi[0].pItf != NULL, "got %p\n", mqi[0].pItf);
+    ok(mqi[0].hr == S_OK, "got 0x%08x\n", mqi[0].hr);
+    g_persistfile_qi_ret = S_OK;
+
+    mqi[0].pIID = &IID_IUnknown;
+    mqi[0].pItf = NULL;
+    mqi[0].hr = S_OK;
+    mqi[1].pIID = &IID_IUnknown;
+    mqi[1].pItf = NULL;
+    mqi[1].hr = S_OK;
+    g_persistfile_qi_ret = 0x8000efef;
+    hr = CoGetInstanceFromFile(NULL, clsid, NULL, CLSCTX_INPROC_SERVER, STGM_READ, (OLECHAR*)filenameW, 2, mqi);
+    ok(hr == 0x8000efef, "got 0x%08x\n", hr);
+    ok(mqi[0].pItf == NULL, "got %p\n", mqi[0].pItf);
+    ok(mqi[0].hr == 0x8000efef, "got 0x%08x\n", mqi[0].hr);
+    ok(mqi[1].pItf == NULL, "got %p\n", mqi[1].pItf);
+    ok(mqi[1].hr == 0x8000efef, "got 0x%08x\n", mqi[1].hr);
+    g_persistfile_qi_ret = S_OK;
+
+    mqi[0].pIID = &IID_IUnknown;
+    mqi[0].pItf = NULL;
+    mqi[0].hr = S_OK;
+    mqi[1].pIID = &IID_IUnknown;
+    mqi[1].pItf = NULL;
+    mqi[1].hr = S_OK;
+    g_persistfile_load_ret = 0x8000fefe;
+    hr = CoGetInstanceFromFile(NULL, clsid, NULL, CLSCTX_INPROC_SERVER, STGM_READ, (OLECHAR*)filenameW, 2, mqi);
+    ok(hr == 0x8000fefe, "got 0x%08x\n", hr);
+    ok(mqi[0].pItf == NULL, "got %p\n", mqi[0].pItf);
+    ok(mqi[0].hr == 0x8000fefe, "got 0x%08x\n", mqi[0].hr);
+    ok(mqi[1].pItf == NULL, "got %p\n", mqi[1].pItf);
+    ok(mqi[1].hr == 0x8000fefe, "got 0x%08x\n", mqi[1].hr);
+    g_persistfile_load_ret = S_OK;
+
+    hr = CoRevokeClassObject(cookie);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    CoUninitialize();
+}
+
 static void init_funcs(void)
 {
     HMODULE hOle32 = GetModuleHandleA("ole32");
@@ -3331,4 +3580,5 @@ START_TEST(compobj)
     test_IMallocSpy();
     test_CoGetCurrentLogicalThreadId();
     test_IInitializeSpy();
+    test_CoGetInstanceFromFile();
 }
