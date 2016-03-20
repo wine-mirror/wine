@@ -109,6 +109,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     /* ARB */
     {"GL_ARB_blend_func_extended",          ARB_BLEND_FUNC_EXTENDED       },
     {"GL_ARB_color_buffer_float",           ARB_COLOR_BUFFER_FLOAT        },
+    {"GL_ARB_copy_buffer",                  ARB_COPY_BUFFER               },
     {"GL_ARB_debug_output",                 ARB_DEBUG_OUTPUT              },
     {"GL_ARB_depth_buffer_float",           ARB_DEPTH_BUFFER_FLOAT        },
     {"GL_ARB_depth_texture",                ARB_DEPTH_TEXTURE             },
@@ -2499,6 +2500,8 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glGetFragDataIndex)
     /* GL_ARB_color_buffer_float */
     USE_GL_FUNC(glClampColorARB)
+    /* GL_ARB_copy_buffer */
+    USE_GL_FUNC(glCopyBufferSubData)
     /* GL_ARB_debug_output */
     USE_GL_FUNC(glDebugMessageCallbackARB)
     USE_GL_FUNC(glDebugMessageControlARB)
@@ -3452,6 +3455,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
          * EXT_framebuffer_multisample and EXT_packed_depth_stencil
          * are integrated into ARB_framebuffer_object. */
 
+        {ARB_COPY_BUFFER,                  MAKEDWORD_VERSION(3, 1)},
         {ARB_DRAW_INSTANCED,               MAKEDWORD_VERSION(3, 1)},
         {ARB_UNIFORM_BUFFER_OBJECT,        MAKEDWORD_VERSION(3, 1)},
         {EXT_TEXTURE_SNORM,                MAKEDWORD_VERSION(3, 1)},
