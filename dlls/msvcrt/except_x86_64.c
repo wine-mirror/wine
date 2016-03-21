@@ -61,6 +61,160 @@ typedef struct _DISPATCHER_CONTEXT
     ULONG                 ScopeIndex;
 } DISPATCHER_CONTEXT;
 
+typedef struct
+{
+    int  prev;
+    UINT handler;
+} unwind_info;
+
+typedef struct
+{
+    UINT flags;
+    UINT type_info;
+    int  offset;
+    UINT handler;
+} catchblock_info;
+
+typedef struct
+{
+    int  start_level;
+    int  end_level;
+    int  catch_level;
+    int  catchblock_count;
+    UINT catchblock;
+} tryblock_info;
+
+typedef struct __cxx_function_descr
+{
+    UINT magic;
+    UINT unwind_count;
+    UINT unwind_table;
+    UINT tryblock_count;
+    UINT tryblock;
+    UINT ipmap_count;
+    UINT ipmap;
+    UINT unwind_help;
+    UINT expect_list;
+    UINT flags;
+} cxx_function_descr;
+
+static inline void* rva_to_ptr(UINT rva, ULONG64 base)
+{
+    return rva ? (void*)(base+rva) : NULL;
+}
+
+static inline void dump_type(UINT type_rva, ULONG64 base)
+{
+    const cxx_type_info *type = rva_to_ptr(type_rva, base);
+
+    TRACE("flags %x type %x %s offsets %d,%d,%d size %d copy ctor %x(%p)\n",
+            type->flags, type->type_info, dbgstr_type_info(rva_to_ptr(type->type_info, base)),
+            type->offsets.this_offset, type->offsets.vbase_descr, type->offsets.vbase_offset,
+            type->size, type->copy_ctor, rva_to_ptr(type->copy_ctor, base));
+}
+
+static void dump_exception_type(const cxx_exception_type *type, ULONG64 base)
+{
+    const cxx_type_info_table *type_info_table = rva_to_ptr(type->type_info_table, base);
+    UINT i;
+
+    TRACE("flags %x destr %x(%p) handler %x(%p) type info %x(%p)\n",
+            type->flags, type->destructor, rva_to_ptr(type->destructor, base),
+            type->custom_handler, rva_to_ptr(type->custom_handler, base),
+            type->type_info_table, type_info_table);
+    for (i = 0; i < type_info_table->count; i++)
+    {
+        TRACE("    %d: ", i);
+        dump_type(type_info_table->info[i], base);
+    }
+}
+
+static void dump_function_descr(const cxx_function_descr *descr, ULONG64 image_base)
+{
+    unwind_info *unwind_table = rva_to_ptr(descr->unwind_table, image_base);
+    tryblock_info *tryblock = rva_to_ptr(descr->tryblock, image_base);
+    UINT i, j;
+
+    TRACE("magic %x\n", descr->magic);
+    TRACE("unwind table: %x(%p) %d\n", descr->unwind_table, unwind_table, descr->unwind_count);
+    for (i=0; i<descr->unwind_count; i++)
+    {
+        TRACE("    %d: prev %d func %x(%p)\n", i, unwind_table[i].prev,
+                unwind_table[i].handler, rva_to_ptr(unwind_table[i].handler, image_base));
+    }
+    TRACE("try table: %x(%p) %d\n", descr->tryblock, tryblock, descr->tryblock_count);
+    for (i=0; i<descr->tryblock_count; i++)
+    {
+        catchblock_info *catchblock = rva_to_ptr(tryblock[i].catchblock, image_base);
+
+        TRACE("    %d: start %d end %d catchlevel %d catch%x(%p) %d\n", i,
+                tryblock[i].start_level, tryblock[i].end_level,
+                tryblock[i].catch_level, tryblock[i].catchblock,
+                catchblock, tryblock[i].catchblock_count);
+        for (j=0; j<tryblock[i].catchblock_count; j++)
+        {
+            TRACE("        %d: flags %x offset %d handler %x(%p) type %x %s\n",
+                    j, catchblock->flags, catchblock->offset, catchblock->handler,
+                    rva_to_ptr(catchblock->handler, image_base), catchblock->type_info,
+                    dbgstr_type_info(rva_to_ptr(catchblock->type_info, image_base)));
+        }
+    }
+    TRACE("unwind_help %d\n", descr->unwind_help);
+    TRACE("expect list: %x\n", descr->expect_list);
+    TRACE("flags: %08x\n", descr->flags);
+}
+
+static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
+                               CONTEXT *context, DISPATCHER_CONTEXT *dispatch,
+                               const cxx_function_descr *descr)
+{
+    cxx_exception_type *exc_type;
+
+    if (descr->magic != CXX_FRAME_MAGIC_VC8)
+    {
+        FIXME("unhandled frame magic %x\n", descr->magic);
+        return ExceptionContinueSearch;
+    }
+
+    if (rec->ExceptionFlags & (EH_UNWINDING|EH_EXIT_UNWIND))
+        return ExceptionContinueSearch;
+    if (!descr->tryblock_count) return ExceptionContinueSearch;
+
+    if (rec->ExceptionCode == CXX_EXCEPTION &&
+            rec->ExceptionInformation[1] == 0 && rec->ExceptionInformation[2] == 0)
+    {
+        *rec = *msvcrt_get_thread_data()->exc_record;
+        rec->ExceptionFlags &= ~EH_UNWINDING;
+        if (TRACE_ON(seh)) {
+            TRACE("detect rethrow: exception code: %x\n", rec->ExceptionCode);
+            if (rec->ExceptionCode == CXX_EXCEPTION)
+                TRACE("re-propage: obj: %lx, type: %lx\n",
+                        rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
+        }
+    }
+
+    if (rec->ExceptionCode == CXX_EXCEPTION)
+    {
+        exc_type = (cxx_exception_type *)rec->ExceptionInformation[2];
+
+        if (TRACE_ON(seh))
+        {
+            TRACE("handling C++ exception rec %p frame %lx unwind_help %d descr %p\n",
+                    rec, frame, *((INT*)(frame+descr->unwind_help)), descr);
+            dump_exception_type(exc_type, rec->ExceptionInformation[3]);
+            dump_function_descr(descr, dispatch->ImageBase);
+        }
+    }
+    else
+    {
+        exc_type = NULL;
+        TRACE("handling C exception code %x rec %p frame %lx unwind_help %d descr %p\n",
+                rec->ExceptionCode, rec, frame, *((INT*)(frame+descr->unwind_help)), descr);
+    }
+
+    return ExceptionContinueSearch;
+}
+
 /*********************************************************************
  *		__CxxExceptionFilter (MSVCRT.@)
  */
@@ -78,7 +232,8 @@ EXCEPTION_DISPOSITION CDECL __CxxFrameHandler( EXCEPTION_RECORD *rec, ULONG64 fr
                                                CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
 {
     FIXME( "%p %lx %p %p: not implemented\n", rec, frame, context, dispatch );
-    return ExceptionContinueSearch;
+    return cxx_frame_handler( rec, frame, context, dispatch,
+            rva_to_ptr(*(UINT*)dispatch->HandlerData, dispatch->ImageBase) );
 }
 
 
