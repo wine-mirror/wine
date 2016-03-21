@@ -79,7 +79,7 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     texture->level_count = level_count;
     texture->filter_type = (desc->usage & WINED3DUSAGE_AUTOGENMIPMAP) ? WINED3D_TEXF_LINEAR : WINED3D_TEXF_NONE;
     texture->lod = 0;
-    texture->flags = WINED3D_TEXTURE_POW2_MAT_IDENT | WINED3D_TEXTURE_NORMALIZED_COORDS;
+    texture->flags |= WINED3D_TEXTURE_POW2_MAT_IDENT | WINED3D_TEXTURE_NORMALIZED_COORDS;
     if (flags & WINED3D_TEXTURE_CREATE_PIN_SYSMEM)
         texture->flags |= WINED3D_TEXTURE_PIN_SYSMEM;
 
@@ -1403,37 +1403,57 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* Non-power2 support. */
-    if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO])
+    pow2_width = desc->width;
+    pow2_height = desc->height;
+    if (((desc->width & (desc->width - 1)) || (desc->height & (desc->height - 1)))
+            && !gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO])
     {
-        pow2_width = desc->width;
-        pow2_height = desc->height;
-    }
-    else
-    {
-        /* Find the nearest pow2 match. */
-        pow2_width = pow2_height = 1;
-        while (pow2_width < desc->width)
-            pow2_width <<= 1;
-        while (pow2_height < desc->height)
-            pow2_height <<= 1;
-
-        if (pow2_width != desc->width || pow2_height != desc->height)
+        /* level_count == 0 returns an error as well. */
+        if (level_count != 1 || desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP)
         {
-            /* level_count == 0 returns an error as well */
-            if (level_count != 1 || desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP)
+            if (desc->pool != WINED3D_POOL_SCRATCH)
             {
-                if (desc->pool == WINED3D_POOL_SCRATCH)
-                {
-                    WARN("Creating a scratch mipmapped/cube NPOT texture despite lack of HW support.\n");
-                }
-                else
-                {
-                    WARN("Attempted to create a mipmapped/cube NPOT texture without unconditional NPOT support.\n");
-                    return WINED3DERR_INVALIDCALL;
-                }
+                WARN("Attempted to create a mipmapped/cube NPOT texture without unconditional NPOT support.\n");
+                return WINED3DERR_INVALIDCALL;
             }
+
+            WARN("Creating a scratch mipmapped/cube NPOT texture despite lack of HW support.\n");
         }
+        texture->flags |= WINED3D_TEXTURE_COND_NP2;
+
+        if (!gl_info->supported[ARB_TEXTURE_RECTANGLE] && !gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
+        {
+            /* Find the nearest pow2 match. */
+            pow2_width = pow2_height = 1;
+            while (pow2_width < desc->width)
+                pow2_width <<= 1;
+            while (pow2_height < desc->height)
+                pow2_height <<= 1;
+            texture->flags |= WINED3D_TEXTURE_COND_NP2_EMULATED;
+        }
+    }
+
+    if ((pow2_width > gl_info->limits.texture_size || pow2_height > gl_info->limits.texture_size)
+            && (desc->usage & WINED3DUSAGE_TEXTURE))
+    {
+        /* One of four options:
+         * 1: Do the same as we do with NPOT and scale the texture. (Any
+         *    texture ops would require the texture to be scaled which is
+         *    potentially slow.)
+         * 2: Set the texture to the maximum size (bad idea).
+         * 3: WARN and return WINED3DERR_NOTAVAILABLE.
+         * 4: Create the surface, but allow it to be used only for DirectDraw
+         *    Blts. Some apps (e.g. Swat 3) create textures with a height of
+         *    16 and a width > 3000 and blt 16x16 letter areas from them to
+         *    the render target. */
+        if (desc->pool == WINED3D_POOL_DEFAULT || desc->pool == WINED3D_POOL_MANAGED)
+        {
+            WARN("Dimensions (%ux%u) exceed the maximum texture size.\n", pow2_width, pow2_height);
+            return WINED3DERR_NOTAVAILABLE;
+        }
+
+        /* We should never use this surface in combination with OpenGL. */
+        TRACE("Creating an oversized (%ux%u) surface.\n", pow2_width, pow2_height);
     }
 
     /* Calculate levels for mip mapping. */
@@ -1464,40 +1484,30 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
     {
         texture->pow2_matrix[0] = (float)desc->width;
         texture->pow2_matrix[5] = (float)desc->height;
-        texture->pow2_matrix[10] = 1.0f;
-        texture->pow2_matrix[15] = 1.0f;
-        texture->target = GL_TEXTURE_RECTANGLE_ARB;
-        texture->flags |= WINED3D_TEXTURE_COND_NP2;
         texture->flags &= ~(WINED3D_TEXTURE_POW2_MAT_IDENT | WINED3D_TEXTURE_NORMALIZED_COORDS);
+        texture->target = GL_TEXTURE_RECTANGLE_ARB;
     }
     else
     {
-        if (desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP)
-            texture->target = GL_TEXTURE_CUBE_MAP_ARB;
-        else
-            texture->target = GL_TEXTURE_2D;
-        if (desc->width == pow2_width && desc->height == pow2_height)
-        {
-            texture->pow2_matrix[0] = 1.0f;
-            texture->pow2_matrix[5] = 1.0f;
-        }
-        else if (gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
-        {
-            texture->pow2_matrix[0] = 1.0f;
-            texture->pow2_matrix[5] = 1.0f;
-            texture->flags |= WINED3D_TEXTURE_COND_NP2;
-        }
-        else
+        if (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
         {
             texture->pow2_matrix[0] = (((float)desc->width) / ((float)pow2_width));
             texture->pow2_matrix[5] = (((float)desc->height) / ((float)pow2_height));
             texture->flags &= ~WINED3D_TEXTURE_POW2_MAT_IDENT;
-            texture->flags |= WINED3D_TEXTURE_COND_NP2_EMULATED;
         }
-        texture->pow2_matrix[10] = 1.0f;
-        texture->pow2_matrix[15] = 1.0f;
+        else
+        {
+            texture->pow2_matrix[0] = 1.0f;
+            texture->pow2_matrix[5] = 1.0f;
+        }
+        if (desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP)
+            texture->target = GL_TEXTURE_CUBE_MAP_ARB;
+        else
+            texture->target = GL_TEXTURE_2D;
     }
-    TRACE("xf(%f) yf(%f)\n", texture->pow2_matrix[0], texture->pow2_matrix[5]);
+    texture->pow2_matrix[10] = 1.0f;
+    texture->pow2_matrix[15] = 1.0f;
+    TRACE("x scale %.8e, y scale %.8e.\n", texture->pow2_matrix[0], texture->pow2_matrix[5]);
 
     if (!(surfaces = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*surfaces) * level_count * layer_count)))
     {

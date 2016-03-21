@@ -557,30 +557,6 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
         }
     }
 
-    if ((surface->pow2Width > gl_info->limits.texture_size || surface->pow2Height > gl_info->limits.texture_size)
-            && (texture->resource.usage & WINED3DUSAGE_TEXTURE))
-    {
-        /* One of three options:
-         * 1: Do the same as we do with NPOT and scale the texture, (any
-         *    texture ops would require the texture to be scaled which is
-         *    potentially slow)
-         * 2: Set the texture to the maximum size (bad idea).
-         * 3: WARN and return WINED3DERR_NOTAVAILABLE;
-         * 4: Create the surface, but allow it to be used only for DirectDraw
-         *    Blts. Some apps (e.g. Swat 3) create textures with a Height of
-         *    16 and a Width > 3000 and blt 16x16 letter areas from them to
-         *    the render target. */
-        if (texture->resource.pool == WINED3D_POOL_DEFAULT || texture->resource.pool == WINED3D_POOL_MANAGED)
-        {
-            WARN("Unable to allocate a surface which exceeds the maximum OpenGL texture size.\n");
-            return WINED3DERR_NOTAVAILABLE;
-        }
-
-        /* We should never use this surface in combination with OpenGL! */
-        TRACE("Creating an oversized surface: %ux%u.\n",
-                surface->pow2Width, surface->pow2Height);
-    }
-
     if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
         surface->locations = WINED3D_LOCATION_DISCARDED;
 
