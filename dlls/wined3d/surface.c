@@ -518,41 +518,6 @@ static void surface_evict_sysmem(struct wined3d_surface *surface)
     surface_invalidate_location(surface, WINED3D_LOCATION_SYSMEM);
 }
 
-static void surface_private_setup(struct wined3d_surface *surface)
-{
-    /* TODO: Check against the maximum texture sizes supported by the video card. */
-    struct wined3d_texture *texture = surface->container;
-    const struct wined3d_gl_info *gl_info = &texture->resource.device->adapter->gl_info;
-    unsigned int pow2Width, pow2Height;
-
-    TRACE("surface %p.\n", surface);
-
-    /* Non-power2 support */
-    if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] || gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT]
-            || gl_info->supported[ARB_TEXTURE_RECTANGLE])
-    {
-        pow2Width = surface->resource.width;
-        pow2Height = surface->resource.height;
-    }
-    else
-    {
-        /* Find the nearest pow2 match */
-        pow2Width = pow2Height = 1;
-        while (pow2Width < surface->resource.width)
-            pow2Width <<= 1;
-        while (pow2Height < surface->resource.height)
-            pow2Height <<= 1;
-    }
-    surface->pow2Width = pow2Width;
-    surface->pow2Height = pow2Height;
-
-    if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
-        surface->locations = WINED3D_LOCATION_DISCARDED;
-
-    if (wined3d_texture_use_pbo(texture, gl_info))
-        surface->resource.map_binding = WINED3D_LOCATION_BUFFER;
-}
-
 static BOOL surface_is_full_rect(const struct wined3d_surface *surface, const RECT *r)
 {
     if ((r->left && r->right) || abs(r->right - r->left) != surface->resource.width)
@@ -4556,6 +4521,25 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
     unsigned int resource_size;
     HRESULT hr;
 
+    if (container->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
+    {
+        unsigned int pow2_width = 1, pow2_height = 1;
+
+        /* Find the nearest pow2 match. */
+        while (pow2_width < desc->width)
+            pow2_width <<= 1;
+        while (pow2_height < desc->height)
+            pow2_height <<= 1;
+
+        surface->pow2Width = pow2_width;
+        surface->pow2Height = pow2_height;
+    }
+    else
+    {
+        surface->pow2Width = desc->width;
+        surface->pow2Height = desc->height;
+    }
+
     /* Quick lockable sanity check.
      * TODO: remove this after surfaces, usage and lockability have been debugged properly
      * this function is too deep to need to care about things like this.
@@ -4614,7 +4598,11 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
     surface->texture_level = level;
     surface->texture_layer = layer;
 
-    surface_private_setup(surface);
+    if (container->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
+        surface->locations = WINED3D_LOCATION_DISCARDED;
+
+    if (wined3d_texture_use_pbo(container, gl_info))
+        surface->resource.map_binding = WINED3D_LOCATION_BUFFER;
 
     /* Similar to lockable rendertargets above, creating the DIB section
      * during surface initialization prevents the sysmem pointer from changing
