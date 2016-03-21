@@ -129,3 +129,15 @@ void WINAPI SCardReleaseStartedEvent(void)
 {
     FIXME("stub\n");
 }
+
+LONG WINAPI SCardListReadersA(SCARDCONTEXT context, const CHAR *groups, CHAR *readers, DWORD *buflen)
+{
+    FIXME("(%lx, %s, %p, %p) stub\n", context, debugstr_a(groups), readers, buflen);
+    return SCARD_E_NO_READERS_AVAILABLE;
+}
+
+LONG WINAPI SCardListReadersW(SCARDCONTEXT context, const WCHAR *groups, WCHAR *readers, DWORD *buflen)
+{
+    FIXME("(%lx, %s, %p, %p) stub\n", context, debugstr_w(groups), readers, buflen);
+    return SCARD_E_NO_READERS_AVAILABLE;
+}

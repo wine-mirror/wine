@@ -40,8 +40,8 @@
 @ stub SCardListInterfacesW
 @ stub SCardListReaderGroupsA
 @ stub SCardListReaderGroupsW
-@ stub SCardListReadersA
-@ stub SCardListReadersW
+@ stdcall SCardListReadersA(long str ptr ptr)
+@ stdcall SCardListReadersW(long wstr ptr ptr)
 @ stub SCardLocateCardsA
 @ stub SCardLocateCardsByATRA
 @ stub SCardLocateCardsByATRW
