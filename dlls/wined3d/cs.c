@@ -229,7 +229,7 @@ struct wined3d_cs_set_transform
 {
     enum wined3d_cs_op opcode;
     enum wined3d_transform_state state;
-    const struct wined3d_matrix *matrix;
+    struct wined3d_matrix matrix;
 };
 
 struct wined3d_cs_set_clip_plane
@@ -854,7 +854,7 @@ static void wined3d_cs_exec_set_transform(struct wined3d_cs *cs, const void *dat
 {
     const struct wined3d_cs_set_transform *op = data;
 
-    cs->state.transforms[op->state] = *op->matrix;
+    cs->state.transforms[op->state] = op->matrix;
     if (op->state < WINED3D_TS_WORLD_MATRIX(cs->device->adapter->d3d_info.limits.ffp_vertex_blend_matrices))
         device_invalidate_state(cs->device, STATE_TRANSFORM(op->state));
 }
@@ -867,7 +867,7 @@ void wined3d_cs_emit_set_transform(struct wined3d_cs *cs, enum wined3d_transform
     op = cs->ops->require_space(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_SET_TRANSFORM;
     op->state = state;
-    op->matrix = matrix;
+    op->matrix = *matrix;
 
     cs->ops->submit(cs);
 }
