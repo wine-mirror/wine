@@ -34,12 +34,22 @@ struct d3drm_object
     struct list destroy_callbacks;
 };
 
+struct d3drm_texture
+{
+    IDirect3DRMTexture IDirect3DRMTexture_iface;
+    IDirect3DRMTexture2 IDirect3DRMTexture2_iface;
+    IDirect3DRMTexture3 IDirect3DRMTexture3_iface;
+    LONG ref;
+    DWORD app_data;
+};
+
 void d3drm_object_init(struct d3drm_object *object) DECLSPEC_HIDDEN;
 HRESULT d3drm_object_add_destroy_callback(struct d3drm_object *object, D3DRMOBJECTCALLBACK cb, void *ctx) DECLSPEC_HIDDEN;
 HRESULT d3drm_object_delete_destroy_callback(struct d3drm_object *object, D3DRMOBJECTCALLBACK cb, void *ctx) DECLSPEC_HIDDEN;
 void d3drm_object_cleanup(IDirect3DRMObject *iface, struct d3drm_object *object) DECLSPEC_HIDDEN;
 
 HRESULT d3drm_device_create(struct d3drm_device **out) DECLSPEC_HIDDEN;
+HRESULT d3drm_texture_create(struct d3drm_texture **texture) DECLSPEC_HIDDEN;
 IDirect3DRMDevice *IDirect3DRMDevice_from_impl(struct d3drm_device *device) DECLSPEC_HIDDEN;
 IDirect3DRMDevice2 *IDirect3DRMDevice2_from_impl(struct d3drm_device *device) DECLSPEC_HIDDEN;
 IDirect3DRMDevice3 *IDirect3DRMDevice3_from_impl(struct d3drm_device *device) DECLSPEC_HIDDEN;
@@ -50,7 +60,6 @@ HRESULT Direct3DRMMesh_create(IDirect3DRMMesh** obj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMMeshBuilder_create(REFIID riid, IUnknown** ppObj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMViewport_create(REFIID riid, IUnknown** ppObj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMMaterial_create(IDirect3DRMMaterial2** ret_iface) DECLSPEC_HIDDEN;
-HRESULT Direct3DRMTexture_create(REFIID riid, IUnknown** ret_iface) DECLSPEC_HIDDEN;
 
 HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *data,
                        D3DRMLOADTEXTURECALLBACK load_texture_proc, void *arg) DECLSPEC_HIDDEN;

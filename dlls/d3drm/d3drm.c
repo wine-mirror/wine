@@ -3,6 +3,7 @@
  *
  * Copyright 2010, 2012 Christian Costa
  * Copyright 2011 André Hentschel
+ * Copyright 2016 Aaryaman Vasishta
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -192,9 +193,17 @@ static HRESULT WINAPI d3drm1_CreateAnimationSet(IDirect3DRM *iface, IDirect3DRMA
 static HRESULT WINAPI d3drm1_CreateTexture(IDirect3DRM *iface,
         D3DRMIMAGE *image, IDirect3DRMTexture **texture)
 {
+    struct d3drm_texture *object;
+    HRESULT hr;
+
     FIXME("iface %p, image %p, texture %p partial stub.\n", iface, image, texture);
 
-    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture, (IUnknown **)texture);
+    if (FAILED(hr = d3drm_texture_create(&object)))
+        return hr;
+
+    *texture = &object->IDirect3DRMTexture_iface;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm1_CreateLight(IDirect3DRM *iface,
@@ -402,17 +411,33 @@ static HRESULT WINAPI d3drm1_CreateUserVisual(IDirect3DRM *iface,
 static HRESULT WINAPI d3drm1_LoadTexture(IDirect3DRM *iface,
         const char *filename, IDirect3DRMTexture **texture)
 {
+    struct d3drm_texture *object;
+    HRESULT hr;
+
     FIXME("iface %p, filename %s, texture %p stub!\n", iface, debugstr_a(filename), texture);
 
-    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture, (IUnknown **)texture);
+    if (FAILED(hr = d3drm_texture_create(&object)))
+        return hr;
+
+    *texture = &object->IDirect3DRMTexture_iface;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm1_LoadTextureFromResource(IDirect3DRM *iface,
         HRSRC resource, IDirect3DRMTexture **texture)
 {
+    struct d3drm_texture *object;
+    HRESULT hr;
+
     FIXME("iface %p, resource %p, texture %p stub!\n", iface, resource, texture);
 
-    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture, (IUnknown **)texture);
+    if (FAILED(hr = d3drm_texture_create(&object)))
+        return hr;
+
+    *texture = &object->IDirect3DRMTexture_iface;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm1_SetSearchPath(IDirect3DRM *iface, const char *path)
@@ -632,9 +657,17 @@ static HRESULT WINAPI d3drm2_CreateAnimationSet(IDirect3DRM2 *iface, IDirect3DRM
 static HRESULT WINAPI d3drm2_CreateTexture(IDirect3DRM2 *iface,
         D3DRMIMAGE *image, IDirect3DRMTexture2 **texture)
 {
+    struct d3drm_texture *object;
+    HRESULT hr;
+
     FIXME("iface %p, image %p, texture %p partial stub.\n", iface, image, texture);
 
-    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture2, (IUnknown **)texture);
+    if (FAILED(hr = d3drm_texture_create(&object)))
+        return hr;
+
+    *texture = &object->IDirect3DRMTexture2_iface;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm2_CreateLight(IDirect3DRM2 *iface,
@@ -820,18 +853,34 @@ static HRESULT WINAPI d3drm2_CreateUserVisual(IDirect3DRM2 *iface,
 static HRESULT WINAPI d3drm2_LoadTexture(IDirect3DRM2 *iface,
         const char *filename, IDirect3DRMTexture2 **texture)
 {
+    struct d3drm_texture *object;
+    HRESULT hr;
+
     FIXME("iface %p, filename %s, texture %p stub!\n", iface, debugstr_a(filename), texture);
 
-    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture2, (IUnknown **)texture);
+    if (FAILED(hr = d3drm_texture_create(&object)))
+        return hr;
+
+    *texture = &object->IDirect3DRMTexture2_iface;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm2_LoadTextureFromResource(IDirect3DRM2 *iface, HMODULE module,
         const char *resource_name, const char *resource_type, IDirect3DRMTexture2 **texture)
 {
+    struct d3drm_texture *object;
+    HRESULT hr;
+
     FIXME("iface %p, resource_name %s, resource_type %s, texture %p stub!\n",
             iface, debugstr_a(resource_name), debugstr_a(resource_type), texture);
 
-    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture2, (IUnknown **)texture);
+    if (FAILED(hr = d3drm_texture_create(&object)))
+        return hr;
+
+    *texture = &object->IDirect3DRMTexture2_iface;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm2_SetSearchPath(IDirect3DRM2 *iface, const char *path)
@@ -1057,9 +1106,17 @@ static HRESULT WINAPI d3drm3_CreateAnimationSet(IDirect3DRM3 *iface, IDirect3DRM
 static HRESULT WINAPI d3drm3_CreateTexture(IDirect3DRM3 *iface,
         D3DRMIMAGE *image, IDirect3DRMTexture3 **texture)
 {
+    struct d3drm_texture *object;
+    HRESULT hr;
+
     FIXME("iface %p, image %p, texture %p partial stub.\n", iface, image, texture);
 
-    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture3, (IUnknown **)texture);
+    if (FAILED(hr = d3drm_texture_create(&object)))
+        return hr;
+
+    *texture = &object->IDirect3DRMTexture3_iface;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm3_CreateLight(IDirect3DRM3 *iface,
@@ -1295,18 +1352,34 @@ static HRESULT WINAPI d3drm3_CreateUserVisual(IDirect3DRM3 *iface,
 static HRESULT WINAPI d3drm3_LoadTexture(IDirect3DRM3 *iface,
         const char *filename, IDirect3DRMTexture3 **texture)
 {
+    struct d3drm_texture *object;
+    HRESULT hr;
+
     FIXME("iface %p, filename %s, texture %p stub!\n", iface, debugstr_a(filename), texture);
 
-    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture3, (IUnknown **)texture);
+    if (FAILED(hr = d3drm_texture_create(&object)))
+        return hr;
+
+    *texture = &object->IDirect3DRMTexture3_iface;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm3_LoadTextureFromResource(IDirect3DRM3 *iface, HMODULE module,
         const char *resource_name, const char *resource_type, IDirect3DRMTexture3 **texture)
 {
+    struct d3drm_texture *object;
+    HRESULT hr;
+
     FIXME("iface %p, module %p, resource_name %s, resource_type %s, texture %p stub!\n",
             iface, module, debugstr_a(resource_name), debugstr_a(resource_type), texture);
 
-    return Direct3DRMTexture_create(&IID_IDirect3DRMTexture3, (IUnknown **)texture);
+    if (FAILED(hr = d3drm_texture_create(&object)))
+        return hr;
+
+    *texture = &object->IDirect3DRMTexture3_iface;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm3_SetSearchPath(IDirect3DRM3 *iface, const char *path)

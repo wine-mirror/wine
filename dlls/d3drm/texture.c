@@ -29,15 +29,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
-struct d3drm_texture
-{
-    IDirect3DRMTexture IDirect3DRMTexture_iface;
-    IDirect3DRMTexture2 IDirect3DRMTexture2_iface;
-    IDirect3DRMTexture3 IDirect3DRMTexture3_iface;
-    LONG ref;
-    DWORD app_data;
-};
-
 static inline struct d3drm_texture *impl_from_IDirect3DRMTexture(IDirect3DRMTexture *iface)
 {
     return CONTAINING_RECORD(iface, struct d3drm_texture, IDirect3DRMTexture_iface);
@@ -1038,12 +1029,11 @@ static const struct IDirect3DRMTexture3Vtbl d3drm_texture3_vtbl =
     d3drm_texture3_SetValidationCallback,
 };
 
-HRESULT Direct3DRMTexture_create(REFIID riid, IUnknown **out)
+HRESULT d3drm_texture_create(struct d3drm_texture **texture)
 {
     struct d3drm_texture *object;
-    HRESULT hr;
 
-    TRACE("riid %s, out %p.\n", debugstr_guid(riid), out);
+    TRACE("texture %p.\n", texture);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -1053,8 +1043,7 @@ HRESULT Direct3DRMTexture_create(REFIID riid, IUnknown **out)
     object->IDirect3DRMTexture3_iface.lpVtbl = &d3drm_texture3_vtbl;
     object->ref = 1;
 
-    hr = IDirect3DRMTexture3_QueryInterface(&object->IDirect3DRMTexture3_iface, riid, (void **)out);
-    IDirect3DRMTexture3_Release(&object->IDirect3DRMTexture3_iface);
+    *texture = object;
 
-    return hr;
+    return D3DRM_OK;
 }
