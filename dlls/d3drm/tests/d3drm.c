@@ -1372,6 +1372,9 @@ static void test_Viewport(void)
     ok(hr == D3DRM_OK, "expected D3DRM_OK (hr = %x)\n", hr);
 
     context.called = 0;
+    hr = IDirect3DRMViewport_QueryInterface(viewport, &IID_IDirect3DRMObject, (void**)&context.obj);
+    ok(hr == D3DRM_OK, "expected D3DRM_OK (hr = %x)\n", hr);
+    IDirect3DRMObject_Release(context.obj);
     IDirect3DRMViewport_Release(viewport);
     ok(context.called == 2, "got %d, expected 2\n", context.called);
 
@@ -1436,6 +1439,9 @@ static void test_Viewport(void)
     ok(hr == D3DRM_OK, "expected D3DRM_OK (hr = %x)\n", hr);
 
     context.called = 0;
+    hr = IDirect3DRMViewport2_QueryInterface(viewport2, &IID_IDirect3DRMObject, (void**)&context.obj);
+    ok(hr == D3DRM_OK, "expected D3DRM_OK (hr = %x)\n", hr);
+    IDirect3DRMObject_Release(context.obj);
     IDirect3DRMViewport2_Release(viewport2);
     ok(context.called == 2, "got %d, expected 2\n", context.called);
 
