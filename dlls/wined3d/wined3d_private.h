@@ -2548,15 +2548,9 @@ struct fbo_entry
     } key;
 };
 
-struct wined3d_surface_ops
-{
-    HRESULT (*surface_private_setup)(struct wined3d_surface *surface);
-};
-
 struct wined3d_surface
 {
     struct wined3d_resource resource;
-    const struct wined3d_surface_ops *surface_ops;
     struct wined3d_texture *container;
     DWORD locations;
 

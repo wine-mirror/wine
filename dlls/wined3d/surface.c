@@ -1068,51 +1068,6 @@ static const struct wined3d_resource_ops surface_resource_ops =
     surface_resource_sub_resource_unmap,
 };
 
-static const struct wined3d_surface_ops surface_ops =
-{
-    surface_private_setup,
-};
-
-/*****************************************************************************
- * Initializes the GDI surface, aka creates the DIB section we render to
- * The DIB section creation is done by calling GetDC, which will create the
- * section and releasing the dc to allow the app to use it. The dib section
- * will stay until the surface is released
- *
- * GDI surfaces do not need to be a power of 2 in size, so the pow2 sizes
- * are set to the real sizes to save memory. The NONPOW2 flag is unset to
- * avoid confusion in the shared surface code.
- *
- * Returns:
- *  WINED3D_OK on success
- *  The return values of called methods on failure
- *
- *****************************************************************************/
-static HRESULT gdi_surface_private_setup(struct wined3d_surface *surface)
-{
-    HRESULT hr;
-
-    TRACE("surface %p.\n", surface);
-
-    /* Sysmem textures have memory already allocated - release it,
-     * this avoids an unnecessary memcpy. */
-    hr = surface_create_dib_section(surface);
-    if (FAILED(hr))
-        return hr;
-    surface->resource.map_binding = WINED3D_LOCATION_DIB;
-
-    /* We don't mind the nonpow2 stuff in GDI. */
-    surface->pow2Width = surface->resource.width;
-    surface->pow2Height = surface->resource.height;
-
-    return WINED3D_OK;
-}
-
-static const struct wined3d_surface_ops gdi_surface_ops =
-{
-    gdi_surface_private_setup,
-};
-
 /* This call just downloads data, the caller is responsible for binding the
  * correct texture. */
 /* Context activation is done by the caller. */
@@ -4673,11 +4628,6 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
     if (!resource_size)
         return WINED3DERR_INVALIDCALL;
 
-    if (device->wined3d->flags & WINED3D_NO3D)
-        surface->surface_ops = &gdi_surface_ops;
-    else
-        surface->surface_ops = &surface_ops;
-
     if (FAILED(hr = resource_init(&surface->resource, device, WINED3D_RTYPE_SURFACE,
             format, desc->multisample_type, multisample_quality, desc->usage, desc->pool, desc->width, desc->height,
             1, resource_size, NULL, &wined3d_null_parent_ops, &surface_resource_ops)))
@@ -4702,7 +4652,7 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
     surface->texture_layer = layer;
 
     /* Call the private setup routine */
-    if (FAILED(hr = surface->surface_ops->surface_private_setup(surface)))
+    if (FAILED(hr = surface_private_setup(surface)))
     {
         ERR("Private setup failed, hr %#x.\n", hr);
         wined3d_surface_cleanup(surface);
@@ -4712,9 +4662,15 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
     /* Similar to lockable rendertargets above, creating the DIB section
      * during surface initialization prevents the sysmem pointer from changing
      * after a wined3d_texture_get_dc() call. */
-    if ((desc->usage & WINED3DUSAGE_OWNDC) && !surface->hDC
-            && SUCCEEDED(surface_create_dib_section(surface)))
+    if ((desc->usage & WINED3DUSAGE_OWNDC) || (device->wined3d->flags & WINED3D_NO3D))
+    {
+        if (FAILED(hr = surface_create_dib_section(surface)))
+        {
+            wined3d_surface_cleanup(surface);
+            return hr;
+        }
         surface->resource.map_binding = WINED3D_LOCATION_DIB;
+    }
 
     if (surface->resource.map_binding == WINED3D_LOCATION_DIB)
     {
