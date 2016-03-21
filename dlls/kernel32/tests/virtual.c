@@ -1808,7 +1808,7 @@ static void test_write_watch(void)
 
 #ifdef __i386__
 
-static DWORD num_guard_page_calls;
+static LONG num_guard_page_calls;
 
 static DWORD guard_page_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
                                  CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
@@ -1820,7 +1820,7 @@ static DWORD guard_page_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_R
     ok( rec->ExceptionCode == STATUS_GUARD_PAGE_VIOLATION, "ExceptionCode is %08x instead of %08x\n",
         rec->ExceptionCode, STATUS_GUARD_PAGE_VIOLATION );
 
-    num_guard_page_calls++;
+    InterlockedIncrement( &num_guard_page_calls );
     *(int *)rec->ExceptionInformation[1] += 0x100;
 
     return ExceptionContinueExecution;
@@ -1909,8 +1909,8 @@ static void test_guard_page(void)
     frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
     pNtCurrentTeb()->Tib.ExceptionList = &frame;
 
-    num_guard_page_calls = 0;
-    old_value = *value; /* exception handler increments value by 0x100 */
+    InterlockedExchange( &num_guard_page_calls, 0 );
+    InterlockedExchange( &old_value, *value ); /* exception handler increments value by 0x100 */
     *value = 2;
     ok( old_value == 0x101, "memory block contains wrong value, expected 0x101, got 0x%x\n", old_value );
     ok( num_guard_page_calls == 1, "expected one callback of guard page handler, got %d calls\n", num_guard_page_calls );
@@ -1931,7 +1931,7 @@ static void test_guard_page(void)
     frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
     pNtCurrentTeb()->Tib.ExceptionList = &frame;
 
-    num_guard_page_calls = 0;
+    InterlockedExchange( &num_guard_page_calls, 0 );
     old_value = *(value + 1);
     ok( old_value == 0x102, "memory block contains wrong value, expected 0x102, got 0x%x\n", old_value );
     ok( *value == 2, "memory block contains wrong value, expected 2, got 0x%x\n", *value );
@@ -1985,7 +1985,7 @@ static void test_guard_page(void)
     frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
     pNtCurrentTeb()->Tib.ExceptionList = &frame;
 
-    num_guard_page_calls = 0;
+    InterlockedExchange( &num_guard_page_calls, 0 );
     *value       = 1;
     *(value + 1) = 2;
     ok( num_guard_page_calls == 1, "expected one callback of guard page handler, got %d calls\n", num_guard_page_calls );
@@ -2006,7 +2006,7 @@ static void test_guard_page(void)
     frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
     pNtCurrentTeb()->Tib.ExceptionList = &frame;
 
-    num_guard_page_calls = 0;
+    InterlockedExchange( &num_guard_page_calls, 0 );
     old_value = *(value + 1); /* doesn't trigger write watch */
     ok( old_value == 0x102, "memory block contains wrong value, expected 0x102, got 0x%x\n", old_value );
     ok( *value == 1, "memory block contains wrong value, expected 1, got 0x%x\n", *value );
@@ -2132,7 +2132,7 @@ static void test_stack_commit(void)
     VirtualFree( call_on_stack, 0, MEM_RELEASE );
 }
 
-DWORD num_execute_fault_calls;
+static LONG num_execute_fault_calls;
 
 static DWORD execute_fault_seh_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
                                         CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
@@ -2157,7 +2157,7 @@ static DWORD execute_fault_seh_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
         ok( rec->ExceptionInformation[0] == err, "ExceptionInformation[0] is %d instead of %d\n",
             (DWORD)rec->ExceptionInformation[0], err );
 
-        num_guard_page_calls++;
+        InterlockedIncrement( &num_guard_page_calls );
     }
     else if (rec->ExceptionCode == STATUS_ACCESS_VIOLATION)
     {
@@ -2172,7 +2172,7 @@ static DWORD execute_fault_seh_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
         ok( success, "VirtualProtect failed %u\n", GetLastError() );
         ok( old_prot == PAGE_READWRITE, "wrong old prot %x\n", old_prot );
 
-        num_execute_fault_calls++;
+        InterlockedIncrement( &num_execute_fault_calls );
     }
 
     return ExceptionContinueExecution;
@@ -2193,7 +2193,7 @@ static LONG CALLBACK execute_fault_vec_handler( EXCEPTION_POINTERS *ExceptionInf
         "ExceptionCode is %08x instead of STATUS_ACCESS_VIOLATION\n", rec->ExceptionCode );
 
     if (rec->ExceptionCode == STATUS_ACCESS_VIOLATION)
-        num_execute_fault_calls++;
+        InterlockedIncrement( &num_execute_fault_calls );
 
     if (rec->ExceptionInformation[0] == EXCEPTION_READ_FAULT)
         return EXCEPTION_CONTINUE_SEARCH;
@@ -2214,7 +2214,8 @@ static inline DWORD send_message_excpt( HWND hWnd, UINT uMsg, WPARAM wParam, LPA
     frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
     pNtCurrentTeb()->Tib.ExceptionList = &frame;
 
-    num_guard_page_calls = num_execute_fault_calls = 0;
+    InterlockedExchange( &num_guard_page_calls, 0 );
+    InterlockedExchange( &num_execute_fault_calls, 0 );
     ret = SendMessageA( hWnd, uMsg, wParam, lParam );
 
     pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
@@ -2231,7 +2232,8 @@ static inline DWORD call_proc_excpt( DWORD (CALLBACK *code)(void *), void *arg )
     frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
     pNtCurrentTeb()->Tib.ExceptionList = &frame;
 
-    num_guard_page_calls = num_execute_fault_calls = 0;
+    InterlockedExchange( &num_guard_page_calls, 0 );
+    InterlockedExchange( &num_execute_fault_calls, 0 );
     ret = code( arg );
 
     pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
