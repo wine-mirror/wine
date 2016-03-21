@@ -450,6 +450,7 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame 
             RtlUnwind( catch_frame ? catch_frame : &frame->frame, 0, rec, 0 );
             cxx_local_unwind( frame, descr, tryblock->start_level );
             frame->trylevel = tryblock->end_level + 1;
+            msvcrt_get_thread_data()->exc_record = rec;
 
             /* call the catch block */
             TRACE( "calling catch block %p addr %p ebp %p\n",
