@@ -355,12 +355,7 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
         return 1;
 
     p = strchrW(key_name,'\\');
-    if (!p)
-    {
-        output_message(STRING_INVALID_KEY);
-        return 1;
-    }
-    p++;
+    if (p) p++;
 
     root = path_get_rootkey(key_name);
     if (!root)
@@ -440,12 +435,7 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
         return 1;
 
     p = strchrW(key_name,'\\');
-    if (!p)
-    {
-        output_message(STRING_INVALID_KEY);
-        return 1;
-    }
-    p++;
+    if (p) p++;
 
     root = path_get_rootkey(key_name);
     if (!root)
