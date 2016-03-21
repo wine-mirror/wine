@@ -518,7 +518,7 @@ static void surface_evict_sysmem(struct wined3d_surface *surface)
     surface_invalidate_location(surface, WINED3D_LOCATION_SYSMEM);
 }
 
-static HRESULT surface_private_setup(struct wined3d_surface *surface)
+static void surface_private_setup(struct wined3d_surface *surface)
 {
     /* TODO: Check against the maximum texture sizes supported by the video card. */
     struct wined3d_texture *texture = surface->container;
@@ -546,24 +546,11 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
     surface->pow2Width = pow2Width;
     surface->pow2Height = pow2Height;
 
-    if (pow2Width > surface->resource.width || pow2Height > surface->resource.height)
-    {
-        /* TODO: Add support for non power two compressed textures. */
-        if (texture->resource.format_flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_HEIGHT_SCALE))
-        {
-            FIXME("(%p) Compressed or height scaled non-power-two textures are not supported w(%d) h(%d)\n",
-                  surface, surface->resource.width, surface->resource.height);
-            return WINED3DERR_NOTAVAILABLE;
-        }
-    }
-
     if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
         surface->locations = WINED3D_LOCATION_DISCARDED;
 
     if (wined3d_texture_use_pbo(texture, gl_info))
         surface->resource.map_binding = WINED3D_LOCATION_BUFFER;
-
-    return WINED3D_OK;
 }
 
 static BOOL surface_is_full_rect(const struct wined3d_surface *surface, const RECT *r)
@@ -4627,13 +4614,7 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
     surface->texture_level = level;
     surface->texture_layer = layer;
 
-    /* Call the private setup routine */
-    if (FAILED(hr = surface_private_setup(surface)))
-    {
-        ERR("Private setup failed, hr %#x.\n", hr);
-        wined3d_surface_cleanup(surface);
-        return hr;
-    }
+    surface_private_setup(surface);
 
     /* Similar to lockable rendertargets above, creating the DIB section
      * during surface initialization prevents the sysmem pointer from changing

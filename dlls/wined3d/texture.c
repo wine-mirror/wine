@@ -1423,6 +1423,17 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
 
         if (!gl_info->supported[ARB_TEXTURE_RECTANGLE] && !gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
         {
+            const struct wined3d_format *format = wined3d_get_format(gl_info, desc->format);
+
+            /* TODO: Add support for non-power-of-two compressed textures. */
+            if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D]
+                    & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_HEIGHT_SCALE))
+            {
+                FIXME("Compressed or height scaled non-power-of-two (%ux%u) textures are not supported.\n",
+                        desc->width, desc->height);
+                return WINED3DERR_NOTAVAILABLE;
+            }
+
             /* Find the nearest pow2 match. */
             pow2_width = pow2_height = 1;
             while (pow2_width < desc->width)
