@@ -1598,7 +1598,6 @@ static void test_data_cache(void)
 
     /* requested is not IUnknown */
     hr = CreateDataCache(&unknown, &CLSID_NULL, &IID_IOleCache2, (void**)&pOleCache);
-todo_wine
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     hr = CreateDataCache(&unknown, &CLSID_NULL, &IID_IUnknown, (void**)&unk);
