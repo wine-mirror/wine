@@ -106,7 +106,7 @@ BOOL CDECL __CxxDetectRethrow(PEXCEPTION_POINTERS ptrs)
     rec = ptrs->ExceptionRecord;
 
     if (rec->ExceptionCode == CXX_EXCEPTION &&
-        rec->NumberParameters == 3 &&
+        rec->NumberParameters == 4 &&
         rec->ExceptionInformation[0] == CXX_FRAME_MAGIC_VC6 &&
         rec->ExceptionInformation[2])
     {
