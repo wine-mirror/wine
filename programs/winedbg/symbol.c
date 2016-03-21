@@ -99,7 +99,7 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG_PTR base,
         VARIANT         v;
 
         type.module = sym->ModBase;
-        type.id = sym->info;
+        type.id = sym->Index;
 
         if (!types_get_info(&type, TI_GET_VALUE, &v))
         {
@@ -252,7 +252,7 @@ static BOOL CALLBACK sgv_cb(PSYMBOL_INFO sym, ULONG size, PVOID ctx)
         return TRUE;
     }
     sgv->syms[insp].flags              = sym->Flags;
-    sgv->syms[insp].sym_info           = sym->info;
+    sgv->syms[insp].sym_info           = sym->Index;
     sgv->num++;
 
     return TRUE;
@@ -614,7 +614,7 @@ enum dbg_line_status symbol_get_function_line_status(const ADDRESS64* addr)
         return dbg_no_line_info;
 
     func.module = sym->ModBase;
-    func.id     = sym->info;
+    func.id     = sym->Index;
 
     if (symbol_get_debug_start(&func, &start) && lin < start)
         return dbg_not_on_a_line_number;
