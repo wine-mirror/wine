@@ -2039,7 +2039,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnableScrollBar( HWND hwnd, UINT nBar, UINT flags 
 	nBar = SB_HORZ;
     }
     else
-	bFineWithMe = TRUE;
+	bFineWithMe = nBar != SB_CTL;
 
     if (!(infoPtr = SCROLL_GetInternalInfo( hwnd, nBar, TRUE ))) return FALSE;
     if (bFineWithMe && infoPtr->flags == flags) return FALSE;
