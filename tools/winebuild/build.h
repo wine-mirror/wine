@@ -284,7 +284,6 @@ extern void read_undef_symbols( DLLSPEC *spec, char **argv );
 extern void resolve_imports( DLLSPEC *spec );
 extern int is_undefined( const char *name );
 extern int has_imports(void);
-extern int has_relays( DLLSPEC *spec );
 extern void output_get_pc_thunk(void);
 extern void output_module( DLLSPEC *spec );
 extern void output_stubs( DLLSPEC *spec );
@@ -363,5 +362,6 @@ extern struct strarray nm_command;
 extern char *cpu_option;
 extern char *arch_option;
 extern int thumb_mode;
+extern int needs_get_pc_thunk;
 
 #endif  /* __WINE_BUILD_H */

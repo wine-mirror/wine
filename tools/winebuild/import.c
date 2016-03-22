@@ -587,8 +587,7 @@ int is_undefined( const char *name )
 /* output the get_pc thunk if needed */
 void output_get_pc_thunk(void)
 {
-    if (target_cpu != CPU_x86) return;
-    if (!UsePIC) return;
+    assert( target_cpu == CPU_x86 );
     output( "\n\t.text\n" );
     output( "\t.align %d\n", get_alignment(4) );
     output( "\t%s\n", func_declaration("__wine_spec_get_pc_thunk_eax") );
@@ -619,6 +618,7 @@ static void output_import_thunk( const char *name, const char *table, int pos )
         {
             output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
             output( "1:\tjmp *%s+%d-1b(%%eax)\n", table, pos );
+            needs_get_pc_thunk = 1;
         }
         break;
     case CPU_x86_64:
@@ -1189,6 +1189,7 @@ void output_stubs( DLLSPEC *spec )
             {
                 output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
                 output( "1:" );
+                needs_get_pc_thunk = 1;
                 if (exp_name)
                 {
                     output( "\tleal .L%s_string-1b(%%eax),%%ecx\n", name );
@@ -1291,14 +1292,6 @@ void output_imports( DLLSPEC *spec )
     output_immediate_import_thunks();
     output_delayed_import_thunks( spec );
     output_external_link_imports( spec );
-    if (!list_empty( &dll_imports ) ||
-        !list_empty( &dll_delayed ) ||
-        ext_link_imports.count ||
-        has_stubs(spec) ||
-        has_relays(spec))
-    {
-        output_get_pc_thunk();
-    }
 }
 
 /* output an import library for a Win32 module and additional object files */

@@ -356,6 +356,7 @@ static void output_call16_function( ORDDEF *odp )
         {
             output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
             output( "1:\tmovl wine_ldt_copy_ptr-1b(%%eax),%%esi\n" );
+            needs_get_pc_thunk = 1;
         }
         else
             output( "\tmovl $%s,%%esi\n", asm_name("wine_ldt_copy") );
@@ -814,6 +815,7 @@ void output_spec16_file( DLLSPEC *spec16 )
     resolve_imports( spec16 );
     add_16bit_exports( spec32, spec16 );
 
+    needs_get_pc_thunk = 0;
     output_standard_file_header();
     output_module( spec32 );
     output_module16( spec16 );
@@ -821,6 +823,7 @@ void output_spec16_file( DLLSPEC *spec16 )
     output_exports( spec32 );
     output_imports( spec16 );
     if (is_undefined( "__wine_call_from_16" )) output_asm_relays16();
+    if (needs_get_pc_thunk) output_get_pc_thunk();
     if (spec16->main_module)
     {
         output( "\n\t%s\n", get_asm_string_section() );
