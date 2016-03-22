@@ -39,7 +39,7 @@
 
 struct import
 {
-    DLLSPEC     *spec;        /* description of the imported dll */
+    char        *dll_name;    /* exported file name of the dll */
     char        *full_name;   /* full name of the input file */
     dev_t        dev;         /* device/inode of the input file */
     ino_t        ino;
@@ -129,7 +129,7 @@ static void free_imports( struct import *imp )
 {
     free( imp->exports );
     free( imp->imports );
-    free_dll_spec( imp->spec );
+    free( imp->dll_name );
     free( imp->full_name );
     free( imp );
 }
@@ -153,7 +153,7 @@ static struct import *is_already_imported( const char *name )
 
     for (i = 0; i < nb_imports; i++)
     {
-        if (!strcmp( dll_imports[i]->spec->file_name, name )) return dll_imports[i];
+        if (!strcmp( dll_imports[i]->dll_name, name )) return dll_imports[i];
     }
     return NULL;
 }
@@ -191,22 +191,20 @@ static char *find_library( const char *name )
 }
 
 /* read in the list of exported symbols of an import library */
-static int read_import_lib( struct import *imp )
+static DLLSPEC *read_import_lib( struct import *imp )
 {
     FILE *f;
-    int i, ret;
+    int i;
     struct stat stat;
     struct import *prev_imp;
-    DLLSPEC *spec = imp->spec;
-    int delayed = is_delayed_import( spec->file_name );
+    DLLSPEC *spec = alloc_dll_spec();
 
     f = open_input_file( NULL, imp->full_name );
     fstat( fileno(f), &stat );
     imp->dev = stat.st_dev;
     imp->ino = stat.st_ino;
-    ret = parse_def_file( f, spec );
+    if (!parse_def_file( f, spec )) exit( 1 );
     close_input_file( f );
-    if (!ret) return 0;
 
     /* check if we already imported that library from a different file */
     if ((prev_imp = is_already_imported( spec->file_name )))
@@ -214,13 +212,8 @@ static int read_import_lib( struct import *imp )
         if (prev_imp->dev != imp->dev || prev_imp->ino != imp->ino)
             fatal_error( "%s and %s have the same export name '%s'\n",
                          prev_imp->full_name, imp->full_name, spec->file_name );
-        return 0;  /* the same file was already loaded, ignore this one */
-    }
-
-    if (delayed)
-    {
-        imp->delay = 1;
-        nb_delayed++;
+        free_dll_spec( spec );
+        return NULL;  /* the same file was already loaded, ignore this one */
     }
 
     if (spec->nb_entry_points)
@@ -230,7 +223,7 @@ static int read_import_lib( struct import *imp )
             imp->exports[imp->nb_exports++] = &spec->entry_points[i];
         qsort( imp->exports, imp->nb_exports, sizeof(*imp->exports), func_cmp );
     }
-    return 1;
+    return spec;
 }
 
 /* build the dll exported name from the import lib name or path */
@@ -260,29 +253,30 @@ static char *get_dll_name( const char *name, const char *filename )
 /* add a dll to the list of imports */
 void add_import_dll( const char *name, const char *filename )
 {
+    DLLSPEC *spec;
+    char *dll_name = get_dll_name( name, filename );
     struct import *imp = xmalloc( sizeof(*imp) );
 
-    imp->spec            = alloc_dll_spec();
-    imp->spec->file_name = get_dll_name( name, filename );
-    imp->delay           = 0;
-    imp->imports         = NULL;
-    imp->nb_imports      = 0;
-    imp->exports         = NULL;
-    imp->nb_exports      = 0;
+    memset( imp, 0, sizeof(*imp) );
 
     if (filename) imp->full_name = xstrdup( filename );
     else imp->full_name = find_library( name );
 
-    if (read_import_lib( imp ))
-    {
-        dll_imports = xrealloc( dll_imports, (nb_imports+1) * sizeof(*dll_imports) );
-        dll_imports[nb_imports++] = imp;
-    }
-    else
+    if (!(spec = read_import_lib( imp )))
     {
         free_imports( imp );
-        if (nb_errors) exit(1);
+        return;
     }
+
+    imp->dll_name = spec->file_name ? spec->file_name : dll_name;
+
+    if (is_delayed_import( dll_name ))
+    {
+        imp->delay = 1;
+        nb_delayed++;
+    }
+    dll_imports = xrealloc( dll_imports, (nb_imports+1) * sizeof(*dll_imports) );
+    dll_imports[nb_imports++] = imp;
 }
 
 /* add a library to the list of delayed imports */
@@ -359,7 +353,7 @@ static void add_extra_undef_symbols( DLLSPEC *spec )
 static int check_unused( const struct import* imp, const DLLSPEC *spec )
 {
     int i;
-    const char *file_name = imp->spec->file_name;
+    const char *file_name = imp->dll_name;
     size_t len = strlen( file_name );
     const char *p = strchr( file_name, '.' );
     if (p && !strcasecmp( p, ".dll" )) len = p - file_name;
@@ -397,10 +391,10 @@ static void check_undefined_forwards( DLLSPEC *spec )
         {
             struct import *imp = dll_imports[j];
 
-            if (strcasecmp( imp->spec->file_name, dll_name )) continue;
+            if (strcasecmp( imp->dll_name, dll_name )) continue;
             if (!find_export( api_name, imp->exports, imp->nb_exports ))
                 warning( "%s:%d: forward '%s' not found in %s\n",
-                         spec->src_name, odp->lineno, odp->link_name, imp->spec->file_name );
+                         spec->src_name, odp->lineno, odp->link_name, imp->dll_name );
             break;
         }
         if (j == nb_imports)
@@ -550,7 +544,7 @@ void resolve_imports( DLLSPEC *spec )
                 if (odp->flags & FLAG_PRIVATE) continue;
                 if (odp->type != TYPE_STDCALL && odp->type != TYPE_CDECL)
                     warning( "winebuild: Data export '%s' cannot be imported from %s\n",
-                             odp->link_name, imp->spec->file_name );
+                             odp->link_name, imp->dll_name );
                 else
                 {
                     add_import_func( imp, odp );
@@ -563,7 +557,7 @@ void resolve_imports( DLLSPEC *spec )
         {
             /* the dll is not used, get rid of it */
             if (check_unused( imp, spec ))
-                warning( "winebuild: %s imported but no symbols used\n", imp->spec->file_name );
+                warning( "winebuild: %s imported but no symbols used\n", imp->dll_name );
             remove_import_dll( i );
             i--;
         }
@@ -683,7 +677,7 @@ static void output_immediate_imports(void)
     for (i = j = 0; i < nb_imports; i++)
     {
         if (dll_imports[i]->delay) continue;
-        dll_name = make_c_identifier( dll_imports[i]->spec->file_name );
+        dll_name = make_c_identifier( dll_imports[i]->dll_name );
         output( "\t.long .L__wine_spec_import_data_names+%d-.L__wine_spec_rva_base\n",  /* OriginalFirstThunk */
                  j * get_ptr_size() );
         output( "\t.long 0\n" );     /* TimeDateStamp */
@@ -705,7 +699,7 @@ static void output_immediate_imports(void)
     for (i = 0; i < nb_imports; i++)
     {
         if (dll_imports[i]->delay) continue;
-        dll_name = make_c_identifier( dll_imports[i]->spec->file_name );
+        dll_name = make_c_identifier( dll_imports[i]->dll_name );
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
@@ -734,7 +728,7 @@ static void output_immediate_imports(void)
     for (i = 0; i < nb_imports; i++)
     {
         if (dll_imports[i]->delay) continue;
-        dll_name = make_c_identifier( dll_imports[i]->spec->file_name );
+        dll_name = make_c_identifier( dll_imports[i]->dll_name );
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
@@ -751,9 +745,9 @@ static void output_immediate_imports(void)
     for (i = 0; i < nb_imports; i++)
     {
         if (dll_imports[i]->delay) continue;
-        dll_name = make_c_identifier( dll_imports[i]->spec->file_name );
+        dll_name = make_c_identifier( dll_imports[i]->dll_name );
         output( ".L__wine_spec_import_name_%s:\n\t%s \"%s\"\n",
-                 dll_name, get_asm_string_keyword(), dll_imports[i]->spec->file_name );
+                 dll_name, get_asm_string_keyword(), dll_imports[i]->dll_name );
     }
 }
 
@@ -865,7 +859,7 @@ static void output_delayed_imports( const DLLSPEC *spec )
         if (!dll_imports[i]->delay) continue;
         output( ".L__wine_delay_name_%d:\n", i );
         output( "\t%s \"%s\"\n",
-                 get_asm_string_keyword(), dll_imports[i]->spec->file_name );
+                 get_asm_string_keyword(), dll_imports[i]->dll_name );
     }
 
     for (i = 0; i < nb_imports; i++)
