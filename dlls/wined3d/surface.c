@@ -2512,6 +2512,8 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
         struct wined3d_surface *src_surface, const RECT *src_rect_in,
         struct wined3d_surface *dst_surface, const RECT *dst_rect_in)
 {
+    struct wined3d_texture *src_texture = src_surface->container;
+    struct wined3d_texture *dst_texture = dst_surface->container;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context = old_ctx;
     struct wined3d_surface *restore_rt = NULL;
@@ -2532,12 +2534,12 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
     /* Make sure the surface is up-to-date. This should probably use
      * surface_load_location() and worry about the destination surface too,
      * unless we're overwriting it completely. */
-    wined3d_texture_load(src_surface->container, context, FALSE);
+    wined3d_texture_load(src_texture, context, FALSE);
 
     /* Activate the destination context, set it up for blitting */
     context_apply_blit_state(context, device);
 
-    if (!wined3d_resource_is_offscreen(&dst_surface->container->resource))
+    if (!wined3d_resource_is_offscreen(&dst_texture->resource))
         surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
 
     device->blitter->set_shader(device->blit_priv, context, src_surface, NULL);
@@ -2550,9 +2552,9 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
         /* For P8 surfaces, the alpha component contains the palette index.
          * Which means that the colorkey is one of the palette entries. In
          * other cases pixels that should be masked away have alpha set to 0. */
-        if (src_surface->resource.format->id == WINED3DFMT_P8_UINT)
+        if (src_texture->resource.format->id == WINED3DFMT_P8_UINT)
             gl_info->gl_ops.gl.p_glAlphaFunc(GL_NOTEQUAL,
-                    (float)src_surface->container->async.src_blt_color_key.color_space_low_value / 255.0f);
+                    (float)src_texture->async.src_blt_color_key.color_space_low_value / 255.0f);
         else
             gl_info->gl_ops.gl.p_glAlphaFunc(GL_NOTEQUAL, 0.0f);
         checkGLcall("glAlphaFunc");
@@ -2575,8 +2577,7 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
     device->blitter->unset_shader(context->gl_info);
 
     if (wined3d_settings.strict_draw_ordering
-            || (dst_surface->container->swapchain
-            && dst_surface->container->swapchain->front_buffer == dst_surface->container))
+            || (dst_texture->swapchain && dst_texture->swapchain->front_buffer == dst_texture))
         gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
     if (restore_rt)
