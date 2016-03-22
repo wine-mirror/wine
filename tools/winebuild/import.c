@@ -46,7 +46,6 @@ struct import
     char        *full_name;   /* full name of the input file */
     dev_t        dev;         /* device/inode of the input file */
     ino_t        ino;
-    int          delay;       /* delay or not dll loading ? */
     ORDDEF     **exports;     /* functions exported from this dll */
     int          nb_exports;  /* number of exported functions */
     ORDDEF     **imports;     /* functions we want to import from this dll */
@@ -59,8 +58,7 @@ static struct strarray delayed_imports;  /* list of delayed import dlls */
 static struct strarray ext_link_imports; /* list of external symbols to link to */
 
 static struct list dll_imports = LIST_INIT( dll_imports );
-static int nb_imports = 0;      /* number of imported dlls (delayed or not) */
-static int nb_delayed = 0;      /* number of delayed dlls */
+static struct list dll_delayed = LIST_INIT( dll_delayed );
 
 
 static inline const char *ppc_reg( int reg )
@@ -154,6 +152,8 @@ static struct import *is_already_imported( const char *name )
     struct import *import;
 
     LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
+        if (!strcmp( import->dll_name, name )) return import;
+    LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
         if (!strcmp( import->dll_name, name )) return import;
     return NULL;
 }
@@ -272,12 +272,9 @@ void add_import_dll( const char *name, const char *filename )
     imp->c_name = make_c_identifier( imp->dll_name );
 
     if (is_delayed_import( dll_name ))
-    {
-        imp->delay = 1;
-        nb_delayed++;
-    }
-    list_add_tail( &dll_imports, &imp->entry );
-    nb_imports++;
+        list_add_tail( &dll_delayed, &imp->entry );
+    else
+        list_add_tail( &dll_imports, &imp->entry );
 }
 
 /* add a library to the list of delayed imports */
@@ -287,20 +284,11 @@ void add_delayed_import( const char *name )
     char *fullname = get_dll_name( name, NULL );
 
     strarray_add( &delayed_imports, fullname, NULL );
-    if ((imp = is_already_imported( fullname )) && !imp->delay)
+    if ((imp = is_already_imported( fullname )))
     {
-        imp->delay = 1;
-        nb_delayed++;
+        list_remove( &imp->entry );
+        list_add_tail( &dll_delayed, &imp->entry );
     }
-}
-
-/* remove an imported dll */
-static void remove_import_dll( struct import *imp )
-{
-    list_remove( &imp->entry );
-    nb_imports--;
-    if (imp->delay) nb_delayed--;
-    free_imports( imp );
 }
 
 /* add a symbol to the list of extra symbols that ld must resolve */
@@ -343,7 +331,7 @@ static void add_extra_undef_symbols( DLLSPEC *spec )
     if (!spec->init_func) spec->init_func = xstrdup( get_default_entry_point(spec) );
     add_extra_ld_symbol( spec->init_func );
     if (has_stubs( spec )) add_extra_ld_symbol( "__wine_spec_unimplemented_stub" );
-    if (nb_delayed) add_extra_ld_symbol( "__wine_spec_delay_load" );
+    if (!list_empty( &dll_delayed )) add_extra_ld_symbol( "__wine_spec_delay_load" );
 }
 
 /* check if a given imported dll is not needed, taking forwards into account */
@@ -391,11 +379,19 @@ static void check_undefined_forwards( DLLSPEC *spec )
             if (!find_export( api_name, imp->exports, imp->nb_exports ))
                 warning( "%s:%d: forward '%s' not found in %s\n",
                          spec->src_name, odp->lineno, odp->link_name, imp->dll_name );
-            break;
+            goto done;
         }
-        if (&imp->entry == &dll_imports)
-            warning( "%s:%d: forward '%s' not found in the imported dll list\n",
-                     spec->src_name, odp->lineno, odp->link_name );
+        LIST_FOR_EACH_ENTRY( imp, &dll_delayed, struct import, entry )
+        {
+            if (strcasecmp( imp->dll_name, dll_name )) continue;
+            if (!find_export( api_name, imp->exports, imp->nb_exports ))
+                warning( "%s:%d: forward '%s' not found in %s\n",
+                         spec->src_name, odp->lineno, odp->link_name, imp->dll_name );
+            goto done;
+        }
+        warning( "%s:%d: forward '%s' not found in the imported dll list\n",
+                 spec->src_name, odp->lineno, odp->link_name );
+    done:
         free( link_name );
         free( dll_name );
     }
@@ -519,16 +515,13 @@ void read_undef_symbols( DLLSPEC *spec, char **argv )
     free( cmd );
 }
 
-/* resolve the imports for a Win32 module */
-void resolve_imports( DLLSPEC *spec )
+void resolve_dll_imports( DLLSPEC *spec, struct list *list )
 {
     unsigned int j, removed;
     struct import *imp, *next;
     ORDDEF *odp;
 
-    check_undefined_forwards( spec );
-
-    LIST_FOR_EACH_ENTRY_SAFE( imp, next, &dll_imports, struct import, entry )
+    LIST_FOR_EACH_ENTRY_SAFE( imp, next, list, struct import, entry )
     {
         for (j = removed = 0; j < undef_symbols.count; j++)
         {
@@ -552,10 +545,18 @@ void resolve_imports( DLLSPEC *spec )
             /* the dll is not used, get rid of it */
             if (check_unused( imp, spec ))
                 warning( "winebuild: %s imported but no symbols used\n", imp->dll_name );
-            remove_import_dll( imp );
+            list_remove( &imp->entry );
+            free_imports( imp );
         }
     }
+}
 
+/* resolve the imports for a Win32 module */
+void resolve_imports( DLLSPEC *spec )
+{
+    check_undefined_forwards( spec );
+    resolve_dll_imports( spec, &dll_imports );
+    resolve_dll_imports( spec, &dll_delayed );
     sort_names( &undef_symbols );
     check_undefined_exports( spec );
 }
@@ -647,7 +648,7 @@ static void output_import_thunk( const char *name, const char *table, int pos )
 /* check if we need an import directory */
 int has_imports(void)
 {
-    return (nb_imports - nb_delayed) > 0;
+    return !list_empty( &dll_imports );
 }
 
 /* output the import table of a Win32 module */
@@ -656,7 +657,7 @@ static void output_immediate_imports(void)
     int j;
     struct import *import;
 
-    if (nb_imports == nb_delayed) return;  /* no immediate imports */
+    if (list_empty( &dll_imports )) return;  /* no immediate imports */
 
     /* main import header */
 
@@ -670,7 +671,6 @@ static void output_immediate_imports(void)
     j = 0;
     LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
     {
-        if (import->delay) continue;
         output( "\t.long .L__wine_spec_import_data_names+%d-.L__wine_spec_rva_base\n",  /* OriginalFirstThunk */
                  j * get_ptr_size() );
         output( "\t.long 0\n" );     /* TimeDateStamp */
@@ -691,7 +691,6 @@ static void output_immediate_imports(void)
     output( ".L__wine_spec_import_data_names:\n" );
     LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
     {
-        if (import->delay) continue;
         for (j = 0; j < import->nb_imports; j++)
         {
             ORDDEF *odp = import->imports[j];
@@ -711,7 +710,6 @@ static void output_immediate_imports(void)
     output( ".L__wine_spec_import_data_ptrs:\n" );
     LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
     {
-        if (import->delay) continue;
         for (j = 0; j < import->nb_imports; j++) output( "\t%s 0\n", get_asm_ptr_keyword() );
         output( "\t%s 0\n", get_asm_ptr_keyword() );
     }
@@ -719,7 +717,6 @@ static void output_immediate_imports(void)
 
     LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
     {
-        if (import->delay) continue;
         for (j = 0; j < import->nb_imports; j++)
         {
             ORDDEF *odp = import->imports[j];
@@ -735,7 +732,6 @@ static void output_immediate_imports(void)
 
     LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
     {
-        if (import->delay) continue;
         output( ".L__wine_spec_import_name_%s:\n\t%s \"%s\"\n",
                 import->c_name, get_asm_string_keyword(), import->dll_name );
     }
@@ -745,11 +741,10 @@ static void output_immediate_imports(void)
 static void output_immediate_import_thunks(void)
 {
     int j, pos;
-    int nb_imm = nb_imports - nb_delayed;
     struct import *import;
     static const char import_thunks[] = "__wine_spec_import_thunks";
 
-    if (!nb_imm) return;
+    if (list_empty( &dll_imports )) return;
 
     output( "\n/* immediate import thunks */\n\n" );
     output( "\t.text\n" );
@@ -759,7 +754,6 @@ static void output_immediate_import_thunks(void)
     pos = 0;
     LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
     {
-        if (import->delay) continue;
         for (j = 0; j < import->nb_imports; j++, pos += get_ptr_size())
         {
             ORDDEF *odp = import->imports[j];
@@ -777,7 +771,7 @@ static void output_delayed_imports( const DLLSPEC *spec )
     int j, mod;
     struct import *import;
 
-    if (!nb_delayed) return;
+    if (list_empty( &dll_delayed )) return;
 
     output( "\n/* delayed imports */\n\n" );
     output( "\t.data\n" );
@@ -787,9 +781,8 @@ static void output_delayed_imports( const DLLSPEC *spec )
     /* list of dlls */
 
     j = mod = 0;
-    LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
+    LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
     {
-        if (!import->delay) continue;
         output( "\t%s 0\n", get_asm_ptr_keyword() );   /* grAttrs */
         output( "\t%s .L__wine_delay_name_%s\n",       /* szName */
                  get_asm_ptr_keyword(), import->c_name );
@@ -815,9 +808,8 @@ static void output_delayed_imports( const DLLSPEC *spec )
     output( "\t%s 0\n", get_asm_ptr_keyword() );   /* dwTimeStamp */
 
     output( "\n.L__wine_delay_IAT:\n" );
-    LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
+    LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
     {
-        if (!import->delay) continue;
         for (j = 0; j < import->nb_imports; j++)
         {
             ORDDEF *odp = import->imports[j];
@@ -828,9 +820,8 @@ static void output_delayed_imports( const DLLSPEC *spec )
     }
 
     output( "\n.L__wine_delay_INT:\n" );
-    LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
+    LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
     {
-        if (!import->delay) continue;
         for (j = 0; j < import->nb_imports; j++)
         {
             ORDDEF *odp = import->imports[j];
@@ -843,21 +834,19 @@ static void output_delayed_imports( const DLLSPEC *spec )
     }
 
     output( "\n.L__wine_delay_modules:\n" );
-    LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
+    LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
     {
-        if (import->delay) output( "\t%s 0\n", get_asm_ptr_keyword() );
+        output( "\t%s 0\n", get_asm_ptr_keyword() );
     }
 
-    LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
+    LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
     {
-        if (!import->delay) continue;
         output( ".L__wine_delay_name_%s:\n", import->c_name );
         output( "\t%s \"%s\"\n", get_asm_string_keyword(), import->dll_name );
     }
 
-    LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
+    LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
     {
-        if (!import->delay) continue;
         for (j = 0; j < import->nb_imports; j++)
         {
             ORDDEF *odp = import->imports[j];
@@ -877,7 +866,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
     static const char delayed_import_loaders[] = "__wine_spec_delayed_import_loaders";
     static const char delayed_import_thunks[] = "__wine_spec_delayed_import_thunks";
 
-    if (!nb_delayed) return;
+    if (list_empty( &dll_delayed )) return;
 
     output( "\n/* delayed import thunks */\n\n" );
     output( "\t.text\n" );
@@ -1005,9 +994,8 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
     output( "\n" );
 
     idx = 0;
-    LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
+    LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
     {
-        if (!import->delay) continue;
         for (j = 0; j < import->nb_imports; j++)
         {
             ORDDEF *odp = import->imports[j];
@@ -1090,9 +1078,8 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
     output( "\n\t.align %d\n", get_alignment(get_ptr_size()) );
     output( "%s:\n", asm_name(delayed_import_thunks));
     pos = 0;
-    LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
+    LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
     {
-        if (!import->delay) continue;
         for (j = 0; j < import->nb_imports; j++, pos += get_ptr_size())
         {
             ORDDEF *odp = import->imports[j];
@@ -1289,8 +1276,14 @@ void output_imports( DLLSPEC *spec )
     output_immediate_import_thunks();
     output_delayed_import_thunks( spec );
     output_external_link_imports( spec );
-    if (nb_imports || ext_link_imports.count || has_stubs(spec) || has_relays(spec))
+    if (!list_empty( &dll_imports ) ||
+        !list_empty( &dll_delayed ) ||
+        ext_link_imports.count ||
+        has_stubs(spec) ||
+        has_relays(spec))
+    {
         output_get_pc_thunk();
+    }
 }
 
 /* output an import library for a Win32 module and additional object files */
