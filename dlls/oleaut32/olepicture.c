@@ -2316,6 +2316,15 @@ HRESULT WINAPI OleLoadPictureEx( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
 }
 
 /***********************************************************************
+ * OleLoadPictureFile (OLEAUT32.422)
+ */
+HRESULT WINAPI OleLoadPictureFile(VARIANT file, LPDISPATCH *picture)
+{
+    FIXME("(%s %p): stub\n", wine_dbgstr_variant(&file), picture);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
  * OleSavePictureFile (OLEAUT32.423)
  */
 HRESULT WINAPI OleSavePictureFile(IDispatch *picture, BSTR filename)
