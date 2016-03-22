@@ -100,6 +100,17 @@ static BOOL buffer_is_fully_dirty(const struct wined3d_buffer *buffer)
     return FALSE;
 }
 
+/* Context activation is done by the caller. */
+static void buffer_bind(struct wined3d_buffer *buffer, struct wined3d_context *context)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    if (buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER)
+        context_invalidate_state(context, STATE_INDEXBUFFER);
+
+    GL_EXTCALL(glBindBuffer(buffer->buffer_type_hint, buffer->buffer_object));
+}
+
 /* Context activation is done by the caller */
 static void delete_gl_buffer(struct wined3d_buffer *This, const struct wined3d_gl_info *gl_info)
 {
@@ -148,9 +159,7 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, struct wine
         goto fail;
     }
 
-    if (This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
-        context_invalidate_state(context, STATE_INDEXBUFFER);
-    GL_EXTCALL(glBindBuffer(This->buffer_type_hint, This->buffer_object));
+    buffer_bind(This, context);
     error = gl_info->gl_ops.gl.p_glGetError();
     if (error != GL_NO_ERROR)
     {
@@ -486,25 +495,23 @@ ULONG CDECL wined3d_buffer_incref(struct wined3d_buffer *buffer)
 }
 
 /* Context activation is done by the caller. */
-BYTE *buffer_get_sysmem(struct wined3d_buffer *This, struct wined3d_context *context)
+BYTE *buffer_get_sysmem(struct wined3d_buffer *buffer, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     /* Heap_memory exists if the buffer is double buffered or has no buffer object at all. */
-    if (This->resource.heap_memory)
-        return This->resource.heap_memory;
+    if (buffer->resource.heap_memory)
+        return buffer->resource.heap_memory;
 
-    if (!wined3d_resource_allocate_sysmem(&This->resource))
+    if (!wined3d_resource_allocate_sysmem(&buffer->resource))
         ERR("Failed to allocate system memory.\n");
 
-    if (This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
-        context_invalidate_state(context, STATE_INDEXBUFFER);
+    buffer_bind(buffer, context);
+    GL_EXTCALL(glGetBufferSubData(buffer->buffer_type_hint, 0, buffer->resource.size, buffer->resource.heap_memory));
+    checkGLcall("buffer download");
+    buffer->flags |= WINED3D_BUFFER_DOUBLEBUFFER;
 
-    GL_EXTCALL(glBindBuffer(This->buffer_type_hint, This->buffer_object));
-    GL_EXTCALL(glGetBufferSubData(This->buffer_type_hint, 0, This->resource.size, This->resource.heap_memory));
-    This->flags |= WINED3D_BUFFER_DOUBLEBUFFER;
-
-    return This->resource.heap_memory;
+    return buffer->resource.heap_memory;
 }
 
 static void buffer_unload(struct wined3d_resource *resource)
@@ -977,9 +984,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
                 context = context_acquire(device, NULL);
                 gl_info = context->gl_info;
 
-                if (buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
-                    context_invalidate_state(context, STATE_INDEXBUFFER);
-                GL_EXTCALL(glBindBuffer(buffer->buffer_type_hint, buffer->buffer_object));
+                buffer_bind(buffer, context);
 
                 if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
                 {
@@ -1076,9 +1081,7 @@ void CDECL wined3d_buffer_unmap(struct wined3d_buffer *buffer)
         context = context_acquire(device, NULL);
         gl_info = context->gl_info;
 
-        if (buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
-            context_invalidate_state(context, STATE_INDEXBUFFER);
-        GL_EXTCALL(glBindBuffer(buffer->buffer_type_hint, buffer->buffer_object));
+        buffer_bind(buffer, context);
 
         if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
         {
@@ -1167,19 +1170,13 @@ HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_
     }
     else if (dst_buffer_mem && !src_buffer_mem)
     {
-        if (src_buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
-            context_invalidate_state(context, STATE_INDEXBUFFER);
-        GL_EXTCALL(glBindBuffer(src_buffer->buffer_type_hint, src_bo_address.buffer_object));
-
+        buffer_bind(src_buffer, context);
         GL_EXTCALL(glGetBufferSubData(src_buffer->buffer_type_hint, src_offset, size, dst_buffer_mem + dst_offset));
         checkGLcall("buffer download");
     }
     else if (!dst_buffer_mem && src_buffer_mem)
     {
-        if (dst_buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
-            context_invalidate_state(context, STATE_INDEXBUFFER);
-        GL_EXTCALL(glBindBuffer(dst_buffer->buffer_type_hint, dst_bo_address.buffer_object));
-
+        buffer_bind(dst_buffer, context);
         GL_EXTCALL(glBufferSubData(dst_buffer->buffer_type_hint, dst_offset, size, src_buffer_mem + src_offset));
         checkGLcall("buffer upload");
     }
