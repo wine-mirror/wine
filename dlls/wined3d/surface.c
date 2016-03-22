@@ -2621,35 +2621,39 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
         struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
         const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter)
 {
-    struct wined3d_device *device = dst_surface->resource.device;
+    struct wined3d_texture *dst_texture = dst_surface->container;
+    struct wined3d_device *device = dst_texture->resource.device;
     const struct wined3d_surface *rt = wined3d_rendertarget_view_get_surface(device->fb.render_targets[0]);
     struct wined3d_swapchain *src_swapchain, *dst_swapchain;
+    struct wined3d_texture *src_texture;
 
     TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
             dst_surface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
             flags, fx, debug_d3dtexturefiltertype(filter));
 
     /* Get the swapchain. One of the surfaces has to be a primary surface */
-    if (dst_surface->resource.pool == WINED3D_POOL_SYSTEM_MEM)
+    if (dst_texture->resource.pool == WINED3D_POOL_SYSTEM_MEM)
     {
         WARN("Destination is in sysmem, rejecting gl blt\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    dst_swapchain = dst_surface->container->swapchain;
+    dst_swapchain = dst_texture->swapchain;
 
     if (src_surface)
     {
-        if (src_surface->resource.pool == WINED3D_POOL_SYSTEM_MEM)
+        src_texture = src_surface->container;
+        if (src_texture->resource.pool == WINED3D_POOL_SYSTEM_MEM)
         {
             WARN("Src is in sysmem, rejecting gl blt\n");
             return WINED3DERR_INVALIDCALL;
         }
 
-        src_swapchain = src_surface->container->swapchain;
+        src_swapchain = src_texture->swapchain;
     }
     else
     {
+        src_texture = NULL;
         src_swapchain = NULL;
     }
 
@@ -2698,8 +2702,8 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
         BOOL stretchx;
 
         /* P8 read back is not implemented */
-        if (src_surface->resource.format->id == WINED3DFMT_P8_UINT
-                || dst_surface->resource.format->id == WINED3DFMT_P8_UINT)
+        if (src_texture->resource.format->id == WINED3DFMT_P8_UINT
+                || dst_texture->resource.format->id == WINED3DFMT_P8_UINT)
         {
             TRACE("P8 read back not supported by frame buffer to texture blit\n");
             return WINED3DERR_INVALIDCALL;
