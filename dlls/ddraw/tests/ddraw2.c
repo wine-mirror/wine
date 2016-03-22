@@ -9063,7 +9063,6 @@ static void test_shademode(void)
     DWORD color0, color1;
     IDirectDraw2 *ddraw;
     D3DLVERTEX *quad;
-    IDirect3D2 *d3d;
     ULONG refcount;
     UINT i, count;
     HWND window;
@@ -9113,8 +9112,6 @@ static void test_shademode(void)
         return;
     }
 
-    hr = IDirect3DDevice2_GetDirect3D(device, &d3d);
-    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
     hr = IDirect3DDevice2_GetRenderTarget(device, &rt);
     ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
 
@@ -9164,7 +9161,6 @@ static void test_shademode(void)
     destroy_viewport(device, viewport);
     destroy_material(background);
     IDirectDrawSurface_Release(rt);
-    IDirect3D2_Release(d3d);
     refcount = IDirect3DDevice2_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     IDirectDraw_Release(ddraw);
