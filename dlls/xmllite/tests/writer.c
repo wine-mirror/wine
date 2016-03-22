@@ -31,6 +31,29 @@
 #include "initguid.h"
 DEFINE_GUID(IID_IXmlWriterOutput, 0xc1131708, 0x0f59, 0x477f, 0x93, 0x59, 0x7d, 0x33, 0x24, 0x51, 0xbc, 0x1a);
 
+static void check_output(IStream *stream, const char *expected, int line)
+{
+    HGLOBAL hglobal;
+    int len = strlen(expected), size;
+    char *ptr;
+    HRESULT hr;
+
+    hr = GetHGlobalFromStream(stream, &hglobal);
+    ok_(__FILE__, line)(hr == S_OK, "got 0x%08x\n", hr);
+
+    size = GlobalSize(hglobal);
+    ptr = GlobalLock(hglobal);
+    if (size != len)
+    {
+        ok_(__FILE__, line)(0, "data size mismatch, expected %u, got %u\n", len, size);
+        ok_(__FILE__, line)(0, "got %s, expected %s\n", ptr, expected);
+    }
+    else
+        ok_(__FILE__, line)(!strncmp(ptr, expected, len), "got %s, expected %s\n", ptr, expected);
+    GlobalUnlock(hglobal);
+}
+#define CHECK_OUTPUT(stream, expected) check_output(stream, expected, __LINE__)
+
 static HRESULT WINAPI testoutput_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
     if (IsEqualGUID(riid, &IID_IUnknown)) {
@@ -191,10 +214,8 @@ static void test_writestartdocument(void)
     static const WCHAR versionW[] = {'v','e','r','s','i','o','n','=','"','1','.','0','"',0};
     static const WCHAR xmlW[] = {'x','m','l',0};
     IXmlWriter *writer;
-    HGLOBAL hglobal;
     IStream *stream;
     HRESULT hr;
-    char *ptr;
 
     hr = CreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
@@ -225,12 +246,7 @@ static void test_writestartdocument(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = GetHGlobalFromStream(stream, &hglobal);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    ptr = GlobalLock(hglobal);
-    ok(!strncmp(ptr, fullprolog, strlen(fullprolog)), "got %s, expected %s\n", ptr, fullprolog);
-    GlobalUnlock(hglobal);
+    CHECK_OUTPUT(stream, fullprolog);
 
     /* one more time */
     hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
@@ -260,12 +276,7 @@ static void test_writestartdocument(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = GetHGlobalFromStream(stream, &hglobal);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    ptr = GlobalLock(hglobal);
-    ok(!strncmp(ptr, prologversion, strlen(prologversion)), "got %s\n", ptr);
-    GlobalUnlock(hglobal);
+    CHECK_OUTPUT(stream, prologversion);
 
     IStream_Release(stream);
     IXmlWriter_Release(writer);
@@ -356,12 +367,7 @@ static void test_omitxmldeclaration(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = GetHGlobalFromStream(stream, &hglobal);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    ptr = GlobalLock(hglobal);
-    ok(!strncmp(ptr, prologversion, strlen(prologversion)), "got %s\n", ptr);
-    GlobalUnlock(hglobal);
+    CHECK_OUTPUT(stream, prologversion);
 
     hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -369,9 +375,7 @@ static void test_omitxmldeclaration(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    ptr = GlobalLock(hglobal);
-    ok(!strncmp(ptr, prologversion, strlen(prologversion)), "got %s\n", ptr);
-    GlobalUnlock(hglobal);
+    CHECK_OUTPUT(stream, prologversion);
 
     hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
     ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
@@ -379,9 +383,7 @@ static void test_omitxmldeclaration(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    ptr = GlobalLock(hglobal);
-    ok(!strncmp(ptr, prologversion, strlen(prologversion)), "got %s\n", ptr);
-    GlobalUnlock(hglobal);
+    CHECK_OUTPUT(stream, prologversion);
 
     /* another attempt to add 'xml' PI */
     hr = IXmlWriter_WriteProcessingInstruction(writer, xmlW, versionW);
@@ -526,10 +528,8 @@ static void test_writestartelement(void)
     static const char *str = "<a><b>value</b>";
     static const WCHAR aW[] = {'a',0};
     static const WCHAR bW[] = {'b',0};
-    char *ptr;
     IXmlWriter *writer;
     IStream *stream;
-    HGLOBAL hglobal;
     HRESULT hr;
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
@@ -556,18 +556,13 @@ static void test_writestartelement(void)
     hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = GetHGlobalFromStream(stream, &hglobal);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
     hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
     ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
 
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    ptr = GlobalLock(hglobal);
-    ok(!strncmp(ptr, "<a", 2), "got %s\n", ptr);
-    GlobalUnlock(hglobal);
+    CHECK_OUTPUT(stream, "<a");
 
     hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
     ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
@@ -603,12 +598,7 @@ static void test_writestartelement(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = GetHGlobalFromStream(stream, &hglobal);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    ptr = GlobalLock(hglobal);
-    ok(!strncmp(ptr, str, strlen(str)), "got %s\n", ptr);
-    GlobalUnlock(hglobal);
+    CHECK_OUTPUT(stream, str);
 
     IStream_Release(stream);
     IXmlWriter_Release(writer);
@@ -618,10 +608,8 @@ static void test_writeendelement(void)
 {
     static const WCHAR aW[] = {'a',0};
     static const WCHAR bW[] = {'b',0};
-    char *ptr;
     IXmlWriter *writer;
     IStream *stream;
-    HGLOBAL hglobal;
     HRESULT hr;
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
@@ -645,15 +633,10 @@ static void test_writeendelement(void)
     hr = IXmlWriter_WriteEndElement(writer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = GetHGlobalFromStream(stream, &hglobal);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    ptr = GlobalLock(hglobal);
-    ok(!strncmp(ptr, "<a><b /></a>", 12), "got %s\n", ptr);
-    GlobalUnlock(hglobal);
+    CHECK_OUTPUT(stream, "<a><b /></a>");
 
     IXmlWriter_Release(writer);
     IStream_Release(stream);
@@ -716,10 +699,7 @@ static void test_writeenddocument(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    ptr = GlobalLock(hglobal);
-    ok(ptr != NULL, "got %p\n", ptr);
-    ok(!strncmp(ptr, "<a><b /></a>", 12), "got %s\n", ptr);
-    GlobalUnlock(hglobal);
+    CHECK_OUTPUT(stream, "<a><b /></a>");
 
     IXmlWriter_Release(writer);
     IStream_Release(stream);
@@ -732,9 +712,7 @@ static void test_WriteComment(void)
     static const WCHAR bW[] = {'b',0};
     IXmlWriter *writer;
     IStream *stream;
-    HGLOBAL hglobal;
     HRESULT hr;
-    char *ptr;
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -772,13 +750,7 @@ static void test_WriteComment(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = GetHGlobalFromStream(stream, &hglobal);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    ptr = GlobalLock(hglobal);
-    ok(ptr != NULL, "got %p\n", ptr);
-    ok(!strncmp(ptr, "<!--a--><b><!--a--><!----><!--- ->-->", 37), "got %s\n", ptr);
-    GlobalUnlock(hglobal);
+    CHECK_OUTPUT(stream, "<!--a--><b><!--a--><!----><!--- ->-->");
 
     IXmlWriter_Release(writer);
     IStream_Release(stream);
@@ -792,9 +764,7 @@ static void test_WriteCData(void)
     static const WCHAR bW[] = {'b',0};
     IXmlWriter *writer;
     IStream *stream;
-    HGLOBAL hglobal;
     HRESULT hr;
-    char *ptr;
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -829,22 +799,14 @@ static void test_WriteCData(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = GetHGlobalFromStream(stream, &hglobal);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    ptr = GlobalLock(hglobal);
-    ok(ptr != NULL, "got %p\n", ptr);
-
-    ok(!strncmp(ptr,
+    CHECK_OUTPUT(stream,
         "<b>"
         "<![CDATA[a]]>"
         "<![CDATA[]]>"
         "<![CDATA[]]]]>"
         "<![CDATA[>]]>"
         "<![CDATA[a]]]]>"
-        "<![CDATA[>b]]>", 84), "got %s\n", ptr);
-
-    GlobalUnlock(hglobal);
+        "<![CDATA[>b]]>");
 
     IXmlWriter_Release(writer);
     IStream_Release(stream);
@@ -855,9 +817,7 @@ static void test_WriteRaw(void)
     static const WCHAR rawW[] = {'a','<',':',0};
     IXmlWriter *writer;
     IStream *stream;
-    HGLOBAL hglobal;
     HRESULT hr;
-    char *ptr;
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -895,17 +855,7 @@ static void test_WriteRaw(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = GetHGlobalFromStream(stream, &hglobal);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    ptr = GlobalLock(hglobal);
-    ok(ptr != NULL, "got %p\n", ptr);
-
-    ok(!strncmp(ptr,
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        "a<:", 41), "got %s\n", ptr);
-
-    GlobalUnlock(hglobal);
+    CHECK_OUTPUT(stream, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>a<:");
 
     IXmlWriter_Release(writer);
     IStream_Release(stream);
