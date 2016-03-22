@@ -1427,13 +1427,16 @@ static void test_startSession(void)
     ok(cid == cid2, "Second activate client ID does not match\n");
 
     hr = ITfThreadMgr_QueryInterface(g_tm, &IID_ITfThreadMgrEx, (void **)&tmex);
-    ok(SUCCEEDED(hr), "Unable to acquire ITfThreadMgrEx interface\n");
+    if (hr == S_OK)
+    {
+        hr = ITfThreadMgrEx_ActivateEx(tmex, &cid2, 0);
+        ok(SUCCEEDED(hr), "Failed to Activate\n");
+        ok(cid == cid2, "ActivateEx client ID does not match\n");
 
-    hr = ITfThreadMgrEx_ActivateEx(tmex, &cid2, 0);
-    ok(SUCCEEDED(hr), "Failed to Activate\n");
-    ok(cid == cid2, "ActivateEx client ID does not match\n");
-
-    ITfThreadMgrEx_Release(tmex);
+        ITfThreadMgrEx_Release(tmex);
+    }
+    else
+        win_skip("ITfThreadMgrEx is not supported\n");
 
     hr = ITfThreadMgr_Deactivate(g_tm);
     ok(SUCCEEDED(hr), "Failed to Deactivate\n");
