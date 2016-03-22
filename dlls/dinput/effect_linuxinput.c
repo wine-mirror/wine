@@ -67,7 +67,7 @@ static inline LinuxInputEffectImpl *impl_from_IDirectInputEffect(IDirectInputEff
     return CONTAINING_RECORD(iface, LinuxInputEffectImpl, IDirectInputEffect_iface);
 }
 
-double ff_effect_direction_to_rad(unsigned int dir)
+static double ff_effect_direction_to_rad(unsigned int dir)
 {
     return (dir & 0xffff) * M_PI / 0x8000;
 }
