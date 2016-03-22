@@ -1407,16 +1407,10 @@ static HRESULT ddraw_surface_blt_clipped(struct ddraw_surface *dst_surface, cons
     UINT i;
 
     if (!dst_rect_in)
-    {
-        dst_rect.left = 0;
-        dst_rect.top = 0;
-        dst_rect.right = dst_surface->surface_desc.dwWidth;
-        dst_rect.bottom = dst_surface->surface_desc.dwHeight;
-    }
+        SetRect(&dst_rect, 0, 0, dst_surface->surface_desc.dwWidth,
+                dst_surface->surface_desc.dwHeight);
     else
-    {
         dst_rect = *dst_rect_in;
-    }
 
     if (IsRectEmpty(&dst_rect))
         return DDERR_INVALIDRECT;
@@ -1424,16 +1418,10 @@ static HRESULT ddraw_surface_blt_clipped(struct ddraw_surface *dst_surface, cons
     if (src_surface)
     {
         if (!src_rect_in)
-        {
-            src_rect.left = 0;
-            src_rect.top = 0;
-            src_rect.right = src_surface->surface_desc.dwWidth;
-            src_rect.bottom = src_surface->surface_desc.dwHeight;
-        }
+            SetRect(&src_rect, 0, 0, src_surface->surface_desc.dwWidth,
+                    src_surface->surface_desc.dwHeight);
         else
-        {
             src_rect = *src_rect_in;
-        }
 
         if (IsRectEmpty(&src_rect))
             return DDERR_INVALIDRECT;

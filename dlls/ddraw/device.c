@@ -6077,11 +6077,7 @@ static HRESULT d3d_device7_Load(IDirect3DDevice7 *iface, IDirectDrawSurface7 *ds
     wined3d_mutex_lock();
 
     if (!src_rect)
-    {
-        srcrect.left = srcrect.top = 0;
-        srcrect.right = src->surface_desc.dwWidth;
-        srcrect.bottom = src->surface_desc.dwHeight;
-    }
+        SetRect(&srcrect, 0, 0, src->surface_desc.dwWidth, src->surface_desc.dwHeight);
     else
         srcrect = *src_rect;
 
