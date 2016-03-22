@@ -54,6 +54,20 @@ static void check_output(IStream *stream, const char *expected, int line)
 }
 #define CHECK_OUTPUT(stream, expected) check_output(stream, expected, __LINE__)
 
+static IStream *writer_set_output(IXmlWriter *writer)
+{
+    IStream *stream;
+    HRESULT hr;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_SetOutput(writer, (IUnknown*)stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    return stream;
+}
+
 static HRESULT WINAPI testoutput_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
     if (IsEqualGUID(riid, &IID_IUnknown)) {
@@ -230,11 +244,7 @@ static void test_writestartdocument(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IXmlWriter_SetOutput(writer, (IUnknown*)stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    stream = writer_set_output(writer);
 
     /* nothing written yet */
     hr = IXmlWriter_Flush(writer);
@@ -254,11 +264,7 @@ static void test_writestartdocument(void)
     IStream_Release(stream);
 
     /* now add PI manually, and try to start a document */
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IXmlWriter_SetOutput(writer, (IUnknown*)stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    stream = writer_set_output(writer);
 
     hr = IXmlWriter_WriteProcessingInstruction(writer, xmlW, versionW);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -326,11 +332,7 @@ static void test_omitxmldeclaration(void)
     hr = CreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IXmlWriter_SetOutput(writer, (IUnknown*)stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    stream = writer_set_output(writer);
 
     hr = IXmlWriter_SetProperty(writer, XmlWriterProperty_OmitXmlDeclaration, TRUE);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -355,11 +357,7 @@ static void test_omitxmldeclaration(void)
     IStream_Release(stream);
 
     /* now add PI manually, and try to start a document */
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IXmlWriter_SetOutput(writer, (IUnknown*)stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    stream = writer_set_output(writer);
 
     hr = IXmlWriter_WriteProcessingInstruction(writer, xmlW, versionW);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -532,17 +530,13 @@ static void test_writestartelement(void)
     IStream *stream;
     HRESULT hr;
 
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
     hr = CreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
     ok(hr == E_UNEXPECTED, "got 0x%08x\n", hr);
 
-    hr = IXmlWriter_SetOutput(writer, (IUnknown*)stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    stream = writer_set_output(writer);
 
     hr = IXmlWriter_WriteStartElement(writer, aW, NULL, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
@@ -580,14 +574,10 @@ static void test_writestartelement(void)
     hr = CreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
     hr = IXmlWriter_WriteElementString(writer, NULL, bW, NULL, valueW);
     ok(hr == E_UNEXPECTED, "got 0x%08x\n", hr);
 
-    hr = IXmlWriter_SetOutput(writer, (IUnknown*)stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    stream = writer_set_output(writer);
 
     hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -612,14 +602,10 @@ static void test_writeendelement(void)
     IStream *stream;
     HRESULT hr;
 
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
     hr = CreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    hr = IXmlWriter_SetOutput(writer, (IUnknown*)stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    stream = writer_set_output(writer);
 
     hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -652,17 +638,13 @@ static void test_writeenddocument(void)
     HRESULT hr;
     char *ptr;
 
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
     hr = CreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     hr = IXmlWriter_WriteEndDocument(writer);
     ok(hr == E_UNEXPECTED, "got 0x%08x\n", hr);
 
-    hr = IXmlWriter_SetOutput(writer, (IUnknown*)stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    stream = writer_set_output(writer);
 
     /* WriteEndDocument resets it to initial state */
     hr = IXmlWriter_WriteEndDocument(writer);
@@ -714,9 +696,6 @@ static void test_WriteComment(void)
     IStream *stream;
     HRESULT hr;
 
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
     hr = CreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
@@ -726,8 +705,7 @@ static void test_WriteComment(void)
     hr = IXmlWriter_WriteComment(writer, aW);
     ok(hr == E_UNEXPECTED, "got 0x%08x\n", hr);
 
-    hr = IXmlWriter_SetOutput(writer, (IUnknown*)stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    stream = writer_set_output(writer);
 
     hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -766,9 +744,6 @@ static void test_WriteCData(void)
     IStream *stream;
     HRESULT hr;
 
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
     hr = CreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
@@ -778,8 +753,7 @@ static void test_WriteCData(void)
     hr = IXmlWriter_WriteCData(writer, aW);
     ok(hr == E_UNEXPECTED, "got 0x%08x\n", hr);
 
-    hr = IXmlWriter_SetOutput(writer, (IUnknown*)stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    stream = writer_set_output(writer);
 
     hr = IXmlWriter_WriteStartElement(writer, NULL, bW, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -819,9 +793,6 @@ static void test_WriteRaw(void)
     IStream *stream;
     HRESULT hr;
 
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
     hr = CreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
@@ -831,8 +802,7 @@ static void test_WriteRaw(void)
     hr = IXmlWriter_WriteRaw(writer, rawW);
     ok(hr == E_UNEXPECTED, "got 0x%08x\n", hr);
 
-    hr = IXmlWriter_SetOutput(writer, (IUnknown*)stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    stream = writer_set_output(writer);
 
     hr = IXmlWriter_WriteRaw(writer, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
