@@ -2675,7 +2675,7 @@ void context_state_fb(struct wined3d_context *context, const struct wined3d_stat
             }
             context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets,
                     wined3d_rendertarget_view_get_surface(fb->depth_stencil),
-                    fb->render_targets[0]->resource->draw_binding,
+                    fb->render_targets[0] ? fb->render_targets[0]->resource->draw_binding : 0,
                     fb->depth_stencil ? fb->depth_stencil->resource->draw_binding : 0);
         }
     }

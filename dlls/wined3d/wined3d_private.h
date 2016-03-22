@@ -3431,7 +3431,7 @@ static inline BOOL needs_srgb_write(const struct wined3d_context *context,
 {
     return (!(context->d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
             || state->render_states[WINED3D_RS_SRGBWRITEENABLE])
-            && fb->render_targets[0]->format_flags & WINED3DFMT_FLAG_SRGB_WRITE;
+            && fb->render_targets[0] && fb->render_targets[0]->format_flags & WINED3DFMT_FLAG_SRGB_WRITE;
 }
 
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */

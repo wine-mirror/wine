@@ -367,11 +367,20 @@ static GLenum gl_blend_factor(enum wined3d_blend factor, const struct wined3d_fo
 
 static void state_blend(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_format *rt_format = state->fb->render_targets[0]->format;
-    unsigned int rt_fmt_flags = state->fb->render_targets[0]->format_flags;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    GLenum srcBlend, dstBlend;
+    const struct wined3d_format *rt_format;
     enum wined3d_blend d3d_blend;
+    GLenum srcBlend, dstBlend;
+    unsigned int rt_fmt_flags;
+
+    if (!state->fb->render_targets[0])
+    {
+        gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
+        return;
+    }
+
+    rt_format = state->fb->render_targets[0]->format;
+    rt_fmt_flags = state->fb->render_targets[0]->format_flags;
 
     /* According to the red book, GL_LINE_SMOOTH needs GL_BLEND with specific
      * blending parameters to work. */
@@ -4544,31 +4553,40 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
 
 static void viewport_miscpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
+    const struct wined3d_rendertarget_view *depth_stencil = state->fb->depth_stencil;
     const struct wined3d_rendertarget_view *target = state->fb->render_targets[0];
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_viewport vp = state->viewport;
+    unsigned int width, height;
 
-    if (vp.width > target->width)
-        vp.width = target->width;
-    if (vp.height > target->height)
-        vp.height = target->height;
+    if (target)
+    {
+        if (vp.width > target->width)
+            vp.width = target->width;
+        if (vp.height > target->height)
+            vp.height = target->height;
+
+        surface_get_drawable_size(wined3d_rendertarget_view_get_surface(target), context, &width, &height);
+    }
+    else if (depth_stencil)
+    {
+        width = depth_stencil->width;
+        height = depth_stencil->height;
+    }
+    else
+    {
+        FIXME("No attachments draw calls not supported.\n");
+        return;
+    }
 
     gl_info->gl_ops.gl.p_glDepthRange(vp.min_z, vp.max_z);
     checkGLcall("glDepthRange");
     /* Note: GL requires lower left, DirectX supplies upper left. This is
      * reversed when using offscreen rendering. */
     if (context->render_offscreen)
-    {
         gl_info->gl_ops.gl.p_glViewport(vp.x, vp.y, vp.width, vp.height);
-    }
     else
-    {
-        UINT width, height;
-
-        surface_get_drawable_size(wined3d_rendertarget_view_get_surface(target), context, &width, &height);
-        gl_info->gl_ops.gl.p_glViewport(vp.x, (height - (vp.y + vp.height)),
-                vp.width, vp.height);
-    }
+        gl_info->gl_ops.gl.p_glViewport(vp.x, (height - (vp.y + vp.height)), vp.width, vp.height);
     checkGLcall("glViewport");
 }
 
