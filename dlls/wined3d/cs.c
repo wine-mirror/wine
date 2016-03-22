@@ -101,7 +101,7 @@ struct wined3d_cs_set_viewport
 struct wined3d_cs_set_scissor_rect
 {
     enum wined3d_cs_op opcode;
-    const RECT *rect;
+    RECT rect;
 };
 
 struct wined3d_cs_set_rendertarget_view
@@ -374,7 +374,7 @@ static void wined3d_cs_exec_set_scissor_rect(struct wined3d_cs *cs, const void *
 {
     const struct wined3d_cs_set_scissor_rect *op = data;
 
-    cs->state.scissor_rect = *op->rect;
+    cs->state.scissor_rect = op->rect;
     device_invalidate_state(cs->device, STATE_SCISSORRECT);
 }
 
@@ -384,7 +384,7 @@ void wined3d_cs_emit_set_scissor_rect(struct wined3d_cs *cs, const RECT *rect)
 
     op = cs->ops->require_space(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_SET_SCISSOR_RECT;
-    op->rect = rect;
+    op->rect = *rect;
 
     cs->ops->submit(cs);
 }
