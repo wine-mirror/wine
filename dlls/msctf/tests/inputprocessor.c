@@ -230,12 +230,18 @@ static ULONG WINAPI TextStoreACP_Release(ITextStoreACP *iface)
 static HRESULT WINAPI TextStoreACP_AdviseSink(ITextStoreACP *iface,
     REFIID riid, IUnknown *punk, DWORD dwMask)
 {
+    ITextStoreACPServices *services;
     HRESULT hr;
 
     sink_fire_ok(&test_ACP_AdviseSink,"TextStoreACP_AdviseSink");
 
-    hr = IUnknown_QueryInterface(punk, &IID_ITextStoreACPSink,(LPVOID*)(&ACPSink));
+    hr = IUnknown_QueryInterface(punk, &IID_ITextStoreACPSink, (void**)&ACPSink);
     ok(SUCCEEDED(hr),"Unable to QueryInterface on sink\n");
+
+    hr = ITextStoreACPSink_QueryInterface(ACPSink, &IID_ITextStoreACPServices, (void**)&services);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ITextStoreACPServices_Release(services);
+
     return S_OK;
 }
 

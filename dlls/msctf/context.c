@@ -66,6 +66,7 @@ typedef struct tagContext {
     /* const ITfQueryEmbeddedVtbl *QueryEmbeddedVtbl; */
     ITfSourceSingle ITfSourceSingle_iface;
     ITextStoreACPSink ITextStoreACPSink_iface;
+    ITextStoreACPServices ITextStoreACPServices_iface;
     LONG refCount;
     BOOL connected;
 
@@ -119,6 +120,11 @@ static inline Context *impl_from_ITfSourceSingle(ITfSourceSingle* iface)
 static inline Context *impl_from_ITextStoreACPSink(ITextStoreACPSink *iface)
 {
     return CONTAINING_RECORD(iface, Context, ITextStoreACPSink_iface);
+}
+
+static inline Context *impl_from_ITextStoreACPServices(ITextStoreACPServices *iface)
+{
+    return CONTAINING_RECORD(iface, Context, ITextStoreACPServices_iface);
 }
 
 static void free_sink(ContextSink *sink)
@@ -791,6 +797,8 @@ static HRESULT WINAPI TextStoreACPSink_QueryInterface(ITextStoreACPSink *iface, 
     {
         *ppvOut = &This->ITextStoreACPSink_iface;
     }
+    else if (IsEqualIID(iid, &IID_ITextStoreACPServices))
+        *ppvOut = &This->ITextStoreACPServices_iface;
 
     if (*ppvOut)
     {
@@ -963,6 +971,74 @@ static const ITextStoreACPSinkVtbl TextStoreACPSinkVtbl =
     TextStoreACPSink_OnEndEditTransaction
 };
 
+static HRESULT WINAPI TextStoreACPServices_QueryInterface(ITextStoreACPServices *iface, REFIID riid, void **obj)
+{
+    Context *This = impl_from_ITextStoreACPServices(iface);
+    return ITextStoreACPSink_QueryInterface(&This->ITextStoreACPSink_iface, riid, obj);
+}
+
+static ULONG WINAPI TextStoreACPServices_AddRef(ITextStoreACPServices *iface)
+{
+    Context *This = impl_from_ITextStoreACPServices(iface);
+    return ITextStoreACPSink_AddRef(&This->ITextStoreACPSink_iface);
+}
+
+static ULONG WINAPI TextStoreACPServices_Release(ITextStoreACPServices *iface)
+{
+    Context *This = impl_from_ITextStoreACPServices(iface);
+    return ITextStoreACPSink_Release(&This->ITextStoreACPSink_iface);
+}
+
+static HRESULT WINAPI TextStoreACPServices_Serialize(ITextStoreACPServices *iface, ITfProperty *prop, ITfRange *range,
+    TF_PERSISTENT_PROPERTY_HEADER_ACP *header, IStream *stream)
+{
+    Context *This = impl_from_ITextStoreACPServices(iface);
+
+    FIXME("stub: %p %p %p %p %p\n", This, prop, range, header, stream);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextStoreACPServices_Unserialize(ITextStoreACPServices *iface, ITfProperty *prop,
+    const TF_PERSISTENT_PROPERTY_HEADER_ACP *header, IStream *stream, ITfPersistentPropertyLoaderACP *loader)
+{
+    Context *This = impl_from_ITextStoreACPServices(iface);
+
+    FIXME("stub: %p %p %p %p %p\n", This, prop, header, stream, loader);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextStoreACPServices_ForceLoadProperty(ITextStoreACPServices *iface, ITfProperty *prop)
+{
+    Context *This = impl_from_ITextStoreACPServices(iface);
+
+    FIXME("stub: %p %p\n", This, prop);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TextStoreACPServices_CreateRange(ITextStoreACPServices *iface,
+    LONG start, LONG end, ITfRangeACP **range)
+{
+    Context *This = impl_from_ITextStoreACPServices(iface);
+
+    FIXME("stub: %p %d %d %p\n", This, start, end, range);
+
+    return S_OK;
+}
+
+static const ITextStoreACPServicesVtbl TextStoreACPServicesVtbl =
+{
+    TextStoreACPServices_QueryInterface,
+    TextStoreACPServices_AddRef,
+    TextStoreACPServices_Release,
+    TextStoreACPServices_Serialize,
+    TextStoreACPServices_Unserialize,
+    TextStoreACPServices_ForceLoadProperty,
+    TextStoreACPServices_CreateRange
+};
+
 HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfDocumentMgr *mgr, ITfContext **ppOut, TfEditCookie *pecTextStore)
 {
     Context *This;
@@ -986,6 +1062,7 @@ HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfDocumentMgr 
     This->ITfInsertAtSelection_iface.lpVtbl = &InsertAtSelectionVtbl;
     This->ITfSourceSingle_iface.lpVtbl = &ContextSourceSingleVtbl;
     This->ITextStoreACPSink_iface.lpVtbl = &TextStoreACPSinkVtbl;
+    This->ITextStoreACPServices_iface.lpVtbl = &TextStoreACPServicesVtbl;
     This->refCount = 1;
     This->tidOwner = tidOwner;
     This->connected = FALSE;
