@@ -582,113 +582,6 @@ static void fog_test(IDirect3DDevice7 *device)
     ok(hr == D3D_OK, "Turning off fog calculations returned %08x\n", hr);
 }
 
-static void blt_test(IDirect3DDevice7 *device)
-{
-    IDirectDrawSurface7 *backbuffer = NULL, *offscreen = NULL;
-    DDSURFACEDESC2 ddsd;
-    HRESULT hr;
-
-    memset(&ddsd, 0, sizeof(ddsd));
-    ddsd.dwSize = sizeof(ddsd);
-    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
-    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
-    ddsd.dwWidth = 640;
-    ddsd.dwHeight = 480;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_3DDEVICE;
-    hr = IDirectDraw7_CreateSurface(DirectDraw, &ddsd, &offscreen, NULL);
-    ok(hr == D3D_OK, "Creating the offscreen render target failed, hr = %08x\n", hr);
-
-    /* Offscreen blits with the same source as destination */
-    if(SUCCEEDED(hr))
-    {
-        RECT src_rect, dst_rect;
-
-        /* Blit the whole surface to itself */
-        hr = IDirectDrawSurface_Blt(offscreen, NULL, offscreen, NULL, 0, NULL);
-        ok(hr == DD_OK, "IDirectDrawSurface7_Blt returned %08x\n", hr);
-
-        /* Overlapped blit */
-        dst_rect.left = 0; dst_rect.right = 480;
-        dst_rect.top = 0; dst_rect.bottom = 480;
-        src_rect.left = 160; src_rect.right = 640;
-        src_rect.top = 0; src_rect.bottom = 480;
-        hr = IDirectDrawSurface_Blt(offscreen, &dst_rect, offscreen, &src_rect, 0, NULL);
-        ok(hr == DD_OK, "IDirectDrawSurface7_Blt returned %08x\n", hr);
-
-        /* Overlapped blit, flip-y through source rectangle (not allowed) */
-        dst_rect.left = 0; dst_rect.right = 480;
-        dst_rect.top = 0; dst_rect.bottom = 480;
-        src_rect.left = 160; src_rect.right = 640;
-        src_rect.top = 480; src_rect.bottom = 0;
-        hr = IDirectDrawSurface_Blt(offscreen, &dst_rect, offscreen, &src_rect, 0, NULL);
-        ok(hr == DDERR_INVALIDRECT, "IDirectDrawSurface7_Blt returned %08x\n", hr);
-
-        /* Overlapped blit, with shrinking in x */
-        dst_rect.left = 0; dst_rect.right = 480;
-        dst_rect.top = 0; dst_rect.bottom = 480;
-        src_rect.left = 160; src_rect.right = 480;
-        src_rect.top = 0; src_rect.bottom = 480;
-        hr = IDirectDrawSurface_Blt(offscreen, &dst_rect, offscreen, &src_rect, 0, NULL);
-        ok(hr == DD_OK, "IDirectDrawSurface7_Blt returned %08x\n", hr);
-    }
-
-    hr = IDirect3DDevice7_GetRenderTarget(device, &backbuffer);
-    ok(hr == D3D_OK, "Unable to obtain a surface pointer to the backbuffer, hr = %08x\n", hr);
-
-    /* backbuffer ==> texture blits */
-    if(SUCCEEDED(hr) && offscreen)
-    {
-        RECT src_rect, dst_rect;
-
-        /* backbuffer ==> texture, src_rect=NULL, dst_rect=NULL, no scaling */
-        hr = IDirectDrawSurface_Blt(offscreen, NULL, backbuffer, NULL, 0, NULL);
-        ok(hr == DD_OK, "fullscreen Blt from backbuffer => texture failed with hr = %08x\n", hr);
-
-        /* backbuffer ==> texture, full surface blits, no scaling */
-        dst_rect.left = 0; dst_rect.right = 640;
-        dst_rect.top = 0; dst_rect.bottom = 480;
-        src_rect.left = 0; src_rect.right = 640;
-        src_rect.top = 0; src_rect.bottom = 480;
-        hr = IDirectDrawSurface_Blt(offscreen, &dst_rect, backbuffer, &src_rect, 0, NULL);
-        ok(hr == DD_OK, "fullscreen Blt from backbuffer => texture failed with hr = %08x\n", hr);
-
-        /* backbuffer ==> texture, flip in y-direction through source rectangle, no scaling (allowed) */
-        dst_rect.left = 0; dst_rect.right = 640;
-        dst_rect.top = 480; dst_rect.top = 0;
-        src_rect.left = 0; src_rect.right = 640;
-        src_rect.top = 0; src_rect.bottom = 480;
-        hr = IDirectDrawSurface_Blt(offscreen, &dst_rect, backbuffer, &src_rect, 0, NULL);
-        ok(hr == DD_OK, "backbuffer => texture flip-y src_rect failed with hr = %08x\n", hr);
-
-        /* backbuffer ==> texture, flip in x-direction through source rectangle, no scaling (not allowed) */
-        dst_rect.left = 640; dst_rect.right = 0;
-        dst_rect.top = 0; dst_rect.top = 480;
-        src_rect.left = 0; src_rect.right = 640;
-        src_rect.top = 0; src_rect.bottom = 480;
-        hr = IDirectDrawSurface_Blt(offscreen, &dst_rect, backbuffer, &src_rect, 0, NULL);
-        ok(hr == DDERR_INVALIDRECT, "backbuffer => texture flip-x src_rect failed with hr = %08x\n", hr);
-
-        /* backbuffer ==> texture, flip in y-direction through destination rectangle (not allowed) */
-        dst_rect.left = 0; dst_rect.right = 640;
-        dst_rect.top = 0; dst_rect.top = 480;
-        src_rect.left = 0; src_rect.right = 640;
-        src_rect.top = 480; src_rect.bottom = 0;
-        hr = IDirectDrawSurface_Blt(offscreen, &dst_rect, backbuffer, &src_rect, 0, NULL);
-        ok(hr == DDERR_INVALIDRECT, "backbuffer => texture flip-y dst_rect failed with hr = %08x\n", hr);
-
-        /* backbuffer ==> texture, flip in x-direction through destination rectangle, no scaling (not allowed) */
-        dst_rect.left = 0; dst_rect.right = 640;
-        dst_rect.top = 0; dst_rect.top = 480;
-        src_rect.left = 640; src_rect.right = 0;
-        src_rect.top = 0; src_rect.bottom = 480;
-        hr = IDirectDrawSurface_Blt(offscreen, &dst_rect, backbuffer, &src_rect, 0, NULL);
-        ok(hr == DDERR_INVALIDRECT, "backbuffer => texture flip-x dst_rect failed with hr = %08x\n", hr);
-    }
-
-    if(offscreen) IDirectDrawSurface7_Release(offscreen);
-    if(backbuffer) IDirectDrawSurface7_Release(backbuffer);
-}
-
 static void offscreen_test(IDirect3DDevice7 *device)
 {
     HRESULT hr;
@@ -2130,7 +2023,6 @@ START_TEST(visual)
     }
 
     /* Now run the tests */
-    blt_test(Direct3DDevice);
     depth_clamp_test(Direct3DDevice);
     clear_test(Direct3DDevice);
     fog_test(Direct3DDevice);
