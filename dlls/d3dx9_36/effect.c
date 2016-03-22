@@ -2645,7 +2645,7 @@ static void d3dx9_set_material_parameter(enum MATERIAL_TYPE op, D3DMATERIAL9 *ma
     }
 }
 
-HRESULT d3dx_set_shader_const_state(IDirect3DDevice9 *device, enum SHADER_CONSTANT_TYPE op, UINT index,
+static HRESULT d3dx_set_shader_const_state(IDirect3DDevice9 *device, enum SHADER_CONSTANT_TYPE op, UINT index,
         struct d3dx_parameter *param, void *value_ptr)
 {
     static const struct
