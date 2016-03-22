@@ -2757,7 +2757,7 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
 static void surface_depth_blt(const struct wined3d_surface *surface, struct wined3d_context *context,
         GLuint texture, GLint x, GLint y, GLsizei w, GLsizei h, GLenum target)
 {
-    struct wined3d_device *device = surface->resource.device;
+    struct wined3d_device *device = surface->container->resource.device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLint compare_mode = GL_NONE;
     struct blt_info info;
