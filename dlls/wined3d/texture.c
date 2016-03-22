@@ -822,6 +822,21 @@ void wined3d_texture_prepare_buffer_object(struct wined3d_texture *texture,
             *buffer_object, texture, sub_resource_idx);
 }
 
+static void wined3d_texture_force_reload(struct wined3d_texture *texture)
+{
+    unsigned int sub_count = texture->level_count * texture->layer_count;
+    unsigned int i;
+
+    texture->flags &= ~(WINED3D_TEXTURE_RGB_ALLOCATED | WINED3D_TEXTURE_SRGB_ALLOCATED
+            | WINED3D_TEXTURE_CONVERTED);
+    texture->async.flags &= ~WINED3D_TEXTURE_ASYNC_COLOR_KEY;
+    for (i = 0; i < sub_count; ++i)
+    {
+        texture->texture_ops->texture_sub_resource_invalidate_location(texture->sub_resources[i].resource,
+                WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB);
+    }
+}
+
 void wined3d_texture_prepare_texture(struct wined3d_texture *texture, struct wined3d_context *context, BOOL srgb)
 {
     DWORD alloc_flag = srgb ? WINED3D_TEXTURE_SRGB_ALLOCATED : WINED3D_TEXTURE_RGB_ALLOCATED;
@@ -842,21 +857,6 @@ void wined3d_texture_prepare_texture(struct wined3d_texture *texture, struct win
 
     texture->texture_ops->texture_prepare_texture(texture, context, srgb);
     texture->flags |= alloc_flag;
-}
-
-void wined3d_texture_force_reload(struct wined3d_texture *texture)
-{
-    unsigned int sub_count = texture->level_count * texture->layer_count;
-    unsigned int i;
-
-    texture->flags &= ~(WINED3D_TEXTURE_RGB_ALLOCATED | WINED3D_TEXTURE_SRGB_ALLOCATED
-            | WINED3D_TEXTURE_CONVERTED);
-    texture->async.flags &= ~WINED3D_TEXTURE_ASYNC_COLOR_KEY;
-    for (i = 0; i < sub_count; ++i)
-    {
-        texture->texture_ops->texture_sub_resource_invalidate_location(texture->sub_resources[i].resource,
-                WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB);
-    }
 }
 
 void CDECL wined3d_texture_generate_mipmaps(struct wined3d_texture *texture)
