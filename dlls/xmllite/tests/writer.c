@@ -880,6 +880,67 @@ static void test_WriteCData(void)
     IStream_Release(stream);
 }
 
+static void test_WriteRaw(void)
+{
+    static const WCHAR rawW[] = {'a','<',':',0};
+    IXmlWriter *writer;
+    IStream *stream;
+    HGLOBAL hglobal;
+    HRESULT hr;
+    char *ptr;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = pCreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IXmlWriter_WriteRaw(writer, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteRaw(writer, rawW);
+    ok(hr == E_UNEXPECTED, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_SetOutput(writer, (IUnknown*)stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteRaw(writer, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteRaw(writer, rawW);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteComment(writer, rawW);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteEndDocument(writer);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteRaw(writer, rawW);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = GetHGlobalFromStream(stream, &hglobal);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ptr = GlobalLock(hglobal);
+    ok(ptr != NULL, "got %p\n", ptr);
+
+    ok(!strncmp(ptr,
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+        "a<:", 41), "got %s\n", ptr);
+
+    GlobalUnlock(hglobal);
+
+    IXmlWriter_Release(writer);
+    IStream_Release(stream);
+}
+
 START_TEST(writer)
 {
     if (!init_pointers())
@@ -896,4 +957,5 @@ START_TEST(writer)
     test_writeenddocument();
     test_WriteComment();
     test_WriteCData();
+    test_WriteRaw();
 }
