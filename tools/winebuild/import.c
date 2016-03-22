@@ -38,18 +38,26 @@
 #include "wine/list.h"
 #include "build.h"
 
+struct import_func
+{
+    const char *name;
+    const char *export_name;
+    int         ordinal;
+};
+
 struct import
 {
-    struct list  entry;       /* entry in global dll list */
-    char        *dll_name;    /* exported file name of the dll */
-    char        *c_name;      /* dll name as a C-compatible identifier */
-    char        *full_name;   /* full name of the input file */
-    dev_t        dev;         /* device/inode of the input file */
-    ino_t        ino;
-    ORDDEF     **exports;     /* functions exported from this dll */
-    int          nb_exports;  /* number of exported functions */
-    ORDDEF     **imports;     /* functions we want to import from this dll */
-    int          nb_imports;  /* number of imported functions */
+    struct list         entry;       /* entry in global dll list */
+    char               *dll_name;    /* exported file name of the dll */
+    char               *c_name;      /* dll name as a C-compatible identifier */
+    char               *full_name;   /* full name of the input file */
+    dev_t               dev;         /* device/inode of the input file */
+    ino_t               ino;
+    ORDDEF            **exports;     /* functions exported from this dll */
+    int                 nb_exports;  /* number of exported functions */
+    struct import_func *imports;     /* functions we want to import from this dll */
+    int                 nb_imports;  /* number of imported functions */
+    int                 max_imports; /* size of imports array */
 };
 
 static struct strarray undef_symbols;    /* list of undefined symbols */
@@ -298,10 +306,18 @@ void add_extra_ld_symbol( const char *name )
 }
 
 /* add a function to the list of imports from a given dll */
-static void add_import_func( struct import *imp, ORDDEF *func )
+static void add_import_func( struct import *imp, const char *name, const char *export_name, int ordinal )
 {
-    imp->imports = xrealloc( imp->imports, (imp->nb_imports+1) * sizeof(*imp->imports) );
-    imp->imports[imp->nb_imports++] = func;
+    if (imp->nb_imports == imp->max_imports)
+    {
+        imp->max_imports *= 2;
+        if (imp->max_imports < 32) imp->max_imports = 32;
+        imp->imports = xrealloc( imp->imports, imp->max_imports * sizeof(*imp->imports) );
+    }
+    imp->imports[imp->nb_imports].name = name;
+    imp->imports[imp->nb_imports].export_name = export_name;
+    imp->imports[imp->nb_imports].ordinal = ordinal;
+    imp->nb_imports++;
 }
 
 /* get the default entry point for a given spec file */
@@ -534,7 +550,8 @@ void resolve_dll_imports( DLLSPEC *spec, struct list *list )
                              odp->link_name, imp->dll_name );
                 else
                 {
-                    add_import_func( imp, odp );
+                    add_import_func( imp, (odp->flags & FLAG_NONAME) ? NULL : odp->name,
+                                     odp->export_name, odp->ordinal );
                     remove_name( &undef_symbols, j-- );
                     removed++;
                 }
@@ -693,16 +710,16 @@ static void output_immediate_imports(void)
     {
         for (j = 0; j < import->nb_imports; j++)
         {
-            ORDDEF *odp = import->imports[j];
-            if (!(odp->flags & FLAG_NONAME))
+            struct import_func *func = &import->imports[j];
+            if (func->name)
                 output( "\t%s .L__wine_spec_import_data_%s_%s-.L__wine_spec_rva_base\n",
-                        get_asm_ptr_keyword(), import->c_name, odp->name );
+                        get_asm_ptr_keyword(), import->c_name, func->name );
             else
             {
                 if (get_ptr_size() == 8)
-                    output( "\t.quad 0x800000000000%04x\n", odp->ordinal );
+                    output( "\t.quad 0x800000000000%04x\n", func->ordinal );
                 else
-                    output( "\t.long 0x8000%04x\n", odp->ordinal );
+                    output( "\t.long 0x8000%04x\n", func->ordinal );
             }
         }
         output( "\t%s 0\n", get_asm_ptr_keyword() );
@@ -719,14 +736,12 @@ static void output_immediate_imports(void)
     {
         for (j = 0; j < import->nb_imports; j++)
         {
-            ORDDEF *odp = import->imports[j];
-            if (!(odp->flags & FLAG_NONAME))
-            {
-                output( "\t.align %d\n", get_alignment(2) );
-                output( ".L__wine_spec_import_data_%s_%s:\n", import->c_name, odp->name );
-                output( "\t.short %d\n", odp->ordinal );
-                output( "\t%s \"%s\"\n", get_asm_string_keyword(), odp->name );
-            }
+            struct import_func *func = &import->imports[j];
+            if (!func->name) continue;
+            output( "\t.align %d\n", get_alignment(2) );
+            output( ".L__wine_spec_import_data_%s_%s:\n", import->c_name, func->name );
+            output( "\t.short %d\n", func->ordinal );
+            output( "\t%s \"%s\"\n", get_asm_string_keyword(), func->name );
         }
     }
 
@@ -756,8 +771,8 @@ static void output_immediate_import_thunks(void)
     {
         for (j = 0; j < import->nb_imports; j++, pos += get_ptr_size())
         {
-            ORDDEF *odp = import->imports[j];
-            output_import_thunk( odp->name ? odp->name : odp->export_name,
+            struct import_func *func = &import->imports[j];
+            output_import_thunk( func->name ? func->name : func->export_name,
                                  ".L__wine_spec_import_data_ptrs", pos );
         }
         pos += get_ptr_size();
@@ -812,8 +827,8 @@ static void output_delayed_imports( const DLLSPEC *spec )
     {
         for (j = 0; j < import->nb_imports; j++)
         {
-            ORDDEF *odp = import->imports[j];
-            const char *name = odp->name ? odp->name : odp->export_name;
+            struct import_func *func = &import->imports[j];
+            const char *name = func->name ? func->name : func->export_name;
             output( "\t%s .L__wine_delay_imp_%s_%s\n",
                     get_asm_ptr_keyword(), import->c_name, name );
         }
@@ -824,12 +839,12 @@ static void output_delayed_imports( const DLLSPEC *spec )
     {
         for (j = 0; j < import->nb_imports; j++)
         {
-            ORDDEF *odp = import->imports[j];
-            if (!odp->name)
-                output( "\t%s %d\n", get_asm_ptr_keyword(), odp->ordinal );
+            struct import_func *func = &import->imports[j];
+            if (!func->name)
+                output( "\t%s %d\n", get_asm_ptr_keyword(), func->ordinal );
             else
                 output( "\t%s .L__wine_delay_data_%s_%s\n",
-                        get_asm_ptr_keyword(), import->c_name, odp->name );
+                        get_asm_ptr_keyword(), import->c_name, func->name );
         }
     }
 
@@ -849,10 +864,10 @@ static void output_delayed_imports( const DLLSPEC *spec )
     {
         for (j = 0; j < import->nb_imports; j++)
         {
-            ORDDEF *odp = import->imports[j];
-            if (!odp->name) continue;
-            output( ".L__wine_delay_data_%s_%s:\n", import->c_name, odp->name );
-            output( "\t%s \"%s\"\n", get_asm_string_keyword(), odp->name );
+            struct import_func *func = &import->imports[j];
+            if (!func->name) continue;
+            output( ".L__wine_delay_data_%s_%s:\n", import->c_name, func->name );
+            output( "\t%s \"%s\"\n", get_asm_string_keyword(), func->name );
         }
     }
     output_function_size( "__wine_spec_delay_imports" );
@@ -998,8 +1013,8 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
     {
         for (j = 0; j < import->nb_imports; j++)
         {
-            ORDDEF *odp = import->imports[j];
-            const char *name = odp->name ? odp->name : odp->export_name;
+            struct import_func *func = &import->imports[j];
+            const char *name = func->name ? func->name : func->export_name;
 
             output( ".L__wine_delay_imp_%s_%s:\n", import->c_name, name );
             output_cfi( ".cfi_startproc" );
@@ -1082,8 +1097,8 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
     {
         for (j = 0; j < import->nb_imports; j++, pos += get_ptr_size())
         {
-            ORDDEF *odp = import->imports[j];
-            output_import_thunk( odp->name ? odp->name : odp->export_name,
+            struct import_func *func = &import->imports[j];
+            output_import_thunk( func->name ? func->name : func->export_name,
                                  ".L__wine_delay_IAT", pos );
         }
     }
