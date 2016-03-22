@@ -110,12 +110,10 @@ static void output_entries( DLLSPEC *spec, int first, int count )
         case TYPE_PASCAL:
         case TYPE_VARARGS:
         case TYPE_STUB:
-            output( "\t.short .L__wine_%s_%u-.L__wine_spec_code_segment\n",
-                     make_c_identifier(spec->dll_name), first + i );
+            output( "\t.short .L__wine_%s_%u-.L__wine_spec_code_segment\n", spec->c_name, first + i );
             break;
         case TYPE_VARIABLE:
-            output( "\t.short .L__wine_%s_%u-.L__wine_spec_data_segment\n",
-                     make_c_identifier(spec->dll_name), first + i );
+            output( "\t.short .L__wine_%s_%u-.L__wine_spec_data_segment\n", spec->c_name, first + i );
             break;
         case TYPE_ABS:
             output( "\t.short 0x%04x  /* %s */\n",
@@ -601,8 +599,7 @@ static void output_module16( DLLSPEC *spec )
     output( "\t.short %u\n", spec->heap_size );                            /* ne_heap */
     output( "\t.short 0\n" );                                              /* ne_stack */
     if (!entry_point) output( "\t.long 0\n" );                             /* ne_csip */
-    else output( "\t.short .L__wine_%s_0-.L__wine_spec_code_segment,1\n",
-                 make_c_identifier(spec->dll_name) );
+    else output( "\t.short .L__wine_%s_0-.L__wine_spec_code_segment,1\n", spec->c_name );
     output( "\t.short 0,2\n" );                                            /* ne_sssp */
     output( "\t.short 2\n" );                                              /* ne_cseg */
     output( "\t.short 0\n" );                                              /* ne_cmod */
@@ -754,7 +751,7 @@ static void output_module16( DLLSPEC *spec )
     {
         ORDDEF *odp = spec->ordinals[i];
         if (!odp || !is_function( odp )) continue;
-        output( ".L__wine_%s_%u:\n", make_c_identifier(spec->dll_name), i );
+        output( ".L__wine_%s_%u:\n", spec->c_name, i );
         output( "\tpushw %%bp\n" );
         output( "\tpushl $%s\n",
                  asm_name( odp->type == TYPE_STUB ? get_stub_name( odp, spec ) : odp->link_name ));
@@ -770,7 +767,7 @@ static void output_module16( DLLSPEC *spec )
     {
         ORDDEF *odp = spec->ordinals[i];
         if (!odp || odp->type != TYPE_VARIABLE) continue;
-        output( ".L__wine_%s_%u:\n", make_c_identifier(spec->dll_name), i );
+        output( ".L__wine_%s_%u:\n", spec->c_name, i );
         output( "\t.long " );
         for (j = 0; j < odp->u.var.n_values-1; j++)
             output( "0x%08x,", odp->u.var.values[j] );

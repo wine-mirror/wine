@@ -754,32 +754,18 @@ DLLSPEC *alloc_dll_spec(void)
     DLLSPEC *spec;
 
     spec = xmalloc( sizeof(*spec) );
-    spec->file_name          = NULL;
-    spec->dll_name           = NULL;
-    spec->init_func          = NULL;
-    spec->main_module        = NULL;
+    memset( spec, 0, sizeof(*spec) );
     spec->type               = SPEC_WIN32;
     spec->base               = MAX_ORDINALS;
-    spec->limit              = 0;
-    spec->stack_size         = 0;
-    spec->heap_size          = 0;
-    spec->nb_entry_points    = 0;
-    spec->alloc_entry_points = 0;
-    spec->nb_names           = 0;
-    spec->nb_resources       = 0;
     spec->characteristics    = IMAGE_FILE_EXECUTABLE_IMAGE;
+    spec->subsystem          = 0;
+    spec->subsystem_major    = 4;
+    spec->subsystem_minor    = 0;
     if (get_ptr_size() > 4)
         spec->characteristics |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
     else
         spec->characteristics |= IMAGE_FILE_32BIT_MACHINE;
     spec->dll_characteristics = IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
-    spec->subsystem          = 0;
-    spec->subsystem_major    = 4;
-    spec->subsystem_minor    = 0;
-    spec->entry_points       = NULL;
-    spec->names              = NULL;
-    spec->ordinals           = NULL;
-    spec->resources          = NULL;
     return spec;
 }
 
@@ -802,6 +788,7 @@ void free_dll_spec( DLLSPEC *spec )
     }
     free( spec->file_name );
     free( spec->dll_name );
+    free( spec->c_name );
     free( spec->init_func );
     free( spec->entry_points );
     free( spec->names );
@@ -816,10 +803,9 @@ void free_dll_spec( DLLSPEC *spec )
  *
  * Map a string to a valid C identifier.
  */
-const char *make_c_identifier( const char *str )
+char *make_c_identifier( const char *str )
 {
-    static char buffer[256];
-    char *p;
+    char *p, buffer[256];
 
     for (p = buffer; *str && p < buffer+sizeof(buffer)-1; p++, str++)
     {
@@ -827,7 +813,7 @@ const char *make_c_identifier( const char *str )
         else *p = '_';
     }
     *p = 0;
-    return buffer;
+    return xstrdup( buffer );
 }
 
 

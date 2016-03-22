@@ -40,6 +40,7 @@
 struct import
 {
     char        *dll_name;    /* exported file name of the dll */
+    char        *c_name;      /* dll name as a C-compatible identifier */
     char        *full_name;   /* full name of the input file */
     dev_t        dev;         /* device/inode of the input file */
     ino_t        ino;
@@ -130,6 +131,7 @@ static void free_imports( struct import *imp )
     free( imp->exports );
     free( imp->imports );
     free( imp->dll_name );
+    free( imp->c_name );
     free( imp->full_name );
     free( imp );
 }
@@ -269,6 +271,7 @@ void add_import_dll( const char *name, const char *filename )
     }
 
     imp->dll_name = spec->file_name ? spec->file_name : dll_name;
+    imp->c_name = make_c_identifier( imp->dll_name );
 
     if (is_delayed_import( dll_name ))
     {
@@ -661,7 +664,6 @@ int has_imports(void)
 static void output_immediate_imports(void)
 {
     int i, j;
-    const char *dll_name;
 
     if (nb_imports == nb_delayed) return;  /* no immediate imports */
 
@@ -677,13 +679,12 @@ static void output_immediate_imports(void)
     for (i = j = 0; i < nb_imports; i++)
     {
         if (dll_imports[i]->delay) continue;
-        dll_name = make_c_identifier( dll_imports[i]->dll_name );
         output( "\t.long .L__wine_spec_import_data_names+%d-.L__wine_spec_rva_base\n",  /* OriginalFirstThunk */
                  j * get_ptr_size() );
         output( "\t.long 0\n" );     /* TimeDateStamp */
         output( "\t.long 0\n" );     /* ForwarderChain */
         output( "\t.long .L__wine_spec_import_name_%s-.L__wine_spec_rva_base\n", /* Name */
-                 dll_name );
+                 dll_imports[i]->c_name );
         output( "\t.long .L__wine_spec_import_data_ptrs+%d-.L__wine_spec_rva_base\n",  /* FirstThunk */
                  j * get_ptr_size() );
         j += dll_imports[i]->nb_imports + 1;
@@ -699,13 +700,12 @@ static void output_immediate_imports(void)
     for (i = 0; i < nb_imports; i++)
     {
         if (dll_imports[i]->delay) continue;
-        dll_name = make_c_identifier( dll_imports[i]->dll_name );
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
             if (!(odp->flags & FLAG_NONAME))
                 output( "\t%s .L__wine_spec_import_data_%s_%s-.L__wine_spec_rva_base\n",
-                         get_asm_ptr_keyword(), dll_name, odp->name );
+                         get_asm_ptr_keyword(), dll_imports[i]->c_name, odp->name );
             else
             {
                 if (get_ptr_size() == 8)
@@ -728,14 +728,13 @@ static void output_immediate_imports(void)
     for (i = 0; i < nb_imports; i++)
     {
         if (dll_imports[i]->delay) continue;
-        dll_name = make_c_identifier( dll_imports[i]->dll_name );
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
             if (!(odp->flags & FLAG_NONAME))
             {
                 output( "\t.align %d\n", get_alignment(2) );
-                output( ".L__wine_spec_import_data_%s_%s:\n", dll_name, odp->name );
+                output( ".L__wine_spec_import_data_%s_%s:\n", dll_imports[i]->c_name, odp->name );
                 output( "\t.short %d\n", odp->ordinal );
                 output( "\t%s \"%s\"\n", get_asm_string_keyword(), odp->name );
             }
@@ -745,9 +744,8 @@ static void output_immediate_imports(void)
     for (i = 0; i < nb_imports; i++)
     {
         if (dll_imports[i]->delay) continue;
-        dll_name = make_c_identifier( dll_imports[i]->dll_name );
         output( ".L__wine_spec_import_name_%s:\n\t%s \"%s\"\n",
-                 dll_name, get_asm_string_keyword(), dll_imports[i]->dll_name );
+                dll_imports[i]->c_name, get_asm_string_keyword(), dll_imports[i]->dll_name );
     }
 }
 

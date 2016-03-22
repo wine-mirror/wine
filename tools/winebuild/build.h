@@ -116,6 +116,7 @@ typedef struct
     char            *src_name;           /* file name of the source spec file */
     char            *file_name;          /* file name of the dll */
     char            *dll_name;           /* internal name of the dll */
+    char            *c_name;             /* internal name of the dll, as a C-compatible identifier */
     char            *init_func;          /* initialization routine */
     char            *main_module;        /* main Win32 module for Win16 specs */
     SPEC_TYPE        type;               /* type of dll (Win16/Win32) */
@@ -259,7 +260,7 @@ extern int remove_stdcall_decoration( char *name );
 extern void assemble_file( const char *src_file, const char *obj_file );
 extern DLLSPEC *alloc_dll_spec(void);
 extern void free_dll_spec( DLLSPEC *spec );
-extern const char *make_c_identifier( const char *str );
+extern char *make_c_identifier( const char *str );
 extern const char *get_stub_name( const ORDDEF *odp, const DLLSPEC *spec );
 extern int get_cpu_from_name( const char *name );
 extern unsigned int get_alignment(unsigned int align);

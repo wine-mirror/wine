@@ -158,6 +158,7 @@ static void init_dll_name( DLLSPEC *spec )
         spec->dll_name = xstrdup( spec->file_name );
         if ((p = strrchr( spec->dll_name, '.' ))) *p = 0;
     }
+    spec->c_name = make_c_identifier( spec->dll_name );
 }
 
 /* set the dll subsystem */
