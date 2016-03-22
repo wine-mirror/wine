@@ -365,7 +365,7 @@ static void WINETEST_PRINTF_ATTR(2,3) _okShell(int condition, const char *msg, .
 #define okShell okShell_(__FILE__, __LINE__)
 
 static char assoc_desc[2048];
-void reset_association_description(void)
+static void reset_association_description(void)
 {
     *assoc_desc = '\0';
 }
