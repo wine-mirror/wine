@@ -4554,7 +4554,7 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
 static HRESULT create_primary_opengl_context(struct wined3d_device *device, struct wined3d_swapchain *swapchain)
 {
     struct wined3d_context *context;
-    struct wined3d_surface *target;
+    struct wined3d_texture *target;
     HRESULT hr;
 
     if (FAILED(hr = device->shader_backend->shader_alloc_private(device,
@@ -4581,9 +4581,7 @@ static HRESULT create_primary_opengl_context(struct wined3d_device *device, stru
         return E_OUTOFMEMORY;
     }
 
-    target = swapchain->back_buffers
-            ? surface_from_resource(wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0))
-            : surface_from_resource(wined3d_texture_get_sub_resource(swapchain->front_buffer, 0));
+    target = swapchain->back_buffers ? swapchain->back_buffers[0] : swapchain->front_buffer;
     if (!(context = context_create(swapchain, target, swapchain->ds_format)))
     {
         WARN("Failed to create context.\n");

@@ -1559,7 +1559,7 @@ HGLRC context_create_wgl_attribs(const struct wined3d_gl_info *gl_info, HDC hdc,
 }
 
 struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
-        struct wined3d_surface *target, const struct wined3d_format *ds_format)
+        struct wined3d_texture *target, const struct wined3d_format *ds_format)
 {
     struct wined3d_device *device = swapchain->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -1659,7 +1659,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         }
     }
 
-    color_format = target->container->resource.format;
+    color_format = target->resource.format;
 
     /* In case of ORM_BACKBUFFER, make sure to request an alpha component for
      * X4R4G4B4/X8R8G8B8 as we might need it for the backbuffer. */
@@ -1771,10 +1771,10 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     }
 
     ret->swapchain = swapchain;
-    ret->current_rt = target;
+    ret->current_rt = target->sub_resources[0].u.surface;
     ret->tid = GetCurrentThreadId();
 
-    ret->render_offscreen = wined3d_resource_is_offscreen(&target->container->resource);
+    ret->render_offscreen = wined3d_resource_is_offscreen(&target->resource);
     ret->draw_buffers_mask = context_generate_rt_mask(GL_BACK);
     ret->valid = 1;
 
