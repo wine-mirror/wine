@@ -3627,6 +3627,13 @@ static void test_texture(void)
         0xffb1c4de, 0xfff0f1f2, 0xfffafdfe, 0xff5a560f,
         0xffd5ff00, 0xffc8f99f, 0xffaa00aa, 0xffdd55bb,
     };
+    static const BYTE a8_data[] =
+    {
+        0x00, 0x10, 0x20, 0x30,
+        0x40, 0x50, 0x60, 0x70,
+        0x80, 0x90, 0xa0, 0xb0,
+        0xc0, 0xd0, 0xe0, 0xf0,
+    };
     static const BYTE bc1_data[] =
     {
         0x00, 0xf8, 0x00, 0xf8, 0x00, 0x00, 0x00, 0x00,
@@ -3673,6 +3680,8 @@ static void test_texture(void)
     };
     static const struct texture srgb_texture = {4, 4, 1, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
             {{srgb_data, 4 * sizeof(*srgb_data)}}};
+    static const struct texture a8_texture = {4, 4, 1, DXGI_FORMAT_A8_UNORM,
+            {{a8_data, 4 * sizeof(*a8_data)}}};
     static const struct texture bc1_texture = {8, 8, 1, DXGI_FORMAT_BC1_UNORM, {{bc1_data, 2 * 8}}};
     static const struct texture bc2_texture = {8, 8, 1, DXGI_FORMAT_BC2_UNORM, {{bc2_data, 2 * 16}}};
     static const struct texture bc3_texture = {8, 8, 1, DXGI_FORMAT_BC3_UNORM, {{bc3_data, 2 * 16}}};
@@ -3712,6 +3721,13 @@ static void test_texture(void)
         0xff000000, 0xff010408, 0xff010101, 0xff37475a,
         0xff708cba, 0xffdee0e2, 0xfff3fbfd, 0xff1a1801,
         0xffa9ff00, 0xff93f159, 0xff670067, 0xffb8177f,
+    };
+    static const DWORD a8_colors[] =
+    {
+        0x00000000, 0x10000000, 0x20000000, 0x30000000,
+        0x40000000, 0x50000000, 0x60000000, 0x70000000,
+        0x80000000, 0x90000000, 0xa0000000, 0xb0000000,
+        0xc0000000, 0xd0000000, 0xe0000000, 0xf0000000,
     };
     static const DWORD bc_colors[] =
     {
@@ -3785,6 +3801,7 @@ static void test_texture(void)
         {&ps_sample,   &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        2.0f, 0.0f, D3D11_FLOAT32_MAX,  0.0f, rgba_level_0},
         {&ps_sample,   &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        8.0f, 0.0f, D3D11_FLOAT32_MAX,  0.0f, level_1_colors},
         {&ps_sample,   &srgb_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, srgb_colors},
+        {&ps_sample,   &a8_texture,    D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, a8_colors},
         {&ps_sample_b, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  0.0f, rgba_level_0},
         {&ps_sample_b, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        8.0f, 0.0f, D3D11_FLOAT32_MAX,  0.0f, level_1_colors},
         {&ps_sample_b, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  8.0f, level_1_colors},
@@ -3940,9 +3957,9 @@ static void test_texture(void)
         draw_quad(&test_context);
 
         get_texture_readback(test_context.backbuffer, &rb);
-        for (x = 0; x < 4; ++x)
+        for (y = 0; y < 4; ++y)
         {
-            for (y = 0; y < 4; ++y)
+            for (x = 0; x < 4; ++x)
             {
                 color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120);
                 ok(compare_color(color, test->expected_colors[y * 4 + x], 1),
