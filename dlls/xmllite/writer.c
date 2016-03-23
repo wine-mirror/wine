@@ -784,6 +784,14 @@ static HRESULT WINAPI xmlwriter_WriteEndElement(IXmlWriter *iface)
 
     TRACE("%p\n", This);
 
+    switch (This->state)
+    {
+    case XmlWriterState_Initial:
+        return E_UNEXPECTED;
+    default:
+        ;
+    }
+
     element = pop_element(This);
     if (!element)
         return WR_E_INVALIDACTION;

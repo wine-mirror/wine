@@ -89,7 +89,6 @@ todo_wine
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteEndElement(writer);
-todo_wine
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
 todo_wine {
