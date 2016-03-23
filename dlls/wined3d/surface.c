@@ -698,7 +698,7 @@ static void surface_blt_fbo(const struct wined3d_device *device,
     if (src_location == WINED3D_LOCATION_DRAWABLE)
     {
         TRACE("Source surface %p is onscreen.\n", src_surface);
-        buffer = surface_get_gl_buffer(src_surface);
+        buffer = wined3d_texture_get_gl_buffer(src_surface->container);
         surface_translate_drawable_coords(src_surface, context->win_handle, &src_rect);
     }
     else
@@ -715,7 +715,7 @@ static void surface_blt_fbo(const struct wined3d_device *device,
     if (dst_location == WINED3D_LOCATION_DRAWABLE)
     {
         TRACE("Destination surface %p is onscreen.\n", dst_surface);
-        buffer = surface_get_gl_buffer(dst_surface);
+        buffer = wined3d_texture_get_gl_buffer(dst_surface->container);
         surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
     }
     else
@@ -1444,38 +1444,6 @@ void surface_set_compatible_renderbuffer(struct wined3d_surface *surface, const 
     checkGLcall("set_compatible_renderbuffer");
 }
 
-GLenum surface_get_gl_buffer(const struct wined3d_surface *surface)
-{
-    const struct wined3d_swapchain *swapchain = surface->container->swapchain;
-
-    TRACE("surface %p.\n", surface);
-
-    if (!swapchain)
-    {
-        ERR("Surface %p is not on a swapchain.\n", surface);
-        return GL_NONE;
-    }
-
-    if (swapchain->back_buffers && swapchain->back_buffers[0] == surface->container)
-    {
-        if (swapchain->render_to_fbo)
-        {
-            TRACE("Returning GL_COLOR_ATTACHMENT0\n");
-            return GL_COLOR_ATTACHMENT0;
-        }
-        TRACE("Returning GL_BACK\n");
-        return GL_BACK;
-    }
-    else if (surface->container == swapchain->front_buffer)
-    {
-        TRACE("Returning GL_FRONT\n");
-        return GL_FRONT;
-    }
-
-    FIXME("Higher back buffer, returning GL_BACK\n");
-    return GL_BACK;
-}
-
 /* Context activation is done by the caller. */
 void surface_load(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb)
 {
@@ -1913,7 +1881,7 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
     else
     {
         /* Onscreen surfaces are always part of a swapchain */
-        GLenum buffer = surface_get_gl_buffer(surface);
+        GLenum buffer = wined3d_texture_get_gl_buffer(texture);
         TRACE("Mapping %#x buffer.\n", buffer);
         gl_info->gl_ops.gl.p_glReadBuffer(buffer);
         checkGLcall("glReadBuffer");
@@ -2016,7 +1984,7 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb, struct 
     if (wined3d_resource_is_offscreen(&texture->resource))
         gl_info->gl_ops.gl.p_glReadBuffer(context_get_offscreen_gl_buffer(context));
     else
-        gl_info->gl_ops.gl.p_glReadBuffer(surface_get_gl_buffer(surface));
+        gl_info->gl_ops.gl.p_glReadBuffer(wined3d_texture_get_gl_buffer(texture));
     checkGLcall("glReadBuffer");
 
     gl_info->gl_ops.gl.p_glCopyTexSubImage2D(surface->texture_target, surface->texture_level,
@@ -2127,7 +2095,7 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
     }
     else
     {
-        gl_info->gl_ops.gl.p_glReadBuffer(surface_get_gl_buffer(src_surface));
+        gl_info->gl_ops.gl.p_glReadBuffer(wined3d_texture_get_gl_buffer(src_texture));
     }
     checkGLcall("glReadBuffer");
 
@@ -2291,7 +2259,7 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
     }
     else
     {
-        gl_info->gl_ops.gl.p_glReadBuffer(surface_get_gl_buffer(src_surface));
+        gl_info->gl_ops.gl.p_glReadBuffer(wined3d_texture_get_gl_buffer(src_texture));
     }
 
     /* TODO: Only back up the part that will be overwritten */

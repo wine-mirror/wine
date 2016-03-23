@@ -37,6 +37,38 @@ BOOL wined3d_texture_use_pbo(const struct wined3d_texture *texture, const struct
             && !(texture->flags & (WINED3D_TEXTURE_PIN_SYSMEM | WINED3D_TEXTURE_COND_NP2_EMULATED));
 }
 
+GLenum wined3d_texture_get_gl_buffer(const struct wined3d_texture *texture)
+{
+    const struct wined3d_swapchain *swapchain = texture->swapchain;
+
+    TRACE("texture %p.\n", texture);
+
+    if (!swapchain)
+    {
+        ERR("Texture %p is not part of a swapchain.\n", texture);
+        return GL_NONE;
+    }
+
+    if (swapchain->back_buffers && swapchain->back_buffers[0] == texture)
+    {
+        if (swapchain->render_to_fbo)
+        {
+            TRACE("Returning GL_COLOR_ATTACHMENT0.\n");
+            return GL_COLOR_ATTACHMENT0;
+        }
+        TRACE("Returning GL_BACK.\n");
+        return GL_BACK;
+    }
+    else if (texture == swapchain->front_buffer)
+    {
+        TRACE("Returning GL_FRONT.\n");
+        return GL_FRONT;
+    }
+
+    FIXME("Higher back buffer, returning GL_BACK.\n");
+    return GL_BACK;
+}
+
 static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struct wined3d_texture_ops *texture_ops,
         UINT layer_count, UINT level_count, const struct wined3d_resource_desc *desc, DWORD flags,
         struct wined3d_device *device, void *parent, const struct wined3d_parent_ops *parent_ops,

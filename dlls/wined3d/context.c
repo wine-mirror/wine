@@ -337,7 +337,7 @@ static inline DWORD context_generate_rt_mask(GLenum buffer)
 
 static inline DWORD context_generate_rt_mask_from_surface(const struct wined3d_surface *target)
 {
-    return (1u << 31) | surface_get_gl_buffer(target);
+    return (1u << 31) | wined3d_texture_get_gl_buffer(target->container);
 }
 
 static inline void context_set_fbo_key_for_surface(const struct wined3d_context *context,
