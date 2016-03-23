@@ -4478,8 +4478,15 @@ static void shader_glsl_sample_c(const struct wined3d_shader_instruction *ins)
     unsigned int resource_idx, sampler_idx, sampler_bind_idx;
     struct glsl_src_param coord_param, compare_param;
     struct glsl_sample_function sample_function;
+    const char *lod_param = NULL;
     DWORD flags = 0;
     UINT coord_size;
+
+    if (ins->handler_idx == WINED3DSIH_SAMPLE_C_LZ)
+    {
+        lod_param = "0";
+        flags |= WINED3D_GLSL_SAMPLE_LOD;
+    }
 
     if (wined3d_shader_instruction_has_texel_offset(ins))
         flags |= WINED3D_GLSL_SAMPLE_OFFSET;
@@ -4493,7 +4500,7 @@ static void shader_glsl_sample_c(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_src_param(ins, &ins->src[3], WINED3DSP_WRITEMASK_0, &compare_param);
     sampler_bind_idx = shader_glsl_find_sampler(&ins->ctx->reg_maps->sampler_map, resource_idx, sampler_idx);
     shader_glsl_gen_sample_code(ins, sampler_bind_idx, &sample_function, WINED3DSP_NOSWIZZLE,
-            NULL, NULL, NULL, &ins->texel_offset, "vec%u(%s, %s)",
+            NULL, NULL, lod_param, &ins->texel_offset, "vec%u(%s, %s)",
             coord_size, coord_param.param_str, compare_param.param_str);
     shader_glsl_release_sample_function(ins->ctx, &sample_function);
 }
@@ -8189,7 +8196,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_SAMPLE                        */ shader_glsl_sample,
     /* WINED3DSIH_SAMPLE_B                      */ shader_glsl_sample,
     /* WINED3DSIH_SAMPLE_C                      */ shader_glsl_sample_c,
-    /* WINED3DSIH_SAMPLE_C_LZ                   */ NULL,
+    /* WINED3DSIH_SAMPLE_C_LZ                   */ shader_glsl_sample_c,
     /* WINED3DSIH_SAMPLE_GRAD                   */ shader_glsl_sample,
     /* WINED3DSIH_SAMPLE_LOD                    */ shader_glsl_sample,
     /* WINED3DSIH_SETP                          */ NULL,
