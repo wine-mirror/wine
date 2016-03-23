@@ -91,13 +91,14 @@ todo_wine
     hr = IXmlWriter_WriteEndElement(writer);
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
-todo_wine {
     hr = IXmlWriter_WriteEntityRef(writer, aW);
+todo_wine
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteFullEndElement(writer);
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
+todo_wine {
     hr = IXmlWriter_WriteName(writer, aW);
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
@@ -915,12 +916,24 @@ static void test_WriteRaw(void)
 static void test_writer_state(void)
 {
     IXmlWriter *writer;
+    IStream *stream;
     HRESULT hr;
 
     hr = CreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
+    /* initial state */
     check_writer_state(writer, E_UNEXPECTED);
+
+    /* set output and call 'wrong' method */
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteEndElement(writer);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+
+    check_writer_state(writer, WR_E_INVALIDACTION);
+
+    IStream_Release(stream);
 
     IXmlWriter_Release(writer);
 }

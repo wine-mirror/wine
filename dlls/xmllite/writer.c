@@ -788,6 +788,10 @@ static HRESULT WINAPI xmlwriter_WriteEndElement(IXmlWriter *iface)
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
+    case XmlWriterState_Ready:
+    case XmlWriterState_DocClosed:
+        This->state = XmlWriterState_DocClosed;
+        return WR_E_INVALIDACTION;
     default:
         ;
     }
@@ -826,6 +830,18 @@ static HRESULT WINAPI xmlwriter_WriteFullEndElement(IXmlWriter *iface)
     struct element *element;
 
     TRACE("%p\n", This);
+
+    switch (This->state)
+    {
+    case XmlWriterState_Initial:
+        return E_UNEXPECTED;
+    case XmlWriterState_Ready:
+    case XmlWriterState_DocClosed:
+        This->state = XmlWriterState_DocClosed;
+        return WR_E_INVALIDACTION;
+    default:
+        ;
+    }
 
     element = pop_element(This);
     if (!element)
