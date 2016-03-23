@@ -1087,6 +1087,7 @@ HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory, LPWSTR lpR
 {
     UINT_PTR retval = SE_ERR_NOASSOC;
     WCHAR old_dir[1024];
+    WCHAR res[MAX_PATH];
 
     TRACE("File %s, Dir %s\n", debugstr_w(lpFile), debugstr_w(lpDirectory));
 
@@ -1100,7 +1101,10 @@ HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory, LPWSTR lpR
         SetCurrentDirectoryW(lpDirectory);
     }
 
-    retval = SHELL_FindExecutable(lpDirectory, lpFile, wszOpen, lpResult, MAX_PATH, NULL, NULL, NULL, NULL);
+    retval = SHELL_FindExecutable(lpDirectory, lpFile, wszOpen, res, MAX_PATH, NULL, NULL, NULL, NULL);
+
+    if (retval > 32)
+        strcpyW(lpResult, res);
 
     TRACE("returning %s\n", debugstr_w(lpResult));
     if (lpDirectory)
