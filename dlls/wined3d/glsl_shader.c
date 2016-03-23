@@ -2883,9 +2883,8 @@ static void PRINTF_ATTR(9, 10) shader_glsl_gen_sample_code(const struct wined3d_
 
     shader_glsl_swizzle_to_str(swizzle, FALSE, ins->dst[0].write_mask, dst_swizzle);
 
-    /* FIXME: We currently don't support fixups for vertex shaders or anything
-     * above SM3. Note that for SM4+ the sampler index doesn't have to match
-     * the resource index. */
+    /* If ARB_texture_swizzle is supported we don't need to do anything here.
+     * We actually rely on it for vertex shaders and SM4+. */
     if (version->type == WINED3D_SHADER_TYPE_PIXEL && version->major < 4)
     {
         const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
@@ -8035,7 +8034,8 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
     if (gl_info->glsl_version >= MAKEDWORD_VERSION(4, 30) && gl_info->supported[WINED3D_GL_VERSION_4_3])
         shader_model = 5;
     else if (gl_info->glsl_version >= MAKEDWORD_VERSION(1, 50) && gl_info->supported[WINED3D_GL_VERSION_3_2]
-            && gl_info->supported[ARB_SHADER_BIT_ENCODING] && gl_info->supported[ARB_SAMPLER_OBJECTS])
+            && gl_info->supported[ARB_SHADER_BIT_ENCODING] && gl_info->supported[ARB_SAMPLER_OBJECTS]
+            && gl_info->supported[ARB_TEXTURE_SWIZZLE])
         shader_model = 4;
     /* ARB_shader_texture_lod or EXT_gpu_shader4 is required for the SM3
      * texldd and texldl instructions. */

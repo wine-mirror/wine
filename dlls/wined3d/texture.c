@@ -219,6 +219,8 @@ void wined3d_texture_bind(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_format *format = texture->resource.format;
+    const struct color_fixup_desc fixup = format->color_fixup;
     struct gl_texture *gl_tex;
     GLenum target;
 
@@ -329,6 +331,31 @@ void wined3d_texture_bind(struct wined3d_texture *texture,
     {
         gl_info->gl_ops.gl.p_glTexParameteri(target, GL_DEPTH_TEXTURE_MODE_ARB, GL_INTENSITY);
         checkGLcall("glTexParameteri(GL_DEPTH_TEXTURE_MODE_ARB, GL_INTENSITY)");
+    }
+
+    if (!is_identity_fixup(fixup) && can_use_texture_swizzle(gl_info, format))
+    {
+        static const GLenum swizzle_source[] =
+        {
+            GL_ZERO,  /* CHANNEL_SOURCE_ZERO */
+            GL_ONE,   /* CHANNEL_SOURCE_ONE */
+            GL_RED,   /* CHANNEL_SOURCE_X */
+            GL_GREEN, /* CHANNEL_SOURCE_Y */
+            GL_BLUE,  /* CHANNEL_SOURCE_Z */
+            GL_ALPHA, /* CHANNEL_SOURCE_W */
+        };
+        struct
+        {
+            GLint x, y, z, w;
+        }
+        swizzle;
+
+        swizzle.x = swizzle_source[fixup.x_source];
+        swizzle.y = swizzle_source[fixup.y_source];
+        swizzle.z = swizzle_source[fixup.z_source];
+        swizzle.w = swizzle_source[fixup.w_source];
+        gl_info->gl_ops.gl.p_glTexParameteriv(target, GL_TEXTURE_SWIZZLE_RGBA, &swizzle.x);
+        checkGLcall("glTexParameteriv(GL_TEXTURE_SWIZZLE_RGBA)");
     }
 }
 

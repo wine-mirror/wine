@@ -3435,6 +3435,12 @@ static inline BOOL needs_srgb_write(const struct wined3d_context *context,
             && fb->render_targets[0] && fb->render_targets[0]->format_flags & WINED3DFMT_FLAG_SRGB_WRITE;
 }
 
+static inline BOOL can_use_texture_swizzle(const struct wined3d_gl_info *gl_info, const struct wined3d_format *format)
+{
+    return gl_info->supported[ARB_TEXTURE_SWIZZLE] && !is_complex_fixup(format->color_fixup)
+            && !is_scaling_fixup(format->color_fixup);
+}
+
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */
 #define WINED3D_OPENGL_WINDOW_CLASS_NAME "WineD3D_OpenGL"
 

@@ -2786,7 +2786,10 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
             args->color_fixup[i] = COLOR_FIXUP_IDENTITY;
             continue;
         }
-        args->color_fixup[i] = texture->resource.format->color_fixup;
+        if (can_use_texture_swizzle(gl_info, texture->resource.format))
+            args->color_fixup[i] = COLOR_FIXUP_IDENTITY;
+        else
+            args->color_fixup[i] = texture->resource.format->color_fixup;
 
         if (texture->resource.format_flags & WINED3DFMT_FLAG_SHADOW)
             args->shadow |= 1u << i;
