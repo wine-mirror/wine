@@ -156,6 +156,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_texture_rectangle",            ARB_TEXTURE_RECTANGLE         },
     {"GL_ARB_texture_rg",                   ARB_TEXTURE_RG                },
     {"GL_ARB_texture_rgb10_a2ui",           ARB_TEXTURE_RGB10_A2UI        },
+    {"GL_ARB_texture_swizzle",              ARB_TEXTURE_SWIZZLE           },
     {"GL_ARB_timer_query",                  ARB_TIMER_QUERY               },
     {"GL_ARB_uniform_buffer_object",        ARB_UNIFORM_BUFFER_OBJECT     },
     {"GL_ARB_vertex_array_bgra",            ARB_VERTEX_ARRAY_BGRA         },
@@ -3473,6 +3474,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
         {ARB_SAMPLER_OBJECTS,              MAKEDWORD_VERSION(3, 3)},
         {ARB_SHADER_BIT_ENCODING,          MAKEDWORD_VERSION(3, 3)},
         {ARB_TEXTURE_RGB10_A2UI,           MAKEDWORD_VERSION(3, 3)},
+        {ARB_TEXTURE_SWIZZLE,              MAKEDWORD_VERSION(3, 3)},
         {ARB_TIMER_QUERY,                  MAKEDWORD_VERSION(3, 3)},
 
         {ARB_ES2_COMPATIBILITY,            MAKEDWORD_VERSION(4, 1)},
