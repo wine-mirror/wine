@@ -491,6 +491,7 @@ D3D_FEATURE_LEVEL dxgi_check_feature_level_support(struct dxgi_factory *factory,
         {D3D_FEATURE_LEVEL_9_1,  2},
     };
     D3D_FEATURE_LEVEL selected_feature_level = 0;
+    unsigned int shader_model;
     unsigned int i, j;
     WINED3DCAPS caps;
     HRESULT hr;
@@ -504,14 +505,14 @@ D3D_FEATURE_LEVEL dxgi_check_feature_level_support(struct dxgi_factory *factory,
     if (FAILED(hr))
         level_count = 0;
 
+    shader_model = min(caps.VertexShaderVersion, caps.PixelShaderVersion);
     for (i = 0; i < level_count; ++i)
     {
         for (j = 0; j < sizeof(feature_levels_sm) / sizeof(feature_levels_sm[0]); ++j)
         {
             if (feature_levels[i] == feature_levels_sm[j].feature_level)
             {
-                if (caps.VertexShaderVersion >= feature_levels_sm[j].sm
-                        && caps.PixelShaderVersion >= feature_levels_sm[j].sm)
+                if (shader_model >= feature_levels_sm[j].sm)
                 {
                     selected_feature_level = feature_levels[i];
                     TRACE("Choosing supported feature level %s (SM%u).\n",
