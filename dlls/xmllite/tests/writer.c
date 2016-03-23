@@ -104,7 +104,7 @@ todo_wine {
 
     hr = IXmlWriter_WriteNmToken(writer, aW);
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
-
+}
     /* FIXME: add WriteNode */
     /* FIXME: add WriteNodeShallow */
 
@@ -112,12 +112,14 @@ todo_wine {
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteQualifiedName(writer, aW, NULL);
+todo_wine
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteRaw(writer, aW);
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteRawChars(writer, aW, 1);
+todo_wine
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
@@ -127,8 +129,9 @@ todo_wine {
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteString(writer, aW);
+todo_wine
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
-}
+
     /* FIXME: add WriteSurrogateCharEntity */
     /* FIXME: add WriteWhitespace */
 }

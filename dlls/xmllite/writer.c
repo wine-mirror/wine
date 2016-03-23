@@ -754,26 +754,19 @@ static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR pr
 static HRESULT WINAPI xmlwriter_WriteEndDocument(IXmlWriter *iface)
 {
     xmlwriter *This = impl_from_IXmlWriter(iface);
-    HRESULT hr = S_OK;
 
     TRACE("%p\n", This);
 
     switch (This->state)
     {
     case XmlWriterState_Initial:
-        hr = E_UNEXPECTED;
-        break;
+        return E_UNEXPECTED;
     case XmlWriterState_Ready:
     case XmlWriterState_DocClosed:
-        hr = WR_E_INVALIDACTION;
-        break;
+        This->state = XmlWriterState_DocClosed;
+        return WR_E_INVALIDACTION;
     default:
         ;
-    }
-
-    if (FAILED(hr)) {
-        This->state = XmlWriterState_DocClosed;
-        return hr;
     }
 
     /* empty element stack */
