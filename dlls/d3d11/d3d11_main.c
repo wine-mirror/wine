@@ -106,7 +106,7 @@ static void WINAPI layer_set_feature_level(enum dxgi_device_layer_id id, void *d
 {
     struct d3d_device *d3d_device = device;
 
-    TRACE("id %#x, device %p, feature_level %u.\n", id, device, feature_level);
+    TRACE("id %#x, device %p, feature_level %#x.\n", id, device, feature_level);
 
     if (id != DXGI_DEVICE_LAYER_D3D10_DEVICE)
     {
