@@ -412,6 +412,7 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame 
     struct catch_func_nested_frame nested_frame;
     int trylevel = frame->trylevel;
     DWORD save_esp = ((DWORD*)frame)[-1];
+    thread_data_t *data;
 
     for (i = 0; i < descr->tryblock_count; i++)
     {
@@ -452,7 +453,10 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame 
             RtlUnwind( catch_frame ? catch_frame : &frame->frame, 0, rec, 0 );
             cxx_local_unwind( frame, descr, tryblock->start_level );
             frame->trylevel = tryblock->end_level + 1;
-            msvcrt_get_thread_data()->exc_record = rec;
+
+            data = msvcrt_get_thread_data();
+            nested_frame.frame_info.rec = data->exc_record;
+            data->exc_record = rec;
 
             /* call the catch block */
             TRACE( "calling catch block %p addr %p ebp %p\n",
