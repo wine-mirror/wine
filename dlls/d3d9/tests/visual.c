@@ -11272,13 +11272,14 @@ static void pixelshader_blending_test(void)
     }
     test_formats[] =
     {
-        {"D3DFMT_G16R16",           D3DFMT_G16R16,          0x001818ff, 0x002010ff},
+        {"D3DFMT_G16R16",           D3DFMT_G16R16,          0x001820ff, 0x002010ff},
         {"D3DFMT_R16F",             D3DFMT_R16F,            0x0018ffff, 0x0020ffff},
-        {"D3DFMT_G16R16F",          D3DFMT_G16R16F,         0x001818ff, 0x002010ff},
-        {"D3DFMT_A16B16G16R16F",    D3DFMT_A16B16G16R16F,   0x00181800, 0x00201000},
+        {"D3DFMT_G16R16F",          D3DFMT_G16R16F,         0x001820ff, 0x002010ff},
+        {"D3DFMT_A16B16G16R16F",    D3DFMT_A16B16G16R16F,   0x00182000, 0x00201000},
         {"D3DFMT_R32F",             D3DFMT_R32F,            0x0018ffff, 0x0020ffff},
-        {"D3DFMT_G32R32F",          D3DFMT_G32R32F,         0x001818ff, 0x002010ff},
-        {"D3DFMT_A32B32G32R32F",    D3DFMT_A32B32G32R32F,   0x00181800, 0x00201000},
+        {"D3DFMT_G32R32F",          D3DFMT_G32R32F,         0x001820ff, 0x002010ff},
+        {"D3DFMT_A32B32G32R32F",    D3DFMT_A32B32G32R32F,   0x00182000, 0x00201000},
+        {"D3DFMT_L8",               D3DFMT_L8,              0x00181818, 0x00202020},
     };
     static const float quad[][5] =
     {
@@ -11292,15 +11293,13 @@ static void pixelshader_blending_test(void)
         struct vec3 position;
         DWORD diffuse;
     }
-    /* Quad with R=0x10, G=0x20 */
     quad1[] =
     {
-        {{-1.0f, -1.0f, 0.1f}, 0x80102000},
-        {{-1.0f,  1.0f, 0.1f}, 0x80102000},
-        {{ 1.0f, -1.0f, 0.1f}, 0x80102000},
-        {{ 1.0f,  1.0f, 0.1f}, 0x80102000},
+        {{-1.0f, -1.0f, 0.1f}, 0x80103000},
+        {{-1.0f,  1.0f, 0.1f}, 0x80103000},
+        {{ 1.0f, -1.0f, 0.1f}, 0x80103000},
+        {{ 1.0f,  1.0f, 0.1f}, 0x80103000},
     },
-    /* Quad with R=0x20, G=0x10 */
     quad2[] =
     {
         {{-1.0f, -1.0f, 0.1f}, 0x80201000},
