@@ -228,6 +228,27 @@ static ID3D10Device *create_device(void)
     return NULL;
 }
 
+static BOOL is_warp_device(ID3D10Device *device)
+{
+    DXGI_ADAPTER_DESC adapter_desc;
+    IDXGIDevice *dxgi_device;
+    IDXGIAdapter *adapter;
+    HRESULT hr;
+
+    hr = ID3D10Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
+    ok(SUCCEEDED(hr), "Failed to query IDXGIDevice interface, hr %#x.\n", hr);
+    hr = IDXGIDevice_GetAdapter(dxgi_device, &adapter);
+    ok(SUCCEEDED(hr), "Failed to get adapter, hr %#x.\n", hr);
+    IDXGIDevice_Release(dxgi_device);
+    hr = IDXGIAdapter_GetDesc(adapter, &adapter_desc);
+    ok(SUCCEEDED(hr), "Failed to get adapter desc, hr %#x.\n", hr);
+    IDXGIAdapter_Release(adapter);
+
+    return !adapter_desc.SubSysId && !adapter_desc.Revision
+            && ((!adapter_desc.VendorId && !adapter_desc.DeviceId)
+            || (adapter_desc.VendorId == 0x1414 && adapter_desc.DeviceId == 0x008c));
+}
+
 #define SWAPCHAIN_FLAG_SHADER_INPUT             0x1
 
 struct swapchain_desc
@@ -5858,6 +5879,97 @@ static void test_swapchain_flip(void)
     DestroyWindow(window);
 }
 
+static void test_clear_render_target_view(void)
+{
+    static const DWORD expected_color = 0xbf4c7f19, expected_srgb_color = 0xbf95bc59;
+    static const float color[] = {0.1f, 0.5f, 0.3f, 0.75f};
+
+    struct d3d10core_test_context test_context;
+    ID3D10Texture2D *texture, *srgb_texture;
+    ID3D10RenderTargetView *rtv, *srgb_rtv;
+    D3D10_RENDER_TARGET_VIEW_DESC rtv_desc;
+    D3D10_TEXTURE2D_DESC texture_desc;
+    ID3D10Device *device;
+    HRESULT hr;
+
+    if (!init_test_context(&test_context))
+        return;
+
+    device = test_context.device;
+
+    texture_desc.Width = 640;
+    texture_desc.Height = 480;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D10_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D10_BIND_RENDER_TARGET;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create depth texture, hr %#x.\n", hr);
+
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &srgb_texture);
+    ok(SUCCEEDED(hr), "Failed to create depth texture, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, NULL, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)srgb_texture, NULL, &srgb_rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, color);
+    check_texture_color(test_context.backbuffer, expected_color, 1);
+
+    ID3D10Device_ClearRenderTargetView(device, rtv, color);
+    check_texture_color(texture, expected_color, 1);
+
+    ID3D10Device_ClearRenderTargetView(device, srgb_rtv, color);
+    check_texture_color(srgb_texture, expected_srgb_color, 1);
+
+    ID3D10RenderTargetView_Release(srgb_rtv);
+    ID3D10RenderTargetView_Release(rtv);
+    ID3D10Texture2D_Release(srgb_texture);
+    ID3D10Texture2D_Release(texture);
+
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_TYPELESS;
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create depth texture, hr %#x.\n", hr);
+
+    rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    rtv_desc.ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2D;
+    U(rtv_desc).Texture2D.MipSlice = 0;
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, &rtv_desc, &srgb_rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+
+    rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    rtv_desc.ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2D;
+    U(rtv_desc).Texture2D.MipSlice = 0;
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, &rtv_desc, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+
+    ID3D10Device_ClearRenderTargetView(device, rtv, color);
+    check_texture_color(texture, expected_color, 1);
+
+    if (!is_warp_device(device))
+    {
+        ID3D10Device_ClearRenderTargetView(device, srgb_rtv, color);
+        todo_wine check_texture_color(texture, expected_srgb_color, 1);
+    }
+    else
+    {
+        win_skip("sRGB clears are broken on WARP.\n");
+    }
+
+    ID3D10RenderTargetView_Release(srgb_rtv);
+    ID3D10RenderTargetView_Release(rtv);
+    ID3D10Texture2D_Release(texture);
+    release_test_context(&test_context);
+}
+
 static void test_clear_depth_stencil_view(void)
 {
     D3D10_TEXTURE2D_DESC texture_desc;
@@ -6135,6 +6247,7 @@ START_TEST(device)
     test_check_multisample_quality_levels();
     test_cb_relative_addressing();
     test_swapchain_flip();
+    test_clear_render_target_view();
     test_clear_depth_stencil_view();
     test_draw_depth_only();
 }
