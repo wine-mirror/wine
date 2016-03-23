@@ -54,6 +54,85 @@ static void check_output(IStream *stream, const char *expected, int line)
 }
 #define CHECK_OUTPUT(stream, expected) check_output(stream, expected, __LINE__)
 
+/* used to test all Write* methods for consistent error state */
+static void check_writer_state(IXmlWriter *writer, HRESULT exp_hr)
+{
+    static const WCHAR aW[] = {'a',0};
+    HRESULT hr;
+
+    /* FIXME: add WriteAttributes */
+
+    hr = IXmlWriter_WriteAttributeString(writer, NULL, aW, NULL, aW);
+todo_wine
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+
+    hr = IXmlWriter_WriteCData(writer, aW);
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+
+    hr = IXmlWriter_WriteCharEntity(writer, aW[0]);
+todo_wine
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+
+    hr = IXmlWriter_WriteChars(writer, aW, 1);
+todo_wine
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+
+    hr = IXmlWriter_WriteComment(writer, aW);
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+
+    /* FIXME: add WriteDocType */
+
+    hr = IXmlWriter_WriteElementString(writer, NULL, aW, NULL, aW);
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+
+    hr = IXmlWriter_WriteEndDocument(writer);
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+
+    hr = IXmlWriter_WriteEndElement(writer);
+todo_wine
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+
+todo_wine {
+    hr = IXmlWriter_WriteEntityRef(writer, aW);
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+
+    hr = IXmlWriter_WriteFullEndElement(writer);
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+
+    hr = IXmlWriter_WriteName(writer, aW);
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+
+    hr = IXmlWriter_WriteNmToken(writer, aW);
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+
+    /* FIXME: add WriteNode */
+    /* FIXME: add WriteNodeShallow */
+
+    hr = IXmlWriter_WriteProcessingInstruction(writer, aW, aW);
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+
+    hr = IXmlWriter_WriteQualifiedName(writer, aW, NULL);
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+
+    hr = IXmlWriter_WriteRaw(writer, aW);
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+
+    hr = IXmlWriter_WriteRawChars(writer, aW, 1);
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+
+    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+
+    hr = IXmlWriter_WriteString(writer, aW);
+    ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
+}
+    /* FIXME: add WriteSurrogateCharEntity */
+    /* FIXME: add WriteWhitespace */
+}
+
 static IStream *writer_set_output(IXmlWriter *writer)
 {
     IStream *stream;
@@ -831,9 +910,23 @@ static void test_WriteRaw(void)
     IStream_Release(stream);
 }
 
+static void test_writer_state(void)
+{
+    IXmlWriter *writer;
+    HRESULT hr;
+
+    hr = CreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    check_writer_state(writer, E_UNEXPECTED);
+
+    IXmlWriter_Release(writer);
+}
+
 START_TEST(writer)
 {
     test_writer_create();
+    test_writer_state();
     test_writeroutput();
     test_writestartdocument();
     test_writestartelement();
