@@ -154,15 +154,15 @@ static int is_delayed_import( const char *name )
     return 0;
 }
 
-/* check whether a given dll has already been imported */
-static struct import *is_already_imported( const char *name )
+/* find an imported dll from its name */
+static struct import *find_import_dll( const char *name )
 {
     struct import *import;
 
     LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
-        if (!strcmp( import->dll_name, name )) return import;
+        if (!strcasecmp( import->dll_name, name )) return import;
     LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
-        if (!strcmp( import->dll_name, name )) return import;
+        if (!strcasecmp( import->dll_name, name )) return import;
     return NULL;
 }
 
@@ -215,7 +215,7 @@ static DLLSPEC *read_import_lib( struct import *imp )
     close_input_file( f );
 
     /* check if we already imported that library from a different file */
-    if ((prev_imp = is_already_imported( spec->file_name )))
+    if ((prev_imp = find_import_dll( spec->file_name )))
     {
         if (prev_imp->dev != imp->dev || prev_imp->ino != imp->ino)
             fatal_error( "%s and %s have the same export name '%s'\n",
@@ -292,7 +292,7 @@ void add_delayed_import( const char *name )
     char *fullname = get_dll_name( name, NULL );
 
     strarray_add( &delayed_imports, fullname, NULL );
-    if ((imp = is_already_imported( fullname )))
+    if ((imp = find_import_dll( fullname )))
     {
         list_remove( &imp->entry );
         list_add_tail( &dll_delayed, &imp->entry );
@@ -389,25 +389,14 @@ static void check_undefined_forwards( DLLSPEC *spec )
         api_name = p + 1;
         dll_name = get_dll_name( link_name, NULL );
 
-        LIST_FOR_EACH_ENTRY( imp, &dll_imports, struct import, entry )
+        if ((imp = find_import_dll( dll_name )))
         {
-            if (strcasecmp( imp->dll_name, dll_name )) continue;
             if (!find_export( api_name, imp->exports, imp->nb_exports ))
                 warning( "%s:%d: forward '%s' not found in %s\n",
                          spec->src_name, odp->lineno, odp->link_name, imp->dll_name );
-            goto done;
         }
-        LIST_FOR_EACH_ENTRY( imp, &dll_delayed, struct import, entry )
-        {
-            if (strcasecmp( imp->dll_name, dll_name )) continue;
-            if (!find_export( api_name, imp->exports, imp->nb_exports ))
-                warning( "%s:%d: forward '%s' not found in %s\n",
-                         spec->src_name, odp->lineno, odp->link_name, imp->dll_name );
-            goto done;
-        }
-        warning( "%s:%d: forward '%s' not found in the imported dll list\n",
-                 spec->src_name, odp->lineno, odp->link_name );
-    done:
+        else warning( "%s:%d: forward '%s' not found in the imported dll list\n",
+                      spec->src_name, odp->lineno, odp->link_name );
         free( link_name );
         free( dll_name );
     }
