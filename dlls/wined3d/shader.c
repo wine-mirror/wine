@@ -869,6 +869,11 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                 FIXME("Invalid instruction %#x for shader type %#x.\n",
                         ins.handler_idx, shader_version.type);
         }
+        else if (ins.handler_idx == WINED3DSIH_DCL_SAMPLER)
+        {
+            if (ins.flags & WINED3DSI_SAMPLER_COMPARISON_MODE)
+                reg_maps->sampler_comparison_mode |= (1u << ins.declaration.dst.reg.idx[0].offset);
+        }
         else if (ins.handler_idx == WINED3DSIH_DCL_VERTICES_OUT)
         {
             if (shader_version.type == WINED3D_SHADER_TYPE_GEOMETRY)
@@ -2790,6 +2795,11 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
         if (!(texture->flags & WINED3D_TEXTURE_POW2_MAT_IDENT))
             args->np2_fixup |= (1u << i);
     }
+
+    /* In SM4+ we use dcl_sampler in order to determine if we should use shadow sampler. */
+    if (shader->reg_maps.shader_version.major >= 4)
+        args->shadow = 0;
+
     if (shader->reg_maps.shader_version.major >= 3)
     {
         if (position_transformed)
