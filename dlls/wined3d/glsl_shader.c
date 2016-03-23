@@ -4473,6 +4473,31 @@ static void shader_glsl_sample(const struct wined3d_shader_instruction *ins)
     shader_glsl_release_sample_function(ins->ctx, &sample_function);
 }
 
+static void shader_glsl_sample_c(const struct wined3d_shader_instruction *ins)
+{
+    unsigned int resource_idx, sampler_idx, sampler_bind_idx;
+    struct glsl_src_param coord_param, compare_param;
+    struct glsl_sample_function sample_function;
+    DWORD flags = 0;
+    UINT coord_size;
+
+    if (wined3d_shader_instruction_has_texel_offset(ins))
+        flags |= WINED3D_GLSL_SAMPLE_OFFSET;
+
+    resource_idx = ins->src[1].reg.idx[0].offset;
+    sampler_idx = ins->src[2].reg.idx[0].offset;
+
+    shader_glsl_get_sample_function(ins->ctx, resource_idx, flags, &sample_function);
+    coord_size = shader_glsl_get_write_mask_size(sample_function.coord_mask);
+    shader_glsl_add_src_param(ins, &ins->src[0], sample_function.coord_mask >> 1, &coord_param);
+    shader_glsl_add_src_param(ins, &ins->src[3], WINED3DSP_WRITEMASK_0, &compare_param);
+    sampler_bind_idx = shader_glsl_find_sampler(&ins->ctx->reg_maps->sampler_map, resource_idx, sampler_idx);
+    shader_glsl_gen_sample_code(ins, sampler_bind_idx, &sample_function, WINED3DSP_NOSWIZZLE,
+            NULL, NULL, NULL, &ins->texel_offset, "vec%u(%s, %s)",
+            coord_size, coord_param.param_str, compare_param.param_str);
+    shader_glsl_release_sample_function(ins->ctx, &sample_function);
+}
+
 static void shader_glsl_texcoord(const struct wined3d_shader_instruction *ins)
 {
     /* FIXME: Make this work for more than just 2D textures */
@@ -8163,7 +8188,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_RSQ                           */ shader_glsl_scalar_op,
     /* WINED3DSIH_SAMPLE                        */ shader_glsl_sample,
     /* WINED3DSIH_SAMPLE_B                      */ shader_glsl_sample,
-    /* WINED3DSIH_SAMPLE_C                      */ NULL,
+    /* WINED3DSIH_SAMPLE_C                      */ shader_glsl_sample_c,
     /* WINED3DSIH_SAMPLE_C_LZ                   */ NULL,
     /* WINED3DSIH_SAMPLE_GRAD                   */ shader_glsl_sample,
     /* WINED3DSIH_SAMPLE_LOD                    */ shader_glsl_sample,
