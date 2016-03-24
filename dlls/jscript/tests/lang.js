@@ -194,6 +194,20 @@ ok(testRecFunc.arguments === null, "testRecFunc.arguments = " + testRecFunc.argu
 testRecFunc(true);
 ok(testRecFunc.arguments === null, "testRecFunc.arguments = " + testRecFunc.arguments);
 
+function argumentsTest() {
+    var save = arguments;
+    with({arguments: 1}) {
+        ok(arguments === 1, "arguments = " + arguments);
+        (function() {
+            ok(argumentsTest.arguments === save, "unexpected argumentsTest.arguments");
+        })();
+    }
+    eval('ok(arguments === save, "unexpected arguments");');
+    [1,2].sort(function() {
+        ok(argumentsTest.arguments === save, "unexpected argumentsTest.arguments");
+    });
+}
+
 tmp = (function() {1;})();
 ok(tmp === undefined, "tmp = " + tmp);
 tmp = eval("1;");
