@@ -3034,10 +3034,11 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
 static HRESULT surface_load_drawable(struct wined3d_surface *surface,
         struct wined3d_context *context)
 {
+    struct wined3d_texture *texture = surface->container;
     RECT r;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
-            && wined3d_resource_is_offscreen(&surface->container->resource))
+            && wined3d_resource_is_offscreen(&texture->resource))
     {
         ERR("Trying to load offscreen surface into WINED3D_LOCATION_DRAWABLE.\n");
         return WINED3DERR_INVALIDCALL;
@@ -3045,7 +3046,7 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
 
     surface_get_rect(surface, NULL, &r);
     surface_load_location(surface, context, WINED3D_LOCATION_TEXTURE_RGB);
-    surface_blt_to_drawable(surface->resource.device, context,
+    surface_blt_to_drawable(texture->resource.device, context,
             WINED3D_TEXF_POINT, FALSE, surface, &r, surface, &r);
 
     return WINED3D_OK;
