@@ -247,7 +247,7 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
 
             prev_args = function->arguments;
             function->arguments = arg_disp;
-            hres = exec_source(exec_ctx, function->code, function->func_code, FALSE, r);
+            hres = exec_source(exec_ctx, function->code, function->func_code, r);
             function->arguments = prev_args;
 
             exec_release(exec_ctx);

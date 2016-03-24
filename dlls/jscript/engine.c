@@ -2543,7 +2543,7 @@ static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdis
     return hres;
 }
 
-HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, BOOL from_eval, jsval_t *ret)
+HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, jsval_t *ret)
 {
     exec_ctx_t *prev_ctx;
     jsval_t val;

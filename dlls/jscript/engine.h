@@ -218,5 +218,5 @@ static inline void exec_addref(exec_ctx_t *ctx)
 
 void exec_release(exec_ctx_t*) DECLSPEC_HIDDEN;
 HRESULT create_exec_ctx(script_ctx_t*,IDispatch*,jsdisp_t*,scope_chain_t*,BOOL,exec_ctx_t**) DECLSPEC_HIDDEN;
-HRESULT exec_source(exec_ctx_t*,bytecode_t*,function_code_t*,BOOL,jsval_t*) DECLSPEC_HIDDEN;
+HRESULT exec_source(exec_ctx_t*,bytecode_t*,function_code_t*,jsval_t*) DECLSPEC_HIDDEN;
 HRESULT create_source_function(script_ctx_t*,bytecode_t*,function_code_t*,scope_chain_t*,jsdisp_t**) DECLSPEC_HIDDEN;
