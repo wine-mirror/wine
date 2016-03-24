@@ -1679,9 +1679,7 @@ static HRESULT WINAPI SAXDeclHandler_externalEntityDecl(ISAXDeclHandler *iface,
     TRACE("(%p)->(%s:%d %s:%d %s:%d)\n", This, debugstr_wn(name, n_name), n_name,
         debugstr_wn(publicId, n_publicId), n_publicId, debugstr_wn(systemId, n_systemId), n_systemId);
 
-    if (!name) return E_INVALIDARG;
-    if (publicId && !systemId) return E_INVALIDARG;
-    if (!publicId && !systemId) return E_INVALIDARG;
+    if (!name || !systemId) return E_INVALIDARG;
 
     write_output_buffer(This, entityW, sizeof(entityW)/sizeof(WCHAR));
     if (n_name) {
