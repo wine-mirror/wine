@@ -3058,9 +3058,9 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     unsigned int width, src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch;
     const RECT src_rect = {0, 0, surface->resource.width, surface->resource.height};
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    struct wined3d_device *device = surface->resource.device;
-    const struct wined3d_color_key_conversion *conversion;
     struct wined3d_texture *texture = surface->container;
+    struct wined3d_device *device = texture->resource.device;
+    const struct wined3d_color_key_conversion *conversion;
     struct wined3d_bo_address data;
     struct wined3d_format format;
     POINT dst_point = {0, 0};
@@ -3076,10 +3076,10 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     }
 
     if (surface->locations & (WINED3D_LOCATION_TEXTURE_SRGB | WINED3D_LOCATION_TEXTURE_RGB)
-            && (surface->container->resource.format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB)
+            && (texture->resource.format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB)
             && fbo_blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
-                NULL, surface->resource.usage, surface->resource.pool, surface->resource.format,
-                NULL, surface->resource.usage, surface->resource.pool, surface->resource.format))
+                NULL, texture->resource.usage, texture->resource.pool, texture->resource.format,
+                NULL, texture->resource.usage, texture->resource.pool, texture->resource.format))
     {
         if (srgb)
             surface_blt_fbo(device, context, WINED3D_TEXF_POINT, surface, WINED3D_LOCATION_TEXTURE_RGB,
@@ -3092,10 +3092,10 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     }
 
     if (surface->locations & (WINED3D_LOCATION_RB_MULTISAMPLE | WINED3D_LOCATION_RB_RESOLVED)
-            && (!srgb || (surface->container->resource.format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB))
+            && (!srgb || (texture->resource.format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB))
             && fbo_blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
-                NULL, surface->resource.usage, surface->resource.pool, surface->resource.format,
-                NULL, surface->resource.usage, surface->resource.pool, surface->resource.format))
+                NULL, texture->resource.usage, texture->resource.pool, texture->resource.format,
+                NULL, texture->resource.usage, texture->resource.pool, texture->resource.format))
     {
         DWORD src_location = surface->locations & WINED3D_LOCATION_RB_RESOLVED ?
                 WINED3D_LOCATION_RB_RESOLVED : WINED3D_LOCATION_RB_MULTISAMPLE;
