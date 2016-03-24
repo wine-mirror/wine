@@ -2798,8 +2798,9 @@ void surface_modify_ds_location(struct wined3d_surface *surface,
 /* Context activation is done by the caller. */
 static void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_context *context, DWORD location)
 {
+    struct wined3d_texture *texture = surface->container;
+    struct wined3d_device *device = texture->resource.device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    struct wined3d_device *device = surface->resource.device;
     GLsizei w, h;
 
     TRACE("surface %p, context %p, new location %#x.\n", surface, context, location);
@@ -2896,7 +2897,7 @@ static void surface_load_ds_location(struct wined3d_surface *surface, struct win
         context_apply_fbo_state_blit(context, GL_FRAMEBUFFER,
                 surface_from_resource(wined3d_texture_get_sub_resource(context->swapchain->front_buffer, 0)),
                 NULL, WINED3D_LOCATION_DRAWABLE);
-        surface_depth_blt(surface, context, surface->container->texture_rgb.name,
+        surface_depth_blt(surface, context, texture->texture_rgb.name,
                 0, surface->pow2Height - h, w, h, surface->texture_target);
         checkGLcall("depth_blt");
 
