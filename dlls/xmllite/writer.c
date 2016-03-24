@@ -767,10 +767,13 @@ static HRESULT WINAPI xmlwriter_WriteElementString(IXmlWriter *iface, LPCWSTR pr
     case XmlWriterState_ElemStarted:
         writer_close_starttag(This);
         break;
-    case XmlWriterState_DocClosed:
-        return WR_E_INVALIDACTION;
+    case XmlWriterState_Ready:
+    case XmlWriterState_DocStarted:
+    case XmlWriterState_PIDocStarted:
+        break;
     default:
-        ;
+        This->state = XmlWriterState_DocClosed;
+        return WR_E_INVALIDACTION;
     }
 
     write_encoding_bom(This);
@@ -1043,11 +1046,11 @@ static HRESULT WINAPI xmlwriter_WriteRaw(IXmlWriter *iface, LPCWSTR data)
     case XmlWriterState_PIDocStarted:
         break;
     default:
+        This->state = XmlWriterState_DocClosed;
         return WR_E_INVALIDACTION;
     }
 
     write_output_buffer(This->output, data, -1);
-    This->state = XmlWriterState_DocClosed;
     return S_OK;
 }
 
@@ -1086,6 +1089,7 @@ static HRESULT WINAPI xmlwriter_WriteStartDocument(IXmlWriter *iface, XmlStandal
     case XmlWriterState_Ready:
         break;
     default:
+        This->state = XmlWriterState_DocClosed;
         return WR_E_INVALIDACTION;
     }
 
@@ -1099,6 +1103,9 @@ static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR pre
 
     TRACE("(%p)->(%s %s %s)\n", This, wine_dbgstr_w(prefix), wine_dbgstr_w(local_name), wine_dbgstr_w(uri));
 
+    if (!local_name)
+        return E_INVALIDARG;
+
     switch (This->state)
     {
     case XmlWriterState_Initial:
@@ -1108,9 +1115,6 @@ static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR pre
     default:
         ;
     }
-
-    if (!local_name)
-        return E_INVALIDARG;
 
     /* close pending element */
     if (This->starttagopen)

@@ -863,6 +863,7 @@ static void test_WriteCData(void)
 static void test_WriteRaw(void)
 {
     static const WCHAR rawW[] = {'a','<',':',0};
+    static const WCHAR aW[] = {'a',0};
     IXmlWriter *writer;
     IStream *stream;
     HRESULT hr;
@@ -884,6 +885,18 @@ static void test_WriteRaw(void)
     hr = IXmlWriter_WriteRaw(writer, rawW);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    hr = IXmlWriter_WriteRaw(writer, rawW);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteComment(writer, rawW);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteRaw(writer, rawW);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteElementString(writer, NULL, aW, NULL, aW);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
     hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
     ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
 
@@ -899,7 +912,7 @@ static void test_WriteRaw(void)
     hr = IXmlWriter_Flush(writer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    CHECK_OUTPUT(stream, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>a<:");
+    CHECK_OUTPUT(stream, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>a<:a<:<!--a<:-->a<:<a>a</a>");
 
     IXmlWriter_Release(writer);
     IStream_Release(stream);
