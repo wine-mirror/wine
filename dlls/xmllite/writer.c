@@ -587,6 +587,16 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
     FIXME("%p %s %s %s %s\n", This, wine_dbgstr_w(pwszPrefix), wine_dbgstr_w(pwszLocalName),
                         wine_dbgstr_w(pwszNamespaceUri), wine_dbgstr_w(pwszValue));
 
+    switch (This->state)
+    {
+    case XmlWriterState_Initial:
+        return E_UNEXPECTED;
+    case XmlWriterState_DocClosed:
+        return WR_E_INVALIDACTION;
+    default:
+        ;
+    }
+
     return E_NOTIMPL;
 }
 
@@ -644,8 +654,22 @@ static HRESULT WINAPI xmlwriter_WriteCData(IXmlWriter *iface, LPCWSTR data)
     return S_OK;
 }
 
-static HRESULT WINAPI xmlwriter_WriteCharEntity(IXmlWriter *iface, WCHAR wch)
+static HRESULT WINAPI xmlwriter_WriteCharEntity(IXmlWriter *iface, WCHAR ch)
 {
+    xmlwriter *This = impl_from_IXmlWriter(iface);
+
+    FIXME("%p %x\n", This, ch);
+
+    switch (This->state)
+    {
+    case XmlWriterState_Initial:
+        return E_UNEXPECTED;
+    case XmlWriterState_DocClosed:
+        return WR_E_INVALIDACTION;
+    default:
+        ;
+    }
+
     return E_NOTIMPL;
 }
 
@@ -654,6 +678,16 @@ static HRESULT WINAPI xmlwriter_WriteChars(IXmlWriter *iface, const WCHAR *pwch,
     xmlwriter *This = impl_from_IXmlWriter(iface);
 
     FIXME("%p %s %d\n", This, wine_dbgstr_w(pwch), cwch);
+
+    switch (This->state)
+    {
+    case XmlWriterState_Initial:
+        return E_UNEXPECTED;
+    case XmlWriterState_DocClosed:
+        return WR_E_INVALIDACTION;
+    default:
+        ;
+    }
 
     return E_NOTIMPL;
 }
@@ -821,6 +855,16 @@ static HRESULT WINAPI xmlwriter_WriteEntityRef(IXmlWriter *iface, LPCWSTR pwszNa
 
     FIXME("%p %s\n", This, wine_dbgstr_w(pwszName));
 
+    switch (This->state)
+    {
+    case XmlWriterState_Initial:
+        return E_UNEXPECTED;
+    case XmlWriterState_DocClosed:
+        return WR_E_INVALIDACTION;
+    default:
+        ;
+    }
+
     return E_NOTIMPL;
 }
 
@@ -862,6 +906,16 @@ static HRESULT WINAPI xmlwriter_WriteName(IXmlWriter *iface, LPCWSTR pwszName)
 
     FIXME("%p %s\n", This, wine_dbgstr_w(pwszName));
 
+    switch (This->state)
+    {
+    case XmlWriterState_Initial:
+        return E_UNEXPECTED;
+    case XmlWriterState_DocClosed:
+        return WR_E_INVALIDACTION;
+    default:
+        ;
+    }
+
     return E_NOTIMPL;
 }
 
@@ -870,6 +924,16 @@ static HRESULT WINAPI xmlwriter_WriteNmToken(IXmlWriter *iface, LPCWSTR pwszNmTo
     xmlwriter *This = impl_from_IXmlWriter(iface);
 
     FIXME("%p %s\n", This, wine_dbgstr_w(pwszNmToken));
+
+    switch (This->state)
+    {
+    case XmlWriterState_Initial:
+        return E_UNEXPECTED;
+    case XmlWriterState_DocClosed:
+        return WR_E_INVALIDACTION;
+    default:
+        ;
+    }
 
     return E_NOTIMPL;
 }
@@ -938,6 +1002,16 @@ static HRESULT WINAPI xmlwriter_WriteQualifiedName(IXmlWriter *iface, LPCWSTR pw
 
     FIXME("%p %s %s\n", This, wine_dbgstr_w(pwszLocalName), wine_dbgstr_w(pwszNamespaceUri));
 
+    switch (This->state)
+    {
+    case XmlWriterState_Initial:
+        return E_UNEXPECTED;
+    case XmlWriterState_DocClosed:
+        return WR_E_INVALIDACTION;
+    default:
+        ;
+    }
+
     return E_NOTIMPL;
 }
 
@@ -975,9 +1049,18 @@ static HRESULT WINAPI xmlwriter_WriteRawChars(IXmlWriter *iface,  const WCHAR *p
 
     FIXME("%p %s %d\n", This, wine_dbgstr_w(pwch), cwch);
 
+    switch (This->state)
+    {
+    case XmlWriterState_Initial:
+        return E_UNEXPECTED;
+    case XmlWriterState_DocClosed:
+        return WR_E_INVALIDACTION;
+    default:
+        ;
+    }
+
     return E_NOTIMPL;
 }
-
 
 static HRESULT WINAPI xmlwriter_WriteStartDocument(IXmlWriter *iface, XmlStandalone standalone)
 {
@@ -1046,6 +1129,16 @@ static HRESULT WINAPI xmlwriter_WriteString(IXmlWriter *iface, LPCWSTR pwszText)
     xmlwriter *This = impl_from_IXmlWriter(iface);
 
     FIXME("%p %s\n", This, wine_dbgstr_w(pwszText));
+
+    switch (This->state)
+    {
+    case XmlWriterState_Initial:
+        return E_UNEXPECTED;
+    case XmlWriterState_DocClosed:
+        return WR_E_INVALIDACTION;
+    default:
+        ;
+    }
 
     return E_NOTIMPL;
 }

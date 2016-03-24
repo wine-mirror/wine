@@ -63,18 +63,15 @@ static void check_writer_state(IXmlWriter *writer, HRESULT exp_hr)
     /* FIXME: add WriteAttributes */
 
     hr = IXmlWriter_WriteAttributeString(writer, NULL, aW, NULL, aW);
-todo_wine
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteCData(writer, aW);
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteCharEntity(writer, aW[0]);
-todo_wine
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteChars(writer, aW, 1);
-todo_wine
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteComment(writer, aW);
@@ -92,19 +89,17 @@ todo_wine
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteEntityRef(writer, aW);
-todo_wine
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteFullEndElement(writer);
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
-todo_wine {
     hr = IXmlWriter_WriteName(writer, aW);
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteNmToken(writer, aW);
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
-}
+
     /* FIXME: add WriteNode */
     /* FIXME: add WriteNodeShallow */
 
@@ -112,14 +107,12 @@ todo_wine {
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteQualifiedName(writer, aW, NULL);
-todo_wine
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteRaw(writer, aW);
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteRawChars(writer, aW, 1);
-todo_wine
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
@@ -129,7 +122,6 @@ todo_wine
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     hr = IXmlWriter_WriteString(writer, aW);
-todo_wine
     ok(hr == exp_hr, "got 0x%08x, expected 0x%08x\n", hr, exp_hr);
 
     /* FIXME: add WriteSurrogateCharEntity */
