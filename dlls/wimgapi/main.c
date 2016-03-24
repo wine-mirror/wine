@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
+#include "wimgapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wimgapi);
 
@@ -48,5 +49,12 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 DWORD WINAPI WIMRegisterMessageCallback(HANDLE wim, FARPROC callback, PVOID data)
 {
     FIXME("(%p %p %p) stub\n", wim, callback, data);
+    return 0;
+}
+
+BOOL WINAPI WIMGetMountedImages(PWIM_MOUNT_LIST list, DWORD *length)
+{
+    FIXME("(%p %p) stub\n", list, length);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
 }

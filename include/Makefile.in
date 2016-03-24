@@ -617,6 +617,7 @@ HEADER_SRCS = \
 	wfext.h \
 	wia.h \
 	wiadef.h \
+	wimgapi.h \
 	winbase.h \
 	wincon.h \
 	wincred.h \

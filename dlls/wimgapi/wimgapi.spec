@@ -21,7 +21,7 @@
 @ stub WIMGetMountedImageHandle
 @ stub WIMGetMountedImageInfo
 @ stub WIMGetMountedImageInfoFromFile
-@ stub WIMGetMountedImages
+@ stdcall WIMGetMountedImages(ptr ptr)
 @ stub WIMInitFileIOCallbacks
 @ stub WIMLoadImage
 @ stub WIMMountImage
