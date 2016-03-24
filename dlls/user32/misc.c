@@ -20,6 +20,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+
 #include <stdarg.h>
 
 #include "windef.h"
@@ -466,11 +468,46 @@ BOOL WINAPI GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
     return ret;
 }
 
+#ifdef __i386__
+/* Some apps pass a non-stdcall callback to EnumDisplayMonitors,
+ * so we need a small assembly wrapper to call it.
+ */
+struct enumdisplaymonitors_lparam
+{
+    MONITORENUMPROC proc;
+    LPARAM lparam;
+};
+
+extern BOOL CALLBACK enumdisplaymonitors_callback_wrapper(HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lparam);
+__ASM_STDCALL_FUNC( enumdisplaymonitors_callback_wrapper, 16,
+    "pushl %ebp\n\t"
+    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+    "movl %esp,%ebp\n\t"
+    __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+    "subl $8,%esp\n\t"
+    "movl 20(%ebp),%eax\n\t"    /* struct enumdisplaymonitors_lparam *orig = (struct enumdisplaymonitors_lparam*)lparam */
+    "pushl 4(%eax)\n\t"         /* push orig->lparam */
+    "pushl 16(%ebp)\n\t"
+    "pushl 12(%ebp)\n\t"
+    "pushl 8(%ebp)\n\t"
+    "call *(%eax)\n\t"          /* call orig->proc */
+    "leave\n\t"
+    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+    __ASM_CFI(".cfi_same_value %ebp\n\t")
+    "ret $16" )
+#endif /* __i386__ */
+
 /***********************************************************************
  *		EnumDisplayMonitors (USER32.@)
  */
 BOOL WINAPI EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
 {
+#ifdef __i386__
+    struct enumdisplaymonitors_lparam orig = { proc, lp };
+    proc = enumdisplaymonitors_callback_wrapper;
+    lp = (LPARAM)&orig;
+#endif
     return USER_Driver->pEnumDisplayMonitors( hdc, rect, proc, lp );
 }
 
