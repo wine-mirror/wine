@@ -67,12 +67,12 @@ struct wined3d_cs_present
 struct wined3d_cs_clear
 {
     enum wined3d_cs_op opcode;
-    DWORD rect_count;
-    const RECT *rects;
     DWORD flags;
-    const struct wined3d_color *color;
+    struct wined3d_color color;
     float depth;
     DWORD stencil;
+    unsigned int rect_count;
+    RECT rects[1];
 };
 
 struct wined3d_cs_draw
@@ -287,7 +287,7 @@ static void wined3d_cs_exec_clear(struct wined3d_cs *cs, const void *data)
     wined3d_get_draw_rect(&device->state, &draw_rect);
     device_clear_render_targets(device, device->adapter->gl_info.limits.buffers,
             &device->fb, op->rect_count, op->rects, &draw_rect, op->flags,
-            op->color, op->depth, op->stencil);
+            &op->color, op->depth, op->stencil);
 }
 
 void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *rects,
@@ -295,14 +295,14 @@ void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *
 {
     struct wined3d_cs_clear *op;
 
-    op = cs->ops->require_space(cs, sizeof(*op));
+    op = cs->ops->require_space(cs, FIELD_OFFSET(struct wined3d_cs_clear, rects[rect_count]));
     op->opcode = WINED3D_CS_OP_CLEAR;
-    op->rect_count = rect_count;
-    op->rects = rects;
     op->flags = flags;
-    op->color = color;
+    op->color = *color;
     op->depth = depth;
     op->stencil = stencil;
+    op->rect_count = rect_count;
+    memcpy(op->rects, rects, sizeof(*rects) * rect_count);
 
     cs->ops->submit(cs);
 }
