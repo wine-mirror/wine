@@ -4146,7 +4146,6 @@ static void test_mxwriter_stream(void)
         V_UNKNOWN(&dest) = (IUnknown*)&mxstream;
         hr = IMXWriter_put_output(writer, dest);
         ok(hr == S_OK, "put_output failed with %08x on test %d\n", hr, current_stream_test_index);
-        VariantClear(&dest);
 
         hr = IMXWriter_put_byteOrderMark(writer, test->bom);
         ok(hr == S_OK, "put_byteOrderMark failed with %08x on test %d\n", hr, current_stream_test_index);
