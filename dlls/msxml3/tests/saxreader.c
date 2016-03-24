@@ -5592,7 +5592,7 @@ START_TEST(saxreader)
 
     if(FAILED(hr))
     {
-        skip("Failed to create SAXXMLReader instance\n");
+        win_skip("Failed to create SAXXMLReader instance\n");
         CoUninitialize();
         return;
     }
@@ -5642,7 +5642,7 @@ START_TEST(saxreader)
         test_mxattr_dispex();
     }
     else
-        skip("SAXAttributes not supported\n");
+        win_skip("SAXAttributes not supported\n");
 
     CoUninitialize();
 }
