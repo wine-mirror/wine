@@ -591,7 +591,9 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
+    case XmlWriterState_Ready:
     case XmlWriterState_DocClosed:
+        This->state = XmlWriterState_DocClosed;
         return WR_E_INVALIDACTION;
     default:
         ;

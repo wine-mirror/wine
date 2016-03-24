@@ -907,6 +907,7 @@ static void test_WriteRaw(void)
 
 static void test_writer_state(void)
 {
+    static const WCHAR aW[] = {'a',0};
     IXmlWriter *writer;
     IStream *stream;
     HRESULT hr;
@@ -921,6 +922,15 @@ static void test_writer_state(void)
     stream = writer_set_output(writer);
 
     hr = IXmlWriter_WriteEndElement(writer);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+
+    check_writer_state(writer, WR_E_INVALIDACTION);
+
+    IStream_Release(stream);
+
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteAttributeString(writer, NULL, aW, NULL, aW);
     ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
 
     check_writer_state(writer, WR_E_INVALIDACTION);
