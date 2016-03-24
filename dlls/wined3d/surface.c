@@ -2956,7 +2956,7 @@ static DWORD resource_access_from_location(DWORD location)
 
 static void surface_copy_simple_location(struct wined3d_surface *surface, DWORD location)
 {
-    struct wined3d_device *device = surface->resource.device;
+    struct wined3d_device *device = surface->container->resource.device;
     struct wined3d_context *context;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_bo_address dst, src;
