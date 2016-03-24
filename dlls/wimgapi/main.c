@@ -58,3 +58,10 @@ BOOL WINAPI WIMGetMountedImages(PWIM_MOUNT_LIST list, DWORD *length)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
 }
+
+HANDLE WINAPI WIMCreateFile(WCHAR *path, DWORD access, DWORD creation, DWORD flags, DWORD compression, DWORD *result)
+{
+    FIXME("(%s %d %d %d %d %p) stub\n", debugstr_w(path), access, creation, flags, compression, result);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
+}

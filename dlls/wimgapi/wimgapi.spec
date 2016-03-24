@@ -5,7 +5,7 @@
 @ stub WIMCloseHandle
 @ stub WIMCommitImageHandle
 @ stub WIMCopyFile
-@ stub WIMCreateFile
+@ stdcall WIMCreateFile(wstr long long long long ptr)
 @ stub WIMCreateImageFile
 @ stub WIMDeleteImage
 @ stub WIMDeleteImageMounts
