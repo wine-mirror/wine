@@ -626,7 +626,9 @@ static HRESULT WINAPI xmlwriter_WriteCData(IXmlWriter *iface, LPCWSTR data)
     case XmlWriterState_ElemStarted:
         writer_close_starttag(This);
         break;
+    case XmlWriterState_Ready:
     case XmlWriterState_DocClosed:
+        This->state = XmlWriterState_DocClosed;
         return WR_E_INVALIDACTION;
     default:
         ;
@@ -912,7 +914,9 @@ static HRESULT WINAPI xmlwriter_WriteName(IXmlWriter *iface, LPCWSTR pwszName)
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
+    case XmlWriterState_Ready:
     case XmlWriterState_DocClosed:
+        This->state = XmlWriterState_DocClosed;
         return WR_E_INVALIDACTION;
     default:
         ;
@@ -931,7 +935,9 @@ static HRESULT WINAPI xmlwriter_WriteNmToken(IXmlWriter *iface, LPCWSTR pwszNmTo
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
+    case XmlWriterState_Ready:
     case XmlWriterState_DocClosed:
+        This->state = XmlWriterState_DocClosed;
         return WR_E_INVALIDACTION;
     default:
         ;
@@ -1136,7 +1142,9 @@ static HRESULT WINAPI xmlwriter_WriteString(IXmlWriter *iface, LPCWSTR pwszText)
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
+    case XmlWriterState_Ready:
     case XmlWriterState_DocClosed:
+        This->state = XmlWriterState_DocClosed;
         return WR_E_INVALIDACTION;
     default:
         ;

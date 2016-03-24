@@ -918,23 +918,76 @@ static void test_writer_state(void)
     /* initial state */
     check_writer_state(writer, E_UNEXPECTED);
 
-    /* set output and call 'wrong' method */
+    /* set output and call 'wrong' method, WriteEndElement */
     stream = writer_set_output(writer);
 
     hr = IXmlWriter_WriteEndElement(writer);
     ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
 
     check_writer_state(writer, WR_E_INVALIDACTION);
-
     IStream_Release(stream);
 
+    /* WriteAttributeString */
     stream = writer_set_output(writer);
 
     hr = IXmlWriter_WriteAttributeString(writer, NULL, aW, NULL, aW);
     ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
 
     check_writer_state(writer, WR_E_INVALIDACTION);
+    IStream_Release(stream);
 
+    /* WriteEndDocument */
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteEndDocument(writer);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+
+    check_writer_state(writer, WR_E_INVALIDACTION);
+    IStream_Release(stream);
+
+    /* WriteFullEndElement */
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteFullEndElement(writer);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+
+    check_writer_state(writer, WR_E_INVALIDACTION);
+    IStream_Release(stream);
+
+    /* WriteCData */
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteCData(writer, aW);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+
+    check_writer_state(writer, WR_E_INVALIDACTION);
+    IStream_Release(stream);
+
+    /* WriteName */
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteName(writer, aW);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+
+    check_writer_state(writer, WR_E_INVALIDACTION);
+    IStream_Release(stream);
+
+    /* WriteNmToken */
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteNmToken(writer, aW);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+
+    check_writer_state(writer, WR_E_INVALIDACTION);
+    IStream_Release(stream);
+
+    /* WriteString */
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteString(writer, aW);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+
+    check_writer_state(writer, WR_E_INVALIDACTION);
     IStream_Release(stream);
 
     IXmlWriter_Release(writer);
