@@ -26,6 +26,9 @@
 
 #include "wine/test.h"
 
+static NTSTATUS (WINAPI *pBCryptHash)( BCRYPT_ALG_HANDLE algorithm, UCHAR *secret, ULONG secretlen,
+                                     UCHAR *input, ULONG inputlen, UCHAR *output, ULONG outputlen );
+
 static void test_BCryptGenRandom(void)
 {
     NTSTATUS ret;
@@ -648,8 +651,55 @@ static void test_md5(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 }
 
+static void test_BcryptHash(void)
+{
+    static const char expected[] =
+        "e2a3e68d23ce348b8f68b3079de3d4c9";
+    static const char expected_hmac[] =
+        "7bda029b93fa8d817fcc9e13d6bdf092";
+    BCRYPT_ALG_HANDLE alg;
+    UCHAR md5[16], md5_hmac[16];
+    char str[65];
+    NTSTATUS ret;
+
+    alg = NULL;
+    ret = BCryptOpenAlgorithmProvider(&alg, BCRYPT_MD5_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(alg != NULL, "alg not set\n");
+
+    test_hash_length(alg, 16);
+    test_alg_name(alg, "MD5");
+
+    memset(md5, 0, sizeof(md5));
+    ret = pBCryptHash(alg, NULL, 0, (UCHAR *)"test", sizeof("test"), md5, sizeof(md5));
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    format_hash( md5, sizeof(md5), str );
+    ok(!strcmp(str, expected), "got %s\n", str);
+
+    ret = BCryptCloseAlgorithmProvider(alg, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    alg = NULL;
+    memset(md5_hmac, 0, sizeof(md5_hmac));
+    ret = BCryptOpenAlgorithmProvider(&alg, BCRYPT_MD5_ALGORITHM, MS_PRIMITIVE_PROVIDER, BCRYPT_ALG_HANDLE_HMAC_FLAG);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(alg != NULL, "alg not set\n");
+
+    ret = pBCryptHash(alg, (UCHAR *)"key", sizeof("key"), (UCHAR *)"test", sizeof("test"), md5_hmac, sizeof(md5_hmac));
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    format_hash( md5_hmac, sizeof(md5_hmac), str );
+    ok(!strcmp(str, expected_hmac), "got %s\n", str);
+
+    ret = BCryptCloseAlgorithmProvider(alg, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+}
+
 START_TEST(bcrypt)
 {
+    HMODULE module;
+
+    module = GetModuleHandleA( "bcrypt.dll" );
+
     test_BCryptGenRandom();
     test_BCryptGetFipsAlgorithmMode();
     test_sha1();
@@ -657,4 +707,11 @@ START_TEST(bcrypt)
     test_sha384();
     test_sha512();
     test_md5();
+
+    pBCryptHash = (void *)GetProcAddress( module, "BCryptHash" );
+
+    if (pBCryptHash)
+        test_BcryptHash();
+    else
+        win_skip("BCryptHash is not available\n");
 }
