@@ -171,7 +171,7 @@ typedef struct
     IStream *dest;
     ULONG dest_written;
 
-    output_buffer *buffer;
+    output_buffer buffer;
 } mxwriter;
 
 typedef struct
@@ -281,40 +281,29 @@ static HRESULT get_code_page(xml_encoding encoding, UINT *cp)
     return S_OK;
 }
 
-static HRESULT alloc_output_buffer(xml_encoding encoding, output_buffer **buffer)
+static HRESULT init_output_buffer(xml_encoding encoding, output_buffer *buffer)
 {
-    output_buffer *ret;
     HRESULT hr;
 
-    ret = heap_alloc(sizeof(*ret));
-    if (!ret) return E_OUTOFMEMORY;
-
-    hr = get_code_page(encoding, &ret->code_page);
-    if (hr != S_OK) {
-        heap_free(ret);
+    hr = get_code_page(encoding, &buffer->code_page);
+    if (hr != S_OK)
         return hr;
-    }
 
-    hr = init_encoded_buffer(&ret->utf16);
-    if (hr != S_OK) {
-        heap_free(ret);
+    hr = init_encoded_buffer(&buffer->utf16);
+    if (hr != S_OK)
         return hr;
-    }
 
     /* currently we always create a default output buffer that is UTF-16 only,
        but it's possible to allocate with specific encoding too */
     if (encoding != XmlEncoding_UTF16) {
-        hr = init_encoded_buffer(&ret->encoded);
+        hr = init_encoded_buffer(&buffer->encoded);
         if (hr != S_OK) {
-            free_encoded_buffer(&ret->utf16);
-            heap_free(ret);
+            free_encoded_buffer(&buffer->utf16);
             return hr;
         }
     }
     else
-        memset(&ret->encoded, 0, sizeof(ret->encoded));
-
-    *buffer = ret;
+        memset(&buffer->encoded, 0, sizeof(buffer->encoded));
 
     return S_OK;
 }
@@ -323,7 +312,6 @@ static void free_output_buffer(output_buffer *buffer)
 {
     free_encoded_buffer(&buffer->encoded);
     free_encoded_buffer(&buffer->utf16);
-    heap_free(buffer);
 }
 
 static void grow_buffer(encoded_buffer *buffer, int length)
@@ -337,8 +325,9 @@ static void grow_buffer(encoded_buffer *buffer, int length)
     }
 }
 
-static HRESULT write_output_buffer_mode(output_buffer *buffer, output_mode mode, const WCHAR *data, int len)
+static HRESULT write_output_buffer_mode(mxwriter *writer, output_mode mode, const WCHAR *data, int len)
 {
+    output_buffer *buffer = &writer->buffer;
     int length;
     char *ptr;
 
@@ -374,16 +363,16 @@ static HRESULT write_output_buffer_mode(output_buffer *buffer, output_mode mode,
     return S_OK;
 }
 
-static HRESULT write_output_buffer(output_buffer *buffer, const WCHAR *data, int len)
+static HRESULT write_output_buffer(mxwriter *writer, const WCHAR *data, int len)
 {
-    return write_output_buffer_mode(buffer, OutputBuffer_Both, data, len);
+    return write_output_buffer_mode(writer, OutputBuffer_Both, data, len);
 }
 
-static HRESULT write_output_buffer_quoted(output_buffer *buffer, const WCHAR *data, int len)
+static HRESULT write_output_buffer_quoted(mxwriter *writer, const WCHAR *data, int len)
 {
-    write_output_buffer(buffer, quotW, 1);
-    write_output_buffer(buffer, data, len);
-    write_output_buffer(buffer, quotW, 1);
+    write_output_buffer(writer, quotW, 1);
+    write_output_buffer(writer, data, len);
+    write_output_buffer(writer, quotW, 1);
 
     return S_OK;
 }
@@ -391,11 +380,11 @@ static HRESULT write_output_buffer_quoted(output_buffer *buffer, const WCHAR *da
 /* frees buffer data, reallocates with a default lengths */
 static void close_output_buffer(mxwriter *This)
 {
-    heap_free(This->buffer->utf16.data);
-    heap_free(This->buffer->encoded.data);
-    init_encoded_buffer(&This->buffer->utf16);
-    init_encoded_buffer(&This->buffer->encoded);
-    get_code_page(This->xml_enc, &This->buffer->code_page);
+    heap_free(This->buffer.utf16.data);
+    heap_free(This->buffer.encoded.data);
+    init_encoded_buffer(&This->buffer.utf16);
+    init_encoded_buffer(&This->buffer.encoded);
+    get_code_page(This->xml_enc, &This->buffer.code_page);
 }
 
 /* Escapes special characters like:
@@ -470,7 +459,7 @@ static WCHAR *get_escaped_string(const WCHAR *str, escape_mode mode, int *len)
     return ret;
 }
 
-static void write_prolog_buffer(mxwriter *This)
+static void write_prolog_buffer(mxwriter *writer)
 {
     static const WCHAR versionW[] = {'<','?','x','m','l',' ','v','e','r','s','i','o','n','='};
     static const WCHAR encodingW[] = {' ','e','n','c','o','d','i','n','g','=','\"'};
@@ -479,26 +468,26 @@ static void write_prolog_buffer(mxwriter *This)
     static const WCHAR noW[] = {'n','o','\"','?','>'};
 
     /* version */
-    write_output_buffer(This->buffer, versionW, sizeof(versionW)/sizeof(WCHAR));
-    write_output_buffer_quoted(This->buffer, This->version, -1);
+    write_output_buffer(writer, versionW, sizeof(versionW)/sizeof(WCHAR));
+    write_output_buffer_quoted(writer, writer->version, -1);
 
     /* encoding */
-    write_output_buffer(This->buffer, encodingW, sizeof(encodingW)/sizeof(WCHAR));
+    write_output_buffer(writer, encodingW, sizeof(encodingW)/sizeof(WCHAR));
 
     /* always write UTF-16 to WCHAR buffer */
-    write_output_buffer_mode(This->buffer, OutputBuffer_Native, utf16W, sizeof(utf16W)/sizeof(WCHAR) - 1);
-    write_output_buffer_mode(This->buffer, OutputBuffer_Encoded, This->encoding, -1);
-    write_output_buffer(This->buffer, quotW, 1);
+    write_output_buffer_mode(writer, OutputBuffer_Native, utf16W, sizeof(utf16W)/sizeof(WCHAR) - 1);
+    write_output_buffer_mode(writer, OutputBuffer_Encoded, writer->encoding, -1);
+    write_output_buffer(writer, quotW, 1);
 
     /* standalone */
-    write_output_buffer(This->buffer, standaloneW, sizeof(standaloneW)/sizeof(WCHAR));
-    if (This->props[MXWriter_Standalone] == VARIANT_TRUE)
-        write_output_buffer(This->buffer, yesW, sizeof(yesW)/sizeof(WCHAR));
+    write_output_buffer(writer, standaloneW, sizeof(standaloneW)/sizeof(WCHAR));
+    if (writer->props[MXWriter_Standalone] == VARIANT_TRUE)
+        write_output_buffer(writer, yesW, sizeof(yesW)/sizeof(WCHAR));
     else
-        write_output_buffer(This->buffer, noW, sizeof(noW)/sizeof(WCHAR));
+        write_output_buffer(writer, noW, sizeof(noW)/sizeof(WCHAR));
 
-    write_output_buffer(This->buffer, crlfW, sizeof(crlfW)/sizeof(WCHAR));
-    This->newline = TRUE;
+    write_output_buffer(writer, crlfW, sizeof(crlfW)/sizeof(WCHAR));
+    writer->newline = TRUE;
 }
 
 /* Attempts to the write data from the mxwriter's buffer to
@@ -514,9 +503,9 @@ static HRESULT write_data_to_stream(mxwriter *This)
         return S_OK;
 
     if (This->xml_enc != XmlEncoding_UTF16)
-        buffer = &This->buffer->encoded;
+        buffer = &This->buffer.encoded;
     else
-        buffer = &This->buffer->utf16;
+        buffer = &This->buffer.utf16;
 
     if (This->dest_written > buffer->written) {
         ERR("Failed sanity check! Not sure what to do... (%d > %d)\n", This->dest_written, buffer->written);
@@ -545,33 +534,33 @@ static HRESULT write_data_to_stream(mxwriter *This)
 
 /* Newly added element start tag left unclosed cause for empty elements
    we have to close it differently. */
-static void close_element_starttag(const mxwriter *This)
+static void close_element_starttag(mxwriter *writer)
 {
     static const WCHAR gtW[] = {'>'};
-    if (!This->element) return;
-    write_output_buffer(This->buffer, gtW, 1);
+    if (!writer->element) return;
+    write_output_buffer(writer, gtW, 1);
 }
 
-static void write_node_indent(mxwriter *This)
+static void write_node_indent(mxwriter *writer)
 {
     static const WCHAR tabW[] = {'\t'};
-    int indent = This->indent;
+    int indent = writer->indent;
 
-    if (!This->props[MXWriter_Indent] || This->text)
+    if (!writer->props[MXWriter_Indent] || writer->text)
     {
-        This->text = FALSE;
+        writer->text = FALSE;
         return;
     }
 
     /* This is to workaround PI output logic that always puts newline chars,
        document prolog PI does that too. */
-    if (!This->newline)
-        write_output_buffer(This->buffer, crlfW, sizeof(crlfW)/sizeof(WCHAR));
+    if (!writer->newline)
+        write_output_buffer(writer, crlfW, sizeof(crlfW)/sizeof(WCHAR));
     while (indent--)
-        write_output_buffer(This->buffer, tabW, 1);
+        write_output_buffer(writer, tabW, 1);
 
-    This->newline = FALSE;
-    This->text = FALSE;
+    writer->newline = FALSE;
+    writer->text = FALSE;
 }
 
 static inline void writer_inc_indent(mxwriter *This)
@@ -772,7 +761,7 @@ static ULONG WINAPI mxwriter_Release(IMXWriter *iface)
     {
         /* Windows flushes the buffer when the interface is destroyed. */
         flush_output_buffer(This);
-        free_output_buffer(This->buffer);
+        free_output_buffer(&This->buffer);
 
         if (This->dest) IStream_Release(This->dest);
         SysFreeString(This->version);
@@ -883,7 +872,7 @@ static HRESULT WINAPI mxwriter_get_output(IMXWriter *iface, VARIANT *dest)
             return hr;
 
         V_VT(dest)   = VT_BSTR;
-        V_BSTR(dest) = SysAllocString((WCHAR*)This->buffer->utf16.data);
+        V_BSTR(dest) = SysAllocString((WCHAR*)This->buffer.utf16.data);
 
         return S_OK;
     }
@@ -1177,18 +1166,18 @@ static void mxwriter_write_attribute(mxwriter *writer, const WCHAR *qname, int q
     static const WCHAR eqW[] = {'='};
 
     /* space separator in front of every attribute */
-    write_output_buffer(writer->buffer, spaceW, 1);
-    write_output_buffer(writer->buffer, qname, qname_len);
-    write_output_buffer(writer->buffer, eqW, 1);
+    write_output_buffer(writer, spaceW, 1);
+    write_output_buffer(writer, qname, qname_len);
+    write_output_buffer(writer, eqW, 1);
 
     if (escape)
     {
         WCHAR *escaped = get_escaped_string(value, EscapeValue, &value_len);
-        write_output_buffer_quoted(writer->buffer, escaped, value_len);
+        write_output_buffer_quoted(writer, escaped, value_len);
         heap_free(escaped);
     }
     else
-        write_output_buffer_quoted(writer->buffer, value, value_len);
+        write_output_buffer_quoted(writer, value, value_len);
 }
 
 static void mxwriter_write_starttag(mxwriter *writer, const WCHAR *qname, int len)
@@ -1200,8 +1189,8 @@ static void mxwriter_write_starttag(mxwriter *writer, const WCHAR *qname, int le
 
     write_node_indent(writer);
 
-    write_output_buffer(writer->buffer, ltW, 1);
-    write_output_buffer(writer->buffer, qname ? qname : emptyW, qname ? len : 0);
+    write_output_buffer(writer, ltW, 1);
+    write_output_buffer(writer, qname ? qname : emptyW, qname ? len : 0);
     writer_inc_indent(writer);
 }
 
@@ -1278,7 +1267,7 @@ static HRESULT WINAPI SAXContentHandler_endElement(
     if (This->element)
     {
         static const WCHAR closeW[] = {'/','>'};
-        write_output_buffer(This->buffer, closeW, 2);
+        write_output_buffer(This, closeW, 2);
     }
     else
     {
@@ -1286,9 +1275,9 @@ static HRESULT WINAPI SAXContentHandler_endElement(
         static const WCHAR gtW[] = {'>'};
 
         write_node_indent(This);
-        write_output_buffer(This->buffer, closetagW, 2);
-        write_output_buffer(This->buffer, QName, nQName);
-        write_output_buffer(This->buffer, gtW, 1);
+        write_output_buffer(This, closetagW, 2);
+        write_output_buffer(This, QName, nQName);
+        write_output_buffer(This, gtW, 1);
     }
 
     set_element_name(This, NULL, 0);
@@ -1316,14 +1305,14 @@ static HRESULT WINAPI SAXContentHandler_characters(
     if (nchars)
     {
         if (This->cdata || This->props[MXWriter_DisableEscaping] == VARIANT_TRUE)
-            write_output_buffer(This->buffer, chars, nchars);
+            write_output_buffer(This, chars, nchars);
         else
         {
             int len = nchars;
             WCHAR *escaped;
 
             escaped = get_escaped_string(chars, EscapeText, &len);
-            write_output_buffer(This->buffer, escaped, len);
+            write_output_buffer(This, escaped, len);
             heap_free(escaped);
         }
     }
@@ -1342,7 +1331,7 @@ static HRESULT WINAPI SAXContentHandler_ignorableWhitespace(
 
     if (!chars) return E_INVALIDARG;
 
-    write_output_buffer(This->buffer, chars, nchars);
+    write_output_buffer(This, chars, nchars);
 
     return S_OK;
 }
@@ -1363,18 +1352,18 @@ static HRESULT WINAPI SAXContentHandler_processingInstruction(
     if (!target) return E_INVALIDARG;
 
     write_node_indent(This);
-    write_output_buffer(This->buffer, openpiW, sizeof(openpiW)/sizeof(WCHAR));
+    write_output_buffer(This, openpiW, sizeof(openpiW)/sizeof(WCHAR));
 
     if (*target)
-        write_output_buffer(This->buffer, target, ntarget);
+        write_output_buffer(This, target, ntarget);
 
     if (data && *data && ndata)
     {
-        write_output_buffer(This->buffer, spaceW, 1);
-        write_output_buffer(This->buffer, data, ndata);
+        write_output_buffer(This, spaceW, 1);
+        write_output_buffer(This, data, ndata);
     }
 
-    write_output_buffer(This->buffer, closepiW, sizeof(closepiW)/sizeof(WCHAR));
+    write_output_buffer(This, closepiW, sizeof(closepiW)/sizeof(WCHAR));
     This->newline = TRUE;
 
     return S_OK;
@@ -1442,42 +1431,42 @@ static HRESULT WINAPI SAXLexicalHandler_startDTD(ISAXLexicalHandler *iface,
 
     if (!name) return E_INVALIDARG;
 
-    write_output_buffer(This->buffer, doctypeW, sizeof(doctypeW)/sizeof(WCHAR));
+    write_output_buffer(This, doctypeW, sizeof(doctypeW)/sizeof(WCHAR));
 
     if (*name)
     {
-        write_output_buffer(This->buffer, name, name_len);
-        write_output_buffer(This->buffer, spaceW, 1);
+        write_output_buffer(This, name, name_len);
+        write_output_buffer(This, spaceW, 1);
     }
 
     if (publicId)
     {
         static const WCHAR publicW[] = {'P','U','B','L','I','C',' '};
 
-        write_output_buffer(This->buffer, publicW, sizeof(publicW)/sizeof(WCHAR));
-        write_output_buffer_quoted(This->buffer, publicId, publicId_len);
+        write_output_buffer(This, publicW, sizeof(publicW)/sizeof(WCHAR));
+        write_output_buffer_quoted(This, publicId, publicId_len);
 
         if (!systemId) return E_INVALIDARG;
 
         if (*publicId)
-            write_output_buffer(This->buffer, spaceW, 1);
+            write_output_buffer(This, spaceW, 1);
 
-        write_output_buffer_quoted(This->buffer, systemId, systemId_len);
+        write_output_buffer_quoted(This, systemId, systemId_len);
 
         if (*systemId)
-            write_output_buffer(This->buffer, spaceW, 1);
+            write_output_buffer(This, spaceW, 1);
     }
     else if (systemId)
     {
         static const WCHAR systemW[] = {'S','Y','S','T','E','M',' '};
 
-        write_output_buffer(This->buffer, systemW, sizeof(systemW)/sizeof(WCHAR));
-        write_output_buffer_quoted(This->buffer, systemId, systemId_len);
+        write_output_buffer(This, systemW, sizeof(systemW)/sizeof(WCHAR));
+        write_output_buffer_quoted(This, systemId, systemId_len);
         if (*systemId)
-            write_output_buffer(This->buffer, spaceW, 1);
+            write_output_buffer(This, spaceW, 1);
     }
 
-    write_output_buffer(This->buffer, openintW, sizeof(openintW)/sizeof(WCHAR));
+    write_output_buffer(This, openintW, sizeof(openintW)/sizeof(WCHAR));
 
     return S_OK;
 }
@@ -1489,7 +1478,7 @@ static HRESULT WINAPI SAXLexicalHandler_endDTD(ISAXLexicalHandler *iface)
 
     TRACE("(%p)\n", This);
 
-    write_output_buffer(This->buffer, closedtdW, sizeof(closedtdW)/sizeof(WCHAR));
+    write_output_buffer(This, closedtdW, sizeof(closedtdW)/sizeof(WCHAR));
 
     return S_OK;
 }
@@ -1516,7 +1505,7 @@ static HRESULT WINAPI SAXLexicalHandler_startCDATA(ISAXLexicalHandler *iface)
     TRACE("(%p)\n", This);
 
     write_node_indent(This);
-    write_output_buffer(This->buffer, scdataW, sizeof(scdataW)/sizeof(WCHAR));
+    write_output_buffer(This, scdataW, sizeof(scdataW)/sizeof(WCHAR));
     This->cdata = TRUE;
 
     return S_OK;
@@ -1529,7 +1518,7 @@ static HRESULT WINAPI SAXLexicalHandler_endCDATA(ISAXLexicalHandler *iface)
 
     TRACE("(%p)\n", This);
 
-    write_output_buffer(This->buffer, ecdataW, sizeof(ecdataW)/sizeof(WCHAR));
+    write_output_buffer(This, ecdataW, sizeof(ecdataW)/sizeof(WCHAR));
     This->cdata = FALSE;
 
     return S_OK;
@@ -1548,10 +1537,10 @@ static HRESULT WINAPI SAXLexicalHandler_comment(ISAXLexicalHandler *iface, const
     close_element_starttag(This);
     write_node_indent(This);
 
-    write_output_buffer(This->buffer, copenW, sizeof(copenW)/sizeof(WCHAR));
+    write_output_buffer(This, copenW, sizeof(copenW)/sizeof(WCHAR));
     if (nchars)
-        write_output_buffer(This->buffer, chars, nchars);
-    write_output_buffer(This->buffer, ccloseW, sizeof(ccloseW)/sizeof(WCHAR));
+        write_output_buffer(This, chars, nchars);
+    write_output_buffer(This, ccloseW, sizeof(ccloseW)/sizeof(WCHAR));
 
     return S_OK;
 }
@@ -1601,14 +1590,14 @@ static HRESULT WINAPI SAXDeclHandler_elementDecl(ISAXDeclHandler *iface,
 
     if (!name || !model) return E_INVALIDARG;
 
-    write_output_buffer(This->buffer, elementW, sizeof(elementW)/sizeof(WCHAR));
+    write_output_buffer(This, elementW, sizeof(elementW)/sizeof(WCHAR));
     if (n_name) {
-        write_output_buffer(This->buffer, name, n_name);
-        write_output_buffer(This->buffer, spaceW, sizeof(spaceW)/sizeof(WCHAR));
+        write_output_buffer(This, name, n_name);
+        write_output_buffer(This, spaceW, sizeof(spaceW)/sizeof(WCHAR));
     }
     if (n_model)
-        write_output_buffer(This->buffer, model, n_model);
-    write_output_buffer(This->buffer, closetagW, sizeof(closetagW)/sizeof(WCHAR));
+        write_output_buffer(This, model, n_model);
+    write_output_buffer(This, closetagW, sizeof(closetagW)/sizeof(WCHAR));
 
     return S_OK;
 }
@@ -1626,31 +1615,31 @@ static HRESULT WINAPI SAXDeclHandler_attributeDecl(ISAXDeclHandler *iface,
         debugstr_wn(attr, n_attr), n_attr, debugstr_wn(type, n_type), n_type, debugstr_wn(Default, n_default), n_default,
         debugstr_wn(value, n_value), n_value);
 
-    write_output_buffer(This->buffer, attlistW, sizeof(attlistW)/sizeof(WCHAR));
+    write_output_buffer(This, attlistW, sizeof(attlistW)/sizeof(WCHAR));
     if (n_element) {
-        write_output_buffer(This->buffer, element, n_element);
-        write_output_buffer(This->buffer, spaceW, sizeof(spaceW)/sizeof(WCHAR));
+        write_output_buffer(This, element, n_element);
+        write_output_buffer(This, spaceW, sizeof(spaceW)/sizeof(WCHAR));
     }
 
     if (n_attr) {
-        write_output_buffer(This->buffer, attr, n_attr);
-        write_output_buffer(This->buffer, spaceW, sizeof(spaceW)/sizeof(WCHAR));
+        write_output_buffer(This, attr, n_attr);
+        write_output_buffer(This, spaceW, sizeof(spaceW)/sizeof(WCHAR));
     }
 
     if (n_type) {
-        write_output_buffer(This->buffer, type, n_type);
-        write_output_buffer(This->buffer, spaceW, sizeof(spaceW)/sizeof(WCHAR));
+        write_output_buffer(This, type, n_type);
+        write_output_buffer(This, spaceW, sizeof(spaceW)/sizeof(WCHAR));
     }
 
     if (n_default) {
-        write_output_buffer(This->buffer, Default, n_default);
-        write_output_buffer(This->buffer, spaceW, sizeof(spaceW)/sizeof(WCHAR));
+        write_output_buffer(This, Default, n_default);
+        write_output_buffer(This, spaceW, sizeof(spaceW)/sizeof(WCHAR));
     }
 
     if (n_value)
-        write_output_buffer_quoted(This->buffer, value, n_value);
+        write_output_buffer_quoted(This, value, n_value);
 
-    write_output_buffer(This->buffer, closetagW, sizeof(closetagW)/sizeof(WCHAR));
+    write_output_buffer(This, closetagW, sizeof(closetagW)/sizeof(WCHAR));
 
     return S_OK;
 }
@@ -1665,16 +1654,16 @@ static HRESULT WINAPI SAXDeclHandler_internalEntityDecl(ISAXDeclHandler *iface,
 
     if (!name || !value) return E_INVALIDARG;
 
-    write_output_buffer(This->buffer, entityW, sizeof(entityW)/sizeof(WCHAR));
+    write_output_buffer(This, entityW, sizeof(entityW)/sizeof(WCHAR));
     if (n_name) {
-        write_output_buffer(This->buffer, name, n_name);
-        write_output_buffer(This->buffer, spaceW, sizeof(spaceW)/sizeof(WCHAR));
+        write_output_buffer(This, name, n_name);
+        write_output_buffer(This, spaceW, sizeof(spaceW)/sizeof(WCHAR));
     }
 
     if (n_value)
-        write_output_buffer_quoted(This->buffer, value, n_value);
+        write_output_buffer_quoted(This, value, n_value);
 
-    write_output_buffer(This->buffer, closetagW, sizeof(closetagW)/sizeof(WCHAR));
+    write_output_buffer(This, closetagW, sizeof(closetagW)/sizeof(WCHAR));
 
     return S_OK;
 }
@@ -1694,26 +1683,26 @@ static HRESULT WINAPI SAXDeclHandler_externalEntityDecl(ISAXDeclHandler *iface,
     if (publicId && !systemId) return E_INVALIDARG;
     if (!publicId && !systemId) return E_INVALIDARG;
 
-    write_output_buffer(This->buffer, entityW, sizeof(entityW)/sizeof(WCHAR));
+    write_output_buffer(This, entityW, sizeof(entityW)/sizeof(WCHAR));
     if (n_name) {
-        write_output_buffer(This->buffer, name, n_name);
-        write_output_buffer(This->buffer, spaceW, sizeof(spaceW)/sizeof(WCHAR));
+        write_output_buffer(This, name, n_name);
+        write_output_buffer(This, spaceW, sizeof(spaceW)/sizeof(WCHAR));
     }
 
     if (publicId)
     {
-        write_output_buffer(This->buffer, publicW, sizeof(publicW)/sizeof(WCHAR));
-        write_output_buffer_quoted(This->buffer, publicId, n_publicId);
-        write_output_buffer(This->buffer, spaceW, sizeof(spaceW)/sizeof(WCHAR));
-        write_output_buffer_quoted(This->buffer, systemId, n_systemId);
+        write_output_buffer(This, publicW, sizeof(publicW)/sizeof(WCHAR));
+        write_output_buffer_quoted(This, publicId, n_publicId);
+        write_output_buffer(This, spaceW, sizeof(spaceW)/sizeof(WCHAR));
+        write_output_buffer_quoted(This, systemId, n_systemId);
     }
     else
     {
-        write_output_buffer(This->buffer, systemW, sizeof(systemW)/sizeof(WCHAR));
-        write_output_buffer_quoted(This->buffer, systemId, n_systemId);
+        write_output_buffer(This, systemW, sizeof(systemW)/sizeof(WCHAR));
+        write_output_buffer_quoted(This, systemId, n_systemId);
     }
 
-    write_output_buffer(This->buffer, closetagW, sizeof(closetagW)/sizeof(WCHAR));
+    write_output_buffer(This, closetagW, sizeof(closetagW)/sizeof(WCHAR));
 
     return S_OK;
 }
@@ -2522,7 +2511,7 @@ HRESULT MXWriter_create(MSXML_VERSION version, void **ppObj)
     This->dest = NULL;
     This->dest_written = 0;
 
-    hr = alloc_output_buffer(This->xml_enc, &This->buffer);
+    hr = init_output_buffer(This->xml_enc, &This->buffer);
     if (hr != S_OK) {
         SysFreeString(This->encoding);
         SysFreeString(This->version);
