@@ -199,6 +199,7 @@ typedef struct _call_frame_t {
     scope_chain_t *base_scope;
 
     IDispatch *this_obj;
+    jsdisp_t *variable_obj;
 
     bytecode_t *bytecode;
     function_code_t *function;
@@ -211,7 +212,6 @@ struct _exec_ctx_t {
     LONG ref;
 
     script_ctx_t *script;
-    jsdisp_t *var_disp;
     BOOL is_global;
 
     jsval_t ret;
@@ -223,6 +223,6 @@ static inline void exec_addref(exec_ctx_t *ctx)
 }
 
 void exec_release(exec_ctx_t*) DECLSPEC_HIDDEN;
-HRESULT create_exec_ctx(script_ctx_t*,jsdisp_t*,BOOL,exec_ctx_t**) DECLSPEC_HIDDEN;
-HRESULT exec_source(exec_ctx_t*,bytecode_t*,function_code_t*,scope_chain_t*,IDispatch*,jsval_t*) DECLSPEC_HIDDEN;
+HRESULT create_exec_ctx(script_ctx_t*,BOOL,exec_ctx_t**) DECLSPEC_HIDDEN;
+HRESULT exec_source(exec_ctx_t*,bytecode_t*,function_code_t*,scope_chain_t*,IDispatch*,jsdisp_t*,jsval_t*) DECLSPEC_HIDDEN;
 HRESULT create_source_function(script_ctx_t*,bytecode_t*,function_code_t*,scope_chain_t*,jsdisp_t**) DECLSPEC_HIDDEN;

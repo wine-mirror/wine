@@ -105,14 +105,14 @@ static HRESULT exec_global_code(JScript *This, bytecode_t *code)
     exec_ctx_t *exec_ctx;
     HRESULT hres;
 
-    hres = create_exec_ctx(This->ctx, This->ctx->global, TRUE, &exec_ctx);
+    hres = create_exec_ctx(This->ctx, TRUE, &exec_ctx);
     if(FAILED(hres))
         return hres;
 
     IActiveScriptSite_OnEnterScript(This->site);
 
     clear_ei(This->ctx);
-    hres = exec_source(exec_ctx, code, &code->global_code, NULL, NULL, NULL);
+    hres = exec_source(exec_ctx, code, &code->global_code, NULL, NULL, This->ctx->global, NULL);
     exec_release(exec_ctx);
 
     IActiveScriptSite_OnLeaveScript(This->site);
@@ -776,14 +776,14 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
     if(dwFlags & SCRIPTTEXT_ISEXPRESSION) {
         exec_ctx_t *exec_ctx;
 
-        hres = create_exec_ctx(This->ctx, This->ctx->global, TRUE, &exec_ctx);
+        hres = create_exec_ctx(This->ctx, TRUE, &exec_ctx);
         if(SUCCEEDED(hres)) {
             jsval_t r;
 
             IActiveScriptSite_OnEnterScript(This->site);
 
             clear_ei(This->ctx);
-            hres = exec_source(exec_ctx, code, &code->global_code, NULL, NULL, &r);
+            hres = exec_source(exec_ctx, code, &code->global_code, NULL, NULL, This->ctx->global, &r);
             if(SUCCEEDED(hres)) {
                 if(pvarResult)
                     hres = jsval_to_variant(r, pvarResult);
