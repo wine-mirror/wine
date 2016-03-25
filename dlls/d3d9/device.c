@@ -2314,7 +2314,7 @@ static HRESULT WINAPI d3d9_device_DrawIndexedPrimitive(IDirect3DDevice9Ex *iface
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     HRESULT hr;
 
-    TRACE("iface %p, primitive_type %#x, base_vertex_idx %u, min_vertex_idx %u,\n"
+    TRACE("iface %p, primitive_type %#x, base_vertex_idx %u, min_vertex_idx %u, "
             "vertex_count %u, start_idx %u, primitive_count %u.\n",
             iface, primitive_type, base_vertex_idx, min_vertex_idx,
             vertex_count, start_idx, primitive_count);
@@ -2339,13 +2339,13 @@ static HRESULT d3d9_device_prepare_vertex_buffer(struct d3d9_device *device, UIN
         UINT size = max(device->vertex_buffer_size * 2, min_size);
         struct wined3d_buffer *buffer;
 
-        TRACE("Growing vertex buffer to %u bytes\n", size);
+        TRACE("Growing vertex buffer to %u bytes.\n", size);
 
         hr = wined3d_buffer_create_vb(device->wined3d_device, size, WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_WRITEONLY,
                 WINED3D_POOL_DEFAULT, NULL, &d3d9_null_wined3d_parent_ops, &buffer);
         if (FAILED(hr))
         {
-            ERR("(%p) wined3d_buffer_create_vb failed with hr = %08x\n", device, hr);
+            ERR("(%p) wined3d_buffer_create_vb failed with hr = %08x.\n", device, hr);
             return hr;
         }
 
@@ -2423,13 +2423,13 @@ static HRESULT d3d9_device_prepare_index_buffer(struct d3d9_device *device, UINT
         UINT size = max(device->index_buffer_size * 2, min_size);
         struct wined3d_buffer *buffer;
 
-        TRACE("Growing index buffer to %u bytes\n", size);
+        TRACE("Growing index buffer to %u bytes.\n", size);
 
         hr = wined3d_buffer_create_ib(device->wined3d_device, size, WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_WRITEONLY,
                 WINED3D_POOL_DEFAULT, NULL, &d3d9_null_wined3d_parent_ops, &buffer);
         if (FAILED(hr))
         {
-            ERR("(%p) wined3d_buffer_create_ib failed with hr = %08x\n", device, hr);
+            ERR("(%p) wined3d_buffer_create_ib failed with hr = %08x.\n", device, hr);
             return hr;
         }
 
@@ -2460,14 +2460,14 @@ static HRESULT WINAPI d3d9_device_DrawIndexedPrimitiveUP(IDirect3DDevice9Ex *ifa
     UINT vtx_size = vertex_count * vertex_stride;
     UINT vb_pos, align;
 
-    TRACE("iface %p, primitive_type %#x, min_vertex_idx %u, vertex_count %u, primitive_count %u,\n"
+    TRACE("iface %p, primitive_type %#x, min_vertex_idx %u, vertex_count %u, primitive_count %u, "
             "index_data %p, index_format %#x, vertex_data %p, vertex_stride %u.\n",
             iface, primitive_type, min_vertex_idx, vertex_count, primitive_count,
             index_data, index_format, vertex_data, vertex_stride);
 
     if (!primitive_count)
     {
-        WARN("primitive_count is 0, returning D3D_OK\n");
+        WARN("primitive_count is 0, returning D3D_OK.\n");
         return D3D_OK;
     }
 
@@ -3259,7 +3259,7 @@ static HRESULT WINAPI d3d9_device_ComposeRects(IDirect3DDevice9Ex *iface,
         IDirect3DSurface9 *src_surface, IDirect3DSurface9 *dst_surface, IDirect3DVertexBuffer9 *src_descs,
         UINT rect_count, IDirect3DVertexBuffer9 *dst_descs, D3DCOMPOSERECTSOP operation, INT offset_x, INT offset_y)
 {
-    FIXME("iface %p, src_surface %p, dst_surface %p, src_descs %p, rect_count %u,\n"
+    FIXME("iface %p, src_surface %p, dst_surface %p, src_descs %p, rect_count %u, "
             "dst_descs %p, operation %#x, offset_x %u, offset_y %u stub!\n",
             iface, src_surface, dst_surface, src_descs, rect_count,
             dst_descs, operation, offset_x, offset_y);
@@ -3372,7 +3372,7 @@ static HRESULT WINAPI d3d9_device_CreateRenderTargetEx(IDirect3DDevice9Ex *iface
         UINT width, UINT height, D3DFORMAT format, D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality,
         BOOL lockable, IDirect3DSurface9 **surface, HANDLE *shared_handle, DWORD usage)
 {
-    FIXME("iface %p, width %u, height %u, format %#x, multisample_type %#x, multisample_quality %u,\n"
+    FIXME("iface %p, width %u, height %u, format %#x, multisample_type %#x, multisample_quality %u, "
             "lockable %#x, surface %p, shared_handle %p, usage %#x stub!\n",
             iface, width, height, format, multisample_type, multisample_quality,
             lockable, surface, shared_handle, usage);
