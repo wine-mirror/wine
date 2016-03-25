@@ -206,7 +206,7 @@ static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         return S_OK;
     }
 
-    if(!ctx->exec_ctx) {
+    if(!ctx->call_ctx) {
         FIXME("No active exec_ctx\n");
         return E_UNEXPECTED;
     }
@@ -222,7 +222,7 @@ static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         return throw_syntax_error(ctx, hres, NULL);
     }
 
-    hres = exec_source(ctx->exec_ctx, code, &code->global_code, r);
+    hres = exec_source(ctx->call_ctx->exec_ctx, code, &code->global_code, r);
     release_bytecode(code);
     return hres;
 }

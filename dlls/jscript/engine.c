@@ -511,8 +511,8 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
 
     TRACE("%s\n", debugstr_w(identifier));
 
-    if(ctx->exec_ctx) {
-        for(scope = ctx->exec_ctx->scope_chain; scope; scope = scope->next) {
+    if(ctx->call_ctx) {
+        for(scope = ctx->call_ctx->exec_ctx->scope_chain; scope; scope = scope->next) {
             if(scope->jsobj)
                 hres = jsdisp_get_id(scope->jsobj, identifier, fdexNameImplicit, &id);
             else
@@ -2393,6 +2393,11 @@ OP_LIST
 #undef X
 };
 
+static void release_call_frame(call_frame_t *frame)
+{
+    heap_free(frame);
+}
+
 static HRESULT unwind_exception(exec_ctx_t *ctx)
 {
     except_frame_t *except_frame;
@@ -2446,17 +2451,19 @@ static HRESULT unwind_exception(exec_ctx_t *ctx)
 
 static HRESULT enter_bytecode(script_ctx_t *ctx, bytecode_t *code, function_code_t *func, jsval_t *ret)
 {
-    exec_ctx_t *exec_ctx = ctx->exec_ctx;
+    exec_ctx_t *exec_ctx = ctx->call_ctx->exec_ctx;
     except_frame_t *prev_except_frame;
     function_code_t *prev_func;
     unsigned prev_ip, prev_top;
     scope_chain_t *prev_scope;
     bytecode_t *prev_code;
+    call_frame_t *frame;
     jsop_t op;
     HRESULT hres = S_OK;
 
     TRACE("\n");
 
+    frame = ctx->call_ctx;
     prev_top = exec_ctx->top;
     prev_scope = exec_ctx->scope_chain;
     prev_except_frame = exec_ctx->except_frame;
@@ -2489,6 +2496,10 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, bytecode_t *code, function_code
     exec_ctx->except_frame = prev_except_frame;
     exec_ctx->code = prev_code;
     exec_ctx->func_code = prev_func;
+
+    assert(ctx->call_ctx == frame);
+    ctx->call_ctx = frame->prev_frame;
+    release_call_frame(frame);
 
     if(FAILED(hres)) {
         while(exec_ctx->scope_chain != prev_scope)
@@ -2543,9 +2554,23 @@ static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdis
     return hres;
 }
 
+static HRESULT setup_call_frame(exec_ctx_t *ctx)
+{
+    call_frame_t *frame;
+
+    frame = heap_alloc_zero(sizeof(*frame));
+    if(!frame)
+        return E_OUTOFMEMORY;
+
+    frame->exec_ctx = ctx;
+
+    frame->prev_frame = ctx->script->call_ctx;
+    ctx->script->call_ctx = frame;
+    return S_OK;
+}
+
 HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, jsval_t *ret)
 {
-    exec_ctx_t *prev_ctx;
     jsval_t val;
     unsigned i;
     HRESULT hres = S_OK;
@@ -2579,12 +2604,11 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, js
         }
     }
 
-    prev_ctx = ctx->script->exec_ctx;
-    ctx->script->exec_ctx = ctx;
+    hres = setup_call_frame(ctx);
+    if(FAILED(hres))
+        return hres;
 
     hres = enter_bytecode(ctx->script, code, func, &val);
-    assert(ctx->script->exec_ctx == ctx);
-    ctx->script->exec_ctx = prev_ctx;
     if(FAILED(hres))
         return hres;
 

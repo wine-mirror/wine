@@ -385,7 +385,7 @@ struct _script_ctx_t {
     SCRIPTSTATE state;
     IActiveScript *active_script;
 
-    exec_ctx_t *exec_ctx;
+    struct _call_frame_t *call_ctx;
     named_item_t *named_items;
     IActiveScriptSite *site;
     IInternetHostSecurityManager *secmgr;

@@ -190,6 +190,11 @@ static inline void scope_addref(scope_chain_t *scope)
 typedef struct _except_frame_t except_frame_t;
 struct _parser_ctx_t;
 
+typedef struct _call_frame_t {
+    struct _call_frame_t *prev_frame;
+    exec_ctx_t *exec_ctx;
+} call_frame_t;
+
 struct _exec_ctx_t {
     LONG ref;
 
