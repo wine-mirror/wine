@@ -2466,7 +2466,6 @@ static HRESULT unwind_exception(exec_ctx_t *ctx)
 static HRESULT enter_bytecode(script_ctx_t *ctx, function_code_t *func, jsval_t *ret)
 {
     exec_ctx_t *exec_ctx = ctx->call_ctx->exec_ctx;
-    scope_chain_t *prev_scope;
     call_frame_t *frame;
     jsop_t op;
     HRESULT hres = S_OK;
@@ -2474,7 +2473,6 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, function_code_t *func, jsval_t 
     TRACE("\n");
 
     frame = ctx->call_ctx;
-    prev_scope = frame->scope;
 
     while(frame->ip != -1) {
         op = frame->bytecode->instrs[frame->ip].op;
@@ -2496,13 +2494,13 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, function_code_t *func, jsval_t 
     assert(ctx->call_ctx == frame);
 
     if(FAILED(hres)) {
-        while(frame->scope != prev_scope)
+        while(frame->scope != frame->base_scope)
             scope_pop(&frame->scope);
         stack_popn(exec_ctx, exec_ctx->top-frame->stack_base);
     }
 
     assert(exec_ctx->top == frame->stack_base);
-    assert(frame->scope == prev_scope);
+    assert(frame->scope == frame->base_scope);
     ctx->call_ctx = frame->prev_frame;
     release_call_frame(frame);
 
@@ -2565,7 +2563,7 @@ static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode, function_
     frame->stack_base = ctx->top;
 
     if(scope)
-        frame->scope = scope_addref(scope);
+        frame->base_scope = frame->scope = scope_addref(scope);
 
     frame->exec_ctx = ctx;
 

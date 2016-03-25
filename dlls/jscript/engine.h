@@ -196,6 +196,7 @@ typedef struct _call_frame_t {
     except_frame_t *except_frame;
     unsigned stack_base;
     scope_chain_t *scope;
+    scope_chain_t *base_scope;
 
     bytecode_t *bytecode;
     function_code_t *function;
