@@ -45,11 +45,10 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define WINED3D_GLSL_SAMPLE_PROJECTED   0x01
-#define WINED3D_GLSL_SAMPLE_NPOT        0x02
-#define WINED3D_GLSL_SAMPLE_LOD         0x04
-#define WINED3D_GLSL_SAMPLE_GRAD        0x08
-#define WINED3D_GLSL_SAMPLE_LOAD        0x10
-#define WINED3D_GLSL_SAMPLE_OFFSET      0x20
+#define WINED3D_GLSL_SAMPLE_LOD         0x02
+#define WINED3D_GLSL_SAMPLE_GRAD        0x04
+#define WINED3D_GLSL_SAMPLE_LOAD        0x08
+#define WINED3D_GLSL_SAMPLE_OFFSET      0x10
 
 struct glsl_dst_param
 {
@@ -2689,7 +2688,9 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
     const struct wined3d_gl_info *gl_info = ctx->gl_info;
     BOOL shadow = glsl_is_shadow_sampler(ctx->shader, priv->cur_ps_args, resource_idx, sampler_idx);
     BOOL projected = flags & WINED3D_GLSL_SAMPLE_PROJECTED;
-    BOOL texrect = flags & WINED3D_GLSL_SAMPLE_NPOT && gl_info->supported[ARB_TEXTURE_RECTANGLE];
+    BOOL texrect = ctx->reg_maps->shader_version.type == WINED3D_SHADER_TYPE_PIXEL
+            && priv->cur_ps_args->np2_fixup & (1u << resource_idx)
+            && gl_info->supported[ARB_TEXTURE_RECTANGLE];
     BOOL lod = flags & WINED3D_GLSL_SAMPLE_LOD;
     BOOL grad = flags & WINED3D_GLSL_SAMPLE_GRAD;
     BOOL offset = flags & WINED3D_GLSL_SAMPLE_OFFSET;
@@ -4222,9 +4223,6 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
         }
     }
 
-    if (priv->cur_ps_args->np2_fixup & (1u << resource_idx))
-        sample_flags |= WINED3D_GLSL_SAMPLE_NPOT;
-
     shader_glsl_get_sample_function(ins->ctx, resource_idx, resource_idx, sample_flags, &sample_function);
     mask |= sample_function.coord_mask;
     sample_function.coord_mask = mask;
@@ -4263,11 +4261,9 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     struct glsl_src_param coord_param, dx_param, dy_param;
-    DWORD sample_flags = WINED3D_GLSL_SAMPLE_GRAD;
     struct glsl_sample_function sample_function;
     DWORD sampler_idx;
     DWORD swizzle = ins->src[1].swizzle;
-    const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
 
     if (!gl_info->supported[ARB_SHADER_TEXTURE_LOD] && !gl_info->supported[EXT_GPU_SHADER4])
     {
@@ -4277,10 +4273,8 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
     }
 
     sampler_idx = ins->src[1].reg.idx[0].offset;
-    if (priv->cur_ps_args->np2_fixup & (1u << sampler_idx))
-        sample_flags |= WINED3D_GLSL_SAMPLE_NPOT;
 
-    shader_glsl_get_sample_function(ins->ctx, sampler_idx, sampler_idx, sample_flags, &sample_function);
+    shader_glsl_get_sample_function(ins->ctx, sampler_idx, sampler_idx, WINED3D_GLSL_SAMPLE_GRAD, &sample_function);
     shader_glsl_add_src_param(ins, &ins->src[0], sample_function.coord_mask, &coord_param);
     shader_glsl_add_src_param(ins, &ins->src[2], sample_function.coord_mask, &dx_param);
     shader_glsl_add_src_param(ins, &ins->src[3], sample_function.coord_mask, &dy_param);
@@ -4294,18 +4288,13 @@ static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     struct glsl_src_param coord_param, lod_param;
-    DWORD sample_flags = WINED3D_GLSL_SAMPLE_LOD;
     struct glsl_sample_function sample_function;
     DWORD sampler_idx;
     DWORD swizzle = ins->src[1].swizzle;
-    const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
 
     sampler_idx = ins->src[1].reg.idx[0].offset;
-    if (ins->ctx->reg_maps->shader_version.type == WINED3D_SHADER_TYPE_PIXEL
-            && priv->cur_ps_args->np2_fixup & (1u << sampler_idx))
-        sample_flags |= WINED3D_GLSL_SAMPLE_NPOT;
 
-    shader_glsl_get_sample_function(ins->ctx, sampler_idx, sampler_idx, sample_flags, &sample_function);
+    shader_glsl_get_sample_function(ins->ctx, sampler_idx, sampler_idx, WINED3D_GLSL_SAMPLE_LOD, &sample_function);
     shader_glsl_add_src_param(ins, &ins->src[0], sample_function.coord_mask, &coord_param);
 
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &lod_param);
