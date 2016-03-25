@@ -223,7 +223,7 @@ static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         return throw_syntax_error(ctx, hres, NULL);
     }
 
-    hres = exec_source(ctx->call_ctx->exec_ctx, code, &code->global_code, frame->scope, r);
+    hres = exec_source(ctx->call_ctx->exec_ctx, code, &code->global_code, frame->scope, frame->this_obj, r);
     release_bytecode(code);
     return hres;
 }

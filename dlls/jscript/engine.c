@@ -295,7 +295,7 @@ void scope_release(scope_chain_t *scope)
     heap_free(scope);
 }
 
-HRESULT create_exec_ctx(script_ctx_t *script_ctx, IDispatch *this_obj, jsdisp_t *var_disp,
+HRESULT create_exec_ctx(script_ctx_t *script_ctx, jsdisp_t *var_disp,
         BOOL is_global, exec_ctx_t **ret)
 {
     exec_ctx_t *ctx;
@@ -307,26 +307,6 @@ HRESULT create_exec_ctx(script_ctx_t *script_ctx, IDispatch *this_obj, jsdisp_t 
     ctx->ref = 1;
     ctx->is_global = is_global;
     ctx->ret = jsval_undefined();
-
-    /* ECMA-262 3rd Edition    11.2.3.7 */
-    if(this_obj) {
-        jsdisp_t *jsthis;
-
-        jsthis = iface_to_jsdisp((IUnknown*)this_obj);
-        if(jsthis) {
-            if(jsthis->builtin_info->class == JSCLASS_GLOBAL || jsthis->builtin_info->class == JSCLASS_NONE)
-                this_obj = NULL;
-            jsdisp_release(jsthis);
-        }
-    }
-
-    if(this_obj)
-        ctx->this_obj = this_obj;
-    else if(script_ctx->host_global)
-        ctx->this_obj = script_ctx->host_global;
-    else
-        ctx->this_obj = to_disp(script_ctx->global);
-    IDispatch_AddRef(ctx->this_obj);
 
     jsdisp_addref(var_disp);
     ctx->var_disp = var_disp;
@@ -345,8 +325,6 @@ void exec_release(exec_ctx_t *ctx)
 
     if(ctx->var_disp)
         jsdisp_release(ctx->var_disp);
-    if(ctx->this_obj)
-        IDispatch_Release(ctx->this_obj);
     if(ctx->script)
         script_release(ctx->script);
     jsval_release(ctx->ret);
@@ -1067,13 +1045,12 @@ static HRESULT interp_call_member(script_ctx_t *ctx)
 /* ECMA-262 3rd Edition    11.1.1 */
 static HRESULT interp_this(script_ctx_t *ctx)
 {
-    IDispatch *this_obj;
+    call_frame_t *frame = ctx->call_ctx;
 
     TRACE("\n");
 
-    this_obj = ctx->call_ctx->exec_ctx->this_obj;
-    IDispatch_AddRef(this_obj);
-    return stack_push(ctx, jsval_disp(this_obj));
+    IDispatch_AddRef(frame->this_obj);
+    return stack_push(ctx, jsval_disp(frame->this_obj));
 }
 
 /* ECMA-262 3rd Edition    10.1.4 */
@@ -2413,6 +2390,8 @@ OP_LIST
 
 static void release_call_frame(call_frame_t *frame)
 {
+    if(frame->this_obj)
+        IDispatch_Release(frame->this_obj);
     if(frame->scope)
         scope_release(frame->scope);
     heap_free(frame);
@@ -2556,9 +2535,22 @@ static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdis
     return hres;
 }
 
-static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode, function_code_t *function, scope_chain_t *scope)
+static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode, function_code_t *function, scope_chain_t *scope,
+        IDispatch *this_obj)
 {
     call_frame_t *frame;
+
+    /* ECMA-262 3rd Edition    11.2.3.7 */
+    if(this_obj) {
+        jsdisp_t *jsthis;
+
+        jsthis = iface_to_jsdisp((IUnknown*)this_obj);
+        if(jsthis) {
+            if(jsthis->builtin_info->class == JSCLASS_GLOBAL || jsthis->builtin_info->class == JSCLASS_NONE)
+                this_obj = NULL;
+            jsdisp_release(jsthis);
+        }
+    }
 
     frame = heap_alloc_zero(sizeof(*frame));
     if(!frame)
@@ -2572,6 +2564,14 @@ static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode, function_
     if(scope)
         frame->base_scope = frame->scope = scope_addref(scope);
 
+    if(this_obj)
+        frame->this_obj = this_obj;
+    else if(ctx->script->host_global)
+        frame->this_obj = ctx->script->host_global;
+    else
+        frame->this_obj = to_disp(ctx->script->global);
+    IDispatch_AddRef(frame->this_obj);
+
     frame->exec_ctx = ctx;
 
     frame->prev_frame = ctx->script->call_ctx;
@@ -2579,7 +2579,8 @@ static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode, function_
     return S_OK;
 }
 
-HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, scope_chain_t *scope, jsval_t *ret)
+HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, scope_chain_t *scope,
+        IDispatch *this_obj, jsval_t *ret)
 {
     jsval_t val;
     unsigned i;
@@ -2614,7 +2615,7 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, sc
         }
     }
 
-    hres = setup_call_frame(ctx, code, func, scope);
+    hres = setup_call_frame(ctx, code, func, scope, this_obj);
     if(FAILED(hres))
         return hres;
 
