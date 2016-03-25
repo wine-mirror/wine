@@ -2443,12 +2443,12 @@ GLenum context_get_offscreen_gl_buffer(const struct wined3d_context *context)
     }
 }
 
-static DWORD context_generate_rt_mask_no_fbo(const struct wined3d_context *context, const struct wined3d_surface *rt)
+static DWORD context_generate_rt_mask_no_fbo(const struct wined3d_context *context, struct wined3d_texture *rt)
 {
-    if (!rt || rt->container->resource.format->id == WINED3DFMT_NULL)
+    if (!rt || rt->resource.format->id == WINED3DFMT_NULL)
         return 0;
-    else if (rt->container->swapchain)
-        return context_generate_rt_mask_from_resource(&rt->container->resource);
+    else if (rt->swapchain)
+        return context_generate_rt_mask_from_resource(&rt->resource);
     else
         return context_generate_rt_mask(context_get_offscreen_gl_buffer(context));
 }
@@ -2482,7 +2482,7 @@ void context_apply_blit_state(struct wined3d_context *context, const struct wine
     }
     else
     {
-        rt_mask = context_generate_rt_mask_no_fbo(context, rt);
+        rt_mask = context_generate_rt_mask_no_fbo(context, rt->container);
     }
 
     cur_mask = context->current_fbo ? &context->current_fbo->rt_mask : &context->draw_buffers_mask;
@@ -2572,7 +2572,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
         else
         {
             rt_mask = context_generate_rt_mask_no_fbo(context,
-                    rt_count ? wined3d_rendertarget_view_get_surface(rts[0]) : NULL);
+                    rt_count ? wined3d_rendertarget_view_get_surface(rts[0])->container : NULL);
         }
     }
     else if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
@@ -2587,7 +2587,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
     else
     {
         rt_mask = context_generate_rt_mask_no_fbo(context,
-                rt_count ? wined3d_rendertarget_view_get_surface(rts[0]) : NULL);
+                rt_count ? wined3d_rendertarget_view_get_surface(rts[0])->container : NULL);
     }
 
     cur_mask = context->current_fbo ? &context->current_fbo->rt_mask : &context->draw_buffers_mask;
@@ -2637,7 +2637,7 @@ static DWORD find_draw_buffers_mask(const struct wined3d_context *context, const
     unsigned int i;
 
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
-        return context_generate_rt_mask_no_fbo(context, wined3d_rendertarget_view_get_surface(rts[0]));
+        return context_generate_rt_mask_no_fbo(context, wined3d_rendertarget_view_get_surface(rts[0])->container);
     else if (!context->render_offscreen)
         return context_generate_rt_mask_from_resource(rts[0]->resource);
 
