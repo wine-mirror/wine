@@ -400,6 +400,10 @@ struct _script_ctx_t {
 
     IDispatch *host_global;
 
+    jsval_t *stack;
+    unsigned stack_size;
+    unsigned stack_top;
+
     jsstr_t *last_match;
     match_result_t match_parens[9];
     DWORD last_match_index;

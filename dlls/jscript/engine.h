@@ -213,9 +213,6 @@ struct _exec_ctx_t {
     IDispatch *this_obj;
     BOOL is_global;
 
-    jsval_t *stack;
-    unsigned stack_size;
-    unsigned top;
     jsval_t ret;
 };
 

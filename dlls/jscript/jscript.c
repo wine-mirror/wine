@@ -74,6 +74,8 @@ void script_release(script_ctx_t *ctx)
     heap_pool_free(&ctx->tmp_heap);
     if(ctx->last_match)
         jsstr_release(ctx->last_match);
+    assert(!ctx->stack_top);
+    heap_free(ctx->stack);
 
     ctx->jscaller->ctx = NULL;
     IServiceProvider_Release(&ctx->jscaller->IServiceProvider_iface);

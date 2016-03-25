@@ -61,15 +61,14 @@ typedef struct {
     } u;
 } exprval_t;
 
-static HRESULT stack_push(script_ctx_t *script_ctx, jsval_t v)
+static HRESULT stack_push(script_ctx_t *ctx, jsval_t v)
 {
-    exec_ctx_t *ctx = script_ctx->call_ctx->exec_ctx;
     if(!ctx->stack_size) {
         ctx->stack = heap_alloc(16*sizeof(*ctx->stack));
         if(!ctx->stack)
             return E_OUTOFMEMORY;
         ctx->stack_size = 16;
-    }else if(ctx->stack_size == ctx->top) {
+    }else if(ctx->stack_size == ctx->stack_top) {
         jsval_t *new_stack;
 
         new_stack = heap_realloc(ctx->stack, ctx->stack_size*2*sizeof(*new_stack));
@@ -82,7 +81,7 @@ static HRESULT stack_push(script_ctx_t *script_ctx, jsval_t v)
         ctx->stack_size *= 2;
     }
 
-    ctx->stack[ctx->top++] = v;
+    ctx->stack[ctx->stack_top++] = v;
     return S_OK;
 }
 
@@ -110,32 +109,28 @@ static HRESULT stack_push_objid(script_ctx_t *ctx, IDispatch *disp, DISPID id)
 
 static inline jsval_t stack_top(script_ctx_t *ctx)
 {
-    exec_ctx_t *exec_ctx = ctx->call_ctx->exec_ctx;
-    assert(exec_ctx->top > ctx->call_ctx->stack_base);
-    return exec_ctx->stack[exec_ctx->top-1];
+    assert(ctx->stack_top > ctx->call_ctx->stack_base);
+    return ctx->stack[ctx->stack_top-1];
 }
 
 static inline jsval_t stack_topn(script_ctx_t *ctx, unsigned n)
 {
-    exec_ctx_t *exec_ctx = ctx->call_ctx->exec_ctx;
-    assert(exec_ctx->top > ctx->call_ctx->stack_base+n);
-    return exec_ctx->stack[exec_ctx->top-1-n];
+    assert(ctx->stack_top > ctx->call_ctx->stack_base+n);
+    return ctx->stack[ctx->stack_top-1-n];
 }
 
-static inline jsval_t *stack_args(script_ctx_t *script_ctx, unsigned n)
+static inline jsval_t *stack_args(script_ctx_t *ctx, unsigned n)
 {
-    exec_ctx_t *ctx = script_ctx->call_ctx->exec_ctx;
     if(!n)
         return NULL;
-    assert(ctx->top > script_ctx->call_ctx->stack_base+n-1);
-    return ctx->stack + ctx->top-n;
+    assert(ctx->stack_top > ctx->call_ctx->stack_base+n-1);
+    return ctx->stack + ctx->stack_top-n;
 }
 
 static inline jsval_t stack_pop(script_ctx_t *ctx)
 {
-    exec_ctx_t *exec_ctx = ctx->call_ctx->exec_ctx;
-    assert(exec_ctx->top > ctx->call_ctx->stack_base);
-    return exec_ctx->stack[--exec_ctx->top];
+    assert(ctx->stack_top > ctx->call_ctx->stack_base);
+    return ctx->stack[--ctx->stack_top];
 }
 
 static void stack_popn(script_ctx_t *ctx, unsigned n)
@@ -355,7 +350,6 @@ void exec_release(exec_ctx_t *ctx)
     if(ctx->script)
         script_release(ctx->script);
     jsval_release(ctx->ret);
-    heap_free(ctx->stack);
     heap_free(ctx);
 }
 
@@ -778,7 +772,7 @@ static HRESULT interp_push_except(script_ctx_t *ctx)
 
     TRACE("\n");
 
-    stack_top = ctx->call_ctx->exec_ctx->top;
+    stack_top = ctx->stack_top;
 
     if(!arg2) {
         HRESULT hres;
@@ -2435,8 +2429,8 @@ static HRESULT unwind_exception(script_ctx_t *ctx)
     except_frame = frame->except_frame;
     frame->except_frame = except_frame->next;
 
-    assert(except_frame->stack_top <= frame->exec_ctx->top);
-    stack_popn(ctx, frame->exec_ctx->top - except_frame->stack_top);
+    assert(except_frame->stack_top <= ctx->stack_top);
+    stack_popn(ctx, ctx->stack_top - except_frame->stack_top);
 
     while(except_frame->scope != frame->scope)
         scope_pop(&frame->scope);
@@ -2509,10 +2503,10 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, function_code_t *func, jsval_t 
     if(FAILED(hres)) {
         while(frame->scope != frame->base_scope)
             scope_pop(&frame->scope);
-        stack_popn(ctx, exec_ctx->top-frame->stack_base);
+        stack_popn(ctx, ctx->stack_top-frame->stack_base);
     }
 
-    assert(exec_ctx->top == frame->stack_base);
+    assert(ctx->stack_top == frame->stack_base);
     assert(frame->scope == frame->base_scope);
     ctx->call_ctx = frame->prev_frame;
     release_call_frame(frame);
@@ -2573,7 +2567,7 @@ static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode, function_
     frame->bytecode = bytecode;
     frame->function = function;
     frame->ip = function->instr_off;
-    frame->stack_base = ctx->top;
+    frame->stack_base = ctx->script->stack_top;
 
     if(scope)
         frame->base_scope = frame->scope = scope_addref(scope);
