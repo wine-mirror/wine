@@ -519,6 +519,7 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_DCL_OUTPUT,
     WINED3DSIH_DCL_OUTPUT_SIV,
     WINED3DSIH_DCL_OUTPUT_TOPOLOGY,
+    WINED3DSIH_DCL_RESOURCE_STRUCTURED,
     WINED3DSIH_DCL_SAMPLER,
     WINED3DSIH_DCL_TEMPS,
     WINED3DSIH_DCL_VERTICES_OUT,
@@ -809,6 +810,12 @@ struct wined3d_shader_register_semantic
     enum wined3d_sysval_semantic sysval_semantic;
 };
 
+struct wined3d_shader_structured_resource
+{
+    struct wined3d_shader_dst_param reg;
+    unsigned int byte_stride;
+};
+
 struct wined3d_shader_texel_offset
 {
     signed char u, v, w;
@@ -835,6 +842,7 @@ struct wined3d_shader_instruction
         struct wined3d_shader_src_param src;
         UINT count;
         const struct wined3d_shader_immediate_constant_buffer *icb;
+        struct wined3d_shader_structured_resource structured_resource;
     } declaration;
 };
 
