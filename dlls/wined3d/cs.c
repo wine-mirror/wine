@@ -59,8 +59,8 @@ struct wined3d_cs_present
     enum wined3d_cs_op opcode;
     HWND dst_window_override;
     struct wined3d_swapchain *swapchain;
-    const RECT *src_rect;
-    const RECT *dst_rect;
+    RECT src_rect;
+    RECT dst_rect;
     DWORD flags;
 };
 
@@ -258,7 +258,7 @@ static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
     swapchain = op->swapchain;
     wined3d_swapchain_set_window(swapchain, op->dst_window_override);
 
-    swapchain->swapchain_ops->swapchain_present(swapchain, op->src_rect, op->dst_rect, op->flags);
+    swapchain->swapchain_ops->swapchain_present(swapchain, &op->src_rect, &op->dst_rect, op->flags);
 }
 
 void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *swapchain,
@@ -270,8 +270,8 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
     op->opcode = WINED3D_CS_OP_PRESENT;
     op->dst_window_override = dst_window_override;
     op->swapchain = swapchain;
-    op->src_rect = src_rect;
-    op->dst_rect = dst_rect;
+    op->src_rect = *src_rect;
+    op->dst_rect = *dst_rect;
     op->flags = flags;
 
     cs->ops->submit(cs);
