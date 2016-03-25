@@ -191,6 +191,8 @@ typedef struct _except_frame_t except_frame_t;
 struct _parser_ctx_t;
 
 typedef struct _call_frame_t {
+    bytecode_t *bytecode;
+
     struct _call_frame_t *prev_frame;
     exec_ctx_t *exec_ctx;
 } call_frame_t;
@@ -199,7 +201,6 @@ struct _exec_ctx_t {
     LONG ref;
 
     struct _parser_ctx_t *parser;
-    bytecode_t *code;
     script_ctx_t *script;
     scope_chain_t *scope_chain;
     jsdisp_t *var_disp;

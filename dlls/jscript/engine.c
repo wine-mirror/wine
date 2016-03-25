@@ -568,23 +568,23 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
 }
 
 static inline BSTR get_op_bstr(exec_ctx_t *ctx, int i){
-    return ctx->code->instrs[ctx->ip].u.arg[i].bstr;
+    return ctx->script->call_ctx->bytecode->instrs[ctx->ip].u.arg[i].bstr;
 }
 
 static inline unsigned get_op_uint(exec_ctx_t *ctx, int i){
-    return ctx->code->instrs[ctx->ip].u.arg[i].uint;
+    return ctx->script->call_ctx->bytecode->instrs[ctx->ip].u.arg[i].uint;
 }
 
 static inline unsigned get_op_int(exec_ctx_t *ctx, int i){
-    return ctx->code->instrs[ctx->ip].u.arg[i].lng;
+    return ctx->script->call_ctx->bytecode->instrs[ctx->ip].u.arg[i].lng;
 }
 
 static inline jsstr_t *get_op_str(exec_ctx_t *ctx, int i){
-    return ctx->code->instrs[ctx->ip].u.arg[i].str;
+    return ctx->script->call_ctx->bytecode->instrs[ctx->ip].u.arg[i].str;
 }
 
 static inline double get_op_double(exec_ctx_t *ctx){
-    return ctx->code->instrs[ctx->ip].u.dbl;
+    return ctx->script->call_ctx->bytecode->instrs[ctx->ip].u.dbl;
 }
 
 /* ECMA-262 3rd Edition    12.2 */
@@ -830,7 +830,7 @@ static HRESULT interp_func(exec_ctx_t *ctx)
 
     TRACE("%d\n", func_idx);
 
-    hres = create_source_function(ctx->script, ctx->code, ctx->func_code->funcs+func_idx,
+    hres = create_source_function(ctx->script, ctx->script->call_ctx->bytecode, ctx->func_code->funcs+func_idx,
             ctx->scope_chain, &dispex);
     if(FAILED(hres))
         return hres;
@@ -2449,14 +2449,13 @@ static HRESULT unwind_exception(exec_ctx_t *ctx)
     return hres;
 }
 
-static HRESULT enter_bytecode(script_ctx_t *ctx, bytecode_t *code, function_code_t *func, jsval_t *ret)
+static HRESULT enter_bytecode(script_ctx_t *ctx, function_code_t *func, jsval_t *ret)
 {
     exec_ctx_t *exec_ctx = ctx->call_ctx->exec_ctx;
     except_frame_t *prev_except_frame;
     function_code_t *prev_func;
     unsigned prev_ip, prev_top;
     scope_chain_t *prev_scope;
-    bytecode_t *prev_code;
     call_frame_t *frame;
     jsop_t op;
     HRESULT hres = S_OK;
@@ -2468,15 +2467,13 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, bytecode_t *code, function_code
     prev_scope = exec_ctx->scope_chain;
     prev_except_frame = exec_ctx->except_frame;
     prev_ip = exec_ctx->ip;
-    prev_code = exec_ctx->code;
     prev_func = exec_ctx->func_code;
     exec_ctx->ip = func->instr_off;
     exec_ctx->except_frame = NULL;
-    exec_ctx->code = code;
     exec_ctx->func_code = func;
 
     while(exec_ctx->ip != -1) {
-        op = code->instrs[exec_ctx->ip].op;
+        op = frame->bytecode->instrs[exec_ctx->ip].op;
         hres = op_funcs[op](exec_ctx);
         if(FAILED(hres)) {
             TRACE("EXCEPTION %08x\n", hres);
@@ -2494,7 +2491,6 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, bytecode_t *code, function_code
 
     exec_ctx->ip = prev_ip;
     exec_ctx->except_frame = prev_except_frame;
-    exec_ctx->code = prev_code;
     exec_ctx->func_code = prev_func;
 
     assert(ctx->call_ctx == frame);
@@ -2554,7 +2550,7 @@ static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdis
     return hres;
 }
 
-static HRESULT setup_call_frame(exec_ctx_t *ctx)
+static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode)
 {
     call_frame_t *frame;
 
@@ -2562,6 +2558,7 @@ static HRESULT setup_call_frame(exec_ctx_t *ctx)
     if(!frame)
         return E_OUTOFMEMORY;
 
+    frame->bytecode = bytecode;
     frame->exec_ctx = ctx;
 
     frame->prev_frame = ctx->script->call_ctx;
@@ -2604,11 +2601,11 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, js
         }
     }
 
-    hres = setup_call_frame(ctx);
+    hres = setup_call_frame(ctx, code);
     if(FAILED(hres))
         return hres;
 
-    hres = enter_bytecode(ctx->script, code, func, &val);
+    hres = enter_bytecode(ctx->script, func, &val);
     if(FAILED(hres))
         return hres;
 
