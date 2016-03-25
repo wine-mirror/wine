@@ -70,6 +70,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DCL_RESOURCE_STRUCTURED       */ "dcl_resource_structured",
     /* WINED3DSIH_DCL_SAMPLER                   */ "dcl_sampler",
     /* WINED3DSIH_DCL_TEMPS                     */ "dcl_temps",
+    /* WINED3DSIH_DCL_UAV_TYPED                 */ "dcl_uav_typed",
     /* WINED3DSIH_DCL_VERTICES_OUT              */ "dcl_maxOutputVertexCount",
     /* WINED3DSIH_DEF                           */ "def",
     /* WINED3DSIH_DEFB                          */ "defb",
@@ -1310,9 +1311,12 @@ static void shader_dump_decl_usage(struct wined3d_string_buffer *buffer,
                 break;
         }
     }
-    else if (semantic->reg.reg.type == WINED3DSPR_RESOURCE)
+    else if (semantic->reg.reg.type == WINED3DSPR_RESOURCE || semantic->reg.reg.type == WINED3DSPR_UAV)
     {
-        shader_addline(buffer, "_resource_");
+        if (semantic->reg.reg.type == WINED3DSPR_RESOURCE)
+            shader_addline(buffer, "_resource_");
+        else
+            shader_addline(buffer, "_uav_");
         switch (semantic->resource_type)
         {
             case WINED3D_SHADER_RESOURCE_BUFFER:
@@ -1570,6 +1574,10 @@ static void shader_dump_register(struct wined3d_string_buffer *buffer,
 
         case WINED3DSPR_RESOURCE:
             shader_addline(buffer, "t");
+            break;
+
+        case WINED3DSPR_UAV:
+            shader_addline(buffer, "u");
             break;
 
         default:
@@ -1953,7 +1961,7 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
             continue;
         }
 
-        if (ins.handler_idx == WINED3DSIH_DCL)
+        if (ins.handler_idx == WINED3DSIH_DCL || ins.handler_idx == WINED3DSIH_DCL_UAV_TYPED)
         {
             shader_dump_decl_usage(&buffer, &ins.declaration.semantic, &shader_version);
             shader_dump_ins_modifiers(&buffer, &ins.declaration.semantic.reg);

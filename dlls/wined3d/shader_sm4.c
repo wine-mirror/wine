@@ -188,6 +188,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM5_OP_DERIV_RTX_FINE            = 0x7b,
     WINED3D_SM5_OP_DERIV_RTY_COARSE          = 0x7c,
     WINED3D_SM5_OP_DERIV_RTY_FINE            = 0x7d,
+    WINED3D_SM5_OP_DCL_UAV_TYPED             = 0x9c,
     WINED3D_SM5_OP_DCL_RESOURCE_STRUCTURED   = 0xa2,
     WINED3D_SM5_OP_LD_STRUCTURED             = 0xa7,
 };
@@ -205,6 +206,7 @@ enum wined3d_sm4_register_type
     WINED3D_SM4_RT_PRIMID         = 0xb,
     WINED3D_SM4_RT_DEPTHOUT       = 0xc,
     WINED3D_SM4_RT_NULL           = 0xd,
+    WINED3D_SM5_RT_UAV            = 0xe,
 };
 
 enum wined3d_sm4_output_primitive_type
@@ -304,6 +306,7 @@ struct wined3d_sm4_opcode_info
  * u -> WINED3D_DATA_UINT
  * R -> WINED3D_DATA_RESOURCE
  * S -> WINED3D_DATA_SAMPLER
+ * U -> WINED3D_DATA_UAV
  */
 static const struct wined3d_sm4_opcode_info opcode_table[] =
 {
@@ -396,6 +399,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM5_OP_DERIV_RTX_FINE,            WINED3DSIH_DSX_FINE,                      "f",    "f"},
     {WINED3D_SM5_OP_DERIV_RTY_COARSE,          WINED3DSIH_DSY_COARSE,                    "f",    "f"},
     {WINED3D_SM5_OP_DERIV_RTY_FINE,            WINED3DSIH_DSY_FINE,                      "f",    "f"},
+    {WINED3D_SM5_OP_DCL_UAV_TYPED,             WINED3DSIH_DCL_UAV_TYPED,                 "",     ""},
     {WINED3D_SM5_OP_DCL_RESOURCE_STRUCTURED,   WINED3DSIH_DCL_RESOURCE_STRUCTURED,       "",     ""},
     {WINED3D_SM5_OP_LD_STRUCTURED,             WINED3DSIH_LD_STRUCTURED,                 "u",    "uuR"},
 };
@@ -416,6 +420,7 @@ static const enum wined3d_shader_register_type register_type_table[] =
     /* WINED3D_SM4_RT_PRIMID */         WINED3DSPR_PRIMID,
     /* WINED3D_SM4_RT_DEPTHOUT */       WINED3DSPR_DEPTHOUT,
     /* WINED3D_SM4_RT_NULL */           WINED3DSPR_NULL,
+    /* WINED3D_SM5_RT_UAV */            WINED3DSPR_UAV,
 };
 
 static const enum wined3d_primitive_type output_primitive_type_table[] =
@@ -518,6 +523,8 @@ static enum wined3d_data_type map_data_type(char t)
             return WINED3D_DATA_RESOURCE;
         case 'S':
             return WINED3D_DATA_SAMPLER;
+        case 'U':
+            return WINED3D_DATA_UAV;
         default:
             ERR("Invalid data type '%c'.\n", t);
             return WINED3D_DATA_FLOAT;
@@ -937,10 +944,11 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
         memcpy(priv->icb.data, p, sizeof(*p) * icb_size);
         ins->declaration.icb = &priv->icb;
     }
-    else if (opcode == WINED3D_SM4_OP_DCL_RESOURCE)
+    else if (opcode == WINED3D_SM4_OP_DCL_RESOURCE || opcode == WINED3D_SM5_OP_DCL_UAV_TYPED)
     {
         enum wined3d_sm4_resource_type resource_type;
         enum wined3d_sm4_data_type data_type;
+        enum wined3d_data_type reg_data_type;
         DWORD components;
 
         resource_type = (opcode_token & WINED3D_SM4_RESOURCE_TYPE_MASK) >> WINED3D_SM4_RESOURCE_TYPE_SHIFT;
@@ -953,7 +961,8 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
         {
             ins->declaration.semantic.resource_type = resource_type_table[resource_type];
         }
-        shader_sm4_read_dst_param(priv, &p, WINED3D_DATA_RESOURCE, &ins->declaration.semantic.reg);
+        reg_data_type = opcode == WINED3D_SM4_OP_DCL_RESOURCE ? WINED3D_DATA_RESOURCE : WINED3D_DATA_UAV;
+        shader_sm4_read_dst_param(priv, &p, reg_data_type, &ins->declaration.semantic.reg);
 
         components = *p++;
         if ((components & 0xfff0) != (components & 0xf) * 0x1110)
