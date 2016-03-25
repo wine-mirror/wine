@@ -1926,16 +1926,17 @@ static struct strarray get_local_dependencies( const struct makefile *make, cons
 
 
 /*******************************************************************
- *         has_static_lib
+ *         get_static_lib
  *
- * Check if makefile builds the named static library.
+ * Check if makefile builds the named static library and return the full lib path.
  */
-static int has_static_lib( const struct makefile *make, const char *name )
+static const char *get_static_lib( const struct makefile *make, const char *name )
 {
-    if (!make->staticlib) return 0;
-    if (strncmp( make->staticlib, "lib", 3 )) return 0;
-    if (strncmp( make->staticlib + 3, name, strlen(name) )) return 0;
-    return !strcmp( make->staticlib + 3 + strlen(name), ".a" );
+    if (!make->staticlib) return NULL;
+    if (strncmp( make->staticlib, "lib", 3 )) return NULL;
+    if (strncmp( make->staticlib + 3, name, strlen(name) )) return NULL;
+    if (strcmp( make->staticlib + 3 + strlen(name), ".a" )) return NULL;
+    return base_dir_path( make, make->staticlib );
 }
 
 
@@ -1954,7 +1955,8 @@ static struct strarray add_default_libraries( const struct makefile *make, struc
 
     for (i = 0; i < all_libs.count; i++)
     {
-        int found = 0;
+        const char *lib = NULL;
+
         if (!strncmp( all_libs.str[i], "-l", 2 ))
         {
             const char *name = all_libs.str[i] + 2;
@@ -1963,17 +1965,17 @@ static struct strarray add_default_libraries( const struct makefile *make, struc
             {
                 const struct makefile *submake = top_makefile->submakes[j];
 
-                if ((found = has_static_lib( submake, name )))
-                {
-                    const char *lib = strmake( "%s/lib%s.a",
-                                               top_obj_dir_path( make, submake->base_dir ), name );
-                    strarray_add( deps, lib );
-                    strarray_add( &ret, lib );
-                    break;
-                }
+                if ((lib = get_static_lib( submake, name ))) break;
             }
         }
-        if (!found) strarray_add( &ret, all_libs.str[i] );
+
+        if (lib)
+        {
+            lib = top_obj_dir_path( make, lib );
+            strarray_add( deps, lib );
+            strarray_add( &ret, lib );
+        }
+        else strarray_add( &ret, all_libs.str[i] );
     }
     return ret;
 }
@@ -1991,6 +1993,7 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
     for (i = 0; i < imports.count; i++)
     {
         const char *name = imports.str[i];
+        const char *lib = NULL;
 
         for (j = 0; j < top_makefile->subdirs.count; j++)
         {
@@ -2007,15 +2010,16 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
                 break;
             }
 
-            if (has_static_lib( submake, name ))
-            {
-                const char *dir = top_obj_dir_path( make, submake->base_dir );
-
-                strarray_add( deps, strmake( "%s/lib%s.a", dir, name ));
-                break;
-            }
+            if ((lib = get_static_lib( submake, name ))) break;
         }
-        strarray_add( &ret, strmake( "-l%s", name ));
+
+        if (lib)
+        {
+            lib = top_obj_dir_path( make, lib );
+            strarray_add( deps, lib );
+            strarray_add( &ret, lib );
+        }
+        else strarray_add( &ret, strmake( "-l%s", name ));
     }
     return ret;
 }
