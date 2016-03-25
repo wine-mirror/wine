@@ -6180,6 +6180,11 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
         shader_addline(buffer, "gl_FrontColor = ffp_varying_diffuse;\n");
         shader_addline(buffer, "gl_FrontSecondaryColor = ffp_varying_specular;\n");
     }
+    else
+    {
+        shader_addline(buffer, "ffp_varying_diffuse = clamp(ffp_varying_diffuse, 0.0, 1.0);\n");
+        shader_addline(buffer, "ffp_varying_specular = clamp(ffp_varying_specular, 0.0, 1.0);\n");
+    }
 
     for (i = 0; i < MAX_TEXTURES; ++i)
     {
