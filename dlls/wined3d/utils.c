@@ -1262,15 +1262,16 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_TEXTURE,
             ARB_TEXTURE_RG,             NULL},
     /* Luminance */
-    {WINED3DFMT_L8_UNORM,               GL_R8,                            GL_R8,                                  0,
-            GL_RED,                     GL_UNSIGNED_BYTE,                 0,
-            WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
-            ARB_TEXTURE_RG,             NULL},
     {WINED3DFMT_L8_UNORM,               GL_LUMINANCE8,                    GL_SLUMINANCE8_EXT,                     0,
             GL_LUMINANCE,               GL_UNSIGNED_BYTE,                 0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
             | WINED3DFMT_FLAG_SRGB_READ,
             WINED3D_GL_LEGACY_CONTEXT,  NULL},
+    {WINED3DFMT_L8_UNORM,               GL_R8,                            GL_R8,                                  0,
+            GL_RED,                     GL_UNSIGNED_BYTE,                 0,
+            WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
+            | WINED3DFMT_FLAG_RENDERTARGET,
+            ARB_TEXTURE_RG,             NULL},
     {WINED3DFMT_L8A8_UNORM,             GL_RG8,                           GL_RG8,                                 0,
             GL_RG,                      GL_UNSIGNED_BYTE,                 0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
@@ -2921,9 +2922,6 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
         idx = get_format_idx(WINED3DFMT_A8_UNORM);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
                 0, CHANNEL_SOURCE_ZERO, 0, CHANNEL_SOURCE_ZERO, 0, CHANNEL_SOURCE_ZERO, 0, CHANNEL_SOURCE_X);
-        idx = get_format_idx(WINED3DFMT_L8_UNORM);
-        gl_info->formats[idx].color_fixup = create_color_fixup_desc(
-                0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_ONE);
         idx = get_format_idx(WINED3DFMT_L8A8_UNORM);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
                 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y);
@@ -2936,6 +2934,13 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
         idx = get_format_idx(WINED3DFMT_INTZ);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
                 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X);
+    }
+
+    if (gl_info->supported[ARB_TEXTURE_RG])
+    {
+        idx = get_format_idx(WINED3DFMT_L8_UNORM);
+        gl_info->formats[idx].color_fixup = create_color_fixup_desc(
+                0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_ONE);
     }
 
     if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
