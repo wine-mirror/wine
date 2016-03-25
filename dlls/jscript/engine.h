@@ -191,6 +191,8 @@ typedef struct _except_frame_t except_frame_t;
 struct _parser_ctx_t;
 
 typedef struct _call_frame_t {
+    except_frame_t *except_frame;
+
     bytecode_t *bytecode;
     function_code_t *function;
 
@@ -210,7 +212,6 @@ struct _exec_ctx_t {
     jsval_t *stack;
     unsigned stack_size;
     unsigned top;
-    except_frame_t *except_frame;
     jsval_t ret;
 
     unsigned ip;

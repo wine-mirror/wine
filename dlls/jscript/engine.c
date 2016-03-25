@@ -764,6 +764,7 @@ static HRESULT interp_push_except(exec_ctx_t *ctx)
 {
     const unsigned arg1 = get_op_uint(ctx, 0);
     const BSTR arg2 = get_op_bstr(ctx, 1);
+    call_frame_t *frame = ctx->script->call_ctx;
     except_frame_t *except;
     unsigned stack_top;
 
@@ -790,22 +791,23 @@ static HRESULT interp_push_except(exec_ctx_t *ctx)
     except->scope = ctx->scope_chain;
     except->catch_off = arg1;
     except->ident = arg2;
-    except->next = ctx->except_frame;
-    ctx->except_frame = except;
+    except->next = frame->except_frame;
+    frame->except_frame = except;
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    12.14 */
 static HRESULT interp_pop_except(exec_ctx_t *ctx)
 {
+    call_frame_t *frame = ctx->script->call_ctx;
     except_frame_t *except;
 
     TRACE("\n");
 
-    except = ctx->except_frame;
+    except = frame->except_frame;
     assert(except != NULL);
 
-    ctx->except_frame = except->next;
+    frame->except_frame = except->next;
     heap_free(except);
     return S_OK;
 }
@@ -2411,13 +2413,14 @@ static void release_call_frame(call_frame_t *frame)
 
 static HRESULT unwind_exception(exec_ctx_t *ctx)
 {
+    call_frame_t *frame = ctx->script->call_ctx;
     except_frame_t *except_frame;
     jsval_t except_val;
     BSTR ident;
     HRESULT hres;
 
-    except_frame = ctx->except_frame;
-    ctx->except_frame = except_frame->next;
+    except_frame = frame->except_frame;
+    frame->except_frame = except_frame->next;
 
     assert(except_frame->stack_top <= ctx->top);
     stack_popn(ctx, ctx->top - except_frame->stack_top);
@@ -2463,7 +2466,6 @@ static HRESULT unwind_exception(exec_ctx_t *ctx)
 static HRESULT enter_bytecode(script_ctx_t *ctx, function_code_t *func, jsval_t *ret)
 {
     exec_ctx_t *exec_ctx = ctx->call_ctx->exec_ctx;
-    except_frame_t *prev_except_frame;
     unsigned prev_ip, prev_top;
     scope_chain_t *prev_scope;
     call_frame_t *frame;
@@ -2475,10 +2477,8 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, function_code_t *func, jsval_t 
     frame = ctx->call_ctx;
     prev_top = exec_ctx->top;
     prev_scope = exec_ctx->scope_chain;
-    prev_except_frame = exec_ctx->except_frame;
     prev_ip = exec_ctx->ip;
     exec_ctx->ip = func->instr_off;
-    exec_ctx->except_frame = NULL;
 
     while(exec_ctx->ip != -1) {
         op = frame->bytecode->instrs[exec_ctx->ip].op;
@@ -2486,7 +2486,7 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, function_code_t *func, jsval_t 
         if(FAILED(hres)) {
             TRACE("EXCEPTION %08x\n", hres);
 
-            if(!exec_ctx->except_frame)
+            if(!frame->except_frame)
                 break;
 
             hres = unwind_exception(exec_ctx);
@@ -2498,7 +2498,6 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, function_code_t *func, jsval_t 
     }
 
     exec_ctx->ip = prev_ip;
-    exec_ctx->except_frame = prev_except_frame;
 
     assert(ctx->call_ctx == frame);
     ctx->call_ctx = frame->prev_frame;
