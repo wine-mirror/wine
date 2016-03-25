@@ -1503,6 +1503,7 @@ static HRESULT d3d_shader_resource_view_init(struct d3d_shader_resource_view *vi
     wined3d_mutex_lock();
     if (!(wined3d_resource = wined3d_resource_from_d3d11_resource(resource)))
     {
+        wined3d_mutex_unlock();
         ERR("Failed to get wined3d resource for d3d10 resource %p.\n", resource);
         return E_FAIL;
     }
@@ -1510,6 +1511,7 @@ static HRESULT d3d_shader_resource_view_init(struct d3d_shader_resource_view *vi
     if (FAILED(hr = wined3d_shader_resource_view_create(wined3d_resource,
             view, &d3d_null_wined3d_parent_ops, &view->wined3d_view)))
     {
+        wined3d_mutex_unlock();
         WARN("Failed to create wined3d shader resource view, hr %#x.\n", hr);
         return hr;
     }
