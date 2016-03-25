@@ -3915,9 +3915,7 @@ HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *dev
         unsigned int dst_y, unsigned int dst_z, struct wined3d_resource *src_resource,
         unsigned int src_sub_resource_idx, const struct wined3d_box *src_box)
 {
-    struct wined3d_surface *dst_surface, *src_surface;
     struct wined3d_texture *dst_texture, *src_texture;
-    struct wined3d_resource *tmp;
     RECT dst_rect, src_rect;
     HRESULT hr;
 
@@ -4003,30 +4001,25 @@ HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *dev
     }
 
     dst_texture = wined3d_texture_from_resource(dst_resource);
-    if (!(tmp = wined3d_texture_get_sub_resource(dst_texture, dst_sub_resource_idx)))
-    {
-        WARN("Invalid dst_sub_resource_idx %u.\n", dst_sub_resource_idx);
-        return WINED3DERR_INVALIDCALL;
-    }
-    dst_surface = surface_from_resource(tmp);
-
     src_texture = wined3d_texture_from_resource(src_resource);
-    if (!(tmp = wined3d_texture_get_sub_resource(src_texture, src_sub_resource_idx)))
-    {
-        WARN("Invalid src_sub_resource_idx %u.\n", src_sub_resource_idx);
-        return WINED3DERR_INVALIDCALL;
-    }
-    src_surface = surface_from_resource(tmp);
 
     if (src_box)
+    {
         SetRect(&src_rect, src_box->left, src_box->top, src_box->right, src_box->bottom);
+    }
     else
-        SetRect(&src_rect, 0, 0, src_surface->resource.width, src_surface->resource.height);
+    {
+        unsigned int level = src_sub_resource_idx % src_texture->level_count;
+
+        SetRect(&src_rect, 0, 0, wined3d_texture_get_level_width(src_texture, level),
+                wined3d_texture_get_level_height(src_texture, level));
+    }
 
     SetRect(&dst_rect, dst_x, dst_y, dst_x + (src_rect.right - src_rect.left),
             dst_y + (src_rect.bottom - src_rect.top));
 
-    if (FAILED(hr = wined3d_surface_blt(dst_surface, &dst_rect, src_surface, &src_rect, 0, NULL, WINED3D_TEXF_POINT)))
+    if (FAILED(hr = wined3d_texture_blt(dst_texture, dst_sub_resource_idx, &dst_rect,
+            src_texture, src_sub_resource_idx, &src_rect, 0, NULL, WINED3D_TEXF_POINT)))
         WARN("Failed to blit, hr %#x.\n", hr);
 
     return hr;
