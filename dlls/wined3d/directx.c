@@ -1282,6 +1282,7 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX960M,    "NVIDIA GeForce GTX 960M",          DRIVER_NVIDIA_GEFORCE8,  2048},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX970,     "NVIDIA GeForce GTX 970",           DRIVER_NVIDIA_GEFORCE8,  4096},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX970M,    "NVIDIA GeForce GTX 970M",          DRIVER_NVIDIA_GEFORCE8,  3072},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX980,     "NVIDIA GeForce GTX 980",           DRIVER_NVIDIA_GEFORCE8,  4096},
 
     /* AMD cards */
     {HW_VENDOR_AMD,        CARD_AMD_RAGE_128PRO,           "ATI Rage Fury",                    DRIVER_AMD_RAGE_128PRO,  16  },
@@ -1721,6 +1722,7 @@ static const struct wined3d_renderer_table
 cards_nvidia_binary[] =
 {
     /* Direct 3D 11 */
+    {"GTX 980",                     CARD_NVIDIA_GEFORCE_GTX980},    /* GeForce 900 - highend */
     {"GTX 970M",                    CARD_NVIDIA_GEFORCE_GTX970M},   /* GeForce 900 - highend mobile*/
     {"GTX 970",                     CARD_NVIDIA_GEFORCE_GTX970},    /* GeForce 900 - highend */
     {"GTX 960M",                    CARD_NVIDIA_GEFORCE_GTX960M},   /* GeForce 900 - midend high mobile */
