@@ -587,6 +587,16 @@ static inline double get_op_double(exec_ctx_t *ctx){
     return ctx->script->call_ctx->bytecode->instrs[ctx->ip].u.dbl;
 }
 
+static inline void jmp_next(exec_ctx_t *ctx)
+{
+    ctx->ip++;
+}
+
+static inline void jmp_abs(exec_ctx_t *ctx, unsigned dst)
+{
+    ctx->ip = dst;
+}
+
 /* ECMA-262 3rd Edition    12.2 */
 static HRESULT interp_var_set(exec_ctx_t *ctx)
 {
@@ -656,10 +666,10 @@ static HRESULT interp_forin(exec_ctx_t *ctx)
         if(FAILED(hres))
             return hres;
 
-        ctx->ip++;
+        jmp_next(ctx);
     }else {
         stack_popn(ctx, 4);
-        ctx->ip = arg;
+        jmp_abs(ctx, arg);
     }
     return S_OK;
 }
@@ -711,9 +721,9 @@ static HRESULT interp_case(exec_ctx_t *ctx)
 
     if(b) {
         stack_popn(ctx, 1);
-        ctx->ip = arg;
+        jmp_abs(ctx, arg);
     }else {
-        ctx->ip++;
+        jmp_next(ctx);
     }
     return S_OK;
 }
@@ -1260,10 +1270,10 @@ static HRESULT interp_cnd_nz(exec_ctx_t *ctx)
         return hres;
 
     if(b) {
-        ctx->ip = arg;
+        jmp_abs(ctx, arg);
     }else {
         stack_popn(ctx, 1);
-        ctx->ip++;
+        jmp_next(ctx);
     }
     return S_OK;
 }
@@ -1283,9 +1293,9 @@ static HRESULT interp_cnd_z(exec_ctx_t *ctx)
 
     if(b) {
         stack_popn(ctx, 1);
-        ctx->ip++;
+        jmp_next(ctx);
     }else {
-        ctx->ip = arg;
+        jmp_abs(ctx, arg);
     }
     return S_OK;
 }
@@ -2327,7 +2337,7 @@ static HRESULT interp_jmp(exec_ctx_t *ctx)
 
     TRACE("%u\n", arg);
 
-    ctx->ip = arg;
+    jmp_abs(ctx, arg);
     return S_OK;
 }
 
@@ -2347,9 +2357,9 @@ static HRESULT interp_jmp_z(exec_ctx_t *ctx)
         return hres;
 
     if(b)
-        ctx->ip++;
+        jmp_next(ctx);
     else
-        ctx->ip = arg;
+        jmp_abs(ctx, arg);
     return S_OK;
 }
 
@@ -2367,7 +2377,7 @@ static HRESULT interp_ret(exec_ctx_t *ctx)
 {
     TRACE("\n");
 
-    ctx->ip = -1;
+    jmp_abs(ctx, -1);
     return S_OK;
 }
 
