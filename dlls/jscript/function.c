@@ -239,19 +239,19 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
 
     hres = scope_push(function->scope_chain, var_disp, to_disp(var_disp), &scope);
     if(SUCCEEDED(hres)) {
-        hres = create_exec_ctx(ctx, this_obj, var_disp, scope, FALSE, &exec_ctx);
-        scope_release(scope);
-
+        hres = create_exec_ctx(ctx, this_obj, var_disp, FALSE, &exec_ctx);
         if(SUCCEEDED(hres)) {
             jsdisp_t *prev_args;
 
             prev_args = function->arguments;
             function->arguments = arg_disp;
-            hres = exec_source(exec_ctx, function->code, function->func_code, r);
+            hres = exec_source(exec_ctx, function->code, function->func_code, scope, r);
             function->arguments = prev_args;
 
             exec_release(exec_ctx);
         }
+
+        scope_release(scope);
     }
 
     /* Reset arguments value to cut the reference cycle. Note that since all activation contexts have

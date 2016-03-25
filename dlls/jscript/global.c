@@ -188,6 +188,7 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
 static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
+    call_frame_t *frame;
     bytecode_t *code;
     const WCHAR *src;
     HRESULT hres;
@@ -206,7 +207,7 @@ static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         return S_OK;
     }
 
-    if(!ctx->call_ctx) {
+    if(!(frame = ctx->call_ctx)) {
         FIXME("No active exec_ctx\n");
         return E_UNEXPECTED;
     }
@@ -222,7 +223,7 @@ static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         return throw_syntax_error(ctx, hres, NULL);
     }
 
-    hres = exec_source(ctx->call_ctx->exec_ctx, code, &code->global_code, r);
+    hres = exec_source(ctx->call_ctx->exec_ctx, code, &code->global_code, frame->scope, r);
     release_bytecode(code);
     return hres;
 }

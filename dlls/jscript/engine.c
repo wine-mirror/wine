@@ -296,7 +296,7 @@ void scope_release(scope_chain_t *scope)
 }
 
 HRESULT create_exec_ctx(script_ctx_t *script_ctx, IDispatch *this_obj, jsdisp_t *var_disp,
-        scope_chain_t *scope, BOOL is_global, exec_ctx_t **ret)
+        BOOL is_global, exec_ctx_t **ret)
 {
     exec_ctx_t *ctx;
 
@@ -334,11 +334,6 @@ HRESULT create_exec_ctx(script_ctx_t *script_ctx, IDispatch *this_obj, jsdisp_t 
     script_addref(script_ctx);
     ctx->script = script_ctx;
 
-    if(scope) {
-        scope_addref(scope);
-        ctx->scope_chain = scope;
-    }
-
     *ret = ctx;
     return S_OK;
 }
@@ -348,8 +343,6 @@ void exec_release(exec_ctx_t *ctx)
     if(--ctx->ref)
         return;
 
-    if(ctx->scope_chain)
-        scope_release(ctx->scope_chain);
     if(ctx->var_disp)
         jsdisp_release(ctx->var_disp);
     if(ctx->this_obj)
@@ -512,7 +505,7 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
     TRACE("%s\n", debugstr_w(identifier));
 
     if(ctx->call_ctx) {
-        for(scope = ctx->call_ctx->exec_ctx->scope_chain; scope; scope = scope->next) {
+        for(scope = ctx->call_ctx->scope; scope; scope = scope->next) {
             if(scope->jsobj)
                 hres = jsdisp_get_id(scope->jsobj, identifier, fdexNameImplicit, &id);
             else
@@ -694,7 +687,7 @@ static HRESULT interp_push_scope(exec_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    hres = scope_push(ctx->scope_chain, to_jsdisp(disp), disp, &ctx->scope_chain);
+    hres = scope_push(ctx->script->call_ctx->scope, to_jsdisp(disp), disp, &ctx->script->call_ctx->scope);
     IDispatch_Release(disp);
     return hres;
 }
@@ -704,7 +697,7 @@ static HRESULT interp_pop_scope(exec_ctx_t *ctx)
 {
     TRACE("\n");
 
-    scope_pop(&ctx->scope_chain);
+    scope_pop(&ctx->script->call_ctx->scope);
     return S_OK;
 }
 
@@ -793,7 +786,7 @@ static HRESULT interp_push_except(exec_ctx_t *ctx)
         return E_OUTOFMEMORY;
 
     except->stack_top = stack_top;
-    except->scope = ctx->scope_chain;
+    except->scope = frame->scope;
     except->catch_off = arg1;
     except->ident = arg2;
     except->next = frame->except_frame;
@@ -849,7 +842,7 @@ static HRESULT interp_func(exec_ctx_t *ctx)
     TRACE("%d\n", func_idx);
 
     hres = create_source_function(ctx->script, frame->bytecode, frame->function->funcs+func_idx,
-            ctx->scope_chain, &dispex);
+            frame->scope, &dispex);
     if(FAILED(hres))
         return hres;
 
@@ -2413,6 +2406,8 @@ OP_LIST
 
 static void release_call_frame(call_frame_t *frame)
 {
+    if(frame->scope)
+        scope_release(frame->scope);
     heap_free(frame);
 }
 
@@ -2430,8 +2425,8 @@ static HRESULT unwind_exception(exec_ctx_t *ctx)
     assert(except_frame->stack_top <= ctx->top);
     stack_popn(ctx, ctx->top - except_frame->stack_top);
 
-    while(except_frame->scope != ctx->scope_chain)
-        scope_pop(&ctx->scope_chain);
+    while(except_frame->scope != frame->scope)
+        scope_pop(&frame->scope);
 
     frame->ip = except_frame->catch_off;
 
@@ -2455,7 +2450,7 @@ static HRESULT unwind_exception(exec_ctx_t *ctx)
         if(FAILED(hres))
             return hres;
 
-        hres = scope_push(ctx->scope_chain, scope_obj, to_disp(scope_obj), &ctx->scope_chain);
+        hres = scope_push(frame->scope, scope_obj, to_disp(scope_obj), &frame->scope);
         jsdisp_release(scope_obj);
     }else {
         hres = stack_push(ctx, except_val);
@@ -2479,7 +2474,7 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, function_code_t *func, jsval_t 
     TRACE("\n");
 
     frame = ctx->call_ctx;
-    prev_scope = exec_ctx->scope_chain;
+    prev_scope = frame->scope;
 
     while(frame->ip != -1) {
         op = frame->bytecode->instrs[frame->ip].op;
@@ -2501,19 +2496,18 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, function_code_t *func, jsval_t 
     assert(ctx->call_ctx == frame);
 
     if(FAILED(hres)) {
-        while(exec_ctx->scope_chain != prev_scope)
-            scope_pop(&exec_ctx->scope_chain);
+        while(frame->scope != prev_scope)
+            scope_pop(&frame->scope);
         stack_popn(exec_ctx, exec_ctx->top-frame->stack_base);
     }
 
     assert(exec_ctx->top == frame->stack_base);
+    assert(frame->scope == prev_scope);
     ctx->call_ctx = frame->prev_frame;
     release_call_frame(frame);
 
     if(FAILED(hres))
         return hres;
-
-    assert(exec_ctx->scope_chain == prev_scope);
 
     *ret = exec_ctx->ret;
     exec_ctx->ret = jsval_undefined();
@@ -2557,7 +2551,7 @@ static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdis
     return hres;
 }
 
-static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode, function_code_t *function)
+static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode, function_code_t *function, scope_chain_t *scope)
 {
     call_frame_t *frame;
 
@@ -2570,6 +2564,9 @@ static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode, function_
     frame->ip = function->instr_off;
     frame->stack_base = ctx->top;
 
+    if(scope)
+        frame->scope = scope_addref(scope);
+
     frame->exec_ctx = ctx;
 
     frame->prev_frame = ctx->script->call_ctx;
@@ -2577,7 +2574,7 @@ static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode, function_
     return S_OK;
 }
 
-HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, jsval_t *ret)
+HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, scope_chain_t *scope, jsval_t *ret)
 {
     jsval_t val;
     unsigned i;
@@ -2589,7 +2586,7 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, js
         if(!func->funcs[i].name)
             continue;
 
-        hres = create_source_function(ctx->script, code, func->funcs+i, ctx->scope_chain, &func_obj);
+        hres = create_source_function(ctx->script, code, func->funcs+i, scope, &func_obj);
         if(FAILED(hres))
             return hres;
 
@@ -2612,7 +2609,7 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, js
         }
     }
 
-    hres = setup_call_frame(ctx, code, func);
+    hres = setup_call_frame(ctx, code, func, scope);
     if(FAILED(hres))
         return hres;
 
