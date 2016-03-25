@@ -191,6 +191,7 @@ typedef struct _except_frame_t except_frame_t;
 struct _parser_ctx_t;
 
 typedef struct _call_frame_t {
+    unsigned ip;
     except_frame_t *except_frame;
 
     bytecode_t *bytecode;
@@ -213,8 +214,6 @@ struct _exec_ctx_t {
     unsigned stack_size;
     unsigned top;
     jsval_t ret;
-
-    unsigned ip;
 };
 
 static inline void exec_addref(exec_ctx_t *ctx)
