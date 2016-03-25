@@ -942,8 +942,8 @@ static HRESULT d3d8_device_create_surface(struct d3d8_device *device, UINT width
     struct wined3d_texture *texture;
     HRESULT hr;
 
-    TRACE("device %p, width %u, height %u, format %#x, flags %#x, surface %p,\n"
-            "\tusage %#x, pool %#x, multisample_type %#x, multisample_quality %u.\n",
+    TRACE("device %p, width %u, height %u, format %#x, flags %#x, surface %p, "
+            "usage %#x, pool %#x, multisample_type %#x, multisample_quality %u.\n",
             device, width, height, format, flags, surface,
             usage, pool, multisample_type, multisample_quality);
 
@@ -2130,7 +2130,7 @@ static HRESULT WINAPI d3d8_device_DrawIndexedPrimitiveUP(IDirect3DDevice8 *iface
     UINT vtx_size = vertex_count * vertex_stride;
     UINT vb_pos, align;
 
-    TRACE("iface %p, primitive_type %#x, min_vertex_idx %u, vertex_count %u, primitive_count %u,\n"
+    TRACE("iface %p, primitive_type %#x, min_vertex_idx %u, vertex_count %u, primitive_count %u, "
             "index_data %p, index_format %#x, vertex_data %p, vertex_stride %u.\n",
             iface, primitive_type, min_vertex_idx, vertex_count, primitive_count,
             index_data, index_format, vertex_data, vertex_stride);
