@@ -3825,10 +3825,9 @@ float CDECL wined3d_device_get_npatch_mode(const struct wined3d_device *device)
 void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
         struct wined3d_resource *dst_resource, struct wined3d_resource *src_resource)
 {
-    struct wined3d_surface *dst_surface, *src_surface;
     struct wined3d_texture *dst_texture, *src_texture;
     RECT dst_rect, src_rect;
-    unsigned int i, count;
+    unsigned int i, j;
     HRESULT hr;
 
     TRACE("device %p, dst_resource %p, src_resource %p.\n", device, dst_resource, src_resource);
@@ -3892,17 +3891,22 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
         return;
     }
 
-    count = dst_texture->layer_count * dst_texture->level_count;
-    for (i = 0; i < count; ++i)
+    for (i = 0; i < dst_texture->level_count; ++i)
     {
-        dst_surface = surface_from_resource(wined3d_texture_get_sub_resource(dst_texture, i));
-        src_surface = surface_from_resource(wined3d_texture_get_sub_resource(src_texture, i));
+        SetRect(&dst_rect, 0, 0,
+                wined3d_texture_get_level_width(dst_texture, i),
+                wined3d_texture_get_level_height(dst_texture, i));
+        SetRect(&src_rect, 0, 0,
+                wined3d_texture_get_level_width(src_texture, i),
+                wined3d_texture_get_level_height(dst_texture, i));
+        for (j = 0; j < dst_texture->layer_count; ++j)
+        {
+            unsigned int idx = j * dst_texture->level_count + i;
 
-        SetRect(&dst_rect, 0, 0, dst_surface->resource.width, dst_surface->resource.height);
-        SetRect(&src_rect, 0, 0, src_surface->resource.width, src_surface->resource.height);
-        if (FAILED(hr = wined3d_surface_blt(dst_surface, &dst_rect,
-                src_surface, &src_rect, 0, NULL, WINED3D_TEXF_POINT)))
-            ERR("Failed to blit, sub-resource %u, hr %#x.\n", i, hr);
+            if (FAILED(hr = wined3d_texture_blt(dst_texture, idx, &dst_rect,
+                    src_texture, idx, &src_rect, 0, NULL, WINED3D_TEXF_POINT)))
+                ERR("Failed to blit, sub-resource %u, hr %#x.\n", idx, hr);
+        }
     }
 }
 
