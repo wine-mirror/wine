@@ -305,7 +305,6 @@ HRESULT create_exec_ctx(script_ctx_t *script_ctx, BOOL is_global, exec_ctx_t **r
 
     ctx->ref = 1;
     ctx->is_global = is_global;
-    ctx->ret = jsval_undefined();
 
     script_addref(script_ctx);
     ctx->script = script_ctx;
@@ -321,7 +320,6 @@ void exec_release(exec_ctx_t *ctx)
 
     if(ctx->script)
         script_release(ctx->script);
-    jsval_release(ctx->ret);
     heap_free(ctx);
 }
 
@@ -2361,10 +2359,12 @@ static HRESULT interp_ret(script_ctx_t *ctx)
 
 static HRESULT interp_setret(script_ctx_t *ctx)
 {
+    call_frame_t *frame = ctx->call_ctx;
+
     TRACE("\n");
 
-    jsval_release(ctx->call_ctx->exec_ctx->ret);
-    ctx->call_ctx->exec_ctx->ret = stack_pop(ctx);
+    jsval_release(frame->ret);
+    frame->ret = stack_pop(ctx);
     return S_OK;
 }
 
@@ -2390,6 +2390,7 @@ static void release_call_frame(call_frame_t *frame)
         IDispatch_Release(frame->this_obj);
     if(frame->scope)
         scope_release(frame->scope);
+    jsval_release(frame->ret);
     heap_free(frame);
 }
 
@@ -2447,7 +2448,6 @@ static HRESULT unwind_exception(script_ctx_t *ctx)
 
 static HRESULT enter_bytecode(script_ctx_t *ctx, function_code_t *func, jsval_t *ret)
 {
-    exec_ctx_t *exec_ctx = ctx->call_ctx->exec_ctx;
     call_frame_t *frame;
     jsop_t op;
     HRESULT hres = S_OK;
@@ -2484,14 +2484,14 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, function_code_t *func, jsval_t 
     assert(ctx->stack_top == frame->stack_base);
     assert(frame->scope == frame->base_scope);
     ctx->call_ctx = frame->prev_frame;
+
+    if(SUCCEEDED(hres)) {
+        *ret = frame->ret;
+        frame->ret = jsval_undefined();
+    }
+
     release_call_frame(frame);
-
-    if(FAILED(hres))
-        return hres;
-
-    *ret = exec_ctx->ret;
-    exec_ctx->ret = jsval_undefined();
-    return S_OK;
+    return hres;
 }
 
 static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdisp_t *func_obj)
@@ -2556,6 +2556,7 @@ static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode, function_
     frame->function = function;
     frame->ip = function->instr_off;
     frame->stack_base = ctx->script->stack_top;
+    frame->ret = jsval_undefined();
 
     if(scope)
         frame->base_scope = frame->scope = scope_addref(scope);

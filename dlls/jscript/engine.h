@@ -198,6 +198,8 @@ typedef struct _call_frame_t {
     scope_chain_t *scope;
     scope_chain_t *base_scope;
 
+    jsval_t ret;
+
     IDispatch *this_obj;
     jsdisp_t *variable_obj;
 
@@ -213,8 +215,6 @@ struct _exec_ctx_t {
 
     script_ctx_t *script;
     BOOL is_global;
-
-    jsval_t ret;
 };
 
 static inline void exec_addref(exec_ctx_t *ctx)
