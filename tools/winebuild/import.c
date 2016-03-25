@@ -309,6 +309,28 @@ void add_extra_ld_symbol( const char *name )
     strarray_add( &extra_ld_symbols, name, NULL );
 }
 
+/* retrieve an imported dll, adding one if necessary */
+struct import *add_static_import_dll( const char *name )
+{
+    struct import *import;
+    char *dll_name = get_dll_name( name, NULL );
+
+    if ((import = find_import_dll( dll_name ))) return import;
+
+    import = xmalloc( sizeof(*import) );
+    memset( import, 0, sizeof(*import) );
+
+    import->dll_name = dll_name;
+    import->full_name = xstrdup( dll_name );
+    import->c_name = make_c_identifier( dll_name );
+
+    if (is_delayed_import( dll_name ))
+        list_add_tail( &dll_delayed, &import->entry );
+    else
+        list_add_tail( &dll_imports, &import->entry );
+    return import;
+}
+
 /* add a function to the list of imports from a given dll */
 static void add_import_func( struct import *imp, const char *name, const char *export_name, int ordinal )
 {
@@ -322,6 +344,26 @@ static void add_import_func( struct import *imp, const char *name, const char *e
     imp->imports[imp->nb_imports].export_name = export_name;
     imp->imports[imp->nb_imports].ordinal = ordinal;
     imp->nb_imports++;
+}
+
+/* add an import for an undefined function of the form __wine$func$ */
+static void add_undef_import( const char *name, int is_ordinal )
+{
+    char *p, *dll_name = xstrdup( name );
+    int ordinal = 0;
+    struct import *import;
+
+    if (!(p = strchr( dll_name, '$' ))) return;
+    *p++ = 0;
+    while (*p >= '0' && *p <= '9') ordinal = 10 * ordinal + *p++ - '0';
+    if (*p != '$') return;
+    p++;
+
+    import = add_static_import_dll( dll_name );
+    if (is_ordinal)
+        add_import_func( import, NULL, xstrdup( p ), ordinal );
+    else
+        add_import_func( import, xstrdup( p ), NULL, ordinal );
 }
 
 /* get the default entry point for a given spec file */
@@ -351,7 +393,7 @@ static void add_extra_undef_symbols( DLLSPEC *spec )
     if (!spec->init_func) spec->init_func = xstrdup( get_default_entry_point(spec) );
     add_extra_ld_symbol( spec->init_func );
     if (has_stubs( spec )) add_extra_ld_symbol( "__wine_spec_unimplemented_stub" );
-    if (!list_empty( &dll_delayed )) add_extra_ld_symbol( "__wine_spec_delay_load" );
+    if (delayed_imports.count) add_extra_ld_symbol( "__wine_spec_delay_load" );
 }
 
 /* check if a given imported dll is not needed, taking forwards into account */
@@ -518,7 +560,11 @@ void read_undef_symbols( DLLSPEC *spec, char **argv )
         while (*p == ' ') p++;
         if (p[0] == 'U' && p[1] == ' ' && p[2]) p += 2;
         if (prefix_len && !strncmp( p, name_prefix, prefix_len )) p += prefix_len;
-        strarray_add( &undef_symbols, xstrdup( p ), NULL );
+        if (!strncmp( p, import_func_prefix, strlen(import_func_prefix) ))
+            add_undef_import( p + strlen( import_func_prefix ), 0 );
+        else if (!strncmp( p, import_ord_prefix, strlen(import_ord_prefix) ))
+            add_undef_import( p + strlen( import_ord_prefix ), 1 );
+        else strarray_add( &undef_symbols, xstrdup( p ), NULL );
     }
     if ((err = pclose( f ))) warning( "%s failed with status %d\n", cmd, err );
     free( cmd );
@@ -526,13 +572,13 @@ void read_undef_symbols( DLLSPEC *spec, char **argv )
 
 void resolve_dll_imports( DLLSPEC *spec, struct list *list )
 {
-    unsigned int j, removed;
+    unsigned int j;
     struct import *imp, *next;
     ORDDEF *odp;
 
     LIST_FOR_EACH_ENTRY_SAFE( imp, next, list, struct import, entry )
     {
-        for (j = removed = 0; j < undef_symbols.count; j++)
+        for (j = 0; j < undef_symbols.count; j++)
         {
             odp = find_export( undef_symbols.str[j], imp->exports, imp->nb_exports );
             if (odp)
@@ -546,11 +592,10 @@ void resolve_dll_imports( DLLSPEC *spec, struct list *list )
                     add_import_func( imp, (odp->flags & FLAG_NONAME) ? NULL : odp->name,
                                      odp->export_name, odp->ordinal );
                     remove_name( &undef_symbols, j-- );
-                    removed++;
                 }
             }
         }
-        if (!removed)
+        if (!imp->nb_imports)
         {
             /* the dll is not used, get rid of it */
             if (check_unused( imp, spec ))
