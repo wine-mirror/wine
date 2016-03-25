@@ -825,12 +825,13 @@ static HRESULT interp_end_finally(exec_ctx_t *ctx)
 static HRESULT interp_func(exec_ctx_t *ctx)
 {
     unsigned func_idx = get_op_uint(ctx, 0);
+    call_frame_t *frame = ctx->script->call_ctx;
     jsdisp_t *dispex;
     HRESULT hres;
 
     TRACE("%d\n", func_idx);
 
-    hres = create_source_function(ctx->script, ctx->script->call_ctx->bytecode, ctx->func_code->funcs+func_idx,
+    hres = create_source_function(ctx->script, frame->bytecode, frame->function->funcs+func_idx,
             ctx->scope_chain, &dispex);
     if(FAILED(hres))
         return hres;
@@ -2453,7 +2454,6 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, function_code_t *func, jsval_t 
 {
     exec_ctx_t *exec_ctx = ctx->call_ctx->exec_ctx;
     except_frame_t *prev_except_frame;
-    function_code_t *prev_func;
     unsigned prev_ip, prev_top;
     scope_chain_t *prev_scope;
     call_frame_t *frame;
@@ -2467,10 +2467,8 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, function_code_t *func, jsval_t 
     prev_scope = exec_ctx->scope_chain;
     prev_except_frame = exec_ctx->except_frame;
     prev_ip = exec_ctx->ip;
-    prev_func = exec_ctx->func_code;
     exec_ctx->ip = func->instr_off;
     exec_ctx->except_frame = NULL;
-    exec_ctx->func_code = func;
 
     while(exec_ctx->ip != -1) {
         op = frame->bytecode->instrs[exec_ctx->ip].op;
@@ -2491,7 +2489,6 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, function_code_t *func, jsval_t 
 
     exec_ctx->ip = prev_ip;
     exec_ctx->except_frame = prev_except_frame;
-    exec_ctx->func_code = prev_func;
 
     assert(ctx->call_ctx == frame);
     ctx->call_ctx = frame->prev_frame;
@@ -2550,7 +2547,7 @@ static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdis
     return hres;
 }
 
-static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode)
+static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode, function_code_t *function)
 {
     call_frame_t *frame;
 
@@ -2559,6 +2556,7 @@ static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode)
         return E_OUTOFMEMORY;
 
     frame->bytecode = bytecode;
+    frame->function = function;
     frame->exec_ctx = ctx;
 
     frame->prev_frame = ctx->script->call_ctx;
@@ -2601,7 +2599,7 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, js
         }
     }
 
-    hres = setup_call_frame(ctx, code);
+    hres = setup_call_frame(ctx, code, func);
     if(FAILED(hres))
         return hres;
 

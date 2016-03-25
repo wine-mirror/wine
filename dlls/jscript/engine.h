@@ -192,6 +192,7 @@ struct _parser_ctx_t;
 
 typedef struct _call_frame_t {
     bytecode_t *bytecode;
+    function_code_t *function;
 
     struct _call_frame_t *prev_frame;
     exec_ctx_t *exec_ctx;
@@ -200,12 +201,10 @@ typedef struct _call_frame_t {
 struct _exec_ctx_t {
     LONG ref;
 
-    struct _parser_ctx_t *parser;
     script_ctx_t *script;
     scope_chain_t *scope_chain;
     jsdisp_t *var_disp;
     IDispatch *this_obj;
-    function_code_t *func_code;
     BOOL is_global;
 
     jsval_t *stack;
