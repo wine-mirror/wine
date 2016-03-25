@@ -36,6 +36,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
+#include <fenv.h>
 #include <unistd.h>
 
 #include <libkern/OSAtomic.h>
@@ -1233,6 +1234,8 @@ static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance uni
         AudioStreamBasicDescription desc;
         UInt32 size;
         Float64 rate;
+        fenv_t fenv;
+        BOOL fenv_stored = TRUE;
 
         hr = ca_get_audiodesc(&desc, fmt);
         if(FAILED(hr))
@@ -1262,7 +1265,17 @@ static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance uni
             return osstatus_to_hresult(sc);
         }
 
+        /* AudioConverterNew requires divide-by-zero SSE exceptions to be masked */
+        if(feholdexcept(&fenv)){
+            WARN("Failed to store fenv state\n");
+            fenv_stored = FALSE;
+        }
+
         sc = AudioConverterNew(dev_desc, &desc, converter);
+
+        if(fenv_stored && fesetenv(&fenv))
+            WARN("Failed to restore fenv state\n");
+
         if(sc != noErr){
             WARN("Couldn't create audio converter: %x\n", (int)sc);
             return osstatus_to_hresult(sc);
