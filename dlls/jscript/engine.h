@@ -193,6 +193,7 @@ struct _parser_ctx_t;
 typedef struct _call_frame_t {
     unsigned ip;
     except_frame_t *except_frame;
+    unsigned stack_base;
 
     bytecode_t *bytecode;
     function_code_t *function;
