@@ -68,6 +68,10 @@ static struct strarray ext_link_imports; /* list of external symbols to link to 
 static struct list dll_imports = LIST_INIT( dll_imports );
 static struct list dll_delayed = LIST_INIT( dll_delayed );
 
+static struct strarray as_files;
+
+static const char import_func_prefix[] = "__wine$func$";
+static const char import_ord_prefix[]  = "__wine$ord$";
 
 static inline const char *ppc_reg( int reg )
 {
@@ -1283,15 +1287,55 @@ void output_imports( DLLSPEC *spec )
     output_external_link_imports( spec );
 }
 
-/* output an import library for a Win32 module and additional object files */
-void output_import_lib( DLLSPEC *spec, char **argv )
+/* create a new asm temp file */
+static void new_output_as_file( const char *prefix )
+{
+    char *name = get_temp_file_name( prefix, ".s" );
+
+    if (output_file) fclose( output_file );
+    if (!(output_file = fopen( name, "w" )))
+        fatal_error( "Unable to create output file '%s'\n", name );
+    strarray_add( &as_files, name, NULL );
+}
+
+/* assemble all the asm files */
+static void assemble_files( const char *prefix )
+{
+    unsigned int i;
+
+    if (output_file) fclose( output_file );
+    output_file = NULL;
+
+    for (i = 0; i < as_files.count; i++)
+    {
+        char *obj = get_temp_file_name( prefix, ".o" );
+        assemble_file( as_files.str[i], obj );
+        as_files.str[i] = obj;
+    }
+}
+
+/* build a library from the current asm files and any additional object files in argv */
+static void build_library( const char *output_name, char **argv, int create )
+{
+    struct strarray args = find_tool( "ar", NULL );
+    struct strarray ranlib = find_tool( "ranlib", NULL );
+
+    strarray_add( &args, create ? "rc" : "r", output_name, NULL );
+    strarray_addall( &args, as_files );
+    strarray_addv( &args, argv );
+    if (create) unlink( output_name );
+    spawn( args );
+
+    strarray_add( &ranlib, output_name, NULL );
+    spawn( ranlib );
+}
+
+/* create a Windows-style import library */
+static void build_windows_import_lib( DLLSPEC *spec )
 {
     struct strarray args;
     char *def_file;
     const char *as_flags, *m_flag;
-
-    if (target_platform != PLATFORM_WINDOWS)
-        fatal_error( "Unix-style import libraries not supported yet\n" );
 
     def_file = get_temp_file_name( output_file_name, ".def" );
     fclose( output_file );
@@ -1320,13 +1364,81 @@ void output_import_lib( DLLSPEC *spec, char **argv )
     if (m_flag)
         strarray_add( &args, "-m", m_flag, as_flags, NULL );
     spawn( args );
+}
 
-    if (argv[0])
+/* create a Unix-style import library */
+static void build_unix_import_lib( DLLSPEC *spec )
+{
+    static const char valid_chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._@";
+    int i, total;
+    const char *name, *prefix;
+    char *dll_name = xstrdup( spec->file_name );
+
+    if (strendswith( dll_name, ".dll" )) dll_name[strlen(dll_name) - 4] = 0;
+    if (strspn( dll_name, valid_chars ) < strlen( dll_name ))
+        fatal_error( "%s contains invalid characters\n", spec->file_name );
+
+    /* entry points */
+
+    for (i = total = 0; i < spec->nb_entry_points; i++)
     {
-        args = find_tool( "ar", NULL );
-        strarray_add( &args, "rs", output_file_name, NULL );
-        strarray_addv( &args, argv );
-        spawn( args );
+        const ORDDEF *odp = &spec->entry_points[i];
+
+        if (odp->name) name = odp->name;
+        else if (odp->export_name) name = odp->export_name;
+        else continue;
+
+        if (odp->flags & FLAG_PRIVATE) continue;
+        total++;
+
+        /* C++ mangled names cannot be imported */
+        if (strpbrk( name, "?@" )) continue;
+
+        switch(odp->type)
+        {
+        case TYPE_VARARGS:
+        case TYPE_CDECL:
+        case TYPE_STDCALL:
+        case TYPE_THISCALL:
+            prefix = (!odp->name || (odp->flags & FLAG_ORDINAL)) ? import_ord_prefix : import_func_prefix;
+            new_output_as_file( spec->file_name );
+            output( "\t.text\n" );
+            output( "\n\t.align %d\n", get_alignment( get_ptr_size() ));
+            output( "\t%s\n", func_declaration( name ) );
+            output( "%s\n", asm_globl( name ) );
+            output( "\t%s %s%s$%u$%s\n", get_asm_ptr_keyword(),
+                    asm_name( prefix ), dll_name, odp->ordinal, name );
+            output_function_size( name );
+            break;
+
+        default:
+            break;
+        }
+    }
+    if (!total) warning( "%s: Import library doesn't export anything\n", spec->file_name );
+
+    if (!as_files.count)  /* create a dummy file to avoid empty import libraries */
+    {
+        new_output_as_file( spec->file_name );
+        output( "\t.text\n" );
+    }
+
+    assemble_files( spec->file_name );
+    free( dll_name );
+}
+
+/* output an import library for a Win32 module and additional object files */
+void output_import_lib( DLLSPEC *spec, char **argv )
+{
+    if (target_platform == PLATFORM_WINDOWS)
+    {
+        build_windows_import_lib( spec );
+        if (argv[0]) build_library( output_file_name, argv, 0 );
+    }
+    else
+    {
+        build_unix_import_lib( spec );
+        build_library( output_file_name, argv, 1 );
     }
     output_file_name = NULL;
 }

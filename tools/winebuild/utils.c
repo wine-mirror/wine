@@ -182,6 +182,13 @@ void strarray_addv( struct strarray *array, char * const *argv )
     while (*argv) strarray_add_one( array, *argv++ );
 }
 
+void strarray_addall( struct strarray *array, struct strarray args )
+{
+    unsigned int i;
+
+    for (i = 0; i < args.count; i++) strarray_add_one( array, args.str[i] );
+}
+
 struct strarray strarray_fromstring( const char *str, const char *delim )
 {
     const char *tok;

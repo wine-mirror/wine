@@ -47,7 +47,7 @@ Build a .def file from a spec file. The .spec file is specified via the
 \fB-E\fR option. This is used when building dlls with a PE (Win32) compiler.
 .TP
 .BI \--implib
-Build a PE import library from a spec file. The .spec file is
+Build a .a import library from a spec file. The .spec file is
 specified via the \fB-E\fR option.
 .TP
 .B \--resources

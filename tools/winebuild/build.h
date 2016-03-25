@@ -233,6 +233,7 @@ extern char *strmake(const char* fmt, ...) __attribute__((__format__ (__printf__
 extern struct strarray strarray_fromstring( const char *str, const char *delim );
 extern void strarray_add( struct strarray *array, ... );
 extern void strarray_addv( struct strarray *array, char * const *argv );
+extern void strarray_addall( struct strarray *array, struct strarray args );
 extern DECLSPEC_NORETURN void fatal_error( const char *msg, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern DECLSPEC_NORETURN void fatal_perror( const char *msg, ... )
