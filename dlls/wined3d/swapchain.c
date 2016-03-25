@@ -172,19 +172,11 @@ HRESULT CDECL wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
 HRESULT CDECL wined3d_swapchain_get_front_buffer_data(const struct wined3d_swapchain *swapchain,
         struct wined3d_texture *dst_texture, unsigned int sub_resource_idx)
 {
-    struct wined3d_surface *src_surface, *dst_surface;
-    struct wined3d_resource *sub_resource;
     RECT src_rect, dst_rect;
 
     TRACE("swapchain %p, dst_texture %p, sub_resource_idx %u.\n", swapchain, dst_texture, sub_resource_idx);
 
-    if (!(sub_resource = wined3d_texture_get_sub_resource(dst_texture, sub_resource_idx)) ||
-            sub_resource->type != WINED3D_RTYPE_SURFACE)
-        return WINED3DERR_INVALIDCALL;
-
-    dst_surface = surface_from_resource(sub_resource);
-    src_surface = surface_from_resource(wined3d_texture_get_sub_resource(swapchain->front_buffer, 0));
-    SetRect(&src_rect, 0, 0, src_surface->resource.width, src_surface->resource.height);
+    SetRect(&src_rect, 0, 0, swapchain->front_buffer->resource.width, swapchain->front_buffer->resource.height);
     dst_rect = src_rect;
 
     if (swapchain->desc.windowed)
@@ -194,7 +186,8 @@ HRESULT CDECL wined3d_swapchain_get_front_buffer_data(const struct wined3d_swapc
                 wine_dbgstr_rect(&dst_rect));
     }
 
-    return wined3d_surface_blt(dst_surface, &dst_rect, src_surface, &src_rect, 0, NULL, WINED3D_TEXF_POINT);
+    return wined3d_texture_blt(dst_texture, sub_resource_idx, &dst_rect,
+            swapchain->front_buffer, 0, &src_rect, 0, NULL, WINED3D_TEXF_POINT);
 }
 
 struct wined3d_texture * CDECL wined3d_swapchain_get_back_buffer(const struct wined3d_swapchain *swapchain,
