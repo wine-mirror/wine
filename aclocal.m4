@@ -395,28 +395,17 @@ $ac_dir/uninstall::
     if wine_fn_has_flag staticimplib
     then
         wine_fn_append_rule \
-"__builddeps__: $ac_file.$IMPLIBEXT $ac_file.$STATIC_IMPLIBEXT
-$ac_file.$STATIC_IMPLIBEXT $ac_file.cross.a: $ac_deps
-$ac_file.def: $srcdir/$ac_dir/$ac_name.spec \$(WINEBUILD)
-	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --def -o \$[@] --export $srcdir/$ac_dir/$ac_name.spec
-$ac_file.$STATIC_IMPLIBEXT: dummy
-	@cd $ac_dir && \$(MAKE) lib$ac_implib.$STATIC_IMPLIBEXT
+"__builddeps__: $ac_file.a
+$ac_file.a $ac_file.cross.a: $ac_deps
+$ac_file.a: dummy
+	@cd $ac_dir && \$(MAKE) lib$ac_implib.a
 .PHONY: $ac_dir/install-dev $ac_dir/uninstall
-$ac_dir/install-dev:: $ac_file.$IMPLIBEXT
-	\$(INSTALL_DATA) $ac_file.$IMPLIBEXT \$(DESTDIR)\$(dlldir)/lib$ac_implib.$IMPLIBEXT
+$ac_dir/install-dev:: $ac_file.a
+	\$(INSTALL_DATA) $ac_file.a \$(DESTDIR)\$(dlldir)/lib$ac_implib.a
 $ac_dir/uninstall::
-	\$(RM) \$(DESTDIR)\$(dlldir)/lib$ac_implib.$IMPLIBEXT
+	\$(RM) \$(DESTDIR)\$(dlldir)/lib$ac_implib.a
 install install-dev:: $ac_dir/install-dev
 __uninstall__: $ac_dir/uninstall"
-
-        if test "$IMPLIBEXT" != "$STATIC_IMPLIBEXT"
-        then
-            wine_fn_append_rule \
-"$ac_dir/install-dev:: $ac_file.$STATIC_IMPLIBEXT __builddeps__
-	\$(INSTALL_DATA) $ac_file.$STATIC_IMPLIBEXT \$(DESTDIR)\$(dlldir)/lib$ac_implib.$STATIC_IMPLIBEXT
-$ac_dir/uninstall::
-	\$(RM) \$(DESTDIR)\$(dlldir)/lib$ac_implib.$STATIC_IMPLIBEXT"
-        fi
 
         if test -n "$CROSSTARGET" -a -z "$ac_implibflags"
         then

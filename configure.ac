@@ -676,7 +676,6 @@ AC_SUBST(LDEXECFLAGS,"")
 LIBEXT="so"
 DLLEXT=".so"
 IMPLIBEXT="def"
-STATIC_IMPLIBEXT="def.a"
 WINE_PATH_SONAME_TOOLS
 WINE_CONFIG_HELPERS
 
@@ -691,7 +690,6 @@ case $host_os in
     LIBEXT="dll"
     DLLEXT=""
     IMPLIBEXT="a"
-    STATIC_IMPLIBEXT="a"
     dnl Disable modules that can't be used on Windows
     enable_iphlpapi=${enable_iphlpapi:-no}
     enable_kernel32=${enable_kernel32:-no}

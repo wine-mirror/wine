@@ -1810,7 +1810,7 @@ static void add_generated_sources( struct makefile *make )
         if (source->file->flags & FLAG_C_IMPLIB)
         {
             if (!make->staticimplib && make->importlib && *dll_ext)
-                make->staticimplib = strmake( "lib%s.def.a", make->importlib );
+                make->staticimplib = strmake( "lib%s.a", make->importlib );
         }
         if (strendswith( source->name, ".po" ))
         {
@@ -2004,9 +2004,10 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
                 const char *dir = top_obj_dir_path( make, submake->base_dir );
                 const char *ext = cross ? "cross.a" : *dll_ext ? "def" : "a";
 
-                strarray_add( deps, strmake( "%s/lib%s.%s", dir, name, ext ));
                 if (!cross && submake->staticimplib)
-                    strarray_add( deps, strmake( "%s/%s", dir, submake->staticimplib ));
+                    lib = base_dir_path( submake, submake->staticimplib );
+                else
+                    strarray_add( deps, strmake( "%s/lib%s.%s", dir, name, ext ));
                 break;
             }
 
@@ -2704,7 +2705,7 @@ static struct strarray output_sources( const struct makefile *make )
         if (spec_file && make->importlib)
         {
             char *importlib_path = obj_dir_path( make, strmake( "lib%s", make->importlib ));
-            if (*dll_ext)
+            if (*dll_ext && !implib_objs.count)
             {
                 strarray_add( &clean_files, strmake( "lib%s.def", make->importlib ));
                 output( "%s.def: %s %s\n", importlib_path, tools_path( make, "winebuild" ), spec_file );
@@ -2715,21 +2716,6 @@ static struct strarray output_sources( const struct makefile *make )
                 add_install_rule( make, install_rules, make->importlib,
                                   strmake( "lib%s.def", make->importlib ),
                                   strmake( "d$(dlldir)/lib%s.def", make->importlib ));
-                if (implib_objs.count)
-                {
-                    strarray_add( &clean_files, strmake( "lib%s.def.a", make->importlib ));
-                    output( "%s.def.a:", importlib_path );
-                    output_filenames_obj_dir( make, implib_objs );
-                    output( "\n" );
-                    output( "\trm -f $@\n" );
-                    output( "\t$(AR) $(ARFLAGS) $@" );
-                    output_filenames_obj_dir( make, implib_objs );
-                    output( "\n" );
-                    output( "\t$(RANLIB) $@\n" );
-                    add_install_rule( make, install_rules, make->importlib,
-                                      strmake( "lib%s.def.a", make->importlib ),
-                                      strmake( "d$(dlldir)/lib%s.def.a", make->importlib ));
-                }
             }
             else
             {
