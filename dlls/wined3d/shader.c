@@ -113,6 +113,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_ITOF                          */ "itof",
     /* WINED3DSIH_LABEL                         */ "label",
     /* WINED3DSIH_LD                            */ "ld",
+    /* WINED3DSIH_LD2DMS                        */ "ld2dms",
     /* WINED3DSIH_LD_STRUCTURED                 */ "ld_structured",
     /* WINED3DSIH_LIT                           */ "lit",
     /* WINED3DSIH_LOG                           */ "log",
