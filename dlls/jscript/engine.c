@@ -295,33 +295,6 @@ void scope_release(scope_chain_t *scope)
     heap_free(scope);
 }
 
-HRESULT create_exec_ctx(script_ctx_t *script_ctx, exec_ctx_t **ret)
-{
-    exec_ctx_t *ctx;
-
-    ctx = heap_alloc_zero(sizeof(exec_ctx_t));
-    if(!ctx)
-        return E_OUTOFMEMORY;
-
-    ctx->ref = 1;
-
-    script_addref(script_ctx);
-    ctx->script = script_ctx;
-
-    *ret = ctx;
-    return S_OK;
-}
-
-void exec_release(exec_ctx_t *ctx)
-{
-    if(--ctx->ref)
-        return;
-
-    if(ctx->script)
-        script_release(ctx->script);
-    heap_free(ctx);
-}
-
 static HRESULT disp_get_id(script_ctx_t *ctx, IDispatch *disp, const WCHAR *name, BSTR name_bstr, DWORD flags, DISPID *id)
 {
     IDispatchEx *dispex;
@@ -2530,7 +2503,7 @@ static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdis
     return hres;
 }
 
-static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode, function_code_t *function, scope_chain_t *scope,
+static HRESULT setup_call_frame(script_ctx_t *ctx, bytecode_t *bytecode, function_code_t *function, scope_chain_t *scope,
         IDispatch *this_obj, BOOL is_global, jsdisp_t *variable_obj)
 {
     call_frame_t *frame;
@@ -2554,7 +2527,7 @@ static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode, function_
     frame->bytecode = bytecode;
     frame->function = function;
     frame->ip = function->instr_off;
-    frame->stack_base = ctx->script->stack_top;
+    frame->stack_base = ctx->stack_top;
     frame->ret = jsval_undefined();
 
     if(scope)
@@ -2562,23 +2535,21 @@ static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode, function_
 
     if(this_obj)
         frame->this_obj = this_obj;
-    else if(ctx->script->host_global)
-        frame->this_obj = ctx->script->host_global;
+    else if(ctx->host_global)
+        frame->this_obj = ctx->host_global;
     else
-        frame->this_obj = to_disp(ctx->script->global);
+        frame->this_obj = to_disp(ctx->global);
     IDispatch_AddRef(frame->this_obj);
 
     frame->is_global = is_global;
     frame->variable_obj = jsdisp_addref(variable_obj);
 
-    frame->exec_ctx = ctx;
-
-    frame->prev_frame = ctx->script->call_ctx;
-    ctx->script->call_ctx = frame;
+    frame->prev_frame = ctx->call_ctx;
+    ctx->call_ctx = frame;
     return S_OK;
 }
 
-HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, scope_chain_t *scope,
+HRESULT exec_source(script_ctx_t *ctx, bytecode_t *code, function_code_t *func, scope_chain_t *scope,
         IDispatch *this_obj, BOOL is_global, jsdisp_t *variable_obj, jsval_t *ret)
 {
     jsval_t val;
@@ -2591,12 +2562,12 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, sc
         if(!func->funcs[i].name)
             continue;
 
-        hres = create_source_function(ctx->script, code, func->funcs+i, scope, &func_obj);
+        hres = create_source_function(ctx, code, func->funcs+i, scope, &func_obj);
         if(FAILED(hres))
             return hres;
 
         if(func->funcs[i].event_target)
-            hres = bind_event_target(ctx->script, func->funcs+i, func_obj);
+            hres = bind_event_target(ctx, func->funcs+i, func_obj);
         else
             hres = jsdisp_propput_name(variable_obj, func->funcs[i].name, jsval_obj(func_obj));
         jsdisp_release(func_obj);
@@ -2605,7 +2576,7 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, sc
     }
 
     for(i=0; i < func->var_cnt; i++) {
-        if(!is_global || !lookup_global_members(ctx->script, func->variables[i], NULL)) {
+        if(!is_global || !lookup_global_members(ctx, func->variables[i], NULL)) {
             DISPID id = 0;
 
             hres = jsdisp_get_id(variable_obj, func->variables[i], fdexNameEnsure, &id);
@@ -2618,7 +2589,7 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, sc
     if(FAILED(hres))
         return hres;
 
-    hres = enter_bytecode(ctx->script, func, &val);
+    hres = enter_bytecode(ctx, func, &val);
     if(FAILED(hres))
         return hres;
 

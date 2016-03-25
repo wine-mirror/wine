@@ -208,21 +208,7 @@ typedef struct _call_frame_t {
     function_code_t *function;
 
     struct _call_frame_t *prev_frame;
-    exec_ctx_t *exec_ctx;
 } call_frame_t;
 
-struct _exec_ctx_t {
-    LONG ref;
-
-    script_ctx_t *script;
-};
-
-static inline void exec_addref(exec_ctx_t *ctx)
-{
-    ctx->ref++;
-}
-
-void exec_release(exec_ctx_t*) DECLSPEC_HIDDEN;
-HRESULT create_exec_ctx(script_ctx_t*,exec_ctx_t**) DECLSPEC_HIDDEN;
-HRESULT exec_source(exec_ctx_t*,bytecode_t*,function_code_t*,scope_chain_t*,IDispatch*,BOOL,jsdisp_t*,jsval_t*) DECLSPEC_HIDDEN;
+HRESULT exec_source(script_ctx_t*,bytecode_t*,function_code_t*,scope_chain_t*,IDispatch*,BOOL,jsdisp_t*,jsval_t*) DECLSPEC_HIDDEN;
 HRESULT create_source_function(script_ctx_t*,bytecode_t*,function_code_t*,scope_chain_t*,jsdisp_t**) DECLSPEC_HIDDEN;

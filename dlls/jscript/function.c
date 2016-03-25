@@ -206,7 +206,6 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
         jsval_t *r)
 {
     jsdisp_t *var_disp, *arg_disp;
-    exec_ctx_t *exec_ctx;
     scope_chain_t *scope;
     HRESULT hres;
 
@@ -239,17 +238,12 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
 
     hres = scope_push(function->scope_chain, var_disp, to_disp(var_disp), &scope);
     if(SUCCEEDED(hres)) {
-        hres = create_exec_ctx(ctx, &exec_ctx);
-        if(SUCCEEDED(hres)) {
-            jsdisp_t *prev_args;
+        jsdisp_t *prev_args;
 
-            prev_args = function->arguments;
-            function->arguments = arg_disp;
-            hres = exec_source(exec_ctx, function->code, function->func_code, scope, this_obj, FALSE, var_disp, r);
-            function->arguments = prev_args;
-
-            exec_release(exec_ctx);
-        }
+        prev_args = function->arguments;
+        function->arguments = arg_disp;
+        hres = exec_source(ctx, function->code, function->func_code, scope, this_obj, FALSE, var_disp, r);
+        function->arguments = prev_args;
 
         scope_release(scope);
     }

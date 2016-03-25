@@ -36,7 +36,6 @@
 typedef struct _jsval_t jsval_t;
 typedef struct _jsstr_t jsstr_t;
 typedef struct _script_ctx_t script_ctx_t;
-typedef struct _exec_ctx_t exec_ctx_t;
 typedef struct _dispex_prop_t dispex_prop_t;
 
 typedef struct {
