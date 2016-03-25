@@ -7345,14 +7345,24 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
             pshader ? min(pshader->limits->constant_float, gl_info->limits.glsl_ps_float_constants) : 0);
     checkGLcall("Find glsl program uniform locations");
 
-    if (pshader && pshader->reg_maps.shader_version.major >= 3
-            && pshader->u.ps.declared_in_count > vec4_varyings(3, gl_info))
+    if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
     {
-        TRACE("Shader %d needs vertex color clamping disabled.\n", program_id);
-        entry->vs.vertex_color_clamp = GL_FALSE;
+        if (pshader && pshader->reg_maps.shader_version.major >= 3
+                && pshader->u.ps.declared_in_count > vec4_varyings(3, gl_info))
+        {
+            TRACE("Shader %d needs vertex color clamping disabled.\n", program_id);
+            entry->vs.vertex_color_clamp = GL_FALSE;
+        }
+        else
+        {
+            entry->vs.vertex_color_clamp = GL_FIXED_ONLY_ARB;
+        }
     }
     else
     {
+        /* With core profile we never change vertex_color_clamp from
+         * GL_FIXED_ONLY_MODE (which is also the initial value) so we never call
+         * glClampColorARB(). */
         entry->vs.vertex_color_clamp = GL_FIXED_ONLY_ARB;
     }
 
