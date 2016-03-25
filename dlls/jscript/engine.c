@@ -295,7 +295,7 @@ void scope_release(scope_chain_t *scope)
     heap_free(scope);
 }
 
-HRESULT create_exec_ctx(script_ctx_t *script_ctx, BOOL is_global, exec_ctx_t **ret)
+HRESULT create_exec_ctx(script_ctx_t *script_ctx, exec_ctx_t **ret)
 {
     exec_ctx_t *ctx;
 
@@ -304,7 +304,6 @@ HRESULT create_exec_ctx(script_ctx_t *script_ctx, BOOL is_global, exec_ctx_t **r
         return E_OUTOFMEMORY;
 
     ctx->ref = 1;
-    ctx->is_global = is_global;
 
     script_addref(script_ctx);
     ctx->script = script_ctx;
@@ -2532,7 +2531,7 @@ static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdis
 }
 
 static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode, function_code_t *function, scope_chain_t *scope,
-        IDispatch *this_obj, jsdisp_t *variable_obj)
+        IDispatch *this_obj, BOOL is_global, jsdisp_t *variable_obj)
 {
     call_frame_t *frame;
 
@@ -2569,6 +2568,7 @@ static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode, function_
         frame->this_obj = to_disp(ctx->script->global);
     IDispatch_AddRef(frame->this_obj);
 
+    frame->is_global = is_global;
     frame->variable_obj = jsdisp_addref(variable_obj);
 
     frame->exec_ctx = ctx;
@@ -2579,7 +2579,7 @@ static HRESULT setup_call_frame(exec_ctx_t *ctx, bytecode_t *bytecode, function_
 }
 
 HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, scope_chain_t *scope,
-        IDispatch *this_obj, jsdisp_t *variable_obj, jsval_t *ret)
+        IDispatch *this_obj, BOOL is_global, jsdisp_t *variable_obj, jsval_t *ret)
 {
     jsval_t val;
     unsigned i;
@@ -2605,7 +2605,7 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, sc
     }
 
     for(i=0; i < func->var_cnt; i++) {
-        if(!ctx->is_global || !lookup_global_members(ctx->script, func->variables[i], NULL)) {
+        if(!is_global || !lookup_global_members(ctx->script, func->variables[i], NULL)) {
             DISPID id = 0;
 
             hres = jsdisp_get_id(variable_obj, func->variables[i], fdexNameEnsure, &id);
@@ -2614,7 +2614,7 @@ HRESULT exec_source(exec_ctx_t *ctx, bytecode_t *code, function_code_t *func, sc
         }
     }
 
-    hres = setup_call_frame(ctx, code, func, scope, this_obj, variable_obj);
+    hres = setup_call_frame(ctx, code, func, scope, this_obj, is_global, variable_obj);
     if(FAILED(hres))
         return hres;
 
