@@ -2001,13 +2001,11 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
 
             if (submake->importlib && !strcmp( submake->importlib, name ))
             {
-                const char *dir = top_obj_dir_path( make, submake->base_dir );
-                const char *ext = cross ? "cross.a" : *dll_ext ? "def" : "a";
-
-                if (!cross && submake->staticimplib)
-                    lib = base_dir_path( submake, submake->staticimplib );
+                if (cross || !*dll_ext || submake->staticimplib)
+                    lib = base_dir_path( submake, strmake( "lib%s.a", name ));
                 else
-                    strarray_add( deps, strmake( "%s/lib%s.%s", dir, name, ext ));
+                    strarray_add( deps, top_obj_dir_path( make,
+                                            strmake( "%s/lib%s.def", submake->base_dir, name )));
                 break;
             }
 
@@ -2016,6 +2014,7 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
 
         if (lib)
         {
+            if (cross) lib = replace_extension( lib, ".a", ".cross.a" );
             lib = top_obj_dir_path( make, lib );
             strarray_add( deps, lib );
             strarray_add( &ret, lib );
