@@ -2484,6 +2484,123 @@ static void test_DestroyCursor(void)
     ok(cursor2 != cursor, "cursor == %p, cursor2 == %p\n", cursor, cursor2);
 }
 
+static void test_monochrome_icon(void)
+{
+    HANDLE handle;
+    BOOL ret;
+    DWORD bytes_written;
+    CURSORICONFILEDIR *icon_data;
+    CURSORICONFILEDIRENTRY *icon_entry;
+    BITMAPINFO *bitmap_info;
+    BITMAPCOREINFO *core_info;
+    ICONINFO icon_info;
+    ULONG icon_size;
+    BOOL monochrome, use_core_info;
+
+    icon_data = HeapAlloc(GetProcessHeap(), 0, sizeof(CURSORICONFILEDIR) + sizeof(BITMAPINFOHEADER) +
+                                               2 * sizeof(RGBQUAD) + sizeof(ULONG));
+
+    for (monochrome = FALSE; monochrome <= TRUE; monochrome++)
+    for (use_core_info = FALSE; use_core_info <= TRUE; use_core_info++)
+    {
+        trace("%s, %s\n",
+              monochrome ? "monochrome" : "colored",
+              use_core_info ? "core info" : "bitmap info");
+
+        icon_size = sizeof(CURSORICONFILEDIR) +
+                    (use_core_info ? sizeof(BITMAPCOREHEADER) : sizeof(BITMAPINFOHEADER)) +
+                    /* 2 * sizeof(RGBTRIPLE) + padding comes out the same */
+                    2 * sizeof(RGBQUAD) +
+                    sizeof(ULONG);
+        ZeroMemory(icon_data, icon_size);
+        icon_data->idReserved = 0;
+        icon_data->idType = 1;
+        icon_data->idCount = 1;
+
+        icon_entry = icon_data->idEntries;
+        icon_entry->bWidth = 1;
+        icon_entry->bHeight = 1;
+        icon_entry->bColorCount = 0;
+        icon_entry->bReserved = 0;
+        icon_entry->xHotspot = 0;
+        icon_entry->yHotspot = 0;
+        icon_entry->dwDIBSize = icon_size - sizeof(CURSORICONFILEDIR);
+        icon_entry->dwDIBOffset = sizeof(CURSORICONFILEDIR);
+
+        if (use_core_info)
+        {
+            core_info = (BITMAPCOREINFO *) ((BYTE *) icon_data + icon_entry->dwDIBOffset);
+            core_info->bmciHeader.bcSize = sizeof(BITMAPCOREHEADER);
+            core_info->bmciHeader.bcWidth = 1;
+            core_info->bmciHeader.bcHeight = 2;
+            core_info->bmciHeader.bcPlanes = 1;
+            core_info->bmciHeader.bcBitCount = 1;
+            core_info->bmciColors[0].rgbtBlue = monochrome ? 0x00 : 0xff;
+            core_info->bmciColors[0].rgbtGreen = 0x00;
+            core_info->bmciColors[0].rgbtRed = 0x00;
+            core_info->bmciColors[1].rgbtBlue = 0xff;
+            core_info->bmciColors[1].rgbtGreen = 0xff;
+            core_info->bmciColors[1].rgbtRed = 0xff;
+        }
+        else
+        {
+            bitmap_info = (BITMAPINFO *) ((BYTE *) icon_data + icon_entry->dwDIBOffset);
+            bitmap_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+            bitmap_info->bmiHeader.biWidth = 1;
+            bitmap_info->bmiHeader.biHeight = 2;
+            bitmap_info->bmiHeader.biPlanes = 1;
+            bitmap_info->bmiHeader.biBitCount = 1;
+            bitmap_info->bmiHeader.biSizeImage = 0; /* Uncompressed bitmap. */
+            bitmap_info->bmiColors[0].rgbBlue = monochrome ? 0x00 : 0xff;
+            bitmap_info->bmiColors[0].rgbGreen = 0x00;
+            bitmap_info->bmiColors[0].rgbRed = 0x00;
+            bitmap_info->bmiColors[1].rgbBlue = 0xff;
+            bitmap_info->bmiColors[1].rgbGreen = 0xff;
+            bitmap_info->bmiColors[1].rgbRed = 0xff;
+        }
+
+        handle = CreateFileA("icon.ico", GENERIC_WRITE, 0, NULL, CREATE_NEW,
+            FILE_ATTRIBUTE_NORMAL, NULL);
+        ok(handle != INVALID_HANDLE_VALUE, "CreateFileA failed. %u\n", GetLastError());
+        ret = WriteFile(handle, icon_data, icon_size, &bytes_written, NULL);
+        ok(ret && bytes_written == icon_size, "icon.ico created improperly.\n");
+        CloseHandle(handle);
+
+        handle = LoadImageA(NULL, "icon.ico", IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+todo_wine_if(use_core_info)
+        ok(handle != NULL, "LoadImage() failed with %u.\n", GetLastError());
+        if (handle == NULL)
+        {
+            skip("Icon failed to load: %s, %s\n",
+                 monochrome ? "monochrome" : "colored",
+                 use_core_info ? "core info" : "bitmap info");
+            DeleteFileA("icon.ico");
+            continue;
+        }
+
+        ret = GetIconInfo(handle, &icon_info);
+        ok(ret, "GetIconInfo() failed with %u.\n", GetLastError());
+        if (ret)
+        {
+            ok(icon_info.fIcon == TRUE, "fIcon is %u.\n", icon_info.fIcon);
+            ok(icon_info.xHotspot == 0, "xHotspot is %u.\n", icon_info.xHotspot);
+            ok(icon_info.yHotspot == 0, "yHotspot is %u.\n", icon_info.yHotspot);
+todo_wine_if(monochrome && use_core_info)
+            if (monochrome)
+                ok(icon_info.hbmColor == NULL, "Got hbmColor %p!\n", icon_info.hbmColor);
+            else
+                ok(icon_info.hbmColor != NULL, "No hbmColor!\n");
+            ok(icon_info.hbmMask != NULL, "No hbmMask!\n");
+        }
+
+        ret = DestroyIcon(handle);
+        ok(ret, "DestroyIcon() failed with %u.\n", GetLastError());
+        DeleteFileA("icon.ico");
+    }
+
+    HeapFree(GetProcessHeap(), 0, icon_data);
+}
+
 START_TEST(cursoricon)
 {
     pGetCursorInfo = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetCursorInfo" );
@@ -2522,6 +2639,7 @@ START_TEST(cursoricon)
     test_SetCursor();
     test_ShowCursor();
     test_DestroyCursor();
+    test_monochrome_icon();
     do_parent();
     test_child_process();
     finish_child_process();
