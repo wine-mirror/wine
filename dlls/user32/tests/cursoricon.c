@@ -2567,7 +2567,6 @@ static void test_monochrome_icon(void)
         CloseHandle(handle);
 
         handle = LoadImageA(NULL, "icon.ico", IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
-todo_wine_if(use_core_info)
         ok(handle != NULL, "LoadImage() failed with %u.\n", GetLastError());
         if (handle == NULL)
         {

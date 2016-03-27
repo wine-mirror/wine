@@ -676,10 +676,19 @@ static BOOL CURSORICON_GetFileEntry( LPCVOID dir, DWORD size, int n,
         return FALSE;
     entry = &filedir->idEntries[n];
     info = (const BITMAPINFOHEADER *)((const char *)dir + entry->dwDIBOffset);
-    if ((const char *)(info + 1) - (const char *)dir > size) return FALSE;
+    if (info->biSize != sizeof(BITMAPCOREHEADER))
+    {
+        if ((const char *)(info + 1) - (const char *)dir > size) return FALSE;
+        *bits = info->biBitCount;
+    }
+    else
+    {
+        const BITMAPCOREHEADER *coreinfo = (const BITMAPCOREHEADER *)((const char *)dir + entry->dwDIBOffset);
+        if ((const char *)(coreinfo + 1) - (const char *)dir > size) return FALSE;
+        *bits = coreinfo->bcBitCount;
+    }
     *width = entry->bWidth;
     *height = entry->bHeight;
-    *bits = info->biBitCount;
     return TRUE;
 }
 
@@ -805,6 +814,9 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
     BOOL do_stretch;
     HICON hObj = 0;
     HDC hdc = 0;
+    LONG bmi_width, bmi_height;
+    WORD bpp;
+    DWORD compr;
 
     /* Check bitmap header */
 
@@ -828,9 +840,10 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
     }
 
     size = bitmap_info_size( bmi, DIB_RGB_COLORS );
-    color_size = get_dib_image_size( bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight / 2,
-                                     bmi->bmiHeader.biBitCount );
-    mask_size = get_dib_image_size( bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight / 2, 1 );
+    DIB_GetBitmapInfo(&bmi->bmiHeader, &bmi_width, &bmi_height, &bpp, &compr);
+    color_size = get_dib_image_size( bmi_width, bmi_height / 2,
+                                     bpp );
+    mask_size = get_dib_image_size( bmi_width, bmi_height / 2, 1 );
     if (size > maxsize || color_size > maxsize - size)
     {
         WARN( "truncated file %u < %u+%u+%u\n", maxsize, size, color_size, mask_size );
@@ -845,11 +858,11 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
     }
     else
     {
-        if (!width) width = bmi->bmiHeader.biWidth;
-        if (!height) height = bmi->bmiHeader.biHeight/2;
+        if (!width) width = bmi_width;
+        if (!height) height = bmi_height/2;
     }
-    do_stretch = (bmi->bmiHeader.biHeight/2 != height) ||
-                 (bmi->bmiHeader.biWidth != width);
+    do_stretch = (bmi_height/2 != height) ||
+                 (bmi_width != width);
 
     /* Scale the hotspot */
     if (bIcon)
@@ -859,8 +872,8 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
     }
     else if (do_stretch)
     {
-        hotspot.x = (hotspot.x * width) / bmi->bmiHeader.biWidth;
-        hotspot.y = (hotspot.y * height) / (bmi->bmiHeader.biHeight / 2);
+        hotspot.x = (hotspot.x * width) / bmi_width;
+        hotspot.y = (hotspot.y * height) / (bmi_height / 2);
     }
 
     if (!screen_dc) screen_dc = CreateDCW( DISPLAYW, NULL, NULL, NULL );
@@ -871,7 +884,11 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
     if (!(hdc = CreateCompatibleDC( 0 ))) goto done;
 
     memcpy( bmi_copy, bmi, size );
-    bmi_copy->bmiHeader.biHeight /= 2;
+    if (bmi_copy->bmiHeader.biSize != sizeof(BITMAPCOREHEADER))
+        bmi_copy->bmiHeader.biHeight /= 2;
+    else
+        ((BITMAPCOREINFO *)bmi_copy)->bmciHeader.bcHeight /= 2;
+    bmi_height /= 2;
 
     color_bits = (const char*)bmi + size;
     mask_bits = (const char*)color_bits + color_size;
@@ -885,7 +902,7 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
         /* copy color data into second half of mask bitmap */
         SelectObject( hdc, mask );
         StretchDIBits( hdc, 0, height, width, height,
-                       0, 0, bmi_copy->bmiHeader.biWidth, bmi_copy->bmiHeader.biHeight,
+                       0, 0, bmi_width, bmi_height,
                        color_bits, bmi_copy, DIB_RGB_COLORS, SRCCOPY );
     }
     else
@@ -899,18 +916,18 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
         }
         SelectObject( hdc, color );
         StretchDIBits( hdc, 0, 0, width, height,
-                       0, 0, bmi_copy->bmiHeader.biWidth, bmi_copy->bmiHeader.biHeight,
+                       0, 0, bmi_width, bmi_height,
                        color_bits, bmi_copy, DIB_RGB_COLORS, SRCCOPY );
 
         if (bmi_has_alpha( bmi_copy, color_bits ))
             alpha = create_alpha_bitmap( color, bmi_copy, color_bits );
 
         /* convert info to monochrome to copy the mask */
-        bmi_copy->bmiHeader.biBitCount = 1;
         if (bmi_copy->bmiHeader.biSize != sizeof(BITMAPCOREHEADER))
         {
             RGBQUAD *rgb = bmi_copy->bmiColors;
 
+            bmi_copy->bmiHeader.biBitCount = 1;
             bmi_copy->bmiHeader.biClrUsed = bmi_copy->bmiHeader.biClrImportant = 2;
             rgb[0].rgbBlue = rgb[0].rgbGreen = rgb[0].rgbRed = 0x00;
             rgb[1].rgbBlue = rgb[1].rgbGreen = rgb[1].rgbRed = 0xff;
@@ -920,6 +937,7 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
         {
             RGBTRIPLE *rgb = (RGBTRIPLE *)(((BITMAPCOREHEADER *)bmi_copy) + 1);
 
+            ((BITMAPCOREINFO *)bmi_copy)->bmciHeader.bcBitCount = 1;
             rgb[0].rgbtBlue = rgb[0].rgbtGreen = rgb[0].rgbtRed = 0x00;
             rgb[1].rgbtBlue = rgb[1].rgbtGreen = rgb[1].rgbtRed = 0xff;
         }
@@ -929,7 +947,7 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
     {
         SelectObject( hdc, mask );
         StretchDIBits( hdc, 0, 0, width, height,
-                       0, 0, bmi_copy->bmiHeader.biWidth, bmi_copy->bmiHeader.biHeight,
+                       0, 0, bmi_width, bmi_height,
                        mask_bits, bmi_copy, DIB_RGB_COLORS, SRCCOPY );
     }
     ret = TRUE;
