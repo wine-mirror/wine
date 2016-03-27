@@ -2306,6 +2306,45 @@ HRESULT WINAPI OleLoadPictureFile(VARIANT file, LPDISPATCH *picture)
     return E_NOTIMPL;
 }
 
+static HRESULT create_stream(const WCHAR *filename, IStream **stream)
+{
+    HANDLE hFile;
+    DWORD dwFileSize;
+    HGLOBAL hGlobal = NULL;
+    DWORD dwBytesRead;
+    HRESULT hr = S_OK;
+
+    hFile = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    if (hFile == INVALID_HANDLE_VALUE)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    dwFileSize = GetFileSize(hFile, NULL);
+    if (dwFileSize != INVALID_FILE_SIZE)
+    {
+        hGlobal = GlobalAlloc(GMEM_FIXED, dwFileSize);
+        if (!hGlobal)
+            hr = E_OUTOFMEMORY;
+        else
+        {
+            if (!ReadFile(hFile, hGlobal, dwFileSize, &dwBytesRead, NULL))
+            {
+                GlobalFree(hGlobal);
+                hr = HRESULT_FROM_WIN32(GetLastError());
+            }
+        }
+    }
+
+    CloseHandle(hFile);
+
+    if (FAILED(hr)) return hr;
+
+    hr = CreateStreamOnHGlobal(hGlobal, TRUE, stream);
+    if (FAILED(hr))
+        GlobalFree(hGlobal);
+
+    return hr;
+}
+
 /***********************************************************************
  * OleSavePictureFile (OLEAUT32.423)
  */
@@ -2322,12 +2361,7 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
 		DWORD dwReserved, OLE_COLOR clrReserved, REFIID riid,
 		LPVOID *ppvRet )
 {
-  HANDLE hFile;
-  DWORD dwFileSize;
-  HGLOBAL hGlobal = NULL;
-  DWORD dwBytesRead;
   IStream *stream;
-  BOOL bRead;
   HRESULT hRes;
   WCHAR *file_candidate;
   WCHAR path_buf[MAX_PATH];
@@ -2355,36 +2389,9 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
 
   /* Handle candidate DOS paths separately. */
   if (file_candidate[1] == ':') {
-      hFile = CreateFileW(file_candidate, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-                          0, NULL);
-      if (hFile == INVALID_HANDLE_VALUE)
-          return INET_E_RESOURCE_NOT_FOUND;
-
-      dwFileSize = GetFileSize(hFile, NULL);
-      if (dwFileSize != INVALID_FILE_SIZE )
-      {
-	  hGlobal = GlobalAlloc(GMEM_FIXED,dwFileSize);
-	  if ( hGlobal)
-	  {
-	      bRead = ReadFile(hFile, hGlobal, dwFileSize, &dwBytesRead, NULL) && dwBytesRead == dwFileSize;
-	      if (!bRead)
-	      {
-		  GlobalFree(hGlobal);
-		  hGlobal = 0;
-	      }
-	  }
-      }
-      CloseHandle(hFile);
-      
-      if (!hGlobal)
+      hRes = create_stream(file_candidate, &stream);
+      if (FAILED(hRes))
 	  return INET_E_RESOURCE_NOT_FOUND;
-
-      hRes = CreateStreamOnHGlobal(hGlobal, TRUE, &stream);
-      if (FAILED(hRes)) 
-      {
-	  GlobalFree(hGlobal);
-	  return hRes;
-      }
   } else {
       IMoniker *pmnk;
       IBindCtx *pbc;
