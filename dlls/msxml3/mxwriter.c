@@ -944,7 +944,14 @@ static HRESULT WINAPI mxwriter_get_output(IMXWriter *iface, VARIANT *dest)
 
     if (!dest) return E_POINTER;
 
-    if (!This->dest)
+    if (This->dest)
+    {
+        /* we only support IStream output so far */
+        V_VT(dest) = VT_UNKNOWN;
+        V_UNKNOWN(dest) = (IUnknown*)This->dest;
+        IStream_AddRef(This->dest);
+    }
+    else
     {
         encoded_buffer *buff;
         char *dest_ptr;
@@ -956,6 +963,8 @@ static HRESULT WINAPI mxwriter_get_output(IMXWriter *iface, VARIANT *dest)
 
         V_VT(dest)   = VT_BSTR;
         V_BSTR(dest) = SysAllocStringLen(NULL, This->buffer.utf16_total / sizeof(WCHAR));
+        if (!V_BSTR(dest))
+            return E_OUTOFMEMORY;
 
         dest_ptr = (char*)V_BSTR(dest);
         buff = &This->buffer.utf16;
@@ -971,14 +980,7 @@ static HRESULT WINAPI mxwriter_get_output(IMXWriter *iface, VARIANT *dest)
             memcpy(dest_ptr, buff->data, buff->written);
             dest_ptr += buff->written;
         }
-
-        return S_OK;
     }
-
-    /* we only support IStream output so far */
-    V_VT(dest) = VT_UNKNOWN;
-    V_UNKNOWN(dest) = (IUnknown*)This->dest;
-    IStream_AddRef(This->dest);
 
     return S_OK;
 }
