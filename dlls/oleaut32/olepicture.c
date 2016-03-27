@@ -2322,16 +2322,13 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
 		DWORD dwReserved, OLE_COLOR clrReserved, REFIID riid,
 		LPVOID *ppvRet )
 {
-  IPicture *ipicture;
   HANDLE hFile;
   DWORD dwFileSize;
   HGLOBAL hGlobal = NULL;
   DWORD dwBytesRead;
   IStream *stream;
   BOOL bRead;
-  IPersistStream *pStream;
   HRESULT hRes;
-  HRESULT init_res;
   WCHAR *file_candidate;
   WCHAR path_buf[MAX_PATH];
 
@@ -2407,31 +2404,9 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
 	  return hRes;
   }
 
-  init_res = CoInitialize(NULL);
-
-  hRes = CoCreateInstance(&CLSID_StdPicture, punkCaller, CLSCTX_INPROC_SERVER,
-                          &IID_IPicture, (LPVOID*)&ipicture);
-  if (SUCCEEDED(hRes)) {
-      hRes = IPicture_QueryInterface(ipicture, &IID_IPersistStream, (LPVOID*)&pStream);
-
-      if (SUCCEEDED(hRes)) {
-          hRes = IPersistStream_Load(pStream, stream);
-
-          if (SUCCEEDED(hRes)) {
-              hRes = IPicture_QueryInterface(ipicture, riid, ppvRet);
-
-              if (FAILED(hRes))
-                  ERR("Failed to get interface %s from IPicture.\n", debugstr_guid(riid));
-          }
-          IPersistStream_Release(pStream);
-      }
-      IPicture_Release(ipicture);
-  }
+  hRes = OleLoadPicture(stream, 0, FALSE, riid, ppvRet);
 
   IStream_Release(stream);
-
-  if (SUCCEEDED(init_res))
-      CoUninitialize();
 
   return hRes;
 }
