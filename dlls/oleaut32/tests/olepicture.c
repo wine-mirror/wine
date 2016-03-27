@@ -948,6 +948,7 @@ static void test_OleLoadPicturePath(void)
     HANDLE file;
     DWORD size;
     WCHAR *ptr;
+    VARIANT var;
 
     const struct
     {
@@ -1014,6 +1015,14 @@ static void test_OleLoadPicturePath(void)
     if (pic)
         IPicture_Release(pic);
 
+    VariantInit(&var);
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(temp_fileW + 8);
+    hres = OleLoadPictureFile(var, (IDispatch **)&pic);
+    ok(hres == S_OK, "OleLoadPictureFile error %#lx\n", hres);
+    IPicture_Release(pic);
+    VariantClear(&var);
+
     /* Try a DOS path with tacked on "file:". */
     hres = OleLoadPicturePath(temp_fileW, NULL, 0, 0, &IID_IPicture, (void **)&pic);
     ok(hres == S_OK ||
@@ -1021,6 +1030,13 @@ static void test_OleLoadPicturePath(void)
        "Expected OleLoadPicturePath to return S_OK, got 0x%08lx\n", hres);
     if (pic)
         IPicture_Release(pic);
+
+    VariantInit(&var);
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(temp_fileW);
+    hres = OleLoadPictureFile(var, (IDispatch **)&pic);
+    ok(hres == CTL_E_PATHFILEACCESSERROR, "wrong error %#lx\n", hres);
+    VariantClear(&var);
 
     DeleteFileA(temp_file);
 
@@ -1031,11 +1047,25 @@ static void test_OleLoadPicturePath(void)
        broken(hres == E_FAIL), /*Win2k */
        "Expected OleLoadPicturePath to return INET_E_RESOURCE_NOT_FOUND, got 0x%08lx\n", hres);
 
+    VariantInit(&var);
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(temp_fileW + 8);
+    hres = OleLoadPictureFile(var, (IDispatch **)&pic);
+    ok(hres == CTL_E_FILENOTFOUND, "wrong error %#lx\n", hres);
+    VariantClear(&var);
+
     hres = OleLoadPicturePath(temp_fileW, NULL, 0, 0, &IID_IPicture, (void **)&pic);
     ok(hres == INET_E_RESOURCE_NOT_FOUND || /* XP+ */
        broken(hres == E_UNEXPECTED) || /* NT4 */
        broken(hres == E_FAIL), /* Win2k */
        "Expected OleLoadPicturePath to return INET_E_RESOURCE_NOT_FOUND, got 0x%08lx\n", hres);
+
+    VariantInit(&var);
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(temp_fileW);
+    hres = OleLoadPictureFile(var, (IDispatch **)&pic);
+    ok(hres == CTL_E_PATHFILEACCESSERROR, "wrong error %#lx\n", hres);
+    VariantClear(&var);
 
     file = CreateFileA(temp_file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                        FILE_ATTRIBUTE_NORMAL, NULL);
@@ -1058,6 +1088,13 @@ static void test_OleLoadPicturePath(void)
     if (pic)
         IPicture_Release(pic);
 
+    VariantInit(&var);
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(temp_fileW);
+    hres = OleLoadPictureFile(var, (IDispatch **)&pic);
+    ok(hres == CTL_E_PATHFILEACCESSERROR, "wrong error %#lx\n", hres);
+    VariantClear(&var);
+
     DeleteFileA(temp_file);
 
     /* Try with a nonexistent file. */
@@ -1066,6 +1103,22 @@ static void test_OleLoadPicturePath(void)
        broken(hres == E_UNEXPECTED) || /* NT4 */
        broken(hres == E_FAIL), /* Win2k */
        "Expected OleLoadPicturePath to return INET_E_RESOURCE_NOT_FOUND, got 0x%08lx\n", hres);
+
+    VariantInit(&var);
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(temp_fileW);
+    hres = OleLoadPictureFile(var, (IDispatch **)&pic);
+    ok(hres == CTL_E_PATHFILEACCESSERROR, "wrong error %#lx\n", hres);
+    VariantClear(&var);
+
+    VariantInit(&var);
+    V_VT(&var) = VT_INT;
+    V_INT(&var) = 762;
+    hres = OleLoadPictureFile(var, (IDispatch **)&pic);
+    ok(hres == CTL_E_FILENOTFOUND, "wrong error %#lx\n", hres);
+
+    if (0) /* crashes under Windows */
+    hres = OleLoadPictureFile(var, NULL);
 }
 
 static void test_himetric(void)

@@ -2297,15 +2297,6 @@ HRESULT WINAPI OleLoadPictureEx( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
   return hr;
 }
 
-/***********************************************************************
- * OleLoadPictureFile (OLEAUT32.422)
- */
-HRESULT WINAPI OleLoadPictureFile(VARIANT file, LPDISPATCH *picture)
-{
-    FIXME("(%s %p): stub\n", wine_dbgstr_variant(&file), picture);
-    return E_NOTIMPL;
-}
-
 static HRESULT create_stream(const WCHAR *filename, IStream **stream)
 {
     HANDLE hFile;
@@ -2342,6 +2333,33 @@ static HRESULT create_stream(const WCHAR *filename, IStream **stream)
     if (FAILED(hr))
         GlobalFree(hGlobal);
 
+    return hr;
+}
+
+/***********************************************************************
+ * OleLoadPictureFile (OLEAUT32.422)
+ */
+HRESULT WINAPI OleLoadPictureFile(VARIANT filename, IDispatch **picture)
+{
+    IStream *stream;
+    HRESULT hr;
+
+    TRACE("(%s,%p)\n", wine_dbgstr_variant(&filename), picture);
+
+    if (V_VT(&filename) != VT_BSTR)
+        return CTL_E_FILENOTFOUND;
+
+    hr = create_stream(V_BSTR(&filename), &stream);
+    if (hr != S_OK)
+    {
+        if (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+            return CTL_E_FILENOTFOUND;
+
+        return CTL_E_PATHFILEACCESSERROR;
+    }
+
+    hr = OleLoadPicture(stream, 0, FALSE, &IID_IDispatch, (void **)picture);
+    IStream_Release(stream);
     return hr;
 }
 
