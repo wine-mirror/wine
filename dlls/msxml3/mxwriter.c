@@ -34,6 +34,7 @@
 #include "msxml6.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 #include "msxml_private.h"
 
@@ -121,6 +122,7 @@ typedef enum
 
 typedef struct
 {
+    struct list entry;
     char *data;
     unsigned int allocated;
     unsigned int written;
@@ -131,6 +133,8 @@ typedef struct
     encoded_buffer utf16;
     encoded_buffer encoded;
     UINT code_page;
+    UINT utf16_total;   /* total number of bytes written since last buffer reinitialization */
+    struct list blocks; /* only used when output was not set, for BSTR case */
 } output_buffer;
 
 typedef struct
@@ -304,14 +308,25 @@ static HRESULT init_output_buffer(xml_encoding encoding, output_buffer *buffer)
     }
     else
         memset(&buffer->encoded, 0, sizeof(buffer->encoded));
+    list_init(&buffer->blocks);
+    buffer->utf16_total = 0;
 
     return S_OK;
 }
 
 static void free_output_buffer(output_buffer *buffer)
 {
+    encoded_buffer *cur, *cur2;
+
     free_encoded_buffer(&buffer->encoded);
     free_encoded_buffer(&buffer->utf16);
+
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &buffer->blocks, encoded_buffer, entry)
+    {
+        list_remove(&cur->entry);
+        free_encoded_buffer(cur);
+        heap_free(cur);
+    }
 }
 
 static void grow_buffer(encoded_buffer *buffer, int length)
@@ -330,6 +345,58 @@ static HRESULT write_output_buffer_mode(mxwriter *writer, output_mode mode, cons
     output_buffer *buffer = &writer->buffer;
     int length;
     char *ptr;
+
+    /* When writer has no output set we have to accumulate everything to return it later in a form of BSTR.
+       To achieve that:
+
+       - fill a buffer already allocated as part of output buffer;
+       - when current buffer is full, allocate another one and switch to it; buffers themselves never grow,
+         but are linked together, with head pointing to first allocated buffer after initial one got filled;
+       - later during get_output() contents are concatenated by copying one after another to destination BSTR buffer,
+         that's returned to the client. */
+    if (!writer->dest && (mode & (OutputBuffer_Native | OutputBuffer_Both)))
+    {
+        encoded_buffer *buff;
+
+        /* select last used block */
+        if (list_empty(&buffer->blocks))
+            buff = &buffer->utf16;
+        else
+            buff = LIST_ENTRY(list_tail(&buffer->blocks), encoded_buffer, entry);
+
+        length = (len == -1 ? strlenW(data) : len) * sizeof(WCHAR);
+
+        while (length)
+        {
+            unsigned int avail = buff->allocated - buff->written;
+            unsigned int written = min(avail, length);
+
+            if (avail)
+            {
+                memcpy(buff->data + buff->written, data, written);
+                buff->written += written;
+                buffer->utf16_total += written;
+                length -= written;
+            }
+
+            /* alloc new block if needed and retry */
+            if (length)
+            {
+                encoded_buffer *next = heap_alloc(sizeof(*next));
+                HRESULT hr;
+
+                if (FAILED(hr = init_encoded_buffer(next))) {
+                    heap_free(next);
+                    return hr;
+                }
+
+                list_add_tail(&buffer->blocks, &next->entry);
+                buff = next;
+            }
+        }
+
+        return S_OK;
+    }
 
     if (mode & (OutputBuffer_Encoded | OutputBuffer_Both)) {
         if (buffer->code_page != ~0)
@@ -378,13 +445,25 @@ static HRESULT write_output_buffer_quoted(mxwriter *writer, const WCHAR *data, i
 }
 
 /* frees buffer data, reallocates with a default lengths */
-static void close_output_buffer(mxwriter *This)
+static void close_output_buffer(mxwriter *writer)
 {
-    heap_free(This->buffer.utf16.data);
-    heap_free(This->buffer.encoded.data);
-    init_encoded_buffer(&This->buffer.utf16);
-    init_encoded_buffer(&This->buffer.encoded);
-    get_code_page(This->xml_enc, &This->buffer.code_page);
+    encoded_buffer *cur, *cur2;
+
+    heap_free(writer->buffer.utf16.data);
+    heap_free(writer->buffer.encoded.data);
+
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &writer->buffer.blocks, encoded_buffer, entry)
+    {
+        list_remove(&cur->entry);
+        free_encoded_buffer(cur);
+        heap_free(cur);
+    }
+
+    init_encoded_buffer(&writer->buffer.utf16);
+    init_encoded_buffer(&writer->buffer.encoded);
+    get_code_page(writer->xml_enc, &writer->buffer.code_page);
+    writer->buffer.utf16_total = 0;
+    list_init(&writer->buffer.blocks);
 }
 
 /* Escapes special characters like:
@@ -867,12 +946,31 @@ static HRESULT WINAPI mxwriter_get_output(IMXWriter *iface, VARIANT *dest)
 
     if (!This->dest)
     {
-        HRESULT hr = flush_output_buffer(This);
+        encoded_buffer *buff;
+        char *dest_ptr;
+        HRESULT hr;
+
+        hr = flush_output_buffer(This);
         if (FAILED(hr))
             return hr;
 
         V_VT(dest)   = VT_BSTR;
-        V_BSTR(dest) = SysAllocString((WCHAR*)This->buffer.utf16.data);
+        V_BSTR(dest) = SysAllocStringLen(NULL, This->buffer.utf16_total / sizeof(WCHAR));
+
+        dest_ptr = (char*)V_BSTR(dest);
+        buff = &This->buffer.utf16;
+
+        if (buff->written)
+        {
+            memcpy(dest_ptr, buff->data, buff->written);
+            dest_ptr += buff->written;
+        }
+
+        LIST_FOR_EACH_ENTRY(buff, &This->buffer.blocks, encoded_buffer, entry)
+        {
+            memcpy(dest_ptr, buff->data, buff->written);
+            dest_ptr += buff->written;
+        }
 
         return S_OK;
     }
