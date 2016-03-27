@@ -1,7 +1,7 @@
 /*
  *    MXWriter implementation
  *
- * Copyright 2011-2014 Nikolay Sivov for CodeWeavers
+ * Copyright 2011-2014, 2016 Nikolay Sivov for CodeWeavers
  * Copyright 2011 Thomas Mullaly
  *
  * This library is free software; you can redistribute it and/or
@@ -244,7 +244,7 @@ static xml_encoding parse_encoding_name(const WCHAR *encoding)
 
 static HRESULT init_encoded_buffer(encoded_buffer *buffer)
 {
-    const int initial_len = 0x2000;
+    const int initial_len = 0x1000;
     buffer->data = heap_alloc(initial_len);
     if (!buffer->data) return E_OUTOFMEMORY;
 

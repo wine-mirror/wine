@@ -3305,7 +3305,6 @@ static void test_mxwriter_flush(void)
     pos2.QuadPart = 0;
     hr = IStream_Seek(stream, pos, STREAM_SEEK_CUR, &pos2);
     EXPECT_HR(hr, S_OK);
-todo_wine
     ok(pos2.QuadPart != 0, "unexpected stream beginning\n");
 
     hr = IMXWriter_get_output(writer, NULL);
