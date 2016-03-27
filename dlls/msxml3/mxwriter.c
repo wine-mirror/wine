@@ -99,13 +99,6 @@ static const struct xml_encoding_data xml_encoding_map[] = {
 
 typedef enum
 {
-    OutputBuffer_Native  = 0x001,
-    OutputBuffer_Encoded = 0x010,
-    OutputBuffer_Both    = 0x100
-} output_mode;
-
-typedef enum
-{
     MXWriter_BOM = 0,
     MXWriter_DisableEscaping,
     MXWriter_Indent,
@@ -130,7 +123,6 @@ typedef struct
 
 typedef struct
 {
-    encoded_buffer utf16;
     encoded_buffer encoded;
     UINT code_page;
     UINT utf16_total;   /* total number of bytes written since last buffer reinitialization */
@@ -173,7 +165,6 @@ typedef struct
     BSTR element;
 
     IStream *dest;
-    ULONG dest_written;
 
     output_buffer buffer;
 } mxwriter;
@@ -293,21 +284,10 @@ static HRESULT init_output_buffer(xml_encoding encoding, output_buffer *buffer)
     if (hr != S_OK)
         return hr;
 
-    hr = init_encoded_buffer(&buffer->utf16);
+    hr = init_encoded_buffer(&buffer->encoded);
     if (hr != S_OK)
         return hr;
 
-    /* currently we always create a default output buffer that is UTF-16 only,
-       but it's possible to allocate with specific encoding too */
-    if (encoding != XmlEncoding_UTF16) {
-        hr = init_encoded_buffer(&buffer->encoded);
-        if (hr != S_OK) {
-            free_encoded_buffer(&buffer->utf16);
-            return hr;
-        }
-    }
-    else
-        memset(&buffer->encoded, 0, sizeof(buffer->encoded));
     list_init(&buffer->blocks);
     buffer->utf16_total = 0;
 
@@ -319,7 +299,6 @@ static void free_output_buffer(output_buffer *buffer)
     encoded_buffer *cur, *cur2;
 
     free_encoded_buffer(&buffer->encoded);
-    free_encoded_buffer(&buffer->utf16);
 
     LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &buffer->blocks, encoded_buffer, entry)
     {
@@ -329,23 +308,93 @@ static void free_output_buffer(output_buffer *buffer)
     }
 }
 
-static void grow_buffer(encoded_buffer *buffer, int length)
-{
-    /* grow if needed, plus 4 bytes to be sure null terminator will fit in */
-    if (buffer->allocated < buffer->written + length + 4)
-    {
-        int grown_size = max(2*buffer->allocated, buffer->allocated + length);
-        buffer->data = heap_realloc(buffer->data, grown_size);
-        buffer->allocated = grown_size;
-    }
-}
-
-static HRESULT write_output_buffer_mode(mxwriter *writer, output_mode mode, const WCHAR *data, int len)
+static HRESULT write_output_buffer(mxwriter *writer, const WCHAR *data, int len)
 {
     output_buffer *buffer = &writer->buffer;
-    int length;
-    char *ptr;
+    encoded_buffer *buff;
+    unsigned int written;
+    int src_len;
 
+    if (!len || !*data)
+        return S_OK;
+
+    src_len = len == -1 ? strlenW(data) : len;
+    if (writer->dest)
+    {
+        buff = &buffer->encoded;
+
+        if (buffer->code_page == ~0)
+        {
+            unsigned int avail = buff->allocated - buff->written;
+
+            src_len *= sizeof(WCHAR);
+            written = min(avail, src_len);
+
+            /* fill internal buffer first */
+            if (avail)
+            {
+                memcpy(buff->data + buff->written, data, written);
+                data += written / sizeof(WCHAR);
+                buff->written += written;
+                avail -= written;
+                src_len -= written;
+            }
+
+            if (!avail)
+            {
+                IStream_Write(writer->dest, buff->data, buff->written, &written);
+                buff->written = 0;
+                if (src_len >= buff->allocated)
+                    IStream_Write(writer->dest, data, src_len, &written);
+                else if (src_len)
+                {
+                    memcpy(buff->data, data, src_len);
+                    buff->written += src_len;
+                }
+            }
+        }
+        else
+        {
+            unsigned int avail = buff->allocated - buff->written;
+            int length;
+
+            length = WideCharToMultiByte(buffer->code_page, 0, data, src_len, NULL, 0, NULL, NULL);
+            if (avail >= length)
+            {
+                length = WideCharToMultiByte(buffer->code_page, 0, data, src_len, buff->data + buff->written, length, NULL, NULL);
+                buff->written += length;
+            }
+            else
+            {
+                /* drain what we go so far */
+                if (buff->written)
+                {
+                    IStream_Write(writer->dest, buff->data, buff->written, &written);
+                    buff->written = 0;
+                    avail = buff->allocated;
+                }
+
+                if (avail >= length)
+                {
+                    length = WideCharToMultiByte(buffer->code_page, 0, data, src_len, buff->data + buff->written, length, NULL, NULL);
+                    buff->written += length;
+                }
+                else
+                {
+                    char *mb;
+
+                    /* if current chunk is larger than total buffer size, convert it at once using temporary allocated buffer */
+                    mb = heap_alloc(length);
+                    if (!mb)
+                        return E_OUTOFMEMORY;
+
+                    length = WideCharToMultiByte(buffer->code_page, 0, data, src_len, mb, length, NULL, NULL);
+                    IStream_Write(writer->dest, mb, length, &written);
+                    heap_free(mb);
+                }
+            }
+        }
+    }
     /* When writer has no output set we have to accumulate everything to return it later in a form of BSTR.
        To achieve that:
 
@@ -354,33 +403,30 @@ static HRESULT write_output_buffer_mode(mxwriter *writer, output_mode mode, cons
          but are linked together, with head pointing to first allocated buffer after initial one got filled;
        - later during get_output() contents are concatenated by copying one after another to destination BSTR buffer,
          that's returned to the client. */
-    if (!writer->dest && (mode & (OutputBuffer_Native | OutputBuffer_Both)))
+    else
     {
-        encoded_buffer *buff;
-
         /* select last used block */
         if (list_empty(&buffer->blocks))
-            buff = &buffer->utf16;
+            buff = &buffer->encoded;
         else
             buff = LIST_ENTRY(list_tail(&buffer->blocks), encoded_buffer, entry);
 
-        length = (len == -1 ? strlenW(data) : len) * sizeof(WCHAR);
-
-        while (length)
+        src_len *= sizeof(WCHAR);
+        while (src_len)
         {
             unsigned int avail = buff->allocated - buff->written;
-            unsigned int written = min(avail, length);
+            unsigned int written = min(avail, src_len);
 
             if (avail)
             {
                 memcpy(buff->data + buff->written, data, written);
                 buff->written += written;
                 buffer->utf16_total += written;
-                length -= written;
+                src_len -= written;
             }
 
             /* alloc new block if needed and retry */
-            if (length)
+            if (src_len)
             {
                 encoded_buffer *next = heap_alloc(sizeof(*next));
                 HRESULT hr;
@@ -394,45 +440,9 @@ static HRESULT write_output_buffer_mode(mxwriter *writer, output_mode mode, cons
                 buff = next;
             }
         }
-
-        return S_OK;
-    }
-
-    if (mode & (OutputBuffer_Encoded | OutputBuffer_Both)) {
-        if (buffer->code_page != ~0)
-        {
-            length = WideCharToMultiByte(buffer->code_page, 0, data, len, NULL, 0, NULL, NULL);
-            grow_buffer(&buffer->encoded, length);
-            ptr = buffer->encoded.data + buffer->encoded.written;
-            length = WideCharToMultiByte(buffer->code_page, 0, data, len, ptr, length, NULL, NULL);
-            buffer->encoded.written += len == -1 ? length-1 : length;
-        }
-    }
-
-    if (mode & (OutputBuffer_Native | OutputBuffer_Both)) {
-        /* WCHAR data just copied */
-        length = len == -1 ? strlenW(data) : len;
-        if (length)
-        {
-            length *= sizeof(WCHAR);
-
-            grow_buffer(&buffer->utf16, length);
-            ptr = buffer->utf16.data + buffer->utf16.written;
-
-            memcpy(ptr, data, length);
-            buffer->utf16.written += length;
-            ptr += length;
-            /* null termination */
-            memset(ptr, 0, sizeof(WCHAR));
-        }
     }
 
     return S_OK;
-}
-
-static HRESULT write_output_buffer(mxwriter *writer, const WCHAR *data, int len)
-{
-    return write_output_buffer_mode(writer, OutputBuffer_Both, data, len);
 }
 
 static HRESULT write_output_buffer_quoted(mxwriter *writer, const WCHAR *data, int len)
@@ -449,7 +459,6 @@ static void close_output_buffer(mxwriter *writer)
 {
     encoded_buffer *cur, *cur2;
 
-    heap_free(writer->buffer.utf16.data);
     heap_free(writer->buffer.encoded.data);
 
     LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &writer->buffer.blocks, encoded_buffer, entry)
@@ -459,7 +468,6 @@ static void close_output_buffer(mxwriter *writer)
         heap_free(cur);
     }
 
-    init_encoded_buffer(&writer->buffer.utf16);
     init_encoded_buffer(&writer->buffer.encoded);
     get_code_page(writer->xml_enc, &writer->buffer.code_page);
     writer->buffer.utf16_total = 0;
@@ -553,9 +561,10 @@ static void write_prolog_buffer(mxwriter *writer)
     /* encoding */
     write_output_buffer(writer, encodingW, sizeof(encodingW)/sizeof(WCHAR));
 
-    /* always write UTF-16 to WCHAR buffer */
-    write_output_buffer_mode(writer, OutputBuffer_Native, utf16W, sizeof(utf16W)/sizeof(WCHAR) - 1);
-    write_output_buffer_mode(writer, OutputBuffer_Encoded, writer->encoding, -1);
+    if (writer->dest)
+        write_output_buffer(writer, writer->encoding, -1);
+    else
+        write_output_buffer(writer, utf16W, sizeof(utf16W)/sizeof(WCHAR) - 1);
     write_output_buffer(writer, quotW, 1);
 
     /* standalone */
@@ -572,43 +581,26 @@ static void write_prolog_buffer(mxwriter *writer)
 /* Attempts to the write data from the mxwriter's buffer to
  * the destination stream (if there is one).
  */
-static HRESULT write_data_to_stream(mxwriter *This)
+static HRESULT write_data_to_stream(mxwriter *writer)
 {
-    encoded_buffer *buffer;
+    encoded_buffer *buffer = &writer->buffer.encoded;
     ULONG written = 0;
-    HRESULT hr;
 
-    if (!This->dest)
+    if (!writer->dest)
         return S_OK;
 
-    if (This->xml_enc != XmlEncoding_UTF16)
-        buffer = &This->buffer.encoded;
+    if (buffer->written == 0)
+    {
+        if (writer->xml_enc == XmlEncoding_UTF8)
+            IStream_Write(writer->dest, buffer->data, 0, &written);
+    }
     else
-        buffer = &This->buffer.utf16;
-
-    if (This->dest_written > buffer->written) {
-        ERR("Failed sanity check! Not sure what to do... (%d > %d)\n", This->dest_written, buffer->written);
-        return E_FAIL;
-    } else if (This->dest_written == buffer->written && This->xml_enc != XmlEncoding_UTF8)
-        /* Windows seems to make an empty write call when the encoding is UTF-8 and
-         * all the data has been written to the stream. It doesn't seem make this call
-         * for any other encodings.
-         */
-        return S_OK;
-
-    /* Write the current content from the output buffer into 'dest'.
-     * TODO: Check what Windows does if the IStream doesn't write all of
-     *       the data we give it at once.
-     */
-    hr = IStream_Write(This->dest, buffer->data+This->dest_written,
-                         buffer->written-This->dest_written, &written);
-    if (FAILED(hr)) {
-        WARN("Failed to write data to IStream (0x%08x)\n", hr);
-        return hr;
+    {
+        IStream_Write(writer->dest, buffer->data, buffer->written, &written);
+        buffer->written = 0;
     }
 
-    This->dest_written += written;
-    return hr;
+    return S_OK;
 }
 
 /* Newly added element start tag left unclosed cause for empty elements
@@ -678,7 +670,6 @@ static inline HRESULT flush_output_buffer(mxwriter *This)
 static inline void reset_output_buffer(mxwriter *This)
 {
     close_output_buffer(This);
-    This->dest_written = 0;
 }
 
 static HRESULT writer_set_property(mxwriter *writer, mxwriter_prop property, VARIANT_BOOL value)
@@ -967,7 +958,7 @@ static HRESULT WINAPI mxwriter_get_output(IMXWriter *iface, VARIANT *dest)
             return E_OUTOFMEMORY;
 
         dest_ptr = (char*)V_BSTR(dest);
-        buff = &This->buffer.utf16;
+        buff = &This->buffer.encoded;
 
         if (buff->written)
         {
@@ -2607,7 +2598,6 @@ HRESULT MXWriter_create(MSXML_VERSION version, void **ppObj)
     This->newline = FALSE;
 
     This->dest = NULL;
-    This->dest_written = 0;
 
     hr = init_output_buffer(This->xml_enc, &This->buffer);
     if (hr != S_OK) {
