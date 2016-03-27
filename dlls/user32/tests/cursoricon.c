@@ -2584,7 +2584,6 @@ static void test_monochrome_icon(void)
             ok(icon_info.fIcon == TRUE, "fIcon is %u.\n", icon_info.fIcon);
             ok(icon_info.xHotspot == 0, "xHotspot is %u.\n", icon_info.xHotspot);
             ok(icon_info.yHotspot == 0, "yHotspot is %u.\n", icon_info.yHotspot);
-todo_wine_if(monochrome && use_core_info)
             if (monochrome)
                 ok(icon_info.hbmColor == NULL, "Got hbmColor %p!\n", icon_info.hbmColor);
             else
