@@ -107,7 +107,7 @@ static HRESULT exec_global_code(JScript *This, bytecode_t *code)
     IActiveScriptSite_OnEnterScript(This->site);
 
     clear_ei(This->ctx);
-    hres = exec_source(This->ctx, EXEC_GLOBAL, code, &code->global_code, NULL, NULL, This->ctx->global, NULL);
+    hres = exec_source(This->ctx, EXEC_GLOBAL, code, &code->global_code, NULL, NULL, This->ctx->global, NULL, NULL);
 
     IActiveScriptSite_OnLeaveScript(This->site);
     return hres;
@@ -773,7 +773,7 @@ static HRESULT WINAPI JScriptParse_ParseScriptText(IActiveScriptParse *iface,
         IActiveScriptSite_OnEnterScript(This->site);
 
         clear_ei(This->ctx);
-        hres = exec_source(This->ctx, EXEC_GLOBAL, code, &code->global_code, NULL, NULL, This->ctx->global, &r);
+        hres = exec_source(This->ctx, EXEC_GLOBAL, code, &code->global_code, NULL, NULL, This->ctx->global, NULL, &r);
         if(SUCCEEDED(hres)) {
             if(pvarResult)
                 hres = jsval_to_variant(r, pvarResult);

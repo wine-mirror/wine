@@ -245,15 +245,11 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
             exec_flags |= EXEC_CONSTRUCTOR;
         prev_args = function->arguments;
         function->arguments = arg_disp;
-        hres = exec_source(ctx, exec_flags, function->code, function->func_code, scope, this_obj, var_disp, r);
+        hres = exec_source(ctx, exec_flags, function->code, function->func_code, scope, this_obj, var_disp, arg_disp, r);
         function->arguments = prev_args;
 
         scope_release(scope);
     }
-
-    /* Reset arguments value to cut the reference cycle. Note that since all activation contexts have
-     * their own arguments property, it's impossible to use prototype's one during name lookup */
-    jsdisp_propput_name(var_disp, argumentsW, jsval_undefined());
 
     jsdisp_release(arg_disp);
     jsdisp_release(var_disp);

@@ -2381,6 +2381,13 @@ OP_LIST
 
 static void release_call_frame(call_frame_t *frame)
 {
+    if(frame->arguments_obj) {
+        /* Reset arguments value to cut the reference cycle. Note that since all activation contexts have
+         * their own arguments property, it's impossible to use prototype's one during name lookup */
+        static const WCHAR argumentsW[] = {'a','r','g','u','m','e','n','t','s',0};
+        jsdisp_propput_name(frame->variable_obj, argumentsW, jsval_undefined());
+        jsdisp_release(frame->arguments_obj);
+    }
     if(frame->variable_obj)
         jsdisp_release(frame->variable_obj);
     if(frame->this_obj)
@@ -2529,7 +2536,7 @@ static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdis
 }
 
 HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, function_code_t *function, scope_chain_t *scope,
-        IDispatch *this_obj, jsdisp_t *variable_obj, jsval_t *r)
+        IDispatch *this_obj, jsdisp_t *variable_obj, jsdisp_t *arguments_obj, jsval_t *r)
 {
     call_frame_t *frame;
     unsigned i;
@@ -2596,6 +2603,9 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
     else
         frame->this_obj = to_disp(ctx->global);
     IDispatch_AddRef(frame->this_obj);
+
+    if(arguments_obj)
+        frame->arguments_obj = jsdisp_addref(arguments_obj);
 
     frame->flags = flags;
     frame->variable_obj = jsdisp_addref(variable_obj);
