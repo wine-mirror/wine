@@ -118,14 +118,14 @@ BEGIN
     IDC_SYSPARAMS_INACTIVE_BORDER   "Inactive Border"
     IDC_SYSPARAMS_BUTTON_SHADOW     "Controls Shadow"
     IDC_SYSPARAMS_GRAY_TEXT         "Gray Text"
-    IDC_SYSPARAMS_BUTTON_HILIGHT    "Controls Highlight"
+    IDC_SYSPARAMS_BUTTON_HIGHLIGHT  "Controls Highlight"
     IDC_SYSPARAMS_BUTTON_DARK_SHADOW "Controls Dark Shadow"
     IDC_SYSPARAMS_BUTTON_LIGHT      "Controls Light"
     IDC_SYSPARAMS_BUTTON_ALTERNATE  "Controls Alternate Background"
     IDC_SYSPARAMS_HOT_TRACKING      "Hot Tracked Item"
     IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "Active Title Bar Gradient"
     IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT "Inactive Title Bar Gradient"
-    IDC_SYSPARAMS_MENU_HILIGHT      "Menu Highlight"
+    IDC_SYSPARAMS_MENU_HIGHLIGHT    "Menu Highlight"
     IDC_SYSPARAMS_MENUBAR           "Menu Bar"
 END
 
