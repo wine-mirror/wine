@@ -77,7 +77,8 @@ void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wine
         const struct wined3d_const_bo_address *data)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    const struct wined3d_format *format = volume->resource.format;
+    struct wined3d_texture *texture = volume->container;
+    const struct wined3d_format *format = texture->resource.format;
     UINT width = volume->resource.width;
     UINT height = volume->resource.height;
     UINT depth = volume->resource.depth;
@@ -95,13 +96,13 @@ void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wine
 
         if (data->buffer_object)
             ERR("Loading a converted volume from a PBO.\n");
-        if (volume->container->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
+        if (texture->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
             ERR("Converting a block-based format.\n");
 
         dst_row_pitch = width * format->conv_byte_count;
         dst_slice_pitch = dst_row_pitch * height;
 
-        wined3d_texture_get_pitch(volume->container, volume->texture_level, &src_row_pitch, &src_slice_pitch);
+        wined3d_texture_get_pitch(texture, volume->texture_level, &src_row_pitch, &src_slice_pitch);
 
         converted_mem = HeapAlloc(GetProcessHeap(), 0, dst_slice_pitch * depth);
         format->convert(data->addr, converted_mem, src_row_pitch, src_slice_pitch,
