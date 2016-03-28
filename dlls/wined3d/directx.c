@@ -3611,6 +3611,11 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
     if (gl_version >= MAKEDWORD_VERSION(4, 3))
         gl_info->supported[WINED3D_GL_VERSION_4_3] = TRUE;
 
+    /* All the points are actually point sprites in core contexts, the APIs from
+     * ARB_point_sprite are not supported anymore. */
+    if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+        gl_info->supported[ARB_POINT_SPRITE] = FALSE;
+
     if (gl_info->supported[APPLE_FENCE])
     {
         /* GL_NV_fence and GL_APPLE_fence provide the same functionality basically.
