@@ -898,12 +898,12 @@ case $host_os in
           WINE_TRY_CFLAGS([-Wl,-Ttext-segment=0x7bc00000],
                           [case $host_os in
                            freebsd* | kfreebsd*-gnu) LDEXECFLAGS="$LDEXECFLAGS -Wl,-Ttext-segment=0x60000000" ;;
-                           *) LDEXECFLAGS="$LDEXECFLAGS -Wl,-Ttext-segment=0x7bf00000" ;;
+                           *) LDEXECFLAGS="$LDEXECFLAGS -Wl,-Ttext-segment=0x7c000000" ;;
                            esac],
-                          [WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7bf00400],
+                          [WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7c000400],
                                            [case $host_os in
                                               freebsd* | kfreebsd*-gnu) LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x60000400" ;;
-                                              *) LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400" ;;
+                                              *) LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7c000400" ;;
                                            esac])
                            AC_PATH_PROG(PRELINK, prelink, false, [/sbin /usr/sbin $PATH])
                            if test "x$PRELINK" = xfalse
