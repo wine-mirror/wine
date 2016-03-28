@@ -1864,21 +1864,18 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
 
     TRACE("Setting up the screen\n");
 
-    gl_info->gl_ops.gl.p_glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-    checkGLcall("glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);");
+    if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+    {
+        gl_info->gl_ops.gl.p_glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+        checkGLcall("glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);");
 
-    gl_info->gl_ops.gl.p_glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
-    checkGLcall("glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);");
+        gl_info->gl_ops.gl.p_glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
+        checkGLcall("glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);");
 
-    gl_info->gl_ops.gl.p_glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
-    checkGLcall("glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);");
-
-    gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_ALIGNMENT, device->surface_alignment);
-    checkGLcall("glPixelStorei(GL_PACK_ALIGNMENT, device->surface_alignment);");
-    gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    checkGLcall("glPixelStorei(GL_UNPACK_ALIGNMENT, device->surface_alignment);");
-
-    if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+        gl_info->gl_ops.gl.p_glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
+        checkGLcall("glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);");
+    }
+    else
     {
         GLuint vao;
 
@@ -1886,6 +1883,11 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         GL_EXTCALL(glBindVertexArray(vao));
         checkGLcall("creating VAO");
     }
+
+    gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_ALIGNMENT, device->surface_alignment);
+    checkGLcall("glPixelStorei(GL_PACK_ALIGNMENT, device->surface_alignment);");
+    gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    checkGLcall("glPixelStorei(GL_UNPACK_ALIGNMENT, device->surface_alignment);");
 
     if (gl_info->supported[ARB_VERTEX_BLEND])
     {
