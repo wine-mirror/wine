@@ -34,7 +34,6 @@ typedef struct {
     bytecode_t *code;
     function_code_t *func_code;
     DWORD length;
-    jsdisp_t *arguments;
 } FunctionInstance;
 
 typedef struct {
@@ -239,14 +238,11 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
     hres = scope_push(function->scope_chain, var_disp, to_disp(var_disp), &scope);
     if(SUCCEEDED(hres)) {
         DWORD exec_flags = 0;
-        jsdisp_t *prev_args;
 
         if(is_constructor)
             exec_flags |= EXEC_CONSTRUCTOR;
-        prev_args = function->arguments;
-        function->arguments = arg_disp;
-        hres = exec_source(ctx, exec_flags, function->code, function->func_code, scope, this_obj, var_disp, arg_disp, r);
-        function->arguments = prev_args;
+        hres = exec_source(ctx, exec_flags, function->code, function->func_code, scope, this_obj,
+                &function->dispex, var_disp, arg_disp, r);
 
         scope_release(scope);
     }
@@ -535,10 +531,18 @@ HRESULT Function_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 static HRESULT Function_get_arguments(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     FunctionInstance *function = function_from_jsdisp(jsthis);
+    call_frame_t *frame;
 
     TRACE("\n");
 
-    *r = function->arguments ? jsval_obj(jsdisp_addref(function->arguments)) : jsval_null();
+    for(frame = ctx->call_ctx; frame; frame = frame->prev_frame) {
+        if(frame->function_instance == &function->dispex) {
+            *r = jsval_obj(jsdisp_addref(frame->arguments_obj));
+            return S_OK;
+        }
+    }
+
+    *r = jsval_null();
     return S_OK;
 }
 

@@ -227,7 +227,7 @@ static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     if(frame->flags & EXEC_GLOBAL)
         exec_flags |= EXEC_GLOBAL;
     hres = exec_source(ctx, exec_flags, code, &code->global_code, frame->scope,
-            frame->this_obj, frame->variable_obj, NULL, r);
+            frame->this_obj, NULL, frame->variable_obj, NULL, r);
     release_bytecode(code);
     return hres;
 }

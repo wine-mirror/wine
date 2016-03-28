@@ -205,8 +205,12 @@ function argumentsTest() {
     eval('ok(arguments === save, "unexpected arguments");');
     [1,2].sort(function() {
         ok(argumentsTest.arguments === save, "unexpected argumentsTest.arguments");
+        return 1;
     });
 }
+/* FIXME: It seems that when function is called as an expression, instance object arguments is not set.
+ * We currently always set it in Wine. */
+argumentsTest();
 
 tmp = (function() {1;})();
 ok(tmp === undefined, "tmp = " + tmp);
