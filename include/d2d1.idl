@@ -1160,7 +1160,7 @@ interface ID2D1DCRenderTarget : ID2D1RenderTarget
 {
     HRESULT BindDC(
         [in] const HDC dc,
-        [in] const RECT rect
+        [in] const RECT *rect
     );
 }
 
