@@ -3763,7 +3763,7 @@
 @ stub _Lock_shared_ptr_spin_lock
 @ cdecl _Mbrtowc(ptr ptr long ptr ptr)
 @ stub _Mtx_clear_owner
-@ stub _Mtx_current_owns
+@ cdecl _Mtx_current_owns(ptr)
 @ cdecl _Mtx_destroy(ptr)
 @ cdecl _Mtx_getconcrtcs(ptr)
 @ cdecl _Mtx_init(ptr long)

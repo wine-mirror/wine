@@ -3763,7 +3763,7 @@
 @ stub _Lock_shared_ptr_spin_lock
 @ cdecl _Mbrtowc(ptr ptr long ptr ptr) msvcp120._Mbrtowc
 @ stub _Mtx_clear_owner
-@ stub _Mtx_current_owns
+@ cdecl _Mtx_current_owns(ptr) msvcp120._Mtx_current_owns
 @ cdecl _Mtx_destroy(ptr) msvcp120._Mtx_destroy
 @ cdecl _Mtx_getconcrtcs(ptr) msvcp120._Mtx_getconcrtcs
 @ cdecl _Mtx_init(ptr long) msvcp120._Mtx_init

@@ -487,6 +487,11 @@ void __cdecl _Mtx_destroy(_Mtx_t *mtx)
     MSVCRT_operator_delete(*mtx);
 }
 
+int __cdecl _Mtx_current_owns(_Mtx_t *mtx)
+{
+    return (*mtx)->thread_id == GetCurrentThreadId();
+}
+
 int __cdecl _Mtx_lock(_Mtx_t *mtx)
 {
     if((*mtx)->thread_id != GetCurrentThreadId()) {
