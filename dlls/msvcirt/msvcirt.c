@@ -1383,7 +1383,7 @@ streampos __thiscall strstreambuf_seekoff(strstreambuf *this, streamoff offset, 
 
     TRACE("(%p %d %d %d)\n", this, offset, dir, mode);
 
-    if (dir < SEEKDIR_beg || dir > SEEKDIR_end || !(mode & (OPENMODE_in|OPENMODE_out)))
+    if ((unsigned int)dir > SEEKDIR_end || !(mode & (OPENMODE_in|OPENMODE_out)))
         return EOF;
     /* read buffer */
     if (mode & OPENMODE_in) {
