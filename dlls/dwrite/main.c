@@ -1313,21 +1313,14 @@ static void init_dwritefactory(struct dwritefactory *factory, DWRITE_FACTORY_TYP
 HRESULT WINAPI DWriteCreateFactory(DWRITE_FACTORY_TYPE type, REFIID riid, IUnknown **ret)
 {
     struct dwritefactory *factory;
+    HRESULT hr;
 
     TRACE("(%d, %s, %p)\n", type, debugstr_guid(riid), ret);
 
     *ret = NULL;
 
-    if (!IsEqualIID(riid, &IID_IDWriteFactory) &&
-        !IsEqualIID(riid, &IID_IDWriteFactory1) &&
-        !IsEqualIID(riid, &IID_IDWriteFactory2))
-        return E_FAIL;
-
-    if (type == DWRITE_FACTORY_TYPE_SHARED && shared_factory) {
-        *ret = (IUnknown*)shared_factory;
-        IDWriteFactory2_AddRef(shared_factory);
-        return S_OK;
-    }
+    if (type == DWRITE_FACTORY_TYPE_SHARED && shared_factory)
+        return IDWriteFactory2_QueryInterface(shared_factory, riid, (void**)ret);
 
     factory = heap_alloc(sizeof(struct dwritefactory));
     if (!factory) return E_OUTOFMEMORY;
@@ -1337,11 +1330,10 @@ HRESULT WINAPI DWriteCreateFactory(DWRITE_FACTORY_TYPE type, REFIID riid, IUnkno
     if (type == DWRITE_FACTORY_TYPE_SHARED)
         if (InterlockedCompareExchangePointer((void**)&shared_factory, &factory->IDWriteFactory2_iface, NULL)) {
             release_shared_factory(&factory->IDWriteFactory2_iface);
-            *ret = (IUnknown*)shared_factory;
-            IDWriteFactory2_AddRef(shared_factory);
-            return S_OK;
+            return IDWriteFactory2_QueryInterface(shared_factory, riid, (void**)ret);
         }
 
-    *ret = (IUnknown*)&factory->IDWriteFactory2_iface;
-    return S_OK;
+    hr = IDWriteFactory2_QueryInterface(&factory->IDWriteFactory2_iface, riid, (void**)ret);
+    IDWriteFactory2_Release(&factory->IDWriteFactory2_iface);
+    return hr;
 }

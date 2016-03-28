@@ -2312,6 +2312,11 @@ static void test_shared_isolated(void)
     hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IID_IDWriteFactory, (IUnknown**)&shared2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(shared == shared2, "got %p, and %p\n", shared, shared2);
+    IDWriteFactory_Release(shared2);
+
+    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IID_IUnknown, (IUnknown**)&shared2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(shared == shared2, "got %p, and %p\n", shared, shared2);
 
     IDWriteFactory_Release(shared);
     IDWriteFactory_Release(shared2);
@@ -2328,6 +2333,10 @@ static void test_shared_isolated(void)
     hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_ISOLATED, &IID_IDWriteFactory, (IUnknown**)&isolated2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(isolated != isolated2, "got %p, and %p\n", isolated, isolated2);
+    IDWriteFactory_Release(isolated2);
+
+    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_ISOLATED, &IID_IUnknown, (IUnknown**)&isolated2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     IDWriteFactory_Release(isolated2);
 
     hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED+1, &IID_IDWriteFactory, (IUnknown**)&isolated2);
