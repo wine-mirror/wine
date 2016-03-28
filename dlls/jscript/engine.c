@@ -2388,6 +2388,7 @@ static void release_call_frame(call_frame_t *frame)
     if(frame->scope)
         scope_release(frame->scope);
     jsval_release(frame->ret);
+    release_bytecode(frame->bytecode);
     heap_free(frame);
 }
 
@@ -2579,7 +2580,7 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
     if(!frame)
         return E_OUTOFMEMORY;
 
-    frame->bytecode = bytecode;
+    frame->bytecode = bytecode_addref(bytecode);
     frame->function = function;
     frame->ip = function->instr_off;
     frame->stack_base = ctx->stack_top;

@@ -168,9 +168,10 @@ typedef struct _bytecode_t {
 HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,const WCHAR*,BOOL,BOOL,bytecode_t**) DECLSPEC_HIDDEN;
 void release_bytecode(bytecode_t*) DECLSPEC_HIDDEN;
 
-static inline void bytecode_addref(bytecode_t *code)
+static inline bytecode_t *bytecode_addref(bytecode_t *code)
 {
     code->ref++;
+    return code;
 }
 
 typedef struct _scope_chain_t {
