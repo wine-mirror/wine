@@ -181,6 +181,263 @@ static void dump_function_descr(const cxx_function_descr *descr, ULONG64 image_b
     TRACE("flags: %08x\n", descr->flags);
 }
 
+static inline int ip_to_state(ipmap_info *ipmap, UINT count, int ip)
+{
+    UINT low = 0, high = count-1, med;
+
+    while (low < high) {
+        med = low + (high-low)/2;
+
+        if (ipmap[med].ip <= ip && ipmap[med+1].ip > ip)
+        {
+            low = med;
+            break;
+        }
+        if (ipmap[med].ip < ip) low = med+1;
+        else high = med-1;
+    }
+
+    TRACE("%x -> %d\n", ip, ipmap[low].state);
+    return ipmap[low].state;
+}
+
+/* check if the exception type is caught by a given catch block, and return the type that matched */
+static const cxx_type_info *find_caught_type(cxx_exception_type *exc_type, ULONG64 exc_base,
+                                             const type_info *catch_ti, UINT catch_flags)
+{
+    const cxx_type_info_table *type_info_table = rva_to_ptr(exc_type->type_info_table, exc_base);
+    UINT i;
+
+    for (i = 0; i < type_info_table->count; i++)
+    {
+        const cxx_type_info *type = rva_to_ptr(type_info_table->info[i], exc_base);
+        const type_info *ti = rva_to_ptr(type->type_info, exc_base);
+
+        if (!catch_ti) return type;   /* catch(...) matches any type */
+        if (catch_ti != ti)
+        {
+            if (strcmp( catch_ti->mangled, ti->mangled )) continue;
+        }
+        /* type is the same, now check the flags */
+        if ((exc_type->flags & TYPE_FLAG_CONST) &&
+                !(catch_flags & TYPE_FLAG_CONST)) continue;
+        if ((exc_type->flags & TYPE_FLAG_VOLATILE) &&
+                !(catch_flags & TYPE_FLAG_VOLATILE)) continue;
+        return type;  /* it matched */
+    }
+    return NULL;
+}
+
+static inline void copy_exception(void *object, ULONG64 frame,
+                                  DISPATCHER_CONTEXT *dispatch,
+                                  const catchblock_info *catchblock,
+                                  const cxx_type_info *type)
+{
+    const type_info *catch_ti = rva_to_ptr(catchblock->type_info, dispatch->ImageBase);
+    void **dest = rva_to_ptr(catchblock->offset, frame);
+
+    if (!catch_ti || !catch_ti->mangled[0]) return;
+    if (!catchblock->offset) return;
+
+    if (catchblock->flags & TYPE_FLAG_REFERENCE)
+    {
+        *dest = get_this_pointer(&type->offsets, object);
+    }
+    else if (type->flags & CLASS_IS_SIMPLE_TYPE)
+    {
+        memmove(dest, object, type->size);
+        /* if it is a pointer, adjust it */
+        if (type->size == sizeof(void*)) *dest = get_this_pointer(&type->offsets, *dest);
+    }
+    else  /* copy the object */
+    {
+        if (type->copy_ctor)
+        {
+            if (type->flags & CLASS_HAS_VIRTUAL_BASE_CLASS)
+            {
+                void (__cdecl *copy_ctor)(void*, void*, int) =
+                    rva_to_ptr(type->copy_ctor, dispatch->ImageBase);
+                copy_ctor(dest, get_this_pointer(&type->offsets, object), 1);
+            }
+            else
+            {
+                void (__cdecl *copy_ctor)(void*, void*) =
+                    rva_to_ptr(type->copy_ctor, dispatch->ImageBase);
+                copy_ctor(dest, get_this_pointer(&type->offsets, object));
+            }
+        }
+        else
+            memmove(dest, get_this_pointer(&type->offsets,object), type->size);
+    }
+}
+
+static void cxx_local_unwind(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
+                             const cxx_function_descr *descr, int last_level)
+{
+    const unwind_info *unwind_table = rva_to_ptr(descr->unwind_table, dispatch->ImageBase);
+    void (__cdecl *handler)(ULONG64 unk, ULONG64 rbp);
+    int *unwind_help = rva_to_ptr(descr->unwind_help, frame);
+    int trylevel;
+
+    if (unwind_help[0] == -2)
+    {
+        trylevel = ip_to_state(rva_to_ptr(descr->ipmap, dispatch->ImageBase),
+                descr->ipmap_count, dispatch->ControlPc-dispatch->ImageBase);
+    }
+    else
+    {
+        trylevel = unwind_help[0];
+    }
+
+    TRACE("current level: %d, last level: %d\n", trylevel, last_level);
+    while (trylevel != last_level)
+    {
+        if (trylevel<0 || trylevel>=descr->unwind_count)
+        {
+            ERR("invalid trylevel %d\n", trylevel);
+            MSVCRT_terminate();
+        }
+        handler = rva_to_ptr(unwind_table[trylevel].handler, dispatch->ImageBase);
+        if (handler)
+        {
+            TRACE("handler: %p\n", handler);
+            handler(0, frame);
+        }
+        trylevel = unwind_table[trylevel].prev;
+    }
+    unwind_help[0] = last_level;
+}
+
+static inline void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
+{
+    ULONG64 frame = rec->ExceptionInformation[1];
+    const cxx_function_descr *descr = (void*)rec->ExceptionInformation[2];
+    EXCEPTION_RECORD *prev_rec = (void*)rec->ExceptionInformation[4];
+    void* (__cdecl *handler)(ULONG64 unk, ULONG64 rbp) = (void*)rec->ExceptionInformation[5];
+    int *unwind_help = rva_to_ptr(descr->unwind_help, frame);
+    cxx_frame_info frame_info;
+    void *ret_addr;
+
+    TRACE("calling handler %p\n", handler);
+
+    /* FIXME:  native does local_unwind here in case of exception rethrow */
+    __CxxRegisterExceptionObject(&prev_rec, &frame_info);
+    ret_addr = handler(0, frame);
+    __CxxUnregisterExceptionObject(&frame_info, FALSE);
+    unwind_help[0] = -2;
+    unwind_help[1] = -1;
+    return ret_addr;
+}
+
+static inline void find_catch_block(EXCEPTION_RECORD *rec, ULONG64 frame,
+                                    DISPATCHER_CONTEXT *dispatch,
+                                    const cxx_function_descr *descr,
+                                    cxx_exception_type *info)
+{
+    ULONG64 exc_base = (rec->NumberParameters == 4 ? rec->ExceptionInformation[3] : 0);
+    int trylevel = ip_to_state(rva_to_ptr(descr->ipmap, dispatch->ImageBase),
+            descr->ipmap_count, dispatch->ControlPc-dispatch->ImageBase);
+    EXCEPTION_RECORD catch_record;
+    CONTEXT context;
+    UINT i, j;
+    ULONG64 orig_frame = frame, throw_base;
+    DWORD throw_func_off;
+    void *throw_func;
+    INT *unwind_help;
+
+    /* update orig_frame if it's a nested exception */
+    throw_func_off = RtlLookupFunctionEntry(dispatch->ControlPc, &throw_base, NULL)->BeginAddress;
+    throw_func = rva_to_ptr(throw_func_off, throw_base);
+    TRACE("reconstructed handler pointer: %p\n", throw_func);
+    for (i=descr->tryblock_count; i>0; i--)
+    {
+        const tryblock_info *tryblock = rva_to_ptr(descr->tryblock, dispatch->ImageBase);
+        tryblock = &tryblock[i-1];
+
+        if (trylevel>tryblock->end_level && trylevel<=tryblock->catch_level)
+        {
+            for (j=0; j<tryblock->catchblock_count; j++)
+            {
+                /* TODO: is it possible to have the same handler for multiple catch blocks? */
+                const catchblock_info *catchblock = rva_to_ptr(tryblock->catchblock, dispatch->ImageBase);
+                catchblock = &catchblock[j];
+
+                if (rva_to_ptr(catchblock->handler, dispatch->ImageBase) == throw_func)
+                {
+                    TRACE("nested exception detected\n");
+                    orig_frame = *(ULONG64*)rva_to_ptr(catchblock->frame, frame);
+                    TRACE("setting orig_frame to %lx\n", orig_frame);
+                }
+            }
+        }
+    }
+
+    unwind_help = rva_to_ptr(descr->unwind_help, orig_frame);
+    unwind_help[0] = trylevel;
+    TRACE("current trylevel: %d, last catch block: %d\n", trylevel, unwind_help[1]);
+
+    for (i=0; i<descr->tryblock_count; i++)
+    {
+        const tryblock_info *tryblock = rva_to_ptr(descr->tryblock, dispatch->ImageBase);
+        tryblock = &tryblock[i];
+
+        if (unwind_help[1] != -1)
+        {
+            if (unwind_help[1] < tryblock->start_level) continue;
+            if (unwind_help[1] > tryblock->end_level) continue;
+        }
+
+        if (trylevel < tryblock->start_level) continue;
+        if (trylevel > tryblock->end_level) continue;
+
+        /* got a try block */
+        for (j=0; j<tryblock->catchblock_count; j++)
+        {
+            const catchblock_info *catchblock = rva_to_ptr(tryblock->catchblock, dispatch->ImageBase);
+            catchblock = &catchblock[j];
+
+            if (info)
+            {
+                const cxx_type_info *type = find_caught_type(info, exc_base,
+                        rva_to_ptr(catchblock->type_info, dispatch->ImageBase),
+                        catchblock->flags);
+                if (!type) continue;
+
+                TRACE("matched type %p in tryblock %d catchblock %d\n", type, i, j);
+
+                /* copy the exception to its destination on the stack */
+                copy_exception((void*)rec->ExceptionInformation[1],
+                        orig_frame, dispatch, catchblock, type);
+            }
+            else
+            {
+                /* no CXX_EXCEPTION only proceed with a catch(...) block*/
+                if (catchblock->type_info)
+                    continue;
+                TRACE("found catch(...) block\n");
+            }
+
+            unwind_help[1] = tryblock->end_level+1;
+
+            /* unwind stack and call catch */
+            memset(&catch_record, 0, sizeof(catch_record));
+            catch_record.ExceptionCode = STATUS_UNWIND_CONSOLIDATE;
+            catch_record.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+            catch_record.NumberParameters = 6;
+            catch_record.ExceptionInformation[0] = (ULONG_PTR)call_catch_block;
+            catch_record.ExceptionInformation[1] = orig_frame;
+            catch_record.ExceptionInformation[2] = (ULONG_PTR)descr;
+            catch_record.ExceptionInformation[3] = tryblock->start_level;
+            catch_record.ExceptionInformation[4] = (ULONG_PTR)rec;
+            catch_record.ExceptionInformation[5] =
+                (ULONG_PTR)rva_to_ptr(catchblock->handler, dispatch->ImageBase);
+            RtlUnwindEx((void*)orig_frame, 0, &catch_record, NULL, &context, NULL);
+        }
+    }
+
+    TRACE("no matching catch block found\n");
+}
+
 static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
                                CONTEXT *context, DISPATCHER_CONTEXT *dispatch,
                                const cxx_function_descr *descr)
@@ -194,7 +451,29 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
     }
 
     if (rec->ExceptionFlags & (EH_UNWINDING|EH_EXIT_UNWIND))
+    {
+        if (rec->ExceptionCode==STATUS_UNWIND_CONSOLIDATE && rec->NumberParameters==6 &&
+                rec->ExceptionInformation[0]==(ULONG_PTR)call_catch_block)
+        {
+            ULONG64 orig_frame = rec->ExceptionInformation[1];
+            const cxx_function_descr *descr = (void*)rec->ExceptionInformation[2];
+            int end_level = rec->ExceptionInformation[3];
+            frame_info *cur;
+
+            cxx_local_unwind(orig_frame, dispatch, descr, end_level);
+
+            /* FIXME: we should only unregister frames registered by call_catch_block here */
+            for (cur = msvcrt_get_thread_data()->frame_info_head; cur; cur = cur->next)
+            {
+                if ((ULONG64)cur > frame)
+                    __CxxUnregisterExceptionObject((cxx_frame_info*)cur, FALSE);
+            }
+            return ExceptionContinueSearch;
+        }
+
+        cxx_local_unwind(frame, dispatch, descr, -1);
         return ExceptionContinueSearch;
+    }
     if (!descr->tryblock_count) return ExceptionContinueSearch;
 
     if (rec->ExceptionCode == CXX_EXCEPTION &&
@@ -216,8 +495,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
 
         if (TRACE_ON(seh))
         {
-            TRACE("handling C++ exception rec %p frame %lx unwind_help %d descr %p\n",
-                    rec, frame, *((INT*)(frame+descr->unwind_help)), descr);
+            TRACE("handling C++ exception rec %p frame %lx descr %p\n", rec, frame,  descr);
             dump_exception_type(exc_type, rec->ExceptionInformation[3]);
             dump_function_descr(descr, dispatch->ImageBase);
         }
@@ -227,8 +505,8 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
         thread_data_t *data = msvcrt_get_thread_data();
 
         exc_type = NULL;
-        TRACE("handling C exception code %x rec %p frame %lx unwind_help %d descr %p\n",
-                rec->ExceptionCode, rec, frame, *((INT*)(frame+descr->unwind_help)), descr);
+        TRACE("handling C exception code %x rec %p frame %lx descr %p\n",
+                rec->ExceptionCode, rec, frame, descr);
 
         if (data->se_translator) {
             EXCEPTION_POINTERS except_ptrs;
@@ -239,6 +517,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
         }
     }
 
+    find_catch_block(rec, frame, dispatch, descr, exc_type);
     return ExceptionContinueSearch;
 }
 
@@ -258,7 +537,7 @@ int CDECL __CxxExceptionFilter( PEXCEPTION_POINTERS ptrs,
 EXCEPTION_DISPOSITION CDECL __CxxFrameHandler( EXCEPTION_RECORD *rec, ULONG64 frame,
                                                CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
 {
-    FIXME( "%p %lx %p %p: not implemented\n", rec, frame, context, dispatch );
+    TRACE( "%p %lx %p %p\n", rec, frame, context, dispatch );
     return cxx_frame_handler( rec, frame, context, dispatch,
             rva_to_ptr(*(UINT*)dispatch->HandlerData, dispatch->ImageBase) );
 }
