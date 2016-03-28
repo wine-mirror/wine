@@ -160,7 +160,9 @@ static void dump_function_descr(const cxx_function_descr *descr, ULONG64 image_b
         }
     }
     TRACE("unwind_help %d\n", descr->unwind_help);
+    if (descr->magic <= CXX_FRAME_MAGIC_VC6) return;
     TRACE("expect list: %x\n", descr->expect_list);
+    if (descr->magic <= CXX_FRAME_MAGIC_VC7) return;
     TRACE("flags: %08x\n", descr->flags);
 }
 
@@ -170,7 +172,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
 {
     cxx_exception_type *exc_type;
 
-    if (descr->magic != CXX_FRAME_MAGIC_VC8)
+    if (descr->magic<CXX_FRAME_MAGIC_VC6 || descr->magic>CXX_FRAME_MAGIC_VC8)
     {
         FIXME("unhandled frame magic %x\n", descr->magic);
         return ExceptionContinueSearch;
