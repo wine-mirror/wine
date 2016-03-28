@@ -108,4 +108,40 @@ const char *debug_d3dxparameter_registerset(D3DXREGISTER_SET r) DECLSPEC_HIDDEN;
 void set_number(void *outdata, D3DXPARAMETER_TYPE outtype,
         const void *indata, D3DXPARAMETER_TYPE intype) DECLSPEC_HIDDEN;
 
+struct d3dx_param_eval;
+
+struct d3dx_parameter
+{
+    char *name;
+    char *semantic;
+    void *data;
+    D3DXPARAMETER_CLASS class;
+    D3DXPARAMETER_TYPE  type;
+    UINT rows;
+    UINT columns;
+    UINT element_count;
+    UINT annotation_count;
+    UINT member_count;
+    DWORD flags;
+    UINT bytes;
+    DWORD object_id;
+
+    D3DXHANDLE handle;
+
+    struct d3dx_parameter *annotations;
+    struct d3dx_parameter *members;
+
+    struct d3dx_parameter *referenced_param;
+    struct d3dx_param_eval *param_eval;
+};
+
+struct d3dx9_base_effect;
+
+struct d3dx_parameter *get_parameter_by_name(struct d3dx9_base_effect *base,
+        struct d3dx_parameter *parameter, const char *name) DECLSPEC_HIDDEN;
+
+HRESULT d3dx_create_param_eval(struct d3dx9_base_effect *base_effect, void *byte_code,
+        unsigned int byte_code_size, D3DXPARAMETER_TYPE type, struct d3dx_param_eval **peval) DECLSPEC_HIDDEN;
+void d3dx_free_param_eval(struct d3dx_param_eval *peval) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_D3DX9_PRIVATE_H */

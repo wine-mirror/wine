@@ -11,6 +11,7 @@ C_SRCS = \
 	line.c \
 	math.c \
 	mesh.c \
+	preshader.c \
 	render.c \
 	shader.c \
 	skin.c \
