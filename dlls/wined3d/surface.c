@@ -3239,11 +3239,12 @@ static void surface_load_renderbuffer(struct wined3d_surface *surface, struct wi
 /* Context activation is done by the caller. Context may be NULL in ddraw-only mode. */
 HRESULT surface_load_location(struct wined3d_surface *surface, struct wined3d_context *context, DWORD location)
 {
+    struct wined3d_texture *texture = surface->container;
     HRESULT hr;
 
     TRACE("surface %p, location %s.\n", surface, wined3d_debug_location(location));
 
-    if (surface->locations & location && (!(surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
+    if (surface->locations & location && (!(texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
             || (surface->ds_current_size.cx == surface->resource.width
             && surface->ds_current_size.cy == surface->resource.height)))
     {
@@ -3254,9 +3255,9 @@ HRESULT surface_load_location(struct wined3d_surface *surface, struct wined3d_co
     if (WARN_ON(d3d_surface))
     {
         DWORD required_access = resource_access_from_location(location);
-        if ((surface->resource.access_flags & required_access) != required_access)
+        if ((texture->resource.access_flags & required_access) != required_access)
             WARN("Operation requires %#x access, but surface only has %#x.\n",
-                    required_access, surface->resource.access_flags);
+                    required_access, texture->resource.access_flags);
     }
 
     if (surface->locations & WINED3D_LOCATION_DISCARDED)
@@ -3275,7 +3276,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, struct wined3d_co
         return surface_load_location(surface, context, location);
     }
 
-    if (surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
+    if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
     {
         if ((location == WINED3D_LOCATION_TEXTURE_RGB && surface->locations & WINED3D_LOCATION_DRAWABLE)
                 || (location == WINED3D_LOCATION_DRAWABLE && surface->locations & WINED3D_LOCATION_TEXTURE_RGB))
@@ -3323,7 +3324,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, struct wined3d_co
 done:
     surface_validate_location(surface, location);
 
-    if (surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
+    if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
     {
         surface->ds_current_size.cx = surface->resource.width;
         surface->ds_current_size.cy = surface->resource.height;
