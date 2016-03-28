@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
 struct gdiinterop {
     IDWriteGdiInterop IDWriteGdiInterop_iface;
-    IDWriteFactory2 *factory;
+    IDWriteFactory3 *factory;
 };
 
 struct dib_data {
@@ -605,14 +605,14 @@ static ULONG WINAPI gdiinterop_AddRef(IDWriteGdiInterop *iface)
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop(iface);
     TRACE("(%p)\n", This);
-    return IDWriteFactory2_AddRef(This->factory);
+    return IDWriteFactory3_AddRef(This->factory);
 }
 
 static ULONG WINAPI gdiinterop_Release(IDWriteGdiInterop *iface)
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop(iface);
     TRACE("(%p)\n", This);
-    return IDWriteFactory2_Release(This->factory);
+    return IDWriteFactory3_Release(This->factory);
 }
 
 static HRESULT WINAPI gdiinterop_CreateFontFromLOGFONT(IDWriteGdiInterop *iface,
@@ -632,7 +632,7 @@ static HRESULT WINAPI gdiinterop_CreateFontFromLOGFONT(IDWriteGdiInterop *iface,
 
     if (!logfont) return E_INVALIDARG;
 
-    hr = IDWriteFactory2_GetSystemFontCollection(This->factory, &collection, FALSE);
+    hr = IDWriteFactory2_GetSystemFontCollection((IDWriteFactory2*)This->factory, &collection, FALSE);
     if (FAILED(hr)) {
         ERR("failed to get system font collection: 0x%08x.\n", hr);
         return hr;
@@ -847,7 +847,7 @@ static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop *iface,
         return E_FAIL;
     }
 
-    hr = IDWriteFactory2_CreateFontFileReference(This->factory, fileinfo->path, &fileinfo->writetime,
+    hr = IDWriteFactory3_CreateFontFileReference(This->factory, fileinfo->path, &fileinfo->writetime,
         &file);
     heap_free(fileinfo);
     if (FAILED(hr))
@@ -861,7 +861,7 @@ static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop *iface,
     }
 
     /* Simulations flags values match DWRITE_FONT_SIMULATIONS */
-    hr = IDWriteFactory2_CreateFontFace(This->factory, facetype, 1, &file, info.face_index, info.simulations,
+    hr = IDWriteFactory3_CreateFontFace(This->factory, facetype, 1, &file, info.face_index, info.simulations,
         fontface);
     IDWriteFontFile_Release(file);
     return hr;
@@ -886,7 +886,7 @@ static const struct IDWriteGdiInteropVtbl gdiinteropvtbl = {
     gdiinterop_CreateBitmapRenderTarget
 };
 
-HRESULT create_gdiinterop(IDWriteFactory2 *factory, IDWriteGdiInterop **ret)
+HRESULT create_gdiinterop(IDWriteFactory3 *factory, IDWriteGdiInterop **ret)
 {
     struct gdiinterop *This;
 

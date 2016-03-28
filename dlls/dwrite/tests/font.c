@@ -5425,13 +5425,14 @@ static void test_HasCharacter(void)
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         ret = IDWriteFont3_HasCharacter(font3, 'A');
+    todo_wine
         ok(ret, "got %d\n", ret);
 
         IDWriteFont3_Release(font3);
         IDWriteFactory3_Release(factory3);
     }
     else
-        skip("IDWriteFont3 is not supported.\n");
+        win_skip("IDWriteFont3 is not supported.\n");
 
     IDWriteFont_Release(font);
     IDWriteFactory_Release(factory);

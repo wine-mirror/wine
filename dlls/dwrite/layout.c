@@ -238,7 +238,7 @@ struct dwrite_textlayout {
     IDWriteTextAnalysisSource1 IDWriteTextAnalysisSource1_iface;
     LONG ref;
 
-    IDWriteFactory2 *factory;
+    IDWriteFactory3 *factory;
 
     WCHAR *str;
     UINT32 len;
@@ -781,7 +781,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         IDWriteFontFallback_AddRef(fallback);
     }
     else {
-        hr = IDWriteFactory2_GetSystemFontFallback(layout->factory, &fallback);
+        hr = IDWriteFactory3_GetSystemFontFallback(layout->factory, &fallback);
         if (FAILED(hr))
             return hr;
     }
@@ -2599,7 +2599,7 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout3 *iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if (!ref) {
-        IDWriteFactory2_Release(This->factory);
+        IDWriteFactory3_Release(This->factory);
         free_layout_ranges_list(This);
         free_layout_eruns(This);
         free_layout_runs(This);
@@ -4441,7 +4441,7 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
     return IDWriteTextFormat_GetFontCollection(format, &layout->format.collection);
 }
 
-static HRESULT init_textlayout(IDWriteFactory2 *factory, const WCHAR *str, UINT32 len, IDWriteTextFormat *format,
+static HRESULT init_textlayout(IDWriteFactory3 *factory, const WCHAR *str, UINT32 len, IDWriteTextFormat *format,
     FLOAT maxwidth, FLOAT maxheight, struct dwrite_textlayout *layout)
 {
     struct layout_range_header *range, *strike, *underline, *effect, *spacing, *typography;
@@ -4511,7 +4511,7 @@ static HRESULT init_textlayout(IDWriteFactory2 *factory, const WCHAR *str, UINT3
     }
 
     layout->factory = factory;
-    IDWriteFactory2_AddRef(layout->factory);
+    IDWriteFactory3_AddRef(layout->factory);
     list_add_head(&layout->ranges, &range->entry);
     list_add_head(&layout->strike_ranges, &strike->entry);
     list_add_head(&layout->underline_ranges, &underline->entry);
@@ -4525,7 +4525,7 @@ fail:
     return hr;
 }
 
-HRESULT create_textlayout(IDWriteFactory2 *factory, const WCHAR *str, UINT32 len, IDWriteTextFormat *format,
+HRESULT create_textlayout(IDWriteFactory3 *factory, const WCHAR *str, UINT32 len, IDWriteTextFormat *format,
     FLOAT maxwidth, FLOAT maxheight, IDWriteTextLayout **ret)
 {
     struct dwrite_textlayout *layout;
@@ -4546,7 +4546,7 @@ HRESULT create_textlayout(IDWriteFactory2 *factory, const WCHAR *str, UINT32 len
     return hr;
 }
 
-HRESULT create_gdicompat_textlayout(IDWriteFactory2 *factory, const WCHAR *str, UINT32 len, IDWriteTextFormat *format,
+HRESULT create_gdicompat_textlayout(IDWriteFactory3 *factory, const WCHAR *str, UINT32 len, IDWriteTextFormat *format,
     FLOAT maxwidth, FLOAT maxheight, FLOAT ppdip, const DWRITE_MATRIX *transform, BOOL use_gdi_natural, IDWriteTextLayout **ret)
 {
     struct dwrite_textlayout *layout;
@@ -4701,7 +4701,7 @@ static inline BOOL is_flow_direction_vert(DWRITE_FLOW_DIRECTION direction)
            (direction == DWRITE_FLOW_DIRECTION_BOTTOM_TO_TOP);
 }
 
-HRESULT create_trimmingsign(IDWriteFactory2 *factory, IDWriteTextFormat *format, IDWriteInlineObject **sign)
+HRESULT create_trimmingsign(IDWriteFactory3 *factory, IDWriteTextFormat *format, IDWriteInlineObject **sign)
 {
     static const WCHAR ellipsisW = 0x2026;
     struct dwrite_trimmingsign *This;
@@ -4727,7 +4727,7 @@ HRESULT create_trimmingsign(IDWriteFactory2 *factory, IDWriteTextFormat *format,
     This->IDWriteInlineObject_iface.lpVtbl = &dwritetrimmingsignvtbl;
     This->ref = 1;
 
-    hr = IDWriteFactory2_CreateTextLayout(factory, &ellipsisW, 1, format, 0.0f, 0.0f, &This->layout);
+    hr = IDWriteFactory3_CreateTextLayout(factory, &ellipsisW, 1, format, 0.0f, 0.0f, &This->layout);
     if (FAILED(hr)) {
         heap_free(This);
         return hr;
