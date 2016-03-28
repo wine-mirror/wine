@@ -429,6 +429,7 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
 /* Context activation is done by the caller. */
 static void wined3d_swapchain_rotate(struct wined3d_swapchain *swapchain, struct wined3d_context *context)
 {
+    struct wined3d_texture_sub_resource *sub_resource;
     struct gl_texture tex0;
     GLuint rb0;
     DWORD locations0;
@@ -439,25 +440,26 @@ static void wined3d_swapchain_rotate(struct wined3d_swapchain *swapchain, struct
     if (swapchain->desc.backbuffer_count < 2 || !swapchain->render_to_fbo)
         return;
 
-    surface_prev = surface_from_resource(wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0));
+    surface_prev = swapchain->back_buffers[0]->sub_resources[0].u.surface;
 
     /* Back buffer 0 is already in the draw binding. */
     tex0 = swapchain->back_buffers[0]->texture_rgb;
     rb0 = surface_prev->rb_multisample;
-    locations0 = surface_prev->locations;
+    locations0 = surface_get_sub_resource(surface_prev)->locations;
 
     for (i = 1; i < swapchain->desc.backbuffer_count; ++i)
     {
-        surface = surface_from_resource(wined3d_texture_get_sub_resource(swapchain->back_buffers[i], 0));
+        sub_resource = &swapchain->back_buffers[i]->sub_resources[0];
+        surface = sub_resource->u.surface;
 
-        if (!(surface->locations & supported_locations))
+        if (!(sub_resource->locations & supported_locations))
             surface_load_location(surface, context, swapchain->back_buffers[i]->resource.draw_binding);
 
         swapchain->back_buffers[i - 1]->texture_rgb = swapchain->back_buffers[i]->texture_rgb;
         surface_prev->rb_multisample = surface->rb_multisample;
 
-        surface_validate_location(surface_prev, surface->locations & supported_locations);
-        surface_invalidate_location(surface_prev, ~(surface->locations & supported_locations));
+        surface_validate_location(surface_prev, sub_resource->locations & supported_locations);
+        surface_invalidate_location(surface_prev, ~(sub_resource->locations & supported_locations));
 
         surface_prev = surface;
     }

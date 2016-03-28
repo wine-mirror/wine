@@ -735,6 +735,7 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
     UINT resource_size = wined3d_format_calculate_size(format, device->surface_alignment, width, height, 1);
+    struct wined3d_texture_sub_resource *sub_resource;
     struct wined3d_surface *surface;
     DWORD valid_location = 0;
     BOOL create_dib = FALSE;
@@ -771,8 +772,9 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         return WINED3DERR_INVALIDCALL;
     }
 
-    surface = texture->sub_resources[0].u.surface;
-    if (surface->resource.map_count || (surface->flags & SFLAG_DCINUSE))
+    sub_resource = &texture->sub_resources[0];
+    surface = sub_resource->u.surface;
+    if (sub_resource->resource->map_count || (surface->flags & SFLAG_DCINUSE))
     {
         WARN("Surface is mapped or the DC is in use.\n");
         return WINED3DERR_INVALIDCALL;
@@ -792,7 +794,7 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         create_dib = TRUE;
     }
 
-    wined3d_resource_free_sysmem(&surface->resource);
+    wined3d_resource_free_sysmem(sub_resource->resource);
 
     if ((texture->row_pitch = pitch))
         texture->slice_pitch = height * pitch;
@@ -807,12 +809,12 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     texture->resource.width = width;
     texture->resource.height = height;
 
-    surface->resource.format = format;
-    surface->resource.multisample_type = multisample_type;
-    surface->resource.multisample_quality = multisample_quality;
-    surface->resource.width = width;
-    surface->resource.height = height;
-    surface->resource.size = texture->slice_pitch;
+    sub_resource->resource->format = format;
+    sub_resource->resource->multisample_type = multisample_type;
+    sub_resource->resource->multisample_quality = multisample_quality;
+    sub_resource->resource->width = width;
+    sub_resource->resource->height = height;
+    sub_resource->resource->size = texture->slice_pitch;
 
     if (((width & (width - 1)) || (height & (height - 1))) && !gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO]
             && !gl_info->supported[ARB_TEXTURE_RECTANGLE] && !gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
@@ -831,11 +833,11 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         surface->pow2Height = height;
     }
 
-    surface->locations = 0;
+    sub_resource->locations = 0;
 
     if ((texture->user_memory = mem))
     {
-        surface->resource.map_binding = WINED3D_LOCATION_USER_MEMORY;
+        sub_resource->resource->map_binding = WINED3D_LOCATION_USER_MEMORY;
         valid_location = WINED3D_LOCATION_USER_MEMORY;
     }
     else if (create_dib && SUCCEEDED(surface_create_dib_section(surface)))
@@ -852,8 +854,8 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
      * If the surface didn't use PBOs previously but could now, don't
      * change it - whatever made us not use PBOs might come back, e.g.
      * color keys. */
-    if (surface->resource.map_binding == WINED3D_LOCATION_BUFFER && !wined3d_texture_use_pbo(texture, gl_info))
-        surface->resource.map_binding = surface->dib.DIBsection ? WINED3D_LOCATION_DIB : WINED3D_LOCATION_SYSMEM;
+    if (sub_resource->resource->map_binding == WINED3D_LOCATION_BUFFER && !wined3d_texture_use_pbo(texture, gl_info))
+        sub_resource->resource->map_binding = surface->dib.DIBsection ? WINED3D_LOCATION_DIB : WINED3D_LOCATION_SYSMEM;
 
     surface_validate_location(surface, valid_location);
 
@@ -1420,7 +1422,8 @@ static HRESULT texture_resource_sub_resource_unmap(struct wined3d_resource *reso
     {
         struct wined3d_surface *surface = texture->sub_resources[sub_resource_idx].u.surface;
 
-        if (!(surface->locations & (WINED3D_LOCATION_DRAWABLE | WINED3D_LOCATION_TEXTURE_RGB)))
+        if (!(surface_get_sub_resource(surface)->locations
+                & (WINED3D_LOCATION_DRAWABLE | WINED3D_LOCATION_TEXTURE_RGB)))
             texture->swapchain->swapchain_ops->swapchain_frontbuffer_updated(texture->swapchain);
     }
     else if (resource->format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))

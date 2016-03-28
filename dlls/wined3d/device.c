@@ -234,9 +234,10 @@ static BOOL is_full_clear(const struct wined3d_surface *target, const RECT *draw
 static void prepare_ds_clear(struct wined3d_surface *ds, struct wined3d_context *context,
         DWORD location, const RECT *draw_rect, UINT rect_count, const RECT *clear_rect, RECT *out_rect)
 {
+    struct wined3d_texture_sub_resource *sub_resource = surface_get_sub_resource(ds);
     RECT current_rect, r;
 
-    if (ds->locations & WINED3D_LOCATION_DISCARDED)
+    if (sub_resource->locations & WINED3D_LOCATION_DISCARDED)
     {
         /* Depth buffer was discarded, make it entirely current in its new location since
          * there is no other place where we would get data anyway. */
@@ -244,7 +245,7 @@ static void prepare_ds_clear(struct wined3d_surface *ds, struct wined3d_context 
         return;
     }
 
-    if (ds->locations & location)
+    if (sub_resource->locations & location)
         SetRect(&current_rect, 0, 0,
                 ds->ds_current_size.cx,
                 ds->ds_current_size.cy);

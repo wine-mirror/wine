@@ -2417,7 +2417,7 @@ struct wined3d_texture
         DWORD color_key_flags;
     } async;
 
-    struct
+    struct wined3d_texture_sub_resource
     {
         struct wined3d_resource *resource;
         union
@@ -2426,6 +2426,7 @@ struct wined3d_texture
             struct wined3d_volume *volume;
         } u;
 
+        DWORD locations;
         GLuint buffer_object;
     } sub_resources[1];
 };
@@ -2502,7 +2503,6 @@ struct wined3d_volume
     struct wined3d_resource resource;
     struct wined3d_texture *container;
 
-    DWORD locations;
     GLint texture_level;
 };
 
@@ -2567,7 +2567,6 @@ struct wined3d_surface
 {
     struct wined3d_resource resource;
     struct wined3d_texture *container;
-    DWORD locations;
 
     DWORD flags;
 
@@ -2604,6 +2603,16 @@ static inline BOOL needs_separate_srgb_gl_texture(const struct wined3d_context *
 {
     return !context->gl_info->supported[EXT_TEXTURE_SRGB_DECODE]
             && context->d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL;
+}
+
+static inline unsigned int surface_get_sub_resource_idx(const struct wined3d_surface *surface)
+{
+    return surface->texture_layer * surface->container->level_count + surface->texture_level;
+}
+
+static inline struct wined3d_texture_sub_resource *surface_get_sub_resource(struct wined3d_surface *surface)
+{
+    return &surface->container->sub_resources[surface_get_sub_resource_idx(surface)];
 }
 
 static inline GLuint surface_get_texture_name(const struct wined3d_surface *surface,
