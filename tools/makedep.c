@@ -2683,6 +2683,8 @@ static struct strarray output_sources( const struct makefile *make )
         output_filenames_obj_dir( make, object_files );
         output_filenames_obj_dir( make, res_files );
         output_filenames( dep_libs );
+        output_filename( tools_path( make, "winebuild" ));
+        output_filename( tools_path( make, "winegcc" ));
         output( "\n" );
         output( "\t%s -o $@", tools_path( make, "winegcc" ));
         output_filename( strmake( "-B%s", tools_dir_path( make, "winebuild" )));
@@ -2907,6 +2909,8 @@ static struct strarray output_sources( const struct makefile *make )
         output_filenames_obj_dir( make, object_files );
         output_filenames_obj_dir( make, res_files );
         output_filenames( dep_libs );
+        output_filename( tools_path( make, "winebuild" ));
+        output_filename( tools_path( make, "winegcc" ));
         output( "\n" );
 
         if (!make->disabled)
@@ -2929,6 +2933,8 @@ static struct strarray output_sources( const struct makefile *make )
             output_filenames_obj_dir( make, crossobj_files );
             output_filenames_obj_dir( make, res_files );
             output_filenames( dep_libs );
+            output_filename( tools_path( make, "winebuild" ));
+            output_filename( tools_path( make, "winegcc" ));
             output( "\n" );
             output( "\t%s -o $@ -b %s", tools_path( make, "winegcc" ), crosstarget );
             output_filename( strmake( "-B%s", tools_dir_path( make, "winebuild" )));
