@@ -73,7 +73,11 @@ typedef struct
     UINT type_info;
     int  offset;
     UINT handler;
+    UINT frame;
 } catchblock_info;
+#define TYPE_FLAG_CONST      1
+#define TYPE_FLAG_VOLATILE   2
+#define TYPE_FLAG_REFERENCE  8
 
 typedef struct
 {
@@ -83,6 +87,12 @@ typedef struct
     int  catchblock_count;
     UINT catchblock;
 } tryblock_info;
+
+typedef struct
+{
+    int ip;
+    int state;
+} ipmap_info;
 
 typedef struct __cxx_function_descr
 {
@@ -133,6 +143,7 @@ static void dump_function_descr(const cxx_function_descr *descr, ULONG64 image_b
 {
     unwind_info *unwind_table = rva_to_ptr(descr->unwind_table, image_base);
     tryblock_info *tryblock = rva_to_ptr(descr->tryblock, image_base);
+    ipmap_info *ipmap = rva_to_ptr(descr->ipmap, image_base);
     UINT i, j;
 
     TRACE("magic %x\n", descr->magic);
@@ -147,17 +158,23 @@ static void dump_function_descr(const cxx_function_descr *descr, ULONG64 image_b
     {
         catchblock_info *catchblock = rva_to_ptr(tryblock[i].catchblock, image_base);
 
-        TRACE("    %d: start %d end %d catchlevel %d catch%x(%p) %d\n", i,
+        TRACE("    %d: start %d end %d catchlevel %d catch %x(%p) %d\n", i,
                 tryblock[i].start_level, tryblock[i].end_level,
                 tryblock[i].catch_level, tryblock[i].catchblock,
                 catchblock, tryblock[i].catchblock_count);
         for (j=0; j<tryblock[i].catchblock_count; j++)
         {
-            TRACE("        %d: flags %x offset %d handler %x(%p) type %x %s\n",
-                    j, catchblock->flags, catchblock->offset, catchblock->handler,
-                    rva_to_ptr(catchblock->handler, image_base), catchblock->type_info,
-                    dbgstr_type_info(rva_to_ptr(catchblock->type_info, image_base)));
+            TRACE("        %d: flags %x offset %d handler %x(%p) frame %x type %x %s\n",
+                    j, catchblock[j].flags, catchblock[j].offset, catchblock[j].handler,
+                    rva_to_ptr(catchblock[j].handler, image_base), catchblock[j].frame,
+                    catchblock[j].type_info,
+                    dbgstr_type_info(rva_to_ptr(catchblock[j].type_info, image_base)));
         }
+    }
+    TRACE("ipmap: %x(%p) %d\n", descr->ipmap, ipmap, descr->ipmap_count);
+    for (i=0; i<descr->ipmap_count; i++)
+    {
+        TRACE("    %d: ip %x state %d\n", i, ipmap[i].ip, ipmap[i].state);
     }
     TRACE("unwind_help %d\n", descr->unwind_help);
     TRACE("expect list: %x\n", descr->expect_list);
