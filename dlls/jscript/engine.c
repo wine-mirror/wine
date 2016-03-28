@@ -201,6 +201,11 @@ static inline jsval_t steal_ret(call_frame_t *frame)
     return r;
 }
 
+static inline void clear_ret(call_frame_t *frame)
+{
+    jsval_release(steal_ret(frame));
+}
+
 static void exprval_release(exprval_t *val)
 {
     switch(val->type) {
@@ -941,8 +946,8 @@ static HRESULT interp_refval(script_ctx_t *ctx)
 static HRESULT interp_new(script_ctx_t *ctx)
 {
     const unsigned argc = get_op_uint(ctx, 0);
-    jsval_t r, constr;
-    HRESULT hres;
+    call_frame_t *frame = ctx->call_ctx;
+    jsval_t constr;
 
     TRACE("%d\n", argc);
 
@@ -957,12 +962,9 @@ static HRESULT interp_new(script_ctx_t *ctx)
     else if(!get_object(constr))
         return throw_type_error(ctx, JS_E_INVALID_PROPERTY, NULL);
 
-    hres = disp_call_value(ctx, get_object(constr), NULL, DISPATCH_CONSTRUCT, argc, stack_args(ctx, argc), &r);
-    if(FAILED(hres))
-        return hres;
-
-    stack_popn(ctx, argc+1);
-    return stack_push(ctx, r);
+    clear_ret(frame);
+    return disp_call_value(ctx, get_object(constr), NULL, DISPATCH_CONSTRUCT,
+                           argc, stack_args(ctx, argc), &frame->ret);
 }
 
 /* ECMA-262 3rd Edition    11.2.3 */
@@ -2351,6 +2353,19 @@ static HRESULT interp_setret(script_ctx_t *ctx)
     jsval_release(frame->ret);
     frame->ret = stack_pop(ctx);
     return S_OK;
+}
+
+static HRESULT interp_push_ret(script_ctx_t *ctx)
+{
+    call_frame_t *frame = ctx->call_ctx;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = stack_push(ctx, frame->ret);
+    if(SUCCEEDED(hres))
+        frame->ret = jsval_undefined();
+    return hres;
 }
 
 typedef HRESULT (*op_func_t)(script_ctx_t*);

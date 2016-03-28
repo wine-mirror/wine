@@ -558,7 +558,15 @@ static HRESULT compile_new_expression(compiler_ctx_t *ctx, call_expression_t *ex
         arg_cnt++;
     }
 
-    return push_instr_uint(ctx, OP_new, arg_cnt);
+    hres = push_instr_uint(ctx, OP_new, arg_cnt);
+    if(FAILED(hres))
+        return hres;
+
+    hres = push_instr_uint(ctx, OP_pop, arg_cnt+1);
+    if(FAILED(hres))
+        return hres;
+
+    return push_instr(ctx, OP_push_ret) ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT compile_call_expression(compiler_ctx_t *ctx, call_expression_t *expr, BOOL emit_ret)
