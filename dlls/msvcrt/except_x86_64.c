@@ -207,9 +207,19 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
     }
     else
     {
+        thread_data_t *data = msvcrt_get_thread_data();
+
         exc_type = NULL;
         TRACE("handling C exception code %x rec %p frame %lx unwind_help %d descr %p\n",
                 rec->ExceptionCode, rec, frame, *((INT*)(frame+descr->unwind_help)), descr);
+
+        if (data->se_translator) {
+            EXCEPTION_POINTERS except_ptrs;
+
+            except_ptrs.ExceptionRecord = rec;
+            except_ptrs.ContextRecord = context;
+            data->se_translator(rec->ExceptionCode, &except_ptrs);
+        }
     }
 
     return ExceptionContinueSearch;
