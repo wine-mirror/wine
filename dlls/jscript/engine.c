@@ -2392,13 +2392,24 @@ static void release_call_frame(call_frame_t *frame)
     heap_free(frame);
 }
 
-static HRESULT unwind_exception(script_ctx_t *ctx)
+static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
 {
     call_frame_t *frame = ctx->call_ctx;
     except_frame_t *except_frame;
     jsval_t except_val;
     BSTR ident;
     HRESULT hres;
+
+    if(!frame->except_frame) {
+        while(frame->scope != frame->base_scope)
+            scope_pop(&frame->scope);
+
+        stack_popn(ctx, ctx->stack_top-frame->stack_base);
+
+        ctx->call_ctx = frame->prev_frame;
+        release_call_frame(frame);
+        return exception_hres;
+    }
 
     except_frame = frame->except_frame;
     frame->except_frame = except_frame->next;
@@ -2444,7 +2455,7 @@ static HRESULT unwind_exception(script_ctx_t *ctx)
     return hres;
 }
 
-static HRESULT enter_bytecode(script_ctx_t *ctx, jsval_t *ret)
+static HRESULT enter_bytecode(script_ctx_t *ctx, jsval_t *r)
 {
     call_frame_t *frame;
     jsop_t op;
@@ -2454,40 +2465,30 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, jsval_t *ret)
 
     frame = ctx->call_ctx;
 
-    while(frame->ip != -1) {
+    while(1) {
         op = frame->bytecode->instrs[frame->ip].op;
         hres = op_funcs[op](ctx);
         if(FAILED(hres)) {
             TRACE("EXCEPTION %08x\n", hres);
 
-            if(!frame->except_frame)
-                break;
-
-            hres = unwind_exception(ctx);
+            hres = unwind_exception(ctx, hres);
             if(FAILED(hres))
-                break;
+                return hres;
+        }else if(frame->ip == -1) {
+            assert(ctx->stack_top == frame->stack_base);
+            assert(frame->scope == frame->base_scope);
+
+            ctx->call_ctx = frame->prev_frame;
+            if(r)
+                *r = steal_ret(frame);
+            release_call_frame(frame);
+            break;
         }else {
             frame->ip += op_move[op];
         }
     }
 
-    assert(ctx->call_ctx == frame);
-
-    if(FAILED(hres)) {
-        while(frame->scope != frame->base_scope)
-            scope_pop(&frame->scope);
-        stack_popn(ctx, ctx->stack_top-frame->stack_base);
-    }
-
-    assert(ctx->stack_top == frame->stack_base);
-    assert(frame->scope == frame->base_scope);
-    ctx->call_ctx = frame->prev_frame;
-
-    if(SUCCEEDED(hres))
-        *ret = steal_ret(frame);
-
-    release_call_frame(frame);
-    return hres;
+    return S_OK;
 }
 
 static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdisp_t *func_obj)
@@ -2528,10 +2529,9 @@ static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdis
 }
 
 HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, function_code_t *function, scope_chain_t *scope,
-        IDispatch *this_obj, jsdisp_t *variable_obj, jsval_t *ret)
+        IDispatch *this_obj, jsdisp_t *variable_obj, jsval_t *r)
 {
     call_frame_t *frame;
-    jsval_t val;
     unsigned i;
     HRESULT hres;
 
@@ -2603,13 +2603,5 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
     frame->prev_frame = ctx->call_ctx;
     ctx->call_ctx = frame;
 
-    hres = enter_bytecode(ctx, &val);
-    if(FAILED(hres))
-        return hres;
-
-    if(ret)
-        *ret = val;
-    else
-        jsval_release(val);
-    return S_OK;
+    return enter_bytecode(ctx, r);
 }
