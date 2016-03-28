@@ -2339,7 +2339,7 @@
 @ stub gets_s
 @ cdecl getwc(ptr) MSVCRT_getwc
 @ cdecl getwchar() MSVCRT_getwchar
-@ stub hypot
+@ cdecl hypot(double double) _hypot
 @ stub ilogb
 @ stub ilogbf
 @ stub ilogbl

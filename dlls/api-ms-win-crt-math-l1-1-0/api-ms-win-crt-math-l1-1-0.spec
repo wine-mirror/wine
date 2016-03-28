@@ -252,7 +252,7 @@
 @ cdecl fmod(double double) ucrtbase.fmod
 @ cdecl -arch=arm,x86_64 fmodf(float float) ucrtbase.fmodf
 @ cdecl frexp(double ptr) ucrtbase.frexp
-@ stub hypot
+@ cdecl hypot(double double) ucrtbase.hypot
 @ stub ilogb
 @ stub ilogbf
 @ stub ilogbl
