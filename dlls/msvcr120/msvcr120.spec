@@ -2339,12 +2339,12 @@
 @ cdecl round(double) MSVCR120_round
 @ cdecl roundf(float) MSVCR120_roundf
 @ cdecl roundl(double) MSVCR120_roundl
-@ stub scalbln
-@ stub scalblnf
-@ stub scalblnl
-@ stub scalbn
-@ stub scalbnf
-@ stub scalbnl
+@ cdecl scalbln(double long) MSVCRT__scalb
+@ cdecl scalblnf(float long) MSVCRT__scalbf
+@ cdecl scalblnl(double long) MSVCR120_scalbnl
+@ cdecl scalbn(double long) MSVCRT__scalb
+@ cdecl scalbnf(float long) MSVCRT__scalbf
+@ cdecl scalbnl(double long) MSVCR120_scalbnl
 @ varargs scanf(str) MSVCRT_scanf
 @ varargs scanf_s(str) MSVCRT_scanf_s
 @ cdecl setbuf(ptr ptr) MSVCRT_setbuf
