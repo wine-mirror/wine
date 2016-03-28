@@ -910,6 +910,8 @@ case $host_os in
                            then
                                WINE_WARNING([prelink not found and linker does not support relocation, base address of core dlls won't be set correctly.])
                            fi])
+          WINE_TRY_CFLAGS([-Wl,-z,max-page-size=0x1000],
+                          [LDEXECFLAGS="$LDEXECFLAGS -Wl,-z,max-page-size=0x1000"])
           ;;
       esac
 
