@@ -333,7 +333,7 @@ static BOOL WCUSER_AreFontsEqual(const struct config_data* config, const LOGFONT
 struct font_chooser
 {
     struct inner_data*	data;
-    BOOL                check_screen_size;
+    int                 pass;
     BOOL                done;
 };
 
@@ -343,15 +343,26 @@ struct font_chooser
  * Returns true if the font described in tm is usable as a font for the renderer
  */
 BOOL WCUSER_ValidateFontMetric(const struct inner_data* data, const TEXTMETRICW* tm,
-                               DWORD type, BOOL check_screen_size)
+                               DWORD type, int pass)
 {
-    BOOL        ret = TRUE;
-
-    if (check_screen_size && (type & RASTER_FONTTYPE))
-        ret = (tm->tmMaxCharWidth * data->curcfg.win_width < GetSystemMetrics(SM_CXSCREEN) &&
-               tm->tmHeight * data->curcfg.win_height < GetSystemMetrics(SM_CYSCREEN));
-    return ret && !tm->tmItalic && !tm->tmUnderlined && !tm->tmStruckOut &&
-        (tm->tmCharSet == DEFAULT_CHARSET || tm->tmCharSet == g_uiDefaultCharset);
+    switch (pass)  /* we get increasingly lenient in later passes */
+    {
+    case 0:
+        if (type & RASTER_FONTTYPE)
+        {
+            if (tm->tmMaxCharWidth * data->curcfg.win_width >= GetSystemMetrics(SM_CXSCREEN) ||
+                tm->tmHeight * data->curcfg.win_height >= GetSystemMetrics(SM_CYSCREEN))
+                return FALSE;
+        }
+        /* fall through */
+    case 1:
+        if (tm->tmCharSet != DEFAULT_CHARSET && tm->tmCharSet != g_uiDefaultCharset) return FALSE;
+        /* fall through */
+    case 2:
+        if (tm->tmItalic || tm->tmUnderlined || tm->tmStruckOut) return FALSE;
+        break;
+    }
+    return TRUE;
 }
 
 /******************************************************************
@@ -359,12 +370,22 @@ BOOL WCUSER_ValidateFontMetric(const struct inner_data* data, const TEXTMETRICW*
  *
  * Returns true if the font family described in lf is usable as a font for the renderer
  */
-BOOL WCUSER_ValidateFont(const struct inner_data* data, const LOGFONTW* lf)
+BOOL WCUSER_ValidateFont(const struct inner_data* data, const LOGFONTW* lf, int pass)
 {
-    return (lf->lfPitchAndFamily & 3) == FIXED_PITCH &&
-        /* (lf->lfPitchAndFamily & 0xF0) == FF_MODERN && */
-        lf->lfFaceName[0] != '@' &&
-        (lf->lfCharSet == DEFAULT_CHARSET || lf->lfCharSet == g_uiDefaultCharset);
+    switch (pass)  /* we get increasingly lenient in later passes */
+    {
+    case 0:
+    case 1:
+        if (lf->lfCharSet != DEFAULT_CHARSET && lf->lfCharSet != g_uiDefaultCharset) return FALSE;
+        /* fall through */
+    case 2:
+        if ((lf->lfPitchAndFamily & 3) != FIXED_PITCH) return FALSE;
+        /* fall through */
+    case 3:
+        if (lf->lfFaceName[0] == '@') return FALSE;
+        break;
+    }
+    return TRUE;
 }
 
 /******************************************************************
@@ -379,7 +400,7 @@ static int CALLBACK get_first_font_enum_2(const LOGFONTW* lf, const TEXTMETRICW*
     struct font_chooser*	fc = (struct font_chooser*)lParam;
 
     WCUSER_DumpTextMetric(tm, FontType);
-    if (WCUSER_ValidateFontMetric(fc->data, tm, FontType, fc->check_screen_size))
+    if (WCUSER_ValidateFontMetric(fc->data, tm, FontType, fc->pass))
     {
         LOGFONTW mlf = *lf;
 
@@ -417,7 +438,7 @@ static int CALLBACK get_first_font_enum(const LOGFONTW* lf, const TEXTMETRICW* t
     struct font_chooser*	fc = (struct font_chooser*)lParam;
 
     WCUSER_DumpLogFont("InitFamily: ", lf, FontType);
-    if (WCUSER_ValidateFont(fc->data, lf))
+    if (WCUSER_ValidateFont(fc->data, lf, fc->pass))
     {
         EnumFontFamiliesW(PRIVATE(fc->data)->hMemDC, lf->lfFaceName,
                           get_first_font_enum_2, lParam);
@@ -537,13 +558,13 @@ static void     WCUSER_SetFontPmt(struct inner_data* data, const WCHAR* font,
     /* try to find an acceptable font */
     WINE_WARN("Couldn't match the font from registry... trying to find one\n");
     fc.data = data;
-    fc.check_screen_size = TRUE;
     fc.done = FALSE;
-    EnumFontFamiliesW(PRIVATE(data)->hMemDC, NULL, get_first_font_enum, (LPARAM)&fc);
-    if (fc.done) return;
-    fc.check_screen_size = FALSE;
-    EnumFontFamiliesW(PRIVATE(data)->hMemDC, NULL, get_first_font_enum, (LPARAM)&fc);
-    if (!fc.done) WINECON_Fatal("Couldn't find a decent font, aborting\n");
+    for (fc.pass = 0; fc.pass <= 4; fc.pass++)
+    {
+        EnumFontFamiliesW(PRIVATE(data)->hMemDC, NULL, get_first_font_enum, (LPARAM)&fc);
+        if (fc.done) return;
+    }
+    WINECON_Fatal("Couldn't find a decent font, aborting\n");
 }
 
 /******************************************************************

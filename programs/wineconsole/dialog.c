@@ -300,7 +300,7 @@ static int CALLBACK font_enum_size2(const LOGFONTW* lf, const TEXTMETRICW* tm,
     struct dialog_info*	di = (struct dialog_info*)lParam;
 
     WCUSER_DumpTextMetric(tm, FontType);
-    if (WCUSER_ValidateFontMetric(di->data, tm, FontType, TRUE))
+    if (WCUSER_ValidateFontMetric(di->data, tm, FontType, 0))
     {
 	di->nFont++;
     }
@@ -314,7 +314,7 @@ static int CALLBACK font_enum(const LOGFONTW* lf, const TEXTMETRICW* tm,
     struct dialog_info*	di = (struct dialog_info*)lParam;
 
     WCUSER_DumpLogFont("DlgFamily: ", lf, FontType);
-    if (WCUSER_ValidateFont(di->data, lf))
+    if (WCUSER_ValidateFont(di->data, lf, 0))
     {
         if (FontType & RASTER_FONTTYPE)
         {
@@ -372,7 +372,7 @@ static int CALLBACK font_enum_size(const LOGFONTW* lf, const TEXTMETRICW* tm,
         return 0;
     }
 
-    if (WCUSER_ValidateFontMetric(di->data, tm, FontType, TRUE))
+    if (WCUSER_ValidateFontMetric(di->data, tm, FontType, 0))
     {
 	int	idx = 0;
 

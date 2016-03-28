@@ -45,9 +45,9 @@ struct inner_data_user {
 /* from user.c */
 extern const COLORREF WCUSER_ColorMap[16];
 extern BOOL WCUSER_GetProperties(struct inner_data*, BOOL);
-extern BOOL WCUSER_ValidateFont(const struct inner_data* data, const LOGFONTW* lf);
+extern BOOL WCUSER_ValidateFont(const struct inner_data* data, const LOGFONTW* lf, int pass);
 extern BOOL WCUSER_ValidateFontMetric(const struct inner_data* data, const TEXTMETRICW* tm,
-                                      DWORD type, BOOL check_screen_size);
+                                      DWORD type, int pass);
 extern HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd,
                              const LOGFONTW* lf, LONG* el);
 extern void WCUSER_FillLogFont(LOGFONTW* lf, const WCHAR* name,
