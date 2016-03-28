@@ -571,7 +571,7 @@ static HRESULT compile_new_expression(compiler_ctx_t *ctx, call_expression_t *ex
 
 static HRESULT compile_call_expression(compiler_ctx_t *ctx, call_expression_t *expr, BOOL emit_ret)
 {
-    unsigned arg_cnt = 0;
+    unsigned arg_cnt = 0, extra_args;
     argument_t *arg;
     unsigned instr;
     jsop_t op;
@@ -579,9 +579,11 @@ static HRESULT compile_call_expression(compiler_ctx_t *ctx, call_expression_t *e
 
     if(is_memberid_expr(expr->expression->type)) {
         op = OP_call_member;
+        extra_args = 2;
         hres = compile_memberid_expression(ctx, expr->expression, 0);
     }else {
         op = OP_call;
+        extra_args = 1;
         hres = compile_expression(ctx, expr->expression, TRUE);
     }
 
@@ -601,7 +603,12 @@ static HRESULT compile_call_expression(compiler_ctx_t *ctx, call_expression_t *e
 
     instr_ptr(ctx, instr)->u.arg[0].uint = arg_cnt;
     instr_ptr(ctx, instr)->u.arg[1].lng = emit_ret;
-    return S_OK;
+
+    hres = push_instr_uint(ctx, OP_pop, arg_cnt + extra_args);
+    if(FAILED(hres))
+        return hres;
+
+    return !emit_ret || push_instr(ctx, OP_push_ret) ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT compile_delete_expression(compiler_ctx_t *ctx, unary_expression_t *expr)

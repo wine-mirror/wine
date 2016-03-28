@@ -972,8 +972,8 @@ static HRESULT interp_call(script_ctx_t *ctx)
 {
     const unsigned argn = get_op_uint(ctx, 0);
     const int do_ret = get_op_int(ctx, 1);
-    jsval_t r, obj;
-    HRESULT hres;
+    call_frame_t *frame = ctx->call_ctx;
+    jsval_t obj;
 
     TRACE("%d %d\n", argn, do_ret);
 
@@ -981,13 +981,9 @@ static HRESULT interp_call(script_ctx_t *ctx)
     if(!is_object_instance(obj))
         return throw_type_error(ctx, JS_E_INVALID_PROPERTY, NULL);
 
-    hres = disp_call_value(ctx, get_object(obj), NULL, DISPATCH_METHOD, argn, stack_args(ctx, argn),
-            do_ret ? &r : NULL);
-    if(FAILED(hres))
-        return hres;
-
-    stack_popn(ctx, argn+1);
-    return do_ret ? stack_push(ctx, r) : S_OK;
+    clear_ret(frame);
+    return disp_call_value(ctx, get_object(obj), NULL, DISPATCH_METHOD,
+                           argn, stack_args(ctx, argn), do_ret ? &frame->ret : NULL);
 }
 
 /* ECMA-262 3rd Edition    11.2.3 */
@@ -995,10 +991,9 @@ static HRESULT interp_call_member(script_ctx_t *ctx)
 {
     const unsigned argn = get_op_uint(ctx, 0);
     const int do_ret = get_op_int(ctx, 1);
+    call_frame_t *frame = ctx->call_ctx;
     IDispatch *obj;
-    jsval_t r;
     DISPID id;
-    HRESULT hres;
 
     TRACE("%d %d\n", argn, do_ret);
 
@@ -1006,13 +1001,9 @@ static HRESULT interp_call_member(script_ctx_t *ctx)
     if(!obj)
         return throw_type_error(ctx, id, NULL);
 
-    hres = disp_call(ctx, obj, id, DISPATCH_METHOD, argn, stack_args(ctx, argn), do_ret ? &r : NULL);
-    if(FAILED(hres))
-        return hres;
-
-    stack_popn(ctx, argn+2);
-    return do_ret ? stack_push(ctx, r) : S_OK;
-
+    clear_ret(frame);
+    return disp_call(ctx, obj, id, DISPATCH_METHOD,
+            argn, stack_args(ctx, argn), do_ret ? &frame->ret : NULL);
 }
 
 /* ECMA-262 3rd Edition    11.1.1 */
