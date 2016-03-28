@@ -3,7 +3,7 @@ MODULE    = kernel32.dll
 IMPORTLIB = kernel32
 IMPORTS   = winecrt0 ntdll
 EXTRALIBS = $(COREFOUNDATION_LIBS) $(POLL_LIBS)
-EXTRADLLFLAGS = -nodefaultlibs -Wb,-F,KERNEL32.dll -Wl,--image-base,0x7b800000
+EXTRADLLFLAGS = -nodefaultlibs -Wb,-F,KERNEL32.dll -Wl,--image-base,0x7b400000
 
 C_SRCS = \
 	actctx.c \
