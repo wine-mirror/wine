@@ -1479,7 +1479,7 @@ static HRESULT compile_return_statement(compiler_ctx_t *ctx, expression_statemen
     if(FAILED(hres))
         return hres;
 
-    return push_instr(ctx, OP_ret) ? S_OK : E_OUTOFMEMORY;
+    return push_instr_uint(ctx, OP_ret, !stat->expr);
 }
 
 /* ECMA-262 3rd Edition    12.10 */
@@ -1857,8 +1857,9 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
 
     resolve_labels(ctx, off);
 
-    if(!push_instr(ctx, OP_ret))
-        return E_OUTOFMEMORY;
+    hres = push_instr_uint(ctx, OP_ret, !from_eval);
+    if(FAILED(hres))
+        return hres;
 
     if(TRACE_ON(jscript_disas))
         dump_code(ctx, off);

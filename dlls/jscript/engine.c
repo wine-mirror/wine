@@ -194,6 +194,13 @@ static inline IDispatch *stack_topn_objid(script_ctx_t *ctx, unsigned n, DISPID 
     return get_object(stack_topn(ctx, n+1));
 }
 
+static inline jsval_t steal_ret(call_frame_t *frame)
+{
+    jsval_t r = frame->ret;
+    frame->ret = jsval_undefined();
+    return r;
+}
+
 static void exprval_release(exprval_t *val)
 {
     switch(val->type) {
@@ -2323,7 +2330,13 @@ static HRESULT interp_pop(script_ctx_t *ctx)
 
 static HRESULT interp_ret(script_ctx_t *ctx)
 {
+    const unsigned clear_ret = get_op_uint(ctx, 0);
+    call_frame_t *frame = ctx->call_ctx;
+
     TRACE("\n");
+
+    if(clear_ret)
+        jsval_release(steal_ret(frame));
 
     jmp_abs(ctx, -1);
     return S_OK;
@@ -2457,10 +2470,8 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, function_code_t *func, jsval_t 
     assert(frame->scope == frame->base_scope);
     ctx->call_ctx = frame->prev_frame;
 
-    if(SUCCEEDED(hres)) {
-        *ret = frame->ret;
-        frame->ret = jsval_undefined();
-    }
+    if(SUCCEEDED(hres))
+        *ret = steal_ret(frame);
 
     release_call_frame(frame);
     return hres;
