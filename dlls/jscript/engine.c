@@ -2520,8 +2520,8 @@ static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdis
     return hres;
 }
 
-static HRESULT setup_call_frame(script_ctx_t *ctx, bytecode_t *bytecode, function_code_t *function, scope_chain_t *scope,
-        IDispatch *this_obj, BOOL is_global, jsdisp_t *variable_obj)
+static HRESULT setup_call_frame(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, function_code_t *function, scope_chain_t *scope,
+        IDispatch *this_obj, jsdisp_t *variable_obj)
 {
     call_frame_t *frame;
 
@@ -2558,7 +2558,7 @@ static HRESULT setup_call_frame(script_ctx_t *ctx, bytecode_t *bytecode, functio
         frame->this_obj = to_disp(ctx->global);
     IDispatch_AddRef(frame->this_obj);
 
-    frame->is_global = is_global;
+    frame->flags = flags;
     frame->variable_obj = jsdisp_addref(variable_obj);
 
     frame->prev_frame = ctx->call_ctx;
@@ -2566,8 +2566,8 @@ static HRESULT setup_call_frame(script_ctx_t *ctx, bytecode_t *bytecode, functio
     return S_OK;
 }
 
-HRESULT exec_source(script_ctx_t *ctx, bytecode_t *code, function_code_t *func, scope_chain_t *scope,
-        IDispatch *this_obj, BOOL is_global, jsdisp_t *variable_obj, jsval_t *ret)
+HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *code, function_code_t *func, scope_chain_t *scope,
+        IDispatch *this_obj, jsdisp_t *variable_obj, jsval_t *ret)
 {
     jsval_t val;
     unsigned i;
@@ -2593,7 +2593,7 @@ HRESULT exec_source(script_ctx_t *ctx, bytecode_t *code, function_code_t *func, 
     }
 
     for(i=0; i < func->var_cnt; i++) {
-        if(!is_global || !lookup_global_members(ctx, func->variables[i], NULL)) {
+        if(!(flags & EXEC_GLOBAL) || !lookup_global_members(ctx, func->variables[i], NULL)) {
             DISPID id = 0;
 
             hres = jsdisp_get_id(variable_obj, func->variables[i], fdexNameEnsure, &id);
@@ -2602,7 +2602,7 @@ HRESULT exec_source(script_ctx_t *ctx, bytecode_t *code, function_code_t *func, 
         }
     }
 
-    hres = setup_call_frame(ctx, code, func, scope, this_obj, is_global, variable_obj);
+    hres = setup_call_frame(ctx, flags, code, func, scope, this_obj, variable_obj);
     if(FAILED(hres))
         return hres;
 

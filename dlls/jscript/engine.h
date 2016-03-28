@@ -203,7 +203,7 @@ typedef struct _call_frame_t {
 
     IDispatch *this_obj;
     jsdisp_t *variable_obj;
-    BOOL is_global;
+    DWORD flags;
 
     bytecode_t *bytecode;
     function_code_t *function;
@@ -211,5 +211,7 @@ typedef struct _call_frame_t {
     struct _call_frame_t *prev_frame;
 } call_frame_t;
 
-HRESULT exec_source(script_ctx_t*,bytecode_t*,function_code_t*,scope_chain_t*,IDispatch*,BOOL,jsdisp_t*,jsval_t*) DECLSPEC_HIDDEN;
+#define EXEC_GLOBAL            0x0001
+
+HRESULT exec_source(script_ctx_t*,DWORD,bytecode_t*,function_code_t*,scope_chain_t*,IDispatch*,jsdisp_t*,jsval_t*) DECLSPEC_HIDDEN;
 HRESULT create_source_function(script_ctx_t*,bytecode_t*,function_code_t*,scope_chain_t*,jsdisp_t**) DECLSPEC_HIDDEN;

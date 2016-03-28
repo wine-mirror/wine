@@ -189,6 +189,7 @@ static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         jsval_t *r)
 {
     call_frame_t *frame;
+    DWORD exec_flags = 0;
     bytecode_t *code;
     const WCHAR *src;
     HRESULT hres;
@@ -223,8 +224,10 @@ static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         return throw_syntax_error(ctx, hres, NULL);
     }
 
-    hres = exec_source(ctx, code, &code->global_code, frame->scope,
-            frame->this_obj, frame->is_global, frame->variable_obj, r);
+    if(frame->flags & EXEC_GLOBAL)
+        exec_flags |= EXEC_GLOBAL;
+    hres = exec_source(ctx, exec_flags, code, &code->global_code, frame->scope,
+            frame->this_obj, frame->variable_obj, r);
     release_bytecode(code);
     return hres;
 }
