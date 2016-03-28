@@ -2160,9 +2160,9 @@
 @ cdecl asctime_s(ptr long ptr) MSVCRT_asctime_s
 @ cdecl asin(double) MSVCRT_asin
 @ cdecl -arch=arm,x86_64 asinf(float) MSVCRT_asinf
-@ stub asinh
-@ stub asinhf
-@ stub asinhl
+@ cdecl asinh(double double) MSVCR120_asinh
+@ cdecl asinhf(float float) MSVCR120_asinhf
+@ cdecl asinhl(double double) MSVCR120_asinhl
 @ cdecl atan(double) MSVCRT_atan
 @ cdecl atan2(double double) MSVCRT_atan2
 @ cdecl -arch=arm,x86_64 atan2f(float float) MSVCRT_atan2f

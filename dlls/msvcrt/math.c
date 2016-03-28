@@ -2743,3 +2743,37 @@ double CDECL MSVCR120_fmin(double x, double y)
         return signbit(x) ? x : y;
     return x<y ? x : y;
 }
+
+/*********************************************************************
+ *      asinh (MSVCR120.@)
+ */
+double CDECL MSVCR120_asinh(double x)
+{
+#ifdef HAVE_ASINH
+    return asinh(x);
+#else
+    FIXME( "not implemented\n" );
+    return 0.0;
+#endif
+}
+
+/*********************************************************************
+ *      asinhf (MSVCR120.@)
+ */
+float CDECL MSVCR120_asinhf(float x)
+{
+#ifdef HAVE_ASINHF
+    return asinhf(x);
+#else
+    FIXME( "not implemented\n" );
+    return 0.0f;
+#endif
+}
+
+/*********************************************************************
+ *      asinhl (MSVCR120.@)
+ */
+LDOUBLE CDECL MSVCR120_asinhl(LDOUBLE x)
+{
+    return MSVCR120_asinh(x);
+}
