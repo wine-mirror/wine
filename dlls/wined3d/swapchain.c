@@ -295,8 +295,9 @@ HRESULT CDECL wined3d_swapchain_get_gamma_ramp(const struct wined3d_swapchain *s
 static void swapchain_blit(const struct wined3d_swapchain *swapchain,
         struct wined3d_context *context, const RECT *src_rect, const RECT *dst_rect)
 {
-    struct wined3d_surface *backbuffer = surface_from_resource(
-            wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0));
+    struct wined3d_texture *texture = swapchain->back_buffers[0];
+    struct wined3d_surface *back_buffer = texture->sub_resources[0].u.surface;
+    struct wined3d_surface *front_buffer = swapchain->front_buffer->sub_resources[0].u.surface;
     UINT src_w = src_rect->right - src_rect->left;
     UINT src_h = src_rect->bottom - src_rect->top;
     GLenum gl_filter;
@@ -315,23 +316,21 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
     GetClientRect(swapchain->win_handle, &win_rect);
     win_h = win_rect.bottom - win_rect.top;
 
-    if (gl_info->fbo_ops.glBlitFramebuffer && is_identity_fixup(backbuffer->resource.format->color_fixup))
+    if (gl_info->fbo_ops.glBlitFramebuffer && is_identity_fixup(texture->resource.format->color_fixup))
     {
         DWORD location = WINED3D_LOCATION_TEXTURE_RGB;
 
-        if (backbuffer->resource.multisample_type)
+        if (texture->resource.multisample_type)
         {
             location = WINED3D_LOCATION_RB_RESOLVED;
-            surface_load_location(backbuffer, context, location);
+            surface_load_location(back_buffer, context, location);
         }
 
-        context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, backbuffer, NULL, location);
+        context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, back_buffer, NULL, location);
         gl_info->gl_ops.gl.p_glReadBuffer(GL_COLOR_ATTACHMENT0);
         context_check_fbo_status(context, GL_READ_FRAMEBUFFER);
 
-        context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER,
-                surface_from_resource(wined3d_texture_get_sub_resource(swapchain->front_buffer, 0)),
-                NULL, WINED3D_LOCATION_DRAWABLE);
+        context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER, front_buffer, NULL, WINED3D_LOCATION_DRAWABLE);
         context_set_draw_buffer(context, GL_BACK);
         context_invalidate_state(context, STATE_FRAMEBUFFER);
 
@@ -359,30 +358,28 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
         float tex_right = src_rect->right;
         float tex_bottom = src_rect->bottom;
 
-        context2 = context_acquire(device, backbuffer);
+        context2 = context_acquire(device, back_buffer);
         context_apply_blit_state(context2, device);
 
-        if (backbuffer->container->flags & WINED3D_TEXTURE_NORMALIZED_COORDS)
+        if (back_buffer->container->flags & WINED3D_TEXTURE_NORMALIZED_COORDS)
         {
-            tex_left /= backbuffer->pow2Width;
-            tex_right /= backbuffer->pow2Width;
-            tex_top /= backbuffer->pow2Height;
-            tex_bottom /= backbuffer->pow2Height;
+            tex_left /= back_buffer->pow2Width;
+            tex_right /= back_buffer->pow2Width;
+            tex_top /= back_buffer->pow2Height;
+            tex_bottom /= back_buffer->pow2Height;
         }
 
-        if (is_complex_fixup(backbuffer->resource.format->color_fixup))
+        if (is_complex_fixup(texture->resource.format->color_fixup))
             gl_filter = GL_NEAREST;
 
-        context_apply_fbo_state_blit(context2, GL_FRAMEBUFFER,
-                surface_from_resource(wined3d_texture_get_sub_resource(swapchain->front_buffer, 0)),
-                NULL, WINED3D_LOCATION_DRAWABLE);
-        context_bind_texture(context2, backbuffer->texture_target, backbuffer->container->texture_rgb.name);
+        context_apply_fbo_state_blit(context2, GL_FRAMEBUFFER, front_buffer, NULL, WINED3D_LOCATION_DRAWABLE);
+        context_bind_texture(context2, back_buffer->texture_target, texture->texture_rgb.name);
 
         /* Set up the texture. The surface is not in a wined3d_texture
          * container, so there are no D3D texture settings to dirtify. */
-        device->blitter->set_shader(device->blit_priv, context2, backbuffer, NULL);
-        gl_info->gl_ops.gl.p_glTexParameteri(backbuffer->texture_target, GL_TEXTURE_MIN_FILTER, gl_filter);
-        gl_info->gl_ops.gl.p_glTexParameteri(backbuffer->texture_target, GL_TEXTURE_MAG_FILTER, gl_filter);
+        device->blitter->set_shader(device->blit_priv, context2, back_buffer, NULL);
+        gl_info->gl_ops.gl.p_glTexParameteri(back_buffer->texture_target, GL_TEXTURE_MIN_FILTER, gl_filter);
+        gl_info->gl_ops.gl.p_glTexParameteri(back_buffer->texture_target, GL_TEXTURE_MAG_FILTER, gl_filter);
 
         context_set_draw_buffer(context, GL_BACK);
 
