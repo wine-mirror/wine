@@ -895,7 +895,7 @@ typedef struct tagPANOSE
 
 #define PAN_FAMILYTYPE_INDEX           0
 #define PAN_SERIFSTYLE_INDEX           1
-#define PAN_WEIGTH_INDEX               2
+#define PAN_WEIGHT_INDEX               2
 #define PAN_PROPORTION_INDEX           3
 #define PAN_CONTRAST_INDEX             4
 #define PAN_STROKEVARIATION_INDEX      5
