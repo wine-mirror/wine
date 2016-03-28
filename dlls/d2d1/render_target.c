@@ -312,7 +312,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmap(ID2D1RenderT
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d2d_bitmap_init_memory(object, render_target, size, src_data, pitch, desc)))
+    if (FAILED(hr = d2d_bitmap_init_memory(object, render_target->factory, render_target->device, size, src_data, pitch, desc)))
     {
         WARN("Failed to initialize bitmap, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
@@ -444,7 +444,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateSharedBitmap(ID2D1R
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d2d_bitmap_init_shared(object, render_target, iid, data, desc)))
+    if (FAILED(hr = d2d_bitmap_init_shared(object, render_target->factory, render_target->device, iid, data, desc)))
     {
         WARN("Failed to initialize bitmap, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);

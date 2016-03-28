@@ -204,9 +204,9 @@ struct d2d_bitmap
     float dpi_y;
 };
 
-HRESULT d2d_bitmap_init_memory(struct d2d_bitmap *bitmap, struct d2d_d3d_render_target *render_target,
+HRESULT d2d_bitmap_init_memory(struct d2d_bitmap *bitmap, ID2D1Factory *factory, ID3D10Device *device,
         D2D1_SIZE_U size, const void *src_data, UINT32 pitch, const D2D1_BITMAP_PROPERTIES *desc) DECLSPEC_HIDDEN;
-HRESULT d2d_bitmap_init_shared(struct d2d_bitmap *bitmap, struct d2d_d3d_render_target *render_target,
+HRESULT d2d_bitmap_init_shared(struct d2d_bitmap *bitmap, ID2D1Factory *factory, ID3D10Device *device,
         REFIID iid, void *data, const D2D1_BITMAP_PROPERTIES *desc) DECLSPEC_HIDDEN;
 struct d2d_bitmap *unsafe_impl_from_ID2D1Bitmap(ID2D1Bitmap *iface) DECLSPEC_HIDDEN;
 
