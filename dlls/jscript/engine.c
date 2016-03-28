@@ -2331,6 +2331,12 @@ static HRESULT interp_ret(script_ctx_t *ctx)
     if(clear_ret)
         jsval_release(steal_ret(frame));
 
+    if((frame->flags & EXEC_CONSTRUCTOR) && !is_object_instance(frame->ret)) {
+        jsval_release(frame->ret);
+        IDispatch_AddRef(frame->this_obj);
+        frame->ret = jsval_disp(frame->this_obj);
+    }
+
     jmp_abs(ctx, -1);
     return S_OK;
 }
