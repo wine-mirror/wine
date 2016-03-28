@@ -52,9 +52,3 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
     return TRUE;
 }
-
-DWORD WINAPI SFC_3(DWORD unknown)
-{
-    FIXME("%x\n", unknown);
-    return 0;
-}

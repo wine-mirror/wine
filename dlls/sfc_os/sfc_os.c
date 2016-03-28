@@ -132,3 +132,9 @@ BOOL WINAPI SfcIsKeyProtected(HKEY hKey, LPCWSTR lpSubKey, REGSAM samDesired)
     SetLastError(ERROR_FILE_NOT_FOUND);
     return FALSE;
 }
+
+DWORD WINAPI SfcConnectToServer(DWORD unknown)
+{
+    FIXME("%x\n", unknown);
+    return 0;
+}
