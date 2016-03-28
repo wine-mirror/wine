@@ -152,8 +152,8 @@ void wined3d_volume_invalidate_location(struct wined3d_volume *volume, DWORD loc
 static void wined3d_volume_download_data(struct wined3d_volume *volume,
         const struct wined3d_context *context, const struct wined3d_bo_address *data)
 {
+    const struct wined3d_format *format = volume->container->resource.format;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    const struct wined3d_format *format = volume->resource.format;
 
     if (format->convert)
     {
