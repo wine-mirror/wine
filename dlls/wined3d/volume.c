@@ -263,10 +263,10 @@ BOOL wined3d_volume_load_location(struct wined3d_volume *volume,
         return TRUE;
     }
 
-    if ((volume->resource.access_flags & required_access) != required_access)
+    if ((texture->resource.access_flags & required_access) != required_access)
     {
         ERR("Operation requires %#x access, but volume only has %#x.\n",
-                required_access, volume->resource.access_flags);
+                required_access, texture->resource.access_flags);
         return FALSE;
     }
 
