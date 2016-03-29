@@ -250,6 +250,19 @@ HRESULT d3d_vertex_shader_create(struct d3d_device *device, const void *byte_cod
 struct d3d_vertex_shader *unsafe_impl_from_ID3D11VertexShader(ID3D11VertexShader *iface) DECLSPEC_HIDDEN;
 struct d3d_vertex_shader *unsafe_impl_from_ID3D10VertexShader(ID3D10VertexShader *iface) DECLSPEC_HIDDEN;
 
+/* ID3D11HullShader */
+struct d3d11_hull_shader
+{
+    ID3D11HullShader ID3D11HullShader_iface;
+    LONG refcount;
+
+    struct wined3d_private_store private_store;
+    ID3D11Device *device;
+};
+
+HRESULT d3d11_hull_shader_create(struct d3d_device *device, const void *byte_code, SIZE_T byte_code_length,
+        struct d3d11_hull_shader **shader) DECLSPEC_HIDDEN;
+
 /* ID3D11GeometryShader, ID3D10GeometryShader */
 struct d3d_geometry_shader
 {

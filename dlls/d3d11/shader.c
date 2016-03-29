@@ -471,6 +471,134 @@ struct d3d_vertex_shader *unsafe_impl_from_ID3D10VertexShader(ID3D10VertexShader
     return impl_from_ID3D10VertexShader(iface);
 }
 
+/* ID3D11HullShader methods */
+
+static inline struct d3d11_hull_shader *impl_from_ID3D11HullShader(ID3D11HullShader *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d11_hull_shader, ID3D11HullShader_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_hull_shader_QueryInterface(ID3D11HullShader *iface,
+        REFIID riid, void **object)
+{
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+
+    if (IsEqualGUID(riid, &IID_ID3D11HullShader)
+            || IsEqualGUID(riid, &IID_ID3D11DeviceChild)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        ID3D11HullShader_AddRef(iface);
+        *object = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *object = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_hull_shader_AddRef(ID3D11HullShader *iface)
+{
+    struct d3d11_hull_shader *shader = impl_from_ID3D11HullShader(iface);
+    ULONG refcount = InterlockedIncrement(&shader->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", shader, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_hull_shader_Release(ID3D11HullShader *iface)
+{
+    struct d3d11_hull_shader *shader = impl_from_ID3D11HullShader(iface);
+    ULONG refcount = InterlockedDecrement(&shader->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", shader, refcount);
+
+    if (!refcount)
+    {
+        ID3D11Device_Release(shader->device);
+        HeapFree(GetProcessHeap(), 0, shader);
+    }
+
+    return refcount;
+}
+
+static void STDMETHODCALLTYPE d3d11_hull_shader_GetDevice(ID3D11HullShader *iface,
+        ID3D11Device **device)
+{
+    struct d3d11_hull_shader *shader = impl_from_ID3D11HullShader(iface);
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    *device = shader->device;
+    ID3D11Device_AddRef(*device);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_hull_shader_GetPrivateData(ID3D11HullShader *iface,
+        REFGUID guid, UINT *data_size, void *data)
+{
+    struct d3d11_hull_shader *shader = impl_from_ID3D11HullShader(iface);
+
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return d3d_get_private_data(&shader->private_store, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_hull_shader_SetPrivateData(ID3D11HullShader *iface,
+        REFGUID guid, UINT data_size, const void *data)
+{
+    struct d3d11_hull_shader *shader = impl_from_ID3D11HullShader(iface);
+
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return d3d_set_private_data(&shader->private_store, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_hull_shader_SetPrivateDataInterface(ID3D11HullShader *iface,
+        REFGUID guid, const IUnknown *data)
+{
+    struct d3d11_hull_shader *shader = impl_from_ID3D11HullShader(iface);
+
+    TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
+
+    return d3d_set_private_data_interface(&shader->private_store, guid, data);
+}
+
+static const struct ID3D11HullShaderVtbl d3d11_hull_shader_vtbl =
+{
+    /* IUnknown methods */
+    d3d11_hull_shader_QueryInterface,
+    d3d11_hull_shader_AddRef,
+    d3d11_hull_shader_Release,
+    /* ID3D11DeviceChild methods */
+    d3d11_hull_shader_GetDevice,
+    d3d11_hull_shader_GetPrivateData,
+    d3d11_hull_shader_SetPrivateData,
+    d3d11_hull_shader_SetPrivateDataInterface,
+};
+
+HRESULT d3d11_hull_shader_create(struct d3d_device *device, const void *byte_code, SIZE_T byte_code_length,
+        struct d3d11_hull_shader **shader)
+{
+    struct d3d11_hull_shader *object;
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->ID3D11HullShader_iface.lpVtbl = &d3d11_hull_shader_vtbl;
+    object->refcount = 1;
+    wined3d_private_store_init(&object->private_store);
+
+    object->device = &device->ID3D11Device_iface;
+    ID3D11Device_AddRef(object->device);
+
+    TRACE("Created hull shader %p.\n", object);
+    *shader = object;
+
+    return S_OK;
+}
+
 /* ID3D11GeometryShader methods */
 
 static inline struct d3d_geometry_shader *impl_from_ID3D11GeometryShader(ID3D11GeometryShader *iface)
