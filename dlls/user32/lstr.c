@@ -31,11 +31,11 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winuser.h"
 #include "winerror.h"
 
 #include "wine/exception.h"
-#include "wine/unicode.h"
 
 
 /***********************************************************************
@@ -175,7 +175,7 @@ BOOL WINAPI CharToOemBuffW( LPCWSTR s, LPSTR d, DWORD len )
  */
 BOOL WINAPI CharToOemW( LPCWSTR s, LPSTR d )
 {
-    return CharToOemBuffW( s, d, strlenW( s ) + 1 );
+    return CharToOemBuffW( s, d, lstrlenW( s ) + 1 );
 }
 
 
@@ -280,20 +280,38 @@ LPSTR WINAPI CharUpperA(LPSTR str)
 /***********************************************************************
  *           CharLowerW   (USER32.@)
  */
-LPWSTR WINAPI CharLowerW(LPWSTR x)
+LPWSTR WINAPI CharLowerW( LPWSTR str )
 {
-    if (!IS_INTRESOURCE(x)) return strlwrW(x);
-    else return (LPWSTR)((UINT_PTR)tolowerW(LOWORD(x)));
+    if (!IS_INTRESOURCE( str ))
+    {
+        CharLowerBuffW( str, lstrlenW( str ));
+        return str;
+    }
+    else
+    {
+        WCHAR ch = LOWORD( str );
+        CharLowerBuffW( &ch, 1 );
+        return (LPWSTR)(UINT_PTR)ch;
+    }
 }
 
 
 /***********************************************************************
  *           CharUpperW   (USER32.@)
  */
-LPWSTR WINAPI CharUpperW(LPWSTR x)
+LPWSTR WINAPI CharUpperW( LPWSTR str )
 {
-    if (!IS_INTRESOURCE(x)) return struprW(x);
-    else return (LPWSTR)((UINT_PTR)toupperW(LOWORD(x)));
+    if (!IS_INTRESOURCE( str ))
+    {
+        CharUpperBuffW( str, lstrlenW( str ));
+        return str;
+    }
+    else
+    {
+        WCHAR ch = LOWORD( str );
+        CharUpperBuffW( &ch, 1 );
+        return (LPWSTR)(UINT_PTR)ch;
+    }
 }
 
 
@@ -327,10 +345,8 @@ DWORD WINAPI CharLowerBuffA( LPSTR str, DWORD len )
  */
 DWORD WINAPI CharLowerBuffW( LPWSTR str, DWORD len )
 {
-    DWORD ret = len;
     if (!str) return 0; /* YES */
-    for (; len; len--, str++) *str = tolowerW(*str);
-    return ret;
+    return LCMapStringW( LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, str, len, str, len );
 }
 
 
@@ -364,10 +380,8 @@ DWORD WINAPI CharUpperBuffA( LPSTR str, DWORD len )
  */
 DWORD WINAPI CharUpperBuffW( LPWSTR str, DWORD len )
 {
-    DWORD ret = len;
     if (!str) return 0; /* YES */
-    for (; len; len--, str++) *str = toupperW(*str);
-    return ret;
+    return LCMapStringW( LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, str, len, str, len );
 }
 
 
@@ -386,9 +400,10 @@ BOOL WINAPI IsCharLowerA(CHAR x)
 /***********************************************************************
  *           IsCharLowerW   (USER32.@)
  */
-BOOL WINAPI IsCharLowerW(WCHAR x)
+BOOL WINAPI IsCharLowerW( WCHAR ch )
 {
-    return (get_char_typeW(x) & C1_LOWER) != 0;
+    WORD type;
+    return GetStringTypeW( CT_CTYPE1, &ch, 1, &type ) && (type & C1_LOWER);
 }
 
 
@@ -407,9 +422,10 @@ BOOL WINAPI IsCharUpperA(CHAR x)
 /***********************************************************************
  *           IsCharUpperW   (USER32.@)
  */
-BOOL WINAPI IsCharUpperW(WCHAR x)
+BOOL WINAPI IsCharUpperW( WCHAR ch )
 {
-    return (get_char_typeW(x) & C1_UPPER) != 0;
+    WORD type;
+    return GetStringTypeW( CT_CTYPE1, &ch, 1, &type ) && (type & C1_UPPER);
 }
 
 
@@ -428,9 +444,10 @@ BOOL WINAPI IsCharAlphaNumericA(CHAR x)
 /***********************************************************************
  *           IsCharAlphaNumericW   (USER32.@)
  */
-BOOL WINAPI IsCharAlphaNumericW(WCHAR x)
+BOOL WINAPI IsCharAlphaNumericW( WCHAR ch )
 {
-    return (get_char_typeW(x) & (C1_ALPHA|C1_DIGIT)) != 0;
+    WORD type;
+    return GetStringTypeW( CT_CTYPE1, &ch, 1, &type ) && (type & (C1_ALPHA|C1_DIGIT));
 }
 
 
@@ -449,7 +466,8 @@ BOOL WINAPI IsCharAlphaA(CHAR x)
 /***********************************************************************
  *           IsCharAlphaW   (USER32.@)
  */
-BOOL WINAPI IsCharAlphaW(WCHAR x)
+BOOL WINAPI IsCharAlphaW( WCHAR ch )
 {
-    return (get_char_typeW(x) & C1_ALPHA) != 0;
+    WORD type;
+    return GetStringTypeW( CT_CTYPE1, &ch, 1, &type ) && (type & C1_ALPHA);
 }
