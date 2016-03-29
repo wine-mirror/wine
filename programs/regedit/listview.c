@@ -20,6 +20,7 @@
  */
 
 #include <windows.h>
+#include <winternl.h>
 #include <commctrl.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -167,10 +168,14 @@ static void AddEntryToList(HWND hwndLV, LPWSTR Name, DWORD dwValType,
                 ListView_SetItemTextW(hwndLV, index, 2, g_szValueNotSet);
             }
             break;
-        case REG_DWORD: {
+        case REG_DWORD:
+        case REG_DWORD_BIG_ENDIAN: {
+                DWORD value = *(DWORD*)ValBuf;
                 WCHAR buf[64];
                 WCHAR format[] = {'0','x','%','0','8','x',' ','(','%','u',')',0};
-                wsprintfW(buf, format, *(DWORD*)ValBuf, *(DWORD*)ValBuf);
+                if (dwValType == REG_DWORD_BIG_ENDIAN)
+                    value = RtlUlongByteSwap(value);
+                wsprintfW(buf, format, value, value);
                 ListView_SetItemTextW(hwndLV, index, 2, buf);
             }
             break;
