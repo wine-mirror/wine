@@ -413,10 +413,15 @@ static void strarray_add_uniq( struct strarray *array, const char *str )
  */
 static const char *strarray_get_value( const struct strarray *array, const char *name )
 {
-    unsigned int i;
+    int pos, res, min = 0, max = array->count / 2 - 1;
 
-    for (i = 0; i < array->count; i += 2)
-        if (!strcmp( array->str[i], name )) return array->str[i + 1];
+    while (min <= max)
+    {
+        pos = (min + max) / 2;
+        if (!(res = strcmp( array->str[pos * 2], name ))) return array->str[pos * 2 + 1];
+        if (res < 0) min = pos + 1;
+        else max = pos - 1;
+    }
     return NULL;
 }
 
@@ -428,17 +433,25 @@ static const char *strarray_get_value( const struct strarray *array, const char 
  */
 static void strarray_set_value( struct strarray *array, const char *name, const char *value )
 {
-    unsigned int i;
+    int i, pos, res, min = 0, max = array->count / 2 - 1;
 
-    /* redefining a variable replaces the previous value */
-    for (i = 0; i < array->count; i += 2)
+    while (min <= max)
     {
-        if (strcmp( array->str[i], name )) continue;
-        array->str[i + 1] = value;
-        return;
+        pos = (min + max) / 2;
+        if (!(res = strcmp( array->str[pos * 2], name )))
+        {
+            /* redefining a variable replaces the previous value */
+            array->str[pos * 2 + 1] = value;
+            return;
+        }
+        if (res < 0) min = pos + 1;
+        else max = pos - 1;
     }
-    strarray_add( array, name );
-    strarray_add( array, value );
+    strarray_add( array, NULL );
+    strarray_add( array, NULL );
+    for (i = array->count - 1; i > min * 2 + 1; i--) array->str[i] = array->str[i - 2];
+    array->str[min * 2] = name;
+    array->str[min * 2 + 1] = value;
 }
 
 
