@@ -304,7 +304,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *ifa
     }
 
     TRACE("Created IDXGISurface %p\n", object);
-    *surface = outer ? &object->IUnknown_iface : (IUnknown *)&object->IDXGISurface_iface;
+    *surface = outer ? &object->IUnknown_iface : (IUnknown *)&object->IDXGISurface1_iface;
 
     return S_OK;
 }

@@ -165,7 +165,7 @@ HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device
 /* IDXGISurface */
 struct dxgi_surface
 {
-    IDXGISurface IDXGISurface_iface;
+    IDXGISurface1 IDXGISurface1_iface;
     IUnknown IUnknown_iface;
     IUnknown *outer_unknown;
     LONG refcount;

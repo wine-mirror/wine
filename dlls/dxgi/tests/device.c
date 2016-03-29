@@ -188,6 +188,7 @@ static void test_create_surface(void)
     DXGI_SURFACE_DESC desc;
     IDXGISurface *surface;
     IDXGIDevice *device;
+    IUnknown *surface1;
     IUnknown *texture;
     ULONG refcount;
     HRESULT hr;
@@ -215,6 +216,11 @@ static void test_create_surface(void)
     ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
             "Surface should implement ID3D11Texture2D.\n");
     if (SUCCEEDED(hr)) IUnknown_Release(texture);
+
+    hr = IDXGISurface_QueryInterface(surface, &IID_IDXGISurface1, (void **)&surface1);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Surface should implement IDXGISurface1.\n");
+    if (SUCCEEDED(hr)) IUnknown_Release(surface1);
 
     IDXGISurface_Release(surface);
     refcount = IDXGIDevice_Release(device);
