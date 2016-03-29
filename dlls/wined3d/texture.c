@@ -69,6 +69,20 @@ GLenum wined3d_texture_get_gl_buffer(const struct wined3d_texture *texture)
     return GL_BACK;
 }
 
+void wined3d_texture_validate_location(struct wined3d_texture *texture,
+        unsigned int sub_resource_idx, DWORD location)
+{
+    struct wined3d_texture_sub_resource *sub_resource;
+
+    TRACE("texture %p, sub_resource_idx %u, location %s.\n",
+            texture, sub_resource_idx, wined3d_debug_location(location));
+
+    sub_resource = &texture->sub_resources[sub_resource_idx];
+    sub_resource->locations |= location;
+
+    TRACE("New locations flags are %s.\n", wined3d_debug_location(sub_resource->locations));
+}
+
 static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struct wined3d_texture_ops *texture_ops,
         UINT layer_count, UINT level_count, const struct wined3d_resource_desc *desc, DWORD flags,
         struct wined3d_device *device, void *parent, const struct wined3d_parent_ops *parent_ops,
@@ -857,7 +871,7 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     if (sub_resource->resource->map_binding == WINED3D_LOCATION_BUFFER && !wined3d_texture_use_pbo(texture, gl_info))
         sub_resource->resource->map_binding = surface->dib.DIBsection ? WINED3D_LOCATION_DIB : WINED3D_LOCATION_SYSMEM;
 
-    surface_validate_location(surface, valid_location);
+    wined3d_texture_validate_location(texture, 0, valid_location);
 
     return WINED3D_OK;
 }
@@ -1000,7 +1014,7 @@ static HRESULT wined3d_texture_upload_data(struct wined3d_texture *texture,
         struct wined3d_resource *sub_resource = texture->sub_resources[i].resource;
 
         texture->texture_ops->texture_sub_resource_upload_data(sub_resource, context, &data[i]);
-        texture->texture_ops->texture_sub_resource_validate_location(sub_resource, WINED3D_LOCATION_TEXTURE_RGB);
+        wined3d_texture_validate_location(texture, i, WINED3D_LOCATION_TEXTURE_RGB);
         texture->texture_ops->texture_sub_resource_invalidate_location(sub_resource, ~WINED3D_LOCATION_TEXTURE_RGB);
     }
 
@@ -1020,13 +1034,6 @@ static void texture2d_sub_resource_invalidate_location(struct wined3d_resource *
     struct wined3d_surface *surface = surface_from_resource(sub_resource);
 
     surface_invalidate_location(surface, location);
-}
-
-static void texture2d_sub_resource_validate_location(struct wined3d_resource *sub_resource, DWORD location)
-{
-    struct wined3d_surface *surface = surface_from_resource(sub_resource);
-
-    surface_validate_location(surface, location);
 }
 
 static void texture2d_sub_resource_upload_data(struct wined3d_resource *sub_resource,
@@ -1141,7 +1148,6 @@ static const struct wined3d_texture_ops texture2d_ops =
 {
     texture2d_sub_resource_load,
     texture2d_sub_resource_invalidate_location,
-    texture2d_sub_resource_validate_location,
     texture2d_sub_resource_upload_data,
     texture2d_load_location,
     texture2d_prepare_location,
@@ -1253,7 +1259,7 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
                 wined3d_debug_location(sub_resource->map_binding));
         if ((ret = texture->texture_ops->texture_prepare_location(texture,
                 sub_resource_idx, context, sub_resource->map_binding)))
-            texture->texture_ops->texture_sub_resource_validate_location(sub_resource, sub_resource->map_binding);
+            wined3d_texture_validate_location(texture, sub_resource_idx, sub_resource->map_binding);
     }
     else
     {
@@ -1656,13 +1662,6 @@ static void texture3d_sub_resource_invalidate_location(struct wined3d_resource *
     wined3d_volume_invalidate_location(volume, location);
 }
 
-static void texture3d_sub_resource_validate_location(struct wined3d_resource *sub_resource, DWORD location)
-{
-    struct wined3d_volume *volume = volume_from_resource(sub_resource);
-
-    wined3d_volume_validate_location(volume, location);
-}
-
 static void texture3d_sub_resource_upload_data(struct wined3d_resource *sub_resource,
         const struct wined3d_context *context, const struct wined3d_sub_resource_data *data)
 {
@@ -1736,7 +1735,6 @@ static const struct wined3d_texture_ops texture3d_ops =
 {
     texture3d_sub_resource_load,
     texture3d_sub_resource_invalidate_location,
-    texture3d_sub_resource_validate_location,
     texture3d_sub_resource_upload_data,
     texture3d_load_location,
     texture3d_prepare_location,

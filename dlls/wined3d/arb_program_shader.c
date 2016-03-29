@@ -7878,6 +7878,7 @@ static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_
         struct wined3d_surface *dst_surface, const RECT *dst_rect_in,
         const struct wined3d_color_key *color_key)
 {
+    unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
     struct wined3d_texture *src_texture = src_surface->container;
     struct wined3d_texture *dst_texture = dst_surface->container;
     struct wined3d_context *context;
@@ -7935,7 +7936,7 @@ static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_
 
     context_release(context);
 
-    surface_validate_location(dst_surface, dst_texture->resource.draw_binding);
+    wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx, dst_texture->resource.draw_binding);
     surface_invalidate_location(dst_surface, ~dst_texture->resource.draw_binding);
 }
 
