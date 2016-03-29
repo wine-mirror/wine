@@ -58,6 +58,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DCL_GLOBAL_FLAGS              */ "dcl_globalFlags",
     /* WINED3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER */ "dcl_immediateConstantBuffer",
     /* WINED3DSIH_DCL_INPUT                     */ "dcl_input",
+    /* WINED3DSIH_DCL_INPUT_CONTROL_POINT_COUNT */ "dcl_input_control_point_count",
     /* WINED3DSIH_DCL_INPUT_PRIMITIVE           */ "dcl_inputPrimitive",
     /* WINED3DSIH_DCL_INPUT_PS                  */ "dcl_input_ps",
     /* WINED3DSIH_DCL_INPUT_PS_SGV              */ "dcl_input_ps_sgv",
@@ -2061,7 +2062,8 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
                 shader_addline(&buffer, ", comparisonMode");
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_TEMPS
-                || ins.handler_idx == WINED3DSIH_DCL_VERTICES_OUT)
+                || ins.handler_idx == WINED3DSIH_DCL_VERTICES_OUT
+                || ins.handler_idx == WINED3DSIH_DCL_INPUT_CONTROL_POINT_COUNT)
         {
             shader_addline(&buffer, "%s %u", shader_opcode_names[ins.handler_idx], ins.declaration.count);
         }
