@@ -100,6 +100,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_FTOU                          */ "ftou",
     /* WINED3DSIH_GE                            */ "ge",
     /* WINED3DSIH_HS_DECLS                      */ "hs_decls",
+    /* WINED3DSIH_HS_FORK_PHASE                 */ "hs_fork_phase",
     /* WINED3DSIH_IADD                          */ "iadd",
     /* WINED3DSIH_IEQ                           */ "ieq",
     /* WINED3DSIH_IF                            */ "if",
