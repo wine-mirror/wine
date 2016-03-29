@@ -51,6 +51,7 @@ typedef struct _user_type_t context_handle_t;
 typedef struct _user_type_t generic_handle_t;
 typedef struct _type_list_t type_list_t;
 typedef struct _statement_t statement_t;
+typedef struct _warning_t warning_t;
 
 typedef struct list attr_list_t;
 typedef struct list str_list_t;
@@ -63,6 +64,7 @@ typedef struct list user_type_list_t;
 typedef struct list context_handle_list_t;
 typedef struct list generic_handle_list_t;
 typedef struct list statement_list_t;
+typedef struct list warning_list_t;
 
 enum attr_type
 {
@@ -536,6 +538,11 @@ struct _statement_t {
         typelib_t *lib;
         type_list_t *type_list;
     } u;
+};
+
+struct _warning_t {
+    int num;
+    struct list entry;
 };
 
 typedef enum {

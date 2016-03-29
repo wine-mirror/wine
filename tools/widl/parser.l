@@ -164,6 +164,7 @@ UUID *parse_uuid(const char *u)
                             yy_pop_state();
                         }
 <PP_PRAGMA>[^\n]*       parser_lval.str = xstrdup(yytext); yy_pop_state(); return aPRAGMA;
+<INITIAL>^{ws}*midl_pragma{ws}+warning return tPRAGMA_WARNING;
 <INITIAL,ATTR>\"	yy_push_state(QUOTE); cbufidx = 0;
 <QUOTE>\"		{
 				yy_pop_state();
