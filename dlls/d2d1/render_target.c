@@ -20,7 +20,6 @@
 #include "wine/port.h"
 
 #include "d2d1_private.h"
-#include "wincodec.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
@@ -309,124 +308,25 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmap(ID2D1RenderT
     TRACE("iface %p, size {%u, %u}, src_data %p, pitch %u, desc %p, bitmap %p.\n",
             iface, size.width, size.height, src_data, pitch, desc, bitmap);
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
-        return E_OUTOFMEMORY;
+    if (SUCCEEDED(hr = d2d_bitmap_create(render_target->factory, render_target->device, size, src_data, pitch, desc, &object)))
+        *bitmap = &object->ID2D1Bitmap_iface;
 
-    if (FAILED(hr = d2d_bitmap_init_memory(object, render_target->factory, render_target->device, size, src_data, pitch, desc)))
-    {
-        WARN("Failed to initialize bitmap, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
-    }
-
-    TRACE("Created bitmap %p.\n", object);
-    *bitmap = &object->ID2D1Bitmap_iface;
-
-    return S_OK;
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmapFromWicBitmap(ID2D1RenderTarget *iface,
         IWICBitmapSource *bitmap_source, const D2D1_BITMAP_PROPERTIES *desc, ID2D1Bitmap **bitmap)
 {
-    const D2D1_PIXEL_FORMAT *d2d_format;
-    D2D1_BITMAP_PROPERTIES bitmap_desc;
-    WICPixelFormatGUID wic_format;
-    unsigned int bpp, data_size;
-    D2D1_SIZE_U size;
-    unsigned int i;
-    WICRect rect;
-    UINT32 pitch;
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+    struct d2d_bitmap *object;
     HRESULT hr;
-    void *data;
-
-    static const struct
-    {
-        const WICPixelFormatGUID *wic;
-        D2D1_PIXEL_FORMAT d2d;
-    }
-    format_lookup[] =
-    {
-        {&GUID_WICPixelFormat32bppPBGRA, {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}},
-        {&GUID_WICPixelFormat32bppBGR,   {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE}},
-    };
 
     TRACE("iface %p, bitmap_source %p, desc %p, bitmap %p.\n",
             iface, bitmap_source, desc, bitmap);
 
-    if (FAILED(hr = IWICBitmapSource_GetSize(bitmap_source, &size.width, &size.height)))
-    {
-        WARN("Failed to get bitmap size, hr %#x.\n", hr);
-        return hr;
-    }
-
-    if (!desc)
-    {
-        bitmap_desc.pixelFormat.format = DXGI_FORMAT_UNKNOWN;
-        bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_UNKNOWN;
-        bitmap_desc.dpiX = 0.0f;
-        bitmap_desc.dpiY = 0.0f;
-    }
-    else
-    {
-        bitmap_desc = *desc;
-    }
-
-    if (FAILED(hr = IWICBitmapSource_GetPixelFormat(bitmap_source, &wic_format)))
-    {
-        WARN("Failed to get bitmap format, hr %#x.\n", hr);
-        return hr;
-    }
-
-    for (i = 0, d2d_format = NULL; i < sizeof(format_lookup) / sizeof(*format_lookup); ++i)
-    {
-        if (IsEqualGUID(&wic_format, format_lookup[i].wic))
-        {
-            d2d_format = &format_lookup[i].d2d;
-            break;
-        }
-    }
-
-    if (!d2d_format)
-    {
-        WARN("Unsupported WIC bitmap format %s.\n", debugstr_guid(&wic_format));
-        return D2DERR_UNSUPPORTED_PIXEL_FORMAT;
-    }
-
-    if (bitmap_desc.pixelFormat.format == DXGI_FORMAT_UNKNOWN)
-        bitmap_desc.pixelFormat.format = d2d_format->format;
-    if (bitmap_desc.pixelFormat.alphaMode == D2D1_ALPHA_MODE_UNKNOWN)
-        bitmap_desc.pixelFormat.alphaMode = d2d_format->alphaMode;
-
-    switch (bitmap_desc.pixelFormat.format)
-    {
-        case DXGI_FORMAT_B8G8R8A8_UNORM:
-            bpp = 4;
-            break;
-
-        default:
-            FIXME("Unhandled format %#x.\n", bitmap_desc.pixelFormat.format);
-            return D2DERR_UNSUPPORTED_PIXEL_FORMAT;
-    }
-
-    pitch = ((bpp * size.width) + 15) & ~15;
-    data_size = pitch * size.height;
-    if (!(data = HeapAlloc(GetProcessHeap(), 0, data_size)))
-        return E_OUTOFMEMORY;
-
-    rect.X = 0;
-    rect.Y = 0;
-    rect.Width = size.width;
-    rect.Height = size.height;
-    if (FAILED(hr = IWICBitmapSource_CopyPixels(bitmap_source, &rect, pitch, data_size, data)))
-    {
-        WARN("Failed to copy bitmap pixels, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, data);
-        return hr;
-    }
-
-    hr = d2d_d3d_render_target_CreateBitmap(iface, size, data, pitch, &bitmap_desc, bitmap);
-
-    HeapFree(GetProcessHeap(), 0, data);
+    if (SUCCEEDED(hr = d2d_bitmap_create_from_wic_bitmap(render_target->factory, render_target->device, bitmap_source,
+            desc, &object)))
+        *bitmap = &object->ID2D1Bitmap_iface;
 
     return hr;
 }
@@ -441,20 +341,10 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateSharedBitmap(ID2D1R
     TRACE("iface %p, iid %s, data %p, desc %p, bitmap %p.\n",
             iface, debugstr_guid(iid), data, desc, bitmap);
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
-        return E_OUTOFMEMORY;
+    if (SUCCEEDED(hr = d2d_bitmap_create_shared(render_target->factory, render_target->device, iid, data, desc, &object)))
+        *bitmap = &object->ID2D1Bitmap_iface;
 
-    if (FAILED(hr = d2d_bitmap_init_shared(object, render_target->factory, render_target->device, iid, data, desc)))
-    {
-        WARN("Failed to initialize bitmap, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
-    }
-
-    TRACE("Created bitmap %p.\n", object);
-    *bitmap = &object->ID2D1Bitmap_iface;
-
-    return S_OK;
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmapBrush(ID2D1RenderTarget *iface,
