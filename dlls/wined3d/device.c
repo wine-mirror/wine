@@ -4970,37 +4970,24 @@ static void device_resource_remove(struct wined3d_device *device, struct wined3d
 void device_resource_released(struct wined3d_device *device, struct wined3d_resource *resource)
 {
     enum wined3d_resource_type type = resource->type;
+    struct wined3d_rendertarget_view *rtv;
     unsigned int i;
 
     TRACE("device %p, resource %p, type %s.\n", device, resource, debug_d3dresourcetype(type));
 
     context_resource_released(device, resource, type);
 
+    for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
+    {
+        if ((rtv = device->fb.render_targets[i]) && rtv->resource == resource)
+            ERR("Resource %p is still in use as render target %u.\n", resource, i);
+    }
+
+    if ((rtv = device->fb.depth_stencil) && rtv->resource == resource)
+        ERR("Resource %p is still in use as depth/stencil buffer.\n", resource);
+
     switch (type)
     {
-        case WINED3D_RTYPE_SURFACE:
-            {
-                struct wined3d_surface *surface = surface_from_resource(resource);
-
-                if (!device->d3d_initialized) break;
-
-                for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
-                {
-                    if (wined3d_rendertarget_view_get_surface(device->fb.render_targets[i]) == surface)
-                    {
-                        ERR("Surface %p is still in use as render target %u.\n", surface, i);
-                        device->fb.render_targets[i] = NULL;
-                    }
-                }
-
-                if (wined3d_rendertarget_view_get_surface(device->fb.depth_stencil) == surface)
-                {
-                    ERR("Surface %p is still in use as depth/stencil buffer.\n", surface);
-                    device->fb.depth_stencil = NULL;
-                }
-            }
-            break;
-
         case WINED3D_RTYPE_TEXTURE_2D:
         case WINED3D_RTYPE_TEXTURE_3D:
             for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
