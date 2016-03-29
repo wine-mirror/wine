@@ -60,18 +60,16 @@ void * CDECL wined3d_rendertarget_view_get_parent(const struct wined3d_rendertar
 
 void * CDECL wined3d_rendertarget_view_get_sub_resource_parent(const struct wined3d_rendertarget_view *view)
 {
-    struct wined3d_resource *sub_resource;
+    struct wined3d_texture *texture;
 
     TRACE("view %p.\n", view);
 
     if (view->resource->type == WINED3D_RTYPE_BUFFER)
         return wined3d_buffer_get_parent(buffer_from_resource(view->resource));
 
-    if (!(sub_resource = wined3d_texture_get_sub_resource(wined3d_texture_from_resource(view->resource),
-            view->sub_resource_idx)))
-        return NULL;
+    texture = wined3d_texture_from_resource(view->resource);
 
-    return wined3d_resource_get_parent(sub_resource);
+    return wined3d_resource_get_parent(texture->sub_resources[view->sub_resource_idx].resource);
 }
 
 void CDECL wined3d_rendertarget_view_set_parent(struct wined3d_rendertarget_view *view, void *parent)
@@ -88,15 +86,13 @@ struct wined3d_resource * CDECL wined3d_rendertarget_view_get_resource(const str
     return view->resource;
 }
 
-static void wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *view,
+static HRESULT wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *view,
         const struct wined3d_rendertarget_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &resource->device->adapter->gl_info;
 
     view->refcount = 1;
-    view->resource = resource;
-    wined3d_resource_incref(resource);
     view->parent = parent;
     view->parent_ops = parent_ops;
 
@@ -113,16 +109,20 @@ static void wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *vie
     else
     {
         struct wined3d_texture *texture = wined3d_texture_from_resource(resource);
-        struct wined3d_resource *sub_resource;
 
+        if (desc->u.texture.level_idx >= texture->level_count
+                || desc->u.texture.layer_idx >= texture->layer_count
+                || desc->u.texture.layer_count > texture->layer_count - desc->u.texture.layer_idx)
+            return WINED3DERR_INVALIDCALL;
         view->sub_resource_idx = desc->u.texture.layer_idx * texture->level_count + desc->u.texture.level_idx;
-        sub_resource = wined3d_texture_get_sub_resource(texture, view->sub_resource_idx);
-
         view->buffer_offset = 0;
-        view->width = sub_resource->width;
-        view->height = sub_resource->height;
+        view->width = wined3d_texture_get_level_width(texture, desc->u.texture.level_idx);
+        view->height = wined3d_texture_get_level_height(texture, desc->u.texture.level_idx);
         view->depth = desc->u.texture.layer_count;
     }
+    wined3d_resource_incref(view->resource = resource);
+
+    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_rendertarget_view_create(const struct wined3d_rendertarget_view_desc *desc,
@@ -130,6 +130,7 @@ HRESULT CDECL wined3d_rendertarget_view_create(const struct wined3d_rendertarget
         struct wined3d_rendertarget_view **view)
 {
     struct wined3d_rendertarget_view *object;
+    HRESULT hr;
 
     TRACE("desc %p, resource %p, parent %p, parent_ops %p, view %p.\n",
             desc, resource, parent, parent_ops, view);
@@ -137,12 +138,17 @@ HRESULT CDECL wined3d_rendertarget_view_create(const struct wined3d_rendertarget
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    wined3d_rendertarget_view_init(object, desc, resource, parent, parent_ops);
+    if (FAILED(hr = wined3d_rendertarget_view_init(object, desc, resource, parent, parent_ops)))
+    {
+        HeapFree(GetProcessHeap(), 0, object);
+        WARN("Failed to initialise view, hr %#x.\n", hr);
+        return hr;
+    }
 
     TRACE("Created render target view %p.\n", object);
     *view = object;
 
-    return WINED3D_OK;
+    return hr;
 }
 
 HRESULT CDECL wined3d_rendertarget_view_create_from_sub_resource(struct wined3d_texture *texture,

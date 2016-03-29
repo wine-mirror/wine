@@ -2958,17 +2958,14 @@ struct wined3d_rendertarget_view
 static inline struct wined3d_surface *wined3d_rendertarget_view_get_surface(
         const struct wined3d_rendertarget_view *view)
 {
-    struct wined3d_resource *resource;
     struct wined3d_texture *texture;
 
     if (!view || view->resource->type != WINED3D_RTYPE_TEXTURE_2D)
         return NULL;
 
     texture = wined3d_texture_from_resource(view->resource);
-    if (!(resource = wined3d_texture_get_sub_resource(texture, view->sub_resource_idx)))
-        return NULL;
 
-    return surface_from_resource(resource);
+    return texture->sub_resources[view->sub_resource_idx].u.surface;
 }
 
 struct wined3d_shader_resource_view
