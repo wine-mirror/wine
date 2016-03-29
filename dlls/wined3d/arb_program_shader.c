@@ -79,9 +79,9 @@ enum arb_helper_value
 
 static const char *arb_get_helper_value(enum wined3d_shader_type shader, enum arb_helper_value value)
 {
-    if (shader == WINED3D_SHADER_TYPE_GEOMETRY)
+    if (shader != WINED3D_SHADER_TYPE_VERTEX && shader != WINED3D_SHADER_TYPE_PIXEL)
     {
-        ERR("Geometry shaders are unsupported\n");
+        ERR("Unsupported shader type '%s'.\n.", debug_shader_type(shader));
         return "bad";
     }
 
@@ -109,7 +109,7 @@ static const char *arb_get_helper_value(enum wined3d_shader_type shader, enum ar
             case ARB_VS_REL_OFFSET: return "rel_addr_const.y";
         }
     }
-    FIXME("Unmanaged %s shader helper constant requested: %u\n",
+    FIXME("Unmanaged %s shader helper constant requested: %u.\n",
           shader == WINED3D_SHADER_TYPE_PIXEL ? "pixel" : "vertex", value);
     switch (value)
     {
@@ -4832,7 +4832,8 @@ static void shader_arb_disable(void *shader_priv, struct wined3d_context *contex
 
     context->shader_update_mask = (1u << WINED3D_SHADER_TYPE_PIXEL)
             | (1u << WINED3D_SHADER_TYPE_VERTEX)
-            | (1u << WINED3D_SHADER_TYPE_GEOMETRY);
+            | (1u << WINED3D_SHADER_TYPE_GEOMETRY)
+            | (1u << WINED3D_SHADER_TYPE_HULL);
 }
 
 /* Context activation is done by the caller. */
@@ -5120,6 +5121,7 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
         caps->vs_uniform_count = 0;
     }
 
+    caps->hs_version = 0;
     caps->gs_version = 0;
 
     if (gl_info->supported[ARB_FRAGMENT_PROGRAM])

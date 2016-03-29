@@ -499,6 +499,11 @@ static void shader_set_limits(struct wined3d_shader *shader)
         {WINED3D_SHADER_VERSION(5, 0), WINED3D_SHADER_VERSION(5, 0), {16,  0,   0,  0, 32,  0}},
         {0}
     },
+    hs_limits[] =
+    {
+        /* min_version, max_version, sampler, constant_int, constant_float, constant_bool, packed_output, packet_input */
+        {WINED3D_SHADER_VERSION(5, 0), WINED3D_SHADER_VERSION(5, 0), {16,  0,   0,  0, 32, 32}},
+    },
     gs_limits[] =
     {
         /* min_version, max_version, sampler, constant_int, constant_float, constant_bool, packed_output, packed_input */
@@ -529,6 +534,9 @@ static void shader_set_limits(struct wined3d_shader *shader)
             /* Fall-through. */
         case WINED3D_SHADER_TYPE_VERTEX:
             limits_array = vs_limits;
+            break;
+        case WINED3D_SHADER_TYPE_HULL:
+            limits_array = hs_limits;
             break;
         case WINED3D_SHADER_TYPE_GEOMETRY:
             limits_array = gs_limits;
@@ -1934,6 +1942,10 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
             type_prefix = "vs";
             break;
 
+        case WINED3D_SHADER_TYPE_HULL:
+            type_prefix = "hs";
+            break;
+
         case WINED3D_SHADER_TYPE_GEOMETRY:
             type_prefix = "gs";
             break;
@@ -2209,7 +2221,8 @@ static void shader_none_disable(void *shader_priv, struct wined3d_context *conte
 
     context->shader_update_mask = (1u << WINED3D_SHADER_TYPE_PIXEL)
             | (1u << WINED3D_SHADER_TYPE_VERTEX)
-            | (1u << WINED3D_SHADER_TYPE_GEOMETRY);
+            | (1u << WINED3D_SHADER_TYPE_GEOMETRY)
+            | (1u << WINED3D_SHADER_TYPE_HULL);
 }
 
 static HRESULT shader_none_alloc(struct wined3d_device *device, const struct wined3d_vertex_pipe_ops *vertex_pipe,
@@ -2267,6 +2280,7 @@ static void shader_none_get_caps(const struct wined3d_gl_info *gl_info, struct s
 {
     /* Set the shader caps to 0 for the none shader backend */
     caps->vs_version = 0;
+    caps->hs_version = 0;
     caps->gs_version = 0;
     caps->ps_version = 0;
     caps->vs_uniform_count = 0;
@@ -2366,6 +2380,9 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *b
     {
         case WINED3D_SHADER_TYPE_VERTEX:
             backend_version = d3d_info->limits.vs_version;
+            break;
+        case WINED3D_SHADER_TYPE_HULL:
+            backend_version = d3d_info->limits.hs_version;
             break;
         case WINED3D_SHADER_TYPE_GEOMETRY:
             backend_version = d3d_info->limits.gs_version;

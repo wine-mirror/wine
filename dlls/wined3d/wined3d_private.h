@@ -293,6 +293,7 @@ struct wined3d_settings
     BOOL always_offscreen;
     BOOL check_float_constants;
     unsigned int max_sm_vs;
+    unsigned int max_sm_hs;
     unsigned int max_sm_gs;
     unsigned int max_sm_ps;
     BOOL no_3d;
@@ -653,6 +654,7 @@ enum wined3d_shader_type
     WINED3D_SHADER_TYPE_PIXEL,
     WINED3D_SHADER_TYPE_VERTEX,
     WINED3D_SHADER_TYPE_GEOMETRY,
+    WINED3D_SHADER_TYPE_HULL,
     WINED3D_SHADER_TYPE_COUNT,
 };
 
@@ -887,9 +889,10 @@ typedef void (*SHADER_HANDLER)(const struct wined3d_shader_instruction *);
 
 struct shader_caps
 {
-    UINT vs_version;
-    UINT gs_version;
-    UINT ps_version;
+    unsigned int vs_version;
+    unsigned int hs_version;
+    unsigned int gs_version;
+    unsigned int ps_version;
 
     DWORD vs_uniform_count;
     DWORD ps_uniform_count;
@@ -1879,7 +1882,7 @@ struct wined3d_driver_info
 
 struct wined3d_d3d_limits
 {
-    UINT vs_version, gs_version, ps_version;
+    unsigned int vs_version, hs_version, gs_version, ps_version;
     DWORD vs_uniform_count;
     DWORD ps_uniform_count;
     UINT varying_count;
@@ -3039,6 +3042,7 @@ const char *debug_fboattachment(GLenum attachment) DECLSPEC_HIDDEN;
 const char *debug_fbostatus(GLenum status) DECLSPEC_HIDDEN;
 const char *debug_glerror(GLenum error) DECLSPEC_HIDDEN;
 const char *debug_d3dtop(enum wined3d_texture_op d3dtop) DECLSPEC_HIDDEN;
+const char *debug_shader_type(enum wined3d_shader_type shader_type) DECLSPEC_HIDDEN;
 void dump_color_fixup_desc(struct color_fixup_desc fixup) DECLSPEC_HIDDEN;
 
 BOOL is_invalid_op(const struct wined3d_state *state, int stage,
