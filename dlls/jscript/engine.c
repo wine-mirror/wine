@@ -982,7 +982,7 @@ static HRESULT interp_call(script_ctx_t *ctx)
         return throw_type_error(ctx, JS_E_INVALID_PROPERTY, NULL);
 
     clear_ret(frame);
-    return disp_call_value(ctx, get_object(obj), NULL, DISPATCH_METHOD,
+    return disp_call_value(ctx, get_object(obj), NULL, DISPATCH_METHOD | DISPATCH_JSCRIPT_CALLEREXECSSOURCE,
                            argn, stack_args(ctx, argn), do_ret ? &frame->ret : NULL);
 }
 
