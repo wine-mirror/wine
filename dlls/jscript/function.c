@@ -492,7 +492,7 @@ static HRESULT Function_call(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         cnt = argc-1;
     }
 
-    hres = call_function(ctx, function, this_obj, cnt, argv+1, FALSE, r);
+    hres = call_function(ctx, function, this_obj, cnt, argv+1, (flags & DISPATCH_JSCRIPT_CALLEREXECSSOURCE) != 0, r);
 
     if(this_obj)
         IDispatch_Release(this_obj);
