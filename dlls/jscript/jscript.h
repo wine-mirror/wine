@@ -101,6 +101,14 @@ extern HINSTANCE jscript_hinstance DECLSPEC_HIDDEN;
 #define PROPF_CONST       0x0800
 #define PROPF_DONTDELETE  0x1000
 
+/*
+ * This is our internal dispatch flag informing calee that it's called directly from interpreter.
+ * If calee is executed as interpreted function, we may let already running interpreter to take
+ * of execution.
+ */
+#define DISPATCH_JSCRIPT_CALLEREXECSSOURCE  0x8000
+#define DISPATCH_JSCRIPT_INTERNAL_MASK      DISPATCH_JSCRIPT_CALLEREXECSSOURCE
+
 /* NOTE: Keep in sync with names in Object.toString implementation */
 typedef enum {
     JSCLASS_NONE,

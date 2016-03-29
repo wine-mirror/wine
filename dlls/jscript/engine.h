@@ -216,6 +216,7 @@ typedef struct _call_frame_t {
 
 #define EXEC_GLOBAL            0x0001
 #define EXEC_CONSTRUCTOR       0x0002
+#define EXEC_RETURN_TO_INTERP  0x0004
 
 HRESULT exec_source(script_ctx_t*,DWORD,bytecode_t*,function_code_t*,scope_chain_t*,IDispatch*,
         jsdisp_t*,jsdisp_t*,jsdisp_t*,jsval_t*) DECLSPEC_HIDDEN;

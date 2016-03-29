@@ -202,7 +202,7 @@ static HRESULT create_var_disp(script_ctx_t *ctx, FunctionInstance *function, un
 }
 
 static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDispatch *this_obj, unsigned argc, jsval_t *argv,
-        BOOL is_constructor, jsval_t *r)
+        BOOL is_constructor, BOOL caller_execs_source, jsval_t *r)
 {
     jsdisp_t *var_disp, *arg_disp;
     scope_chain_t *scope;
@@ -239,6 +239,8 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
     if(SUCCEEDED(hres)) {
         DWORD exec_flags = 0;
 
+        if(caller_execs_source)
+            exec_flags |= EXEC_RETURN_TO_INTERP;
         if(is_constructor)
             exec_flags |= EXEC_CONSTRUCTOR;
         hres = exec_source(ctx, exec_flags, function->code, function->func_code, scope, this_obj,
@@ -277,7 +279,7 @@ static HRESULT call_function(script_ctx_t *ctx, FunctionInstance *function, IDis
     if(function->value_proc)
         return invoke_value_proc(ctx, function, this_obj, DISPATCH_METHOD, argc, argv, r);
 
-    return invoke_source(ctx, function, this_obj, argc, argv, FALSE, r);
+    return invoke_source(ctx, function, this_obj, argc, argv, FALSE, FALSE, r);
 }
 
 static HRESULT function_to_string(FunctionInstance *function, jsstr_t **ret)
@@ -312,6 +314,7 @@ static HRESULT function_to_string(FunctionInstance *function, jsstr_t **ret)
 
 HRESULT Function_invoke(jsdisp_t *func_this, IDispatch *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
+    const BOOL caller_execs_source = (flags & DISPATCH_JSCRIPT_CALLEREXECSSOURCE) != 0;
     FunctionInstance *function;
 
     TRACE("func %p this %p\n", func_this, jsthis);
@@ -319,6 +322,7 @@ HRESULT Function_invoke(jsdisp_t *func_this, IDispatch *jsthis, WORD flags, unsi
     assert(is_class(func_this, JSCLASS_FUNCTION));
     function = (FunctionInstance*)func_this;
 
+    flags &= ~DISPATCH_JSCRIPT_INTERNAL_MASK;
     if(function->value_proc)
         return invoke_value_proc(function->dispex.ctx, function, jsthis, flags, argc, argv, r);
 
@@ -330,13 +334,13 @@ HRESULT Function_invoke(jsdisp_t *func_this, IDispatch *jsthis, WORD flags, unsi
         if(FAILED(hres))
             return hres;
 
-        hres = invoke_source(function->dispex.ctx, function, to_disp(this_obj), argc, argv, TRUE, r);
+        hres = invoke_source(function->dispex.ctx, function, to_disp(this_obj), argc, argv, TRUE, FALSE, r);
         jsdisp_release(this_obj);
         return hres;
     }
 
     assert(flags == DISPATCH_METHOD);
-    return invoke_source(function->dispex.ctx, function, jsthis, argc, argv, FALSE, r);
+    return invoke_source(function->dispex.ctx, function, jsthis, argc, argv, FALSE, caller_execs_source, r);
 }
 
 static HRESULT Function_get_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)

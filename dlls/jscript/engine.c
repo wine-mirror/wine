@@ -1002,7 +1002,7 @@ static HRESULT interp_call_member(script_ctx_t *ctx)
         return throw_type_error(ctx, id, NULL);
 
     clear_ret(frame);
-    return disp_call(ctx, obj, id, DISPATCH_METHOD,
+    return disp_call(ctx, obj, id, DISPATCH_METHOD | DISPATCH_JSCRIPT_CALLEREXECSSOURCE,
             argn, stack_args(ctx, argn), do_ret ? &frame->ret : NULL);
 }
 
@@ -2403,21 +2403,25 @@ static void release_call_frame(call_frame_t *frame)
 
 static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
 {
-    call_frame_t *frame = ctx->call_ctx;
     except_frame_t *except_frame;
+    call_frame_t *frame;
     jsval_t except_val;
     BSTR ident;
     HRESULT hres;
 
-    if(!frame->except_frame) {
+    for(frame = ctx->call_ctx; !frame->except_frame; frame = ctx->call_ctx) {
+        DWORD flags;
+
         while(frame->scope != frame->base_scope)
             scope_pop(&frame->scope);
 
         stack_popn(ctx, ctx->stack_top-frame->stack_base);
 
         ctx->call_ctx = frame->prev_frame;
+        flags = frame->flags;
         release_call_frame(frame);
-        return exception_hres;
+        if(!(flags & EXEC_RETURN_TO_INTERP))
+            return exception_hres;
     }
 
     except_frame = frame->except_frame;
@@ -2472,9 +2476,8 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, jsval_t *r)
 
     TRACE("\n");
 
-    frame = ctx->call_ctx;
-
     while(1) {
+        frame = ctx->call_ctx;
         op = frame->bytecode->instrs[frame->ip].op;
         hres = op_funcs[op](ctx);
         if(FAILED(hres)) {
@@ -2484,14 +2487,21 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, jsval_t *r)
             if(FAILED(hres))
                 return hres;
         }else if(frame->ip == -1) {
+            const DWORD return_to_interp = frame->flags & EXEC_RETURN_TO_INTERP;
+
             assert(ctx->stack_top == frame->stack_base);
             assert(frame->scope == frame->base_scope);
 
             ctx->call_ctx = frame->prev_frame;
-            if(r)
+            if(return_to_interp) {
+                clear_ret(ctx->call_ctx);
+                ctx->call_ctx->ret = steal_ret(frame);
+            }else if(r) {
                 *r = steal_ret(frame);
+            }
             release_call_frame(frame);
-            break;
+            if(!return_to_interp)
+                break;
         }else {
             frame->ip += op_move[op];
         }
@@ -2616,6 +2626,16 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
 
     frame->prev_frame = ctx->call_ctx;
     ctx->call_ctx = frame;
+
+    if(flags & EXEC_RETURN_TO_INTERP) {
+        /*
+         * We're called directly from interpreter, so we may just setup call frame and return.
+         * Already running interpreter will take care of execution.
+         */
+        if(r)
+            *r = jsval_undefined();
+        return S_OK;
+    }
 
     return enter_bytecode(ctx, r);
 }
