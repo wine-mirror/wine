@@ -517,8 +517,15 @@ static ULONG STDMETHODCALLTYPE d3d11_hull_shader_Release(ID3D11HullShader *iface
 
     if (!refcount)
     {
-        ID3D11Device_Release(shader->device);
-        HeapFree(GetProcessHeap(), 0, shader);
+        ID3D11Device *device = shader->device;
+
+        wined3d_mutex_lock();
+        wined3d_shader_decref(shader->wined3d_shader);
+        wined3d_mutex_unlock();
+
+        /* Release the device last, it may cause the wined3d device to be
+         * destroyed. */
+        ID3D11Device_Release(device);
     }
 
     return refcount;
@@ -578,20 +585,81 @@ static const struct ID3D11HullShaderVtbl d3d11_hull_shader_vtbl =
     d3d11_hull_shader_SetPrivateDataInterface,
 };
 
+static void STDMETHODCALLTYPE d3d11_hull_shader_wined3d_object_destroyed(void *parent)
+{
+    struct d3d11_hull_shader *shader = parent;
+
+    wined3d_private_store_cleanup(&shader->private_store);
+    HeapFree(GetProcessHeap(), 0, parent);
+}
+
+static const struct wined3d_parent_ops d3d11_hull_shader_wined3d_parent_ops =
+{
+    d3d11_hull_shader_wined3d_object_destroyed,
+};
+
+static HRESULT d3d11_hull_shader_init(struct d3d11_hull_shader *shader, struct d3d_device *device,
+        const void *byte_code, SIZE_T byte_code_length)
+{
+    struct wined3d_shader_signature output_signature;
+    struct wined3d_shader_signature input_signature;
+    struct d3d_shader_info shader_info;
+    struct wined3d_shader_desc desc;
+    HRESULT hr;
+
+    shader->ID3D11HullShader_iface.lpVtbl = &d3d11_hull_shader_vtbl;
+    shader->refcount = 1;
+    wined3d_mutex_lock();
+    wined3d_private_store_init(&shader->private_store);
+
+    shader_info.input_signature = &input_signature;
+    shader_info.output_signature = &output_signature;
+    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &shader_info)))
+    {
+        WARN("Failed to extract shader, hr %#x.\n", hr);
+        wined3d_private_store_cleanup(&shader->private_store);
+        wined3d_mutex_unlock();
+        return hr;
+    }
+
+    desc.byte_code = shader_info.shader_code;
+    desc.input_signature = &input_signature;
+    desc.output_signature = &output_signature;
+    desc.max_version = d3d_sm_from_feature_level(device->feature_level);
+
+    hr = wined3d_shader_create_hs(device->wined3d_device, &desc, shader,
+            &d3d11_hull_shader_wined3d_parent_ops, &shader->wined3d_shader);
+    shader_free_signature(&input_signature);
+    shader_free_signature(&output_signature);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d hull shader, hr %#x.\n", hr);
+        wined3d_private_store_cleanup(&shader->private_store);
+        wined3d_mutex_unlock();
+        return E_INVALIDARG;
+    }
+    wined3d_mutex_unlock();
+
+    shader->device = &device->ID3D11Device_iface;
+    ID3D11Device_AddRef(shader->device);
+
+    return S_OK;
+}
+
 HRESULT d3d11_hull_shader_create(struct d3d_device *device, const void *byte_code, SIZE_T byte_code_length,
         struct d3d11_hull_shader **shader)
 {
     struct d3d11_hull_shader *object;
+    HRESULT hr;
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    object->ID3D11HullShader_iface.lpVtbl = &d3d11_hull_shader_vtbl;
-    object->refcount = 1;
-    wined3d_private_store_init(&object->private_store);
-
-    object->device = &device->ID3D11Device_iface;
-    ID3D11Device_AddRef(object->device);
+    if (FAILED(hr = d3d11_hull_shader_init(object, device, byte_code, byte_code_length)))
+    {
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
 
     TRACE("Created hull shader %p.\n", object);
     *shader = object;

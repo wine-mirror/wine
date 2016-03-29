@@ -2182,7 +2182,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateHullShader(ID3D11Device *ifa
     struct d3d11_hull_shader *object;
     HRESULT hr;
 
-    FIXME("iface %p, byte_code %p, byte_code_length %lu, class_linkage %p, shader %p partial-stub!\n",
+    TRACE("iface %p, byte_code %p, byte_code_length %lu, class_linkage %p, shader %p.\n",
             iface, byte_code, byte_code_length, class_linkage, shader);
 
     if (class_linkage)

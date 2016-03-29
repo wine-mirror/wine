@@ -257,6 +257,7 @@ struct d3d11_hull_shader
     LONG refcount;
 
     struct wined3d_private_store private_store;
+    struct wined3d_shader *wined3d_shader;
     ID3D11Device *device;
 };
 

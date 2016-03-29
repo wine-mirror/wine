@@ -607,9 +607,9 @@ static void shader_sm4_read_header(void *data, const DWORD **ptr, struct wined3d
     priv->end = *ptr;
 
     version_token = *(*ptr)++;
-    TRACE("version: 0x%08x\n", version_token);
+    TRACE("Version: 0x%08x.\n", version_token);
 
-    TRACE("token count: %u\n", **ptr);
+    TRACE("Token count: %u.\n", **ptr);
     priv->end += *(*ptr)++;
 
     switch (version_token >> 16)
@@ -626,8 +626,12 @@ static void shader_sm4_read_header(void *data, const DWORD **ptr, struct wined3d
             priv->shader_version.type = WINED3D_SHADER_TYPE_GEOMETRY;
             break;
 
+        case WINED3D_SM5_HS:
+            priv->shader_version.type = WINED3D_SHADER_TYPE_HULL;
+            break;
+
         default:
-            FIXME("Unrecognized shader type %#x\n", version_token >> 16);
+            FIXME("Unrecognized shader type %#x.\n", version_token >> 16);
     }
     priv->shader_version.major = WINED3D_SM4_VERSION_MAJOR(version_token);
     priv->shader_version.minor = WINED3D_SM4_VERSION_MINOR(version_token);

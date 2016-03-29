@@ -297,10 +297,11 @@ static const struct wined3d_shader_frontend *shader_select_frontend(DWORD versio
         case WINED3D_SM4_PS:
         case WINED3D_SM4_VS:
         case WINED3D_SM4_GS:
+        case WINED3D_SM5_HS:
             return &sm4_shader_frontend;
 
         default:
-            FIXME("Unrecognised version token %#x\n", version_token);
+            FIXME("Unrecognised version token %#x.\n", version_token);
             return NULL;
     }
 }
@@ -2686,6 +2687,19 @@ static HRESULT vertexshader_init(struct wined3d_shader *shader, struct wined3d_d
     return WINED3D_OK;
 }
 
+static HRESULT hullshader_init(struct wined3d_shader *shader, struct wined3d_device *device,
+        const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
+{
+    HRESULT hr;
+
+    if (FAILED(hr = shader_init(shader, device, desc, 0, WINED3D_SHADER_TYPE_HULL, parent, parent_ops)))
+        return hr;
+
+    shader->load_local_constsF = shader->lconst_inf_or_nan;
+
+    return WINED3D_OK;
+}
+
 static HRESULT geometryshader_init(struct wined3d_shader *shader, struct wined3d_device *device,
         const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -3025,6 +3039,31 @@ HRESULT CDECL wined3d_shader_create_gs(struct wined3d_device *device, const stru
     }
 
     TRACE("Created geometry shader %p.\n", object);
+    *shader = object;
+
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_shader_create_hs(struct wined3d_device *device, const struct wined3d_shader_desc *desc,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader)
+{
+    struct wined3d_shader *object;
+    HRESULT hr;
+
+    TRACE("device %p, desc %p, parent %p, parent_ops %p, shader %p.\n",
+            device, desc, parent, parent_ops, shader);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = hullshader_init(object, device, desc, parent, parent_ops)))
+    {
+        WARN("Failed to initialize hull shader, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created hull shader %p.\n", object);
     *shader = object;
 
     return WINED3D_OK;

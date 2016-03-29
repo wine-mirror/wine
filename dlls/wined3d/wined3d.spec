@@ -201,6 +201,7 @@
 @ cdecl wined3d_sampler_incref(ptr)
 
 @ cdecl wined3d_shader_create_gs(ptr ptr ptr ptr ptr)
+@ cdecl wined3d_shader_create_hs(ptr ptr ptr ptr ptr)
 @ cdecl wined3d_shader_create_ps(ptr ptr ptr ptr ptr)
 @ cdecl wined3d_shader_create_vs(ptr ptr ptr ptr ptr)
 @ cdecl wined3d_shader_decref(ptr)

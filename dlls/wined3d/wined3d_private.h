@@ -461,6 +461,7 @@ enum wined3d_shader_rel_op
 #define WINED3D_SM4_PS  0x0000u
 #define WINED3D_SM4_VS  0x0001u
 #define WINED3D_SM4_GS  0x0002u
+#define WINED3D_SM5_HS  0x0003u
 
 /* Shader version tokens, and shader end tokens */
 #define WINED3DPS_VERSION(major, minor) ((WINED3D_SM1_PS << 16) | ((major) << 8) | (minor))
