@@ -2626,6 +2626,71 @@ todo_wine
     DestroyWindow(window);
 }
 
+static void test_dc_target(void)
+{
+    static const D2D1_PIXEL_FORMAT invalid_formats[] =
+    {
+        { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED },
+        { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_UNKNOWN },
+        { DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED },
+    };
+    D2D1_RENDER_TARGET_PROPERTIES desc;
+    ID2D1SolidColorBrush *brush;
+    ID2D1DCRenderTarget *rt;
+    ID2D1Factory *factory;
+    D2D1_COLOR_F color;
+    D2D1_SIZE_F size;
+    unsigned int i;
+    HRESULT hr;
+
+    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
+    ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(invalid_formats) / sizeof(*invalid_formats); ++i)
+    {
+        desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+        desc.pixelFormat = invalid_formats[i];
+        desc.dpiX = 96.0f;
+        desc.dpiY = 96.0f;
+        desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+        desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+
+        hr = ID2D1Factory_CreateDCRenderTarget(factory, &desc, &rt);
+    todo_wine
+        ok(hr == D2DERR_UNSUPPORTED_PIXEL_FORMAT, "Got unexpected hr %#x.\n", hr);
+    }
+
+    desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+    desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+    desc.dpiX = 96.0f;
+    desc.dpiY = 96.0f;
+    desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+    desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+    hr = ID2D1Factory_CreateDCRenderTarget(factory, &desc, &rt);
+todo_wine
+    ok(SUCCEEDED(hr), "Failed to create target, hr %#x.\n", hr);
+if (SUCCEEDED(hr))
+{
+    size = ID2D1DCRenderTarget_GetSize(rt);
+    ok(size.width == 0.0f, "got width %.08e.\n", size.width);
+    ok(size.height == 0.0f, "got height %.08e.\n", size.height);
+
+    /* object creation methods work without BindDC() */
+    set_color(&color, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1DCRenderTarget_CreateSolidColorBrush(rt, &color, NULL, &brush);
+    ok(SUCCEEDED(hr), "Failed to create a brush, hr %#x.\n", hr);
+    ID2D1SolidColorBrush_Release(brush);
+
+    ID2D1DCRenderTarget_BeginDraw(rt);
+    hr = ID2D1DCRenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
+
+    ID2D1DCRenderTarget_Release(rt);
+}
+    ID2D1Factory_Release(factory);
+}
+
 START_TEST(d2d1)
 {
     test_clip();
@@ -2640,4 +2705,5 @@ START_TEST(d2d1)
     test_opacity_brush();
     test_create_target();
     test_draw_text_layout();
+    test_dc_target();
 }
