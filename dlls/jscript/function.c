@@ -334,7 +334,7 @@ HRESULT Function_invoke(jsdisp_t *func_this, IDispatch *jsthis, WORD flags, unsi
         if(FAILED(hres))
             return hres;
 
-        hres = invoke_source(function->dispex.ctx, function, to_disp(this_obj), argc, argv, TRUE, FALSE, r);
+        hres = invoke_source(function->dispex.ctx, function, to_disp(this_obj), argc, argv, TRUE, caller_execs_source, r);
         jsdisp_release(this_obj);
         return hres;
     }

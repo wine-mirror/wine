@@ -963,7 +963,7 @@ static HRESULT interp_new(script_ctx_t *ctx)
         return throw_type_error(ctx, JS_E_INVALID_PROPERTY, NULL);
 
     clear_ret(frame);
-    return disp_call_value(ctx, get_object(constr), NULL, DISPATCH_CONSTRUCT,
+    return disp_call_value(ctx, get_object(constr), NULL, DISPATCH_CONSTRUCT | DISPATCH_JSCRIPT_CALLEREXECSSOURCE,
                            argc, stack_args(ctx, argc), &frame->ret);
 }
 
@@ -2604,7 +2604,6 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
     frame->ip = function->instr_off;
     frame->stack_base = ctx->stack_top;
     frame->ret = jsval_undefined();
-
     if(scope)
         frame->base_scope = frame->scope = scope_addref(scope);
 
