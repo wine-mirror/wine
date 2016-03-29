@@ -58,7 +58,7 @@ static enum wined3d_event_query_result wined3d_event_query_test(const struct win
         return WINED3D_EVENT_QUERY_WRONG_THREAD;
     }
 
-    context = context_acquire(device, query->context->current_rt);
+    context = context_acquire(device, context_get_rt_surface(query->context));
     gl_info = context->gl_info;
 
     if (gl_info->supported[ARB_SYNC])
@@ -132,7 +132,7 @@ enum wined3d_event_query_result wined3d_event_query_finish(const struct wined3d_
         return WINED3D_EVENT_QUERY_WRONG_THREAD;
     }
 
-    context = context_acquire(device, query->context->current_rt);
+    context = context_acquire(device, context_get_rt_surface(query->context));
 
     if (gl_info->supported[ARB_SYNC])
     {
@@ -192,7 +192,7 @@ void wined3d_event_query_issue(struct wined3d_event_query *query, const struct w
         }
         else
         {
-            context = context_acquire(device, query->context->current_rt);
+            context = context_acquire(device, context_get_rt_surface(query->context));
         }
     }
     else
@@ -348,7 +348,7 @@ static HRESULT wined3d_occlusion_query_ops_get_data(struct wined3d_query *query,
         return S_OK;
     }
 
-    context = context_acquire(query->device, oq->context->current_rt);
+    context = context_acquire(device, context_get_rt_surface(oq->context));
 
     GL_EXTCALL(glGetQueryObjectuiv(oq->id, GL_QUERY_RESULT_AVAILABLE, &available));
     checkGLcall("glGetQueryObjectuiv(GL_QUERY_RESULT_AVAILABLE)");
@@ -490,7 +490,7 @@ static HRESULT wined3d_occlusion_query_ops_issue(struct wined3d_query *query, DW
                 }
                 else
                 {
-                    context = context_acquire(query->device, oq->context->current_rt);
+                    context = context_acquire(device, context_get_rt_surface(oq->context));
 
                     GL_EXTCALL(glEndQuery(GL_SAMPLES_PASSED));
                     checkGLcall("glEndQuery()");
@@ -522,7 +522,7 @@ static HRESULT wined3d_occlusion_query_ops_issue(struct wined3d_query *query, DW
                 }
                 else
                 {
-                    context = context_acquire(query->device, oq->context->current_rt);
+                    context = context_acquire(device, context_get_rt_surface(oq->context));
 
                     GL_EXTCALL(glEndQuery(GL_SAMPLES_PASSED));
                     checkGLcall("glEndQuery()");
@@ -578,7 +578,7 @@ static HRESULT wined3d_timestamp_query_ops_get_data(struct wined3d_query *query,
         return S_OK;
     }
 
-    context = context_acquire(query->device, tq->context->current_rt);
+    context = context_acquire(device, context_get_rt_surface(tq->context));
 
     GL_EXTCALL(glGetQueryObjectuiv(tq->id, GL_QUERY_RESULT_AVAILABLE, &available));
     checkGLcall("glGetQueryObjectuiv(GL_QUERY_RESULT_AVAILABLE)");

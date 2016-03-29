@@ -1282,7 +1282,11 @@ struct wined3d_context
     DWORD isStateDirty[STATE_HIGHEST / (sizeof(DWORD) * CHAR_BIT) + 1]; /* Bitmap to find out quickly if a state is dirty */
 
     struct wined3d_swapchain *swapchain;
-    struct wined3d_surface *current_rt;
+    struct
+    {
+        struct wined3d_texture *texture;
+        unsigned int sub_resource_idx;
+    } current_rt;
     DWORD                   tid;    /* Thread ID which owns this context at the moment */
 
     /* Stores some information about the context state for optimization */
@@ -3471,6 +3475,15 @@ static inline BOOL can_use_texture_swizzle(const struct wined3d_gl_info *gl_info
 {
     return gl_info->supported[ARB_TEXTURE_SWIZZLE] && !is_complex_fixup(format->color_fixup)
             && !is_scaling_fixup(format->color_fixup);
+}
+
+static inline struct wined3d_surface *context_get_rt_surface(const struct wined3d_context *context)
+{
+    struct wined3d_texture *texture = context->current_rt.texture;
+
+    if (!texture)
+        return NULL;
+    return texture->sub_resources[context->current_rt.sub_resource_idx].u.surface;
 }
 
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */

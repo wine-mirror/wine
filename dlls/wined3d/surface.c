@@ -108,8 +108,8 @@ void surface_get_drawable_size(const struct wined3d_surface *surface, const stru
         /* The drawable size of an onscreen drawable is the surface size.
          * (Actually: The window size, but the surface is created in window
          * size.) */
-        *width = context->current_rt->resource.width;
-        *height = context->current_rt->resource.height;
+        *width = context->current_rt.texture->resource.width;
+        *height = context->current_rt.texture->resource.height;
     }
     else if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
     {
@@ -123,10 +123,13 @@ void surface_get_drawable_size(const struct wined3d_surface *surface, const stru
     }
     else
     {
+        struct wined3d_surface *rt;
+
         /* The drawable size of an FBO target is the OpenGL texture size,
          * which is the power of two size. */
-        *width = context->current_rt->pow2Width;
-        *height = context->current_rt->pow2Height;
+        rt = context->current_rt.texture->sub_resources[context->current_rt.sub_resource_idx].u.surface;
+        *width = rt->pow2Width;
+        *height = rt->pow2Height;
     }
 }
 
@@ -675,11 +678,11 @@ static void surface_blt_fbo(const struct wined3d_device *device,
     else if (dst_location == WINED3D_LOCATION_DRAWABLE) required_rt = dst_surface;
     else required_rt = NULL;
 
-    if (required_rt && required_rt != old_ctx->current_rt)
-    {
-        restore_rt = old_ctx->current_rt;
+    restore_rt = context_get_rt_surface(old_ctx);
+    if (restore_rt != required_rt)
         context = context_acquire(device, required_rt);
-    }
+    else
+        restore_rt = NULL;
 
     if (!context->valid)
     {
@@ -1852,11 +1855,11 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
 
     surface_get_memory(surface, &data, dst_location);
 
-    if (surface != old_ctx->current_rt)
-    {
-        restore_rt = old_ctx->current_rt;
+    restore_rt = context_get_rt_surface(old_ctx);
+    if (restore_rt != surface)
         context = context_acquire(device, surface);
-    }
+    else
+        restore_rt = NULL;
 
     context_apply_blit_state(context, device);
     gl_info = context->gl_info;
@@ -1962,11 +1965,11 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb, struct 
     struct wined3d_context *context = old_ctx;
     struct wined3d_surface *restore_rt = NULL;
 
-    if (old_ctx->current_rt != surface)
-    {
-        restore_rt = old_ctx->current_rt;
+    restore_rt = context_get_rt_surface(old_ctx);
+    if (restore_rt != surface)
         context = context_acquire(device, surface);
-    }
+    else
+        restore_rt = NULL;
 
     gl_info = context->gl_info;
     device_invalidate_state(device, STATE_FRAMEBUFFER);
@@ -2485,12 +2488,11 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
     src_rect = *src_rect_in;
     dst_rect = *dst_rect_in;
 
-
-    if (old_ctx->current_rt != dst_surface)
-    {
-        restore_rt = old_ctx->current_rt;
+    restore_rt = context_get_rt_surface(old_ctx);
+    if (restore_rt != dst_surface)
         context = context_acquire(device, dst_surface);
-    }
+    else
+        restore_rt = NULL;
 
     gl_info = context->gl_info;
 
