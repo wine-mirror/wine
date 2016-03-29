@@ -30,9 +30,8 @@
 #include "wine/port.h"
 #include "wined3d_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
-WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 #define MAXLOCKCOUNT 50 /* After this amount of locks do not free the sysmem copy. */
 
@@ -3262,7 +3261,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, struct wined3d_co
         return WINED3D_OK;
     }
 
-    if (WARN_ON(d3d_surface))
+    if (WARN_ON(d3d))
     {
         DWORD required_access = resource_access_from_location(location);
         if ((texture->resource.access_flags & required_access) != required_access)
@@ -3400,7 +3399,7 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info,
             }
         case WINED3D_BLIT_OP_COLOR_BLIT:
         case WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST:
-            if (TRACE_ON(d3d_surface) && TRACE_ON(d3d))
+            if (TRACE_ON(d3d))
             {
                 TRACE("Checking support for fixup:\n");
                 dump_color_fixup_desc(src_format->color_fixup);
@@ -4128,10 +4127,8 @@ do { \
     }
 
 error:
-    if (flags && FIXME_ON(d3d_surface))
-    {
-        FIXME("\tUnsupported flags: %#x.\n", flags);
-    }
+    if (flags)
+        FIXME("    Unsupported flags %#x.\n", flags);
 
 release:
     wined3d_resource_unmap(&dst_texture->resource, dst_sub_resource_idx);
