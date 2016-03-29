@@ -385,6 +385,8 @@ struct d3d11_immediate_context
 {
     ID3D11DeviceContext ID3D11DeviceContext_iface;
     LONG refcount;
+
+    struct wined3d_private_store private_store;
 };
 
 /* ID3D11Device, ID3D10Device1 */

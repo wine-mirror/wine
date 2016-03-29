@@ -109,25 +109,31 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_GetDevice(ID3D11DeviceCont
 static HRESULT STDMETHODCALLTYPE d3d11_immediate_context_GetPrivateData(ID3D11DeviceContext *iface, REFGUID guid,
         UINT *data_size, void *data)
 {
-    FIXME("iface %p, guid %s, data_size %p, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return d3d_get_private_data(&context->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_immediate_context_SetPrivateData(ID3D11DeviceContext *iface, REFGUID guid,
         UINT data_size, const void *data)
 {
-    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return d3d_set_private_data(&context->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_immediate_context_SetPrivateDataInterface(ID3D11DeviceContext *iface,
         REFGUID guid, const IUnknown *data)
 {
-    FIXME("iface %p, guid %s, data %p stub!\n", iface, debugstr_guid(guid), data);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
+
+    return d3d_set_private_data_interface(&context->private_store, guid, data);
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_VSSetConstantBuffers(ID3D11DeviceContext *iface,
@@ -1919,14 +1925,19 @@ static const struct ID3D11DeviceContextVtbl d3d11_immediate_context_vtbl =
     d3d11_immediate_context_FinishCommandList,
 };
 
-static HRESULT d3d11_immediate_context_init(struct d3d11_immediate_context *context, struct d3d_device *device)
+static void d3d11_immediate_context_init(struct d3d11_immediate_context *context, struct d3d_device *device)
 {
     context->ID3D11DeviceContext_iface.lpVtbl = &d3d11_immediate_context_vtbl;
     context->refcount = 1;
 
     ID3D11Device_AddRef(&device->ID3D11Device_iface);
 
-    return S_OK;
+    wined3d_private_store_init(&context->private_store);
+}
+
+static void d3d11_immediate_context_destroy(struct d3d11_immediate_context *context)
+{
+    wined3d_private_store_cleanup(&context->private_store);
 }
 
 /* ID3D11Device methods */
@@ -2777,6 +2788,7 @@ static ULONG STDMETHODCALLTYPE d3d_device_inner_Release(IUnknown *iface)
 
     if (!refcount)
     {
+        d3d11_immediate_context_destroy(&device->immediate_context);
         if (device->wined3d_device)
         {
             wined3d_mutex_lock();
@@ -5110,11 +5122,7 @@ HRESULT d3d_device_init(struct d3d_device *device, void *outer_unknown)
     /* COM aggregation always takes place */
     device->outer_unk = outer_unknown;
 
-    if (FAILED(d3d11_immediate_context_init(&device->immediate_context, device)))
-    {
-        WARN("Failed to initialize immediate device context.\n");
-        return E_FAIL;
-    }
+    d3d11_immediate_context_init(&device->immediate_context, device);
     ID3D11DeviceContext_Release(&device->immediate_context.ID3D11DeviceContext_iface);
 
     if (wine_rb_init(&device->blend_states, &d3d_blend_state_rb_ops) == -1)
