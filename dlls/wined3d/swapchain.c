@@ -480,6 +480,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
             wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0));
     const struct wined3d_fb_state *fb = &swapchain->device->fb;
     const struct wined3d_gl_info *gl_info;
+    struct wined3d_texture *logo_texture;
     struct wined3d_context *context;
     struct wined3d_surface *front;
     BOOL render_to_fbo;
@@ -494,23 +495,19 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
 
     gl_info = context->gl_info;
 
-    if (swapchain->device->logo_texture)
+    if ((logo_texture = swapchain->device->logo_texture))
     {
-        struct wined3d_surface *src_surface = surface_from_resource(
-                wined3d_texture_get_sub_resource(swapchain->device->logo_texture, 0));
-        RECT rect = {0, 0, src_surface->resource.width, src_surface->resource.height};
+        RECT rect = {0, 0, logo_texture->resource.width, logo_texture->resource.height};
 
         /* Blit the logo into the upper left corner of the drawable. */
-        wined3d_surface_blt(back_buffer, &rect, src_surface, &rect,
+        wined3d_texture_blt(swapchain->back_buffers[0], 0, &rect, logo_texture, 0, &rect,
                 WINED3D_BLT_ALPHA_TEST, NULL, WINED3D_TEXF_POINT);
     }
 
     if (swapchain->device->bCursorVisible && swapchain->device->cursor_texture
             && !swapchain->device->hardwareCursor)
     {
-        struct wined3d_surface *cursor = surface_from_resource(
-                wined3d_texture_get_sub_resource(swapchain->device->cursor_texture, 0));
-        RECT destRect =
+        RECT dst_rect =
         {
             swapchain->device->xScreenSpace - swapchain->device->xHotSpot,
             swapchain->device->yScreenSpace - swapchain->device->yHotSpot,
@@ -523,14 +520,17 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
             swapchain->device->cursor_texture->resource.width,
             swapchain->device->cursor_texture->resource.height
         };
-        const RECT clip_rect = {0, 0, back_buffer->resource.width, back_buffer->resource.height};
+        const RECT clip_rect = {0, 0,
+                swapchain->back_buffers[0]->resource.width,
+                swapchain->back_buffers[0]->resource.height};
 
         TRACE("Rendering the software cursor.\n");
 
         if (swapchain->desc.windowed)
-            MapWindowPoints(NULL, swapchain->win_handle, (POINT *)&destRect, 2);
-        if (wined3d_clip_blit(&clip_rect, &destRect, &src_rect))
-            wined3d_surface_blt(back_buffer, &destRect, cursor, &src_rect,
+            MapWindowPoints(NULL, swapchain->win_handle, (POINT *)&dst_rect, 2);
+        if (wined3d_clip_blit(&clip_rect, &dst_rect, &src_rect))
+            wined3d_texture_blt(swapchain->back_buffers[0], 0, &dst_rect,
+                    swapchain->device->cursor_texture, 0, &src_rect,
                     WINED3D_BLT_ALPHA_TEST, NULL, WINED3D_TEXF_POINT);
     }
 
