@@ -179,7 +179,8 @@ static void AddEntryToList(HWND hwndLV, LPWSTR Name, DWORD dwValType,
                 ListView_SetItemTextW(hwndLV, index, 2, buf);
             }
             break;
-        case REG_BINARY: {
+        case REG_BINARY:
+        case REG_NONE: {
                 unsigned int i;
                 LPBYTE pData = ValBuf;
                 LPWSTR strBinary = HeapAlloc(GetProcessHeap(), 0, dwCount * sizeof(WCHAR) * 3 + sizeof(WCHAR));
