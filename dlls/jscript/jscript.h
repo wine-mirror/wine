@@ -475,6 +475,8 @@ HRESULT regexp_string_match(script_ctx_t*,jsdisp_t*,jsstr_t*,jsval_t*) DECLSPEC_
 BOOL bool_obj_value(jsdisp_t*) DECLSPEC_HIDDEN;
 unsigned array_get_length(jsdisp_t*) DECLSPEC_HIDDEN;
 
+HRESULT JSGlobal_eval(script_ctx_t*,vdisp_t*,WORD,unsigned,jsval_t*,jsval_t*) DECLSPEC_HIDDEN;
+
 static inline BOOL is_class(jsdisp_t *jsdisp, jsclass_t class)
 {
     return jsdisp->builtin_info->class == class;

@@ -185,7 +185,7 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
 }
 
 /* ECMA-262 3rd Edition    15.1.2.1 */
-static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     call_frame_t *frame;
@@ -226,6 +226,8 @@ static HRESULT JSGlobal_eval(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
 
     if(frame->flags & EXEC_GLOBAL)
         exec_flags |= EXEC_GLOBAL;
+    if(flags & DISPATCH_JSCRIPT_CALLEREXECSSOURCE)
+        exec_flags |= EXEC_RETURN_TO_INTERP;
     hres = exec_source(ctx, exec_flags, code, &code->global_code, frame->scope,
             frame->this_obj, NULL, frame->variable_obj, NULL, r);
     release_bytecode(code);

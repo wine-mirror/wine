@@ -377,7 +377,7 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
         if(prop->name || This->builtin_info->class != JSCLASS_FUNCTION) {
             vdisp_t vthis;
 
-            if(This->builtin_info->class != JSCLASS_FUNCTION)
+            if(This->builtin_info->class != JSCLASS_FUNCTION && prop->u.p->invoke != JSGlobal_eval)
                 flags &= ~DISPATCH_JSCRIPT_INTERNAL_MASK;
             if(jsthis)
                 set_disp(&vthis, jsthis);
