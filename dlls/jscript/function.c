@@ -274,12 +274,12 @@ static HRESULT invoke_value_proc(script_ctx_t *ctx, FunctionInstance *function, 
 }
 
 static HRESULT call_function(script_ctx_t *ctx, FunctionInstance *function, IDispatch *this_obj,
-        unsigned argc, jsval_t *argv, jsval_t *r)
+        unsigned argc, jsval_t *argv, BOOL caller_execs_source, jsval_t *r)
 {
     if(function->value_proc)
         return invoke_value_proc(ctx, function, this_obj, DISPATCH_METHOD, argc, argv, r);
 
-    return invoke_source(ctx, function, this_obj, argc, argv, FALSE, FALSE, r);
+    return invoke_source(ctx, function, this_obj, argc, argv, FALSE, caller_execs_source, r);
 }
 
 static HRESULT function_to_string(FunctionInstance *function, jsstr_t **ret)
@@ -459,7 +459,7 @@ static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     }
 
     if(SUCCEEDED(hres))
-        hres = call_function(ctx, function, this_obj, cnt, args, r);
+        hres = call_function(ctx, function, this_obj, cnt, args, (flags & DISPATCH_JSCRIPT_CALLEREXECSSOURCE) != 0, r);
 
     if(this_obj)
         IDispatch_Release(this_obj);
@@ -492,7 +492,7 @@ static HRESULT Function_call(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         cnt = argc-1;
     }
 
-    hres = call_function(ctx, function, this_obj, cnt, argv+1, r);
+    hres = call_function(ctx, function, this_obj, cnt, argv+1, FALSE, r);
 
     if(this_obj)
         IDispatch_Release(this_obj);
