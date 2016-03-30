@@ -46,6 +46,11 @@ struct node *alloc_node( WS_XML_NODE_TYPE ) DECLSPEC_HIDDEN;
 void free_node( struct node * ) DECLSPEC_HIDDEN;
 void destroy_nodes( struct node * ) DECLSPEC_HIDDEN;
 
+static inline WS_XML_NODE_TYPE node_type( const struct node *node )
+{
+    return node->hdr.node.nodeType;
+}
+
 static inline void *heap_alloc( SIZE_T size )
 {
     return HeapAlloc( GetProcessHeap(), 0, size );
