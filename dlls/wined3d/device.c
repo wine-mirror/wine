@@ -399,13 +399,20 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
         for (i = 0; i < rt_count; ++i)
         {
             struct wined3d_rendertarget_view *rtv = fb->render_targets[i];
-            struct wined3d_surface *rt = wined3d_rendertarget_view_get_surface(rtv);
+            struct wined3d_texture *texture;
 
-            if (rt)
+            if (!rtv)
+                continue;
+
+            if (rtv->resource->type == WINED3D_RTYPE_BUFFER)
             {
-                wined3d_texture_validate_location(rt->container, rtv->sub_resource_idx, rtv->resource->draw_binding);
-                surface_invalidate_location(rt, ~rtv->resource->draw_binding);
+                FIXME("Not supported on buffer resources.\n");
+                continue;
             }
+
+            texture = wined3d_texture_from_resource(rtv->resource);
+            wined3d_texture_validate_location(texture, rtv->sub_resource_idx, rtv->resource->draw_binding);
+            wined3d_texture_invalidate_location(texture, rtv->sub_resource_idx, ~rtv->resource->draw_binding);
         }
 
         if (!gl_info->supported[ARB_FRAMEBUFFER_SRGB] && needs_srgb_write(context, &device->state, fb))
@@ -3570,7 +3577,7 @@ static HRESULT wined3d_device_update_texture_3d(struct wined3d_device *device,
         data.buffer_object = 0;
         data.addr = src.data;
         wined3d_volume_upload_data(dst_texture->sub_resources[i].u.volume, context, &data);
-        wined3d_volume_invalidate_location(dst_texture->sub_resources[i].u.volume, ~WINED3D_LOCATION_TEXTURE_RGB);
+        wined3d_texture_invalidate_location(dst_texture, i, ~WINED3D_LOCATION_TEXTURE_RGB);
 
         if (FAILED(hr = wined3d_resource_unmap(&src_texture->resource, src_level + i)))
             goto done;
@@ -4120,7 +4127,7 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
     context_release(context);
 
     wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB);
-    surface_invalidate_location(surface, ~WINED3D_LOCATION_TEXTURE_RGB);
+    wined3d_texture_invalidate_location(texture, sub_resource_idx, ~WINED3D_LOCATION_TEXTURE_RGB);
 }
 
 HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,

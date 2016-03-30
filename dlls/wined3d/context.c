@@ -3481,14 +3481,12 @@ static void context_setup_target(struct wined3d_context *context,
         {
             unsigned int prev_sub_resource_idx = context->current_rt.sub_resource_idx;
             struct wined3d_texture *prev_texture = context->current_rt.texture;
-            struct wined3d_surface *prev_surface;
 
             /* Read the back buffer of the old drawable into the destination texture. */
             if (prev_texture->texture_srgb.name)
                 wined3d_texture_load(prev_texture, context, TRUE);
             wined3d_texture_load(prev_texture, context, FALSE);
-            prev_surface = prev_texture->sub_resources[prev_sub_resource_idx].u.surface;
-            surface_invalidate_location(prev_surface, WINED3D_LOCATION_DRAWABLE);
+            wined3d_texture_invalidate_location(prev_texture, prev_sub_resource_idx, WINED3D_LOCATION_DRAWABLE);
         }
     }
 

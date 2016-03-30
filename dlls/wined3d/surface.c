@@ -505,6 +505,7 @@ static void surface_prepare_system_memory(struct wined3d_surface *surface)
 
 static void surface_evict_sysmem(struct wined3d_surface *surface)
 {
+    unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     struct wined3d_texture *texture = surface->container;
 
     if (surface->resource.map_count || texture->download_count > MAXLOCKCOUNT
@@ -512,7 +513,7 @@ static void surface_evict_sysmem(struct wined3d_surface *surface)
         return;
 
     wined3d_resource_free_sysmem(&surface->resource);
-    surface_invalidate_location(surface, WINED3D_LOCATION_SYSMEM);
+    wined3d_texture_invalidate_location(texture, sub_resource_idx, WINED3D_LOCATION_SYSMEM);
 }
 
 static BOOL surface_is_full_rect(const struct wined3d_surface *surface, const RECT *r)
@@ -925,20 +926,20 @@ static void surface_unload(struct wined3d_resource *resource)
         if (resource->usage & WINED3DUSAGE_DEPTHSTENCIL)
         {
             wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_DISCARDED);
-            surface_invalidate_location(surface, ~WINED3D_LOCATION_DISCARDED);
+            wined3d_texture_invalidate_location(texture, sub_resource_idx, ~WINED3D_LOCATION_DISCARDED);
         }
         else
         {
             surface_prepare_system_memory(surface);
             memset(surface->resource.heap_memory, 0, surface->resource.size);
             wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_SYSMEM);
-            surface_invalidate_location(surface, ~WINED3D_LOCATION_SYSMEM);
+            wined3d_texture_invalidate_location(texture, sub_resource_idx, ~WINED3D_LOCATION_SYSMEM);
         }
     }
     else
     {
         surface_load_location(surface, context, surface->resource.map_binding);
-        surface_invalidate_location(surface, ~surface->resource.map_binding);
+        wined3d_texture_invalidate_location(texture, sub_resource_idx, ~surface->resource.map_binding);
     }
 
     /* Destroy fbo render buffers. This is needed for implicit render targets, for
@@ -1372,7 +1373,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     context_release(context);
 
     wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB);
-    surface_invalidate_location(dst_surface, ~WINED3D_LOCATION_TEXTURE_RGB);
+    wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx, ~WINED3D_LOCATION_TEXTURE_RGB);
 
     return WINED3D_OK;
 }
@@ -2166,7 +2167,7 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
     /* The texture is now most up to date - If the surface is a render target
      * and has a drawable, this path is never entered. */
     wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB);
-    surface_invalidate_location(dst_surface, ~WINED3D_LOCATION_TEXTURE_RGB);
+    wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx, ~WINED3D_LOCATION_TEXTURE_RGB);
 }
 
 /* Uses the hardware to stretch and flip the image */
@@ -2444,7 +2445,7 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
     /* The texture is now most up to date - If the surface is a render target
      * and has a drawable, this path is never entered. */
     wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB);
-    surface_invalidate_location(dst_surface, ~WINED3D_LOCATION_TEXTURE_RGB);
+    wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx, ~WINED3D_LOCATION_TEXTURE_RGB);
 }
 
 /* Front buffer coordinates are always full screen coordinates, but our GL
@@ -2917,21 +2918,6 @@ static void surface_load_ds_location(struct wined3d_surface *surface, struct win
     }
 }
 
-void surface_invalidate_location(struct wined3d_surface *surface, DWORD location)
-{
-    struct wined3d_texture_sub_resource *sub_resource;
-
-    TRACE("surface %p, location %s.\n", surface, wined3d_debug_location(location));
-
-    sub_resource = surface_get_sub_resource(surface);
-    if (location & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
-        wined3d_texture_set_dirty(surface->container);
-    sub_resource->locations &= ~location;
-
-    if (!sub_resource->locations)
-        ERR("Surface %p does not have any up to date location.\n", surface);
-}
-
 static DWORD resource_access_from_location(DWORD location)
 {
     switch (location)
@@ -3274,7 +3260,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, struct wined3d_co
         TRACE("Surface previously discarded, nothing to do.\n");
         wined3d_surface_prepare(surface, context, location);
         wined3d_texture_validate_location(texture, sub_resource_idx, location);
-        surface_invalidate_location(surface, WINED3D_LOCATION_DISCARDED);
+        wined3d_texture_invalidate_location(texture, sub_resource_idx, WINED3D_LOCATION_DISCARDED);
         goto done;
     }
 
@@ -3506,7 +3492,7 @@ static void ffp_blit_blit_surface(struct wined3d_device *device, enum wined3d_bl
             (old_color_key_flags & WINED3D_CKEY_SRC_BLT) ? &old_blt_key : NULL);
 
     wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx, dst_texture->resource.draw_binding);
-    surface_invalidate_location(dst_surface, ~dst_texture->resource.draw_binding);
+    wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx, ~dst_texture->resource.draw_binding);
 }
 
 const struct blit_shader ffp_blit =  {
@@ -4475,7 +4461,8 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
 
                 wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx,
                         dst_texture->resource.draw_binding);
-                surface_invalidate_location(dst_surface, ~dst_texture->resource.draw_binding);
+                wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx,
+                        ~dst_texture->resource.draw_binding);
 
                 return WINED3D_OK;
             }
@@ -4614,7 +4601,7 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
     {
         wined3d_resource_free_sysmem(&surface->resource);
         wined3d_texture_validate_location(container, sub_resource_idx, WINED3D_LOCATION_DIB);
-        surface_invalidate_location(surface, WINED3D_LOCATION_SYSMEM);
+        wined3d_texture_invalidate_location(container, sub_resource_idx, WINED3D_LOCATION_SYSMEM);
     }
 
     return hr;

@@ -2369,7 +2369,6 @@ struct wined3d_texture_ops
 {
     void (*texture_sub_resource_load)(struct wined3d_resource *sub_resource,
             struct wined3d_context *context, BOOL srgb);
-    void (*texture_sub_resource_invalidate_location)(struct wined3d_resource *sub_resource, DWORD location);
     void (*texture_sub_resource_upload_data)(struct wined3d_resource *sub_resource,
             const struct wined3d_context *context, const struct wined3d_sub_resource_data *data);
     BOOL (*texture_load_location)(struct wined3d_texture *texture, unsigned int sub_resource_idx,
@@ -2483,6 +2482,8 @@ BOOL wined3d_texture_check_block_align(const struct wined3d_texture *texture,
 GLenum wined3d_texture_get_gl_buffer(const struct wined3d_texture *texture) DECLSPEC_HIDDEN;
 struct wined3d_resource *wined3d_texture_get_sub_resource(const struct wined3d_texture *texture,
         UINT sub_resource_idx) DECLSPEC_HIDDEN;
+void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
+        unsigned int sub_resource_idx, DWORD location) DECLSPEC_HIDDEN;
 void wined3d_texture_load(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void wined3d_texture_prepare_buffer_object(struct wined3d_texture *texture,
@@ -2647,7 +2648,6 @@ void surface_get_drawable_size(const struct wined3d_surface *surface, const stru
 HRESULT wined3d_surface_init(struct wined3d_surface *surface,
         struct wined3d_texture *container, const struct wined3d_resource_desc *desc,
         GLenum target, unsigned int level, unsigned int layer, DWORD flags) DECLSPEC_HIDDEN;
-void surface_invalidate_location(struct wined3d_surface *surface, DWORD location) DECLSPEC_HIDDEN;
 void surface_load(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb,
         struct wined3d_context *context) DECLSPEC_HIDDEN;

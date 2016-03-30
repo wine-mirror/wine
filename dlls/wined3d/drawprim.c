@@ -625,7 +625,8 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
             if (state->render_states[WINED3D_RS_COLORWRITEENABLE])
             {
                 surface_load_location(target, context, rtv->resource->draw_binding);
-                surface_invalidate_location(target, ~rtv->resource->draw_binding);
+                wined3d_texture_invalidate_location(target->container,
+                        rtv->sub_resource_idx, ~rtv->resource->draw_binding);
             }
             else
             {
