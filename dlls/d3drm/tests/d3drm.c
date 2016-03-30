@@ -994,6 +994,8 @@ static void test_Frame(void)
     ok(hr == D3DRM_OK, "Cannot get parent frame (hr = %x)\n", hr);
     ok(pFrameTmp == pFrameP1, "pFrameTmp = %p\n", pFrameTmp);
     CHECK_REFCOUNT(pFrameP1, 2);
+    IDirect3DRMFrame_Release(pFrameTmp);
+    CHECK_REFCOUNT(pFrameP1, 1);
 
     /* Add child to second parent */
     hr = IDirect3DRM_CreateFrame(d3drm, NULL, &pFrameP2);
@@ -1037,6 +1039,8 @@ static void test_Frame(void)
     ok(pFrameTmp == pFrameP2, "pFrameTmp = %p\n", pFrameTmp);
     CHECK_REFCOUNT(pFrameP2, 2);
     CHECK_REFCOUNT(pFrameC, 2);
+    IDirect3DRMFrame_Release(pFrameTmp);
+    CHECK_REFCOUNT(pFrameP2, 1);
 
     /* Add child again */
     hr = IDirect3DRMFrame_AddChild(pFrameP2, pFrameC);
@@ -1088,7 +1092,7 @@ static void test_Frame(void)
 
     hr = IDirect3DRMFrame_AddChild(pFrameP2, pFrameP1);
     ok(hr == D3DRM_OK, "Cannot add child frame (hr = %x)\n", hr);
-    CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 2);
 
     frame_array = NULL;
     hr = IDirect3DRMFrame_GetChildren(pFrameP2, &frame_array);
@@ -1111,11 +1115,11 @@ static void test_Frame(void)
     /* [Add/Delete]Visual with NULL pointer */
     hr = IDirect3DRMFrame_AddVisual(pFrameP1, NULL);
     ok(hr == D3DRMERR_BADOBJECT, "Should have returned D3DRMERR_BADOBJECT (hr = %x)\n", hr);
-    CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 2);
 
     hr = IDirect3DRMFrame_DeleteVisual(pFrameP1, NULL);
     ok(hr == D3DRMERR_BADOBJECT, "Should have returned D3DRMERR_BADOBJECT (hr = %x)\n", hr);
-    CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 2);
 
     /* Create Visual */
     hr = IDirect3DRM_CreateMeshBuilder(d3drm, &mesh_builder);
@@ -1125,7 +1129,7 @@ static void test_Frame(void)
     /* Add Visual to first parent */
     hr = IDirect3DRMFrame_AddVisual(pFrameP1, visual1);
     ok(hr == D3DRM_OK, "Cannot add visual (hr = %x)\n", hr);
-    CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 2);
     CHECK_REFCOUNT(visual1, 2);
 
     visual_array = NULL;
@@ -1145,17 +1149,17 @@ static void test_Frame(void)
     /* Delete Visual */
     hr = IDirect3DRMFrame_DeleteVisual(pFrameP1, visual1);
     ok(hr == D3DRM_OK, "Cannot delete visual (hr = %x)\n", hr);
-    CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 2);
     IDirect3DRMMeshBuilder_Release(mesh_builder);
 
     /* [Add/Delete]Light with NULL pointer */
     hr = IDirect3DRMFrame_AddLight(pFrameP1, NULL);
     ok(hr == D3DRMERR_BADOBJECT, "Should have returned D3DRMERR_BADOBJECT (hr = %x)\n", hr);
-    CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 2);
 
     hr = IDirect3DRMFrame_DeleteLight(pFrameP1, NULL);
     ok(hr == D3DRMERR_BADOBJECT, "Should have returned D3DRMERR_BADOBJECT (hr = %x)\n", hr);
-    CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 2);
 
     /* Create Light */
     hr = IDirect3DRM_CreateLightRGB(d3drm, D3DRMLIGHT_SPOT, 0.1, 0.2, 0.3, &light1);
@@ -1164,7 +1168,7 @@ static void test_Frame(void)
     /* Add Light to first parent */
     hr = IDirect3DRMFrame_AddLight(pFrameP1, light1);
     ok(hr == D3DRM_OK, "Cannot add light (hr = %x)\n", hr);
-    CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 2);
     CHECK_REFCOUNT(light1, 2);
 
     light_array = NULL;
@@ -1184,7 +1188,7 @@ static void test_Frame(void)
     /* Delete Light */
     hr = IDirect3DRMFrame_DeleteLight(pFrameP1, light1);
     ok(hr == D3DRM_OK, "Cannot delete light (hr = %x)\n", hr);
-    CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameP1, 2);
     IDirect3DRMLight_Release(light1);
 
     /* Test SceneBackground on first parent */
@@ -1203,8 +1207,8 @@ static void test_Frame(void)
 
     /* Cleanup */
     IDirect3DRMFrame_Release(pFrameP2);
-    CHECK_REFCOUNT(pFrameC, 2);
-    CHECK_REFCOUNT(pFrameP1, 3);
+    CHECK_REFCOUNT(pFrameC, 1);
+    CHECK_REFCOUNT(pFrameP1, 1);
 
     IDirect3DRMFrame_Release(pFrameC);
     IDirect3DRMFrame_Release(pFrameP1);
