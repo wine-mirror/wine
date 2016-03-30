@@ -1,4 +1,6 @@
 MODULE    = t2embed.dll
+IMPORTLIB = t2embed
+IMPORTS   = gdi32
 
 C_SRCS = \
 	main.c

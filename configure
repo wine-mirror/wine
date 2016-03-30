@@ -17969,7 +17969,8 @@ wine_fn_config_dll svrapi enable_svrapi
 wine_fn_config_dll sxs enable_sxs implib
 wine_fn_config_test dlls/sxs/tests sxs_test
 wine_fn_config_dll system.drv16 enable_win16
-wine_fn_config_dll t2embed enable_t2embed
+wine_fn_config_dll t2embed enable_t2embed implib
+wine_fn_config_test dlls/t2embed/tests t2embed_test
 wine_fn_config_dll tapi32 enable_tapi32 implib
 wine_fn_config_dll taskschd enable_taskschd clean
 wine_fn_config_test dlls/taskschd/tests taskschd_test
