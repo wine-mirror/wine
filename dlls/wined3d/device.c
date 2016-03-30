@@ -3547,9 +3547,9 @@ static HRESULT wined3d_device_update_texture_3d(struct wined3d_device *device,
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (src_texture->sub_resources[src_level].resource->width != dst_texture->resource.width
-            || src_texture->sub_resources[src_level].resource->height != dst_texture->resource.height
-            || src_texture->sub_resources[src_level].resource->depth != dst_texture->resource.depth)
+    if (wined3d_texture_get_level_width(src_texture, src_level) != dst_texture->resource.width
+            || wined3d_texture_get_level_height(src_texture, src_level) != dst_texture->resource.height
+            || wined3d_texture_get_level_depth(src_texture, src_level) != dst_texture->resource.depth)
     {
         WARN("Source and destination dimensions do not match.\n");
         return WINED3DERR_INVALIDCALL;
