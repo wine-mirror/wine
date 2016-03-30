@@ -464,6 +464,15 @@ static void clear_prefixes( struct prefix *prefixes, ULONG count )
     }
 }
 
+static void free_reader( struct reader *reader )
+{
+    if (!reader) return;
+    destroy_nodes( reader->root );
+    clear_prefixes( reader->prefixes, reader->nb_prefixes );
+    heap_free( reader->prefixes );
+    heap_free( reader );
+}
+
 static HRESULT set_prefix( struct prefix *prefix, const WS_XML_STRING *str, const WS_XML_STRING *ns )
 {
     if (str)
@@ -608,14 +617,14 @@ HRESULT WINAPI WsCreateReader( const WS_XML_READER_PROPERTY *properties, ULONG c
         hr = set_reader_prop( reader, properties[i].id, properties[i].value, properties[i].valueSize );
         if (hr != S_OK)
         {
-            heap_free( reader );
+            free_reader( reader );
             return hr;
         }
     }
 
     if ((hr = read_init_state( reader )) != S_OK)
     {
-        heap_free( reader );
+        free_reader( reader );
         return hr;
     }
 
@@ -631,12 +640,7 @@ void WINAPI WsFreeReader( WS_XML_READER *handle )
     struct reader *reader = (struct reader *)handle;
 
     TRACE( "%p\n", handle );
-
-    if (!reader) return;
-    destroy_nodes( reader->root );
-    clear_prefixes( reader->prefixes, reader->nb_prefixes );
-    heap_free( reader->prefixes );
-    heap_free( reader );
+    free_reader( reader );
 }
 
 /**************************************************************************
