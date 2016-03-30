@@ -7903,8 +7903,8 @@ static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_
          * rectangle instead. */
         surface_load_fb_texture(src_surface, FALSE, context);
 
-        src_rect.top = src_surface->resource.height - src_rect.top;
-        src_rect.bottom = src_surface->resource.height - src_rect.bottom;
+        src_rect.top = wined3d_texture_get_level_height(src_texture, src_surface->texture_level) - src_rect.top;
+        src_rect.bottom = wined3d_texture_get_level_height(src_texture, src_surface->texture_level) - src_rect.bottom;
     }
     else
         wined3d_texture_load(src_texture, context, FALSE);
