@@ -1803,7 +1803,7 @@ CompositeMonikerImpl_Construct(IMoniker **ppMoniker, IMoniker *pmkFirst, IMonike
                 LPVOID tab_moniker = This->tabMoniker;
 
                 This->tabSize+=BLOCK_TAB_SIZE;
-                This->tabMoniker=HeapReAlloc(GetProcessHeap(),0,This->tabMoniker,This->tabSize*sizeof(IMoniker));
+                This->tabMoniker=HeapReAlloc(GetProcessHeap(),0,This->tabMoniker,This->tabSize*sizeof(This->tabMoniker[0]));
 
                 if (This->tabMoniker==NULL){
                     HeapFree(GetProcessHeap(), 0, tab_moniker);
