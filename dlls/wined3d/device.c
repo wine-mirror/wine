@@ -216,16 +216,16 @@ void device_switch_onscreen_ds(struct wined3d_device *device,
 
 static BOOL is_full_clear(const struct wined3d_surface *target, const RECT *draw_rect, const RECT *clear_rect)
 {
+    unsigned int height = wined3d_texture_get_level_height(target->container, target->texture_level);
+    unsigned int width = wined3d_texture_get_level_width(target->container, target->texture_level);
+
     /* partial draw rect */
-    if (draw_rect->left || draw_rect->top
-            || draw_rect->right < target->resource.width
-            || draw_rect->bottom < target->resource.height)
+    if (draw_rect->left || draw_rect->top || draw_rect->right < width || draw_rect->bottom < height)
         return FALSE;
 
     /* partial clear rect */
     if (clear_rect && (clear_rect->left > 0 || clear_rect->top > 0
-            || clear_rect->right < target->resource.width
-            || clear_rect->bottom < target->resource.height))
+            || clear_rect->right < width || clear_rect->bottom < height))
         return FALSE;
 
     return TRUE;
