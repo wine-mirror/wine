@@ -176,6 +176,12 @@ void *ws_realloc( WS_HEAP *handle, void *ptr, SIZE_T size )
     return HeapReAlloc( heap->handle, 0, ptr, size );
 }
 
+static void *ws_realloc_zero( WS_HEAP *handle, void *ptr, SIZE_T size )
+{
+    struct heap *heap = (struct heap *)handle;
+    return HeapReAlloc( heap->handle, HEAP_ZERO_MEMORY, ptr, size );
+}
+
 void ws_free( WS_HEAP *handle, void *ptr )
 {
     struct heap *heap = (struct heap *)handle;
@@ -2528,9 +2534,111 @@ static HRESULT read_type_wsz( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static ULONG get_type_size( WS_TYPE type, const WS_STRUCT_DESCRIPTION *desc )
+{
+    switch (type)
+    {
+    case WS_INT8_TYPE:
+    case WS_UINT8_TYPE:
+        return sizeof(INT8);
+
+    case WS_INT16_TYPE:
+    case WS_UINT16_TYPE:
+        return sizeof(INT16);
+
+    case WS_BOOL_TYPE:
+    case WS_INT32_TYPE:
+    case WS_UINT32_TYPE:
+        return sizeof(INT32);
+
+    case WS_INT64_TYPE:
+    case WS_UINT64_TYPE:
+        return sizeof(INT64);
+
+    case WS_WSZ_TYPE:
+        return sizeof(WCHAR *);
+
+    case WS_STRUCT_TYPE:
+        return desc->size;
+
+    default:
+        ERR( "unhandled type %u\n", type );
+        return 0;
+    }
+}
+
 static HRESULT read_type( struct reader *, WS_TYPE_MAPPING, WS_TYPE, const WS_XML_STRING *,
                           const WS_XML_STRING *, const void *, WS_READ_OPTION, WS_HEAP *,
                           void *, ULONG );
+
+static HRESULT read_type_repeating_element( struct reader *reader, const WS_FIELD_DESCRIPTION *desc,
+                                            WS_READ_OPTION option, WS_HEAP *heap, void **ret,
+                                            ULONG size, ULONG *count )
+{
+    HRESULT hr;
+    ULONG item_size, nb_items = 0, nb_allocated = 1, offset = 0;
+    char *buf;
+
+    if (desc->itemRange)
+        FIXME( "ignoring range (%u-%u)\n", desc->itemRange->minItemCount, desc->itemRange->maxItemCount );
+
+    /* wrapper element */
+    if (desc->localName && ((hr = read_node( reader )) != S_OK)) return hr;
+
+    item_size = get_type_size( desc->type, desc->typeDescription );
+    if (!(buf = ws_alloc_zero( heap, item_size ))) return WS_E_QUOTA_EXCEEDED;
+    for (;;)
+    {
+        if (nb_items >= nb_allocated)
+        {
+            if (!(buf = ws_realloc_zero( heap, buf, nb_allocated * 2 * item_size )))
+                return WS_E_QUOTA_EXCEEDED;
+            nb_allocated *= 2;
+        }
+        hr = read_type( reader, WS_ELEMENT_TYPE_MAPPING, desc->type, desc->itemLocalName, desc->itemNs,
+                        desc->typeDescription, WS_READ_REQUIRED_VALUE, heap, buf + offset, item_size );
+        if (hr == WS_E_INVALID_FORMAT) break;
+        if (hr != S_OK)
+        {
+            ws_free( heap, buf );
+            return hr;
+        }
+        if ((hr = read_node( reader )) != S_OK)
+        {
+            ws_free( heap, buf );
+            return hr;
+        }
+        offset += item_size;
+        nb_items++;
+    }
+
+    if (desc->localName && ((hr = read_node( reader )) != S_OK)) return hr;
+
+    if (!nb_items)
+    {
+        ws_free( heap, buf );
+        buf = NULL;
+    }
+
+    switch (option)
+    {
+    case WS_READ_REQUIRED_POINTER:
+        if (!nb_items) return WS_E_INVALID_FORMAT;
+        /* fall through */
+
+    case WS_READ_OPTIONAL_POINTER:
+        if (size < sizeof(void *)) return E_INVALIDARG;
+        *ret = buf;
+        break;
+
+    default:
+        FIXME( "read option %u not supported\n", option );
+        return E_NOTIMPL;
+    }
+
+    *count = nb_items;
+    return S_OK;
+}
 
 static HRESULT read_type_text( struct reader *reader, const WS_FIELD_DESCRIPTION *desc,
                                WS_READ_OPTION option, WS_HEAP *heap, void *ret, ULONG size )
@@ -2598,6 +2706,13 @@ static HRESULT read_type_struct_field( struct reader *reader, const WS_FIELD_DES
                         desc->typeDescription, option, heap, ptr, size );
         break;
 
+    case WS_REPEATING_ELEMENT_FIELD_MAPPING:
+    {
+        ULONG count;
+        hr = read_type_repeating_element( reader, desc, option, heap, (void **)ptr, size, &count );
+        if (hr == S_OK) *(ULONG *)(ptr + desc->countOffset) = count;
+        break;
+    }
     case WS_TEXT_FIELD_MAPPING:
         hr = read_type_text( reader, desc, option, heap, ptr, size );
         break;

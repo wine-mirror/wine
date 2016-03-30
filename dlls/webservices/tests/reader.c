@@ -71,6 +71,12 @@ static const char data11[] =
     "</o:services>"
     "</o:OfficeConfig>";
 
+static const char data12[] =
+    "<services>"
+    "<service><id>1</id></service>"
+    "<service><id>2</id></service>"
+    "</services>";
+
 static void test_WsCreateError(void)
 {
     HRESULT hr;
@@ -2642,6 +2648,79 @@ static void test_complex_struct_type(void)
     WsFreeError( error );
 }
 
+static void test_repeating_element(void)
+{
+    WS_XML_STRING str_services = {8, (BYTE *)"services"};
+    WS_XML_STRING str_service = {7, (BYTE *)"service"};
+    WS_XML_STRING str_id = {2, (BYTE *)"id"};
+    WS_XML_STRING str_ns = {0, NULL};
+    HRESULT hr;
+    WS_XML_READER *reader;
+    WS_HEAP *heap;
+    WS_STRUCT_DESCRIPTION s, s2;
+    WS_FIELD_DESCRIPTION f, f2, *fields[1], *fields2[1];
+    struct service
+    {
+        UINT32 id;
+    };
+    struct services
+    {
+        struct service *service;
+        ULONG           service_count;
+    } *test;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    prepare_struct_type_test( reader, data12 );
+
+    memset( &f2, 0, sizeof(f2) );
+    f2.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f2.localName = &str_id;
+    f2.ns        = &str_ns;
+    f2.type      = WS_UINT32_TYPE;
+    fields2[0]   = &f2;
+
+    memset( &s2, 0, sizeof(s2) );
+    s2.size          = sizeof(struct service);
+    s2.alignment     = TYPE_ALIGNMENT(struct service);
+    s2.fields        = fields2;
+    s2.fieldCount    = 1;
+    s2.typeLocalName = &str_service;
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping         = WS_REPEATING_ELEMENT_FIELD_MAPPING;
+    f.countOffset     = FIELD_OFFSET(struct services, service_count);
+    f.type            = WS_STRUCT_TYPE;
+    f.typeDescription = &s2;
+    f.itemLocalName   = &str_service;
+    f.itemNs          = &str_ns;
+    fields[0] = &f;
+
+    memset( &s, 0, sizeof(s) );
+    s.size          = sizeof(struct services);
+    s.alignment     = TYPE_ALIGNMENT(struct services);
+    s.fields        = fields;
+    s.fieldCount    = 1;
+    s.typeLocalName = &str_services;
+
+    test = NULL;
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( test != NULL, "test not set\n" );
+    ok( test->service != NULL, "service not set\n" );
+    ok( test->service_count == 2, "got %u\n", test->service_count );
+    ok( test->service[0].id == 1, "got %u\n", test->service[0].id );
+    ok( test->service[1].id == 2, "got %u\n", test->service[1].id );
+
+    WsFreeReader( reader );
+    WsFreeHeap( heap );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -2665,4 +2744,5 @@ START_TEST(reader)
     test_WsGetNamespaceFromPrefix();
     test_text_field_mapping();
     test_complex_struct_type();
+    test_repeating_element();
 }
