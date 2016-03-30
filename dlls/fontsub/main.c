@@ -19,6 +19,7 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include "fontsub.h"
 
 #include "wine/debug.h"
 
@@ -37,4 +38,17 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
 
     return TRUE;
+}
+
+ULONG __cdecl CreateFontPackage(const unsigned char *src, const ULONG src_len, unsigned char **dest,
+    ULONG *dest_len, ULONG *written, const unsigned short flags, const unsigned short face_index,
+    const unsigned short format, const unsigned short lang, const unsigned short platform, const unsigned short encoding,
+    const unsigned short *keep_list, const unsigned short keep_len, CFP_ALLOCPROC allocproc,
+    CFP_REALLOCPROC reallocproc, CFP_FREEPROC freeproc, void *reserved)
+{
+    FIXME("(%p %u %p %p %p %#x %u %u %u %u %u %p %u %p %p %p %p): stub\n", src, src_len, dest, dest_len,
+        written, flags, face_index, format, lang, platform, encoding, keep_list, keep_len, allocproc,
+        reallocproc, freeproc, reserved);
+
+    return ERR_GENERIC;
 }

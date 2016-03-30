@@ -355,6 +355,7 @@ HEADER_SRCS = \
 	fdi.h \
 	fileapi.h \
 	fltdefs.h \
+	fontsub.h \
 	gdiplus.h \
 	gdipluscolor.h \
 	gdipluscolormatrix.h \
