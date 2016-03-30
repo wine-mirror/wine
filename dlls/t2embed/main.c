@@ -24,6 +24,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "t2embapi.h"
 #include "wine/debug.h"
 
@@ -73,9 +74,30 @@ LONG WINAPI TTEmbedFont(HDC hDC, ULONG ulFlags, ULONG ulCharSet, ULONG *pulPrivS
 
 LONG WINAPI TTGetEmbeddingType(HDC hDC, ULONG *status)
 {
-    FIXME("(%p %p) stub\n", hDC, status);
-    if (status) *status = EMBED_NOEMBEDDING;
-    return E_API_NOTIMPL;
+    OUTLINETEXTMETRICW otm;
+
+    TRACE("(%p %p)\n", hDC, status);
+
+    if (!hDC)
+        return E_HDCINVALID;
+
+    otm.otmSize = sizeof(otm);
+    if (!GetOutlineTextMetricsW(hDC, otm.otmSize, &otm))
+        return E_NOTATRUETYPEFONT;
+
+    if (!status)
+        return E_PERMISSIONSINVALID;
+
+    if (otm.otmfsType == LICENSE_INSTALLABLE)
+        *status = EMBED_INSTALLABLE;
+    else if (otm.otmfsType & LICENSE_NOEMBEDDING)
+        *status = EMBED_NOEMBEDDING;
+    else if (otm.otmfsType & LICENSE_PREVIEWPRINT)
+        *status = EMBED_PREVIEWPRINT;
+    else if (otm.otmfsType & LICENSE_EDITABLE)
+        *status = EMBED_EDITABLE;
+
+    return E_NONE;
 }
 
 LONG WINAPI TTIsEmbeddingEnabled(HDC hDC, BOOL *enabled)

@@ -39,6 +39,10 @@ extern "C" {
 /* Possible return values. */
 #define E_NONE                              __MSABI_LONG(0x0000)
 #define E_API_NOTIMPL                       __MSABI_LONG(0x0001)
+#define E_HDCINVALID                        __MSABI_LONG(0x0006)
+#define E_NOTATRUETYPEFONT                  __MSABI_LONG(0x000a)
+#define E_ERRORACCESSINGFONTDATA            __MSABI_LONG(0x000c)
+#define E_PERMISSIONSINVALID                __MSABI_LONG(0x0117)
 
 typedef ULONG (WINAPIV * READEMBEDPROC)(void*,void*,ULONG);
 typedef ULONG (WINAPIV * WRITEEMBEDPROC)(void*,void*,ULONG);

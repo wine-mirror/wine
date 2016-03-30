@@ -1,0 +1,5 @@
+TESTDLL   = t2embed.dll
+IMPORTS   = gdi32 t2embed
+
+C_SRCS = \
+	t2embed.c
