@@ -2532,6 +2532,20 @@ static HRESULT read_type( struct reader *, WS_TYPE_MAPPING, WS_TYPE, const WS_XM
                           const WS_XML_STRING *, const void *, WS_READ_OPTION, WS_HEAP *,
                           void *, ULONG );
 
+static HRESULT read_type_text( struct reader *reader, const WS_FIELD_DESCRIPTION *desc,
+                               WS_READ_OPTION option, WS_HEAP *heap, void *ret, ULONG size )
+{
+    HRESULT hr;
+    BOOL found;
+
+    if ((hr = read_to_startelement( reader, &found )) != S_OK) return S_OK;
+    if (!found) return WS_E_INVALID_FORMAT;
+    if ((hr = read_node( reader )) != S_OK) return hr;
+
+    return read_type( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, desc->type, NULL, NULL,
+                      desc->typeDescription, option, heap, ret, size );
+}
+
 static WS_READ_OPTION map_field_options( WS_TYPE type, ULONG options )
 {
     if (options & !(WS_FIELD_POINTER | WS_FIELD_OPTIONAL))
@@ -2582,6 +2596,10 @@ static HRESULT read_type_struct_field( struct reader *reader, const WS_FIELD_DES
     case WS_ELEMENT_FIELD_MAPPING:
         hr = read_type( reader, WS_ELEMENT_TYPE_MAPPING, desc->type, desc->localName, desc->ns,
                         desc->typeDescription, option, heap, ptr, size );
+        break;
+
+    case WS_TEXT_FIELD_MAPPING:
+        hr = read_type_text( reader, desc, option, heap, ptr, size );
         break;
 
     default:
