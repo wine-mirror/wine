@@ -668,6 +668,11 @@ static HRESULT WINAPI ClServiceProvider_QueryService(IServiceProvider *iface, RE
         return IWebBrowser2_QueryInterface(This->wb, riid, ppv);
     }
 
+    if(IsEqualGUID(&IID_ITargetFrame, guidService)) {
+        TRACE("(%p)->(IID_ITargetFrame %s %p)\n", This, debugstr_guid(riid), ppv);
+        return IWebBrowser2_QueryInterface(This->wb, riid, ppv);
+    }
+
     if(IsEqualGUID(&IID_IWebBrowserApp, guidService)) {
         TRACE("IWebBrowserApp service\n");
         return IWebBrowser2_QueryInterface(This->wb, riid, ppv);

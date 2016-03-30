@@ -29,6 +29,7 @@
 #include "ole2.h"
 #include "exdisp.h"
 #include "htiframe.h"
+#include "htiface.h"
 #include "mshtmhst.h"
 #include "mshtmcid.h"
 #include "mshtml.h"
@@ -3543,6 +3544,11 @@ static void test_dochost_qs(IWebBrowser2 *webbrowser)
     IUnknown_Release(service);
 
     hres = IServiceProvider_QueryService(serv_prov, &IID_IWebBrowserApp, &IID_IHlinkFrame, (void**)&service);
+    ok(hres == S_OK, "QueryService failed: %08x\n", hres);
+    ok(iface_cmp(service, (IUnknown*)webbrowser), "service != unk\n");
+    IUnknown_Release(service);
+
+    hres = IServiceProvider_QueryService(serv_prov, &IID_ITargetFrame, &IID_ITargetFrame, (void**)&service);
     ok(hres == S_OK, "QueryService failed: %08x\n", hres);
     ok(iface_cmp(service, (IUnknown*)webbrowser), "service != unk\n");
     IUnknown_Release(service);
