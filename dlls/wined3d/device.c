@@ -241,7 +241,9 @@ static void prepare_ds_clear(struct wined3d_surface *ds, struct wined3d_context 
     {
         /* Depth buffer was discarded, make it entirely current in its new location since
          * there is no other place where we would get data anyway. */
-        SetRect(out_rect, 0, 0, ds->resource.width, ds->resource.height);
+        SetRect(out_rect, 0, 0,
+                wined3d_texture_get_level_width(ds->container, ds->texture_level),
+                wined3d_texture_get_level_height(ds->container, ds->texture_level));
         return;
     }
 
