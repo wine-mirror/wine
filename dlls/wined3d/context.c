@@ -480,8 +480,10 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context,
 
     if (depth_stencil && render_targets[0])
     {
-        if (depth_stencil->resource.width < render_targets[0]->resource.width ||
-            depth_stencil->resource.height < render_targets[0]->resource.height)
+        if (wined3d_texture_get_level_width(depth_stencil->container, depth_stencil->texture_level)
+                < wined3d_texture_get_level_width(render_targets[0]->container, render_targets[0]->texture_level)
+                || wined3d_texture_get_level_height(depth_stencil->container, depth_stencil->texture_level)
+                < wined3d_texture_get_level_height(render_targets[0]->container, render_targets[0]->texture_level))
         {
             WARN("Depth stencil is smaller than the primary color buffer, disabling\n");
             depth_stencil = NULL;
