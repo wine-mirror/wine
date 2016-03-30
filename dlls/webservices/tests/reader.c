@@ -64,6 +64,13 @@ static const char data9[] =
 static const char data10[] =
     "<a></b>";
 
+static const char data11[] =
+    "<o:OfficeConfig xmlns:o=\"urn:schemas-microsoft-com:office:office\">"
+    "<o:services o:GenerationTime=\"2015-09-03T18:47:54\">"
+    "<!--Build: 16.0.6202.6852-->"
+    "</o:services>"
+    "</o:OfficeConfig>";
+
 static void test_WsCreateError(void)
 {
     HRESULT hr;
@@ -2490,6 +2497,151 @@ static void test_text_field_mapping(void)
     WsFreeHeap( heap );
 }
 
+static void test_complex_struct_type(void)
+{
+    static const WCHAR timestampW[] =
+        {'2','0','1','5','-','0','9','-','0','3','T','1','8',':','4','7',':','5','4',0};
+    HRESULT hr;
+    WS_ERROR *error;
+    WS_ERROR_PROPERTY prop;
+    WS_XML_READER *reader;
+    WS_HEAP *heap;
+    WS_STRUCT_DESCRIPTION s, s2;
+    WS_FIELD_DESCRIPTION f, f2, *fields[1], *fields2[1];
+    WS_XML_STRING str_officeconfig = {12, (BYTE *)"OfficeConfig"};
+    WS_XML_STRING str_services = {8, (BYTE *)"services"};
+    WS_XML_STRING str_generationtime = {14, (BYTE *)"GenerationTime"};
+    WS_XML_STRING ns = {39, (BYTE *)"urn:schemas-microsoft-com:office:office"};
+    LANGID langid = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
+    const WS_XML_NODE *node;
+    const WS_XML_ELEMENT_NODE *elem;
+    struct services
+    {
+        WCHAR *generationtime;
+    };
+    struct officeconfig
+    {
+        struct services *services;
+    } *test;
+
+    prop.id        = WS_ERROR_PROPERTY_LANGID;
+    prop.value     = &langid;
+    prop.valueSize = sizeof(langid);
+    hr = WsCreateError( &prop, 1, &error );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* element content type mapping */
+    prepare_struct_type_test( reader, data11 );
+
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    elem = (const WS_XML_ELEMENT_NODE *)node;
+    ok( elem->node.nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", elem->node.nodeType );
+    ok( elem->localName->length == 12, "got %u\n", elem->localName->length );
+    ok( !memcmp( elem->localName->bytes, "OfficeConfig", 12 ), "wrong data\n" );
+
+    hr = WsReadStartElement( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    elem = (const WS_XML_ELEMENT_NODE *)node;
+    ok( elem->node.nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", elem->node.nodeType );
+    ok( elem->localName->length == 8, "got %u\n", elem->localName->length );
+    ok( !memcmp( elem->localName->bytes, "services", 8 ), "wrong data\n" );
+
+    memset( &f2, 0, sizeof(f2) );
+    f2.mapping         = WS_ATTRIBUTE_FIELD_MAPPING;
+    f2.localName       = &str_generationtime;
+    f2.ns              = &ns;
+    f2.type            = WS_WSZ_TYPE;
+    f2.options         = WS_FIELD_OPTIONAL;
+    fields2[0] = &f2;
+
+    memset( &s2, 0, sizeof(s2) );
+    s2.size          = sizeof(*test->services);
+    s2.alignment     = TYPE_ALIGNMENT(struct services);
+    s2.fields        = fields2;
+    s2.fieldCount    = 1;
+    s2.typeLocalName = &str_services;
+    s2.typeNs        = &ns;
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping         = WS_ELEMENT_FIELD_MAPPING;
+    f.localName       = &str_services;
+    f.ns              = &ns;
+    f.type            = WS_STRUCT_TYPE;
+    f.typeDescription = &s2;
+    f.options         = WS_FIELD_POINTER;
+    fields[0] = &f;
+
+    memset( &s, 0, sizeof(s) );
+    s.size          = sizeof(*test);
+    s.alignment     = TYPE_ALIGNMENT(struct officeconfig);
+    s.fields        = fields;
+    s.fieldCount    = 1;
+    s.typeLocalName = &str_officeconfig;
+    s.typeNs        = &ns;
+
+    test = NULL;
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), error );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( test != NULL, "test not set\n" );
+    ok( !lstrcmpW( test->services->generationtime, timestampW ), "wrong data\n" );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", node->nodeType );
+
+    hr = WsReadEndElement( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
+
+    hr = WsReadEndElement( reader, NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    /* element type mapping */
+    prepare_struct_type_test( reader, data11 );
+
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    elem = (const WS_XML_ELEMENT_NODE *)node;
+    ok( elem->node.nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", elem->node.nodeType );
+    ok( elem->localName->length == 12, "got %u\n", elem->localName->length );
+    ok( !memcmp( elem->localName->bytes, "OfficeConfig", 12 ), "wrong data\n" );
+
+    test = NULL;
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), error );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( test != NULL, "test not set\n" );
+    if (test) ok( !lstrcmpW( test->services->generationtime, timestampW ), "wrong data\n" );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    todo_wine ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
+
+    WsFreeReader( reader );
+    WsFreeHeap( heap );
+    WsFreeError( error );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -2512,4 +2664,5 @@ START_TEST(reader)
     test_WsFindAttribute();
     test_WsGetNamespaceFromPrefix();
     test_text_field_mapping();
+    test_complex_struct_type();
 }
