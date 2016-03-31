@@ -138,20 +138,27 @@ static const struct ID2D1GradientStopCollectionVtbl d2d_gradient_vtbl =
     d2d_gradient_GetExtendMode,
 };
 
-HRESULT d2d_gradient_init(struct d2d_gradient *gradient, ID2D1Factory *factory,
-        const D2D1_GRADIENT_STOP *stops, UINT32 stop_count, D2D1_GAMMA gamma, D2D1_EXTEND_MODE extend_mode)
+HRESULT d2d_gradient_create(ID2D1Factory *factory, const D2D1_GRADIENT_STOP *stops,
+        UINT32 stop_count, D2D1_GAMMA gamma, D2D1_EXTEND_MODE extend_mode, struct d2d_gradient **gradient)
 {
+    if (!(*gradient = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**gradient))))
+        return E_OUTOFMEMORY;
+
     FIXME("Ignoring gradient properties.\n");
 
-    gradient->ID2D1GradientStopCollection_iface.lpVtbl = &d2d_gradient_vtbl;
-    gradient->refcount = 1;
-    ID2D1Factory_AddRef(gradient->factory = factory);
+    (*gradient)->ID2D1GradientStopCollection_iface.lpVtbl = &d2d_gradient_vtbl;
+    (*gradient)->refcount = 1;
+    ID2D1Factory_AddRef((*gradient)->factory = factory);
 
-    gradient->stop_count = stop_count;
-    if (!(gradient->stops = HeapAlloc(GetProcessHeap(), 0, stop_count * sizeof(*stops))))
+    (*gradient)->stop_count = stop_count;
+    if (!((*gradient)->stops = HeapAlloc(GetProcessHeap(), 0, stop_count * sizeof(*stops))))
+    {
+        HeapFree(GetProcessHeap(), 0, *gradient);
         return E_OUTOFMEMORY;
-    memcpy(gradient->stops, stops, stop_count * sizeof(*stops));
+    }
+    memcpy((*gradient)->stops, stops, stop_count * sizeof(*stops));
 
+    TRACE("Created gradient %p.\n", *gradient);
     return S_OK;
 }
 
@@ -308,12 +315,18 @@ static const struct ID2D1SolidColorBrushVtbl d2d_solid_color_brush_vtbl =
     d2d_solid_color_brush_GetColor,
 };
 
-void d2d_solid_color_brush_init(struct d2d_brush *brush, ID2D1Factory *factory,
-        const D2D1_COLOR_F *color, const D2D1_BRUSH_PROPERTIES *desc)
+HRESULT d2d_solid_color_brush_create(ID2D1Factory *factory, const D2D1_COLOR_F *color,
+        const D2D1_BRUSH_PROPERTIES *desc, struct d2d_brush **brush)
 {
-    d2d_brush_init(brush, factory, D2D_BRUSH_TYPE_SOLID, desc,
+    if (!(*brush = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**brush))))
+        return E_OUTOFMEMORY;
+
+    d2d_brush_init(*brush, factory, D2D_BRUSH_TYPE_SOLID, desc,
             (ID2D1BrushVtbl *)&d2d_solid_color_brush_vtbl);
-    brush->u.solid.color = *color;
+    (*brush)->u.solid.color = *color;
+
+    TRACE("Created brush %p.\n", *brush);
+    return S_OK;
 }
 
 static inline struct d2d_brush *impl_from_ID2D1LinearGradientBrush(ID2D1LinearGradientBrush *iface)
@@ -464,14 +477,19 @@ static const struct ID2D1LinearGradientBrushVtbl d2d_linear_gradient_brush_vtbl 
     d2d_linear_gradient_brush_GetGradientStopCollection,
 };
 
-void d2d_linear_gradient_brush_init(struct d2d_brush *brush, ID2D1Factory *factory,
-        const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES *gradient_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
-        ID2D1GradientStopCollection *gradient)
+HRESULT d2d_linear_gradient_brush_create(ID2D1Factory *factory, const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES *gradient_brush_desc,
+        const D2D1_BRUSH_PROPERTIES *brush_desc, ID2D1GradientStopCollection *gradient, struct d2d_brush **brush)
 {
+    if (!(*brush = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**brush))))
+        return E_OUTOFMEMORY;
+
     FIXME("Ignoring brush properties.\n");
 
-    d2d_brush_init(brush, factory, D2D_BRUSH_TYPE_LINEAR, brush_desc,
+    d2d_brush_init(*brush, factory, D2D_BRUSH_TYPE_LINEAR, brush_desc,
             (ID2D1BrushVtbl *)&d2d_linear_gradient_brush_vtbl);
+
+    TRACE("Created brush %p.\n", *brush);
+    return S_OK;
 }
 
 static inline struct d2d_brush *impl_from_ID2D1BitmapBrush(ID2D1BitmapBrush *iface)
@@ -690,25 +708,31 @@ static const struct ID2D1BitmapBrushVtbl d2d_bitmap_brush_vtbl =
     d2d_bitmap_brush_GetBitmap,
 };
 
-void d2d_bitmap_brush_init(struct d2d_brush *brush, ID2D1Factory *factory, ID2D1Bitmap *bitmap,
-        const D2D1_BITMAP_BRUSH_PROPERTIES *bitmap_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc)
+HRESULT d2d_bitmap_brush_create(ID2D1Factory *factory, ID2D1Bitmap *bitmap, const D2D1_BITMAP_BRUSH_PROPERTIES *bitmap_brush_desc,
+        const D2D1_BRUSH_PROPERTIES *brush_desc, struct d2d_brush **brush)
 {
-    d2d_brush_init(brush, factory, D2D_BRUSH_TYPE_BITMAP,
+    if (!(*brush = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**brush))))
+        return E_OUTOFMEMORY;
+
+    d2d_brush_init(*brush, factory, D2D_BRUSH_TYPE_BITMAP,
             brush_desc, (ID2D1BrushVtbl *)&d2d_bitmap_brush_vtbl);
-    if ((brush->u.bitmap.bitmap = unsafe_impl_from_ID2D1Bitmap(bitmap)))
-        ID2D1Bitmap_AddRef(&brush->u.bitmap.bitmap->ID2D1Bitmap_iface);
+    if (((*brush)->u.bitmap.bitmap = unsafe_impl_from_ID2D1Bitmap(bitmap)))
+        ID2D1Bitmap_AddRef(&(*brush)->u.bitmap.bitmap->ID2D1Bitmap_iface);
     if (bitmap_brush_desc)
     {
-        brush->u.bitmap.extend_mode_x = bitmap_brush_desc->extendModeX;
-        brush->u.bitmap.extend_mode_y = bitmap_brush_desc->extendModeY;
-        brush->u.bitmap.interpolation_mode = bitmap_brush_desc->interpolationMode;
+        (*brush)->u.bitmap.extend_mode_x = bitmap_brush_desc->extendModeX;
+        (*brush)->u.bitmap.extend_mode_y = bitmap_brush_desc->extendModeY;
+        (*brush)->u.bitmap.interpolation_mode = bitmap_brush_desc->interpolationMode;
     }
     else
     {
-        brush->u.bitmap.extend_mode_x = D2D1_EXTEND_MODE_CLAMP;
-        brush->u.bitmap.extend_mode_y = D2D1_EXTEND_MODE_CLAMP;
-        brush->u.bitmap.interpolation_mode = D2D1_BITMAP_INTERPOLATION_MODE_LINEAR;
+        (*brush)->u.bitmap.extend_mode_x = D2D1_EXTEND_MODE_CLAMP;
+        (*brush)->u.bitmap.extend_mode_y = D2D1_EXTEND_MODE_CLAMP;
+        (*brush)->u.bitmap.interpolation_mode = D2D1_BITMAP_INTERPOLATION_MODE_LINEAR;
     }
+
+    TRACE("Created brush %p.\n", *brush);
+    return S_OK;
 }
 
 struct d2d_brush *unsafe_impl_from_ID2D1Brush(ID2D1Brush *iface)
