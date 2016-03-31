@@ -6149,10 +6149,9 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
     for (i = 0; i < MAX_TEXTURES; ++i)
     {
         unsigned int coord_idx = settings->texgen[i] & 0x0000ffff;
-        if ((settings->texgen[i] & 0xffff0000) == WINED3DTSS_TCI_PASSTHRU)
-        {
+        if ((settings->texgen[i] & 0xffff0000) == WINED3DTSS_TCI_PASSTHRU
+                && settings->texcoords & (1u << i))
             shader_addline(buffer, "vec4 ffp_attrib_texcoord%u = vs_in%u;\n", i, coord_idx + WINED3D_FFP_TEXCOORD0);
-        }
     }
 
     shader_addline(buffer, "ffp_attrib_blendweight[%u] = 1.0;\n", settings->vertexblends);
