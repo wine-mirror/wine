@@ -223,10 +223,10 @@ static const struct
 sysval_semantic_names[] =
 {
     {WINED3D_SV_POSITION,                   "SV_Position"},
-    {WINED3D_SV_INSTANCEID,                 "SV_InstanceID"},
-    {WINED3D_SV_PRIMITIVEID,                "SV_PrimitiveID"},
-    {WINED3D_SV_ISFRONTFACE,                "SV_IsFrontFace"},
-    {WINED3D_SV_SAMPLEINDEX,                "SV_SampleIndex"},
+    {WINED3D_SV_INSTANCE_ID,                "SV_InstanceID"},
+    {WINED3D_SV_PRIMITIVE_ID,               "SV_PrimitiveID"},
+    {WINED3D_SV_IS_FRONT_FACE,              "SV_IsFrontFace"},
+    {WINED3D_SV_SAMPLE_INDEX,               "SV_SampleIndex"},
     {WINED3D_SV_QUAD_U0_TESS_FACTOR,        "finalQuadUeq0EdgeTessFactor"},
     {WINED3D_SV_QUAD_V0_TESS_FACTOR,        "finalQuadVeq0EdgeTessFactor"},
     {WINED3D_SV_QUAD_U1_TESS_FACTOR,        "finalQuadUeq1EdgeTessFactor"},
