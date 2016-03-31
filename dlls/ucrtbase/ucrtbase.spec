@@ -230,7 +230,7 @@
 @ cdecl _commit(long) MSVCRT__commit
 @ cdecl _configthreadlocale(long)
 @ cdecl _configure_narrow_argv(long)
-@ stub _configure_wide_argv
+@ cdecl _configure_wide_argv(long)
 @ cdecl _control87(long long)
 @ cdecl _controlfp(long long)
 @ cdecl _controlfp_s(ptr long long)
@@ -420,7 +420,7 @@
 @ cdecl _i64tow_s(int64 ptr long long) MSVCRT__i64tow_s
 @ cdecl _initialize_narrow_environment()
 @ stub _initialize_onexit_table
-@ stub _initialize_wide_environment
+@ cdecl _initialize_wide_environment()
 @ cdecl _initterm(ptr ptr)
 @ cdecl _initterm_e(ptr ptr)
 @ cdecl _invalid_parameter_noinfo()

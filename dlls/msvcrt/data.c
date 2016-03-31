@@ -666,3 +666,21 @@ int CDECL _initialize_narrow_environment(void)
   TRACE("\n");
   return 0;
 }
+
+/*********************************************************************
+ *		_configure_wide_argv (UCRTBASE.@)
+ */
+int CDECL _configure_wide_argv(int mode)
+{
+  FIXME("(%d) stub\n", mode);
+  return 0;
+}
+
+/*********************************************************************
+ *		_initialize_wide_environment (UCRTBASE.@)
+ */
+int CDECL _initialize_wide_environment(void)
+{
+  FIXME("stub\n");
+  return 0;
+}
