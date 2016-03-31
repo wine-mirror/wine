@@ -284,6 +284,7 @@ HKCR,chm.file\shell\open\command,,2,"""%10%\hh.exe"" ""%1"""
 HKCR,cplfile,,2,"Control Panel Item"
 HKCR,cplfile\shell\cplopen,,2,"Open with Control Panel"
 HKCR,cplfile\shell\cplopen\command,,2,"rundll32.exe shell32.dll,Control_RunDLL ""%1"",%*"
+HKCR,Directory\Background\shellex\ContextMenuHandlers\New,,,"{d969a300-e7ff-11d0-a93b-00a0c90f2719}"
 HKCR,DirectShow,,16
 HKCR,exefile,,2,"Application"
 HKCR,exefile\DefaultIcon,,2,"%1"
