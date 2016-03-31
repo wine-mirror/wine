@@ -11359,6 +11359,12 @@ msgstr "Ste si istý že chcete zmazať tieto hodnoty?"
 msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr ""
 
+#: reg.rc:53
+msgid ""
+"reg: Unable to delete all registry values in '%1'. An unexpected error "
+"occurred.\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registry"

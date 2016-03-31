@@ -512,13 +512,14 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
             {
                 rc = RegDeleteValueW(subkey, szValue);
                 if (rc != ERROR_SUCCESS)
-                    break;
+                {
+                    HeapFree(GetProcessHeap(), 0, szValue);
+                    RegCloseKey(subkey);
+                    output_message(STRING_VALUEALL_FAILED, key_name);
+                    return 1;
+                }
             }
             else break;
-        }
-        if (rc != ERROR_SUCCESS)
-        {
-            /* FIXME  delete failed */
         }
     }
     else if (value_name || value_empty)

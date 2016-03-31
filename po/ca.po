@@ -11763,6 +11763,12 @@ msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr ""
 "desinstal·lador: Una GUID d'aplicació ha de seguir l'opció '--remove'\n"
 
+#: reg.rc:53
+msgid ""
+"reg: Unable to delete all registry values in '%1'. An unexpected error "
+"occurred.\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registre"

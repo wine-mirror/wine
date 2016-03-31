@@ -11719,6 +11719,12 @@ msgstr "Czy jesteś pewien, że chcesz usunąć '%1'?"
 msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr "usuwanie programów: Po opcji '--remove' należy podać GUID aplikacji\n"
 
+#: reg.rc:53
+msgid ""
+"reg: Unable to delete all registry values in '%1'. An unexpected error "
+"occurred.\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Rejestr"

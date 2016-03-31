@@ -11631,6 +11631,14 @@ msgstr "Are you sure you want to delete the registry key '%1'?"
 msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr "reg: The option [/d] must be followed by a valid string\n"
 
+#: reg.rc:53
+msgid ""
+"reg: Unable to delete all registry values in '%1'. An unexpected error "
+"occurred.\n"
+msgstr ""
+"reg: Unable to delete all registry values in '%1'. An unexpected error "
+"occurred.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registry"
