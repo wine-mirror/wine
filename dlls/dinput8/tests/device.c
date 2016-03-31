@@ -223,8 +223,8 @@ static BOOL CALLBACK enumeration_callback(const DIDEVICEINSTANCEA *lpddi, IDirec
     dps.wsz[0] = '\0';
 
     hr = IDirectInputDevice_GetProperty(lpdid, DIPROP_USERNAME, &dps.diph);
-    todo_wine ok (SUCCEEDED(hr), "GetProperty failed hr=%08x\n", hr);
-    todo_wine ok (!lstrcmpW(usernameW, dps.wsz), "Username not set correctly expected=%s, got=%s\n", wine_dbgstr_wn(usernameW, -1), wine_dbgstr_wn(dps.wsz, -1));
+    ok (SUCCEEDED(hr), "GetProperty failed hr=%08x\n", hr);
+    ok (!lstrcmpW(usernameW, dps.wsz), "Username not set correctly expected=%s, got=%s\n", wine_dbgstr_w(usernameW), wine_dbgstr_w(dps.wsz));
 
     /* Test buffer size */
     memset(&dp, 0, sizeof(dp));
@@ -275,6 +275,7 @@ static void test_action_mapping(void)
     HINSTANCE hinst = GetModuleHandleA(NULL);
     IDirectInput8A *pDI = NULL;
     DIACTIONFORMATA af;
+    DIPROPSTRING dps;
     struct enum_data data =  {pDI, &af, NULL, NULL, NULL, 0};
     HWND hwnd;
 
@@ -342,6 +343,30 @@ static void test_action_mapping(void)
 
         af.dwDataSize = 4 * sizeof(actionMapping) / sizeof(actionMapping[0]);
         af.dwNumActions = sizeof(actionMapping) / sizeof(actionMapping[0]);
+
+        /* test DIDSAM_NOUSER */
+        dps.diph.dwSize = sizeof(dps);
+        dps.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+        dps.diph.dwObj = 0;
+        dps.diph.dwHow = DIPH_DEVICE;
+        dps.wsz[0] = '\0';
+
+        hr = IDirectInputDevice_GetProperty(data.keyboard, DIPROP_USERNAME, &dps.diph);
+        ok (SUCCEEDED(hr), "GetProperty failed hr=%08x\n", hr);
+        ok (dps.wsz[0] != 0, "Expected any username, got=%s\n", wine_dbgstr_w(dps.wsz));
+
+        hr = IDirectInputDevice8_SetActionMap(data.keyboard, data.lpdiaf, NULL, DIDSAM_NOUSER);
+        ok (SUCCEEDED(hr), "SetActionMap failed hr=%08x\n", hr);
+
+        dps.diph.dwSize = sizeof(dps);
+        dps.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+        dps.diph.dwObj = 0;
+        dps.diph.dwHow = DIPH_DEVICE;
+        dps.wsz[0] = '\0';
+
+        hr = IDirectInputDevice_GetProperty(data.keyboard, DIPROP_USERNAME, &dps.diph);
+        ok (SUCCEEDED(hr), "GetProperty failed hr=%08x\n", hr);
+        ok (dps.wsz[0] == 0, "Expected empty username, got=%s\n", wine_dbgstr_w(dps.wsz));
     }
 
     if (data.mouse != NULL)
