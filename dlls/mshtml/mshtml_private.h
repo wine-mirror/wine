@@ -677,6 +677,7 @@ typedef struct {
     void (*traverse)(HTMLDOMNode*,nsCycleCollectionTraversalCallback*);
     void (*unlink)(HTMLDOMNode*);
     BOOL (*is_text_edit)(HTMLDOMNode*);
+    BOOL (*is_settable)(HTMLDOMNode*,DISPID);
 } NodeImplVtbl;
 
 struct HTMLDOMNode {
