@@ -654,9 +654,9 @@ static char *top_obj_dir_path( const struct makefile *make, const char *path )
 
 
 /*******************************************************************
- *         top_dir_path
+ *         top_src_dir_path
  */
-static char *top_dir_path( const struct makefile *make, const char *path )
+static char *top_src_dir_path( const struct makefile *make, const char *path )
 {
     if (make->top_src_dir) return concat_paths( make->top_src_dir, path );
     return top_obj_dir_path( make, path );
@@ -1296,7 +1296,7 @@ static struct file *open_global_file( const struct makefile *make, const char *p
     char *src_path = root_dir_path( path );
     struct file *ret = load_file( src_path );
 
-    if (ret) *filename = top_dir_path( make, path );
+    if (ret) *filename = top_src_dir_path( make, path );
     free( src_path );
     return ret;
 }
@@ -2147,7 +2147,7 @@ static struct strarray output_install_rules( const struct makefile *make, struct
     output_filenames_obj_dir( make, targets );
     output( "\n" );
 
-    install_sh = top_dir_path( make, "tools/install-sh" );
+    install_sh = top_src_dir_path( make, "tools/install-sh" );
     for (i = 0; i < files.count; i += 2)
     {
         const char *file = files.str[i];
@@ -2318,8 +2318,10 @@ static struct strarray output_sources( const struct makefile *make )
     if (make->src_dir) strarray_add( &includes, strmake( "-I%s", make->src_dir ));
     if (make->parent_dir) strarray_add( &includes, strmake( "-I%s", src_dir_path( make, make->parent_dir )));
     strarray_add( &includes, strmake( "-I%s", top_obj_dir_path( make, "include" )));
-    if (make->top_src_dir) strarray_add( &includes, strmake( "-I%s", top_dir_path( make, "include" )));
-    if (make->use_msvcrt) strarray_add( &includes, strmake( "-I%s", top_dir_path( make, "include/msvcrt" )));
+    if (make->top_src_dir)
+        strarray_add( &includes, strmake( "-I%s", top_src_dir_path( make, "include" )));
+    if (make->use_msvcrt)
+        strarray_add( &includes, strmake( "-I%s", top_src_dir_path( make, "include/msvcrt" )));
     for (i = 0; i < make->include_paths.count; i++)
         strarray_add( &includes, strmake( "-I%s", obj_dir_path( make, make->include_paths.str[i] )));
 
@@ -2527,7 +2529,7 @@ static struct strarray output_sources( const struct makefile *make )
             {
                 output( "%s: %s\n", ttf_file, source->filename );
                 output( "\t%s -script %s %s $@\n",
-                        fontforge, top_dir_path( make, "fonts/genttf.ff" ), source->filename );
+                        fontforge, top_src_dir_path( make, "fonts/genttf.ff" ), source->filename );
                 if (!(source->file->flags & FLAG_SFD_FONTS)) output( "all: %s\n", ttf_file );
             }
             if (source->file->flags & FLAG_INSTALL)
@@ -2560,7 +2562,7 @@ static struct strarray output_sources( const struct makefile *make )
                 output( "%s.ico %s.bmp: %s\n",
                         src_dir_path( make, obj ), src_dir_path( make, obj ), source->filename );
                 output( "\tCONVERT=\"%s\" ICOTOOL=\"%s\" RSVG=\"%s\" %s %s $@\n", convert, icotool, rsvg,
-                        top_dir_path( make, "tools/buildimage" ), source->filename );
+                        top_src_dir_path( make, "tools/buildimage" ), source->filename );
             }
         }
         else if (!strcmp( ext, "po" ))  /* po file */
@@ -2633,8 +2635,9 @@ static struct strarray output_sources( const struct makefile *make )
                 strarray_add( &ok_files, strmake( "%s.ok", obj ));
                 output( "%s.ok:\n", obj_dir_path( make, obj ));
                 output( "\t%s $(RUNTESTFLAGS) -T %s -M %s -p %s%s %s && touch $@\n",
-                        top_dir_path( make, "tools/runtest" ), top_obj_dir_path( make, "" ), make->testdll,
-                        replace_extension( make->testdll, ".dll", "_test.exe" ), dll_ext, obj );
+                        top_src_dir_path( make, "tools/runtest" ), top_obj_dir_path( make, "" ),
+                        make->testdll, replace_extension( make->testdll, ".dll", "_test.exe" ),
+                        dll_ext, obj );
             }
             if (!strcmp( ext, "c" ) && !(source->file->flags & FLAG_GENERATED))
                 strarray_add( &c2man_files, source->filename );
@@ -2764,33 +2767,33 @@ static struct strarray output_sources( const struct makefile *make )
             if (c2man_files.count)
             {
                 output( "manpages::\n" );
-                output( "\t%s -w %s", top_dir_path( make, "tools/c2man.pl" ), spec_file );
-                output_filename( strmake( "-R%s", top_dir_path( make, "" )));
-                output_filename( strmake( "-I%s", top_dir_path( make, "include" )));
+                output( "\t%s -w %s", top_src_dir_path( make, "tools/c2man.pl" ), spec_file );
+                output_filename( strmake( "-R%s", top_src_dir_path( make, "" )));
+                output_filename( strmake( "-I%s", top_src_dir_path( make, "include" )));
                 output_filename( strmake( "-o %s/man%s",
                                           top_obj_dir_path( make, "documentation" ), man_ext ));
                 output_filenames( c2man_files );
                 output( "\n" );
                 output( "htmlpages::\n" );
-                output( "\t%s -Th -w %s", top_dir_path( make, "tools/c2man.pl" ), spec_file );
-                output_filename( strmake( "-R%s", top_dir_path( make, "" )));
-                output_filename( strmake( "-I%s", top_dir_path( make, "include" )));
+                output( "\t%s -Th -w %s", top_src_dir_path( make, "tools/c2man.pl" ), spec_file );
+                output_filename( strmake( "-R%s", top_src_dir_path( make, "" )));
+                output_filename( strmake( "-I%s", top_src_dir_path( make, "include" )));
                 output_filename( strmake( "-o %s",
                                           top_obj_dir_path( make, "documentation/html" )));
                 output_filenames( c2man_files );
                 output( "\n" );
                 output( "sgmlpages::\n" );
-                output( "\t%s -Ts -w %s", top_dir_path( make, "tools/c2man.pl" ), spec_file );
-                output_filename( strmake( "-R%s", top_dir_path( make, "" )));
-                output_filename( strmake( "-I%s", top_dir_path( make, "include" )));
+                output( "\t%s -Ts -w %s", top_src_dir_path( make, "tools/c2man.pl" ), spec_file );
+                output_filename( strmake( "-R%s", top_src_dir_path( make, "" )));
+                output_filename( strmake( "-I%s", top_src_dir_path( make, "include" )));
                 output_filename( strmake( "-o %s",
                                           top_obj_dir_path( make, "documentation/api-guide" )));
                 output_filenames( c2man_files );
                 output( "\n" );
                 output( "xmlpages::\n" );
-                output( "\t%s -Tx -w %s", top_dir_path( make, "tools/c2man.pl" ), spec_file );
-                output_filename( strmake( "-R%s", top_dir_path( make, "" )));
-                output_filename( strmake( "-I%s", top_dir_path( make, "include" )));
+                output( "\t%s -Tx -w %s", top_src_dir_path( make, "tools/c2man.pl" ), spec_file );
+                output_filename( strmake( "-R%s", top_src_dir_path( make, "" )));
+                output_filename( strmake( "-I%s", top_src_dir_path( make, "include" )));
                 output_filename( strmake( "-o %s",
                                           top_obj_dir_path( make, "documentation/api-guide-xml" )));
                 output_filenames( c2man_files );
@@ -3088,8 +3091,8 @@ static struct strarray output_sources( const struct makefile *make )
         {
             const struct makefile *submake = make->submakes[i];
 
-            strarray_add( &makefile_deps, top_dir_path( make, base_dir_path( submake,
-                                                         strmake ( "%s.in", output_makefile_name ))));
+            strarray_add( &makefile_deps, top_src_dir_path( make, base_dir_path( submake,
+                                                            strmake ( "%s.in", output_makefile_name ))));
             strarray_add( &distclean_files, base_dir_path( submake, output_makefile_name ));
             if (!make->src_dir) strarray_add( &distclean_files, base_dir_path( submake, ".gitignore" ));
             if (submake->testdll) strarray_add( &distclean_files, base_dir_path( submake, "testlist.c" ));
@@ -3415,7 +3418,7 @@ static void load_sources( struct makefile *make )
         make->src_dir = concat_paths( make->top_src_dir, make->base_dir );
     }
     strarray_set_value( &make->vars, "top_builddir", top_obj_dir_path( make, "" ));
-    strarray_set_value( &make->vars, "top_srcdir", top_dir_path( make, "" ));
+    strarray_set_value( &make->vars, "top_srcdir", top_src_dir_path( make, "" ));
     strarray_set_value( &make->vars, "srcdir", src_dir_path( make, "" ));
 
     make->parent_dir    = get_expanded_make_variable( make, "PARENTSRC" );
