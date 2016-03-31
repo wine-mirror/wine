@@ -1279,7 +1279,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
  error:
     if (view) delete_view( view );
     server_leave_uninterrupted_section( &csVirtual, &sigset );
-    if (dup_mapping) NtClose( dup_mapping );
+    if (dup_mapping) close_handle( dup_mapping );
     return status;
 }
 
@@ -2640,7 +2640,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
             res = map_image( handle, unix_handle, base, size, mask, header_size,
                              shared_fd, dup_mapping, map_vprot, addr_ptr );
             if (shared_needs_close) close( shared_fd );
-            NtClose( shared_file );
+            close_handle( shared_file );
         }
         else
         {
@@ -2708,7 +2708,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     server_leave_uninterrupted_section( &csVirtual, &sigset );
 
 done:
-    if (dup_mapping) NtClose( dup_mapping );
+    if (dup_mapping) close_handle( dup_mapping );
     if (needs_close) close( unix_handle );
     return res;
 }
