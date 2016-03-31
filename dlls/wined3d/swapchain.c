@@ -480,8 +480,7 @@ static void wined3d_swapchain_rotate(struct wined3d_swapchain *swapchain, struct
 static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, DWORD flags)
 {
-    struct wined3d_surface *back_buffer = surface_from_resource(
-            wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0));
+    struct wined3d_surface *back_buffer = swapchain->back_buffers[0]->sub_resources[0].u.surface;
     const struct wined3d_fb_state *fb = &swapchain->device->fb;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_texture *logo_texture;
