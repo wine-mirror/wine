@@ -195,6 +195,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM5_OP_DERIV_RTY_FINE                   = 0x7d,
     WINED3D_SM5_OP_DCL_INPUT_CONTROL_POINT_COUNT    = 0x93,
     WINED3D_SM5_OP_DCL_OUTPUT_CONTROL_POINT_COUNT   = 0x94,
+    WINED3D_SM5_OP_DCL_HS_MAX_TESSFACTOR            = 0x98,
     WINED3D_SM5_OP_DCL_HS_FORK_PHASE_INSTANCE_COUNT = 0x99,
     WINED3D_SM5_OP_DCL_UAV_TYPED                    = 0x9c,
     WINED3D_SM5_OP_DCL_RESOURCE_STRUCTURED          = 0xa2,
@@ -412,6 +413,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM5_OP_DERIV_RTY_FINE,                   WINED3DSIH_DSY_FINE,                         "f",    "f"},
     {WINED3D_SM5_OP_DCL_INPUT_CONTROL_POINT_COUNT,    WINED3DSIH_DCL_INPUT_CONTROL_POINT_COUNT,    "",     ""},
     {WINED3D_SM5_OP_DCL_OUTPUT_CONTROL_POINT_COUNT,   WINED3DSIH_DCL_OUTPUT_CONTROL_POINT_COUNT,   "",     ""},
+    {WINED3D_SM5_OP_DCL_HS_MAX_TESSFACTOR,            WINED3DSIH_DCL_HS_MAX_TESSFACTOR,            "",     ""},
     {WINED3D_SM5_OP_DCL_HS_FORK_PHASE_INSTANCE_COUNT, WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT, "",     ""},
     {WINED3D_SM5_OP_DCL_UAV_TYPED,                    WINED3DSIH_DCL_UAV_TYPED,                    "",     ""},
     {WINED3D_SM5_OP_DCL_RESOURCE_STRUCTURED,          WINED3DSIH_DCL_RESOURCE_STRUCTURED,          "",     ""},
@@ -1008,6 +1010,10 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
         shader_sm4_read_src_param(priv, &p, WINED3D_DATA_FLOAT, &ins->declaration.src);
         if (opcode_token & WINED3D_SM4_INDEX_TYPE_MASK)
             ins->flags |= WINED3DSI_INDEXED_DYNAMIC;
+    }
+    else if (opcode == WINED3D_SM5_OP_DCL_HS_MAX_TESSFACTOR)
+    {
+        ins->declaration.max_tessellation_factor = *(float *)p++;
     }
     else if (opcode == WINED3D_SM4_OP_DCL_SAMPLER)
     {

@@ -513,6 +513,7 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_DCL_CONSTANT_BUFFER,
     WINED3DSIH_DCL_GLOBAL_FLAGS,
     WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT,
+    WINED3DSIH_DCL_HS_MAX_TESSFACTOR,
     WINED3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER,
     WINED3DSIH_DCL_INPUT,
     WINED3DSIH_DCL_INPUT_CONTROL_POINT_COUNT,
@@ -855,6 +856,7 @@ struct wined3d_shader_instruction
         UINT count;
         const struct wined3d_shader_immediate_constant_buffer *icb;
         struct wined3d_shader_structured_resource structured_resource;
+        float max_tessellation_factor;
     } declaration;
 };
 
