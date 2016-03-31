@@ -659,7 +659,7 @@ static void swapchain_gdi_frontbuffer_updated(struct wined3d_swapchain *swapchai
 
     TRACE("swapchain %p.\n", swapchain);
 
-    front = surface_from_resource(wined3d_texture_get_sub_resource(swapchain->front_buffer, 0));
+    front = swapchain->front_buffer->sub_resources[0].u.surface;
     if (swapchain->palette)
         wined3d_palette_apply_to_dc(swapchain->palette, front->hDC);
 
