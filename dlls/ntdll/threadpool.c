@@ -1845,7 +1845,7 @@ static void tp_object_initialize( struct threadpool_object *object, struct threa
 
     if (environment)
     {
-        if (environment->Version != 1)
+        if (environment->Version != 1 && environment->Version != 3)
             FIXME( "unsupported environment version %u\n", environment->Version );
 
         object->group = impl_from_TP_CLEANUP_GROUP( environment->CleanupGroup );
