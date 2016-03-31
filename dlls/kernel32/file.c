@@ -1631,6 +1631,7 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
 {
     WCHAR *nameW;
 
+    if ((GetVersion() & 0x80000000) && IsBadStringPtrA(filename, -1)) return INVALID_HANDLE_VALUE;
     if (!(nameW = FILE_name_AtoW( filename, FALSE ))) return INVALID_HANDLE_VALUE;
     return CreateFileW( nameW, access, sharing, sa, creation, attributes, template );
 }
