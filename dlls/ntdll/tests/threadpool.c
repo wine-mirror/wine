@@ -477,6 +477,7 @@ static void CALLBACK simple2_cb(TP_CALLBACK_INSTANCE *instance, void *userdata)
 static void test_tp_simple(void)
 {
     TP_CALLBACK_ENVIRON environment;
+    TP_CALLBACK_ENVIRON_V3 environment3;
     TP_CLEANUP_GROUP *group;
     HANDLE semaphore;
     NTSTATUS status;
@@ -508,6 +509,17 @@ static void test_tp_simple(void)
     environment.Version = 1;
     environment.Pool = pool;
     status = pTpSimpleTryPost(simple_cb, semaphore, &environment);
+    ok(!status, "TpSimpleTryPost failed with status %x\n", status);
+    result = WaitForSingleObject(semaphore, 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+
+    /* test with environment version 3 */
+    memset(&environment3, 0, sizeof(environment3));
+    environment3.Version = 3;
+    environment3.Pool = pool;
+    environment3.CallbackPriority = TP_CALLBACK_PRIORITY_NORMAL;
+    environment3.Size = sizeof(environment3);
+    status = pTpSimpleTryPost(simple_cb, semaphore, (TP_CALLBACK_ENVIRON *)&environment3);
     ok(!status, "TpSimpleTryPost failed with status %x\n", status);
     result = WaitForSingleObject(semaphore, 1000);
     ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
