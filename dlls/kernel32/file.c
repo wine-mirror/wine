@@ -625,7 +625,9 @@ BOOL WINAPI GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped,
         if (WaitForSingleObject( lpOverlapped->hEvent ? lpOverlapped->hEvent : hFile,
                                  INFINITE ) == WAIT_FAILED)
             return FALSE;
+
         status = lpOverlapped->Internal;
+        if (status == STATUS_PENDING) status = STATUS_SUCCESS;
     }
 
     *lpTransferred = lpOverlapped->InternalHigh;

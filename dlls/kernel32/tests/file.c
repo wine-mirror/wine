@@ -3361,6 +3361,11 @@ static void test_overlapped(void)
         "wrong error %u\n", GetLastError() );
     ok( r == FALSE, "should return false\n");
 
+    r = GetOverlappedResult( 0, &ov, &result, TRUE );
+    ok( r == TRUE, "should return TRUE\n" );
+    ok( result == 0xabcd, "wrong result %u\n", result );
+    ok( ov.Internal == STATUS_PENDING, "expected STATUS_PENDING, got %08lx\n", ov.Internal );
+
     ResetEvent( ov.hEvent );
 
     SetLastError( 0xb00 );
