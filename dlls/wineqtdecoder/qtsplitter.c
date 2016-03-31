@@ -250,7 +250,7 @@ IUnknown * CALLBACK QTSplitter_create(IUnknown *punkout, HRESULT *phr)
     QTSplitter *This;
     static const WCHAR wcsInputPinName[] = {'I','n','p','u','t',' ','P','i','n',0};
 
-    EnterMovies();
+    EnterMoviesOnThread(0);
 
     RegisterWineDataHandler();
 
@@ -324,7 +324,7 @@ static void QT_Destroy(QTSplitter *This)
     if (This->aSession)
         MovieAudioExtractionEnd(This->aSession);
 
-    ExitMovies();
+    ExitMoviesOnThread();
     LeaveCriticalSection(&This->csReceive);
 
     if (This->loaderThread)
