@@ -1574,6 +1574,11 @@ static BOOL needs_legacy_glsl_syntax(const struct wined3d_gl_info *gl_info)
     return gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
 }
 
+static const char *get_attribute_keyword(const struct wined3d_gl_info *gl_info)
+{
+    return needs_legacy_glsl_syntax(gl_info) ? "attribute" : "in";
+}
+
 static void PRINTF_ATTR(4, 5) declare_in_varying(const struct wined3d_gl_info *gl_info,
         struct wined3d_string_buffer *buffer, BOOL flat, const char *format, ...)
 {
@@ -1902,7 +1907,8 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                 shader_addline(buffer, "vec4 %s_in%u = vec4(intBitsToFloat(gl_InstanceID), 0.0, 0.0, 0.0);\n",
                         prefix, e->register_idx);
             else
-                shader_addline(buffer, "attribute vec4 %s_in%u;\n", prefix, e->register_idx);
+                shader_addline(buffer, "%s vec4 %s_in%u;\n",
+                        get_attribute_keyword(gl_info), prefix, e->register_idx);
         }
 
         if (vs_args->point_size && !vs_args->per_vertex_point_size)
@@ -6059,7 +6065,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
     {
         const char *type = i < ARRAY_SIZE(attrib_info) ? attrib_info[i].type : "vec4";
 
-        shader_addline(buffer, "attribute %s vs_in%u;\n", type, i);
+        shader_addline(buffer, "%s %s vs_in%u;\n", get_attribute_keyword(gl_info), type, i);
     }
     shader_addline(buffer, "\n");
 
