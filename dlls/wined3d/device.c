@@ -3666,10 +3666,8 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
             {
                 for (j = 0; j < level_count; ++j)
                 {
-                    src_surface = surface_from_resource(wined3d_texture_get_sub_resource(src_texture,
-                            i * src_levels + j + src_skip_levels));
-                    dst_surface = surface_from_resource(wined3d_texture_get_sub_resource(dst_texture,
-                            i * dst_levels + j));
+                    src_surface = src_texture->sub_resources[i * src_levels + j + src_skip_levels].u.surface;
+                    dst_surface = dst_texture->sub_resources[i * dst_levels + j].u.surface;
                     if (FAILED(hr = surface_upload_from_surface(dst_surface, NULL, src_surface, NULL)))
                     {
                         WARN("Failed to update surface, hr %#x.\n", hr);
