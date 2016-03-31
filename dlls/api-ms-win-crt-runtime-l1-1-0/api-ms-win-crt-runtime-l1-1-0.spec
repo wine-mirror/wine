@@ -24,7 +24,7 @@
 @ cdecl _cexit() ucrtbase._cexit
 @ cdecl _clearfp() ucrtbase._clearfp
 @ cdecl _configure_narrow_argv(long) ucrtbase._configure_narrow_argv
-@ stub _configure_wide_argv
+@ cdecl _configure_wide_argv(long) ucrtbase._configure_wide_argv
 @ cdecl _control87(long long) ucrtbase._control87
 @ cdecl _controlfp(long long) ucrtbase._controlfp
 @ cdecl _controlfp_s(ptr long long) ucrtbase._controlfp_s
@@ -53,7 +53,7 @@
 @ cdecl _getpid() ucrtbase._getpid
 @ cdecl _initialize_narrow_environment() ucrtbase._initialize_narrow_environment
 @ stub _initialize_onexit_table
-@ stub _initialize_wide_environment
+@ cdecl _initialize_wide_environment() ucrtbase._initialize_wide_environment
 @ cdecl _initterm(ptr ptr) ucrtbase._initterm
 @ cdecl _initterm_e(ptr ptr) ucrtbase._initterm_e
 @ cdecl _invalid_parameter_noinfo() ucrtbase._invalid_parameter_noinfo
