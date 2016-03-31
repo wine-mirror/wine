@@ -222,11 +222,23 @@ static const struct
 }
 sysval_semantic_names[] =
 {
-    {WINED3D_SV_POSITION,    "SV_Position"},
-    {WINED3D_SV_INSTANCEID,  "SV_InstanceID"},
-    {WINED3D_SV_PRIMITIVEID, "SV_PrimitiveID"},
-    {WINED3D_SV_ISFRONTFACE, "SV_IsFrontFace"},
-    {WINED3D_SV_SAMPLEINDEX, "SV_SampleIndex"},
+    {WINED3D_SV_POSITION,                   "SV_Position"},
+    {WINED3D_SV_INSTANCEID,                 "SV_InstanceID"},
+    {WINED3D_SV_PRIMITIVEID,                "SV_PrimitiveID"},
+    {WINED3D_SV_ISFRONTFACE,                "SV_IsFrontFace"},
+    {WINED3D_SV_SAMPLEINDEX,                "SV_SampleIndex"},
+    {WINED3D_SV_QUAD_U0_TESS_FACTOR,        "finalQuadUeq0EdgeTessFactor"},
+    {WINED3D_SV_QUAD_V0_TESS_FACTOR,        "finalQuadVeq0EdgeTessFactor"},
+    {WINED3D_SV_QUAD_U1_TESS_FACTOR,        "finalQuadUeq1EdgeTessFactor"},
+    {WINED3D_SV_QUAD_V1_TESS_FACTOR,        "finalQuadVeq1EdgeTessFactor"},
+    {WINED3D_SV_QUAD_U_INNER_TESS_FACTOR,   "finalQuadUInsideTessFactor"},
+    {WINED3D_SV_QUAD_V_INNER_TESS_FACTOR,   "finalQuadVInsideTessFactor"},
+    {WINED3D_SV_TRIANGLE_U_TESS_FACTOR,     "finalTriUeq0EdgeTessFactor"},
+    {WINED3D_SV_TRIANGLE_V_TESS_FACTOR,     "finalTriVeq0EdgeTessFactor"},
+    {WINED3D_SV_TRIANGLE_W_TESS_FACTOR,     "finalTriWeq0EdgeTessFactor"},
+    {WINED3D_SV_TRIANGLE_INNER_TESS_FACTOR, "finalTriInsideTessFactor"},
+    {WINED3D_SV_LINE_DETAIL_TESS_FACTOR,    "finalLineDetailTessFactor"},
+    {WINED3D_SV_LINE_DENSITY_TESS_FACTOR,   "finalLineDensityTessFactor"},
 };
 
 static void shader_dump_src_param(struct wined3d_string_buffer *buffer,
