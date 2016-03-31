@@ -188,7 +188,7 @@ struct d2d_mesh
     ID2D1Factory *factory;
 };
 
-void d2d_mesh_init(struct d2d_mesh *mesh, ID2D1Factory *factory) DECLSPEC_HIDDEN;
+HRESULT d2d_mesh_create(ID2D1Factory *factory, struct d2d_mesh **mesh) DECLSPEC_HIDDEN;
 
 struct d2d_bitmap
 {

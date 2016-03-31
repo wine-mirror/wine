@@ -98,9 +98,15 @@ static const struct ID2D1MeshVtbl d2d_mesh_vtbl =
     d2d_mesh_Open,
 };
 
-void d2d_mesh_init(struct d2d_mesh *mesh, ID2D1Factory *factory)
+HRESULT d2d_mesh_create(ID2D1Factory *factory, struct d2d_mesh **mesh)
 {
-    mesh->ID2D1Mesh_iface.lpVtbl = &d2d_mesh_vtbl;
-    mesh->refcount = 1;
-    ID2D1Factory_AddRef(mesh->factory = factory);
+    if (!(*mesh = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**mesh))))
+        return E_OUTOFMEMORY;
+
+    (*mesh)->ID2D1Mesh_iface.lpVtbl = &d2d_mesh_vtbl;
+    (*mesh)->refcount = 1;
+    ID2D1Factory_AddRef((*mesh)->factory = factory);
+
+    TRACE("Created mesh %p.\n", *mesh);
+    return S_OK;
 }
