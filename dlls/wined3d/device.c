@@ -665,7 +665,7 @@ static void device_load_logo(struct wined3d_device *device, const char *filename
         struct wined3d_surface *surface;
 
         /* Fill the surface with a white color to show that wined3d is there */
-        surface = surface_from_resource(wined3d_texture_get_sub_resource(device->logo_texture, 0));
+        surface = device->logo_texture->sub_resources[0].u.surface;
         surface_color_fill(surface, &rect, &c);
     }
 
