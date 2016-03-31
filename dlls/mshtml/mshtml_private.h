@@ -94,6 +94,7 @@ typedef struct event_target_t event_target_t;
     XDIID(DispHTMLGenericElement) \
     XDIID(DispHTMLFrameElement) \
     XDIID(DispHTMLHeadElement) \
+    XDIID(DispHTMLHtmlElement) \
     XDIID(DispHTMLHistory) \
     XDIID(DispHTMLIFrame) \
     XDIID(DispHTMLImg) \
@@ -162,6 +163,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLFrameElement3) \
     XIID(IHTMLGenericElement) \
     XIID(IHTMLHeadElement) \
+    XIID(IHTMLHtmlElement) \
     XIID(IHTMLIFrameElement) \
     XIID(IHTMLIFrameElement2) \
     XIID(IHTMLIFrameElement3) \
@@ -968,6 +970,7 @@ HRESULT HTMLEmbedElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement
 HRESULT HTMLFormElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLFrameElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLHeadElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
+HRESULT HTMLHtmlElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLIFrame_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLStyleElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLImgElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
