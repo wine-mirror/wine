@@ -1464,6 +1464,11 @@ int main(int argc, char **argv)
                         /* don't pass it to the compiler, this generates warnings */
                         raw_compiler_arg = raw_linker_arg = 0;
                     }
+                    else if (!strcmp(str, "tools/winebuild"))
+                    {
+                        opts.wine_objdir = ".";
+                        raw_compiler_arg = raw_linker_arg = 0;
+                    }
                     if (!opts.prefix) opts.prefix = strarray_alloc();
                     strarray_add(opts.prefix, str);
 		    break;
