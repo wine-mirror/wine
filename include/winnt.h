@@ -5936,6 +5936,29 @@ typedef struct _TP_CALLBACK_ENVIRON_V1
 	} u;
 } TP_CALLBACK_ENVIRON_V1;
 
+typedef struct _TP_CALLBACK_ENVIRON_V3
+{
+    TP_VERSION Version;
+    PTP_POOL Pool;
+    PTP_CLEANUP_GROUP CleanupGroup;
+    PTP_CLEANUP_GROUP_CANCEL_CALLBACK CleanupGroupCancelCallback;
+    PVOID RaceDll;
+    struct _ACTIVATION_CONTEXT *ActivationContext;
+    PTP_SIMPLE_CALLBACK FinalizationCallback;
+    union
+    {
+        DWORD Flags;
+        struct
+        {
+            DWORD LongFunction:1;
+            DWORD Persistent:1;
+            DWORD Private:30;
+        } s;
+    } u;
+    TP_CALLBACK_PRIORITY CallbackPriority;
+    DWORD Size;
+} TP_CALLBACK_ENVIRON_V3;
+
 typedef struct _TP_WORK TP_WORK, *PTP_WORK;
 typedef struct _TP_TIMER TP_TIMER, *PTP_TIMER;
 
