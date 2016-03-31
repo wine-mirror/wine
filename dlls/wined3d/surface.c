@@ -454,39 +454,6 @@ HRESULT surface_create_dib_section(struct wined3d_surface *surface)
     return WINED3D_OK;
 }
 
-static void surface_get_memory(const struct wined3d_surface *surface, struct wined3d_bo_address *data,
-        DWORD location)
-{
-    if (location & WINED3D_LOCATION_BUFFER)
-    {
-        data->addr = NULL;
-        data->buffer_object = surface->container->sub_resources[surface_get_sub_resource_idx(surface)].buffer_object;
-        return;
-    }
-    if (location & WINED3D_LOCATION_USER_MEMORY)
-    {
-        data->addr = surface->container->user_memory;
-        data->buffer_object = 0;
-        return;
-    }
-    if (location & WINED3D_LOCATION_DIB)
-    {
-        data->addr = surface->dib.bitmap_data;
-        data->buffer_object = 0;
-        return;
-    }
-    if (location & WINED3D_LOCATION_SYSMEM)
-    {
-        data->addr = surface->resource.heap_memory;
-        data->buffer_object = 0;
-        return;
-    }
-
-    ERR("Unexpected locations %s.\n", wined3d_debug_location(location));
-    data->addr = NULL;
-    data->buffer_object = 0;
-}
-
 static void surface_prepare_system_memory(struct wined3d_surface *surface)
 {
     TRACE("surface %p.\n", surface);
@@ -1013,7 +980,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         return;
     }
 
-    surface_get_memory(surface, &data, dst_location);
+    wined3d_texture_get_memory(texture, surface_get_sub_resource_idx(surface), &data, dst_location);
 
     if (texture->resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
     {
@@ -1268,6 +1235,7 @@ static BOOL surface_check_block_align_rect(struct wined3d_surface *surface, cons
 HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
         struct wined3d_surface *src_surface, const RECT *src_rect)
 {
+    unsigned int src_sub_resource_idx = surface_get_sub_resource_idx(src_surface);
     unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
     struct wined3d_texture *src_texture = src_surface->container;
     struct wined3d_texture *dst_texture = dst_surface->container;
@@ -1364,7 +1332,8 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
         surface_load_location(dst_surface, context, WINED3D_LOCATION_TEXTURE_RGB);
     wined3d_texture_bind_and_dirtify(dst_texture, context, FALSE);
 
-    surface_get_memory(src_surface, &data, surface_get_sub_resource(src_surface)->locations);
+    wined3d_texture_get_memory(src_texture, src_sub_resource_idx, &data,
+            src_texture->sub_resources[src_sub_resource_idx].locations);
     wined3d_texture_get_pitch(src_texture, src_surface->texture_level, &src_row_pitch, &src_slice_pitch);
 
     wined3d_surface_upload_data(dst_surface, gl_info, src_format, src_rect,
@@ -1844,6 +1813,7 @@ do { \
 static void read_from_framebuffer(struct wined3d_surface *surface,
         struct wined3d_context *old_ctx, DWORD dst_location)
 {
+    unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     struct wined3d_texture *texture = surface->container;
     struct wined3d_device *device = texture->resource.device;
     const struct wined3d_gl_info *gl_info;
@@ -1856,7 +1826,7 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
     BOOL srcIsUpsideDown;
     struct wined3d_bo_address data;
 
-    surface_get_memory(surface, &data, dst_location);
+    wined3d_texture_get_memory(texture, sub_resource_idx, &data, dst_location);
 
     restore_rt = context_get_rt_surface(old_ctx);
     if (restore_rt != surface)
@@ -2943,14 +2913,17 @@ static DWORD resource_access_from_location(DWORD location)
 
 static void surface_copy_simple_location(struct wined3d_surface *surface, DWORD location)
 {
-    struct wined3d_device *device = surface->container->resource.device;
+    unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
+    struct wined3d_texture *texture = surface->container;
+    struct wined3d_device *device = texture->resource.device;
     struct wined3d_context *context;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_bo_address dst, src;
     UINT size = surface->resource.size;
 
-    surface_get_memory(surface, &dst, location);
-    surface_get_memory(surface, &src, surface_get_sub_resource(surface)->locations);
+    wined3d_texture_get_memory(texture, sub_resource_idx, &dst, location);
+    wined3d_texture_get_memory(texture, sub_resource_idx, &src,
+            texture->sub_resources[sub_resource_idx].locations);
 
     if (dst.buffer_object)
     {
@@ -3046,6 +3019,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
 {
     unsigned int width, src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch;
     const RECT src_rect = {0, 0, surface->resource.width, surface->resource.height};
+    unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_texture *texture = surface->container;
     struct wined3d_device *device = texture->resource.device;
@@ -3142,8 +3116,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     /* Don't use PBOs for converted surfaces. During PBO conversion we look at
      * WINED3D_TEXTURE_CONVERTED but it isn't set (yet) in all cases it is
      * getting called. */
-    if ((format.convert || conversion)
-            && texture->sub_resources[surface_get_sub_resource_idx(surface)].buffer_object)
+    if ((format.convert || conversion) && texture->sub_resources[sub_resource_idx].buffer_object)
     {
         TRACE("Removing the pbo attached to surface %p.\n", surface);
 
@@ -3153,10 +3126,10 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
             surface->resource.map_binding = WINED3D_LOCATION_SYSMEM;
 
         surface_load_location(surface, context, surface->resource.map_binding);
-        wined3d_texture_remove_buffer_object(texture, surface_get_sub_resource_idx(surface), gl_info);
+        wined3d_texture_remove_buffer_object(texture, sub_resource_idx, gl_info);
     }
 
-    surface_get_memory(surface, &data, sub_resource->locations);
+    wined3d_texture_get_memory(texture, sub_resource_idx, &data, sub_resource->locations);
     if (format.convert)
     {
         /* This code is entered for texture formats which need a fixup. */
