@@ -78,7 +78,7 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 #define WINED3D_SM4_REGISTER_ORDER_MASK         (0x3u << WINED3D_SM4_REGISTER_ORDER_SHIFT)
 
 #define WINED3D_SM4_REGISTER_TYPE_SHIFT         12
-#define WINED3D_SM4_REGISTER_TYPE_MASK          (0xfu << WINED3D_SM4_REGISTER_TYPE_SHIFT)
+#define WINED3D_SM4_REGISTER_TYPE_MASK          (0xffu << WINED3D_SM4_REGISTER_TYPE_SHIFT)
 
 #define WINED3D_SM4_SWIZZLE_TYPE_SHIFT          2
 #define WINED3D_SM4_SWIZZLE_TYPE_MASK           (0x3u << WINED3D_SM4_SWIZZLE_TYPE_SHIFT)
@@ -205,18 +205,19 @@ enum wined3d_sm4_opcode
 
 enum wined3d_sm4_register_type
 {
-    WINED3D_SM4_RT_TEMP           = 0x0,
-    WINED3D_SM4_RT_INPUT          = 0x1,
-    WINED3D_SM4_RT_OUTPUT         = 0x2,
-    WINED3D_SM4_RT_IMMCONST       = 0x4,
-    WINED3D_SM4_RT_SAMPLER        = 0x6,
-    WINED3D_SM4_RT_RESOURCE       = 0x7,
-    WINED3D_SM4_RT_CONSTBUFFER    = 0x8,
-    WINED3D_SM4_RT_IMMCONSTBUFFER = 0x9,
-    WINED3D_SM4_RT_PRIMID         = 0xb,
-    WINED3D_SM4_RT_DEPTHOUT       = 0xc,
-    WINED3D_SM4_RT_NULL           = 0xd,
-    WINED3D_SM5_RT_UAV            = 0xe,
+    WINED3D_SM4_RT_TEMP             = 0x0,
+    WINED3D_SM4_RT_INPUT            = 0x1,
+    WINED3D_SM4_RT_OUTPUT           = 0x2,
+    WINED3D_SM4_RT_IMMCONST         = 0x4,
+    WINED3D_SM4_RT_SAMPLER          = 0x6,
+    WINED3D_SM4_RT_RESOURCE         = 0x7,
+    WINED3D_SM4_RT_CONSTBUFFER      = 0x8,
+    WINED3D_SM4_RT_IMMCONSTBUFFER   = 0x9,
+    WINED3D_SM4_RT_PRIMID           = 0xb,
+    WINED3D_SM4_RT_DEPTHOUT         = 0xc,
+    WINED3D_SM4_RT_NULL             = 0xd,
+    WINED3D_SM5_RT_FORK_INSTANCE_ID = 0x17,
+    WINED3D_SM5_RT_UAV              = 0x1e,
 };
 
 enum wined3d_sm4_output_primitive_type
@@ -423,21 +424,37 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
 
 static const enum wined3d_shader_register_type register_type_table[] =
 {
-    /* WINED3D_SM4_RT_TEMP */           WINED3DSPR_TEMP,
-    /* WINED3D_SM4_RT_INPUT */          WINED3DSPR_INPUT,
-    /* WINED3D_SM4_RT_OUTPUT */         WINED3DSPR_OUTPUT,
-    /* UNKNOWN */                       0,
-    /* WINED3D_SM4_RT_IMMCONST */       WINED3DSPR_IMMCONST,
-    /* UNKNOWN */                       0,
-    /* WINED3D_SM4_RT_SAMPLER */        WINED3DSPR_SAMPLER,
-    /* WINED3D_SM4_RT_RESOURCE */       WINED3DSPR_RESOURCE,
-    /* WINED3D_SM4_RT_CONSTBUFFER */    WINED3DSPR_CONSTBUFFER,
-    /* WINED3D_SM4_RT_IMMCONSTBUFFER */ WINED3DSPR_IMMCONSTBUFFER,
-    /* UNKNOWN */                       0,
-    /* WINED3D_SM4_RT_PRIMID */         WINED3DSPR_PRIMID,
-    /* WINED3D_SM4_RT_DEPTHOUT */       WINED3DSPR_DEPTHOUT,
-    /* WINED3D_SM4_RT_NULL */           WINED3DSPR_NULL,
-    /* WINED3D_SM5_RT_UAV */            WINED3DSPR_UAV,
+    /* WINED3D_SM4_RT_TEMP */             WINED3DSPR_TEMP,
+    /* WINED3D_SM4_RT_INPUT */            WINED3DSPR_INPUT,
+    /* WINED3D_SM4_RT_OUTPUT */           WINED3DSPR_OUTPUT,
+    /* UNKNOWN */                         0,
+    /* WINED3D_SM4_RT_IMMCONST */         WINED3DSPR_IMMCONST,
+    /* UNKNOWN */                         0,
+    /* WINED3D_SM4_RT_SAMPLER */          WINED3DSPR_SAMPLER,
+    /* WINED3D_SM4_RT_RESOURCE */         WINED3DSPR_RESOURCE,
+    /* WINED3D_SM4_RT_CONSTBUFFER */      WINED3DSPR_CONSTBUFFER,
+    /* WINED3D_SM4_RT_IMMCONSTBUFFER */   WINED3DSPR_IMMCONSTBUFFER,
+    /* UNKNOWN */                         0,
+    /* WINED3D_SM4_RT_PRIMID */           WINED3DSPR_PRIMID,
+    /* WINED3D_SM4_RT_DEPTHOUT */         WINED3DSPR_DEPTHOUT,
+    /* WINED3D_SM4_RT_NULL */             WINED3DSPR_NULL,
+    /* UNKNOWN */                         0,
+    /* UNKNOWN */                         0,
+    /* UNKNOWN */                         0,
+    /* UNKNOWN */                         0,
+    /* UNKNOWN */                         0,
+    /* UNKNOWN */                         0,
+    /* UNKNOWN */                         0,
+    /* UNKNOWN */                         0,
+    /* UNKNOWN */                         0,
+    /* WINED3D_SM5_RT_FORK_INSTANCE_ID */ WINED3DSPR_FORKINSTID,
+    /* UNKNOWN */                         0,
+    /* UNKNOWN */                         0,
+    /* UNKNOWN */                         0,
+    /* UNKNOWN */                         0,
+    /* UNKNOWN */                         0,
+    /* UNKNOWN */                         0,
+    /* WINED3D_SM5_RT_UAV */              WINED3DSPR_UAV,
 };
 
 static const enum wined3d_primitive_type output_primitive_type_table[] =

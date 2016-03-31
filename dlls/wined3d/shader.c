@@ -1608,6 +1608,10 @@ static void shader_dump_register(struct wined3d_string_buffer *buffer,
             shader_addline(buffer, "u");
             break;
 
+        case WINED3DSPR_FORKINSTID:
+            shader_addline(buffer, "vForkInstanceId");
+            break;
+
         default:
             shader_addline(buffer, "<unhandled_rtype(%#x)>", reg->type);
             break;

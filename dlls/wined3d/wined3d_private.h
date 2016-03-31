@@ -367,6 +367,7 @@ enum wined3d_shader_register_type
     WINED3DSPR_NULL,
     WINED3DSPR_RESOURCE,
     WINED3DSPR_UAV,
+    WINED3DSPR_FORKINSTID,
 };
 
 enum wined3d_data_type
