@@ -61,8 +61,8 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 #define WINED3D_SM4_GLOBAL_FLAGS_SHIFT          11
 #define WINED3D_SM4_GLOBAL_FLAGS_MASK           (0xffu << WINED3D_SM4_GLOBAL_FLAGS_SHIFT)
 
-#define WINED3D_SM5_CPOINT_COUNT_SHIFT          11
-#define WINED3D_SM5_CPOINT_COUNT_MASK           (0xffu << WINED3D_SM5_CPOINT_COUNT_SHIFT)
+#define WINED3D_SM5_CONTROL_POINT_COUNT_SHIFT   11
+#define WINED3D_SM5_CONTROL_POINT_COUNT_MASK    (0xffu << WINED3D_SM5_CONTROL_POINT_COUNT_SHIFT)
 
 #define WINED3D_SM4_OPCODE_MASK                 0xff
 
@@ -193,8 +193,8 @@ enum wined3d_sm4_opcode
     WINED3D_SM5_OP_DERIV_RTX_FINE                   = 0x7b,
     WINED3D_SM5_OP_DERIV_RTY_COARSE                 = 0x7c,
     WINED3D_SM5_OP_DERIV_RTY_FINE                   = 0x7d,
-    WINED3D_SM5_OP_DCL_INPUT_CPOINT_COUNT           = 0x93,
-    WINED3D_SM5_OP_DCL_OUTPUT_CPOINT_COUNT          = 0x94,
+    WINED3D_SM5_OP_DCL_INPUT_CONTROL_POINT_COUNT    = 0x93,
+    WINED3D_SM5_OP_DCL_OUTPUT_CONTROL_POINT_COUNT   = 0x94,
     WINED3D_SM5_OP_DCL_HS_FORK_PHASE_INSTANCE_COUNT = 0x99,
     WINED3D_SM5_OP_DCL_UAV_TYPED                    = 0x9c,
     WINED3D_SM5_OP_DCL_RESOURCE_STRUCTURED          = 0xa2,
@@ -410,8 +410,8 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM5_OP_DERIV_RTX_FINE,                   WINED3DSIH_DSX_FINE,                         "f",    "f"},
     {WINED3D_SM5_OP_DERIV_RTY_COARSE,                 WINED3DSIH_DSY_COARSE,                       "f",    "f"},
     {WINED3D_SM5_OP_DERIV_RTY_FINE,                   WINED3DSIH_DSY_FINE,                         "f",    "f"},
-    {WINED3D_SM5_OP_DCL_INPUT_CPOINT_COUNT,           WINED3DSIH_DCL_INPUT_CONTROL_POINT_COUNT,    "",     ""},
-    {WINED3D_SM5_OP_DCL_OUTPUT_CPOINT_COUNT,          WINED3DSIH_DCL_OUTPUT_CONTROL_POINT_COUNT,   "",     ""},
+    {WINED3D_SM5_OP_DCL_INPUT_CONTROL_POINT_COUNT,    WINED3DSIH_DCL_INPUT_CONTROL_POINT_COUNT,    "",     ""},
+    {WINED3D_SM5_OP_DCL_OUTPUT_CONTROL_POINT_COUNT,   WINED3DSIH_DCL_OUTPUT_CONTROL_POINT_COUNT,   "",     ""},
     {WINED3D_SM5_OP_DCL_HS_FORK_PHASE_INSTANCE_COUNT, WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT, "",     ""},
     {WINED3D_SM5_OP_DCL_UAV_TYPED,                    WINED3DSIH_DCL_UAV_TYPED,                    "",     ""},
     {WINED3D_SM5_OP_DCL_RESOURCE_STRUCTURED,          WINED3DSIH_DCL_RESOURCE_STRUCTURED,          "",     ""},
@@ -1031,10 +1031,11 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
             ins->declaration.primitive_type = output_primitive_type_table[primitive_type];
         }
     }
-    else if (opcode == WINED3D_SM5_OP_DCL_INPUT_CPOINT_COUNT
-            || opcode == WINED3D_SM5_OP_DCL_OUTPUT_CPOINT_COUNT)
+    else if (opcode == WINED3D_SM5_OP_DCL_INPUT_CONTROL_POINT_COUNT
+            || opcode == WINED3D_SM5_OP_DCL_OUTPUT_CONTROL_POINT_COUNT)
     {
-        ins->declaration.count = (opcode_token & WINED3D_SM5_CPOINT_COUNT_MASK) >> WINED3D_SM5_CPOINT_COUNT_SHIFT;
+        ins->declaration.count = (opcode_token & WINED3D_SM5_CONTROL_POINT_COUNT_MASK)
+                >> WINED3D_SM5_CONTROL_POINT_COUNT_SHIFT;
     }
     else if (opcode == WINED3D_SM4_OP_DCL_INPUT_PRIMITIVE)
     {
