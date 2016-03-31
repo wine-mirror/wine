@@ -1619,6 +1619,11 @@ static void PRINTF_ATTR(4, 5) declare_out_varying(const struct wined3d_gl_info *
     }
 }
 
+static const char *get_fragment_output(const struct wined3d_gl_info *gl_info)
+{
+    return needs_legacy_glsl_syntax(gl_info) ? "gl_FragData" : "ps_out";
+}
+
 static BOOL glsl_is_color_reg_read(const struct wined3d_shader *shader, unsigned int idx)
 {
     const struct wined3d_shader_signature *input_signature = &shader->input_signature;
@@ -2009,6 +2014,9 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             shader_addline(buffer, "vec4 vpos;\n");
         }
 
+        if (!needs_legacy_glsl_syntax(gl_info))
+            shader_addline(buffer, "out vec4 ps_out[%u];\n", gl_info->limits.buffers);
+
         if (shader->limits->constant_float + extra_constants_needed >= gl_info->limits.glsl_ps_float_constants)
             FIXME("Insufficient uniforms to run this shader.\n");
     }
@@ -2327,7 +2335,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                 WARN("Write to render target %u, only %d supported.\n",
                         reg->idx[0].offset, gl_info->limits.buffers);
 
-            sprintf(register_name, "gl_FragData[%u]", reg->idx[0].offset);
+            sprintf(register_name, "%s[%u]", get_fragment_output(gl_info), reg->idx[0].offset);
             break;
 
         case WINED3DSPR_RASTOUT:
@@ -5393,18 +5401,24 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
     return ret;
 }
 
-static void shader_glsl_generate_srgb_write_correction(struct wined3d_string_buffer *buffer)
+static void shader_glsl_generate_srgb_write_correction(struct wined3d_string_buffer *buffer,
+        const struct wined3d_gl_info *gl_info)
 {
-    shader_addline(buffer, "tmp0.xyz = pow(gl_FragData[0].xyz, vec3(srgb_const0.x));\n");
+    const char *output = get_fragment_output(gl_info);
+
+    shader_addline(buffer, "tmp0.xyz = pow(%s[0].xyz, vec3(srgb_const0.x));\n", output);
     shader_addline(buffer, "tmp0.xyz = tmp0.xyz * vec3(srgb_const0.y) - vec3(srgb_const0.z);\n");
-    shader_addline(buffer, "tmp1.xyz = gl_FragData[0].xyz * vec3(srgb_const0.w);\n");
-    shader_addline(buffer, "bvec3 srgb_compare = lessThan(gl_FragData[0].xyz, vec3(srgb_const1.x));\n");
-    shader_addline(buffer, "gl_FragData[0].xyz = mix(tmp0.xyz, tmp1.xyz, vec3(srgb_compare));\n");
-    shader_addline(buffer, "gl_FragData[0] = clamp(gl_FragData[0], 0.0, 1.0);\n");
+    shader_addline(buffer, "tmp1.xyz = %s[0].xyz * vec3(srgb_const0.w);\n", output);
+    shader_addline(buffer, "bvec3 srgb_compare = lessThan(%s[0].xyz, vec3(srgb_const1.x));\n", output);
+    shader_addline(buffer, "%s[0].xyz = mix(tmp0.xyz, tmp1.xyz, vec3(srgb_compare));\n", output);
+    shader_addline(buffer, "%s[0] = clamp(%s[0], 0.0, 1.0);\n", output, output);
 }
 
-static void shader_glsl_generate_fog_code(struct wined3d_string_buffer *buffer, enum wined3d_ffp_ps_fog_mode mode)
+static void shader_glsl_generate_fog_code(struct wined3d_string_buffer *buffer,
+        const struct wined3d_gl_info *gl_info, enum wined3d_ffp_ps_fog_mode mode)
 {
+    const char *output = get_fragment_output(gl_info);
+
     switch (mode)
     {
         case WINED3D_FFP_PS_FOG_OFF:
@@ -5428,8 +5442,8 @@ static void shader_glsl_generate_fog_code(struct wined3d_string_buffer *buffer, 
             return;
     }
 
-    shader_addline(buffer, "gl_FragData[0].xyz = mix(ffp_fog.color.xyz, gl_FragData[0].xyz,"
-            " clamp(fog, 0.0, 1.0));\n");
+    shader_addline(buffer, "%s[0].xyz = mix(ffp_fog.color.xyz, %s[0].xyz, clamp(fog, 0.0, 1.0));\n",
+            output, output);
 }
 
 /* Context activation is done by the caller. */
@@ -5513,17 +5527,14 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
 
     /* Pixel shaders < 2.0 place the resulting color in R0 implicitly */
     if (reg_maps->shader_version.major < 2)
-    {
-        /* Some older cards like GeforceFX ones don't support multiple buffers, so also not gl_FragData */
-        shader_addline(buffer, "gl_FragData[0] = R0;\n");
-    }
+        shader_addline(buffer, "%s[0] = R0;\n", get_fragment_output(gl_info));
 
     if (args->srgb_correction)
-        shader_glsl_generate_srgb_write_correction(buffer);
+        shader_glsl_generate_srgb_write_correction(buffer, gl_info);
 
     /* SM < 3 does not replace the fog stage. */
     if (reg_maps->shader_version.major < 3)
-        shader_glsl_generate_fog_code(buffer, args->fog);
+        shader_glsl_generate_fog_code(buffer, gl_info, args->fog);
 
     shader_addline(buffer, "}\n");
 
@@ -6612,6 +6623,9 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
     if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
         shader_addline(buffer, "#extension GL_ARB_texture_rectangle : enable\n");
 
+    if (!needs_legacy_glsl_syntax(gl_info))
+        shader_addline(buffer, "out vec4 ps_out[1];\n");
+
     shader_addline(buffer, "vec4 tmp0, tmp1;\n");
     shader_addline(buffer, "vec4 ret;\n");
     if (tempreg_used || settings->sRGB_write)
@@ -6928,12 +6942,13 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
         }
     }
 
-    shader_addline(buffer, "gl_FragData[0] = ffp_varying_specular * specular_enable + ret;\n");
+    shader_addline(buffer, "%s[0] = ffp_varying_specular * specular_enable + ret;\n",
+            get_fragment_output(gl_info));
 
     if (settings->sRGB_write)
-        shader_glsl_generate_srgb_write_correction(buffer);
+        shader_glsl_generate_srgb_write_correction(buffer, gl_info);
 
-    shader_glsl_generate_fog_code(buffer, settings->fog);
+    shader_glsl_generate_fog_code(buffer, gl_info, settings->fog);
 
     shader_addline(buffer, "}\n");
 
