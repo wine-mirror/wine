@@ -2904,3 +2904,12 @@ BOOL WINAPI SetProcessDPIAware( VOID )
 
     return TRUE;
 }
+
+/***********************************************************************
+ *              IsProcessDPIAware   (USER32.@)
+ */
+BOOL WINAPI IsProcessDPIAware(void)
+{
+    FIXME( "stub!\n");
+    return FALSE;
+}
