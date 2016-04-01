@@ -64,7 +64,7 @@
 @ stub D3DX10SaveTextureToFileA(ptr ptr str)
 @ stub D3DX10SaveTextureToFileW(ptr ptr wstr)
 @ stub D3DX10SaveTextureToMemory(ptr ptr ptr long)
-@ stub D3DX10UnsetAllDeviceObjects(ptr)
+@ stdcall D3DX10UnsetAllDeviceObjects(ptr)
 @ stdcall D3DXBoxBoundProbe(ptr ptr ptr ptr) d3dx9_36.D3DXBoxBoundProbe
 @ stdcall D3DXColorAdjustContrast(ptr ptr float) d3dx9_36.D3DXColorAdjustContrast
 @ stdcall D3DXColorAdjustSaturation(ptr ptr float) d3dx9_36.D3DXColorAdjustSaturation

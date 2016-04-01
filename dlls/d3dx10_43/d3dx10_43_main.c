@@ -116,3 +116,10 @@ HRESULT WINAPI D3DX10CreateEffectPoolFromMemory(const void *data, SIZE_T datasiz
 
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI D3DX10UnsetAllDeviceObjects(ID3D10Device *device)
+{
+    FIXME("device %p stub.\n", device);
+
+    return E_NOTIMPL;
+}
