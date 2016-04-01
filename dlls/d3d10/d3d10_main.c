@@ -252,6 +252,14 @@ HRESULT WINAPI D3D10CompileEffectFromMemory(void *data, SIZE_T data_size, const 
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI D3D10CreateEffectPoolFromMemory(void *data, SIZE_T data_size, UINT fx_flags,
+        ID3D10Device *device, ID3D10EffectPool **effect_pool)
+{
+    FIXME("data %p, data_size %lu, fx_flags %#x, device %p, effect_pool %p stub.\n",
+            data, data_size, fx_flags, device, effect_pool);
+
+    return E_NOTIMPL;
+}
 
 const char * WINAPI D3D10GetVertexShaderProfile(ID3D10Device *device)
 {
