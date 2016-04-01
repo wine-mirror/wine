@@ -264,6 +264,20 @@ struct d3d11_hull_shader
 HRESULT d3d11_hull_shader_create(struct d3d_device *device, const void *byte_code, SIZE_T byte_code_length,
         struct d3d11_hull_shader **shader) DECLSPEC_HIDDEN;
 
+/* ID3D11DomainShader */
+struct d3d11_domain_shader
+{
+    ID3D11DomainShader ID3D11DomainShader_iface;
+    LONG refcount;
+
+    struct wined3d_private_store private_store;
+    struct wined3d_shader *wined3d_shader;
+    ID3D11Device *device;
+};
+
+HRESULT d3d11_domain_shader_create(struct d3d_device *device, const void *byte_code, SIZE_T byte_code_length,
+        struct d3d11_domain_shader **shader) DECLSPEC_HIDDEN;
+
 /* ID3D11GeometryShader, ID3D10GeometryShader */
 struct d3d_geometry_shader
 {
