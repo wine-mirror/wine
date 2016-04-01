@@ -2568,7 +2568,6 @@ static inline struct wined3d_volume *volume_from_resource(struct wined3d_resourc
 void wined3d_volume_cleanup(struct wined3d_volume *volume) DECLSPEC_HIDDEN;
 HRESULT wined3d_volume_init(struct wined3d_volume *volume, struct wined3d_texture *container,
         const struct wined3d_resource_desc *desc, UINT level) DECLSPEC_HIDDEN;
-void wined3d_volume_invalidate_location(struct wined3d_volume *volume, DWORD location) DECLSPEC_HIDDEN;
 void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *context,
         BOOL srgb_mode) DECLSPEC_HIDDEN;
 BOOL wined3d_volume_load_location(struct wined3d_volume *volume,
