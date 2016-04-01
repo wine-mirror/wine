@@ -319,6 +319,7 @@ static const struct wined3d_shader_frontend *shader_select_frontend(DWORD versio
         case WINED3D_SM4_VS:
         case WINED3D_SM4_GS:
         case WINED3D_SM5_HS:
+        case WINED3D_SM5_DS:
             return &sm4_shader_frontend;
 
         default:
@@ -526,6 +527,11 @@ static void shader_set_limits(struct wined3d_shader *shader)
         /* min_version, max_version, sampler, constant_int, constant_float, constant_bool, packed_output, packet_input */
         {WINED3D_SHADER_VERSION(5, 0), WINED3D_SHADER_VERSION(5, 0), {16,  0,   0,  0, 32, 32}},
     },
+    ds_limits[] =
+    {
+        /* min_version, max_version, sampler, constant_int, constant_float, constant_bool, packed_output, packet_input */
+        {WINED3D_SHADER_VERSION(5, 0), WINED3D_SHADER_VERSION(5, 0), {16,  0,   0,  0, 32, 32}},
+    },
     gs_limits[] =
     {
         /* min_version, max_version, sampler, constant_int, constant_float, constant_bool, packed_output, packed_input */
@@ -559,6 +565,9 @@ static void shader_set_limits(struct wined3d_shader *shader)
             break;
         case WINED3D_SHADER_TYPE_HULL:
             limits_array = hs_limits;
+            break;
+        case WINED3D_SHADER_TYPE_DOMAIN:
+            limits_array = ds_limits;
             break;
         case WINED3D_SHADER_TYPE_GEOMETRY:
             limits_array = gs_limits;
@@ -2038,6 +2047,10 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
             type_prefix = "hs";
             break;
 
+        case WINED3D_SHADER_TYPE_DOMAIN:
+            type_prefix = "ds";
+            break;
+
         case WINED3D_SHADER_TYPE_GEOMETRY:
             type_prefix = "gs";
             break;
@@ -2337,7 +2350,8 @@ static void shader_none_disable(void *shader_priv, struct wined3d_context *conte
     context->shader_update_mask = (1u << WINED3D_SHADER_TYPE_PIXEL)
             | (1u << WINED3D_SHADER_TYPE_VERTEX)
             | (1u << WINED3D_SHADER_TYPE_GEOMETRY)
-            | (1u << WINED3D_SHADER_TYPE_HULL);
+            | (1u << WINED3D_SHADER_TYPE_HULL)
+            | (1u << WINED3D_SHADER_TYPE_DOMAIN);
 }
 
 static HRESULT shader_none_alloc(struct wined3d_device *device, const struct wined3d_vertex_pipe_ops *vertex_pipe,
@@ -2396,6 +2410,7 @@ static void shader_none_get_caps(const struct wined3d_gl_info *gl_info, struct s
     /* Set the shader caps to 0 for the none shader backend */
     caps->vs_version = 0;
     caps->hs_version = 0;
+    caps->ds_version = 0;
     caps->gs_version = 0;
     caps->ps_version = 0;
     caps->vs_uniform_count = 0;
@@ -2498,6 +2513,9 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *b
             break;
         case WINED3D_SHADER_TYPE_HULL:
             backend_version = d3d_info->limits.hs_version;
+            break;
+        case WINED3D_SHADER_TYPE_DOMAIN:
+            backend_version = d3d_info->limits.ds_version;
             break;
         case WINED3D_SHADER_TYPE_GEOMETRY:
             backend_version = d3d_info->limits.gs_version;
@@ -2772,7 +2790,7 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
     return hr;
 }
 
-static HRESULT vertexshader_init(struct wined3d_shader *shader, struct wined3d_device *device,
+static HRESULT vertex_shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
         const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
@@ -2801,7 +2819,20 @@ static HRESULT vertexshader_init(struct wined3d_shader *shader, struct wined3d_d
     return WINED3D_OK;
 }
 
-static HRESULT hullshader_init(struct wined3d_shader *shader, struct wined3d_device *device,
+static HRESULT domain_shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
+        const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
+{
+    HRESULT hr;
+
+    if (FAILED(hr = shader_init(shader, device, desc, 0, WINED3D_SHADER_TYPE_DOMAIN, parent, parent_ops)))
+        return hr;
+
+    shader->load_local_constsF = shader->lconst_inf_or_nan;
+
+    return WINED3D_OK;
+}
+
+static HRESULT hull_shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
         const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     HRESULT hr;
@@ -2814,7 +2845,7 @@ static HRESULT hullshader_init(struct wined3d_shader *shader, struct wined3d_dev
     return WINED3D_OK;
 }
 
-static HRESULT geometryshader_init(struct wined3d_shader *shader, struct wined3d_device *device,
+static HRESULT geometry_shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
         const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     HRESULT hr;
@@ -3045,7 +3076,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
         args->flatshading = state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
 }
 
-static HRESULT pixelshader_init(struct wined3d_shader *shader, struct wined3d_device *device,
+static HRESULT pixel_shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
         const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -3132,6 +3163,31 @@ void pixelshader_update_resource_types(struct wined3d_shader *shader, WORD tex_t
     }
 }
 
+HRESULT CDECL wined3d_shader_create_ds(struct wined3d_device *device, const struct wined3d_shader_desc *desc,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader)
+{
+    struct wined3d_shader *object;
+    HRESULT hr;
+
+    TRACE("device %p, desc %p, parent %p, parent_ops %p, shader %p.\n",
+            device, desc, parent, parent_ops, shader);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = domain_shader_init(object, device, desc, parent, parent_ops)))
+    {
+        WARN("Failed to initialize domain shader, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created domain shader %p.\n", object);
+    *shader = object;
+
+    return WINED3D_OK;
+}
+
 HRESULT CDECL wined3d_shader_create_gs(struct wined3d_device *device, const struct wined3d_shader_desc *desc,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader)
 {
@@ -3145,7 +3201,7 @@ HRESULT CDECL wined3d_shader_create_gs(struct wined3d_device *device, const stru
     if (!object)
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = geometryshader_init(object, device, desc, parent, parent_ops)))
+    if (FAILED(hr = geometry_shader_init(object, device, desc, parent, parent_ops)))
     {
         WARN("Failed to initialize geometry shader, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
@@ -3170,7 +3226,7 @@ HRESULT CDECL wined3d_shader_create_hs(struct wined3d_device *device, const stru
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = hullshader_init(object, device, desc, parent, parent_ops)))
+    if (FAILED(hr = hull_shader_init(object, device, desc, parent, parent_ops)))
     {
         WARN("Failed to initialize hull shader, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
@@ -3196,7 +3252,7 @@ HRESULT CDECL wined3d_shader_create_ps(struct wined3d_device *device, const stru
     if (!object)
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = pixelshader_init(object, device, desc, parent, parent_ops)))
+    if (FAILED(hr = pixel_shader_init(object, device, desc, parent, parent_ops)))
     {
         WARN("Failed to initialize pixel shader, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
@@ -3222,7 +3278,7 @@ HRESULT CDECL wined3d_shader_create_vs(struct wined3d_device *device, const stru
     if (!object)
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = vertexshader_init(object, device, desc, parent, parent_ops)))
+    if (FAILED(hr = vertex_shader_init(object, device, desc, parent, parent_ops)))
     {
         WARN("Failed to initialize vertex shader, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);

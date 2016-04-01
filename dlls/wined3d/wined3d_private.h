@@ -294,6 +294,7 @@ struct wined3d_settings
     BOOL check_float_constants;
     unsigned int max_sm_vs;
     unsigned int max_sm_hs;
+    unsigned int max_sm_ds;
     unsigned int max_sm_gs;
     unsigned int max_sm_ps;
     BOOL no_3d;
@@ -486,6 +487,7 @@ enum wined3d_shader_rel_op
 #define WINED3D_SM4_VS  0x0001u
 #define WINED3D_SM4_GS  0x0002u
 #define WINED3D_SM5_HS  0x0003u
+#define WINED3D_SM5_DS  0x0004u
 
 /* Shader version tokens, and shader end tokens */
 #define WINED3DPS_VERSION(major, minor) ((WINED3D_SM1_PS << 16) | ((major) << 8) | (minor))
@@ -689,6 +691,7 @@ enum wined3d_shader_type
     WINED3D_SHADER_TYPE_VERTEX,
     WINED3D_SHADER_TYPE_GEOMETRY,
     WINED3D_SHADER_TYPE_HULL,
+    WINED3D_SHADER_TYPE_DOMAIN,
     WINED3D_SHADER_TYPE_COUNT,
 };
 
@@ -929,6 +932,7 @@ struct shader_caps
 {
     unsigned int vs_version;
     unsigned int hs_version;
+    unsigned int ds_version;
     unsigned int gs_version;
     unsigned int ps_version;
 
@@ -1925,7 +1929,7 @@ struct wined3d_driver_info
 
 struct wined3d_d3d_limits
 {
-    unsigned int vs_version, hs_version, gs_version, ps_version;
+    unsigned int vs_version, hs_version, ds_version, gs_version, ps_version;
     DWORD vs_uniform_count;
     DWORD ps_uniform_count;
     UINT varying_count;

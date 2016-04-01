@@ -4833,7 +4833,8 @@ static void shader_arb_disable(void *shader_priv, struct wined3d_context *contex
     context->shader_update_mask = (1u << WINED3D_SHADER_TYPE_PIXEL)
             | (1u << WINED3D_SHADER_TYPE_VERTEX)
             | (1u << WINED3D_SHADER_TYPE_GEOMETRY)
-            | (1u << WINED3D_SHADER_TYPE_HULL);
+            | (1u << WINED3D_SHADER_TYPE_HULL)
+            | (1u << WINED3D_SHADER_TYPE_DOMAIN);
 }
 
 /* Context activation is done by the caller. */
@@ -5122,6 +5123,7 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
     }
 
     caps->hs_version = 0;
+    caps->ds_version = 0;
     caps->gs_version = 0;
 
     if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
