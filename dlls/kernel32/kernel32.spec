@@ -582,8 +582,8 @@
 @ stdcall GetComputerNameW(ptr ptr)
 @ stub GetConsoleAliasA
 @ stub GetConsoleAliasExesA
-@ stub GetConsoleAliasExesLengthA
-@ stub GetConsoleAliasExesLengthW
+@ stdcall GetConsoleAliasExesLengthA()
+@ stdcall GetConsoleAliasExesLengthW()
 @ stub GetConsoleAliasExesW
 @ stdcall GetConsoleAliasW(wstr ptr long wstr)
 @ stub GetConsoleAliasesA
