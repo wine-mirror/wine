@@ -454,6 +454,14 @@ enum wined3d_tessellator_output_primitive
     WINED3D_TESSELLATOR_OUTPUT_TRIANGLE_CCW = 4,
 };
 
+enum wined3d_tessellator_partitioning
+{
+    WINED3D_TESSELLATOR_PARTITIONING_INTEGER         = 1,
+    WINED3D_TESSELLATOR_PARTITIONING_POW2            = 2,
+    WINED3D_TESSELLATOR_PARTITIONING_FRACTIONAL_ODD  = 3,
+    WINED3D_TESSELLATOR_PARTITIONING_FRACTIONAL_EVEN = 4,
+};
+
 /* Undocumented opcode control to identify projective texture lookups in ps 2.0 and later */
 #define WINED3DSI_TEXLD_PROJECT     0x1
 #define WINED3DSI_TEXLD_BIAS        0x2
@@ -548,6 +556,7 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_DCL_TEMPS,
     WINED3DSIH_DCL_TESSELLATOR_DOMAIN,
     WINED3DSIH_DCL_TESSELLATOR_OUTPUT_PRIMITIVE,
+    WINED3DSIH_DCL_TESSELLATOR_PARTITIONING,
     WINED3DSIH_DCL_UAV_TYPED,
     WINED3DSIH_DCL_VERTICES_OUT,
     WINED3DSIH_DEF,
@@ -876,6 +885,7 @@ struct wined3d_shader_instruction
         struct wined3d_shader_structured_resource structured_resource;
         enum wined3d_tessellator_domain tessellator_domain;
         enum wined3d_tessellator_output_primitive tessellator_output_primitive;
+        enum wined3d_tessellator_partitioning tessellator_partitioning;
         float max_tessellation_factor;
     } declaration;
 };

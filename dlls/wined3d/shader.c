@@ -76,6 +76,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DCL_TEMPS                        */ "dcl_temps",
     /* WINED3DSIH_DCL_TESSELLATOR_DOMAIN           */ "dcl_tessellator_domain",
     /* WINED3DSIH_DCL_TESSELLATOR_OUTPUT_PRIMITIVE */ "dcl_tessellator_output_primitive",
+    /* WINED3DSIH_DCL_TESSELLATOR_PARTITIONING     */ "dcl_tessellator_partitioning",
     /* WINED3DSIH_DCL_UAV_TYPED                    */ "dcl_uav_typed",
     /* WINED3DSIH_DCL_VERTICES_OUT                 */ "dcl_maxOutputVertexCount",
     /* WINED3DSIH_DEF                              */ "def",
@@ -1342,6 +1343,29 @@ static void shader_dump_tessellator_output_primitive(struct wined3d_string_buffe
     }
 }
 
+static void shader_dump_tessellator_partitioning(struct wined3d_string_buffer *buffer,
+        enum wined3d_tessellator_partitioning partitioning)
+{
+    switch (partitioning)
+    {
+        case WINED3D_TESSELLATOR_PARTITIONING_INTEGER:
+            shader_addline(buffer, "integer");
+            break;
+        case WINED3D_TESSELLATOR_PARTITIONING_POW2:
+            shader_addline(buffer, "pow2");
+            break;
+        case WINED3D_TESSELLATOR_PARTITIONING_FRACTIONAL_ODD:
+            shader_addline(buffer, "fractional_odd");
+            break;
+        case WINED3D_TESSELLATOR_PARTITIONING_FRACTIONAL_EVEN:
+            shader_addline(buffer, "fractional_even");
+            break;
+        default:
+            shader_addline(buffer, "unknown_tessellator_partitioning(%#x)", partitioning);
+            break;
+    }
+}
+
 static void shader_dump_sysval_semantic(struct wined3d_string_buffer *buffer, enum wined3d_sysval_semantic semantic)
 {
     unsigned int i;
@@ -2147,6 +2171,11 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
         {
             shader_addline(&buffer, "%s ", shader_opcode_names[ins.handler_idx]);
             shader_dump_tessellator_output_primitive(&buffer, ins.declaration.tessellator_output_primitive);
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_TESSELLATOR_PARTITIONING)
+        {
+            shader_addline(&buffer, "%s ", shader_opcode_names[ins.handler_idx]);
+            shader_dump_tessellator_partitioning(&buffer, ins.declaration.tessellator_partitioning);
         }
         else if (ins.handler_idx == WINED3DSIH_DEF)
         {
