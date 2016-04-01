@@ -967,6 +967,9 @@ HRESULT opentype_get_font_table(IDWriteFontFileStream *stream, DWRITE_FONT_FACE_
     if (found) *found = FALSE;
     if (table_size) *table_size = 0;
 
+    *table_data = NULL;
+    *table_context = NULL;
+
     if (type == DWRITE_FONT_FACE_TYPE_TRUETYPE_COLLECTION) {
         const TTC_Header_V1 *ttc_header;
         void * ttc_context;

@@ -2923,6 +2923,15 @@ static void test_TryGetFontTable(void)
     IDWriteFontFace_ReleaseFontTable(fontface, context2);
     IDWriteFontFace_ReleaseFontTable(fontface, context);
 
+    /* table does not exist */
+    exists = TRUE;
+    context = (void*)0xdeadbeef;
+    table = (void*)0xdeadbeef;
+    hr = IDWriteFontFace_TryGetFontTable(fontface, 0xabababab, &table, &size, &context, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(exists == FALSE, "got %d\n", exists);
+    ok(context == NULL && table == NULL, "got context %p, table pointer %p\n", context, table);
+
     IDWriteFontFace_Release(fontface);
     IDWriteFontFile_Release(file);
     IDWriteFactory_Release(factory);
