@@ -1,8 +1,8 @@
 @ stub BeginFileMapEnumeration
 @ stub CloseFileMapEnumeration
 @ stub GetNextFileMapContent
-@ stub SRSetRestorePointA
-@ stub SRSetRestorePointW
+@ stdcall SRSetRestorePointA(ptr ptr)
+@ stdcall SRSetRestorePointW(ptr ptr)
 @ stub SfcClose
 @ stdcall SfcConnectToServer(long)
 @ stub SfcFileException

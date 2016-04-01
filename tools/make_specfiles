@@ -280,6 +280,10 @@ my @dll_groups =
   "bthprops.cpl",
   "irprops.cpl",
  ],
+ [
+  "sfc_os",
+  "sfc",
+ ],
 );
 
 my $update_flags = 0;

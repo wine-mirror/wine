@@ -29,6 +29,7 @@
 #define APPLICATION_INSTALL          0
 
 #define MAX_DESC                    64
+#define MAX_DESC_W                  256
 
 #pragma pack(1)
 
@@ -39,6 +40,21 @@ typedef struct _RESTOREPTINFOA {
     CHAR  szDescription[MAX_DESC];
 } RESTOREPOINTINFOA, *PRESTOREPOINTINFOA;
 
+typedef struct _RESTOREPTINFOW {
+    DWORD dwEventType;
+    DWORD dwRestorePtType;
+    INT64 llSequenceNumber;
+    WCHAR szDescription[MAX_DESC_W];
+} RESTOREPOINTINFOW, *PRESTOREPOINTINFOW;
+
+typedef struct _RESTOREPTINFOEX {
+    FILETIME ftCreation;
+    DWORD dwEventType;
+    DWORD dwRestorePtType;
+    DWORD dwRPNum;
+    WCHAR szDescription[MAX_DESC_W];
+} RESTOREPOINTINFOEX, *PRESTOREPOINTINFOEX;
+
 typedef struct _SMGRSTATUS {
     DWORD nStatus;
     INT64 llSequenceNumber;
@@ -48,7 +64,10 @@ typedef struct _SMGRSTATUS {
 extern "C" {
 #endif
 
-BOOL WINAPI SRSetRestorePointA(PRESTOREPOINTINFOA, PSTATEMGRSTATUS);
+BOOL WINAPI SRSetRestorePointA(RESTOREPOINTINFOA *, STATEMGRSTATUS *);
+BOOL WINAPI SRSetRestorePointW(RESTOREPOINTINFOW *, STATEMGRSTATUS *);
+#define     SRSetRestorePoint WINELIB_NAME_AW(SRSetRestorePoint)
+
 DWORD WINAPI SRRemoveRestorePoint(DWORD);
 
 #ifdef __cplusplus

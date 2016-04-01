@@ -25,6 +25,7 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "sfc.h"
+#include "srrestoreptapi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(sfc);
@@ -137,4 +138,18 @@ DWORD WINAPI SfcConnectToServer(DWORD unknown)
 {
     FIXME("%x\n", unknown);
     return 0;
+}
+
+BOOL WINAPI SRSetRestorePointA(RESTOREPOINTINFOA *restorepoint, STATEMGRSTATUS *status)
+{
+    FIXME("%p %p\n", restorepoint, status);
+    status->nStatus = ERROR_SERVICE_DISABLED;
+    return FALSE;
+}
+
+BOOL WINAPI SRSetRestorePointW(RESTOREPOINTINFOW *restorepoint, STATEMGRSTATUS *status)
+{
+    FIXME("%p %p\n", restorepoint, status);
+    status->nStatus = ERROR_SERVICE_DISABLED;
+    return FALSE;
 }
