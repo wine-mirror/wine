@@ -74,6 +74,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DCL_RESOURCE_STRUCTURED          */ "dcl_resource_structured",
     /* WINED3DSIH_DCL_SAMPLER                      */ "dcl_sampler",
     /* WINED3DSIH_DCL_TEMPS                        */ "dcl_temps",
+    /* WINED3DSIH_DCL_TESSELLATOR_DOMAIN           */ "dcl_tessellator_domain",
     /* WINED3DSIH_DCL_UAV_TYPED                    */ "dcl_uav_typed",
     /* WINED3DSIH_DCL_VERTICES_OUT                 */ "dcl_maxOutputVertexCount",
     /* WINED3DSIH_DEF                              */ "def",
@@ -1297,6 +1298,26 @@ static void shader_dump_global_flags(struct wined3d_string_buffer *buffer, DWORD
         shader_addline(buffer, "unknown_flags(%#x)", global_flags);
 }
 
+static void shader_dump_tessellator_domain(struct wined3d_string_buffer *buffer,
+        enum wined3d_tessellator_domain domain)
+{
+    switch (domain)
+    {
+        case WINED3D_TESSELLATOR_DOMAIN_LINE:
+            shader_addline(buffer, "line");
+            break;
+        case WINED3D_TESSELLATOR_DOMAIN_TRIANGLE:
+            shader_addline(buffer, "triangle");
+            break;
+        case WINED3D_TESSELLATOR_DOMAIN_QUAD:
+            shader_addline(buffer, "quad");
+            break;
+        default:
+            shader_addline(buffer, "unknown_tessellator_domain(%#x)", domain);
+            break;
+    }
+}
+
 static void shader_dump_sysval_semantic(struct wined3d_string_buffer *buffer, enum wined3d_sysval_semantic semantic)
 {
     unsigned int i;
@@ -2092,6 +2113,11 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
                 || ins.handler_idx == WINED3DSIH_DCL_OUTPUT_CONTROL_POINT_COUNT)
         {
             shader_addline(&buffer, "%s %u", shader_opcode_names[ins.handler_idx], ins.declaration.count);
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_TESSELLATOR_DOMAIN)
+        {
+            shader_addline(&buffer, "%s ", shader_opcode_names[ins.handler_idx]);
+            shader_dump_tessellator_domain(&buffer, ins.declaration.tessellator_domain);
         }
         else if (ins.handler_idx == WINED3DSIH_DEF)
         {

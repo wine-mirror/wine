@@ -64,6 +64,9 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 #define WINED3D_SM5_CONTROL_POINT_COUNT_SHIFT   11
 #define WINED3D_SM5_CONTROL_POINT_COUNT_MASK    (0xffu << WINED3D_SM5_CONTROL_POINT_COUNT_SHIFT)
 
+#define WINED3D_SM5_TESSELLATOR_DOMAIN_SHIFT    11
+#define WINED3D_SM5_TESSELLATOR_DOMAIN_MASK     (0xfu << WINED3D_SM5_TESSELLATOR_DOMAIN_SHIFT)
+
 #define WINED3D_SM4_OPCODE_MASK                 0xff
 
 #define WINED3D_SM4_REGISTER_MODIFIER           (0x1u << 31)
@@ -195,6 +198,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM5_OP_DERIV_RTY_FINE                   = 0x7d,
     WINED3D_SM5_OP_DCL_INPUT_CONTROL_POINT_COUNT    = 0x93,
     WINED3D_SM5_OP_DCL_OUTPUT_CONTROL_POINT_COUNT   = 0x94,
+    WINED3D_SM5_OP_DCL_TESSELLATOR_DOMAIN           = 0x95,
     WINED3D_SM5_OP_DCL_HS_MAX_TESSFACTOR            = 0x98,
     WINED3D_SM5_OP_DCL_HS_FORK_PHASE_INSTANCE_COUNT = 0x99,
     WINED3D_SM5_OP_DCL_UAV_TYPED                    = 0x9c,
@@ -414,6 +418,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM5_OP_DERIV_RTY_FINE,                   WINED3DSIH_DSY_FINE,                         "f",    "f"},
     {WINED3D_SM5_OP_DCL_INPUT_CONTROL_POINT_COUNT,    WINED3DSIH_DCL_INPUT_CONTROL_POINT_COUNT,    "",     ""},
     {WINED3D_SM5_OP_DCL_OUTPUT_CONTROL_POINT_COUNT,   WINED3DSIH_DCL_OUTPUT_CONTROL_POINT_COUNT,   "",     ""},
+    {WINED3D_SM5_OP_DCL_TESSELLATOR_DOMAIN,           WINED3DSIH_DCL_TESSELLATOR_DOMAIN,           "",     ""},
     {WINED3D_SM5_OP_DCL_HS_MAX_TESSFACTOR,            WINED3DSIH_DCL_HS_MAX_TESSFACTOR,            "",     ""},
     {WINED3D_SM5_OP_DCL_HS_FORK_PHASE_INSTANCE_COUNT, WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT, "",     ""},
     {WINED3D_SM5_OP_DCL_UAV_TYPED,                    WINED3DSIH_DCL_UAV_TYPED,                    "",     ""},
@@ -1038,6 +1043,11 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
         if (ins->flags & ~WINED3D_SM4_SAMPLER_COMPARISON)
             FIXME("Unhandled sampler mode %#x.\n", ins->flags);
         shader_sm4_read_dst_param(priv, &p, WINED3D_DATA_SAMPLER, &ins->declaration.dst);
+    }
+    else if (opcode == WINED3D_SM5_OP_DCL_TESSELLATOR_DOMAIN)
+    {
+        ins->declaration.tessellator_domain = (opcode_token & WINED3D_SM5_TESSELLATOR_DOMAIN_MASK)
+                >> WINED3D_SM5_TESSELLATOR_DOMAIN_SHIFT;
     }
     else if (opcode == WINED3D_SM4_OP_DCL_OUTPUT_TOPOLOGY)
     {

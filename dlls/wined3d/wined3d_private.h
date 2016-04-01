@@ -439,6 +439,13 @@ enum wined3d_shader_global_flags
     WINED3DSGF_ENABLE_RAW_AND_STRUCTURED_BUFFERS = 0x8,
 };
 
+enum wined3d_tessellator_domain
+{
+    WINED3D_TESSELLATOR_DOMAIN_LINE      = 1,
+    WINED3D_TESSELLATOR_DOMAIN_TRIANGLE  = 2,
+    WINED3D_TESSELLATOR_DOMAIN_QUAD      = 3,
+};
+
 /* Undocumented opcode control to identify projective texture lookups in ps 2.0 and later */
 #define WINED3DSI_TEXLD_PROJECT     0x1
 #define WINED3DSI_TEXLD_BIAS        0x2
@@ -531,6 +538,7 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_DCL_RESOURCE_STRUCTURED,
     WINED3DSIH_DCL_SAMPLER,
     WINED3DSIH_DCL_TEMPS,
+    WINED3DSIH_DCL_TESSELLATOR_DOMAIN,
     WINED3DSIH_DCL_UAV_TYPED,
     WINED3DSIH_DCL_VERTICES_OUT,
     WINED3DSIH_DEF,
@@ -857,6 +865,7 @@ struct wined3d_shader_instruction
         UINT count;
         const struct wined3d_shader_immediate_constant_buffer *icb;
         struct wined3d_shader_structured_resource structured_resource;
+        enum wined3d_tessellator_domain tessellator_domain;
         float max_tessellation_factor;
     } declaration;
 };
