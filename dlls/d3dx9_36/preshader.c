@@ -86,6 +86,11 @@ table_info[] =
     {sizeof(float),  4, PRES_VT_FLOAT }  /* PRES_REGTAB_TEMP */
 };
 
+static const char *table_symbol[] =
+{
+    "imm", "c", "oc", "ob", "oi", "r", "(null)",
+};
+
 static const enum pres_reg_tables pres_regset2table[] =
 {
     PRES_REGTAB_OBCONST,  /* D3DXRS_BOOL */
@@ -410,6 +415,65 @@ static void update_table_sizes_consts(unsigned int *table_sizes, struct d3dx_con
     }
 }
 
+static void dump_arg(struct d3dx_regstore *rs, const struct d3dx_pres_operand *arg, int component_count)
+{
+    static const char *xyzw_str = "xyzw";
+    unsigned int i, table;
+
+    table = arg->table;
+    if (table == PRES_REGTAB_IMMED)
+    {
+        TRACE("(");
+        for (i = 0; i < component_count; ++i)
+            TRACE(i < component_count - 1 ? "%.16e, " : "%.16e",
+                    ((double *)rs->tables[PRES_REGTAB_IMMED])[arg->offset + i]);
+        TRACE(")");
+    }
+    else
+    {
+        TRACE("%s%u.", table_symbol[table], get_reg_offset(table, arg->offset));
+        for (i = 0; i < component_count; ++i)
+            TRACE("%c", xyzw_str[(arg->offset + i) % 4]);
+    }
+}
+
+static void dump_registers(struct d3dx_const_tab *ctab)
+{
+    unsigned int table, i;
+
+    for (i = 0; i < ctab->input_count; ++i)
+    {
+        table = ctab->regset2table[ctab->inputs[i].RegisterSet];
+        TRACE("//   %-12s %s%-4u %u\n", ctab->inputs_param[i] ? ctab->inputs_param[i]->name : "(nil)",
+                table_symbol[table], ctab->inputs[i].RegisterIndex, ctab->inputs[i].RegisterCount);
+    }
+}
+
+static void dump_ins(struct d3dx_regstore *rs, const struct d3dx_pres_ins *ins)
+{
+    unsigned int i;
+
+    TRACE("    %s ", pres_op_info[ins->op].mnem);
+    dump_arg(rs, &ins->output, pres_op_info[ins->op].func_all_comps ? 1 : ins->component_count);
+    for (i = 0; i < pres_op_info[ins->op].input_count; ++i)
+    {
+        TRACE(", ");
+        dump_arg(rs, &ins->inputs[i], ins->scalar_op && !i ? 1 : ins->component_count);
+    }
+    TRACE("\n");
+}
+
+static void dump_preshader(struct d3dx_preshader *pres)
+{
+    unsigned int i;
+
+    TRACE("// Preshader registers:\n");
+    dump_registers(&pres->inputs);
+    TRACE("    preshader\n");
+    for (i = 0; i < pres->ins_count; ++i)
+        dump_ins(&pres->regs, &pres->ins[i]);
+}
+
 static HRESULT parse_preshader(struct d3dx_preshader *pres, unsigned int *ptr, unsigned int count, struct d3dx9_base_effect *base)
 {
     unsigned int *p;
@@ -579,8 +643,15 @@ void d3dx_create_param_eval(struct d3dx9_base_effect *base_effect, void *byte_co
     }
 
     if (TRACE_ON(d3dx))
+    {
         dump_bytecode(byte_code, byte_code_size);
-
+        dump_preshader(&peval->pres);
+        if (shader)
+        {
+            TRACE("// Shader registers:\n");
+            dump_registers(&peval->shader_inputs);
+        }
+    }
     *peval_out = peval;
     TRACE("Created parameter evaluator %p.\n", *peval_out);
     return;
