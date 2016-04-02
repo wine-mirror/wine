@@ -40,8 +40,10 @@ extern "C" {
 #define E_NONE                              __MSABI_LONG(0x0000)
 #define E_API_NOTIMPL                       __MSABI_LONG(0x0001)
 #define E_HDCINVALID                        __MSABI_LONG(0x0006)
+#define E_NOFREEMEMORY                      __MSABI_LONG(0x0007)
 #define E_NOTATRUETYPEFONT                  __MSABI_LONG(0x000a)
 #define E_ERRORACCESSINGFONTDATA            __MSABI_LONG(0x000c)
+#define E_ERRORACCESSINGFACENAME            __MSABI_LONG(0x000d)
 #define E_FACENAMEINVALID                   __MSABI_LONG(0x0113)
 #define E_PERMISSIONSINVALID                __MSABI_LONG(0x0117)
 #define E_PBENABLEDINVALID                  __MSABI_LONG(0x0118)
@@ -75,6 +77,7 @@ LONG WINAPI TTDeleteEmbeddedFont(HANDLE,ULONG,ULONG*);
 
 LONG WINAPI TTGetEmbeddingType(HDC, ULONG*);
 LONG WINAPI TTIsEmbeddingEnabledForFacename(LPCSTR facename, BOOL *enabled);
+LONG WINAPI TTIsEmbeddingEnabled(HDC hdc, BOOL *enabled);
 
 #ifdef __cplusplus
 }
