@@ -148,9 +148,27 @@ LONG WINAPI TTIsEmbeddingEnabledForFacename(LPCSTR facename, BOOL *enabled)
 
 LONG WINAPI TTIsEmbeddingEnabled(HDC hDC, BOOL *enabled)
 {
-    FIXME("(%p %p) stub\n", hDC, enabled);
-    if (enabled) *enabled = FALSE;
-    return E_API_NOTIMPL;
+    OUTLINETEXTMETRICA *otm;
+    LONG ret;
+    UINT len;
+
+    TRACE("(%p %p)\n", hDC, enabled);
+
+    if (!hDC)
+        return E_HDCINVALID;
+
+    len = GetOutlineTextMetricsA(hDC, 0, NULL);
+    if (!len)
+        return E_ERRORACCESSINGFACENAME;
+
+    otm = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!otm)
+        return E_NOFREEMEMORY;
+
+    GetOutlineTextMetricsA(hDC, len, otm);
+    ret = TTIsEmbeddingEnabledForFacename(otm->otmpFaceName, enabled);
+    HeapFree(GetProcessHeap(), 0, otm);
+    return ret;
 }
 
 LONG WINAPI TTDeleteEmbeddedFont(HANDLE hFontReference, ULONG flags, ULONG *status)
