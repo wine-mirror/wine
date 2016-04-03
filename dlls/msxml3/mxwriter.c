@@ -46,6 +46,8 @@ static const WCHAR quotW[]  = {'\"'};
 static const WCHAR closetagW[] = {'>','\r','\n'};
 static const WCHAR crlfW[] = {'\r','\n'};
 static const WCHAR entityW[] = {'<','!','E','N','T','I','T','Y',' '};
+static const WCHAR publicW[] = {'P','U','B','L','I','C',' '};
+static const WCHAR systemW[] = {'S','Y','S','T','E','M',' '};
 
 /* should be ordered as encoding names are sorted */
 typedef enum
@@ -1532,8 +1534,6 @@ static HRESULT WINAPI SAXLexicalHandler_startDTD(ISAXLexicalHandler *iface,
 
     if (publicId)
     {
-        static const WCHAR publicW[] = {'P','U','B','L','I','C',' '};
-
         write_output_buffer(This, publicW, sizeof(publicW)/sizeof(WCHAR));
         write_output_buffer_quoted(This, publicId, publicId_len);
 
@@ -1549,8 +1549,6 @@ static HRESULT WINAPI SAXLexicalHandler_startDTD(ISAXLexicalHandler *iface,
     }
     else if (systemId)
     {
-        static const WCHAR systemW[] = {'S','Y','S','T','E','M',' '};
-
         write_output_buffer(This, systemW, sizeof(systemW)/sizeof(WCHAR));
         write_output_buffer_quoted(This, systemId, systemId_len);
         if (*systemId)
@@ -1763,8 +1761,6 @@ static HRESULT WINAPI SAXDeclHandler_externalEntityDecl(ISAXDeclHandler *iface,
     const WCHAR *name, int n_name, const WCHAR *publicId, int n_publicId,
     const WCHAR *systemId, int n_systemId)
 {
-    static const WCHAR publicW[] = {'P','U','B','L','I','C',' '};
-    static const WCHAR systemW[] = {'S','Y','S','T','E','M',' '};
     mxwriter *This = impl_from_ISAXDeclHandler( iface );
 
     TRACE("(%p)->(%s:%d %s:%d %s:%d)\n", This, debugstr_wn(name, n_name), n_name,
@@ -2290,14 +2286,45 @@ static ULONG WINAPI SAXDTDHandler_Release(ISAXDTDHandler *iface)
 }
 
 static HRESULT WINAPI SAXDTDHandler_notationDecl(ISAXDTDHandler *iface,
-    const WCHAR *name, INT nname,
-    const WCHAR *publicid, INT npublicid,
-    const WCHAR *systemid, INT nsystemid)
+    const WCHAR *name, INT n_name,
+    const WCHAR *publicid, INT n_publicid,
+    const WCHAR *systemid, INT n_systemid)
 {
+    static const WCHAR notationW[] = {'<','!','N','O','T','A','T','I','O','N',' '};
     mxwriter *This = impl_from_ISAXDTDHandler( iface );
-    FIXME("(%p)->(%s:%d, %s:%d, %s:%d): stub\n", This, debugstr_wn(name, nname), nname,
-        debugstr_wn(publicid, npublicid), npublicid, debugstr_wn(systemid, nsystemid), nsystemid);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s:%d, %s:%d, %s:%d)\n", This, debugstr_wn(name, n_name), n_name,
+        debugstr_wn(publicid, n_publicid), n_publicid, debugstr_wn(systemid, n_systemid), n_systemid);
+
+    if (!name || !n_name)
+        return E_INVALIDARG;
+
+    write_output_buffer(This, notationW, sizeof(notationW)/sizeof(WCHAR));
+    write_output_buffer(This, name, n_name);
+
+    if (!publicid && !systemid)
+        return E_INVALIDARG;
+
+    write_output_buffer(This, spaceW, sizeof(spaceW)/sizeof(WCHAR));
+    if (publicid)
+    {
+        write_output_buffer(This, publicW, sizeof(publicW)/sizeof(WCHAR));
+        write_output_buffer_quoted(This, publicid, n_publicid);
+        if (systemid)
+        {
+            write_output_buffer(This, spaceW, sizeof(spaceW)/sizeof(WCHAR));
+            write_output_buffer_quoted(This, systemid, n_systemid);
+        }
+    }
+    else
+    {
+        write_output_buffer(This, systemW, sizeof(systemW)/sizeof(WCHAR));
+        write_output_buffer_quoted(This, systemid, n_systemid);
+    }
+
+    write_output_buffer(This, closetagW, sizeof(closetagW)/sizeof(WCHAR));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SAXDTDHandler_unparsedEntityDecl(ISAXDTDHandler *iface,
