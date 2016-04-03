@@ -390,7 +390,7 @@ HRESULT surface_create_dib_section(struct wined3d_surface *surface)
     b_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     wined3d_texture_get_pitch(texture, surface->texture_level, &row_pitch, &slice_pitch);
     b_info->bmiHeader.biWidth = row_pitch / format->byte_count;
-    b_info->bmiHeader.biHeight = 0 - surface->resource.height;
+    b_info->bmiHeader.biHeight = 0 - wined3d_texture_get_level_height(texture, surface->texture_level);
     b_info->bmiHeader.biSizeImage = slice_pitch;
     b_info->bmiHeader.biPlanes = 1;
     b_info->bmiHeader.biBitCount = format->byte_count * 8;
