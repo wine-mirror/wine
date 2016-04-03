@@ -423,7 +423,7 @@ SYSCALL_FUNC( wld_mmap, 9 /* SYS_mmap */ );
 int wld_mprotect( const void *addr, size_t len, int prot );
 SYSCALL_FUNC( wld_mprotect, 10 /* SYS_mprotect */ );
 
-int wld_prctl( int code, int arg );
+int wld_prctl( int code, long arg );
 SYSCALL_FUNC( wld_prctl, 157 /* SYS_prctl */ );
 
 uid_t wld_getuid(void);
