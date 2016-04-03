@@ -487,9 +487,13 @@ static void surface_evict_sysmem(struct wined3d_surface *surface)
 
 static BOOL surface_is_full_rect(const struct wined3d_surface *surface, const RECT *r)
 {
-    if ((r->left && r->right) || abs(r->right - r->left) != surface->resource.width)
+    unsigned int t;
+
+    t = wined3d_texture_get_level_width(surface->container, surface->texture_level);
+    if ((r->left && r->right) || abs(r->right - r->left) != t)
         return FALSE;
-    if ((r->top && r->bottom) || abs(r->bottom - r->top) != surface->resource.height)
+    t = wined3d_texture_get_level_height(surface->container, surface->texture_level);
+    if ((r->top && r->bottom) || abs(r->bottom - r->top) != t)
         return FALSE;
     return TRUE;
 }
