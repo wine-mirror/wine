@@ -4325,20 +4325,18 @@ static struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined
 HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device,
         UINT x_hotspot, UINT y_hotspot, struct wined3d_texture *texture, unsigned int sub_resource_idx)
 {
+    unsigned int texture_level = sub_resource_idx % texture->level_count;
+    unsigned int cursor_width, cursor_height;
     struct wined3d_display_mode mode;
     struct wined3d_map_desc map_desc;
-    struct wined3d_resource *sub_resource;
-    struct wined3d_surface *cursor_image;
     HRESULT hr;
 
     TRACE("device %p, x_hotspot %u, y_hotspot %u, texture %p, sub_resource_idx %u.\n",
             device, x_hotspot, y_hotspot, texture, sub_resource_idx);
 
-    if (!(sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx))
-            || sub_resource->type != WINED3D_RTYPE_SURFACE)
+    if (sub_resource_idx >= texture->level_count * texture->layer_count
+            || texture->resource.type != WINED3D_RTYPE_TEXTURE_2D)
         return WINED3DERR_INVALIDCALL;
-
-    cursor_image = surface_from_resource(sub_resource);
 
     if (device->cursor_texture)
     {
@@ -4359,11 +4357,12 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (cursor_image->resource.width > mode.width || cursor_image->resource.height > mode.height)
+    cursor_width = wined3d_texture_get_level_width(texture, texture_level);
+    cursor_height = wined3d_texture_get_level_height(texture, texture_level);
+    if (cursor_width > mode.width || cursor_height > mode.height)
     {
-        WARN("Surface %p dimensions are %ux%u, but screen dimensions are %ux%u.\n",
-                cursor_image, cursor_image->resource.width, cursor_image->resource.height,
-                mode.width, mode.height);
+        WARN("Texture %p, sub-resource %u dimensions are %ux%u, but screen dimensions are %ux%u.\n",
+                texture, sub_resource_idx, cursor_width, cursor_height, mode.width, mode.height);
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -4379,9 +4378,9 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (cursor_image->resource.width == 32 && cursor_image->resource.height == 32)
+    if (cursor_width == 32 && cursor_height == 32)
     {
-        UINT mask_size = cursor_image->resource.width * cursor_image->resource.height / 8;
+        UINT mask_size = cursor_width * cursor_height / 8;
         ICONINFO cursor_info;
         DWORD *mask_bits;
         HCURSOR cursor;
@@ -4398,10 +4397,8 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
         cursor_info.fIcon = FALSE;
         cursor_info.xHotspot = x_hotspot;
         cursor_info.yHotspot = y_hotspot;
-        cursor_info.hbmMask = CreateBitmap(cursor_image->resource.width,
-                cursor_image->resource.height, 1, 1, mask_bits);
-        cursor_info.hbmColor = CreateBitmap(cursor_image->resource.width,
-                cursor_image->resource.height, 1, 32, map_desc.data);
+        cursor_info.hbmMask = CreateBitmap(cursor_width, cursor_height, 1, 1, mask_bits);
+        cursor_info.hbmColor = CreateBitmap(cursor_width, cursor_height, 1, 32, map_desc.data);
         wined3d_resource_unmap(&texture->resource, sub_resource_idx);
 
         /* Create our cursor and clean up. */
@@ -4419,9 +4416,9 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
         HeapFree(GetProcessHeap(), 0, mask_bits);
     }
 
-    TRACE("New cursor dimensions are %ux%u.\n", cursor_image->resource.width, cursor_image->resource.height);
-    device->cursorWidth = cursor_image->resource.width;
-    device->cursorHeight = cursor_image->resource.height;
+    TRACE("New cursor dimensions are %ux%u.\n", cursor_width, cursor_height);
+    device->cursorWidth = cursor_width;
+    device->cursorHeight = cursor_height;
     device->xHotSpot = x_hotspot;
     device->yHotSpot = y_hotspot;
 
