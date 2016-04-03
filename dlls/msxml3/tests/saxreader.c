@@ -2927,7 +2927,6 @@ static void test_mxwriter_handlers(void)
         ok(hr == S_OK, "%s, expected S_OK, got %08x\n", wine_dbgstr_guid(riids[i]), hr);
         ok(writer2 == writer, "got %p, expected %p\n", writer2, writer);
         EXPECT_REF(writer, 3);
-        EXPECT_REF(writer2, 3);
         IMXWriter_Release(writer2);
         IUnknown_Release(handler);
     }
