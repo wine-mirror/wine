@@ -899,7 +899,7 @@
 @ stub PsReferenceImpersonationToken
 @ stub PsReferencePrimaryToken
 @ stdcall PsRemoveCreateThreadNotifyRoutine(ptr)
-@ stub PsRemoveLoadImageNotifyRoutine
+@ stdcall PsRemoveLoadImageNotifyRoutine(ptr)
 @ stub PsRestoreImpersonation
 @ stub PsReturnPoolQuota
 @ stub PsReturnProcessNonPagedPoolQuota
