@@ -1582,7 +1582,6 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     HGLRC ctx, share_ctx;
     int pixel_format;
     unsigned int s;
-    int swap_interval;
     DWORD state;
     HDC hdc = 0;
     BOOL hdc_is_private = FALSE;
@@ -1836,36 +1835,6 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
             GL_EXTCALL(glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_PERFORMANCE,
                     GL_DONT_CARE, 0, NULL, GL_TRUE));
         }
-    }
-
-    switch (swapchain->desc.swap_interval)
-    {
-        case WINED3DPRESENT_INTERVAL_IMMEDIATE:
-            swap_interval = 0;
-            break;
-        case WINED3DPRESENT_INTERVAL_DEFAULT:
-        case WINED3DPRESENT_INTERVAL_ONE:
-            swap_interval = 1;
-            break;
-        case WINED3DPRESENT_INTERVAL_TWO:
-            swap_interval = 2;
-            break;
-        case WINED3DPRESENT_INTERVAL_THREE:
-            swap_interval = 3;
-            break;
-        case WINED3DPRESENT_INTERVAL_FOUR:
-            swap_interval = 4;
-            break;
-        default:
-            FIXME("Unknown swap interval %#x.\n", swapchain->desc.swap_interval);
-            swap_interval = 1;
-    }
-
-    if (gl_info->supported[WGL_EXT_SWAP_CONTROL])
-    {
-        if (!GL_EXTCALL(wglSwapIntervalEXT(swap_interval)))
-            ERR("wglSwapIntervalEXT failed to set swap interval %d for context %p, last error %#x\n",
-                swap_interval, ret, GetLastError());
     }
 
     gl_info->gl_ops.gl.p_glGetIntegerv(GL_AUX_BUFFERS, &ret->aux_buffers);

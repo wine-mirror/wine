@@ -4899,8 +4899,12 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         wined3d_cs_emit_set_scissor_rect(device->cs, &state->scissor_rect);
     }
 
-    if (reset_state && device->d3d_initialized)
-        hr = create_primary_opengl_context(device, swapchain);
+    if (device->d3d_initialized)
+    {
+        if (reset_state)
+            hr = create_primary_opengl_context(device, swapchain);
+        swapchain_update_swap_interval(swapchain);
+    }
 
     /* All done. There is no need to reload resources or shaders, this will happen automatically on the
      * first use
