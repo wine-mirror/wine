@@ -700,8 +700,8 @@ static void swapchain_gdi_present(struct wined3d_swapchain *swapchain,
 {
     struct wined3d_surface *front, *back;
 
-    front = surface_from_resource(wined3d_texture_get_sub_resource(swapchain->front_buffer, 0));
-    back = surface_from_resource(wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0));
+    front = swapchain->front_buffer->sub_resources[0].u.surface;
+    back = swapchain->back_buffers[0]->sub_resources[0].u.surface;
 
     /* Flip the DC. */
     {
