@@ -3048,6 +3048,7 @@ static void shader_glsl_relop(const struct wined3d_shader_instruction *ins)
             case WINED3DSIH_UGE: op = "greaterThanEqual"; break;
             case WINED3DSIH_LT:  op = "lessThan"; break;
             case WINED3DSIH_ILT: op = "lessThan"; break;
+            case WINED3DSIH_ULT: op = "lessThan"; break;
             case WINED3DSIH_NE:  op = "notEqual"; break;
             case WINED3DSIH_INE: op = "notEqual"; break;
             default:
@@ -3070,6 +3071,7 @@ static void shader_glsl_relop(const struct wined3d_shader_instruction *ins)
             case WINED3DSIH_UGE: op = ">="; break;
             case WINED3DSIH_LT:  op = "<"; break;
             case WINED3DSIH_ILT: op = "<"; break;
+            case WINED3DSIH_ULT: op = "<"; break;
             case WINED3DSIH_NE:  op = "!="; break;
             case WINED3DSIH_INE: op = "!="; break;
             default:
@@ -8293,6 +8295,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_TEXREG2RGB                       */ shader_glsl_texreg2rgb,
     /* WINED3DSIH_UDIV                             */ shader_glsl_udiv,
     /* WINED3DSIH_UGE                              */ shader_glsl_relop,
+    /* WINED3DSIH_ULT                              */ shader_glsl_relop,
     /* WINED3DSIH_USHR                             */ shader_glsl_binop,
     /* WINED3DSIH_UTOF                             */ shader_glsl_to_float,
     /* WINED3DSIH_XOR                              */ shader_glsl_binop,
