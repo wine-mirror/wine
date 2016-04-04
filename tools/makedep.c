@@ -2639,6 +2639,7 @@ static struct strarray output_sources( const struct makefile *make )
                 output_filenames( includes );
                 output_filenames( make->define_args );
                 output_filenames( extradefs );
+                if (make->use_msvcrt) output_filenames( msvcrt_flags );
                 output_filename( "-DWINE_CROSSTEST" );
                 output_filenames( cpp_flags );
                 output_filename( "$(CFLAGS)" );
