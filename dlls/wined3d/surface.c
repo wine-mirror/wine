@@ -1704,27 +1704,31 @@ static inline const struct d3dfmt_converter_desc *find_converter(enum wined3d_fo
 }
 
 static struct wined3d_texture *surface_convert_format(struct wined3d_texture *src_texture,
-        unsigned int sub_resource_idx, enum wined3d_format_id format)
+        unsigned int sub_resource_idx, const struct wined3d_format *dst_format)
 {
-    struct wined3d_map_desc src_map, dst_map;
-    const struct d3dfmt_converter_desc *conv;
+    const struct wined3d_format *src_format = src_texture->resource.format;
+    struct wined3d_device *device = src_texture->resource.device;
+    const struct d3dfmt_converter_desc *conv = NULL;
     struct wined3d_texture *dst_texture;
     struct wined3d_resource_desc desc;
+    struct wined3d_map_desc src_map;
 
-    if (!(conv = find_converter(src_texture->resource.format->id, format)))
+    if (!(conv = find_converter(src_format->id, dst_format->id)) && (!device->d3d_initialized
+            || !is_identity_fixup(src_format->color_fixup) || src_format->convert
+            || !is_identity_fixup(dst_format->color_fixup) || dst_format->convert))
     {
         FIXME("Cannot find a conversion function from format %s to %s.\n",
-                debug_d3dformat(src_texture->resource.format->id), debug_d3dformat(format));
+                debug_d3dformat(src_format->id), debug_d3dformat(dst_format->id));
         return NULL;
     }
 
     /* FIXME: Multisampled conversion? */
     wined3d_resource_get_desc(src_texture->sub_resources[sub_resource_idx].resource, &desc);
     desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
-    desc.format = format;
+    desc.format = dst_format->id;
     desc.usage = 0;
     desc.pool = WINED3D_POOL_SCRATCH;
-    if (FAILED(wined3d_texture_create(src_texture->resource.device, &desc, 1,
+    if (FAILED(wined3d_texture_create(device, &desc, 1,
             WINED3D_TEXTURE_CREATE_MAPPABLE | WINED3D_TEXTURE_CREATE_DISCARD,
             NULL, NULL, &wined3d_null_parent_ops, &dst_texture)))
     {
@@ -1733,8 +1737,6 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_texture *sr
     }
 
     memset(&src_map, 0, sizeof(src_map));
-    memset(&dst_map, 0, sizeof(dst_map));
-
     if (FAILED(wined3d_resource_map(&src_texture->resource, sub_resource_idx,
             &src_map, NULL, WINED3D_MAP_READONLY)))
     {
@@ -1742,17 +1744,45 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_texture *sr
         wined3d_texture_decref(dst_texture);
         return NULL;
     }
-    if (FAILED(wined3d_resource_map(&dst_texture->resource, 0, &dst_map, NULL, 0)))
+    if (conv)
     {
-        ERR("Failed to map the destination texture.\n");
-        wined3d_resource_unmap(&src_texture->resource, sub_resource_idx);
-        wined3d_texture_decref(dst_texture);
-        return NULL;
+        struct wined3d_map_desc dst_map;
+
+        memset(&dst_map, 0, sizeof(dst_map));
+        if (FAILED(wined3d_resource_map(&dst_texture->resource, 0, &dst_map, NULL, 0)))
+        {
+            ERR("Failed to map the destination texture.\n");
+            wined3d_resource_unmap(&src_texture->resource, sub_resource_idx);
+            wined3d_texture_decref(dst_texture);
+            return NULL;
+        }
+
+        conv->convert(src_map.data, dst_map.data, src_map.row_pitch, dst_map.row_pitch, desc.width, desc.height);
+
+        wined3d_resource_unmap(&dst_texture->resource, 0);
     }
+    else
+    {
+        struct wined3d_bo_address data = {0, src_map.data};
+        RECT src_rect = {0, 0, desc.width, desc.height};
+        const struct wined3d_gl_info *gl_info;
+        struct wined3d_context *context;
+        POINT dst_point = {0, 0};
 
-    conv->convert(src_map.data, dst_map.data, src_map.row_pitch, dst_map.row_pitch, desc.width, desc.height);
+        TRACE("Using upload conversion.\n");
+        context = context_acquire(device, NULL);
+        gl_info = context->gl_info;
 
-    wined3d_resource_unmap(&dst_texture->resource, 0);
+        wined3d_texture_prepare_texture(dst_texture, context, FALSE);
+        wined3d_texture_bind_and_dirtify(dst_texture, context, FALSE);
+        wined3d_surface_upload_data(dst_texture->sub_resources[0].u.surface, gl_info, src_format,
+                &src_rect, src_map.row_pitch, &dst_point, FALSE, wined3d_const_bo_address(&data));
+
+        context_release(context);
+
+        wined3d_texture_validate_location(dst_texture, 0, WINED3D_LOCATION_TEXTURE_RGB);
+        wined3d_texture_invalidate_location(dst_texture, 0, ~WINED3D_LOCATION_TEXTURE_RGB);
+    }
     wined3d_resource_unmap(&src_texture->resource, sub_resource_idx);
 
     return dst_texture;
@@ -3664,7 +3694,7 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
         {
             if (dst_texture->resource.format->id != src_texture->resource.format->id)
             {
-                if (!(converted_texture = surface_convert_format(src_texture, src_sub_resource_idx, dst_format->id)))
+                if (!(converted_texture = surface_convert_format(src_texture, src_sub_resource_idx, dst_format)))
                 {
                     /* The conv function writes a FIXME */
                     WARN("Cannot convert source surface format to dest format.\n");
