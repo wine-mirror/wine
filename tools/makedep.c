@@ -2836,6 +2836,8 @@ static struct strarray output_sources( const struct makefile *make )
         output( "\t$(AR) $(ARFLAGS) $@" );
         output_filenames_obj_dir( make, object_files );
         output( "\n\t$(RANLIB) $@\n" );
+        add_install_rule( make, install_rules, make->staticlib, make->staticlib,
+                          strmake( "d$(dlldir)/%s", make->staticlib ));
         if (crosstarget && make->module)
         {
             char *name = replace_extension( make->staticlib, ".a", ".cross.a" );
@@ -3461,7 +3463,12 @@ static void load_sources( struct makefile *make )
         make->use_msvcrt = !strncmp( make->imports.str[i], "msvcr", 5 ) ||
                            !strcmp( make->imports.str[i], "ucrtbase" );
 
-    if (make->module && !make->install_lib.count) strarray_add( &make->install_lib, make->module );
+    if (make->module && !make->install_lib.count && !make->install_dev.count)
+    {
+        if (make->importlib) strarray_add( &make->install_dev, make->importlib );
+        if (make->staticlib) strarray_add( &make->install_dev, make->staticlib );
+        else strarray_add( &make->install_lib, make->module );
+    }
 
     make->include_paths = empty_strarray;
     make->define_args = empty_strarray;
