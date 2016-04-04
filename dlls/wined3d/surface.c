@@ -2861,7 +2861,7 @@ static void surface_load_ds_location(struct wined3d_surface *surface, struct win
         /* Note that we use depth_blt here as well, rather than glCopyTexImage2D
          * directly on the FBO texture. That's because we need to flip. */
         context_apply_fbo_state_blit(context, GL_FRAMEBUFFER,
-                surface_from_resource(wined3d_texture_get_sub_resource(context->swapchain->front_buffer, 0)),
+                wined3d_texture_get_sub_resource(context->swapchain->front_buffer, 0)->u.surface,
                 NULL, WINED3D_LOCATION_DRAWABLE);
         if (surface->texture_target == GL_TEXTURE_RECTANGLE_ARB)
         {
@@ -2907,7 +2907,7 @@ static void surface_load_ds_location(struct wined3d_surface *surface, struct win
         TRACE("Copying depth texture to onscreen depth buffer.\n");
 
         context_apply_fbo_state_blit(context, GL_FRAMEBUFFER,
-                surface_from_resource(wined3d_texture_get_sub_resource(context->swapchain->front_buffer, 0)),
+                wined3d_texture_get_sub_resource(context->swapchain->front_buffer, 0)->u.surface,
                 NULL, WINED3D_LOCATION_DRAWABLE);
         surface_depth_blt(surface, context, texture->texture_rgb.name,
                 0, surface->pow2Height - h, w, h, surface->texture_target);
