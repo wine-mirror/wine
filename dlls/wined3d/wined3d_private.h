@@ -2528,8 +2528,8 @@ BOOL wined3d_texture_check_block_align(const struct wined3d_texture *texture,
 GLenum wined3d_texture_get_gl_buffer(const struct wined3d_texture *texture) DECLSPEC_HIDDEN;
 void wined3d_texture_get_memory(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         struct wined3d_bo_address *data, DWORD locations) DECLSPEC_HIDDEN;
-struct wined3d_resource *wined3d_texture_get_sub_resource(const struct wined3d_texture *texture,
-        UINT sub_resource_idx) DECLSPEC_HIDDEN;
+struct wined3d_texture_sub_resource *wined3d_texture_get_sub_resource(struct wined3d_texture *texture,
+        unsigned int sub_resource_idx) DECLSPEC_HIDDEN;
 void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, DWORD location) DECLSPEC_HIDDEN;
 void wined3d_texture_load(struct wined3d_texture *texture,

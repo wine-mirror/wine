@@ -4036,9 +4036,10 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
         unsigned int sub_resource_idx, const struct wined3d_box *box, const void *data, unsigned int row_pitch,
         unsigned int depth_pitch)
 {
-    struct wined3d_resource *sub_resource;
+    struct wined3d_texture_sub_resource *sub_resource;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_const_bo_address addr;
+    unsigned int width, height, level;
     struct wined3d_context *context;
     struct wined3d_texture *texture;
     struct wined3d_surface *surface;
@@ -4077,14 +4078,18 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
         WARN("Invalid sub_resource_idx %u.\n", sub_resource_idx);
         return;
     }
-    surface = surface_from_resource(sub_resource);
+    surface = sub_resource->u.surface;
+
+    level = sub_resource_idx % texture->level_count;
+    width = wined3d_texture_get_level_width(texture, level);
+    height = wined3d_texture_get_level_height(texture, level);
 
     src_rect.left = 0;
     src_rect.top = 0;
     if (box)
     {
-        if (box->left >= box->right || box->right > sub_resource->width
-                || box->top >= box->bottom || box->bottom > sub_resource->height
+        if (box->left >= box->right || box->right > width
+                || box->top >= box->bottom || box->bottom > height
                 || box->front >= box->back)
         {
             WARN("Invalid box %s specified.\n", debug_box(box));
@@ -4098,8 +4103,8 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
     }
     else
     {
-        src_rect.right = sub_resource->width;
-        src_rect.bottom = sub_resource->height;
+        src_rect.right = width;
+        src_rect.bottom = height;
         dst_point.x = 0;
         dst_point.y = 0;
     }
@@ -4111,8 +4116,7 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
     gl_info = context->gl_info;
 
     /* Only load the surface for partial updates. */
-    if (!dst_point.x && !dst_point.y && src_rect.right == sub_resource->width
-            && src_rect.bottom == sub_resource->height)
+    if (!dst_point.x && !dst_point.y && src_rect.right == width && src_rect.bottom == height)
         wined3d_texture_prepare_texture(texture, context, FALSE);
     else
         surface_load_location(surface, context, WINED3D_LOCATION_TEXTURE_RGB);
