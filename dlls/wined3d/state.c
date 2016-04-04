@@ -42,7 +42,7 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
 
 static void state_undefined(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    ERR("Undefined state.\n");
+    ERR("Undefined state %s (%#x).\n", debug_d3dstate(state_id), state_id);
 }
 
 void state_nop(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
