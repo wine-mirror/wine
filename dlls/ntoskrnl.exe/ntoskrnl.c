@@ -2077,6 +2077,16 @@ NTSTATUS WINAPI PsRemoveCreateThreadNotifyRoutine( PCREATE_THREAD_NOTIFY_ROUTINE
 
 
 /***********************************************************************
+ *           PsRemoveLoadImageNotifyRoutine  (NTOSKRNL.EXE.@)
+ */
+ NTSTATUS WINAPI PsRemoveLoadImageNotifyRoutine(PLOAD_IMAGE_NOTIFY_ROUTINE NotifyRoutine)
+ {
+    FIXME( "stub: %p\n", NotifyRoutine );
+    return STATUS_SUCCESS;
+ }
+
+
+/***********************************************************************
  *           PsTerminateSystemThread   (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI PsTerminateSystemThread(NTSTATUS ExitStatus)
