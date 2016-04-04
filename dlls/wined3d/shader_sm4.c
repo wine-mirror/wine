@@ -225,6 +225,7 @@ enum wined3d_sm4_register_type
     WINED3D_SM5_RT_OUTPUT_CONTROL_POINT_ID = 0x16,
     WINED3D_SM5_RT_FORK_INSTANCE_ID        = 0x17,
     WINED3D_SM5_RT_INPUT_CONTROL_POINT     = 0x19,
+    WINED3D_SM5_RT_PATCH_CONSTANT_DATA     = 0x1b,
     WINED3D_SM5_RT_DOMAIN_LOCATION         = 0x1c,
     WINED3D_SM5_RT_UAV                     = 0x1e,
 };
@@ -758,7 +759,7 @@ static const enum wined3d_shader_register_type register_type_table[] =
     /* UNKNOWN */                                ~0u,
     /* WINED3D_SM5_RT_INPUT_CONTROL_POINT */     WINED3DSPR_INCONTROLPOINT,
     /* UNKNOWN */                                ~0u,
-    /* UNKNOWN */                                ~0u,
+    /* WINED3D_SM5_RT_PATCH_CONSTANT_DATA */     WINED3DSPR_PATCHCONST,
     /* WINED3D_SM5_RT_DOMAIN_LOCATION */         WINED3DSPR_TESSCOORD,
     /* UNKNOWN */                                ~0u,
     /* WINED3D_SM5_RT_UAV */                     WINED3DSPR_UAV,

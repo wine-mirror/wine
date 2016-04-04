@@ -1698,6 +1698,10 @@ static void shader_dump_register(struct wined3d_string_buffer *buffer,
             shader_addline(buffer, "vicp");
             break;
 
+        case WINED3DSPR_PATCHCONST:
+            shader_addline(buffer, "vpc");
+            break;
+
         case WINED3DSPR_TESSCOORD:
             shader_addline(buffer, "vDomainLocation");
             break;
