@@ -1454,6 +1454,7 @@ static void build_unix_import_lib( DLLSPEC *spec )
             output( "\t%s %s%s$%u$%s\n", get_asm_ptr_keyword(),
                     asm_name( prefix ), dll_name, odp->ordinal, name );
             output_function_size( name );
+            output_gnu_stack_note();
             break;
 
         default:
