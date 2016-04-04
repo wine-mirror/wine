@@ -2488,3 +2488,12 @@ NTSTATUS WINAPI CmUnRegisterCallback(LARGE_INTEGER cookie)
     FIXME("(%s): stub\n", wine_dbgstr_longlong(cookie.QuadPart));
     return STATUS_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ *           KeDelayExecutionThread  (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI KeDelayExecutionThread(KPROCESSOR_MODE waitmode, BOOLEAN alertable, PLARGE_INTEGER interval)
+{
+    FIXME("%u %u %p", waitmode, alertable, interval);
+    return STATUS_NOT_IMPLEMENTED;
+}
