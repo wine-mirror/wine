@@ -8203,6 +8203,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_HS_CONTROL_POINT_PHASE           */ NULL,
     /* WINED3DSIH_HS_DECLS                         */ shader_glsl_nop,
     /* WINED3DSIH_HS_FORK_PHASE                    */ NULL,
+    /* WINED3DSIH_HS_JOIN_PHASE                    */ NULL,
     /* WINED3DSIH_IADD                             */ shader_glsl_binop,
     /* WINED3DSIH_IEQ                              */ shader_glsl_relop,
     /* WINED3DSIH_IF                               */ shader_glsl_if,

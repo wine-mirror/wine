@@ -109,6 +109,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_HS_CONTROL_POINT_PHASE           */ "hs_control_point_phase",
     /* WINED3DSIH_HS_DECLS                         */ "hs_decls",
     /* WINED3DSIH_HS_FORK_PHASE                    */ "hs_fork_phase",
+    /* WINED3DSIH_HS_JOIN_PHASE                    */ "hs_join_phase",
     /* WINED3DSIH_IADD                             */ "iadd",
     /* WINED3DSIH_IEQ                              */ "ieq",
     /* WINED3DSIH_IF                               */ "if",
