@@ -1690,6 +1690,10 @@ static void shader_dump_register(struct wined3d_string_buffer *buffer,
             shader_addline(buffer, "vForkInstanceId");
             break;
 
+        case WINED3DSPR_INCONTROLPOINT:
+            shader_addline(buffer, "vicp");
+            break;
+
         case WINED3DSPR_TESSCOORD:
             shader_addline(buffer, "vDomainLocation");
             break;
