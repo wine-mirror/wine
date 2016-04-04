@@ -1686,6 +1686,10 @@ static void shader_dump_register(struct wined3d_string_buffer *buffer,
             shader_addline(buffer, "u");
             break;
 
+        case WINED3DSPR_OUTPOINTID:
+            shader_addline(buffer, "vOutputControlPointID");
+            break;
+
         case WINED3DSPR_FORKINSTID:
             shader_addline(buffer, "vForkInstanceId");
             break;
