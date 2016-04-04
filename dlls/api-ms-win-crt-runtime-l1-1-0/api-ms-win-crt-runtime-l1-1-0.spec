@@ -41,7 +41,7 @@
 @ cdecl _get_doserrno(ptr) ucrtbase._get_doserrno
 @ cdecl _get_errno(ptr) ucrtbase._get_errno
 @ cdecl _get_initial_narrow_environment() ucrtbase._get_initial_narrow_environment
-@ stub _get_initial_wide_environment
+@ cdecl _get_initial_wide_environment() ucrtbase._get_initial_wide_environment
 @ cdecl _get_invalid_parameter_handler() ucrtbase._get_invalid_parameter_handler
 @ stub _get_narrow_winmain_command_line
 @ cdecl _get_pgmptr(ptr) ucrtbase._get_pgmptr

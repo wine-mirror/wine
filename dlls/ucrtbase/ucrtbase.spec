@@ -366,7 +366,7 @@
 @ cdecl _get_fmode(ptr) MSVCRT__get_fmode
 @ cdecl _get_heap_handle()
 @ cdecl _get_initial_narrow_environment()
-@ stub _get_initial_wide_environment
+@ cdecl _get_initial_wide_environment()
 @ cdecl _get_invalid_parameter_handler()
 @ stub _get_narrow_winmain_command_line
 @ cdecl _get_osfhandle(long) MSVCRT__get_osfhandle

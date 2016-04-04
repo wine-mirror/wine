@@ -668,6 +668,14 @@ int CDECL _initialize_narrow_environment(void)
 }
 
 /*********************************************************************
+ *		_get_initial_wide_environment (UCRTBASE.@)
+ */
+MSVCRT_wchar_t** CDECL _get_initial_wide_environment(void)
+{
+  return MSVCRT___winitenv;
+}
+
+/*********************************************************************
  *		_configure_wide_argv (UCRTBASE.@)
  */
 int CDECL _configure_wide_argv(int mode)
