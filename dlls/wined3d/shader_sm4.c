@@ -731,33 +731,33 @@ static const enum wined3d_shader_register_type register_type_table[] =
     /* WINED3D_SM4_RT_TEMP */             WINED3DSPR_TEMP,
     /* WINED3D_SM4_RT_INPUT */            WINED3DSPR_INPUT,
     /* WINED3D_SM4_RT_OUTPUT */           WINED3DSPR_OUTPUT,
-    /* UNKNOWN */                         0,
+    /* UNKNOWN */                         ~0u,
     /* WINED3D_SM4_RT_IMMCONST */         WINED3DSPR_IMMCONST,
-    /* UNKNOWN */                         0,
+    /* UNKNOWN */                         ~0u,
     /* WINED3D_SM4_RT_SAMPLER */          WINED3DSPR_SAMPLER,
     /* WINED3D_SM4_RT_RESOURCE */         WINED3DSPR_RESOURCE,
     /* WINED3D_SM4_RT_CONSTBUFFER */      WINED3DSPR_CONSTBUFFER,
     /* WINED3D_SM4_RT_IMMCONSTBUFFER */   WINED3DSPR_IMMCONSTBUFFER,
-    /* UNKNOWN */                         0,
+    /* UNKNOWN */                         ~0u,
     /* WINED3D_SM4_RT_PRIMID */           WINED3DSPR_PRIMID,
     /* WINED3D_SM4_RT_DEPTHOUT */         WINED3DSPR_DEPTHOUT,
     /* WINED3D_SM4_RT_NULL */             WINED3DSPR_NULL,
-    /* UNKNOWN */                         0,
-    /* UNKNOWN */                         0,
-    /* UNKNOWN */                         0,
-    /* UNKNOWN */                         0,
-    /* UNKNOWN */                         0,
-    /* UNKNOWN */                         0,
-    /* UNKNOWN */                         0,
-    /* UNKNOWN */                         0,
-    /* UNKNOWN */                         0,
+    /* UNKNOWN */                         ~0u,
+    /* UNKNOWN */                         ~0u,
+    /* UNKNOWN */                         ~0u,
+    /* UNKNOWN */                         ~0u,
+    /* UNKNOWN */                         ~0u,
+    /* UNKNOWN */                         ~0u,
+    /* UNKNOWN */                         ~0u,
+    /* UNKNOWN */                         ~0u,
+    /* UNKNOWN */                         ~0u,
     /* WINED3D_SM5_RT_FORK_INSTANCE_ID */ WINED3DSPR_FORKINSTID,
-    /* UNKNOWN */                         0,
-    /* UNKNOWN */                         0,
-    /* UNKNOWN */                         0,
-    /* UNKNOWN */                         0,
-    /* UNKNOWN */                         0,
-    /* UNKNOWN */                         0,
+    /* UNKNOWN */                         ~0u,
+    /* UNKNOWN */                         ~0u,
+    /* UNKNOWN */                         ~0u,
+    /* UNKNOWN */                         ~0u,
+    /* UNKNOWN */                         ~0u,
+    /* UNKNOWN */                         ~0u,
     /* WINED3D_SM5_RT_UAV */              WINED3DSPR_UAV,
 };
 
@@ -967,7 +967,8 @@ static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **p
     DWORD order;
 
     register_type = (token & WINED3D_SM4_REGISTER_TYPE_MASK) >> WINED3D_SM4_REGISTER_TYPE_SHIFT;
-    if (register_type >= sizeof(register_type_table) / sizeof(*register_type_table))
+    if (register_type >= sizeof(register_type_table) / sizeof(*register_type_table)
+            || register_type_table[register_type] == ~0u)
     {
         FIXME("Unhandled register type %#x.\n", register_type);
         param->type = WINED3DSPR_TEMP;
