@@ -8746,6 +8746,20 @@ fpos_int* __thiscall basic_istream_char_tellg(basic_istream_char *this, fpos_int
 
     TRACE("(%p %p)\n", this, ret);
 
+#if _MSVCP_VER >= 110
+    if(basic_istream_char_sentry_create(this, TRUE)) {
+        basic_streambuf_char_pubseekoff(basic_ios_char_rdbuf_get(base),
+                ret, 0, SEEKDIR_cur, OPENMODE_in);
+
+        if(ret->off==-1 && ret->pos==0 && ret->state==0)
+            basic_ios_char_setstate(base, IOSTATE_failbit);
+    }else {
+        ret->off = -1;
+        ret->pos = 0;
+        ret->state = 0;
+    }
+    basic_istream_char_sentry_destroy(this);
+#else
     if(ios_base_fail(&base->base)) {
         ret->off = -1;
         ret->pos = 0;
@@ -8758,6 +8772,7 @@ fpos_int* __thiscall basic_istream_char_tellg(basic_istream_char *this, fpos_int
 
     if(ret->off==-1 && ret->pos==0 && ret->state==0)
         basic_ios_char_setstate(base, IOSTATE_failbit);
+#endif
 
     return ret;
 }
@@ -10270,6 +10285,20 @@ fpos_int* __thiscall basic_istream_wchar_tellg(basic_istream_wchar *this, fpos_i
 
     TRACE("(%p %p)\n", this, ret);
 
+#if _MSVCP_VER >= 110
+    if(basic_istream_wchar_sentry_create(this, TRUE)) {
+        basic_streambuf_wchar_pubseekoff(basic_ios_wchar_rdbuf_get(base),
+                ret, 0, SEEKDIR_cur, OPENMODE_in);
+
+        if(ret->off==-1 && ret->pos==0 && ret->state==0)
+            basic_ios_wchar_setstate(base, IOSTATE_failbit);
+    }else {
+        ret->off = -1;
+        ret->pos = 0;
+        ret->state = 0;
+    }
+    basic_istream_wchar_sentry_destroy(this);
+#else
     if(ios_base_fail(&base->base)) {
         ret->off = -1;
         ret->pos = 0;
@@ -10281,7 +10310,7 @@ fpos_int* __thiscall basic_istream_wchar_tellg(basic_istream_wchar *this, fpos_i
             ret, 0, SEEKDIR_cur, OPENMODE_in);
     if(ret->off==-1 && ret->pos==0 && ret->state==0)
         basic_ios_wchar_setstate(base, IOSTATE_failbit);
-
+#endif
     return ret;
 }
 
