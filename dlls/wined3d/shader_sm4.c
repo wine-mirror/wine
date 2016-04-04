@@ -223,6 +223,7 @@ enum wined3d_sm4_register_type
     WINED3D_SM4_RT_DEPTHOUT         = 0xc,
     WINED3D_SM4_RT_NULL             = 0xd,
     WINED3D_SM5_RT_FORK_INSTANCE_ID = 0x17,
+    WINED3D_SM5_RT_DOMAIN_LOCATION  = 0x1c,
     WINED3D_SM5_RT_UAV              = 0x1e,
 };
 
@@ -756,7 +757,7 @@ static const enum wined3d_shader_register_type register_type_table[] =
     /* UNKNOWN */                         ~0u,
     /* UNKNOWN */                         ~0u,
     /* UNKNOWN */                         ~0u,
-    /* UNKNOWN */                         ~0u,
+    /* WINED3D_SM5_RT_DOMAIN_LOCATION */  WINED3DSPR_TESSCOORD,
     /* UNKNOWN */                         ~0u,
     /* WINED3D_SM5_RT_UAV */              WINED3DSPR_UAV,
 };
