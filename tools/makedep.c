@@ -2140,51 +2140,65 @@ static struct strarray output_install_rules( const struct makefile *make, struct
     if (!files.count) return uninstall;
 
     for (i = 0; i < files.count; i += 2)
-        if (strchr( "dps", files.str[i + 1][0] ))  /* only for files copied from object dir */
-            strarray_add_uniq( &targets, files.str[i] );
+    {
+        const char *file = files.str[i];
+        switch (*files.str[i + 1])
+        {
+        case 'd':  /* data file */
+        case 'p':  /* program file */
+        case 's':  /* script */
+            strarray_add_uniq( &targets, obj_dir_path( make, file ));
+            break;
+        case 't':  /* script in tools dir */
+            strarray_add_uniq( &targets, tools_dir_path( make, file ));
+            break;
+        }
+    }
 
     output( "install %s::", target );
-    output_filenames_obj_dir( make, targets );
+    output_filenames( targets );
     output( "\n" );
 
     install_sh = top_src_dir_path( make, "tools/install-sh" );
     for (i = 0; i < files.count; i += 2)
     {
         const char *file = files.str[i];
-        const char *dest = files.str[i + 1];
+        const char *dest = strmake( "$(DESTDIR)%s", files.str[i + 1] + 1 );
 
-        switch (*dest)
+        switch (*files.str[i + 1])
         {
         case 'd':  /* data file */
-            output( "\t%s -m 644 $(INSTALL_DATA_FLAGS) %s $(DESTDIR)%s\n",
-                    install_sh, obj_dir_path( make, file ), dest + 1 );
+            output( "\t%s -m 644 $(INSTALL_DATA_FLAGS) %s %s\n",
+                    install_sh, obj_dir_path( make, file ), dest );
             break;
         case 'D':  /* data file in source dir */
-            output( "\t%s -m 644 $(INSTALL_DATA_FLAGS) %s $(DESTDIR)%s\n",
-                    install_sh, src_dir_path( make, file ), dest + 1 );
+            output( "\t%s -m 644 $(INSTALL_DATA_FLAGS) %s %s\n",
+                    install_sh, src_dir_path( make, file ), dest );
             break;
         case 'p':  /* program file */
-            output( "\tSTRIPPROG=\"$(STRIP)\" %s $(INSTALL_PROGRAM_FLAGS) %s $(DESTDIR)%s\n",
-                    install_sh, obj_dir_path( make, file ), dest + 1 );
+            output( "\tSTRIPPROG=\"$(STRIP)\" %s $(INSTALL_PROGRAM_FLAGS) %s %s\n",
+                    install_sh, obj_dir_path( make, file ), dest );
             break;
         case 's':  /* script */
-            output( "\t%s $(INSTALL_SCRIPT_FLAGS) %s $(DESTDIR)%s\n",
-                    install_sh, obj_dir_path( make, file ), dest + 1 );
+            output( "\t%s $(INSTALL_SCRIPT_FLAGS) %s %s\n",
+                    install_sh, obj_dir_path( make, file ), dest );
             break;
         case 'S':  /* script in source dir */
-            output( "\t%s $(INSTALL_SCRIPT_FLAGS) %s $(DESTDIR)%s\n",
-                    install_sh, src_dir_path( make, file ), dest + 1 );
+            output( "\t%s $(INSTALL_SCRIPT_FLAGS) %s %s\n",
+                    install_sh, src_dir_path( make, file ), dest );
+            break;
+        case 't':  /* script in tools dir */
+            output( "\t%s $(INSTALL_SCRIPT_FLAGS) %s %s\n",
+                    install_sh, tools_dir_path( make, file ), dest );
             break;
         case 'y':  /* symlink */
-            output( "\trm -f $(DESTDIR)%s && %s %s $(DESTDIR)%s\n", dest + 1, ln_s, file, dest + 1 );
+            output( "\trm -f %s && %s %s %s\n", dest, ln_s, file, dest );
             break;
         default:
             assert(0);
         }
+        strarray_add( &uninstall, dest );
     }
-
-    for (i = 0; i < files.count; i += 2)
-        strarray_add( &uninstall, strmake( "$(DESTDIR)%s", files.str[i + 1] + 1 ));
 
     strarray_add_uniq( phony_targets, "install" );
     strarray_add_uniq( phony_targets, target );
@@ -2808,8 +2822,8 @@ static struct strarray output_sources( const struct makefile *make )
         else if (*dll_ext)
         {
             char *binary = replace_extension( make->module, ".exe", "" );
-            add_install_rule( make, install_rules, binary, tools_dir_path( make, "wineapploader" ),
-                              strmake( "s$(bindir)/%s", binary ));
+            add_install_rule( make, install_rules, binary, "wineapploader",
+                              strmake( "t$(bindir)/%s", binary ));
         }
     }
 
