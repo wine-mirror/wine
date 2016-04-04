@@ -64,6 +64,7 @@ typedef LONG NTSTATUS;
     {'M','i','c','r','o','s','o','f','t',' ','P','l','a','t','f','o','r','m',' ','C','r','y','p','t','o',' ','P','r','o','v','i','d','e','r',0}
 
 #define BCRYPT_MD5_ALGORITHM        (const WCHAR []){'M','D','5',0}
+#define BCRYPT_RNG_ALGORITHM        (const WCHAR []){'R','N','G',0}
 #define BCRYPT_SHA1_ALGORITHM       (const WCHAR []){'S','H','A','1',0}
 #define BCRYPT_SHA256_ALGORITHM     (const WCHAR []){'S','H','A','2','5','6',0}
 #define BCRYPT_SHA384_ALGORITHM     (const WCHAR []){'S','H','A','3','8','4',0}

@@ -694,6 +694,34 @@ static void test_BcryptHash(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 }
 
+static void test_rng(void)
+{
+    BCRYPT_ALG_HANDLE alg;
+    ULONG size, len;
+    UCHAR buf[16];
+    NTSTATUS ret;
+
+    alg = NULL;
+    ret = BCryptOpenAlgorithmProvider(&alg, BCRYPT_RNG_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(alg != NULL, "alg not set\n");
+
+    len = size = 0xdeadbeef;
+    ret = BCryptGetProperty(alg, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(ret == STATUS_NOT_SUPPORTED, "got %08x\n", ret);
+
+    test_alg_name(alg, "RNG");
+
+    memset(buf, 0, 16);
+    ret = BCryptGenRandom(alg, buf, 8, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(memcmp(buf, buf + 8, 8), "got zeroes\n");
+
+    ret = BCryptCloseAlgorithmProvider(alg, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+}
+
+
 START_TEST(bcrypt)
 {
     HMODULE module;
@@ -707,6 +735,7 @@ START_TEST(bcrypt)
     test_sha384();
     test_sha512();
     test_md5();
+    test_rng();
 
     pBCryptHash = (void *)GetProcAddress( module, "BCryptHash" );
 

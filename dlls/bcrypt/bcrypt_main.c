@@ -136,10 +136,48 @@ NTSTATUS WINAPI BCryptEnumAlgorithms(ULONG dwAlgOperations, ULONG *pAlgCount,
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS WINAPI BCryptGenRandom(BCRYPT_ALG_HANDLE algorithm, UCHAR *buffer, ULONG count, ULONG flags)
+#define MAGIC_ALG  (('A' << 24) | ('L' << 16) | ('G' << 8) | '0')
+#define MAGIC_HASH (('H' << 24) | ('A' << 16) | ('S' << 8) | 'H')
+struct object
+{
+    ULONG magic;
+};
+
+enum alg_id
+{
+    ALG_ID_MD5,
+    ALG_ID_RNG,
+    ALG_ID_SHA1,
+    ALG_ID_SHA256,
+    ALG_ID_SHA384,
+    ALG_ID_SHA512
+};
+
+static const struct {
+    ULONG hash_length;
+    const WCHAR *alg_name;
+} alg_props[] = {
+    /* ALG_ID_MD5    */ { 16, BCRYPT_MD5_ALGORITHM },
+    /* ALG_ID_RNG    */ {  0, BCRYPT_RNG_ALGORITHM },
+    /* ALG_ID_SHA1   */ { 20, BCRYPT_SHA1_ALGORITHM },
+    /* ALG_ID_SHA256 */ { 32, BCRYPT_SHA256_ALGORITHM },
+    /* ALG_ID_SHA384 */ { 48, BCRYPT_SHA384_ALGORITHM },
+    /* ALG_ID_SHA512 */ { 64, BCRYPT_SHA512_ALGORITHM }
+};
+
+struct algorithm
+{
+    struct object hdr;
+    enum alg_id   id;
+    BOOL hmac;
+};
+
+NTSTATUS WINAPI BCryptGenRandom(BCRYPT_ALG_HANDLE handle, UCHAR *buffer, ULONG count, ULONG flags)
 {
     const DWORD supported_flags = BCRYPT_USE_SYSTEM_PREFERRED_RNG;
-    TRACE("%p, %p, %u, %08x - semi-stub\n", algorithm, buffer, count, flags);
+    struct algorithm *algorithm = handle;
+
+    TRACE("%p, %p, %u, %08x - semi-stub\n", handle, buffer, count, flags);
 
     if (!algorithm)
     {
@@ -149,6 +187,9 @@ NTSTATUS WINAPI BCryptGenRandom(BCRYPT_ALG_HANDLE algorithm, UCHAR *buffer, ULON
         if (!(flags & BCRYPT_USE_SYSTEM_PREFERRED_RNG))
             return STATUS_INVALID_HANDLE;
     }
+    else if (algorithm->hdr.magic != MAGIC_ALG || algorithm->id != ALG_ID_RNG)
+        return STATUS_INVALID_HANDLE;
+
     if (!buffer)
         return STATUS_INVALID_PARAMETER;
 
@@ -162,7 +203,7 @@ NTSTATUS WINAPI BCryptGenRandom(BCRYPT_ALG_HANDLE algorithm, UCHAR *buffer, ULON
     if (!count)
         return STATUS_SUCCESS;
 
-    if (flags & BCRYPT_USE_SYSTEM_PREFERRED_RNG)
+    if (algorithm || (flags & BCRYPT_USE_SYSTEM_PREFERRED_RNG))
     {
         if (RtlGenRandom(buffer, count))
             return STATUS_SUCCESS;
@@ -171,40 +212,6 @@ NTSTATUS WINAPI BCryptGenRandom(BCRYPT_ALG_HANDLE algorithm, UCHAR *buffer, ULON
     FIXME("called with unsupported parameters, returning error\n");
     return STATUS_NOT_IMPLEMENTED;
 }
-
-#define MAGIC_ALG  (('A' << 24) | ('L' << 16) | ('G' << 8) | '0')
-#define MAGIC_HASH (('H' << 24) | ('A' << 16) | ('S' << 8) | 'H')
-struct object
-{
-    ULONG magic;
-};
-
-enum alg_id
-{
-    ALG_ID_MD5,
-    ALG_ID_SHA1,
-    ALG_ID_SHA256,
-    ALG_ID_SHA384,
-    ALG_ID_SHA512
-};
-
-static const struct {
-    ULONG hash_length;
-    const WCHAR *alg_name;
-} alg_props[] = {
-    /* ALG_ID_MD5    */ { 16, BCRYPT_MD5_ALGORITHM },
-    /* ALG_ID_SHA1   */ { 20, BCRYPT_SHA1_ALGORITHM },
-    /* ALG_ID_SHA256 */ { 32, BCRYPT_SHA256_ALGORITHM },
-    /* ALG_ID_SHA384 */ { 48, BCRYPT_SHA384_ALGORITHM },
-    /* ALG_ID_SHA512 */ { 64, BCRYPT_SHA512_ALGORITHM }
-};
-
-struct algorithm
-{
-    struct object hdr;
-    enum alg_id   id;
-    BOOL hmac;
-};
 
 NTSTATUS WINAPI BCryptOpenAlgorithmProvider( BCRYPT_ALG_HANDLE *handle, LPCWSTR id, LPCWSTR implementation, DWORD flags )
 {
@@ -224,6 +231,7 @@ NTSTATUS WINAPI BCryptOpenAlgorithmProvider( BCRYPT_ALG_HANDLE *handle, LPCWSTR 
 
     if (!strcmpW( id, BCRYPT_SHA1_ALGORITHM )) alg_id = ALG_ID_SHA1;
     else if (!strcmpW( id, BCRYPT_MD5_ALGORITHM )) alg_id = ALG_ID_MD5;
+    else if (!strcmpW( id, BCRYPT_RNG_ALGORITHM )) alg_id = ALG_ID_RNG;
     else if (!strcmpW( id, BCRYPT_SHA256_ALGORITHM )) alg_id = ALG_ID_SHA256;
     else if (!strcmpW( id, BCRYPT_SHA384_ALGORITHM )) alg_id = ALG_ID_SHA384;
     else if (!strcmpW( id, BCRYPT_SHA512_ALGORITHM )) alg_id = ALG_ID_SHA512;
@@ -628,6 +636,12 @@ static NTSTATUS get_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *buf,
         }
         FIXME( "unsupported md5 algorithm property %s\n", debugstr_w(prop) );
         return STATUS_NOT_IMPLEMENTED;
+
+    case ALG_ID_RNG:
+        if (!strcmpW( prop, BCRYPT_OBJECT_LENGTH )) return STATUS_NOT_SUPPORTED;
+        FIXME( "unsupported rng algorithm property %s\n", debugstr_w(prop) );
+        return STATUS_NOT_IMPLEMENTED;
+
     case ALG_ID_SHA1:
         if (!strcmpW( prop, BCRYPT_OBJECT_LENGTH ))
         {
