@@ -1987,9 +1987,9 @@
 @ cdecl rand() msvcr120.rand
 @ cdecl rand_s(ptr) msvcr120.rand_s
 @ cdecl realloc(ptr long) msvcr120.realloc
-@ stub remainder
-@ stub remainderf
-@ stub remainderl
+@ cdecl remainder(double double) msvcr120.remainder
+@ cdecl remainderf(float float) msvcr120.remainderf
+@ cdecl remainderl(double double) msvcr120.remainderl
 @ cdecl remove(str) msvcr120.remove
 @ stub remquo
 @ stub remquof

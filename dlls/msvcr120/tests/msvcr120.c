@@ -88,6 +88,12 @@ static void (CDECL *p_free)(void*);
 static float (CDECL *p_strtof)(const char *, char **);
 static int (CDECL *p__finite)(double);
 static float (CDECL *p_wcstof)(const wchar_t*, wchar_t**);
+static double (CDECL *p_remainder)(double, double);
+static int* (CDECL *p_errno)(void);
+
+/* make sure we use the correct errno */
+#undef errno
+#define errno (*p_errno())
 
 static BOOL init(void)
 {
@@ -113,6 +119,8 @@ static BOOL init(void)
     p_strtof = (void*)GetProcAddress(module, "strtof");
     p__finite = (void*)GetProcAddress(module, "_finite");
     p_wcstof = (void*)GetProcAddress(module, "wcstof");
+    p_remainder = (void*)GetProcAddress(module, "remainder");
+    p_errno = (void*)GetProcAddress(module, "_errno");
     return TRUE;
 }
 
@@ -389,6 +397,45 @@ static void test__strtof(void)
     p_setlocale(LC_ALL, "C");
 }
 
+static void test_remainder(void)
+{
+    struct {
+        double  x, y, r;
+        errno_t e;
+    } tests[] = {
+        { 3.0,      2.0,       -1.0,    -1   },
+        { 1.0,      1.0,        0.0,    -1   },
+        { INFINITY, 0.0,        NAN,    EDOM },
+        { INFINITY, 42.0,       NAN,    EDOM },
+        { NAN,      0.0,        NAN,    EDOM },
+        { NAN,      42.0,       NAN,    EDOM },
+        { 0.0,      INFINITY,   0.0,    -1   },
+        { 42.0,     INFINITY,   42.0,   -1   },
+        { 0.0,      NAN,        NAN,    EDOM },
+        { 42.0,     NAN,        NAN,    EDOM },
+        { 1.0,      0.0,        NAN,    EDOM },
+        { INFINITY, INFINITY,   NAN,    EDOM },
+    };
+    errno_t e;
+    double r;
+    int i;
+
+    if(sizeof(void*) != 8) /* errno handling slightly different on 32-bit */
+        return;
+
+    for(i=0; i<sizeof(tests)/sizeof(*tests); i++) {
+        errno = -1;
+        r = p_remainder(tests[i].x, tests[i].y);
+        e = errno;
+
+        ok(tests[i].e == e, "expected errno %i, but got %i\n", tests[i].e, e);
+        if(_isnan(tests[i].r))
+            ok(_isnan(r), "expected NAN, but got %f\n", r);
+        else
+            ok(tests[i].r == r, "expected result %f, but got %f\n", tests[i].r, r);
+    }
+}
+
 START_TEST(msvcr120)
 {
     if (!init()) return;
@@ -400,4 +447,5 @@ START_TEST(msvcr120)
     test__GetConcurrency();
     test__W_Gettnames();
     test__strtof();
+    test_remainder();
 }

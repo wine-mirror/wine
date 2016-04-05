@@ -2534,6 +2534,8 @@ AC_CHECK_FUNCS(\
 	lrintf \
 	lround \
 	lroundf \
+	remainder \
+	remainderf \
 	rint \
 	rintf \
 	round \

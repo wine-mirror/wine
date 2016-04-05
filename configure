@@ -16876,6 +16876,8 @@ for ac_func in \
 	lrintf \
 	lround \
 	lroundf \
+	remainder \
+	remainderf \
 	rint \
 	rintf \
 	round \

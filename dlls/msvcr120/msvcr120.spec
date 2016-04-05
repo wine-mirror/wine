@@ -2324,9 +2324,9 @@
 @ cdecl rand() MSVCRT_rand
 @ cdecl rand_s(ptr) MSVCRT_rand_s
 @ cdecl realloc(ptr long) MSVCRT_realloc
-@ stub remainder
-@ stub remainderf
-@ stub remainderl
+@ cdecl remainder(double double) MSVCR120_remainder
+@ cdecl remainderf(float float) MSVCR120_remainderf
+@ cdecl remainderl(double double) MSVCR120_remainderl
 @ cdecl remove(str) MSVCRT_remove
 @ stub remquo
 @ stub remquof

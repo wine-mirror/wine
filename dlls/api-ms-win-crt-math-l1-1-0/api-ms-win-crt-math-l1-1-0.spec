@@ -304,9 +304,9 @@
 @ stub norml
 @ cdecl pow(double double) ucrtbase.pow
 @ cdecl -arch=arm,x86_64 powf(float float) ucrtbase.powf
-@ stub remainder
-@ stub remainderf
-@ stub remainderl
+@ cdecl remainder(double double) ucrtbase.remainder
+@ cdecl remainderf(float float) ucrtbase.remainderf
+@ cdecl remainderl(double double) ucrtbase.remainderl
 @ stub remquo
 @ stub remquof
 @ stub remquol

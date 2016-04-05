@@ -2790,3 +2790,43 @@ LDOUBLE CDECL MSVCR120_scalbnl(LDOUBLE num, MSVCRT_long power)
 {
     return MSVCRT__scalb(num, power);
 }
+
+/*********************************************************************
+ *      remainder (MSVCR120.@)
+ */
+double CDECL MSVCR120_remainder(double x, double y)
+{
+#ifdef HAVE_REMAINDER
+    /* this matches 64-bit Windows.  32-bit Windows is slightly different */
+    if(!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+    if(isnan(y) || y==0.0) *MSVCRT__errno() = MSVCRT_EDOM;
+    return remainder(x, y);
+#else
+    FIXME( "not implemented\n" );
+    return 0.0;
+#endif
+}
+
+/*********************************************************************
+ *      remainderf (MSVCR120.@)
+ */
+float CDECL MSVCR120_remainderf(float x, float y)
+{
+#ifdef HAVE_REMAINDERF
+    /* this matches 64-bit Windows.  32-bit Windows is slightly different */
+    if(!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+    if(isnanf(y) || y==0.0f) *MSVCRT__errno() = MSVCRT_EDOM;
+    return remainderf(x, y);
+#else
+    FIXME( "not implemented\n" );
+    return 0.0f;
+#endif
+}
+
+/*********************************************************************
+ *      remainderl (MSVCR120.@)
+ */
+LDOUBLE CDECL MSVCR120_remainderl(LDOUBLE x, LDOUBLE y)
+{
+    return MSVCR120_remainder(x, y);
+}
