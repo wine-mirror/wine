@@ -646,7 +646,7 @@ void CDECL MSVCRT___set_app_type(int app_type)
  */
 char** CDECL _get_initial_narrow_environment(void)
 {
-  return MSVCRT___argv;
+  return MSVCRT___initenv;
 }
 
 /*********************************************************************
