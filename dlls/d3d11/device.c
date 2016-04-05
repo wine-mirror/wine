@@ -2486,9 +2486,14 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateQuery(ID3D11Device *iface,
     if (FAILED(hr = d3d_query_create(device, desc, FALSE, &object)))
         return hr;
 
-    *query = &object->ID3D11Query_iface;
+    if (query)
+    {
+        *query = &object->ID3D11Query_iface;
+        return S_OK;
+    }
 
-    return S_OK;
+    ID3D11Query_Release(&object->ID3D11Query_iface);
+    return S_FALSE;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreatePredicate(ID3D11Device *iface, const D3D11_QUERY_DESC *desc,
