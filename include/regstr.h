@@ -23,6 +23,7 @@
 
 
 #define REGSTR_PATH_UNINSTALL			TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall")
+#define REGSTR_VAL_MAX_HCID_LEN 1024
 
 /* DisplayName <= 32 chars in Windows (otherwise not displayed for uninstall) */
 #define REGSTR_VAL_UNINSTALLER_DISPLAYNAME	TEXT("DisplayName")
