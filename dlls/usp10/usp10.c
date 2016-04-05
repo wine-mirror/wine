@@ -2292,8 +2292,8 @@ HRESULT WINAPI ScriptStringOut(SCRIPT_STRING_ANALYSIS ssa,
     int   item;
     HRESULT hr;
 
-    TRACE("(%p,%d,%d,0x%1x,%p,%d,%d,%d)\n",
-         ssa, iX, iY, uOptions, prc, iMinSel, iMaxSel, fDisabled);
+    TRACE("(%p,%d,%d,0x%08x,%s,%d,%d,%d)\n",
+         ssa, iX, iY, uOptions, wine_dbgstr_rect(prc), iMinSel, iMaxSel, fDisabled);
 
     if (!(analysis = ssa)) return E_INVALIDARG;
     if (!(analysis->dwFlags & SSA_GLYPHS)) return E_INVALIDARG;
@@ -3483,8 +3483,8 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
     INT *lpDx;
     WORD *reordered_glyphs = (WORD *)pwGlyphs;
 
-    TRACE("(%p, %p, %d, %d, %04x, %p, %p, %p, %d, %p, %d, %p, %p, %p)\n",
-         hdc, psc, x, y, fuOptions, lprc, psa, pwcReserved, iReserved, pwGlyphs, cGlyphs,
+    TRACE("(%p, %p, %d, %d, %08x, %s, %p, %p, %d, %p, %d, %p, %p, %p)\n",
+         hdc, psc, x, y, fuOptions, wine_dbgstr_rect(lprc), psa, pwcReserved, iReserved, pwGlyphs, cGlyphs,
          piAdvance, piJustify, pGoffset);
 
     if (!hdc || !psc) return E_INVALIDARG;
