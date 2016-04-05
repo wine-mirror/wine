@@ -437,11 +437,11 @@ static NTSTATUS HID_get_feature(DEVICE_OBJECT *device, IRP *irp)
     HID_XFER_PACKET *packet;
     DWORD len;
     NTSTATUS rc = STATUS_SUCCESS;
-    WCHAR *out_buffer;
+    BYTE *out_buffer;
 
     irp->IoStatus.Information = 0;
 
-    out_buffer = (WCHAR*)(((BYTE*)irp->MdlAddress->StartVa) + irp->MdlAddress->ByteOffset);
+    out_buffer = (((BYTE*)irp->MdlAddress->StartVa) + irp->MdlAddress->ByteOffset);
     TRACE_(hid_report)("Device %p Buffer length %i Buffer %p\n", device, irpsp->Parameters.DeviceIoControl.OutputBufferLength, out_buffer);
 
     len = sizeof(*packet) + irpsp->Parameters.DeviceIoControl.OutputBufferLength;
@@ -452,15 +452,20 @@ static NTSTATUS HID_get_feature(DEVICE_OBJECT *device, IRP *irp)
 
     TRACE_(hid_report)("(id %i, len %i buffer %p)\n", packet->reportId, packet->reportBufferLen, packet->reportBuffer);
 
-    rc = call_minidriver(IOCTL_HID_GET_FEATURE, device, NULL, 0, packet, len);
+    rc = call_minidriver(IOCTL_HID_GET_FEATURE, device, NULL, 0, packet, sizeof(*packet));
 
     irp->IoStatus.u.Status = rc;
     if (irp->IoStatus.u.Status == STATUS_SUCCESS)
-        irp->IoStatus.Information = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
+    {
+        irp->IoStatus.Information = packet->reportBufferLen;
+        memcpy(out_buffer, packet->reportBuffer, packet->reportBufferLen);
+    }
     else
         irp->IoStatus.Information = 0;
 
     TRACE_(hid_report)("Result 0x%x get %li bytes\n", rc, irp->IoStatus.Information);
+
+    HeapFree(GetProcessHeap(), 0, packet);
 
     return rc;
 }
