@@ -1858,6 +1858,7 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
     struct wined3d_context *context = old_ctx;
     struct wined3d_surface *restore_rt = NULL;
     unsigned int row_pitch, slice_pitch;
+    unsigned int width, height;
     BYTE *mem;
     BYTE *row, *top, *bottom;
     int i;
@@ -1909,8 +1910,9 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
     gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_ROW_LENGTH, row_pitch / texture->resource.format->byte_count);
     checkGLcall("glPixelStorei");
 
-    gl_info->gl_ops.gl.p_glReadPixels(0, 0,
-            surface->resource.width, surface->resource.height,
+    width = wined3d_texture_get_level_width(texture, surface->texture_level);
+    height = wined3d_texture_get_level_height(texture, surface->texture_level);
+    gl_info->gl_ops.gl.p_glReadPixels(0, 0, width, height,
             texture->resource.format->glFormat,
             texture->resource.format->glType, data.addr);
     checkGLcall("glReadPixels");
@@ -1936,8 +1938,8 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
             mem = data.addr;
 
         top = mem;
-        bottom = mem + row_pitch * (surface->resource.height - 1);
-        for (i = 0; i < surface->resource.height / 2; i++)
+        bottom = mem + row_pitch * (height - 1);
+        for (i = 0; i < height / 2; i++)
         {
             memcpy(row, top, row_pitch);
             memcpy(top, bottom, row_pitch);
