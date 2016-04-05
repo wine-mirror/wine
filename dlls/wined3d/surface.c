@@ -1999,7 +1999,8 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb, struct 
     checkGLcall("glReadBuffer");
 
     gl_info->gl_ops.gl.p_glCopyTexSubImage2D(surface->texture_target, surface->texture_level,
-            0, 0, 0, 0, surface->resource.width, surface->resource.height);
+            0, 0, 0, 0, wined3d_texture_get_level_width(texture, surface->texture_level),
+            wined3d_texture_get_level_height(texture, surface->texture_level));
     checkGLcall("glCopyTexSubImage2D");
 
     if (restore_rt)
