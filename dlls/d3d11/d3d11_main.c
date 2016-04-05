@@ -295,7 +295,7 @@ HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_t
     else
         ID3D11Device_Release(device);
 
-    return S_OK;
+    return (device_out || immediate_context) ? S_OK : S_FALSE;
 }
 
 HRESULT WINAPI D3D11CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type,
@@ -367,7 +367,7 @@ HRESULT WINAPI D3D11CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D_DRIVER_T
     else
         ID3D11Device_Release(device);
 
-    return S_OK;
+    return (swapchain || device_out || immediate_context) ? S_OK : S_FALSE;
 
 cleanup:
     ID3D11Device_Release(device);
