@@ -1287,7 +1287,8 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
 
     if (!src_rect)
     {
-        SetRect(&r, 0, 0, src_surface->resource.width, src_surface->resource.height);
+        SetRect(&r, 0, 0, wined3d_texture_get_level_width(src_texture, src_surface->texture_level),
+                wined3d_texture_get_level_height(src_texture, src_surface->texture_level));
         src_rect = &r;
     }
     else if (src_rect->left < 0 || src_rect->left >= src_rect->right
@@ -1297,8 +1298,8 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
         return WINED3DERR_INVALIDCALL;
     }
 
-    dst_w = dst_surface->resource.width;
-    dst_h = dst_surface->resource.height;
+    dst_w = wined3d_texture_get_level_width(dst_texture, dst_surface->texture_level);
+    dst_h = wined3d_texture_get_level_height(dst_texture, dst_surface->texture_level);
 
     update_w = src_rect->right - src_rect->left;
     update_h = src_rect->bottom - src_rect->top;
