@@ -479,7 +479,7 @@ static NTSTATUS HID_set_feature(DEVICE_OBJECT *device, IRP *irp)
     packet.reportBufferLen = irpsp->Parameters.DeviceIoControl.InputBufferLength;
     TRACE_(hid_report)("(id %i, len %i buffer %p)\n", packet.reportId, packet.reportBufferLen, packet.reportBuffer);
 
-    rc = call_minidriver(IOCTL_HID_SET_FEATURE, device, NULL, 0, &packet, sizeof(packet));
+    rc = call_minidriver(IOCTL_HID_SET_FEATURE, device, &packet, sizeof(packet), NULL, 0);
 
     irp->IoStatus.u.Status = rc;
     if (irp->IoStatus.u.Status == STATUS_SUCCESS)
