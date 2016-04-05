@@ -2508,9 +2508,14 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreatePredicate(ID3D11Device *ifac
     if (FAILED(hr = d3d_query_create(device, desc, TRUE, &object)))
         return hr;
 
-    *predicate = (ID3D11Predicate *)&object->ID3D11Query_iface;
+    if (predicate)
+    {
+        *predicate = (ID3D11Predicate *)&object->ID3D11Query_iface;
+        return S_OK;
+    }
 
-    return S_OK;
+    ID3D11Query_Release(&object->ID3D11Query_iface);
+    return S_FALSE;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateCounter(ID3D11Device *iface, const D3D11_COUNTER_DESC *desc,
