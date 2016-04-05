@@ -113,7 +113,7 @@ static BOOL INSTR_ReplaceSelector( CONTEXT *context, WORD *sel )
 
 
 /* store an operand into a register */
-static void store_reg( CONTEXT *context, BYTE regmodrm, const BYTE *addr, int long_op )
+static void store_reg_word( CONTEXT *context, BYTE regmodrm, const BYTE *addr, int long_op )
 {
     switch((regmodrm >> 3) & 7)
     {
@@ -149,6 +149,22 @@ static void store_reg( CONTEXT *context, BYTE regmodrm, const BYTE *addr, int lo
         if (long_op) context->Edi = *(const DWORD *)addr;
         else SET_LOWORD(context->Edi, *(const WORD *)addr);
         break;
+    }
+}
+
+/* store an operand into a byte register */
+static void store_reg_byte( CONTEXT *context, BYTE regmodrm, const BYTE *addr )
+{
+    switch((regmodrm >> 3) & 7)
+    {
+    case 0: context->Eax = (context->Eax & 0xffffff00) | *addr; break;
+    case 1: context->Ecx = (context->Ecx & 0xffffff00) | *addr; break;
+    case 2: context->Edx = (context->Edx & 0xffffff00) | *addr; break;
+    case 3: context->Ebx = (context->Ebx & 0xffffff00) | *addr; break;
+    case 4: context->Eax = (context->Eax & 0xffff00ff) | (*addr << 8); break;
+    case 5: context->Ecx = (context->Ecx & 0xffff00ff) | (*addr << 8); break;
+    case 6: context->Edx = (context->Edx & 0xffff00ff) | (*addr << 8); break;
+    case 7: context->Ebx = (context->Ebx & 0xffff00ff) | (*addr << 8); break;
     }
 }
 
@@ -333,7 +349,7 @@ static BOOL INSTR_EmulateLDS( CONTEXT *context, BYTE *instr, int long_op,
 
     /* Now store the offset in the correct register */
 
-    store_reg( context, *regmodrm, addr, long_op );
+    store_reg_word( context, *regmodrm, addr, long_op );
 
     /* Store the correct segment in the segment register */
 
@@ -689,19 +705,26 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
 	    }
             return ExceptionContinueExecution;
 
+        case 0x8a: /* mov Eb, Gb */
         case 0x8b: /* mov Ev, Gv */
             {
-                BYTE *addr = INSTR_GetOperandAddr(context, instr + 1, long_addr,
+                BYTE *data = INSTR_GetOperandAddr(context, instr + 1, long_addr,
                                                   segprefix, &len);
+                unsigned int data_size = (*instr == 0x8b) ? (long_op ? 4 : 2) : 1;
                 struct idtr idtr = get_idtr();
-                unsigned int offset = addr - idtr.base;
+                unsigned int offset = data - idtr.base;
 
-                if (offset <= idtr.limit + 1 - (long_op ? 4 : 2))
+                if (offset <= idtr.limit + 1 - data_size)
                 {
                     idt[1].LimitLow = 0x100; /* FIXME */
                     idt[2].LimitLow = 0x11E; /* FIXME */
                     idt[3].LimitLow = 0x500; /* FIXME */
-                    store_reg( context, instr[1], (BYTE *)idt + offset, long_op );
+
+                    switch (*instr)
+                    {
+                    case 0x8a: store_reg_byte( context, instr[1], (BYTE *)idt + offset ); break;
+                    case 0x8b: store_reg_word( context, instr[1], (BYTE *)idt + offset, long_op ); break;
+                    }
                     context->Eip += prefixlen + len + 1;
                     return ExceptionContinueExecution;
                 }
