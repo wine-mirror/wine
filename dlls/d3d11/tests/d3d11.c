@@ -515,24 +515,24 @@ static void test_create_device(void)
     ID3D11Device_Release(device);
 
     hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "D3D11CreateDevice failed %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
 
     hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION, NULL,
             &feature_level, NULL);
-    ok(SUCCEEDED(hr), "D3D11CreateDevice failed %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
     ok(feature_level == supported_feature_level, "Got feature level %#x, expected %#x.\n",
             feature_level, supported_feature_level);
 
     hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, default_feature_levels,
             sizeof(default_feature_levels) / sizeof(default_feature_levels[0]), D3D11_SDK_VERSION, NULL,
             &feature_level, NULL);
-    ok(SUCCEEDED(hr), "D3D11CreateDevice failed %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
     ok(feature_level == supported_feature_level, "Got feature level %#x, expected %#x.\n",
             feature_level, supported_feature_level);
 
     hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION, NULL, NULL,
             &immediate_context);
-    ok(SUCCEEDED(hr), "D3D11CreateDevice failed %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     ok(!!immediate_context, "Expected immediate device context pointer, got NULL.\n");
     refcount = get_refcount((IUnknown *)immediate_context);
@@ -575,17 +575,17 @@ static void test_create_device(void)
 
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             &swapchain_desc, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "D3D11CreateDeviceAndSwapChain failed %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
 
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             &swapchain_desc, NULL, NULL, &feature_level, NULL);
-    ok(SUCCEEDED(hr), "D3D11CreateDeviceAndSwapChain failed %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
     ok(feature_level == supported_feature_level, "Got feature level %#x, expected %#x.\n",
             feature_level, supported_feature_level);
 
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             &swapchain_desc, &swapchain, &device, NULL, NULL);
-    ok(SUCCEEDED(hr), "D3D11CreateDeviceAndSwapChain failed %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     memset(&obtained_desc, 0, sizeof(obtained_desc));
     hr = IDXGISwapChain_GetDesc(swapchain, &obtained_desc);
@@ -635,27 +635,32 @@ static void test_create_device(void)
 
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             NULL, NULL, &device, NULL, NULL);
-    ok(SUCCEEDED(hr), "D3D11CreateDeviceAndSwapChain failed %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ID3D11Device_Release(device);
 
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             NULL, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "D3D11CreateDeviceAndSwapChain failed %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
 
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             NULL, NULL, NULL, &feature_level, NULL);
-    ok(SUCCEEDED(hr), "D3D11CreateDeviceAndSwapChain failed %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
     ok(feature_level == supported_feature_level, "Got feature level %#x, expected %#x.\n",
             feature_level, supported_feature_level);
 
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
+            NULL, NULL, NULL, NULL, &immediate_context);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ID3D11DeviceContext_Release(immediate_context);
+
+    hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             &swapchain_desc, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "D3D11CreateDeviceAndSwapChain failed %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
 
     swapchain_desc.OutputWindow = NULL;
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             &swapchain_desc, NULL, &device, NULL, NULL);
-    ok(SUCCEEDED(hr), "D3D11CreateDeviceAndSwapChain failed %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ID3D11Device_Release(device);
 
     swapchain = (IDXGISwapChain *)0xdeadbeef;
