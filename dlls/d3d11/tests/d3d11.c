@@ -23,6 +23,8 @@
 #include "wine/test.h"
 #include <limits.h>
 
+#define SWAPCHAIN_FLAG_SHADER_INPUT             0x1
+
 static const D3D_FEATURE_LEVEL d3d11_feature_levels[] =
 {
     D3D_FEATURE_LEVEL_11_1,
@@ -47,6 +49,14 @@ struct vec3
 struct vec4
 {
     float x, y, z, w;
+};
+
+struct swapchain_desc
+{
+    BOOL windowed;
+    UINT buffer_count;
+    DXGI_SWAP_EFFECT swap_effect;
+    DWORD flags;
 };
 
 static void set_box(D3D11_BOX *box, UINT left, UINT top, UINT front, UINT right, UINT bottom, UINT back)
@@ -286,10 +296,10 @@ static BOOL is_warp_device(ID3D11Device *device)
             || (adapter_desc.VendorId == 0x1414 && adapter_desc.DeviceId == 0x008c));
 }
 
-static IDXGISwapChain *create_swapchain(ID3D11Device *device, HWND window, BOOL windowed)
+static IDXGISwapChain *create_swapchain(ID3D11Device *device, HWND window, const struct swapchain_desc *swapchain_desc)
 {
+    DXGI_SWAP_CHAIN_DESC dxgi_desc;
     IDXGISwapChain *swapchain;
-    DXGI_SWAP_CHAIN_DESC desc;
     IDXGIDevice *dxgi_device;
     IDXGIAdapter *adapter;
     IDXGIFactory *factory;
@@ -304,23 +314,33 @@ static IDXGISwapChain *create_swapchain(ID3D11Device *device, HWND window, BOOL 
     ok(SUCCEEDED(hr), "Failed to get factory, hr %#x.\n", hr);
     IDXGIAdapter_Release(adapter);
 
-    desc.BufferDesc.Width = 640;
-    desc.BufferDesc.Height = 480;
-    desc.BufferDesc.RefreshRate.Numerator = 60;
-    desc.BufferDesc.RefreshRate.Denominator = 1;
-    desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-    desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-    desc.SampleDesc.Count = 1;
-    desc.SampleDesc.Quality = 0;
-    desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    desc.BufferCount = 1;
-    desc.OutputWindow = window;
-    desc.Windowed = windowed;
-    desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-    desc.Flags = 0;
+    dxgi_desc.BufferDesc.Width = 640;
+    dxgi_desc.BufferDesc.Height = 480;
+    dxgi_desc.BufferDesc.RefreshRate.Numerator = 60;
+    dxgi_desc.BufferDesc.RefreshRate.Denominator = 1;
+    dxgi_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    dxgi_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    dxgi_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    dxgi_desc.SampleDesc.Count = 1;
+    dxgi_desc.SampleDesc.Quality = 0;
+    dxgi_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    dxgi_desc.BufferCount = 1;
+    dxgi_desc.OutputWindow = window;
+    dxgi_desc.Windowed = TRUE;
+    dxgi_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    dxgi_desc.Flags = 0;
 
-    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &desc, &swapchain);
+    if (swapchain_desc)
+    {
+        dxgi_desc.Windowed = swapchain_desc->windowed;
+        dxgi_desc.SwapEffect = swapchain_desc->swap_effect;
+        dxgi_desc.BufferCount = swapchain_desc->buffer_count;
+
+        if (swapchain_desc->flags & SWAPCHAIN_FLAG_SHADER_INPUT)
+            dxgi_desc.BufferUsage |= DXGI_USAGE_SHADER_INPUT;
+    }
+
+    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &dxgi_desc, &swapchain);
     ok(SUCCEEDED(hr), "Failed to create swapchain, hr %#x.\n", hr);
     IDXGIFactory_Release(factory);
 
@@ -357,7 +377,7 @@ static BOOL init_test_context_(unsigned int line, struct d3d11_test_context *con
     }
     context->window = CreateWindowA("static", "d3d11_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             0, 0, 640, 480, NULL, NULL, NULL, NULL);
-    context->swapchain = create_swapchain(context->device, context->window, TRUE);
+    context->swapchain = create_swapchain(context->device, context->window, NULL);
     hr = IDXGISwapChain_GetBuffer(context->swapchain, 0, &IID_ID3D11Texture2D, (void **)&context->backbuffer);
     ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
 
@@ -5368,6 +5388,275 @@ done:
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_swapchain_flip(void)
+{
+    ID3D11Texture2D *backbuffer_0, *backbuffer_1, *backbuffer_2, *offscreen;
+    ID3D11ShaderResourceView *backbuffer_0_srv, *backbuffer_1_srv;
+    ID3D11RenderTargetView *backbuffer_0_rtv, *offscreen_rtv;
+    D3D11_SUBRESOURCE_DATA resource_data;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11InputLayout *input_layout;
+    D3D11_BUFFER_DESC buffer_desc;
+    ID3D11DeviceContext *context;
+    unsigned int stride, offset;
+    struct swapchain_desc desc;
+    IDXGISwapChain *swapchain;
+    ID3D11VertexShader *vs;
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    D3D11_VIEWPORT vp;
+    ID3D11Buffer *vb;
+    ULONG refcount;
+    DWORD color;
+    HWND window;
+    HRESULT hr;
+
+    static const D3D11_INPUT_ELEMENT_DESC layout_desc[] =
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    };
+    static const DWORD vs_code[] =
+    {
+#if 0
+        float4 main(float4 position : POSITION) : SV_POSITION
+        {
+            return position;
+        }
+#endif
+        0x43425844, 0xa7a2f22d, 0x83ff2560, 0xe61638bd, 0x87e3ce90, 0x00000001, 0x000000d8, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0xababab00,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x52444853, 0x0000003c, 0x00010040,
+        0x0000000f, 0x0300005f, 0x001010f2, 0x00000000, 0x04000067, 0x001020f2, 0x00000000, 0x00000001,
+        0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
+    };
+
+    static const DWORD ps_code[] =
+    {
+#if 0
+        Texture2D t0, t1;
+        SamplerState s;
+
+        float4 main(float4 position : SV_POSITION) : SV_Target
+        {
+            float2 p;
+
+            p.x = 0.5;
+            p.y = 0.5;
+            if (position.x < 320)
+                return t0.Sample(s, p);
+            return t1.Sample(s, p);
+        }
+#endif
+        0x43425844, 0x1733542c, 0xf74c6b6a, 0x0fb11eac, 0x76f6a999, 0x00000001, 0x000002cc, 0x00000005,
+        0x00000034, 0x000000f4, 0x00000128, 0x0000015c, 0x00000250, 0x46454452, 0x000000b8, 0x00000000,
+        0x00000000, 0x00000003, 0x0000001c, 0xffff0400, 0x00000100, 0x00000084, 0x0000007c, 0x00000003,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x0000007e, 0x00000002,
+        0x00000005, 0x00000004, 0xffffffff, 0x00000000, 0x00000001, 0x0000000c, 0x00000081, 0x00000002,
+        0x00000005, 0x00000004, 0xffffffff, 0x00000001, 0x00000001, 0x0000000c, 0x30740073, 0x00317400,
+        0x7263694d, 0x666f736f, 0x52282074, 0x4c482029, 0x53204c53, 0x65646168, 0x6f432072, 0x6c69706d,
+        0x39207265, 0x2e39322e, 0x2e323539, 0x31313133, 0xababab00, 0x4e475349, 0x0000002c, 0x00000001,
+        0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000010f, 0x505f5653,
+        0x5449534f, 0x004e4f49, 0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000,
+        0x00000000, 0x00000003, 0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853,
+        0x000000ec, 0x00000040, 0x0000003b, 0x0300005a, 0x00106000, 0x00000000, 0x04001858, 0x00107000,
+        0x00000000, 0x00005555, 0x04001858, 0x00107000, 0x00000001, 0x00005555, 0x04002064, 0x00101012,
+        0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x07000031,
+        0x00100012, 0x00000000, 0x0010100a, 0x00000000, 0x00004001, 0x43a00000, 0x0304001f, 0x0010000a,
+        0x00000000, 0x0c000045, 0x001020f2, 0x00000000, 0x00004002, 0x3f000000, 0x3f000000, 0x00000000,
+        0x00000000, 0x00107e46, 0x00000000, 0x00106000, 0x00000000, 0x0100003e, 0x01000015, 0x0c000045,
+        0x001020f2, 0x00000000, 0x00004002, 0x3f000000, 0x3f000000, 0x00000000, 0x00000000, 0x00107e46,
+        0x00000001, 0x00106000, 0x00000000, 0x0100003e, 0x54415453, 0x00000074, 0x00000007, 0x00000001,
+        0x00000000, 0x00000002, 0x00000001, 0x00000000, 0x00000000, 0x00000002, 0x00000001, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000
+    };
+    static const struct
+    {
+        struct vec2 position;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f}},
+        {{-1.0f,  1.0f}},
+        {{ 1.0f, -1.0f}},
+        {{ 1.0f,  1.0f}},
+    };
+    static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
+    static const float green[] = {0.0f, 1.0f, 0.0f, 0.5f};
+    static const float blue[] = {0.0f, 0.0f, 1.0f, 0.5f};
+
+    if (!(device = create_device(NULL)))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+    window = CreateWindowA("static", "d3d11_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    desc.buffer_count = 3;
+    desc.swap_effect = DXGI_SWAP_EFFECT_SEQUENTIAL;
+    desc.windowed = TRUE;
+    desc.flags = SWAPCHAIN_FLAG_SHADER_INPUT;
+    swapchain = create_swapchain(device, window, &desc);
+
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_ID3D11Texture2D, (void **)&backbuffer_0);
+    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+    hr = IDXGISwapChain_GetBuffer(swapchain, 1, &IID_ID3D11Texture2D, (void **)&backbuffer_1);
+    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+    hr = IDXGISwapChain_GetBuffer(swapchain, 2, &IID_ID3D11Texture2D, (void **)&backbuffer_2);
+    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)backbuffer_0, NULL, &backbuffer_0_rtv);
+    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)backbuffer_0, NULL, &backbuffer_0_srv);
+    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)backbuffer_1, NULL, &backbuffer_1_srv);
+    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+
+    ID3D11Texture2D_GetDesc(backbuffer_0, &texture_desc);
+    todo_wine ok((texture_desc.BindFlags & (D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE))
+            == (D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE),
+            "Got unexpected bind flags %x.\n", texture_desc.BindFlags);
+    ok(texture_desc.Usage == D3D11_USAGE_DEFAULT, "Got unexpected usage %u.\n", texture_desc.Usage);
+
+    ID3D11Texture2D_GetDesc(backbuffer_1, &texture_desc);
+    todo_wine ok((texture_desc.BindFlags & (D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE))
+            == (D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE),
+            "Got unexpected bind flags %x.\n", texture_desc.BindFlags);
+    ok(texture_desc.Usage == D3D11_USAGE_DEFAULT, "Got unexpected usage %u.\n", texture_desc.Usage);
+
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)backbuffer_1, NULL, &offscreen_rtv);
+    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D11RenderTargetView_Release(offscreen_rtv);
+
+    ID3D11Device_GetImmediateContext(device, &context);
+
+    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &backbuffer_0_srv);
+    ID3D11DeviceContext_PSSetShaderResources(context, 1, 1, &backbuffer_1_srv);
+
+    texture_desc.Width = 640;
+    texture_desc.Height = 480;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &offscreen);
+    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)offscreen, NULL, &offscreen_rtv);
+    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &offscreen_rtv, NULL);
+    vp.TopLeftX = 0;
+    vp.TopLeftY = 0;
+    vp.Width = 640;
+    vp.Height = 480;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+
+    buffer_desc.ByteWidth = sizeof(quad);
+    buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+
+    resource_data.pSysMem = quad;
+    resource_data.SysMemPitch = 0;
+    resource_data.SysMemSlicePitch = 0;
+
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &vb);
+    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, sizeof(layout_desc) / sizeof(*layout_desc),
+            vs_code, sizeof(vs_code), &input_layout);
+    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ID3D11DeviceContext_IASetInputLayout(context, input_layout);
+    ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    ID3D11DeviceContext_VSSetShader(context, vs, NULL, 0);
+    stride = sizeof(*quad);
+    offset = 0;
+    ID3D11DeviceContext_IASetVertexBuffers(context, 0, 1, &vb, &stride, &offset);
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, backbuffer_0_rtv, red);
+
+    ID3D11DeviceContext_Draw(context, 4, 0);
+    color = get_texture_color(offscreen, 120, 240);
+    todo_wine ok(compare_color(color, 0x7f0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+
+    /* DXGI moves buffers in the same direction as earlier versions. Buffer 2
+     * becomes buffer 1, buffer 1 becomes the new buffer 0, and buffer 0
+     * becomes buffer n - 1. However, only buffer 0 can be rendered to.
+     *
+     * What is this good for? I don't know. Ad-hoc tests suggest that
+     * Present() always waits for the next V-sync interval, even if there are
+     * still untouched buffers. Buffer 0 is the buffer that is shown on the
+     * screen, just like in <= d3d9. Present() also doesn't discard buffers if
+     * rendering finishes before the V-sync interval is over. I haven't found
+     * any productive use for more than one buffer. */
+    IDXGISwapChain_Present(swapchain, 0, 0);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, backbuffer_0_rtv, green);
+
+    ID3D11DeviceContext_Draw(context, 4, 0);
+    color = get_texture_color(offscreen, 120, 240); /* green, buf 0 */
+    todo_wine ok(compare_color(color, 0x7f00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    /* Buffer 1 is still untouched. */
+
+    color = get_texture_color(backbuffer_0, 320, 240); /* green */
+    ok(compare_color(color, 0x7f00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(backbuffer_2, 320, 240); /* red */
+    ok(compare_color(color, 0x7f0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+
+    IDXGISwapChain_Present(swapchain, 0, 0);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, backbuffer_0_rtv, blue);
+
+    ID3D11DeviceContext_Draw(context, 4, 0);
+    color = get_texture_color(offscreen, 120, 240); /* blue, buf 0 */
+    todo_wine ok(compare_color(color, 0x7fff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(offscreen, 360, 240); /* red, buf 1 */
+    todo_wine ok(compare_color(color, 0x7f0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+
+    color = get_texture_color(backbuffer_0, 320, 240); /* blue */
+    ok(compare_color(color, 0x7fff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(backbuffer_1, 320, 240); /* red */
+    ok(compare_color(color, 0x7f0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(backbuffer_2, 320, 240); /* green */
+    ok(compare_color(color, 0x7f00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+
+    ID3D11VertexShader_Release(vs);
+    ID3D11PixelShader_Release(ps);
+    ID3D11Buffer_Release(vb);
+    ID3D11InputLayout_Release(input_layout);
+    ID3D11ShaderResourceView_Release(backbuffer_0_srv);
+    ID3D11ShaderResourceView_Release(backbuffer_1_srv);
+    ID3D11RenderTargetView_Release(backbuffer_0_rtv);
+    ID3D11RenderTargetView_Release(offscreen_rtv);
+    ID3D11Texture2D_Release(offscreen);
+    ID3D11Texture2D_Release(backbuffer_0);
+    ID3D11Texture2D_Release(backbuffer_1);
+    ID3D11Texture2D_Release(backbuffer_2);
+    IDXGISwapChain_Release(swapchain);
+
+    ID3D11DeviceContext_Release(context);
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 static void test_clear_render_target_view(void)
 {
     static const DWORD expected_color = 0xbf4c7f19, expected_srgb_color = 0xbf95bc59;
@@ -5945,6 +6234,7 @@ START_TEST(d3d11)
     test_resource_map();
     test_multisample_init();
     test_check_multisample_quality_levels();
+    test_swapchain_flip();
     test_clear_render_target_view();
     test_clear_depth_stencil_view();
     test_draw_depth_only();
