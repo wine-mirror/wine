@@ -40,12 +40,7 @@ WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
 static const WCHAR device_name_fmtW[] = {'\\','D','e','v','i','c','e',
     '\\','H','I','D','#','%','p','&','%','p',0};
-static const WCHAR device_regname_fmtW[] = {'H','I','D','\\',
-    'v','i','d','_','%','0','4','x','&','p','i','d','_','%',
-    '0','4','x','&','%','s','\\','%','i','&','%','s',0};
-static const WCHAR device_link_fmtW[] = {'\\','?','?','\\','h','i','d','#',
-    'v','i','d','_','%','0','4','x','&','p','i','d','_','%',
-    '0','4','x','&','%','s','#','%','i','&','%','s','#','%','s',0};
+static const WCHAR device_link_fmtW[] = {'\\','?','?','\\','%','s','#','%','s',0};
 /* GUID_DEVINTERFACE_HID */
 static const WCHAR class_guid[] = {'{','4','D','1','E','5','5','B','2',
     '-','F','1','6','F','-','1','1','C','F','-','8','8','C','B','-','0','0',
@@ -83,10 +78,10 @@ NTSTATUS HID_CreateDevice(DEVICE_OBJECT *native_device, HID_MINIDRIVER_REGISTRAT
     return S_OK;
 }
 
-NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device, LPCWSTR serial, LPCWSTR index)
+NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
 {
-    WCHAR regname[255];
     WCHAR dev_link[255];
+    WCHAR *ptr;
     SP_DEVINFO_DATA Data;
     UNICODE_STRING nameW, linkW;
     NTSTATUS status;
@@ -97,9 +92,9 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device, LPCWSTR serial, LPCWSTR index)
     HidD_GetHidGuid(&hidGuid);
     ext = device->DeviceExtension;
 
-    sprintfW(dev_link, device_link_fmtW, ext->information.VendorID,
-        ext->information.ProductID, index, ext->information.VersionNumber, serial,
-        class_guid);
+    sprintfW(dev_link, device_link_fmtW, ext->instance_id, class_guid);
+    ptr = dev_link + 4;
+    do { if (*ptr == '\\') *ptr = '#'; } while (*ptr++);
     struprW(dev_link);
 
     RtlInitUnicodeString( &nameW, ext->device_name);
@@ -117,8 +112,6 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device, LPCWSTR serial, LPCWSTR index)
         return status;
     }
 
-    sprintfW(regname, device_regname_fmtW, ext->information.VendorID, ext->information.ProductID, index, ext->information.VersionNumber, serial);
-
     devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_HIDCLASS, NULL, NULL, DIGCF_DEVICEINTERFACE);
     if (!devinfo)
     {
@@ -126,7 +119,7 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device, LPCWSTR serial, LPCWSTR index)
         return GetLastError();
     }
     Data.cbSize = sizeof(Data);
-    if (!SetupDiCreateDeviceInfoW(devinfo, regname, &GUID_DEVCLASS_HIDCLASS, NULL, NULL, DICD_INHERIT_CLASSDRVS, &Data))
+    if (!SetupDiCreateDeviceInfoW(devinfo, ext->instance_id, &GUID_DEVCLASS_HIDCLASS, NULL, NULL, DICD_INHERIT_CLASSDRVS, &Data))
     {
         if (GetLastError() == ERROR_DEVINST_ALREADY_EXISTS)
         {

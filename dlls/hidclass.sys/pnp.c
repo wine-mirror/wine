@@ -250,7 +250,7 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     sprintfW(ext->instance_id, device_instanceid_fmtW, device_enumeratorW, ext->information.VendorID, ext->information.ProductID, interface, ext->information.VersionNumber, serial);
     sprintfW(ext->device_id, device_deviceid_fmtW, device_enumeratorW, ext->information.VendorID, ext->information.ProductID);
 
-    HID_LinkDevice(device, serial, interface);
+    HID_LinkDevice(device);
 
     ext->poll_interval = DEFAULT_POLL_INTERVAL;
 
