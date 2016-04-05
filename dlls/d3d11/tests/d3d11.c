@@ -498,11 +498,15 @@ static void test_create_device(void)
     HWND window;
     HRESULT hr;
 
-    hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION, &device,
-            NULL, NULL);
-    if (FAILED(hr))
+    if (FAILED(hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
+            &device, NULL, NULL)))
     {
         skip("Failed to create HAL device.\n");
+        if ((device = create_device(NULL)))
+        {
+            trace("Feature level %#x.\n", ID3D11Device_GetFeatureLevel(device));
+            ID3D11Device_Release(device);
+        }
         return;
     }
 
