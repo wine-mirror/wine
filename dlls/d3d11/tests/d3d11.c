@@ -2887,46 +2887,96 @@ static void test_create_rasterizer_state(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-static void test_create_predicate(void)
+static void test_create_query(void)
 {
-    static const D3D11_QUERY other_queries[] =
+    static const struct
     {
-        D3D11_QUERY_EVENT,
-        D3D11_QUERY_OCCLUSION,
-        D3D11_QUERY_TIMESTAMP,
-        D3D11_QUERY_TIMESTAMP_DISJOINT,
-        D3D11_QUERY_PIPELINE_STATISTICS,
-        D3D11_QUERY_SO_STATISTICS,
-        D3D11_QUERY_SO_STATISTICS_STREAM0,
-        D3D11_QUERY_SO_STATISTICS_STREAM1,
-        D3D11_QUERY_SO_STATISTICS_STREAM2,
-        D3D11_QUERY_SO_STATISTICS_STREAM3,
+        D3D11_QUERY query;
+        D3D_FEATURE_LEVEL required_feature_level;
+        BOOL is_predicate;
+        BOOL can_use_create_predicate;
+        BOOL todo;
+    }
+    tests[] =
+    {
+        {D3D11_QUERY_EVENT,                         D3D_FEATURE_LEVEL_10_0, FALSE, FALSE, FALSE},
+        {D3D11_QUERY_OCCLUSION,                     D3D_FEATURE_LEVEL_10_0, FALSE, FALSE, FALSE},
+        {D3D11_QUERY_TIMESTAMP,                     D3D_FEATURE_LEVEL_10_0, FALSE, FALSE, FALSE},
+        {D3D11_QUERY_TIMESTAMP_DISJOINT,            D3D_FEATURE_LEVEL_10_0, FALSE, FALSE, FALSE},
+        {D3D11_QUERY_PIPELINE_STATISTICS,           D3D_FEATURE_LEVEL_10_0, FALSE, FALSE, TRUE},
+        {D3D11_QUERY_OCCLUSION_PREDICATE,           D3D_FEATURE_LEVEL_10_0, TRUE,  TRUE,  FALSE},
+        {D3D11_QUERY_SO_STATISTICS,                 D3D_FEATURE_LEVEL_10_0, FALSE, FALSE, TRUE},
+        {D3D11_QUERY_SO_OVERFLOW_PREDICATE,         D3D_FEATURE_LEVEL_10_0, TRUE,  TRUE,  TRUE},
+        {D3D11_QUERY_SO_STATISTICS_STREAM0,         D3D_FEATURE_LEVEL_11_0, FALSE, FALSE, TRUE},
+        {D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM0, D3D_FEATURE_LEVEL_11_0, TRUE,  FALSE, TRUE},
+        {D3D11_QUERY_SO_STATISTICS_STREAM1,         D3D_FEATURE_LEVEL_11_0, FALSE, FALSE, TRUE},
+        {D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM1, D3D_FEATURE_LEVEL_11_0, TRUE,  FALSE, TRUE},
+        {D3D11_QUERY_SO_STATISTICS_STREAM2,         D3D_FEATURE_LEVEL_11_0, FALSE, FALSE, TRUE},
+        {D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM2, D3D_FEATURE_LEVEL_11_0, TRUE,  FALSE, TRUE},
+        {D3D11_QUERY_SO_STATISTICS_STREAM3,         D3D_FEATURE_LEVEL_11_0, FALSE, FALSE, TRUE},
+        {D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM3, D3D_FEATURE_LEVEL_11_0, TRUE,  FALSE, TRUE},
     };
 
     ULONG refcount, expected_refcount;
+    D3D_FEATURE_LEVEL feature_level;
     D3D11_QUERY_DESC query_desc;
     ID3D11Predicate *predicate;
     ID3D11Device *device, *tmp;
+    HRESULT hr, expected_hr;
+    ID3D11Query *query;
     IUnknown *iface;
     unsigned int i;
-    HRESULT hr;
 
     if (!(device = create_device(NULL)))
     {
         skip("Failed to create device.\n");
         return;
     }
+    feature_level = ID3D11Device_GetFeatureLevel(device);
 
+    hr = ID3D11Device_CreateQuery(device, NULL, &query);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = ID3D11Device_CreatePredicate(device, NULL, &predicate);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
-    query_desc.MiscFlags = 0;
-
-    for (i = 0; i < sizeof(other_queries) / sizeof(*other_queries); ++i)
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
-        query_desc.Query = other_queries[i];
+        if (tests[i].required_feature_level > feature_level)
+        {
+            skip("Query type %u requires feature level %#x.\n", tests[i].query, tests[i].required_feature_level);
+            continue;
+        }
+
+        query_desc.Query = tests[i].query;
+        query_desc.MiscFlags = 0;
+
+        hr = ID3D11Device_CreateQuery(device, &query_desc, NULL);
+        todo_wine_if(tests[i].todo)
+        ok(hr == S_FALSE, "Got unexpected hr %#x for query type %u.\n", hr, query_desc.Query);
+
+        query_desc.Query = tests[i].query;
+        hr = ID3D11Device_CreateQuery(device, &query_desc, &query);
+        todo_wine_if(tests[i].todo)
+        ok(hr == S_OK, "Got unexpected hr %#x for query type %u.\n", hr, query_desc.Query);
+        if (FAILED(hr))
+            continue;
+
+        expected_hr = tests[i].is_predicate ? S_OK : E_NOINTERFACE;
+        hr = ID3D11Query_QueryInterface(query, &IID_ID3D11Predicate, (void **)&predicate);
+        ID3D11Query_Release(query);
+        ok(hr == expected_hr, "Got unexpected hr %#x for query type %u.\n", hr, query_desc.Query);
+        if (SUCCEEDED(hr))
+            ID3D11Predicate_Release(predicate);
+
+        expected_hr = tests[i].can_use_create_predicate ? S_FALSE : E_INVALIDARG;
+        hr = ID3D11Device_CreatePredicate(device, &query_desc, NULL);
+        ok(hr == expected_hr, "Got unexpected hr %#x for query type %u.\n", hr, query_desc.Query);
+
+        expected_hr = tests[i].can_use_create_predicate ? S_OK : E_INVALIDARG;
         hr = ID3D11Device_CreatePredicate(device, &query_desc, &predicate);
-        ok(hr == E_INVALIDARG, "Got unexpected hr %#x for query type %u.\n", hr, other_queries[i]);
+        ok(hr == expected_hr, "Got unexpected hr %#x for query type %u.\n", hr, query_desc.Query);
+        if (SUCCEEDED(hr))
+            ID3D11Predicate_Release(predicate);
     }
 
     query_desc.Query = D3D11_QUERY_OCCLUSION_PREDICATE;
@@ -2947,12 +2997,6 @@ static void test_create_predicate(void)
             "Predicate should implement ID3D10Predicate.\n");
     if (SUCCEEDED(hr)) IUnknown_Release(iface);
     ID3D11Predicate_Release(predicate);
-
-    query_desc.Query = D3D11_QUERY_SO_OVERFLOW_PREDICATE;
-    hr = ID3D11Device_CreatePredicate(device, &query_desc, &predicate);
-    todo_wine ok(SUCCEEDED(hr), "Failed to create predicate, hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        ID3D11Predicate_Release(predicate);
 
     refcount = ID3D11Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -5878,7 +5922,7 @@ START_TEST(d3d11)
     test_create_blend_state();
     test_create_depthstencil_state();
     test_create_rasterizer_state();
-    test_create_predicate();
+    test_create_query();
     test_device_removed_reason();
     test_private_data();
     test_blend();
