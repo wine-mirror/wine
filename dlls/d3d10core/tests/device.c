@@ -5679,7 +5679,6 @@ static void test_swapchain_flip(void)
     DWORD color;
     HWND window;
     HRESULT hr;
-    UINT count;
 
     static const D3D10_INPUT_ELEMENT_DESC layout_desc[] =
     {
@@ -5919,8 +5918,6 @@ static void test_swapchain_flip(void)
     ID3D10Texture2D_Release(backbuffer_2);
     IDXGISwapChain_Release(swapchain);
 
-    hr = ID3D10Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, &count);
-    ok(SUCCEEDED(hr), "Failed to get quality levels, hr %#x.\n", hr);
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     DestroyWindow(window);
