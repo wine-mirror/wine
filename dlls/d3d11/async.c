@@ -364,22 +364,27 @@ HRESULT d3d_query_create(struct d3d_device *device, const D3D11_QUERY_DESC *desc
         struct d3d_query **query)
 {
     struct d3d_query *object;
+    BOOL is_predicate_type;
     HRESULT hr;
 
     if (!desc)
         return E_INVALIDARG;
 
-    if (predicate
-            && desc->Query != D3D11_QUERY_OCCLUSION_PREDICATE
-            && desc->Query != D3D11_QUERY_SO_OVERFLOW_PREDICATE
-            && desc->Query != D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM0
-            && desc->Query != D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM1
-            && desc->Query != D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM2
-            && desc->Query != D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM3)
+    is_predicate_type = desc->Query == D3D11_QUERY_OCCLUSION_PREDICATE
+            || desc->Query == D3D11_QUERY_SO_OVERFLOW_PREDICATE
+            || desc->Query == D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM0
+            || desc->Query == D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM1
+            || desc->Query == D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM2
+            || desc->Query == D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM3;
+
+    if (!is_predicate_type && predicate)
     {
         WARN("Query type %u is not a predicate.\n", desc->Query);
         return E_INVALIDARG;
     }
+
+    if (is_predicate_type)
+        predicate = TRUE;
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
