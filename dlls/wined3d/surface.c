@@ -2082,6 +2082,7 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
     struct wined3d_context *context;
     BOOL upsidedown = FALSE;
     RECT dst_rect = *dst_rect_in;
+    unsigned int src_height;
 
     /* Make sure that the top pixel is always above the bottom pixel, and keep a separate upside down flag
      * glCopyTexSubImage is a bit picky about the parameters we pass to it
@@ -2128,6 +2129,7 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
         ERR("Texture filtering not supported in direct blit\n");
     }
 
+    src_height = wined3d_texture_get_level_height(src_texture, src_surface->texture_level);
     if (upsidedown
             && !((xrel - 1.0f < -eps) || (xrel - 1.0f > eps))
             && !((yrel - 1.0f < -eps) || (yrel - 1.0f > eps)))
@@ -2135,13 +2137,13 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
         /* Upside down copy without stretching is nice, one glCopyTexSubImage call will do. */
         gl_info->gl_ops.gl.p_glCopyTexSubImage2D(dst_surface->texture_target, dst_surface->texture_level,
                 dst_rect.left /*xoffset */, dst_rect.top /* y offset */,
-                src_rect->left, src_surface->resource.height - src_rect->bottom,
+                src_rect->left, src_height - src_rect->bottom,
                 dst_rect.right - dst_rect.left, dst_rect.bottom - dst_rect.top);
     }
     else
     {
         LONG row;
-        UINT yoffset = src_surface->resource.height - src_rect->top + dst_rect.top - 1;
+        UINT yoffset = src_height - src_rect->top + dst_rect.top - 1;
         /* I have to process this row by row to swap the image,
          * otherwise it would be upside down, so stretching in y direction
          * doesn't cost extra time
