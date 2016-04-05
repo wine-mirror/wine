@@ -2691,10 +2691,10 @@
 @ cdecl -arch=win64 ?do_decimal_point@?$numpunct@G@std@@MEBAGXZ(ptr) numpunct_wchar_do_decimal_point
 @ thiscall -arch=win32 ?do_decimal_point@?$numpunct@_W@std@@MBE_WXZ(ptr) numpunct_wchar_do_decimal_point
 @ cdecl -arch=win64 ?do_decimal_point@?$numpunct@_W@std@@MEBA_WXZ(ptr) numpunct_wchar_do_decimal_point
-@ stub -arch=win32 ?do_encoding@?$codecvt@GDH@std@@MBEHXZ
-@ stub -arch=win64 ?do_encoding@?$codecvt@GDH@std@@MEBAHXZ
-@ stub -arch=win32 ?do_encoding@?$codecvt@_WDH@std@@MBEHXZ
-@ stub -arch=win64 ?do_encoding@?$codecvt@_WDH@std@@MEBAHXZ
+@ thiscall -arch=win32 ?do_encoding@?$codecvt@GDH@std@@MBEHXZ(ptr) codecvt_wchar_do_encoding
+@ cdecl -arch=win64 ?do_encoding@?$codecvt@GDH@std@@MEBAHXZ(ptr) codecvt_wchar_do_encoding
+@ thiscall -arch=win32 ?do_encoding@?$codecvt@_WDH@std@@MBEHXZ(ptr) codecvt_wchar_do_encoding
+@ cdecl -arch=win64 ?do_encoding@?$codecvt@_WDH@std@@MEBAHXZ(ptr) codecvt_wchar_do_encoding
 @ thiscall -arch=i386 ?do_encoding@codecvt_base@std@@MBEHXZ(ptr) codecvt_base_do_encoding
 @ cdecl -arch=win64 ?do_encoding@codecvt_base@std@@MEBAHXZ(ptr) codecvt_base_do_encoding
 @ thiscall -arch=win32 ?do_falsename@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) numpunct_char_do_falsename

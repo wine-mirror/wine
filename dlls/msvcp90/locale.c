@@ -3784,6 +3784,17 @@ int __thiscall codecvt_wchar_do_max_length(const codecvt_wchar *this)
     return MB_LEN_MAX;
 }
 
+/* ?do_encoding@?$codecvt@GDH@std@@MBEHXZ */
+/* ?do_encoding@?$codecvt@GDH@std@@MEBAHXZ */
+/* ?do_encoding@?$codecvt@_WDH@std@@MBEHXZ */
+/* ?do_encoding@?$codecvt@_WDH@std@@MEBAHXZ */
+DEFINE_THISCALL_WRAPPER(codecvt_wchar_do_encoding, 4)
+int __thiscall codecvt_wchar_do_encoding(const codecvt_wchar *this)
+{
+    TRACE("(%p)\n", this);
+    return 0;
+}
+
 /* ?do_in@?$codecvt@GDH@std@@MBEHAAHPBD1AAPBDPAG3AAPAG@Z */
 /* ?do_in@?$codecvt@GDH@std@@MEBAHAEAHPEBD1AEAPEBDPEAG3AEAPEAG@Z */
 /* ?do_in@?$codecvt@_WDH@std@@MBEHAAHPBD1AAPBDPA_W3AAPA_W@Z */
@@ -11316,7 +11327,11 @@ void __asm_dummy_vtables(void) {
 #endif
             VTABLE_ADD_FUNC(codecvt_wchar_do_always_noconv)
             VTABLE_ADD_FUNC(codecvt_wchar_do_max_length)
+#if _MSVCP_VER >= 90 && _MSVCP_VER <= 100
             VTABLE_ADD_FUNC(codecvt_base_do_encoding)
+#else
+            VTABLE_ADD_FUNC(codecvt_wchar_do_encoding)
+#endif
             VTABLE_ADD_FUNC(codecvt_wchar_do_in)
             VTABLE_ADD_FUNC(codecvt_wchar_do_out)
             VTABLE_ADD_FUNC(codecvt_wchar_do_unshift)
@@ -11329,7 +11344,11 @@ void __asm_dummy_vtables(void) {
 #endif
             VTABLE_ADD_FUNC(codecvt_wchar_do_always_noconv)
             VTABLE_ADD_FUNC(codecvt_wchar_do_max_length)
+#if _MSVCP_VER >= 90 && _MSVCP_VER <= 100
             VTABLE_ADD_FUNC(codecvt_base_do_encoding)
+#else
+            VTABLE_ADD_FUNC(codecvt_wchar_do_encoding)
+#endif
             VTABLE_ADD_FUNC(codecvt_wchar_do_in)
             VTABLE_ADD_FUNC(codecvt_wchar_do_out)
             VTABLE_ADD_FUNC(codecvt_wchar_do_unshift)
