@@ -300,7 +300,7 @@ static const scriptRange scriptRanges[] = {
     { SCRIPT_UNDEFINED,  0, 0, 0}
 };
 
-/* the must be in order so that the index matches the Script value */
+/* this must be in order so that the index matches the Script value */
 const scriptData scriptInformation[] = {
     {{SCRIPT_UNDEFINED, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_NEUTRAL, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -741,7 +741,7 @@ static inline BOOL set_cache_font_properties(const HDC hdc, ScriptCache *sc)
         static const WCHAR chars[4] = {0x0020, 0x200B, 0xF71B, 0x0640};
         /* U+0020: numeric space
            U+200B: zero width space
-           U+F71B: unknow char found by black box testing
+           U+F71B: unknown char found by black box testing
            U+0640: kashida */
         WORD gi[4];
 
@@ -908,7 +908,7 @@ static WORD get_char_script( LPCWSTR str, INT index, INT end, INT *consumed)
     if (str[index] == 0x2212 || str[index] == 0x2044)
         return Script_Punctuation;
 
-    /* Currency Symboles by Unicode point */
+    /* Currency Symbols by Unicode point */
     switch (str[index])
     {
         case 0x09f2:
@@ -2765,8 +2765,8 @@ static inline int get_cluster_advance(const int* piAdvance,
  *  use piAdvance to find the cluster we are looking at
  *  Find the character that is the first character of the cluster
  *  That is our base piCP
- *  If the script snaps to cluster boundries (Hebrew, Indic, Thai) then we
- *  are good Otherwise if the cluster is larger than 1 glyph we need to
+ *  If the script snaps to cluster boundaries (Hebrew, Indic, Thai) then we
+ *  are good. Otherwise if the cluster is larger than 1 glyph we need to
  *  determine how far through the cluster to advance the cursor.
  */
 HRESULT WINAPI ScriptXtoCP(int iX,
@@ -2955,7 +2955,7 @@ HRESULT WINAPI ScriptXtoCP(int iX,
  *
  *  PARAMS
  *   chars [I] Array of characters.
- *   sa    [I] String analysis.
+ *   sa    [I] Script analysis.
  *   la    [I] Array of logical attribute structures.
  *
  *  RETURNS
@@ -3259,7 +3259,7 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
  * PARAMS
  *  hdc       [I]   Device context.
  *  psc       [I/O] Opaque pointer to a script cache.
- *  psa       [I/O] String analysis.
+ *  psa       [I/O] Script analysis.
  *  tagScript   [I]   The OpenType tag for the Script
  *  tagLangSys  [I]   The OpenType tag for the Language
  *  rcRangeChars[I]   Array of Character counts in each range
