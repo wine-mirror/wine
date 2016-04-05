@@ -3452,6 +3452,33 @@ static void test_RegOpenCurrentUser(void)
     RegCloseKey(key);
 }
 
+static void test_RegNotifyChangeKeyValue(void)
+{
+    HKEY key, subkey;
+    HANDLE event;
+    DWORD dwret;
+    LONG ret;
+
+    event = CreateEventW(NULL, FALSE, TRUE, NULL);
+    ok(event != NULL, "CreateEvent failed, error %u\n", GetLastError());
+    ret = RegCreateKeyA(hkey_main, "TestKey", &key);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+
+    ret = RegNotifyChangeKeyValue(key, TRUE, REG_NOTIFY_CHANGE_NAME, event, TRUE);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+    dwret = WaitForSingleObject(event, 0);
+    ok(dwret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %u\n", dwret);
+
+    ret = RegCreateKeyA(key, "SubKey", &subkey);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+    dwret = WaitForSingleObject(event, 0);
+    ok(dwret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", dwret);
+
+    RegDeleteKeyA(key, "");
+    RegCloseKey(key);
+    CloseHandle(event);
+}
+
 START_TEST(registry)
 {
     /* Load pointers for functions that are not available in all Windows versions */
@@ -3486,6 +3513,7 @@ START_TEST(registry)
     test_delete_value();
     test_delete_key_value();
     test_RegOpenCurrentUser();
+    test_RegNotifyChangeKeyValue();
 
     /* cleanup */
     delete_key( hkey_main );
