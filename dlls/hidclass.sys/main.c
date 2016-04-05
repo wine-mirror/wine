@@ -74,6 +74,9 @@ NTSTATUS WINAPI HidRegisterMinidriver(HID_MINIDRIVER_REGISTRATION *registration)
     registration->DriverObject->MajorFunction[IRP_MJ_CREATE] = HID_Device_create;
     registration->DriverObject->MajorFunction[IRP_MJ_CLOSE] = HID_Device_close;
 
+    driver->PNPDispatch = registration->DriverObject->MajorFunction[IRP_MJ_PNP];
+    registration->DriverObject->MajorFunction[IRP_MJ_PNP] = HID_PNP_Dispatch;
+
     driver->AddDevice = registration->DriverObject->DriverExtension->AddDevice;
     registration->DriverObject->DriverExtension->AddDevice = PNP_AddDevice;
 

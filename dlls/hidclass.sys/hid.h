@@ -27,6 +27,7 @@
 #include "ddk/hidport.h"
 #include "ddk/hidclass.h"
 #include "ddk/hidpi.h"
+#include "cfgmgr32.h"
 #include "wine/list.h"
 #include "parse.h"
 
@@ -47,6 +48,8 @@ typedef struct _BASE_DEVICE_EXTENSTION {
     ULONG poll_interval;
     WCHAR *device_name;
     WCHAR *link_name;
+    WCHAR device_id[MAX_DEVICE_ID_LEN];
+    WCHAR instance_id[MAX_DEVICE_ID_LEN];
     struct ReportRingBuffer *ring_buffer;
     HANDLE halt_event;
     HANDLE thread;
@@ -75,6 +78,7 @@ typedef struct _minidriver
     PDRIVER_UNLOAD DriverUnload;
 
     pAddDevice AddDevice;
+    PDRIVER_DISPATCH PNPDispatch;
 } minidriver;
 
 NTSTATUS call_minidriver(ULONG code, DEVICE_OBJECT *device, void *in_buff, ULONG in_size, void *out_buff, ULONG out_size) DECLSPEC_HIDDEN;
@@ -91,6 +95,7 @@ NTSTATUS WINAPI HID_Device_read(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN
 NTSTATUS WINAPI HID_Device_write(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
 NTSTATUS WINAPI HID_Device_create(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
 NTSTATUS WINAPI HID_Device_close(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
+NTSTATUS WINAPI HID_PNP_Dispatch(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
 
 /* Pseudo-Plug and Play support*/
 NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT* PDO) DECLSPEC_HIDDEN;

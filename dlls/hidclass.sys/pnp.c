@@ -23,11 +23,19 @@
 #include <stdarg.h>
 #include "hid.h"
 #include "ddk/hidtypes.h"
+#include "regstr.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
+
+static const WCHAR device_enumeratorW[] = {'H','I','D',0};
+static const WCHAR device_deviceid_fmtW[] = {'%','s','\\',
+    'v','i','d','_','%','0','4','x','&','p','i','d','_','%', '0','4','x'};
+static const WCHAR device_instanceid_fmtW[] = {'%','s','\\',
+    'v','i','d','_','%','0','4','x','&','p','i','d','_','%',
+    '0','4','x','&','%','s','\\','%','i','&','%','s',0};
 
 typedef struct _NATIVE_DEVICE {
     struct list entry;
@@ -239,6 +247,8 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
         sprintfW(interface, ig_fmtW, interface_index);
     else
         sprintfW(interface, im_fmtW, interface_index);
+    sprintfW(ext->instance_id, device_instanceid_fmtW, device_enumeratorW, ext->information.VendorID, ext->information.ProductID, interface, ext->information.VersionNumber, serial);
+    sprintfW(ext->device_id, device_deviceid_fmtW, device_enumeratorW, ext->information.VendorID, ext->information.ProductID);
 
     HID_LinkDevice(device, serial, interface);
 
@@ -268,4 +278,66 @@ void PNP_CleanupPNP(DRIVER_OBJECT *driver)
             HeapFree(GetProcessHeap(), 0, tracked_device);
         }
     }
+}
+
+NTSTATUS WINAPI HID_PNP_Dispatch(DEVICE_OBJECT *device, IRP *irp)
+{
+    NTSTATUS rc = STATUS_NOT_SUPPORTED;
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
+
+    TRACE("%p, %p\n", device, irp);
+
+    switch(irpsp->MinorFunction)
+    {
+        case IRP_MN_QUERY_ID:
+        {
+            BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+            ULONG type = irpsp->Parameters.QueryId.IdType;
+            WCHAR *id = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WCHAR)*REGSTR_VAL_MAX_HCID_LEN);
+            TRACE("IRP_MN_QUERY_ID[%i]\n", type);
+            switch (type)
+            {
+                case BusQueryHardwareIDs:
+                case BusQueryCompatibleIDs:
+                {
+                    WCHAR *ptr;
+                    ptr = id;
+                    /* Instance ID */
+                    strcpyW(ptr, ext->instance_id);
+                    ptr += lstrlenW(ext->instance_id) + 1;
+                    /* Device ID */
+                    strcpyW(ptr, ext->device_id);
+                    ptr += lstrlenW(ext->device_id) + 1;
+                    /* Bus ID */
+                    strcpyW(ptr, device_enumeratorW);
+                    ptr += lstrlenW(device_enumeratorW) + 1;
+                    *ptr = 0;
+                    irp->IoStatus.Information = (ULONG_PTR)id;
+                    rc = STATUS_SUCCESS;
+                    break;
+                }
+                case BusQueryDeviceID:
+                    strcpyW(id, ext->device_id);
+                    irp->IoStatus.Information = (ULONG_PTR)id;
+                    rc = STATUS_SUCCESS;
+                    break;
+                case BusQueryInstanceID:
+                    strcpyW(id, ext->instance_id);
+                    irp->IoStatus.Information = (ULONG_PTR)id;
+                    rc = STATUS_SUCCESS;
+                    break;
+            }
+            break;
+        }
+        default:
+        {
+            /* Forward IRP to the minidriver */
+            minidriver *minidriver = find_minidriver(device->DriverObject);
+            return minidriver->PNPDispatch(device, irp);
+        }
+    }
+
+    irp->IoStatus.u.Status = rc;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return rc;
 }
