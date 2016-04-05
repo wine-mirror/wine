@@ -1054,8 +1054,8 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         if (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
         {
             const BYTE *src_data;
+            unsigned int h, y;
             BYTE *dst_data;
-            UINT y;
             /*
              * Some games (e.g. warhammer 40k) don't work properly with the odd pitches, preventing
              * the surface pitch from being used to box non-power2 textures. Instead we have to use a hack to
@@ -1104,7 +1104,8 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
             src_data = mem;
             dst_data = data.addr;
             TRACE("Repacking the surface data from pitch %u to pitch %u.\n", src_row_pitch, dst_row_pitch);
-            for (y = 0; y < surface->resource.height; ++y)
+            h = wined3d_texture_get_level_height(texture, surface->texture_level);
+            for (y = 0; y < h; ++y)
             {
                 memcpy(dst_data, src_data, dst_row_pitch);
                 src_data += src_row_pitch;
