@@ -11286,6 +11286,12 @@ msgid ""
 "occurred.\n"
 msgstr ""
 
+#: reg.rc:54
+msgid ""
+"reg: Unable to complete the specified operation. An unexpected error "
+"occurred.\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr ""

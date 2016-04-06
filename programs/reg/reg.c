@@ -497,8 +497,8 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
             &maxValue, NULL, NULL, NULL);
         if (rc != ERROR_SUCCESS)
         {
-            /* FIXME: failure */
             RegCloseKey(subkey);
+            output_message(STRING_GENERAL_FAILURE);
             return 1;
         }
         maxValue++;

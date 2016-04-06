@@ -11639,6 +11639,14 @@ msgstr ""
 "reg: Unable to delete all registry values in '%1'. An unexpected error "
 "occurred.\n"
 
+#: reg.rc:54
+msgid ""
+"reg: Unable to complete the specified operation. An unexpected error "
+"occurred.\n"
+msgstr ""
+"reg: Unable to complete the specified operation. An unexpected error "
+"occurred.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registry"

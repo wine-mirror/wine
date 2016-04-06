@@ -11645,6 +11645,17 @@ msgid ""
 msgstr ""
 "reg: Nepavyko pašalinti visų „%1“ registro reikšmių. Įvyko netikėta klaida.\n"
 
+#: reg.rc:54
+#, fuzzy
+#| msgid ""
+#| "reg: Unable to delete all registry values in '%1'. An unexpected error "
+#| "occurred.\n"
+msgid ""
+"reg: Unable to complete the specified operation. An unexpected error "
+"occurred.\n"
+msgstr ""
+"reg: Nepavyko pašalinti visų „%1“ registro reikšmių. Įvyko netikėta klaida.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "R&egistras"

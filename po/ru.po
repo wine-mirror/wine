@@ -11642,6 +11642,18 @@ msgstr ""
 "reg: не удалось удалить все значения в «%1». Произошла непредвиденная "
 "ошибка.\n"
 
+#: reg.rc:54
+#, fuzzy
+#| msgid ""
+#| "reg: Unable to delete all registry values in '%1'. An unexpected error "
+#| "occurred.\n"
+msgid ""
+"reg: Unable to complete the specified operation. An unexpected error "
+"occurred.\n"
+msgstr ""
+"reg: не удалось удалить все значения в «%1». Произошла непредвиденная "
+"ошибка.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Реестр"
