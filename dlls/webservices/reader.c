@@ -915,11 +915,8 @@ static inline unsigned int read_utf8_char( struct reader *reader, unsigned int *
 
 static inline void read_skip( struct reader *reader, unsigned int count )
 {
-    while (reader->read_pos < reader->read_size && count)
-    {
-        reader->read_pos++;
-        count--;
-    }
+    if (reader->read_pos + count > reader->read_size) return;
+    reader->read_pos += count;
 }
 
 static inline BOOL read_isnamechar( unsigned int ch )
