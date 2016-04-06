@@ -2579,6 +2579,8 @@ static HRESULT read_type_repeating_element( struct reader *reader, const WS_FIEL
     ULONG item_size, nb_items = 0, nb_allocated = 1, offset = 0;
     char *buf;
 
+    if (size != sizeof(void *)) return E_INVALIDARG;
+
     if (desc->itemRange)
         FIXME( "ignoring range (%u-%u)\n", desc->itemRange->minItemCount, desc->itemRange->maxItemCount );
 
@@ -2627,7 +2629,7 @@ static HRESULT read_type_repeating_element( struct reader *reader, const WS_FIEL
         /* fall through */
 
     case WS_READ_OPTIONAL_POINTER:
-        if (size < sizeof(void *)) return E_INVALIDARG;
+        if (size != sizeof(void *)) return E_INVALIDARG;
         *ret = buf;
         break;
 
@@ -2686,13 +2688,19 @@ static WS_READ_OPTION map_field_options( WS_TYPE type, ULONG options )
 }
 
 static HRESULT read_type_struct_field( struct reader *reader, const WS_FIELD_DESCRIPTION *desc,
-                                       WS_HEAP *heap, char *buf, ULONG size )
+                                       WS_HEAP *heap, char *buf )
 {
     char *ptr = buf + desc->offset;
     WS_READ_OPTION option;
+    ULONG size;
     HRESULT hr;
 
     if (!(option = map_field_options( desc->type, desc->options ))) return E_INVALIDARG;
+
+    if (option == WS_READ_REQUIRED_VALUE)
+        size = get_type_size( desc->type, desc->typeDescription );
+    else
+        size = sizeof(void *);
 
     switch (desc->mapping)
     {
@@ -2750,7 +2758,7 @@ static HRESULT read_type_struct( struct reader *reader, WS_TYPE_MAPPING mapping,
                                  const WS_STRUCT_DESCRIPTION *desc, WS_READ_OPTION option,
                                  WS_HEAP *heap, void *ret, ULONG size )
 {
-    ULONG i, field_size;
+    ULONG i;
     HRESULT hr;
     char *buf;
 
@@ -2766,7 +2774,7 @@ static HRESULT read_type_struct( struct reader *reader, WS_TYPE_MAPPING mapping,
     {
     case WS_READ_REQUIRED_POINTER:
     case WS_READ_OPTIONAL_POINTER:
-        if (size < sizeof(void *)) return E_INVALIDARG;
+        if (size != sizeof(void *)) return E_INVALIDARG;
         if (!(buf = ws_alloc_zero( heap, desc->size ))) return WS_E_QUOTA_EXCEEDED;
         break;
 
@@ -2782,8 +2790,7 @@ static HRESULT read_type_struct( struct reader *reader, WS_TYPE_MAPPING mapping,
 
     for (i = 0; i < desc->fieldCount; i++)
     {
-        field_size = get_field_size( desc, i );
-        if ((hr = read_type_struct_field( reader, desc->fields[i], heap, buf, field_size )) != S_OK)
+        if ((hr = read_type_struct_field( reader, desc->fields[i], heap, buf )) != S_OK)
             break;
     }
 

@@ -1378,7 +1378,7 @@ static HRESULT write_type_struct_field( struct writer *writer, const WS_FIELD_DE
     return S_OK;
 }
 
-ULONG get_field_size( const WS_STRUCT_DESCRIPTION *desc, ULONG index )
+static ULONG get_field_size( const WS_STRUCT_DESCRIPTION *desc, ULONG index )
 {
     if (index < desc->fieldCount - 1) return desc->fields[index + 1]->offset - desc->fields[index]->offset;
     return desc->size - desc->fields[index]->offset;
