@@ -587,24 +587,24 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     if (modal && owner)
     {
         HWND parent;
-        disabled_owner = owner;
         /*
          * Owner needs to be top level window. We need to duplicate the logic from server,
-         * because we need to disable it before creating dialog window.
+         * because we need to disable it before creating dialog window. Note that we do that
+         * even if dialog has WS_CHILD, but only for modal dialogs, which matched what
+         * Windows does.
          */
-        while ((GetWindowLongW( disabled_owner, GWL_STYLE ) & (WS_POPUP|WS_CHILD)) == WS_CHILD)
+        while ((GetWindowLongW( owner, GWL_STYLE ) & (WS_POPUP|WS_CHILD)) == WS_CHILD)
         {
-            parent = GetParent( disabled_owner );
+            parent = GetParent( owner );
             if (!parent || parent == GetDesktopWindow()) break;
-            disabled_owner = parent;
+            owner = parent;
         }
-        if (IsWindowEnabled( disabled_owner ))
+        if (IsWindowEnabled( owner ))
         {
             flags |= DF_OWNERENABLED;
+            disabled_owner = owner;
             EnableWindow( disabled_owner, FALSE );
         }
-        else
-            disabled_owner = NULL;
     }
 
     if (unicode)
