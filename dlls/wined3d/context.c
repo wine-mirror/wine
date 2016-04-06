@@ -3101,7 +3101,8 @@ static void context_update_stream_info(struct wined3d_context *context, const st
          * sources. In most sane cases the pointer - offset will still be > 0,
          * otherwise it will wrap around to some big value. Hope that with the
          * indices the driver wraps it back internally. If not,
-         * drawStridedSlow is needed, including a vertex buffer path. */
+         * draw_primitive_immediate_mode() is needed, including a vertex buffer
+         * path. */
         if (state->load_base_vertex_index < 0)
         {
             WARN_(d3d_perf)("load_base_vertex_index is < 0 (%d), not using VBOs.\n",
@@ -3132,7 +3133,7 @@ static void context_update_stream_info(struct wined3d_context *context, const st
     {
         if (state->vertex_declaration->half_float_conv_needed && !stream_info->all_vbo)
         {
-            TRACE("Using drawStridedSlow with vertex shaders for FLOAT16 conversion.\n");
+            TRACE("Using immediate mode draw with vertex shaders for FLOAT16 conversion.\n");
             context->use_immediate_mode_draw = TRUE;
         }
         else

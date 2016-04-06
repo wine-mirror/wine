@@ -4364,18 +4364,20 @@ static void compute_texture_matrix(const struct wined3d_gl_info *gl_info, const 
                 /* case WINED3D_TTFF_COUNT1: Won't ever get here. */
                 case WINED3D_TTFF_COUNT2:
                     mat._13 = mat._23 = mat._33 = mat._43 = 0.0f;
-                /* OpenGL divides the first 3 vertex coord by the 4th by default,
-                * which is essentially the same as D3DTTFF_PROJECTED. Make sure that
-                * the 4th coord evaluates to 1.0 to eliminate that.
-                *
-                * If the fixed function pipeline is used, the 4th value remains unused,
-                * so there is no danger in doing this. With vertex shaders we have a
-                * problem. Should an app hit that problem, the code here would have to
-                * check for pixel shaders, and the shader has to undo the default gl divide.
-                *
-                * A more serious problem occurs if the app passes 4 coordinates in, and the
-                * 4th is != 1.0(opengl default). This would have to be fixed in drawStridedSlow
-                * or a replacement shader. */
+                /* OpenGL divides the first 3 vertex coordinates by the 4th by
+                 * default, which is essentially the same as D3DTTFF_PROJECTED.
+                 * Make sure that the 4th coordinate evaluates to 1.0 to
+                 * eliminate that.
+                 *
+                 * If the fixed function pipeline is used, the 4th value
+                 * remains unused, so there is no danger in doing this. With
+                 * vertex shaders we have a problem. Should an application hit
+                 * that problem, the code here would have to check for pixel
+                 * shaders, and the shader has to undo the default GL divide.
+                 *
+                 * A more serious problem occurs if the application passes 4
+                 * coordinates in, and the 4th is != 1.0 (OpenGL default).
+                 * This would have to be fixed with immediate mode draws. */
                 default:
                     mat._14 = mat._24 = mat._34 = 0.0f; mat._44 = 1.0f;
             }

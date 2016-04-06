@@ -89,80 +89,97 @@ static void drawStridedFast(const struct wined3d_gl_info *gl_info, GLenum primit
     }
 }
 
-/*
- * Actually draw using the supplied information.
- * Slower GL version which extracts info about each vertex in turn
- */
+static unsigned int get_stride_idx(const void *idx_data, unsigned int idx_size,
+        unsigned int base_vertex_idx, unsigned int start_idx, unsigned int vertex_idx)
+{
+    if (!idx_data)
+        return start_idx + vertex_idx;
+    if (idx_size == 2)
+        return ((const WORD *)idx_data)[start_idx + vertex_idx] + base_vertex_idx;
+    return ((const DWORD *)idx_data)[start_idx + vertex_idx] + base_vertex_idx;
+}
 
 /* Context activation is done by the caller. */
-static void drawStridedSlow(const struct wined3d_device *device, struct wined3d_context *context,
-        const struct wined3d_stream_info *si, UINT NumVertexes, GLenum glPrimType,
-        const void *idxData, UINT idxSize, UINT startIdx)
+static void draw_primitive_immediate_mode(struct wined3d_context *context, const struct wined3d_state *state,
+        const struct wined3d_stream_info *si, unsigned int vertex_count, const void *idx_data,
+        unsigned int idx_size, unsigned int start_idx, unsigned int instance_count)
 {
-    unsigned int               textureNo;
-    const WORD                *pIdxBufS     = NULL;
-    const DWORD               *pIdxBufL     = NULL;
-    UINT vx_index;
-    const struct wined3d_state *state = &device->state;
-    LONG SkipnStrides = startIdx;
-    BOOL pixelShader = use_ps(state);
-    BOOL specular_fog = FALSE;
-    const BYTE *texCoords[WINED3DDP_MAXTEXCOORD];
-    const BYTE *diffuse = NULL, *specular = NULL, *normal = NULL, *position = NULL;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
+    const BYTE *position = NULL, *normal = NULL, *diffuse = NULL, *specular = NULL;
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
-    const struct wined3d_ffp_attrib_ops *ops = &d3d_info->ffp_attrib_ops;
-    UINT texture_stages = d3d_info->limits.ffp_blend_stages;
+    unsigned int coord_idx, stride_idx, texture_idx, vertex_idx;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_stream_info_element *element;
-    UINT num_untracked_materials;
-    DWORD tex_mask = 0;
+    const BYTE *tex_coords[WINED3DDP_MAXTEXCOORD];
+    unsigned int texture_unit, texture_stages;
+    const struct wined3d_ffp_attrib_ops *ops;
+    unsigned int untracked_material_count;
+    unsigned int tex_mask = 0;
+    BOOL specular_fog = FALSE;
+    BOOL ps = use_ps(state);
+    const void *ptr;
 
-    TRACE_(d3d_perf)("Using slow vertex array code\n");
+    static unsigned int once;
 
-    /* Variable Initialization */
-    if (idxSize)
+    if (!once++)
+        FIXME_(d3d_perf)("Drawing using immediate mode.\n");
+    else
+        WARN_(d3d_perf)("Drawing using immediate mode.\n");
+
+    if (!idx_size && idx_data)
+        ERR("Non-NULL idx_data with 0 idx_size, this should never happen.\n");
+
+    if (instance_count)
+        FIXME("Instancing not implemented.\n");
+
+    /* Immediate mode drawing can't make use of indices in a vbo - get the
+     * data from the index buffer. If the index buffer has no vbo (not
+     * supported or other reason), or with user pointer drawing idx_data
+     * will be non-NULL. */
+    if (idx_size && !idx_data)
+        idx_data = buffer_get_sysmem(state->index_buffer, context);
+
+    ops = &d3d_info->ffp_attrib_ops;
+
+    gl_info->gl_ops.gl.p_glBegin(state->gl_primitive_type);
+
+    if (use_vs(state) || d3d_info->ffp_generic_attributes)
     {
-        /* Immediate mode drawing can't make use of indices in a vbo - get the
-         * data from the index buffer. If the index buffer has no vbo (not
-         * supported or other reason), or with user pointer drawing idxData
-         * will be non-NULL. */
-        if (!idxData)
-            idxData = buffer_get_sysmem(state->index_buffer, context);
+        for (vertex_idx = 0; vertex_idx < vertex_count; ++vertex_idx)
+        {
+            unsigned int use_map = si->use_map;
+            unsigned int element_idx;
 
-        if (idxSize == 2) pIdxBufS = idxData;
-        else pIdxBufL = idxData;
-    } else if (idxData) {
-        ERR("non-NULL idxData with 0 idxSize, this should never happen\n");
+            stride_idx = get_stride_idx(idx_data, idx_size, state->base_vertex_index, start_idx, vertex_idx);
+            for (element_idx = 0; use_map; use_map >>= 1, ++element_idx)
+            {
+                if (!(use_map & 1u))
+                    continue;
+
+                ptr = si->elements[element_idx].data.addr + si->elements[element_idx].stride * stride_idx;
+                ops->generic[si->elements[element_idx].format->emit_idx](element_idx, ptr);
+            }
+        }
+
+        gl_info->gl_ops.gl.p_glEnd();
         return;
     }
 
-    /* Start drawing in GL */
-    gl_info->gl_ops.gl.p_glBegin(glPrimType);
-
     if (si->use_map & (1u << WINED3D_FFP_POSITION))
-    {
-        element = &si->elements[WINED3D_FFP_POSITION];
-        position = element->data.addr;
-    }
+        position = si->elements[WINED3D_FFP_POSITION].data.addr;
 
     if (si->use_map & (1u << WINED3D_FFP_NORMAL))
-    {
-        element = &si->elements[WINED3D_FFP_NORMAL];
-        normal = element->data.addr;
-    }
+        normal = si->elements[WINED3D_FFP_NORMAL].data.addr;
     else
-    {
-        gl_info->gl_ops.gl.p_glNormal3f(0, 0, 0);
-    }
+        gl_info->gl_ops.gl.p_glNormal3f(0.0f, 0.0f, 0.0f);
 
-    num_untracked_materials = context->num_untracked_materials;
+    untracked_material_count = context->num_untracked_materials;
     if (si->use_map & (1u << WINED3D_FFP_DIFFUSE))
     {
         element = &si->elements[WINED3D_FFP_DIFFUSE];
         diffuse = element->data.addr;
 
-        if (num_untracked_materials && element->format->id != WINED3DFMT_B8G8R8A8_UNORM)
-            FIXME("Implement diffuse color tracking from %s\n", debug_d3dformat(element->format->id));
+        if (untracked_material_count && element->format->id != WINED3DFMT_B8G8R8A8_UNORM)
+            FIXME("Implement diffuse color tracking from %s.\n", debug_d3dformat(element->format->id));
     }
     else
     {
@@ -174,7 +191,7 @@ static void drawStridedSlow(const struct wined3d_device *device, struct wined3d_
         element = &si->elements[WINED3D_FFP_SPECULAR];
         specular = element->data.addr;
 
-        /* special case where the fog density is stored in the specular alpha channel */
+        /* Special case where the fog density is stored in the specular alpha channel. */
         if (state->render_states[WINED3D_RS_FOGENABLE]
                 && (state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3D_FOG_NONE
                     || si->elements[WINED3D_FFP_POSITION].format->id == WINED3DFMT_R32G32B32A32_FLOAT)
@@ -182,216 +199,126 @@ static void drawStridedSlow(const struct wined3d_device *device, struct wined3d_
         {
             if (gl_info->supported[EXT_FOG_COORD])
             {
-                if (element->format->id == WINED3DFMT_B8G8R8A8_UNORM) specular_fog = TRUE;
-                else FIXME("Implement fog coordinates from %s\n", debug_d3dformat(element->format->id));
+                if (element->format->id == WINED3DFMT_B8G8R8A8_UNORM)
+                    specular_fog = TRUE;
+                else
+                    FIXME("Implement fog coordinates from %s.\n", debug_d3dformat(element->format->id));
             }
             else
             {
-                static BOOL warned;
+                static unsigned int once;
 
-                if (!warned)
-                {
-                    /* TODO: Use the fog table code from old ddraw */
-                    FIXME("Implement fog for transformed vertices in software\n");
-                    warned = TRUE;
-                }
+                if (!once++)
+                    FIXME("Implement fog for transformed vertices in software.\n");
             }
         }
     }
     else if (gl_info->supported[EXT_SECONDARY_COLOR])
     {
-        GL_EXTCALL(glSecondaryColor3fEXT)(0, 0, 0);
+        GL_EXTCALL(glSecondaryColor3fEXT)(0.0f, 0.0f, 0.0f);
     }
 
-    for (textureNo = 0; textureNo < texture_stages; ++textureNo)
+    texture_stages = d3d_info->limits.ffp_blend_stages;
+    for (texture_idx = 0; texture_idx < texture_stages; ++texture_idx)
     {
-        int coordIdx = state->texture_states[textureNo][WINED3D_TSS_TEXCOORD_INDEX];
-        DWORD texture_idx = context->tex_unit_map[textureNo];
-
-        if (!gl_info->supported[ARB_MULTITEXTURE] && textureNo > 0)
+        if (!gl_info->supported[ARB_MULTITEXTURE] && texture_idx > 0)
         {
-            FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+            FIXME("Program using multiple concurrent textures which this OpenGL implementation doesn't support.\n");
             continue;
         }
 
-        if (!pixelShader && !state->textures[textureNo]) continue;
+        if (!ps && !state->textures[texture_idx])
+            continue;
 
-        if (texture_idx == WINED3D_UNMAPPED_STAGE) continue;
+        texture_unit = context->tex_unit_map[texture_idx];
+        if (texture_unit == WINED3D_UNMAPPED_STAGE)
+            continue;
 
-        if (coordIdx > 7)
+        coord_idx = state->texture_states[texture_idx][WINED3D_TSS_TEXCOORD_INDEX];
+        if (coord_idx > 7)
         {
-            TRACE("tex: %d - Skip tex coords, as being system generated\n", textureNo);
+            TRACE("Skipping generated coordinates (%#x) for texture %u.\n", coord_idx, texture_idx);
             continue;
         }
-        else if (coordIdx < 0)
-        {
-            FIXME("tex: %d - Coord index %d is less than zero, expect a crash.\n", textureNo, coordIdx);
-            continue;
-        }
 
-        if (si->use_map & (1u << (WINED3D_FFP_TEXCOORD0 + coordIdx)))
+        if (si->use_map & (1u << (WINED3D_FFP_TEXCOORD0 + coord_idx)))
         {
-            element = &si->elements[WINED3D_FFP_TEXCOORD0 + coordIdx];
-            texCoords[coordIdx] = element->data.addr;
-            tex_mask |= (1u << textureNo);
+            tex_coords[coord_idx] = si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].data.addr;
+            tex_mask |= (1u << texture_idx);
         }
         else
         {
-            TRACE("tex: %d - Skipping tex coords, as no data supplied\n", textureNo);
+            TRACE("Setting default coordinates for texture %u.\n", texture_idx);
             if (gl_info->supported[ARB_MULTITEXTURE])
-                GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + texture_idx, 0, 0, 0, 1));
+                GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + texture_unit, 0.0f, 0.0f, 0.0f, 1.0f));
             else
-                gl_info->gl_ops.gl.p_glTexCoord4f(0, 0, 0, 1);
+                gl_info->gl_ops.gl.p_glTexCoord4f(0.0f, 0.0f, 0.0f, 1.0f);
         }
     }
 
-    /* We shouldn't start this function if any VBO is involved. Should I put a safety check here?
-     * Guess it's not necessary(we crash then anyway) and would only eat CPU time
-     */
+    /* Blending data and point sizes are not supported by this function. They
+     * are not supported by the fixed function pipeline at all. A FIXME for
+     * them is printed after decoding the vertex declaration. */
+    for (vertex_idx = 0; vertex_idx < vertex_count; ++vertex_idx)
+    {
+        unsigned int tmp_tex_mask;
 
-    /* For each primitive */
-    for (vx_index = 0; vx_index < NumVertexes; ++vx_index) {
-        UINT texture, tmp_tex_mask;
-        /* Blending data and Point sizes are not supported by this function. They are not supported by the fixed
-         * function pipeline at all. A Fixme for them is printed after decoding the vertex declaration
-         */
+        stride_idx = get_stride_idx(idx_data, idx_size, state->base_vertex_index, start_idx, vertex_idx);
 
-        /* For indexed data, we need to go a few more strides in */
-        if (idxData)
+        if (position)
         {
-            /* Indexed so work out the number of strides to skip */
-            if (idxSize == 2)
-                SkipnStrides = pIdxBufS[startIdx + vx_index] + state->base_vertex_index;
-            else
-                SkipnStrides = pIdxBufL[startIdx + vx_index] + state->base_vertex_index;
+            ptr = position + stride_idx * si->elements[WINED3D_FFP_POSITION].stride;
+            ops->position[si->elements[WINED3D_FFP_POSITION].format->emit_idx](ptr);
         }
 
-        tmp_tex_mask = tex_mask;
-        for (texture = 0; tmp_tex_mask; tmp_tex_mask >>= 1, ++texture)
+        if (normal)
         {
-            int coord_idx;
-            const void *ptr;
-            DWORD texture_idx;
-
-            if (!(tmp_tex_mask & 1)) continue;
-
-            coord_idx = state->texture_states[texture][WINED3D_TSS_TEXCOORD_INDEX];
-            ptr = texCoords[coord_idx] + (SkipnStrides * si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].stride);
-
-            texture_idx = context->tex_unit_map[texture];
-            ops->texcoord[si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].format->emit_idx](
-                    GL_TEXTURE0_ARB + texture_idx, ptr);
+            ptr = normal + stride_idx * si->elements[WINED3D_FFP_NORMAL].stride;
+            ops->normal[si->elements[WINED3D_FFP_NORMAL].format->emit_idx](ptr);
         }
 
-        /* Diffuse -------------------------------- */
         if (diffuse)
         {
-            const void *ptrToCoords = diffuse + SkipnStrides * si->elements[WINED3D_FFP_DIFFUSE].stride;
-            ops->diffuse[si->elements[WINED3D_FFP_DIFFUSE].format->emit_idx](ptrToCoords);
+            ptr = diffuse + stride_idx * si->elements[WINED3D_FFP_DIFFUSE].stride;
+            ops->diffuse[si->elements[WINED3D_FFP_DIFFUSE].format->emit_idx](ptr);
 
-            if (num_untracked_materials)
+            if (untracked_material_count)
             {
                 struct wined3d_color color;
-                unsigned char i;
+                unsigned int i;
 
-                wined3d_color_from_d3dcolor(&color, *(const DWORD *)ptrToCoords);
-                for (i = 0; i < num_untracked_materials; ++i)
+                wined3d_color_from_d3dcolor(&color, *(const DWORD *)ptr);
+                for (i = 0; i < untracked_material_count; ++i)
                 {
                     gl_info->gl_ops.gl.p_glMaterialfv(GL_FRONT_AND_BACK, context->untracked_materials[i], &color.r);
                 }
             }
         }
 
-        /* Specular ------------------------------- */
         if (specular)
         {
-            const void *ptrToCoords = specular + SkipnStrides * si->elements[WINED3D_FFP_SPECULAR].stride;
-            ops->specular[si->elements[WINED3D_FFP_SPECULAR].format->emit_idx](ptrToCoords);
+            ptr = specular + stride_idx * si->elements[WINED3D_FFP_SPECULAR].stride;
+            ops->specular[si->elements[WINED3D_FFP_SPECULAR].format->emit_idx](ptr);
 
             if (specular_fog)
-            {
-                DWORD specularColor = *(const DWORD *)ptrToCoords;
-                GL_EXTCALL(glFogCoordfEXT((float) (specularColor >> 24)));
-            }
+                GL_EXTCALL(glFogCoordfEXT((float)(*(const DWORD *)ptr >> 24)));
         }
 
-        /* Normal -------------------------------- */
-        if (normal)
+        tmp_tex_mask = tex_mask;
+        for (texture_idx = 0; tmp_tex_mask; tmp_tex_mask >>= 1, ++texture_idx)
         {
-            const void *ptrToCoords = normal + SkipnStrides * si->elements[WINED3D_FFP_NORMAL].stride;
-            ops->normal[si->elements[WINED3D_FFP_NORMAL].format->emit_idx](ptrToCoords);
-        }
+            if (!(tmp_tex_mask & 1))
+                continue;
 
-        /* Position -------------------------------- */
-        if (position)
-        {
-            const void *ptrToCoords = position + SkipnStrides * si->elements[WINED3D_FFP_POSITION].stride;
-            ops->position[si->elements[WINED3D_FFP_POSITION].format->emit_idx](ptrToCoords);
+            coord_idx = state->texture_states[texture_idx][WINED3D_TSS_TEXCOORD_INDEX];
+            ptr = tex_coords[coord_idx] + (stride_idx * si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].stride);
+            ops->texcoord[si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].format->emit_idx](
+                    GL_TEXTURE0_ARB + context->tex_unit_map[texture_idx], ptr);
         }
-
-        /* For non indexed mode, step onto next parts */
-        if (!idxData) ++SkipnStrides;
     }
 
     gl_info->gl_ops.gl.p_glEnd();
     checkGLcall("glEnd and previous calls");
-}
-
-/* Context activation is done by the caller. */
-static void drawStridedSlowVs(struct wined3d_context *context, const struct wined3d_state *state,
-        const struct wined3d_stream_info *si, UINT numberOfVertices, GLenum glPrimitiveType,
-        const void *idxData, UINT idxSize, UINT startIdx)
-{
-    const struct wined3d_ffp_attrib_ops *ops = &context->d3d_info->ffp_attrib_ops;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    LONG SkipnStrides = startIdx + state->load_base_vertex_index;
-    const DWORD *pIdxBufL = NULL;
-    const WORD *pIdxBufS = NULL;
-    UINT vx_index;
-    int i;
-    const BYTE *ptr;
-
-    if (idxSize)
-    {
-        /* Immediate mode drawing can't make use of indices in a vbo - get the
-         * data from the index buffer. If the index buffer has no vbo (not
-         * supported or other reason), or with user pointer drawing idxData
-         * will be non-NULL. */
-        if (!idxData)
-            idxData = buffer_get_sysmem(state->index_buffer, context);
-
-        if (idxSize == 2) pIdxBufS = idxData;
-        else pIdxBufL = idxData;
-    } else if (idxData) {
-        ERR("non-NULL idxData with 0 idxSize, this should never happen\n");
-        return;
-    }
-
-    /* Start drawing in GL */
-    gl_info->gl_ops.gl.p_glBegin(glPrimitiveType);
-
-    for (vx_index = 0; vx_index < numberOfVertices; ++vx_index)
-    {
-        if (idxData)
-        {
-            /* Indexed so work out the number of strides to skip */
-            if (idxSize == 2)
-                SkipnStrides = pIdxBufS[startIdx + vx_index] + state->load_base_vertex_index;
-            else
-                SkipnStrides = pIdxBufL[startIdx + vx_index] + state->load_base_vertex_index;
-        }
-
-        for (i = MAX_ATTRIBS - 1; i >= 0; i--)
-        {
-            if (!(si->use_map & (1u << i))) continue;
-
-            ptr = si->elements[i].data.addr + si->elements[i].stride * SkipnStrides;
-            ops->generic[si->elements[i].format->emit_idx](i, ptr);
-        }
-        SkipnStrides++;
-    }
-
-    gl_info->gl_ops.gl.p_glEnd();
 }
 
 /* Context activation is done by the caller. */
@@ -643,28 +570,8 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
 
     if (context->use_immediate_mode_draw || emulation)
     {
-        /* Immediate mode drawing. */
-        if (use_vs(state))
-        {
-            static BOOL warned;
-
-            if (!warned++)
-                FIXME("Using immediate mode with vertex shaders for half float emulation.\n");
-            else
-                WARN_(d3d_perf)("Using immediate mode with vertex shaders for half float emulation.\n");
-
-            drawStridedSlowVs(context, state, stream_info, index_count,
-                    state->gl_primitive_type, idx_data, idx_size, start_idx);
-        }
-        else
-        {
-            if (context->d3d_info->ffp_generic_attributes)
-                drawStridedSlowVs(context, state, stream_info, index_count,
-                    state->gl_primitive_type, idx_data, idx_size, start_idx);
-            else
-                drawStridedSlow(device, context, stream_info, index_count,
-                        state->gl_primitive_type, idx_data, idx_size, start_idx);
-        }
+        draw_primitive_immediate_mode(context, state, stream_info, index_count,
+                idx_data, idx_size, start_idx, instance_count);
     }
     else if (!gl_info->supported[ARB_INSTANCED_ARRAYS] && instance_count)
     {

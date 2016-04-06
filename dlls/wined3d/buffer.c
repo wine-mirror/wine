@@ -432,8 +432,9 @@ static inline void fixup_d3dcolor(DWORD *dst_color)
 {
     DWORD src_color = *dst_color;
 
-    /* Color conversion like in drawStridedSlow. watch out for little endianity
-     * If we want that stuff to work on big endian machines too we have to consider more things
+    /* Color conversion like in draw_primitive_immediate_mode(). Watch out for
+     * endianness. If we want this to work on big-endian machines as well we
+     * have to consider more things.
      *
      * 0xff000000: Alpha mask
      * 0x00ff0000: Blue mask
@@ -1318,15 +1319,11 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
         buffer->flags |= WINED3D_BUFFER_DOUBLEBUFFER;
     }
 
+    /* Observations show that draw_primitive_immediate_mode() is faster on
+     * dynamic vertex buffers than converting + drawStridedFast().
+     * (Half-Life 2 and others.) */
     dynamic_buffer_ok = gl_info->supported[APPLE_FLUSH_BUFFER_RANGE] || gl_info->supported[ARB_MAP_BUFFER_RANGE];
 
-    /* Observations show that drawStridedSlow is faster on dynamic VBs than converting +
-     * drawStridedFast (half-life 2 and others).
-     *
-     * Basically converting the vertices in the buffer is quite expensive, and observations
-     * show that drawStridedSlow is faster than converting + uploading + drawStridedFast.
-     * Therefore do not create a VBO for WINED3DUSAGE_DYNAMIC buffers.
-     */
     if (!gl_info->supported[ARB_VERTEX_BUFFER_OBJECT])
     {
         TRACE("Not creating a vbo because GL_ARB_vertex_buffer is not supported\n");

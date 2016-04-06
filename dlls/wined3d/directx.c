@@ -5608,9 +5608,9 @@ static void WINE_GLAPI invalid_generic_attrib_func(GLuint idx, const void *data)
     DebugBreak();
 }
 
-/* Helper functions for providing vertex data to opengl. The arrays are initialized based on
- * the extension detection and are used in drawStridedSlow
- */
+/* Helper functions for providing vertex data to OpenGL. The arrays are
+ * initialised based on the extension detection and are used in
+ * draw_primitive_immediate_mode(). */
 static void WINE_GLAPI position_d3dcolor(const void *data)
 {
     DWORD pos = *((const DWORD *)data);
