@@ -294,6 +294,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     struct wined3d_surface *target = rt_count ? wined3d_rendertarget_view_get_surface(fb->render_targets[0]) : NULL;
     struct wined3d_surface *depth_stencil = fb->depth_stencil
             ? wined3d_rendertarget_view_get_surface(fb->depth_stencil) : NULL;
+    const struct wined3d_state *state = &device->state;
     const struct wined3d_gl_info *gl_info;
     UINT drawable_width, drawable_height;
     struct wined3d_color corrected_color;
@@ -359,7 +360,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
                 draw_rect, rect_count, clear_rect, &ds_rect);
     }
 
-    if (!context_apply_clear_state(context, device, rt_count, fb))
+    if (!context_apply_clear_state(context, state, rt_count, fb))
     {
         context_release(context);
         WARN("Failed to apply clear state, skipping clear.\n");
@@ -415,7 +416,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
             wined3d_texture_invalidate_location(texture, rtv->sub_resource_idx, ~rtv->resource->draw_binding);
         }
 
-        if (!gl_info->supported[ARB_FRAMEBUFFER_SRGB] && needs_srgb_write(context, &device->state, fb))
+        if (!gl_info->supported[ARB_FRAMEBUFFER_SRGB] && needs_srgb_write(context, state, fb))
         {
             if (rt_count > 1)
                 WARN("Clearing multiple sRGB render targets with no GL_ARB_framebuffer_sRGB "
