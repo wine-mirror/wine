@@ -49,7 +49,7 @@
 @ stdcall GetLongPathNameW(wstr long long) kernel32.GetLongPathNameW
 @ stdcall GetShortPathNameW(wstr ptr long) kernel32.GetShortPathNameW
 @ stdcall GetTempFileNameW(wstr wstr long ptr) kernel32.GetTempFileNameW
-@ stub GetVolumeInformationByHandleW
+@ stdcall GetVolumeInformationByHandleW(ptr ptr long ptr ptr ptr ptr long) kernel32.GetVolumeInformationByHandleW
 @ stdcall GetVolumeInformationW(wstr ptr long ptr ptr ptr ptr long) kernel32.GetVolumeInformationW
 @ stdcall GetVolumePathNameW(wstr ptr long) kernel32.GetVolumePathNameW
 @ stdcall LocalFileTimeToFileTime(ptr ptr) kernel32.LocalFileTimeToFileTime

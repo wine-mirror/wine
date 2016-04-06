@@ -2217,6 +2217,7 @@ WINBASEAPI BOOL        WINAPI GetVersionExW(OSVERSIONINFOW*);
 WINBASEAPI BOOL        WINAPI GetVolumeInformationA(LPCSTR,LPSTR,DWORD,LPDWORD,LPDWORD,LPDWORD,LPSTR,DWORD);
 WINBASEAPI BOOL        WINAPI GetVolumeInformationW(LPCWSTR,LPWSTR,DWORD,LPDWORD,LPDWORD,LPDWORD,LPWSTR,DWORD);
 #define                       GetVolumeInformation WINELIB_NAME_AW(GetVolumeInformation)
+WINBASEAPI BOOL        WINAPI GetVolumeInformationByHandleW(HANDLE,WCHAR *,DWORD,DWORD *,DWORD *,DWORD *,WCHAR *,DWORD);
 WINBASEAPI BOOL        WINAPI GetVolumeNameForVolumeMountPointA(LPCSTR,LPSTR,DWORD);
 WINBASEAPI BOOL        WINAPI GetVolumeNameForVolumeMountPointW(LPCWSTR,LPWSTR,DWORD);
 #define                       GetVolumeNameForVolumeMountPoint WINELIB_NAME_AW(GetVolumeNameForVolumeMountPoint)

@@ -2309,3 +2309,25 @@ BOOL WINAPI SetVolumeMountPointW(LPCWSTR path, LPCWSTR volume)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+/***********************************************************************
+ *           GetVolumeInformationByHandleW (KERNEL32.@)
+ */
+BOOL WINAPI GetVolumeInformationByHandleW(HANDLE handle, WCHAR *volnamebuf, DWORD volnamesize, DWORD *volserial, DWORD *maxlength, DWORD *flags, WCHAR *fsnamebuf, DWORD fsnamesize)
+{
+    FIXME("%p %p %d %p %p %p %p %d\n", handle, volnamebuf, volnamesize, volserial, maxlength, flags, fsnamebuf, fsnamesize);
+
+    if(volnamebuf && volnamesize)
+        *volnamebuf = 0;
+    if(volserial)
+        *volserial = 0;
+    if(maxlength)
+        *maxlength = 0;
+    if(flags)
+        *flags = 0;
+    if(fsnamebuf && fsnamesize)
+        *fsnamebuf = 0;
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}

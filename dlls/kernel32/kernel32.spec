@@ -877,7 +877,7 @@
 @ stdcall GetVersionExA(ptr)
 @ stdcall GetVersionExW(ptr)
 @ stdcall GetVolumeInformationA(str ptr long ptr ptr ptr ptr long)
-# @ stub GetVolumeInformationByHandleW
+@ stdcall GetVolumeInformationByHandleW(ptr ptr long ptr ptr ptr ptr long)
 @ stdcall GetVolumeInformationW(wstr ptr long ptr ptr ptr ptr long)
 @ stdcall GetVolumeNameForVolumeMountPointA(str ptr long)
 @ stdcall GetVolumeNameForVolumeMountPointW(wstr ptr long)

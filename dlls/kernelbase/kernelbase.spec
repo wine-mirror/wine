@@ -337,7 +337,7 @@
 @ stdcall GetVersion() kernel32.GetVersion
 @ stdcall GetVersionExA(ptr) kernel32.GetVersionExA
 @ stdcall GetVersionExW(ptr) kernel32.GetVersionExW
-@ stub GetVolumeInformationByHandleW
+@ stdcall GetVolumeInformationByHandleW(ptr ptr long ptr ptr ptr ptr long) kernel32.GetVolumeInformationByHandleW
 @ stdcall GetVolumeInformationW(wstr ptr long ptr ptr ptr ptr long) kernel32.GetVolumeInformationW
 @ stdcall GetVolumePathNameW(wstr ptr long) kernel32.GetVolumePathNameW
 @ stdcall GetWindowsAccountDomainSid(ptr ptr ptr) advapi32.GetWindowsAccountDomainSid
