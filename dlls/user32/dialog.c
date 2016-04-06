@@ -445,7 +445,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
  */
 static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
                                    HWND owner, DLGPROC dlgProc, LPARAM param,
-                                   BOOL unicode, BOOL modal )
+                                   BOOL unicode, HWND *modal_owner )
 {
     HWND hwnd;
     RECT rect;
@@ -584,7 +584,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
         }
     }
 
-    if (modal && owner)
+    if (modal_owner && owner)
     {
         HWND parent;
         /*
@@ -599,6 +599,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
             if (!parent || parent == GetDesktopWindow()) break;
             owner = parent;
         }
+        *modal_owner = owner;
         if (IsWindowEnabled( owner ))
         {
             disabled_owner = owner;
@@ -768,9 +769,8 @@ HWND WINAPI CreateDialogIndirectParamW( HINSTANCE hInst, LPCDLGTEMPLATEW dlgTemp
 /***********************************************************************
  *           DIALOG_DoDialogBox
  */
-INT DIALOG_DoDialogBox( HWND hwnd )
+INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
 {
-    HWND owner = GetWindow( hwnd, GW_OWNER );
     DIALOGINFO * dlgInfo;
     MSG msg;
     INT retval;
@@ -792,7 +792,7 @@ INT DIALOG_DoDialogBox( HWND hwnd )
                     bFirstEmpty = FALSE;
                 }
                 if (!(GetWindowLongW( hwnd, GWL_STYLE ) & DS_NOIDLEMSG))
-               {
+                {
                     /* No message present -> send ENTERIDLE and wait */
                     SendMessageW( owner, WM_ENTERIDLE, MSGF_DIALOGBOX, (LPARAM)hwnd );
                 }
@@ -839,8 +839,8 @@ INT_PTR WINAPI DialogBoxParamA( HINSTANCE hInst, LPCSTR name,
 
     if (!(hrsrc = FindResourceA( hInst, name, (LPSTR)RT_DIALOG ))) return -1;
     if (!(ptr = LoadResource(hInst, hrsrc))) return -1;
-    hwnd = DIALOG_CreateIndirect( hInst, ptr, owner, dlgProc, param, FALSE, TRUE );
-    if (hwnd) return DIALOG_DoDialogBox( hwnd );
+    hwnd = DIALOG_CreateIndirect( hInst, ptr, owner, dlgProc, param, FALSE, &owner );
+    if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
     return 0;
 }
 
@@ -857,8 +857,8 @@ INT_PTR WINAPI DialogBoxParamW( HINSTANCE hInst, LPCWSTR name,
 
     if (!(hrsrc = FindResourceW( hInst, name, (LPWSTR)RT_DIALOG ))) return -1;
     if (!(ptr = LoadResource(hInst, hrsrc))) return -1;
-    hwnd = DIALOG_CreateIndirect( hInst, ptr, owner, dlgProc, param, TRUE, TRUE );
-    if (hwnd) return DIALOG_DoDialogBox( hwnd );
+    hwnd = DIALOG_CreateIndirect( hInst, ptr, owner, dlgProc, param, TRUE, &owner );
+    if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
     return 0;
 }
 
@@ -870,8 +870,8 @@ INT_PTR WINAPI DialogBoxIndirectParamAorW( HINSTANCE hInstance, LPCVOID template
                                            HWND owner, DLGPROC dlgProc,
                                            LPARAM param, DWORD flags )
 {
-    HWND hwnd = DIALOG_CreateIndirect( hInstance, template, owner, dlgProc, param, !flags, TRUE );
-    if (hwnd) return DIALOG_DoDialogBox( hwnd );
+    HWND hwnd = DIALOG_CreateIndirect( hInstance, template, owner, dlgProc, param, !flags, &owner );
+    if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
     return -1;
 }
 

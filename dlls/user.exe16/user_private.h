@@ -63,7 +63,7 @@ struct wow_handlers32
     HWND    (*get_win_handle)(HWND);
     WNDPROC (*alloc_winproc)(WNDPROC,BOOL);
     struct tagDIALOGINFO *(*get_dialog_info)(HWND,BOOL);
-    INT     (*dialog_box_loop)(HWND);
+    INT     (*dialog_box_loop)(HWND,HWND);
     ULONG_PTR (*get_icon_param)(HICON);
     ULONG_PTR (*set_icon_param)(HICON,ULONG_PTR);
 };
