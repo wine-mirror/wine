@@ -601,7 +601,6 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
         }
         if (IsWindowEnabled( owner ))
         {
-            flags |= DF_OWNERENABLED;
             disabled_owner = owner;
             EnableWindow( disabled_owner, FALSE );
         }
@@ -822,7 +821,6 @@ INT DIALOG_DoDialogBox( HWND hwnd )
             }
         }
     }
-    if (dlgInfo->flags & DF_OWNERENABLED) EnableWindow( owner, TRUE );
     retval = dlgInfo->idResult;
     DestroyWindow( hwnd );
     return retval;

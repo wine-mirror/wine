@@ -241,7 +241,6 @@ typedef struct tagDIALOGINFO
 } DIALOGINFO;
 
 #define DF_END  0x0001
-#define DF_OWNERENABLED 0x0002
 
 extern DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create ) DECLSPEC_HIDDEN;
 extern INT DIALOG_DoDialogBox( HWND hwnd ) DECLSPEC_HIDDEN;
