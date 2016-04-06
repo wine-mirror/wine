@@ -1950,6 +1950,7 @@ struct wined3d_d3d_limits
 
 typedef void (WINE_GLAPI *wined3d_ffp_attrib_func)(const void *data);
 typedef void (WINE_GLAPI *wined3d_ffp_texcoord_func)(GLenum unit, const void *data);
+typedef void (WINE_GLAPI *wined3d_generic_attrib_func)(GLuint idx, const void *data);
 extern wined3d_ffp_attrib_func specular_func_3ubv DECLSPEC_HIDDEN;
 
 struct wined3d_ffp_attrib_ops
@@ -1959,6 +1960,7 @@ struct wined3d_ffp_attrib_ops
     wined3d_ffp_attrib_func specular[WINED3D_FFP_EMIT_COUNT];
     wined3d_ffp_attrib_func normal[WINED3D_FFP_EMIT_COUNT];
     wined3d_ffp_texcoord_func texcoord[WINED3D_FFP_EMIT_COUNT];
+    wined3d_generic_attrib_func generic[WINED3D_FFP_EMIT_COUNT];
 };
 
 struct wined3d_d3d_info

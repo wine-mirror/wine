@@ -5602,6 +5602,12 @@ static void WINE_GLAPI invalid_texcoord_func(GLenum unit, const void *data)
     DebugBreak();
 }
 
+static void WINE_GLAPI invalid_generic_attrib_func(GLuint idx, const void *data)
+{
+    ERR("Invalid attribute function called.\n");
+    DebugBreak();
+}
+
 /* Helper functions for providing vertex data to opengl. The arrays are initialized based on
  * the extension detection and are used in drawStridedSlow
  */
@@ -5658,6 +5664,47 @@ static void WINE_GLAPI specular_d3dcolor(const void *data)
 static void WINE_GLAPI warn_no_specular_func(const void *data)
 {
     WARN("GL_EXT_secondary_color not supported\n");
+}
+
+static void WINE_GLAPI generic_d3dcolor(GLuint idx, const void *data)
+{
+    DWORD color = *((const DWORD *)data);
+
+    context_get_current()->gl_info->gl_ops.ext.p_glVertexAttrib4Nub(idx,
+            D3DCOLOR_B_R(color), D3DCOLOR_B_G(color),
+            D3DCOLOR_B_B(color), D3DCOLOR_B_A(color));
+}
+
+static void WINE_GLAPI generic_short2n(GLuint idx, const void *data)
+{
+    const GLshort s[] = {((const GLshort *)data)[0], ((const GLshort *)data)[1], 0, 1};
+
+    context_get_current()->gl_info->gl_ops.ext.p_glVertexAttrib4Nsv(idx, s);
+}
+
+static void WINE_GLAPI generic_ushort2n(GLuint idx, const void *data)
+{
+    const GLushort s[] = {((const GLushort *)data)[0], ((const GLushort *)data)[1], 0, 1};
+
+    context_get_current()->gl_info->gl_ops.ext.p_glVertexAttrib4Nusv(idx, s);
+}
+
+static void WINE_GLAPI generic_float16_2(GLuint idx, const void *data)
+{
+    float x = float_16_to_32(((const unsigned short *)data) + 0);
+    float y = float_16_to_32(((const unsigned short *)data) + 1);
+
+    context_get_current()->gl_info->gl_ops.ext.p_glVertexAttrib2f(idx, x, y);
+}
+
+static void WINE_GLAPI generic_float16_4(GLuint idx, const void *data)
+{
+    float x = float_16_to_32(((const unsigned short *)data) + 0);
+    float y = float_16_to_32(((const unsigned short *)data) + 1);
+    float z = float_16_to_32(((const unsigned short *)data) + 2);
+    float w = float_16_to_32(((const unsigned short *)data) + 3);
+
+    context_get_current()->gl_info->gl_ops.ext.p_glVertexAttrib4f(idx, x, y, z, w);
 }
 
 static void wined3d_adapter_init_ffp_attrib_ops(struct wined3d_adapter *adapter)
@@ -5785,6 +5832,39 @@ static void wined3d_adapter_init_ffp_attrib_ops(struct wined3d_adapter *adapter)
         ops->texcoord[WINED3D_FFP_EMIT_FLOAT16_4] = invalid_texcoord_func;
     }
     ops->texcoord[WINED3D_FFP_EMIT_INVALID]   = invalid_texcoord_func;
+
+    ops->generic[WINED3D_FFP_EMIT_FLOAT1]     = (wined3d_generic_attrib_func)gl_info->gl_ops.ext.p_glVertexAttrib1fv;
+    ops->generic[WINED3D_FFP_EMIT_FLOAT2]     = (wined3d_generic_attrib_func)gl_info->gl_ops.ext.p_glVertexAttrib2fv;
+    ops->generic[WINED3D_FFP_EMIT_FLOAT3]     = (wined3d_generic_attrib_func)gl_info->gl_ops.ext.p_glVertexAttrib3fv;
+    ops->generic[WINED3D_FFP_EMIT_FLOAT4]     = (wined3d_generic_attrib_func)gl_info->gl_ops.ext.p_glVertexAttrib4fv;
+    if (gl_info->supported[ARB_VERTEX_ARRAY_BGRA])
+        ops->generic[WINED3D_FFP_EMIT_D3DCOLOR] = generic_d3dcolor;
+    else
+        ops->generic[WINED3D_FFP_EMIT_D3DCOLOR] =
+                (wined3d_generic_attrib_func)gl_info->gl_ops.ext.p_glVertexAttrib4Nubv;
+    ops->generic[WINED3D_FFP_EMIT_UBYTE4]     = (wined3d_generic_attrib_func)gl_info->gl_ops.ext.p_glVertexAttrib4ubv;
+    ops->generic[WINED3D_FFP_EMIT_SHORT2]     = (wined3d_generic_attrib_func)gl_info->gl_ops.ext.p_glVertexAttrib2sv;
+    ops->generic[WINED3D_FFP_EMIT_SHORT4]     = (wined3d_generic_attrib_func)gl_info->gl_ops.ext.p_glVertexAttrib4sv;
+    ops->generic[WINED3D_FFP_EMIT_UBYTE4N]    = (wined3d_generic_attrib_func)gl_info->gl_ops.ext.p_glVertexAttrib4Nubv;
+    ops->generic[WINED3D_FFP_EMIT_SHORT2N]    = generic_short2n;
+    ops->generic[WINED3D_FFP_EMIT_SHORT4N]    = (wined3d_generic_attrib_func)gl_info->gl_ops.ext.p_glVertexAttrib4Nsv;
+    ops->generic[WINED3D_FFP_EMIT_USHORT2N]   = generic_ushort2n;
+    ops->generic[WINED3D_FFP_EMIT_USHORT4N]   = (wined3d_generic_attrib_func)gl_info->gl_ops.ext.p_glVertexAttrib4Nusv;
+    ops->generic[WINED3D_FFP_EMIT_UDEC3]      = invalid_generic_attrib_func;
+    ops->generic[WINED3D_FFP_EMIT_DEC3N]      = invalid_generic_attrib_func;
+    if (gl_info->supported[NV_HALF_FLOAT] && gl_info->supported[NV_VERTEX_PROGRAM])
+    {
+        ops->generic[WINED3D_FFP_EMIT_FLOAT16_2] =
+                (wined3d_generic_attrib_func)gl_info->gl_ops.ext.p_glVertexAttrib2hvNV;
+        ops->generic[WINED3D_FFP_EMIT_FLOAT16_4] =
+                (wined3d_generic_attrib_func)gl_info->gl_ops.ext.p_glVertexAttrib4hvNV;
+    }
+    else
+    {
+        ops->generic[WINED3D_FFP_EMIT_FLOAT16_2] = generic_float16_2;
+        ops->generic[WINED3D_FFP_EMIT_FLOAT16_4] = generic_float16_4;
+    }
+    ops->generic[WINED3D_FFP_EMIT_INVALID]    = invalid_generic_attrib_func;
 }
 
 static void wined3d_adapter_init_fb_cfgs(struct wined3d_adapter *adapter, HDC dc)

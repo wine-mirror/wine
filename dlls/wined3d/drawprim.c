@@ -338,120 +338,11 @@ static void drawStridedSlow(const struct wined3d_device *device, struct wined3d_
 }
 
 /* Context activation is done by the caller. */
-static inline void send_attribute(const struct wined3d_gl_info *gl_info,
-        enum wined3d_format_id format, const UINT index, const void *ptr)
-{
-    switch(format)
-    {
-        case WINED3DFMT_R32_FLOAT:
-            GL_EXTCALL(glVertexAttrib1fv(index, ptr));
-            break;
-        case WINED3DFMT_R32G32_FLOAT:
-            GL_EXTCALL(glVertexAttrib2fv(index, ptr));
-            break;
-        case WINED3DFMT_R32G32B32_FLOAT:
-            GL_EXTCALL(glVertexAttrib3fv(index, ptr));
-            break;
-        case WINED3DFMT_R32G32B32A32_FLOAT:
-            GL_EXTCALL(glVertexAttrib4fv(index, ptr));
-            break;
-
-        case WINED3DFMT_R8G8B8A8_UINT:
-            GL_EXTCALL(glVertexAttrib4ubv(index, ptr));
-            break;
-        case WINED3DFMT_B8G8R8A8_UNORM:
-            if (gl_info->supported[ARB_VERTEX_ARRAY_BGRA])
-            {
-                const DWORD *src = ptr;
-                DWORD c = *src & 0xff00ff00u;
-                c |= (*src & 0xff0000u) >> 16;
-                c |= (*src & 0xffu) << 16;
-                GL_EXTCALL(glVertexAttrib4Nubv(index, (GLubyte *)&c));
-                break;
-            }
-            /* else fallthrough */
-        case WINED3DFMT_R8G8B8A8_UNORM:
-            GL_EXTCALL(glVertexAttrib4Nubv(index, ptr));
-            break;
-
-        case WINED3DFMT_R16G16_SINT:
-            GL_EXTCALL(glVertexAttrib2sv(index, ptr));
-            break;
-        case WINED3DFMT_R16G16B16A16_SINT:
-            GL_EXTCALL(glVertexAttrib4sv(index, ptr));
-            break;
-
-        case WINED3DFMT_R16G16_SNORM:
-        {
-            GLshort s[4] = {((const GLshort *)ptr)[0], ((const GLshort *)ptr)[1], 0, 1};
-            GL_EXTCALL(glVertexAttrib4Nsv(index, s));
-            break;
-        }
-        case WINED3DFMT_R16G16_UNORM:
-        {
-            GLushort s[4] = {((const GLushort *)ptr)[0], ((const GLushort *)ptr)[1], 0, 1};
-            GL_EXTCALL(glVertexAttrib4Nusv(index, s));
-            break;
-        }
-        case WINED3DFMT_R16G16B16A16_SNORM:
-            GL_EXTCALL(glVertexAttrib4Nsv(index, ptr));
-            break;
-        case WINED3DFMT_R16G16B16A16_UNORM:
-            GL_EXTCALL(glVertexAttrib4Nusv(index, ptr));
-            break;
-
-        case WINED3DFMT_R10G10B10A2_UINT:
-            FIXME("Unsure about WINED3DDECLTYPE_UDEC3\n");
-            /*glVertexAttrib3usvARB(instancedData[j], (GLushort *) ptr); Does not exist */
-            break;
-        case WINED3DFMT_R10G10B10A2_SNORM:
-            FIXME("Unsure about WINED3DDECLTYPE_DEC3N\n");
-            /*glVertexAttrib3NusvARB(instancedData[j], (GLushort *) ptr); Does not exist */
-            break;
-
-        case WINED3DFMT_R16G16_FLOAT:
-            /* Are those 16 bit floats. C doesn't have a 16 bit float type. I could read the single bits and calculate a 4
-             * byte float according to the IEEE standard
-             */
-            if (gl_info->supported[NV_HALF_FLOAT] && gl_info->supported[NV_VERTEX_PROGRAM])
-            {
-                /* Not supported by GL_ARB_half_float_vertex */
-                GL_EXTCALL(glVertexAttrib2hvNV(index, ptr));
-            }
-            else
-            {
-                float x = float_16_to_32(((const unsigned short *)ptr) + 0);
-                float y = float_16_to_32(((const unsigned short *)ptr) + 1);
-                GL_EXTCALL(glVertexAttrib2f(index, x, y));
-            }
-            break;
-        case WINED3DFMT_R16G16B16A16_FLOAT:
-            if (gl_info->supported[NV_HALF_FLOAT] && gl_info->supported[NV_VERTEX_PROGRAM])
-            {
-                /* Not supported by GL_ARB_half_float_vertex */
-                GL_EXTCALL(glVertexAttrib4hvNV(index, ptr));
-            }
-            else
-            {
-                float x = float_16_to_32(((const unsigned short *)ptr) + 0);
-                float y = float_16_to_32(((const unsigned short *)ptr) + 1);
-                float z = float_16_to_32(((const unsigned short *)ptr) + 2);
-                float w = float_16_to_32(((const unsigned short *)ptr) + 3);
-                GL_EXTCALL(glVertexAttrib4f(index, x, y, z, w));
-            }
-            break;
-
-        default:
-            ERR("Unexpected attribute format: %s\n", debug_d3dformat(format));
-            break;
-    }
-}
-
-/* Context activation is done by the caller. */
 static void drawStridedSlowVs(struct wined3d_context *context, const struct wined3d_state *state,
         const struct wined3d_stream_info *si, UINT numberOfVertices, GLenum glPrimitiveType,
         const void *idxData, UINT idxSize, UINT startIdx)
 {
+    const struct wined3d_ffp_attrib_ops *ops = &context->d3d_info->ffp_attrib_ops;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     LONG SkipnStrides = startIdx + state->load_base_vertex_index;
     const DWORD *pIdxBufL = NULL;
@@ -495,8 +386,7 @@ static void drawStridedSlowVs(struct wined3d_context *context, const struct wine
             if (!(si->use_map & (1u << i))) continue;
 
             ptr = si->elements[i].data.addr + si->elements[i].stride * SkipnStrides;
-
-            send_attribute(gl_info, si->elements[i].format->id, i, ptr);
+            ops->generic[si->elements[i].format->emit_idx](i, ptr);
         }
         SkipnStrides++;
     }
@@ -509,6 +399,7 @@ static void drawStridedInstanced(struct wined3d_context *context, const struct w
         const struct wined3d_stream_info *si, UINT numberOfVertices, GLenum glPrimitiveType,
         const void *idxData, UINT idxSize, UINT startIdx, UINT base_vertex_index, UINT instance_count)
 {
+    const struct wined3d_ffp_attrib_ops *ops = &context->d3d_info->ffp_attrib_ops;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     int numInstancedAttribs = 0, j;
     UINT instancedData[sizeof(si->elements) / sizeof(*si->elements) /* 16 */];
@@ -550,7 +441,7 @@ static void drawStridedInstanced(struct wined3d_context *context, const struct w
                 ptr += (ULONG_PTR)buffer_get_sysmem(vb, context);
             }
 
-            send_attribute(gl_info, si->elements[instancedData[j]].format->id, instancedData[j], ptr);
+            ops->generic[si->elements[instancedData[j]].format->emit_idx](instancedData[j], ptr);
         }
 
         if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
