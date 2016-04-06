@@ -2581,9 +2581,6 @@ static HRESULT read_type_repeating_element( struct reader *reader, const WS_FIEL
 
     if (size != sizeof(void *)) return E_INVALIDARG;
 
-    if (desc->itemRange)
-        FIXME( "ignoring range (%u-%u)\n", desc->itemRange->minItemCount, desc->itemRange->maxItemCount );
-
     /* wrapper element */
     if (desc->localName && ((hr = read_node( reader )) != S_OK)) return hr;
 
@@ -2616,29 +2613,17 @@ static HRESULT read_type_repeating_element( struct reader *reader, const WS_FIEL
 
     if (desc->localName && ((hr = read_node( reader )) != S_OK)) return hr;
 
-    if (!nb_items)
+    if (desc->itemRange && (nb_items < desc->itemRange->minItemCount || nb_items > desc->itemRange->maxItemCount))
     {
+        TRACE( "number of items %u out of range (%u-%u)\n", nb_items, desc->itemRange->minItemCount,
+               desc->itemRange->maxItemCount );
         ws_free( heap, buf );
-        buf = NULL;
-    }
-
-    switch (option)
-    {
-    case WS_READ_REQUIRED_POINTER:
-        if (!nb_items) return WS_E_INVALID_FORMAT;
-        /* fall through */
-
-    case WS_READ_OPTIONAL_POINTER:
-        if (size != sizeof(void *)) return E_INVALIDARG;
-        *ret = buf;
-        break;
-
-    default:
-        FIXME( "read option %u not supported\n", option );
-        return E_NOTIMPL;
+        return WS_E_INVALID_FORMAT;
     }
 
     *count = nb_items;
+    *ret = buf;
+
     return S_OK;
 }
 

@@ -77,6 +77,9 @@ static const char data12[] =
     "<service><id>2</id></service>"
     "</services>";
 
+static const char data13[] =
+    "<services></services>";
+
 static void test_WsCreateError(void)
 {
     HRESULT hr;
@@ -2659,6 +2662,7 @@ static void test_repeating_element(void)
     WS_HEAP *heap;
     WS_STRUCT_DESCRIPTION s, s2;
     WS_FIELD_DESCRIPTION f, f2, *fields[1], *fields2[1];
+    WS_ITEM_RANGE range;
     struct service
     {
         UINT32 id;
@@ -2716,6 +2720,18 @@ static void test_repeating_element(void)
     ok( test->service_count == 2, "got %u\n", test->service_count );
     ok( test->service[0].id == 1, "got %u\n", test->service[0].id );
     ok( test->service[1].id == 2, "got %u\n", test->service[1].id );
+
+    prepare_struct_type_test( reader, data13 );
+    range.minItemCount = 0;
+    range.maxItemCount = 1;
+    f.itemRange = &range;
+    test = NULL;
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( test != NULL, "test not set\n" );
+    ok( test->service != NULL, "service not set\n" );
+    ok( !test->service_count, "got %u\n", test->service_count );
 
     WsFreeReader( reader );
     WsFreeHeap( heap );
