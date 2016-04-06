@@ -260,8 +260,9 @@ GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF 
     (*metafile)->image.palette = NULL;
     (*metafile)->image.xres = dpix;
     (*metafile)->image.yres = dpiy;
-    (*metafile)->bounds = *frameRect;
-    (*metafile)->unit = frameUnit;
+    (*metafile)->bounds.X = (*metafile)->bounds.Y = 0.0;
+    (*metafile)->bounds.Width = (*metafile)->bounds.Height = 1.0;
+    (*metafile)->unit = UnitPixel;
     (*metafile)->metafile_type = type;
     (*metafile)->record_dc = record_dc;
     (*metafile)->comment_data = NULL;
@@ -470,6 +471,20 @@ GpStatus METAFILE_GraphicsDeleted(GpMetafile* metafile)
     heap_free(metafile->comment_data);
     metafile->comment_data = NULL;
     metafile->comment_data_size = 0;
+
+    if (stat == Ok)
+    {
+        MetafileHeader header;
+
+        stat = GdipGetMetafileHeaderFromEmf(metafile->hemf, &header);
+        if (stat == Ok)
+        {
+            metafile->bounds.X = header.X;
+            metafile->bounds.Y = header.Y;
+            metafile->bounds.Width = header.Width;
+            metafile->bounds.Height = header.Height;
+        }
+    }
 
     return stat;
 }

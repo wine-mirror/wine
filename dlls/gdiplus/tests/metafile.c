@@ -1141,6 +1141,68 @@ static void test_converttoemfplus(void)
     expect(Ok, stat);
 }
 
+static void test_frameunit(void)
+{
+    GpStatus stat;
+    GpMetafile *metafile;
+    GpGraphics *graphics;
+    HDC hdc;
+    static const GpRectF frame = {0.0, 0.0, 5.0, 5.0};
+    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
+    GpUnit unit;
+    REAL dpix, dpiy;
+    GpRectF bounds;
+
+    hdc = CreateCompatibleDC(0);
+
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitInch, description, &metafile);
+    expect(Ok, stat);
+
+    DeleteDC(hdc);
+
+    if (stat != Ok)
+        return;
+
+    stat = GdipGetImageBounds((GpImage*)metafile, &bounds, &unit);
+    expect(Ok, stat);
+    expect(UnitPixel, unit);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    expectf(1.0, bounds.Width);
+    expectf(1.0, bounds.Height);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipGetImageBounds((GpImage*)metafile, &bounds, &unit);
+    expect(Ok, stat);
+    expect(UnitPixel, unit);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    expectf(1.0, bounds.Width);
+    expectf(1.0, bounds.Height);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    stat = GdipGetImageHorizontalResolution((GpImage*)metafile, &dpix);
+    expect(Ok, stat);
+
+    stat = GdipGetImageVerticalResolution((GpImage*)metafile, &dpiy);
+    expect(Ok, stat);
+
+    stat = GdipGetImageBounds((GpImage*)metafile, &bounds, &unit);
+    expect(Ok, stat);
+    expect(UnitPixel, unit);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    expectf_(5.0 * dpix, bounds.Width, 1.0);
+    expectf_(5.0 * dpiy, bounds.Height, 1.0);
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -1166,6 +1228,7 @@ START_TEST(metafile)
     test_fillrect();
     test_pagetransform();
     test_converttoemfplus();
+    test_frameunit();
 
     GdiplusShutdown(gdiplusToken);
 }
