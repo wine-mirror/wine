@@ -4420,6 +4420,233 @@ static void test_dialog_styles(void)
     }
 }
 
+struct dlg_parent_param
+{
+    HWND ga_parent;
+    HWND gwl_parent;
+    HWND get_parent;
+    HWND owner;
+    HWND root;
+    HWND ga_root_owner;
+};
+
+static INT_PTR WINAPI parent_dlg_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (msg == WM_INITDIALOG) {
+        struct dlg_parent_param *param = (void*)lparam;
+        check_parents(hwnd, param->ga_parent, param->gwl_parent, param->get_parent, param->owner,
+                      param->root ? param->root : hwnd, param->ga_root_owner ? param->ga_root_owner : hwnd);
+
+        ok(!IsWindowEnabled(param->gwl_parent), "parent is not disabled\n");
+        EndDialog(hwnd, 2);
+        ok(IsWindowEnabled(param->gwl_parent), "parent is not enabled\n");
+    }
+
+    return 0;
+}
+
+static INT_PTR WINAPI reparent_dlg_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (msg == WM_INITDIALOG) {
+        ok(!IsWindowEnabled(GetParent(hwnd)), "parent is not disabled\n");
+        SetParent(hwnd, (HWND)lparam);
+    }
+
+    return 0;
+}
+
+static INT_PTR WINAPI reparent_owned_dlg_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (msg == WM_INITDIALOG) {
+        HWND new_parent = (HWND)lparam;
+        HWND owner = GetWindow(hwnd, GW_OWNER);
+        ok(!IsWindowEnabled(owner), "owner is not disabled\n");
+        SetWindowLongA(hwnd, GWL_STYLE, GetWindowLongA(hwnd, GWL_STYLE) | WS_CHILD);
+        SetParent(hwnd, new_parent);
+        ok(GetParent(hwnd) == new_parent, "GetParent(hwnd) = %p, expected %p\n", GetParent(hwnd), new_parent);
+        PostMessageA(hwnd, WM_QUIT, 0, 0);
+    }
+
+    return 0;
+}
+
+static LRESULT WINAPI reparent_dialog_owner_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (msg == WM_ENTERIDLE) {
+        HWND dialog = (HWND)lparam;
+        HWND owner = GetParent(dialog);
+        /* EndDialog will enable owner */
+        EnableWindow(owner, FALSE);
+        EndDialog(dialog, 2);
+        ok(IsWindowEnabled(owner), "owner is not enabled\n");
+        /* ...but it won't be enabled on dialog exit */
+        EnableWindow(owner, FALSE);
+    }
+    return DefWindowProcA( hwnd, msg, wparam, lparam );
+}
+
+static LRESULT WINAPI post_quit_dialog_owner_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (msg == WM_ENTERIDLE) {
+        HWND dialog = (HWND)lparam;
+        PostMessageA(dialog, WM_QUIT, 0, 0);
+    }
+    return DefWindowProcA( hwnd, msg, wparam, lparam );
+}
+
+static LRESULT WINAPI destroy_dialog_owner_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (msg == WM_ENTERIDLE) {
+        HWND dialog = (HWND)lparam;
+        DestroyWindow(dialog);
+    }
+    return DefWindowProcA( hwnd, msg, wparam, lparam );
+}
+
+static void test_dialog_parent(void)
+{
+    HWND dialog, parent, child, child2, other, desktop = GetDesktopWindow();
+    struct dlg_parent_param param;
+    INT_PTR ret;
+    struct
+    {
+        DLGTEMPLATE dt;
+        WORD menu_name;
+        WORD class_id;
+        WORD class_atom;
+        WCHAR caption[1];
+    } dlg_data;
+
+    dlg_data.dt.dwExtendedStyle = 0;
+    dlg_data.dt.cdit = 0;
+    dlg_data.dt.x = 0;
+    dlg_data.dt.y = 0;
+    dlg_data.dt.cx = 100;
+    dlg_data.dt.cy = 100;
+    dlg_data.menu_name = 0;
+    dlg_data.class_id = 0;
+    dlg_data.class_atom = 0;
+    dlg_data.caption[0] = 0;
+
+    parent = CreateWindowExA(0, "static", NULL, WS_OVERLAPPEDWINDOW, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
+    /* Create a child without WS_CHILD flag. It's a valid owner window. */
+    child = CreateWindowExA(0, "static", NULL, WS_OVERLAPPEDWINDOW, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
+    SetParent(child, parent);
+    /* Regular child. If passed as an owner, its parent will be true owner window. */
+    child2 = CreateWindowExA(0, "static", NULL, WS_CHILD, 0, 0, 0, 0, child, NULL, NULL, NULL);
+
+    trace("parent %p child %p child2 %p desktop %p\n", parent, child, child2, desktop);
+
+    /* When dialog is created with WS_CHILD style, its parent depends on function used to create it. */
+    dlg_data.dt.style = WS_CHILD;
+
+    /* CreateDialogIndirectParam uses passed parent as dialog parent. */
+    dialog = CreateDialogIndirectParamA(GetModuleHandleA(NULL), &dlg_data.dt, child2, empty_dlg_proc, 0);
+    ok(dialog != 0, "dialog creation failed\n");
+    check_parents(dialog, child2, child2, child2, NULL, parent, child);
+
+    ok(IsWindowEnabled(child2), "child2 is disabled\n");
+    EnableWindow(child2, FALSE);
+    EndDialog(dialog, 0);
+    ok(IsWindowEnabled(child2), "child2 is not enabled\n");
+    DestroyWindow(dialog);
+
+    /* DialogBoxIndirectParam uses the first parent of passed owner that's not a child window as dialog
+     * parent (like in case of dialog with owner). */
+    param.ga_parent = param.gwl_parent = param.get_parent = child;
+    param.owner = NULL;
+    param.root = parent;
+    param.ga_root_owner = child;
+    ret = DialogBoxIndirectParamA(GetModuleHandleA(NULL), &dlg_data.dt, child2, parent_dlg_proc, (LPARAM)&param);
+    ok(ret == 2, "DialogBoxIndirectParam returned %ld\n", ret);
+
+    /* Dialogs without WS_CHILD behave as expected, they use passed owner just like CreateWindow does. */
+    dlg_data.dt.style = WS_OVERLAPPEDWINDOW;
+
+    dialog = CreateDialogIndirectParamA(GetModuleHandleA(NULL), &dlg_data.dt, child2, empty_dlg_proc, 0);
+    ok(dialog != 0, "dialog creation failed\n");
+    check_parents(dialog, desktop, child, NULL, child, dialog, dialog);
+
+    ok(IsWindowEnabled(child), "child is disabled\n");
+    EnableWindow(child, FALSE);
+    EndDialog(dialog, 0);
+    ok(IsWindowEnabled(child), "child is not enabled\n");
+    DestroyWindow(dialog);
+
+    param.ga_parent = desktop;
+    param.gwl_parent = child;
+    param.get_parent = NULL;
+    param.owner = child;
+    param.root = param.ga_root_owner = NULL;
+    ret = DialogBoxIndirectParamA(GetModuleHandleA(NULL), &dlg_data.dt, child2, parent_dlg_proc, (LPARAM)&param);
+    ok(ret == 2, "DialogBoxIndirectParam returned %ld\n", ret);
+
+    other = CreateWindowExA(0, "static", NULL, WS_OVERLAPPEDWINDOW, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
+    SetWindowLongPtrA(child, GWLP_WNDPROC, (ULONG_PTR)reparent_dialog_owner_proc);
+
+    /* When dialog is created with WS_CHILD|WS_POPUP style, we have an owner. */
+    dlg_data.dt.style = WS_CHILD|WS_POPUP;
+
+    dialog = CreateDialogIndirectParamA(GetModuleHandleA(NULL), &dlg_data.dt, child2, empty_dlg_proc, 0);
+    ok(dialog != 0, "dialog creation failed\n");
+    check_parents(dialog, desktop, child, child, child, dialog, child);
+
+    ok(IsWindowEnabled(child), "child is disabled\n");
+    EnableWindow(child, FALSE);
+    EndDialog(dialog, 0);
+    ok(IsWindowEnabled(child), "child is not enabled\n");
+    DestroyWindow(dialog);
+
+    param.ga_parent = desktop;
+    param.gwl_parent = param.get_parent = child;
+    param.owner = child;
+    param.root = NULL;
+    param.ga_root_owner = child;
+    ret = DialogBoxIndirectParamA(GetModuleHandleA(NULL), &dlg_data.dt, child2, parent_dlg_proc, (LPARAM)&param);
+    ok(ret == 2, "DialogBoxIndirectParam returned %ld\n", ret);
+
+    /* If we change parent in WM_INITDIALOG for WS_CHILD dialog WM_ENTERIDLE is still sent to the original
+     * parent. EndDialog will enable the new parent. */
+    EnableWindow(child, TRUE);
+    EnableWindow(other, FALSE);
+    dlg_data.dt.style = WS_CHILD;
+    ret = DialogBoxIndirectParamA(GetModuleHandleA(NULL), &dlg_data.dt, child2, reparent_dlg_proc, (LPARAM)other);
+    ok(ret == 2, "DialogBoxIndirectParam returned %ld\n", ret);
+    ok(!IsWindowEnabled(other), "other is not disabled\n");
+    ok(!IsWindowEnabled(child), "child is not disabled\n");
+    ok(IsWindowEnabled(child2), "child2 is not enabled\n");
+    EnableWindow(child, TRUE);
+
+    /* If we change parent and style in WM_INITDIALOG for dialog with an owner to make it true child
+     * (thus GetParent() will return the new parent instead of an owner), WM_ENTERIDLE is still sent
+     * to the original parent. EndDialog will enable the new parent. */
+    EnableWindow(other, FALSE);
+    dlg_data.dt.style = WS_OVERLAPPED;
+    ret = DialogBoxIndirectParamA(GetModuleHandleA(NULL), &dlg_data.dt, child2, reparent_owned_dlg_proc, (LPARAM)other);
+    ok(ret == 1, "DialogBoxIndirectParam returned %ld\n", ret);
+    ok(!IsWindowEnabled(other), "other is not disabled\n");
+    ok(!IsWindowEnabled(child), "child is not disabled\n");
+    ok(IsWindowEnabled(child2), "child2 is not enabled\n");
+    EnableWindow(child, TRUE);
+    EnableWindow(other, TRUE);
+
+    /* Quit dialog message loop by sending WM_QUIT message. Dialog owner is not enabled. */
+    SetWindowLongPtrA(child, GWLP_WNDPROC, (ULONG_PTR)post_quit_dialog_owner_proc);
+    ret = DialogBoxIndirectParamA(GetModuleHandleA(NULL), &dlg_data.dt, other, empty_dlg_proc, 0);
+    ok(ret == 1, "DialogBoxIndirectParam returned %ld\n", ret);
+    ok(!IsWindowEnabled(other), "other is enabled\n");
+    EnableWindow(other, TRUE);
+
+    /* Quit dialog message loop by destroying the window. Dialog owner is not enabled. */
+    SetWindowLongPtrA(child, GWLP_WNDPROC, (ULONG_PTR)destroy_dialog_owner_proc);
+    ret = DialogBoxIndirectParamA(GetModuleHandleA(NULL), &dlg_data.dt, other, empty_dlg_proc, 0);
+    ok(ret == 1, "DialogBoxIndirectParam returned %ld\n", ret);
+    ok(!IsWindowEnabled(other), "other is enabled\n");
+    EnableWindow(other, TRUE);
+
+    DestroyWindow(parent);
+}
+
 static void test_scrollwindow( HWND hwnd)
 {
     HDC hdc;
@@ -8977,6 +9204,7 @@ START_TEST(win)
     test_AdjustWindowRect();
     test_window_styles();
     test_dialog_styles();
+    test_dialog_parent();
     test_redrawnow();
     test_csparentdc();
     test_SetWindowLong();
