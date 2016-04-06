@@ -36,55 +36,119 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 #include <math.h>
 
 /* Context activation is done by the caller. */
-static void drawStridedFast(const struct wined3d_gl_info *gl_info, GLenum primitive_type, UINT count, UINT idx_size,
-        const void *idx_data, UINT start_idx, INT base_vertex_index, UINT start_instance, UINT instance_count)
+static void draw_primitive_arrays(struct wined3d_context *context, const struct wined3d_state *state,
+        unsigned int count, const void *idx_data, unsigned int idx_size, unsigned int start_idx,
+        unsigned int start_instance, unsigned int instance_count)
 {
-    if (idx_size)
+    const struct wined3d_ffp_attrib_ops *ops = &context->d3d_info->ffp_attrib_ops;
+    GLenum idx_type = idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
+    const struct wined3d_stream_info *si = &context->stream_info;
+    unsigned int instanced_elements[ARRAY_SIZE(si->elements)];
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    unsigned int instanced_element_count = 0;
+    unsigned int i, j;
+
+    if (!instance_count)
     {
-        GLenum idxtype = idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
-        if (instance_count)
+        if (!idx_size)
         {
-            if (start_instance)
-                FIXME("Start instance (%u) not supported.\n", start_instance);
-            if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
-            {
-                GL_EXTCALL(glDrawElementsInstancedBaseVertex(primitive_type, count, idxtype,
-                        (const char *)idx_data + (idx_size * start_idx), instance_count, base_vertex_index));
-                checkGLcall("glDrawElementsInstancedBaseVertex");
-            }
-            else
-            {
-                GL_EXTCALL(glDrawElementsInstanced(primitive_type, count, idxtype,
-                        (const char *)idx_data + (idx_size * start_idx), instance_count));
-                checkGLcall("glDrawElementsInstanced");
-            }
+            gl_info->gl_ops.gl.p_glDrawArrays(state->gl_primitive_type, start_idx, count);
+            checkGLcall("glDrawArrays");
+            return;
         }
-        else if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
+
+        if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
         {
-            GL_EXTCALL(glDrawElementsBaseVertex(primitive_type, count, idxtype,
-                    (const char *)idx_data + (idx_size * start_idx), base_vertex_index));
+            GL_EXTCALL(glDrawElementsBaseVertex(state->gl_primitive_type, count, idx_type,
+                    (const char *)idx_data + (idx_size * start_idx), state->base_vertex_index));
+            checkGLcall("glDrawElementsBaseVertex");
+            return;
+        }
+
+        gl_info->gl_ops.gl.p_glDrawElements(state->gl_primitive_type, count,
+                idx_type, (const char *)idx_data + (idx_size * start_idx));
+        checkGLcall("glDrawElements");
+        return;
+    }
+
+    if (start_instance)
+        FIXME("Start instance (%u) not supported.\n", start_instance);
+
+    if (gl_info->supported[ARB_INSTANCED_ARRAYS])
+    {
+        if (!idx_size)
+        {
+            GL_EXTCALL(glDrawArraysInstanced(state->gl_primitive_type, start_idx, count, instance_count));
+            checkGLcall("glDrawArraysInstanced");
+            return;
+        }
+
+        if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
+        {
+            GL_EXTCALL(glDrawElementsInstancedBaseVertex(state->gl_primitive_type, count, idx_type,
+                        (const char *)idx_data + (idx_size * start_idx), instance_count, state->base_vertex_index));
+            checkGLcall("glDrawElementsInstancedBaseVertex");
+            return;
+        }
+
+        GL_EXTCALL(glDrawElementsInstanced(state->gl_primitive_type, count, idx_type,
+                    (const char *)idx_data + (idx_size * start_idx), instance_count));
+        checkGLcall("glDrawElementsInstanced");
+        return;
+    }
+
+    /* Instancing emulation by mixing immediate mode and arrays. */
+
+    /* This is a nasty thing. MSDN says no hardware supports this and
+     * applications have to use software vertex processing. We don't support
+     * this for now.
+     *
+     * Shouldn't be too hard to support with OpenGL, in theory just call
+     * glDrawArrays() instead of drawElements(). But the stream fequency value
+     * has a different meaning in that situation. */
+    if (!idx_size)
+    {
+        FIXME("Non-indexed instanced drawing is not supported\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(si->elements); ++i)
+    {
+        if (!(si->use_map & (1u << i)))
+            continue;
+
+        if (state->streams[si->elements[i].stream_idx].flags & WINED3DSTREAMSOURCE_INSTANCEDATA)
+            instanced_elements[instanced_element_count++] = i;
+    }
+
+    for (i = 0; i < instance_count; ++i)
+    {
+        /* Specify the instanced attributes using immediate mode calls. */
+        for (j = 0; j < instanced_element_count; ++j)
+        {
+            const struct wined3d_stream_info_element *element;
+            unsigned int element_idx;
+            const BYTE *ptr;
+
+            element_idx = instanced_elements[j];
+            element = &si->elements[element_idx];
+            ptr = element->data.addr + element->stride * i;
+            if (element->data.buffer_object)
+                ptr += (ULONG_PTR)buffer_get_sysmem(state->streams[element->stream_idx].buffer, context);
+            ops->generic[element->format->emit_idx](element_idx, ptr);
+        }
+
+        if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
+        {
+            GL_EXTCALL(glDrawElementsBaseVertex(state->gl_primitive_type, count, idx_type,
+                        (const char *)idx_data + (idx_size * start_idx), state->base_vertex_index));
             checkGLcall("glDrawElementsBaseVertex");
         }
         else
         {
-            gl_info->gl_ops.gl.p_glDrawElements(primitive_type, count,
-                    idxtype, (const char *)idx_data + (idx_size * start_idx));
+            gl_info->gl_ops.gl.p_glDrawElements(state->gl_primitive_type, count, idx_type,
+                        (const char *)idx_data + (idx_size * start_idx));
             checkGLcall("glDrawElements");
-        }
-    }
-    else
-    {
-        if (instance_count)
-        {
-            if (start_instance)
-                FIXME("Start instance (%u) not supported.\n", start_instance);
-            GL_EXTCALL(glDrawArraysInstanced(primitive_type, start_idx, count, instance_count));
-            checkGLcall("glDrawArraysInstanced");
-        }
-        else
-        {
-            gl_info->gl_ops.gl.p_glDrawArrays(primitive_type, start_idx, count);
-            checkGLcall("glDrawArrays");
         }
     }
 }
@@ -321,71 +385,6 @@ static void draw_primitive_immediate_mode(struct wined3d_context *context, const
     checkGLcall("glEnd and previous calls");
 }
 
-/* Context activation is done by the caller. */
-static void drawStridedInstanced(struct wined3d_context *context, const struct wined3d_state *state,
-        const struct wined3d_stream_info *si, UINT numberOfVertices, GLenum glPrimitiveType,
-        const void *idxData, UINT idxSize, UINT startIdx, UINT base_vertex_index, UINT instance_count)
-{
-    const struct wined3d_ffp_attrib_ops *ops = &context->d3d_info->ffp_attrib_ops;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    int numInstancedAttribs = 0, j;
-    UINT instancedData[sizeof(si->elements) / sizeof(*si->elements) /* 16 */];
-    GLenum idxtype = idxSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
-    UINT i;
-
-    if (!idxSize)
-    {
-        /* This is a nasty thing. MSDN says no hardware supports that and apps have to use software vertex processing.
-         * We don't support this for now
-         *
-         * Shouldn't be too hard to support with opengl, in theory just call glDrawArrays instead of drawElements.
-         * But the StreamSourceFreq value has a different meaning in that situation.
-         */
-        FIXME("Non-indexed instanced drawing is not supported\n");
-        return;
-    }
-
-    for (i = 0; i < sizeof(si->elements) / sizeof(*si->elements); ++i)
-    {
-        if (!(si->use_map & (1u << i))) continue;
-
-        if (state->streams[si->elements[i].stream_idx].flags & WINED3DSTREAMSOURCE_INSTANCEDATA)
-        {
-            instancedData[numInstancedAttribs] = i;
-            numInstancedAttribs++;
-        }
-    }
-
-    for (i = 0; i < instance_count; ++i)
-    {
-        /* Specify the instanced attributes using immediate mode calls */
-        for(j = 0; j < numInstancedAttribs; j++) {
-            const BYTE *ptr = si->elements[instancedData[j]].data.addr
-                    + si->elements[instancedData[j]].stride * i;
-            if (si->elements[instancedData[j]].data.buffer_object)
-            {
-                struct wined3d_buffer *vb = state->streams[si->elements[instancedData[j]].stream_idx].buffer;
-                ptr += (ULONG_PTR)buffer_get_sysmem(vb, context);
-            }
-
-            ops->generic[si->elements[instancedData[j]].format->emit_idx](instancedData[j], ptr);
-        }
-
-        if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
-        {
-            GL_EXTCALL(glDrawElementsBaseVertex(glPrimitiveType, numberOfVertices, idxtype,
-                        (const char *)idxData+(idxSize * startIdx), base_vertex_index));
-            checkGLcall("glDrawElementsBaseVertex");
-        }
-        else
-        {
-            gl_info->gl_ops.gl.p_glDrawElements(glPrimitiveType, numberOfVertices, idxtype,
-                        (const char *)idxData + (idxSize * startIdx));
-            checkGLcall("glDrawElements");
-        }
-    }
-}
-
 static void remove_vbos(struct wined3d_context *context,
         const struct wined3d_state *state, struct wined3d_stream_info *s)
 {
@@ -569,21 +568,11 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
     }
 
     if (context->use_immediate_mode_draw || emulation)
-    {
         draw_primitive_immediate_mode(context, state, stream_info, index_count,
                 idx_data, idx_size, start_idx, instance_count);
-    }
-    else if (!gl_info->supported[ARB_INSTANCED_ARRAYS] && instance_count)
-    {
-        /* Instancing emulation by mixing immediate mode and arrays. */
-        drawStridedInstanced(context, state, stream_info, index_count, state->gl_primitive_type,
-                idx_data, idx_size, start_idx, state->base_vertex_index, instance_count);
-    }
     else
-    {
-        drawStridedFast(gl_info, state->gl_primitive_type, index_count, idx_size, idx_data,
-                start_idx, state->base_vertex_index, start_instance, instance_count);
-    }
+        draw_primitive_arrays(context, state, index_count, idx_data,
+                idx_size, start_idx, start_instance, instance_count);
 
     if (ib_query)
         wined3d_event_query_issue(ib_query, device);

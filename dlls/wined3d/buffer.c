@@ -1320,7 +1320,7 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
     }
 
     /* Observations show that draw_primitive_immediate_mode() is faster on
-     * dynamic vertex buffers than converting + drawStridedFast().
+     * dynamic vertex buffers than converting + draw_primitive_arrays().
      * (Half-Life 2 and others.) */
     dynamic_buffer_ok = gl_info->supported[APPLE_FLUSH_BUFFER_RANGE] || gl_info->supported[ARB_MAP_BUFFER_RANGE];
 
