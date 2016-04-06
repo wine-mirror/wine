@@ -355,14 +355,6 @@ done:
     return TRUE;
 }
 
-/* Context activation is done by the caller. */
-void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *context, BOOL srgb_mode)
-{
-    wined3d_texture_prepare_texture(volume->container, context, srgb_mode);
-    wined3d_volume_load_location(volume, context,
-            srgb_mode ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB);
-}
-
 void wined3d_volume_cleanup(struct wined3d_volume *volume)
 {
     TRACE("volume %p.\n", volume);

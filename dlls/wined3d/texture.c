@@ -663,7 +663,9 @@ void wined3d_texture_load(struct wined3d_texture *texture,
     /* Reload the surfaces if the texture is marked dirty. */
     for (i = 0; i < sub_count; ++i)
     {
-        texture->texture_ops->texture_sub_resource_load(texture->sub_resources[i].resource, context, srgb);
+        if (!texture->texture_ops->texture_load_location(texture, i, context,
+                srgb ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB))
+            ERR("Failed to load location (srgb %#x).\n", srgb);
     }
     texture->flags |= flag;
 }
@@ -1087,12 +1089,6 @@ static HRESULT wined3d_texture_upload_data(struct wined3d_texture *texture,
     return WINED3D_OK;
 }
 
-static void texture2d_sub_resource_load(struct wined3d_resource *sub_resource,
-        struct wined3d_context *context, BOOL srgb)
-{
-    surface_load(surface_from_resource(sub_resource), context, srgb);
-}
-
 static void texture2d_sub_resource_upload_data(struct wined3d_resource *sub_resource,
         const struct wined3d_context *context, const struct wined3d_sub_resource_data *data)
 {
@@ -1203,7 +1199,6 @@ static void texture2d_cleanup_sub_resources(struct wined3d_texture *texture)
 
 static const struct wined3d_texture_ops texture2d_ops =
 {
-    texture2d_sub_resource_load,
     texture2d_sub_resource_upload_data,
     texture2d_load_location,
     texture2d_prepare_location,
@@ -1689,12 +1684,6 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
     return WINED3D_OK;
 }
 
-static void texture3d_sub_resource_load(struct wined3d_resource *sub_resource,
-        struct wined3d_context *context, BOOL srgb)
-{
-    wined3d_volume_load(volume_from_resource(sub_resource), context, srgb);
-}
-
 static void texture3d_sub_resource_upload_data(struct wined3d_resource *sub_resource,
         const struct wined3d_context *context, const struct wined3d_sub_resource_data *data)
 {
@@ -1766,7 +1755,6 @@ static void texture3d_cleanup_sub_resources(struct wined3d_texture *texture)
 
 static const struct wined3d_texture_ops texture3d_ops =
 {
-    texture3d_sub_resource_load,
     texture3d_sub_resource_upload_data,
     texture3d_load_location,
     texture3d_prepare_location,

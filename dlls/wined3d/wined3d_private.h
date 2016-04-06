@@ -2416,8 +2416,6 @@ struct gl_texture
 
 struct wined3d_texture_ops
 {
-    void (*texture_sub_resource_load)(struct wined3d_resource *sub_resource,
-            struct wined3d_context *context, BOOL srgb);
     void (*texture_sub_resource_upload_data)(struct wined3d_resource *sub_resource,
             const struct wined3d_context *context, const struct wined3d_sub_resource_data *data);
     BOOL (*texture_load_location)(struct wined3d_texture *texture, unsigned int sub_resource_idx,
@@ -2580,8 +2578,6 @@ static inline struct wined3d_volume *volume_from_resource(struct wined3d_resourc
 void wined3d_volume_cleanup(struct wined3d_volume *volume) DECLSPEC_HIDDEN;
 HRESULT wined3d_volume_init(struct wined3d_volume *volume, struct wined3d_texture *container,
         const struct wined3d_resource_desc *desc, UINT level) DECLSPEC_HIDDEN;
-void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *context,
-        BOOL srgb_mode) DECLSPEC_HIDDEN;
 BOOL wined3d_volume_load_location(struct wined3d_volume *volume,
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
 BOOL wined3d_volume_prepare_location(struct wined3d_volume *volume,
@@ -2698,7 +2694,6 @@ void surface_get_drawable_size(const struct wined3d_surface *surface, const stru
 HRESULT wined3d_surface_init(struct wined3d_surface *surface,
         struct wined3d_texture *container, const struct wined3d_resource_desc *desc,
         GLenum target, unsigned int level, unsigned int layer, DWORD flags) DECLSPEC_HIDDEN;
-void surface_load(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
 HRESULT surface_load_location(struct wined3d_surface *surface,

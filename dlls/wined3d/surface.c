@@ -1422,27 +1422,6 @@ void surface_set_compatible_renderbuffer(struct wined3d_surface *surface, const 
     checkGLcall("set_compatible_renderbuffer");
 }
 
-/* Context activation is done by the caller. */
-void surface_load(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb)
-{
-    DWORD location = srgb ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB;
-
-    TRACE("surface %p, srgb %#x.\n", surface, srgb);
-
-    if (surface->container->resource.pool == WINED3D_POOL_SCRATCH)
-        ERR("Not supported on scratch surfaces.\n");
-
-    if (surface_get_sub_resource(surface)->locations & location)
-    {
-        TRACE("surface is already in texture\n");
-        return;
-    }
-    TRACE("Reloading because surface is dirty.\n");
-
-    surface_load_location(surface, context, location);
-    surface_evict_sysmem(surface);
-}
-
 /* See also float_16_to_32() in wined3d_private.h */
 static inline unsigned short float_32_to_16(const float *in)
 {
