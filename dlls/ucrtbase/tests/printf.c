@@ -30,6 +30,36 @@
 
 #include "wine/test.h"
 
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    expect_ ## func = TRUE
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT(func) \
+    do { \
+        CHECK_EXPECT2(func); \
+        expect_ ## func = FALSE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+DEFINE_EXPECT(invalid_parameter_handler);
+
+/* make sure we use the correct errno */
+#undef errno
+#define errno (*p_errno())
+
 #define UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION (0x0001)
 #define UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR      (0x0002)
 #define UCRTBASE_PRINTF_LEGACY_WIDE_SPECIFIERS           (0x0004)
@@ -59,6 +89,8 @@ static inline float __port_ind(void)
 
 static int (__cdecl *p_vfprintf)(unsigned __int64 options, FILE *file, const char *format,
                                  void *locale, __ms_va_list valist);
+static int (__cdecl *p_vfwprintf)(unsigned __int64 options, FILE *file, const wchar_t *format,
+                                  void *locale, __ms_va_list valist);
 static int (__cdecl *p_vsprintf)(unsigned __int64 options, char *str, size_t len, const char *format,
                                  void *locale, __ms_va_list valist);
 static int (__cdecl *p_vsnprintf_s)(unsigned __int64 options, char *str, size_t sizeOfBuffer, size_t count, const char *format,
@@ -72,6 +104,22 @@ static FILE *(__cdecl *p_fopen)(const char *name, const char *mode);
 static int (__cdecl *p_fclose)(FILE *file);
 static long (__cdecl *p_ftell)(FILE *file);
 static char *(__cdecl *p_fgets)(char *str, int size, FILE *file);
+static wchar_t *(__cdecl *p_fgetws)(wchar_t *str, int size, FILE *file);
+
+static _invalid_parameter_handler (__cdecl *p_set_invalid_parameter_handler)(_invalid_parameter_handler);
+static int* (__cdecl *p_errno)(void);
+
+static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
+        const wchar_t *function, const wchar_t *file,
+        unsigned line, uintptr_t arg)
+{
+    CHECK_EXPECT(invalid_parameter_handler);
+    ok(expression == NULL, "expression is not NULL\n");
+    ok(function == NULL, "function is not NULL\n");
+    ok(file == NULL, "file is not NULL\n");
+    ok(line == 0, "line = %u\n", line);
+    ok(arg == 0, "arg = %lx\n", (UINT_PTR)arg);
+}
 
 static BOOL init( void )
 {
@@ -84,6 +132,7 @@ static BOOL init( void )
     }
 
     p_vfprintf = (void *)GetProcAddress(hmod, "__stdio_common_vfprintf");
+    p_vfwprintf = (void *)GetProcAddress(hmod, "__stdio_common_vfwprintf");
     p_vsprintf = (void *)GetProcAddress(hmod, "__stdio_common_vsprintf");
     p_vsnprintf_s = (void *)GetProcAddress(hmod, "__stdio_common_vsnprintf_s");
     p_vsprintf_s = (void *)GetProcAddress(hmod, "__stdio_common_vsprintf_s");
@@ -93,6 +142,10 @@ static BOOL init( void )
     p_fclose = (void *)GetProcAddress(hmod, "fclose");
     p_ftell = (void *)GetProcAddress(hmod, "ftell");
     p_fgets = (void *)GetProcAddress(hmod, "fgets");
+    p_fgetws = (void *)GetProcAddress(hmod, "fgetws");
+
+    p_set_invalid_parameter_handler = (void *)GetProcAddress(hmod, "_set_invalid_parameter_handler");
+    p_errno = (void *)GetProcAddress(hmod, "_errno");
     return TRUE;
 }
 
@@ -308,6 +361,109 @@ static void test_fprintf(void)
     unlink(file_name);
 }
 
+static int __cdecl vfwprintf_wrapper(FILE *file,
+                                     const wchar_t *format, ...)
+{
+    int ret;
+    __ms_va_list valist;
+    __ms_va_start(valist, format);
+    ret = p_vfwprintf(0, file, format, NULL, valist);
+    __ms_va_end(valist);
+    return ret;
+}
+
+static void test_fwprintf(void)
+{
+    static const char file_name[] = "fprintf.tst";
+    static const WCHAR simple[] = {'s','i','m','p','l','e',' ','t','e','s','t','\n',0};
+    static const WCHAR cont_fmt[] = {'c','o','n','t','a','i','n','s','%','c','n','u','l','l','\n',0};
+    static const WCHAR cont[] = {'c','o','n','t','a','i','n','s','\0','n','u','l','l','\n',0};
+
+    FILE *fp = p_fopen(file_name, "wb");
+    wchar_t bufw[1024];
+    char bufa[1024];
+    int ret;
+
+    ret = vfwprintf_wrapper(fp, simple);
+    ok(ret == 12, "ret = %d\n", ret);
+    ret = p_ftell(fp);
+    ok(ret == 24, "ftell returned %d\n", ret);
+
+    ret = vfwprintf_wrapper(fp, cont_fmt, '\0');
+    ok(ret == 14, "ret = %d\n", ret);
+    ret = p_ftell(fp);
+    ok(ret == 52, "ftell returned %d\n", ret);
+
+    p_fclose(fp);
+
+    fp = p_fopen(file_name, "rb");
+    p_fgetws(bufw, sizeof(bufw)/sizeof(bufw[0]), fp);
+    ret = p_ftell(fp);
+    ok(ret == 24, "ftell returned %d\n", ret);
+    ok(!wcscmp(bufw, simple), "buf = %s\n", wine_dbgstr_w(bufw));
+
+    p_fgetws(bufw, sizeof(bufw)/sizeof(bufw[0]), fp);
+    ret = p_ftell(fp);
+    ok(ret == 52, "ret = %d\n", ret);
+    ok(!memcmp(bufw, cont, 28), "buf = %s\n", wine_dbgstr_w(bufw));
+
+    p_fclose(fp);
+
+    fp = p_fopen(file_name, "wt");
+
+    ret = vfwprintf_wrapper(fp, simple);
+    ok(ret == 12, "ret = %d\n", ret);
+    ret = p_ftell(fp);
+    ok(ret == 13, "ftell returned %d\n", ret);
+
+    ret = vfwprintf_wrapper(fp, cont_fmt, '\0');
+    ok(ret == 14, "ret = %d\n", ret);
+    ret = p_ftell(fp);
+    ok(ret == 28, "ftell returned %d\n", ret);
+
+    p_fclose(fp);
+
+    fp = p_fopen(file_name, "rb");
+    p_fgets(bufa, sizeof(bufa), fp);
+    ret = p_ftell(fp);
+    ok(ret == 13, "ftell returned %d\n", ret);
+    ok(!strcmp(bufa, "simple test\r\n"), "buf = %s\n", bufa);
+
+    p_fgets(bufa, sizeof(bufa), fp);
+    ret = p_ftell(fp);
+    ok(ret == 28, "ret = %d\n", ret);
+    ok(!memcmp(bufa, "contains\0null\r\n", 15), "buf = %s\n", bufa);
+
+    p_fclose(fp);
+    unlink(file_name);
+
+    ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+            "Invalid parameter handler was already set\n");
+
+    /* NULL format */
+    errno = 0xdeadbeef;
+    SET_EXPECT(invalid_parameter_handler);
+    ret = vfwprintf_wrapper(fp, NULL);
+    ok(errno == EINVAL, "expected errno EINVAL, got %d\n", errno);
+    ok(ret == -1, "expected ret -1, got %d\n", ret);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    /* NULL file */
+    errno = 0xdeadbeef;
+    SET_EXPECT(invalid_parameter_handler);
+    ret = vfwprintf_wrapper(NULL, simple);
+    ok(errno == EINVAL, "expected errno EINVAL, got %d\n", errno);
+    ok(ret == -1, "expected ret -1, got %d\n", ret);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    /* format using % with NULL arglist*/
+    /* crashes on Windows */
+    /* ret = p_vfwprintf(0, fp, cont_fmt, NULL, NULL); */
+
+    ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+            "Cannot reset invalid parameter handler\n");
+}
+
 static int __cdecl _vsnprintf_s_wrapper(char *str, size_t sizeOfBuffer,
                                         size_t count, const char *format, ...)
 {
@@ -456,6 +612,7 @@ START_TEST(printf)
     test_snprintf();
     test_swprintf();
     test_fprintf();
+    test_fwprintf();
     test_vsnprintf_s();
     test_printf_legacy_wide();
     test_printf_legacy_msvcrt();
