@@ -914,7 +914,7 @@ BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
     dlgInfo->idResult = retval;
     dlgInfo->flags |= DF_END;
 
-    owner = GetWindow( hwnd, GW_OWNER );
+    owner = (HWND)GetWindowLongPtrA( hwnd, GWLP_HWNDPARENT );
     if (owner)
         EnableWindow( owner, TRUE );
 
