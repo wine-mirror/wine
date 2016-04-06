@@ -876,7 +876,7 @@ static void test_nullframerect(void) {
     hdc = CreateCompatibleDC(0);
 
     stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, NULL, MetafileFrameUnitPixel, description, &metafile);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     DeleteDC(hdc);
 
@@ -917,10 +917,10 @@ static void test_nullframerect(void) {
     stat = GdipGetImageBounds((GpImage*)metafile, &bounds, &unit);
     expect(Ok, stat);
     expect(UnitPixel, unit);
-    expectf_(25.0, bounds.X, 0.05);
-    expectf_(25.0, bounds.Y, 0.05);
-    expectf_(75.0, bounds.Width, 0.05);
-    expectf_(75.0, bounds.Height, 0.05);
+    todo_wine expectf_(25.0, bounds.X, 0.05);
+    todo_wine expectf_(25.0, bounds.Y, 0.05);
+    todo_wine expectf_(75.0, bounds.Width, 0.05);
+    todo_wine expectf_(75.0, bounds.Height, 0.05);
 
     stat = GdipDisposeImage((GpImage*)metafile);
     expect(Ok, stat);
@@ -966,8 +966,8 @@ static void test_nullframerect(void) {
     expect(UnitPixel, unit);
     expectf_(25.0, bounds.X, 0.05);
     expectf_(25.0, bounds.Y, 0.05);
-    expectf_(50.0, bounds.Width, 0.05);
-    expectf_(50.0, bounds.Height, 0.05);
+    todo_wine expectf_(50.0, bounds.Width, 0.05);
+    todo_wine expectf_(50.0, bounds.Height, 0.05);
 
     stat = GdipDisposeImage((GpImage*)metafile);
     expect(Ok, stat);

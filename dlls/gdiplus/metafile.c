@@ -195,7 +195,7 @@ GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF 
     HDC record_dc;
     REAL dpix, dpiy;
     REAL framerect_factor_x, framerect_factor_y;
-    RECT rc;
+    RECT rc, *lprc;
     GpStatus stat;
 
     TRACE("(%p %d %p %d %p %p)\n", hdc, type, frameRect, frameUnit, desc, metafile);
@@ -203,46 +203,47 @@ GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF 
     if (!hdc || type < EmfTypeEmfOnly || type > EmfTypeEmfPlusDual || !metafile)
         return InvalidParameter;
 
-    if (!frameRect)
-    {
-        FIXME("not implemented for NULL rect\n");
-        return NotImplemented;
-    }
-
     dpix = (REAL)GetDeviceCaps(hdc, HORZRES) / GetDeviceCaps(hdc, HORZSIZE) * 25.4;
     dpiy = (REAL)GetDeviceCaps(hdc, VERTRES) / GetDeviceCaps(hdc, VERTSIZE) * 25.4;
 
-    switch (frameUnit)
+    if (frameRect)
     {
-    case MetafileFrameUnitPixel:
-        framerect_factor_x = 2540.0 / dpix;
-        framerect_factor_y = 2540.0 / dpiy;
-        break;
-    case MetafileFrameUnitPoint:
-        framerect_factor_x = framerect_factor_y = 2540.0 / 72.0;
-        break;
-    case MetafileFrameUnitInch:
-        framerect_factor_x = framerect_factor_y = 2540.0;
-        break;
-    case MetafileFrameUnitDocument:
-        framerect_factor_x = framerect_factor_y = 2540.0 / 300.0;
-        break;
-    case MetafileFrameUnitMillimeter:
-        framerect_factor_x = framerect_factor_y = 100.0;
-        break;
-    case MetafileFrameUnitGdi:
-        framerect_factor_x = framerect_factor_y = 1.0;
-        break;
-    default:
-        return InvalidParameter;
+        switch (frameUnit)
+        {
+        case MetafileFrameUnitPixel:
+            framerect_factor_x = 2540.0 / dpix;
+            framerect_factor_y = 2540.0 / dpiy;
+            break;
+        case MetafileFrameUnitPoint:
+            framerect_factor_x = framerect_factor_y = 2540.0 / 72.0;
+            break;
+        case MetafileFrameUnitInch:
+            framerect_factor_x = framerect_factor_y = 2540.0;
+            break;
+        case MetafileFrameUnitDocument:
+            framerect_factor_x = framerect_factor_y = 2540.0 / 300.0;
+            break;
+        case MetafileFrameUnitMillimeter:
+            framerect_factor_x = framerect_factor_y = 100.0;
+            break;
+        case MetafileFrameUnitGdi:
+            framerect_factor_x = framerect_factor_y = 1.0;
+            break;
+        default:
+            return InvalidParameter;
+        }
+
+        rc.left = framerect_factor_x * frameRect->X;
+        rc.top = framerect_factor_y * frameRect->Y;
+        rc.right = rc.left + framerect_factor_x * frameRect->Width;
+        rc.bottom = rc.top + framerect_factor_y * frameRect->Height;
+
+        lprc = &rc;
     }
+    else
+        lprc = NULL;
 
-    rc.left = framerect_factor_x * frameRect->X;
-    rc.top = framerect_factor_y * frameRect->Y;
-    rc.right = rc.left + framerect_factor_x * frameRect->Width;
-    rc.bottom = rc.top + framerect_factor_y * frameRect->Height;
-
-    record_dc = CreateEnhMetaFileW(hdc, NULL, &rc, desc);
+    record_dc = CreateEnhMetaFileW(hdc, NULL, lprc, desc);
 
     if (!record_dc)
         return GenericError;
