@@ -5,7 +5,7 @@
 @ stub __stdio_common_vfprintf_p
 @ stub __stdio_common_vfprintf_s
 @ stub __stdio_common_vfscanf
-@ stub __stdio_common_vfwprintf
+@ cdecl __stdio_common_vfwprintf(int64 ptr ptr ptr ptr) ucrtbase.__stdio_common_vfwprintf
 @ stub __stdio_common_vfwprintf_p
 @ stub __stdio_common_vfwprintf_s
 @ stub __stdio_common_vfwscanf
