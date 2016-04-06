@@ -2142,6 +2142,10 @@ static GpStatus free_image_data(GpImage *image)
             metafile->record_graphics->image = NULL;
             metafile->record_graphics->busy = TRUE;
         }
+        if (metafile->record_stream)
+        {
+            IStream_Release(metafile->record_stream);
+        }
     }
     else
     {

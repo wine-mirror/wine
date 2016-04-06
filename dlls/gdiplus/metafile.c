@@ -308,6 +308,27 @@ GpStatus WINGDIPAPI GdipRecordMetafileI(HDC hdc, EmfType type, GDIPCONST GpRect 
     return GdipRecordMetafile(hdc, type, pFrameRectF, frameUnit, desc, metafile);
 }
 
+GpStatus WINGDIPAPI GdipRecordMetafileStream(IStream *stream, HDC hdc, EmfType type, GDIPCONST GpRectF *frameRect,
+                                        MetafileFrameUnit frameUnit, GDIPCONST WCHAR *desc, GpMetafile **metafile)
+{
+    GpStatus stat;
+
+    TRACE("(%p %p %d %p %d %p %p)\n", stream, hdc, type, frameRect, frameUnit, desc, metafile);
+
+    if (!stream)
+        return InvalidParameter;
+
+    stat = GdipRecordMetafile(hdc, type, frameRect, frameUnit, desc, metafile);
+
+    if (stat == Ok)
+    {
+        (*metafile)->record_stream = stream;
+        IStream_AddRef(stream);
+    }
+
+    return stat;
+}
+
 GpStatus METAFILE_GetGraphicsContext(GpMetafile* metafile, GpGraphics **result)
 {
     GpStatus stat;
@@ -485,6 +506,37 @@ GpStatus METAFILE_GraphicsDeleted(GpMetafile* metafile)
             metafile->bounds.Width = header.Width;
             metafile->bounds.Height = header.Height;
         }
+    }
+
+    if (stat == Ok && metafile->record_stream)
+    {
+        BYTE *buffer;
+        UINT buffer_size;
+
+        buffer_size = GetEnhMetaFileBits(metafile->hemf, 0, NULL);
+
+        buffer = heap_alloc(buffer_size);
+        if (buffer)
+        {
+            HRESULT hr;
+
+            GetEnhMetaFileBits(metafile->hemf, buffer_size, buffer);
+
+            hr = IStream_Write(metafile->record_stream, buffer, buffer_size, NULL);
+
+            if (FAILED(hr))
+                stat = hresult_to_status(hr);
+
+            heap_free(buffer);
+        }
+        else
+            stat = OutOfMemory;
+    }
+
+    if (metafile->record_stream)
+    {
+        IStream_Release(metafile->record_stream);
+        metafile->record_stream = NULL;
     }
 
     return stat;

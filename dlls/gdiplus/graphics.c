@@ -6436,13 +6436,6 @@ GpStatus WINGDIPAPI GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT16 
                               brush, positions, flags, matrix);
 }
 
-GpStatus WINGDIPAPI GdipRecordMetafileStream(IStream *stream, HDC hdc, EmfType type, GDIPCONST GpRect *frameRect,
-                                        MetafileFrameUnit frameUnit, GDIPCONST WCHAR *desc, GpMetafile **metafile)
-{
-    FIXME("(%p %p %d %p %d %p %p): stub\n", stream, hdc, type, frameRect, frameUnit, desc, metafile);
-    return NotImplemented;
-}
-
 /*****************************************************************************
  * GdipIsVisibleClipEmpty [GDIPLUS.@]
  */

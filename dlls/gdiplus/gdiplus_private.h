@@ -343,6 +343,7 @@ struct GpMetafile{
     BYTE *comment_data;
     DWORD comment_data_size;
     DWORD comment_data_length;
+    IStream *record_stream;
 
     /* playback */
     GpGraphics *playback_graphics;
