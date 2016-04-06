@@ -2644,7 +2644,7 @@ static void test_complex_struct_type(void)
 
     hr = WsGetReaderNode( reader, &node, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    todo_wine ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
+    ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
 
     WsFreeReader( reader );
     WsFreeHeap( heap );
