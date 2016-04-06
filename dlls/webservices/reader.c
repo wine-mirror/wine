@@ -919,6 +919,11 @@ static inline void read_skip( struct reader *reader, unsigned int count )
     reader->read_pos += count;
 }
 
+static inline void read_rewind( struct reader *reader, unsigned int count )
+{
+    reader->read_pos -= count;
+}
+
 static inline BOOL read_isnamechar( unsigned int ch )
 {
     /* FIXME: incomplete */
@@ -1179,6 +1184,11 @@ static HRESULT read_element( struct reader *reader )
 
     if (read_cmp( reader, "<", 1 )) goto error;
     read_skip( reader, 1 );
+    if (!read_isnamechar( read_utf8_char( reader, &skip )))
+    {
+        read_rewind( reader, 1 );
+        goto error;
+    }
 
     start = read_current_ptr( reader );
     for (;;)
