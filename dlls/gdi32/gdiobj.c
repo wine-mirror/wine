@@ -38,7 +38,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
-#define FIRST_GDI_HANDLE 16
+#define FIRST_GDI_HANDLE 32
 #define MAX_GDI_HANDLES  16384
 
 struct hdc_list
