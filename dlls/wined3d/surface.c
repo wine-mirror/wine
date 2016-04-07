@@ -3044,8 +3044,7 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
 static HRESULT surface_load_texture(struct wined3d_surface *surface,
         struct wined3d_context *context, BOOL srgb)
 {
-    unsigned int width, src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch;
-    const RECT src_rect = {0, 0, surface->resource.width, surface->resource.height};
+    unsigned int width, height, src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch;
     unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_texture *texture = surface->container;
@@ -3056,6 +3055,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     struct wined3d_format format;
     POINT dst_point = {0, 0};
     BYTE *mem = NULL;
+    RECT src_rect;
 
     sub_resource = surface_get_sub_resource(surface);
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
@@ -3066,6 +3066,10 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
 
         return WINED3D_OK;
     }
+
+    width = wined3d_texture_get_level_width(texture, surface->texture_level);
+    height = wined3d_texture_get_level_height(texture, surface->texture_level);
+    SetRect(&src_rect, 0, 0, width, height);
 
     if (sub_resource->locations & (WINED3D_LOCATION_TEXTURE_SRGB | WINED3D_LOCATION_TEXTURE_RGB)
             && (texture->resource.format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB)
@@ -3092,10 +3096,9 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         DWORD src_location = sub_resource->locations & WINED3D_LOCATION_RB_RESOLVED ?
                 WINED3D_LOCATION_RB_RESOLVED : WINED3D_LOCATION_RB_MULTISAMPLE;
         DWORD dst_location = srgb ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB;
-        RECT rect = {0, 0, surface->resource.width, surface->resource.height};
 
         surface_blt_fbo(device, context, WINED3D_TEXF_POINT, surface, src_location,
-                &rect, surface, dst_location, &rect);
+                &src_rect, surface, dst_location, &src_rect);
 
         return WINED3D_OK;
     }
@@ -3134,8 +3137,6 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     wined3d_texture_bind_and_dirtify(texture, context, srgb);
     wined3d_texture_get_pitch(texture, surface->texture_level, &src_row_pitch, &src_slice_pitch);
 
-    width = surface->resource.width;
-
     format = *texture->resource.format;
     if ((conversion = wined3d_format_get_color_key_conversion(texture, TRUE)))
         format = *wined3d_get_format(gl_info, conversion->dst_format);
@@ -3160,8 +3161,6 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     if (format.convert)
     {
         /* This code is entered for texture formats which need a fixup. */
-        UINT height = surface->resource.height;
-
         format.byte_count = format.conv_byte_count;
         wined3d_format_calculate_pitch(&format, 1, width, height, &dst_row_pitch, &dst_slice_pitch);
 
@@ -3180,7 +3179,6 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     {
         /* This code is only entered for color keying fixups */
         struct wined3d_palette *palette = NULL;
-        UINT height = surface->resource.height;
 
         wined3d_format_calculate_pitch(&format, device->surface_alignment,
                 width, height, &dst_row_pitch, &dst_slice_pitch);
