@@ -2172,9 +2172,8 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
     struct wined3d_device *device = dst_texture->resource.device;
     GLuint src, backup = 0;
     float left, right, top, bottom; /* Texture coordinates */
-    UINT fbwidth = src_surface->resource.width;
-    UINT fbheight = src_surface->resource.height;
     const struct wined3d_gl_info *gl_info;
+    unsigned int src_width, src_height;
     struct wined3d_context *context;
     GLenum drawBuffer = GL_BACK;
     GLenum offscreen_buffer;
@@ -2192,6 +2191,8 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
     wined3d_texture_load(dst_texture, context, FALSE);
 
     offscreen_buffer = context_get_offscreen_gl_buffer(context);
+    src_width = wined3d_texture_get_level_width(src_texture, src_surface->texture_level);
+    src_height = wined3d_texture_get_level_height(src_texture, src_surface->texture_level);
 
     src_offscreen = wined3d_resource_is_offscreen(&src_texture->resource);
     noBackBufferBackup = src_offscreen && wined3d_settings.offscreen_rendering_mode == ORM_FBO;
@@ -2258,7 +2259,7 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
     }
 
     /* TODO: Only back up the part that will be overwritten */
-    gl_info->gl_ops.gl.p_glCopyTexSubImage2D(texture_target, 0, 0, 0, 0, 0, fbwidth, fbheight);
+    gl_info->gl_ops.gl.p_glCopyTexSubImage2D(texture_target, 0, 0, 0, 0, 0, src_width, src_height);
 
     checkGLcall("glCopyTexSubImage2D");
 
@@ -2288,7 +2289,7 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
         gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, src_surface->pow2Width,
                 src_surface->pow2Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
         checkGLcall("glTexImage2D");
-        gl_info->gl_ops.gl.p_glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, fbwidth, fbheight);
+        gl_info->gl_ops.gl.p_glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, src_width, src_height);
 
         gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         checkGLcall("glTexParameteri");
@@ -2312,13 +2313,13 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
 
     if (!upsidedown)
     {
-        top = src_surface->resource.height - src_rect->top;
-        bottom = src_surface->resource.height - src_rect->bottom;
+        top = src_height - src_rect->top;
+        bottom = src_height - src_rect->bottom;
     }
     else
     {
-        top = src_surface->resource.height - src_rect->bottom;
-        bottom = src_surface->resource.height - src_rect->top;
+        top = src_height - src_rect->bottom;
+        bottom = src_height - src_rect->top;
     }
 
     if (src_texture->flags & WINED3D_TEXTURE_NORMALIZED_COORDS)
@@ -2398,20 +2399,20 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
         gl_info->gl_ops.gl.p_glBegin(GL_QUADS);
             /* top left */
             gl_info->gl_ops.gl.p_glTexCoord2f(0.0f, 0.0f);
-            gl_info->gl_ops.gl.p_glVertex2i(0, fbheight);
+            gl_info->gl_ops.gl.p_glVertex2i(0, src_height);
 
             /* bottom left */
-            gl_info->gl_ops.gl.p_glTexCoord2f(0.0f, (float)fbheight / (float)src_surface->pow2Height);
+            gl_info->gl_ops.gl.p_glTexCoord2f(0.0f, (float)src_height / (float)src_surface->pow2Height);
             gl_info->gl_ops.gl.p_glVertex2i(0, 0);
 
             /* bottom right */
-            gl_info->gl_ops.gl.p_glTexCoord2f((float)fbwidth / (float)src_surface->pow2Width,
-                    (float)fbheight / (float)src_surface->pow2Height);
-            gl_info->gl_ops.gl.p_glVertex2i(fbwidth, 0);
+            gl_info->gl_ops.gl.p_glTexCoord2f((float)src_width / (float)src_surface->pow2Width,
+                    (float)src_height / (float)src_surface->pow2Height);
+            gl_info->gl_ops.gl.p_glVertex2i(src_width, 0);
 
             /* top right */
-            gl_info->gl_ops.gl.p_glTexCoord2f((float)fbwidth / (float)src_surface->pow2Width, 0.0f);
-            gl_info->gl_ops.gl.p_glVertex2i(fbwidth, fbheight);
+            gl_info->gl_ops.gl.p_glTexCoord2f((float)src_width / (float)src_surface->pow2Width, 0.0f);
+            gl_info->gl_ops.gl.p_glVertex2i(src_width, src_height);
         gl_info->gl_ops.gl.p_glEnd();
     }
     gl_info->gl_ops.gl.p_glDisable(texture_target);
