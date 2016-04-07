@@ -1,4 +1,4 @@
-The Wine maintenance release 1.8.1 is now available.
+The Wine maintenance release 1.8.2 is now available.
 
 What's new in this release (see below for details):
   - Various bug fixes.
@@ -6,8 +6,8 @@ What's new in this release (see below for details):
 
 The source is available from the following locations:
 
-  http://dl.winehq.org/wine/source/1.8/wine-1.8.1.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/1.8/wine-1.8.1.tar.bz2
+  http://dl.winehq.org/wine/source/1.8/wine-1.8.2.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.8/wine-1.8.2.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -23,108 +23,200 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.8.1 (total 24):
+Bugs fixed in 1.8.2 (total 32):
 
-   7938  Gyldendal dictionary needs ole2disp.dll.SAFEARRAYALLOCDATA
-  11023  Lack of ole2disp.dll.SAFEARRAYDESTROYDESCRIPTOR causes Nota Bene to refuse to launch
-  22581  Internet Explorer 3.01 crashes on some web pages (unimplemented function ole2disp.dll16.VARIANTINIT)
-  24658  Unimplemented function ole2.dll16.READCLASSSTM
-  28113  winverbs doesn't work, needs ole2disp.dll16.SAFEARRAYALLOCDESCRIPTOR
-  32852  BioEdit: changing the install directory doesn't show the change in the GUI
-  34185  Castlevania: Lords of Shadow demo doesn't work after intro movies
-  38076  GameRanger: unimplemented function dnsapi.dll.DnsFlushResolverCacheEntry_A
-  38818  Umax Astra 4100 USB scanner driver installer needs setupx.dll16.DiBuildDriverIndex in Win9X mode
-  39454  64-bit StarCraft II v3.0 client crashes immediately on startup (SetThreadContext on self with only DRx registers/CONTEXT_DEBUG_REGISTERS provided)
-  39611  Any Video Converter (AVC) crashes after converting a video, needs msvcr100.dll._wtmpnam_s
-  39660  some *-config scripts in configure.ac are not crosscompiling friendly
-  39678  Zararadio can not read folder/file name path with Latin characters
-  39739  Cobra 11 - Burning Wheels demo: crashes when starting the tutorial
-  39752  The elder scrolls IV: Oblivion issues
-  39805  GTAIV rendering is broken
-  39811  GetLongPathName not working on case insensitive filesystems when short path is passed
-  39904  Spurious "You must use msvcrt" error even when __MSVCRT__ is defined (-mno-cygwin)
-  39943  Worms Armageddon opens wine explorer instead of running
-  39952  trackbar thumb always at zero on dialog load.
-  39953  StarCraft II: 64bit client crashing regularly due to access violation (0xC0000005)
-  39954  StarCraft II: 64bit client only runs with lowest shader settings
-  39974  Thumb slider doesn't respond to key events
-  40052  Opening an RTF file with "A Wine application" fails with "File not found"
+  12652  Tom Clancy's Rainbow Six: Vegas 2 fails to launch (number of quality levels for D3DMULTISAMPLE_NONMASKABLE multiple-sample type must not exceed 8)
+  13683  Ultima IX: Mouse pointer missing when reading books, under inventory
+  14617  Multiple Visual Basic 5/6 applications using ActiveX components depend on Standard OLE Types Typelib which is missing from 'olepro32.dll'
+  15473  Adobe After Effects 4 crashes on startup
+  25086  Multiple games and applications need kernel32.GetLogicalProcessorInformationEx implementation (CPU-Z 1.72, Splinter Cell: Blacklist, Adobe CC 2015, Kontakt 5)
+  30687  Powerpoint 2003/2007: embedded video play/pause on click no longer works
+  32827  Legrand XlPro 3 (MFC app) crashes on startup (failure to load registry-free COM servers via app hook, 'OleCreate' must ignore HRESULT of 'IOleObject::GetMiscStatus')
+  33787  IE8 crashes on new tab
+  33988  Star Wars: The Force Unleashed II - Crashes with a page fault
+  34174  MinGW installer 0.5-beta-20120426-1 fails to process log files (sharing violation on temp file used for piped output)
+  34318  Multiple games and applications need ntdll.dll.EtwRegisterTraceGuidsW (Process Hacker 2.x, Far Cry 4)
+  35187  Jade Empire Special Edition configuration tool always resetting video settings
+  36013  bleem! 1.4 (PlayStation emulator) fails on startup, complaining with 'Not enough memory to load program!'
+  37115  Calling ReadFile from WINBASEAPI (WinBase.h) with zero read length causes hang
+  37288  Not implemented feature System.Drawing.Pen.ResetTransform()
+  37536  Native MSVCP120.dll override requires implementation of msvcr120.dll._W_Gettnames (Desura client)
+  37556  CompareStringW should abort on the first nonmatching character to avoid invalid memory access.
+  38314  Mouse Wheel doesn't work for Jagged Alliance 2 version 1.13 (it uses MOUSEHOOKSTRUCTEX)
+  39591  Crimzon Clover: Page fault on launch
+  39838  Wreckfest Server: Crashes at startup, unimplemented function KERNEL32.dll.GetConsoleScreenBufferInfoEx & SetConsoleScreenBufferInfoEx
+  39866  XIIZeal (steam) immediately exits on start
+  39875  Starcraft can't see Direct Cable Connection games hosted on another computer
+  39878  Diablo II does not start on 64bit system with more than 2GB VRAM cards
+  39908  SuperTux 0.3.5a crashes on startup, needs msvcr120.dll.strtof
+  40021  IDEA v1.7 fails to start
+  40053  Romance of the Three Kingdoms 13 (三國志13) fails to start
+  40083  Heroes of the Storm Freezes/Crashes after its recent updates
+  40129  MSI Reading and Writing Behaves differently than Windows
+  40147  Assertion 'm->state == STATE_PASSIVE' failed at pulse/mainloop.c:827 on starting Skype 7.18.0.112
+  40201  EccoPro only works on Wine 1.6.2
+  40204  Steam client fails to start with UmePlus font installed, when running in dwrite mode
+  40222  IMalloc(Spy)::Free nullptr
 
 ----------------------------------------------------------------
 
-Changes since 1.8:
+Changes since 1.8.1:
 
 Alex Henrie (1):
-      maintainers: Add Wine Staging maintainers.
+      ntdll: Finish serial reads of size 0 immediately.
 
-Alexandre Julliard (4):
-      Update copyright info for 2016.
-      explorer: Support a quoted /desktop option.
-      wine.inf: Fix the wordpad.exe path in associations.
-      wine.inf: Add quotes around the wordpad.exe path.
+Alexandre Julliard (5):
+      make_unicode: Fix typo in Indic syllable table generation.
+      server: Implement serial port read interval timeouts.
+      advapi32: Fix null termination in RegQueryInfoKeyA.
+      tools: Add a script to update the ANNOUNCE file at release time.
+      secur32/tests: Don't check the exact number of cipher bits.
 
-Alistair Leslie-Hughes (2):
-      msi: Allow PathEdit controls to be updated.
-      msi: Refreh controls after spawned dialog is closed.
+Alistair Leslie-Hughes (7):
+      user32: Don't crash in DrawTextEx when tab length is zero.
+      olepro32: Add typelib resource.
+      include: Add GdipGetPenTransform, GdipSetPenTransform declarations.
+      gdiplus/tests: Add Pen Transform tests.
+      gdiplus: Implement GdipGetPenTransform.
+      gdiplus: Implement GdipSetPenTransform.
+      gdiplus: Implement GdipResetPenTransform.
 
-Andrew Eikum (1):
-      maintainers: Add DirectShow section.
+Andrew Eikum (6):
+      oleaut32: Don't clear BSTR size.
+      mciqtz: Implement MCI_RESUME.
+      xaudio2: Handle openal source allocation failure.
+      winepulse.drv: Check that the server connection actually succeeded.
+      ntdll: Implement SystemLogicalProcessorInformationEx.
+      ntdll: Initialize variable (Coverity).
 
-André Hentschel (1):
-      include: Add more OID defines.
+André Hentschel (2):
+      winemaker: Markup fixes in German translation.
+      ntdll: Set TPIDRURW also on ARMv8-A.
 
-Anthony Fok (1):
-      include: Suppress "use msvcrt" error in tchar.h when -mno-cygwin is used.
+Anton Baskanov (1):
+      quartz: Set the result to 1.0 in FilterGraph::GetRate.
+
+Aric Stewart (1):
+      winejoystick.drv: Initialize unhandled dwPOV to JOY_POVCENTERED.
 
 Austin English (1):
-      setupx.dll16: Add DiBuildDriverIndex stub.
+      kernel32: Add GetConsoleScreenBufferInfoEx/SetConsoleScreenBufferInfoEx stubs.
 
-Frédéric Delanoy (2):
-      loader: Update French translation of wine manpage.
-      po: Update French translation.
+Bernhard Übelacker (2):
+      include: Implement todo_wine_if for usage in wine tests.
+      msvcr120: Implement strtof and _strtof_l.
 
-Hans Leidekker (1):
-      dnsapi: Add a stub implementation of DnsFlushResolverCacheEntry_A/UTF8/W.
+Charles Davis (3):
+      winex11.drv: Actually query the swap method attribute.
+      dwrite: Fix typos, and fix definition of Mac LangCodes for Welsh and up.
+      configure: Check for __builtin_ms_va_list on all x86_64 platforms.
+
+Christopher Thielen (4):
+      user32: Ensure that button responds only to changes in WM_CAPTURECHANGED handler.
+      comctl32: Ensure that trackbar respond only to changes in WM_CAPTURECHANGED handler.
+      comctl32: Ensure that toolbar respond only to changes in WM_CAPTURECHANGED handler.
+      user32: A window may be notified with WM_CAPTURECHANGED about itself if SetCapture() is called twice.
+
+Dmitry Timoshkov (1):
+      kernel32: CompareStringW should abort on the first nonmatching character to avoid an invalid memory access.
+
+Frédéric Delanoy (1):
+      winemaker: Markup fixes in French translation.
+
+Hans Leidekker (3):
+      msiexec: Fix manpage markup for repair and logging modifiers.
+      msi: Fix the CHAR column type.
+      winhttp/tests: Fix test failures.
 
 Henri Verbeet (1):
-      wined3d: Set WINED3D_BUFFER_DOUBLEBUFFER for managed buffers as well.
+      ntdll: Add special handling for int $0x2d exceptions.
 
-Jactry Zeng (1):
-      po: Update Simplified Chinese translation.
+Hugh McMaster (1):
+      reg: Remove stub output from the 'add' and 'delete' functions.
 
-Józef Kucia (1):
-      d3d9: Implement d3d9_device_CreateDepthStencilSurfaceEx().
+Huw D. M. Davies (1):
+      ole32: The type of the size of IMalloc'ed blocks is SIZE_T.
 
-Matteo Bruni (1):
-      wined3d: Regenerate FFP replacement VS on changes to the normal attribute in the vertex declaration.
+Jacek Caban (4):
+      ntdll: Pass SYNCHRONIZE flag in NtOpenFile and NtCreateFile calls.
+      ntdll: Don't call NtOpenKeyEx directly from NtOpenKey.
+      kernel32: Don't set unconditionally SECTION_QUERY flag in OpenFileMapping.
+      ntdll: Moved RegisterTraceGuids[AW] implementation to ntdll.
 
-Nikolay Sivov (10):
-      ole2disp: Implement VariantInit().
-      ole2: Fix error handling in ReadClassStg().
-      ole2: Implement ReadClassStm().
-      ole2disp: Implement SafeArrayAllocDescriptor().
-      ole2disp: Implement SafeArrayDestroyDescriptor().
-      ole2disp: Implement SafeArrayAllocData().
-      msvcrt: Fix char to int promotion that breaks pattern lookup.
-      comctl32/tests: Separate individual Trackbar tests from each other.
-      comctl32/trackbar: Update thumb immediately on TBM_SETPOS.
-      comctl32/trackbar: Update thumb immediately on key press.
+Jens Reyer (2):
+      loader: Fix macro-not-defined error from man.
+      winemaker: Fix macro-not-defined errors from man.
 
-Piotr Caban (4):
-      ntdll: Fix NtQueryDirectoryFile behavior on short file names on case insensitive file systems.
-      msvcrt: Add tmpnam_s implementation.
-      msvcrt: Add _wtmpnam_s implementation.
-      msvcrt: Fix modff signature.
+Józef Kucia (4):
+      wined3d: Validate render state in wined3d_device_set_render_state().
+      wined3d: Limit amount of video memory for older Windows versions.
+      wined3d: Fix driver version check.
+      wined3d: Allow to query if surface format supports gamma correction.
 
-Sebastian Lackner (2):
-      ntdll: Check ContextFlags before restoring registers on x86_64.
-      ntdll: Receive debug registers from server on x86_64.
+Kira Backes (1):
+      user32: Add MOUSEHOOKSTRUCTEX for mouse wheel support.
 
-Stefan Dösinger (1):
-      wined3d: Prepare GL textures in surface_load_ds_location.
+Marcus Meissner (2):
+      manpages: Markup fixes.
+      ntdll: Cast left shifted 1 to be ulong wide (Coverity).
 
-Thomas Petazzoni (1):
-      configure: Allow to override the location of the *-config scripts.
+Matteo Bruni (2):
+      wined3d: Limit the number of WINED3D_MULTISAMPLE_NON_MASKABLE quality levels reported.
+      wined3d: Add WINED3DFMT_FLAG_RENDERTARGET to WINED3DFMT_B5G5R5X1_UNORM.
+
+Michael Müller (6):
+      msvideo.dll16: Translate 16 bit address in lparam for MCIWNDM_SETTIMEFORMATA message.
+      include: Add definitions for Win8 pseudo handles.
+      server: Add support for Win8 pseudo handles.
+      advapi32/tests: Add tests for Win8 pseudo handles.
+      kernel32: Allow to pass NULL as old protection in VirtualProtect for Win9x compatibility.
+      user32: Preserve beginning of extra data for MDI windows.
+
+Miklós Máté (2):
+      winex11: Add 1280x960 resolution.
+      wined3d: Warn only once about unsupported wrap state.
+
+Nikolay Sivov (12):
+      ole2disp: Implement SafeArrayGetDim().
+      ole2disp: Implement SafeArrayGetElemsize().
+      ole2disp: Implement SafeArrayLock()/SafeArrayUnlock().
+      ole2disp: Implement SafeArrayAccessData()/SafeArrayUnaccessData().
+      include: Fix IsBad* prototypes.
+      ctl3d32: Claim success in Ctl3dRegister().
+      ole32: Ignore GetMiscStatus() returned value in OleCreate().
+      dwrite: Handle font data initialization failure when building collections.
+      ntdll/tests: Some tests for NtQuerySystemInformationEx().
+      ntdll: Add NtQuerySystemInformationEx() stub.
+      kernel32: Forward GetLogicalProcessorInformationEx() to ntdll.
+      ole32: Don't call spy on IMalloc::Free(NULL).
+
+Paul Gofman (1):
+      d3dx9: Fix D3DXIntersectTri function.
+
+Piotr Caban (6):
+      msxml3: Update xmlNode reference count when nodes are merged in node_insert_before.
+      msxml3: Store information about ignorrable whitespace nodes in xmlNode._private variable.
+      msxml3: Reimplement node_get_text helper so it uses information about ignorred white space nodes.
+      msxml3: Add support for CDATA nodes in node_get_text.
+      msvcr110: Fix __lc_time_data definition.
+      msvcr110: Add _W_Gettnames implementation.
+
+Sebastian Lackner (15):
+      vcomp/tests: Reenable architecture dependent tests.
+      vcomp: Implement 64-bit atomic instructions.
+      ntdll: Implement RtlInterlockedPushListSListEx and fix calling convention of RtlInterlockedPushListSList.
+      kernel32/tests: Clean up interlocked SList tests.
+      kernel32/tests: Add tests for RtlInterlockedPushListSList[Ex].
+      kernel32: Forward InterlockedPushListSList[Ex] to ntdll.
+      cmd: Fix sharing permissions of piped output files.
+      vmm.vxd: Fix protection flags passed to VirtualAlloc.
+      kernel32/tests: Add test to show that CompareStringW aborts on first non-matching character.
+      ntdll: Mimic Windows behaviour when calling debug service.
+      ntdll: Implement handling of int $0x2d for x86_64.
+      ntdll/tests: Add more tests for calling int $0x2d on x86 and x86_64.
+      ntdll/tests: Add additional tests for instruction pointer in debug service tests.
+      ntdll/tests: Add separate tests for exception handling of int $0x3.
+      ntdll: Fix up instruction pointer in context for EXCEPTION_BREAKPOINT on x86_64.
 
 --
 Michael Stefaniuc
