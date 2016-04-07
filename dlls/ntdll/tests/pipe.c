@@ -277,10 +277,9 @@ static void test_overlapped(void)
     ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
 
     memset(&iosb, 0x55, sizeof(iosb));
-
-/* try with event and apc */
     res = listen_pipe(hPipe, hEvent, &iosb, TRUE);
     ok(res == STATUS_PENDING, "NtFsControlFile returned %x\n", res);
+    ok(U(iosb).Status == 0x55555555, "iosb.Status got changed to %x\n", U(iosb).Status);
 
     hClient = CreateFileW(testpipe, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);
     ok(hClient != INVALID_HANDLE_VALUE, "can't open pipe, GetLastError: %x\n", GetLastError());
@@ -294,9 +293,28 @@ static void test_overlapped(void)
 
     ok(ioapc_called, "IOAPC didn't run\n");
 
-    CloseHandle(hEvent);
     CloseHandle(hPipe);
     CloseHandle(hClient);
+
+    res = create_pipe(&hPipe, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 /* OVERLAPPED */);
+    ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
+
+    hClient = CreateFileW(testpipe, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);
+    ok(hClient != INVALID_HANDLE_VALUE || broken(GetLastError() == ERROR_PIPE_BUSY) /* > Win 8 */,
+       "can't open pipe, GetLastError: %x\n", GetLastError());
+
+    if (hClient != INVALID_HANDLE_VALUE)
+    {
+        memset(&iosb, 0x55, sizeof(iosb));
+        res = listen_pipe(hPipe, hEvent, &iosb, TRUE);
+        ok(res == STATUS_PIPE_CONNECTED, "NtFsControlFile returned %x\n", res);
+        todo_wine ok(U(iosb).Status == 0x55555555, "iosb.Status got changed to %x\n", U(iosb).Status);
+
+        CloseHandle(hClient);
+    }
+
+    CloseHandle(hPipe);
+    CloseHandle(hEvent);
 }
 
 static BOOL userapc_called;
