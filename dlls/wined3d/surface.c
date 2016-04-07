@@ -2447,9 +2447,10 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
  * origin, while D3D has a top-left origin. */
 void surface_translate_drawable_coords(const struct wined3d_surface *surface, HWND window, RECT *rect)
 {
+    struct wined3d_texture *texture = surface->container;
     UINT drawable_height;
 
-    if (surface->container->swapchain && surface->container == surface->container->swapchain->front_buffer)
+    if (texture->swapchain && texture == texture->swapchain->front_buffer)
     {
         POINT offset = {0, 0};
         RECT windowsize;
@@ -2462,7 +2463,7 @@ void surface_translate_drawable_coords(const struct wined3d_surface *surface, HW
     }
     else
     {
-        drawable_height = surface->resource.height;
+        drawable_height = wined3d_texture_get_level_height(texture, surface->texture_level);
     }
 
     rect->top = drawable_height - rect->top;
