@@ -2662,6 +2662,7 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
 
     if ((src_swapchain || src_surface == rt) && !dst_swapchain)
     {
+        unsigned int src_width, src_height;
         /* Blit from render target to texture */
         BOOL stretchx;
 
@@ -2695,8 +2696,10 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
          *    back buffer. This is slower than reading line per line, thus not used for flipping
          * -> If the app wants a scaled image with a dest rect that is bigger than the fb, it has to be copied
          *    pixel by pixel. */
-        if (!stretchx || dst_rect->right - dst_rect->left > src_surface->resource.width
-                || dst_rect->bottom - dst_rect->top > src_surface->resource.height)
+        src_width = wined3d_texture_get_level_width(src_texture, src_surface->texture_level);
+        src_height = wined3d_texture_get_level_height(src_texture, src_surface->texture_level);
+        if (!stretchx || dst_rect->right - dst_rect->left > src_width
+                || dst_rect->bottom - dst_rect->top > src_height)
         {
             TRACE("No stretching in x direction, using direct framebuffer -> texture copy.\n");
             fb_copy_to_texture_direct(dst_surface, src_surface, src_rect, dst_rect, filter);
