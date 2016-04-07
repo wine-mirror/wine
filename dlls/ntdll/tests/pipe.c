@@ -541,7 +541,8 @@ static void test_filepipeinfo(void)
     check_pipe_handle_state(hServer, 0, 1);
 
     hClient = CreateFileW(testpipe, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);
-    ok(hClient != INVALID_HANDLE_VALUE, "can't open pipe, GetLastError: %x\n", GetLastError());
+    ok(hClient != INVALID_HANDLE_VALUE || broken(GetLastError() == ERROR_PIPE_BUSY) /* > Win 8 */,
+       "can't open pipe, GetLastError: %x\n", GetLastError());
 
     check_pipe_handle_state(hServer, 0, 1);
     check_pipe_handle_state(hClient, 0, 0);
@@ -617,7 +618,8 @@ static void test_filepipeinfo(void)
     check_pipe_handle_state(hServer, 1, 0);
 
     hClient = CreateFileW(testpipe, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);
-    ok(hClient != INVALID_HANDLE_VALUE, "can't open pipe, GetLastError: %x\n", GetLastError());
+    ok(hClient != INVALID_HANDLE_VALUE || broken(GetLastError() == ERROR_PIPE_BUSY) /* > Win 8 */,
+       "can't open pipe, GetLastError: %x\n", GetLastError());
 
     check_pipe_handle_state(hServer, 1, 0);
     check_pipe_handle_state(hClient, 0, 0);
