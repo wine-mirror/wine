@@ -1077,9 +1077,7 @@ static HRESULT wined3d_texture_upload_data(struct wined3d_texture *texture,
 
     for (i = 0; i < sub_count; ++i)
     {
-        struct wined3d_resource *sub_resource = texture->sub_resources[i].resource;
-
-        texture->texture_ops->texture_sub_resource_upload_data(sub_resource, context, &data[i]);
+        texture->texture_ops->texture_upload_data(texture, i, context, &data[i]);
         wined3d_texture_validate_location(texture, i, WINED3D_LOCATION_TEXTURE_RGB);
         wined3d_texture_invalidate_location(texture, i, ~WINED3D_LOCATION_TEXTURE_RGB);
     }
@@ -1089,21 +1087,23 @@ static HRESULT wined3d_texture_upload_data(struct wined3d_texture *texture,
     return WINED3D_OK;
 }
 
-static void texture2d_sub_resource_upload_data(struct wined3d_resource *sub_resource,
+static void texture2d_upload_data(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         const struct wined3d_context *context, const struct wined3d_sub_resource_data *data)
 {
-    struct wined3d_surface *surface = surface_from_resource(sub_resource);
     static const POINT dst_point = {0, 0};
     struct wined3d_const_bo_address addr;
+    unsigned int texture_level;
     RECT src_rect;
 
-    SetRect(&src_rect, 0, 0, surface->resource.width, surface->resource.height);
+    texture_level = sub_resource_idx % texture->level_count;
+    SetRect(&src_rect, 0, 0, wined3d_texture_get_level_width(texture, texture_level),
+            wined3d_texture_get_level_height(texture, texture_level));
 
     addr.buffer_object = 0;
     addr.addr = data->data;
 
-    wined3d_surface_upload_data(surface, context->gl_info, surface->container->resource.format,
-            &src_rect, data->row_pitch, &dst_point, FALSE, &addr);
+    wined3d_surface_upload_data(texture->sub_resources[sub_resource_idx].u.surface, context->gl_info,
+            texture->resource.format, &src_rect, data->row_pitch, &dst_point, FALSE, &addr);
 }
 
 static BOOL texture2d_load_location(struct wined3d_texture *texture, unsigned int sub_resource_idx,
@@ -1199,7 +1199,7 @@ static void texture2d_cleanup_sub_resources(struct wined3d_texture *texture)
 
 static const struct wined3d_texture_ops texture2d_ops =
 {
-    texture2d_sub_resource_upload_data,
+    texture2d_upload_data,
     texture2d_load_location,
     texture2d_prepare_location,
     texture2d_prepare_texture,
@@ -1684,21 +1684,20 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
     return WINED3D_OK;
 }
 
-static void texture3d_sub_resource_upload_data(struct wined3d_resource *sub_resource,
+static void texture3d_upload_data(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         const struct wined3d_context *context, const struct wined3d_sub_resource_data *data)
 {
-    struct wined3d_volume *volume = volume_from_resource(sub_resource);
     struct wined3d_const_bo_address addr;
     unsigned int row_pitch, slice_pitch;
 
-    wined3d_texture_get_pitch(volume->container, volume->texture_level, &row_pitch, &slice_pitch);
+    wined3d_texture_get_pitch(texture, sub_resource_idx, &row_pitch, &slice_pitch);
     if (row_pitch != data->row_pitch || slice_pitch != data->slice_pitch)
         FIXME("Ignoring row/slice pitch (%u/%u).\n", data->row_pitch, data->slice_pitch);
 
     addr.buffer_object = 0;
     addr.addr = data->data;
 
-    wined3d_volume_upload_data(volume, context, &addr);
+    wined3d_volume_upload_data(texture->sub_resources[sub_resource_idx].u.volume, context, &addr);
 }
 
 static BOOL texture3d_load_location(struct wined3d_texture *texture, unsigned int sub_resource_idx,
@@ -1755,7 +1754,7 @@ static void texture3d_cleanup_sub_resources(struct wined3d_texture *texture)
 
 static const struct wined3d_texture_ops texture3d_ops =
 {
-    texture3d_sub_resource_upload_data,
+    texture3d_upload_data,
     texture3d_load_location,
     texture3d_prepare_location,
     texture3d_prepare_texture,
