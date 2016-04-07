@@ -214,7 +214,6 @@ my @dll_groups =
   "api-ms-win-core-wow64-l1-1-0",
   "api-ms-win-core-xstate-l2-1-0",
   "api-ms-win-core-errorhandling-l1-1-2",
-  "kernelbase",
  ],
  [
   "kernel32",
@@ -229,6 +228,12 @@ my @dll_groups =
   "api-ms-win-core-namedpipe-l1-1-0",
   "api-ms-win-core-namedpipe-l1-2-0",
   "api-ms-win-core-processthreads-l1-1-1",
+ ],
+ [
+  "kernel32",
+  "advapi32",
+  "user32",
+  "kernelbase",
  ],
  [
   "ole32",
