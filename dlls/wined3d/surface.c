@@ -2820,8 +2820,8 @@ static void surface_load_ds_location(struct wined3d_surface *surface, struct win
     }
     else
     {
-        w = surface->resource.width;
-        h = surface->resource.height;
+        w = wined3d_texture_get_level_width(surface->container, surface->texture_level);
+        h = wined3d_texture_get_level_height(surface->container, surface->texture_level);
     }
 
     if (surface->current_renderbuffer)
