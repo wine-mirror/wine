@@ -13991,6 +13991,127 @@ static void test_PostMessage(void)
     flush_events();
 }
 
+static LPARAM g_broadcast_lparam;
+static LRESULT WINAPI broadcast_test_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+
+    if (wParam == 0xbaadbeef)
+        g_broadcast_lparam = wParam;
+    else
+        g_broadcast_lparam = 0;
+
+    return CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
+}
+
+static void test_broadcast(void)
+{
+    static const UINT messages[] =
+    {
+        WM_USER-1,
+        WM_USER,
+        WM_USER+1,
+        0xc000-1,
+        0xc000, /* lowest possible atom returned by RegisterWindowMessage */
+        0xffff,
+    };
+    WNDPROC oldproc;
+    unsigned int i;
+    HWND hwnd;
+
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP, 0, 0, 0, 0, 0, 0, 0, NULL);
+    ok(hwnd != NULL, "got %p\n", hwnd);
+
+    oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)broadcast_test_proc);
+    SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)oldproc);
+
+    for (i = 0; i < sizeof(messages)/sizeof(messages[0]); i++)
+    {
+        BOOL ret;
+        MSG msg;
+
+        flush_events();
+        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+            ;
+
+        /* post, broadcast */
+        ret = PostMessageA(HWND_BROADCAST, messages[i], 0, 0);
+        ok(ret, "%d: got %d, error %d\n", i, ret, GetLastError());
+
+        memset(&msg, 0xab, sizeof(msg));
+        ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+        if (messages[i] < WM_USER || messages[i] >= 0xc000)
+        {
+            ok(ret, "%d: message %04x, got %d, error %d\n", i, messages[i], ret, GetLastError());
+            ok(msg.hwnd == hwnd, "%d: got %p\n", i, msg.hwnd);
+        }
+        else
+        {
+        todo_wine
+            ok(!ret, "%d: message %04x, got %d, error %d\n", i, messages[i], ret, GetLastError());
+        }
+
+        /* post, topmost */
+        ret = PostMessageA(HWND_TOPMOST, messages[i], 0, 0);
+        ok(ret, "%d: got %d, error %d\n", i, ret, GetLastError());
+
+        memset(&msg, 0xab, sizeof(msg));
+        ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+        if (messages[i] < WM_USER || messages[i] >= 0xc000)
+        {
+            ok(ret, "%d: message %04x, got %d, error %d\n", i, messages[i], ret, GetLastError());
+            ok(msg.hwnd == hwnd, "%d: got %p\n", i, msg.hwnd);
+        }
+        else
+        {
+        todo_wine
+            ok(!ret, "%d: got %d, error %d\n", i, ret, GetLastError());
+        }
+
+        /* send, broadcast */
+        g_broadcast_lparam = 0xdead;
+        ret = SendMessageTimeoutA(HWND_BROADCAST, messages[i], 0xbaadbeef, 0, SMTO_NORMAL, 2000, NULL);
+        if (!ret && GetLastError() == ERROR_TIMEOUT)
+            win_skip("broadcasting test %d, timeout\n", i);
+        else
+        {
+            if (messages[i] < WM_USER || messages[i] >= 0xc000)
+            {
+                ok(g_broadcast_lparam == 0xbaadbeef, "%d: message %04x, got %#lx, error %d\n", i, messages[i],
+                    g_broadcast_lparam, GetLastError());
+            }
+            else
+            {
+            todo_wine
+                ok(g_broadcast_lparam == 0xdead, "%d: message %04x, got %#lx, error %d\n", i, messages[i],
+                    g_broadcast_lparam, GetLastError());
+            }
+        }
+
+        /* send, topmost */
+        g_broadcast_lparam = 0xdead;
+        ret = SendMessageTimeoutA(HWND_TOPMOST, messages[i], 0xbaadbeef, 0, SMTO_NORMAL, 2000, NULL);
+        if (!ret && GetLastError() == ERROR_TIMEOUT)
+            win_skip("broadcasting test %d, timeout\n", i);
+        else
+        {
+            if (messages[i] < WM_USER || messages[i] >= 0xc000)
+            {
+                ok(g_broadcast_lparam == 0xbaadbeef, "%d: message %04x, got %#lx, error %d\n", i, messages[i],
+                    g_broadcast_lparam, GetLastError());
+            }
+            else
+            {
+            todo_wine
+                ok(g_broadcast_lparam == 0xdead, "%d: message %04x, got %#lx, error %d\n", i, messages[i],
+                    g_broadcast_lparam, GetLastError());
+            }
+        }
+    }
+
+    DestroyWindow(hwnd);
+}
+
 static const struct
 {
     DWORD exp, broken;
@@ -15642,6 +15763,7 @@ START_TEST(msg)
     test_SetFocus();
     test_SetParent();
     test_PostMessage();
+    test_broadcast();
     test_ShowWindow();
     test_PeekMessage();
     test_PeekMessage2();
