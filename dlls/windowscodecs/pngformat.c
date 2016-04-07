@@ -532,7 +532,7 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     }
 
     This->end_info = ppng_create_info_struct(This->png_ptr);
-    if (!This->info_ptr)
+    if (!This->end_info)
     {
         ppng_destroy_read_struct(&This->png_ptr, &This->info_ptr, NULL);
         This->png_ptr = NULL;
