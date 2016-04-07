@@ -39,8 +39,8 @@
 @ stdcall GetFileSizeEx(long ptr) kernel32.GetFileSizeEx
 @ stdcall GetFileTime(long ptr ptr ptr) kernel32.GetFileTime
 @ stdcall GetFileType(long) kernel32.GetFileType
-@ stub GetFinalPathNameByHandleA
-@ stub GetFinalPathNameByHandleW
+@ stdcall GetFinalPathNameByHandleA(long ptr long long) kernel32.GetFinalPathNameByHandleA
+@ stdcall GetFinalPathNameByHandleW(long ptr long long) kernel32.GetFinalPathNameByHandleW
 @ stdcall GetFullPathNameA(str long ptr ptr) kernel32.GetFullPathNameA
 @ stdcall GetFullPathNameW(wstr long ptr ptr) kernel32.GetFullPathNameW
 @ stdcall GetLogicalDriveStringsW(long ptr) kernel32.GetLogicalDriveStringsW

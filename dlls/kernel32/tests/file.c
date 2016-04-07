@@ -4453,9 +4453,28 @@ static void test_GetFinalPathNameByHandleA(void)
     strcpy(dos_path, dos_prefix);
     strcat(dos_path, long_path);
 
+    count = pGetFinalPathNameByHandleA(INVALID_HANDLE_VALUE, NULL, 0, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    ok(count == 0, "Expected length 0, got %u\n", count);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %u\n", GetLastError());
+
     file = CreateFileA(test_path, GENERIC_READ | GENERIC_WRITE, 0, NULL,
                        CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
     ok(file != INVALID_HANDLE_VALUE, "CreateFileA error %u\n", GetLastError());
+
+    if (0) {
+        /* Windows crashes on NULL path */
+        count = pGetFinalPathNameByHandleA(file, NULL, MAX_PATH, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+        ok(count == 0, "Expected length 0, got %u\n", count);
+        ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %u\n", GetLastError());
+    }
+
+    /* Test 0-length path */
+    count = pGetFinalPathNameByHandleA(file, result_path, 0, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    ok(count == strlen(dos_path), "Expected length %u, got %u\n", lstrlenA(dos_path), count);
+
+    /* Test 0 and NULL path */
+    count = pGetFinalPathNameByHandleA(file, NULL, 0, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    ok(count == strlen(dos_path), "Expected length %u, got %u\n", lstrlenA(dos_path), count);
 
     /* Test VOLUME_NAME_DOS with sufficient buffer size */
     memset(result_path, 0x11, sizeof(result_path));
@@ -4518,6 +4537,10 @@ static void test_GetFinalPathNameByHandleW(void)
     ok(count == 0, "Expected length 0, got %u\n", count);
     ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %u\n", GetLastError());
 
+    count = pGetFinalPathNameByHandleW(INVALID_HANDLE_VALUE, NULL, 0, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    ok(count == 0, "Expected length 0, got %u\n", count);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %u\n", GetLastError());
+
     count = GetTempPathW(MAX_PATH, temp_path);
     ok(count, "Failed to get temp path, error %u\n", GetLastError());
     ret = GetTempFileNameW(temp_path, prefix, 0, test_path);
@@ -4530,6 +4553,23 @@ static void test_GetFinalPathNameByHandleW(void)
     file = CreateFileW(test_path, GENERIC_READ | GENERIC_WRITE, 0, NULL,
                        CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, 0);
     ok(file != INVALID_HANDLE_VALUE, "CreateFileW error %u\n", GetLastError());
+
+    if (0) {
+        /* Windows crashes on NULL path */
+        count = pGetFinalPathNameByHandleW(file, NULL, MAX_PATH, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+        ok(count == 0, "Expected length 0, got %u\n", count);
+        ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %u\n", GetLastError());
+    }
+
+    /* Test 0-length path */
+    count = pGetFinalPathNameByHandleW(file, result_path, 0, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    ok(count == lstrlenW(dos_path) + 1 ||
+            broken(count == lstrlenW(dos_path) + 2), "Expected length %u, got %u\n", lstrlenW(dos_path) + 1, count);
+
+    /* Test 0 and NULL path */
+    count = pGetFinalPathNameByHandleW(file, NULL, 0, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    ok(count == lstrlenW(dos_path) + 1 ||
+            broken(count == lstrlenW(dos_path) + 2), "Expected length %u, got %u\n", lstrlenW(dos_path) + 1, count);
 
     /* Test VOLUME_NAME_DOS with sufficient buffer size */
     memset(result_path, 0x11, sizeof(result_path));
