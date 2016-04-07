@@ -4238,6 +4238,8 @@ static void init_font_list(void)
     load_fontconfig_fonts();
 #elif defined(HAVE_CARBON_CARBON_H)
     load_mac_fonts();
+#elif defined(__ANDROID__)
+    ReadFontDir("/system/fonts", TRUE);
 #endif
 
     /* then look in any directories that we've specified in the config file */
