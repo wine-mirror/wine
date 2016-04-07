@@ -14047,7 +14047,6 @@ static void test_broadcast(void)
         }
         else
         {
-        todo_wine
             ok(!ret, "%d: message %04x, got %d, error %d\n", i, messages[i], ret, GetLastError());
         }
 
@@ -14064,7 +14063,6 @@ static void test_broadcast(void)
         }
         else
         {
-        todo_wine
             ok(!ret, "%d: got %d, error %d\n", i, ret, GetLastError());
         }
 
@@ -14082,7 +14080,6 @@ static void test_broadcast(void)
             }
             else
             {
-            todo_wine
                 ok(g_broadcast_lparam == 0xdead, "%d: message %04x, got %#lx, error %d\n", i, messages[i],
                     g_broadcast_lparam, GetLastError());
             }
@@ -14102,7 +14099,6 @@ static void test_broadcast(void)
             }
             else
             {
-            todo_wine
                 ok(g_broadcast_lparam == 0xdead, "%d: message %04x, got %#lx, error %d\n", i, messages[i],
                     g_broadcast_lparam, GetLastError());
             }

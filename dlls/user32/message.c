@@ -3232,6 +3232,10 @@ static LRESULT send_inter_thread_callback( HWND hwnd, UINT msg, WPARAM wp, LPARA
     return send_inter_thread_message( info, result );
 }
 
+static BOOL is_message_broadcastable(UINT msg)
+{
+    return msg < WM_USER || msg >= 0xc000;
+}
 
 /***********************************************************************
  *		send_message
@@ -3246,7 +3250,8 @@ static BOOL send_message( struct send_message_info *info, DWORD_PTR *res_ptr, BO
 
     if (is_broadcast(info->hwnd))
     {
-        EnumWindows( broadcast_message_callback, (LPARAM)info );
+        if (is_message_broadcastable( info->msg ))
+            EnumWindows( broadcast_message_callback, (LPARAM)info );
         if (res_ptr) *res_ptr = 1;
         return TRUE;
     }
@@ -3659,7 +3664,8 @@ BOOL WINAPI PostMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 
     if (is_broadcast(hwnd))
     {
-        EnumWindows( broadcast_message_callback, (LPARAM)&info );
+        if (is_message_broadcastable( info.msg ))
+            EnumWindows( broadcast_message_callback, (LPARAM)&info );
         return TRUE;
     }
 
