@@ -2141,7 +2141,7 @@ static void test_overlapped_error(void)
     err = GetLastError();
     ok(ret == FALSE, "ConnectNamedPipe succeeded\n");
     ok(err == ERROR_PIPE_CONNECTED, "expected ERROR_PIPE_CONNECTED, got %u\n", err);
-    todo_wine ok(overlapped.Internal == STATUS_PENDING, "expected STATUS_PENDING, got %08lx\n", overlapped.Internal);
+    ok(overlapped.Internal == STATUS_PENDING, "expected STATUS_PENDING, got %08lx\n", overlapped.Internal);
 
     CloseHandle(file);
     CloseHandle(pipe);
