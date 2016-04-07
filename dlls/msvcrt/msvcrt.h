@@ -217,6 +217,7 @@ typedef struct
     void *unk;
 } cxx_frame_info;
 
+frame_info* __cdecl _CreateFrameInfo(frame_info *fi, void *obj);
 BOOL __cdecl __CxxRegisterExceptionObject(EXCEPTION_RECORD**, cxx_frame_info*);
 void __cdecl __CxxUnregisterExceptionObject(cxx_frame_info*, BOOL);
 void CDECL __DestructExceptionObject(EXCEPTION_RECORD*);

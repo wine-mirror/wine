@@ -447,7 +447,9 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame 
                 TRACE("found catch(...) block\n");
             }
 
-            __CxxRegisterExceptionObject(&rec, &nested_frame.frame_info);
+            /* Add frame info here so exception is not freed inside RtlUnwind call */
+            _CreateFrameInfo(&nested_frame.frame_info.frame_info,
+                    (void*)rec->ExceptionInformation[1]);
 
             /* unwind the stack */
             RtlUnwind( catch_frame ? catch_frame : &frame->frame, 0, rec, 0 );
