@@ -1895,7 +1895,7 @@ static void test_MCM_SIZERECTTOMIN(void)
     ret = SendMessageA(hwnd, MCM_SIZERECTTOMIN, 0, 0);
     ok(ret == 0, "got %d\n", ret);
 
-    r.left = r.right = r.top = r.bottom = 0;
+    SetRectEmpty(&r);
     ret = SendMessageA(hwnd, MCM_SIZERECTTOMIN, 0, (LPARAM)&r);
     if (ret == 0)
     {

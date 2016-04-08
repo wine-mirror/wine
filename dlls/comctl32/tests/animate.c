@@ -88,10 +88,7 @@ static void create_animate(DWORD parent_style, DWORD animate_style)
     wc.lpfnWndProc = animate_test_wnd_proc;
     RegisterClassA(&wc);
 
-    rect.left = 0;
-    rect.top = 0;
-    rect.right = 200;
-    rect.bottom = 200;
+    SetRect(&rect, 0, 0, 200, 200);
     ret = AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
     ok(ret, "got %d\n", ret);
 
