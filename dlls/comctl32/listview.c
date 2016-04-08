@@ -3123,7 +3123,11 @@ static RANGES ranges_clone(RANGES ranges)
         RANGE *newrng = Alloc(sizeof(RANGE));
 	if (!newrng) goto fail;
 	*newrng = *((RANGE*)DPA_GetPtr(ranges->hdpa, i));
-	DPA_SetPtr(clone->hdpa, i, newrng);
+        if (!DPA_SetPtr(clone->hdpa, i, newrng))
+        {
+            Free(newrng);
+            goto fail;
+        }
     }
     return clone;
     
