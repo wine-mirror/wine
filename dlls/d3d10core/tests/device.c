@@ -1170,15 +1170,17 @@ static void test_create_depthstencil_view(void)
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
     ID3D10Device_Release(tmp);
 
+    memset(&dsv_desc, 0, sizeof(dsv_desc));
     ID3D10DepthStencilView_GetDesc(dsview, &dsv_desc);
     ok(dsv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", dsv_desc.Format);
     ok(dsv_desc.ViewDimension == D3D10_DSV_DIMENSION_TEXTURE2D,
             "Got unexpected view dimension %#x.\n", dsv_desc.ViewDimension);
-    ok(U(dsv_desc).Texture2D.MipSlice == 0, "Got Unexpected mip slice %u.\n", U(dsv_desc).Texture2D.MipSlice);
+    ok(!U(dsv_desc).Texture2D.MipSlice, "Got unexpected mip slice %u.\n", U(dsv_desc).Texture2D.MipSlice);
 
     ID3D10DepthStencilView_Release(dsview);
 
     dsv_desc.Format = DXGI_FORMAT_UNKNOWN;
+
     hr = ID3D10Device_CreateDepthStencilView(device, (ID3D10Resource *)texture, &dsv_desc, &dsview);
     ok(SUCCEEDED(hr), "Failed to create a depthstencil view, hr %#x.\n", hr);
 
@@ -1187,10 +1189,32 @@ static void test_create_depthstencil_view(void)
     todo_wine ok(dsv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", dsv_desc.Format);
     ok(dsv_desc.ViewDimension == D3D10_DSV_DIMENSION_TEXTURE2D,
             "Got unexpected view dimension %#x.\n", dsv_desc.ViewDimension);
-    ok(!U(dsv_desc).Texture2D.MipSlice, "Got Unexpected mip slice %u.\n", U(dsv_desc).Texture2D.MipSlice);
+    ok(!U(dsv_desc).Texture2D.MipSlice, "Got unexpected mip slice %u.\n", U(dsv_desc).Texture2D.MipSlice);
 
     ID3D10DepthStencilView_Release(dsview);
+    ID3D10Texture2D_Release(texture);
 
+    texture_desc.ArraySize = 4;
+
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create 2d texture, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateDepthStencilView(device, (ID3D10Resource *)texture, NULL, &dsview);
+    ok(SUCCEEDED(hr), "Failed to create depthstencil view, hr %#x.\n", hr);
+
+    memset(&dsv_desc, 0, sizeof(dsv_desc));
+    ID3D10DepthStencilView_GetDesc(dsview, &dsv_desc);
+    ok(dsv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", dsv_desc.Format);
+    ok(dsv_desc.ViewDimension == D3D10_DSV_DIMENSION_TEXTURE2DARRAY,
+            "Got unexpected view dimension %#x.\n", dsv_desc.ViewDimension);
+    ok(!U(dsv_desc).Texture2DArray.MipSlice, "Got unexpected mip slice %u.\n",
+            U(dsv_desc).Texture2DArray.MipSlice);
+    ok(!U(dsv_desc).Texture2DArray.FirstArraySlice, "Got unexpected first array slice %u.\n",
+            U(dsv_desc).Texture2DArray.FirstArraySlice);
+    todo_wine ok(U(dsv_desc).Texture2DArray.ArraySize == texture_desc.ArraySize,
+            "Got unexpected array size %u.\n", U(dsv_desc).Texture2DArray.ArraySize);
+
+    ID3D10DepthStencilView_Release(dsview);
     ID3D10Texture2D_Release(texture);
 
     refcount = ID3D10Device_Release(device);
@@ -1352,6 +1376,7 @@ static void test_create_rendertarget_view(void)
     hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, NULL, &rtview);
     ok(SUCCEEDED(hr), "Failed to create a rendertarget view, hr %#x\n", hr);
 
+    memset(&rtv_desc, 0, sizeof(rtv_desc));
     ID3D10RenderTargetView_GetDesc(rtview, &rtv_desc);
     ok(rtv_desc.Format == texture_desc.Format, "Expected format %#x, got %#x\n", texture_desc.Format, rtv_desc.Format);
     ok(rtv_desc.ViewDimension == D3D10_RTV_DIMENSION_TEXTURE2D,
@@ -1366,6 +1391,7 @@ static void test_create_rendertarget_view(void)
     ID3D10RenderTargetView_Release(rtview);
 
     rtv_desc.Format = DXGI_FORMAT_UNKNOWN;
+
     hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, &rtv_desc, &rtview);
     ok(SUCCEEDED(hr), "Failed to create a rendertarget view, hr %#x.\n", hr);
 
@@ -1374,10 +1400,32 @@ static void test_create_rendertarget_view(void)
     todo_wine ok(rtv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", rtv_desc.Format);
     ok(rtv_desc.ViewDimension == D3D10_RTV_DIMENSION_TEXTURE2D, "Got unexpected view dimension %#x.\n",
             rtv_desc.ViewDimension);
-    ok(!U(rtv_desc).Texture2D.MipSlice, "Got unexpected mip slice %#x.\n", U(rtv_desc).Texture2D.MipSlice);
+    ok(!U(rtv_desc).Texture2D.MipSlice, "Got unexpected mip slice %u.\n", U(rtv_desc).Texture2D.MipSlice);
 
     ID3D10RenderTargetView_Release(rtview);
+    ID3D10Texture2D_Release(texture);
 
+    texture_desc.ArraySize = 4;
+
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create 2d texture, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, NULL, &rtview);
+    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+
+    memset(&rtv_desc, 0, sizeof(rtv_desc));
+    ID3D10RenderTargetView_GetDesc(rtview, &rtv_desc);
+    ok(rtv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", rtv_desc.Format);
+    ok(rtv_desc.ViewDimension == D3D10_RTV_DIMENSION_TEXTURE2DARRAY, "Got unexpected view dimension %#x.\n",
+            rtv_desc.ViewDimension);
+    ok(!U(rtv_desc).Texture2DArray.MipSlice, "Got unexpected mip slice %u.\n",
+            U(rtv_desc).Texture2DArray.MipSlice);
+    ok(!U(rtv_desc).Texture2DArray.FirstArraySlice, "Got unexpected first array slice %u.\n",
+            U(rtv_desc).Texture2DArray.FirstArraySlice);
+    todo_wine ok(U(rtv_desc).Texture2DArray.ArraySize == texture_desc.ArraySize, "Got unexpected array size %u.\n",
+            U(rtv_desc).Texture2DArray.ArraySize);
+
+    ID3D10RenderTargetView_Release(rtview);
     ID3D10Texture2D_Release(texture);
 
     refcount = ID3D10Device_Release(device);
@@ -1463,6 +1511,7 @@ static void test_create_shader_resource_view(void)
     hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)texture, NULL, &srview);
     ok(SUCCEEDED(hr), "Failed to create a shader resource view, hr %#x\n", hr);
 
+    memset(&srv_desc, 0, sizeof(srv_desc));
     ID3D10ShaderResourceView_GetDesc(srview, &srv_desc);
     ok(srv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", srv_desc.Format);
     ok(srv_desc.ViewDimension == D3D10_SRV_DIMENSION_TEXTURE2D,
@@ -1483,6 +1532,8 @@ static void test_create_shader_resource_view(void)
     ID3D10ShaderResourceView_Release(srview);
 
     srv_desc.Format = DXGI_FORMAT_UNKNOWN;
+    U(srv_desc).Texture2D.MipLevels = -1;
+
     hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)texture, &srv_desc, &srview);
     ok(SUCCEEDED(hr), "Failed to create a shader resource view, hr %#x.\n", hr);
 
@@ -1493,10 +1544,35 @@ static void test_create_shader_resource_view(void)
             "Got unexpected view dimension %#x.\n", srv_desc.ViewDimension);
     ok(U(srv_desc).Texture2D.MostDetailedMip == 0, "Got unexpected MostDetailedMip %u.\n",
             U(srv_desc).Texture2D.MostDetailedMip);
-    ok(U(srv_desc).Texture2D.MipLevels == 10, "Got unexpected MipLevels %u.\n", U(srv_desc).Texture2D.MipLevels);
+    todo_wine ok(U(srv_desc).Texture2D.MipLevels == 10, "Got unexpected MipLevels %u.\n",
+            U(srv_desc).Texture2D.MipLevels);
 
     ID3D10ShaderResourceView_Release(srview);
+    ID3D10Texture2D_Release(texture);
 
+    texture_desc.ArraySize = 4;
+
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create 2d texture, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)texture, NULL, &srview);
+    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+
+    memset(&srv_desc, 0, sizeof(srv_desc));
+    ID3D10ShaderResourceView_GetDesc(srview, &srv_desc);
+    ok(srv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", srv_desc.Format);
+    ok(srv_desc.ViewDimension == D3D10_SRV_DIMENSION_TEXTURE2DARRAY,
+            "Got unexpected view dimension %#x.\n", srv_desc.ViewDimension);
+    ok(!U(srv_desc).Texture2DArray.MostDetailedMip, "Got unexpected MostDetailedMip %u.\n",
+            U(srv_desc).Texture2DArray.MostDetailedMip);
+    ok(U(srv_desc).Texture2DArray.MipLevels == 10, "Got unexpected MipLevels %u.\n",
+            U(srv_desc).Texture2DArray.MipLevels);
+    ok(!U(srv_desc).Texture2DArray.FirstArraySlice, "Got unexpected FirstArraySlice %u.\n",
+            U(srv_desc).Texture2DArray.FirstArraySlice);
+    ok(U(srv_desc).Texture2DArray.ArraySize == texture_desc.ArraySize, "Got unexpected ArraySize %u.\n",
+            U(srv_desc).Texture2DArray.ArraySize);
+
+    ID3D10ShaderResourceView_Release(srview);
     ID3D10Texture2D_Release(texture);
 
     refcount = ID3D10Device_Release(device);
