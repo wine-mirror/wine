@@ -2175,23 +2175,30 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	break;
     }
 
+    case EMR_GRADIENTFILL:
+    {
+        EMRGRADIENTFILL *grad = (EMRGRADIENTFILL *)mr;
+        GdiGradientFill( hdc, grad->Ver, grad->nVer, grad->Ver + grad->nVer,
+                         grad->nTri, grad->ulMode );
+        break;
+    }
+
     case EMR_POLYDRAW16:
     case EMR_GLSRECORD:
     case EMR_GLSBOUNDEDRECORD:
-	case EMR_DRAWESCAPE :
-	case EMR_EXTESCAPE:
-	case EMR_STARTDOC:
-	case EMR_SMALLTEXTOUT:
-	case EMR_FORCEUFIMAPPING:
-	case EMR_NAMEDESCAPE:
-	case EMR_COLORCORRECTPALETTE:
-	case EMR_SETICMPROFILEA:
-	case EMR_SETICMPROFILEW:
-	case EMR_TRANSPARENTBLT:
-	case EMR_GRADIENTFILL:
-	case EMR_SETLINKEDUFI:
-	case EMR_COLORMATCHTOTARGETW:
-	case EMR_CREATECOLORSPACEW:
+    case EMR_DRAWESCAPE:
+    case EMR_EXTESCAPE:
+    case EMR_STARTDOC:
+    case EMR_SMALLTEXTOUT:
+    case EMR_FORCEUFIMAPPING:
+    case EMR_NAMEDESCAPE:
+    case EMR_COLORCORRECTPALETTE:
+    case EMR_SETICMPROFILEA:
+    case EMR_SETICMPROFILEW:
+    case EMR_TRANSPARENTBLT:
+    case EMR_SETLINKEDUFI:
+    case EMR_COLORMATCHTOTARGETW:
+    case EMR_CREATECOLORSPACEW:
 
     default:
       /* From docs: If PlayEnhMetaFileRecord doesn't recognize a
