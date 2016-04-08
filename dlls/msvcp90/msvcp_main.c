@@ -117,6 +117,16 @@ int __cdecl _scprintf(const char* fmt, ...)
     __ms_va_end(valist);
     return ret;
 }
+
+int __cdecl sprintf(char *buf, const char *fmt, ...)
+{
+    int ret;
+    __ms_va_list valist;
+    __ms_va_start(valist, fmt);
+    ret = __stdio_common_vsprintf(UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, buf, -1, fmt, NULL, valist);
+    __ms_va_end(valist);
+    return ret;
+}
 #endif
 
 static void init_cxx_funcs(void)
