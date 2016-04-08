@@ -855,3 +855,57 @@ no_bounds:
     HeapFree( GetProcessHeap(), 0, pemr );
     return ret;
 }
+
+/**********************************************************************
+ *          EMFDRV_GradientFill
+ */
+BOOL EMFDRV_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
+                          void *grad_array, ULONG ngrad, ULONG mode )
+{
+    EMRGRADIENTFILL *emr;
+    ULONG i, pt, size, num_pts = ngrad * (mode == GRADIENT_FILL_TRIANGLE ? 3 : 2);
+    const ULONG *pts = (const ULONG *)grad_array;
+    BOOL ret;
+
+    size = FIELD_OFFSET(EMRGRADIENTFILL, Ver[nvert]) + num_pts * sizeof(pts[0]);
+
+    emr = HeapAlloc( GetProcessHeap(), 0, size );
+    if (!emr) return FALSE;
+
+    for (i = 0; i < num_pts; i++)
+    {
+        pt = pts[i];
+
+        if (i == 0)
+        {
+            emr->rclBounds.left = emr->rclBounds.right = vert_array[pt].x;
+            emr->rclBounds.top = emr->rclBounds.bottom = vert_array[pt].y;
+        }
+        else
+        {
+            if (vert_array[pt].x < emr->rclBounds.left)
+                emr->rclBounds.left = vert_array[pt].x;
+            else if (vert_array[pt].x > emr->rclBounds.right)
+                emr->rclBounds.right = vert_array[pt].x;
+            if (vert_array[pt].y < emr->rclBounds.top)
+                emr->rclBounds.top = vert_array[pt].y;
+            else if (vert_array[pt].y > emr->rclBounds.bottom)
+                emr->rclBounds.bottom = vert_array[pt].y;
+        }
+    }
+    emr->rclBounds.right--;
+    emr->rclBounds.bottom--;
+
+    emr->emr.iType = EMR_GRADIENTFILL;
+    emr->emr.nSize = size;
+    emr->nVer = nvert;
+    emr->nTri = ngrad;
+    emr->ulMode = mode;
+    memcpy( emr->Ver, vert_array, nvert * sizeof(vert_array[0]) );
+    memcpy( emr->Ver + nvert, pts, num_pts * sizeof(pts[0]) );
+
+    EMFDRV_UpdateBBox( dev, &emr->rclBounds );
+    ret = EMFDRV_WriteRecord( dev, &emr->emr );
+    HeapFree( GetProcessHeap(), 0, emr );
+    return ret;
+}
