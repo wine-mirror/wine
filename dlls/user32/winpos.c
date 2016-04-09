@@ -2348,7 +2348,11 @@ HDWP WINAPI DeferWindowPos( HDWP hdwp, HWND hwnd, HWND hwndAfter,
           hdwp, hwnd, hwndAfter, x, y, cx, cy, flags);
 
     hwnd = WIN_GetFullHandle( hwnd );
-    if (is_desktop_window( hwnd )) return 0;
+    if (is_desktop_window( hwnd ) || !IsWindow( hwnd ))
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
 
     if (!(pDWP = get_user_handle_ptr( hdwp, USER_DWP ))) return 0;
     if (pDWP == OBJ_OTHER_PROCESS)

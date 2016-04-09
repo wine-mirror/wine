@@ -8821,6 +8821,40 @@ static void test_winproc_limit(void)
     ok(i == 1, "winproc should be called once (%d)\n", i);
 }
 
+static void test_deferwindowpos(void)
+{
+    HDWP hdwp, hdwp2;
+    BOOL ret;
+
+    hdwp = BeginDeferWindowPos(0);
+    ok(hdwp != NULL, "got %p\n", hdwp);
+
+    ret = EndDeferWindowPos(NULL);
+    ok(!ret, "got %d\n", ret);
+
+    hdwp2 = DeferWindowPos(NULL, NULL, NULL, 0, 0, 10, 10, 0);
+todo_wine
+    ok(hdwp2 == NULL && ((GetLastError() == ERROR_INVALID_DWP_HANDLE) ||
+        broken(GetLastError() == ERROR_INVALID_WINDOW_HANDLE) /* before win8 */), "got %p, error %d\n", hdwp2, GetLastError());
+
+    hdwp2 = DeferWindowPos((HDWP)0xdead, GetDesktopWindow(), NULL, 0, 0, 10, 10, 0);
+todo_wine
+    ok(hdwp2 == NULL && ((GetLastError() == ERROR_INVALID_DWP_HANDLE) ||
+        broken(GetLastError() == ERROR_INVALID_WINDOW_HANDLE) /* before win8 */), "got %p, error %d\n", hdwp2, GetLastError());
+
+    hdwp2 = DeferWindowPos(hdwp, NULL, NULL, 0, 0, 10, 10, 0);
+    ok(hdwp2 == NULL && GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "got %p, error %d\n", hdwp2, GetLastError());
+
+    hdwp2 = DeferWindowPos(hdwp, GetDesktopWindow(), NULL, 0, 0, 10, 10, 0);
+    ok(hdwp2 == NULL && GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "got %p, error %d\n", hdwp2, GetLastError());
+
+    hdwp2 = DeferWindowPos(hdwp, (HWND)0xdead, NULL, 0, 0, 10, 10, 0);
+    ok(hdwp2 == NULL && GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "got %p, error %d\n", hdwp2, GetLastError());
+
+    ret = EndDeferWindowPos(hdwp);
+    ok(ret, "got %d\n", ret);
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -8963,6 +8997,7 @@ START_TEST(win)
     test_GetMessagePos();
     test_activateapp(hwndMain);
     test_winproc_handles(argv[0]);
+    test_deferwindowpos();
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
