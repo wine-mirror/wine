@@ -2810,3 +2810,46 @@ end:
     TRACE("returning 0x%08x\n", r);
     return r;
 }
+
+HRESULT WINAPI StgOpenPropStg(IUnknown *unk, REFFMTID fmt, DWORD flags,
+                              DWORD reserved, IPropertyStorage **prop_stg)
+{
+    IStorage *stg;
+    IStream *stm;
+    HRESULT r;
+
+    TRACE("%p %s %08x %d %p\n", unk, debugstr_guid(fmt), flags, reserved, prop_stg);
+
+    if (!fmt || reserved)
+    {
+        r = E_INVALIDARG;
+        goto end;
+    }
+
+    if (flags & PROPSETFLAG_NONSIMPLE)
+    {
+        r = IUnknown_QueryInterface(unk, &IID_IStorage, (void **)&stg);
+        if (FAILED(r))
+            goto end;
+
+        /* FIXME: if (flags & PROPSETFLAG_NONSIMPLE), we need to open a
+         * storage, not a stream.  For now, disallow it.
+         */
+        FIXME("PROPSETFLAG_NONSIMPLE not supported\n");
+        IStorage_Release(stg);
+        r = STG_E_INVALIDFLAG;
+    }
+    else
+    {
+        r = IUnknown_QueryInterface(unk, &IID_IStream, (void **)&stm);
+        if (FAILED(r))
+            goto end;
+
+        r = PropertyStorage_ConstructFromStream(stm, fmt,
+                STGM_READWRITE|STGM_SHARE_EXCLUSIVE, prop_stg);
+    }
+
+end:
+    TRACE("returning 0x%08x\n", r);
+    return r;
+}
