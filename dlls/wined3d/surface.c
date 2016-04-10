@@ -887,27 +887,10 @@ static void surface_unload(struct wined3d_resource *resource)
 
     if (resource->pool == WINED3D_POOL_DEFAULT)
     {
-        /* Default pool resources are supposed to be destroyed before Reset is called.
-         * Implicit resources stay however. So this means we have an implicit render target
-         * or depth stencil. The content may be destroyed, but we still have to tear down
-         * opengl resources, so we cannot leave early.
-         *
-         * Put the surfaces into sysmem, and reset the content. The D3D content is undefined,
-         * but we can't set the sysmem INDRAWABLE because when we're rendering the swapchain
-         * or the depth stencil into an FBO the texture or render buffer will be removed
-         * and all flags get lost */
-        if (resource->usage & WINED3DUSAGE_DEPTHSTENCIL)
-        {
-            wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_DISCARDED);
-            wined3d_texture_invalidate_location(texture, sub_resource_idx, ~WINED3D_LOCATION_DISCARDED);
-        }
-        else
-        {
-            surface_prepare_system_memory(surface);
-            memset(surface->resource.heap_memory, 0, surface->resource.size);
-            wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_SYSMEM);
-            wined3d_texture_invalidate_location(texture, sub_resource_idx, ~WINED3D_LOCATION_SYSMEM);
-        }
+        /* We should only get here on device reset/teardown for implicit
+         * resources. */
+        wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_DISCARDED);
+        wined3d_texture_invalidate_location(texture, sub_resource_idx, ~WINED3D_LOCATION_DISCARDED);
     }
     else
     {
