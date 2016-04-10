@@ -1216,9 +1216,8 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
     char              *text, *text_base, *text_end;
     LONG               size, blocksize, datalen;
     unsigned short     bits;
-    unsigned           nc, ncol = 1;
-    short              table_width;
-    BOOL               in_table = FALSE;
+    unsigned           ncol = 1;
+    short              nc, lastcol, table_width;
     char               tmp[256];
     BOOL               ret = FALSE;
 
@@ -1262,9 +1261,8 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
 
     if (buf[0x14] == HLP_TABLE)
     {
-        char    type;
+        unsigned char    type;
 
-        in_table = TRUE;
         ncol = *format++;
 
         if (!HLPFILE_RtfAddControl(rd, "\\trowd")) goto done;
@@ -1273,6 +1271,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
         {
             table_width = GET_SHORT(format, 0);
             format += 2;
+            if (!HLPFILE_RtfAddControl(rd, "\\trqc")) goto done;
         }
         else
             table_width = 32767;
@@ -1282,10 +1281,10 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
         {
             int     pos;
             sprintf(tmp, "\\trgaph%d\\trleft%d",
-                    HLPFILE_HalfPointsScale(page, MulDiv(GET_SHORT(format, 6), table_width, 32767)),
-                    HLPFILE_HalfPointsScale(page, MulDiv(GET_SHORT(format, 0), table_width, 32767)));
+                    MulDiv(HLPFILE_HalfPointsScale(page, GET_SHORT(format, 6)), table_width, 32767),
+                    MulDiv(HLPFILE_HalfPointsScale(page, GET_SHORT(format, 2) - GET_SHORT(format, 6)), table_width, 32767) - 1);
             if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
-            pos = HLPFILE_HalfPointsScale(page, MulDiv(GET_SHORT(format, 6) / 2, table_width, 32767));
+            pos = GET_SHORT(format, 6) / 2;
             for (nc = 0; nc < ncol; nc++)
             {
                 WINE_TRACE("column(%d/%d) gap=%d width=%d\n",
@@ -1293,7 +1292,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
                            GET_SHORT(format, nc*4+2));
                 pos += GET_SHORT(format, nc * 4) + GET_SHORT(format, nc * 4 + 2);
                 sprintf(tmp, "\\cellx%d",
-                        HLPFILE_HalfPointsScale(page, MulDiv(pos, table_width, 32767)));
+                        MulDiv(HLPFILE_HalfPointsScale(page, pos), table_width, 32767));
                 if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
             }
         }
@@ -1302,22 +1301,27 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
             WINE_TRACE("column(0/%d) gap=%d width=%d\n",
                        ncol, GET_SHORT(format, 0), GET_SHORT(format, 2));
             sprintf(tmp, "\\trleft%d\\cellx%d ",
-                    HLPFILE_HalfPointsScale(page, MulDiv(GET_SHORT(format, 0), table_width, 32767)),
-                    HLPFILE_HalfPointsScale(page, MulDiv(GET_SHORT(format, 0) + GET_SHORT(format, 2),
-                                      table_width, 32767)));
+                    MulDiv(HLPFILE_HalfPointsScale(page, GET_SHORT(format, 2)), table_width, 32767) - 1,
+                    MulDiv(HLPFILE_HalfPointsScale(page, GET_SHORT(format, 0)), table_width, 32767));
             if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
         }
         format += ncol * 4;
     }
 
+    lastcol = -1;
     for (nc = 0; nc < ncol; /**/)
     {
         WINE_TRACE("looking for format at offset %lu in column %d\n", (SIZE_T)(format - (buf + 0x15)), nc);
         if (!HLPFILE_RtfAddControl(rd, "\\pard")) goto done;
-        if (in_table)
+        if (buf[0x14] == HLP_TABLE)
         {
-            nc = GET_SHORT(format, 0);
-            if (nc == -1) break;
+            nc = lastcol = GET_SHORT(format, 0);
+            if (nc == -1) /* last column */
+            {
+                if (!HLPFILE_RtfAddControl(rd, "\\row")) goto done;
+                rd->char_pos += 2;
+                break;
+            }
             format += 5;
             if (!HLPFILE_RtfAddControl(rd, "\\intbl")) goto done;
         }
@@ -1436,7 +1440,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
             /* else: null text, keep on storing attributes */
             text += textsize + 1;
 
-            WINE_TRACE("format=%02x\n", *format);
+            WINE_TRACE("format=0x%02x\n", *format);
 	    if (*format == 0xff)
             {
                 format++;
@@ -1490,15 +1494,24 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
                 break;
 
 	    case 0x82:
-                if (in_table)
+                if (buf[0x14] == HLP_TABLE)
                 {
                     if (format[1] != 0xFF)
                     {
                         if (!HLPFILE_RtfAddControl(rd, "\\par\\intbl")) goto done;
                     }
+                    else if (GET_SHORT(format, 2) == -1)
+                    {
+                        if (!HLPFILE_RtfAddControl(rd, "\\cell\\intbl\\row")) goto done;
+                        rd->char_pos += 2;
+                    }
+                    else if (GET_SHORT(format, 2) == lastcol)
+                    {
+                        if (!HLPFILE_RtfAddControl(rd, "\\par\\pard")) goto done;
+                    }
                     else
                     {
-                        if (!HLPFILE_RtfAddControl(rd, "\\cell\\pard\\intbl")) goto done;
+                        if (!HLPFILE_RtfAddControl(rd, "\\cell\\pard")) goto done;
                     }
                 }
                 else if (!HLPFILE_RtfAddControl(rd, "\\par")) goto done;
@@ -1663,11 +1676,6 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
                 format++;
 	    }
 	}
-    }
-    if (in_table)
-    {
-        if (!HLPFILE_RtfAddControl(rd, "\\row\\par\\pard\\plain")) goto done;
-        rd->char_pos += 2;
     }
     ret = TRUE;
 done:
