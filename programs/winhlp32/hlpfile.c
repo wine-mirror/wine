@@ -693,6 +693,7 @@ static BOOL HLPFILE_RtfAddRawString(struct RtfData* rd, const char* str, size_t 
 
 static BOOL HLPFILE_RtfAddControl(struct RtfData* rd, const char* str)
 {
+    WINE_TRACE("%s\n", debugstr_a(str));
     if (*str == '\\' || *str == '{') rd->in_text = FALSE;
     else if (*str == '}') rd->in_text = TRUE;
     return HLPFILE_RtfAddRawString(rd, str, strlen(str));
@@ -1258,6 +1259,8 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
     format = buf + 0x15;
     format_end = buf + GET_UINT(buf, 0x10);
 
+    WINE_TRACE("Record type (buf[0x14]) = 0x%x\n", buf[0x14]);
+
     if (buf[0x14] == HLP_DISPLAY || buf[0x14] == HLP_TABLE)
     {
         fetch_long(&format);
@@ -1440,13 +1443,13 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
             /* else: null text, keep on storing attributes */
             text += textsize + 1;
 
+            WINE_TRACE("format=%02x\n", *format);
 	    if (*format == 0xff)
             {
                 format++;
                 break;
             }
 
-            WINE_TRACE("format=%02x\n", *format);
             switch (*format)
             {
             case 0x20:
