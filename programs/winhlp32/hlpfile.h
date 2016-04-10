@@ -149,6 +149,9 @@ typedef struct tagHlpFileFile
     COLORREF                    popup_color;
 
     LPSTR                       help_on_file;
+
+    int                         scale;
+    int                         rounderr;
 } HLPFILE;
 
 /*

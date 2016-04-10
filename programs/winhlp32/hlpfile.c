@@ -1865,6 +1865,26 @@ static BOOL HLPFILE_ReadFont(HLPFILE* hlpfile)
     hlpfile->fonts = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_FONT) * dscr_num);
 
     len = (dscr_offset - face_offset) / face_num;
+
+    /* mvb font */
+    if (face_offset >= 16)
+    {
+        hlpfile->scale = 1;
+        hlpfile->rounderr = 0;
+        WINE_FIXME("mvb font: not implemented\n");
+        return FALSE;
+    }
+    /* new font */
+    if (face_offset >= 12)
+    {
+        hlpfile->scale = 1;
+        hlpfile->rounderr = 0;
+        WINE_FIXME("new font: not implemented\n");
+        return FALSE;
+    }
+    /* old font */
+    hlpfile->scale = 10;
+    hlpfile->rounderr = 5;
 /* EPP     for (i = face_offset; i < dscr_offset; i += len) */
 /* EPP         WINE_FIXME("[%d]: %*s\n", i / len, len, ref + i); */
     for (i = 0; i < dscr_num; i++)
