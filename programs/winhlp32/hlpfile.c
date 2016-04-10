@@ -1199,16 +1199,9 @@ static HLPFILE_LINK*       HLPFILE_AllocLink(struct RtfData* rd, int cookie,
     return link;
 }
 
-static unsigned HLPFILE_HalfPointsToTwips(unsigned pts)
+static unsigned HLPFILE_HalfPointsScale(HLPFILE_PAGE* page, unsigned pts)
 {
-    static unsigned logPxY;
-    if (!logPxY)
-    {
-        HDC hdc = GetDC(NULL);
-        logPxY = GetDeviceCaps(hdc, LOGPIXELSY);
-        ReleaseDC(NULL, hdc);
-    }
-    return MulDiv(pts, 72 * 10, logPxY);
+    return pts * page->file->scale - page->file->rounderr;
 }
 
 /***********************************************************************
@@ -1289,10 +1282,10 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
         {
             int     pos;
             sprintf(tmp, "\\trgaph%d\\trleft%d",
-                    HLPFILE_HalfPointsToTwips(MulDiv(GET_SHORT(format, 6), table_width, 32767)),
-                    HLPFILE_HalfPointsToTwips(MulDiv(GET_SHORT(format, 0), table_width, 32767)));
+                    HLPFILE_HalfPointsScale(page, MulDiv(GET_SHORT(format, 6), table_width, 32767)),
+                    HLPFILE_HalfPointsScale(page, MulDiv(GET_SHORT(format, 0), table_width, 32767)));
             if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
-            pos = HLPFILE_HalfPointsToTwips(MulDiv(GET_SHORT(format, 6) / 2, table_width, 32767));
+            pos = HLPFILE_HalfPointsScale(page, MulDiv(GET_SHORT(format, 6) / 2, table_width, 32767));
             for (nc = 0; nc < ncol; nc++)
             {
                 WINE_TRACE("column(%d/%d) gap=%d width=%d\n",
@@ -1300,7 +1293,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
                            GET_SHORT(format, nc*4+2));
                 pos += GET_SHORT(format, nc * 4) + GET_SHORT(format, nc * 4 + 2);
                 sprintf(tmp, "\\cellx%d",
-                        HLPFILE_HalfPointsToTwips(MulDiv(pos, table_width, 32767)));
+                        HLPFILE_HalfPointsScale(page, MulDiv(pos, table_width, 32767)));
                 if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
             }
         }
@@ -1309,8 +1302,8 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
             WINE_TRACE("column(0/%d) gap=%d width=%d\n",
                        ncol, GET_SHORT(format, 0), GET_SHORT(format, 2));
             sprintf(tmp, "\\trleft%d\\cellx%d ",
-                    HLPFILE_HalfPointsToTwips(MulDiv(GET_SHORT(format, 0), table_width, 32767)),
-                    HLPFILE_HalfPointsToTwips(MulDiv(GET_SHORT(format, 0) + GET_SHORT(format, 2),
+                    HLPFILE_HalfPointsScale(page, MulDiv(GET_SHORT(format, 0), table_width, 32767)),
+                    HLPFILE_HalfPointsScale(page, MulDiv(GET_SHORT(format, 0) + GET_SHORT(format, 2),
                                       table_width, 32767)));
             if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
         }
@@ -1337,32 +1330,32 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
         if (bits & 0x0001) fetch_long(&format);
         if (bits & 0x0002)
         {
-            sprintf(tmp, "\\sb%d", HLPFILE_HalfPointsToTwips(fetch_short(&format)));
+            sprintf(tmp, "\\sb%d", HLPFILE_HalfPointsScale(page, fetch_short(&format)));
             if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
         }
         if (bits & 0x0004)
         {
-            sprintf(tmp, "\\sa%d", HLPFILE_HalfPointsToTwips(fetch_short(&format)));
+            sprintf(tmp, "\\sa%d", HLPFILE_HalfPointsScale(page, fetch_short(&format)));
             if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
         }
         if (bits & 0x0008)
         {
-            sprintf(tmp, "\\sl%d", HLPFILE_HalfPointsToTwips(fetch_short(&format)));
+            sprintf(tmp, "\\sl%d", HLPFILE_HalfPointsScale(page, fetch_short(&format)));
             if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
         }
         if (bits & 0x0010)
         {
-            sprintf(tmp, "\\li%d", HLPFILE_HalfPointsToTwips(fetch_short(&format)));
+            sprintf(tmp, "\\li%d", HLPFILE_HalfPointsScale(page, fetch_short(&format)));
             if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
         }
         if (bits & 0x0020)
         {
-            sprintf(tmp, "\\ri%d", HLPFILE_HalfPointsToTwips(fetch_short(&format)));
+            sprintf(tmp, "\\ri%d", HLPFILE_HalfPointsScale(page, fetch_short(&format)));
             if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
         }
         if (bits & 0x0040)
         {
-            sprintf(tmp, "\\fi%d", HLPFILE_HalfPointsToTwips(fetch_short(&format)));
+            sprintf(tmp, "\\fi%d", HLPFILE_HalfPointsScale(page, fetch_short(&format)));
             if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
         }
         if (bits & 0x0100)
@@ -1383,7 +1376,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
             w = GET_SHORT(format, 0); format += 2;
             if (w)
             {
-                sprintf(tmp, "\\brdrw%d", HLPFILE_HalfPointsToTwips(w));
+                sprintf(tmp, "\\brdrw%d", HLPFILE_HalfPointsScale(page, w));
                 if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
             }
         }
@@ -1407,7 +1400,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
                 }
                 /* FIXME: do kind */
                 sprintf(tmp, "%s\\tx%d",
-                        kind, HLPFILE_HalfPointsToTwips(tab & 0x3FFF));
+                        kind, HLPFILE_HalfPointsScale(page, tab & 0x3FFF));
                 if (!HLPFILE_RtfAddControl(rd, tmp)) goto done;
             }
         }
