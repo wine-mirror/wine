@@ -1258,13 +1258,13 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
     format = buf + 0x15;
     format_end = buf + GET_UINT(buf, 0x10);
 
-    if (buf[0x14] == 0x20 || buf[0x14] == 0x23)
+    if (buf[0x14] == HLP_DISPLAY || buf[0x14] == HLP_TABLE)
     {
         fetch_long(&format);
         *parlen = fetch_ushort(&format);
     }
 
-    if (buf[0x14] == 0x23)
+    if (buf[0x14] == HLP_TABLE)
     {
         char    type;
 
@@ -1326,7 +1326,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
             if (!HLPFILE_RtfAddControl(rd, "\\intbl")) goto done;
         }
         else nc++;
-        if (buf[0x14] == 0x01)
+        if (buf[0x14] == HLP_DISPLAY30)
             format += 6;
         else
             format += 4;
@@ -1799,12 +1799,12 @@ BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd,
 
         switch (buf[0x14])
         {
-        case 0x02:
+        case HLP_TOPICHDR:
             if (count++) goto done;
             break;
-        case 0x01:
-        case 0x20:
-        case 0x23:
+        case HLP_DISPLAY30:
+        case HLP_DISPLAY:
+        case HLP_TABLE:
             if (!HLPFILE_BrowseParagraph(page, rd, buf, end, &parlen)) return FALSE;
             if (relative > index * 0x8000 + offs)
                 rd->char_pos_rel = rd->char_pos;
@@ -2605,7 +2605,7 @@ static BOOL HLPFILE_SkipParagraph(HLPFILE *hlpfile, const BYTE *buf, const BYTE 
     if (buf + 0x19 > end) {WINE_WARN("header too small\n"); return FALSE;};
 
     tmp = buf + 0x15;
-    if (buf[0x14] == 0x20 || buf[0x14] == 0x23)
+    if (buf[0x14] == HLP_DISPLAY || buf[0x14] == HLP_TABLE)
     {
         fetch_long(&tmp);
         *len = fetch_ushort(&tmp);
@@ -2680,7 +2680,7 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
 
         switch (buf[0x14])
 	{
-	case 0x02:
+	case HLP_TOPICHDR: /* Topic Header */
             if (hlpfile->version <= 16)
                 topicoffset = ref + index * 12;
             else
@@ -2688,9 +2688,9 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
             if (!HLPFILE_AddPage(hlpfile, buf, end, ref, topicoffset)) return FALSE;
             break;
 
-	case 0x01:
-	case 0x20:
-	case 0x23:
+	case HLP_DISPLAY30:
+	case HLP_DISPLAY:
+	case HLP_TABLE:
             if (!HLPFILE_SkipParagraph(hlpfile, buf, end, &len)) return FALSE;
             offs += len;
             break;
