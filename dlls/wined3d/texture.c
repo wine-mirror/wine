@@ -1408,6 +1408,7 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
         TRACE("Mapped front buffer %s.\n", wine_dbgstr_rect(r));
     }
 
+    ++resource->map_count;
     ++sub_resource->resource->map_count;
 
     TRACE("Returning memory %p, row pitch %u, slice pitch %u.\n",
@@ -1473,6 +1474,7 @@ static HRESULT texture_resource_sub_resource_unmap(struct wined3d_resource *reso
     }
 
     --sub_resource->resource->map_count;
+    --resource->map_count;
 
     return WINED3D_OK;
 }
@@ -2263,6 +2265,7 @@ HRESULT CDECL wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned i
         context_release(context);
 
     surface->flags |= SFLAG_DCINUSE;
+    ++texture->resource.map_count;
     surface->resource.map_count++;
 
     *dc = surface->hDC;
@@ -2302,6 +2305,7 @@ HRESULT CDECL wined3d_texture_release_dc(struct wined3d_texture *texture, unsign
     }
 
     surface->resource.map_count--;
+    --texture->resource.map_count;
     surface->flags &= ~SFLAG_DCINUSE;
 
     if (surface->resource.map_binding == WINED3D_LOCATION_USER_MEMORY

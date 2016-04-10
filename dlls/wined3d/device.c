@@ -4503,6 +4503,10 @@ void CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
     {
         TRACE("Checking resource %p for eviction.\n", resource);
 
+        /* These are handled by the texture they're part of. */
+        if (resource->type == WINED3D_RTYPE_SURFACE || resource->type == WINED3D_RTYPE_VOLUME)
+            continue;
+
         if (resource->pool == WINED3D_POOL_MANAGED && !resource->map_count)
         {
             TRACE("Evicting %p.\n", resource);
