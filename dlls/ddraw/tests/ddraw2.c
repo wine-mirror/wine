@@ -9680,6 +9680,121 @@ static void test_blt(void)
     DestroyWindow(window);
 }
 
+static void test_getdc(void)
+{
+    IDirectDrawSurface *surface;
+    DDSURFACEDESC surface_desc;
+    IDirectDraw2 *ddraw;
+    unsigned int i;
+    HWND window;
+    HRESULT hr;
+    HDC dc;
+
+    static const struct
+    {
+        const char *name;
+        DDPIXELFORMAT format;
+        BOOL getdc_supported;
+        HRESULT alt_result;
+    }
+    test_data[] =
+    {
+        {"D3DFMT_A8R8G8B8",    {sizeof(test_data->format), DDPF_RGB | DDPF_ALPHAPIXELS, 0, {32},
+                {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0xff000000}}, TRUE},
+        {"D3DFMT_X8R8G8B8",    {sizeof(test_data->format), DDPF_RGB, 0, {32},
+                {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0x00000000}}, TRUE},
+        {"D3DFMT_R5G6B5",      {sizeof(test_data->format), DDPF_RGB, 0, {16},
+                {0x0000f800}, {0x000007e0}, {0x0000001f}, {0x00000000}}, TRUE},
+        {"D3DFMT_X1R5G5B5",    {sizeof(test_data->format), DDPF_RGB, 0, {16},
+                {0x00007c00}, {0x000003e0}, {0x0000001f}, {0x00000000}}, TRUE},
+        {"D3DFMT_A1R5G5B5",    {sizeof(test_data->format), DDPF_RGB | DDPF_ALPHAPIXELS, 0, {16},
+                {0x00007c00}, {0x000003e0}, {0x0000001f}, {0x00008000}}, TRUE},
+        {"D3DFMT_A4R4G4B4",    {sizeof(test_data->format), DDPF_RGB | DDPF_ALPHAPIXELS, 0, {16},
+                {0x00000f00}, {0x000000f0}, {0x0000000f}, {0x0000f000}}, TRUE, DDERR_CANTCREATEDC /* Vista+ */},
+        {"D3DFMT_X4R4G4B4",    {sizeof(test_data->format), DDPF_RGB, 0, {16},
+                {0x00000f00}, {0x000000f0}, {0x0000000f}, {0x00000000}}, TRUE, DDERR_CANTCREATEDC /* Vista+ */},
+        {"D3DFMT_A2R10G10B10", {sizeof(test_data->format), DDPF_RGB | DDPF_ALPHAPIXELS, 0, {32},
+                {0xc0000000}, {0x3ff00000}, {0x000ffc00}, {0x000003ff}}, TRUE},
+        {"D3DFMT_A8B8G8R8",    {sizeof(test_data->format), DDPF_RGB | DDPF_ALPHAPIXELS, 0, {32},
+                {0x000000ff}, {0x0000ff00}, {0x00ff0000}, {0xff000000}}, TRUE, DDERR_CANTCREATEDC /* Vista+ */},
+        {"D3DFMT_X8B8G8R8",    {sizeof(test_data->format), DDPF_RGB, 0, {32},
+                {0x000000ff}, {0x0000ff00}, {0x00ff0000}, {0x00000000}}, TRUE, DDERR_CANTCREATEDC /* Vista+ */},
+        {"D3DFMT_R3G3B2",      {sizeof(test_data->format), DDPF_RGB, 0, {8},
+                {0x000000e0}, {0x0000001c}, {0x00000003}, {0x00000000}}, FALSE},
+        /* GetDC() on a P8 surface fails unless the display mode is 8 bpp.
+         * This is not implemented in wine yet, so disable the test for now.
+         * Succeeding P8 GetDC() calls are tested in the ddraw:visual test.
+        {"D3DFMT_P8", {sizeof(test_data->format), DDPF_PALETTEINDEXED8 | DDPF_RGB, 0, {8 },
+                {0x00000000}, {0x00000000}, {0x00000000}, {0x00000000}}, FALSE},
+         */
+        {"D3DFMT_L8",          {sizeof(test_data->format), DDPF_LUMINANCE, 0, {8},
+                {0x000000ff}, {0x00000000}, {0x00000000}, {0x00000000}}, FALSE},
+        {"D3DFMT_A8L8",        {sizeof(test_data->format), DDPF_ALPHAPIXELS | DDPF_LUMINANCE, 0, {16},
+                {0x000000ff}, {0x00000000}, {0x00000000}, {0x0000ff00}}, FALSE},
+        {"D3DFMT_DXT1",        {sizeof(test_data->format), DDPF_FOURCC, MAKEFOURCC('D','X','T','1'), {0},
+                {0x00000000}, {0x00000000}, {0x00000000}, {0x00000000}}, FALSE},
+        {"D3DFMT_DXT2",        {sizeof(test_data->format), DDPF_FOURCC, MAKEFOURCC('D','X','T','2'), {0},
+                {0x00000000}, {0x00000000}, {0x00000000}, {0x00000000}}, FALSE},
+        {"D3DFMT_DXT3",        {sizeof(test_data->format), DDPF_FOURCC, MAKEFOURCC('D','X','T','3'), {0},
+                {0x00000000}, {0x00000000}, {0x00000000}, {0x00000000}}, FALSE},
+        {"D3DFMT_DXT4",        {sizeof(test_data->format), DDPF_FOURCC, MAKEFOURCC('D','X','T','4'), {0},
+                {0x00000000}, {0x00000000}, {0x00000000}, {0x00000000}}, FALSE},
+        {"D3DFMT_DXT5",        {sizeof(test_data->format), DDPF_FOURCC, MAKEFOURCC('D','X','T','5'), {0},
+                {0x00000000}, {0x00000000}, {0x00000000}, {0x00000000}}, FALSE},
+    };
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    for (i = 0; i < (sizeof(test_data) / sizeof(*test_data)); ++i)
+    {
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+        surface_desc.dwWidth = 64;
+        surface_desc.dwHeight = 64;
+        U4(surface_desc).ddpfPixelFormat = test_data[i].format;
+        surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+
+        if (FAILED(IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface, NULL)))
+        {
+            surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+            if (FAILED(hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface, NULL)))
+            {
+                skip("Failed to create surface for format %s (hr %#x), skipping tests.\n", test_data[i].name, hr);
+                continue;
+            }
+        }
+
+        dc = (void *)0x1234;
+        hr = IDirectDrawSurface_GetDC(surface, &dc);
+        if (test_data[i].getdc_supported)
+            ok(SUCCEEDED(hr) || (test_data[i].alt_result && hr == test_data[i].alt_result),
+                    "Got unexpected hr %#x for format %s.\n", hr, test_data[i].name);
+        else
+            ok(FAILED(hr), "Got unexpected hr %#x for format %s.\n", hr, test_data[i].name);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IDirectDrawSurface_ReleaseDC(surface, dc);
+            ok(hr == DD_OK, "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        }
+        else
+        {
+            ok(!dc, "Got unexpected dc %p for format %s.\n", dc, test_data[i].name);
+        }
+
+        IDirectDrawSurface_Release(surface);
+    }
+
+    IDirectDraw2_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw2)
 {
     IDirectDraw2 *ddraw;
@@ -9764,4 +9879,5 @@ START_TEST(ddraw2)
     test_offscreen_overlay();
     test_overlay_rect();
     test_blt();
+    test_getdc();
 }
