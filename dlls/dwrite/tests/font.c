@@ -1,7 +1,7 @@
 /*
  *    Font related tests
  *
- * Copyright 2012, 2014 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2016 Nikolay Sivov for CodeWeavers
  * Copyright 2014 Aric Stewart for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -40,6 +40,16 @@
 #define MS_VDMX_TAG MS_MAKE_TAG('V','D','M','X')
 #define MS_GASP_TAG MS_MAKE_TAG('g','a','s','p')
 #define MS_CPAL_TAG MS_MAKE_TAG('C','P','A','L')
+#define MS_0S2_TAG  MS_MAKE_TAG('O','S','/','2')
+#define MS_HEAD_TAG MS_MAKE_TAG('h','e','a','d')
+#define MS_HHEA_TAG MS_MAKE_TAG('h','h','e','a')
+#define MS_POST_TAG MS_MAKE_TAG('p','o','s','t')
+
+#ifdef WORDS_BIGENDIAN
+#define GET_BE_WORD(x) (x)
+#else
+#define GET_BE_WORD(x) RtlUshortByteSwap(x)
+#endif
 
 #define EXPECT_HR(hr,hr_exp) \
     ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
@@ -99,6 +109,90 @@ static const WCHAR tahomaUppercaseW[] = {'T','A','H','O','M','A',0};
 static const WCHAR tahomaStrangecaseW[] = {'t','A','h','O','m','A',0};
 static const WCHAR blahW[]  = {'B','l','a','h','!',0};
 static const WCHAR emojiW[] = {'S','e','g','o','e',' ','U','I',' ','E','m','o','j','i',0};
+
+/* PANOSE is 10 bytes in size, need to pack the structure properly */
+#include "pshpack2.h"
+typedef struct
+{
+    ULONG version;
+    ULONG revision;
+    ULONG checksumadj;
+    ULONG magic;
+    USHORT flags;
+    USHORT unitsPerEm;
+    ULONGLONG created;
+    ULONGLONG modified;
+    SHORT xMin;
+    SHORT yMin;
+    SHORT xMax;
+    SHORT yMax;
+    USHORT macStyle;
+    USHORT lowestRecPPEM;
+    SHORT direction_hint;
+    SHORT index_format;
+    SHORT glyphdata_format;
+} TT_HEAD;
+
+typedef struct
+{
+    USHORT version;
+    SHORT xAvgCharWidth;
+    USHORT usWeightClass;
+    USHORT usWidthClass;
+    SHORT fsType;
+    SHORT ySubscriptXSize;
+    SHORT ySubscriptYSize;
+    SHORT ySubscriptXOffset;
+    SHORT ySubscriptYOffset;
+    SHORT ySuperscriptXSize;
+    SHORT ySuperscriptYSize;
+    SHORT ySuperscriptXOffset;
+    SHORT ySuperscriptYOffset;
+    SHORT yStrikeoutSize;
+    SHORT yStrikeoutPosition;
+    SHORT sFamilyClass;
+    PANOSE panose;
+    ULONG ulUnicodeRange1;
+    ULONG ulUnicodeRange2;
+    ULONG ulUnicodeRange3;
+    ULONG ulUnicodeRange4;
+    CHAR achVendID[4];
+    USHORT fsSelection;
+    USHORT usFirstCharIndex;
+    USHORT usLastCharIndex;
+    /* According to the Apple spec, original version didn't have the below fields,
+     * version numbers were taken from the OpenType spec.
+     */
+    /* version 0 (TrueType 1.5) */
+    USHORT sTypoAscender;
+    USHORT sTypoDescender;
+    USHORT sTypoLineGap;
+    USHORT usWinAscent;
+    USHORT usWinDescent;
+    /* version 1 (TrueType 1.66) */
+    ULONG ulCodePageRange1;
+    ULONG ulCodePageRange2;
+    /* version 2 (OpenType 1.2) */
+    SHORT sxHeight;
+    SHORT sCapHeight;
+    USHORT usDefaultChar;
+    USHORT usBreakChar;
+    USHORT usMaxContext;
+} TT_OS2_V2;
+
+typedef struct {
+    ULONG Version;
+    ULONG italicAngle;
+    SHORT underlinePosition;
+    SHORT underlineThickness;
+    ULONG fixed_pitch;
+    ULONG minmemType42;
+    ULONG maxmemType42;
+    ULONG minmemType1;
+    ULONG maxmemType1;
+} TT_POST;
+
+#include "poppack.h"
 
 static IDWriteFactory *create_factory(void)
 {
@@ -1425,9 +1519,92 @@ todo_wine
     DELETE_FONTFILE(path);
 }
 
+static void get_expected_font_metrics(IDWriteFontFace *fontface, DWRITE_FONT_METRICS *metrics)
+{
+    void *os2_context, *head_context, *post_context;
+    const TT_OS2_V2 *tt_os2;
+    const TT_HEAD *tt_head;
+    const TT_POST *tt_post;
+    UINT32 size;
+    BOOL exists;
+    HRESULT hr;
+
+    memset(metrics, 0, sizeof(*metrics));
+
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_0S2_TAG, (const void**)&tt_os2, &size, &os2_context, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_HEAD_TAG, (const void**)&tt_head, &size, &head_context, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_POST_TAG, (const void**)&tt_post, &size, &post_context, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    if (tt_head)
+        metrics->designUnitsPerEm = GET_BE_WORD(tt_head->unitsPerEm);
+
+    if (tt_os2) {
+        metrics->strikethroughPosition  = GET_BE_WORD(tt_os2->yStrikeoutPosition);
+        metrics->strikethroughThickness = GET_BE_WORD(tt_os2->yStrikeoutSize);
+    }
+
+    if (tt_post) {
+        metrics->underlinePosition = GET_BE_WORD(tt_post->underlinePosition);
+        metrics->underlineThickness = GET_BE_WORD(tt_post->underlineThickness);
+    }
+
+    if (metrics->strikethroughThickness || metrics->underlineThickness) {
+        if (!metrics->strikethroughThickness)
+            metrics->strikethroughThickness = metrics->underlineThickness;
+        if (!metrics->underlineThickness)
+            metrics->underlineThickness = metrics->strikethroughThickness;
+    }
+    else {
+        metrics->strikethroughThickness = metrics->designUnitsPerEm / 14;
+        metrics->underlineThickness = metrics->designUnitsPerEm / 14;
+    }
+
+    if (tt_os2)
+        IDWriteFontFace_ReleaseFontTable(fontface, os2_context);
+    if (tt_head)
+        IDWriteFontFace_ReleaseFontTable(fontface, head_context);
+    if (tt_post)
+        IDWriteFontFace_ReleaseFontTable(fontface, post_context);
+}
+
+static void check_font_metrics(const WCHAR *nameW, const DWRITE_FONT_METRICS *got, const DWRITE_FONT_METRICS *expected)
+{
+    ok(got->designUnitsPerEm == expected->designUnitsPerEm, "font %s: designUnitsPerEm %u, expected %u\n",
+        wine_dbgstr_w(nameW), got->designUnitsPerEm, expected->designUnitsPerEm);
+    ok(got->underlinePosition == expected->underlinePosition, "font %s: underlinePosition %d, expected %d\n",
+        wine_dbgstr_w(nameW), got->underlinePosition, expected->underlinePosition);
+todo_wine_if(got->underlineThickness == 0)
+    ok(got->underlineThickness == expected->underlineThickness, "font %s: underlineThickness %u, "
+        "expected %u\n", wine_dbgstr_w(nameW), got->underlineThickness, expected->underlineThickness);
+    ok(got->strikethroughPosition == expected->strikethroughPosition, "font %s: strikethroughPosition %d, expected %d\n",
+        wine_dbgstr_w(nameW), got->strikethroughPosition, expected->strikethroughPosition);
+todo_wine_if(got->strikethroughThickness == 0)
+    ok(got->strikethroughThickness == expected->strikethroughThickness, "font %s: strikethroughThickness %u, "
+        "expected %u\n", wine_dbgstr_w(nameW), got->strikethroughThickness, expected->strikethroughThickness);
+}
+
+static void get_enus_string(IDWriteLocalizedStrings *strings, WCHAR *buff, UINT32 size)
+{
+    static const WCHAR enusW[] = {'e','n','-','u','s',0};
+    BOOL exists = FALSE;
+    UINT32 index;
+    HRESULT hr;
+
+    hr = IDWriteLocalizedStrings_FindLocaleName(strings, enusW, &index, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(exists, "got %d\n", exists);
+
+    hr = IDWriteLocalizedStrings_GetString(strings, index, buff, size);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+}
+
 static void test_GetMetrics(void)
 {
     DWRITE_FONT_METRICS metrics, metrics2;
+    IDWriteFontCollection *syscollection;
     IDWriteGdiInterop *interop;
     IDWriteFontFace *fontface;
     IDWriteFactory *factory;
@@ -1436,7 +1613,7 @@ static void test_GetMetrics(void)
     IDWriteFont1 *font1;
     IDWriteFont *font;
     LOGFONTW logfont;
-    UINT32 count;
+    UINT32 count, i;
     HRESULT hr;
     HDC hdc;
     HFONT hfont;
@@ -1607,6 +1784,44 @@ if (0) /* crashes on native */
     IDWriteFontFile_Release(file);
     IDWriteFont_Release(font);
 
+    /* test metrics for whole system collection */
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &syscollection, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    count = IDWriteFontCollection_GetFontFamilyCount(syscollection);
+
+    for (i = 0; i < count; i++) {
+        DWRITE_FONT_METRICS expected_metrics;
+        IDWriteLocalizedStrings *names;
+        IDWriteFontFamily *family;
+        IDWriteFont *font;
+        WCHAR nameW[256];
+
+        hr = IDWriteFontCollection_GetFontFamily(syscollection, i, &family);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
+            DWRITE_FONT_STYLE_NORMAL, &font);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFont_CreateFontFace(font, &fontface);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontFamily_GetFamilyNames(family, &names);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        get_enus_string(names, nameW, sizeof(nameW)/sizeof(nameW[0]));
+
+        IDWriteLocalizedStrings_Release(names);
+        IDWriteFont_Release(font);
+
+        IDWriteFontFace_GetMetrics(fontface, &metrics);
+        get_expected_font_metrics(fontface, &expected_metrics);
+        check_font_metrics(nameW, &metrics, &expected_metrics);
+
+        IDWriteFontFace_Release(fontface);
+        IDWriteFontFamily_Release(family);
+    }
+    IDWriteFontCollection_Release(syscollection);
     IDWriteFactory_Release(factory);
 }
 
@@ -4036,11 +4251,6 @@ struct VDMX_vTable
     SHORT yMin;
 };
 
-#ifdef WORDS_BIGENDIAN
-#define GET_BE_WORD(x) (x)
-#else
-#define GET_BE_WORD(x) RtlUshortByteSwap(x)
-#endif
 
 static const struct VDMX_group *find_vdmx_group(const struct VDMX_Header *hdr)
 {
