@@ -1204,6 +1204,18 @@ void opentype_get_font_metrics(IDWriteFontFileStream *stream, DWRITE_FONT_FACE_T
         metrics->underlineThickness = GET_BE_WORD(tt_post->underlineThickness);
     }
 
+    /* use any of thickness values if another one is zero, if both are zero use estimate */
+    if (metrics->strikethroughThickness || metrics->underlineThickness) {
+        if (!metrics->strikethroughThickness)
+            metrics->strikethroughThickness = metrics->underlineThickness;
+        if (!metrics->underlineThickness)
+            metrics->underlineThickness = metrics->strikethroughThickness;
+    }
+    else {
+        metrics->strikethroughThickness = metrics->designUnitsPerEm / 14;
+        metrics->underlineThickness = metrics->designUnitsPerEm / 14;
+    }
+
     /* estimate missing metrics */
     if (metrics->xHeight == 0)
         metrics->xHeight = metrics->designUnitsPerEm / 2;

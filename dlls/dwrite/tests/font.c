@@ -1576,12 +1576,10 @@ static void check_font_metrics(const WCHAR *nameW, const DWRITE_FONT_METRICS *go
         wine_dbgstr_w(nameW), got->designUnitsPerEm, expected->designUnitsPerEm);
     ok(got->underlinePosition == expected->underlinePosition, "font %s: underlinePosition %d, expected %d\n",
         wine_dbgstr_w(nameW), got->underlinePosition, expected->underlinePosition);
-todo_wine_if(got->underlineThickness == 0)
     ok(got->underlineThickness == expected->underlineThickness, "font %s: underlineThickness %u, "
         "expected %u\n", wine_dbgstr_w(nameW), got->underlineThickness, expected->underlineThickness);
     ok(got->strikethroughPosition == expected->strikethroughPosition, "font %s: strikethroughPosition %d, expected %d\n",
         wine_dbgstr_w(nameW), got->strikethroughPosition, expected->strikethroughPosition);
-todo_wine_if(got->strikethroughThickness == 0)
     ok(got->strikethroughThickness == expected->strikethroughThickness, "font %s: strikethroughThickness %u, "
         "expected %u\n", wine_dbgstr_w(nameW), got->strikethroughThickness, expected->strikethroughThickness);
 }
