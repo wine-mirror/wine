@@ -10958,13 +10958,14 @@ static void test_color_clamping(void)
 
 static void test_getdc(void)
 {
-    IDirectDrawSurface4 *surface;
-    DDSURFACEDESC2 surface_desc;
+    DDSCAPS2 caps = {DDSCAPS_COMPLEX, 0, 0, {0}};
+    IDirectDrawSurface4 *surface, *surface2, *tmp;
+    DDSURFACEDESC2 surface_desc, map_desc;
     IDirectDraw4 *ddraw;
     unsigned int i;
     HWND window;
+    HDC dc, dc2;
     HRESULT hr;
-    HDC dc;
 
     static const struct
     {
@@ -11065,6 +11066,158 @@ static void test_getdc(void)
             ok(!dc, "Got unexpected dc %p for format %s.\n", dc, test_data[i].name);
         }
 
+        IDirectDrawSurface4_Release(surface);
+
+        if (FAILED(hr))
+            continue;
+
+        surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+        surface_desc.ddsCaps.dwCaps2 = DDSCAPS2_TEXTUREMANAGE;
+        if (FAILED(hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL)))
+        {
+            skip("Failed to create mip-mapped texture for format %s (hr %#x), skipping tests.\n",
+                    test_data[i].name, hr);
+            continue;
+        }
+
+        hr = IDirectDrawSurface4_GetAttachedSurface(surface, &caps, &tmp);
+        ok(SUCCEEDED(hr), "Failed to get attached surface for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_GetAttachedSurface(tmp, &caps, &surface2);
+        ok(SUCCEEDED(hr), "Failed to get attached surface for format %s, hr %#x.\n", test_data[i].name, hr);
+        IDirectDrawSurface4_Release(tmp);
+
+        hr = IDirectDrawSurface4_GetDC(surface, &dc);
+        ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_ReleaseDC(surface, dc);
+        ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_GetDC(surface2, &dc);
+        ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_ReleaseDC(surface2, dc);
+        ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+
+        hr = IDirectDrawSurface4_GetDC(surface, &dc);
+        ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        dc2 = (void *)0x1234;
+        hr = IDirectDrawSurface4_GetDC(surface, &dc2);
+        ok(hr == DDERR_DCALREADYCREATED, "Got unexpected hr %#x for format %s.\n", hr, test_data[i].name);
+        ok(dc2 == (void *)0x1234, "Got unexpected dc %p for format %s.\n", dc, test_data[i].name);
+        hr = IDirectDrawSurface4_ReleaseDC(surface, dc);
+        ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_ReleaseDC(surface, dc);
+        ok(hr == DDERR_NODC, "Got unexpected hr %#x for format %s.\n", hr, test_data[i].name);
+
+        map_desc.dwSize = sizeof(map_desc);
+        hr = IDirectDrawSurface4_Lock(surface, NULL, &map_desc, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
+        ok(SUCCEEDED(hr), "Failed to map surface for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_Lock(surface, NULL, &map_desc, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
+        ok(hr == DDERR_SURFACEBUSY, "Got unexpected hr %#x for format %s.\n", hr, test_data[i].name);
+        hr = IDirectDrawSurface4_Unlock(surface, NULL);
+        ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_Unlock(surface, NULL);
+        ok(hr == DDERR_NOTLOCKED, "Got unexpected hr %#x for format %s.\n", hr, test_data[i].name);
+
+        hr = IDirectDrawSurface4_GetDC(surface, &dc);
+        ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_Lock(surface, NULL, &map_desc, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
+        ok(hr == DDERR_SURFACEBUSY, "Got unexpected hr %#x for format %s.\n", hr, test_data[i].name);
+        hr = IDirectDrawSurface4_ReleaseDC(surface, dc);
+        ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+
+        hr = IDirectDrawSurface4_Lock(surface, NULL, &map_desc, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
+        ok(SUCCEEDED(hr), "Failed to map surface for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_GetDC(surface, &dc);
+        todo_wine ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_ReleaseDC(surface, dc);
+        todo_wine ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_Unlock(surface, NULL);
+        ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", test_data[i].name, hr);
+
+        hr = IDirectDrawSurface4_GetDC(surface, &dc);
+        ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_GetDC(surface2, &dc2);
+        ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_ReleaseDC(surface2, dc2);
+        ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_ReleaseDC(surface, dc);
+        ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+
+        hr = IDirectDrawSurface4_GetDC(surface2, &dc);
+        ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_GetDC(surface, &dc2);
+        ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_ReleaseDC(surface, dc2);
+        ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_ReleaseDC(surface2, dc);
+        ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+
+        hr = IDirectDrawSurface4_Lock(surface, NULL, &map_desc, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
+        ok(SUCCEEDED(hr), "Failed to map surface for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_Lock(surface2, NULL, &map_desc, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
+        ok(SUCCEEDED(hr), "Failed to map surface for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_Unlock(surface2, NULL);
+        ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_Unlock(surface, NULL);
+        ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", test_data[i].name, hr);
+
+        hr = IDirectDrawSurface4_Lock(surface, NULL, &map_desc, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
+        ok(SUCCEEDED(hr), "Failed to map surface for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_GetDC(surface, &dc);
+        todo_wine ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_ReleaseDC(surface, dc);
+        todo_wine ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_Unlock(surface, NULL);
+        ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", test_data[i].name, hr);
+
+        hr = IDirectDrawSurface4_Lock(surface2, NULL, &map_desc, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
+        ok(SUCCEEDED(hr), "Failed to map surface for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_GetDC(surface, &dc);
+        ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_ReleaseDC(surface, dc);
+        ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_Unlock(surface2, NULL);
+        ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", test_data[i].name, hr);
+
+        hr = IDirectDrawSurface4_GetDC(surface, &dc);
+        ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_Lock(surface2, NULL, &map_desc, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
+        ok(SUCCEEDED(hr), "Failed to map surface for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_Unlock(surface2, NULL);
+        ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_ReleaseDC(surface, dc);
+        ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+
+        hr = IDirectDrawSurface4_GetDC(surface2, &dc);
+        ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_Lock(surface, NULL, &map_desc, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
+        ok(SUCCEEDED(hr), "Failed to map surface for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_Unlock(surface, NULL);
+        ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_ReleaseDC(surface2, dc);
+        ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+
+        hr = IDirectDrawSurface4_Unlock(surface, NULL);
+        ok(hr == DDERR_NOTLOCKED, "Got unexpected hr %#x for format %s.\n", hr, test_data[i].name);
+        hr = IDirectDrawSurface4_GetDC(surface2, &dc);
+        ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_Unlock(surface, NULL);
+        ok(hr == DDERR_NOTLOCKED, "Got unexpected hr %#x for format %s.\n", hr, test_data[i].name);
+        hr = IDirectDrawSurface4_ReleaseDC(surface2, dc);
+        ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_Unlock(surface, NULL);
+        ok(hr == DDERR_NOTLOCKED, "Got unexpected hr %#x for format %s.\n", hr, test_data[i].name);
+
+        hr = IDirectDrawSurface4_Unlock(surface2, NULL);
+        ok(hr == DDERR_NOTLOCKED, "Got unexpected hr %#x for format %s.\n", hr, test_data[i].name);
+        hr = IDirectDrawSurface4_GetDC(surface, &dc);
+        ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_Unlock(surface2, NULL);
+        ok(hr == DDERR_NOTLOCKED, "Got unexpected hr %#x for format %s.\n", hr, test_data[i].name);
+        hr = IDirectDrawSurface4_ReleaseDC(surface, dc);
+        ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirectDrawSurface4_Unlock(surface2, NULL);
+        ok(hr == DDERR_NOTLOCKED, "Got unexpected hr %#x for format %s.\n", hr, test_data[i].name);
+
+        IDirectDrawSurface4_Release(surface2);
         IDirectDrawSurface4_Release(surface);
     }
 
