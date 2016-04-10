@@ -270,6 +270,7 @@
 @ stdcall StgIsStorageFile(wstr)
 @ stdcall StgIsStorageILockBytes(ptr)
 @ stub StgOpenAsyncDocfileOnIFillLockBytes
+@ stdcall StgOpenPropStg(ptr ptr long long ptr)
 @ stdcall StgOpenStorage(wstr ptr long ptr long ptr)
 @ stdcall StgOpenStorageEx(wstr long long long ptr ptr ptr ptr)
 @ stdcall StgOpenStorageOnILockBytes(ptr ptr long long long ptr)
