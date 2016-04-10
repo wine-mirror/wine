@@ -663,7 +663,7 @@ static void swapchain_gdi_frontbuffer_updated(struct wined3d_swapchain *swapchai
     if (swapchain->palette)
         wined3d_palette_apply_to_dc(swapchain->palette, front->hDC);
 
-    if (front->resource.map_count)
+    if (front->container->resource.map_count)
         ERR("Trying to blit a mapped surface.\n");
 
     TRACE("Copying surface %p to screen.\n", front);

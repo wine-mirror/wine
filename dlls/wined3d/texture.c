@@ -853,7 +853,7 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
 
     sub_resource = &texture->sub_resources[0];
     surface = sub_resource->u.surface;
-    if (sub_resource->resource->map_count || (surface->flags & SFLAG_DCINUSE))
+    if (sub_resource->map_count || (surface->flags & SFLAG_DCINUSE))
     {
         WARN("Surface is mapped or the DC is in use.\n");
         return WINED3DERR_INVALIDCALL;
@@ -1291,7 +1291,7 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
             return WINED3DERR_INVALIDCALL;
     }
 
-    if (sub_resource->resource->map_count)
+    if (sub_resource->map_count)
     {
         WARN("Sub-resource is already mapped.\n");
         return WINED3DERR_INVALIDCALL;
@@ -1409,7 +1409,7 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
     }
 
     ++resource->map_count;
-    ++sub_resource->resource->map_count;
+    ++sub_resource->map_count;
 
     TRACE("Returning memory %p, row pitch %u, slice pitch %u.\n",
             map_desc->data, map_desc->row_pitch, map_desc->slice_pitch);
@@ -1430,7 +1430,7 @@ static HRESULT texture_resource_sub_resource_unmap(struct wined3d_resource *reso
     if (!(sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx)))
         return E_INVALIDARG;
 
-    if (!sub_resource->resource->map_count)
+    if (!sub_resource->map_count)
     {
         WARN("Trying to unmap unmapped sub-resource.\n");
         return WINEDDERR_NOTLOCKED;
@@ -1473,7 +1473,7 @@ static HRESULT texture_resource_sub_resource_unmap(struct wined3d_resource *reso
         FIXME("Depth / stencil buffer locking is not implemented.\n");
     }
 
-    --sub_resource->resource->map_count;
+    --sub_resource->map_count;
     --resource->map_count;
 
     return WINED3D_OK;
@@ -2237,7 +2237,7 @@ HRESULT CDECL wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned i
         return WINEDDERR_DCALREADYCREATED;
 
     /* Can't GetDC if the surface is locked. */
-    if (surface->resource.map_count)
+    if (sub_resource->map_count)
         return WINED3DERR_INVALIDCALL;
 
     if (device->d3d_initialized)
@@ -2266,7 +2266,7 @@ HRESULT CDECL wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned i
 
     surface->flags |= SFLAG_DCINUSE;
     ++texture->resource.map_count;
-    surface->resource.map_count++;
+    ++sub_resource->map_count;
 
     *dc = surface->hDC;
     TRACE("Returning dc %p.\n", *dc);
@@ -2304,7 +2304,7 @@ HRESULT CDECL wined3d_texture_release_dc(struct wined3d_texture *texture, unsign
         return WINEDDERR_NODC;
     }
 
-    surface->resource.map_count--;
+    --sub_resource->map_count;
     --texture->resource.map_count;
     surface->flags &= ~SFLAG_DCINUSE;
 

@@ -477,7 +477,7 @@ static void surface_evict_sysmem(struct wined3d_surface *surface)
     unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     struct wined3d_texture *texture = surface->container;
 
-    if (surface->resource.map_count || texture->download_count > MAXLOCKCOUNT
+    if (texture->sub_resources[sub_resource_idx].map_count || texture->download_count > MAXLOCKCOUNT
             || texture->flags & (WINED3D_TEXTURE_CONVERTED | WINED3D_TEXTURE_PIN_SYSMEM))
         return;
 
@@ -1124,6 +1124,7 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
         const struct wined3d_format *format, const RECT *src_rect, UINT src_pitch, const POINT *dst_point,
         BOOL srgb, const struct wined3d_const_bo_address *data)
 {
+    unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     struct wined3d_texture *texture = surface->container;
     UINT update_w = src_rect->right - src_rect->left;
     UINT update_h = src_rect->bottom - src_rect->top;
@@ -1132,7 +1133,7 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
             surface, gl_info, debug_d3dformat(format->id), wine_dbgstr_rect(src_rect), src_pitch,
             wine_dbgstr_point(dst_point), srgb, data->buffer_object, data->addr);
 
-    if (surface->resource.map_count)
+    if (texture->sub_resources[sub_resource_idx].map_count)
     {
         WARN("Uploading a surface that is currently mapped, setting WINED3D_TEXTURE_PIN_SYSMEM.\n");
         texture->flags |= WINED3D_TEXTURE_PIN_SYSMEM;
@@ -4178,6 +4179,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     struct wined3d_device *device = dst_texture->resource.device;
     struct wined3d_swapchain *src_swapchain, *dst_swapchain;
     struct wined3d_texture *src_texture = NULL;
+    unsigned int src_sub_resource_idx = 0;
     DWORD src_ds_flags, dst_ds_flags;
     BOOL scale, convert;
 
@@ -4207,7 +4209,14 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
                 fx->src_color_key.color_space_high_value);
     }
 
-    if (dst_surface->resource.map_count || (src_surface && src_surface->resource.map_count))
+    if (src_surface)
+    {
+        src_texture = src_surface->container;
+        src_sub_resource_idx = surface_get_sub_resource_idx(src_surface);
+    }
+
+    if (dst_texture->sub_resources[dst_sub_resource_idx].map_count
+            || (src_texture && src_texture->sub_resources[src_sub_resource_idx].map_count))
     {
         WARN("Surface is busy, returning WINEDDERR_SURFACEBUSY.\n");
         return WINEDDERR_SURFACEBUSY;
@@ -4223,7 +4232,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
         return WINEDDERR_INVALIDRECT;
     }
 
-    if (src_surface)
+    if (src_texture)
     {
         if (src_rect->left >= src_rect->right || src_rect->top >= src_rect->bottom
                 || src_rect->left > src_surface->resource.width || src_rect->left < 0
@@ -4234,7 +4243,6 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
             WARN("The application gave us a bad source rectangle.\n");
             return WINEDDERR_INVALIDRECT;
         }
-        src_texture = src_surface->container;
     }
 
     if (!fx || !(fx->fx))
@@ -4284,7 +4292,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
         goto fallback;
     }
 
-    if (src_surface)
+    if (src_texture)
         src_swapchain = src_texture->swapchain;
     else
         src_swapchain = NULL;
@@ -4302,14 +4310,14 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
         goto fallback;
     }
 
-    scale = src_surface
+    scale = src_texture
             && (src_rect->right - src_rect->left != dst_rect->right - dst_rect->left
             || src_rect->bottom - src_rect->top != dst_rect->bottom - dst_rect->top);
-    convert = src_surface && src_texture->resource.format->id != dst_texture->resource.format->id;
+    convert = src_texture && src_texture->resource.format->id != dst_texture->resource.format->id;
 
     dst_ds_flags = dst_texture->resource.format_flags
             & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
-    if (src_surface)
+    if (src_texture)
         src_ds_flags = src_texture->resource.format_flags
                 & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
     else
@@ -4348,12 +4356,12 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
         const struct blit_shader *blitter;
 
         dst_sub_resource = surface_get_sub_resource(dst_surface);
-        src_sub_resource = src_surface ? surface_get_sub_resource(src_surface) : NULL;
+        src_sub_resource = src_texture ? &src_texture->sub_resources[src_sub_resource_idx] : NULL;
 
         /* In principle this would apply to depth blits as well, but we don't
          * implement those in the CPU blitter at the moment. */
         if ((dst_sub_resource->locations & dst_surface->resource.map_binding)
-                && (!src_surface || (src_sub_resource->locations & src_surface->resource.map_binding)))
+                && (!src_texture || (src_sub_resource->locations & src_surface->resource.map_binding)))
         {
             if (scale)
                 TRACE("Not doing sysmem blit because of scaling.\n");
@@ -4483,8 +4491,8 @@ fallback:
         return WINED3D_OK;
 
 cpu:
-    return surface_cpu_blt(dst_texture, surface_get_sub_resource_idx(dst_surface), &dst_box,
-            src_texture, src_texture ? surface_get_sub_resource_idx(src_surface) : 0, &src_box, flags, fx, filter);
+    return surface_cpu_blt(dst_texture, dst_sub_resource_idx, &dst_box,
+            src_texture, src_sub_resource_idx, &src_box, flags, fx, filter);
 }
 
 HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_texture *container,

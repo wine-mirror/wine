@@ -2484,6 +2484,7 @@ struct wined3d_texture
             struct wined3d_volume *volume;
         } u;
 
+        unsigned int map_count;
         DWORD locations;
         GLuint buffer_object;
     } sub_resources[1];
