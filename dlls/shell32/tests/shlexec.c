@@ -650,7 +650,7 @@ static INT_PTR shell_execute_ex_(const char* file, int line,
      * functions know about it
      */
     WritePrivateProfileStringA(NULL, NULL, NULL, child_file);
-    if (GetFileAttributesA(child_file) != INVALID_FILE_ATTRIBUTES)
+    if (rc > 32 && GetFileAttributesA(child_file) != INVALID_FILE_ATTRIBUTES)
     {
         int c;
         dump_child_(file, line);
