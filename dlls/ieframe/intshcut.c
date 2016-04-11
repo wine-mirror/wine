@@ -483,6 +483,15 @@ static HRESULT WINAPI PersistFile_Load(IPersistFile *pFile, LPCOLESTR pszFileNam
         return hr;
     }
 
+    hr = IPropertySetStorage_Open(This->property_set_storage, &FMTID_Intshcut,
+                STGM_READWRITE | STGM_SHARE_EXCLUSIVE, &pPropStg);
+    if (FAILED(hr))
+    {
+        CoTaskMemFree(filename);
+        CoTaskMemFree(url);
+        return hr;
+    }
+
     CoTaskMemFree(This->currentFile);
     This->currentFile = filename;
     CoTaskMemFree(This->url);
@@ -492,8 +501,6 @@ static HRESULT WINAPI PersistFile_Load(IPersistFile *pFile, LPCOLESTR pszFileNam
     /* Now we're going to read in the iconfile and iconindex.
        If we don't find them, that's not a failure case -- it's possible
        that they just aren't in there. */
-    hr = IPropertySetStorage_Open(This->property_set_storage, &FMTID_Intshcut,
-                STGM_READWRITE | STGM_SHARE_EXCLUSIVE, &pPropStg);
 
     if (get_profile_string(str_header, str_iconfile, pszFileName, &iconfile) == S_OK)
     {
