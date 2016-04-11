@@ -292,6 +292,11 @@ static void release_client_site(WebBrowser *This)
         This->client = NULL;
     }
 
+    if(This->client_closed) {
+        IOleClientSite_Release(This->client_closed);
+        This->client_closed = NULL;
+    }
+
     if(This->shell_embedding_hwnd) {
         DestroyWindow(This->shell_embedding_hwnd);
         This->shell_embedding_hwnd = NULL;
@@ -460,6 +465,11 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
 
     TRACE("(%p)->(%p)\n", This, pClientSite);
 
+    if(This->client_closed) {
+        IOleClientSite_Release(This->client_closed);
+        This->client_closed = NULL;
+    }
+
     if(This->client == pClientSite)
         return S_OK;
 
@@ -549,6 +559,8 @@ static HRESULT WINAPI OleObject_SetHostNames(IOleObject *iface, LPCOLESTR szCont
 static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
 {
     WebBrowser *This = impl_from_IOleObject(iface);
+    IOleClientSite *client;
+    HRESULT hres;
 
     TRACE("(%p)->(%d)\n", This, dwSaveOption);
 
@@ -569,7 +581,13 @@ static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
     if(This->inplace)
         IOleInPlaceSiteEx_OnInPlaceDeactivate(This->inplace);
 
-    return IOleObject_SetClientSite(iface, NULL);
+    /* store old client site - we need to restore it in DoVerb */
+    client = This->client;
+    if(This->client)
+        IOleClientSite_AddRef(This->client);
+    hres = IOleObject_SetClientSite(iface, NULL);
+    This->client_closed = client;
+    return hres;
 }
 
 static HRESULT WINAPI OleObject_SetMoniker(IOleObject *iface, DWORD dwWhichMoniker, IMoniker* pmk)
@@ -610,6 +628,14 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
 
     TRACE("(%p)->(%d %p %p %d %p %s)\n", This, iVerb, lpmsg, pActiveSite, lindex, hwndParent,
           wine_dbgstr_rect(lprcPosRect));
+
+    /* restore closed client site if we have one */
+    if(!This->client && This->client_closed) {
+        IOleClientSite *client = This->client_closed;
+        This->client_closed = NULL;
+        IOleObject_SetClientSite(iface, client);
+        IOleClientSite_Release(client);
+    }
 
     switch (iVerb)
     {
