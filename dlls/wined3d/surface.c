@@ -4168,6 +4168,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     struct wined3d_device *device = dst_texture->resource.device;
     struct wined3d_swapchain *src_swapchain, *dst_swapchain;
     struct wined3d_texture *src_texture = NULL;
+    unsigned int dst_w, dst_h, src_w, src_h;
     unsigned int src_sub_resource_idx = 0;
     DWORD src_ds_flags, dst_ds_flags;
     BOOL scale, convert;
@@ -4211,11 +4212,13 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
         return WINEDDERR_SURFACEBUSY;
     }
 
+    dst_w = wined3d_texture_get_level_width(dst_texture, dst_surface->texture_level);
+    dst_h = wined3d_texture_get_level_height(dst_texture, dst_surface->texture_level);
     if (dst_rect->left >= dst_rect->right || dst_rect->top >= dst_rect->bottom
-            || dst_rect->left > dst_surface->resource.width || dst_rect->left < 0
-            || dst_rect->top > dst_surface->resource.height || dst_rect->top < 0
-            || dst_rect->right > dst_surface->resource.width || dst_rect->right < 0
-            || dst_rect->bottom > dst_surface->resource.height || dst_rect->bottom < 0)
+            || dst_rect->left > dst_w || dst_rect->left < 0
+            || dst_rect->top > dst_h || dst_rect->top < 0
+            || dst_rect->right > dst_w || dst_rect->right < 0
+            || dst_rect->bottom > dst_h || dst_rect->bottom < 0)
     {
         WARN("The application gave us a bad destination rectangle.\n");
         return WINEDDERR_INVALIDRECT;
@@ -4223,11 +4226,13 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
 
     if (src_texture)
     {
+        src_w = wined3d_texture_get_level_width(src_texture, src_surface->texture_level);
+        src_h = wined3d_texture_get_level_height(src_texture, src_surface->texture_level);
         if (src_rect->left >= src_rect->right || src_rect->top >= src_rect->bottom
-                || src_rect->left > src_surface->resource.width || src_rect->left < 0
-                || src_rect->top > src_surface->resource.height || src_rect->top < 0
-                || src_rect->right > src_surface->resource.width || src_rect->right < 0
-                || src_rect->bottom > src_surface->resource.height || src_rect->bottom < 0)
+                || src_rect->left > src_w || src_rect->left < 0
+                || src_rect->top > src_h || src_rect->top < 0
+                || src_rect->right > src_w || src_rect->right < 0
+                || src_rect->bottom > src_h || src_rect->bottom < 0)
         {
             WARN("The application gave us a bad source rectangle.\n");
             return WINEDDERR_INVALIDRECT;
