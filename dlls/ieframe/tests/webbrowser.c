@@ -51,7 +51,7 @@ DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
 
 #define SET_EXPECT(func) \
-    expect_ ## func = TRUE
+    do { called_ ## func = FALSE; expect_ ## func = TRUE; } while(0)
 
 #define CHECK_EXPECT2(func) \
     do { \
@@ -68,6 +68,12 @@ DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
 #define CHECK_CALLED(func) \
     do { \
         ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+#define CHECK_NOT_CALLED(func) \
+    do { \
+        ok(!called_ ## func, "unexpected " #func "\n"); \
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
@@ -3633,19 +3639,25 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
     hres = IOleObject_DoVerb(oo, OLEIVERB_HIDE, NULL, (IOleClientSite*)0xdeadbeef,
             0, (HWND)0xdeadbeef, NULL);
     ok(hres == S_OK, "DoVerb failed: %08x\n", hres);
-    todo_wine CHECK_CALLED(GetContainer);
-    todo_wine CHECK_CALLED(Site_GetWindow);
-    todo_wine CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
-    todo_wine CHECK_CALLED(Invoke_AMBIENT_SILENT);
+    CHECK_CALLED(GetContainer);
+    CHECK_CALLED(Site_GetWindow);
+    CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    CHECK_CALLED(Invoke_AMBIENT_SILENT);
 
     hres = IOleObject_GetClientSite(oo, &ocs);
     ok(hres == S_OK, "hres = %x\n", hres);
-    todo_wine ok(ocs == &ClientSite, "ocs != &ClientSite\n");
+    ok(ocs == &ClientSite, "ocs != &ClientSite\n");
     if(ocs)
         IOleClientSite_Release(ocs);
 
+    SET_EXPECT(OnFocus_FALSE);
+    SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
+    SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
     hres = IOleObject_Close(oo, OLECLOSE_NOSAVE);
     ok(hres == S_OK, "OleObject_Close failed: %x\n", hres);
+    todo_wine CHECK_NOT_CALLED(OnFocus_FALSE);
+    todo_wine CHECK_NOT_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
+    todo_wine CHECK_NOT_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
 
     test_close = FALSE;
     IOleObject_Release(oo);

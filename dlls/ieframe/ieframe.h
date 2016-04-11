@@ -190,6 +190,7 @@ struct WebBrowser {
     INT version;
 
     IOleClientSite *client;
+    IOleClientSite *client_closed;
     IOleContainer *container;
     IOleInPlaceSiteEx *inplace;
 
