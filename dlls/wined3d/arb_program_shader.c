@@ -81,7 +81,7 @@ static const char *arb_get_helper_value(enum wined3d_shader_type shader, enum ar
 {
     if (shader != WINED3D_SHADER_TYPE_VERTEX && shader != WINED3D_SHADER_TYPE_PIXEL)
     {
-        ERR("Unsupported shader type '%s'.\n.", debug_shader_type(shader));
+        ERR("Unsupported shader type '%s'.\n", debug_shader_type(shader));
         return "bad";
     }
 
