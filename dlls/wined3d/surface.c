@@ -3193,7 +3193,10 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
 static void surface_load_renderbuffer(struct wined3d_surface *surface, struct wined3d_context *context,
         DWORD dst_location)
 {
-    const RECT rect = {0, 0, surface->resource.width, surface->resource.height};
+    struct wined3d_texture *texture = surface->container;
+    const RECT rect = {0, 0,
+            wined3d_texture_get_level_width(texture, surface->texture_level),
+            wined3d_texture_get_level_height(texture, surface->texture_level)};
     DWORD locations = surface_get_sub_resource(surface)->locations;
     DWORD src_location;
 
@@ -3206,7 +3209,7 @@ static void surface_load_renderbuffer(struct wined3d_surface *surface, struct wi
     else /* surface_blt_fbo will load the source location if necessary. */
         src_location = WINED3D_LOCATION_TEXTURE_RGB;
 
-    surface_blt_fbo(surface->container->resource.device, context, WINED3D_TEXF_POINT,
+    surface_blt_fbo(texture->resource.device, context, WINED3D_TEXF_POINT,
             surface, src_location, &rect, surface, dst_location, &rect);
 }
 
