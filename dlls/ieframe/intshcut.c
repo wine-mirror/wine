@@ -514,9 +514,7 @@ static HRESULT WINAPI PersistFile_Load(IPersistFile *pFile, LPCOLESTR pszFileNam
         int iconindex;
         PROPSPEC ps;
         PROPVARIANT pv;
-        char *iconindexastring = co_strdupWtoA(iconindexstring);
-        sscanf(iconindexastring, "%d", &iconindex);
-        CoTaskMemFree(iconindexastring);
+        iconindex = strtolW(iconindexstring, NULL, 10);
         ps.ulKind = PRSPEC_PROPID;
         ps.u.propid = PID_IS_ICONINDEX;
         pv.vt = VT_I4;
