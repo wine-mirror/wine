@@ -1729,7 +1729,9 @@ static void texture3d_prepare_texture(struct wined3d_texture *texture, struct wi
 
         GL_EXTCALL(glTexImage3D(GL_TEXTURE_3D, volume->texture_level,
                 srgb ? format->glGammaInternal : format->glInternal,
-                volume->resource.width, volume->resource.height, volume->resource.depth,
+                wined3d_texture_get_level_width(texture, volume->texture_level),
+                wined3d_texture_get_level_height(texture, volume->texture_level),
+                wined3d_texture_get_level_depth(texture, volume->texture_level),
                 0, format->glFormat, format->glType, NULL));
         checkGLcall("glTexImage3D");
     }
