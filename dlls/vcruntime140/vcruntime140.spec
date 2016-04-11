@@ -36,8 +36,8 @@
 @ stub __intrinsic_setjmpex
 @ stub __processing_throw
 @ stub __report_gsfailure
-@ stub __std_exception_copy
-@ stub __std_exception_destroy
+@ cdecl __std_exception_copy(ptr ptr) ucrtbase.__std_exception_copy
+@ cdecl __std_exception_destroy(ptr) ucrtbase.__std_exception_destroy
 @ stub __std_terminate
 @ cdecl __std_type_info_compare(ptr ptr) ucrtbase.__std_type_info_compare
 @ stub __std_type_info_destroy_list

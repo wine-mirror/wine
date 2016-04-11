@@ -462,3 +462,38 @@ void CDECL __CxxUnregisterExceptionObject(cxx_frame_info *frame_info, BOOL in_us
         __DestructExceptionObject(data->exc_record);
     data->exc_record = frame_info->rec;
 }
+
+struct __std_exception_data {
+    char       *what;
+    MSVCRT_bool dofree;
+};
+
+/*********************************************************************
+ *  __std_exception_copy (MSVCRT.@)
+ */
+void CDECL MSVCRT___std_exception_copy(const struct __std_exception_data *src,
+                                       struct __std_exception_data *dst)
+{
+    TRACE("(%p %p)\n", src, dst);
+
+    if(src->dofree && src->what) {
+        dst->what   = MSVCRT__strdup(src->what);
+        dst->dofree = 1;
+    } else {
+        dst->what   = src->what;
+        dst->dofree = 0;
+    }
+}
+
+/*********************************************************************
+ *  __std_exception_destroy (MSVCRT.@)
+ */
+void CDECL MSVCRT___std_exception_destroy(struct __std_exception_data *data)
+{
+    TRACE("(%p)\n", data);
+
+    if(data->dofree)
+        MSVCRT_free(data->what);
+    data->what   = NULL;
+    data->dofree = 0;
+}
