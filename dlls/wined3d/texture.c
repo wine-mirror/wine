@@ -2038,13 +2038,17 @@ HRESULT CDECL wined3d_texture_update_overlay(struct wined3d_texture *texture, un
     if (src_rect)
         surface->overlay_srcrect = *src_rect;
     else
-        SetRect(&surface->overlay_srcrect, 0, 0, surface->resource.width, surface->resource.height);
+        SetRect(&surface->overlay_srcrect, 0, 0,
+                wined3d_texture_get_level_width(texture, surface->texture_level),
+                wined3d_texture_get_level_height(texture, surface->texture_level));
 
     dst_surface = dst_sub_resource->u.surface;
     if (dst_rect)
         surface->overlay_destrect = *dst_rect;
     else
-        SetRect(&surface->overlay_destrect, 0, 0, dst_surface->resource.width, dst_surface->resource.height);
+        SetRect(&surface->overlay_destrect, 0, 0,
+                wined3d_texture_get_level_width(dst_texture, dst_surface->texture_level),
+                wined3d_texture_get_level_height(dst_texture, dst_surface->texture_level));
 
     if (surface->overlay_dest && (surface->overlay_dest != dst_surface || flags & WINEDDOVER_HIDE))
     {
