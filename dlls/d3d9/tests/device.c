@@ -10904,6 +10904,151 @@ static void test_check_device_format(void)
     IDirect3D9_Release(d3d);
 }
 
+static void test_miptree_layout(void)
+{
+    unsigned int pool_idx, format_idx, base_dimension, level_count, offset, i, j;
+    IDirect3DCubeTexture9 *texture_cube;
+    IDirect3DTexture9 *texture_2d;
+    IDirect3DDevice9 *device;
+    D3DLOCKED_RECT map_desc;
+    BYTE *base = NULL;
+    IDirect3D9 *d3d;
+    D3DCAPS9 caps;
+    UINT refcount;
+    HWND window;
+    HRESULT hr;
+
+    static const struct
+    {
+        D3DFORMAT format;
+        const char *name;
+    }
+    formats[] =
+    {
+        {D3DFMT_A8R8G8B8, "D3DFMT_A8R8G8B8"},
+        {D3DFMT_A8,       "D3DFMT_A8"},
+        {D3DFMT_L8,       "D3DFMT_L8"},
+    };
+    static const struct
+    {
+        D3DPOOL pool;
+        const char *name;
+    }
+    pools[] =
+    {
+        {D3DPOOL_MANAGED,   "D3DPOOL_MANAGED"},
+        {D3DPOOL_SYSTEMMEM, "D3DPOOL_SYSTEMMEM"},
+        {D3DPOOL_SCRATCH,   "D3DPOOL_SCRATCH"},
+    };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, NULL)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+
+    base_dimension = 257;
+    if (caps.TextureCaps & (D3DPTEXTURECAPS_POW2 | D3DPTEXTURECAPS_CUBEMAP_POW2))
+    {
+        skip("Using power of two base dimension.\n");
+        base_dimension = 256;
+    }
+
+    for (format_idx = 0; format_idx < sizeof(formats) / sizeof(*formats); ++format_idx)
+    {
+        if (FAILED(hr = IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+                D3DFMT_X8R8G8B8, 0, D3DRTYPE_TEXTURE, formats[format_idx].format)))
+        {
+            skip("%s textures not supported, skipping tests.\n", formats[format_idx].name);
+            continue;
+        }
+
+        for (pool_idx = 0; pool_idx < sizeof(pools) / sizeof(*pools); ++pool_idx)
+        {
+            hr = IDirect3DDevice9_CreateTexture(device, base_dimension, base_dimension, 0, 0,
+                    formats[format_idx].format, pools[pool_idx].pool, &texture_2d, NULL);
+            ok(SUCCEEDED(hr), "Failed to create a %s %s texture, hr %#x.\n",
+                    pools[pool_idx].name, formats[format_idx].name, hr);
+
+            level_count = IDirect3DTexture9_GetLevelCount(texture_2d);
+            for (i = 0, offset = 0; i < level_count; ++i)
+            {
+                hr = IDirect3DTexture9_LockRect(texture_2d, i, &map_desc, NULL, 0);
+                ok(SUCCEEDED(hr), "%s, %s: Failed to lock level %u, hr %#x.\n",
+                        pools[pool_idx].name, formats[format_idx].name, i, hr);
+
+                if (!i)
+                    base = map_desc.pBits;
+                else
+                    todo_wine ok(map_desc.pBits == base + offset,
+                            "%s, %s, level %u: Got unexpected pBits %p, expected %p.\n",
+                            pools[pool_idx].name, formats[format_idx].name, i, map_desc.pBits, base + offset);
+                offset += (base_dimension >> i) * map_desc.Pitch;
+
+                hr = IDirect3DTexture9_UnlockRect(texture_2d, i);
+                ok(SUCCEEDED(hr), "%s, %s Failed to unlock level %u, hr %#x.\n",
+                        pools[pool_idx].name, formats[format_idx].name, i, hr);
+            }
+
+            IDirect3DTexture9_Release(texture_2d);
+        }
+
+        if (FAILED(hr = IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+                D3DFMT_X8R8G8B8, 0, D3DRTYPE_CUBETEXTURE, formats[format_idx].format)))
+        {
+            skip("%s cube textures not supported, skipping tests.\n", formats[format_idx].name);
+            continue;
+        }
+
+        for (pool_idx = 0; pool_idx < sizeof(pools) / sizeof(*pools); ++pool_idx)
+        {
+            hr = IDirect3DDevice9_CreateCubeTexture(device, base_dimension, 0, 0,
+                    formats[format_idx].format, pools[pool_idx].pool, &texture_cube, NULL);
+            ok(SUCCEEDED(hr), "Failed to create a %s %s cube texture, hr %#x.\n",
+                    pools[pool_idx].name, formats[format_idx].name, hr);
+
+            level_count = IDirect3DCubeTexture9_GetLevelCount(texture_cube);
+            for (i = 0, offset = 0; i < 6; ++i)
+            {
+                for (j = 0; j < level_count; ++j)
+                {
+                    hr = IDirect3DCubeTexture9_LockRect(texture_cube, i, j, &map_desc, NULL, 0);
+                    ok(SUCCEEDED(hr), "%s, %s: Failed to lock face %u, level %u, hr %#x.\n",
+                            pools[pool_idx].name, formats[format_idx].name, i, j, hr);
+
+                    if (!i && !j)
+                        base = map_desc.pBits;
+                    else
+                        todo_wine ok(map_desc.pBits == base + offset,
+                                "%s, %s, face %u, level %u: Got unexpected pBits %p, expected %p.\n",
+                                pools[pool_idx].name, formats[format_idx].name, i, j, map_desc.pBits, base + offset);
+                    offset += (base_dimension >> j) * map_desc.Pitch;
+
+                    hr = IDirect3DCubeTexture9_UnlockRect(texture_cube, i, j);
+                    ok(SUCCEEDED(hr), "%s, %s: Failed to unlock face %u, level %u, hr %#x.\n",
+                            pools[pool_idx].name, formats[format_idx].name, i, j, hr);
+                }
+                offset = (offset + 15) & ~15;
+            }
+
+            IDirect3DCubeTexture9_Release(texture_cube);
+        }
+    }
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     WNDCLASSA wc = {0};
@@ -11018,6 +11163,7 @@ START_TEST(device)
     test_resource_priority();
     test_swapchain_parameters();
     test_check_device_format();
+    test_miptree_layout();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }
