@@ -1361,8 +1361,12 @@ static void D3DXVector3Test(void)
 
 /*_______________D3DXVec3Transform_______________________*/
     expectedtrans.x = 70.0f; expectedtrans.y = 88.0f; expectedtrans.z = 106.0f; expectedtrans.w = 124.0f;
-    D3DXVec3Transform(&gottrans,&u,&mat);
-    expect_vec4(expectedtrans,gottrans);
+    D3DXVec3Transform(&gottrans, &u, &mat);
+    expect_vec4(expectedtrans, gottrans);
+
+    gottrans.x = u.x; gottrans.y = u.y; gottrans.z = u.z;
+    D3DXVec3Transform(&gottrans, (D3DXVECTOR3 *)&gottrans, &mat);
+    expect_vec4(expectedtrans, gottrans);
 
 /*_______________D3DXVec3TransformCoord_______________________*/
     expectedvec.x = 70.0f/124.0f; expectedvec.y = 88.0f/124.0f; expectedvec.z = 106.0f/124.0f;
