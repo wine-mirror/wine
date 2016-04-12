@@ -492,7 +492,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
 #define REGMODRM_RM( regmodrm, rex )    (((regmodrm) & 7) | (((rex) & REX_B) ? 8 : 0))
 
 #define SIB_SS( sib, rex )      ((sib) >> 6)
-#define SIB_INDEX( sib, rex )   (((sib) >> 3) & 7) | (((rex) & REX_R) ? 8 : 0)
+#define SIB_INDEX( sib, rex )   (((sib) >> 3) & 7) | (((rex) & REX_X) ? 8 : 0)
 #define SIB_BASE( sib, rex )    (((sib) & 7) | (((rex) & REX_B) ? 8 : 0))
 
 /* keep in sync with dlls/ntdll/thread.c:thread_init */
