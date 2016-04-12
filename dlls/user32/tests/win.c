@@ -4258,6 +4258,74 @@ static INT_PTR WINAPI empty_dlg_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
     return 0;
 }
 
+static INT_PTR WINAPI empty_dlg_proc3(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (msg == WM_INITDIALOG)
+        EndDialog(hwnd, 0);
+
+    return 0;
+}
+
+struct dialog_param
+{
+    HWND parent, grand_parent;
+    DLGTEMPLATE *dlg_data;
+};
+
+static INT_PTR WINAPI empty_dlg_proc2(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (msg == WM_INITDIALOG)
+    {
+        DWORD style = GetWindowLongA(hwnd, GWL_STYLE);
+        struct dialog_param *param = (struct dialog_param *)lparam;
+        BOOL parent_is_child;
+        HWND disabled_hwnd;
+
+        parent_is_child = (GetWindowLongA(param->parent, GWL_STYLE) & (WS_POPUP | WS_CHILD)) == WS_CHILD;
+
+        ok(IsWindowEnabled(hwnd), "wrong state for %p\n", hwnd);
+        if (parent_is_child)
+        {
+            ok(IsWindowEnabled(param->parent), "wrong state for %08x\n", style);
+            disabled_hwnd = param->grand_parent;
+        }
+        else
+        {
+            ok(!IsWindowEnabled(param->parent), "wrong state for %08x\n", style);
+            disabled_hwnd = param->parent;
+        }
+
+        if (param->grand_parent)
+        {
+            if (parent_is_child)
+                ok(!IsWindowEnabled(param->grand_parent), "wrong state for %08x\n", style);
+            else
+                ok(IsWindowEnabled(param->grand_parent), "wrong state for %08x\n", style);
+        }
+
+        DialogBoxIndirectParamA(GetModuleHandleA(NULL), param->dlg_data, disabled_hwnd, empty_dlg_proc3, 0);
+        ok(IsWindowEnabled(disabled_hwnd), "wrong state for %08x\n", style);
+
+        ok(IsWindowEnabled(hwnd), "wrong state for %p\n", hwnd);
+        ok(IsWindowEnabled(param->parent), "wrong state for %p\n", param->parent);
+        if (param->grand_parent)
+            ok(IsWindowEnabled(param->grand_parent), "wrong state for %p (%08x)\n", param->grand_parent, style);
+
+        DialogBoxIndirectParamA(GetModuleHandleA(NULL), param->dlg_data, hwnd, empty_dlg_proc3, 0);
+        ok(IsWindowEnabled(hwnd), "wrong state for %p\n", hwnd);
+        ok(IsWindowEnabled(param->parent), "wrong state for %p\n", param->parent);
+        if (param->grand_parent)
+            ok(IsWindowEnabled(param->grand_parent), "wrong state for %p (%08x)\n", param->grand_parent, style);
+
+        param->dlg_data->style |= WS_CHILD;
+        DialogBoxIndirectParamA(GetModuleHandleA(NULL), param->dlg_data, hwnd, empty_dlg_proc3, 0);
+        ok(IsWindowEnabled(hwnd), "wrong state for %p (%08x)\n", hwnd, style);
+
+        EndDialog(hwnd, 0);
+    }
+    return 0;
+}
+
 static void check_dialog_style(DWORD style_in, DWORD ex_style_in, DWORD style_out, DWORD ex_style_out)
 {
     struct
@@ -4269,11 +4337,19 @@ static void check_dialog_style(DWORD style_in, DWORD ex_style_in, DWORD style_ou
         WCHAR caption[1];
     } dlg_data;
     DWORD style, ex_style;
-    HWND hwnd, parent = 0;
+    HWND hwnd, grand_parent = 0, parent = 0;
+    struct dialog_param param;
 
     if (style_in & WS_CHILD)
-        parent = CreateWindowExA(0, "static", NULL, WS_OVERLAPPEDWINDOW,
+    {
+        grand_parent = CreateWindowExA(0, "static", NULL, WS_OVERLAPPEDWINDOW,
                                 0, 0, 0, 0, NULL, NULL, NULL, NULL);
+        ok(grand_parent != 0, "grand_parent creation failed\n");
+    }
+
+    parent = CreateWindowExA(0, "static", NULL, style_in,
+                             0, 0, 0, 0, grand_parent, NULL, NULL, NULL);
+    ok(parent != 0, "parent creation failed, style %#x\n", style_in);
 
     dlg_data.dt.style = style_in;
     dlg_data.dt.dwExtendedStyle = ex_style_in;
@@ -4296,6 +4372,8 @@ static void check_dialog_style(DWORD style_in, DWORD ex_style_in, DWORD style_ou
     ex_style = GetWindowLongA(hwnd, GWL_EXSTYLE);
     ok(style == (style_out | DS_3DLOOK), "got %#x\n", style);
     ok(ex_style == ex_style_out, "expected ex_style %#x, got %#x\n", ex_style_out, ex_style);
+
+    ok(IsWindowEnabled(parent), "wrong parent state (dialog style %#x)\n", style_in);
 
     /* try setting the styles explicitly */
     SetWindowLongA(hwnd, GWL_EXSTYLE, ex_style_in);
@@ -4330,7 +4408,18 @@ static void check_dialog_style(DWORD style_in, DWORD ex_style_in, DWORD style_ou
         ok(ex_style == ex_style_out, "expected ex_style %#x, got %#x\n", ex_style_out, ex_style);
 
     DestroyWindow(hwnd);
+
+    param.parent = parent;
+    param.grand_parent = grand_parent;
+    param.dlg_data = &dlg_data.dt;
+    DialogBoxIndirectParamA(GetModuleHandleA(NULL), &dlg_data.dt, parent, empty_dlg_proc2, (LPARAM)&param);
+
+    ok(IsWindowEnabled(parent), "wrong parent state (dialog style %#x)\n", style_in);
+    if (grand_parent)
+        ok(IsWindowEnabled(grand_parent), "wrong grand parent state (dialog style %#x)\n", style_in);
+
     DestroyWindow(parent);
+    DestroyWindow(grand_parent);
 }
 
 static void test_dialog_styles(void)
