@@ -677,7 +677,15 @@ static void test_create_device(void)
             &swapchain_desc, NULL, NULL, NULL, NULL);
     ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
 
+    hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
+            &swapchain_desc, &swapchain, NULL, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    IDXGISwapChain_Release(swapchain);
+
     swapchain_desc.OutputWindow = NULL;
+    hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
+            &swapchain_desc, NULL, NULL, NULL, NULL);
+    ok(hr == S_FALSE, "D3D11CreateDeviceAndSwapChain returned %#x.\n", hr);
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             &swapchain_desc, NULL, &device, NULL, NULL);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
