@@ -303,8 +303,8 @@ BOOL WINAPI ArcTo( HDC hdc,
                      INT xstart, INT ystart,
                      INT xend,   INT yend )
 {
-    double width = fabs(right-left),
-        height = fabs(bottom-top),
+    double width = abs( right - left ),
+        height = abs( bottom - top ),
         xradius = width/2,
         yradius = height/2,
         xcenter = right > left ? left+xradius : right+xradius,
