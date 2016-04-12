@@ -287,9 +287,32 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_ResizeTarget(IDXGISwapChain *ifa
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetContainingOutput(IDXGISwapChain *iface, IDXGIOutput **output)
 {
-    FIXME("iface %p, output %p stub!\n", iface, output);
+    IDXGIAdapter *adapter;
+    IDXGIDevice *device;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, output %p.\n", iface, output);
+
+    if (FAILED(hr = dxgi_swapchain_GetDevice(iface, &IID_IDXGIDevice, (void **)&device)))
+        return hr;
+
+    hr = IDXGIDevice_GetAdapter(device, &adapter);
+    IDXGIDevice_Release(device);
+    if (FAILED(hr))
+    {
+        WARN("GetAdapter failed, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (SUCCEEDED(IDXGIAdapter_EnumOutputs(adapter, 1, output)))
+    {
+        FIXME("Adapter has got multiple outputs, returning the first one.\n");
+        IDXGIOutput_Release(*output);
+    }
+
+    hr = IDXGIAdapter_EnumOutputs(adapter, 0, output);
+    IDXGIAdapter_Release(adapter);
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetFrameStatistics(IDXGISwapChain *iface, DXGI_FRAME_STATISTICS *stats)
