@@ -412,15 +412,15 @@ struct refresh_rates
     BOOL denominator_should_pass;
 };
 
-static void test_createswapchain(void)
+static void test_create_swapchain(void)
 {
-    IUnknown *obj;
+    DXGI_SWAP_CHAIN_DESC creation_desc, result_desc;
+    ULONG refcount, expected_refcount;
+    IDXGISwapChain *swapchain;
+    IUnknown *obj, *parent;
     IDXGIAdapter *adapter;
     IDXGIFactory *factory;
     IDXGIDevice *device;
-    ULONG refcount;
-    IDXGISwapChain *swapchain;
-    DXGI_SWAP_CHAIN_DESC creation_desc, result_desc;
     HRESULT hr;
     UINT i;
 
@@ -465,13 +465,41 @@ static void test_createswapchain(void)
     hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
     ok(SUCCEEDED(hr), "GetParent failed, hr %#x.\n", hr);
 
+    expected_refcount = get_refcount((IUnknown *)adapter);
+    refcount = get_refcount((IUnknown *)factory);
+    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+
     hr = IDXGIFactory_CreateSwapChain(factory, obj, &creation_desc, &swapchain);
     ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
+
+    refcount = get_refcount((IUnknown *)adapter);
+    ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+    refcount = get_refcount((IUnknown *)factory);
+    todo_wine ok(refcount == 4, "Got unexpected refcount %u.\n", refcount);
+    refcount = get_refcount((IUnknown *)device);
+    todo_wine ok(refcount == 3, "Got unexpected refcount %u.\n", refcount);
 
     hr = IDXGISwapChain_GetDesc(swapchain, NULL);
     ok(hr == E_INVALIDARG, "GetDesc unexpectedly returned %#x.\n", hr);
 
+    hr = IDXGISwapChain_GetParent(swapchain, &IID_IUnknown, (void **)&parent);
+    todo_wine ok(SUCCEEDED(hr), "GetParent failed %#x.\n", hr);
+    todo_wine ok(parent == (IUnknown *)factory, "Got unexpected parent interface pointer %p.\n", parent);
+    if (SUCCEEDED(hr)) refcount = IUnknown_Release(parent);
+    todo_wine ok(refcount == 4, "Got unexpected refcount %u.\n", refcount);
+
+    hr = IDXGISwapChain_GetParent(swapchain, &IID_IDXGIFactory, (void **)&parent);
+    todo_wine ok(SUCCEEDED(hr), "GetParent failed %#x.\n", hr);
+    todo_wine ok(parent == (IUnknown *)factory, "Got unexpected parent interface pointer %p.\n", parent);
+    if (SUCCEEDED(hr)) refcount = IUnknown_Release(parent);
+    todo_wine ok(refcount == 4, "Got unexpected refcount %u.\n", refcount);
+
     IDXGISwapChain_Release(swapchain);
+
+    refcount = get_refcount((IUnknown *)factory);
+    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
 
     for (i = 0; i < sizeof(refresh_list)/sizeof(refresh_list[0]); i++)
     {
@@ -522,11 +550,13 @@ static void test_createswapchain(void)
         IDXGISwapChain_Release(swapchain);
     }
 
-    IDXGIFactory_Release(factory);
-    IDXGIAdapter_Release(adapter);
     IUnknown_Release(obj);
     refcount = IDXGIDevice_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
+    refcount = IDXGIAdapter_Release(adapter);
+    todo_wine ok(!refcount, "Adapter has %u references left.\n", refcount);
+    refcount = IDXGIFactory_Release(factory);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
     DestroyWindow(creation_desc.OutputWindow);
 }
 
@@ -1381,7 +1411,7 @@ START_TEST(device)
     test_create_surface();
     test_parents();
     test_output();
-    test_createswapchain();
+    test_create_swapchain();
     test_create_factory();
     test_private_data();
     test_swapchain_resize();
