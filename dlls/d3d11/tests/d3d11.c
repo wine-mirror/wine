@@ -5955,6 +5955,9 @@ static void test_clear_depth_stencil_view(void)
     ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 0.25f, 0);
     check_texture_float(depth_texture, 0.25f, 0);
 
+    ID3D11DeviceContext_ClearDepthStencilView(context, NULL, D3D11_CLEAR_DEPTH, 1.0f, 0);
+    check_texture_float(depth_texture, 0.25f, 0);
+
     ID3D11Texture2D_Release(depth_texture);
     ID3D11DepthStencilView_Release(dsv);
 
