@@ -1284,11 +1284,12 @@ static void test_maximum_frame_latency(void)
 
 static void test_output_desc(void)
 {
+    IDXGIAdapter *adapter, *adapter2;
+    IDXGIOutput *output, *output2;
     DXGI_OUTPUT_DESC desc;
     IDXGIFactory *factory;
-    IDXGIAdapter *adapter;
-    IDXGIOutput *output;
     unsigned int i, j;
+    ULONG refcount;
     HRESULT hr;
 
     hr = CreateDXGIFactory(&IID_IDXGIFactory, (void **)&factory);
@@ -1301,6 +1302,18 @@ static void test_output_desc(void)
             break;
         ok(SUCCEEDED(hr), "Failed to enumerate adapter %u, hr %#x.\n", i, hr);
 
+        hr = IDXGIFactory_EnumAdapters(factory, i, &adapter2);
+        ok(SUCCEEDED(hr), "Failed to enumerate adapter %u, hr %#x.\n", i, hr);
+        todo_wine ok(adapter != adapter2, "Expected to get new instance of IDXGIAdapter, %p == %p.\n", adapter, adapter2);
+        refcount = get_refcount((IUnknown *)adapter);
+        todo_wine ok(refcount == 1, "Get unexpected refcount %u for adapter %u.\n", refcount, i);
+        IDXGIAdapter_Release(adapter2);
+
+        refcount = get_refcount((IUnknown *)factory);
+        todo_wine ok(refcount == 2, "Get unexpected refcount %u.\n", refcount);
+        refcount = get_refcount((IUnknown *)adapter);
+        todo_wine ok(refcount == 1, "Get unexpected refcount %u for adapter %u.\n", refcount, i);
+
         for (j = 0; ; ++j)
         {
             MONITORINFOEXW monitor_info;
@@ -1310,6 +1323,20 @@ static void test_output_desc(void)
             if (hr == DXGI_ERROR_NOT_FOUND)
                 break;
             ok(SUCCEEDED(hr), "Failed to enumerate output %u on adapter %u, hr %#x.\n", j, i, hr);
+
+            hr = IDXGIAdapter_EnumOutputs(adapter, j, &output2);
+            ok(SUCCEEDED(hr), "Failed to enumerate output %u on adapter %u, hr %#x.\n", j, i, hr);
+            todo_wine ok(output != output2, "Expected to get new instance of IDXGIOuput, %p == %p.\n", output, output2);
+            refcount = get_refcount((IUnknown *)output);
+            todo_wine ok(refcount == 1, "Get unexpected refcount %u for output %u, adapter %u.\n", refcount, j, i);
+            IDXGIOutput_Release(output2);
+
+            refcount = get_refcount((IUnknown *)factory);
+            todo_wine ok(refcount == 2, "Get unexpected refcount %u.\n", refcount);
+            refcount = get_refcount((IUnknown *)adapter);
+            ok(refcount == 2, "Get unexpected refcount %u for adapter %u.\n", refcount, i);
+            refcount = get_refcount((IUnknown *)output);
+            todo_wine ok(refcount == 1, "Get unexpected refcount %u for output %u, adapter %u.\n", refcount, j, i);
 
             hr = IDXGIOutput_GetDesc(output, NULL);
             ok(hr == E_INVALIDARG, "Got unexpected hr %#x for output %u on adapter %u.\n", hr, j, i);
@@ -1329,12 +1356,17 @@ static void test_output_desc(void)
                     monitor_info.rcMonitor.right, monitor_info.rcMonitor.bottom);
 
             IDXGIOutput_Release(output);
+            refcount = get_refcount((IUnknown *)adapter);
+            todo_wine ok(refcount == 1, "Get unexpected refcount %u for adapter %u.\n", refcount, i);
         }
 
         IDXGIAdapter_Release(adapter);
+        refcount = get_refcount((IUnknown *)factory);
+        ok(refcount == 1, "Get unexpected refcount %u.\n", refcount);
     }
 
-    IDXGIFactory_Release(factory);
+    refcount = IDXGIFactory_Release(factory);
+    ok(!refcount, "IDXGIFactory has %u references left.\n", refcount);
 }
 
 START_TEST(device)
