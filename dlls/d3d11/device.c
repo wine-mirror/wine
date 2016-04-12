@@ -5064,7 +5064,7 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
         return E_FAIL;
     }
 
-    hr = IWineDXGIDevice_create_swapchain(wine_device, desc, swapchain);
+    hr = IWineDXGIDevice_create_swapchain(wine_device, desc, TRUE, swapchain);
     IWineDXGIDevice_Release(wine_device);
     if (FAILED(hr))
     {

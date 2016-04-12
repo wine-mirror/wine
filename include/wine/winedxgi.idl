@@ -36,6 +36,7 @@ interface IWineDXGIDevice : IDXGIDevice1
     );
     HRESULT create_swapchain(
         [in] struct wined3d_swapchain_desc *desc,
+        [in] BOOL implicit,
         [out] struct wined3d_swapchain **wined3d_swapchain
     );
 }

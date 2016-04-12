@@ -157,10 +157,11 @@ struct dxgi_swapchain
     LONG refcount;
     struct wined3d_private_store private_store;
     struct wined3d_swapchain *wined3d_swapchain;
+    IWineDXGIDevice *device;
 };
 
 HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device *device,
-        struct wined3d_swapchain_desc *desc) DECLSPEC_HIDDEN;
+        struct wined3d_swapchain_desc *desc, BOOL implicit) DECLSPEC_HIDDEN;
 
 /* IDXGISurface */
 struct dxgi_surface

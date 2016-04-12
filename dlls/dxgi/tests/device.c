@@ -479,7 +479,7 @@ static void test_create_swapchain(void)
     refcount = get_refcount((IUnknown *)factory);
     todo_wine ok(refcount == 4, "Got unexpected refcount %u.\n", refcount);
     refcount = get_refcount((IUnknown *)device);
-    todo_wine ok(refcount == 3, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 3, "Got unexpected refcount %u.\n", refcount);
 
     hr = IDXGISwapChain_GetDesc(swapchain, NULL);
     ok(hr == E_INVALIDARG, "GetDesc unexpectedly returned %#x.\n", hr);

@@ -310,31 +310,29 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *ifa
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_create_swapchain(IWineDXGIDevice *iface,
-        struct wined3d_swapchain_desc *desc, struct wined3d_swapchain **wined3d_swapchain)
+        struct wined3d_swapchain_desc *desc, BOOL implicit, struct wined3d_swapchain **wined3d_swapchain)
 {
-    struct dxgi_device *This = impl_from_IWineDXGIDevice(iface);
+    struct dxgi_device *device = impl_from_IWineDXGIDevice(iface);
     struct dxgi_swapchain *object;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, wined3d_swapchain %p.\n",
             iface, desc, wined3d_swapchain);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
     {
         ERR("Failed to allocate DXGI swapchain object memory\n");
         return E_OUTOFMEMORY;
     }
 
-    hr = dxgi_swapchain_init(object, This, desc);
-    if (FAILED(hr))
+    if (FAILED(hr = dxgi_swapchain_init(object, device, desc, implicit)))
     {
         WARN("Failed to initialize swapchain, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
         return hr;
     }
 
-    TRACE("Created IDXGISwapChain %p\n", object);
+    TRACE("Created IDXGISwapChain %p.\n", object);
     *wined3d_swapchain = object->wined3d_swapchain;
 
     return S_OK;
