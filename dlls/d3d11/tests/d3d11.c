@@ -5824,6 +5824,7 @@ static void test_clear_render_target_view(void)
 {
     static const DWORD expected_color = 0xbf4c7f19, expected_srgb_color = 0xbf95bc59;
     static const float color[] = {0.1f, 0.5f, 0.3f, 0.75f};
+    static const float green[] = {0.0f, 1.0f, 0.0f, 0.5f};
 
     ID3D11Texture2D *texture, *srgb_texture;
     struct d3d11_test_context test_context;
@@ -5868,6 +5869,9 @@ static void test_clear_render_target_view(void)
     check_texture_color(test_context.backbuffer, expected_color, 1);
 
     ID3D11DeviceContext_ClearRenderTargetView(context, rtv, color);
+    check_texture_color(texture, expected_color, 1);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, NULL, green);
     check_texture_color(texture, expected_color, 1);
 
     ID3D11DeviceContext_ClearRenderTargetView(context, srgb_rtv, color);
