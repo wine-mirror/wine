@@ -39,7 +39,7 @@ typedef NTSTATUS (WINAPI *pAddDevice)(DRIVER_OBJECT *DriverObject, DEVICE_OBJECT
 /* Ring buffer functions */
 struct ReportRingBuffer;
 
-typedef struct _BASE_DEVICE_EXTENSTION {
+typedef struct _BASE_DEVICE_EXTENSION {
     HID_DEVICE_EXTENSION deviceExtension;
 
     HID_COLLECTION_INFORMATION information;
