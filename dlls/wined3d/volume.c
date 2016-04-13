@@ -79,15 +79,17 @@ void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wine
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_texture *texture = volume->container;
     const struct wined3d_format *format = texture->resource.format;
-    UINT width = volume->resource.width;
-    UINT height = volume->resource.height;
-    UINT depth = volume->resource.depth;
+    unsigned int width, height, depth;
     const void *mem = data->addr;
     void *converted_mem = NULL;
 
     TRACE("volume %p, context %p, level %u, format %s (%#x).\n",
             volume, context, volume->texture_level, debug_d3dformat(format->id),
             format->id);
+
+    width = wined3d_texture_get_level_width(texture, volume->texture_level);
+    height = wined3d_texture_get_level_height(texture, volume->texture_level);
+    depth = wined3d_texture_get_level_depth(texture, volume->texture_level);
 
     if (format->convert)
     {
