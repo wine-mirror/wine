@@ -573,17 +573,13 @@ done:
     return ret;
 }
 
-static BOOL has_opengl(void)
-{
-    static BOOL init_done = FALSE;
-    static void *opengl_handle;
+static void *opengl_handle;
 
+static BOOL WINAPI init_opengl( INIT_ONCE *once, void *param, void **context )
+{
     char buffer[200];
     int error_base, event_base;
     unsigned int i;
-
-    if (init_done) return (opengl_handle != NULL);
-    init_done = TRUE;
 
     /* No need to load any other libraries as according to the ABI, libGL should be self-sufficient
        and include all dependencies */
@@ -592,7 +588,7 @@ static BOOL has_opengl(void)
     {
         ERR( "Failed to load libGL: %s\n", buffer );
         ERR( "OpenGL support is disabled.\n");
-        return FALSE;
+        return TRUE;
     }
 
     for (i = 0; i < sizeof(opengl_func_names)/sizeof(opengl_func_names[0]); i++)
@@ -757,7 +753,14 @@ static BOOL has_opengl(void)
 failed:
     wine_dlclose(opengl_handle, NULL, 0);
     opengl_handle = NULL;
-    return FALSE;
+    return TRUE;
+}
+
+static BOOL has_opengl(void)
+{
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+    InitOnceExecuteOnce(&init_once, init_opengl, NULL, NULL);
+    return opengl_handle != NULL;
 }
 
 static const char *debugstr_fbconfig( GLXFBConfig fbconfig )
