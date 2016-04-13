@@ -46,8 +46,6 @@
 #define WINED3DERR_INVALIDCALL                                  MAKE_WINED3DHRESULT(2156)
 #define WINEDDERR_NOTAOVERLAYSURFACE                            MAKE_WINED3DHRESULT(580)
 #define WINEDDERR_NOTLOCKED                                     MAKE_WINED3DHRESULT(584)
-#define WINEDDERR_NODC                                          MAKE_WINED3DHRESULT(586)
-#define WINEDDERR_DCALREADYCREATED                              MAKE_WINED3DHRESULT(620)
 #define WINEDDERR_SURFACEBUSY                                   MAKE_WINED3DHRESULT(430)
 #define WINEDDERR_INVALIDRECT                                   MAKE_WINED3DHRESULT(150)
 #define WINEDDERR_OVERLAYNOTVISIBLE                             MAKE_WINED3DHRESULT(577)
@@ -1470,7 +1468,7 @@ enum wined3d_display_rotation
 
 #define WINED3D_TEXTURE_CREATE_MAPPABLE                         0x00000001
 #define WINED3D_TEXTURE_CREATE_DISCARD                          0x00000002
-#define WINED3D_TEXTURE_CREATE_PIN_SYSMEM                       0x00000004
+#define WINED3D_TEXTURE_CREATE_GET_DC_LENIENT                   0x00000004
 
 #define WINED3D_APPEND_ALIGNED_ELEMENT                          0xffffffff
 

@@ -2138,7 +2138,9 @@ static HRESULT WINAPI ddraw_surface7_GetDC(IDirectDrawSurface7 *iface, HDC *dc)
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
-    if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+    if (surface->dc)
+        hr = DDERR_DCALREADYCREATED;
+    else if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
         hr = ddraw_surface_update_frontbuffer(surface, NULL, TRUE);
     if (SUCCEEDED(hr))
         hr = wined3d_texture_get_dc(surface->wined3d_texture, surface->sub_resource_idx, dc);
@@ -2234,7 +2236,11 @@ static HRESULT WINAPI ddraw_surface7_ReleaseDC(IDirectDrawSurface7 *iface, HDC h
     TRACE("iface %p, dc %p.\n", iface, hdc);
 
     wined3d_mutex_lock();
-    if (SUCCEEDED(hr = wined3d_texture_release_dc(surface->wined3d_texture, surface->sub_resource_idx, hdc)))
+    if (!surface->dc)
+    {
+        hr = DDERR_NODC;
+    }
+    else if (SUCCEEDED(hr = wined3d_texture_release_dc(surface->wined3d_texture, surface->sub_resource_idx, hdc)))
     {
         surface->dc = NULL;
         if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
@@ -6096,10 +6102,11 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
      * address. Some of those also assume that this address is valid even when
      * the surface isn't mapped, and that updates done this way will be
      * visible on the screen. The game Nox is such an application,
-     * Commandos: Behind Enemy Lines is another. We set
-     * WINED3D_TEXTURE_CREATE_PIN_SYSMEM because of this. */
+     * Commandos: Behind Enemy Lines is another. Setting
+     * WINED3D_TEXTURE_CREATE_GET_DC_LENIENT will ensure this. */
     if (FAILED(hr = wined3d_texture_create(ddraw->wined3d_device, &wined3d_desc, levels,
-            WINED3D_TEXTURE_CREATE_PIN_SYSMEM, NULL, texture, &ddraw_texture_wined3d_parent_ops, &wined3d_texture)))
+            WINED3D_TEXTURE_CREATE_GET_DC_LENIENT, NULL, texture,
+            &ddraw_texture_wined3d_parent_ops, &wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, texture);
@@ -6217,7 +6224,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             desc->u5.dwBackBufferCount = 0;
 
             if (FAILED(hr = wined3d_texture_create(ddraw->wined3d_device, &wined3d_desc, 1,
-                    WINED3D_TEXTURE_CREATE_PIN_SYSMEM, NULL, texture,
+                    WINED3D_TEXTURE_CREATE_GET_DC_LENIENT, NULL, texture,
                     &ddraw_texture_wined3d_parent_ops, &wined3d_texture)))
             {
                 HeapFree(GetProcessHeap(), 0, texture);

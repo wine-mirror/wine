@@ -191,8 +191,8 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     texture->filter_type = (desc->usage & WINED3DUSAGE_AUTOGENMIPMAP) ? WINED3D_TEXF_LINEAR : WINED3D_TEXF_NONE;
     texture->lod = 0;
     texture->flags |= WINED3D_TEXTURE_POW2_MAT_IDENT | WINED3D_TEXTURE_NORMALIZED_COORDS;
-    if (flags & WINED3D_TEXTURE_CREATE_PIN_SYSMEM)
-        texture->flags |= WINED3D_TEXTURE_PIN_SYSMEM;
+    if (flags & WINED3D_TEXTURE_CREATE_GET_DC_LENIENT)
+        texture->flags |= WINED3D_TEXTURE_PIN_SYSMEM | WINED3D_TEXTURE_GET_DC_LENIENT;
 
     return WINED3D_OK;
 }
@@ -2238,12 +2238,7 @@ HRESULT CDECL wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned i
 
     surface = sub_resource->u.surface;
 
-    /* Give more detailed info for ddraw. */
-    if (surface->flags & SFLAG_DCINUSE)
-        return WINEDDERR_DCALREADYCREATED;
-
-    /* Can't GetDC if the surface is locked. */
-    if (sub_resource->map_count)
+    if (sub_resource->map_count && !(texture->flags & WINED3D_TEXTURE_GET_DC_LENIENT))
         return WINED3DERR_INVALIDCALL;
 
     if (device->d3d_initialized)
@@ -2270,7 +2265,8 @@ HRESULT CDECL wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned i
     if (context)
         context_release(context);
 
-    surface->flags |= SFLAG_DCINUSE;
+    if (!(texture->flags & WINED3D_TEXTURE_GET_DC_LENIENT))
+        surface->flags |= SFLAG_DCINUSE;
     ++texture->resource.map_count;
     ++sub_resource->map_count;
 
@@ -2300,19 +2296,20 @@ HRESULT CDECL wined3d_texture_release_dc(struct wined3d_texture *texture, unsign
 
     surface = sub_resource->u.surface;
 
-    if (!(surface->flags & SFLAG_DCINUSE))
-        return WINEDDERR_NODC;
+    if (!(texture->flags & WINED3D_TEXTURE_GET_DC_LENIENT) && !(surface->flags & SFLAG_DCINUSE))
+        return WINED3DERR_INVALIDCALL;
 
     if (surface->hDC != dc)
     {
         WARN("Application tries to release invalid DC %p, surface DC is %p.\n",
                 dc, surface->hDC);
-        return WINEDDERR_NODC;
+        return WINED3DERR_INVALIDCALL;
     }
 
     --sub_resource->map_count;
     --texture->resource.map_count;
-    surface->flags &= ~SFLAG_DCINUSE;
+    if (!(texture->flags & WINED3D_TEXTURE_GET_DC_LENIENT))
+        surface->flags &= ~SFLAG_DCINUSE;
 
     if (surface->resource.map_binding == WINED3D_LOCATION_USER_MEMORY
             || (surface->container->flags & WINED3D_TEXTURE_PIN_SYSMEM

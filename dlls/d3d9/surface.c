@@ -312,11 +312,7 @@ static HRESULT WINAPI d3d9_surface_ReleaseDC(IDirect3DSurface9 *iface, HDC dc)
     hr = wined3d_texture_release_dc(surface->wined3d_texture, surface->sub_resource_idx, dc);
     wined3d_mutex_unlock();
 
-    switch (hr)
-    {
-        case WINEDDERR_NODC:    return D3DERR_INVALIDCALL;
-        default:                return hr;
-    }
+    return hr;
 }
 
 static const struct IDirect3DSurface9Vtbl d3d9_surface_vtbl =

@@ -7683,7 +7683,7 @@ static void test_getdc(void)
         ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", testdata[i].name, hr);
         dc2 = (void *)0x1234;
         hr = IDirect3DSurface9_GetDC(surface, &dc2);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
         ok(dc2 == (void *)0x1234, "Got unexpected dc %p for format %s.\n", dc, testdata[i].name);
         hr = IDirect3DSurface9_ReleaseDC(surface, dc);
         ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", testdata[i].name, hr);

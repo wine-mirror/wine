@@ -11394,9 +11394,9 @@ static void test_getdc(void)
         hr = IDirectDrawSurface7_Lock(surface, NULL, &map_desc, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
         ok(SUCCEEDED(hr), "Failed to map surface for format %s, hr %#x.\n", test_data[i].name, hr);
         hr = IDirectDrawSurface7_GetDC(surface, &dc);
-        todo_wine ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
         hr = IDirectDrawSurface7_ReleaseDC(surface, dc);
-        todo_wine ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
         hr = IDirectDrawSurface7_Unlock(surface, NULL);
         ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", test_data[i].name, hr);
 
@@ -11430,9 +11430,9 @@ static void test_getdc(void)
         hr = IDirectDrawSurface7_Lock(surface, NULL, &map_desc, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
         ok(SUCCEEDED(hr), "Failed to map surface for format %s, hr %#x.\n", test_data[i].name, hr);
         hr = IDirectDrawSurface7_GetDC(surface, &dc);
-        todo_wine ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", test_data[i].name, hr);
         hr = IDirectDrawSurface7_ReleaseDC(surface, dc);
-        todo_wine ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
+        ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
         hr = IDirectDrawSurface7_Unlock(surface, NULL);
         ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", test_data[i].name, hr);
 
