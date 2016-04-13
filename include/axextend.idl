@@ -178,7 +178,7 @@ interface IFilterMapper : IUnknown
          [in]  CLSID clsInMaj,
          [in]  CLSID clsInSub,
          [in]  BOOL  bRender,
-         [in]  BOOL  bOututNeeded,
+         [in]  BOOL  bOutputNeeded,
          [in]  CLSID clsOutMaj,
          [in]  CLSID clsOutSub
        );
