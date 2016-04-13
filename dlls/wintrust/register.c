@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
 static CRYPT_TRUST_REG_ENTRY SoftpubInitialization;
 static CRYPT_TRUST_REG_ENTRY SoftpubMessage;
 static CRYPT_TRUST_REG_ENTRY SoftpubSignature;
-static CRYPT_TRUST_REG_ENTRY SoftpubCertficate;
+static CRYPT_TRUST_REG_ENTRY SoftpubCertificate;
 static CRYPT_TRUST_REG_ENTRY SoftpubCertCheck;
 static CRYPT_TRUST_REG_ENTRY SoftpubFinalPolicy;
 static CRYPT_TRUST_REG_ENTRY SoftpubCleanup;
@@ -100,7 +100,7 @@ static void WINTRUST_InitRegStructs(void)
     WINTRUST_INITREGENTRY(SoftpubInitialization, SP_POLICY_PROVIDER_DLL_NAME, SP_INIT_FUNCTION)
     WINTRUST_INITREGENTRY(SoftpubMessage, SP_POLICY_PROVIDER_DLL_NAME, SP_OBJTRUST_FUNCTION)
     WINTRUST_INITREGENTRY(SoftpubSignature, SP_POLICY_PROVIDER_DLL_NAME, SP_SIGTRUST_FUNCTION)
-    WINTRUST_INITREGENTRY(SoftpubCertficate, SP_POLICY_PROVIDER_DLL_NAME, WT_PROVIDER_CERTTRUST_FUNCTION)
+    WINTRUST_INITREGENTRY(SoftpubCertificate, SP_POLICY_PROVIDER_DLL_NAME, WT_PROVIDER_CERTTRUST_FUNCTION)
     WINTRUST_INITREGENTRY(SoftpubCertCheck, SP_POLICY_PROVIDER_DLL_NAME, SP_CHKCERT_FUNCTION)
     WINTRUST_INITREGENTRY(SoftpubFinalPolicy, SP_POLICY_PROVIDER_DLL_NAME, SP_FINALPOLICY_FUNCTION)
     WINTRUST_INITREGENTRY(SoftpubCleanup, SP_POLICY_PROVIDER_DLL_NAME, SP_CLEANUPPOLICY_FUNCTION)
@@ -134,7 +134,7 @@ static void WINTRUST_FreeRegStructs(void)
     WINTRUST_FREEREGENTRY(SoftpubInitialization);
     WINTRUST_FREEREGENTRY(SoftpubMessage);
     WINTRUST_FREEREGENTRY(SoftpubSignature);
-    WINTRUST_FREEREGENTRY(SoftpubCertficate);
+    WINTRUST_FREEREGENTRY(SoftpubCertificate);
     WINTRUST_FREEREGENTRY(SoftpubCertCheck);
     WINTRUST_FREEREGENTRY(SoftpubFinalPolicy);
     WINTRUST_FREEREGENTRY(SoftpubCleanup);
@@ -432,7 +432,7 @@ static BOOL WINTRUST_RegisterGenVerifyV2(void)
     ProvInfo.sInitProvider              = SoftpubInitialization;
     ProvInfo.sObjectProvider            = SoftpubMessage;
     ProvInfo.sSignatureProvider         = SoftpubSignature;
-    ProvInfo.sCertificateProvider       = SoftpubCertficate;
+    ProvInfo.sCertificateProvider       = SoftpubCertificate;
     ProvInfo.sCertificatePolicyProvider = SoftpubCertCheck;
     ProvInfo.sFinalPolicyProvider       = SoftpubFinalPolicy;
     ProvInfo.sTestPolicyProvider        = NullCTRE; /* No diagnostic policy */
@@ -465,7 +465,7 @@ static BOOL WINTRUST_RegisterPublishedSoftware(void)
     ProvInfo.sInitProvider              = SoftpubInitialization;
     ProvInfo.sObjectProvider            = SoftpubMessage;
     ProvInfo.sSignatureProvider         = SoftpubSignature;
-    ProvInfo.sCertificateProvider       = SoftpubCertficate;
+    ProvInfo.sCertificateProvider       = SoftpubCertificate;
     ProvInfo.sCertificatePolicyProvider = SoftpubCertCheck;
     ProvInfo.sFinalPolicyProvider       = SoftpubFinalPolicy;
     ProvInfo.sTestPolicyProvider        = NullCTRE; /* No diagnostic policy */
@@ -497,7 +497,7 @@ static BOOL WINTRUST_RegisterPublishedSoftwareNoBadUi(void)
     ProvInfo.sInitProvider              = SoftpubInitialization;
     ProvInfo.sObjectProvider            = SoftpubMessage;
     ProvInfo.sSignatureProvider         = SoftpubSignature;
-    ProvInfo.sCertificateProvider       = SoftpubCertficate;
+    ProvInfo.sCertificateProvider       = SoftpubCertificate;
     ProvInfo.sCertificatePolicyProvider = SoftpubCertCheck;
     ProvInfo.sFinalPolicyProvider       = SoftpubFinalPolicy;
     ProvInfo.sTestPolicyProvider        = NullCTRE; /* No diagnostic policy */
@@ -527,7 +527,7 @@ static BOOL WINTRUST_RegisterGenCertVerify(void)
     ProvInfo.sInitProvider              = SoftpubDefCertInit;
     ProvInfo.sObjectProvider            = SoftpubMessage;
     ProvInfo.sSignatureProvider         = SoftpubSignature;
-    ProvInfo.sCertificateProvider       = SoftpubCertficate;
+    ProvInfo.sCertificateProvider       = SoftpubCertificate;
     ProvInfo.sCertificatePolicyProvider = SoftpubCertCheck;
     ProvInfo.sFinalPolicyProvider       = SoftpubFinalPolicy;
     ProvInfo.sTestPolicyProvider        = NullCTRE; /* No diagnostic policy */
@@ -557,7 +557,7 @@ static BOOL WINTRUST_RegisterTrustProviderTest(void)
     ProvInfo.sInitProvider              = SoftpubInitialization;
     ProvInfo.sObjectProvider            = SoftpubMessage;
     ProvInfo.sSignatureProvider         = SoftpubSignature;
-    ProvInfo.sCertificateProvider       = SoftpubCertficate;
+    ProvInfo.sCertificateProvider       = SoftpubCertificate;
     ProvInfo.sCertificatePolicyProvider = SoftpubCertCheck;
     ProvInfo.sFinalPolicyProvider       = SoftpubFinalPolicy;
     ProvInfo.sTestPolicyProvider        = SoftpubDumpStructure;
@@ -639,7 +639,7 @@ static BOOL WINTRUST_RegisterOfficeSignVerify(void)
     ProvInfo.sInitProvider              = OfficeInitializePolicy;
     ProvInfo.sObjectProvider            = SoftpubMessage;
     ProvInfo.sSignatureProvider         = SoftpubSignature;
-    ProvInfo.sCertificateProvider       = SoftpubCertficate;
+    ProvInfo.sCertificateProvider       = SoftpubCertificate;
     ProvInfo.sCertificatePolicyProvider = SoftpubCertCheck;
     ProvInfo.sFinalPolicyProvider       = SoftpubFinalPolicy;
     ProvInfo.sTestPolicyProvider        = NullCTRE; /* No diagnostic policy */
@@ -670,7 +670,7 @@ static BOOL WINTRUST_RegisterDriverVerify(void)
     ProvInfo.sInitProvider              = DriverInitializePolicy;
     ProvInfo.sObjectProvider            = SoftpubMessage;
     ProvInfo.sSignatureProvider         = SoftpubSignature;
-    ProvInfo.sCertificateProvider       = SoftpubCertficate;
+    ProvInfo.sCertificateProvider       = SoftpubCertificate;
     ProvInfo.sCertificatePolicyProvider = SoftpubCertCheck;
     ProvInfo.sFinalPolicyProvider       = DriverFinalPolicy;
     ProvInfo.sTestPolicyProvider        = NullCTRE; /* No diagnostic policy */
