@@ -7567,30 +7567,32 @@ static void test_getdc(void)
     {
         const char *name;
         D3DFORMAT format;
+        unsigned int bit_count;
+        DWORD mask_r, mask_g, mask_b;
         BOOL getdc_supported;
     }
     testdata[] =
     {
-        {"D3DFMT_A8R8G8B8",    D3DFMT_A8R8G8B8,    TRUE },
-        {"D3DFMT_X8R8G8B8",    D3DFMT_X8R8G8B8,    TRUE },
-        {"D3DFMT_R5G6B5",      D3DFMT_R5G6B5,      TRUE },
-        {"D3DFMT_X1R5G5B5",    D3DFMT_X1R5G5B5,    TRUE },
-        {"D3DFMT_A1R5G5B5",    D3DFMT_A1R5G5B5,    TRUE },
-        {"D3DFMT_R8G8B8",      D3DFMT_R8G8B8,      TRUE },
-        {"D3DFMT_A2R10G10B10", D3DFMT_A2R10G10B10, FALSE}, /* Untested, card on windows didn't support it. */
-        {"D3DFMT_V8U8",        D3DFMT_V8U8,        FALSE},
-        {"D3DFMT_Q8W8V8U8",    D3DFMT_Q8W8V8U8,    FALSE},
-        {"D3DFMT_A8B8G8R8",    D3DFMT_A8B8G8R8,    FALSE},
-        {"D3DFMT_X8B8G8R8",    D3DFMT_A8B8G8R8,    FALSE},
-        {"D3DFMT_R3G3B2",      D3DFMT_R3G3B2,      FALSE},
-        {"D3DFMT_P8",          D3DFMT_P8,          FALSE},
-        {"D3DFMT_L8",          D3DFMT_L8,          FALSE},
-        {"D3DFMT_A8L8",        D3DFMT_A8L8,        FALSE},
-        {"D3DFMT_DXT1",        D3DFMT_DXT1,        FALSE},
-        {"D3DFMT_DXT2",        D3DFMT_DXT2,        FALSE},
-        {"D3DFMT_DXT3",        D3DFMT_DXT3,        FALSE},
-        {"D3DFMT_DXT4",        D3DFMT_DXT4,        FALSE},
-        {"D3DFMT_DXT5",        D3DFMT_DXT5,        FALSE},
+        {"A8R8G8B8",    D3DFMT_A8R8G8B8,    32, 0x00000000, 0x00000000, 0x00000000, TRUE },
+        {"X8R8G8B8",    D3DFMT_X8R8G8B8,    32, 0x00000000, 0x00000000, 0x00000000, TRUE },
+        {"R5G6B5",      D3DFMT_R5G6B5,      16, 0x0000f800, 0x000007e0, 0x0000001f, TRUE },
+        {"X1R5G5B5",    D3DFMT_X1R5G5B5,    16, 0x00007c00, 0x000003e0, 0x0000001f, TRUE },
+        {"A1R5G5B5",    D3DFMT_A1R5G5B5,    16, 0x00007c00, 0x000003e0, 0x0000001f, TRUE },
+        {"R8G8B8",      D3DFMT_R8G8B8,      24, 0x00000000, 0x00000000, 0x00000000, TRUE },
+        {"A2R10G10B10", D3DFMT_A2R10G10B10, 32, 0x00000000, 0x00000000, 0x00000000, FALSE},
+        {"V8U8",        D3DFMT_V8U8,        16, 0x00000000, 0x00000000, 0x00000000, FALSE},
+        {"Q8W8V8U8",    D3DFMT_Q8W8V8U8,    32, 0x00000000, 0x00000000, 0x00000000, FALSE},
+        {"A8B8G8R8",    D3DFMT_A8B8G8R8,    32, 0x00000000, 0x00000000, 0x00000000, FALSE},
+        {"X8B8G8R8",    D3DFMT_A8B8G8R8,    32, 0x00000000, 0x00000000, 0x00000000, FALSE},
+        {"R3G3B2",      D3DFMT_R3G3B2,      8,  0x00000000, 0x00000000, 0x00000000, FALSE},
+        {"P8",          D3DFMT_P8,          8,  0x00000000, 0x00000000, 0x00000000, FALSE},
+        {"L8",          D3DFMT_L8,          8,  0x00000000, 0x00000000, 0x00000000, FALSE},
+        {"A8L8",        D3DFMT_A8L8,        16, 0x00000000, 0x00000000, 0x00000000, FALSE},
+        {"DXT1",        D3DFMT_DXT1,        4,  0x00000000, 0x00000000, 0x00000000, FALSE},
+        {"DXT2",        D3DFMT_DXT2,        8,  0x00000000, 0x00000000, 0x00000000, FALSE},
+        {"DXT3",        D3DFMT_DXT3,        8,  0x00000000, 0x00000000, 0x00000000, FALSE},
+        {"DXT4",        D3DFMT_DXT4,        8,  0x00000000, 0x00000000, 0x00000000, FALSE},
+        {"DXT5",        D3DFMT_DXT5,        8,  0x00000000, 0x00000000, 0x00000000, FALSE},
     };
     IDirect3DSurface9 *surface, *surface2;
     IDirect3DCubeTexture9 *cube_texture;
@@ -7643,6 +7645,77 @@ static void test_getdc(void)
 
         if (SUCCEEDED(hr))
         {
+            unsigned int width_bytes;
+            DIBSECTION dib;
+            HBITMAP bitmap;
+            DWORD type;
+            int size;
+
+            type = GetObjectType(dc);
+            ok(type == OBJ_MEMDC, "Got unexpected object type %#x for format %s.\n", type, testdata[i].name);
+            bitmap = GetCurrentObject(dc, OBJ_BITMAP);
+            type = GetObjectType(bitmap);
+            ok(type == OBJ_BITMAP, "Got unexpected object type %#x for format %s.\n", type, testdata[i].name);
+
+            size = GetObjectA(bitmap, sizeof(dib), &dib);
+            ok(size == sizeof(dib), "Got unexpected size %d for format %s.\n", size, testdata[i].name);
+            ok(!dib.dsBm.bmType, "Got unexpected type %#x for format %s.\n",
+                    dib.dsBm.bmType, testdata[i].name);
+            ok(dib.dsBm.bmWidth == 64, "Got unexpected width %d for format %s.\n",
+                    dib.dsBm.bmWidth, testdata[i].name);
+            ok(dib.dsBm.bmHeight == 64, "Got unexpected height %d for format %s.\n",
+                    dib.dsBm.bmHeight, testdata[i].name);
+            width_bytes = ((dib.dsBm.bmWidth * testdata[i].bit_count + 31) >> 3) & ~3;
+            ok(dib.dsBm.bmWidthBytes == width_bytes, "Got unexpected width bytes %d for format %s.\n",
+                    dib.dsBm.bmWidthBytes, testdata[i].name);
+            ok(dib.dsBm.bmPlanes == 1, "Got unexpected plane count %d for format %s.\n",
+                    dib.dsBm.bmPlanes, testdata[i].name);
+            ok(dib.dsBm.bmBitsPixel == testdata[i].bit_count,
+                    "Got unexpected bit count %d for format %s.\n",
+                    dib.dsBm.bmBitsPixel, testdata[i].name);
+            ok(!!dib.dsBm.bmBits, "Got unexpected bits %p for format %s.\n",
+                    dib.dsBm.bmBits, testdata[i].name);
+
+            ok(dib.dsBmih.biSize == sizeof(dib.dsBmih), "Got unexpected size %u for format %s.\n",
+                    dib.dsBmih.biSize, testdata[i].name);
+            ok(dib.dsBmih.biWidth == 64, "Got unexpected width %d for format %s.\n",
+                    dib.dsBmih.biHeight, testdata[i].name);
+            ok(dib.dsBmih.biHeight == 64, "Got unexpected height %d for format %s.\n",
+                    dib.dsBmih.biHeight, testdata[i].name);
+            ok(dib.dsBmih.biPlanes == 1, "Got unexpected plane count %u for format %s.\n",
+                    dib.dsBmih.biPlanes, testdata[i].name);
+            ok(dib.dsBmih.biBitCount == testdata[i].bit_count, "Got unexpected bit count %u for format %s.\n",
+                    dib.dsBmih.biBitCount, testdata[i].name);
+            ok(dib.dsBmih.biCompression == (testdata[i].bit_count == 16 ? BI_BITFIELDS : BI_RGB),
+                    "Got unexpected compression %#x for format %s.\n",
+                    dib.dsBmih.biCompression, testdata[i].name);
+            todo_wine ok(!dib.dsBmih.biSizeImage, "Got unexpected image size %u for format %s.\n",
+                    dib.dsBmih.biSizeImage, testdata[i].name);
+            ok(!dib.dsBmih.biXPelsPerMeter, "Got unexpected horizontal resolution %d for format %s.\n",
+                    dib.dsBmih.biXPelsPerMeter, testdata[i].name);
+            ok(!dib.dsBmih.biYPelsPerMeter, "Got unexpected vertical resolution %d for format %s.\n",
+                    dib.dsBmih.biYPelsPerMeter, testdata[i].name);
+            ok(!dib.dsBmih.biClrUsed, "Got unexpected used colour count %u for format %s.\n",
+                    dib.dsBmih.biClrUsed, testdata[i].name);
+            ok(!dib.dsBmih.biClrImportant, "Got unexpected important colour count %u for format %s.\n",
+                    dib.dsBmih.biClrImportant, testdata[i].name);
+
+            if (dib.dsBmih.biCompression == BI_BITFIELDS)
+            {
+                ok(dib.dsBitfields[0] == testdata[i].mask_r && dib.dsBitfields[1] == testdata[i].mask_g
+                        && dib.dsBitfields[2] == testdata[i].mask_b,
+                        "Got unexpected colour masks 0x%08x 0x%08x 0x%08x for format %s.\n",
+                        dib.dsBitfields[0], dib.dsBitfields[1], dib.dsBitfields[2], testdata[i].name);
+            }
+            else
+            {
+                ok(!dib.dsBitfields[0] && !dib.dsBitfields[1] && !dib.dsBitfields[2],
+                        "Got unexpected colour masks 0x%08x 0x%08x 0x%08x for format %s.\n",
+                        dib.dsBitfields[0], dib.dsBitfields[1], dib.dsBitfields[2], testdata[i].name);
+            }
+            ok(!dib.dshSection, "Got unexpected section %p for format %s.\n", dib.dshSection, testdata[i].name);
+            ok(!dib.dsOffset, "Got unexpected offset %u for format %s.\n", dib.dsOffset, testdata[i].name);
+
             hr = IDirect3DSurface9_ReleaseDC(surface, dc);
             ok(hr == D3D_OK, "Failed to release DC, hr %#x.\n", hr);
         }
