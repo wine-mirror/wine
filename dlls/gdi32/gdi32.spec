@@ -80,6 +80,8 @@
 @ stdcall CreateScalableFontResourceA(long str str str)
 @ stdcall CreateScalableFontResourceW(long wstr wstr wstr)
 @ stdcall CreateSolidBrush(long)
+@ stdcall D3DKMTCreateDCFromMemory(ptr)
+@ stdcall D3DKMTDestroyDCFromMemory(ptr)
 @ stdcall D3DKMTEscape(ptr)
 @ stdcall D3DKMTOpenAdapterFromHdc(ptr)
 @ stdcall DPtoLP(long ptr long)

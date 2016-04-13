@@ -250,6 +250,7 @@ HEADER_SRCS = \
 	d3drmobj.h \
 	d3drmwin.h \
 	d3dtypes.h \
+	d3dukmdt.h \
 	d3dvec.inl \
 	d3dx10.h \
 	d3dx10async.h \
@@ -276,6 +277,7 @@ HEADER_SRCS = \
 	ddeml.h \
 	ddk/compstui.h \
 	ddk/csq.h \
+	ddk/d3dkmthk.h \
 	ddk/hidclass.h \
 	ddk/hidpi.h \
 	ddk/hidport.h \
