@@ -2731,18 +2731,19 @@ static WS_READ_OPTION map_field_options( WS_TYPE type, ULONG options )
 static HRESULT read_type_struct_field( struct reader *reader, const WS_FIELD_DESCRIPTION *desc,
                                        WS_HEAP *heap, char *buf )
 {
-    char *ptr = buf + desc->offset;
+    char *ptr;
     WS_READ_OPTION option;
     ULONG size;
     HRESULT hr;
 
-    if (!(option = map_field_options( desc->type, desc->options ))) return E_INVALIDARG;
+    if (!desc || !(option = map_field_options( desc->type, desc->options ))) return E_INVALIDARG;
 
     if (option == WS_READ_REQUIRED_VALUE)
         size = get_type_size( desc->type, desc->typeDescription );
     else
         size = sizeof(void *);
 
+    ptr = buf + desc->offset;
     switch (desc->mapping)
     {
     case WS_ATTRIBUTE_FIELD_MAPPING:
