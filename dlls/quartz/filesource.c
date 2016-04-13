@@ -765,7 +765,7 @@ static inline FileAsyncReader *impl_from_BaseOutputPin(BaseOutputPin *iface)
     return CONTAINING_RECORD(iface, FileAsyncReader, pin);
 }
 
-static inline BaseOutputPin *impl_BaseOututPin_from_BasePin(BasePin *iface)
+static inline BaseOutputPin *impl_BaseOutputPin_from_BasePin(BasePin *iface)
 {
     return CONTAINING_RECORD(iface, BaseOutputPin, pin);
 }
@@ -881,7 +881,7 @@ static const IPinVtbl FileAsyncReaderPin_Vtbl =
  * doesn't need the IMemInputPin interface on the receiving pin */
 static HRESULT WINAPI FileAsyncReaderPin_AttemptConnection(BasePin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
-    BaseOutputPin *This = impl_BaseOututPin_from_BasePin(iface);
+    BaseOutputPin *This = impl_BaseOutputPin_from_BasePin(iface);
     HRESULT hr;
 
     TRACE("(%p, %p)\n", pReceivePin, pmt);
