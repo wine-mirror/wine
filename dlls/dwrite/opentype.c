@@ -1187,15 +1187,12 @@ void opentype_get_font_metrics(IDWriteFontFileStream *stream, DWRITE_FONT_FACE_T
             metrics->xHeight   = GET_BE_WORD(tt_os2->sxHeight);
         }
 
-        /* version 4 fields */
-        if (version >= 4) {
-            if (GET_BE_WORD(tt_os2->fsSelection) & OS2_FSSELECTION_USE_TYPO_METRICS) {
-                SHORT descent = GET_BE_WORD(tt_os2->sTypoDescender);
-                metrics->ascent = GET_BE_WORD(tt_os2->sTypoAscender);
-                metrics->descent = descent < 0 ? -descent : 0;
-                metrics->lineGap = GET_BE_WORD(tt_os2->sTypoLineGap);
-                metrics->hasTypographicMetrics = TRUE;
-            }
+        if (GET_BE_WORD(tt_os2->fsSelection) & OS2_FSSELECTION_USE_TYPO_METRICS) {
+            SHORT descent = GET_BE_WORD(tt_os2->sTypoDescender);
+            metrics->ascent = GET_BE_WORD(tt_os2->sTypoAscender);
+            metrics->descent = descent < 0 ? -descent : 0;
+            metrics->lineGap = GET_BE_WORD(tt_os2->sTypoLineGap);
+            metrics->hasTypographicMetrics = TRUE;
         }
     }
 

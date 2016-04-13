@@ -180,6 +180,19 @@ typedef struct
     USHORT usMaxContext;
 } TT_OS2_V2;
 
+enum OS2_FSSELECTION {
+    OS2_FSSELECTION_ITALIC           = 1 << 0,
+    OS2_FSSELECTION_UNDERSCORE       = 1 << 1,
+    OS2_FSSELECTION_NEGATIVE         = 1 << 2,
+    OS2_FSSELECTION_OUTLINED         = 1 << 3,
+    OS2_FSSELECTION_STRIKEOUT        = 1 << 4,
+    OS2_FSSELECTION_BOLD             = 1 << 5,
+    OS2_FSSELECTION_REGULAR          = 1 << 6,
+    OS2_FSSELECTION_USE_TYPO_METRICS = 1 << 7,
+    OS2_FSSELECTION_WWS              = 1 << 8,
+    OS2_FSSELECTION_OBLIQUE          = 1 << 9
+};
+
 typedef struct {
     ULONG Version;
     ULONG italicAngle;
@@ -1519,7 +1532,7 @@ todo_wine
     DELETE_FONTFILE(path);
 }
 
-static void get_expected_font_metrics(IDWriteFontFace *fontface, DWRITE_FONT_METRICS *metrics)
+static void get_expected_font_metrics(IDWriteFontFace *fontface, DWRITE_FONT_METRICS1 *metrics)
 {
     void *os2_context, *head_context, *post_context;
     const TT_OS2_V2 *tt_os2;
@@ -1542,6 +1555,19 @@ static void get_expected_font_metrics(IDWriteFontFace *fontface, DWRITE_FONT_MET
         metrics->designUnitsPerEm = GET_BE_WORD(tt_head->unitsPerEm);
 
     if (tt_os2) {
+        if (GET_BE_WORD(tt_os2->fsSelection) & OS2_FSSELECTION_USE_TYPO_METRICS) {
+            SHORT descent = GET_BE_WORD(tt_os2->sTypoDescender);
+            metrics->ascent = GET_BE_WORD(tt_os2->sTypoAscender);
+            metrics->descent = descent < 0 ? -descent : 0;
+            metrics->hasTypographicMetrics = TRUE;
+        }
+        else {
+            metrics->ascent  = GET_BE_WORD(tt_os2->usWinAscent);
+            /* Some fonts have usWinDescent value stored as signed short, which could be wrongly
+               interpreted as large unsigned value. */
+            metrics->descent = abs((SHORT)GET_BE_WORD(tt_os2->usWinDescent));
+        }
+
         metrics->strikethroughPosition  = GET_BE_WORD(tt_os2->yStrikeoutPosition);
         metrics->strikethroughThickness = GET_BE_WORD(tt_os2->yStrikeoutSize);
     }
@@ -1570,10 +1596,15 @@ static void get_expected_font_metrics(IDWriteFontFace *fontface, DWRITE_FONT_MET
         IDWriteFontFace_ReleaseFontTable(fontface, post_context);
 }
 
-static void check_font_metrics(const WCHAR *nameW, const DWRITE_FONT_METRICS *got, const DWRITE_FONT_METRICS *expected)
+static void check_font_metrics(const WCHAR *nameW, BOOL has_metrics1, const DWRITE_FONT_METRICS *got,
+    const DWRITE_FONT_METRICS1 *expected)
 {
     ok(got->designUnitsPerEm == expected->designUnitsPerEm, "font %s: designUnitsPerEm %u, expected %u\n",
         wine_dbgstr_w(nameW), got->designUnitsPerEm, expected->designUnitsPerEm);
+    ok(got->ascent == expected->ascent, "font %s: ascent %u, expected %u\n", wine_dbgstr_w(nameW), got->ascent,
+        expected->ascent);
+    ok(got->descent == expected->descent, "font %s: descent %u, expected %u\n", wine_dbgstr_w(nameW), got->descent,
+        expected->descent);
     ok(got->underlinePosition == expected->underlinePosition, "font %s: underlinePosition %d, expected %d\n",
         wine_dbgstr_w(nameW), got->underlinePosition, expected->underlinePosition);
     ok(got->underlineThickness == expected->underlineThickness, "font %s: underlineThickness %u, "
@@ -1582,6 +1613,12 @@ static void check_font_metrics(const WCHAR *nameW, const DWRITE_FONT_METRICS *go
         wine_dbgstr_w(nameW), got->strikethroughPosition, expected->strikethroughPosition);
     ok(got->strikethroughThickness == expected->strikethroughThickness, "font %s: strikethroughThickness %u, "
         "expected %u\n", wine_dbgstr_w(nameW), got->strikethroughThickness, expected->strikethroughThickness);
+
+    if (has_metrics1) {
+        const DWRITE_FONT_METRICS1 *m1 = (const DWRITE_FONT_METRICS1*)got;
+        ok(m1->hasTypographicMetrics == expected->hasTypographicMetrics, "font %s: hasTypographicMetrics %d, "
+            "expected %d\n", wine_dbgstr_w(nameW), m1->hasTypographicMetrics, expected->hasTypographicMetrics);
+    }
 }
 
 static void get_enus_string(IDWriteLocalizedStrings *strings, WCHAR *buff, UINT32 size)
@@ -1788,8 +1825,9 @@ if (0) /* crashes on native */
     count = IDWriteFontCollection_GetFontFamilyCount(syscollection);
 
     for (i = 0; i < count; i++) {
-        DWRITE_FONT_METRICS expected_metrics;
+        DWRITE_FONT_METRICS1 expected_metrics, metrics1;
         IDWriteLocalizedStrings *names;
+        IDWriteFontFace1 *fontface1;
         IDWriteFontFamily *family;
         IDWriteFont *font;
         WCHAR nameW[256];
@@ -1804,6 +1842,9 @@ if (0) /* crashes on native */
         hr = IDWriteFont_CreateFontFace(font, &fontface);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
+        fontface1 = NULL;
+        IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void**)&fontface1);
+
         hr = IDWriteFontFamily_GetFamilyNames(family, &names);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
@@ -1812,10 +1853,18 @@ if (0) /* crashes on native */
         IDWriteLocalizedStrings_Release(names);
         IDWriteFont_Release(font);
 
-        IDWriteFontFace_GetMetrics(fontface, &metrics);
         get_expected_font_metrics(fontface, &expected_metrics);
-        check_font_metrics(nameW, &metrics, &expected_metrics);
+        if (fontface1) {
+            IDWriteFontFace1_GetMetrics(fontface1, &metrics1);
+            check_font_metrics(nameW, TRUE, (const DWRITE_FONT_METRICS*)&metrics1, &expected_metrics);
+        }
+        else {
+            IDWriteFontFace_GetMetrics(fontface, &metrics);
+            check_font_metrics(nameW, FALSE, &metrics, &expected_metrics);
+        }
 
+        if (fontface1)
+            IDWriteFontFace1_Release(fontface1);
         IDWriteFontFace_Release(fontface);
         IDWriteFontFamily_Release(family);
     }
