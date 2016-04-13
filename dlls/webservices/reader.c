@@ -2016,6 +2016,7 @@ static HRESULT read_get_text( struct reader *reader, WS_TYPE_MAPPING mapping,
     }
     case WS_ELEMENT_TYPE_MAPPING:
     case WS_ELEMENT_CONTENT_TYPE_MAPPING:
+    case WS_ANY_ELEMENT_TYPE_MAPPING:
     {
         HRESULT hr;
         *found = TRUE;
@@ -2690,8 +2691,9 @@ static HRESULT read_type_text( struct reader *reader, const WS_FIELD_DESCRIPTION
     if ((hr = read_to_startelement( reader, &found )) != S_OK) return S_OK;
     if (!found) return WS_E_INVALID_FORMAT;
     if ((hr = read_node( reader )) != S_OK) return hr;
+    if (node_type( reader->current ) != WS_XML_NODE_TYPE_TEXT) return WS_E_INVALID_FORMAT;
 
-    return read_type( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, desc->type, NULL, NULL,
+    return read_type( reader, WS_ANY_ELEMENT_TYPE_MAPPING, desc->type, NULL, NULL,
                       desc->typeDescription, option, heap, ret, size );
 }
 
@@ -2875,6 +2877,7 @@ static HRESULT read_type( struct reader *reader, WS_TYPE_MAPPING mapping, WS_TYP
         if ((hr = read_type_next_element_node( reader, localname, ns )) != S_OK) return hr;
         break;
 
+    case WS_ANY_ELEMENT_TYPE_MAPPING:
     case WS_ATTRIBUTE_TYPE_MAPPING:
         break;
 
