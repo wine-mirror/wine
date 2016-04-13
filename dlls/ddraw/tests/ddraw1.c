@@ -8674,6 +8674,81 @@ static void test_getdc(void)
 
         if (SUCCEEDED(hr))
         {
+            unsigned int width_bytes;
+            DIBSECTION dib;
+            HBITMAP bitmap;
+            DWORD type;
+            int size;
+
+            type = GetObjectType(dc);
+            ok(type == OBJ_MEMDC, "Got unexpected object type %#x for format %s.\n", type, test_data[i].name);
+            bitmap = GetCurrentObject(dc, OBJ_BITMAP);
+            type = GetObjectType(bitmap);
+            ok(type == OBJ_BITMAP, "Got unexpected object type %#x for format %s.\n", type, test_data[i].name);
+
+            size = GetObjectA(bitmap, sizeof(dib), &dib);
+            ok(size == sizeof(dib), "Got unexpected size %d for format %s.\n", size, test_data[i].name);
+            ok(!dib.dsBm.bmType, "Got unexpected type %#x for format %s.\n",
+                    dib.dsBm.bmType, test_data[i].name);
+            ok(dib.dsBm.bmWidth == surface_desc.dwWidth, "Got unexpected width %d for format %s.\n",
+                    dib.dsBm.bmWidth, test_data[i].name);
+            ok(dib.dsBm.bmHeight == surface_desc.dwHeight, "Got unexpected height %d for format %s.\n",
+                    dib.dsBm.bmHeight, test_data[i].name);
+            width_bytes = ((dib.dsBm.bmWidth * U1(test_data[i].format).dwRGBBitCount + 31) >> 3) & ~3;
+            ok(dib.dsBm.bmWidthBytes == width_bytes, "Got unexpected width bytes %d for format %s.\n",
+                    dib.dsBm.bmWidthBytes, test_data[i].name);
+            ok(dib.dsBm.bmPlanes == 1, "Got unexpected plane count %d for format %s.\n",
+                    dib.dsBm.bmPlanes, test_data[i].name);
+            ok(dib.dsBm.bmBitsPixel == U1(test_data[i].format).dwRGBBitCount,
+                    "Got unexpected bit count %d for format %s.\n",
+                    dib.dsBm.bmBitsPixel, test_data[i].name);
+            ok(!!dib.dsBm.bmBits, "Got unexpected bits %p for format %s.\n",
+                    dib.dsBm.bmBits, test_data[i].name);
+
+            ok(dib.dsBmih.biSize == sizeof(dib.dsBmih), "Got unexpected size %u for format %s.\n",
+                    dib.dsBmih.biSize, test_data[i].name);
+            ok(dib.dsBmih.biWidth == surface_desc.dwWidth, "Got unexpected width %d for format %s.\n",
+                    dib.dsBmih.biHeight, test_data[i].name);
+            ok(dib.dsBmih.biHeight == surface_desc.dwHeight, "Got unexpected height %d for format %s.\n",
+                    dib.dsBmih.biHeight, test_data[i].name);
+            ok(dib.dsBmih.biPlanes == 1, "Got unexpected plane count %u for format %s.\n",
+                    dib.dsBmih.biPlanes, test_data[i].name);
+            ok(dib.dsBmih.biBitCount == U1(test_data[i].format).dwRGBBitCount,
+                    "Got unexpected bit count %u for format %s.\n",
+                    dib.dsBmih.biBitCount, test_data[i].name);
+            ok(dib.dsBmih.biCompression == (U1(test_data[i].format).dwRGBBitCount == 16 ? BI_BITFIELDS : BI_RGB)
+                    || broken(U2(test_data[i].format).dwRGBBitCount == 32 && dib.dsBmih.biCompression == BI_BITFIELDS),
+                    "Got unexpected compression %#x for format %s.\n",
+                    dib.dsBmih.biCompression, test_data[i].name);
+            todo_wine ok(!dib.dsBmih.biSizeImage, "Got unexpected image size %u for format %s.\n",
+                    dib.dsBmih.biSizeImage, test_data[i].name);
+            ok(!dib.dsBmih.biXPelsPerMeter, "Got unexpected horizontal resolution %d for format %s.\n",
+                    dib.dsBmih.biXPelsPerMeter, test_data[i].name);
+            ok(!dib.dsBmih.biYPelsPerMeter, "Got unexpected vertical resolution %d for format %s.\n",
+                    dib.dsBmih.biYPelsPerMeter, test_data[i].name);
+            ok(!dib.dsBmih.biClrUsed, "Got unexpected used colour count %u for format %s.\n",
+                    dib.dsBmih.biClrUsed, test_data[i].name);
+            ok(!dib.dsBmih.biClrImportant, "Got unexpected important colour count %u for format %s.\n",
+                    dib.dsBmih.biClrImportant, test_data[i].name);
+
+            if (dib.dsBmih.biCompression == BI_BITFIELDS)
+            {
+                ok((dib.dsBitfields[0] == U2(test_data[i].format).dwRBitMask
+                        && dib.dsBitfields[1] == U3(test_data[i].format).dwGBitMask
+                        && dib.dsBitfields[2] == U4(test_data[i].format).dwBBitMask)
+                        || broken(!dib.dsBitfields[0] && !dib.dsBitfields[1] && !dib.dsBitfields[2]),
+                        "Got unexpected colour masks 0x%08x 0x%08x 0x%08x for format %s.\n",
+                        dib.dsBitfields[0], dib.dsBitfields[1], dib.dsBitfields[2], test_data[i].name);
+            }
+            else
+            {
+                ok(!dib.dsBitfields[0] && !dib.dsBitfields[1] && !dib.dsBitfields[2],
+                        "Got unexpected colour masks 0x%08x 0x%08x 0x%08x for format %s.\n",
+                        dib.dsBitfields[0], dib.dsBitfields[1], dib.dsBitfields[2], test_data[i].name);
+            }
+            ok(!dib.dshSection, "Got unexpected section %p for format %s.\n", dib.dshSection, test_data[i].name);
+            ok(!dib.dsOffset, "Got unexpected offset %u for format %s.\n", dib.dsOffset, test_data[i].name);
+
             hr = IDirectDrawSurface_ReleaseDC(surface, dc);
             ok(hr == DD_OK, "Failed to release DC for format %s, hr %#x.\n", test_data[i].name, hr);
         }
