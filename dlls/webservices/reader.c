@@ -2761,7 +2761,7 @@ static HRESULT read_type_text( struct reader *reader, const WS_FIELD_DESCRIPTION
 
 static WS_READ_OPTION map_field_options( WS_TYPE type, ULONG options )
 {
-    if (options & !(WS_FIELD_POINTER | WS_FIELD_OPTIONAL))
+    if (options & ~(WS_FIELD_POINTER | WS_FIELD_OPTIONAL))
     {
         FIXME( "options %08x not supported\n", options );
         return 0;
