@@ -4501,25 +4501,6 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
     unsigned int resource_size;
     HRESULT hr;
 
-    if (container->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
-    {
-        unsigned int pow2_width = 1, pow2_height = 1;
-
-        /* Find the nearest pow2 match. */
-        while (pow2_width < desc->width)
-            pow2_width <<= 1;
-        while (pow2_height < desc->height)
-            pow2_height <<= 1;
-
-        surface->pow2Width = pow2_width;
-        surface->pow2Height = pow2_height;
-    }
-    else
-    {
-        surface->pow2Width = desc->width;
-        surface->pow2Height = desc->height;
-    }
-
     /* Quick lockable sanity check.
      * TODO: remove this after surfaces, usage and lockability have been debugged properly
      * this function is too deep to need to care about things like this.
@@ -4564,6 +4545,8 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
     }
 
     surface->container = container;
+    surface->pow2Width = wined3d_texture_get_level_pow2_width(container, level);
+    surface->pow2Height = wined3d_texture_get_level_pow2_height(container, level);
     surface->texture_target = target;
     surface->texture_level = level;
     surface->texture_layer = layer;

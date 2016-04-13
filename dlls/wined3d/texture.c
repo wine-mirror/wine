@@ -899,18 +899,20 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
             && !gl_info->supported[ARB_TEXTURE_RECTANGLE] && !gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
     {
         texture->flags |= WINED3D_TEXTURE_COND_NP2_EMULATED;
-        surface->pow2Width = surface->pow2Height = 1;
-        while (surface->pow2Width < width)
-            surface->pow2Width <<= 1;
-        while (surface->pow2Height < height)
-            surface->pow2Height <<= 1;
+        texture->pow2_width = texture->pow2_height = 1;
+        while (texture->pow2_width < width)
+            texture->pow2_width <<= 1;
+        while (texture->pow2_height < height)
+            texture->pow2_height <<= 1;
     }
     else
     {
         texture->flags &= ~WINED3D_TEXTURE_COND_NP2_EMULATED;
-        surface->pow2Width = width;
-        surface->pow2Height = height;
+        texture->pow2_width = width;
+        texture->pow2_height = height;
     }
+    surface->pow2Width = texture->pow2_width;
+    surface->pow2Height = texture->pow2_height;
 
     sub_resource->locations = 0;
 
@@ -1556,6 +1558,8 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
             texture->flags |= WINED3D_TEXTURE_COND_NP2_EMULATED;
         }
     }
+    texture->pow2_width = pow2_width;
+    texture->pow2_height = pow2_height;
 
     if ((pow2_width > gl_info->limits.texture_size || pow2_height > gl_info->limits.texture_size)
             && (desc->usage & WINED3DUSAGE_TEXTURE))
