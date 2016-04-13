@@ -7716,18 +7716,18 @@ static void test_getdc(void)
         hr = IDirect3DSurface9_GetDC(surface, &dc);
         ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", testdata[i].name, hr);
         hr = IDirect3DSurface9_GetDC(surface2, &dc2);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
         hr = IDirect3DSurface9_ReleaseDC(surface2, dc2);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
         hr = IDirect3DSurface9_ReleaseDC(surface, dc);
         ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", testdata[i].name, hr);
 
         hr = IDirect3DSurface9_GetDC(surface2, &dc);
         ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", testdata[i].name, hr);
         hr = IDirect3DSurface9_GetDC(surface, &dc2);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
         hr = IDirect3DSurface9_ReleaseDC(surface, dc2);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
         hr = IDirect3DSurface9_ReleaseDC(surface2, dc);
         ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", testdata[i].name, hr);
 
@@ -7752,16 +7752,16 @@ static void test_getdc(void)
         hr = IDirect3DSurface9_LockRect(surface2, &map_desc, NULL, D3DLOCK_READONLY);
         ok(SUCCEEDED(hr), "Failed to map surface for format %s, hr %#x.\n", testdata[i].name, hr);
         hr = IDirect3DSurface9_GetDC(surface, &dc);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
         hr = IDirect3DSurface9_ReleaseDC(surface, dc);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
         hr = IDirect3DSurface9_UnlockRect(surface2);
         ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", testdata[i].name, hr);
 
         hr = IDirect3DSurface9_GetDC(surface, &dc);
         ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", testdata[i].name, hr);
         hr = IDirect3DSurface9_LockRect(surface2, &map_desc, NULL, D3DLOCK_READONLY);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
         hr = IDirect3DSurface9_UnlockRect(surface2);
         ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", testdata[i].name, hr);
         hr = IDirect3DSurface9_ReleaseDC(surface, dc);
@@ -7770,7 +7770,7 @@ static void test_getdc(void)
         hr = IDirect3DSurface9_GetDC(surface2, &dc);
         ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", testdata[i].name, hr);
         hr = IDirect3DSurface9_LockRect(surface, &map_desc, NULL, D3DLOCK_READONLY);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
         hr = IDirect3DSurface9_UnlockRect(surface);
         ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", testdata[i].name, hr);
         hr = IDirect3DSurface9_ReleaseDC(surface2, dc);
@@ -7781,7 +7781,7 @@ static void test_getdc(void)
         hr = IDirect3DSurface9_GetDC(surface2, &dc);
         ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", testdata[i].name, hr);
         hr = IDirect3DSurface9_UnlockRect(surface);
-        todo_wine ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", testdata[i].name, hr);
+        ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", testdata[i].name, hr);
         hr = IDirect3DSurface9_ReleaseDC(surface2, dc);
         ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", testdata[i].name, hr);
         hr = IDirect3DSurface9_UnlockRect(surface);
@@ -7792,7 +7792,7 @@ static void test_getdc(void)
         hr = IDirect3DSurface9_GetDC(surface, &dc);
         ok(SUCCEEDED(hr), "Failed to get DC for format %s, hr %#x.\n", testdata[i].name, hr);
         hr = IDirect3DSurface9_UnlockRect(surface2);
-        todo_wine ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", testdata[i].name, hr);
+        ok(SUCCEEDED(hr), "Failed to unmap surface for format %s, hr %#x.\n", testdata[i].name, hr);
         hr = IDirect3DSurface9_ReleaseDC(surface, dc);
         ok(SUCCEEDED(hr), "Failed to release DC for format %s, hr %#x.\n", testdata[i].name, hr);
         hr = IDirect3DSurface9_UnlockRect(surface2);

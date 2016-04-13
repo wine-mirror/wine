@@ -838,6 +838,12 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         return WINED3DERR_INVALIDCALL;
     }
 
+    if (texture->resource.map_count)
+    {
+        WARN("Texture is mapped.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
     /* We have no way of supporting a pitch that is not a multiple of the pixel
      * byte width short of uploading the texture row-by-row.
      * Fortunately that's not an issue since D3D9Ex doesn't allow a custom pitch
@@ -851,17 +857,11 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         return WINED3DERR_INVALIDCALL;
     }
 
-    sub_resource = &texture->sub_resources[0];
-    surface = sub_resource->u.surface;
-    if (sub_resource->map_count || (surface->flags & SFLAG_DCINUSE))
-    {
-        WARN("Surface is mapped or the DC is in use.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
     if (device->d3d_initialized)
         texture->resource.resource_ops->resource_unload(&texture->resource);
 
+    sub_resource = &texture->sub_resources[0];
+    surface = sub_resource->u.surface;
     if (surface->flags & SFLAG_DIBSECTION)
     {
         DeleteDC(surface->hDC);
@@ -1291,6 +1291,12 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
             return WINED3DERR_INVALIDCALL;
     }
 
+    if (texture->flags & WINED3D_TEXTURE_DC_IN_USE)
+    {
+        WARN("DC is in use.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
     if (sub_resource->map_count)
     {
         WARN("Sub-resource is already mapped.\n");
@@ -1433,6 +1439,8 @@ static HRESULT texture_resource_sub_resource_unmap(struct wined3d_resource *reso
     if (!sub_resource->map_count)
     {
         WARN("Trying to unmap unmapped sub-resource.\n");
+        if (texture->flags & WINED3D_TEXTURE_DC_IN_USE)
+            return WINED3D_OK;
         return WINEDDERR_NOTLOCKED;
     }
 
@@ -2238,7 +2246,7 @@ HRESULT CDECL wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned i
 
     surface = sub_resource->u.surface;
 
-    if (sub_resource->map_count && !(texture->flags & WINED3D_TEXTURE_GET_DC_LENIENT))
+    if (texture->resource.map_count && !(texture->flags & WINED3D_TEXTURE_GET_DC_LENIENT))
         return WINED3DERR_INVALIDCALL;
 
     if (device->d3d_initialized)
@@ -2266,7 +2274,7 @@ HRESULT CDECL wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned i
         context_release(context);
 
     if (!(texture->flags & WINED3D_TEXTURE_GET_DC_LENIENT))
-        surface->flags |= SFLAG_DCINUSE;
+        texture->flags |= WINED3D_TEXTURE_DC_IN_USE;
     ++texture->resource.map_count;
     ++sub_resource->map_count;
 
@@ -2296,7 +2304,7 @@ HRESULT CDECL wined3d_texture_release_dc(struct wined3d_texture *texture, unsign
 
     surface = sub_resource->u.surface;
 
-    if (!(texture->flags & WINED3D_TEXTURE_GET_DC_LENIENT) && !(surface->flags & SFLAG_DCINUSE))
+    if (!(texture->flags & (WINED3D_TEXTURE_GET_DC_LENIENT | WINED3D_TEXTURE_DC_IN_USE)))
         return WINED3DERR_INVALIDCALL;
 
     if (surface->hDC != dc)
@@ -2309,7 +2317,7 @@ HRESULT CDECL wined3d_texture_release_dc(struct wined3d_texture *texture, unsign
     --sub_resource->map_count;
     --texture->resource.map_count;
     if (!(texture->flags & WINED3D_TEXTURE_GET_DC_LENIENT))
-        surface->flags &= ~SFLAG_DCINUSE;
+        texture->flags &= ~WINED3D_TEXTURE_DC_IN_USE;
 
     if (surface->resource.map_binding == WINED3D_LOCATION_USER_MEMORY
             || (surface->container->flags & WINED3D_TEXTURE_PIN_SYSMEM

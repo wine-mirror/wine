@@ -2439,6 +2439,7 @@ struct wined3d_texture_ops
 #define WINED3D_TEXTURE_PIN_SYSMEM          0x00000200
 #define WINED3D_TEXTURE_NORMALIZED_COORDS   0x00000400
 #define WINED3D_TEXTURE_GET_DC_LENIENT      0x00000800
+#define WINED3D_TEXTURE_DC_IN_USE           0x00001000
 
 #define WINED3D_TEXTURE_ASYNC_COLOR_KEY     0x00000001
 
@@ -2720,7 +2721,6 @@ void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3
 /* Surface flags: */
 #define SFLAG_DIBSECTION        0x00000001 /* Has a DIB section attached for GetDC. */
 #define SFLAG_DISCARD           0x00000002 /* ??? */
-#define SFLAG_DCINUSE           0x00000020 /* Set between GetDC and ReleaseDC calls. */
 
 struct wined3d_sampler
 {
