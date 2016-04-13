@@ -407,10 +407,11 @@ static void remove_vbos(struct wined3d_context *context,
 }
 
 /* Routine common to the draw primitive and draw indexed primitive routines */
-void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_count,
-        UINT start_instance, UINT instance_count, BOOL indexed)
+void draw_primitive(struct wined3d_device *device, const struct wined3d_state *state,
+        unsigned int start_idx, unsigned int index_count, unsigned int start_instance,
+        unsigned int instance_count, BOOL indexed)
 {
-    const struct wined3d_state *state = &device->state;
+    const struct wined3d_fb_state *fb = state->fb;
     const struct wined3d_stream_info *stream_info;
     struct wined3d_event_query *ib_query = NULL;
     struct wined3d_stream_info si_emulated;
@@ -423,7 +424,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
 
     if (!index_count) return;
 
-    context = context_acquire(device, wined3d_rendertarget_view_get_surface(device->fb.render_targets[0]));
+    context = context_acquire(device, wined3d_rendertarget_view_get_surface(fb->render_targets[0]));
     if (!context->valid)
     {
         context_release(context);
@@ -432,9 +433,9 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
     }
     gl_info = context->gl_info;
 
-    for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
+    for (i = 0; i < gl_info->limits.buffers; ++i)
     {
-        struct wined3d_rendertarget_view *rtv = device->fb.render_targets[i];
+        struct wined3d_rendertarget_view *rtv = fb->render_targets[i];
         struct wined3d_surface *target = wined3d_rendertarget_view_get_surface(rtv);
 
         if (target && rtv->format->id != WINED3DFMT_NULL)
@@ -452,16 +453,16 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
         }
     }
 
-    if (device->fb.depth_stencil)
+    if (fb->depth_stencil)
     {
         /* Note that this depends on the context_acquire() call above to set
          * context->render_offscreen properly. We don't currently take the
          * Z-compare function into account, but we could skip loading the
          * depthstencil for D3DCMP_NEVER and D3DCMP_ALWAYS as well. Also note
          * that we never copy the stencil data.*/
-        DWORD location = context->render_offscreen ? device->fb.depth_stencil->resource->draw_binding
+        DWORD location = context->render_offscreen ? fb->depth_stencil->resource->draw_binding
                 : WINED3D_LOCATION_DRAWABLE;
-        struct wined3d_surface *ds = wined3d_rendertarget_view_get_surface(device->fb.depth_stencil);
+        struct wined3d_surface *ds = wined3d_rendertarget_view_get_surface(fb->depth_stencil);
 
         if (state->render_states[WINED3D_RS_ZWRITEENABLE] || state->render_states[WINED3D_RS_ZENABLE])
         {
@@ -494,9 +495,9 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
         return;
     }
 
-    if (device->fb.depth_stencil && state->render_states[WINED3D_RS_ZWRITEENABLE])
+    if (fb->depth_stencil && state->render_states[WINED3D_RS_ZWRITEENABLE])
     {
-        struct wined3d_surface *ds = wined3d_rendertarget_view_get_surface(device->fb.depth_stencil);
+        struct wined3d_surface *ds = wined3d_rendertarget_view_get_surface(fb->depth_stencil);
         DWORD location = context->render_offscreen ? ds->container->resource.draw_binding : WINED3D_LOCATION_DRAWABLE;
 
         surface_modify_ds_location(ds, location, ds->ds_current_size.cx, ds->ds_current_size.cy);
