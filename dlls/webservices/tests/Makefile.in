@@ -2,5 +2,6 @@ TESTDLL   = webservices.dll
 IMPORTS   = webservices
 
 C_SRCS = \
+	channel.c \
 	reader.c \
 	writer.c
