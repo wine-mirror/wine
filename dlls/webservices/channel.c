@@ -78,6 +78,15 @@ static HRESULT set_channel_prop( struct channel *channel, WS_CHANNEL_PROPERTY_ID
     return S_OK;
 }
 
+static HRESULT get_channel_prop( struct channel *channel, WS_CHANNEL_PROPERTY_ID id, void *buf, ULONG size )
+{
+    if (id >= channel->prop_count || size != channel_props[id].size)
+        return E_INVALIDARG;
+
+    memcpy( buf, channel->prop[id].value, channel->prop[id].valueSize );
+    return S_OK;
+}
+
 void free_channel( struct channel *channel )
 {
     heap_free( channel );
@@ -155,4 +164,32 @@ void WINAPI WsFreeChannel( WS_CHANNEL *handle )
 
     TRACE( "%p\n", handle );
     free_channel( channel );
+}
+
+/**************************************************************************
+ *          WsGetChannelProperty		[webservices.@]
+ */
+HRESULT WINAPI WsGetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID id, void *buf,
+                                     ULONG size, WS_ERROR *error )
+{
+    struct channel *channel = (struct channel *)handle;
+
+    TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    return get_channel_prop( channel, id, buf, size );
+}
+
+/**************************************************************************
+ *          WsSetChannelProperty		[webservices.@]
+ */
+HRESULT WINAPI WsSetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID id, const void *value,
+                                     ULONG size, WS_ERROR *error )
+{
+    struct channel *channel = (struct channel *)handle;
+
+    TRACE( "%p %u %p %u\n", handle, id, value, size );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    return set_channel_prop( channel, id, value, size );
 }

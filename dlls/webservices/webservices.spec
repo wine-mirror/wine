@@ -59,7 +59,7 @@
 @ stub WsFreeServiceHost
 @ stub WsFreeServiceProxy
 @ stdcall WsFreeWriter(ptr)
-@ stub WsGetChannelProperty
+@ stdcall WsGetChannelProperty(ptr long ptr long ptr)
 @ stub WsGetCustomHeader
 @ stub WsGetDictionary
 @ stdcall WsGetErrorProperty(ptr long ptr long)
@@ -145,7 +145,7 @@
 @ stub WsSendFaultMessageForError
 @ stub WsSendMessage
 @ stub WsSendReplyMessage
-@ stub WsSetChannelProperty
+@ stdcall WsSetChannelProperty(ptr long ptr long ptr)
 @ stdcall WsSetErrorProperty(ptr long ptr long)
 @ stub WsSetFaultErrorDetail
 @ stub WsSetFaultErrorProperty
