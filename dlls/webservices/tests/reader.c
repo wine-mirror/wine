@@ -1324,6 +1324,12 @@ static void test_WsReadType(void)
     HRESULT hr;
     WS_XML_READER *reader;
     WS_HEAP *heap;
+    enum { ONE = 1, TWO = 2 };
+    WS_XML_STRING one = { 3, (BYTE *)"ONE" };
+    WS_XML_STRING two = { 3, (BYTE *)"TWO" };
+    WS_ENUM_VALUE enum_values[] = { { ONE, &one }, { TWO, &two } };
+    WS_ENUM_DESCRIPTION enum_desc;
+    int val_enum;
     WCHAR *val_str;
     BOOL val_bool;
     INT8 val_int8;
@@ -1560,6 +1566,18 @@ static void test_WsReadType(void)
                      WS_READ_REQUIRED_VALUE, heap, &val_uint64, sizeof(val_uint64), NULL );
     todo_wine ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
     ok( !val_uint64, "wrong value\n" );
+
+    enum_desc.values       = enum_values;
+    enum_desc.valueCount   = sizeof(enum_values)/sizeof(enum_values[0]);
+    enum_desc.maxByteCount = 3;
+    enum_desc.nameIndices  = NULL;
+
+    val_enum = 0;
+    prepare_type_test( reader, "<t>ONE</t>", sizeof("<t>ONE</t>") - 1 );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_ENUM_TYPE, &enum_desc,
+                     WS_READ_REQUIRED_VALUE, heap, &val_enum, sizeof(val_enum), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( val_enum == 1, "got %d\n", val_enum );
 
     WsFreeReader( reader );
     WsFreeHeap( heap );

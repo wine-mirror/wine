@@ -2542,6 +2542,67 @@ static HRESULT read_type_wsz( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT get_enum_value( const WS_XML_UTF8_TEXT *text, const WS_ENUM_DESCRIPTION *desc, int *ret )
+{
+    ULONG i;
+    for (i = 0; i < desc->valueCount; i++)
+    {
+        if (WsXmlStringEquals( &text->value, desc->values[i].name, NULL ) == S_OK)
+        {
+            *ret = desc->values[i].value;
+            return S_OK;
+        }
+    }
+    return WS_E_INVALID_FORMAT;
+}
+
+static HRESULT read_type_enum( struct reader *reader, WS_TYPE_MAPPING mapping,
+                               const WS_XML_STRING *localname, const WS_XML_STRING *ns,
+                               const WS_ENUM_DESCRIPTION *desc, WS_READ_OPTION option,
+                               WS_HEAP *heap, void *ret, ULONG size )
+{
+    WS_XML_UTF8_TEXT *utf8;
+    HRESULT hr;
+    int val = 0;
+    BOOL found;
+
+    if (!desc) return E_INVALIDARG;
+
+    if ((hr = read_get_text( reader, mapping, localname, ns, &utf8, &found )) != S_OK) return hr;
+    if (found && (hr = get_enum_value( utf8, desc, &val )) != S_OK) return hr;
+
+    switch (option)
+    {
+    case WS_READ_REQUIRED_VALUE:
+        if (!found) return WS_E_INVALID_FORMAT;
+        if (size != sizeof(int)) return E_INVALIDARG;
+        *(int *)ret = val;
+        break;
+
+    case WS_READ_REQUIRED_POINTER:
+        if (!found) return WS_E_INVALID_FORMAT;
+        /* fall through */
+
+    case WS_READ_OPTIONAL_POINTER:
+    {
+        int *heap_val = NULL;
+        if (size != sizeof(heap_val)) return E_INVALIDARG;
+        if (found)
+        {
+            if (!(heap_val = ws_alloc( heap, sizeof(*heap_val) ))) return WS_E_QUOTA_EXCEEDED;
+            *heap_val = val;
+        }
+        *(int **)ret = heap_val;
+        break;
+    }
+    default:
+        FIXME( "read option %u not supported\n", option );
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 static BOOL is_empty_text_node( const struct node *node )
 {
     const WS_XML_TEXT_NODE *text = (const WS_XML_TEXT_NODE *)node;
@@ -2608,6 +2669,7 @@ static ULONG get_type_size( WS_TYPE type, const WS_STRUCT_DESCRIPTION *desc )
     case WS_BOOL_TYPE:
     case WS_INT32_TYPE:
     case WS_UINT32_TYPE:
+    case WS_ENUM_TYPE:
         return sizeof(INT32);
 
     case WS_INT64_TYPE:
@@ -2716,6 +2778,7 @@ static WS_READ_OPTION map_field_options( WS_TYPE type, ULONG options )
     case WS_UINT16_TYPE:
     case WS_UINT32_TYPE:
     case WS_UINT64_TYPE:
+    case WS_ENUM_TYPE:
         return WS_READ_REQUIRED_VALUE;
 
     case WS_WSZ_TYPE:
@@ -2941,6 +3004,11 @@ static HRESULT read_type( struct reader *reader, WS_TYPE_MAPPING mapping, WS_TYP
 
     case WS_WSZ_TYPE:
         if ((hr = read_type_wsz( reader, mapping, localname, ns, desc, option, heap, value, size )) != S_OK)
+            return hr;
+        break;
+
+    case WS_ENUM_TYPE:
+        if ((hr = read_type_enum( reader, mapping, localname, ns, desc, option, heap, value, size )) != S_OK)
             return hr;
         break;
 
