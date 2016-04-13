@@ -430,9 +430,7 @@ static RECT WINAPI VideoRenderer_GetDefaultRect(BaseWindow *iface)
     VideoRendererImpl *This = impl_from_BaseWindow(iface);
     static RECT defRect;
 
-    defRect.left = defRect.top = 0;
-    defRect.right = This->VideoWidth;
-    defRect.bottom = This->VideoHeight;
+    SetRect(&defRect, 0, 0, This->VideoWidth, This->VideoHeight);
 
     return defRect;
 }
@@ -596,10 +594,7 @@ static HRESULT WINAPI VideoRenderer_SetDefaultSourceRect(BaseControlVideo* iface
 {
     VideoRendererImpl *This = impl_from_BaseControlVideo(iface);
 
-    This->SourceRect.left = 0;
-    This->SourceRect.top = 0;
-    This->SourceRect.right = This->VideoWidth;
-    This->SourceRect.bottom = This->VideoHeight;
+    SetRect(&This->SourceRect, 0, 0, This->VideoWidth, This->VideoHeight);
 
     return S_OK;
 }
@@ -612,10 +607,7 @@ static HRESULT WINAPI VideoRenderer_SetDefaultTargetRect(BaseControlVideo* iface
     if (!GetClientRect(This->baseControlWindow.baseWindow.hWnd, &rect))
         return E_FAIL;
 
-    This->DestRect.left = 0;
-    This->DestRect.top = 0;
-    This->DestRect.right = rect.right;
-    This->DestRect.bottom = rect.bottom;
+    SetRect(&This->DestRect, 0, 0, rect.right, rect.bottom);
 
     return S_OK;
 }
