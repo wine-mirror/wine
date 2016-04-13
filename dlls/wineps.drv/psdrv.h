@@ -549,7 +549,7 @@ extern BOOL PSDRV_WriteBuiltinGlyphShow(PHYSDEV dev, LPCWSTR str, INT count) DEC
 
 extern BOOL PSDRV_SelectDownloadFont(PHYSDEV dev) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteSetDownloadFont(PHYSDEV dev, BOOL vertical) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteDownloadGlyphShow(PHYSDEV dev, const WORD *glpyhs, UINT count) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteDownloadGlyphShow(PHYSDEV dev, const WORD *glyphs, UINT count) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_EmptyDownloadList(PHYSDEV dev, BOOL write_undef) DECLSPEC_HIDDEN;
 
 extern DWORD write_spool( PHYSDEV dev, const void *data, DWORD num ) DECLSPEC_HIDDEN;
