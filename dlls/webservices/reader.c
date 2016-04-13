@@ -2759,7 +2759,7 @@ static HRESULT read_type_struct_field( struct reader *reader, const WS_FIELD_DES
     {
         ULONG count;
         hr = read_type_repeating_element( reader, desc, option, heap, (void **)ptr, size, &count );
-        if (hr == S_OK) *(ULONG *)(ptr + desc->countOffset) = count;
+        if (hr == S_OK) *(ULONG *)(buf + desc->countOffset) = count;
         break;
     }
     case WS_TEXT_FIELD_MAPPING:
