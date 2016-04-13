@@ -143,13 +143,13 @@ DWORD WINAPI SfcConnectToServer(DWORD unknown)
 BOOL WINAPI SRSetRestorePointA(RESTOREPOINTINFOA *restorepoint, STATEMGRSTATUS *status)
 {
     FIXME("%p %p\n", restorepoint, status);
-    status->nStatus = ERROR_SERVICE_DISABLED;
+    status->nStatus = ERROR_SUCCESS;
     return FALSE;
 }
 
 BOOL WINAPI SRSetRestorePointW(RESTOREPOINTINFOW *restorepoint, STATEMGRSTATUS *status)
 {
     FIXME("%p %p\n", restorepoint, status);
-    status->nStatus = ERROR_SERVICE_DISABLED;
+    status->nStatus = ERROR_SUCCESS;
     return FALSE;
 }
