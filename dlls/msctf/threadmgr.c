@@ -99,8 +99,8 @@ typedef struct tagACLMulti {
     ITfDocumentMgr *focus;
     LONG activationCount;
 
-    ITfKeyEventSink *forgroundKeyEventSink;
-    CLSID forgroundTextService;
+    ITfKeyEventSink *foregroundKeyEventSink;
+    CLSID foregroundTextService;
 
     struct list CurrentPreservedKeys;
     struct list CreatedDocumentMgrs;
@@ -767,15 +767,15 @@ static HRESULT WINAPI KeystrokeMgr_AdviseKeyEventSink(ITfKeystrokeMgr *iface,
 
     if (fForeground)
     {
-        if (This->forgroundKeyEventSink)
+        if (This->foregroundKeyEventSink)
         {
-            ITfKeyEventSink_OnSetFocus(This->forgroundKeyEventSink, FALSE);
-            ITfKeyEventSink_Release(This->forgroundKeyEventSink);
+            ITfKeyEventSink_OnSetFocus(This->foregroundKeyEventSink, FALSE);
+            ITfKeyEventSink_Release(This->foregroundKeyEventSink);
         }
         ITfKeyEventSink_AddRef(check);
         ITfKeyEventSink_OnSetFocus(check, TRUE);
-        This->forgroundKeyEventSink = check;
-        This->forgroundTextService = textservice;
+        This->foregroundKeyEventSink = check;
+        This->foregroundTextService = textservice;
     }
     return S_OK;
 }
@@ -803,11 +803,11 @@ static HRESULT WINAPI KeystrokeMgr_UnadviseKeyEventSink(ITfKeystrokeMgr *iface,
     set_textservice_sink(tid, &IID_ITfKeyEventSink, NULL);
     ITfKeyEventSink_Release(check);
 
-    if (This->forgroundKeyEventSink == check)
+    if (This->foregroundKeyEventSink == check)
     {
-        ITfKeyEventSink_Release(This->forgroundKeyEventSink);
-        This->forgroundKeyEventSink = NULL;
-        This->forgroundTextService = GUID_NULL;
+        ITfKeyEventSink_Release(This->foregroundKeyEventSink);
+        This->foregroundKeyEventSink = NULL;
+        This->foregroundTextService = GUID_NULL;
     }
     return S_OK;
 }
@@ -820,10 +820,10 @@ static HRESULT WINAPI KeystrokeMgr_GetForeground(ITfKeystrokeMgr *iface,
     if (!pclsid)
         return E_INVALIDARG;
 
-    if (IsEqualCLSID(&This->forgroundTextService,&GUID_NULL))
+    if (IsEqualCLSID(&This->foregroundTextService,&GUID_NULL))
         return S_FALSE;
 
-    *pclsid = This->forgroundTextService;
+    *pclsid = This->foregroundTextService;
     return S_OK;
 }
 
