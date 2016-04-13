@@ -283,7 +283,7 @@ static HRESULT on_silent_change(WebBrowser *This)
     return S_OK;
 }
 
-static void release_client_site(WebBrowser *This)
+static void release_client_site(WebBrowser *This, BOOL destroy_win)
 {
     release_dochost_client(&This->doc_host);
 
@@ -297,7 +297,7 @@ static void release_client_site(WebBrowser *This)
         This->client_closed = NULL;
     }
 
-    if(This->shell_embedding_hwnd) {
+    if(destroy_win && This->shell_embedding_hwnd) {
         DestroyWindow(This->shell_embedding_hwnd);
         This->shell_embedding_hwnd = NULL;
     }
@@ -459,6 +459,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
     WebBrowser *This = impl_from_IOleObject(iface);
     IDocHostUIHandler *hostui;
     IOleCommandTarget *olecmd;
+    BOOL get_olecmd = TRUE;
     IOleContainer *container;
     IDispatch *disp;
     HRESULT hres;
@@ -473,7 +474,14 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
     if(This->client == pClientSite)
         return S_OK;
 
-    release_client_site(This);
+    if(This->client && pClientSite) {
+        get_olecmd = FALSE;
+        olecmd = This->doc_host.olecmd;
+        if(olecmd)
+            IOleCommandTarget_AddRef(olecmd);
+    }
+
+    release_client_site(This, !pClientSite);
 
     if(!pClientSite) {
         on_commandstate_change(&This->doc_host, CSC_NAVIGATEBACK, FALSE);
@@ -497,31 +505,46 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
     if(SUCCEEDED(hres))
         This->doc_host.hostui = hostui;
 
-    hres = IOleClientSite_GetContainer(This->client, &container);
-    if(SUCCEEDED(hres)) {
-        ITargetContainer *target_container;
-
-        hres = IOleContainer_QueryInterface(container, &IID_ITargetContainer,
-                                            (void**)&target_container);
+    if(get_olecmd) {
+        hres = IOleClientSite_GetContainer(This->client, &container);
         if(SUCCEEDED(hres)) {
-            FIXME("Unsupported ITargetContainer\n");
-            ITargetContainer_Release(target_container);
+            ITargetContainer *target_container;
+
+            hres = IOleContainer_QueryInterface(container, &IID_ITargetContainer,
+                    (void**)&target_container);
+            if(SUCCEEDED(hres)) {
+                FIXME("Unsupported ITargetContainer\n");
+                ITargetContainer_Release(target_container);
+            }
+
+            hres = IOleContainer_QueryInterface(container, &IID_IOleCommandTarget, (void**)&olecmd);
+            if(FAILED(hres))
+                olecmd = NULL;
+
+            IOleContainer_Release(container);
+        }else {
+            hres = IOleClientSite_QueryInterface(This->client, &IID_IOleCommandTarget, (void**)&olecmd);
+            if(FAILED(hres))
+                olecmd = NULL;
         }
-
-        hres = IOleContainer_QueryInterface(container, &IID_IOleCommandTarget, (void**)&olecmd);
-        if(FAILED(hres))
-            olecmd = NULL;
-
-        IOleContainer_Release(container);
-    }else {
-        hres = IOleClientSite_QueryInterface(This->client, &IID_IOleCommandTarget, (void**)&olecmd);
-        if(FAILED(hres))
-            olecmd = NULL;
     }
 
     This->doc_host.olecmd = olecmd;
 
-    create_shell_embedding_hwnd(This);
+    if(This->shell_embedding_hwnd) {
+        IOleInPlaceSite *inplace;
+        HWND parent;
+
+        hres = IOleClientSite_QueryInterface(This->client, &IID_IOleInPlaceSite, (void**)&inplace);
+        if(SUCCEEDED(hres)) {
+            hres = IOleInPlaceSite_GetWindow(inplace, &parent);
+            IOleInPlaceSite_Release(inplace);
+            if(SUCCEEDED(hres))
+                SHSetParentHwnd(This->shell_embedding_hwnd, parent);
+        }
+    }else {
+        create_shell_embedding_hwnd(This);
+    }
 
     on_offlineconnected_change(This);
     on_silent_change(This);
@@ -1198,5 +1221,5 @@ void WebBrowser_OleObject_Init(WebBrowser *This)
 
 void WebBrowser_OleObject_Destroy(WebBrowser *This)
 {
-    release_client_site(This);
+    release_client_site(This, TRUE);
 }
