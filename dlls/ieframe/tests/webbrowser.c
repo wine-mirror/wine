@@ -1123,6 +1123,7 @@ static const IOleClientSiteVtbl ClientSiteVtbl = {
 };
 
 static IOleClientSite ClientSite = { &ClientSiteVtbl };
+static IOleClientSite ClientSite2 = { &ClientSiteVtbl };
 
 static HRESULT WINAPI IOleControlSite_fnQueryInterface(IOleControlSite *iface, REFIID riid, void **ppv)
 {
@@ -2028,6 +2029,61 @@ static void test_ClientSite(IWebBrowser2 *unk, IOleClientSite *client, BOOL stop
 
     IOleInPlaceObject_Release(inplace);
     IOleObject_Release(oleobj);
+}
+
+static void test_change_ClientSite(IWebBrowser2 *unk)
+{
+    BOOL old_use_container_olecmd = use_container_olecmd;
+    IOleClientSite *doc_clientsite;
+    IOleInPlaceObject *inplace;
+    IOleCommandTarget *olecmd;
+    IOleObject *oleobj;
+    HRESULT hres;
+    HWND hwnd;
+
+    hres = IWebBrowser2_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
+    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    use_container_olecmd = FALSE;
+
+    SET_EXPECT(Site_GetWindow);
+    SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    SET_EXPECT(Invoke_AMBIENT_SILENT);
+
+    hres = IOleObject_SetClientSite(oleobj, &ClientSite2);
+    ok(hres == S_OK, "SetClientSite failed: %08x\n", hres);
+    IOleObject_Release(oleobj);
+
+    CHECK_CALLED(Site_GetWindow);
+    CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    CHECK_CALLED(Invoke_AMBIENT_SILENT);
+
+    doc_clientsite = get_dochost(unk);
+    hres = IOleClientSite_QueryInterface(doc_clientsite, &IID_IOleCommandTarget, (void**)&olecmd);
+    ok(hres == S_OK, "QueryInterface(IOleCommandTarget) failed: %08x\n", hres);
+    IOleClientSite_Release(doc_clientsite);
+
+    hres = IWebBrowser2_QueryInterface(unk, &IID_IOleInPlaceObject, (void**)&inplace);
+    ok(hres == S_OK, "QueryInterface(OleInPlaceObject) failed: %08x\n", hres);
+    hres = IOleInPlaceObject_GetWindow(inplace, &hwnd);
+    ok(hres == S_OK, "GetWindow failed: %08x\n", hres);
+    ok(hwnd == shell_embedding_hwnd, "unexpected hwnd %p\n", hwnd);
+    IOleInPlaceObject_Release(inplace);
+
+    if(old_use_container_olecmd) {
+        SET_EXPECT(Exec_UPDATECOMMANDS);
+
+        hres = IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_UPDATECOMMANDS,
+                OLECMDEXECOPT_DONTPROMPTUSER, NULL, NULL);
+        ok(hres == S_OK, "Exec(OLECMDID_UPDATECOMMAND) failed: %08x\n", hres);
+
+        CHECK_CALLED(Exec_UPDATECOMMANDS);
+        use_container_olecmd = TRUE;
+    }
+
+    IOleCommandTarget_Release(olecmd);
 }
 
 static void test_ClassInfo(IWebBrowser2 *unk)
@@ -3777,10 +3833,12 @@ static void test_WebBrowser(DWORD flags, BOOL do_close)
     test_external(webbrowser);
     test_htmlwindow_close(webbrowser);
 
-    if(do_close)
+    if(do_close) {
         test_Close(webbrowser, do_download);
-    else
+    }else {
+        test_change_ClientSite(webbrowser);
         test_ClientSite(webbrowser, NULL, !do_download);
+    }
     test_ie_funcs(webbrowser);
     test_GetControlInfo(webbrowser);
     test_wb_funcs(webbrowser, FALSE);
