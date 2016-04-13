@@ -7681,8 +7681,6 @@ static GLuint arbfp_gen_plain_shader(struct arbfp_blit_priv *priv,
 static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, const struct wined3d_surface *surface,
         const struct wined3d_color_key *color_key)
 {
-    GLuint shader;
-    float size[4] = {(float) surface->pow2Width, (float) surface->pow2Height, 1.0f, 1.0f};
     const struct wined3d_texture *texture = surface->container;
     struct arbfp_blit_priv *priv = blit_priv;
     enum complex_fixup fixup;
@@ -7691,6 +7689,13 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
     struct arbfp_blit_type type;
     struct arbfp_blit_desc *desc;
     struct wined3d_color float_color_key[2];
+    struct wined3d_vec4 size;
+    GLuint shader;
+
+    size.x = wined3d_texture_get_level_pow2_width(texture, surface->texture_level);
+    size.y = wined3d_texture_get_level_pow2_height(texture, surface->texture_level);
+    size.z = 1.0f;
+    size.w = 1.0f;
 
     if (is_complex_fixup(texture->resource.format->color_fixup))
         fixup = get_complex_fixup(texture->resource.format->color_fixup);
@@ -7787,7 +7792,7 @@ err_out:
     checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB)");
     GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader));
     checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, shader)");
-    GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARBFP_BLIT_PARAM_SIZE, size));
+    GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARBFP_BLIT_PARAM_SIZE, &size.x));
     checkGLcall("glProgramLocalParameter4fvARB");
     if (type.use_color_key)
     {
