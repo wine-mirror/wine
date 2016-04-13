@@ -20,7 +20,7 @@
 @ stub WsCombineUrl
 @ stub WsCopyError
 @ stub WsCopyNode
-@ stub WsCreateChannel
+@ stdcall WsCreateChannel(long long ptr long ptr ptr ptr)
 @ stub WsCreateChannelForListener
 @ stdcall WsCreateError(ptr long ptr)
 @ stub WsCreateFaultFromError
@@ -48,7 +48,7 @@
 @ stdcall WsFindAttribute(ptr ptr ptr long ptr ptr)
 @ stub WsFlushBody
 @ stub WsFlushWriter
-@ stub WsFreeChannel
+@ stdcall WsFreeChannel(ptr)
 @ stdcall WsFreeError(ptr)
 @ stdcall WsFreeHeap(ptr)
 @ stub WsFreeListener

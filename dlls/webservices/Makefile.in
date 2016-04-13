@@ -3,6 +3,7 @@ IMPORTLIB = webservices
 IMPORTS   = user32
 
 C_SRCS = \
+	channel.c \
 	main.c \
 	reader.c \
 	writer.c

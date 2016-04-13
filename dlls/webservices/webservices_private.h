@@ -50,6 +50,18 @@ static inline WS_XML_NODE_TYPE node_type( const struct node *node )
     return node->hdr.node.nodeType;
 }
 
+struct channel
+{
+    WS_CHANNEL_TYPE         type;
+    WS_CHANNEL_BINDING      binding;
+    ULONG                   prop_count;
+    WS_CHANNEL_PROPERTY     prop[9];
+};
+
+HRESULT create_channel( WS_CHANNEL_TYPE, WS_CHANNEL_BINDING, const WS_CHANNEL_PROPERTY *,
+                        ULONG, struct channel ** ) DECLSPEC_HIDDEN;
+void free_channel( struct channel * ) DECLSPEC_HIDDEN;
+
 static inline void *heap_alloc( SIZE_T size )
 {
     return HeapAlloc( GetProcessHeap(), 0, size );
