@@ -2592,14 +2592,9 @@ static HRESULT VMR9_ImagePresenter_PresentOffscreenSurface(VMR9DefaultAllocatorP
         return hr;
     }
 
-    target_rect = This->pVMR9->target_rect;
-    target_rect.right -= target_rect.left;
-    target_rect.bottom -= target_rect.top;
-    target_rect.left = target_rect.top = 0;
-
-    /* Flip */
-    target_rect.top = target_rect.bottom;
-    target_rect.bottom = 0;
+    /* Move rect to origin and flip it */
+    SetRect(&target_rect, 0, This->pVMR9->target_rect.bottom - This->pVMR9->target_rect.top,
+            This->pVMR9->target_rect.right - This->pVMR9->target_rect.left, 0);
 
     hr = IDirect3DDevice9_StretchRect(This->d3d9_dev, surface, &This->pVMR9->source_rect, target, &target_rect, D3DTEXF_LINEAR);
     if (FAILED(hr))
