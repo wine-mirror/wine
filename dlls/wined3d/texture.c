@@ -1850,6 +1850,13 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
         }
     }
 
+    if (desc->usage & WINED3DUSAGE_DYNAMIC && (desc->pool == WINED3D_POOL_MANAGED
+            || desc->pool == WINED3D_POOL_SCRATCH))
+    {
+        WARN("Attempted to create a DYNAMIC texture in pool %s.\n", debug_d3dpool(desc->pool));
+        return WINED3DERR_INVALIDCALL;
+    }
+
     if (!gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO])
     {
         UINT pow2_w, pow2_h, pow2_d;

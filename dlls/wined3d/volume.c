@@ -441,15 +441,6 @@ HRESULT wined3d_volume_init(struct wined3d_volume *volume, struct wined3d_textur
     HRESULT hr;
     UINT size;
 
-    /* TODO: Write tests for other resources and move this check
-     * to resource_init, if applicable. */
-    if (desc->usage & WINED3DUSAGE_DYNAMIC
-            && (desc->pool == WINED3D_POOL_MANAGED || desc->pool == WINED3D_POOL_SCRATCH))
-    {
-        WARN("Attempted to create a DYNAMIC texture in pool %s.\n", debug_d3dpool(desc->pool));
-        return WINED3DERR_INVALIDCALL;
-    }
-
     size = wined3d_format_calculate_size(format, device->surface_alignment, desc->width, desc->height, desc->depth);
 
     if (FAILED(hr = resource_init(&volume->resource, device, WINED3D_RTYPE_VOLUME, format,
