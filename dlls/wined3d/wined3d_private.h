@@ -2445,6 +2445,7 @@ struct wined3d_texture_ops
 #define WINED3D_TEXTURE_NORMALIZED_COORDS   0x00000400
 #define WINED3D_TEXTURE_GET_DC_LENIENT      0x00000800
 #define WINED3D_TEXTURE_DC_IN_USE           0x00001000
+#define WINED3D_TEXTURE_DISCARD             0x00002000
 
 #define WINED3D_TEXTURE_ASYNC_COLOR_KEY     0x00000001
 
@@ -2646,8 +2647,6 @@ struct wined3d_surface
     struct wined3d_resource resource;
     struct wined3d_texture *container;
 
-    DWORD flags;
-
     UINT pow2Width;
     UINT pow2Height;
     GLuint rb_multisample;
@@ -2733,9 +2732,6 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
 
 void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3d_context *context,
         const RECT *src_rect, const RECT *dst_rect, enum wined3d_texture_filter_type filter) DECLSPEC_HIDDEN;
-
-/* Surface flags: */
-#define SFLAG_DISCARD           0x00000002 /* ??? */
 
 struct wined3d_sampler
 {

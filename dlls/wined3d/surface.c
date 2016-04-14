@@ -4533,9 +4533,6 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
     list_init(&surface->renderbuffers);
     list_init(&surface->overlays);
 
-    /* Flags */
-    if (flags & WINED3D_TEXTURE_CREATE_DISCARD)
-        surface->flags |= SFLAG_DISCARD;
     if (lockable || desc->format == WINED3DFMT_D16_LOCKABLE)
         surface->resource.access_flags |= WINED3D_RESOURCE_ACCESS_CPU;
 
