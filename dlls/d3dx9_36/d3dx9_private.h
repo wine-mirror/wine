@@ -193,5 +193,7 @@ struct d3dx_parameter *get_parameter_by_name(struct d3dx9_base_effect *base,
 void d3dx_create_param_eval(struct d3dx9_base_effect *base_effect, void *byte_code,
         unsigned int byte_code_size, D3DXPARAMETER_TYPE type, struct d3dx_param_eval **peval) DECLSPEC_HIDDEN;
 void d3dx_free_param_eval(struct d3dx_param_eval *peval) DECLSPEC_HIDDEN;
+HRESULT d3dx_evaluate_parameter(struct d3dx_param_eval *peval,
+        const struct d3dx_parameter *param, void *param_value) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_D3DX9_PRIVATE_H */

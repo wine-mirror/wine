@@ -2493,25 +2493,36 @@ static HRESULT d3dx9_base_effect_set_array_range(struct d3dx9_base_effect *base,
 static HRESULT d3dx9_get_param_value_ptr(struct ID3DXEffectImpl *effect, struct d3dx_pass *pass,
         struct d3dx_state *state, void **param_value, struct d3dx_parameter **out_param)
 {
-    struct d3dx_parameter *param;
-    param = state->parameter.referenced_param ? state->parameter.referenced_param : &state->parameter;
+    struct d3dx_parameter *param = &state->parameter;
+
+    *param_value = NULL;
+    *out_param = NULL;
 
     switch (state->type)
     {
-        case ST_CONSTANT:
         case ST_PARAMETER:
-            *param_value = param->data;
+            param = param->referenced_param;
+            /* fallthrough */
+        case ST_CONSTANT:
             *out_param = param;
+            *param_value = param->data;
             return D3D_OK;
         case ST_ARRAY_SELECTOR:
             FIXME("Array selector.\n");
             break;
         case ST_FXLC:
-            FIXME("FXLC not supported yet.\n");
-            break;
+            if (param->param_eval)
+            {
+                *out_param = param;
+                *param_value = param->data;
+                return d3dx_evaluate_parameter(param->param_eval, param, *param_value);
+            }
+            else
+            {
+                FIXME("No preshader for FXLC parameter.\n");
+                return D3DERR_INVALIDCALL;
+            }
     }
-    *param_value = NULL;
-    *out_param = NULL;
     return E_NOTIMPL;
 }
 
@@ -2524,19 +2535,19 @@ static void d3dx9_set_light_parameter(enum LIGHT_TYPE op, D3DLIGHT9 *light, void
     }
     light_tbl[] =
     {
-       {FIELD_OFFSET(D3DLIGHT9, Type),         "LC_TYPE"},
-       {FIELD_OFFSET(D3DLIGHT9, Diffuse),      "LT_DIFFUSE"},
-       {FIELD_OFFSET(D3DLIGHT9, Specular),     "LT_SPECULAR"},
-       {FIELD_OFFSET(D3DLIGHT9, Ambient),      "LT_AMBIENT"},
-       {FIELD_OFFSET(D3DLIGHT9, Position),     "LT_POSITION"},
-       {FIELD_OFFSET(D3DLIGHT9, Direction),    "LT_DIRECTION"},
-       {FIELD_OFFSET(D3DLIGHT9, Range),        "LT_RANGE"},
-       {FIELD_OFFSET(D3DLIGHT9, Falloff),      "LT_FALLOFF"},
-       {FIELD_OFFSET(D3DLIGHT9, Attenuation0), "LT_ATTENUATION0"},
-       {FIELD_OFFSET(D3DLIGHT9, Attenuation1), "LT_ATTENUATION1"},
-       {FIELD_OFFSET(D3DLIGHT9, Attenuation2), "LT_ATTENUATION2"},
-       {FIELD_OFFSET(D3DLIGHT9, Theta),        "LT_THETA"},
-       {FIELD_OFFSET(D3DLIGHT9, Phi),          "LT_PHI"}
+        {FIELD_OFFSET(D3DLIGHT9, Type),         "LC_TYPE"},
+        {FIELD_OFFSET(D3DLIGHT9, Diffuse),      "LT_DIFFUSE"},
+        {FIELD_OFFSET(D3DLIGHT9, Specular),     "LT_SPECULAR"},
+        {FIELD_OFFSET(D3DLIGHT9, Ambient),      "LT_AMBIENT"},
+        {FIELD_OFFSET(D3DLIGHT9, Position),     "LT_POSITION"},
+        {FIELD_OFFSET(D3DLIGHT9, Direction),    "LT_DIRECTION"},
+        {FIELD_OFFSET(D3DLIGHT9, Range),        "LT_RANGE"},
+        {FIELD_OFFSET(D3DLIGHT9, Falloff),      "LT_FALLOFF"},
+        {FIELD_OFFSET(D3DLIGHT9, Attenuation0), "LT_ATTENUATION0"},
+        {FIELD_OFFSET(D3DLIGHT9, Attenuation1), "LT_ATTENUATION1"},
+        {FIELD_OFFSET(D3DLIGHT9, Attenuation2), "LT_ATTENUATION2"},
+        {FIELD_OFFSET(D3DLIGHT9, Theta),        "LT_THETA"},
+        {FIELD_OFFSET(D3DLIGHT9, Phi),          "LT_PHI"}
     };
     switch (op)
     {
@@ -2550,8 +2561,8 @@ static void d3dx9_set_light_parameter(enum LIGHT_TYPE op, D3DLIGHT9 *light, void
         {
             D3DCOLORVALUE c = *(D3DCOLORVALUE *)value;
 
-            TRACE("%s (%f %f %f %f).\n", light_tbl[op].name, c.r, c.g, c.b, c.a);
-            *(D3DCOLORVALUE *)((char *)light + light_tbl[op].offset) = c;
+            TRACE("%s (%.8e %.8e %.8e %.8e).\n", light_tbl[op].name, c.r, c.g, c.b, c.a);
+            *(D3DCOLORVALUE *)((BYTE *)light + light_tbl[op].offset) = c;
             break;
         }
         case LT_POSITION:
@@ -2559,8 +2570,8 @@ static void d3dx9_set_light_parameter(enum LIGHT_TYPE op, D3DLIGHT9 *light, void
         {
             D3DVECTOR v = *(D3DVECTOR *)value;
 
-            TRACE("%s (%f %f %f).\n", light_tbl[op].name, v.x, v.y, v.z);
-            *(D3DVECTOR *)((char *)light + light_tbl[op].offset) = v;
+            TRACE("%s (%.8e %.8e %.8e).\n", light_tbl[op].name, v.x, v.y, v.z);
+            *(D3DVECTOR *)((BYTE *)light + light_tbl[op].offset) = v;
             break;
         }
         case LT_RANGE:
@@ -2572,8 +2583,8 @@ static void d3dx9_set_light_parameter(enum LIGHT_TYPE op, D3DLIGHT9 *light, void
         case LT_PHI:
         {
             float v = *(float *)value;
-            TRACE("%s %f.\n", light_tbl[op].name, v);
-            *(float *)((char *)light + light_tbl[op].offset) = v;
+            TRACE("%s %.8e.\n", light_tbl[op].name, v);
+            *(float *)((BYTE *)light + light_tbl[op].offset) = v;
             break;
         }
         default:
@@ -2591,11 +2602,11 @@ static void d3dx9_set_material_parameter(enum MATERIAL_TYPE op, D3DMATERIAL9 *ma
     }
     material_tbl[] =
     {
-       {FIELD_OFFSET(D3DMATERIAL9, Diffuse),  "MT_DIFFUSE"},
-       {FIELD_OFFSET(D3DMATERIAL9, Ambient),  "MT_AMBIENT"},
-       {FIELD_OFFSET(D3DMATERIAL9, Specular), "MT_SPECULAR"},
-       {FIELD_OFFSET(D3DMATERIAL9, Emissive), "MT_EMISSIVE"},
-       {FIELD_OFFSET(D3DMATERIAL9, Power),    "MT_POWER"}
+        {FIELD_OFFSET(D3DMATERIAL9, Diffuse),  "MT_DIFFUSE"},
+        {FIELD_OFFSET(D3DMATERIAL9, Ambient),  "MT_AMBIENT"},
+        {FIELD_OFFSET(D3DMATERIAL9, Specular), "MT_SPECULAR"},
+        {FIELD_OFFSET(D3DMATERIAL9, Emissive), "MT_EMISSIVE"},
+        {FIELD_OFFSET(D3DMATERIAL9, Power),    "MT_POWER"}
     };
 
     switch (op)
@@ -2604,7 +2615,7 @@ static void d3dx9_set_material_parameter(enum MATERIAL_TYPE op, D3DMATERIAL9 *ma
         {
             float v = *(float *)value;
 
-            TRACE("%s %f.\n", material_tbl[op].name, v);
+            TRACE("%s %.8e.\n", material_tbl[op].name, v);
             material->Power = v;
             break;
         }
@@ -2615,8 +2626,8 @@ static void d3dx9_set_material_parameter(enum MATERIAL_TYPE op, D3DMATERIAL9 *ma
         {
             D3DCOLORVALUE c = *(D3DCOLORVALUE *)value;
 
-            TRACE("%s, value (%f %f %f %f).\n", material_tbl[op].name, c.r, c.g, c.b, c.a);
-            *(D3DCOLORVALUE *)((char *)material + material_tbl[op].offset) = c;
+            TRACE("%s, value (%.8e %.8e %.8e %.8e).\n", material_tbl[op].name, c.r, c.g, c.b, c.a);
+            *(D3DCOLORVALUE *)((BYTE *)material + material_tbl[op].offset) = c;
             break;
         }
         default:
