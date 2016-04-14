@@ -1194,8 +1194,11 @@ static void D3DXVector2Test(void)
 
 /*_______________D3DXVec2TransformCoord_______________________*/
     expectedvec.x = 0.6f; expectedvec.y = 11.0f/15.0f;
-    D3DXVec2TransformCoord(&gotvec,&u,&mat);
-    expect_vec(expectedvec,gotvec);
+    D3DXVec2TransformCoord(&gotvec, &u, &mat);
+    expect_vec(expectedvec, gotvec);
+    gotvec.x = u.x; gotvec.y = u.y;
+    D3DXVec2TransformCoord(&gotvec, (D3DXVECTOR2 *)&gotvec, &mat);
+    expect_vec(expectedvec, gotvec);
 
  /*_______________D3DXVec2TransformNormal______________________*/
     expectedvec.x = 23.0f; expectedvec.y = 30.0f;
