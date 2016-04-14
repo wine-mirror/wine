@@ -4469,47 +4469,15 @@ cpu:
 }
 
 HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_texture *container,
-        const struct wined3d_resource_desc *desc, GLenum target, unsigned int level, unsigned int layer, DWORD flags)
+        const struct wined3d_resource_desc *desc, GLenum target, unsigned int level, unsigned int layer)
 {
     unsigned int sub_resource_idx = layer * container->level_count + level;
     struct wined3d_device *device = container->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, desc->format);
-    BOOL lockable = flags & WINED3D_TEXTURE_CREATE_MAPPABLE;
     UINT multisample_quality = desc->multisample_quality;
     unsigned int resource_size;
     HRESULT hr;
-
-    /* Quick lockable sanity check.
-     * TODO: remove this after surfaces, usage and lockability have been debugged properly
-     * this function is too deep to need to care about things like this.
-     * Levels need to be checked too, since they all affect what can be done. */
-    switch (desc->pool)
-    {
-        case WINED3D_POOL_MANAGED:
-            if (desc->usage & WINED3DUSAGE_DYNAMIC)
-                FIXME("Called with a pool of MANAGED and a usage of DYNAMIC which are mutually exclusive.\n");
-            break;
-
-        case WINED3D_POOL_DEFAULT:
-            if (lockable && !(desc->usage & (WINED3DUSAGE_DYNAMIC
-                    | WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL)))
-                WARN("Creating a lockable surface with a POOL of DEFAULT, that doesn't specify DYNAMIC usage.\n");
-            break;
-
-        case WINED3D_POOL_SCRATCH:
-        case WINED3D_POOL_SYSTEM_MEM:
-            break;
-
-        default:
-            FIXME("Unknown pool %#x.\n", desc->pool);
-            break;
-    };
-
-    if (desc->usage & WINED3DUSAGE_RENDERTARGET && desc->pool != WINED3D_POOL_DEFAULT)
-        FIXME("Trying to create a render target that isn't in the default pool.\n");
-
-    /* FIXME: Check that the format is supported by the device. */
 
     resource_size = wined3d_format_calculate_size(format, device->surface_alignment, desc->width, desc->height, 1);
     if (!resource_size)
@@ -4522,6 +4490,7 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
         WARN("Failed to initialize resource, returning %#x.\n", hr);
         return hr;
     }
+    surface->resource.access_flags = container->resource.access_flags;
 
     surface->container = container;
     surface->pow2Width = wined3d_texture_get_level_pow2_width(container, level);
@@ -4532,9 +4501,6 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
 
     list_init(&surface->renderbuffers);
     list_init(&surface->overlays);
-
-    if (lockable || desc->format == WINED3DFMT_D16_LOCKABLE)
-        surface->resource.access_flags |= WINED3D_RESOURCE_ACCESS_CPU;
 
     wined3d_texture_validate_location(container, sub_resource_idx, WINED3D_LOCATION_SYSMEM);
     if (container->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)

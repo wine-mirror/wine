@@ -2711,7 +2711,7 @@ void surface_get_drawable_size(const struct wined3d_surface *surface, const stru
         unsigned int *width, unsigned int *height) DECLSPEC_HIDDEN;
 HRESULT wined3d_surface_init(struct wined3d_surface *surface,
         struct wined3d_texture *container, const struct wined3d_resource_desc *desc,
-        GLenum target, unsigned int level, unsigned int layer, DWORD flags) DECLSPEC_HIDDEN;
+        GLenum target, unsigned int level, unsigned int layer) DECLSPEC_HIDDEN;
 void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
 HRESULT surface_load_location(struct wined3d_surface *surface,

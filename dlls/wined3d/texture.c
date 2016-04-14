@@ -1507,6 +1507,14 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
         return WINED3DERR_INVALIDCALL;
     }
 
+    if (desc->usage & WINED3DUSAGE_DYNAMIC && desc->pool == WINED3D_POOL_MANAGED)
+        FIXME("Trying to create a managed texture with dynamic usage.\n");
+    if (!(desc->usage & (WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL))
+            && (flags & WINED3D_TEXTURE_CREATE_MAPPABLE))
+        WARN("Creating a mappable texture in the default pool that doesn't specify dynamic usage.\n");
+    if (desc->usage & WINED3DUSAGE_RENDERTARGET && desc->pool != WINED3D_POOL_DEFAULT)
+        FIXME("Trying to create a render target that isn't in the default pool.\n");
+
     pow2_width = desc->width;
     pow2_height = desc->height;
     if (((desc->width & (desc->width - 1)) || (desc->height & (desc->height - 1)))
@@ -1653,7 +1661,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
             struct wined3d_surface *surface;
 
             surface = &surfaces[idx];
-            if (FAILED(hr = wined3d_surface_init(surface, texture, &surface_desc, target, i, j, flags)))
+            if (FAILED(hr = wined3d_surface_init(surface, texture, &surface_desc, target, i, j)))
             {
                 WARN("Failed to initialize surface, returning %#x.\n", hr);
                 wined3d_texture_cleanup(texture);
