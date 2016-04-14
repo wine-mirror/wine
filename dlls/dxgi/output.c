@@ -61,15 +61,16 @@ static ULONG STDMETHODCALLTYPE dxgi_output_AddRef(IDXGIOutput *iface)
 
 static ULONG STDMETHODCALLTYPE dxgi_output_Release(IDXGIOutput *iface)
 {
-    struct dxgi_output *This = impl_from_IDXGIOutput(iface);
-    ULONG refcount = InterlockedDecrement(&This->refcount);
+    struct dxgi_output *output = impl_from_IDXGIOutput(iface);
+    ULONG refcount = InterlockedDecrement(&output->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", This, refcount);
+    TRACE("%p decreasing refcount to %u.\n", output, refcount);
 
     if (!refcount)
     {
-        wined3d_private_store_cleanup(&This->private_store);
-        HeapFree(GetProcessHeap(), 0, This);
+        wined3d_private_store_cleanup(&output->private_store);
+        IDXGIAdapter1_Release(&output->adapter->IDXGIAdapter1_iface);
+        HeapFree(GetProcessHeap(), 0, output);
     }
 
     return refcount;
@@ -110,11 +111,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetPrivateData(IDXGIOutput *iface,
 static HRESULT STDMETHODCALLTYPE dxgi_output_GetParent(IDXGIOutput *iface,
         REFIID riid, void **parent)
 {
-    struct dxgi_output *This = impl_from_IDXGIOutput(iface);
+    struct dxgi_output *output = impl_from_IDXGIOutput(iface);
 
     TRACE("iface %p, riid %s, parent %p.\n", iface, debugstr_guid(riid), parent);
 
-    return IDXGIAdapter_QueryInterface((IDXGIAdapter *)This->adapter, riid, parent);
+    return IDXGIAdapter1_QueryInterface(&output->adapter->IDXGIAdapter1_iface, riid, parent);
 }
 
 /* IDXGIOutput methods */
@@ -316,10 +317,20 @@ static const struct IDXGIOutputVtbl dxgi_output_vtbl =
     dxgi_output_GetFrameStatistics,
 };
 
-void dxgi_output_init(struct dxgi_output *output, struct dxgi_adapter *adapter)
+static void dxgi_output_init(struct dxgi_output *output, struct dxgi_adapter *adapter)
 {
     output->IDXGIOutput_iface.lpVtbl = &dxgi_output_vtbl;
     output->refcount = 1;
     wined3d_private_store_init(&output->private_store);
     output->adapter = adapter;
+    IDXGIAdapter1_AddRef(&output->adapter->IDXGIAdapter1_iface);
+}
+
+HRESULT dxgi_output_create(struct dxgi_adapter *adapter, struct dxgi_output **output)
+{
+    if (!(*output = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**output))))
+        return E_OUTOFMEMORY;
+
+    dxgi_output_init(*output, adapter);
+    return S_OK;
 }

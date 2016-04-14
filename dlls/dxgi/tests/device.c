@@ -619,7 +619,7 @@ static void test_get_containing_output(void)
     ok(SUCCEEDED(hr), "EnumOutputs failed, hr %#x.\n", hr);
 
     refcount = get_refcount((IUnknown *)output);
-    todo_wine ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
 
     hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
     ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
@@ -635,9 +635,9 @@ static void test_get_containing_output(void)
     }
 
     refcount = get_refcount((IUnknown *)output);
-    todo_wine ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
     refcount = get_refcount((IUnknown *)output2);
-    todo_wine ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
 
     hr = IDXGIOutput_GetDesc(output, &output_desc);
     ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
@@ -656,13 +656,13 @@ static void test_get_containing_output(void)
             output_desc2.DesktopCoordinates.right, output_desc2.DesktopCoordinates.bottom);
 
     refcount = IDXGIOutput_Release(output2);
-    todo_wine ok(!refcount, "IDXGIOuput has %u references left.\n", refcount);
+    ok(!refcount, "IDXGIOuput has %u references left.\n", refcount);
 
     refcount = IDXGISwapChain_Release(swapchain);
     ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
 
     refcount = IDXGIOutput_Release(output);
-    todo_wine ok(!refcount, "IDXGIOuput has %u references left.\n", refcount);
+    ok(!refcount, "IDXGIOuput has %u references left.\n", refcount);
 
 done:
     refcount = IDXGIDevice_Release(device);
@@ -1470,17 +1470,17 @@ static void test_output_desc(void)
 
             hr = IDXGIAdapter_EnumOutputs(adapter, j, &output2);
             ok(SUCCEEDED(hr), "Failed to enumerate output %u on adapter %u, hr %#x.\n", j, i, hr);
-            todo_wine ok(output != output2, "Expected to get new instance of IDXGIOuput, %p == %p.\n", output, output2);
+            ok(output != output2, "Expected to get new instance of IDXGIOuput, %p == %p.\n", output, output2);
             refcount = get_refcount((IUnknown *)output);
-            todo_wine ok(refcount == 1, "Get unexpected refcount %u for output %u, adapter %u.\n", refcount, j, i);
+            ok(refcount == 1, "Get unexpected refcount %u for output %u, adapter %u.\n", refcount, j, i);
             IDXGIOutput_Release(output2);
 
             refcount = get_refcount((IUnknown *)factory);
             todo_wine ok(refcount == 2, "Get unexpected refcount %u.\n", refcount);
             refcount = get_refcount((IUnknown *)adapter);
-            ok(refcount == 2, "Get unexpected refcount %u for adapter %u.\n", refcount, i);
+            todo_wine ok(refcount == 2, "Get unexpected refcount %u for adapter %u.\n", refcount, i);
             refcount = get_refcount((IUnknown *)output);
-            todo_wine ok(refcount == 1, "Get unexpected refcount %u for output %u, adapter %u.\n", refcount, j, i);
+            ok(refcount == 1, "Get unexpected refcount %u for output %u, adapter %u.\n", refcount, j, i);
 
             hr = IDXGIOutput_GetDesc(output, NULL);
             ok(hr == E_INVALIDARG, "Got unexpected hr %#x for output %u on adapter %u.\n", hr, j, i);

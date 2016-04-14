@@ -134,7 +134,7 @@ struct dxgi_output
     struct dxgi_adapter *adapter;
 };
 
-void dxgi_output_init(struct dxgi_output *output, struct dxgi_adapter *adapter) DECLSPEC_HIDDEN;
+HRESULT dxgi_output_create(struct dxgi_adapter *adapter, struct dxgi_output **output) DECLSPEC_HIDDEN;
 
 /* IDXGIAdapter */
 struct dxgi_adapter
@@ -144,10 +144,9 @@ struct dxgi_adapter
     LONG refcount;
     struct wined3d_private_store private_store;
     UINT ordinal;
-    IDXGIOutput *output;
 };
 
-HRESULT dxgi_adapter_init(struct dxgi_adapter *adapter, struct dxgi_factory *parent, UINT ordinal) DECLSPEC_HIDDEN;
+void dxgi_adapter_init(struct dxgi_adapter *adapter, struct dxgi_factory *parent, UINT ordinal) DECLSPEC_HIDDEN;
 struct dxgi_adapter *unsafe_impl_from_IDXGIAdapter1(IDXGIAdapter1 *iface) DECLSPEC_HIDDEN;
 
 /* IDXGISwapChain */

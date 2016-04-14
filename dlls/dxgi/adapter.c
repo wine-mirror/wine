@@ -68,7 +68,6 @@ static ULONG STDMETHODCALLTYPE dxgi_adapter_Release(IDXGIAdapter1 *iface)
 
     if (!refcount)
     {
-        IDXGIOutput_Release(adapter->output);
         wined3d_private_store_cleanup(&adapter->private_store);
         HeapFree(GetProcessHeap(), 0, adapter);
     }
@@ -119,6 +118,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_EnumOutputs(IDXGIAdapter1 *iface,
         UINT output_idx, IDXGIOutput **output)
 {
     struct dxgi_adapter *adapter = impl_from_IDXGIAdapter1(iface);
+    struct dxgi_output *output_object;
+    HRESULT hr;
 
     TRACE("iface %p, output_idx %u, output %p.\n", iface, output_idx, output);
 
@@ -128,10 +129,15 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_EnumOutputs(IDXGIAdapter1 *iface,
         return DXGI_ERROR_NOT_FOUND;
     }
 
-    *output = adapter->output;
-    IDXGIOutput_AddRef(*output);
+    if (FAILED(hr = dxgi_output_create(adapter, &output_object)))
+    {
+        *output = NULL;
+        return hr;
+    }
 
-    TRACE("Returning output %p.\n", output);
+    *output = &output_object->IDXGIOutput_iface;
+
+    TRACE("Returning output %p.\n", *output);
 
     return S_OK;
 }
@@ -259,23 +265,11 @@ struct dxgi_adapter *unsafe_impl_from_IDXGIAdapter1(IDXGIAdapter1 *iface)
     return CONTAINING_RECORD(iface, struct dxgi_adapter, IDXGIAdapter1_iface);
 }
 
-HRESULT dxgi_adapter_init(struct dxgi_adapter *adapter, struct dxgi_factory *parent, UINT ordinal)
+void dxgi_adapter_init(struct dxgi_adapter *adapter, struct dxgi_factory *parent, UINT ordinal)
 {
-    struct dxgi_output *output;
-
     adapter->IDXGIAdapter1_iface.lpVtbl = &dxgi_adapter_vtbl;
     adapter->parent = parent;
     adapter->refcount = 1;
     wined3d_private_store_init(&adapter->private_store);
     adapter->ordinal = ordinal;
-
-    if (!(output = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*output))))
-    {
-        wined3d_private_store_cleanup(&adapter->private_store);
-        return E_OUTOFMEMORY;
-    }
-    dxgi_output_init(output, adapter);
-    adapter->output = &output->IDXGIOutput_iface;
-
-    return S_OK;
 }

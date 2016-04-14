@@ -347,20 +347,7 @@ static HRESULT dxgi_factory_init(struct dxgi_factory *factory, BOOL extended)
             goto fail;
         }
 
-        if (FAILED(hr = dxgi_adapter_init(adapter, factory, i)))
-        {
-            UINT j;
-
-            ERR("Failed to initialize adapter, hr %#x.\n", hr);
-
-            HeapFree(GetProcessHeap(), 0, adapter);
-            for (j = 0; j < i; ++j)
-            {
-                IDXGIAdapter1_Release(factory->adapters[j]);
-            }
-            goto fail;
-        }
-
+        dxgi_adapter_init(adapter, factory, i);
         factory->adapters[i] = &adapter->IDXGIAdapter1_iface;
     }
 
