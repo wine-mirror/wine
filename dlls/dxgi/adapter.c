@@ -69,6 +69,7 @@ static ULONG STDMETHODCALLTYPE dxgi_adapter_Release(IDXGIAdapter1 *iface)
     if (!refcount)
     {
         wined3d_private_store_cleanup(&adapter->private_store);
+        IDXGIFactory1_Release(&adapter->factory->IDXGIFactory1_iface);
         HeapFree(GetProcessHeap(), 0, adapter);
     }
 
@@ -109,9 +110,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetParent(IDXGIAdapter1 *iface, RE
 {
     struct dxgi_adapter *adapter = impl_from_IDXGIAdapter1(iface);
 
-    TRACE("iface %p, iid %s, parent %p\n", iface, debugstr_guid(iid), parent);
+    TRACE("iface %p, iid %s, parent %p.\n", iface, debugstr_guid(iid), parent);
 
-    return IDXGIFactory1_QueryInterface(&adapter->parent->IDXGIFactory1_iface, iid, parent);
+    return IDXGIFactory1_QueryInterface(&adapter->factory->IDXGIFactory1_iface, iid, parent);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_EnumOutputs(IDXGIAdapter1 *iface,
@@ -160,7 +161,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc1(IDXGIAdapter1 *iface, DXG
     adapter_id.device_name_size = 0;
 
     wined3d_mutex_lock();
-    hr = wined3d_get_adapter_identifier(adapter->parent->wined3d, adapter->ordinal, 0, &adapter_id);
+    hr = wined3d_get_adapter_identifier(adapter->factory->wined3d, adapter->ordinal, 0, &adapter_id);
     wined3d_mutex_unlock();
 
     if (FAILED(hr))
@@ -221,7 +222,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_CheckInterfaceSupport(IDXGIAdapter
         return DXGI_ERROR_UNSUPPORTED;
     }
 
-    if (!dxgi_check_feature_level_support(adapter->parent, adapter, &feature_level, 1))
+    if (!dxgi_check_feature_level_support(adapter->factory, adapter, &feature_level, 1))
         return DXGI_ERROR_UNSUPPORTED;
 
     if (umd_version)
@@ -231,7 +232,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_CheckInterfaceSupport(IDXGIAdapter
         adapter_id.device_name_size = 0;
 
         wined3d_mutex_lock();
-        hr = wined3d_get_adapter_identifier(adapter->parent->wined3d, adapter->ordinal, 0, &adapter_id);
+        hr = wined3d_get_adapter_identifier(adapter->factory->wined3d, adapter->ordinal, 0, &adapter_id);
         wined3d_mutex_unlock();
         if (FAILED(hr))
             return hr;
@@ -265,11 +266,21 @@ struct dxgi_adapter *unsafe_impl_from_IDXGIAdapter1(IDXGIAdapter1 *iface)
     return CONTAINING_RECORD(iface, struct dxgi_adapter, IDXGIAdapter1_iface);
 }
 
-void dxgi_adapter_init(struct dxgi_adapter *adapter, struct dxgi_factory *parent, UINT ordinal)
+static void dxgi_adapter_init(struct dxgi_adapter *adapter, struct dxgi_factory *factory, UINT ordinal)
 {
     adapter->IDXGIAdapter1_iface.lpVtbl = &dxgi_adapter_vtbl;
-    adapter->parent = parent;
     adapter->refcount = 1;
     wined3d_private_store_init(&adapter->private_store);
     adapter->ordinal = ordinal;
+    adapter->factory = factory;
+    IDXGIFactory1_AddRef(&adapter->factory->IDXGIFactory1_iface);
+}
+
+HRESULT dxgi_adapter_create(struct dxgi_factory *factory, UINT ordinal, struct dxgi_adapter **adapter)
+{
+    if (!(*adapter = HeapAlloc(GetProcessHeap(), 0, sizeof(**adapter))))
+        return E_OUTOFMEMORY;
+
+    dxgi_adapter_init(*adapter, factory, ordinal);
+    return S_OK;
 }

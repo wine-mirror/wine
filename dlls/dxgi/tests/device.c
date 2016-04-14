@@ -467,7 +467,7 @@ static void test_create_swapchain(void)
 
     expected_refcount = get_refcount((IUnknown *)adapter);
     refcount = get_refcount((IUnknown *)factory);
-    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+    todo_wine ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
     refcount = get_refcount((IUnknown *)device);
     ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
 
@@ -499,7 +499,7 @@ static void test_create_swapchain(void)
     IDXGISwapChain_Release(swapchain);
 
     refcount = get_refcount((IUnknown *)factory);
-    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+    todo_wine ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
 
     for (i = 0; i < sizeof(refresh_list)/sizeof(refresh_list[0]); i++)
     {
@@ -554,7 +554,7 @@ static void test_create_swapchain(void)
     refcount = IDXGIDevice_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     refcount = IDXGIAdapter_Release(adapter);
-    todo_wine ok(!refcount, "Adapter has %u references left.\n", refcount);
+    ok(!refcount, "Adapter has %u references left.\n", refcount);
     refcount = IDXGIFactory_Release(factory);
     ok(!refcount, "Factory has %u references left.\n", refcount);
     DestroyWindow(creation_desc.OutputWindow);
@@ -668,7 +668,7 @@ done:
     refcount = IDXGIDevice_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     refcount = IDXGIAdapter_Release(adapter);
-    todo_wine ok(!refcount, "Adapter has %u references left.\n", refcount);
+    ok(!refcount, "Adapter has %u references left.\n", refcount);
     refcount = IDXGIFactory_Release(factory);
     ok(!refcount, "Factory has %u references left.\n", refcount);
     DestroyWindow(swapchain_desc.OutputWindow);
@@ -1448,15 +1448,15 @@ static void test_output_desc(void)
 
         hr = IDXGIFactory_EnumAdapters(factory, i, &adapter2);
         ok(SUCCEEDED(hr), "Failed to enumerate adapter %u, hr %#x.\n", i, hr);
-        todo_wine ok(adapter != adapter2, "Expected to get new instance of IDXGIAdapter, %p == %p.\n", adapter, adapter2);
+        ok(adapter != adapter2, "Expected to get new instance of IDXGIAdapter, %p == %p.\n", adapter, adapter2);
         refcount = get_refcount((IUnknown *)adapter);
-        todo_wine ok(refcount == 1, "Get unexpected refcount %u for adapter %u.\n", refcount, i);
+        ok(refcount == 1, "Get unexpected refcount %u for adapter %u.\n", refcount, i);
         IDXGIAdapter_Release(adapter2);
 
         refcount = get_refcount((IUnknown *)factory);
-        todo_wine ok(refcount == 2, "Get unexpected refcount %u.\n", refcount);
+        ok(refcount == 2, "Get unexpected refcount %u.\n", refcount);
         refcount = get_refcount((IUnknown *)adapter);
-        todo_wine ok(refcount == 1, "Get unexpected refcount %u for adapter %u.\n", refcount, i);
+        ok(refcount == 1, "Get unexpected refcount %u for adapter %u.\n", refcount, i);
 
         for (j = 0; ; ++j)
         {
@@ -1476,9 +1476,9 @@ static void test_output_desc(void)
             IDXGIOutput_Release(output2);
 
             refcount = get_refcount((IUnknown *)factory);
-            todo_wine ok(refcount == 2, "Get unexpected refcount %u.\n", refcount);
+            ok(refcount == 2, "Get unexpected refcount %u.\n", refcount);
             refcount = get_refcount((IUnknown *)adapter);
-            todo_wine ok(refcount == 2, "Get unexpected refcount %u for adapter %u.\n", refcount, i);
+            ok(refcount == 2, "Get unexpected refcount %u for adapter %u.\n", refcount, i);
             refcount = get_refcount((IUnknown *)output);
             ok(refcount == 1, "Get unexpected refcount %u for output %u, adapter %u.\n", refcount, j, i);
 
@@ -1501,7 +1501,7 @@ static void test_output_desc(void)
 
             IDXGIOutput_Release(output);
             refcount = get_refcount((IUnknown *)adapter);
-            todo_wine ok(refcount == 1, "Get unexpected refcount %u for adapter %u.\n", refcount, i);
+            ok(refcount == 1, "Get unexpected refcount %u for adapter %u.\n", refcount, i);
         }
 
         IDXGIAdapter_Release(adapter);

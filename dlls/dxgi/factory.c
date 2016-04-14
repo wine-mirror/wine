@@ -70,15 +70,8 @@ static ULONG STDMETHODCALLTYPE dxgi_factory_Release(IDXGIFactory1 *iface)
 
     if (!refcount)
     {
-        UINT i;
-
         if (factory->device_window)
             DestroyWindow(factory->device_window);
-        for (i = 0; i < factory->adapter_count; ++i)
-        {
-            IDXGIAdapter1_Release(factory->adapters[i]);
-        }
-        HeapFree(GetProcessHeap(), 0, factory->adapters);
 
         wined3d_mutex_lock();
         wined3d_decref(factory->wined3d);
@@ -133,20 +126,32 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters1(IDXGIFactory1 *iface
         UINT adapter_idx, IDXGIAdapter1 **adapter)
 {
     struct dxgi_factory *factory = impl_from_IDXGIFactory1(iface);
+    struct dxgi_adapter *adapter_object;
+    UINT adapter_count;
+    HRESULT hr;
 
     TRACE("iface %p, adapter_idx %u, adapter %p.\n", iface, adapter_idx, adapter);
 
     if (!adapter)
         return DXGI_ERROR_INVALID_CALL;
 
-    if (adapter_idx >= factory->adapter_count)
+    wined3d_mutex_lock();
+    adapter_count = wined3d_get_adapter_count(factory->wined3d);
+    wined3d_mutex_unlock();
+
+    if (adapter_idx >= adapter_count)
     {
         *adapter = NULL;
         return DXGI_ERROR_NOT_FOUND;
     }
 
-    *adapter = (IDXGIAdapter1 *)factory->adapters[adapter_idx];
-    IDXGIAdapter1_AddRef(*adapter);
+    if (FAILED(hr = dxgi_adapter_create(factory, adapter_idx, &adapter_object)))
+    {
+        *adapter = NULL;
+        return hr;
+    }
+
+    *adapter = &adapter_object->IDXGIAdapter1_iface;
 
     TRACE("Returning adapter %p.\n", *adapter);
 
@@ -304,64 +309,22 @@ struct dxgi_factory *unsafe_impl_from_IDXGIFactory1(IDXGIFactory1 *iface)
 
 static HRESULT dxgi_factory_init(struct dxgi_factory *factory, BOOL extended)
 {
-    HRESULT hr;
-    UINT i;
-
     factory->IDXGIFactory1_iface.lpVtbl = &dxgi_factory_vtbl;
     factory->refcount = 1;
     wined3d_private_store_init(&factory->private_store);
 
     wined3d_mutex_lock();
     factory->wined3d = wined3d_create(0);
+    wined3d_mutex_unlock();
     if (!factory->wined3d)
     {
-        wined3d_mutex_unlock();
         wined3d_private_store_cleanup(&factory->private_store);
         return DXGI_ERROR_UNSUPPORTED;
-    }
-
-    factory->adapter_count = wined3d_get_adapter_count(factory->wined3d);
-    wined3d_mutex_unlock();
-    factory->adapters = HeapAlloc(GetProcessHeap(), 0, factory->adapter_count * sizeof(*factory->adapters));
-    if (!factory->adapters)
-    {
-        ERR("Failed to allocate DXGI adapter array memory.\n");
-        hr = E_OUTOFMEMORY;
-        goto fail;
-    }
-
-    for (i = 0; i < factory->adapter_count; ++i)
-    {
-        struct dxgi_adapter *adapter = HeapAlloc(GetProcessHeap(), 0, sizeof(*adapter));
-        if (!adapter)
-        {
-            UINT j;
-
-            ERR("Failed to allocate DXGI adapter memory.\n");
-
-            for (j = 0; j < i; ++j)
-            {
-                IDXGIAdapter1_Release(factory->adapters[j]);
-            }
-            hr = E_OUTOFMEMORY;
-            goto fail;
-        }
-
-        dxgi_adapter_init(adapter, factory, i);
-        factory->adapters[i] = &adapter->IDXGIAdapter1_iface;
     }
 
     factory->extended = extended;
 
     return S_OK;
-
-fail:
-    HeapFree(GetProcessHeap(), 0, factory->adapters);
-    wined3d_mutex_lock();
-    wined3d_decref(factory->wined3d);
-    wined3d_mutex_unlock();
-    wined3d_private_store_cleanup(&factory->private_store);
-    return hr;
 }
 
 HRESULT dxgi_factory_create(REFIID riid, void **factory, BOOL extended)

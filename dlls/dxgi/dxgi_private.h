@@ -100,8 +100,6 @@ struct dxgi_factory
     LONG refcount;
     struct wined3d_private_store private_store;
     struct wined3d *wined3d;
-    UINT adapter_count;
-    IDXGIAdapter1 **adapters;
     BOOL extended;
     HWND device_window;
 };
@@ -141,13 +139,14 @@ HRESULT dxgi_output_create(struct dxgi_adapter *adapter, struct dxgi_output **ou
 struct dxgi_adapter
 {
     IDXGIAdapter1 IDXGIAdapter1_iface;
-    struct dxgi_factory *parent;
     LONG refcount;
     struct wined3d_private_store private_store;
     UINT ordinal;
+    struct dxgi_factory *factory;
 };
 
-void dxgi_adapter_init(struct dxgi_adapter *adapter, struct dxgi_factory *parent, UINT ordinal) DECLSPEC_HIDDEN;
+HRESULT dxgi_adapter_create(struct dxgi_factory *factory, UINT ordinal,
+        struct dxgi_adapter **adapter) DECLSPEC_HIDDEN;
 struct dxgi_adapter *unsafe_impl_from_IDXGIAdapter1(IDXGIAdapter1 *iface) DECLSPEC_HIDDEN;
 
 /* IDXGISwapChain */

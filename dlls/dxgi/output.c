@@ -132,7 +132,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc(IDXGIOutput *iface, DXGI_OU
         return E_INVALIDARG;
 
     wined3d_mutex_lock();
-    hr = wined3d_get_output_desc(output->adapter->parent->wined3d,
+    hr = wined3d_get_output_desc(output->adapter->factory->wined3d,
             output->adapter->ordinal, &wined3d_desc);
     wined3d_mutex_unlock();
 
@@ -172,7 +172,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
         return S_OK;
     }
 
-    wined3d = This->adapter->parent->wined3d;
+    wined3d = This->adapter->factory->wined3d;
     wined3d_format = wined3dformat_from_dxgi_format(format);
 
     wined3d_mutex_lock();
