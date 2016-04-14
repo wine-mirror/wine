@@ -72,7 +72,7 @@
 72 stub _IID_IEXTERNALCONNECTION
 73 pascal CoCreateGuid(ptr) CoCreateGuid16
 75 stub FNASSERT
-76 pascal StringFromGUID2(ptr ptr word) StringFromGUID216
+76 pascal -ret16 StringFromGUID2(ptr ptr word) StringFromGUID216
 77 stub COGETCLASSEXT
 78 stub OLE1CLASSFROMCLSID2
 79 stub CLSIDFROMOLE1CLASS

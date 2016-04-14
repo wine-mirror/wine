@@ -54,6 +54,7 @@ typedef LPCSTR LPCOLESTR16;
 #define STDMETHOD16(m) HRESULT (STDMETHOD16CALLTYPE *m)
 #define STDMETHOD16_(t,m) t (STDMETHOD16CALLTYPE *m)
 
+#define CHARS_IN_GUID 39
 
 /***********************************************************************
  * IMalloc16 interface
@@ -689,9 +690,14 @@ HRESULT WINAPI CLSIDFromProgID16(LPCOLESTR16 progid, LPCLSID riid)
 /******************************************************************************
  *		StringFromGUID2	[COMPOBJ.76]
  */
-INT WINAPI StringFromGUID216(REFGUID id, LPOLESTR str, INT cmax)
+INT16 WINAPI StringFromGUID216(REFGUID id, LPOLESTR16 str, INT16 cmax)
 {
-    return StringFromGUID2( id, str, cmax );
+    static const char format[] = "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}";
+    if (!id || cmax < CHARS_IN_GUID) return 0;
+    sprintf( str, format, id->Data1, id->Data2, id->Data3,
+             id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
+             id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
+    return CHARS_IN_GUID;
 }
 
 
