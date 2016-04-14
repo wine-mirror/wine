@@ -11615,12 +11615,16 @@ msgid ""
 "reg: Unable to delete all registry values in '%1'. An unexpected error "
 "occurred.\n"
 msgstr ""
+"reg: Kaikkien arvojen poistaminen kohteesta '%1' ei onnistu. Tapahtui "
+"odottamaton virhe.\n"
 
 #: reg.rc:54
 msgid ""
 "reg: Unable to complete the specified operation. An unexpected error "
 "occurred.\n"
 msgstr ""
+"reg: Määrätyn toiminnon suorittaminen ei onnistu. Tapahtui odottamaton "
+"virhe.\n"
 
 #: regedit.rc:34
 msgid "&Registry"
