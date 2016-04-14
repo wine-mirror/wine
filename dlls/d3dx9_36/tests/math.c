@@ -1186,8 +1186,11 @@ static void D3DXVector2Test(void)
 
 /*_______________D3DXVec2Transform_______________________*/
     expectedtrans.x = 36.0f; expectedtrans.y = 44.0f; expectedtrans.z = 52.0f; expectedtrans.w = 60.0f;
-    D3DXVec2Transform(&gottrans,&u,&mat);
-    expect_vec4(expectedtrans,gottrans);
+    D3DXVec2Transform(&gottrans, &u, &mat);
+    expect_vec4(expectedtrans, gottrans);
+    gottrans.x = u.x; gottrans.y = u.y;
+    D3DXVec2Transform(&gottrans, (D3DXVECTOR2 *)&gottrans, &mat);
+    expect_vec4(expectedtrans, gottrans);
 
 /*_______________D3DXVec2TransformCoord_______________________*/
     expectedvec.x = 0.6f; expectedvec.y = 11.0f/15.0f;
