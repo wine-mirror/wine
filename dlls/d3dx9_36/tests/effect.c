@@ -3848,7 +3848,7 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->SetVector(effect, par, &fvect2);
     ok(hr == D3D_OK, "SetVector failed, hr %#x.\n", hr);
     hr = effect->lpVtbl->BeginPass(effect, 1);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
@@ -3860,7 +3860,7 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     hr = IDirect3DVertexShader9_GetFunction(vshader, byte_code, &byte_code_size);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     ok(byte_code_size > 1, "Got unexpected byte code size %u.\n", byte_code_size);
-    todo_wine ok(!memcmp(byte_code,
+    ok(!memcmp(byte_code,
             &test_effect_preshader_effect_blob[TEST_EFFECT_PRESHADER_VSHADER_POS +
             TEST_EFFECT_PRESHADER_VSHADER_LEN], byte_code_size),
             "Incorrect shader selected.\n");
@@ -3873,7 +3873,7 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->SetVector(effect, par, &fvect1);
     ok(hr == D3D_OK, "SetVector failed, hr %#x.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     ok(!vshader, "Incorrect shader selected.\n");
