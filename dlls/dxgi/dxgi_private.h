@@ -116,7 +116,6 @@ struct dxgi_device
     LONG refcount;
     struct wined3d_private_store private_store;
     struct wined3d_device *wined3d_device;
-    IDXGIFactory1 *factory;
     IDXGIAdapter1 *adapter;
 };
 

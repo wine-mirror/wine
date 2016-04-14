@@ -86,7 +86,6 @@ static ULONG STDMETHODCALLTYPE dxgi_device_Release(IWineDXGIDevice *iface)
         wined3d_device_decref(device->wined3d_device);
         wined3d_mutex_unlock();
         IDXGIAdapter1_Release(device->adapter);
-        IDXGIFactory1_Release(device->factory);
         wined3d_private_store_cleanup(&device->private_store);
         HeapFree(GetProcessHeap(), 0, device);
     }
@@ -454,8 +453,6 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     }
     wined3d_mutex_unlock();
 
-    device->factory = &dxgi_factory->IDXGIFactory1_iface;
-    IDXGIFactory1_AddRef(device->factory);
     device->adapter = &dxgi_adapter->IDXGIAdapter1_iface;
     IDXGIAdapter1_AddRef(device->adapter);
 

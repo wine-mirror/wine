@@ -467,7 +467,7 @@ static void test_create_swapchain(void)
 
     expected_refcount = get_refcount((IUnknown *)adapter);
     refcount = get_refcount((IUnknown *)factory);
-    todo_wine ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
     refcount = get_refcount((IUnknown *)device);
     ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
 
@@ -499,7 +499,7 @@ static void test_create_swapchain(void)
     IDXGISwapChain_Release(swapchain);
 
     refcount = get_refcount((IUnknown *)factory);
-    todo_wine ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
 
     for (i = 0; i < sizeof(refresh_list)/sizeof(refresh_list[0]); i++)
     {
