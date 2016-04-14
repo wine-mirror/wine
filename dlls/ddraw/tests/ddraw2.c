@@ -5346,7 +5346,7 @@ static void test_user_memory_getdc(void)
     ok(!!bitmap, "Failed to get bitmap.\n");
     size = GetObjectA(bitmap, sizeof(dib), &dib);
     ok(size == sizeof(dib), "Got unexpected size %d.\n", size);
-    todo_wine ok(dib.dsBm.bmBits == data, "Got unexpected bits %p, expected %p.\n", dib.dsBm.bmBits, data);
+    ok(dib.dsBm.bmBits == data, "Got unexpected bits %p, expected %p.\n", dib.dsBm.bmBits, data);
     BitBlt(dc, 0, 0, 16, 8, NULL, 0, 0, WHITENESS);
     BitBlt(dc, 0, 8, 16, 8, NULL, 0, 0, BLACKNESS);
     hr = IDirectDrawSurface3_ReleaseDC(surface3, dc);
@@ -9835,7 +9835,7 @@ static void test_getdc(void)
                     || broken(U2(test_data[i].format).dwRGBBitCount == 32 && dib.dsBmih.biCompression == BI_BITFIELDS),
                     "Got unexpected compression %#x for format %s.\n",
                     dib.dsBmih.biCompression, test_data[i].name);
-            todo_wine ok(!dib.dsBmih.biSizeImage, "Got unexpected image size %u for format %s.\n",
+            ok(!dib.dsBmih.biSizeImage, "Got unexpected image size %u for format %s.\n",
                     dib.dsBmih.biSizeImage, test_data[i].name);
             ok(!dib.dsBmih.biXPelsPerMeter, "Got unexpected horizontal resolution %d for format %s.\n",
                     dib.dsBmih.biXPelsPerMeter, test_data[i].name);

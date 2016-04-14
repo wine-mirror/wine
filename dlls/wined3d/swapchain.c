@@ -661,16 +661,14 @@ static void swapchain_gdi_frontbuffer_updated(struct wined3d_swapchain *swapchai
 
     front = swapchain->front_buffer->sub_resources[0].u.surface;
     if (swapchain->palette)
-        wined3d_palette_apply_to_dc(swapchain->palette, front->hDC);
+        wined3d_palette_apply_to_dc(swapchain->palette, front->dc);
 
     if (front->container->resource.map_count)
         ERR("Trying to blit a mapped surface.\n");
 
     TRACE("Copying surface %p to screen.\n", front);
 
-    surface_load_location(front, NULL, WINED3D_LOCATION_DIB);
-
-    src_dc = front->hDC;
+    src_dc = front->dc;
     window = swapchain->win_handle;
     dst_dc = GetDCEx(window, 0, DCX_CLIPSIBLINGS | DCX_CACHE);
 
@@ -699,40 +697,25 @@ static void swapchain_gdi_present(struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, DWORD flags)
 {
     struct wined3d_surface *front, *back;
+    HBITMAP bitmap;
+    void *data;
+    HDC dc;
 
     front = swapchain->front_buffer->sub_resources[0].u.surface;
     back = swapchain->back_buffers[0]->sub_resources[0].u.surface;
 
-    /* Flip the DC. */
-    {
-        HDC tmp;
-        tmp = front->hDC;
-        front->hDC = back->hDC;
-        back->hDC = tmp;
-    }
-
-    /* Flip the DIBsection. */
-    {
-        HBITMAP tmp;
-        tmp = front->dib.DIBsection;
-        front->dib.DIBsection = back->dib.DIBsection;
-        back->dib.DIBsection = tmp;
-    }
-
     /* Flip the surface data. */
-    {
-        void *tmp;
+    dc = front->dc;
+    bitmap = front->bitmap;
+    data = front->resource.heap_memory;
 
-        tmp = front->dib.bitmap_data;
-        front->dib.bitmap_data = back->dib.bitmap_data;
-        back->dib.bitmap_data = tmp;
+    front->dc = back->dc;
+    front->bitmap = back->bitmap;
+    front->resource.heap_memory = back->resource.heap_memory;
 
-        if (front->resource.heap_memory)
-            ERR("GDI Surface %p has heap memory allocated.\n", front);
-
-        if (back->resource.heap_memory)
-            ERR("GDI Surface %p has heap memory allocated.\n", back);
-    }
+    back->dc = dc;
+    back->bitmap = bitmap;
+    back->resource.heap_memory = data;
 
     /* FPS support */
     if (TRACE_ON(fps))

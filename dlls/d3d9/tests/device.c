@@ -7689,7 +7689,7 @@ static void test_getdc(void)
             ok(dib.dsBmih.biCompression == (testdata[i].bit_count == 16 ? BI_BITFIELDS : BI_RGB),
                     "Got unexpected compression %#x for format %s.\n",
                     dib.dsBmih.biCompression, testdata[i].name);
-            todo_wine ok(!dib.dsBmih.biSizeImage, "Got unexpected image size %u for format %s.\n",
+            ok(!dib.dsBmih.biSizeImage, "Got unexpected image size %u for format %s.\n",
                     dib.dsBmih.biSizeImage, testdata[i].name);
             ok(!dib.dsBmih.biXPelsPerMeter, "Got unexpected horizontal resolution %d for format %s.\n",
                     dib.dsBmih.biXPelsPerMeter, testdata[i].name);

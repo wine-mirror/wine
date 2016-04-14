@@ -34,6 +34,8 @@
 #include <stdarg.h>
 #include <math.h>
 #include <limits.h>
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #define COBJMACROS
@@ -42,6 +44,8 @@
 #include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winternl.h"
+#include "ddk/d3dkmthk.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -2553,6 +2557,8 @@ void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, DWORD location) DECLSPEC_HIDDEN;
 void wined3d_texture_load(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
+void *wined3d_texture_map_bo_address(const struct wined3d_bo_address *data, size_t size,
+        const struct wined3d_gl_info *gl_info, GLenum binding, DWORD flags) DECLSPEC_HIDDEN;
 void wined3d_texture_prepare_buffer_object(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 void wined3d_texture_prepare_texture(struct wined3d_texture *texture,
@@ -2562,6 +2568,8 @@ void wined3d_texture_remove_buffer_object(struct wined3d_texture *texture,
 void wined3d_texture_set_dirty(struct wined3d_texture *texture) DECLSPEC_HIDDEN;
 void wined3d_texture_set_swapchain(struct wined3d_texture *texture,
         struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
+void wined3d_texture_unmap_bo_address(const struct wined3d_bo_address *data,
+        const struct wined3d_gl_info *gl_info, GLenum binding) DECLSPEC_HIDDEN;
 BOOL wined3d_texture_use_pbo(const struct wined3d_texture *texture,
         const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 void wined3d_texture_validate_location(struct wined3d_texture *texture,
@@ -2570,13 +2578,12 @@ void wined3d_texture_validate_location(struct wined3d_texture *texture,
 #define WINED3D_LOCATION_DISCARDED      0x00000001
 #define WINED3D_LOCATION_SYSMEM         0x00000002
 #define WINED3D_LOCATION_USER_MEMORY    0x00000004
-#define WINED3D_LOCATION_DIB            0x00000008
-#define WINED3D_LOCATION_BUFFER         0x00000010
-#define WINED3D_LOCATION_TEXTURE_RGB    0x00000020
-#define WINED3D_LOCATION_TEXTURE_SRGB   0x00000040
-#define WINED3D_LOCATION_DRAWABLE       0x00000080
-#define WINED3D_LOCATION_RB_MULTISAMPLE 0x00000100
-#define WINED3D_LOCATION_RB_RESOLVED    0x00000200
+#define WINED3D_LOCATION_BUFFER         0x00000008
+#define WINED3D_LOCATION_TEXTURE_RGB    0x00000010
+#define WINED3D_LOCATION_TEXTURE_SRGB   0x00000020
+#define WINED3D_LOCATION_DRAWABLE       0x00000040
+#define WINED3D_LOCATION_RB_MULTISAMPLE 0x00000080
+#define WINED3D_LOCATION_RB_RESOLVED    0x00000100
 
 const char *wined3d_debug_location(DWORD location) DECLSPEC_HIDDEN;
 
@@ -2602,13 +2609,6 @@ BOOL wined3d_volume_prepare_location(struct wined3d_volume *volume,
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
 void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wined3d_context *context,
         const struct wined3d_const_bo_address *data) DECLSPEC_HIDDEN;
-
-struct wined3d_surface_dib
-{
-    HBITMAP DIBsection;
-    void *bitmap_data;
-    UINT bitmap_size;
-};
 
 struct wined3d_renderbuffer_entry
 {
@@ -2657,8 +2657,8 @@ struct wined3d_surface
     unsigned int texture_layer;
 
     /* For GetDC */
-    struct wined3d_surface_dib dib;
-    HDC                       hDC;
+    HBITMAP bitmap;
+    HDC dc;
 
     struct list               renderbuffers;
     const struct wined3d_renderbuffer_entry *current_renderbuffer;
@@ -2706,7 +2706,8 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
 void wined3d_surface_cleanup(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 HRESULT surface_color_fill(struct wined3d_surface *s,
         const RECT *rect, const struct wined3d_color *color) DECLSPEC_HIDDEN;
-HRESULT surface_create_dib_section(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
+HRESULT wined3d_surface_create_dc(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
+void wined3d_surface_destroy_dc(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 void surface_get_drawable_size(const struct wined3d_surface *surface, const struct wined3d_context *context,
         unsigned int *width, unsigned int *height) DECLSPEC_HIDDEN;
 HRESULT wined3d_surface_init(struct wined3d_surface *surface,
@@ -2734,7 +2735,6 @@ void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3
         const RECT *src_rect, const RECT *dst_rect, enum wined3d_texture_filter_type filter) DECLSPEC_HIDDEN;
 
 /* Surface flags: */
-#define SFLAG_DIBSECTION        0x00000001 /* Has a DIB section attached for GetDC. */
 #define SFLAG_DISCARD           0x00000002 /* ??? */
 
 struct wined3d_sampler
@@ -3451,6 +3451,7 @@ struct wined3d_format
 {
     enum wined3d_format_id id;
 
+    D3DDDIFORMAT ddi_format;
     DWORD red_size;
     DWORD green_size;
     DWORD blue_size;

@@ -2172,7 +2172,7 @@ static HRESULT WINAPI ddraw_surface7_GetDC(IDirectDrawSurface7 *iface, HDC *dc)
          * does not touch *dc. */
         case WINED3DERR_INVALIDCALL:
             *dc = NULL;
-            return DDERR_INVALIDPARAMS;
+            return DDERR_CANTCREATEDC;
 
         default:
             return hr;

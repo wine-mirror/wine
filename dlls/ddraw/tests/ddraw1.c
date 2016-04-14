@@ -8720,7 +8720,7 @@ static void test_getdc(void)
                     || broken(U2(test_data[i].format).dwRGBBitCount == 32 && dib.dsBmih.biCompression == BI_BITFIELDS),
                     "Got unexpected compression %#x for format %s.\n",
                     dib.dsBmih.biCompression, test_data[i].name);
-            todo_wine ok(!dib.dsBmih.biSizeImage, "Got unexpected image size %u for format %s.\n",
+            ok(!dib.dsBmih.biSizeImage, "Got unexpected image size %u for format %s.\n",
                     dib.dsBmih.biSizeImage, test_data[i].name);
             ok(!dib.dsBmih.biXPelsPerMeter, "Got unexpected horizontal resolution %d for format %s.\n",
                     dib.dsBmih.biXPelsPerMeter, test_data[i].name);

@@ -35,9 +35,8 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
 #define MAXLOCKCOUNT 50 /* After this amount of locks do not free the sysmem copy. */
 
-static const DWORD surface_simple_locations =
-        WINED3D_LOCATION_SYSMEM | WINED3D_LOCATION_USER_MEMORY
-        | WINED3D_LOCATION_DIB | WINED3D_LOCATION_BUFFER;
+static const DWORD surface_simple_locations = WINED3D_LOCATION_SYSMEM
+        | WINED3D_LOCATION_USER_MEMORY | WINED3D_LOCATION_BUFFER;
 
 void wined3d_surface_cleanup(struct wined3d_surface *surface)
 {
@@ -80,12 +79,8 @@ void wined3d_surface_cleanup(struct wined3d_surface *surface)
         context_release(context);
     }
 
-    if (surface->flags & SFLAG_DIBSECTION)
-    {
-        DeleteDC(surface->hDC);
-        DeleteObject(surface->dib.DIBsection);
-        surface->dib.bitmap_data = NULL;
-    }
+    if (surface->dc)
+        wined3d_surface_destroy_dc(surface);
 
     if (surface->overlay_dest)
         list_remove(&surface->overlay_entry);
@@ -348,110 +343,100 @@ static void get_color_masks(const struct wined3d_format *format, DWORD *masks)
     masks[2] = ((1u << format->blue_size) - 1) << format->blue_offset;
 }
 
-HRESULT surface_create_dib_section(struct wined3d_surface *surface)
+void wined3d_surface_destroy_dc(struct wined3d_surface *surface)
 {
+    unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
+    struct wined3d_texture *texture = surface->container;
+    struct wined3d_device *device = texture->resource.device;
+    const struct wined3d_gl_info *gl_info = NULL;
+    D3DKMT_DESTROYDCFROMMEMORY destroy_desc;
+    struct wined3d_context *context = NULL;
+    struct wined3d_bo_address data;
+    NTSTATUS status;
+
+    if (!surface->dc)
+    {
+        ERR("Surface %p has no DC.\n", surface);
+        return;
+    }
+
+    TRACE("dc %p, bitmap %p.\n", surface->dc, surface->bitmap);
+
+    destroy_desc.hDc = surface->dc;
+    destroy_desc.hBitmap = surface->bitmap;
+    if ((status = D3DKMTDestroyDCFromMemory(&destroy_desc)))
+        ERR("Failed to destroy dc, status %#x.\n", status);
+    surface->dc = NULL;
+    surface->bitmap = NULL;
+
+    if (device->d3d_initialized)
+    {
+        context = context_acquire(device, NULL);
+        gl_info = context->gl_info;
+    }
+
+    wined3d_texture_get_memory(texture, sub_resource_idx, &data, surface->resource.map_binding);
+    wined3d_texture_unmap_bo_address(&data, gl_info, GL_PIXEL_UNPACK_BUFFER);
+
+    if (context)
+        context_release(context);
+}
+
+HRESULT wined3d_surface_create_dc(struct wined3d_surface *surface)
+{
+    unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     struct wined3d_texture *texture = surface->container;
     const struct wined3d_format *format = texture->resource.format;
-    unsigned int format_flags = texture->resource.format_flags;
+    struct wined3d_device *device = texture->resource.device;
+    const struct wined3d_gl_info *gl_info = NULL;
+    struct wined3d_context *context = NULL;
     unsigned int row_pitch, slice_pitch;
-    BITMAPINFO *b_info;
-    DWORD *masks;
+    struct wined3d_bo_address data;
+    D3DKMT_CREATEDCFROMMEMORY desc;
+    NTSTATUS status;
 
     TRACE("surface %p.\n", surface);
 
-    if (!(format_flags & WINED3DFMT_FLAG_GETDC))
+    if (!format->ddi_format)
     {
-        WARN("Cannot use GetDC on a %s surface.\n", debug_d3dformat(format->id));
+        WARN("Cannot create a DC for format %s.\n", debug_d3dformat(format->id));
         return WINED3DERR_INVALIDCALL;
     }
 
-    switch (format->byte_count)
-    {
-        case 2:
-        case 4:
-            /* Allocate extra space to store the RGB bit masks. */
-            b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, FIELD_OFFSET(BITMAPINFO, bmiColors[3]));
-            break;
-
-        case 3:
-            b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, FIELD_OFFSET(BITMAPINFO, bmiColors[0]));
-            break;
-
-        default:
-            /* Allocate extra space for a palette. */
-            b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                    FIELD_OFFSET(BITMAPINFO, bmiColors[1u << (format->byte_count * 8)]));
-            break;
-    }
-
-    if (!b_info)
-        return E_OUTOFMEMORY;
-
-    b_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     wined3d_texture_get_pitch(texture, surface->texture_level, &row_pitch, &slice_pitch);
-    b_info->bmiHeader.biWidth = row_pitch / format->byte_count;
-    b_info->bmiHeader.biHeight = 0 - wined3d_texture_get_level_height(texture, surface->texture_level);
-    b_info->bmiHeader.biSizeImage = slice_pitch;
-    b_info->bmiHeader.biPlanes = 1;
-    b_info->bmiHeader.biBitCount = format->byte_count * 8;
 
-    b_info->bmiHeader.biXPelsPerMeter = 0;
-    b_info->bmiHeader.biYPelsPerMeter = 0;
-    b_info->bmiHeader.biClrUsed = 0;
-    b_info->bmiHeader.biClrImportant = 0;
-
-    /* Get the bit masks */
-    masks = (DWORD *)b_info->bmiColors;
-    switch (format->id)
+    if (device->d3d_initialized)
     {
-        case WINED3DFMT_B8G8R8_UNORM:
-            b_info->bmiHeader.biCompression = BI_RGB;
-            break;
-
-        case WINED3DFMT_B5G5R5X1_UNORM:
-        case WINED3DFMT_B5G5R5A1_UNORM:
-        case WINED3DFMT_B4G4R4A4_UNORM:
-        case WINED3DFMT_B4G4R4X4_UNORM:
-        case WINED3DFMT_B2G3R3_UNORM:
-        case WINED3DFMT_B2G3R3A8_UNORM:
-        case WINED3DFMT_R10G10B10A2_UNORM:
-        case WINED3DFMT_R8G8B8A8_UNORM:
-        case WINED3DFMT_R8G8B8X8_UNORM:
-        case WINED3DFMT_B10G10R10A2_UNORM:
-        case WINED3DFMT_B5G6R5_UNORM:
-        case WINED3DFMT_R16G16B16A16_UNORM:
-            b_info->bmiHeader.biCompression = BI_BITFIELDS;
-            get_color_masks(format, masks);
-            break;
-
-        default:
-            /* Don't know palette */
-            b_info->bmiHeader.biCompression = BI_RGB;
-            break;
+        context = context_acquire(device, NULL);
+        gl_info = context->gl_info;
     }
 
-    TRACE("Creating a DIB section with size %dx%dx%d, size=%d.\n",
-            b_info->bmiHeader.biWidth, b_info->bmiHeader.biHeight,
-            b_info->bmiHeader.biBitCount, b_info->bmiHeader.biSizeImage);
-    surface->dib.DIBsection = CreateDIBSection(0, b_info, DIB_RGB_COLORS, &surface->dib.bitmap_data, 0, 0);
+    wined3d_texture_get_memory(texture, sub_resource_idx, &data, surface->resource.map_binding);
+    desc.pMemory = wined3d_texture_map_bo_address(&data, surface->resource.size,
+            gl_info, GL_PIXEL_UNPACK_BUFFER, 0);
 
-    if (!surface->dib.DIBsection)
+    if (context)
+        context_release(context);
+
+    desc.Format = format->ddi_format;
+    desc.Width = wined3d_texture_get_level_width(texture, surface->texture_level);
+    desc.Height = wined3d_texture_get_level_height(texture, surface->texture_level);
+    desc.Pitch = row_pitch;
+    desc.hDeviceDc = CreateCompatibleDC(NULL);
+    desc.pColorTable = NULL;
+
+    status = D3DKMTCreateDCFromMemory(&desc);
+    DeleteDC(desc.hDeviceDc);
+    if (status)
     {
-        ERR("Failed to create DIB section.\n");
-        HeapFree(GetProcessHeap(), 0, b_info);
-        return HRESULT_FROM_WIN32(GetLastError());
+        WARN("Failed to create DC, status %#x.\n", status);
+        return WINED3DERR_INVALIDCALL;
     }
 
-    TRACE("DIBSection at %p.\n", surface->dib.bitmap_data);
-    surface->dib.bitmap_size = b_info->bmiHeader.biSizeImage;
+    surface->dc = desc.hDc;
+    surface->bitmap = desc.hBitmap;
 
-    HeapFree(GetProcessHeap(), 0, b_info);
-
-    /* Now allocate a DC. */
-    surface->hDC = CreateCompatibleDC(0);
-    SelectObject(surface->hDC, surface->dib.DIBsection);
-
-    surface->flags |= SFLAG_DIBSECTION;
+    TRACE("Created DC %p, bitmap %p for surface %p.\n", surface->dc, surface->bitmap, surface);
 
     return WINED3D_OK;
 }
@@ -2905,7 +2890,6 @@ static DWORD resource_access_from_location(DWORD location)
     {
         case WINED3D_LOCATION_SYSMEM:
         case WINED3D_LOCATION_USER_MEMORY:
-        case WINED3D_LOCATION_DIB:
         case WINED3D_LOCATION_BUFFER:
             return WINED3D_RESOURCE_ACCESS_CPU;
 
@@ -3132,11 +3116,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     {
         TRACE("Removing the pbo attached to surface %p.\n", surface);
 
-        if (surface->flags & SFLAG_DIBSECTION)
-            surface->resource.map_binding = WINED3D_LOCATION_DIB;
-        else
-            surface->resource.map_binding = WINED3D_LOCATION_SYSMEM;
-
+        surface->resource.map_binding = WINED3D_LOCATION_SYSMEM;
         surface_load_location(surface, context, surface->resource.map_binding);
         wined3d_texture_remove_buffer_object(texture, sub_resource_idx, gl_info);
     }
@@ -3275,7 +3255,6 @@ HRESULT surface_load_location(struct wined3d_surface *surface, struct wined3d_co
 
     switch (location)
     {
-        case WINED3D_LOCATION_DIB:
         case WINED3D_LOCATION_USER_MEMORY:
         case WINED3D_LOCATION_SYSMEM:
         case WINED3D_LOCATION_BUFFER:
@@ -4567,26 +4546,6 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
     if (wined3d_texture_use_pbo(container, gl_info))
         surface->resource.map_binding = WINED3D_LOCATION_BUFFER;
 
-    /* Similar to lockable rendertargets above, creating the DIB section
-     * during surface initialization prevents the sysmem pointer from changing
-     * after a wined3d_texture_get_dc() call. */
-    if ((desc->usage & WINED3DUSAGE_OWNDC) || (device->wined3d->flags & WINED3D_NO3D))
-    {
-        if (FAILED(hr = surface_create_dib_section(surface)))
-        {
-            wined3d_surface_cleanup(surface);
-            return hr;
-        }
-        surface->resource.map_binding = WINED3D_LOCATION_DIB;
-    }
-
-    if (surface->resource.map_binding == WINED3D_LOCATION_DIB)
-    {
-        wined3d_resource_free_sysmem(&surface->resource);
-        wined3d_texture_validate_location(container, sub_resource_idx, WINED3D_LOCATION_DIB);
-        wined3d_texture_invalidate_location(container, sub_resource_idx, WINED3D_LOCATION_SYSMEM);
-    }
-
     return hr;
 }
 
@@ -4605,11 +4564,6 @@ void wined3d_surface_prepare(struct wined3d_surface *surface, struct wined3d_con
         case WINED3D_LOCATION_USER_MEMORY:
             if (!texture->user_memory)
                 ERR("Map binding is set to WINED3D_LOCATION_USER_MEMORY but surface->user_memory is NULL.\n");
-            break;
-
-        case WINED3D_LOCATION_DIB:
-            if (!surface->dib.bitmap_data)
-                ERR("Map binding is set to WINED3D_LOCATION_DIB but surface->dib.bitmap_data is NULL.\n");
             break;
 
         case WINED3D_LOCATION_BUFFER:

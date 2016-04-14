@@ -105,7 +105,7 @@ void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
 }
 
 /* Context activation is done by the caller. */
-static void *wined3d_texture_map_bo_address(const struct wined3d_bo_address *data, size_t size,
+void *wined3d_texture_map_bo_address(const struct wined3d_bo_address *data, size_t size,
         const struct wined3d_gl_info *gl_info, GLenum binding, DWORD flags)
 {
     BYTE *memory;
@@ -133,7 +133,7 @@ static void *wined3d_texture_map_bo_address(const struct wined3d_bo_address *dat
 }
 
 /* Context activation is done by the caller. */
-static void wined3d_texture_unmap_bo_address(const struct wined3d_bo_address *data,
+void wined3d_texture_unmap_bo_address(const struct wined3d_bo_address *data,
         const struct wined3d_gl_info *gl_info, GLenum binding)
 {
     if (!data->buffer_object)
@@ -165,17 +165,6 @@ void wined3d_texture_get_memory(struct wined3d_texture *texture, unsigned int su
         data->addr = texture->user_memory;
         data->buffer_object = 0;
         return;
-    }
-    if (locations & WINED3D_LOCATION_DIB)
-    {
-        if (texture->resource.type == WINED3D_RTYPE_TEXTURE_2D)
-        {
-            data->addr = sub_resource->u.surface->dib.bitmap_data;
-            data->buffer_object = 0;
-            return;
-        }
-        ERR("Invalid location WINED3D_LOCATION_DIB for resource type %s.\n",
-                debug_d3dresourcetype(texture->resource.type));
     }
     if (locations & WINED3D_LOCATION_SYSMEM)
     {
@@ -903,14 +892,9 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
 
     sub_resource = &texture->sub_resources[0];
     surface = sub_resource->u.surface;
-    if (surface->flags & SFLAG_DIBSECTION)
+    if (surface->dc)
     {
-        DeleteDC(surface->hDC);
-        surface->hDC = NULL;
-        DeleteObject(surface->dib.DIBsection);
-        surface->dib.DIBsection = NULL;
-        surface->dib.bitmap_data = NULL;
-        surface->flags &= ~SFLAG_DIBSECTION;
+        wined3d_surface_destroy_dc(surface);
         create_dib = TRUE;
     }
 
@@ -962,10 +946,6 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         sub_resource->resource->map_binding = WINED3D_LOCATION_USER_MEMORY;
         valid_location = WINED3D_LOCATION_USER_MEMORY;
     }
-    else if (create_dib && SUCCEEDED(surface_create_dib_section(surface)))
-    {
-        valid_location = WINED3D_LOCATION_DIB;
-    }
     else
     {
         wined3d_surface_prepare(surface, NULL, WINED3D_LOCATION_SYSMEM);
@@ -977,9 +957,12 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
      * change it - whatever made us not use PBOs might come back, e.g.
      * color keys. */
     if (sub_resource->resource->map_binding == WINED3D_LOCATION_BUFFER && !wined3d_texture_use_pbo(texture, gl_info))
-        sub_resource->resource->map_binding = surface->dib.DIBsection ? WINED3D_LOCATION_DIB : WINED3D_LOCATION_SYSMEM;
+        sub_resource->resource->map_binding = WINED3D_LOCATION_SYSMEM;
 
     wined3d_texture_validate_location(texture, 0, valid_location);
+
+    if (create_dib)
+        wined3d_surface_create_dc(surface);
 
     return WINED3D_OK;
 }
@@ -1693,6 +1676,13 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
             texture->sub_resources[idx].resource = &surface->resource;
             texture->sub_resources[idx].u.surface = surface;
             TRACE("Created surface level %u, layer %u @ %p.\n", i, j, surface);
+
+            if (((desc->usage & WINED3DUSAGE_OWNDC) || (device->wined3d->flags & WINED3D_NO3D))
+                    && FAILED(hr = wined3d_surface_create_dc(surface)))
+            {
+                wined3d_texture_cleanup(texture);
+                return hr;
+            }
         }
         /* Calculate the next mipmap level. */
         surface_desc.width = max(1, surface_desc.width >> 1);
@@ -2239,7 +2229,7 @@ HRESULT CDECL wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned i
     struct wined3d_texture_sub_resource *sub_resource;
     struct wined3d_context *context = NULL;
     struct wined3d_surface *surface;
-    HRESULT hr;
+    HRESULT hr = WINED3D_OK;
 
     TRACE("texture %p, sub_resource_idx %u, dc %p.\n", texture, sub_resource_idx, dc);
 
@@ -2260,43 +2250,31 @@ HRESULT CDECL wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned i
     if (device->d3d_initialized)
         context = context_acquire(device, NULL);
 
-    /* Create a DIB section if there isn't a dc yet. */
-    if (!surface->hDC)
-    {
-        if (FAILED(hr = surface_create_dib_section(surface)))
-        {
-            if (context)
-                context_release(context);
-             return WINED3DERR_INVALIDCALL;
-        }
-        if (!(surface->resource.map_binding == WINED3D_LOCATION_USER_MEMORY
-                || texture->flags & WINED3D_TEXTURE_PIN_SYSMEM
-                || texture->sub_resources[sub_resource_idx].buffer_object))
-            surface->resource.map_binding = WINED3D_LOCATION_DIB;
-    }
+    surface_load_location(surface, context, surface->resource.map_binding);
+    wined3d_texture_invalidate_location(texture, sub_resource_idx, ~surface->resource.map_binding);
 
-    surface_load_location(surface, context, WINED3D_LOCATION_DIB);
-    wined3d_texture_invalidate_location(texture, sub_resource_idx, ~WINED3D_LOCATION_DIB);
-
+    if (!surface->dc)
+        hr = wined3d_surface_create_dc(surface);
     if (context)
         context_release(context);
+    if (FAILED(hr))
+        return WINED3DERR_INVALIDCALL;
 
     if (!(texture->flags & WINED3D_TEXTURE_GET_DC_LENIENT))
         texture->flags |= WINED3D_TEXTURE_DC_IN_USE;
     ++texture->resource.map_count;
     ++sub_resource->map_count;
 
-    *dc = surface->hDC;
+    *dc = surface->dc;
     TRACE("Returning dc %p.\n", *dc);
 
-    return WINED3D_OK;
+    return hr;
 }
 
 HRESULT CDECL wined3d_texture_release_dc(struct wined3d_texture *texture, unsigned int sub_resource_idx, HDC dc)
 {
     struct wined3d_device *device = texture->resource.device;
     struct wined3d_texture_sub_resource *sub_resource;
-    struct wined3d_context *context = NULL;
     struct wined3d_surface *surface;
 
     TRACE("texture %p, sub_resource_idx %u, dc %p.\n", texture, sub_resource_idx, dc);
@@ -2315,38 +2293,19 @@ HRESULT CDECL wined3d_texture_release_dc(struct wined3d_texture *texture, unsign
     if (!(texture->flags & (WINED3D_TEXTURE_GET_DC_LENIENT | WINED3D_TEXTURE_DC_IN_USE)))
         return WINED3DERR_INVALIDCALL;
 
-    if (surface->hDC != dc)
+    if (surface->dc != dc)
     {
-        WARN("Application tries to release invalid DC %p, surface DC is %p.\n",
-                dc, surface->hDC);
+        WARN("Application tries to release invalid DC %p, surface DC is %p.\n", dc, surface->dc);
         return WINED3DERR_INVALIDCALL;
     }
+
+    if (!(texture->resource.usage & WINED3DUSAGE_OWNDC) && !(device->wined3d->flags & WINED3D_NO3D))
+        wined3d_surface_destroy_dc(surface);
 
     --sub_resource->map_count;
     --texture->resource.map_count;
     if (!(texture->flags & WINED3D_TEXTURE_GET_DC_LENIENT))
         texture->flags &= ~WINED3D_TEXTURE_DC_IN_USE;
-
-    if (surface->resource.map_binding == WINED3D_LOCATION_USER_MEMORY
-            || (surface->container->flags & WINED3D_TEXTURE_PIN_SYSMEM
-            && surface->resource.map_binding != WINED3D_LOCATION_DIB))
-    {
-        /* The game Salammbo modifies the surface contents without mapping the surface between
-         * a GetDC/ReleaseDC operation and flipping the surface. If the DIB remains the active
-         * copy and is copied to the screen, this update, which draws the mouse pointer, is lost.
-         * Do not only copy the DIB to the map location, but also make sure the map location is
-         * copied back to the DIB in the next getdc call.
-         *
-         * The same consideration applies to user memory surfaces. */
-
-        if (device->d3d_initialized)
-            context = context_acquire(device, NULL);
-
-        surface_load_location(surface, context, surface->resource.map_binding);
-        wined3d_texture_invalidate_location(texture, sub_resource_idx, WINED3D_LOCATION_DIB);
-        if (context)
-            context_release(context);
-    }
 
     return WINED3D_OK;
 }

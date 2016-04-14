@@ -1471,7 +1471,7 @@ static void test_user_memory_getdc(void)
     ok(!!bitmap, "Failed to get bitmap.\n");
     size = GetObjectA(bitmap, sizeof(dib), &dib);
     ok(size == sizeof(dib), "Got unexpected size %d.\n", size);
-    todo_wine ok(dib.dsBm.bmBits == data, "Got unexpected bits %p, expected %p.\n", dib.dsBm.bmBits, data);
+    ok(dib.dsBm.bmBits == data, "Got unexpected bits %p, expected %p.\n", dib.dsBm.bmBits, data);
     BitBlt(dc, 0, 0, 16, 8, NULL, 0, 0, WHITENESS);
     BitBlt(dc, 0, 8, 16, 8, NULL, 0, 0, BLACKNESS);
     hr = IDirect3DSurface9_ReleaseDC(surface, dc);
