@@ -1706,6 +1706,8 @@ static HRESULT WINAPI MimeMessage_Load(IMimeMessage *iface, IStream *pStm)
         return E_FAIL;
     }
 
+    empty_body_list(&This->body_tree);
+
     IStream_AddRef(pStm);
     This->stream = pStm;
     offsets.cbBoundaryStart = offsets.cbHeaderStart = 0;
@@ -2544,6 +2546,8 @@ static const IMimeMessageVtbl MimeMessageVtbl =
 HRESULT MimeMessage_create(IUnknown *outer, void **obj)
 {
     MimeMessage *This;
+    MimeBody *mime_body;
+    body_t *root_body;
 
     TRACE("(%p, %p)\n", outer, obj);
 
@@ -2563,6 +2567,10 @@ HRESULT MimeMessage_create(IUnknown *outer, void **obj)
     This->stream = NULL;
     list_init(&This->body_tree);
     This->next_index = 1;
+
+    mime_body = mimebody_create();
+    root_body = new_body_entry(mime_body, This->next_index++, NULL);
+    list_add_head(&This->body_tree, &root_body->entry);
 
     *obj = &This->IMimeMessage_iface;
     return S_OK;

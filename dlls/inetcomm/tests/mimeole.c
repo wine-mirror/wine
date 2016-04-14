@@ -332,6 +332,27 @@ static void test_CreateMessage(void)
     IStream_Release(stream);
 }
 
+void test_BindToObject(void)
+{
+    HRESULT hr;
+    IMimeMessage *msg;
+    IMimeBody *body;
+    ULONG count;
+
+    hr = MimeOleCreateMessage(NULL, &msg);
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    hr = IMimeMessage_CountBodies(msg, HBODY_ROOT, TRUE, &count);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(count == 1, "got %d\n", count);
+
+    hr = IMimeMessage_BindToObject(msg, HBODY_ROOT, &IID_IMimeBody, (void**)&body);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    IMimeBody_Release(body);
+
+    IMimeMessage_Release(msg);
+}
+
 START_TEST(mimeole)
 {
     OleInitialize(NULL);
@@ -340,5 +361,6 @@ START_TEST(mimeole)
     test_CreateBody();
     test_Allocator();
     test_CreateMessage();
+    test_BindToObject();
     OleUninitialize();
 }
