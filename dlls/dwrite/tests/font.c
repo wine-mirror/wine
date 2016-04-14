@@ -1551,8 +1551,13 @@ static void get_expected_font_metrics(IDWriteFontFace *fontface, DWRITE_FONT_MET
     hr = IDWriteFontFace_TryGetFontTable(fontface, MS_POST_TAG, (const void**)&tt_post, &size, &post_context, &exists);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    if (tt_head)
+    if (tt_head) {
         metrics->designUnitsPerEm = GET_BE_WORD(tt_head->unitsPerEm);
+        metrics->glyphBoxLeft = GET_BE_WORD(tt_head->xMin);
+        metrics->glyphBoxTop = GET_BE_WORD(tt_head->yMax);
+        metrics->glyphBoxRight = GET_BE_WORD(tt_head->xMax);
+        metrics->glyphBoxBottom = GET_BE_WORD(tt_head->yMin);
+    }
 
     if (tt_os2) {
         if (GET_BE_WORD(tt_os2->fsSelection) & OS2_FSSELECTION_USE_TYPO_METRICS) {
@@ -1618,6 +1623,14 @@ static void check_font_metrics(const WCHAR *nameW, BOOL has_metrics1, const DWRI
         const DWRITE_FONT_METRICS1 *m1 = (const DWRITE_FONT_METRICS1*)got;
         ok(m1->hasTypographicMetrics == expected->hasTypographicMetrics, "font %s: hasTypographicMetrics %d, "
             "expected %d\n", wine_dbgstr_w(nameW), m1->hasTypographicMetrics, expected->hasTypographicMetrics);
+        ok(m1->glyphBoxLeft == expected->glyphBoxLeft, "font %s: glyphBoxLeft %d, expected %d\n", wine_dbgstr_w(nameW),
+            m1->glyphBoxLeft, expected->glyphBoxLeft);
+        ok(m1->glyphBoxTop == expected->glyphBoxTop, "font %s: glyphBoxTop %d, expected %d\n", wine_dbgstr_w(nameW),
+            m1->glyphBoxTop, expected->glyphBoxTop);
+        ok(m1->glyphBoxRight == expected->glyphBoxRight, "font %s: glyphBoxRight %d, expected %d\n", wine_dbgstr_w(nameW),
+            m1->glyphBoxRight, expected->glyphBoxRight);
+        ok(m1->glyphBoxBottom == expected->glyphBoxBottom, "font %s: glyphBoxBottom %d, expected %d\n", wine_dbgstr_w(nameW),
+            m1->glyphBoxBottom, expected->glyphBoxBottom);
     }
 }
 
