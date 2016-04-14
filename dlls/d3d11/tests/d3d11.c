@@ -2123,6 +2123,24 @@ static void test_create_shader(void)
         return o;
     }
 #endif
+    static const DWORD vs_4_1[] =
+    {
+        0x43425844, 0xfce5b27c, 0x965db93d, 0x8c3d0459, 0x9890ebac, 0x00000001, 0x000001c4, 0x00000003,
+        0x0000002c, 0x0000007c, 0x000000cc, 0x4e475349, 0x00000048, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x00000041, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000707, 0x49534f50, 0x4e4f4954, 0x524f4e00, 0x004c414d, 0x4e47534f,
+        0x00000048, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x00000041, 0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x0000000f, 0x49534f50,
+        0x4e4f4954, 0x4c4f4300, 0xab00524f, 0x52444853, 0x000000f0, 0x00010041, 0x0000003c, 0x0100086a,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000005, 0x0300005f, 0x001010f2, 0x00000000, 0x0300005f,
+        0x00101072, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x03000065, 0x001020f2, 0x00000001,
+        0x08000011, 0x00102012, 0x00000000, 0x00101e46, 0x00000000, 0x00208e46, 0x00000000, 0x00000001,
+        0x08000011, 0x00102022, 0x00000000, 0x00101e46, 0x00000000, 0x00208e46, 0x00000000, 0x00000002,
+        0x08000011, 0x00102042, 0x00000000, 0x00101e46, 0x00000000, 0x00208e46, 0x00000000, 0x00000003,
+        0x08000011, 0x00102082, 0x00000000, 0x00101e46, 0x00000000, 0x00208e46, 0x00000000, 0x00000004,
+        0x08000010, 0x001020f2, 0x00000001, 0x00208246, 0x00000000, 0x00000000, 0x00101246, 0x00000001,
+        0x0100003e,
+    };
     static const DWORD vs_4_0[] =
     {
         0x43425844, 0x3ae813ca, 0x0f034b91, 0x790f3226, 0x6b4a718a, 0x00000001, 0x000001c0,
@@ -2142,22 +2160,6 @@ static void test_create_shader(void)
         0x00101e46, 0x00000000, 0x00208e46, 0x00000000, 0x00000004, 0x08000010, 0x001020f2,
         0x00000001, 0x00208246, 0x00000000, 0x00000000, 0x00101246, 0x00000001, 0x0100003e,
     };
-
-    static const DWORD vs_2_0[] =
-    {
-        0xfffe0200, 0x002bfffe, 0x42415443, 0x0000001c, 0x00000077, 0xfffe0200, 0x00000002,
-        0x0000001c, 0x00000100, 0x00000070, 0x00000044, 0x00040002, 0x00000001, 0x0000004c,
-        0x00000000, 0x0000005c, 0x00000002, 0x00000004, 0x00000060, 0x00000000, 0x6867696c,
-        0xabab0074, 0x00030001, 0x00040001, 0x00000001, 0x00000000, 0x0074616d, 0x00030003,
-        0x00040004, 0x00000001, 0x00000000, 0x325f7376, 0x4d00305f, 0x6f726369, 0x74666f73,
-        0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072,
-        0x392e3932, 0x332e3235, 0x00313131, 0x0200001f, 0x80000000, 0x900f0000, 0x0200001f,
-        0x80000003, 0x900f0001, 0x03000009, 0xc0010000, 0x90e40000, 0xa0e40000, 0x03000009,
-        0xc0020000, 0x90e40000, 0xa0e40001, 0x03000009, 0xc0040000, 0x90e40000, 0xa0e40002,
-        0x03000009, 0xc0080000, 0x90e40000, 0xa0e40003, 0x03000008, 0xd00f0000, 0xa0e40004,
-        0x90e40001, 0x0000ffff,
-    };
-
     static const DWORD vs_3_0[] =
     {
         0xfffe0300, 0x002bfffe, 0x42415443, 0x0000001c, 0x00000077, 0xfffe0300, 0x00000002,
@@ -2173,6 +2175,20 @@ static void test_create_shader(void)
         0xe0080000, 0x90e40000, 0xa0e40003, 0x03000008, 0xe00f0001, 0xa0e40004, 0x90e40001,
         0x0000ffff,
     };
+    static const DWORD vs_2_0[] =
+    {
+        0xfffe0200, 0x002bfffe, 0x42415443, 0x0000001c, 0x00000077, 0xfffe0200, 0x00000002,
+        0x0000001c, 0x00000100, 0x00000070, 0x00000044, 0x00040002, 0x00000001, 0x0000004c,
+        0x00000000, 0x0000005c, 0x00000002, 0x00000004, 0x00000060, 0x00000000, 0x6867696c,
+        0xabab0074, 0x00030001, 0x00040001, 0x00000001, 0x00000000, 0x0074616d, 0x00030003,
+        0x00040004, 0x00000001, 0x00000000, 0x325f7376, 0x4d00305f, 0x6f726369, 0x74666f73,
+        0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072,
+        0x392e3932, 0x332e3235, 0x00313131, 0x0200001f, 0x80000000, 0x900f0000, 0x0200001f,
+        0x80000003, 0x900f0001, 0x03000009, 0xc0010000, 0x90e40000, 0xa0e40000, 0x03000009,
+        0xc0020000, 0x90e40000, 0xa0e40001, 0x03000009, 0xc0040000, 0x90e40000, 0xa0e40002,
+        0x03000009, 0xc0080000, 0x90e40000, 0xa0e40003, 0x03000008, 0xd00f0000, 0xa0e40004,
+        0x90e40001, 0x0000ffff,
+    };
 
 #if 0
     float4 main(const float4 color : COLOR) : SV_TARGET
@@ -2184,6 +2200,16 @@ static void test_create_shader(void)
         return o;
     }
 #endif
+    static const DWORD ps_4_1[] =
+    {
+        0x43425844, 0xa1a44423, 0xa4cfcec2, 0x64610832, 0xb7a852bd, 0x00000001, 0x000000d4, 0x00000003,
+        0x0000002c, 0x0000005c, 0x00000090, 0x4e475349, 0x00000028, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x4f4c4f43, 0xabab0052, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x0000003c, 0x00000041, 0x0000000f,
+        0x0100086a, 0x03001062, 0x001010f2, 0x00000000, 0x03000065, 0x001020f2, 0x00000000, 0x05000036,
+        0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
+    };
     static const DWORD ps_4_0[] =
     {
         0x43425844, 0x4da9446f, 0xfbe1f259, 0x3fdb3009, 0x517521fa, 0x00000001, 0x000001ac,
@@ -2271,6 +2297,27 @@ static void test_create_shader(void)
         vout.Append(v);
     }
 #endif
+    static const DWORD gs_4_1[] =
+    {
+        0x43425844, 0x779daaf5, 0x7e154197, 0xcf5e99da, 0xb502b4d2, 0x00000001, 0x00000240, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0xababab00,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x52444853, 0x000001a4, 0x00020041,
+        0x00000069, 0x0100086a, 0x0400005f, 0x002010f2, 0x00000001, 0x00000000, 0x02000068, 0x00000001,
+        0x0100085d, 0x0100285c, 0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x0200005e, 0x00000004,
+        0x0f000032, 0x00100032, 0x00000000, 0x80201ff6, 0x00000041, 0x00000000, 0x00000000, 0x00004002,
+        0x3dcccccd, 0x3dcccccd, 0x00000000, 0x00000000, 0x00201046, 0x00000000, 0x00000000, 0x05000036,
+        0x00102032, 0x00000000, 0x00100046, 0x00000000, 0x06000036, 0x001020c2, 0x00000000, 0x00201ea6,
+        0x00000000, 0x00000000, 0x01000013, 0x05000036, 0x00102012, 0x00000000, 0x0010000a, 0x00000000,
+        0x0e000032, 0x00100052, 0x00000000, 0x00201ff6, 0x00000000, 0x00000000, 0x00004002, 0x3dcccccd,
+        0x00000000, 0x3dcccccd, 0x00000000, 0x00201106, 0x00000000, 0x00000000, 0x05000036, 0x00102022,
+        0x00000000, 0x0010002a, 0x00000000, 0x06000036, 0x001020c2, 0x00000000, 0x00201ea6, 0x00000000,
+        0x00000000, 0x01000013, 0x05000036, 0x00102012, 0x00000000, 0x0010000a, 0x00000000, 0x05000036,
+        0x00102022, 0x00000000, 0x0010001a, 0x00000000, 0x06000036, 0x001020c2, 0x00000000, 0x00201ea6,
+        0x00000000, 0x00000000, 0x01000013, 0x05000036, 0x00102032, 0x00000000, 0x00100086, 0x00000000,
+        0x06000036, 0x001020c2, 0x00000000, 0x00201ea6, 0x00000000, 0x00000000, 0x01000013, 0x0100003e,
+    };
     static const DWORD gs_4_0[] =
     {
         0x43425844, 0x000ee786, 0xc624c269, 0x885a5cbe, 0x444b3b1f, 0x00000001, 0x0000023c, 0x00000003,
@@ -2373,6 +2420,22 @@ static void test_create_shader(void)
             ok(!refcount, "Vertex shader has %u references left.\n", refcount);
         }
 
+        hr = ID3D11Device_CreateVertexShader(device, vs_4_1, sizeof(vs_4_1), NULL, &vs);
+        if (feature_level >= D3D_FEATURE_LEVEL_10_1)
+        {
+            ok(SUCCEEDED(hr), "Failed to create SM4.1 vertex shader, hr %#x, feature level %#x.\n",
+                    hr, feature_level);
+            refcount = ID3D11VertexShader_Release(vs);
+            ok(!refcount, "Vertex shader has %u references left.\n", refcount);
+        }
+        else
+        {
+            todo_wine_if(feature_level >= D3D_FEATURE_LEVEL_10_0)
+            ok(hr == E_INVALIDARG, "Created a SM4.1 vertex shader, hr %#x, feature level %#x.\n", hr, feature_level);
+            if (SUCCEEDED(hr))
+                ID3D11VertexShader_Release(vs);
+        }
+
         /* pixel shader */
         expected_refcount = get_refcount((IUnknown *)device) + (feature_level >= D3D_FEATURE_LEVEL_10_0);
         hr = ID3D11Device_CreatePixelShader(device, ps_4_0, sizeof(ps_4_0), NULL, &ps);
@@ -2404,6 +2467,22 @@ static void test_create_shader(void)
             ok(!refcount, "Pixel shader has %u references left.\n", refcount);
         }
 
+        hr = ID3D11Device_CreatePixelShader(device, ps_4_1, sizeof(ps_4_1), NULL, &ps);
+        if (feature_level >= D3D_FEATURE_LEVEL_10_1)
+        {
+            ok(SUCCEEDED(hr), "Failed to create SM4.1 pixel shader, hr %#x, feature level %#x.\n",
+                    hr, feature_level);
+            refcount = ID3D11PixelShader_Release(ps);
+            ok(!refcount, "Pixel shader has %u references left.\n", refcount);
+        }
+        else
+        {
+            todo_wine_if(feature_level >= D3D_FEATURE_LEVEL_10_0)
+            ok(hr == E_INVALIDARG, "Created a SM4.1 pixel shader, hr %#x, feature level %#x.\n", hr, feature_level);
+            if (SUCCEEDED(hr))
+                ID3D11PixelShader_Release(ps);
+        }
+
         /* geometry shader */
         expected_refcount = get_refcount((IUnknown *)device) + (feature_level >= D3D_FEATURE_LEVEL_10_0);
         hr = ID3D11Device_CreateGeometryShader(device, gs_4_0, sizeof(gs_4_0), NULL, &gs);
@@ -2433,6 +2512,23 @@ static void test_create_shader(void)
 
             refcount = ID3D11GeometryShader_Release(gs);
             ok(!refcount, "Geometry shader has %u references left.\n", refcount);
+        }
+
+        hr = ID3D11Device_CreateGeometryShader(device, gs_4_1, sizeof(gs_4_1), NULL, &gs);
+        if (feature_level >= D3D_FEATURE_LEVEL_10_1)
+        {
+            ok(SUCCEEDED(hr), "Failed to create SM4.1 geometry shader, hr %#x, feature level %#x.\n",
+                    hr, feature_level);
+            refcount = ID3D11GeometryShader_Release(gs);
+            ok(!refcount, "Geometry shader has %u references left.\n", refcount);
+        }
+        else
+        {
+            todo_wine_if(feature_level >= D3D_FEATURE_LEVEL_10_0)
+            ok(hr == E_INVALIDARG, "Created a SM4.1 geometry shader, hr %#x, feature level %#x.\n",
+                    hr, feature_level);
+            if (SUCCEEDED(hr))
+                ID3D11GeometryShader_Release(gs);
         }
 
         refcount = ID3D11Device_Release(device);
