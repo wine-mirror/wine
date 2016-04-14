@@ -609,7 +609,14 @@ static void D3DXPlaneTest(void)
     vec1.x = 11.0f; vec1.y = 13.0f; vec1.z = 15.0f;
     vec2.x = 17.0f; vec2.y = 31.0f; vec2.z = 24.0f;
     expectedplane.a = 17.0f; expectedplane.b = 31.0f; expectedplane.c = 24.0f; expectedplane.d = -950.0f;
-    D3DXPlaneFromPointNormal(&gotplane,&vec1,&vec2);
+    D3DXPlaneFromPointNormal(&gotplane, &vec1, &vec2);
+    expect_plane(expectedplane, gotplane);
+    gotplane.a = vec2.x; gotplane.b = vec2.y; gotplane.c = vec2.z;
+    D3DXPlaneFromPointNormal(&gotplane, &vec1, (D3DXVECTOR3 *)&gotplane);
+    expect_plane(expectedplane, gotplane);
+    gotplane.a = vec1.x; gotplane.b = vec1.y; gotplane.c = vec1.z;
+    expectedplane.d = -1826.0f;
+    D3DXPlaneFromPointNormal(&gotplane, (D3DXVECTOR3 *)&gotplane, &vec2);
     expect_plane(expectedplane, gotplane);
 
 /*_______________D3DXPlaneFromPoints_______*/
