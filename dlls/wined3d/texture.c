@@ -104,6 +104,47 @@ void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
                 sub_resource_idx, texture);
 }
 
+/* Context activation is done by the caller. */
+static void *wined3d_texture_map_bo_address(const struct wined3d_bo_address *data, size_t size,
+        const struct wined3d_gl_info *gl_info, GLenum binding, DWORD flags)
+{
+    BYTE *memory;
+
+    if (!data->buffer_object)
+        return data->addr;
+
+    GL_EXTCALL(glBindBuffer(binding, data->buffer_object));
+
+    if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
+    {
+        GLbitfield map_flags = wined3d_resource_gl_map_flags(flags) & ~GL_MAP_FLUSH_EXPLICIT_BIT;
+        memory = GL_EXTCALL(glMapBufferRange(binding, (INT_PTR)data->addr, size, map_flags));
+    }
+    else
+    {
+        memory = GL_EXTCALL(glMapBuffer(binding, wined3d_resource_gl_legacy_map_flags(flags)));
+        memory += (INT_PTR)data->addr;
+    }
+
+    GL_EXTCALL(glBindBuffer(binding, 0));
+    checkGLcall("Map buffer object");
+
+    return memory;
+}
+
+/* Context activation is done by the caller. */
+static void wined3d_texture_unmap_bo_address(const struct wined3d_bo_address *data,
+        const struct wined3d_gl_info *gl_info, GLenum binding)
+{
+    if (!data->buffer_object)
+        return;
+
+    GL_EXTCALL(glBindBuffer(binding, data->buffer_object));
+    GL_EXTCALL(glUnmapBuffer(binding));
+    GL_EXTCALL(glBindBuffer(binding, 0));
+    checkGLcall("Unmap buffer object");
+}
+
 void wined3d_texture_get_memory(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         struct wined3d_bo_address *data, DWORD locations)
 {
@@ -1340,36 +1381,12 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
         wined3d_texture_invalidate_location(texture, sub_resource_idx, ~sub_resource->resource->map_binding);
 
     wined3d_texture_get_memory(texture, sub_resource_idx, &data, sub_resource->resource->map_binding);
-    if (!data.buffer_object)
-    {
-        base_memory = data.addr;
-    }
-    else
-    {
-        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, data.buffer_object));
-
-        if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
-        {
-            GLbitfield map_flags = wined3d_resource_gl_map_flags(flags);
-            map_flags &= ~GL_MAP_FLUSH_EXPLICIT_BIT;
-            base_memory = GL_EXTCALL(glMapBufferRange(GL_PIXEL_UNPACK_BUFFER,
-                    (INT_PTR)data.addr, sub_resource->resource->size, map_flags));
-        }
-        else
-        {
-            GLenum access = wined3d_resource_gl_legacy_map_flags(flags);
-            base_memory = GL_EXTCALL(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, access));
-            base_memory += (INT_PTR)data.addr;
-        }
-
-        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
-        checkGLcall("Map PBO");
-    }
+    base_memory = wined3d_texture_map_bo_address(&data, sub_resource->resource->size,
+            gl_info, GL_PIXEL_UNPACK_BUFFER, flags);
+    TRACE("Base memory pointer %p.\n", base_memory);
 
     if (context)
         context_release(context);
-
-    TRACE("Base memory pointer %p.\n", base_memory);
 
     if (fmt_flags & WINED3DFMT_FLAG_BROKEN_PITCH)
     {
@@ -1428,9 +1445,11 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
 static HRESULT texture_resource_sub_resource_unmap(struct wined3d_resource *resource, unsigned int sub_resource_idx)
 {
     struct wined3d_texture_sub_resource *sub_resource;
-    const struct wined3d_gl_info *gl_info;
+    struct wined3d_device *device = resource->device;
+    const struct wined3d_gl_info *gl_info = NULL;
+    struct wined3d_context *context = NULL;
     struct wined3d_texture *texture;
-    struct wined3d_context *context;
+    struct wined3d_bo_address data;
 
     TRACE("resource %p, sub_resource_idx %u.\n", resource, sub_resource_idx);
 
@@ -1446,36 +1465,21 @@ static HRESULT texture_resource_sub_resource_unmap(struct wined3d_resource *reso
         return WINEDDERR_NOTLOCKED;
     }
 
-    switch (sub_resource->resource->map_binding)
+    if (device->d3d_initialized)
     {
-        case WINED3D_LOCATION_SYSMEM:
-        case WINED3D_LOCATION_USER_MEMORY:
-        case WINED3D_LOCATION_DIB:
-            break;
-
-        case WINED3D_LOCATION_BUFFER:
-            context = context_acquire(resource->device, NULL);
-            gl_info = context->gl_info;
-
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER,
-                    texture->sub_resources[sub_resource_idx].buffer_object));
-            GL_EXTCALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
-            checkGLcall("glUnmapBuffer");
-            context_release(context);
-            break;
-
-        default:
-            ERR("Unexpected map binding %s.\n", wined3d_debug_location(sub_resource->resource->map_binding));
-            break;
+        context = context_acquire(device, NULL);
+        gl_info = context->gl_info;
     }
+
+    wined3d_texture_get_memory(texture, sub_resource_idx, &data, sub_resource->resource->map_binding);
+    wined3d_texture_unmap_bo_address(&data, gl_info, GL_PIXEL_UNPACK_BUFFER);
+
+    if (context)
+        context_release(context);
 
     if (texture->swapchain && texture->swapchain->front_buffer == texture)
     {
-        struct wined3d_surface *surface = texture->sub_resources[sub_resource_idx].u.surface;
-
-        if (!(surface_get_sub_resource(surface)->locations
-                & (WINED3D_LOCATION_DRAWABLE | WINED3D_LOCATION_TEXTURE_RGB)))
+        if (!(sub_resource->locations & (WINED3D_LOCATION_DRAWABLE | WINED3D_LOCATION_TEXTURE_RGB)))
             texture->swapchain->swapchain_ops->swapchain_frontbuffer_updated(texture->swapchain);
     }
     else if (resource->format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
