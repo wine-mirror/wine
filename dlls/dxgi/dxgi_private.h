@@ -156,6 +156,7 @@ struct dxgi_swapchain
     struct wined3d_private_store private_store;
     struct wined3d_swapchain *wined3d_swapchain;
     IWineDXGIDevice *device;
+    IDXGIFactory *factory;
 };
 
 HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device *device,

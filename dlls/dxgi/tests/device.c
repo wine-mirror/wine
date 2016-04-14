@@ -485,15 +485,15 @@ static void test_create_swapchain(void)
     ok(hr == E_INVALIDARG, "GetDesc unexpectedly returned %#x.\n", hr);
 
     hr = IDXGISwapChain_GetParent(swapchain, &IID_IUnknown, (void **)&parent);
-    todo_wine ok(SUCCEEDED(hr), "GetParent failed %#x.\n", hr);
-    todo_wine ok(parent == (IUnknown *)factory, "Got unexpected parent interface pointer %p.\n", parent);
-    if (SUCCEEDED(hr)) refcount = IUnknown_Release(parent);
+    ok(SUCCEEDED(hr), "GetParent failed %#x.\n", hr);
+    ok(parent == (IUnknown *)factory, "Got unexpected parent interface pointer %p.\n", parent);
+    refcount = IUnknown_Release(parent);
     todo_wine ok(refcount == 4, "Got unexpected refcount %u.\n", refcount);
 
     hr = IDXGISwapChain_GetParent(swapchain, &IID_IDXGIFactory, (void **)&parent);
-    todo_wine ok(SUCCEEDED(hr), "GetParent failed %#x.\n", hr);
-    todo_wine ok(parent == (IUnknown *)factory, "Got unexpected parent interface pointer %p.\n", parent);
-    if (SUCCEEDED(hr)) refcount = IUnknown_Release(parent);
+    ok(SUCCEEDED(hr), "GetParent failed %#x.\n", hr);
+    ok(parent == (IUnknown *)factory, "Got unexpected parent interface pointer %p.\n", parent);
+    refcount = IUnknown_Release(parent);
     todo_wine ok(refcount == 4, "Got unexpected refcount %u.\n", refcount);
 
     IDXGISwapChain_Release(swapchain);
