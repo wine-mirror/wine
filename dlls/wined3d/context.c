@@ -3318,9 +3318,9 @@ static void context_bind_shader_resources(struct wined3d_context *context, const
 }
 
 /* Context activation is done by the caller. */
-BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_device *device)
+BOOL context_apply_draw_state(struct wined3d_context *context,
+        const struct wined3d_device *device, const struct wined3d_state *state)
 {
-    const struct wined3d_state *state = &device->state;
     const struct StateEntry *state_table = context->state_table;
     const struct wined3d_fb_state *fb = state->fb;
     unsigned int i;

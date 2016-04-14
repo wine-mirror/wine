@@ -488,7 +488,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
             wined3d_surface_prepare(ds, context, location);
     }
 
-    if (!context_apply_draw_state(context, device))
+    if (!context_apply_draw_state(context, device, state))
     {
         context_release(context);
         WARN("Unable to apply draw state, skipping draw.\n");
