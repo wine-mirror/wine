@@ -664,7 +664,7 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     /* read the image data */
     This->width = ppng_get_image_width(This->png_ptr, This->info_ptr);
     This->height = ppng_get_image_height(This->png_ptr, This->info_ptr);
-    This->stride = This->width * This->bpp;
+    This->stride = (This->width * This->bpp + 7) / 8;
     image_size = This->stride * This->height;
 
     This->image_bits = HeapAlloc(GetProcessHeap(), 0, image_size);
