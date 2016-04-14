@@ -119,6 +119,7 @@ struct dxgi_device
     struct wined3d_private_store private_store;
     struct wined3d_device *wined3d_device;
     IDXGIFactory1 *factory;
+    IDXGIAdapter1 *adapter;
 };
 
 HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *layer,

@@ -72,21 +72,23 @@ static ULONG STDMETHODCALLTYPE dxgi_device_AddRef(IWineDXGIDevice *iface)
 
 static ULONG STDMETHODCALLTYPE dxgi_device_Release(IWineDXGIDevice *iface)
 {
-    struct dxgi_device *This = impl_from_IWineDXGIDevice(iface);
-    ULONG refcount = InterlockedDecrement(&This->refcount);
+    struct dxgi_device *device = impl_from_IWineDXGIDevice(iface);
+    ULONG refcount = InterlockedDecrement(&device->refcount);
 
-    TRACE("%p decreasing refcount to %u\n", This, refcount);
+    TRACE("%p decreasing refcount to %u.\n", device, refcount);
 
     if (!refcount)
     {
-        if (This->child_layer) IUnknown_Release(This->child_layer);
+        if (device->child_layer)
+            IUnknown_Release(device->child_layer);
         wined3d_mutex_lock();
-        wined3d_device_uninit_3d(This->wined3d_device);
-        wined3d_device_decref(This->wined3d_device);
+        wined3d_device_uninit_3d(device->wined3d_device);
+        wined3d_device_decref(device->wined3d_device);
         wined3d_mutex_unlock();
-        IDXGIFactory1_Release(This->factory);
-        wined3d_private_store_cleanup(&This->private_store);
-        HeapFree(GetProcessHeap(), 0, This);
+        IDXGIAdapter1_Release(device->adapter);
+        IDXGIFactory1_Release(device->factory);
+        wined3d_private_store_cleanup(&device->private_store);
+        HeapFree(GetProcessHeap(), 0, device);
     }
 
     return refcount;
@@ -148,16 +150,13 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetParent(IWineDXGIDevice *iface, R
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_GetAdapter(IWineDXGIDevice *iface, IDXGIAdapter **adapter)
 {
-    struct dxgi_device *This = impl_from_IWineDXGIDevice(iface);
-    struct wined3d_device_creation_parameters create_parameters;
+    struct dxgi_device *device = impl_from_IWineDXGIDevice(iface);
 
-    TRACE("iface %p, adapter %p\n", iface, adapter);
+    TRACE("iface %p, adapter %p.\n", iface, adapter);
 
-    wined3d_mutex_lock();
-    wined3d_device_get_creation_parameters(This->wined3d_device, &create_parameters);
-    wined3d_mutex_unlock();
-
-    return IDXGIFactory1_EnumAdapters(This->factory, create_parameters.adapter_idx, adapter);
+    *adapter = (IDXGIAdapter *)device->adapter;
+    IDXGIAdapter_AddRef(*adapter);
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *iface,
@@ -457,6 +456,8 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
 
     device->factory = &dxgi_factory->IDXGIFactory1_iface;
     IDXGIFactory1_AddRef(device->factory);
+    device->adapter = &dxgi_adapter->IDXGIAdapter1_iface;
+    IDXGIAdapter1_AddRef(device->adapter);
 
     return S_OK;
 }
