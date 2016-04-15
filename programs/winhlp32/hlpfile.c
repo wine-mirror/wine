@@ -507,6 +507,18 @@ static BOOL HLPFILE_FindSubFile(HLPFILE* hlpfile, LPCSTR name, BYTE **subbuf, BY
     WINE_TRACE("looking for file '%s'\n", name);
     ptr = HLPFILE_BPTreeSearch(hlpfile->file_buffer + GET_UINT(hlpfile->file_buffer, 4),
                                name, comp_FindSubFile);
+    if (!ptr)
+    {   /* Subfiles with bitmap images are usually prefixed with '|', but sometimes not.
+           Unfortunately, there is no consensus among different pieces of unofficial
+           documentation. So remove leading '|' and try again. */
+        CHAR c = *name++;
+        if (c == '|')
+        {
+            WINE_TRACE("not found. try '%s'\n", name);
+            ptr = HLPFILE_BPTreeSearch(hlpfile->file_buffer + GET_UINT(hlpfile->file_buffer, 4),
+                                       name, comp_FindSubFile);
+        }
+    }
     if (!ptr) return FALSE;
     *subbuf = hlpfile->file_buffer + GET_UINT(ptr, strlen(name)+1);
     if (*subbuf >= hlpfile->file_buffer + hlpfile->file_buffer_size)
