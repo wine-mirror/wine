@@ -1805,6 +1805,93 @@ static void test_write_watch(void)
     VirtualFree( base, 0, MEM_RELEASE );
 }
 
+#if defined(__i386__) || defined(__x86_64__)
+
+static DWORD WINAPI stack_commit_func( void *arg )
+{
+    volatile char *p = (char *)&p;
+
+    /* trigger all guard pages, to ensure that the pages are committed */
+    while (p >= (char *)NtCurrentTeb()->DeallocationStack + 4 * 0x1000)
+    {
+        p[0] |= 0;
+        p -= 0x1000;
+    }
+
+    ok( arg == (void *)0xdeadbeef, "expected 0xdeadbeef, got %p\n", arg );
+    return 42;
+}
+
+static void test_stack_commit(void)
+{
+#ifdef __i386__
+    static const char code_call_on_stack[] = {
+        0x55,                   /* pushl %ebp */
+        0x56,                   /* pushl %esi */
+        0x89, 0xe6,             /* movl %esp,%esi */
+        0x8b, 0x4c, 0x24, 0x0c, /* movl 12(%esp),%ecx - func */
+        0x8b, 0x54, 0x24, 0x10, /* movl 16(%esp),%edx - arg */
+        0x8b, 0x44, 0x24, 0x14, /* movl 20(%esp),%eax - stack */
+        0x83, 0xe0, 0xf0,       /* andl $~15,%eax */
+        0x83, 0xe8, 0x0c,       /* subl $12,%eax */
+        0x89, 0xc4,             /* movl %eax,%esp */
+        0x52,                   /* pushl %edx */
+        0x31, 0xed,             /* xorl %ebp,%ebp */
+        0xff, 0xd1,             /* call *%ecx */
+        0x89, 0xf4,             /* movl %esi,%esp */
+        0x5e,                   /* popl %esi */
+        0x5d,                   /* popl %ebp */
+        0xc2, 0x0c, 0x00 };     /* ret $12 */
+#else
+    static const char code_call_on_stack[] = {
+        0x55,                   /* pushq %rbp */
+        0x48, 0x89, 0xe5,       /* movq %rsp,%rbp */
+                                /* %rcx - func, %rdx - arg, %r8 - stack */
+        0x48, 0x87, 0xca,       /* xchgq %rcx,%rdx */
+        0x49, 0x83, 0xe0, 0xf0, /* andq $~15,%r8 */
+        0x49, 0x83, 0xe8, 0x20, /* subq $0x20,%r8 */
+        0x4c, 0x89, 0xc4,       /* movq %r8,%rsp */
+        0xff, 0xd2,             /* callq *%rdx */
+        0x48, 0x89, 0xec,       /* movq %rbp,%rsp */
+        0x5d,                   /* popq %rbp */
+        0xc3 };                 /* ret */
+#endif
+    DWORD (WINAPI *call_on_stack)( DWORD (WINAPI *func)(void *), void *arg, void *stack );
+    void *old_stack, *old_stack_base, *old_stack_limit;
+    void *new_stack, *new_stack_base;
+    DWORD result;
+
+    call_on_stack = VirtualAlloc( 0, 0x1000, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+    ok( call_on_stack != NULL, "VirtualAlloc failed %u\n", GetLastError() );
+    memcpy( call_on_stack, code_call_on_stack, sizeof(code_call_on_stack) );
+
+    /* allocate a new stack, only the first guard page is committed */
+    new_stack = VirtualAlloc( 0, 0x400000, MEM_RESERVE, PAGE_READWRITE );
+    ok( new_stack != NULL, "VirtualAlloc failed %u\n", GetLastError() );
+    new_stack_base = (char *)new_stack + 0x400000;
+    VirtualAlloc( (char *)new_stack_base - 0x1000, 0x1000, MEM_COMMIT, PAGE_READWRITE | PAGE_GUARD );
+
+    old_stack       = NtCurrentTeb()->DeallocationStack;
+    old_stack_base  = NtCurrentTeb()->Tib.StackBase;
+    old_stack_limit = NtCurrentTeb()->Tib.StackLimit;
+
+    NtCurrentTeb()->DeallocationStack  = new_stack;
+    NtCurrentTeb()->Tib.StackBase      = new_stack_base;
+    NtCurrentTeb()->Tib.StackLimit     = new_stack_base;
+
+    result = call_on_stack( stack_commit_func, (void *)0xdeadbeef, new_stack_base );
+
+    NtCurrentTeb()->DeallocationStack  = old_stack;
+    NtCurrentTeb()->Tib.StackBase      = old_stack_base;
+    NtCurrentTeb()->Tib.StackLimit     = old_stack_limit;
+
+    ok( result == 42, "expected 42, got %u\n", result );
+
+    VirtualFree( new_stack, 0, MEM_RELEASE );
+    VirtualFree( call_on_stack, 0, MEM_RELEASE );
+}
+
+#endif  /* defined(__i386__) || defined(__x86_64__) */
 #ifdef __i386__
 
 static LONG num_guard_page_calls;
@@ -2048,75 +2135,6 @@ static void test_guard_page(void)
     ok( results[0] == base || broken(results[0] == (void *)0xdeadbeef) /* Windows 8 */, "wrong result %p\n", results[0] );
 
     VirtualFree( base, 0, MEM_RELEASE );
-}
-
-static DWORD WINAPI stack_commit_func( void *arg )
-{
-    volatile char *p = (char *)&p;
-
-    /* trigger all guard pages, to ensure that the pages are committed */
-    while (p >= (char *)NtCurrentTeb()->DeallocationStack + 3 * 0x1000)
-    {
-        p[0] |= 0;
-        p -= 0x1000;
-    }
-
-    ok( arg == (void *)0xdeadbeef, "expected 0xdeadbeef, got %p\n", arg );
-    return 42;
-}
-
-static void test_stack_commit(void)
-{
-    static const char code_call_on_stack[] = {
-        0x55,                   /* pushl %ebp */
-        0x56,                   /* pushl %esi */
-        0x89, 0xe6,             /* movl %esp,%esi */
-        0x8b, 0x4c, 0x24, 0x0c, /* movl 12(%esp),%ecx - func */
-        0x8b, 0x54, 0x24, 0x10, /* movl 16(%esp),%edx - arg */
-        0x8b, 0x44, 0x24, 0x14, /* movl 20(%esp),%eax - stack */
-        0x83, 0xe0, 0xf0,       /* andl $~15,%eax */
-        0x83, 0xe8, 0x0c,       /* subl $12,%eax */
-        0x89, 0xc4,             /* movl %eax,%esp */
-        0x52,                   /* pushl %edx */
-        0x31, 0xed,             /* xorl %ebp,%ebp */
-        0xff, 0xd1,             /* call *%ecx */
-        0x89, 0xf4,             /* movl %esi,%esp */
-        0x5e,                   /* popl %esi */
-        0x5d,                   /* popl %ebp */
-        0xc2, 0x0c, 0x00 };     /* ret $12 */
-
-    DWORD (WINAPI *call_on_stack)( DWORD (WINAPI *func)(void *), void *arg, void *stack );
-    void *old_stack, *old_stack_base, *old_stack_limit;
-    void *new_stack, *new_stack_base;
-    DWORD result;
-
-    call_on_stack = VirtualAlloc( 0, 0x1000, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE );
-    ok( call_on_stack != NULL, "VirtualAlloc failed %u\n", GetLastError() );
-    memcpy( call_on_stack, code_call_on_stack, sizeof(code_call_on_stack) );
-
-    /* allocate a new stack, only the first guard page is committed */
-    new_stack = VirtualAlloc( 0, 0x400000, MEM_RESERVE, PAGE_READWRITE );
-    ok( new_stack != NULL, "VirtualAlloc failed %u\n", GetLastError() );
-    new_stack_base = (char *)new_stack + 0x400000;
-    VirtualAlloc( (char *)new_stack_base - 0x1000, 0x1000, MEM_COMMIT, PAGE_READWRITE | PAGE_GUARD );
-
-    old_stack       = NtCurrentTeb()->DeallocationStack;
-    old_stack_base  = NtCurrentTeb()->Tib.StackBase;
-    old_stack_limit = NtCurrentTeb()->Tib.StackLimit;
-
-    NtCurrentTeb()->DeallocationStack  = new_stack;
-    NtCurrentTeb()->Tib.StackBase      = new_stack_base;
-    NtCurrentTeb()->Tib.StackLimit     = new_stack_base;
-
-    result = call_on_stack( stack_commit_func, (void *)0xdeadbeef, new_stack_base );
-    ok( result == 42, "expected 42, got %u\n", result );
-
-    NtCurrentTeb()->DeallocationStack  = old_stack;
-    NtCurrentTeb()->Tib.StackBase      = old_stack_base;
-    NtCurrentTeb()->Tib.StackLimit     = old_stack_limit;
-
-    VirtualFree( new_stack, 0, MEM_RELEASE );
-    VirtualFree( call_on_stack, 0, MEM_RELEASE );
 }
 
 static LONG num_execute_fault_calls;
@@ -3824,9 +3842,11 @@ START_TEST(virtual)
     test_IsBadWritePtr();
     test_IsBadCodePtr();
     test_write_watch();
+#if defined(__i386__) || defined(__x86_64__)
+    test_stack_commit();
+#endif
 #ifdef __i386__
     test_guard_page();
-    test_stack_commit();
     /* The following tests should be executed as a last step, and in exactly this
      * order, since ATL thunk emulation cannot be enabled anymore on Windows. */
     test_atl_thunk_emulation( MEM_EXECUTE_OPTION_ENABLE );
