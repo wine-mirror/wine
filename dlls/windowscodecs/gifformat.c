@@ -249,7 +249,7 @@ static HRESULT load_GCE_metadata(IStream *stream, const GUID *vendor, DWORD opti
                                  MetadataItem **items, DWORD *count)
 {
 #include "pshpack1.h"
-    struct graphic_control_extenstion
+    struct graphic_control_extension
     {
         BYTE packed;
         /* reservred: 3;
@@ -327,7 +327,7 @@ static HRESULT load_APE_metadata(IStream *stream, const GUID *vendor, DWORD opti
                                  MetadataItem **items, DWORD *count)
 {
 #include "pshpack1.h"
-    struct application_extenstion
+    struct application_extension
     {
         BYTE extension_introducer;
         BYTE extension_label;
@@ -434,7 +434,7 @@ static HRESULT load_GifComment_metadata(IStream *stream, const GUID *vendor, DWO
                                         MetadataItem **items, DWORD *count)
 {
 #include "pshpack1.h"
-    struct gif_extenstion
+    struct gif_extension
     {
         BYTE extension_introducer;
         BYTE extension_label;
