@@ -469,6 +469,8 @@ library MIMEOLE
     ]
     interface IMimePropertySchema : IUnknown
     {
+        typedef [unique] IMimePropertySchema *LPMIMEPROPERTYSCHEMA;
+
         typedef enum tagMIMEPROPFLAGS
         {
             MPF_INETCSET            = 0x01,
@@ -479,7 +481,30 @@ library MIMEOLE
             MPF_READONLY            = 0x20
         } MIMEPROPFLAGS;
 
-        /* FIXME: fill this in */
+        HRESULT RegisterProperty(
+                [in]  const char *name,
+                [in]  DWORD      flags,
+                [in]  DWORD      rownumber,
+                [in]  VARTYPE    vtdefault,
+                [out] DWORD      *propid);
+
+        HRESULT ModifyProperty(
+                [in] const char  *name,
+                [in] DWORD       flags,
+                [in] DWORD       rownumber,
+                [in] VARTYPE     vtdefault);
+
+        HRESULT GetPropertyId(
+                [in]  const char *name,
+                [out] DWORD      *propid);
+
+        HRESULT GetPropertyName(
+                [in]  DWORD      propid,
+                [out] char       **name);
+
+        HRESULT RegisterAddressType(
+                [in]  const char *name,
+                [out] DWORD      *adrtype);
     }
 
     [
