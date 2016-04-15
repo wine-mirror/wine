@@ -79,7 +79,7 @@
 @ stdcall MimeOleGetInternat(ptr)
 @ stub MimeOleGetPropA
 @ stub MimeOleGetPropW
-@ stub MimeOleGetPropertySchema
+@ stdcall MimeOleGetPropertySchema(ptr)
 @ stub MimeOleGetRelatedSection
 @ stub MimeOleInetDateToFileTime
 @ stub MimeOleObjectFromMoniker

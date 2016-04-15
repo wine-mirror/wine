@@ -3031,3 +3031,9 @@ HRESULT VirtualStream_create(IUnknown *outer, void **obj)
 
     return MimeOleCreateVirtualStream((IStream **)obj);
 }
+
+HRESULT WINAPI MimeOleGetPropertySchema(IMimePropertySchema **schema)
+{
+    FIXME("(%p) stub\n", schema);
+    return E_NOTIMPL;
+}
