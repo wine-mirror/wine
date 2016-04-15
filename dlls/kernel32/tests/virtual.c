@@ -43,7 +43,6 @@ static UINT   (WINAPI *pResetWriteWatch)(LPVOID,SIZE_T);
 static NTSTATUS (WINAPI *pNtAreMappedFilesTheSame)(PVOID,PVOID);
 static NTSTATUS (WINAPI *pNtMapViewOfSection)(HANDLE, HANDLE, PVOID *, ULONG, SIZE_T, const LARGE_INTEGER *, SIZE_T *, ULONG, ULONG, ULONG);
 static DWORD (WINAPI *pNtUnmapViewOfSection)(HANDLE, PVOID);
-static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
 static PVOID  (WINAPI *pRtlAddVectoredExceptionHandler)(ULONG, PVECTORED_EXCEPTION_HANDLER);
 static ULONG  (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID);
 static BOOL   (WINAPI *pGetProcessDEPPolicy)(HANDLE, LPDWORD, PBOOL);
@@ -1838,12 +1837,6 @@ static void test_guard_page(void)
     BOOL success;
     char *base;
 
-    if (!pNtCurrentTeb)
-    {
-        win_skip( "NtCurrentTeb not supported\n" );
-        return;
-    }
-
     size = 0x1000;
     base = VirtualAlloc( 0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE | PAGE_GUARD );
     ok( base != NULL, "VirtualAlloc failed %u\n", GetLastError() );
@@ -1906,8 +1899,8 @@ static void test_guard_page(void)
 
     /* test directly accessing the memory - we need to setup an exception handler first */
     frame.Handler = guard_page_handler;
-    frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
-    pNtCurrentTeb()->Tib.ExceptionList = &frame;
+    frame.Prev = NtCurrentTeb()->Tib.ExceptionList;
+    NtCurrentTeb()->Tib.ExceptionList = &frame;
 
     InterlockedExchange( &num_guard_page_calls, 0 );
     InterlockedExchange( &old_value, *value ); /* exception handler increments value by 0x100 */
@@ -1915,7 +1908,7 @@ static void test_guard_page(void)
     ok( old_value == 0x101, "memory block contains wrong value, expected 0x101, got 0x%x\n", old_value );
     ok( num_guard_page_calls == 1, "expected one callback of guard page handler, got %d calls\n", num_guard_page_calls );
 
-    pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
+    NtCurrentTeb()->Tib.ExceptionList = frame.Prev;
 
     /* check info structure again, PAGE_GUARD should be removed now */
     ret = VirtualQuery( base, &info, sizeof(info) );
@@ -1928,8 +1921,8 @@ static void test_guard_page(void)
 
     /* test accessing second integer in memory */
     frame.Handler = guard_page_handler;
-    frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
-    pNtCurrentTeb()->Tib.ExceptionList = &frame;
+    frame.Prev = NtCurrentTeb()->Tib.ExceptionList;
+    NtCurrentTeb()->Tib.ExceptionList = &frame;
 
     InterlockedExchange( &num_guard_page_calls, 0 );
     old_value = *(value + 1);
@@ -1937,7 +1930,7 @@ static void test_guard_page(void)
     ok( *value == 2, "memory block contains wrong value, expected 2, got 0x%x\n", *value );
     ok( num_guard_page_calls == 1, "expected one callback of guard page handler, got %d calls\n", num_guard_page_calls );
 
-    pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
+    NtCurrentTeb()->Tib.ExceptionList = frame.Prev;
 
     success = VirtualLock( base, size );
     ok( success, "VirtualLock failed %u\n", GetLastError() );
@@ -1982,15 +1975,15 @@ static void test_guard_page(void)
 
     /* writing to a page should trigger should trigger guard page, even if write watch is set */
     frame.Handler = guard_page_handler;
-    frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
-    pNtCurrentTeb()->Tib.ExceptionList = &frame;
+    frame.Prev = NtCurrentTeb()->Tib.ExceptionList;
+    NtCurrentTeb()->Tib.ExceptionList = &frame;
 
     InterlockedExchange( &num_guard_page_calls, 0 );
     *value       = 1;
     *(value + 1) = 2;
     ok( num_guard_page_calls == 1, "expected one callback of guard page handler, got %d calls\n", num_guard_page_calls );
 
-    pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
+    NtCurrentTeb()->Tib.ExceptionList = frame.Prev;
 
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
@@ -2003,8 +1996,8 @@ static void test_guard_page(void)
 
     /* write watch is triggered from inside of the guard page handler */
     frame.Handler = guard_page_handler;
-    frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
-    pNtCurrentTeb()->Tib.ExceptionList = &frame;
+    frame.Prev = NtCurrentTeb()->Tib.ExceptionList;
+    NtCurrentTeb()->Tib.ExceptionList = &frame;
 
     InterlockedExchange( &num_guard_page_calls, 0 );
     old_value = *(value + 1); /* doesn't trigger write watch */
@@ -2012,7 +2005,7 @@ static void test_guard_page(void)
     ok( *value == 1, "memory block contains wrong value, expected 1, got 0x%x\n", *value );
     ok( num_guard_page_calls == 1, "expected one callback of guard page handler, got %d calls\n", num_guard_page_calls );
 
-    pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
+    NtCurrentTeb()->Tib.ExceptionList = frame.Prev;
 
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
@@ -2062,7 +2055,7 @@ static DWORD WINAPI stack_commit_func( void *arg )
     volatile char *p = (char *)&p;
 
     /* trigger all guard pages, to ensure that the pages are committed */
-    while (p >= (char *)pNtCurrentTeb()->DeallocationStack + 3 * 0x1000)
+    while (p >= (char *)NtCurrentTeb()->DeallocationStack + 3 * 0x1000)
     {
         p[0] |= 0;
         p -= 0x1000;
@@ -2097,12 +2090,6 @@ static void test_stack_commit(void)
     void *new_stack, *new_stack_base;
     DWORD result;
 
-    if (!pNtCurrentTeb)
-    {
-        win_skip( "NtCurrentTeb not supported\n" );
-        return;
-    }
-
     call_on_stack = VirtualAlloc( 0, 0x1000, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE );
     ok( call_on_stack != NULL, "VirtualAlloc failed %u\n", GetLastError() );
     memcpy( call_on_stack, code_call_on_stack, sizeof(code_call_on_stack) );
@@ -2113,20 +2100,20 @@ static void test_stack_commit(void)
     new_stack_base = (char *)new_stack + 0x400000;
     VirtualAlloc( (char *)new_stack_base - 0x1000, 0x1000, MEM_COMMIT, PAGE_READWRITE | PAGE_GUARD );
 
-    old_stack       = pNtCurrentTeb()->DeallocationStack;
-    old_stack_base  = pNtCurrentTeb()->Tib.StackBase;
-    old_stack_limit = pNtCurrentTeb()->Tib.StackLimit;
+    old_stack       = NtCurrentTeb()->DeallocationStack;
+    old_stack_base  = NtCurrentTeb()->Tib.StackBase;
+    old_stack_limit = NtCurrentTeb()->Tib.StackLimit;
 
-    pNtCurrentTeb()->DeallocationStack  = new_stack;
-    pNtCurrentTeb()->Tib.StackBase      = new_stack_base;
-    pNtCurrentTeb()->Tib.StackLimit     = new_stack_base;
+    NtCurrentTeb()->DeallocationStack  = new_stack;
+    NtCurrentTeb()->Tib.StackBase      = new_stack_base;
+    NtCurrentTeb()->Tib.StackLimit     = new_stack_base;
 
     result = call_on_stack( stack_commit_func, (void *)0xdeadbeef, new_stack_base );
     ok( result == 42, "expected 42, got %u\n", result );
 
-    pNtCurrentTeb()->DeallocationStack  = old_stack;
-    pNtCurrentTeb()->Tib.StackBase      = old_stack_base;
-    pNtCurrentTeb()->Tib.StackLimit     = old_stack_limit;
+    NtCurrentTeb()->DeallocationStack  = old_stack;
+    NtCurrentTeb()->Tib.StackBase      = old_stack_base;
+    NtCurrentTeb()->Tib.StackLimit     = old_stack_limit;
 
     VirtualFree( new_stack, 0, MEM_RELEASE );
     VirtualFree( call_on_stack, 0, MEM_RELEASE );
@@ -2211,14 +2198,14 @@ static inline DWORD send_message_excpt( HWND hWnd, UINT uMsg, WPARAM wParam, LPA
     DWORD ret;
 
     frame.Handler = execute_fault_seh_handler;
-    frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
-    pNtCurrentTeb()->Tib.ExceptionList = &frame;
+    frame.Prev = NtCurrentTeb()->Tib.ExceptionList;
+    NtCurrentTeb()->Tib.ExceptionList = &frame;
 
     InterlockedExchange( &num_guard_page_calls, 0 );
     InterlockedExchange( &num_execute_fault_calls, 0 );
     ret = SendMessageA( hWnd, uMsg, wParam, lParam );
 
-    pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
+    NtCurrentTeb()->Tib.ExceptionList = frame.Prev;
 
     return ret;
 }
@@ -2229,14 +2216,14 @@ static inline DWORD call_proc_excpt( DWORD (CALLBACK *code)(void *), void *arg )
     DWORD ret;
 
     frame.Handler = execute_fault_seh_handler;
-    frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
-    pNtCurrentTeb()->Tib.ExceptionList = &frame;
+    frame.Prev = NtCurrentTeb()->Tib.ExceptionList;
+    NtCurrentTeb()->Tib.ExceptionList = &frame;
 
     InterlockedExchange( &num_guard_page_calls, 0 );
     InterlockedExchange( &num_execute_fault_calls, 0 );
     ret = code( arg );
 
-    pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
+    NtCurrentTeb()->Tib.ExceptionList = frame.Prev;
 
     return ret;
 }
@@ -2282,12 +2269,6 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     WNDCLASSEXA wc;
     char *base;
     HWND hWnd;
-
-    if (!pNtCurrentTeb)
-    {
-        win_skip( "NtCurrentTeb not supported\n" );
-        return;
-    }
 
     trace( "Running DEP tests with ProcessExecuteFlags = %d\n", dep_flags );
 
@@ -3819,7 +3800,6 @@ START_TEST(virtual)
     pNtAreMappedFilesTheSame = (void *)GetProcAddress( hntdll, "NtAreMappedFilesTheSame" );
     pNtMapViewOfSection = (void *)GetProcAddress( hntdll, "NtMapViewOfSection" );
     pNtUnmapViewOfSection = (void *)GetProcAddress( hntdll, "NtUnmapViewOfSection" );
-    pNtCurrentTeb = (void *)GetProcAddress( hntdll, "NtCurrentTeb" );
     pRtlAddVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlAddVectoredExceptionHandler" );
     pRtlRemoveVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlRemoveVectoredExceptionHandler" );
     pNtProtectVirtualMemory = (void *)GetProcAddress( hntdll, "NtProtectVirtualMemory" );
