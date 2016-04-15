@@ -393,6 +393,21 @@ interface ITrigger : IDispatch
 }
 
 [
+    odl,
+    uuid(126c5cd8-b288-41d5-8dbf-e491446adc5c),
+    oleautomation,
+    dual,
+    nonextensible
+]
+interface IDailyTrigger : ITrigger
+{
+    [propget] HRESULT DaysInterval([out, retval] short *pDays);
+    [propput] HRESULT DaysInterval([in] short days);
+    [propget] HRESULT RandomDelay([out, retval] BSTR *pRandomDelay);
+    [propput] HRESULT RandomDelay([in] BSTR randomDelay);
+}
+
+[
     object,
     oleautomation,
     uuid(85df5081-1b24-4f32-878a-d9d14df4cb77)
