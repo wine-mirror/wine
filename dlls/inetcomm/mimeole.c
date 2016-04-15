@@ -559,7 +559,8 @@ static HRESULT WINAPI MimeBody_GetClassID(
                                  IMimeBody* iface,
                                  CLSID* pClassID)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%p) stub\n", This, pClassID);
     return E_NOTIMPL;
 }
 
@@ -567,20 +568,22 @@ static HRESULT WINAPI MimeBody_GetClassID(
 static HRESULT WINAPI MimeBody_IsDirty(
                               IMimeBody* iface)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->() stub\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI MimeBody_Load(IMimeBody *iface, IStream *pStm)
 {
     MimeBody *This = impl_from_IMimeBody(iface);
-    TRACE("(%p)->(%p)\n", iface, pStm);
+    TRACE("(%p)->(%p)\n", This, pStm);
     return parse_headers(This, pStm);
 }
 
 static HRESULT WINAPI MimeBody_Save(IMimeBody *iface, IStream *pStm, BOOL fClearDirty)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%p, %d)\n", This, pStm, fClearDirty);
     return E_NOTIMPL;
 }
 
@@ -588,14 +591,16 @@ static HRESULT WINAPI MimeBody_GetSizeMax(
                                  IMimeBody* iface,
                                  ULARGE_INTEGER* pcbSize)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%p) stub\n", This, pcbSize);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI MimeBody_InitNew(
                               IMimeBody* iface)
 {
-    TRACE("%p->()\n", iface);
+    MimeBody *This = impl_from_IMimeBody(iface);
+    TRACE("(%p)->()\n", This);
     return S_OK;
 }
 
@@ -604,7 +609,8 @@ static HRESULT WINAPI MimeBody_GetPropInfo(
                                   LPCSTR pszName,
                                   LPMIMEPROPINFO pInfo)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%s, %p) stub\n", This, debugstr_a(pszName), pInfo);
     return E_NOTIMPL;
 }
 
@@ -613,7 +619,8 @@ static HRESULT WINAPI MimeBody_SetPropInfo(
                                   LPCSTR pszName,
                                   LPCMIMEPROPINFO pInfo)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%s, %p) stub\n", This, debugstr_a(pszName), pInfo);
     return E_NOTIMPL;
 }
 
@@ -624,7 +631,7 @@ static HRESULT WINAPI MimeBody_GetProp(
                               LPPROPVARIANT pValue)
 {
     MimeBody *This = impl_from_IMimeBody(iface);
-    TRACE("(%p)->(%s, %d, %p)\n", This, pszName, dwFlags, pValue);
+    TRACE("(%p)->(%s, 0x%x, %p)\n", This, pszName, dwFlags, pValue);
 
     if(!strcasecmp(pszName, "att:pri-content-type"))
     {
@@ -644,7 +651,8 @@ static HRESULT WINAPI MimeBody_SetProp(
                               DWORD dwFlags,
                               LPCPROPVARIANT pValue)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%s, 0x%x, %p) stub\n", This, debugstr_a(pszName), dwFlags, pValue);
     return E_NOTIMPL;
 }
 
@@ -654,7 +662,8 @@ static HRESULT WINAPI MimeBody_AppendProp(
                                  DWORD dwFlags,
                                  LPPROPVARIANT pValue)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%s, 0x%x, %p) stub\n", This, debugstr_a(pszName), dwFlags, pValue);
     return E_NOTIMPL;
 }
 
@@ -662,7 +671,8 @@ static HRESULT WINAPI MimeBody_DeleteProp(
                                  IMimeBody* iface,
                                  LPCSTR pszName)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%s) stub\n", This, debugstr_a(pszName));
     return E_NOTIMPL;
 }
 
@@ -672,7 +682,8 @@ static HRESULT WINAPI MimeBody_CopyProps(
                                 LPCSTR* prgszName,
                                 IMimePropertySet* pPropertySet)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%d, %p, %p) stub\n", This, cNames, prgszName, pPropertySet);
     return E_NOTIMPL;
 }
 
@@ -682,7 +693,8 @@ static HRESULT WINAPI MimeBody_MoveProps(
                                 LPCSTR* prgszName,
                                 IMimePropertySet* pPropertySet)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%d, %p, %p) stub\n", This, cNames, prgszName, pPropertySet);
     return E_NOTIMPL;
 }
 
@@ -691,7 +703,8 @@ static HRESULT WINAPI MimeBody_DeleteExcept(
                                    ULONG cNames,
                                    LPCSTR* prgszName)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%d, %p) stub\n", This, cNames, prgszName);
     return E_NOTIMPL;
 }
 
@@ -702,7 +715,8 @@ static HRESULT WINAPI MimeBody_QueryProp(
                                 boolean fSubString,
                                 boolean fCaseSensitive)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%s, %s, %d, %d) stub\n", This, debugstr_a(pszName), debugstr_a(pszCriteria), fSubString, fCaseSensitive);
     return E_NOTIMPL;
 }
 
@@ -710,7 +724,8 @@ static HRESULT WINAPI MimeBody_GetCharset(
                                  IMimeBody* iface,
                                  LPHCHARSET phCharset)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%p) stub\n", This, phCharset);
     *phCharset = NULL;
     return S_OK;
 }
@@ -720,7 +735,8 @@ static HRESULT WINAPI MimeBody_SetCharset(
                                  HCHARSET hCharset,
                                  CSETAPPLYTYPE applytype)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%p, %d) stub\n", This, hCharset, applytype);
     return E_NOTIMPL;
 }
 
@@ -799,7 +815,8 @@ static HRESULT WINAPI MimeBody_BindToObject(
                                    REFIID riid,
                                    void** ppvObject)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%s, %p) stub\n", This, debugstr_guid(riid), ppvObject);
     return E_NOTIMPL;
 }
 
@@ -807,7 +824,8 @@ static HRESULT WINAPI MimeBody_Clone(
                             IMimeBody* iface,
                             IMimePropertySet** ppPropertySet)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%p) stub\n", This, ppPropertySet);
     return E_NOTIMPL;
 }
 
@@ -816,8 +834,9 @@ static HRESULT WINAPI MimeBody_SetOption(
                                 const TYPEDID oid,
                                 LPCPROPVARIANT pValue)
 {
+    MimeBody *This = impl_from_IMimeBody(iface);
     HRESULT hr = E_NOTIMPL;
-    TRACE("(%p)->(%08x, %p)\n", iface, oid, pValue);
+    TRACE("(%p)->(%08x, %p)\n", This, oid, pValue);
 
     if(pValue->vt != TYPEDID_TYPE(oid))
     {
@@ -843,7 +862,8 @@ static HRESULT WINAPI MimeBody_GetOption(
                                 const TYPEDID oid,
                                 LPPROPVARIANT pValue)
 {
-    FIXME("(%p)->(%08x, %p): stub\n", iface, oid, pValue);
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%08x, %p): stub\n", This, oid, pValue);
     return E_NOTIMPL;
 }
 
@@ -852,7 +872,8 @@ static HRESULT WINAPI MimeBody_EnumProps(
                                 DWORD dwFlags,
                                 IMimeEnumProperties** ppEnum)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(0x%x, %p) stub\n", This, dwFlags, ppEnum);
     return E_NOTIMPL;
 }
 
@@ -862,7 +883,7 @@ static HRESULT WINAPI MimeBody_IsType(
 {
     MimeBody *This = impl_from_IMimeBody(iface);
 
-    TRACE("(%p)->(%d)\n", iface, bodytype);
+    TRACE("(%p)->(%d)\n", This, bodytype);
     switch(bodytype)
     {
     case IBT_EMPTY:
@@ -877,7 +898,8 @@ static HRESULT WINAPI MimeBody_SetDisplayName(
                                      IMimeBody* iface,
                                      LPCSTR pszDisplay)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%s) stub\n", This, debugstr_a(pszDisplay));
     return E_NOTIMPL;
 }
 
@@ -885,7 +907,8 @@ static HRESULT WINAPI MimeBody_GetDisplayName(
                                      IMimeBody* iface,
                                      LPSTR* ppszDisplay)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%p) stub\n", This, ppszDisplay);
     return E_NOTIMPL;
 }
 
@@ -931,7 +954,8 @@ static HRESULT WINAPI MimeBody_GetEstimatedSize(
                                        ENCODINGTYPE ietEncoding,
                                        ULONG* pcbSize)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%d, %p) stub\n", This, ietEncoding, pcbSize);
     return E_NOTIMPL;
 }
 
@@ -940,7 +964,8 @@ static HRESULT WINAPI MimeBody_GetDataHere(
                                   ENCODINGTYPE ietEncoding,
                                   IStream* pStream)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%d, %p) stub\n", This, ietEncoding, pStream);
     return E_NOTIMPL;
 }
 
@@ -995,7 +1020,8 @@ static HRESULT WINAPI MimeBody_SetData(
 static HRESULT WINAPI MimeBody_EmptyData(
                                 IMimeBody* iface)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->() stub\n", This);
     return E_NOTIMPL;
 }
 
@@ -1003,7 +1029,8 @@ static HRESULT WINAPI MimeBody_CopyTo(
                              IMimeBody* iface,
                              IMimeBody* pBody)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%p) stub\n", This, pBody);
     return E_NOTIMPL;
 }
 
@@ -1011,7 +1038,8 @@ static HRESULT WINAPI MimeBody_GetTransmitInfo(
                                       IMimeBody* iface,
                                       LPTRANSMITINFO pTransmitInfo)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%p) stub\n", This, pTransmitInfo);
     return E_NOTIMPL;
 }
 
@@ -1020,7 +1048,8 @@ static HRESULT WINAPI MimeBody_SaveToFile(
                                  ENCODINGTYPE ietEncoding,
                                  LPCSTR pszFilePath)
 {
-    FIXME("stub\n");
+    MimeBody *This = impl_from_IMimeBody(iface);
+    FIXME("(%p)->(%d, %s) stub\n", This, ietEncoding, debugstr_a(pszFilePath));
     return E_NOTIMPL;
 }
 
