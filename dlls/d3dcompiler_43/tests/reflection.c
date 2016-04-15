@@ -1296,7 +1296,7 @@ static void test_reflection_constant_buffer(void)
     ok(t11_valid != t11_dummy && t11_valid, "GetType failed\n");
 
     /* reflection calls */
-    cb11 = ref11->lpVtbl->GetConstantBufferByName(ref11, "invaild");
+    cb11 = ref11->lpVtbl->GetConstantBufferByName(ref11, "invalid");
     ok(cb11_dummy == cb11, "GetConstantBufferByName failed, got %p, expected %p\n", cb11, cb11_dummy);
 
     cb11 = ref11->lpVtbl->GetConstantBufferByName(ref11, NULL);
@@ -1305,7 +1305,7 @@ static void test_reflection_constant_buffer(void)
     v11 = ref11->lpVtbl->GetVariableByName(ref11, NULL);
     ok(v11_dummy == v11, "GetVariableByIndex failed, got %p, expected %p\n", v11, v11_dummy);
 
-    v11 = ref11->lpVtbl->GetVariableByName(ref11, "invaild");
+    v11 = ref11->lpVtbl->GetVariableByName(ref11, "invalid");
     ok(v11_dummy == v11, "GetVariableByName failed, got %p, expected %p\n", v11, v11_dummy);
 
     v11 = ref11->lpVtbl->GetVariableByName(ref11, "a");
