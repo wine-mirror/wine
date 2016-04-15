@@ -434,6 +434,7 @@
 @ stdcall RpcServerRegisterAuthInfoA(str  long ptr ptr)
 @ stdcall RpcServerRegisterAuthInfoW(wstr long ptr ptr)
 @ stdcall RpcServerRegisterIf2(ptr ptr ptr long long long ptr)
+@ stdcall RpcServerRegisterIf3(ptr ptr ptr long long long ptr ptr)
 @ stdcall RpcServerRegisterIf(ptr ptr ptr)
 @ stdcall RpcServerRegisterIfEx(ptr ptr ptr long long ptr)
 @ stub RpcServerTestCancel
