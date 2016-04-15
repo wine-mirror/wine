@@ -724,17 +724,6 @@ static DWORD service_start_process(struct service_entry *service_entry)
 
     service_lock(service_entry);
 
-    if (!env)
-    {
-        HANDLE htok;
-
-        if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY|TOKEN_DUPLICATE, &htok))
-            CreateEnvironmentBlock(&env, htok, FALSE);
-
-        if (!env)
-            WINE_ERR("failed to create services environment\n");
-    }
-
     if ((err = get_service_binary_path(service_entry, &path)))
     {
         service_unlock(service_entry);
@@ -976,9 +965,20 @@ static void load_registry_parameters(void)
 int main(int argc, char *argv[])
 {
     static const WCHAR svcctl_started_event[] = SVCCTL_STARTED_EVENT;
+    HANDLE htok;
     DWORD err;
 
     g_hStartedEvent = CreateEventW(NULL, TRUE, FALSE, svcctl_started_event);
+
+    if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY|TOKEN_DUPLICATE, &htok))
+    {
+        CreateEnvironmentBlock(&env, htok, FALSE);
+        CloseHandle(htok);
+    }
+
+    if (!env)
+        WINE_ERR("failed to create services environment\n");
+
     load_registry_parameters();
     err = scmdatabase_create(&active_database);
     if (err != ERROR_SUCCESS)
