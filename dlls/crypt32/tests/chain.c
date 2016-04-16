@@ -4670,7 +4670,7 @@ static void check_ssl_policy(void)
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      fooPolicyCheckWithoutMatchingName, &oct2007, &policyPara);
     /* The Battle.Net chain checks a certificate with a domain component
-     * containg a terminating NULL.
+     * containing a terminating NULL.
      */
     sslPolicyPara.pwszServerName = battle_dot_net;
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
