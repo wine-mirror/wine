@@ -493,7 +493,7 @@ static void test_encoder_properties(const CLSID* clsid_encoder, IPropertyBag2 *o
         if (FAILED(hr))
             return;
 
-        ok(cProperties == cProperties2, "Missmatch of property count (IPropertyBag2::CountProperties=%i, IPropertyBag2::GetPropertyInfo=%i)\n",
+        ok(cProperties == cProperties2, "Mismatch of property count (IPropertyBag2::CountProperties=%i, IPropertyBag2::GetPropertyInfo=%i)\n",
            (int)cProperties, (int)cProperties2);
     }
 
