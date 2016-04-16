@@ -3205,7 +3205,7 @@ static void test_scissor_size(void)
         ok(hr == D3D_OK, "IDirect3DDevice9_GetScissorRect failed with: %08x\n", hr);
         ok(scissorrect.right == scts[i].backx && scissorrect.bottom == scts[i].backy
                 && scissorrect.top == 0 && scissorrect.left == 0,
-                "Scissorrect missmatch (%d, %d) should be (%d, %d)\n", scissorrect.right, scissorrect.bottom,
+                "Scissorrect mismatch (%d, %d) should be (%d, %d)\n", scissorrect.right, scissorrect.bottom,
                 scts[i].backx, scts[i].backy);
 
         /* check the scissorrect values after a reset */
@@ -3221,7 +3221,7 @@ static void test_scissor_size(void)
         ok(hr == D3D_OK, "IDirect3DDevice9_GetScissorRect failed with: %08x\n", hr);
         ok(scissorrect.right == registry_mode.dmPelsWidth && scissorrect.bottom == registry_mode.dmPelsHeight
                 && scissorrect.top == 0 && scissorrect.left == 0,
-                "Scissorrect missmatch (%d, %d) should be (%u, %u)\n", scissorrect.right, scissorrect.bottom,
+                "Scissorrect mismatch (%d, %d) should be (%u, %u)\n", scissorrect.right, scissorrect.bottom,
                 registry_mode.dmPelsWidth, registry_mode.dmPelsHeight);
 
         if(device_ptr) {
