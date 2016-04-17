@@ -554,7 +554,7 @@ static void test_get_shader_constant_table_ex(void)
         ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
         hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, &constant_desc, NULL);
         ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
-        hr = ID3DXConstantTable_GetConstantDesc(constant_table, "Constant unknow", &constant_desc, &nb);
+        hr = ID3DXConstantTable_GetConstantDesc(constant_table, "Constant unknown", &constant_desc, &nb);
         ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
         hr = ID3DXConstantTable_GetConstantDesc(constant_table, "Constant3", &constant_desc, &nb);
         ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
