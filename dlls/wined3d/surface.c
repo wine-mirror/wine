@@ -991,7 +991,9 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         {
             wined3d_texture_get_pitch(texture, surface->texture_level, &dst_row_pitch, &dst_slice_pitch);
             wined3d_format_calculate_pitch(format, texture->resource.device->surface_alignment,
-                    surface->pow2Width, surface->pow2Height, &src_row_pitch, &src_slice_pitch);
+                    wined3d_texture_get_level_pow2_width(texture, surface->texture_level),
+                    wined3d_texture_get_level_pow2_height(texture, surface->texture_level),
+                    &src_row_pitch, &src_slice_pitch);
             mem = HeapAlloc(GetProcessHeap(), 0, src_slice_pitch);
         }
         else
