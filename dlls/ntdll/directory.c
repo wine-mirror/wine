@@ -47,6 +47,11 @@
 #ifdef HAVE_SYS_ATTR_H
 #include <sys/attr.h>
 #endif
+#ifdef MAJOR_IN_MKDEV
+# include <sys/mkdev.h>
+#elif defined(MAJOR_IN_SYSMACROS)
+# include <sys/sysmacros.h>
+#endif
 #ifdef HAVE_SYS_VNODE_H
 /* Work around a conflict with Solaris' system list defined in sys/list.h. */
 #define list SYSLIST
