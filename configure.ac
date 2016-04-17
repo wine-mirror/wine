@@ -510,6 +510,7 @@ AC_CHECK_HEADERS(\
 	valgrind/valgrind.h \
 	zlib.h
 )
+AC_HEADER_MAJOR()
 AC_HEADER_STAT()
 
 dnl **** Checks for headers that depend on other ones ****

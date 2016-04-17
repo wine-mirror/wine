@@ -83,6 +83,11 @@
 #endif
 #include <sys/stat.h>
 #include <sys/time.h>
+#ifdef MAJOR_IN_MKDEV
+#include <sys/mkdev.h>
+#elif defined(MAJOR_IN_SYSMACROS)
+#include <sys/sysmacros.h>
+#endif
 #include <sys/types.h>
 #include <unistd.h>
 #ifdef HAVE_SYS_SYSCALL_H
