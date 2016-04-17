@@ -536,7 +536,7 @@ static void test_CreateEnumObject(void)
     ok(*((WORD*)pdata) == 3, "Retrieved data is wrong (%u instead of 3)\n", *((WORD*)pdata));
 
     /* Try to get not existing member (szMember == "unknown") */
-    hr = IDirectXFileData_GetData(lpdxfd, "unknow", &size, (void**)&pdata);
+    hr = IDirectXFileData_GetData(lpdxfd, "unknown", &size, (void**)&pdata);
     ok(hr == DXFILEERR_BADDATAREFERENCE, "IDirectXFileData_GetData: %x\n", hr);
 
     ref = IDirectXFileEnumObject_Release(lpdxfeo);
