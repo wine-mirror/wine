@@ -36,6 +36,7 @@ struct d3drm_object
 
 struct d3drm_texture
 {
+    struct d3drm_object obj;
     IDirect3DRMTexture IDirect3DRMTexture_iface;
     IDirect3DRMTexture2 IDirect3DRMTexture2_iface;
     IDirect3DRMTexture3 IDirect3DRMTexture3_iface;
