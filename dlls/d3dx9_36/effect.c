@@ -4764,10 +4764,17 @@ static HRESULT d3dx9_parse_name(char **name, const char *ptr)
     return D3D_OK;
 }
 
-static HRESULT d3dx9_copy_data(struct d3dx_object *object, const char **ptr)
+static HRESULT d3dx9_copy_data(struct d3dx9_base_effect *base, unsigned int object_id, const char **ptr)
 {
+    struct d3dx_object *object = &base->objects[object_id];
+
     if (object->size || object->data)
-        FIXME("Object already initialized!\n");
+    {
+        if (object_id)
+            FIXME("Overwriting object id %u!\n", object_id);
+        else
+            TRACE("Overwriting object id 0.\n");
+    }
 
     read_dword(ptr, &object->size);
     TRACE("Data size: %#x\n", object->size);
@@ -5570,7 +5577,7 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
                 case D3DXPT_VERTEXSHADER:
                 case D3DXPT_PIXELSHADER:
                     state->type = ST_CONSTANT;
-                    if (FAILED(hr = d3dx9_copy_data(&base->objects[param->object_id], ptr)))
+                    if (FAILED(hr = d3dx9_copy_data(base, param->object_id, ptr)))
                         return hr;
 
                     if (object->data)
@@ -5586,7 +5593,7 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
                 case D3DXPT_FLOAT:
                 case D3DXPT_STRING:
                     state->type = ST_FXLC;
-                    if (FAILED(hr = d3dx9_copy_data(&base->objects[param->object_id], ptr)))
+                    if (FAILED(hr = d3dx9_copy_data(base, param->object_id, ptr)))
                         return hr;
                     d3dx_create_param_eval(base, object->data, object->size, param->type, &param->param_eval);
                     break;
@@ -5599,7 +5606,7 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
 
         case 1:
             state->type = ST_PARAMETER;
-            if (FAILED(hr = d3dx9_copy_data(&base->objects[param->object_id], ptr)))
+            if (FAILED(hr = d3dx9_copy_data(base, param->object_id, ptr)))
                 return hr;
 
             TRACE("Looking for parameter %s.\n", debugstr_a(object->data));
@@ -5627,7 +5634,7 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
 
         case 2:
             state->type = ST_ARRAY_SELECTOR;
-            if (FAILED(hr = d3dx9_copy_data(object, ptr)))
+            if (FAILED(hr = d3dx9_copy_data(base, param->object_id, ptr)))
                 return hr;
             hr = d3dx9_parse_array_selector(base, param);
             break;
@@ -5727,7 +5734,7 @@ static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *da
         read_dword(&ptr, &id);
         TRACE("Id: %u\n", id);
 
-        if (FAILED(hr = d3dx9_copy_data(&base->objects[id], &ptr)))
+        if (FAILED(hr = d3dx9_copy_data(base, id, &ptr)))
             goto err_out;
 
         if (base->objects[id].data)
