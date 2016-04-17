@@ -6079,6 +6079,7 @@ static void test_clear_render_target_view(void)
 {
     static const DWORD expected_color = 0xbf4c7f19, expected_srgb_color = 0xbf95bc59;
     static const float color[] = {0.1f, 0.5f, 0.3f, 0.75f};
+    static const float green[] = {0.0f, 1.0f, 0.0f, 0.5f};
 
     struct d3d10core_test_context test_context;
     ID3D10Texture2D *texture, *srgb_texture;
@@ -6122,6 +6123,14 @@ static void test_clear_render_target_view(void)
 
     ID3D10Device_ClearRenderTargetView(device, rtv, color);
     check_texture_color(texture, expected_color, 1);
+
+    if (d3d11_available)
+    {
+        ID3D10Device_ClearRenderTargetView(device, NULL, green);
+        check_texture_color(texture, expected_color, 1);
+    }
+    else
+        win_skip("D3D11 is not available, skipping test.\n");
 
     ID3D10Device_ClearRenderTargetView(device, srgb_rtv, color);
     check_texture_color(srgb_texture, expected_srgb_color, 1);

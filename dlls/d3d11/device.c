@@ -3445,6 +3445,9 @@ static void STDMETHODCALLTYPE d3d10_device_ClearRenderTargetView(ID3D10Device1 *
     TRACE("iface %p, render_target_view %p, color_rgba %s.\n",
             iface, render_target_view, debug_float4(color_rgba));
 
+    if (!view)
+        return;
+
     wined3d_mutex_lock();
     if (FAILED(hr = wined3d_device_clear_rendertarget_view(device->wined3d_device, view->wined3d_view, NULL,
             WINED3DCLEAR_TARGET, &color, 0.0f, 0)))
