@@ -22,6 +22,8 @@
 #include "wine/test.h"
 #include <limits.h>
 
+static BOOL d3d11_available;
+
 struct vec2
 {
     float x, y;
@@ -477,6 +479,8 @@ static void test_feature_level(void)
         ID3D10Device_Release(device10);
         return;
     }
+
+    d3d11_available = TRUE;
 
     /* Device was created by D3D10CreateDevice. */
     feature_level = ID3D11Device_GetFeatureLevel(device11);
@@ -6221,6 +6225,14 @@ static void test_clear_depth_stencil_view(void)
 
     ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH | D3D10_CLEAR_STENCIL, 0.0f, 0);
     check_texture_color(depth_texture, 0x00000000, 0);
+
+    if (d3d11_available)
+    {
+        ID3D10Device_ClearDepthStencilView(device, NULL, D3D10_CLEAR_DEPTH | D3D10_CLEAR_STENCIL, 1.0f, 0xff);
+        check_texture_color(depth_texture, 0x00000000, 0);
+    }
+    else
+        win_skip("D3D11 is not available, skipping test.\n");
 
     ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH, 1.0f, 0xff);
     todo_wine check_texture_color(depth_texture, 0x00ffffff, 0);
