@@ -122,8 +122,8 @@ void surface_get_drawable_size(const struct wined3d_surface *surface, const stru
         /* The drawable size of an FBO target is the OpenGL texture size,
          * which is the power of two size. */
         rt = context->current_rt.texture->sub_resources[context->current_rt.sub_resource_idx].u.surface;
-        *width = rt->pow2Width;
-        *height = rt->pow2Height;
+        *width = wined3d_texture_get_level_pow2_width(rt->container, rt->texture_level);
+        *height = wined3d_texture_get_level_pow2_height(rt->container, rt->texture_level);
     }
 }
 
