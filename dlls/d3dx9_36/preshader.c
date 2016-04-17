@@ -29,11 +29,57 @@ enum pres_ops
 {
     PRESHADER_OP_NOP,
     PRESHADER_OP_MOV,
+    PRESHADER_OP_ADD,
+    PRESHADER_OP_MUL,
+    PRESHADER_OP_DOT,
+    PRESHADER_OP_NEG,
+    PRESHADER_OP_RCP,
+    PRESHADER_OP_LT,
+    PRESHADER_OP_FRC,
+    PRESHADER_OP_MIN,
+    PRESHADER_OP_MAX,
+    PRESHADER_OP_GE,
+    PRESHADER_OP_CMP,
+    PRESHADER_OP_SIN,
+    PRESHADER_OP_COS,
+    PRESHADER_OP_RSQ,
 };
 
-typedef double (*pres_op_func)(double *args, int ncomp);
+typedef double (*pres_op_func)(double *args, int n);
 
-static double pres_mov(double *args, int ncomp) {return args[0];}
+static double pres_mov(double *args, int n) {return args[0];}
+static double pres_add(double *args, int n) {return args[0] + args[1];}
+static double pres_mul(double *args, int n) {return args[0] * args[1];}
+static double pres_dot(double *args, int n)
+{
+    int i;
+    double sum;
+
+    sum = 0.0;
+    for (i = 0; i < n; ++i)
+        sum += args[i] * args[i + n];
+    return sum;
+}
+static double pres_neg(double *args, int n) {return -args[0];}
+static double pres_rcp(double *args, int n) {return 1.0 / args[0];}
+static double pres_lt(double *args, int n)  {return args[0] < args[1] ? 1.0 : 0.0;}
+static double pres_ge(double *args, int n)  {return args[0] >= args[1] ? 1.0 : 0.0;}
+static double pres_frc(double *args, int n) {return args[0] - floor(args[0]);}
+static double pres_min(double *args, int n) {return fmin(args[0], args[1]);}
+static double pres_max(double *args, int n) {return fmax(args[0], args[1]);}
+static double pres_cmp(double *args, int n) {return args[0] < 0.0 ? args[2] : args[1];}
+static double pres_sin(double *args, int n) {return sin(args[0]);}
+static double pres_cos(double *args, int n) {return cos(args[0]);}
+static double pres_rsq(double *args, int n)
+{
+    double v;
+
+    v = fabs(args[0]);
+    if (v == 0.0)
+        return INFINITY;
+    else
+        return 1.0 / sqrt(v);
+}
 
 #define PRES_OPCODE_MASK 0x7ff00000
 #define PRES_OPCODE_SHIFT 20
@@ -59,6 +105,20 @@ static const struct op_info pres_op_info[] =
 {
     {0x000, "nop", 0, 0, NULL    }, /* PRESHADER_OP_NOP */
     {0x100, "mov", 1, 0, pres_mov}, /* PRESHADER_OP_MOV */
+    {0x204, "add", 2, 0, pres_add}, /* PRESHADER_OP_ADD */
+    {0x205, "mul", 2, 0, pres_mul}, /* PRESHADER_OP_MUL */
+    {0x500, "dot", 2, 1, pres_dot}, /* PRESHADER_OP_DOT */
+    {0x101, "neg", 1, 0, pres_neg}, /* PRESHADER_OP_NEG */
+    {0x103, "rcp", 1, 0, pres_rcp}, /* PRESHADER_OP_RCP */
+    {0x202, "lt",  2, 0, pres_lt }, /* PRESHADER_OP_LT  */
+    {0x104, "frc", 1, 0, pres_frc}, /* PRESHADER_OP_FRC */
+    {0x200, "min", 2, 0, pres_min}, /* PRESHADER_OP_MIN */
+    {0x201, "max", 2, 0, pres_max}, /* PRESHADER_OP_MAX */
+    {0x203, "ge",  2, 0, pres_ge }, /* PRESHADER_OP_GE  */
+    {0x300, "cmp", 3, 0, pres_cmp}, /* PRESHADER_OP_CMP */
+    {0x108, "sin", 1, 0, pres_sin}, /* PRESHADER_OP_SIN */
+    {0x109, "cos", 1, 0, pres_cos}, /* PRESHADER_OP_COS */
+    {0x107, "rsq", 1, 0, pres_rsq}, /* PRESHADER_OP_RSQ */
 };
 
 enum pres_value_type

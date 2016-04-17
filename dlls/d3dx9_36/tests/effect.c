@@ -3692,37 +3692,34 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
         const char *comment;
         BOOL todo[4];
         unsigned int result[4];
+        unsigned int ulps;
     }
     test_effect_preshader_op_results[] =
     {
-        {"1 / op", { TRUE,  TRUE,  TRUE,  TRUE}, {0x7f800000, 0xff800000, 0xbee8ba2e, 0x00200000}},
+        {"1 / op", {FALSE, FALSE, FALSE, FALSE}, {0x7f800000, 0xff800000, 0xbee8ba2e, 0x00200000}},
+        {"rsq",    {FALSE, FALSE, FALSE, FALSE}, {0x7f800000, 0x7f800000, 0x3f2c985c, 0x1f800001}, 1},
+        {"mul",    {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x80000000, 0x40d33334, 0x7f800000}},
+        {"add",    {FALSE, FALSE, FALSE, FALSE}, {0x3f800000, 0x40000000, 0xc0a66666, 0x7f7fffff}},
+        {"lt",     {FALSE, FALSE, FALSE, FALSE}, {0x3f800000, 0x3f800000, 0x00000000, 0x00000000}},
+        {"ge",     {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x00000000, 0x3f800000, 0x3f800000}},
+        {"neg",    {FALSE, FALSE, FALSE, FALSE}, {0x80000000, 0x00000000, 0x400ccccd, 0xff7fffff}},
+        {"rcp",    {FALSE, FALSE, FALSE, FALSE}, {0x7f800000, 0xff800000, 0xbee8ba2e, 0x00200000}},
+        {"frac",   {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x00000000, 0x3f4ccccc, 0x00000000}},
+        {"min",    {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x80000000, 0xc0400000, 0x40800000}},
+        {"max",    {FALSE, FALSE, FALSE, FALSE}, {0x3f800000, 0x40000000, 0xc00ccccd, 0x7f7fffff}},
 #if __x86_64__
-        {"rsq",    { TRUE,  TRUE,  TRUE,  TRUE}, {0x7f800000, 0x7f800000, 0x3f2c985d, 0x1f800000}},
+        {"sin",    {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x80000000, 0xbf4ef99e, 0xbf0599b3}},
+        {"cos",    {FALSE, FALSE, FALSE, FALSE}, {0x3f800000, 0x3f800000, 0xbf16a803, 0x3f5a5f96}},
 #else
-        {"rsq",    { TRUE,  TRUE,  TRUE,  TRUE}, {0x7f800000, 0x7f800000, 0x3f2c985c, 0x1f800001}},
+        {"sin",    {FALSE, FALSE, FALSE,  TRUE}, {0x00000000, 0x80000000, 0xbf4ef99e, 0x3f792dc4}},
+        {"cos",    {FALSE, FALSE, FALSE,  TRUE}, {0x3f800000, 0x3f800000, 0xbf16a803, 0xbe6acefc}},
 #endif
-        {"mul",    { TRUE,  TRUE,  TRUE,  TRUE}, {0x00000000, 0x80000000, 0x40d33334, 0x7f800000}},
-        {"add",    {FALSE,  TRUE,  TRUE,  TRUE}, {0x3f800000, 0x40000000, 0xc0a66666, 0x7f7fffff}},
-        {"lt",     {FALSE, FALSE,  TRUE, FALSE}, {0x3f800000, 0x3f800000, 0x00000000, 0x00000000}},
-        {"ge",     { TRUE,  TRUE, FALSE,  TRUE}, {0x00000000, 0x00000000, 0x3f800000, 0x3f800000}},
-        {"neg",    { TRUE,  TRUE,  TRUE,  TRUE}, {0x80000000, 0x00000000, 0x400ccccd, 0xff7fffff}},
-        {"rcp",    { TRUE,  TRUE,  TRUE,  TRUE}, {0x7f800000, 0xff800000, 0xbee8ba2e, 0x00200000}},
-        {"frac",   {FALSE, FALSE,  TRUE, FALSE}, {0x00000000, 0x00000000, 0x3f4ccccc, 0x00000000}},
-        {"min",    {FALSE,  TRUE,  TRUE,  TRUE}, {0x00000000, 0x80000000, 0xc0400000, 0x40800000}},
-        {"max",    { TRUE,  TRUE,  TRUE,  TRUE}, {0x3f800000, 0x40000000, 0xc00ccccd, 0x7f7fffff}},
+        {"den mul",{FALSE, FALSE, FALSE, FALSE}, {0x7f800000, 0xff800000, 0xbb94f209, 0x000051ec}},
+        {"dot",    {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x7f800000, 0x41f00000, 0x00000000}},
 #if __x86_64__
-        {"sin",    {FALSE,  TRUE,  TRUE,  TRUE}, {0x00000000, 0x80000000, 0xbf4ef99e, 0xbf0599b3}},
-        {"cos",    { TRUE,  TRUE,  TRUE,  TRUE}, {0x3f800000, 0x3f800000, 0xbf16a803, 0x3f5a5f96}},
+        {"prec",   {FALSE, FALSE,  TRUE, FALSE}, {0x2b8cbccc, 0x2c0cbccc, 0xac531800, 0x00000000}}
 #else
-        {"sin",    {FALSE,  TRUE,  TRUE,  TRUE}, {0x00000000, 0x80000000, 0xbf4ef99e, 0x3f792dc4}},
-        {"cos",    { TRUE,  TRUE,  TRUE,  TRUE}, {0x3f800000, 0x3f800000, 0xbf16a803, 0xbe6acefc}},
-#endif
-        {"den mul",{ TRUE,  TRUE,  TRUE,  TRUE}, {0x7f800000, 0xff800000, 0xbb94f209, 0x000051ec}},
-        {"dot",    {FALSE,  TRUE,  TRUE, FALSE}, {0x00000000, 0x7f800000, 0x41f00000, 0x00000000}},
-#if __x86_64__
-        {"prec",   { TRUE,  TRUE,  TRUE, FALSE}, {0x2b8cbccc, 0x2c0cbccc, 0xac531800, 0x00000000}}
-#else
-        {"prec",   { TRUE,  TRUE, FALSE, FALSE}, {0x2b8cbccc, 0x2c0cbccc, 0x00000000, 0x00000000}}
+        {"prec",   {FALSE, FALSE, FALSE, FALSE}, {0x2b8cbccc, 0x2c0cbccc, 0x00000000, 0x00000000}}
 #endif
     };
 #define TEST_EFFECT_PRES_NFLOATV ARRAY_SIZE(test_effect_preshader_fconstsv)
@@ -3789,7 +3786,7 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "SetVector failed, hr %#x.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 0, &fdata[0].x, TEST_EFFECT_PRES_NFLOATV);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
@@ -3828,17 +3825,20 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
 
     for (i = 0; i < TEST_EFFECT_PRES_NOPTESTS; ++i)
     {
-        unsigned int *v;
+        float *v;
 
         hr = IDirect3DDevice9_GetLight(device, i % 8, &light);
-        v = i < 8 ? (unsigned int *)&light.Diffuse : (unsigned int *)&light.Ambient;
+        v = i < 8 ? &light.Diffuse.r : &light.Ambient.r;
         ok(hr == D3D_OK, "Got result %#x.\n", hr);
         for (j = 0; j < 4; ++j)
+        {
             todo_wine_if(test_effect_preshader_op_results[i].todo[j])
-            ok(v[j] == test_effect_preshader_op_results[i].result[j],
+            ok(compare_float(v[j], ((float *)test_effect_preshader_op_results[i].result)[j],
+                    test_effect_preshader_op_results[i].ulps),
                     "Operation %s, component %u, expected %#x, got %#x (%g).\n",
                     test_effect_preshader_op_results[i].comment, j,
-                    test_effect_preshader_op_results[i].result[j], v[j], ((float *)v)[j]);
+                    test_effect_preshader_op_results[i].result[j], ((unsigned int *)v)[j], v[j]);
+        }
     }
 
     hr = effect->lpVtbl->EndPass(effect);
