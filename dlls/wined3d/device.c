@@ -343,8 +343,10 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     else
     {
         render_offscreen = TRUE;
-        drawable_width = depth_stencil->pow2Width;
-        drawable_height = depth_stencil->pow2Height;
+        drawable_width = wined3d_texture_get_level_pow2_width(depth_stencil->container,
+                depth_stencil->texture_level);
+        drawable_height = wined3d_texture_get_level_pow2_height(depth_stencil->container,
+                depth_stencil->texture_level);
     }
 
     if (depth_stencil && render_offscreen)
