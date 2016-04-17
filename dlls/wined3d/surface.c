@@ -289,7 +289,9 @@ void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3
     struct wined3d_texture *texture = src_surface->container;
     struct blt_info info;
 
-    surface_get_blt_info(src_surface->texture_target, src_rect, src_surface->pow2Width, src_surface->pow2Height, &info);
+    surface_get_blt_info(src_surface->texture_target, src_rect,
+            wined3d_texture_get_level_pow2_width(texture, src_surface->texture_level),
+            wined3d_texture_get_level_pow2_height(texture, src_surface->texture_level), &info);
 
     gl_info->gl_ops.gl.p_glEnable(info.bind_target);
     checkGLcall("glEnable(bind_target)");
