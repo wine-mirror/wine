@@ -574,11 +574,7 @@ static HWND create_child_editcontrol (DWORD style, DWORD exstyle)
     HWND editWnd;
     RECT rect;
     BOOL b;
-    
-    rect.left = 0;
-    rect.top = 0;
-    rect.right = 300;
-    rect.bottom = 300;
+    SetRect(&rect, 0, 0, 300, 300);
     b = AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
     ok(b, "AdjustWindowRect failed\n");
     
@@ -1468,10 +1464,7 @@ static void test_margins(void)
        the rectangle must not change */
 
     SendMessageA(hwEdit, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(10, 10));
-    old_rect.left = 1;
-    old_rect.right = 99;
-    old_rect.top = 1;
-    old_rect.bottom = 99;
+    SetRect(&old_rect, 1, 1, 99, 99);
     SendMessageA(hwEdit, EM_SETRECT, 0, (LPARAM)&old_rect);
     SendMessageA(hwEdit, EM_GETRECT, 0, (LPARAM)&old_rect);
     SendMessageA(hwEdit, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(10, 10));
