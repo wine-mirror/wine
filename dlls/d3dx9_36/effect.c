@@ -4774,10 +4774,13 @@ static HRESULT d3dx9_copy_data(struct d3dx9_base_effect *base, unsigned int obje
             FIXME("Overwriting object id %u!\n", object_id);
         else
             TRACE("Overwriting object id 0.\n");
+
+        HeapFree(GetProcessHeap(), 0, object->data);
+        object->data = NULL;
     }
 
     read_dword(ptr, &object->size);
-    TRACE("Data size: %#x\n", object->size);
+    TRACE("Data size: %#x.\n", object->size);
 
     if (!object->size)
         return D3D_OK;
