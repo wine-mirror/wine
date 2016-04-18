@@ -1587,6 +1587,7 @@ static D3DXQUATERNION add_diff(const D3DXQUATERNION *q1, const D3DXQUATERNION *q
 void WINAPI D3DXQuaternionSquadSetup(D3DXQUATERNION *paout, D3DXQUATERNION *pbout, D3DXQUATERNION *pcout, const D3DXQUATERNION *pq0, const D3DXQUATERNION *pq1, const D3DXQUATERNION *pq2, const D3DXQUATERNION *pq3)
 {
     D3DXQUATERNION q, temp1, temp2, temp3, zero;
+    D3DXQUATERNION aout, cout;
 
     TRACE("paout %p, pbout %p, pcout %p, pq0 %p, pq1 %p, pq2 %p, pq3 %p\n", paout, pbout, pcout, pq0, pq1, pq2, pq3);
 
@@ -1595,17 +1596,17 @@ void WINAPI D3DXQuaternionSquadSetup(D3DXQUATERNION *paout, D3DXQUATERNION *pbou
     zero.z = 0.0f;
     zero.w = 0.0f;
 
-    if ( D3DXQuaternionDot(pq0, pq1) <  0.0f )
+    if (D3DXQuaternionDot(pq0, pq1) < 0.0f)
         temp2 = add_diff(&zero, pq0, -1.0f);
     else
         temp2 = *pq0;
 
-    if ( D3DXQuaternionDot(pq1, pq2) < 0.0f )
-        *pcout = add_diff(&zero, pq2, -1.0f);
+    if (D3DXQuaternionDot(pq1, pq2) < 0.0f)
+        cout = add_diff(&zero, pq2, -1.0f);
     else
-        *pcout = *pq2;
+        cout = *pq2;
 
-    if ( D3DXQuaternionDot(pcout, pq3) < 0.0f )
+    if (D3DXQuaternionDot(&cout, pq3) < 0.0f)
         temp3 = add_diff(&zero, pq3, -1.0f);
     else
         temp3 = *pq3;
@@ -1613,7 +1614,7 @@ void WINAPI D3DXQuaternionSquadSetup(D3DXQUATERNION *paout, D3DXQUATERNION *pbou
     D3DXQuaternionInverse(&temp1, pq1);
     D3DXQuaternionMultiply(&temp2, &temp1, &temp2);
     D3DXQuaternionLn(&temp2, &temp2);
-    D3DXQuaternionMultiply(&q, &temp1, pcout);
+    D3DXQuaternionMultiply(&q, &temp1, &cout);
     D3DXQuaternionLn(&q, &q);
     temp1 = add_diff(&temp2, &q, 1.0f);
     temp1.x *= -0.25f;
@@ -1621,9 +1622,9 @@ void WINAPI D3DXQuaternionSquadSetup(D3DXQUATERNION *paout, D3DXQUATERNION *pbou
     temp1.z *= -0.25f;
     temp1.w *= -0.25f;
     D3DXQuaternionExp(&temp1, &temp1);
-    D3DXQuaternionMultiply(paout, pq1, &temp1);
+    D3DXQuaternionMultiply(&aout, pq1, &temp1);
 
-    D3DXQuaternionInverse(&temp1, pcout);
+    D3DXQuaternionInverse(&temp1, &cout);
     D3DXQuaternionMultiply(&temp2, &temp1, pq1);
     D3DXQuaternionLn(&temp2, &temp2);
     D3DXQuaternionMultiply(&q, &temp1, &temp3);
@@ -1634,9 +1635,9 @@ void WINAPI D3DXQuaternionSquadSetup(D3DXQUATERNION *paout, D3DXQUATERNION *pbou
     temp1.z *= -0.25f;
     temp1.w *= -0.25f;
     D3DXQuaternionExp(&temp1, &temp1);
-    D3DXQuaternionMultiply(pbout, pcout, &temp1);
-
-    return;
+    D3DXQuaternionMultiply(pbout, &cout, &temp1);
+    *paout = aout;
+    *pcout = cout;
 }
 
 void WINAPI D3DXQuaternionToAxisAngle(const D3DXQUATERNION *pq, D3DXVECTOR3 *paxis, FLOAT *pangle)
