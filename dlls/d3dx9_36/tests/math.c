@@ -3108,10 +3108,18 @@ static void test_D3DXSHMultiply3(void)
     unsigned int i;
     FLOAT a[20], b[20], c[20];
     /* D3DXSHMultiply3 only modifies the first 9 elements of the array */
-    const FLOAT expected[20] =
-    { 7.813913f, 2.256058f, 5.9484005f, 4.970894f, 2.899858f, 3.598946f,
-      1.726572f, 5.573538f, 0.622063f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f,
-      14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f };
+    static const float expected[20] =
+    {
+        7.813913f, 2.256058f, 5.9484005f, 4.970894f, 2.899858f, 3.598946f,
+        1.726572f, 5.573538f, 0.622063f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f,
+        14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f
+    };
+    static const float expected_aliased[20] =
+    {
+        454.092499f,2.126404f, 5.570401f, 15.330379f, 22.796087f, 43.604126f,
+        4.273841f, 175.772034f, 237.672729f, 1.09f, 1.1f, 1.11f, 1.12f, 1.13f,
+        1.14f, 1.15f, 1.16f, 1.17f, 1.18f, 1.19f
+    };
 
     for (i = 0; i < 20; i++)
     {
@@ -3122,7 +3130,14 @@ static void test_D3DXSHMultiply3(void)
 
     D3DXSHMultiply3(c, a, b);
     for (i = 0; i < 20; i++)
-        ok(relative_error(c[i], expected[i]) < admitted_error, "Expected[%d] = %f, received = %f\n", i, expected[i], c[i]);
+        ok(relative_error(c[i], expected[i]) < admitted_error,
+                "Expected[%d] = %f, received = %f\n", i, expected[i], c[i]);
+    for (i = 0; i < 20; i++)
+        c[i] = a[i];
+    D3DXSHMultiply3(c, c, b);
+    for (i = 0; i < 20; i++)
+        ok(relative_error(c[i], expected_aliased[i]) < admitted_error,
+                "Expected[%d] = %f, received = %f\n", i, expected[i], c[i]);
 }
 
 static void test_D3DXSHMultiply4(void)
