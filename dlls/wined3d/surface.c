@@ -429,22 +429,6 @@ HRESULT wined3d_surface_create_dc(struct wined3d_surface *surface)
     return WINED3D_OK;
 }
 
-static void surface_prepare_system_memory(struct wined3d_surface *surface)
-{
-    TRACE("surface %p.\n", surface);
-
-    if (surface->resource.heap_memory)
-        return;
-
-    /* Whatever surface we have, make sure that there is memory allocated
-     * for the downloaded copy, or a PBO to map. */
-    if (!wined3d_resource_allocate_sysmem(&surface->resource))
-        ERR("Failed to allocate system memory.\n");
-
-    if (surface_get_sub_resource(surface)->locations & WINED3D_LOCATION_SYSMEM)
-        ERR("Surface without system memory has WINED3D_LOCATION_SYSMEM set.\n");
-}
-
 static void surface_evict_sysmem(struct wined3d_surface *surface)
 {
     unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
@@ -4396,38 +4380,6 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
  * WINED3D_NO3D mode. */
 void wined3d_surface_prepare(struct wined3d_surface *surface, struct wined3d_context *context, DWORD location)
 {
-    struct wined3d_texture *texture = surface->container;
-
-    switch (location)
-    {
-        case WINED3D_LOCATION_SYSMEM:
-            surface_prepare_system_memory(surface);
-            break;
-
-        case WINED3D_LOCATION_USER_MEMORY:
-            if (!texture->user_memory)
-                ERR("Map binding is set to WINED3D_LOCATION_USER_MEMORY but surface->user_memory is NULL.\n");
-            break;
-
-        case WINED3D_LOCATION_BUFFER:
-            wined3d_texture_prepare_buffer_object(texture,
-                    surface_get_sub_resource_idx(surface), context->gl_info);
-            break;
-
-        case WINED3D_LOCATION_TEXTURE_RGB:
-            wined3d_texture_prepare_texture(texture, context, FALSE);
-            break;
-
-        case WINED3D_LOCATION_TEXTURE_SRGB:
-            wined3d_texture_prepare_texture(texture, context, TRUE);
-            break;
-
-        case WINED3D_LOCATION_RB_MULTISAMPLE:
-            wined3d_texture_prepare_rb(texture, context->gl_info, TRUE);
-            break;
-
-        case WINED3D_LOCATION_RB_RESOLVED:
-            wined3d_texture_prepare_rb(texture, context->gl_info, FALSE);
-            break;
-    }
+    wined3d_texture_prepare_location(surface->container,
+            surface_get_sub_resource_idx(surface), context, location);
 }

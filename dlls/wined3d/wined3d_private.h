@@ -2428,8 +2428,6 @@ struct wined3d_texture_ops
             const struct wined3d_context *context, const struct wined3d_sub_resource_data *data);
     BOOL (*texture_load_location)(struct wined3d_texture *texture, unsigned int sub_resource_idx,
             struct wined3d_context *context, DWORD location);
-    BOOL (*texture_prepare_location)(struct wined3d_texture *texture, unsigned int sub_resource_idx,
-            struct wined3d_context *context, DWORD location);
     void (*texture_prepare_texture)(struct wined3d_texture *texture,
             struct wined3d_context *context, BOOL srgb);
     void (*texture_cleanup_sub_resources)(struct wined3d_texture *texture);
@@ -2567,10 +2565,8 @@ void wined3d_texture_load(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void *wined3d_texture_map_bo_address(const struct wined3d_bo_address *data, size_t size,
         const struct wined3d_gl_info *gl_info, GLenum binding, DWORD flags) DECLSPEC_HIDDEN;
-void wined3d_texture_prepare_buffer_object(struct wined3d_texture *texture,
-        unsigned int sub_resource_idx, const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
-void wined3d_texture_prepare_rb(struct wined3d_texture *texture,
-        const struct wined3d_gl_info *gl_info, BOOL multisample) DECLSPEC_HIDDEN;
+BOOL wined3d_texture_prepare_location(struct wined3d_texture *texture, unsigned int sub_resource_idx,
+        struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
 void wined3d_texture_prepare_texture(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void wined3d_texture_set_dirty(struct wined3d_texture *texture) DECLSPEC_HIDDEN;

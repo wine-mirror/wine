@@ -27,47 +27,12 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
-static BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
-{
-    if (volume->resource.heap_memory)
-        return TRUE;
-
-    if (!wined3d_resource_allocate_sysmem(&volume->resource))
-    {
-        ERR("Failed to allocate system memory.\n");
-        return FALSE;
-    }
-    return TRUE;
-}
-
 /* Context activation is done by the caller. Context may be NULL in
  * WINED3D_NO3D mode. */
 BOOL wined3d_volume_prepare_location(struct wined3d_volume *volume,
         struct wined3d_context *context, DWORD location)
 {
-    struct wined3d_texture *texture = volume->container;
-
-    switch (location)
-    {
-        case WINED3D_LOCATION_SYSMEM:
-            return volume_prepare_system_memory(volume);
-
-        case WINED3D_LOCATION_BUFFER:
-            wined3d_texture_prepare_buffer_object(texture, volume->texture_level, context->gl_info);
-            return TRUE;
-
-        case WINED3D_LOCATION_TEXTURE_RGB:
-            wined3d_texture_prepare_texture(texture, context, FALSE);
-            return TRUE;
-
-        case WINED3D_LOCATION_TEXTURE_SRGB:
-            wined3d_texture_prepare_texture(texture, context, TRUE);
-            return TRUE;
-
-        default:
-            ERR("Invalid location %s.\n", wined3d_debug_location(location));
-            return FALSE;
-    }
+    return wined3d_texture_prepare_location(volume->container, volume->texture_level, context, location);
 }
 
 /* This call just uploads data, the caller is responsible for binding the
