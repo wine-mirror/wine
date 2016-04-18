@@ -1086,9 +1086,9 @@ DWORD __cdecl svcctl_ControlService(
 {
     DWORD access_required;
     struct sc_service_handle *service;
+    struct process_entry *process;
     DWORD result;
     BOOL ret;
-    HANDLE control_mutex;
 
     WINE_TRACE("(%p, %d, %p)\n", hService, dwControl, lpServiceStatus);
 
@@ -1169,14 +1169,18 @@ DWORD __cdecl svcctl_ControlService(
     if (dwControl == SERVICE_CONTROL_STOP)
         service->service_entry->force_shutdown = TRUE;
 
-    control_mutex = service->service_entry->process->control_mutex;
+    /* Hold a reference to the process while sending the command. */
+    process = grab_process(service->service_entry->process);
     service_unlock(service->service_entry);
 
-    ret = WaitForSingleObject(control_mutex, 30000);
+    ret = WaitForSingleObject(process->control_mutex, 30000);
     if (ret != WAIT_OBJECT_0)
+    {
+        release_process(process);
         return ERROR_SERVICE_REQUEST_TIMEOUT;
+    }
 
-    process_send_control(service->service_entry->process, service->service_entry->name, dwControl, &result);
+    process_send_control(process, service->service_entry->name, dwControl, &result);
 
     if (lpServiceStatus)
     {
@@ -1191,7 +1195,8 @@ DWORD __cdecl svcctl_ControlService(
         service_unlock(service->service_entry);
     }
 
-    ReleaseMutex(control_mutex);
+    ReleaseMutex(process->control_mutex);
+    release_process(process);
     return result;
 }
 

@@ -457,6 +457,13 @@ struct service_entry *scmdatabase_find_service_by_displayname(struct scmdatabase
     return NULL;
 }
 
+struct process_entry *grab_process(struct process_entry *process)
+{
+    if (process)
+        InterlockedIncrement(&process->ref_count);
+    return process;
+}
+
 void release_process(struct process_entry *process)
 {
     if (InterlockedDecrement(&process->ref_count) == 0)

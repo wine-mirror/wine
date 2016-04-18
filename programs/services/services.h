@@ -88,6 +88,7 @@ void service_terminate(struct service_entry *service);
 
 /* Process functions */
 
+struct process_entry *grab_process(struct process_entry *process);
 void release_process(struct process_entry *process);
 BOOL process_send_command(struct process_entry *process, const void *data, DWORD size, DWORD *result);
 
