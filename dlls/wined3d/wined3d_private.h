@@ -2470,6 +2470,9 @@ struct wined3d_texture
     DWORD flags;
     GLenum target;
 
+    GLuint rb_multisample;
+    GLuint rb_resolved;
+
     void *user_memory;
     unsigned int row_pitch;
     unsigned int slice_pitch;
@@ -2565,6 +2568,8 @@ void *wined3d_texture_map_bo_address(const struct wined3d_bo_address *data, size
         const struct wined3d_gl_info *gl_info, GLenum binding, DWORD flags) DECLSPEC_HIDDEN;
 void wined3d_texture_prepare_buffer_object(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
+void wined3d_texture_prepare_rb(struct wined3d_texture *texture,
+        const struct wined3d_gl_info *gl_info, BOOL multisample) DECLSPEC_HIDDEN;
 void wined3d_texture_prepare_texture(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void wined3d_texture_remove_buffer_object(struct wined3d_texture *texture,
@@ -2652,8 +2657,6 @@ struct wined3d_surface
 
     UINT pow2Width;
     UINT pow2Height;
-    GLuint rb_multisample;
-    GLuint rb_resolved;
     GLenum texture_target;
     unsigned int texture_level;
     unsigned int texture_layer;

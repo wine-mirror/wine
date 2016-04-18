@@ -434,7 +434,6 @@ static void wined3d_swapchain_rotate(struct wined3d_swapchain *swapchain, struct
     struct gl_texture tex0;
     GLuint rb0;
     DWORD locations0;
-    struct wined3d_surface *surface, *surface_prev;
     unsigned int i;
     static const DWORD supported_locations = WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_RB_MULTISAMPLE;
 
@@ -442,34 +441,31 @@ static void wined3d_swapchain_rotate(struct wined3d_swapchain *swapchain, struct
         return;
 
     texture_prev = swapchain->back_buffers[0];
-    surface_prev = texture_prev->sub_resources[0].u.surface;
 
     /* Back buffer 0 is already in the draw binding. */
     tex0 = texture_prev->texture_rgb;
-    rb0 = surface_prev->rb_multisample;
+    rb0 = texture_prev->rb_multisample;
     locations0 = texture_prev->sub_resources[0].locations;
 
     for (i = 1; i < swapchain->desc.backbuffer_count; ++i)
     {
         texture = swapchain->back_buffers[i];
         sub_resource = &texture->sub_resources[0];
-        surface = sub_resource->u.surface;
 
         if (!(sub_resource->locations & supported_locations))
-            surface_load_location(surface, context, texture->resource.draw_binding);
+            surface_load_location(sub_resource->u.surface, context, texture->resource.draw_binding);
 
         texture_prev->texture_rgb = texture->texture_rgb;
-        surface_prev->rb_multisample = surface->rb_multisample;
+        texture_prev->rb_multisample = texture->rb_multisample;
 
         wined3d_texture_validate_location(texture_prev, 0, sub_resource->locations & supported_locations);
         wined3d_texture_invalidate_location(texture_prev, 0, ~(sub_resource->locations & supported_locations));
 
         texture_prev = texture;
-        surface_prev = surface;
     }
 
     texture_prev->texture_rgb = tex0;
-    surface_prev->rb_multisample = rb0;
+    texture_prev->rb_multisample = rb0;
 
     wined3d_texture_validate_location(texture_prev, 0, locations0 & supported_locations);
     wined3d_texture_invalidate_location(texture_prev, 0, ~(locations0 & supported_locations));

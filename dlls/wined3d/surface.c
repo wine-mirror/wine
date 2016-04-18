@@ -44,7 +44,7 @@ void wined3d_surface_cleanup(struct wined3d_surface *surface)
 
     TRACE("surface %p.\n", surface);
 
-    if (surface->rb_multisample || surface->rb_resolved || !list_empty(&surface->renderbuffers))
+    if (!list_empty(&surface->renderbuffers))
     {
         struct wined3d_device *device = surface->container->resource.device;
         struct wined3d_renderbuffer_entry *entry, *entry2;
@@ -53,20 +53,6 @@ void wined3d_surface_cleanup(struct wined3d_surface *surface)
 
         context = context_acquire(device, NULL);
         gl_info = context->gl_info;
-
-        if (surface->rb_multisample)
-        {
-            TRACE("Deleting multisample renderbuffer %u.\n", surface->rb_multisample);
-            context_gl_resource_released(device, surface->rb_multisample, TRUE);
-            gl_info->fbo_ops.glDeleteRenderbuffers(1, &surface->rb_multisample);
-        }
-
-        if (surface->rb_resolved)
-        {
-            TRACE("Deleting resolved renderbuffer %u.\n", surface->rb_resolved);
-            context_gl_resource_released(device, surface->rb_resolved, TRUE);
-            gl_info->fbo_ops.glDeleteRenderbuffers(1, &surface->rb_resolved);
-        }
 
         LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &surface->renderbuffers, struct wined3d_renderbuffer_entry, entry)
         {
@@ -898,19 +884,6 @@ static void surface_unload(struct wined3d_resource *resource)
     }
     list_init(&surface->renderbuffers);
     surface->current_renderbuffer = NULL;
-
-    if (surface->rb_multisample)
-    {
-        context_gl_resource_released(device, surface->rb_multisample, TRUE);
-        gl_info->fbo_ops.glDeleteRenderbuffers(1, &surface->rb_multisample);
-        surface->rb_multisample = 0;
-    }
-    if (surface->rb_resolved)
-    {
-        context_gl_resource_released(device, surface->rb_resolved, TRUE);
-        gl_info->fbo_ops.glDeleteRenderbuffers(1, &surface->rb_resolved);
-        surface->rb_resolved = 0;
-    }
 
     context_release(context);
 
@@ -1957,67 +1930,6 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb, struct 
 
     if (restore_rt)
         context_restore(context, restore_rt);
-}
-
-static void surface_prepare_rb(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info, BOOL multisample)
-{
-    struct wined3d_texture *texture = surface->container;
-    const struct wined3d_format *format = texture->resource.format;
-
-    if (multisample)
-    {
-        DWORD samples;
-
-        if (surface->rb_multisample)
-            return;
-
-        /* TODO: Nvidia exposes their Coverage Sample Anti-Aliasing (CSAA) feature
-         * through type == MULTISAMPLE_XX and quality != 0. This could be mapped
-         * to GL_NV_framebuffer_multisample_coverage.
-         *
-         * AMD has a similar feature called Enhanced Quality Anti-Aliasing (EQAA),
-         * but it does not have an equivalent OpenGL extension. */
-
-        /* We advertise as many WINED3D_MULTISAMPLE_NON_MASKABLE quality levels
-         * as the count of advertised multisample types for the surface format. */
-        if (texture->resource.multisample_type == WINED3D_MULTISAMPLE_NON_MASKABLE)
-        {
-            unsigned int i, count = 0;
-
-            for (i = 0; i < sizeof(format->multisample_types) * 8; ++i)
-            {
-                if (format->multisample_types & 1u << i)
-                {
-                    if (texture->resource.multisample_quality == count++)
-                        break;
-                }
-            }
-            samples = i + 1;
-        }
-        else
-        {
-            samples = texture->resource.multisample_type;
-        }
-
-        gl_info->fbo_ops.glGenRenderbuffers(1, &surface->rb_multisample);
-        gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, surface->rb_multisample);
-        gl_info->fbo_ops.glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples,
-                format->glInternal, surface->pow2Width, surface->pow2Height);
-        checkGLcall("glRenderbufferStorageMultisample()");
-        TRACE("Created multisample rb %u.\n", surface->rb_multisample);
-    }
-    else
-    {
-        if (surface->rb_resolved)
-            return;
-
-        gl_info->fbo_ops.glGenRenderbuffers(1, &surface->rb_resolved);
-        gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, surface->rb_resolved);
-        gl_info->fbo_ops.glRenderbufferStorage(GL_RENDERBUFFER, format->glInternal,
-                surface->pow2Width, surface->pow2Height);
-        checkGLcall("glRenderbufferStorage()");
-        TRACE("Created resolved rb %u.\n", surface->rb_resolved);
-    }
 }
 
 /* Does a direct frame buffer -> texture copy. Stretching is done with single
@@ -4547,11 +4459,11 @@ void wined3d_surface_prepare(struct wined3d_surface *surface, struct wined3d_con
             break;
 
         case WINED3D_LOCATION_RB_MULTISAMPLE:
-            surface_prepare_rb(surface, context->gl_info, TRUE);
+            wined3d_texture_prepare_rb(texture, context->gl_info, TRUE);
             break;
 
         case WINED3D_LOCATION_RB_RESOLVED:
-            surface_prepare_rb(surface, context->gl_info, FALSE);
+            wined3d_texture_prepare_rb(texture, context->gl_info, FALSE);
             break;
     }
 }

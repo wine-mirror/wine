@@ -257,11 +257,14 @@ static void gltexture_delete(struct wined3d_device *device, const struct wined3d
 static void wined3d_texture_unload_gl_texture(struct wined3d_texture *texture)
 {
     struct wined3d_device *device = texture->resource.device;
+    const struct wined3d_gl_info *gl_info = NULL;
     struct wined3d_context *context = NULL;
 
-    if (texture->texture_rgb.name || texture->texture_srgb.name)
+    if (texture->texture_rgb.name || texture->texture_srgb.name
+            || texture->rb_multisample || texture->rb_resolved)
     {
         context = context_acquire(device, NULL);
+        gl_info = context->gl_info;
     }
 
     if (texture->texture_rgb.name)
@@ -269,6 +272,20 @@ static void wined3d_texture_unload_gl_texture(struct wined3d_texture *texture)
 
     if (texture->texture_srgb.name)
         gltexture_delete(device, context->gl_info, &texture->texture_srgb);
+
+    if (texture->rb_multisample)
+    {
+        TRACE("Deleting multisample renderbuffer %u.\n", texture->rb_multisample);
+        context_gl_resource_released(device, texture->rb_multisample, TRUE);
+        gl_info->fbo_ops.glDeleteRenderbuffers(1, &texture->rb_multisample);
+    }
+
+    if (texture->rb_resolved)
+    {
+        TRACE("Deleting resolved renderbuffer %u.\n", texture->rb_resolved);
+        context_gl_resource_released(device, texture->rb_resolved, TRUE);
+        gl_info->fbo_ops.glDeleteRenderbuffers(1, &texture->rb_resolved);
+    }
 
     if (context) context_release(context);
 
@@ -1025,6 +1042,68 @@ void wined3d_texture_prepare_texture(struct wined3d_texture *texture, struct win
 
     texture->texture_ops->texture_prepare_texture(texture, context, srgb);
     texture->flags |= alloc_flag;
+}
+
+void wined3d_texture_prepare_rb(struct wined3d_texture *texture,
+        const struct wined3d_gl_info *gl_info, BOOL multisample)
+{
+    const struct wined3d_format *format = texture->resource.format;
+
+    if (multisample)
+    {
+        DWORD samples;
+
+        if (texture->rb_multisample)
+            return;
+
+        /* TODO: NVIDIA expose their Coverage Sample Anti-Aliasing (CSAA)
+         * feature through type == MULTISAMPLE_XX and quality != 0. This could
+         * be mapped to GL_NV_framebuffer_multisample_coverage.
+         *
+         * AMD have a similar feature called Enhanced Quality Anti-Aliasing
+         * (EQAA), but it does not have an equivalent OpenGL extension. */
+
+        /* We advertise as many WINED3D_MULTISAMPLE_NON_MASKABLE quality
+         * levels as the count of advertised multisample types for the texture
+         * format. */
+        if (texture->resource.multisample_type == WINED3D_MULTISAMPLE_NON_MASKABLE)
+        {
+            unsigned int i, count = 0;
+
+            for (i = 0; i < sizeof(format->multisample_types) * 8; ++i)
+            {
+                if (format->multisample_types & 1u << i)
+                {
+                    if (texture->resource.multisample_quality == count++)
+                        break;
+                }
+            }
+            samples = i + 1;
+        }
+        else
+        {
+            samples = texture->resource.multisample_type;
+        }
+
+        gl_info->fbo_ops.glGenRenderbuffers(1, &texture->rb_multisample);
+        gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, texture->rb_multisample);
+        gl_info->fbo_ops.glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples,
+                format->glInternal, texture->resource.width, texture->resource.height);
+        checkGLcall("glRenderbufferStorageMultisample()");
+        TRACE("Created multisample rb %u.\n", texture->rb_multisample);
+    }
+    else
+    {
+        if (texture->rb_resolved)
+            return;
+
+        gl_info->fbo_ops.glGenRenderbuffers(1, &texture->rb_resolved);
+        gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, texture->rb_resolved);
+        gl_info->fbo_ops.glRenderbufferStorage(GL_RENDERBUFFER, format->glInternal,
+                texture->resource.width, texture->resource.height);
+        checkGLcall("glRenderbufferStorage()");
+        TRACE("Created resolved rb %u.\n", texture->rb_resolved);
+    }
 }
 
 void CDECL wined3d_texture_generate_mipmaps(struct wined3d_texture *texture)

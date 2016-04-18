@@ -378,13 +378,13 @@ static inline void context_set_fbo_key_for_surface(const struct wined3d_context 
                 break;
 
             case WINED3D_LOCATION_RB_MULTISAMPLE:
-                key->objects[idx].object = surface->rb_multisample;
+                key->objects[idx].object = surface->container->rb_multisample;
                 key->objects[idx].level = key->objects[idx].target = 0;
                 key->rb_namespace |= 1 << idx;
                 break;
 
             case WINED3D_LOCATION_RB_RESOLVED:
-                key->objects[idx].object = surface->rb_resolved;
+                key->objects[idx].object = surface->container->rb_resolved;
                 key->objects[idx].level = key->objects[idx].target = 0;
                 key->rb_namespace |= 1 << idx;
                 break;
