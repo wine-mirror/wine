@@ -862,7 +862,10 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
 {
     struct wined3d_texture *texture = surface->container;
     const struct wined3d_format *format = texture->resource.format;
+    unsigned int dst_row_pitch, dst_slice_pitch;
+    unsigned int src_row_pitch, src_slice_pitch;
     struct wined3d_bo_address data;
+    void *mem;
 
     /* Only support read back of converted P8 surfaces. */
     if (texture->flags & WINED3D_TEXTURE_CONVERTED && format->id != WINED3DFMT_P8_UINT)
@@ -873,134 +876,117 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
 
     wined3d_texture_get_memory(texture, surface_get_sub_resource_idx(surface), &data, dst_location);
 
-    if (texture->resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
+    if (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
     {
-        TRACE("(%p) : Calling glGetCompressedTexImage level %d, format %#x, type %#x, data %p.\n",
-                surface, surface->texture_level, format->glFormat, format->glType, data.addr);
+        wined3d_texture_get_pitch(texture, surface->texture_level, &dst_row_pitch, &dst_slice_pitch);
+        wined3d_format_calculate_pitch(format, texture->resource.device->surface_alignment,
+                wined3d_texture_get_level_pow2_width(texture, surface->texture_level),
+                wined3d_texture_get_level_pow2_height(texture, surface->texture_level),
+                &src_row_pitch, &src_slice_pitch);
+        mem = HeapAlloc(GetProcessHeap(), 0, src_slice_pitch);
 
         if (data.buffer_object)
-        {
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, data.buffer_object));
-            checkGLcall("glBindBuffer");
-            GL_EXTCALL(glGetCompressedTexImage(surface->texture_target, surface->texture_level, NULL));
-            checkGLcall("glGetCompressedTexImage");
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
-            checkGLcall("glBindBuffer");
-        }
-        else
-        {
-            GL_EXTCALL(glGetCompressedTexImage(surface->texture_target,
-                    surface->texture_level, data.addr));
-            checkGLcall("glGetCompressedTexImage");
-        }
+            ERR("NP2 emulated texture uses PBO unexpectedly.\n");
+        if (texture->resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
+            ERR("Unexpected compressed format for NP2 emulated texture.\n");
     }
     else
     {
-        unsigned int dst_row_pitch, dst_slice_pitch;
-        unsigned int src_row_pitch, src_slice_pitch;
-        GLenum gl_format = format->glFormat;
-        GLenum gl_type = format->glType;
-        void *mem;
+        mem = data.addr;
+    }
 
-        if (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
+    if (data.buffer_object)
+    {
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, data.buffer_object));
+        checkGLcall("glBindBuffer");
+    }
+
+    if (texture->resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
+    {
+        TRACE("Downloading compressed surface %p, level %u, format %#x, type %#x, data %p.\n",
+                surface, surface->texture_level, format->glFormat, format->glType, mem);
+
+        GL_EXTCALL(glGetCompressedTexImage(surface->texture_target, surface->texture_level, mem));
+        checkGLcall("glGetCompressedTexImage");
+    }
+    else
+    {
+        TRACE("Downloading surface %p, level %u, format %#x, type %#x, data %p.\n",
+                surface, surface->texture_level, format->glFormat, format->glType, mem);
+
+        gl_info->gl_ops.gl.p_glGetTexImage(surface->texture_target, surface->texture_level,
+                format->glFormat, format->glType, mem);
+        checkGLcall("glGetTexImage");
+    }
+
+    if (data.buffer_object)
+    {
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
+        checkGLcall("glBindBuffer");
+    }
+
+    if (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
+    {
+        const BYTE *src_data;
+        unsigned int h, y;
+        BYTE *dst_data;
+        /*
+         * Some games (e.g. warhammer 40k) don't work properly with the odd pitches, preventing
+         * the surface pitch from being used to box non-power2 textures. Instead we have to use a hack to
+         * repack the texture so that the bpp * width pitch can be used instead of bpp * pow2width.
+         *
+         * We're doing this...
+         *
+         * instead of boxing the texture :
+         * |<-texture width ->|  -->pow2width|   /\
+         * |111111111111111111|              |   |
+         * |222 Texture 222222| boxed empty  | texture height
+         * |3333 Data 33333333|              |   |
+         * |444444444444444444|              |   \/
+         * -----------------------------------   |
+         * |     boxed  empty | boxed empty  | pow2height
+         * |                  |              |   \/
+         * -----------------------------------
+         *
+         *
+         * we're repacking the data to the expected texture width
+         *
+         * |<-texture width ->|  -->pow2width|   /\
+         * |111111111111111111222222222222222|   |
+         * |222333333333333333333444444444444| texture height
+         * |444444                           |   |
+         * |                                 |   \/
+         * |                                 |   |
+         * |            empty                | pow2height
+         * |                                 |   \/
+         * -----------------------------------
+         *
+         * == is the same as
+         *
+         * |<-texture width ->|    /\
+         * |111111111111111111|
+         * |222222222222222222|texture height
+         * |333333333333333333|
+         * |444444444444444444|    \/
+         * --------------------
+         *
+         * This also means that any references to surface memory should work with the data as if it were a
+         * standard texture with a non-power2 width instead of a texture boxed up to be a power2 texture.
+         *
+         * internally the texture is still stored in a boxed format so any references to textureName will
+         * get a boxed texture with width pow2width and not a texture of width resource.width. */
+        src_data = mem;
+        dst_data = data.addr;
+        TRACE("Repacking the surface data from pitch %u to pitch %u.\n", src_row_pitch, dst_row_pitch);
+        h = wined3d_texture_get_level_height(texture, surface->texture_level);
+        for (y = 0; y < h; ++y)
         {
-            wined3d_texture_get_pitch(texture, surface->texture_level, &dst_row_pitch, &dst_slice_pitch);
-            wined3d_format_calculate_pitch(format, texture->resource.device->surface_alignment,
-                    wined3d_texture_get_level_pow2_width(texture, surface->texture_level),
-                    wined3d_texture_get_level_pow2_height(texture, surface->texture_level),
-                    &src_row_pitch, &src_slice_pitch);
-            mem = HeapAlloc(GetProcessHeap(), 0, src_slice_pitch);
-        }
-        else
-        {
-            mem = data.addr;
+            memcpy(dst_data, src_data, dst_row_pitch);
+            src_data += src_row_pitch;
+            dst_data += dst_row_pitch;
         }
 
-        TRACE("(%p) : Calling glGetTexImage level %d, format %#x, type %#x, data %p\n",
-                surface, surface->texture_level, gl_format, gl_type, mem);
-
-        if (data.buffer_object)
-        {
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, data.buffer_object));
-            checkGLcall("glBindBuffer");
-
-            gl_info->gl_ops.gl.p_glGetTexImage(surface->texture_target, surface->texture_level,
-                    gl_format, gl_type, NULL);
-            checkGLcall("glGetTexImage");
-
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
-            checkGLcall("glBindBuffer");
-        }
-        else
-        {
-            gl_info->gl_ops.gl.p_glGetTexImage(surface->texture_target, surface->texture_level,
-                    gl_format, gl_type, mem);
-            checkGLcall("glGetTexImage");
-        }
-
-        if (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
-        {
-            const BYTE *src_data;
-            unsigned int h, y;
-            BYTE *dst_data;
-            /*
-             * Some games (e.g. warhammer 40k) don't work properly with the odd pitches, preventing
-             * the surface pitch from being used to box non-power2 textures. Instead we have to use a hack to
-             * repack the texture so that the bpp * width pitch can be used instead of bpp * pow2width.
-             *
-             * We're doing this...
-             *
-             * instead of boxing the texture :
-             * |<-texture width ->|  -->pow2width|   /\
-             * |111111111111111111|              |   |
-             * |222 Texture 222222| boxed empty  | texture height
-             * |3333 Data 33333333|              |   |
-             * |444444444444444444|              |   \/
-             * -----------------------------------   |
-             * |     boxed  empty | boxed empty  | pow2height
-             * |                  |              |   \/
-             * -----------------------------------
-             *
-             *
-             * we're repacking the data to the expected texture width
-             *
-             * |<-texture width ->|  -->pow2width|   /\
-             * |111111111111111111222222222222222|   |
-             * |222333333333333333333444444444444| texture height
-             * |444444                           |   |
-             * |                                 |   \/
-             * |                                 |   |
-             * |            empty                | pow2height
-             * |                                 |   \/
-             * -----------------------------------
-             *
-             * == is the same as
-             *
-             * |<-texture width ->|    /\
-             * |111111111111111111|
-             * |222222222222222222|texture height
-             * |333333333333333333|
-             * |444444444444444444|    \/
-             * --------------------
-             *
-             * This also means that any references to surface memory should work with the data as if it were a
-             * standard texture with a non-power2 width instead of a texture boxed up to be a power2 texture.
-             *
-             * internally the texture is still stored in a boxed format so any references to textureName will
-             * get a boxed texture with width pow2width and not a texture of width resource.width. */
-            src_data = mem;
-            dst_data = data.addr;
-            TRACE("Repacking the surface data from pitch %u to pitch %u.\n", src_row_pitch, dst_row_pitch);
-            h = wined3d_texture_get_level_height(texture, surface->texture_level);
-            for (y = 0; y < h; ++y)
-            {
-                memcpy(dst_data, src_data, dst_row_pitch);
-                src_data += src_row_pitch;
-                dst_data += dst_row_pitch;
-            }
-
-            HeapFree(GetProcessHeap(), 0, mem);
-        }
+        HeapFree(GetProcessHeap(), 0, mem);
     }
 }
 
