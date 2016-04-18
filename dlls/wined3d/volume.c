@@ -451,14 +451,11 @@ HRESULT wined3d_volume_init(struct wined3d_volume *volume, struct wined3d_textur
         return hr;
     }
 
+    if (container->resource.map_binding == WINED3D_LOCATION_BUFFER)
+        wined3d_resource_free_sysmem(&volume->resource);
+
     volume->texture_level = level;
     container->sub_resources[level].locations = WINED3D_LOCATION_DISCARDED;
-
-    if (wined3d_texture_use_pbo(container, gl_info))
-    {
-        wined3d_resource_free_sysmem(&volume->resource);
-        volume->resource.map_binding = WINED3D_LOCATION_BUFFER;
-    }
 
     volume->container = container;
 

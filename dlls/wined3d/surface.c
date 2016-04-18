@@ -363,7 +363,7 @@ void wined3d_surface_destroy_dc(struct wined3d_surface *surface)
         gl_info = context->gl_info;
     }
 
-    wined3d_texture_get_memory(texture, sub_resource_idx, &data, surface->resource.map_binding);
+    wined3d_texture_get_memory(texture, sub_resource_idx, &data, texture->resource.map_binding);
     wined3d_texture_unmap_bo_address(&data, gl_info, GL_PIXEL_UNPACK_BUFFER);
 
     if (context)
@@ -399,7 +399,7 @@ HRESULT wined3d_surface_create_dc(struct wined3d_surface *surface)
         gl_info = context->gl_info;
     }
 
-    wined3d_texture_get_memory(texture, sub_resource_idx, &data, surface->resource.map_binding);
+    wined3d_texture_get_memory(texture, sub_resource_idx, &data, texture->resource.map_binding);
     desc.pMemory = wined3d_texture_map_bo_address(&data, surface->resource.size,
             gl_info, GL_PIXEL_UNPACK_BUFFER, 0);
 
@@ -867,8 +867,8 @@ static void surface_unload(struct wined3d_resource *resource)
     }
     else
     {
-        surface_load_location(surface, context, surface->resource.map_binding);
-        wined3d_texture_invalidate_location(texture, sub_resource_idx, ~surface->resource.map_binding);
+        surface_load_location(surface, context, texture->resource.map_binding);
+        wined3d_texture_invalidate_location(texture, sub_resource_idx, ~texture->resource.map_binding);
     }
 
     /* Destroy fbo render buffers. This is needed for implicit render targets, for
@@ -2936,9 +2936,9 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     const struct wined3d_color_key_conversion *conversion;
     struct wined3d_texture_sub_resource *sub_resource;
     struct wined3d_bo_address data;
+    BYTE *src_mem, *dst_mem = NULL;
     struct wined3d_format format;
     POINT dst_point = {0, 0};
-    BYTE *mem = NULL;
     RECT src_rect;
 
     sub_resource = surface_get_sub_resource(surface);
@@ -2991,22 +2991,22 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
 
     if (srgb)
     {
-        if ((sub_resource->locations & (WINED3D_LOCATION_TEXTURE_RGB | surface->resource.map_binding))
+        if ((sub_resource->locations & (WINED3D_LOCATION_TEXTURE_RGB | texture->resource.map_binding))
                 == WINED3D_LOCATION_TEXTURE_RGB)
         {
             /* Performance warning... */
             FIXME("Downloading RGB surface %p to reload it as sRGB.\n", surface);
-            surface_load_location(surface, context, surface->resource.map_binding);
+            surface_load_location(surface, context, texture->resource.map_binding);
         }
     }
     else
     {
-        if ((sub_resource->locations & (WINED3D_LOCATION_TEXTURE_SRGB | surface->resource.map_binding))
+        if ((sub_resource->locations & (WINED3D_LOCATION_TEXTURE_SRGB | texture->resource.map_binding))
                 == WINED3D_LOCATION_TEXTURE_SRGB)
         {
             /* Performance warning... */
             FIXME("Downloading sRGB surface %p to reload it as RGB.\n", surface);
-            surface_load_location(surface, context, surface->resource.map_binding);
+            surface_load_location(surface, context, texture->resource.map_binding);
         }
     }
 
@@ -3032,9 +3032,8 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     {
         TRACE("Removing the pbo attached to surface %p.\n", surface);
 
-        surface->resource.map_binding = WINED3D_LOCATION_SYSMEM;
-        surface_load_location(surface, context, surface->resource.map_binding);
-        wined3d_texture_remove_buffer_object(texture, sub_resource_idx, gl_info);
+        surface_load_location(surface, context, WINED3D_LOCATION_SYSMEM);
+        wined3d_texture_set_map_binding(texture, WINED3D_LOCATION_SYSMEM);
     }
 
     wined3d_texture_get_memory(texture, sub_resource_idx, &data, sub_resource->locations);
@@ -3044,16 +3043,21 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         format.byte_count = format.conv_byte_count;
         wined3d_format_calculate_pitch(&format, 1, width, height, &dst_row_pitch, &dst_slice_pitch);
 
-        if (!(mem = HeapAlloc(GetProcessHeap(), 0, dst_slice_pitch)))
+        src_mem = wined3d_texture_map_bo_address(&data, src_slice_pitch,
+                gl_info, GL_PIXEL_UNPACK_BUFFER, WINED3D_MAP_READONLY);
+        if (!(dst_mem = HeapAlloc(GetProcessHeap(), 0, dst_slice_pitch)))
         {
             ERR("Out of memory (%u).\n", dst_slice_pitch);
             context_release(context);
             return E_OUTOFMEMORY;
         }
-        format.convert(data.addr, mem, src_row_pitch, src_slice_pitch,
+        format.convert(src_mem, dst_mem, src_row_pitch, src_slice_pitch,
                 dst_row_pitch, dst_slice_pitch, width, height, 1);
         src_row_pitch = dst_row_pitch;
-        data.addr = mem;
+        wined3d_texture_unmap_bo_address(&data, gl_info, GL_PIXEL_UNPACK_BUFFER);
+
+        data.buffer_object = 0;
+        data.addr = dst_mem;
     }
     else if (conversion)
     {
@@ -3063,7 +3067,9 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         wined3d_format_calculate_pitch(&format, device->surface_alignment,
                 width, height, &dst_row_pitch, &dst_slice_pitch);
 
-        if (!(mem = HeapAlloc(GetProcessHeap(), 0, dst_slice_pitch)))
+        src_mem = wined3d_texture_map_bo_address(&data, src_slice_pitch,
+                gl_info, GL_PIXEL_UNPACK_BUFFER, WINED3D_MAP_READONLY);
+        if (!(dst_mem = HeapAlloc(GetProcessHeap(), 0, dst_slice_pitch)))
         {
             ERR("Out of memory (%u).\n", dst_slice_pitch);
             context_release(context);
@@ -3071,16 +3077,19 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         }
         if (texture->swapchain && texture->swapchain->palette)
             palette = texture->swapchain->palette;
-        conversion->convert(data.addr, src_row_pitch, mem, dst_row_pitch,
+        conversion->convert(src_mem, src_row_pitch, dst_mem, dst_row_pitch,
                 width, height, palette, &texture->async.gl_color_key);
         src_row_pitch = dst_row_pitch;
-        data.addr = mem;
+        wined3d_texture_unmap_bo_address(&data, gl_info, GL_PIXEL_UNPACK_BUFFER);
+
+        data.buffer_object = 0;
+        data.addr = dst_mem;
     }
 
     wined3d_surface_upload_data(surface, gl_info, &format, &src_rect,
             src_row_pitch, &dst_point, srgb, wined3d_const_bo_address(&data));
 
-    HeapFree(GetProcessHeap(), 0, mem);
+    HeapFree(GetProcessHeap(), 0, dst_mem);
 
     return WINED3D_OK;
 }
@@ -4249,8 +4258,8 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
 
         /* In principle this would apply to depth blits as well, but we don't
          * implement those in the CPU blitter at the moment. */
-        if ((dst_sub_resource->locations & dst_surface->resource.map_binding)
-                && (!src_texture || (src_sub_resource->locations & src_surface->resource.map_binding)))
+        if ((dst_sub_resource->locations & dst_texture->resource.map_binding)
+                && (!src_texture || (src_sub_resource->locations & src_texture->resource.map_binding)))
         {
             if (scale)
                 TRACE("Not doing sysmem blit because of scaling.\n");
@@ -4421,9 +4430,6 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
     wined3d_texture_validate_location(container, sub_resource_idx, WINED3D_LOCATION_SYSMEM);
     if (container->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
         container->sub_resources[sub_resource_idx].locations = WINED3D_LOCATION_DISCARDED;
-
-    if (wined3d_texture_use_pbo(container, gl_info))
-        surface->resource.map_binding = WINED3D_LOCATION_BUFFER;
 
     return hr;
 }
