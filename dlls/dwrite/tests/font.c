@@ -205,6 +205,23 @@ typedef struct {
     ULONG maxmemType1;
 } TT_POST;
 
+typedef struct {
+    ULONG  version;
+    SHORT  ascender;
+    SHORT  descender;
+    SHORT  linegap;
+    USHORT advanceWidthMax;
+    SHORT  minLeftSideBearing;
+    SHORT  minRightSideBearing;
+    SHORT  xMaxExtent;
+    SHORT  caretSlopeRise;
+    SHORT  caretSlopeRun;
+    SHORT  caretOffset;
+    SHORT  reserved[4];
+    SHORT  metricDataFormat;
+    USHORT numberOfHMetrics;
+} TT_HHEA;
+
 #include "poppack.h"
 
 static IDWriteFactory *create_factory(void)
@@ -1534,10 +1551,11 @@ todo_wine
 
 static void get_expected_font_metrics(IDWriteFontFace *fontface, DWRITE_FONT_METRICS1 *metrics)
 {
-    void *os2_context, *head_context, *post_context;
+    void *os2_context, *head_context, *post_context, *hhea_context;
     const TT_OS2_V2 *tt_os2;
     const TT_HEAD *tt_head;
     const TT_POST *tt_post;
+    const TT_HHEA *tt_hhea;
     UINT32 size;
     BOOL exists;
     HRESULT hr;
@@ -1547,6 +1565,8 @@ static void get_expected_font_metrics(IDWriteFontFace *fontface, DWRITE_FONT_MET
     hr = IDWriteFontFace_TryGetFontTable(fontface, MS_0S2_TAG, (const void**)&tt_os2, &size, &os2_context, &exists);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IDWriteFontFace_TryGetFontTable(fontface, MS_HEAD_TAG, (const void**)&tt_head, &size, &head_context, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_HHEA_TAG, (const void**)&tt_hhea, &size, &hhea_context, &exists);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IDWriteFontFace_TryGetFontTable(fontface, MS_POST_TAG, (const void**)&tt_post, &size, &post_context, &exists);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1564,6 +1584,7 @@ static void get_expected_font_metrics(IDWriteFontFace *fontface, DWRITE_FONT_MET
             SHORT descent = GET_BE_WORD(tt_os2->sTypoDescender);
             metrics->ascent = GET_BE_WORD(tt_os2->sTypoAscender);
             metrics->descent = descent < 0 ? -descent : 0;
+            metrics->lineGap = GET_BE_WORD(tt_os2->sTypoLineGap);
             metrics->hasTypographicMetrics = TRUE;
         }
         else {
@@ -1571,6 +1592,15 @@ static void get_expected_font_metrics(IDWriteFontFace *fontface, DWRITE_FONT_MET
             /* Some fonts have usWinDescent value stored as signed short, which could be wrongly
                interpreted as large unsigned value. */
             metrics->descent = abs((SHORT)GET_BE_WORD(tt_os2->usWinDescent));
+
+            if (tt_hhea) {
+                SHORT descender = (SHORT)GET_BE_WORD(tt_hhea->descender);
+                INT32 linegap;
+
+                linegap = GET_BE_WORD(tt_hhea->ascender) + abs(descender) + GET_BE_WORD(tt_hhea->linegap) -
+                    metrics->ascent - metrics->descent;
+                metrics->lineGap = linegap > 0 ? linegap : 0;
+            }
         }
 
         metrics->strikethroughPosition  = GET_BE_WORD(tt_os2->yStrikeoutPosition);
@@ -1606,6 +1636,8 @@ static void get_expected_font_metrics(IDWriteFontFace *fontface, DWRITE_FONT_MET
         IDWriteFontFace_ReleaseFontTable(fontface, os2_context);
     if (tt_head)
         IDWriteFontFace_ReleaseFontTable(fontface, head_context);
+    if (tt_hhea)
+        IDWriteFontFace_ReleaseFontTable(fontface, hhea_context);
     if (tt_post)
         IDWriteFontFace_ReleaseFontTable(fontface, post_context);
 }
@@ -1619,6 +1651,8 @@ static void check_font_metrics(const WCHAR *nameW, BOOL has_metrics1, const DWRI
         expected->ascent);
     ok(got->descent == expected->descent, "font %s: descent %u, expected %u\n", wine_dbgstr_w(nameW), got->descent,
         expected->descent);
+    ok(got->lineGap == expected->lineGap, "font %s: lineGap %d, expected %d\n", wine_dbgstr_w(nameW), got->lineGap,
+        expected->lineGap);
     ok(got->underlinePosition == expected->underlinePosition, "font %s: underlinePosition %d, expected %d\n",
         wine_dbgstr_w(nameW), got->underlinePosition, expected->underlinePosition);
     ok(got->underlineThickness == expected->underlineThickness, "font %s: underlineThickness %u, "
