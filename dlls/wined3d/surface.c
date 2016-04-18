@@ -845,49 +845,7 @@ static ULONG surface_resource_decref(struct wined3d_resource *resource)
 
 static void surface_unload(struct wined3d_resource *resource)
 {
-    struct wined3d_surface *surface = surface_from_resource(resource);
-    unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
-    struct wined3d_texture *texture = surface->container;
-    struct wined3d_renderbuffer_entry *entry, *entry2;
-    struct wined3d_device *device = resource->device;
-    const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context;
-
-    TRACE("surface %p.\n", surface);
-
-    context = context_acquire(device, NULL);
-    gl_info = context->gl_info;
-
-    if (resource->pool == WINED3D_POOL_DEFAULT)
-    {
-        /* We should only get here on device reset/teardown for implicit
-         * resources. */
-        wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_DISCARDED);
-        wined3d_texture_invalidate_location(texture, sub_resource_idx, ~WINED3D_LOCATION_DISCARDED);
-    }
-    else
-    {
-        surface_load_location(surface, context, texture->resource.map_binding);
-        wined3d_texture_invalidate_location(texture, sub_resource_idx, ~texture->resource.map_binding);
-    }
-
-    /* Destroy fbo render buffers. This is needed for implicit render targets, for
-     * all application-created targets the application has to release the surface
-     * before calling _Reset
-     */
-    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &surface->renderbuffers, struct wined3d_renderbuffer_entry, entry)
-    {
-        context_gl_resource_released(device, entry->id, TRUE);
-        gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
-        list_remove(&entry->entry);
-        HeapFree(GetProcessHeap(), 0, entry);
-    }
-    list_init(&surface->renderbuffers);
-    surface->current_renderbuffer = NULL;
-
-    context_release(context);
-
-    resource_unload(resource);
+    ERR("Not supported on sub-resources.\n");
 }
 
 static HRESULT surface_resource_sub_resource_map(struct wined3d_resource *resource, unsigned int sub_resource_idx,

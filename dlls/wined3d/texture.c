@@ -1358,26 +1358,59 @@ static void wined3d_texture_unload(struct wined3d_resource *resource)
 {
     struct wined3d_texture *texture = wined3d_texture_from_resource(resource);
     UINT sub_count = texture->level_count * texture->layer_count;
-    struct wined3d_context *context = NULL;
+    struct wined3d_device *device = resource->device;
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context *context;
     UINT i;
 
     TRACE("texture %p.\n", texture);
 
+    context = context_acquire(device, NULL);
+    gl_info = context->gl_info;
+
     for (i = 0; i < sub_count; ++i)
     {
-        struct wined3d_resource *sub_resource = texture->sub_resources[i].resource;
+        struct wined3d_texture_sub_resource *sub_resource = &texture->sub_resources[i];
 
-        sub_resource->resource_ops->resource_unload(sub_resource);
-
-        if (texture->sub_resources[i].buffer_object)
+        if (resource->pool != WINED3D_POOL_DEFAULT
+                && texture->texture_ops->texture_load_location(texture, i, context, resource->map_binding))
         {
-            if (!context)
-                context = context_acquire(texture->resource.device, NULL);
-            wined3d_texture_remove_buffer_object(texture, i, context->gl_info);
+            wined3d_texture_invalidate_location(texture, i, ~resource->map_binding);
         }
+        else
+        {
+            /* We should only get here on device reset/teardown for implicit
+             * resources. */
+            if (resource->pool != WINED3D_POOL_DEFAULT || resource->type != WINED3D_RTYPE_TEXTURE_2D)
+                ERR("Discarding %s %p sub-resource %u in the %s pool.\n", debug_d3dresourcetype(resource->type),
+                        resource, i, debug_d3dpool(resource->pool));
+            wined3d_texture_validate_location(texture, i, WINED3D_LOCATION_DISCARDED);
+            wined3d_texture_invalidate_location(texture, i, ~WINED3D_LOCATION_DISCARDED);
+        }
+
+        if (sub_resource->buffer_object)
+            wined3d_texture_remove_buffer_object(texture, i, context->gl_info);
+
+        if (resource->type == WINED3D_RTYPE_TEXTURE_2D)
+        {
+            struct wined3d_surface *surface = sub_resource->u.surface;
+            struct wined3d_renderbuffer_entry *entry, *entry2;
+
+            LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &surface->renderbuffers, struct wined3d_renderbuffer_entry, entry)
+            {
+                context_gl_resource_released(device, entry->id, TRUE);
+                gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
+                list_remove(&entry->entry);
+                HeapFree(GetProcessHeap(), 0, entry);
+            }
+            list_init(&surface->renderbuffers);
+            surface->current_renderbuffer = NULL;
+        }
+
+        resource_unload(sub_resource->resource);
     }
-    if (context)
-        context_release(context);
+
+    context_release(context);
 
     wined3d_texture_force_reload(texture);
     wined3d_texture_unload_gl_texture(texture);

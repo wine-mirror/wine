@@ -1138,8 +1138,10 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     /* Unload resources */
     LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
     {
-        TRACE("Unloading resource %p.\n", resource);
+        if (resource->type == WINED3D_RTYPE_SURFACE || resource->type == WINED3D_RTYPE_VOLUME)
+            continue;
 
+        TRACE("Unloading resource %p.\n", resource);
         resource->resource_ops->resource_unload(resource);
     }
 
@@ -4532,8 +4534,10 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
 
     LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
     {
-        TRACE("Unloading resource %p.\n", resource);
+        if (resource->type == WINED3D_RTYPE_SURFACE || resource->type == WINED3D_RTYPE_VOLUME)
+            continue;
 
+        TRACE("Unloading resource %p.\n", resource);
         resource->resource_ops->resource_unload(resource);
     }
 

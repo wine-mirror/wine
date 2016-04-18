@@ -366,32 +366,7 @@ void wined3d_volume_cleanup(struct wined3d_volume *volume)
 
 static void volume_unload(struct wined3d_resource *resource)
 {
-    struct wined3d_volume *volume = volume_from_resource(resource);
-    struct wined3d_texture *texture = volume->container;
-    struct wined3d_device *device = texture->resource.device;
-    struct wined3d_context *context;
-
-    if (texture->resource.pool == WINED3D_POOL_DEFAULT)
-        ERR("Unloading DEFAULT pool volume.\n");
-
-    TRACE("texture %p.\n", resource);
-
-    context = context_acquire(device, NULL);
-    if (wined3d_volume_load_location(volume, context, WINED3D_LOCATION_SYSMEM))
-    {
-        wined3d_texture_invalidate_location(texture, volume->texture_level, ~WINED3D_LOCATION_SYSMEM);
-    }
-    else
-    {
-        ERR("Out of memory when unloading volume %p.\n", volume);
-        wined3d_texture_validate_location(texture, volume->texture_level, WINED3D_LOCATION_DISCARDED);
-        wined3d_texture_invalidate_location(texture, volume->texture_level, ~WINED3D_LOCATION_DISCARDED);
-    }
-    context_release(context);
-
-    /* The texture name is managed by the container. */
-
-    resource_unload(resource);
+    ERR("Not supported on sub-resources.\n");
 }
 
 static ULONG volume_resource_incref(struct wined3d_resource *resource)
