@@ -43,6 +43,7 @@ DWORD service_pipe_timeout = 10000;
 DWORD service_kill_timeout = 60000;
 static DWORD default_preshutdown_timeout = 180000;
 static void *env = NULL;
+static HKEY service_current_key = NULL;
 
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
@@ -608,39 +609,21 @@ static LPWSTR service_get_pipe_name(void)
 {
     static const WCHAR format[] = { '\\','\\','.','\\','p','i','p','e','\\',
         'n','e','t','\\','N','t','C','o','n','t','r','o','l','P','i','p','e','%','u',0};
-    static const WCHAR service_current_key_str[] = { 'S','Y','S','T','E','M','\\',
-        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-        'C','o','n','t','r','o','l','\\',
-        'S','e','r','v','i','c','e','C','u','r','r','e','n','t',0};
-    LPWSTR name;
-    DWORD len;
-    HKEY service_current_key;
-    DWORD service_current = -1;
+    static WCHAR name[sizeof(format)/sizeof(WCHAR) + 10]; /* strlenW("4294967295") */
+    static DWORD service_current = 0;
+    DWORD len, value = -1;
     LONG ret;
     DWORD type;
 
-    ret = RegCreateKeyExW(HKEY_LOCAL_MACHINE, service_current_key_str, 0,
-        NULL, REG_OPTION_VOLATILE, KEY_SET_VALUE | KEY_QUERY_VALUE, NULL,
-        &service_current_key, NULL);
-    if (ret != ERROR_SUCCESS)
-        return NULL;
-    len = sizeof(service_current);
+    len = sizeof(value);
     ret = RegQueryValueExW(service_current_key, NULL, NULL, &type,
-        (BYTE *)&service_current, &len);
-    if ((ret == ERROR_SUCCESS && type == REG_DWORD) || ret == ERROR_FILE_NOT_FOUND)
-    {
-        service_current++;
-        RegSetValueExW(service_current_key, NULL, 0, REG_DWORD,
-            (BYTE *)&service_current, sizeof(service_current));
-    }
-    RegCloseKey(service_current_key);
-    if ((ret != ERROR_SUCCESS || type != REG_DWORD) && (ret != ERROR_FILE_NOT_FOUND))
-        return NULL;
-    len = sizeof(format)/sizeof(WCHAR) + 10 /* strlenW("4294967295") */;
-    name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    if (!name)
-        return NULL;
-    snprintfW(name, len, format, service_current);
+        (BYTE *)&value, &len);
+    if (ret == ERROR_SUCCESS && type == REG_DWORD)
+        service_current = max(service_current, value + 1);
+    RegSetValueExW(service_current_key, NULL, 0, REG_DWORD,
+        (BYTE *)&service_current, sizeof(service_current));
+    sprintfW(name, format, service_current);
+    service_current++;
     return name;
 }
 
@@ -855,7 +838,6 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
 {
     struct process_entry *process = service->process;
     DWORD err;
-    LPWSTR name;
 
     err = scmdatabase_lock_startup(service->db);
     if (err != ERROR_SUCCESS)
@@ -876,10 +858,8 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
     if (!process->overlapped_event)
         process->overlapped_event = CreateEventW(NULL, TRUE, FALSE, NULL);
 
-    name = service_get_pipe_name();
-    process->control_pipe = CreateNamedPipeW(name, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
-                  PIPE_TYPE_BYTE|PIPE_WAIT, 1, 256, 256, 10000, NULL );
-    HeapFree(GetProcessHeap(), 0, name);
+    process->control_pipe = CreateNamedPipeW(service_get_pipe_name(), PIPE_ACCESS_DUPLEX |
+            FILE_FLAG_OVERLAPPED, PIPE_TYPE_BYTE|PIPE_WAIT, 1, 256, 256, 10000, NULL );
     if (process->control_pipe == INVALID_HANDLE_VALUE)
     {
         WINE_ERR("failed to create pipe for %s, error = %d\n",
@@ -964,6 +944,10 @@ static void load_registry_parameters(void)
 
 int main(int argc, char *argv[])
 {
+    static const WCHAR service_current_key_str[] = { 'S','Y','S','T','E','M','\\',
+        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+        'C','o','n','t','r','o','l','\\',
+        'S','e','r','v','i','c','e','C','u','r','r','e','n','t',0};
     static const WCHAR svcctl_started_event[] = SVCCTL_STARTED_EVENT;
     HANDLE htok;
     DWORD err;
@@ -978,6 +962,12 @@ int main(int argc, char *argv[])
 
     if (!env)
         WINE_ERR("failed to create services environment\n");
+
+    err = RegCreateKeyExW(HKEY_LOCAL_MACHINE, service_current_key_str, 0,
+        NULL, REG_OPTION_VOLATILE, KEY_SET_VALUE | KEY_QUERY_VALUE, NULL,
+        &service_current_key, NULL);
+    if (err != ERROR_SUCCESS)
+        return err;
 
     load_registry_parameters();
     err = scmdatabase_create(&active_database);
