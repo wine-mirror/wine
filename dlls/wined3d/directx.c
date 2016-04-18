@@ -4713,34 +4713,38 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
     if (adapter_idx >= wined3d->adapter_count)
         return WINED3DERR_INVALIDCALL;
 
+    if (resource_type == WINED3D_RTYPE_SURFACE || resource_type == WINED3D_RTYPE_VOLUME)
+    {
+        WARN("Invalid resource_type %s.\n", debug_d3dresourcetype(resource_type));
+        return WINED3DERR_INVALIDCALL;
+    }
+
     switch (resource_type)
     {
-        case WINED3D_RTYPE_SURFACE:
-            if (!CheckSurfaceCapability(adapter, adapter_format, format, wined3d->flags & WINED3D_NO3D))
-            {
-                TRACE("[FAILED] - Not supported for plain surfaces.\n");
-                return WINED3DERR_NOTAVAILABLE;
-            }
-
+        case WINED3D_RTYPE_TEXTURE_2D:
             allowed_usage = WINED3DUSAGE_DEPTHSTENCIL
                     | WINED3DUSAGE_RENDERTARGET
                     | WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
             if (usage & WINED3DUSAGE_RENDERTARGET)
                 allowed_usage |= WINED3DUSAGE_QUERY_SRGBWRITE;
-            gl_type = WINED3D_GL_RES_TYPE_RB;
-            break;
+            if (!(usage & WINED3DUSAGE_TEXTURE))
+            {
+                if (!CheckSurfaceCapability(adapter, adapter_format, format, wined3d->flags & WINED3D_NO3D))
+                {
+                    TRACE("[FAILED] - Not supported for plain surfaces.\n");
+                    return WINED3DERR_NOTAVAILABLE;
+                }
 
-        case WINED3D_RTYPE_TEXTURE_2D:
-            format_flags |= WINED3DFMT_FLAG_TEXTURE;
-            allowed_usage = WINED3DUSAGE_AUTOGENMIPMAP
-                    | WINED3DUSAGE_DEPTHSTENCIL
+                gl_type = WINED3D_GL_RES_TYPE_RB;
+                break;
+            }
+            allowed_usage |= WINED3DUSAGE_AUTOGENMIPMAP
                     | WINED3DUSAGE_DYNAMIC
                     | WINED3DUSAGE_LEGACY_CUBEMAP
-                    | WINED3DUSAGE_RENDERTARGET
                     | WINED3DUSAGE_SOFTWAREPROCESSING
+                    | WINED3DUSAGE_TEXTURE
                     | WINED3DUSAGE_QUERY_FILTER
                     | WINED3DUSAGE_QUERY_LEGACYBUMPMAP
-                    | WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING
                     | WINED3DUSAGE_QUERY_SRGBREAD
                     | WINED3DUSAGE_QUERY_SRGBWRITE
                     | WINED3DUSAGE_QUERY_VERTEXTEXTURE
@@ -4761,10 +4765,9 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
             break;
 
         case WINED3D_RTYPE_TEXTURE_3D:
-        case WINED3D_RTYPE_VOLUME:
-            format_flags |= WINED3DFMT_FLAG_TEXTURE;
             allowed_usage = WINED3DUSAGE_DYNAMIC
                     | WINED3DUSAGE_SOFTWAREPROCESSING
+                    | WINED3DUSAGE_TEXTURE
                     | WINED3DUSAGE_QUERY_FILTER
                     | WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING
                     | WINED3DUSAGE_QUERY_SRGBREAD
@@ -4786,6 +4789,8 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
         return WINED3DERR_NOTAVAILABLE;
     }
 
+    if (usage & WINED3DUSAGE_TEXTURE)
+        format_flags |= WINED3DFMT_FLAG_TEXTURE;
     if (usage & WINED3DUSAGE_QUERY_FILTER)
         format_flags |= WINED3DFMT_FLAG_FILTERING;
     if (usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING)
@@ -4970,7 +4975,7 @@ HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d, UINT adap
 
     /* Validate that the back buffer format is usable for render targets. */
     if (FAILED(wined3d_check_device_format(wined3d, adapter_idx, device_type, display_format,
-            WINED3DUSAGE_RENDERTARGET, WINED3D_RTYPE_SURFACE, backbuffer_format)))
+            WINED3DUSAGE_RENDERTARGET, WINED3D_RTYPE_TEXTURE_2D, backbuffer_format)))
     {
         TRACE("Format %s not allowed for render targets.\n", debug_d3dformat(backbuffer_format));
         return WINED3DERR_NOTAVAILABLE;

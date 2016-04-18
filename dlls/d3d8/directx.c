@@ -244,25 +244,18 @@ static HRESULT WINAPI d3d8_CheckDeviceFormat(IDirect3D8 *iface, UINT adapter, D3
     usage = usage & (WINED3DUSAGE_MASK | WINED3DUSAGE_QUERY_MASK);
     switch (resource_type)
     {
-        case D3DRTYPE_SURFACE:
-            wined3d_rtype = WINED3D_RTYPE_SURFACE;
-            break;
-
-        case D3DRTYPE_VOLUME:
-            wined3d_rtype = WINED3D_RTYPE_VOLUME;
-            break;
-
+        case D3DRTYPE_CUBETEXTURE:
+            usage |= WINED3DUSAGE_LEGACY_CUBEMAP;
         case D3DRTYPE_TEXTURE:
+            usage |= WINED3DUSAGE_TEXTURE;
+        case D3DRTYPE_SURFACE:
             wined3d_rtype = WINED3D_RTYPE_TEXTURE_2D;
             break;
 
         case D3DRTYPE_VOLUMETEXTURE:
+        case D3DRTYPE_VOLUME:
+            usage |= WINED3DUSAGE_TEXTURE;
             wined3d_rtype = WINED3D_RTYPE_TEXTURE_3D;
-            break;
-
-        case D3DRTYPE_CUBETEXTURE:
-            wined3d_rtype = WINED3D_RTYPE_TEXTURE_2D;
-            usage |= WINED3DUSAGE_LEGACY_CUBEMAP;
             break;
 
         case D3DRTYPE_VERTEXBUFFER:

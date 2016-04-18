@@ -1733,7 +1733,7 @@ static HRESULT WINAPI ddraw7_GetFourCCCodes(IDirectDraw7 *iface, DWORD *NumCodes
     for (i = 0; i < (sizeof(formats) / sizeof(formats[0])); ++i)
     {
         if (SUCCEEDED(wined3d_check_device_format(ddraw->wined3d, WINED3DADAPTER_DEFAULT, WINED3D_DEVICE_TYPE_HAL,
-                mode.format_id, 0, WINED3D_RTYPE_SURFACE, formats[i])))
+                mode.format_id, 0, WINED3D_RTYPE_TEXTURE_2D, formats[i])))
         {
             if (count < outsize)
                 Codes[count] = formats[i];
@@ -4310,7 +4310,7 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
     for (i = 0; i < (sizeof(formats) / sizeof(*formats)); ++i)
     {
         if (SUCCEEDED(wined3d_check_device_format(ddraw->wined3d, WINED3DADAPTER_DEFAULT, type, mode.format_id,
-                WINED3DUSAGE_DEPTHSTENCIL, WINED3D_RTYPE_SURFACE, formats[i])))
+                WINED3DUSAGE_DEPTHSTENCIL, WINED3D_RTYPE_TEXTURE_2D, formats[i])))
         {
             DDPIXELFORMAT pformat;
 
@@ -4334,7 +4334,7 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
      * pixel format, so we use dwZBufferBitDepth=32. Some games expect 24. Windows Vista and
      * newer enumerate both versions, so we do the same(bug 22434) */
     if (SUCCEEDED(wined3d_check_device_format(ddraw->wined3d, WINED3DADAPTER_DEFAULT, type, mode.format_id,
-            WINED3DUSAGE_DEPTHSTENCIL, WINED3D_RTYPE_SURFACE, WINED3DFMT_X8D24_UNORM)))
+            WINED3DUSAGE_DEPTHSTENCIL, WINED3D_RTYPE_TEXTURE_2D, WINED3DFMT_X8D24_UNORM)))
     {
         DDPIXELFORMAT x8d24 =
         {

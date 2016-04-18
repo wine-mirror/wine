@@ -5935,18 +5935,12 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     {
         if (!(desc->ddsCaps.dwCaps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE)))
         {
-            enum wined3d_resource_type rtype;
             DWORD usage = 0;
 
             if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
-            {
-                usage |= WINED3DUSAGE_LEGACY_CUBEMAP;
-                rtype = WINED3D_RTYPE_TEXTURE_2D;
-            }
+                usage |= WINED3DUSAGE_LEGACY_CUBEMAP | WINED3DUSAGE_TEXTURE;
             else if (desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
-                rtype = WINED3D_RTYPE_TEXTURE_2D;
-            else
-                rtype = WINED3D_RTYPE_SURFACE;
+                usage |= WINED3DUSAGE_TEXTURE;
 
             if (desc->ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
                 usage = WINED3DUSAGE_DEPTHSTENCIL;
@@ -5954,7 +5948,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                 usage = WINED3DUSAGE_RENDERTARGET;
 
             if (SUCCEEDED(hr = wined3d_check_device_format(ddraw->wined3d, WINED3DADAPTER_DEFAULT,
-                    WINED3D_DEVICE_TYPE_HAL, mode.format_id, usage, rtype, wined3d_desc.format)))
+                    WINED3D_DEVICE_TYPE_HAL, mode.format_id, usage, WINED3D_RTYPE_TEXTURE_2D, wined3d_desc.format)))
                 desc->ddsCaps.dwCaps |= DDSCAPS_VIDEOMEMORY;
             else
                 desc->ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
