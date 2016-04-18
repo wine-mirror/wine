@@ -690,6 +690,7 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
     count = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers);
     for (i = 0; i < count; ++i)
     {
+        static const DWORD d3d10_color = 0x00000000;
         static const DWORD color = 0x000000ff;
 
         /* Make appropriate texture active */
@@ -749,6 +750,20 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
                 checkGLcall("glTexImage2D");
             }
         }
+
+        if (gl_info->supported[EXT_TEXTURE_ARRAY])
+        {
+            gl_info->gl_ops.gl.p_glGenTextures(1, &device->dummy_texture_2d_array[i]);
+            checkGLcall("glGenTextures");
+            TRACE("Dummy 2D array texture %u given name %u.\n", i, device->dummy_texture_2d_array[i]);
+
+            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D_ARRAY, device->dummy_texture_2d_array[i]);
+            checkGLcall("glBindTexture");
+
+            GL_EXTCALL(glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA8, 1, 1, 1, 0,
+                    GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &d3d10_color));
+            checkGLcall("glTexImage3D");
+        }
     }
 }
 
@@ -756,6 +771,12 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
 static void destroy_dummy_textures(struct wined3d_device *device, const struct wined3d_gl_info *gl_info)
 {
     unsigned int count = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers);
+
+    if (gl_info->supported[EXT_TEXTURE_ARRAY])
+    {
+        gl_info->gl_ops.gl.p_glDeleteTextures(count, device->dummy_texture_2d_array);
+        checkGLcall("glDeleteTextures(count, device->dummy_texture_2d_array)");
+    }
 
     if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
     {
@@ -778,6 +799,7 @@ static void destroy_dummy_textures(struct wined3d_device *device, const struct w
     gl_info->gl_ops.gl.p_glDeleteTextures(count, device->dummy_texture_2d);
     checkGLcall("glDeleteTextures(count, device->dummy_texture_2d)");
 
+    memset(device->dummy_texture_2d_array, 0, count * sizeof(*device->dummy_texture_2d_array));
     memset(device->dummy_texture_cube, 0, count * sizeof(*device->dummy_texture_cube));
     memset(device->dummy_texture_3d, 0, count * sizeof(*device->dummy_texture_3d));
     memset(device->dummy_texture_rect, 0, count * sizeof(*device->dummy_texture_rect));

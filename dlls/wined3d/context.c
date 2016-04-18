@@ -1507,6 +1507,12 @@ static void bind_dummy_textures(const struct wined3d_device *device, const struc
             gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_CUBE_MAP, device->dummy_texture_cube[i]);
             checkGLcall("glBindTexture");
         }
+
+        if (gl_info->supported[EXT_TEXTURE_ARRAY])
+        {
+            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D_ARRAY, device->dummy_texture_2d_array[i]);
+            checkGLcall("glBindTexture");
+        }
     }
 }
 
@@ -2343,6 +2349,10 @@ void context_bind_texture(struct wined3d_context *context, GLenum target, GLuint
                 gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, device->dummy_texture_2d[unit]);
                 checkGLcall("glBindTexture");
                 break;
+            case GL_TEXTURE_2D_ARRAY:
+                gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D_ARRAY, device->dummy_texture_2d_array[unit]);
+                checkGLcall("glBindTexture");
+                break;
             case GL_TEXTURE_RECTANGLE_ARB:
                 gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_RECTANGLE_ARB, device->dummy_texture_rect[unit]);
                 checkGLcall("glBindTexture");
@@ -2356,7 +2366,7 @@ void context_bind_texture(struct wined3d_context *context, GLenum target, GLuint
                 checkGLcall("glBindTexture");
                 break;
             default:
-                ERR("Unexpected texture target %#x\n", old_texture_type);
+                ERR("Unexpected texture target %#x.\n", old_texture_type);
         }
 
         context->texture_type[unit] = target;
