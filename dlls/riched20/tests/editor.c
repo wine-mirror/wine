@@ -601,6 +601,7 @@ static void test_EM_POSFROMCHAR(void)
   POINTL pt;
   LOCALESIGNATURE sig;
   BOOL rtl;
+  PARAFORMAT2 fmt;
   static const char text[] = "aa\n"
       "this is a long line of text that should be longer than the "
       "control's width\n"
@@ -726,6 +727,18 @@ static void test_EM_POSFROMCHAR(void)
   /* Try a negative position. */
   SendMessageA(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pt, -1);
   ok(pt.x == 1, "pt.x = %d\n", pt.x);
+
+  /* test negative indentation */
+  SendMessageA(hwndRichEdit, WM_SETTEXT, 0,
+          (LPARAM)"{\\rtf1\\pard\\fi-200\\li-200\\f1 TestSomeText\\par}");
+  SendMessageA(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pt, 0);
+  todo_wine ok(pt.x == 1, "pt.x = %d\n", pt.x);
+
+  fmt.cbSize = sizeof(fmt);
+  SendMessageA(hwndRichEdit, EM_GETPARAFORMAT, 0, (LPARAM)&fmt);
+  ok(fmt.dxStartIndent == -400, "got %d\n", fmt.dxStartIndent);
+  ok(fmt.dxOffset == 200, "got %d\n", fmt.dxOffset);
+  ok(fmt.wAlignment == PFA_LEFT, "got %d\n", fmt.wAlignment);
 
   DestroyWindow(hwndRichEdit);
 }
