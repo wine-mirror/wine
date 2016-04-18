@@ -879,6 +879,11 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {
     wc.nFirstMargin = ME_twips2pointsX(c, dxStartIndent);
     wc.nLeftMargin = wc.nFirstMargin + ME_twips2pointsX(c, pFmt->dxOffset);
     wc.nRightMargin = ME_twips2pointsX(c, pFmt->dxRightIndent);
+
+    if (wc.nFirstMargin < 0)
+        wc.nFirstMargin = 0;
+    if (wc.nLeftMargin < 0)
+        wc.nLeftMargin = 0;
   }
   if (c->editor->bEmulateVersion10 && /* v1.0 - 3.0 */
       pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE)

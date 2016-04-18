@@ -732,7 +732,7 @@ static void test_EM_POSFROMCHAR(void)
   SendMessageA(hwndRichEdit, WM_SETTEXT, 0,
           (LPARAM)"{\\rtf1\\pard\\fi-200\\li-200\\f1 TestSomeText\\par}");
   SendMessageA(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pt, 0);
-  todo_wine ok(pt.x == 1, "pt.x = %d\n", pt.x);
+  ok(pt.x == 1, "pt.x = %d\n", pt.x);
 
   fmt.cbSize = sizeof(fmt);
   SendMessageA(hwndRichEdit, EM_GETPARAFORMAT, 0, (LPARAM)&fmt);
