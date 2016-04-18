@@ -32,18 +32,14 @@
 
 #include "wine/test.h"
 
-#define MS_MAKE_TAG(ch0, ch1, ch2, ch3) \
-                    ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
-                    ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
-
-#define MS_CMAP_TAG MS_MAKE_TAG('c','m','a','p')
-#define MS_VDMX_TAG MS_MAKE_TAG('V','D','M','X')
-#define MS_GASP_TAG MS_MAKE_TAG('g','a','s','p')
-#define MS_CPAL_TAG MS_MAKE_TAG('C','P','A','L')
-#define MS_0S2_TAG  MS_MAKE_TAG('O','S','/','2')
-#define MS_HEAD_TAG MS_MAKE_TAG('h','e','a','d')
-#define MS_HHEA_TAG MS_MAKE_TAG('h','h','e','a')
-#define MS_POST_TAG MS_MAKE_TAG('p','o','s','t')
+#define MS_CMAP_TAG DWRITE_MAKE_OPENTYPE_TAG('c','m','a','p')
+#define MS_VDMX_TAG DWRITE_MAKE_OPENTYPE_TAG('V','D','M','X')
+#define MS_GASP_TAG DWRITE_MAKE_OPENTYPE_TAG('g','a','s','p')
+#define MS_CPAL_TAG DWRITE_MAKE_OPENTYPE_TAG('C','P','A','L')
+#define MS_0S2_TAG  DWRITE_MAKE_OPENTYPE_TAG('O','S','/','2')
+#define MS_HEAD_TAG DWRITE_MAKE_OPENTYPE_TAG('h','e','a','d')
+#define MS_HHEA_TAG DWRITE_MAKE_OPENTYPE_TAG('h','h','e','a')
+#define MS_POST_TAG DWRITE_MAKE_OPENTYPE_TAG('p','o','s','t')
 
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
