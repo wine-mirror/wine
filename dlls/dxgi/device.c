@@ -182,7 +182,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
     device_parent = IWineDXGIDeviceParent_get_wined3d_device_parent(dxgi_device_parent);
 
     FIXME("Implement DXGI<->wined3d usage conversion\n");
-    surface_desc.resource_type = WINED3D_RTYPE_SURFACE;
+    surface_desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
     surface_desc.format = wined3dformat_from_dxgi_format(desc->Format);
     wined3d_sample_desc_from_dxgi(&surface_desc.multisample_type,
             &surface_desc.multisample_quality, &desc->SampleDesc);
