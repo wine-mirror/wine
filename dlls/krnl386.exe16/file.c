@@ -113,8 +113,7 @@ HFILE WINAPI Win32HandleToDosFileHandle( HANDLE handle )
     if (!handle || (handle == INVALID_HANDLE_VALUE))
         return HFILE_ERROR;
 
-    FILE_InitProcessDosHandles();
-    for (i = 0; i < DOS_TABLE_SIZE; i++)
+    for (i = 5; i < DOS_TABLE_SIZE; i++)
         if (!dos_handles[i])
         {
             dos_handles[i] = handle;
