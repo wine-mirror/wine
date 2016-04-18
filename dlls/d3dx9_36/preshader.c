@@ -297,6 +297,18 @@ static void regstore_set_double(struct d3dx_regstore *rs, unsigned int table, un
             1u << (reg_idx % PRES_BITMASK_BLOCK_SIZE);
 }
 
+static void regstore_reset_table(struct d3dx_regstore *rs, unsigned int table)
+{
+    unsigned int size;
+
+    size = rs->table_sizes[table] * table_info[table].reg_component_count * table_info[table].component_size;
+
+    memset(rs->tables[table], 0, size);
+    memset(rs->table_value_set[table], 0,
+            sizeof(*rs->table_value_set[table]) *
+            ((rs->table_sizes[table] + PRES_BITMASK_BLOCK_SIZE - 1) / PRES_BITMASK_BLOCK_SIZE));
+}
+
 static void dump_bytecode(void *data, unsigned int size)
 {
     unsigned int *bytecode = (unsigned int *)data;
@@ -1058,4 +1070,105 @@ HRESULT d3dx_evaluate_parameter(struct d3dx_param_eval *peval, const struct d3dx
     for (i = 0; i < elements; ++i)
         set_number((unsigned int *)param_value + i, param->type, oc + i, D3DXPT_FLOAT);
     return D3D_OK;
+}
+
+static HRESULT set_shader_constants_device(struct IDirect3DDevice9 *device, struct d3dx_regstore *rs,
+        D3DXPARAMETER_TYPE type, enum pres_reg_tables table)
+{
+    unsigned int start, count;
+    void *ptr;
+    HRESULT hr, result;
+
+    result = D3D_OK;
+    start = 0;
+    while (start < rs->table_sizes[table])
+    {
+        count = 0;
+        while (start < rs->table_sizes[table] && !regstore_is_val_set_reg(rs, table, start))
+            ++start;
+        while (start + count < rs->table_sizes[table] && regstore_is_val_set_reg(rs, table, start + count))
+            ++count;
+        if (!count)
+            break;
+        TRACE("Setting %u constants at %u.\n", count, start);
+        ptr = (BYTE *)rs->tables[table] + start * table_info[table].reg_component_count
+                * table_info[table].component_size;
+        if (type == D3DXPT_VERTEXSHADER)
+        {
+            switch(table)
+            {
+                case PRES_REGTAB_OCONST:
+                    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, start, (const float *)ptr, count);
+                    break;
+                case PRES_REGTAB_OICONST:
+                    hr = IDirect3DDevice9_SetVertexShaderConstantI(device, start, (const int *)ptr, count);
+                    break;
+                case PRES_REGTAB_OBCONST:
+                    hr = IDirect3DDevice9_SetVertexShaderConstantB(device, start, (const BOOL *)ptr, count);
+                    break;
+                default:
+                    FIXME("Unexpected register table %u.\n", table);
+                    return D3DERR_INVALIDCALL;
+            }
+        }
+        else if (type == D3DXPT_PIXELSHADER)
+        {
+            switch(table)
+            {
+                case PRES_REGTAB_OCONST:
+                    hr = IDirect3DDevice9_SetPixelShaderConstantF(device, start, (const float *)ptr, count);
+                    break;
+                case PRES_REGTAB_OICONST:
+                    hr = IDirect3DDevice9_SetPixelShaderConstantI(device, start, (const int *)ptr, count);
+                    break;
+                case PRES_REGTAB_OBCONST:
+                    hr = IDirect3DDevice9_SetPixelShaderConstantB(device, start, (const BOOL *)ptr, count);
+                    break;
+                default:
+                    FIXME("Unexpected register table %u.\n", table);
+                    return D3DERR_INVALIDCALL;
+            }
+        }
+        else
+        {
+            FIXME("Unexpected parameter type %u.\n", type);
+            return D3DERR_INVALIDCALL;
+        }
+
+        if (FAILED(hr))
+        {
+            ERR("Setting constants failed, type %u, table %u, hr %#x.\n", type, table, hr);
+            result = hr;
+        }
+        start += count;
+    }
+    regstore_reset_table(rs, table);
+    return result;
+}
+
+HRESULT d3dx_param_eval_set_shader_constants(struct IDirect3DDevice9 *device, struct d3dx_param_eval *peval)
+{
+    static const enum pres_reg_tables set_tables[] =
+            {PRES_REGTAB_OCONST, PRES_REGTAB_OICONST, PRES_REGTAB_OBCONST};
+    HRESULT hr, result;
+    struct d3dx_preshader *pres = &peval->pres;
+    struct d3dx_regstore *rs = &pres->regs;
+    unsigned int i;
+
+    TRACE("device %p, peval %p, param_type %u.\n", device, peval, peval->param_type);
+
+    if (FAILED(hr = set_constants(rs, &pres->inputs)))
+        return hr;
+    if (FAILED(hr = execute_preshader(pres)))
+        return hr;
+    if (FAILED(hr = set_constants(rs, &peval->shader_inputs)))
+        return hr;
+
+    result = D3D_OK;
+    for (i = 0; i < ARRAY_SIZE(set_tables); ++i)
+    {
+        if (FAILED(hr = set_shader_constants_device(device, rs, peval->param_type, set_tables[i])))
+            result = hr;
+    }
+    return result;
 }

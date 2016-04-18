@@ -3790,7 +3790,7 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 0, &fdata[0].x, TEST_EFFECT_PRES_NFLOATV);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    todo_wine ok(!memcmp(fdata, test_effect_preshader_fconstsv, sizeof(test_effect_preshader_fconstsv)),
+    ok(!memcmp(fdata, test_effect_preshader_fconstsv, sizeof(test_effect_preshader_fconstsv)),
             "Vertex shader float constants do not match.\n");
     for (i = TEST_EFFECT_PRES_NFLOATV; i < 256; ++i)
     {
@@ -3801,7 +3801,7 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     }
     hr = IDirect3DDevice9_GetPixelShaderConstantF(device, 0, &fdata[0].x, TEST_EFFECT_PRES_NFLOATP);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    todo_wine ok(!memcmp(fdata, test_effect_preshader_fconstsp, sizeof(test_effect_preshader_fconstsp)),
+    ok(!memcmp(fdata, test_effect_preshader_fconstsp, sizeof(test_effect_preshader_fconstsp)),
             "Pixel shader float constants do not match.\n");
     for (i = TEST_EFFECT_PRES_NFLOATP; i < 224; ++i)
     {

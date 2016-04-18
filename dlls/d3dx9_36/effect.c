@@ -2718,7 +2718,53 @@ static HRESULT d3dx_set_shader_const_state(IDirect3DDevice9 *device, enum SHADER
 }
 
 static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pass *pass,
-        struct d3dx_state *state, int parent_index)
+        struct d3dx_state *state, unsigned int parent_index);
+
+static HRESULT d3dx_set_shader_constants(struct ID3DXEffectImpl *effect, struct d3dx_pass *pass,
+        struct d3dx_parameter *param, BOOL vs)
+{
+    IDirect3DDevice9 *device = effect->device;
+    HRESULT hr, ret;
+    struct d3dx_parameter **params;
+    D3DXCONSTANT_DESC *cdesc;
+    unsigned int parameters_count;
+    unsigned int i, j;
+
+    if (!param->param_eval)
+    {
+        FIXME("param_eval structure is null.\n");
+        return D3DERR_INVALIDCALL;
+    }
+    if (FAILED(hr = d3dx_param_eval_set_shader_constants(device, param->param_eval)))
+        return hr;
+    params = param->param_eval->shader_inputs.inputs_param;
+    cdesc = param->param_eval->shader_inputs.inputs;
+    parameters_count = param->param_eval->shader_inputs.input_count;
+    ret = D3D_OK;
+    for (i = 0; i < parameters_count; ++i)
+    {
+        if (params[i] && params[i]->class == D3DXPC_OBJECT && (params[i]->type == D3DXPT_SAMPLER
+                || params[i]->type == D3DXPT_SAMPLER1D || params[i]->type == D3DXPT_SAMPLER2D
+                || params[i]->type == D3DXPT_SAMPLER3D || params[i]->type == D3DXPT_SAMPLERCUBE))
+        {
+            struct d3dx_sampler *sampler;
+
+            sampler = (struct d3dx_sampler *)params[i]->data;
+            TRACE("sampler %s, register index %u, state count %u.\n", debugstr_a(params[i]->name),
+                    cdesc[i].RegisterIndex, sampler->state_count);
+            for (j = 0; j < sampler->state_count; ++j)
+            {
+                if (FAILED(hr = d3dx9_apply_state(effect, pass, &sampler->states[j],
+                        cdesc[i].RegisterIndex + (vs ? D3DVERTEXTEXTURESAMPLER0 : 0))))
+                    ret = hr;
+            }
+        }
+    }
+    return ret;
+}
+
+static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pass *pass,
+        struct d3dx_state *state, unsigned int parent_index)
 {
     IDirect3DDevice9 *device = effect->device;
     struct d3dx_parameter *param;
@@ -2744,7 +2790,7 @@ static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pas
         {
             UINT unit;
 
-            unit = parent_index == -1 ? state->index : parent_index;
+            unit = parent_index == ~0u ? state->index : parent_index;
             TRACE("%s, unit %u, value %p.\n", state_table[state->operation].name, unit,
                     *(IDirect3DBaseTexture9 **)param_value);
             return IDirect3DDevice9_SetTexture(device, unit, *(IDirect3DBaseTexture9 **)param_value);
@@ -2774,7 +2820,7 @@ static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pas
         {
             UINT sampler;
 
-            sampler = parent_index == -1 ? state->index : parent_index;
+            sampler = parent_index == ~0u ? state->index : parent_index;
             TRACE("%s, sampler %u, value %u.\n", state_table[state->operation].name, sampler, *(DWORD *)param_value);
             return IDirect3DDevice9_SetSamplerState(device, sampler, state_table[state->operation].op,
                     *(DWORD *)param_value);
@@ -2783,13 +2829,15 @@ static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pas
             TRACE("%s, shader %p.\n", state_table[state->operation].name, *(IDirect3DVertexShader9 **)param_value);
             if (FAILED(hr = IDirect3DDevice9_SetVertexShader(device, *(IDirect3DVertexShader9 **)param_value)))
                 ERR("Could not set vertex shader, hr %#x.\n", hr);
-            FIXME("Not executing preshader and not setting constants.\n");
+            else if (*(IDirect3DVertexShader9 **)param_value)
+                hr = d3dx_set_shader_constants(effect, pass, param, TRUE);
             return hr;
         case SC_PIXELSHADER:
             TRACE("%s, shader %p.\n", state_table[state->operation].name, *(IDirect3DPixelShader9 **)param_value);
             if (FAILED(hr = IDirect3DDevice9_SetPixelShader(device, *(IDirect3DPixelShader9 **)param_value)))
                 ERR("Could not set pixel shader, hr %#x.\n", hr);
-            FIXME("Not executing preshader and not setting constants.\n");
+            else if (*(IDirect3DPixelShader9 **)param_value)
+                hr = d3dx_set_shader_constants(effect, pass, param, FALSE);
             return hr;
         case SC_TRANSFORM:
             TRACE("%s, state %u.\n", state_table[state->operation].name, state->index);
@@ -2853,7 +2901,7 @@ static HRESULT d3dx9_apply_pass_states(struct ID3DXEffectImpl *effect, struct d3
     {
         HRESULT hr;
 
-        if (FAILED(hr = d3dx9_apply_state(effect, pass, &pass->states[i], -1)))
+        if (FAILED(hr = d3dx9_apply_state(effect, pass, &pass->states[i], ~0u)))
         {
             WARN("Error applying state, hr %#x.\n", hr);
             ret = hr;
