@@ -987,8 +987,6 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         texture->pow2_width = width;
         texture->pow2_height = height;
     }
-    surface->pow2Width = texture->pow2_width;
-    surface->pow2Height = texture->pow2_height;
 
     sub_resource->locations = 0;
 

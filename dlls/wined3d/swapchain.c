@@ -361,12 +361,12 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
         context2 = context_acquire(device, back_buffer);
         context_apply_blit_state(context2, device);
 
-        if (back_buffer->container->flags & WINED3D_TEXTURE_NORMALIZED_COORDS)
+        if (texture->flags & WINED3D_TEXTURE_NORMALIZED_COORDS)
         {
-            tex_left /= back_buffer->pow2Width;
-            tex_right /= back_buffer->pow2Width;
-            tex_top /= back_buffer->pow2Height;
-            tex_bottom /= back_buffer->pow2Height;
+            tex_left /= texture->pow2_width;
+            tex_right /= texture->pow2_width;
+            tex_top /= texture->pow2_height;
+            tex_bottom /= texture->pow2_height;
         }
 
         if (is_complex_fixup(texture->resource.format->color_fixup))

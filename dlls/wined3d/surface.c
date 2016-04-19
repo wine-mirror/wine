@@ -4351,8 +4351,6 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
     surface->resource.access_flags = container->resource.access_flags;
 
     surface->container = container;
-    surface->pow2Width = wined3d_texture_get_level_pow2_width(container, level);
-    surface->pow2Height = wined3d_texture_get_level_pow2_height(container, level);
     surface->texture_target = target;
     surface->texture_level = level;
     surface->texture_layer = layer;

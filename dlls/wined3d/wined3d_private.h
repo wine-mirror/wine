@@ -2651,8 +2651,6 @@ struct wined3d_surface
     struct wined3d_resource resource;
     struct wined3d_texture *container;
 
-    UINT pow2Width;
-    UINT pow2Height;
     GLenum texture_target;
     unsigned int texture_level;
     unsigned int texture_layer;
