@@ -2073,14 +2073,11 @@ static void test_system_fontcollection(void)
 
         family1 = (void*)0xdeadbeef;
         hr = IDWriteFontCollection1_GetFontFamily(collection1, ~0u, &family1);
-    todo_wine {
         ok(hr == E_FAIL, "got 0x%08x\n", hr);
         ok(family1 == NULL, "got %p\n", family1);
-    }
+
         hr = IDWriteFontCollection1_GetFontFamily(collection1, 0, &family1);
-    todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
-    if (hr == S_OK)
         IDWriteFontFamily1_Release(family1);
         IDWriteFontCollection1_Release(collection1);
     }
