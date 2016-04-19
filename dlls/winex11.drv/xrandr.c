@@ -431,7 +431,7 @@ static int xrandr12_init_modes(void)
 
     if (!output_info->nmode)
     {
-        ERR("Output has no modes.\n");
+        WARN("Output has no modes.\n");
         goto done;
     }
 
