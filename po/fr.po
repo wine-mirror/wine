@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-04-02 12:50+0100\n"
+"PO-Revision-Date: 2016-04-19 11:46+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -11767,8 +11767,6 @@ msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "Voulez-vous réellement supprimer la clé de registre « %1 » ?"
 
 #: reg.rc:52
-#, fuzzy
-#| msgid "reg: The option [/d] must be followed by a valid integer\n"
 msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr "reg : l'option [/d] doit être suivie d'un entier valide\n"
 
@@ -11777,12 +11775,16 @@ msgid ""
 "reg: Unable to delete all registry values in '%1'. An unexpected error "
 "occurred.\n"
 msgstr ""
+"reg : Impossible d'effacer toutes les valeurs de registre dans « %1 ».Une "
+"erreur inattendue est survenue.\n"
 
 #: reg.rc:54
 msgid ""
 "reg: Unable to complete the specified operation. An unexpected error "
 "occurred.\n"
 msgstr ""
+"reg : Impossible d'effectuer l'opération spécifiée. Une erreur inattendue "
+"est survenue.\n"
 
 #: regedit.rc:34
 msgid "&Registry"
