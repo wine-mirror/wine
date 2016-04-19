@@ -245,8 +245,8 @@ static DWORD VMR9_SendSampleData(struct quartz_vmr *This, VMR9PresentationInfo *
     width = bmiHeader->biWidth;
     height = bmiHeader->biHeight;
 
-    TRACE("Src Rect: %d %d %d %d\n", This->source_rect.left, This->source_rect.top, This->source_rect.right, This->source_rect.bottom);
-    TRACE("Dst Rect: %d %d %d %d\n", This->target_rect.left, This->target_rect.top, This->target_rect.right, This->target_rect.bottom);
+    TRACE("Src Rect: %s\n", wine_dbgstr_rect(&This->source_rect));
+    TRACE("Dst Rect: %s\n", wine_dbgstr_rect(&This->target_rect));
 
     hr = IDirect3DSurface9_LockRect(info->lpSurf, &lock, NULL, D3DLOCK_DISCARD);
     if (FAILED(hr))
@@ -1769,8 +1769,7 @@ static HRESULT WINAPI VMR7WindowlessControl_SetVideoPosition(IVMRWindowlessContr
         This->target_rect = *dest;
         if (This->baseControlWindow.baseWindow.hWnd)
         {
-            FIXME("Output rectangle: starting at %dx%d, up to point %dx%d\n",
-                  dest->left, dest->top, dest->right, dest->bottom);
+            FIXME("Output rectangle: %s\n", wine_dbgstr_rect(dest));
             SetWindowPos(This->baseControlWindow.baseWindow.hWnd, NULL,
                          dest->left, dest->top, dest->right - dest->left, dest->bottom-dest->top,
                          SWP_NOACTIVATE|SWP_NOCOPYBITS|SWP_NOOWNERZORDER|SWP_NOREDRAW);
@@ -1974,7 +1973,7 @@ static HRESULT WINAPI VMR9WindowlessControl_SetVideoPosition(IVMRWindowlessContr
         This->target_rect = *dest;
         if (This->baseControlWindow.baseWindow.hWnd)
         {
-            FIXME("Output rectangle: starting at %dx%d, up to point %dx%d\n", dest->left, dest->top, dest->right, dest->bottom);
+            FIXME("Output rectangle: %s\n", wine_dbgstr_rect(dest));
             SetWindowPos(This->baseControlWindow.baseWindow.hWnd, NULL, dest->left, dest->top, dest->right - dest->left,
                          dest->bottom-dest->top, SWP_NOACTIVATE|SWP_NOCOPYBITS|SWP_NOOWNERZORDER|SWP_NOREDRAW);
         }
@@ -2613,7 +2612,7 @@ static HRESULT WINAPI VMR9_ImagePresenter_PresentImage(IVMRImagePresenter9 *ifac
 
     TRACE("(%p/%p/%p)->(...) stub\n", iface, This, This->pVMR9);
     GetWindowRect(This->pVMR9->baseControlWindow.baseWindow.hWnd, &output);
-    TRACE("Output rectangle: starting at %dx%d, up to point %dx%d\n", output.left, output.top, output.right, output.bottom);
+    TRACE("Output rectangle: %s\n", wine_dbgstr_rect(&output));
 
     /* This might happen if we don't have active focus (eg on a different virtual desktop) */
     if (!This->d3d9_dev)

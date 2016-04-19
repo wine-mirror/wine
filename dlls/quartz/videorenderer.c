@@ -184,7 +184,7 @@ static void VideoRenderer_AutoShowWindow(VideoRendererImpl *This)
 
         AdjustWindowRectEx(&This->WindowPos, style, FALSE, style_ex);
 
-        TRACE("WindowPos: %d %d %d %d\n", This->WindowPos.left, This->WindowPos.top, This->WindowPos.right, This->WindowPos.bottom);
+        TRACE("WindowPos: %s\n", wine_dbgstr_rect(&This->WindowPos));
         SetWindowPos(This->baseControlWindow.baseWindow.hWnd, NULL,
             This->WindowPos.left,
             This->WindowPos.top,
@@ -242,8 +242,8 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
         return E_FAIL;
     }
 
-    TRACE("Src Rect: %d %d %d %d\n", This->SourceRect.left, This->SourceRect.top, This->SourceRect.right, This->SourceRect.bottom);
-    TRACE("Dst Rect: %d %d %d %d\n", This->DestRect.left, This->DestRect.top, This->DestRect.right, This->DestRect.bottom);
+    TRACE("Src Rect: %s\n", wine_dbgstr_rect(&This->SourceRect));
+    TRACE("Dst Rect: %s\n", wine_dbgstr_rect(&This->DestRect));
 
     StretchDIBits(This->baseControlWindow.baseWindow.hDC, This->DestRect.left, This->DestRect.top, This->DestRect.right -This->DestRect.left,
                   This->DestRect.bottom - This->DestRect.top, This->SourceRect.left, This->SourceRect.top,
