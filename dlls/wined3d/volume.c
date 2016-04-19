@@ -27,14 +27,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
-/* Context activation is done by the caller. Context may be NULL in
- * WINED3D_NO3D mode. */
-BOOL wined3d_volume_prepare_location(struct wined3d_volume *volume,
-        struct wined3d_context *context, DWORD location)
-{
-    return wined3d_texture_prepare_location(volume->container, volume->texture_level, context, location);
-}
-
 /* This call just uploads data, the caller is responsible for binding the
  * correct texture. */
 /* Context activation is done by the caller. */
@@ -222,7 +214,7 @@ BOOL wined3d_volume_load_location(struct wined3d_volume *volume,
         return FALSE;
     }
 
-    if (!wined3d_volume_prepare_location(volume, context, location))
+    if (!wined3d_texture_prepare_location(texture, sub_resource_idx, context, location))
         return FALSE;
 
     if (sub_resource->locations & WINED3D_LOCATION_DISCARDED)
