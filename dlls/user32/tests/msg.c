@@ -11188,6 +11188,70 @@ static void test_quit_message(void)
     ok_sequence(WmStopQuitSeq, "WmStopQuitSeq", FALSE);
 }
 
+static const struct message WmNotifySeq[] = {
+    { WM_NOTIFY, sent|wparam|lparam, 0x1234, 0xdeadbeef },
+    { 0 }
+};
+
+static void test_notify_message(void)
+{
+    HWND hwnd;
+    BOOL ret;
+    MSG msg;
+
+    hwnd = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
+                           CW_USEDEFAULT, CW_USEDEFAULT, 300, 300, 0, NULL, NULL, 0);
+    ok(hwnd != 0, "Failed to create window\n");
+    flush_events();
+    flush_sequence();
+
+    ret = SendNotifyMessageA(hwnd, WM_NOTIFY, 0x1234, 0xdeadbeef);
+    ok(ret == TRUE, "SendNotifyMessageA failed with error %u\n", GetLastError());
+    ok_sequence(WmNotifySeq, "WmNotifySeq", FALSE);
+
+    ret = SendNotifyMessageW(hwnd, WM_NOTIFY, 0x1234, 0xdeadbeef);
+    ok(ret == TRUE, "SendNotifyMessageW failed with error %u\n", GetLastError());
+    ok_sequence(WmNotifySeq, "WmNotifySeq", FALSE);
+
+    ret = SendMessageCallbackA(hwnd, WM_NOTIFY, 0x1234, 0xdeadbeef, NULL, 0);
+    ok(ret == TRUE, "SendMessageCallbackA failed with error %u\n", GetLastError());
+    ok_sequence(WmNotifySeq, "WmNotifySeq", FALSE);
+
+    ret = SendMessageCallbackW(hwnd, WM_NOTIFY, 0x1234, 0xdeadbeef, NULL, 0);
+    ok(ret == TRUE, "SendMessageCallbackW failed with error %u\n", GetLastError());
+    ok_sequence(WmNotifySeq, "WmNotifySeq", FALSE);
+
+    ret = PostMessageA(hwnd, WM_NOTIFY, 0x1234, 0xdeadbeef);
+    ok(ret == TRUE, "PostMessageA failed with error %u\n", GetLastError());
+    flush_events();
+    ok_sequence(WmNotifySeq, "WmNotifySeq", FALSE);
+
+    ret = PostMessageW(hwnd, WM_NOTIFY, 0x1234, 0xdeadbeef);
+    ok(ret == TRUE, "PostMessageW failed with error %u\n", GetLastError());
+    flush_events();
+    ok_sequence(WmNotifySeq, "WmNotifySeq", FALSE);
+
+    ret = PostThreadMessageA(GetCurrentThreadId(), WM_NOTIFY, 0x1234, 0xdeadbeef);
+    ok(ret == TRUE, "PostThreadMessageA failed with error %u\n", GetLastError());
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+    {
+        msg.hwnd = hwnd;
+        DispatchMessageA(&msg);
+    }
+    ok_sequence(WmNotifySeq, "WmNotifySeq", FALSE);
+
+    ret = PostThreadMessageW(GetCurrentThreadId(), WM_NOTIFY, 0x1234, 0xdeadbeef);
+    ok(ret == TRUE, "PostThreadMessageW failed with error %u\n", GetLastError());
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+    {
+        msg.hwnd = hwnd;
+        DispatchMessageA(&msg);
+    }
+    ok_sequence(WmNotifySeq, "WmNotifySeq", FALSE);
+
+    DestroyWindow(hwnd);
+}
+
 static const struct message WmMouseHoverSeq[] = {
     { WM_MOUSEACTIVATE, sent|optional },  /* we can get those when moving the mouse in focus-follow-mouse mode under X11 */
     { WM_MOUSEACTIVATE, sent|optional },
@@ -15793,6 +15857,7 @@ START_TEST(msg)
     test_SendMessageTimeout();
     test_edit_messages();
     test_quit_message();
+    test_notify_message();
     test_SetActiveWindow();
 
     if (!pTrackMouseEvent)
