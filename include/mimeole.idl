@@ -139,12 +139,26 @@ cpp_quote("} MIMEPROPID;")
 cpp_quote("#define TYPEDID_MASK                  ((ULONG)0xffff)")
 cpp_quote("#define TYPEDID_TYPE(t)               ((VARTYPE)((t) & TYPEDID_MASK))")
 
+cpp_quote("#define OID_ALLOW_8BIT_HEADER         (0x00010000 | VT_BOOL)")
+cpp_quote("#define OID_CBMAX_HEADER_LINE         (0x00020000 | VT_UI4)")
+cpp_quote("#define OID_SAVE_FORMAT               (0x00030000 | VT_UI4)")
+cpp_quote("#define OID_WRAP_BODY_TEXT            (0x00040000 | VT_BOOL)")
+cpp_quote("#define OID_CBMAX_BODY_LINE           (0x00050000 | VT_UI4)")
+cpp_quote("#define OID_TRANSMIT_BODY_ENCODING    (0x00060000 | VT_UI4)")
+cpp_quote("#define OID_TRANSMIT_TEXT_ENCODING    (0x00070000 | VT_UI4)")
+cpp_quote("#define OID_GENERATE_MESSAGE_ID       (0x00080000 | VT_BOOL)")
 cpp_quote("#define OID_HIDE_TNEF_ATTACHMENTS     (0x000e0000 | VT_BOOL)")
+cpp_quote("#define OID_CLEANUP_TREE_ON_SAVE      (0x000f0000 | VT_BOOL)")
+cpp_quote("#define OID_BODY_REMOVE_NBSP          (0x00140000 | VT_BOOL)")
+cpp_quote("#define OID_DEFAULT_BODY_CHARSET      (0x00150000 | VT_UI4)")
+cpp_quote("#define OID_DEFAULT_HEADER_CHARSET    (0x00160000 | VT_UI4)")
+cpp_quote("#define OID_DBCS_ESCAPE_IS_8BIT       (0x00170000 | VT_BOOL)")
 cpp_quote("#define OID_SECURITY_TYPE             (0x00180000 | VT_UI4)")
 cpp_quote("#define OID_SECURITY_HWND_OWNER       (0x00320000 | VT_UI4)")
 cpp_quote("#define OID_HEADER_RELOAD_TYPE        (0x00370000 | VT_UI4)")
+cpp_quote("#define OID_CAN_INLINE_TEXT_BODIES    (0x00380000 | VT_BOOL)")
 cpp_quote("#define OID_SHOW_MACBINARY            (0x00390000 | VT_BOOL)")
-
+cpp_quote("#define OID_SAVEBODY_KEEPBOUNDARY     (0x00400000 | VT_BOOL)")
 
 [
     uuid(e4b28371-83b0-11d0-8259-00c04fd85ab4),
