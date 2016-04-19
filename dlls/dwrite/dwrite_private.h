@@ -120,8 +120,8 @@ extern HRESULT create_gdicompat_textlayout(IDWriteFactory3*,const WCHAR*,UINT32,
     const DWRITE_MATRIX*,BOOL,IDWriteTextLayout**) DECLSPEC_HIDDEN;
 extern HRESULT create_trimmingsign(IDWriteFactory3*,IDWriteTextFormat*,IDWriteInlineObject**) DECLSPEC_HIDDEN;
 extern HRESULT create_typography(IDWriteTypography**) DECLSPEC_HIDDEN;
-extern HRESULT create_gdiinterop(IDWriteFactory3*,IDWriteGdiInterop**) DECLSPEC_HIDDEN;
-extern void    release_gdiinterop(IDWriteGdiInterop*) DECLSPEC_HIDDEN;
+extern HRESULT create_gdiinterop(IDWriteFactory3*,IDWriteGdiInterop1**) DECLSPEC_HIDDEN;
+extern void    release_gdiinterop(IDWriteGdiInterop1*) DECLSPEC_HIDDEN;
 extern HRESULT create_localizedstrings(IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 extern HRESULT add_localizedstring(IDWriteLocalizedStrings*,const WCHAR*,const WCHAR*) DECLSPEC_HIDDEN;
 extern HRESULT clone_localizedstring(IDWriteLocalizedStrings *iface, IDWriteLocalizedStrings **strings) DECLSPEC_HIDDEN;

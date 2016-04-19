@@ -24,6 +24,11 @@ interface IDWriteFontSet;
 interface IDWriteFontSetBuilder;
 interface IDWriteFontDownloadQueue;
 
+cpp_quote("#ifndef _WINGDI_")
+/* already defined in wingdi.h but needed for WIDL */
+typedef struct FONTSIGNATURE FONTSIGNATURE;
+cpp_quote("#endif /* _WINGDI_ */")
+
 typedef enum DWRITE_LOCALITY
 {
     DWRITE_LOCALITY_REMOTE,
@@ -252,6 +257,26 @@ interface IDWriteTextLayout3 : IDWriteTextLayout2
     HRESULT SetLineSpacing(DWRITE_LINE_SPACING const *spacing);
     HRESULT GetLineSpacing(DWRITE_LINE_SPACING *spacing);
     HRESULT GetLineMetrics(DWRITE_LINE_METRICS1 *metrics, UINT32 max_count, UINT32 *count);
+}
+
+[
+    local,
+    object,
+    uuid(4556be70-3abd-4f70-90be-421780a6f515)
+]
+interface IDWriteGdiInterop1 : IDWriteGdiInterop
+{
+    HRESULT CreateFontFromLOGFONT(LOGFONTW const *logfont,
+        IDWriteFontCollection *collection,
+        IDWriteFont **font);
+
+    /* GetFontSignature() methods are listed in reversed order to make
+       resulting vtable order compatible. */
+    HRESULT GetFontSignature_(IDWriteFontFace *fontface, FONTSIGNATURE *fontsig);
+    HRESULT GetFontSignature(IDWriteFont *font, FONTSIGNATURE *fontsig);
+    HRESULT GetMatchingFontsByLOGFONT(LOGFONTW const *logfont,
+        IDWriteFontSet *fontset,
+        IDWriteFontSet **subset);
 }
 
 [

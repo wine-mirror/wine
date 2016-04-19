@@ -525,7 +525,7 @@ struct dwritefactory {
 
     IDWriteFontCollection *system_collection;
     IDWriteFontCollection *eudc_collection;
-    IDWriteGdiInterop *gdiinterop;
+    IDWriteGdiInterop1 *gdiinterop;
     IDWriteFontFallback *fallback;
 
     IDWriteLocalFontFileLoader* localfontfileloader;
@@ -1061,7 +1061,7 @@ static HRESULT WINAPI dwritefactory_GetGdiInterop(IDWriteFactory3 *iface, IDWrit
             return hr;
     }
 
-    *gdi_interop = This->gdiinterop;
+    *gdi_interop = (IDWriteGdiInterop*)This->gdiinterop;
     IDWriteGdiInterop_AddRef(*gdi_interop);
 
     return S_OK;
