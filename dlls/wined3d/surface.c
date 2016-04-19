@@ -2561,7 +2561,9 @@ static void surface_depth_blt(const struct wined3d_surface *surface, struct wine
     gl_info->gl_ops.gl.p_glDepthRange(0.0, 1.0);
 
     SetRect(&rect, 0, h, w, 0);
-    surface_get_blt_info(target, &rect, surface->pow2Width, surface->pow2Height, &info);
+    surface_get_blt_info(target, &rect,
+            wined3d_texture_get_level_pow2_width(surface->container, surface->texture_level),
+            wined3d_texture_get_level_pow2_height(surface->container, surface->texture_level), &info);
     context_active_texture(context, context->gl_info, 0);
     gl_info->gl_ops.gl.p_glGetIntegerv(info.binding, &old_binding);
     gl_info->gl_ops.gl.p_glBindTexture(info.bind_target, texture);
