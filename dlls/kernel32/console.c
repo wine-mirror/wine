@@ -3347,6 +3347,13 @@ COORD WINAPI GetConsoleFontSize(HANDLE hConsole, DWORD index)
 }
 #endif /* !defined(__i386__) */
 
+BOOL WINAPI GetConsoleFontInfo(HANDLE hConsole, BOOL maximize, DWORD numfonts, CONSOLE_FONT_INFO *info)
+{
+    FIXME("(%p %d %u %p): stub!\n", hConsole, maximize, numfonts, info);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
 BOOL WINAPI GetConsoleScreenBufferInfoEx(HANDLE hConsole, CONSOLE_SCREEN_BUFFER_INFOEX *csbix)
 {
     FIXME("(%p %p): stub!\n", hConsole, csbix);
