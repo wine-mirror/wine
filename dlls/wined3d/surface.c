@@ -2637,8 +2637,8 @@ static void surface_load_ds_location(struct wined3d_surface *surface, struct win
     }
     else
     {
-        w = wined3d_texture_get_level_width(surface->container, surface->texture_level);
-        h = wined3d_texture_get_level_height(surface->container, surface->texture_level);
+        w = wined3d_texture_get_level_width(texture, surface->texture_level);
+        h = wined3d_texture_get_level_height(texture, surface->texture_level);
     }
 
     if (surface->current_renderbuffer)
@@ -2717,8 +2717,9 @@ static void surface_load_ds_location(struct wined3d_surface *surface, struct win
         context_apply_fbo_state_blit(context, GL_FRAMEBUFFER,
                 context->swapchain->front_buffer->sub_resources[0].u.surface,
                 NULL, WINED3D_LOCATION_DRAWABLE);
-        surface_depth_blt(surface, context, texture->texture_rgb.name,
-                0, surface->pow2Height - h, w, h, surface->texture_target);
+        surface_depth_blt(surface, context, texture->texture_rgb.name, 0,
+                wined3d_texture_get_level_pow2_height(texture, surface->texture_level) - h,
+                w, h, surface->texture_target);
         checkGLcall("depth_blt");
 
         context_invalidate_state(context, STATE_FRAMEBUFFER);
