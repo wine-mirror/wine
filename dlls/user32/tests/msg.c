@@ -5938,7 +5938,7 @@ static void test_button_messages(void)
 
         SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"Text 2");
         sprintf(desc, "button[%i]: WM_SETTEXT on an invisible button", i);
-        ok_sequence(WmSetTextInvisibleSeq, desc, TRUE);
+        ok_sequence(WmSetTextInvisibleSeq, desc, FALSE);
 
         ShowWindow(hwnd, SW_SHOW);
         ShowWindow(parent, SW_HIDE);
@@ -5947,7 +5947,7 @@ static void test_button_messages(void)
 
         SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"Text 3");
         sprintf(desc, "button[%i]: WM_SETTEXT on an invisible button", i);
-        ok_sequence(WmSetTextInvisibleSeq, desc, TRUE);
+        ok_sequence(WmSetTextInvisibleSeq, desc, FALSE);
 
         ShowWindow(parent, SW_SHOW);
         flush_events();

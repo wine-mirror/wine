@@ -385,31 +385,34 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
     case WM_SETTEXT:
     {
         /* Clear an old text here as Windows does */
-        HDC hdc = GetDC(hWnd);
-        HBRUSH hbrush;
-        RECT client, rc;
-        HWND parent = GetParent(hWnd);
-        UINT message = (btn_type == BS_PUSHBUTTON ||
-                        btn_type == BS_DEFPUSHBUTTON ||
-                        btn_type == BS_USERBUTTON ||
-                        btn_type == BS_OWNERDRAW) ?
-                        WM_CTLCOLORBTN : WM_CTLCOLORSTATIC;
+        if (IsWindowVisible(hWnd))
+        {
+            HDC hdc = GetDC(hWnd);
+            HBRUSH hbrush;
+            RECT client, rc;
+            HWND parent = GetParent(hWnd);
+            UINT message = (btn_type == BS_PUSHBUTTON ||
+                            btn_type == BS_DEFPUSHBUTTON ||
+                            btn_type == BS_USERBUTTON ||
+                            btn_type == BS_OWNERDRAW) ?
+                            WM_CTLCOLORBTN : WM_CTLCOLORSTATIC;
 
-        if (!parent) parent = hWnd;
-        hbrush = (HBRUSH)SendMessageW(parent, message,
-                                      (WPARAM)hdc, (LPARAM)hWnd);
-        if (!hbrush) /* did the app forget to call DefWindowProc ? */
-            hbrush = (HBRUSH)DefWindowProcW(parent, message,
-                                            (WPARAM)hdc, (LPARAM)hWnd);
+            if (!parent) parent = hWnd;
+            hbrush = (HBRUSH)SendMessageW(parent, message,
+                                          (WPARAM)hdc, (LPARAM)hWnd);
+            if (!hbrush) /* did the app forget to call DefWindowProc ? */
+                hbrush = (HBRUSH)DefWindowProcW(parent, message,
+                                                (WPARAM)hdc, (LPARAM)hWnd);
 
-        GetClientRect(hWnd, &client);
-        rc = client;
-        BUTTON_CalcLabelRect(hWnd, hdc, &rc);
-        /* Clip by client rect bounds */
-        if (rc.right > client.right) rc.right = client.right;
-        if (rc.bottom > client.bottom) rc.bottom = client.bottom;
-        FillRect(hdc, &rc, hbrush);
-        ReleaseDC(hWnd, hdc);
+            GetClientRect(hWnd, &client);
+            rc = client;
+            BUTTON_CalcLabelRect(hWnd, hdc, &rc);
+            /* Clip by client rect bounds */
+            if (rc.right > client.right) rc.right = client.right;
+            if (rc.bottom > client.bottom) rc.bottom = client.bottom;
+            FillRect(hdc, &rc, hbrush);
+            ReleaseDC(hWnd, hdc);
+        }
 
         if (unicode) DefWindowProcW( hWnd, WM_SETTEXT, wParam, lParam );
         else DefWindowProcA( hWnd, WM_SETTEXT, wParam, lParam );
