@@ -1393,7 +1393,7 @@ sub dump_scripts($)
     print OUTPUT "/* generated from $UNIDATA/Scripts.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
 
-    # Inherited was consumed by Unknown, we don't need it as a separate enum memeber
+    # Inherited was consumed by Unknown, we don't need it as a separate enum member
     delete $scripts{"Inherited"};
     print OUTPUT "enum unicode_script_id {\n";
     foreach my $script (sort { $scripts{$a} <=> $scripts{$b} } keys %scripts)

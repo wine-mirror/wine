@@ -871,7 +871,7 @@ int get_cpu_from_name( const char *name )
  * align on an 8-byte boundary you'd say
  *     .align 3
  *
- * The reason gas is written this way is that it's trying to mimick
+ * The reason gas is written this way is that it's trying to mimic
  * native assemblers for the various architectures it runs on.  gas
  * provides other directives that work consistently across
  * architectures, but of course we want to work on all arches with or
