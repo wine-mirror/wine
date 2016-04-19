@@ -1243,17 +1243,17 @@ void surface_set_compatible_renderbuffer(struct wined3d_surface *surface, const 
 
     if (rt && rt->container->resource.format->id != WINED3DFMT_NULL)
     {
-        width = rt->pow2Width;
-        height = rt->pow2Height;
+        width = wined3d_texture_get_level_pow2_width(rt->container, rt->texture_level);
+        height = wined3d_texture_get_level_pow2_height(rt->container, rt->texture_level);
     }
     else
     {
-        width = surface->pow2Width;
-        height = surface->pow2Height;
+        width = wined3d_texture_get_level_pow2_width(surface->container, surface->texture_level);
+        height = wined3d_texture_get_level_pow2_height(surface->container, surface->texture_level);
     }
 
-    src_width = surface->pow2Width;
-    src_height = surface->pow2Height;
+    src_width = wined3d_texture_get_level_pow2_width(surface->container, surface->texture_level);
+    src_height = wined3d_texture_get_level_pow2_height(surface->container, surface->texture_level);
 
     /* A depth stencil smaller than the render target is not valid */
     if (width > src_width || height > src_height) return;
