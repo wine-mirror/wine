@@ -3977,6 +3977,7 @@ static void test_CreateRenderingParams(void)
     IDWriteRenderingParams1 *params1;
     IDWriteRenderingParams *params;
     DWRITE_RENDERING_MODE mode;
+    IDWriteFactory3 *factory3;
     IDWriteFactory *factory;
     HRESULT hr;
 
@@ -4019,6 +4020,27 @@ static void test_CreateRenderingParams(void)
     mode = IDWriteRenderingParams_GetRenderingMode(params);
     ok(mode == DWRITE_RENDERING_MODE_DEFAULT, "got %d\n", mode);
     IDWriteRenderingParams_Release(params);
+
+    hr = IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory3, (void**)&factory3);
+    if (hr == S_OK) {
+        IDWriteRenderingParams3 *params3;
+
+        hr = IDWriteFactory3_CreateCustomRenderingParams(factory3, 1.0f, 0.0f, 0.0f, 1.0f, DWRITE_PIXEL_GEOMETRY_FLAT,
+            DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC_DOWNSAMPLED, DWRITE_GRID_FIT_MODE_DEFAULT, &params3);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteRenderingParams3_QueryInterface(params3, &IID_IDWriteRenderingParams, (void**)&params);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        mode = IDWriteRenderingParams_GetRenderingMode(params);
+        ok(mode == DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC, "got %d\n", mode);
+
+        IDWriteRenderingParams_Release(params);
+        IDWriteRenderingParams3_Release(params3);
+        IDWriteFactory3_Release(factory3);
+    }
+    else
+        win_skip("IDWriteRenderingParams3 not supported.\n");
 
     IDWriteFactory_Release(factory);
 }
