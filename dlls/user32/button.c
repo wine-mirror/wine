@@ -389,13 +389,18 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
         HBRUSH hbrush;
         RECT client, rc;
         HWND parent = GetParent(hWnd);
+        UINT message = (btn_type == BS_PUSHBUTTON ||
+                        btn_type == BS_DEFPUSHBUTTON ||
+                        btn_type == BS_USERBUTTON ||
+                        btn_type == BS_OWNERDRAW) ?
+                        WM_CTLCOLORBTN : WM_CTLCOLORSTATIC;
 
         if (!parent) parent = hWnd;
-        hbrush = (HBRUSH)SendMessageW(parent, WM_CTLCOLORSTATIC,
-				      (WPARAM)hdc, (LPARAM)hWnd);
+        hbrush = (HBRUSH)SendMessageW(parent, message,
+                                      (WPARAM)hdc, (LPARAM)hWnd);
         if (!hbrush) /* did the app forget to call DefWindowProc ? */
-            hbrush = (HBRUSH)DefWindowProcW(parent, WM_CTLCOLORSTATIC,
-					    (WPARAM)hdc, (LPARAM)hWnd);
+            hbrush = (HBRUSH)DefWindowProcW(parent, message,
+                                            (WPARAM)hdc, (LPARAM)hWnd);
 
         GetClientRect(hWnd, &client);
         rc = client;
