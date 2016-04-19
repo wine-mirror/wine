@@ -5540,6 +5540,35 @@ static const struct message WmSetFontStaticSeq[] =
     { WM_CTLCOLORSTATIC, sent|defwinproc },
     { 0 }
 };
+static const struct message WmSetTextButtonSeq[] =
+{
+    { WM_SETTEXT, sent },
+    { WM_CTLCOLORBTN, sent|parent },
+    { WM_CTLCOLORBTN, sent|parent },
+    { WM_COMMAND, sent|parent|optional },
+    { WM_DRAWITEM, sent|parent|optional },
+    { 0 }
+};
+static const struct message WmSetTextStaticSeq[] =
+{
+    { WM_SETTEXT, sent },
+    { WM_CTLCOLORSTATIC, sent|parent },
+    { WM_CTLCOLORSTATIC, sent|parent },
+    { 0 }
+};
+static const struct message WmSetTextGroupSeq[] =
+{
+    { WM_SETTEXT, sent },
+    { WM_CTLCOLORSTATIC, sent|parent },
+    { WM_CTLCOLORSTATIC, sent|parent|optional }, /* FIXME: Missing in Wine */
+    { WM_CTLCOLORSTATIC, sent|parent|optional }, /* FIXME: Missing in Wine */
+    { 0 }
+};
+static const struct message WmSetTextInvisibleSeq[] =
+{
+    { WM_SETTEXT, sent },
+    { 0 }
+};
 static const struct message WmSetStyleButtonSeq[] =
 {
     { BM_SETSTYLE, sent },
@@ -5709,51 +5738,63 @@ static void test_button_messages(void)
         const struct message *lbuttondown;
         const struct message *lbuttonup;
         const struct message *setfont;
+        const struct message *settext;
     } button[] = {
         { BS_PUSHBUTTON, DLGC_BUTTON | DLGC_UNDEFPUSHBUTTON,
           WmSetFocusButtonSeq, WmKillFocusButtonSeq, WmSetStyleButtonSeq,
           WmSetStateButtonSeq, WmSetStateButtonSeq, WmSetCheckIgnoredSeq,
-          WmLButtonDownSeq, WmLButtonUpSeq, WmSetFontButtonSeq },
+          WmLButtonDownSeq, WmLButtonUpSeq, WmSetFontButtonSeq,
+          WmSetTextButtonSeq },
         { BS_DEFPUSHBUTTON, DLGC_BUTTON | DLGC_DEFPUSHBUTTON,
           WmSetFocusButtonSeq, WmKillFocusButtonSeq, WmSetStyleButtonSeq,
           WmSetStateButtonSeq, WmSetStateButtonSeq, WmSetCheckIgnoredSeq,
-          WmLButtonDownSeq, WmLButtonUpSeq, WmSetFontButtonSeq },
+          WmLButtonDownSeq, WmLButtonUpSeq, WmSetFontButtonSeq,
+          WmSetTextButtonSeq },
         { BS_CHECKBOX, DLGC_BUTTON,
           WmSetFocusStaticSeq, WmKillFocusStaticSeq, WmSetStyleStaticSeq,
           WmSetStateStaticSeq, WmSetStateStaticSeq, WmSetCheckStaticSeq,
-          WmLButtonDownStaticSeq, WmLButtonUpStaticSeq, WmSetFontStaticSeq },
+          WmLButtonDownStaticSeq, WmLButtonUpStaticSeq, WmSetFontStaticSeq,
+          WmSetTextStaticSeq },
         { BS_AUTOCHECKBOX, DLGC_BUTTON,
           WmSetFocusStaticSeq, WmKillFocusStaticSeq, WmSetStyleStaticSeq,
           WmSetStateStaticSeq, WmSetStateStaticSeq, WmSetCheckStaticSeq,
-          WmLButtonDownStaticSeq, WmLButtonUpAutoSeq, WmSetFontStaticSeq },
+          WmLButtonDownStaticSeq, WmLButtonUpAutoSeq, WmSetFontStaticSeq,
+          WmSetTextStaticSeq },
         { BS_RADIOBUTTON, DLGC_BUTTON | DLGC_RADIOBUTTON,
           WmSetFocusStaticSeq, WmKillFocusStaticSeq, WmSetStyleStaticSeq,
           WmSetStateStaticSeq, WmSetStateStaticSeq, WmSetCheckStaticSeq,
-          WmLButtonDownStaticSeq, WmLButtonUpStaticSeq, WmSetFontStaticSeq },
+          WmLButtonDownStaticSeq, WmLButtonUpStaticSeq, WmSetFontStaticSeq,
+          WmSetTextStaticSeq },
         { BS_3STATE, DLGC_BUTTON,
           WmSetFocusStaticSeq, WmKillFocusStaticSeq, WmSetStyleStaticSeq,
           WmSetStateStaticSeq, WmSetStateStaticSeq, WmSetCheckStaticSeq,
-          WmLButtonDownStaticSeq, WmLButtonUpStaticSeq, WmSetFontStaticSeq },
+          WmLButtonDownStaticSeq, WmLButtonUpStaticSeq, WmSetFontStaticSeq,
+          WmSetTextStaticSeq },
         { BS_AUTO3STATE, DLGC_BUTTON,
           WmSetFocusStaticSeq, WmKillFocusStaticSeq, WmSetStyleStaticSeq,
           WmSetStateStaticSeq, WmSetStateStaticSeq, WmSetCheckStaticSeq,
-          WmLButtonDownStaticSeq, WmLButtonUpAutoSeq, WmSetFontStaticSeq },
+          WmLButtonDownStaticSeq, WmLButtonUpAutoSeq, WmSetFontStaticSeq,
+          WmSetTextStaticSeq },
         { BS_GROUPBOX, DLGC_STATIC,
           WmSetFocusStaticSeq, WmKillFocusStaticSeq, WmSetStyleStaticSeq,
           WmSetStateStaticSeq, WmSetStateStaticSeq, WmSetCheckIgnoredSeq,
-          WmLButtonDownStaticSeq, WmLButtonUpStaticSeq, WmSetFontStaticSeq },
+          WmLButtonDownStaticSeq, WmLButtonUpStaticSeq, WmSetFontStaticSeq,
+          WmSetTextGroupSeq },
         { BS_USERBUTTON, DLGC_BUTTON | DLGC_UNDEFPUSHBUTTON,
           WmSetFocusButtonSeq, WmKillFocusButtonSeq, WmSetStyleUserSeq,
           WmSetStateUserSeq, WmClearStateButtonSeq, WmSetCheckIgnoredSeq,
-          WmLButtonDownSeq, WmLButtonUpSeq, WmSetFontButtonSeq },
+          WmLButtonDownSeq, WmLButtonUpSeq, WmSetFontButtonSeq,
+          WmSetTextButtonSeq },
         { BS_AUTORADIOBUTTON, DLGC_BUTTON | DLGC_RADIOBUTTON,
           WmSetFocusStaticSeq, WmKillFocusStaticSeq, WmSetStyleStaticSeq,
           WmSetStateStaticSeq, WmSetStateStaticSeq, WmSetCheckStaticSeq,
-          NULL /* avoid infinite loop */, WmLButtonUpBrokenSeq, WmSetFontStaticSeq },
+          NULL /* avoid infinite loop */, WmLButtonUpBrokenSeq, WmSetFontStaticSeq,
+          WmSetTextStaticSeq },
         { BS_OWNERDRAW, DLGC_BUTTON,
           WmSetFocusOwnerdrawSeq, WmKillFocusOwnerdrawSeq, WmSetStyleOwnerdrawSeq,
           WmSetStateOwnerdrawSeq, WmClearStateOwnerdrawSeq, WmSetCheckIgnoredSeq,
-          WmLButtonDownSeq, WmLButtonUpSeq, WmSetFontButtonSeq },
+          WmLButtonDownSeq, WmLButtonUpSeq, WmSetFontButtonSeq,
+          WmSetTextButtonSeq },
     };
     unsigned int i;
     HWND hwnd, parent;
@@ -5886,6 +5927,30 @@ static void test_button_messages(void)
         SendMessageA(hwnd, WM_APP, 0, 0); /* place a separator mark here */
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
         ok_sequence(button[i].setcheck, "BM_SETCHECK on a button", FALSE);
+
+        SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"Text 1");
+        sprintf(desc, "button[%i]: WM_SETTEXT on a visible button", i);
+        ok_sequence(button[i].settext, desc, FALSE);
+
+        ShowWindow(hwnd, SW_HIDE);
+        flush_events();
+        flush_sequence();
+
+        SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"Text 2");
+        sprintf(desc, "button[%i]: WM_SETTEXT on an invisible button", i);
+        ok_sequence(WmSetTextInvisibleSeq, desc, TRUE);
+
+        ShowWindow(hwnd, SW_SHOW);
+        ShowWindow(parent, SW_HIDE);
+        flush_events();
+        flush_sequence();
+
+        SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"Text 3");
+        sprintf(desc, "button[%i]: WM_SETTEXT on an invisible button", i);
+        ok_sequence(WmSetTextInvisibleSeq, desc, TRUE);
+
+        ShowWindow(parent, SW_SHOW);
+        flush_events();
 
         state = SendMessageA(hwnd, BM_GETCHECK, 0, 0);
         if (button[i].style == BS_PUSHBUTTON ||
