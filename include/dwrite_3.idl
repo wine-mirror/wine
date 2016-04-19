@@ -282,15 +282,17 @@ interface IDWriteFactory3 : IDWriteFactory2
         DWRITE_GRID_FIT_MODE gridfit_mode,
         IDWriteRenderingParams3 **params);
 
-    HRESULT CreateFontFaceReference(
-        WCHAR const *path,
-        FILETIME const *writetime,
+    /* CreateFontFaceReference methods are listed in reversed order to make
+       resulting vtable order compatible. */
+    HRESULT CreateFontFaceReference_(
+        IDWriteFontFile *file,
         UINT32 index,
         DWRITE_FONT_SIMULATIONS simulations,
         IDWriteFontFaceReference **reference);
 
-    HRESULT CreateFontFaceReference_(
-        IDWriteFontFile *file,
+    HRESULT CreateFontFaceReference(
+        WCHAR const *path,
+        FILETIME const *writetime,
         UINT32 index,
         DWRITE_FONT_SIMULATIONS simulations,
         IDWriteFontFaceReference **reference);

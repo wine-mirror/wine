@@ -5792,6 +5792,54 @@ static void test_HasCharacter(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_CreateFontFaceReference(void)
+{
+    static const WCHAR dummyW[] = {'d','u','m','m','y',0};
+    IDWriteFontFaceReference *ref;
+    IDWriteFactory3 *factory3;
+    IDWriteFactory *factory;
+    UINT32 index;
+    WCHAR *path;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory3, (void**)&factory3);
+    IDWriteFactory_Release(factory);
+    if (FAILED(hr)) {
+        win_skip("CreateFontFaceReference() is not supported.\n");
+        return;
+    }
+
+    path = create_testfontfile(test_fontfile);
+
+    hr = IDWriteFactory3_CreateFontFaceReference(factory3, NULL, NULL, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
+todo_wine
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    /* test file is not a collection, but reference could still be created */
+    hr = IDWriteFactory3_CreateFontFaceReference(factory3, path, NULL, 1, DWRITE_FONT_SIMULATIONS_NONE, &ref);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+if (hr == S_OK) {
+    index = IDWriteFontFaceReference_GetFontFaceIndex(ref);
+    ok(index == 1, "got %u\n", index);
+}
+    /* path however has to be valid */
+    hr = IDWriteFactory3_CreateFontFaceReference(factory3, dummyW, NULL, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
+todo_wine
+    ok(hr == DWRITE_E_FILENOTFOUND, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory3_CreateFontFaceReference(factory3, path, NULL, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+if (hr == S_OK)
+    IDWriteFontFaceReference_Release(ref);
+
+    IDWriteFactory3_Release(factory3);
+    DELETE_FONTFILE(path);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -5846,6 +5894,7 @@ START_TEST(font)
     test_GetPaletteEntries();
     test_TranslateColorGlyphRun();
     test_HasCharacter();
+    test_CreateFontFaceReference();
 
     IDWriteFactory_Release(factory);
 }

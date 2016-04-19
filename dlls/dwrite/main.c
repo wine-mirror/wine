@@ -1261,22 +1261,22 @@ static HRESULT WINAPI dwritefactory3_CreateCustomRenderingParams(IDWriteFactory3
         gridfit_mode, params);
 }
 
-static HRESULT WINAPI dwritefactory3_CreateFontFaceReference(IDWriteFactory3 *iface, WCHAR const *path, FILETIME const *writetime,
-    UINT32 index, DWRITE_FONT_SIMULATIONS simulations, IDWriteFontFaceReference **reference)
-{
-    struct dwritefactory *This = impl_from_IDWriteFactory3(iface);
-
-    FIXME("(%p)->(%s %p %u %x, %p): stub\n", This, debugstr_w(path), writetime, index, simulations, reference);
-
-    return E_NOTIMPL;
-}
-
 static HRESULT WINAPI dwritefactory3_CreateFontFaceReference_(IDWriteFactory3 *iface, IDWriteFontFile *file, UINT32 index,
     DWRITE_FONT_SIMULATIONS simulations, IDWriteFontFaceReference **reference)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory3(iface);
 
     FIXME("(%p)->(%p %u %x %p): stub\n", This, file, index, simulations, reference);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritefactory3_CreateFontFaceReference(IDWriteFactory3 *iface, WCHAR const *path, FILETIME const *writetime,
+    UINT32 index, DWRITE_FONT_SIMULATIONS simulations, IDWriteFontFaceReference **reference)
+{
+    struct dwritefactory *This = impl_from_IDWriteFactory3(iface);
+
+    FIXME("(%p)->(%s %p %u %x, %p): stub\n", This, debugstr_w(path), writetime, index, simulations, reference);
 
     return E_NOTIMPL;
 }
@@ -1362,8 +1362,8 @@ static const struct IDWriteFactory3Vtbl dwritefactoryvtbl = {
     dwritefactory2_CreateGlyphRunAnalysis,
     dwritefactory3_CreateGlyphRunAnalysis,
     dwritefactory3_CreateCustomRenderingParams,
-    dwritefactory3_CreateFontFaceReference,
     dwritefactory3_CreateFontFaceReference_,
+    dwritefactory3_CreateFontFaceReference,
     dwritefactory3_GetSystemFontSet,
     dwritefactory3_CreateFontSetBuilder,
     dwritefactory3_CreateFontCollectionFromFontSet,
@@ -1419,8 +1419,8 @@ static const struct IDWriteFactory3Vtbl shareddwritefactoryvtbl = {
     dwritefactory2_CreateGlyphRunAnalysis,
     dwritefactory3_CreateGlyphRunAnalysis,
     dwritefactory3_CreateCustomRenderingParams,
-    dwritefactory3_CreateFontFaceReference,
     dwritefactory3_CreateFontFaceReference_,
+    dwritefactory3_CreateFontFaceReference,
     dwritefactory3_GetSystemFontSet,
     dwritefactory3_CreateFontSetBuilder,
     dwritefactory3_CreateFontCollectionFromFontSet,
