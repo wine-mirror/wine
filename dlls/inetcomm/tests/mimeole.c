@@ -353,6 +353,17 @@ void test_BindToObject(void)
     IMimeMessage_Release(msg);
 }
 
+static void test_MimeOleGetPropertySchema(void)
+{
+    HRESULT hr;
+    IMimePropertySchema *schema = NULL;
+
+    hr = MimeOleGetPropertySchema(&schema);
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    IMimePropertySchema_Release(schema);
+}
+
 START_TEST(mimeole)
 {
     OleInitialize(NULL);
@@ -362,5 +373,6 @@ START_TEST(mimeole)
     test_Allocator();
     test_CreateMessage();
     test_BindToObject();
+    test_MimeOleGetPropertySchema();
     OleUninitialize();
 }

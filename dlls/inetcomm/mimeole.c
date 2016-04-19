@@ -115,6 +115,17 @@ static inline MimeBody *impl_from_IMimeBody(IMimeBody *iface)
     return CONTAINING_RECORD(iface, MimeBody, IMimeBody_iface);
 }
 
+typedef struct propschema
+{
+    IMimePropertySchema IMimePropertySchema_iface;
+    LONG ref;
+} propschema;
+
+static inline propschema *impl_from_IMimePropertySchema(IMimePropertySchema *iface)
+{
+    return CONTAINING_RECORD(iface, propschema, IMimePropertySchema_iface);
+}
+
 static LPSTR strdupA(LPCSTR str)
 {
     char *ret;
@@ -3032,8 +3043,118 @@ HRESULT VirtualStream_create(IUnknown *outer, void **obj)
     return MimeOleCreateVirtualStream((IStream **)obj);
 }
 
+/* IMimePropertySchema Interface */
+static HRESULT WINAPI propschema_QueryInterface(IMimePropertySchema *iface, REFIID riid, void **out)
+{
+    propschema *This = impl_from_IMimePropertySchema(iface);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), out);
+
+    *out = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IMimePropertySchema))
+    {
+        *out = iface;
+    }
+    else
+    {
+        FIXME("no interface for %s\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IMimePropertySchema_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI propschema_AddRef(IMimePropertySchema *iface)
+{
+    propschema *This = impl_from_IMimePropertySchema(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI propschema_Release(IMimePropertySchema *iface)
+{
+    propschema *This = impl_from_IMimePropertySchema(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if (!ref)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI propschema_RegisterProperty(IMimePropertySchema *iface, const char *name, DWORD flags,
+        DWORD rownumber, VARTYPE vtdefault, DWORD *propid)
+{
+    propschema *This = impl_from_IMimePropertySchema(iface);
+    FIXME("(%p)->(%s, %x, %d, %d, %p) stub\n", This, debugstr_a(name), flags, rownumber, vtdefault, propid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propschema_ModifyProperty(IMimePropertySchema *iface, const char *name, DWORD flags,
+        DWORD rownumber, VARTYPE vtdefault)
+{
+    propschema *This = impl_from_IMimePropertySchema(iface);
+    FIXME("(%p)->(%s, %x, %d, %d) stub\n", This, debugstr_a(name), flags, rownumber, vtdefault);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propschema_GetPropertyId(IMimePropertySchema *iface, const char *name, DWORD *propid)
+{
+    propschema *This = impl_from_IMimePropertySchema(iface);
+    FIXME("(%p)->(%s, %p) stub\n", This, debugstr_a(name), propid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propschema_GetPropertyName(IMimePropertySchema *iface, DWORD propid, char **name)
+{
+    propschema *This = impl_from_IMimePropertySchema(iface);
+    FIXME("(%p)->(%d, %p) stub\n", This, propid, name);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propschema_RegisterAddressType(IMimePropertySchema *iface, const char *name, DWORD *adrtype)
+{
+    propschema *This = impl_from_IMimePropertySchema(iface);
+    FIXME("(%p)->(%s, %p) stub\n", This, debugstr_a(name), adrtype);
+    return E_NOTIMPL;
+}
+
+static IMimePropertySchemaVtbl prop_schema_vtbl =
+{
+    propschema_QueryInterface,
+    propschema_AddRef,
+    propschema_Release,
+    propschema_RegisterProperty,
+    propschema_ModifyProperty,
+    propschema_GetPropertyId,
+    propschema_GetPropertyName,
+    propschema_RegisterAddressType
+};
+
+
 HRESULT WINAPI MimeOleGetPropertySchema(IMimePropertySchema **schema)
 {
-    FIXME("(%p) stub\n", schema);
-    return E_NOTIMPL;
+    propschema *This;
+
+    TRACE("(%p) stub\n", schema);
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This)
+        return E_OUTOFMEMORY;
+
+    This->IMimePropertySchema_iface.lpVtbl = &prop_schema_vtbl;
+    This->ref = 1;
+
+    *schema = &This->IMimePropertySchema_iface;
+
+    return S_OK;
 }
