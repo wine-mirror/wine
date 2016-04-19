@@ -1345,9 +1345,10 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
     for (i = 0; i < sub_count; ++i)
     {
         struct wined3d_surface *surface = texture->sub_resources[i].u.surface;
-        GLsizei height = surface->pow2Height;
-        GLsizei width = surface->pow2Width;
+        GLsizei width, height;
 
+        width = wined3d_texture_get_level_pow2_width(texture, surface->texture_level);
+        height = wined3d_texture_get_level_pow2_height(texture, surface->texture_level);
         if (texture->resource.format_flags & WINED3DFMT_FLAG_HEIGHT_SCALE)
         {
             height *= format->height_scale.numerator;
