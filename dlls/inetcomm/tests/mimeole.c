@@ -332,6 +332,68 @@ static void test_CreateMessage(void)
     IStream_Release(stream);
 }
 
+static void test_MessageOptions(void)
+{
+    static const char string[] = "XXXXX";
+    static const char zero[] =   "0";
+    HRESULT hr;
+    IMimeMessage *msg;
+    PROPVARIANT prop;
+
+    hr = MimeOleCreateMessage(NULL, &msg);
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    PropVariantInit(&prop);
+
+    prop.vt = VT_BOOL;
+    prop.u.boolVal = TRUE;
+    hr = IMimeMessage_SetOption(msg, OID_HIDE_TNEF_ATTACHMENTS, &prop);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    PropVariantClear(&prop);
+
+    hr = IMimeMessage_GetOption(msg, OID_HIDE_TNEF_ATTACHMENTS, &prop);
+    todo_wine ok(hr == S_OK, "ret %08x\n", hr);
+    todo_wine ok(prop.vt == VT_BOOL, "vt %08x\n", prop.vt);
+    todo_wine ok(prop.u.boolVal == TRUE, "Hide Attachments got %d\n", prop.u.boolVal);
+    PropVariantClear(&prop);
+
+    prop.vt = VT_LPSTR;
+    prop.u.pszVal = CoTaskMemAlloc(strlen(string)+1);
+    strcpy(prop.u.pszVal, string);
+    hr = IMimeMessage_SetOption(msg, OID_HIDE_TNEF_ATTACHMENTS, &prop);
+    todo_wine ok(hr == S_OK, "ret %08x\n", hr);
+    PropVariantClear(&prop);
+
+    hr = IMimeMessage_GetOption(msg, OID_HIDE_TNEF_ATTACHMENTS, &prop);
+    todo_wine ok(hr == S_OK, "ret %08x\n", hr);
+    todo_wine ok(prop.vt == VT_BOOL, "vt %08x\n", prop.vt);
+    todo_wine ok(prop.u.boolVal == TRUE, "Hide Attachments got %d\n", prop.u.boolVal);
+    PropVariantClear(&prop);
+
+    /* Invalid property type doesn't change the value */
+    prop.vt = VT_LPSTR;
+    prop.u.pszVal = CoTaskMemAlloc(strlen(zero)+1);
+    strcpy(prop.u.pszVal, zero);
+    hr = IMimeMessage_SetOption(msg, OID_HIDE_TNEF_ATTACHMENTS, &prop);
+    todo_wine ok(hr == S_OK, "ret %08x\n", hr);
+    PropVariantClear(&prop);
+
+    hr = IMimeMessage_GetOption(msg, OID_HIDE_TNEF_ATTACHMENTS, &prop);
+    todo_wine ok(hr == S_OK, "ret %08x\n", hr);
+    todo_wine ok(prop.vt == VT_BOOL, "vt %08x\n", prop.vt);
+    todo_wine ok(prop.u.boolVal == TRUE, "Hide Attachments got %d\n", prop.u.boolVal);
+    PropVariantClear(&prop);
+
+    /* Invalid OID */
+    prop.vt = VT_BOOL;
+    prop.u.boolVal = TRUE;
+    hr = IMimeMessage_SetOption(msg, 0xff00000a, &prop);
+    todo_wine ok(hr == MIME_E_INVALID_OPTION_ID, "ret %08x\n", hr);
+    PropVariantClear(&prop);
+
+    IMimeMessage_Release(msg);
+}
+
 void test_BindToObject(void)
 {
     HRESULT hr;
@@ -372,6 +434,7 @@ START_TEST(mimeole)
     test_CreateBody();
     test_Allocator();
     test_CreateMessage();
+    test_MessageOptions();
     test_BindToObject();
     test_MimeOleGetPropertySchema();
     OleUninitialize();
