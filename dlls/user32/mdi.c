@@ -501,8 +501,7 @@ static void MDI_ChildGetMinMaxInfo( HWND client, HWND hwnd, MINMAXINFO* lpMinMax
     lpMinMax->ptMaxPosition.x = rect.left;
     lpMinMax->ptMaxPosition.y = rect.top;
 
-    TRACE("max rect (%d,%d - %d, %d)\n",
-                        rect.left,rect.top,rect.right,rect.bottom);
+    TRACE("max rect %s\n", wine_dbgstr_rect(&rect));
 }
 
 /**********************************************************************
