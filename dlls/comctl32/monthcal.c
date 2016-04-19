@@ -1805,18 +1805,6 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
   if (lpht->cbSize == sizeof(MCHITTESTINFO))
     memcpy(&htinfo.rc, &lpht->rc, sizeof(MCHITTESTINFO) - MCHITTESTINFO_V1_SIZE);
 
-  /* Comment in for debugging...
-  TRACE("%d %d wd[%d %d %d %d] d[%d %d %d %d] t[%d %d %d %d] wn[%d %d %d %d]\n", x, y,
-	infoPtr->wdays.left, infoPtr->wdays.right,
-	infoPtr->wdays.top, infoPtr->wdays.bottom,
-	infoPtr->days.left, infoPtr->days.right,
-	infoPtr->days.top, infoPtr->days.bottom,
-	infoPtr->todayrect.left, infoPtr->todayrect.right,
-	infoPtr->todayrect.top, infoPtr->todayrect.bottom,
-	infoPtr->weeknums.left, infoPtr->weeknums.right,
-	infoPtr->weeknums.top, infoPtr->weeknums.bottom);
-  */
-
   /* guess in what calendar we are */
   calIdx = MONTHCAL_GetCalendarFromPoint(infoPtr, &lpht->pt);
   if (calIdx == -1)
