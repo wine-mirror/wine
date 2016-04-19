@@ -3656,7 +3656,7 @@ static void test_emf_GradientFill(void)
     ok( mf != 0, "CreateEnhMetaFileA error %d\n", GetLastError() );
 
     /* Don't test the GRADIENT_FILL_RECT_ modes since a Windows bug
-     * means it allocates three mesh indicies rather than two per
+     * means it allocates three mesh indices rather than two per
      * rectangle.  This results in uninitialised values being written
      * to the EMF which is rather difficult to test against.
      *
