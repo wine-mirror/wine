@@ -1243,8 +1243,7 @@ static void TAB_SetItemBounds (TAB_INFO *infoPtr)
         tabwidth = max(tabwidth, infoPtr->tabMinWidth);
 
       curr->rect.right = curr->rect.left + tabwidth;
-      TRACE("for <%s>, l,r=%d,%d\n",
-	  debugstr_w(curr->pszText), curr->rect.left, curr->rect.right);
+      TRACE("for <%s>, rect %s\n", debugstr_w(curr->pszText), wine_dbgstr_rect(&curr->rect));
     }
 
     /*
@@ -1263,8 +1262,7 @@ static void TAB_SetItemBounds (TAB_INFO *infoPtr)
 
 	curr->rect.left = 0;
         curItemRowCount++;
-	TRACE("wrapping <%s>, l,r=%d,%d\n", debugstr_w(curr->pszText),
-	    curr->rect.left, curr->rect.right);
+	TRACE("wrapping <%s>, rect %s\n", debugstr_w(curr->pszText), wine_dbgstr_rect(&curr->rect));
     }
 
     curr->rect.bottom = 0;
@@ -1377,9 +1375,7 @@ static void TAB_SetItemBounds (TAB_INFO *infoPtr)
           else
             curItemLeftPos = curr->rect.right;
 
-          TRACE("arranging <%s>, l,r=%d,%d, row=%d\n",
-	      debugstr_w(curr->pszText), curr->rect.left,
-	      curr->rect.right, curr->rect.top);
+          TRACE("arranging <%s>, rect %s\n", debugstr_w(curr->pszText), wine_dbgstr_rect(&curr->rect));
       }
 
       /*
@@ -1429,9 +1425,7 @@ static void TAB_SetItemBounds (TAB_INFO *infoPtr)
 	      item->rect.left += iCount * widthDiff;
 	      item->rect.right += (iCount + 1) * widthDiff;
 
-              TRACE("adjusting 1 <%s>, l,r=%d,%d\n",
-		  debugstr_w(item->pszText),
-		  item->rect.left, item->rect.right);
+              TRACE("adjusting 1 <%s>, rect %s\n", debugstr_w(item->pszText), wine_dbgstr_rect(&item->rect));
 
 	    }
 	    TAB_GetItem(infoPtr, iIndex - 1)->rect.right += remainder;
@@ -1441,12 +1435,8 @@ static void TAB_SetItemBounds (TAB_INFO *infoPtr)
 	    start->rect.left = clientRect.left;
 	    start->rect.right = clientRect.right - 4;
 
-            TRACE("adjusting 2 <%s>, l,r=%d,%d\n",
-		debugstr_w(start->pszText),
-		start->rect.left, start->rect.right);
-
+            TRACE("adjusting 2 <%s>, rect %s\n", debugstr_w(start->pszText), wine_dbgstr_rect(&start->rect));
 	  }
-
 
 	  iIndexStart = iIndexEnd;
 	}
