@@ -947,12 +947,12 @@ todo_wine
     ok(hr == S_OK, "get_Name error %#x\n", hr);
     hr = IIDFromString(bstr, &iid);
     ok(hr == S_OK, "IIDFromString error %#x\n", hr);
-    SysFreeString(bstr);
 
     IRegisteredTask_Release(task1);
 
     hr = ITaskFolder_DeleteTask(root, bstr, 0);
     ok(hr == S_OK, "DeleteTask error %#x\n", hr);
+    SysFreeString(bstr);
 
     hr = ITaskFolder_RegisterTask(folder, NULL, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
