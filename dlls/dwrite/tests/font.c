@@ -5830,6 +5830,8 @@ static void test_CreateFontFaceReference(void)
     IDWriteFontFile *file, *file1;
     IDWriteFactory3 *factory3;
     IDWriteFactory *factory;
+    IDWriteFont3 *font3;
+    IDWriteFont *font;
     UINT32 index;
     WCHAR *path;
     HRESULT hr;
@@ -5920,6 +5922,23 @@ todo_wine
     IDWriteFontFaceReference_Release(ref);
     IDWriteFontFile_Release(file);
     IDWriteFontFile_Release(file1);
+
+    /* references returned from IDWriteFont3 */
+    font = get_tahoma_instance((IDWriteFactory*)factory3, DWRITE_FONT_STYLE_NORMAL);
+    hr = IDWriteFont_QueryInterface(font, &IID_IDWriteFont3, (void**)&font3);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFont_Release(font);
+
+    hr = IDWriteFont3_GetFontFaceReference(font3, &ref);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFont3_GetFontFaceReference(font3, &ref1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(ref != ref1, "got %p, %p\n", ref1, ref);
+
+    IDWriteFontFaceReference_Release(ref);
+    IDWriteFontFaceReference_Release(ref1);
+    IDWriteFont3_Release(font3);
 
     IDWriteFactory3_Release(factory3);
     DELETE_FONTFILE(path);

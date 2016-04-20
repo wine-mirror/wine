@@ -1511,8 +1511,11 @@ static BOOL WINAPI dwritefont3_Equals(IDWriteFont3 *iface, IDWriteFont *font)
 static HRESULT WINAPI dwritefont3_GetFontFaceReference(IDWriteFont3 *iface, IDWriteFontFaceReference **reference)
 {
     struct dwrite_font *This = impl_from_IDWriteFont3(iface);
-    FIXME("(%p)->(%p): stub\n", This, reference);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, reference);
+
+    return IDWriteFactory3_CreateFontFaceReference_(This->data->factory, This->data->file, This->data->face_index,
+        This->data->simulations, reference);
 }
 
 static BOOL WINAPI dwritefont3_HasCharacter(IDWriteFont3 *iface, UINT32 ch)
