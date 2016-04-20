@@ -5847,14 +5847,12 @@ static void test_CreateFontFaceReference(void)
     path = create_testfontfile(test_fontfile);
 
     hr = IDWriteFactory3_CreateFontFaceReference(factory3, NULL, NULL, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
-todo_wine
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     /* test file is not a collection, but reference could still be created */
     hr = IDWriteFactory3_CreateFontFaceReference(factory3, path, NULL, 1, DWRITE_FONT_SIMULATIONS_NONE, &ref);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
-if (hr == S_OK) {
+
     index = IDWriteFontFaceReference_GetFontFaceIndex(ref);
     ok(index == 1, "got %u\n", index);
 
@@ -5863,20 +5861,21 @@ if (hr == S_OK) {
     IDWriteFontFile_Release(file);
 
     hr = IDWriteFontFaceReference_CreateFontFace(ref, &fontface);
+todo_wine
     ok(hr == DWRITE_E_FILEFORMAT, "got 0x%08x\n", hr);
 
     IDWriteFontFaceReference_Release(ref);
-}
+
     /* path however has to be valid */
     hr = IDWriteFactory3_CreateFontFaceReference(factory3, dummyW, NULL, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
 todo_wine
     ok(hr == DWRITE_E_FILENOTFOUND, "got 0x%08x\n", hr);
+    if (hr == S_OK)
+        IDWriteFontFaceReference_Release(ref);
 
     EXPECT_REF(factory3, 1);
     hr = IDWriteFactory3_CreateFontFaceReference(factory3, path, NULL, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
-if (hr == S_OK) {
     EXPECT_REF(factory3, 2);
 
     /* new file is returned */
@@ -5922,7 +5921,7 @@ if (hr == S_OK) {
     IDWriteFontFaceReference_Release(ref);
     IDWriteFontFile_Release(file);
     IDWriteFontFile_Release(file1);
-}
+
     IDWriteFactory3_Release(factory3);
     DELETE_FONTFILE(path);
 }

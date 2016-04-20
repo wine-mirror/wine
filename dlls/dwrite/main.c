@@ -1270,19 +1270,29 @@ static HRESULT WINAPI dwritefactory3_CreateFontFaceReference_(IDWriteFactory3 *i
 {
     struct dwritefactory *This = impl_from_IDWriteFactory3(iface);
 
-    FIXME("(%p)->(%p %u %x %p): stub\n", This, file, index, simulations, reference);
+    TRACE("(%p)->(%p %u %x %p)\n", This, file, index, simulations, reference);
 
-    return E_NOTIMPL;
+    return create_fontfacereference(iface, file, index, simulations, reference);
 }
 
 static HRESULT WINAPI dwritefactory3_CreateFontFaceReference(IDWriteFactory3 *iface, WCHAR const *path, FILETIME const *writetime,
     UINT32 index, DWRITE_FONT_SIMULATIONS simulations, IDWriteFontFaceReference **reference)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory3(iface);
+    IDWriteFontFile *file;
+    HRESULT hr;
 
-    FIXME("(%p)->(%s %p %u %x, %p): stub\n", This, debugstr_w(path), writetime, index, simulations, reference);
+    TRACE("(%p)->(%s %p %u %x, %p)\n", This, debugstr_w(path), writetime, index, simulations, reference);
 
-    return E_NOTIMPL;
+    hr = IDWriteFactory3_CreateFontFileReference(iface, path, writetime, &file);
+    if (FAILED(hr)) {
+        *reference = NULL;
+        return hr;
+    }
+
+    hr = IDWriteFactory3_CreateFontFaceReference_(iface, file, index, simulations, reference);
+    IDWriteFontFile_Release(file);
+    return hr;
 }
 
 static HRESULT WINAPI dwritefactory3_GetSystemFontSet(IDWriteFactory3 *iface, IDWriteFontSet **fontset)

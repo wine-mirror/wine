@@ -147,6 +147,8 @@ extern HRESULT create_system_fontfallback(IDWriteFactory3*,IDWriteFontFallback**
 extern void    release_system_fontfallback(IDWriteFontFallback*) DECLSPEC_HIDDEN;
 extern HRESULT create_matching_font(IDWriteFontCollection*,const WCHAR*,DWRITE_FONT_WEIGHT,DWRITE_FONT_STYLE,DWRITE_FONT_STRETCH,
     IDWriteFont**) DECLSPEC_HIDDEN;
+extern HRESULT create_fontfacereference(IDWriteFactory3*,IDWriteFontFile*,UINT32,DWRITE_FONT_SIMULATIONS,
+    IDWriteFontFaceReference**) DECLSPEC_HIDDEN;
 
 /* Opentype font table functions */
 struct dwrite_font_props {
