@@ -5390,10 +5390,18 @@ static HRESULT WINAPI fontfacereference_CreateFontFaceWithSimulations(IDWriteFon
 static BOOL WINAPI fontfacereference_Equals(IDWriteFontFaceReference *iface, IDWriteFontFaceReference *ref)
 {
     struct dwrite_fontfacereference *This = impl_from_IDWriteFontFaceReference(iface);
+    IDWriteFontFile *file;
+    BOOL ret;
 
-    FIXME("(%p)->(%p): stub\n", This, ref);
+    TRACE("(%p)->(%p)\n", This, ref);
 
-    return E_NOTIMPL;
+    if (FAILED(IDWriteFontFaceReference_GetFontFile(ref, &file)))
+        return FALSE;
+
+    ret = is_same_fontfile(This->file, file);
+    IDWriteFontFile_Release(file);
+
+    return ret;
 }
 
 static UINT32 WINAPI fontfacereference_GetFontFaceIndex(IDWriteFontFaceReference *iface)
