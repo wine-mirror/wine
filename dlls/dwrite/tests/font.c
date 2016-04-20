@@ -43,8 +43,10 @@
 
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
+#define GET_BE_DWORD(x) (x)
 #else
 #define GET_BE_WORD(x) RtlUshortByteSwap(x)
+#define GET_BE_DWORD(x) RtlUlongByteSwap(x)
 #endif
 
 #define EXPECT_HR(hr,hr_exp) \
@@ -5840,6 +5842,127 @@ if (hr == S_OK)
     DELETE_FONTFILE(path);
 }
 
+static void get_expected_fontsig(IDWriteFont *font, FONTSIGNATURE *fontsig)
+{
+    void *os2_context;
+    IDWriteFontFace *fontface;
+    const TT_OS2_V2 *tt_os2;
+    UINT32 size;
+    BOOL exists;
+    HRESULT hr;
+
+    memset(fontsig, 0, sizeof(*fontsig));
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_0S2_TAG, (const void**)&tt_os2, &size, &os2_context, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    if (tt_os2) {
+        fontsig->fsUsb[0] = GET_BE_DWORD(tt_os2->ulUnicodeRange1);
+        fontsig->fsUsb[1] = GET_BE_DWORD(tt_os2->ulUnicodeRange2);
+        fontsig->fsUsb[2] = GET_BE_DWORD(tt_os2->ulUnicodeRange3);
+        fontsig->fsUsb[3] = GET_BE_DWORD(tt_os2->ulUnicodeRange4);
+
+        fontsig->fsCsb[0] = GET_BE_DWORD(tt_os2->ulCodePageRange1);
+        fontsig->fsCsb[1] = GET_BE_DWORD(tt_os2->ulCodePageRange2);
+
+        IDWriteFontFace_ReleaseFontTable(fontface, os2_context);
+    }
+
+    IDWriteFontFace_Release(fontface);
+}
+
+static void test_GetFontSignature(void)
+{
+    IDWriteFontCollection *syscollection;
+    IDWriteGdiInterop1 *interop1;
+    IDWriteGdiInterop *interop;
+    IDWriteFactory *factory;
+    FONTSIGNATURE fontsig;
+    UINT count, i;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_GetGdiInterop(factory, &interop);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteGdiInterop_QueryInterface(interop, &IID_IDWriteGdiInterop1, (void**)&interop1);
+    IDWriteGdiInterop_Release(interop);
+    if (FAILED(hr)) {
+        win_skip("GetFontSignature() is not supported.\n");
+        IDWriteGdiInterop_Release(interop);
+        IDWriteFactory_Release(factory);
+        return;
+    };
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteGdiInterop1_GetFontSignature(interop1, NULL, &fontsig);
+todo_wine
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &syscollection, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    count = IDWriteFontCollection_GetFontFamilyCount(syscollection);
+
+    for (i = 0; i < count; i++) {
+        FONTSIGNATURE expected_signature;
+        IDWriteLocalizedStrings *names;
+        IDWriteFontFace *fontface;
+        IDWriteFontFamily *family;
+        IDWriteFont *font;
+        WCHAR nameW[256];
+
+        hr = IDWriteFontCollection_GetFontFamily(syscollection, i, &family);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
+            DWRITE_FONT_STYLE_NORMAL, &font);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFont_CreateFontFace(font, &fontface);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontFamily_GetFamilyNames(family, &names);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        get_enus_string(names, nameW, sizeof(nameW)/sizeof(nameW[0]));
+
+        IDWriteLocalizedStrings_Release(names);
+
+        hr = IDWriteGdiInterop1_GetFontSignature(interop1, font, &fontsig);
+    todo_wine
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+if (hr == S_OK) {
+        get_expected_fontsig(font, &expected_signature);
+
+        ok(fontsig.fsUsb[0] == expected_signature.fsUsb[0], "%s: fsUsb[0] %#x, expected %#x\n", wine_dbgstr_w(nameW),
+            fontsig.fsUsb[0], expected_signature.fsUsb[0]);
+        ok(fontsig.fsUsb[1] == expected_signature.fsUsb[1], "%s: fsUsb[1] %#x, expected %#x\n", wine_dbgstr_w(nameW),
+            fontsig.fsUsb[1], expected_signature.fsUsb[1]);
+        ok(fontsig.fsUsb[2] == expected_signature.fsUsb[2], "%s: fsUsb[2] %#x, expected %#x\n", wine_dbgstr_w(nameW),
+            fontsig.fsUsb[2], expected_signature.fsUsb[2]);
+        ok(fontsig.fsUsb[3] == expected_signature.fsUsb[3], "%s: fsUsb[3] %#x, expected %#x\n", wine_dbgstr_w(nameW),
+            fontsig.fsUsb[3], expected_signature.fsUsb[3]);
+
+        ok(fontsig.fsCsb[0] == expected_signature.fsCsb[0], "%s: fsCsb[0] %#x, expected %#x\n", wine_dbgstr_w(nameW),
+            fontsig.fsCsb[0], expected_signature.fsCsb[0]);
+        ok(fontsig.fsCsb[1] == expected_signature.fsCsb[1], "%s: fsCsb[1] %#x, expected %#x\n", wine_dbgstr_w(nameW),
+            fontsig.fsCsb[1], expected_signature.fsCsb[1]);
+}
+        IDWriteFont_Release(font);
+        IDWriteFontFace_Release(fontface);
+        IDWriteFontFamily_Release(family);
+    }
+
+    IDWriteGdiInterop1_Release(interop1);
+    IDWriteFontCollection_Release(syscollection);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -5895,6 +6018,7 @@ START_TEST(font)
     test_TranslateColorGlyphRun();
     test_HasCharacter();
     test_CreateFontFaceReference();
+    test_GetFontSignature();
 
     IDWriteFactory_Release(factory);
 }
