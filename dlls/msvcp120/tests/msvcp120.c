@@ -276,12 +276,14 @@ static _Pad* (__thiscall *p__Pad_op_assign)(_Pad*, const _Pad*);
 static void (__thiscall *p__Pad__Launch)(_Pad*, _Thrd_t*);
 static void (__thiscall *p__Pad__Release)(_Pad*);
 
+static BOOLEAN (WINAPI *pCreateSymbolicLinkA)(LPCSTR,LPCSTR,DWORD);
+
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
 static BOOL init(void)
 {
-    HANDLE msvcr;
+    HANDLE hdll;
 
     msvcp = LoadLibraryA("msvcp120.dll");
     if(!msvcp)
@@ -512,10 +514,13 @@ static BOOL init(void)
     SET(p__Cnd_signal,
             "_Cnd_signal");
 
-    msvcr = GetModuleHandleA("msvcr120.dll");
-    p_setlocale = (void*)GetProcAddress(msvcr, "setlocale");
-    p__setmbcp = (void*)GetProcAddress(msvcr, "_setmbcp");
-    p_isleadbyte = (void*)GetProcAddress(msvcr, "isleadbyte");
+    hdll = GetModuleHandleA("msvcr120.dll");
+    p_setlocale = (void*)GetProcAddress(hdll, "setlocale");
+    p__setmbcp = (void*)GetProcAddress(hdll, "_setmbcp");
+    p_isleadbyte = (void*)GetProcAddress(hdll, "isleadbyte");
+
+    hdll = GetModuleHandleA("kernel32.dll");
+    pCreateSymbolicLinkA = (void*)GetProcAddress(hdll, "CreateSymbolicLinkA");
 
     init_thiscall_thunk();
     return TRUE;
@@ -1277,13 +1282,13 @@ static void test_tr2_sys__Stat(void)
     ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
     ok(CloseHandle(file), "CloseHandle\n");
     SetLastError(0xdeadbeef);
-    ret = CreateSymbolicLinkA("tr2_test_dir/f1_link", "tr2_test_dir/f1", 0);
-    if(!ret && (GetLastError()==ERROR_PRIVILEGE_NOT_HELD||GetLastError()==ERROR_INVALID_FUNCTION)) {
+    ret = pCreateSymbolicLinkA ? pCreateSymbolicLinkA("tr2_test_dir/f1_link", "tr2_test_dir/f1", 0) : FALSE;
+    if(!ret && (!pCreateSymbolicLinkA || GetLastError()==ERROR_PRIVILEGE_NOT_HELD||GetLastError()==ERROR_INVALID_FUNCTION)) {
         tests[5].ret = tests[6].ret = file_not_found;
         win_skip("Privilege not held or symbolic link not supported, skipping symbolic link tests.\n");
     }else {
         ok(ret, "CreateSymbolicLinkA failed\n");
-        ok(CreateSymbolicLinkA("tr2_test_dir/dir_link", "tr2_test_dir", 1), "CreateSymbolicLinkA failed\n");
+        ok(pCreateSymbolicLinkA("tr2_test_dir/dir_link", "tr2_test_dir", 1), "CreateSymbolicLinkA failed\n");
     }
 
     file = CreateNamedPipeA("\\\\.\\PiPe\\tests_pipe.c",
