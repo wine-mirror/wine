@@ -5886,7 +5886,7 @@ static void test_publish_components(void)
     size = 0;
     r = MsiProvideQualifiedComponentA("{92AFCBC0-9CA6-4270-8454-47C5EE2B8FAA}",
             "english.txt", INSTALLMODE_DEFAULT, NULL, &size);
-    ok(r == ERROR_SUCCESS, "MsiProvideQualifiedCompontent returned %d\n", r);
+    ok(r == ERROR_SUCCESS, "MsiProvideQualifiedComponent returned %d\n", r);
 
     res = RegOpenKeyA(HKEY_CURRENT_USER, keypath, &key);
     ok(res == ERROR_SUCCESS, "components key not created %d\n", res);
@@ -5912,7 +5912,7 @@ static void test_publish_components(void)
     size = 0;
     r = MsiProvideQualifiedComponentA("{92AFCBC0-9CA6-4270-8454-47C5EE2B8FAA}",
             "english.txt", INSTALLMODE_DEFAULT, NULL, &size);
-    ok(r == ERROR_SUCCESS, "MsiProvideQualifiedCompontent returned %d\n", r);
+    ok(r == ERROR_SUCCESS, "MsiProvideQualifiedComponent returned %d\n", r);
 
     if (pRegDeleteKeyExA)
         res = pRegDeleteKeyExA(HKEY_LOCAL_MACHINE, keypath2, KEY_WOW64_64KEY, 0);

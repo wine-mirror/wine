@@ -2482,7 +2482,7 @@ static void test_msipackage(void)
     r = MsiOpenDatabaseW(msifileW, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    /* database exists, but is emtpy */
+    /* database exists, but is empty */
     sprintf(name, "#%d", hdb);
     r = MsiOpenPackageA(name, &hpack);
     ok(r == ERROR_INSTALL_PACKAGE_INVALID,
