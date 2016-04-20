@@ -186,14 +186,16 @@ BOOL WINAPI JSPROXY_InternetInitializeAutoProxyDll( DWORD version, LPSTR tmpfile
 
     EnterCriticalSection( &cs_jsproxy );
 
-    if (global_script->text)
+    if (buffer && buffer->dwStructSize == sizeof(*buffer) && buffer->lpszScriptBuffer)
     {
-        LeaveCriticalSection( &cs_jsproxy );
-        return FALSE;
+        heap_free( global_script->text );
+        if( (global_script->text = strdupAW( buffer->lpszScriptBuffer, buffer->dwScriptBufferSize ))) ret = TRUE;
     }
-    if (buffer && buffer->dwStructSize == sizeof(*buffer) && buffer->lpszScriptBuffer &&
-        (global_script->text = strdupAW( buffer->lpszScriptBuffer, buffer->dwScriptBufferSize ))) ret = TRUE;
-    else if ((global_script->text = load_script( tmpfile ))) ret = TRUE;
+    else
+    {
+        heap_free( global_script->text );
+        if ((global_script->text = load_script( tmpfile ))) ret = TRUE;
+    }
 
     LeaveCriticalSection( &cs_jsproxy );
     return ret;
