@@ -139,10 +139,12 @@ static ULONG WINAPI d3drm1_Release(IDirect3DRM *iface)
 static HRESULT WINAPI d3drm1_CreateObject(IDirect3DRM *iface,
         REFCLSID clsid, IUnknown *outer, REFIID iid, void **out)
 {
-    FIXME("iface %p, clsid %s, outer %p, iid %s, out %p stub!\n",
+    struct d3drm *d3drm = impl_from_IDirect3DRM(iface);
+
+    TRACE("iface %p, clsid %s, outer %p, iid %s, out %p.\n",
             iface, debugstr_guid(clsid), outer, debugstr_guid(iid), out);
 
-    return E_NOTIMPL;
+    return IDirect3DRM3_CreateObject(&d3drm->IDirect3DRM3_iface, clsid, outer, iid, out);
 }
 
 static HRESULT WINAPI d3drm1_CreateFrame(IDirect3DRM *iface,
@@ -603,10 +605,12 @@ static ULONG WINAPI d3drm2_Release(IDirect3DRM2 *iface)
 static HRESULT WINAPI d3drm2_CreateObject(IDirect3DRM2 *iface,
         REFCLSID clsid, IUnknown *outer, REFIID iid, void **out)
 {
-    FIXME("iface %p, clsid %s, outer %p, iid %s, out %p stub!\n",
+    struct d3drm *d3drm = impl_from_IDirect3DRM2(iface);
+
+    TRACE("iface %p, clsid %s, outer %p, iid %s, out %p.\n",
             iface, debugstr_guid(clsid), outer, debugstr_guid(iid), out);
 
-    return E_NOTIMPL;
+    return IDirect3DRM3_CreateObject(&d3drm->IDirect3DRM3_iface, clsid, outer, iid, out);
 }
 
 static HRESULT WINAPI d3drm2_CreateFrame(IDirect3DRM2 *iface,
@@ -1054,10 +1058,50 @@ static ULONG WINAPI d3drm3_Release(IDirect3DRM3 *iface)
 static HRESULT WINAPI d3drm3_CreateObject(IDirect3DRM3 *iface,
         REFCLSID clsid, IUnknown *outer, REFIID iid, void **out)
 {
-    FIXME("iface %p, clsid %s, outer %p, iid %s, out %p stub!\n",
+    IUnknown *object;
+    HRESULT hr;
+
+    TRACE("iface %p, clsid %s, outer %p, iid %s, out %p.\n",
             iface, debugstr_guid(clsid), outer, debugstr_guid(iid), out);
 
-    return E_NOTIMPL;
+    if (!out)
+        return D3DRMERR_BADVALUE;
+
+    if (!clsid || !iid)
+    {
+        *out = NULL;
+        return D3DRMERR_BADVALUE;
+    }
+
+    if (outer)
+    {
+        FIXME("COM aggregation for outer IUnknown (%p) not implemented. Returning E_NOTIMPL.\n", outer);
+        *out = NULL;
+        return E_NOTIMPL;
+    }
+
+    if (IsEqualGUID(clsid, &CLSID_CDirect3DRMTexture))
+    {
+        struct d3drm_texture *texture;
+        if (FAILED(hr = d3drm_texture_create(&texture)))
+        {
+            *out = NULL;
+            return hr;
+        }
+        object = (IUnknown *)&texture->IDirect3DRMTexture3_iface;
+    }
+    else
+    {
+        FIXME("%s not implemented. Returning CLASSFACTORY_E_FIRST.\n", debugstr_guid(clsid));
+        *out = NULL;
+        return CLASSFACTORY_E_FIRST;
+    }
+
+    if (FAILED(hr = IUnknown_QueryInterface(object, iid, out)))
+        *out = NULL;
+    IUnknown_Release(object);
+
+    return hr;
 }
 
 static HRESULT WINAPI d3drm3_CreateFrame(IDirect3DRM3 *iface,

@@ -1353,23 +1353,24 @@ static void test_object(void)
     {
         REFCLSID clsid;
         REFIID iid;
+        BOOL todo;
     }
     tests[] =
     {
-        { &CLSID_CDirect3DRMDevice,        &IID_IDirect3DRMDevice        },
-        { &CLSID_CDirect3DRMDevice,        &IID_IDirect3DRMDevice2       },
-        { &CLSID_CDirect3DRMDevice,        &IID_IDirect3DRMDevice3       },
-        { &CLSID_CDirect3DRMDevice,        &IID_IDirect3DRMWinDevice     },
-        { &CLSID_CDirect3DRMTexture,       &IID_IDirect3DRMTexture       },
-        { &CLSID_CDirect3DRMTexture,       &IID_IDirect3DRMTexture2      },
-        { &CLSID_CDirect3DRMTexture,       &IID_IDirect3DRMTexture3      },
-        { &CLSID_CDirect3DRMViewport,      &IID_IDirect3DRMViewport      },
-        { &CLSID_CDirect3DRMViewport,      &IID_IDirect3DRMViewport2     },
+        { &CLSID_CDirect3DRMDevice,        &IID_IDirect3DRMDevice,       TRUE  },
+        { &CLSID_CDirect3DRMDevice,        &IID_IDirect3DRMDevice2,      TRUE  },
+        { &CLSID_CDirect3DRMDevice,        &IID_IDirect3DRMDevice3,      TRUE  },
+        { &CLSID_CDirect3DRMDevice,        &IID_IDirect3DRMWinDevice,    TRUE  },
+        { &CLSID_CDirect3DRMTexture,       &IID_IDirect3DRMTexture,      FALSE },
+        { &CLSID_CDirect3DRMTexture,       &IID_IDirect3DRMTexture2,     FALSE },
+        { &CLSID_CDirect3DRMTexture,       &IID_IDirect3DRMTexture3,     FALSE },
+        { &CLSID_CDirect3DRMViewport,      &IID_IDirect3DRMViewport,     TRUE  },
+        { &CLSID_CDirect3DRMViewport,      &IID_IDirect3DRMViewport2,    TRUE  },
     };
     IDirect3DRM *d3drm1;
     IDirect3DRM2 *d3drm2;
     IDirect3DRM3 *d3drm3;
-    IUnknown *unknown;
+    IUnknown *unknown = (IUnknown *)0xdeadbeef;
     HRESULT hr;
     ULONG ref1, ref2, ref3, ref4;
     int i;
@@ -1382,17 +1383,26 @@ static void test_object(void)
     hr = IDirect3DRM_QueryInterface(d3drm1, &IID_IDirect3DRM3, (void **)&d3drm3);
     ok(SUCCEEDED(hr), "Cannot get IDirect3DRM3 interface (hr = %#x).\n", hr);
 
+    hr = IDirect3DRM_CreateObject(d3drm1, &CLSID_DirectDraw, NULL, &IID_IDirectDraw, (void **)&unknown);
+    ok(hr == CLASSFACTORY_E_FIRST, "Expected hr == CLASSFACTORY_E_FIRST, got %#x.\n", hr);
+    ok(!unknown, "Expected object returned == NULL, got %p.\n", unknown);
+
     for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
+        unknown = (IUnknown *)0xdeadbeef;
         hr = IDirect3DRM_CreateObject(d3drm1, NULL, NULL, tests[i].iid, (void **)&unknown);
-        todo_wine ok(hr == D3DRMERR_BADVALUE, "Test %u: expected hr == D3DRMERR_BADVALUE, got %#x.\n", i, hr);
+        ok(hr == D3DRMERR_BADVALUE, "Test %u: expected hr == D3DRMERR_BADVALUE, got %#x.\n", i, hr);
+        ok(!unknown, "Expected object returned == NULL, got %p.\n", unknown);
+        unknown = (IUnknown *)0xdeadbeef;
         hr = IDirect3DRM_CreateObject(d3drm1, tests[i].clsid, NULL, NULL, (void **)&unknown);
-        todo_wine ok(hr == D3DRMERR_BADVALUE, "Test %u: expected hr == D3DRMERR_BADVALUE, got %#x.\n", i, hr);
+        ok(hr == D3DRMERR_BADVALUE, "Test %u: expected hr == D3DRMERR_BADVALUE, got %#x.\n", i, hr);
+        ok(!unknown, "Expected object returned == NULL, got %p.\n", unknown);
         hr = IDirect3DRM_CreateObject(d3drm1, tests[i].clsid, NULL, NULL, NULL);
-        todo_wine ok(hr == D3DRMERR_BADVALUE, "Test %u: expected hr == D3DRMERR_BADVALUE, got %#x.\n", i, hr);
+        ok(hr == D3DRMERR_BADVALUE, "Test %u: expected hr == D3DRMERR_BADVALUE, got %#x.\n", i, hr);
 
         hr = IDirect3DRM_CreateObject(d3drm1, tests[i].clsid, NULL, tests[i].iid, (void **)&unknown);
-        todo_wine ok(SUCCEEDED(hr), "Test %u: expected hr == D3DRM_OK, got %#x.\n", i, hr);
+        todo_wine_if(tests[i].todo)
+        ok(SUCCEEDED(hr), "Test %u: expected hr == D3DRM_OK, got %#x.\n", i, hr);
         if (SUCCEEDED(hr))
         {
             ref2 = get_refcount((IUnknown *)d3drm1);
