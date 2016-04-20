@@ -11768,7 +11768,8 @@ msgstr "Voulez-vous réellement supprimer la clé de registre « %1 » ?"
 
 #: reg.rc:52
 msgid "reg: The option [/d] must be followed by a valid string\n"
-msgstr "reg : l'option [/d] doit être suivie d'un entier valide\n"
+msgstr ""
+"reg : l'option [/d] doit être suivie d'une chaîne de caractères valide\n"
 
 #: reg.rc:53
 msgid ""
