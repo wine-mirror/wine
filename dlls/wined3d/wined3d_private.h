@@ -2505,6 +2505,8 @@ struct wined3d_texture
             struct wined3d_surface *surface;
             struct wined3d_volume *volume;
         } u;
+        unsigned int offset;
+        unsigned int size;
 
         unsigned int map_count;
         DWORD locations;

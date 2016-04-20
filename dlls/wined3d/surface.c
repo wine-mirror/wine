@@ -398,7 +398,7 @@ HRESULT wined3d_surface_create_dc(struct wined3d_surface *surface)
     }
 
     wined3d_texture_get_memory(texture, sub_resource_idx, &data, texture->resource.map_binding);
-    desc.pMemory = wined3d_texture_map_bo_address(&data, surface->resource.size,
+    desc.pMemory = wined3d_texture_map_bo_address(&data, texture->sub_resources[sub_resource_idx].size,
             gl_info, GL_PIXEL_UNPACK_BUFFER, 0);
 
     if (context)
@@ -2746,21 +2746,21 @@ static void surface_copy_simple_location(struct wined3d_surface *surface, DWORD 
     unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     struct wined3d_texture *texture = surface->container;
     struct wined3d_device *device = texture->resource.device;
+    struct wined3d_texture_sub_resource *sub_resource;
     struct wined3d_context *context;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_bo_address dst, src;
-    UINT size = surface->resource.size;
 
+    sub_resource = &texture->sub_resources[sub_resource_idx];
     wined3d_texture_get_memory(texture, sub_resource_idx, &dst, location);
-    wined3d_texture_get_memory(texture, sub_resource_idx, &src,
-            texture->sub_resources[sub_resource_idx].locations);
+    wined3d_texture_get_memory(texture, sub_resource_idx, &src, sub_resource->locations);
 
     if (dst.buffer_object)
     {
         context = context_acquire(device, NULL);
         gl_info = context->gl_info;
         GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, dst.buffer_object));
-        GL_EXTCALL(glBufferSubData(GL_PIXEL_UNPACK_BUFFER, 0, size, src.addr));
+        GL_EXTCALL(glBufferSubData(GL_PIXEL_UNPACK_BUFFER, 0, sub_resource->size, src.addr));
         GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
         checkGLcall("Upload PBO");
         context_release(context);
@@ -2771,13 +2771,13 @@ static void surface_copy_simple_location(struct wined3d_surface *surface, DWORD 
         context = context_acquire(device, NULL);
         gl_info = context->gl_info;
         GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, src.buffer_object));
-        GL_EXTCALL(glGetBufferSubData(GL_PIXEL_PACK_BUFFER, 0, size, dst.addr));
+        GL_EXTCALL(glGetBufferSubData(GL_PIXEL_PACK_BUFFER, 0, sub_resource->size, dst.addr));
         GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
         checkGLcall("Download PBO");
         context_release(context);
         return;
     }
-    memcpy(dst.addr, src.addr, size);
+    memcpy(dst.addr, src.addr, sub_resource->size);
 }
 
 /* Context activation is done by the caller. */
@@ -4316,16 +4316,11 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, desc->format);
     UINT multisample_quality = desc->multisample_quality;
-    unsigned int resource_size;
     HRESULT hr;
-
-    resource_size = wined3d_format_calculate_size(format, device->surface_alignment, desc->width, desc->height, 1);
-    if (!resource_size)
-        return WINED3DERR_INVALIDCALL;
 
     if (FAILED(hr = resource_init(&surface->resource, device, WINED3D_RTYPE_SURFACE,
             format, desc->multisample_type, multisample_quality, desc->usage, desc->pool, desc->width, desc->height,
-            1, resource_size, NULL, &wined3d_null_parent_ops, &surface_resource_ops)))
+            1, 0, NULL, &wined3d_null_parent_ops, &surface_resource_ops)))
     {
         WARN("Failed to initialize resource, returning %#x.\n", hr);
         return hr;

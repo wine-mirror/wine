@@ -7929,7 +7929,7 @@ static void test_miptree_layout(void)
                 if (!i)
                     base = map_desc.pBits;
                 else
-                    todo_wine ok(map_desc.pBits == base + offset,
+                    ok(map_desc.pBits == base + offset,
                             "%s, %s, level %u: Got unexpected pBits %p, expected %p.\n",
                             pools[pool_idx].name, formats[format_idx].name, i, map_desc.pBits, base + offset);
                 offset += (base_dimension >> i) * map_desc.Pitch;
@@ -7968,7 +7968,7 @@ static void test_miptree_layout(void)
                     if (!i && !j)
                         base = map_desc.pBits;
                     else
-                        todo_wine ok(map_desc.pBits == base + offset,
+                        ok(map_desc.pBits == base + offset,
                                 "%s, %s, face %u, level %u: Got unexpected pBits %p, expected %p.\n",
                                 pools[pool_idx].name, formats[format_idx].name, i, j, map_desc.pBits, base + offset);
                     offset += (base_dimension >> j) * map_desc.Pitch;

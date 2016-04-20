@@ -703,15 +703,15 @@ static void swapchain_gdi_present(struct wined3d_swapchain *swapchain,
     /* Flip the surface data. */
     dc = front->dc;
     bitmap = front->bitmap;
-    data = front->resource.heap_memory;
+    data = front->container->resource.heap_memory;
 
     front->dc = back->dc;
     front->bitmap = back->bitmap;
-    front->resource.heap_memory = back->resource.heap_memory;
+    front->container->resource.heap_memory = back->container->resource.heap_memory;
 
     back->dc = dc;
     back->bitmap = bitmap;
-    back->resource.heap_memory = data;
+    back->container->resource.heap_memory = data;
 
     /* FPS support */
     if (TRACE_ON(fps))

@@ -146,6 +146,7 @@ static DWORD volume_access_from_location(DWORD location)
 static void wined3d_volume_srgb_transfer(struct wined3d_volume *volume,
         struct wined3d_context *context, BOOL dest_is_srgb)
 {
+    struct wined3d_texture *texture = volume->container;
     struct wined3d_bo_address data;
     /* Optimizations are possible, but the effort should be put into either
      * implementing EXT_SRGB_DECODE in the driver or finding out why we
@@ -156,13 +157,12 @@ static void wined3d_volume_srgb_transfer(struct wined3d_volume *volume,
 
     WARN_(d3d_perf)("Performing slow rgb/srgb volume transfer.\n");
     data.buffer_object = 0;
-    data.addr = HeapAlloc(GetProcessHeap(), 0, volume->resource.size);
-    if (!data.addr)
+    if (!(data.addr = HeapAlloc(GetProcessHeap(), 0, texture->sub_resources[volume->texture_level].size)))
         return;
 
-    wined3d_texture_bind_and_dirtify(volume->container, context, !dest_is_srgb);
+    wined3d_texture_bind_and_dirtify(texture, context, !dest_is_srgb);
     wined3d_volume_download_data(volume, context, &data);
-    wined3d_texture_bind_and_dirtify(volume->container, context, dest_is_srgb);
+    wined3d_texture_bind_and_dirtify(texture, context, dest_is_srgb);
     wined3d_volume_upload_data(volume, context, wined3d_const_bo_address(&data));
 
     HeapFree(GetProcessHeap(), 0, data.addr);
@@ -211,7 +211,8 @@ BOOL wined3d_volume_load_location(struct wined3d_volume *volume,
         case WINED3D_LOCATION_TEXTURE_SRGB:
             if (sub_resource->locations & WINED3D_LOCATION_SYSMEM)
             {
-                struct wined3d_const_bo_address data = {0, volume->resource.heap_memory};
+                struct wined3d_const_bo_address data = {0, texture->resource.heap_memory};
+                data.addr += sub_resource->offset;
                 wined3d_texture_bind_and_dirtify(texture, context,
                         location == WINED3D_LOCATION_TEXTURE_SRGB);
                 wined3d_volume_upload_data(volume, context, &data);
@@ -241,8 +242,9 @@ BOOL wined3d_volume_load_location(struct wined3d_volume *volume,
         case WINED3D_LOCATION_SYSMEM:
             if (sub_resource->locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
             {
-                struct wined3d_bo_address data = {0, volume->resource.heap_memory};
+                struct wined3d_bo_address data = {0, texture->resource.heap_memory};
 
+                data.addr += sub_resource->offset;
                 if (sub_resource->locations & WINED3D_LOCATION_TEXTURE_RGB)
                     wined3d_texture_bind_and_dirtify(texture, context, FALSE);
                 else
@@ -348,20 +350,14 @@ HRESULT wined3d_volume_init(struct wined3d_volume *volume, struct wined3d_textur
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, desc->format);
     HRESULT hr;
-    UINT size;
-
-    size = wined3d_format_calculate_size(format, device->surface_alignment, desc->width, desc->height, desc->depth);
 
     if (FAILED(hr = resource_init(&volume->resource, device, WINED3D_RTYPE_VOLUME, format,
             WINED3D_MULTISAMPLE_NONE, 0, desc->usage, desc->pool, desc->width, desc->height, desc->depth,
-            size, NULL, &wined3d_null_parent_ops, &volume_resource_ops)))
+            0, NULL, &wined3d_null_parent_ops, &volume_resource_ops)))
     {
         WARN("Failed to initialize resource, returning %#x.\n", hr);
         return hr;
     }
-
-    if (container->resource.map_binding == WINED3D_LOCATION_BUFFER)
-        wined3d_resource_free_sysmem(&volume->resource);
 
     volume->texture_level = level;
     volume->container = container;

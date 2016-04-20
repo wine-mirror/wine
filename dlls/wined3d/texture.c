@@ -93,8 +93,8 @@ static void wined3d_texture_evict_sysmem(struct wined3d_texture *texture)
             ERR("WINED3D_LOCATION_SYSMEM is the only location for sub-resource %u of texture %p.\n",
                     i, texture);
         sub_resource->locations &= ~WINED3D_LOCATION_SYSMEM;
-        wined3d_resource_free_sysmem(sub_resource->resource);
     }
+    wined3d_resource_free_sysmem(&texture->resource);
 }
 
 void wined3d_texture_validate_location(struct wined3d_texture *texture,
@@ -203,7 +203,8 @@ void wined3d_texture_get_memory(struct wined3d_texture *texture, unsigned int su
     }
     if (locations & WINED3D_LOCATION_SYSMEM)
     {
-        data->addr = sub_resource->resource->heap_memory;
+        data->addr = texture->resource.heap_memory;
+        data->addr += sub_resource->offset;
         data->buffer_object = 0;
         return;
     }
@@ -219,6 +220,7 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
         const struct wined3d_resource_ops *resource_ops)
 {
     const struct wined3d_format *format = wined3d_get_format(&device->adapter->gl_info, desc->format);
+    unsigned int i, j, size, offset = 0;
     HRESULT hr;
 
     TRACE("texture %p, texture_ops %p, layer_count %u, level_count %u, resource_type %s, format %s, "
@@ -229,9 +231,30 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
             debug_d3dusage(desc->usage), debug_d3dpool(desc->pool), desc->width, desc->height, desc->depth,
             flags, device, parent, parent_ops, resource_ops);
 
+    if (!desc->width || !desc->height || !desc->depth)
+        return WINED3DERR_INVALIDCALL;
+
+    for (i = 0; i < layer_count; ++i)
+    {
+        for (j = 0; j < level_count; ++j)
+        {
+            unsigned int idx = i * level_count + j;
+
+            size = wined3d_format_calculate_size(format, device->surface_alignment,
+                    max(1, desc->width >> j), max(1, desc->height >> j), max(1, desc->depth >> j));
+            texture->sub_resources[idx].offset = offset;
+            texture->sub_resources[idx].size = size;
+            offset += size;
+        }
+        offset = (offset + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1);
+    }
+
+    if (!offset)
+        return WINED3DERR_INVALIDCALL;
+
     if (FAILED(hr = resource_init(&texture->resource, device, desc->resource_type, format,
             desc->multisample_type, desc->multisample_quality, desc->usage, desc->pool,
-            desc->width, desc->height, desc->depth, 0, parent, parent_ops, resource_ops)))
+            desc->width, desc->height, desc->depth, offset, parent, parent_ops, resource_ops)))
     {
         static unsigned int once;
 
@@ -984,7 +1007,7 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         create_dib = TRUE;
     }
 
-    wined3d_resource_free_sysmem(sub_resource->resource);
+    wined3d_resource_free_sysmem(&texture->resource);
 
     if ((texture->row_pitch = pitch))
         texture->slice_pitch = height * pitch;
@@ -998,13 +1021,14 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     texture->resource.multisample_quality = multisample_quality;
     texture->resource.width = width;
     texture->resource.height = height;
+    texture->resource.size = texture->slice_pitch;
 
     sub_resource->resource->format = format;
     sub_resource->resource->multisample_type = multisample_type;
     sub_resource->resource->multisample_quality = multisample_quality;
     sub_resource->resource->width = width;
     sub_resource->resource->height = height;
-    sub_resource->resource->size = texture->slice_pitch;
+    sub_resource->size = texture->slice_pitch;
     sub_resource->locations = WINED3D_LOCATION_DISCARDED;
 
     if (((width & (width - 1)) || (height & (height - 1))) && !gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO]
@@ -1055,21 +1079,20 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
 static void wined3d_texture_prepare_buffer_object(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, const struct wined3d_gl_info *gl_info)
 {
-    GLuint *buffer_object;
+    struct wined3d_texture_sub_resource *sub_resource;
 
-    buffer_object = &texture->sub_resources[sub_resource_idx].buffer_object;
-    if (*buffer_object)
+    sub_resource = &texture->sub_resources[sub_resource_idx];
+    if (sub_resource->buffer_object)
         return;
 
-    GL_EXTCALL(glGenBuffers(1, buffer_object));
-    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, *buffer_object));
-    GL_EXTCALL(glBufferData(GL_PIXEL_UNPACK_BUFFER,
-            texture->sub_resources[sub_resource_idx].resource->size, NULL, GL_STREAM_DRAW));
+    GL_EXTCALL(glGenBuffers(1, &sub_resource->buffer_object));
+    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, sub_resource->buffer_object));
+    GL_EXTCALL(glBufferData(GL_PIXEL_UNPACK_BUFFER, sub_resource->size, NULL, GL_STREAM_DRAW));
     GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
     checkGLcall("Create buffer object");
 
     TRACE("Created buffer object %u for texture %p, sub-resource %u.\n",
-            *buffer_object, texture, sub_resource_idx);
+            sub_resource->buffer_object, texture, sub_resource_idx);
 }
 
 static void wined3d_texture_force_reload(struct wined3d_texture *texture)
@@ -1179,10 +1202,10 @@ BOOL wined3d_texture_prepare_location(struct wined3d_texture *texture, unsigned 
     switch (location)
     {
         case WINED3D_LOCATION_SYSMEM:
-            if (texture->sub_resources[sub_resource_idx].resource->heap_memory)
+            if (texture->resource.heap_memory)
                 return TRUE;
 
-            if (!wined3d_resource_allocate_sysmem(texture->sub_resources[sub_resource_idx].resource))
+            if (!wined3d_resource_allocate_sysmem(&texture->resource))
             {
                 ERR("Failed to allocate system memory.\n");
                 return FALSE;
@@ -1589,7 +1612,7 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
         wined3d_texture_invalidate_location(texture, sub_resource_idx, ~texture->resource.map_binding);
 
     wined3d_texture_get_memory(texture, sub_resource_idx, &data, texture->resource.map_binding);
-    base_memory = wined3d_texture_map_bo_address(&data, sub_resource->resource->size,
+    base_memory = wined3d_texture_map_bo_address(&data, sub_resource->size,
             gl_info, GL_PIXEL_UNPACK_BUFFER, flags);
     TRACE("Base memory pointer %p.\n", base_memory);
 
@@ -2128,7 +2151,10 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
     texture->target = GL_TEXTURE_3D;
 
     if (wined3d_texture_use_pbo(texture, gl_info))
+    {
+        wined3d_resource_free_sysmem(&texture->resource);
         texture->resource.map_binding = WINED3D_LOCATION_BUFFER;
+    }
 
     if (!(volumes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*volumes) * levels)))
     {
@@ -2391,7 +2417,7 @@ HRESULT CDECL wined3d_texture_get_sub_resource_desc(const struct wined3d_texture
     desc->width = wined3d_texture_get_level_width(texture, level_idx);
     desc->height = wined3d_texture_get_level_height(texture, level_idx);
     desc->depth = wined3d_texture_get_level_depth(texture, level_idx);
-    desc->size = texture->sub_resources[sub_resource_idx].resource->size;
+    desc->size = texture->sub_resources[sub_resource_idx].size;
 
     return WINED3D_OK;
 }
