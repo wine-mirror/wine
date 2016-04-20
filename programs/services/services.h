@@ -27,12 +27,15 @@ struct scmdatabase
 {
     HKEY root_key;
     LONG service_start_lock;
+    struct list processes;
     struct list services;
     CRITICAL_SECTION cs;
 };
 
 struct process_entry
 {
+    struct list entry;
+    struct scmdatabase *db;
     LONG ref_count;
     HANDLE process;
     HANDLE control_mutex;
@@ -91,6 +94,7 @@ void service_terminate(struct service_entry *service);
 struct process_entry *grab_process(struct process_entry *process);
 void release_process(struct process_entry *process);
 BOOL process_send_command(struct process_entry *process, const void *data, DWORD size, DWORD *result);
+void process_terminate(struct process_entry *process);
 
 extern HANDLE g_hStartedEvent;
 

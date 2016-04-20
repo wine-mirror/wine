@@ -100,23 +100,22 @@ struct timeout_queue_elem
     struct list entry;
 
     FILETIME time;
-    void (*func)(struct service_entry*);
-    struct service_entry *service_entry;
+    void (*func)(struct process_entry *);
+    struct process_entry *process;
 };
 
-static void run_after_timeout(void (*func)(struct service_entry*), struct service_entry *service, DWORD timeout)
+static void run_after_timeout(void (*func)(struct process_entry *), struct process_entry *process, DWORD timeout)
 {
     struct timeout_queue_elem *elem = HeapAlloc(GetProcessHeap(), 0, sizeof(struct timeout_queue_elem));
     ULARGE_INTEGER time;
 
     if(!elem) {
-        func(service);
+        func(process);
         return;
     }
 
-    InterlockedIncrement(&service->ref_count);
     elem->func = func;
-    elem->service_entry = service;
+    elem->process = grab_process(process);
 
     GetSystemTimeAsFileTime(&elem->time);
     time.u.LowPart = elem->time.dwLowDateTime;
@@ -751,6 +750,7 @@ DWORD __cdecl svcctl_SetServiceStatus(
     LPSERVICE_STATUS lpServiceStatus)
 {
     struct sc_service_handle *service;
+    struct process_entry *process;
     DWORD err;
 
     WINE_TRACE("(%p, %p)\n", hServiceStatus, lpServiceStatus);
@@ -768,12 +768,14 @@ DWORD __cdecl svcctl_SetServiceStatus(
     service->service_entry->status.dwServiceSpecificExitCode = lpServiceStatus->dwServiceSpecificExitCode;
     service->service_entry->status.dwCheckPoint = lpServiceStatus->dwCheckPoint;
     service->service_entry->status.dwWaitHint = lpServiceStatus->dwWaitHint;
+    if ((process = service->service_entry->process))
+    {
+        if (lpServiceStatus->dwCurrentState == SERVICE_STOPPED)
+            run_after_timeout(process_terminate, process, service_kill_timeout);
+        else
+            SetEvent(process->status_changed_event);
+    }
     service_unlock(service->service_entry);
-
-    if (lpServiceStatus->dwCurrentState == SERVICE_STOPPED)
-        run_after_timeout(service_terminate, service->service_entry, service_kill_timeout);
-    else if (service->service_entry->process->status_changed_event)
-        SetEvent(service->service_entry->process->status_changed_event);
 
     return ERROR_SUCCESS;
 }
@@ -1172,6 +1174,9 @@ DWORD __cdecl svcctl_ControlService(
     /* Hold a reference to the process while sending the command. */
     process = grab_process(service->service_entry->process);
     service_unlock(service->service_entry);
+
+    if (!process)
+        return ERROR_SERVICE_CANNOT_ACCEPT_CTRL;
 
     ret = WaitForSingleObject(process->control_mutex, 30000);
     if (ret != WAIT_OBJECT_0)
@@ -1930,7 +1935,7 @@ DWORD events_loop(void)
                 WINE_TRACE("Exceeded maximum wait object count\n");
                 break;
             }
-            wait_handles[num_handles] = iter->service_entry->process->process;
+            wait_handles[num_handles] = iter->process->process;
             num_handles++;
         }
         LeaveCriticalSection(&timeout_queue_cs);
@@ -1956,10 +1961,10 @@ DWORD events_loop(void)
                         (err > WAIT_OBJECT_0 + 1 && idx == err - WAIT_OBJECT_0 - 2))
                 {
                     LeaveCriticalSection(&timeout_queue_cs);
-                    iter->func(iter->service_entry);
+                    iter->func(iter->process);
                     EnterCriticalSection(&timeout_queue_cs);
 
-                    release_service(iter->service_entry);
+                    release_process(iter->process);
                     list_remove(&iter->entry);
                     HeapFree(GetProcessHeap(), 0, iter);
                 }
@@ -1988,10 +1993,10 @@ DWORD events_loop(void)
     LIST_FOR_EACH_ENTRY_SAFE(iter, iter_safe, &timeout_queue, struct timeout_queue_elem, entry)
     {
         LeaveCriticalSection(&timeout_queue_cs);
-        iter->func(iter->service_entry);
+        iter->func(iter->process);
         EnterCriticalSection(&timeout_queue_cs);
 
-        release_service(iter->service_entry);
+        release_process(iter->process);
         list_remove(&iter->entry);
         HeapFree(GetProcessHeap(), 0, iter);
     }
