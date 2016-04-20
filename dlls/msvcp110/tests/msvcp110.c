@@ -95,7 +95,7 @@ static void test_tr2_sys__Last_write_time(void)
     newtime = last_write_time + 222222;
     p_tr2_sys__Last_write_time_set("tr2_test_dir/f1", newtime);
     ok(last_write_time != p_tr2_sys__Last_write_time("tr2_test_dir/f1"),
-            "last_write_time before modfied should not equal to last_write_time %s\n",
+            "last_write_time should have changed: %s\n",
             debugstr_longlong(last_write_time));
 
     /* test the formula */
