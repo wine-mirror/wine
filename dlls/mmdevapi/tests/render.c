@@ -730,7 +730,7 @@ static void test_padding(void)
     ok(defp == 100000 || broken(defp == 101587) || defp == 200000,
        "Expected 10ms default period: %u\n", (ULONG)defp);
     ok(minp != 0, "Minimum period is 0\n");
-    ok(minp <= defp, "Mininum period is greater than default period\n");
+    ok(minp <= defp, "Minimum period is greater than default period\n");
 
     hr = IAudioClient_GetService(ac, &IID_IAudioRenderClient, (void**)&arc);
     ok(hr == S_OK, "GetService failed: %08x\n", hr);
