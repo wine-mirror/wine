@@ -292,8 +292,8 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
         float depth, DWORD stencil)
 {
     struct wined3d_surface *target = rt_count ? wined3d_rendertarget_view_get_surface(fb->render_targets[0]) : NULL;
-    struct wined3d_surface *depth_stencil = fb->depth_stencil
-            ? wined3d_rendertarget_view_get_surface(fb->depth_stencil) : NULL;
+    struct wined3d_rendertarget_view *dsv = fb->depth_stencil;
+    struct wined3d_surface *depth_stencil = dsv ? wined3d_rendertarget_view_get_surface(dsv) : NULL;
     const struct wined3d_state *state = &device->state;
     const struct wined3d_gl_info *gl_info;
     UINT drawable_width, drawable_height;
@@ -331,7 +331,8 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
             if (flags & WINED3DCLEAR_TARGET && !is_full_clear(target, draw_rect, rect_count ? clear_rect : NULL))
                 surface_load_location(rt, context, rtv->resource->draw_binding);
             else
-                wined3d_surface_prepare(rt, context, rtv->resource->draw_binding);
+                wined3d_texture_prepare_location(rt->container, rtv->sub_resource_idx,
+                        context, rtv->resource->draw_binding);
         }
     }
 
@@ -350,11 +351,12 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     }
 
     if (depth_stencil && render_offscreen)
-        wined3d_surface_prepare(depth_stencil, context, depth_stencil->container->resource.draw_binding);
+        wined3d_texture_prepare_location(depth_stencil->container,
+                dsv->sub_resource_idx, context, dsv->resource->draw_binding);
 
     if (flags & WINED3DCLEAR_ZBUFFER)
     {
-        DWORD location = render_offscreen ? fb->depth_stencil->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
+        DWORD location = render_offscreen ? dsv->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
 
         if (!render_offscreen && depth_stencil != device->onscreen_depth_stencil)
             device_switch_onscreen_ds(device, context, depth_stencil);
@@ -386,7 +388,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
 
     if (flags & WINED3DCLEAR_ZBUFFER)
     {
-        DWORD location = render_offscreen ? fb->depth_stencil->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
+        DWORD location = render_offscreen ? dsv->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
 
         surface_modify_ds_location(depth_stencil, location, ds_rect.right, ds_rect.bottom);
 
