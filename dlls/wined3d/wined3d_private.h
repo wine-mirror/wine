@@ -1870,6 +1870,8 @@ struct wined3d_fbo_ops
             GLenum textarget, GLuint texture, GLint level);
     void (WINE_GLAPI *glFramebufferTexture3D)(GLenum target, GLenum attachment,
             GLenum textarget, GLuint texture, GLint level, GLint layer);
+    void (WINE_GLAPI *glFramebufferTextureLayer)(GLenum target, GLenum attachment,
+            GLuint texture, GLint level, GLint layer);
     void (WINE_GLAPI *glFramebufferRenderbuffer)(GLenum target, GLenum attachment,
             GLenum renderbuffertarget, GLuint renderbuffer);
     void (WINE_GLAPI *glGetFramebufferAttachmentParameteriv)(GLenum target, GLenum attachment,
@@ -2626,7 +2628,8 @@ struct wined3d_renderbuffer_entry
 struct wined3d_fbo_resource
 {
     GLuint object;
-    GLuint level, target;
+    GLenum target;
+    GLuint level, layer;
 };
 
 #define WINED3D_FBO_ENTRY_FLAG_ATTACHED      0x1

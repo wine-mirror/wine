@@ -3835,6 +3835,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
         gl_info->fbo_ops.glFramebufferTexture1D = gl_info->gl_ops.ext.p_glFramebufferTexture1D;
         gl_info->fbo_ops.glFramebufferTexture2D = gl_info->gl_ops.ext.p_glFramebufferTexture2D;
         gl_info->fbo_ops.glFramebufferTexture3D = gl_info->gl_ops.ext.p_glFramebufferTexture3D;
+        gl_info->fbo_ops.glFramebufferTextureLayer = gl_info->gl_ops.ext.p_glFramebufferTextureLayer;
         gl_info->fbo_ops.glFramebufferRenderbuffer = gl_info->gl_ops.ext.p_glFramebufferRenderbuffer;
         gl_info->fbo_ops.glGetFramebufferAttachmentParameteriv
                 = gl_info->gl_ops.ext.p_glGetFramebufferAttachmentParameteriv;
@@ -3868,6 +3869,11 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
         {
             WARN_(d3d_perf)("Framebuffer objects not supported, falling back to backbuffer offscreen rendering mode.\n");
             wined3d_settings.offscreen_rendering_mode = ORM_BACKBUFFER;
+        }
+
+        if (gl_info->supported[ARB_GEOMETRY_SHADER4])
+        {
+            gl_info->fbo_ops.glFramebufferTextureLayer = gl_info->gl_ops.ext.p_glFramebufferTextureLayerARB;
         }
         if (gl_info->supported[EXT_FRAMEBUFFER_BLIT])
         {
