@@ -5810,7 +5810,6 @@ static void test_HasCharacter(void)
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         ret = IDWriteFont3_HasCharacter(font3, 'A');
-    todo_wine
         ok(ret, "got %d\n", ret);
 
         IDWriteFont3_Release(font3);
