@@ -17749,6 +17749,7 @@ wine_fn_config_dll joy.cpl enable_joy_cpl clean
 wine_fn_config_dll jscript enable_jscript clean
 wine_fn_config_test dlls/jscript/tests jscript_test
 wine_fn_config_dll jsproxy enable_jsproxy implib
+wine_fn_config_test dlls/jsproxy/tests jsproxy_test
 wine_fn_config_dll kernel32 enable_kernel32 clean,implib
 wine_fn_config_test dlls/kernel32/tests kernel32_test
 wine_fn_config_dll kernelbase enable_kernelbase
