@@ -282,18 +282,11 @@ DWORD scmdatabase_add_service(struct scmdatabase *db, struct service_entry *serv
     return ERROR_SUCCESS;
 }
 
-static DWORD scmdatabase_remove_service(struct scmdatabase *db, struct service_entry *service)
+static void scmdatabase_remove_service(struct scmdatabase *db, struct service_entry *service)
 {
-    int err;
-
-    err = RegDeleteTreeW(db->root_key, service->name);
-
-    if (err != 0)
-        return err;
-
+    RegDeleteTreeW(db->root_key, service->name);
     list_remove(&service->entry);
     service->entry.next = service->entry.prev = NULL;
-    return ERROR_SUCCESS;
 }
 
 static void scmdatabase_autostart_services(struct scmdatabase *db)
