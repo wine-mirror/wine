@@ -1423,17 +1423,19 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
 static void texture2d_cleanup_sub_resources(struct wined3d_texture *texture)
 {
     unsigned int sub_count = texture->level_count * texture->layer_count;
+    struct wined3d_texture_sub_resource *sub_resource;
     struct wined3d_surface *surface;
     unsigned int i;
 
     for (i = 0; i < sub_count; ++i)
     {
-        if ((surface = texture->sub_resources[i].u.surface))
+        sub_resource = &texture->sub_resources[i];
+        if ((surface = sub_resource->u.surface))
         {
             TRACE("surface %p.\n", surface);
 
             wined3d_surface_cleanup(surface);
-            surface->resource.parent_ops->wined3d_object_destroyed(surface->resource.parent);
+            sub_resource->parent_ops->wined3d_object_destroyed(sub_resource->parent);
         }
     }
     HeapFree(GetProcessHeap(), 0, texture->sub_resources[0].u.surface);
@@ -1937,7 +1939,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
             }
 
             if (FAILED(hr = device_parent->ops->surface_created(device_parent,
-                    texture, idx, &parent, &parent_ops)))
+                    texture, idx, &sub_resource->parent, &sub_resource->parent_ops)))
             {
                 WARN("Failed to create surface parent, hr %#x.\n", hr);
                 wined3d_surface_cleanup(surface);
@@ -1945,10 +1947,8 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
                 return hr;
             }
 
-            TRACE("parent %p, parent_ops %p.\n", parent, parent_ops);
+            TRACE("parent %p, parent_ops %p.\n", sub_resource->parent, sub_resource->parent_ops);
 
-            surface->resource.parent = parent;
-            surface->resource.parent_ops = parent_ops;
             TRACE("Created surface level %u, layer %u @ %p.\n", i, j, surface);
 
             if (((desc->usage & WINED3DUSAGE_OWNDC) || (device->wined3d->flags & WINED3D_NO3D))
@@ -2014,17 +2014,19 @@ static void texture3d_prepare_texture(struct wined3d_texture *texture, struct wi
 static void texture3d_cleanup_sub_resources(struct wined3d_texture *texture)
 {
     unsigned int sub_count = texture->level_count * texture->layer_count;
+    struct wined3d_texture_sub_resource *sub_resource;
     struct wined3d_volume *volume;
     unsigned int i;
 
     for (i = 0; i < sub_count; ++i)
     {
-        if ((volume = texture->sub_resources[i].u.volume))
+        sub_resource = &texture->sub_resources[i];
+        if ((volume = sub_resource->u.volume))
         {
             TRACE("volume %p.\n", volume);
 
             wined3d_volume_cleanup(volume);
-            volume->resource.parent_ops->wined3d_object_destroyed(volume->resource.parent);
+            sub_resource->parent_ops->wined3d_object_destroyed(sub_resource->parent);
         }
     }
     HeapFree(GetProcessHeap(), 0, texture->sub_resources[0].u.volume);
@@ -2191,7 +2193,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
         sub_resource->u.volume = volume;
 
         if (FAILED(hr = device_parent->ops->volume_created(device_parent,
-                texture, i, &parent, &parent_ops)))
+                texture, i, &sub_resource->parent, &sub_resource->parent_ops)))
         {
             WARN("Failed to create volume parent, hr %#x.\n", hr);
             wined3d_volume_cleanup(volume);
@@ -2201,8 +2203,6 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
 
         TRACE("parent %p, parent_ops %p.\n", parent, parent_ops);
 
-        volume->resource.parent = parent;
-        volume->resource.parent_ops = parent_ops;
         TRACE("Created volume level %u @ %p.\n", i, volume);
 
         /* Calculate the next mipmap level. */
@@ -2377,7 +2377,7 @@ void * CDECL wined3d_texture_get_sub_resource_parent(struct wined3d_texture *tex
         return NULL;
     }
 
-    return texture->sub_resources[sub_resource_idx].resource->parent;
+    return texture->sub_resources[sub_resource_idx].parent;
 }
 
 void CDECL wined3d_texture_set_sub_resource_parent(struct wined3d_texture *texture,
@@ -2393,7 +2393,7 @@ void CDECL wined3d_texture_set_sub_resource_parent(struct wined3d_texture *textu
         return;
     }
 
-    texture->sub_resources[sub_resource_idx].resource->parent = parent;
+    texture->sub_resources[sub_resource_idx].parent = parent;
 }
 
 HRESULT CDECL wined3d_texture_get_sub_resource_desc(const struct wined3d_texture *texture,

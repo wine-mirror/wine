@@ -2500,6 +2500,10 @@ struct wined3d_texture
     struct wined3d_texture_sub_resource
     {
         struct wined3d_resource *resource;
+
+        void *parent;
+        const struct wined3d_parent_ops *parent_ops;
+
         union
         {
             struct wined3d_surface *surface;

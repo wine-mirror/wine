@@ -69,7 +69,7 @@ void * CDECL wined3d_rendertarget_view_get_sub_resource_parent(const struct wine
 
     texture = texture_from_resource(view->resource);
 
-    return wined3d_resource_get_parent(texture->sub_resources[view->sub_resource_idx].resource);
+    return texture->sub_resources[view->sub_resource_idx].parent;
 }
 
 void CDECL wined3d_rendertarget_view_set_parent(struct wined3d_rendertarget_view *view, void *parent)
