@@ -1820,6 +1820,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
             HBITMAP hBmp = 0, hBmpOld = 0;
             const BITMAPINFO *pbi = (const BITMAPINFO *)((const BYTE *)mr + pBitBlt->offBmiSrc);
 
+            SetGraphicsMode(hdcSrc, GM_ADVANCED);
             SetWorldTransform(hdcSrc, &pBitBlt->xformSrc);
 
             hBrush = CreateSolidBrush(pBitBlt->crBkColorSrc);
@@ -1862,6 +1863,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
             HBITMAP hBmp = 0, hBmpOld = 0;
             const BITMAPINFO *pbi = (const BITMAPINFO *)((const BYTE *)mr + pStretchBlt->offBmiSrc);
 
+            SetGraphicsMode(hdcSrc, GM_ADVANCED);
             SetWorldTransform(hdcSrc, &pStretchBlt->xformSrc);
 
             hBrush = CreateSolidBrush(pStretchBlt->crBkColorSrc);
@@ -1904,6 +1906,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
             const BITMAPINFO *pbi = (const BITMAPINFO *)((const BYTE *)mr + pAlphaBlend->offBmiSrc);
             void *bits;
 
+            SetGraphicsMode(hdcSrc, GM_ADVANCED);
             SetWorldTransform(hdcSrc, &pAlphaBlend->xformSrc);
 
             hBmp = CreateDIBSection(hdc, pbi, pAlphaBlend->iUsageSrc, &bits, NULL, 0);
@@ -1929,6 +1932,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	HBITMAP hBmp, hBmpOld, hBmpMask;
 	const BITMAPINFO *pbi;
 
+        SetGraphicsMode(hdcSrc, GM_ADVANCED);
 	SetWorldTransform(hdcSrc, &pMaskBlt->xformSrc);
 
 	hBrush = CreateSolidBrush(pMaskBlt->crBkColorSrc);
@@ -1977,6 +1981,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	const BITMAPINFO *pbi;
 	POINT pts[3];
 
+        SetGraphicsMode(hdcSrc, GM_ADVANCED);
 	SetWorldTransform(hdcSrc, &pPlgBlt->xformSrc);
 
 	pts[0].x = pPlgBlt->aptlDest[0].x; pts[0].y = pPlgBlt->aptlDest[0].y;
