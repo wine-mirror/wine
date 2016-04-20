@@ -807,7 +807,9 @@ static HRESULT WINAPI dwritefactory_CreateCustomFontFileReference(IDWriteFactory
 
     *font_file = NULL;
 
-    if (!loader || !factory_get_file_loader(This, loader))
+    /* local loader is accepted as well */
+    if (!loader || !(factory_get_file_loader(This, loader) ||
+        (IDWriteFontFileLoader*)This->localfontfileloader == loader))
         return E_INVALIDARG;
 
     return create_font_file(loader, reference_key, key_size, font_file);

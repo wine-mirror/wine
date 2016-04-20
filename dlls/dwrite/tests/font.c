@@ -2431,6 +2431,7 @@ static void test_CreateCustomFontFileReference(void)
     IDWriteFontFileLoader floader2 = { &dwritefontfileloadervtbl };
     IDWriteFontFileLoader floader3 = { &dwritefontfileloadervtbl };
     IDWriteFactory *factory, *factory2;
+    IDWriteFontFileLoader *loader;
     IDWriteFontFile *file, *file2;
     BOOL support;
     DWRITE_FONT_FILE_TYPE file_type;
@@ -2441,6 +2442,11 @@ static void test_CreateCustomFontFileReference(void)
     HRSRC fontrsrc;
     UINT32 codePoints[1] = {0xa8};
     UINT16 indices[2];
+    const void *key;
+    UINT32 key_size;
+    WCHAR *path;
+
+    path = create_testfontfile(test_fontfile);
 
     factory = create_factory();
     factory2 = create_factory();
@@ -2449,6 +2455,23 @@ if (0) { /* crashes on win10 */
     hr = IDWriteFactory_RegisterFontFileLoader(factory, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 }
+    /* local loader is accepted too */
+    hr = IDWriteFactory_CreateFontFileReference(factory, path, NULL, &file);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFile_GetLoader(file, &loader);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFile_GetReferenceKey(file, &key, &key_size);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateCustomFontFileReference(factory, key, key_size, loader, &file2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IDWriteFontFile_Release(file2);
+    IDWriteFontFile_Release(file);
+    IDWriteFontFileLoader_Release(loader);
+
     hr = IDWriteFactory_RegisterFontFileLoader(factory, &floader);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IDWriteFactory_RegisterFontFileLoader(factory, &floader2);
@@ -2582,6 +2605,7 @@ if (0) /* crashes on native */
 
     IDWriteFactory_Release(factory2);
     IDWriteFactory_Release(factory);
+    DELETE_FONTFILE(path);
 }
 
 static void test_CreateFontFileReference(void)
