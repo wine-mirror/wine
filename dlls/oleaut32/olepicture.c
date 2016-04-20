@@ -636,8 +636,7 @@ static HRESULT WINAPI OLEPictureImpl_Render(IPicture *iface, HDC hdc,
   TRACE("(%p)->(%p, (%d,%d), (%d,%d) <- (%d,%d), (%d,%d), %p)\n",
 	This, hdc, x, y, cx, cy, xSrc, ySrc, cxSrc, cySrc, prcWBounds);
   if(prcWBounds)
-    TRACE("prcWBounds (%d,%d) - (%d,%d)\n", prcWBounds->left, prcWBounds->top,
-	  prcWBounds->right, prcWBounds->bottom);
+  TRACE("prcWBounds %s\n", wine_dbgstr_rect(prcWBounds));
 
   if(cx == 0 || cy == 0 || cxSrc == 0 || cySrc == 0){
     return CTL_E_INVALIDPROPERTYVALUE;
