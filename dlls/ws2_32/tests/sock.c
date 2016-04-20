@@ -7828,7 +7828,7 @@ static void test_DisconnectEx(void)
                     &pDisconnectEx, sizeof(pDisconnectEx), &num_bytes, NULL, NULL);
     if (iret)
     {
-        skip("WSAIoctl failed to get DisconnectEx, error %d\n", WSAGetLastError());
+        win_skip("WSAIoctl failed to get DisconnectEx, error %d\n", WSAGetLastError());
         closesocket(connector);
         return;
     }
@@ -7859,7 +7859,7 @@ static void test_DisconnectEx(void)
     memset(&overlapped, 0, sizeof(overlapped));
     bret = pDisconnectEx(connector, &overlapped, 0, 0);
     ok(bret == FALSE, "DisconnectEx unexpectedly succeeded\n");
-    ok(WSAGetLastError() == WSAENOTCONN, "expected WSAENOTCONN, got %d\n", WSAGetLastError());
+    todo_wine ok(WSAGetLastError() == WSAENOTCONN, "expected WSAENOTCONN, got %d\n", WSAGetLastError());
 
     iret = connect(connector, (struct sockaddr *)&address, addrlen);
     ok(iret == 0, "failed to connect, error %d\n", WSAGetLastError());

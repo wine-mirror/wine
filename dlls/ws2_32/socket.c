@@ -3552,6 +3552,24 @@ connection_success:
     return TRUE;
 }
 
+/***********************************************************************
+ *             DisconnectEx
+ */
+static BOOL WINAPI WS2_DisconnectEx( SOCKET s, LPOVERLAPPED ov, DWORD flags, DWORD reserved )
+{
+    TRACE( "socket %04lx, ov %p, flags 0x%x, reserved 0x%x\n", s, ov, flags, reserved );
+
+    if (flags & TF_REUSE_SOCKET)
+        FIXME( "Reusing socket not supported yet\n" );
+
+    if (ov)
+    {
+        ov->Internal = STATUS_PENDING;
+        ov->InternalHigh = 0;
+    }
+
+    return !WS_shutdown( s, SD_BOTH );
+}
 
 /***********************************************************************
  *		getpeername		(WS2_32.5)
@@ -4767,7 +4785,8 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         }
         else if ( IsEqualGUID(&disconnectex_guid, in_buff) )
         {
-            FIXME("SIO_GET_EXTENSION_FUNCTION_POINTER: unimplemented DisconnectEx\n");
+            *(LPFN_DISCONNECTEX *)out_buff = WS2_DisconnectEx;
+            break;
         }
         else if ( IsEqualGUID(&acceptex_guid, in_buff) )
         {
