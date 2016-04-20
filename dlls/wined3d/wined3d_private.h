@@ -2514,7 +2514,7 @@ struct wined3d_texture
     } sub_resources[1];
 };
 
-static inline struct wined3d_texture *wined3d_texture_from_resource(struct wined3d_resource *resource)
+static inline struct wined3d_texture *texture_from_resource(struct wined3d_resource *resource)
 {
     return CONTAINING_RECORD(resource, struct wined3d_texture, resource);
 }
@@ -3027,7 +3027,7 @@ static inline struct wined3d_surface *wined3d_rendertarget_view_get_surface(
     if (!view || view->resource->type != WINED3D_RTYPE_TEXTURE_2D)
         return NULL;
 
-    texture = wined3d_texture_from_resource(view->resource);
+    texture = texture_from_resource(view->resource);
 
     return texture->sub_resources[view->sub_resource_idx].u.surface;
 }

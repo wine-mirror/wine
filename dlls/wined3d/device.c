@@ -413,7 +413,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
                 continue;
             }
 
-            texture = wined3d_texture_from_resource(rtv->resource);
+            texture = texture_from_resource(rtv->resource);
             wined3d_texture_validate_location(texture, rtv->sub_resource_idx, rtv->resource->draw_binding);
             wined3d_texture_invalidate_location(texture, rtv->sub_resource_idx, ~rtv->resource->draw_binding);
         }
@@ -2039,7 +2039,7 @@ static void resolve_depth_buffer(struct wined3d_state *state)
 
     SetRect(&dst_rect, 0, 0, dst_texture->resource.width, dst_texture->resource.height);
     SetRect(&src_rect, 0, 0, src_view->width, src_view->height);
-    wined3d_texture_blt(dst_texture, 0, &dst_rect, wined3d_texture_from_resource(src_view->resource),
+    wined3d_texture_blt(dst_texture, 0, &dst_rect, texture_from_resource(src_view->resource),
             src_view->sub_resource_idx, &src_rect, 0, NULL, WINED3D_TEXF_POINT);
 }
 
@@ -3913,8 +3913,8 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
         return;
     }
 
-    dst_texture = wined3d_texture_from_resource(dst_resource);
-    src_texture = wined3d_texture_from_resource(src_resource);
+    dst_texture = texture_from_resource(dst_resource);
+    src_texture = texture_from_resource(src_resource);
 
     if (src_texture->layer_count != dst_texture->layer_count
             || src_texture->level_count != dst_texture->level_count)
@@ -4034,8 +4034,8 @@ HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *dev
         return WINED3DERR_INVALIDCALL;
     }
 
-    dst_texture = wined3d_texture_from_resource(dst_resource);
-    src_texture = wined3d_texture_from_resource(src_resource);
+    dst_texture = texture_from_resource(dst_resource);
+    src_texture = texture_from_resource(src_resource);
 
     if (src_box)
     {
@@ -4099,7 +4099,7 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
         return;
     }
 
-    texture = wined3d_texture_from_resource(resource);
+    texture = texture_from_resource(resource);
     if (!(sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx)))
     {
         WARN("Invalid sub_resource_idx %u.\n", sub_resource_idx);
@@ -4695,6 +4695,9 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     {
         LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
         {
+            if (resource->type == WINED3D_RTYPE_SURFACE || resource->type == WINED3D_RTYPE_VOLUME)
+                continue;
+
             TRACE("Enumerating resource %p.\n", resource);
             if (FAILED(hr = callback(resource)))
                 return hr;
@@ -5037,7 +5040,7 @@ void device_resource_released(struct wined3d_device *device, struct wined3d_reso
         case WINED3D_RTYPE_TEXTURE_3D:
             for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
             {
-                struct wined3d_texture *texture = wined3d_texture_from_resource(resource);
+                struct wined3d_texture *texture = texture_from_resource(resource);
 
                 if (device->state.textures[i] == texture)
                 {

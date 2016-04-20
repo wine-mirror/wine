@@ -605,44 +605,34 @@ static UINT WINAPI d3d9_device_GetNumberOfSwapChains(IDirect3DDevice9Ex *iface)
 static HRESULT CDECL reset_enum_callback(struct wined3d_resource *resource)
 {
     struct wined3d_resource_desc desc;
+    IDirect3DBaseTexture9 *texture;
+    struct d3d9_surface *surface;
+    IUnknown *parent;
 
     wined3d_resource_get_desc(resource, &desc);
-    if (desc.pool == WINED3D_POOL_DEFAULT)
+    if (desc.pool != WINED3D_POOL_DEFAULT)
+        return D3D_OK;
+
+    if (desc.resource_type != WINED3D_RTYPE_TEXTURE_2D)
     {
-        struct d3d9_surface *surface;
-
-        if (desc.resource_type == WINED3D_RTYPE_TEXTURE_2D)
-        {
-            IUnknown *parent = wined3d_resource_get_parent(resource);
-            IDirect3DBaseTexture9 *texture;
-
-            if (SUCCEEDED(IUnknown_QueryInterface(parent, &IID_IDirect3DBaseTexture9, (void **)&texture)))
-            {
-                IDirect3DBaseTexture9_Release(texture);
-                WARN("Texture %p (resource %p) in pool D3DPOOL_DEFAULT blocks the Reset call.\n", texture, resource);
-                return D3DERR_INVALIDCALL;
-            }
-
-            return D3D_OK;
-        }
-
-        if (desc.resource_type != WINED3D_RTYPE_SURFACE)
-        {
-            WARN("Resource %p in pool D3DPOOL_DEFAULT blocks the Reset call.\n", resource);
-            return D3DERR_INVALIDCALL;
-        }
-
-        surface = wined3d_resource_get_parent(resource);
-        if (surface->resource.refcount)
-        {
-            WARN("Surface %p (resource %p) in pool D3DPOOL_DEFAULT blocks the Reset call.\n", surface, resource);
-            return D3DERR_INVALIDCALL;
-        }
-
-        WARN("Surface %p (resource %p) is an implicit resource with ref 0.\n", surface, resource);
+        WARN("Resource %p in pool D3DPOOL_DEFAULT blocks the Reset call.\n", resource);
+        return D3DERR_INVALIDCALL;
     }
 
-    return D3D_OK;
+    parent = wined3d_resource_get_parent(resource);
+    if (parent && SUCCEEDED(IUnknown_QueryInterface(parent, &IID_IDirect3DBaseTexture9, (void **)&texture)))
+    {
+        IDirect3DBaseTexture9_Release(texture);
+        WARN("Texture %p (resource %p) in pool D3DPOOL_DEFAULT blocks the Reset call.\n", texture, resource);
+        return D3DERR_INVALIDCALL;
+    }
+
+    surface = wined3d_texture_get_sub_resource_parent(wined3d_texture_from_resource(resource), 0);
+    if (!surface->resource.refcount)
+        return D3D_OK;
+
+    WARN("Surface %p in pool D3DPOOL_DEFAULT blocks the Reset call.\n", surface);
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT d3d9_device_get_swapchains(struct d3d9_device *device)

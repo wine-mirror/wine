@@ -243,6 +243,7 @@
 @ cdecl wined3d_texture_blt(ptr long ptr ptr long ptr long ptr long)
 @ cdecl wined3d_texture_create(ptr ptr long long ptr ptr ptr ptr)
 @ cdecl wined3d_texture_decref(ptr)
+@ cdecl wined3d_texture_from_resource(ptr)
 @ cdecl wined3d_texture_generate_mipmaps(ptr)
 @ cdecl wined3d_texture_get_autogen_filter_type(ptr)
 @ cdecl wined3d_texture_get_dc(ptr long ptr)

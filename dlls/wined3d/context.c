@@ -353,7 +353,7 @@ static inline DWORD context_generate_rt_mask_from_resource(struct wined3d_resour
         return 0;
     }
 
-    return (1u << 31) | wined3d_texture_get_gl_buffer(wined3d_texture_from_resource(resource));
+    return (1u << 31) | wined3d_texture_get_gl_buffer(texture_from_resource(resource));
 }
 
 static inline void context_set_fbo_key_for_surface(const struct wined3d_context *context,
@@ -884,7 +884,7 @@ void context_resource_released(const struct wined3d_device *device,
     {
         case WINED3D_RTYPE_TEXTURE_2D:
         case WINED3D_RTYPE_TEXTURE_3D:
-            texture = wined3d_texture_from_resource(resource);
+            texture = texture_from_resource(resource);
 
             for (i = 0; i < device->context_count; ++i)
             {
@@ -3265,7 +3265,7 @@ static void context_load_shader_resources(struct wined3d_context *context, const
             if (view->resource->type == WINED3D_RTYPE_BUFFER)
                 buffer_internal_preload(buffer_from_resource(view->resource), context, state);
             else
-                wined3d_texture_load(wined3d_texture_from_resource(view->resource), context, FALSE);
+                wined3d_texture_load(texture_from_resource(view->resource), context, FALSE);
         }
     }
 }
@@ -3337,7 +3337,7 @@ static void context_bind_shader_resources(struct wined3d_context *context, const
                 continue;
             }
 
-            texture = wined3d_texture_from_resource(view->resource);
+            texture = texture_from_resource(view->resource);
             context_active_texture(context, gl_info, shader_types[i].base_idx + entry->bind_idx);
             wined3d_texture_bind(texture, context, FALSE);
 

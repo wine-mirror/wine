@@ -67,7 +67,7 @@ void * CDECL wined3d_rendertarget_view_get_sub_resource_parent(const struct wine
     if (view->resource->type == WINED3D_RTYPE_BUFFER)
         return wined3d_buffer_get_parent(buffer_from_resource(view->resource));
 
-    texture = wined3d_texture_from_resource(view->resource);
+    texture = texture_from_resource(view->resource);
 
     return wined3d_resource_get_parent(texture->sub_resources[view->sub_resource_idx].resource);
 }
@@ -108,7 +108,7 @@ static HRESULT wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *
     }
     else
     {
-        struct wined3d_texture *texture = wined3d_texture_from_resource(resource);
+        struct wined3d_texture *texture = texture_from_resource(resource);
 
         if (desc->u.texture.level_idx >= texture->level_count
                 || desc->u.texture.layer_idx >= texture->layer_count

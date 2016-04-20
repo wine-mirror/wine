@@ -1447,19 +1447,24 @@ static const struct wined3d_texture_ops texture2d_ops =
     texture2d_cleanup_sub_resources,
 };
 
+struct wined3d_texture * __cdecl wined3d_texture_from_resource(struct wined3d_resource *resource)
+{
+    return texture_from_resource(resource);
+}
+
 static ULONG texture_resource_incref(struct wined3d_resource *resource)
 {
-    return wined3d_texture_incref(wined3d_texture_from_resource(resource));
+    return wined3d_texture_incref(texture_from_resource(resource));
 }
 
 static ULONG texture_resource_decref(struct wined3d_resource *resource)
 {
-    return wined3d_texture_decref(wined3d_texture_from_resource(resource));
+    return wined3d_texture_decref(texture_from_resource(resource));
 }
 
 static void wined3d_texture_unload(struct wined3d_resource *resource)
 {
-    struct wined3d_texture *texture = wined3d_texture_from_resource(resource);
+    struct wined3d_texture *texture = texture_from_resource(resource);
     UINT sub_count = texture->level_count * texture->layer_count;
     struct wined3d_device *device = resource->device;
     const struct wined3d_gl_info *gl_info;
@@ -1537,7 +1542,7 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
     TRACE("resource %p, sub_resource_idx %u, map_desc %p, box %s, flags %#x.\n",
             resource, sub_resource_idx, map_desc, debug_box(box), flags);
 
-    texture = wined3d_texture_from_resource(resource);
+    texture = texture_from_resource(resource);
     if (!(sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx)))
         return E_INVALIDARG;
 
@@ -1684,7 +1689,7 @@ static HRESULT texture_resource_sub_resource_unmap(struct wined3d_resource *reso
 
     TRACE("resource %p, sub_resource_idx %u.\n", resource, sub_resource_idx);
 
-    texture = wined3d_texture_from_resource(resource);
+    texture = texture_from_resource(resource);
     if (!(sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx)))
         return E_INVALIDARG;
 

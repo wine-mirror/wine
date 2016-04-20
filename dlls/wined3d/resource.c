@@ -414,7 +414,7 @@ BOOL wined3d_resource_is_offscreen(struct wined3d_resource *resource)
         return TRUE;
 
     /* Not on a swapchain - must be offscreen */
-    if (!(swapchain = wined3d_texture_from_resource(resource)->swapchain))
+    if (!(swapchain = texture_from_resource(resource)->swapchain))
         return TRUE;
 
     /* The front buffer is always onscreen */
