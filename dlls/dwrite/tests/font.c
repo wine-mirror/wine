@@ -5797,7 +5797,9 @@ static void test_HasCharacter(void)
 static void test_CreateFontFaceReference(void)
 {
     static const WCHAR dummyW[] = {'d','u','m','m','y',0};
-    IDWriteFontFaceReference *ref;
+    IDWriteFontFace3 *fontface, *fontface1;
+    IDWriteFontFaceReference *ref, *ref1;
+    IDWriteFontFile *file, *file1;
     IDWriteFactory3 *factory3;
     IDWriteFactory *factory;
     UINT32 index;
@@ -5826,18 +5828,72 @@ todo_wine
 if (hr == S_OK) {
     index = IDWriteFontFaceReference_GetFontFaceIndex(ref);
     ok(index == 1, "got %u\n", index);
+
+    hr = IDWriteFontFaceReference_GetFontFile(ref, &file);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFile_Release(file);
+
+    hr = IDWriteFontFaceReference_CreateFontFace(ref, &fontface);
+    ok(hr == DWRITE_E_FILEFORMAT, "got 0x%08x\n", hr);
+
+    IDWriteFontFaceReference_Release(ref);
 }
     /* path however has to be valid */
     hr = IDWriteFactory3_CreateFontFaceReference(factory3, dummyW, NULL, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
 todo_wine
     ok(hr == DWRITE_E_FILENOTFOUND, "got 0x%08x\n", hr);
 
+    EXPECT_REF(factory3, 1);
     hr = IDWriteFactory3_CreateFontFaceReference(factory3, path, NULL, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
 todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
-if (hr == S_OK)
+if (hr == S_OK) {
+    EXPECT_REF(factory3, 2);
+
+    /* new file is returned */
+    hr = IDWriteFontFaceReference_GetFontFile(ref, &file);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFaceReference_GetFontFile(ref, &file1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(file != file1, "got %p, previous file %p\n", file1, file);
+
+    IDWriteFontFile_Release(file);
+    IDWriteFontFile_Release(file1);
+
+    /* references are not reused */
+    hr = IDWriteFactory3_CreateFontFaceReference(factory3, path, NULL, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(ref1 != ref, "got %p, previous ref %p\n", ref1, ref);
+
+    /* created fontfaces are cached */
+    hr = IDWriteFontFaceReference_CreateFontFace(ref, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFaceReference_CreateFontFace(ref1, &fontface1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(fontface == fontface1, "got %p, expected %p\n", fontface1, fontface);
+    IDWriteFontFace3_Release(fontface);
+    IDWriteFontFace3_Release(fontface1);
+
+    IDWriteFontFaceReference_Release(ref1);
     IDWriteFontFaceReference_Release(ref);
 
+    /* create reference from a file */
+    hr = IDWriteFactory3_CreateFontFileReference(factory3, path, NULL, &file);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory3_CreateFontFaceReference_(factory3, file, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFaceReference_GetFontFile(ref, &file1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(file != file1, "got %p, previous file %p\n", file1, file);
+
+    IDWriteFontFaceReference_Release(ref);
+    IDWriteFontFile_Release(file);
+    IDWriteFontFile_Release(file1);
+}
     IDWriteFactory3_Release(factory3);
     DELETE_FONTFILE(path);
 }
