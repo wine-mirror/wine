@@ -1,5 +1,6 @@
 MODULE    = d3dx10_43.dll
 IMPORTLIB = d3dx10
+IMPORTS   = d3d10_1
 
 C_SRCS = \
 	d3dx10_43_main.c

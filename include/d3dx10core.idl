@@ -66,3 +66,5 @@ interface ID3DX10ThreadPump : IUnknown
 };
 
 cpp_quote("HRESULT WINAPI D3DX10UnsetAllDeviceObjects(ID3D10Device *device);")
+cpp_quote("HRESULT WINAPI D3DX10CreateDevice(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver_type,")
+cpp_quote("        HMODULE swrast, unsigned int flags, ID3D10Device **device);")
