@@ -97,7 +97,7 @@ static inline BOOL heap_free( LPVOID mem )
     return HeapFree( GetProcessHeap(), 0, mem );
 }
 
-static inline WCHAR *strdupAW( const char *src, DWORD len )
+static inline WCHAR *strdupAW( const char *src, int len )
 {
     WCHAR *dst = NULL;
     if (src)
@@ -628,8 +628,8 @@ BOOL WINAPI InternetGetProxyInfo( LPCSTR url, DWORD len_url, LPCSTR hostname, DW
     EnterCriticalSection( &cs_jsproxy );
 
     if (!global_script->text) goto done;
-    if (!(urlW = strdupAW( url, len_url ))) goto done;
-    if (hostname && !(hostnameW = strdupAW( hostname, len_hostname ))) goto done;
+    if (!(urlW = strdupAW( url, -1 ))) goto done;
+    if (hostname && !(hostnameW = strdupAW( hostname, -1 ))) goto done;
 
     TRACE( "%s\n", debugstr_w(global_script->text) );
     ret = run_script( global_script->text, urlW, hostnameW, proxy, len_proxy );
