@@ -33,8 +33,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
-#define MAXLOCKCOUNT 50 /* After this amount of locks do not free the sysmem copy. */
-
 static const DWORD surface_simple_locations = WINED3D_LOCATION_SYSMEM
         | WINED3D_LOCATION_USER_MEMORY | WINED3D_LOCATION_BUFFER;
 
@@ -427,19 +425,6 @@ HRESULT wined3d_surface_create_dc(struct wined3d_surface *surface)
     TRACE("Created DC %p, bitmap %p for surface %p.\n", surface->dc, surface->bitmap, surface);
 
     return WINED3D_OK;
-}
-
-static void surface_evict_sysmem(struct wined3d_surface *surface)
-{
-    unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
-    struct wined3d_texture *texture = surface->container;
-
-    if (texture->sub_resources[sub_resource_idx].map_count || texture->download_count > MAXLOCKCOUNT
-            || texture->flags & (WINED3D_TEXTURE_CONVERTED | WINED3D_TEXTURE_PIN_SYSMEM))
-        return;
-
-    wined3d_resource_free_sysmem(&surface->resource);
-    wined3d_texture_invalidate_location(texture, sub_resource_idx, WINED3D_LOCATION_SYSMEM);
 }
 
 static BOOL surface_is_full_rect(const struct wined3d_surface *surface, const RECT *r)
@@ -2531,8 +2516,6 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
             fb_copy_to_texture_hwstretch(dst_surface, src_surface, src_rect, dst_rect, filter);
         }
 
-        surface_evict_sysmem(dst_surface);
-
         return WINED3D_OK;
     }
 
@@ -3152,9 +3135,6 @@ done:
         surface->ds_current_size.cx = surface_w;
         surface->ds_current_size.cy = surface_h;
     }
-
-    if (location != WINED3D_LOCATION_SYSMEM && (sub_resource->locations & WINED3D_LOCATION_SYSMEM))
-        surface_evict_sysmem(surface);
 
     return WINED3D_OK;
 }
@@ -4332,7 +4312,6 @@ cpu:
 HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_texture *container,
         const struct wined3d_resource_desc *desc, GLenum target, unsigned int level, unsigned int layer)
 {
-    unsigned int sub_resource_idx = layer * container->level_count + level;
     struct wined3d_device *device = container->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, desc->format);
@@ -4360,10 +4339,6 @@ HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_tex
 
     list_init(&surface->renderbuffers);
     list_init(&surface->overlays);
-
-    wined3d_texture_validate_location(container, sub_resource_idx, WINED3D_LOCATION_SYSMEM);
-    if (container->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
-        container->sub_resources[sub_resource_idx].locations = WINED3D_LOCATION_DISCARDED;
 
     return hr;
 }

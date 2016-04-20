@@ -28,6 +28,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+#define WINED3D_TEXTURE_DYNAMIC_MAP_THRESHOLD 50
+
 static BOOL wined3d_texture_use_pbo(const struct wined3d_texture *texture, const struct wined3d_gl_info *gl_info)
 {
     return texture->resource.pool == WINED3D_POOL_DEFAULT
@@ -69,16 +71,47 @@ GLenum wined3d_texture_get_gl_buffer(const struct wined3d_texture *texture)
     return GL_BACK;
 }
 
+static void wined3d_texture_evict_sysmem(struct wined3d_texture *texture)
+{
+    struct wined3d_texture_sub_resource *sub_resource;
+    unsigned int i, sub_count;
+
+    if (texture->flags & (WINED3D_TEXTURE_CONVERTED | WINED3D_TEXTURE_PIN_SYSMEM)
+            || texture->download_count > WINED3D_TEXTURE_DYNAMIC_MAP_THRESHOLD)
+    {
+        TRACE("Not evicting system memory for texture %p.\n", texture);
+        return;
+    }
+
+    TRACE("Evicting system memory for texture %p.\n", texture);
+
+    sub_count = texture->level_count * texture->layer_count;
+    for (i = 0; i < sub_count; ++i)
+    {
+        sub_resource = &texture->sub_resources[i];
+        if (sub_resource->locations == WINED3D_LOCATION_SYSMEM)
+            ERR("WINED3D_LOCATION_SYSMEM is the only location for sub-resource %u of texture %p.\n",
+                    i, texture);
+        sub_resource->locations &= ~WINED3D_LOCATION_SYSMEM;
+        wined3d_resource_free_sysmem(sub_resource->resource);
+    }
+}
+
 void wined3d_texture_validate_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, DWORD location)
 {
     struct wined3d_texture_sub_resource *sub_resource;
+    DWORD previous_locations;
 
     TRACE("texture %p, sub_resource_idx %u, location %s.\n",
             texture, sub_resource_idx, wined3d_debug_location(location));
 
     sub_resource = &texture->sub_resources[sub_resource_idx];
+    previous_locations = sub_resource->locations;
     sub_resource->locations |= location;
+    if (previous_locations == WINED3D_LOCATION_SYSMEM && location != WINED3D_LOCATION_SYSMEM
+            && !--texture->sysmem_count)
+        wined3d_texture_evict_sysmem(texture);
 
     TRACE("New locations flags are %s.\n", wined3d_debug_location(sub_resource->locations));
 }
@@ -96,6 +129,8 @@ void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
 
     sub_resource = &texture->sub_resources[sub_resource_idx];
     sub_resource->locations &= ~location;
+    if (sub_resource->locations == WINED3D_LOCATION_SYSMEM)
+        ++texture->sysmem_count;
 
     TRACE("New locations flags are %s.\n", wined3d_debug_location(sub_resource->locations));
 
@@ -970,6 +1005,7 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     sub_resource->resource->width = width;
     sub_resource->resource->height = height;
     sub_resource->resource->size = texture->slice_pitch;
+    sub_resource->locations = WINED3D_LOCATION_DISCARDED;
 
     if (((width & (width - 1)) || (height & (height - 1))) && !gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO]
             && !gl_info->supported[ARB_TEXTURE_RECTANGLE] && !gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
@@ -987,8 +1023,6 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         texture->pow2_width = width;
         texture->pow2_height = height;
     }
-
-    sub_resource->locations = 0;
 
     if ((texture->user_memory = mem))
     {
@@ -1009,6 +1043,7 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         texture->resource.map_binding = WINED3D_LOCATION_SYSMEM;
 
     wined3d_texture_validate_location(texture, 0, valid_location);
+    wined3d_texture_invalidate_location(texture, 0, ~valid_location);
 
     if (create_dib)
         wined3d_surface_create_dc(surface);
@@ -1849,6 +1884,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
                 GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,
             };
             GLenum target = desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP ? cube_targets[j] : texture->target;
+            struct wined3d_texture_sub_resource *sub_resource;
             unsigned int idx = j * texture->level_count + i;
             struct wined3d_surface *surface;
 
@@ -1860,6 +1896,16 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
                 if (!idx)
                     HeapFree(GetProcessHeap(), 0, surfaces);
                 return hr;
+            }
+
+            sub_resource = &texture->sub_resources[idx];
+            sub_resource->locations = WINED3D_LOCATION_DISCARDED;
+            sub_resource->resource = &surface->resource;
+            sub_resource->u.surface = surface;
+            if (!(texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL))
+            {
+                wined3d_texture_validate_location(texture, idx, WINED3D_LOCATION_SYSMEM);
+                wined3d_texture_invalidate_location(texture, idx, ~WINED3D_LOCATION_SYSMEM);
             }
 
             if (FAILED(hr = device_parent->ops->surface_created(device_parent,
@@ -1875,8 +1921,6 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
 
             surface->resource.parent = parent;
             surface->resource.parent_ops = parent_ops;
-            texture->sub_resources[idx].resource = &surface->resource;
-            texture->sub_resources[idx].u.surface = surface;
             TRACE("Created surface level %u, layer %u @ %p.\n", i, j, surface);
 
             if (((desc->usage & WINED3DUSAGE_OWNDC) || (device->wined3d->flags & WINED3D_NO3D))
@@ -2097,6 +2141,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
     volume_desc.resource_type = WINED3D_RTYPE_VOLUME;
     for (i = 0; i < texture->level_count; ++i)
     {
+        struct wined3d_texture_sub_resource *sub_resource;
         struct wined3d_volume *volume;
 
         volume = &volumes[i];
@@ -2108,6 +2153,11 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
                 HeapFree(GetProcessHeap(), 0, volumes);
             return hr;
         }
+
+        sub_resource = &texture->sub_resources[i];
+        sub_resource->locations = WINED3D_LOCATION_DISCARDED;
+        sub_resource->resource = &volume->resource;
+        sub_resource->u.volume = volume;
 
         if (FAILED(hr = device_parent->ops->volume_created(device_parent,
                 texture, i, &parent, &parent_ops)))
@@ -2122,8 +2172,6 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
 
         volume->resource.parent = parent;
         volume->resource.parent_ops = parent_ops;
-        texture->sub_resources[i].resource = &volume->resource;
-        texture->sub_resources[i].u.volume = volume;
         TRACE("Created volume level %u @ %p.\n", i, volume);
 
         /* Calculate the next mipmap level. */

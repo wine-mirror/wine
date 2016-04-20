@@ -121,12 +121,6 @@ static void wined3d_volume_download_data(struct wined3d_volume *volume,
 
 }
 
-static void wined3d_volume_evict_sysmem(struct wined3d_volume *volume)
-{
-    wined3d_resource_free_sysmem(&volume->resource);
-    wined3d_texture_invalidate_location(volume->container, volume->texture_level, WINED3D_LOCATION_SYSMEM);
-}
-
 static DWORD volume_access_from_location(DWORD location)
 {
     switch (location)
@@ -172,20 +166,6 @@ static void wined3d_volume_srgb_transfer(struct wined3d_volume *volume,
     wined3d_volume_upload_data(volume, context, wined3d_const_bo_address(&data));
 
     HeapFree(GetProcessHeap(), 0, data.addr);
-}
-
-static BOOL wined3d_volume_can_evict(const struct wined3d_volume *volume)
-{
-    struct wined3d_texture *texture = volume->container;
-
-    if (texture->resource.pool != WINED3D_POOL_MANAGED)
-        return FALSE;
-    if (texture->download_count >= 10)
-        return FALSE;
-    if (texture->resource.format->convert)
-        return FALSE;
-
-    return TRUE;
 }
 
 /* Context activation is done by the caller. */
@@ -308,9 +288,6 @@ BOOL wined3d_volume_load_location(struct wined3d_volume *volume,
 done:
     wined3d_texture_validate_location(texture, sub_resource_idx, location);
 
-    if (location != WINED3D_LOCATION_SYSMEM && wined3d_volume_can_evict(volume))
-        wined3d_volume_evict_sysmem(volume);
-
     return TRUE;
 }
 
@@ -387,8 +364,6 @@ HRESULT wined3d_volume_init(struct wined3d_volume *volume, struct wined3d_textur
         wined3d_resource_free_sysmem(&volume->resource);
 
     volume->texture_level = level;
-    container->sub_resources[level].locations = WINED3D_LOCATION_DISCARDED;
-
     volume->container = container;
 
     return WINED3D_OK;

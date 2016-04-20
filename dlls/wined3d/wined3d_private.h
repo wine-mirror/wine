@@ -2467,6 +2467,7 @@ struct wined3d_texture
     UINT layer_count;
     UINT level_count;
     unsigned int download_count;
+    unsigned int sysmem_count;
     float pow2_matrix[16];
     UINT lod;
     enum wined3d_texture_filter_type filter_type;
