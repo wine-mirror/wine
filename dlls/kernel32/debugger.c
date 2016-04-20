@@ -159,7 +159,7 @@ BOOL WINAPI WaitForDebugEvent(
  * PARAMS
  *  pid    [I] The id of the process to continue.
  *  tid    [I] The id of the thread to continue.
- *  status [I] The rule to apply to unhandled exeptions.
+ *  status [I] The rule to apply to unhandled exceptions.
  *
  * RETURNS
  *
