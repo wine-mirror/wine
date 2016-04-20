@@ -2194,11 +2194,9 @@ static void test_mdi(void)
                 gotit = TRUE;
             }
             else
-todo_wine
                 ok(msg.hwnd != mdi_client, "message %04x should not be posted to mdiclient\n", msg.message);
             DispatchMessageA(&msg);
         }
-todo_wine
         ok(gotit, "message 0x003f should appear after SetWindowPos\n");
 
         si.cbSize = sizeof(si);

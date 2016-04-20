@@ -103,7 +103,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mdi);
 
 #define MDI_MAXTITLELENGTH      0xa1
 
-#define WM_MDICALCCHILDSCROLL   0x10ac /* this is exactly what Windows uses */
+#define WM_MDICALCCHILDSCROLL   0x003f /* this is exactly what Windows uses */
 
 /* "More Windows..." definitions */
 #define MDI_MOREWINDOWSLIMIT    9       /* after this number of windows, a "More Windows..."
