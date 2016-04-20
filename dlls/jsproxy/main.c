@@ -188,8 +188,20 @@ BOOL WINAPI JSPROXY_InternetInitializeAutoProxyDll( DWORD version, LPSTR tmpfile
 
     if (buffer && buffer->dwStructSize == sizeof(*buffer) && buffer->lpszScriptBuffer)
     {
+        DWORD i, len = 0;
+        for (i = 0; i < buffer->dwScriptBufferSize; i++)
+        {
+            if (!buffer->lpszScriptBuffer[i]) break;
+            len++;
+        }
+        if (len == buffer->dwScriptBufferSize)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            LeaveCriticalSection( &cs_jsproxy );
+            return FALSE;
+        }
         heap_free( global_script->text );
-        if( (global_script->text = strdupAW( buffer->lpszScriptBuffer, buffer->dwScriptBufferSize ))) ret = TRUE;
+        if ((global_script->text = strdupAW( buffer->lpszScriptBuffer, len ))) ret = TRUE;
     }
     else
     {
@@ -627,7 +639,16 @@ BOOL WINAPI InternetGetProxyInfo( LPCSTR url, DWORD len_url, LPCSTR hostname, DW
 
     EnterCriticalSection( &cs_jsproxy );
 
-    if (!global_script->text) goto done;
+    if (!global_script->text)
+    {
+        SetLastError( ERROR_CAN_NOT_COMPLETE );
+        goto done;
+    }
+    if (hostname && len_hostname < strlen( hostname ))
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        goto done;
+    }
     if (!(urlW = strdupAW( url, -1 ))) goto done;
     if (hostname && !(hostnameW = strdupAW( hostname, -1 ))) goto done;
 
