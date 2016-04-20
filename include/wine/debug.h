@@ -199,12 +199,6 @@ static inline const char *wine_dbgstr_point( const POINT *pt )
     return wine_dbg_sprintf( "(%d,%d)", pt->x, pt->y );
 }
 
-static inline const char *wine_dbgstr_size( const SIZE *size )
-{
-    if (!size) return "(null)";
-    return wine_dbg_sprintf( "(%d,%d)", size->cx, size->cy );
-}
-
 static inline const char *wine_dbgstr_rect( const RECT *rect )
 {
     if (!rect) return "(null)";
