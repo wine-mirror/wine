@@ -1243,7 +1243,8 @@ static HRESULT WINAPI dwritefont_QueryInterface(IDWriteFont3 *iface, REFIID riid
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
 
-    if (IsEqualIID(riid, &IID_IDWriteFont2) ||
+    if (IsEqualIID(riid, &IID_IDWriteFont3) ||
+        IsEqualIID(riid, &IID_IDWriteFont2) ||
         IsEqualIID(riid, &IID_IDWriteFont1) ||
         IsEqualIID(riid, &IID_IDWriteFont)  ||
         IsEqualIID(riid, &IID_IUnknown))
