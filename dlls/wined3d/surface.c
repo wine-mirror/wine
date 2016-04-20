@@ -1561,6 +1561,7 @@ static inline const struct d3dfmt_converter_desc *find_converter(enum wined3d_fo
 static struct wined3d_texture *surface_convert_format(struct wined3d_texture *src_texture,
         unsigned int sub_resource_idx, const struct wined3d_format *dst_format)
 {
+    unsigned int texture_level = sub_resource_idx % src_texture->level_count;
     const struct wined3d_format *src_format = src_texture->resource.format;
     struct wined3d_device *device = src_texture->resource.device;
     const struct d3dfmt_converter_desc *conv = NULL;
@@ -1578,11 +1579,16 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_texture *sr
     }
 
     /* FIXME: Multisampled conversion? */
-    wined3d_resource_get_desc(src_texture->sub_resources[sub_resource_idx].resource, &desc);
     desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
     desc.format = dst_format->id;
+    desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
+    desc.multisample_quality = 0;
     desc.usage = 0;
     desc.pool = WINED3D_POOL_SCRATCH;
+    desc.width = wined3d_texture_get_level_width(src_texture, texture_level);
+    desc.height = wined3d_texture_get_level_height(src_texture, texture_level);
+    desc.depth = 1;
+    desc.size = 0;
     if (FAILED(wined3d_texture_create(device, &desc, 1,
             WINED3D_TEXTURE_CREATE_MAPPABLE | WINED3D_TEXTURE_CREATE_DISCARD,
             NULL, NULL, &wined3d_null_parent_ops, &dst_texture)))
