@@ -2606,19 +2606,16 @@ static void surface_depth_blt(const struct wined3d_surface *surface, struct wine
 void surface_modify_ds_location(struct wined3d_surface *surface,
         DWORD location, UINT w, UINT h)
 {
-    struct wined3d_texture_sub_resource *sub_resource;
+    struct wined3d_texture *texture = surface->container;
+    unsigned int sub_resource_idx;
 
     TRACE("surface %p, new location %#x, w %u, h %u.\n", surface, location, w, h);
 
-    sub_resource = surface_get_sub_resource(surface);
-    if (((sub_resource->locations & WINED3D_LOCATION_TEXTURE_RGB) && !(location & WINED3D_LOCATION_TEXTURE_RGB))
-            || (!(sub_resource->locations & WINED3D_LOCATION_TEXTURE_RGB)
-            && (location & WINED3D_LOCATION_TEXTURE_RGB)))
-        wined3d_texture_set_dirty(surface->container);
-
+    sub_resource_idx = surface_get_sub_resource_idx(surface);
     surface->ds_current_size.cx = w;
     surface->ds_current_size.cy = h;
-    sub_resource->locations = location;
+    wined3d_texture_validate_location(texture, sub_resource_idx, location);
+    wined3d_texture_invalidate_location(texture, sub_resource_idx, ~location);
 }
 
 /* Context activation is done by the caller. */
