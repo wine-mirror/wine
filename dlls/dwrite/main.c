@@ -778,6 +778,8 @@ static HRESULT WINAPI dwritefactory_CreateFontFileReference(IDWriteFactory3 *ifa
 
     TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(path), writetime, font_file);
 
+    *font_file = NULL;
+
     if (!This->localfontfileloader)
     {
         hr = create_localfontfileloader(&This->localfontfileloader);

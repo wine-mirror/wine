@@ -4399,6 +4399,9 @@ HRESULT get_local_refkey(const WCHAR *path, const FILETIME *writetime, void **ke
 {
     struct local_refkey *refkey;
 
+    if (!path)
+        return E_INVALIDARG;
+
     *size = FIELD_OFFSET(struct local_refkey, name) + (strlenW(path)+1)*sizeof(WCHAR);
     *key = NULL;
 

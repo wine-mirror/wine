@@ -2599,6 +2599,11 @@ static void test_CreateFontFileReference(void)
     path = create_testfontfile(test_fontfile);
     factory = create_factory();
 
+    ffile = (void*)0xdeadbeef;
+    hr = IDWriteFactory_CreateFontFileReference(factory, NULL, NULL, &ffile);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n",hr);
+    ok(ffile == NULL, "got %p\n", ffile);
+
     hr = IDWriteFactory_CreateFontFileReference(factory, path, NULL, &ffile);
     ok(hr == S_OK, "got 0x%08x\n",hr);
 
