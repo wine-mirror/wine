@@ -3036,7 +3036,7 @@ static void HTTP_ReceiveRequestData(http_request_t *req, BOOL first_notif, DWORD
 }
 
 /* read data from the http connection (the read section must be held) */
-static DWORD HTTPREQ_Read(http_request_t *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
+static DWORD HTTPREQ_Read(http_request_t *req, void *buffer, DWORD size, DWORD *read)
 {
     DWORD current_read = 0, ret_read = 0;
     blocking_mode_t blocking_mode;
@@ -3090,7 +3090,7 @@ static BOOL drain_content(http_request_t *req, BOOL blocking)
         DWORD bytes_read, res;
         BYTE buf[4096];
 
-        res = HTTPREQ_Read(req, buf, sizeof(buf), &bytes_read, TRUE);
+        res = HTTPREQ_Read(req, buf, sizeof(buf), &bytes_read);
         if(res != ERROR_SUCCESS) {
             ret = FALSE;
             break;
@@ -3114,7 +3114,7 @@ static DWORD HTTPREQ_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DW
     if(hdr->dwError == INTERNET_HANDLE_IN_USE)
         hdr->dwError = ERROR_INTERNET_INTERNAL_ERROR;
 
-    res = HTTPREQ_Read(req, buffer, size, read, TRUE);
+    res = HTTPREQ_Read(req, buffer, size, read);
     if(res == ERROR_SUCCESS)
         res = hdr->dwError;
     LeaveCriticalSection( &req->read_section );
@@ -3137,7 +3137,7 @@ static void AsyncReadFileExProc(task_header_t *hdr)
 
     TRACE("INTERNETREADFILEEXW %p\n", task->hdr.hdr);
 
-    res = HTTPREQ_Read(req, task->buf, task->size, task->ret_read, TRUE);
+    res = HTTPREQ_Read(req, task->buf, task->size, task->ret_read);
     send_request_complete(req, res == ERROR_SUCCESS, res);
 }
 
@@ -3161,7 +3161,7 @@ static DWORD HTTPREQ_ReadFileEx(object_header_t *hdr, void *buf, DWORD size, DWO
         {
             if (get_avail_data(req))
             {
-                res = HTTPREQ_Read(req, buf, size, &read, FALSE);
+                res = HTTPREQ_Read(req, buf, size, &read);
                 LeaveCriticalSection( &req->read_section );
                 goto done;
             }
@@ -3187,7 +3187,7 @@ static DWORD HTTPREQ_ReadFileEx(object_header_t *hdr, void *buf, DWORD size, DWO
         hdr->dwError = ERROR_INTERNET_INTERNAL_ERROR;
 
     while(1) {
-        res = HTTPREQ_Read(req, (char*)buf+read, size-read, &cread, !(flags & IRF_NO_WAIT));
+        res = HTTPREQ_Read(req, (char*)buf+read, size-read, &cread);
         if(res != ERROR_SUCCESS)
             break;
 
