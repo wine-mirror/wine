@@ -142,3 +142,10 @@ HRESULT WINAPI D3DX10CreateDevice(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE drive
 
     return hr;
 }
+
+HRESULT WINAPI D3DX10GetFeatureLevel1(ID3D10Device *device, ID3D10Device1 **device1)
+{
+    TRACE("device %p, device1 %p.\n", device, device1);
+
+    return ID3D10Device_QueryInterface(device, &IID_ID3D10Device1, (void **)device1);
+}
