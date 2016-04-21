@@ -537,6 +537,76 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     return 0;
 }
 
+static WCHAR *reg_data_to_wchar(DWORD type, const BYTE *src, DWORD size_bytes)
+{
+    WCHAR *buffer = NULL;
+    int i;
+
+    switch (type)
+    {
+        case REG_SZ:
+        case REG_EXPAND_SZ:
+            buffer = HeapAlloc(GetProcessHeap(), 0, size_bytes);
+            strcpyW(buffer, (WCHAR *)src);
+            break;
+        case REG_NONE:
+        case REG_BINARY:
+        {
+            WCHAR *ptr;
+            WCHAR fmt[] = {'%','0','2','X',0};
+
+            buffer = HeapAlloc(GetProcessHeap(), 0, (size_bytes * 2 + 1) * sizeof(WCHAR));
+            ptr = buffer;
+            for (i = 0; i < size_bytes; i++)
+                ptr += sprintfW(ptr, fmt, src[i]);
+            break;
+        }
+        case REG_DWORD:
+     /* case REG_DWORD_LITTLE_ENDIAN: */
+        case REG_DWORD_BIG_ENDIAN:
+        {
+            const int zero_x_dword = 10;
+            WCHAR fmt[] = {'0','x','%','x',0};
+
+            buffer = HeapAlloc(GetProcessHeap(), 0, (zero_x_dword + 1) * sizeof(WCHAR));
+            sprintfW(buffer, fmt, *(DWORD *)src);
+            break;
+        }
+        case REG_MULTI_SZ:
+        {
+            const int two_wchars = 2 * sizeof(WCHAR);
+            DWORD tmp_size;
+            const WCHAR *tmp = (const WCHAR *)src;
+            int len, destindex;
+
+            if (size_bytes <= two_wchars)
+            {
+                buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR));
+                *buffer = 0;
+                return buffer;
+            }
+
+            tmp_size = size_bytes - two_wchars; /* exclude both null terminators */
+            buffer = HeapAlloc(GetProcessHeap(), 0, tmp_size * 2);
+            len = tmp_size / sizeof(WCHAR);
+
+            for (i = 0, destindex = 0; i < len; i++, destindex++)
+            {
+                if (tmp[i])
+                    buffer[destindex] = tmp[i];
+                else
+                {
+                    buffer[destindex++] = '\\';
+                    buffer[destindex] = '0';
+                }
+            }
+            buffer[destindex] = 0;
+            break;
+        }
+    }
+    return buffer;
+}
+
 static const WCHAR *reg_type_to_wchar(DWORD type)
 {
     int i, array_size = ARRAY_SIZE(type_rels);
@@ -549,9 +619,10 @@ static const WCHAR *reg_type_to_wchar(DWORD type)
     return NULL;
 }
 
-static void output_value(const WCHAR *value_name, DWORD type)
+static void output_value(const WCHAR *value_name, DWORD type, BYTE *data, DWORD data_size)
 {
     WCHAR fmt[] = {' ',' ',' ',' ','%','1',0};
+    WCHAR *reg_data;
     WCHAR newlineW[] = {'\n',0};
 
     if (value_name && value_name[0])
@@ -563,6 +634,9 @@ static void output_value(const WCHAR *value_name, DWORD type)
         output_string(fmt, defval);
     }
     output_string(fmt, reg_type_to_wchar(type));
+    reg_data = reg_data_to_wchar(type, data, data_size);
+    output_string(fmt, reg_data);
+    HeapFree(GetProcessHeap(), 0, reg_data);
     output_string(newlineW);
 }
 
@@ -571,14 +645,16 @@ static int query_all(HKEY key, WCHAR *path)
     LONG rc;
     DWORD num_subkeys, max_subkey_len, subkey_len;
     DWORD num_values, max_value_len, value_len;
+    DWORD max_data_bytes, data_size;
     DWORD i, type;
     WCHAR fmt[] = {'%','1','\n',0};
     WCHAR fmt_path[] = {'%','1','\\','%','2','\n',0};
     WCHAR *value_name, *subkey_name;
     WCHAR newlineW[] = {'\n',0};
+    BYTE *data;
 
     rc = RegQueryInfoKeyW(key, NULL, NULL, NULL, &num_subkeys, &max_subkey_len, NULL,
-                          &num_values, &max_value_len, NULL, NULL, NULL);
+                          &num_values, &max_value_len, &max_data_bytes, NULL, NULL);
     if (rc)
     {
         ERR("RegQueryInfoKey failed: %d\n", rc);
@@ -595,14 +671,24 @@ static int query_all(HKEY key, WCHAR *path)
         return 1;
     }
 
+    data = HeapAlloc(GetProcessHeap(), 0, max_data_bytes);
+    if (!data)
+    {
+        HeapFree(GetProcessHeap(), 0, value_name);
+        ERR("Failed to allocate memory for data\n");
+        return 1;
+    }
+
     for (i = 0; i < num_values; i++)
     {
         value_len = max_value_len;
-        rc = RegEnumValueW(key, i, value_name, &value_len, NULL, &type, NULL, NULL);
+        data_size = max_data_bytes;
+        rc = RegEnumValueW(key, i, value_name, &value_len, NULL, &type, data, &data_size);
         if (rc == ERROR_SUCCESS)
-            output_value(value_name, type);
+            output_value(value_name, type, data, data_size);
     }
 
+    HeapFree(GetProcessHeap(), 0, data);
     HeapFree(GetProcessHeap(), 0, value_name);
 
     if (num_values)
