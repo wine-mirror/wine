@@ -2063,12 +2063,12 @@ static HRESULT PropertyStorage_BaseConstruct(IStream *stm,
     hr = PropertyStorage_CreateDictionaries(*pps);
     if (FAILED(hr))
     {
-        IStream_Release(stm);
         (*pps)->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&(*pps)->cs);
         HeapFree(GetProcessHeap(), 0, *pps);
         *pps = NULL;
     }
+    else IStream_AddRef( stm );
 
     return hr;
 }
@@ -2090,11 +2090,7 @@ static HRESULT PropertyStorage_ConstructFromStream(IStream *stm,
             TRACE("PropertyStorage %p constructed\n", ps);
             hr = S_OK;
         }
-        else
-        {
-            PropertyStorage_DestroyDictionaries(ps);
-            HeapFree(GetProcessHeap(), 0, ps);
-        }
+        else IPropertyStorage_Release( &ps->IPropertyStorage_iface );
     }
     return hr;
 }
@@ -2222,6 +2218,8 @@ static HRESULT WINAPI IPropertySetStorage_fnCreate(
 
     r = PropertyStorage_ConstructEmpty(stm, rfmtid, grfFlags, grfMode, ppprstg);
 
+    IStream_Release( stm );
+
 end:
     TRACE("returning 0x%08x\n", r);
     return r;
@@ -2266,6 +2264,8 @@ static HRESULT WINAPI IPropertySetStorage_fnOpen(
         goto end;
 
     r = PropertyStorage_ConstructFromStream(stm, rfmtid, grfMode, ppprstg);
+
+    IStream_Release( stm );
 
 end:
     TRACE("returning 0x%08x\n", r);
@@ -2804,6 +2804,8 @@ HRESULT WINAPI StgCreatePropStg(IUnknown *unk, REFFMTID fmt, const CLSID *clsid,
 
         r = PropertyStorage_ConstructEmpty(stm, fmt, flags,
                 STGM_CREATE|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, prop_stg);
+
+        IStream_Release( stm );
     }
 
 end:
@@ -2847,6 +2849,8 @@ HRESULT WINAPI StgOpenPropStg(IUnknown *unk, REFFMTID fmt, DWORD flags,
 
         r = PropertyStorage_ConstructFromStream(stm, fmt,
                 STGM_READWRITE|STGM_SHARE_EXCLUSIVE, prop_stg);
+
+        IStream_Release( stm );
     }
 
 end:
