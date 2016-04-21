@@ -540,14 +540,16 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
 static int query_all(HKEY key, WCHAR *path)
 {
     LONG rc;
+    DWORD num_subkeys, max_subkey_len, subkey_len;
     DWORD num_values, max_value_len, value_len;
     DWORD i;
     WCHAR fmt[] = {'%','1','\n',0};
     WCHAR fmt_value[] = {' ',' ',' ',' ','%','1',0};
-    WCHAR *value_name;
+    WCHAR fmt_path[] = {'%','1','\\','%','2','\n',0};
+    WCHAR *value_name, *subkey_name;
     WCHAR newlineW[] = {'\n',0};
 
-    rc = RegQueryInfoKeyW(key, NULL, NULL, NULL, NULL, NULL, NULL,
+    rc = RegQueryInfoKeyW(key, NULL, NULL, NULL, &num_subkeys, &max_subkey_len, NULL,
                           &num_values, &max_value_len, NULL, NULL, NULL);
     if (rc)
     {
@@ -579,6 +581,27 @@ static int query_all(HKEY key, WCHAR *path)
     HeapFree(GetProcessHeap(), 0, value_name);
 
     if (num_values)
+        output_string(newlineW);
+
+    max_subkey_len++;
+    subkey_name = HeapAlloc(GetProcessHeap(), 0, max_subkey_len * sizeof(WCHAR));
+    if (!subkey_name)
+    {
+        ERR("Failed to allocate memory for subkey_name\n");
+        return 1;
+    }
+
+    for (i = 0; i < num_subkeys; i++)
+    {
+        subkey_len = max_subkey_len;
+        rc = RegEnumKeyExW(key, i, subkey_name, &subkey_len, NULL, NULL, NULL, NULL);
+        if (rc == ERROR_SUCCESS)
+            output_string(fmt_path, path, subkey_name);
+    }
+
+    HeapFree(GetProcessHeap(), 0, subkey_name);
+
+    if (num_subkeys)
         output_string(newlineW);
 
     return 0;
