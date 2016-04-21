@@ -5456,7 +5456,16 @@ void wined3d_get_draw_rect(const struct wined3d_state *state, RECT *rect)
 
 const char *wined3d_debug_location(DWORD location)
 {
+    const char *prefix = "";
+    const char *suffix = "";
     char buf[294];
+
+    if (wined3d_popcount(location) > 16)
+    {
+        prefix = "~(";
+        location = ~location;
+        suffix = ")";
+    }
 
     buf[0] = '\0';
 #define LOCATION_TO_STR(u) if (location & u) { strcat(buf, " | "#u); location &= ~u; }
@@ -5472,7 +5481,7 @@ const char *wined3d_debug_location(DWORD location)
 #undef LOCATION_TO_STR
     if (location) FIXME("Unrecognized location flag(s) %#x.\n", location);
 
-    return buf[0] ? wine_dbg_sprintf("%s", &buf[3]) : "0";
+    return wine_dbg_sprintf("%s%s%s", prefix, buf[0] ? &buf[3] : "0", suffix);
 }
 
 /* Print a floating point value with the %.8e format specifier, always using
