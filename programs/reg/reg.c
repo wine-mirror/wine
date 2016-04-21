@@ -549,6 +549,16 @@ static const WCHAR *reg_type_to_wchar(DWORD type)
     return NULL;
 }
 
+static void output_value(const WCHAR *value_name, DWORD type)
+{
+    WCHAR fmt[] = {' ',' ',' ',' ','%','1',0};
+    WCHAR newlineW[] = {'\n',0};
+
+    output_string(fmt, value_name);
+    output_string(fmt, reg_type_to_wchar(type));
+    output_string(newlineW);
+}
+
 static int query_all(HKEY key, WCHAR *path)
 {
     LONG rc;
@@ -556,7 +566,6 @@ static int query_all(HKEY key, WCHAR *path)
     DWORD num_values, max_value_len, value_len;
     DWORD i, type;
     WCHAR fmt[] = {'%','1','\n',0};
-    WCHAR fmt_value[] = {' ',' ',' ',' ','%','1',0};
     WCHAR fmt_path[] = {'%','1','\\','%','2','\n',0};
     WCHAR *value_name, *subkey_name;
     WCHAR newlineW[] = {'\n',0};
@@ -584,11 +593,7 @@ static int query_all(HKEY key, WCHAR *path)
         value_len = max_value_len;
         rc = RegEnumValueW(key, i, value_name, &value_len, NULL, &type, NULL, NULL);
         if (rc == ERROR_SUCCESS)
-        {
-            output_string(fmt_value, value_name);
-            output_string(fmt_value, reg_type_to_wchar(type));
-            output_string(newlineW);
-        }
+            output_value(value_name, type);
     }
 
     HeapFree(GetProcessHeap(), 0, value_name);
