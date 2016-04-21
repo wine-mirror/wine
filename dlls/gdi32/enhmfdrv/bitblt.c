@@ -122,7 +122,7 @@ BOOL EMFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
     pEMR->dwRop = rop;
     pEMR->xSrc = src->log_x;
     pEMR->ySrc = src->log_y;
-    GetWorldTransform(devSrc->hdc, &pEMR->xformSrc);
+    GetTransform(devSrc->hdc, 0x204, &pEMR->xformSrc);
     pEMR->crBkColorSrc = GetBkColor(devSrc->hdc);
     pEMR->iUsageSrc = DIB_RGB_COLORS;
     pEMR->offBmiSrc = emrSize;
