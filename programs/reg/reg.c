@@ -554,7 +554,14 @@ static void output_value(const WCHAR *value_name, DWORD type)
     WCHAR fmt[] = {' ',' ',' ',' ','%','1',0};
     WCHAR newlineW[] = {'\n',0};
 
-    output_string(fmt, value_name);
+    if (value_name && value_name[0])
+        output_string(fmt, value_name);
+    else
+    {
+        WCHAR defval[32];
+        LoadStringW(GetModuleHandleW(NULL), STRING_DEFAULT_VALUE, defval, ARRAY_SIZE(defval));
+        output_string(fmt, defval);
+    }
     output_string(fmt, reg_type_to_wchar(type));
     output_string(newlineW);
 }
