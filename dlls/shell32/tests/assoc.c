@@ -150,6 +150,12 @@ static void test_IQueryAssociations_GetString(void)
     int i = 0;
 
     r = RegCreateKeyExW(HKEY_CLASSES_ROOT, test_extensionW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &test_extension_key, NULL);
+    if (r == ERROR_ACCESS_DENIED)
+    {
+        win_skip("Not enough permissions to create a test key.\n");
+        return;
+    }
+
     ok(r == ERROR_SUCCESS, "RegCreateKeyExW(HKCR, \".test\") failed: 0x%lx\n", r);
     r = RegSetValueExW(test_extension_key, NULL, 0, REG_SZ, (PBYTE)test_progidW, sizeof(test_progidW));
     ok(r == ERROR_SUCCESS, "RegSetValueExW(HKCR\\.test, NULL, \"testfile\") failed: 0x%lx\n", r);
