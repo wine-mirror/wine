@@ -1992,7 +1992,7 @@ static void texture3d_upload_data(struct wined3d_texture *texture, unsigned int 
     addr.buffer_object = 0;
     addr.addr = data->data;
 
-    wined3d_volume_upload_data(texture->sub_resources[sub_resource_idx].u.volume, context, &addr);
+    wined3d_volume_upload_data(texture, sub_resource_idx, context, &addr);
 }
 
 static BOOL texture3d_load_location(struct wined3d_texture *texture, unsigned int sub_resource_idx,
