@@ -502,7 +502,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
         close( fd );
         goto error;
     }
-    process->parent          = NULL;
+    process->parent_id       = 0;
     process->debugger        = NULL;
     process->handles         = NULL;
     process->msg_fd          = NULL;
@@ -554,7 +554,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     else
     {
         struct process *parent = parent_thread->process;
-        process->parent = (struct process *)grab_object( parent );
+        process->parent_id = parent->id;
         process->handles = inherit_all ? copy_handle_table( process, parent )
                                        : alloc_handle_table( process, 0 );
         /* Note: for security reasons, starting a new process does not attempt
@@ -621,7 +621,6 @@ static void process_destroy( struct object *obj )
         release_object( process->job );
     }
     if (process->console) release_object( process->console );
-    if (process->parent) release_object( process->parent );
     if (process->msg_fd) release_object( process->msg_fd );
     list_remove( &process->entry );
     if (process->idle_event) release_object( process->idle_event );
@@ -1350,7 +1349,7 @@ DECL_HANDLER(get_process_info)
     if ((process = get_process_from_handle( req->handle, PROCESS_QUERY_LIMITED_INFORMATION )))
     {
         reply->pid              = get_process_id( process );
-        reply->ppid             = process->parent ? get_process_id( process->parent ) : 0;
+        reply->ppid             = process->parent_id;
         reply->exit_code        = process->exit_code;
         reply->priority         = process->priority;
         reply->affinity         = process->affinity;

@@ -56,7 +56,7 @@ struct process
 {
     struct object        obj;             /* object header */
     struct list          entry;           /* entry in system-wide process list */
-    struct process      *parent;          /* parent process */
+    process_id_t         parent_id;       /* parent process id (at the time of creation) */
     struct list          thread_list;     /* thread list */
     struct thread       *debugger;        /* thread debugging this process */
     struct handle_table *handles;         /* handle entries */
