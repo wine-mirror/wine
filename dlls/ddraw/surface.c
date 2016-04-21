@@ -1235,7 +1235,8 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
 
     wined3d_mutex_lock();
 
-    if (!(dst_impl->ddraw->cooperative_level & DDSCL_EXCLUSIVE))
+    if ((dst_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+            && !(dst_impl->ddraw->cooperative_level & DDSCL_EXCLUSIVE))
     {
         WARN("Not in exclusive mode.\n");
         wined3d_mutex_unlock();
