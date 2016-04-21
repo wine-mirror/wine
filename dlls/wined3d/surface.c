@@ -3408,9 +3408,9 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
             {
                 if (!(converted_texture = surface_convert_format(src_texture, src_sub_resource_idx, dst_format)))
                 {
-                    /* The conv function writes a FIXME */
-                    WARN("Cannot convert source surface format to dest format.\n");
-                    goto release;
+                    FIXME("Cannot convert %s to %s.\n", debug_d3dformat(src_texture->resource.format->id),
+                            debug_d3dformat(dst_texture->resource.format->id));
+                    return WINED3DERR_NOTAVAILABLE;
                 }
                 src_texture = converted_texture;
                 src_sub_resource_idx = 0;
