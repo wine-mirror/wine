@@ -981,40 +981,13 @@ static HRESULT WINAPI OLEPictureImpl_IsDirty(
   return E_NOTIMPL;
 }
 
-static HRESULT OLEPictureImpl_LoadDIB(OLEPictureImpl *This, BYTE *xbuf, ULONG xread)
-{
-    BITMAPFILEHEADER	*bfh = (BITMAPFILEHEADER*)xbuf;
-    BITMAPINFO		*bi = (BITMAPINFO*)(bfh+1);
-    HDC			hdcref;
-
-    /* Does not matter whether this is a coreheader or not, we only use
-     * components which are in both
-     */
-    hdcref = GetDC(0);
-    This->desc.bmp.hbitmap = CreateDIBitmap(
-	hdcref,
-	&(bi->bmiHeader),
-	CBM_INIT,
-	xbuf+bfh->bfOffBits,
-	bi,
-       DIB_RGB_COLORS
-    );
-    ReleaseDC(0, hdcref);
-    if (This->desc.bmp.hbitmap == 0)
-        return E_FAIL;
-    This->desc.picType = PICTYPE_BITMAP;
-    OLEPictureImpl_SetBitmap(This);
-    return S_OK;
-}
-
 static HRESULT OLEPictureImpl_LoadWICSource(OLEPictureImpl *This, IWICBitmapSource *src)
 {
     HRESULT hr;
     BITMAPINFOHEADER bih;
-    HDC hdcref;
     UINT width, height;
     UINT stride, buffersize;
-    LPBYTE bits=NULL;
+    BYTE *bits, *mask = NULL;
     WICRect rc;
     IWICBitmapSource *real_source;
     UINT x, y;
@@ -1042,10 +1015,17 @@ static HRESULT OLEPictureImpl_LoadWICSource(OLEPictureImpl *This, IWICBitmapSour
     stride = 4 * width;
     buffersize = stride * height;
 
-    bits = malloc(buffersize);
-    if (!bits)
+    mask = malloc(buffersize);
+    if (!mask)
     {
         hr = E_OUTOFMEMORY;
+        goto end;
+    }
+
+    This->desc.bmp.hbitmap = CreateDIBSection(0, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void **)&bits, NULL, 0);
+    if (This->desc.bmp.hbitmap == 0)
+    {
+        hr = E_FAIL;
         goto end;
     }
 
@@ -1055,21 +1035,8 @@ static HRESULT OLEPictureImpl_LoadWICSource(OLEPictureImpl *This, IWICBitmapSour
     rc.Height = height;
     hr = IWICBitmapSource_CopyPixels(real_source, &rc, stride, buffersize, bits);
     if (FAILED(hr))
-        goto end;
-
-    hdcref = GetDC(0);
-    This->desc.bmp.hbitmap = CreateDIBitmap(
-        hdcref,
-        &bih,
-        CBM_INIT,
-        bits,
-        (BITMAPINFO*)&bih,
-        DIB_RGB_COLORS);
-
-    if (This->desc.bmp.hbitmap == 0)
     {
-        hr = E_FAIL;
-        ReleaseDC(0, hdcref);
+        DeleteObject(This->desc.bmp.hbitmap);
         goto end;
     }
 
@@ -1083,23 +1050,25 @@ static HRESULT OLEPictureImpl_LoadWICSource(OLEPictureImpl *This, IWICBitmapSour
             if((*pixel & 0x80000000) == 0)
             {
                 has_alpha = TRUE;
-                *pixel = black;
+                *(DWORD *)(mask + stride * y + 4 * x) = black;
             }
             else
-                *pixel = white;
+                *(DWORD *)(mask + stride * y + 4 * x) = white;
         }
     }
 
     if (has_alpha)
     {
-        HDC hdcBmp, hdcXor, hdcMask;
+        HDC hdcref, hdcBmp, hdcXor, hdcMask;
         HBITMAP hbmoldBmp, hbmoldXor, hbmoldMask;
+
+        hdcref = GetDC(0);
 
         This->hbmXor = CreateDIBitmap(
             hdcref,
             &bih,
             CBM_INIT,
-            bits,
+            mask,
             (BITMAPINFO*)&bih,
             DIB_RGB_COLORS
         );
@@ -1124,12 +1093,11 @@ static HRESULT OLEPictureImpl_LoadWICSource(OLEPictureImpl *This, IWICBitmapSour
         DeleteDC(hdcBmp);
         DeleteDC(hdcXor);
         DeleteDC(hdcMask);
+        ReleaseDC(0, hdcref);
     }
 
-    ReleaseDC(0, hdcref);
-
 end:
-    free(bits);
+    free(mask);
     IWICBitmapSource_Release(real_source);
     return hr;
 }
@@ -1494,7 +1462,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface, IStream *pStm) 
     hr = OLEPictureImpl_LoadWICDecoder(This, &CLSID_WICJpegDecoder, xbuf, xread);
     break;
   case BITMAP_FORMAT_BMP: /* Bitmap */
-    hr = OLEPictureImpl_LoadDIB(This, xbuf, xread);
+    hr = OLEPictureImpl_LoadWICDecoder(This, &CLSID_WICBmpDecoder, xbuf, xread);
     break;
   case BITMAP_FORMAT_PNG: /* PNG */
     hr = OLEPictureImpl_LoadWICDecoder(This, &CLSID_WICPngDecoder, xbuf, xread);
