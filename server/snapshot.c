@@ -115,7 +115,7 @@ static int snapshot_next_process( struct snapshot *snapshot, struct next_process
     ptr = &snapshot->processes[snapshot->process_pos++];
     reply->count    = ptr->count;
     reply->pid      = get_process_id( ptr->process );
-    reply->ppid     = ptr->process->parent ? get_process_id( ptr->process->parent ) : 0;
+    reply->ppid     = ptr->process->parent_id;
     reply->threads  = ptr->threads;
     reply->priority = ptr->priority;
     reply->handles  = ptr->handles;

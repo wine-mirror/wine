@@ -1157,7 +1157,7 @@ static void test_Toolhelp(void)
         Sleep(100);
     }
     /* The following test fails randomly on some Windows versions, but Gothic 2 depends on it */
-    todo_wine ok(i < 20 || broken(i == 20), "process object not released\n");
+    ok(i < 20 || broken(i == 20), "process object not released\n");
 
     snapshot = pCreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     ok(snapshot != INVALID_HANDLE_VALUE, "CreateToolhelp32Snapshot failed %u\n", GetLastError());

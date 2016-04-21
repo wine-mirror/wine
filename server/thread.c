@@ -1304,7 +1304,7 @@ DECL_HANDLER(init_thread)
         process->peb      = req->entry;
         process->cpu      = req->cpu;
         reply->info_size  = init_process( current );
-        if (!process->parent)
+        if (!process->parent_id)
             process->affinity = current->affinity = get_thread_affinity( current );
         else
             set_thread_affinity( current, current->affinity );
