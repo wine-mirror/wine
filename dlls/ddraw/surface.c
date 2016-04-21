@@ -5718,10 +5718,41 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     /* Ensure DDSD_CAPS is always set. */
     desc->dwFlags |= DDSD_CAPS;
 
+    if (desc->ddsCaps.dwCaps & DDSCAPS_FLIP)
+    {
+        if (!(desc->dwFlags & DDSD_BACKBUFFERCOUNT) || !desc->u5.dwBackBufferCount)
+        {
+            WARN("Tried to create a flippable surface without any back buffers.\n");
+            HeapFree(GetProcessHeap(), 0, texture);
+            return DDERR_INVALIDCAPS;
+        }
+
+        if (!(desc->ddsCaps.dwCaps & DDSCAPS_COMPLEX))
+        {
+            WARN("Tried to create a flippable surface without DDSCAPS_COMPLEX.\n");
+            HeapFree(GetProcessHeap(), 0, texture);
+            return DDERR_INVALIDCAPS;
+        }
+
+        if (desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
+        {
+            FIXME("Flippable textures not implemented.\n");
+            HeapFree(GetProcessHeap(), 0, texture);
+            return DDERR_INVALIDCAPS;
+        }
+    }
+    else
+    {
+        if (desc->dwFlags & DDSD_BACKBUFFERCOUNT)
+        {
+            WARN("Tried to specify a back buffer count for a non-flippable surface.\n");
+            HeapFree(GetProcessHeap(), 0, texture);
+            return DDERR_INVALIDCAPS;
+        }
+    }
+
     if (desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
-        DWORD flippable = desc->ddsCaps.dwCaps & (DDSCAPS_FLIP | DDSCAPS_COMPLEX);
-
         if (desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
         {
             WARN("Tried to create a primary surface with DDSCAPS_TEXTURE.\n");
@@ -5729,28 +5760,18 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             return DDERR_INVALIDCAPS;
         }
 
-        if (flippable)
+        if ((desc->ddsCaps.dwCaps & DDSCAPS_COMPLEX) && !(desc->ddsCaps.dwCaps & DDSCAPS_FLIP))
         {
-            if (flippable != (DDSCAPS_FLIP | DDSCAPS_COMPLEX))
-            {
-                WARN("Tried to create a flippable primary surface without both DDSCAPS_FLIP and DDSCAPS_COMPLEX.\n");
-                HeapFree(GetProcessHeap(), 0, texture);
-                return DDERR_INVALIDCAPS;
-            }
+            WARN("Tried to create a flippable primary surface without both DDSCAPS_FLIP and DDSCAPS_COMPLEX.\n");
+            HeapFree(GetProcessHeap(), 0, texture);
+            return DDERR_INVALIDCAPS;
+        }
 
-            if (!(desc->dwFlags & DDSD_BACKBUFFERCOUNT) || !desc->u5.dwBackBufferCount)
-            {
-                WARN("Tried to create a flippable primary surface without any back buffers.\n");
-                HeapFree(GetProcessHeap(), 0, texture);
-                return DDERR_INVALIDCAPS;
-            }
-
-            if (!(ddraw->cooperative_level & DDSCL_EXCLUSIVE))
-            {
-                WARN("Tried to create a flippable primary surface without DDSCL_EXCLUSIVE.\n");
-                HeapFree(GetProcessHeap(), 0, texture);
-                return DDERR_NOEXCLUSIVEMODE;
-            }
+        if ((desc->ddsCaps.dwCaps & DDSCAPS_FLIP) && !(ddraw->cooperative_level & DDSCL_EXCLUSIVE))
+        {
+            WARN("Tried to create a flippable primary surface without DDSCL_EXCLUSIVE.\n");
+            HeapFree(GetProcessHeap(), 0, texture);
+            return DDERR_NOEXCLUSIVEMODE;
         }
     }
 
@@ -5853,12 +5874,13 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         return DDERR_INVALIDPARAMS;
     }
 
+    if (desc->ddsCaps.dwCaps & DDSCAPS_FLIP)
+        desc->ddsCaps.dwCaps |= DDSCAPS_FRONTBUFFER;
+
     if (desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
         /* The first surface is a front buffer, the back buffers are created
          * afterwards. */
-        if (desc->ddsCaps.dwCaps & DDSCAPS_FLIP)
-            desc->ddsCaps.dwCaps |= DDSCAPS_FRONTBUFFER;
         desc->ddsCaps.dwCaps |= DDSCAPS_VISIBLE;
         if (ddraw->cooperative_level & DDSCL_EXCLUSIVE)
         {
