@@ -338,6 +338,7 @@ static unsigned int used_ptid_entries;      /* number of entries in use */
 static unsigned int alloc_ptid_entries;     /* number of allocated entries */
 static unsigned int next_free_ptid;         /* next free entry */
 static unsigned int last_free_ptid;         /* last free entry */
+static unsigned int num_free_ptids;         /* number of free ptids */
 
 static void kill_all_processes(void);
 
@@ -354,16 +355,17 @@ unsigned int alloc_ptid( void *ptr )
         id = used_ptid_entries + PTID_OFFSET;
         entry = &ptid_entries[used_ptid_entries++];
     }
-    else if (next_free_ptid)
+    else if (next_free_ptid && num_free_ptids >= 256)
     {
         id = next_free_ptid;
         entry = &ptid_entries[id - PTID_OFFSET];
         if (!(next_free_ptid = entry->next)) last_free_ptid = 0;
+        num_free_ptids--;
     }
     else  /* need to grow the array */
     {
         unsigned int count = alloc_ptid_entries + (alloc_ptid_entries / 2);
-        if (!count) count = 64;
+        if (!count) count = 512;
         if (!(entry = realloc( ptid_entries, count * sizeof(*entry) )))
         {
             set_error( STATUS_NO_MEMORY );
@@ -390,8 +392,8 @@ void free_ptid( unsigned int id )
     /* append to end of free list so that we don't reuse it too early */
     if (last_free_ptid) ptid_entries[last_free_ptid - PTID_OFFSET].next = id;
     else next_free_ptid = id;
-
     last_free_ptid = id;
+    num_free_ptids++;
 }
 
 /* retrieve the pointer corresponding to a process or thread id */
