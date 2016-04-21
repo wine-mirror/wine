@@ -373,7 +373,7 @@ HLPFILE_PAGE *HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset, ULONG* relativ
 
     if (!hlpfile) return 0;
 
-    WINE_TRACE("<%s>[%x]\n", hlpfile->lpszPath, offset);
+    WINE_TRACE("<%s>[%x]\n", debugstr_a(hlpfile->lpszPath), offset);
 
     if (offset == 0xFFFFFFFF) return NULL;
     page = NULL;
@@ -388,7 +388,7 @@ HLPFILE_PAGE *HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset, ULONG* relativ
     }
     if (!found)
         WINE_ERR("Page of offset %u not found in file %s\n",
-                 offset, hlpfile->lpszPath);
+                 offset, debugstr_a(hlpfile->lpszPath));
     return found;
 }
 
@@ -441,7 +441,7 @@ HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash, ULONG* relative)
     if (!hlpfile) return NULL;
     if (!lHash) return HLPFILE_Contents(hlpfile, relative);
 
-    WINE_TRACE("<%s>[%x]\n", hlpfile->lpszPath, lHash);
+    WINE_TRACE("<%s>[%x]\n", debugstr_a(hlpfile->lpszPath), lHash);
 
     /* For win 3.0 files hash values are really page numbers */
     if (hlpfile->version <= 16)
@@ -453,7 +453,7 @@ HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash, ULONG* relative)
     ptr = HLPFILE_BPTreeSearch(hlpfile->Context, LongToPtr(lHash), comp_PageByHash);
     if (!ptr)
     {
-        WINE_ERR("Page of hash %x not found in file %s\n", lHash, hlpfile->lpszPath);
+        WINE_ERR("Page of hash %x not found in file %s\n", lHash, debugstr_a(hlpfile->lpszPath));
         return NULL;
     }
 
@@ -470,7 +470,7 @@ HLPFILE_PAGE *HLPFILE_PageByMap(HLPFILE* hlpfile, LONG lMap, ULONG* relative)
 
     if (!hlpfile) return 0;
 
-    WINE_TRACE("<%s>[%x]\n", hlpfile->lpszPath, lMap);
+    WINE_TRACE("<%s>[%x]\n", debugstr_a(hlpfile->lpszPath), lMap);
 
     for (i = 0; i < hlpfile->wMapLen; i++)
     {
@@ -478,7 +478,7 @@ HLPFILE_PAGE *HLPFILE_PageByMap(HLPFILE* hlpfile, LONG lMap, ULONG* relative)
             return HLPFILE_PageByOffset(hlpfile, hlpfile->Map[i].offset, relative);
     }
 
-    WINE_ERR("Page of Map %x not found in file %s\n", lMap, hlpfile->lpszPath);
+    WINE_ERR("Page of Map %x not found in file %s\n", lMap, debugstr_a(hlpfile->lpszPath));
     return NULL;
 }
 
@@ -492,7 +492,7 @@ static int comp_FindSubFile(void *p, const void *key,
                             int leaf, void** next)
 {
     *next = (char *)p+strlen(p)+(leaf?5:3);
-    WINE_TRACE("Comparing '%s' with '%s'\n", (char *)p, (const char *)key);
+    WINE_TRACE("Comparing %s with %s\n", debugstr_a((char *)p), debugstr_a((const char *)key));
     return strcmp(p, key);
 }
 
@@ -504,7 +504,7 @@ static BOOL HLPFILE_FindSubFile(HLPFILE* hlpfile, LPCSTR name, BYTE **subbuf, BY
 {
     BYTE *ptr;
 
-    WINE_TRACE("looking for file '%s'\n", name);
+    WINE_TRACE("looking for file %s\n", debugstr_a(name));
     ptr = HLPFILE_BPTreeSearch(hlpfile->file_buffer + GET_UINT(hlpfile->file_buffer, 4),
                                name, comp_FindSubFile);
     if (!ptr)
@@ -514,7 +514,7 @@ static BOOL HLPFILE_FindSubFile(HLPFILE* hlpfile, LPCSTR name, BYTE **subbuf, BY
         CHAR c = *name++;
         if (c == '|')
         {
-            WINE_TRACE("not found. try '%s'\n", name);
+            WINE_TRACE("not found. try %s\n", debugstr_a(name));
             ptr = HLPFILE_BPTreeSearch(hlpfile->file_buffer + GET_UINT(hlpfile->file_buffer, 4),
                                        name, comp_FindSubFile);
         }
@@ -523,18 +523,18 @@ static BOOL HLPFILE_FindSubFile(HLPFILE* hlpfile, LPCSTR name, BYTE **subbuf, BY
     *subbuf = hlpfile->file_buffer + GET_UINT(ptr, strlen(name)+1);
     if (*subbuf >= hlpfile->file_buffer + hlpfile->file_buffer_size)
     {
-        WINE_ERR("internal file %s does not fit\n", name);
+        WINE_ERR("internal file %s does not fit\n", debugstr_a(name));
         return FALSE;
     }
     *subend = *subbuf + GET_UINT(*subbuf, 0);
     if (*subend > hlpfile->file_buffer + hlpfile->file_buffer_size)
     {
-        WINE_ERR("internal file %s does not fit\n", name);
+        WINE_ERR("internal file %s does not fit\n", debugstr_a(name));
         return FALSE;
     }
     if (GET_UINT(*subbuf, 0) < GET_UINT(*subbuf, 4) + 9)
     {
-        WINE_ERR("invalid size provided for internal file %s\n", name);
+        WINE_ERR("invalid size provided for internal file %s\n", debugstr_a(name));
         return FALSE;
     }
     return TRUE;
@@ -804,7 +804,7 @@ static void HLPFILE_AddHotSpotLinks(struct RtfData* rd, HLPFILE* file,
 
         WINE_TRACE("%02x-%02x%02x {%s,%s}\n",
                    start[7 + 15 * i + 0], start[7 + 15 * i + 1], start[7 + 15 * i + 2],
-                   str, str + strlen(str) + 1);
+                   debugstr_a(str), debugstr_a(str + strlen(str) + 1));
         /* str points to two null terminated strings:
          * hotspot name, then link name
          */
@@ -843,7 +843,7 @@ static void HLPFILE_AddHotSpotLinks(struct RtfData* rd, HLPFILE* file,
                         if (!strcmp(win + 1, file->windows[wnd].name)) break;
                     }
                     if (wnd == -1)
-                        WINE_WARN("Couldn't find window info for %s\n", win);
+                        WINE_WARN("Couldn't find window info for %s\n", debugstr_a(win));
                     if ((tgt = HeapAlloc(GetProcessHeap(), 0, win - str + 1)))
                     {
                         memcpy(tgt, str, win - str);
@@ -1207,7 +1207,7 @@ static HLPFILE_LINK*       HLPFILE_AllocLink(struct RtfData* rd, int cookie,
         rd->current_link = link;
 
     WINE_TRACE("Link[%d] to %s@%08x:%d\n",
-               link->cookie, link->string, link->hash, link->window);
+               link->cookie, debugstr_a(link->string), link->hash, link->window);
     return link;
 }
 
@@ -1435,7 +1435,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
 
         while (text < text_end && format < format_end)
         {
-            WINE_TRACE("Got text: %s (%p/%p - %p/%p)\n", wine_dbgstr_a(text), text, text_end, format, format_end);
+            WINE_TRACE("Got text: %s (%p/%p - %p/%p)\n", debugstr_a(text), text, text_end, format, format_end);
             textsize = strlen(text);
             if (textsize)
             {
@@ -1578,7 +1578,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
                         }
                         break;
                     case 0x05:
-                        WINE_FIXME("Got an embedded element %s\n", format + 6);
+                        WINE_FIXME("Got an embedded element %s\n", debugstr_a((char *)format + 6));
                         break;
                     default:
                         WINE_FIXME("Got a type %d picture\n", type);
@@ -1618,7 +1618,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
 
             case 0xC8:
             case 0xCC:
-                WINE_TRACE("macro => %s\n", format + 3);
+                WINE_TRACE("macro => %s\n", debugstr_a((char *)format + 3));
                 HLPFILE_AllocLink(rd, hlp_link_macro, (const char*)format + 3,
                                   GET_USHORT(format, 1), 0, !(*format & 4), FALSE, -1);
                 format += 3 + GET_USHORT(format, 1);
@@ -1668,7 +1668,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
                             if (!strcmp(ptr, page->file->windows[wnd].name)) break;
                         }
                         if (wnd == -1)
-                            WINE_WARN("Couldn't find window info for %s\n", ptr);
+                            WINE_WARN("Couldn't find window info for %s\n", debugstr_a(ptr));
                         ptr += strlen(ptr) + 1;
                         /* fall through */
                     case 4:
@@ -1955,7 +1955,7 @@ static BOOL HLPFILE_ReadFont(HLPFILE* hlpfile)
                    X(5, "smallCaps"),
                    ref[dscr_offset + i * 11 + 1],
                    family,
-                   hlpfile->fonts[i].LogFont.lfFaceName, idx,
+                   debugstr_a(hlpfile->fonts[i].LogFont.lfFaceName), idx,
                    GET_UINT(ref, dscr_offset + i * 11 + 5) & 0x00FFFFFF);
     }
     return TRUE;
@@ -2051,7 +2051,7 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
         hlpfile->lpszTitle = HeapAlloc(GetProcessHeap(), 0, strlen(str) + 1);
         if (!hlpfile->lpszTitle) return FALSE;
         strcpy(hlpfile->lpszTitle, str);
-        WINE_TRACE("Title: %s\n", hlpfile->lpszTitle);
+        WINE_TRACE("Title: %s\n", debugstr_a(hlpfile->lpszTitle));
         /* Nothing more to parse */
         return TRUE;
     }
@@ -2065,7 +2065,7 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
             hlpfile->lpszTitle = HeapAlloc(GetProcessHeap(), 0, strlen(str) + 1);
             if (!hlpfile->lpszTitle) return FALSE;
             strcpy(hlpfile->lpszTitle, str);
-            WINE_TRACE("Title: %s\n", hlpfile->lpszTitle);
+            WINE_TRACE("Title: %s\n", debugstr_a(hlpfile->lpszTitle));
             break;
 
 	case 2:
@@ -2073,7 +2073,7 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
             hlpfile->lpszCopyright = HeapAlloc(GetProcessHeap(), 0, strlen(str) + 1);
             if (!hlpfile->lpszCopyright) return FALSE;
             strcpy(hlpfile->lpszCopyright, str);
-            WINE_TRACE("Copyright: %s\n", hlpfile->lpszCopyright);
+            WINE_TRACE("Copyright: %s\n", debugstr_a(hlpfile->lpszCopyright));
             break;
 
 	case 3:
@@ -2140,12 +2140,12 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
                            flags & 0x0020 ? 'W' : 'w',
                            flags & 0x0040 ? 'H' : 'h',
                            flags & 0x0080 ? 'S' : 's',
-                           wi->type, wi->name, wi->caption, wi->origin.x, wi->origin.y,
+                           debugstr_a(wi->type), debugstr_a(wi->name), debugstr_a(wi->caption), wi->origin.x, wi->origin.y,
                            wi->size.cx, wi->size.cy);
             }
             break;
         case 8:
-            WINE_WARN("Citation: '%s'\n", ptr + 4);
+            WINE_WARN("Citation: %s\n", debugstr_a((char *)ptr + 4));
             break;
         case 11:
             hlpfile->charset = ptr[4];
@@ -2604,8 +2604,8 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, const BYTE *buf, const BYTE *end, 
             page->browse_fwd = hlpfile->TOMap[page->browse_fwd];
     }
 
-    WINE_TRACE("Added page[%d]: title='%s' %08x << %08x >> %08x\n",
-               page->wNumber, page->lpszTitle,
+    WINE_TRACE("Added page[%d]: title=%s %08x << %08x >> %08x\n",
+               page->wNumber, debugstr_a(page->lpszTitle),
                page->browse_bwd, page->offset, page->browse_fwd);
 
     /* now load macros */
@@ -2615,7 +2615,7 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, const BYTE *buf, const BYTE *end, 
         unsigned len = strlen(ptr);
         char*    macro_str;
 
-        WINE_TRACE("macro: %s\n", ptr);
+        WINE_TRACE("macro: %s\n", debugstr_a(ptr));
         macro = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_MACRO) + len + 1);
         macro->lpszMacro = macro_str = (char*)(macro + 1);
         memcpy(macro_str, ptr, len + 1);
