@@ -1138,9 +1138,9 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	rc.top = pExtTextOutA->emrtext.rcl.top;
 	rc.right = pExtTextOutA->emrtext.rcl.right;
 	rc.bottom = pExtTextOutA->emrtext.rcl.bottom;
-        TRACE("EMR_EXTTEXTOUTA: x,y = %d, %d. rect = %d, %d - %d, %d. flags %08x\n",
+        TRACE("EMR_EXTTEXTOUTA: x,y = %d, %d. rect = %s. flags %08x\n",
               pExtTextOutA->emrtext.ptlReference.x, pExtTextOutA->emrtext.ptlReference.y,
-              rc.left, rc.top, rc.right, rc.bottom, pExtTextOutA->emrtext.fOptions);
+              wine_dbgstr_rect(&rc), pExtTextOutA->emrtext.fOptions);
 
         old_mode = SetGraphicsMode(hdc, pExtTextOutA->iGraphicsMode);
         /* Reselect the font back into the dc so that the transformation
@@ -1174,9 +1174,9 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	rc.top = pExtTextOutW->emrtext.rcl.top;
 	rc.right = pExtTextOutW->emrtext.rcl.right;
 	rc.bottom = pExtTextOutW->emrtext.rcl.bottom;
-        TRACE("EMR_EXTTEXTOUTW: x,y = %d, %d.  rect = %d, %d - %d, %d. flags %08x\n",
+        TRACE("EMR_EXTTEXTOUTW: x,y = %d, %d.  rect = %s. flags %08x\n",
               pExtTextOutW->emrtext.ptlReference.x, pExtTextOutW->emrtext.ptlReference.y,
-              rc.left, rc.top, rc.right, rc.bottom, pExtTextOutW->emrtext.fOptions);
+              wine_dbgstr_rect(&rc), pExtTextOutW->emrtext.fOptions);
 
         old_mode = SetGraphicsMode(hdc, pExtTextOutW->iGraphicsMode);
         /* Reselect the font back into the dc so that the transformation
@@ -2214,8 +2214,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
   tmprc.left = tmprc.top = 0;
   tmprc.right = tmprc.bottom = 1000;
   LPtoDP(hdc, (POINT*)&tmprc, 2);
-  TRACE("L:0,0 - 1000,1000 -> D:%d,%d - %d,%d\n", tmprc.left,
-	tmprc.top, tmprc.right, tmprc.bottom);
+  TRACE("L:0,0 - 1000,1000 -> D:%s\n", wine_dbgstr_rect(&tmprc));
 
   return TRUE;
 }

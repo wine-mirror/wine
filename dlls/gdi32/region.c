@@ -422,12 +422,9 @@ static void REGION_DumpRegion(WINEREGION *pReg)
 {
     RECT *pRect, *pRectEnd = pReg->rects + pReg->numRects;
 
-    TRACE("Region %p: %d,%d - %d,%d %d rects\n", pReg,
-	    pReg->extents.left, pReg->extents.top,
-	    pReg->extents.right, pReg->extents.bottom, pReg->numRects);
+    TRACE("Region %p: %s %d rects\n", pReg, wine_dbgstr_rect(&pReg->extents), pReg->numRects);
     for(pRect = pReg->rects; pRect < pRectEnd; pRect++)
-        TRACE("\t%d,%d - %d,%d\n", pRect->left, pRect->top,
-		       pRect->right, pRect->bottom);
+        TRACE("\t%s\n", wine_dbgstr_rect(pRect));
     return;
 }
 
@@ -569,8 +566,7 @@ INT WINAPI GetRgnBox( HRGN hrgn, LPRECT rect )
 	rect->top = obj->extents.top;
 	rect->right = obj->extents.right;
 	rect->bottom = obj->extents.bottom;
-	TRACE("%p (%d,%d-%d,%d)\n", hrgn,
-               rect->left, rect->top, rect->right, rect->bottom);
+        TRACE("%p %s\n", hrgn, wine_dbgstr_rect(rect));
 	ret = get_region_type( obj );
 	GDI_ReleaseObj(hrgn);
 	return ret;
