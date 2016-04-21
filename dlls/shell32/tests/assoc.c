@@ -100,7 +100,7 @@ static struct assoc_getstring_test getstring_tests[] =
     { NULL }
 };
 
-static void getstring_test(LPCWSTR assocName, HKEY progIdKey, ASSOCSTR str, LPCWSTR expected_string, int line_num)
+static void getstring_test(LPCWSTR assocName, HKEY progIdKey, ASSOCSTR str, LPCWSTR expected_string, int line)
 {
     IQueryAssociations *assoc;
     HRESULT hr;
@@ -108,25 +108,25 @@ static void getstring_test(LPCWSTR assocName, HKEY progIdKey, ASSOCSTR str, LPCW
     DWORD len;
 
     hr = CoCreateInstance(&CLSID_QueryAssociations, NULL, CLSCTX_INPROC_SERVER, &IID_IQueryAssociations, (void*)&assoc);
-    ok(hr == S_OK, "line %d: failed to create IQueryAssociations, 0x%x\n", line_num, hr);
+    ok_(__FILE__, line)(hr == S_OK, "failed to create IQueryAssociations, 0x%x\n", hr);
     hr = IQueryAssociations_Init(assoc, 0, assocName, progIdKey, NULL);
-    ok(hr == S_OK, "line %d: IQueryAssociations::Init failed, 0x%x\n", line_num, hr);
+    ok_(__FILE__, line)(hr == S_OK, "IQueryAssociations::Init failed, 0x%x\n", hr);
 
     hr = IQueryAssociations_GetString(assoc, 0, str, NULL, NULL, &len);
     if (hr != S_FALSE) {
         if (expected_string) {
-            ok(SUCCEEDED(hr), "line %d: GetString returned 0x%x, expected success\n", line_num, hr);
+            ok_(__FILE__, line)(SUCCEEDED(hr), "GetString returned 0x%x, expected success\n", hr);
         } else {
-            ok(FAILED(hr), "line %d: GetString returned 0x%x, expected failure\n", line_num, hr);
+            ok_(__FILE__, line)(FAILED(hr), "GetString returned 0x%x, expected failure\n", hr);
         }
     }
 
     buffer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    ok(buffer != NULL, "line %d: out of memory\n", line_num);
+    ok_(__FILE__, line)(buffer != NULL, "out of memory\n");
     hr = IQueryAssociations_GetString(assoc, 0, str, NULL, buffer, &len);
 
     if (expected_string) {
-        ok(lstrcmpW(buffer, expected_string) == 0, "line %d: GetString returned %s, expected %s\n", line_num,
+        ok_(__FILE__, line)(lstrcmpW(buffer, expected_string) == 0, "GetString returned %s, expected %s\n",
                 wine_dbgstr_w(buffer), wine_dbgstr_w(expected_string));
     }
 }
