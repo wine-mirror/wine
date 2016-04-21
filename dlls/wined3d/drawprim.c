@@ -415,6 +415,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     const struct wined3d_stream_info *stream_info;
     struct wined3d_event_query *ib_query = NULL;
     struct wined3d_stream_info si_emulated;
+    struct wined3d_rendertarget_view *dsv;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     BOOL emulation = FALSE;
@@ -448,21 +449,21 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
             }
             else
             {
-                wined3d_surface_prepare(target, context, rtv->resource->draw_binding);
+                wined3d_texture_prepare_location(target->container, rtv->sub_resource_idx,
+                        context, rtv->resource->draw_binding);
             }
         }
     }
 
-    if (fb->depth_stencil)
+    if ((dsv = fb->depth_stencil))
     {
         /* Note that this depends on the context_acquire() call above to set
          * context->render_offscreen properly. We don't currently take the
          * Z-compare function into account, but we could skip loading the
          * depthstencil for D3DCMP_NEVER and D3DCMP_ALWAYS as well. Also note
          * that we never copy the stencil data.*/
-        DWORD location = context->render_offscreen ? fb->depth_stencil->resource->draw_binding
-                : WINED3D_LOCATION_DRAWABLE;
-        struct wined3d_surface *ds = wined3d_rendertarget_view_get_surface(fb->depth_stencil);
+        DWORD location = context->render_offscreen ? dsv->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
+        struct wined3d_surface *ds = wined3d_rendertarget_view_get_surface(dsv);
 
         if (state->render_states[WINED3D_RS_ZWRITEENABLE] || state->render_states[WINED3D_RS_ZENABLE])
         {
@@ -482,10 +483,10 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
             if (!EqualRect(&r, &draw_rect))
                 surface_load_location(ds, context, location);
             else
-                wined3d_surface_prepare(ds, context, location);
+                wined3d_texture_prepare_location(ds->container, dsv->sub_resource_idx, context, location);
         }
         else
-            wined3d_surface_prepare(ds, context, location);
+            wined3d_texture_prepare_location(ds->container, dsv->sub_resource_idx, context, location);
     }
 
     if (!context_apply_draw_state(context, device, state))
