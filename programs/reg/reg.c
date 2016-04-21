@@ -537,12 +537,60 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     return 0;
 }
 
+static int query_all(HKEY key, WCHAR *path)
+{
+    LONG rc;
+    DWORD num_values, max_value_len, value_len;
+    DWORD i;
+    WCHAR fmt[] = {'%','1','\n',0};
+    WCHAR fmt_value[] = {' ',' ',' ',' ','%','1',0};
+    WCHAR *value_name;
+    WCHAR newlineW[] = {'\n',0};
+
+    rc = RegQueryInfoKeyW(key, NULL, NULL, NULL, NULL, NULL, NULL,
+                          &num_values, &max_value_len, NULL, NULL, NULL);
+    if (rc)
+    {
+        ERR("RegQueryInfoKey failed: %d\n", rc);
+        return 1;
+    }
+
+    output_string(fmt, path);
+
+    max_value_len++;
+    value_name = HeapAlloc(GetProcessHeap(), 0, max_value_len * sizeof(WCHAR));
+    if (!value_name)
+    {
+        ERR("Failed to allocate memory for value_name\n");
+        return 1;
+    }
+
+    for (i = 0; i < num_values; i++)
+    {
+        value_len = max_value_len;
+        rc = RegEnumValueW(key, i, value_name, &value_len, NULL, NULL, NULL, NULL);
+        if (rc == ERROR_SUCCESS)
+        {
+            output_string(fmt_value, value_name);
+            output_string(newlineW);
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, value_name);
+
+    if (num_values)
+        output_string(newlineW);
+
+    return 0;
+}
+
 static int reg_query(WCHAR *key_name, WCHAR *value_name, BOOL value_empty, BOOL recurse)
 {
     WCHAR *p;
-    HKEY root;
+    HKEY root, key;
     static const WCHAR stubW[] = {'S','T','U','B',' ','Q','U','E','R','Y',' ',
         '-',' ','%','1',' ','%','2',' ','%','3','!','d','!',' ','%','4','!','d','!','\n',0};
+    int ret;
 
     if (!sane_path(key_name))
         return 1;
@@ -563,9 +611,23 @@ static int reg_query(WCHAR *key_name, WCHAR *value_name, BOOL value_empty, BOOL 
     p = strchrW(key_name, '\\');
     if (p) p++;
 
-    output_string(stubW, key_name, value_name, value_empty, recurse);
+    if (RegOpenKeyExW(root, p, 0, KEY_READ, &key) != ERROR_SUCCESS)
+    {
+        output_message(STRING_CANNOT_FIND);
+        return 1;
+    }
 
-    return 1;
+    if (value_name || value_empty || recurse)
+    {
+        output_string(stubW, key_name, value_name, value_empty, recurse);
+        return 1;
+    }
+
+    ret = query_all(key, key_name);
+
+    RegCloseKey(key);
+
+    return ret;
 }
 
 int wmain(int argc, WCHAR *argvW[])
