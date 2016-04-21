@@ -537,12 +537,24 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     return 0;
 }
 
+static const WCHAR *reg_type_to_wchar(DWORD type)
+{
+    int i, array_size = ARRAY_SIZE(type_rels);
+
+    for (i = 0; i < array_size; i++)
+    {
+        if (type == type_rels[i].type)
+            return type_rels[i].name;
+    }
+    return NULL;
+}
+
 static int query_all(HKEY key, WCHAR *path)
 {
     LONG rc;
     DWORD num_subkeys, max_subkey_len, subkey_len;
     DWORD num_values, max_value_len, value_len;
-    DWORD i;
+    DWORD i, type;
     WCHAR fmt[] = {'%','1','\n',0};
     WCHAR fmt_value[] = {' ',' ',' ',' ','%','1',0};
     WCHAR fmt_path[] = {'%','1','\\','%','2','\n',0};
@@ -570,10 +582,11 @@ static int query_all(HKEY key, WCHAR *path)
     for (i = 0; i < num_values; i++)
     {
         value_len = max_value_len;
-        rc = RegEnumValueW(key, i, value_name, &value_len, NULL, NULL, NULL, NULL);
+        rc = RegEnumValueW(key, i, value_name, &value_len, NULL, &type, NULL, NULL);
         if (rc == ERROR_SUCCESS)
         {
             output_string(fmt_value, value_name);
+            output_string(fmt_value, reg_type_to_wchar(type));
             output_string(newlineW);
         }
     }
