@@ -92,7 +92,7 @@ static void test_InternetGetProxyInfo(void)
     SetLastError( 0xdeadbeef );
     ret = pInternetGetProxyInfo( url, strlen(url), host, strlen(host), &proxy, &len );
     err = GetLastError();
-    ok( !ret, "unexpected succes\n" );
+    ok( !ret, "unexpected success\n" );
     ok( err == ERROR_CAN_NOT_COMPLETE, "got %u\n", err );
 
     buf.dwStructSize = sizeof(buf);
