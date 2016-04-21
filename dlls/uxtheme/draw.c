@@ -1747,7 +1747,7 @@ HRESULT WINAPI GetThemeBackgroundContentRect(HTHEME hTheme, HDC hdc, int iPartId
         /* If nothing was found, leave unchanged */
     }
 
-    TRACE("left:%d,top:%d,right:%d,bottom:%d\n", pContentRect->left, pContentRect->top, pContentRect->right, pContentRect->bottom);
+    TRACE("%s\n", wine_dbgstr_rect(pContentRect));
 
     return S_OK;
 }
@@ -1795,7 +1795,7 @@ HRESULT WINAPI GetThemeBackgroundExtent(HTHEME hTheme, HDC hdc, int iPartId,
         /* If nothing was found, leave unchanged */
     }
 
-    TRACE("left:%d,top:%d,right:%d,bottom:%d\n", pExtentRect->left, pExtentRect->top, pExtentRect->right, pExtentRect->bottom);
+    TRACE("%s\n", wine_dbgstr_rect(pExtentRect));
 
     return S_OK;
 }
