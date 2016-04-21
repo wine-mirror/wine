@@ -1162,9 +1162,6 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     /* Unload resources */
     LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
     {
-        if (resource->type == WINED3D_RTYPE_SURFACE || resource->type == WINED3D_RTYPE_VOLUME)
-            continue;
-
         TRACE("Unloading resource %p.\n", resource);
         resource->resource_ops->resource_unload(resource);
     }
@@ -4531,10 +4528,6 @@ void CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
     {
         TRACE("Checking resource %p for eviction.\n", resource);
 
-        /* These are handled by the texture they're part of. */
-        if (resource->type == WINED3D_RTYPE_SURFACE || resource->type == WINED3D_RTYPE_VOLUME)
-            continue;
-
         if (resource->pool == WINED3D_POOL_MANAGED && !resource->map_count)
         {
             TRACE("Evicting %p.\n", resource);
@@ -4558,9 +4551,6 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
 
     LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
     {
-        if (resource->type == WINED3D_RTYPE_SURFACE || resource->type == WINED3D_RTYPE_VOLUME)
-            continue;
-
         TRACE("Unloading resource %p.\n", resource);
         resource->resource_ops->resource_unload(resource);
     }
@@ -4697,9 +4687,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     {
         LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
         {
-            if (resource->type == WINED3D_RTYPE_SURFACE || resource->type == WINED3D_RTYPE_VOLUME)
-                continue;
-
             TRACE("Enumerating resource %p.\n", resource);
             if (FAILED(hr = callback(resource)))
                 return hr;

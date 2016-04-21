@@ -36,48 +36,6 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 static const DWORD surface_simple_locations = WINED3D_LOCATION_SYSMEM
         | WINED3D_LOCATION_USER_MEMORY | WINED3D_LOCATION_BUFFER;
 
-void wined3d_surface_cleanup(struct wined3d_surface *surface)
-{
-    struct wined3d_surface *overlay, *cur;
-
-    TRACE("surface %p.\n", surface);
-
-    if (!list_empty(&surface->renderbuffers))
-    {
-        struct wined3d_device *device = surface->container->resource.device;
-        struct wined3d_renderbuffer_entry *entry, *entry2;
-        const struct wined3d_gl_info *gl_info;
-        struct wined3d_context *context;
-
-        context = context_acquire(device, NULL);
-        gl_info = context->gl_info;
-
-        LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &surface->renderbuffers, struct wined3d_renderbuffer_entry, entry)
-        {
-            TRACE("Deleting renderbuffer %u.\n", entry->id);
-            context_gl_resource_released(device, entry->id, TRUE);
-            gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
-            HeapFree(GetProcessHeap(), 0, entry);
-        }
-
-        context_release(context);
-    }
-
-    if (surface->dc)
-        wined3d_surface_destroy_dc(surface);
-
-    if (surface->overlay_dest)
-        list_remove(&surface->overlay_entry);
-
-    LIST_FOR_EACH_ENTRY_SAFE(overlay, cur, &surface->overlays, struct wined3d_surface, overlay_entry)
-    {
-        list_remove(&overlay->overlay_entry);
-        overlay->overlay_dest = NULL;
-    }
-
-    resource_cleanup(&surface->resource);
-}
-
 void surface_get_drawable_size(const struct wined3d_surface *surface, const struct wined3d_context *context,
         unsigned int *width, unsigned int *height)
 {
@@ -793,51 +751,6 @@ static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, DW
 
     return WINED3D_OK;
 }
-
-static ULONG surface_resource_incref(struct wined3d_resource *resource)
-{
-    struct wined3d_surface *surface = surface_from_resource(resource);
-
-    TRACE("surface %p, container %p.\n", surface, surface->container);
-
-    return wined3d_texture_incref(surface->container);
-}
-
-static ULONG surface_resource_decref(struct wined3d_resource *resource)
-{
-    struct wined3d_surface *surface = surface_from_resource(resource);
-
-    TRACE("surface %p, container %p.\n", surface, surface->container);
-
-    return wined3d_texture_decref(surface->container);
-}
-
-static void surface_unload(struct wined3d_resource *resource)
-{
-    ERR("Not supported on sub-resources.\n");
-}
-
-static HRESULT surface_resource_sub_resource_map(struct wined3d_resource *resource, unsigned int sub_resource_idx,
-        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
-{
-    ERR("Not supported on sub-resources.\n");
-    return WINED3DERR_INVALIDCALL;
-}
-
-static HRESULT surface_resource_sub_resource_unmap(struct wined3d_resource *resource, unsigned int sub_resource_idx)
-{
-    ERR("Not supported on sub-resources.\n");
-    return WINED3DERR_INVALIDCALL;
-}
-
-static const struct wined3d_resource_ops surface_resource_ops =
-{
-    surface_resource_incref,
-    surface_resource_decref,
-    surface_unload,
-    surface_resource_sub_resource_map,
-    surface_resource_sub_resource_unmap,
-};
 
 /* This call just downloads data, the caller is responsible for binding the
  * correct texture. */
@@ -4307,35 +4220,6 @@ fallback:
 cpu:
     return surface_cpu_blt(dst_texture, dst_sub_resource_idx, &dst_box,
             src_texture, src_sub_resource_idx, &src_box, flags, fx, filter);
-}
-
-HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_texture *container,
-        const struct wined3d_resource_desc *desc, GLenum target, unsigned int level, unsigned int layer)
-{
-    struct wined3d_device *device = container->resource.device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct wined3d_format *format = wined3d_get_format(gl_info, desc->format);
-    UINT multisample_quality = desc->multisample_quality;
-    HRESULT hr;
-
-    if (FAILED(hr = resource_init(&surface->resource, device, WINED3D_RTYPE_SURFACE,
-            format, desc->multisample_type, multisample_quality, desc->usage, desc->pool, desc->width, desc->height,
-            1, 0, NULL, &wined3d_null_parent_ops, &surface_resource_ops)))
-    {
-        WARN("Failed to initialize resource, returning %#x.\n", hr);
-        return hr;
-    }
-    surface->resource.access_flags = container->resource.access_flags;
-
-    surface->container = container;
-    surface->texture_target = target;
-    surface->texture_level = level;
-    surface->texture_layer = layer;
-
-    list_init(&surface->renderbuffers);
-    list_init(&surface->overlays);
-
-    return hr;
 }
 
 /* Context activation is done by the caller. Context may be NULL in

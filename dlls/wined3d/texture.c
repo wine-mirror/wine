@@ -1022,12 +1022,6 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     texture->resource.width = width;
     texture->resource.height = height;
     texture->resource.size = texture->slice_pitch;
-
-    sub_resource->resource->format = format;
-    sub_resource->resource->multisample_type = multisample_type;
-    sub_resource->resource->multisample_quality = multisample_quality;
-    sub_resource->resource->width = width;
-    sub_resource->resource->height = height;
     sub_resource->size = texture->slice_pitch;
     sub_resource->locations = WINED3D_LOCATION_DISCARDED;
 
@@ -1423,21 +1417,53 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
 static void texture2d_cleanup_sub_resources(struct wined3d_texture *texture)
 {
     unsigned int sub_count = texture->level_count * texture->layer_count;
+    struct wined3d_device *device = texture->resource.device;
     struct wined3d_texture_sub_resource *sub_resource;
+    struct wined3d_renderbuffer_entry *entry, *entry2;
+    const struct wined3d_gl_info *gl_info = NULL;
+    struct wined3d_context *context = NULL;
+    struct wined3d_surface *overlay, *cur;
     struct wined3d_surface *surface;
     unsigned int i;
 
     for (i = 0; i < sub_count; ++i)
     {
         sub_resource = &texture->sub_resources[i];
-        if ((surface = sub_resource->u.surface))
-        {
-            TRACE("surface %p.\n", surface);
+        if (!(surface = sub_resource->u.surface))
+            continue;
 
-            wined3d_surface_cleanup(surface);
-            sub_resource->parent_ops->wined3d_object_destroyed(sub_resource->parent);
+        TRACE("surface %p.\n", surface);
+
+        if (!context && !list_empty(&surface->renderbuffers))
+        {
+            context = context_acquire(device, NULL);
+            gl_info = context->gl_info;
         }
+
+        LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &surface->renderbuffers, struct wined3d_renderbuffer_entry, entry)
+        {
+            TRACE("Deleting renderbuffer %u.\n", entry->id);
+            context_gl_resource_released(device, entry->id, TRUE);
+            gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
+            HeapFree(GetProcessHeap(), 0, entry);
+        }
+
+        if (surface->dc)
+            wined3d_surface_destroy_dc(surface);
+
+        if (surface->overlay_dest)
+            list_remove(&surface->overlay_entry);
+
+        LIST_FOR_EACH_ENTRY_SAFE(overlay, cur, &surface->overlays, struct wined3d_surface, overlay_entry)
+        {
+            list_remove(&overlay->overlay_entry);
+            overlay->overlay_dest = NULL;
+        }
+
+        sub_resource->parent_ops->wined3d_object_destroyed(sub_resource->parent);
     }
+    if (context)
+        context_release(context);
     HeapFree(GetProcessHeap(), 0, texture->sub_resources[0].u.surface);
 }
 
@@ -1516,8 +1542,6 @@ static void wined3d_texture_unload(struct wined3d_resource *resource)
             list_init(&surface->renderbuffers);
             surface->current_renderbuffer = NULL;
         }
-
-        resource_unload(sub_resource->resource);
     }
 
     context_release(context);
@@ -1747,7 +1771,6 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
 {
     struct wined3d_device_parent *device_parent = device->device_parent;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    struct wined3d_resource_desc surface_desc;
     struct wined3d_surface *surfaces;
     UINT pow2_width, pow2_height;
     unsigned int i, j;
@@ -1898,8 +1921,6 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
     }
 
     /* Generate all the surfaces. */
-    surface_desc = *desc;
-    surface_desc.resource_type = WINED3D_RTYPE_SURFACE;
     for (i = 0; i < texture->level_count; ++i)
     {
         for (j = 0; j < texture->layer_count; ++j)
@@ -1913,24 +1934,20 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
                 GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,
                 GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,
             };
-            GLenum target = desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP ? cube_targets[j] : texture->target;
             struct wined3d_texture_sub_resource *sub_resource;
             unsigned int idx = j * texture->level_count + i;
             struct wined3d_surface *surface;
 
             surface = &surfaces[idx];
-            if (FAILED(hr = wined3d_surface_init(surface, texture, &surface_desc, target, i, j)))
-            {
-                WARN("Failed to initialize surface, returning %#x.\n", hr);
-                wined3d_texture_cleanup(texture);
-                if (!idx)
-                    HeapFree(GetProcessHeap(), 0, surfaces);
-                return hr;
-            }
+            surface->container = texture;
+            surface->texture_target = desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP ? cube_targets[j] : texture->target;
+            surface->texture_level = i;
+            surface->texture_layer = j;
+            list_init(&surface->renderbuffers);
+            list_init(&surface->overlays);
 
             sub_resource = &texture->sub_resources[idx];
             sub_resource->locations = WINED3D_LOCATION_DISCARDED;
-            sub_resource->resource = &surface->resource;
             sub_resource->u.surface = surface;
             if (!(texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL))
             {
@@ -1942,7 +1959,6 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
                     texture, idx, &sub_resource->parent, &sub_resource->parent_ops)))
             {
                 WARN("Failed to create surface parent, hr %#x.\n", hr);
-                wined3d_surface_cleanup(surface);
                 wined3d_texture_cleanup(texture);
                 return hr;
             }
@@ -1958,9 +1974,6 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
                 return hr;
             }
         }
-        /* Calculate the next mipmap level. */
-        surface_desc.width = max(1, surface_desc.width >> 1);
-        surface_desc.height = max(1, surface_desc.height >> 1);
     }
 
     return WINED3D_OK;
@@ -2025,7 +2038,6 @@ static void texture3d_cleanup_sub_resources(struct wined3d_texture *texture)
         {
             TRACE("volume %p.\n", volume);
 
-            wined3d_volume_cleanup(volume);
             sub_resource->parent_ops->wined3d_object_destroyed(sub_resource->parent);
         }
     }
@@ -2074,7 +2086,6 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
 {
     struct wined3d_device_parent *device_parent = device->device_parent;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    struct wined3d_resource_desc volume_desc;
     struct wined3d_volume *volumes;
     unsigned int i;
     HRESULT hr;
@@ -2170,33 +2181,23 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
     }
 
     /* Generate all the surfaces. */
-    volume_desc = *desc;
-    volume_desc.resource_type = WINED3D_RTYPE_VOLUME;
     for (i = 0; i < texture->level_count; ++i)
     {
         struct wined3d_texture_sub_resource *sub_resource;
         struct wined3d_volume *volume;
 
         volume = &volumes[i];
-        if (FAILED(hr = wined3d_volume_init(volume, texture, &volume_desc, i)))
-        {
-            WARN("Failed to initialize volume, returning %#x.\n", hr);
-            wined3d_texture_cleanup(texture);
-            if (!i)
-                HeapFree(GetProcessHeap(), 0, volumes);
-            return hr;
-        }
+        volume->container = texture;
+        volume->texture_level = i;
 
         sub_resource = &texture->sub_resources[i];
         sub_resource->locations = WINED3D_LOCATION_DISCARDED;
-        sub_resource->resource = &volume->resource;
         sub_resource->u.volume = volume;
 
         if (FAILED(hr = device_parent->ops->volume_created(device_parent,
                 texture, i, &sub_resource->parent, &sub_resource->parent_ops)))
         {
             WARN("Failed to create volume parent, hr %#x.\n", hr);
-            wined3d_volume_cleanup(volume);
             wined3d_texture_cleanup(texture);
             return hr;
         }
@@ -2204,11 +2205,6 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
         TRACE("parent %p, parent_ops %p.\n", parent, parent_ops);
 
         TRACE("Created volume level %u @ %p.\n", i, volume);
-
-        /* Calculate the next mipmap level. */
-        volume_desc.width = max(1, volume_desc.width >> 1);
-        volume_desc.height = max(1, volume_desc.height >> 1);
-        volume_desc.depth = max(1, volume_desc.depth >> 1);
     }
 
     return WINED3D_OK;

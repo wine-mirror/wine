@@ -2500,8 +2500,6 @@ struct wined3d_texture
 
     struct wined3d_texture_sub_resource
     {
-        struct wined3d_resource *resource;
-
         void *parent;
         const struct wined3d_parent_ops *parent_ops;
 
@@ -2606,20 +2604,11 @@ const char *wined3d_debug_location(DWORD location) DECLSPEC_HIDDEN;
 
 struct wined3d_volume
 {
-    struct wined3d_resource resource;
     struct wined3d_texture *container;
 
     GLint texture_level;
 };
 
-static inline struct wined3d_volume *volume_from_resource(struct wined3d_resource *resource)
-{
-    return CONTAINING_RECORD(resource, struct wined3d_volume, resource);
-}
-
-void wined3d_volume_cleanup(struct wined3d_volume *volume) DECLSPEC_HIDDEN;
-HRESULT wined3d_volume_init(struct wined3d_volume *volume, struct wined3d_texture *container,
-        const struct wined3d_resource_desc *desc, UINT level) DECLSPEC_HIDDEN;
 BOOL wined3d_volume_load_location(struct wined3d_volume *volume,
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
 void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wined3d_context *context,
@@ -2659,7 +2648,6 @@ struct fbo_entry
 
 struct wined3d_surface
 {
-    struct wined3d_resource resource;
     struct wined3d_texture *container;
 
     GLenum texture_target;
@@ -2681,11 +2669,6 @@ struct wined3d_surface
     struct list               overlays;
     struct list               overlay_entry;
 };
-
-static inline struct wined3d_surface *surface_from_resource(struct wined3d_resource *resource)
-{
-    return CONTAINING_RECORD(resource, struct wined3d_surface, resource);
-}
 
 static inline BOOL needs_separate_srgb_gl_texture(const struct wined3d_context *context)
 {
@@ -2713,16 +2696,12 @@ static inline GLuint surface_get_texture_name(const struct wined3d_surface *surf
 HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect,
         struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
         const struct wined3d_blt_fx *blt_fx, enum wined3d_texture_filter_type filter) DECLSPEC_HIDDEN;
-void wined3d_surface_cleanup(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 HRESULT surface_color_fill(struct wined3d_surface *s,
         const RECT *rect, const struct wined3d_color *color) DECLSPEC_HIDDEN;
 HRESULT wined3d_surface_create_dc(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 void wined3d_surface_destroy_dc(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 void surface_get_drawable_size(const struct wined3d_surface *surface, const struct wined3d_context *context,
         unsigned int *width, unsigned int *height) DECLSPEC_HIDDEN;
-HRESULT wined3d_surface_init(struct wined3d_surface *surface,
-        struct wined3d_texture *container, const struct wined3d_resource_desc *desc,
-        GLenum target, unsigned int level, unsigned int layer) DECLSPEC_HIDDEN;
 void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
 HRESULT surface_load_location(struct wined3d_surface *surface,

@@ -4729,12 +4729,6 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
     if (adapter_idx >= wined3d->adapter_count)
         return WINED3DERR_INVALIDCALL;
 
-    if (resource_type == WINED3D_RTYPE_SURFACE || resource_type == WINED3D_RTYPE_VOLUME)
-    {
-        WARN("Invalid resource_type %s.\n", debug_d3dresourcetype(resource_type));
-        return WINED3DERR_INVALIDCALL;
-    }
-
     switch (resource_type)
     {
         case WINED3D_RTYPE_TEXTURE_2D:
