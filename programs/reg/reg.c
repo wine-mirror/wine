@@ -537,12 +537,33 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     return 0;
 }
 
-static int reg_query(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
-    BOOL subkey)
+static int reg_query(WCHAR *key_name, WCHAR *value_name, BOOL value_empty, BOOL recurse)
 {
+    WCHAR *p;
+    HKEY root;
     static const WCHAR stubW[] = {'S','T','U','B',' ','Q','U','E','R','Y',' ',
         '-',' ','%','1',' ','%','2',' ','%','3','!','d','!',' ','%','4','!','d','!','\n',0};
-    output_string(stubW, key_name, value_name, value_empty, subkey);
+
+    if (!sane_path(key_name))
+        return 1;
+
+    if (value_name && value_empty)
+    {
+        output_message(STRING_INVALID_CMDLINE);
+        return 1;
+    }
+
+    root = path_get_rootkey(key_name);
+    if (!root)
+    {
+        output_message(STRING_INVALID_KEY);
+        return 1;
+    }
+
+    p = strchrW(key_name, '\\');
+    if (p) p++;
+
+    output_string(stubW, key_name, value_name, value_empty, recurse);
 
     return 1;
 }
@@ -668,7 +689,7 @@ int wmain(int argc, WCHAR *argvW[])
     else if (!lstrcmpiW(argvW[1], queryW))
     {
         WCHAR *key_name, *value_name = NULL;
-        BOOL value_empty = FALSE, subkey = FALSE;
+        BOOL value_empty = FALSE, recurse = FALSE;
 
         if (argc < 3)
         {
@@ -696,9 +717,9 @@ int wmain(int argc, WCHAR *argvW[])
             else if (!lstrcmpiW(argvW[i], slashVEW))
                 value_empty = TRUE;
             else if (!lstrcmpiW(argvW[i], slashSW))
-                subkey = TRUE;
+                recurse = TRUE;
         }
-        return reg_query(key_name, value_name, value_empty, subkey);
+        return reg_query(key_name, value_name, value_empty, recurse);
     }
     else
     {
