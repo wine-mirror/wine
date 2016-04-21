@@ -1345,51 +1345,51 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
 }
 
 static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface4_Flip(IDirectDrawSurface4 *iface,
-        IDirectDrawSurface4 *dst, DWORD flags)
+        IDirectDrawSurface4 *src, DWORD flags)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface4(iface);
-    struct ddraw_surface *dst_impl = unsafe_impl_from_IDirectDrawSurface4(dst);
+    struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface4(src);
 
-    TRACE("iface %p, dst %p, flags %#x.\n", iface, dst, flags);
+    TRACE("iface %p, src %p, flags %#x.\n", iface, src, flags);
 
     return ddraw_surface7_Flip(&surface->IDirectDrawSurface7_iface,
-            dst_impl ? &dst_impl->IDirectDrawSurface7_iface : NULL, flags);
+            src_impl ? &src_impl->IDirectDrawSurface7_iface : NULL, flags);
 }
 
 static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface3_Flip(IDirectDrawSurface3 *iface,
-        IDirectDrawSurface3 *dst, DWORD flags)
+        IDirectDrawSurface3 *src, DWORD flags)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface3(iface);
-    struct ddraw_surface *dst_impl = unsafe_impl_from_IDirectDrawSurface3(dst);
+    struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface3(src);
 
-    TRACE("iface %p, dst %p, flags %#x.\n", iface, dst, flags);
+    TRACE("iface %p, src %p, flags %#x.\n", iface, src, flags);
 
     return ddraw_surface7_Flip(&surface->IDirectDrawSurface7_iface,
-            dst_impl ? &dst_impl->IDirectDrawSurface7_iface : NULL, flags);
+            src_impl ? &src_impl->IDirectDrawSurface7_iface : NULL, flags);
 }
 
 static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface2_Flip(IDirectDrawSurface2 *iface,
-        IDirectDrawSurface2 *dst, DWORD flags)
+        IDirectDrawSurface2 *src, DWORD flags)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface2(iface);
-    struct ddraw_surface *dst_impl = unsafe_impl_from_IDirectDrawSurface2(dst);
+    struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface2(src);
 
-    TRACE("iface %p, dst %p, flags %#x.\n", iface, dst, flags);
+    TRACE("iface %p, src %p, flags %#x.\n", iface, src, flags);
 
     return ddraw_surface7_Flip(&surface->IDirectDrawSurface7_iface,
-            dst_impl ? &dst_impl->IDirectDrawSurface7_iface : NULL, flags);
+            src_impl ? &src_impl->IDirectDrawSurface7_iface : NULL, flags);
 }
 
 static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *iface,
-        IDirectDrawSurface *dst, DWORD flags)
+        IDirectDrawSurface *src, DWORD flags)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface(iface);
-    struct ddraw_surface *dst_impl = unsafe_impl_from_IDirectDrawSurface(dst);
+    struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface(src);
 
-    TRACE("iface %p, dst %p, flags %#x.\n", iface, dst, flags);
+    TRACE("iface %p, src %p, flags %#x.\n", iface, src, flags);
 
     return ddraw_surface7_Flip(&surface->IDirectDrawSurface7_iface,
-            dst_impl ? &dst_impl->IDirectDrawSurface7_iface : NULL, flags);
+            src_impl ? &src_impl->IDirectDrawSurface7_iface : NULL, flags);
 }
 
 static HRESULT ddraw_surface_blt_clipped(struct ddraw_surface *dst_surface, const RECT *dst_rect_in,
