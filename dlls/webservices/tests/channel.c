@@ -57,7 +57,47 @@ static void test_WsCreateChannel(void)
     WsFreeChannel( channel );
 }
 
+static void test_WsOpenChannel(void)
+{
+    WCHAR url[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t'};
+    HRESULT hr;
+    WS_CHANNEL *channel;
+    WS_ENDPOINT_ADDRESS addr;
+
+    hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, 0, NULL, &channel, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCloseChannel( channel, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    WsFreeChannel( channel );
+
+    hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, 0, NULL, &channel, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsOpenChannel( channel, NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    addr.url.length = sizeof(url)/sizeof(url[0]);
+    addr.url.chars  = url;
+    addr.headers    = NULL;
+    addr.extensions = NULL;
+    addr.identity   = NULL;
+    hr = WsOpenChannel( channel, &addr, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsOpenChannel( channel, &addr, NULL, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = WsCloseChannel( channel, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCloseChannel( channel, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    WsFreeChannel( channel );
+}
+
 START_TEST(channel)
 {
     test_WsCreateChannel();
+    test_WsOpenChannel();
 }

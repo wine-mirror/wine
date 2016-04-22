@@ -13,7 +13,7 @@
 @ stub WsAsyncExecute
 @ stub WsCall
 @ stub WsCheckMustUnderstandHeaders
-@ stub WsCloseChannel
+@ stdcall WsCloseChannel(ptr ptr ptr)
 @ stub WsCloseListener
 @ stub WsCloseServiceHost
 @ stub WsCloseServiceProxy
@@ -95,7 +95,7 @@
 @ stub WsMatchPolicyAlternative
 @ stdcall WsMoveReader(ptr long ptr ptr)
 @ stub WsMoveWriter
-@ stub WsOpenChannel
+@ stdcall WsOpenChannel(ptr ptr ptr ptr)
 @ stub WsOpenListener
 @ stub WsOpenServiceHost
 @ stub WsOpenServiceProxy

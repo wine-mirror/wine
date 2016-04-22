@@ -162,3 +162,47 @@ HRESULT WINAPI WsSetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
 
     return prop_set( channel->prop, channel->prop_count, id, value, size );
 }
+
+HRESULT open_channel( struct channel *channel, const WS_ENDPOINT_ADDRESS *endpoint )
+{
+    channel->state = WS_CHANNEL_STATE_OPEN;
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsOpenChannel		[webservices.@]
+ */
+HRESULT WINAPI WsOpenChannel( WS_CHANNEL *handle, const WS_ENDPOINT_ADDRESS *endpoint,
+                              const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
+{
+    struct channel *channel = (struct channel *)handle;
+
+    TRACE( "%p %p %p %p\n", handle, endpoint, ctx, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+    if (ctx) FIXME( "ignoring ctx parameter\n" );
+
+    if (!endpoint) return E_INVALIDARG;
+    if (channel->state != WS_CHANNEL_STATE_CREATED) return WS_E_INVALID_OPERATION;
+
+    return open_channel( channel, endpoint );
+}
+
+HRESULT close_channel( struct channel *channel )
+{
+    channel->state = WS_CHANNEL_STATE_CLOSED;
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsCloseChannel		[webservices.@]
+ */
+HRESULT WINAPI WsCloseChannel( WS_CHANNEL *handle, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
+{
+    struct channel *channel = (struct channel *)handle;
+
+    TRACE( "%p %p %p\n", handle, ctx, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+    if (ctx) FIXME( "ignoring ctx parameter\n" );
+
+    return close_channel( channel );
+}

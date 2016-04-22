@@ -74,6 +74,7 @@ struct channel
 {
     WS_CHANNEL_TYPE         type;
     WS_CHANNEL_BINDING      binding;
+    WS_CHANNEL_STATE        state;
     ULONG                   prop_count;
     struct prop             prop[9];
 };
@@ -81,6 +82,8 @@ struct channel
 HRESULT create_channel( WS_CHANNEL_TYPE, WS_CHANNEL_BINDING, const WS_CHANNEL_PROPERTY *,
                         ULONG, struct channel ** ) DECLSPEC_HIDDEN;
 void free_channel( struct channel * ) DECLSPEC_HIDDEN;
+HRESULT open_channel( struct channel *, const WS_ENDPOINT_ADDRESS * ) DECLSPEC_HIDDEN;
+HRESULT close_channel( struct channel * ) DECLSPEC_HIDDEN;
 
 static inline void *heap_alloc( SIZE_T size )
 {
