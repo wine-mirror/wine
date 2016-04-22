@@ -86,7 +86,7 @@
 @ stub WsGetSecurityContextProperty
 @ stub WsGetSecurityTokenProperty
 @ stub WsGetServiceHostProperty
-@ stub WsGetServiceProxyProperty
+@ stdcall WsGetServiceProxyProperty(ptr long ptr long ptr)
 @ stub WsGetWriterPosition
 @ stdcall WsGetWriterProperty(ptr long ptr long ptr)
 @ stdcall WsGetXmlAttribute(ptr ptr ptr ptr ptr ptr)

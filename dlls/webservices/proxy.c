@@ -131,3 +131,17 @@ void WINAPI WsFreeServiceProxy( WS_SERVICE_PROXY *handle )
     TRACE( "%p\n", handle );
     free_proxy( proxy );
 }
+
+/**************************************************************************
+ *          WsGetServiceProxyProperty		[webservices.@]
+ */
+HRESULT WINAPI WsGetServiceProxyProperty( WS_SERVICE_PROXY *handle, WS_PROXY_PROPERTY_ID id,
+                                          void *buf, ULONG size, WS_ERROR *error )
+{
+    struct proxy *proxy = (struct proxy *)handle;
+
+    TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    return prop_get( proxy->prop, proxy->prop_count, id, buf, size );
+}
