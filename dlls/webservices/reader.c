@@ -157,33 +157,48 @@ struct heap
     struct prop prop[sizeof(heap_props)/sizeof(heap_props[0])];
 };
 
+static BOOL ensure_heap( struct heap *heap )
+{
+    SIZE_T size;
+    if (heap->handle) return TRUE;
+    if (prop_get( heap->prop, heap->prop_count, WS_HEAP_PROPERTY_MAX_SIZE, &size, sizeof(size) ) != S_OK)
+        return FALSE;
+    if (!(heap->handle = HeapCreate( 0, 0, size ))) return FALSE;
+    return TRUE;
+}
+
 void *ws_alloc( WS_HEAP *handle, SIZE_T size )
 {
     struct heap *heap = (struct heap *)handle;
+    if (!ensure_heap( heap )) return NULL;
     return HeapAlloc( heap->handle, 0, size );
 }
 
 static void *ws_alloc_zero( WS_HEAP *handle, SIZE_T size )
 {
     struct heap *heap = (struct heap *)handle;
+    if (!ensure_heap( heap )) return NULL;
     return HeapAlloc( heap->handle, HEAP_ZERO_MEMORY, size );
 }
 
 void *ws_realloc( WS_HEAP *handle, void *ptr, SIZE_T size )
 {
     struct heap *heap = (struct heap *)handle;
+    if (!ensure_heap( heap )) return NULL;
     return HeapReAlloc( heap->handle, 0, ptr, size );
 }
 
 static void *ws_realloc_zero( WS_HEAP *handle, void *ptr, SIZE_T size )
 {
     struct heap *heap = (struct heap *)handle;
+    if (!ensure_heap( heap )) return NULL;
     return HeapReAlloc( heap->handle, HEAP_ZERO_MEMORY, ptr, size );
 }
 
 void ws_free( WS_HEAP *handle, void *ptr )
 {
     struct heap *heap = (struct heap *)handle;
+    if (!heap->handle) return;
     HeapFree( heap->handle, 0, ptr );
 }
 
@@ -233,12 +248,6 @@ HRESULT WINAPI WsCreateHeap( SIZE_T max_size, SIZE_T trim_size, const WS_HEAP_PR
     prop_set( heap->prop, heap->prop_count, WS_HEAP_PROPERTY_MAX_SIZE, &max_size, sizeof(max_size) );
     prop_set( heap->prop, heap->prop_count, WS_HEAP_PROPERTY_TRIM_SIZE, &trim_size, sizeof(trim_size) );
 
-    if (!(heap->handle = HeapCreate( 0, 0, max_size )))
-    {
-        heap_free( heap );
-        return E_OUTOFMEMORY;
-    }
-
     *handle = (WS_HEAP *)heap;
     return S_OK;
 }
@@ -255,6 +264,23 @@ void WINAPI WsFreeHeap( WS_HEAP *handle )
     if (!heap) return;
     HeapDestroy( heap->handle );
     heap_free( heap );
+}
+
+/**************************************************************************
+ *          WsResetHeap		[webservices.@]
+ */
+HRESULT WINAPI WsResetHeap( WS_HEAP *handle, WS_ERROR *error )
+{
+    struct heap *heap = (struct heap *)handle;
+
+    TRACE( "%p %p\n", handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!heap) return E_INVALIDARG;
+
+    HeapDestroy( heap->handle );
+    heap->handle = NULL;
+    return S_OK;
 }
 
 struct node *alloc_node( WS_XML_NODE_TYPE type )

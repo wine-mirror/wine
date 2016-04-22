@@ -955,6 +955,7 @@ HRESULT WINAPI WsReadToStartElement(WS_XML_READER*, const WS_XML_STRING*, const 
                                     BOOL*, WS_ERROR*);
 HRESULT WINAPI WsReadType(WS_XML_READER*, WS_TYPE_MAPPING, WS_TYPE, const void*, WS_READ_OPTION,
                           WS_HEAP*, void*, ULONG, WS_ERROR*);
+HRESULT WINAPI WsResetHeap(WS_HEAP*, WS_ERROR*);
 HRESULT WINAPI WsSetChannelProperty(WS_CHANNEL*, WS_CHANNEL_PROPERTY_ID, const void*, ULONG, WS_ERROR*);
 HRESULT WINAPI WsSetErrorProperty(WS_ERROR*, WS_ERROR_PROPERTY_ID, const void*, ULONG);
 HRESULT WINAPI WsSetInput(WS_XML_READER*, const WS_XML_READER_ENCODING*, const WS_XML_READER_INPUT*,

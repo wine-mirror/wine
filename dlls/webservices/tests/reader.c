@@ -2850,6 +2850,80 @@ static void test_repeating_element(void)
     WsFreeHeap( heap );
 }
 
+static void test_WsResetHeap(void)
+{
+    HRESULT hr;
+    WS_HEAP *heap;
+    SIZE_T requested, actual;
+    ULONG size;
+    void *ptr;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    requested = 0xdeadbeef;
+    size = sizeof(requested);
+    hr = WsGetHeapProperty( heap, WS_HEAP_PROPERTY_REQUESTED_SIZE, &requested, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !requested, "got %u\n", (ULONG)requested );
+
+    actual = 0xdeadbeef;
+    size = sizeof(actual);
+    hr = WsGetHeapProperty( heap, WS_HEAP_PROPERTY_ACTUAL_SIZE, &actual, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !actual, "got %u\n", (ULONG)actual );
+
+    hr = WsAlloc( heap, 128, &ptr, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    requested = 0xdeadbeef;
+    size = sizeof(requested);
+    hr = WsGetHeapProperty( heap, WS_HEAP_PROPERTY_REQUESTED_SIZE, &requested, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    todo_wine ok( requested == 128, "got %u\n", (ULONG)requested );
+
+    actual = 0xdeadbeef;
+    size = sizeof(actual);
+    hr = WsGetHeapProperty( heap, WS_HEAP_PROPERTY_ACTUAL_SIZE, &actual, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    todo_wine ok( actual == 128, "got %u\n", (ULONG)actual );
+
+    hr = WsAlloc( heap, 1, &ptr, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    requested = 0xdeadbeef;
+    size = sizeof(requested);
+    hr = WsGetHeapProperty( heap, WS_HEAP_PROPERTY_REQUESTED_SIZE, &requested, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    todo_wine ok( requested == 129, "got %u\n", (ULONG)requested );
+
+    actual = 0xdeadbeef;
+    size = sizeof(actual);
+    hr = WsGetHeapProperty( heap, WS_HEAP_PROPERTY_ACTUAL_SIZE, &actual, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    todo_wine ok( actual == 384, "got %u\n", (ULONG)actual );
+
+    hr = WsResetHeap( NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsResetHeap( heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    requested = 0xdeadbeef;
+    size = sizeof(requested);
+    hr = WsGetHeapProperty( heap, WS_HEAP_PROPERTY_REQUESTED_SIZE, &requested, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !requested, "got %u\n", (ULONG)requested );
+
+    actual = 0xdeadbeef;
+    size = sizeof(actual);
+    hr = WsGetHeapProperty( heap, WS_HEAP_PROPERTY_ACTUAL_SIZE, &actual, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    todo_wine ok( actual == 128, "got %u\n", (ULONG)actual );
+
+    WsFreeHeap( heap );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -2874,4 +2948,5 @@ START_TEST(reader)
     test_text_field_mapping();
     test_complex_struct_type();
     test_repeating_element();
+    test_WsResetHeap();
 }
