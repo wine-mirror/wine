@@ -1046,23 +1046,37 @@ void IME_SetResultString(LPWSTR lpResult, DWORD dwResultLen)
     LPINPUTCONTEXT lpIMC;
     HIMCC newCompStr;
     LPIMEPRIVATE myPrivate;
+    BOOL inComp;
 
     imc = RealIMC(FROM_X11);
     lpIMC = ImmLockIMC(imc);
     if (lpIMC == NULL)
         return;
 
+    newCompStr = updateCompStr(lpIMC->hCompStr, NULL, 0);
+    ImmDestroyIMCC(lpIMC->hCompStr);
+    lpIMC->hCompStr = newCompStr;
+
     newCompStr = updateResultStr(lpIMC->hCompStr, lpResult, dwResultLen);
     ImmDestroyIMCC(lpIMC->hCompStr);
     lpIMC->hCompStr = newCompStr;
 
     myPrivate = ImmLockIMCC(lpIMC->hPrivate);
-    if (!myPrivate->bInComposition)
-        GenerateIMEMessage(imc, WM_IME_STARTCOMPOSITION, 0, 0);
-    GenerateIMEMessage(imc, WM_IME_COMPOSITION, 0, GCS_RESULTSTR);
-    if (!myPrivate->bInComposition)
-        GenerateIMEMessage(imc, WM_IME_ENDCOMPOSITION, 0, 0);
+    inComp = myPrivate->bInComposition;
     ImmUnlockIMCC(lpIMC->hPrivate);
+
+    if (!inComp)
+    {
+        ImmSetOpenStatus(imc, TRUE);
+        GenerateIMEMessage(imc, WM_IME_STARTCOMPOSITION, 0, 0);
+    }
+
+    GenerateIMEMessage(imc, WM_IME_COMPOSITION, 0, GCS_COMPSTR);
+    GenerateIMEMessage(imc, WM_IME_COMPOSITION, lpResult[0], GCS_RESULTSTR|GCS_RESULTCLAUSE);
+    GenerateIMEMessage(imc, WM_IME_ENDCOMPOSITION, 0, 0);
+
+    if (!inComp)
+        ImmSetOpenStatus(imc, FALSE);
 
     ImmUnlockIMC(imc);
 }
