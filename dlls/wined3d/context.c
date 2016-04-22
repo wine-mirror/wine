@@ -219,6 +219,20 @@ static void context_attach_surface_fbo(struct wined3d_context *context,
 static void context_dump_fbo_attachment(const struct wined3d_gl_info *gl_info, GLenum target,
         GLenum attachment)
 {
+    static const struct
+    {
+        GLenum target;
+        GLenum binding;
+        const char *str;
+        enum wined3d_gl_extension extension;
+    }
+    texture_type[] =
+    {
+        {GL_TEXTURE_2D,            GL_TEXTURE_BINDING_2D,            "2d",        WINED3D_GL_EXT_NONE},
+        {GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_BINDING_RECTANGLE_ARB, "rectangle", ARB_TEXTURE_RECTANGLE},
+        {GL_TEXTURE_2D_ARRAY,      GL_TEXTURE_BINDING_2D_ARRAY,      "2d-array",  EXT_TEXTURE_ARRAY},
+    };
+
     GLint type, name, samples, width, height, old_texture, level, face, fmt, tex_target;
 
     gl_info->fbo_ops.glGetFramebufferAttachmentParameteriv(target, attachment,
@@ -262,29 +276,30 @@ static void context_dump_fbo_attachment(const struct wined3d_gl_info *gl_info, G
         }
         else
         {
-            gl_info->gl_ops.gl.p_glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_texture);
-            while (gl_info->gl_ops.gl.p_glGetError());
+            unsigned int i;
 
-            glBindTexture(GL_TEXTURE_2D, name);
-            if (!gl_info->gl_ops.gl.p_glGetError())
+            tex_type_str = NULL;
+            for (i = 0; i < sizeof(texture_type) / sizeof(*texture_type); ++i)
             {
-                tex_target = GL_TEXTURE_2D;
-                tex_type_str = "2d";
-            }
-            else
-            {
-                glBindTexture(GL_TEXTURE_2D, old_texture);
-                gl_info->gl_ops.gl.p_glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_texture);
+                if (!gl_info->supported[texture_type[i].extension])
+                    continue;
 
-                glBindTexture(GL_TEXTURE_RECTANGLE_ARB, name);
-                if (gl_info->gl_ops.gl.p_glGetError())
+                gl_info->gl_ops.gl.p_glGetIntegerv(texture_type[i].binding, &old_texture);
+                while (gl_info->gl_ops.gl.p_glGetError());
+
+                glBindTexture(texture_type[i].target, name);
+                if (!gl_info->gl_ops.gl.p_glGetError())
                 {
-                    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, old_texture);
-                    FIXME("Cannot find type of texture %d.\n", name);
-                    return;
+                    tex_target = texture_type[i].target;
+                    tex_type_str = texture_type[i].str;
+                    break;
                 }
-                tex_target = GL_TEXTURE_RECTANGLE_ARB;
-                tex_type_str = "rectangle";
+                glBindTexture(texture_type[i].target, old_texture);
+            }
+            if (!tex_type_str)
+            {
+                FIXME("Cannot find type of texture %d.\n", name);
+                return;
             }
 
             glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_INTERNAL_FORMAT, &fmt);
@@ -296,13 +311,16 @@ static void context_dump_fbo_attachment(const struct wined3d_gl_info *gl_info, G
                 tex_type_str, name, width, height, fmt);
 
         glBindTexture(tex_target, old_texture);
+        checkGLcall("Guess texture type");
     }
     else if (type == GL_NONE)
     {
-        FIXME("\t%s: NONE.\n", debug_fboattachment(attachment));
+        FIXME("    %s: NONE.\n", debug_fboattachment(attachment));
     }
     else
-        ERR("\t%s: Unknown attachment %#x.\n", debug_fboattachment(attachment), type);
+    {
+        ERR("    %s: Unknown attachment %#x.\n", debug_fboattachment(attachment), type);
+    }
 }
 
 /* Context activation is done by the caller. */
