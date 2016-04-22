@@ -205,3 +205,32 @@ HRESULT WINAPI WsGetServiceProxyProperty( WS_SERVICE_PROXY *handle, WS_PROXY_PRO
 
     return prop_get( proxy->prop, proxy->prop_count, id, buf, size );
 }
+
+/**************************************************************************
+ *          WsOpenServiceProxy		[webservices.@]
+ */
+HRESULT WINAPI WsOpenServiceProxy( WS_SERVICE_PROXY *handle, const WS_ENDPOINT_ADDRESS *endpoint,
+                                   const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
+{
+    struct proxy *proxy = (struct proxy *)handle;
+
+    TRACE( "%p %p %p %p\n", handle, endpoint, ctx, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+    if (ctx) FIXME( "ignoring ctx parameter\n" );
+
+    return open_channel( proxy->channel, endpoint );
+}
+
+/**************************************************************************
+ *          WsCloseServiceProxy		[webservices.@]
+ */
+HRESULT WINAPI WsCloseServiceProxy( WS_SERVICE_PROXY *handle, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
+{
+    struct proxy *proxy = (struct proxy *)handle;
+
+    TRACE( "%p %p %p\n", handle, ctx, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+    if (ctx) FIXME( "ignoring ctx parameter\n" );
+
+    return close_channel( proxy->channel );
+}

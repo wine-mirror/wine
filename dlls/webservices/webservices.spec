@@ -16,7 +16,7 @@
 @ stdcall WsCloseChannel(ptr ptr ptr)
 @ stub WsCloseListener
 @ stub WsCloseServiceHost
-@ stub WsCloseServiceProxy
+@ stdcall WsCloseServiceProxy(ptr ptr ptr)
 @ stub WsCombineUrl
 @ stub WsCopyError
 @ stub WsCopyNode
@@ -98,7 +98,7 @@
 @ stdcall WsOpenChannel(ptr ptr ptr ptr)
 @ stub WsOpenListener
 @ stub WsOpenServiceHost
-@ stub WsOpenServiceProxy
+@ stdcall WsOpenServiceProxy(ptr ptr ptr ptr)
 @ stub WsPullBytes
 @ stub WsPushBytes
 @ stub WsReadArray
