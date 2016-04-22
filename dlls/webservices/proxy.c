@@ -122,6 +122,66 @@ HRESULT WINAPI WsCreateServiceProxy( const WS_CHANNEL_TYPE type, const WS_CHANNE
 }
 
 /**************************************************************************
+ *          WsCreateServiceProxyFromTemplate		[webservices.@]
+ */
+HRESULT WINAPI WsCreateServiceProxyFromTemplate( WS_CHANNEL_TYPE channel_type,
+                                                 const WS_PROXY_PROPERTY *properties, const ULONG count,
+                                                 WS_BINDING_TEMPLATE_TYPE type, void *value, ULONG size,
+                                                 const void *desc, ULONG desc_size, WS_SERVICE_PROXY **handle,
+                                                 WS_ERROR *error )
+{
+    const WS_CHANNEL_PROPERTY *channel_props = NULL;
+    ULONG channel_props_count = 0;
+    WS_CHANNEL_BINDING binding;
+    struct channel *channel;
+    HRESULT hr;
+
+    TRACE( "%u %p %u %u %p %u %p %u %p %p\n", channel_type, properties, count, type, value, size, desc,
+           desc_size, handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!desc || !handle) return E_INVALIDARG;
+    FIXME( "ignoring description\n" );
+
+    switch (type)
+    {
+    case WS_HTTP_BINDING_TEMPLATE_TYPE:
+    {
+        WS_HTTP_BINDING_TEMPLATE *http = value;
+        if (http)
+        {
+            channel_props = http->channelProperties.properties;
+            channel_props_count = http->channelProperties.propertyCount;
+        }
+        binding = WS_HTTP_CHANNEL_BINDING;
+        break;
+    }
+    case WS_HTTP_SSL_BINDING_TEMPLATE_TYPE:
+    {
+        WS_HTTP_SSL_BINDING_TEMPLATE *https = value;
+        if (https)
+        {
+            channel_props = https->channelProperties.properties;
+            channel_props_count = https->channelProperties.propertyCount;
+        }
+        binding = WS_HTTP_CHANNEL_BINDING;
+        break;
+    }
+    default:
+        FIXME( "template type %u not implemented\n", type );
+        return E_NOTIMPL;
+    }
+
+    if ((hr = create_channel( type, binding, channel_props, channel_props_count, &channel )) != S_OK)
+        return hr;
+
+    if ((hr = create_proxy( channel, properties, count, handle )) != S_OK)
+        free_channel( channel );
+
+    return hr;
+}
+
+/**************************************************************************
  *          WsFreeServiceProxy		[webservices.@]
  */
 void WINAPI WsFreeServiceProxy( WS_SERVICE_PROXY *handle )

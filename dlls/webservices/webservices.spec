@@ -33,7 +33,7 @@
 @ stub WsCreateServiceEndpointFromTemplate
 @ stub WsCreateServiceHost
 @ stdcall WsCreateServiceProxy(long long ptr ptr long ptr long ptr ptr)
-@ stub WsCreateServiceProxyFromTemplate
+@ stdcall WsCreateServiceProxyFromTemplate(long ptr long long ptr long ptr long ptr ptr)
 @ stdcall WsCreateWriter(ptr long ptr ptr)
 @ stdcall WsCreateXmlBuffer(ptr ptr long ptr ptr)
 @ stub WsCreateXmlSecurityToken
