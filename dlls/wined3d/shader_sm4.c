@@ -1146,11 +1146,42 @@ static BOOL shader_sm4_read_dst_param(struct wined3d_sm4_data *priv, const DWORD
     return TRUE;
 }
 
+static void shader_sm4_read_instruction_modifier(DWORD modifier, struct wined3d_shader_instruction *ins)
+{
+    static const DWORD recognized_bits = WINED3D_SM4_INSTRUCTION_MODIFIER
+            | WINED3D_SM4_MODIFIER_AOFFIMMI
+            | WINED3D_SM4_AOFFIMMI_U_MASK
+            | WINED3D_SM4_AOFFIMMI_V_MASK
+            | WINED3D_SM4_AOFFIMMI_W_MASK;
+
+    if (modifier & ~recognized_bits)
+    {
+        FIXME("Unhandled modifier 0x%08x.\n", modifier);
+    }
+    else
+    {
+        /* Bit fields are used for sign extension */
+        struct
+        {
+            int u : 4;
+            int v : 4;
+            int w : 4;
+        }
+        aoffimmi;
+        aoffimmi.u = (modifier & WINED3D_SM4_AOFFIMMI_U_MASK) >> WINED3D_SM4_AOFFIMMI_U_SHIFT;
+        aoffimmi.v = (modifier & WINED3D_SM4_AOFFIMMI_V_MASK) >> WINED3D_SM4_AOFFIMMI_V_SHIFT;
+        aoffimmi.w = (modifier & WINED3D_SM4_AOFFIMMI_W_MASK) >> WINED3D_SM4_AOFFIMMI_W_SHIFT;
+        ins->texel_offset.u = aoffimmi.u;
+        ins->texel_offset.v = aoffimmi.v;
+        ins->texel_offset.w = aoffimmi.w;
+    }
+}
+
 static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_sm4_opcode_info *opcode_info;
+    DWORD opcode_token, opcode, previous_token;
     struct wined3d_sm4_data *priv = data;
-    DWORD opcode_token, opcode;
     unsigned int i, len;
     const DWORD *p;
 
@@ -1195,36 +1226,9 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
     p = *ptr;
     *ptr += len;
 
-    if (opcode_token & WINED3D_SM4_INSTRUCTION_MODIFIER)
-    {
-        static const DWORD recognized_bits = WINED3D_SM4_MODIFIER_AOFFIMMI
-                | WINED3D_SM4_AOFFIMMI_U_MASK
-                | WINED3D_SM4_AOFFIMMI_V_MASK
-                | WINED3D_SM4_AOFFIMMI_W_MASK;
-        DWORD modifier = *p++;
-        /* Bit fields are used for sign extension */
-        struct
-        {
-            int u : 4;
-            int v : 4;
-            int w : 4;
-        }
-        aoffimmi;
-
-        if (modifier & ~recognized_bits)
-        {
-            FIXME("Skipping modifier 0x%08x.\n", modifier);
-        }
-        else
-        {
-            aoffimmi.u = (modifier & WINED3D_SM4_AOFFIMMI_U_MASK) >> WINED3D_SM4_AOFFIMMI_U_SHIFT;
-            aoffimmi.v = (modifier & WINED3D_SM4_AOFFIMMI_V_MASK) >> WINED3D_SM4_AOFFIMMI_V_SHIFT;
-            aoffimmi.w = (modifier & WINED3D_SM4_AOFFIMMI_W_MASK) >> WINED3D_SM4_AOFFIMMI_W_SHIFT;
-            ins->texel_offset.u = aoffimmi.u;
-            ins->texel_offset.v = aoffimmi.v;
-            ins->texel_offset.w = aoffimmi.w;
-        }
-    }
+    previous_token = opcode_token;
+    while (previous_token & WINED3D_SM4_INSTRUCTION_MODIFIER)
+        shader_sm4_read_instruction_modifier(previous_token = *p++, ins);
 
     if (opcode_info->read_opcode_func)
     {
