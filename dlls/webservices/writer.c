@@ -30,12 +30,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
 
-static const struct
-{
-    ULONG size;
-    BOOL  readonly;
-}
-writer_props[] =
+static const struct prop_desc writer_props[] =
 {
     { sizeof(ULONG), FALSE },       /* WS_XML_WRITER_PROPERTY_MAX_DEPTH */
     { sizeof(BOOL), FALSE },        /* WS_XML_WRITER_PROPERTY_ALLOW_FRAGMENT */
@@ -83,47 +78,19 @@ struct writer
     struct xmlbuf            *output_buf;
     WS_HEAP                  *output_heap;
     ULONG                     prop_count;
-    WS_XML_WRITER_PROPERTY    prop[sizeof(writer_props)/sizeof(writer_props[0])];
+    struct prop               prop[sizeof(writer_props)/sizeof(writer_props[0])];
 };
 
 static struct writer *alloc_writer(void)
 {
     static const ULONG count = sizeof(writer_props)/sizeof(writer_props[0]);
     struct writer *ret;
-    ULONG i, size = sizeof(*ret) + count * sizeof(WS_XML_WRITER_PROPERTY);
-    char *ptr;
+    ULONG size = sizeof(*ret) + prop_size( writer_props, count );
 
-    for (i = 0; i < count; i++) size += writer_props[i].size;
     if (!(ret = heap_alloc_zero( size ))) return NULL;
-
-    ptr = (char *)&ret->prop[count];
-    for (i = 0; i < count; i++)
-    {
-        ret->prop[i].value = ptr;
-        ret->prop[i].valueSize = writer_props[i].size;
-        ptr += ret->prop[i].valueSize;
-    }
+    prop_init( writer_props, count, ret->prop, &ret[1] );
     ret->prop_count = count;
     return ret;
-}
-
-static HRESULT set_writer_prop( struct writer *writer, WS_XML_WRITER_PROPERTY_ID id, const void *value,
-                                ULONG size )
-{
-    if (id >= writer->prop_count || size != writer_props[id].size || writer_props[id].readonly)
-        return E_INVALIDARG;
-
-    memcpy( writer->prop[id].value, value, size );
-    return S_OK;
-}
-
-static HRESULT get_writer_prop( struct writer *writer, WS_XML_WRITER_PROPERTY_ID id, void *buf, ULONG size )
-{
-    if (id >= writer->prop_count || size != writer_props[id].size)
-        return E_INVALIDARG;
-
-    memcpy( buf, writer->prop[id].value, writer->prop[id].valueSize );
-    return S_OK;
 }
 
 static void free_writer( struct writer *writer )
@@ -196,17 +163,18 @@ HRESULT WINAPI WsCreateWriter( const WS_XML_WRITER_PROPERTY *properties, ULONG c
     if (!handle) return E_INVALIDARG;
     if (!(writer = alloc_writer())) return E_OUTOFMEMORY;
 
-    set_writer_prop( writer, WS_XML_WRITER_PROPERTY_MAX_DEPTH, &max_depth, sizeof(max_depth) );
-    set_writer_prop( writer, WS_XML_WRITER_PROPERTY_MAX_ATTRIBUTES, &max_attrs, sizeof(max_attrs) );
-    set_writer_prop( writer, WS_XML_WRITER_PROPERTY_BUFFER_TRIM_SIZE, &trim_size, sizeof(trim_size) );
-    set_writer_prop( writer, WS_XML_WRITER_PROPERTY_CHARSET, &charset, sizeof(charset) );
-    set_writer_prop( writer, WS_XML_WRITER_PROPERTY_BUFFER_MAX_SIZE, &max_size, sizeof(max_size) );
-    set_writer_prop( writer, WS_XML_WRITER_PROPERTY_MAX_MIME_PARTS_BUFFER_SIZE, &max_size, sizeof(max_size) );
-    set_writer_prop( writer, WS_XML_WRITER_PROPERTY_MAX_NAMESPACES, &max_ns, sizeof(max_ns) );
+    prop_set( writer->prop, writer->prop_count, WS_XML_WRITER_PROPERTY_MAX_DEPTH, &max_depth, sizeof(max_depth) );
+    prop_set( writer->prop, writer->prop_count, WS_XML_WRITER_PROPERTY_MAX_ATTRIBUTES, &max_attrs, sizeof(max_attrs) );
+    prop_set( writer->prop, writer->prop_count, WS_XML_WRITER_PROPERTY_BUFFER_TRIM_SIZE, &trim_size, sizeof(trim_size) );
+    prop_set( writer->prop, writer->prop_count, WS_XML_WRITER_PROPERTY_CHARSET, &charset, sizeof(charset) );
+    prop_set( writer->prop, writer->prop_count, WS_XML_WRITER_PROPERTY_BUFFER_MAX_SIZE, &max_size, sizeof(max_size) );
+    prop_set( writer->prop, writer->prop_count, WS_XML_WRITER_PROPERTY_MAX_MIME_PARTS_BUFFER_SIZE, &max_size, sizeof(max_size) );
+    prop_set( writer->prop, writer->prop_count, WS_XML_WRITER_PROPERTY_MAX_NAMESPACES, &max_ns, sizeof(max_ns) );
 
     for (i = 0; i < count; i++)
     {
-        hr = set_writer_prop( writer, properties[i].id, properties[i].value, properties[i].valueSize );
+        hr = prop_set( writer->prop, writer->prop_count, properties[i].id, properties[i].value,
+                       properties[i].valueSize );
         if (hr != S_OK)
         {
             free_writer( writer );
@@ -214,7 +182,8 @@ HRESULT WINAPI WsCreateWriter( const WS_XML_WRITER_PROPERTY *properties, ULONG c
         }
     }
 
-    hr = get_writer_prop( writer, WS_XML_WRITER_PROPERTY_BUFFER_MAX_SIZE, &max_size, sizeof(max_size) );
+    hr = prop_get( writer->prop, writer->prop_count, WS_XML_WRITER_PROPERTY_BUFFER_MAX_SIZE,
+                   &max_size, sizeof(max_size) );
     if (hr != S_OK)
     {
         free_writer( writer );
@@ -315,7 +284,7 @@ HRESULT WINAPI WsGetWriterProperty( WS_XML_WRITER *handle, WS_XML_WRITER_PROPERT
         return S_OK;
     }
     default:
-        return get_writer_prop( writer, id, buf, size );
+        return prop_get( writer->prop, writer->prop_count, id, buf, size );
     }
 }
 
@@ -351,7 +320,8 @@ HRESULT WINAPI WsSetOutput( WS_XML_WRITER *handle, const WS_XML_WRITER_ENCODING 
 
     for (i = 0; i < count; i++)
     {
-        hr = set_writer_prop( writer, properties[i].id, properties[i].value, properties[i].valueSize );
+        hr = prop_set( writer->prop, writer->prop_count, properties[i].id, properties[i].value,
+                       properties[i].valueSize );
         if (hr != S_OK) return hr;
     }
 
@@ -413,7 +383,8 @@ HRESULT WINAPI WsSetOutputToBuffer( WS_XML_WRITER *handle, WS_XML_BUFFER *buffer
 
     for (i = 0; i < count; i++)
     {
-        hr = set_writer_prop( writer, properties[i].id, properties[i].value, properties[i].valueSize );
+        hr = prop_set( writer->prop, writer->prop_count, properties[i].id, properties[i].value,
+                       properties[i].valueSize );
         if (hr != S_OK) return hr;
     }
 
@@ -1686,7 +1657,8 @@ HRESULT WINAPI WsWriteXmlBufferToBytes( WS_XML_WRITER *handle, WS_XML_BUFFER *bu
 
     for (i = 0; i < count; i++)
     {
-        hr = set_writer_prop( writer, properties[i].id, properties[i].value, properties[i].valueSize );
+        hr = prop_set( writer->prop, writer->prop_count, properties[i].id, properties[i].value,
+                       properties[i].valueSize );
         if (hr != S_OK) return hr;
     }
 

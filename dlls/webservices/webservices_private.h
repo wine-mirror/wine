@@ -50,12 +50,32 @@ static inline WS_XML_NODE_TYPE node_type( const struct node *node )
     return node->hdr.node.nodeType;
 }
 
+struct prop_desc
+{
+    ULONG size;
+    BOOL  readonly;
+    BOOL  writeonly;
+};
+
+struct prop
+{
+    void  *value;
+    ULONG  size;
+    BOOL   readonly;
+    BOOL   writeonly;
+};
+
+ULONG prop_size( const struct prop_desc *, ULONG ) DECLSPEC_HIDDEN;
+void prop_init( const struct prop_desc *, ULONG, struct prop *, void * ) DECLSPEC_HIDDEN;
+HRESULT prop_set( const struct prop *, ULONG, ULONG, const void *, ULONG ) DECLSPEC_HIDDEN;
+HRESULT prop_get( const struct prop *, ULONG, ULONG, void *, ULONG ) DECLSPEC_HIDDEN;
+
 struct channel
 {
     WS_CHANNEL_TYPE         type;
     WS_CHANNEL_BINDING      binding;
     ULONG                   prop_count;
-    WS_CHANNEL_PROPERTY     prop[9];
+    struct prop             prop[9];
 };
 
 HRESULT create_channel( WS_CHANNEL_TYPE, WS_CHANNEL_BINDING, const WS_CHANNEL_PROPERTY *,

@@ -35,12 +35,42 @@ const char *debugstr_xmlstr( const WS_XML_STRING *str )
     return debugstr_an( (const char *)str->bytes, str->length );
 }
 
-static const struct
+ULONG prop_size( const struct prop_desc *desc, ULONG count )
 {
-    ULONG size;
-    BOOL  readonly;
+    ULONG i, ret = count * sizeof(struct prop);
+    for (i = 0; i < count; i++) ret += desc[i].size;
+    return ret;
 }
-error_props[] =
+
+void prop_init( const struct prop_desc *desc, ULONG count, struct prop *prop, void *data )
+{
+    ULONG i;
+    char *ptr = data;
+    for (i = 0; i < count; i++)
+    {
+        prop[i].value     = ptr;
+        prop[i].size      = desc[i].size;
+        prop[i].readonly  = desc[i].readonly;
+        prop[i].writeonly = desc[i].writeonly;
+        ptr += prop[i].size;
+    }
+}
+
+HRESULT prop_set( const struct prop *prop, ULONG count, ULONG id, const void *value, ULONG size )
+{
+    if (id >= count || size != prop[id].size || prop[id].readonly) return E_INVALIDARG;
+    memcpy( prop[id].value, value, size );
+    return S_OK;
+}
+
+HRESULT prop_get( const struct prop *prop, ULONG count, ULONG id, void *buf, ULONG size )
+{
+    if (id >= count || size != prop[id].size || prop[id].writeonly) return E_INVALIDARG;
+    memcpy( buf, prop[id].value, prop[id].size );
+    return S_OK;
+}
+
+static const struct prop_desc error_props[] =
 {
     { sizeof(ULONG), TRUE },    /* WS_ERROR_PROPERTY_STRING_COUNT */
     { sizeof(ULONG), FALSE },   /* WS_ERROR_PROPERTY_ORIGINAL_ERROR_CODE */
@@ -49,47 +79,20 @@ error_props[] =
 
 struct error
 {
-    ULONG             prop_count;
-    WS_ERROR_PROPERTY prop[sizeof(error_props)/sizeof(error_props[0])];
+    ULONG       prop_count;
+    struct prop prop[sizeof(error_props)/sizeof(error_props[0])];
 };
 
 static struct error *alloc_error(void)
 {
     static const ULONG count = sizeof(error_props)/sizeof(error_props[0]);
     struct error *ret;
-    ULONG i, size = sizeof(*ret) + count * sizeof(WS_ERROR_PROPERTY);
-    char *ptr;
+    ULONG size = sizeof(*ret) + prop_size( error_props, count );
 
-    for (i = 0; i < count; i++) size += error_props[i].size;
     if (!(ret = heap_alloc_zero( size ))) return NULL;
-
-    ptr = (char *)&ret->prop[count];
-    for (i = 0; i < count; i++)
-    {
-        ret->prop[i].value = ptr;
-        ret->prop[i].valueSize = error_props[i].size;
-        ptr += ret->prop[i].valueSize;
-    }
+    prop_init( error_props, count, ret->prop, &ret[1] );
     ret->prop_count = count;
     return ret;
-}
-
-static HRESULT set_error_prop( struct error *error, WS_ERROR_PROPERTY_ID id, const void *value, ULONG size )
-{
-    if (id >= error->prop_count || size != error_props[id].size || error_props[id].readonly)
-        return E_INVALIDARG;
-
-    memcpy( error->prop[id].value, value, size );
-    return S_OK;
-}
-
-static HRESULT get_error_prop( struct error *error, WS_ERROR_PROPERTY_ID id, void *buf, ULONG size )
-{
-    if (id >= error->prop_count || size != error_props[id].size)
-        return E_INVALIDARG;
-
-    memcpy( buf, error->prop[id].value, error->prop[id].valueSize );
-    return S_OK;
 }
 
 /**************************************************************************
@@ -107,7 +110,7 @@ HRESULT WINAPI WsCreateError( const WS_ERROR_PROPERTY *properties, ULONG count, 
     if (!handle) return E_INVALIDARG;
     if (!(error = alloc_error())) return E_OUTOFMEMORY;
 
-    set_error_prop( error, WS_ERROR_PROPERTY_LANGID, &langid, sizeof(langid) );
+    prop_set( error->prop, error->prop_count, WS_ERROR_PROPERTY_LANGID, &langid, sizeof(langid) );
     for (i = 0; i < count; i++)
     {
         if (properties[i].id == WS_ERROR_PROPERTY_ORIGINAL_ERROR_CODE)
@@ -115,7 +118,8 @@ HRESULT WINAPI WsCreateError( const WS_ERROR_PROPERTY *properties, ULONG count, 
             heap_free( error );
             return E_INVALIDARG;
         }
-        hr = set_error_prop( error, properties[i].id, properties[i].value, properties[i].valueSize );
+        hr = prop_set( error->prop, error->prop_count, properties[i].id, properties[i].value,
+                       properties[i].valueSize );
         if (hr != S_OK)
         {
             heap_free( error );
@@ -138,12 +142,7 @@ void WINAPI WsFreeError( WS_ERROR *handle )
     heap_free( error );
 }
 
-static const struct
-{
-    ULONG size;
-    BOOL  readonly;
-}
-heap_props[] =
+static const struct prop_desc heap_props[] =
 {
     { sizeof(SIZE_T), FALSE }, /* WS_HEAP_PROPERTY_MAX_SIZE */
     { sizeof(SIZE_T), FALSE }, /* WS_HEAP_PROPERTY_TRIM_SIZE */
@@ -153,9 +152,9 @@ heap_props[] =
 
 struct heap
 {
-    HANDLE           handle;
-    ULONG            prop_count;
-    WS_HEAP_PROPERTY prop[sizeof(heap_props)/sizeof(heap_props[0])];
+    HANDLE      handle;
+    ULONG       prop_count;
+    struct prop prop[sizeof(heap_props)/sizeof(heap_props[0])];
 };
 
 void *ws_alloc( WS_HEAP *handle, SIZE_T size )
@@ -209,39 +208,12 @@ static struct heap *alloc_heap(void)
 {
     static const ULONG count = sizeof(heap_props)/sizeof(heap_props[0]);
     struct heap *ret;
-    ULONG i, size = sizeof(*ret) + count * sizeof(WS_HEAP_PROPERTY);
-    char *ptr;
+    ULONG size = sizeof(*ret) + prop_size( heap_props, count );
 
-    for (i = 0; i < count; i++) size += heap_props[i].size;
     if (!(ret = heap_alloc_zero( size ))) return NULL;
-
-    ptr = (char *)&ret->prop[count];
-    for (i = 0; i < count; i++)
-    {
-        ret->prop[i].value = ptr;
-        ret->prop[i].valueSize = heap_props[i].size;
-        ptr += ret->prop[i].valueSize;
-    }
+    prop_init( heap_props, count, ret->prop, &ret[1] );
     ret->prop_count = count;
     return ret;
-}
-
-static HRESULT set_heap_prop( struct heap *heap, WS_HEAP_PROPERTY_ID id, const void *value, ULONG size )
-{
-    if (id >= heap->prop_count || size != heap_props[id].size || heap_props[id].readonly)
-        return E_INVALIDARG;
-
-    memcpy( heap->prop[id].value, value, size );
-    return S_OK;
-}
-
-static HRESULT get_heap_prop( struct heap *heap, WS_HEAP_PROPERTY_ID id, void *buf, ULONG size )
-{
-    if (id >= heap->prop_count || size != heap_props[id].size)
-        return E_INVALIDARG;
-
-    memcpy( buf, heap->prop[id].value, heap->prop[id].valueSize );
-    return S_OK;
 }
 
 /**************************************************************************
@@ -258,8 +230,8 @@ HRESULT WINAPI WsCreateHeap( SIZE_T max_size, SIZE_T trim_size, const WS_HEAP_PR
     if (!handle || count) return E_INVALIDARG;
     if (!(heap = alloc_heap())) return E_OUTOFMEMORY;
 
-    set_heap_prop( heap, WS_HEAP_PROPERTY_MAX_SIZE, &max_size, sizeof(max_size) );
-    set_heap_prop( heap, WS_HEAP_PROPERTY_TRIM_SIZE, &trim_size, sizeof(trim_size) );
+    prop_set( heap->prop, heap->prop_count, WS_HEAP_PROPERTY_MAX_SIZE, &max_size, sizeof(max_size) );
+    prop_set( heap->prop, heap->prop_count, WS_HEAP_PROPERTY_TRIM_SIZE, &trim_size, sizeof(trim_size) );
 
     if (!(heap->handle = HeapCreate( 0, 0, max_size )))
     {
@@ -363,12 +335,7 @@ void destroy_nodes( struct node *node )
     free_node( node );
 }
 
-static const struct
-{
-    ULONG size;
-    BOOL  readonly;
-}
-reader_props[] =
+static const struct prop_desc reader_props[] =
 {
     { sizeof(ULONG), FALSE },      /* WS_XML_READER_PROPERTY_MAX_DEPTH */
     { sizeof(BOOL), FALSE },       /* WS_XML_READER_PROPERTY_ALLOW_FRAGMENT */
@@ -424,19 +391,16 @@ struct reader
     const unsigned char     *input_data;
     ULONG                    input_size;
     ULONG                    prop_count;
-    WS_XML_READER_PROPERTY   prop[sizeof(reader_props)/sizeof(reader_props[0])];
+    struct prop              prop[sizeof(reader_props)/sizeof(reader_props[0])];
 };
 
 static struct reader *alloc_reader(void)
 {
     static const ULONG count = sizeof(reader_props)/sizeof(reader_props[0]);
     struct reader *ret;
-    ULONG i, size = sizeof(*ret) + count * sizeof(WS_XML_READER_PROPERTY);
-    char *ptr;
+    ULONG size = sizeof(*ret) + prop_size( reader_props, count );
 
-    for (i = 0; i < count; i++) size += reader_props[i].size;
     if (!(ret = heap_alloc_zero( size ))) return NULL;
-
     if (!(ret->prefixes = heap_alloc_zero( sizeof(*ret->prefixes) )))
     {
         heap_free( ret );
@@ -444,13 +408,7 @@ static struct reader *alloc_reader(void)
     }
     ret->nb_prefixes = ret->nb_prefixes_allocated = 1;
 
-    ptr = (char *)&ret->prop[count];
-    for (i = 0; i < count; i++)
-    {
-        ret->prop[i].value = ptr;
-        ret->prop[i].valueSize = reader_props[i].size;
-        ptr += ret->prop[i].valueSize;
-    }
+    prop_init( reader_props, count, ret->prop, &ret[1] );
     ret->prop_count = count;
     return ret;
 }
@@ -532,24 +490,6 @@ static const WS_XML_STRING *get_namespace( struct reader *reader, const WS_XML_S
     return NULL;
 }
 
-static HRESULT set_reader_prop( struct reader *reader, WS_XML_READER_PROPERTY_ID id, const void *value, ULONG size )
-{
-    if (id >= reader->prop_count || size != reader_props[id].size || reader_props[id].readonly)
-        return E_INVALIDARG;
-
-    memcpy( reader->prop[id].value, value, size );
-    return S_OK;
-}
-
-static HRESULT get_reader_prop( struct reader *reader, WS_XML_READER_PROPERTY_ID id, void *buf, ULONG size )
-{
-    if (id >= reader->prop_count || size != reader_props[id].size)
-        return E_INVALIDARG;
-
-    memcpy( buf, reader->prop[id].value, reader->prop[id].valueSize );
-    return S_OK;
-}
-
 static void read_insert_eof( struct reader *reader, struct node *eof )
 {
     if (!reader->root) reader->root = eof;
@@ -612,15 +552,16 @@ HRESULT WINAPI WsCreateReader( const WS_XML_READER_PROPERTY *properties, ULONG c
     if (!handle) return E_INVALIDARG;
     if (!(reader = alloc_reader())) return E_OUTOFMEMORY;
 
-    set_reader_prop( reader, WS_XML_READER_PROPERTY_MAX_DEPTH, &max_depth, sizeof(max_depth) );
-    set_reader_prop( reader, WS_XML_READER_PROPERTY_MAX_ATTRIBUTES, &max_attrs, sizeof(max_attrs) );
-    set_reader_prop( reader, WS_XML_READER_PROPERTY_READ_DECLARATION, &read_decl, sizeof(read_decl) );
-    set_reader_prop( reader, WS_XML_READER_PROPERTY_CHARSET, &charset, sizeof(charset) );
-    set_reader_prop( reader, WS_XML_READER_PROPERTY_MAX_NAMESPACES, &max_ns, sizeof(max_ns) );
+    prop_set( reader->prop, reader->prop_count, WS_XML_READER_PROPERTY_MAX_DEPTH, &max_depth, sizeof(max_depth) );
+    prop_set( reader->prop, reader->prop_count, WS_XML_READER_PROPERTY_MAX_ATTRIBUTES, &max_attrs, sizeof(max_attrs) );
+    prop_set( reader->prop, reader->prop_count, WS_XML_READER_PROPERTY_READ_DECLARATION, &read_decl, sizeof(read_decl) );
+    prop_set( reader->prop, reader->prop_count, WS_XML_READER_PROPERTY_CHARSET, &charset, sizeof(charset) );
+    prop_set( reader->prop, reader->prop_count, WS_XML_READER_PROPERTY_MAX_NAMESPACES, &max_ns, sizeof(max_ns) );
 
     for (i = 0; i < count; i++)
     {
-        hr = set_reader_prop( reader, properties[i].id, properties[i].value, properties[i].valueSize );
+        hr = prop_set( reader->prop, reader->prop_count, properties[i].id, properties[i].value,
+                       properties[i].valueSize );
         if (hr != S_OK)
         {
             free_reader( reader );
@@ -678,7 +619,7 @@ HRESULT WINAPI WsGetErrorProperty( WS_ERROR *handle, WS_ERROR_PROPERTY_ID id, vo
     struct error *error = (struct error *)handle;
 
     TRACE( "%p %u %p %u\n", handle, id, buf, size );
-    return get_error_prop( error, id, buf, size );
+    return prop_get( error->prop, error->prop_count, id, buf, size );
 }
 
 /**************************************************************************
@@ -701,7 +642,7 @@ HRESULT WINAPI WsGetHeapProperty( WS_HEAP *handle, WS_HEAP_PROPERTY_ID id, void 
     TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    return get_heap_prop( heap, id, buf, size );
+    return prop_get( heap->prop, heap->prop_count, id, buf, size );
 }
 
 /**************************************************************************
@@ -800,12 +741,12 @@ HRESULT WINAPI WsGetReaderProperty( WS_XML_READER *handle, WS_XML_READER_PROPERT
         WS_CHARSET charset;
         HRESULT hr;
 
-        if ((hr = get_reader_prop( reader, id, &charset, size )) != S_OK) return hr;
+        if ((hr = prop_get( reader->prop, reader->prop_count, id, &charset, size )) != S_OK) return hr;
         if (!charset) return WS_E_INVALID_FORMAT;
         *(WS_CHARSET *)buf = charset;
         return S_OK;
     }
-    return get_reader_prop( reader, id, buf, size );
+    return prop_get( reader->prop, reader->prop_count, id, buf, size );
 }
 
 /**************************************************************************
@@ -3073,7 +3014,7 @@ HRESULT WINAPI WsSetErrorProperty( WS_ERROR *handle, WS_ERROR_PROPERTY_ID id, co
     TRACE( "%p %u %p %u\n", handle, id, value, size );
 
     if (id == WS_ERROR_PROPERTY_LANGID) return WS_E_INVALID_OPERATION;
-    return set_error_prop( error, id, value, size );
+    return prop_set( error->prop, error->prop_count, id, value, size );
 }
 
 static inline BOOL is_utf8( const unsigned char *data, ULONG size, ULONG *offset )
@@ -3142,7 +3083,8 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
 
     for (i = 0; i < count; i++)
     {
-        hr = set_reader_prop( reader, properties[i].id, properties[i].value, properties[i].valueSize );
+        hr = prop_set( reader->prop, reader->prop_count, properties[i].id, properties[i].value,
+                       properties[i].valueSize );
         if (hr != S_OK) return hr;
     }
 
@@ -3165,7 +3107,8 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
         if (charset == WS_CHARSET_AUTO)
             charset = detect_charset( buf->encodedData, buf->encodedDataSize, &offset );
 
-        hr = set_reader_prop( reader, WS_XML_READER_PROPERTY_CHARSET, &charset, sizeof(charset) );
+        hr = prop_set( reader->prop, reader->prop_count, WS_XML_READER_PROPERTY_CHARSET,
+                       &charset, sizeof(charset) );
         if (hr != S_OK) return hr;
         break;
     }
@@ -3212,14 +3155,16 @@ HRESULT WINAPI WsSetInputToBuffer( WS_XML_READER *handle, WS_XML_BUFFER *buffer,
 
     for (i = 0; i < count; i++)
     {
-        hr = set_reader_prop( reader, properties[i].id, properties[i].value, properties[i].valueSize );
+        hr = prop_set( reader->prop, reader->prop_count, properties[i].id, properties[i].value,
+                       properties[i].valueSize );
         if (hr != S_OK) return hr;
     }
 
     if ((hr = read_init_state( reader )) != S_OK) return hr;
 
     charset = detect_charset( xmlbuf->ptr, xmlbuf->size, &offset );
-    hr = set_reader_prop( reader, WS_XML_READER_PROPERTY_CHARSET, &charset, sizeof(charset) );
+    hr = prop_set( reader->prop, reader->prop_count, WS_XML_READER_PROPERTY_CHARSET,
+                   &charset, sizeof(charset) );
     if (hr != S_OK) return hr;
 
     set_input_buffer( reader, (const unsigned char *)xmlbuf->ptr + offset, xmlbuf->size - offset );

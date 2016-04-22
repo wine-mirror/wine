@@ -29,12 +29,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
 
-static const struct
-{
-    ULONG size;
-    BOOL  readonly;
-}
-channel_props[] =
+static const struct prop_desc channel_props[] =
 {
     { sizeof(ULONG), FALSE },                   /* WS_CHANNEL_PROPERTY_MAX_BUFFERED_MESSAGE_SIZE */
     { sizeof(UINT64), FALSE },                  /* WS_CHANNEL_PROPERTY_MAX_STREAMED_MESSAGE_SIZE */
@@ -51,40 +46,12 @@ static struct channel *alloc_channel(void)
 {
     static const ULONG count = sizeof(channel_props)/sizeof(channel_props[0]);
     struct channel *ret;
-    ULONG i, size = sizeof(*ret) + count * sizeof(WS_CHANNEL_PROPERTY);
-    char *ptr;
+    ULONG size = sizeof(*ret) + prop_size( channel_props, count );
 
-    for (i = 0; i < count; i++) size += channel_props[i].size;
     if (!(ret = heap_alloc_zero( size ))) return NULL;
-
-    ptr = (char *)&ret->prop[count];
-    for (i = 0; i < count; i++)
-    {
-        ret->prop[i].value = ptr;
-        ret->prop[i].valueSize = channel_props[i].size;
-        ptr += ret->prop[i].valueSize;
-    }
+    prop_init( channel_props, count, ret->prop, &ret[1] );
     ret->prop_count = count;
     return ret;
-}
-
-static HRESULT set_channel_prop( struct channel *channel, WS_CHANNEL_PROPERTY_ID id, const void *value,
-                                 ULONG size )
-{
-    if (id >= channel->prop_count || size != channel_props[id].size || channel_props[id].readonly)
-        return E_INVALIDARG;
-
-    memcpy( channel->prop[id].value, value, size );
-    return S_OK;
-}
-
-static HRESULT get_channel_prop( struct channel *channel, WS_CHANNEL_PROPERTY_ID id, void *buf, ULONG size )
-{
-    if (id >= channel->prop_count || size != channel_props[id].size)
-        return E_INVALIDARG;
-
-    memcpy( buf, channel->prop[id].value, channel->prop[id].valueSize );
-    return S_OK;
 }
 
 void free_channel( struct channel *channel )
@@ -101,11 +68,13 @@ HRESULT create_channel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding,
 
     if (!(channel = alloc_channel())) return E_OUTOFMEMORY;
 
-    set_channel_prop( channel, WS_CHANNEL_PROPERTY_MAX_BUFFERED_MESSAGE_SIZE, &msg_size, sizeof(msg_size) );
+    prop_set( channel->prop, channel->prop_count, WS_CHANNEL_PROPERTY_MAX_BUFFERED_MESSAGE_SIZE,
+              &msg_size, sizeof(msg_size) );
 
     for (i = 0; i < count; i++)
     {
-        hr = set_channel_prop( channel, properties[i].id, properties[i].value, properties[i].valueSize );
+        hr = prop_set( channel->prop, channel->prop_count, properties[i].id, properties[i].value,
+                       properties[i].valueSize );
         if (hr != S_OK)
         {
             free_channel( channel );
@@ -177,7 +146,7 @@ HRESULT WINAPI WsGetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
     TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    return get_channel_prop( channel, id, buf, size );
+    return prop_get( channel->prop, channel->prop_count, id, buf, size );
 }
 
 /**************************************************************************
@@ -191,5 +160,5 @@ HRESULT WINAPI WsSetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
     TRACE( "%p %u %p %u\n", handle, id, value, size );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    return set_channel_prop( channel, id, value, size );
+    return prop_set( channel->prop, channel->prop_count, id, value, size );
 }
