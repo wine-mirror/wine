@@ -758,11 +758,14 @@ static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, DW
 static void surface_download_data(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
         DWORD dst_location)
 {
+    unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     struct wined3d_texture *texture = surface->container;
     const struct wined3d_format *format = texture->resource.format;
+    struct wined3d_texture_sub_resource *sub_resource;
     unsigned int dst_row_pitch, dst_slice_pitch;
     unsigned int src_row_pitch, src_slice_pitch;
     struct wined3d_bo_address data;
+    BYTE *temporary_mem = NULL;
     void *mem;
 
     /* Only support read back of converted P8 surfaces. */
@@ -772,7 +775,28 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         return;
     }
 
-    wined3d_texture_get_memory(texture, surface_get_sub_resource_idx(surface), &data, dst_location);
+    sub_resource = &texture->sub_resources[sub_resource_idx];
+
+    if (surface->texture_target == GL_TEXTURE_2D_ARRAY)
+    {
+        /* We don't expect to ever need to emulate NP2 textures when we have EXT_texture_array. */
+        if (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
+        {
+            FIXME("Cannot download surface %p, level %u, layer %u.\n",
+                    surface, surface->texture_level, surface->texture_layer);
+            return;
+        }
+
+        WARN_(d3d_perf)("Downloading all miplevel layers to get the surface data for a single sub-resource.\n");
+
+        if (!(temporary_mem = HeapAlloc(GetProcessHeap(), 0, texture->layer_count * sub_resource->size)))
+        {
+            ERR("Out of memory.\n");
+            return;
+        }
+    }
+
+    wined3d_texture_get_memory(texture, sub_resource_idx, &data, dst_location);
 
     if (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
     {
@@ -781,22 +805,31 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
                 wined3d_texture_get_level_pow2_width(texture, surface->texture_level),
                 wined3d_texture_get_level_pow2_height(texture, surface->texture_level),
                 &src_row_pitch, &src_slice_pitch);
-        mem = HeapAlloc(GetProcessHeap(), 0, src_slice_pitch);
+        if (!(temporary_mem = HeapAlloc(GetProcessHeap(), 0, src_slice_pitch)))
+        {
+            ERR("Out of memory.\n");
+            return;
+        }
 
         if (data.buffer_object)
             ERR("NP2 emulated texture uses PBO unexpectedly.\n");
         if (texture->resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
             ERR("Unexpected compressed format for NP2 emulated texture.\n");
     }
-    else
-    {
-        mem = data.addr;
-    }
 
-    if (data.buffer_object)
+    if (temporary_mem)
+    {
+        mem = temporary_mem;
+    }
+    else if (data.buffer_object)
     {
         GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, data.buffer_object));
         checkGLcall("glBindBuffer");
+        mem = data.addr;
+    }
+    else
+    {
+        mem = data.addr;
     }
 
     if (texture->resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
@@ -815,12 +848,6 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         gl_info->gl_ops.gl.p_glGetTexImage(surface->texture_target, surface->texture_level,
                 format->glFormat, format->glType, mem);
         checkGLcall("glGetTexImage");
-    }
-
-    if (data.buffer_object)
-    {
-        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
-        checkGLcall("glBindBuffer");
     }
 
     if (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
@@ -883,9 +910,30 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
             src_data += src_row_pitch;
             dst_data += dst_row_pitch;
         }
-
-        HeapFree(GetProcessHeap(), 0, mem);
     }
+    else if (temporary_mem)
+    {
+        void *src_data = temporary_mem + surface->texture_layer * sub_resource->size;
+        if (data.buffer_object)
+        {
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, data.buffer_object));
+            checkGLcall("glBindBuffer");
+            GL_EXTCALL(glBufferSubData(GL_PIXEL_PACK_BUFFER, 0, sub_resource->size, src_data));
+            checkGLcall("glBufferSubData");
+        }
+        else
+        {
+            memcpy(data.addr, src_data, sub_resource->size);
+        }
+    }
+
+    if (data.buffer_object)
+    {
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
+        checkGLcall("glBindBuffer");
+    }
+
+    HeapFree(GetProcessHeap(), 0, temporary_mem);
 }
 
 /* This call just uploads data, the caller is responsible for binding the
