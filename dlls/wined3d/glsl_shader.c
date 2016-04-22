@@ -1860,7 +1860,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
 
             default:
                 sampler_type = "unsupported_sampler";
-                FIXME("Unhandled resource type %#x.\n", reg_maps->resource_info[i].type);
+                FIXME("Unhandled resource type %#x.\n", reg_maps->resource_info[entry->resource_idx].type);
                 break;
         }
         shader_addline(buffer, "uniform %s%s %s_sampler%u;\n",
