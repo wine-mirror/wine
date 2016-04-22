@@ -749,6 +749,7 @@ static ID2D1SimplifiedGeometrySink test_geomsink2 = { &test_geometrysink2_vtbl }
 static void test_CreateFontFromLOGFONT(void)
 {
     static const WCHAR tahomaspW[] = {'T','a','h','o','m','a',' ',0};
+    IDWriteGdiInterop1 *interop1;
     IDWriteGdiInterop *interop;
     DWRITE_FONT_WEIGHT weight;
     DWRITE_FONT_STYLE style;
@@ -905,6 +906,25 @@ if (0)
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
     ok(hr == DWRITE_E_NOFONT, "got 0x%08x\n", hr);
     ok(font == NULL, "got %p\n", font);
+
+    /* IDWriteGdiInterop1::CreateFontFromLOGFONT() */
+    hr = IDWriteGdiInterop_QueryInterface(interop, &IID_IDWriteGdiInterop1, (void**)&interop1);
+    if (hr == S_OK) {
+        memset(&logfont, 0, sizeof(logfont));
+        logfont.lfHeight = 12;
+        logfont.lfWidth  = 12;
+        logfont.lfWeight = FW_NORMAL;
+        logfont.lfItalic = 1;
+        lstrcpyW(logfont.lfFaceName, tahomaW);
+
+        hr = IDWriteGdiInterop1_CreateFontFromLOGFONT(interop1, &logfont, NULL, &font);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        IDWriteFont_Release(font);
+        IDWriteGdiInterop1_Release(interop1);
+    }
+    else
+        win_skip("IDWriteGdiInterop1 is not supported, skipping CreateFontFromLOGFONT() tests.\n");
 
     IDWriteGdiInterop_Release(interop);
     IDWriteFactory_Release(factory);

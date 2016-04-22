@@ -620,47 +620,10 @@ static HRESULT WINAPI gdiinterop_CreateFontFromLOGFONT(IDWriteGdiInterop1 *iface
     LOGFONTW const *logfont, IDWriteFont **font)
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
-    IDWriteFontCollection *collection;
-    IDWriteFontFamily *family;
-    DWRITE_FONT_STYLE style;
-    BOOL exists = FALSE;
-    UINT32 index;
-    HRESULT hr;
 
     TRACE("(%p)->(%p %p)\n", This, logfont, font);
 
-    *font = NULL;
-
-    if (!logfont) return E_INVALIDARG;
-
-    hr = IDWriteFactory2_GetSystemFontCollection((IDWriteFactory2*)This->factory, &collection, FALSE);
-    if (FAILED(hr)) {
-        ERR("failed to get system font collection: 0x%08x.\n", hr);
-        return hr;
-    }
-
-    hr = IDWriteFontCollection_FindFamilyName(collection, logfont->lfFaceName, &index, &exists);
-    if (FAILED(hr)) {
-        IDWriteFontCollection_Release(collection);
-        goto done;
-    }
-
-    if (!exists) {
-        hr = DWRITE_E_NOFONT;
-        goto done;
-    }
-
-    hr = IDWriteFontCollection_GetFontFamily(collection, index, &family);
-    if (FAILED(hr))
-        goto done;
-
-    style = logfont->lfItalic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
-    hr = IDWriteFontFamily_GetFirstMatchingFont(family, logfont->lfWeight, DWRITE_FONT_STRETCH_NORMAL, style, font);
-    IDWriteFontFamily_Release(family);
-
-done:
-    IDWriteFontCollection_Release(collection);
-    return hr;
+    return IDWriteGdiInterop1_CreateFontFromLOGFONT(iface, logfont, NULL, font);
 }
 
 static HRESULT WINAPI gdiinterop_ConvertFontToLOGFONT(IDWriteGdiInterop1 *iface,
@@ -880,10 +843,48 @@ static HRESULT WINAPI gdiinterop1_CreateFontFromLOGFONT(IDWriteGdiInterop1 *ifac
     LOGFONTW const *logfont, IDWriteFontCollection *collection, IDWriteFont **font)
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
+    IDWriteFontFamily *family;
+    DWRITE_FONT_STYLE style;
+    BOOL exists = FALSE;
+    UINT32 index;
+    HRESULT hr;
 
-    FIXME("(%p)->(%p %p %p): stub\n", This, logfont, collection, font);
+    TRACE("(%p)->(%p %p %p)\n", This, logfont, collection, font);
 
-    return E_NOTIMPL;
+    *font = NULL;
+
+    if (!logfont) return E_INVALIDARG;
+
+    if (collection)
+        IDWriteFontCollection_AddRef(collection);
+    else {
+        hr = IDWriteFactory2_GetSystemFontCollection((IDWriteFactory2*)This->factory, &collection, FALSE);
+        if (FAILED(hr)) {
+            ERR("failed to get system font collection: 0x%08x.\n", hr);
+            return hr;
+        }
+    }
+
+    hr = IDWriteFontCollection_FindFamilyName(collection, logfont->lfFaceName, &index, &exists);
+    if (FAILED(hr))
+        goto done;
+
+    if (!exists) {
+        hr = DWRITE_E_NOFONT;
+        goto done;
+    }
+
+    hr = IDWriteFontCollection_GetFontFamily(collection, index, &family);
+    if (FAILED(hr))
+        goto done;
+
+    style = logfont->lfItalic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
+    hr = IDWriteFontFamily_GetFirstMatchingFont(family, logfont->lfWeight, DWRITE_FONT_STRETCH_NORMAL, style, font);
+    IDWriteFontFamily_Release(family);
+
+done:
+    IDWriteFontCollection_Release(collection);
+    return hr;
 }
 
 static HRESULT WINAPI gdiinterop1_GetFontSignature_(IDWriteGdiInterop1 *iface, IDWriteFontFace *fontface,
