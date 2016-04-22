@@ -587,7 +587,7 @@ static WCHAR *reg_data_to_wchar(DWORD type, const BYTE *src, DWORD size_bytes)
             }
 
             tmp_size = size_bytes - two_wchars; /* exclude both null terminators */
-            buffer = HeapAlloc(GetProcessHeap(), 0, tmp_size * 2);
+            buffer = HeapAlloc(GetProcessHeap(), 0, tmp_size * 2 + sizeof(WCHAR));
             len = tmp_size / sizeof(WCHAR);
 
             for (i = 0, destindex = 0; i < len; i++, destindex++)
