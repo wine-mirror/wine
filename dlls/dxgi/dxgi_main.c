@@ -128,8 +128,8 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
         unsigned int flags, const D3D_FEATURE_LEVEL *feature_levels, unsigned int level_count, void **device)
 {
     struct layer_get_size_args get_size_args;
-    struct dxgi_device *dxgi_device;
     struct dxgi_device_layer d3d10_layer;
+    struct dxgi_device *dxgi_device;
     UINT device_size;
     DWORD count;
     HRESULT hr;
@@ -137,18 +137,22 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
     TRACE("d3d10core %p, factory %p, adapter %p, flags %#x, feature_levels %p, level_count %u, device %p.\n",
             d3d10core, factory, adapter, flags, feature_levels, level_count, device);
 
-    FIXME("Ignoring flags.\n");
+    if (flags)
+        FIXME("Ignoring flags %#x.\n", flags);
+
+    if (TRACE_ON(dxgi))
+        dump_feature_levels(feature_levels, level_count);
 
     hr = register_d3d10core_layers(d3d10core);
     if (FAILED(hr))
     {
-        ERR("Failed to register d3d10core layers, returning %#x\n", hr);
+        ERR("Failed to register d3d10core layers, returning %#x.\n", hr);
         return hr;
     }
 
     if (!get_layer(DXGI_DEVICE_LAYER_D3D10_DEVICE, &d3d10_layer))
     {
-        ERR("Failed to get D3D10 device layer\n");
+        ERR("Failed to get D3D10 device layer.\n");
         return E_FAIL;
     }
 
@@ -156,7 +160,7 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
     hr = d3d10_layer.init(d3d10_layer.id, &count, NULL);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize D3D10 device layer\n");
+        WARN("Failed to initialize D3D10 device layer.\n");
         return E_FAIL;
     }
 
@@ -176,7 +180,7 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
     dxgi_device = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, device_size);
     if (!dxgi_device)
     {
-        ERR("Failed to allocate device memory\n");
+        ERR("Failed to allocate device memory.\n");
         return E_OUTOFMEMORY;
     }
 

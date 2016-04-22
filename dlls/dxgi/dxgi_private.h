@@ -79,6 +79,7 @@ struct dxgi_device_layer
 
 /* TRACE helper functions */
 const char *debug_dxgi_format(DXGI_FORMAT format) DECLSPEC_HIDDEN;
+void dump_feature_levels(const D3D_FEATURE_LEVEL *feature_levels, unsigned int level_count) DECLSPEC_HIDDEN;
 
 DXGI_FORMAT dxgi_format_from_wined3dformat(enum wined3d_format_id format) DECLSPEC_HIDDEN;
 enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format) DECLSPEC_HIDDEN;

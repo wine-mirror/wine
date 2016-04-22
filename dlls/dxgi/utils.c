@@ -364,6 +364,21 @@ enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format)
     }
 }
 
+void dump_feature_levels(const D3D_FEATURE_LEVEL *feature_levels, unsigned int level_count)
+{
+    unsigned int i;
+
+    if (!feature_levels || !level_count)
+    {
+        TRACE("Feature levels: (null).\n");
+        return;
+    }
+
+    TRACE("Feature levels (count = %u):\n", level_count);
+    for (i = 0; i < level_count; ++i)
+        TRACE("    [%u] = %s.\n", i, debug_feature_level(feature_levels[i]));
+}
+
 void dxgi_sample_desc_from_wined3d(DXGI_SAMPLE_DESC *desc,
         enum wined3d_multisample_type wined3d_type, unsigned int wined3d_quality)
 {
