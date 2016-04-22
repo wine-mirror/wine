@@ -402,6 +402,9 @@ static void surface_depth_blt_fbo(const struct wined3d_device *device,
         struct wined3d_surface *src_surface, DWORD src_location, const RECT *src_rect,
         struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect)
 {
+    unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
+    struct wined3d_texture *dst_texture = dst_surface->container;
+    struct wined3d_texture *src_texture = src_surface->container;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     DWORD src_mask, dst_mask;
@@ -413,21 +416,21 @@ static void surface_depth_blt_fbo(const struct wined3d_device *device,
     TRACE("dst_surface %p, dst_location %s, dst_rect %s.\n",
             dst_surface, wined3d_debug_location(dst_location), wine_dbgstr_rect(dst_rect));
 
-    src_mask = src_surface->container->resource.format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
-    dst_mask = dst_surface->container->resource.format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
+    src_mask = src_texture->resource.format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
+    dst_mask = dst_texture->resource.format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
 
     if (src_mask != dst_mask)
     {
         ERR("Incompatible formats %s and %s.\n",
-                debug_d3dformat(src_surface->container->resource.format->id),
-                debug_d3dformat(dst_surface->container->resource.format->id));
+                debug_d3dformat(src_texture->resource.format->id),
+                debug_d3dformat(dst_texture->resource.format->id));
         return;
     }
 
     if (!src_mask)
     {
         ERR("Not a depth / stencil format: %s.\n",
-                debug_d3dformat(src_surface->container->resource.format->id));
+                debug_d3dformat(src_texture->resource.format->id));
         return;
     }
 
@@ -451,7 +454,7 @@ static void surface_depth_blt_fbo(const struct wined3d_device *device,
     if (!surface_is_full_rect(dst_surface, dst_rect))
         surface_load_location(dst_surface, context, dst_location);
     else
-        wined3d_surface_prepare(dst_surface, context, dst_location);
+        wined3d_texture_prepare_location(dst_texture, dst_sub_resource_idx, context, dst_location);
 
     gl_info = context->gl_info;
 
