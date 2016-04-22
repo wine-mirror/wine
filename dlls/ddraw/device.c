@@ -4010,18 +4010,24 @@ static void pack_strided_data(BYTE *dst, DWORD count, const D3DDRAWPRIMITIVESTRI
     }
 }
 
-static HRESULT d3d_device7_DrawPrimitiveStrided(IDirect3DDevice7 *iface, D3DPRIMITIVETYPE PrimitiveType,
-        DWORD VertexType, D3DDRAWPRIMITIVESTRIDEDDATA *D3DDrawPrimStrideData, DWORD VertexCount, DWORD Flags)
+static HRESULT d3d_device7_DrawPrimitiveStrided(IDirect3DDevice7 *iface, D3DPRIMITIVETYPE primitive_type,
+        DWORD fvf, D3DDRAWPRIMITIVESTRIDEDDATA *strided_data, DWORD vertex_count, DWORD flags)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
     HRESULT hr;
-    UINT dst_stride = get_flexible_vertex_size(VertexType);
-    UINT dst_size = dst_stride * VertexCount;
+    UINT dst_stride = get_flexible_vertex_size(fvf);
+    UINT dst_size = dst_stride * vertex_count;
     UINT vb_pos, align;
     BYTE *dst_data;
 
-    TRACE("iface %p, primitive_type %#x, FVF %#x, strided_data %p, vertex_count %u, flags %#x.\n",
-            iface, PrimitiveType, VertexType, D3DDrawPrimStrideData, VertexCount, Flags);
+    TRACE("iface %p, primitive_type %#x, fvf %#x, strided_data %p, vertex_count %u, flags %#x.\n",
+            iface, primitive_type, fvf, strided_data, vertex_count, flags);
+
+    if (!vertex_count)
+    {
+        WARN("0 vertex count.\n");
+        return D3D_OK;
+    }
 
     wined3d_mutex_lock();
     hr = d3d_device_prepare_vertex_buffer(device, dst_size);
@@ -4040,17 +4046,17 @@ static HRESULT d3d_device7_DrawPrimitiveStrided(IDirect3DDevice7 *iface, D3DPRIM
             vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD);
     if (FAILED(hr))
         goto done;
-    pack_strided_data(dst_data, VertexCount, D3DDrawPrimStrideData, VertexType);
+    pack_strided_data(dst_data, vertex_count, strided_data, fvf);
     wined3d_buffer_unmap(device->vertex_buffer);
     device->vertex_buffer_pos = vb_pos + dst_size;
 
     hr = wined3d_device_set_stream_source(device->wined3d_device, 0, device->vertex_buffer, 0, dst_stride);
     if (FAILED(hr))
         goto done;
-    wined3d_device_set_vertex_declaration(device->wined3d_device, ddraw_find_decl(device->ddraw, VertexType));
+    wined3d_device_set_vertex_declaration(device->wined3d_device, ddraw_find_decl(device->ddraw, fvf));
 
-    wined3d_device_set_primitive_type(device->wined3d_device, PrimitiveType);
-    hr = wined3d_device_draw_primitive(device->wined3d_device, vb_pos / dst_stride, VertexCount);
+    wined3d_device_set_primitive_type(device->wined3d_device, primitive_type);
+    hr = wined3d_device_draw_primitive(device->wined3d_device, vb_pos / dst_stride, vertex_count);
 
 done:
     wined3d_mutex_unlock();
