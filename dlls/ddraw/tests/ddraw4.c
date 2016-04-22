@@ -11420,7 +11420,7 @@ static void test_draw_primitive(void)
     memset(&strided, 0, sizeof(strided));
 
     hr = IDirect3DDevice3_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, NULL, 0, NULL, 0, 0);
-    todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice3_DrawIndexedPrimitiveStrided(device,
             D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, &strided, 0, NULL, 0, 0);
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
@@ -11434,7 +11434,7 @@ static void test_draw_primitive(void)
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
 
     hr = IDirect3DDevice3_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, NULL, 0, indices, 4, 0);
-    todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice3_DrawIndexedPrimitiveStrided(device,
             D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, &strided, 0, indices, 4, 0);
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);

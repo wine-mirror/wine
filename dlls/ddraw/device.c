@@ -3689,6 +3689,12 @@ static HRESULT d3d_device7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
             "indices %p, index_count %u, flags %#x.\n",
             iface, primitive_type, fvf, vertices, vertex_count, indices, index_count, flags);
 
+    if (!vertex_count || !index_count)
+    {
+        WARN("0 vertex or index count.\n");
+        return D3D_OK;
+    }
+
     /* Set the D3DDevice's FVF */
     wined3d_mutex_lock();
 
