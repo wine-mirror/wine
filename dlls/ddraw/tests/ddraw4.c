@@ -11423,7 +11423,7 @@ static void test_draw_primitive(void)
     todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice3_DrawIndexedPrimitiveStrided(device,
             D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, &strided, 0, NULL, 0, 0);
-    todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice3_DrawIndexedPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, NULL, 0, 0);
     todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice3_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, NULL, 0, 0);
@@ -11437,7 +11437,7 @@ static void test_draw_primitive(void)
     todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice3_DrawIndexedPrimitiveStrided(device,
             D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, &strided, 0, indices, 4, 0);
-    todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice3_DrawIndexedPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, indices, 4, 0);
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
 

@@ -4107,21 +4107,27 @@ static HRESULT WINAPI d3d_device3_DrawPrimitiveStrided(IDirect3DDevice3 *iface,
  *
  *****************************************************************************/
 static HRESULT d3d_device7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
-        D3DPRIMITIVETYPE PrimitiveType, DWORD VertexType,
-        D3DDRAWPRIMITIVESTRIDEDDATA *D3DDrawPrimStrideData, DWORD VertexCount,
-        WORD *Indices, DWORD IndexCount, DWORD Flags)
+        D3DPRIMITIVETYPE primitive_type, DWORD fvf, D3DDRAWPRIMITIVESTRIDEDDATA *strided_data,
+        DWORD vertex_count, WORD *indices, DWORD index_count, DWORD flags)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
-    HRESULT hr;
-    UINT vtx_dst_stride = get_flexible_vertex_size(VertexType);
-    UINT vtx_dst_size = VertexCount * vtx_dst_stride;
+    UINT vtx_dst_stride = get_flexible_vertex_size(fvf);
+    UINT vtx_dst_size = vertex_count * vtx_dst_stride;
+    UINT idx_size = index_count * sizeof(WORD);
     UINT vb_pos, align;
-    UINT idx_size = IndexCount * sizeof(WORD);
-    UINT ib_pos;
     BYTE *dst_data;
+    UINT ib_pos;
+    HRESULT hr;
 
-    TRACE("iface %p, primitive_type %#x, FVF %#x, strided_data %p, vertex_count %u, indices %p, index_count %u, flags %#x.\n",
-            iface, PrimitiveType, VertexType, D3DDrawPrimStrideData, VertexCount, Indices, IndexCount, Flags);
+    TRACE("iface %p, primitive_type %#x, fvf %#x, strided_data %p, "
+            "vertex_count %u, indices %p, index_count %u, flags %#x.\n",
+            iface, primitive_type, fvf, strided_data, vertex_count, indices, index_count, flags);
+
+    if (!vertex_count || !index_count)
+    {
+        WARN("0 vertex or index count.\n");
+        return D3D_OK;
+    }
 
     wined3d_mutex_lock();
 
@@ -4141,7 +4147,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
             vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD);
     if (FAILED(hr))
         goto done;
-    pack_strided_data(dst_data, VertexCount, D3DDrawPrimStrideData, VertexType);
+    pack_strided_data(dst_data, vertex_count, strided_data, fvf);
     wined3d_buffer_unmap(device->vertex_buffer);
     device->vertex_buffer_pos = vb_pos + vtx_dst_size;
 
@@ -4156,7 +4162,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
             ib_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD);
     if (FAILED(hr))
         goto done;
-    memcpy(dst_data, Indices, idx_size);
+    memcpy(dst_data, indices, idx_size);
     wined3d_buffer_unmap(device->index_buffer);
     device->index_buffer_pos = ib_pos + idx_size;
 
@@ -4166,9 +4172,9 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
     wined3d_device_set_index_buffer(device->wined3d_device, device->index_buffer, WINED3DFMT_R16_UINT);
     wined3d_device_set_base_vertex_index(device->wined3d_device, vb_pos / vtx_dst_stride);
 
-    wined3d_device_set_vertex_declaration(device->wined3d_device, ddraw_find_decl(device->ddraw, VertexType));
-    wined3d_device_set_primitive_type(device->wined3d_device, PrimitiveType);
-    hr = wined3d_device_draw_indexed_primitive(device->wined3d_device, ib_pos / sizeof(WORD), IndexCount);
+    wined3d_device_set_vertex_declaration(device->wined3d_device, ddraw_find_decl(device->ddraw, fvf));
+    wined3d_device_set_primitive_type(device->wined3d_device, primitive_type);
+    hr = wined3d_device_draw_indexed_primitive(device->wined3d_device, ib_pos / sizeof(WORD), index_count);
 
 done:
     wined3d_mutex_unlock();
