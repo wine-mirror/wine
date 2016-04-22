@@ -11694,7 +11694,7 @@ static void test_draw_primitive(void)
     hr = IDirect3DDevice7_DrawIndexedPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 0, 0, NULL, 0, 0);
     todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, NULL, 0, 0);
-    todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice7_DrawPrimitiveStrided(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, &strided, 0, 0);
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice7_DrawPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 0, 0, 0);

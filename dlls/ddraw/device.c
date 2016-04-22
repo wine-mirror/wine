@@ -3508,8 +3508,11 @@ static HRESULT d3d_device7_DrawPrimitive(IDirect3DDevice7 *iface,
     TRACE("iface %p, primitive_type %#x, fvf %#x, vertices %p, vertex_count %u, flags %#x.\n",
             iface, primitive_type, fvf, vertices, vertex_count, flags);
 
-    if (!vertices)
-        return DDERR_INVALIDPARAMS;
+    if (!vertex_count)
+    {
+        WARN("0 vertex count.\n");
+        return D3D_OK;
+    }
 
     /* Get the stride */
     stride = get_flexible_vertex_size(fvf);
