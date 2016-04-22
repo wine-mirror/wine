@@ -502,6 +502,9 @@ static void surface_blt_fbo(const struct wined3d_device *device,
         struct wined3d_surface *src_surface, DWORD src_location, const RECT *src_rect_in,
         struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect_in)
 {
+    unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
+    struct wined3d_texture *dst_texture = dst_surface->container;
+    struct wined3d_texture *src_texture = src_surface->container;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context = old_ctx;
     struct wined3d_surface *required_rt, *restore_rt = NULL;
@@ -534,7 +537,7 @@ static void surface_blt_fbo(const struct wined3d_device *device,
 
     /* Resolve the source surface first if needed. */
     if (src_location == WINED3D_LOCATION_RB_MULTISAMPLE
-            && (src_surface->container->resource.format->id != dst_surface->container->resource.format->id
+            && (src_texture->resource.format->id != dst_texture->resource.format->id
                 || abs(src_rect.bottom - src_rect.top) != abs(dst_rect.bottom - dst_rect.top)
                 || abs(src_rect.right - src_rect.left) != abs(dst_rect.right - dst_rect.left)))
         src_location = WINED3D_LOCATION_RB_RESOLVED;
@@ -547,7 +550,7 @@ static void surface_blt_fbo(const struct wined3d_device *device,
     if (!surface_is_full_rect(dst_surface, &dst_rect))
         surface_load_location(dst_surface, old_ctx, dst_location);
     else
-        wined3d_surface_prepare(dst_surface, old_ctx, dst_location);
+        wined3d_texture_prepare_location(dst_texture, dst_sub_resource_idx, old_ctx, dst_location);
 
 
     if (src_location == WINED3D_LOCATION_DRAWABLE) required_rt = src_surface;
@@ -572,7 +575,7 @@ static void surface_blt_fbo(const struct wined3d_device *device,
     if (src_location == WINED3D_LOCATION_DRAWABLE)
     {
         TRACE("Source surface %p is onscreen.\n", src_surface);
-        buffer = wined3d_texture_get_gl_buffer(src_surface->container);
+        buffer = wined3d_texture_get_gl_buffer(src_texture);
         surface_translate_drawable_coords(src_surface, context->win_handle, &src_rect);
     }
     else
@@ -589,7 +592,7 @@ static void surface_blt_fbo(const struct wined3d_device *device,
     if (dst_location == WINED3D_LOCATION_DRAWABLE)
     {
         TRACE("Destination surface %p is onscreen.\n", dst_surface);
-        buffer = wined3d_texture_get_gl_buffer(dst_surface->container);
+        buffer = wined3d_texture_get_gl_buffer(dst_texture);
         surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
     }
     else
@@ -616,9 +619,8 @@ static void surface_blt_fbo(const struct wined3d_device *device,
             dst_rect.left, dst_rect.top, dst_rect.right, dst_rect.bottom, GL_COLOR_BUFFER_BIT, gl_filter);
     checkGLcall("glBlitFramebuffer()");
 
-    if (wined3d_settings.strict_draw_ordering
-            || (dst_location == WINED3D_LOCATION_DRAWABLE
-            && dst_surface->container->swapchain->front_buffer == dst_surface->container))
+    if (wined3d_settings.strict_draw_ordering || (dst_location == WINED3D_LOCATION_DRAWABLE
+            && dst_texture->swapchain->front_buffer == dst_texture))
         gl_info->gl_ops.gl.p_glFlush();
 
     if (restore_rt)
