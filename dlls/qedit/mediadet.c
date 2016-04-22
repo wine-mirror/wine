@@ -640,7 +640,7 @@ static const IMediaDetVtbl IMediaDet_VTable =
 HRESULT MediaDet_create(IUnknown * pUnkOuter, LPVOID * ppv) {
     MediaDetImpl* obj = NULL;
 
-    TRACE("(%p,%p)\n", ppv, pUnkOuter);
+    TRACE("(%p,%p)\n", pUnkOuter, ppv);
 
     obj = CoTaskMemAlloc(sizeof(MediaDetImpl));
     if (NULL == obj) {

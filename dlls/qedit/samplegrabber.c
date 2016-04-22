@@ -1262,7 +1262,7 @@ HRESULT SampleGrabber_create(IUnknown *pUnkOuter, LPVOID *ppv)
     ISeekingPassThru *passthru;
     HRESULT hr;
 
-    TRACE("(%p,%p)\n", ppv, pUnkOuter);
+    TRACE("(%p,%p)\n", pUnkOuter, ppv);
 
     obj = CoTaskMemAlloc(sizeof(SG_Impl));
     if (NULL == obj) {
