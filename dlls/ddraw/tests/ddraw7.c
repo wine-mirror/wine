@@ -11640,6 +11640,110 @@ static void test_getdc(void)
     DestroyWindow(window);
 }
 
+static void test_draw_primitive(void)
+{
+    static WORD indices[] = {0, 1, 2, 3};
+    static struct vec3 quad[] =
+    {
+        {-1.0f, -1.0f, 0.0f},
+        {-1.0f,  1.0f, 0.0f},
+        { 1.0f, -1.0f, 0.0f},
+        { 1.0f,  1.0f, 0.0f},
+    };
+    D3DDRAWPRIMITIVESTRIDEDDATA strided;
+    D3DVERTEXBUFFERDESC vb_desc;
+    IDirect3DVertexBuffer7 *vb;
+    IDirect3DDevice7 *device;
+    IDirect3D7 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    void *data;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get D3D interface, hr %#x.\n", hr);
+
+    memset(&vb_desc, 0, sizeof(vb_desc));
+    vb_desc.dwSize = sizeof(vb_desc);
+    vb_desc.dwFVF = D3DFVF_XYZ;
+    vb_desc.dwNumVertices = 4;
+    hr = IDirect3D7_CreateVertexBuffer(d3d, &vb_desc, &vb, 0);
+    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
+
+    IDirect3D7_Release(d3d);
+
+    memset(&strided, 0, sizeof(strided));
+
+    hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, NULL, 0, NULL, 0, 0);
+    todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawIndexedPrimitiveStrided(device,
+            D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, &strided, 0, NULL, 0, 0);
+    todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawIndexedPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 0, 0, NULL, 0, 0);
+    todo_wine ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawIndexedPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 0, 0, NULL, 0, 0);
+    todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, NULL, 0, 0);
+    todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawPrimitiveStrided(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, &strided, 0, 0);
+    todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 0, 0, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, NULL, 0, indices, 4, 0);
+    todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawIndexedPrimitiveStrided(device,
+            D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, &strided, 0, indices, 4, 0);
+    todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawIndexedPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 0, 0, indices, 4, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    strided.position.lpvData = quad;
+    strided.position.dwStride = sizeof(*quad);
+    hr = IDirect3DVertexBuffer7_Lock(vb, 0, &data, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock vertex buffer, hr %#x.\n", hr);
+    memcpy(data, quad, sizeof(quad));
+    hr = IDirect3DVertexBuffer7_Unlock(vb);
+    ok(SUCCEEDED(hr), "Failed to unlock vertex buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, quad, 4, NULL, 0, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawIndexedPrimitiveStrided(device,
+            D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, &strided, 4, NULL, 0, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawIndexedPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 0, 4, NULL, 0, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, quad, 4, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawPrimitiveStrided(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, &strided, 4, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 0, 4, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, quad, 4, indices, 4, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawIndexedPrimitiveStrided(device,
+            D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, &strided, 4, indices, 4, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_DrawIndexedPrimitiveVB(device, D3DPT_TRIANGLESTRIP, vb, 0, 4, indices, 4, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    IDirect3DVertexBuffer7_Release(vb);
+    refcount = IDirect3DDevice7_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -11744,4 +11848,5 @@ START_TEST(ddraw7)
     test_blt();
     test_color_clamping();
     test_getdc();
+    test_draw_primitive();
 }

@@ -10092,6 +10092,67 @@ static void test_getdc(void)
     DestroyWindow(window);
 }
 
+static void test_draw_primitive(void)
+{
+    static WORD indices[] = {0, 1, 2, 3};
+    static D3DVERTEX quad[] =
+    {
+        {{-1.0f}, {-1.0f}, {0.0f}},
+        {{-1.0f}, { 1.0f}, {0.0f}},
+        {{ 1.0f}, {-1.0f}, {0.0f}},
+        {{ 1.0f}, { 1.0f}, {0.0f}},
+    };
+    IDirect3DViewport2 *viewport;
+    IDirect3DDevice2 *device;
+    IDirectDraw2 *ddraw;
+    IDirect3D2 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        IDirectDraw2_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to activate the viewport, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice2_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get D3D interface, hr %#x.\n", hr);
+
+    IDirect3D2_Release(d3d);
+
+    hr = IDirect3DDevice2_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, NULL, 0, NULL, 0, 0);
+    todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, NULL, 0, 0);
+    todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice2_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, NULL, 0, indices, 4, 0);
+    todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice2_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, quad, 4, NULL, 0, 0);
+    todo_wine ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, quad, 4, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_DrawIndexedPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, quad, 4, indices, 4, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    destroy_viewport(device, viewport);
+    refcount = IDirect3DDevice2_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirectDraw2_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw2)
 {
     IDirectDraw2 *ddraw;
@@ -10177,4 +10238,5 @@ START_TEST(ddraw2)
     test_overlay_rect();
     test_blt();
     test_getdc();
+    test_draw_primitive();
 }
