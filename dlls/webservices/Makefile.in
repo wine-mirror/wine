@@ -5,5 +5,6 @@ IMPORTS   = user32
 C_SRCS = \
 	channel.c \
 	main.c \
+	proxy.c \
 	reader.c \
 	writer.c

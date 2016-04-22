@@ -32,7 +32,7 @@
 @ stdcall WsCreateReader(ptr long ptr ptr)
 @ stub WsCreateServiceEndpointFromTemplate
 @ stub WsCreateServiceHost
-@ stub WsCreateServiceProxy
+@ stdcall WsCreateServiceProxy(long long ptr ptr long ptr long ptr ptr)
 @ stub WsCreateServiceProxyFromTemplate
 @ stdcall WsCreateWriter(ptr long ptr ptr)
 @ stdcall WsCreateXmlBuffer(ptr ptr long ptr ptr)
@@ -57,7 +57,7 @@
 @ stdcall WsFreeReader(ptr)
 @ stub WsFreeSecurityToken
 @ stub WsFreeServiceHost
-@ stub WsFreeServiceProxy
+@ stdcall WsFreeServiceProxy(ptr)
 @ stdcall WsFreeWriter(ptr)
 @ stdcall WsGetChannelProperty(ptr long ptr long ptr)
 @ stub WsGetCustomHeader
