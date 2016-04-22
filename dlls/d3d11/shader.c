@@ -1507,3 +1507,145 @@ struct d3d_pixel_shader *unsafe_impl_from_ID3D10PixelShader(ID3D10PixelShader *i
 
     return impl_from_ID3D10PixelShader(iface);
 }
+
+/* ID3D11ClassLinkage methods */
+
+static inline struct d3d11_class_linkage *impl_from_ID3D11ClassLinkage(ID3D11ClassLinkage *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d11_class_linkage, ID3D11ClassLinkage_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_class_linkage_QueryInterface(ID3D11ClassLinkage *iface,
+        REFIID riid, void **object)
+{
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+
+    if (IsEqualGUID(riid, &IID_ID3D11ClassLinkage)
+            || IsEqualGUID(riid, &IID_ID3D11DeviceChild)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        ID3D11ClassLinkage_AddRef(*object = iface);
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *object = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_class_linkage_AddRef(ID3D11ClassLinkage *iface)
+{
+    struct d3d11_class_linkage *class_linkage = impl_from_ID3D11ClassLinkage(iface);
+    ULONG refcount = InterlockedIncrement(&class_linkage->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", class_linkage, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_class_linkage_Release(ID3D11ClassLinkage *iface)
+{
+    struct d3d11_class_linkage *class_linkage = impl_from_ID3D11ClassLinkage(iface);
+    ULONG refcount = InterlockedDecrement(&class_linkage->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", class_linkage, refcount);
+
+    if (!refcount)
+    {
+        wined3d_private_store_cleanup(&class_linkage->private_store);
+        HeapFree(GetProcessHeap(), 0, class_linkage);
+    }
+
+    return refcount;
+}
+
+static void STDMETHODCALLTYPE d3d11_class_linkage_GetDevice(ID3D11ClassLinkage *iface,
+        ID3D11Device **device)
+{
+    FIXME("iface %p, device %p stub!\n", iface, device);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_class_linkage_GetPrivateData(ID3D11ClassLinkage *iface,
+        REFGUID guid, UINT *data_size, void *data)
+{
+    struct d3d11_class_linkage *class_linkage = impl_from_ID3D11ClassLinkage(iface);
+
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return d3d_get_private_data(&class_linkage->private_store, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_class_linkage_SetPrivateData(ID3D11ClassLinkage *iface,
+        REFGUID guid, UINT data_size, const void *data)
+{
+    struct d3d11_class_linkage *class_linkage = impl_from_ID3D11ClassLinkage(iface);
+
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return d3d_set_private_data(&class_linkage->private_store, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_class_linkage_SetPrivateDataInterface(ID3D11ClassLinkage *iface,
+        REFGUID guid, const IUnknown *data)
+{
+    struct d3d11_class_linkage *class_linkage = impl_from_ID3D11ClassLinkage(iface);
+
+    TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
+
+    return d3d_set_private_data_interface(&class_linkage->private_store, guid, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_class_linkage_GetClassInstance(ID3D11ClassLinkage *iface,
+        const char *instance_name, UINT instance_index, ID3D11ClassInstance **class_instance)
+{
+    FIXME("iface %p, instance_name %s, instance_index %u, class_instance %p stub!\n",
+            iface, debugstr_a(instance_name), instance_index, class_instance);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_class_linkage_CreateClassInstance(ID3D11ClassLinkage *iface,
+        const char *type_name, UINT cb_offset, UINT cb_vector_offset, UINT texture_offset,
+        UINT sampler_offset, ID3D11ClassInstance **class_instance)
+{
+    FIXME("iface %p, type_name %s, cb_offset %u, cb_vector_offset %u, texture_offset %u, "
+            "sampler_offset %u, class_instance %p stub!\n",
+            iface, debugstr_a(type_name), cb_offset, cb_vector_offset, texture_offset,
+            sampler_offset, class_instance);
+
+    return E_NOTIMPL;
+}
+
+static const struct ID3D11ClassLinkageVtbl d3d11_class_linkage_vtbl =
+{
+    /* IUnknown methods */
+    d3d11_class_linkage_QueryInterface,
+    d3d11_class_linkage_AddRef,
+    d3d11_class_linkage_Release,
+    /* ID3D11DeviceChild methods */
+    d3d11_class_linkage_GetDevice,
+    d3d11_class_linkage_GetPrivateData,
+    d3d11_class_linkage_SetPrivateData,
+    d3d11_class_linkage_SetPrivateDataInterface,
+    /* ID3D11ClassLinkage methods */
+    d3d11_class_linkage_GetClassInstance,
+    d3d11_class_linkage_CreateClassInstance,
+};
+
+HRESULT d3d11_class_linkage_create(struct d3d_device *device, struct d3d11_class_linkage **class_linkage)
+{
+    struct d3d11_class_linkage *object;
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->ID3D11ClassLinkage_iface.lpVtbl = &d3d11_class_linkage_vtbl;
+    object->refcount = 1;
+    wined3d_private_store_init(&object->private_store);
+
+    TRACE("Created class linkage %p.\n", object);
+    *class_linkage = object;
+
+    return S_OK;
+}

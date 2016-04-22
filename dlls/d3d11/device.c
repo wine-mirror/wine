@@ -2241,9 +2241,18 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateComputeShader(ID3D11Device *
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateClassLinkage(ID3D11Device *iface,
         ID3D11ClassLinkage **class_linkage)
 {
-    FIXME("iface %p, class_linkage %p stub!\n", iface, class_linkage);
+    struct d3d_device *device = impl_from_ID3D11Device(iface);
+    struct d3d11_class_linkage *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, class_linkage %p.\n", iface, class_linkage);
+
+    if (FAILED(hr = d3d11_class_linkage_create(device, &object)))
+        return hr;
+
+    *class_linkage = &object->ID3D11ClassLinkage_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateBlendState(ID3D11Device *iface,
