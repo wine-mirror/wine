@@ -188,7 +188,7 @@ static void test_getname(void)
     ret = data_object->lpVtbl->GetName(data_object, name, &length);
     ok(ret == S_OK, "GetName failed with %#x\n", ret);
     ok(length == 7, "Returned length should be 7 instead of %ld\n", length);
-    ok(!strcmp(name, "Object"), "Returned string should be 'Object' intead of '%s'\n", name);
+    ok(!strcmp(name, "Object"), "Returned string should be 'Object' instead of '%s'\n", name);
     length = 3;
     ret = data_object->lpVtbl->GetName(data_object, name, &length);
     ok(ret== D3DXFERR_BADVALUE, "GetName returned %#x, expected %#x\n", ret, D3DXFERR_BADVALUE);
