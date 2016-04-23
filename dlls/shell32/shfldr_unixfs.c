@@ -668,7 +668,7 @@ static HRESULT UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, LPBC pbc, const WCHA
         szCompletePath[cPathLen-1] = '\0';
 
     if ((szCompletePath[0] != '/') || (pNextPathElement[0] != '/')) {
-        ERR("szCompletePath: %s, pNextPathElment: %s\n", szCompletePath, pNextPathElement);
+        ERR("szCompletePath: %s, pNextPathElement: %s\n", szCompletePath, pNextPathElement);
         return E_FAIL;
     }
     
