@@ -2218,7 +2218,7 @@ static void test_OleInitialize_InitCounting(void)
     IUnknown *pUnk;
     REFCLSID rclsid = &CLSID_InternetZoneManager;
 
-    /* 1. OleInitialize fails but OleUnintialize is still called: apartment stays inited */
+    /* 1. OleInitialize fails but OleUninitialize is still called: apartment stays initialized */
     hr = pCoInitializeEx(NULL, COINIT_MULTITHREADED);
     ok(hr == S_OK, "CoInitializeEx(COINIT_MULTITHREADED) failed with error 0x%08x\n", hr);
 
@@ -2233,7 +2233,7 @@ static void test_OleInitialize_InitCounting(void)
 
     CoUninitialize();
 
-    /* 2. Extra multiple OleUninitialize: apartment stays inited until CoUnitialize */
+    /* 2. Extra multiple OleUninitialize: apartment stays initialized until CoUninitialize */
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "CoInitialize() failed with error 0x%08x\n", hr);
 
