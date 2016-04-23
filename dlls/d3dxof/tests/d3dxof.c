@@ -755,7 +755,7 @@ static void test_getname(void)
     hr = IDirectXFileData_GetName(lpdxfd, name, &length);
     ok(hr == DXFILE_OK, "IDirectXFileData_GetName: %x\n", hr);
     ok(length == 7, "Returned length should be 7 instead of %u\n", length);
-    ok(!strcmp(name, "Object"), "Returned string should be 'Object' intead of '%s'\n", name);
+    ok(!strcmp(name, "Object"), "Returned string should be 'Object' instead of '%s'\n", name);
     length = 3;
     hr = IDirectXFileData_GetName(lpdxfd, name, &length);
     ok(hr == DXFILEERR_BADVALUE, "IDirectXFileData_GetName: %x\n", hr);
