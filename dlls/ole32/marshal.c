@@ -1776,7 +1776,7 @@ HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
         }
     }
 
-    TRACE("Calling IMarshal::MarshalInterace\n");
+    TRACE("Calling IMarshal::MarshalInterface\n");
     /* call helper object to do the actual marshaling */
     hr = IMarshal_MarshalInterface(pMarshal, pStream, riid, pUnk, dwDestContext,
                                    pvDestContext, mshlFlags);
