@@ -3938,7 +3938,7 @@ static int WCMD_handleExpression(WCHAR **expr, int *ret, int depth)
     case ',':
                {
                  int prevresult = -1;
-                 WINE_TRACE("Found expression delimiter - reducing exising stacks\n");
+                 WINE_TRACE("Found expression delimiter - reducing existing stacks\n");
                  while (!rc && opstackhead) {
                    rc = WCMD_reduce(&opstackhead, &varstackhead);
                  }
