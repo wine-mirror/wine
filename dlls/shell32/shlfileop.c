@@ -894,7 +894,6 @@ int WINAPI SHFileOperationA(LPSHFILEOPSTRUCTA lpFileOp)
 	    if (ForFree) continue;
 	    retCode = ERROR_OUTOFMEMORY;
 	    nFileOp.fAnyOperationsAborted = TRUE;
-	    SetLastError(retCode);
 	    return retCode;
 	  }
 	}
@@ -1564,6 +1563,7 @@ int WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
     if (ret == ERROR_CANCELLED)
         lpFileOp->fAnyOperationsAborted = TRUE;
 
+    SetLastError(ERROR_SUCCESS);
     return ret;
 }
 
