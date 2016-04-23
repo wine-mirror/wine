@@ -394,7 +394,7 @@ static void test_MessageOptions(void)
     IMimeMessage_Release(msg);
 }
 
-void test_BindToObject(void)
+static void test_BindToObject(void)
 {
     HRESULT hr;
     IMimeMessage *msg;
