@@ -796,7 +796,7 @@ static HRESULT WINAPI d3drm_texture3_GetClassName(IDirect3DRMTexture3 *iface, DW
 {
     TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
-    if (!size || *size < strlen("Texture") || !name)
+    if (!size || *size < sizeof("Texture") || !name)
         return E_INVALIDARG;
 
     strcpy(name, "Texture");
