@@ -1592,12 +1592,33 @@ LRESULT WINAPI SetPathWordBreakProc(HWND hwnd, BOOL bSet)
  *
  * Draw text with shadow.
  */
-int WINAPI DrawShadowText(HDC hdc, LPCWSTR pszText, UINT cch, RECT *rect, DWORD dwFlags,
-                          COLORREF crText, COLORREF crShadow, int ixOffset, int iyOffset)
+int WINAPI DrawShadowText(HDC hdc, LPCWSTR text, UINT length, RECT *rect, DWORD flags,
+                          COLORREF crText, COLORREF crShadow, int offset_x, int offset_y)
 {
-    FIXME("(%p, %s, %d, %p, %d, 0x%08x, 0x%08x, %d, %d): stub\n", hdc, debugstr_w(pszText), cch, rect, dwFlags,
-                                                                  crText, crShadow, ixOffset, iyOffset);
-    return DrawTextW(hdc, pszText, cch, rect, DT_LEFT);
+    int bkmode, ret;
+    COLORREF clr;
+    RECT r;
+
+    FIXME("(%p, %s, %d, %p, 0x%08x, 0x%08x, 0x%08x, %d, %d): semi-stub\n", hdc, debugstr_w(text),
+        length, rect, flags, crText, crShadow, offset_x, offset_y);
+
+    bkmode = SetBkMode(hdc, TRANSPARENT);
+    clr = SetTextColor(hdc, crShadow);
+
+    /* FIXME: for shadow we need to render normally, blur it, and blend with current background. */
+    r = *rect;
+    OffsetRect(&r, 1, 1);
+    DrawTextW(hdc, text, length, &r, flags);
+
+    SetTextColor(hdc, crText);
+
+    /* with text color on top of a shadow */
+    ret = DrawTextW(hdc, text, length, rect, flags);
+
+    SetTextColor(hdc, clr);
+    SetBkMode(hdc, bkmode);
+
+    return ret;
 }
 
 /***********************************************************************
