@@ -2963,9 +2963,6 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
     return hr;
 }
 
-#define DDENUMSURFACES_SEARCHTYPE (DDENUMSURFACES_CANBECREATED|DDENUMSURFACES_DOESEXIST)
-#define DDENUMSURFACES_MATCHTYPE (DDENUMSURFACES_ALL|DDENUMSURFACES_MATCH|DDENUMSURFACES_NOMATCH)
-
 static BOOL
 Main_DirectDraw_DDPIXELFORMAT_Match(const DDPIXELFORMAT *requested,
                                     const DDPIXELFORMAT *provided)
@@ -3071,9 +3068,6 @@ static BOOL ddraw_match_surface_desc(const DDSURFACEDESC2 *requested, const DDSU
 
     return TRUE;
 }
-
-#undef DDENUMSURFACES_SEARCHTYPE
-#undef DDENUMSURFACES_MATCHTYPE
 
 struct surfacescallback2_context
 {
