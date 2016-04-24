@@ -40,8 +40,6 @@ struct d3drm_texture
     IDirect3DRMTexture IDirect3DRMTexture_iface;
     IDirect3DRMTexture2 IDirect3DRMTexture2_iface;
     IDirect3DRMTexture3 IDirect3DRMTexture3_iface;
-    LONG ref;
-    DWORD app_data;
 };
 
 void d3drm_object_init(struct d3drm_object *object) DECLSPEC_HIDDEN;

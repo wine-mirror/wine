@@ -707,7 +707,7 @@ static HRESULT WINAPI d3drm_texture3_QueryInterface(IDirect3DRMTexture3 *iface, 
 static ULONG WINAPI d3drm_texture3_AddRef(IDirect3DRMTexture3 *iface)
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture3(iface);
-    ULONG refcount = InterlockedIncrement(&texture->ref);
+    ULONG refcount = InterlockedIncrement(&texture->obj.ref);
 
     TRACE("%p increasing refcount to %u.\n", iface, refcount);
 
@@ -717,7 +717,7 @@ static ULONG WINAPI d3drm_texture3_AddRef(IDirect3DRMTexture3 *iface)
 static ULONG WINAPI d3drm_texture3_Release(IDirect3DRMTexture3 *iface)
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture3(iface);
-    ULONG refcount = InterlockedDecrement(&texture->ref);
+    ULONG refcount = InterlockedDecrement(&texture->obj.ref);
 
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
@@ -764,7 +764,7 @@ static HRESULT WINAPI d3drm_texture3_SetAppData(IDirect3DRMTexture3 *iface, DWOR
 
     TRACE("iface %p, data %#x.\n", iface, data);
 
-    texture->app_data = data;
+    texture->obj.appdata = data;
 
     return D3DRM_OK;
 }
@@ -775,7 +775,7 @@ static DWORD WINAPI d3drm_texture3_GetAppData(IDirect3DRMTexture3 *iface)
 
     TRACE("iface %p.\n", iface);
 
-    return texture->app_data;
+    return texture->obj.appdata;
 }
 
 static HRESULT WINAPI d3drm_texture3_SetName(IDirect3DRMTexture3 *iface, const char *name)
@@ -1056,7 +1056,6 @@ HRESULT d3drm_texture_create(struct d3drm_texture **texture)
     object->IDirect3DRMTexture_iface.lpVtbl = &d3drm_texture1_vtbl;
     object->IDirect3DRMTexture2_iface.lpVtbl = &d3drm_texture2_vtbl;
     object->IDirect3DRMTexture3_iface.lpVtbl = &d3drm_texture3_vtbl;
-    object->ref = 1;
 
     d3drm_object_init(&object->obj);
 
