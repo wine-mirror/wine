@@ -2262,8 +2262,8 @@ static void test_write_flush_size(FILE *file, int bufsize)
     fpos_t pos, pos2;
 
     fd = fileno(file);
-    inbuffer = calloc(bufsize + 1, 1);
-    outbuffer = calloc(bufsize + 1, 1);
+    inbuffer = calloc(1, bufsize + 1);
+    outbuffer = calloc(1, bufsize + 1);
     _snprintf(outbuffer, bufsize + 1, "0,1,2,3,4,5,6,7,8,9");
 
     for (size = bufsize + 1; size >= bufsize - 1; size--) {

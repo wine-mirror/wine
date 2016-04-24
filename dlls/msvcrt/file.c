@@ -512,7 +512,7 @@ unsigned msvcrt_create_io_inherit_block(WORD *size, BYTE **block)
   last_fd++;
 
   *size = sizeof(unsigned) + (sizeof(char) + sizeof(HANDLE)) * last_fd;
-  *block = MSVCRT_calloc(*size, 1);
+  *block = MSVCRT_calloc(1, *size);
   if (!*block)
   {
     *size = 0;
@@ -660,7 +660,7 @@ static BOOL msvcrt_alloc_buffer(MSVCRT_FILE* file)
             && MSVCRT__isatty(file->_file))
         return FALSE;
 
-    file->_base = MSVCRT_calloc(MSVCRT_INTERNAL_BUFSIZ,1);
+    file->_base = MSVCRT_calloc(1, MSVCRT_INTERNAL_BUFSIZ);
     if(file->_base) {
         file->_bufsiz = MSVCRT_INTERNAL_BUFSIZ;
         file->_flag |= MSVCRT__IOMYBUF;

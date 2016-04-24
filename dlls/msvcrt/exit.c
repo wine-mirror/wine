@@ -273,7 +273,7 @@ MSVCRT__onexit_t CDECL MSVCRT__onexit(MSVCRT__onexit_t func)
   {
     MSVCRT__onexit_t *newtable;
     TRACE("expanding table\n");
-    newtable = MSVCRT_calloc(sizeof(void *),MSVCRT_atexit_table_size + 32);
+    newtable = MSVCRT_calloc(MSVCRT_atexit_table_size + 32, sizeof(void *));
     if (!newtable)
     {
       TRACE("failed!\n");
