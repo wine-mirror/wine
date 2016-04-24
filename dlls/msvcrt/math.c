@@ -665,36 +665,16 @@ int CDECL MSVCRT__fpclass(double num)
 #if defined(HAVE_FPCLASS) || defined(fpclass)
   switch (fpclass( num ))
   {
-#ifdef FP_SNAN
   case FP_SNAN:  return MSVCRT__FPCLASS_SNAN;
-#endif
-#ifdef FP_QNAN
   case FP_QNAN:  return MSVCRT__FPCLASS_QNAN;
-#endif
-#ifdef FP_NINF
   case FP_NINF:  return MSVCRT__FPCLASS_NINF;
-#endif
-#ifdef FP_PINF
   case FP_PINF:  return MSVCRT__FPCLASS_PINF;
-#endif
-#ifdef FP_NDENORM
   case FP_NDENORM: return MSVCRT__FPCLASS_ND;
-#endif
-#ifdef FP_PDENORM
   case FP_PDENORM: return MSVCRT__FPCLASS_PD;
-#endif
-#ifdef FP_NZERO
   case FP_NZERO: return MSVCRT__FPCLASS_NZ;
-#endif
-#ifdef FP_PZERO
   case FP_PZERO: return MSVCRT__FPCLASS_PZ;
-#endif
-#ifdef FP_NNORM
   case FP_NNORM: return MSVCRT__FPCLASS_NN;
-#endif
-#ifdef FP_PNORM
   case FP_PNORM: return MSVCRT__FPCLASS_PN;
-#endif
   default: return MSVCRT__FPCLASS_PN;
   }
 #elif defined (fpclassify)
