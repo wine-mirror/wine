@@ -2570,6 +2570,7 @@ void surface_modify_ds_location(struct wined3d_surface *surface,
 /* Context activation is done by the caller. */
 static void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_context *context, DWORD location)
 {
+    unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     struct wined3d_texture *texture = surface->container;
     struct wined3d_device *device = texture->resource.device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -2580,7 +2581,7 @@ static void surface_load_ds_location(struct wined3d_surface *surface, struct win
     /* TODO: Make this work for modes other than FBO */
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO) return;
 
-    if (!(surface_get_sub_resource(surface)->locations & location))
+    if (!(texture->sub_resources[sub_resource_idx].locations & location))
     {
         w = surface->ds_current_size.cx;
         h = surface->ds_current_size.cy;
@@ -2599,7 +2600,7 @@ static void surface_load_ds_location(struct wined3d_surface *surface, struct win
         return;
     }
 
-    wined3d_surface_prepare(surface, context, location);
+    wined3d_texture_prepare_location(texture, sub_resource_idx, context, location);
 
     if (location == WINED3D_LOCATION_TEXTURE_RGB)
     {
