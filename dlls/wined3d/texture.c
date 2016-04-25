@@ -370,6 +370,7 @@ static void wined3d_texture_unload_gl_texture(struct wined3d_texture *texture)
         TRACE("Deleting multisample renderbuffer %u.\n", texture->rb_multisample);
         context_gl_resource_released(device, texture->rb_multisample, TRUE);
         gl_info->fbo_ops.glDeleteRenderbuffers(1, &texture->rb_multisample);
+        texture->rb_multisample = 0;
     }
 
     if (texture->rb_resolved)
@@ -377,6 +378,7 @@ static void wined3d_texture_unload_gl_texture(struct wined3d_texture *texture)
         TRACE("Deleting resolved renderbuffer %u.\n", texture->rb_resolved);
         context_gl_resource_released(device, texture->rb_resolved, TRUE);
         gl_info->fbo_ops.glDeleteRenderbuffers(1, &texture->rb_resolved);
+        texture->rb_resolved = 0;
     }
 
     if (context) context_release(context);
