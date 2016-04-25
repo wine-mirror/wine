@@ -37,18 +37,32 @@ static ULONG get_refcount(IUnknown *iface)
     return IUnknown_Release(iface);
 }
 
-static ID3D10Device1 *create_device(D3D10_FEATURE_LEVEL1 feature_level)
+struct device_desc
 {
-    ID3D10Device1 *device;
+    D3D10_FEATURE_LEVEL1 feature_level;
+    UINT flags;
+};
 
-    if (SUCCEEDED(D3D10CreateDevice1(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, feature_level, D3D10_1_SDK_VERSION,
-            &device)))
+static ID3D10Device1 *create_device(const struct device_desc *desc)
+{
+    D3D10_FEATURE_LEVEL1 feature_level = D3D10_FEATURE_LEVEL_10_1;
+    ID3D10Device1 *device;
+    UINT flags = 0;
+
+    if (desc)
+    {
+        feature_level = desc->feature_level;
+        flags = desc->flags;
+    }
+
+    if (SUCCEEDED(D3D10CreateDevice1(NULL, D3D10_DRIVER_TYPE_HARDWARE,
+            NULL, flags, feature_level, D3D10_1_SDK_VERSION, &device)))
         return device;
-    if (SUCCEEDED(D3D10CreateDevice1(NULL, D3D10_DRIVER_TYPE_WARP, NULL, 0, feature_level, D3D10_1_SDK_VERSION,
-            &device)))
+    if (SUCCEEDED(D3D10CreateDevice1(NULL, D3D10_DRIVER_TYPE_WARP,
+            NULL, flags, feature_level, D3D10_1_SDK_VERSION, &device)))
         return device;
-    if (SUCCEEDED(D3D10CreateDevice1(NULL, D3D10_DRIVER_TYPE_REFERENCE, NULL, 0, feature_level, D3D10_1_SDK_VERSION,
-            &device)))
+    if (SUCCEEDED(D3D10CreateDevice1(NULL, D3D10_DRIVER_TYPE_REFERENCE,
+            NULL, flags, feature_level, D3D10_1_SDK_VERSION, &device)))
         return device;
 
     return NULL;
@@ -240,7 +254,12 @@ static void test_device_interfaces(void)
 
     for (i = 0; i < sizeof(d3d10_feature_levels) / sizeof(*d3d10_feature_levels); ++i)
     {
-        if (!(device = create_device(d3d10_feature_levels[i])))
+        struct device_desc device_desc;
+
+        device_desc.feature_level = d3d10_feature_levels[i];
+        device_desc.flags = 0;
+
+        if (!(device = create_device(&device_desc)))
         {
             skip("Failed to create device for feature level %#x.\n", d3d10_feature_levels[i]);
             continue;
@@ -306,7 +325,7 @@ static void test_create_shader_resource_view(void)
     IUnknown *iface;
     HRESULT hr;
 
-    if (!(device = create_device(D3D10_FEATURE_LEVEL_10_1)))
+    if (!(device = create_device(NULL)))
     {
         skip("Failed to create device.\n");
         return;
@@ -494,7 +513,7 @@ static void test_create_blend_state(void)
     IUnknown *iface;
     HRESULT hr;
 
-    if (!(device = create_device(D3D10_FEATURE_LEVEL_10_1)))
+    if (!(device = create_device(NULL)))
     {
         skip("Failed to create device.\n");
         return;
@@ -624,10 +643,86 @@ static void test_create_blend_state(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_getdc(void)
+{
+    struct device_desc device_desc;
+    D3D10_TEXTURE2D_DESC desc;
+    ID3D10Texture2D *texture;
+    IDXGISurface1 *surface1;
+    ID3D10Device1 *device;
+    ULONG refcount;
+    HRESULT hr;
+    HDC dc;
+
+    device_desc.feature_level = D3D10_FEATURE_LEVEL_10_1;
+    device_desc.flags = D3D10_CREATE_DEVICE_BGRA_SUPPORT;
+    if (!(device = create_device(&device_desc)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    /* Without D3D10_RESOURCE_MISC_GDI_COMPATIBLE. */
+    desc.Width = 512;
+    desc.Height = 512;
+    desc.MipLevels = 1;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Usage = D3D10_USAGE_DEFAULT;
+    desc.BindFlags = D3D10_BIND_RENDER_TARGET;
+    desc.CPUAccessFlags = 0;
+    desc.MiscFlags = 0;
+    hr = ID3D10Device1_CreateTexture2D(device, &desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    hr = ID3D10Texture2D_QueryInterface(texture, &IID_IDXGISurface1, (void**)&surface1);
+    ok(SUCCEEDED(hr), "Failed to get IDXGISurface1 interface, hr %#x.\n", hr);
+
+    hr = IDXGISurface1_GetDC(surface1, FALSE, &dc);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    IDXGISurface1_Release(surface1);
+    ID3D10Texture2D_Release(texture);
+
+    desc.MiscFlags = D3D10_RESOURCE_MISC_GDI_COMPATIBLE;
+    hr = ID3D10Device1_CreateTexture2D(device, &desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    hr = ID3D10Texture2D_QueryInterface(texture, &IID_IDXGISurface1, (void**)&surface1);
+    ok(SUCCEEDED(hr), "Failed to get IDXGISurface1 interface, hr %#x.\n", hr);
+
+    hr = IDXGISurface1_ReleaseDC(surface1, NULL);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDXGISurface1_GetDC(surface1, FALSE, &dc);
+    todo_wine ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
+
+    /* One more time. */
+    dc = (HDC)0xdeadbeef;
+    hr = IDXGISurface1_GetDC(surface1, FALSE, &dc);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(dc == (HDC)0xdeadbeef, "Got unexpected dc %p.\n", dc);
+
+    hr = IDXGISurface1_ReleaseDC(surface1, NULL);
+    todo_wine ok(SUCCEEDED(hr), "Failed to release DC, hr %#x.\n", hr);
+
+    hr = IDXGISurface1_ReleaseDC(surface1, NULL);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    IDXGISurface1_Release(surface1);
+    ID3D10Texture2D_Release(texture);
+
+    refcount = ID3D10Device1_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(d3d10_1)
 {
     test_create_device();
     test_device_interfaces();
     test_create_shader_resource_view();
     test_create_blend_state();
+    test_getdc();
 }
