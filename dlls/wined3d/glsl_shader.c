@@ -551,7 +551,7 @@ static void shader_glsl_load_samplers(const struct wined3d_gl_info *gl_info,
 }
 
 /* Context activation is done by the caller. */
-static inline void walk_constant_heap(const struct wined3d_gl_info *gl_info, const float *constants,
+static inline void walk_constant_heap(const struct wined3d_gl_info *gl_info, const struct wined3d_vec4 *constants,
         const GLint *constant_locations, const struct constant_heap *heap, unsigned char *stack, DWORD version)
 {
     unsigned int start = ~0U, end = 0;
@@ -620,7 +620,7 @@ static inline void walk_constant_heap(const struct wined3d_gl_info *gl_info, con
         }
     }
     if (start <= end)
-        GL_EXTCALL(glUniform4fv(constant_locations[start], end - start + 1, &constants[start * 4]));
+        GL_EXTCALL(glUniform4fv(constant_locations[start], end - start + 1, &constants[start].x));
     checkGLcall("walk_constant_heap()");
 }
 
@@ -712,7 +712,8 @@ static void shader_glsl_load_constantsF(const struct wined3d_shader *shader, con
         walk_constant_heap_clamped(gl_info, (const struct wined3d_vec4 *)constants,
                 constant_locations, heap, stack, version);
     else
-        walk_constant_heap(gl_info, constants, constant_locations, heap, stack, version);
+        walk_constant_heap(gl_info, (const struct wined3d_vec4 *)constants,
+                constant_locations, heap, stack, version);
 
     if (!shader->load_local_constsF)
     {
