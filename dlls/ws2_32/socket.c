@@ -6471,6 +6471,9 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
 
         else if (IS_IPX_PROTO(punixhints->ai_protocol) && punixhints->ai_socktype != SOCK_DGRAM)
             punixhints->ai_socktype = 0;
+
+        else if (punixhints->ai_protocol == IPPROTO_IPV6)
+            punixhints->ai_protocol = 0;
     }
 
     /* getaddrinfo(3) is thread safe, no need to wrap in CS */
