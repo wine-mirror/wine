@@ -114,6 +114,8 @@ static void test_handles(void)
     DWORD id, flags, le;
     ATOM atom;
     char buffer[20];
+    DWORD size;
+    BOOL ret;
 
     /* win stations */
 
@@ -214,6 +216,12 @@ static void test_handles(void)
     SetLastError( 0xdeadbeef );
     w2 = CreateWindowStationA( "", 0, WINSTA_ALL_ACCESS, NULL );
     ok( w2 != 0, "create station failed err %u\n", GetLastError() );
+
+    memset( buffer, 0, sizeof(buffer) );
+    ret = GetUserObjectInformationA( w2, UOI_NAME, buffer, sizeof(buffer), &size );
+    ok( ret, "GetUserObjectInformationA failed with error %u\n", GetLastError() );
+    todo_wine ok( !memcmp(buffer, "Service-0x0-", 12), "unexpected window station name '%s'\n", buffer );
+    todo_wine ok( buffer[strlen(buffer) - 1] == '$', "unexpected window station name '%s'\n", buffer );
 
     SetLastError( 0xdeadbeef );
     w3 = OpenWindowStationA( "", TRUE, WINSTA_ALL_ACCESS );
