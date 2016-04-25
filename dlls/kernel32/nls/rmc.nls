@@ -29,7 +29,7 @@
   does and not the "." used by Windows Vista and the Swiss German language.
 */
 
-#pragma code_page(1252)
+#pragma code_page(65001) /* UTF-8 */
 
 STRINGTABLE LANGUAGE LANG_ROMANSH, SUBLANG_ROMANSH_SWITZERLAND
 {
