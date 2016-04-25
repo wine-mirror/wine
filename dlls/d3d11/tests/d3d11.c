@@ -118,12 +118,14 @@ struct texture_readback
     ID3D11Resource *texture;
     D3D11_MAPPED_SUBRESOURCE map_desc;
     ID3D11DeviceContext *immediate_context;
-    unsigned int width, height;
+    unsigned int width, height, sub_resource_idx;
 };
 
-static void get_texture_readback(ID3D11Texture2D *texture, struct texture_readback *rb)
+static void get_texture_readback(ID3D11Texture2D *texture, unsigned int sub_resource_idx,
+        struct texture_readback *rb)
 {
     D3D11_TEXTURE2D_DESC texture_desc;
+    unsigned int miplevel;
     ID3D11Device *device;
     HRESULT hr;
 
@@ -143,15 +145,18 @@ static void get_texture_readback(ID3D11Texture2D *texture, struct texture_readba
         return;
     }
 
-    rb->width = texture_desc.Width;
-    rb->height = texture_desc.Height;
+    miplevel = sub_resource_idx % texture_desc.MipLevels;
+    rb->width = max(1, texture_desc.Width >> miplevel);
+    rb->height = max(1, texture_desc.Height >> miplevel);
+    rb->sub_resource_idx = sub_resource_idx;
 
     ID3D11Device_GetImmediateContext(device, &rb->immediate_context);
 
     ID3D11DeviceContext_CopyResource(rb->immediate_context, rb->texture, (ID3D11Resource *)texture);
-    if (FAILED(hr = ID3D11DeviceContext_Map(rb->immediate_context, rb->texture, 0, D3D11_MAP_READ, 0, &rb->map_desc)))
+    if (FAILED(hr = ID3D11DeviceContext_Map(rb->immediate_context, rb->texture, sub_resource_idx,
+            D3D11_MAP_READ, 0, &rb->map_desc)))
     {
-        trace("Failed to map texture, hr %#x.\n", hr);
+        trace("Failed to map sub-resource %u, hr %#x.\n", sub_resource_idx, hr);
         ID3D11Resource_Release(rb->texture);
         rb->texture = NULL;
         ID3D11DeviceContext_Release(rb->immediate_context);
@@ -173,7 +178,7 @@ static float get_readback_float(struct texture_readback *rb, unsigned int x, uns
 
 static void release_texture_readback(struct texture_readback *rb)
 {
-    ID3D11DeviceContext_Unmap(rb->immediate_context, rb->texture, 0);
+    ID3D11DeviceContext_Unmap(rb->immediate_context, rb->texture, rb->sub_resource_idx);
     ID3D11Resource_Release(rb->texture);
     ID3D11DeviceContext_Release(rb->immediate_context);
 }
@@ -183,23 +188,23 @@ static DWORD get_texture_color(ID3D11Texture2D *texture, unsigned int x, unsigne
     struct texture_readback rb;
     DWORD color;
 
-    get_texture_readback(texture, &rb);
+    get_texture_readback(texture, 0, &rb);
     color = get_readback_color(&rb, x, y);
     release_texture_readback(&rb);
 
     return color;
 }
 
-#define check_texture_color(t, c, d) check_texture_color_(__LINE__, t, c, d)
-static void check_texture_color_(unsigned int line, ID3D11Texture2D *texture,
-        DWORD expected_color, BYTE max_diff)
+#define check_texture_sub_resource_color(t, s, c, d) check_texture_sub_resource_color_(__LINE__, t, s, c, d)
+static void check_texture_sub_resource_color_(unsigned int line, ID3D11Texture2D *texture,
+        unsigned int sub_resource_idx, DWORD expected_color, BYTE max_diff)
 {
     struct texture_readback rb;
     unsigned int x = 0, y = 0;
     BOOL all_match = TRUE;
     DWORD color = 0;
 
-    get_texture_readback(texture, &rb);
+    get_texture_readback(texture, sub_resource_idx, &rb);
     for (y = 0; y < rb.height; ++y)
     {
         for (x = 0; x < rb.width; ++x)
@@ -216,19 +221,33 @@ static void check_texture_color_(unsigned int line, ID3D11Texture2D *texture,
     }
     release_texture_readback(&rb);
     ok_(__FILE__, line)(all_match,
-            "Got unexpected color 0x%08x at (%u, %u).\n", color, x, y);
+            "Got unexpected color 0x%08x at (%u, %u), sub-resource %u.\n",
+            color, x, y, sub_resource_idx);
 }
 
-#define check_texture_float(r, f, d) check_texture_float_(__LINE__, r, f, d)
-static void check_texture_float_(unsigned int line, ID3D11Texture2D *texture,
-        float expected_value, BYTE max_diff)
+#define check_texture_color(t, c, d) check_texture_color_(__LINE__, t, c, d)
+static void check_texture_color_(unsigned int line, ID3D11Texture2D *texture,
+        DWORD expected_color, BYTE max_diff)
+{
+    unsigned int sub_resource_idx, sub_resource_count;
+    D3D11_TEXTURE2D_DESC texture_desc;
+
+    ID3D11Texture2D_GetDesc(texture, &texture_desc);
+    sub_resource_count = texture_desc.ArraySize * texture_desc.MipLevels;
+    for (sub_resource_idx = 0; sub_resource_idx < sub_resource_count; ++sub_resource_idx)
+        check_texture_sub_resource_color_(line, texture, sub_resource_idx, expected_color, max_diff);
+}
+
+#define check_texture_sub_resource_float(t, s, c, d) check_texture_sub_resource_flot_(__LINE__, t, s, c, d)
+static void check_texture_sub_resource_float_(unsigned int line, ID3D11Texture2D *texture,
+        unsigned int sub_resource_idx, float expected_value, BYTE max_diff)
 {
     struct texture_readback rb;
     unsigned int x = 0, y = 0;
     BOOL all_match = TRUE;
     float value = 0.0f;
 
-    get_texture_readback(texture, &rb);
+    get_texture_readback(texture, sub_resource_idx, &rb);
     for (y = 0; y < rb.height; ++y)
     {
         for (x = 0; x < rb.width; ++x)
@@ -245,7 +264,21 @@ static void check_texture_float_(unsigned int line, ID3D11Texture2D *texture,
     }
     release_texture_readback(&rb);
     ok_(__FILE__, line)(all_match,
-            "Got unexpected value %.8e at (%u, %u).\n", value, x, y);
+            "Got unexpected value %.8e at (%u, %u), sub-resource %u.\n",
+            value, x, y, sub_resource_idx);
+}
+
+#define check_texture_float(r, f, d) check_texture_float_(__LINE__, r, f, d)
+static void check_texture_float_(unsigned int line, ID3D11Texture2D *texture,
+        float expected_value, BYTE max_diff)
+{
+    unsigned int sub_resource_idx, sub_resource_count;
+    D3D11_TEXTURE2D_DESC texture_desc;
+
+    ID3D11Texture2D_GetDesc(texture, &texture_desc);
+    sub_resource_count = texture_desc.ArraySize * texture_desc.MipLevels;
+    for (sub_resource_idx = 0; sub_resource_idx < sub_resource_count; ++sub_resource_idx)
+        check_texture_sub_resource_float_(line, texture, sub_resource_idx, expected_value, max_diff);
 }
 
 static ID3D11Device *create_device(const struct device_desc *desc)
@@ -4271,7 +4304,7 @@ static void test_texture(void)
 
         draw_quad(&test_context);
 
-        get_texture_readback(test_context.backbuffer, &rb);
+        get_texture_readback(test_context.backbuffer, 0, &rb);
         for (y = 0; y < 4; ++y)
         {
             for (x = 0; x < 4; ++x)
@@ -5042,7 +5075,7 @@ static void test_update_subresource(void)
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)texture, 0, &box,
             bitmap_data, 4 * sizeof(*bitmap_data), 0);
     draw_quad(&test_context);
-    get_texture_readback(test_context.backbuffer, &rb);
+    get_texture_readback(test_context.backbuffer, 0, &rb);
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
@@ -5058,7 +5091,7 @@ static void test_update_subresource(void)
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)texture, 0, NULL,
             bitmap_data, 4 * sizeof(*bitmap_data), 0);
     draw_quad(&test_context);
-    get_texture_readback(test_context.backbuffer, &rb);
+    get_texture_readback(test_context.backbuffer, 0, &rb);
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
@@ -5244,7 +5277,7 @@ static void test_copy_subresource_region(void)
     ID3D11DeviceContext_CopySubresourceRegion(context, (ID3D11Resource *)dst_texture, 0,
             0, 0, 0, (ID3D11Resource *)src_texture, 0, &box);
     draw_quad(&test_context);
-    get_texture_readback(test_context.backbuffer, &rb);
+    get_texture_readback(test_context.backbuffer, 0, &rb);
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
@@ -5260,7 +5293,7 @@ static void test_copy_subresource_region(void)
     ID3D11DeviceContext_CopySubresourceRegion(context, (ID3D11Resource *)dst_texture, 0,
             0, 0, 0, (ID3D11Resource *)src_texture, 0, NULL);
     draw_quad(&test_context);
-    get_texture_readback(test_context.backbuffer, &rb);
+    get_texture_readback(test_context.backbuffer, 0, &rb);
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
@@ -5343,7 +5376,7 @@ static void test_copy_subresource_region(void)
     ID3D11DeviceContext_CopySubresourceRegion(context, (ID3D11Resource *)dst_buffer, 0,
             0, 0, 0, (ID3D11Resource *)src_buffer, 0, &box);
     draw_quad(&test_context);
-    get_texture_readback(test_context.backbuffer, &rb);
+    get_texture_readback(test_context.backbuffer, 0, &rb);
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
@@ -6271,7 +6304,7 @@ static void test_draw_depth_only(void)
             draw_quad(&test_context);
         }
     }
-    get_texture_readback(texture, &rb);
+    get_texture_readback(texture, 0, &rb);
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
