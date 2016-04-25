@@ -867,7 +867,10 @@ done:
 static HRESULT WINAPI dwritetextanalyzer_AnalyzeNumberSubstitution(IDWriteTextAnalyzer2 *iface,
     IDWriteTextAnalysisSource* source, UINT32 position, UINT32 length, IDWriteTextAnalysisSink* sink)
 {
-    FIXME("(%p %u %u %p): stub\n", source, position, length, sink);
+    static int once;
+
+    if (!once++)
+        FIXME("(%p %u %u %p): stub\n", source, position, length, sink);
     return S_OK;
 }
 
