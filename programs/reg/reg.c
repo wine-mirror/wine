@@ -655,6 +655,49 @@ static WCHAR *build_subkey_path(WCHAR *path, DWORD path_len, WCHAR *subkey_name,
     return subkey_path;
 }
 
+static int query_value(HKEY key, WCHAR *value_name, WCHAR *path)
+{
+    LONG rc;
+    DWORD max_data_bytes, data_size;
+    DWORD type;
+    BYTE *data;
+    WCHAR fmt[] = {'%','1','\n',0};
+    WCHAR newlineW[] = {'\n',0};
+
+    rc = RegQueryInfoKeyW(key, NULL, NULL, NULL, NULL, NULL,
+                          NULL, NULL, NULL, &max_data_bytes, NULL, NULL);
+    if (rc)
+    {
+        ERR("RegQueryInfoKey failed: %d\n", rc);
+        return 1;
+    }
+
+    data = HeapAlloc(GetProcessHeap(), 0, max_data_bytes);
+    if (!data)
+    {
+        ERR("Failed to allocate memory for data\n");
+        return 1;
+    }
+
+    data_size = max_data_bytes;
+    rc = RegQueryValueExW(key, value_name, NULL, &type, data, &data_size);
+    if (rc == ERROR_SUCCESS)
+    {
+        output_string(fmt, path);
+        output_value(value_name, type, data, data_size);
+        output_string(newlineW);
+    }
+
+    HeapFree(GetProcessHeap(), 0, data);
+
+    if (rc == ERROR_FILE_NOT_FOUND)
+    {
+        output_message(STRING_CANNOT_FIND);
+        return 1;
+    }
+    return 0;
+}
+
 static int query_all(HKEY key, WCHAR *path, BOOL recurse)
 {
     LONG rc;
@@ -783,11 +826,16 @@ static int reg_query(WCHAR *key_name, WCHAR *value_name, BOOL value_empty, BOOL 
 
     if (value_name || value_empty)
     {
-        output_string(stubW, key_name, value_name, value_empty, recurse);
-        return 1;
+        if (recurse)
+        {
+            RegCloseKey(key);
+            output_string(stubW, key_name, value_name, value_empty, recurse);
+            return 1;
+        }
+        ret = query_value(key, value_name, key_name);
     }
-
-    ret = query_all(key, key_name, recurse);
+    else
+        ret = query_all(key, key_name, recurse);
 
     RegCloseKey(key);
 
