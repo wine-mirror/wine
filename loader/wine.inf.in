@@ -2584,6 +2584,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 16422,Internet Explorer,iexplore.exe
 16422,Windows Media Player,wmplayer.exe
 16422,Windows NT\Accessories,wordpad.exe
+16427,Microsoft Shared\TextConv,
 16427,System\OLE DB,oledb32.dll
 16427,System\OLE DB,msdaps.dll
 11,,*
