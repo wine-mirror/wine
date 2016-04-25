@@ -1694,40 +1694,167 @@ static void test_Material2(void)
 static void test_Texture(void)
 {
     HRESULT hr;
-    IDirect3DRM *d3drm;
-    IDirect3DRMTexture *texture;
+    IDirect3DRM *d3drm1;
+    IDirect3DRM2 *d3drm2;
+    IDirect3DRM3 *d3drm3;
+    IDirect3DRMTexture *texture1;
+    IDirect3DRMTexture2 *texture2;
+    IDirect3DRMTexture3 *texture3;
     D3DRMIMAGE initimg = {
         2, 2, 1, 1, 32,
         TRUE, 2 * sizeof(DWORD), NULL, NULL,
         0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000, 0, NULL
-    };
+    }, *d3drm_img = NULL;
     DWORD pixel[4] = { 20000, 30000, 10000, 0 };
     DWORD size;
     CHAR cname[64] = {0};
+    ULONG ref1, ref2, ref3, ref4;
 
-    hr = Direct3DRMCreate(&d3drm);
-    ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
+    hr = Direct3DRMCreate(&d3drm1);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
+    ref1 = get_refcount((IUnknown *)d3drm1);
+
+    hr = IDirect3DRM_QueryInterface(d3drm1, &IID_IDirect3DRM2, (void **)&d3drm2);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRM2 interface (hr = %x).\n", hr);
+
+    hr = IDirect3DRM_QueryInterface(d3drm1, &IID_IDirect3DRM3, (void **)&d3drm3);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRM3 interface (hr = %x).\n", hr);
 
     initimg.buffer1 = &pixel;
-    hr = IDirect3DRM_CreateTexture(d3drm, &initimg, &texture);
-    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMTexture interface (hr = %x)\n", hr);
+    hr = IDirect3DRM_CreateTexture(d3drm1, &initimg, &texture1);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMTexture interface (hr = %x)\n", hr);
+    ref2 = get_refcount((IUnknown *)d3drm1);
+    todo_wine ok(ref2 > ref1, "expected ref2 > ref1, got ref1 = %u , ref2 = %u.\n", ref1, ref2);
+    ref3 = get_refcount((IUnknown *)d3drm2);
+    ok(ref3 == ref1, "expected ref3 == ref1, got ref1 = %u , ref3 = %u.\n", ref1, ref3);
+    ref4 = get_refcount((IUnknown *)d3drm3);
+    ok(ref4 == ref1, "expected ref4 == ref1, got ref1 = %u , ref4 = %u.\n", ref1, ref4);
+    hr = IDirect3DRM2_CreateTexture(d3drm2, &initimg, &texture2);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMTexture2 interface (hr = %x)\n", hr);
+    ref2 = get_refcount((IUnknown *)d3drm1);
+    todo_wine ok(ref2 > ref1 + 1, "expected ref2 > ref1, got ref1 = %u , ref2 = %u.\n", ref1, ref2);
+    ref3 = get_refcount((IUnknown *)d3drm2);
+    ok(ref3 == ref1, "expected ref3 == ref1, got ref1 = %u , ref3 = %u.\n", ref1, ref3);
+    ref4 = get_refcount((IUnknown *)d3drm3);
+    ok(ref4 == ref1, "expected ref4 == ref1, got ref1 = %u , ref4 = %u.\n", ref1, ref4);
+    hr = IDirect3DRM3_CreateTexture(d3drm3, &initimg, &texture3);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMTexture3 interface (hr = %x)\n", hr);
+    ref2 = get_refcount((IUnknown *)d3drm1);
+    todo_wine ok(ref2 > ref1 + 2, "expected ref2 > ref1, got ref1 = %u , ref2 = %u.\n", ref1, ref2);
+    ref3 = get_refcount((IUnknown *)d3drm2);
+    ok(ref3 == ref1, "expected ref3 == ref1, got ref1 = %u , ref3 = %u.\n", ref1, ref3);
+    ref4 = get_refcount((IUnknown *)d3drm3);
+    ok(ref4 == ref1, "expected ref4 == ref1, got ref1 = %u , ref4 = %u.\n", ref1, ref4);
 
-    hr = IDirect3DRMTexture_GetClassName(texture, NULL, cname);
+    /* Test all failures together */
+    hr = IDirect3DRMTexture_GetClassName(texture1, NULL, cname);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMTexture_GetClassName(texture, NULL, NULL);
+    hr = IDirect3DRMTexture_GetClassName(texture1, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    hr = IDirect3DRMTexture2_GetClassName(texture2, NULL, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    hr = IDirect3DRMTexture2_GetClassName(texture2, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    hr = IDirect3DRMTexture3_GetClassName(texture3, NULL, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    hr = IDirect3DRMTexture3_GetClassName(texture3, NULL, NULL);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
     size = 1;
-    hr = IDirect3DRMTexture_GetClassName(texture, &size, cname);
+    hr = IDirect3DRMTexture_GetClassName(texture1, &size, cname);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    hr = IDirect3DRMTexture2_GetClassName(texture2, &size, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    hr = IDirect3DRMTexture3_GetClassName(texture3, &size, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    size = sizeof("Texture") - 1;
+    strcpy(cname, "test");
+    hr = IDirect3DRMTexture_GetClassName(texture1, &size, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    ok(size == sizeof("Texture") - 1, "wrong size: %u\n", size);
+    ok(!strcmp(cname, "test"), "Expected cname to be \"test\", but got \"%s\"\n", cname);
+    hr = IDirect3DRMTexture2_GetClassName(texture2, &size, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    ok(size == sizeof("Texture") - 1, "wrong size: %u\n", size);
+    ok(!strcmp(cname, "test"), "Expected cname to be \"test\", but got \"%s\"\n", cname);
+    hr = IDirect3DRMTexture3_GetClassName(texture3, &size, cname);
+    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
+    ok(size == sizeof("Texture") - 1, "wrong size: %u\n", size);
+    ok(!strcmp(cname, "test"), "Expected cname to be \"test\", but got \"%s\"\n", cname);
+
+    d3drm_img = IDirect3DRMTexture_GetImage(texture1);
+    todo_wine ok(!!d3drm_img, "Failed to get image.\n");
+    todo_wine ok(d3drm_img == &initimg, "Expected image returned == %p, got %p.\n", &initimg, d3drm_img);
+
     size = sizeof(cname);
-    hr = IDirect3DRMTexture_GetClassName(texture, &size, cname);
-    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
+    hr = IDirect3DRMTexture_GetClassName(texture1, &size, cname);
+    ok(SUCCEEDED(hr), "Cannot get classname (hr = %x)\n", hr);
+    ok(size == sizeof("Texture"), "wrong size: %u\n", size);
+    ok(!strcmp(cname, "Texture"), "Expected cname to be \"Texture\", but got \"%s\"\n", cname);
+    size = sizeof("Texture");
+    hr = IDirect3DRMTexture_GetClassName(texture1, &size, cname);
+    ok(SUCCEEDED(hr), "Cannot get classname (hr = %x)\n", hr);
     ok(size == sizeof("Texture"), "wrong size: %u\n", size);
     ok(!strcmp(cname, "Texture"), "Expected cname to be \"Texture\", but got \"%s\"\n", cname);
 
-    IDirect3DRMTexture_Release(texture);
+    IDirect3DRMTexture_Release(texture1);
+    ref2 = get_refcount((IUnknown *)d3drm1);
+    todo_wine ok(ref2 - 2 == ref1, "expected ref2 == ref1, got ref1 = %u, ref2 = %u.\n", ref1, ref2);
+    ref3 = get_refcount((IUnknown *)d3drm2);
+    ok(ref3 == ref1, "expected ref3 == ref1, got ref1 = %u, ref3 = %u.\n", ref1, ref3);
+    ref4 = get_refcount((IUnknown *)d3drm3);
+    ok(ref4 == ref1, "expected ref4 == ref1, got ref1 = %u, ref4 = %u.\n", ref1, ref4);
 
-    IDirect3DRM_Release(d3drm);
+    d3drm_img = NULL;
+    d3drm_img = IDirect3DRMTexture2_GetImage(texture2);
+    todo_wine ok(!!d3drm_img, "Failed to get image.\n");
+    todo_wine ok(d3drm_img == &initimg, "Expected image returned == %p, got %p.\n", &initimg, d3drm_img);
+
+    size = sizeof(cname);
+    hr = IDirect3DRMTexture2_GetClassName(texture2, &size, cname);
+    ok(SUCCEEDED(hr), "Cannot get classname (hr = %x)\n", hr);
+    ok(size == sizeof("Texture"), "wrong size: %u\n", size);
+    ok(!strcmp(cname, "Texture"), "Expected cname to be \"Texture\", but got \"%s\"\n", cname);
+    size = sizeof("Texture");
+    hr = IDirect3DRMTexture2_GetClassName(texture2, &size, cname);
+    ok(SUCCEEDED(hr), "Cannot get classname (hr = %x)\n", hr);
+    ok(size == sizeof("Texture"), "wrong size: %u\n", size);
+    ok(!strcmp(cname, "Texture"), "Expected cname to be \"Texture\", but got \"%s\"\n", cname);
+
+    IDirect3DRMTexture2_Release(texture2);
+    ref2 = get_refcount((IUnknown *)d3drm1);
+    todo_wine ok(ref2 - 1 == ref1, "expected ref2 == ref1, got ref1 = %u, ref2 = %u.\n", ref1, ref2);
+    ref3 = get_refcount((IUnknown *)d3drm2);
+    ok(ref3 == ref1, "expected ref3 == ref1, got ref1 = %u, ref3 = %u.\n", ref1, ref3);
+    ref4 = get_refcount((IUnknown *)d3drm3);
+    ok(ref4 == ref1, "expected ref4 == ref1, got ref1 = %u, ref4 = %u.\n", ref1, ref4);
+
+    d3drm_img = NULL;
+    d3drm_img = IDirect3DRMTexture3_GetImage(texture3);
+    todo_wine ok(!!d3drm_img, "Failed to get image.\n");
+    todo_wine ok(d3drm_img == &initimg, "Expected image returned == %p, got %p.\n", &initimg, d3drm_img);
+
+    size = sizeof(cname);
+    hr = IDirect3DRMTexture3_GetClassName(texture3, &size, cname);
+    ok(SUCCEEDED(hr), "Cannot get classname (hr = %x)\n", hr);
+    ok(size == sizeof("Texture"), "wrong size: %u\n", size);
+    ok(!strcmp(cname, "Texture"), "Expected cname to be \"Texture\", but got \"%s\"\n", cname);
+    size = sizeof("Texture");
+    hr = IDirect3DRMTexture3_GetClassName(texture3, &size, cname);
+    ok(SUCCEEDED(hr), "Cannot get classname (hr = %x)\n", hr);
+    ok(size == sizeof("Texture"), "wrong size: %u\n", size);
+    ok(!strcmp(cname, "Texture"), "Expected cname to be \"Texture\", but got \"%s\"\n", cname);
+
+    IDirect3DRMTexture3_Release(texture3);
+    ref2 = get_refcount((IUnknown *)d3drm1);
+    ok(ref2 == ref1, "expected ref2 == ref1, got ref1 = %u, ref2 = %u.\n", ref1, ref2);
+    ref3 = get_refcount((IUnknown *)d3drm2);
+    ok(ref3 == ref1, "expected ref3 == ref1, got ref1 = %u, ref3 = %u.\n", ref1, ref3);
+    ref4 = get_refcount((IUnknown *)d3drm3);
+    ok(ref4 == ref1, "expected ref4 == ref1, got ref1 = %u, ref4 = %u.\n", ref1, ref4);
+
+    IDirect3DRM3_Release(d3drm3);
+    IDirect3DRM2_Release(d3drm2);
+    IDirect3DRM_Release(d3drm1);
 }
 
 static void test_Device(void)
