@@ -625,16 +625,17 @@ static inline void walk_constant_heap(const struct wined3d_gl_info *gl_info, con
 }
 
 /* Context activation is done by the caller. */
-static inline void apply_clamped_constant(const struct wined3d_gl_info *gl_info, GLint location, const GLfloat *data)
+static inline void apply_clamped_constant(const struct wined3d_gl_info *gl_info,
+        GLint location, const struct wined3d_vec4 *data)
 {
     GLfloat clamped_constant[4];
 
     if (location == -1) return;
 
-    clamped_constant[0] = data[0] < -1.0f ? -1.0f : data[0] > 1.0f ? 1.0f : data[0];
-    clamped_constant[1] = data[1] < -1.0f ? -1.0f : data[1] > 1.0f ? 1.0f : data[1];
-    clamped_constant[2] = data[2] < -1.0f ? -1.0f : data[2] > 1.0f ? 1.0f : data[2];
-    clamped_constant[3] = data[3] < -1.0f ? -1.0f : data[3] > 1.0f ? 1.0f : data[3];
+    clamped_constant[0] = data->x < -1.0f ? -1.0f : data->x > 1.0f ? 1.0f : data->x;
+    clamped_constant[1] = data->y < -1.0f ? -1.0f : data->y > 1.0f ? 1.0f : data->y;
+    clamped_constant[2] = data->z < -1.0f ? -1.0f : data->z > 1.0f ? 1.0f : data->z;
+    clamped_constant[3] = data->w < -1.0f ? -1.0f : data->w > 1.0f ? 1.0f : data->w;
 
     GL_EXTCALL(glUniform4fv(location, 1, clamped_constant));
 }
@@ -650,7 +651,7 @@ static inline void walk_constant_heap_clamped(const struct wined3d_gl_info *gl_i
     if (heap->entries[heap_idx].version <= version) return;
 
     idx = heap->entries[heap_idx].idx;
-    apply_clamped_constant(gl_info, constant_locations[idx], &constants[idx * 4]);
+    apply_clamped_constant(gl_info, constant_locations[idx], (const struct wined3d_vec4 *)&constants[idx * 4]);
     stack[stack_idx] = HEAP_NODE_TRAVERSE_LEFT;
 
     while (stack_idx >= 0)
@@ -665,7 +666,8 @@ static inline void walk_constant_heap_clamped(const struct wined3d_gl_info *gl_i
                 {
                     heap_idx = left_idx;
                     idx = heap->entries[heap_idx].idx;
-                    apply_clamped_constant(gl_info, constant_locations[idx], &constants[idx * 4]);
+                    apply_clamped_constant(gl_info, constant_locations[idx],
+                            (const struct wined3d_vec4 *)&constants[idx * 4]);
 
                     stack[stack_idx++] = HEAP_NODE_TRAVERSE_RIGHT;
                     stack[stack_idx] = HEAP_NODE_TRAVERSE_LEFT;
@@ -680,7 +682,8 @@ static inline void walk_constant_heap_clamped(const struct wined3d_gl_info *gl_i
                 {
                     heap_idx = right_idx;
                     idx = heap->entries[heap_idx].idx;
-                    apply_clamped_constant(gl_info, constant_locations[idx], &constants[idx * 4]);
+                    apply_clamped_constant(gl_info, constant_locations[idx],
+                            (const struct wined3d_vec4 *)&constants[idx * 4]);
 
                     stack[stack_idx++] = HEAP_NODE_POP;
                     stack[stack_idx] = HEAP_NODE_TRAVERSE_LEFT;
