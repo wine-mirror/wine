@@ -1359,10 +1359,10 @@ static BOOL texture2d_load_location(struct wined3d_texture *texture, unsigned in
 /* Context activation is done by the caller. */
 static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wined3d_context *context, BOOL srgb)
 {
-    UINT sub_count = texture->level_count * texture->layer_count;
     const struct wined3d_format *format = texture->resource.format;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_color_key_conversion *conversion;
+    unsigned int sub_call_count;
     GLenum internal;
     UINT i;
 
@@ -1394,7 +1394,10 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
 
     TRACE("internal %#x, format %#x, type %#x.\n", internal, format->glFormat, format->glType);
 
-    for (i = 0; i < sub_count; ++i)
+    sub_call_count = texture->level_count;
+    if (texture->target != GL_TEXTURE_2D_ARRAY)
+        sub_call_count *= texture->layer_count;
+    for (i = 0; i < sub_call_count; ++i)
     {
         struct wined3d_surface *surface = texture->sub_resources[i].u.surface;
         GLsizei width, height;
@@ -1407,12 +1410,22 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
             height /= format->height_scale.denominator;
         }
 
-        TRACE("surface %p, target %#x, level %d, width %d, height %d.\n",
+        TRACE("surface %p, target %#x, level %u, width %u, height %u.\n",
                 surface, surface->texture_target, surface->texture_level, width, height);
 
-        gl_info->gl_ops.gl.p_glTexImage2D(surface->texture_target, surface->texture_level,
-                internal, width, height, 0, format->glFormat, format->glType, NULL);
-        checkGLcall("glTexImage2D");
+        if (texture->target == GL_TEXTURE_2D_ARRAY)
+        {
+            GL_EXTCALL(glTexImage3D(surface->texture_target, surface->texture_level,
+                    internal, width, height, texture->layer_count, 0,
+                    format->glFormat, format->glType, NULL));
+            checkGLcall("glTexImage3D");
+        }
+        else
+        {
+            gl_info->gl_ops.gl.p_glTexImage2D(surface->texture_target, surface->texture_level,
+                    internal, width, height, 0, format->glFormat, format->glType, NULL);
+            checkGLcall("glTexImage2D");
+        }
     }
 }
 
@@ -1778,8 +1791,12 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
     unsigned int i, j;
     HRESULT hr;
 
-    if (!(desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP) && layer_count != 1)
-        FIXME("Array textures not implemented.\n");
+    if (!(desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP) && layer_count > 1
+            && !gl_info->supported[EXT_TEXTURE_ARRAY])
+    {
+        WARN("OpenGL implementation does not support array textures.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
 
     /* TODO: It should only be possible to create textures for formats
      * that are reported as supported. */
@@ -1909,6 +1926,8 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
         }
         if (desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP)
             texture->target = GL_TEXTURE_CUBE_MAP_ARB;
+        else if (layer_count > 1)
+            texture->target = GL_TEXTURE_2D_ARRAY;
         else
             texture->target = GL_TEXTURE_2D;
     }
