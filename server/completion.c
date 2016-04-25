@@ -104,7 +104,7 @@ static void completion_dump( struct object *obj, int verbose )
     struct completion *completion = (struct completion *) obj;
 
     assert( obj->ops == &completion_ops );
-    fprintf( stderr, "Completion depth=%u", completion->depth );
+    fprintf( stderr, "Completion depth=%u\n", completion->depth );
 }
 
 static struct object_type *completion_get_type( struct object *obj )
