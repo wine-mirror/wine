@@ -2446,8 +2446,8 @@ HRESULT __cdecl wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigne
         struct wined3d_texture *src_texture, unsigned int src_idx, const RECT *src_rect_in, DWORD flags,
         const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter);
 HRESULT __cdecl wined3d_texture_create(struct wined3d_device *device, const struct wined3d_resource_desc *desc,
-        UINT level_count, DWORD flags, const struct wined3d_sub_resource_data *data, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture);
+        UINT layer_count, UINT level_count, DWORD flags, const struct wined3d_sub_resource_data *data,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture);
 struct wined3d_texture * __cdecl wined3d_texture_from_resource(struct wined3d_resource *resource);
 ULONG __cdecl wined3d_texture_decref(struct wined3d_texture *texture);
 void __cdecl wined3d_texture_generate_mipmaps(struct wined3d_texture *texture);

@@ -1131,7 +1131,7 @@ HRESULT texture_init(struct d3d8_texture *texture, struct d3d8_device *device,
         levels = wined3d_log2i(max(width, height)) + 1;
 
     wined3d_mutex_lock();
-    hr = wined3d_texture_create(device->wined3d_device, &desc, levels, flags,
+    hr = wined3d_texture_create(device->wined3d_device, &desc, 1, levels, flags,
             NULL, texture, &d3d8_texture_wined3d_parent_ops, &texture->wined3d_texture);
     wined3d_mutex_unlock();
     if (FAILED(hr))
@@ -1176,7 +1176,7 @@ HRESULT cubetexture_init(struct d3d8_texture *texture, struct d3d8_device *devic
         levels = wined3d_log2i(edge_length) + 1;
 
     wined3d_mutex_lock();
-    hr = wined3d_texture_create(device->wined3d_device, &desc, levels, flags,
+    hr = wined3d_texture_create(device->wined3d_device, &desc, 6, levels, flags,
             NULL, texture, &d3d8_texture_wined3d_parent_ops, &texture->wined3d_texture);
     wined3d_mutex_unlock();
     if (FAILED(hr))
@@ -1217,7 +1217,7 @@ HRESULT volumetexture_init(struct d3d8_texture *texture, struct d3d8_device *dev
         levels = wined3d_log2i(max(max(width, height), depth)) + 1;
 
     wined3d_mutex_lock();
-    hr = wined3d_texture_create(device->wined3d_device, &desc, levels, 0,
+    hr = wined3d_texture_create(device->wined3d_device, &desc, 1, levels, 0,
             NULL, texture, &d3d8_texture_wined3d_parent_ops, &texture->wined3d_texture);
     wined3d_mutex_unlock();
     if (FAILED(hr))

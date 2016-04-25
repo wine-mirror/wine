@@ -457,8 +457,6 @@ static HRESULT d3d_texture2d_init(struct d3d_texture2d *texture, struct d3d_devi
     wined3d_private_store_init(&texture->private_store);
     texture->desc = *desc;
 
-    if (desc->ArraySize != 1)
-        FIXME("Array textures not implemented.\n");
     if (desc->SampleDesc.Count > 1)
         FIXME("Multisampled textures not implemented.\n");
 
@@ -476,8 +474,8 @@ static HRESULT d3d_texture2d_init(struct d3d_texture2d *texture, struct d3d_devi
     levels = desc->MipLevels ? desc->MipLevels : wined3d_log2i(max(desc->Width, desc->Height)) + 1;
 
     if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &wined3d_desc,
-            levels, 0, (struct wined3d_sub_resource_data *)data, texture,
-            &d3d_texture2d_wined3d_parent_ops, &texture->wined3d_texture)))
+            desc->ArraySize, levels, 0, (struct wined3d_sub_resource_data *)data,
+            texture, &d3d_texture2d_wined3d_parent_ops, &texture->wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&texture->private_store);
@@ -930,7 +928,7 @@ static HRESULT d3d_texture3d_init(struct d3d_texture3d *texture, struct d3d_devi
     levels = desc->MipLevels ? desc->MipLevels : wined3d_log2i(max(max(desc->Width, desc->Height), desc->Depth)) + 1;
 
     if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &wined3d_desc,
-            levels, 0, (struct wined3d_sub_resource_data *)data, texture,
+            1, levels, 0, (struct wined3d_sub_resource_data *)data, texture,
             &d3d_texture3d_wined3d_parent_ops, &texture->wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);

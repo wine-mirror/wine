@@ -951,7 +951,7 @@ static HRESULT d3d8_device_create_surface(struct d3d8_device *device, UINT width
     wined3d_mutex_lock();
 
     if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &desc,
-            1, flags, NULL, NULL, &d3d8_null_wined3d_parent_ops, &texture)))
+            1, 1, flags, NULL, NULL, &d3d8_null_wined3d_parent_ops, &texture)))
     {
         wined3d_mutex_unlock();
         WARN("Failed to create texture, hr %#x.\n", hr);
@@ -3027,7 +3027,7 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
     TRACE("device_parent %p, container_parent %p, desc %p, texture %p.\n",
             device_parent, container_parent, desc, texture);
 
-    if (FAILED(hr = wined3d_texture_create(device->wined3d_device, desc, 1, WINED3D_TEXTURE_CREATE_MAPPABLE,
+    if (FAILED(hr = wined3d_texture_create(device->wined3d_device, desc, 1, 1, WINED3D_TEXTURE_CREATE_MAPPABLE,
             NULL, &device->IDirect3DDevice8_iface, &d3d8_null_wined3d_parent_ops, texture)))
     {
         WARN("Failed to create texture, hr %#x.\n", hr);

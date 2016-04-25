@@ -6121,7 +6121,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
      * visible on the screen. The game Nox is such an application,
      * Commandos: Behind Enemy Lines is another. Setting
      * WINED3D_TEXTURE_CREATE_GET_DC_LENIENT will ensure this. */
-    if (FAILED(hr = wined3d_texture_create(ddraw->wined3d_device, &wined3d_desc, levels,
+    if (FAILED(hr = wined3d_texture_create(ddraw->wined3d_device, &wined3d_desc, layers, levels,
             WINED3D_TEXTURE_CREATE_GET_DC_LENIENT, NULL, texture,
             &ddraw_texture_wined3d_parent_ops, &wined3d_texture)))
     {
@@ -6240,7 +6240,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                 desc->ddsCaps.dwCaps |= DDSCAPS_BACKBUFFER;
             desc->u5.dwBackBufferCount = 0;
 
-            if (FAILED(hr = wined3d_texture_create(ddraw->wined3d_device, &wined3d_desc, 1,
+            if (FAILED(hr = wined3d_texture_create(ddraw->wined3d_device, &wined3d_desc, 1, 1,
                     WINED3D_TEXTURE_CREATE_GET_DC_LENIENT, NULL, texture,
                     &ddraw_texture_wined3d_parent_ops, &wined3d_texture)))
             {

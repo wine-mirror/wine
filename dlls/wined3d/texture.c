@@ -1778,6 +1778,9 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
     unsigned int i, j;
     HRESULT hr;
 
+    if (!(desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP) && layer_count != 1)
+        FIXME("Array textures not implemented.\n");
+
     /* TODO: It should only be possible to create textures for formats
      * that are reported as supported. */
     if (WINED3DFMT_UNKNOWN >= desc->format)
@@ -1800,15 +1803,15 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
             && !gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO])
     {
         /* level_count == 0 returns an error as well. */
-        if (level_count != 1 || desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP)
+        if (level_count != 1 || layer_count != 1)
         {
             if (desc->pool != WINED3D_POOL_SCRATCH)
             {
-                WARN("Attempted to create a mipmapped/cube NPOT texture without unconditional NPOT support.\n");
+                WARN("Attempted to create a mipmapped/cube/array NPOT texture without unconditional NPOT support.\n");
                 return WINED3DERR_INVALIDCALL;
             }
 
-            WARN("Creating a scratch mipmapped/cube NPOT texture despite lack of HW support.\n");
+            WARN("Creating a scratch mipmapped/cube/array NPOT texture despite lack of HW support.\n");
         }
         texture->flags |= WINED3D_TEXTURE_COND_NP2;
 
@@ -2084,13 +2087,20 @@ BOOL wined3d_texture_check_block_align(const struct wined3d_texture *texture,
 }
 
 static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct wined3d_resource_desc *desc,
-        UINT levels, struct wined3d_device *device, void *parent, const struct wined3d_parent_ops *parent_ops)
+        UINT layer_count, UINT level_count, struct wined3d_device *device, void *parent,
+        const struct wined3d_parent_ops *parent_ops)
 {
     struct wined3d_device_parent *device_parent = device->device_parent;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_volume *volumes;
     unsigned int i;
     HRESULT hr;
+
+    if (layer_count != 1)
+    {
+        ERR("Invalid layer count for volume texture.\n");
+        return E_INVALIDARG;
+    }
 
     /* TODO: It should only be possible to create textures for formats
      * that are reported as supported. */
@@ -2115,7 +2125,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
             return WINED3DERR_INVALIDCALL;
         }
 
-        if (levels != 1)
+        if (level_count != 1)
         {
             WARN("WINED3DUSAGE_AUTOGENMIPMAP is set, and level count != 1, returning D3DERR_INVALIDCALL.\n");
             return WINED3DERR_INVALIDCALL;
@@ -2157,7 +2167,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
         }
     }
 
-    if (FAILED(hr = wined3d_texture_init(texture, &texture3d_ops, 1, levels, desc,
+    if (FAILED(hr = wined3d_texture_init(texture, &texture3d_ops, 1, level_count, desc,
             0, device, parent, parent_ops, &texture_resource_ops)))
     {
         WARN("Failed to initialize texture, returning %#x.\n", hr);
@@ -2176,7 +2186,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
         texture->resource.map_binding = WINED3D_LOCATION_BUFFER;
     }
 
-    if (!(volumes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*volumes) * levels)))
+    if (!(volumes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*volumes) * level_count)))
     {
         wined3d_texture_cleanup(texture);
         return E_OUTOFMEMORY;
@@ -2426,15 +2436,26 @@ HRESULT CDECL wined3d_texture_get_sub_resource_desc(const struct wined3d_texture
 }
 
 HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct wined3d_resource_desc *desc,
-        UINT level_count, DWORD flags, const struct wined3d_sub_resource_data *data, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
+        UINT layer_count, UINT level_count, DWORD flags, const struct wined3d_sub_resource_data *data,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
 {
-    unsigned int layer_count = desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP ? 6 : 1;
     struct wined3d_texture *object;
     HRESULT hr;
 
-    TRACE("device %p, desc %p, level_count %u, flags %#x, data %p, parent %p, parent_ops %p, texture %p.\n",
-            device, desc, level_count, flags, data, parent, parent_ops, texture);
+    TRACE("device %p, desc %p, layer_count %u, level_count %u, flags %#x, data %p, "
+            "parent %p, parent_ops %p, texture %p.\n",
+            device, desc, layer_count, level_count, flags, data, parent, parent_ops, texture);
+
+    if (!layer_count)
+    {
+        WARN("Invalid layer count.\n");
+        return E_INVALIDARG;
+    }
+    if ((desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP) && layer_count != 6)
+    {
+        ERR("Invalid layer count %u for legacy cubemap.\n", layer_count);
+        layer_count = 6;
+    }
 
     if (!level_count)
     {
@@ -2474,7 +2495,7 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
             break;
 
         case WINED3D_RTYPE_TEXTURE_3D:
-            hr = volumetexture_init(object, desc, level_count, device, parent, parent_ops);
+            hr = volumetexture_init(object, desc, layer_count, level_count, device, parent, parent_ops);
             break;
 
         default:
