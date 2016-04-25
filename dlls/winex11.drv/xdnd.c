@@ -210,7 +210,7 @@ void X11DRV_XDND_EnterEvent( HWND hWnd, XClientMessageEvent *event )
 
     if (version > WINE_XDND_VERSION)
     {
-        TRACE("Ignores unsupported version\n");
+        ERR("ignoring unsupported XDND version %d\n", version);
         return;
     }
 
@@ -345,8 +345,8 @@ void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
         effect = DROPEFFECT_COPY;
     }
 
-    TRACE("action req: %ld accept(%d) at x(%d),y(%d)\n",
-          event->data.l[4], accept, XDNDxy.x, XDNDxy.y);
+    TRACE("actionRequested(%ld) accept(%d) chosen(0x%x) at x(%d),y(%d)\n",
+          event->data.l[4], accept, effect, XDNDxy.x, XDNDxy.y);
 
     /*
      * Let source know if we're accepting the drop by
@@ -380,8 +380,6 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
     DWORD effect = XDNDDropEffect;
     int accept = 0; /* Assume we're not accepting */
     BOOL drop_file = TRUE;
-
-    TRACE("\n");
 
     /* Notify OLE of Drop */
     if (XDNDAccepted)
@@ -440,6 +438,9 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
             }
         }
     }
+
+    TRACE("effectRequested(0x%x) accept(%d) performed(0x%x) at x(%d),y(%d)\n",
+          XDNDDropEffect, accept, effect, XDNDxy.x, XDNDxy.y);
 
     X11DRV_XDND_FreeDragDropOp();
 
