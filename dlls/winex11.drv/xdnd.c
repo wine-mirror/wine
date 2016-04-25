@@ -307,7 +307,7 @@ void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
         {
             DWORD effect_ignore = effect;
             hr = IDropTarget_DragEnter(dropTarget, &XDNDDataObject,
-                                       MK_LBUTTON, pointl, &effect);
+                                       MK_LBUTTON, pointl, &effect_ignore);
             if (hr == S_OK)
             {
                 XDNDAccepted = TRUE;
