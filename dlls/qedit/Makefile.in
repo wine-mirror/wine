@@ -4,6 +4,7 @@ IMPORTS   = strmiids strmbase uuid oleaut32 ole32 advapi32
 C_SRCS = \
 	main.c \
 	mediadet.c \
-	samplegrabber.c
+	samplegrabber.c \
+	timeline.c
 
 IDL_SRCS = qedit_classes.idl

@@ -58,6 +58,7 @@ struct object_creation_info
 
 static const struct object_creation_info object_creation[] =
 {
+    { &CLSID_AMTimeline, AMTimeline_create },
     { &CLSID_MediaDet, MediaDet_create },
     { &CLSID_SampleGrabber, SampleGrabber_create },
 };
