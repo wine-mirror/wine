@@ -1454,7 +1454,7 @@ static const struct gpu_description *query_gpu_description(const struct wined3d_
     if (wined3d_settings.pci_device_id != PCI_DEVICE_NONE)
     {
         device = wined3d_settings.pci_device_id;
-        TRACE("Overriding device PCI ID with 0x%04x.\n", vendor);
+        TRACE("Overriding device PCI ID with 0x%04x.\n", device);
     }
 
     if (wined3d_settings.emulated_textureram)
