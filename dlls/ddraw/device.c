@@ -4256,28 +4256,28 @@ static HRESULT WINAPI d3d_device3_DrawIndexedPrimitiveStrided(IDirect3DDevice3 *
  *  DDERR_INVALIDPARAMS if D3DVertexBuf is NULL
  *
  *****************************************************************************/
-static HRESULT d3d_device7_DrawPrimitiveVB(IDirect3DDevice7 *iface, D3DPRIMITIVETYPE PrimitiveType,
-        IDirect3DVertexBuffer7 *D3DVertexBuf, DWORD StartVertex, DWORD NumVertices, DWORD Flags)
+static HRESULT d3d_device7_DrawPrimitiveVB(IDirect3DDevice7 *iface, D3DPRIMITIVETYPE primitive_type,
+        IDirect3DVertexBuffer7 *vb, DWORD start_vertex, DWORD vertex_count, DWORD flags)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
-    struct d3d_vertex_buffer *vb = unsafe_impl_from_IDirect3DVertexBuffer7(D3DVertexBuf);
+    struct d3d_vertex_buffer *vb_impl = unsafe_impl_from_IDirect3DVertexBuffer7(vb);
     HRESULT hr;
     DWORD stride;
 
     TRACE("iface %p, primitive_type %#x, vb %p, start_vertex %u, vertex_count %u, flags %#x.\n",
-            iface, PrimitiveType, D3DVertexBuf, StartVertex, NumVertices, Flags);
+            iface, primitive_type, vb, start_vertex, vertex_count, flags);
 
-    /* Sanity checks */
-    if (!vb)
+    if (!vertex_count)
     {
-        WARN("No Vertex buffer specified.\n");
-        return DDERR_INVALIDPARAMS;
+        WARN("0 vertex count.\n");
+        return D3D_OK;
     }
-    stride = get_flexible_vertex_size(vb->fvf);
+
+    stride = get_flexible_vertex_size(vb_impl->fvf);
 
     wined3d_mutex_lock();
-    wined3d_device_set_vertex_declaration(device->wined3d_device, vb->wineD3DVertexDeclaration);
-    hr = wined3d_device_set_stream_source(device->wined3d_device, 0, vb->wineD3DVertexBuffer, 0, stride);
+    wined3d_device_set_vertex_declaration(device->wined3d_device, vb_impl->wineD3DVertexDeclaration);
+    hr = wined3d_device_set_stream_source(device->wined3d_device, 0, vb_impl->wineD3DVertexBuffer, 0, stride);
     if (FAILED(hr))
     {
         WARN("Failed to set stream source, hr %#x.\n", hr);
@@ -4286,8 +4286,8 @@ static HRESULT d3d_device7_DrawPrimitiveVB(IDirect3DDevice7 *iface, D3DPRIMITIVE
     }
 
     /* Now draw the primitives */
-    wined3d_device_set_primitive_type(device->wined3d_device, PrimitiveType);
-    hr = wined3d_device_draw_primitive(device->wined3d_device, StartVertex, NumVertices);
+    wined3d_device_set_primitive_type(device->wined3d_device, primitive_type);
+    hr = wined3d_device_draw_primitive(device->wined3d_device, start_vertex, vertex_count);
 
     wined3d_mutex_unlock();
 
