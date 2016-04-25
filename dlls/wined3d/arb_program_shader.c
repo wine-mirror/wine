@@ -360,21 +360,20 @@ static unsigned int reserved_vs_const(const struct arb_vshader_private *shader_d
  *  or GL_FRAGMENT_PROGRAM_ARB (for pixel shaders)
  */
 /* Context activation is done by the caller. */
-static unsigned int shader_arb_load_constantsF(const struct wined3d_shader *shader,
+static unsigned int shader_arb_load_constants_f(const struct wined3d_shader *shader,
         const struct wined3d_gl_info *gl_info, GLuint target_type, unsigned int max_constants,
-        const float *constants, char *dirty_consts)
+        const struct wined3d_vec4 *constants, char *dirty_consts)
 {
     struct wined3d_shader_lconst *lconst;
-    DWORD i, j;
-    unsigned int ret;
+    unsigned int ret, i, j;
 
     if (TRACE_ON(d3d_constants))
     {
-        for(i = 0; i < max_constants; i++) {
-            if(!dirty_consts[i]) continue;
-            TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
-                        constants[i * 4 + 0], constants[i * 4 + 1],
-                        constants[i * 4 + 2], constants[i * 4 + 3]);
+        for (i = 0; i < max_constants; ++i)
+        {
+            if (!dirty_consts[i])
+                continue;
+            TRACE_(d3d_constants)("Loading constant %u: %s.\n", i, debug_vec4(&constants[i]));
         }
     }
 
@@ -387,26 +386,39 @@ static unsigned int shader_arb_load_constantsF(const struct wined3d_shader *shad
         /* ps 1.x supports only 8 constants, clamp only those. When switching between 1.x and higher
          * shaders, the first 8 constants are marked dirty for reload
          */
-        for(; i < min(8, max_constants); i++) {
-            if(!dirty_consts[i]) continue;
+        for (; i < min(8, max_constants); ++i)
+        {
+            if (!dirty_consts[i])
+                continue;
             dirty_consts[i] = 0;
 
-            j = 4 * i;
-            if (constants[j + 0] > 1.0f) lcl_const[0] = 1.0f;
-            else if (constants[j + 0] < -1.0f) lcl_const[0] = -1.0f;
-            else lcl_const[0] = constants[j + 0];
+            if (constants[i].x > 1.0f)
+                lcl_const[0] = 1.0f;
+            else if (constants[i].x < -1.0f)
+                lcl_const[0] = -1.0f;
+            else
+                lcl_const[0] = constants[i].x;
 
-            if (constants[j + 1] > 1.0f) lcl_const[1] = 1.0f;
-            else if (constants[j + 1] < -1.0f) lcl_const[1] = -1.0f;
-            else lcl_const[1] = constants[j + 1];
+            if (constants[i].y > 1.0f)
+                lcl_const[1] = 1.0f;
+            else if (constants[i].y < -1.0f)
+                lcl_const[1] = -1.0f;
+            else
+                lcl_const[1] = constants[i].y;
 
-            if (constants[j + 2] > 1.0f) lcl_const[2] = 1.0f;
-            else if (constants[j + 2] < -1.0f) lcl_const[2] = -1.0f;
-            else lcl_const[2] = constants[j + 2];
+            if (constants[i].z > 1.0f)
+                lcl_const[2] = 1.0f;
+            else if (constants[i].z < -1.0f)
+                lcl_const[2] = -1.0f;
+            else
+                lcl_const[2] = constants[i].z;
 
-            if (constants[j + 3] > 1.0f) lcl_const[3] = 1.0f;
-            else if (constants[j + 3] < -1.0f) lcl_const[3] = -1.0f;
-            else lcl_const[3] = constants[j + 3];
+            if (constants[i].w > 1.0f)
+                lcl_const[3] = 1.0f;
+            else if (constants[i].w < -1.0f)
+                lcl_const[3] = -1.0f;
+            else
+                lcl_const[3] = constants[i].w;
 
             GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, lcl_const));
         }
@@ -427,23 +439,30 @@ static unsigned int shader_arb_load_constantsF(const struct wined3d_shader *shad
          *
         GL_EXTCALL(glProgramEnvParameters4fvEXT(target_type, i, max_constants, constants + (i * 4)));
          */
-        for(; i < max_constants; i++) {
-            if(!dirty_consts[i]) continue;
+        for (; i < max_constants; ++i)
+        {
+            if (!dirty_consts[i])
+                continue;
 
             /* Find the next block of dirty constants */
             dirty_consts[i] = 0;
             j = i;
-            for(i++; (i < max_constants) && dirty_consts[i]; i++) {
+            for (++i; (i < max_constants) && dirty_consts[i]; ++i)
+            {
                 dirty_consts[i] = 0;
             }
 
-            GL_EXTCALL(glProgramEnvParameters4fvEXT(target_type, j, i - j, constants + (j * 4)));
+            GL_EXTCALL(glProgramEnvParameters4fvEXT(target_type, j, i - j, &constants[j].x));
         }
-    } else {
-        for(; i < max_constants; i++) {
-            if(dirty_consts[i]) {
+    }
+    else
+    {
+        for (; i < max_constants; ++i)
+        {
+            if (dirty_consts[i])
+            {
                 dirty_consts[i] = 0;
-                GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, constants + (i * 4)));
+                GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, &constants[i].x));
             }
         }
     }
@@ -675,8 +694,8 @@ static void shader_arb_load_constants_internal(struct shader_arb_priv *priv,
         const struct arb_vs_compiled_shader *gl_shader = priv->compiled_vprog;
 
         /* Load DirectX 9 float constants for vertex shader */
-        priv->highest_dirty_vs_const = shader_arb_load_constantsF(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
-                priv->highest_dirty_vs_const, state->vs_consts_f, priv->vshader_const_dirty);
+        priv->highest_dirty_vs_const = shader_arb_load_constants_f(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
+                priv->highest_dirty_vs_const, (struct wined3d_vec4 *)state->vs_consts_f, priv->vshader_const_dirty);
         shader_arb_vs_local_constants(gl_shader, context, state);
     }
 
@@ -687,8 +706,8 @@ static void shader_arb_load_constants_internal(struct shader_arb_priv *priv,
         UINT rt_height = state->fb->render_targets[0]->height;
 
         /* Load DirectX 9 float constants for pixel shader */
-        priv->highest_dirty_ps_const = shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
-                priv->highest_dirty_ps_const, state->ps_consts_f, priv->pshader_const_dirty);
+        priv->highest_dirty_ps_const = shader_arb_load_constants_f(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
+                priv->highest_dirty_ps_const, (struct wined3d_vec4 *)state->ps_consts_f, priv->pshader_const_dirty);
         shader_arb_ps_local_constants(gl_shader, context, state, rt_height);
 
         if (context->constant_update_mask & WINED3D_SHADER_CONST_PS_NP2_FIXUP)

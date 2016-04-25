@@ -3095,13 +3095,14 @@ const char *debug_d3dsamplerstate(enum wined3d_sampler_state state) DECLSPEC_HID
 const char *debug_d3dstate(DWORD state) DECLSPEC_HIDDEN;
 const char *debug_d3dtexturefiltertype(enum wined3d_texture_filter_type filter_type) DECLSPEC_HIDDEN;
 const char *debug_d3dtexturestate(enum wined3d_texture_stage_state state) DECLSPEC_HIDDEN;
+const char *debug_d3dtop(enum wined3d_texture_op d3dtop) DECLSPEC_HIDDEN;
 const char *debug_d3dtstype(enum wined3d_transform_state tstype) DECLSPEC_HIDDEN;
 const char *debug_d3dpool(enum wined3d_pool pool) DECLSPEC_HIDDEN;
 const char *debug_fboattachment(GLenum attachment) DECLSPEC_HIDDEN;
 const char *debug_fbostatus(GLenum status) DECLSPEC_HIDDEN;
 const char *debug_glerror(GLenum error) DECLSPEC_HIDDEN;
-const char *debug_d3dtop(enum wined3d_texture_op d3dtop) DECLSPEC_HIDDEN;
 const char *debug_shader_type(enum wined3d_shader_type shader_type) DECLSPEC_HIDDEN;
+const char *debug_vec4(const struct wined3d_vec4 *v) DECLSPEC_HIDDEN;
 void dump_color_fixup_desc(struct color_fixup_desc fixup) DECLSPEC_HIDDEN;
 
 BOOL is_invalid_op(const struct wined3d_state *state, int stage,
