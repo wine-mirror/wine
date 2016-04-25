@@ -700,20 +700,18 @@ static inline void walk_constant_heap_clamped(const struct wined3d_gl_info *gl_i
 }
 
 /* Context activation is done by the caller. */
-static void shader_glsl_load_constantsF(const struct wined3d_shader *shader, const struct wined3d_gl_info *gl_info,
-        const float *constants, const GLint *constant_locations, const struct constant_heap *heap,
-        unsigned char *stack, UINT version)
+static void shader_glsl_load_constants_f(const struct wined3d_shader *shader, const struct wined3d_gl_info *gl_info,
+        const struct wined3d_vec4 *constants, const GLint *constant_locations, const struct constant_heap *heap,
+        unsigned char *stack, unsigned int version)
 {
     const struct wined3d_shader_lconst *lconst;
 
     /* 1.X pshaders have the constants clamped to [-1;1] implicitly. */
     if (shader->reg_maps.shader_version.major == 1
             && shader->reg_maps.shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
-        walk_constant_heap_clamped(gl_info, (const struct wined3d_vec4 *)constants,
-                constant_locations, heap, stack, version);
+        walk_constant_heap_clamped(gl_info, constants, constant_locations, heap, stack, version);
     else
-        walk_constant_heap(gl_info, (const struct wined3d_vec4 *)constants,
-                constant_locations, heap, stack, version);
+        walk_constant_heap(gl_info, constants, constant_locations, heap, stack, version);
 
     if (!shader->load_local_constsF)
     {
@@ -1333,7 +1331,7 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
     update_mask = context->constant_update_mask & prog->constant_update_mask;
 
     if (update_mask & WINED3D_SHADER_CONST_VS_F)
-        shader_glsl_load_constantsF(vshader, gl_info, state->vs_consts_f,
+        shader_glsl_load_constants_f(vshader, gl_info, (const struct wined3d_vec4 *)state->vs_consts_f,
                 prog->vs.uniform_f_locations, &priv->vconst_heap, priv->stack, constant_version);
 
     if (update_mask & WINED3D_SHADER_CONST_VS_I)
@@ -1406,7 +1404,7 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
     }
 
     if (update_mask & WINED3D_SHADER_CONST_PS_F)
-        shader_glsl_load_constantsF(pshader, gl_info, state->ps_consts_f,
+        shader_glsl_load_constants_f(pshader, gl_info, (const struct wined3d_vec4 *)state->ps_consts_f,
                 prog->ps.uniform_f_locations, &priv->pconst_heap, priv->stack, constant_version);
 
     if (update_mask & WINED3D_SHADER_CONST_PS_I)
