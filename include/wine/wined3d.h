@@ -2209,7 +2209,7 @@ void __cdecl wined3d_device_set_ps_cb(struct wined3d_device *device, UINT idx, s
 HRESULT __cdecl wined3d_device_set_ps_consts_b(struct wined3d_device *device,
         UINT start_register, const BOOL *constants, UINT bool_count);
 HRESULT __cdecl wined3d_device_set_ps_consts_f(struct wined3d_device *device,
-        UINT start_register, const float *constants, UINT vector4f_count);
+        unsigned int start_idx, unsigned int count, const struct wined3d_vec4 *constants);
 HRESULT __cdecl wined3d_device_set_ps_consts_i(struct wined3d_device *device,
         UINT start_register, const int *constants, UINT vector4i_count);
 void __cdecl wined3d_device_set_ps_resource_view(struct wined3d_device *device,
