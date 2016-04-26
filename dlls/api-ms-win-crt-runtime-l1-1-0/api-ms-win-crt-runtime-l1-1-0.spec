@@ -52,7 +52,7 @@
 @ cdecl _getdllprocaddr(long str long) ucrtbase._getdllprocaddr
 @ cdecl _getpid() ucrtbase._getpid
 @ cdecl _initialize_narrow_environment() ucrtbase._initialize_narrow_environment
-@ stub _initialize_onexit_table
+@ cdecl _initialize_onexit_table(ptr) ucrtbase._initialize_onexit_table
 @ cdecl _initialize_wide_environment() ucrtbase._initialize_wide_environment
 @ cdecl _initterm(ptr ptr) ucrtbase._initterm
 @ cdecl _initterm_e(ptr ptr) ucrtbase._initterm_e

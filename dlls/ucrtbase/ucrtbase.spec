@@ -419,7 +419,7 @@
 @ cdecl _i64tow(int64 ptr long) ntdll._i64tow
 @ cdecl _i64tow_s(int64 ptr long long) MSVCRT__i64tow_s
 @ cdecl _initialize_narrow_environment()
-@ stub _initialize_onexit_table
+@ cdecl _initialize_onexit_table(ptr) MSVCRT__initialize_onexit_table
 @ cdecl _initialize_wide_environment()
 @ cdecl _initterm(ptr ptr)
 @ cdecl _initterm_e(ptr ptr)

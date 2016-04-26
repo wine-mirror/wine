@@ -34,6 +34,13 @@ static int MSVCRT_atexit_table_size = 0;
 static int MSVCRT_atexit_registered = 0; /* Points to free slot */
 static MSVCRT_purecall_handler purecall_handler = NULL;
 
+typedef struct MSVCRT__onexit_table_t
+{
+    MSVCRT__onexit_t *_first;
+    MSVCRT__onexit_t *_last;
+    MSVCRT__onexit_t *_end;
+} MSVCRT__onexit_table_t;
+
 static const char szMsgBoxTitle[] = "Wine C++ Runtime Library";
 
 extern int MSVCRT_app_type;
@@ -332,6 +339,22 @@ int CDECL MSVCRT__crt_atexit(void (*func)(void))
 {
   TRACE("(%p)\n", func);
   return MSVCRT__onexit((MSVCRT__onexit_t)func) == (MSVCRT__onexit_t)func ? 0 : -1;
+}
+
+
+/*********************************************************************
+ *		_initialize_onexit_table (UCRTBASE.@)
+ */
+int CDECL MSVCRT__initialize_onexit_table(MSVCRT__onexit_table_t *table)
+{
+    TRACE("(%p)\n", table);
+
+    if (!table)
+        return -1;
+
+    if (table->_first == table->_end)
+        table->_last = table->_end = table->_first = NULL;
+    return 0;
 }
 
 /*********************************************************************
