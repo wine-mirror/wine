@@ -3068,7 +3068,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, struct wined3d_co
     if (sub_resource->locations & WINED3D_LOCATION_DISCARDED)
     {
         TRACE("Surface previously discarded, nothing to do.\n");
-        wined3d_surface_prepare(surface, context, location);
+        wined3d_texture_prepare_location(texture, sub_resource_idx, context, location);
         wined3d_texture_validate_location(texture, sub_resource_idx, location);
         wined3d_texture_invalidate_location(texture, sub_resource_idx, WINED3D_LOCATION_DISCARDED);
         goto done;
