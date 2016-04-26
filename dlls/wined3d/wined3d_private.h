@@ -2215,7 +2215,7 @@ struct wined3d_state
 
     BOOL ps_consts_b[MAX_CONST_B];
     INT ps_consts_i[MAX_CONST_I * 4];
-    float *ps_consts_f;
+    struct wined3d_vec4 *ps_consts_f;
 
     struct wined3d_texture *textures[MAX_COMBINED_SAMPLERS];
     DWORD sampler_states[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];

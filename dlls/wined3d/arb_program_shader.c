@@ -707,7 +707,7 @@ static void shader_arb_load_constants_internal(struct shader_arb_priv *priv,
 
         /* Load DirectX 9 float constants for pixel shader */
         priv->highest_dirty_ps_const = shader_arb_load_constants_f(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
-                priv->highest_dirty_ps_const, (struct wined3d_vec4 *)state->ps_consts_f, priv->pshader_const_dirty);
+                priv->highest_dirty_ps_const, state->ps_consts_f, priv->pshader_const_dirty);
         shader_arb_ps_local_constants(gl_shader, context, state, rt_height);
 
         if (context->constant_update_mask & WINED3D_SHADER_CONST_PS_NP2_FIXUP)
