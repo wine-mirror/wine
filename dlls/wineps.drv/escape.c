@@ -149,7 +149,7 @@ INT PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
             r->top    = 0;
             r->right  = physDev->horzRes;
             r->bottom = physDev->vertRes;
-            TRACE("NEXTBAND returning %d,%d - %d,%d\n", r->left, r->top, r->right, r->bottom );
+            TRACE("NEXTBAND returning %s\n", wine_dbgstr_rect(r));
 	    return 1;
 	}
         r->left   = 0;
@@ -252,8 +252,7 @@ INT PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
                 WARN("cbInput != sizeof(RECT) (=%d) for SET_BOUNDS\n", cbInput);
 		return 0;
             }
-	    TRACE("SET_BOUNDS (%d,%d) - (%d,%d)\n", r->left, r->top,
-		  r->right, r->bottom);
+            TRACE("SET_BOUNDS %s\n", wine_dbgstr_rect(r));
 	    return 0;
 	}
 
