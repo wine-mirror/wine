@@ -94,7 +94,7 @@
 @ cdecl wined3d_device_get_viewport(ptr ptr)
 @ cdecl wined3d_device_get_vs_cb(ptr long)
 @ cdecl wined3d_device_get_vs_consts_b(ptr long ptr long)
-@ cdecl wined3d_device_get_vs_consts_f(ptr long ptr long)
+@ cdecl wined3d_device_get_vs_consts_f(ptr long long ptr)
 @ cdecl wined3d_device_get_vs_consts_i(ptr long ptr long)
 @ cdecl wined3d_device_get_vs_resource_view(ptr long)
 @ cdecl wined3d_device_get_vs_sampler(ptr long)

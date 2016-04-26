@@ -2494,18 +2494,18 @@ HRESULT CDECL wined3d_device_set_vs_consts_f(struct wined3d_device *device,
 }
 
 HRESULT CDECL wined3d_device_get_vs_consts_f(const struct wined3d_device *device,
-        UINT start_register, float *constants, UINT vector4f_count)
+        unsigned int start_idx, unsigned int count, struct wined3d_vec4 *constants)
 {
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
-    int count = min(vector4f_count, d3d_info->limits.vs_uniform_count - start_register);
 
-    TRACE("device %p, start_register %u, constants %p, vector4f_count %u.\n",
-            device, start_register, constants, vector4f_count);
+    TRACE("device %p, start_idx %u, count %u, constants %p.\n",
+            device, start_idx, count, constants);
 
-    if (!constants || count < 0)
+    if (!constants || start_idx >= d3d_info->limits.vs_uniform_count
+            || count > d3d_info->limits.vs_uniform_count - start_idx)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(constants, &device->state.vs_consts_f[start_register], count * sizeof(float) * 4);
+    memcpy(constants, &device->state.vs_consts_f[start_idx], count * sizeof(*constants));
 
     return WINED3D_OK;
 }

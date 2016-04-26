@@ -2836,7 +2836,8 @@ static HRESULT WINAPI d3d9_device_GetVertexShaderConstantF(IDirect3DDevice9Ex *i
     }
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_vs_consts_f(device->wined3d_device, reg_idx, data, count);
+    hr = wined3d_device_get_vs_consts_f(device->wined3d_device,
+            reg_idx, count, (struct wined3d_vec4 *)data);
     wined3d_mutex_unlock();
 
     return hr;
