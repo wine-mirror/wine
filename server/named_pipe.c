@@ -901,6 +901,7 @@ DECL_HANDLER(create_named_pipe)
     if (!req->sharing || (req->sharing & ~(FILE_SHARE_READ | FILE_SHARE_WRITE)) ||
         (!(req->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE) && (req->flags & NAMED_PIPE_MESSAGE_STREAM_READ)))
     {
+        if (root) release_object( root );
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
