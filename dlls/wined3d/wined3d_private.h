@@ -2211,7 +2211,7 @@ struct wined3d_state
 
     BOOL vs_consts_b[MAX_CONST_B];
     INT vs_consts_i[MAX_CONST_I * 4];
-    float *vs_consts_f;
+    struct wined3d_vec4 *vs_consts_f;
 
     BOOL ps_consts_b[MAX_CONST_B];
     INT ps_consts_i[MAX_CONST_I * 4];

@@ -675,16 +675,9 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
     {
         unsigned int idx = stateblock->contained_vs_consts_f[i];
 
-        TRACE("Setting vs_consts_f[%u] to {%.8e, %.8e, %.8e, %.8e}.\n", idx,
-                src_state->vs_consts_f[idx * 4 + 0],
-                src_state->vs_consts_f[idx * 4 + 1],
-                src_state->vs_consts_f[idx * 4 + 2],
-                src_state->vs_consts_f[idx * 4 + 3]);
+        TRACE("Setting vs_consts_f[%u] to %s.\n", idx, debug_vec4(&src_state->vs_consts_f[idx]));
 
-        stateblock->state.vs_consts_f[idx * 4 + 0] = src_state->vs_consts_f[idx * 4 + 0];
-        stateblock->state.vs_consts_f[idx * 4 + 1] = src_state->vs_consts_f[idx * 4 + 1];
-        stateblock->state.vs_consts_f[idx * 4 + 2] = src_state->vs_consts_f[idx * 4 + 2];
-        stateblock->state.vs_consts_f[idx * 4 + 3] = src_state->vs_consts_f[idx * 4 + 3];
+        stateblock->state.vs_consts_f[idx] = src_state->vs_consts_f[idx];
     }
 
     /* Vertex shader integer constants. */
@@ -970,7 +963,7 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
     for (i = 0; i < stateblock->num_contained_vs_consts_f; ++i)
     {
         wined3d_device_set_vs_consts_f(device, stateblock->contained_vs_consts_f[i],
-                stateblock->state.vs_consts_f + stateblock->contained_vs_consts_f[i] * 4, 1);
+                &stateblock->state.vs_consts_f[stateblock->contained_vs_consts_f[i]].x, 1);
     }
     for (i = 0; i < stateblock->num_contained_vs_consts_i; ++i)
     {
@@ -1325,7 +1318,7 @@ HRESULT state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,
     }
 
     if (!(state->vs_consts_f = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            4 * sizeof(float) * d3d_info->limits.vs_uniform_count)))
+            sizeof(*state->vs_consts_f) * d3d_info->limits.vs_uniform_count)))
         return E_OUTOFMEMORY;
 
     if (!(state->ps_consts_f = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,

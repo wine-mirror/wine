@@ -695,7 +695,7 @@ static void shader_arb_load_constants_internal(struct shader_arb_priv *priv,
 
         /* Load DirectX 9 float constants for vertex shader */
         priv->highest_dirty_vs_const = shader_arb_load_constants_f(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
-                priv->highest_dirty_vs_const, (struct wined3d_vec4 *)state->vs_consts_f, priv->vshader_const_dirty);
+                priv->highest_dirty_vs_const, state->vs_consts_f, priv->vshader_const_dirty);
         shader_arb_vs_local_constants(gl_shader, context, state);
     }
 

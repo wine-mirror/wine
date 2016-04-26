@@ -1331,7 +1331,7 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
     update_mask = context->constant_update_mask & prog->constant_update_mask;
 
     if (update_mask & WINED3D_SHADER_CONST_VS_F)
-        shader_glsl_load_constants_f(vshader, gl_info, (const struct wined3d_vec4 *)state->vs_consts_f,
+        shader_glsl_load_constants_f(vshader, gl_info, state->vs_consts_f,
                 prog->vs.uniform_f_locations, &priv->vconst_heap, priv->stack, constant_version);
 
     if (update_mask & WINED3D_SHADER_CONST_VS_I)

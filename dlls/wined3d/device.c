@@ -2480,7 +2480,7 @@ HRESULT CDECL wined3d_device_set_vs_consts_f(struct wined3d_device *device,
             || start_register > d3d_info->limits.vs_uniform_count)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(&device->update_state->vs_consts_f[start_register * 4],
+    memcpy(&device->update_state->vs_consts_f[start_register],
             constants, vector4f_count * sizeof(float) * 4);
     if (TRACE_ON(d3d))
     {
@@ -2512,7 +2512,7 @@ HRESULT CDECL wined3d_device_get_vs_consts_f(const struct wined3d_device *device
     if (!constants || count < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(constants, &device->state.vs_consts_f[start_register * 4], count * sizeof(float) * 4);
+    memcpy(constants, &device->state.vs_consts_f[start_register], count * sizeof(float) * 4);
 
     return WINED3D_OK;
 }
