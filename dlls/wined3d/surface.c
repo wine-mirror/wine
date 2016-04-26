@@ -2782,12 +2782,14 @@ static void surface_copy_simple_location(struct wined3d_surface *surface, DWORD 
 static void surface_load_sysmem(struct wined3d_surface *surface,
         struct wined3d_context *context, DWORD dst_location)
 {
+    unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_texture *texture = surface->container;
     struct wined3d_texture_sub_resource *sub_resource;
 
-    wined3d_surface_prepare(surface, context, dst_location);
+    wined3d_texture_prepare_location(texture, sub_resource_idx, context, dst_location);
 
-    sub_resource = surface_get_sub_resource(surface);
+    sub_resource = &texture->sub_resources[sub_resource_idx];
     if (sub_resource->locations & surface_simple_locations)
     {
         surface_copy_simple_location(surface, dst_location);
@@ -2800,8 +2802,6 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
     /* Download the surface to system memory. */
     if (sub_resource->locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
     {
-        struct wined3d_texture *texture = surface->container;
-
         wined3d_texture_bind_and_dirtify(texture, context,
                 !(sub_resource->locations & WINED3D_LOCATION_TEXTURE_RGB));
         surface_download_data(surface, gl_info, dst_location);
