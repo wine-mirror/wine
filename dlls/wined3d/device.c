@@ -2465,37 +2465,30 @@ HRESULT CDECL wined3d_device_get_vs_consts_i(const struct wined3d_device *device
 }
 
 HRESULT CDECL wined3d_device_set_vs_consts_f(struct wined3d_device *device,
-        UINT start_register, const float *constants, UINT vector4f_count)
+        unsigned int start_idx, unsigned int count, const struct wined3d_vec4 *constants)
 {
-    UINT i;
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
+    unsigned int i;
 
-    TRACE("device %p, start_register %u, constants %p, vector4f_count %u.\n",
-            device, start_register, constants, vector4f_count);
+    TRACE("device %p, start_idx %u, count %u, constants %p.\n",
+            device, start_idx, count, constants);
 
-    /* Specifically test start_register > limit to catch MAX_UINT overflows
-     * when adding start_register + vector4f_count. */
-    if (!constants
-            || start_register + vector4f_count > d3d_info->limits.vs_uniform_count
-            || start_register > d3d_info->limits.vs_uniform_count)
+    if (!constants || start_idx >= d3d_info->limits.vs_uniform_count
+            || count > d3d_info->limits.vs_uniform_count - start_idx)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(&device->update_state->vs_consts_f[start_register],
-            constants, vector4f_count * sizeof(float) * 4);
+    memcpy(&device->update_state->vs_consts_f[start_idx], constants, count * sizeof(*constants));
     if (TRACE_ON(d3d))
     {
-        for (i = 0; i < vector4f_count; ++i)
-            TRACE("Set FLOAT constant %u to {%.8e, %.8e, %.8e, %.8e}.\n", start_register + i,
-                    constants[i * 4], constants[i * 4 + 1],
-                    constants[i * 4 + 2], constants[i * 4 + 3]);
+        for (i = 0; i < count; ++i)
+            TRACE("Set vec4 constant %u to %s.\n", start_idx + i, debug_vec4(&constants[i]));
     }
 
     if (device->recording)
-        memset(device->recording->changed.vertexShaderConstantsF + start_register, 1,
-                sizeof(*device->recording->changed.vertexShaderConstantsF) * vector4f_count);
+        memset(&device->recording->changed.vertexShaderConstantsF[start_idx], 1,
+                count * sizeof(*device->recording->changed.vertexShaderConstantsF));
     else
-        device->shader_backend->shader_update_float_vertex_constants(device, start_register, vector4f_count);
-
+        device->shader_backend->shader_update_float_vertex_constants(device, start_idx, count);
 
     return WINED3D_OK;
 }
