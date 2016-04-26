@@ -1689,21 +1689,18 @@ static void test_load_save_emf(void)
     ok(hr == S_OK, "QueryInterface error %#lx\n", hr);
 
     hr = IPersistStream_Save(src_stream, dst_stream, TRUE);
-    todo_wine
     ok(hr == S_OK, "Save error %#lx\n", hr);
 
     IPersistStream_Release(src_stream);
     IStream_Release(dst_stream);
 
     mem = GlobalLock(hmem);
-    if (hr == S_OK)
-    {
     ok(!memcmp(mem, "lt\0\0", 4), "got wrong stream header %04lx\n", mem[0]);
     ok(mem[1] == 128, "expected 128, got %lu\n", mem[1]);
     emh = (ENHMETAHEADER *)(mem + 2);
     ok(emh->iType == EMR_HEADER, "wrong iType %04lx\n", emh->iType);
     ok(emh->dSignature == ENHMETA_SIGNATURE, "wrong dSignature %08lx\n", emh->dSignature);
-    }
+
     GlobalUnlock(hmem);
     GlobalFree(hmem);
 
