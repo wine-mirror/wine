@@ -264,6 +264,7 @@
  727 stdcall SHGetImageList(long ptr ptr)
  730 stdcall -noname RestartDialogEx(long wstr long long)
  743 stdcall SHCreateFileExtractIconW(wstr long ptr ptr)
+ 747 stdcall SHLimitInputEdit(ptr ptr)
 
 1217 stub FOOBAR1217   # no joke! This is the real name!!
 

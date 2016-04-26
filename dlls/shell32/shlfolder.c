@@ -600,3 +600,12 @@ HRESULT WINAPI SHGetSetFolderCustomSettings( LPSHFOLDERCUSTOMSETTINGS fcs, LPCST
     FIXME("%p %s 0x%x: stub\n", fcs, path, flag);
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ * SHLimitInputEdit (SHELL32.747)
+ */
+HRESULT WINAPI SHLimitInputEdit( HWND textbox, IShellFolder *folder )
+{
+    FIXME("%p %p: stub\n", textbox, folder);
+    return E_NOTIMPL;
+}
