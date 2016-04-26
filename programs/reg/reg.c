@@ -655,16 +655,19 @@ static WCHAR *build_subkey_path(WCHAR *path, DWORD path_len, WCHAR *subkey_name,
     return subkey_path;
 }
 
-static int query_value(HKEY key, WCHAR *value_name, WCHAR *path)
+static int query_value(HKEY key, WCHAR *value_name, WCHAR *path, BOOL recurse)
 {
     LONG rc;
+    DWORD num_subkeys, max_subkey_len, subkey_len;
     DWORD max_data_bytes, data_size;
-    DWORD type;
+    DWORD type, path_len, i;
     BYTE *data;
     WCHAR fmt[] = {'%','1','\n',0};
     WCHAR newlineW[] = {'\n',0};
+    WCHAR *subkey_name, *subkey_path;
+    HKEY subkey;
 
-    rc = RegQueryInfoKeyW(key, NULL, NULL, NULL, NULL, NULL,
+    rc = RegQueryInfoKeyW(key, NULL, NULL, NULL, &num_subkeys, &max_subkey_len,
                           NULL, NULL, NULL, &max_data_bytes, NULL, NULL);
     if (rc)
     {
@@ -690,11 +693,43 @@ static int query_value(HKEY key, WCHAR *value_name, WCHAR *path)
 
     HeapFree(GetProcessHeap(), 0, data);
 
-    if (rc == ERROR_FILE_NOT_FOUND)
+    if (!recurse)
     {
-        output_message(STRING_CANNOT_FIND);
+        if (rc == ERROR_FILE_NOT_FOUND)
+        {
+            output_message(STRING_CANNOT_FIND);
+            return 1;
+        }
+        return 0;
+    }
+
+    max_subkey_len++;
+    subkey_name = HeapAlloc(GetProcessHeap(), 0, max_subkey_len * sizeof(WCHAR));
+    if (!subkey_name)
+    {
+        ERR("Failed to allocate memory for subkey_name\n");
         return 1;
     }
+
+    path_len = strlenW(path);
+
+    for (i = 0; i < num_subkeys; i++)
+    {
+        subkey_len = max_subkey_len;
+        rc = RegEnumKeyExW(key, i, subkey_name, &subkey_len, NULL, NULL, NULL, NULL);
+        if (rc == ERROR_SUCCESS)
+        {
+            subkey_path = build_subkey_path(path, path_len, subkey_name, subkey_len);
+            if (!RegOpenKeyExW(key, subkey_name, 0, KEY_READ, &subkey))
+            {
+                query_value(subkey, value_name, subkey_path, recurse);
+                RegCloseKey(subkey);
+            }
+            HeapFree(GetProcessHeap(), 0, subkey_path);
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, subkey_name);
     return 0;
 }
 
@@ -795,8 +830,6 @@ static int reg_query(WCHAR *key_name, WCHAR *value_name, BOOL value_empty, BOOL 
 {
     WCHAR *p;
     HKEY root, key;
-    static const WCHAR stubW[] = {'S','T','U','B',' ','Q','U','E','R','Y',' ',
-        '-',' ','%','1',' ','%','2',' ','%','3','!','d','!',' ','%','4','!','d','!','\n',0};
     int ret;
 
     if (!sane_path(key_name))
@@ -825,15 +858,7 @@ static int reg_query(WCHAR *key_name, WCHAR *value_name, BOOL value_empty, BOOL 
     }
 
     if (value_name || value_empty)
-    {
-        if (recurse)
-        {
-            RegCloseKey(key);
-            output_string(stubW, key_name, value_name, value_empty, recurse);
-            return 1;
-        }
-        ret = query_value(key, value_name, key_name);
-    }
+        ret = query_value(key, value_name, key_name, recurse);
     else
         ret = query_all(key, key_name, recurse);
 
