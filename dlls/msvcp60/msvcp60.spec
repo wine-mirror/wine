@@ -1,5 +1,5 @@
-@ stub -arch=win32 ??$?5DU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAC@Z
-@ stub -arch=win64 ??$?5DU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@AEAC@Z
+@ cdecl -arch=win32 ??$?5DU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAC@Z(ptr ptr) basic_istream_char_read_ch
+@ cdecl -arch=win64 ??$?5DU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@AEAC@Z(ptr ptr) basic_istream_char_read_ch
 @ cdecl -arch=win32 ??$?5DU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAD@Z(ptr ptr) basic_istream_char_read_ch
 @ cdecl -arch=win64 ??$?5DU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@AEAD@Z(ptr ptr) basic_istream_char_read_ch
 @ cdecl -arch=win32 ??$?5DU?$char_traits@D@std@@@std@@YAAAV?$basic_istream@DU?$char_traits@D@std@@@0@AAV10@AAE@Z(ptr ptr) basic_istream_char_read_ch
