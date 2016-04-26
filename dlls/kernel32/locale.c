@@ -2977,7 +2977,11 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
 
     if (version) FIXME("unsupported version structure %p\n", version);
     if (reserved) FIXME("unsupported reserved pointer %p\n", reserved);
-    if (lparam) FIXME("unsupported lparam %lx\n", lparam);
+    if (lparam)
+    {
+        static int once;
+        if (!once++) FIXME("unsupported lparam %lx\n", lparam);
+    }
 
     if (!src || !srclen || dstlen < 0)
     {
