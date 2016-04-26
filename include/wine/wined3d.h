@@ -2117,7 +2117,7 @@ struct wined3d_buffer * __cdecl wined3d_device_get_ps_cb(const struct wined3d_de
 HRESULT __cdecl wined3d_device_get_ps_consts_b(const struct wined3d_device *device,
         UINT start_register, BOOL *constants, UINT bool_count);
 HRESULT __cdecl wined3d_device_get_ps_consts_f(const struct wined3d_device *device,
-        UINT start_register, float *constants, UINT vector4f_count);
+        unsigned int start_idx, unsigned int count, struct wined3d_vec4 *constants);
 HRESULT __cdecl wined3d_device_get_ps_consts_i(const struct wined3d_device *device,
         UINT start_register, int *constants, UINT vector4i_count);
 struct wined3d_shader_resource_view * __cdecl wined3d_device_get_ps_resource_view(const struct wined3d_device *device,
