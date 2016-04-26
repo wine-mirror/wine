@@ -1500,6 +1500,15 @@ void __cdecl __ExceptionPtrCurrentException(exception_ptr *ep)
 }
 #endif
 
+/*********************************************************************
+ * ?__ExceptionPtrToBool@@YA_NPBX@Z
+ * ?__ExceptionPtrToBool@@YA_NPEBX@Z
+ */
+MSVCRT_bool __cdecl __ExceptionPtrToBool(exception_ptr *ep)
+{
+    return !!ep->rec;
+}
+
 void* __cdecl __AdjustPointer(void *obj, const this_ptr_offsets *off)
 {
     return get_this_pointer(off, obj);
