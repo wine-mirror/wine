@@ -642,7 +642,7 @@ BOOL WINAPI AlignRects(LPRECT rect, DWORD b, DWORD c, DWORD d)
 {
     FIXME("(%p, %d, %d, %d): stub\n", rect, b, c, d);
     if (rect)
-        FIXME("rect: [[%d, %d], [%d, %d]]\n", rect->left, rect->top, rect->right, rect->bottom);
+        FIXME("rect: %s\n", wine_dbgstr_rect(rect));
     /* Calls OffsetRect */
     return FALSE;
 }
