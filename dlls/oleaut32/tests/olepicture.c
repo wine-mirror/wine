@@ -1622,6 +1622,95 @@ static void test_load_save_dib(void)
     }
 }
 
+static void test_load_save_emf(void)
+{
+    HDC hdc;
+    IPicture *pic;
+    PICTDESC desc;
+    short type;
+    OLE_HANDLE handle;
+    HGLOBAL hmem;
+    DWORD *mem;
+    ENHMETAHEADER *emh;
+    IPersistStream *src_stream;
+    IStream *dst_stream;
+    LARGE_INTEGER offset;
+    HRESULT hr;
+    LONG size;
+
+    hdc = CreateEnhMetaFileA(0, NULL, NULL, NULL);
+    ok(hdc != 0, "CreateEnhMetaFileA failed\n");
+
+    desc.cbSizeofstruct = sizeof(desc);
+    desc.picType = PICTYPE_ENHMETAFILE;
+    desc.emf.hemf = CloseEnhMetaFile(hdc);
+    ok(desc.emf.hemf != 0, "CloseEnhMetaFile failed\n");
+    hr = OleCreatePictureIndirect(&desc, &IID_IPicture, FALSE, (void**)&pic);
+    ok(hr == S_OK, "OleCreatePictureIndirect error %#lx\n", hr);
+
+    type = -1;
+    hr = IPicture_get_Type(pic, &type);
+    ok(hr == S_OK, "get_Type error %#lx\n", hr);
+    ok(type == PICTYPE_ENHMETAFILE,"expected PICTYPE_ENHMETAFILE, got %d\n", type);
+
+    hr = IPicture_get_Handle(pic, &handle);
+    ok(hr == S_OK,"get_Handle error %#lx\n", hr);
+    ok(IntToPtr(handle) == desc.emf.hemf, "get_Handle returned wrong handle %#x\n", handle);
+
+    hmem = GlobalAlloc(GMEM_MOVEABLE, 0);
+    hr = CreateStreamOnHGlobal(hmem, FALSE, &dst_stream);
+    ok(hr == S_OK, "createstreamonhglobal error %#lx\n", hr);
+
+    size = -1;
+    hr = IPicture_SaveAsFile(pic, dst_stream, TRUE, &size);
+    ok(hr == S_OK, "IPicture_SaveasFile error %#lx\n", hr);
+    todo_wine
+    ok(size == 128, "expected 128, got %ld\n", size);
+    emh = GlobalLock(hmem);
+    if (size > 0)
+    {
+    ok(emh->iType == EMR_HEADER, "wrong iType %04lx\n", emh->iType);
+    ok(emh->dSignature == ENHMETA_SIGNATURE, "wrong dSignature %08lx\n", emh->dSignature);
+    }
+    GlobalUnlock(hmem);
+
+    size = -1;
+    hr = IPicture_SaveAsFile(pic, dst_stream, FALSE, &size);
+    todo_wine
+    ok(hr == E_FAIL, "expected E_FAIL, got %#lx\n", hr);
+    todo_wine
+    ok(size == -1, "expected -1, got %ld\n", size);
+
+    offset.QuadPart = 0;
+    hr = IStream_Seek(dst_stream, offset, SEEK_SET, NULL);
+    ok(hr == S_OK, "IStream_Seek %#lx\n", hr);
+
+    hr = IPicture_QueryInterface(pic, &IID_IPersistStream, (void **)&src_stream);
+    ok(hr == S_OK, "QueryInterface error %#lx\n", hr);
+
+    hr = IPersistStream_Save(src_stream, dst_stream, TRUE);
+    todo_wine
+    ok(hr == S_OK, "Save error %#lx\n", hr);
+
+    IPersistStream_Release(src_stream);
+    IStream_Release(dst_stream);
+
+    mem = GlobalLock(hmem);
+    if (hr == S_OK)
+    {
+    ok(!memcmp(mem, "lt\0\0", 4), "got wrong stream header %04lx\n", mem[0]);
+    ok(mem[1] == 128, "expected 128, got %lu\n", mem[1]);
+    emh = (ENHMETAHEADER *)(mem + 2);
+    ok(emh->iType == EMR_HEADER, "wrong iType %04lx\n", emh->iType);
+    ok(emh->dSignature == ENHMETA_SIGNATURE, "wrong dSignature %08lx\n", emh->dSignature);
+    }
+    GlobalUnlock(hmem);
+    GlobalFree(hmem);
+
+    DeleteEnhMetaFile(desc.emf.hemf);
+    IPicture_Release(pic);
+}
+
 START_TEST(olepicture)
 {
     hOleaut32 = GetModuleHandleA("oleaut32.dll");
@@ -1663,6 +1752,7 @@ START_TEST(olepicture)
     test_load_save_dib();
     test_load_save_icon();
     test_load_save_empty_picture();
+    test_load_save_emf();
 }
 
 
