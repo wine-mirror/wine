@@ -1,5 +1,5 @@
 TESTDLL   = uxtheme.dll
-IMPORTS   = user32
+IMPORTS   = user32 uxtheme
 
 C_SRCS = \
 	system.c
