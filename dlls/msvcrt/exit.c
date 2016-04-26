@@ -358,6 +358,48 @@ int CDECL MSVCRT__initialize_onexit_table(MSVCRT__onexit_table_t *table)
 }
 
 /*********************************************************************
+ *		_register_onexit_function (UCRTBASE.@)
+ */
+int CDECL MSVCRT__register_onexit_function(MSVCRT__onexit_table_t *table, MSVCRT__onexit_t func)
+{
+    TRACE("(%p %p)\n", table, func);
+
+    if (!table)
+        return -1;
+
+    if (!table->_first)
+    {
+        table->_first = MSVCRT_calloc(32, sizeof(void *));
+        if (!table->_first)
+        {
+            WARN("failed to allocate initial table.\n");
+            return -1;
+        }
+        table->_last = table->_first;
+        table->_end = table->_first + 32;
+    }
+
+    /* grow if full */
+    if (table->_last == table->_end)
+    {
+        int len = table->_end - table->_first;
+        MSVCRT__onexit_t *tmp = MSVCRT_realloc(table->_first, 2 * len * sizeof(void *));
+        if (!tmp)
+        {
+            WARN("failed to grow table.\n");
+            return -1;
+        }
+        table->_first = tmp;
+        table->_end = table->_first + 2 * len;
+        table->_last = table->_first + len;
+    }
+
+    *table->_last = func;
+    table->_last++;
+    return 0;
+}
+
+/*********************************************************************
  *		_set_purecall_handler (MSVCR71.@)
  */
 MSVCRT_purecall_handler CDECL _set_purecall_handler(MSVCRT_purecall_handler function)

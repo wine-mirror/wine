@@ -60,7 +60,7 @@
 @ stub _invalid_parameter_noinfo_noreturn
 @ stub _invoke_watson
 @ stub _query_app_type
-@ stub _register_onexit_function
+@ cdecl _register_onexit_function(ptr ptr) ucrtbase._register_onexit_function
 @ stub _register_thread_local_exe_atexit_callback
 @ cdecl _resetstkoflw() ucrtbase._resetstkoflw
 @ cdecl -arch=i386,x86_64,arm _seh_filter_dll(long ptr) ucrtbase._seh_filter_dll

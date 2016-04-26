@@ -36,6 +36,7 @@ typedef struct MSVCRT__onexit_table_t
 } MSVCRT__onexit_table_t;
 
 static int (CDECL *p_initialize_onexit_table)(MSVCRT__onexit_table_t *table);
+static int (CDECL *p_register_onexit_function)(MSVCRT__onexit_table_t *table, MSVCRT__onexit_t func);
 
 static void test__initialize_onexit_table(void)
 {
@@ -97,11 +98,53 @@ static void test__initialize_onexit_table(void)
         table._first, table._last, table._end);
 }
 
+static int CDECL onexit_func(void)
+{
+    return 0;
+}
+
+static void test__register_onexit_function(void)
+{
+    MSVCRT__onexit_table_t table;
+    MSVCRT__onexit_t *f;
+    int ret;
+
+    if (!p_register_onexit_function)
+    {
+        win_skip("_register_onexit_function() is not available.\n");
+        return;
+    }
+
+    memset(&table, 0, sizeof(table));
+    ret = p_initialize_onexit_table(&table);
+    ok(ret == 0, "got %d\n", ret);
+
+    ret = p_register_onexit_function(NULL, NULL);
+    ok(ret == -1, "got %d\n", ret);
+
+    ret = p_register_onexit_function(NULL, onexit_func);
+    ok(ret == -1, "got %d\n", ret);
+
+    f = table._last;
+    ret = p_register_onexit_function(&table, NULL);
+    ok(ret == 0, "got %d\n", ret);
+    ok(f != table._last, "got %p, initial %p\n", table._last, f);
+
+    ret = p_register_onexit_function(&table, onexit_func);
+    ok(ret == 0, "got %d\n", ret);
+
+    f = table._last;
+    ret = p_register_onexit_function(&table, onexit_func);
+    ok(ret == 0, "got %d\n", ret);
+    ok(f != table._last, "got %p, initial %p\n", table._last, f);
+}
+
 static void init(void)
 {
     HMODULE module = LoadLibraryA("ucrtbase.dll");
 
     p_initialize_onexit_table = (void*)GetProcAddress(module, "_initialize_onexit_table");
+    p_register_onexit_function = (void*)GetProcAddress(module, "_register_onexit_function");
 }
 
 START_TEST(misc)
@@ -109,4 +152,5 @@ START_TEST(misc)
     init();
 
     test__initialize_onexit_table();
+    test__register_onexit_function();
 }

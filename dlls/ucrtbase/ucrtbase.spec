@@ -1861,7 +1861,7 @@
 @ cdecl _read(long ptr long) MSVCRT__read
 @ stub _realloc_base
 @ cdecl _recalloc(ptr long long)
-@ stub _register_onexit_function
+@ cdecl _register_onexit_function(ptr ptr) MSVCRT__register_onexit_function
 @ stub _register_thread_local_exe_atexit_callback
 @ cdecl _resetstkoflw() MSVCRT__resetstkoflw
 @ cdecl _rmdir(str) MSVCRT__rmdir
