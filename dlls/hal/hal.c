@@ -167,3 +167,8 @@ ULONG WINAPI READ_PORT_ULONG(ULONG *port)
     FIXME("(%p) stub!\n", port);
     return 0;
 }
+
+void WINAPI WRITE_PORT_ULONG(ULONG *port, ULONG value)
+{
+    FIXME("(%p %d) stub!\n", port, value);
+}
