@@ -602,9 +602,11 @@ static HRESULT WINAPI TimelineObj_GetTimelineType(IAMTimelineObj *iface, TIMELIN
 
 static HRESULT WINAPI TimelineObj_SetTimelineType(IAMTimelineObj *iface, TIMELINE_MAJOR_TYPE type)
 {
+    /* MSDN says that this function is "not supported" */
     TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
-    FIXME("(%p)->(%d): not implemented!\n", This, type);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, type);
+    if (type != This->timeline_type) return E_INVALIDARG;
+    return S_OK;
 }
 
 static HRESULT WINAPI TimelineObj_GetUserID(IAMTimelineObj *iface, LONG *id)

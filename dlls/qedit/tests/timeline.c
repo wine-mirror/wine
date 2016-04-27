@@ -82,6 +82,15 @@ static void test_timeline(void)
     hr = IAMTimelineObj_GetTimelineType(obj, &type);
     ok(hr == S_OK, "GetTimelineType failed: %08x\n", hr);
     ok(type == TIMELINE_MAJOR_TYPE_COMPOSITE, "Expected TIMELINE_MAJOR_TYPE_COMPOSITE got %d\n", type);
+
+    for (type = 0; type < 256; type++)
+    {
+        hr = IAMTimelineObj_SetTimelineType(obj, type);
+        if (type == TIMELINE_MAJOR_TYPE_COMPOSITE)
+            ok(hr == S_OK, "SetTimelineType failed: %08x\n", hr);
+        else
+            ok(hr == E_INVALIDARG, "Expected E_INVALIDARG got %08x\n", hr);
+    }
 }
 
 START_TEST(timeline)
