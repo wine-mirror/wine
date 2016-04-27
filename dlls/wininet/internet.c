@@ -1507,168 +1507,122 @@ static BOOL set_url_component(WCHAR **component, DWORD *component_length, const 
     return TRUE;
 }
 
-/***********************************************************************
- *           ConvertUrlComponentValue (Internal)
- *
- * Helper function for InternetCrackUrlA
- *
- */
-static void ConvertUrlComponentValue(LPSTR* lppszComponent, LPDWORD dwComponentLen,
-                                     LPWSTR lpwszComponent, DWORD dwwComponentLen,
-                                     LPCSTR lpszStart, LPCWSTR lpwszStart)
+static BOOL set_url_component_WtoA(const WCHAR *comp_w, DWORD length, const WCHAR *url_w, char **comp, DWORD *ret_length,
+                                   const char *url_a)
 {
-    TRACE("%p %d %p %d %p %p\n", *lppszComponent, *dwComponentLen, lpwszComponent, dwwComponentLen, lpszStart, lpwszStart);
-    if (*dwComponentLen != 0)
-    {
-        DWORD nASCIILength=WideCharToMultiByte(CP_ACP,0,lpwszComponent,dwwComponentLen,NULL,0,NULL,NULL);
-        if (*lppszComponent == NULL)
-        {
-            if (lpwszComponent)
-            {
-                int offset = WideCharToMultiByte(CP_ACP, 0, lpwszStart, lpwszComponent-lpwszStart, NULL, 0, NULL, NULL);
-                *lppszComponent = (LPSTR)lpszStart + offset;
-            }
-            else
-                *lppszComponent = NULL;
+    size_t size, ret_size = *ret_length;
 
-            *dwComponentLen = nASCIILength;
-        }
-        else
-        {
-            DWORD ncpylen = min((*dwComponentLen)-1, nASCIILength);
-            WideCharToMultiByte(CP_ACP,0,lpwszComponent,dwwComponentLen,*lppszComponent,ncpylen+1,NULL,NULL);
-            (*lppszComponent)[ncpylen]=0;
-            *dwComponentLen = ncpylen;
-        }
+    if (!*ret_length)
+        return TRUE;
+    size = WideCharToMultiByte(CP_ACP, 0, comp_w, length, NULL, 0, NULL, NULL);
+
+    if (!*comp) {
+        *comp = comp_w ? (char*)url_a + WideCharToMultiByte(CP_ACP, 0, url_w, comp_w-url_w, NULL, 0, NULL, NULL) : NULL;
+        *ret_length = size;
+        return TRUE;
     }
+
+    if (size+1 > ret_size) {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        *ret_length = size+1;
+        return FALSE;
+    }
+
+    *ret_length = size;
+    WideCharToMultiByte(CP_ACP, 0, comp_w, length, *comp, ret_size-1, NULL, NULL);
+    (*comp)[size] = 0;
+    return TRUE;
 }
 
+static BOOL set_url_component_AtoW(const char *comp_a, DWORD len_a, WCHAR **comp_w, DWORD *len_w, WCHAR **buf)
+{
+    *len_w = len_a;
+
+    if(!comp_a) {
+        *comp_w = NULL;
+        return TRUE;
+    }
+
+    if(!(*comp_w = *buf = heap_alloc(len_a*sizeof(WCHAR)))) {
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+
+    return TRUE;
+}
 
 /***********************************************************************
  *           InternetCrackUrlA (WININET.@)
  *
  * See InternetCrackUrlW.
  */
-BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
-    LPURL_COMPONENTSA lpUrlComponents)
+BOOL WINAPI InternetCrackUrlA(const char *url, DWORD url_length, DWORD flags, URL_COMPONENTSA *ret_comp)
 {
-  DWORD nLength;
-  URL_COMPONENTSW UCW;
-  BOOL ret = FALSE;
-  WCHAR *lpwszUrl, *hostname = NULL, *username = NULL, *password = NULL, *path = NULL,
-        *scheme = NULL, *extra = NULL;
+    WCHAR *host = NULL, *user = NULL, *pass = NULL, *path = NULL, *scheme = NULL, *extra = NULL;
+    URL_COMPONENTSW comp;
+    WCHAR *url_w;
+    BOOL ret;
 
-  TRACE("(%s %u %x %p)\n",
-        lpszUrl ? debugstr_an(lpszUrl, dwUrlLength ? dwUrlLength : strlen(lpszUrl)) : "(null)",
-        dwUrlLength, dwFlags, lpUrlComponents);
+    TRACE("(%s %u %x %p)\n", url_length ? debugstr_an(url, url_length) : debugstr_a(url), url_length, flags, ret_comp);
 
-  if (!lpszUrl || !*lpszUrl || !lpUrlComponents ||
-          lpUrlComponents->dwStructSize != sizeof(URL_COMPONENTSA))
-  {
-      INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
-      return FALSE;
-  }
-
-  if(dwUrlLength<=0)
-      dwUrlLength=-1;
-  nLength=MultiByteToWideChar(CP_ACP,0,lpszUrl,dwUrlLength,NULL,0);
-
-  /* if dwUrlLength=-1 then nLength includes null but length to 
-       InternetCrackUrlW should not include it                  */
-  if (dwUrlLength == -1) nLength--;
-
-  lpwszUrl = heap_alloc((nLength + 1) * sizeof(WCHAR));
-  MultiByteToWideChar(CP_ACP,0,lpszUrl,dwUrlLength,lpwszUrl,nLength + 1);
-  lpwszUrl[nLength] = '\0';
-
-  memset(&UCW,0,sizeof(UCW));
-  UCW.dwStructSize = sizeof(URL_COMPONENTSW);
-  if (lpUrlComponents->dwHostNameLength)
-  {
-    UCW.dwHostNameLength = lpUrlComponents->dwHostNameLength;
-    if (lpUrlComponents->lpszHostName)
-    {
-      hostname = heap_alloc(UCW.dwHostNameLength * sizeof(WCHAR));
-      UCW.lpszHostName = hostname;
+    if (!url || !*url || !ret_comp || ret_comp->dwStructSize != sizeof(URL_COMPONENTSA)) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
     }
-  }
-  if (lpUrlComponents->dwUserNameLength)
-  {
-    UCW.dwUserNameLength = lpUrlComponents->dwUserNameLength;
-    if (lpUrlComponents->lpszUserName)
-    {
-      username = heap_alloc(UCW.dwUserNameLength * sizeof(WCHAR));
-      UCW.lpszUserName = username;
-    }
-  }
-  if (lpUrlComponents->dwPasswordLength)
-  {
-    UCW.dwPasswordLength = lpUrlComponents->dwPasswordLength;
-    if (lpUrlComponents->lpszPassword)
-    {
-      password = heap_alloc(UCW.dwPasswordLength * sizeof(WCHAR));
-      UCW.lpszPassword = password;
-    }
-  }
-  if (lpUrlComponents->dwUrlPathLength)
-  {
-    UCW.dwUrlPathLength = lpUrlComponents->dwUrlPathLength;
-    if (lpUrlComponents->lpszUrlPath)
-    {
-      path = heap_alloc(UCW.dwUrlPathLength * sizeof(WCHAR));
-      UCW.lpszUrlPath = path;
-    }
-  }
-  if (lpUrlComponents->dwSchemeLength)
-  {
-    UCW.dwSchemeLength = lpUrlComponents->dwSchemeLength;
-    if (lpUrlComponents->lpszScheme)
-    {
-      scheme = heap_alloc(UCW.dwSchemeLength * sizeof(WCHAR));
-      UCW.lpszScheme = scheme;
-    }
-  }
-  if (lpUrlComponents->dwExtraInfoLength)
-  {
-    UCW.dwExtraInfoLength = lpUrlComponents->dwExtraInfoLength;
-    if (lpUrlComponents->lpszExtraInfo)
-    {
-      extra = heap_alloc(UCW.dwExtraInfoLength * sizeof(WCHAR));
-      UCW.lpszExtraInfo = extra;
-    }
-  }
-  if ((ret = InternetCrackUrlW(lpwszUrl, nLength, dwFlags, &UCW)))
-  {
-    ConvertUrlComponentValue(&lpUrlComponents->lpszHostName, &lpUrlComponents->dwHostNameLength,
-                             UCW.lpszHostName, UCW.dwHostNameLength, lpszUrl, lpwszUrl);
-    ConvertUrlComponentValue(&lpUrlComponents->lpszUserName, &lpUrlComponents->dwUserNameLength,
-                             UCW.lpszUserName, UCW.dwUserNameLength, lpszUrl, lpwszUrl);
-    ConvertUrlComponentValue(&lpUrlComponents->lpszPassword, &lpUrlComponents->dwPasswordLength,
-                             UCW.lpszPassword, UCW.dwPasswordLength, lpszUrl, lpwszUrl);
-    ConvertUrlComponentValue(&lpUrlComponents->lpszUrlPath, &lpUrlComponents->dwUrlPathLength,
-                             UCW.lpszUrlPath, UCW.dwUrlPathLength, lpszUrl, lpwszUrl);
-    ConvertUrlComponentValue(&lpUrlComponents->lpszScheme, &lpUrlComponents->dwSchemeLength,
-                             UCW.lpszScheme, UCW.dwSchemeLength, lpszUrl, lpwszUrl);
-    ConvertUrlComponentValue(&lpUrlComponents->lpszExtraInfo, &lpUrlComponents->dwExtraInfoLength,
-                             UCW.lpszExtraInfo, UCW.dwExtraInfoLength, lpszUrl, lpwszUrl);
 
-    lpUrlComponents->nScheme = UCW.nScheme;
-    lpUrlComponents->nPort = UCW.nPort;
+    comp.dwStructSize = sizeof(comp);
 
-    TRACE("%s: scheme(%s) host(%s) path(%s) extra(%s)\n", debugstr_a(lpszUrl),
-          debugstr_an(lpUrlComponents->lpszScheme, lpUrlComponents->dwSchemeLength),
-          debugstr_an(lpUrlComponents->lpszHostName, lpUrlComponents->dwHostNameLength),
-          debugstr_an(lpUrlComponents->lpszUrlPath, lpUrlComponents->dwUrlPathLength),
-          debugstr_an(lpUrlComponents->lpszExtraInfo, lpUrlComponents->dwExtraInfoLength));
-  }
-  heap_free(lpwszUrl);
-  heap_free(hostname);
-  heap_free(username);
-  heap_free(password);
-  heap_free(path);
-  heap_free(scheme);
-  heap_free(extra);
-  return ret;
+    ret = set_url_component_AtoW(ret_comp->lpszHostName, ret_comp->dwHostNameLength,
+                                 &comp.lpszHostName, &comp.dwHostNameLength, &host)
+        && set_url_component_AtoW(ret_comp->lpszUserName, ret_comp->dwUserNameLength,
+                                  &comp.lpszUserName, &comp.dwUserNameLength, &user)
+        && set_url_component_AtoW(ret_comp->lpszPassword, ret_comp->dwPasswordLength,
+                                  &comp.lpszPassword, &comp.dwPasswordLength, &pass)
+        && set_url_component_AtoW(ret_comp->lpszUrlPath, ret_comp->dwUrlPathLength,
+                                  &comp.lpszUrlPath, &comp.dwUrlPathLength, &path)
+        && set_url_component_AtoW(ret_comp->lpszScheme, ret_comp->dwSchemeLength,
+                                  &comp.lpszScheme, &comp.dwSchemeLength, &scheme)
+        && set_url_component_AtoW(ret_comp->lpszExtraInfo, ret_comp->dwExtraInfoLength,
+                                  &comp.lpszExtraInfo, &comp.dwExtraInfoLength, &extra);
+
+    if(ret && !(url_w = heap_strndupAtoW(url, url_length ? url_length : -1, &url_length))) {
+        SetLastError(ERROR_OUTOFMEMORY);
+        ret = FALSE;
+    }
+
+    if (ret && (ret = InternetCrackUrlW(url_w, url_length, flags, &comp))) {
+        ret_comp->nScheme = comp.nScheme;
+        ret_comp->nPort = comp.nPort;
+
+        ret = set_url_component_WtoA(comp.lpszHostName, comp.dwHostNameLength, url_w,
+                                     &ret_comp->lpszHostName, &ret_comp->dwHostNameLength, url)
+            && set_url_component_WtoA(comp.lpszUserName, comp.dwUserNameLength, url_w,
+                                      &ret_comp->lpszUserName, &ret_comp->dwUserNameLength, url)
+            && set_url_component_WtoA(comp.lpszPassword, comp.dwPasswordLength, url_w,
+                                      &ret_comp->lpszPassword, &ret_comp->dwPasswordLength, url)
+            && set_url_component_WtoA(comp.lpszUrlPath, comp.dwUrlPathLength, url_w,
+                                      &ret_comp->lpszUrlPath, &ret_comp->dwUrlPathLength, url)
+            && set_url_component_WtoA(comp.lpszScheme, comp.dwSchemeLength, url_w,
+                                      &ret_comp->lpszScheme, &ret_comp->dwSchemeLength, url)
+            && set_url_component_WtoA(comp.lpszExtraInfo, comp.dwExtraInfoLength, url_w,
+                                      &ret_comp->lpszExtraInfo, &ret_comp->dwExtraInfoLength, url);
+
+        if(ret)
+            TRACE("%s: scheme(%s) host(%s) path(%s) extra(%s)\n", debugstr_a(url),
+                  debugstr_an(ret_comp->lpszScheme, ret_comp->dwSchemeLength),
+                  debugstr_an(ret_comp->lpszHostName, ret_comp->dwHostNameLength),
+                  debugstr_an(ret_comp->lpszUrlPath, ret_comp->dwUrlPathLength),
+                  debugstr_an(ret_comp->lpszExtraInfo, ret_comp->dwExtraInfoLength));
+    }
+
+    heap_free(host);
+    heap_free(user);
+    heap_free(pass);
+    heap_free(path);
+    heap_free(scheme);
+    heap_free(extra);
+    heap_free(url_w);
+    return ret;
 }
 
 static const WCHAR url_schemes[][7] =
