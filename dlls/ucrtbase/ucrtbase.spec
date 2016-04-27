@@ -279,7 +279,7 @@
 @ varargs _execle(str str)
 @ varargs _execlp(str str)
 @ varargs _execlpe(str str)
-@ stub _execute_onexit_table
+@ cdecl _execute_onexit_table(ptr) MSVCRT__execute_onexit_table
 @ cdecl _execv(str ptr)
 @ cdecl _execve(str ptr ptr) MSVCRT__execve
 @ cdecl _execvp(str ptr)

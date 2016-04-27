@@ -37,6 +37,7 @@ typedef struct MSVCRT__onexit_table_t
 
 static int (CDECL *p_initialize_onexit_table)(MSVCRT__onexit_table_t *table);
 static int (CDECL *p_register_onexit_function)(MSVCRT__onexit_table_t *table, MSVCRT__onexit_t func);
+static int (CDECL *p_execute_onexit_table)(MSVCRT__onexit_table_t *table);
 
 static void test__initialize_onexit_table(void)
 {
@@ -98,8 +99,17 @@ static void test__initialize_onexit_table(void)
         table._first, table._last, table._end);
 }
 
+static int g_onexit_called;
 static int CDECL onexit_func(void)
 {
+    g_onexit_called++;
+    return 0;
+}
+
+static int CDECL onexit_func2(void)
+{
+    ok(g_onexit_called == 0, "got %d\n", g_onexit_called);
+    g_onexit_called++;
     return 0;
 }
 
@@ -139,12 +149,75 @@ static void test__register_onexit_function(void)
     ok(f != table._last, "got %p, initial %p\n", table._last, f);
 }
 
+static void test__execute_onexit_table(void)
+{
+    MSVCRT__onexit_table_t table;
+    int ret;
+
+    if (!p_execute_onexit_table)
+    {
+        win_skip("_execute_onexit_table() is not available.\n");
+        return;
+    }
+
+    ret = p_execute_onexit_table(NULL);
+    ok(ret == -1, "got %d\n", ret);
+
+    memset(&table, 0, sizeof(table));
+    ret = p_initialize_onexit_table(&table);
+    ok(ret == 0, "got %d\n", ret);
+
+    /* execute empty table */
+    ret = p_execute_onexit_table(&table);
+    ok(ret == 0, "got %d\n", ret);
+
+    /* same functions registered twice */
+    ret = p_register_onexit_function(&table, onexit_func);
+    ok(ret == 0, "got %d\n", ret);
+
+    ret = p_register_onexit_function(&table, NULL);
+    ok(ret == 0, "got %d\n", ret);
+
+    ret = p_register_onexit_function(&table, onexit_func);
+    ok(ret == 0, "got %d\n", ret);
+
+    ok(table._first != table._end, "got %p, %p\n", table._first, table._end);
+    g_onexit_called = 0;
+    ret = p_execute_onexit_table(&table);
+    ok(ret == 0, "got %d\n", ret);
+    ok(g_onexit_called == 2, "got %d\n", g_onexit_called);
+    ok(table._first == table._end, "got %p, %p\n", table._first, table._end);
+
+    /* execute again, table is already empty */
+    g_onexit_called = 0;
+    ret = p_execute_onexit_table(&table);
+    ok(ret == 0, "got %d\n", ret);
+    ok(g_onexit_called == 0, "got %d\n", g_onexit_called);
+
+    /* check call order */
+    memset(&table, 0, sizeof(table));
+    ret = p_initialize_onexit_table(&table);
+    ok(ret == 0, "got %d\n", ret);
+
+    ret = p_register_onexit_function(&table, onexit_func);
+    ok(ret == 0, "got %d\n", ret);
+
+    ret = p_register_onexit_function(&table, onexit_func2);
+    ok(ret == 0, "got %d\n", ret);
+
+    g_onexit_called = 0;
+    ret = p_execute_onexit_table(&table);
+    ok(ret == 0, "got %d\n", ret);
+    ok(g_onexit_called == 2, "got %d\n", g_onexit_called);
+}
+
 static void init(void)
 {
     HMODULE module = LoadLibraryA("ucrtbase.dll");
 
     p_initialize_onexit_table = (void*)GetProcAddress(module, "_initialize_onexit_table");
     p_register_onexit_function = (void*)GetProcAddress(module, "_register_onexit_function");
+    p_execute_onexit_table = (void*)GetProcAddress(module, "_execute_onexit_table");
 }
 
 START_TEST(misc)
@@ -153,4 +226,5 @@ START_TEST(misc)
 
     test__initialize_onexit_table();
     test__register_onexit_function();
+    test__execute_onexit_table();
 }

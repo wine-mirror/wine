@@ -34,7 +34,7 @@
 @ cdecl _endthread() ucrtbase._endthread
 @ cdecl _endthreadex(long) ucrtbase._endthreadex
 @ cdecl _errno() ucrtbase._errno
-@ stub _execute_onexit_table
+@ cdecl _execute_onexit_table(ptr) ucrtbase._execute_onexit_table
 @ cdecl _exit(long) ucrtbase._exit
 @ cdecl _fpieee_flt(long ptr ptr) ucrtbase._fpieee_flt
 @ cdecl _fpreset() ucrtbase._fpreset

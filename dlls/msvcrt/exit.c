@@ -400,6 +400,33 @@ int CDECL MSVCRT__register_onexit_function(MSVCRT__onexit_table_t *table, MSVCRT
 }
 
 /*********************************************************************
+ *		_execute_onexit_table (UCRTBASE.@)
+ */
+int CDECL MSVCRT__execute_onexit_table(MSVCRT__onexit_table_t *table)
+{
+    MSVCRT__onexit_t *func;
+
+    TRACE("(%p)\n", table);
+
+    if (!table)
+        return -1;
+
+    if (!table->_first || table->_first >= table->_last)
+        return 0;
+
+    for (func = table->_last - 1; func >= table->_first; func--)
+    {
+        if (*func)
+           (*func)();
+    }
+
+    MSVCRT_free(table->_first);
+    memset(table, 0, sizeof(*table));
+    MSVCRT__initialize_onexit_table(table);
+    return 0;
+}
+
+/*********************************************************************
  *		_set_purecall_handler (MSVCR71.@)
  */
 MSVCRT_purecall_handler CDECL _set_purecall_handler(MSVCRT_purecall_handler function)
