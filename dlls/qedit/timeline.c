@@ -737,9 +737,12 @@ static HRESULT WINAPI TimelineObj_RemoveAll(IAMTimelineObj *iface)
 
 static HRESULT WINAPI TimelineObj_GetTimelineNoRef(IAMTimelineObj *iface, IAMTimeline **timeline)
 {
+    /* MSDN says that this function is "not supported" */
     TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
-    FIXME("(%p)->(%p): not implemented!\n", This, timeline);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, timeline);
+    if (!timeline) return E_POINTER;
+    *timeline = NULL;
+    return E_NOINTERFACE;
 }
 
 static HRESULT WINAPI TimelineObj_GetGroupIBelongTo(IAMTimelineObj *iface, IAMTimelineGroup **group)

@@ -91,6 +91,14 @@ static void test_timeline(void)
         else
             ok(hr == E_INVALIDARG, "Expected E_INVALIDARG got %08x\n", hr);
     }
+
+    hr = IAMTimelineObj_GetTimelineNoRef(obj, NULL);
+    ok(hr == E_POINTER, "Expected E_POINTER got %08x\n", hr);
+
+    timeline2 = (IAMTimeline *)0xdeadbeef;
+    hr = IAMTimelineObj_GetTimelineNoRef(obj, &timeline2);
+    ok(hr == E_NOINTERFACE, "Expected E_NOINTERFACE got %08x\n", hr);
+    ok(!timeline2, "Expected NULL got %p\n", timeline2);
 }
 
 START_TEST(timeline)
