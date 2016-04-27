@@ -1072,26 +1072,47 @@ static HRESULT WINAPI dwritefactory_GetGdiInterop(IDWriteFactory3 *iface, IDWrit
 }
 
 static HRESULT WINAPI dwritefactory_CreateTextLayout(IDWriteFactory3 *iface, WCHAR const* string,
-    UINT32 len, IDWriteTextFormat *format, FLOAT max_width, FLOAT max_height, IDWriteTextLayout **layout)
+    UINT32 length, IDWriteTextFormat *format, FLOAT max_width, FLOAT max_height, IDWriteTextLayout **layout)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory3(iface);
+    struct textlayout_desc desc;
 
-    TRACE("(%p)->(%s:%u %p %f %f %p)\n", This, debugstr_wn(string, len), len, format, max_width, max_height, layout);
+    TRACE("(%p)->(%s:%u %p %f %f %p)\n", This, debugstr_wn(string, length), length, format, max_width, max_height, layout);
 
-    return create_textlayout(iface, string, len, format, max_width, max_height, layout);
+    desc.factory = iface;
+    desc.string = string;
+    desc.length = length;
+    desc.format = format;
+    desc.max_width = max_width;
+    desc.max_height = max_height;
+    desc.is_gdi_compatible = FALSE;
+    desc.ppdip = 1.0f;
+    desc.transform = NULL;
+    desc.use_gdi_natural = FALSE;
+    return create_textlayout(&desc, layout);
 }
 
 static HRESULT WINAPI dwritefactory_CreateGdiCompatibleTextLayout(IDWriteFactory3 *iface, WCHAR const* string,
-    UINT32 len, IDWriteTextFormat *format, FLOAT layout_width, FLOAT layout_height, FLOAT pixels_per_dip,
+    UINT32 length, IDWriteTextFormat *format, FLOAT max_width, FLOAT max_height, FLOAT pixels_per_dip,
     DWRITE_MATRIX const* transform, BOOL use_gdi_natural, IDWriteTextLayout **layout)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory3(iface);
+    struct textlayout_desc desc;
 
-    TRACE("(%p)->(%s:%u %p %f %f %f %p %d %p)\n", This, debugstr_wn(string, len), len, format, layout_width, layout_height,
+    TRACE("(%p)->(%s:%u %p %f %f %f %p %d %p)\n", This, debugstr_wn(string, length), length, format, max_width, max_height,
         pixels_per_dip, transform, use_gdi_natural, layout);
 
-    return create_gdicompat_textlayout(iface, string, len, format, layout_width, layout_height, pixels_per_dip, transform,
-        use_gdi_natural, layout);
+    desc.factory = iface;
+    desc.string = string;
+    desc.length = length;
+    desc.format = format;
+    desc.max_width = max_width;
+    desc.max_height = max_height;
+    desc.is_gdi_compatible = TRUE;
+    desc.ppdip = pixels_per_dip;
+    desc.transform = transform;
+    desc.use_gdi_natural = use_gdi_natural;
+    return create_textlayout(&desc, layout);
 }
 
 static HRESULT WINAPI dwritefactory_CreateEllipsisTrimmingSign(IDWriteFactory3 *iface, IDWriteTextFormat *format,
@@ -1122,6 +1143,7 @@ static HRESULT WINAPI dwritefactory_CreateGlyphRunAnalysis(IDWriteFactory3 *ifac
     DWRITE_MEASURING_MODE measuring_mode, FLOAT originX, FLOAT originY, IDWriteGlyphRunAnalysis **analysis)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory3(iface);
+    struct glyphrunanalysis_desc desc;
 
     TRACE("(%p)->(%p %.2f %p %d %d %.2f %.2f %p)\n", This, run, ppdip, transform, rendering_mode,
         measuring_mode, originX, originY, analysis);
@@ -1131,8 +1153,16 @@ static HRESULT WINAPI dwritefactory_CreateGlyphRunAnalysis(IDWriteFactory3 *ifac
         return E_INVALIDARG;
     }
 
-    return create_glyphrunanalysis(rendering_mode, measuring_mode, run, ppdip, transform, DWRITE_GRID_FIT_MODE_DEFAULT,
-        DWRITE_TEXT_ANTIALIAS_MODE_CLEARTYPE, originX, originY, analysis);
+    desc.run = run;
+    desc.ppdip = ppdip;
+    desc.transform = transform;
+    desc.rendering_mode = rendering_mode;
+    desc.measuring_mode = measuring_mode;
+    desc.gridfit_mode = DWRITE_GRID_FIT_MODE_DEFAULT;
+    desc.aa_mode = DWRITE_TEXT_ANTIALIAS_MODE_CLEARTYPE;
+    desc.origin_x = originX;
+    desc.origin_y = originY;
+    return create_glyphrunanalysis(&desc, analysis);
 }
 
 static HRESULT WINAPI dwritefactory1_GetEudcFontCollection(IDWriteFactory3 *iface, IDWriteFontCollection **collection,
@@ -1232,11 +1262,21 @@ static HRESULT WINAPI dwritefactory2_CreateGlyphRunAnalysis(IDWriteFactory3 *ifa
     IDWriteGlyphRunAnalysis **analysis)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory3(iface);
+    struct glyphrunanalysis_desc desc;
 
     TRACE("(%p)->(%p %p %d %d %d %d %.2f %.2f %p)\n", This, run, transform, rendering_mode, measuring_mode,
         gridfit_mode, aa_mode, originX, originY, analysis);
 
-    return create_glyphrunanalysis(rendering_mode, measuring_mode, run, 1.0f, transform, gridfit_mode, aa_mode, originX, originY, analysis);
+    desc.run = run;
+    desc.ppdip = 1.0f;
+    desc.transform = transform;
+    desc.rendering_mode = rendering_mode;
+    desc.measuring_mode = measuring_mode;
+    desc.gridfit_mode = gridfit_mode;
+    desc.aa_mode = aa_mode;
+    desc.origin_x = originX;
+    desc.origin_y = originY;
+    return create_glyphrunanalysis(&desc, analysis);
 }
 
 static HRESULT WINAPI dwritefactory3_CreateGlyphRunAnalysis(IDWriteFactory3 *iface, DWRITE_GLYPH_RUN const *run,

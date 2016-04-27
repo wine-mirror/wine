@@ -4864,9 +4864,7 @@ static inline void transform_2d_vec(D2D_POINT_2F *vec, const DWRITE_MATRIX *m)
     *vec = ret;
 }
 
-HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEASURING_MODE measuring_mode, DWRITE_GLYPH_RUN const *run,
-    FLOAT ppdip, const DWRITE_MATRIX *transform, DWRITE_GRID_FIT_MODE gridfit_mode, DWRITE_TEXT_ANTIALIAS_MODE aa_mode,
-    FLOAT originX, FLOAT originY, IDWriteGlyphRunAnalysis **ret)
+HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWriteGlyphRunAnalysis **ret)
 {
     struct dwrite_glyphrunanalysis *analysis;
     FLOAT rtl_factor;
@@ -4875,7 +4873,7 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
     *ret = NULL;
 
     /* check for valid rendering mode */
-    if ((UINT32)rendering_mode >= DWRITE_RENDERING_MODE_OUTLINE || rendering_mode == DWRITE_RENDERING_MODE_DEFAULT)
+    if ((UINT32)desc->rendering_mode >= DWRITE_RENDERING_MODE_OUTLINE || desc->rendering_mode == DWRITE_RENDERING_MODE_DEFAULT)
         return E_INVALIDARG;
 
     analysis = heap_alloc(sizeof(*analysis));
@@ -4884,27 +4882,27 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
 
     analysis->IDWriteGlyphRunAnalysis_iface.lpVtbl = &glyphrunanalysisvtbl;
     analysis->ref = 1;
-    analysis->rendering_mode = rendering_mode;
+    analysis->rendering_mode = desc->rendering_mode;
     analysis->flags = 0;
     analysis->bitmap = NULL;
-    analysis->ppdip = ppdip;
-    analysis->origin.x = originX * ppdip;
-    analysis->origin.y = originY * ppdip;
+    analysis->ppdip = desc->ppdip;
+    analysis->origin.x = desc->origin_x * desc->ppdip;
+    analysis->origin.y = desc->origin_y * desc->ppdip;
     SetRectEmpty(&analysis->bounds);
-    analysis->run = *run;
+    analysis->run = *desc->run;
     IDWriteFontFace_AddRef(analysis->run.fontFace);
-    analysis->glyphs = heap_alloc(run->glyphCount*sizeof(*run->glyphIndices));
-    analysis->advances = heap_alloc(run->glyphCount*sizeof(*analysis->advances));
-    if (run->glyphOffsets) {
-        analysis->advanceoffsets = heap_alloc(run->glyphCount*sizeof(*analysis->advanceoffsets));
-        analysis->ascenderoffsets = heap_alloc(run->glyphCount*sizeof(*analysis->ascenderoffsets));
+    analysis->glyphs = heap_alloc(desc->run->glyphCount*sizeof(*desc->run->glyphIndices));
+    analysis->advances = heap_alloc(desc->run->glyphCount*sizeof(*analysis->advances));
+    if (desc->run->glyphOffsets) {
+        analysis->advanceoffsets = heap_alloc(desc->run->glyphCount*sizeof(*analysis->advanceoffsets));
+        analysis->ascenderoffsets = heap_alloc(desc->run->glyphCount*sizeof(*analysis->ascenderoffsets));
     }
     else {
         analysis->advanceoffsets = NULL;
         analysis->ascenderoffsets = NULL;
     }
 
-    if (!analysis->glyphs || !analysis->advances || ((!analysis->advanceoffsets || !analysis->ascenderoffsets) && run->glyphOffsets)) {
+    if (!analysis->glyphs || !analysis->advances || ((!analysis->advanceoffsets || !analysis->ascenderoffsets) && desc->run->glyphOffsets)) {
         heap_free(analysis->glyphs);
         heap_free(analysis->advances);
         heap_free(analysis->advanceoffsets);
@@ -4920,8 +4918,8 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
     }
 
     /* check if transform is usable */
-    if (transform && memcmp(transform, &identity, sizeof(*transform))) {
-        analysis->m = *transform;
+    if (desc->transform && memcmp(desc->transform, &identity, sizeof(*desc->transform))) {
+        analysis->m = *desc->transform;
         analysis->flags |= RUNANALYSIS_USE_TRANSFORM;
     }
     else
@@ -4931,16 +4929,16 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
     analysis->run.glyphAdvances = NULL;
     analysis->run.glyphOffsets = NULL;
 
-    rtl_factor = run->bidiLevel & 1 ? -1.0f : 1.0f;
+    rtl_factor = desc->run->bidiLevel & 1 ? -1.0f : 1.0f;
 
     if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
         transform_2d_vec(&analysis->origin, &analysis->m);
 
-    memcpy(analysis->glyphs, run->glyphIndices, run->glyphCount*sizeof(*run->glyphIndices));
+    memcpy(analysis->glyphs, desc->run->glyphIndices, desc->run->glyphCount*sizeof(*desc->run->glyphIndices));
 
-    if (run->glyphAdvances) {
-        for (i = 0; i < run->glyphCount; i++) {
-            init_2d_vec(analysis->advances + i, rtl_factor * run->glyphAdvances[i] * ppdip, run->isSideways);
+    if (desc->run->glyphAdvances) {
+        for (i = 0; i < desc->run->glyphCount; i++) {
+            init_2d_vec(analysis->advances + i, rtl_factor * desc->run->glyphAdvances[i] * desc->ppdip, desc->run->isSideways);
             if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
                 transform_2d_vec(analysis->advances + i, &analysis->m);
         }
@@ -4949,31 +4947,31 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
         DWRITE_FONT_METRICS metrics;
         IDWriteFontFace1 *fontface1;
 
-        IDWriteFontFace_GetMetrics(run->fontFace, &metrics);
-        IDWriteFontFace_QueryInterface(run->fontFace, &IID_IDWriteFontFace1, (void**)&fontface1);
+        IDWriteFontFace_GetMetrics(desc->run->fontFace, &metrics);
+        IDWriteFontFace_QueryInterface(desc->run->fontFace, &IID_IDWriteFontFace1, (void**)&fontface1);
 
-        for (i = 0; i < run->glyphCount; i++) {
+        for (i = 0; i < desc->run->glyphCount; i++) {
             HRESULT hr;
             INT32 a;
 
-            switch (measuring_mode)
+            switch (desc->measuring_mode)
             {
             case DWRITE_MEASURING_MODE_NATURAL:
-                hr = IDWriteFontFace1_GetDesignGlyphAdvances(fontface1, 1, run->glyphIndices + i, &a, run->isSideways);
+                hr = IDWriteFontFace1_GetDesignGlyphAdvances(fontface1, 1, desc->run->glyphIndices + i, &a, desc->run->isSideways);
                 if (FAILED(hr))
                     a = 0;
-                init_2d_vec(analysis->advances + i, rtl_factor * get_scaled_advance_width(a, run->fontEmSize, &metrics) * ppdip,
-                    run->isSideways);
+                init_2d_vec(analysis->advances + i, rtl_factor * get_scaled_advance_width(a, desc->run->fontEmSize, &metrics) * desc->ppdip,
+                    desc->run->isSideways);
                 break;
             case DWRITE_MEASURING_MODE_GDI_CLASSIC:
             case DWRITE_MEASURING_MODE_GDI_NATURAL:
-                hr = IDWriteFontFace1_GetGdiCompatibleGlyphAdvances(fontface1, run->fontEmSize, ppdip, transform,
-                    measuring_mode == DWRITE_MEASURING_MODE_GDI_NATURAL, run->isSideways, 1, run->glyphIndices + i, &a);
+                hr = IDWriteFontFace1_GetGdiCompatibleGlyphAdvances(fontface1, desc->run->fontEmSize, desc->ppdip, desc->transform,
+                    desc->measuring_mode == DWRITE_MEASURING_MODE_GDI_NATURAL, desc->run->isSideways, 1, desc->run->glyphIndices + i, &a);
                 if (FAILED(hr))
                     init_2d_vec(analysis->advances + i, 0.0f, FALSE);
                 else
-                    init_2d_vec(analysis->advances + i, rtl_factor * floorf(a * run->fontEmSize * ppdip / metrics.designUnitsPerEm + 0.5f),
-                        run->isSideways);
+                    init_2d_vec(analysis->advances + i, rtl_factor * floorf(a * desc->run->fontEmSize * desc->ppdip / metrics.designUnitsPerEm + 0.5f),
+                        desc->run->isSideways);
                 break;
             default:
                 ;
@@ -4986,11 +4984,11 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
         IDWriteFontFace1_Release(fontface1);
     }
 
-    if (run->glyphOffsets) {
-        for (i = 0; i < run->glyphCount; i++) {
-            init_2d_vec(analysis->advanceoffsets + i, rtl_factor * run->glyphOffsets[i].advanceOffset * ppdip, run->isSideways);
+    if (desc->run->glyphOffsets) {
+        for (i = 0; i < desc->run->glyphCount; i++) {
+            init_2d_vec(analysis->advanceoffsets + i, rtl_factor * desc->run->glyphOffsets[i].advanceOffset * desc->ppdip, desc->run->isSideways);
             /* Positive ascender offset moves glyph up. Keep it orthogonal to advance direction. */
-            init_2d_vec(analysis->ascenderoffsets + i, -run->glyphOffsets[i].ascenderOffset * ppdip, !run->isSideways);
+            init_2d_vec(analysis->ascenderoffsets + i, -desc->run->glyphOffsets[i].ascenderOffset * desc->ppdip, !desc->run->isSideways);
             if (analysis->flags & RUNANALYSIS_USE_TRANSFORM) {
                 transform_2d_vec(analysis->advanceoffsets + i, &analysis->m);
                 transform_2d_vec(analysis->ascenderoffsets + i, &analysis->m);

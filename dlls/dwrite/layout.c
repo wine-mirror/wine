@@ -4441,8 +4441,7 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
     return IDWriteTextFormat_GetFontCollection(format, &layout->format.collection);
 }
 
-static HRESULT init_textlayout(IDWriteFactory3 *factory, const WCHAR *str, UINT32 len, IDWriteTextFormat *format,
-    FLOAT maxwidth, FLOAT maxheight, struct dwrite_textlayout *layout)
+static HRESULT init_textlayout(const struct textlayout_desc *desc, struct dwrite_textlayout *layout)
 {
     struct layout_range_header *range, *strike, *underline, *effect, *spacing, *typography;
     static const DWRITE_TEXT_RANGE r = { 0, ~0u };
@@ -4453,7 +4452,7 @@ static HRESULT init_textlayout(IDWriteFactory3 *factory, const WCHAR *str, UINT3
     layout->IDWriteTextAnalysisSink1_iface.lpVtbl = &dwritetextlayoutsinkvtbl;
     layout->IDWriteTextAnalysisSource1_iface.lpVtbl = &dwritetextlayoutsourcevtbl;
     layout->ref = 1;
-    layout->len = len;
+    layout->len = desc->length;
     layout->recompute = RECOMPUTE_EVERYTHING;
     layout->nominal_breakpoints = NULL;
     layout->actual_breakpoints = NULL;
@@ -4476,20 +4475,20 @@ static HRESULT init_textlayout(IDWriteFactory3 *factory, const WCHAR *str, UINT3
     list_init(&layout->typographies);
     memset(&layout->format, 0, sizeof(layout->format));
     memset(&layout->metrics, 0, sizeof(layout->metrics));
-    layout->metrics.layoutWidth = maxwidth;
-    layout->metrics.layoutHeight = maxheight;
+    layout->metrics.layoutWidth = desc->max_width;
+    layout->metrics.layoutHeight = desc->max_height;
     layout->measuringmode = DWRITE_MEASURING_MODE_NATURAL;
 
     layout->ppdip = 0.0f;
     memset(&layout->transform, 0, sizeof(layout->transform));
 
-    layout->str = heap_strdupnW(str, len);
-    if (len && !layout->str) {
+    layout->str = heap_strdupnW(desc->string, desc->length);
+    if (desc->length && !layout->str) {
         hr = E_OUTOFMEMORY;
         goto fail;
     }
 
-    hr = layout_format_from_textformat(layout, format);
+    hr = layout_format_from_textformat(layout, desc->format);
     if (FAILED(hr))
         goto fail;
 
@@ -4510,7 +4509,14 @@ static HRESULT init_textlayout(IDWriteFactory3 *factory, const WCHAR *str, UINT3
         goto fail;
     }
 
-    layout->factory = factory;
+    if (desc->is_gdi_compatible)
+        layout->measuringmode = desc->use_gdi_natural ? DWRITE_MEASURING_MODE_GDI_NATURAL : DWRITE_MEASURING_MODE_GDI_CLASSIC;
+    else
+        layout->measuringmode = DWRITE_MEASURING_MODE_NATURAL;
+    layout->ppdip = desc->ppdip;
+    layout->transform = desc->transform ? *desc->transform : identity;
+
+    layout->factory = desc->factory;
     IDWriteFactory3_AddRef(layout->factory);
     list_add_head(&layout->ranges, &range->entry);
     list_add_head(&layout->strike_ranges, &strike->entry);
@@ -4525,51 +4531,22 @@ fail:
     return hr;
 }
 
-HRESULT create_textlayout(IDWriteFactory3 *factory, const WCHAR *str, UINT32 len, IDWriteTextFormat *format,
-    FLOAT maxwidth, FLOAT maxheight, IDWriteTextLayout **ret)
+HRESULT create_textlayout(const struct textlayout_desc *desc, IDWriteTextLayout **ret)
 {
     struct dwrite_textlayout *layout;
     HRESULT hr;
 
     *ret = NULL;
 
-    if (!format || !str)
+    if (!desc->format || !desc->string)
         return E_INVALIDARG;
 
     layout = heap_alloc(sizeof(struct dwrite_textlayout));
     if (!layout) return E_OUTOFMEMORY;
 
-    hr = init_textlayout(factory, str, len, format, maxwidth, maxheight, layout);
+    hr = init_textlayout(desc, layout);
     if (hr == S_OK)
         *ret = (IDWriteTextLayout*)&layout->IDWriteTextLayout3_iface;
-
-    return hr;
-}
-
-HRESULT create_gdicompat_textlayout(IDWriteFactory3 *factory, const WCHAR *str, UINT32 len, IDWriteTextFormat *format,
-    FLOAT maxwidth, FLOAT maxheight, FLOAT ppdip, const DWRITE_MATRIX *transform, BOOL use_gdi_natural, IDWriteTextLayout **ret)
-{
-    struct dwrite_textlayout *layout;
-    HRESULT hr;
-
-    *ret = NULL;
-
-    if (!format || !str)
-        return E_INVALIDARG;
-
-    layout = heap_alloc(sizeof(struct dwrite_textlayout));
-    if (!layout) return E_OUTOFMEMORY;
-
-    hr = init_textlayout(factory, str, len, format, maxwidth, maxheight, layout);
-    if (hr == S_OK) {
-        layout->measuringmode = use_gdi_natural ? DWRITE_MEASURING_MODE_GDI_NATURAL : DWRITE_MEASURING_MODE_GDI_CLASSIC;
-
-        /* set gdi-specific properties */
-        layout->ppdip = ppdip;
-        layout->transform = transform ? *transform : identity;
-
-        *ret = (IDWriteTextLayout*)&layout->IDWriteTextLayout3_iface;
-    }
 
     return hr;
 }
