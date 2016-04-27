@@ -1482,6 +1482,30 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
     return TRUE;
 }
 
+static BOOL set_url_component(WCHAR **component, DWORD *component_length, const WCHAR *value, DWORD len)
+{
+    TRACE("%s (%d)\n", debugstr_wn(value, len), len);
+
+    if (!*component_length)
+        return TRUE;
+
+    if (!*component) {
+        *(const WCHAR**)component = value;
+        *component_length = len;
+        return TRUE;
+    }
+
+    if (*component_length < len+1) {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
+
+    *component_length = len;
+    if(len)
+        memcpy(*component, value, len*sizeof(WCHAR));
+    (*component)[len] = 0;
+    return TRUE;
+}
 
 /***********************************************************************
  *           ConvertUrlComponentValue (Internal)
@@ -1686,49 +1710,6 @@ static INTERNET_SCHEME GetInternetSchemeW(LPCWSTR lpszScheme, DWORD nMaxCmp)
 }
 
 /***********************************************************************
- *           SetUrlComponentValueW (Internal)
- *
- * Helper function for InternetCrackUrlW
- *
- * PARAMS
- *     lppszComponent [O] Holds the returned string
- *     dwComponentLen [I] Holds the size of lppszComponent
- *                    [O] Holds the length of the string in lppszComponent without '\0'
- *     lpszStart      [I] Holds the string to copy from
- *     len            [I] Holds the length of lpszStart without '\0'
- *
- * RETURNS
- *    TRUE on success
- *    FALSE on failure
- *
- */
-static BOOL SetUrlComponentValueW(LPWSTR* lppszComponent, LPDWORD dwComponentLen, LPCWSTR lpszStart, DWORD len)
-{
-    TRACE("%s (%d)\n", debugstr_wn(lpszStart,len), len);
-
-    if ( (*dwComponentLen == 0) && (*lppszComponent == NULL) )
-        return FALSE;
-
-    if (*dwComponentLen != 0 || *lppszComponent == NULL)
-    {
-        if (*lppszComponent == NULL)
-        {
-            *lppszComponent = (LPWSTR)lpszStart;
-            *dwComponentLen = len;
-        }
-        else
-        {
-            DWORD ncpylen = min((*dwComponentLen)-1, len);
-            memcpy(*lppszComponent, lpszStart, ncpylen*sizeof(WCHAR));
-            (*lppszComponent)[ncpylen] = '\0';
-            *dwComponentLen = ncpylen;
-        }
-    }
-
-    return TRUE;
-}
-
-/***********************************************************************
  *           InternetCrackUrlW   (WININET.@)
  *
  * Break up URL into its components
@@ -1813,14 +1794,15 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
     if(!lpszParam)
         lpszParam = memchrW(lpszap, '#', dwUrlLength - (lpszap - lpszUrl));
 
-    SetUrlComponentValueW(&lpUC->lpszExtraInfo, &lpUC->dwExtraInfoLength,
-                          lpszParam, lpszParam ? dwUrlLength-(lpszParam-lpszUrl) : 0);
+    if(!set_url_component(&lpUC->lpszExtraInfo, &lpUC->dwExtraInfoLength,
+                          lpszParam, lpszParam ? dwUrlLength-(lpszParam-lpszUrl) : 0))
+        return FALSE;
 
 
     /* Get scheme first. */
     lpUC->nScheme = GetInternetSchemeW(lpszUrl, lpszcp - lpszUrl);
-    SetUrlComponentValueW(&lpUC->lpszScheme, &lpUC->dwSchemeLength,
-                               lpszUrl, lpszcp - lpszUrl);
+    if(!set_url_component(&lpUC->lpszScheme, &lpUC->dwSchemeLength, lpszUrl, lpszcp - lpszUrl))
+        return FALSE;
 
     /* Eat ':' in protocol. */
     lpszcp++;
@@ -1854,8 +1836,8 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
             if (lpszHost == NULL || lpszHost > lpszNetLoc)
             {
                 /* username and password not specified. */
-                SetUrlComponentValueW(&lpUC->lpszUserName, &lpUC->dwUserNameLength, NULL, 0);
-                SetUrlComponentValueW(&lpUC->lpszPassword, &lpUC->dwPasswordLength, NULL, 0);
+                set_url_component(&lpUC->lpszUserName, &lpUC->dwUserNameLength, NULL, 0);
+                set_url_component(&lpUC->lpszPassword, &lpUC->dwPasswordLength, NULL, 0);
             }
             else /* Parse out username and password */
             {
@@ -1870,14 +1852,14 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
                     lpszcp++;
                 }
 
-                SetUrlComponentValueW(&lpUC->lpszUserName, &lpUC->dwUserNameLength,
-                                      lpszUser, lpszPasswd - lpszUser);
+                if(!set_url_component(&lpUC->lpszUserName, &lpUC->dwUserNameLength, lpszUser, lpszPasswd - lpszUser))
+                    return FALSE;
 
                 if (lpszPasswd != lpszHost)
                     lpszPasswd++;
-                SetUrlComponentValueW(&lpUC->lpszPassword, &lpUC->dwPasswordLength,
-                                      lpszPasswd == lpszHost ? NULL : lpszPasswd,
-                                      lpszHost - lpszPasswd);
+                if(!set_url_component(&lpUC->lpszPassword, &lpUC->dwPasswordLength,
+                                      lpszPasswd == lpszHost ? NULL : lpszPasswd, lpszHost - lpszPasswd))
+                    return FALSE;
 
                 lpszcp++; /* Advance to beginning of host */
             }
@@ -1891,8 +1873,8 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
                entire string up to the first '/' */
             if(lpUC->nScheme==INTERNET_SCHEME_RES)
             {
-                SetUrlComponentValueW(&lpUC->lpszHostName, &lpUC->dwHostNameLength,
-                                      lpszHost, lpszPort - lpszHost);
+                if(!set_url_component(&lpUC->lpszHostName, &lpUC->dwHostNameLength, lpszHost, lpszPort - lpszHost))
+                    return FALSE;
                 lpszcp=lpszNetLoc;
             }
             else
@@ -1909,13 +1891,12 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
                 if(lpUC->nScheme==INTERNET_SCHEME_FILE && lpszPort <= lpszHost+1)
                 {
                     lpszcp=lpszHost;
-                    SetUrlComponentValueW(&lpUC->lpszHostName, &lpUC->dwHostNameLength,
-                                          NULL, 0);
+                    set_url_component(&lpUC->lpszHostName, &lpUC->dwHostNameLength, NULL, 0);
                 }
                 else
                 {
-                    SetUrlComponentValueW(&lpUC->lpszHostName, &lpUC->dwHostNameLength,
-                                          lpszHost, lpszPort - lpszHost);
+                    if(!set_url_component(&lpUC->lpszHostName, &lpUC->dwHostNameLength, lpszHost, lpszPort - lpszHost))
+                        return FALSE;
                     if (lpszPort != lpszNetLoc)
                         lpUC->nPort = atoiW(++lpszPort);
                     else switch (lpUC->nScheme)
@@ -1941,9 +1922,9 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
     }
     else
     {
-        SetUrlComponentValueW(&lpUC->lpszUserName, &lpUC->dwUserNameLength, NULL, 0);
-        SetUrlComponentValueW(&lpUC->lpszPassword, &lpUC->dwPasswordLength, NULL, 0);
-        SetUrlComponentValueW(&lpUC->lpszHostName, &lpUC->dwHostNameLength, NULL, 0);
+        set_url_component(&lpUC->lpszUserName, &lpUC->dwUserNameLength, NULL, 0);
+        set_url_component(&lpUC->lpszPassword, &lpUC->dwPasswordLength, NULL, 0);
+        set_url_component(&lpUC->lpszHostName, &lpUC->dwHostNameLength, NULL, 0);
     }
 
     /* Here lpszcp points to:
@@ -2005,12 +1986,11 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
                     ++len;
                 }
             }
-            SetUrlComponentValueW(&lpUC->lpszUrlPath, &lpUC->dwUrlPathLength,
-                                       tmppath, len);
+            if(!set_url_component(&lpUC->lpszUrlPath, &lpUC->dwUrlPathLength, tmppath, len))
+                return FALSE;
         }
-        else
-            SetUrlComponentValueW(&lpUC->lpszUrlPath, &lpUC->dwUrlPathLength,
-                                       lpszcp, len);
+        else if(!set_url_component(&lpUC->lpszUrlPath, &lpUC->dwUrlPathLength, lpszcp, len))
+            return FALSE;
     }
     else
     {
