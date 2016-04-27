@@ -3706,9 +3706,8 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
     LPCSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD_PTR dwContext)
 {
     HINTERNET rc = NULL;
-    DWORD lenHeaders = 0;
     LPWSTR szUrl = NULL;
-    LPWSTR szHeaders = NULL;
+    WCHAR *headers = NULL;
 
     TRACE("\n");
 
@@ -3719,20 +3718,17 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
     }
 
     if(lpszHeaders) {
-        lenHeaders = MultiByteToWideChar(CP_ACP, 0, lpszHeaders, dwHeadersLength, NULL, 0 );
-        szHeaders = heap_alloc(lenHeaders*sizeof(WCHAR));
-        if(!szHeaders) {
+        headers = heap_strndupAtoW(lpszHeaders, dwHeadersLength, &dwHeadersLength);
+        if(!headers) {
             heap_free(szUrl);
             return NULL;
         }
-        MultiByteToWideChar(CP_ACP, 0, lpszHeaders, dwHeadersLength, szHeaders, lenHeaders);
     }
     
-    rc = InternetOpenUrlW(hInternet, szUrl, szHeaders,
-        lenHeaders, dwFlags, dwContext);
+    rc = InternetOpenUrlW(hInternet, szUrl, headers, dwHeadersLength, dwFlags, dwContext);
 
     heap_free(szUrl);
-    heap_free(szHeaders);
+    heap_free(headers);
     return rc;
 }
 
