@@ -52,6 +52,7 @@ static inline TimelineImpl *impl_from_IAMTimeline(IAMTimeline *iface)
 typedef struct {
     IAMTimelineObj IAMTimelineObj_iface;
     LONG ref;
+    TIMELINE_MAJOR_TYPE timeline_type;
 } TimelineObjImpl;
 
 static inline TimelineObjImpl *impl_from_IAMTimelineObj(IAMTimelineObj *iface)
@@ -169,6 +170,7 @@ static HRESULT WINAPI Timeline_IAMTimeline_CreateEmptyNode(IAMTimeline *iface, I
 
     obj_impl->ref = 1;
     obj_impl->IAMTimelineObj_iface.lpVtbl = &IAMTimelineObj_VTable;
+    obj_impl->timeline_type = type;
 
     *obj = &obj_impl->IAMTimelineObj_iface;
     return S_OK;
@@ -592,8 +594,10 @@ static HRESULT WINAPI TimelineObj_GetSubObjectLoaded(IAMTimelineObj *iface, BOOL
 static HRESULT WINAPI TimelineObj_GetTimelineType(IAMTimelineObj *iface, TIMELINE_MAJOR_TYPE *type)
 {
     TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
-    FIXME("(%p)->(%p): not implemented!\n", This, type);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, type);
+    if (!type) return E_POINTER;
+    *type = This->timeline_type;
+    return S_OK;
 }
 
 static HRESULT WINAPI TimelineObj_SetTimelineType(IAMTimelineObj *iface, TIMELINE_MAJOR_TYPE type)

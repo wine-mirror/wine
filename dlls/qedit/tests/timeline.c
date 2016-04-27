@@ -75,6 +75,13 @@ static void test_timeline(void)
     hr = IAMTimelineObj_QueryInterface(obj, &IID_IAMTimeline, (void **)&timeline2);
     ok(hr == E_NOINTERFACE, "Expected E_NOINTERFACE got %08x\n", hr);
     ok(!timeline2, "Expected NULL got %p\n", timeline2);
+
+    hr = IAMTimelineObj_GetTimelineType(obj, NULL);
+    ok(hr == E_POINTER, "Expected E_POINTER got %08x\n", hr);
+
+    hr = IAMTimelineObj_GetTimelineType(obj, &type);
+    ok(hr == S_OK, "GetTimelineType failed: %08x\n", hr);
+    ok(type == TIMELINE_MAJOR_TYPE_COMPOSITE, "Expected TIMELINE_MAJOR_TYPE_COMPOSITE got %d\n", type);
 }
 
 START_TEST(timeline)
