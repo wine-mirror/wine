@@ -2,6 +2,7 @@ TESTDLL   = qedit.dll
 IMPORTS   = oleaut32 ole32
 
 C_SRCS = \
-	mediadet.c
+	mediadet.c \
+	timeline.c
 
 RC_SRCS = qedit.rc
