@@ -521,41 +521,32 @@ static void free_global_proxy( void )
 
 static BOOL parse_proxy_url( proxyinfo_t *info, const WCHAR *url )
 {
-    static const WCHAR fmt[] = {'%','s',':','%','u',0};
-    WCHAR hostname[INTERNET_MAX_HOST_NAME_LENGTH];
-    WCHAR username[INTERNET_MAX_USER_NAME_LENGTH];
-    WCHAR password[INTERNET_MAX_PASSWORD_LENGTH];
-    URL_COMPONENTSW uc;
+    static const WCHAR fmt[] = {'%','.','*','s',':','%','u',0};
+    URL_COMPONENTSW uc = {sizeof(uc)};
 
-    hostname[0] = username[0] = password[0] = 0;
-    memset( &uc, 0, sizeof(uc) );
-    uc.dwStructSize      = sizeof(uc);
-    uc.lpszHostName      = hostname;
-    uc.dwHostNameLength  = INTERNET_MAX_HOST_NAME_LENGTH;
-    uc.lpszUserName      = username;
-    uc.dwUserNameLength  = INTERNET_MAX_USER_NAME_LENGTH;
-    uc.lpszPassword      = password;
-    uc.dwPasswordLength  = INTERNET_MAX_PASSWORD_LENGTH;
+    uc.dwHostNameLength = 1;
+    uc.dwUserNameLength = 1;
+    uc.dwPasswordLength = 1;
 
     if (!InternetCrackUrlW( url, 0, 0, &uc )) return FALSE;
-    if (!hostname[0])
+    if (!uc.dwHostNameLength)
     {
         if (!(info->proxy = heap_strdupW( url ))) return FALSE;
         info->proxyUsername = NULL;
         info->proxyPassword = NULL;
         return TRUE;
     }
-    if (!(info->proxy = heap_alloc( (strlenW(hostname) + 12) * sizeof(WCHAR) ))) return FALSE;
-    sprintfW( info->proxy, fmt, hostname, uc.nPort );
+    if (!(info->proxy = heap_alloc( (uc.dwHostNameLength + 12) * sizeof(WCHAR) ))) return FALSE;
+    sprintfW( info->proxy, fmt, uc.dwHostNameLength, uc.lpszHostName, uc.nPort );
 
-    if (!username[0]) info->proxyUsername = NULL;
-    else if (!(info->proxyUsername = heap_strdupW( username )))
+    if (!uc.dwUserNameLength) info->proxyUsername = NULL;
+    else if (!(info->proxyUsername = heap_strndupW( uc.lpszUserName, uc.dwUserNameLength )))
     {
         heap_free( info->proxy );
         return FALSE;
     }
-    if (!password[0]) info->proxyPassword = NULL;
-    else if (!(info->proxyPassword = heap_strdupW( password )))
+    if (!uc.dwPasswordLength) info->proxyPassword = NULL;
+    else if (!(info->proxyPassword = heap_strndupW( uc.lpszPassword, uc.dwPasswordLength )))
     {
         heap_free( info->proxyUsername );
         heap_free( info->proxy );
