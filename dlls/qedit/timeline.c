@@ -49,6 +49,18 @@ static inline TimelineImpl *impl_from_IAMTimeline(IAMTimeline *iface)
     return CONTAINING_RECORD(iface, TimelineImpl, IAMTimeline_iface);
 }
 
+typedef struct {
+    IAMTimelineObj IAMTimelineObj_iface;
+    LONG ref;
+} TimelineObjImpl;
+
+static inline TimelineObjImpl *impl_from_IAMTimelineObj(IAMTimelineObj *iface)
+{
+    return CONTAINING_RECORD(iface, TimelineObjImpl, IAMTimelineObj_iface);
+}
+
+static const IAMTimelineObjVtbl IAMTimelineObj_VTable;
+
 /* Timeline inner IUnknown */
 
 static HRESULT WINAPI Timeline_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
@@ -129,8 +141,37 @@ static HRESULT WINAPI Timeline_IAMTimeline_CreateEmptyNode(IAMTimeline *iface, I
                                                            TIMELINE_MAJOR_TYPE type)
 {
     TimelineImpl *This = impl_from_IAMTimeline(iface);
-    FIXME("(%p)->(%p,%04x): not implemented!\n", This, obj, type);
-    return E_NOTIMPL;
+    TimelineObjImpl* obj_impl;
+
+    TRACE("(%p)->(%p,%d)\n", This, obj, type);
+
+    if (!obj)
+        return E_POINTER;
+
+    switch (type)
+    {
+        case TIMELINE_MAJOR_TYPE_COMPOSITE:
+        case TIMELINE_MAJOR_TYPE_TRACK:
+        case TIMELINE_MAJOR_TYPE_SOURCE:
+        case TIMELINE_MAJOR_TYPE_TRANSITION:
+        case TIMELINE_MAJOR_TYPE_EFFECT:
+        case TIMELINE_MAJOR_TYPE_GROUP:
+            break;
+        default:
+            return E_INVALIDARG;
+    }
+
+    obj_impl = CoTaskMemAlloc(sizeof(TimelineObjImpl));
+    if (!obj_impl) {
+        *obj = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    obj_impl->ref = 1;
+    obj_impl->IAMTimelineObj_iface.lpVtbl = &IAMTimelineObj_VTable;
+
+    *obj = &obj_impl->IAMTimelineObj_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI Timeline_IAMTimeline_AddGroup(IAMTimeline *iface, IAMTimelineObj *group)
@@ -395,3 +436,361 @@ HRESULT AMTimeline_create(IUnknown *pUnkOuter, LPVOID *ppv)
     *ppv = &obj->IUnknown_inner;
     return S_OK;
 }
+
+/* IAMTimelineObj implementation */
+
+static HRESULT WINAPI TimelineObj_QueryInterface(IAMTimelineObj *iface, REFIID riid, void **ppv)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IAMTimelineObj))
+        *ppv = &This->IAMTimelineObj_iface;
+    else
+        WARN("(%p, %s,%p): not found\n", This, debugstr_guid(riid), ppv);
+
+    if (!*ppv)
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI TimelineObj_AddRef(IAMTimelineObj *iface)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) new ref = %u\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI TimelineObj_Release(IAMTimelineObj *iface)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) new ref = %u\n", This, ref);
+
+    if (!ref)
+        CoTaskMemFree(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI TimelineObj_GetStartStop(IAMTimelineObj *iface, REFERENCE_TIME *start, REFERENCE_TIME *stop)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p,%p): not implemented!\n", This, start, stop);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_GetStartStop2(IAMTimelineObj *iface, REFTIME *start, REFTIME *stop)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p,%p): not implemented!\n", This, start, stop);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_FixTimes(IAMTimelineObj *iface, REFERENCE_TIME *start, REFERENCE_TIME *stop)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p,%p): not implemented!\n", This, start, stop);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_FixTimes2(IAMTimelineObj *iface, REFTIME *start, REFTIME *stop)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p,%p): not implemented!\n", This, start, stop);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_SetStartStop(IAMTimelineObj *iface, REFERENCE_TIME start, REFERENCE_TIME stop)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%s,%s): not implemented!\n", This, wine_dbgstr_longlong(start), wine_dbgstr_longlong(stop));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_SetStartStop2(IAMTimelineObj *iface, REFTIME start, REFTIME stop)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%f,%f): not implemented!\n", This, start, stop);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_GetPropertySetter(IAMTimelineObj *iface, IPropertySetter **setter)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p): not implemented!\n", This, setter);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_SetPropertySetter(IAMTimelineObj *iface, IPropertySetter *setter)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p): not implemented!\n", This, setter);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_GetSubObject(IAMTimelineObj *iface, IUnknown **obj)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p): not implemented!\n", This, obj);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_SetSubObject(IAMTimelineObj *iface, IUnknown *obj)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p): not implemented!\n", This, obj);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_SetSubObjectGUID(IAMTimelineObj *iface, GUID guid)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%s): not implemented!\n", This, wine_dbgstr_guid(&guid));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_SetSubObjectGUIDB(IAMTimelineObj *iface, BSTR guidb)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%s): not implemented!\n", This, wine_dbgstr_w(guidb));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_GetSubObjectGUID(IAMTimelineObj *iface, GUID *guid)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p): not implemented!\n", This, guid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_GetSubObjectGUIDB(IAMTimelineObj *iface, BSTR *guidb)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p): not implemented!\n", This, guidb);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_GetSubObjectLoaded(IAMTimelineObj *iface, BOOL *loaded)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p): not implemented!\n", This, loaded);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_GetTimelineType(IAMTimelineObj *iface, TIMELINE_MAJOR_TYPE *type)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p): not implemented!\n", This, type);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_SetTimelineType(IAMTimelineObj *iface, TIMELINE_MAJOR_TYPE type)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%d): not implemented!\n", This, type);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_GetUserID(IAMTimelineObj *iface, LONG *id)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p): not implemented!\n", This, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_SetUserID(IAMTimelineObj *iface, LONG id)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%d): not implemented!\n", This, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_GetGenID(IAMTimelineObj *iface, LONG *id)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p): not implemented!\n", This, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_GetUserName(IAMTimelineObj *iface, BSTR *name)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p): not implemented!\n", This, name);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_SetUserName(IAMTimelineObj *iface, BSTR name)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%s): not implemented!\n", This, wine_dbgstr_w(name));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_GetUserData(IAMTimelineObj *iface, BYTE *data, LONG *size)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p,%p): not implemented!\n", This, data, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_SetUserData(IAMTimelineObj *iface, BYTE *data, LONG size)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p,%d): not implemented!\n", This, data, size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_GetMuted(IAMTimelineObj *iface, BOOL *muted)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p): not implemented!\n", This, muted);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_SetMuted(IAMTimelineObj *iface, BOOL muted)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%d): not implemented!\n", This, muted);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_GetLocked(IAMTimelineObj *iface, BOOL *locked)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p): not implemented!\n", This, locked);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_SetLocked(IAMTimelineObj *iface, BOOL locked)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%d): not implemented!\n", This, locked);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_GetDirtyRange(IAMTimelineObj *iface, REFERENCE_TIME *start, REFERENCE_TIME *stop)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p,%p): not implemented!\n", This, start, stop);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_GetDirtyRange2(IAMTimelineObj *iface, REFTIME *start, REFTIME *stop)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p,%p): not implemented!\n", This, start, stop);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_SetDirtyRange(IAMTimelineObj *iface, REFERENCE_TIME start, REFERENCE_TIME stop)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%s,%s): not implemented!\n", This, wine_dbgstr_longlong(start), wine_dbgstr_longlong(stop));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_SetDirtyRange2(IAMTimelineObj *iface, REFTIME start, REFTIME stop)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%f,%f): not implemented!\n", This, start, stop);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_ClearDirty(IAMTimelineObj *iface)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p): not implemented!\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_Remove(IAMTimelineObj *iface)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p): not implemented!\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_RemoveAll(IAMTimelineObj *iface)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p): not implemented!\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_GetTimelineNoRef(IAMTimelineObj *iface, IAMTimeline **timeline)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p): not implemented!\n", This, timeline);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_GetGroupIBelongTo(IAMTimelineObj *iface, IAMTimelineGroup **group)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p): not implemented!\n", This, group);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TimelineObj_GetEmbedDepth(IAMTimelineObj *iface, LONG *depth)
+{
+    TimelineObjImpl *This = impl_from_IAMTimelineObj(iface);
+    FIXME("(%p)->(%p): not implemented!\n", This, depth);
+    return E_NOTIMPL;
+}
+
+static const IAMTimelineObjVtbl IAMTimelineObj_VTable =
+{
+    TimelineObj_QueryInterface,
+    TimelineObj_AddRef,
+    TimelineObj_Release,
+    TimelineObj_GetStartStop,
+    TimelineObj_GetStartStop2,
+    TimelineObj_FixTimes,
+    TimelineObj_FixTimes2,
+    TimelineObj_SetStartStop,
+    TimelineObj_SetStartStop2,
+    TimelineObj_GetPropertySetter,
+    TimelineObj_SetPropertySetter,
+    TimelineObj_GetSubObject,
+    TimelineObj_SetSubObject,
+    TimelineObj_SetSubObjectGUID,
+    TimelineObj_SetSubObjectGUIDB,
+    TimelineObj_GetSubObjectGUID,
+    TimelineObj_GetSubObjectGUIDB,
+    TimelineObj_GetSubObjectLoaded,
+    TimelineObj_GetTimelineType,
+    TimelineObj_SetTimelineType,
+    TimelineObj_GetUserID,
+    TimelineObj_SetUserID,
+    TimelineObj_GetGenID,
+    TimelineObj_GetUserName,
+    TimelineObj_SetUserName,
+    TimelineObj_GetUserData,
+    TimelineObj_SetUserData,
+    TimelineObj_GetMuted,
+    TimelineObj_SetMuted,
+    TimelineObj_GetLocked,
+    TimelineObj_SetLocked,
+    TimelineObj_GetDirtyRange,
+    TimelineObj_GetDirtyRange2,
+    TimelineObj_SetDirtyRange,
+    TimelineObj_SetDirtyRange2,
+    TimelineObj_ClearDirty,
+    TimelineObj_Remove,
+    TimelineObj_RemoveAll,
+    TimelineObj_GetTimelineNoRef,
+    TimelineObj_GetGroupIBelongTo,
+    TimelineObj_GetEmbedDepth,
+};

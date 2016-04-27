@@ -38,11 +38,9 @@ static void test_timeline(void)
     if (!timeline) return;
 
     hr = IAMTimeline_CreateEmptyNode(timeline, NULL, 0);
-todo_wine
     ok(hr == E_POINTER, "Expected E_POINTER got %08x\n", hr);
 
     hr = IAMTimeline_CreateEmptyNode(timeline, NULL, TIMELINE_MAJOR_TYPE_COMPOSITE);
-todo_wine
     ok(hr == E_POINTER, "Expected E_POINTER got %08x\n", hr);
 
     for (type = 0; type < 256; type++)
@@ -57,12 +55,10 @@ todo_wine
             case TIMELINE_MAJOR_TYPE_TRANSITION:
             case TIMELINE_MAJOR_TYPE_EFFECT:
             case TIMELINE_MAJOR_TYPE_GROUP:
-todo_wine
                 ok(hr == S_OK, "CreateEmptyNode failed: %08x\n", hr);
                 if (obj != &obj_iface) IAMTimelineObj_Release(obj);
                 break;
             default:
-todo_wine
                 ok(hr == E_INVALIDARG, "Expected E_INVALIDARG got %08x\n", hr);
                 ok(obj == &obj_iface, "Expected %p got %p\n", &obj_iface, obj);
         }
@@ -70,7 +66,6 @@ todo_wine
 
     obj = NULL;
     hr = IAMTimeline_CreateEmptyNode(timeline, &obj, TIMELINE_MAJOR_TYPE_COMPOSITE);
-todo_wine
     ok(hr == S_OK, "CreateEmptyNode failed: %08x\n", hr);
     if (!obj) return;
 
