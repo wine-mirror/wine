@@ -91,3 +91,10 @@ BOOL WINAPI WinStationVirtualOpen( PVOID a, PVOID b, PVOID c )
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
+
+BOOLEAN WINAPI WinStationEnumerateW( HANDLE server, PSESSIONIDW *sessionids, ULONG *count )
+{
+    FIXME( "%p %p %p\n", server, sessionids, count );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}

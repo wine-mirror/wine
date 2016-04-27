@@ -29,7 +29,7 @@
 @ stub WinStationEnumerateA
 @ stub WinStationEnumerateLicenses
 @ stub WinStationEnumerateProcesses
-@ stub WinStationEnumerateW
+@ stdcall WinStationEnumerateW(ptr ptr ptr)
 @ stub WinStationEnumerate_IndexedA
 @ stub WinStationEnumerate_IndexedW
 @ stub WinStationFreeGAPMemory
