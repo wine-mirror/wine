@@ -166,6 +166,25 @@ static inline LPWSTR heap_strndupW(LPCWSTR str, UINT max_len)
     return ret;
 }
 
+static inline WCHAR *heap_strndupAtoW(const char *str, int len_a, DWORD *len_w)
+{
+    WCHAR *ret = NULL;
+
+    if(str) {
+        size_t len;
+        if(len_a < 0) len_a = strlen(str);
+        len = MultiByteToWideChar(CP_ACP, 0, str, len_a, NULL, 0);
+        ret = heap_alloc((len+1)*sizeof(WCHAR));
+        if(ret) {
+            MultiByteToWideChar(CP_ACP, 0, str, len_a, ret, len);
+            ret[len] = 0;
+            *len_w = len;
+        }
+    }
+
+    return ret;
+}
+
 static inline WCHAR *heap_strdupAtoW(const char *str)
 {
     LPWSTR ret = NULL;

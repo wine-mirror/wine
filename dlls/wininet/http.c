@@ -1376,21 +1376,17 @@ BOOL WINAPI HttpAddRequestHeadersW(HINTERNET hHttpRequest,
 BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
 	LPCSTR lpszHeader, DWORD dwHeaderLength, DWORD dwModifier)
 {
-    DWORD len;
-    LPWSTR hdr;
+    WCHAR *headers = NULL;
     BOOL r;
 
     TRACE("%p, %s, %i, %i\n", hHttpRequest, debugstr_an(lpszHeader, dwHeaderLength), dwHeaderLength, dwModifier);
 
-    len = MultiByteToWideChar( CP_ACP, 0, lpszHeader, dwHeaderLength, NULL, 0 );
-    hdr = heap_alloc(len*sizeof(WCHAR));
-    MultiByteToWideChar( CP_ACP, 0, lpszHeader, dwHeaderLength, hdr, len );
-    if( dwHeaderLength != ~0U )
-        dwHeaderLength = len;
+    if(lpszHeader)
+        headers = heap_strndupAtoW(lpszHeader, dwHeaderLength, &dwHeaderLength);
 
-    r = HttpAddRequestHeadersW( hHttpRequest, hdr, dwHeaderLength, dwModifier );
+    r = HttpAddRequestHeadersW(hHttpRequest, headers, dwHeaderLength, dwModifier);
 
-    heap_free( hdr );
+    heap_free(headers);
     return r;
 }
 
