@@ -3330,13 +3330,12 @@ BOOL WINAPI InternetCheckConnectionW( LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRe
   BOOL   rc = FALSE;
   static const CHAR ping[] = "ping -c 1 ";
   static const CHAR redirect[] = " >/dev/null 2>/dev/null";
-  CHAR *command = NULL;
-  WCHAR hostW[INTERNET_MAX_HOST_NAME_LENGTH];
-  DWORD len;
+  WCHAR *host;
+  DWORD len, host_len;
   INTERNET_PORT port;
   int status = -1;
 
-  FIXME("\n");
+  FIXME("(%s %x %x)\n", debugstr_w(lpszUrl), dwFlags, dwReserved);
 
   /*
    * Crack or set the Address
@@ -3355,27 +3354,34 @@ BOOL WINAPI InternetCheckConnectionW( LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRe
   }
   else
   {
-     URL_COMPONENTSW components;
+     URL_COMPONENTSW components = {sizeof(components)};
 
-     ZeroMemory(&components,sizeof(URL_COMPONENTSW));
-     components.lpszHostName = (LPWSTR)hostW;
-     components.dwHostNameLength = INTERNET_MAX_HOST_NAME_LENGTH;
+     components.dwHostNameLength = 1;
 
      if (!InternetCrackUrlW(lpszUrl,0,0,&components))
        goto End;
 
-     TRACE("host name : %s\n",debugstr_w(components.lpszHostName));
+     host = components.lpszHostName;
+     host_len = components.dwHostNameLength;
      port = components.nPort;
-     TRACE("port: %d\n", port);
+     TRACE("host name: %s port: %d\n",debugstr_wn(host, host_len), port);
   }
 
   if (dwFlags & FLAG_ICC_FORCE_CONNECTION)
   {
       struct sockaddr_storage saddr;
       socklen_t sa_len = sizeof(saddr);
+      WCHAR *host_z;
       int fd;
+      BOOL b;
 
-      if (!GetAddress(hostW, port, (struct sockaddr *)&saddr, &sa_len, NULL))
+      host_z = heap_strndupW(host, host_len);
+      if (!host_z)
+          return FALSE;
+
+      b = GetAddress(host_z, port, (struct sockaddr *)&saddr, &sa_len, NULL);
+      heap_free(host_z);
+      if(!b)
           goto End;
       init_winsock();
       fd = socket(saddr.ss_family, SOCK_STREAM, 0);
@@ -3391,15 +3397,18 @@ BOOL WINAPI InternetCheckConnectionW( LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRe
       /*
        * Build our ping command
        */
-      len = WideCharToMultiByte(CP_UNIXCP, 0, hostW, -1, NULL, 0, NULL, NULL);
-      command = heap_alloc(strlen(ping)+len+strlen(redirect));
-      strcpy(command,ping);
-      WideCharToMultiByte(CP_UNIXCP, 0, hostW, -1, command+strlen(ping), len, NULL, NULL);
-      strcat(command,redirect);
+      char *command;
+
+      len = WideCharToMultiByte(CP_UNIXCP, 0, host, host_len, NULL, 0, NULL, NULL);
+      command = heap_alloc(strlen(ping)+len+strlen(redirect)+1);
+      strcpy(command, ping);
+      WideCharToMultiByte(CP_UNIXCP, 0, host, host_len, command+sizeof(ping)-1, len, NULL, NULL);
+      strcpy(command+sizeof(ping)-1+len, redirect);
 
       TRACE("Ping command is : %s\n",command);
 
       status = system(command);
+      heap_free( command );
 
       TRACE("Ping returned a code of %i\n",status);
 
@@ -3409,7 +3418,6 @@ BOOL WINAPI InternetCheckConnectionW( LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRe
   }
 
 End:
-  heap_free( command );
   if (rc == FALSE)
     INTERNET_SetLastError(ERROR_NOT_CONNECTED);
 
