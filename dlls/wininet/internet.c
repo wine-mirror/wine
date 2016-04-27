@@ -4499,23 +4499,28 @@ BOOL WINAPI InternetGetSecurityInfoByURLA(LPSTR lpszURL, PCCERT_CHAIN_CONTEXT *p
  */
 BOOL WINAPI InternetGetSecurityInfoByURLW(LPCWSTR lpszURL, PCCERT_CHAIN_CONTEXT *ppCertChain, DWORD *pdwSecureFlags)
 {
-    WCHAR hostname[INTERNET_MAX_HOST_NAME_LENGTH];
     URL_COMPONENTSW url = {sizeof(url)};
     server_t *server;
-    BOOL res = FALSE;
+    WCHAR *hostname;
+    BOOL res;
 
     TRACE("(%s %p %p)\n", debugstr_w(lpszURL), ppCertChain, pdwSecureFlags);
 
-    url.lpszHostName = hostname;
-    url.dwHostNameLength = sizeof(hostname)/sizeof(WCHAR);
-
+    url.dwHostNameLength = 1;
     res = InternetCrackUrlW(lpszURL, 0, 0, &url);
     if(!res || url.nScheme != INTERNET_SCHEME_HTTPS) {
         SetLastError(ERROR_INTERNET_ITEM_NOT_FOUND);
         return FALSE;
     }
 
+    hostname = heap_strndupW(url.lpszHostName, url.dwHostNameLength);
+    if(!hostname) {
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+
     server = get_server(hostname, url.nPort, TRUE, FALSE);
+    heap_free(hostname);
     if(!server) {
         SetLastError(ERROR_INTERNET_ITEM_NOT_FOUND);
         return FALSE;
