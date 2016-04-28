@@ -1099,7 +1099,7 @@ static void InternetReadFileExA_test(int flags)
                 CHECK_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
                 WaitForSingleObject(hCompleteEvent, INFINITE);
                 CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
-                CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
+                CHECK_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
                 ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
             }
             else
@@ -4505,6 +4505,7 @@ static void test_async_read(int port)
         if (!ret)
         {
             ok( GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %u\n", GetLastError() );
+            CHECK_NOTIFIED( INTERNET_STATUS_RECEIVING_RESPONSE );
             SET_EXPECT( INTERNET_STATUS_REQUEST_COMPLETE );
             if (!pending_reads++)
             {
@@ -4517,6 +4518,7 @@ static void test_async_read(int port)
             ok( req_error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", req_error );
             todo_wine_if( pending_reads > 1 )
             ok( ib.dwBufferLength != 0, "expected ib.dwBufferLength != 0\n" );
+            CHECK_NOTIFIED( INTERNET_STATUS_RESPONSE_RECEIVED );
             CHECK_NOTIFIED( INTERNET_STATUS_REQUEST_COMPLETE );
         }
 

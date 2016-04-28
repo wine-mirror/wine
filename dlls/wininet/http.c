@@ -3134,6 +3134,13 @@ static void AsyncReadFileExProc(task_header_t *hdr)
     TRACE("INTERNETREADFILEEXW %p\n", task->hdr.hdr);
 
     res = HTTPREQ_Read(req, task->buf, task->size, task->ret_read);
+    if (res == ERROR_SUCCESS)
+    {
+        DWORD read = *task->ret_read;
+        INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RESPONSE_RECEIVED,
+                &read, sizeof(read));
+    }
+
     send_request_complete(req, res == ERROR_SUCCESS, res);
 }
 
