@@ -4435,7 +4435,7 @@ static void test_async_read(int port)
     INTERNET_BUFFERSA ib;
     char buffer[0x100];
     DWORD pending_reads;
-    DWORD res, count;
+    DWORD res, count, bytes;
     BOOL ret;
 
     hCompleteEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
@@ -4525,6 +4525,96 @@ static void test_async_read(int port)
         CLEAR_NOTIFIED( INTERNET_STATUS_RECEIVING_RESPONSE );
         CLEAR_NOTIFIED( INTERNET_STATUS_RESPONSE_RECEIVED );
         if (!ib.dwBufferLength) break;
+    }
+
+    todo_wine
+    ok( pending_reads == 1, "expected 1 pending read, got %u\n", pending_reads );
+    ok( !strcmp(buffer, page1), "unexpected buffer content\n" );
+    close_async_handle( ses, hCompleteEvent, 2 );
+    ResetEvent( conn_wait_event );
+
+    /* test asynchronous InternetReadFile */
+    ses = InternetOpenA( "winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, INTERNET_FLAG_ASYNC );
+    ok( ses != NULL, "InternetOpenA failed\n" );
+    pInternetSetStatusCallbackA( ses, &callback );
+
+    SET_EXPECT( INTERNET_STATUS_HANDLE_CREATED );
+    con = InternetConnectA( ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0xdeadbeef );
+    ok( con != NULL, "InternetConnectA failed %u\n", GetLastError() );
+    CHECK_NOTIFIED( INTERNET_STATUS_HANDLE_CREATED );
+
+    SET_EXPECT( INTERNET_STATUS_HANDLE_CREATED );
+    req = HttpOpenRequestA( con, "GET", "/async_read", NULL, NULL, NULL, INTERNET_FLAG_RELOAD, 0xdeadbeef );
+    ok( req != NULL, "HttpOpenRequestA failed %u\n", GetLastError() );
+    CHECK_NOTIFIED( INTERNET_STATUS_HANDLE_CREATED );
+
+    SET_OPTIONAL( INTERNET_STATUS_COOKIE_SENT );
+    SET_OPTIONAL( INTERNET_STATUS_DETECTING_PROXY );
+    SET_EXPECT( INTERNET_STATUS_CONNECTING_TO_SERVER );
+    SET_EXPECT( INTERNET_STATUS_CONNECTED_TO_SERVER );
+    SET_EXPECT( INTERNET_STATUS_SENDING_REQUEST );
+    SET_EXPECT( INTERNET_STATUS_REQUEST_SENT );
+    SET_EXPECT( INTERNET_STATUS_RECEIVING_RESPONSE );
+    SET_EXPECT( INTERNET_STATUS_RESPONSE_RECEIVED );
+    SET_OPTIONAL( INTERNET_STATUS_CLOSING_CONNECTION );
+    SET_OPTIONAL( INTERNET_STATUS_CONNECTION_CLOSED );
+    SET_EXPECT( INTERNET_STATUS_REQUEST_COMPLETE );
+
+    SetLastError( 0xdeadbeef );
+    ret = HttpSendRequestA( req, NULL, 0, NULL, 0 );
+    ok( !ret, "HttpSendRequestA unexpectedly succeeded\n" );
+    ok( GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %u\n", GetLastError() );
+    WaitForSingleObject( hCompleteEvent, INFINITE );
+    ok( req_error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", req_error );
+
+    CLEAR_NOTIFIED( INTERNET_STATUS_COOKIE_SENT );
+    CLEAR_NOTIFIED( INTERNET_STATUS_DETECTING_PROXY );
+    CHECK_NOTIFIED( INTERNET_STATUS_CONNECTING_TO_SERVER );
+    CHECK_NOTIFIED( INTERNET_STATUS_CONNECTED_TO_SERVER );
+    CHECK_NOTIFIED( INTERNET_STATUS_SENDING_REQUEST );
+    CHECK_NOTIFIED( INTERNET_STATUS_REQUEST_SENT );
+    CHECK_NOTIFIED( INTERNET_STATUS_RECEIVING_RESPONSE );
+    CHECK_NOTIFIED( INTERNET_STATUS_RESPONSE_RECEIVED );
+    CLEAR_NOTIFIED( INTERNET_STATUS_CLOSING_CONNECTION );
+    CLEAR_NOTIFIED( INTERNET_STATUS_CONNECTION_CLOSED );
+    CHECK_NOTIFIED( INTERNET_STATUS_REQUEST_COMPLETE );
+
+    pending_reads = 0;
+    memset( buffer, 0, sizeof(buffer) );
+    for (count = 0; count < sizeof(buffer); count += bytes)
+    {
+        SET_EXPECT( INTERNET_STATUS_RECEIVING_RESPONSE );
+        SET_EXPECT( INTERNET_STATUS_RESPONSE_RECEIVED );
+
+        bytes = 0xdeadbeef;
+        ret = InternetReadFile( req, buffer + count, min(16, sizeof(buffer) - count), &bytes );
+        if (!count) /* the first part should arrive immediately */
+            ok( ret, "InternetReadFile failed %u\n", GetLastError() );
+        if (!ret)
+        {
+            ok( GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %u\n", GetLastError() );
+            ok( bytes == 0, "expected 0, got %u\n", bytes );
+            todo_wine
+            CHECK_NOTIFIED( INTERNET_STATUS_RECEIVING_RESPONSE );
+            SET_EXPECT( INTERNET_STATUS_REQUEST_COMPLETE );
+            if (!pending_reads++)
+            {
+                res = WaitForSingleObject( hCompleteEvent, 0 );
+                ok( res == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %u\n", res );
+                SetEvent( conn_wait_event );
+            }
+            res = WaitForSingleObject( hCompleteEvent, INFINITE );
+            ok( res == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", res );
+            ok( req_error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", req_error );
+            todo_wine_if( pending_reads > 1 )
+            ok( bytes != 0, "expected bytes != 0\n" );
+            CHECK_NOTIFIED( INTERNET_STATUS_RESPONSE_RECEIVED );
+            CHECK_NOTIFIED( INTERNET_STATUS_REQUEST_COMPLETE );
+        }
+
+        CLEAR_NOTIFIED( INTERNET_STATUS_RECEIVING_RESPONSE );
+        CLEAR_NOTIFIED( INTERNET_STATUS_RESPONSE_RECEIVED );
+        if (!bytes) break;
     }
 
     todo_wine
