@@ -70,6 +70,9 @@ static HRESULT WINAPI Timeline_QueryInterface(IUnknown *iface, REFIID riid, void
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
 
+    if (!ppv)
+        return E_POINTER;
+
     *ppv = NULL;
     if (IsEqualIID(riid, &IID_IUnknown))
         *ppv = &This->IUnknown_inner;

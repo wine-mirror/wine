@@ -29,13 +29,20 @@ static void test_timeline(void)
     HRESULT hr;
     IAMTimeline *timeline = NULL;
     IAMTimeline *timeline2 = (IAMTimeline *)0xdeadbeef;
-    IAMTimelineObj *obj;
+    IAMTimelineObj *obj = (IAMTimelineObj *)0xdeadbeef;
     IAMTimelineObj obj_iface;
     TIMELINE_MAJOR_TYPE type;
 
     hr = CoCreateInstance(&CLSID_AMTimeline, NULL, CLSCTX_INPROC_SERVER, &IID_IAMTimeline, (void **)&timeline);
     ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "CoCreateInstance failed: %08x\n", hr);
     if (!timeline) return;
+
+    hr = IAMTimeline_QueryInterface(timeline, &IID_IAMTimelineObj, NULL);
+    ok(hr == E_POINTER, "Expected E_POINTER got %08x\n", hr);
+
+    hr = IAMTimeline_QueryInterface(timeline, &IID_IAMTimelineObj, (void **)&obj);
+    ok(hr == E_NOINTERFACE, "Expected E_NOINTERFACE got %08x\n", hr);
+    ok(!obj, "Expected NULL got %p\n", obj);
 
     hr = IAMTimeline_CreateEmptyNode(timeline, NULL, 0);
     ok(hr == E_POINTER, "Expected E_POINTER got %08x\n", hr);
