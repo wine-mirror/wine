@@ -347,6 +347,7 @@ COLORREF EMFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 static BOOL
 EMFDRV_Polylinegon( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
 {
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
     EMRPOLYLINE *emr;
     DWORD size;
     INT i;
@@ -357,6 +358,17 @@ EMFDRV_Polylinegon( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
     emr = HeapAlloc( GetProcessHeap(), 0, size );
     emr->emr.iType = iType;
     emr->emr.nSize = size;
+
+    emr->cptl = count;
+    memcpy(emr->aptl, pt, count * sizeof(POINTL));
+
+    if(physDev->path) {
+        emr->rclBounds.left = emr->rclBounds.top = 0;
+        emr->rclBounds.right = emr->rclBounds.bottom = -1;
+        ret = EMFDRV_WriteRecord( dev, &emr->emr );
+        HeapFree( GetProcessHeap(), 0, emr );
+        return ret;
+    }
 
     if(iType == EMR_POLYBEZIERTO) {
         POINT cur_pt;
@@ -384,9 +396,6 @@ EMFDRV_Polylinegon( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
 	    emr->rclBounds.bottom = pt[i].y;
     }
 
-    emr->cptl = count;
-    memcpy(emr->aptl, pt, count * sizeof(POINTL));
-
     ret = EMFDRV_WriteRecord( dev, &emr->emr );
     if(ret)
         EMFDRV_UpdateBBox( dev, &emr->rclBounds );
@@ -406,6 +415,7 @@ EMFDRV_Polylinegon( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
 static BOOL
 EMFDRV_Polylinegon16( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
 {
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
     EMRPOLYLINE16 *emr;
     DWORD size;
     INT i;
@@ -423,6 +433,20 @@ EMFDRV_Polylinegon16( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
     emr = HeapAlloc( GetProcessHeap(), 0, size );
     emr->emr.iType = iType;
     emr->emr.nSize = size;
+
+    emr->cpts = count;
+    for(i = 0; i < count; i++ ) {
+        emr->apts[i].x = pt[i].x;
+        emr->apts[i].y = pt[i].y;
+    }
+
+    if(physDev->path) {
+        emr->rclBounds.left = emr->rclBounds.top = 0;
+        emr->rclBounds.right = emr->rclBounds.bottom = -1;
+        ret = EMFDRV_WriteRecord( dev, &emr->emr );
+        HeapFree( GetProcessHeap(), 0, emr );
+        return ret;
+    }
 
     if(iType == EMR_POLYBEZIERTO16) {
         POINT cur_pt;
@@ -448,12 +472,6 @@ EMFDRV_Polylinegon16( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
 	    emr->rclBounds.top = pt[i].y;
 	else if(pt[i].y > emr->rclBounds.bottom)
 	    emr->rclBounds.bottom = pt[i].y;
-    }
-
-    emr->cpts = count;
-    for(i = 0; i < count; i++ ) {
-        emr->apts[i].x = pt[i].x;
-        emr->apts[i].y = pt[i].y;
     }
 
     ret = EMFDRV_WriteRecord( dev, &emr->emr );
