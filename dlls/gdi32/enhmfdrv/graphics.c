@@ -87,6 +87,7 @@ static BOOL
 EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 		    INT xstart, INT ystart, INT xend, INT yend, DWORD iType )
 {
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
     INT temp, xCentre, yCentre, i;
     double angleStart, angleEnd;
     double xinterStart, yinterStart, xinterEnd, yinterEnd;
@@ -178,7 +179,8 @@ EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     }
     if(!EMFDRV_WriteRecord( dev, &emr.emr ))
         return FALSE;
-    EMFDRV_UpdateBBox( dev, &bounds );
+    if(!physDev->path)
+        EMFDRV_UpdateBBox( dev, &bounds );
     return TRUE;
 }
 
