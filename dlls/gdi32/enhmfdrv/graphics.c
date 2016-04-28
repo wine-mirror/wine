@@ -221,6 +221,7 @@ BOOL EMFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
  */
 BOOL EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
     EMRELLIPSE emr;
     INT temp;
 
@@ -243,7 +244,8 @@ BOOL EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
     emr.rclBox.right  = right;
     emr.rclBox.bottom = bottom;
 
-    EMFDRV_UpdateBBox( dev, &emr.rclBox );
+    if(!physDev->path)
+        EMFDRV_UpdateBBox( dev, &emr.rclBox );
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
