@@ -53,6 +53,7 @@ BOOL EMFDRV_MoveTo(PHYSDEV dev, INT x, INT y)
  */
 BOOL EMFDRV_LineTo( PHYSDEV dev, INT x, INT y )
 {
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
     POINT pt;
     EMRLINETO emr;
     RECTL bounds;
@@ -72,7 +73,8 @@ BOOL EMFDRV_LineTo( PHYSDEV dev, INT x, INT y )
     bounds.right  = max(x, pt.x);
     bounds.bottom = max(y, pt.y);
 
-    EMFDRV_UpdateBBox( dev, &bounds );
+    if(!physDev->path)
+        EMFDRV_UpdateBBox( dev, &bounds );
 
     return TRUE;
 }
