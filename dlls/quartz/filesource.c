@@ -613,6 +613,9 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
 
     TRACE("(%s, %p)\n", debugstr_w(pszFileName), pmt);
 
+    if (!pszFileName)
+        return E_POINTER;
+
     /* open file */
     /* FIXME: check the sharing values that native uses */
     hFile = CreateFileW(pszFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);

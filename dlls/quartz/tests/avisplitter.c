@@ -252,7 +252,6 @@ static void test_filesourcefilter(void)
         ok(olepath == NULL, "expected NULL, got %p\n", olepath);
 
         hr = IFileSourceFilter_Load(filesource, NULL, NULL);
-        todo_wine
         ok(hr == E_POINTER, "expected E_POINTER, got %08x\n", hr);
 
         hr = IFileSourceFilter_Load(filesource, path, NULL);
