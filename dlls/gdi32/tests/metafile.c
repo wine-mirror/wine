@@ -240,6 +240,16 @@ static void test_ExtTextOut(void)
     ret = ExtTextOutA(hdcMetafile, 0, 40, 0, NULL, text, lstrlenA(text), NULL);
     ok( ret, "ExtTextOutA error %d\n", GetLastError());
 
+    /* 4. test with unmatched BeginPath/EndPath calls */
+    ret = BeginPath(hdcMetafile);
+    ok( ret, "BeginPath error %d\n", GetLastError());
+    ret = BeginPath(hdcMetafile);
+    ok( ret, "BeginPath error %d\n", GetLastError());
+    ret = EndPath(hdcMetafile);
+    ok( ret, "BeginPath error %d\n", GetLastError());
+    ret = ExtTextOutA(hdcMetafile, 0, 60, 0, NULL, text, lstrlenA(text), NULL);
+    ok( ret, "ExtTextOutA error %d\n", GetLastError());
+
     hFont = SelectObject(hdcMetafile, hFont);
     ret = DeleteObject(hFont);
     ok( ret, "DeleteObject error %d\n", GetLastError());
