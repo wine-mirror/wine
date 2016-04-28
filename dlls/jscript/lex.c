@@ -603,7 +603,7 @@ static int next_token(parser_ctx_t *ctx, void *lval)
         return '}';
 
     case '.':
-        if(++ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
+        if(ctx->ptr+1 < ctx->end && isdigitW(ctx->ptr[1])) {
             double n;
             HRESULT hres;
             hres = parse_decimal(&ctx->ptr, ctx->end, &n);
@@ -614,6 +614,7 @@ static int next_token(parser_ctx_t *ctx, void *lval)
             *(literal_t**)lval = new_double_literal(ctx, n);
             return tNumericLiteral;
         }
+        ctx->ptr++;
         return '.';
 
     case '<':
