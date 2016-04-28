@@ -533,6 +533,7 @@ static BOOL
 EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polys,
 			DWORD iType)
 {
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
     EMRPOLYPOLYLINE *emr;
     DWORD cptl = 0, poly, size, i;
     INT point;
@@ -576,7 +577,7 @@ EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT po
     if(use_small_emr) emr->emr.iType += EMR_POLYPOLYLINE16 - EMR_POLYPOLYLINE;
 
     emr->emr.nSize = size;
-    if(bounds_valid)
+    if(bounds_valid && !physDev->path)
         emr->rclBounds = bounds;
     else
         emr->rclBounds = empty;
@@ -608,7 +609,7 @@ EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT po
         ret = FALSE;
         SetLastError( ERROR_INVALID_PARAMETER );
     }
-    if(ret)
+    if(ret && !physDev->path)
         EMFDRV_UpdateBBox( dev, &emr->rclBounds );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
