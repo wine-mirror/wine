@@ -3101,23 +3101,6 @@ static BOOL drain_content(http_request_t *req, BOOL blocking)
     return ret;
 }
 
-static DWORD HTTPREQ_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DWORD *read)
-{
-    http_request_t *req = (http_request_t*)hdr;
-    DWORD res;
-
-    EnterCriticalSection( &req->read_section );
-    if(hdr->dwError == INTERNET_HANDLE_IN_USE)
-        hdr->dwError = ERROR_INTERNET_INTERNAL_ERROR;
-
-    res = HTTPREQ_Read(req, buffer, size, read);
-    if(res == ERROR_SUCCESS)
-        res = hdr->dwError;
-    LeaveCriticalSection( &req->read_section );
-
-    return res;
-}
-
 typedef struct {
     task_header_t hdr;
     void *buf;
@@ -3238,6 +3221,49 @@ static DWORD HTTPREQ_WriteFile(object_header_t *hdr, const void *buffer, DWORD s
         request->bytesWritten += *written;
 
     INTERNET_SendCallback(&request->hdr, request->hdr.dwContext, INTERNET_STATUS_REQUEST_SENT, written, sizeof(DWORD));
+    return res;
+}
+
+static DWORD HTTPREQ_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DWORD *read)
+{
+    http_request_t *req = (http_request_t*)hdr;
+    DWORD res;
+
+    if (req->session->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
+    {
+        read_file_ex_task_t *task;
+
+        if (TryEnterCriticalSection( &req->read_section ))
+        {
+            if (get_avail_data(req))
+            {
+                res = HTTPREQ_Read(req, buffer, size, read);
+                LeaveCriticalSection( &req->read_section );
+                return res;
+            }
+            LeaveCriticalSection( &req->read_section );
+        }
+
+        task = alloc_async_task(&req->hdr, AsyncReadFileExProc, sizeof(*task));
+        task->buf = buffer;
+        task->size = size;
+        task->ret_read = read;
+
+        *read = 0;
+        INTERNET_AsyncCall(&task->hdr);
+
+        return ERROR_IO_PENDING;
+    }
+
+    EnterCriticalSection( &req->read_section );
+    if(hdr->dwError == INTERNET_HANDLE_IN_USE)
+        hdr->dwError = ERROR_INTERNET_INTERNAL_ERROR;
+
+    res = HTTPREQ_Read(req, buffer, size, read);
+    if(res == ERROR_SUCCESS)
+        res = hdr->dwError;
+    LeaveCriticalSection( &req->read_section );
+
     return res;
 }
 
