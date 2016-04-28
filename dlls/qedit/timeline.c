@@ -106,10 +106,7 @@ static ULONG WINAPI Timeline_Release(IUnknown *iface)
     TRACE("(%p) new ref = %u\n", This, ref);
 
     if (ref == 0)
-    {
         CoTaskMemFree(This);
-        return 0;
-    }
 
     return ref;
 }

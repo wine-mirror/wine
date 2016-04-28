@@ -112,7 +112,6 @@ static ULONG WINAPI MediaDet_inner_Release(IUnknown *iface)
     {
         MD_cleanup(This);
         CoTaskMemFree(This);
-        return 0;
     }
 
     return ref;
