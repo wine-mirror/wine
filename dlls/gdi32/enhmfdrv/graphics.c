@@ -348,10 +348,22 @@ EMFDRV_Polylinegon( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
     emr->emr.iType = iType;
     emr->emr.nSize = size;
 
-    emr->rclBounds.left = emr->rclBounds.right = pt[0].x;
-    emr->rclBounds.top = emr->rclBounds.bottom = pt[0].y;
+    if(iType == EMR_POLYBEZIERTO) {
+        POINT cur_pt;
 
-    for(i = 1; i < count; i++) {
+        GetCurrentPositionEx( dev->hdc, &cur_pt );
+        emr->rclBounds.left = emr->rclBounds.right = cur_pt.x;
+        emr->rclBounds.top = emr->rclBounds.bottom = cur_pt.y;
+        i = 0;
+    }
+    else
+    {
+        emr->rclBounds.left = emr->rclBounds.right = pt[0].x;
+        emr->rclBounds.top = emr->rclBounds.bottom = pt[0].y;
+        i = 1;
+    }
+
+    for(; i < count; i++) {
         if(pt[i].x < emr->rclBounds.left)
 	    emr->rclBounds.left = pt[i].x;
 	else if(pt[i].x > emr->rclBounds.right)
@@ -402,10 +414,22 @@ EMFDRV_Polylinegon16( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
     emr->emr.iType = iType;
     emr->emr.nSize = size;
 
-    emr->rclBounds.left = emr->rclBounds.right = pt[0].x;
-    emr->rclBounds.top = emr->rclBounds.bottom = pt[0].y;
+    if(iType == EMR_POLYBEZIERTO16) {
+        POINT cur_pt;
 
-    for(i = 1; i < count; i++) {
+        GetCurrentPositionEx( dev->hdc, &cur_pt );
+        emr->rclBounds.left = emr->rclBounds.right = cur_pt.x;
+        emr->rclBounds.top = emr->rclBounds.bottom = cur_pt.y;
+        i = 0;
+    }
+    else
+    {
+        emr->rclBounds.left = emr->rclBounds.right = pt[0].x;
+        emr->rclBounds.top = emr->rclBounds.bottom = pt[0].y;
+        i = 1;
+    }
+
+    for(; i < count; i++) {
         if(pt[i].x < emr->rclBounds.left)
 	    emr->rclBounds.left = pt[i].x;
 	else if(pt[i].x > emr->rclBounds.right)
