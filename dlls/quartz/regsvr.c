@@ -818,6 +818,11 @@ static struct regsvr_mediatype_parsing const mediatype_parsing_list[] = {
             "0, 10, FFFFFF00000080808080, 494433000000000000",
 	    NULL }
     },
+    {   &MEDIATYPE_Stream,
+        &MEDIASUBTYPE_MPEG2_PROGRAM,
+        {   "0, 5, FFFFFFFFC0, 000001BA40",
+            NULL }
+    },
     {	&MEDIATYPE_Stream,
 	&MEDIASUBTYPE_QTMovie,
 	{   "4, 4, , 6d646174",

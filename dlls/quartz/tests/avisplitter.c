@@ -206,6 +206,12 @@ static void test_filesourcefilter(void)
             &MEDIASUBTYPE_MPEG1Audio,
         },
         {
+            "MPEG2 Program",
+            "\x00\x00\x01\xBA\x40",
+            5,
+            &MEDIASUBTYPE_MPEG2_PROGRAM,
+        },
+        {
             "WAVE",
             "\x52\x49\x46\x46xxxx\x57\x41\x56\x45",
             12,
