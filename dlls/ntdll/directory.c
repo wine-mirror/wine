@@ -2225,6 +2225,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
                                       BOOLEAN restart_scan )
 {
     int cwd, fd, needs_close;
+    NTSTATUS status;
 
     TRACE("(%p %p %p %p %p %p 0x%08x 0x%08x 0x%08x %s 0x%08x\n",
           handle, event, apc_routine, apc_context, io, buffer,
@@ -2234,7 +2235,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
     if (event || apc_routine)
     {
         FIXME( "Unsupported yet option\n" );
-        return io->u.Status = STATUS_NOT_IMPLEMENTED;
+        return STATUS_NOT_IMPLEMENTED;
     }
     switch (info_class)
     {
@@ -2243,16 +2244,16 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
     case FileFullDirectoryInformation:
     case FileIdBothDirectoryInformation:
     case FileIdFullDirectoryInformation:
-        if (length < dir_info_size( info_class, 1 )) return io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
-        if (!buffer) return io->u.Status = STATUS_ACCESS_VIOLATION;
+        if (length < dir_info_size( info_class, 1 )) return STATUS_INFO_LENGTH_MISMATCH;
+        if (!buffer) return STATUS_ACCESS_VIOLATION;
         break;
     default:
         FIXME( "Unsupported file info class %d\n", info_class );
-        return io->u.Status = STATUS_NOT_IMPLEMENTED;
+        return STATUS_NOT_IMPLEMENTED;
     }
 
-    if ((io->u.Status = server_get_unix_fd( handle, FILE_LIST_DIRECTORY, &fd, &needs_close, NULL, NULL )) != STATUS_SUCCESS)
-        return io->u.Status;
+    if ((status = server_get_unix_fd( handle, FILE_LIST_DIRECTORY, &fd, &needs_close, NULL, NULL )) != STATUS_SUCCESS)
+        return status;
 
     io->Information = 0;
 
@@ -2290,16 +2291,17 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
         read_directory_readdir( fd, io, buffer, length, single_entry, mask, restart_scan, info_class );
 
     done:
+        status = io->u.Status;
         if (cwd == -1 || fchdir( cwd ) == -1) chdir( "/" );
     }
-    else io->u.Status = FILE_GetNtStatus();
+    else status = FILE_GetNtStatus();
 
     RtlLeaveCriticalSection( &dir_section );
 
     if (needs_close) close( fd );
     if (cwd != -1) close( cwd );
-    TRACE( "=> %x (%ld)\n", io->u.Status, io->Information );
-    return io->u.Status;
+    TRACE( "=> %x (%ld)\n", status, io->Information );
+    return status;
 }
 
 
