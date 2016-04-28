@@ -1856,6 +1856,14 @@ static int compare_emf_bits(const HENHMETAFILE mf, const unsigned char *bits,
        broken(emh1->nSize - diff_nt4 == emh2->nSize) ||
        broken(emh1->nSize - diff_9x == emh2->nSize),
        "expected nSize %u, got %u\n", emh1->nSize, emh2->nSize);
+    ok(emh1->rclBounds.left == emh2->rclBounds.left, "%s: expected rclBounds.left = %d, got %d\n",
+            desc, emh1->rclBounds.left, emh2->rclBounds.left);
+    ok(emh1->rclBounds.top == emh2->rclBounds.top, "%s: expected rclBounds.top = %d, got %d\n",
+            desc, emh1->rclBounds.top, emh2->rclBounds.top);
+    ok(emh1->rclBounds.right == emh2->rclBounds.right, "%s: expected rclBounds.right = %d, got %d\n",
+            desc, emh1->rclBounds.right, emh2->rclBounds.right);
+    ok(emh1->rclBounds.bottom == emh2->rclBounds.bottom, "%s: expected rclBounds.bottom = %d, got %d\n",
+            desc, emh1->rclBounds.bottom, emh2->rclBounds.bottom);
     ok(emh1->dSignature == emh2->dSignature, "expected dSignature %u, got %u\n", emh1->dSignature, emh2->dSignature);
     ok(emh1->nBytes == emh2->nBytes ||
        broken(emh1->nBytes - diff_nt4 == emh2->nBytes) ||
