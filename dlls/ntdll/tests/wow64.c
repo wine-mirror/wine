@@ -42,6 +42,7 @@ static NTSTATUS (WINAPI *pRtlWow64GetSharedInfoProcess)(HANDLE,BOOLEAN*,WOW64INF
 static NTSTATUS (WINAPI *pRtlWow64GetThreadContext)(HANDLE,WOW64_CONTEXT*);
 static NTSTATUS (WINAPI *pRtlWow64IsWowGuestMachineSupported)(USHORT,BOOLEAN*);
 static NTSTATUS (WINAPI *pNtMapViewOfSectionEx)(HANDLE,HANDLE,PVOID*,const LARGE_INTEGER*,SIZE_T*,ULONG,ULONG,MEM_EXTENDED_PARAMETER*,ULONG);
+static NTSTATUS (WINAPI *pNtSetLdtEntries)(ULONG,LDT_ENTRY,ULONG,LDT_ENTRY);
 #ifdef _WIN64
 static NTSTATUS (WINAPI *pKiUserExceptionDispatcher)(EXCEPTION_RECORD*,CONTEXT*);
 static NTSTATUS (WINAPI *pRtlWow64GetCpuAreaInfo)(WOW64_CPURESERVED*,ULONG,WOW64_CPU_AREA_INFO*);
@@ -117,6 +118,7 @@ static void init(void)
 
 #define GET_PROC(func) p##func = (void *)GetProcAddress( ntdll, #func )
     GET_PROC( NtMapViewOfSectionEx );
+    GET_PROC( NtSetLdtEntries );
     GET_PROC( NtQuerySystemInformation );
     GET_PROC( NtQuerySystemInformationEx );
     GET_PROC( RtlGetNativeSystemInformation );
@@ -1172,6 +1174,7 @@ static void test_selectors(void)
     THREAD_DESCRIPTOR_INFORMATION info;
     NTSTATUS status;
     ULONG base, limit, sel, retlen;
+    LDT_ENTRY ds_entry = { 0 };
     I386_CONTEXT context = { CONTEXT_I386_CONTROL | CONTEXT_I386_SEGMENTS };
 
 #ifdef _WIN64
@@ -1270,6 +1273,7 @@ static void test_selectors(void)
             ok( !info.Entry.HighWord.Bits.Sys, "wrong sys\n" );
             ok( info.Entry.HighWord.Bits.Default_Big, "wrong big\n" );
             ok( info.Entry.HighWord.Bits.Granularity, "wrong granularity\n" );
+            ds_entry = info.Entry;
         }
         else if (sel == context.SegFs)  /* TEB selector */
         {
@@ -1294,8 +1298,9 @@ static void test_selectors(void)
         else if (!status)
         {
             ok( retlen == sizeof(info.Entry), "len set %lu\n", retlen );
-            trace( "succeeded for %lx base %lx limit %lx type %x\n",
+            trace( "succeeded for %04lx base %lx limit %lx type %x\n",
                    sel, base, limit, info.Entry.HighWord.Bits.Type );
+            ok( !(sel & 4), "succeeded for LDT selector %04lx\n", sel );
         }
         else
         {
@@ -1306,6 +1311,29 @@ static void test_selectors(void)
             ok( retlen == 0xdeadbeef, "len set %lu\n", retlen );
         }
     }
+
+    status = pNtSetLdtEntries( 0, ds_entry, 0, ds_entry );
+    if (status != STATUS_NOT_IMPLEMENTED)
+    {
+        ok( !status, "NtSetLdtEntries failed: %08lx\n", status );
+
+        status = pNtSetLdtEntries( 0x000f, ds_entry, 0x001f, ds_entry );
+        ok( !status, "NtSetLdtEntries failed: %08lx\n", status );
+
+        info.Selector = 0x000f;
+        memset(&info.Entry, 0x9a, sizeof(info.Entry));
+        status = GET_ENTRY( &info, sizeof(info), NULL );
+        ok(!status, "wrong status %lx\n", status);
+        ok(!memcmp(&ds_entry, &info.Entry, sizeof(ds_entry)), "entries do not match\n");
+
+        info.Selector = 0x001f;
+        memset(&info.Entry, 0x9a, sizeof(info.Entry));
+        status = GET_ENTRY( &info, sizeof(info), NULL );
+        ok(!status, "wrong status %lx\n", status);
+        ok(!memcmp(&ds_entry, &info.Entry, sizeof(ds_entry)), "entries do not match\n");
+    }
+    else skip( "NtSetLdtEntries not supported\n" );
+
 #undef GET_ENTRY
 #endif /* __arm__ */
 }
