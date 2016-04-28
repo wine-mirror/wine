@@ -1,6 +1,6 @@
-@ stdcall AllocateUserPhysicalPages(ptr ptr ptr) kernel32.AllocateUserPhysicalPages
+@ stdcall AllocateUserPhysicalPages(long ptr ptr) kernel32.AllocateUserPhysicalPages
 @ stub AllocateUserPhysicalPagesNuma
-@ stub FreeUserPhysicalPages
+@ stdcall FreeUserPhysicalPages(long ptr ptr) kernel32.FreeUserPhysicalPages
 @ stub GetMemoryErrorHandlingCapabilities
 @ stub MapUserPhysicalPages
 @ stub RegisterBadMemoryNotification
