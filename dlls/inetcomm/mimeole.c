@@ -3221,3 +3221,11 @@ HRESULT WINAPI MimeOleGetPropertySchema(IMimePropertySchema **schema)
 
     return S_OK;
 }
+
+HRESULT WINAPI MimeGetAddressFormatW(REFIID riid, void *object, DWORD addr_type,
+       ADDRESSFORMAT addr_format, WCHAR **address)
+{
+    FIXME("(%s, %p, %d, %d, %p) stub\n", debugstr_guid(riid), object, addr_type, addr_format, address);
+
+    return E_NOTIMPL;
+}

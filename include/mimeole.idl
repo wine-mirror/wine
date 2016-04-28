@@ -1435,7 +1435,7 @@ cpp_quote("HRESULT WINAPI MimeEditGetBackgroundImageUrl(IUnknown*,BSTR*);")
 cpp_quote("HRESULT WINAPI MimeEditDocumentFromStream(IStream*,REFIID,void**);")
 
 cpp_quote("HRESULT WINAPI MimeOleGetPropertySchema(IMimePropertySchema**);")
-
+cpp_quote("HRESULT WINAPI MimeGetAddressFormatW(REFIID,void*,DWORD,ADDRESSFORMAT,WCHAR**);")
 cpp_quote("#ifdef __cplusplus")
 cpp_quote("}")
 cpp_quote("#endif")

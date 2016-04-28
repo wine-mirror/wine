@@ -42,7 +42,7 @@
 @ stub MimeEditGetBackgroundImageUrl
 @ stub MimeEditIsSafeToRun
 @ stub MimeEditViewSource
-@ stub MimeGetAddressFormatW
+@ stdcall MimeGetAddressFormatW(ptr ptr long long ptr)
 @ stub MimeOleAlgNameFromSMimeCap
 @ stub MimeOleAlgStrengthFromSMimeCap
 @ stub MimeOleClearDirtyTree
