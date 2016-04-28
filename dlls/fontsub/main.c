@@ -50,5 +50,16 @@ ULONG __cdecl CreateFontPackage(const unsigned char *src, const ULONG src_len, u
         written, flags, face_index, format, lang, platform, encoding, keep_list, keep_len, allocproc,
         reallocproc, freeproc, reserved);
 
-    return ERR_GENERIC;
+    if (format != TTFCFP_SUBSET)
+        return ERR_GENERIC;
+
+    *dest = allocproc(src_len);
+    if (!*dest)
+        return ERR_MEM;
+
+    memcpy(*dest, src, src_len);
+    *dest_len = src_len;
+    *written = src_len;
+
+    return NO_ERROR;
 }
