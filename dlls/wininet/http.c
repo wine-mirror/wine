@@ -3149,7 +3149,7 @@ static DWORD HTTPREQ_ReadFileEx(object_header_t *hdr, void *buf, DWORD size, DWO
 
     INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
 
-    if (hdr->dwFlags & INTERNET_FLAG_ASYNC)
+    if (req->session->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         read_file_ex_task_t *task;
 
