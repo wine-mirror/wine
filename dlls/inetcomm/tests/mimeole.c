@@ -361,12 +361,21 @@ static void test_MessageSetProp(void)
     ok(hr == S_OK, "ret %08x\n", hr);
     PropVariantClear(&prop);
 
+    hr = IMimeBody_GetProp(body, NULL, 0, &prop);
+    ok(hr == E_INVALIDARG, "ret %08x\n", hr);
+
+    hr = IMimeBody_GetProp(body, "Thread-Topic", 0, NULL);
+    ok(hr == E_INVALIDARG, "ret %08x\n", hr);
+
+    hr = IMimeBody_GetProp(body, "Wine-Topic", 0, &prop);
+    ok(hr == MIME_E_NOT_FOUND, "ret %08x\n", hr);
+
     hr = IMimeBody_GetProp(body, "Thread-Topic", 0, &prop);
-    todo_wine ok(hr == S_OK, "ret %08x\n", hr);
+    ok(hr == S_OK, "ret %08x\n", hr);
     if(hr == S_OK)
     {
-        todo_wine ok(prop.vt == VT_LPSTR, "type %d\n", prop.vt);
-        todo_wine ok(!strcmp(prop.u.pszVal, topic), "got  %s\n", prop.u.pszVal);
+        ok(prop.vt == VT_LPSTR, "type %d\n", prop.vt);
+        ok(!strcmp(prop.u.pszVal, topic), "got  %s\n", prop.u.pszVal);
         PropVariantClear(&prop);
     }
 
