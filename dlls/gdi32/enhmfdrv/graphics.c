@@ -288,6 +288,7 @@ BOOL EMFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 BOOL EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
 		  INT bottom, INT ell_width, INT ell_height )
 {
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
     EMRROUNDRECT emr;
     INT temp;
 
@@ -310,7 +311,8 @@ BOOL EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
     emr.szlCorner.cx  = ell_width;
     emr.szlCorner.cy  = ell_height;
 
-    EMFDRV_UpdateBBox( dev, &emr.rclBox );
+    if(!physDev->path)
+        EMFDRV_UpdateBBox( dev, &emr.rclBox );
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
