@@ -663,8 +663,60 @@ static HRESULT WINAPI MimeBody_SetProp(
                               LPCPROPVARIANT pValue)
 {
     MimeBody *This = impl_from_IMimeBody(iface);
-    FIXME("(%p)->(%s, 0x%x, %p) stub\n", This, debugstr_a(pszName), dwFlags, pValue);
-    return E_NOTIMPL;
+    header_t *header;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s, 0x%x, %p)\n", This, debugstr_a(pszName), dwFlags, pValue);
+
+    if(!pszName || !pValue)
+        return E_INVALIDARG;
+
+    hr = find_prop(This, pszName, &header);
+    if(hr != S_OK)
+    {
+        property_list_entry_t *prop_entry;
+        const property_t *prop = NULL;
+
+        LIST_FOR_EACH_ENTRY(prop_entry, &This->new_props, property_list_entry_t, entry)
+        {
+            if(!strcasecmp(pszName, prop_entry->prop.name))
+            {
+                TRACE("Found match with already added new property id %d\n", prop_entry->prop.id);
+                prop = &prop_entry->prop;
+                break;
+            }
+        }
+
+        header = HeapAlloc(GetProcessHeap(), 0, sizeof(*header));
+        if(!header)
+            return E_OUTOFMEMORY;
+
+        if(!prop)
+        {
+            prop_entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*prop_entry));
+            if(!prop_entry)
+            {
+                HeapFree(GetProcessHeap(), 0, header);
+                return E_OUTOFMEMORY;
+            }
+            prop_entry->prop.name = strdupA(pszName);
+            prop_entry->prop.id = This->next_prop_id++;
+            prop_entry->prop.flags = 0;
+            prop_entry->prop.default_vt = pValue->vt;
+            list_add_tail(&This->new_props, &prop_entry->entry);
+            prop = &prop_entry->prop;
+            TRACE("Allocating new prop id %d\n", prop_entry->prop.id);
+        }
+
+        header->prop = prop;
+        PropVariantInit(&header->value);
+        list_init(&header->params);
+        list_add_tail(&This->headers, &header->entry);
+    }
+
+    PropVariantCopy(&header->value, pValue);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MimeBody_AppendProp(
