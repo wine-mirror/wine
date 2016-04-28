@@ -148,6 +148,13 @@ static int CALLBACK eto_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         ok(!memcmp(&orig_lf, &device_lf, FIELD_OFFSET(LOGFONTA, lfOutPrecision)), "fonts don't match\n");
         ok(!lstrcmpA(orig_lf.lfFaceName, device_lf.lfFaceName), "font names don't match\n");
 
+        ok(!emr_ExtTextOutW->rclBounds.left, "emr_ExtTextOutW->rclBounds.left = %d\n",
+                emr_ExtTextOutW->rclBounds.left);
+        ok(emr_ExtTextOutW->rclBounds.right != -1, "emr_ExtTextOutW->rclBounds.right = %d\n",
+                emr_ExtTextOutW->rclBounds.right);
+        ok(emr_ExtTextOutW->rclBounds.bottom != -1, "emr_ExtTextOutW->rclBounds.bottom = %d\n",
+                emr_ExtTextOutW->rclBounds.bottom);
+
         for(i = 0; i < emr_ExtTextOutW->emrtext.nChars; i++)
         {
             ok(orig_dx[i] == dx[i], "pass %d: dx[%d] (%d) didn't match %d\n",
@@ -227,6 +234,10 @@ static void test_ExtTextOut(void)
 
     /* 2. pass custom lpDx */
     ret = ExtTextOutA(hdcMetafile, 0, 20, 0, &rc, text, lstrlenA(text), dx);
+    ok( ret, "ExtTextOutA error %d\n", GetLastError());
+
+    /* 3. pass NULL lprc */
+    ret = ExtTextOutA(hdcMetafile, 0, 40, 0, NULL, text, lstrlenA(text), NULL);
     ok( ret, "ExtTextOutA error %d\n", GetLastError());
 
     hFont = SelectObject(hdcMetafile, hFont);

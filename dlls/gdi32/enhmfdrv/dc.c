@@ -420,7 +420,10 @@ BOOL EMFDRV_AbortPath( PHYSDEV dev )
 
 BOOL EMFDRV_BeginPath( PHYSDEV dev )
 {
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
     EMRBEGINPATH emr;
+
+    physDev->path = TRUE;
 
     emr.emr.iType = EMR_BEGINPATH;
     emr.emr.nSize = sizeof(emr);
@@ -440,7 +443,10 @@ BOOL EMFDRV_CloseFigure( PHYSDEV dev )
 
 BOOL EMFDRV_EndPath( PHYSDEV dev )
 {
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
     EMRENDPATH emr;
+
+    physDev->path = FALSE;
 
     emr.emr.iType = EMR_ENDPATH;
     emr.emr.nSize = sizeof(emr);

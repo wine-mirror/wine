@@ -42,6 +42,7 @@ typedef struct
     HDC        ref_dc;             /* Reference device */
     HDC        screen_dc;          /* Screen DC if no reference device specified */
     INT        restoring;          /* RestoreDC counter */
+    BOOL       path;
 } EMFDRV_PDEVICE;
 
 

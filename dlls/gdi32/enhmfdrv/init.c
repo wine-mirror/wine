@@ -352,6 +352,7 @@ HDC WINAPI CreateEnhMetaFileW(
     physDev->dc_pen = 0;
     physDev->screen_dc = 0;
     physDev->restoring = 0;
+    physDev->path = FALSE;
     if (hdc)  /* if no ref, use current display */
         physDev->ref_dc = hdc;
     else

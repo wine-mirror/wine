@@ -746,6 +746,7 @@ BOOL EMFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn )
 BOOL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *lprect,
                         LPCWSTR str, UINT count, const INT *lpDx )
 {
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
     EMREXTTEXTOUTW *pemr;
     DWORD nSize;
     BOOL ret;
@@ -827,13 +828,14 @@ BOOL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *lprec
         }
     }
 
-    if (!lprect)
+    if (physDev->path)
     {
         pemr->rclBounds.left = pemr->rclBounds.top = 0;
         pemr->rclBounds.right = pemr->rclBounds.bottom = -1;
         goto no_bounds;
     }
 
+    /* FIXME: handle font escapement */
     switch (textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER)) {
     case TA_CENTER: {
         pemr->rclBounds.left  = x - (textWidth / 2) - 1;
