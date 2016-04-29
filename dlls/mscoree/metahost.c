@@ -272,7 +272,13 @@ static void CDECL mono_shutdown_callback_fn(MonoProfiler *prof)
 
 static void CDECL mono_print_handler_fn(const char *string, INT is_stdout)
 {
-    wine_dbg_printf("%s", string);
+    const char *p;
+    for (; *string; string = p)
+    {
+        if ((p = strstr(string, "\n"))) p++;
+        else p = string + strlen(string);
+        wine_dbg_printf("%.*s", (int)(p - string), string);
+    }
 }
 
 static HRESULT CLRRuntimeInfo_GetRuntimeHost(CLRRuntimeInfo *This, RuntimeHost **result)
