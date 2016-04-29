@@ -2924,6 +2924,91 @@ static void test_WsResetHeap(void)
     WsFreeHeap( heap );
 }
 
+static void test_datetime(void)
+{
+    static const struct
+    {
+        const char        *str;
+        HRESULT            hr;
+        __int64            ticks;
+        WS_DATETIME_FORMAT format;
+    }
+    tests[] =
+    {
+        {"<t>0000-01-01T00:00:00Z</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>0001-01-01T00:00:00Z</t>", S_OK, 0, WS_DATETIME_FORMAT_UTC},
+        {"<t>0001-01-01T00:00:00.Z</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>0001-01-01T00:00:00.0Z</t>", S_OK, 0, WS_DATETIME_FORMAT_UTC},
+        {"<t>0001-01-01T00:00:00.1Z</t>", S_OK, 0x0000f4240, WS_DATETIME_FORMAT_UTC},
+        {"<t>0001-01-01T00:00:00.01Z</t>", S_OK, 0x0000186a0, WS_DATETIME_FORMAT_UTC},
+        {"<t>0001-01-01T00:00:00.0000001Z</t>", S_OK, 1, WS_DATETIME_FORMAT_UTC},
+        {"<t>0001-01-01T00:00:00.9999999Z</t>", S_OK, 0x00098967f, WS_DATETIME_FORMAT_UTC},
+        {"<t>0001-01-01T00:00:00.0000000Z</t>", S_OK, 0, WS_DATETIME_FORMAT_UTC},
+        {"<t>0001-01-01T00:00:00.00000001Z</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>0001-01-01T00:00:00Z-</t>", WS_E_INVALID_FORMAT, 0},
+        {"<t>-0001-01-01T00:00:00Z</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>0001-00-01T00:00:00Z</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>0001-13-01T00:00:00Z</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>0001-12-01T00:00:00Z</t>", S_OK, 0x1067555f88000, WS_DATETIME_FORMAT_UTC},
+        {"<t>0001-01-00T00:00:00Z</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>2001-01-32T00:00:00Z</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>2001-01-31T00:00:00Z</t>", S_OK, 0x8c2592fe3794000, WS_DATETIME_FORMAT_UTC},
+        {"<t>1900-02-29T00:00:00Z</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>2000-02-29T00:00:00Z</t>", S_OK, 0x8c1505f0e438000, 0},
+        {"<t>2001-02-29T00:00:00Z</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>2001-02-28T00:00:00Z</t>", S_OK, 0x8c26f30870a4000, WS_DATETIME_FORMAT_UTC},
+        {"<t>0001-00-01U00:00:00Z</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>0001-01-01T24:00:00Z</t>", S_OK, 0xc92a69c000, WS_DATETIME_FORMAT_UTC},
+        {"<t>0001-01-01T24:00:01Z</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>0001-01-01T00:60:00Z</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>0001-01-01T00:00:60Z</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>0001-01-01T00:00:00Y</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>0001-01-01T00:00:00+00:01</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>0001-01-01T00:00:00-00:01</t>", S_OK, 0x023c34600, WS_DATETIME_FORMAT_LOCAL},
+        {"<t>9999-12-31T24:00:00+00:01</t>", S_OK, 0x2bca2875d073fa00, WS_DATETIME_FORMAT_LOCAL},
+        {"<t>9999-12-31T24:00:00-00:01</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>0002-01-01T00:00:00+14:01</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>0002-01-01T00:00:00+15:00</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>0002-01-01T00:00:00+13:60</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>0002-01-01T00:00:00+13:59</t>", S_OK, 0x11e5c43cc5600, WS_DATETIME_FORMAT_LOCAL},
+        {"<t>0002-01-01T00:00:00+01:00</t>", S_OK, 0x11ec917025800, WS_DATETIME_FORMAT_LOCAL},
+        {"<t>2016-01-01T00:00:00-01:00</t>", S_OK, 0x8d31246dfbba800, WS_DATETIME_FORMAT_LOCAL},
+        {"<t>2016-01-01T00:00:00Z</t>", S_OK, 0x8d3123e7df74000, WS_DATETIME_FORMAT_UTC},
+        {"<t> 2016-01-02T03:04:05Z </t>", S_OK, 0x8d313215fb64080, WS_DATETIME_FORMAT_UTC},
+        {"<t>+2016-01-01T00:00:00Z</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t></t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>01-01-01T00:00:00Z</t>", WS_E_INVALID_FORMAT, 0, 0},
+        {"<t>1601-01-01T00:00:00Z</t>", S_OK, 0x701ce1722770000, WS_DATETIME_FORMAT_UTC},
+    };
+    HRESULT hr;
+    WS_XML_READER *reader;
+    WS_HEAP *heap;
+    WS_DATETIME date;
+    ULONG i;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        memset( &date, 0, sizeof(date) );
+        prepare_type_test( reader, tests[i].str, strlen(tests[i].str) );
+        hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_DATETIME_TYPE, NULL,
+                         WS_READ_REQUIRED_VALUE, heap, &date, sizeof(date), NULL );
+        ok( hr == tests[i].hr, "%u: got %08x\n", i, hr );
+        if (hr == S_OK)
+        {
+            ok( date.ticks == tests[i].ticks, "%u: got %x%08x\n", i, (ULONG)(date.ticks >> 32), (ULONG)date.ticks );
+            ok( date.format == tests[i].format, "%u: got %u\n", i, date.format );
+        }
+    }
+
+    WsFreeReader( reader );
+    WsFreeHeap( heap );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -2949,4 +3034,5 @@ START_TEST(reader)
     test_complex_struct_type();
     test_repeating_element();
     test_WsResetHeap();
+    test_datetime();
 }

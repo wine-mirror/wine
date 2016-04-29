@@ -1881,6 +1881,148 @@ static HRESULT str_to_uint64( const unsigned char *str, ULONG len, UINT64 max, U
     return S_OK;
 }
 
+#define TICKS_PER_SEC   10000000
+#define TICKS_PER_MIN   (60 * (ULONGLONG)TICKS_PER_SEC)
+#define TICKS_PER_HOUR  (3600 * (ULONGLONG)TICKS_PER_SEC)
+#define TICKS_PER_DAY   (86400 * (ULONGLONG)TICKS_PER_SEC)
+#define TICKS_MAX       3155378975999999999
+
+static const int month_offsets[2][12] =
+{
+    {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334},
+    {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335}
+};
+
+static const int month_days[2][12] =
+{
+    {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
+    {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
+};
+
+static inline int is_leap_year( int year )
+{
+    return !(year % 4) && (year % 100 || !(year % 400));
+}
+
+static inline int valid_day( int year, int month, int day )
+{
+    return day > 0 && day <= month_days[is_leap_year( year )][month - 1];
+}
+
+static inline int leap_days_before( int year )
+{
+    return (year - 1) / 4 - (year - 1) / 100 + (year - 1) / 400;
+}
+
+static HRESULT str_to_datetime( const unsigned char *bytes, ULONG len, WS_DATETIME *ret )
+{
+    const unsigned char *p = bytes, *q;
+    int year, month, day, hour, min, sec, sec_frac = 0, tz_hour, tz_min, tz_neg;
+
+    while (len && read_isspace( *p )) { p++; len--; }
+    while (len && read_isspace( p[len - 1] )) { len--; }
+
+    q = p;
+    while (len && isdigit( *q )) { q++; len--; };
+    if (q - p != 4 || !len || *q != '-') return WS_E_INVALID_FORMAT;
+    year = (p[0] - '0') * 1000 + (p[1] - '0') * 100 + (p[2] - '0') * 10 + p[3] - '0';
+    if (year < 1) return WS_E_INVALID_FORMAT;
+
+    p = ++q; len--;
+    while (len && isdigit( *q )) { q++; len--; };
+    if (q - p != 2 || !len || *q != '-') return WS_E_INVALID_FORMAT;
+    month = (p[0] - '0') * 10 + p[1] - '0';
+    if (month < 1 || month > 12) return WS_E_INVALID_FORMAT;
+
+    p = ++q; len--;
+    while (len && isdigit( *q )) { q++; len--; };
+    if (q - p != 2 || !len || *q != 'T') return WS_E_INVALID_FORMAT;
+    day = (p[0] - '0') * 10 + p[1] - '0';
+    if (!valid_day( year, month, day )) return WS_E_INVALID_FORMAT;
+
+    p = ++q; len--;
+    while (len && isdigit( *q )) { q++; len--; };
+    if (q - p != 2 || !len || *q != ':') return WS_E_INVALID_FORMAT;
+    hour = (p[0] - '0') * 10 + p[1] - '0';
+    if (hour > 24) return WS_E_INVALID_FORMAT;
+
+    p = ++q; len--;
+    while (len && isdigit( *q )) { q++; len--; };
+    if (q - p != 2 || !len || *q != ':') return WS_E_INVALID_FORMAT;
+    min = (p[0] - '0') * 10 + p[1] - '0';
+    if (min > 59 || (min > 0 && hour == 24)) return WS_E_INVALID_FORMAT;
+
+    p = ++q; len--;
+    while (len && isdigit( *q )) { q++; len--; };
+    if (q - p != 2 || !len) return WS_E_INVALID_FORMAT;
+    sec = (p[0] - '0') * 10 + p[1] - '0';
+    if (sec > 59 || (sec > 0 && hour == 24)) return WS_E_INVALID_FORMAT;
+
+    if (*q == '.')
+    {
+        unsigned int i, nb_digits, mul = TICKS_PER_SEC / 10;
+        p = ++q; len--;
+        while (len && isdigit( *q )) { q++; len--; };
+        nb_digits = q - p;
+        if (nb_digits < 1 || nb_digits > 7) return WS_E_INVALID_FORMAT;
+        for (i = 0; i < nb_digits; i++)
+        {
+            sec_frac += (p[i] - '0') * mul;
+            mul /= 10;
+        }
+    }
+    if (*q == 'Z')
+    {
+        if (--len) return WS_E_INVALID_FORMAT;
+        tz_hour = tz_min = tz_neg = 0;
+        ret->format = WS_DATETIME_FORMAT_UTC;
+    }
+    else if (*q == '+' || *q == '-')
+    {
+        tz_neg = (*q == '-') ? 1 : 0;
+
+        p = ++q; len--;
+        while (len && isdigit( *q )) { q++; len--; };
+        if (q - p != 2 || !len || *q != ':') return WS_E_INVALID_FORMAT;
+        tz_hour = (p[0] - '0') * 10 + p[1] - '0';
+        if (tz_hour > 14) return WS_E_INVALID_FORMAT;
+
+        p = ++q; len--;
+        while (len && isdigit( *q )) { q++; len--; };
+        if (q - p != 2 || len) return WS_E_INVALID_FORMAT;
+        tz_min = (p[0] - '0') * 10 + p[1] - '0';
+        if (tz_min > 59 || (tz_min > 0 && tz_hour == 14)) return WS_E_INVALID_FORMAT;
+
+        ret->format = WS_DATETIME_FORMAT_LOCAL;
+    }
+    else return WS_E_INVALID_FORMAT;
+
+    ret->ticks = ((year - 1) * 365 + leap_days_before( year )) * TICKS_PER_DAY;
+    ret->ticks += month_offsets[is_leap_year( year )][month - 1] * TICKS_PER_DAY;
+    ret->ticks += (day - 1) * TICKS_PER_DAY;
+    ret->ticks += hour * TICKS_PER_HOUR;
+    ret->ticks += min * TICKS_PER_MIN;
+    ret->ticks += sec * TICKS_PER_SEC;
+    ret->ticks += sec_frac;
+
+    if (tz_neg)
+    {
+        if (tz_hour * TICKS_PER_HOUR + tz_min * TICKS_PER_MIN + ret->ticks > TICKS_MAX)
+            return WS_E_INVALID_FORMAT;
+        ret->ticks += tz_hour * TICKS_PER_HOUR;
+        ret->ticks += tz_min * TICKS_PER_MIN;
+    }
+    else
+    {
+        if (tz_hour * TICKS_PER_HOUR + tz_min * TICKS_PER_MIN > ret->ticks)
+            return WS_E_INVALID_FORMAT;
+        ret->ticks -= tz_hour * TICKS_PER_HOUR;
+        ret->ticks -= tz_min * TICKS_PER_MIN;
+    }
+
+    return S_OK;
+}
+
 static HRESULT read_get_node_text( struct reader *reader, WS_XML_UTF8_TEXT **ret )
 {
     WS_XML_TEXT_NODE *text;
@@ -2570,6 +2712,53 @@ static HRESULT read_type_enum( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT read_type_datetime( struct reader *reader, WS_TYPE_MAPPING mapping,
+                                   const WS_XML_STRING *localname, const WS_XML_STRING *ns,
+                                   const WS_DATETIME_DESCRIPTION *desc, WS_READ_OPTION option,
+                                   WS_HEAP *heap, void *ret, ULONG size )
+{
+    WS_XML_UTF8_TEXT *utf8;
+    HRESULT hr;
+    WS_DATETIME val = {0, WS_DATETIME_FORMAT_UTC};
+    BOOL found;
+
+    if (desc) FIXME( "ignoring description\n" );
+
+    if ((hr = read_get_text( reader, mapping, localname, ns, &utf8, &found )) != S_OK) return hr;
+    if (found && (hr = str_to_datetime( utf8->value.bytes, utf8->value.length, &val )) != S_OK) return hr;
+
+    switch (option)
+    {
+    case WS_READ_REQUIRED_VALUE:
+        if (!found) return WS_E_INVALID_FORMAT;
+        if (size != sizeof(WS_DATETIME)) return E_INVALIDARG;
+        *(WS_DATETIME *)ret = val;
+        break;
+
+    case WS_READ_REQUIRED_POINTER:
+        if (!found) return WS_E_INVALID_FORMAT;
+        /* fall through */
+
+    case WS_READ_OPTIONAL_POINTER:
+    {
+        WS_DATETIME *heap_val = NULL;
+        if (size != sizeof(heap_val)) return E_INVALIDARG;
+        if (found)
+        {
+            if (!(heap_val = ws_alloc( heap, sizeof(*heap_val) ))) return WS_E_QUOTA_EXCEEDED;
+            *heap_val = val;
+        }
+        *(WS_DATETIME **)ret = heap_val;
+        break;
+    }
+    default:
+        FIXME( "read option %u not supported\n", option );
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 static BOOL is_empty_text_node( const struct node *node )
 {
     const WS_XML_TEXT_NODE *text = (const WS_XML_TEXT_NODE *)node;
@@ -2642,6 +2831,9 @@ static ULONG get_type_size( WS_TYPE type, const WS_STRUCT_DESCRIPTION *desc )
     case WS_INT64_TYPE:
     case WS_UINT64_TYPE:
         return sizeof(INT64);
+
+    case WS_DATETIME_TYPE:
+        return sizeof(WS_DATETIME);
 
     case WS_WSZ_TYPE:
         return sizeof(WCHAR *);
@@ -2746,6 +2938,7 @@ static WS_READ_OPTION map_field_options( WS_TYPE type, ULONG options )
     case WS_UINT32_TYPE:
     case WS_UINT64_TYPE:
     case WS_ENUM_TYPE:
+    case WS_DATETIME_TYPE:
         return WS_READ_REQUIRED_VALUE;
 
     case WS_WSZ_TYPE:
@@ -2976,6 +3169,11 @@ static HRESULT read_type( struct reader *reader, WS_TYPE_MAPPING mapping, WS_TYP
 
     case WS_ENUM_TYPE:
         if ((hr = read_type_enum( reader, mapping, localname, ns, desc, option, heap, value, size )) != S_OK)
+            return hr;
+        break;
+
+    case WS_DATETIME_TYPE:
+        if ((hr = read_type_datetime( reader, mapping, localname, ns, desc, option, heap, value, size )) != S_OK)
             return hr;
         break;
 
