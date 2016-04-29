@@ -234,3 +234,14 @@ HRESULT WINAPI WsCloseServiceProxy( WS_SERVICE_PROXY *handle, const WS_ASYNC_CON
 
     return close_channel( proxy->channel );
 }
+
+/**************************************************************************
+ *          WsCall		[webservices.@]
+ */
+HRESULT WINAPI WsCall( WS_SERVICE_PROXY *handle, const WS_OPERATION_DESCRIPTION *desc, const void **args,
+                       WS_HEAP *heap, const WS_CALL_PROPERTY *properties, const ULONG count,
+                       const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
+{
+    FIXME( "%p %p %p %p %p %u %p %p\n", handle, desc, args, heap, properties, count, ctx, error );
+    return E_NOTIMPL;
+}

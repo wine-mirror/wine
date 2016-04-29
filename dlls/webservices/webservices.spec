@@ -11,7 +11,7 @@
 @ stub WsAddressMessage
 @ stdcall WsAlloc(ptr long ptr ptr)
 @ stub WsAsyncExecute
-@ stub WsCall
+@ stdcall WsCall(ptr ptr ptr ptr ptr long ptr ptr)
 @ stub WsCheckMustUnderstandHeaders
 @ stdcall WsCloseChannel(ptr ptr ptr)
 @ stub WsCloseListener
