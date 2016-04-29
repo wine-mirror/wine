@@ -217,6 +217,12 @@ static void test_filesourcefilter(void)
             12,
             &MEDIASUBTYPE_WAVE,
         },
+        {
+            "unknown format",
+            "Hello World",
+            11,
+            NULL, /* FIXME: should be &MEDIASUBTYPE_NULL */
+        },
     };
     WCHAR path[MAX_PATH], temp[MAX_PATH];
     IFileSourceFilter *filesource;
@@ -277,10 +283,13 @@ static void test_filesourcefilter(void)
         ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
         ok(!lstrcmpW(olepath, path),
            "expected %s, got %s\n", wine_dbgstr_w(path), wine_dbgstr_w(olepath));
-        ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Stream),
-           "expected MEDIATYPE_Stream, got %s\n", wine_dbgstr_guid(&mt.majortype));
-        ok(IsEqualGUID(&mt.subtype, tests[i].subtype),
-           "expected %s, got %s\n", wine_dbgstr_guid(tests[i].subtype), wine_dbgstr_guid(&mt.subtype));
+        if (tests[i].subtype)
+        {
+            ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Stream),
+               "expected MEDIATYPE_Stream, got %s\n", wine_dbgstr_guid(&mt.majortype));
+            ok(IsEqualGUID(&mt.subtype, tests[i].subtype),
+               "expected %s, got %s\n", wine_dbgstr_guid(tests[i].subtype), wine_dbgstr_guid(&mt.subtype));
+        }
         CoTaskMemFree(olepath);
 
         IFileSourceFilter_Release(filesource);

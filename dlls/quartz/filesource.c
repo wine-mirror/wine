@@ -655,8 +655,9 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
             hr = GetClassMediaFile(pReader, pszFileName, &This->pmt->majortype, &This->pmt->subtype, NULL);
             if (FAILED(hr))
             {
-                CoTaskMemFree(This->pmt);
-                This->pmt = NULL;
+                This->pmt->majortype = MEDIATYPE_Stream;
+                This->pmt->subtype = MEDIASUBTYPE_NULL;
+                hr = S_OK;
             }
         }
         else
