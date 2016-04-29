@@ -2077,7 +2077,6 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     }
     else
     {
-        IO_STATUS_BLOCK io;
         BOOL has_wildcard = strpbrkW( info->mask.Buffer, wildcardsW ) != NULL;
 
         info->data_size = has_wildcard ? 8192 : max_entry_size * 2;
@@ -2091,12 +2090,12 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
                 return INVALID_HANDLE_VALUE;
             }
 
-            NtQueryDirectoryFile( info->handle, 0, NULL, NULL, &io, info->data, info->data_size,
-                                  FileBothDirectoryInformation, FALSE, &info->mask, TRUE );
-            if (io.u.Status)
+            status = NtQueryDirectoryFile( info->handle, 0, NULL, NULL, &io, info->data, info->data_size,
+                                           FileBothDirectoryInformation, FALSE, &info->mask, TRUE );
+            if (status)
             {
                 FindClose( info );
-                SetLastError( RtlNtStatusToDosError( io.u.Status ) );
+                SetLastError( RtlNtStatusToDosError( status ) );
                 return INVALID_HANDLE_VALUE;
             }
 
@@ -2148,6 +2147,7 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
     FIND_FIRST_INFO *info;
     FILE_BOTH_DIR_INFORMATION *dir_info;
     BOOL ret = FALSE;
+    NTSTATUS status;
 
     TRACE("%p %p\n", handle, data);
 
@@ -2173,15 +2173,15 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
             IO_STATUS_BLOCK io;
 
             if (info->data_size)
-                NtQueryDirectoryFile( info->handle, 0, NULL, NULL, &io, info->data, info->data_size,
-                                      FileBothDirectoryInformation, FALSE, &info->mask, FALSE );
+                status = NtQueryDirectoryFile( info->handle, 0, NULL, NULL, &io, info->data, info->data_size,
+                                               FileBothDirectoryInformation, FALSE, &info->mask, FALSE );
             else
-                io.u.Status = STATUS_NO_MORE_FILES;
+                status = STATUS_NO_MORE_FILES;
 
-            if (io.u.Status)
+            if (status)
             {
-                SetLastError( RtlNtStatusToDosError( io.u.Status ) );
-                if (io.u.Status == STATUS_NO_MORE_FILES)
+                SetLastError( RtlNtStatusToDosError( status ) );
+                if (status == STATUS_NO_MORE_FILES)
                 {
                     CloseHandle( info->handle );
                     HeapFree( GetProcessHeap(), 0, info->data );
