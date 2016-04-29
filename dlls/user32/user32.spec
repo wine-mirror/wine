@@ -620,6 +620,7 @@
 @ stdcall SetClassWord(long long long)
 @ stdcall SetClipboardData(long long)
 @ stdcall SetClipboardViewer(long)
+@ stdcall SetCoalescableTimer(long long long ptr long)
 # @ stub SetConsoleReserveKeys
 @ stdcall SetCursor(long)
 @ stub SetCursorContents

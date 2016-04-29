@@ -4436,9 +4436,9 @@ BOOL WINAPI MessageBeep( UINT i )
 
 
 /***********************************************************************
- *		SetTimer (USER32.@)
+ *      SetCoalescableTimer (USER32.@)
  */
-UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
+UINT_PTR WINAPI SetCoalescableTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc, ULONG tolerance )
 {
     UINT_PTR ret;
     WNDPROC winproc = 0;
@@ -4465,6 +4465,15 @@ UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
 
     TRACE("Added %p %lx %p timeout %d\n", hwnd, id, winproc, timeout );
     return ret;
+}
+
+
+/******************************************************************
+ *      SetTimer (USER32.@)
+ */
+UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
+{
+    return SetCoalescableTimer( hwnd, id, timeout, proc, TIMERV_DEFAULT_COALESCING );
 }
 
 

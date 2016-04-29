@@ -1713,6 +1713,7 @@ static HMONITOR (WINAPI *pMonitorFromPoint)(POINT,DWORD);
 static BOOL (WINAPI *pUpdateLayeredWindow)(HWND,HDC,POINT*,SIZE*,HDC,POINT*,COLORREF,BLENDFUNCTION*,DWORD);
 static UINT_PTR (WINAPI *pSetSystemTimer)(HWND, UINT_PTR, UINT, TIMERPROC);
 static UINT_PTR (WINAPI *pKillSystemTimer)(HWND, UINT_PTR);
+static UINT_PTR (WINAPI *pSetCoalescableTimer)(HWND, UINT_PTR, UINT, TIMERPROC, ULONG);
 /* kernel32 functions */
 static BOOL (WINAPI *pGetCPInfoExA)(UINT, DWORD, LPCPINFOEXA);
 
@@ -1739,6 +1740,7 @@ static void init_procs(void)
     GET_PROC(user32, UpdateLayeredWindow)
     GET_PROC(user32, SetSystemTimer)
     GET_PROC(user32, KillSystemTimer)
+    GET_PROC(user32, SetCoalescableTimer)
 
     GET_PROC(kernel32, GetCPInfoExA)
 
@@ -8666,6 +8668,20 @@ static void test_timers_no_wnd(void)
        count, TIMER_COUNT_EXPECTED);
     KillTimer(NULL, id);
     /* Note: SetSystemTimer doesn't support a NULL window, see test_timers */
+
+    if (pSetCoalescableTimer)
+    {
+        count = 0;
+        id = pSetCoalescableTimer(NULL, 0, 0, callback_count, 0);
+        ok(id != 0, "SetCoalescableTimer failed with %u.\n", GetLastError());
+        start = GetTickCount();
+        while (GetTickCount()-start < 100 && GetMessageA(&msg, NULL, 0, 0))
+            DispatchMessageA(&msg);
+        ok(count > 1, "expected count > 1, got %d.\n", count);
+        KillTimer(NULL, id);
+    }
+    else
+        win_skip("SetCoalescableTimer not available.\n");
 
     /* Check what happens when we're running out of timers */
     for (i=0; i<sizeof(ids)/sizeof(ids[0]); i++)
