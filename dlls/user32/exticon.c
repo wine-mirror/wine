@@ -218,13 +218,13 @@ static BYTE * ICO_LoadIcon( LPBYTE peimage, LPicoICONDIRENTRY lpiIDE, ULONG *uSi
  */
 static BYTE * ICO_GetIconDirectory( LPBYTE peimage, LPicoICONDIR* lplpiID, ULONG *uSize )
 {
-	CURSORICONDIR	* lpcid;	/* icon resource in resource-dir format */
+	CURSORICONFILEDIR *lpcid;	/* icon resource in resource-dir format */
 	CURSORICONDIR	* lpID;		/* icon resource in resource format */
 	int		i;
 
 	TRACE("%p %p\n", peimage, lplpiID);
 
-	lpcid = (CURSORICONDIR*)peimage;
+	lpcid = (CURSORICONFILEDIR*)peimage;
 
 	if( lpcid->idReserved || (lpcid->idType != 1) || (!lpcid->idCount) )
 	  return 0;

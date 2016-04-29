@@ -48,29 +48,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(cursor);
 WINE_DECLARE_DEBUG_CHANNEL(icon);
 WINE_DECLARE_DEBUG_CHANNEL(resource);
 
-#include "pshpack1.h"
-
-typedef struct {
-    BYTE bWidth;
-    BYTE bHeight;
-    BYTE bColorCount;
-    BYTE bReserved;
-    WORD xHotspot;
-    WORD yHotspot;
-    DWORD dwDIBSize;
-    DWORD dwDIBOffset;
-} CURSORICONFILEDIRENTRY;
-
-typedef struct
-{
-    WORD                idReserved;
-    WORD                idType;
-    WORD                idCount;
-    CURSORICONFILEDIRENTRY  idEntries[1];
-} CURSORICONFILEDIR;
-
-#include "poppack.h"
-
 static HDC screen_dc;
 
 static const WCHAR DISPLAYW[] = {'D','I','S','P','L','A','Y',0};
