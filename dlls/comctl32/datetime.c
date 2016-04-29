@@ -783,10 +783,7 @@ DATETIME_Refresh (DATETIME_INFO *infoPtr, HDC hdc)
                     GetTextExtentPoint32W (hdc, txt, strlenW(txt), &size);
                 }
 
-                selection.left   = 0;
-                selection.top    = 0;
-                selection.right  = size.cx;
-                selection.bottom = size.cy;
+                SetRect(&selection, 0, 0, size.cx, size.cy);
                 /* center rectangle */
                 OffsetRect(&selection, (field->right  + field->left - size.cx)/2,
                                        (field->bottom - size.cy)/2);

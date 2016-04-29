@@ -776,10 +776,7 @@ static VOID SYSLINK_Render (const SYSLINK_INFO *infoPtr, HDC hdc, PRECT pRect)
                     
                     cbl->nChars = LineLen;
                     cbl->nSkip = SkipChars;
-                    cbl->rc.left = x;
-                    cbl->rc.top = y;
-                    cbl->rc.right = x + szDim.cx;
-                    cbl->rc.bottom = y + szDim.cy;
+                    SetRect(&cbl->rc, x, y, x + szDim.cx, y + szDim.cy);
 
                     if (cbl->rc.right > szDoc.cx)
                         szDoc.cx = cbl->rc.right;

@@ -1769,8 +1769,7 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
     rcImage = *drawRect;
 
     rcTemp = *drawRect;
-
-    rcText.left = rcText.top = rcText.right = rcText.bottom = 0;
+    SetRectEmpty(&rcText);
 
     /* get the rectangle that the text fits in */
     if (item->pszText)

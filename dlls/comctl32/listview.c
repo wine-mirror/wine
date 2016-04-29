@@ -5445,9 +5445,7 @@ static HIMAGELIST LISTVIEW_CreateDragImage(LISTVIEW_INFO *infoPtr, INT iItem, LP
     hOldbmp = SelectObject(hdc, hbmp);
     hOldFont = SelectObject(hdc, infoPtr->hFont);
 
-    rcItem.left = rcItem.top = 0;
-    rcItem.right = size.cx;
-    rcItem.bottom = size.cy;
+    SetRect(&rcItem, 0, 0, size.cx, size.cy);
     FillRect(hdc, &rcItem, infoPtr->hBkBrush);
     
     pos.x = pos.y = 0;
@@ -5756,10 +5754,9 @@ static void LISTVIEW_ScrollOnInsert(LISTVIEW_INFO *infoPtr, INT nItem, INT dir)
     if (infoPtr->uView == LV_VIEW_DETAILS) return;
 
     /* now for LISTs, we have to deal with the columns to the right */
-    rcScroll.left = (nItemCol + 1) * infoPtr->nItemWidth;
-    rcScroll.top = 0;
-    rcScroll.right = (infoPtr->nItemCount / nPerCol + 1) * infoPtr->nItemWidth;
-    rcScroll.bottom = nPerCol * infoPtr->nItemHeight;
+    SetRect(&rcScroll, (nItemCol + 1) * infoPtr->nItemWidth, 0,
+            (infoPtr->nItemCount / nPerCol + 1) * infoPtr->nItemWidth,
+            nPerCol * infoPtr->nItemHeight);
     OffsetRect(&rcScroll, Origin.x, Origin.y);
     if (IntersectRect(&rcScroll, &rcScroll, &infoPtr->rcList))
 	InvalidateRect(infoPtr->hwndSelf, &rcScroll, TRUE);
@@ -8484,10 +8481,7 @@ static HIMAGELIST LISTVIEW_CreateCheckBoxIL(const LISTVIEW_INFO *infoPtr)
     hbm_mask = CreateBitmap(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), 1, 1, NULL);
     ReleaseDC(infoPtr->hwndSelf, hdc_wnd);
 
-    rc.left = rc.top = 0;
-    rc.right = GetSystemMetrics(SM_CXSMICON);
-    rc.bottom = GetSystemMetrics(SM_CYSMICON);
-
+    SetRect(&rc, 0, 0, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON));
     hbm_orig = SelectObject(hdc, hbm_mask);
     FillRect(hdc, &rc, hbr_white);
     InflateRect(&rc, -2, -2);
@@ -8847,10 +8841,8 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
     
 	    if (infoPtr->uView == LV_VIEW_DETAILS)
 	    {
-		rcErase.left = 0;
-		rcErase.top = nFrom * infoPtr->nItemHeight;
-		rcErase.right = infoPtr->nItemWidth;
-		rcErase.bottom = nTo * infoPtr->nItemHeight;
+                SetRect(&rcErase, 0, nFrom * infoPtr->nItemHeight, infoPtr->nItemWidth,
+                        nTo * infoPtr->nItemHeight);
 		OffsetRect(&rcErase, Origin.x, Origin.y);
 		if (IntersectRect(&rcErase, &rcErase, &infoPtr->rcList))
 		    LISTVIEW_InvalidateRect(infoPtr, &rcErase);

@@ -709,11 +709,7 @@ static BOOL PROPSHEET_SizeMismatch(HWND hwndDlg, const PropSheetInfo* psInfo)
   /*
    * Biggest page size.
    */
-  rcPage.left   = 0;
-  rcPage.top    = 0;
-  rcPage.right  = psInfo->width;
-  rcPage.bottom = psInfo->height;
-
+  SetRect(&rcPage, 0, 0, psInfo->width, psInfo->height);
   MapDialogRect(hwndDlg, &rcPage);
   TRACE("biggest page %s\n", wine_dbgstr_rect(&rcPage));
 
@@ -747,11 +743,7 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
   /*
    * Biggest page size.
    */
-  rc.left   = 0;
-  rc.top    = 0;
-  rc.right  = psInfo->width;
-  rc.bottom = psInfo->height;
-
+  SetRect(&rc, 0, 0, psInfo->width, psInfo->height);
   MapDialogRect(hwndDlg, &rc);
 
   /* retrieve the dialog units */
@@ -822,10 +814,7 @@ static BOOL PROPSHEET_AdjustSizeWizard(HWND hwndDlg, const PropSheetInfo* psInfo
   RECT rc, lineRect, dialogRect;
 
   /* Biggest page size */
-  rc.left   = 0;
-  rc.top    = 0;
-  rc.right  = psInfo->width;
-  rc.bottom = psInfo->height;
+  SetRect(&rc, 0, 0, psInfo->width, psInfo->height);
   MapDialogRect(hwndDlg, &rc);
 
   TRACE("Biggest page %s\n", wine_dbgstr_rect(&rc));
@@ -3319,11 +3308,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
 
 	GetClientRect(hwndLine, &r);
 	MapWindowPoints(hwndLine, hwnd, (LPPOINT) &r, 2);
-
-	rzone.left = 0;
-	rzone.top = 0;
-	rzone.right = r.right;
-	rzone.bottom = r.top - 1;
+        SetRect(&rzone, 0, 0, r.right, r.top - 1);
 
 	hbr = GetSysColorBrush(COLOR_WINDOW);
 	FillRect(hdc, &rzone, hbr);
