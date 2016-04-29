@@ -2023,6 +2023,27 @@ static HRESULT str_to_datetime( const unsigned char *bytes, ULONG len, WS_DATETI
     return S_OK;
 }
 
+#define TICKS_1601_01_01    504911232000000000
+
+/**************************************************************************
+ *          WsDateTimeToFileTime               [webservices.@]
+ */
+HRESULT WINAPI WsDateTimeToFileTime( const WS_DATETIME *dt, FILETIME *ft, WS_ERROR *error )
+{
+    unsigned __int64 ticks;
+
+    TRACE( "%p %p %p\n", dt, ft, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!dt || !ft) return E_INVALIDARG;
+
+    if (dt->ticks < TICKS_1601_01_01) return WS_E_INVALID_FORMAT;
+    ticks = dt->ticks - TICKS_1601_01_01;
+    ft->dwHighDateTime = ticks >> 32;
+    ft->dwLowDateTime  = (DWORD)ticks;
+    return S_OK;
+}
+
 static HRESULT read_get_node_text( struct reader *reader, WS_XML_UTF8_TEXT **ret )
 {
     WS_XML_TEXT_NODE *text;

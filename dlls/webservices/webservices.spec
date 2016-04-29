@@ -37,7 +37,7 @@
 @ stdcall WsCreateWriter(ptr long ptr ptr)
 @ stdcall WsCreateXmlBuffer(ptr ptr long ptr ptr)
 @ stub WsCreateXmlSecurityToken
-@ stub WsDateTimeToFileTime
+@ stdcall WsDateTimeToFileTime(ptr ptr ptr)
 @ stub WsDecodeUrl
 @ stub WsEncodeUrl
 @ stub WsEndReaderCanonicalization

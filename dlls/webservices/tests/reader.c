@@ -3009,6 +3009,53 @@ static void test_datetime(void)
     WsFreeHeap( heap );
 }
 
+static void test_WsDateTimeToFileTime(void)
+{
+    static const struct
+    {
+        WS_DATETIME dt;
+        HRESULT     hr;
+        FILETIME    ft;
+    }
+    tests[] =
+    {
+        { {0, WS_DATETIME_FORMAT_UTC}, WS_E_INVALID_FORMAT, {0, 0} },
+        { {0x701ce172276ffff, WS_DATETIME_FORMAT_UTC}, WS_E_INVALID_FORMAT, {0, 0} },
+        { {0x701ce1722770000, WS_DATETIME_FORMAT_UTC}, S_OK, {0, 0} },
+        { {0x2bca2875f4373fff, WS_DATETIME_FORMAT_UTC}, S_OK, {0xd1c03fff, 0x24c85a5e} },
+        { {0x2bca2875f4374000, WS_DATETIME_FORMAT_UTC}, S_OK, {0xd1c04000, 0x24c85a5e} },
+        { {0x2bca2875f4374000, WS_DATETIME_FORMAT_LOCAL}, S_OK, {0xd1c04000, 0x24c85a5e} },
+        { {~0, WS_DATETIME_FORMAT_UTC}, S_OK, {0xdd88ffff, 0xf8fe31e8} },
+    };
+    WS_DATETIME dt;
+    FILETIME ft;
+    HRESULT hr;
+    ULONG i;
+
+    hr = WsDateTimeToFileTime( NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    dt.ticks  = 0x701ce172277000;
+    dt.format = WS_DATETIME_FORMAT_UTC;
+    hr = WsDateTimeToFileTime( &dt, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsDateTimeToFileTime( NULL, &ft, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        memset( &ft, 0, sizeof(ft) );
+        hr = WsDateTimeToFileTime( &tests[i].dt, &ft, NULL );
+        ok( hr == tests[i].hr, "%u: got %08x\n", i, hr );
+        if (hr == S_OK)
+        {
+            ok( ft.dwLowDateTime == tests[i].ft.dwLowDateTime, "%u: got %08x\n", i, ft.dwLowDateTime );
+            ok( ft.dwHighDateTime == tests[i].ft.dwHighDateTime, "%u: got %08x\n", i, ft.dwHighDateTime );
+        }
+    }
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -3035,4 +3082,5 @@ START_TEST(reader)
     test_repeating_element();
     test_WsResetHeap();
     test_datetime();
+    test_WsDateTimeToFileTime();
 }
