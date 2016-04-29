@@ -2236,8 +2236,9 @@ static void test_multiselect(void)
 
     HWND hwnd;
     INT r;
-    int i,j,item_count,selected_count;
+    int i, j;
     static const int items=5;
+    DWORD item_count;
     BYTE kstate[256];
     select_task task;
     LONG_PTR style;
@@ -2255,10 +2256,11 @@ static void test_multiselect(void)
     for (i = 0; i < items; i++)
         insert_item(hwnd, 0);
 
-    item_count = (int)SendMessageA(hwnd, LVM_GETITEMCOUNT, 0, 0);
+    item_count = SendMessageA(hwnd, LVM_GETITEMCOUNT, 0, 0);
     expect(items, item_count);
 
     for (i = 0; i < 4; i++) {
+        DWORD selected_count;
         LVITEMA item;
 
         task = task_list[i];
@@ -2291,9 +2293,11 @@ static void test_multiselect(void)
 	    expect(0,r);
 	}
 
-	selected_count = (int)SendMessageA(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
+	selected_count = SendMessageA(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
 
-	ok((task.result == -1 ? item_count : task.result) == selected_count, "Failed multiple selection %s. There should be %d selected items (is %d)\n", task.descr, item_count, selected_count);
+	ok((task.result == -1 ? item_count : task.result) == selected_count,
+            "Failed multiple selection %s. There should be %d selected items (is %d)\n",
+            task.descr, item_count, selected_count);
 
 	/* Set SHIFT key released */
 	GetKeyboardState(kstate);
@@ -2307,7 +2311,7 @@ static void test_multiselect(void)
     for (i=0;i<items;i++) {
 	    insert_item(hwnd, 0);
     }
-    item_count = (int)SendMessageA(hwnd, LVM_GETITEMCOUNT, 0, 0);
+    item_count = SendMessageA(hwnd, LVM_GETITEMCOUNT, 0, 0);
     expect(items,item_count);
 
     /* try with NULL pointer */
