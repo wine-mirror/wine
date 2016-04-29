@@ -2694,9 +2694,8 @@ static WCHAR *lookup_manifest_file( HANDLE dir, struct assembly_identity *ai )
               ai->version.major, ai->version.minor, lang );
     RtlInitUnicodeString( &lookup_us, lookup );
 
-    NtQueryDirectoryFile( dir, 0, NULL, NULL, &io, buffer, sizeof(buffer),
-                          FileBothDirectoryInformation, FALSE, &lookup_us, TRUE );
-    if (io.u.Status == STATUS_SUCCESS)
+    if (!NtQueryDirectoryFile( dir, 0, NULL, NULL, &io, buffer, sizeof(buffer),
+                               FileBothDirectoryInformation, FALSE, &lookup_us, TRUE ))
     {
         ULONG min_build = ai->version.build, min_revision = ai->version.revision;
         FILE_BOTH_DIR_INFORMATION *dir_info;
@@ -2709,9 +2708,9 @@ static WCHAR *lookup_manifest_file( HANDLE dir, struct assembly_identity *ai )
         {
             if (data_pos >= data_len)
             {
-                NtQueryDirectoryFile( dir, 0, NULL, NULL, &io, buffer, sizeof(buffer),
-                                      FileBothDirectoryInformation, FALSE, &lookup_us, FALSE );
-                if (io.u.Status != STATUS_SUCCESS) break;
+                if (NtQueryDirectoryFile( dir, 0, NULL, NULL, &io, buffer, sizeof(buffer),
+                                          FileBothDirectoryInformation, FALSE, &lookup_us, FALSE ))
+                    break;
                 data_len = io.Information;
                 data_pos = 0;
             }
