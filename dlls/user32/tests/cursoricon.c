@@ -1130,14 +1130,76 @@ static void test_LoadImageFile(const char * test_desc, const unsigned char * ima
     DeleteFileA(filename);
 }
 
+typedef struct {
+    unsigned width;
+    unsigned height;
+    BOOL invalid_offset;
+} test_icon_entries_t;
+
+static void create_ico_file(const char *filename, const test_icon_entries_t *test_icon_entries, unsigned entry_cnt)
+{
+    CURSORICONFILEDIRENTRY *icon_entry;
+    BITMAPINFOHEADER *icon_header;
+    CURSORICONFILEDIR *dir;
+    BYTE *buf, *bitmap_ptr;
+    DWORD bytes_written;
+    size_t icon_size;
+    HANDLE file;
+    unsigned i;
+    BOOL ret;
+
+    const unsigned icon_bpp = 32;
+
+    icon_size = FIELD_OFFSET(CURSORICONFILEDIR, idEntries[entry_cnt]) + sizeof(BITMAPINFOHEADER)*entry_cnt;
+    for(i=0; i<entry_cnt; i++)
+        icon_size += icon_bpp * test_icon_entries[i].width * test_icon_entries[i].height / 8;
+
+    buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, icon_size);
+    dir = (CURSORICONFILEDIR*)buf;
+
+    dir->idReserved = 0;
+    dir->idType = 1;
+    dir->idCount = entry_cnt;
+
+    bitmap_ptr = buf + FIELD_OFFSET(CURSORICONFILEDIR, idEntries[entry_cnt]);
+    for(i=0; i<entry_cnt; i++) {
+        icon_entry = dir->idEntries+i;
+        icon_entry->bWidth = test_icon_entries[i].width;
+        icon_entry->bHeight = test_icon_entries[i].height;
+        icon_entry->bColorCount = 0;
+        icon_entry->bReserved = 0;
+        icon_entry->xHotspot = 1;
+        icon_entry->yHotspot = 1;
+        icon_entry->dwDIBSize = sizeof(BITMAPINFOHEADER) + icon_entry->bWidth * icon_entry->bHeight * icon_bpp / 8;
+        icon_entry->dwDIBOffset = test_icon_entries[i].invalid_offset ? 0xffffffff : bitmap_ptr - buf;
+
+        icon_header = (BITMAPINFOHEADER*)bitmap_ptr;
+        bitmap_ptr += icon_entry->dwDIBSize;
+
+        icon_header->biSize = sizeof(BITMAPINFOHEADER);
+        icon_header->biWidth = icon_entry->bWidth;
+        icon_header->biHeight = icon_entry->bHeight;
+        icon_header->biPlanes = 1;
+        icon_header->biBitCount = icon_bpp;
+        icon_header->biSizeImage = 0; /* Uncompressed bitmap. */
+    }
+
+    memset(bitmap_ptr, 0xf0, buf+icon_size-bitmap_ptr);
+
+    /* Create the icon. */
+    file = CreateFileA(filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileA failed. %u\n", GetLastError());
+    ret = WriteFile(file, buf, icon_size, &bytes_written, NULL);
+    ok(ret && bytes_written == icon_size, "icon.ico created improperly.\n");
+    CloseHandle(file);
+}
+
 static void test_LoadImage(void)
 {
     HANDLE handle;
     BOOL ret;
-    DWORD error, bytes_written;
-    CURSORICONFILEDIR *icon_data;
-    CURSORICONFILEDIRENTRY *icon_entry;
-    BITMAPINFOHEADER *icon_header, *bitmap_header;
+    DWORD error;
+    BITMAPINFOHEADER *bitmap_header;
     ICONINFO icon_info;
     int i;
 
@@ -1149,37 +1211,9 @@ static void test_LoadImage(void)
     (sizeof(CURSORICONFILEDIR) + sizeof(BITMAPINFOHEADER) \
     + ICON_AND_SIZE + ICON_AND_SIZE*ICON_BPP)
 
-    /* Set icon data. */
-    icon_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ICON_SIZE);
-    icon_data->idReserved = 0;
-    icon_data->idType = 1;
-    icon_data->idCount = 1;
+    static const test_icon_entries_t icon_desc = {32, 32};
 
-    icon_entry = icon_data->idEntries;
-    icon_entry->bWidth = ICON_WIDTH;
-    icon_entry->bHeight = ICON_HEIGHT;
-    icon_entry->bColorCount = 0;
-    icon_entry->bReserved = 0;
-    icon_entry->xHotspot = 1;
-    icon_entry->yHotspot = 1;
-    icon_entry->dwDIBSize = ICON_SIZE - sizeof(CURSORICONFILEDIR);
-    icon_entry->dwDIBOffset = sizeof(CURSORICONFILEDIR);
-
-    icon_header = (BITMAPINFOHEADER *) ((BYTE *) icon_data + icon_entry->dwDIBOffset);
-    icon_header->biSize = sizeof(BITMAPINFOHEADER);
-    icon_header->biWidth = ICON_WIDTH;
-    icon_header->biHeight = ICON_HEIGHT*2;
-    icon_header->biPlanes = 1;
-    icon_header->biBitCount = ICON_BPP;
-    icon_header->biSizeImage = 0; /* Uncompressed bitmap. */
-
-    /* Create the icon. */
-    handle = CreateFileA("icon.ico", GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_NEW,
-        FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(handle != INVALID_HANDLE_VALUE, "CreateFileA failed. %u\n", GetLastError());
-    ret = WriteFile(handle, icon_data, ICON_SIZE, &bytes_written, NULL);
-    ok(ret && bytes_written == ICON_SIZE, "icon.ico created improperly.\n");
-    CloseHandle(handle);
+    create_ico_file("icon.ico", &icon_desc, 1);
 
     /* Test loading an icon as a cursor. */
     SetLastError(0xdeadbeef);
@@ -1227,7 +1261,6 @@ static void test_LoadImage(void)
     error = GetLastError();
     ok(error == 0xdeadbeef, "Last error: %u\n", error);
 
-    HeapFree(GetProcessHeap(), 0, icon_data);
     DeleteFileA("icon.ico");
 
     /* Test a system icon */
