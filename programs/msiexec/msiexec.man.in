@@ -76,7 +76,7 @@ Log all error messages.
 .IP "\fBa\fR"
 Log start of actions.
 .IP "\fBr\fR"
-Log action specifc records.
+Log action specific records.
 .IP "\fBu\fR"
 Log user requests.
 .IP "\fBc\fR"
