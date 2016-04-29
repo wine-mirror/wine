@@ -98,6 +98,7 @@ static INT (WINAPI *pGetGeoInfoA)(GEOID, GEOTYPE, LPSTR, INT, LANGID);
 static INT (WINAPI *pGetGeoInfoW)(GEOID, GEOTYPE, LPWSTR, INT, LANGID);
 static BOOL (WINAPI *pEnumSystemGeoID)(GEOCLASS, GEOID, GEO_ENUMPROC);
 static BOOL (WINAPI *pGetSystemPreferredUILanguages)(DWORD, ULONG*, WCHAR*, ULONG*);
+static BOOL (WINAPI *pGetThreadPreferredUILanguages)(DWORD, ULONG*, WCHAR*, ULONG*);
 
 static void InitFunctionPointers(void)
 {
@@ -127,6 +128,7 @@ static void InitFunctionPointers(void)
   X(GetGeoInfoW);
   X(EnumSystemGeoID);
   X(GetSystemPreferredUILanguages);
+  X(GetThreadPreferredUILanguages);
 #undef X
 }
 
@@ -4770,6 +4772,32 @@ static void test_GetSystemPreferredUILanguages(void)
        "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
 }
 
+static void test_GetThreadPreferredUILanguages(void)
+{
+    BOOL ret;
+    ULONG count, size;
+    WCHAR *buf;
+
+    if (!pGetThreadPreferredUILanguages)
+    {
+        win_skip("GetThreadPreferredUILanguages is not available.\n");
+        return;
+    }
+
+    size = count = 0;
+    ret = pGetThreadPreferredUILanguages(MUI_LANGUAGE_ID|MUI_UI_FALLBACK, &count, NULL, &size);
+    ok(ret, "got %u\n", GetLastError());
+    ok(count, "expected count > 0\n");
+    ok(size, "expected size > 0\n");
+
+    count = 0;
+    buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size * sizeof(WCHAR));
+    ret = pGetThreadPreferredUILanguages(MUI_LANGUAGE_ID|MUI_UI_FALLBACK, &count, buf, &size);
+    ok(ret, "got %u\n", GetLastError());
+    ok(count, "expected count > 0\n");
+    HeapFree(GetProcessHeap(), 0, buf);
+}
+
 START_TEST(locale)
 {
   InitFunctionPointers();
@@ -4813,6 +4841,7 @@ START_TEST(locale)
   test_EnumSystemGeoID();
   test_invariant();
   test_GetSystemPreferredUILanguages();
+  test_GetThreadPreferredUILanguages();
   /* this requires collation table patch to make it MS compatible */
   if (0) test_sorting();
 }
