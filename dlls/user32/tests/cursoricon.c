@@ -2517,6 +2517,25 @@ static void test_DestroyCursor(void)
     ok(cursor2 != cursor, "cursor == %p, cursor2 == %p\n", cursor, cursor2);
 }
 
+static void test_PrivateExtractIcons(void)
+{
+    HICON icon;
+    UINT ret;
+
+    static const test_icon_entries_t icon_desc[] = {{0,0,TRUE}, {16,16,TRUE}, {32,32}, {64,64,TRUE}};
+
+    create_ico_file("extract.ico", icon_desc, sizeof(icon_desc)/sizeof(*icon_desc));
+
+    ret = PrivateExtractIconsA("extract.ico", 0, 32, 32, &icon, NULL, 1, 0);
+    ok(ret == 1, "PrivateExtractIconsA returned %u\n", ret);
+    ok(icon != NULL, "icon == NULL\n");
+
+    test_icon_info(icon, 32, 32, 32, 32);
+    DestroyIcon(icon);
+
+    DeleteFileA("extract.ico");
+}
+
 static void test_monochrome_icon(void)
 {
     HANDLE handle;
@@ -2670,6 +2689,7 @@ START_TEST(cursoricon)
     test_SetCursor();
     test_ShowCursor();
     test_DestroyCursor();
+    test_PrivateExtractIcons();
     test_monochrome_icon();
     do_parent();
     test_child_process();
