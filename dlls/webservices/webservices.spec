@@ -42,7 +42,7 @@
 @ stub WsEncodeUrl
 @ stub WsEndReaderCanonicalization
 @ stub WsEndWriterCanonicalization
-@ stub WsFileTimeToDateTime
+@ stdcall WsFileTimeToDateTime(ptr ptr ptr)
 @ stub WsFillBody
 @ stdcall WsFillReader(ptr long ptr ptr)
 @ stdcall WsFindAttribute(ptr ptr ptr long ptr ptr)

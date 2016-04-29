@@ -3056,6 +3056,50 @@ static void test_WsDateTimeToFileTime(void)
     }
 }
 
+static void test_WsFileTimeToDateTime(void)
+{
+    WS_DATETIME dt;
+    FILETIME ft;
+    HRESULT hr;
+
+    hr = WsFileTimeToDateTime( NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    ft.dwLowDateTime = ft.dwHighDateTime = 0;
+    hr = WsFileTimeToDateTime( &ft, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsFileTimeToDateTime( NULL, &dt, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    dt.ticks = 0xdeadbeef;
+    dt.format = 0xdeadbeef;
+    hr = WsFileTimeToDateTime( &ft, &dt, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( dt.ticks == 0x701ce1722770000, "got %x%08x\n", (ULONG)(dt.ticks >> 32), (ULONG)dt.ticks );
+    ok( dt.format == WS_DATETIME_FORMAT_UTC, "got %u\n", dt.format );
+
+    ft.dwLowDateTime  = 0xd1c03fff;
+    ft.dwHighDateTime = 0x24c85a5e;
+    hr = WsFileTimeToDateTime( &ft, &dt, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( dt.ticks == 0x2bca2875f4373fff, "got %x%08x\n", (ULONG)(dt.ticks >> 32), (ULONG)dt.ticks );
+    ok( dt.format == WS_DATETIME_FORMAT_UTC, "got %u\n", dt.format );
+
+    ft.dwLowDateTime++;
+    hr = WsFileTimeToDateTime( &ft, &dt, NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    ft.dwLowDateTime  = 0xdd88ffff;
+    ft.dwHighDateTime = 0xf8fe31e8;
+    hr = WsFileTimeToDateTime( &ft, &dt, NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    ft.dwLowDateTime++;
+    hr = WsFileTimeToDateTime( &ft, &dt, NULL );
+    ok( hr == WS_E_NUMERIC_OVERFLOW, "got %08x\n", hr );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -3083,4 +3127,5 @@ START_TEST(reader)
     test_WsResetHeap();
     test_datetime();
     test_WsDateTimeToFileTime();
+    test_WsFileTimeToDateTime();
 }

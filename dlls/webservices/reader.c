@@ -2044,6 +2044,26 @@ HRESULT WINAPI WsDateTimeToFileTime( const WS_DATETIME *dt, FILETIME *ft, WS_ERR
     return S_OK;
 }
 
+/**************************************************************************
+ *          WsFileTimeToDateTime               [webservices.@]
+ */
+HRESULT WINAPI WsFileTimeToDateTime( const FILETIME *ft, WS_DATETIME *dt, WS_ERROR *error )
+{
+    unsigned __int64 ticks;
+
+    TRACE( "%p %p %p\n", ft, dt, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!dt || !ft) return E_INVALIDARG;
+
+    ticks = ((unsigned __int64)ft->dwHighDateTime << 32) | ft->dwLowDateTime;
+    if (ticks > MAX_UINT64 - TICKS_1601_01_01) return WS_E_NUMERIC_OVERFLOW;
+    if (ticks + TICKS_1601_01_01 > TICKS_MAX) return WS_E_INVALID_FORMAT;
+    dt->ticks  = ticks + TICKS_1601_01_01;
+    dt->format = WS_DATETIME_FORMAT_UTC;
+    return S_OK;
+}
+
 static HRESULT read_get_node_text( struct reader *reader, WS_XML_UTF8_TEXT **ret )
 {
     WS_XML_TEXT_NODE *text;
