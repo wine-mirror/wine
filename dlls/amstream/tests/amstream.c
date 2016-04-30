@@ -263,16 +263,13 @@ static void test_media_streams(void)
         ok((void*)am_media_stream == (void*)video_stream, "Not same interface, got %p expected %p\n", am_media_stream, video_stream);
 
         hr = IAMMediaStream_GetMultiMediaStream(am_media_stream, NULL);
-        todo_wine ok(hr == E_POINTER, "Expected E_POINTER, got %x\n", hr);
+        ok(hr == E_POINTER, "Expected E_POINTER, got %x\n", hr);
 
         multi_media_stream = (void *)0xdeadbeef;
         hr = IAMMediaStream_GetMultiMediaStream(am_media_stream, &multi_media_stream);
-        todo_wine ok(hr == S_OK, "IAMMediaStream_GetMultiMediaStream returned: %x\n", hr);
-        if (hr == S_OK)
-        {
-            ok((void *)multi_media_stream == (void *)pams, "Expected %p, got %p\n", pams, multi_media_stream);
-            IMultiMediaStream_Release(multi_media_stream);
-        }
+        ok(hr == S_OK, "IAMMediaStream_GetMultiMediaStream returned: %x\n", hr);
+        ok((void *)multi_media_stream == (void *)pams, "Expected %p, got %p\n", pams, multi_media_stream);
+        IMultiMediaStream_Release(multi_media_stream);
 
         IAMMediaStream_Release(am_media_stream);
 

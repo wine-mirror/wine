@@ -110,9 +110,15 @@ static HRESULT WINAPI DirectDrawMediaStreamImpl_IAMMediaStream_GetMultiMediaStre
 {
     DirectDrawMediaStreamImpl *This = impl_from_DirectDrawMediaStream_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p) stub!\n", This, iface, multi_media_stream);
+    TRACE("(%p/%p)->(%p)\n", This, iface, multi_media_stream);
 
-    return S_FALSE;
+    if (!multi_media_stream)
+        return E_POINTER;
+
+    IMultiMediaStream_AddRef(This->parent);
+    *multi_media_stream = This->parent;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DirectDrawMediaStreamImpl_IAMMediaStream_GetInformation(IAMMediaStream *iface,
