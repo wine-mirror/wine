@@ -686,13 +686,19 @@ static ULONG WINAPI AudioMediaStreamImpl_IAudioMediaStream_Release(IAudioMediaSt
 
 /*** IMediaStream methods ***/
 static HRESULT WINAPI AudioMediaStreamImpl_IAudioMediaStream_GetMultiMediaStream(IAudioMediaStream *iface,
-        IMultiMediaStream** multimedia_stream)
+        IMultiMediaStream **multi_media_stream)
 {
     AudioMediaStreamImpl *This = impl_from_IAudioMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p) stub!\n", iface, This, multimedia_stream);
+    TRACE("(%p/%p)->(%p)\n", iface, This, multi_media_stream);
 
-    return S_FALSE;
+    if (!multi_media_stream)
+        return E_POINTER;
+
+    IMultiMediaStream_AddRef(This->parent);
+    *multi_media_stream = This->parent;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI AudioMediaStreamImpl_IAudioMediaStream_GetInformation(IAudioMediaStream *iface,
