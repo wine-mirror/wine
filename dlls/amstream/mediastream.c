@@ -273,13 +273,19 @@ static ULONG WINAPI DirectDrawMediaStreamImpl_IDirectDrawMediaStream_Release(IDi
 
 /*** IMediaStream methods ***/
 static HRESULT WINAPI DirectDrawMediaStreamImpl_IDirectDrawMediaStream_GetMultiMediaStream(IDirectDrawMediaStream *iface,
-        IMultiMediaStream** ppMultiMediaStream)
+        IMultiMediaStream **multi_media_stream)
 {
     DirectDrawMediaStreamImpl *This = impl_from_IDirectDrawMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p) stub!\n", This, iface, ppMultiMediaStream);
+    TRACE("(%p/%p)->(%p)\n", This, iface, multi_media_stream);
 
-    return S_FALSE;
+    if (!multi_media_stream)
+        return E_POINTER;
+
+    IMultiMediaStream_AddRef(This->parent);
+    *multi_media_stream = This->parent;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DirectDrawMediaStreamImpl_IDirectDrawMediaStream_GetInformation(IDirectDrawMediaStream *iface,

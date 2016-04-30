@@ -292,16 +292,13 @@ static void test_media_streams(void)
             ok(hr == S_OK, "IDirectDrawMediaStream_CreateSample returned: %x\n", hr);
 
             hr = IDirectDrawMediaStream_GetMultiMediaStream(ddraw_stream, NULL);
-            todo_wine ok(hr == E_POINTER, "Expected E_POINTER, got %x\n", hr);
+            ok(hr == E_POINTER, "Expected E_POINTER, got %x\n", hr);
 
             multi_media_stream = (void *)0xdeadbeef;
             hr = IDirectDrawMediaStream_GetMultiMediaStream(ddraw_stream, &multi_media_stream);
-            todo_wine ok(hr == S_OK, "IDirectDrawMediaStream_GetMultiMediaStream returned: %x\n", hr);
-            if (hr == S_OK)
-            {
-                ok((void *)multi_media_stream == (void *)pams, "Expected %p, got %p\n", pams, multi_media_stream);
-                IMultiMediaStream_Release(multi_media_stream);
-            }
+            ok(hr == S_OK, "IDirectDrawMediaStream_GetMultiMediaStream returned: %x\n", hr);
+            ok((void *)multi_media_stream == (void *)pams, "Expected %p, got %p\n", pams, multi_media_stream);
+            IMultiMediaStream_Release(multi_media_stream);
         }
 
         if (ddraw_sample)
