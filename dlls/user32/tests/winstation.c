@@ -284,7 +284,7 @@ static void test_handles(void)
 
     SetLastError( 0xdeadbeef );
     d2 = OpenDesktopA( "", 0, TRUE, DESKTOP_ALL_ACCESS );
-    ok( !d2, "open mepty desktop succeeded\n" );
+    ok( !d2, "open empty desktop succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
