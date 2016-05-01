@@ -98,7 +98,7 @@ sub new($) {
 	# remove leading and trailing whitespace
 	s/^\s*(.*?)\s*$/$1/;
 
-	# skip emty lines
+	# skip empty lines
 	if(/^$/) { next; }
 
 	# skip comments
@@ -147,7 +147,7 @@ sub new($) {
 	# remove leading and trailing whitespace
 	s/^\s*(.*?)\s*$/$1/;
 
-	# skip emty lines
+	# skip empty lines
 	if(/^$/) { next; }
 
 	if(/^\#undef\s+(\S+)$/) {
