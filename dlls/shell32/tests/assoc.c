@@ -160,7 +160,7 @@ static void test_IQueryAssociations_GetString(void)
     r = RegSetValueExW(test_extension_key, NULL, 0, REG_SZ, (PBYTE)test_progidW, sizeof(test_progidW));
     ok(r == ERROR_SUCCESS, "RegSetValueExW(HKCR\\.test, NULL, \"testfile\") failed: 0x%lx\n", r);
 
-    /* adding progid key with no information shuld fail to return information */
+    /* adding progid key with no information should fail to return information */
     r = RegCreateKeyExW(HKEY_CLASSES_ROOT, test_progidW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &test_progid_key, NULL);
     ok(r == ERROR_SUCCESS, "RegCreateKeyExW(HKCR, \"testfile\") failed: 0x%lx\n", r);
     getstring_test(test_extensionW, NULL, ASSOCSTR_DEFAULTICON, NULL, __LINE__);
