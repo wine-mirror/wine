@@ -332,7 +332,7 @@ typedef struct tagLISTVIEW_INFO
   /* painting */
   BOOL bIsDrawing;         /* Drawing in progress */
   INT nMeasureItemHeight;  /* WM_MEASUREITEM result */
-  BOOL bRedraw;            /* WM_SETREDRAW switch */
+  BOOL redraw;             /* WM_SETREDRAW switch */
 
   /* misc */
   DWORD iVersion;          /* CCM_[G,S]ETVERSION */
@@ -1706,7 +1706,7 @@ static inline BOOL LISTVIEW_DrawFocusRect(const LISTVIEW_INFO *infoPtr, HDC hdc)
 
 static inline BOOL is_redrawing(const LISTVIEW_INFO *infoPtr)
 {
-    return infoPtr->bRedraw;
+    return infoPtr->redraw;
 }
 
 static inline void LISTVIEW_InvalidateRect(const LISTVIEW_INFO *infoPtr, const RECT* rect)
@@ -9465,7 +9465,7 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, const CREATESTRUCTW *lpcs)
   infoPtr->nFocusedItem = -1;
   infoPtr->nSelectionMark = -1;
   infoPtr->nHotItem = -1;
-  infoPtr->bRedraw = TRUE;
+  infoPtr->redraw = TRUE;
   infoPtr->bNoItemMetrics = TRUE;
   infoPtr->bDoChangeNotify = TRUE;
   infoPtr->autoSpacing = TRUE;
@@ -10948,22 +10948,21 @@ static LRESULT LISTVIEW_SetFont(LISTVIEW_INFO *infoPtr, HFONT hFont, WORD fRedra
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] bRedraw: state of redraw flag
+ * [I] redraw: state of redraw flag
  *
  * RETURN:
- * DefWinProc return value
+ *     Zero.
  */
-static LRESULT LISTVIEW_SetRedraw(LISTVIEW_INFO *infoPtr, BOOL bRedraw)
+static LRESULT LISTVIEW_SetRedraw(LISTVIEW_INFO *infoPtr, BOOL redraw)
 {
-    TRACE("infoPtr->bRedraw=%d, bRedraw=%d\n", infoPtr->bRedraw, bRedraw);
+    TRACE("old=%d, new=%d\n", infoPtr->redraw, redraw);
 
-    /* we cannot use straight equality here because _any_ non-zero value is TRUE */
-    if ((infoPtr->bRedraw && bRedraw) || (!infoPtr->bRedraw && !bRedraw)) return 0;
+    if (infoPtr->redraw == !!redraw)
+        return 0;
 
-    infoPtr->bRedraw = bRedraw;
+    if (!(infoPtr->redraw = !!redraw))
+        return 0;
 
-    if(!bRedraw) return 0;
-    
     if (is_autoarrange(infoPtr))
 	LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
     LISTVIEW_UpdateScroll(infoPtr);
