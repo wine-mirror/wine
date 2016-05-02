@@ -833,6 +833,7 @@ static int reg_query(WCHAR *key_name, WCHAR *value_name, BOOL value_empty, BOOL 
 {
     WCHAR *p;
     HKEY root, key;
+    WCHAR newlineW[] = {'\n',0};
     int ret;
 
     if (!sane_path(key_name))
@@ -859,6 +860,8 @@ static int reg_query(WCHAR *key_name, WCHAR *value_name, BOOL value_empty, BOOL 
         output_message(STRING_CANNOT_FIND);
         return 1;
     }
+
+    output_string(newlineW);
 
     if (value_name || value_empty)
     {
