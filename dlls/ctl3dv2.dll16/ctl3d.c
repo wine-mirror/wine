@@ -102,7 +102,7 @@ BOOL16 WINAPI Ctl3dIsAutoSubclass16(void)
  */
 BOOL16 WINAPI Ctl3dRegister16(HINSTANCE16 hInst)
 {
-    return FALSE;
+    return TRUE;
 }
 
 /***********************************************************************
