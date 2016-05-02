@@ -1717,6 +1717,17 @@ static void dump_get_handle_fd_reply( const struct get_handle_fd_reply *req )
     fprintf( stderr, ", options=%08x", req->options );
 }
 
+static void dump_get_directory_cache_entry_request( const struct get_directory_cache_entry_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+}
+
+static void dump_get_directory_cache_entry_reply( const struct get_directory_cache_entry_reply *req )
+{
+    fprintf( stderr, " entry=%d", req->entry );
+    dump_varargs_ints( ", free=", cur_size );
+}
+
 static void dump_flush_request( const struct flush_request *req )
 {
     fprintf( stderr, " blocking=%d", req->blocking );
@@ -4344,6 +4355,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_alloc_file_handle_request,
     (dump_func)dump_get_handle_unix_name_request,
     (dump_func)dump_get_handle_fd_request,
+    (dump_func)dump_get_directory_cache_entry_request,
     (dump_func)dump_flush_request,
     (dump_func)dump_lock_file_request,
     (dump_func)dump_unlock_file_request,
@@ -4618,6 +4630,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_alloc_file_handle_reply,
     (dump_func)dump_get_handle_unix_name_reply,
     (dump_func)dump_get_handle_fd_reply,
+    (dump_func)dump_get_directory_cache_entry_reply,
     (dump_func)dump_flush_reply,
     (dump_func)dump_lock_file_reply,
     NULL,
@@ -4892,6 +4905,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "alloc_file_handle",
     "get_handle_unix_name",
     "get_handle_fd",
+    "get_directory_cache_entry",
     "flush",
     "lock_file",
     "unlock_file",

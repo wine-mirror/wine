@@ -1200,6 +1200,15 @@ enum server_fd_type
 };
 
 
+/* Retrieve (or allocate) the client-side directory cache entry */
+@REQ(get_directory_cache_entry)
+    obj_handle_t handle;        /* handle to the directory */
+@REPLY
+    int          entry;         /* cache entry on the client side */
+    VARARG(free,ints);          /* entries that can be freed */
+@END
+
+
 /* Flush a file buffers */
 @REQ(flush)
     int            blocking;    /* whether it's a blocking flush */

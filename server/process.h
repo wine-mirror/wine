@@ -90,6 +90,7 @@ struct process
     struct list          dlls;            /* list of loaded dlls */
     client_ptr_t         peb;             /* PEB address in client address space */
     client_ptr_t         ldt_copy;        /* pointer to LDT copy in client addr space */
+    struct dir_cache    *dir_cache;       /* map of client-side directory cache */
     unsigned int         trace_data;      /* opaque data used by the process tracing mechanism */
     struct list          rawinput_devices;/* list of registered rawinput devices */
     const struct rawinput_device *rawinput_mouse; /* rawinput mouse device, if any */

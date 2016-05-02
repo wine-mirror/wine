@@ -1452,6 +1452,21 @@ enum server_fd_type
 
 
 
+struct get_directory_cache_entry_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct get_directory_cache_entry_reply
+{
+    struct reply_header __header;
+    int          entry;
+    /* VARARG(free,ints); */
+    char __pad_12[4];
+};
+
+
+
 struct flush_request
 {
     struct request_header __header;
@@ -5401,6 +5416,7 @@ enum request
     REQ_alloc_file_handle,
     REQ_get_handle_unix_name,
     REQ_get_handle_fd,
+    REQ_get_directory_cache_entry,
     REQ_flush,
     REQ_lock_file,
     REQ_unlock_file,
@@ -5679,6 +5695,7 @@ union generic_request
     struct alloc_file_handle_request alloc_file_handle_request;
     struct get_handle_unix_name_request get_handle_unix_name_request;
     struct get_handle_fd_request get_handle_fd_request;
+    struct get_directory_cache_entry_request get_directory_cache_entry_request;
     struct flush_request flush_request;
     struct lock_file_request lock_file_request;
     struct unlock_file_request unlock_file_request;
@@ -5955,6 +5972,7 @@ union generic_reply
     struct alloc_file_handle_reply alloc_file_handle_reply;
     struct get_handle_unix_name_reply get_handle_unix_name_reply;
     struct get_handle_fd_reply get_handle_fd_reply;
+    struct get_directory_cache_entry_reply get_directory_cache_entry_reply;
     struct flush_reply flush_reply;
     struct lock_file_reply lock_file_reply;
     struct unlock_file_reply unlock_file_reply;
@@ -6184,6 +6202,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 502
+#define SERVER_PROTOCOL_VERSION 503
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

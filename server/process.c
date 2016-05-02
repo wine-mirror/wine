@@ -526,6 +526,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     process->idle_event      = NULL;
     process->peb             = 0;
     process->ldt_copy        = 0;
+    process->dir_cache       = NULL;
     process->winstation      = 0;
     process->desktop         = 0;
     process->token           = NULL;
@@ -630,6 +631,7 @@ static void process_destroy( struct object *obj )
     if (process->idle_event) release_object( process->idle_event );
     if (process->id) free_ptid( process->id );
     if (process->token) release_object( process->token );
+    free( process->dir_cache );
 }
 
 /* dump a process on stdout for debugging purposes */
