@@ -43,6 +43,7 @@ enum pres_ops
     PRESHADER_OP_SIN,
     PRESHADER_OP_COS,
     PRESHADER_OP_RSQ,
+    PRESHADER_OP_EXP,
 };
 
 typedef double (*pres_op_func)(double *args, int n);
@@ -80,6 +81,7 @@ static double pres_rsq(double *args, int n)
     else
         return 1.0 / sqrt(v);
 }
+static double pres_exp(double *args, int n) {return pow(2.0, args[0]);}
 
 #define PRES_OPCODE_MASK 0x7ff00000
 #define PRES_OPCODE_SHIFT 20
@@ -119,6 +121,7 @@ static const struct op_info pres_op_info[] =
     {0x108, "sin", 1, 0, pres_sin}, /* PRESHADER_OP_SIN */
     {0x109, "cos", 1, 0, pres_cos}, /* PRESHADER_OP_COS */
     {0x107, "rsq", 1, 0, pres_rsq}, /* PRESHADER_OP_RSQ */
+    {0x105, "exp", 1, 0, pres_exp}, /* PRESHADER_OP_EXP */
 };
 
 enum pres_value_type

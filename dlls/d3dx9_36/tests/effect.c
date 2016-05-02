@@ -3886,6 +3886,101 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     effect->lpVtbl->Release(effect);
 }
 
+struct test_preshader_op_def
+{
+    const char *mnem;
+    unsigned int opcode;
+    unsigned int args_count;
+    unsigned int expected_result[4];
+    D3DXVECTOR4 fvect1, fvect2;
+    unsigned int ulps;
+    BOOL todo[4];
+};
+
+static void test_preshader_op(IDirect3DDevice9 *device, const DWORD *sample_effect_blob,
+        unsigned int sample_effect_blob_size, const struct test_preshader_op_def *test)
+{
+    static const struct
+    {
+        unsigned int pos;
+        unsigned int result_index;
+    }
+    blob_position[] =
+    {
+        {0, 0},
+        {2468, 0},
+        {2319, 2}
+    };
+    DWORD *test_effect_blob;
+    HRESULT hr;
+    ID3DXEffect *effect;
+    D3DLIGHT9 light;
+    unsigned int i, passes_count;
+    float *v;
+    unsigned int op_pos, op_step;
+    D3DXHANDLE param;
+
+    op_step = 2 + (test->args_count + 1) * 3;
+    op_pos = blob_position[test->args_count].pos;
+
+    test_effect_blob = HeapAlloc(GetProcessHeap(), 0, sample_effect_blob_size);
+    memcpy(test_effect_blob, sample_effect_blob, sample_effect_blob_size);
+    for (i = 0; i < 4; ++i)
+        test_effect_blob[op_pos + i * op_step] = test->opcode;
+
+    hr = D3DXCreateEffect(device, test_effect_blob, sample_effect_blob_size,
+            NULL, NULL, 0, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    param = effect->lpVtbl->GetParameterByName(effect, NULL, "opvect1");
+    ok(!!param, "GetParameterByName failed.\n");
+    hr = effect->lpVtbl->SetVector(effect, param, &test->fvect1);
+    ok(hr == D3D_OK, "SetVector failed, hr %#x.\n", hr);
+
+    if (test->args_count > 1)
+    {
+        param = effect->lpVtbl->GetParameterByName(effect, NULL, "opvect2");
+        ok(!!param, "GetParameterByName failed.\n");
+        hr = effect->lpVtbl->SetVector(effect, param, &test->fvect2);
+        ok(hr == D3D_OK, "SetVector failed, hr %#x.\n", hr);
+    }
+
+    hr = effect->lpVtbl->BeginPass(effect, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetLight(device, blob_position[test->args_count].result_index, &light);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    v = &light.Diffuse.r;
+    for (i = 0; i < 4; ++i)
+        todo_wine_if(test->todo[i])
+        ok(compare_float(v[i], ((float *)test->expected_result)[i], test->ulps),
+                "Operation %s, component %u, expected %#x (%g), got %#x (%g).\n", test->mnem, i,
+                test->expected_result[i], ((float *)test->expected_result)[i], ((unsigned int *)v)[i], v[i]);
+
+    hr = effect->lpVtbl->EndPass(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->End(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    effect->lpVtbl->Release(effect);
+    HeapFree(GetProcessHeap(), 0, test_effect_blob);
+}
+
+static void test_effect_preshader_ops(IDirect3DDevice9 *device)
+{
+    static const struct test_preshader_op_def op_tests[] =
+    {
+        {"exp", 0x10500001, 1, {0x3f800000, 0x3f800000, 0x3e5edc66, 0x7f800000},
+                {0.0f, -0.0f, -2.2f, 3.402823466e+38f}, {1.0f, 2.0f, -3.0f, 4.0f}},
+    };
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(op_tests); ++i)
+        test_preshader_op(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
+                &op_tests[i]);
+}
+
 START_TEST(effect)
 {
     HWND wnd;
@@ -3927,6 +4022,7 @@ START_TEST(effect)
     test_effect_compilation_errors(device);
     test_effect_states(device);
     test_effect_preshader(device);
+    test_effect_preshader_ops(device);
 
     count = IDirect3DDevice9_Release(device);
     ok(count == 0, "The device was not properly freed: refcount %u\n", count);
