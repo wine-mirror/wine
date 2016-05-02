@@ -205,4 +205,45 @@ DECLARE_INTERFACE_(ID3D11ShaderReflection, IUnknown)
 };
 #undef INTERFACE
 
+DEFINE_GUID(IID_ID3D11ModuleInstance, 0x469e07f7, 0x45a, 0x48d5, 0xaa, 0x12, 0x68, 0xa4, 0x78, 0xcd, 0xf7, 0x5d);
+
+#define INTERFACE ID3D11ModuleInstance
+DECLARE_INTERFACE_(ID3D11ModuleInstance, IUnknown)
+{
+    STDMETHOD(QueryInterface)(THIS_ REFIID iid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+
+    /* ID3D11ModuleInstance methods */
+    STDMETHOD(BindConstantBuffer)(THIS_ UINT srcslot, UINT dstslot, UINT dstoffset) PURE;
+    STDMETHOD(BindConstantBufferByName)(THIS_ const char *name, UINT dstslot, UINT dstoffset) PURE;
+
+    STDMETHOD(BindResource)(THIS_ UINT srcslot, UINT dstslot, UINT count) PURE;
+    STDMETHOD(BindResourceByName)(THIS_ const char *name, UINT dstslot, UINT count) PURE;
+
+    STDMETHOD(BindSampler)(THIS_ UINT srcslot,  UINT dstslot,  UINT count) PURE;
+    STDMETHOD(BindSamplerByName)(THIS_ const char *name,  UINT dstslot, UINT count) PURE;
+
+    STDMETHOD(BindUnorderedAccessView)(THIS_ UINT srcslot,  UINT dstslot, UINT count) PURE;
+    STDMETHOD(BindUnorderedAccessViewByName)(THIS_ const char *name, UINT dstslot, UINT count) PURE;
+
+    STDMETHOD(BindResourceAsUnorderedAccessView)(THIS_ UINT srcslot, UINT dstslot, UINT count) PURE;
+    STDMETHOD(BindResourceAsUnorderedAccessViewByName)(THIS_ const char *name, UINT dstslot, UINT count) PURE;
+};
+#undef INTERFACE
+
+DEFINE_GUID(IID_ID3D11Module, 0xcac701ee, 0x80fc, 0x4122, 0x82, 0x42, 0x10, 0xb3, 0x9c, 0x8c, 0xec, 0x34);
+
+#define INTERFACE ID3D11Module
+DECLARE_INTERFACE_(ID3D11Module, IUnknown)
+{
+    STDMETHOD(QueryInterface)(THIS_ REFIID iid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+
+    /* ID3D11Module methods */
+    STDMETHOD(CreateInstance)(THIS_ const char *instnamespace, ID3D11ModuleInstance **moduleinstance) PURE;
+};
+#undef INTERFACE
+
 #endif
