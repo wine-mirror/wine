@@ -214,7 +214,7 @@ static header_t *read_prop(MimeBody *body, char **ptr)
 
     for(prop = default_props; prop->name; prop++)
     {
-        if(!strcasecmp(*ptr, prop->name))
+        if(!lstrcmpiA(*ptr, prop->name))
         {
             TRACE("%s: found match with default property id %d\n", *ptr, prop->id);
             break;
@@ -226,7 +226,7 @@ static header_t *read_prop(MimeBody *body, char **ptr)
         property_list_entry_t *prop_entry;
         LIST_FOR_EACH_ENTRY(prop_entry, &body->new_props, property_list_entry_t, entry)
         {
-            if(!strcasecmp(*ptr, prop_entry->prop.name))
+            if(!lstrcmpiA(*ptr, prop_entry->prop.name))
             {
                 TRACE("%s: found match with already added new property id %d\n", *ptr, prop_entry->prop.id);
                 prop = &prop_entry->prop;
@@ -496,7 +496,7 @@ static HRESULT find_prop(MimeBody *body, const char *name, header_t **prop)
 
     LIST_FOR_EACH_ENTRY(header, &body->headers, header_t, entry)
     {
-        if(!strcasecmp(name, header->prop->name))
+        if(!lstrcmpiA(name, header->prop->name))
         {
             *prop = header;
             return S_OK;
@@ -650,7 +650,7 @@ static HRESULT WINAPI MimeBody_GetProp(
     if(!pszName || !pValue)
         return E_INVALIDARG;
 
-    if(!strcasecmp(pszName, "att:pri-content-type"))
+    if(!lstrcmpiA(pszName, "att:pri-content-type"))
     {
         PropVariantClear(pValue);
         pValue->vt = VT_LPSTR;
@@ -690,7 +690,7 @@ static HRESULT WINAPI MimeBody_SetProp(
 
         LIST_FOR_EACH_ENTRY(prop_entry, &This->new_props, property_list_entry_t, entry)
         {
-            if(!strcasecmp(pszName, prop_entry->prop.name))
+            if(!lstrcmpiA(pszName, prop_entry->prop.name))
             {
                 TRACE("Found match with already added new property id %d\n", prop_entry->prop.id);
                 prop = &prop_entry->prop;
@@ -871,14 +871,14 @@ static HRESULT WINAPI MimeBody_IsContentType(
     {
         const char *pri = This->content_pri_type;
         if(!pri) pri = "text";
-        if(strcasecmp(pri, pszPriType)) return S_FALSE;
+        if(lstrcmpiA(pri, pszPriType)) return S_FALSE;
     }
 
     if(pszSubType)
     {
         const char *sub = This->content_sub_type;
         if(!sub) sub = "plain";
-        if(strcasecmp(sub, pszSubType)) return S_FALSE;
+        if(lstrcmpiA(sub, pszSubType)) return S_FALSE;
     }
 
     return S_OK;
@@ -1764,7 +1764,7 @@ static body_t *create_sub_body(MimeMessage *msg, IStream *pStm, BODYOFFSETS *off
 
         for(i = 0; i < count; i++)
         {
-            if(!strcasecmp(param_info[i].pszName, "boundary"))
+            if(!lstrcmpiA(param_info[i].pszName, "boundary"))
             {
                 struct list offset_list;
                 offset_entry_t *cur, *cursor2;
