@@ -126,7 +126,7 @@ HRESULT WINAPI DwmSetWindowAttribute(HWND hwnd, DWORD attributenum, LPCVOID attr
 
     if (!once++) FIXME("(%p, %x, %p, %x) stub\n", hwnd, attributenum, attribute, size);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 /**********************************************************************
