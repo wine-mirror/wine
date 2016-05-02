@@ -17,7 +17,7 @@
 @ stdcall D3DGetInputSignatureBlob(ptr long ptr)
 @ stdcall D3DGetOutputSignatureBlob(ptr long ptr)
 @ stub D3DGetTraceInstructionOffsets
-@ stub D3DLoadModule
+@ stdcall D3DLoadModule(ptr long ptr)
 @ stdcall D3DPreprocess(ptr long str ptr ptr ptr ptr)
 @ stdcall D3DReadFileToBlob(wstr ptr)
 @ stdcall D3DReflect(ptr long ptr ptr)
