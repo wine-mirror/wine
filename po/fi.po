@@ -11626,6 +11626,10 @@ msgstr ""
 "reg: Määrätyn toiminnon suorittaminen ei onnistu. Tapahtui odottamaton "
 "virhe.\n"
 
+#: reg.rc:55
+msgid "Search complete. Number of matches found: %1!d!\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Rekisteri"

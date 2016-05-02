@@ -11648,6 +11648,10 @@ msgid ""
 "occurred.\n"
 msgstr "reg: не удалось завершить операцию. Произошла непредвиденная ошибка.\n"
 
+#: reg.rc:55
+msgid "Search complete. Number of matches found: %1!d!\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Реестр"

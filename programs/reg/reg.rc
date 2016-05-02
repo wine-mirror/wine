@@ -51,4 +51,5 @@ STRINGTABLE
     STRING_INVALID_STRING, "reg: The option [/d] must be followed by a valid string\n"
     STRING_VALUEALL_FAILED, "reg: Unable to delete all registry values in '%1'. An unexpected error occurred.\n"
     STRING_GENERAL_FAILURE, "reg: Unable to complete the specified operation. An unexpected error occurred.\n"
+    STRING_MATCHES_FOUND, "Search complete. Number of matches found: %1!d!\n"
 }

@@ -11647,6 +11647,10 @@ msgstr ""
 "reg: Unable to complete the specified operation. An unexpected error "
 "occurred.\n"
 
+#: reg.rc:55
+msgid "Search complete. Number of matches found: %1!d!\n"
+msgstr "Search complete. Number of matches found: %1!d!\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registry"

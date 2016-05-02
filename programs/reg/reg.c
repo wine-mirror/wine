@@ -655,6 +655,8 @@ static WCHAR *build_subkey_path(WCHAR *path, DWORD path_len, WCHAR *subkey_name,
     return subkey_path;
 }
 
+static unsigned int num_values_found = 0;
+
 static int query_value(HKEY key, WCHAR *value_name, WCHAR *path, BOOL recurse)
 {
     LONG rc;
@@ -689,6 +691,7 @@ static int query_value(HKEY key, WCHAR *value_name, WCHAR *path, BOOL recurse)
         output_string(fmt, path);
         output_value(value_name, type, data, data_size);
         output_string(newlineW);
+        num_values_found++;
     }
 
     HeapFree(GetProcessHeap(), 0, data);
@@ -858,7 +861,11 @@ static int reg_query(WCHAR *key_name, WCHAR *value_name, BOOL value_empty, BOOL 
     }
 
     if (value_name || value_empty)
+    {
         ret = query_value(key, value_name, key_name, recurse);
+        if (recurse)
+            output_message(STRING_MATCHES_FOUND, num_values_found);
+    }
     else
         ret = query_all(key, key_name, recurse);
 

@@ -11733,6 +11733,10 @@ msgid ""
 msgstr ""
 "reg: неможливо завершити зазначену операцію. Сталася неочікувана помилка.\n"
 
+#: reg.rc:55
+msgid "Search complete. Number of matches found: %1!d!\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Реєстр"

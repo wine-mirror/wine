@@ -11651,6 +11651,10 @@ msgid ""
 "occurred.\n"
 msgstr "reg: Nepavyko užbaigti nurodytos operacijos. Įvyko netikėta klaida.\n"
 
+#: reg.rc:55
+msgid "Search complete. Number of matches found: %1!d!\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "R&egistras"
