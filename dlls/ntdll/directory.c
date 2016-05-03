@@ -2302,7 +2302,7 @@ static NTSTATUS get_cached_dir_data( HANDLE handle, struct dir_data **data_ret, 
 
     if (entry >= dir_data_cache_size)
     {
-        unsigned int size = max( dir_data_cache_initial_size, dir_data_cache_size * 2 );
+        unsigned int size = max( dir_data_cache_initial_size, max( dir_data_cache_size * 2, entry + 1 ) );
         struct dir_data **new_cache;
 
         if (dir_data_cache)
