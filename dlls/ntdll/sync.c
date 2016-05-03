@@ -235,6 +235,8 @@ NTSTATUS WINAPI NtQuerySemaphore( HANDLE handle, SEMAPHORE_INFORMATION_CLASS cla
     NTSTATUS ret;
     SEMAPHORE_BASIC_INFORMATION *out = info;
 
+    TRACE("(%p, %u, %p, %u, %p)\n", handle, class, info, len, ret_len);
+
     if (class != SemaphoreBasicInformation)
     {
         FIXME("(%p,%d,%u) Unknown class\n", handle, class, len);
@@ -416,6 +418,8 @@ NTSTATUS WINAPI NtQueryEvent( HANDLE handle, EVENT_INFORMATION_CLASS class,
 {
     NTSTATUS ret;
     EVENT_BASIC_INFORMATION *out = info;
+
+    TRACE("(%p, %u, %p, %u, %p)\n", handle, class, info, len, ret_len);
 
     if (class != EventBasicInformation)
     {
