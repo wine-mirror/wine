@@ -2,7 +2,7 @@
  *    GDI Interop
  *
  * Copyright 2011 Huw Davies
- * Copyright 2012, 2014 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2016 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,11 +31,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
-
-struct gdiinterop {
-    IDWriteGdiInterop1 IDWriteGdiInterop1_iface;
-    IDWriteFactory3 *factory;
-};
 
 struct dib_data {
     DWORD *ptr;
@@ -929,24 +924,10 @@ static const struct IDWriteGdiInterop1Vtbl gdiinteropvtbl = {
     gdiinterop1_GetMatchingFontsByLOGFONT
 };
 
-HRESULT create_gdiinterop(IDWriteFactory3 *factory, IDWriteGdiInterop1 **ret)
+void gdiinterop_init(struct gdiinterop *interop, IDWriteFactory3 *factory)
 {
-    struct gdiinterop *This;
-
-    *ret = NULL;
-
-    This = heap_alloc(sizeof(struct gdiinterop));
-    if (!This) return E_OUTOFMEMORY;
-
-    This->IDWriteGdiInterop1_iface.lpVtbl = &gdiinteropvtbl;
-    This->factory = factory;
-
-    *ret= &This->IDWriteGdiInterop1_iface;
-    return S_OK;
-}
-
-void release_gdiinterop(IDWriteGdiInterop1 *iface)
-{
-    struct gdiinterop *interop = impl_from_IDWriteGdiInterop1(iface);
-    heap_free(interop);
+    interop->IDWriteGdiInterop1_iface.lpVtbl = &gdiinteropvtbl;
+    /* Interop is a part of a factory, sharing its refcount.
+       GetGdiInterop() will AddRef() on every call. */
+    interop->factory = factory;
 }

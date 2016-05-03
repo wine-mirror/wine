@@ -111,6 +111,12 @@ static inline FLOAT get_scaled_advance_width(INT32 advance, FLOAT emSize, const 
     return (FLOAT)advance * emSize / (FLOAT)metrics->designUnitsPerEm;
 }
 
+struct gdiinterop
+{
+    IDWriteGdiInterop1 IDWriteGdiInterop1_iface;
+    IDWriteFactory3 *factory;
+};
+
 struct textlayout_desc
 {
     IDWriteFactory3 *factory;
@@ -146,8 +152,7 @@ extern HRESULT create_textformat(const WCHAR*,IDWriteFontCollection*,DWRITE_FONT
 extern HRESULT create_textlayout(const struct textlayout_desc*,IDWriteTextLayout**) DECLSPEC_HIDDEN;
 extern HRESULT create_trimmingsign(IDWriteFactory3*,IDWriteTextFormat*,IDWriteInlineObject**) DECLSPEC_HIDDEN;
 extern HRESULT create_typography(IDWriteTypography**) DECLSPEC_HIDDEN;
-extern HRESULT create_gdiinterop(IDWriteFactory3*,IDWriteGdiInterop1**) DECLSPEC_HIDDEN;
-extern void    release_gdiinterop(IDWriteGdiInterop1*) DECLSPEC_HIDDEN;
+extern void    gdiinterop_init(struct gdiinterop*,IDWriteFactory3*) DECLSPEC_HIDDEN;
 extern HRESULT create_localizedstrings(IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 extern HRESULT add_localizedstring(IDWriteLocalizedStrings*,const WCHAR*,const WCHAR*) DECLSPEC_HIDDEN;
 extern HRESULT clone_localizedstring(IDWriteLocalizedStrings *iface, IDWriteLocalizedStrings **strings) DECLSPEC_HIDDEN;
