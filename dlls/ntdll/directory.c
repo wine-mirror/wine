@@ -111,7 +111,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 /* just in case... */
 #undef VFAT_IOCTL_READDIR_BOTH
-#undef USE_GETDENTS
 
 #ifdef linux
 
@@ -129,24 +128,6 @@ typedef struct
 
 #ifndef O_DIRECTORY
 # define O_DIRECTORY 0200000 /* must be directory */
-#endif
-
-#ifdef __NR_getdents64
-typedef struct
-{
-    ULONG64        d_ino;
-    LONG64         d_off;
-    unsigned short d_reclen;
-    unsigned char  d_type;
-    char           d_name[256];
-} KERNEL_DIRENT64;
-
-#undef getdents64
-static inline int getdents64( int fd, char *de, unsigned int size )
-{
-    return syscall( __NR_getdents64, fd, de, size );
-}
-#define USE_GETDENTS
 #endif
 
 #endif  /* linux */
@@ -180,14 +161,34 @@ union file_directory_info
     FILE_ID_FULL_DIRECTORY_INFORMATION id_full;
 };
 
-struct dir_data
+struct dir_data_buffer
 {
-    struct file_identity    id;      /* directory file identity */
-    UNICODE_STRING         *mask;    /* file search mask */
-    UNICODE_STRING          mask_str;
+    struct dir_data_buffer *next;    /* next buffer in the list */
+    unsigned int            size;    /* total size of the buffer */
+    unsigned int            pos;     /* current position in the buffer */
+    char                    data[1];
 };
 
+struct dir_data_names
+{
+    const WCHAR *long_name;          /* long file name in Unicode */
+    const WCHAR *short_name;         /* short file name in Unicode */
+    const char  *unix_name;          /* Unix file name in host encoding */
+};
+
+struct dir_data
+{
+    unsigned int            size;    /* size of the names array */
+    unsigned int            count;   /* count of used entries in the names array */
+    unsigned int            pos;     /* current reading position in the names array */
+    struct file_identity    id;      /* directory file identity */
+    struct dir_data_names  *names;   /* directory file names */
+    struct dir_data_buffer *buffer;  /* head of data buffers list */
+};
+
+static const unsigned int dir_data_buffer_initial_size = 4096;
 static const unsigned int dir_data_cache_initial_size  = 256;
+static const unsigned int dir_data_names_initial_size  = 64;
 
 static struct dir_data **dir_data_cache;
 static unsigned int dir_data_cache_size;
@@ -257,29 +258,29 @@ static inline BOOL is_ignored_file( const struct stat *st )
     return FALSE;
 }
 
+static inline unsigned int dir_info_align( unsigned int len )
+{
+    return (len + 7) & ~7;
+}
+
 static inline unsigned int dir_info_size( FILE_INFORMATION_CLASS class, unsigned int len )
 {
     switch (class)
     {
     case FileDirectoryInformation:
-        return (FIELD_OFFSET( FILE_DIRECTORY_INFORMATION, FileName[len] ) + 7) & ~7;
+        return offsetof( FILE_DIRECTORY_INFORMATION, FileName[len] );
     case FileBothDirectoryInformation:
-        return (FIELD_OFFSET( FILE_BOTH_DIRECTORY_INFORMATION, FileName[len] ) + 7) & ~7;
+        return offsetof( FILE_BOTH_DIRECTORY_INFORMATION, FileName[len] );
     case FileFullDirectoryInformation:
-        return (FIELD_OFFSET( FILE_FULL_DIRECTORY_INFORMATION, FileName[len] ) + 7) & ~7;
+        return offsetof( FILE_FULL_DIRECTORY_INFORMATION, FileName[len] );
     case FileIdBothDirectoryInformation:
-        return (FIELD_OFFSET( FILE_ID_BOTH_DIRECTORY_INFORMATION, FileName[len] ) + 7) & ~7;
+        return offsetof( FILE_ID_BOTH_DIRECTORY_INFORMATION, FileName[len] );
     case FileIdFullDirectoryInformation:
-        return (FIELD_OFFSET( FILE_ID_FULL_DIRECTORY_INFORMATION, FileName[len] ) + 7) & ~7;
+        return offsetof( FILE_ID_FULL_DIRECTORY_INFORMATION, FileName[len] );
     default:
         assert(0);
         return 0;
     }
-}
-
-static inline unsigned int max_dir_info_size( FILE_INFORMATION_CLASS class )
-{
-    return dir_info_size( class, MAX_DIR_ENTRY_LEN );
 }
 
 static inline BOOL has_wildcard( const UNICODE_STRING *mask )
@@ -289,12 +290,88 @@ static inline BOOL has_wildcard( const UNICODE_STRING *mask )
             memchrW( mask->Buffer, '?', mask->Length / sizeof(WCHAR) ));
 }
 
-/* free the cached directory data */
+/* get space from the current directory data buffer, allocating a new one if necessary */
+static void *get_dir_data_space( struct dir_data *data, unsigned int size )
+{
+    struct dir_data_buffer *buffer = data->buffer;
+    void *ret;
+
+    if (!buffer || size >= buffer->size - buffer->pos)
+    {
+        unsigned int new_size = buffer ? buffer->size * 2 : dir_data_buffer_initial_size;
+        if (new_size < size) new_size = size;
+        if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0,
+                                        offsetof( struct dir_data_buffer, data[new_size] ) ))) return NULL;
+        buffer->pos  = 0;
+        buffer->size = new_size;
+        buffer->next = data->buffer;
+        data->buffer = buffer;
+    }
+    ret = buffer->data + buffer->pos;
+    buffer->pos += size;
+    return ret;
+}
+
+/* add a string to the directory data buffer */
+static const char *add_dir_data_nameA( struct dir_data *data, const char *name )
+{
+    /* keep buffer data WCHAR-aligned */
+    char *ptr = get_dir_data_space( data, (strlen( name ) + sizeof(WCHAR)) & ~(sizeof(WCHAR) - 1) );
+    if (ptr) strcpy( ptr, name );
+    return ptr;
+}
+
+/* add a Unicode string to the directory data buffer */
+static const WCHAR *add_dir_data_nameW( struct dir_data *data, const WCHAR *name )
+{
+    WCHAR *ptr = get_dir_data_space( data, (strlenW( name ) + 1) * sizeof(WCHAR) );
+    if (ptr) strcpyW( ptr, name );
+    return ptr;
+}
+
+/* add an entry to the directory names array */
+static BOOL add_dir_data_names( struct dir_data *data, const WCHAR *long_name,
+                                const WCHAR *short_name, const char *unix_name )
+{
+    static const WCHAR empty[1];
+    struct dir_data_names *names = data->names;
+
+    if (data->count >= data->size)
+    {
+        unsigned int new_size = max( data->size * 2, dir_data_names_initial_size );
+
+        if (names) names = RtlReAllocateHeap( GetProcessHeap(), 0, names, new_size * sizeof(*names) );
+        else names = RtlAllocateHeap( GetProcessHeap(), 0, new_size * sizeof(*names) );
+        if (!names) return FALSE;
+        data->size  = new_size;
+        data->names = names;
+    }
+
+    if (short_name[0])
+    {
+        if (!(names[data->count].short_name = add_dir_data_nameW( data, short_name ))) return FALSE;
+    }
+    else names[data->count].short_name = empty;
+
+    if (!(names[data->count].long_name = add_dir_data_nameW( data, long_name ))) return FALSE;
+    if (!(names[data->count].unix_name = add_dir_data_nameA( data, unix_name ))) return FALSE;
+    data->count++;
+    return TRUE;
+}
+
+/* free the complete directory data structure */
 static void free_dir_data( struct dir_data *data )
 {
+    struct dir_data_buffer *buffer, *next;
+
     if (!data) return;
 
-    RtlFreeUnicodeString( &data->mask_str );
+    for (buffer = data->buffer; buffer; buffer = next)
+    {
+        next = buffer->next;
+        RtlFreeHeap( GetProcessHeap(), 0, buffer );
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, data->names );
     RtlFreeHeap( GetProcessHeap(), 0, data );
 }
 
@@ -1336,8 +1413,6 @@ static BOOLEAN match_filename( const UNICODE_STRING *name_str, const UNICODE_STR
     const WCHAR *lastjoker = NULL;
     const WCHAR *next_to_retry = NULL;
 
-    TRACE("(%s, %s)\n", debugstr_us(name_str), debugstr_us(mask_str));
-
     while (name < name_end && mask < mask_end)
     {
         switch(*mask)
@@ -1398,25 +1473,19 @@ static BOOLEAN match_filename( const UNICODE_STRING *name_str, const UNICODE_STR
 /***********************************************************************
  *           append_entry
  *
- * helper for NtQueryDirectoryFile
+ * Add a file to the directory data if it matches the mask.
  */
-static union file_directory_info *append_entry( struct dir_data *dir_data, void *info_ptr,
-                                                IO_STATUS_BLOCK *io, ULONG max_length,
-                                                const char *long_name, const char *short_name,
-                                                const UNICODE_STRING *mask, FILE_INFORMATION_CLASS class )
+static BOOL append_entry( struct dir_data *data, const char *long_name,
+                          const char *short_name, const UNICODE_STRING *mask )
 {
-    union file_directory_info *info;
-    int i, long_len, short_len, total_len;
-    struct stat st;
-    WCHAR long_nameW[MAX_DIR_ENTRY_LEN];
-    WCHAR short_nameW[12];
-    WCHAR *filename;
+    int i, long_len, short_len;
+    WCHAR long_nameW[MAX_DIR_ENTRY_LEN + 1];
+    WCHAR short_nameW[13];
     UNICODE_STRING str;
-    ULONG attributes;
 
-    io->u.Status = STATUS_SUCCESS;
     long_len = ntdll_umbstowcs( 0, long_name, strlen(long_name), long_nameW, MAX_DIR_ENTRY_LEN );
-    if (long_len == -1) return NULL;
+    if (long_len == -1) return TRUE;
+    long_nameW[long_len] = 0;
 
     str.Buffer = long_nameW;
     str.Length = long_len * sizeof(WCHAR);
@@ -1425,8 +1494,9 @@ static union file_directory_info *append_entry( struct dir_data *dir_data, void 
     if (short_name)
     {
         short_len = ntdll_umbstowcs( 0, short_name, strlen(short_name),
-                                     short_nameW, sizeof(short_nameW) / sizeof(WCHAR) );
-        if (short_len == -1) short_len = sizeof(short_nameW) / sizeof(WCHAR);
+                                     short_nameW, sizeof(short_nameW) / sizeof(WCHAR) - 1 );
+        if (short_len == -1) short_len = sizeof(short_nameW) / sizeof(WCHAR) - 1;
+        for (i = 0; i < short_len; i++) short_nameW[i] = toupperW( short_nameW[i] );
     }
     else  /* generate a short name if necessary */
     {
@@ -1436,85 +1506,111 @@ static union file_directory_info *append_entry( struct dir_data *dir_data, void 
         if (!RtlIsNameLegalDOS8Dot3( &str, NULL, &spaces ) || spaces)
             short_len = hash_short_file_name( &str, short_nameW );
     }
+    short_nameW[short_len] = 0;
 
     TRACE( "long %s short %s mask %s\n",
-           debugstr_us(&str), debugstr_wn(short_nameW, short_len), debugstr_us(mask) );
+           debugstr_w( long_nameW ), debugstr_w( short_nameW ), debugstr_us( mask ));
 
     if (mask && !match_filename( &str, mask ))
     {
-        if (!short_len) return NULL;  /* no short name to match */
+        if (!short_len) return TRUE;  /* no short name to match */
         str.Buffer = short_nameW;
         str.Length = short_len * sizeof(WCHAR);
         str.MaximumLength = sizeof(short_nameW);
-        if (!match_filename( &str, mask )) return NULL;
+        if (!match_filename( &str, mask )) return TRUE;
     }
 
-    if (get_file_info( long_name, &st, &attributes ) == -1) return NULL;
+    return add_dir_data_names( data, long_nameW, short_nameW, long_name );
+}
+
+
+/***********************************************************************
+ *           get_dir_data_entry
+ *
+ * Return a directory entry from the cached data.
+ */
+static NTSTATUS get_dir_data_entry( struct dir_data *dir_data, void *info_ptr, IO_STATUS_BLOCK *io,
+                                    ULONG max_length, FILE_INFORMATION_CLASS class,
+                                    union file_directory_info **last_info )
+{
+    const struct dir_data_names *names = &dir_data->names[dir_data->pos];
+    union file_directory_info *info;
+    struct stat st;
+    ULONG name_len, start, dir_size, attributes;
+
+    if (get_file_info( names->unix_name, &st, &attributes ) == -1)
+    {
+        TRACE( "file no longer exists %s\n", names->unix_name );
+        return STATUS_SUCCESS;
+    }
     if (is_ignored_file( &st ))
     {
-        TRACE( "ignoring file %s\n", long_name );
-        return NULL;
+        TRACE( "ignoring file %s\n", names->unix_name );
+        return STATUS_SUCCESS;
     }
-    if (!show_dot_files && long_name[0] == '.' && long_name[1] && (long_name[1] != '.' || long_name[2]))
+    if (!show_dot_files && names->long_name[0] == '.' && names->long_name[1] &&
+        (names->long_name[1] != '.' || names->long_name[2]))
         attributes |= FILE_ATTRIBUTE_HIDDEN;
 
-    total_len = dir_info_size( class, long_len );
-    if (io->Information + total_len > max_length)
-    {
-        total_len = max_length - io->Information;
-        io->u.Status = STATUS_BUFFER_OVERFLOW;
-    }
-    info = (union file_directory_info *)((char *)info_ptr + io->Information);
     if (st.st_dev != dir_data->id.dev) st.st_ino = 0;  /* ignore inode if on a different device */
+
+    start = dir_info_align( io->Information );
+    dir_size = dir_info_size( class, 0 );
+    if (start + dir_size > max_length) return STATUS_MORE_ENTRIES;
+
+    max_length -= start + dir_size;
+    name_len = strlenW( names->long_name ) * sizeof(WCHAR);
+    /* if this is not the first entry, fail; the first entry is always returned (but truncated) */
+    if (*last_info && name_len > max_length) return STATUS_MORE_ENTRIES;
+
+    info = (union file_directory_info *)((char *)info_ptr + start);
+
     /* all the structures start with a FileDirectoryInformation layout */
     fill_file_info( &st, attributes, info, class );
-    info->dir.NextEntryOffset = total_len;
+    info->dir.NextEntryOffset = 0;
     info->dir.FileIndex = 0;  /* NTFS always has 0 here, so let's not bother with it */
 
     switch (class)
     {
     case FileDirectoryInformation:
-        info->dir.FileNameLength = long_len * sizeof(WCHAR);
-        filename = info->dir.FileName;
+        info->dir.FileNameLength = name_len;
         break;
 
     case FileFullDirectoryInformation:
         info->full.EaSize = 0; /* FIXME */
-        info->full.FileNameLength = long_len * sizeof(WCHAR);
-        filename = info->full.FileName;
+        info->full.FileNameLength = name_len;
         break;
 
     case FileIdFullDirectoryInformation:
         info->id_full.EaSize = 0; /* FIXME */
-        info->id_full.FileNameLength = long_len * sizeof(WCHAR);
-        filename = info->id_full.FileName;
+        info->id_full.FileNameLength = name_len;
         break;
 
     case FileBothDirectoryInformation:
         info->both.EaSize = 0; /* FIXME */
-        info->both.ShortNameLength = short_len * sizeof(WCHAR);
-        for (i = 0; i < short_len; i++) info->both.ShortName[i] = toupperW(short_nameW[i]);
-        info->both.FileNameLength = long_len * sizeof(WCHAR);
-        filename = info->both.FileName;
+        info->both.ShortNameLength = strlenW( names->short_name ) * sizeof(WCHAR);
+        memcpy( info->both.ShortName, names->short_name, info->both.ShortNameLength );
+        info->both.FileNameLength = name_len;
         break;
 
     case FileIdBothDirectoryInformation:
         info->id_both.EaSize = 0; /* FIXME */
-        info->id_both.ShortNameLength = short_len * sizeof(WCHAR);
-        for (i = 0; i < short_len; i++) info->id_both.ShortName[i] = toupperW(short_nameW[i]);
-        info->id_both.FileNameLength = long_len * sizeof(WCHAR);
-        filename = info->id_both.FileName;
+        info->id_both.ShortNameLength = strlenW( names->short_name ) * sizeof(WCHAR);
+        memcpy( info->id_both.ShortName, names->short_name, info->id_both.ShortNameLength );
+        info->id_both.FileNameLength = name_len;
         break;
 
     default:
         assert(0);
-        return NULL;
+        return 0;
     }
-    memcpy( filename, long_nameW, long_len * sizeof(WCHAR) );
-    io->Information += total_len;
-    return info;
-}
 
+    memcpy( (char *)info + dir_size, names->long_name, min( name_len, max_length ) );
+    io->Information = start + dir_size + min( name_len, max_length );
+    if (*last_info) (*last_info)->next = (char *)info - (char *)*last_info;
+    *last_info = info;
+    return name_len > max_length ? STATUS_BUFFER_OVERFLOW : STATUS_SUCCESS;
+}
 
 #ifdef VFAT_IOCTL_READDIR_BOTH
 
@@ -1563,592 +1659,51 @@ static KERNEL_DIRENT *start_vfat_ioctl( int fd )
  *
  * Read a directory using the VFAT ioctl; helper for NtQueryDirectoryFile.
  */
-static int read_directory_vfat( struct dir_data *dir_data, int fd, IO_STATUS_BLOCK *io,
-                                void *buffer, ULONG length, BOOLEAN single_entry,
-                                BOOLEAN restart_scan, FILE_INFORMATION_CLASS class )
-
+static NTSTATUS read_directory_data_vfat( struct dir_data *data, int fd, const UNICODE_STRING *mask )
 {
+    char *short_name, *long_name;
     size_t len;
     KERNEL_DIRENT *de;
-    union file_directory_info *info, *last_info = NULL;
+    NTSTATUS status = STATUS_NO_MEMORY;
+    off_t old_pos = lseek( fd, 0, SEEK_CUR );
 
-    io->u.Status = STATUS_SUCCESS;
+    if (!(de = start_vfat_ioctl( fd ))) return STATUS_NOT_SUPPORTED;
 
-    if (restart_scan) lseek( fd, 0, SEEK_SET );
+    lseek( fd, 0, SEEK_SET );
 
-    if (length < max_dir_info_size(class))  /* we may have to return a partial entry here */
+    if (!append_entry( data, ".", NULL, mask )) goto done;
+    if (!append_entry( data, "..", NULL, mask )) goto done;
+
+    while (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de ) != -1)
     {
-        off_t old_pos = lseek( fd, 0, SEEK_CUR );
+        if (!de[0].d_reclen) break;  /* eof */
 
-        if (!(de = start_vfat_ioctl( fd ))) return -1;  /* not supported */
+        /* make sure names are null-terminated to work around an x86-64 kernel bug */
+        len = min( de[0].d_reclen, sizeof(de[0].d_name) - 1 );
+        de[0].d_name[len] = 0;
+        len = min( de[1].d_reclen, sizeof(de[1].d_name) - 1 );
+        de[1].d_name[len] = 0;
 
-        while (de[0].d_reclen)
+        if (!strcmp( de[0].d_name, "." ) || !strcmp( de[0].d_name, ".." )) continue;
+        if (de[1].d_name[0])
         {
-            /* make sure names are null-terminated to work around an x86-64 kernel bug */
-            len = min(de[0].d_reclen, sizeof(de[0].d_name) - 1 );
-            de[0].d_name[len] = 0;
-            len = min(de[1].d_reclen, sizeof(de[1].d_name) - 1 );
-            de[1].d_name[len] = 0;
-
-            if (de[1].d_name[0])
-                info = append_entry( dir_data, buffer, io, length, de[1].d_name, de[0].d_name, dir_data->mask, class );
-            else
-                info = append_entry( dir_data, buffer, io, length, de[0].d_name, NULL, dir_data->mask, class );
-            if (info)
-            {
-                last_info = info;
-                if (io->u.Status == STATUS_BUFFER_OVERFLOW)
-                    lseek( fd, old_pos, SEEK_SET );  /* restore pos to previous entry */
-                break;
-            }
-            old_pos = lseek( fd, 0, SEEK_CUR );
-            if (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de ) == -1) break;
+            short_name = de[0].d_name;
+            long_name = de[1].d_name;
         }
-    }
-    else  /* we'll only return full entries, no need to worry about overflow */
-    {
-        if (!(de = start_vfat_ioctl( fd ))) return -1;  /* not supported */
-
-        while (de[0].d_reclen)
+        else
         {
-            /* make sure names are null-terminated to work around an x86-64 kernel bug */
-            len = min(de[0].d_reclen, sizeof(de[0].d_name) - 1 );
-            de[0].d_name[len] = 0;
-            len = min(de[1].d_reclen, sizeof(de[1].d_name) - 1 );
-            de[1].d_name[len] = 0;
-
-            if (de[1].d_name[0])
-                info = append_entry( dir_data, buffer, io, length, de[1].d_name, de[0].d_name, dir_data->mask, class );
-            else
-                info = append_entry( dir_data, buffer, io, length, de[0].d_name, NULL, dir_data->mask, class );
-            if (info)
-            {
-                last_info = info;
-                if (single_entry) break;
-                /* check if we still have enough space for the largest possible entry */
-                if (io->Information + max_dir_info_size(class) > length) break;
-            }
-            if (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de ) == -1) break;
+            long_name = de[0].d_name;
+            short_name = NULL;
         }
+        if (!append_entry( data, long_name, short_name, mask )) goto done;
     }
-
-    if (last_info) last_info->next = 0;
-    else io->u.Status = restart_scan ? STATUS_NO_SUCH_FILE : STATUS_NO_MORE_FILES;
-    return 0;
+    status = STATUS_SUCCESS;
+done:
+    lseek( fd, old_pos, SEEK_SET );
+    return status;
 }
 #endif /* VFAT_IOCTL_READDIR_BOTH */
 
-
-#ifdef USE_GETDENTS
-/***********************************************************************
- *           read_first_dent_name
- *
- * reads name of first or second dentry (if they have inodes).
- */
-static char *read_first_dent_name( int which, int fd, off_t second_offs, KERNEL_DIRENT64 *de_first_two,
-                                   char *buffer, size_t size, BOOL *buffer_changed )
-{
-    KERNEL_DIRENT64 *de;
-    int res;
-
-    de = de_first_two;
-    if (de != NULL)
-    {
-        if (which == 1)
-            de = (KERNEL_DIRENT64 *)((char *)de + de->d_reclen);
-
-        return de->d_ino ? de->d_name : NULL;
-    }
-
-    *buffer_changed = TRUE;
-    lseek( fd, which == 1 ? second_offs : 0, SEEK_SET );
-    res = getdents64( fd, buffer, size );
-    if (res <= 0)
-        return NULL;
-
-    de = (KERNEL_DIRENT64 *)buffer;
-    return de->d_ino ? de->d_name : NULL;
-}
-
-/***********************************************************************
- *           read_directory_getdents
- *
- * Read a directory using the Linux getdents64 system call; helper for NtQueryDirectoryFile.
- */
-static int read_directory_getdents( struct dir_data *dir_data, int fd, IO_STATUS_BLOCK *io,
-                                    void *buffer, ULONG length, BOOLEAN single_entry,
-                                    BOOLEAN restart_scan, FILE_INFORMATION_CLASS class )
-{
-    static off_t second_entry_pos;
-    static struct file_identity last_dir_id;
-    off_t old_pos = 0, next_pos;
-    size_t size = length;
-    char *data, local_buffer[8192];
-    KERNEL_DIRENT64 *de, *de_first_two = NULL;
-    union file_directory_info *info, *last_info = NULL;
-    const char *filename;
-    BOOL data_buffer_changed;
-    int res, swap_to;
-
-    if (size <= sizeof(local_buffer) || !(data = RtlAllocateHeap( GetProcessHeap(), 0, size )))
-    {
-        size = sizeof(local_buffer);
-        data = local_buffer;
-    }
-
-    if (restart_scan) lseek( fd, 0, SEEK_SET );
-    else
-    {
-        old_pos = lseek( fd, 0, SEEK_CUR );
-        if (old_pos == -1)
-        {
-            io->u.Status = (errno == ENOENT) ? STATUS_NO_MORE_FILES : FILE_GetNtStatus();
-            res = 0;
-            goto done;
-        }
-    }
-
-    io->u.Status = STATUS_SUCCESS;
-    de = (KERNEL_DIRENT64 *)data;
-
-    /* if old_pos is not 0 we don't know how many entries have been returned already,
-     * so maintain second_entry_pos to know when to return '..' */
-    if (old_pos != 0 && (last_dir_id.dev != dir_data->id.dev || last_dir_id.ino != dir_data->id.ino))
-    {
-        lseek( fd, 0, SEEK_SET );
-        res = getdents64( fd, data, size );
-        if (res > 0)
-        {
-            second_entry_pos = de->d_off;
-            last_dir_id = dir_data->id;
-        }
-        lseek( fd, old_pos, SEEK_SET );
-    }
-
-    res = getdents64( fd, data, size );
-    if (res == -1)
-    {
-        if (errno != ENOSYS)
-        {
-            io->u.Status = FILE_GetNtStatus();
-            res = 0;
-        }
-        goto done;
-    }
-
-    if (old_pos == 0 && res > 0)
-    {
-        second_entry_pos = de->d_off;
-        last_dir_id = dir_data->id;
-        if (res > de->d_reclen)
-            de_first_two = de;
-    }
-
-    while (res > 0)
-    {
-        res -= de->d_reclen;
-        next_pos = de->d_off;
-        filename = NULL;
-
-        /* we must return first 2 entries as "." and "..", but getdents64()
-         * can return them anywhere, so swap first entries with "." and ".." */
-        if (old_pos == 0)
-            filename = ".";
-        else if (old_pos == second_entry_pos)
-            filename = "..";
-        else if (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." ))
-        {
-            swap_to = !strcmp( de->d_name, "." ) ? 0 : 1;
-            data_buffer_changed = FALSE;
-
-            filename = read_first_dent_name( swap_to, fd, second_entry_pos, de_first_two,
-                                             data, size, &data_buffer_changed );
-            if (filename != NULL && (!strcmp( filename, "." ) || !strcmp( filename, ".." )))
-                filename = read_first_dent_name( swap_to ^ 1, fd, second_entry_pos, NULL,
-                                                 data, size, &data_buffer_changed );
-            if (data_buffer_changed)
-            {
-                lseek( fd, next_pos, SEEK_SET );
-                res = 0;
-            }
-        }
-        else if (de->d_ino)
-            filename = de->d_name;
-
-        if (filename && (info = append_entry( dir_data, buffer, io, length, filename, NULL, dir_data->mask, class )))
-        {
-            last_info = info;
-            if (io->u.Status == STATUS_BUFFER_OVERFLOW)
-            {
-                lseek( fd, old_pos, SEEK_SET );  /* restore pos to previous entry */
-                break;
-            }
-            /* check if we still have enough space for the largest possible entry */
-            if (single_entry || io->Information + max_dir_info_size(class) > length)
-            {
-                if (res > 0) lseek( fd, next_pos, SEEK_SET );  /* set pos to next entry */
-                break;
-            }
-        }
-        old_pos = next_pos;
-        /* move on to the next entry */
-        if (res > 0) de = (KERNEL_DIRENT64 *)((char *)de + de->d_reclen);
-        else
-        {
-            res = getdents64( fd, data, size );
-            de = (KERNEL_DIRENT64 *)data;
-            de_first_two = NULL;
-        }
-    }
-
-    if (last_info) last_info->next = 0;
-    else io->u.Status = restart_scan ? STATUS_NO_SUCH_FILE : STATUS_NO_MORE_FILES;
-    res = 0;
-done:
-    if (data != local_buffer) RtlFreeHeap( GetProcessHeap(), 0, data );
-    return res;
-}
-
-#elif defined HAVE_GETDIRENTRIES
-
-#ifdef _DARWIN_FEATURE_64_BIT_INODE
-
-/* Darwin doesn't provide a version of getdirentries with support for 64-bit
- * inodes.  When 64-bit inodes are enabled, the getdirentries symbol is mapped
- * to _getdirentries_is_not_available_when_64_bit_inodes_are_in_effect so that
- * we get link errors if we try to use it.  We still need getdirentries, but we
- * don't need it to support 64-bit inodes.  So, we use the legacy getdirentries
- * with 32-bit inodes.  We have to be careful to use a corresponding dirent
- * structure, too.
- */
-int darwin_legacy_getdirentries(int, char *, int, long *) __asm("_getdirentries");
-#define getdirentries darwin_legacy_getdirentries
-
-struct darwin_legacy_dirent {
-    __uint32_t d_ino;
-    __uint16_t d_reclen;
-    __uint8_t  d_type;
-    __uint8_t  d_namlen;
-    char d_name[__DARWIN_MAXNAMLEN + 1];
-};
-#define dirent darwin_legacy_dirent
-
-#endif
-
-/***********************************************************************
- *           wine_getdirentries
- *
- * Wrapper for the BSD getdirentries system call to fix a bug in the
- * Mac OS X version.  For some file systems (at least Apple Filing
- * Protocol a.k.a. AFP), getdirentries resets the file position to 0
- * when it's about to return 0 (no more entries).  So, a subsequent
- * getdirentries call starts over at the beginning again, causing an
- * infinite loop.
- */
-static inline int wine_getdirentries(int fd, char *buf, int nbytes, long *basep)
-{
-    int res = getdirentries(fd, buf, nbytes, basep);
-#ifdef __APPLE__
-    if (res == 0)
-        lseek(fd, *basep, SEEK_SET);
-#endif
-    return res;
-}
-
-static inline int dir_reclen(struct dirent *de)
-{
-#ifdef HAVE_STRUCT_DIRENT_D_RECLEN
-    return de->d_reclen;
-#else
-    return _DIRENT_RECLEN(de->d_namlen);
-#endif
-}
-
-/***********************************************************************
- *           read_directory_getdirentries
- *
- * Read a directory using the BSD getdirentries system call; helper for NtQueryDirectoryFile.
- */
-static int read_directory_getdirentries( struct dir_data *dir_data, int fd, IO_STATUS_BLOCK *io,
-                                         void *buffer, ULONG length, BOOLEAN single_entry,
-                                         BOOLEAN restart_scan, FILE_INFORMATION_CLASS class )
-{
-    long restart_pos;
-    ULONG_PTR restart_info_pos = 0;
-    size_t size, initial_size = length;
-    int res, fake_dot_dot = 1;
-    char *data, local_buffer[8192];
-    struct dirent *de;
-    union file_directory_info *info, *last_info = NULL, *restart_last_info = NULL;
-
-    size = initial_size;
-    data = local_buffer;
-    if (size > sizeof(local_buffer) && !(data = RtlAllocateHeap( GetProcessHeap(), 0, size )))
-    {
-        io->u.Status = STATUS_NO_MEMORY;
-        return io->u.Status;
-    }
-
-    if (restart_scan) lseek( fd, 0, SEEK_SET );
-
-    io->u.Status = STATUS_SUCCESS;
-
-    /* FIXME: should make sure size is larger than filesystem block size */
-    res = wine_getdirentries( fd, data, size, &restart_pos );
-    if (res == -1)
-    {
-        io->u.Status = FILE_GetNtStatus();
-        res = 0;
-        goto done;
-    }
-
-    de = (struct dirent *)data;
-
-    if (restart_scan)
-    {
-        /* check if we got . and .. from getdirentries */
-        if (res > 0)
-        {
-            if (!strcmp( de->d_name, "." ) && res > dir_reclen(de))
-            {
-                struct dirent *next_de = (struct dirent *)(data + dir_reclen(de));
-                if (!strcmp( next_de->d_name, ".." )) fake_dot_dot = 0;
-            }
-        }
-        /* make sure we have enough room for both entries */
-        if (fake_dot_dot)
-        {
-            const ULONG min_info_size = dir_info_size( class, 1 ) + dir_info_size( class, 2 );
-            if (length < min_info_size || single_entry)
-            {
-                FIXME( "not enough room %u/%u for fake . and .. entries\n", length, single_entry );
-                fake_dot_dot = 0;
-            }
-        }
-
-        if (fake_dot_dot)
-        {
-            if ((info = append_entry( dir_data, buffer, io, length, ".", NULL, dir_data->mask, class )))
-                last_info = info;
-            if ((info = append_entry( dir_data, buffer, io, length, "..", NULL, dir_data->mask, class )))
-                last_info = info;
-
-            restart_last_info = last_info;
-            restart_info_pos = io->Information;
-
-            /* check if we still have enough space for the largest possible entry */
-            if (last_info && io->Information + max_dir_info_size(class) > length)
-            {
-                lseek( fd, 0, SEEK_SET );  /* reset pos to first entry */
-                res = 0;
-            }
-        }
-    }
-
-    while (res > 0)
-    {
-        res -= dir_reclen(de);
-        if (de->d_fileno &&
-            !(fake_dot_dot && (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." ))) &&
-            ((info = append_entry( dir_data, buffer, io, length, de->d_name, NULL, dir_data->mask, class ))))
-        {
-            last_info = info;
-            if (io->u.Status == STATUS_BUFFER_OVERFLOW)
-            {
-                lseek( fd, (unsigned long)restart_pos, SEEK_SET );
-                if (restart_info_pos)  /* if we have a complete read already, return it */
-                {
-                    io->u.Status = STATUS_SUCCESS;
-                    io->Information = restart_info_pos;
-                    last_info = restart_last_info;
-                    break;
-                }
-                /* otherwise restart from the start with a smaller size */
-                size = (char *)de - data;
-                if (!size) break;
-                io->Information = 0;
-                last_info = NULL;
-                goto restart;
-            }
-            if (!has_wildcard( dir_data->->mask )) break;
-            /* if we have to return but the buffer contains more data, restart with a smaller size */
-            if (res > 0 && (single_entry || io->Information + max_dir_info_size(class) > length))
-            {
-                lseek( fd, (unsigned long)restart_pos, SEEK_SET );
-                size = (char *)de + dir_reclen(de) - data;
-                io->Information = restart_info_pos;
-                last_info = restart_last_info;
-                goto restart;
-            }
-        }
-        /* move on to the next entry */
-        if (res > 0)
-        {
-            de = (struct dirent *)((char *)de + dir_reclen(de));
-            continue;
-        }
-        if (size < initial_size) break;  /* already restarted once, give up now */
-        restart_last_info = last_info;
-        restart_info_pos = io->Information;
-    restart:
-        res = wine_getdirentries( fd, data, size, &restart_pos );
-        de = (struct dirent *)data;
-    }
-
-    if (last_info) last_info->next = 0;
-    else io->u.Status = restart_scan ? STATUS_NO_SUCH_FILE : STATUS_NO_MORE_FILES;
-    res = 0;
-done:
-    if (data != local_buffer) RtlFreeHeap( GetProcessHeap(), 0, data );
-    return res;
-}
-
-#ifdef _DARWIN_FEATURE_64_BIT_INODE
-#undef getdirentries
-#undef dirent
-#endif
-
-#endif  /* HAVE_GETDIRENTRIES */
-
-
-/***********************************************************************
- *           read_directory_readdir
- *
- * Read a directory using the POSIX readdir interface; helper for NtQueryDirectoryFile.
- */
-static void read_directory_readdir( struct dir_data *dir_data, int fd, IO_STATUS_BLOCK *io,
-                                    void *buffer, ULONG length, BOOLEAN single_entry,
-                                    BOOLEAN restart_scan, FILE_INFORMATION_CLASS class )
-{
-    DIR *dir;
-    off_t i, old_pos = 0;
-    struct dirent *de;
-    union file_directory_info *info, *last_info = NULL;
-
-    if (!(dir = opendir( "." )))
-    {
-        io->u.Status = FILE_GetNtStatus();
-        return;
-    }
-
-    if (!restart_scan)
-    {
-        old_pos = lseek( fd, 0, SEEK_CUR );
-        /* skip the right number of entries */
-        for (i = 0; i < old_pos - 2; i++)
-        {
-            if (!readdir( dir ))
-            {
-                closedir( dir );
-                io->u.Status = STATUS_NO_MORE_FILES;
-                return;
-            }
-        }
-    }
-    io->u.Status = STATUS_SUCCESS;
-
-    for (;;)
-    {
-        if (old_pos == 0)
-            info = append_entry( dir_data, buffer, io, length, ".", NULL, dir_data->mask, class );
-        else if (old_pos == 1)
-            info = append_entry( dir_data, buffer, io, length, "..", NULL, dir_data->mask, class );
-        else if ((de = readdir( dir )))
-        {
-            if (strcmp( de->d_name, "." ) && strcmp( de->d_name, ".." ))
-                info = append_entry( dir_data, buffer, io, length, de->d_name, NULL, dir_data->mask, class );
-            else
-                info = NULL;
-        }
-        else
-            break;
-        old_pos++;
-        if (info)
-        {
-            last_info = info;
-            if (io->u.Status == STATUS_BUFFER_OVERFLOW)
-            {
-                old_pos--;  /* restore pos to previous entry */
-                break;
-            }
-            if (single_entry) break;
-            /* check if we still have enough space for the largest possible entry */
-            if (io->Information + max_dir_info_size(class) > length) break;
-        }
-    }
-
-    lseek( fd, old_pos, SEEK_SET );  /* store dir offset as filepos for fd */
-    closedir( dir );
-
-    if (last_info) last_info->next = 0;
-    else io->u.Status = restart_scan ? STATUS_NO_SUCH_FILE : STATUS_NO_MORE_FILES;
-}
-
-/***********************************************************************
- *           read_directory_stat
- *
- * Read a single file from a directory by determining whether the file
- * identified by mask exists using stat.
- */
-static int read_directory_stat( struct dir_data *dir_data, int fd, IO_STATUS_BLOCK *io,
-                                void *buffer, ULONG length, BOOLEAN single_entry,
-                                BOOLEAN restart_scan, FILE_INFORMATION_CLASS class )
-{
-    const UNICODE_STRING *mask = dir_data->mask;
-    int unix_len, ret, used_default;
-    char *unix_name;
-    struct stat st;
-    BOOL case_sensitive = get_dir_case_sensitivity(".");
-
-    TRACE("looking up file %s\n", debugstr_us( mask ));
-
-    unix_len = ntdll_wcstoumbs( 0, mask->Buffer, mask->Length / sizeof(WCHAR), NULL, 0, NULL, NULL );
-    if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len + 1)))
-    {
-        io->u.Status = STATUS_NO_MEMORY;
-        return 0;
-    }
-    ret = ntdll_wcstoumbs( 0, mask->Buffer, mask->Length / sizeof(WCHAR), unix_name, unix_len,
-                           NULL, &used_default );
-    if (ret > 0 && !used_default)
-    {
-        unix_name[ret] = 0;
-        if (restart_scan)
-        {
-            lseek( fd, 0, SEEK_SET );
-        }
-        else if (lseek( fd, 0, SEEK_CUR ) != 0)
-        {
-            io->u.Status = STATUS_NO_MORE_FILES;
-            ret = 0;
-            goto done;
-        }
-
-        ret = stat( unix_name, &st );
-        if (case_sensitive && !ret)
-        {
-            union file_directory_info *info = append_entry( dir_data, buffer, io, length, unix_name, NULL, NULL, class );
-            if (info)
-            {
-                info->next = 0;
-                if (io->u.Status != STATUS_BUFFER_OVERFLOW) lseek( fd, 1, SEEK_CUR );
-            }
-            else io->u.Status = restart_scan ? STATUS_NO_SUCH_FILE : STATUS_NO_MORE_FILES;
-        }
-        else
-        {
-            ret = -1;
-        }
-    }
-    else ret = -1;
-
-done:
-    RtlFreeHeap( GetProcessHeap(), 0, unix_name );
-
-    TRACE("returning %d\n", ret);
-
-    return ret;
-}
 
 #ifdef HAVE_GETATTRLIST
 /***********************************************************************
@@ -2157,13 +1712,8 @@ done:
  * Read a single file from a directory by determining whether the file
  * identified by mask exists using getattrlist.
  */
-static int read_directory_getattrlist( struct dir_data *data, int fd, IO_STATUS_BLOCK *io,
-                                       void *buffer, ULONG length, BOOLEAN single_entry,
-                                       BOOLEAN restart_scan, FILE_INFORMATION_CLASS class )
+static NTSTATUS read_directory_data_getattrlist( struct dir_data *data, const char *unix_name )
 {
-    const UNICODE_STRING *mask = dir_data->mask;
-    int unix_len, ret, used_default;
-    char *unix_name;
     struct attrlist attrlist;
 #include "pshpack4.h"
     struct
@@ -2172,66 +1722,128 @@ static int read_directory_getattrlist( struct dir_data *data, int fd, IO_STATUS_
         struct attrreference name_reference;
         fsobj_type_t type;
         char name[NAME_MAX * 3 + 1];
-    } attrlist_buffer;
+    } buffer;
 #include "poppack.h"
 
-    TRACE("looking up file %s\n", debugstr_us( mask ));
-
-    unix_len = ntdll_wcstoumbs( 0, mask->Buffer, mask->Length / sizeof(WCHAR), NULL, 0, NULL, NULL );
-    if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len + 1)))
+    memset( &attrlist, 0, sizeof(attrlist) );
+    attrlist.bitmapcount = ATTR_BIT_MAP_COUNT;
+    attrlist.commonattr = ATTR_CMN_NAME | ATTR_CMN_OBJTYPE;
+    if (getattrlist( unix_name, &attrlist, &buffer, sizeof(buffer), FSOPT_NOFOLLOW ) == -1)
+        return STATUS_NO_SUCH_FILE;
+    /* If unix_name named a symlink, the above may have succeeded even if the symlink is broken.
+       Check that with another call without FSOPT_NOFOLLOW.  We don't ask for any attributes. */
+    if (buffer.type == VLNK)
     {
-        io->u.Status = STATUS_NO_MEMORY;
-        return 0;
+        u_int32_t dummy;
+        attrlist.commonattr = 0;
+        if (getattrlist( unix_name, &attrlist, &dummy, sizeof(dummy), 0 ) == -1)
+            return STATUS_NO_SUCH_FILE;
     }
-    ret = ntdll_wcstoumbs( 0, mask->Buffer, mask->Length / sizeof(WCHAR), unix_name, unix_len,
-                           NULL, &used_default );
-    if (ret > 0 && !used_default)
-    {
-        unix_name[ret] = 0;
-        if (restart_scan)
-        {
-            lseek( fd, 0, SEEK_SET );
-        }
-        else if (lseek( fd, 0, SEEK_CUR ) != 0)
-        {
-            io->u.Status = STATUS_NO_MORE_FILES;
-            ret = 0;
-            goto done;
-        }
 
-        memset( &attrlist, 0, sizeof(attrlist) );
-        attrlist.bitmapcount = ATTR_BIT_MAP_COUNT;
-        attrlist.commonattr = ATTR_CMN_NAME | ATTR_CMN_OBJTYPE;
-        ret = getattrlist( unix_name, &attrlist, &attrlist_buffer, sizeof(attrlist_buffer), FSOPT_NOFOLLOW );
-        /* If unix_name named a symlink, the above may have succeeded even if the symlink is broken.
-           Check that with another call without FSOPT_NOFOLLOW.  We don't ask for any attributes. */
-        if (!ret && attrlist_buffer.type == VLNK)
-        {
-            u_int32_t dummy;
-            attrlist.commonattr = 0;
-            ret = getattrlist( unix_name, &attrlist, &dummy, sizeof(dummy), 0 );
-        }
-        if (!ret)
-        {
-            union file_directory_info *info = append_entry( dir_data, buffer, io, length, attrlist_buffer.name, NULL, NULL, class );
-            if (info)
-            {
-                info->next = 0;
-                if (io->u.Status != STATUS_BUFFER_OVERFLOW) lseek( fd, 1, SEEK_CUR );
-            }
-            else io->u.Status = restart_scan ? STATUS_NO_SUCH_FILE : STATUS_NO_MORE_FILES;
-        }
+    TRACE( "found %s\n", buffer.name );
+
+    if (!append_entry( data, buffer.name, NULL, NULL )) return STATUS_NO_MEMORY;
+
+    return STATUS_SUCCESS;
+}
+#endif  /* HAVE_GETATTRLIST */
+
+
+/***********************************************************************
+ *           read_directory_stat
+ *
+ * Read a single file from a directory by determining whether the file
+ * identified by mask exists using stat.
+ */
+static NTSTATUS read_directory_data_stat( struct dir_data *data, const char *unix_name )
+{
+    struct stat st;
+
+    /* if the file system is not case sensitive we can't find the actual name through stat() */
+    if (!get_dir_case_sensitivity(".")) return STATUS_NO_SUCH_FILE;
+    if (stat( unix_name, &st ) == -1) return STATUS_NO_SUCH_FILE;
+
+    TRACE( "found %s\n", unix_name );
+
+    if (!append_entry( data, unix_name, NULL, NULL )) return STATUS_NO_MEMORY;
+
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *           read_directory_readdir
+ *
+ * Read a directory using the POSIX readdir interface; helper for NtQueryDirectoryFile.
+ */
+static NTSTATUS read_directory_data_readdir( struct dir_data *data, const UNICODE_STRING *mask )
+{
+    struct dirent *de;
+    NTSTATUS status = STATUS_NO_MEMORY;
+    DIR *dir = opendir( "." );
+
+    if (!dir) return STATUS_NO_SUCH_FILE;
+
+    if (!append_entry( data, ".", NULL, mask )) goto done;
+    if (!append_entry( data, "..", NULL, mask )) goto done;
+    while ((de = readdir( dir )))
+    {
+        if (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." )) continue;
+        if (!append_entry( data, de->d_name, NULL, mask )) goto done;
     }
-    else ret = -1;
+    status = STATUS_SUCCESS;
 
 done:
-    RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+    closedir( dir );
+    return status;
+}
 
-    TRACE("returning %d\n", ret);
 
+/***********************************************************************
+ *           read_directory_data
+ *
+ * Read the full contents of a directory, using one of the above helper functions.
+ */
+static NTSTATUS read_directory_data( struct dir_data *data, int fd, const UNICODE_STRING *mask )
+{
+    NTSTATUS status;
+
+#ifdef VFAT_IOCTL_READDIR_BOTH
+    if (!(status = read_directory_data_vfat( data, fd, mask ))) return status;
+#endif
+
+    if (!has_wildcard( mask ))
+    {
+        /* convert the mask to a Unix name and check for it */
+        int ret, used_default;
+        char unix_name[MAX_DIR_ENTRY_LEN * 3 + 1];
+
+        ret = ntdll_wcstoumbs( 0, mask->Buffer, mask->Length / sizeof(WCHAR),
+                               unix_name, sizeof(unix_name) - 1, NULL, &used_default );
+        if (ret > 0 && !used_default)
+        {
+            unix_name[ret] = 0;
+#ifdef HAVE_GETATTRLIST
+            if (!(status = read_directory_data_getattrlist( data, unix_name ))) return status;
+#endif
+            if (!(status = read_directory_data_stat( data, unix_name ))) return status;
+        }
+    }
+
+    return read_directory_data_readdir( data, mask );
+}
+
+
+/* compare file names for directory sorting */
+static int name_compare( const void *a, const void *b )
+{
+    const struct dir_data_names *file_a = (const struct dir_data_names *)a;
+    const struct dir_data_names *file_b = (const struct dir_data_names *)b;
+    int ret = RtlCompareUnicodeStrings( file_a->long_name, strlenW(file_a->long_name),
+                                        file_b->long_name, strlenW(file_b->long_name), TRUE );
+    if (!ret) ret = strcmpW( file_a->long_name, file_b->long_name );
     return ret;
 }
-#endif
 
 
 /***********************************************************************
@@ -2243,24 +1855,46 @@ static NTSTATUS init_cached_dir_data( struct dir_data **data_ret, int fd, const 
 {
     struct dir_data *data;
     struct stat st;
+    NTSTATUS status;
+    unsigned int i;
 
     if (!(data = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data) )))
         return STATUS_NO_MEMORY;
 
-    if (mask)
+    if ((status = read_directory_data( data, fd, mask )))
     {
-        RtlDuplicateUnicodeString( 0, mask, &data->mask_str );
-        data->mask = &data->mask_str;
+        free_dir_data( data );
+        return status;
     }
 
-    if (!fstat( fd, &st ))
+    /* sort filenames, but not "." and ".." */
+    i = 0;
+    if (i < data->count && !strcmp( data->names[i].unix_name, "." )) i++;
+    if (i < data->count && !strcmp( data->names[i].unix_name, ".." )) i++;
+    if (i < data->count) qsort( data->names + i, data->count - i, sizeof(*data->names), name_compare );
+
+    if (data->count)
     {
-        data->id.dev = st.st_dev;
-        data->id.ino = st.st_ino;
+        /* release unused space */
+        if (data->buffer)
+            RtlReAllocateHeap( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, data->buffer,
+                               offsetof( struct dir_data_buffer, data[data->buffer->pos] ));
+        if (data->count < data->size)
+            RtlReAllocateHeap( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, data->names,
+                               data->count * sizeof(*data->names) );
+        if (!fstat( fd, &st ))
+        {
+            data->id.dev = st.st_dev;
+            data->id.ino = st.st_ino;
+        }
     }
+
+    TRACE( "mask %s found %u files\n", debugstr_us( mask ), data->count );
+    for (i = 0; i < data->count; i++)
+        TRACE( "%s %s\n", debugstr_w(data->names[i].long_name), debugstr_w(data->names[i].short_name) );
 
     *data_ret = data;
-    return STATUS_SUCCESS;
+    return data->count ? STATUS_SUCCESS : STATUS_NO_SUCH_FILE;
 }
 
 
@@ -2356,7 +1990,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
     case FileFullDirectoryInformation:
     case FileIdBothDirectoryInformation:
     case FileIdFullDirectoryInformation:
-        if (length < dir_info_size( info_class, 1 )) return STATUS_INFO_LENGTH_MISMATCH;
+        if (length < dir_info_align( dir_info_size( info_class, 1 ))) return STATUS_INFO_LENGTH_MISMATCH;
         if (!buffer) return STATUS_ACCESS_VIOLATION;
         break;
     default:
@@ -2376,32 +2010,24 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
     cwd = open( ".", O_RDONLY );
     if (fchdir( fd ) != -1)
     {
-        if ((io->u.Status = get_cached_dir_data( handle, &data, fd, mask ))) goto done;
-
-#ifdef VFAT_IOCTL_READDIR_BOTH
-        if ((read_directory_vfat( data, fd, io, buffer, length, single_entry,
-                                  restart_scan, info_class )) != -1) goto done;
-#endif
-        if (!has_wildcard( data->mask ))
+        if (!(status = get_cached_dir_data( handle, &data, fd, mask )))
         {
-#ifdef HAVE_GETATTRLIST
-            if (read_directory_getattrlist( data, fd, io, buffer, length, single_entry,
-                                            restart_scan, info_class ) != -1) goto done;
-#endif
-            if (read_directory_stat( data, fd, io, buffer, length, single_entry,
-                                     restart_scan, info_class ) != -1) goto done;
-        }
-#ifdef USE_GETDENTS
-        if ((read_directory_getdents( data, fd, io, buffer, length, single_entry,
-                                      restart_scan, info_class )) != -1) goto done;
-#elif defined HAVE_GETDIRENTRIES
-        if ((read_directory_getdirentries( data, fd, io, buffer, length, single_entry,
-                                           restart_scan, info_class )) != -1) goto done;
-#endif
-        read_directory_readdir( data, fd, io, buffer, length, single_entry, restart_scan, info_class );
+            union file_directory_info *last_info = NULL;
 
-    done:
-        status = io->u.Status;
+            if (restart_scan) data->pos = 0;
+
+            while (!status && data->pos < data->count)
+            {
+                status = get_dir_data_entry( data, buffer, io, length, info_class, &last_info );
+                if (!status || status == STATUS_BUFFER_OVERFLOW) data->pos++;
+                if (single_entry) break;
+            }
+
+            if (!last_info) status = STATUS_NO_MORE_FILES;
+            else if (status == STATUS_MORE_ENTRIES) status = STATUS_SUCCESS;
+
+            io->u.Status = status;
+        }
         if (cwd == -1 || fchdir( cwd ) == -1) chdir( "/" );
     }
     else status = FILE_GetNtStatus();
