@@ -9034,7 +9034,7 @@ static void test_winproc_handles(const char *argv0)
     HINSTANCE hinst = GetModuleHandleA(NULL);
     WNDCLASSA wnd_classA;
     WNDCLASSW wnd_classW;
-    int count;
+    int count, ret;
     PROCESS_INFORMATION info;
     STARTUPINFOA startup;
     char cmd[MAX_PATH];
@@ -9042,11 +9042,11 @@ static void test_winproc_handles(const char *argv0)
     memset(&wnd_classA, 0, sizeof(wnd_classA));
     wnd_classA.lpszClassName = "winproc_test";
     wnd_classA.lpfnWndProc = winproc;
-    ok(RegisterClassA(&wnd_classA),
-            "RegisterClass failed with error %d\n", GetLastError());
+    ret = RegisterClassA(&wnd_classA);
+    ok(ret, "RegisterClass failed with error %d\n", GetLastError());
 
-    ok(GetClassInfoW(hinst, winproc_testW, &wnd_classW),
-            "GetClassInfoW failed with error %d\n", GetLastError());
+    ret = GetClassInfoW(hinst, winproc_testW, &wnd_classW);
+    ok(ret, "GetClassInfoW failed with error %d\n", GetLastError());
     ok(wnd_classA.lpfnWndProc != wnd_classW.lpfnWndProc,
             "winproc pointers should not be identical\n");
 
@@ -9057,8 +9057,9 @@ static void test_winproc_handles(const char *argv0)
     CallWindowProcW(wnd_classW.lpfnWndProc, 0, 0, 0, (LPARAM)&count);
     ok(count == 1, "winproc should be called once (%d)\n", count);
 
-    ok(UnregisterClassW(winproc_testW, hinst),
-            "UnregisterClass failed with error %d\n", GetLastError());
+    ret = UnregisterClassW(winproc_testW, hinst);
+    ok(ret, "UnregisterClass failed with error %d\n", GetLastError());
+
     /* crashes on 64-bit windows because lpfnWndProc handle is already freed */
     if (sizeof(void*) == 4)
     {
@@ -9082,6 +9083,7 @@ static void test_winproc_handles(const char *argv0)
 static void test_winproc_limit(void)
 {
     WNDPROC winproc_handle;
+    LONG_PTR ret;
     HWND hwnd;
     int i;
 
@@ -9102,13 +9104,13 @@ static void test_winproc_limit(void)
     }
     ok(i != 0xffff, "unable to run out of winproc slots\n");
 
-    ok(SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)winproc_convA),
-            "SetWindowLongPtr failed with error %d\n", GetLastError());
+    ret = SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)winproc_convA);
+    ok(ret, "SetWindowLongPtr failed with error %d\n", GetLastError());
     ok(SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"text"), "WM_SETTEXT failed\n");
     ok(SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)textW), "WM_SETTEXT with conversion failed\n");
 
-    ok(SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)winproc_convW),
-            "SetWindowLongPtr failed with error %d\n", GetLastError());
+    ret = SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)winproc_convW);
+    ok(ret, "SetWindowLongPtr failed with error %d\n", GetLastError());
     ok(SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"text"), "WM_SETTEXT failed\n");
     ok(SendMessageW(hwnd, WM_SETTEXT, 0, (LPARAM)textW), "WM_SETTEXT with conversion failed\n");
 
