@@ -452,29 +452,35 @@ LONG WINAPI RtlCompareString( const STRING *s1, const STRING *s2, BOOLEAN CaseIn
 
 
 /******************************************************************************
+ *	RtlCompareUnicodeStrings   (NTDLL.@)
+ */
+LONG WINAPI RtlCompareUnicodeStrings( const WCHAR *s1, SIZE_T len1, const WCHAR *s2, SIZE_T len2,
+                                      BOOLEAN case_insensitive )
+{
+    LONG ret = 0;
+    SIZE_T len = min( len1, len2 );
+
+    if (case_insensitive)
+    {
+        while (!ret && len--) ret = toupperW(*s1++) - toupperW(*s2++);
+    }
+    else
+    {
+        while (!ret && len--) ret = *s1++ - *s2++;
+    }
+    if (!ret) ret = len1 - len2;
+    return ret;
+}
+
+
+/******************************************************************************
  *	RtlCompareUnicodeString   (NTDLL.@)
  */
 LONG WINAPI RtlCompareUnicodeString( const UNICODE_STRING *s1, const UNICODE_STRING *s2,
                                      BOOLEAN CaseInsensitive )
 {
-    unsigned int len;
-    LONG ret = 0;
-    LPCWSTR p1, p2;
-
-    len = min(s1->Length, s2->Length) / sizeof(WCHAR);
-    p1 = s1->Buffer;
-    p2 = s2->Buffer;
-
-    if (CaseInsensitive)
-    {
-        while (!ret && len--) ret = toupperW(*p1++) - toupperW(*p2++);
-    }
-    else
-    {
-        while (!ret && len--) ret = *p1++ - *p2++;
-    }
-    if (!ret) ret = s1->Length - s2->Length;
-    return ret;
+    return RtlCompareUnicodeStrings( s1->Buffer, s1->Length / sizeof(WCHAR),
+                                     s2->Buffer, s2->Length / sizeof(WCHAR), CaseInsensitive );
 }
 
 

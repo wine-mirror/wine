@@ -464,7 +464,8 @@
 @ stdcall RtlCompareMemory(ptr ptr long)
 @ stdcall RtlCompareMemoryUlong(ptr long long)
 @ stdcall RtlCompareString(ptr ptr long)
-@ stdcall RtlCompareUnicodeString (ptr ptr long)
+@ stdcall RtlCompareUnicodeString(ptr ptr long)
+@ stdcall RtlCompareUnicodeStrings(ptr long ptr long long)
 @ stdcall RtlCompressBuffer(long ptr long ptr long long ptr ptr)
 @ stdcall RtlComputeCrc32(long ptr long)
 # @ stub RtlComputeImportTableHash
