@@ -819,7 +819,7 @@ static void test_menu_ownerdraw(void)
     ok( MOD_rc[0].right - MOD_rc[0].left == 2 * MOD_avec + MOD_SIZE,
             "width of owner drawn menu item is wrong. Got %d expected %d\n",
             MOD_rc[0].right - MOD_rc[0].left , 2*MOD_avec + MOD_SIZE);
-    /* test hight */
+    /* test height */
     ok( MOD_rc[0].bottom - MOD_rc[0].top == GetSystemMetrics( SM_CYMENU) - 1,
             "Height of owner drawn menu item is wrong. Got %d expected %d\n",
             MOD_rc[0].bottom - MOD_rc[0].top, GetSystemMetrics( SM_CYMENU) - 1);
