@@ -603,10 +603,7 @@ void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
     LeaveCriticalSection(&freetype_cs);
 
     /* flip Y axis */
-    bitmap->bbox.left = bbox.xMin;
-    bitmap->bbox.right = bbox.xMax;
-    bitmap->bbox.top = -bbox.yMax;
-    bitmap->bbox.bottom = -bbox.yMin;
+    SetRect(&bitmap->bbox, bbox.xMin, -bbox.yMax, bbox.xMax, -bbox.yMin);
 }
 
 static BOOL freetype_get_aliased_glyph_bitmap(struct dwrite_glyphbitmap *bitmap, FT_Glyph glyph)

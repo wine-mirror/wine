@@ -339,9 +339,7 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
     if (FAILED(hr))
         return hr;
 
-    target.left = target.top = 0;
-    target.right = This->size.cx;
-    target.bottom = This->size.cy;
+    SetRect(&target, 0, 0, This->size.cx, This->size.cy);
 
     if (rendermode == DWRITE_RENDERING_MODE_OUTLINE) {
         static const XFORM identity = { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
