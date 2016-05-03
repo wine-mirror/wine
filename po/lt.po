@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-04-06 22:14+0300\n"
+"PO-Revision-Date: 2016-05-03 21:19+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -11653,7 +11653,7 @@ msgstr "reg: Nepavyko užbaigti nurodytos operacijos. Įvyko netikėta klaida.\n
 
 #: reg.rc:55
 msgid "Search complete. Number of matches found: %1!d!\n"
-msgstr ""
+msgstr "Paieška baigta. Rasta atitikimų: %1!d!\n"
 
 #: regedit.rc:34
 msgid "&Registry"
