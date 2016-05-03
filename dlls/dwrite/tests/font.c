@@ -4233,15 +4233,13 @@ static void test_CreateGlyphRunAnalysis(void)
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(!IsRectEmpty(&rect), "got empty rect\n");
 
-            rect.left = rect.top = 0;
-            rect.bottom = rect.right = 1;
+            SetRect(&rect, 0, 0, 1, 1);
             hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1, &rect);
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(IsRectEmpty(&rect), "unexpected empty rect\n");
         }
         else {
-            rect.left = rect.top = 0;
-            rect.bottom = rect.right = 1;
+            SetRect(&rect, 0, 0, 1, 1);
             hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect);
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(IsRectEmpty(&rect), "got empty rect\n");
