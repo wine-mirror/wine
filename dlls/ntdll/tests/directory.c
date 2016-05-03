@@ -34,6 +34,7 @@
 #define WIN32_NO_STATUS
 
 #include "wine/test.h"
+#include "winnls.h"
 #include "winternl.h"
 
 static NTSTATUS (WINAPI *pNtClose)( PHANDLE );
@@ -46,6 +47,7 @@ static BOOLEAN  (WINAPI *pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING,LPCS
 static BOOL     (WINAPI *pRtlDosPathNameToNtPathName_U)( LPCWSTR, PUNICODE_STRING, PWSTR*, CURDIR* );
 static VOID     (WINAPI *pRtlInitUnicodeString)( PUNICODE_STRING, LPCWSTR );
 static VOID     (WINAPI *pRtlFreeUnicodeString)( PUNICODE_STRING );
+static LONG     (WINAPI *pRtlCompareUnicodeString)( const UNICODE_STRING*, const UNICODE_STRING*,BOOLEAN );
 static NTSTATUS (WINAPI *pRtlMultiByteToUnicodeN)( LPWSTR dst, DWORD dstlen, LPDWORD reslen,
                                                    LPCSTR src, DWORD srclen );
 static NTSTATUS (WINAPI *pRtlWow64EnableFsRedirection)( BOOLEAN enable );
@@ -247,6 +249,84 @@ static void test_flags_NtQueryDirectoryFile(OBJECT_ATTRIBUTES *attr, const char 
             ok(testfiles[i].nfound == 1, "Wrong number %d of %s files found (single_entry=%d,restart=%d)\n",
                testfiles[i].nfound, testfiles[i].description, single_entry, restart_flag);
     pNtClose(new_dirh);
+}
+
+static void test_directory_sort( const WCHAR *testdir )
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING ntdirname;
+    IO_STATUS_BLOCK io;
+    UINT data_pos, data_len, count;
+    BYTE data[8192];
+    WCHAR prev[MAX_PATH], name[MAX_PATH];
+    UNICODE_STRING prev_str, name_str;
+    FILE_BOTH_DIRECTORY_INFORMATION *info;
+    NTSTATUS status;
+    HANDLE handle;
+    int res;
+
+    if (!pRtlDosPathNameToNtPathName_U( testdir, &ntdirname, NULL, NULL ))
+    {
+        ok(0, "RtlDosPathNametoNtPathName_U failed\n");
+        return;
+    }
+    InitializeObjectAttributes( &attr, &ntdirname, OBJ_CASE_INSENSITIVE, 0, NULL );
+    status = pNtOpenFile( &handle, SYNCHRONIZE | FILE_LIST_DIRECTORY, &attr, &io, FILE_SHARE_READ,
+                        FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT | FILE_DIRECTORY_FILE );
+    ok(status == STATUS_SUCCESS, "failed to open dir %s\n", wine_dbgstr_w(testdir) );
+
+    U(io).Status = 0xdeadbeef;
+    status = pNtQueryDirectoryFile( handle, NULL, NULL, NULL, &io, data, sizeof(data),
+                                    FileBothDirectoryInformation, FALSE, NULL, TRUE );
+    ok( status == STATUS_SUCCESS, "failed to query directory; status %x\n", status );
+    ok( U(io).Status == STATUS_SUCCESS, "failed to query directory; status %x\n", U(io).Status );
+    data_len = io.Information;
+    ok( data_len >= sizeof(FILE_BOTH_DIRECTORY_INFORMATION), "not enough data in directory\n" );
+    data_pos = 0;
+    count = 0;
+
+    while (data_pos < data_len)
+    {
+        info = (FILE_BOTH_DIRECTORY_INFORMATION *)(data + data_pos);
+
+        memcpy( name, info->FileName, info->FileNameLength );
+        name[info->FileNameLength / sizeof(WCHAR)] = 0;
+        switch (count)
+        {
+        case 0:  /* first entry must be '.' */
+            ok( !lstrcmpW( name, dotW ), "wrong name %s\n", wine_dbgstr_w( name ));
+            break;
+        case 1:  /* second entry must be '..' */
+            ok( !lstrcmpW( name, dotdotW ), "wrong name %s\n", wine_dbgstr_w( name ));
+            break;
+        case 2:  /* nothing to compare against */
+            break;
+        default:
+            pRtlInitUnicodeString( &prev_str, prev );
+            pRtlInitUnicodeString( &name_str, name );
+            res = pRtlCompareUnicodeString( &prev_str, &name_str, TRUE );
+            ok( res < 0, "wrong result %d %s %s\n", res, wine_dbgstr_w( prev ), wine_dbgstr_w( name ));
+            break;
+        }
+        count++;
+        lstrcpyW( prev, name );
+
+        if (info->NextEntryOffset == 0)
+        {
+            U(io).Status = 0xdeadbeef;
+            status = pNtQueryDirectoryFile( handle, 0, NULL, NULL, &io, data, sizeof(data),
+                                            FileBothDirectoryInformation, FALSE, NULL, FALSE );
+            ok (U(io).Status == status, "wrong status %x / %x\n", status, U(io).Status);
+            if (status == STATUS_NO_MORE_FILES) break;
+            ok( status == STATUS_SUCCESS, "failed to query directory; status %x\n", status );
+            data_len = io.Information;
+            data_pos = 0;
+        }
+        else data_pos += info->NextEntryOffset;
+    }
+
+    pNtClose( handle );
+    pRtlFreeUnicodeString( &ntdirname );
 }
 
 static void test_NtQueryDirectoryFile(void)
@@ -526,6 +606,7 @@ static void test_NtQueryDirectoryFile(void)
     ok(U(io).Status == 0xdeadbeef, "wrong status %x\n", U(io).Status);
 
 done:
+    test_directory_sort( testdirW );
     tear_down_attribute_test( testdirW );
     pRtlFreeUnicodeString(&ntdirname);
 }
@@ -675,6 +756,7 @@ static void test_redirection(void)
 
 START_TEST(directory)
 {
+    WCHAR sysdir[MAX_PATH];
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
     if (!hntdll)
     {
@@ -691,10 +773,13 @@ START_TEST(directory)
     pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(hntdll, "RtlDosPathNameToNtPathName_U");
     pRtlInitUnicodeString   = (void *)GetProcAddress(hntdll, "RtlInitUnicodeString");
     pRtlFreeUnicodeString   = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
+    pRtlCompareUnicodeString = (void *)GetProcAddress(hntdll, "RtlCompareUnicodeString");
     pRtlMultiByteToUnicodeN = (void *)GetProcAddress(hntdll,"RtlMultiByteToUnicodeN");
     pRtlWow64EnableFsRedirection = (void *)GetProcAddress(hntdll,"RtlWow64EnableFsRedirection");
     pRtlWow64EnableFsRedirectionEx = (void *)GetProcAddress(hntdll,"RtlWow64EnableFsRedirectionEx");
 
+    GetSystemDirectoryW( sysdir, MAX_PATH );
+    test_directory_sort( sysdir );
     test_NtQueryDirectoryFile();
     test_NtQueryDirectoryFile_case();
     test_redirection();
