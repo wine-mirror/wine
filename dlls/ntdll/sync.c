@@ -510,7 +510,7 @@ NTSTATUS WINAPI NtReleaseMutant( IN HANDLE handle, OUT PLONG prev_count OPTIONAL
     {
         req->handle = wine_server_obj_handle( handle );
         status = wine_server_call( req );
-        if (prev_count) *prev_count = reply->prev_count;
+        if (prev_count) *prev_count = 1 - reply->prev_count;
     }
     SERVER_END_REQ;
     return status;
