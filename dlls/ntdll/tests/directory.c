@@ -54,50 +54,56 @@ static struct testfile_s {
     BOOL todo;                /* set if it doesn't work on wine yet */
     BOOL attr_done;           /* set if attributes were tested for this file already */
     const DWORD attr;         /* desired attribute */
-    const char *name;         /* filename to use */
+    WCHAR name[20];           /* filename to use */
     const char *target;       /* what to point to (only for reparse pts) */
     const char *description;  /* for error messages */
     int nfound;               /* How many were found (expect 1) */
-    WCHAR nameW[20];          /* unicode version of name (filled in later) */
 } testfiles[] = {
-    { 0, 0, FILE_ATTRIBUTE_NORMAL,    "longfilename.tmp", NULL, "normal" },
-    { 0, 0, FILE_ATTRIBUTE_NORMAL,    "n.tmp", NULL, "normal" },
-    { 1, 0, FILE_ATTRIBUTE_HIDDEN,    "h.tmp", NULL, "hidden" },
-    { 1, 0, FILE_ATTRIBUTE_SYSTEM,    "s.tmp", NULL, "system" },
-    { 0, 0, FILE_ATTRIBUTE_DIRECTORY, "d.tmp", NULL, "directory" },
-    { 0, 0, FILE_ATTRIBUTE_DIRECTORY, ".",     NULL, ". directory" },
-    { 0, 0, FILE_ATTRIBUTE_DIRECTORY, "..",    NULL, ".. directory" },
-    { 0, 0, 0, NULL }
+    { 0, 0, FILE_ATTRIBUTE_NORMAL,    {'l','o','n','g','f','i','l','e','n','a','m','e','.','t','m','p'}, "normal" },
+    { 0, 0, FILE_ATTRIBUTE_NORMAL,    {'n','.','t','m','p',}, "normal" },
+    { 1, 0, FILE_ATTRIBUTE_HIDDEN,    {'h','.','t','m','p',}, "hidden" },
+    { 1, 0, FILE_ATTRIBUTE_SYSTEM,    {'s','.','t','m','p',}, "system" },
+    { 0, 0, FILE_ATTRIBUTE_DIRECTORY, {'d','.','t','m','p',}, "directory" },
+    { 0, 0, FILE_ATTRIBUTE_NORMAL,    {0xe9,'a','.','t','m','p'}, "normal" },
+    { 0, 0, FILE_ATTRIBUTE_NORMAL,    {0xc9,'b','.','t','m','p'}, "normal" },
+    { 0, 0, FILE_ATTRIBUTE_NORMAL,    {'e','a','.','t','m','p'},  "normal" },
+    { 0, 0, FILE_ATTRIBUTE_DIRECTORY, {'.'},                  ". directory" },
+    { 0, 0, FILE_ATTRIBUTE_DIRECTORY, {'.','.'},              ".. directory" }
 };
-static const int max_test_dir_size = 20;  /* size of above plus some for .. etc */
+static const int test_dir_count = sizeof(testfiles) / sizeof(testfiles[0]);
+static const int max_test_dir_size = sizeof(testfiles) / sizeof(testfiles[0]) + 5;  /* size of above plus some for .. etc */
 
 static const WCHAR dummyW[] = {'d','u','m','m','y',0};
+static const WCHAR dotW[] = {'.',0};
+static const WCHAR dotdotW[] = {'.','.',0};
+static const WCHAR backslashW[] = {'\\',0};
 
 /* Create a test directory full of attribute test files, clear counts */
-static void set_up_attribute_test(const char *testdirA)
+static void set_up_attribute_test(const WCHAR *testdir)
 {
     int i;
     BOOL ret;
 
-    ret = CreateDirectoryA(testdirA, NULL);
-    ok(ret, "couldn't create dir '%s', error %d\n", testdirA, GetLastError());
+    ret = CreateDirectoryW(testdir, NULL);
+    ok(ret, "couldn't create dir %s, error %d\n", wine_dbgstr_w(testdir), GetLastError());
 
-    for (i=0; testfiles[i].name; i++) {
-        char buf[MAX_PATH];
-        pRtlMultiByteToUnicodeN(testfiles[i].nameW, sizeof(testfiles[i].nameW), NULL, testfiles[i].name, strlen(testfiles[i].name)+1);
+    for (i=0; i < test_dir_count; i++) {
+        WCHAR buf[MAX_PATH];
 
-        if (strcmp(testfiles[i].name, ".") == 0 || strcmp(testfiles[i].name, "..") == 0)
+        if (lstrcmpW(testfiles[i].name, dotW) == 0 || lstrcmpW(testfiles[i].name, dotdotW) == 0)
             continue;
-        sprintf(buf, "%s\\%s", testdirA, testfiles[i].name);
+        lstrcpyW( buf, testdir );
+        lstrcatW( buf, backslashW );
+        lstrcatW( buf, testfiles[i].name );
         if (testfiles[i].attr & FILE_ATTRIBUTE_DIRECTORY) {
-            ret = CreateDirectoryA(buf, NULL);
-            ok(ret, "couldn't create dir '%s', error %d\n", buf, GetLastError());
+            ret = CreateDirectoryW(buf, NULL);
+            ok(ret, "couldn't create dir %s, error %d\n", wine_dbgstr_w(buf), GetLastError());
         } else {
-            HANDLE h = CreateFileA(buf,
+            HANDLE h = CreateFileW(buf,
                                    GENERIC_READ|GENERIC_WRITE,
                                    0, NULL, CREATE_ALWAYS,
                                    testfiles[i].attr, 0);
-            ok( h != INVALID_HANDLE_VALUE, "failed to create temp file '%s'\n", buf );
+            ok( h != INVALID_HANDLE_VALUE, "failed to create temp file %s\n", wine_dbgstr_w(buf) );
             CloseHandle(h);
         }
     }
@@ -107,32 +113,34 @@ static void reset_found_files(void)
 {
     int i;
 
-    for (i = 0; testfiles[i].name; i++)
+    for (i = 0; i < test_dir_count; i++)
         testfiles[i].nfound = 0;
 }
 
 /* Remove the given test directory and the attribute test files, if any */
-static void tear_down_attribute_test(const char *testdirA)
+static void tear_down_attribute_test(const WCHAR *testdir)
 {
     int i;
 
-    for (i=0; testfiles[i].name; i++) {
+    for (i = 0; i < test_dir_count; i++) {
         int ret;
-        char buf[MAX_PATH];
-        if (strcmp(testfiles[i].name, ".") == 0 || strcmp(testfiles[i].name, "..") == 0)
+        WCHAR buf[MAX_PATH];
+        if (lstrcmpW(testfiles[i].name, dotW) == 0 || lstrcmpW(testfiles[i].name, dotdotW) == 0)
             continue;
-        sprintf(buf, "%s\\%s", testdirA, testfiles[i].name);
+        lstrcpyW( buf, testdir );
+        lstrcatW( buf, backslashW );
+        lstrcatW( buf, testfiles[i].name );
         if (testfiles[i].attr & FILE_ATTRIBUTE_DIRECTORY) {
-            ret = RemoveDirectoryA(buf);
+            ret = RemoveDirectoryW(buf);
             ok(ret || (GetLastError() == ERROR_PATH_NOT_FOUND),
-               "Failed to rmdir %s, error %d\n", buf, GetLastError());
+               "Failed to rmdir %s, error %d\n", wine_dbgstr_w(buf), GetLastError());
         } else {
-            ret = DeleteFileA(buf);
+            ret = DeleteFileW(buf);
             ok(ret || (GetLastError() == ERROR_PATH_NOT_FOUND),
-               "Failed to rm %s, error %d\n", buf, GetLastError());
+               "Failed to rm %s, error %d\n", wine_dbgstr_w(buf), GetLastError());
         }
     }
-    RemoveDirectoryA(testdirA);
+    RemoveDirectoryW(testdir);
 }
 
 /* Match one found file against testfiles[], increment count if found */
@@ -145,19 +153,19 @@ static void tally_test_file(FILE_BOTH_DIRECTORY_INFORMATION *dir_info)
     WCHAR *nameW = dir_info->FileName;
     int namelen = dir_info->FileNameLength / sizeof(WCHAR);
 
-    for (i=0; testfiles[i].name; i++) {
-        int len = strlen(testfiles[i].name);
-        if (namelen != len || memcmp(nameW, testfiles[i].nameW, len*sizeof(WCHAR)))
+    for (i = 0; i < test_dir_count; i++) {
+        int len = lstrlenW(testfiles[i].name);
+        if (namelen != len || memcmp(nameW, testfiles[i].name, len*sizeof(WCHAR)))
             continue;
         if (!testfiles[i].attr_done) {
             todo_wine_if (testfiles[i].todo)
-                ok (attrib == (testfiles[i].attr & attribmask), "file %s: expected %s (%x), got %x (is your linux new enough?)\n", testfiles[i].name, testfiles[i].description, testfiles[i].attr, attrib);
+                ok (attrib == (testfiles[i].attr & attribmask), "file %s: expected %s (%x), got %x (is your linux new enough?)\n", wine_dbgstr_w(testfiles[i].name), testfiles[i].description, testfiles[i].attr, attrib);
             testfiles[i].attr_done = TRUE;
         }
         testfiles[i].nfound++;
         break;
     }
-    ok(testfiles[i].name != NULL, "unexpected file found\n");
+    ok(i < test_dir_count, "unexpected file found %s\n", wine_dbgstr_wn(dir_info->FileName, namelen));
 }
 
 static void test_flags_NtQueryDirectoryFile(OBJECT_ATTRIBUTES *attr, const char *testdirA,
@@ -227,13 +235,13 @@ static void test_flags_NtQueryDirectoryFile(OBJECT_ATTRIBUTES *attr, const char 
     ok(numfiles < max_test_dir_size, "too many loops\n");
 
     if (mask)
-        for (i=0; testfiles[i].name; i++)
-            ok(testfiles[i].nfound == (testfiles[i].nameW == mask->Buffer),
+        for (i = 0; i < test_dir_count; i++)
+            ok(testfiles[i].nfound == (testfiles[i].name == mask->Buffer),
                "Wrong number %d of %s files found (single_entry=%d,mask=%s)\n",
                testfiles[i].nfound, testfiles[i].description, single_entry,
                wine_dbgstr_wn(mask->Buffer, mask->Length/sizeof(WCHAR) ));
     else
-        for (i=0; testfiles[i].name; i++)
+        for (i = 0; i < test_dir_count; i++)
             ok(testfiles[i].nfound == 1, "Wrong number %d of %s files found (single_entry=%d,restart=%d)\n",
                testfiles[i].nfound, testfiles[i].description, single_entry, restart_flag);
     pNtClose(new_dirh);
@@ -258,10 +266,10 @@ static void test_NtQueryDirectoryFile(void)
     /* Clean up from prior aborted run, if any, then set up test files */
     ok(GetTempPathA(MAX_PATH, testdirA), "couldn't get temp dir\n");
     strcat(testdirA, "NtQueryDirectoryFile.tmp");
-    tear_down_attribute_test(testdirA);
-    set_up_attribute_test(testdirA);
-
     pRtlMultiByteToUnicodeN(testdirW, sizeof(testdirW), NULL, testdirA, strlen(testdirA)+1);
+    tear_down_attribute_test(testdirW);
+    set_up_attribute_test(testdirW);
+
     if (!pRtlDosPathNameToNtPathName_U(testdirW, &ntdirname, NULL, NULL))
     {
         ok(0, "RtlDosPathNametoNtPathName_U failed\n");
@@ -274,11 +282,11 @@ static void test_NtQueryDirectoryFile(void)
     test_flags_NtQueryDirectoryFile(&attr, testdirA, NULL, TRUE, TRUE);
     test_flags_NtQueryDirectoryFile(&attr, testdirA, NULL, TRUE, FALSE);
 
-    for (i = 0; testfiles[i].name; i++)
+    for (i = 0; i < test_dir_count; i++)
     {
-        if (testfiles[i].nameW[0] == '.') continue;  /* . and .. as masks are broken on Windows */
-        mask.Buffer = testfiles[i].nameW;
-        mask.Length = mask.MaximumLength = lstrlenW(testfiles[i].nameW) * sizeof(WCHAR);
+        if (testfiles[i].name[0] == '.') continue;  /* . and .. as masks are broken on Windows */
+        mask.Buffer = testfiles[i].name;
+        mask.Length = mask.MaximumLength = lstrlenW(testfiles[i].name) * sizeof(WCHAR);
         test_flags_NtQueryDirectoryFile(&attr, testdirA, &mask, FALSE, TRUE);
         test_flags_NtQueryDirectoryFile(&attr, testdirA, &mask, FALSE, FALSE);
         test_flags_NtQueryDirectoryFile(&attr, testdirA, &mask, TRUE, TRUE);
@@ -293,8 +301,8 @@ static void test_NtQueryDirectoryFile(void)
         skip("can't test if we can't open the directory\n");
         return;
     }
-    mask.Buffer = testfiles[0].nameW;
-    mask.Length = mask.MaximumLength = lstrlenW(testfiles[0].nameW) * sizeof(WCHAR);
+    mask.Buffer = testfiles[0].name;
+    mask.Length = mask.MaximumLength = lstrlenW(testfiles[0].name) * sizeof(WCHAR);
     data_size = offsetof(FILE_BOTH_DIRECTORY_INFORMATION, FileName[256]);
     U(io).Status = 0xdeadbeef;
     status = pNtQueryDirectoryFile(dirh, 0, NULL, NULL, &io, data, data_size,
@@ -313,10 +321,10 @@ static void test_NtQueryDirectoryFile(void)
     ok(status == STATUS_SUCCESS, "failed to query directory status %x\n", status);
     ok(U(io).Status == STATUS_SUCCESS, "failed to query directory status %x\n", U(io).Status);
     todo_wine
-    ok(U(io).Information == offsetof(FILE_BOTH_DIRECTORY_INFORMATION, FileName[strlen(testfiles[0].name)]),
+    ok(U(io).Information == offsetof(FILE_BOTH_DIRECTORY_INFORMATION, FileName[lstrlenW(testfiles[0].name)]),
        "wrong info %lx\n", U(io).Information);
-    ok(fbdi->FileNameLength == strlen(testfiles[0].name)*sizeof(WCHAR) &&
-            !memcmp(fbdi->FileName, testfiles[0].nameW, fbdi->FileNameLength),
+    ok(fbdi->FileNameLength == lstrlenW(testfiles[0].name)*sizeof(WCHAR) &&
+            !memcmp(fbdi->FileName, testfiles[0].name, fbdi->FileNameLength),
             "incorrect long file name: %s\n", wine_dbgstr_wn(fbdi->FileName,
                 fbdi->FileNameLength/sizeof(WCHAR)));
 
@@ -332,9 +340,9 @@ static void test_NtQueryDirectoryFile(void)
     ok( U(io).Information == data_size || broken( U(io).Information == 0),
         "wrong info %lx\n", U(io).Information );
     ok( fbdi->NextEntryOffset == 0, "wrong offset %x\n",  fbdi->NextEntryOffset );
-    ok( fbdi->FileNameLength == strlen(testfiles[0].name) * sizeof(WCHAR),
+    ok( fbdi->FileNameLength == lstrlenW(testfiles[0].name) * sizeof(WCHAR),
         "wrong length %x\n", fbdi->FileNameLength );
-    ok( filename[0] == testfiles[0].nameW[0], "incorrect long file name: %s\n",
+    ok( filename[0] == testfiles[0].name[0], "incorrect long file name: %s\n",
         wine_dbgstr_wn(fbdi->FileName, fbdi->FileNameLength/sizeof(WCHAR)));
     todo_wine
     ok( filename[1] == 0x5555, "incorrect long file name: %s\n",
@@ -374,8 +382,8 @@ static void test_NtQueryDirectoryFile(void)
     ok( status == STATUS_SUCCESS || status == STATUS_NO_MORE_FILES, "wrong status %x\n", status );
     ok( U(io).Status == status, "wrong status %x / %x\n", U(io).Status, status );
     if (!status)
-        ok( fbdi->FileNameLength == strlen(testfiles[0].name)*sizeof(WCHAR) &&
-            !memcmp(fbdi->FileName, testfiles[0].nameW, fbdi->FileNameLength),
+        ok( fbdi->FileNameLength == lstrlenW(testfiles[0].name)*sizeof(WCHAR) &&
+            !memcmp(fbdi->FileName, testfiles[0].name, fbdi->FileNameLength),
             "incorrect long file name: %s\n",
             wine_dbgstr_wn(fbdi->FileName, fbdi->FileNameLength/sizeof(WCHAR)));
 
@@ -500,7 +508,7 @@ static void test_NtQueryDirectoryFile(void)
     ok(U(io).Status == 0xdeadbeef, "wrong status %x\n", U(io).Status);
 
 done:
-    tear_down_attribute_test(testdirA);
+    tear_down_attribute_test( testdirW );
     pRtlFreeUnicodeString(&ntdirname);
 }
 
