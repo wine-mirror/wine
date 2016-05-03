@@ -616,6 +616,36 @@ static HGLOBAL create_dib_from_bitmap(HBITMAP hBmp)
 
 
 /**************************************************************************
+ *              create_bitmap_from_dib
+ *
+ *  Given a packed DIB, creates a bitmap object from it.
+ */
+static HANDLE create_bitmap_from_dib(HANDLE dib)
+{
+    HANDLE ret = 0;
+    BITMAPINFO *bmi;
+
+    if (dib && (bmi = GlobalLock(dib)))
+    {
+        HDC hdc;
+        unsigned int offset;
+
+        hdc = GetDC(NULL);
+
+        offset = bitmap_info_size(bmi, DIB_RGB_COLORS);
+
+        ret = CreateDIBitmap(hdc, &bmi->bmiHeader, CBM_INIT, (LPBYTE)bmi + offset,
+                             bmi, DIB_RGB_COLORS);
+
+        GlobalUnlock(dib);
+        ReleaseDC(NULL, hdc);
+    }
+
+    return ret;
+}
+
+
+/**************************************************************************
  *              import_clipboard_data
  *
  *  Generic import clipboard data routine.
@@ -647,36 +677,6 @@ static HANDLE import_clipboard_data(CFDataRef data)
     }
 
     return data_handle;
-}
-
-
-/**************************************************************************
- *              create_bitmap_from_dib
- *
- *  Given a packed DIB, creates a bitmap object from it.
- */
-static HANDLE create_bitmap_from_dib(HANDLE dib)
-{
-    HANDLE ret = 0;
-    BITMAPINFO *bmi;
-
-    if (dib && (bmi = GlobalLock(dib)))
-    {
-        HDC hdc;
-        unsigned int offset;
-
-        hdc = GetDC(NULL);
-
-        offset = bitmap_info_size(bmi, DIB_RGB_COLORS);
-
-        ret = CreateDIBitmap(hdc, &bmi->bmiHeader, CBM_INIT, (LPBYTE)bmi + offset,
-                             bmi, DIB_RGB_COLORS);
-
-        GlobalUnlock(dib);
-        ReleaseDC(NULL, hdc);
-    }
-
-    return ret;
 }
 
 
