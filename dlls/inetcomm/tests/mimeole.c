@@ -412,7 +412,7 @@ static void test_MessageOptions(void)
     prop.u.pszVal = CoTaskMemAlloc(strlen(string)+1);
     strcpy(prop.u.pszVal, string);
     hr = IMimeMessage_SetOption(msg, OID_HIDE_TNEF_ATTACHMENTS, &prop);
-    todo_wine ok(hr == S_OK, "ret %08x\n", hr);
+    ok(hr == S_OK, "ret %08x\n", hr);
     PropVariantClear(&prop);
 
     hr = IMimeMessage_GetOption(msg, OID_HIDE_TNEF_ATTACHMENTS, &prop);
@@ -426,7 +426,7 @@ static void test_MessageOptions(void)
     prop.u.pszVal = CoTaskMemAlloc(strlen(zero)+1);
     strcpy(prop.u.pszVal, zero);
     hr = IMimeMessage_SetOption(msg, OID_HIDE_TNEF_ATTACHMENTS, &prop);
-    todo_wine ok(hr == S_OK, "ret %08x\n", hr);
+    ok(hr == S_OK, "ret %08x\n", hr);
     PropVariantClear(&prop);
 
     hr = IMimeMessage_GetOption(msg, OID_HIDE_TNEF_ATTACHMENTS, &prop);
@@ -439,7 +439,14 @@ static void test_MessageOptions(void)
     prop.vt = VT_BOOL;
     prop.u.boolVal = TRUE;
     hr = IMimeMessage_SetOption(msg, 0xff00000a, &prop);
-    todo_wine ok(hr == MIME_E_INVALID_OPTION_ID, "ret %08x\n", hr);
+    ok(hr == MIME_E_INVALID_OPTION_ID, "ret %08x\n", hr);
+    PropVariantClear(&prop);
+
+    /* Out of range before type. */
+    prop.vt = VT_I4;
+    prop.u.lVal = 1;
+    hr = IMimeMessage_SetOption(msg, 0xff00000a, &prop);
+    ok(hr == MIME_E_INVALID_OPTION_ID, "ret %08x\n", hr);
     PropVariantClear(&prop);
 
     IMimeMessage_Release(msg);

@@ -2305,27 +2305,35 @@ static HRESULT WINAPI MimeMessage_SetOption(
     const TYPEDID oid,
     LPCPROPVARIANT pValue)
 {
-    HRESULT hr = E_NOTIMPL;
+    HRESULT hr = S_OK;
     TRACE("(%p)->(%08x, %p)\n", iface, oid, pValue);
+
+    /* Message ID is checked before type.
+     *  OID 0x4D -> 0x56 and 0x58 aren't defined but will filtered out later.
+     */
+    if(TYPEDID_ID(oid) < TYPEDID_ID(OID_ALLOW_8BIT_HEADER) || TYPEDID_ID(oid) > TYPEDID_ID(OID_SECURITY_2KEY_CERT_BAG_64))
+    {
+        WARN("oid (%08x) out of range\n", oid);
+        return MIME_E_INVALID_OPTION_ID;
+    }
 
     if(pValue->vt != TYPEDID_TYPE(oid))
     {
         WARN("Called with vartype %04x and oid %08x\n", pValue->vt, oid);
-        return E_INVALIDARG;
+        return S_OK;
     }
 
     switch(oid)
     {
     case OID_HIDE_TNEF_ATTACHMENTS:
         FIXME("OID_HIDE_TNEF_ATTACHMENTS (value %d): ignoring\n", pValue->u.boolVal);
-        hr = S_OK;
         break;
     case OID_SHOW_MACBINARY:
         FIXME("OID_SHOW_MACBINARY (value %d): ignoring\n", pValue->u.boolVal);
-        hr = S_OK;
         break;
     default:
         FIXME("Unhandled oid %08x\n", oid);
+        hr = MIME_E_INVALID_OPTION_ID;
     }
 
     return hr;

@@ -153,6 +153,7 @@ cpp_quote("    PID_ATT_ACCOUNTNAME   = 78,")
 cpp_quote("    PID_LAST              = 79,")
 cpp_quote("} MIMEPROPID;")
 
+cpp_quote("#define TYPEDID_ID(_typedid)          (((ULONG)(_typedid))>>16)")
 cpp_quote("#define TYPEDID_MASK                  ((ULONG)0xffff)")
 cpp_quote("#define TYPEDID_TYPE(t)               ((VARTYPE)((t) & TYPEDID_MASK))")
 
@@ -176,6 +177,9 @@ cpp_quote("#define OID_HEADER_RELOAD_TYPE        (0x00370000 | VT_UI4)")
 cpp_quote("#define OID_CAN_INLINE_TEXT_BODIES    (0x00380000 | VT_BOOL)")
 cpp_quote("#define OID_SHOW_MACBINARY            (0x00390000 | VT_BOOL)")
 cpp_quote("#define OID_SAVEBODY_KEEPBOUNDARY     (0x00400000 | VT_BOOL)")
+
+cpp_quote("#define OID_SECURITY_2KEY_CERT_BAG    (0x00590000 | VT_VECTOR | VT_UI4)")
+cpp_quote("#define OID_SECURITY_2KEY_CERT_BAG_64 (0x00590000 | VT_VECTOR | VT_UI8)")
 
 [
     uuid(e4b28371-83b0-11d0-8259-00c04fd85ab4),
