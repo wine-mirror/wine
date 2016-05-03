@@ -2349,7 +2349,8 @@ static void test_close(void)
             (HANDLE)_get_osfhandle(fd1), h);
     ok((HANDLE)_get_osfhandle(fd2) == h, "handles mismatch (%p != %p)\n",
             (HANDLE)_get_osfhandle(fd2), h);
-    ok(!close(fd1), "close(fd1) failed (%d)\n", errno);
+    ret1 = close(fd1);
+    ok(!ret1, "close(fd1) failed (%d)\n", errno);
     ok(!GetHandleInformation(h, &flags), "GetHandleInformation succeeded\n");
     ok(close(fd2), "close(fd2) succeeded\n");
 
