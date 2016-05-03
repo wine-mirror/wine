@@ -884,19 +884,48 @@ static HRESULT WINAPI gdiinterop1_GetFontSignature_(IDWriteGdiInterop1 *iface, I
     FONTSIGNATURE *fontsig)
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
+    IDWriteFontFileStream *stream;
+    IDWriteFontFile *file;
+    UINT32 count;
+    HRESULT hr;
 
-    FIXME("(%p)->(%p %p): stub\n", This, fontface, fontsig);
+    TRACE("(%p)->(%p %p)\n", This, fontface, fontsig);
 
-    return E_NOTIMPL;
+    memset(fontsig, 0, sizeof(*fontsig));
+
+    count = 1;
+    hr = IDWriteFontFace_GetFiles(fontface, &count, &file);
+    hr = get_filestream_from_file(file, &stream);
+    IDWriteFontFile_Release(file);
+    if (FAILED(hr))
+        return hr;
+
+    hr = opentype_get_font_signature(stream, IDWriteFontFace_GetType(fontface),
+        IDWriteFontFace_GetIndex(fontface), fontsig);
+    IDWriteFontFileStream_Release(stream);
+    return hr;
 }
 
 static HRESULT WINAPI gdiinterop1_GetFontSignature(IDWriteGdiInterop1 *iface, IDWriteFont *font, FONTSIGNATURE *fontsig)
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
+    IDWriteFontFace *fontface;
+    HRESULT hr;
 
-    FIXME("(%p)->(%p %p): stub\n", This, font, fontsig);
+    TRACE("(%p)->(%p %p)\n", This, font, fontsig);
 
-    return E_NOTIMPL;
+    if (!font)
+        return E_INVALIDARG;
+
+    memset(fontsig, 0, sizeof(*fontsig));
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IDWriteGdiInterop1_GetFontSignature_(iface, fontface, fontsig);
+    IDWriteFontFace_Release(fontface);
+    return hr;
 }
 
 static HRESULT WINAPI gdiinterop1_GetMatchingFontsByLOGFONT(IDWriteGdiInterop1 *iface, LOGFONTW const *logfont,

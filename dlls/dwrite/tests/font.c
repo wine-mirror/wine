@@ -6020,7 +6020,6 @@ static void test_GetFontSignature(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteGdiInterop1_GetFontSignature(interop1, NULL, &fontsig);
-todo_wine
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     hr = IDWriteFactory_GetSystemFontCollection(factory, &syscollection, FALSE);
@@ -6053,10 +6052,8 @@ todo_wine
         IDWriteLocalizedStrings_Release(names);
 
         hr = IDWriteGdiInterop1_GetFontSignature(interop1, font, &fontsig);
-    todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-if (hr == S_OK) {
         get_expected_fontsig(font, &expected_signature);
 
         ok(fontsig.fsUsb[0] == expected_signature.fsUsb[0], "%s: fsUsb[0] %#x, expected %#x\n", wine_dbgstr_w(nameW),
@@ -6072,7 +6069,7 @@ if (hr == S_OK) {
             fontsig.fsCsb[0], expected_signature.fsCsb[0]);
         ok(fontsig.fsCsb[1] == expected_signature.fsCsb[1], "%s: fsCsb[1] %#x, expected %#x\n", wine_dbgstr_w(nameW),
             fontsig.fsCsb[1], expected_signature.fsCsb[1]);
-}
+
         IDWriteFont_Release(font);
         IDWriteFontFace_Release(fontface);
         IDWriteFontFamily_Release(family);

@@ -1869,3 +1869,26 @@ void opentype_colr_next_glyph(const void *colr, struct dwrite_colorglyph *glyph)
     glyph->glyph = GET_BE_WORD(layer->GID);
     glyph->palette_index = GET_BE_WORD(layer->paletteIndex);
 }
+
+HRESULT opentype_get_font_signature(IDWriteFontFileStream *stream, DWRITE_FONT_FACE_TYPE face_type, UINT32 face_index,
+    FONTSIGNATURE *fontsig)
+{
+    const TT_OS2_V2 *tt_os2;
+    void *os2_context;
+    HRESULT hr;
+
+    hr = opentype_get_font_table(stream, face_type, face_index, MS_OS2_TAG,  (const void**)&tt_os2, &os2_context, NULL, NULL);
+    if (tt_os2) {
+        fontsig->fsUsb[0] = GET_BE_DWORD(tt_os2->ulUnicodeRange1);
+        fontsig->fsUsb[1] = GET_BE_DWORD(tt_os2->ulUnicodeRange2);
+        fontsig->fsUsb[2] = GET_BE_DWORD(tt_os2->ulUnicodeRange3);
+        fontsig->fsUsb[3] = GET_BE_DWORD(tt_os2->ulUnicodeRange4);
+
+        fontsig->fsCsb[0] = GET_BE_DWORD(tt_os2->ulCodePageRange1);
+        fontsig->fsCsb[1] = GET_BE_DWORD(tt_os2->ulCodePageRange2);
+
+        IDWriteFontFileStream_ReleaseFileFragment(stream, os2_context);
+    }
+
+    return hr;
+}
