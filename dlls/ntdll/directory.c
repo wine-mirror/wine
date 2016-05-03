@@ -302,7 +302,7 @@ static void *get_dir_data_space( struct dir_data *data, unsigned int size )
     struct dir_data_buffer *buffer = data->buffer;
     void *ret;
 
-    if (!buffer || size >= buffer->size - buffer->pos)
+    if (!buffer || size > buffer->size - buffer->pos)
     {
         unsigned int new_size = buffer ? buffer->size * 2 : dir_data_buffer_initial_size;
         if (new_size < size) new_size = size;
