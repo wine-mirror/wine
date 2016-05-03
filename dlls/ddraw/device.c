@@ -6118,8 +6118,7 @@ static HRESULT d3d_device7_Load(IDirect3DDevice7 *iface, IDirectDrawSurface7 *ds
      * for it may be divided. If any dimension of dest is larger than source, it can't be
      * mip level subset, so an error can be returned early.
      */
-    if (srcrect.left >= srcrect.right || srcrect.top >= srcrect.bottom ||
-        srcrect.right > src->surface_desc.dwWidth ||
+    if (IsRectEmpty(&srcrect) || srcrect.right > src->surface_desc.dwWidth ||
         srcrect.bottom > src->surface_desc.dwHeight ||
         destpoint.x + srcrect.right - srcrect.left > src->surface_desc.dwWidth ||
         destpoint.y + srcrect.bottom - srcrect.top > src->surface_desc.dwHeight ||
