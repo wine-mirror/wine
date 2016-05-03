@@ -1093,6 +1093,16 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @END
 
 
+/* Query a mutex */
+@REQ(query_mutex)
+    obj_handle_t  handle;       /* handle to mutex */
+@REPLY
+    unsigned int count;         /* current count of mutex */
+    int          owned;         /* true if owned by current thread */
+    int          abandoned;     /* true if abandoned */
+@END
+
+
 /* Create a semaphore */
 @REQ(create_semaphore)
     unsigned int access;        /* wanted access rights */

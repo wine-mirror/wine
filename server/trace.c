@@ -1602,6 +1602,18 @@ static void dump_open_mutex_reply( const struct open_mutex_reply *req )
     fprintf( stderr, " handle=%04x", req->handle );
 }
 
+static void dump_query_mutex_request( const struct query_mutex_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+}
+
+static void dump_query_mutex_reply( const struct query_mutex_reply *req )
+{
+    fprintf( stderr, " count=%08x", req->count );
+    fprintf( stderr, ", owned=%d", req->owned );
+    fprintf( stderr, ", abandoned=%d", req->abandoned );
+}
+
 static void dump_create_semaphore_request( const struct create_semaphore_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
@@ -4346,6 +4358,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_mutex_request,
     (dump_func)dump_release_mutex_request,
     (dump_func)dump_open_mutex_request,
+    (dump_func)dump_query_mutex_request,
     (dump_func)dump_create_semaphore_request,
     (dump_func)dump_release_semaphore_request,
     (dump_func)dump_query_semaphore_request,
@@ -4621,6 +4634,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_mutex_reply,
     (dump_func)dump_release_mutex_reply,
     (dump_func)dump_open_mutex_reply,
+    (dump_func)dump_query_mutex_reply,
     (dump_func)dump_create_semaphore_reply,
     (dump_func)dump_release_semaphore_reply,
     (dump_func)dump_query_semaphore_reply,
@@ -4896,6 +4910,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_mutex",
     "release_mutex",
     "open_mutex",
+    "query_mutex",
     "create_semaphore",
     "release_semaphore",
     "query_semaphore",

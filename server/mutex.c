@@ -251,3 +251,19 @@ DECL_HANDLER(release_mutex)
         release_object( mutex );
     }
 }
+
+/* return details about the mutex */
+DECL_HANDLER(query_mutex)
+{
+    struct mutex *mutex;
+
+    if ((mutex = (struct mutex *)get_handle_obj( current->process, req->handle,
+                                                 MUTANT_QUERY_STATE, &mutex_ops )))
+    {
+        reply->count = mutex->count;
+        reply->owned = (mutex->owner == current);
+        reply->abandoned = mutex->abandoned;
+
+        release_object( mutex );
+    }
+}

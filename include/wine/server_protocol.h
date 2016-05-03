@@ -1292,6 +1292,22 @@ struct open_mutex_reply
 
 
 
+struct query_mutex_request
+{
+    struct request_header __header;
+    obj_handle_t  handle;
+};
+struct query_mutex_reply
+{
+    struct reply_header __header;
+    unsigned int count;
+    int          owned;
+    int          abandoned;
+    char __pad_20[4];
+};
+
+
+
 struct create_semaphore_request
 {
     struct request_header __header;
@@ -5407,6 +5423,7 @@ enum request
     REQ_create_mutex,
     REQ_release_mutex,
     REQ_open_mutex,
+    REQ_query_mutex,
     REQ_create_semaphore,
     REQ_release_semaphore,
     REQ_query_semaphore,
@@ -5686,6 +5703,7 @@ union generic_request
     struct create_mutex_request create_mutex_request;
     struct release_mutex_request release_mutex_request;
     struct open_mutex_request open_mutex_request;
+    struct query_mutex_request query_mutex_request;
     struct create_semaphore_request create_semaphore_request;
     struct release_semaphore_request release_semaphore_request;
     struct query_semaphore_request query_semaphore_request;
@@ -5963,6 +5981,7 @@ union generic_reply
     struct create_mutex_reply create_mutex_reply;
     struct release_mutex_reply release_mutex_reply;
     struct open_mutex_reply open_mutex_reply;
+    struct query_mutex_reply query_mutex_reply;
     struct create_semaphore_reply create_semaphore_reply;
     struct release_semaphore_reply release_semaphore_reply;
     struct query_semaphore_reply query_semaphore_reply;
@@ -6202,6 +6221,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 503
+#define SERVER_PROTOCOL_VERSION 504
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

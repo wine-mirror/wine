@@ -43,6 +43,8 @@ static NTSTATUS (WINAPI *pNtCreateMailslotFile)( PHANDLE, ACCESS_MASK, POBJECT_A
                                                  ULONG, ULONG, ULONG, PLARGE_INTEGER );
 static NTSTATUS (WINAPI *pNtCreateMutant)( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES, BOOLEAN );
 static NTSTATUS (WINAPI *pNtOpenMutant)  ( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES );
+static NTSTATUS (WINAPI *pNtQueryMutant) ( HANDLE, MUTANT_INFORMATION_CLASS, PVOID, ULONG, PULONG );
+static NTSTATUS (WINAPI *pNtReleaseMutant)( HANDLE, PLONG );
 static NTSTATUS (WINAPI *pNtCreateSemaphore)( PHANDLE, ACCESS_MASK,const POBJECT_ATTRIBUTES,LONG,LONG );
 static NTSTATUS (WINAPI *pNtOpenSemaphore)( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES );
 static NTSTATUS (WINAPI *pNtCreateTimer) ( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES, TIMER_TYPE );
@@ -1865,6 +1867,121 @@ static void test_null_device(void)
     CloseHandle(ov.hEvent);
 }
 
+static DWORD WINAPI mutant_thread( void *arg )
+{
+    MUTANT_BASIC_INFORMATION info;
+    NTSTATUS status;
+    HANDLE mutant;
+    DWORD ret;
+
+    mutant = arg;
+    ret = WaitForSingleObject( mutant, 1000 );
+    ok( ret == WAIT_OBJECT_0, "WaitForSingleObject failed %08x\n", ret );
+
+    memset(&info, 0xcc, sizeof(info));
+    status = pNtQueryMutant(mutant, MutantBasicInformation, &info, sizeof(info), NULL);
+    ok( status == STATUS_SUCCESS, "NtQueryMutant failed %08x\n", status );
+    ok( info.CurrentCount == 0, "expected 0, got %d\n", info.CurrentCount );
+    ok( info.OwnedByCaller == TRUE, "expected TRUE, got %d\n", info.OwnedByCaller );
+    ok( info.AbandonedState == FALSE, "expected FALSE, got %d\n", info.AbandonedState );
+    /* abandon mutant */
+
+    return 0;
+}
+
+static void test_mutant(void)
+{
+    static const WCHAR name[] = {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s',
+                                 '\\','t','e','s','t','_','m','u','t','a','n','t',0};
+    MUTANT_BASIC_INFORMATION info;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING str;
+    NTSTATUS status;
+    HANDLE mutant;
+    HANDLE thread;
+    DWORD ret;
+    ULONG len;
+    LONG prev;
+
+    pRtlInitUnicodeString(&str, name);
+    InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
+    status = pNtCreateMutant(&mutant, GENERIC_ALL, &attr, TRUE);
+    ok( status == STATUS_SUCCESS, "Failed to create Mutant(%08x)\n", status );
+
+    /* bogus */
+    status = pNtQueryMutant(mutant, MutantBasicInformation, &info, 0, NULL);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH,
+        "Failed to NtQueryMutant, expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status );
+    status = pNtQueryMutant(mutant, 0x42, &info, sizeof(info), NULL);
+    ok( status == STATUS_INVALID_INFO_CLASS || broken(status == STATUS_NOT_IMPLEMENTED), /* 32-bit on Vista/2k8 */
+        "Failed to NtQueryMutant, expected STATUS_INVALID_INFO_CLASS, got %08x\n", status );
+    status = pNtQueryMutant((HANDLE)0xdeadbeef, MutantBasicInformation, &info, sizeof(info), NULL);
+    ok( status == STATUS_INVALID_HANDLE,
+        "Failed to NtQueryMutant, expected STATUS_INVALID_HANDLE, got %08x\n", status );
+
+    /* new */
+    len = -1;
+    memset(&info, 0xcc, sizeof(info));
+    status = pNtQueryMutant(mutant, MutantBasicInformation, &info, sizeof(info), &len);
+    ok( status == STATUS_SUCCESS, "NtQueryMutant failed %08x\n", status );
+    ok( info.CurrentCount == 0, "expected 0, got %d\n", info.CurrentCount );
+    ok( info.OwnedByCaller == TRUE, "expected TRUE, got %d\n", info.OwnedByCaller );
+    ok( info.AbandonedState == FALSE, "expected FALSE, got %d\n", info.AbandonedState );
+    ok( len == sizeof(info), "got %u\n", len );
+
+    ret = WaitForSingleObject( mutant, 1000 );
+    ok( ret == WAIT_OBJECT_0, "WaitForSingleObject failed %08x\n", ret );
+
+    memset(&info, 0xcc, sizeof(info));
+    status = pNtQueryMutant(mutant, MutantBasicInformation, &info, sizeof(info), NULL);
+    ok( status == STATUS_SUCCESS, "NtQueryMutant failed %08x\n", status );
+    ok( info.CurrentCount == -1, "expected -1, got %d\n", info.CurrentCount );
+    ok( info.OwnedByCaller == TRUE, "expected TRUE, got %d\n", info.OwnedByCaller );
+    ok( info.AbandonedState == FALSE, "expected FALSE, got %d\n", info.AbandonedState );
+
+    prev = 0xdeadbeef;
+    status = pNtReleaseMutant(mutant, &prev);
+    ok( status == STATUS_SUCCESS, "NtQueryRelease failed %08x\n", status );
+    todo_wine ok( prev == -1, "NtQueryRelease failed, expected -1, got %d\n", prev );
+
+    prev = 0xdeadbeef;
+    status = pNtReleaseMutant(mutant, &prev);
+    ok( status == STATUS_SUCCESS, "NtQueryRelease failed %08x\n", status );
+    todo_wine ok( prev == 0, "NtQueryRelease failed, expected 0, got %d\n", prev );
+
+    memset(&info, 0xcc, sizeof(info));
+    status = pNtQueryMutant(mutant, MutantBasicInformation, &info, sizeof(info), NULL);
+    ok( status == STATUS_SUCCESS, "NtQueryMutant failed %08x\n", status );
+    ok( info.CurrentCount == 1, "expected 1, got %d\n", info.CurrentCount );
+    ok( info.OwnedByCaller == FALSE, "expected FALSE, got %d\n", info.OwnedByCaller );
+    ok( info.AbandonedState == FALSE, "expected FALSE, got %d\n", info.AbandonedState );
+
+    /* abandoned */
+    thread = CreateThread( NULL, 0, mutant_thread, mutant, 0, NULL );
+    ret = WaitForSingleObject( thread, 1000 );
+    ok( ret == WAIT_OBJECT_0, "WaitForSingleObject failed %08x\n", ret );
+    CloseHandle( thread );
+
+    memset(&info, 0xcc, sizeof(info));
+    status = pNtQueryMutant(mutant, MutantBasicInformation, &info, sizeof(info), NULL);
+    ok( status == STATUS_SUCCESS, "NtQueryMutant failed %08x\n", status );
+    ok( info.CurrentCount == 1, "expected 0, got %d\n", info.CurrentCount );
+    ok( info.OwnedByCaller == FALSE, "expected FALSE, got %d\n", info.OwnedByCaller );
+    ok( info.AbandonedState == TRUE, "expected TRUE, got %d\n", info.AbandonedState );
+
+    ret = WaitForSingleObject( mutant, 1000 );
+    ok( ret == WAIT_ABANDONED_0, "WaitForSingleObject failed %08x\n", ret );
+
+    memset(&info, 0xcc, sizeof(info));
+    status = pNtQueryMutant(mutant, MutantBasicInformation, &info, sizeof(info), NULL);
+    ok( status == STATUS_SUCCESS, "NtQueryMutant failed %08x\n", status );
+    ok( info.CurrentCount == 0, "expected 0, got %d\n", info.CurrentCount );
+    ok( info.OwnedByCaller == TRUE, "expected TRUE, got %d\n", info.OwnedByCaller );
+    ok( info.AbandonedState == FALSE, "expected FALSE, got %d\n", info.AbandonedState );
+
+    NtClose( mutant );
+}
+
 START_TEST(om)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
@@ -1892,6 +2009,8 @@ START_TEST(om)
     pNtQueryEvent           = (void *)GetProcAddress(hntdll, "NtQueryEvent");
     pNtPulseEvent           = (void *)GetProcAddress(hntdll, "NtPulseEvent");
     pNtOpenMutant           = (void *)GetProcAddress(hntdll, "NtOpenMutant");
+    pNtQueryMutant          = (void *)GetProcAddress(hntdll, "NtQueryMutant");
+    pNtReleaseMutant        = (void *)GetProcAddress(hntdll, "NtReleaseMutant");
     pNtOpenFile             = (void *)GetProcAddress(hntdll, "NtOpenFile");
     pNtClose                = (void *)GetProcAddress(hntdll, "NtClose");
     pRtlInitUnicodeString   = (void *)GetProcAddress(hntdll, "RtlInitUnicodeString");
@@ -1925,6 +2044,7 @@ START_TEST(om)
     test_query_object();
     test_type_mismatch();
     test_event();
+    test_mutant();
     test_keyed_events();
     test_null_device();
 }
