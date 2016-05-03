@@ -2897,6 +2897,47 @@ static void test_GetConsoleFontInfo(HANDLE std_output)
     SetConsoleScreenBufferSize(std_output, orig_sb_size);
 }
 
+static void test_SetConsoleFont(HANDLE std_output)
+{
+    HANDLE hmod;
+    BOOL (WINAPI *pSetConsoleFont)(HANDLE, DWORD);
+    BOOL ret;
+    DWORD (WINAPI *pGetNumberOfConsoleFonts)(void);
+    DWORD num_fonts;
+
+    hmod = GetModuleHandleA("kernel32.dll");
+    pSetConsoleFont = (void *)GetProcAddress(hmod, "SetConsoleFont");
+    if (!pSetConsoleFont)
+    {
+        win_skip("SetConsoleFont is not available\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = pSetConsoleFont(NULL, 0);
+    ok(!ret, "got %d, expected zero\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pSetConsoleFont(GetStdHandle(STD_INPUT_HANDLE), 0);
+    ok(!ret, "got %d, expected zero\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+
+    pGetNumberOfConsoleFonts = (void *)GetProcAddress(hmod, "GetNumberOfConsoleFonts");
+    if (!pGetNumberOfConsoleFonts)
+    {
+        win_skip("GetNumberOfConsoleFonts is not available\n");
+        return;
+    }
+
+    num_fonts = pGetNumberOfConsoleFonts();
+
+    SetLastError(0xdeadbeef);
+    ret = pSetConsoleFont(std_output, num_fonts);
+    ok(!ret, "got %d, expected zero\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+}
+
 START_TEST(console)
 {
     static const char font_name[] = "Lucida Console";
@@ -3044,4 +3085,5 @@ START_TEST(console)
     test_GetConsoleFontSize(hConOut);
     test_GetLargestConsoleWindowSize(hConOut);
     test_GetConsoleFontInfo(hConOut);
+    test_SetConsoleFont(hConOut);
 }
