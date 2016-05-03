@@ -963,10 +963,7 @@ static void test_wmp(void)
 
     test_window(hwnd);
 
-    pos.left = 1;
-    pos.top = 2;
-    pos.right = 301;
-    pos.bottom = 312;
+    SetRect(&pos, 1, 2, 301, 312);
     hres = IOleInPlaceObject_SetObjectRects(ipobj, &pos, &pos);
     ok(hres == S_OK, "SetObjectRects failed: %08x\n", hres);
     GetClientRect(hwnd, &pos);
