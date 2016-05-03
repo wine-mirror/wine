@@ -612,10 +612,14 @@ static HRESULT WINAPI dwritefontface_TryGetFontTable(IDWriteFontFace3 *iface, UI
     const void **table_data, UINT32 *table_size, void **context, BOOL *exists)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace3(iface);
+    struct file_stream_desc stream_desc;
 
     TRACE("(%p)->(%s %p %p %p %p)\n", This, debugstr_tag(table_tag), table_data, table_size, context, exists);
 
-    return opentype_get_font_table(This->streams[0], This->type, This->index, table_tag, table_data, context, table_size, exists);
+    stream_desc.stream = This->streams[0];
+    stream_desc.face_type = This->type;
+    stream_desc.face_index = This->index;
+    return opentype_get_font_table(&stream_desc, table_tag, table_data, context, table_size, exists);
 }
 
 static void WINAPI dwritefontface_ReleaseFontTable(IDWriteFontFace3 *iface, void *table_context)
@@ -3054,6 +3058,7 @@ static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
 static HRESULT init_font_data(IDWriteFactory3 *factory, IDWriteFontFile *file, DWRITE_FONT_FACE_TYPE face_type, UINT32 face_index,
     IDWriteLocalizedStrings **family_name, struct dwrite_font_data **ret)
 {
+    struct file_stream_desc stream_desc;
     struct dwrite_font_props props;
     struct dwrite_font_data *data;
     IDWriteFontFileStream *stream;
@@ -3082,12 +3087,15 @@ static HRESULT init_font_data(IDWriteFactory3 *factory, IDWriteFontFile *file, D
     IDWriteFontFile_AddRef(file);
     IDWriteFactory3_AddRef(factory);
 
-    opentype_get_font_properties(stream, face_type, face_index, &props);
-    opentype_get_font_metrics(stream, face_type, face_index, &data->metrics, NULL);
-    opentype_get_font_facename(stream, face_type, face_index, &data->names);
+    stream_desc.stream = stream;
+    stream_desc.face_type = face_type;
+    stream_desc.face_index = face_index;
+    opentype_get_font_properties(&stream_desc, &props);
+    opentype_get_font_metrics(&stream_desc, &data->metrics, NULL);
+    opentype_get_font_facename(&stream_desc, &data->names);
 
     /* get family name from font file */
-    hr = opentype_get_font_familyname(stream, face_type, face_index, family_name);
+    hr = opentype_get_font_familyname(&stream_desc, family_name);
     IDWriteFontFileStream_Release(stream);
     if (FAILED(hr)) {
         WARN("unable to get family name from font\n");
@@ -4006,6 +4014,7 @@ static HRESULT get_stream_from_file(IDWriteFontFile *file, IDWriteFontFileStream
 HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDWriteFontFile* const* font_files, UINT32 index,
     DWRITE_FONT_SIMULATIONS simulations, IDWriteFontFace3 **ret)
 {
+    struct file_stream_desc stream_desc;
     struct dwrite_fontface *fontface;
     HRESULT hr = S_OK;
     int i;
@@ -4055,7 +4064,10 @@ HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDW
         IDWriteFontFile_AddRef(font_files[i]);
     }
 
-    opentype_get_font_metrics(fontface->streams[0], facetype, index, &fontface->metrics, &fontface->caret);
+    stream_desc.stream = fontface->streams[0];
+    stream_desc.face_type = facetype;
+    stream_desc.face_index = index;
+    opentype_get_font_metrics(&stream_desc, &fontface->metrics, &fontface->caret);
     if (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE) {
         /* TODO: test what happens if caret is already slanted */
         if (fontface->caret.slopeRise == 1) {

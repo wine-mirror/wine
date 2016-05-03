@@ -682,7 +682,7 @@ static HRESULT WINAPI gdiinterop_ConvertFontFaceToLOGFONT(IDWriteGdiInterop1 *if
     struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
     IDWriteLocalizedStrings *familynames;
     DWRITE_FONT_SIMULATIONS simulations;
-    DWRITE_FONT_FACE_TYPE face_type;
+    struct file_stream_desc stream_desc;
     struct dwrite_font_props props;
     IDWriteFontFileStream *stream;
     IDWriteFontFile *file = NULL;
@@ -705,10 +705,11 @@ static HRESULT WINAPI gdiinterop_ConvertFontFaceToLOGFONT(IDWriteGdiInterop1 *if
         return hr;
     }
 
-    index = IDWriteFontFace_GetIndex(fontface);
-    face_type = IDWriteFontFace_GetType(fontface);
-    opentype_get_font_properties(stream, face_type, index, &props);
-    hr = opentype_get_font_familyname(stream, index, face_type, &familynames);
+    stream_desc.stream = stream;
+    stream_desc.face_type = IDWriteFontFace_GetType(fontface);
+    stream_desc.face_index = IDWriteFontFace_GetIndex(fontface);
+    opentype_get_font_properties(&stream_desc, &props);
+    hr = opentype_get_font_familyname(&stream_desc, &familynames);
     IDWriteFontFile_Release(file);
     IDWriteFontFileStream_Release(stream);
     if (FAILED(hr))
@@ -884,6 +885,7 @@ static HRESULT WINAPI gdiinterop1_GetFontSignature_(IDWriteGdiInterop1 *iface, I
     FONTSIGNATURE *fontsig)
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
+    struct file_stream_desc stream_desc;
     IDWriteFontFileStream *stream;
     IDWriteFontFile *file;
     UINT32 count;
@@ -900,8 +902,10 @@ static HRESULT WINAPI gdiinterop1_GetFontSignature_(IDWriteGdiInterop1 *iface, I
     if (FAILED(hr))
         return hr;
 
-    hr = opentype_get_font_signature(stream, IDWriteFontFace_GetType(fontface),
-        IDWriteFontFace_GetIndex(fontface), fontsig);
+    stream_desc.stream = stream;
+    stream_desc.face_type = IDWriteFontFace_GetType(fontface);
+    stream_desc.face_index = IDWriteFontFace_GetIndex(fontface);
+    hr = opentype_get_font_signature(&stream_desc, fontsig);
     IDWriteFontFileStream_Release(stream);
     return hr;
 }
