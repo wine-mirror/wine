@@ -75,6 +75,12 @@ typedef struct {
     } interfaces;
 } Sink;
 
+#define SINK_ENTRY(cursor,type) (LIST_ENTRY(cursor,Sink,entry)->interfaces.p##type)
+#define SINK_FOR_EACH(cursor,list,type,elem) \
+    for ((cursor) = (list)->next, elem = SINK_ENTRY(cursor,type); \
+         (cursor) != (list); \
+         (cursor) = (cursor)->next, elem = SINK_ENTRY(cursor,type))
+
 HRESULT advise_sink(struct list *sink_list, REFIID riid, DWORD cookie_magic, IUnknown *unk, DWORD *cookie) DECLSPEC_HIDDEN;
 HRESULT unadvise_sink(DWORD cookie) DECLSPEC_HIDDEN;
 void free_sinks(struct list *sink_list) DECLSPEC_HIDDEN;
