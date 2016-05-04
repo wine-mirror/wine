@@ -73,6 +73,7 @@ typedef struct {
         IUnknown *pIUnknown;
         ITfThreadMgrEventSink *pITfThreadMgrEventSink;
         ITfCompartmentEventSink *pITfCompartmentEventSink;
+        ITfTextEditSink *pITfTextEditSink;
     } interfaces;
 } Sink;
 

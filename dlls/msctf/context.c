@@ -41,19 +41,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msctf);
 
-typedef struct tagContextSink {
-    struct list         entry;
-    union {
-        /* Context Sinks */
-        IUnknown            *pIUnknown;
-        /* ITfContextKeyEventSink  *pITfContextKeyEventSink; */
-        /* ITfEditTransactionSink  *pITfEditTransactionSink; */
-        /* ITfStatusSink           *pITfStatusSink; */
-        ITfTextEditSink     *pITfTextEditSink;
-        /* ITfTextLayoutSink       *pITfTextLayoutSink; */
-    } interfaces;
-} ContextSink;
-
 typedef struct tagContext {
     ITfContext ITfContext_iface;
     ITfSource ITfSource_iface;
@@ -126,15 +113,8 @@ static inline Context *impl_from_ITextStoreACPServices(ITextStoreACPServices *if
     return CONTAINING_RECORD(iface, Context, ITextStoreACPServices_iface);
 }
 
-static void free_sink(ContextSink *sink)
-{
-        IUnknown_Release(sink->interfaces.pIUnknown);
-        HeapFree(GetProcessHeap(),0,sink);
-}
-
 static void Context_Destructor(Context *This)
 {
-    struct list *cursor, *cursor2;
     EditCookie *cookie;
     TRACE("destroying %p\n", This);
 
@@ -154,36 +134,11 @@ static void Context_Destructor(Context *This)
         This->defaultCookie = 0;
     }
 
-    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->pContextKeyEventSink)
-    {
-        ContextSink* sink = LIST_ENTRY(cursor,ContextSink,entry);
-        list_remove(cursor);
-        free_sink(sink);
-    }
-    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->pEditTransactionSink)
-    {
-        ContextSink* sink = LIST_ENTRY(cursor,ContextSink,entry);
-        list_remove(cursor);
-        free_sink(sink);
-    }
-    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->pStatusSink)
-    {
-        ContextSink* sink = LIST_ENTRY(cursor,ContextSink,entry);
-        list_remove(cursor);
-        free_sink(sink);
-    }
-    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->pTextEditSink)
-    {
-        ContextSink* sink = LIST_ENTRY(cursor,ContextSink,entry);
-        list_remove(cursor);
-        free_sink(sink);
-    }
-    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->pTextLayoutSink)
-    {
-        ContextSink* sink = LIST_ENTRY(cursor,ContextSink,entry);
-        list_remove(cursor);
-        free_sink(sink);
-    }
+    free_sinks(&This->pContextKeyEventSink);
+    free_sinks(&This->pEditTransactionSink);
+    free_sinks(&This->pStatusSink);
+    free_sinks(&This->pTextEditSink);
+    free_sinks(&This->pTextLayoutSink);
 
     CompartmentMgr_Destructor(This->CompartmentMgr);
     HeapFree(GetProcessHeap(),0,This);
@@ -603,53 +558,29 @@ static HRESULT WINAPI ContextSource_AdviseSink(ITfSource *iface,
         REFIID riid, IUnknown *punk, DWORD *pdwCookie)
 {
     Context *This = impl_from_ITfSource(iface);
-    ContextSink *es;
+
     TRACE("(%p) %s %p %p\n",This,debugstr_guid(riid),punk,pdwCookie);
 
     if (!riid || !punk || !pdwCookie)
         return E_INVALIDARG;
 
     if (IsEqualIID(riid, &IID_ITfTextEditSink))
-    {
-        es = HeapAlloc(GetProcessHeap(),0,sizeof(ContextSink));
-        if (!es)
-            return E_OUTOFMEMORY;
-        if (FAILED(IUnknown_QueryInterface(punk, riid, (LPVOID *)&es->interfaces.pITfTextEditSink)))
-        {
-            HeapFree(GetProcessHeap(),0,es);
-            return CONNECT_E_CANNOTCONNECT;
-        }
-        list_add_head(&This->pTextEditSink ,&es->entry);
-        *pdwCookie = generate_Cookie(COOKIE_MAGIC_CONTEXTSINK, es);
-    }
-    else
-    {
-        FIXME("(%p) Unhandled Sink: %s\n",This,debugstr_guid(riid));
-        return E_NOTIMPL;
-    }
+        return advise_sink(&This->pTextEditSink, &IID_ITfTextEditSink, COOKIE_MAGIC_CONTEXTSINK, punk, pdwCookie);
 
-    TRACE("cookie %x\n",*pdwCookie);
-    return S_OK;
+    FIXME("(%p) Unhandled Sink: %s\n",This,debugstr_guid(riid));
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ContextSource_UnadviseSink(ITfSource *iface, DWORD pdwCookie)
 {
     Context *This = impl_from_ITfSource(iface);
-    ContextSink *sink;
 
     TRACE("(%p) %x\n",This,pdwCookie);
 
     if (get_Cookie_magic(pdwCookie)!=COOKIE_MAGIC_CONTEXTSINK)
         return E_INVALIDARG;
 
-    sink = remove_Cookie(pdwCookie);
-    if (!sink)
-        return CONNECT_E_NOCONNECTION;
-
-    list_remove(&sink->entry);
-    free_sink(sink);
-
-    return S_OK;
+    return unadvise_sink(pdwCookie);
 }
 
 static const ITfSourceVtbl ContextSourceVtbl =
@@ -914,6 +845,7 @@ static HRESULT WINAPI TextStoreACPSink_OnLockGranted(ITextStoreACPSink *iface,
 
     if ((dwLockFlags&TS_LF_READWRITE) == TS_LF_READWRITE)
     {
+        ITfTextEditSink *sink;
         TfEditCookie sc;
 
         sinkcookie->lockType = TS_LF_READ;
@@ -921,11 +853,9 @@ static HRESULT WINAPI TextStoreACPSink_OnLockGranted(ITextStoreACPSink *iface,
         sc = generate_Cookie(COOKIE_MAGIC_EDITCOOKIE, sinkcookie);
 
         /*TODO: implement ITfEditRecord */
-        LIST_FOR_EACH(cursor, &This->pTextEditSink)
+        SINK_FOR_EACH(cursor, &This->pTextEditSink, ITfTextEditSink, sink)
         {
-            ContextSink* sink = LIST_ENTRY(cursor,ContextSink,entry);
-            ITfTextEditSink_OnEndEdit(sink->interfaces.pITfTextEditSink,
-                                      (ITfContext*) &This->ITfContext_iface, sc, NULL);
+            ITfTextEditSink_OnEndEdit(sink, (ITfContext*) &This->ITfContext_iface, sc, NULL);
         }
         sinkcookie = remove_Cookie(sc);
     }
