@@ -35,26 +35,11 @@
 #include "olectl.h"
 
 #include "wine/unicode.h"
-#include "wine/list.h"
 
 #include "msctf.h"
 #include "msctf_internal.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msctf);
-
-typedef struct tagThreadMgrSink {
-    struct list         entry;
-    union {
-        /* ThreadMgr Sinks */
-        IUnknown            *pIUnknown;
-        /* ITfActiveLanguageProfileNotifySink *pITfActiveLanguageProfileNotifySink; */
-        /* ITfDisplayAttributeNotifySink *pITfDisplayAttributeNotifySink; */
-        /* ITfKeyTraceEventSink *pITfKeyTraceEventSink; */
-        /* ITfPreservedKeyNotifySink *pITfPreservedKeyNotifySink; */
-        /* ITfThreadFocusSink *pITfThreadFocusSink; */
-        ITfThreadMgrEventSink *pITfThreadMgrEventSink;
-    } interfaces;
-} ThreadMgrSink;
 
 typedef struct tagPreservedKey
 {
@@ -172,7 +157,7 @@ static inline EnumTfDocumentMgr *impl_from_IEnumTfDocumentMgrs(IEnumTfDocumentMg
     return CONTAINING_RECORD(iface, EnumTfDocumentMgr, IEnumTfDocumentMgrs_iface);
 }
 
-static void free_sink(ThreadMgrSink *sink)
+static void free_sink(Sink *sink)
 {
         IUnknown_Release(sink->interfaces.pIUnknown);
         HeapFree(GetProcessHeap(),0,sink);
@@ -194,37 +179,37 @@ static void ThreadMgr_Destructor(ThreadMgr *This)
     /* free sinks */
     LIST_FOR_EACH_SAFE(cursor, cursor2, &This->ActiveLanguageProfileNotifySink)
     {
-        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        Sink* sink = LIST_ENTRY(cursor,Sink,entry);
         list_remove(cursor);
         free_sink(sink);
     }
     LIST_FOR_EACH_SAFE(cursor, cursor2, &This->DisplayAttributeNotifySink)
     {
-        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        Sink* sink = LIST_ENTRY(cursor,Sink,entry);
         list_remove(cursor);
         free_sink(sink);
     }
     LIST_FOR_EACH_SAFE(cursor, cursor2, &This->KeyTraceEventSink)
     {
-        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        Sink* sink = LIST_ENTRY(cursor,Sink,entry);
         list_remove(cursor);
         free_sink(sink);
     }
     LIST_FOR_EACH_SAFE(cursor, cursor2, &This->PreservedKeyNotifySink)
     {
-        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        Sink* sink = LIST_ENTRY(cursor,Sink,entry);
         list_remove(cursor);
         free_sink(sink);
     }
     LIST_FOR_EACH_SAFE(cursor, cursor2, &This->ThreadFocusSink)
     {
-        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        Sink* sink = LIST_ENTRY(cursor,Sink,entry);
         list_remove(cursor);
         free_sink(sink);
     }
     LIST_FOR_EACH_SAFE(cursor, cursor2, &This->ThreadMgrEventSink)
     {
-        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        Sink* sink = LIST_ENTRY(cursor,Sink,entry);
         list_remove(cursor);
         free_sink(sink);
     }
@@ -658,7 +643,7 @@ static HRESULT WINAPI ThreadMgrSource_AdviseSink(ITfSource *iface,
         REFIID riid, IUnknown *punk, DWORD *pdwCookie)
 {
     ThreadMgr *This = impl_from_ITfSource(iface);
-    ThreadMgrSink *tms;
+    Sink *tms;
 
     TRACE("(%p) %s %p %p\n",This,debugstr_guid(riid),punk,pdwCookie);
 
@@ -667,7 +652,7 @@ static HRESULT WINAPI ThreadMgrSource_AdviseSink(ITfSource *iface,
 
     if (IsEqualIID(riid, &IID_ITfThreadMgrEventSink))
     {
-        tms = HeapAlloc(GetProcessHeap(),0,sizeof(ThreadMgrSink));
+        tms = HeapAlloc(GetProcessHeap(),0,sizeof(*tms));
         if (!tms)
             return E_OUTOFMEMORY;
         if (FAILED(IUnknown_QueryInterface(punk, riid, (LPVOID *)&tms->interfaces.pITfThreadMgrEventSink)))
@@ -692,7 +677,7 @@ static HRESULT WINAPI ThreadMgrSource_AdviseSink(ITfSource *iface,
 static HRESULT WINAPI ThreadMgrSource_UnadviseSink(ITfSource *iface, DWORD pdwCookie)
 {
     ThreadMgr *This = impl_from_ITfSource(iface);
-    ThreadMgrSink *sink;
+    Sink *sink;
 
     TRACE("(%p) %x\n",This,pdwCookie);
 
@@ -1164,7 +1149,7 @@ static HRESULT WINAPI ThreadMgrEventSink_OnInitDocumentMgr(
 
     LIST_FOR_EACH(cursor, &This->ThreadMgrEventSink)
     {
-        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        Sink* sink = LIST_ENTRY(cursor,Sink,entry);
         ITfThreadMgrEventSink_OnInitDocumentMgr(sink->interfaces.pITfThreadMgrEventSink,pdim);
     }
 
@@ -1181,7 +1166,7 @@ static HRESULT WINAPI ThreadMgrEventSink_OnUninitDocumentMgr(
 
     LIST_FOR_EACH(cursor, &This->ThreadMgrEventSink)
     {
-        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        Sink* sink = LIST_ENTRY(cursor,Sink,entry);
         ITfThreadMgrEventSink_OnUninitDocumentMgr(sink->interfaces.pITfThreadMgrEventSink,pdim);
     }
 
@@ -1199,7 +1184,7 @@ static HRESULT WINAPI ThreadMgrEventSink_OnSetFocus(
 
     LIST_FOR_EACH(cursor, &This->ThreadMgrEventSink)
     {
-        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        Sink* sink = LIST_ENTRY(cursor,Sink,entry);
         ITfThreadMgrEventSink_OnSetFocus(sink->interfaces.pITfThreadMgrEventSink, pdimFocus, pdimPrevFocus);
     }
 
@@ -1216,7 +1201,7 @@ static HRESULT WINAPI ThreadMgrEventSink_OnPushContext(
 
     LIST_FOR_EACH(cursor, &This->ThreadMgrEventSink)
     {
-        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        Sink* sink = LIST_ENTRY(cursor,Sink,entry);
         ITfThreadMgrEventSink_OnPushContext(sink->interfaces.pITfThreadMgrEventSink,pic);
     }
 
@@ -1233,7 +1218,7 @@ static HRESULT WINAPI ThreadMgrEventSink_OnPopContext(
 
     LIST_FOR_EACH(cursor, &This->ThreadMgrEventSink)
     {
-        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        Sink* sink = LIST_ENTRY(cursor,Sink,entry);
         ITfThreadMgrEventSink_OnPopContext(sink->interfaces.pITfThreadMgrEventSink,pic);
     }
 

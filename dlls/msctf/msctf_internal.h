@@ -21,6 +21,8 @@
 #ifndef __WINE_MSCTF_I_H
 #define __WINE_MSCTF_I_H
 
+#include "wine/list.h"
+
 #define COOKIE_MAGIC_TMSINK  0x0010
 #define COOKIE_MAGIC_CONTEXTSINK 0x0020
 #define COOKIE_MAGIC_GUIDATOM 0x0030
@@ -64,6 +66,14 @@ extern HRESULT deactivate_textservices(void) DECLSPEC_HIDDEN;
 extern CLSID get_textservice_clsid(TfClientId tid) DECLSPEC_HIDDEN;
 extern HRESULT get_textservice_sink(TfClientId tid, REFCLSID iid, IUnknown** sink) DECLSPEC_HIDDEN;
 extern HRESULT set_textservice_sink(TfClientId tid, REFCLSID iid, IUnknown* sink) DECLSPEC_HIDDEN;
+
+typedef struct {
+    struct list entry;
+    union {
+        IUnknown *pIUnknown;
+        ITfThreadMgrEventSink *pITfThreadMgrEventSink;
+    } interfaces;
+} Sink;
 
 extern const WCHAR szwSystemTIPKey[] DECLSPEC_HIDDEN;
 extern const WCHAR szwSystemCTFKey[] DECLSPEC_HIDDEN;

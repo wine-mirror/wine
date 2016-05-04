@@ -36,7 +36,6 @@
 #include "olectl.h"
 
 #include "wine/unicode.h"
-#include "wine/list.h"
 
 #include "msctf.h"
 #include "msctf_internal.h"
