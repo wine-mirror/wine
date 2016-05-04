@@ -29,6 +29,7 @@
 #define COOKIE_MAGIC_IPPSINK 0x0040
 #define COOKIE_MAGIC_EDITCOOKIE 0x0050
 #define COOKIE_MAGIC_COMPARTMENTSINK 0x0060
+#define COOKIE_MAGIC_DMSINK 0x0070
 
 extern DWORD tlsIndex DECLSPEC_HIDDEN;
 extern TfClientId processId DECLSPEC_HIDDEN;
@@ -75,6 +76,7 @@ typedef struct {
         ITfCompartmentEventSink *pITfCompartmentEventSink;
         ITfTextEditSink *pITfTextEditSink;
         ITfLanguageProfileNotifySink *pITfLanguageProfileNotifySink;
+        ITfTransitoryExtensionSink *pITfTransitoryExtensionSink;
     } interfaces;
 } Sink;
 
