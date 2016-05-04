@@ -832,7 +832,8 @@ static HRESULT WINAPI KeystrokeMgr_TestKeyDown(ITfKeystrokeMgr *iface,
 {
     ThreadMgr *This = impl_from_ITfKeystrokeMgr(iface);
     FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    *pfEaten = FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI KeystrokeMgr_TestKeyUp(ITfKeystrokeMgr *iface,
@@ -840,7 +841,8 @@ static HRESULT WINAPI KeystrokeMgr_TestKeyUp(ITfKeystrokeMgr *iface,
 {
     ThreadMgr *This = impl_from_ITfKeystrokeMgr(iface);
     FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    *pfEaten = FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI KeystrokeMgr_KeyDown(ITfKeystrokeMgr *iface,
