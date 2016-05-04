@@ -2630,8 +2630,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         macdrv_query* query = macdrv_create_query();
         query->type = QUERY_DRAG_OPERATION;
         query->window = (macdrv_window)[self retain];
-        query->drag_operation.x = pt.x;
-        query->drag_operation.y = pt.y;
+        query->drag_operation.x = floor(pt.x);
+        query->drag_operation.y = floor(pt.y);
         query->drag_operation.offered_ops = [sender draggingSourceOperationMask];
         query->drag_operation.accepted_op = NSDragOperationNone;
         query->drag_operation.pasteboard = (CFTypeRef)[pb retain];
@@ -2652,8 +2652,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         macdrv_query* query = macdrv_create_query();
         query->type = QUERY_DRAG_DROP;
         query->window = (macdrv_window)[self retain];
-        query->drag_drop.x = pt.x;
-        query->drag_drop.y = pt.y;
+        query->drag_drop.x = floor(pt.x);
+        query->drag_drop.y = floor(pt.y);
         query->drag_drop.op = [sender draggingSourceOperationMask];
         query->drag_drop.pasteboard = (CFTypeRef)[pb retain];
 

@@ -1592,8 +1592,8 @@ static NSString* WineLocalizedString(unsigned int stringID)
                     [self clipCursorLocation:&point];
 
                 event = macdrv_create_event(MOUSE_MOVED_ABSOLUTE, targetWindow);
-                event->mouse_moved.x = point.x;
-                event->mouse_moved.y = point.y;
+                event->mouse_moved.x = floor(point.x);
+                event->mouse_moved.y = floor(point.y);
 
                 mouseMoveDeltaX = 0;
                 mouseMoveDeltaY = 0;
@@ -1733,8 +1733,8 @@ static NSString* WineLocalizedString(unsigned int stringID)
                 event = macdrv_create_event(MOUSE_BUTTON, window);
                 event->mouse_button.button = [theEvent buttonNumber];
                 event->mouse_button.pressed = pressed;
-                event->mouse_button.x = pt.x;
-                event->mouse_button.y = pt.y;
+                event->mouse_button.x = floor(pt.x);
+                event->mouse_button.y = floor(pt.y);
                 event->mouse_button.time_ms = [self ticksForEventTime:[theEvent timestamp]];
 
                 [window.queue postEvent:event];
@@ -1812,8 +1812,8 @@ static NSString* WineLocalizedString(unsigned int stringID)
                 BOOL continuous = FALSE;
 
                 event = macdrv_create_event(MOUSE_SCROLL, window);
-                event->mouse_scroll.x = pt.x;
-                event->mouse_scroll.y = pt.y;
+                event->mouse_scroll.x = floor(pt.x);
+                event->mouse_scroll.y = floor(pt.y);
                 event->mouse_scroll.time_ms = [self ticksForEventTime:[theEvent timestamp]];
 
                 if (CGEventGetIntegerValueField(cgevent, kCGScrollWheelEventIsContinuous))

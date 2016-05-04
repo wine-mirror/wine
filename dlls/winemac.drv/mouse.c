@@ -697,8 +697,8 @@ BOOL CDECL macdrv_GetCursorPos(LPPOINT pos)
     if (ret)
     {
         TRACE("pointer at (%g,%g) server pos %d,%d\n", pt.x, pt.y, pos->x, pos->y);
-        pos->x = pt.x;
-        pos->y = pt.y;
+        pos->x = floor(pt.x);
+        pos->y = floor(pt.y);
     }
     return ret;
 }
