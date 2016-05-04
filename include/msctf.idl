@@ -1845,3 +1845,19 @@ interface ITfMouseTrackerACP : IUnknown
 
     HRESULT UnadviseMouseSink([in] DWORD dwCookie);
 }
+
+[
+    object,
+    local,
+    uuid(a615096f-1c57-4813-8a15-55ee6e5a839c),
+    pointer_default(unique)
+]
+interface ITfTransitoryExtensionSink : IUnknown
+{
+    HRESULT OnTransitoryExtensionUpdated(
+        [in] ITfContext *pic,
+        [in] TfEditCookie ecReadOnly,
+        [in] ITfRange *pResultRange,
+        [in] ITfRange *pCompositionRange,
+        [out] BOOL *pfDeleteResultRange);
+}
