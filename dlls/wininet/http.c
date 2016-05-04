@@ -3145,7 +3145,7 @@ static DWORD HTTPREQ_ReadFileEx(object_header_t *hdr, void *buf, DWORD size, DWO
 
         if (TryEnterCriticalSection( &req->read_section ))
         {
-            if (get_avail_data(req))
+            if (get_avail_data(req) || end_of_read_data(req))
             {
                 res = HTTPREQ_Read(req, buf, size, &read);
                 LeaveCriticalSection( &req->read_section );
