@@ -15075,7 +15075,6 @@ for ac_func in \
 	futimes \
 	futimesat \
 	getattrlist \
-	getdirentries \
 	getopt_long_only \
 	getpwuid \
 	gettimeofday \

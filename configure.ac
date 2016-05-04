@@ -1997,7 +1997,6 @@ AC_CHECK_FUNCS(\
 	futimes \
 	futimesat \
 	getattrlist \
-	getdirentries \
 	getopt_long_only \
 	getpwuid \
 	gettimeofday \
