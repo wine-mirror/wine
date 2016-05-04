@@ -304,6 +304,25 @@ HRESULT advise_sink(struct list *sink_list, REFIID riid, DWORD cookie_magic, IUn
     return S_OK;
 }
 
+static void free_sink(Sink *sink)
+{
+    list_remove(&sink->entry);
+    IUnknown_Release(sink->interfaces.pIUnknown);
+    HeapFree(GetProcessHeap(), 0, sink);
+}
+
+HRESULT unadvise_sink(DWORD cookie)
+{
+    Sink *sink;
+
+    sink = remove_Cookie(cookie);
+    if (!sink)
+        return CONNECT_E_NOCONNECTION;
+
+    free_sink(sink);
+    return S_OK;
+}
+
 /*****************************************************************************
  * Active Text Service Management
  *****************************************************************************/

@@ -76,6 +76,7 @@ typedef struct {
 } Sink;
 
 HRESULT advise_sink(struct list *sink_list, REFIID riid, DWORD cookie_magic, IUnknown *unk, DWORD *cookie) DECLSPEC_HIDDEN;
+HRESULT unadvise_sink(DWORD cookie) DECLSPEC_HIDDEN;
 
 extern const WCHAR szwSystemTIPKey[] DECLSPEC_HIDDEN;
 extern const WCHAR szwSystemCTFKey[] DECLSPEC_HIDDEN;
