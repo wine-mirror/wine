@@ -159,6 +159,8 @@ union file_directory_info
     FILE_FULL_DIRECTORY_INFORMATION    full;
     FILE_ID_BOTH_DIRECTORY_INFORMATION id_both;
     FILE_ID_FULL_DIRECTORY_INFORMATION id_full;
+    FILE_ID_GLOBAL_TX_DIR_INFORMATION  id_tx;
+    FILE_NAMES_INFORMATION             names;
 };
 
 struct dir_data_buffer
@@ -277,6 +279,10 @@ static inline unsigned int dir_info_size( FILE_INFORMATION_CLASS class, unsigned
         return offsetof( FILE_ID_BOTH_DIRECTORY_INFORMATION, FileName[len] );
     case FileIdFullDirectoryInformation:
         return offsetof( FILE_ID_FULL_DIRECTORY_INFORMATION, FileName[len] );
+    case FileIdGlobalTxDirectoryInformation:
+        return offsetof( FILE_ID_GLOBAL_TX_DIR_INFORMATION, FileName[len] );
+    case FileNamesInformation:
+        return offsetof( FILE_NAMES_INFORMATION, FileName[len] );
     default:
         assert(0);
         return 0;
@@ -1548,12 +1554,6 @@ static NTSTATUS get_dir_data_entry( struct dir_data *dir_data, void *info_ptr, I
         TRACE( "ignoring file %s\n", names->unix_name );
         return STATUS_SUCCESS;
     }
-    if (!show_dot_files && names->long_name[0] == '.' && names->long_name[1] &&
-        (names->long_name[1] != '.' || names->long_name[2]))
-        attributes |= FILE_ATTRIBUTE_HIDDEN;
-
-    if (st.st_dev != dir_data->id.dev) st.st_ino = 0;  /* ignore inode if on a different device */
-
     start = dir_info_align( io->Information );
     dir_size = dir_info_size( class, 0 );
     if (start + dir_size > max_length) return STATUS_MORE_ENTRIES;
@@ -1564,11 +1564,20 @@ static NTSTATUS get_dir_data_entry( struct dir_data *dir_data, void *info_ptr, I
     if (*last_info && name_len > max_length) return STATUS_MORE_ENTRIES;
 
     info = (union file_directory_info *)((char *)info_ptr + start);
-
-    /* all the structures start with a FileDirectoryInformation layout */
-    fill_file_info( &st, attributes, info, class );
     info->dir.NextEntryOffset = 0;
     info->dir.FileIndex = 0;  /* NTFS always has 0 here, so let's not bother with it */
+
+    /* all the structures except FileNamesInformation start with a FileDirectoryInformation layout */
+    if (class != FileNamesInformation)
+    {
+        if (st.st_dev != dir_data->id.dev) st.st_ino = 0;  /* ignore inode if on a different device */
+
+        if (!show_dot_files && names->long_name[0] == '.' && names->long_name[1] &&
+            (names->long_name[1] != '.' || names->long_name[2]))
+            attributes |= FILE_ATTRIBUTE_HIDDEN;
+
+        fill_file_info( &st, attributes, info, class );
+    }
 
     switch (class)
     {
@@ -1598,6 +1607,15 @@ static NTSTATUS get_dir_data_entry( struct dir_data *dir_data, void *info_ptr, I
         info->id_both.ShortNameLength = strlenW( names->short_name ) * sizeof(WCHAR);
         memcpy( info->id_both.ShortName, names->short_name, info->id_both.ShortNameLength );
         info->id_both.FileNameLength = name_len;
+        break;
+
+    case FileIdGlobalTxDirectoryInformation:
+        info->id_tx.TxInfoFlags = 0;
+        info->id_tx.FileNameLength = name_len;
+        break;
+
+    case FileNamesInformation:
+        info->names.FileNameLength = name_len;
         break;
 
     default:
@@ -1990,13 +2008,23 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
     case FileFullDirectoryInformation:
     case FileIdBothDirectoryInformation:
     case FileIdFullDirectoryInformation:
+    case FileIdGlobalTxDirectoryInformation:
+    case FileNamesInformation:
         if (length < dir_info_align( dir_info_size( info_class, 1 ))) return STATUS_INFO_LENGTH_MISMATCH;
-        if (!buffer) return STATUS_ACCESS_VIOLATION;
         break;
+    case FileObjectIdInformation:
+        if (length != sizeof(FILE_OBJECTID_INFORMATION)) return STATUS_INFO_LENGTH_MISMATCH;
+        return STATUS_INVALID_INFO_CLASS;
+    case FileQuotaInformation:
+        if (length != sizeof(FILE_QUOTA_INFORMATION)) return STATUS_INFO_LENGTH_MISMATCH;
+        return STATUS_INVALID_INFO_CLASS;
+    case FileReparsePointInformation:
+        if (length != sizeof(FILE_REPARSE_POINT_INFORMATION)) return STATUS_INFO_LENGTH_MISMATCH;
+        return STATUS_INVALID_INFO_CLASS;
     default:
-        FIXME( "Unsupported file info class %d\n", info_class );
-        return STATUS_NOT_IMPLEMENTED;
+        return STATUS_INVALID_INFO_CLASS;
     }
+    if (!buffer) return STATUS_ACCESS_VIOLATION;
 
     if ((status = server_get_unix_fd( handle, FILE_LIST_DIRECTORY, &fd, &needs_close, NULL, NULL )) != STATUS_SUCCESS)
         return status;

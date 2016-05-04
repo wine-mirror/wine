@@ -2198,6 +2198,13 @@ NTSTATUS fill_file_info( const struct stat *st, ULONG attr, void *ptr,
             fill_file_info( st, attr, info, FileDirectoryInformation );
         }
         break;
+    case FileIdGlobalTxDirectoryInformation:
+        {
+            FILE_ID_GLOBAL_TX_DIR_INFORMATION *info = ptr;
+            info->FileId.QuadPart = st->st_ino;
+            fill_file_info( st, attr, info, FileDirectoryInformation );
+        }
+        break;
 
     default:
         return STATUS_INVALID_INFO_CLASS;

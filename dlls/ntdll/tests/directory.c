@@ -329,6 +329,121 @@ static void test_directory_sort( const WCHAR *testdir )
     pRtlFreeUnicodeString( &ntdirname );
 }
 
+static void test_NtQueryDirectoryFile_classes( HANDLE handle, UNICODE_STRING *mask )
+{
+    IO_STATUS_BLOCK io;
+    UINT data_size;
+    ULONG data[256];
+    NTSTATUS status;
+    int class;
+
+    for (class = 0; class < FileMaximumInformation; class++)
+    {
+        U(io).Status = 0xdeadbeef;
+        U(io).Information = 0xdeadbeef;
+        data_size = 0;
+        memset( data, 0x55, sizeof(data) );
+
+        status = pNtQueryDirectoryFile( handle, 0, NULL, NULL, &io, data, data_size,
+                                        class, FALSE, mask, TRUE );
+        ok( U(io).Status == 0xdeadbeef, "%u: wrong status %x\n", class, U(io).Status );
+        ok( U(io).Information == 0xdeadbeef, "%u: wrong info %lx\n", class, U(io).Information );
+        ok(data[0] == 0x55555555, "%u: wrong offset %x\n",  class, data[0] );
+
+        switch (class)
+        {
+        case FileIdGlobalTxDirectoryInformation:
+            if (status == STATUS_INVALID_INFO_CLASS || status == STATUS_NOT_IMPLEMENTED) continue;
+            /* fall through */
+        case FileDirectoryInformation:
+        case FileFullDirectoryInformation:
+        case FileBothDirectoryInformation:
+        case FileNamesInformation:
+        case FileIdBothDirectoryInformation:
+        case FileIdFullDirectoryInformation:
+        case FileObjectIdInformation:
+        case FileQuotaInformation:
+        case FileReparsePointInformation:
+            ok( status == STATUS_INFO_LENGTH_MISMATCH, "%u: wrong status %x\n", class, status );
+            break;
+        default:
+            ok( status == STATUS_INVALID_INFO_CLASS || status == STATUS_NOT_IMPLEMENTED,
+                "%u: wrong status %x\n", class, status );
+            continue;
+        }
+
+        for (data_size = 1; data_size < sizeof(data); data_size++)
+        {
+            status = pNtQueryDirectoryFile( handle, 0, NULL, NULL, &io, data, data_size,
+                                            class, FALSE, mask, TRUE );
+            if (status == STATUS_BUFFER_OVERFLOW)
+            {
+                ok( U(io).Status == STATUS_BUFFER_OVERFLOW, "%u: wrong status %x\n", class, U(io).Status );
+                ok( U(io).Information == data_size, "%u: wrong info %lx\n", class, U(io).Information );
+                ok(data[0] == 0, "%u: wrong offset %x\n",  class, data[0] );
+            }
+            else
+            {
+                ok( U(io).Status == 0xdeadbeef, "%u: wrong status %x\n", class, U(io).Status );
+                ok( U(io).Information == 0xdeadbeef, "%u: wrong info %lx\n", class, U(io).Information );
+                ok(data[0] == 0x55555555, "%u: wrong offset %x\n",  class, data[0] );
+            }
+            if (status != STATUS_INFO_LENGTH_MISMATCH) break;
+        }
+
+        switch (class)
+        {
+        case FileDirectoryInformation:
+            ok( status == STATUS_BUFFER_OVERFLOW, "%u: wrong status %x\n", class, status );
+            ok( data_size == ((offsetof( FILE_DIRECTORY_INFORMATION, FileName[1] ) + 7) & ~7),
+                "%u: wrong size %u\n", class, data_size );
+            break;
+        case FileFullDirectoryInformation:
+            ok( status == STATUS_BUFFER_OVERFLOW, "%u: wrong status %x\n", class, status );
+            ok( data_size == ((offsetof( FILE_FULL_DIRECTORY_INFORMATION, FileName[1] ) + 7) & ~7),
+                "%u: wrong size %u\n", class, data_size );
+            break;
+        case FileBothDirectoryInformation:
+            ok( status == STATUS_BUFFER_OVERFLOW, "%u: wrong status %x\n", class, status );
+            ok( data_size == ((offsetof( FILE_BOTH_DIRECTORY_INFORMATION, FileName[1] ) + 7) & ~7),
+                "%u: wrong size %u\n", class, data_size );
+            break;
+        case FileNamesInformation:
+            ok( status == STATUS_BUFFER_OVERFLOW, "%u: wrong status %x\n", class, status );
+            ok( data_size == ((offsetof( FILE_NAMES_INFORMATION, FileName[1] ) + 7) & ~7),
+                "%u: wrong size %u\n", class, data_size );
+            break;
+        case FileIdBothDirectoryInformation:
+            ok( status == STATUS_BUFFER_OVERFLOW, "%u: wrong status %x\n", class, status );
+            ok( data_size == ((offsetof( FILE_ID_BOTH_DIRECTORY_INFORMATION, FileName[1] ) + 7) & ~7),
+                "%u: wrong size %u\n", class, data_size );
+            break;
+        case FileIdFullDirectoryInformation:
+            ok( status == STATUS_BUFFER_OVERFLOW, "%u: wrong status %x\n", class, status );
+            ok( data_size == ((offsetof( FILE_ID_FULL_DIRECTORY_INFORMATION, FileName[1] ) + 7) & ~7),
+                "%u: wrong size %u\n", class, data_size );
+            break;
+        case FileIdGlobalTxDirectoryInformation:
+            ok( status == STATUS_BUFFER_OVERFLOW, "%u: wrong status %x\n", class, status );
+            ok( data_size == ((offsetof( FILE_ID_GLOBAL_TX_DIR_INFORMATION, FileName[1] ) + 7) & ~7),
+                "%u: wrong size %u\n", class, data_size );
+            break;
+        case FileObjectIdInformation:
+            ok( status == STATUS_INVALID_INFO_CLASS, "%u: wrong status %x\n", class, status );
+            ok( data_size == sizeof(FILE_OBJECTID_INFORMATION), "%u: wrong size %u\n", class, data_size );
+            break;
+        case FileQuotaInformation:
+            ok( status == STATUS_INVALID_INFO_CLASS, "%u: wrong status %x\n", class, status );
+            ok( data_size == sizeof(FILE_QUOTA_INFORMATION), "%u: wrong size %u\n", class, data_size );
+            break;
+        case FileReparsePointInformation:
+            ok( status == STATUS_INVALID_INFO_CLASS, "%u: wrong status %x\n", class, status );
+            ok( data_size == sizeof(FILE_REPARSE_POINT_INFORMATION), "%u: wrong size %u\n", class, data_size );
+            break;
+        }
+    }
+}
+
 static void test_NtQueryDirectoryFile(void)
 {
     OBJECT_ATTRIBUTES attr;
@@ -342,6 +457,7 @@ static void test_NtQueryDirectoryFile(void)
     BYTE data[8192];
     FILE_BOTH_DIRECTORY_INFORMATION *next, *fbdi = (FILE_BOTH_DIRECTORY_INFORMATION*)data;
     FILE_POSITION_INFORMATION pos_info;
+    FILE_NAMES_INFORMATION *names;
     const WCHAR *filename = fbdi->FileName;
     NTSTATUS status;
     HANDLE dirh;
@@ -453,30 +569,7 @@ static void test_NtQueryDirectoryFile(void)
     ok( filename[1] == 0x5555, "incorrect long file name: %s\n",
         wine_dbgstr_wn(fbdi->FileName, fbdi->FileNameLength/sizeof(WCHAR)));
 
-    memset( data, 0x55, data_size );
-    U(io).Status = 0xdeadbeef;
-    U(io).Information = 0xdeadbeef;
-    data_size = offsetof( FILE_BOTH_DIRECTORY_INFORMATION, FileName[0] );
-    status = pNtQueryDirectoryFile(dirh, 0, NULL, NULL, &io, data, data_size,
-                                   FileBothDirectoryInformation, FALSE, &mask, TRUE);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "weong status %x\n", status );
-    ok( U(io).Status == 0xdeadbeef, "wrong status %x\n", U(io).Status );
-    ok( U(io).Information == 0xdeadbeef, "wrong info %lx\n", U(io).Information );
-    ok( fbdi->NextEntryOffset == 0x55555555, "wrong offset %x\n",  fbdi->NextEntryOffset );
-
-    data_size = offsetof( FILE_DIRECTORY_INFORMATION, FileName[3] );
-    status = pNtQueryDirectoryFile(dirh, 0, NULL, NULL, &io, data, data_size,
-                                   FileDirectoryInformation, FALSE, &mask, TRUE);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "weong status %x\n", status );
-    ok( U(io).Status == 0xdeadbeef, "wrong status %x\n", U(io).Status );
-    ok( U(io).Information == 0xdeadbeef, "wrong info %lx\n", U(io).Information );
-
-    data_size = offsetof( FILE_DIRECTORY_INFORMATION, FileName[4] );
-    status = pNtQueryDirectoryFile(dirh, 0, NULL, NULL, &io, data, data_size,
-                                   FileDirectoryInformation, FALSE, &mask, TRUE);
-    ok( status == STATUS_BUFFER_OVERFLOW, "weong status %x\n", status );
-    ok( U(io).Status == STATUS_BUFFER_OVERFLOW, "wrong status %x\n", U(io).Status );
-    ok( U(io).Information == data_size, "wrong info %lx\n", U(io).Information );
+    test_NtQueryDirectoryFile_classes( dirh, &mask );
 
     /* mask may or may not be ignored when restarting the search */
     pRtlInitUnicodeString( &mask, dummyW );
@@ -571,6 +664,29 @@ static void test_NtQueryDirectoryFile(void)
     ok( filename[0] == '.' && filename[1] == '.', "incorrect long file name: %s\n",
         wine_dbgstr_wn(next->FileName, next->FileNameLength/sizeof(WCHAR)));
 
+    data_size = ((offsetof( FILE_NAMES_INFORMATION, FileName[1] ) + 7) & ~7) +
+                  offsetof( FILE_NAMES_INFORMATION, FileName[2] );
+    memset( data, 0x55, data_size );
+    U(io).Status = 0xdeadbeef;
+    U(io).Information = 0xdeadbeef;
+    status = pNtQueryDirectoryFile( dirh, 0, NULL, NULL, &io, data, data_size,
+                                    FileNamesInformation, FALSE, NULL, TRUE );
+    ok( status == STATUS_SUCCESS, "wrong status %x\n", status );
+    ok( U(io).Status == STATUS_SUCCESS, "wrong status %x\n", U(io).Status );
+    ok( U(io).Information == data_size, "wrong info %lx / %x\n", U(io).Information, data_size );
+    names = (FILE_NAMES_INFORMATION *)data;
+    ok( names->NextEntryOffset == ((offsetof( FILE_NAMES_INFORMATION, FileName[1] ) + 7) & ~7),
+        "wrong offset %x\n",  names->NextEntryOffset );
+    ok( names->FileNameLength == sizeof(WCHAR), "wrong length %x\n", names->FileNameLength );
+    ok( names->FileName[0] == '.', "incorrect long file name: %s\n",
+        wine_dbgstr_wn(names->FileName, names->FileNameLength/sizeof(WCHAR)));
+    names = (FILE_NAMES_INFORMATION *)(data + names->NextEntryOffset);
+    ok( names->NextEntryOffset == 0, "wrong offset %x\n",  names->NextEntryOffset );
+    ok( names->FileNameLength == 2 * sizeof(WCHAR), "wrong length %x\n", names->FileNameLength );
+    filename = names->FileName;
+    ok( filename[0] == '.' && filename[1] == '.', "incorrect long file name: %s\n",
+        wine_dbgstr_wn(names->FileName, names->FileNameLength/sizeof(WCHAR)));
+
     pNtClose(dirh);
 
     /* create new handle to change mask */
@@ -580,6 +696,7 @@ static void test_NtQueryDirectoryFile(void)
 
     pRtlInitUnicodeString( &mask, dummyW );
     U(io).Status = 0xdeadbeef;
+    data_size = sizeof(data);
     status = pNtQueryDirectoryFile(dirh, 0, NULL, NULL, &io, data, data_size,
                                    FileBothDirectoryInformation, TRUE, &mask, TRUE);
     ok(status == STATUS_NO_SUCH_FILE, "wrong status %x\n", status);
