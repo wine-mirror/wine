@@ -58,9 +58,9 @@ typedef struct
     CRITICAL_SECTION  cs;          /* crit section protecting this structure */
     FINDEX_SEARCH_OPS search_op;   /* Flags passed to FindFirst.  */
     FINDEX_INFO_LEVELS level;      /* Level passed to FindFirst */
-    UNICODE_STRING    mask;        /* file mask */
     UNICODE_STRING    path;        /* NT path used to open the directory */
     BOOL              is_root;     /* is directory the root of the drive? */
+    BOOL              wildcard;    /* did the mask contain wildcard characters? */
     UINT              data_pos;    /* current position in dir data */
     UINT              data_len;    /* length of dir data */
     UINT              data_size;   /* size of data buffer, or 0 when everything has been read */
@@ -1939,7 +1939,8 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
                                 LPVOID data, FINDEX_SEARCH_OPS search_op,
                                 LPVOID filter, DWORD flags)
 {
-    WCHAR *mask, *p;
+    WCHAR *mask;
+    BOOL has_wildcard = FALSE;
     FIND_FIRST_INFO *info = NULL;
     UNICODE_STRING nt_name;
     OBJECT_ATTRIBUTES attr;
@@ -2003,7 +2004,6 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
             goto error;
         }
         HeapFree( GetProcessHeap(), 0, dir );
-        RtlInitUnicodeString( &info->mask, NULL );
     }
     else if (!mask || !*mask)
     {
@@ -2012,25 +2012,17 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     }
     else
     {
-        if (!RtlCreateUnicodeString( &info->mask, mask ))
-        {
-            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-            goto error;
-        }
-
-        /* truncate dir name before mask */
-        *mask = 0;
         nt_name.Length = (mask - nt_name.Buffer) * sizeof(WCHAR);
+        has_wildcard = strpbrkW( mask, wildcardsW ) != NULL;
     }
 
-    /* check if path is the root of the drive */
+    /* check if path is the root of the drive, skipping the \??\ prefix */
     info->is_root = FALSE;
-    p = nt_name.Buffer + 4;  /* skip \??\ prefix */
-    if (p[0] && p[1] == ':')
+    if (nt_name.Length >= 6 * sizeof(WCHAR) && nt_name.Buffer[5] == ':')
     {
-        p += 2;
-        while (*p == '\\') p++;
-        info->is_root = (*p == 0);
+        DWORD pos = 6;
+        while (pos * sizeof(WCHAR) < nt_name.Length && nt_name.Buffer[pos] == '\\') pos++;
+        info->is_root = (pos * sizeof(WCHAR) >= nt_name.Length);
     }
 
     attr.Length = sizeof(attr);
@@ -2046,7 +2038,6 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
 
     if (status != STATUS_SUCCESS)
     {
-        RtlFreeUnicodeString( &info->mask );
         if (status == STATUS_OBJECT_NAME_NOT_FOUND)
             SetLastError( ERROR_PATH_NOT_FOUND );
         else
@@ -2058,6 +2049,7 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     info->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": FIND_FIRST_INFO.cs");
     info->path     = nt_name;
     info->magic    = FIND_FIRST_MAGIC;
+    info->wildcard = has_wildcard;
     info->data_pos = 0;
     info->data_len = 0;
     info->data_size = 0;
@@ -2077,8 +2069,9 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     }
     else
     {
-        BOOL has_wildcard = strpbrkW( info->mask.Buffer, wildcardsW ) != NULL;
+        UNICODE_STRING mask_str;
 
+        RtlInitUnicodeString( &mask_str, mask );
         info->data_size = has_wildcard ? 8192 : max_entry_size * 2;
 
         while (info->data_size)
@@ -2091,7 +2084,7 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
             }
 
             status = NtQueryDirectoryFile( info->handle, 0, NULL, NULL, &io, info->data, info->data_size,
-                                           FileBothDirectoryInformation, FALSE, &info->mask, TRUE );
+                                           FileBothDirectoryInformation, FALSE, &mask_str, TRUE );
             if (status)
             {
                 FindClose( info );
@@ -2174,7 +2167,7 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
 
             if (info->data_size)
                 status = NtQueryDirectoryFile( info->handle, 0, NULL, NULL, &io, info->data, info->data_size,
-                                               FileBothDirectoryInformation, FALSE, &info->mask, FALSE );
+                                               FileBothDirectoryInformation, FALSE, NULL, FALSE );
             else
                 status = STATUS_NO_MORE_FILES;
 
@@ -2210,7 +2203,7 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
         /* check for dir symlink */
         if ((dir_info->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
             (dir_info->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
-            strpbrkW( info->mask.Buffer, wildcardsW ))
+            info->wildcard)
         {
             if (!check_dir_symlink( info, dir_info )) continue;
         }
@@ -2270,8 +2263,6 @@ BOOL WINAPI FindClose( HANDLE handle )
                 info->magic = 0;
                 if (info->handle) CloseHandle( info->handle );
                 info->handle = 0;
-                RtlFreeUnicodeString( &info->mask );
-                info->mask.Buffer = NULL;
                 RtlFreeUnicodeString( &info->path );
                 info->data_pos = 0;
                 info->data_len = 0;
