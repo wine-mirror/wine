@@ -81,6 +81,22 @@ typedef struct {
     float imag;
 } complex_float;
 
+typedef struct {
+    void *vtable;
+    size_t refs;
+} locale_facet;
+
+typedef unsigned char MSVCP_bool;
+
+typedef struct _locale__Locimp {
+    locale_facet facet;
+    locale_facet **facetvec;
+    size_t facet_cnt;
+    int catmask;
+    MSVCP_bool transparent;
+    basic_string_char name;
+} locale__Locimp;
+
 static void* (__cdecl *p_set_invalid_parameter_handler)(void*);
 static _locale_t (__cdecl *p__get_current_locale)(void);
 static void (__cdecl *p__free_locale)(_locale_t);
@@ -102,6 +118,7 @@ static MSVCP__Ctypevec* (__cdecl *p__Getctype)(MSVCP__Ctypevec*);
 static /*MSVCP__Collvec*/ULONGLONG (__cdecl *p__Getcoll)(void);
 static wctrans_t (__cdecl *p_wctrans)(const char*);
 static wint_t (__cdecl *p_towctrans)(wint_t, wctrans_t);
+static void (__cdecl *p_locale__Locimp__Locimp_Addfac)(locale__Locimp*,locale_facet*,size_t);
 
 #undef __thiscall
 #ifdef __i386__
@@ -250,6 +267,8 @@ static BOOL init(void)
     SET(p_std_Ctraits_long_double__Isnan, "?_Isnan@?$_Ctraits@O@std@@SA_NO@Z");
 
     if(sizeof(void*) == 8) { /* 64-bit initialization */
+        SET(p_locale__Locimp__Locimp_Addfac,
+                "?_Locimp_Addfac@_Locimp@locale@std@@CAXPEAV123@PEAVfacet@23@_K@Z");
         SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAEADAEBD@Z");
         SET(p_wchar_assign, "?assign@?$char_traits@_W@std@@SAXAEA_WAEB_W@Z");
         SET(p_short_assign, "?assign@?$char_traits@G@std@@SAXAEAGAEBG@Z");
@@ -310,6 +329,8 @@ static BOOL init(void)
         SET(p_complex_float_pow_cf,
                 "??$pow@M@std@@YA?AV?$complex@M@0@AEBV10@AEBM@Z");
     } else {
+        SET(p_locale__Locimp__Locimp_Addfac,
+                "?_Locimp_Addfac@_Locimp@locale@std@@CAXPAV123@PAVfacet@23@I@Z");
 #ifdef __arm__
         SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAADABD@Z");
         SET(p_wchar_assign, "?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z");
@@ -1050,6 +1071,19 @@ static void test_vbtable_size_exports(void)
     }
 }
 
+
+
+static void test_locale__Locimp__Locimp_Addfac(void)
+{
+    locale__Locimp locimp;
+    locale_facet facet;
+
+    memset(&locimp, 0, sizeof(locimp));
+    memset(&facet, 0, sizeof(facet));
+    p_locale__Locimp__Locimp_Addfac(&locimp, &facet, 1);
+    ok(locimp.facet_cnt == 40, "locimp.facet_cnt = %d\n", (int)locimp.facet_cnt);
+}
+
 START_TEST(misc)
 {
     if(!init())
@@ -1068,6 +1102,7 @@ START_TEST(misc)
     test_Ctraits_math_functions();
     test_complex();
     test_vbtable_size_exports();
+    test_locale__Locimp__Locimp_Addfac();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 

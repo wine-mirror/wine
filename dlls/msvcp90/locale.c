@@ -10204,8 +10204,8 @@ void __cdecl locale__Locimp__Locimp_Addfac(locale__Locimp *locimp, locale_facet 
         MSVCP_size_t new_size = id+1;
         locale_facet **new_facetvec;
 
-        if(new_size < locale_id__Id_cnt+1)
-            new_size = locale_id__Id_cnt+1;
+        if(new_size < 40)
+            new_size = 40;
 
         new_facetvec = MSVCRT_operator_new(sizeof(locale_facet*)*new_size);
         if(!new_facetvec) {
