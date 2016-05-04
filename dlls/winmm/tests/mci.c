@@ -1391,6 +1391,46 @@ static void test_asyncWaveTypeMpegvideo(HWND hwnd)
     test_notification(hwnd,"play (aborted by close)",MCI_NOTIFY_ABORTED);
 }
 
+static DWORD CALLBACK thread_cb(void *p)
+{
+    HANDLE evt = p;
+    MCIERROR mr;
+
+    mr = mciSendStringA("play x", NULL, 0, NULL);
+    ok(mr == MCIERR_INVALID_DEVICE_NAME, "play gave: 0x%x\n", mr);
+
+    mr = mciSendStringA("close x", NULL, 0, NULL);
+    ok(mr == MCIERR_INVALID_DEVICE_NAME, "close gave: 0x%x\n", mr);
+
+    SetEvent(evt);
+
+    return 0;
+}
+
+static void test_threads(void)
+{
+    MCIERROR mr;
+    HANDLE evt;
+
+    mr = mciSendStringA("open tempfile.wav alias x", NULL, 0, NULL);
+    ok(mr == 0 || mr == ok_saved, "open gave: 0x%x\n", mr);
+    if(mr){
+        skip("Cannot open tempfile.wav for playing (%s), skipping\n", dbg_mcierr(mr));
+        return;
+    }
+
+    evt = CreateEventW( NULL, TRUE, FALSE, NULL );
+
+    CloseHandle(CreateThread(NULL, 0, &thread_cb, evt, 0, NULL));
+
+    WaitForSingleObject(evt, INFINITE);
+
+    CloseHandle(evt);
+
+    mr = mciSendStringA("close x", NULL, 0, NULL);
+    ok(mr == 0, "close gave: 0x%x\n", mr);
+}
+
 START_TEST(mci)
 {
     char curdir[MAX_PATH], tmpdir[MAX_PATH];
@@ -1407,6 +1447,7 @@ START_TEST(mci)
     test_openCloseWAVE(hwnd);
     test_recordWAVE(hwnd);
     if(waveOutGetNumDevs()){
+        test_threads();
         test_playWAVE(hwnd);
         test_asyncWAVE(hwnd);
         test_AutoOpenWAVE(hwnd);
