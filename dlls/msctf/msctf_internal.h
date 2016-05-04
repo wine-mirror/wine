@@ -72,6 +72,7 @@ typedef struct {
     union {
         IUnknown *pIUnknown;
         ITfThreadMgrEventSink *pITfThreadMgrEventSink;
+        ITfCompartmentEventSink *pITfCompartmentEventSink;
     } interfaces;
 } Sink;
 
