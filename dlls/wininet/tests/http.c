@@ -109,7 +109,7 @@ static int expect[MAX_INTERNET_STATUS], optional[MAX_INTERNET_STATUS],
     wine_allow[MAX_INTERNET_STATUS], notified[MAX_INTERNET_STATUS];
 static const char *status_string[MAX_INTERNET_STATUS];
 
-static HANDLE hCompleteEvent, conn_close_event, conn_wait_event;
+static HANDLE hCompleteEvent, conn_close_event, conn_wait_event, server_req_rec_event;
 static DWORD req_error;
 
 #define TESTF_REDIRECT      0x01
@@ -2029,6 +2029,7 @@ struct server_info {
 
 static int test_cache_gzip;
 static const char *send_buffer;
+static int server_socket;
 
 static DWORD CALLBACK server_thread(LPVOID param)
 {
@@ -2366,6 +2367,12 @@ static DWORD CALLBACK server_thread(LPVOID param)
             send(c, page1, page1_mid - page1, 0);
             WaitForSingleObject(conn_wait_event, INFINITE);
             send(c, page1_mid, page1_end - page1_mid, 0);
+        }
+        if (strstr(buffer, "/socket"))
+        {
+            server_socket = c;
+            SetEvent(server_req_rec_event);
+            WaitForSingleObject(conn_wait_event, INFINITE);
         }
         shutdown(c, 2);
         closesocket(c);
@@ -4626,6 +4633,174 @@ static void test_async_read(int port)
     CloseHandle( conn_wait_event );
 }
 
+typedef struct {
+    HINTERNET session;
+    HINTERNET connection;
+    HINTERNET request;
+} test_request_t;
+
+static void server_send_string(const char *msg)
+{
+    send(server_socket, msg, strlen(msg), 0);
+}
+
+static void WINAPI readex_callback(HINTERNET handle, DWORD_PTR context, DWORD status, void *info, DWORD info_size)
+{
+    switch(status) {
+    case INTERNET_STATUS_RECEIVING_RESPONSE:
+    case INTERNET_STATUS_RESPONSE_RECEIVED:
+        break;
+    default:
+        callback(handle, context, status, info, info_size);
+    }
+}
+
+static void open_read_test_request(int port, test_request_t *req, const char *response)
+{
+    BOOL ret;
+
+    req->session = InternetOpenA("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, INTERNET_FLAG_ASYNC);
+    ok(req->session != NULL, "InternetOpenA failed\n");
+    pInternetSetStatusCallbackA(req->session, readex_callback);
+
+    SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
+    req->connection = InternetConnectA(req->session, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0xdeadbeef);
+    ok(req->connection != NULL, "InternetConnectA failed %u\n", GetLastError());
+    CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED );
+
+    SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
+    req->request = HttpOpenRequestA(req->connection, "GET", "/socket", NULL, NULL, NULL, INTERNET_FLAG_RELOAD, 0xdeadbeef);
+    ok(req->request != NULL, "HttpOpenRequestA failed %u\n", GetLastError());
+    CHECK_NOTIFIED( INTERNET_STATUS_HANDLE_CREATED );
+
+    SET_OPTIONAL(INTERNET_STATUS_COOKIE_SENT);
+    SET_OPTIONAL(INTERNET_STATUS_DETECTING_PROXY);
+    SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    SET_EXPECT(INTERNET_STATUS_SENDING_REQUEST);
+    SET_EXPECT(INTERNET_STATUS_REQUEST_SENT);
+
+    SetLastError(0xdeadbeef);
+    ret = HttpSendRequestA(req->request, NULL, 0, NULL, 0);
+    ok(!ret, "HttpSendRequestA unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %u\n", GetLastError());
+    ok(req_error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", req_error);
+
+    WaitForSingleObject(server_req_rec_event, INFINITE);
+
+    CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
+    CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
+    CHECK_NOTIFIED(INTERNET_STATUS_SENDING_REQUEST);
+
+    SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+
+    server_send_string(response);
+    WaitForSingleObject(hCompleteEvent, INFINITE);
+
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_SENT);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+}
+
+#define readex_expect_sync_data(a,b,c,d,e) _readex_expect_sync_data(__LINE__,a,b,c,d,e)
+static void _readex_expect_sync_data(unsigned line, HINTERNET req, DWORD flags, INTERNET_BUFFERSW *buf,
+        DWORD buf_size, const char *exdata)
+{
+    DWORD len = strlen(exdata);
+    BOOL ret;
+
+    SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+
+    memset(buf->lpvBuffer, 0xff, buf_size);
+    buf->dwBufferLength = buf_size;
+    ret = InternetReadFileExW(req, buf, flags, 0xdeadbeef);
+    ok_(__FILE__,line)(ret, "InternetReadFileExW failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(buf->dwBufferLength == len, "dwBufferLength = %u, expected %u\n", buf->dwBufferLength, len);
+    if(len)
+        ok_(__FILE__,line)(!memcmp(buf->lpvBuffer, exdata, len), "Unexpected data\n");
+
+    CLEAR_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+}
+
+static void send_response_and_wait(const char *response, BOOL close_connection, INTERNET_BUFFERSW *buf)
+{
+    DWORD orig_size = buf->dwBufferLength;
+
+    SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+
+    if(response)
+        server_send_string(response);
+
+    if(close_connection) {
+        char c;
+        SetEvent(conn_wait_event);
+        recv(server_socket, &c, 1, 0);
+    }
+
+    WaitForSingleObject(hCompleteEvent, INFINITE);
+
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+
+    /* If IRF_NO_WAIT is used, buffer is not changed. */
+    ok(buf->dwBufferLength == orig_size, "dwBufferLength = %u\n", buf->dwBufferLength);
+    ok(!*(int*)buf->lpvBuffer, "buffer data changed\n");
+}
+
+static void readex_expect_async(HINTERNET req, DWORD flags, INTERNET_BUFFERSW *buf, DWORD buf_size)
+{
+    BOOL ret;
+
+    memset(buf->lpvBuffer, 0, buf_size);
+    buf->dwBufferLength = buf_size;
+    ret = InternetReadFileExW(req, buf, flags, 0xdeadbeef);
+    ok(!ret && GetLastError() == ERROR_IO_PENDING, "InternetReadFileExW returned %x (%u)\n", ret, GetLastError());
+    ok(buf->dwBufferLength == buf_size, "dwBufferLength = %u, expected %u\n", buf->dwBufferLength, buf_size);
+    ok(!*(int*)buf->lpvBuffer, "buffer data changed\n");
+}
+
+static void test_http_read(int port)
+{
+    INTERNET_BUFFERSW ib;
+    test_request_t req;
+    char buf[4096];
+
+    hCompleteEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+    conn_wait_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    server_req_rec_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    trace("Testing InternetReadFileExW with IRF_NO_WAIT flag...\n");
+
+    open_read_test_request(port, &req,
+                           "HTTP/1.1 200 OK\r\n"
+                           "Server: winetest\r\n"
+                           "\r\n"
+                           "xx");
+
+    memset(&ib, 0, sizeof(ib));
+    ib.dwStructSize = sizeof(ib);
+    ib.lpvBuffer = buf;
+
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "xx");
+
+    readex_expect_async(req.request, IRF_NO_WAIT, &ib, sizeof(buf));
+    send_response_and_wait("1234567890", FALSE, &ib);
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, 5, "12345");
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "67890");
+
+    readex_expect_async(req.request, IRF_NO_WAIT, &ib, sizeof(buf));
+    send_response_and_wait("12345", TRUE, &ib);
+
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "12345");
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "");
+
+    close_async_handle(req.session, hCompleteEvent, 2);
+
+    CloseHandle(hCompleteEvent);
+    CloseHandle(conn_wait_event);
+    CloseHandle(server_req_rec_event);
+}
+
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -4676,6 +4851,7 @@ static void test_http_connection(void)
     test_accept_encoding(si.port);
     test_basic_auth_credentials_reuse(si.port);
     test_async_read(si.port);
+    test_http_read(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");
