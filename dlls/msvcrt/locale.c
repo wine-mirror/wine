@@ -769,7 +769,7 @@ void free_locinfo(MSVCRT_pthreadlocinfo locinfo)
         MSVCRT_free(locinfo->lconv->mon_grouping);
         MSVCRT_free(locinfo->lconv->positive_sign);
         MSVCRT_free(locinfo->lconv->negative_sign);
-#if _MSVCR_VER >= 120
+#if _MSVCR_VER >= 100
         MSVCRT_free(locinfo->lconv->_W_decimal_point);
         MSVCRT_free(locinfo->lconv->_W_thousands_sep);
         MSVCRT_free(locinfo->lconv->_W_int_curr_symbol);
@@ -908,7 +908,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
     LCID lcid[6] = { 0 }, lcid_tmp;
     unsigned short cp[6] = { 0 };
     char buf[256];
-#if _MSVCR_VER >= 120
+#if _MSVCR_VER >= 100
     MSVCRT_wchar_t wbuf[256];
 #endif
     int i, ret, size;
@@ -1262,7 +1262,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-#if _MSVCR_VER >= 120
+#if _MSVCR_VER >= 100
         i = GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_SINTLSYMBOL
                 |LOCALE_NOUSEROVERRIDE, wbuf, 256);
         if(i && (locinfo->lconv->_W_int_curr_symbol = MSVCRT_malloc(i * sizeof(MSVCRT_wchar_t))))
@@ -1355,7 +1355,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         locinfo->lconv->p_sign_posn = 127;
         locinfo->lconv->n_sign_posn = 127;
 
-#if _MSVCR_VER >= 120
+#if _MSVCR_VER >= 100
         locinfo->lconv->_W_int_curr_symbol = MSVCRT_malloc(sizeof(MSVCRT_wchar_t));
         locinfo->lconv->_W_currency_symbol = MSVCRT_malloc(sizeof(MSVCRT_wchar_t));
         locinfo->lconv->_W_mon_decimal_point = MSVCRT_malloc(sizeof(MSVCRT_wchar_t));
@@ -1436,7 +1436,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-#if _MSVCR_VER >= 120
+#if _MSVCR_VER >= 100
         i = GetLocaleInfoW(lcid[MSVCRT_LC_NUMERIC], LOCALE_SDECIMAL
                 |LOCALE_NOUSEROVERRIDE, wbuf, 256);
         if(i && (locinfo->lconv->_W_decimal_point = MSVCRT_malloc(i * sizeof(MSVCRT_wchar_t))))
@@ -1475,7 +1475,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         locinfo->lconv->thousands_sep[0] = '\0';
         locinfo->lconv->grouping[0] = '\0';
 
-#if _MSVCR_VER >= 120
+#if _MSVCR_VER >= 100
         locinfo->lconv->_W_decimal_point = MSVCRT_malloc(sizeof(MSVCRT_wchar_t[2]));
         locinfo->lconv->_W_thousands_sep = MSVCRT_malloc(sizeof(MSVCRT_wchar_t));
 
@@ -1719,7 +1719,7 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
         swap_pointers((void**)&locinfo->lconv->negative_sign,
                 (void**)&newlocinfo->lconv->negative_sign);
 
-#if _MSVCR_VER >= 120
+#if _MSVCR_VER >= 100
         swap_pointers((void**)&locinfo->lconv->_W_int_curr_symbol,
                 (void**)&newlocinfo->lconv->_W_int_curr_symbol);
         swap_pointers((void**)&locinfo->lconv->_W_currency_symbol,
@@ -1767,7 +1767,7 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
         swap_pointers((void**)&locinfo->lconv->grouping,
                 (void**)&newlocinfo->lconv->grouping);
 
-#if _MSVCR_VER >= 120
+#if _MSVCR_VER >= 100
         swap_pointers((void**)&locinfo->lconv->_W_decimal_point,
                 (void**)&newlocinfo->lconv->_W_decimal_point);
         swap_pointers((void**)&locinfo->lconv->_W_thousands_sep,

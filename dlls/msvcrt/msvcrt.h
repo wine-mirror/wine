@@ -410,7 +410,7 @@ struct MSVCRT_lconv {
     char n_sep_by_space;
     char p_sign_posn;
     char n_sign_posn;
-#if _MSVCR_VER >= 120
+#if _MSVCR_VER >= 100
     MSVCRT_wchar_t* _W_decimal_point;
     MSVCRT_wchar_t* _W_thousands_sep;
     MSVCRT_wchar_t* _W_int_curr_symbol;
