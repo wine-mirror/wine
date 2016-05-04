@@ -643,7 +643,6 @@ static HRESULT WINAPI ThreadMgrSource_AdviseSink(ITfSource *iface,
         REFIID riid, IUnknown *punk, DWORD *pdwCookie)
 {
     ThreadMgr *This = impl_from_ITfSource(iface);
-    Sink *tms;
 
     TRACE("(%p) %s %p %p\n",This,debugstr_guid(riid),punk,pdwCookie);
 
@@ -651,27 +650,10 @@ static HRESULT WINAPI ThreadMgrSource_AdviseSink(ITfSource *iface,
         return E_INVALIDARG;
 
     if (IsEqualIID(riid, &IID_ITfThreadMgrEventSink))
-    {
-        tms = HeapAlloc(GetProcessHeap(),0,sizeof(*tms));
-        if (!tms)
-            return E_OUTOFMEMORY;
-        if (FAILED(IUnknown_QueryInterface(punk, riid, (LPVOID *)&tms->interfaces.pITfThreadMgrEventSink)))
-        {
-            HeapFree(GetProcessHeap(),0,tms);
-            return CONNECT_E_CANNOTCONNECT;
-        }
-        list_add_head(&This->ThreadMgrEventSink,&tms->entry);
-        *pdwCookie = generate_Cookie(COOKIE_MAGIC_TMSINK, tms);
-    }
-    else
-    {
-        FIXME("(%p) Unhandled Sink: %s\n",This,debugstr_guid(riid));
-        return E_NOTIMPL;
-    }
+        return advise_sink(&This->ThreadMgrEventSink, &IID_ITfThreadMgrEventSink, COOKIE_MAGIC_TMSINK, punk, pdwCookie);
 
-    TRACE("cookie %x\n",*pdwCookie);
-
-    return S_OK;
+    FIXME("(%p) Unhandled Sink: %s\n",This,debugstr_guid(riid));
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ThreadMgrSource_UnadviseSink(ITfSource *iface, DWORD pdwCookie)

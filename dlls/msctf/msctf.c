@@ -32,6 +32,7 @@
 #include "shlwapi.h"
 #include "shlguid.h"
 #include "comcat.h"
+#include "olectl.h"
 #include "rpcproxy.h"
 #include "msctf.h"
 #include "inputscope.h"
@@ -281,6 +282,26 @@ DWORD enumerate_Cookie(DWORD magic, DWORD *index)
             return cookies[i].id;
         }
     return 0x0;
+}
+
+HRESULT advise_sink(struct list *sink_list, REFIID riid, DWORD cookie_magic, IUnknown *unk, DWORD *cookie)
+{
+    Sink *sink;
+
+    sink = HeapAlloc(GetProcessHeap(), 0, sizeof(*sink));
+    if (!sink)
+        return E_OUTOFMEMORY;
+
+    if (FAILED(IUnknown_QueryInterface(unk, riid, (void**)&sink->interfaces.pIUnknown)))
+    {
+        HeapFree(GetProcessHeap(), 0, sink);
+        return CONNECT_E_CANNOTCONNECT;
+    }
+
+    list_add_head(sink_list, &sink->entry);
+    *cookie = generate_Cookie(cookie_magic, sink);
+    TRACE("cookie %x\n", *cookie);
+    return S_OK;
 }
 
 /*****************************************************************************
