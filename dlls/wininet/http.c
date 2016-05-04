@@ -3112,14 +3112,19 @@ static void AsyncReadFileExProc(task_header_t *hdr)
 {
     read_file_ex_task_t *task = (read_file_ex_task_t*)hdr;
     http_request_t *req = (http_request_t*)task->hdr.hdr;
-    DWORD res;
+    DWORD res = ERROR_SUCCESS, read = 0, buffered = 0;
 
-    TRACE("INTERNETREADFILEEXW %p\n", task->hdr.hdr);
+    TRACE("%p\n", req);
 
-    res = HTTPREQ_Read(req, task->buf, task->size, task->ret_read);
+    if(task->ret_read)
+        res = HTTPREQ_Read(req, task->buf, task->size, &read);
+    if(res == ERROR_SUCCESS)
+        res = refill_read_buffer(req, task->ret_read ? BLOCKING_DISALLOW : BLOCKING_ALLOW, &buffered);
     if (res == ERROR_SUCCESS)
     {
-        DWORD read = *task->ret_read;
+        if(task->ret_read)
+            *task->ret_read = read;
+        read += buffered;
         INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RESPONSE_RECEIVED,
                 &read, sizeof(read));
     }
@@ -3133,6 +3138,8 @@ static DWORD HTTPREQ_ReadFileEx(object_header_t *hdr, void *buf, DWORD size, DWO
 
     http_request_t *req = (http_request_t*)hdr;
     DWORD res, read, cread, error = ERROR_SUCCESS;
+
+    TRACE("(%p %p %u %x)\n", req, buf, size, flags);
 
     if (flags & ~(IRF_ASYNC|IRF_NO_WAIT))
         FIXME("these dwFlags aren't implemented: 0x%x\n", flags & ~(IRF_ASYNC|IRF_NO_WAIT));
@@ -3157,7 +3164,7 @@ static DWORD HTTPREQ_ReadFileEx(object_header_t *hdr, void *buf, DWORD size, DWO
         task = alloc_async_task(&req->hdr, AsyncReadFileExProc, sizeof(*task));
         task->buf = buf;
         task->size = size;
-        task->ret_read = ret_read;
+        task->ret_read = (flags & IRF_NO_WAIT) ? NULL : ret_read;
 
         INTERNET_AsyncCall(&task->hdr);
 
