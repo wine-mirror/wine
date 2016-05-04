@@ -157,12 +157,6 @@ static inline EnumTfDocumentMgr *impl_from_IEnumTfDocumentMgrs(IEnumTfDocumentMg
     return CONTAINING_RECORD(iface, EnumTfDocumentMgr, IEnumTfDocumentMgrs_iface);
 }
 
-static void free_sink(Sink *sink)
-{
-        IUnknown_Release(sink->interfaces.pIUnknown);
-        HeapFree(GetProcessHeap(),0,sink);
-}
-
 static void ThreadMgr_Destructor(ThreadMgr *This)
 {
     struct list *cursor, *cursor2;
@@ -176,43 +170,12 @@ static void ThreadMgr_Destructor(ThreadMgr *This)
     if (This->focus)
         ITfDocumentMgr_Release(This->focus);
 
-    /* free sinks */
-    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->ActiveLanguageProfileNotifySink)
-    {
-        Sink* sink = LIST_ENTRY(cursor,Sink,entry);
-        list_remove(cursor);
-        free_sink(sink);
-    }
-    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->DisplayAttributeNotifySink)
-    {
-        Sink* sink = LIST_ENTRY(cursor,Sink,entry);
-        list_remove(cursor);
-        free_sink(sink);
-    }
-    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->KeyTraceEventSink)
-    {
-        Sink* sink = LIST_ENTRY(cursor,Sink,entry);
-        list_remove(cursor);
-        free_sink(sink);
-    }
-    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->PreservedKeyNotifySink)
-    {
-        Sink* sink = LIST_ENTRY(cursor,Sink,entry);
-        list_remove(cursor);
-        free_sink(sink);
-    }
-    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->ThreadFocusSink)
-    {
-        Sink* sink = LIST_ENTRY(cursor,Sink,entry);
-        list_remove(cursor);
-        free_sink(sink);
-    }
-    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->ThreadMgrEventSink)
-    {
-        Sink* sink = LIST_ENTRY(cursor,Sink,entry);
-        list_remove(cursor);
-        free_sink(sink);
-    }
+    free_sinks(&This->ActiveLanguageProfileNotifySink);
+    free_sinks(&This->DisplayAttributeNotifySink);
+    free_sinks(&This->KeyTraceEventSink);
+    free_sinks(&This->PreservedKeyNotifySink);
+    free_sinks(&This->ThreadFocusSink);
+    free_sinks(&This->ThreadMgrEventSink);
 
     LIST_FOR_EACH_SAFE(cursor, cursor2, &This->CurrentPreservedKeys)
     {

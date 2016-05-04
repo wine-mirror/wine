@@ -323,6 +323,15 @@ HRESULT unadvise_sink(DWORD cookie)
     return S_OK;
 }
 
+void free_sinks(struct list *sink_list)
+{
+    while(!list_empty(sink_list))
+    {
+        Sink* sink = LIST_ENTRY(sink_list->next, Sink, entry);
+        free_sink(sink);
+    }
+}
+
 /*****************************************************************************
  * Active Text Service Management
  *****************************************************************************/
