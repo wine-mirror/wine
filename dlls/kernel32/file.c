@@ -64,7 +64,7 @@ typedef struct
     UINT              data_pos;    /* current position in dir data */
     UINT              data_len;    /* length of dir data */
     UINT              data_size;   /* size of data buffer, or 0 when everything has been read */
-    BYTE             *data;        /* directory data */
+    BYTE              data[1];     /* directory data */
 } FIND_FIRST_INFO;
 
 #define FIND_FIRST_MAGIC  0xc0ffee11
@@ -1946,7 +1946,7 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
     NTSTATUS status;
-    DWORD device = 0;
+    DWORD size, device = 0;
 
     TRACE("%s %d %p %d %p %x\n", debugstr_w(filename), level, data, search_op, filter, flags);
 
@@ -1971,12 +1971,6 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     {
         SetLastError( ERROR_PATH_NOT_FOUND );
         return INVALID_HANDLE_VALUE;
-    }
-
-    if (!(info = HeapAlloc( GetProcessHeap(), 0, sizeof(*info))))
-    {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        goto error;
     }
 
     if (!mask && (device = RtlIsDosDeviceName_U( filename )))
@@ -2004,6 +1998,7 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
             goto error;
         }
         HeapFree( GetProcessHeap(), 0, dir );
+        size = 0;
     }
     else if (!mask || !*mask)
     {
@@ -2014,6 +2009,13 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     {
         nt_name.Length = (mask - nt_name.Buffer) * sizeof(WCHAR);
         has_wildcard = strpbrkW( mask, wildcardsW ) != NULL;
+        size = has_wildcard ? 8192 : max_entry_size;
+    }
+
+    if (!(info = HeapAlloc( GetProcessHeap(), 0, offsetof( FIND_FIRST_INFO, data[size] ))))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        goto error;
     }
 
     /* check if path is the root of the drive, skipping the \??\ prefix */
@@ -2052,8 +2054,7 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     info->wildcard = has_wildcard;
     info->data_pos = 0;
     info->data_len = 0;
-    info->data_size = 0;
-    info->data      = NULL;
+    info->data_size = size;
     info->search_op = search_op;
     info->level     = level;
 
@@ -2072,41 +2073,23 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
         UNICODE_STRING mask_str;
 
         RtlInitUnicodeString( &mask_str, mask );
-        info->data_size = has_wildcard ? 8192 : max_entry_size * 2;
-
-        while (info->data_size)
+        status = NtQueryDirectoryFile( info->handle, 0, NULL, NULL, &io, info->data, info->data_size,
+                                       FileBothDirectoryInformation, FALSE, &mask_str, TRUE );
+        if (status)
         {
-            if (!(info->data = HeapAlloc( GetProcessHeap(), 0, info->data_size )))
-            {
-                FindClose( info );
-                SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-                return INVALID_HANDLE_VALUE;
-            }
-
-            status = NtQueryDirectoryFile( info->handle, 0, NULL, NULL, &io, info->data, info->data_size,
-                                           FileBothDirectoryInformation, FALSE, &mask_str, TRUE );
-            if (status)
-            {
-                FindClose( info );
-                SetLastError( RtlNtStatusToDosError( status ) );
-                return INVALID_HANDLE_VALUE;
-            }
-
-            if (io.Information < info->data_size - max_entry_size)
-            {
-                info->data_size = 0;  /* we read everything */
-            }
-            else if (info->data_size < 1024 * 1024)
-            {
-                HeapFree( GetProcessHeap(), 0, info->data );
-                info->data_size *= 2;
-            }
-            else break;
+            FindClose( info );
+            SetLastError( RtlNtStatusToDosError( status ) );
+            return INVALID_HANDLE_VALUE;
         }
 
         info->data_len = io.Information;
-        if (!info->data_size && has_wildcard)  /* release unused buffer space */
-            HeapReAlloc( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, info->data, info->data_len );
+        if (!has_wildcard || info->data_len < info->data_size - max_entry_size)
+        {
+            if (has_wildcard)  /* release unused buffer space */
+                HeapReAlloc( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY,
+                             info, offsetof( FIND_FIRST_INFO, data[info->data_len] ));
+            info->data_size = 0;  /* we read everything */
+        }
 
         if (!FindNextFileW( info, data ))
         {
@@ -2118,9 +2101,7 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
         if (!has_wildcard)  /* we can't find two files with the same name */
         {
             CloseHandle( info->handle );
-            HeapFree( GetProcessHeap(), 0, info->data );
             info->handle = 0;
-            info->data = NULL;
         }
     }
     return info;
@@ -2177,9 +2158,7 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
                 if (status == STATUS_NO_MORE_FILES)
                 {
                     CloseHandle( info->handle );
-                    HeapFree( GetProcessHeap(), 0, info->data );
                     info->handle = 0;
-                    info->data = NULL;
                 }
                 break;
             }
@@ -2266,7 +2245,6 @@ BOOL WINAPI FindClose( HANDLE handle )
                 RtlFreeUnicodeString( &info->path );
                 info->data_pos = 0;
                 info->data_len = 0;
-                HeapFree( GetProcessHeap(), 0, info->data );
                 RtlLeaveCriticalSection( &info->cs );
                 info->cs.DebugInfo->Spare[0] = 0;
                 RtlDeleteCriticalSection( &info->cs );
