@@ -2945,10 +2945,18 @@ static void test_GetMatchingFonts(void)
 
         font = (void*)0xdeadbeef;
         hr = IDWriteFontList1_GetFont(fontlist1, ~0u, &font);
-    todo_wine {
         ok(hr == E_FAIL, "got 0x%08x\n", hr);
         ok(font == NULL, "got %p\n", font);
-    }
+
+        font = (void*)0xdeadbeef;
+        hr = IDWriteFontList1_GetFont(fontlist1, IDWriteFontList1_GetFontCount(fontlist1), &font);
+        ok(hr == E_FAIL, "got 0x%08x\n", hr);
+        ok(font == NULL, "got %p\n", font);
+
+        hr = IDWriteFontList1_GetFont(fontlist1, 0, &font);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        IDWriteFont3_Release(font);
+
         IDWriteFontList1_Release(fontlist1);
     }
     else

@@ -1678,9 +1678,17 @@ static HRESULT WINAPI dwritefontlist1_GetFont(IDWriteFontList1 *iface, UINT32 in
 {
     struct dwrite_fontlist *This = impl_from_IDWriteFontList1(iface);
 
-    FIXME("(%p)->(%u %p): stub\n", This, index, font);
+    TRACE("(%p)->(%u %p)\n", This, index, font);
 
-    return E_NOTIMPL;
+    *font = NULL;
+
+    if (This->font_count == 0)
+        return S_FALSE;
+
+    if (index >= This->font_count)
+        return E_FAIL;
+
+    return create_font(This->fonts[index], This->family, font);
 }
 
 static HRESULT WINAPI dwritefontlist1_GetFontFaceReference(IDWriteFontList1 *iface, UINT32 index,
