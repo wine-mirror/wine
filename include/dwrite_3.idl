@@ -48,6 +48,30 @@ typedef enum DWRITE_RENDERING_MODE1
     DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC_DOWNSAMPLED
 } DWRITE_RENDERING_MODE1;
 
+typedef enum DWRITE_FONT_PROPERTY_ID
+{
+    DWRITE_FONT_PROPERTY_ID_NONE,
+    DWRITE_FONT_PROPERTY_ID_FAMILY_NAME,
+    DWRITE_FONT_PROPERTY_ID_PREFERRED_FAMILY_NAME,
+    DWRITE_FONT_PROPERTY_ID_FACE_NAME,
+    DWRITE_FONT_PROPERTY_ID_FULL_NAME,
+    DWRITE_FONT_PROPERTY_ID_WIN32_FAMILY_NAME,
+    DWRITE_FONT_PROPERTY_ID_POSTSCRIPT_NAME,
+    DWRITE_FONT_PROPERTY_ID_DESIGN_SCRIPT_LANGUAGE_TAG,
+    DWRITE_FONT_PROPERTY_ID_SEMANTIC_TAG,
+    DWRITE_FONT_PROPERTY_ID_WEIGHT,
+    DWRITE_FONT_PROPERTY_ID_STRETCH,
+    DWRITE_FONT_PROPERTY_ID_STYLE,
+    DWRITE_FONT_PROPERTY_ID_TOTAL
+} DWRITE_FONT_PROPERTY_ID;
+
+typedef struct DWRITE_FONT_PROPERTY
+{
+    DWRITE_FONT_PROPERTY_ID propertyId;
+    WCHAR const *propertyValue;
+    WCHAR const *localeName;
+} DWRITE_FONT_PROPERTY;
+
 [
     local,
     object,
@@ -81,6 +105,43 @@ interface IDWriteFontDownloadQueue : IUnknown
 interface IDWriteRenderingParams3 : IDWriteRenderingParams2
 {
     DWRITE_RENDERING_MODE1 GetRenderingMode1();
+}
+
+[
+    local,
+    object,
+    uuid(cfee3140-1257-47ca-8b85-31bfcf3f2d0e)
+]
+interface IDWriteStringList : IUnknown
+{
+    UINT32 GetCount();
+    HRESULT GetLocaleNameLength(UINT32 index, UINT32 *length);
+    HRESULT GetLocaleName(UINT32 index, WCHAR *name, UINT32 size);
+    HRESULT GetStringLength(UINT32 index, UINT32 *length);
+    HRESULT GetString(UINT32 index, WCHAR *string, UINT32 size);
+}
+
+[
+    local,
+    object,
+    uuid(53585141-d9f8-4095-8321-d73cf6bd116b)
+]
+interface IDWriteFontSet : IUnknown
+{
+    UINT32 GetFontCount();
+    HRESULT GetFontFaceReference(UINT32 index, IDWriteFontFaceReference **reference);
+    HRESULT FindFontFaceReference(IDWriteFontFaceReference *reference,
+        UINT32 *index, BOOL *exists);
+    HRESULT FindFontFace(IDWriteFontFace *fontface, UINT32 *index, BOOL *exists);
+    HRESULT GetPropertyValues__(DWRITE_FONT_PROPERTY_ID id, IDWriteStringList **values);
+    HRESULT GetPropertyValues_(DWRITE_FONT_PROPERTY_ID id,
+        WCHAR const *preferred_locales, IDWriteStringList **values);
+    HRESULT GetPropertyValues(UINT32 index, DWRITE_FONT_PROPERTY_ID id, BOOL *exists,
+        IDWriteLocalizedStrings **values);
+    HRESULT GetPropertyOccurenceCount(DWRITE_FONT_PROPERTY const *property, UINT32 *count);
+    HRESULT GetMatchingFonts_(WCHAR const *family, DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STRETCH stretch,
+        DWRITE_FONT_STYLE style, IDWriteFontSet **fontset);
+    HRESULT GetMatchingFonts(DWRITE_FONT_PROPERTY const *props, UINT32 count, IDWriteFontSet **fontset);
 }
 
 [
@@ -193,19 +254,6 @@ interface IDWriteFontFace3 : IDWriteFontFace2
         BOOL enqueue_if_not, BOOL *are_local);
 }
 
-[
-    local,
-    object,
-    uuid(cfee3140-1257-47ca-8b85-31bfcf3f2d0e)
-]
-interface IDWriteStringList : IUnknown
-{
-    UINT32 GetCount();
-    HRESULT GetLocaleNameLength(UINT32 index, UINT32 *length);
-    HRESULT GetLocaleName(UINT32 index, WCHAR *name, UINT32 size);
-    HRESULT GetStringLength(UINT32 index, UINT32 *length);
-    HRESULT GetString(UINT32 index, WCHAR *string, UINT32 size);
-}
 
 typedef struct DWRITE_LINE_METRICS1
 {
