@@ -26,6 +26,8 @@
     NSView* latentView;
     BOOL needsUpdate;
     BOOL shouldClearToBlack;
+
+    GLint backing_size[2];
 }
 
 @property BOOL needsUpdate;

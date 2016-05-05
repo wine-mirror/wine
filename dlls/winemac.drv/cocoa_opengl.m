@@ -27,6 +27,10 @@
 
 @interface WineOpenGLContext ()
 @property (retain, nonatomic) NSView* latentView;
+
+    + (NSView*) dummyView;
+    - (void) wine_updateBackingSize:(const CGSize*)size;
+
 @end
 
 
@@ -38,6 +42,81 @@
         [[self view] release];
         [latentView release];
         [super dealloc];
+    }
+
+    + (NSView*) dummyView
+    {
+        static NSWindow* dummyWindow;
+        static dispatch_once_t once;
+
+        dispatch_once(&once, ^{
+            OnMainThread(^{
+                dummyWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 100, 100)
+                                                          styleMask:NSBorderlessWindowMask
+                                                            backing:NSBackingStoreBuffered
+                                                              defer:NO];
+            });
+        });
+
+        return dummyWindow.contentView;
+    }
+
+    // Normally, we take care that disconnecting a context from a view doesn't
+    // destroy that view's GL surface (see -clearDrawableLeavingSurfaceOnScreen).
+    // However, if we're using a surface backing size and that size changes, we
+    // need to destroy and recreate the surface or we get weird behavior.
+    - (void) resetSurfaceIfBackingSizeChanged
+    {
+        if (!retina_enabled)
+            return;
+
+        int view_backing[2];
+        if (macdrv_get_view_backing_size((macdrv_view)self.view, view_backing) &&
+            (view_backing[0] != backing_size[0] || view_backing[1] != backing_size[1]))
+        {
+            view_backing[0] = backing_size[0];
+            view_backing[1] = backing_size[1];
+            macdrv_set_view_backing_size((macdrv_view)self.view, view_backing);
+
+            NSView* save = self.view;
+            [super clearDrawable];
+            [super setView:save];
+            shouldClearToBlack = TRUE;
+        }
+    }
+
+    - (void) wine_updateBackingSize:(const CGSize*)size
+    {
+        GLint enabled;
+
+        if (!retina_enabled)
+            return;
+
+        if (size)
+        {
+            if (CGLIsEnabled(self.CGLContextObj, kCGLCESurfaceBackingSize, &enabled) != kCGLNoError)
+                enabled = 0;
+
+            if (!enabled || backing_size[0] != size->width || backing_size[1] != size->height)
+            {
+                backing_size[0] = size->width;
+                backing_size[1] = size->height;
+                CGLSetParameter(self.CGLContextObj, kCGLCPSurfaceBackingSize, backing_size);
+            }
+
+            if (!enabled)
+                CGLEnable(self.CGLContextObj, kCGLCESurfaceBackingSize);
+
+            [self resetSurfaceIfBackingSizeChanged];
+        }
+        else
+        {
+            backing_size[0] = 0;
+            backing_size[1] = 0;
+
+            if (CGLIsEnabled(self.CGLContextObj, kCGLCESurfaceBackingSize, &enabled) == kCGLNoError && enabled)
+               CGLDisable(self.CGLContextObj, kCGLCESurfaceBackingSize);
+        }
     }
 
     - (void) setView:(NSView*)newView
@@ -53,6 +132,8 @@
         NSView* oldView = [self view];
         [super clearDrawable];
         [oldView release];
+
+        [self wine_updateBackingSize:NULL];
     }
 
     /* On at least some versions of Mac OS X, -[NSOpenGLContext clearDrawable] has the
@@ -64,19 +145,7 @@
        original implementation proceed. */
     - (void) clearDrawableLeavingSurfaceOnScreen
     {
-        static NSWindow* dummyWindow;
-        static dispatch_once_t once;
-
-        dispatch_once(&once, ^{
-            OnMainThread(^{
-                dummyWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 100, 100)
-                                                          styleMask:NSBorderlessWindowMask
-                                                            backing:NSBackingStoreBuffered
-                                                              defer:NO];
-            });
-        });
-
-        [self setView:[dummyWindow contentView]];
+        [self setView:[[self class] dummyView]];
         [self clearDrawable];
     }
 
@@ -189,7 +258,7 @@ void macdrv_dispose_opengl_context(macdrv_opengl_context c)
 /***********************************************************************
  *              macdrv_make_context_current
  */
-void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v)
+void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v, CGRect r)
 {
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
     WineOpenGLContext *context = (WineOpenGLContext*)c;
@@ -198,7 +267,10 @@ void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v)
     if (context && view)
     {
         if (view == [context view] || view == [context latentView])
+        {
+            [context wine_updateBackingSize:&r.size];
             macdrv_update_opengl_context(c);
+        }
         else
         {
             [context removeFromViews:NO];
@@ -207,13 +279,18 @@ void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v)
             if (context.needsUpdate)
             {
                 context.needsUpdate = FALSE;
+                if (context.view)
+                    [context setView:[[context class] dummyView]];
+                [context wine_updateBackingSize:&r.size];
                 [context setView:view];
                 [context setLatentView:nil];
+                [context resetSurfaceIfBackingSizeChanged];
             }
             else
             {
                 if ([context view])
                     [context clearDrawableLeavingSurfaceOnScreen];
+                [context wine_updateBackingSize:&r.size];
                 [context setLatentView:view];
             }
         }
@@ -257,10 +334,14 @@ void macdrv_update_opengl_context(macdrv_opengl_context c)
             [context setView:context.latentView];
             context.latentView = nil;
 
+            [context resetSurfaceIfBackingSizeChanged];
             [context clearToBlackIfNeeded];
         }
         else
+        {
             [context update];
+            [context resetSurfaceIfBackingSizeChanged];
+        }
     }
 
     [pool release];

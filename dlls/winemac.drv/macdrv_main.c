@@ -58,6 +58,7 @@ int allow_immovable_windows = TRUE;
 int cursor_clipping_locks_windows = TRUE;
 int use_precise_scrolling = TRUE;
 int gl_surface_mode = GL_SURFACE_IN_FRONT_OPAQUE;
+int retina_enabled = FALSE;
 HMODULE macdrv_module = 0;
 
 CFDictionaryRef localized_strings;
@@ -195,6 +196,11 @@ static void setup_options(void)
         else
             gl_surface_mode = GL_SURFACE_IN_FRONT_OPAQUE;
     }
+
+    /* Don't use appkey.  The DPI and monitor sizes should be consistent for all
+       processes in the prefix. */
+    if (!get_config_key(hkey, NULL, "RetinaMode", buffer, sizeof(buffer)))
+        retina_enabled = IS_OPTION_TRUE(buffer[0]);
 
     if (appkey) RegCloseKey(appkey);
     if (hkey) RegCloseKey(hkey);

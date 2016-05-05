@@ -78,6 +78,8 @@ int macdrv_get_displays(struct macdrv_display** displays, int* count)
                 convert_display_rect(&disps[i].frame, frame, primary_frame);
                 convert_display_rect(&disps[i].work_frame, visible_frame,
                                      primary_frame);
+                disps[i].frame = cgrect_win_from_mac(disps[i].frame);
+                disps[i].work_frame = cgrect_win_from_mac(disps[i].work_frame);
             }
 
             *displays = disps;

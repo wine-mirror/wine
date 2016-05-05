@@ -488,7 +488,7 @@ static int get_default_bpp(void)
 
 
 #if defined(MAC_OS_X_VERSION_10_8) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_8
-static CFDictionaryRef create_mode_dict(CGDisplayModeRef display_mode)
+static CFDictionaryRef create_mode_dict(CGDisplayModeRef display_mode, BOOL is_original)
 {
     CFDictionaryRef ret;
     SInt32 io_flags = CGDisplayModeGetIOFlags(display_mode);
@@ -497,6 +497,12 @@ static CFDictionaryRef create_mode_dict(CGDisplayModeRef display_mode)
     double refresh_rate = CGDisplayModeGetRefreshRate(display_mode);
     CFStringRef pixel_encoding = CGDisplayModeCopyPixelEncoding(display_mode);
     CFNumberRef cf_io_flags, cf_width, cf_height, cf_refresh;
+
+    if (retina_enabled && is_original)
+    {
+        width *= 2;
+        height *= 2;
+    }
 
     io_flags &= kDisplayModeValidFlag | kDisplayModeSafeFlag | kDisplayModeInterlacedFlag |
                 kDisplayModeStretchedFlag | kDisplayModeTelevisionFlag;
@@ -581,7 +587,7 @@ static CFArrayRef copy_display_modes(CGDirectDisplayID display)
             BOOL better = TRUE;
             CGDisplayModeRef new_mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
             BOOL new_is_original = display_mode_matches_descriptor(new_mode, desc);
-            CFDictionaryRef key = create_mode_dict(new_mode);
+            CFDictionaryRef key = create_mode_dict(new_mode, new_is_original);
 
             /* If a given mode is the user's default, then always list it in preference to any similar
                modes that may exist. */
@@ -667,6 +673,23 @@ static CFArrayRef copy_display_modes(CGDirectDisplayID display)
 }
 
 
+void check_retina_status(void)
+{
+    if (retina_enabled)
+    {
+        struct display_mode_descriptor* desc = create_original_display_mode_descriptor(kCGDirectMainDisplay);
+        CGDisplayModeRef mode = CGDisplayCopyDisplayMode(kCGDirectMainDisplay);
+        BOOL new_value = display_mode_matches_descriptor(mode, desc);
+
+        CGDisplayModeRelease(mode);
+        free_display_mode_descriptor(desc);
+
+        if (new_value != retina_on)
+            macdrv_set_cocoa_retina_mode(new_value);
+    }
+}
+
+
 /***********************************************************************
  *              ChangeDisplaySettingsEx  (MACDRV.@)
  *
@@ -681,9 +704,11 @@ LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
     struct macdrv_display *displays;
     int num_displays;
     CFArrayRef display_modes;
+    struct display_mode_descriptor* desc;
     CFIndex count, i, safe, best;
     CGDisplayModeRef best_display_mode;
     uint32_t best_io_flags;
+    BOOL best_is_original;
 
     TRACE("%s %p %p 0x%08x %p\n", debugstr_w(devname), devmode, hwnd, flags, lpvoid);
 
@@ -748,16 +773,25 @@ LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
         TRACE(" %sinterlaced", devmode->dmDisplayFlags & DM_INTERLACED ? "" : "non-");
     TRACE("\n");
 
+    desc = create_original_display_mode_descriptor(displays[0].displayID);
+
     safe = -1;
     best_display_mode = NULL;
     count = CFArrayGetCount(display_modes);
     for (i = 0; i < count; i++)
     {
         CGDisplayModeRef display_mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(display_modes, i);
+        BOOL is_original = display_mode_matches_descriptor(display_mode, desc);
         uint32_t io_flags = CGDisplayModeGetIOFlags(display_mode);
         int mode_bpp = display_mode_bits_per_pixel(display_mode);
         size_t width = CGDisplayModeGetWidth(display_mode);
         size_t height = CGDisplayModeGetHeight(display_mode);
+
+        if (is_original && retina_enabled)
+        {
+            width *= 2;
+            height *= 2;
+        }
 
         if (!(io_flags & kDisplayModeValidFlag) || !(io_flags & kDisplayModeSafeFlag))
             continue;
@@ -817,6 +851,7 @@ better:
         best_display_mode = display_mode;
         best = safe;
         best_io_flags = io_flags;
+        best_is_original = is_original;
     }
 
     if (best_display_mode)
@@ -837,6 +872,12 @@ better:
             size_t width = CGDisplayModeGetWidth(best_display_mode);
             size_t height = CGDisplayModeGetHeight(best_display_mode);
 
+            if (best_is_original && retina_enabled)
+            {
+                width *= 2;
+                height *= 2;
+            }
+
             SendMessageW(GetDesktopWindow(), WM_MACDRV_UPDATE_DESKTOP_RECT, mode_bpp,
                          MAKELPARAM(width, height));
             ret = DISP_CHANGE_SUCCESSFUL;
@@ -854,6 +895,7 @@ better:
             bpp, devmode->dmDisplayFrequency);
     }
 
+    free_display_mode_descriptor(desc);
     CFRelease(display_modes);
     macdrv_free_displays(displays);
 
@@ -1082,6 +1124,16 @@ BOOL CDECL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode,
 
     devmode->dmPelsWidth = CGDisplayModeGetWidth(display_mode);
     devmode->dmPelsHeight = CGDisplayModeGetHeight(display_mode);
+    if (retina_enabled)
+    {
+        struct display_mode_descriptor* desc = create_original_display_mode_descriptor(displays[0].displayID);
+        if (display_mode_matches_descriptor(display_mode, desc))
+        {
+            devmode->dmPelsWidth *= 2;
+            devmode->dmPelsHeight *= 2;
+        }
+        free_display_mode_descriptor(desc);
+    }
     devmode->dmFields |= DM_PELSWIDTH | DM_PELSHEIGHT;
 
     devmode->dmDisplayFlags = 0;
@@ -1329,8 +1381,18 @@ void macdrv_displays_changed(const macdrv_event *event)
         size_t width = CGDisplayModeGetWidth(mode);
         size_t height = CGDisplayModeGetHeight(mode);
         int mode_bpp = display_mode_bits_per_pixel(mode);
+        struct display_mode_descriptor* desc = create_original_display_mode_descriptor(mainDisplay);
+        BOOL is_original = display_mode_matches_descriptor(mode, desc);
 
+        free_display_mode_descriptor(desc);
         CGDisplayModeRelease(mode);
+
+        if (is_original && retina_enabled)
+        {
+            width *= 2;
+            height *= 2;
+        }
+
         SendMessageW(hwnd, WM_MACDRV_UPDATE_DESKTOP_RECT, mode_bpp,
                      MAKELPARAM(width, height));
     }

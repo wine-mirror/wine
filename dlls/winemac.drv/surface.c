@@ -403,7 +403,7 @@ CGImageRef create_surface_image(void *window_surface, CGRect *rect, int copy_dat
         cgimage = CGImageCreate(CGRectGetWidth(visrect), CGRectGetHeight(visrect),
                                 8, 32, bytes_per_row, colorspace,
                                 alphaInfo | kCGBitmapByteOrder32Little,
-                                provider, NULL, FALSE, kCGRenderingIntentDefault);
+                                provider, NULL, retina_on, kCGRenderingIntentDefault);
         CGDataProviderRelease(provider);
         CGColorSpaceRelease(colorspace);
     }

@@ -51,6 +51,8 @@ static int desktop_vert_res;    /* height in pixels of virtual desktop */
 static int bits_per_pixel;      /* pixel depth of screen */
 static int device_data_valid;   /* do the above variables have up-to-date values? */
 
+int retina_on = FALSE;
+
 static CRITICAL_SECTION device_data_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
 {
@@ -94,6 +96,29 @@ static DWORD get_dpi(void)
 
 
 /***********************************************************************
+ *              compute_desktop_rect
+ */
+static void compute_desktop_rect(void)
+{
+    CGDirectDisplayID displayIDs[32];
+    uint32_t count, i;
+
+    desktop_rect = CGRectNull;
+    if (CGGetActiveDisplayList(sizeof(displayIDs)/sizeof(displayIDs[0]),
+                               displayIDs, &count) != kCGErrorSuccess ||
+        !count)
+    {
+        displayIDs[0] = CGMainDisplayID();
+        count = 1;
+    }
+
+    for (i = 0; i < count; i++)
+        desktop_rect = CGRectUnion(desktop_rect, CGDisplayBounds(displayIDs[i]));
+    desktop_rect = cgrect_win_from_mac(desktop_rect);
+}
+
+
+/***********************************************************************
  *              macdrv_get_desktop_rect
  *
  * Returns the rectangle encompassing all the screens.
@@ -101,27 +126,16 @@ static DWORD get_dpi(void)
 CGRect macdrv_get_desktop_rect(void)
 {
     CGRect ret;
-    CGDirectDisplayID displayIDs[32];
-    uint32_t count, i;
 
     EnterCriticalSection(&device_data_section);
 
     if (!device_data_valid)
     {
-        desktop_rect = CGRectNull;
-        if (CGGetActiveDisplayList(sizeof(displayIDs)/sizeof(displayIDs[0]),
-                                   displayIDs, &count) != kCGErrorSuccess ||
-            !count)
-        {
-            displayIDs[0] = CGMainDisplayID();
-            count = 1;
-        }
-
-        for (i = 0; i < count; i++)
-            desktop_rect = CGRectUnion(desktop_rect, CGDisplayBounds(displayIDs[i]));
+        check_retina_status();
+        compute_desktop_rect();
     }
-
     ret = desktop_rect;
+
     LeaveCriticalSection(&device_data_section);
 
     TRACE("%s\n", wine_dbgstr_cgrect(ret));
@@ -141,12 +155,23 @@ static void device_init(void)
     CGSize size_mm = CGDisplayScreenSize(mainDisplay);
     CGDisplayModeRef mode = CGDisplayCopyDisplayMode(mainDisplay);
 
+    check_retina_status();
+
     /* Initialize device caps */
     log_pixels_x = log_pixels_y = get_dpi();
     if (!log_pixels_x)
     {
         size_t width = CGDisplayPixelsWide(mainDisplay);
         size_t height = CGDisplayPixelsHigh(mainDisplay);
+
+        if (retina_on)
+        {
+            /* Although CGDisplayPixelsWide/High() claim to report in pixels, they
+               actually report in points. */
+            width *= 2;
+            height *= 2;
+        }
+
         log_pixels_x = MulDiv(width, 254, size_mm.width * 10);
         log_pixels_y = MulDiv(height, 254, size_mm.height * 10);
     }
@@ -181,7 +206,13 @@ static void device_init(void)
         vert_res = CGDisplayPixelsHigh(mainDisplay);
     }
 
-    macdrv_get_desktop_rect();
+    if (retina_on)
+    {
+        horz_res *= 2;
+        vert_res *= 2;
+    }
+
+    compute_desktop_rect();
     desktop_horz_res = desktop_rect.size.width;
     desktop_vert_res = desktop_rect.size.height;
 

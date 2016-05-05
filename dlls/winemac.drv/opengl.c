@@ -65,12 +65,15 @@ struct wgl_context
     CGLContextObj           cglcontext;
     HWND                    draw_hwnd;
     macdrv_view             draw_view;
+    RECT                    draw_rect;
     struct wgl_pbuffer     *draw_pbuffer;
     macdrv_view             read_view;
+    RECT                    read_rect;
     struct wgl_pbuffer     *read_pbuffer;
     BOOL                    has_been_current;
     BOOL                    sharing;
     LONG                    update_swap_interval;
+    LONG                    view_moved;
     DWORD                   last_flush_time;
     UINT                    major;
 };
@@ -1691,6 +1694,23 @@ done:
 
 
 /**********************************************************************
+ *              mark_contexts_for_moved_view
+ */
+static void mark_contexts_for_moved_view(macdrv_view view)
+{
+    struct wgl_context *context;
+
+    EnterCriticalSection(&context_section);
+    LIST_FOR_EACH_ENTRY(context, &context_list, struct wgl_context, entry)
+    {
+        if (context->draw_view == view)
+            InterlockedExchange(&context->view_moved, TRUE);
+    }
+    LeaveCriticalSection(&context_section);
+}
+
+
+/**********************************************************************
  *              set_gl_view_parent
  */
 void set_gl_view_parent(HWND hwnd, HWND parent)
@@ -1716,9 +1736,32 @@ void set_gl_view_parent(HWND hwnd, HWND parent)
         }
 
         macdrv_set_view_window_and_frame(data->gl_view, cocoa_window, cgrect_from_rect(data->gl_rect));
+        mark_contexts_for_moved_view(data->gl_view);
     }
 
     release_win_data(data);
+}
+
+
+/**********************************************************************
+ *              sync_context_rect
+ */
+static BOOL sync_context_rect(struct wgl_context *context)
+{
+    BOOL ret = FALSE;
+    if (InterlockedCompareExchange(&context->view_moved, FALSE, TRUE))
+    {
+        struct macdrv_win_data *data = get_win_data(context->draw_hwnd);
+
+        if (data && data->gl_view && data->gl_view == context->draw_view &&
+            memcmp(&context->draw_rect, &data->gl_rect, sizeof(context->draw_rect)))
+        {
+            context->draw_rect = data->gl_rect;
+            ret = TRUE;
+        }
+        release_win_data(data);
+    }
+    return ret;
 }
 
 
@@ -1728,27 +1771,46 @@ void set_gl_view_parent(HWND hwnd, HWND parent)
 static void make_context_current(struct wgl_context *context, BOOL read)
 {
     macdrv_view view;
+    RECT view_rect;
     struct wgl_pbuffer *pbuffer;
 
     if (read)
     {
         view = context->read_view;
+        view_rect = context->read_rect;
         pbuffer = context->read_pbuffer;
     }
     else
     {
+        sync_context_rect(context);
+
         view = context->draw_view;
+        view_rect = context->draw_rect;
         pbuffer = context->draw_pbuffer;
     }
 
     if (view || !pbuffer)
-        macdrv_make_context_current(context->context, view);
+        macdrv_make_context_current(context->context, view, cgrect_from_rect(view_rect));
     else
     {
+        GLint enabled;
+
+        if (CGLIsEnabled(context->cglcontext, kCGLCESurfaceBackingSize, &enabled) == kCGLNoError && enabled)
+            CGLDisable(context->cglcontext, kCGLCESurfaceBackingSize);
         CGLSetPBuffer(context->cglcontext, pbuffer->pbuffer, pbuffer->face,
                       pbuffer->level, 0);
         CGLSetCurrentContext(context->cglcontext);
     }
+}
+
+
+/**********************************************************************
+ *              sync_context
+ */
+static void sync_context(struct wgl_context *context)
+{
+    if (sync_context_rect(context))
+        make_context_current(context, FALSE);
 }
 
 
@@ -2275,6 +2337,7 @@ static void macdrv_glFinish(void)
     struct wgl_context *context = NtCurrentTeb()->glContext;
 
     sync_swap_interval(context);
+    sync_context(context);
     pglFinish();
 }
 
@@ -2287,6 +2350,7 @@ static void macdrv_glFlush(void)
     struct wgl_context *context = NtCurrentTeb()->glContext;
 
     sync_swap_interval(context);
+    sync_context(context);
 
     if (skip_single_buffer_flushes)
     {
@@ -2367,6 +2431,7 @@ static void macdrv_glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
     struct wgl_context *context = NtCurrentTeb()->glContext;
 
+    sync_context(context);
     macdrv_update_opengl_context(context->context);
     pglViewport(x, y, width, height);
 }
@@ -3552,7 +3617,7 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
 
     if (!context)
     {
-        macdrv_make_context_current(NULL, NULL);
+        macdrv_make_context_current(NULL, NULL, CGRectNull);
         NtCurrentTeb()->glContext = NULL;
         return TRUE;
     }
@@ -3585,6 +3650,7 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
 
         context->draw_hwnd = hwnd;
         context->draw_view = data->gl_view;
+        context->draw_rect = data->gl_rect;
         context->draw_pbuffer = NULL;
         release_win_data(data);
     }
@@ -3631,7 +3697,10 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
             if ((data = get_win_data(hwnd)))
             {
                 if (data->gl_view != context->draw_view)
+                {
                     context->read_view = data->gl_view;
+                    context->read_rect = data->gl_rect;
+                }
                 release_win_data(data);
             }
         }
@@ -3643,8 +3712,9 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
         }
     }
 
-    TRACE("making context current with draw_view %p draw_pbuffer %p read_view %p read_pbuffer %p format %u\n",
-          context->draw_view, context->draw_pbuffer, context->read_view, context->read_pbuffer, context->format);
+    TRACE("making context current with draw_view %p %s draw_pbuffer %p read_view %p %s read_pbuffer %p format %u\n",
+          context->draw_view, wine_dbgstr_rect(&context->draw_rect), context->draw_pbuffer,
+          context->read_view, wine_dbgstr_rect(&context->read_rect), context->read_pbuffer, context->format);
 
     make_context_current(context, FALSE);
     context->has_been_current = TRUE;
@@ -4361,6 +4431,7 @@ void sync_gl_view(struct macdrv_win_data *data)
         TRACE("Setting GL view %p frame to %s\n", data->gl_view, wine_dbgstr_rect(&rect));
         macdrv_set_view_window_and_frame(data->gl_view, NULL, cgrect_from_rect(rect));
         data->gl_rect = rect;
+        mark_contexts_for_moved_view(data->gl_view);
     }
 }
 
@@ -4607,7 +4678,10 @@ static BOOL macdrv_wglSwapBuffers(HDC hdc)
           (context ? context->cglcontext : NULL));
 
     if (context)
+    {
         sync_swap_interval(context);
+        sync_context(context);
+    }
 
     if ((hwnd = WindowFromDC(hdc)))
     {
