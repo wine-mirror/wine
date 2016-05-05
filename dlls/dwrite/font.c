@@ -1695,10 +1695,21 @@ static HRESULT WINAPI dwritefontlist1_GetFontFaceReference(IDWriteFontList1 *ifa
     IDWriteFontFaceReference **reference)
 {
     struct dwrite_fontlist *This = impl_from_IDWriteFontList1(iface);
+    IDWriteFont3 *font;
+    HRESULT hr;
 
-    FIXME("(%p)->(%u %p): stub\n", This, index, reference);
+    TRACE("(%p)->(%u %p)\n", This, index, reference);
 
-    return E_NOTIMPL;
+    *reference = NULL;
+
+    hr = IDWriteFontList1_GetFont(iface, index, &font);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IDWriteFont3_GetFontFaceReference(font, reference);
+    IDWriteFont3_Release(font);
+
+    return hr;
 }
 
 static const IDWriteFontList1Vtbl dwritefontlistvtbl = {

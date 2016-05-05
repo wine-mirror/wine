@@ -2941,7 +2941,12 @@ static void test_GetMatchingFonts(void)
 
     hr = IDWriteFontList_QueryInterface(fontlist, &IID_IDWriteFontList1, (void**)&fontlist1);
     if (hr == S_OK) {
+        IDWriteFontFaceReference *ref, *ref1;
         IDWriteFont3 *font;
+        UINT32 count;
+
+        count = IDWriteFontList1_GetFontCount(fontlist1);
+        ok(count > 0, "got %u\n", count);
 
         font = (void*)0xdeadbeef;
         hr = IDWriteFontList1_GetFont(fontlist1, ~0u, &font);
@@ -2949,7 +2954,7 @@ static void test_GetMatchingFonts(void)
         ok(font == NULL, "got %p\n", font);
 
         font = (void*)0xdeadbeef;
-        hr = IDWriteFontList1_GetFont(fontlist1, IDWriteFontList1_GetFontCount(fontlist1), &font);
+        hr = IDWriteFontList1_GetFont(fontlist1, count, &font);
         ok(hr == E_FAIL, "got 0x%08x\n", hr);
         ok(font == NULL, "got %p\n", font);
 
@@ -2957,6 +2962,15 @@ static void test_GetMatchingFonts(void)
         ok(hr == S_OK, "got 0x%08x\n", hr);
         IDWriteFont3_Release(font);
 
+        hr = IDWriteFontList1_GetFontFaceReference(fontlist1, 0, &ref);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontList1_GetFontFaceReference(fontlist1, 0, &ref1);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(ref != ref1, "got %p, %p\n", ref, ref1);
+
+        IDWriteFontFaceReference_Release(ref1);
+        IDWriteFontFaceReference_Release(ref);
         IDWriteFontList1_Release(fontlist1);
     }
     else
