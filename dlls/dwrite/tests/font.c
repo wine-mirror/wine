@@ -5853,6 +5853,7 @@ static void test_CreateFontFaceReference(void)
     UINT32 index;
     WCHAR *path;
     HRESULT hr;
+    BOOL ret;
 
     factory = create_factory();
 
@@ -5923,7 +5924,23 @@ todo_wine
     IDWriteFontFace3_Release(fontface);
     IDWriteFontFace3_Release(fontface1);
 
+    /* reference equality */
+    ret = IDWriteFontFaceReference_Equals(ref, ref1);
+    ok(ret, "got %d\n", ret);
     IDWriteFontFaceReference_Release(ref1);
+
+    hr = IDWriteFactory3_CreateFontFaceReference(factory3, path, NULL, 1, DWRITE_FONT_SIMULATIONS_NONE, &ref1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ret = IDWriteFontFaceReference_Equals(ref, ref1);
+    ok(!ret, "got %d\n", ret);
+    IDWriteFontFaceReference_Release(ref1);
+
+    hr = IDWriteFactory3_CreateFontFaceReference(factory3, path, NULL, 0, DWRITE_FONT_SIMULATIONS_BOLD, &ref1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ret = IDWriteFontFaceReference_Equals(ref, ref1);
+    ok(!ret, "got %d\n", ret);
+    IDWriteFontFaceReference_Release(ref1);
+
     IDWriteFontFaceReference_Release(ref);
 
     /* create reference from a file */

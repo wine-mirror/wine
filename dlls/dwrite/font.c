@@ -5416,7 +5416,9 @@ static BOOL WINAPI fontfacereference_Equals(IDWriteFontFaceReference *iface, IDW
     if (FAILED(IDWriteFontFaceReference_GetFontFile(ref, &file)))
         return FALSE;
 
-    ret = is_same_fontfile(This->file, file);
+    ret = is_same_fontfile(This->file, file) &&
+        This->index == IDWriteFontFaceReference_GetFontFaceIndex(ref) &&
+        This->simulations == IDWriteFontFaceReference_GetSimulations(ref);
     IDWriteFontFile_Release(file);
 
     return ret;
