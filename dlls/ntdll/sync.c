@@ -856,7 +856,7 @@ NTSTATUS WINAPI NtSetTimer(IN HANDLE handle,
 {
     NTSTATUS    status = STATUS_SUCCESS;
 
-    TRACE("(%p,%p,%p,%p,%08x,0x%08x,%p) stub\n",
+    TRACE("(%p,%p,%p,%p,%08x,0x%08x,%p)\n",
           handle, when, callback, callback_arg, resume, period, state);
 
     SERVER_START_REQ( set_timer )
