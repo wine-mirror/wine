@@ -839,6 +839,9 @@ static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory3 *iface,
     if (req_facetype != DWRITE_FONT_FACE_TYPE_TRUETYPE_COLLECTION && index)
         return E_INVALIDARG;
 
+    if (!is_simulation_valid(simulations))
+        return E_INVALIDARG;
+
     /* check actual file/face type */
     is_supported = FALSE;
     face_type = DWRITE_FONT_FACE_TYPE_UNKNOWN;

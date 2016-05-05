@@ -111,6 +111,12 @@ static inline FLOAT get_scaled_advance_width(INT32 advance, FLOAT emSize, const 
     return (FLOAT)advance * emSize / (FLOAT)metrics->designUnitsPerEm;
 }
 
+static inline BOOL is_simulation_valid(DWRITE_FONT_SIMULATIONS simulations)
+{
+    return (simulations & ~(DWRITE_FONT_SIMULATIONS_NONE | DWRITE_FONT_SIMULATIONS_BOLD |
+        DWRITE_FONT_SIMULATIONS_OBLIQUE)) == 0;
+}
+
 struct gdiinterop
 {
     IDWriteGdiInterop1 IDWriteGdiInterop1_iface;

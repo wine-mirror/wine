@@ -1524,6 +1524,13 @@ if (0) /* crashes on native */
     ok(face_type == DWRITE_FONT_FACE_TYPE_TRUETYPE, "got %i\n", face_type);
     ok(count == 1, "got %i\n", count);
 
+    /* invalid simulation flags */
+    hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_CFF, 1, &file, 0, ~0u, &fontface);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_CFF, 1, &file, 0, 0xf, &fontface);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
     /* try mismatching face type, the one that's not supported */
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_CFF, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
     ok(hr == DWRITE_E_FILEFORMAT, "got 0x%08x\n", hr);
@@ -5869,7 +5876,11 @@ static void test_CreateFontFaceReference(void)
     hr = IDWriteFactory3_CreateFontFaceReference(factory3, NULL, NULL, 0, DWRITE_FONT_SIMULATIONS_NONE, &ref);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
-    /* test file is not a collection, but reference could still be created */
+    /* out of range simulation flags */
+    hr = IDWriteFactory3_CreateFontFaceReference(factory3, path, NULL, 0, ~0u, &ref);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    /* test file is not a collection, but reference could still be created with non-zero face index */
     hr = IDWriteFactory3_CreateFontFaceReference(factory3, path, NULL, 1, DWRITE_FONT_SIMULATIONS_NONE, &ref);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 

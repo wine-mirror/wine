@@ -5568,6 +5568,9 @@ HRESULT create_fontfacereference(IDWriteFactory3 *factory, IDWriteFontFile *file
 
     *ret = NULL;
 
+    if (!is_simulation_valid(simulations))
+        return E_INVALIDARG;
+
     ref = heap_alloc(sizeof(*ref));
     if (!ref)
         return E_OUTOFMEMORY;
