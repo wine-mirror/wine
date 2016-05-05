@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-04-20 20:39+0200\n"
+"PO-Revision-Date: 2016-05-05 21:44+0200\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: Ukrainian\n"
 "Language: uk\n"
@@ -2918,7 +2918,7 @@ msgstr "Ви можете захистити паролем приватний �
 
 #: cryptui.rc:174
 msgid "The passwords do not match."
-msgstr "Паролі не співпадають."
+msgstr "Паролі не збігаються."
 
 #: cryptui.rc:175
 msgid "Note: The private key for this certificate could not be opened."
@@ -11735,7 +11735,7 @@ msgstr ""
 
 #: reg.rc:55
 msgid "Search complete. Number of matches found: %1!d!\n"
-msgstr ""
+msgstr "Пошук завершено. Знайдено збігів: %1!d!\n"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -13179,8 +13179,6 @@ msgstr ""
 "цих вкладках як для окремої програми, так і глобально."
 
 #: winecfg.rc:159
-#, fuzzy
-#| msgid "&Add application..."
 msgid "Add appli&cation..."
 msgstr "&Додати програму..."
 
@@ -13307,7 +13305,7 @@ msgstr "&Шлях:"
 
 #: winecfg.rc:248 winecfg.rc:38
 msgid "Show Advan&ced"
-msgstr "Показати &додат. налаштування"
+msgstr "Показати &додат. налашт."
 
 #: winecfg.rc:249
 msgid "De&vice:"
@@ -13407,7 +13405,7 @@ msgstr "Будь ласка, виберіть цільову теку Unix."
 
 #: winecfg.rc:37
 msgid "Hide Advan&ced"
-msgstr "Сховати &додат. налаштування"
+msgstr "Сховати &додат. налашт."
 
 #: winecfg.rc:39
 msgid "(No Theme)"
