@@ -1994,13 +1994,24 @@ static HRESULT WINAPI dwritefontfamily1_GetFont(IDWriteFontFamily1 *iface, UINT3
 }
 
 static HRESULT WINAPI dwritefontfamily1_GetFontFaceReference(IDWriteFontFamily1 *iface, UINT32 index,
-    IDWriteFontFaceReference **ref)
+    IDWriteFontFaceReference **reference)
 {
     struct dwrite_fontfamily *This = impl_from_IDWriteFontFamily1(iface);
+    IDWriteFont3 *font;
+    HRESULT hr;
 
-    FIXME("(%p)->(%u %p): stub\n", This, index, ref);
+    TRACE("(%p)->(%u %p)\n", This, index, reference);
 
-    return E_NOTIMPL;
+    *reference = NULL;
+
+    hr = IDWriteFontFamily1_GetFont(iface, index, &font);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IDWriteFont3_GetFontFaceReference(font, reference);
+    IDWriteFont3_Release(font);
+
+    return hr;
 }
 
 static const IDWriteFontFamily1Vtbl fontfamilyvtbl = {

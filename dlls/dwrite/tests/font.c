@@ -1265,6 +1265,7 @@ if (0) /* crashes on native */
 
     hr = IDWriteFontFamily_QueryInterface(family, &IID_IDWriteFontFamily1, (void**)&family1);
     if (hr == S_OK) {
+        IDWriteFontFaceReference *ref, *ref1;
         IDWriteFontList *fontlist;
         IDWriteFont3 *font3;
         IDWriteFont1 *font1;
@@ -1293,6 +1294,17 @@ if (0) /* crashes on native */
         IDWriteFontList_Release(fontlist);
 
         IDWriteFont3_Release(font3);
+
+        hr = IDWriteFontFamily1_GetFontFaceReference(family1, 0, &ref);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontFamily1_GetFontFaceReference(family1, 0, &ref1);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(ref != ref1, "got %p, %p\n", ref, ref1);
+
+        IDWriteFontFaceReference_Release(ref);
+        IDWriteFontFaceReference_Release(ref1);
+
         IDWriteFontFamily1_Release(family1);
     }
     else
