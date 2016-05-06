@@ -2124,6 +2124,32 @@ static struct strarray get_shared_lib_names( const char *libname )
 
 
 /*******************************************************************
+ *         output_symlink_rule
+ *
+ * Output a rule to create a symlink.
+ */
+static void output_symlink_rule( const char *src_name, const char *link_name )
+{
+    const char *name;
+
+    output( "\trm -f %s && ", link_name );
+
+    /* dest path with a directory needs special handling if ln -s isn't supported */
+    if (strcmp( ln_s, "ln -s" ) && ((name = strrchr( link_name, '/' ))))
+    {
+        char *dir = xstrdup( link_name );
+        dir[name - link_name] = 0;
+        output( "cd %s && %s %s %s\n", *dir ? dir : "/", ln_s, src_name, name + 1 );
+        free( dir );
+    }
+    else
+    {
+        output( "%s %s %s\n", ln_s, src_name, link_name );
+    }
+}
+
+
+/*******************************************************************
  *         output_install_rules
  *
  * Rules are stored as a (file,dest) pair of values.
@@ -2192,7 +2218,7 @@ static struct strarray output_install_rules( const struct makefile *make, struct
                     install_sh, tools_dir_path( make, file ), dest );
             break;
         case 'y':  /* symlink */
-            output( "\trm -f %s && %s %s %s\n", dest, ln_s, file, dest );
+            output_symlink_rule( file, dest );
             break;
         default:
             assert(0);
@@ -2213,7 +2239,7 @@ static struct strarray output_importlib_symlinks( const struct makefile *parent,
                                                   const struct makefile *make )
 {
     struct strarray ret = empty_strarray;
-    const char *dir, *lib;
+    const char *lib, *dst;
 
     if (!make->module) return ret;
     if (!make->importlib) return ret;
@@ -2225,18 +2251,19 @@ static struct strarray output_importlib_symlinks( const struct makefile *parent,
         !strcmp( make->module + strlen( make->importlib ), ".dll" ))
         return ret;
 
-    dir = obj_dir_path( parent, "dlls" );
     lib = strmake( "lib%s.%s", make->importlib, *dll_ext ? "def" : "a" );
-    output( "%s/%s: %s\n", dir, lib, base_dir_path( make, lib ));
-    output( "\trm -f $@ && %s %s/%s $@\n", ln_s, make->base_dir + strlen("dlls/"), lib );
-    strarray_add( &ret, strmake( "%s/%s", dir, lib ));
+    dst = concat_paths( obj_dir_path( parent, "dlls" ), lib );
+    output( "%s: %s\n", dst, base_dir_path( make, lib ));
+    output_symlink_rule( concat_paths( make->base_dir + strlen("dlls/"), lib ), dst );
+    strarray_add( &ret, dst );
 
     if (crosstarget && !make->is_win16)
     {
         lib = strmake( "lib%s.cross.a", make->importlib );
-        output( "%s/%s: %s\n", dir, lib, base_dir_path( make, lib ));
-        output( "\trm -f $@ && %s %s/%s $@\n", ln_s, make->base_dir + strlen("dlls/"), lib );
-        strarray_add( &ret, strmake( "%s/%s", dir, lib ));
+        dst = concat_paths( obj_dir_path( parent, "dlls" ), lib );
+        output( "%s: %s\n", dst, base_dir_path( make, lib ));
+        output_symlink_rule( concat_paths( make->base_dir + strlen("dlls/"), lib ), dst );
+        strarray_add( &ret, dst );
     }
     return ret;
 }
@@ -2881,7 +2908,7 @@ static struct strarray output_sources( const struct makefile *make )
         for (i = 1; i < names.count; i++)
         {
             output( "%s: %s\n", obj_dir_path( make, names.str[i] ), obj_dir_path( make, names.str[i-1] ));
-            output( "\trm -f $@ && %s %s $@\n", ln_s, names.str[i-1] );
+            output_symlink_rule( obj_dir_path( make, names.str[i-1] ), obj_dir_path( make, names.str[i] ));
             add_install_rule( make, install_rules, names.str[i], names.str[i-1],
                               strmake( "y$(libdir)/%s", names.str[i] ));
         }
@@ -3049,13 +3076,12 @@ static struct strarray output_sources( const struct makefile *make )
         output( "\n" );
         strarray_add( &all_targets, program );
 
-        if (symlinks.count)
+        for (j = 0; j < symlinks.count; j++)
         {
-            output_filenames_obj_dir( make, symlinks );
-            output( ": %s\n", obj_dir_path( make, program ));
-            output( "\trm -f $@ && %s %s $@\n", ln_s, obj_dir_path( make, program ));
-            strarray_addall( &all_targets, symlinks );
+            output( "%s: %s\n", obj_dir_path( make, symlinks.str[j] ), obj_dir_path( make, program ));
+            output_symlink_rule( obj_dir_path( make, program ), obj_dir_path( make, symlinks.str[j] ));
         }
+        strarray_addall( &all_targets, symlinks );
 
         add_install_rule( make, install_rules, program, program_installed ? program_installed : program,
                           strmake( "p$(bindir)/%s", program ));
