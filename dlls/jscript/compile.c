@@ -872,17 +872,11 @@ static HRESULT compile_object_literal(compiler_ctx_t *ctx, property_value_expres
     return S_OK;
 }
 
-static HRESULT compile_function_expression(compiler_ctx_t *ctx, function_expression_t *expr)
+static HRESULT compile_function_expression(compiler_ctx_t *ctx, function_expression_t *expr, BOOL emit_ret)
 {
+    unsigned func_id = ctx->func->func_cnt++;
     ctx->func_tail = ctx->func_tail ? (ctx->func_tail->next = expr) : (ctx->func_head = expr);
-
-    /* FIXME: not exactly right */
-    if(expr->identifier && !expr->event_target) {
-        ctx->func->func_cnt++;
-        return push_instr_bstr(ctx, OP_ident, expr->identifier);
-    }
-
-    return push_instr_uint(ctx, OP_func, ctx->func->func_cnt++);
+    return emit_ret ? push_instr_uint(ctx, OP_func, func_id) : S_OK;
 }
 
 static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr, BOOL emit_ret)
@@ -967,8 +961,7 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr, BOOL 
         hres = compile_binary_expression(ctx, (binary_expression_t*)expr, OP_eq2);
         break;
     case EXPR_FUNC:
-        hres = compile_function_expression(ctx, (function_expression_t*)expr);
-        break;
+        return compile_function_expression(ctx, (function_expression_t*)expr, emit_ret);
     case EXPR_GREATER:
         hres = compile_binary_expression(ctx, (binary_expression_t*)expr, OP_gt);
         break;

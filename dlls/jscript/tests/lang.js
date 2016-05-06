@@ -232,6 +232,58 @@ testNoRes(), testNoRes();
 
 tmp = (function(){ return testNoRes(), testRes();})();
 
+var f1, f2;
+
+ok(funcexpr() == 2, "funcexpr() = " + funcexpr());
+
+f1 = function funcexpr() { return 1; }
+ok(f1 != funcexpr, "f1 == funcexpr");
+ok(f1() === 1, "f1() = " + f1());
+
+f2 = function funcexpr() { return 2; }
+ok(f2 != funcexpr, "f2 != funcexpr");
+ok(f2() === 2, "f2() = " + f2());
+
+f1 = null;
+for(i = 0; i < 3; i++) {
+    f2 = function funcexpr2() {};
+    ok(f1 != f2, "f1 == f2");
+    f1 = f2;
+}
+
+f1 = null;
+for(i = 0; i < 3; i++) {
+    f2 = function() {};
+    ok(f1 != f2, "f1 == f2");
+    f1 = f2;
+}
+
+(function() {
+    ok(infuncexpr() == 2, "infuncexpr() = " + infuncexpr());
+
+    f1 = function infuncexpr() { return 1; }
+    ok(f1 != funcexpr, "f1 == funcexpr");
+    ok(f1() === 1, "f1() = " + f1());
+
+    f2 = function infuncexpr() { return 2; }
+    ok(f2 != funcexpr, "f2 != funcexpr");
+    ok(f2() === 2, "f2() = " + f2());
+
+    f1 = null;
+    for(i = 0; i < 3; i++) {
+        f2 = function infuncexpr2() {};
+        ok(f1 != f2, "f1 == f2");
+        f1 = f2;
+    }
+
+    f1 = null;
+    for(i = 0; i < 3; i++) {
+        f2 = function() {};
+        ok(f1 != f2, "f1 == f2");
+        f1 = f2;
+    }
+})();
+
 var obj1 = new Object();
 ok(typeof(obj1) === "object", "typeof(obj1) is not object");
 ok(obj1.constructor === Object, "unexpected obj1.constructor");
