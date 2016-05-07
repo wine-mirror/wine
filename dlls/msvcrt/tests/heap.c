@@ -474,8 +474,9 @@ static void test_calloc(void)
 
     errno = 0;
     ptr = calloc(~(size_t)0 / 2, ~(size_t)0 / 2);
-    ok(ptr == NULL, "got %p\n", ptr);
+    ok(ptr == NULL || broken(ptr != NULL) /* winxp sp0 */, "got %p\n", ptr);
     ok(errno == ENOMEM || broken(errno == 0) /* winxp, win2k3 */, "got errno %d\n", errno);
+    free(ptr);
 }
 
 START_TEST(heap)
