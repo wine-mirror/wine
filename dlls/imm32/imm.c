@@ -2218,11 +2218,10 @@ BOOL WINAPI ImmSetCandidateWindow(
     if (IMM_IsCrossThreadAccess(NULL, hIMC))
         return FALSE;
 
-    TRACE("\t%x, %x, (%i,%i), (%i,%i - %i,%i)\n",
-            lpCandidate->dwIndex, lpCandidate->dwStyle,
-            lpCandidate->ptCurrentPos.x, lpCandidate->ptCurrentPos.y,
-            lpCandidate->rcArea.top, lpCandidate->rcArea.left,
-            lpCandidate->rcArea.bottom, lpCandidate->rcArea.right);
+    TRACE("\t%x, %x, %s, %s\n",
+          lpCandidate->dwIndex, lpCandidate->dwStyle,
+          wine_dbgstr_point(&lpCandidate->ptCurrentPos),
+          wine_dbgstr_rect(&lpCandidate->rcArea));
 
     if ( lpCandidate->dwIndex >= (sizeof(data->IMC.cfCandForm) / sizeof(CANDIDATEFORM)) )
         return FALSE;
@@ -2409,9 +2408,9 @@ BOOL WINAPI ImmSetCompositionWindow(
 
     TRACE("(%p, %p)\n", hIMC, lpCompForm);
     if (lpCompForm)
-        TRACE("\t%x, (%i,%i), (%i,%i - %i,%i)\n",lpCompForm->dwStyle,
-              lpCompForm->ptCurrentPos.x, lpCompForm->ptCurrentPos.y, lpCompForm->rcArea.top,
-              lpCompForm->rcArea.left, lpCompForm->rcArea.bottom, lpCompForm->rcArea.right);
+        TRACE("\t%x, %s, %s\n", lpCompForm->dwStyle,
+              wine_dbgstr_point(&lpCompForm->ptCurrentPos),
+              wine_dbgstr_rect(&lpCompForm->rcArea));
 
     if (!data)
     {
@@ -2534,7 +2533,7 @@ BOOL WINAPI ImmSetStatusWindowPos(HIMC hIMC, LPPOINT lpptPos)
     if (IMM_IsCrossThreadAccess(NULL, hIMC))
         return FALSE;
 
-    TRACE("\t(%i,%i)\n", lpptPos->x, lpptPos->y);
+    TRACE("\t%s\n", wine_dbgstr_point(lpptPos));
 
     data->IMC.ptStatusWndPos = *lpptPos;
     ImmNotifyIME( hIMC, NI_CONTEXTUPDATED, 0, IMC_SETSTATUSWINDOWPOS);
