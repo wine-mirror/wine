@@ -2408,9 +2408,10 @@ BOOL WINAPI ImmSetCompositionWindow(
     InputContextData *data = get_imc_data(hIMC);
 
     TRACE("(%p, %p)\n", hIMC, lpCompForm);
-    TRACE("\t%x, (%i,%i), (%i,%i - %i,%i)\n",lpCompForm->dwStyle,
-          lpCompForm->ptCurrentPos.x, lpCompForm->ptCurrentPos.y, lpCompForm->rcArea.top,
-          lpCompForm->rcArea.left, lpCompForm->rcArea.bottom, lpCompForm->rcArea.right);
+    if (lpCompForm)
+        TRACE("\t%x, (%i,%i), (%i,%i - %i,%i)\n",lpCompForm->dwStyle,
+              lpCompForm->ptCurrentPos.x, lpCompForm->ptCurrentPos.y, lpCompForm->rcArea.top,
+              lpCompForm->rcArea.left, lpCompForm->rcArea.bottom, lpCompForm->rcArea.right);
 
     if (!data)
     {
