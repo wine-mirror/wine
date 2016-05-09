@@ -105,8 +105,8 @@ static void get_file_name(CHAR **command_line, CHAR *file_name)
         }
     }
     memcpy(file_name, *command_line, pos * sizeof((*command_line)[0]));
-    /* remove the last backslash */
-    if (file_name[pos - 1] == '\\') {
+    /* Terminate the string and remove the trailing backslash */
+    if (pos > 0 && file_name[pos - 1] == '\\') {
         file_name[pos - 1] = '\0';
     } else {
         file_name[pos] = '\0';
