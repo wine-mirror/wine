@@ -11751,7 +11751,7 @@ static void stream_test(void)
     hr = IDirect3DDevice9_CreateVertexShader(device, shader_code, &shader);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateVertexShader failed hr=%08x\n", hr);
     if(!shader) {
-        skip("Failed to create a vetex shader\n");
+        skip("Failed to create a vertex shader.\n");
         goto out;
     }
 
