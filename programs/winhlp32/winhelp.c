@@ -986,6 +986,7 @@ static BOOL WINHELP_CheckPopup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
         popup = Globals.active_popup;
         Globals.active_popup = NULL;
         WINHELP_ReleaseWindow(popup);
+        if (lret) *lret = 1;
         return TRUE;
     }
     return FALSE;
