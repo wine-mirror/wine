@@ -3664,7 +3664,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       editor->hbrBackground = CreateSolidBrush(editor->rgbBackColor);
     }
     ITextHost_TxInvalidateRect(editor->texthost, NULL, TRUE);
-    ITextHost_TxViewChange(editor->texthost, TRUE);
     return lColor;
   }
   case EM_GETMODIFY:
