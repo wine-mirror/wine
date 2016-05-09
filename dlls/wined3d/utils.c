@@ -3875,7 +3875,7 @@ const char *debug_d3dtexturefiltertype(enum wined3d_texture_filter_type filter_t
         D3DTEXTUREFILTERTYPE_TO_STR(WINED3D_TEXF_GAUSSIAN_QUAD);
 #undef D3DTEXTUREFILTERTYPE_TO_STR
         default:
-            FIXME("Unrecognied texture filter type 0x%08x.\n", filter_type);
+            FIXME("Unrecognized texture filter type 0x%08x.\n", filter_type);
             return "unrecognized";
     }
 }
@@ -4113,7 +4113,7 @@ const char *debug_fbostatus(GLenum status) {
         FBOSTATUS_TO_STR(GL_FRAMEBUFFER_UNDEFINED);
 #undef FBOSTATUS_TO_STR
         default:
-            FIXME("Unrecognied FBO status 0x%08x\n", status);
+            FIXME("Unrecognized FBO status 0x%08x.\n", status);
             return "unrecognized";
     }
 }
@@ -4131,7 +4131,7 @@ const char *debug_glerror(GLenum error) {
         GLERROR_TO_STR(GL_INVALID_FRAMEBUFFER_OPERATION);
 #undef GLERROR_TO_STR
         default:
-            FIXME("Unrecognied GL error 0x%08x\n", error);
+            FIXME("Unrecognized GL error 0x%08x.\n", error);
             return "unrecognized";
     }
 }
