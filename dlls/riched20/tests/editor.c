@@ -8337,6 +8337,17 @@ static void test_rtf_specials(void)
     DestroyWindow( edit );
 }
 
+static void test_background(void)
+{
+    HWND hwndRichEdit = new_richedit(NULL);
+
+    /* set the background color to black */
+    ValidateRect(hwndRichEdit, NULL);
+    SendMessageA(hwndRichEdit, EM_SETBKGNDCOLOR, FALSE, RGB(0, 0, 0));
+    ok(GetUpdateRect(hwndRichEdit, NULL, FALSE), "Update rectangle is empty!\n");
+
+    DestroyWindow(hwndRichEdit);
+}
 
 START_TEST( editor )
 {
@@ -8408,6 +8419,7 @@ START_TEST( editor )
   test_EM_SETFONTSIZE();
   test_alignment_style();
   test_rtf_specials();
+  test_background();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
