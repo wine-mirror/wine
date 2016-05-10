@@ -86,9 +86,9 @@ LCID* __cdecl ___lc_handle_func(void);
 
 #define locale_string_wchar _Yarn_wchar
 #define locale_string_wchar_ctor(this)           _Yarn_wchar_ctor(this)
-#define locale_string_wchar_ctor_cstr(this,str)  _Yarn_wchar_ctor(this); _Yarn_wchar_op_assign_cstr(this,str)
 #define locale_string_wchar_dtor(this)           _Yarn_wchar_dtor(this)
 #define locale_string_wchar_c_str(this)          _Yarn_wchar__C_str(this)
+#define locale_string_wchar_assign(this,str)     _Yarn_wchar_op_assign_cstr(this,str)
 #endif
 
 typedef int category;
@@ -850,8 +850,7 @@ const wchar_t* __thiscall _Locinfo__W_Getdays(const _Locinfo *this)
     TRACE("(%p)\n", this);
 
     if(wdays) {
-        locale_string_wchar_dtor((locale_string_wchar *)&this->wdays);
-        locale_string_wchar_ctor_cstr((locale_string_wchar *)&this->wdays, wdays);
+        locale_string_wchar_assign((locale_string_wchar *)&this->wdays, wdays);
         free(wdays);
     }
 
@@ -886,8 +885,7 @@ const wchar_t* __thiscall _Locinfo__W_Getmonths(const _Locinfo *this)
     TRACE("(%p)\n", this);
 
     if(wmonths) {
-        locale_string_wchar_dtor((locale_string_wchar *)&this->wmonths);
-        locale_string_wchar_ctor_cstr((locale_string_wchar *)&this->wmonths, wmonths);
+        locale_string_wchar_assign((locale_string_wchar *)&this->wmonths, wmonths);
         free(wmonths);
     }
 
