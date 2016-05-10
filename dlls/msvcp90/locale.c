@@ -69,6 +69,7 @@ LCID* __cdecl ___lc_handle_func(void);
 
 #if _MSVCP_VER < 100
 #define locale_string basic_string_char
+#define locale_string_char_ctor(this)           MSVCP_basic_string_char_ctor(this)
 #define locale_string_char_ctor_cstr(this,str)  MSVCP_basic_string_char_ctor_cstr(this,str)
 #define locale_string_char_copy_ctor(this,copy) MSVCP_basic_string_char_copy_ctor(this,copy)
 #define locale_string_char_dtor(this)           MSVCP_basic_string_char_dtor(this)
@@ -76,6 +77,7 @@ LCID* __cdecl ___lc_handle_func(void);
 #define locale_string_char_assign(this,assign)  MSVCP_basic_string_char_assign(this,assign)
 #else
 #define locale_string _Yarn_char
+#define locale_string_char_ctor(this)           _Yarn_char_ctor(this)
 #define locale_string_char_ctor_cstr(this,str)  _Yarn_char_ctor_cstr(this,str)
 #define locale_string_char_copy_ctor(this,copy) _Yarn_char_copy_ctor(this,copy)
 #define locale_string_char_dtor(this)           _Yarn_char_dtor(this)
@@ -512,9 +514,6 @@ void* __thiscall _Timevec__Getptr(_Timevec *this)
 _Locinfo* __cdecl _Locinfo__Locinfo_ctor_cat_cstr(_Locinfo *locinfo, int category, const char *locstr)
 {
     const char *locale = NULL;
-#if _MSVCP_VER >= 110
-    static const wchar_t empty[] = { '\0' };
-#endif
 
     /* This function is probably modifying more global objects */
     FIXME("(%p %d %s) semi-stub\n", locinfo, category, locstr);
@@ -523,11 +522,11 @@ _Locinfo* __cdecl _Locinfo__Locinfo_ctor_cat_cstr(_Locinfo *locinfo, int categor
         throw_exception(EXCEPTION_RUNTIME_ERROR, "bad locale name");
 
     _Lockit_ctor_locktype(&locinfo->lock, _LOCK_LOCALE);
-    locale_string_char_ctor_cstr(&locinfo->days, "");
-    locale_string_char_ctor_cstr(&locinfo->months, "");
+    locale_string_char_ctor(&locinfo->days);
+    locale_string_char_ctor(&locinfo->months);
 #if _MSVCP_VER >= 110
-    locale_string_wchar_ctor_cstr(&locinfo->wdays, empty);
-    locale_string_wchar_ctor_cstr(&locinfo->wmonths, empty);
+    locale_string_wchar_ctor(&locinfo->wdays);
+    locale_string_wchar_ctor(&locinfo->wmonths);
 #endif
     locale_string_char_ctor_cstr(&locinfo->oldlocname, setlocale(LC_ALL, NULL));
 

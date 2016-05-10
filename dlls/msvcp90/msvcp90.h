@@ -142,6 +142,7 @@ typedef struct
     char null_str;
 } _Yarn_char;
 
+_Yarn_char* __thiscall _Yarn_char_ctor(_Yarn_char*);
 _Yarn_char* __thiscall _Yarn_char_ctor_cstr(_Yarn_char*, const char*);
 _Yarn_char* __thiscall _Yarn_char_copy_ctor(_Yarn_char*, const _Yarn_char*);
 const char* __thiscall _Yarn_char_c_str(const _Yarn_char*);
