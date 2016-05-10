@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-01-11 12:42+0100\n"
+"PO-Revision-Date: 2016-05-10 18:09+0200\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -11646,116 +11646,86 @@ msgid "The operation completed successfully\n"
 msgstr "Der Vorgang wurde erfolgreich abgeschlossen\n"
 
 #: reg.rc:35
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid key name\n"
-msgstr "Fehler: Ungültiger Schlüssel\n"
+msgstr "reg: Ungültiger Schlüsselname\n"
 
 #: reg.rc:36
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "reg: Invalid command line parameters\n"
-msgstr "Fehler: Ungültige Befehlszeilenargumente\n"
+msgstr "reg: Ungültige Befehlszeilenargumente\n"
 
 #: reg.rc:37
-#, fuzzy
-#| msgid "Error: Unable to access remote machine\n"
 msgid "reg: Unable to access remote machine\n"
-msgstr "Fehler: Auf den Remoterechner kann nicht zugegriffen werden\n"
+msgstr "reg: Auf den Remoterechner kann nicht zugegriffen werden\n"
 
 #: reg.rc:38
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
 "reg: The system was unable to find the specified registry key or value\n"
 msgstr ""
-"Fehler: Der angegebene Schlüssel oder Wert konnte nicht gefunden werden\n"
+"reg: Das System konnte den angegebenen Schlüssel oder Wert nicht finden\n"
 
 #: reg.rc:39
-#, fuzzy
-#| msgid "Error: Unsupported type\n"
 msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "Fehler: Nicht unterstützter Typ\n"
+msgstr "reg: Nicht unterstützter Registrierungsdatentyp [%1]\n"
 
 #: reg.rc:40
-#, fuzzy
-#| msgid ""
-#| "uninstaller: The option '--remove' must be followed by an application "
-#| "GUID\n"
 msgid "reg: The option [/d] must be followed by a valid integer\n"
-msgstr ""
-"Uninstaller: Auf die Option '--remove' muss eine Anwendungs-GUID folgen\n"
+msgstr "reg: Auf die Option [/d] muss eine gültige Ganzzahl folgen\n"
 
 #: reg.rc:41
-#, fuzzy
-#| msgid ""
-#| "uninstaller: The option '--remove' must be followed by an application "
-#| "GUID\n"
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
-msgstr ""
-"Uninstaller: Auf die Option '--remove' muss eine Anwendungs-GUID folgen\n"
+msgstr "reg: Auf die Option [/d] muss ein gültiger Hexadezimalwert folgen\n"
 
 #: reg.rc:42
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
-msgstr ""
+msgstr "reg: Unbehandelter Registrierungsdatentyp [/t 0x%1!x!, /d %2]\n"
 
 #: reg.rc:43
-#, fuzzy
-#| msgid "The specified file already exists. Do you want to replace it?"
 msgid "The registry value '%1' already exists. Do you want to overwrite it?"
-msgstr "Die angegebene Datei existiert bereits. Möchten Sie sie ersetzen?"
+msgstr "Der Wert '%1' existiert bereits. Möchten Sie ihn ersetzen?"
 
 #: reg.rc:47
 msgid "The registry operation was cancelled\n"
-msgstr ""
+msgstr "Der Registrierungsvorgang wurde abgebrochen\n"
 
 #: reg.rc:48 regedit.rc:204
 msgid "(Default)"
 msgstr "(Standard)"
 
 #: reg.rc:49
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
-msgstr "Möchten Sie diese Werte wirklich löschen?"
+msgstr "Sind Sie sicher, dass Sie den Wert '%1' löschen möchten?"
 
 #: reg.rc:50
-#, fuzzy
-#| msgid "Are you sure you want to delete value '%s'?"
 msgid "Are you sure you want to delete all registry values in '%1'?"
-msgstr "Möchten Sie den Wert '%s' wirklich löschen?"
+msgstr "Sind Sie sicher, dass Sie alle Werte in '%1' löschen möchten?"
 
 #: reg.rc:51
-#, fuzzy
-#| msgid "Are you sure you want to delete '%1'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
-msgstr "Sind Sie sicher, dass Sie '%1' löschen möchten?"
+msgstr "Sind Sie sicher, dass Sie den Schlüssel '%1' löschen möchten?"
 
 #: reg.rc:52
-#, fuzzy
-#| msgid ""
-#| "uninstaller: The option '--remove' must be followed by an application "
-#| "GUID\n"
 msgid "reg: The option [/d] must be followed by a valid string\n"
-msgstr ""
-"Uninstaller: Auf die Option '--remove' muss eine Anwendungs-GUID folgen\n"
+msgstr "reg: Auf die Option [/d] muss eine gültige Zeichenkette folgen\n"
 
 #: reg.rc:53
 msgid ""
 "reg: Unable to delete all registry values in '%1'. An unexpected error "
 "occurred.\n"
 msgstr ""
+"reg: Es konnten nicht alle Werte in '%1' gelöscht werden. Es ist ein "
+"unerwarteter Fehler aufgetreten.\n"
 
 #: reg.rc:54
 msgid ""
 "reg: Unable to complete the specified operation. An unexpected error "
 "occurred.\n"
 msgstr ""
+"reg: Der angegebene Vorgang konnte nicht abgeschlossen werden. Es ist ein "
+"unerwarteter Fehler aufgetreten.\n"
 
 #: reg.rc:55
 msgid "Search complete. Number of matches found: %1!d!\n"
-msgstr ""
+msgstr "Suche abgeschlossen. Gefundene Übereinstimmungen: %1!d!\n"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -13212,8 +13182,6 @@ msgstr ""
 "Einstellungen in diesen Reitern vornehmen können."
 
 #: winecfg.rc:159
-#, fuzzy
-#| msgid "&Add application..."
 msgid "Add appli&cation..."
 msgstr "Anw. &hinzufügen..."
 
@@ -13277,7 +13245,7 @@ msgstr "&Neue Überschreibung für:"
 
 #: winecfg.rc:196
 msgid "A&dd"
-msgstr ""
+msgstr "&Hinzufügen"
 
 #: winecfg.rc:197
 msgid "Existing &overrides:"
@@ -13304,10 +13272,8 @@ msgid "&Native (Windows)"
 msgstr "&Native (Windows)"
 
 #: winecfg.rc:211
-#, fuzzy
-#| msgid "Bui&ltin then Native"
 msgid "Buil&tin then Native"
-msgstr "Bui&ltin dann Native"
+msgstr "Buil&tin dann Native"
 
 #: winecfg.rc:212
 msgid "Nati&ve then Builtin"
@@ -13330,26 +13296,20 @@ msgstr ""
 "nicht bearbeitet werden."
 
 #: winecfg.rc:236
-#, fuzzy
-#| msgid "&Add..."
 msgid "A&dd..."
 msgstr "&Hinzufügen..."
 
 #: winecfg.rc:238
-#, fuzzy
-#| msgid "Autodetect"
 msgid "Aut&odetect"
-msgstr "Automatisch"
+msgstr "&Automatisch"
 
 #: winecfg.rc:241
 msgid "&Path:"
 msgstr "&Pfad:"
 
 #: winecfg.rc:248 winecfg.rc:38
-#, fuzzy
-#| msgid "Show &Advanced"
 msgid "Show Advan&ced"
-msgstr "&Erweitert"
+msgstr "&Erweitert anzeigen"
 
 #: winecfg.rc:249
 msgid "De&vice:"
@@ -13368,8 +13328,6 @@ msgid "S&erial:"
 msgstr "S&erien-Nr.:"
 
 #: winecfg.rc:258
-#, fuzzy
-#| msgid "Show &dot files"
 msgid "&Show dot files"
 msgstr "D&ot-Dateien anzeigen"
 
@@ -13450,8 +13408,6 @@ msgid "Select the Unix target directory, please."
 msgstr "Bitte wählen Sie das Unix-Zielverzeichnis."
 
 #: winecfg.rc:37
-#, fuzzy
-#| msgid "Hide &Advanced"
 msgid "Hide Advan&ced"
 msgstr "&Erweitert ausblenden"
 
@@ -13916,13 +13872,11 @@ msgid "Configuration error"
 msgstr "Konfigurationsfehler"
 
 #: wineconsole.rc:42
-#, fuzzy
-#| msgid "Screen buffer size must be greater or equal to the window's one"
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
 msgstr ""
-"Die Größe des Zeichenpuffers muss mindestens der Fenstergröße entsprechen"
+"Die Größe des Zeichenpuffers muss mindestens der Fenstergröße entsprechen."
 
 #: wineconsole.rc:37
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
