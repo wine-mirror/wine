@@ -550,7 +550,9 @@ istreambuf_iterator_wchar *__thiscall num_get_wchar_get_bool(const num_get*, ist
 /* class num_put<wchar> */
 typedef struct {
     locale_facet facet;
+#if _MSVCP_VER < 110
     _Cvtvec cvt;
+#endif
 } num_put;
 
 num_put* num_put_char_use_facet(const locale*);

@@ -7124,7 +7124,9 @@ DEFINE_THISCALL_WRAPPER(num_put_char__Init, 8)
 void __thiscall num_put_char__Init(num_put *this, const _Locinfo *locinfo)
 {
     TRACE("(%p %p)\n", this, locinfo);
+#if _MSVCP_VER < 110
     _Locinfo__Getcvt(locinfo, &this->cvt);
+#endif
 }
 
 /* ??0?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAE@ABV_Locinfo@1@I@Z */
@@ -7869,7 +7871,9 @@ DEFINE_THISCALL_WRAPPER(num_put_wchar__Init, 8)
 void __thiscall num_put_wchar__Init(num_put *this, const _Locinfo *locinfo)
 {
     TRACE("(%p %p)\n", this, locinfo);
+#if _MSVCP_VER < 110
     _Locinfo__Getcvt(locinfo, &this->cvt);
+#endif
 }
 
 /* ??0?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QAE@ABV_Locinfo@1@I@Z */
@@ -8104,6 +8108,7 @@ ostreambuf_iterator_wchar* __cdecl num_put_wchar__Put(const num_put *this, ostre
     return ret;
 }
 
+#if _MSVCP_VER < 110
 /* ?_Putc@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@PBDI@Z */
 /* ?_Putc@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@PEBD_K@Z */
 /* ?_Putc@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@PBDI@Z */
@@ -8124,6 +8129,7 @@ ostreambuf_iterator_wchar* __cdecl num_put_wchar__Putc(const num_put *this, ostr
     *ret = dest;
     return ret;
 }
+#endif
 
 /* ?_Putgrouped@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@PBDI_W@Z */
 /* ?_Putgrouped@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@PEBD_K_W@Z */
@@ -8208,6 +8214,27 @@ ostreambuf_iterator_wchar* __cdecl num_put_short__Fput(const num_put *this, ostr
     return NULL;
 }
 
+#if _MSVCP_VER < 110
+static void num_put_wchar_wide_put(const num_put *this,
+        ostreambuf_iterator_wchar *dest, ios_base *base,
+        const char *buf, MSVCP_size_t count)
+{
+    num_put_wchar__Putc(this, dest, *dest, buf, count);
+}
+#else
+static void num_put_wchar_wide_put(const num_put *this,
+        ostreambuf_iterator_wchar *dest, ios_base *base,
+                const char *buf, MSVCP_size_t count)
+{
+    ctype_wchar *ctype;
+    MSVCP_size_t i;
+
+    ctype = ctype_wchar_use_facet(IOS_LOCALE(base));
+    for(i=0; i<count; i++)
+        ostreambuf_iterator_wchar_put(dest, ctype_wchar_widen_ch(ctype, buf[i]));
+}
+#endif
+
 /* TODO: This function should be removed when num_put_wchar__Fput is implemented */
 static ostreambuf_iterator_wchar* num_put__fput(const num_put *this, ostreambuf_iterator_wchar *ret,
         ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, char *buf,
@@ -8258,7 +8285,7 @@ static ostreambuf_iterator_wchar* num_put__fput(const num_put *this, ostreambuf_
     base->wide = 0;
 
     if((adjustfield & FMTFLAG_internal) && (buf[0]=='-' || buf[0]=='+')) {
-        num_put_wchar__Putc(this, &dest, dest, buf, 1);
+        num_put_wchar_wide_put(this, &dest, base, buf, 1);
         buf++;
     }
     if(adjustfield != FMTFLAG_left) {
@@ -8272,7 +8299,7 @@ static ostreambuf_iterator_wchar* num_put__fput(const num_put *this, ostreambuf_
         else if(!buf[i])
             num_put_wchar__Rep(this, &dest, dest, sep, 1);
         else
-            num_put_wchar__Putc(this, &dest, dest, buf+i, 1);
+            num_put_wchar_wide_put(this, &dest, base, buf+i, 1);
     }
 
     return num_put_wchar__Rep(this, ret, dest, fill, pad);
@@ -8351,10 +8378,10 @@ static ostreambuf_iterator_wchar* num_put__Iput(const num_put *this, ostreambuf_
     base->wide = 0;
 
     if((adjustfield & FMTFLAG_internal) && (buf[0]=='-' || buf[0]=='+')) {
-        num_put_wchar__Putc(this, &dest, dest, buf, 1);
+        num_put_wchar_wide_put(this, &dest, base, buf, 1);
         buf++;
     }else if((adjustfield & FMTFLAG_internal) && (buf[1]=='x' || buf[1]=='X')) {
-        num_put_wchar__Putc(this, &dest, dest, buf, 2);
+        num_put_wchar_wide_put(this, &dest, base, buf, 2);
         buf += 2;
     }
     if(adjustfield != FMTFLAG_left) {
@@ -8366,7 +8393,7 @@ static ostreambuf_iterator_wchar* num_put__Iput(const num_put *this, ostreambuf_
         if(!buf[i])
             num_put_wchar__Rep(this, &dest, dest, sep, 1);
         else
-            num_put_wchar__Putc(this, &dest, dest, buf+i, 1);
+            num_put_wchar_wide_put(this, &dest, base, buf+i, 1);
     }
 
     return num_put_wchar__Rep(this, ret, dest, fill, pad);
