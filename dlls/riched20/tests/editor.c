@@ -3822,7 +3822,7 @@ static void test_EM_SETTEXTEX(void)
   getText.flags = GT_DEFAULT;
   getText.lpDefaultChar = NULL;
   getText.lpUsedDefChar = NULL;
-  memset(buf, 0, MAX_BUF_LEN);
+  memset(buf, 0, sizeof(buf));
   SendMessageA(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM)buf);
   ok(lstrcmpW(buf, TestItem2) == 0,
       "EM_GETTEXTEX results not what was set by EM_SETTEXTEX\n");
@@ -3837,7 +3837,7 @@ static void test_EM_SETTEXTEX(void)
   getText.flags = GT_USECRLF;   /* <-- asking for CR -> CRLF conversion */
   getText.lpDefaultChar = NULL;
   getText.lpUsedDefChar = NULL;
-  memset(buf, 0, MAX_BUF_LEN);
+  memset(buf, 0, sizeof(buf));
   SendMessageA(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM)buf);
   ok(lstrcmpW(buf, TestItem1) == 0,
       "EM_GETTEXTEX results not what was set by EM_SETTEXTEX\n");
