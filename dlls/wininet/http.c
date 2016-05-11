@@ -3242,7 +3242,7 @@ static DWORD HTTPREQ_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DW
 
         if (TryEnterCriticalSection( &req->read_section ))
         {
-            if (get_avail_data(req))
+            if (get_avail_data(req) || end_of_read_data(req))
             {
                 res = HTTPREQ_Read(req, buffer, size, read);
                 LeaveCriticalSection( &req->read_section );
