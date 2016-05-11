@@ -90,6 +90,9 @@ static void test_add(void)
     run_reg_exe("reg add", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
 
+    run_reg_exe("reg add /?", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(err == ERROR_SUCCESS || err == ERROR_FILE_NOT_FOUND, "got %d\n", err);
 
@@ -453,6 +456,9 @@ static void test_delete(void)
     run_reg_exe("reg delete", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
 
+    run_reg_exe("reg delete /?", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+
     err = RegCreateKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL);
     ok(err == ERROR_SUCCESS, "got %d\n", err);
 
@@ -511,6 +517,9 @@ static void test_query(void)
 
     run_reg_exe("reg query", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
+    run_reg_exe("reg query /?", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
     /* Create a test key */
     err = RegCreateKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL);
