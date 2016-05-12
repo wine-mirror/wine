@@ -1005,7 +1005,7 @@ HEADER_FreeCallbackItems(HEADER_ITEM *lpItem)
         lpItem->iImage = I_IMAGECALLBACK;
 }
 
-static LRESULT
+static HIMAGELIST
 HEADER_CreateDragImage (HEADER_INFO *infoPtr, INT iItem)
 {
     HEADER_ITEM *lpItem;
@@ -1019,7 +1019,7 @@ HEADER_CreateDragImage (HEADER_INFO *infoPtr, INT iItem)
     HFONT hFont;
     
     if (iItem >= infoPtr->uNumItem)
-        return FALSE;
+        return NULL;
 
     if (!infoPtr->bRectsValid)
         HEADER_SetItemBounds(infoPtr);
@@ -1047,12 +1047,12 @@ HEADER_CreateDragImage (HEADER_INFO *infoPtr, INT iItem)
     DeleteDC(hMemoryDC);
     
     if (hMemory == NULL)    /* if anything failed */
-        return FALSE;
-    
+        return NULL;
+
     himl = ImageList_Create(width, height, ILC_COLORDDB, 1, 1);
     ImageList_Add(himl, hMemory, NULL);
     DeleteObject(hMemory);
-    return (LRESULT)himl;
+    return himl;
 }
 
 static LRESULT
@@ -1836,7 +1836,7 @@ HEADER_MouseMove (HEADER_INFO *infoPtr, LPARAM lParam)
 	{
             if (!HEADER_SendNotifyWithHDItemT(infoPtr, HDN_BEGINDRAG, infoPtr->iMoveItem, NULL))
 	    {
-		HIMAGELIST hDragItem = (HIMAGELIST)HEADER_CreateDragImage(infoPtr, infoPtr->iMoveItem);
+		HIMAGELIST hDragItem = HEADER_CreateDragImage(infoPtr, infoPtr->iMoveItem);
 		if (hDragItem != NULL)
 		{
 		    HEADER_ITEM *lpItem = &infoPtr->items[infoPtr->iMoveItem];
@@ -2067,7 +2067,7 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 /*	case HDM_CLEARFILTER: */
 
 	case HDM_CREATEDRAGIMAGE:
-	    return HEADER_CreateDragImage (infoPtr, (INT)wParam);
+	    return (LRESULT)HEADER_CreateDragImage (infoPtr, (INT)wParam);
 
 	case HDM_DELETEITEM:
 	    return HEADER_DeleteItem (infoPtr, (INT)wParam);
