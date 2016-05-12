@@ -480,23 +480,6 @@ HRESULT DSOUND_PrimaryStop(DirectSoundDevice *device)
     return DS_OK;
 }
 
-HRESULT DSOUND_PrimaryGetPosition(DirectSoundDevice *device, LPDWORD playpos, LPDWORD writepos)
-{
-	TRACE("(%p,%p,%p)\n", device, playpos, writepos);
-
-	/* check if playpos was requested */
-	if (playpos)
-		*playpos = device->playing_offs_bytes;
-
-	/* check if writepos was requested */
-	if (writepos)
-		/* the writepos is the first non-queued position */
-		*writepos = (device->playing_offs_bytes + device->in_mmdev_bytes) % device->buflen;
-
-	TRACE("playpos = %d, writepos = %d (%p, time=%d)\n", playpos?*playpos:-1, writepos?*writepos:-1, device, GetTickCount());
-	return DS_OK;
-}
-
 WAVEFORMATEX *DSOUND_CopyFormat(const WAVEFORMATEX *wfex)
 {
     WAVEFORMATEX *pwfx;
@@ -824,7 +807,9 @@ static ULONG WINAPI PrimaryBufferImpl_Release(IDirectSoundBuffer *iface)
 static HRESULT WINAPI PrimaryBufferImpl_GetCurrentPosition(IDirectSoundBuffer *iface,
         DWORD *playpos, DWORD *writepos)
 {
-	HRESULT	hres;
+	HRESULT	hres = DS_OK;
+	UINT32 pad = 0;
+	UINT32 mixpos;
         IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer(iface);
         DirectSoundDevice *device = This->device;
 	TRACE("(%p,%p,%p)\n", iface, playpos, writepos);
@@ -832,17 +817,23 @@ static HRESULT WINAPI PrimaryBufferImpl_GetCurrentPosition(IDirectSoundBuffer *i
 	/* **** */
 	EnterCriticalSection(&(device->mixlock));
 
-	hres = DSOUND_PrimaryGetPosition(device, playpos, writepos);
+	if (device->client)
+		hres = IAudioClient_GetCurrentPadding(device->client, &pad);
 	if (hres != DS_OK) {
-		WARN("DSOUND_PrimaryGetPosition failed\n");
+		WARN("IAudioClient_GetCurrentPadding failed\n");
 		LeaveCriticalSection(&(device->mixlock));
 		return hres;
 	}
+	mixpos = (device->playpos + pad * device->pwfx->nBlockAlign) % device->buflen;
+	if (playpos)
+		*playpos = mixpos;
 	if (writepos) {
-		if (device->state != STATE_STOPPED)
+		*writepos = mixpos;
+		if (device->state != STATE_STOPPED) {
 			/* apply the documented 10ms lead to writepos */
 			*writepos += device->writelead;
-		while (*writepos >= device->buflen) *writepos -= device->buflen;
+			*writepos %= device->buflen;
+		}
 	}
 
 	LeaveCriticalSection(&(device->mixlock));

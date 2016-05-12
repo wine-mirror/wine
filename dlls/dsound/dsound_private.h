@@ -75,7 +75,6 @@ struct DirectSoundDevice
     DSCAPS                      drvcaps;
     DWORD                       priolevel, sleeptime;
     PWAVEFORMATEX               pwfx, primary_pwfx;
-    UINT                        playing_offs_bytes, in_mmdev_bytes;
     LPBYTE                      buffer;
     DWORD                       writelead, buflen, aclen, fraglen, state, playpos, pad;
     int                         nrofbuffers;
