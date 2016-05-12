@@ -1789,6 +1789,20 @@ int CDECL MSVCRT__fstat32(int fd, struct MSVCRT__stat32* buf)
 }
 
 /*********************************************************************
+ *		_fstat32i64 (MSVCR80.@)
+ */
+int CDECL MSVCRT__fstat32i64(int fd, struct MSVCRT__stat32i64* buf)
+{
+    int ret;
+    struct MSVCRT__stat64 buf64;
+
+    ret = MSVCRT__fstat64(fd, &buf64);
+    if (!ret)
+        msvcrt_stat64_to_stat32i64(&buf64, buf);
+    return ret;
+}
+
+/*********************************************************************
  *		_fstat64i32 (MSVCR80.@)
  */
 int CDECL MSVCRT__fstat64i32(int fd, struct MSVCRT__stat64i32* buf)

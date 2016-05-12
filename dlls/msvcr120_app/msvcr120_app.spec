@@ -1123,7 +1123,7 @@
 @ cdecl _fseeki64_nolock(ptr int64 long) msvcr120._fseeki64_nolock
 @ cdecl _fsopen(str str long) msvcr120._fsopen
 @ cdecl _fstat32(long ptr) msvcr120._fstat32
-@ stub _fstat32i64
+@ cdecl _fstat32i64(long ptr) msvcr120._fstat32i64
 @ cdecl _fstat64(long ptr) msvcr120._fstat64
 @ cdecl _fstat64i32(long ptr) msvcr120._fstat64i32
 @ cdecl _ftell_nolock(ptr) msvcr120._ftell_nolock
