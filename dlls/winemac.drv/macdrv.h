@@ -129,12 +129,12 @@ struct macdrv_win_data
 {
     HWND                hwnd;                   /* hwnd that this private data belongs to */
     macdrv_window       cocoa_window;
+    macdrv_view         cocoa_view;
+    macdrv_view         client_cocoa_view;
     RECT                window_rect;            /* USER window rectangle relative to parent */
     RECT                whole_rect;             /* Mac window rectangle for the whole window relative to parent */
     RECT                client_rect;            /* client area relative to parent */
     int                 pixel_format;           /* pixel format for GL */
-    macdrv_view         gl_view;                /* view for GL */
-    RECT                gl_rect;                /* GL view rectangle relative to whole_rect */
     COLORREF            color_key;              /* color key for layered window; CLR_INVALID is not color keyed */
     unsigned int        on_screen : 1;          /* is window ordered in? (minimized or not) */
     unsigned int        shaped : 1;             /* is window using a custom region shape? */
@@ -206,8 +206,7 @@ extern BOOL query_drag_exited(macdrv_query* query) DECLSPEC_HIDDEN;
 extern BOOL query_drag_drop(macdrv_query* query) DECLSPEC_HIDDEN;
 
 extern struct opengl_funcs *macdrv_wine_get_wgl_driver(PHYSDEV dev, UINT version) DECLSPEC_HIDDEN;
-extern void sync_gl_view(struct macdrv_win_data *data) DECLSPEC_HIDDEN;
-extern void set_gl_view_parent(HWND hwnd, HWND parent) DECLSPEC_HIDDEN;
+extern void sync_gl_view(struct macdrv_win_data* data, const RECT* old_whole_rect, const RECT* old_client_rect) DECLSPEC_HIDDEN;
 
 extern CGImageRef create_cgimage_from_icon_bitmaps(HDC hdc, HANDLE icon, HBITMAP hbmColor,
                                                    unsigned char *color_bits, int color_size, HBITMAP hbmMask,

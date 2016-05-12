@@ -1549,76 +1549,6 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share, uns
 }
 
 
-static BOOL get_gl_view_window_rect(struct macdrv_win_data *data, macdrv_window *window, RECT *rect)
-{
-    BOOL ret = TRUE;
-    *rect = data->client_rect;
-
-    if (data->cocoa_window)
-    {
-        if (window)
-            *window = data->cocoa_window;
-        OffsetRect(rect, -data->whole_rect.left, -data->whole_rect.top);
-    }
-    else
-    {
-        HWND top = GetAncestor(data->hwnd, GA_ROOT);
-        HWND parent = GetAncestor(data->hwnd, GA_PARENT);
-        struct macdrv_win_data *top_data = get_win_data(top);
-
-        if (top_data && top_data->cocoa_window)
-        {
-            if (window)
-                *window = top_data->cocoa_window;
-            MapWindowPoints(parent, 0, (POINT*)rect, 2);
-            OffsetRect(rect, -top_data->whole_rect.left, -top_data->whole_rect.top);
-        }
-        else
-            ret = FALSE;
-
-        release_win_data(top_data);
-    }
-
-    return ret;
-}
-
-
-/***********************************************************************
- *              set_win_format
- */
-static BOOL set_win_format(struct macdrv_win_data *data, int format)
-{
-    TRACE("hwnd %p format %d\n", data->hwnd, format);
-
-    if (!data->gl_view)
-    {
-        macdrv_window cocoa_window;
-
-        if (!get_gl_view_window_rect(data, &cocoa_window, &data->gl_rect))
-        {
-            ERR("no top-level parent with Cocoa window in this process\n");
-            return FALSE;
-        }
-
-        data->gl_view = macdrv_create_view(cgrect_from_rect(data->gl_rect));
-        if (!data->gl_view)
-        {
-            WARN("failed to create GL view for window %p rect %s\n", cocoa_window, wine_dbgstr_rect(&data->gl_rect));
-            return FALSE;
-        }
-        macdrv_set_view_hidden(data->gl_view, FALSE);
-        macdrv_set_view_superview(data->gl_view, NULL, cocoa_window, NULL, NULL);
-
-        TRACE("created GL view %p in window %p at %s\n", data->gl_view, cocoa_window,
-              wine_dbgstr_rect(&data->gl_rect));
-    }
-
-    data->pixel_format = format;
-
-    return TRUE;
-}
-
-
 /**********************************************************************
  *              set_pixel_format
  *
@@ -1665,11 +1595,7 @@ static BOOL set_pixel_format(HDC hdc, int fmt, BOOL allow_reset)
         goto done;
     }
 
-    if (!set_win_format(data, fmt))
-    {
-        WARN("Couldn't set format of the window, returning failure\n");
-        goto done;
-    }
+    data->pixel_format = fmt;
 
     TRACE("pixel format:\n");
     TRACE("           window: %u\n", (unsigned int)pf->window);
@@ -1713,40 +1639,6 @@ static void mark_contexts_for_moved_view(macdrv_view view)
 
 
 /**********************************************************************
- *              set_gl_view_parent
- */
-void set_gl_view_parent(HWND hwnd, HWND parent)
-{
-    struct macdrv_win_data *data;
-
-    if (!(data = get_win_data(hwnd))) return;
-
-    if (data->gl_view)
-    {
-        macdrv_window cocoa_window;
-
-        TRACE("moving GL view %p to parent %p\n", data->gl_view, parent);
-
-        if (!get_gl_view_window_rect(data, &cocoa_window, &data->gl_rect))
-        {
-            ERR("no top-level parent with Cocoa window in this process\n");
-            macdrv_dispose_view(data->gl_view);
-            data->gl_view = NULL;
-            release_win_data(data);
-            __wine_set_pixel_format( hwnd, 0 );
-            return;
-        }
-
-        macdrv_set_view_superview(data->gl_view, NULL, cocoa_window, NULL, NULL);
-        macdrv_set_view_frame(data->gl_view, cgrect_from_rect(data->gl_rect));
-        mark_contexts_for_moved_view(data->gl_view);
-    }
-
-    release_win_data(data);
-}
-
-
-/**********************************************************************
  *              sync_context_rect
  */
 static BOOL sync_context_rect(struct wgl_context *context)
@@ -1756,11 +1648,15 @@ static BOOL sync_context_rect(struct wgl_context *context)
     {
         struct macdrv_win_data *data = get_win_data(context->draw_hwnd);
 
-        if (data && data->gl_view && data->gl_view == context->draw_view &&
-            memcmp(&context->draw_rect, &data->gl_rect, sizeof(context->draw_rect)))
+        if (data && data->client_cocoa_view == context->draw_view)
         {
-            context->draw_rect = data->gl_rect;
-            ret = TRUE;
+            RECT rect = data->client_rect;
+            OffsetRect(&rect, -data->whole_rect.left, -data->whole_rect.top);
+            if (memcmp(&context->draw_rect, &rect, sizeof(context->draw_rect)))
+            {
+                context->draw_rect = rect;
+                ret = TRUE;
+            }
         }
         release_win_data(data);
     }
@@ -3652,8 +3548,9 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
             set_swap_interval(context, data->swap_interval);
 
         context->draw_hwnd = hwnd;
-        context->draw_view = data->gl_view;
-        context->draw_rect = data->gl_rect;
+        context->draw_view = data->client_cocoa_view;
+        context->draw_rect = data->client_rect;
+        OffsetRect(&context->draw_rect, -data->whole_rect.left, -data->whole_rect.top);
         context->draw_pbuffer = NULL;
         release_win_data(data);
     }
@@ -3699,10 +3596,11 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
         {
             if ((data = get_win_data(hwnd)))
             {
-                if (data->gl_view != context->draw_view)
+                if (data->client_cocoa_view != context->draw_view)
                 {
-                    context->read_view = data->gl_view;
-                    context->read_rect = data->gl_rect;
+                    context->read_view = data->client_cocoa_view;
+                    context->read_rect = data->client_rect;
+                    OffsetRect(&context->read_rect, -data->whole_rect.left, -data->whole_rect.top);
                 }
                 release_win_data(data);
             }
@@ -4421,20 +4319,19 @@ failed:
  * Synchronize the Mac GL view position with the Windows child window
  * position.
  */
-void sync_gl_view(struct macdrv_win_data *data)
+void sync_gl_view(struct macdrv_win_data* data, const RECT* old_whole_rect, const RECT* old_client_rect)
 {
-    RECT rect;
-
-    TRACE("hwnd %p gl_view %p\n", data->hwnd, data->gl_view);
-
-    if (!data->gl_view) return;
-
-    if (get_gl_view_window_rect(data, NULL, &rect) && memcmp(&data->gl_rect, &rect, sizeof(rect)))
+    if (data->client_cocoa_view && data->pixel_format)
     {
-        TRACE("Setting GL view %p frame to %s\n", data->gl_view, wine_dbgstr_rect(&rect));
-        macdrv_set_view_frame(data->gl_view, cgrect_from_rect(rect));
-        data->gl_rect = rect;
-        mark_contexts_for_moved_view(data->gl_view);
+        RECT old = *old_client_rect, new = data->client_rect;
+
+        OffsetRect(&old, -old_whole_rect->left, -old_whole_rect->top);
+        OffsetRect(&new, -data->whole_rect.left, -data->whole_rect.top);
+        if (memcmp(&old, &new, sizeof(old)))
+        {
+            TRACE("GL view %p changed position; marking contexts\n", data->client_cocoa_view);
+            mark_contexts_for_moved_view(data->client_cocoa_view);
+        }
     }
 }
 
@@ -4696,7 +4593,7 @@ static BOOL macdrv_wglSwapBuffers(HDC hdc)
             return FALSE;
         }
 
-        if (context && context->draw_view == data->gl_view)
+        if (context && context->draw_view == data->client_cocoa_view)
             match = TRUE;
 
         release_win_data(data);
