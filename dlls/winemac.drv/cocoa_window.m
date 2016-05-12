@@ -3266,39 +3266,22 @@ void macdrv_dispose_view(macdrv_view v)
 }
 
 /***********************************************************************
- *              macdrv_set_view_window_and_frame
- *
- * Move a view to a new window and/or position within its window.  If w
- * is NULL, leave the view in its current window and just change its
- * frame.
+ *              macdrv_set_view_frame
  */
-void macdrv_set_view_window_and_frame(macdrv_view v, macdrv_window w, CGRect rect)
+void macdrv_set_view_frame(macdrv_view v, CGRect rect)
 {
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
     WineContentView* view = (WineContentView*)v;
-    WineWindow* window = (WineWindow*)w;
 
     if (CGRectIsNull(rect)) rect = CGRectZero;
 
     OnMainThread(^{
-        BOOL changedWindow = (window && window != [view window]);
         NSRect newFrame = NSRectFromCGRect(cgrect_mac_from_win(rect));
         NSRect oldFrame = [view frame];
-        BOOL needUpdateWindowForGLSubviews = FALSE;
-
-        if (changedWindow)
-        {
-            WineWindow* oldWindow = (WineWindow*)[view window];
-            [view removeFromSuperview];
-            [oldWindow updateForGLSubviews];
-            [[window contentView] addSubview:view];
-            needUpdateWindowForGLSubviews = TRUE;
-        }
 
         if (!NSEqualRects(oldFrame, newFrame))
         {
-            if (!changedWindow)
-                [[view superview] setNeedsDisplayInRect:oldFrame];
+            [[view superview] setNeedsDisplayInRect:oldFrame];
             if (NSEqualPoints(oldFrame.origin, newFrame.origin))
                 [view setFrameSize:newFrame.size];
             else if (NSEqualSizes(oldFrame.size, newFrame.size))
@@ -3306,17 +3289,14 @@ void macdrv_set_view_window_and_frame(macdrv_view v, macdrv_window w, CGRect rec
             else
                 [view setFrame:newFrame];
             [view setNeedsDisplay:YES];
-            needUpdateWindowForGLSubviews = TRUE;
 
             if (retina_enabled)
             {
                 int backing_size[2] = { 0 };
                 [view wine_setBackingSize:backing_size];
             }
-        }
-
-        if (needUpdateWindowForGLSubviews)
             [(WineWindow*)[view window] updateForGLSubviews];
+        }
     });
 
     [pool release];

@@ -1736,7 +1736,7 @@ void set_gl_view_parent(HWND hwnd, HWND parent)
         }
 
         macdrv_set_view_superview(data->gl_view, NULL, cocoa_window, NULL, NULL);
-        macdrv_set_view_window_and_frame(data->gl_view, NULL, cgrect_from_rect(data->gl_rect));
+        macdrv_set_view_frame(data->gl_view, cgrect_from_rect(data->gl_rect));
         mark_contexts_for_moved_view(data->gl_view);
     }
 
@@ -4430,7 +4430,7 @@ void sync_gl_view(struct macdrv_win_data *data)
     if (get_gl_view_window_rect(data, NULL, &rect) && memcmp(&data->gl_rect, &rect, sizeof(rect)))
     {
         TRACE("Setting GL view %p frame to %s\n", data->gl_view, wine_dbgstr_rect(&rect));
-        macdrv_set_view_window_and_frame(data->gl_view, NULL, cgrect_from_rect(rect));
+        macdrv_set_view_frame(data->gl_view, cgrect_from_rect(rect));
         data->gl_rect = rect;
         mark_contexts_for_moved_view(data->gl_view);
     }
