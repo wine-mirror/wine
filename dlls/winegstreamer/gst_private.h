@@ -39,7 +39,8 @@ void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt);
 
 IUnknown * CALLBACK Gstreamer_AudioConvert_create(IUnknown *pUnkOuter, HRESULT *phr);
 IUnknown * CALLBACK Gstreamer_Mp3_create(IUnknown *pUnkOuter, HRESULT *phr);
-IUnknown * CALLBACK Gstreamer_YUV_create(IUnknown *pUnkOuter, HRESULT *phr);
+IUnknown * CALLBACK Gstreamer_YUV2RGB_create(IUnknown *pUnkOuter, HRESULT *phr);
+IUnknown * CALLBACK Gstreamer_YUV2ARGB_create(IUnknown *pUnkOuter, HRESULT *phr);
 IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr);
 
 DWORD Gstreamer_init(void);

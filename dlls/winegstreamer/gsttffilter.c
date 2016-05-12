@@ -677,7 +677,7 @@ static HRESULT WINAPI Gstreamer_YUV_ConnectInput(TransformFilter *tf, PIN_DIRECT
     return S_OK;
 }
 
-static HRESULT WINAPI Gstreamer_YUV_SetMediaType(TransformFilter *tf, PIN_DIRECTION dir,  const AM_MEDIA_TYPE *amt)
+static HRESULT WINAPI Gstreamer_YUV2RGB_SetMediaType(TransformFilter *tf, PIN_DIRECTION dir,  const AM_MEDIA_TYPE *amt)
 {
     GstTfImpl *This = (GstTfImpl*)tf;
     GstCaps *capsin, *capsout;
@@ -748,13 +748,13 @@ static HRESULT WINAPI Gstreamer_YUV_SetMediaType(TransformFilter *tf, PIN_DIRECT
     return hr;
 }
 
-static const TransformFilterFuncTable Gstreamer_YUV_vtbl = {
+static const TransformFilterFuncTable Gstreamer_YUV2RGB_vtbl = {
     Gstreamer_transform_DecideBufferSize,
     Gstreamer_transform_ProcessBegin,
     Gstreamer_transform_ProcessData,
     Gstreamer_transform_ProcessEnd,
     Gstreamer_YUV_QueryConnect,
-    Gstreamer_YUV_SetMediaType,
+    Gstreamer_YUV2RGB_SetMediaType,
     Gstreamer_YUV_ConnectInput,
     Gstreamer_transform_Cleanup,
     Gstreamer_transform_EndOfStream,
@@ -764,7 +764,7 @@ static const TransformFilterFuncTable Gstreamer_YUV_vtbl = {
     Gstreamer_transform_QOS
 };
 
-IUnknown * CALLBACK Gstreamer_YUV_create(IUnknown *punkouter, HRESULT *phr)
+IUnknown * CALLBACK Gstreamer_YUV2RGB_create(IUnknown *punkouter, HRESULT *phr)
 {
     IUnknown *obj = NULL;
 
@@ -776,7 +776,113 @@ IUnknown * CALLBACK Gstreamer_YUV_create(IUnknown *punkouter, HRESULT *phr)
         return NULL;
     }
 
-    *phr = Gstreamer_transform_create(punkouter, &CLSID_Gstreamer_YUV, "videoconvert", &Gstreamer_YUV_vtbl, (LPVOID*)&obj);
+    *phr = Gstreamer_transform_create(punkouter, &CLSID_Gstreamer_YUV2RGB, "videoconvert", &Gstreamer_YUV2RGB_vtbl, (LPVOID*)&obj);
+
+    TRACE("returning %p\n", obj);
+
+    return obj;
+}
+
+static HRESULT WINAPI Gstreamer_YUV2ARGB_SetMediaType(TransformFilter *tf, PIN_DIRECTION dir,  const AM_MEDIA_TYPE *amt)
+{
+    GstTfImpl *This = (GstTfImpl*)tf;
+    GstCaps *capsin, *capsout;
+    AM_MEDIA_TYPE *outpmt = &This->tf.pmt;
+    HRESULT hr;
+    int avgtime;
+    LONG width, height;
+
+    TRACE("%p 0x%x %p\n", This, dir, amt);
+
+    mark_wine_thread();
+
+    if (dir != PINDIR_INPUT)
+        return S_OK;
+
+    if (Gstreamer_YUV_QueryConnect(&This->tf, amt) == S_FALSE || !amt->pbFormat)
+        return E_FAIL;
+
+    FreeMediaType(outpmt);
+    CopyMediaType(outpmt, amt);
+
+    if (IsEqualGUID(&amt->formattype, &FORMAT_VideoInfo)) {
+        VIDEOINFOHEADER *vih = (VIDEOINFOHEADER*)outpmt->pbFormat;
+        avgtime = vih->AvgTimePerFrame;
+        width = vih->bmiHeader.biWidth;
+        height = vih->bmiHeader.biHeight;
+        if (vih->bmiHeader.biHeight > 0)
+            vih->bmiHeader.biHeight = -vih->bmiHeader.biHeight;
+        vih->bmiHeader.biBitCount = 32;
+        vih->bmiHeader.biCompression = BI_RGB;
+        vih->bmiHeader.biSizeImage = width * abs(height) * 3;
+    } else {
+        VIDEOINFOHEADER2 *vih = (VIDEOINFOHEADER2*)outpmt->pbFormat;
+        avgtime = vih->AvgTimePerFrame;
+        width = vih->bmiHeader.biWidth;
+        height = vih->bmiHeader.biHeight;
+        if (vih->bmiHeader.biHeight > 0)
+            vih->bmiHeader.biHeight = -vih->bmiHeader.biHeight;
+        vih->bmiHeader.biBitCount = 32;
+        vih->bmiHeader.biCompression = BI_RGB;
+        vih->bmiHeader.biSizeImage = width * abs(height) * 3;
+    }
+    if (!avgtime)
+        avgtime = 10000000 / 30;
+
+    outpmt->subtype = MEDIASUBTYPE_ARGB32;
+
+    capsin = gst_caps_new_simple("video/x-raw",
+                                 "format", G_TYPE_STRING,
+                                   gst_video_format_to_string(
+                                     gst_video_format_from_fourcc(amt->subtype.Data1)),
+                                 "width", G_TYPE_INT, width,
+                                 "height", G_TYPE_INT, height,
+                                 "framerate", GST_TYPE_FRACTION, 10000000, avgtime,
+                                 NULL);
+    capsout = gst_caps_new_simple("video/x-raw",
+                                  "format", G_TYPE_STRING, "BGRA",
+                                  "width", G_TYPE_INT, width,
+                                  "height", G_TYPE_INT, height,
+                                  "framerate", GST_TYPE_FRACTION, 10000000, avgtime,
+                                   NULL);
+
+    hr = Gstreamer_transform_ConnectInput(This, amt, capsin, capsout);
+    gst_caps_unref(capsin);
+    gst_caps_unref(capsout);
+
+    This->cbBuffer = width * height * 4;
+    return hr;
+}
+
+static const TransformFilterFuncTable Gstreamer_YUV2ARGB_vtbl = {
+    Gstreamer_transform_DecideBufferSize,
+    Gstreamer_transform_ProcessBegin,
+    Gstreamer_transform_ProcessData,
+    Gstreamer_transform_ProcessEnd,
+    Gstreamer_YUV_QueryConnect,
+    Gstreamer_YUV2ARGB_SetMediaType,
+    Gstreamer_YUV_ConnectInput,
+    Gstreamer_transform_Cleanup,
+    Gstreamer_transform_EndOfStream,
+    Gstreamer_transform_BeginFlush,
+    Gstreamer_transform_EndFlush,
+    Gstreamer_transform_NewSegment,
+    Gstreamer_transform_QOS
+};
+
+IUnknown * CALLBACK Gstreamer_YUV2ARGB_create(IUnknown *punkouter, HRESULT *phr)
+{
+    IUnknown *obj = NULL;
+
+    TRACE("%p %p\n", punkouter, phr);
+
+    if (!Gstreamer_init())
+    {
+        *phr = E_FAIL;
+        return NULL;
+    }
+
+    *phr = Gstreamer_transform_create(punkouter, &CLSID_Gstreamer_YUV2ARGB, "videoconvert", &Gstreamer_YUV2ARGB_vtbl, (LPVOID*)&obj);
 
     TRACE("returning %p\n", obj);
 
