@@ -49,7 +49,7 @@ extern const bitsgetfunc getbpp[5] DECLSPEC_HIDDEN;
 void putieee32(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
 void mixieee32(float *src, float *dst, unsigned samples) DECLSPEC_HIDDEN;
 typedef void (*normfunc)(const void *, void *, unsigned);
-extern const normfunc normfunctions[5] DECLSPEC_HIDDEN;
+extern const normfunc normfunctions[4] DECLSPEC_HIDDEN;
 
 typedef struct _DSVOLUMEPAN
 {
@@ -87,7 +87,7 @@ struct DirectSoundDevice
     int                         speaker_num[DS_MAX_CHANNELS];
     int                         num_speakers;
     int                         lfe_channel;
-    float *mix_buffer, *tmp_buffer;
+    float *tmp_buffer;
     DWORD                       tmp_buffer_len, mix_buffer_len;
 
     DSVOLUMEPAN                 volpan;

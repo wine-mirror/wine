@@ -263,27 +263,9 @@ static void norm32(float *src, INT *dst, unsigned len)
     }
 }
 
-static void normieee32(float *src, float *dst, unsigned len)
-{
-    TRACE("%p - %p %d\n", src, dst, len);
-    len /= 4;
-    while (len--)
-    {
-        if(*src > 1)
-            *dst = 1;
-        else if(*src < -1)
-            *dst = -1;
-        else
-            *dst = *src;
-        ++dst;
-        ++src;
-    }
-}
-
-const normfunc normfunctions[5] = {
+const normfunc normfunctions[4] = {
     (normfunc)norm8,
     (normfunc)norm16,
     (normfunc)norm24,
     (normfunc)norm32,
-    (normfunc)normieee32
 };

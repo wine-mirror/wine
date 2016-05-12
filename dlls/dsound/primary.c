@@ -338,11 +338,7 @@ HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 		device->buflen = ds_hel_buflen;
 	device->buflen -= device->buflen % device->pwfx->nBlockAlign;
 
-	HeapFree(GetProcessHeap(), 0, device->mix_buffer);
 	device->mix_buffer_len = (device->buflen / (device->pwfx->wBitsPerSample / 8)) * sizeof(float);
-	device->mix_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, device->mix_buffer_len);
-	if (!device->mix_buffer)
-		return DSERR_OUTOFMEMORY;
 
 	if (device->state == STATE_PLAYING) device->state = STATE_STARTING;
 	else if (device->state == STATE_STOPPING) device->state = STATE_STOPPED;
@@ -370,20 +366,12 @@ HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
             (device->pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
              IsEqualGUID(&((WAVEFORMATEXTENSIBLE*)device->pwfx)->SubFormat,
                  &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)))
-        device->normfunction = normfunctions[4];
+        device->normfunction = NULL;
     else
         device->normfunction = normfunctions[device->pwfx->wBitsPerSample/8 - 1];
 
     FillMemory(device->buffer, device->buflen, (device->pwfx->wBitsPerSample == 8) ? 128 : 0);
-    FillMemory(device->mix_buffer, device->mix_buffer_len, 0);
     device->playpos = 0;
-
-    if (device->pwfx->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
-	 (device->pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-	  IsEqualGUID(&((WAVEFORMATEXTENSIBLE*)device->pwfx)->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)))
-        device->normfunction = normfunctions[4];
-    else
-        device->normfunction = normfunctions[device->pwfx->wBitsPerSample/8 - 1];
 
     for (i = 0; i < device->nrofbuffers; i++) {
         RtlAcquireResourceExclusive(&dsb[i]->lock, TRUE);

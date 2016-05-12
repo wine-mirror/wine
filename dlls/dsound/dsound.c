@@ -238,7 +238,6 @@ static ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
             IAudioStreamVolume_Release(device->volume);
 
         HeapFree(GetProcessHeap(), 0, device->tmp_buffer);
-        HeapFree(GetProcessHeap(), 0, device->mix_buffer);
         HeapFree(GetProcessHeap(), 0, device->buffer);
         RtlDeleteResource(&device->buffer_list_lock);
         device->mixlock.DebugInfo->Spare[0] = 0;
