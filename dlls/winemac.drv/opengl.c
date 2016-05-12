@@ -1735,7 +1735,8 @@ void set_gl_view_parent(HWND hwnd, HWND parent)
             return;
         }
 
-        macdrv_set_view_window_and_frame(data->gl_view, cocoa_window, cgrect_from_rect(data->gl_rect));
+        macdrv_set_view_superview(data->gl_view, NULL, cocoa_window, NULL, NULL);
+        macdrv_set_view_window_and_frame(data->gl_view, NULL, cgrect_from_rect(data->gl_rect));
         mark_contexts_for_moved_view(data->gl_view);
     }
 

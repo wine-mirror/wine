@@ -514,6 +514,7 @@ extern void macdrv_set_window_min_max_sizes(macdrv_window w, CGSize min_size, CG
 extern macdrv_view macdrv_create_view(macdrv_window w, CGRect rect) DECLSPEC_HIDDEN;
 extern void macdrv_dispose_view(macdrv_view v) DECLSPEC_HIDDEN;
 extern void macdrv_set_view_window_and_frame(macdrv_view v, macdrv_window w, CGRect rect) DECLSPEC_HIDDEN;
+extern void macdrv_set_view_superview(macdrv_view v, macdrv_view s, macdrv_window w, macdrv_view p, macdrv_view n) DECLSPEC_HIDDEN;
 extern void macdrv_add_view_opengl_context(macdrv_view v, macdrv_opengl_context c) DECLSPEC_HIDDEN;
 extern void macdrv_remove_view_opengl_context(macdrv_view v, macdrv_opengl_context c) DECLSPEC_HIDDEN;
 extern int macdrv_get_view_backing_size(macdrv_view v, int backing_size[2]) DECLSPEC_HIDDEN;

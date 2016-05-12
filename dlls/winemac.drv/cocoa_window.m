@@ -3323,6 +3323,58 @@ void macdrv_set_view_window_and_frame(macdrv_view v, macdrv_window w, CGRect rec
 }
 
 /***********************************************************************
+ *              macdrv_set_view_superview
+ *
+ * Move a view to a new superview and position it relative to its
+ * siblings.  If p is non-NULL, the view is ordered behind it.
+ * Otherwise, the view is ordered above n.  If s is NULL, use the
+ * content view of w as the new superview.
+ */
+void macdrv_set_view_superview(macdrv_view v, macdrv_view s, macdrv_window w, macdrv_view p, macdrv_view n)
+{
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    WineContentView* view = (WineContentView*)v;
+    WineContentView* superview = (WineContentView*)s;
+    WineWindow* window = (WineWindow*)w;
+    WineContentView* prev = (WineContentView*)p;
+    WineContentView* next = (WineContentView*)n;
+
+    if (!superview)
+        superview = [window contentView];
+
+    OnMainThread(^{
+        if (superview == [view superview])
+        {
+            NSArray* subviews = [superview subviews];
+            NSUInteger index = [subviews indexOfObjectIdenticalTo:view];
+            if (!prev && !next && index == 0)
+                return;
+            if (prev && index > 0 && [subviews objectAtIndex:index - 1] == prev)
+                return;
+            if (!prev && next && index + 1 < [subviews count] && [subviews objectAtIndex:index + 1] == next)
+                return;
+        }
+
+        WineWindow* oldWindow = (WineWindow*)[view window];
+        WineWindow* newWindow = (WineWindow*)[superview window];
+
+        [view removeFromSuperview];
+        if (prev)
+            [superview addSubview:view positioned:NSWindowBelow relativeTo:prev];
+        else
+            [superview addSubview:view positioned:NSWindowAbove relativeTo:next];
+
+        if (oldWindow != newWindow)
+        {
+            [oldWindow updateForGLSubviews];
+            [newWindow updateForGLSubviews];
+        }
+    });
+
+    [pool release];
+}
+
+/***********************************************************************
  *              macdrv_add_view_opengl_context
  *
  * Add an OpenGL context to the list being tracked for each view.
