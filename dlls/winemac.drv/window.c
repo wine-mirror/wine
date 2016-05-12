@@ -746,14 +746,24 @@ static void destroy_cocoa_window(struct macdrv_win_data *data)
  */
 static void create_cocoa_view(struct macdrv_win_data *data)
 {
+    BOOL equal = !memcmp(&data->window_rect, &data->client_rect, sizeof(data->whole_rect));
+    CGRect frame = cgrect_from_rect(data->window_rect);
+
     data->shaped = FALSE;
     data->whole_rect = data->window_rect;
 
     TRACE("creating %p window %s whole %s client %s\n", data->hwnd, wine_dbgstr_rect(&data->window_rect),
           wine_dbgstr_rect(&data->whole_rect), wine_dbgstr_rect(&data->client_rect));
 
-    data->cocoa_view = macdrv_create_view(cgrect_from_rect(data->whole_rect));
+    if (!equal)
+        data->cocoa_view = macdrv_create_view(frame);
     create_client_cocoa_view(data);
+    if (equal)
+    {
+        data->cocoa_view = data->client_cocoa_view;
+        macdrv_set_view_hidden(data->cocoa_view, TRUE);
+        macdrv_set_view_frame(data->cocoa_view, frame);
+    }
 }
 
 
@@ -768,7 +778,8 @@ static void destroy_cocoa_view(struct macdrv_win_data *data)
 
     TRACE("win %p Cocoa view %p\n", data->hwnd, data->cocoa_view);
 
-    macdrv_dispose_view(data->cocoa_view);
+    if (data->cocoa_view != data->client_cocoa_view)
+        macdrv_dispose_view(data->cocoa_view);
     data->cocoa_view = NULL;
     data->on_screen = FALSE;
 }
@@ -1007,7 +1018,7 @@ static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags, c
                                  const RECT *old_whole_rect)
 {
     CGRect frame = cgrect_from_rect(data->whole_rect);
-    RECT rect;
+    BOOL force_z_order = FALSE;
 
     if (data->cocoa_window)
     {
@@ -1020,11 +1031,37 @@ static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags, c
         macdrv_set_cocoa_window_frame(data->cocoa_window, &frame);
     }
     else
-        macdrv_set_view_frame(data->cocoa_view, frame);
+    {
+        BOOL were_equal = (data->cocoa_view == data->client_cocoa_view);
+        BOOL now_equal = !memcmp(&data->whole_rect, &data->client_rect, sizeof(data->whole_rect));
 
-    rect = data->client_rect;
-    OffsetRect(&rect, -data->whole_rect.left, -data->whole_rect.top);
-    macdrv_set_view_frame(data->client_cocoa_view, cgrect_from_rect(rect));
+        if (were_equal && !now_equal)
+        {
+            data->cocoa_view = macdrv_create_view(frame);
+            macdrv_set_view_hidden(data->cocoa_view, !data->on_screen);
+            macdrv_set_view_superview(data->client_cocoa_view, data->cocoa_view, NULL, NULL, NULL);
+            macdrv_set_view_hidden(data->client_cocoa_view, FALSE);
+            force_z_order = TRUE;
+        }
+        else if (!were_equal && now_equal)
+        {
+            macdrv_dispose_view(data->cocoa_view);
+            data->cocoa_view = data->client_cocoa_view;
+            macdrv_set_view_hidden(data->cocoa_view, !data->on_screen);
+            macdrv_set_view_frame(data->cocoa_view, frame);
+            force_z_order = TRUE;
+        }
+        else
+            macdrv_set_view_frame(data->cocoa_view, frame);
+    }
+
+    if (data->cocoa_view != data->client_cocoa_view)
+    {
+        RECT rect = data->client_rect;
+        OffsetRect(&rect, -data->whole_rect.left, -data->whole_rect.top);
+        macdrv_set_view_frame(data->client_cocoa_view, cgrect_from_rect(rect));
+        TRACE("win %p/%p client %s\n", data->hwnd, data->client_cocoa_view, wine_dbgstr_rect(&rect));
+    }
 
     if (old_window_rect && old_whole_rect &&
         (IsRectEmpty(old_window_rect) != IsRectEmpty(&data->window_rect) ||
@@ -1032,11 +1069,11 @@ static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags, c
          old_window_rect->top - old_whole_rect->top != data->window_rect.top - data->whole_rect.top))
         sync_window_region(data, (HRGN)1);
 
-    TRACE("win %p/%p whole_rect %s frame %s client %s\n", data->hwnd,
+    TRACE("win %p/%p whole_rect %s frame %s\n", data->hwnd,
           data->cocoa_window ? (void*)data->cocoa_window : (void*)data->cocoa_view,
-          wine_dbgstr_rect(&data->whole_rect), wine_dbgstr_cgrect(frame), wine_dbgstr_rect(&rect));
+          wine_dbgstr_rect(&data->whole_rect), wine_dbgstr_cgrect(frame));
 
-    if (!(swp_flags & SWP_NOZORDER) || (swp_flags & SWP_SHOWWINDOW))
+    if (force_z_order || !(swp_flags & SWP_NOZORDER) || (swp_flags & SWP_SHOWWINDOW))
         sync_window_z_order(data);
 }
 
