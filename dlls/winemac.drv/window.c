@@ -785,6 +785,16 @@ static void hide_window(struct macdrv_win_data *data)
 
 
 /***********************************************************************
+ *              sync_window_z_order
+ */
+static void sync_window_z_order(struct macdrv_win_data *data)
+{
+    if (data->on_screen)
+        show_window(data);
+}
+
+
+/***********************************************************************
  *              get_region_data
  *
  * Calls GetRegionData on the given region and converts the rectangle
@@ -878,8 +888,8 @@ static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags, c
     TRACE("win %p/%p whole_rect %s frame %s\n", data->hwnd, data->cocoa_window,
           wine_dbgstr_rect(&data->whole_rect), wine_dbgstr_cgrect(frame));
 
-    if (data->on_screen && (!(swp_flags & SWP_NOZORDER) || (swp_flags & SWP_SHOWWINDOW)))
-        show_window(data);
+    if (!(swp_flags & SWP_NOZORDER) || (swp_flags & SWP_SHOWWINDOW))
+        sync_window_z_order(data);
 }
 
 
