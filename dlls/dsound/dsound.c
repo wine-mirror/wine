@@ -158,7 +158,6 @@ static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
     device->ds3dl.flRolloffFactor = DS3D_DEFAULTROLLOFFFACTOR;
     device->ds3dl.flDopplerFactor = DS3D_DEFAULTDOPPLERFACTOR;
 
-    device->prebuf = ds_snd_queue_max;
     device->guid = GUID_NULL;
 
     /* Set default wave format (may need it for waveOutOpen) */
