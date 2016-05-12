@@ -1606,6 +1606,7 @@ static BOOL set_win_format(struct macdrv_win_data *data, int format)
             WARN("failed to create GL view for window %p rect %s\n", cocoa_window, wine_dbgstr_rect(&data->gl_rect));
             return FALSE;
         }
+        macdrv_set_view_hidden(data->gl_view, FALSE);
 
         TRACE("created GL view %p in window %p at %s\n", data->gl_view, cocoa_window,
               wine_dbgstr_rect(&data->gl_rect));

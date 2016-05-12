@@ -506,6 +506,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
     - (BOOL) _hasGLDescendant
     {
+        if ([self isHidden])
+            return NO;
         if ([self hasGLContext])
             return YES;
         for (WineContentView* view in [self subviews])
@@ -622,6 +624,12 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                 [self invalidateHasGLDescendant];
         }
         [super willRemoveSubview:subview];
+    }
+
+    - (void) setHidden:(BOOL)hidden
+    {
+        [super setHidden:hidden];
+        [self invalidateHasGLDescendant];
     }
 
     /*
@@ -3221,6 +3229,7 @@ macdrv_view macdrv_create_view(macdrv_window w, CGRect rect)
 
         view = [[WineContentView alloc] initWithFrame:NSRectFromCGRect(cgrect_mac_from_win(rect))];
         [view setAutoresizesSubviews:NO];
+        [view setHidden:YES];
         [nc addObserver:view
                selector:@selector(updateGLContexts)
                    name:NSViewGlobalFrameDidChangeNotification
@@ -3349,6 +3358,21 @@ void macdrv_set_view_superview(macdrv_view v, macdrv_view s, macdrv_window w, ma
             [oldWindow updateForGLSubviews];
             [newWindow updateForGLSubviews];
         }
+    });
+
+    [pool release];
+}
+
+/***********************************************************************
+ *              macdrv_set_view_hidden
+ */
+void macdrv_set_view_hidden(macdrv_view v, int hidden)
+{
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    WineContentView* view = (WineContentView*)v;
+
+    OnMainThread(^{
+        [view setHidden:hidden];
     });
 
     [pool release];
