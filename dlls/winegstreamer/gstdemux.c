@@ -64,6 +64,7 @@ typedef struct GSTImpl {
     LONGLONG filesize;
 
     BOOL discont, initial, ignore_flush;
+    GstElement *container;
     GstElement *gstfilter;
     GstPad *my_src, *their_sink;
     GstBus *bus;
@@ -78,6 +79,8 @@ struct GSTOutPin {
     BaseOutputPin pin;
     IQualityControl IQualityControl_iface;
 
+    GstElement *flipfilter;
+    GstPad *flip_sink, *flip_src;
     GstPad *their_src;
     GstPad *my_sink;
     GstBufferPool *gstpool;
@@ -751,8 +754,14 @@ static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
     }
     if (x == This->cStreams)
         goto out;
+
     pin = This->ppPins[x];
-    gst_pad_unlink(pin->their_src, pin->my_sink);
+
+    if(pin->flipfilter)
+        gst_pad_unlink(pin->their_src, pin->flip_sink);
+    else
+        gst_pad_unlink(pin->their_src, pin->my_sink);
+
     gst_object_unref(pin->their_src);
     pin->their_src = NULL;
 out:
@@ -819,10 +828,72 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, GSTImpl *This)
     pin->isvid = isvid;
 
     gst_segment_init(pin->segment, GST_FORMAT_TIME);
-    ret = gst_pad_link(pad, mypad);
+
+    if (isvid) {
+        TRACE("setting up videoflip filter for pin %p, my_sink: %p, their_src: %p\n",
+                pin, pin->my_sink, pad);
+
+        /* gstreamer outputs video top-down, but dshow expects bottom-up, so
+         * make new transform filter to invert video */
+        pin->flipfilter = gst_element_factory_make("videoflip", NULL);
+        if(!pin->flipfilter){
+            ERR("Missing videoflip filter?\n");
+            ret = -1;
+            goto exit;
+        }
+
+        gst_util_set_object_arg(G_OBJECT(pin->flipfilter), "method", "vertical-flip");
+
+        gst_bin_add(GST_BIN(This->container), pin->flipfilter);
+        gst_element_sync_state_with_parent(pin->flipfilter);
+
+        pin->flip_sink = gst_element_get_static_pad(pin->flipfilter, "sink");
+        if(!pin->flip_sink){
+            WARN("Couldn't find sink on flip filter\n");
+            gst_object_unref(pin->flipfilter);
+            pin->flipfilter = NULL;
+            ret = -1;
+            goto exit;
+        }
+
+        ret = gst_pad_link(pad, pin->flip_sink);
+        if(ret < 0){
+            WARN("gst_pad_link failed: %d\n", ret);
+            gst_object_unref(pin->flip_sink);
+            pin->flip_sink = NULL;
+            gst_object_unref(pin->flipfilter);
+            pin->flipfilter = NULL;
+            goto exit;
+        }
+
+        pin->flip_src = gst_element_get_static_pad(pin->flipfilter, "src");
+        if(!pin->flip_src){
+            WARN("Couldn't find src on flip filter\n");
+            gst_object_unref(pin->flip_sink);
+            pin->flip_sink = NULL;
+            gst_object_unref(pin->flipfilter);
+            pin->flipfilter = NULL;
+            ret = -1;
+            goto exit;
+        }
+
+        ret = gst_pad_link(pin->flip_src, pin->my_sink);
+        if(ret < 0){
+            WARN("gst_pad_link failed: %d\n", ret);
+            gst_object_unref(pin->flip_src);
+            pin->flip_src = NULL;
+            gst_object_unref(pin->flip_sink);
+            pin->flip_sink = NULL;
+            gst_object_unref(pin->flipfilter);
+            pin->flipfilter = NULL;
+            goto exit;
+        }
+    } else
+        ret = gst_pad_link(pad, mypad);
 
     gst_pad_set_active(mypad, 1);
 
+exit:
     TRACE("Linking: %i\n", ret);
 
     if (ret >= 0) {
@@ -834,7 +905,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, GSTImpl *This)
 static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
 {
     GSTImpl *This = (GSTImpl*)user;
-    int x;
+    int x, ret;
 
     TRACE("%p %p %p\n", This, bin, pad);
 
@@ -852,7 +923,13 @@ static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
         GSTOutPin *pin = This->ppPins[x];
         if (!pin->their_src) {
             gst_segment_init(pin->segment, GST_FORMAT_TIME);
-            if (gst_pad_link(pad, pin->my_sink) >= 0) {
+
+            if (pin->flipfilter)
+                ret = gst_pad_link(pad, pin->flip_sink);
+            else
+                ret = gst_pad_link(pad, pin->my_sink);
+
+            if (ret >= 0) {
                 pin->their_src = pad;
                 gst_object_ref(pin->their_src);
                 TRACE("Relinked\n");
@@ -1023,12 +1100,17 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
         gst_bus_set_sync_handler(This->bus, watch_bus_wrapper, This, NULL);
     }
 
+    This->container = gst_bin_new(NULL);
+
     This->gstfilter = gst_element_factory_make("decodebin", NULL);
     if (!This->gstfilter) {
         FIXME("Could not make source filter, are gstreamer-plugins-* installed for %u bits?\n",
               8 * (int)sizeof(void*));
         return E_FAIL;
     }
+
+    gst_bin_add(GST_BIN(This->container), This->gstfilter);
+
     gst_element_set_bus(This->gstfilter, This->bus);
     g_signal_connect(This->gstfilter, "pad-added", G_CALLBACK(existing_new_pad_wrapper), This);
     g_signal_connect(This->gstfilter, "pad-removed", G_CALLBACK(removed_decoded_pad_wrapper), This);
@@ -1054,9 +1136,9 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
     /* Add initial pins */
     This->initial = This->discont = TRUE;
     ResetEvent(This->event);
-    gst_element_set_state(This->gstfilter, GST_STATE_PLAYING);
+    gst_element_set_state(This->container, GST_STATE_PLAYING);
     WaitForSingleObject(This->event, -1);
-    gst_element_get_state(This->gstfilter, NULL, NULL, -1);
+    gst_element_get_state(This->container, NULL, NULL, -1);
 
     if (ret < 0) {
         WARN("Ret: %i\n", ret);
@@ -1078,8 +1160,8 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
     *props = This->props;
 
     This->ignore_flush = TRUE;
-    gst_element_set_state(This->gstfilter, GST_STATE_READY);
-    gst_element_get_state(This->gstfilter, NULL, NULL, -1);
+    gst_element_set_state(This->container, GST_STATE_READY);
+    gst_element_get_state(This->container, NULL, NULL, -1);
     This->ignore_flush = FALSE;
 
     This->initial = FALSE;
@@ -1262,10 +1344,10 @@ static HRESULT WINAPI GST_Stop(IBaseFilter *iface)
 
     mark_wine_thread();
 
-    if (This->gstfilter) {
+    if (This->container) {
         This->ignore_flush = TRUE;
-        gst_element_set_state(This->gstfilter, GST_STATE_READY);
-        gst_element_get_state(This->gstfilter, NULL, NULL, -1);
+        gst_element_set_state(This->container, GST_STATE_READY);
+        gst_element_get_state(This->container, NULL, NULL, -1);
         This->ignore_flush = FALSE;
     }
     return S_OK;
@@ -1280,19 +1362,19 @@ static HRESULT WINAPI GST_Pause(IBaseFilter *iface)
 
     TRACE("(%p)\n", This);
 
-    if (!This->gstfilter)
+    if (!This->container)
         return VFW_E_NOT_CONNECTED;
 
     mark_wine_thread();
 
-    gst_element_get_state(This->gstfilter, &now, NULL, -1);
+    gst_element_get_state(This->container, &now, NULL, -1);
     if (now == GST_STATE_PAUSED)
         return S_OK;
     if (now != GST_STATE_PLAYING)
         hr = IBaseFilter_Run(iface, -1);
     if (FAILED(hr))
         return hr;
-    ret = gst_element_set_state(This->gstfilter, GST_STATE_PAUSED);
+    ret = gst_element_set_state(This->container, GST_STATE_PAUSED);
     if (ret == GST_STATE_CHANGE_ASYNC)
         hr = S_FALSE;
     return hr;
@@ -1310,26 +1392,26 @@ static HRESULT WINAPI GST_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 
     mark_wine_thread();
 
-    if (!This->gstfilter)
+    if (!This->container)
         return VFW_E_NOT_CONNECTED;
 
     EnterCriticalSection(&This->filter.csFilter);
     This->filter.rtStreamStart = tStart;
     LeaveCriticalSection(&This->filter.csFilter);
 
-    gst_element_get_state(This->gstfilter, &now, NULL, -1);
+    gst_element_get_state(This->container, &now, NULL, -1);
     if (now == GST_STATE_PLAYING)
         return S_OK;
     if (now == GST_STATE_PAUSED) {
         GstStateChangeReturn ret;
-        ret = gst_element_set_state(This->gstfilter, GST_STATE_PLAYING);
+        ret = gst_element_set_state(This->container, GST_STATE_PLAYING);
         if (ret == GST_STATE_CHANGE_ASYNC)
             return S_FALSE;
         return S_OK;
     }
 
     EnterCriticalSection(&This->filter.csFilter);
-    gst_element_set_state(This->gstfilter, GST_STATE_PLAYING);
+    gst_element_set_state(This->container, GST_STATE_PLAYING);
     This->filter.rtStreamStart = tStart;
 
     for (i = 0; i < This->cStreams; i++) {
@@ -1355,12 +1437,12 @@ static HRESULT WINAPI GST_GetState(IBaseFilter *iface, DWORD dwMilliSecsTimeout,
 
     mark_wine_thread();
 
-    if (!This->gstfilter) {
+    if (!This->container) {
         *pState = State_Stopped;
         return S_OK;
     }
 
-    ret = gst_element_get_state(This->gstfilter, &now, &pending, dwMilliSecsTimeout == INFINITE ? -1 : dwMilliSecsTimeout * 1000);
+    ret = gst_element_get_state(This->container, &now, &pending, dwMilliSecsTimeout == INFINITE ? -1 : dwMilliSecsTimeout * 1000);
 
     if (ret == GST_STATE_CHANGE_ASYNC)
         hr = VFW_S_STATE_INTERMEDIATE;
@@ -1642,7 +1724,14 @@ static ULONG WINAPI GSTOutPin_Release(IPin *iface)
 
     if (!refCount) {
         if (This->their_src) {
-            gst_pad_unlink(This->their_src, This->my_sink);
+            if (This->flipfilter) {
+                gst_pad_unlink(This->their_src, This->flip_sink);
+                gst_pad_unlink(This->flip_src, This->my_sink);
+                gst_object_unref(This->flip_src);
+                gst_object_unref(This->flip_sink);
+                gst_object_unref(This->flipfilter);
+            } else
+                gst_pad_unlink(This->their_src, This->my_sink);
             gst_object_unref(This->their_src);
         }
         gst_object_unref(This->my_sink);
@@ -1793,10 +1882,10 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This)
     TRACE("(%p)\n", This);
     mark_wine_thread();
 
-    if (!This->gstfilter)
+    if (!This->container)
         return S_OK;
     gst_element_set_bus(This->gstfilter, NULL);
-    gst_element_set_state(This->gstfilter, GST_STATE_NULL);
+    gst_element_set_state(This->container, GST_STATE_NULL);
     gst_pad_unlink(This->my_src, This->their_sink);
     gst_object_unref(This->my_src);
     gst_object_unref(This->their_sink);
@@ -1811,6 +1900,8 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This)
     This->ppPins = NULL;
     gst_object_unref(This->gstfilter);
     This->gstfilter = NULL;
+    gst_object_unref(This->container);
+    This->container = NULL;
     BaseFilterImpl_IncrementPinVersion((BaseFilter*)This);
     CoTaskMemFree(ppOldPins);
     return S_OK;

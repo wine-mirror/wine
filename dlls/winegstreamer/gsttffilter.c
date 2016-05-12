@@ -704,8 +704,6 @@ static HRESULT WINAPI Gstreamer_YUV2RGB_SetMediaType(TransformFilter *tf, PIN_DI
         avgtime = vih->AvgTimePerFrame;
         width = vih->bmiHeader.biWidth;
         height = vih->bmiHeader.biHeight;
-        if (vih->bmiHeader.biHeight > 0)
-            vih->bmiHeader.biHeight = -vih->bmiHeader.biHeight;
         vih->bmiHeader.biBitCount = 24;
         vih->bmiHeader.biCompression = BI_RGB;
         vih->bmiHeader.biSizeImage = width * abs(height) * 3;
@@ -714,8 +712,6 @@ static HRESULT WINAPI Gstreamer_YUV2RGB_SetMediaType(TransformFilter *tf, PIN_DI
         avgtime = vih->AvgTimePerFrame;
         width = vih->bmiHeader.biWidth;
         height = vih->bmiHeader.biHeight;
-        if (vih->bmiHeader.biHeight > 0)
-            vih->bmiHeader.biHeight = -vih->bmiHeader.biHeight;
         vih->bmiHeader.biBitCount = 24;
         vih->bmiHeader.biCompression = BI_RGB;
         vih->bmiHeader.biSizeImage = width * abs(height) * 3;
@@ -810,8 +806,6 @@ static HRESULT WINAPI Gstreamer_YUV2ARGB_SetMediaType(TransformFilter *tf, PIN_D
         avgtime = vih->AvgTimePerFrame;
         width = vih->bmiHeader.biWidth;
         height = vih->bmiHeader.biHeight;
-        if (vih->bmiHeader.biHeight > 0)
-            vih->bmiHeader.biHeight = -vih->bmiHeader.biHeight;
         vih->bmiHeader.biBitCount = 32;
         vih->bmiHeader.biCompression = BI_RGB;
         vih->bmiHeader.biSizeImage = width * abs(height) * 3;
@@ -820,8 +814,6 @@ static HRESULT WINAPI Gstreamer_YUV2ARGB_SetMediaType(TransformFilter *tf, PIN_D
         avgtime = vih->AvgTimePerFrame;
         width = vih->bmiHeader.biWidth;
         height = vih->bmiHeader.biHeight;
-        if (vih->bmiHeader.biHeight > 0)
-            vih->bmiHeader.biHeight = -vih->bmiHeader.biHeight;
         vih->bmiHeader.biBitCount = 32;
         vih->bmiHeader.biCompression = BI_RGB;
         vih->bmiHeader.biSizeImage = width * abs(height) * 3;
