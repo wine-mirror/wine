@@ -731,40 +731,43 @@ static struct macdrv_win_data *macdrv_create_win_data(HWND hwnd, const RECT *win
  */
 static void show_window(struct macdrv_win_data *data)
 {
-    HWND prev = NULL;
-    HWND next = NULL;
-    macdrv_window prev_window = NULL;
-    macdrv_window next_window = NULL;
-    BOOL activate = FALSE;
-    HWND hwndFocus;
-
-    /* find window that this one must be after */
-    prev = GetWindow(data->hwnd, GW_HWNDPREV);
-    while (prev && !((GetWindowLongW(prev, GWL_STYLE) & (WS_VISIBLE | WS_MINIMIZE)) == WS_VISIBLE &&
-                     (prev_window = macdrv_get_cocoa_window(prev, TRUE))))
-        prev = GetWindow(prev, GW_HWNDPREV);
-    if (!prev_window)
+    if (data->cocoa_window)
     {
-        /* find window that this one must be before */
-        next = GetWindow(data->hwnd, GW_HWNDNEXT);
-        while (next && !((GetWindowLongW(next, GWL_STYLE) & (WS_VISIBLE | WS_MINIMIZE)) == WS_VISIBLE &&
-                         (next_window = macdrv_get_cocoa_window(next, TRUE))))
-            next = GetWindow(next, GW_HWNDNEXT);
+        HWND prev = NULL;
+        HWND next = NULL;
+        macdrv_window prev_window = NULL;
+        macdrv_window next_window = NULL;
+        BOOL activate = FALSE;
+        HWND hwndFocus;
+
+        /* find window that this one must be after */
+        prev = GetWindow(data->hwnd, GW_HWNDPREV);
+        while (prev && !((GetWindowLongW(prev, GWL_STYLE) & (WS_VISIBLE | WS_MINIMIZE)) == WS_VISIBLE &&
+                         (prev_window = macdrv_get_cocoa_window(prev, TRUE))))
+            prev = GetWindow(prev, GW_HWNDPREV);
+        if (!prev_window)
+        {
+            /* find window that this one must be before */
+            next = GetWindow(data->hwnd, GW_HWNDNEXT);
+            while (next && !((GetWindowLongW(next, GWL_STYLE) & (WS_VISIBLE | WS_MINIMIZE)) == WS_VISIBLE &&
+                             (next_window = macdrv_get_cocoa_window(next, TRUE))))
+                next = GetWindow(next, GW_HWNDNEXT);
+        }
+
+        TRACE("win %p/%p below %p/%p above %p/%p\n",
+              data->hwnd, data->cocoa_window, prev, prev_window, next, next_window);
+
+        if (!prev_window)
+            activate = activate_on_focus_time && (GetTickCount() - activate_on_focus_time < 2000);
+        macdrv_order_cocoa_window(data->cocoa_window, prev_window, next_window, activate);
+        data->on_screen = TRUE;
+
+        hwndFocus = GetFocus();
+        if (hwndFocus && (data->hwnd == hwndFocus || IsChild(data->hwnd, hwndFocus)))
+            macdrv_SetFocus(hwndFocus);
+        if (activate)
+            activate_on_focus_time = 0;
     }
-
-    TRACE("win %p/%p below %p/%p above %p/%p\n",
-          data->hwnd, data->cocoa_window, prev, prev_window, next, next_window);
-
-    if (!prev_window)
-        activate = activate_on_focus_time && (GetTickCount() - activate_on_focus_time < 2000);
-    macdrv_order_cocoa_window(data->cocoa_window, prev_window, next_window, activate);
-    data->on_screen = TRUE;
-
-    hwndFocus = GetFocus();
-    if (hwndFocus && (data->hwnd == hwndFocus || IsChild(data->hwnd, hwndFocus)))
-        macdrv_SetFocus(hwndFocus);
-    if (activate)
-        activate_on_focus_time = 0;
 }
 
 
@@ -775,7 +778,8 @@ static void hide_window(struct macdrv_win_data *data)
 {
     TRACE("win %p/%p\n", data->hwnd, data->cocoa_window);
 
-    macdrv_hide_cocoa_window(data->cocoa_window);
+    if (data->cocoa_window)
+        macdrv_hide_cocoa_window(data->cocoa_window);
     data->on_screen = FALSE;
 }
 
