@@ -1600,13 +1600,14 @@ static BOOL set_win_format(struct macdrv_win_data *data, int format)
             return FALSE;
         }
 
-        data->gl_view = macdrv_create_view(cocoa_window, cgrect_from_rect(data->gl_rect));
+        data->gl_view = macdrv_create_view(cgrect_from_rect(data->gl_rect));
         if (!data->gl_view)
         {
             WARN("failed to create GL view for window %p rect %s\n", cocoa_window, wine_dbgstr_rect(&data->gl_rect));
             return FALSE;
         }
         macdrv_set_view_hidden(data->gl_view, FALSE);
+        macdrv_set_view_superview(data->gl_view, NULL, cocoa_window, NULL, NULL);
 
         TRACE("created GL view %p in window %p at %s\n", data->gl_view, cocoa_window,
               wine_dbgstr_rect(&data->gl_rect));

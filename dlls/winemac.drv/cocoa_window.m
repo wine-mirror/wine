@@ -3212,14 +3212,13 @@ void macdrv_set_window_min_max_sizes(macdrv_window w, CGSize min_size, CGSize ma
 /***********************************************************************
  *              macdrv_create_view
  *
- * Creates and returns a view in the specified rect of the window.  The
+ * Creates and returns a view with the specified frame rect.  The
  * caller is responsible for calling macdrv_dispose_view() on the view
  * when it is done with it.
  */
-macdrv_view macdrv_create_view(macdrv_window w, CGRect rect)
+macdrv_view macdrv_create_view(CGRect rect)
 {
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-    WineWindow* window = (WineWindow*)w;
     __block WineContentView* view;
 
     if (CGRectIsNull(rect)) rect = CGRectZero;
@@ -3238,8 +3237,6 @@ macdrv_view macdrv_create_view(macdrv_window w, CGRect rect)
                selector:@selector(updateGLContexts)
                    name:NSApplicationDidChangeScreenParametersNotification
                  object:NSApp];
-        [[window contentView] addSubview:view];
-        [window updateForGLSubviews];
     });
 
     [pool release];
