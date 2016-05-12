@@ -290,6 +290,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 {
     NSMutableArray* glContexts;
     NSMutableArray* pendingGlContexts;
+    BOOL _cachedHasGLDescendant;
+    BOOL _cachedHasGLDescendantValid;
     BOOL clearedGlSurface;
 
     NSMutableAttributedString* markedText;
@@ -454,6 +456,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
     - (void) addGLContext:(WineOpenGLContext*)context
     {
+        BOOL hadContext = [self hasGLContext];
         if (!glContexts)
             glContexts = [[NSMutableArray alloc] init];
         if (!pendingGlContexts)
@@ -475,13 +478,18 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             [self setNeedsDisplay:YES];
         }
 
+        if (!hadContext)
+            [self invalidateHasGLDescendant];
         [(WineWindow*)[self window] updateForGLSubviews];
     }
 
     - (void) removeGLContext:(WineOpenGLContext*)context
     {
+        BOOL hadContext = [self hasGLContext];
         [glContexts removeObjectIdenticalTo:context];
         [pendingGlContexts removeObjectIdenticalTo:context];
+        if (hadContext && ![self hasGLContext])
+            [self invalidateHasGLDescendant];
         [(WineWindow*)[self window] updateForGLSubviews];
     }
 
@@ -494,6 +502,40 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     - (BOOL) hasGLContext
     {
         return [glContexts count] || [pendingGlContexts count];
+    }
+
+    - (BOOL) _hasGLDescendant
+    {
+        if ([self hasGLContext])
+            return YES;
+        for (WineContentView* view in [self subviews])
+        {
+            if ([view hasGLDescendant])
+                return YES;
+        }
+        return NO;
+    }
+
+    - (BOOL) hasGLDescendant
+    {
+        if (!_cachedHasGLDescendantValid)
+        {
+            _cachedHasGLDescendant = [self _hasGLDescendant];
+            _cachedHasGLDescendantValid = YES;
+        }
+        return _cachedHasGLDescendant;
+    }
+
+    - (void) invalidateHasGLDescendant
+    {
+        BOOL invalidateAncestors = _cachedHasGLDescendantValid;
+        _cachedHasGLDescendantValid = NO;
+        if (invalidateAncestors && self != [[self window] contentView])
+        {
+            WineContentView* superview = (WineContentView*)[self superview];
+            if ([superview isKindOfClass:[WineContentView class]])
+                [superview invalidateHasGLDescendant];
+        }
     }
 
     - (void) wine_getBackingSize:(int*)outBackingSize
@@ -558,6 +600,28 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     - (NSFocusRingType) focusRingType
     {
         return NSFocusRingTypeNone;
+    }
+
+    - (void) didAddSubview:(NSView*)subview
+    {
+        if ([subview isKindOfClass:[WineContentView class]])
+        {
+            WineContentView* view = (WineContentView*)subview;
+            if (!view->_cachedHasGLDescendantValid || view->_cachedHasGLDescendant)
+                [self invalidateHasGLDescendant];
+        }
+        [super didAddSubview:subview];
+    }
+
+    - (void) willRemoveSubview:(NSView*)subview
+    {
+        if ([subview isKindOfClass:[WineContentView class]])
+        {
+            WineContentView* view = (WineContentView*)subview;
+            if (!view->_cachedHasGLDescendantValid || view->_cachedHasGLDescendant)
+                [self invalidateHasGLDescendant];
+        }
+        [super willRemoveSubview:subview];
     }
 
     /*
@@ -1606,7 +1670,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     - (BOOL) needsTransparency
     {
         return self.shape || self.colorKeyed || self.usePerPixelAlpha ||
-                (gl_surface_mode == GL_SURFACE_BEHIND && [[self.contentView valueForKeyPath:@"subviews.@max.hasGLContext"] boolValue]);
+                (gl_surface_mode == GL_SURFACE_BEHIND && [(WineContentView*)self.contentView hasGLDescendant]);
     }
 
     - (void) checkTransparency
@@ -2194,17 +2258,12 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     {
         NSRect contentRect = [[self contentView] frame];
         BOOL coveredByGLView = FALSE;
-        for (WineContentView* view in [[self contentView] subviews])
+        WineContentView* view = (WineContentView*)[[self contentView] hitTest:NSMakePoint(NSMidX(contentRect), NSMidY(contentRect))];
+        if ([view isKindOfClass:[WineContentView class]] && [view hasGLContext])
         {
-            if ([view hasGLContext])
-            {
-                NSRect frame = [view convertRect:[view bounds] toView:nil];
-                if (NSContainsRect(frame, contentRect))
-                {
-                    coveredByGLView = TRUE;
-                    break;
-                }
-            }
+            NSRect frame = [view convertRect:[view bounds] toView:nil];
+            if (NSContainsRect(frame, contentRect))
+                coveredByGLView = TRUE;
         }
 
         if (coveredByGLView)
