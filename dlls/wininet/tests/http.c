@@ -520,7 +520,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     length = sizeof(buffer);
     res = HttpQueryInfoA(hor, HTTP_QUERY_RAW_HEADERS, buffer, &length, 0x0);
     ok(res, "HttpQueryInfoA(HTTP_QUERY_RAW_HEADERS) failed with error %d\n", GetLastError());
-    ok(length == 0, "HTTP_QUERY_RAW_HEADERS: expected length 0, but got %d\n", length);
+    ok(length == 0 || (length == 1 && !*buffer) /* win10 */, "HTTP_QUERY_RAW_HEADERS: expected length 0, but got %d\n", length);
     ok(!strcmp(buffer, ""), "HTTP_QUERY_RAW_HEADERS: expected string \"\", but got \"%s\"\n", buffer);
 
     CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
@@ -1759,8 +1759,8 @@ static void HttpHeaders_test(void)
     memset(buffer, 'x', sizeof(buffer));
     ok(HttpQueryInfoA(hRequest,HTTP_QUERY_RAW_HEADERS_CRLF,
                 buffer,&len,&index) == TRUE,"Query failed\n");
-    ok(len == 2, "Expected 2, got %d\n", len);
-    ok(strcmp(buffer, "\r\n") == 0, "Expected CRLF, got '%s'\n", buffer);
+    ok(len == 2 || len == 4 /* win10 */, "Expected 2 or 4, got %d\n", len);
+    ok(memcmp(buffer, "\r\n\r\n", len) == 0, "Expected CRLF, got '%s'\n", buffer);
     ok(index == 0, "Index was incremented\n");
 
     ok(HttpAddRequestHeadersA(hRequest,"Warning:test2",-1,HTTP_ADDREQ_FLAG_ADD),
@@ -1962,8 +1962,7 @@ static const char contmsg[] =
 static const char expandcontmsg[] =
 "HTTP/1.1 100 Continue\r\n"
 "Server: winecontinue\r\n"
-"Tag: something witty\r\n"
-"\r\n";
+"Tag: something witty\r\n";
 
 static const char okmsg[] =
 "HTTP/1.1 200 OK\r\n"
@@ -2390,6 +2389,8 @@ static void test_basic_request(int port, const char *verb, const char *url)
     DWORD r, count, error;
     char buffer[0x100];
 
+    trace("basic request %s %s\n", verb, url);
+
     hi = InternetOpenA(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
     ok(hi != NULL, "open failed\n");
 
@@ -2403,7 +2404,7 @@ static void test_basic_request(int port, const char *verb, const char *url)
     r = HttpSendRequestA(hr, NULL, 0, NULL, 0);
     error = GetLastError();
     ok(error == ERROR_SUCCESS || broken(error != ERROR_SUCCESS), "expected ERROR_SUCCESS, got %u\n", error);
-    ok(r, "HttpSendRequest failed\n");
+    ok(r, "HttpSendRequest failed: %u\n", GetLastError());
 
     count = 0;
     memset(buffer, 0, sizeof buffer);
@@ -3073,14 +3074,24 @@ static void test_header_override(int port)
     ok(req != NULL, "HttpOpenRequest failed\n");
 
     ret = HttpAddRequestHeadersA(req, host_header_override, ~0u, HTTP_ADDREQ_FLAG_REPLACE);
-    err = GetLastError();
-    todo_wine ok(!ret, "HttpAddRequestHeaders succeeded\n");
-    todo_wine ok(err == ERROR_HTTP_HEADER_NOT_FOUND, "Expected error ERROR_HTTP_HEADER_NOT_FOUND, got %d\n", err);
+    if(ret) { /* win10 returns success */
+        trace("replacing host header is supported.\n");
 
-    ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
-    ok(ret, "HttpSendRequest failed\n");
+        ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
+        ok(ret, "HttpSendRequest failed\n");
 
-    test_status_code_todo(req, 400);
+        test_status_code(req, 200);
+    }else {
+        trace("replacing host header is not supported.\n");
+
+        err = GetLastError();
+        ok(err == ERROR_HTTP_HEADER_NOT_FOUND, "Expected error ERROR_HTTP_HEADER_NOT_FOUND, got %d\n", err);
+
+        ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
+        ok(ret, "HttpSendRequest failed\n");
+
+        test_status_code(req, 400);
+    }
 
     InternetCloseHandle(req);
     InternetCloseHandle(con);
