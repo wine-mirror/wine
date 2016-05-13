@@ -1307,7 +1307,7 @@ static void test_create_depthstencil_view(void)
             U(dsv_desc).Texture2DArray.MipSlice);
     ok(!U(dsv_desc).Texture2DArray.FirstArraySlice, "Got unexpected first array slice %u.\n",
             U(dsv_desc).Texture2DArray.FirstArraySlice);
-    todo_wine ok(U(dsv_desc).Texture2DArray.ArraySize == texture_desc.ArraySize,
+    ok(U(dsv_desc).Texture2DArray.ArraySize == texture_desc.ArraySize,
             "Got unexpected array size %u.\n", U(dsv_desc).Texture2DArray.ArraySize);
 
     ID3D10DepthStencilView_Release(dsview);
@@ -1518,7 +1518,7 @@ static void test_create_rendertarget_view(void)
             U(rtv_desc).Texture2DArray.MipSlice);
     ok(!U(rtv_desc).Texture2DArray.FirstArraySlice, "Got unexpected first array slice %u.\n",
             U(rtv_desc).Texture2DArray.FirstArraySlice);
-    todo_wine ok(U(rtv_desc).Texture2DArray.ArraySize == texture_desc.ArraySize, "Got unexpected array size %u.\n",
+    ok(U(rtv_desc).Texture2DArray.ArraySize == texture_desc.ArraySize, "Got unexpected array size %u.\n",
             U(rtv_desc).Texture2DArray.ArraySize);
 
     ID3D10RenderTargetView_Release(rtview);

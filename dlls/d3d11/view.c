@@ -60,7 +60,7 @@ static HRESULT set_dsdesc_from_resource(D3D11_DEPTH_STENCIL_VIEW_DESC *desc, ID3
                 desc->ViewDimension = D3D11_DSV_DIMENSION_TEXTURE1DARRAY;
                 desc->u.Texture1DArray.MipSlice = 0;
                 desc->u.Texture1DArray.FirstArraySlice = 0;
-                desc->u.Texture1DArray.ArraySize = 1;
+                desc->u.Texture1DArray.ArraySize = texture_desc.ArraySize;
             }
 
             return S_OK;
@@ -100,13 +100,13 @@ static HRESULT set_dsdesc_from_resource(D3D11_DEPTH_STENCIL_VIEW_DESC *desc, ID3
                     desc->ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
                     desc->u.Texture2DArray.MipSlice = 0;
                     desc->u.Texture2DArray.FirstArraySlice = 0;
-                    desc->u.Texture2DArray.ArraySize = 1;
+                    desc->u.Texture2DArray.ArraySize = texture_desc.ArraySize;
                 }
                 else
                 {
                     desc->ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
                     desc->u.Texture2DMSArray.FirstArraySlice = 0;
-                    desc->u.Texture2DMSArray.ArraySize = 1;
+                    desc->u.Texture2DMSArray.ArraySize = texture_desc.ArraySize;
                 }
             }
 
@@ -156,7 +156,7 @@ static HRESULT set_rtdesc_from_resource(D3D11_RENDER_TARGET_VIEW_DESC *desc, ID3
                 desc->ViewDimension = D3D11_RTV_DIMENSION_TEXTURE1DARRAY;
                 desc->u.Texture1DArray.MipSlice = 0;
                 desc->u.Texture1DArray.FirstArraySlice = 0;
-                desc->u.Texture1DArray.ArraySize = 1;
+                desc->u.Texture1DArray.ArraySize = texture_desc.ArraySize;
             }
 
             return S_OK;
@@ -197,13 +197,13 @@ static HRESULT set_rtdesc_from_resource(D3D11_RENDER_TARGET_VIEW_DESC *desc, ID3
                     desc->ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
                     desc->u.Texture2DArray.MipSlice = 0;
                     desc->u.Texture2DArray.FirstArraySlice = 0;
-                    desc->u.Texture2DArray.ArraySize = 1;
+                    desc->u.Texture2DArray.ArraySize = texture_desc.ArraySize;
                 }
                 else
                 {
                     desc->ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY;
                     desc->u.Texture2DMSArray.FirstArraySlice = 0;
-                    desc->u.Texture2DMSArray.ArraySize = 1;
+                    desc->u.Texture2DMSArray.ArraySize = texture_desc.ArraySize;
                 }
             }
 
