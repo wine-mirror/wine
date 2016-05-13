@@ -5735,6 +5735,13 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             return DDERR_INVALIDCAPS;
         }
 
+        if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
+        {
+            WARN("Tried to create a flippable cubemap.\n");
+            HeapFree(GetProcessHeap(), 0, texture);
+            return DDERR_INVALIDPARAMS;
+        }
+
         if (desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
         {
             FIXME("Flippable textures not implemented.\n");
@@ -5748,6 +5755,8 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         {
             WARN("Tried to specify a back buffer count for a non-flippable surface.\n");
             HeapFree(GetProcessHeap(), 0, texture);
+            if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
+                return DDERR_INVALIDPARAMS;
             return DDERR_INVALIDCAPS;
         }
     }
