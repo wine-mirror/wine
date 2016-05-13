@@ -5991,6 +5991,8 @@ static void test_flip(void)
     IDirectDrawSurface7 *frontbuffer, *backbuffer1, *backbuffer2, *backbuffer3, *surface;
     DDSCAPS2 caps = {DDSCAPS_FLIP, 0, 0, {0}};
     DDSURFACEDESC2 surface_desc;
+    D3DDEVICEDESC7 device_desc;
+    IDirect3DDevice7 *device;
     BOOL sysmem_primary;
     IDirectDraw7 *ddraw;
     DWORD expected_caps;
@@ -6227,6 +6229,54 @@ static void test_flip(void)
         IDirectDrawSurface7_Release(frontbuffer);
     }
 
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create 3D device.\n");
+        goto done;
+    }
+    hr = IDirect3DDevice7_GetCaps(device, &device_desc);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    IDirect3DDevice7_Release(device);
+    if (!(device_desc.dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_CUBEMAP))
+    {
+        skip("Cubemaps are not supported.\n");
+        goto done;
+    }
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_COMPLEX | DDSCAPS_FLIP | DDSCAPS_TEXTURE;
+    surface_desc.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES;
+    surface_desc.dwWidth = 128;
+    surface_desc.dwHeight = 128;
+    surface_desc.dwBackBufferCount = 3;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &frontbuffer, NULL);
+    ok(hr == DDERR_INVALIDCAPS, "Got unexpected hr %#x.\n", hr);
+
+    surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_FLIP;
+    surface_desc.dwFlags |= DDSD_BACKBUFFERCOUNT;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &frontbuffer, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_COMPLEX;
+    surface_desc.ddsCaps.dwCaps |= DDSCAPS_FLIP;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &frontbuffer, NULL);
+    ok(hr == DDERR_INVALIDCAPS, "Got unexpected hr %#x.\n", hr);
+
+    surface_desc.ddsCaps.dwCaps |= DDSCAPS_COMPLEX;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &frontbuffer, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    surface_desc.dwBackBufferCount = 1;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &frontbuffer, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    surface_desc.dwBackBufferCount = 0;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &frontbuffer, NULL);
+    ok(hr == DDERR_INVALIDCAPS, "Got unexpected hr %#x.\n", hr);
+
+done:
     refcount = IDirectDraw7_Release(ddraw);
     ok(refcount == 0, "The ddraw object was not properly freed, refcount %u.\n", refcount);
     DestroyWindow(window);
