@@ -2041,7 +2041,6 @@ static DWORD CALLBACK server_thread(LPVOID param)
     int last_request = 0;
     char host_header[22];
     char host_header_override[30];
-    static BOOL test_b = FALSE;
     static int test_no_cache = 0;
 
     WSAStartup(MAKEWORD(1,1), &wsaData);
@@ -2189,13 +2188,6 @@ static DWORD CALLBACK server_thread(LPVOID param)
                 send(c, okmsg, sizeof okmsg-1, 0);
             else
                 send(c, notokmsg, sizeof notokmsg-1, 0);
-        }
-        if (!test_b && strstr(buffer, "/testB HTTP/1.1"))
-        {
-            test_b = TRUE;
-            send(c, okmsg, sizeof okmsg-1, 0);
-            recvfrom(c, buffer, sizeof buffer, 0, NULL, NULL);
-            send(c, okmsg, sizeof okmsg-1, 0);
         }
         if (strstr(buffer, "/testC"))
         {
@@ -3091,37 +3083,6 @@ static void test_header_override(int port)
         ok(ret, "HttpSendRequest failed\n");
 
         test_status_code(req, 400);
-    }
-
-    InternetCloseHandle(req);
-    InternetCloseHandle(con);
-    InternetCloseHandle(ses);
-}
-
-static void test_http1_1(int port)
-{
-    HINTERNET ses, con, req;
-    BOOL ret;
-
-    ses = InternetOpenA("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
-    ok(ses != NULL, "InternetOpen failed\n");
-
-    con = InternetConnectA(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
-    ok(con != NULL, "InternetConnect failed\n");
-
-    req = HttpOpenRequestA(con, NULL, "/testB", NULL, NULL, NULL, INTERNET_FLAG_KEEP_CONNECTION, 0);
-    ok(req != NULL, "HttpOpenRequest failed\n");
-
-    ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
-    if (ret)
-    {
-        InternetCloseHandle(req);
-
-        req = HttpOpenRequestA(con, NULL, "/testB", NULL, NULL, NULL, INTERNET_FLAG_KEEP_CONNECTION, 0);
-        ok(req != NULL, "HttpOpenRequest failed\n");
-
-        ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
-        ok(ret, "HttpSendRequest failed\n");
     }
 
     InternetCloseHandle(req);
@@ -4840,7 +4801,6 @@ static void test_http_connection(void)
     test_basic_request(si.port, "GET", "/testF");
     test_connection_header(si.port);
     test_header_override(si.port);
-    test_http1_1(si.port);
     test_cookie_header(si.port);
     test_basic_authentication(si.port);
     test_invalid_response_headers(si.port);
