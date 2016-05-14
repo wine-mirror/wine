@@ -11628,7 +11628,7 @@ msgstr ""
 
 #: reg.rc:55
 msgid "Search complete. Number of matches found: %1!d!\n"
-msgstr ""
+msgstr "Haku on valmis. Osumia: %1!d!\n"
 
 #: regedit.rc:34
 msgid "&Registry"
