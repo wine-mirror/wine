@@ -540,12 +540,6 @@ static inline struct dwritefactory *impl_from_IDWriteFactory3(IDWriteFactory3 *i
     return CONTAINING_RECORD(iface, struct dwritefactory, IDWriteFactory3_iface);
 }
 
-void notify_factory_fallback_removed(IDWriteFactory3 *iface)
-{
-    struct dwritefactory *factory = impl_from_IDWriteFactory3(iface);
-    factory->fallback = NULL;
-}
-
 static void release_fontface_cache(struct list *fontfaces)
 {
     struct fontfacecached *fontface, *fontface2;
