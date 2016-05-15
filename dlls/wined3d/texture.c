@@ -116,6 +116,11 @@ void wined3d_texture_validate_location(struct wined3d_texture *texture,
     TRACE("New locations flags are %s.\n", wined3d_debug_location(sub_resource->locations));
 }
 
+static void wined3d_texture_set_dirty(struct wined3d_texture *texture)
+{
+    texture->flags &= ~(WINED3D_TEXTURE_RGB_VALID | WINED3D_TEXTURE_SRGB_VALID);
+}
+
 void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, DWORD location)
 {
@@ -428,11 +433,6 @@ void wined3d_texture_set_swapchain(struct wined3d_texture *texture, struct wined
 {
     texture->swapchain = swapchain;
     wined3d_resource_update_draw_binding(&texture->resource);
-}
-
-void wined3d_texture_set_dirty(struct wined3d_texture *texture)
-{
-    texture->flags &= ~(WINED3D_TEXTURE_RGB_VALID | WINED3D_TEXTURE_SRGB_VALID);
 }
 
 /* Context activation is done by the caller. */
