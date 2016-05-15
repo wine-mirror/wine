@@ -338,8 +338,6 @@ HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 		device->buflen = ds_hel_buflen;
 	device->buflen -= device->buflen % device->pwfx->nBlockAlign;
 
-	device->mix_buffer_len = (device->buflen / (device->pwfx->wBitsPerSample / 8)) * sizeof(float);
-
 	if (device->state == STATE_PLAYING) device->state = STATE_STARTING;
 	else if (device->state == STATE_STOPPING) device->state = STATE_STOPPED;
 
@@ -359,8 +357,7 @@ HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 
     device->buffer = newbuf;
 
-    TRACE("buflen: %u, fraglen: %u, mix_buffer_len: %u\n",
-            device->buflen, device->fraglen, device->mix_buffer_len);
+    TRACE("buflen: %u, fraglen: %u\n", device->buflen, device->fraglen);
 
     if(device->pwfx->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
             (device->pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
