@@ -2591,7 +2591,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     ok( count == 1, "wrong count %lu\n", count );
     ok( results[0] == base, "wrong result %p\n", results[0] );
 
-    /* Create a new window class and associcated Window (see above) */
+    /* Create a new window class and associated Window (see above) */
 
     success = VirtualProtect( base, size, PAGE_EXECUTE_READWRITE, &old_prot );
     ok( success, "VirtualProtect failed %u\n", GetLastError() );
