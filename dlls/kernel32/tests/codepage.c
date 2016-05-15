@@ -1211,9 +1211,9 @@ static void test_dbcs_to_widechar(void)
         {
             WCHAR wbuf_ok[]     = { 0x770b, 0x003f, '\0', 0xffff };
             WCHAR wbuf_broken[] = { 0x770b, '\0', 0xffff, 0xffff };
-            todo_wine ok(count == 3 || broken(count == 2 /*windows xp*/),
+            ok(count == 3 || broken(count == 2 /*windows xp*/),
                "%04x: returned %d (expected 3)\n", flags[i], count);
-            todo_wine ok(!memcmp(wbuf, wbuf_ok, sizeof(wbuf_ok))
+            ok(!memcmp(wbuf, wbuf_ok, sizeof(wbuf_ok))
                || broken(!memcmp(wbuf, wbuf_broken, sizeof(wbuf_broken))),
                "%04x: returned %04x %04x %04x %04x (expected %04x %04x %04x %04x)\n",
                flags[i], wbuf[0], wbuf[1], wbuf[2], wbuf[3],
@@ -1240,9 +1240,9 @@ static void test_dbcs_to_widechar(void)
         {
             WCHAR wbuf_ok[]     = { 0x770b, 0x003f, '\0', 'x', 0xffff };
             WCHAR wbuf_broken[] = { 0x770b, '\0', 'x', 0xffff, 0xffff };
-            todo_wine ok(count == 4 || broken(count == 3),
+            ok(count == 4 || broken(count == 3),
                "%04x: returned %d (expected 4)\n", flags[i], count);
-            todo_wine ok(!memcmp(wbuf, wbuf_ok, sizeof(wbuf_ok))
+            ok(!memcmp(wbuf, wbuf_ok, sizeof(wbuf_ok))
                || broken(!memcmp(wbuf, wbuf_broken, sizeof(wbuf_broken))),
                "%04x: returned %04x %04x %04x %04x %04x (expected %04x %04x %04x %04x %04x)\n",
                flags[i], wbuf[0], wbuf[1], wbuf[2], wbuf[3], wbuf[4],
