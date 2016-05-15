@@ -1651,21 +1651,15 @@ static void test_load_save_emf(void)
 
     size = -1;
     hr = IPicture_SaveAsFile(pic, dst_stream, TRUE, &size);
-    todo_wine
     ok(hr == S_OK, "IPicture_SaveasFile error %#lx\n", hr);
-    todo_wine
     ok(size == 128, "expected 128, got %ld\n", size);
     emh = GlobalLock(hmem);
-    if (size > 0)
-    {
     ok(emh->iType == EMR_HEADER, "wrong iType %04lx\n", emh->iType);
     ok(emh->dSignature == ENHMETA_SIGNATURE, "wrong dSignature %08lx\n", emh->dSignature);
-    }
     GlobalUnlock(hmem);
 
     size = -1;
     hr = IPicture_SaveAsFile(pic, dst_stream, FALSE, &size);
-    todo_wine
     ok(hr == E_FAIL, "expected E_FAIL, got %#lx\n", hr);
     ok(size == -1, "expected -1, got %ld\n", size);
 

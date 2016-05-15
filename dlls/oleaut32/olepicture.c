@@ -2009,9 +2009,22 @@ static HRESULT WINAPI OLEPictureImpl_SaveAsFile(IPicture *iface,
     case PICTYPE_METAFILE:
         FIXME("PICTYPE_METAFILE is not implemented\n");
         return E_NOTIMPL;
+
     case PICTYPE_ENHMETAFILE:
-        FIXME("ENHMETAFILE is not implemented\n");
-        return E_NOTIMPL;
+        if (!mem_copy) return E_FAIL;
+
+        if (This->bIsDirty || !This->data)
+        {
+            hr = serializeEMF(This->desc.emf.hemf, &data, &data_size);
+            if (hr != S_OK) return hr;
+            HeapFree(GetProcessHeap(), 0, This->data);
+            This->data = data;
+            This->datalen = data_size;
+        }
+        hr = IStream_Write(stream, This->data, This->datalen, &written);
+        if (hr == S_OK && size) *size = written;
+        return hr;
+
     default:
         FIXME("%#x is not implemented\n", This->desc.picType);
         break;
