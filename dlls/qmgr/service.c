@@ -148,7 +148,7 @@ ServiceMain(DWORD dwArgc, LPWSTR *lpszArgv)
     WaitForSingleObject(fileTxThread, INFINITE);
     UpdateStatus(SERVICE_STOPPED, NO_ERROR, 0);
     CloseHandle(stop_event);
-    TRACE("service stoped\n");
+    TRACE("service stopped\n");
 
     CoUninitialize();
 }
