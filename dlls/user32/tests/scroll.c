@@ -114,7 +114,7 @@ static void test_EnableScrollBar(void)
     ok( ret, "The scrollbar should be enabled.\n" );
     ok( IsWindowEnabled( hScroll ), "The scrollbar window should be enabled.\n" );
 
-    /* disable window, try to reenable */
+    /* disable window, try to re-enable */
     ret = EnableWindow( hScroll, FALSE );
     ok( !ret, "got %d\n", ret );
     ok( !IsWindowEnabled( hScroll ), "The scrollbar window should be disabled.\n" );
