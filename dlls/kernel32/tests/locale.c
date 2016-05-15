@@ -4179,6 +4179,8 @@ static void test_IsValidLocaleName(void)
     ok(!ret, "IsValidLocaleName should have failed\n");
     ret = pIsValidLocaleName(LOCALE_NAME_INVARIANT);
     ok(ret, "IsValidLocaleName failed\n");
+    ret = pIsValidLocaleName(NULL);
+    ok(!ret, "IsValidLocaleName should have failed\n");
 }
 
 static void test_CompareStringOrdinal(void)

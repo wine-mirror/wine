@@ -2656,6 +2656,9 @@ BOOL WINAPI IsValidLocaleName( LPCWSTR locale )
 {
     struct locale_name locale_name;
 
+    if (!locale)
+        return FALSE;
+
     /* string parsing */
     parse_locale_name( locale, &locale_name );
 
