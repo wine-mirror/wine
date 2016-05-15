@@ -304,7 +304,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
             *ppv = &MMDEVAPI_CF[i];
             return S_OK;
         }
-        i++;
     }
 
     WARN("(%s, %s, %p): no class found.\n", debugstr_guid(rclsid),
