@@ -138,7 +138,7 @@ interface IDWriteFontSet : IUnknown
         WCHAR const *preferred_locales, IDWriteStringList **values);
     HRESULT GetPropertyValues(UINT32 index, DWRITE_FONT_PROPERTY_ID id, BOOL *exists,
         IDWriteLocalizedStrings **values);
-    HRESULT GetPropertyOccurenceCount(DWRITE_FONT_PROPERTY const *property, UINT32 *count);
+    HRESULT GetPropertyOccurrenceCount(DWRITE_FONT_PROPERTY const *property, UINT32 *count);
     HRESULT GetMatchingFonts_(WCHAR const *family, DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STRETCH stretch,
         DWRITE_FONT_STYLE style, IDWriteFontSet **fontset);
     HRESULT GetMatchingFonts(DWRITE_FONT_PROPERTY const *props, UINT32 count, IDWriteFontSet **fontset);
