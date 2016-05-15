@@ -5046,7 +5046,7 @@ static void test_EM_REPLACESEL(int redraw)
     todo_wine ok(!strcmp(buffer, "WTestSomeTextne"), "WM_GETTEXT returned incorrect string\n");
 
     if (!redraw)
-        /* This is needed to avoid interferring with keybd_event calls
+        /* This is needed to avoid interfering with keybd_event calls
          * on other tests that simulate keyboard events. */
         SendMessageA(hwndRichEdit, WM_SETREDRAW, TRUE, 0);
 
