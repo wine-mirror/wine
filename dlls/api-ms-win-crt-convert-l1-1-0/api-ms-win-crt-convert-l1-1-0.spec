@@ -88,7 +88,7 @@
 @ stub mbrtoc32
 @ cdecl mbrtowc(ptr str long ptr) ucrtbase.mbrtowc
 @ cdecl mbsrtowcs(ptr ptr long ptr) ucrtbase.mbsrtowcs
-@ stub mbsrtowcs_s
+@ cdecl mbsrtowcs_s(ptr ptr long ptr long ptr) ucrtbase.mbsrtowcs_s
 @ cdecl mbstowcs(ptr str long) ucrtbase.mbstowcs
 @ cdecl mbstowcs_s(ptr ptr long str long) ucrtbase.mbstowcs_s
 @ cdecl mbtowc(ptr str long) ucrtbase.mbtowc

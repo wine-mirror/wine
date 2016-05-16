@@ -1365,7 +1365,7 @@
 @ cdecl mbrtowc(ptr str long ptr) MSVCRT_mbrtowc
 # stub mbsdup_dbg(wstr long ptr long)
 @ cdecl mbsrtowcs(ptr ptr long ptr) MSVCRT_mbsrtowcs
-# stub mbsrtowcs_s(ptr ptr long ptr long ptr)
+@ cdecl mbsrtowcs_s(ptr ptr long ptr long ptr) MSVCRT_mbsrtowcs_s
 @ cdecl mbstowcs(ptr str long) MSVCRT_mbstowcs
 @ cdecl mbstowcs_s(ptr ptr long str long) MSVCRT__mbstowcs_s
 @ cdecl mbtowc(ptr str long) MSVCRT_mbtowc
