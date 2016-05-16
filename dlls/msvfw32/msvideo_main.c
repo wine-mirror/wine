@@ -450,7 +450,7 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
             local = ICOpen(fccType, info.fccHandler, wMode);
             if (local != 0)
             {
-                TRACE("Returning %s as defult handler for %s\n",
+                TRACE("Returning %s as default handler for %s\n",
                       wine_dbgstr_fcc(info.fccHandler), wine_dbgstr_fcc(fccType));
                 return local;
             }
