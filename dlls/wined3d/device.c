@@ -302,7 +302,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     GLbitfield clear_mask = 0;
     BOOL render_offscreen;
     unsigned int i;
-    RECT ds_rect;
+    RECT ds_rect = {0};
 
     context = context_acquire(device, target);
     if (!context->valid)
