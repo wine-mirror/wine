@@ -252,9 +252,10 @@ static void replace_cookie(cookie_container_t *container, cookie_t *new_cookie)
     add_cookie(container, new_cookie);
 }
 
-static BOOL cookie_match_path(cookie_container_t *container, const WCHAR *path)
+static BOOL cookie_match_path(cookie_container_t *container, substr_t path)
 {
-    return !strncmpiW(container->path, path, strlenW(container->path));
+    size_t len = strlenW(container->path);
+    return path.len >= len && !strncmpiW(container->path, path.str, len);
 }
 
 static BOOL create_cookie_url(substr_t domain, substr_t path, WCHAR *buf, DWORD buf_len)
@@ -557,44 +558,42 @@ typedef struct {
     unsigned string_len;
 } cookie_set_t;
 
-static DWORD get_cookie(const WCHAR *host, const WCHAR *path, DWORD flags, cookie_set_t *res)
+static DWORD get_cookie(substr_t host, substr_t path, DWORD flags, cookie_set_t *res)
 {
     static const WCHAR empty_path[] = { '/',0 };
 
     const WCHAR *p;
     cookie_domain_t *domain;
     cookie_container_t *container;
-    unsigned len;
     FILETIME tm;
 
     GetSystemTimeAsFileTime(&tm);
 
-    len = strlenW(host);
-    p = host+len;
-    while(p>host && p[-1]!='.') p--;
-    while(p != host) {
+    p = host.str + host.len;
+    while(p > host.str && p[-1] != '.') p--;
+    while(p != host.str) {
         p--;
-        while(p>host && p[-1]!='.') p--;
-        if(p == host) break;
+        while(p > host.str && p[-1] != '.') p--;
+        if(p == host.str) break;
 
-        load_persistent_cookie(substr(p, host+len-p), substr(empty_path, 1));
+        load_persistent_cookie(substr(p, host.str+host.len-p), substr(empty_path, 1));
     }
 
-    p = host + len;
+    p = path.str + path.len;
     do {
-        load_persistent_cookie(substr(host, len), substr(path, p-path));
+        load_persistent_cookie(host, substr(path.str, p-path.str));
 
         p--;
-        while(p > path && p[-1] != '/') p--;
-    }while(p != path);
+        while(p > path.str && p[-1] != '/') p--;
+    }while(p != path.str);
 
-    domain = get_cookie_domain(substrz(host), FALSE);
+    domain = get_cookie_domain(host, FALSE);
     if(!domain) {
-        TRACE("Unknown host %s\n", debugstr_w(host));
+        TRACE("Unknown host %s\n", debugstr_wn(host.str, host.len));
         return ERROR_NO_MORE_ITEMS;
     }
 
-    for(domain = get_cookie_domain(substrz(host), FALSE); domain; domain = domain->parent) {
+    for(domain = get_cookie_domain(host, FALSE); domain; domain = domain->parent) {
         TRACE("Trying %s domain...\n", debugstr_w(domain->domain));
 
         LIST_FOR_EACH_ENTRY(container, &domain->path_list, cookie_container_t, entry) {
@@ -685,7 +684,7 @@ DWORD get_cookie_header(const WCHAR *host, const WCHAR *path, WCHAR **ret)
 
     EnterCriticalSection(&cookie_cs);
 
-    res = get_cookie(host, path, INTERNET_COOKIE_HTTPONLY, &cookie_set);
+    res = get_cookie(substrz(host), substrz(path), INTERNET_COOKIE_HTTPONLY, &cookie_set);
     if(res != ERROR_SUCCESS) {
         LeaveCriticalSection(&cookie_cs);
         return res;
@@ -760,7 +759,7 @@ BOOL WINAPI InternetGetCookieExW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
 
     EnterCriticalSection(&cookie_cs);
 
-    res = get_cookie(host, path, flags, &cookie_set);
+    res = get_cookie(substrz(host), substrz(path), flags, &cookie_set);
     if(res != ERROR_SUCCESS) {
         LeaveCriticalSection(&cookie_cs);
         SetLastError(res);
