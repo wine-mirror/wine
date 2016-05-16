@@ -765,7 +765,7 @@ SampleGrabber_IMemInputPin_Receive(IMemInputPin *iface, IMediaSample *sample)
     TRACE("(%p)->(%p) output = %p, grabber = %p\n", This, sample, This->memOutput, This->grabberIface);
     if (!sample)
         return E_POINTER;
-    if ((This->filter.state != State_Running) || (This->oneShot == OneShot_Past))
+    if (This->oneShot == OneShot_Past)
         return S_FALSE;
     SampleGrabber_callback(This, sample);
     hr = This->memOutput ? IMemInputPin_Receive(This->memOutput, sample) : S_OK;
