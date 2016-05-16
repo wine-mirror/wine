@@ -867,45 +867,45 @@ BOOL WINAPI InternetGetCookieExA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
  */
 BOOL WINAPI InternetGetCookieA(const char *url, const char *name, char *data, DWORD *size)
 {
-    TRACE("(%s, %s, %s, %p)\n", debugstr_a(url), debugstr_a(name), debugstr_a(data), size);
+    TRACE("(%s, %s, %p, %p)\n", debugstr_a(url), debugstr_a(name), data, size);
 
     return InternetGetCookieExA(url, name, data, size, 0, NULL);
 }
 
-/***********************************************************************
- *           IsDomainLegalCookieDomainW (WININET.@)
- */
-BOOL WINAPI IsDomainLegalCookieDomainW( LPCWSTR s1, LPCWSTR s2 )
+static BOOL is_domain_legal_for_cookie(substr_t domain, substr_t full_domain)
 {
-    DWORD s1_len, s2_len;
+    const WCHAR *ptr;
 
-    FIXME("(%s, %s) semi-stub\n", debugstr_w(s1), debugstr_w(s2));
-
-    if (!s1 || !s2)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    if (s1[0] == '.' || !s1[0] || s2[0] == '.' || !s2[0])
-    {
+    if(!domain.len || *domain.str == '.' || !full_domain.len || *full_domain.str == '.') {
         SetLastError(ERROR_INVALID_NAME);
         return FALSE;
     }
-    if(!strchrW(s1, '.') || !strchrW(s2, '.'))
+
+    if(domain.len > full_domain.len || !memchrW(domain.str, '.', domain.len) || !memchrW(full_domain.str, '.', full_domain.len))
         return FALSE;
 
-    s1_len = strlenW(s1);
-    s2_len = strlenW(s2);
-    if (s1_len > s2_len)
-        return FALSE;
-
-    if (strncmpiW(s1, s2+s2_len-s1_len, s1_len) || (s2_len>s1_len && s2[s2_len-s1_len-1]!='.'))
-    {
+    ptr = full_domain.str + full_domain.len - domain.len;
+    if (strncmpiW(domain.str, ptr, domain.len) || (full_domain.len > domain.len && ptr[-1] != '.')) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
     return TRUE;
+}
+
+/***********************************************************************
+ *           IsDomainLegalCookieDomainW (WININET.@)
+ */
+BOOL WINAPI IsDomainLegalCookieDomainW(const WCHAR *domain, const WCHAR *full_domain)
+{
+    FIXME("(%s, %s) semi-stub\n", debugstr_w(domain), debugstr_w(full_domain));
+
+    if (!domain || !full_domain) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    return is_domain_legal_for_cookie(substrz(domain), substrz(full_domain));
 }
 
 DWORD set_cookie(const WCHAR *domain, const WCHAR *path, const WCHAR *cookie_name, const WCHAR *cookie_data, DWORD flags)
