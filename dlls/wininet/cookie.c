@@ -257,7 +257,7 @@ static BOOL cookie_match_path(cookie_container_t *container, const WCHAR *path)
     return !strncmpiW(container->path, path, strlenW(container->path));
 }
 
-static BOOL create_cookie_url(LPCWSTR domain, LPCWSTR path, WCHAR *buf, DWORD buf_len)
+static BOOL create_cookie_url(substr_t domain, substr_t path, WCHAR *buf, DWORD buf_len)
 {
     static const WCHAR cookie_prefix[] = {'C','o','o','k','i','e',':'};
 
@@ -282,18 +282,16 @@ static BOOL create_cookie_url(LPCWSTR domain, LPCWSTR path, WCHAR *buf, DWORD bu
     *(buf++) = '@';
     buf_len--;
 
-    len = strlenW(domain);
-    if(len >= buf_len)
+    if(domain.len >= buf_len)
         return FALSE;
-    memcpy(buf, domain, len*sizeof(WCHAR));
-    buf += len;
-    buf_len -= len;
+    memcpy(buf, domain.str, domain.len*sizeof(WCHAR));
+    buf += domain.len;
+    buf_len -= domain.len;
 
-    len = strlenW(path);
-    if(len >= buf_len)
+    if(path.len >= buf_len)
         return FALSE;
-    memcpy(buf, path, len*sizeof(WCHAR));
-    buf += len;
+    memcpy(buf, path.str, path.len*sizeof(WCHAR));
+    buf += path.len;
 
     *buf = 0;
 
@@ -314,8 +312,10 @@ static BOOL load_persistent_cookie(LPCWSTR domain, LPCWSTR path)
     WCHAR *name, *data;
     FILETIME expiry, create, time;
 
-    if (!create_cookie_url(domain, path, cookie_url, sizeof(cookie_url)/sizeof(cookie_url[0])))
+    if (!create_cookie_url(substrz(domain), substrz(path), cookie_url, sizeof(cookie_url)/sizeof(cookie_url[0]))) {
+        FIXME("Failed to create cookie URL.\n");
         return FALSE;
+    }
 
     size = 0;
     RetrieveUrlCacheEntryStreamW(cookie_url, NULL, &size, FALSE, 0);
@@ -409,8 +409,11 @@ static BOOL save_persistent_cookie(cookie_container_t *container)
     FILETIME time;
     DWORD bytes_written;
 
-    if (!create_cookie_url(container->domain->domain, container->path, cookie_url, sizeof(cookie_url)/sizeof(cookie_url[0])))
+    if (!create_cookie_url(substrz(container->domain->domain), substrz(container->path),
+                           cookie_url, sizeof(cookie_url)/sizeof(cookie_url[0]))) {
+        FIXME("Failed to create cookie URL.\n");
         return FALSE;
+    }
 
     /* check if there's anything to save */
     GetSystemTimeAsFileTime(&time);
