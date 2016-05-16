@@ -2280,7 +2280,7 @@ BOOL WINAPI InternetReadFileExW(HINTERNET hFile, LPINTERNET_BUFFERSW lpBuffer,
 
     TRACE("(%p %p 0x%x 0x%lx)\n", hFile, lpBuffer, dwFlags, dwContext);
 
-    if (lpBuffer->dwStructSize != sizeof(*lpBuffer)) {
+    if (!lpBuffer || lpBuffer->dwStructSize != sizeof(*lpBuffer)) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }

@@ -1067,6 +1067,11 @@ static void InternetReadFileExA_test(int flags)
     CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
     CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
 
+    rc = InternetReadFileExW(hor, NULL, 0, 0xdeadcafe);
+    ok(!rc && (GetLastError() == ERROR_INVALID_PARAMETER),
+        "InternetReadFileEx should have failed with ERROR_INVALID_PARAMETER instead of %s, %u\n",
+        rc ? "TRUE" : "FALSE", GetLastError());
+
     /* tests invalid dwStructSize */
     inetbuffers.dwStructSize = sizeof(inetbuffers)+1;
     inetbuffers.lpcszHeader = NULL;
