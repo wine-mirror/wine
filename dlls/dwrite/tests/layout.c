@@ -32,7 +32,16 @@
 static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
 static const WCHAR enusW[] = {'e','n','-','u','s',0};
 
-static DWRITE_SCRIPT_ANALYSIS g_sa;
+struct testanalysissink
+{
+    IDWriteTextAnalysisSink IDWriteTextAnalysisSink_iface;
+    DWRITE_SCRIPT_ANALYSIS sa; /* last analysis, with SetScriptAnalysis() */
+};
+
+static inline struct testanalysissink *impl_from_IDWriteTextAnalysisSink(IDWriteTextAnalysisSink *iface)
+{
+    return CONTAINING_RECORD(iface, struct testanalysissink, IDWriteTextAnalysisSink_iface);
+}
 
 /* test IDWriteTextAnalysisSink */
 static HRESULT WINAPI analysissink_QueryInterface(IDWriteTextAnalysisSink *iface, REFIID riid, void **obj)
@@ -60,7 +69,8 @@ static ULONG WINAPI analysissink_Release(IDWriteTextAnalysisSink *iface)
 static HRESULT WINAPI analysissink_SetScriptAnalysis(IDWriteTextAnalysisSink *iface,
     UINT32 position, UINT32 length, DWRITE_SCRIPT_ANALYSIS const* sa)
 {
-    g_sa = *sa;
+    struct testanalysissink *sink = impl_from_IDWriteTextAnalysisSink(iface);
+    sink->sa = *sa;
     return S_OK;
 }
 
@@ -95,7 +105,10 @@ static IDWriteTextAnalysisSinkVtbl analysissinkvtbl = {
     analysissink_SetNumberSubstitution
 };
 
-static IDWriteTextAnalysisSink analysissink = { &analysissinkvtbl };
+static struct testanalysissink analysissink = {
+    { &analysissinkvtbl },
+    { 0 }
+};
 
 /* test IDWriteTextAnalysisSource */
 static HRESULT WINAPI analysissource_QueryInterface(IDWriteTextAnalysisSource *iface,
@@ -202,10 +215,10 @@ static void get_script_analysis(const WCHAR *str, UINT32 len, DWRITE_SCRIPT_ANAL
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &analysissource, 0, len, &analysissink);
+    hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &analysissource, 0, len, &analysissink.IDWriteTextAnalysisSink_iface);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    *sa = g_sa;
+    *sa = analysissink.sa;
     IDWriteFactory_Release(factory);
 }
 
