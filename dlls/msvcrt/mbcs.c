@@ -2371,6 +2371,35 @@ MSVCRT_size_t CDECL MSVCRT_mbsrtowcs(MSVCRT_wchar_t *wcstr,
 }
 
 /*********************************************************************
+ *              mbsrtowcs_s(MSVCRT.@)
+ */
+int CDECL MSVCRT_mbsrtowcs_s(MSVCRT_size_t *ret, MSVCRT_wchar_t *wcstr, MSVCRT_size_t len,
+        const char **mbstr, MSVCRT_size_t count, MSVCRT_mbstate_t *state)
+{
+    MSVCRT_size_t tmp;
+
+    if(!ret) ret = &tmp;
+    if(!MSVCRT_CHECK_PMT(!!wcstr == !!len)) {
+        *ret = -1;
+        return MSVCRT_EINVAL;
+    }
+
+    *ret = MSVCRT_mbsrtowcs(wcstr, mbstr, count>len ? len : count, state);
+    if(*ret == -1) {
+        if(wcstr) *wcstr = 0;
+        return *MSVCRT__errno();
+    }
+    (*ret)++;
+    if(*ret > len) {
+        /* no place for terminating '\0' */
+        if(wcstr) *wcstr = 0;
+        return 0;
+    }
+    if(wcstr) wcstr[(*ret)-1] = 0;
+    return 0;
+}
+
+/*********************************************************************
  *		_mbctohira (MSVCRT.@)
  *
  *              Converts a sjis katakana character to hiragana.

@@ -1943,7 +1943,7 @@
 @ cdecl mbrlen(ptr long ptr) msvcr120.mbrlen
 @ cdecl mbrtowc(ptr str long ptr) msvcr120.mbrtowc
 @ cdecl mbsrtowcs(ptr ptr long ptr) msvcr120.mbsrtowcs
-@ stub mbsrtowcs_s
+@ cdecl mbsrtowcs_s(ptr ptr long ptr long ptr) msvcr120.mbsrtowcs_s
 @ cdecl mbstowcs(ptr str long) msvcr120.mbstowcs
 @ cdecl mbstowcs_s(ptr ptr long str long) msvcr120.mbstowcs_s
 @ cdecl mbtowc(ptr str long) msvcr120.mbtowc
