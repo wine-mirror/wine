@@ -509,44 +509,23 @@ static BOOL save_persistent_cookie(cookie_container_t *container)
     return CommitUrlCacheEntryW(cookie_url, cookie_file, time, time, 0, NULL, 0, txtW, 0);
 }
 
-static BOOL COOKIE_crackUrlSimple(LPCWSTR lpszUrl, LPWSTR hostName, int hostNameLen, LPWSTR path, int pathLen)
+static BOOL cookie_parse_url(const WCHAR *url, substr_t *host, substr_t *path)
 {
-    URL_COMPONENTSW UrlComponents;
+    URL_COMPONENTSW comp = { sizeof(comp) };
+    static const WCHAR rootW[] = {'/',0};
 
-    UrlComponents.lpszExtraInfo = NULL;
-    UrlComponents.lpszPassword = NULL;
-    UrlComponents.lpszScheme = NULL;
-    UrlComponents.lpszUrlPath = path;
-    UrlComponents.lpszUserName = NULL;
-    UrlComponents.lpszHostName = hostName;
-    UrlComponents.dwExtraInfoLength = 0;
-    UrlComponents.dwPasswordLength = 0;
-    UrlComponents.dwSchemeLength = 0;
-    UrlComponents.dwUserNameLength = 0;
-    UrlComponents.dwHostNameLength = hostNameLen;
-    UrlComponents.dwUrlPathLength = pathLen;
+    comp.dwHostNameLength = 1;
+    comp.dwUrlPathLength = 1;
 
-    if (!InternetCrackUrlW(lpszUrl, 0, 0, &UrlComponents)) return FALSE;
+    if(!InternetCrackUrlW(url, 0, 0, &comp) || !comp.dwHostNameLength)
+        return FALSE;
 
     /* discard the webpage off the end of the path */
-    if (UrlComponents.dwUrlPathLength)
-    {
-        if (path[UrlComponents.dwUrlPathLength - 1] != '/')
-        {
-            WCHAR *ptr;
-            if ((ptr = strrchrW(path, '/'))) *(++ptr) = 0;
-            else
-            {
-                path[0] = '/';
-                path[1] = 0;
-            }
-        }
-    }
-    else if (pathLen >= 2)
-    {
-        path[0] = '/';
-        path[1] = 0;
-    }
+    while(comp.dwUrlPathLength && comp.lpszUrlPath[comp.dwUrlPathLength-1] != '/')
+        comp.dwUrlPathLength--;
+
+    *host = substr(comp.lpszHostName, comp.dwHostNameLength);
+    *path = comp.dwUrlPathLength ? substr(comp.lpszUrlPath, comp.dwUrlPathLength) : substr(rootW, 1);
     return TRUE;
 }
 
@@ -734,8 +713,8 @@ DWORD get_cookie_header(const WCHAR *host, const WCHAR *path, WCHAR **ret)
 BOOL WINAPI InternetGetCookieExW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
         LPWSTR lpCookieData, LPDWORD lpdwSize, DWORD flags, void *reserved)
 {
-    WCHAR host[INTERNET_MAX_HOST_NAME_LENGTH], path[INTERNET_MAX_PATH_LENGTH];
     cookie_set_t cookie_set = {0};
+    substr_t host, path;
     DWORD res;
     BOOL ret;
 
@@ -750,16 +729,15 @@ BOOL WINAPI InternetGetCookieExW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
         return FALSE;
     }
 
-    host[0] = 0;
-    ret = COOKIE_crackUrlSimple(lpszUrl, host, sizeof(host)/sizeof(host[0]), path, sizeof(path)/sizeof(path[0]));
-    if (!ret || !host[0]) {
+    ret = cookie_parse_url(lpszUrl, &host, &path);
+    if (!ret) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
     EnterCriticalSection(&cookie_cs);
 
-    res = get_cookie(substrz(host), substrz(path), flags, &cookie_set);
+    res = get_cookie(host, path, flags, &cookie_set);
     if(res != ERROR_SUCCESS) {
         LeaveCriticalSection(&cookie_cs);
         SetLastError(res);
@@ -780,7 +758,7 @@ BOOL WINAPI InternetGetCookieExW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
             lpCookieData[cookie_set.string_len] = 0;
         }
     }else {
-        TRACE("no cookies found for %s\n", debugstr_w(host));
+        TRACE("no cookies found for %s\n", debugstr_wn(host.str, host.len));
         SetLastError(ERROR_NO_MORE_ITEMS);
         ret = FALSE;
     }
@@ -1078,9 +1056,8 @@ DWORD set_cookie(substr_t domain, substr_t path, substr_t name, substr_t data, D
 DWORD WINAPI InternetSetCookieExW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
         LPCWSTR lpCookieData, DWORD flags, DWORD_PTR reserved)
 {
-    substr_t name, data;
+    substr_t host, path, name, data;
     BOOL ret;
-    WCHAR hostName[INTERNET_MAX_HOST_NAME_LENGTH], path[INTERNET_MAX_PATH_LENGTH];
 
     TRACE("(%s, %s, %s, %x, %lx)\n", debugstr_w(lpszUrl), debugstr_w(lpszCookieName),
           debugstr_w(lpCookieData), flags, reserved);
@@ -1094,9 +1071,8 @@ DWORD WINAPI InternetSetCookieExW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
         return COOKIE_STATE_UNKNOWN;
     }
 
-    hostName[0] = 0;
-    ret = COOKIE_crackUrlSimple(lpszUrl, hostName, sizeof(hostName)/sizeof(hostName[0]), path, sizeof(path)/sizeof(path[0]));
-    if (!ret || !hostName[0]) return COOKIE_STATE_UNKNOWN;
+    ret = cookie_parse_url(lpszUrl, &host, &path);
+    if (!ret || !host.len) return COOKIE_STATE_UNKNOWN;
 
     if (!lpszCookieName) {
         const WCHAR *ptr;
@@ -1114,7 +1090,7 @@ DWORD WINAPI InternetSetCookieExW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
         data = substrz(lpCookieData);
     }
 
-    return set_cookie(substrz(hostName), substrz(path), name, data, flags);
+    return set_cookie(host, path, name, data, flags);
 }
 
 /***********************************************************************
