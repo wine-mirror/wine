@@ -1500,6 +1500,10 @@ static void test_InternetErrorDlg(void)
                 continue;
             }
             break;
+        case ERROR_INTERNET_CHG_POST_IS_NON_SECURE:
+            if(res == ERROR_SUCCESS) /* win10 returns ERROR_SUCCESS */
+                expected = ERROR_SUCCESS;
+            break;
         default: break;
         }
 
