@@ -621,16 +621,18 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, LPBYTE pos, DWORD bytes)
 	hr = IAudioRenderClient_GetBuffer(device->render, bytes / device->pwfx->nBlockAlign, &buffer);
 	if(FAILED(hr)){
 		WARN("GetBuffer failed: %08x\n", hr);
-		goto done;
+		return;
 	}
 
 	memcpy(buffer, pos, bytes);
 
 	hr = IAudioRenderClient_ReleaseBuffer(device->render, bytes / device->pwfx->nBlockAlign, 0);
-	if(FAILED(hr))
-		WARN("ReleaseBuffer failed: %08x\n", hr);
+	if(FAILED(hr)) {
+		ERR("ReleaseBuffer failed: %08x\n", hr);
+		IAudioRenderClient_ReleaseBuffer(device->render, 0, 0);
+		return;
+	}
 
-done:
 	device->pad += bytes;
 }
 
