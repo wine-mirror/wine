@@ -1374,7 +1374,8 @@ static HRESULT WINAPI dwritetextanalyzer1_ApplyCharacterSpacing(IDWriteTextAnaly
         len, glyph_count, clustermap, advances, offsets, props, modified_advances, modified_offsets);
 
     if (min_advance_width < 0.0f) {
-        memset(modified_advances, 0, glyph_count*sizeof(*modified_advances));
+        if (modified_advances != advances)
+            memset(modified_advances, 0, glyph_count*sizeof(*modified_advances));
         return E_INVALIDARG;
     }
 

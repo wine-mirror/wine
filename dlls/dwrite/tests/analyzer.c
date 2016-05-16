@@ -1723,7 +1723,7 @@ static void test_ApplyCharacterSpacing(void)
         offsets[0].advanceOffset = ptr->offsets[0];
         offsets[1].advanceOffset = ptr->offsets[1];
         offsets[2].advanceOffset = ptr->offsets[2];
-        /* Ascender offsets are never thouched as spacing applies in reading direction only,
+        /* Ascender offsets are never touched as spacing applies in reading direction only,
            we'll only test them to see if they are not changed */
         offsets[0].ascenderOffset = 23.0;
         offsets[1].ascenderOffset = 32.0;
@@ -1758,11 +1758,8 @@ static void test_ApplyCharacterSpacing(void)
             props,
             advances,
             offsets);
-        /* invalid argument cases */
-        if (ptr->min_advance < 0.0)
-            ok(hr == E_INVALIDARG, "%d: got 0x%08x\n", i, hr);
-        else
-            ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
+        ok(hr == (ptr->min_advance < 0.0f ? E_INVALIDARG : S_OK), "%d: got 0x%08x\n", i, hr);
+
         if (hr == S_OK) {
             ok(ptr->modified_advances[0] == advances[0], "%d: got advance[0] %.2f, expected %.2f\n", i, advances[0], ptr->modified_advances[0]);
             ok(ptr->modified_advances[1] == advances[1], "%d: got advance[1] %.2f, expected %.2f\n", i, advances[1], ptr->modified_advances[1]);
@@ -1790,6 +1787,61 @@ static void test_ApplyCharacterSpacing(void)
                 offsets[1].advanceOffset, ptr->modified_offsets[1]);
             ok(offsets[0].ascenderOffset == 23.0, "%d: unexpected ascenderOffset %.2f\n", i, offsets[0].ascenderOffset);
             ok(offsets[1].ascenderOffset == 32.0, "%d: unexpected ascenderOffset %.2f\n", i, offsets[1].ascenderOffset);
+        }
+
+        /* same, with argument aliasing */
+        memcpy(advances, ptr->advances, glyph_count * sizeof(*advances));
+        offsets[0].advanceOffset = ptr->offsets[0];
+        offsets[1].advanceOffset = ptr->offsets[1];
+        offsets[2].advanceOffset = ptr->offsets[2];
+        /* Ascender offsets are never touched as spacing applies in reading direction only,
+           we'll only test them to see if they are not changed */
+        offsets[0].ascenderOffset = 23.0f;
+        offsets[1].ascenderOffset = 32.0f;
+        offsets[2].ascenderOffset = 31.0f;
+
+        hr = IDWriteTextAnalyzer1_ApplyCharacterSpacing(analyzer1,
+            ptr->leading,
+            ptr->trailing,
+            ptr->min_advance,
+            sizeof(clustermap)/sizeof(clustermap[0]),
+            glyph_count,
+            clustermap,
+            advances,
+            offsets,
+            props,
+            advances,
+            offsets);
+        ok(hr == (ptr->min_advance < 0.0f ? E_INVALIDARG : S_OK), "%d: got 0x%08x\n", i, hr);
+
+        if (hr == S_OK) {
+            ok(ptr->modified_advances[0] == advances[0], "%d: got advance[0] %.2f, expected %.2f\n", i, advances[0], ptr->modified_advances[0]);
+            ok(ptr->modified_advances[1] == advances[1], "%d: got advance[1] %.2f, expected %.2f\n", i, advances[1], ptr->modified_advances[1]);
+            if (glyph_count > 2)
+                ok(ptr->modified_advances[2] == advances[2], "%d: got advance[2] %.2f, expected %.2f\n", i, advances[2], ptr->modified_advances[2]);
+
+            ok(ptr->modified_offsets[0] == offsets[0].advanceOffset, "%d: got offset[0] %.2f, expected %.2f\n", i,
+                offsets[0].advanceOffset, ptr->modified_offsets[0]);
+            ok(ptr->modified_offsets[1] == offsets[1].advanceOffset, "%d: got offset[1] %.2f, expected %.2f\n", i,
+                offsets[1].advanceOffset, ptr->modified_offsets[1]);
+            if (glyph_count > 2)
+                ok(ptr->modified_offsets[2] == offsets[2].advanceOffset, "%d: got offset[2] %.2f, expected %.2f\n", i,
+                    offsets[2].advanceOffset, ptr->modified_offsets[2]);
+
+            ok(offsets[0].ascenderOffset == 23.0f, "%d: unexpected ascenderOffset %.2f\n", i, offsets[0].ascenderOffset);
+            ok(offsets[1].ascenderOffset == 32.0f, "%d: unexpected ascenderOffset %.2f\n", i, offsets[1].ascenderOffset);
+            ok(offsets[2].ascenderOffset == 31.0f, "%d: unexpected ascenderOffset %.2f\n", i, offsets[2].ascenderOffset);
+        }
+        else {
+            /* with aliased advances original values are retained */
+            ok(ptr->advances[0] == advances[0], "%d: got advance[0] %.2f, expected %.2f\n", i, advances[0], ptr->advances[0]);
+            ok(ptr->advances[1] == advances[1], "%d: got advance[1] %.2f, expected %.2f\n", i, advances[1], ptr->advances[1]);
+            ok(ptr->offsets[0] == offsets[0].advanceOffset, "%d: got offset[0] %.2f, expected %.2f\n", i,
+                offsets[0].advanceOffset, ptr->modified_offsets[0]);
+            ok(ptr->offsets[1] == offsets[1].advanceOffset, "%d: got offset[1] %.2f, expected %.2f\n", i,
+                offsets[1].advanceOffset, ptr->modified_offsets[1]);
+            ok(offsets[0].ascenderOffset == 23.0f, "%d: unexpected ascenderOffset %.2f\n", i, offsets[0].ascenderOffset);
+            ok(offsets[1].ascenderOffset == 32.0f, "%d: unexpected ascenderOffset %.2f\n", i, offsets[1].ascenderOffset);
         }
     }
 
