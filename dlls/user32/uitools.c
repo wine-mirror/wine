@@ -21,6 +21,7 @@
 
 #include <stdarg.h>
 
+#define WINE_NO_INLINE_RECT
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

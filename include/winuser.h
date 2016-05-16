@@ -3771,7 +3771,6 @@ WINUSERAPI BOOL        WINAPI IsGUIThread(BOOL);
 WINUSERAPI BOOL        WINAPI IsHungAppWindow(HWND);
 WINUSERAPI BOOL        WINAPI IsIconic(HWND);
 WINUSERAPI BOOL        WINAPI IsMenu(HMENU);
-WINUSERAPI BOOL        WINAPI IsRectEmpty(const RECT*);
 WINUSERAPI BOOL        WINAPI IsTouchWindow(HWND,PULONG);
 WINUSERAPI BOOL        WINAPI IsWinEventHookInstalled(DWORD);
 WINUSERAPI BOOL        WINAPI IsWindow(HWND);
@@ -3982,8 +3981,6 @@ WINUSERAPI HWND        WINAPI SetParent(HWND,HWND);
 WINUSERAPI BOOL        WINAPI SetPropA(HWND,LPCSTR,HANDLE);
 WINUSERAPI BOOL        WINAPI SetPropW(HWND,LPCWSTR,HANDLE);
 #define                       SetProp WINELIB_NAME_AW(SetProp)
-WINUSERAPI BOOL        WINAPI SetRect(LPRECT,INT,INT,INT,INT);
-WINUSERAPI BOOL        WINAPI SetRectEmpty(LPRECT);
 WINUSERAPI INT         WINAPI SetScrollInfo(HWND,INT,const SCROLLINFO*,BOOL);
 WINUSERAPI INT         WINAPI SetScrollPos(HWND,INT,INT,BOOL);
 WINUSERAPI BOOL        WINAPI SetScrollRange(HWND,INT,INT,INT,BOOL);
@@ -4091,6 +4088,41 @@ WINUSERAPI INT        WINAPIV wsprintfW(LPWSTR,LPCWSTR,...);
 WINUSERAPI INT         WINAPI wvsprintfA(LPSTR,LPCSTR,__ms_va_list);
 WINUSERAPI INT         WINAPI wvsprintfW(LPWSTR,LPCWSTR,__ms_va_list);
 #define                       wvsprintf WINELIB_NAME_AW(wvsprintf)
+
+#if !defined(__WINESRC__) || defined(WINE_NO_INLINE_RECT)
+
+WINUSERAPI BOOL        WINAPI IsRectEmpty(const RECT*);
+WINUSERAPI BOOL        WINAPI SetRect(LPRECT,INT,INT,INT,INT);
+WINUSERAPI BOOL        WINAPI SetRectEmpty(LPRECT);
+
+#else
+
+/* Inline versions of common RECT helpers */
+
+static inline BOOL WINAPI IsRectEmpty(const RECT *rect)
+{
+    if (!rect) return TRUE;
+    return ((rect->left >= rect->right) || (rect->top >= rect->bottom));
+}
+
+static inline BOOL WINAPI SetRect(LPRECT rect, INT left, INT top, INT right, INT bottom)
+{
+    if (!rect) return FALSE;
+    rect->left   = left;
+    rect->right  = right;
+    rect->top    = top;
+    rect->bottom = bottom;
+    return TRUE;
+}
+
+static inline BOOL WINAPI SetRectEmpty(LPRECT rect)
+{
+    if (!rect) return FALSE;
+    rect->left = rect->right = rect->top = rect->bottom = 0;
+    return TRUE;
+}
+
+#endif /* !defined(__WINESRC__) || defined(WINE_NO_INLINE_RECT) */
 
 /* Undocumented functions */
 
