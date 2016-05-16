@@ -2991,7 +2991,7 @@ static void test_process_info(void)
         sizeof(buf) /* ProcessHandleTracing */,
         sizeof(ULONG) /* ProcessIoPriority */,
         sizeof(ULONG) /* ProcessExecuteFlags */,
-#if 0 /* FIXME: Add remaning classes */
+#if 0 /* FIXME: Add remaining classes */
         ProcessResourceManagement,
         sizeof(ULONG) /* ProcessCookie */,
         sizeof(SECTION_IMAGE_INFORMATION) /* ProcessImageInformation */,
