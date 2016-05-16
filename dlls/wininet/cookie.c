@@ -142,24 +142,22 @@ static cookie_domain_t *get_cookie_domain(substr_t domain, BOOL create)
     }
 }
 
-static cookie_container_t *get_cookie_container(const WCHAR *domain, const WCHAR *path, BOOL create)
+static cookie_container_t *get_cookie_container(substr_t domain, substr_t path, BOOL create)
 {
     cookie_domain_t *cookie_domain;
     cookie_container_t *cookie_container, *iter;
-    size_t path_len, len;
+    size_t len;
 
-    cookie_domain = get_cookie_domain(substrz(domain), create);
+    cookie_domain = get_cookie_domain(domain, create);
     if(!cookie_domain)
         return NULL;
 
-    path_len = strlenW(path);
-
     LIST_FOR_EACH_ENTRY(cookie_container, &cookie_domain->path_list, cookie_container_t, entry) {
         len = strlenW(cookie_container->path);
-        if(len < path_len)
+        if(len < path.len)
             break;
 
-        if(!strcmpiW(cookie_container->path, path))
+        if(path.len == strlenW(cookie_container->path) && !strncmpiW(cookie_container->path, path.str, path.len))
             return cookie_container;
     }
 
@@ -170,7 +168,7 @@ static cookie_container_t *get_cookie_container(const WCHAR *domain, const WCHAR
     if(!cookie_container)
         return NULL;
 
-    cookie_container->path = heap_strdupW(path);
+    cookie_container->path = heap_strndupW(path.str, path.len);
     if(!cookie_container->path) {
         heap_free(cookie_container);
         return NULL;
@@ -179,9 +177,8 @@ static cookie_container_t *get_cookie_container(const WCHAR *domain, const WCHAR
     cookie_container->domain = cookie_domain;
     list_init(&cookie_container->cookie_list);
 
-
     LIST_FOR_EACH_ENTRY(iter, &cookie_domain->path_list, cookie_container_t, entry) {
-        if(strlenW(iter->path) <= path_len) {
+        if(strlenW(iter->path) <= path.len) {
             list_add_before(&iter->entry, &cookie_container->entry);
             return cookie_container;
         }
@@ -341,7 +338,7 @@ static BOOL load_persistent_cookie(LPCWSTR domain, LPCWSTR path)
     str[size] = 0;
     UnlockUrlCacheEntryStream(cookie, 0);
 
-    cookie_container = get_cookie_container(domain, path, TRUE);
+    cookie_container = get_cookie_container(substrz(domain), substrz(path), TRUE);
     if(!cookie_container) {
         heap_free(str);
         return FALSE;
@@ -1043,7 +1040,7 @@ DWORD set_cookie(const WCHAR *domain, const WCHAR *path, const WCHAR *cookie_nam
 
     load_persistent_cookie(domain, path);
 
-    container = get_cookie_container(domain, path, !expired);
+    container = get_cookie_container(substrz(domain), substrz(path), !expired);
     if(!container) {
         heap_free(data);
         if (value != data) heap_free(value);
