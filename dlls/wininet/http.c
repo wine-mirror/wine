@@ -773,7 +773,7 @@ static void HTTP_ProcessCookies( http_request_t *request )
     while((HeaderIndex = HTTP_GetCustomHeaderIndex(request, szSet_Cookie, numCookies++, FALSE)) != -1)
     {
         const WCHAR *data;
-        WCHAR *name;
+        substr_t name;
 
         setCookieHeader = &request->custHeaders[HeaderIndex];
 
@@ -784,13 +784,9 @@ static void HTTP_ProcessCookies( http_request_t *request )
         if(!data)
             continue;
 
-        name = heap_strndupW(setCookieHeader->lpszValue, data-setCookieHeader->lpszValue);
-        if(!name)
-            continue;
-
+        name = substr(setCookieHeader->lpszValue, data - setCookieHeader->lpszValue);
         data++;
-        set_cookie(request->server->name, request->path, name, data, INTERNET_COOKIE_HTTPONLY);
-        heap_free(name);
+        set_cookie(substrz(request->server->name), substrz(request->path), name, substrz(data), INTERNET_COOKIE_HTTPONLY);
     }
 
     LeaveCriticalSection( &request->headers_section );

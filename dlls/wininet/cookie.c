@@ -197,7 +197,7 @@ static void delete_cookie(cookie_t *cookie)
     heap_free(cookie);
 }
 
-static cookie_t *alloc_cookie(const WCHAR *name, const WCHAR *data, FILETIME expiry, FILETIME create_time, DWORD flags)
+static cookie_t *alloc_cookie(substr_t name, substr_t data, FILETIME expiry, FILETIME create_time, DWORD flags)
 {
     cookie_t *new_cookie;
 
@@ -210,9 +210,9 @@ static cookie_t *alloc_cookie(const WCHAR *name, const WCHAR *data, FILETIME exp
     new_cookie->flags = flags;
     list_init(&new_cookie->entry);
 
-    new_cookie->name = heap_strdupW(name);
-    new_cookie->data = heap_strdupW(data);
-    if((name && !new_cookie->name) || (data && !new_cookie->data)) {
+    new_cookie->name = heap_strndupW(name.str, name.len);
+    new_cookie->data = heap_strndupW(data.str, data.len);
+    if(!new_cookie->name || !new_cookie->data) {
         delete_cookie(new_cookie);
         return NULL;
     }
@@ -220,12 +220,12 @@ static cookie_t *alloc_cookie(const WCHAR *name, const WCHAR *data, FILETIME exp
     return new_cookie;
 }
 
-static cookie_t *find_cookie(cookie_container_t *container, const WCHAR *name)
+static cookie_t *find_cookie(cookie_container_t *container, substr_t name)
 {
     cookie_t *iter;
 
     LIST_FOR_EACH_ENTRY(iter, &container->cookie_list, cookie_t, entry) {
-        if(!strcmpiW(iter->name, name))
+        if(strlenW(iter->name) == name.len && !strncmpiW(iter->name, name.str, name.len))
             return iter;
     }
 
@@ -245,7 +245,7 @@ static void replace_cookie(cookie_container_t *container, cookie_t *new_cookie)
 {
     cookie_t *old_cookie;
 
-    old_cookie = find_cookie(container, new_cookie->name);
+    old_cookie = find_cookie(container, substrz(new_cookie->name));
     if(old_cookie)
         delete_cookie(old_cookie);
 
@@ -378,7 +378,7 @@ static BOOL load_persistent_cookie(substr_t domain, substr_t path)
             break;
 
         if(CompareFileTime(&time, &expiry) <= 0) {
-            new_cookie = alloc_cookie(NULL, NULL, expiry, create, flags);
+            new_cookie = alloc_cookie(substr(NULL, 0), substr(NULL, 0), expiry, create, flags);
             if(!new_cookie)
                 break;
 
@@ -908,139 +908,123 @@ BOOL WINAPI IsDomainLegalCookieDomainW(const WCHAR *domain, const WCHAR *full_do
     return is_domain_legal_for_cookie(substrz(domain), substrz(full_domain));
 }
 
-DWORD set_cookie(const WCHAR *domain, const WCHAR *path, const WCHAR *cookie_name, const WCHAR *cookie_data, DWORD flags)
+static void substr_skip(substr_t *str, size_t len)
+{
+    assert(str->len >= len);
+    str->str += len;
+    str->len -= len;
+}
+
+DWORD set_cookie(substr_t domain, substr_t path, substr_t name, substr_t data, DWORD flags)
 {
     cookie_container_t *container;
     cookie_t *thisCookie;
-    LPWSTR data, value;
-    WCHAR *ptr;
+    substr_t value;
+    const WCHAR *end_ptr;
     FILETIME expiry, create;
     BOOL expired = FALSE, update_persistent = FALSE;
-    DWORD cookie_flags = 0;
+    DWORD cookie_flags = 0, len;
 
-    TRACE("%s %s %s=%s %x\n", debugstr_w(domain), debugstr_w(path), debugstr_w(cookie_name), debugstr_w(cookie_data), flags);
-
-    value = data = heap_strdupW(cookie_data);
-    if (!data)
-    {
-        ERR("could not allocate the cookie data buffer\n");
-        return COOKIE_STATE_UNKNOWN;
-    }
+    TRACE("%s %s %s=%s %x\n", debugstr_wn(domain.str, domain.len), debugstr_wn(path.str, path.len),
+          debugstr_wn(name.str, name.len), debugstr_wn(data.str, data.len), flags);
 
     memset(&expiry,0,sizeof(expiry));
     GetSystemTimeAsFileTime(&create);
 
     /* lots of information can be parsed out of the cookie value */
 
-    ptr = data;
-    for (;;)
-    {
-        static const WCHAR szDomain[] = {'d','o','m','a','i','n','=',0};
-        static const WCHAR szPath[] = {'p','a','t','h','=',0};
-        static const WCHAR szExpires[] = {'e','x','p','i','r','e','s','=',0};
-        static const WCHAR szSecure[] = {'s','e','c','u','r','e',0};
-        static const WCHAR szHttpOnly[] = {'h','t','t','p','o','n','l','y',0};
-        static const WCHAR szVersion[] = {'v','e','r','s','i','o','n','=',0};
+    if(!(end_ptr = memchrW(data.str, ';', data.len)))
+       end_ptr = data.str + data.len;
+    value = substr(data.str, end_ptr-data.str);
+    data.str += value.len;
+    data.len -= value.len;
 
-        if (!(ptr = strchrW(ptr,';'))) break;
-        *ptr++ = 0;
+    for(;;) {
+        static const WCHAR szDomain[] = {'d','o','m','a','i','n','='};
+        static const WCHAR szPath[] = {'p','a','t','h','='};
+        static const WCHAR szExpires[] = {'e','x','p','i','r','e','s','='};
+        static const WCHAR szSecure[] = {'s','e','c','u','r','e'};
+        static const WCHAR szHttpOnly[] = {'h','t','t','p','o','n','l','y'};
+        static const WCHAR szVersion[] = {'v','e','r','s','i','o','n','='};
 
-        if (value != data) heap_free(value);
-        value = heap_alloc((ptr - data) * sizeof(WCHAR));
-        if (value == NULL)
-        {
-            heap_free(data);
-            ERR("could not allocate the cookie value buffer\n");
-            return COOKIE_STATE_UNKNOWN;
-        }
-        strcpyW(value, data);
+        /* Skip ';' */
+        if(data.len)
+            substr_skip(&data, 1);
 
-        while (*ptr == ' ') ptr++; /* whitespace */
+        while(data.len && *data.str == ' ')
+            substr_skip(&data, 1);
 
-        if (strncmpiW(ptr, szDomain, 7) == 0)
-        {
-            WCHAR *end_ptr;
+        if(!data.len)
+            break;
 
-            ptr += sizeof(szDomain)/sizeof(szDomain[0])-1;
-            if(*ptr == '.')
-                ptr++;
-            end_ptr = strchrW(ptr, ';');
-            if(end_ptr)
-                *end_ptr = 0;
+        if(!(end_ptr = memchrW(data.str, ';', data.len)))
+            end_ptr = data.str + data.len;
 
-            if(!IsDomainLegalCookieDomainW(ptr, domain))
-            {
-                if(value != data)
-                    heap_free(value);
-                heap_free(data);
+        if(data.len >= (len = sizeof(szDomain)/sizeof(WCHAR)) && !strncmpiW(data.str, szDomain, len)) {
+            substr_skip(&data, len);
+
+            if(data.len && *data.str == '.')
+                substr_skip(&data, 1);
+
+            if(!is_domain_legal_for_cookie(substr(data.str, end_ptr-data.str), domain))
                 return COOKIE_STATE_UNKNOWN;
-            }
 
-            if(end_ptr)
-                *end_ptr = ';';
-
-            domain = ptr;
-            TRACE("Parsing new domain %s\n",debugstr_w(domain));
-        }
-        else if (strncmpiW(ptr, szPath, 5) == 0)
-        {
-            ptr+=strlenW(szPath);
-            path = ptr;
-            TRACE("Parsing new path %s\n",debugstr_w(path));
-        }
-        else if (strncmpiW(ptr, szExpires, 8) == 0)
-        {
+            domain = substr(data.str, end_ptr-data.str);
+            TRACE("Parsing new domain %s\n", debugstr_wn(domain.str, domain.len));
+        }else if(data.len >= (len = sizeof(szPath)/sizeof(WCHAR)) && !strncmpiW(data.str, szPath, len)) {
+            substr_skip(&data, len);
+            path = substr(data.str, end_ptr - data.str);
+            TRACE("Parsing new path %s\n", debugstr_wn(path.str, path.len));
+        }else if(data.len >= (len = sizeof(szExpires)/sizeof(WCHAR)) && !strncmpiW(data.str, szExpires, len)) {
             SYSTEMTIME st;
-            ptr+=strlenW(szExpires);
-            if (InternetTimeToSystemTimeW(ptr, &st, 0))
-            {
-                SystemTimeToFileTime(&st, &expiry);
+            WCHAR buf[128];
 
-                if (CompareFileTime(&create,&expiry) > 0)
-                {
-                    TRACE("Cookie already expired.\n");
-                    expired = TRUE;
+            substr_skip(&data, len);
+
+            if(end_ptr - data.str < sizeof(buf)/sizeof(WCHAR)-1) {
+                memcpy(buf, data.str, data.len*sizeof(WCHAR));
+                buf[data.len] = 0;
+
+                if (InternetTimeToSystemTimeW(data.str, &st, 0)) {
+                    SystemTimeToFileTime(&st, &expiry);
+
+                    if (CompareFileTime(&create,&expiry) > 0) {
+                        TRACE("Cookie already expired.\n");
+                        expired = TRUE;
+                    }
                 }
             }
-        }
-        else if (strncmpiW(ptr, szSecure, 6) == 0)
-        {
-            FIXME("secure not handled (%s)\n",debugstr_w(ptr));
-            ptr += strlenW(szSecure);
-        }
-        else if (strncmpiW(ptr, szHttpOnly, 8) == 0)
-        {
+        }else if(data.len >= (len = sizeof(szSecure)/sizeof(WCHAR)) && !strncmpiW(data.str, szSecure, len)) {
+            substr_skip(&data, len);
+            FIXME("secure not handled\n");
+        }else if(data.len >= (len = sizeof(szHttpOnly)/sizeof(WCHAR)) && !strncmpiW(data.str, szHttpOnly, len)) {
+            substr_skip(&data, len);
+
             if(!(flags & INTERNET_COOKIE_HTTPONLY)) {
                 WARN("HTTP only cookie added without INTERNET_COOKIE_HTTPONLY flag\n");
-                heap_free(data);
-                if (value != data) heap_free(value);
                 SetLastError(ERROR_INVALID_OPERATION);
                 return COOKIE_STATE_REJECT;
             }
 
             cookie_flags |= INTERNET_COOKIE_HTTPONLY;
-            ptr += strlenW(szHttpOnly);
-        }
-        else if (strncmpiW(ptr, szVersion, 8) == 0)
-        {
-            FIXME("version not handled (%s)\n",debugstr_w(ptr));
-            ptr += strlenW(szVersion);
-        }
-        else if (*ptr)
-        {
-            FIXME("Unknown additional option %s\n",debugstr_w(ptr));
+        }else if(data.len >= (len = sizeof(szVersion)/sizeof(WCHAR)) && !strncmpiW(data.str, szVersion, len)) {
+            substr_skip(&data, len);
+
+            FIXME("version not handled (%s)\n",debugstr_wn(data.str, data.len));
+        }else if(data.len) {
+            FIXME("Unknown additional option %s\n", debugstr_wn(data.str, data.len));
             break;
         }
+
+        substr_skip(&data, end_ptr - data.str);
     }
 
     EnterCriticalSection(&cookie_cs);
 
-    load_persistent_cookie(substrz(domain), substrz(path));
+    load_persistent_cookie(domain, path);
 
-    container = get_cookie_container(substrz(domain), substrz(path), !expired);
+    container = get_cookie_container(domain, path, !expired);
     if(!container) {
-        heap_free(data);
-        if (value != data) heap_free(value);
         LeaveCriticalSection(&cookie_cs);
         return COOKIE_STATE_ACCEPT;
     }
@@ -1050,13 +1034,10 @@ DWORD set_cookie(const WCHAR *domain, const WCHAR *path, const WCHAR *cookie_nam
     else
         update_persistent = TRUE;
 
-    if ((thisCookie = find_cookie(container, cookie_name)))
-    {
+    if ((thisCookie = find_cookie(container, name))) {
         if ((thisCookie->flags & INTERNET_COOKIE_HTTPONLY) && !(flags & INTERNET_COOKIE_HTTPONLY)) {
             WARN("An attempt to override httponly cookie\n");
             SetLastError(ERROR_INVALID_OPERATION);
-            heap_free(data);
-            if (value != data) heap_free(value);
             return COOKIE_STATE_REJECT;
         }
 
@@ -1065,24 +1046,20 @@ DWORD set_cookie(const WCHAR *domain, const WCHAR *path, const WCHAR *cookie_nam
         delete_cookie(thisCookie);
     }
 
-    TRACE("setting cookie %s=%s for domain %s path %s\n", debugstr_w(cookie_name),
-          debugstr_w(value), debugstr_w(container->domain->domain),debugstr_w(container->path));
+    TRACE("setting cookie %s=%s for domain %s path %s\n", debugstr_wn(name.str, name.len),
+          debugstr_wn(value.str, value.len), debugstr_w(container->domain->domain), debugstr_w(container->path));
 
     if (!expired) {
         cookie_t *new_cookie;
 
-        new_cookie = alloc_cookie(cookie_name, value, expiry, create, cookie_flags);
+        new_cookie = alloc_cookie(name, value, expiry, create, cookie_flags);
         if(!new_cookie) {
-            heap_free(data);
-            if (value != data) heap_free(value);
             LeaveCriticalSection(&cookie_cs);
             return COOKIE_STATE_UNKNOWN;
         }
 
         add_cookie(container, new_cookie);
     }
-    heap_free(data);
-    if (value != data) heap_free(value);
 
     if (!update_persistent || save_persistent_cookie(container))
     {
@@ -1101,6 +1078,7 @@ DWORD set_cookie(const WCHAR *domain, const WCHAR *path, const WCHAR *cookie_nam
 DWORD WINAPI InternetSetCookieExW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
         LPCWSTR lpCookieData, DWORD flags, DWORD_PTR reserved)
 {
+    substr_t name, data;
     BOOL ret;
     WCHAR hostName[INTERNET_MAX_HOST_NAME_LENGTH], path[INTERNET_MAX_PATH_LENGTH];
 
@@ -1120,30 +1098,23 @@ DWORD WINAPI InternetSetCookieExW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
     ret = COOKIE_crackUrlSimple(lpszUrl, hostName, sizeof(hostName)/sizeof(hostName[0]), path, sizeof(path)/sizeof(path[0]));
     if (!ret || !hostName[0]) return COOKIE_STATE_UNKNOWN;
 
-    if (!lpszCookieName)
-    {
-        WCHAR *cookie, *data;
-        DWORD res;
-
-        cookie = heap_strdupW(lpCookieData);
-        if (!cookie)
-        {
-            SetLastError(ERROR_OUTOFMEMORY);
-            return COOKIE_STATE_UNKNOWN;
-        }
+    if (!lpszCookieName) {
+        const WCHAR *ptr;
 
         /* some apps (or is it us??) try to add a cookie with no cookie name, but
          * the cookie data in the form of name[=data].
          */
-        if (!(data = strchrW(cookie, '='))) data = cookie + strlenW(cookie);
-        else *data++ = 0;
+        if (!(ptr = strchrW(lpCookieData, '=')))
+            ptr = lpCookieData + strlenW(lpCookieData);
 
-        res = set_cookie(hostName, path, cookie, data, flags);
-
-        heap_free(cookie);
-        return res;
+        name = substr(lpCookieData, ptr - lpCookieData);
+        data = substrz(*ptr == '=' ? ptr+1 : ptr);
+    }else {
+        name = substrz(lpszCookieName);
+        data = substrz(lpCookieData);
     }
-    return set_cookie(hostName, path, lpszCookieName, lpCookieData, flags);
+
+    return set_cookie(substrz(hostName), substrz(path), name, data, flags);
 }
 
 /***********************************************************************
