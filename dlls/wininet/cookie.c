@@ -300,7 +300,7 @@ static BOOL create_cookie_url(substr_t domain, substr_t path, WCHAR *buf, DWORD 
     return TRUE;
 }
 
-static BOOL load_persistent_cookie(LPCWSTR domain, LPCWSTR path)
+static BOOL load_persistent_cookie(substr_t domain, substr_t path)
 {
     INTERNET_CACHE_ENTRY_INFOW *info;
     cookie_container_t *cookie_container;
@@ -312,7 +312,7 @@ static BOOL load_persistent_cookie(LPCWSTR domain, LPCWSTR path)
     WCHAR *name, *data;
     FILETIME expiry, create, time;
 
-    if (!create_cookie_url(substrz(domain), substrz(path), cookie_url, sizeof(cookie_url)/sizeof(cookie_url[0]))) {
+    if (!create_cookie_url(domain, path, cookie_url, sizeof(cookie_url)/sizeof(cookie_url[0]))) {
         FIXME("Failed to create cookie URL.\n");
         return FALSE;
     }
@@ -338,7 +338,7 @@ static BOOL load_persistent_cookie(LPCWSTR domain, LPCWSTR path)
     str[size] = 0;
     UnlockUrlCacheEntryStream(cookie, 0);
 
-    cookie_container = get_cookie_container(substrz(domain), substrz(path), TRUE);
+    cookie_container = get_cookie_container(domain, path, TRUE);
     if(!cookie_container) {
         heap_free(str);
         return FALSE;
@@ -561,7 +561,6 @@ static DWORD get_cookie(const WCHAR *host, const WCHAR *path, DWORD flags, cooki
 {
     static const WCHAR empty_path[] = { '/',0 };
 
-    WCHAR *ptr, subpath[INTERNET_MAX_PATH_LENGTH];
     const WCHAR *p;
     cookie_domain_t *domain;
     cookie_container_t *container;
@@ -578,20 +577,16 @@ static DWORD get_cookie(const WCHAR *host, const WCHAR *path, DWORD flags, cooki
         while(p>host && p[-1]!='.') p--;
         if(p == host) break;
 
-        load_persistent_cookie(p, empty_path);
+        load_persistent_cookie(substr(p, host+len-p), substr(empty_path, 1));
     }
 
-    len = strlenW(path);
-    assert(len+1 < INTERNET_MAX_PATH_LENGTH);
-    memcpy(subpath, path, (len+1)*sizeof(WCHAR));
-    ptr = subpath+len;
+    p = host + len;
     do {
-        *ptr = 0;
-        load_persistent_cookie(host, subpath);
+        load_persistent_cookie(substr(host, len), substr(path, p-path));
 
-        ptr--;
-        while(ptr>subpath && ptr[-1]!='/') ptr--;
-    }while(ptr != subpath);
+        p--;
+        while(p > path && p[-1] != '/') p--;
+    }while(p != path);
 
     domain = get_cookie_domain(substrz(host), FALSE);
     if(!domain) {
@@ -1041,7 +1036,7 @@ DWORD set_cookie(const WCHAR *domain, const WCHAR *path, const WCHAR *cookie_nam
 
     EnterCriticalSection(&cookie_cs);
 
-    load_persistent_cookie(domain, path);
+    load_persistent_cookie(substrz(domain), substrz(path));
 
     container = get_cookie_container(substrz(domain), substrz(path), !expired);
     if(!container) {
