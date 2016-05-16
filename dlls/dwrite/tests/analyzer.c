@@ -1207,7 +1207,13 @@ static void test_numbersubstitution(void)
     IDWriteNumberSubstitution *substitution;
     HRESULT hr;
 
+    /* locale is not specified, method does not require it */
     hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE, NULL, FALSE, &substitution);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteNumberSubstitution_Release(substitution);
+
+    /* invalid locale name, method does not require it */
+    hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE, dummyW, FALSE, &substitution);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     IDWriteNumberSubstitution_Release(substitution);
 
@@ -1220,6 +1226,9 @@ static void test_numbersubstitution(void)
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     /* invalid locale */
+    hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_TRADITIONAL, NULL, FALSE, &substitution);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
     hr = IDWriteFactory_CreateNumberSubstitution(factory, DWRITE_NUMBER_SUBSTITUTION_METHOD_TRADITIONAL, dummyW, FALSE, &substitution);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
