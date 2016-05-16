@@ -389,7 +389,7 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
          nCharsToDelete is a number of chars to delete from THIS run */
       nChars -= nCharsToDelete;
       shift -= nCharsToDelete;
-      TRACE("Deleting %d (remaning %d) chars at %d in %s (%d)\n",
+      TRACE("Deleting %d (remaining %d) chars at %d in %s (%d)\n",
         nCharsToDelete, nChars, c.nOffset,
         debugstr_run( run ), run->len);
 
