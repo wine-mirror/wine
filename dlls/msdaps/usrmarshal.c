@@ -1362,9 +1362,19 @@ HRESULT __RPC_STUB IErrorRecords_GetCustomErrorObject_Stub(IErrorRecords* This, 
 
 HRESULT CALLBACK IErrorRecords_GetBasicErrorInfo_Proxy(IErrorRecords* This, ULONG ulRecordNum, ERRORINFO *pErrorInfo)
 {
+    IErrorInfo *error = NULL;
+    HRESULT hr;
+
     TRACE("(%p)->%d %p\n", This, ulRecordNum, pErrorInfo);
 
-    return IErrorRecords_GetBasicErrorInfo_Proxy(This, ulRecordNum, pErrorInfo);
+    hr = IErrorRecords_RemoteGetBasicErrorInfo_Proxy(This, ulRecordNum, pErrorInfo, &error);
+    if(error)
+    {
+        SetErrorInfo(0, error);
+        IErrorInfo_Release(error);
+    }
+
+    return hr;
 }
 
 HRESULT __RPC_STUB IErrorRecords_GetBasicErrorInfo_Stub(IErrorRecords* This, ULONG ulRecordNum, ERRORINFO *pErrorInfo,
