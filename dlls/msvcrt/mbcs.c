@@ -2344,26 +2344,29 @@ MSVCRT_size_t CDECL MSVCRT_mbsrtowcs(MSVCRT_wchar_t *wcstr,
     MSVCRT_mbstate_t s = (state ? *state : 0);
     MSVCRT_wchar_t tmpdst;
     MSVCRT_size_t ret = 0;
+    const char *p;
 
     if(!MSVCRT_CHECK_PMT(pmbstr != NULL))
         return -1;
 
+    p = *pmbstr;
     while(!wcstr || count>ret) {
-        int ch_len = MSVCRT_mbrtowc(&tmpdst, *pmbstr, 2, &s);
+        int ch_len = MSVCRT_mbrtowc(&tmpdst, p, 2, &s);
         if(wcstr)
             wcstr[ret] = tmpdst;
 
         if(ch_len < 0) {
             return -1;
         }else if(ch_len == 0) {
-            *pmbstr = NULL;
+            if(wcstr) *pmbstr = NULL;
             return ret;
         }
 
-        *pmbstr += ch_len;
+        p += ch_len;
         ret++;
     }
 
+    if(wcstr) *pmbstr = p;
     return ret;
 }
 
