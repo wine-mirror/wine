@@ -92,19 +92,20 @@ static CRITICAL_SECTION_DEBUG cookie_cs_debug =
 static CRITICAL_SECTION cookie_cs = { &cookie_cs_debug, -1, 0, 0, 0, 0 };
 static struct list domain_list = LIST_INIT(domain_list);
 
-static cookie_domain_t *get_cookie_domain(const WCHAR *domain, BOOL create)
+static cookie_domain_t *get_cookie_domain(substr_t domain, BOOL create)
 {
-    const WCHAR *ptr = domain + strlenW(domain), *ptr_end, *subdomain_ptr;
+    const WCHAR *ptr = domain.str + domain.len, *ptr_end, *subdomain_ptr;
     cookie_domain_t *iter, *current_domain, *prev_domain = NULL;
     struct list *current_list = &domain_list;
 
     while(1) {
-        for(ptr_end = ptr--; ptr > domain && *ptr != '.'; ptr--);
+        for(ptr_end = ptr--; ptr > domain.str && *ptr != '.'; ptr--);
         subdomain_ptr = *ptr == '.' ? ptr+1 : ptr;
 
         current_domain = NULL;
         LIST_FOR_EACH_ENTRY(iter, current_list, cookie_domain_t, entry) {
-            if(ptr_end-subdomain_ptr == iter->subdomain_len && !memcmp(subdomain_ptr, iter->domain, iter->subdomain_len)) {
+            if(ptr_end-subdomain_ptr == iter->subdomain_len
+                    && !memcmp(subdomain_ptr, iter->domain, iter->subdomain_len*sizeof(WCHAR))) {
                 current_domain = iter;
                 break;
             }
@@ -118,7 +119,7 @@ static cookie_domain_t *get_cookie_domain(const WCHAR *domain, BOOL create)
             if(!current_domain)
                 return NULL;
 
-            current_domain->domain = heap_strdupW(subdomain_ptr);
+            current_domain->domain = heap_strndupW(subdomain_ptr, domain.str + domain.len - subdomain_ptr);
             if(!current_domain->domain) {
                 heap_free(current_domain);
                 return NULL;
@@ -133,7 +134,7 @@ static cookie_domain_t *get_cookie_domain(const WCHAR *domain, BOOL create)
             list_add_tail(current_list, &current_domain->entry);
         }
 
-        if(ptr == domain)
+        if(ptr == domain.str)
             return current_domain;
 
         prev_domain = current_domain;
@@ -147,7 +148,7 @@ static cookie_container_t *get_cookie_container(const WCHAR *domain, const WCHAR
     cookie_container_t *cookie_container, *iter;
     size_t path_len, len;
 
-    cookie_domain = get_cookie_domain(domain, create);
+    cookie_domain = get_cookie_domain(substrz(domain), create);
     if(!cookie_domain)
         return NULL;
 
@@ -592,13 +593,13 @@ static DWORD get_cookie(const WCHAR *host, const WCHAR *path, DWORD flags, cooki
         while(ptr>subpath && ptr[-1]!='/') ptr--;
     }while(ptr != subpath);
 
-    domain = get_cookie_domain(host, FALSE);
+    domain = get_cookie_domain(substrz(host), FALSE);
     if(!domain) {
         TRACE("Unknown host %s\n", debugstr_w(host));
         return ERROR_NO_MORE_ITEMS;
     }
 
-    for(domain = get_cookie_domain(host, FALSE); domain; domain = domain->parent) {
+    for(domain = get_cookie_domain(substrz(host), FALSE); domain; domain = domain->parent) {
         TRACE("Trying %s domain...\n", debugstr_w(domain->domain));
 
         LIST_FOR_EACH_ENTRY(container, &domain->path_list, cookie_container_t, entry) {

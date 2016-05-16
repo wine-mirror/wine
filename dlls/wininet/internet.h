@@ -215,6 +215,22 @@ static inline char *heap_strdupWtoA(LPCWSTR str)
     return ret;
 }
 
+typedef struct {
+    const WCHAR *str;
+    size_t len;
+} substr_t;
+
+static inline substr_t substr(const WCHAR *str, size_t len)
+{
+    substr_t r = {str, len};
+    return r;
+}
+
+static inline substr_t substrz(const WCHAR *str)
+{
+    return substr(str, strlenW(str));
+}
+
 static inline void WININET_find_data_WtoA(LPWIN32_FIND_DATAW dataW, LPWIN32_FIND_DATAA dataA)
 {
     dataA->dwFileAttributes = dataW->dwFileAttributes;
