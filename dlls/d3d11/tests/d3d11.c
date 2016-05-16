@@ -239,7 +239,7 @@ static void check_texture_color_(unsigned int line, ID3D11Texture2D *texture,
         check_texture_sub_resource_color_(line, texture, sub_resource_idx, expected_color, max_diff);
 }
 
-#define check_texture_sub_resource_float(t, s, c, d) check_texture_sub_resource_flot_(__LINE__, t, s, c, d)
+#define check_texture_sub_resource_float(t, s, c, d) check_texture_sub_resource_float_(__LINE__, t, s, c, d)
 static void check_texture_sub_resource_float_(unsigned int line, ID3D11Texture2D *texture,
         unsigned int sub_resource_idx, float expected_value, BYTE max_diff)
 {
