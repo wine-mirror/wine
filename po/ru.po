@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-05-04 22:10+0300\n"
+"PO-Revision-Date: 2016-05-16 22:15+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -2994,7 +2994,7 @@ msgstr "%1!u!МБ используется, %2!u!МБ доступно"
 
 #: gdi32.rc:28
 msgid "Western"
-msgstr "Западный"
+msgstr "Западноевропейский"
 
 #: gdi32.rc:29
 msgid "Central European"
@@ -3038,19 +3038,19 @@ msgstr "Японский"
 
 #: gdi32.rc:39
 msgid "CHINESE_GB2312"
-msgstr "CHINESE_GB2312"
+msgstr "Китайский GB2312"
 
 #: gdi32.rc:40
 msgid "Hangul"
-msgstr "Хангул"
+msgstr "Хангыль"
 
 #: gdi32.rc:41
 msgid "CHINESE_BIG5"
-msgstr "CHINESE_BIG5"
+msgstr "Китайский BIG5"
 
 #: gdi32.rc:42
 msgid "Hangul(Johab)"
-msgstr "Хангул(Johab)"
+msgstr "Хангыль(Johab)"
 
 #: gdi32.rc:43
 msgid "Symbol"
