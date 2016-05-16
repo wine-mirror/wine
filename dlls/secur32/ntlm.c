@@ -1460,7 +1460,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_RevertSecurityContext(PCtxtHandle phContex
  * As both MakeSignature and VerifySignature need this, but different keys
  * are needed for NTLM2, the logic goes into a helper function.
  * To ensure maximal reusability, we can specify the direction as NTLM_SEND for
- * signing/encrypting and NTLM_RECV for verfying/decrypting. When encrypting,
+ * signing/encrypting and NTLM_RECV for verifying/decrypting. When encrypting,
  * the signature is encrypted after the message was encrypted, so
  * CreateSignature shouldn't do it. In this case, encrypt_sig can be set to
  * false.
