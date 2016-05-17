@@ -43,7 +43,7 @@ HRESULT QualityControlImpl_Create(IPin *input, IBaseFilter *self, QualityControl
 {
     QualityControlImpl *This;
     TRACE("%p, %p, %p\n", input, self, ppv);
-    *ppv = HeapAlloc(GetProcessHeap(),0,sizeof(QualityControlImpl));
+    *ppv = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(QualityControlImpl));
     if (!*ppv)
         return E_OUTOFMEMORY;
     This = *ppv;
@@ -51,6 +51,7 @@ HRESULT QualityControlImpl_Create(IPin *input, IBaseFilter *self, QualityControl
     This->self = self;
     This->tonotify = NULL;
     This->clock = NULL;
+    This->current_rstart = This->current_rstop = -1;
     TRACE("-> %p\n", This);
     return S_OK;
 }
