@@ -1788,40 +1788,39 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_req
 {
     static const WCHAR protoHttp[] = { 'h','t','t','p',0 };
     static const WCHAR szHttp[] = { 'h','t','t','p',':','/','/',0 };
-    static const WCHAR szFormat[] = { 'h','t','t','p',':','/','/','%','s',0 };
-    WCHAR protoProxy[INTERNET_MAX_URL_LENGTH];
-    DWORD protoProxyLen = INTERNET_MAX_URL_LENGTH;
-    WCHAR proxy[INTERNET_MAX_URL_LENGTH];
     static WCHAR szNul[] = { 0 };
-    URL_COMPONENTSW UrlComponents;
-    server_t *new_server;
+    URL_COMPONENTSW UrlComponents = { sizeof(UrlComponents) };
+    server_t *new_server = NULL;
+    WCHAR *proxy;
     BOOL is_https;
 
-    memset( &UrlComponents, 0, sizeof UrlComponents );
-    UrlComponents.dwStructSize = sizeof UrlComponents;
+    proxy = INTERNET_FindProxyForProtocol(hIC->proxy, protoHttp);
+    if(!proxy)
+        return FALSE;
+    if(CSTR_EQUAL != CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
+                                    proxy, strlenW(szHttp), szHttp, strlenW(szHttp))) {
+        WCHAR *proxy_url = heap_alloc(strlenW(proxy)*sizeof(WCHAR) + sizeof(szHttp));
+        if(!proxy_url)
+            return FALSE;
+        strcpyW(proxy_url, szHttp);
+        strcatW(proxy_url, proxy);
+        heap_free(proxy);
+        proxy = proxy_url;
+    }
+
     UrlComponents.dwHostNameLength = 1;
+    if(InternetCrackUrlW(proxy, 0, 0, &UrlComponents) && UrlComponents.dwHostNameLength) {
+        if( !request->path )
+            request->path = szNul;
 
-    if (!INTERNET_FindProxyForProtocol(hIC->proxy, protoHttp, protoProxy, &protoProxyLen))
-        return FALSE;
-    if( CSTR_EQUAL != CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-                                 protoProxy,strlenW(szHttp),szHttp,strlenW(szHttp)) )
-        sprintfW(proxy, szFormat, protoProxy);
-    else
-	strcpyW(proxy, protoProxy);
-    if( !InternetCrackUrlW(proxy, 0, 0, &UrlComponents) )
-        return FALSE;
-    if( UrlComponents.dwHostNameLength == 0 )
-        return FALSE;
+        is_https = (UrlComponents.nScheme == INTERNET_SCHEME_HTTPS);
+        if (is_https && UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
+            UrlComponents.nPort = INTERNET_DEFAULT_HTTPS_PORT;
 
-    if( !request->path )
-        request->path = szNul;
-
-    is_https = (UrlComponents.nScheme == INTERNET_SCHEME_HTTPS);
-    if (is_https && UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
-        UrlComponents.nPort = INTERNET_DEFAULT_HTTPS_PORT;
-
-    new_server = get_server(substr(UrlComponents.lpszHostName, UrlComponents.dwHostNameLength),
-                            UrlComponents.nPort, is_https, TRUE);
+        new_server = get_server(substr(UrlComponents.lpszHostName, UrlComponents.dwHostNameLength),
+                                UrlComponents.nPort, is_https, TRUE);
+    }
+    heap_free(proxy);
     if(!new_server)
         return FALSE;
 

@@ -390,15 +390,15 @@ static LONG INTERNET_SaveProxySettings( proxyinfo_t *lpwpi )
  *     *foundProxyLen is set to the required size in WCHARs, including the
  *     NULL terminator, and the last error is set to ERROR_INSUFFICIENT_BUFFER.
  */
-BOOL INTERNET_FindProxyForProtocol(LPCWSTR szProxy, LPCWSTR proto, WCHAR *foundProxy, DWORD *foundProxyLen)
+WCHAR *INTERNET_FindProxyForProtocol(LPCWSTR szProxy, LPCWSTR proto)
 {
-    LPCWSTR ptr;
-    BOOL ret = FALSE;
+    WCHAR *ret = NULL;
+    const WCHAR *ptr;
 
     TRACE("(%s, %s)\n", debugstr_w(szProxy), debugstr_w(proto));
 
     /* First, look for the specified protocol (proto=scheme://host:port) */
-    for (ptr = szProxy; !ret && ptr && *ptr; )
+    for (ptr = szProxy; ptr && *ptr; )
     {
         LPCWSTR end, equal;
 
@@ -408,60 +408,36 @@ BOOL INTERNET_FindProxyForProtocol(LPCWSTR szProxy, LPCWSTR proto, WCHAR *foundP
              equal - ptr == strlenW(proto) &&
              !strncmpiW(proto, ptr, strlenW(proto)))
         {
-            if (end - equal > *foundProxyLen)
-            {
-                WARN("buffer too short for %s\n",
-                     debugstr_wn(equal + 1, end - equal - 1));
-                *foundProxyLen = end - equal;
-                SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            }
-            else
-            {
-                memcpy(foundProxy, equal + 1, (end - equal) * sizeof(WCHAR));
-                foundProxy[end - equal] = 0;
-                ret = TRUE;
-            }
+            ret = heap_strndupW(equal + 1, end - equal - 1);
+            TRACE("found proxy for %s: %s\n", debugstr_w(proto), debugstr_w(ret));
+            return ret;
         }
         if (*end == ' ')
             ptr = end + 1;
         else
             ptr = end;
     }
-    if (!ret)
-    {
-        /* It wasn't found: look for no protocol */
-        for (ptr = szProxy; !ret && ptr && *ptr; )
-        {
-            LPCWSTR end;
 
-            if (!(end = strchrW(ptr, ' ')))
-                end = ptr + strlenW(ptr);
-            if (!strchrW(ptr, '='))
-            {
-                if (end - ptr + 1 > *foundProxyLen)
-                {
-                    WARN("buffer too short for %s\n",
-                         debugstr_wn(ptr, end - ptr));
-                    *foundProxyLen = end - ptr + 1;
-                    SetLastError(ERROR_INSUFFICIENT_BUFFER);
-                }
-                else
-                {
-                    memcpy(foundProxy, ptr, (end - ptr) * sizeof(WCHAR));
-                    foundProxy[end - ptr] = 0;
-                    ret = TRUE;
-                }
-            }
-            if (*end == ' ')
-                ptr = end + 1;
-            else
-                ptr = end;
+    /* It wasn't found: look for no protocol */
+    for (ptr = szProxy; ptr && *ptr; )
+    {
+        LPCWSTR end;
+
+        if (!(end = strchrW(ptr, ' ')))
+            end = ptr + strlenW(ptr);
+        if (!strchrW(ptr, '='))
+        {
+            ret = heap_strndupW(ptr, end - ptr);
+            TRACE("found proxy for %s: %s\n", debugstr_w(proto), debugstr_w(ret));
+            return ret;
         }
+        if (*end == ' ')
+            ptr = end + 1;
+        else
+            ptr = end;
     }
-    if (ret)
-        TRACE("found proxy for %s: %s\n", debugstr_w(proto),
-              debugstr_w(foundProxy));
-    return ret;
+
+    return NULL;
 }
 
 /***********************************************************************
