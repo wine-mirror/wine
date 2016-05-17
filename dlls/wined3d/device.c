@@ -2407,17 +2407,17 @@ HRESULT CDECL wined3d_device_set_vs_consts_b(struct wined3d_device *device,
 }
 
 HRESULT CDECL wined3d_device_get_vs_consts_b(const struct wined3d_device *device,
-        UINT start_register, BOOL *constants, UINT bool_count)
+        unsigned int start_idx, unsigned int count, BOOL *constants)
 {
-    UINT count = min(bool_count, WINED3D_MAX_CONSTS_B - start_register);
+    TRACE("device %p, start_idx %u, count %u, constants %p.\n",
+            device, start_idx, count, constants);
 
-    TRACE("device %p, start_register %u, constants %p, bool_count %u.\n",
-            device, start_register, constants, bool_count);
-
-    if (!constants || start_register >= WINED3D_MAX_CONSTS_B)
+    if (!constants || start_idx >= WINED3D_MAX_CONSTS_B)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(constants, &device->state.vs_consts_b[start_register], count * sizeof(BOOL));
+    if (count > WINED3D_MAX_CONSTS_B - start_idx)
+        count = WINED3D_MAX_CONSTS_B - start_idx;
+    memcpy(constants, &device->state.vs_consts_b[start_idx], count * sizeof(*constants));
 
     return WINED3D_OK;
 }
