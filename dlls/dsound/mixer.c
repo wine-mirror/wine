@@ -694,10 +694,6 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		 * also wipe out just-played sound data */
 		if (!pad)
 			WARN("Probable buffer underrun\n");
-		else if (device->state == STATE_STOPPED ||
-		         device->state == STATE_STARTING) {
-			TRACE("Buffer restarting\n");
-		}
 
 		hr = IAudioRenderClient_GetBuffer(device->render, maxq / block, (void*)&buffer);
 		if(FAILED(hr)){
@@ -724,23 +720,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 			ERR("ReleaseBuffer failed: %08x\n", hr);
 
 		device->pad += maxq;
-
-		if (maxq) {
-			if (device->state == STATE_STARTING ||
-			    device->state == STATE_STOPPED) {
-				if(DSOUND_PrimaryPlay(device) != DS_OK)
-					WARN("DSOUND_PrimaryPlay failed\n");
-				else if (device->state == STATE_STARTING)
-					device->state = STATE_PLAYING;
-				else
-					device->state = STATE_STOPPING;
-			}
-		} else if (!pad && !maxq && (all_stopped == TRUE) &&
-			   (device->state == STATE_STOPPING)) {
-			device->state = STATE_STOPPED;
-			DSOUND_PrimaryStop(device);
-		}
-	} else if (device->state != STATE_STOPPED) {
+	} else if (!device->stopped) {
 		if (maxq > device->buflen)
 			maxq = device->buflen;
 		if (writepos + maxq > device->buflen) {
@@ -748,20 +728,6 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 			DSOUND_WaveQueue(device, device->buffer, writepos + maxq - device->buflen);
 		} else
 			DSOUND_WaveQueue(device, device->buffer + writepos, maxq);
-
-		/* in the DSSCL_WRITEPRIMARY mode, the app is totally in charge... */
-		if (device->state == STATE_STARTING) {
-			if (DSOUND_PrimaryPlay(device) != DS_OK)
-				WARN("DSOUND_PrimaryPlay failed\n");
-			else
-				device->state = STATE_PLAYING;
-		}
-		else if (device->state == STATE_STOPPING) {
-			if (DSOUND_PrimaryStop(device) != DS_OK)
-				WARN("DSOUND_PrimaryStop failed\n");
-			else
-				device->state = STATE_STOPPED;
-		}
 	}
 
 	LeaveCriticalSection(&(device->mixlock));

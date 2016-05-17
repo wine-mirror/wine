@@ -135,7 +135,7 @@ static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
 
     device->ref            = 1;
     device->priolevel      = DSSCL_NORMAL;
-    device->state          = STATE_STOPPED;
+    device->stopped        = 1;
     device->speaker_config = DSSPEAKER_COMBINED(DSSPEAKER_STEREO, DSSPEAKER_GEOMETRY_WIDE);
 
     DSOUND_ParseSpeakerConfig(device);
