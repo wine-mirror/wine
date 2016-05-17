@@ -1714,55 +1714,47 @@ static WCHAR *build_proxy_path_url(http_request_t *req)
     return url;
 }
 
-static BOOL HTTP_DomainMatches(LPCWSTR server, LPCWSTR domain)
+static BOOL HTTP_DomainMatches(LPCWSTR server, substr_t domain)
 {
     static const WCHAR localW[] = { '<','l','o','c','a','l','>',0 };
-    BOOL ret = FALSE;
+    const WCHAR *dot, *ptr;
+    int len;
 
-    if (!strcmpiW( domain, localW ) && !strchrW( server, '.' ))
-        ret = TRUE;
-    else if (*domain == '*')
-    {
-        if (domain[1] == '.')
-        {
-            LPCWSTR dot;
+    if(domain.len == sizeof(localW)/sizeof(WCHAR)-1 && !strncmpiW(domain.str, localW, domain.len) && !strchrW(server, '.' ))
+        return TRUE;
 
-            /* For a hostname to match a wildcard, the last domain must match
-             * the wildcard exactly.  E.g. if the wildcard is *.a.b, and the
-             * hostname is www.foo.a.b, it matches, but a.b does not.
-             */
-            dot = strchrW( server, '.' );
-            if (dot)
-            {
-                int len = strlenW( dot + 1 );
+    if(domain.len && *domain.str != '*')
+        return domain.len == strlenW(server) && !strncmpiW(server, domain.str, domain.len);
 
-                if (len > strlenW( domain + 2 ))
-                {
-                    LPCWSTR ptr;
+    if(domain.len < 2 || domain.str[1] != '.')
+        return FALSE;
 
-                    /* The server's domain is longer than the wildcard, so it
-                     * could be a subdomain.  Compare the last portion of the
-                     * server's domain.
-                     */
-                    ptr = dot + len + 1 - strlenW( domain + 2 );
-                    if (!strcmpiW( ptr, domain + 2 ))
-                    {
-                        /* This is only a match if the preceding character is
-                         * a '.', i.e. that it is a matching domain.  E.g.
-                         * if domain is '*.b.c' and server is 'www.ab.c' they
-                         * do not match.
-                         */
-                        ret = *(ptr - 1) == '.';
-                    }
-                }
-                else
-                    ret = !strcmpiW( dot + 1, domain + 2 );
-            }
-        }
-    }
-    else
-        ret = !strcmpiW( server, domain );
-    return ret;
+    /* For a hostname to match a wildcard, the last domain must match
+     * the wildcard exactly.  E.g. if the wildcard is *.a.b, and the
+     * hostname is www.foo.a.b, it matches, but a.b does not.
+     */
+    dot = strchrW(server, '.');
+    if(!dot)
+        return FALSE;
+
+    len = strlenW(dot + 1);
+    if(len <= domain.len - 2)
+        return FALSE;
+
+    /* The server's domain is longer than the wildcard, so it
+     * could be a subdomain.  Compare the last portion of the
+     * server's domain.
+     */
+    ptr = dot + 1 + len - domain.len + 2;
+    if(!strncmpiW(ptr, domain.str+2, domain.len-2))
+        /* This is only a match if the preceding character is
+         * a '.', i.e. that it is a matching domain.  E.g.
+         * if domain is '*.b.c' and server is 'www.ab.c' they
+         * do not match.
+         */
+        return *(ptr - 1) == '.';
+
+    return len == domain.len-2 && !strncmpiW(dot + 1, domain.str + 2, len);
 }
 
 static BOOL HTTP_ShouldBypassProxy(appinfo_t *lpwai, LPCWSTR server)
@@ -1772,27 +1764,19 @@ static BOOL HTTP_ShouldBypassProxy(appinfo_t *lpwai, LPCWSTR server)
 
     if (!lpwai->proxyBypass) return FALSE;
     ptr = lpwai->proxyBypass;
-    do {
+    while(1) {
         LPCWSTR tmp = ptr;
 
         ptr = strchrW( ptr, ';' );
         if (!ptr)
             ptr = strchrW( tmp, ' ' );
-        if (ptr)
-        {
-            if (ptr - tmp < INTERNET_MAX_HOST_NAME_LENGTH)
-            {
-                WCHAR domain[INTERNET_MAX_HOST_NAME_LENGTH];
-
-                memcpy( domain, tmp, (ptr - tmp) * sizeof(WCHAR) );
-                domain[ptr - tmp] = 0;
-                ret = HTTP_DomainMatches( server, domain );
-            }
-            ptr += 1;
-        }
-        else if (*tmp)
-            ret = HTTP_DomainMatches( server, tmp );
-    } while (ptr && !ret);
+        if (!ptr)
+            ptr = tmp + strlenW(ptr);
+        ret = HTTP_DomainMatches( server, substr(tmp, ptr-tmp) );
+        if (ret || !*ptr)
+            break;
+        ptr++;
+    }
     return ret;
 }
 
