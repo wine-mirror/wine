@@ -3365,6 +3365,14 @@ const char *debug_color(const struct wined3d_color *color)
             color->r, color->g, color->b, color->a);
 }
 
+const char *debug_ivec4(const struct wined3d_ivec4 *v)
+{
+    if (!v)
+        return "(null)";
+    return wine_dbg_sprintf("{%d, %d, %d, %d}",
+            v->x, v->y, v->z, v->w);
+}
+
 const char *debug_vec4(const struct wined3d_vec4 *v)
 {
     if (!v)

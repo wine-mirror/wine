@@ -2213,7 +2213,7 @@ struct wined3d_state
     struct wined3d_shader_resource_view *shader_resource_view[WINED3D_SHADER_TYPE_COUNT][MAX_SHADER_RESOURCE_VIEWS];
 
     BOOL vs_consts_b[MAX_CONST_B];
-    INT vs_consts_i[WINED3D_MAX_CONSTS_I * 4];
+    struct wined3d_ivec4 vs_consts_i[WINED3D_MAX_CONSTS_I];
     struct wined3d_vec4 vs_consts_f[WINED3D_MAX_VS_CONSTS_F];
 
     BOOL ps_consts_b[MAX_CONST_B];
@@ -3103,6 +3103,7 @@ const char *debug_d3dpool(enum wined3d_pool pool) DECLSPEC_HIDDEN;
 const char *debug_fboattachment(GLenum attachment) DECLSPEC_HIDDEN;
 const char *debug_fbostatus(GLenum status) DECLSPEC_HIDDEN;
 const char *debug_glerror(GLenum error) DECLSPEC_HIDDEN;
+const char *debug_ivec4(const struct wined3d_ivec4 *v) DECLSPEC_HIDDEN;
 const char *debug_shader_type(enum wined3d_shader_type shader_type) DECLSPEC_HIDDEN;
 const char *debug_vec4(const struct wined3d_vec4 *v) DECLSPEC_HIDDEN;
 void dump_color_fixup_desc(struct color_fixup_desc fixup) DECLSPEC_HIDDEN;

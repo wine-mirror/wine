@@ -1505,6 +1505,14 @@ struct wined3d_vec4
     float w;
 };
 
+struct wined3d_ivec4
+{
+    int x;
+    int y;
+    int z;
+    int w;
+};
+
 struct wined3d_matrix
 {
     float _11, _12, _13, _14;

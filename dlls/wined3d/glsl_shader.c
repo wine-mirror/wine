@@ -728,8 +728,8 @@ static void shader_glsl_load_constants_f(const struct wined3d_shader *shader, co
 }
 
 /* Context activation is done by the caller. */
-static void shader_glsl_load_constantsI(const struct wined3d_shader *shader, const struct wined3d_gl_info *gl_info,
-        const GLint locations[WINED3D_MAX_CONSTS_I], const int *constants, WORD constants_set)
+static void shader_glsl_load_constants_i(const struct wined3d_shader *shader, const struct wined3d_gl_info *gl_info,
+        const struct wined3d_ivec4 *constants, const GLint locations[WINED3D_MAX_CONSTS_I], WORD constants_set)
 {
     unsigned int i;
     struct list* ptr;
@@ -739,7 +739,7 @@ static void shader_glsl_load_constantsI(const struct wined3d_shader *shader, con
         if (!(constants_set & 1)) continue;
 
         /* We found this uniform name in the program - go ahead and send the data */
-        GL_EXTCALL(glUniform4iv(locations[i], 1, &constants[i * 4]));
+        GL_EXTCALL(glUniform4iv(locations[i], 1, &constants[i].x));
     }
 
     /* Load immediate constants */
@@ -1335,8 +1335,8 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
                 prog->vs.uniform_f_locations, &priv->vconst_heap, priv->stack, constant_version);
 
     if (update_mask & WINED3D_SHADER_CONST_VS_I)
-        shader_glsl_load_constantsI(vshader, gl_info, prog->vs.uniform_i_locations, state->vs_consts_i,
-                vshader->reg_maps.integer_constants);
+        shader_glsl_load_constants_i(vshader, gl_info, state->vs_consts_i,
+                prog->vs.uniform_i_locations, vshader->reg_maps.integer_constants);
 
     if (update_mask & WINED3D_SHADER_CONST_VS_B)
         shader_glsl_load_constantsB(vshader, gl_info, prog->vs.uniform_b_locations, state->vs_consts_b,
@@ -1408,8 +1408,8 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
                 prog->ps.uniform_f_locations, &priv->pconst_heap, priv->stack, constant_version);
 
     if (update_mask & WINED3D_SHADER_CONST_PS_I)
-        shader_glsl_load_constantsI(pshader, gl_info, prog->ps.uniform_i_locations, state->ps_consts_i,
-                pshader->reg_maps.integer_constants);
+        shader_glsl_load_constants_i(pshader, gl_info, (const struct wined3d_ivec4 *)state->ps_consts_i,
+                prog->ps.uniform_i_locations, pshader->reg_maps.integer_constants);
 
     if (update_mask & WINED3D_SHADER_CONST_PS_B)
         shader_glsl_load_constantsB(pshader, gl_info, prog->ps.uniform_b_locations, state->ps_consts_b,
