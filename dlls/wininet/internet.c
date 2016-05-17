@@ -4496,7 +4496,6 @@ BOOL WINAPI InternetGetSecurityInfoByURLW(LPCWSTR lpszURL, PCCERT_CHAIN_CONTEXT 
 {
     URL_COMPONENTSW url = {sizeof(url)};
     server_t *server;
-    WCHAR *hostname;
     BOOL res;
 
     TRACE("(%s %p %p)\n", debugstr_w(lpszURL), ppCertChain, pdwSecureFlags);
@@ -4508,14 +4507,7 @@ BOOL WINAPI InternetGetSecurityInfoByURLW(LPCWSTR lpszURL, PCCERT_CHAIN_CONTEXT 
         return FALSE;
     }
 
-    hostname = heap_strndupW(url.lpszHostName, url.dwHostNameLength);
-    if(!hostname) {
-        SetLastError(ERROR_OUTOFMEMORY);
-        return FALSE;
-    }
-
-    server = get_server(hostname, url.nPort, TRUE, FALSE);
-    heap_free(hostname);
+    server = get_server(substr(url.lpszHostName, url.dwHostNameLength), url.nPort, TRUE, FALSE);
     if(!server) {
         SetLastError(ERROR_INTERNET_ITEM_NOT_FOUND);
         return FALSE;

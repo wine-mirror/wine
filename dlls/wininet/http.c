@@ -265,7 +265,7 @@ static BOOL process_host_port(server_t *server)
     return TRUE;
 }
 
-server_t *get_server(const WCHAR *name, INTERNET_PORT port, BOOL is_https, BOOL do_create)
+server_t *get_server(substr_t name, INTERNET_PORT port, BOOL is_https, BOOL do_create)
 {
     server_t *iter, *server = NULL;
 
@@ -275,7 +275,8 @@ server_t *get_server(const WCHAR *name, INTERNET_PORT port, BOOL is_https, BOOL 
     EnterCriticalSection(&connection_pool_cs);
 
     LIST_FOR_EACH_ENTRY(iter, &connection_pool, server_t, entry) {
-        if(iter->port == port && !strcmpW(iter->name, name) && iter->is_https == is_https) {
+        if(iter->port == port && name.len == strlenW(iter->name) && !strncmpW(iter->name, name.str, name.len)
+                && iter->is_https == is_https) {
             server = iter;
             server_addref(server);
             break;
@@ -289,7 +290,7 @@ server_t *get_server(const WCHAR *name, INTERNET_PORT port, BOOL is_https, BOOL 
             server->port = port;
             server->is_https = is_https;
             list_init(&server->conn_pool);
-            server->name = heap_strdupW(name);
+            server->name = heap_strndupW(name.str, name.len);
             if(server->name && process_host_port(server)) {
                 list_add_head(&connection_pool, &server->entry);
             }else {
@@ -1788,7 +1789,6 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_req
     static const WCHAR protoHttp[] = { 'h','t','t','p',0 };
     static const WCHAR szHttp[] = { 'h','t','t','p',':','/','/',0 };
     static const WCHAR szFormat[] = { 'h','t','t','p',':','/','/','%','s',0 };
-    WCHAR buf[INTERNET_MAX_HOST_NAME_LENGTH];
     WCHAR protoProxy[INTERNET_MAX_URL_LENGTH];
     DWORD protoProxyLen = INTERNET_MAX_URL_LENGTH;
     WCHAR proxy[INTERNET_MAX_URL_LENGTH];
@@ -1799,8 +1799,7 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_req
 
     memset( &UrlComponents, 0, sizeof UrlComponents );
     UrlComponents.dwStructSize = sizeof UrlComponents;
-    UrlComponents.lpszHostName = buf;
-    UrlComponents.dwHostNameLength = INTERNET_MAX_HOST_NAME_LENGTH;
+    UrlComponents.dwHostNameLength = 1;
 
     if (!INTERNET_FindProxyForProtocol(hIC->proxy, protoHttp, protoProxy, &protoProxyLen))
         return FALSE;
@@ -1821,7 +1820,8 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_req
     if (is_https && UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
         UrlComponents.nPort = INTERNET_DEFAULT_HTTPS_PORT;
 
-    new_server = get_server(UrlComponents.lpszHostName, UrlComponents.nPort, is_https, TRUE);
+    new_server = get_server(substr(UrlComponents.lpszHostName, UrlComponents.dwHostNameLength),
+                            UrlComponents.nPort, is_https, TRUE);
     if(!new_server)
         return FALSE;
 
@@ -3391,7 +3391,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     request->session = session;
     list_add_head( &session->hdr.children, &request->hdr.entry );
 
-    request->server = get_server(session->hostName, session->hostPort, (dwFlags & INTERNET_FLAG_SECURE) != 0, TRUE);
+    request->server = get_server(substrz(session->hostName), session->hostPort, (dwFlags & INTERNET_FLAG_SECURE) != 0, TRUE);
     if(!request->server) {
         WININET_Release(&request->hdr);
         return ERROR_OUTOFMEMORY;
@@ -4204,7 +4204,7 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
         if(strcmpiW(request->server->name, hostName) || request->server->port != urlComponents.nPort) {
             server_t *new_server;
 
-            new_server = get_server(hostName, urlComponents.nPort, urlComponents.nScheme == INTERNET_SCHEME_HTTPS, TRUE);
+            new_server = get_server(substrz(hostName), urlComponents.nPort, urlComponents.nScheme == INTERNET_SCHEME_HTTPS, TRUE);
             server_release(request->server);
             request->server = new_server;
         }
