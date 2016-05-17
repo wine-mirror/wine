@@ -906,7 +906,7 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
     for (i = 0; i < stateblock->num_contained_vs_consts_i; ++i)
     {
         wined3d_device_set_vs_consts_i(device, stateblock->contained_vs_consts_i[i],
-                &stateblock->state.vs_consts_i[stateblock->contained_vs_consts_i[i]].x, 1);
+                1, &stateblock->state.vs_consts_i[stateblock->contained_vs_consts_i[i]]);
     }
     for (i = 0; i < stateblock->num_contained_vs_consts_b; ++i)
     {
