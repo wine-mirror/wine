@@ -861,6 +861,13 @@ HRESULT WINAPI WsWriteEndCData( WS_XML_WRITER *handle, WS_ERROR *error )
     return S_OK;
 }
 
+/* flush current start element if necessary */
+static HRESULT write_flush( struct writer *writer )
+{
+    if (writer->state == WRITER_STATE_STARTELEMENT) return write_endstartelement( writer );
+    return S_OK;
+}
+
 static HRESULT write_add_element_node( struct writer *writer, const WS_XML_STRING *prefix,
                                        const WS_XML_STRING *localname, const WS_XML_STRING *ns )
 {
@@ -868,9 +875,7 @@ static HRESULT write_add_element_node( struct writer *writer, const WS_XML_STRIN
     WS_XML_ELEMENT_NODE *elem;
     HRESULT hr;
 
-    /* flush current start element if necessary */
-    if (writer->state == WRITER_STATE_STARTELEMENT && ((hr = write_endstartelement( writer )) != S_OK))
-        return hr;
+    if ((hr = write_flush( writer )) != S_OK) return hr;
 
     if (!prefix && node_type( writer->current ) == WS_XML_NODE_TYPE_ELEMENT)
         prefix = writer->current->hdr.prefix;
@@ -950,6 +955,7 @@ HRESULT WINAPI WsWriteText( WS_XML_WRITER *handle, const WS_XML_TEXT *text, WS_E
     }
     else
     {
+        if ((hr = write_flush( writer )) != S_OK) return hr;
         if ((hr = write_grow_buffer( writer, src->value.length )) != S_OK) return hr;
         write_bytes( writer, src->value.bytes, src->value.length );
     }
