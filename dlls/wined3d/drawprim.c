@@ -214,9 +214,9 @@ static void draw_primitive_immediate_mode(struct wined3d_context *context, const
             unsigned int element_idx;
 
             stride_idx = get_stride_idx(idx_data, idx_size, state->base_vertex_index, start_idx, vertex_idx);
-            for (element_idx = 0; use_map; use_map >>= 1, ++element_idx)
+            for (element_idx = MAX_ATTRIBS - 1; use_map; use_map &= ~(1u << element_idx), --element_idx)
             {
-                if (!(use_map & 1u))
+                if (!(use_map & 1u << element_idx))
                     continue;
 
                 ptr = si->elements[element_idx].data.addr + si->elements[element_idx].stride * stride_idx;
@@ -329,12 +329,6 @@ static void draw_primitive_immediate_mode(struct wined3d_context *context, const
 
         stride_idx = get_stride_idx(idx_data, idx_size, state->base_vertex_index, start_idx, vertex_idx);
 
-        if (position)
-        {
-            ptr = position + stride_idx * si->elements[WINED3D_FFP_POSITION].stride;
-            ops->position[si->elements[WINED3D_FFP_POSITION].format->emit_idx](ptr);
-        }
-
         if (normal)
         {
             ptr = normal + stride_idx * si->elements[WINED3D_FFP_NORMAL].stride;
@@ -378,6 +372,12 @@ static void draw_primitive_immediate_mode(struct wined3d_context *context, const
             ptr = tex_coords[coord_idx] + (stride_idx * si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].stride);
             ops->texcoord[si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].format->emit_idx](
                     GL_TEXTURE0_ARB + context->tex_unit_map[texture_idx], ptr);
+        }
+
+        if (position)
+        {
+            ptr = position + stride_idx * si->elements[WINED3D_FFP_POSITION].stride;
+            ops->position[si->elements[WINED3D_FFP_POSITION].format->emit_idx](ptr);
         }
     }
 
