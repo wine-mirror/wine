@@ -1664,7 +1664,10 @@ static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFil
 {
     GSTOutPin *pin = impl_from_IQualityControl(iface);
     REFERENCE_TIME late = qm.Late;
-    TRACE("(%p)->(%p, qm)\n", pin, sender);
+    TRACE("(%p)->(%p, { 0x%x %u %s %s })\n", pin, sender,
+            qm.Type, qm.Proportion,
+            wine_dbgstr_longlong(qm.Late),
+            wine_dbgstr_longlong(qm.TimeStamp));
     mark_wine_thread();
     if (qm.Late < 0 && -qm.Late > qm.TimeStamp)
         late = -qm.TimeStamp;

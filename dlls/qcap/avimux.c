@@ -1539,7 +1539,10 @@ static HRESULT WINAPI AviMuxOut_QualityControl_Notify(IQualityControl *iface,
         IBaseFilter *pSelf, Quality q)
 {
     AviMux *This = impl_from_out_IQualityControl(iface);
-    FIXME("(%p)->(%p Quality)\n", This, pSelf);
+    FIXME("(%p)->(%p { 0x%x %u %s %s })\n", This, pSelf,
+            q.Type, q.Proportion,
+            wine_dbgstr_longlong(q.Late),
+            wine_dbgstr_longlong(q.TimeStamp));
     return E_NOTIMPL;
 }
 
@@ -2273,7 +2276,10 @@ static HRESULT WINAPI AviMuxIn_QualityControl_Notify(IQualityControl *iface,
 {
     AviMuxIn *avimuxin = AviMuxIn_from_IQualityControl(iface);
     AviMux *This = impl_from_in_IPin(&avimuxin->pin.pin.IPin_iface);
-    FIXME("(%p:%s)->(%p Quality)\n", This, debugstr_w(avimuxin->pin.pin.pinInfo.achName), pSelf);
+    FIXME("(%p:%s)->(%p { 0x%x %u %s %s })\n", This, debugstr_w(avimuxin->pin.pin.pinInfo.achName), pSelf,
+            q.Type, q.Proportion,
+            wine_dbgstr_longlong(q.Late),
+            wine_dbgstr_longlong(q.TimeStamp));
     return E_NOTIMPL;
 }
 
