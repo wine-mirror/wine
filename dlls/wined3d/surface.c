@@ -1897,7 +1897,7 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
 
     if ((xrel - 1.0f < -eps) || (xrel - 1.0f > eps))
     {
-        FIXME("Doing a pixel by pixel copy from the framebuffer to a texture, expect major performance issues\n");
+        FIXME_(d3d_perf)("Doing a pixel by pixel copy from the framebuffer to a texture.\n");
 
         if (filter != WINED3D_TEXF_NONE && filter != WINED3D_TEXF_POINT)
             ERR("Texture filtering not supported in direct blit.\n");
@@ -2910,8 +2910,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         if ((sub_resource->locations & (WINED3D_LOCATION_TEXTURE_RGB | texture->resource.map_binding))
                 == WINED3D_LOCATION_TEXTURE_RGB)
         {
-            /* Performance warning... */
-            FIXME("Downloading RGB surface %p to reload it as sRGB.\n", surface);
+            FIXME_(d3d_perf)("Downloading RGB surface %p to reload it as sRGB.\n", surface);
             surface_load_location(surface, context, texture->resource.map_binding);
         }
     }
@@ -2920,8 +2919,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         if ((sub_resource->locations & (WINED3D_LOCATION_TEXTURE_SRGB | texture->resource.map_binding))
                 == WINED3D_LOCATION_TEXTURE_SRGB)
         {
-            /* Performance warning... */
-            FIXME("Downloading sRGB surface %p to reload it as RGB.\n", surface);
+            FIXME_(d3d_perf)("Downloading sRGB surface %p to reload it as RGB.\n", surface);
             surface_load_location(surface, context, texture->resource.map_binding);
         }
     }
