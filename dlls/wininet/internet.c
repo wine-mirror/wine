@@ -26,15 +26,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-
-#include "ws2tcpip.h"
-
-#include <string.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <assert.h>
+#include "config.h"
 
 #ifdef HAVE_CORESERVICES_CORESERVICES_H
 #define GetCurrentThread MacGetCurrentThread
@@ -44,6 +36,16 @@
 #undef LoadResource
 #undef DPRINTF
 #endif
+
+#include "winsock2.h"
+#include "ws2ipdef.h"
+
+#include <string.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -3370,7 +3372,7 @@ BOOL WINAPI InternetCheckConnectionW( LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRe
   if (dwFlags & FLAG_ICC_FORCE_CONNECTION)
   {
       struct sockaddr_storage saddr;
-      socklen_t sa_len = sizeof(saddr);
+      int sa_len = sizeof(saddr);
       WCHAR *host_z;
       int fd;
       BOOL b;
