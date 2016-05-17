@@ -1174,7 +1174,7 @@ void make_window_embedded( struct x11drv_win_data *data )
     /* the window cannot be mapped before being embedded */
     if (data->mapped)
     {
-        if (data->managed) XUnmapWindow( data->display, data->whole_window );
+        if (!data->managed) XUnmapWindow( data->display, data->whole_window );
         else XWithdrawWindow( data->display, data->whole_window, data->vis.screen );
         data->net_wm_state = 0;
     }
