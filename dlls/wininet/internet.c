@@ -2307,13 +2307,14 @@ BOOL WINAPI InternetReadFileExW(HINTERNET hFile, LPINTERNET_BUFFERSW lpBuffer,
     return res == ERROR_SUCCESS;
 }
 
-static BOOL get_proxy_autoconfig_url( char *buf, DWORD buflen )
+static WCHAR *get_proxy_autoconfig_url(void)
 {
 #if defined(MAC_OS_X_VERSION_10_6) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
 
     CFDictionaryRef settings = CFNetworkCopySystemProxySettings();
+    WCHAR *ret = NULL;
+    SIZE_T len;
     const void *ref;
-    BOOL ret = FALSE;
 
     if (!settings) return FALSE;
 
@@ -2322,16 +2323,20 @@ static BOOL get_proxy_autoconfig_url( char *buf, DWORD buflen )
         CFRelease( settings );
         return FALSE;
     }
-    if (CFStringGetCString( ref, buf, buflen, kCFStringEncodingASCII ))
+    len = CFStringGetLength( ref );
+    if (len)
+        ret = heap_alloc( (len+1) * sizeof(WCHAR) );
+    if (ret)
     {
-        TRACE( "returning %s\n", debugstr_a(buf) );
-        ret = TRUE;
+        CFStringGetCharacters( ref, CFRangeMake(0, len), ret );
+        ret[len] = 0;
     }
+    TRACE( "returning %s\n", debugstr_w(ret) );
     CFRelease( settings );
     return ret;
 #else
     FIXME( "no support on this platform\n" );
-    return FALSE;
+    return NULL;
 #endif
 }
 
@@ -2418,19 +2423,16 @@ static DWORD query_global_option(DWORD option, void *buffer, DWORD *size, BOOL u
     }
 
     case INTERNET_OPTION_PER_CONNECTION_OPTION: {
-        char url[INTERNET_MAX_URL_LENGTH + 1];
+        WCHAR *url;
         INTERNET_PER_CONN_OPTION_LISTW *con = buffer;
         INTERNET_PER_CONN_OPTION_LISTA *conA = buffer;
         DWORD res = ERROR_SUCCESS, i;
         proxyinfo_t pi;
-        BOOL have_url;
         LONG ret;
 
         TRACE("Getting global proxy info\n");
         if((ret = INTERNET_LoadProxySettings(&pi)))
             return ret;
-
-        have_url = get_proxy_autoconfig_url(url, sizeof(url));
 
         FIXME("INTERNET_OPTION_PER_CONNECTION_OPTION stub\n");
 
@@ -2438,6 +2440,8 @@ static DWORD query_global_option(DWORD option, void *buffer, DWORD *size, BOOL u
             FreeProxyInfo(&pi);
             return ERROR_INSUFFICIENT_BUFFER;
         }
+
+        url = get_proxy_autoconfig_url();
 
         for (i = 0; i < con->dwOptionCount; i++) {
             INTERNET_PER_CONN_OPTIONW *optionW = con->pOptions + i;
@@ -2449,7 +2453,7 @@ static DWORD query_global_option(DWORD option, void *buffer, DWORD *size, BOOL u
                     optionW->Value.dwValue = PROXY_TYPE_PROXY;
                 else
                     optionW->Value.dwValue = PROXY_TYPE_DIRECT;
-                if (have_url)
+                if (url)
                     /* native includes PROXY_TYPE_DIRECT even if PROXY_TYPE_PROXY is set */
                     optionW->Value.dwValue |= PROXY_TYPE_DIRECT|PROXY_TYPE_AUTO_PROXY_URL;
                 break;
@@ -2469,12 +2473,12 @@ static DWORD query_global_option(DWORD option, void *buffer, DWORD *size, BOOL u
                 break;
 
             case INTERNET_PER_CONN_AUTOCONFIG_URL:
-                if (!have_url)
+                if (!url)
                     optionW->Value.pszValue = NULL;
                 else if (unicode)
-                    optionW->Value.pszValue = heap_strdupAtoW(url);
+                    optionW->Value.pszValue = heap_strdupW(url);
                 else
-                    optionA->Value.pszValue = heap_strdupA(url);
+                    optionA->Value.pszValue = heap_strdupWtoA(url);
                 break;
 
             case INTERNET_PER_CONN_AUTODISCOVERY_FLAGS:
@@ -2495,6 +2499,7 @@ static DWORD query_global_option(DWORD option, void *buffer, DWORD *size, BOOL u
                 break;
             }
         }
+        heap_free(url);
         FreeProxyInfo(&pi);
 
         return res;
