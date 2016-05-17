@@ -911,7 +911,7 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
     for (i = 0; i < stateblock->num_contained_vs_consts_b; ++i)
     {
         wined3d_device_set_vs_consts_b(device, stateblock->contained_vs_consts_b[i],
-                stateblock->state.vs_consts_b + stateblock->contained_vs_consts_b[i], 1);
+                1, &stateblock->state.vs_consts_b[stateblock->contained_vs_consts_b[i]]);
     }
 
     apply_lights(device, &stateblock->state);
