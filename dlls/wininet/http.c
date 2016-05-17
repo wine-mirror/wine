@@ -1792,7 +1792,6 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_req
     URL_COMPONENTSW UrlComponents = { sizeof(UrlComponents) };
     server_t *new_server = NULL;
     WCHAR *proxy;
-    BOOL is_https;
 
     proxy = INTERNET_FindProxyForProtocol(hIC->proxy, protoHttp);
     if(!proxy)
@@ -1813,12 +1812,8 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_req
         if( !request->path )
             request->path = szNul;
 
-        is_https = (UrlComponents.nScheme == INTERNET_SCHEME_HTTPS);
-        if (is_https && UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
-            UrlComponents.nPort = INTERNET_DEFAULT_HTTPS_PORT;
-
         new_server = get_server(substr(UrlComponents.lpszHostName, UrlComponents.dwHostNameLength),
-                                UrlComponents.nPort, is_https, TRUE);
+                                UrlComponents.nPort, UrlComponents.nScheme == INTERNET_SCHEME_HTTPS, TRUE);
     }
     heap_free(proxy);
     if(!new_server)
@@ -4171,10 +4166,7 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
                 request->hdr.dwFlags &= ~INTERNET_FLAG_SECURE;
             }
 
-            if(urlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
-                urlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
-            else if(urlComponents.nPort != INTERNET_DEFAULT_HTTP_PORT)
-                custom_port = TRUE;
+            custom_port = urlComponents.nPort != INTERNET_DEFAULT_HTTP_PORT;
         }else if(!strcmpiW(protocol, httpsW)) {
             if(!(request->hdr.dwFlags & INTERNET_FLAG_SECURE)) {
                 TRACE("redirect from non-secure page to secure page\n");
@@ -4182,10 +4174,7 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
                 request->hdr.dwFlags |= INTERNET_FLAG_SECURE;
             }
 
-            if(urlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
-                urlComponents.nPort = INTERNET_DEFAULT_HTTPS_PORT;
-            else if(urlComponents.nPort != INTERNET_DEFAULT_HTTPS_PORT)
-                custom_port = TRUE;
+            custom_port = urlComponents.nPort != INTERNET_DEFAULT_HTTPS_PORT;
         }
 
         heap_free(session->hostName);

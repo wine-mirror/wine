@@ -3477,8 +3477,6 @@ static HINTERNET INTERNET_InternetOpenUrlW(appinfo_t *hIC, LPCWSTR lpszUrl,
 
     switch(urlComponents.nScheme) {
     case INTERNET_SCHEME_FTP:
-	if(urlComponents.nPort == 0)
-	    urlComponents.nPort = INTERNET_DEFAULT_FTP_PORT;
 	client = FTP_Connect(hIC, host, urlComponents.nPort,
 			     user, pass, dwFlags, dwContext, INET_OPENURL);
 	if(client == NULL)
@@ -3494,12 +3492,7 @@ static HINTERNET INTERNET_InternetOpenUrlW(appinfo_t *hIC, LPCWSTR lpszUrl,
     case INTERNET_SCHEME_HTTPS: {
 	static const WCHAR szStars[] = { '*','/','*', 0 };
 	LPCWSTR accept[2] = { szStars, NULL };
-	if(urlComponents.nPort == 0) {
-	    if(urlComponents.nScheme == INTERNET_SCHEME_HTTP)
-		urlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
-	    else
-		urlComponents.nPort = INTERNET_DEFAULT_HTTPS_PORT;
-	}
+
         if (urlComponents.nScheme == INTERNET_SCHEME_HTTPS) dwFlags |= INTERNET_FLAG_SECURE;
 
         /* FIXME: should use pointers, not handles, as handles are not thread-safe */
