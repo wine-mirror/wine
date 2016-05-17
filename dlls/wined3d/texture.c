@@ -1051,7 +1051,7 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     }
     else
     {
-        wined3d_surface_prepare(surface, NULL, WINED3D_LOCATION_SYSMEM);
+        wined3d_texture_prepare_location(texture, 0, NULL, WINED3D_LOCATION_SYSMEM);
         valid_location = WINED3D_LOCATION_SYSMEM;
     }
 

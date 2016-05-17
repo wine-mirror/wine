@@ -4303,11 +4303,3 @@ cpu:
     return surface_cpu_blt(dst_texture, dst_sub_resource_idx, &dst_box,
             src_texture, src_sub_resource_idx, &src_box, flags, fx, filter);
 }
-
-/* Context activation is done by the caller. Context may be NULL in
- * WINED3D_NO3D mode. */
-void wined3d_surface_prepare(struct wined3d_surface *surface, struct wined3d_context *context, DWORD location)
-{
-    wined3d_texture_prepare_location(surface->container,
-            surface_get_sub_resource_idx(surface), context, location);
-}
