@@ -999,13 +999,11 @@ void wined3d_cs_emit_set_material(struct wined3d_cs *cs, const struct wined3d_ma
 static void wined3d_cs_exec_reset_state(struct wined3d_cs *cs, const void *data)
 {
     struct wined3d_adapter *adapter = cs->device->adapter;
-    HRESULT hr;
 
     state_cleanup(&cs->state);
     memset(&cs->state, 0, sizeof(cs->state));
-    if (FAILED(hr = state_init(&cs->state, &cs->fb, &adapter->gl_info, &adapter->d3d_info,
-            WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT)))
-        ERR("Failed to initialize CS state, hr %#x.\n", hr);
+    state_init(&cs->state, &cs->fb, &adapter->gl_info, &adapter->d3d_info,
+            WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT);
 }
 
 void wined3d_cs_emit_reset_state(struct wined3d_cs *cs)
@@ -1093,13 +1091,8 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
         return NULL;
     }
 
-    if (FAILED(state_init(&cs->state, &cs->fb, gl_info, &device->adapter->d3d_info,
-            WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT)))
-    {
-        HeapFree(GetProcessHeap(), 0, cs->fb.render_targets);
-        HeapFree(GetProcessHeap(), 0, cs);
-        return NULL;
-    }
+    state_init(&cs->state, &cs->fb, gl_info, &device->adapter->d3d_info,
+            WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT);
 
     cs->ops = &wined3d_cs_st_ops;
     cs->device = device;

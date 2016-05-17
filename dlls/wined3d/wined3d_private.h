@@ -514,6 +514,7 @@ enum wined3d_shader_rel_op
 #define MAX_CONST_B 16
 #define WINED3D_MAX_CBS 15
 #define WINED3D_MAX_VS_CONSTS_F 256
+#define WINED3D_MAX_PS_CONSTS_F 224
 
 /* FIXME: This needs to go up to 2048 for
  * Shader model 3 according to msdn (and for software shaders) */
@@ -2217,7 +2218,7 @@ struct wined3d_state
 
     BOOL ps_consts_b[MAX_CONST_B];
     INT ps_consts_i[MAX_CONST_I * 4];
-    struct wined3d_vec4 *ps_consts_f;
+    struct wined3d_vec4 ps_consts_f[WINED3D_MAX_PS_CONSTS_F];
 
     struct wined3d_texture *textures[MAX_COMBINED_SAMPLERS];
     DWORD sampler_states[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
@@ -2777,7 +2778,7 @@ struct wined3d_saved_states
     DWORD clipplane;                            /* WINED3DMAXUSERCLIPPLANES, 32 */
     WORD pixelShaderConstantsB;                 /* MAX_CONST_B, 16 */
     WORD pixelShaderConstantsI;                 /* MAX_CONST_I, 16 */
-    BOOL *pixelShaderConstantsF;
+    BOOL ps_consts_f[WINED3D_MAX_PS_CONSTS_F];
     WORD vertexShaderConstantsB;                /* MAX_CONST_B, 16 */
     WORD vertexShaderConstantsI;                /* MAX_CONST_I, 16 */
     BOOL vs_consts_f[WINED3D_MAX_VS_CONSTS_F];
@@ -2822,7 +2823,7 @@ struct wined3d_stateblock
     unsigned int              num_contained_ps_consts_i;
     DWORD                     contained_ps_consts_b[MAX_CONST_B];
     unsigned int              num_contained_ps_consts_b;
-    DWORD                     *contained_ps_consts_f;
+    DWORD                     contained_ps_consts_f[WINED3D_MAX_PS_CONSTS_F];
     unsigned int              num_contained_ps_consts_f;
     struct StageState         contained_tss_states[MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE + 1)];
     unsigned int              num_contained_tss_states;
@@ -2833,7 +2834,7 @@ struct wined3d_stateblock
 void stateblock_init_contained_states(struct wined3d_stateblock *stateblock) DECLSPEC_HIDDEN;
 
 void state_cleanup(struct wined3d_state *state) DECLSPEC_HIDDEN;
-HRESULT state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,
+void state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,
         const struct wined3d_gl_info *gl_info, const struct wined3d_d3d_info *d3d_info,
         DWORD flags) DECLSPEC_HIDDEN;
 void state_unbind_resources(struct wined3d_state *state) DECLSPEC_HIDDEN;

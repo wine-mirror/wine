@@ -189,30 +189,6 @@ static const DWORD vertex_states_sampler[] =
     WINED3D_SAMP_DMAP_OFFSET,
 };
 
-/* Allocates the correct amount of space for pixel and vertex shader constants,
- * along with their set/changed flags on the given stateblock object
- */
-static HRESULT stateblock_allocate_shader_constants(struct wined3d_stateblock *object)
-{
-    const struct wined3d_d3d_info *d3d_info = &object->device->adapter->d3d_info;
-
-    object->changed.pixelShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(BOOL) * d3d_info->limits.ps_uniform_count);
-    if (!object->changed.pixelShaderConstantsF) goto fail;
-
-    object->contained_ps_consts_f = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(DWORD) * d3d_info->limits.ps_uniform_count);
-    if (!object->contained_ps_consts_f) goto fail;
-
-    return WINED3D_OK;
-
-fail:
-    ERR("Failed to allocate memory\n");
-    HeapFree(GetProcessHeap(), 0, object->changed.pixelShaderConstantsF);
-    HeapFree(GetProcessHeap(), 0, object->contained_ps_consts_f);
-    return E_OUTOFMEMORY;
-}
-
 static inline void stateblock_set_bits(DWORD *map, UINT map_size)
 {
     DWORD mask = (1u << (map_size & 0x1f)) - 1;
@@ -250,7 +226,7 @@ static void stateblock_savedstates_set_all(struct wined3d_saved_states *states, 
     states->vertexShaderConstantsI = 0xffff;
 
     /* Dynamically sized arrays */
-    memset(states->pixelShaderConstantsF, TRUE, sizeof(BOOL) * ps_consts);
+    memset(states->ps_consts_f, TRUE, sizeof(BOOL) * ps_consts);
     memset(states->vs_consts_f, TRUE, sizeof(BOOL) * vs_consts);
 }
 
@@ -277,7 +253,7 @@ static void stateblock_savedstates_set_pixel(struct wined3d_saved_states *states
     states->pixelShaderConstantsB = 0xffff;
     states->pixelShaderConstantsI = 0xffff;
 
-    memset(states->pixelShaderConstantsF, TRUE, sizeof(BOOL) * num_constants);
+    memset(states->ps_consts_f, TRUE, sizeof(BOOL) * num_constants);
 }
 
 static void stateblock_savedstates_set_vertex(struct wined3d_saved_states *states, const DWORD num_constants)
@@ -365,7 +341,7 @@ void stateblock_init_contained_states(struct wined3d_stateblock *stateblock)
 
     for (i = 0; i < d3d_info->limits.ps_uniform_count; ++i)
     {
-        if (stateblock->changed.pixelShaderConstantsF[i])
+        if (stateblock->changed.ps_consts_f[i])
         {
             stateblock->contained_ps_consts_f[stateblock->num_contained_ps_consts_f] = i;
             ++stateblock->num_contained_ps_consts_f;
@@ -554,8 +530,6 @@ void state_cleanup(struct wined3d_state *state)
             HeapFree(GetProcessHeap(), 0, light);
         }
     }
-
-    HeapFree(GetProcessHeap(), 0, state->ps_consts_f);
 }
 
 ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
@@ -567,9 +541,6 @@ ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
     if (!refcount)
     {
         state_cleanup(&stateblock->state);
-
-        HeapFree(GetProcessHeap(), 0, stateblock->changed.pixelShaderConstantsF);
-        HeapFree(GetProcessHeap(), 0, stateblock->contained_ps_consts_f);
         HeapFree(GetProcessHeap(), 0, stateblock);
     }
 
@@ -1283,7 +1254,7 @@ static void state_init_default(struct wined3d_state *state, const struct wined3d
     }
 }
 
-HRESULT state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,
+void state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,
         const struct wined3d_gl_info *gl_info, const struct wined3d_d3d_info *d3d_info,
         DWORD flags)
 {
@@ -1297,33 +1268,18 @@ HRESULT state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,
         list_init(&state->light_map[i]);
     }
 
-    if (!(state->ps_consts_f = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(*state->ps_consts_f) * d3d_info->limits.ps_uniform_count)))
-        return E_OUTOFMEMORY;
-
     if (flags & WINED3D_STATE_INIT_DEFAULT)
         state_init_default(state, gl_info);
-
-    return WINED3D_OK;
 }
 
 static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
         struct wined3d_device *device, enum wined3d_stateblock_type type)
 {
-    HRESULT hr;
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
 
     stateblock->ref = 1;
     stateblock->device = device;
-
-    if (FAILED(hr = state_init(&stateblock->state, NULL, &device->adapter->gl_info, d3d_info, 0)))
-        return hr;
-
-    if (FAILED(hr = stateblock_allocate_shader_constants(stateblock)))
-    {
-        state_cleanup(&stateblock->state);
-        return hr;
-    }
+    state_init(&stateblock->state, NULL, &device->adapter->gl_info, d3d_info, 0);
 
     if (type == WINED3D_SBT_RECORDED)
         return WINED3D_OK;

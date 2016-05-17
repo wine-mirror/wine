@@ -165,7 +165,7 @@ struct glsl_ps_program
 {
     struct list shader_entry;
     GLuint id;
-    GLint *uniform_f_locations;
+    GLint uniform_f_locations[WINED3D_MAX_PS_CONSTS_F];
     GLint uniform_i_locations[MAX_CONST_I];
     GLint uniform_b_locations[MAX_CONST_B];
     GLint bumpenv_mat_location[MAX_TEXTURES];
@@ -5137,7 +5137,6 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const struc
         list_remove(&entry->gs.shader_entry);
     if (entry->ps.id)
         list_remove(&entry->ps.shader_entry);
-    HeapFree(GetProcessHeap(), 0, entry->ps.uniform_f_locations);
     HeapFree(GetProcessHeap(), 0, entry);
 }
 
@@ -7096,15 +7095,12 @@ static void shader_glsl_init_ps_uniform_locations(const struct wined3d_gl_info *
     unsigned int i;
     struct wined3d_string_buffer *name = string_buffer_get(&priv->string_buffers);
 
-    ps->uniform_f_locations = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(GLuint) * gl_info->limits.glsl_ps_float_constants);
     for (i = 0; i < ps_c_count; ++i)
     {
         string_buffer_sprintf(name, "ps_c[%u]", i);
         ps->uniform_f_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
     }
-    memset(&ps->uniform_f_locations[ps_c_count], 0xff,
-            (gl_info->limits.glsl_ps_float_constants - ps_c_count) * sizeof(GLuint));
+    memset(&ps->uniform_f_locations[ps_c_count], 0xff, (WINED3D_MAX_PS_CONSTS_F - ps_c_count) * sizeof(GLuint));
 
     for (i = 0; i < MAX_CONST_I; ++i)
     {
@@ -7371,7 +7367,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     shader_glsl_init_vs_uniform_locations(gl_info, priv, program_id, &entry->vs,
             vshader ? vshader->limits->constant_float : 0);
     shader_glsl_init_ps_uniform_locations(gl_info, priv, program_id, &entry->ps,
-            pshader ? min(pshader->limits->constant_float, gl_info->limits.glsl_ps_float_constants) : 0);
+            pshader ? pshader->limits->constant_float : 0);
     checkGLcall("Find glsl program uniform locations");
 
     if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
@@ -7930,7 +7926,7 @@ static HRESULT shader_glsl_alloc(struct wined3d_device *device, const struct win
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct shader_glsl_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_glsl_priv));
-    SIZE_T stack_size = wined3d_log2i(max(WINED3D_MAX_VS_CONSTS_F, gl_info->limits.glsl_ps_float_constants)) + 1;
+    SIZE_T stack_size = wined3d_log2i(max(WINED3D_MAX_VS_CONSTS_F, WINED3D_MAX_PS_CONSTS_F)) + 1;
     struct fragment_caps fragment_caps;
     void *vertex_priv, *fragment_priv;
 
@@ -7970,7 +7966,7 @@ static HRESULT shader_glsl_alloc(struct wined3d_device *device, const struct win
         goto fail;
     }
 
-    if (!constant_heap_init(&priv->pconst_heap, gl_info->limits.glsl_ps_float_constants))
+    if (!constant_heap_init(&priv->pconst_heap, WINED3D_MAX_PS_CONSTS_F))
     {
         ERR("Failed to initialize pixel shader constant heap\n");
         goto fail;
@@ -8086,7 +8082,7 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
     caps->ps_version = min(wined3d_settings.max_sm_ps, shader_model);
 
     caps->vs_uniform_count = min(WINED3D_MAX_VS_CONSTS_F, gl_info->limits.glsl_vs_float_constants);
-    caps->ps_uniform_count = gl_info->limits.glsl_ps_float_constants;
+    caps->ps_uniform_count = min(WINED3D_MAX_PS_CONSTS_F, gl_info->limits.glsl_ps_float_constants);
     caps->varying_count = gl_info->limits.glsl_varyings;
 
     /* FIXME: The following line is card dependent. -8.0 to 8.0 is the

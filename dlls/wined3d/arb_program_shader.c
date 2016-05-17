@@ -304,7 +304,7 @@ struct shader_arb_priv
 
     unsigned int highest_dirty_ps_const, highest_dirty_vs_const;
     char vshader_const_dirty[WINED3D_MAX_VS_CONSTS_F];
-    char *pshader_const_dirty;
+    char pshader_const_dirty[WINED3D_MAX_PS_CONSTS_F];
     const struct wined3d_context *last_context;
 
     const struct wined3d_vertex_pipe_ops *vertex_pipe;
@@ -5001,18 +5001,16 @@ static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct wine
 
     memset(priv->vshader_const_dirty, 1,
            sizeof(*priv->vshader_const_dirty) * d3d_info->limits.vs_uniform_count);
-
-    priv->pshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(*priv->pshader_const_dirty) * d3d_info->limits.ps_uniform_count);
-    if (!priv->pshader_const_dirty)
-        goto fail;
     memset(priv->pshader_const_dirty, 1,
             sizeof(*priv->pshader_const_dirty) * d3d_info->limits.ps_uniform_count);
 
-    if(wine_rb_init(&priv->signature_tree, &sig_tree_functions) == -1)
+    if (wine_rb_init(&priv->signature_tree, &sig_tree_functions) == -1)
     {
         ERR("RB tree init failed\n");
-        goto fail;
+        fragment_pipe->free_private(device);
+        vertex_pipe->vp_free(device);
+        HeapFree(GetProcessHeap(), 0, priv);
+        return E_OUTOFMEMORY;
     }
 
     priv->vertex_pipe = vertex_pipe;
@@ -5025,13 +5023,6 @@ static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct wine
     device->shader_priv = priv;
 
     return WINED3D_OK;
-
-fail:
-    HeapFree(GetProcessHeap(), 0, priv->pshader_const_dirty);
-    fragment_pipe->free_private(device);
-    vertex_pipe->vp_free(device);
-    HeapFree(GetProcessHeap(), 0, priv);
-    return E_OUTOFMEMORY;
 }
 
 static void release_signature(struct wine_rb_entry *entry, void *context)
@@ -5070,7 +5061,6 @@ static void shader_arb_free(struct wined3d_device *device)
     }
 
     wine_rb_destroy(&priv->signature_tree, release_signature, NULL);
-    HeapFree(GetProcessHeap(), 0, priv->pshader_const_dirty);
     priv->fragment_pipe->free_private(device);
     priv->vertex_pipe->vp_free(device);
     HeapFree(GetProcessHeap(), 0, device->shader_priv);
@@ -5169,7 +5159,7 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
             TRACE("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
         }
         caps->ps_version = min(wined3d_settings.max_sm_ps, ps_version);
-        caps->ps_uniform_count = ps_consts;
+        caps->ps_uniform_count = min(WINED3D_MAX_PS_CONSTS_F, ps_consts);
         caps->ps_1x_max_value = 8.0f;
     }
     else
