@@ -84,6 +84,7 @@ typedef struct
     INT       iHotItem;		/* index of hot item (cursor is over this item) */
     INT       iHotDivider;      /* index of the hot divider (used while dragging an item or by HDM_SETHOTDIVIDER) */
     INT       iMargin;          /* width of the margin that surrounds a bitmap */
+    INT       filter_change_timeout; /* change timeout set with HDM_SETFILTERCHANGETIMEOUT */
 
     HIMAGELIST  himl;		/* handle to an image list (may be 0) */
     HEADER_ITEM *items;		/* pointer to array of HEADER_ITEM's */
@@ -1540,6 +1541,7 @@ HEADER_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
     infoPtr->iMargin = 3*GetSystemMetrics(SM_CXEDGE);
     infoPtr->nNotifyFormat =
 	SendMessageW (infoPtr->hwndNotify, WM_NOTIFYFORMAT, (WPARAM)hwnd, NF_QUERY);
+    infoPtr->filter_change_timeout = 1000;
 
     hdc = GetDC (0);
     hOldFont = SelectObject (hdc, GetStockObject (SYSTEM_FONT));
@@ -2054,6 +2056,14 @@ static LRESULT HEADER_ThemeChanged(const HEADER_INFO *infoPtr)
     return 0;
 }
 
+static INT HEADER_SetFilterChangeTimeout(HEADER_INFO *infoPtr, INT timeout)
+{
+    INT old_timeout = infoPtr->filter_change_timeout;
+
+    if (timeout != 0)
+        infoPtr->filter_change_timeout = timeout;
+    return old_timeout;
+}
 
 static LRESULT WINAPI
 HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -2112,7 +2122,8 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case HDM_SETBITMAPMARGIN:
 	    return HEADER_SetBitmapMargin(infoPtr, (INT)wParam);
 
-/*	case HDM_SETFILTERCHANGETIMEOUT: */
+        case HDM_SETFILTERCHANGETIMEOUT:
+            return HEADER_SetFilterChangeTimeout(infoPtr, (INT)lParam);
 
         case HDM_SETHOTDIVIDER:
             return HEADER_SetHotDivider(infoPtr, wParam, lParam);

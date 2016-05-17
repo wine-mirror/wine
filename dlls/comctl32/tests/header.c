@@ -994,8 +994,19 @@ static void test_hdm_filterMessages(HWND hParent)
     ok_sequence(sequences, PARENT_SEQ_INDEX, add_header_to_parent_seq,
                                     "adder header control to parent", FALSE);
 
+    timeout = SendMessageA(hChild, HDM_SETFILTERCHANGETIMEOUT, 0, 0);
+    ok(timeout == 1000, "got %d\n", timeout);
+
+    timeout = SendMessageA(hChild, HDM_SETFILTERCHANGETIMEOUT, 0, 0);
+    ok(timeout == 1000, "got %d\n", timeout);
+
+    timeout = SendMessageA(hChild, HDM_SETFILTERCHANGETIMEOUT, 0, -100);
+    ok(timeout == 1000, "got %d\n", timeout);
+
     timeout = SendMessageA(hChild, HDM_SETFILTERCHANGETIMEOUT, 1, 100);
-    SendMessageA(hChild, HDM_SETFILTERCHANGETIMEOUT, 1, timeout);
+    ok(timeout == -100, "got %d\n", timeout);
+    retVal = SendMessageA(hChild, HDM_SETFILTERCHANGETIMEOUT, 1, timeout);
+    ok(retVal == 100, "got %d\n", retVal);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
