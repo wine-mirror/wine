@@ -933,7 +933,7 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
     for (i = 0; i < stateblock->num_contained_ps_consts_b; ++i)
     {
         wined3d_device_set_ps_consts_b(device, stateblock->contained_ps_consts_b[i],
-                stateblock->state.ps_consts_b + stateblock->contained_ps_consts_b[i], 1);
+                1, &stateblock->state.ps_consts_b[stateblock->contained_ps_consts_b[i]]);
     }
 
     /* Render states. */
