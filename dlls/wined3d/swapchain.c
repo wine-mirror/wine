@@ -606,6 +606,9 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
      * The FLIP swap effect is not implemented yet. We could mark WINED3D_LOCATION_DRAWABLE
      * up to date and hope WGL flipped front and back buffers and read this data into
      * the FBO. Don't bother about this for now. */
+    if (swapchain->desc.swap_effect == WINED3D_SWAP_EFFECT_DISCARD)
+        wined3d_texture_validate_location(swapchain->back_buffers[swapchain->desc.backbuffer_count - 1],
+                0, WINED3D_LOCATION_DISCARDED);
 
     if (fb->depth_stencil)
     {
