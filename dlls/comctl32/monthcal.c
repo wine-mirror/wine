@@ -1156,6 +1156,18 @@ static void MONTHCAL_PaintLeadTrailMonths(const MONTHCAL_INFO *infoPtr, HDC hdc,
   }
 }
 
+static int get_localized_dayname(const MONTHCAL_INFO *infoPtr, unsigned int day, WCHAR *buff, unsigned int count)
+{
+  LCTYPE lctype;
+
+  if (infoPtr->dwStyle & MCS_SHORTDAYSOFWEEK)
+      lctype = LOCALE_SSHORTESTDAYNAME1 + day;
+  else
+      lctype = LOCALE_SABBREVDAYNAME1 + day;
+
+  return GetLocaleInfoW(LOCALE_USER_DEFAULT, lctype, buff, count);
+}
+
 /* paint a calendar area */
 static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps, INT calIdx)
 {
@@ -1196,7 +1208,7 @@ static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const 
 
   i = infoPtr->firstDay;
   for(j = 0; j < 7; j++) {
-    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SABBREVDAYNAME1 + (i+j+6)%7, buf, countof(buf));
+    get_localized_dayname(infoPtr, (i + j + 6) % 7, buf, countof(buf));
     DrawTextW(hdc, buf, strlenW(buf), &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
     OffsetRect(&r, infoPtr->width_increment, 0);
   }
@@ -2500,8 +2512,7 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
   size.cx = sz.cx = 0;
   for (i = 0; i < 7; i++)
   {
-      if(GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SABBREVDAYNAME1 + i,
-                        buff, countof(buff)))
+      if (get_localized_dayname(infoPtr, i, buff, countof(buff)))
       {
           GetTextExtentPoint32W(hdc, buff, lstrlenW(buff), &sz);
           if (sz.cx > size.cx) size.cx = sz.cx;
@@ -2703,7 +2714,7 @@ static INT MONTHCAL_StyleChanged(MONTHCAL_INFO *infoPtr, WPARAM wStyleType,
     infoPtr->dwStyle = lpss->styleNew;
 
     /* make room for week numbers */
-    if ((lpss->styleNew ^ lpss->styleOld) & MCS_WEEKNUMBERS)
+    if ((lpss->styleNew ^ lpss->styleOld) & (MCS_WEEKNUMBERS | MCS_SHORTDAYSOFWEEK))
         MONTHCAL_UpdateSize(infoPtr);
 
     return 0;
