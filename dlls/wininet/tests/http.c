@@ -4717,6 +4717,27 @@ static void test_http_read(int port)
     CloseHandle(server_req_rec_event);
 }
 
+static void test_long_url(int port)
+{
+    char long_path[INTERNET_MAX_PATH_LENGTH*2] = "/echo_request?";
+    char buf[sizeof(long_path)*2];
+    test_request_t req;
+    BOOL ret;
+
+    memset(long_path+strlen(long_path), 'x', sizeof(long_path)-strlen(long_path));
+    long_path[sizeof(long_path)-1] = 0;
+    open_simple_request(&req, "localhost", port, NULL, long_path);
+
+    ret = HttpSendRequestA(req.request, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
+    test_status_code(req.request, 200);
+
+    receive_simple_request(req.request, buf, sizeof(buf));
+    ok(strstr(buf, long_path) != NULL, "long pathnot found in %s\n", buf);
+
+    close_request(&req);
+}
+
 static void test_http_connection(void)
 {
     struct server_info si;
@@ -4767,6 +4788,7 @@ static void test_http_connection(void)
     test_basic_auth_credentials_reuse(si.port);
     test_async_read(si.port);
     test_http_read(si.port);
+    test_long_url(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");
