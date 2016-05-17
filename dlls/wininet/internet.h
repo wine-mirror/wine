@@ -268,6 +268,7 @@ typedef struct
     LONG ref;
     HANDLE file_handle;
     WCHAR *file_name;
+    WCHAR *url;
     BOOL is_committed;
 } req_file_t;
 

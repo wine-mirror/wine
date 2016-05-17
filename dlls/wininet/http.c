@@ -1873,14 +1873,14 @@ static DWORD HTTP_ResolveName(http_request_t *request)
     return ERROR_SUCCESS;
 }
 
-static BOOL HTTP_GetRequestURL(http_request_t *req, LPWSTR buf)
+static WCHAR *compose_request_url(http_request_t *req)
 {
     static const WCHAR http[] = { 'h','t','t','p',':','/','/',0 };
     static const WCHAR https[] = { 'h','t','t','p','s',':','/','/',0 };
-    static const WCHAR slash[] = { '/',0 };
     LPHTTPHEADERW host_header;
-    const WCHAR *host;
-    LPCWSTR scheme;
+    const WCHAR *host, *scheme;
+    WCHAR *buf, *ptr;
+    size_t len;
 
     EnterCriticalSection( &req->headers_section );
 
@@ -1888,18 +1888,30 @@ static BOOL HTTP_GetRequestURL(http_request_t *req, LPWSTR buf)
     if (host_header) host = host_header->lpszValue;
     else host = req->server->canon_host_port;
 
-    if (req->hdr.dwFlags & INTERNET_FLAG_SECURE)
+    if (req->server->is_https)
         scheme = https;
     else
         scheme = http;
-    strcpyW(buf, scheme);
-    strcatW(buf, host);
-    if (req->path[0] != '/')
-        strcatW(buf, slash);
-    strcatW(buf, req->path);
+
+    len = strlenW(scheme) + strlenW(host) + (req->path[0] != '/' ? 1 : 0) + strlenW(req->path);
+    ptr = buf = heap_alloc((len+1) * sizeof(WCHAR));
+    if(buf) {
+        strcpyW(ptr, scheme);
+        ptr += strlenW(ptr);
+
+        strcpyW(ptr, host);
+        ptr += strlenW(ptr);
+
+        if(req->path[0] != '/')
+            *ptr++ = '/';
+
+        strcpyW(ptr, req->path);
+        ptr += strlenW(ptr);
+        *ptr = 0;
+    }
 
     LeaveCriticalSection( &req->headers_section );
-    return TRUE;
+    return buf;
 }
 
 
@@ -2158,27 +2170,29 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
     case INTERNET_OPTION_CACHE_TIMESTAMPS: {
         INTERNET_CACHE_ENTRY_INFOW *info;
         INTERNET_CACHE_TIMESTAMPS *ts = buffer;
-        WCHAR url[INTERNET_MAX_URL_LENGTH];
         DWORD nbytes, error;
         BOOL ret;
 
         TRACE("INTERNET_OPTION_CACHE_TIMESTAMPS\n");
+
+        if(!req->req_file)
+            return ERROR_FILE_NOT_FOUND;
 
         if (*size < sizeof(*ts))
         {
             *size = sizeof(*ts);
             return ERROR_INSUFFICIENT_BUFFER;
         }
+
         nbytes = 0;
-        HTTP_GetRequestURL(req, url);
-        ret = GetUrlCacheEntryInfoW(url, NULL, &nbytes);
+        ret = GetUrlCacheEntryInfoW(req->req_file->url, NULL, &nbytes);
         error = GetLastError();
         if (!ret && error == ERROR_INSUFFICIENT_BUFFER)
         {
             if (!(info = heap_alloc(nbytes)))
                 return ERROR_OUTOFMEMORY;
 
-            GetUrlCacheEntryInfoW(url, info, &nbytes);
+            GetUrlCacheEntryInfoW(req->req_file->url, info, &nbytes);
 
             ts->ftExpires = info->ExpireTime;
             ts->ftLastModified = info->LastModifiedTime;
@@ -2367,29 +2381,25 @@ static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer,
 
 static void commit_cache_entry(http_request_t *req)
 {
-    WCHAR url[INTERNET_MAX_URL_LENGTH];
+    WCHAR *header;
+    DWORD header_len;
+    BOOL res;
 
     TRACE("%p\n", req);
 
     CloseHandle(req->hCacheFile);
     req->hCacheFile = NULL;
 
-    if(HTTP_GetRequestURL(req, url)) {
-        WCHAR *header;
-        DWORD header_len;
-        BOOL res;
-
-        header = build_response_header(req, TRUE);
-        header_len = (header ? strlenW(header) : 0);
-        res = CommitUrlCacheEntryW(url, req->req_file->file_name, req->expires,
-                req->last_modified, NORMAL_CACHE_ENTRY,
-                header, header_len, NULL, 0);
-        if(res)
-            req->req_file->is_committed = TRUE;
-        else
-            WARN("CommitUrlCacheEntry failed: %u\n", GetLastError());
-        heap_free(header);
-    }
+    header = build_response_header(req, TRUE);
+    header_len = (header ? strlenW(header) : 0);
+    res = CommitUrlCacheEntryW(req->req_file->url, req->req_file->file_name, req->expires,
+             req->last_modified, NORMAL_CACHE_ENTRY,
+            header, header_len, NULL, 0);
+    if(res)
+        req->req_file->is_committed = TRUE;
+    else
+        WARN("CommitUrlCacheEntry failed: %u\n", GetLastError());
+    heap_free(header);
 }
 
 static void create_cache_entry(http_request_t *req)
@@ -2397,8 +2407,8 @@ static void create_cache_entry(http_request_t *req)
     static const WCHAR no_cacheW[] = {'n','o','-','c','a','c','h','e',0};
     static const WCHAR no_storeW[] = {'n','o','-','s','t','o','r','e',0};
 
-    WCHAR url[INTERNET_MAX_URL_LENGTH];
     WCHAR file_name[MAX_PATH+1];
+    WCHAR *url;
     BOOL b = TRUE;
 
     /* FIXME: We should free previous cache file earlier */
@@ -2455,8 +2465,8 @@ static void create_cache_entry(http_request_t *req)
         FIXME("INTERNET_FLAG_NEED_FILE is not supported correctly\n");
     }
 
-    b = HTTP_GetRequestURL(req, url);
-    if(!b) {
+    url = compose_request_url(req);
+    if(!url) {
         WARN("Could not get URL\n");
         return;
     }
@@ -2468,6 +2478,7 @@ static void create_cache_entry(http_request_t *req)
     }
 
     create_req_file(file_name, &req->req_file);
+    req->req_file->url = url;
 
     req->hCacheFile = CreateFileW(file_name, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
               NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);

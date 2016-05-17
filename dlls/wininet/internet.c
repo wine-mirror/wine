@@ -3901,6 +3901,7 @@ void req_file_release(req_file_t *req_file)
     if(req_file->file_handle && req_file->file_handle != INVALID_HANDLE_VALUE)
         CloseHandle(req_file->file_handle);
     heap_free(req_file->file_name);
+    heap_free(req_file->url);
     heap_free(req_file);
 }
 
