@@ -476,7 +476,7 @@ todo_wine
     toolinfoA.lpszText = bufA;
     r = SendMessageA(hwnd, TTM_GETTEXTA, 0, (LPARAM)&toolinfoA);
     ok(!r, "got %ld\n", r);
-    ok(!strcmp(toolinfoA.lpszText, testtip2A), "expected %s, got %s\n", testtipA, toolinfoA.lpszText);
+    ok(!strcmp(toolinfoA.lpszText, testtip2A), "expected %s, got %s\n", testtip2A, toolinfoA.lpszText);
 
     DestroyWindow(hwnd);
 }
