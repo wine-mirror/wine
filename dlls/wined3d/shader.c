@@ -232,6 +232,7 @@ static const struct
 sysval_semantic_names[] =
 {
     {WINED3D_SV_POSITION,                   "SV_Position"},
+    {WINED3D_SV_VERTEX_ID,                  "SV_VertexID"},
     {WINED3D_SV_INSTANCE_ID,                "SV_InstanceID"},
     {WINED3D_SV_PRIMITIVE_ID,               "SV_PrimitiveID"},
     {WINED3D_SV_IS_FRONT_FACE,              "SV_IsFrontFace"},
