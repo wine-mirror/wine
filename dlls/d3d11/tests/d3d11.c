@@ -1808,7 +1808,7 @@ static void test_create_depthstencil_view(void)
 
     memset(&dsv_desc, 0, sizeof(dsv_desc));
     ID3D11DepthStencilView_GetDesc(dsview, &dsv_desc);
-    todo_wine ok(dsv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", dsv_desc.Format);
+    ok(dsv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", dsv_desc.Format);
     ok(dsv_desc.ViewDimension == D3D11_DSV_DIMENSION_TEXTURE2D,
             "Got unexpected view dimension %#x.\n", dsv_desc.ViewDimension);
     ok(!dsv_desc.Flags, "Got unexpected flags %#x.\n", dsv_desc.Flags);
@@ -2022,7 +2022,7 @@ static void test_create_rendertarget_view(void)
 
     memset(&rtv_desc, 0, sizeof(rtv_desc));
     ID3D11RenderTargetView_GetDesc(rtview, &rtv_desc);
-    todo_wine ok(rtv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", rtv_desc.Format);
+    ok(rtv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", rtv_desc.Format);
     ok(rtv_desc.ViewDimension == D3D11_RTV_DIMENSION_TEXTURE2D, "Got unexpected view dimension %#x.\n",
             rtv_desc.ViewDimension);
     ok(!U(rtv_desc).Texture2D.MipSlice, "Got unexpected mip slice %u.\n", U(rtv_desc).Texture2D.MipSlice);
@@ -2165,7 +2165,7 @@ static void test_create_shader_resource_view(void)
 
     memset(&srv_desc, 0, sizeof(srv_desc));
     ID3D11ShaderResourceView_GetDesc(srview, &srv_desc);
-    todo_wine ok(srv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", srv_desc.Format);
+    ok(srv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", srv_desc.Format);
     ok(srv_desc.ViewDimension == D3D11_SRV_DIMENSION_TEXTURE2D,
             "Got unexpected view dimension %#x.\n", srv_desc.ViewDimension);
     ok(U(srv_desc).Texture2D.MostDetailedMip == 0, "Got unexpected MostDetailedMip %u.\n",

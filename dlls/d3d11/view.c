@@ -121,6 +121,59 @@ static HRESULT set_dsdesc_from_resource(D3D11_DEPTH_STENCIL_VIEW_DESC *desc, ID3
     }
 }
 
+static void normalize_dsv_desc(D3D11_DEPTH_STENCIL_VIEW_DESC *desc, ID3D11Resource *resource)
+{
+    D3D11_RESOURCE_DIMENSION dimension;
+
+    if (desc->Format != DXGI_FORMAT_UNKNOWN)
+        return;
+
+    ID3D11Resource_GetType(resource, &dimension);
+    switch (dimension)
+    {
+        case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
+        {
+            D3D11_TEXTURE1D_DESC texture_desc;
+            ID3D11Texture1D *texture;
+
+            if (FAILED(ID3D11Resource_QueryInterface(resource, &IID_ID3D11Texture1D, (void **)&texture)))
+            {
+                ERR("Resource of type TEXTURE1D doesn't implement ID3D11Texture1D.\n");
+                break;
+            }
+
+            ID3D11Texture1D_GetDesc(texture, &texture_desc);
+            ID3D11Texture1D_Release(texture);
+
+            if (desc->Format == DXGI_FORMAT_UNKNOWN)
+                desc->Format = texture_desc.Format;
+            break;
+        }
+
+        case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
+        {
+            D3D11_TEXTURE2D_DESC texture_desc;
+            ID3D11Texture2D *texture;
+
+            if (FAILED(ID3D11Resource_QueryInterface(resource, &IID_ID3D11Texture2D, (void **)&texture)))
+            {
+                ERR("Resource of type TEXTURE2D doesn't implement ID3D11Texture2D.\n");
+                break;
+            }
+
+            ID3D11Texture2D_GetDesc(texture, &texture_desc);
+            ID3D11Texture2D_Release(texture);
+
+            if (desc->Format == DXGI_FORMAT_UNKNOWN)
+                desc->Format = texture_desc.Format;
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
 static HRESULT set_rtdesc_from_resource(D3D11_RENDER_TARGET_VIEW_DESC *desc, ID3D11Resource *resource)
 {
     D3D11_RESOURCE_DIMENSION dimension;
@@ -240,6 +293,59 @@ static HRESULT set_rtdesc_from_resource(D3D11_RENDER_TARGET_VIEW_DESC *desc, ID3
     }
 }
 
+static void normalize_rtv_desc(D3D11_RENDER_TARGET_VIEW_DESC *desc, ID3D11Resource *resource)
+{
+    D3D11_RESOURCE_DIMENSION dimension;
+
+    if (desc->Format != DXGI_FORMAT_UNKNOWN)
+        return;
+
+    ID3D11Resource_GetType(resource, &dimension);
+    switch (dimension)
+    {
+        case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
+        {
+            D3D11_TEXTURE1D_DESC texture_desc;
+            ID3D11Texture1D *texture;
+
+            if (FAILED(ID3D11Resource_QueryInterface(resource, &IID_ID3D11Texture1D, (void **)&texture)))
+            {
+                ERR("Resource of type TEXTURE1D doesn't implement ID3D11Texture1D.\n");
+                break;
+            }
+
+            ID3D11Texture1D_GetDesc(texture, &texture_desc);
+            ID3D11Texture1D_Release(texture);
+
+            if (desc->Format == DXGI_FORMAT_UNKNOWN)
+                desc->Format = texture_desc.Format;
+            break;
+        }
+
+        case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
+        {
+            D3D11_TEXTURE2D_DESC texture_desc;
+            ID3D11Texture2D *texture;
+
+            if (FAILED(ID3D11Resource_QueryInterface(resource, &IID_ID3D11Texture2D, (void **)&texture)))
+            {
+                ERR("Resource of type TEXTURE2D doesn't implement ID3D11Texture2D.\n");
+                break;
+            }
+
+            ID3D11Texture2D_GetDesc(texture, &texture_desc);
+            ID3D11Texture2D_Release(texture);
+
+            if (desc->Format == DXGI_FORMAT_UNKNOWN)
+                desc->Format = texture_desc.Format;
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
 static HRESULT set_srdesc_from_resource(D3D11_SHADER_RESOURCE_VIEW_DESC *desc, ID3D11Resource *resource)
 {
     D3D11_RESOURCE_DIMENSION dimension;
@@ -356,6 +462,59 @@ static HRESULT set_srdesc_from_resource(D3D11_SHADER_RESOURCE_VIEW_DESC *desc, I
             FIXME("Unhandled resource dimension %#x.\n", dimension);
         case D3D11_RESOURCE_DIMENSION_BUFFER:
             return E_INVALIDARG;
+    }
+}
+
+static void normalize_srv_desc(D3D11_SHADER_RESOURCE_VIEW_DESC *desc, ID3D11Resource *resource)
+{
+    D3D11_RESOURCE_DIMENSION dimension;
+
+    if (desc->Format != DXGI_FORMAT_UNKNOWN)
+        return;
+
+    ID3D11Resource_GetType(resource, &dimension);
+    switch (dimension)
+    {
+        case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
+        {
+            D3D11_TEXTURE1D_DESC texture_desc;
+            ID3D11Texture1D *texture;
+
+            if (FAILED(ID3D11Resource_QueryInterface(resource, &IID_ID3D11Texture1D, (void **)&texture)))
+            {
+                ERR("Resource of type TEXTURE1D doesn't implement ID3D11Texture1D.\n");
+                break;
+            }
+
+            ID3D11Texture1D_GetDesc(texture, &texture_desc);
+            ID3D11Texture1D_Release(texture);
+
+            if (desc->Format == DXGI_FORMAT_UNKNOWN)
+                desc->Format = texture_desc.Format;
+            break;
+        }
+
+        case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
+        {
+            D3D11_TEXTURE2D_DESC texture_desc;
+            ID3D11Texture2D *texture;
+
+            if (FAILED(ID3D11Resource_QueryInterface(resource, &IID_ID3D11Texture2D, (void **)&texture)))
+            {
+                ERR("Resource of type TEXTURE2D doesn't implement ID3D11Texture2D.\n");
+                break;
+            }
+
+            ID3D11Texture2D_GetDesc(texture, &texture_desc);
+            ID3D11Texture2D_Release(texture);
+
+            if (desc->Format == DXGI_FORMAT_UNKNOWN)
+                desc->Format = texture_desc.Format;
+            break;
+        }
+
+        default:
+            break;
     }
 }
 
@@ -706,6 +865,7 @@ static HRESULT d3d_depthstencil_view_init(struct d3d_depthstencil_view *view, st
     else
     {
         view->desc = *desc;
+        normalize_dsv_desc(&view->desc, resource);
     }
 
     wined3d_mutex_lock();
@@ -1121,12 +1281,13 @@ static HRESULT d3d_rendertarget_view_init(struct d3d_rendertarget_view *view, st
 
     if (!desc)
     {
-        HRESULT hr = set_rtdesc_from_resource(&view->desc, resource);
-        if (FAILED(hr)) return hr;
+        if (FAILED(hr = set_rtdesc_from_resource(&view->desc, resource)))
+            return hr;
     }
     else
     {
         view->desc = *desc;
+        normalize_rtv_desc(&view->desc, resource);
     }
 
     wined3d_mutex_lock();
@@ -1498,13 +1659,14 @@ static HRESULT d3d_shader_resource_view_init(struct d3d_shader_resource_view *vi
     else
     {
         view->desc = *desc;
+        normalize_srv_desc(&view->desc, resource);
     }
 
     wined3d_mutex_lock();
     if (!(wined3d_resource = wined3d_resource_from_d3d11_resource(resource)))
     {
         wined3d_mutex_unlock();
-        ERR("Failed to get wined3d resource for d3d10 resource %p.\n", resource);
+        ERR("Failed to get wined3d resource for d3d11 resource %p.\n", resource);
         return E_FAIL;
     }
 
