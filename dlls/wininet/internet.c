@@ -1551,7 +1551,7 @@ BOOL WINAPI InternetCrackUrlA(const char *url, DWORD url_length, DWORD flags, UR
 {
     WCHAR *host = NULL, *user = NULL, *pass = NULL, *path = NULL, *scheme = NULL, *extra = NULL;
     URL_COMPONENTSW comp;
-    WCHAR *url_w;
+    WCHAR *url_w = NULL;
     BOOL ret;
 
     TRACE("(%s %u %x %p)\n", url_length ? debugstr_an(url, url_length) : debugstr_a(url), url_length, flags, ret_comp);
