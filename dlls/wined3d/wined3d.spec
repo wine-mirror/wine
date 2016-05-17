@@ -70,7 +70,7 @@
 @ cdecl wined3d_device_get_predication(ptr ptr)
 @ cdecl wined3d_device_get_primitive_type(ptr ptr)
 @ cdecl wined3d_device_get_ps_cb(ptr long)
-@ cdecl wined3d_device_get_ps_consts_b(ptr long ptr long)
+@ cdecl wined3d_device_get_ps_consts_b(ptr long long ptr)
 @ cdecl wined3d_device_get_ps_consts_f(ptr long long ptr)
 @ cdecl wined3d_device_get_ps_consts_i(ptr long long ptr)
 @ cdecl wined3d_device_get_ps_resource_view(ptr long)

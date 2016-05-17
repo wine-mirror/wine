@@ -2123,7 +2123,7 @@ void __cdecl wined3d_device_get_primitive_type(const struct wined3d_device *devi
         enum wined3d_primitive_type *primitive_topology);
 struct wined3d_buffer * __cdecl wined3d_device_get_ps_cb(const struct wined3d_device *device, UINT idx);
 HRESULT __cdecl wined3d_device_get_ps_consts_b(const struct wined3d_device *device,
-        UINT start_register, BOOL *constants, UINT bool_count);
+        unsigned int start_idx, unsigned int count, BOOL *constants);
 HRESULT __cdecl wined3d_device_get_ps_consts_f(const struct wined3d_device *device,
         unsigned int start_idx, unsigned int count, struct wined3d_vec4 *constants);
 HRESULT __cdecl wined3d_device_get_ps_consts_i(const struct wined3d_device *device,
