@@ -2973,25 +2973,57 @@ static ULONG get_type_size( WS_TYPE type, const WS_STRUCT_DESCRIPTION *desc )
     }
 }
 
+static WS_READ_OPTION get_array_read_option( WS_TYPE type )
+{
+    switch (type)
+    {
+    case WS_BOOL_TYPE:
+    case WS_INT8_TYPE:
+    case WS_INT16_TYPE:
+    case WS_INT32_TYPE:
+    case WS_INT64_TYPE:
+    case WS_UINT8_TYPE:
+    case WS_UINT16_TYPE:
+    case WS_UINT32_TYPE:
+    case WS_UINT64_TYPE:
+    case WS_DOUBLE_TYPE:
+    case WS_ENUM_TYPE:
+    case WS_STRUCT_TYPE:
+    case WS_DATETIME_TYPE:
+        return WS_READ_REQUIRED_VALUE;
+
+    case WS_WSZ_TYPE:
+        return WS_READ_REQUIRED_POINTER;
+
+    default:
+        FIXME( "unhandled type %u\n", type );
+        return 0;
+    }
+}
+
 static HRESULT read_type( struct reader *, WS_TYPE_MAPPING, WS_TYPE, const WS_XML_STRING *,
                           const WS_XML_STRING *, const void *, WS_READ_OPTION, WS_HEAP *,
                           void *, ULONG );
 
 static HRESULT read_type_repeating_element( struct reader *reader, const WS_FIELD_DESCRIPTION *desc,
-                                            WS_READ_OPTION option, WS_HEAP *heap, void **ret,
-                                            ULONG size, ULONG *count )
+                                            WS_HEAP *heap, void **ret, ULONG size, ULONG *count )
 {
     HRESULT hr;
     ULONG item_size, nb_items = 0, nb_allocated = 1, offset = 0;
+    WS_READ_OPTION option;
     char *buf;
 
-    if (size != sizeof(void *)) return E_INVALIDARG;
+    if (size != sizeof(void *) || !(option = get_array_read_option( desc->type ))) return E_INVALIDARG;
 
     /* wrapper element */
     if (desc->localName && ((hr = read_type_next_element_node( reader, desc->localName, desc->ns )) != S_OK))
         return hr;
 
-    item_size = get_type_size( desc->type, desc->typeDescription );
+    if (option == WS_READ_REQUIRED_VALUE)
+        item_size = get_type_size( desc->type, desc->typeDescription );
+    else
+        item_size = sizeof(void *);
+
     if (!(buf = ws_alloc_zero( heap, item_size ))) return WS_E_QUOTA_EXCEEDED;
     for (;;)
     {
@@ -3002,7 +3034,7 @@ static HRESULT read_type_repeating_element( struct reader *reader, const WS_FIEL
             nb_allocated *= 2;
         }
         hr = read_type( reader, WS_ELEMENT_TYPE_MAPPING, desc->type, desc->itemLocalName, desc->itemNs,
-                        desc->typeDescription, WS_READ_REQUIRED_VALUE, heap, buf + offset, item_size );
+                        desc->typeDescription, option, heap, buf + offset, item_size );
         if (hr == WS_E_INVALID_FORMAT) break;
         if (hr != S_OK)
         {
@@ -3046,14 +3078,8 @@ static HRESULT read_type_text( struct reader *reader, const WS_FIELD_DESCRIPTION
                       desc->typeDescription, option, heap, ret, size );
 }
 
-static WS_READ_OPTION map_field_options( WS_TYPE type, ULONG options )
+static WS_READ_OPTION get_field_read_option( WS_TYPE type )
 {
-    if (options & ~(WS_FIELD_POINTER | WS_FIELD_OPTIONAL))
-    {
-        FIXME( "options %08x not supported\n", options );
-        return 0;
-    }
-
     switch (type)
     {
     case WS_BOOL_TYPE:
@@ -3087,7 +3113,13 @@ static HRESULT read_type_struct_field( struct reader *reader, const WS_FIELD_DES
     ULONG size;
     HRESULT hr;
 
-    if (!desc || !(option = map_field_options( desc->type, desc->options ))) return E_INVALIDARG;
+    if (!desc) return E_INVALIDARG;
+    if (desc->options & ~(WS_FIELD_POINTER | WS_FIELD_OPTIONAL))
+    {
+        FIXME( "options %08x not supported\n", desc->options );
+        return E_NOTIMPL;
+    }
+    if (!(option = get_field_read_option( desc->type ))) return E_INVALIDARG;
 
     if (option == WS_READ_REQUIRED_VALUE)
         size = get_type_size( desc->type, desc->typeDescription );
@@ -3110,7 +3142,7 @@ static HRESULT read_type_struct_field( struct reader *reader, const WS_FIELD_DES
     case WS_REPEATING_ELEMENT_FIELD_MAPPING:
     {
         ULONG count;
-        hr = read_type_repeating_element( reader, desc, option, heap, (void **)ptr, size, &count );
+        hr = read_type_repeating_element( reader, desc, heap, (void **)ptr, size, &count );
         if (hr == S_OK) *(ULONG *)(buf + desc->countOffset) = count;
         break;
     }
