@@ -117,7 +117,7 @@ struct glsl_vs_program
     struct list shader_entry;
     GLuint id;
     GLenum vertex_color_clamp;
-    GLint *uniform_f_locations;
+    GLint uniform_f_locations[WINED3D_MAX_VS_CONSTS_F];
     GLint uniform_i_locations[MAX_CONST_I];
     GLint uniform_b_locations[MAX_CONST_B];
     GLint pos_fixup_location;
@@ -5137,7 +5137,6 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const struc
         list_remove(&entry->gs.shader_entry);
     if (entry->ps.id)
         list_remove(&entry->ps.shader_entry);
-    HeapFree(GetProcessHeap(), 0, entry->vs.uniform_f_locations);
     HeapFree(GetProcessHeap(), 0, entry->ps.uniform_f_locations);
     HeapFree(GetProcessHeap(), 0, entry);
 }
@@ -7015,15 +7014,12 @@ static void shader_glsl_init_vs_uniform_locations(const struct wined3d_gl_info *
     unsigned int i;
     struct wined3d_string_buffer *name = string_buffer_get(&priv->string_buffers);
 
-    vs->uniform_f_locations = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(GLuint) * gl_info->limits.glsl_vs_float_constants);
     for (i = 0; i < vs_c_count; ++i)
     {
         string_buffer_sprintf(name, "vs_c[%u]", i);
         vs->uniform_f_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
     }
-    memset(&vs->uniform_f_locations[vs_c_count], 0xff,
-            (gl_info->limits.glsl_vs_float_constants - vs_c_count) * sizeof(GLuint));
+    memset(&vs->uniform_f_locations[vs_c_count], 0xff, (WINED3D_MAX_VS_CONSTS_F - vs_c_count) * sizeof(GLuint));
 
     for (i = 0; i < MAX_CONST_I; ++i)
     {
@@ -7373,7 +7369,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     shader_glsl_validate_link(gl_info, program_id);
 
     shader_glsl_init_vs_uniform_locations(gl_info, priv, program_id, &entry->vs,
-            vshader ? min(vshader->limits->constant_float, gl_info->limits.glsl_vs_float_constants) : 0);
+            vshader ? vshader->limits->constant_float : 0);
     shader_glsl_init_ps_uniform_locations(gl_info, priv, program_id, &entry->ps,
             pshader ? min(pshader->limits->constant_float, gl_info->limits.glsl_ps_float_constants) : 0);
     checkGLcall("Find glsl program uniform locations");
@@ -7934,8 +7930,7 @@ static HRESULT shader_glsl_alloc(struct wined3d_device *device, const struct win
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct shader_glsl_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_glsl_priv));
-    SIZE_T stack_size = wined3d_log2i(max(gl_info->limits.glsl_vs_float_constants,
-            gl_info->limits.glsl_ps_float_constants)) + 1;
+    SIZE_T stack_size = wined3d_log2i(max(WINED3D_MAX_VS_CONSTS_F, gl_info->limits.glsl_ps_float_constants)) + 1;
     struct fragment_caps fragment_caps;
     void *vertex_priv, *fragment_priv;
 
@@ -7969,7 +7964,7 @@ static HRESULT shader_glsl_alloc(struct wined3d_device *device, const struct win
         goto fail;
     }
 
-    if (!constant_heap_init(&priv->vconst_heap, gl_info->limits.glsl_vs_float_constants))
+    if (!constant_heap_init(&priv->vconst_heap, WINED3D_MAX_VS_CONSTS_F))
     {
         ERR("Failed to initialize vertex shader constant heap\n");
         goto fail;
@@ -8090,7 +8085,7 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
     caps->gs_version = min(wined3d_settings.max_sm_gs, shader_model);
     caps->ps_version = min(wined3d_settings.max_sm_ps, shader_model);
 
-    caps->vs_uniform_count = gl_info->limits.glsl_vs_float_constants;
+    caps->vs_uniform_count = min(WINED3D_MAX_VS_CONSTS_F, gl_info->limits.glsl_vs_float_constants);
     caps->ps_uniform_count = gl_info->limits.glsl_ps_float_constants;
     caps->varying_count = gl_info->limits.glsl_varyings;
 

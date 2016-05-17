@@ -200,14 +200,6 @@ static HRESULT stateblock_allocate_shader_constants(struct wined3d_stateblock *o
             sizeof(BOOL) * d3d_info->limits.ps_uniform_count);
     if (!object->changed.pixelShaderConstantsF) goto fail;
 
-    object->changed.vertexShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(BOOL) * d3d_info->limits.vs_uniform_count);
-    if (!object->changed.vertexShaderConstantsF) goto fail;
-
-    object->contained_vs_consts_f = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(DWORD) * d3d_info->limits.vs_uniform_count);
-    if (!object->contained_vs_consts_f) goto fail;
-
     object->contained_ps_consts_f = HeapAlloc(GetProcessHeap(), 0,
             sizeof(DWORD) * d3d_info->limits.ps_uniform_count);
     if (!object->contained_ps_consts_f) goto fail;
@@ -217,8 +209,6 @@ static HRESULT stateblock_allocate_shader_constants(struct wined3d_stateblock *o
 fail:
     ERR("Failed to allocate memory\n");
     HeapFree(GetProcessHeap(), 0, object->changed.pixelShaderConstantsF);
-    HeapFree(GetProcessHeap(), 0, object->changed.vertexShaderConstantsF);
-    HeapFree(GetProcessHeap(), 0, object->contained_vs_consts_f);
     HeapFree(GetProcessHeap(), 0, object->contained_ps_consts_f);
     return E_OUTOFMEMORY;
 }
@@ -261,7 +251,7 @@ static void stateblock_savedstates_set_all(struct wined3d_saved_states *states, 
 
     /* Dynamically sized arrays */
     memset(states->pixelShaderConstantsF, TRUE, sizeof(BOOL) * ps_consts);
-    memset(states->vertexShaderConstantsF, TRUE, sizeof(BOOL) * vs_consts);
+    memset(states->vs_consts_f, TRUE, sizeof(BOOL) * vs_consts);
 }
 
 static void stateblock_savedstates_set_pixel(struct wined3d_saved_states *states, const DWORD num_constants)
@@ -314,7 +304,7 @@ static void stateblock_savedstates_set_vertex(struct wined3d_saved_states *state
     states->vertexShaderConstantsB = 0xffff;
     states->vertexShaderConstantsI = 0xffff;
 
-    memset(states->vertexShaderConstantsF, TRUE, sizeof(BOOL) * num_constants);
+    memset(states->vs_consts_f, TRUE, sizeof(BOOL) * num_constants);
 }
 
 void stateblock_init_contained_states(struct wined3d_stateblock *stateblock)
@@ -348,7 +338,7 @@ void stateblock_init_contained_states(struct wined3d_stateblock *stateblock)
 
     for (i = 0; i < d3d_info->limits.vs_uniform_count; ++i)
     {
-        if (stateblock->changed.vertexShaderConstantsF[i])
+        if (stateblock->changed.vs_consts_f[i])
         {
             stateblock->contained_vs_consts_f[stateblock->num_contained_vs_consts_f] = i;
             ++stateblock->num_contained_vs_consts_f;
@@ -565,7 +555,6 @@ void state_cleanup(struct wined3d_state *state)
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, state->vs_consts_f);
     HeapFree(GetProcessHeap(), 0, state->ps_consts_f);
 }
 
@@ -579,9 +568,7 @@ ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
     {
         state_cleanup(&stateblock->state);
 
-        HeapFree(GetProcessHeap(), 0, stateblock->changed.vertexShaderConstantsF);
         HeapFree(GetProcessHeap(), 0, stateblock->changed.pixelShaderConstantsF);
-        HeapFree(GetProcessHeap(), 0, stateblock->contained_vs_consts_f);
         HeapFree(GetProcessHeap(), 0, stateblock->contained_ps_consts_f);
         HeapFree(GetProcessHeap(), 0, stateblock);
     }
@@ -1310,16 +1297,9 @@ HRESULT state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,
         list_init(&state->light_map[i]);
     }
 
-    if (!(state->vs_consts_f = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(*state->vs_consts_f) * d3d_info->limits.vs_uniform_count)))
-        return E_OUTOFMEMORY;
-
     if (!(state->ps_consts_f = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             sizeof(*state->ps_consts_f) * d3d_info->limits.ps_uniform_count)))
-    {
-        HeapFree(GetProcessHeap(), 0, state->vs_consts_f);
         return E_OUTOFMEMORY;
-    }
 
     if (flags & WINED3D_STATE_INIT_DEFAULT)
         state_init_default(state, gl_info);

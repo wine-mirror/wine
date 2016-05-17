@@ -303,7 +303,8 @@ struct shader_arb_priv
     DWORD ps_sig_number;
 
     unsigned int highest_dirty_ps_const, highest_dirty_vs_const;
-    char *vshader_const_dirty, *pshader_const_dirty;
+    char vshader_const_dirty[WINED3D_MAX_VS_CONSTS_F];
+    char *pshader_const_dirty;
     const struct wined3d_context *last_context;
 
     const struct wined3d_vertex_pipe_ops *vertex_pipe;
@@ -4998,10 +4999,6 @@ static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct wine
         return E_FAIL;
     }
 
-    priv->vshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(*priv->vshader_const_dirty) * d3d_info->limits.vs_uniform_count);
-    if (!priv->vshader_const_dirty)
-        goto fail;
     memset(priv->vshader_const_dirty, 1,
            sizeof(*priv->vshader_const_dirty) * d3d_info->limits.vs_uniform_count);
 
@@ -5031,7 +5028,6 @@ static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct wine
 
 fail:
     HeapFree(GetProcessHeap(), 0, priv->pshader_const_dirty);
-    HeapFree(GetProcessHeap(), 0, priv->vshader_const_dirty);
     fragment_pipe->free_private(device);
     vertex_pipe->vp_free(device);
     HeapFree(GetProcessHeap(), 0, priv);
@@ -5075,7 +5071,6 @@ static void shader_arb_free(struct wined3d_device *device)
 
     wine_rb_destroy(&priv->signature_tree, release_signature, NULL);
     HeapFree(GetProcessHeap(), 0, priv->pshader_const_dirty);
-    HeapFree(GetProcessHeap(), 0, priv->vshader_const_dirty);
     priv->fragment_pipe->free_private(device);
     priv->vertex_pipe->vp_free(device);
     HeapFree(GetProcessHeap(), 0, device->shader_priv);
@@ -5133,7 +5128,7 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
             TRACE("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
         }
         caps->vs_version = min(wined3d_settings.max_sm_vs, vs_version);
-        caps->vs_uniform_count = vs_consts;
+        caps->vs_uniform_count = min(WINED3D_MAX_VS_CONSTS_F, vs_consts);
     }
     else
     {

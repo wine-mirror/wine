@@ -2485,8 +2485,8 @@ HRESULT CDECL wined3d_device_set_vs_consts_f(struct wined3d_device *device,
     }
 
     if (device->recording)
-        memset(&device->recording->changed.vertexShaderConstantsF[start_idx], 1,
-                count * sizeof(*device->recording->changed.vertexShaderConstantsF));
+        memset(&device->recording->changed.vs_consts_f[start_idx], 1,
+                count * sizeof(*device->recording->changed.vs_consts_f));
     else
         device->shader_backend->shader_update_float_vertex_constants(device, start_idx, count);
 

@@ -513,6 +513,7 @@ enum wined3d_shader_rel_op
 #define MAX_CONST_I 16
 #define MAX_CONST_B 16
 #define WINED3D_MAX_CBS 15
+#define WINED3D_MAX_VS_CONSTS_F 256
 
 /* FIXME: This needs to go up to 2048 for
  * Shader model 3 according to msdn (and for software shaders) */
@@ -2212,7 +2213,7 @@ struct wined3d_state
 
     BOOL vs_consts_b[MAX_CONST_B];
     INT vs_consts_i[MAX_CONST_I * 4];
-    struct wined3d_vec4 *vs_consts_f;
+    struct wined3d_vec4 vs_consts_f[WINED3D_MAX_VS_CONSTS_F];
 
     BOOL ps_consts_b[MAX_CONST_B];
     INT ps_consts_i[MAX_CONST_I * 4];
@@ -2779,7 +2780,7 @@ struct wined3d_saved_states
     BOOL *pixelShaderConstantsF;
     WORD vertexShaderConstantsB;                /* MAX_CONST_B, 16 */
     WORD vertexShaderConstantsI;                /* MAX_CONST_I, 16 */
-    BOOL *vertexShaderConstantsF;
+    BOOL vs_consts_f[WINED3D_MAX_VS_CONSTS_F];
     DWORD textures : 20;                        /* MAX_COMBINED_SAMPLERS, 20 */
     DWORD primitive_type : 1;
     DWORD indices : 1;
@@ -2815,7 +2816,7 @@ struct wined3d_stateblock
     unsigned int              num_contained_vs_consts_i;
     DWORD                     contained_vs_consts_b[MAX_CONST_B];
     unsigned int              num_contained_vs_consts_b;
-    DWORD                     *contained_vs_consts_f;
+    DWORD                     contained_vs_consts_f[WINED3D_MAX_VS_CONSTS_F];
     unsigned int              num_contained_vs_consts_f;
     DWORD                     contained_ps_consts_i[MAX_CONST_I];
     unsigned int              num_contained_ps_consts_i;
