@@ -292,18 +292,29 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, LONG64 *
 
     UINT fir_cachesize = (fir_len + dsbfirstep - 2) / dsbfirstep;
     UINT required_input = max_ipos + fir_cachesize;
+    float *intermediate, *fir_copy, *itmp;
 
-    float* intermediate = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(float) * required_input * channels);
+    DWORD len = required_input * channels;
+    len += fir_cachesize;
+    len *= sizeof(float);
 
-    float* fir_copy = HeapAlloc(GetProcessHeap(), 0,
-            sizeof(float) * fir_cachesize);
+    if (!dsb->device->cp_buffer) {
+        dsb->device->cp_buffer = HeapAlloc(GetProcessHeap(), 0, len);
+        dsb->device->cp_buffer_len = len;
+    } else if (len > dsb->device->cp_buffer_len) {
+        dsb->device->cp_buffer = HeapReAlloc(GetProcessHeap(), 0, dsb->device->cp_buffer, len);
+        dsb->device->cp_buffer_len = len;
+    }
+
+    fir_copy = dsb->device->cp_buffer;
+    intermediate = fir_copy + fir_cachesize;
+
 
     /* Important: this buffer MUST be non-interleaved
      * if you want -msse3 to have any effect.
      * This is good for CPU cache effects, too.
      */
-    float* itmp = intermediate;
+    itmp = intermediate;
     for (channel = 0; channel < channels; channel++)
         for (i = 0; i < required_input; i++)
             *(itmp++) = get_current_sample(dsb,
@@ -337,9 +348,6 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, LONG64 *
     }
 
     *freqAccNum = freqAcc_end % dsb->freqAdjustDen;
-
-    HeapFree(GetProcessHeap(), 0, fir_copy);
-    HeapFree(GetProcessHeap(), 0, intermediate);
 
     return max_ipos;
 }
