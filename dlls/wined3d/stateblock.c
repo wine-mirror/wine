@@ -321,7 +321,7 @@ void stateblock_init_contained_states(struct wined3d_stateblock *stateblock)
         }
     }
 
-    for (i = 0; i < MAX_CONST_I; ++i)
+    for (i = 0; i < WINED3D_MAX_CONSTS_I; ++i)
     {
         if (stateblock->changed.vertexShaderConstantsI & (1u << i))
         {
@@ -348,7 +348,7 @@ void stateblock_init_contained_states(struct wined3d_stateblock *stateblock)
         }
     }
 
-    for (i = 0; i < MAX_CONST_I; ++i)
+    for (i = 0; i < WINED3D_MAX_CONSTS_I; ++i)
     {
         if (stateblock->changed.pixelShaderConstantsI & (1u << i))
         {

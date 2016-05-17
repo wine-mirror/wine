@@ -2421,13 +2421,13 @@ HRESULT CDECL wined3d_device_get_vs_consts_b(const struct wined3d_device *device
 HRESULT CDECL wined3d_device_set_vs_consts_i(struct wined3d_device *device,
         UINT start_register, const int *constants, UINT vector4i_count)
 {
-    UINT count = min(vector4i_count, MAX_CONST_I - start_register);
+    UINT count = min(vector4i_count, WINED3D_MAX_CONSTS_I - start_register);
     UINT i;
 
     TRACE("device %p, start_register %u, constants %p, vector4i_count %u.\n",
             device, start_register, constants, vector4i_count);
 
-    if (!constants || start_register >= MAX_CONST_I)
+    if (!constants || start_register >= WINED3D_MAX_CONSTS_I)
         return WINED3DERR_INVALIDCALL;
 
     memcpy(&device->update_state->vs_consts_i[start_register * 4], constants, count * sizeof(int) * 4);
@@ -2452,12 +2452,12 @@ HRESULT CDECL wined3d_device_set_vs_consts_i(struct wined3d_device *device,
 HRESULT CDECL wined3d_device_get_vs_consts_i(const struct wined3d_device *device,
         UINT start_register, int *constants, UINT vector4i_count)
 {
-    UINT count = min(vector4i_count, MAX_CONST_I - start_register);
+    UINT count = min(vector4i_count, WINED3D_MAX_CONSTS_I - start_register);
 
     TRACE("device %p, start_register %u, constants %p, vector4i_count %u.\n",
             device, start_register, constants, vector4i_count);
 
-    if (!constants || start_register >= MAX_CONST_I)
+    if (!constants || start_register >= WINED3D_MAX_CONSTS_I)
         return WINED3DERR_INVALIDCALL;
 
     memcpy(constants, &device->state.vs_consts_i[start_register * 4], count * sizeof(int) * 4);
@@ -2648,13 +2648,13 @@ HRESULT CDECL wined3d_device_get_ps_consts_b(const struct wined3d_device *device
 HRESULT CDECL wined3d_device_set_ps_consts_i(struct wined3d_device *device,
         UINT start_register, const int *constants, UINT vector4i_count)
 {
-    UINT count = min(vector4i_count, MAX_CONST_I - start_register);
+    UINT count = min(vector4i_count, WINED3D_MAX_CONSTS_I - start_register);
     UINT i;
 
     TRACE("device %p, start_register %u, constants %p, vector4i_count %u.\n",
             device, start_register, constants, vector4i_count);
 
-    if (!constants || start_register >= MAX_CONST_I)
+    if (!constants || start_register >= WINED3D_MAX_CONSTS_I)
         return WINED3DERR_INVALIDCALL;
 
     memcpy(&device->update_state->ps_consts_i[start_register * 4], constants, count * sizeof(int) * 4);
@@ -2679,12 +2679,12 @@ HRESULT CDECL wined3d_device_set_ps_consts_i(struct wined3d_device *device,
 HRESULT CDECL wined3d_device_get_ps_consts_i(const struct wined3d_device *device,
         UINT start_register, int *constants, UINT vector4i_count)
 {
-    UINT count = min(vector4i_count, MAX_CONST_I - start_register);
+    UINT count = min(vector4i_count, WINED3D_MAX_CONSTS_I - start_register);
 
     TRACE("device %p, start_register %u, constants %p, vector4i_count %u.\n",
             device, start_register, constants, vector4i_count);
 
-    if (!constants || start_register >= MAX_CONST_I)
+    if (!constants || start_register >= WINED3D_MAX_CONSTS_I)
         return WINED3DERR_INVALIDCALL;
 
     memcpy(constants, &device->state.ps_consts_i[start_register * 4], count * sizeof(int) * 4);

@@ -165,7 +165,7 @@ struct arb_ps_compile_args
     struct ps_compile_args          super;
     WORD                            bools;
     WORD                            clip;  /* only a boolean, use a WORD for alignment */
-    unsigned char                   loop_ctrl[MAX_CONST_I][3];
+    unsigned char                   loop_ctrl[WINED3D_MAX_CONSTS_I][3];
 };
 
 struct stb_const_desc
@@ -180,7 +180,7 @@ struct arb_ps_compiled_shader
     struct arb_ps_np2fixup_info     np2fixup_info;
     struct stb_const_desc           bumpenvmatconst[MAX_TEXTURES];
     struct stb_const_desc           luminanceconst[MAX_TEXTURES];
-    UINT                            int_consts[MAX_CONST_I];
+    UINT                            int_consts[WINED3D_MAX_CONSTS_I];
     GLuint                          prgId;
     UINT                            ycorrection;
     unsigned char                   numbumpenvmatconsts;
@@ -206,14 +206,14 @@ struct arb_vs_compile_args
         unsigned char               samplers[4];
         DWORD                       samplers_compare;
     } vertex;
-    unsigned char                   loop_ctrl[MAX_CONST_I][3];
+    unsigned char                   loop_ctrl[WINED3D_MAX_CONSTS_I][3];
 };
 
 struct arb_vs_compiled_shader
 {
     struct arb_vs_compile_args      args;
     GLuint                          prgId;
-    UINT                            int_consts[MAX_CONST_I];
+    UINT                            int_consts[WINED3D_MAX_CONSTS_I];
     char                            num_int_consts;
     char                            need_color_unclamp;
     UINT                            pos_fixup;
@@ -590,7 +590,7 @@ static void shader_arb_ps_local_constants(const struct arb_ps_compiled_shader *g
 
     if (!gl_shader->num_int_consts) return;
 
-    for(i = 0; i < MAX_CONST_I; i++)
+    for (i = 0; i < WINED3D_MAX_CONSTS_I; ++i)
     {
         if(gl_shader->int_consts[i] != WINED3D_CONST_NUM_UNUSED)
         {
@@ -620,7 +620,7 @@ static void shader_arb_vs_local_constants(const struct arb_vs_compiled_shader *g
 
     if (!gl_shader->num_int_consts) return;
 
-    for(i = 0; i < MAX_CONST_I; i++)
+    for (i = 0; i < WINED3D_MAX_CONSTS_I; ++i)
     {
         if(gl_shader->int_consts[i] != WINED3D_CONST_NUM_UNUSED)
         {
@@ -3842,7 +3842,7 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
                        i, compiled->luminanceconst[bump_const].const_num);
     }
 
-    for(i = 0; i < MAX_CONST_I; i++)
+    for (i = 0; i < WINED3D_MAX_CONSTS_I; ++i)
     {
         compiled->int_consts[i] = WINED3D_CONST_NUM_UNUSED;
         if (reg_maps->integer_constants & (1u << i) && priv_ctx.target_version >= NV2)
@@ -4290,7 +4290,7 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
     shader_generate_arb_declarations(shader, reg_maps, buffer, gl_info,
             &priv_ctx.vs_clipplanes, &priv_ctx);
 
-    for(i = 0; i < MAX_CONST_I; i++)
+    for (i = 0; i < WINED3D_MAX_CONSTS_I; ++i)
     {
         compiled->int_consts[i] = WINED3D_CONST_NUM_UNUSED;
         if (reg_maps->integer_constants & (1u << i) && priv_ctx.target_version >= NV2)
@@ -4588,7 +4588,7 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
         return;
     }
 
-    for (i = 0; i < MAX_CONST_I; ++i)
+    for (i = 0; i < WINED3D_MAX_CONSTS_I; ++i)
     {
         if (int_skip & (1u << i))
         {
@@ -4665,7 +4665,7 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
         return;
     }
 
-    for(i = 0; i < MAX_CONST_I; i++)
+    for (i = 0; i < WINED3D_MAX_CONSTS_I; ++i)
     {
         if (int_skip & (1u << i))
         {

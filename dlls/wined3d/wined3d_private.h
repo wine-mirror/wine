@@ -510,9 +510,9 @@ enum wined3d_shader_rel_op
 #define MAX_REG_TEXCRD 8
 #define MAX_REG_INPUT 32
 #define MAX_REG_OUTPUT 32
-#define MAX_CONST_I 16
 #define MAX_CONST_B 16
 #define WINED3D_MAX_CBS 15
+#define WINED3D_MAX_CONSTS_I 16
 #define WINED3D_MAX_VS_CONSTS_F 256
 #define WINED3D_MAX_PS_CONSTS_F 224
 
@@ -762,9 +762,9 @@ struct wined3d_shader_reg_maps
     } u;
     DWORD input_registers;                          /* max(MAX_REG_INPUT, MAX_ATTRIBS), 32 */
     DWORD output_registers;                         /* MAX_REG_OUTPUT, 32 */
-    WORD integer_constants;                         /* MAX_CONST_I, 16 */
+    WORD integer_constants;                         /* WINED3D_MAX_CONSTS_I, 16 */
     WORD boolean_constants;                         /* MAX_CONST_B, 16 */
-    WORD local_int_consts;                          /* MAX_CONST_I, 16 */
+    WORD local_int_consts;                          /* WINED3D_MAX_CONSTS_I, 16 */
     WORD local_bool_consts;                         /* MAX_CONST_B, 16 */
     UINT cb_sizes[WINED3D_MAX_CBS];
 
@@ -2213,11 +2213,11 @@ struct wined3d_state
     struct wined3d_shader_resource_view *shader_resource_view[WINED3D_SHADER_TYPE_COUNT][MAX_SHADER_RESOURCE_VIEWS];
 
     BOOL vs_consts_b[MAX_CONST_B];
-    INT vs_consts_i[MAX_CONST_I * 4];
+    INT vs_consts_i[WINED3D_MAX_CONSTS_I * 4];
     struct wined3d_vec4 vs_consts_f[WINED3D_MAX_VS_CONSTS_F];
 
     BOOL ps_consts_b[MAX_CONST_B];
-    INT ps_consts_i[MAX_CONST_I * 4];
+    INT ps_consts_i[WINED3D_MAX_CONSTS_I * 4];
     struct wined3d_vec4 ps_consts_f[WINED3D_MAX_PS_CONSTS_F];
 
     struct wined3d_texture *textures[MAX_COMBINED_SAMPLERS];
@@ -2777,10 +2777,10 @@ struct wined3d_saved_states
     WORD samplerState[MAX_COMBINED_SAMPLERS];   /* WINED3D_HIGHEST_SAMPLER_STATE + 1, 14 */
     DWORD clipplane;                            /* WINED3DMAXUSERCLIPPLANES, 32 */
     WORD pixelShaderConstantsB;                 /* MAX_CONST_B, 16 */
-    WORD pixelShaderConstantsI;                 /* MAX_CONST_I, 16 */
+    WORD pixelShaderConstantsI;                 /* WINED3D_MAX_CONSTS_I, 16 */
     BOOL ps_consts_f[WINED3D_MAX_PS_CONSTS_F];
     WORD vertexShaderConstantsB;                /* MAX_CONST_B, 16 */
-    WORD vertexShaderConstantsI;                /* MAX_CONST_I, 16 */
+    WORD vertexShaderConstantsI;                /* WINED3D_MAX_CONSTS_I, 16 */
     BOOL vs_consts_f[WINED3D_MAX_VS_CONSTS_F];
     DWORD textures : 20;                        /* MAX_COMBINED_SAMPLERS, 20 */
     DWORD primitive_type : 1;
@@ -2813,13 +2813,13 @@ struct wined3d_stateblock
     unsigned int              num_contained_render_states;
     DWORD                     contained_transform_states[HIGHEST_TRANSFORMSTATE + 1];
     unsigned int              num_contained_transform_states;
-    DWORD                     contained_vs_consts_i[MAX_CONST_I];
+    DWORD                     contained_vs_consts_i[WINED3D_MAX_CONSTS_I];
     unsigned int              num_contained_vs_consts_i;
     DWORD                     contained_vs_consts_b[MAX_CONST_B];
     unsigned int              num_contained_vs_consts_b;
     DWORD                     contained_vs_consts_f[WINED3D_MAX_VS_CONSTS_F];
     unsigned int              num_contained_vs_consts_f;
-    DWORD                     contained_ps_consts_i[MAX_CONST_I];
+    DWORD                     contained_ps_consts_i[WINED3D_MAX_CONSTS_I];
     unsigned int              num_contained_ps_consts_i;
     DWORD                     contained_ps_consts_b[MAX_CONST_B];
     unsigned int              num_contained_ps_consts_b;
