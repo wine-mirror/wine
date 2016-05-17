@@ -2376,13 +2376,13 @@ static void device_invalidate_shader_constants(const struct wined3d_device *devi
 HRESULT CDECL wined3d_device_set_vs_consts_b(struct wined3d_device *device,
         UINT start_register, const BOOL *constants, UINT bool_count)
 {
-    UINT count = min(bool_count, MAX_CONST_B - start_register);
+    UINT count = min(bool_count, WINED3D_MAX_CONSTS_B - start_register);
     UINT i;
 
     TRACE("device %p, start_register %u, constants %p, bool_count %u.\n",
             device, start_register, constants, bool_count);
 
-    if (!constants || start_register >= MAX_CONST_B)
+    if (!constants || start_register >= WINED3D_MAX_CONSTS_B)
         return WINED3DERR_INVALIDCALL;
 
     memcpy(&device->update_state->vs_consts_b[start_register], constants, count * sizeof(BOOL));
@@ -2405,12 +2405,12 @@ HRESULT CDECL wined3d_device_set_vs_consts_b(struct wined3d_device *device,
 HRESULT CDECL wined3d_device_get_vs_consts_b(const struct wined3d_device *device,
         UINT start_register, BOOL *constants, UINT bool_count)
 {
-    UINT count = min(bool_count, MAX_CONST_B - start_register);
+    UINT count = min(bool_count, WINED3D_MAX_CONSTS_B - start_register);
 
     TRACE("device %p, start_register %u, constants %p, bool_count %u.\n",
             device, start_register, constants, bool_count);
 
-    if (!constants || start_register >= MAX_CONST_B)
+    if (!constants || start_register >= WINED3D_MAX_CONSTS_B)
         return WINED3DERR_INVALIDCALL;
 
     memcpy(constants, &device->state.vs_consts_b[start_register], count * sizeof(BOOL));
@@ -2605,13 +2605,13 @@ struct wined3d_sampler * CDECL wined3d_device_get_ps_sampler(const struct wined3
 HRESULT CDECL wined3d_device_set_ps_consts_b(struct wined3d_device *device,
         UINT start_register, const BOOL *constants, UINT bool_count)
 {
-    UINT count = min(bool_count, MAX_CONST_B - start_register);
+    UINT count = min(bool_count, WINED3D_MAX_CONSTS_B - start_register);
     UINT i;
 
     TRACE("device %p, start_register %u, constants %p, bool_count %u.\n",
             device, start_register, constants, bool_count);
 
-    if (!constants || start_register >= MAX_CONST_B)
+    if (!constants || start_register >= WINED3D_MAX_CONSTS_B)
         return WINED3DERR_INVALIDCALL;
 
     memcpy(&device->update_state->ps_consts_b[start_register], constants, count * sizeof(BOOL));
@@ -2634,12 +2634,12 @@ HRESULT CDECL wined3d_device_set_ps_consts_b(struct wined3d_device *device,
 HRESULT CDECL wined3d_device_get_ps_consts_b(const struct wined3d_device *device,
         UINT start_register, BOOL *constants, UINT bool_count)
 {
-    UINT count = min(bool_count, MAX_CONST_B - start_register);
+    UINT count = min(bool_count, WINED3D_MAX_CONSTS_B - start_register);
 
     TRACE("device %p, start_register %u, constants %p, bool_count %u.\n",
             device, start_register, constants, bool_count);
 
-    if (!constants || start_register >= MAX_CONST_B)
+    if (!constants || start_register >= WINED3D_MAX_CONSTS_B)
         return WINED3DERR_INVALIDCALL;
 
     memcpy(constants, &device->state.ps_consts_b[start_register], count * sizeof(BOOL));

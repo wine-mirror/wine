@@ -119,7 +119,7 @@ struct glsl_vs_program
     GLenum vertex_color_clamp;
     GLint uniform_f_locations[WINED3D_MAX_VS_CONSTS_F];
     GLint uniform_i_locations[WINED3D_MAX_CONSTS_I];
-    GLint uniform_b_locations[MAX_CONST_B];
+    GLint uniform_b_locations[WINED3D_MAX_CONSTS_B];
     GLint pos_fixup_location;
 
     GLint modelview_matrix_location[MAX_VERTEX_BLENDS];
@@ -167,7 +167,7 @@ struct glsl_ps_program
     GLuint id;
     GLint uniform_f_locations[WINED3D_MAX_PS_CONSTS_F];
     GLint uniform_i_locations[WINED3D_MAX_CONSTS_I];
-    GLint uniform_b_locations[MAX_CONST_B];
+    GLint uniform_b_locations[WINED3D_MAX_CONSTS_B];
     GLint bumpenv_mat_location[MAX_TEXTURES];
     GLint bumpenv_lum_scale_location[MAX_TEXTURES];
     GLint bumpenv_lum_offset_location[MAX_TEXTURES];
@@ -759,7 +759,7 @@ static void shader_glsl_load_constants_i(const struct wined3d_shader *shader, co
 
 /* Context activation is done by the caller. */
 static void shader_glsl_load_constantsB(const struct wined3d_shader *shader, const struct wined3d_gl_info *gl_info,
-        const GLint locations[MAX_CONST_B], const BOOL *constants, WORD constants_set)
+        const GLint locations[WINED3D_MAX_CONSTS_B], const BOOL *constants, WORD constants_set)
 {
     unsigned int i;
     struct list* ptr;
@@ -7026,7 +7026,7 @@ static void shader_glsl_init_vs_uniform_locations(const struct wined3d_gl_info *
         vs->uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
     }
 
-    for (i = 0; i < MAX_CONST_B; ++i)
+    for (i = 0; i < WINED3D_MAX_CONSTS_B; ++i)
     {
         string_buffer_sprintf(name, "vs_b[%u]", i);
         vs->uniform_b_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
@@ -7108,7 +7108,7 @@ static void shader_glsl_init_ps_uniform_locations(const struct wined3d_gl_info *
         ps->uniform_i_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
     }
 
-    for (i = 0; i < MAX_CONST_B; ++i)
+    for (i = 0; i < WINED3D_MAX_CONSTS_B; ++i)
     {
         string_buffer_sprintf(name, "ps_b[%u]", i);
         ps->uniform_b_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));

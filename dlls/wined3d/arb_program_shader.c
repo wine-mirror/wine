@@ -4563,7 +4563,7 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
     /* This forces all local boolean constants to 1 to make them stateblock independent */
     args->bools = shader->reg_maps.local_bool_consts;
 
-    for(i = 0; i < MAX_CONST_B; i++)
+    for (i = 0; i < WINED3D_MAX_CONSTS_B; ++i)
     {
         if (state->ps_consts_b[i])
             args->bools |= ( 1u << i);
@@ -4645,7 +4645,7 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
     /* This forces all local boolean constants to 1 to make them stateblock independent */
     args->clip.boolclip.bools = shader->reg_maps.local_bool_consts;
     /* TODO: Figure out if it would be better to store bool constants as bitmasks in the stateblock */
-    for(i = 0; i < MAX_CONST_B; i++)
+    for (i = 0; i < WINED3D_MAX_CONSTS_B; ++i)
     {
         if (state->vs_consts_b[i])
             args->clip.boolclip.bools |= (1u << i);
