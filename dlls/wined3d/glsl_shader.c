@@ -1914,7 +1914,10 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         for (i = 0; i < shader->input_signature.element_count; ++i)
         {
             const struct wined3d_shader_signature_element *e = &shader->input_signature.elements[i];
-            if (e->sysval_semantic == WINED3D_SV_INSTANCE_ID)
+            if (e->sysval_semantic == WINED3D_SV_VERTEX_ID)
+                shader_addline(buffer, "vec4 %s_in%u = vec4(intBitsToFloat(gl_VertexID), 0.0, 0.0, 0.0);\n",
+                        prefix, e->register_idx);
+            else if (e->sysval_semantic == WINED3D_SV_INSTANCE_ID)
                 shader_addline(buffer, "vec4 %s_in%u = vec4(intBitsToFloat(gl_InstanceID), 0.0, 0.0, 0.0);\n",
                         prefix, e->register_idx);
             else
