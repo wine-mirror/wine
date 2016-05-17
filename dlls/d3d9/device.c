@@ -3158,7 +3158,8 @@ static HRESULT WINAPI d3d9_device_GetPixelShaderConstantI(IDirect3DDevice9Ex *if
     TRACE("iface %p, reg_idx %u, data %p, count %u.\n", iface, reg_idx, data, count);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_ps_consts_i(device->wined3d_device, reg_idx, data, count);
+    hr = wined3d_device_get_ps_consts_i(device->wined3d_device,
+            reg_idx, count, (struct wined3d_ivec4 *)data);
     wined3d_mutex_unlock();
 
     return hr;
