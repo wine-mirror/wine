@@ -3464,40 +3464,40 @@ BOOL WINAPI InternetCheckConnectionA(LPCSTR lpszUrl, DWORD dwFlags, DWORD dwRese
 static HINTERNET INTERNET_InternetOpenUrlW(appinfo_t *hIC, LPCWSTR lpszUrl,
     LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD_PTR dwContext)
 {
-    URL_COMPONENTSW urlComponents;
-    WCHAR protocol[INTERNET_MAX_SCHEME_LENGTH];
-    WCHAR hostName[INTERNET_MAX_HOST_NAME_LENGTH];
-    WCHAR userName[INTERNET_MAX_USER_NAME_LENGTH];
-    WCHAR password[INTERNET_MAX_PASSWORD_LENGTH];
-    WCHAR path[INTERNET_MAX_PATH_LENGTH];
-    WCHAR extra[1024];
+    URL_COMPONENTSW urlComponents = { sizeof(urlComponents) };
+    WCHAR *host, *user = NULL, *pass = NULL, *path;
     HINTERNET client = NULL, client1 = NULL;
     DWORD res;
     
     TRACE("(%p, %s, %s, %08x, %08x, %08lx)\n", hIC, debugstr_w(lpszUrl), debugstr_w(lpszHeaders),
 	  dwHeadersLength, dwFlags, dwContext);
     
-    urlComponents.dwStructSize = sizeof(URL_COMPONENTSW);
-    urlComponents.lpszScheme = protocol;
-    urlComponents.dwSchemeLength = INTERNET_MAX_SCHEME_LENGTH;
-    urlComponents.lpszHostName = hostName;
-    urlComponents.dwHostNameLength = INTERNET_MAX_HOST_NAME_LENGTH;
-    urlComponents.lpszUserName = userName;
-    urlComponents.dwUserNameLength = INTERNET_MAX_USER_NAME_LENGTH;
-    urlComponents.lpszPassword = password;
-    urlComponents.dwPasswordLength = INTERNET_MAX_PASSWORD_LENGTH;
-    urlComponents.lpszUrlPath = path;
-    urlComponents.dwUrlPathLength = INTERNET_MAX_PATH_LENGTH;
-    urlComponents.lpszExtraInfo = extra;
-    urlComponents.dwExtraInfoLength = 1024;
+    urlComponents.dwHostNameLength = 1;
+    urlComponents.dwUserNameLength = 1;
+    urlComponents.dwPasswordLength = 1;
+    urlComponents.dwUrlPathLength = 1;
+    urlComponents.dwExtraInfoLength = 1;
     if(!InternetCrackUrlW(lpszUrl, strlenW(lpszUrl), 0, &urlComponents))
 	return NULL;
+
+    if(urlComponents.nScheme == INTERNET_SCHEME_HTTP && urlComponents.dwExtraInfoLength) {
+        assert(urlComponents.lpszUrlPath + urlComponents.dwUrlPathLength == urlComponents.lpszExtraInfo);
+        urlComponents.dwUrlPathLength += urlComponents.dwExtraInfoLength;
+    }
+
+    host = heap_strndupW(urlComponents.lpszHostName, urlComponents.dwHostNameLength);
+    path = heap_strndupW(urlComponents.lpszUrlPath, urlComponents.dwUrlPathLength);
+    if(urlComponents.dwUserNameLength)
+        user = heap_strndupW(urlComponents.lpszUserName, urlComponents.dwUserNameLength);
+    if(urlComponents.dwPasswordLength)
+        pass = heap_strndupW(urlComponents.lpszPassword, urlComponents.dwPasswordLength);
+
     switch(urlComponents.nScheme) {
     case INTERNET_SCHEME_FTP:
 	if(urlComponents.nPort == 0)
 	    urlComponents.nPort = INTERNET_DEFAULT_FTP_PORT;
-	client = FTP_Connect(hIC, hostName, urlComponents.nPort,
-			     userName, password, dwFlags, dwContext, INET_OPENURL);
+	client = FTP_Connect(hIC, host, urlComponents.nPort,
+			     user, pass, dwFlags, dwContext, INET_OPENURL);
 	if(client == NULL)
 	    break;
 	client1 = FtpOpenFileW(client, path, GENERIC_READ, dwFlags, dwContext);
@@ -3520,30 +3520,14 @@ static HINTERNET INTERNET_InternetOpenUrlW(appinfo_t *hIC, LPCWSTR lpszUrl,
         if (urlComponents.nScheme == INTERNET_SCHEME_HTTPS) dwFlags |= INTERNET_FLAG_SECURE;
 
         /* FIXME: should use pointers, not handles, as handles are not thread-safe */
-	res = HTTP_Connect(hIC, hostName, urlComponents.nPort,
-                           userName, password, dwFlags, dwContext, INET_OPENURL, &client);
+	res = HTTP_Connect(hIC, host, urlComponents.nPort,
+                           user, pass, dwFlags, dwContext, INET_OPENURL, &client);
         if(res != ERROR_SUCCESS) {
             INTERNET_SetLastError(res);
 	    break;
         }
 
-	if (urlComponents.dwExtraInfoLength) {
-		WCHAR *path_extra;
-		DWORD len = urlComponents.dwUrlPathLength + urlComponents.dwExtraInfoLength + 1;
-
-		if (!(path_extra = heap_alloc(len * sizeof(WCHAR))))
-		{
-			InternetCloseHandle(client);
-			break;
-		}
-		strcpyW(path_extra, urlComponents.lpszUrlPath);
-		strcatW(path_extra, urlComponents.lpszExtraInfo);
-		client1 = HttpOpenRequestW(client, NULL, path_extra, NULL, NULL, accept, dwFlags, dwContext);
-		heap_free(path_extra);
-	}
-	else
-		client1 = HttpOpenRequestW(client, NULL, path, NULL, NULL, accept, dwFlags, dwContext);
-
+        client1 = HttpOpenRequestW(client, NULL, path, NULL, NULL, accept, dwFlags, dwContext);
 	if(client1 == NULL) {
 	    InternetCloseHandle(client);
 	    break;
@@ -3565,7 +3549,11 @@ static HINTERNET INTERNET_InternetOpenUrlW(appinfo_t *hIC, LPCWSTR lpszUrl,
     }
 
     TRACE(" %p <--\n", client1);
-    
+
+    heap_free(host);
+    heap_free(path);
+    heap_free(user);
+    heap_free(pass);
     return client1;
 }
 
