@@ -475,6 +475,18 @@ static void _close_request(unsigned line, test_request_t *req)
     ok_(__FILE__,line)(ret, "InternetCloseHandle(session) failed: %u\n", GetLastError());
 }
 
+#define receive_simple_request(a,b,c) _receive_simple_request(__LINE__,a,b,c)
+static DWORD _receive_simple_request(unsigned line, HINTERNET req, char *buf, size_t buf_size)
+{
+    DWORD read = 0;
+    BOOL ret;
+
+    ret = InternetReadFile(req, buf, buf_size, &read);
+    ok_(__FILE__,line)(ret, "InternetReadFile failed: %u\n", GetLastError());
+
+    return read;
+}
+
 static void close_async_handle(HINTERNET handle, HANDLE complete_event, int handle_cnt)
 {
     BOOL res;
@@ -2055,7 +2067,8 @@ static DWORD CALLBACK server_thread(LPVOID param)
     int r, c = -1, i, on, count = 0;
     SOCKET s;
     struct sockaddr_in sa;
-    char buffer[0x100];
+    char *buffer;
+    size_t buffer_size;
     WSADATA wsaData;
     int last_request = 0;
     char host_header[22];
@@ -2086,16 +2099,20 @@ static DWORD CALLBACK server_thread(LPVOID param)
 
     sprintf(host_header, "Host: localhost:%d", si->port);
     sprintf(host_header_override, "Host: test.local:%d\r\n", si->port);
+    buffer = HeapAlloc(GetProcessHeap(), 0, buffer_size = 1000);
 
     do
     {
         if(c == -1)
             c = accept(s, NULL, NULL);
 
-        memset(buffer, 0, sizeof buffer);
-        for(i=0; i<(sizeof buffer-1); i++)
+        memset(buffer, 0, buffer_size);
+        for(i=0;; i++)
         {
-            r = recv(c, &buffer[i], 1, 0);
+            if(i == buffer_size)
+                buffer = HeapReAlloc(GetProcessHeap(), 0, buffer, buffer_size *= 2);
+
+            r = recv(c, buffer+i, 1, 0);
             if (r != 1)
                 break;
             if (i<4) continue;
@@ -2168,7 +2185,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
             if (strstr(buffer, "Content-Length: 100"))
             {
                 if (strstr(buffer, "POST /test7b"))
-                    recvfrom(c, buffer, sizeof buffer, 0, NULL, NULL);
+                    recvfrom(c, buffer, buffer_size, 0, NULL, NULL);
                 send(c, okmsg, sizeof okmsg-1, 0);
                 send(c, page1, sizeof page1-1, 0);
             }
@@ -2259,7 +2276,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
         if (strstr(buffer, "GET /testH"))
         {
             send(c, ok_with_length2, sizeof(ok_with_length2)-1, 0);
-            recvfrom(c, buffer, sizeof(buffer), 0, NULL, NULL);
+            recvfrom(c, buffer, buffer_size, 0, NULL, NULL);
             send(c, ok_with_length, sizeof(ok_with_length)-1, 0);
         }
 
@@ -2341,13 +2358,6 @@ static DWORD CALLBACK server_thread(LPVOID param)
         }
         if (strstr(buffer, "GET /test_premature_disconnect"))
             trace("closing connection\n");
-        if (strstr(buffer, "/test_accept_encoding_http10"))
-        {
-            if (strstr(buffer, "Accept-Encoding: gzip"))
-                send(c, okmsg, sizeof okmsg-1, 0);
-            else
-                send(c, notokmsg, sizeof notokmsg-1, 0);
-        }
         if (strstr(buffer, "HEAD /upload.txt"))
         {
             if (strstr(buffer, "Authorization: Basic dXNlcjpwd2Q="))
@@ -2384,12 +2394,18 @@ static DWORD CALLBACK server_thread(LPVOID param)
             SetEvent(server_req_rec_event);
             WaitForSingleObject(conn_wait_event, INFINITE);
         }
+        if (strstr(buffer, "/echo_request"))
+        {
+            send(c, okmsg, sizeof(okmsg)-1, 0);
+            send(c, buffer, strlen(buffer), 0);
+        }
         shutdown(c, 2);
         closesocket(c);
         c = -1;
     } while (!last_request);
 
     closesocket(s);
+    HeapFree(GetProcessHeap(), 0, buffer);
 
     return 0;
 }
@@ -4250,6 +4266,7 @@ static void test_request_content_length(int port)
 static void test_accept_encoding(int port)
 {
     HINTERNET ses, con, req;
+    char buf[1000];
     BOOL ret;
 
     ses = InternetOpenA("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
@@ -4258,7 +4275,7 @@ static void test_accept_encoding(int port)
     con = InternetConnectA(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
     ok(con != NULL, "InternetConnect failed\n");
 
-    req = HttpOpenRequestA(con, "GET", "/test_accept_encoding_http10", "HTTP/1.0", NULL, NULL, 0, 0);
+    req = HttpOpenRequestA(con, "GET", "/echo_request", "HTTP/1.0", NULL, NULL, 0, 0);
     ok(req != NULL, "HttpOpenRequest failed\n");
 
     ret = HttpAddRequestHeadersA(req, "Accept-Encoding: gzip\r\n", ~0u, HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDREQ_FLAG_ADD);
@@ -4268,16 +4285,20 @@ static void test_accept_encoding(int port)
     ok(ret, "HttpSendRequestA failed\n");
 
     test_status_code(req, 200);
+    receive_simple_request(req, buf, sizeof(buf));
+    ok(strstr(buf, "Accept-Encoding: gzip") != NULL, "Accept-Encoding header not found in %s\n", buf);
 
     InternetCloseHandle(req);
 
-    req = HttpOpenRequestA(con, "GET", "/test_accept_encoding_http10", "HTTP/1.0", NULL, NULL, 0, 0);
+    req = HttpOpenRequestA(con, "GET", "/echo_request", "HTTP/1.0", NULL, NULL, 0, 0);
     ok(req != NULL, "HttpOpenRequest failed\n");
 
     ret = HttpSendRequestA(req, "Accept-Encoding: gzip", ~0u, NULL, 0);
     ok(ret, "HttpSendRequestA failed\n");
 
     test_status_code(req, 200);
+    receive_simple_request(req, buf, sizeof(buf));
+    ok(strstr(buf, "Accept-Encoding: gzip") != NULL, "Accept-Encoding header not found in %s\n", buf);
 
     InternetCloseHandle(req);
     InternetCloseHandle(con);
