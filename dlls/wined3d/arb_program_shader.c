@@ -595,9 +595,9 @@ static void shader_arb_ps_local_constants(const struct arb_ps_compiled_shader *g
         if(gl_shader->int_consts[i] != WINED3D_CONST_NUM_UNUSED)
         {
             float val[4];
-            val[0] = (float)state->ps_consts_i[4 * i];
-            val[1] = (float)state->ps_consts_i[4 * i + 1];
-            val[2] = (float)state->ps_consts_i[4 * i + 2];
+            val[0] = (float)state->ps_consts_i[i].x;
+            val[1] = (float)state->ps_consts_i[i].y;
+            val[2] = (float)state->ps_consts_i[i].z;
             val[3] = -1.0f;
 
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->int_consts[i], val));
@@ -4598,9 +4598,9 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
         }
         else
         {
-            args->loop_ctrl[i][0] = state->ps_consts_i[i * 4];
-            args->loop_ctrl[i][1] = state->ps_consts_i[i * 4 + 1];
-            args->loop_ctrl[i][2] = state->ps_consts_i[i * 4 + 2];
+            args->loop_ctrl[i][0] = state->ps_consts_i[i].x;
+            args->loop_ctrl[i][1] = state->ps_consts_i[i].y;
+            args->loop_ctrl[i][2] = state->ps_consts_i[i].z;
         }
     }
 }

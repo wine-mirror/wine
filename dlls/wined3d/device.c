@@ -2657,7 +2657,7 @@ HRESULT CDECL wined3d_device_set_ps_consts_i(struct wined3d_device *device,
     if (!constants || start_register >= WINED3D_MAX_CONSTS_I)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(&device->update_state->ps_consts_i[start_register * 4], constants, count * sizeof(int) * 4);
+    memcpy(&device->update_state->ps_consts_i[start_register], constants, count * sizeof(int) * 4);
     for (i = 0; i < count; ++i)
         TRACE("Set INT constant %u to {%d, %d, %d, %d}.\n", start_register + i,
                 constants[i * 4], constants[i * 4 + 1],
@@ -2687,7 +2687,7 @@ HRESULT CDECL wined3d_device_get_ps_consts_i(const struct wined3d_device *device
     if (!constants || start_register >= WINED3D_MAX_CONSTS_I)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(constants, &device->state.ps_consts_i[start_register * 4], count * sizeof(int) * 4);
+    memcpy(constants, &device->state.ps_consts_i[start_register], count * sizeof(int) * 4);
 
     return WINED3D_OK;
 }

@@ -1408,7 +1408,7 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
                 prog->ps.uniform_f_locations, &priv->pconst_heap, priv->stack, constant_version);
 
     if (update_mask & WINED3D_SHADER_CONST_PS_I)
-        shader_glsl_load_constants_i(pshader, gl_info, (const struct wined3d_ivec4 *)state->ps_consts_i,
+        shader_glsl_load_constants_i(pshader, gl_info, state->ps_consts_i,
                 prog->ps.uniform_i_locations, pshader->reg_maps.integer_constants);
 
     if (update_mask & WINED3D_SHADER_CONST_PS_B)
