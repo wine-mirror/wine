@@ -161,24 +161,20 @@ static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
     device->guid = GUID_NULL;
 
     /* Set default wave format (may need it for waveOutOpen) */
-    device->pwfx = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(WAVEFORMATEXTENSIBLE));
     device->primary_pwfx = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(WAVEFORMATEXTENSIBLE));
-    if (!device->pwfx || !device->primary_pwfx) {
+    if (!device->primary_pwfx) {
         WARN("out of memory\n");
-        HeapFree(GetProcessHeap(),0,device->primary_pwfx);
-        HeapFree(GetProcessHeap(),0,device->pwfx);
         HeapFree(GetProcessHeap(),0,device);
         return DSERR_OUTOFMEMORY;
     }
 
-    device->pwfx->wFormatTag = WAVE_FORMAT_PCM;
-    device->pwfx->nSamplesPerSec = 22050;
-    device->pwfx->wBitsPerSample = 8;
-    device->pwfx->nChannels = 2;
-    device->pwfx->nBlockAlign = device->pwfx->wBitsPerSample * device->pwfx->nChannels / 8;
-    device->pwfx->nAvgBytesPerSec = device->pwfx->nSamplesPerSec * device->pwfx->nBlockAlign;
-    device->pwfx->cbSize = 0;
-    memcpy(device->primary_pwfx, device->pwfx, sizeof(*device->pwfx));
+    device->primary_pwfx->wFormatTag = WAVE_FORMAT_PCM;
+    device->primary_pwfx->nSamplesPerSec = 22050;
+    device->primary_pwfx->wBitsPerSample = 8;
+    device->primary_pwfx->nChannels = 2;
+    device->primary_pwfx->nBlockAlign = device->primary_pwfx->wBitsPerSample * device->primary_pwfx->nChannels / 8;
+    device->primary_pwfx->nAvgBytesPerSec = device->primary_pwfx->nSamplesPerSec * device->primary_pwfx->nBlockAlign;
+    device->primary_pwfx->cbSize = 0;
 
     InitializeCriticalSection(&(device->mixlock));
     device->mixlock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": DirectSoundDevice.mixlock");
@@ -228,12 +224,12 @@ static ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
         if (hr != DS_OK)
             WARN("DSOUND_PrimaryDestroy failed\n");
 
-        if(device->client)
+        if(device->client) {
+            IAudioClient_Stop(device->client);
             IAudioClient_Release(device->client);
+        }
         if(device->render)
             IAudioRenderClient_Release(device->render);
-        if(device->clock)
-            IAudioClock_Release(device->clock);
         if(device->volume)
             IAudioStreamVolume_Release(device->volume);
 
@@ -323,6 +319,7 @@ static HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGU
     device->mmdevice = mmdevice;
     device->guid = devGUID;
     device->sleepev = CreateEventW(0, 0, 0, 0);
+    device->buflen = ds_hel_buflen;
 
     hr = DSOUND_ReopenDevice(device, FALSE);
     if (FAILED(hr))
@@ -381,13 +378,9 @@ static HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGU
 
     ZeroMemory(&device->volpan, sizeof(device->volpan));
 
-    hr = DSOUND_PrimaryCreate(device);
-    if (hr == DS_OK) {
-        device->thread_finished = CreateEventW(0, 0, 0, 0);
-        device->thread = CreateThread(0, 0, DSOUND_mixthread, device, 0, 0);
-        SetThreadPriority(device->thread, THREAD_PRIORITY_TIME_CRITICAL);
-    } else
-        WARN("DSOUND_PrimaryCreate failed: %08x\n", hr);
+    device->thread_finished = CreateEventW(0, 0, 0, 0);
+    device->thread = CreateThread(0, 0, DSOUND_mixthread, device, 0, 0);
+    SetThreadPriority(device->thread, THREAD_PRIORITY_TIME_CRITICAL);
 
     *ppDevice = device;
     list_add_tail(&DSOUND_renderers, &device->entry);
@@ -851,7 +844,6 @@ static HRESULT WINAPI IDirectSound8Impl_SetCooperativeLevel(IDirectSound8 *iface
 {
     IDirectSoundImpl *This = impl_from_IDirectSound8(iface);
     DirectSoundDevice *device = This->device;
-    DWORD oldlevel;
     HRESULT hr = S_OK;
 
     TRACE("(%p,%p,%s)\n", This, hwnd, dumpCooperativeLevel(level));
@@ -868,15 +860,10 @@ static HRESULT WINAPI IDirectSound8Impl_SetCooperativeLevel(IDirectSound8 *iface
 
     RtlAcquireResourceExclusive(&device->buffer_list_lock, TRUE);
     EnterCriticalSection(&device->mixlock);
-    oldlevel = device->priolevel;
-    device->priolevel = level;
-    if ((level == DSSCL_WRITEPRIMARY) != (oldlevel == DSSCL_WRITEPRIMARY)) {
+    if ((level == DSSCL_WRITEPRIMARY) != (device->priolevel == DSSCL_WRITEPRIMARY))
         hr = DSOUND_ReopenDevice(device, level == DSSCL_WRITEPRIMARY);
-        if (FAILED(hr))
-            device->priolevel = oldlevel;
-        else
-            DSOUND_PrimaryOpen(device);
-    }
+    if (SUCCEEDED(hr))
+        device->priolevel = level;
     LeaveCriticalSection(&device->mixlock);
     RtlReleaseResource(&device->buffer_list_lock);
     return hr;
