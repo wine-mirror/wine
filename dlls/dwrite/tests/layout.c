@@ -321,13 +321,6 @@ static inline void flush_sequence(struct drawcall_sequence **seg, int sequence_i
     call_seq->count = call_seq->size = 0;
 }
 
-static inline void flush_sequences(struct drawcall_sequence **seq, int n)
-{
-    int i;
-    for (i = 0; i < n; i++)
-        flush_sequence(seq, i);
-}
-
 static void init_call_sequences(struct drawcall_sequence **seq, int n)
 {
     int i;

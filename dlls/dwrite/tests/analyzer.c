@@ -114,13 +114,6 @@ static inline void flush_sequence(struct call_sequence **seg, int sequence_index
     call_seq->count = call_seq->size = 0;
 }
 
-static inline void flush_sequences(struct call_sequence **seq, int n)
-{
-    int i;
-    for (i = 0; i < n; i++)
-        flush_sequence(seq, i);
-}
-
 static void init_call_sequences(struct call_sequence **seq, int n)
 {
     int i;
@@ -902,7 +895,7 @@ static void init_expected_sa(struct call_sequence **seq, const struct sa_test *t
     static const struct call_entry end_of_sequence = { LastKind };
     int i;
 
-    flush_sequence(seq, 0);
+    flush_sequence(seq, ANALYZER_ID);
 
     /* add expected calls */
     for (i = 0; i < test->item_count; i++)
