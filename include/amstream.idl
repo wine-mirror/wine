@@ -76,9 +76,9 @@ interface IDirectShowStream : IDispatch
 	[propget, id(1), helpstring("property FileName")] HRESULT FileName([out, retval] BSTR *pVal);
 	[propput, id(1), helpstring("property FileName")] HRESULT FileName([in] BSTR newVal);
 	[propget, id(2), helpstring("property Video")] HRESULT Video([out, retval] OUTPUT_STATE *pVal);
-	[propput, id(2), helpstring("propetry Video")] HRESULT Video([in] OUTPUT_STATE newVal);
+	[propput, id(2), helpstring("property Video")] HRESULT Video([in] OUTPUT_STATE newVal);
 	[propget, id(3), helpstring("property Audio")] HRESULT Audio([out, retval] OUTPUT_STATE *pVal);
-	[propput, id(3), helpstring("propetry Audio")] HRESULT Audio([in] OUTPUT_STATE newVal);
+	[propput, id(3), helpstring("property Audio")] HRESULT Audio([in] OUTPUT_STATE newVal);
 };
 
 [
