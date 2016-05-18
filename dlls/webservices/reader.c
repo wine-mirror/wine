@@ -1937,6 +1937,160 @@ static HRESULT str_to_uint64( const unsigned char *str, ULONG len, UINT64 max, U
     return S_OK;
 }
 
+#if defined(__i386__) || defined(__x86_64__)
+
+#define RC_DOWN 0x100;
+static BOOL set_fp_rounding( unsigned short *save )
+{
+#ifdef __GNUC__
+    unsigned short fpword;
+
+    __asm__ __volatile__( "fstcw %0" : "=m" (fpword) );
+    *save = fpword;
+    fpword |= RC_DOWN;
+    __asm__ __volatile__( "fldcw %0" : : "m" (fpword) );
+    return TRUE;
+#else
+    FIXME( "not implemented\n" );
+    return FALSE;
+#endif
+}
+static void restore_fp_rounding( unsigned short fpword )
+{
+#ifdef __GNUC__
+    __asm__ __volatile__( "fldcw %0" : : "m" (fpword) );
+#else
+    FIXME( "not implemented\n" );
+#endif
+}
+#else
+static BOOL set_fp_rounding( unsigned short *save )
+{
+    FIXME( "not implemented\n" );
+    return FALSE;
+}
+static void restore_fp_rounding( unsigned short fpword )
+{
+    FIXME( "not implemented\n" );
+}
+#endif
+
+static HRESULT str_to_double( const unsigned char *str, ULONG len, double *ret )
+{
+    static const unsigned __int64 nan = 0xfff8000000000000;
+    static const unsigned __int64 inf = 0x7ff0000000000000;
+    static const unsigned __int64 inf_min = 0xfff0000000000000;
+    HRESULT hr = WS_E_INVALID_FORMAT;
+    const unsigned char *p = str, *q;
+    int sign = 1, exp_sign = 1, exp = 0, exp_tmp = 0, neg_exp, i, nb_digits, have_digits;
+    unsigned __int64 val = 0, tmp;
+    long double exp_val = 1.0, exp_mul = 10.0;
+    unsigned short fpword;
+
+    while (len && read_isspace( *p )) { p++; len--; }
+    while (len && read_isspace( p[len - 1] )) { len--; }
+    if (!len) return WS_E_INVALID_FORMAT;
+
+    if (len == 3 && !memcmp( p, "NaN", 3 ))
+    {
+        *(unsigned __int64 *)ret = nan;
+        return S_OK;
+    }
+    else if (len == 3 && !memcmp( p, "INF", 3 ))
+    {
+        *(unsigned __int64 *)ret = inf;
+        return S_OK;
+    }
+    else if (len == 4 && !memcmp( p, "-INF", 4 ))
+    {
+        *(unsigned __int64 *)ret = inf_min;
+        return S_OK;
+    }
+
+    *ret = 0.0;
+    if (*p == '-')
+    {
+        sign = -1;
+        p++; len--;
+    }
+    else if (*p == '+') { p++; len--; };
+    if (!len) return S_OK;
+
+    if (!set_fp_rounding( &fpword )) return E_NOTIMPL;
+
+    q = p;
+    while (len && isdigit( *q )) { q++; len--; }
+    have_digits = nb_digits = q - p;
+    for (i = 0; i < nb_digits; i++)
+    {
+        tmp = val * 10 + p[i] - '0';
+        if (val > MAX_UINT64 / 10 || tmp < val)
+        {
+            for (; i < nb_digits; i++) exp++;
+            break;
+        }
+        val = tmp;
+    }
+
+    if (len)
+    {
+        if (*q == '.')
+        {
+            p = ++q; len--;
+            while (len && isdigit( *q )) { q++; len--; };
+            have_digits |= nb_digits = q - p;
+            for (i = 0; i < nb_digits; i++)
+            {
+                tmp = val * 10 + p[i] - '0';
+                if (val > MAX_UINT64 / 10 || tmp < val) break;
+                val = tmp;
+                exp--;
+            }
+        }
+        if (len > 1 && tolower(*q) == 'e')
+        {
+            if (!have_digits) goto done;
+            p = ++q; len--;
+            if (*p == '-')
+            {
+                exp_sign = -1;
+                p++; len--;
+            }
+            else if (*p == '+') { p++; len--; };
+
+            q = p;
+            while (len && isdigit( *q )) { q++; len--; };
+            nb_digits = q - p;
+            if (!nb_digits || len) goto done;
+            for (i = 0; i < nb_digits; i++)
+            {
+                if (exp_tmp > MAX_INT32 / 10 || (exp_tmp = exp_tmp * 10 + p[i] - '0') < 0)
+                    exp_tmp = MAX_INT32;
+            }
+            exp_tmp *= exp_sign;
+
+            if (exp < 0 && exp_tmp < 0 && exp + exp_tmp >= 0) exp = MIN_INT32;
+            else if (exp > 0 && exp_tmp > 0 && exp + exp_tmp < 0) exp = MAX_INT32;
+            else exp += exp_tmp;
+        }
+    }
+    if (!have_digits || len) goto done;
+
+    if ((neg_exp = exp < 0)) exp = -exp;
+    for (; exp; exp >>= 1)
+    {
+        if (exp & 1) exp_val *= exp_mul;
+        exp_mul *= exp_mul;
+    }
+
+    *ret = sign * (neg_exp ? val / exp_val : val * exp_val);
+    hr = S_OK;
+
+done:
+    restore_fp_rounding( fpword );
+    return hr;
+}
+
 #define TICKS_PER_SEC   10000000
 #define TICKS_PER_MIN   (60 * (ULONGLONG)TICKS_PER_SEC)
 #define TICKS_PER_HOUR  (3600 * (ULONGLONG)TICKS_PER_SEC)
@@ -2711,6 +2865,53 @@ static HRESULT read_type_uint64( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT read_type_double( struct reader *reader, WS_TYPE_MAPPING mapping,
+                                 const WS_XML_STRING *localname, const WS_XML_STRING *ns,
+                                 const WS_DOUBLE_DESCRIPTION *desc, WS_READ_OPTION option,
+                                 WS_HEAP *heap, void *ret, ULONG size )
+{
+    WS_XML_UTF8_TEXT *utf8;
+    HRESULT hr;
+    double val = 0.0;
+    BOOL found;
+
+    if (desc) FIXME( "ignoring description\n" );
+
+    if ((hr = read_get_text( reader, mapping, localname, ns, &utf8, &found )) != S_OK) return hr;
+    if (found && (hr = str_to_double( utf8->value.bytes, utf8->value.length, &val )) != S_OK) return hr;
+
+    switch (option)
+    {
+    case WS_READ_REQUIRED_VALUE:
+        if (!found) return WS_E_INVALID_FORMAT;
+        if (size != sizeof(double)) return E_INVALIDARG;
+        *(double *)ret = val;
+        break;
+
+    case WS_READ_REQUIRED_POINTER:
+        if (!found) return WS_E_INVALID_FORMAT;
+        /* fall through */
+
+    case WS_READ_OPTIONAL_POINTER:
+    {
+        double *heap_val = NULL;
+        if (size != sizeof(heap_val)) return E_INVALIDARG;
+        if (found)
+        {
+            if (!(heap_val = ws_alloc( heap, sizeof(*heap_val) ))) return WS_E_QUOTA_EXCEEDED;
+            *heap_val = val;
+        }
+        *(double **)ret = heap_val;
+        break;
+    }
+    default:
+        FIXME( "read option %u not supported\n", option );
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 static HRESULT read_type_wsz( struct reader *reader, WS_TYPE_MAPPING mapping,
                               const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                               const WS_WSZ_DESCRIPTION *desc, WS_READ_OPTION option,
@@ -2958,6 +3159,9 @@ static ULONG get_type_size( WS_TYPE type, const WS_STRUCT_DESCRIPTION *desc )
     case WS_UINT64_TYPE:
         return sizeof(INT64);
 
+    case WS_DOUBLE_TYPE:
+        return sizeof(double);
+
     case WS_DATETIME_TYPE:
         return sizeof(WS_DATETIME);
 
@@ -3091,6 +3295,7 @@ static WS_READ_OPTION get_field_read_option( WS_TYPE type )
     case WS_UINT16_TYPE:
     case WS_UINT32_TYPE:
     case WS_UINT64_TYPE:
+    case WS_DOUBLE_TYPE:
     case WS_ENUM_TYPE:
     case WS_DATETIME_TYPE:
         return WS_READ_REQUIRED_VALUE;
@@ -3319,6 +3524,11 @@ static HRESULT read_type( struct reader *reader, WS_TYPE_MAPPING mapping, WS_TYP
 
     case WS_UINT64_TYPE:
         if ((hr = read_type_uint64( reader, mapping, localname, ns, desc, option, heap, value, size )) != S_OK)
+            return hr;
+        break;
+
+    case WS_DOUBLE_TYPE:
+        if ((hr = read_type_double( reader, mapping, localname, ns, desc, option, heap, value, size )) != S_OK)
             return hr;
         break;
 
