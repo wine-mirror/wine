@@ -4720,8 +4720,9 @@ static void test_http_read(int port)
 static void test_long_url(int port)
 {
     char long_path[INTERNET_MAX_PATH_LENGTH*2] = "/echo_request?";
-    char buf[sizeof(long_path)*2];
+    char buf[sizeof(long_path)*2], url[sizeof(buf)];
     test_request_t req;
+    DWORD size, len;
     BOOL ret;
 
     memset(long_path+strlen(long_path), 'x', sizeof(long_path)-strlen(long_path));
@@ -4734,6 +4735,15 @@ static void test_long_url(int port)
 
     receive_simple_request(req.request, buf, sizeof(buf));
     ok(strstr(buf, long_path) != NULL, "long pathnot found in %s\n", buf);
+
+    sprintf(url, "http://localhost:%u%s", port, long_path);
+
+    size = sizeof(buf);
+    ret = InternetQueryOptionA(req.request, INTERNET_OPTION_URL, buf, &size);
+    ok(ret, "InternetQueryOptionA(INTERNET_OPTION_URL) failed: %u\n", GetLastError());
+    len = strlen(url);
+    ok(size == len, "size = %u, expected %u\n", size, len);
+    ok(!strcmp(buf, url), "Wrong URL %s, expected %s\n", buf, url);
 
     close_request(&req);
 }

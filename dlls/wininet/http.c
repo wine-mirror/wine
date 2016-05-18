@@ -2116,17 +2116,18 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         return ERROR_SUCCESS;
 
     case INTERNET_OPTION_URL: {
-        static const WCHAR httpW[] = {'h','t','t','p',':','/','/',0};
-        WCHAR url[INTERNET_MAX_URL_LENGTH];
+        WCHAR *url;
+        DWORD res;
 
         TRACE("INTERNET_OPTION_URL\n");
 
-        strcpyW(url, httpW);
-        strcatW(url, req->server->canon_host_port);
-        strcatW(url, req->path);
+        url = compose_request_url(req);
+        if(!url)
+            return ERROR_OUTOFMEMORY;
 
-        TRACE("INTERNET_OPTION_URL: %s\n",debugstr_w(url));
-        return str_to_buffer(url, buffer, size, unicode);
+        res = str_to_buffer(url, buffer, size, unicode);
+        heap_free(url);
+        return res;
     }
     case INTERNET_OPTION_USER_AGENT:
         return str_to_buffer(req->session->appInfo->agent, buffer, size, unicode);
