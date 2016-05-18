@@ -969,6 +969,11 @@ static void resolveResolved(unsigned baselevel, const WORD * pcls, WORD *plevel,
                 plevel[j--] = baselevel;
             plevel[i] = baselevel;
         }
+        else if (pcls[i] == LRE || pcls[i] == RLE || pcls[i] == LRO || pcls[i] == RLO ||
+                 pcls[i] == PDF || pcls[i] == BN)
+        {
+            plevel[i] = i ? plevel[i - 1] : baselevel;
+        }
         if (i == eos &&
             (pcls[i] == WS || pcls[i] == FSI || pcls[i] == LRI || pcls[i] == RLI ||
              pcls[i] == PDI || pcls[i] == LRE || pcls[i] == RLE || pcls[i] == LRO ||
