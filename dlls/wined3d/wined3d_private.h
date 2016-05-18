@@ -3033,7 +3033,7 @@ struct wined3d_swapchain_ops
 {
     void (*swapchain_present)(struct wined3d_swapchain *swapchain,
             const RECT *src_rect, const RECT *dst_rect, DWORD flags);
-    void (*swapchain_frontbuffer_updated)(struct wined3d_swapchain *swaphchain);
+    void (*swapchain_frontbuffer_updated)(struct wined3d_swapchain *swapchain);
 };
 
 struct wined3d_swapchain
