@@ -4130,36 +4130,24 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
     }
     else
     {
-        URL_COMPONENTSW urlComponents;
-        WCHAR protocol[INTERNET_MAX_SCHEME_LENGTH];
+        URL_COMPONENTSW urlComponents = { sizeof(urlComponents) };
         WCHAR hostName[INTERNET_MAX_HOST_NAME_LENGTH];
         WCHAR userName[INTERNET_MAX_USER_NAME_LENGTH];
         BOOL custom_port = FALSE;
 
-        static const WCHAR httpW[] = {'h','t','t','p',0};
-        static const WCHAR httpsW[] = {'h','t','t','p','s',0};
-
         userName[0] = 0;
         hostName[0] = 0;
-        protocol[0] = 0;
 
-        urlComponents.dwStructSize = sizeof(URL_COMPONENTSW);
-        urlComponents.lpszScheme = protocol;
-        urlComponents.dwSchemeLength = INTERNET_MAX_SCHEME_LENGTH;
         urlComponents.lpszHostName = hostName;
         urlComponents.dwHostNameLength = INTERNET_MAX_HOST_NAME_LENGTH;
         urlComponents.lpszUserName = userName;
         urlComponents.dwUserNameLength = INTERNET_MAX_USER_NAME_LENGTH;
-        urlComponents.lpszPassword = NULL;
-        urlComponents.dwPasswordLength = 0;
         urlComponents.lpszUrlPath = path;
         urlComponents.dwUrlPathLength = INTERNET_MAX_PATH_LENGTH;
-        urlComponents.lpszExtraInfo = NULL;
-        urlComponents.dwExtraInfoLength = 0;
         if(!InternetCrackUrlW(lpszUrl, strlenW(lpszUrl), 0, &urlComponents))
             return INTERNET_GetLastError();
 
-        if(!strcmpiW(protocol, httpW)) {
+        if(urlComponents.nScheme == INTERNET_SCHEME_HTTP) {
             if(request->hdr.dwFlags & INTERNET_FLAG_SECURE) {
                 TRACE("redirect from secure page to non-secure page\n");
                 /* FIXME: warn about from secure redirect to non-secure page */
@@ -4167,7 +4155,7 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
             }
 
             custom_port = urlComponents.nPort != INTERNET_DEFAULT_HTTP_PORT;
-        }else if(!strcmpiW(protocol, httpsW)) {
+        }else if(urlComponents.nScheme == INTERNET_SCHEME_HTTPS) {
             if(!(request->hdr.dwFlags & INTERNET_FLAG_SECURE)) {
                 TRACE("redirect from non-secure page to secure page\n");
                 /* FIXME: notify about redirect to secure page */
