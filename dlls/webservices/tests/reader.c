@@ -3271,6 +3271,43 @@ static void test_double(void)
     WsFreeHeap( heap );
 }
 
+static void test_WsReadElement(void)
+{
+    WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL};
+    HRESULT hr;
+    WS_XML_READER *reader;
+    WS_ELEMENT_DESCRIPTION desc;
+    UINT32 val;
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    desc.elementLocalName = &localname;
+    desc.elementNs        = &ns;
+    desc.type             = WS_UINT32_TYPE;
+    desc.typeDescription  = NULL;
+
+    prepare_struct_type_test( reader, "<t>1</t>" );
+    hr = WsReadElement( NULL, &desc, WS_READ_REQUIRED_VALUE, NULL, &val, sizeof(val), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    prepare_struct_type_test( reader, "<t>1</t>" );
+    hr = WsReadElement( reader, NULL, WS_READ_REQUIRED_VALUE, NULL, &val, sizeof(val), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    prepare_struct_type_test( reader, "<t>1</t>" );
+    hr = WsReadElement( reader, &desc, WS_READ_REQUIRED_VALUE, NULL, NULL, sizeof(val), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    prepare_struct_type_test( reader, "<t>1</t>" );
+    val = 0xdeadbeef;
+    hr = WsReadElement( reader, &desc, WS_READ_REQUIRED_VALUE, NULL, &val, sizeof(val), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( val == 1, "got %u\n", val );
+
+    WsFreeReader( reader );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -3300,4 +3337,5 @@ START_TEST(reader)
     test_WsDateTimeToFileTime();
     test_WsFileTimeToDateTime();
     test_double();
+    test_WsReadElement();
 }

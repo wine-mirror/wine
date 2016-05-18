@@ -1069,6 +1069,8 @@ HRESULT WINAPI WsOpenServiceProxy(WS_SERVICE_PROXY*, const WS_ENDPOINT_ADDRESS*,
                                   WS_ERROR*);
 HRESULT WINAPI WsReadAttribute(WS_XML_READER*, const WS_ATTRIBUTE_DESCRIPTION*, WS_READ_OPTION,
                                WS_HEAP*, void*, ULONG, WS_ERROR*);
+HRESULT WINAPI WsReadElement(WS_XML_READER*, const WS_ELEMENT_DESCRIPTION*, WS_READ_OPTION,
+                             WS_HEAP*, void*, ULONG, WS_ERROR*);
 HRESULT WINAPI WsReadEndAttribute(WS_XML_READER*, WS_ERROR*);
 HRESULT WINAPI WsReadEndElement(WS_XML_READER*, WS_ERROR*);
 HRESULT WINAPI WsReadNode(WS_XML_READER*, WS_ERROR*);
@@ -1078,6 +1080,7 @@ HRESULT WINAPI WsReadToStartElement(WS_XML_READER*, const WS_XML_STRING*, const 
                                     BOOL*, WS_ERROR*);
 HRESULT WINAPI WsReadType(WS_XML_READER*, WS_TYPE_MAPPING, WS_TYPE, const void*, WS_READ_OPTION,
                           WS_HEAP*, void*, ULONG, WS_ERROR*);
+HRESULT WINAPI WsReadValue(WS_XML_READER*, WS_VALUE_TYPE, void*, ULONG, WS_ERROR*);
 HRESULT WINAPI WsResetHeap(WS_HEAP*, WS_ERROR*);
 HRESULT WINAPI WsSendMessage(WS_CHANNEL*, WS_MESSAGE*, const WS_MESSAGE_DESCRIPTION*, WS_WRITE_OPTION,
                              const void*, ULONG, const WS_ASYNC_CONTEXT*, WS_ERROR*);

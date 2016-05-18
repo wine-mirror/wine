@@ -3598,6 +3598,24 @@ HRESULT WINAPI WsReadType( WS_XML_READER *handle, WS_TYPE_MAPPING mapping, WS_TY
 }
 
 /**************************************************************************
+ *          WsReadElement		[webservices.@]
+ */
+HRESULT WINAPI WsReadElement( WS_XML_READER *handle, const WS_ELEMENT_DESCRIPTION *desc,
+                              WS_READ_OPTION option, WS_HEAP *heap, void *value, ULONG size,
+                              WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+
+    TRACE( "%p %p %u %p %p %u %p\n", handle, desc, option, heap, value, size, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader || !desc || !value) return E_INVALIDARG;
+
+    return read_type( reader, WS_ELEMENT_TYPE_MAPPING, desc->type, desc->elementLocalName,
+                      desc->elementNs, desc->typeDescription, option, heap, value, size );
+}
+
+/**************************************************************************
  *          WsSetErrorProperty		[webservices.@]
  */
 HRESULT WINAPI WsSetErrorProperty( WS_ERROR *handle, WS_ERROR_PROPERTY_ID id, const void *value,
