@@ -4116,29 +4116,22 @@ static LPWSTR HTTP_GetRedirectURL(http_request_t *request, LPCWSTR lpszUrl)
 static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
 {
     http_session_t *session = request->session;
-    WCHAR path[INTERNET_MAX_PATH_LENGTH];
+    WCHAR *path;
 
     if(lpszUrl[0]=='/')
     {
         /* if it's an absolute path, keep the same session info */
-        lstrcpynW(path, lpszUrl, INTERNET_MAX_URL_LENGTH);
+        path = heap_strdupW(lpszUrl);
     }
     else
     {
         URL_COMPONENTSW urlComponents = { sizeof(urlComponents) };
-        WCHAR hostName[INTERNET_MAX_HOST_NAME_LENGTH];
-        WCHAR userName[INTERNET_MAX_USER_NAME_LENGTH];
         BOOL custom_port = FALSE;
+        substr_t host;
 
-        userName[0] = 0;
-        hostName[0] = 0;
-
-        urlComponents.lpszHostName = hostName;
-        urlComponents.dwHostNameLength = INTERNET_MAX_HOST_NAME_LENGTH;
-        urlComponents.lpszUserName = userName;
-        urlComponents.dwUserNameLength = INTERNET_MAX_USER_NAME_LENGTH;
-        urlComponents.lpszUrlPath = path;
-        urlComponents.dwUrlPathLength = INTERNET_MAX_PATH_LENGTH;
+        urlComponents.dwHostNameLength = 1;
+        urlComponents.dwUserNameLength = 1;
+        urlComponents.dwUrlPathLength = 1;
         if(!InternetCrackUrlW(lpszUrl, strlenW(lpszUrl), 0, &urlComponents))
             return INTERNET_GetLastError();
 
@@ -4162,20 +4155,23 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
 
         heap_free(session->hostName);
 
-        session->hostName = heap_strdupW(hostName);
+        session->hostName = heap_strndupW(urlComponents.lpszHostName, urlComponents.dwHostNameLength);
         session->hostPort = urlComponents.nPort;
 
         heap_free(session->userName);
         session->userName = NULL;
-        if (userName[0])
-            session->userName = heap_strdupW(userName);
+        if (urlComponents.dwUserNameLength)
+            session->userName = heap_strndupW(urlComponents.lpszUserName, urlComponents.dwUserNameLength);
 
         reset_data_stream(request);
 
-        if(strcmpiW(request->server->name, hostName) || request->server->port != urlComponents.nPort) {
+        host = substr(urlComponents.lpszHostName, urlComponents.dwHostNameLength);
+
+        if(host.len != strlenW(request->server->name) || strncmpiW(request->server->name, host.str, host.len)
+           || request->server->port != urlComponents.nPort) {
             server_t *new_server;
 
-            new_server = get_server(substrz(hostName), urlComponents.nPort, urlComponents.nScheme == INTERNET_SCHEME_HTTPS, TRUE);
+            new_server = get_server(host, urlComponents.nPort, urlComponents.nScheme == INTERNET_SCHEME_HTTPS, TRUE);
             server_release(request->server);
             request->server = new_server;
         }
@@ -4184,16 +4180,18 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
             HTTP_ProcessHeader(request, hostW, request->server->host_port, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
         else
             HTTP_ProcessHeader(request, hostW, request->server->name, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
+
+        path = heap_strndupW(urlComponents.lpszUrlPath, urlComponents.dwUrlPathLength);
     }
     heap_free(request->path);
-    request->path=NULL;
+    request->path = NULL;
     if (*path)
     {
         DWORD needed = 0;
         HRESULT rc;
 
         rc = UrlEscapeW(path, NULL, &needed, URL_ESCAPE_SPACES_ONLY);
-        if (rc != E_POINTER)
+        if (rc == E_POINTER)
             needed = strlenW(path)+1;
         request->path = heap_alloc(needed*sizeof(WCHAR));
         rc = UrlEscapeW(path, request->path, &needed,
@@ -4201,9 +4199,11 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
         if (rc != S_OK)
         {
             ERR("Unable to escape string!(%s) (%d)\n",debugstr_w(path),rc);
-            strcpyW(request->path,path);
+            strcpyW(request->path, path);
         }
     }
+
+    heap_free(path);
 
     /* Remove custom content-type/length headers on redirects.  */
     remove_header(request, szContent_Type, TRUE);
