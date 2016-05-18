@@ -178,6 +178,7 @@ INT WINAPI GetClipboardFormatNameA(UINT wFormat, LPSTR retStr, INT maxlen)
 BOOL WINAPI OpenClipboard( HWND hWnd )
 {
     BOOL bRet;
+    UINT flags;
 
     TRACE("(%p)...\n", hWnd);
 
@@ -185,9 +186,15 @@ BOOL WINAPI OpenClipboard( HWND hWnd )
     {
         req->flags = SET_CB_OPEN;
         req->clipboard = wine_server_user_handle( hWnd );
-        bRet = !wine_server_call( req );
+        if ((bRet = !wine_server_call( req )))
+            flags = reply->flags;
     }
     SERVER_END_REQ;
+
+    if (bRet && !(flags & CB_PROCESS))
+    {
+        bCBHasChanged = FALSE;
+    }
 
     TRACE(" returning %i\n", bRet);
 
@@ -201,6 +208,7 @@ BOOL WINAPI OpenClipboard( HWND hWnd )
 BOOL WINAPI CloseClipboard(void)
 {
     HWND viewer = 0;
+    UINT flags;
     BOOL ret;
 
     TRACE("() Changed=%d\n", bCBHasChanged);
@@ -210,18 +218,21 @@ BOOL WINAPI CloseClipboard(void)
         req->flags = SET_CB_CLOSE;
         if (bCBHasChanged) req->flags |= SET_CB_SEQNO;
         if ((ret = !wine_server_call_err( req )))
+        {
             viewer = wine_server_ptr_handle( reply->old_viewer );
+            flags = reply->flags;
+        }
     }
     SERVER_END_REQ;
 
     if (!ret) return FALSE;
 
-    if (bCBHasChanged)
+    if (bCBHasChanged && (flags & CB_PROCESS))
     {
         USER_Driver->pEndClipboardUpdate();
-        bCBHasChanged = FALSE;
         if (viewer) SendNotifyMessageW(viewer, WM_DRAWCLIPBOARD, (WPARAM) GetClipboardOwner(), 0);
     }
+    bCBHasChanged = FALSE;
     return TRUE;
 }
 
