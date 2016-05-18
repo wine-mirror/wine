@@ -3308,6 +3308,57 @@ static void test_WsReadElement(void)
     WsFreeReader( reader );
 }
 
+static void test_WsReadValue(void)
+{
+    HRESULT hr;
+    WS_XML_READER *reader;
+    UINT32 val;
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    prepare_struct_type_test( reader, "<t>1</t>" );
+    hr = WsReadValue( NULL, WS_UINT32_TYPE, &val, sizeof(val), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    prepare_struct_type_test( reader, "<t>1</t>" );
+    hr = WsReadValue( reader, WS_UINT32_TYPE, NULL, sizeof(val), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    /* reader must be positioned correctly */
+    prepare_struct_type_test( reader, "<t>1</t>" );
+    hr = WsReadValue( reader, WS_UINT32_TYPE, &val, sizeof(val), NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    prepare_struct_type_test( reader, "<t>1</t>" );
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadValue( reader, WS_UINT32_TYPE, &val, sizeof(val), NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    prepare_struct_type_test( reader, "<t>1</t>" );
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadStartElement( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    val = 0xdeadbeef;
+    hr = WsReadValue( reader, WS_UINT32_TYPE, &val, sizeof(val), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( val == 1, "got %u\n", val );
+
+    prepare_struct_type_test( reader, "<u t='1'></u>" );
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadValue( reader, WS_UINT32_TYPE, &val, sizeof(val), NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    WsFreeReader( reader );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -3338,4 +3389,5 @@ START_TEST(reader)
     test_WsFileTimeToDateTime();
     test_double();
     test_WsReadElement();
+    test_WsReadValue();
 }

@@ -1559,7 +1559,7 @@ HRESULT WINAPI WsWriteType( WS_XML_WRITER *handle, WS_TYPE_MAPPING mapping, WS_T
     return hr;
 }
 
-static WS_TYPE map_value_type( WS_VALUE_TYPE type )
+WS_TYPE map_value_type( WS_VALUE_TYPE type )
 {
     switch (type)
     {
