@@ -1855,16 +1855,11 @@ static WCHAR *compose_request_url(http_request_t *req)
 {
     static const WCHAR http[] = { 'h','t','t','p',':','/','/',0 };
     static const WCHAR https[] = { 'h','t','t','p','s',':','/','/',0 };
-    LPHTTPHEADERW host_header;
     const WCHAR *host, *scheme;
     WCHAR *buf, *ptr;
     size_t len;
 
-    EnterCriticalSection( &req->headers_section );
-
-    host_header = HTTP_GetHeader(req, hostW);
-    if (host_header) host = host_header->lpszValue;
-    else host = req->server->canon_host_port;
+    host = req->server->canon_host_port;
 
     if (req->server->is_https)
         scheme = https;
@@ -1888,7 +1883,6 @@ static WCHAR *compose_request_url(http_request_t *req)
         *ptr = 0;
     }
 
-    LeaveCriticalSection( &req->headers_section );
     return buf;
 }
 
