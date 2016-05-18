@@ -553,6 +553,24 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         }
     }
 
+    - (void) setRetinaMode:(int)mode
+    {
+        double scale = mode ? 0.5 : 2.0;
+        NSRect frame = self.frame;
+        frame.origin.x *= scale;
+        frame.origin.y *= scale;
+        frame.size.width *= scale;
+        frame.size.height *= scale;
+        [self setFrame:frame];
+        [self updateGLContexts];
+
+        for (WineContentView* subview in [self subviews])
+        {
+            if ([subview isKindOfClass:[WineContentView class]])
+                [subview setRetinaMode:mode];
+        }
+    }
+
     - (BOOL) acceptsFirstMouse:(NSEvent*)theEvent
     {
         return YES;
@@ -2301,15 +2319,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         for (WineContentView* subview in [self.contentView subviews])
         {
             if ([subview isKindOfClass:[WineContentView class]])
-            {
-                frame = subview.frame;
-                frame.origin.x *= scale;
-                frame.origin.y *= scale;
-                frame.size.width *= scale;
-                frame.size.height *= scale;
-                [subview setFrame:frame];
-                [subview updateGLContexts];
-            }
+                [subview setRetinaMode:mode];
         }
 
         frame = [self contentRectForFrameRect:self.wine_fractionalFrame];
