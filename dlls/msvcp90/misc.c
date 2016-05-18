@@ -471,7 +471,7 @@ typedef struct
 int __cdecl _Mtx_init(_Mtx_t *mtx, int flags)
 {
     if(flags & ~MTX_MULTI_LOCK)
-        FIXME("unknown flags ignorred: %x\n", flags);
+        FIXME("unknown flags ignored: %x\n", flags);
 
     *mtx = MSVCRT_operator_new(sizeof(**mtx));
     (*mtx)->flags = flags;
