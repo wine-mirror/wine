@@ -31,6 +31,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wininet.h"
+#include "lmcons.h"
 #include "winerror.h"
 
 #include "wine/debug.h"
@@ -63,7 +64,8 @@ typedef struct _cookie_t {
 typedef struct _cookie_container_t {
     struct list entry;
 
-    WCHAR *path;
+    WCHAR *cookie_url;
+    substr_t path;
     struct _cookie_domain_t *domain;
 
     struct list cookie_list;
@@ -142,22 +144,56 @@ static cookie_domain_t *get_cookie_domain(substr_t domain, BOOL create)
     }
 }
 
+static WCHAR *create_cookie_url(substr_t domain, substr_t path, substr_t *ret_path)
+{
+    WCHAR user[UNLEN], *p, *url;
+    DWORD len, user_len, i;
+
+    static const WCHAR cookie_prefix[] = {'C','o','o','k','i','e',':'};
+
+    if(!GetUserNameW(user, &user_len))
+        return FALSE;
+    user_len--;
+
+    len = sizeof(cookie_prefix)/sizeof(WCHAR) + user_len + 1 /* @ */ + domain.len + path.len;
+    url = heap_alloc((len+1) * sizeof(WCHAR));
+    if(!url)
+        return NULL;
+
+    memcpy(url, cookie_prefix, sizeof(cookie_prefix));
+    p = url + sizeof(cookie_prefix)/sizeof(WCHAR);
+
+    memcpy(p, user, user_len*sizeof(WCHAR));
+    p += user_len;
+
+    *p++ = '@';
+
+    memcpy(p, domain.str, domain.len*sizeof(WCHAR));
+    p += domain.len;
+
+    for(i=0; i < path.len; i++)
+        p[i] = tolowerW(path.str[i]);
+    p[path.len] = 0;
+
+    ret_path->str = p;
+    ret_path->len = path.len;
+    return url;
+}
+
 static cookie_container_t *get_cookie_container(substr_t domain, substr_t path, BOOL create)
 {
     cookie_domain_t *cookie_domain;
     cookie_container_t *cookie_container, *iter;
-    size_t len;
 
     cookie_domain = get_cookie_domain(domain, create);
     if(!cookie_domain)
         return NULL;
 
     LIST_FOR_EACH_ENTRY(cookie_container, &cookie_domain->path_list, cookie_container_t, entry) {
-        len = strlenW(cookie_container->path);
-        if(len < path.len)
+        if(cookie_container->path.len < path.len)
             break;
 
-        if(path.len == strlenW(cookie_container->path) && !strncmpiW(cookie_container->path, path.str, path.len))
+        if(path.len == cookie_container->path.len && !strncmpiW(cookie_container->path.str, path.str, path.len))
             return cookie_container;
     }
 
@@ -168,8 +204,8 @@ static cookie_container_t *get_cookie_container(substr_t domain, substr_t path, 
     if(!cookie_container)
         return NULL;
 
-    cookie_container->path = heap_strndupW(path.str, path.len);
-    if(!cookie_container->path) {
+    cookie_container->cookie_url = create_cookie_url(substrz(cookie_domain->domain), path, &cookie_container->path);
+    if(!cookie_container->cookie_url) {
         heap_free(cookie_container);
         return NULL;
     }
@@ -178,7 +214,7 @@ static cookie_container_t *get_cookie_container(substr_t domain, substr_t path, 
     list_init(&cookie_container->cookie_list);
 
     LIST_FOR_EACH_ENTRY(iter, &cookie_domain->path_list, cookie_container_t, entry) {
-        if(strlenW(iter->path) <= path.len) {
+        if(iter->path.len <= path.len) {
             list_add_before(&iter->entry, &cookie_container->entry);
             return cookie_container;
         }
@@ -234,8 +270,8 @@ static cookie_t *find_cookie(cookie_container_t *container, substr_t name)
 
 static void add_cookie(cookie_container_t *container, cookie_t *new_cookie)
 {
-    TRACE("Adding %s=%s to %s %s\n", debugstr_w(new_cookie->name), debugstr_w(new_cookie->data),
-          debugstr_w(container->domain->domain), debugstr_w(container->path));
+    TRACE("Adding %s=%s to %s\n", debugstr_w(new_cookie->name), debugstr_w(new_cookie->data),
+          debugstr_w(container->cookie_url));
 
     list_add_tail(&container->cookie_list, &new_cookie->entry);
     new_cookie->container = container;
@@ -254,51 +290,7 @@ static void replace_cookie(cookie_container_t *container, cookie_t *new_cookie)
 
 static BOOL cookie_match_path(cookie_container_t *container, substr_t path)
 {
-    size_t len = strlenW(container->path);
-    return path.len >= len && !strncmpiW(container->path, path.str, len);
-}
-
-static BOOL create_cookie_url(substr_t domain, substr_t path, WCHAR *buf, DWORD buf_len)
-{
-    static const WCHAR cookie_prefix[] = {'C','o','o','k','i','e',':'};
-
-    WCHAR *p;
-    DWORD len;
-
-    if(buf_len < sizeof(cookie_prefix)/sizeof(WCHAR))
-        return FALSE;
-    memcpy(buf, cookie_prefix, sizeof(cookie_prefix));
-    buf += sizeof(cookie_prefix)/sizeof(WCHAR);
-    buf_len -= sizeof(cookie_prefix)/sizeof(WCHAR);
-    p = buf;
-
-    len = buf_len;
-    if(!GetUserNameW(buf, &len))
-        return FALSE;
-    buf += len-1;
-    buf_len -= len-1;
-
-    if(!buf_len)
-        return FALSE;
-    *(buf++) = '@';
-    buf_len--;
-
-    if(domain.len >= buf_len)
-        return FALSE;
-    memcpy(buf, domain.str, domain.len*sizeof(WCHAR));
-    buf += domain.len;
-    buf_len -= domain.len;
-
-    if(path.len >= buf_len)
-        return FALSE;
-    memcpy(buf, path.str, path.len*sizeof(WCHAR));
-    buf += path.len;
-
-    *buf = 0;
-
-    for(; *p; p++)
-        *p = tolowerW(*p);
-    return TRUE;
+    return path.len >= container->path.len && !strncmpiW(container->path.str, path.str, container->path.len);
 }
 
 static BOOL load_persistent_cookie(substr_t domain, substr_t path)
@@ -306,26 +298,24 @@ static BOOL load_persistent_cookie(substr_t domain, substr_t path)
     INTERNET_CACHE_ENTRY_INFOW *info;
     cookie_container_t *cookie_container;
     cookie_t *new_cookie;
-    WCHAR cookie_url[MAX_PATH];
     HANDLE cookie;
     char *str = NULL, *pbeg, *pend;
     DWORD size, flags;
     WCHAR *name, *data;
     FILETIME expiry, create, time;
 
-    if (!create_cookie_url(domain, path, cookie_url, sizeof(cookie_url)/sizeof(cookie_url[0]))) {
-        FIXME("Failed to create cookie URL.\n");
+    cookie_container = get_cookie_container(domain, path, TRUE);
+    if(!cookie_container)
         return FALSE;
-    }
 
     size = 0;
-    RetrieveUrlCacheEntryStreamW(cookie_url, NULL, &size, FALSE, 0);
+    RetrieveUrlCacheEntryStreamW(cookie_container->cookie_url, NULL, &size, FALSE, 0);
     if(GetLastError() != ERROR_INSUFFICIENT_BUFFER)
         return TRUE;
     info = heap_alloc(size);
     if(!info)
         return FALSE;
-    cookie = RetrieveUrlCacheEntryStreamW(cookie_url, info, &size, FALSE, 0);
+    cookie = RetrieveUrlCacheEntryStreamW(cookie_container->cookie_url, info, &size, FALSE, 0);
     size = info->dwSizeLow;
     heap_free(info);
     if(!cookie)
@@ -338,12 +328,6 @@ static BOOL load_persistent_cookie(substr_t domain, substr_t path)
     }
     str[size] = 0;
     UnlockUrlCacheEntryStream(cookie, 0);
-
-    cookie_container = get_cookie_container(domain, path, TRUE);
-    if(!cookie_container) {
-        heap_free(str);
-        return FALSE;
-    }
 
     GetSystemTimeAsFileTime(&time);
     for(pbeg=str; pbeg && *pbeg; name=data=NULL) {
@@ -402,19 +386,14 @@ static BOOL save_persistent_cookie(cookie_container_t *container)
 {
     static const WCHAR txtW[] = {'t','x','t',0};
 
-    WCHAR cookie_url[MAX_PATH], cookie_file[MAX_PATH];
+    WCHAR cookie_file[MAX_PATH];
     HANDLE cookie_handle;
     cookie_t *cookie_container = NULL, *cookie_iter;
     BOOL do_save = FALSE;
     char buf[64], *dyn_buf;
     FILETIME time;
     DWORD bytes_written;
-
-    if (!create_cookie_url(substrz(container->domain->domain), substrz(container->path),
-                           cookie_url, sizeof(cookie_url)/sizeof(cookie_url[0]))) {
-        FIXME("Failed to create cookie URL.\n");
-        return FALSE;
-    }
+    size_t len;
 
     /* check if there's anything to save */
     GetSystemTimeAsFileTime(&time);
@@ -431,13 +410,15 @@ static BOOL save_persistent_cookie(cookie_container_t *container)
             break;
         }
     }
+
     if(!do_save) {
-        DeleteUrlCacheEntryW(cookie_url);
+        DeleteUrlCacheEntryW(container->cookie_url);
         return TRUE;
     }
 
-    if(!CreateUrlCacheEntryW(cookie_url, 0, txtW, cookie_file, 0))
+    if(!CreateUrlCacheEntryW(container->cookie_url, 0, txtW, cookie_file, 0))
         return FALSE;
+
     cookie_handle = CreateFileW(cookie_file, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
     if(cookie_handle == INVALID_HANDLE_VALUE) {
         DeleteFileW(cookie_file);
@@ -481,7 +462,12 @@ static BOOL save_persistent_cookie(cookie_container_t *container)
         }
         heap_free(dyn_buf);
 
-        dyn_buf = heap_strdupWtoA(container->path);
+        len = WideCharToMultiByte(CP_ACP, 0, container->path.str, container->path.len, NULL, 0, NULL, NULL);
+        dyn_buf = heap_alloc(len+1);
+        if(dyn_buf) {
+            WideCharToMultiByte(CP_ACP, 0, container->path.str, container->path.len, dyn_buf, len, NULL, NULL);
+            dyn_buf[len] = 0;
+        }
         if(!dyn_buf || !WriteFile(cookie_handle, dyn_buf, strlen(dyn_buf), &bytes_written, NULL)) {
             heap_free(dyn_buf);
             do_save = FALSE;
@@ -506,7 +492,7 @@ static BOOL save_persistent_cookie(cookie_container_t *container)
     }
 
     memset(&time, 0, sizeof(time));
-    return CommitUrlCacheEntryW(cookie_url, cookie_file, time, time, 0, NULL, 0, txtW, 0);
+    return CommitUrlCacheEntryW(container->cookie_url, cookie_file, time, time, 0, NULL, 0, txtW, 0);
 }
 
 static BOOL cookie_parse_url(const WCHAR *url, substr_t *host, substr_t *path)
@@ -578,7 +564,7 @@ static DWORD get_cookie(substr_t host, substr_t path, DWORD flags, cookie_set_t 
         LIST_FOR_EACH_ENTRY(container, &domain->path_list, cookie_container_t, entry) {
             struct list *cursor, *cursor2;
 
-            TRACE("path %s\n", debugstr_w(container->path));
+            TRACE("path %s\n", debugstr_wn(container->path.str, container->path.len));
 
             if(!cookie_match_path(container, path))
                 continue;
@@ -1025,7 +1011,8 @@ DWORD set_cookie(substr_t domain, substr_t path, substr_t name, substr_t data, D
     }
 
     TRACE("setting cookie %s=%s for domain %s path %s\n", debugstr_wn(name.str, name.len),
-          debugstr_wn(value.str, value.len), debugstr_w(container->domain->domain), debugstr_w(container->path));
+          debugstr_wn(value.str, value.len), debugstr_w(container->domain->domain),
+          debugstr_wn(container->path.str, container->path.len));
 
     if (!expired) {
         cookie_t *new_cookie;
