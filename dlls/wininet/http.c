@@ -203,7 +203,6 @@ static INT HTTP_GetCustomHeaderIndex(http_request_t *req, LPCWSTR lpszField, INT
 static BOOL HTTP_DeleteCustomHeader(http_request_t *req, DWORD index);
 static LPWSTR HTTP_build_req( LPCWSTR *list, int len );
 static DWORD HTTP_HttpQueryInfoW(http_request_t*, DWORD, LPVOID, LPDWORD, LPDWORD);
-static LPWSTR HTTP_GetRedirectURL(http_request_t *req, LPCWSTR lpszUrl);
 static UINT HTTP_DecodeBase64(LPCWSTR base64, LPSTR bin);
 static BOOL drain_content(http_request_t*,BOOL);
 
@@ -4048,64 +4047,57 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
     return result;
 }
 
-/***********************************************************************
- *           HTTP_GetRedirectURL (internal)
- */
-static LPWSTR HTTP_GetRedirectURL(http_request_t *request, LPCWSTR lpszUrl)
+static WCHAR *get_redirect_url(http_request_t *request)
 {
     static WCHAR szHttp[] = {'h','t','t','p',0};
     static WCHAR szHttps[] = {'h','t','t','p','s',0};
     http_session_t *session = request->session;
-    URL_COMPONENTSW urlComponents;
-    DWORD url_length = 0;
-    LPWSTR orig_url;
-    LPWSTR combined_url;
-
-    urlComponents.dwStructSize = sizeof(URL_COMPONENTSW);
-    urlComponents.lpszScheme = (request->hdr.dwFlags & INTERNET_FLAG_SECURE) ? szHttps : szHttp;
-    urlComponents.dwSchemeLength = 0;
-    urlComponents.lpszHostName = request->server->name;
-    urlComponents.dwHostNameLength = 0;
-    urlComponents.nPort = request->server->port;
-    urlComponents.lpszUserName = session->userName;
-    urlComponents.dwUserNameLength = 0;
-    urlComponents.lpszPassword = NULL;
-    urlComponents.dwPasswordLength = 0;
-    urlComponents.lpszUrlPath = request->path;
-    urlComponents.dwUrlPathLength = 0;
-    urlComponents.lpszExtraInfo = NULL;
-    urlComponents.dwExtraInfoLength = 0;
-
-    if (!InternetCreateUrlW(&urlComponents, 0, NULL, &url_length) &&
-        (GetLastError() != ERROR_INSUFFICIENT_BUFFER))
-        return NULL;
-
-    orig_url = heap_alloc(url_length);
-
-    /* convert from bytes to characters */
-    url_length = url_length / sizeof(WCHAR) - 1;
-    if (!InternetCreateUrlW(&urlComponents, 0, orig_url, &url_length))
-    {
-        heap_free(orig_url);
-        return NULL;
-    }
+    URL_COMPONENTSW urlComponents = { sizeof(urlComponents) };
+    WCHAR *orig_url = NULL, *redirect_url = NULL, *combined_url = NULL;
+    DWORD url_length = 0, res;
+    BOOL b;
 
     url_length = 0;
-    if (!InternetCombineUrlW(orig_url, lpszUrl, NULL, &url_length, ICU_ENCODE_SPACES_ONLY) &&
-        (GetLastError() != ERROR_INSUFFICIENT_BUFFER))
-    {
-        heap_free(orig_url);
+    res = HTTP_HttpQueryInfoW(request, HTTP_QUERY_LOCATION, redirect_url, &url_length, NULL);
+    if(res == ERROR_INSUFFICIENT_BUFFER) {
+        redirect_url = heap_alloc(url_length);
+        res = HTTP_HttpQueryInfoW(request, HTTP_QUERY_LOCATION, redirect_url, &url_length, NULL);
+    }
+    if(res != ERROR_SUCCESS) {
+        heap_free(redirect_url);
         return NULL;
     }
-    combined_url = heap_alloc(url_length * sizeof(WCHAR));
 
-    if (!InternetCombineUrlW(orig_url, lpszUrl, combined_url, &url_length, ICU_ENCODE_SPACES_ONLY))
-    {
-        heap_free(orig_url);
-        heap_free(combined_url);
-        return NULL;
+    urlComponents.lpszScheme = (request->hdr.dwFlags & INTERNET_FLAG_SECURE) ? szHttps : szHttp;
+    urlComponents.lpszHostName = request->server->name;
+    urlComponents.nPort = request->server->port;
+    urlComponents.lpszUserName = session->userName;
+    urlComponents.lpszUrlPath = request->path;
+
+    b = InternetCreateUrlW(&urlComponents, 0, NULL, &url_length);
+    if(!b && GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+        orig_url = heap_alloc(url_length);
+
+        /* convert from bytes to characters */
+        url_length = url_length / sizeof(WCHAR) - 1;
+        b = InternetCreateUrlW(&urlComponents, 0, orig_url, &url_length);
     }
+
+    if(b) {
+        url_length = 0;
+        b = InternetCombineUrlW(orig_url, redirect_url, NULL, &url_length, ICU_ENCODE_SPACES_ONLY);
+        if(!b && GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+            combined_url = heap_alloc(url_length * sizeof(WCHAR));
+            b = InternetCombineUrlW(orig_url, redirect_url, combined_url, &url_length, ICU_ENCODE_SPACES_ONLY);
+            if(!b) {
+                heap_free(combined_url);
+                combined_url = NULL;
+            }
+        }
+    }
+
     heap_free(orig_url);
+    heap_free(redirect_url);
     return combined_url;
 }
 
@@ -5095,14 +5087,15 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
 
             if (!(request->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT) && responseLen)
             {
-                WCHAR *new_url, szNewLocation[INTERNET_MAX_URL_LENGTH];
-                dwBufferSize=sizeof(szNewLocation);
+                WCHAR *new_url;
+
                 switch(request->status_code) {
                 case HTTP_STATUS_REDIRECT:
                 case HTTP_STATUS_MOVED:
                 case HTTP_STATUS_REDIRECT_KEEP_VERB:
                 case HTTP_STATUS_REDIRECT_METHOD:
-                    if(HTTP_HttpQueryInfoW(request,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,NULL) != ERROR_SUCCESS)
+                    new_url = get_redirect_url(request);
+                    if(!new_url)
                         break;
 
                     if (strcmpW(request->verb, szGET) && strcmpW(request->verb, szHEAD) &&
@@ -5112,17 +5105,13 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                         request->verb = heap_strdupW(szGET);
                     }
                     http_release_netconn(request, drain_content(request, FALSE));
-                    if ((new_url = HTTP_GetRedirectURL( request, szNewLocation )))
-                    {
-                        INTERNET_SendCallback(&request->hdr, request->hdr.dwContext, INTERNET_STATUS_REDIRECT,
-                                              new_url, (strlenW(new_url) + 1) * sizeof(WCHAR));
-                        res = HTTP_HandleRedirect(request, new_url);
-                        if (res == ERROR_SUCCESS)
-                        {
-                            heap_free(requestString);
-                            loop_next = TRUE;
-                        }
-                        heap_free( new_url );
+                    INTERNET_SendCallback(&request->hdr, request->hdr.dwContext, INTERNET_STATUS_REDIRECT,
+                                          new_url, (strlenW(new_url) + 1) * sizeof(WCHAR));
+                    res = HTTP_HandleRedirect(request, new_url);
+                    heap_free(new_url);
+                    if (res == ERROR_SUCCESS) {
+                        heap_free(requestString);
+                        loop_next = TRUE;
                     }
                     redirected = TRUE;
                 }
@@ -5265,7 +5254,6 @@ static void AsyncHttpSendRequestProc(task_header_t *hdr)
 
 static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_PTR dwContext)
 {
-    DWORD dwBufferSize;
     INT responseLen;
     DWORD res = ERROR_SUCCESS;
 
@@ -5302,9 +5290,10 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
         case HTTP_STATUS_MOVED:
         case HTTP_STATUS_REDIRECT_METHOD:
         case HTTP_STATUS_REDIRECT_KEEP_VERB: {
-            WCHAR *new_url, szNewLocation[INTERNET_MAX_URL_LENGTH];
-            dwBufferSize=sizeof(szNewLocation);
-            if (HTTP_HttpQueryInfoW(request, HTTP_QUERY_LOCATION, szNewLocation, &dwBufferSize, NULL) != ERROR_SUCCESS)
+            WCHAR *new_url;
+
+            new_url = get_redirect_url(request);
+            if(!new_url)
                 break;
 
             if (strcmpW(request->verb, szGET) && strcmpW(request->verb, szHEAD) &&
@@ -5314,15 +5303,12 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
                 request->verb = heap_strdupW(szGET);
             }
             http_release_netconn(request, drain_content(request, FALSE));
-            if ((new_url = HTTP_GetRedirectURL( request, szNewLocation )))
-            {
-                INTERNET_SendCallback(&request->hdr, request->hdr.dwContext, INTERNET_STATUS_REDIRECT,
-                                      new_url, (strlenW(new_url) + 1) * sizeof(WCHAR));
-                res = HTTP_HandleRedirect(request, new_url);
-                if (res == ERROR_SUCCESS)
-                    res = HTTP_HttpSendRequestW(request, NULL, 0, NULL, 0, 0, TRUE);
-                heap_free( new_url );
-            }
+            INTERNET_SendCallback(&request->hdr, request->hdr.dwContext, INTERNET_STATUS_REDIRECT,
+                                  new_url, (strlenW(new_url) + 1) * sizeof(WCHAR));
+            res = HTTP_HandleRedirect(request, new_url);
+            heap_free(new_url);
+            if (res == ERROR_SUCCESS)
+                res = HTTP_HttpSendRequestW(request, NULL, 0, NULL, 0, 0, TRUE);
         }
         }
     }
