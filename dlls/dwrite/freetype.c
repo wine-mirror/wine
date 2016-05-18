@@ -107,6 +107,11 @@ static FT_Error face_requester(FTC_FaceID face_id, FT_Library library, FT_Pointe
 
     *face = NULL;
 
+    if (!fontface) {
+        WARN("NULL fontface requested.\n");
+        return FT_Err_Ok;
+    }
+
     count = 1;
     hr = IDWriteFontFace_GetFiles(fontface, &count, &file);
     if (FAILED(hr))
