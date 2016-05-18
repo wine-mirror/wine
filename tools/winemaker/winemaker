@@ -328,7 +328,7 @@ my $P_PATH=0;
 
 ##
 # This index contains a reference to an array containing the project-wide
-# settings. The structure of that arrray is actually identical to that of
+# settings. The structure of that array is actually identical to that of
 # a regular target since it can also contain extra sources.
 my $P_SETTINGS=1;
 
@@ -767,7 +767,7 @@ sub source_scan_project_file($$$)
                         # Build a DLL
                         $prj_target_type=$TT_DLL;
                     } elsif (/^incremental:[[:alpha:]]+$/) {
-                        # Link Incrmentally
+                        # Link Incrementally
                     } elsif (/^implib:/) {
                         # Name import library
                     } elsif (/^libpath:\"(.*)\"/) {
