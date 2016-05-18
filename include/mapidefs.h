@@ -182,7 +182,7 @@ typedef struct _MAPIUID
 #define cchProfilePassMax 64 /* Maximum length of a profile password */
 #endif
 
-/* Properties: The are the contents of cells in MAPI tables, as well as the
+/* Properties: These are the contents of cells in MAPI tables, as well as the
  * values returned when object properties are queried.
  */
 
