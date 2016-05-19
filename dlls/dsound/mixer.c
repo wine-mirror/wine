@@ -173,6 +173,12 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 		dsb->mix_channels = 2;
 		dsb->put = put_stereo2surround51;
 	}
+	else if (ichannels == 6 && ochannels == 2)
+	{
+		dsb->mix_channels = 6;
+		dsb->put = put_surround512stereo;
+		dsb->put_aux = putieee32_sum;
+	}
 	else
 	{
 		if (ichannels > 2)
@@ -487,6 +493,8 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 	/* Resample buffer to temporary buffer specifically allocated for this purpose, if needed */
 	oldpos = dsb->sec_mixpos;
 
+	if(dsb->put_aux == putieee32_sum)
+		memset(dsb->device->tmp_buffer, 0, dsb->device->tmp_buffer_len);
 	DSOUND_MixToTemporary(dsb, frames);
 	ibuf = dsb->device->tmp_buffer;
 
