@@ -1501,6 +1501,13 @@ static INT scroll_window( HWND hwnd, INT dx, INT dy, const RECT *rect, const REC
                 CombineRgn( hrgnTemp, hrgnTemp, hrgnClip, RGN_AND );
                 CombineRgn( hrgnUpdate, hrgnUpdate, hrgnTemp, RGN_OR );
 
+                if (rcUpdate)
+                {
+                    RECT rcTemp;
+                    GetRgnBox( hrgnTemp, &rcTemp );
+                    UnionRect( rcUpdate, rcUpdate, &rcTemp );
+                }
+
                 if( !bOwnRgn)
                     CombineRgn( hrgnWinupd, hrgnWinupd, hrgnTemp, RGN_OR );
             }

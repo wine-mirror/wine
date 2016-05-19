@@ -4841,8 +4841,22 @@ static void test_scrollvalidate( HWND parent)
             rcu.left,rcu.top,rcu.right,rcu.bottom);
     ReleaseDC( hwnd1, hdc);
 
-    /* test scrolling a window with an update region */
+    /* test scrolling a rect by more than its size */
     DestroyWindow( hwnd2);
+    ValidateRect( hwnd1, NULL);
+    SetRect( &rc, 40,40, 50,50);
+    InvalidateRect( hwnd1, &rc, 1);
+    ScrollWindowEx( hwnd1, -20, 0, &rc, NULL, hrgn, &rcu,
+      SW_SCROLLCHILDREN | SW_INVALIDATE);
+    if (winetest_debug > 0) dump_region(hrgn);
+    SetRectRgn( exprgn, 20, 40, 30, 50);
+    SetRectRgn( tmprgn, 40, 40, 50, 50);
+    CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
+    ok( EqualRgn( exprgn, hrgn), "wrong update region\n");
+    ok( rcu.left == 20 && rcu.top == 40 && rcu.right == 50 && rcu.bottom == 50,
+        "unexpected update rect: %d,%d - %d,%d\n", rcu.left,rcu.top,rcu.right,rcu.bottom);
+
+    /* test scrolling a window with an update region */
     ValidateRect( hwnd1, NULL);
     SetRect( &rc, 40,40, 50,50);
     InvalidateRect( hwnd1, &rc, 1);
