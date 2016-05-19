@@ -4450,6 +4450,8 @@ static void test_texture(void)
         {&ps_sample_2d_array, &array_2d_texture, POINT,        0.0f, 0.0f, MIP_MAX,  3.0f, blue_colors},
         {&ps_sample_2d_array, &array_2d_texture, POINT,        0.0f, 0.0f, MIP_MAX,  3.1f, blue_colors},
         {&ps_sample_2d_array, &array_2d_texture, POINT,        0.0f, 0.0f, MIP_MAX,  9.0f, blue_colors},
+        {&ps_sample_2d_array, NULL,              POINT,        0.0f, 0.0f,    0.0f,  0.0f, zero_colors},
+        {&ps_sample_2d_array, NULL,              POINT,        0.0f, 0.0f, MIP_MAX,  0.0f, zero_colors},
 #undef POINT
 #undef POINT_LINEAR
 #undef MIP_MAX
@@ -4524,17 +4526,25 @@ static void test_texture(void)
 
             current_texture = test->texture;
 
-            texture_desc.Width = current_texture->width;
-            texture_desc.Height = current_texture->height;
-            texture_desc.MipLevels = current_texture->miplevel_count;
-            texture_desc.ArraySize = current_texture->array_size;
-            texture_desc.Format = current_texture->format;
+            if (current_texture)
+            {
+                texture_desc.Width = current_texture->width;
+                texture_desc.Height = current_texture->height;
+                texture_desc.MipLevels = current_texture->miplevel_count;
+                texture_desc.ArraySize = current_texture->array_size;
+                texture_desc.Format = current_texture->format;
 
-            hr = ID3D10Device_CreateTexture2D(device, &texture_desc, current_texture->data, &texture);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+                hr = ID3D10Device_CreateTexture2D(device, &texture_desc, current_texture->data, &texture);
+                ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
 
-            hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)texture, NULL, &srv);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create shader resource view, hr %#x.\n", i, hr);
+                hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)texture, NULL, &srv);
+                ok(SUCCEEDED(hr), "Test %u: Failed to create shader resource view, hr %#x.\n", i, hr);
+            }
+            else
+            {
+                texture = NULL;
+                srv = NULL;
+            }
 
             ID3D10Device_PSSetShaderResources(device, 0, 1, &srv);
         }
@@ -4577,9 +4587,11 @@ static void test_texture(void)
         }
         release_texture_readback(&rb);
     }
-    ID3D10ShaderResourceView_Release(srv);
+    if (srv)
+        ID3D10ShaderResourceView_Release(srv);
     ID3D10SamplerState_Release(sampler);
-    ID3D10Texture2D_Release(texture);
+    if (texture)
+        ID3D10Texture2D_Release(texture);
     ID3D10PixelShader_Release(ps);
 
     ID3D10Buffer_Release(cb);
