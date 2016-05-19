@@ -6683,7 +6683,8 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
          * settings, then activate it. */
         gen_ffp_frag_op(context, state, &settings, FALSE);
         desc = (const struct arbfp_ffp_desc *)find_ffp_frag_shader(&priv->fragment_shaders, &settings);
-        if(!desc) {
+        if (!desc)
+        {
             struct arbfp_ffp_desc *new_desc = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_desc));
             if (!new_desc)
             {
@@ -6716,6 +6717,7 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
             }
             state_texfactor_arbfp(context, state, STATE_RENDER(WINED3D_RS_TEXTUREFACTOR));
             state_arb_specularenable(context, state, STATE_RENDER(WINED3D_RS_SPECULARENABLE));
+            color_key_arbfp(context, state, STATE_COLOR_KEY);
         }
         context->last_was_pshader = FALSE;
     }
