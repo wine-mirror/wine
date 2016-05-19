@@ -173,7 +173,7 @@ static HICON NC_IconForWindow( HWND hwnd )
      */
     if (!hIcon && !(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_DLGMODALFRAME))
         hIcon = LoadImageW(0, (LPCWSTR)IDI_WINLOGO, IMAGE_ICON, GetSystemMetrics(SM_CXSMICON),
-                           GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
+                           GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR | LR_SHARED);
     return hIcon;
 }
 
