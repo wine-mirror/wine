@@ -6378,22 +6378,17 @@ static const char *arbfp_texture_target(enum wined3d_gl_resource_type type)
 
 static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, const struct wined3d_gl_info *gl_info)
 {
-    unsigned int stage;
-    struct wined3d_string_buffer buffer;
-    BOOL tex_read[MAX_TEXTURES] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
-    BOOL bump_used[MAX_TEXTURES] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
-    BOOL luminance_used[MAX_TEXTURES] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
-    BOOL constant_used[MAX_TEXTURES] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
-    UINT lowest_disabled_stage;
-    const char *textype;
-    const char *instr;
-    char colorcor_dst[8];
-    GLuint ret;
-    DWORD arg0, arg1, arg2;
+    BYTE tex_read = 0, bump_used = 0, luminance_used = 0, constant_used = 0;
     BOOL tempreg_used = FALSE, tfactor_used = FALSE;
-    BOOL op_equal;
-    BOOL custom_linear_fog = FALSE;
+    unsigned int stage, lowest_disabled_stage;
+    struct wined3d_string_buffer buffer;
     struct color_fixup_masks masks;
+    BOOL custom_linear_fog = FALSE;
+    const char *textype, *instr;
+    DWORD arg0, arg1, arg2;
+    char colorcor_dst[8];
+    BOOL op_equal;
+    GLuint ret;
 
     if (!string_buffer_init(&buffer))
     {
@@ -6407,7 +6402,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
     {
         shader_addline(&buffer, "PARAM color_key_low = program.env[%u];\n", ARB_FFP_CONST_COLOR_KEY_LOW);
         shader_addline(&buffer, "PARAM color_key_high = program.env[%u];\n", ARB_FFP_CONST_COLOR_KEY_HIGH);
-        tex_read[0] = TRUE;
+        tex_read |= 1;
     }
 
     /* Find out which textures are read */
@@ -6415,56 +6410,58 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
     {
         if (settings->op[stage].cop == WINED3D_TOP_DISABLE)
             break;
+
         arg0 = settings->op[stage].carg0 & WINED3DTA_SELECTMASK;
         arg1 = settings->op[stage].carg1 & WINED3DTA_SELECTMASK;
         arg2 = settings->op[stage].carg2 & WINED3DTA_SELECTMASK;
-        if (arg0 == WINED3DTA_TEXTURE) tex_read[stage] = TRUE;
-        if (arg1 == WINED3DTA_TEXTURE) tex_read[stage] = TRUE;
-        if (arg2 == WINED3DTA_TEXTURE) tex_read[stage] = TRUE;
 
-        if (settings->op[stage].cop == WINED3D_TOP_BLEND_TEXTURE_ALPHA)
-            tex_read[stage] = TRUE;
-        if (settings->op[stage].cop == WINED3D_TOP_BLEND_TEXTURE_ALPHA_PM)
-            tex_read[stage] = TRUE;
-        if (settings->op[stage].cop == WINED3D_TOP_BUMPENVMAP)
-        {
-            bump_used[stage] = TRUE;
-            tex_read[stage] = TRUE;
-        }
-        if (settings->op[stage].cop == WINED3D_TOP_BUMPENVMAP_LUMINANCE)
-        {
-            bump_used[stage] = TRUE;
-            tex_read[stage] = TRUE;
-            luminance_used[stage] = TRUE;
-        }
-        else if (settings->op[stage].cop == WINED3D_TOP_BLEND_FACTOR_ALPHA)
-        {
-            tfactor_used = TRUE;
-        }
-
-        if (settings->op[stage].dst == tempreg) tempreg_used = TRUE;
+        if (arg0 == WINED3DTA_TEXTURE || arg1 == WINED3DTA_TEXTURE || arg2 == WINED3DTA_TEXTURE)
+            tex_read |= 1u << stage;
+        if (settings->op[stage].dst == tempreg)
+            tempreg_used = TRUE;
         if (arg0 == WINED3DTA_TEMP || arg1 == WINED3DTA_TEMP || arg2 == WINED3DTA_TEMP)
             tempreg_used = TRUE;
         if (arg0 == WINED3DTA_TFACTOR || arg1 == WINED3DTA_TFACTOR || arg2 == WINED3DTA_TFACTOR)
             tfactor_used = TRUE;
         if (arg0 == WINED3DTA_CONSTANT || arg1 == WINED3DTA_CONSTANT || arg2 == WINED3DTA_CONSTANT)
-            constant_used[stage] = TRUE;
+            constant_used |= 1u << stage;
+
+        switch (settings->op[stage].cop)
+        {
+            case WINED3D_TOP_BUMPENVMAP_LUMINANCE:
+                luminance_used |= 1u << stage;
+                /* fall through */
+            case WINED3D_TOP_BUMPENVMAP:
+                bump_used |= 1u << stage;
+                /* fall through */
+            case WINED3D_TOP_BLEND_TEXTURE_ALPHA:
+            case WINED3D_TOP_BLEND_TEXTURE_ALPHA_PM:
+                tex_read |= 1u << stage;
+                break;
+
+            case WINED3D_TOP_BLEND_FACTOR_ALPHA:
+                tfactor_used = TRUE;
+                break;
+
+            default:
+                break;
+        }
 
         if (settings->op[stage].aop == WINED3D_TOP_DISABLE)
             continue;
+
         arg0 = settings->op[stage].aarg0 & WINED3DTA_SELECTMASK;
         arg1 = settings->op[stage].aarg1 & WINED3DTA_SELECTMASK;
         arg2 = settings->op[stage].aarg2 & WINED3DTA_SELECTMASK;
-        if (arg0 == WINED3DTA_TEXTURE) tex_read[stage] = TRUE;
-        if (arg1 == WINED3DTA_TEXTURE) tex_read[stage] = TRUE;
-        if (arg2 == WINED3DTA_TEXTURE) tex_read[stage] = TRUE;
 
+        if (arg0 == WINED3DTA_TEXTURE || arg1 == WINED3DTA_TEXTURE || arg2 == WINED3DTA_TEXTURE)
+            tex_read |= 1u << stage;
         if (arg0 == WINED3DTA_TEMP || arg1 == WINED3DTA_TEMP || arg2 == WINED3DTA_TEMP)
             tempreg_used = TRUE;
         if (arg0 == WINED3DTA_TFACTOR || arg1 == WINED3DTA_TFACTOR || arg2 == WINED3DTA_TFACTOR)
             tfactor_used = TRUE;
         if (arg0 == WINED3DTA_CONSTANT || arg1 == WINED3DTA_CONSTANT || arg2 == WINED3DTA_CONSTANT)
-            constant_used[stage] = TRUE;
+            constant_used |= 1u << stage;
     }
     lowest_disabled_stage = stage;
 
@@ -6494,25 +6491,24 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
     shader_addline(&buffer, "TEMP arg2;\n");
     for (stage = 0; stage < MAX_TEXTURES; ++stage)
     {
-        if (constant_used[stage])
+        if (constant_used & (1u << stage))
             shader_addline(&buffer, "PARAM const%u = program.env[%u];\n", stage, ARB_FFP_CONST_CONSTANT(stage));
 
-        if (!tex_read[stage])
+        if (!(tex_read & (1u << stage)))
             continue;
 
         shader_addline(&buffer, "TEMP tex%u;\n", stage);
 
-        if (!bump_used[stage])
+        if (!(bump_used & (1u << stage)))
             continue;
         shader_addline(&buffer, "PARAM bumpmat%u = program.env[%u];\n", stage, ARB_FFP_CONST_BUMPMAT(stage));
 
-        if (!luminance_used[stage])
+        if (!(luminance_used & (1u << stage)))
             continue;
         shader_addline(&buffer, "PARAM luminance%u = program.env[%u];\n", stage, ARB_FFP_CONST_LUMINANCE(stage));
     }
-    if(tfactor_used) {
+    if (tfactor_used)
         shader_addline(&buffer, "PARAM tfactor = program.env[%u];\n", ARB_FFP_CONST_TFACTOR);
-    }
     shader_addline(&buffer, "PARAM specular_enable = program.env[%u];\n", ARB_FFP_CONST_SPECULAR_ENABLE);
 
     if (settings->sRGB_write)
@@ -6534,7 +6530,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
     /* Generate texture sampling instructions */
     for (stage = 0; stage < MAX_TEXTURES && settings->op[stage].cop != WINED3D_TOP_DISABLE; ++stage)
     {
-        if (!tex_read[stage])
+        if (!(tex_read & (1u << stage)))
             continue;
 
         textype = arbfp_texture_target(settings->op[stage].tex_type);
