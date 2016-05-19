@@ -11122,6 +11122,55 @@ done:
     DestroyWindow(window);
 }
 
+static void test_get_render_target_data(void)
+{
+    IDirect3DSurface9 *offscreen_surface, *render_target;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    UINT refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, NULL)))
+    {
+        skip("Failed to create a D3D device.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32,
+            D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &offscreen_surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create offscreen surface, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 32, 32,
+            D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, TRUE, &render_target, NULL);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetRenderTargetData(device, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetRenderTargetData(device, render_target, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetRenderTargetData(device, NULL, offscreen_surface);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetRenderTargetData(device, render_target, offscreen_surface);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    IDirect3DSurface9_Release(render_target);
+    IDirect3DSurface9_Release(offscreen_surface);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     WNDCLASSA wc = {0};
@@ -11237,6 +11286,7 @@ START_TEST(device)
     test_swapchain_parameters();
     test_check_device_format();
     test_miptree_layout();
+    test_get_render_target_data();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }

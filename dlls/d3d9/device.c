@@ -1279,6 +1279,9 @@ static HRESULT WINAPI d3d9_device_GetRenderTargetData(IDirect3DDevice9Ex *iface,
 
     TRACE("iface %p, render_target %p, dst_surface %p.\n", iface, render_target, dst_surface);
 
+    if (!render_target || !dst_surface)
+        return D3DERR_INVALIDCALL;
+
     wined3d_mutex_lock();
     wined3d_texture_get_sub_resource_desc(dst_impl->wined3d_texture, dst_impl->sub_resource_idx, &wined3d_desc);
     dst_rect.left = 0;
