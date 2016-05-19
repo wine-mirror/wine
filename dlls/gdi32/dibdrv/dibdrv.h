@@ -177,7 +177,7 @@ typedef struct primitive_funcs
     void            (* solid_rects)(const dib_info *dib, int num, const RECT *rc, DWORD and, DWORD xor);
     void             (* solid_line)(const dib_info *dib, const POINT *start, const struct line_params *params,
                                     DWORD and, DWORD xor);
-    void          (* pattern_rects)(const dib_info *dib, int num, const RECT *rc, const POINT *orign,
+    void          (* pattern_rects)(const dib_info *dib, int num, const RECT *rc, const POINT *origin,
                                     const dib_info *brush, const rop_mask_bits *bits);
     void              (* copy_rect)(const dib_info *dst, const RECT *rc, const dib_info *src,
                                     const POINT *origin, int rop2, int overlap);
