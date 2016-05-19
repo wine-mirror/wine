@@ -47,6 +47,7 @@ typedef float (*bitsgetfunc)(const IDirectSoundBufferImpl *, DWORD, DWORD);
 typedef void (*bitsputfunc)(const IDirectSoundBufferImpl *, DWORD, DWORD, float);
 extern const bitsgetfunc getbpp[5] DECLSPEC_HIDDEN;
 void putieee32(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
+void putieee32_sum(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
 void mixieee32(float *src, float *dst, unsigned samples) DECLSPEC_HIDDEN;
 typedef void (*normfunc)(const void *, void *, unsigned);
 extern const normfunc normfunctions[4] DECLSPEC_HIDDEN;
@@ -177,6 +178,7 @@ void put_mono2quad(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, 
 void put_stereo2quad(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
 void put_mono2surround51(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
 void put_stereo2surround51(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
+void put_surround512stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
 
 HRESULT secondarybuffer_create(DirectSoundDevice *device, const DSBUFFERDESC *dsbd,
         IDirectSoundBuffer **buffer) DECLSPEC_HIDDEN;
