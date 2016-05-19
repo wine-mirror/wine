@@ -3072,9 +3072,15 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
     gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
     idx = get_format_idx(WINED3DFMT_BC1_UNORM);
     gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
+    idx = get_format_idx(WINED3DFMT_BC1_UNORM_SRGB);
+    gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
     idx = get_format_idx(WINED3DFMT_BC2_UNORM);
     gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
+    idx = get_format_idx(WINED3DFMT_BC2_UNORM_SRGB);
+    gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
     idx = get_format_idx(WINED3DFMT_BC3_UNORM);
+    gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
+    idx = get_format_idx(WINED3DFMT_BC3_UNORM_SRGB);
     gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
     /* Similarly with ATI1N / ATI2N and GL_ARB_texture_compression_rgtc. */
     idx = get_format_idx(WINED3DFMT_ATI1N);
