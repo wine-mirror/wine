@@ -333,7 +333,7 @@ SplineSet
 EndSplineSet
 EndChar
 
-StartChar: sqaure2
+StartChar: square2
 Encoding: 160 160 14
 Width: 641
 Flags: W
