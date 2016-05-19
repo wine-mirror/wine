@@ -1860,6 +1860,13 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                 sampler_type = "samplerCube";
                 break;
 
+            case WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY:
+                if (shadow_sampler)
+                    sampler_type = "sampler2DArrayShadow";
+                else
+                    sampler_type = "sampler2DArray";
+                break;
+
             default:
                 sampler_type = "unsupported_sampler";
                 FIXME("Unhandled resource type %#x.\n", reg_maps->resource_info[entry->resource_idx].type);
@@ -2699,16 +2706,16 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
     }
     resource_types[] =
     {
-        {0, 0, ""},     /* WINED3D_SHADER_RESOURCE_NONE */
-        {1, 0, ""},     /* WINED3D_SHADER_RESOURCE_BUFFER */
-        {1, 1, "1D"},   /* WINED3D_SHADER_RESOURCE_TEXTURE_1D */
-        {2, 2, "2D"},   /* WINED3D_SHADER_RESOURCE_TEXTURE_2D */
-        {2, 0, ""},     /* WINED3D_SHADER_RESOURCE_TEXTURE_2DMS */
-        {3, 3, "3D"},   /* WINED3D_SHADER_RESOURCE_TEXTURE_3D */
-        {3, 0, "Cube"}, /* WINED3D_SHADER_RESOURCE_TEXTURE_CUBE */
-        {2, 1, ""},     /* WINED3D_SHADER_RESOURCE_TEXTURE_1DARRAY */
-        {3, 2, ""},     /* WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY */
-        {3, 0, ""},     /* WINED3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY */
+        {0, 0, ""},        /* WINED3D_SHADER_RESOURCE_NONE */
+        {1, 0, ""},        /* WINED3D_SHADER_RESOURCE_BUFFER */
+        {1, 1, "1D"},      /* WINED3D_SHADER_RESOURCE_TEXTURE_1D */
+        {2, 2, "2D"},      /* WINED3D_SHADER_RESOURCE_TEXTURE_2D */
+        {2, 0, ""},        /* WINED3D_SHADER_RESOURCE_TEXTURE_2DMS */
+        {3, 3, "3D"},      /* WINED3D_SHADER_RESOURCE_TEXTURE_3D */
+        {3, 0, "Cube"},    /* WINED3D_SHADER_RESOURCE_TEXTURE_CUBE */
+        {2, 1, ""},        /* WINED3D_SHADER_RESOURCE_TEXTURE_1DARRAY */
+        {3, 2, "2DArray"}, /* WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY */
+        {3, 0, ""},        /* WINED3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY */
     };
     struct shader_glsl_ctx_priv *priv = ctx->backend_data;
     enum wined3d_shader_resource_type resource_type = ctx->reg_maps->resource_info[resource_idx].type;
@@ -5492,6 +5499,8 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
         shader_addline(buffer, "#extension GL_ARB_uniform_buffer_object : enable\n");
     if (gl_info->supported[EXT_GPU_SHADER4])
         shader_addline(buffer, "#extension GL_EXT_gpu_shader4 : enable\n");
+    if (gl_info->supported[EXT_TEXTURE_ARRAY])
+        shader_addline(buffer, "#extension GL_EXT_texture_array : enable\n");
 
     /* Base Declarations */
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
@@ -5581,6 +5590,8 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
         shader_addline(buffer, "#extension GL_ARB_uniform_buffer_object : enable\n");
     if (gl_info->supported[EXT_GPU_SHADER4])
         shader_addline(buffer, "#extension GL_EXT_gpu_shader4 : enable\n");
+    if (gl_info->supported[EXT_TEXTURE_ARRAY])
+        shader_addline(buffer, "#extension GL_EXT_texture_array : enable\n");
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_vs_args = args;
@@ -5668,6 +5679,8 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context 
         shader_addline(buffer, "#extension GL_ARB_uniform_buffer_object : enable\n");
     if (gl_info->supported[EXT_GPU_SHADER4])
         shader_addline(buffer, "#extension GL_EXT_gpu_shader4 : enable\n");
+    if (gl_info->supported[EXT_TEXTURE_ARRAY])
+        shader_addline(buffer, "#extension GL_EXT_texture_array : enable\n");
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.string_buffers = string_buffers;
