@@ -632,6 +632,21 @@ typedef struct D3D11_QUERY_DESC
     UINT MiscFlags;
 } D3D11_QUERY_DESC;
 
+cpp_quote("#if !defined(D3D11_NO_HELPERS) && defined(__cplusplus)")
+cpp_quote("struct CD3D11_QUERY_DESC : public D3D11_QUERY_DESC {")
+cpp_quote("    CD3D11_QUERY_DESC() {}")
+cpp_quote("    ~CD3D11_QUERY_DESC() {}")
+cpp_quote("    explicit CD3D11_QUERY_DESC(const D3D11_QUERY_DESC &other) : D3D11_QUERY_DESC(other) {}")
+cpp_quote("    explicit CD3D11_QUERY_DESC(D3D11_QUERY query, UINT misc_flags = 0) {")
+cpp_quote("        Query = query;")
+cpp_quote("        MiscFlags = misc_flags;")
+cpp_quote("    }")
+cpp_quote("    operator const D3D11_QUERY_DESC&() const {")
+cpp_quote("        return *this;")
+cpp_quote("    }")
+cpp_quote("};")
+cpp_quote("#endif")
+
 typedef struct D3D11_RASTERIZER_DESC
 {
     D3D11_FILL_MODE FillMode;
