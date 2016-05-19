@@ -179,6 +179,12 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 		dsb->put = put_surround512stereo;
 		dsb->put_aux = putieee32_sum;
 	}
+	else if (ichannels == 4 && ochannels == 2)
+	{
+		dsb->mix_channels = 4;
+		dsb->put = put_quad2stereo;
+		dsb->put_aux = putieee32_sum;
+	}
 	else
 	{
 		if (ichannels > 2)

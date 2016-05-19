@@ -252,6 +252,33 @@ void put_surround512stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD c
     }
 }
 
+void put_quad2stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
+{
+    /* based on pulseaudio's downmix algorithm */
+    switch(channel){
+
+    case 2: /* back left */
+        value *= 0.1f; /* (1/9) / (sum of left volumes) */
+        dsb->put_aux(dsb, pos, 0, value);
+        break;
+
+    case 0: /* front left */
+        value *= 0.9f; /* 1 / (sum of left volumes) */
+        dsb->put_aux(dsb, pos, 0, value);
+        break;
+
+    case 3: /* back right */
+        value *= 0.1f; /* (1/9) / (sum of right volumes) */
+        dsb->put_aux(dsb, pos, 1, value);
+        break;
+
+    case 1: /* front right */
+        value *= 0.9f; /* 1 / (sum of right volumes) */
+        dsb->put_aux(dsb, pos, 1, value);
+        break;
+    }
+}
+
 void mixieee32(float *src, float *dst, unsigned samples)
 {
     TRACE("%p - %p %d\n", src, dst, samples);
