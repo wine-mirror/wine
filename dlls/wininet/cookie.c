@@ -151,6 +151,7 @@ static WCHAR *create_cookie_url(substr_t domain, substr_t path, substr_t *ret_pa
 
     static const WCHAR cookie_prefix[] = {'C','o','o','k','i','e',':'};
 
+    user_len = sizeof(user)/sizeof(WCHAR);
     if(!GetUserNameW(user, &user_len))
         return FALSE;
     user_len--;
