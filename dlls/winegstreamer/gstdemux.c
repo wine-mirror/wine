@@ -1663,15 +1663,28 @@ static ULONG WINAPI GST_QualityControl_Release(IQualityControl *iface)
 static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm)
 {
     GSTOutPin *pin = impl_from_IQualityControl(iface);
-    REFERENCE_TIME late = qm.Late;
+    GstEvent *evt;
+
     TRACE("(%p)->(%p, { 0x%x %u %s %s })\n", pin, sender,
             qm.Type, qm.Proportion,
             wine_dbgstr_longlong(qm.Late),
             wine_dbgstr_longlong(qm.TimeStamp));
+
     mark_wine_thread();
-    if (qm.Late < 0 && -qm.Late > qm.TimeStamp)
-        late = -qm.TimeStamp;
-    gst_pad_push_event(pin->my_sink, gst_event_new_qos(late <= 0 ? GST_QOS_TYPE_OVERFLOW : GST_QOS_TYPE_UNDERFLOW, 1000./qm.Proportion, late*100, qm.TimeStamp*100));
+
+    if (qm.Type == Flood)
+        qm.Late = 0;
+
+    evt = gst_event_new_qos(qm.Type == Famine ? GST_QOS_TYPE_UNDERFLOW : GST_QOS_TYPE_OVERFLOW,
+            qm.Proportion / 1000., qm.Late * 100, qm.TimeStamp * 100);
+
+    if (!evt) {
+        WARN("Failed to create QOS event\n");
+        return E_INVALIDARG;
+    }
+
+    gst_pad_push_event(pin->my_sink, evt);
+
     return S_OK;
 }
 
