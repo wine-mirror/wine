@@ -479,35 +479,30 @@ HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX passe
 	RtlAcquireResourceExclusive(&(device->buffer_list_lock), TRUE);
 	EnterCriticalSection(&(device->mixlock));
 
-	if (device->priolevel == DSSCL_WRITEPRIMARY) {
-		old_fmt = device->primary_pwfx;
-		device->primary_pwfx = DSOUND_CopyFormat(passed_fmt);
-		fmtex = (WAVEFORMATEXTENSIBLE *)device->primary_pwfx;
-		if (device->primary_pwfx == NULL) {
-			err = DSERR_OUTOFMEMORY;
-			goto out;
-		}
+	old_fmt = device->primary_pwfx;
+	device->primary_pwfx = DSOUND_CopyFormat(passed_fmt);
+	fmtex = (WAVEFORMATEXTENSIBLE *)device->primary_pwfx;
+	if (device->primary_pwfx == NULL) {
+		err = DSERR_OUTOFMEMORY;
+		goto out;
+	}
 
-		if (fmtex->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-		    fmtex->Samples.wValidBitsPerSample == 0) {
-			TRACE("Correcting 0 valid bits per sample\n");
-			fmtex->Samples.wValidBitsPerSample = fmtex->Format.wBitsPerSample;
-		}
+	if (fmtex->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+			fmtex->Samples.wValidBitsPerSample == 0) {
+		TRACE("Correcting 0 valid bits per sample\n");
+		fmtex->Samples.wValidBitsPerSample = fmtex->Format.wBitsPerSample;
+	}
 
+	if(device->priolevel == DSSCL_WRITEPRIMARY || device->nrofbuffers == 0)
 		err = DSOUND_ReopenDevice(device, TRUE);
-		if (FAILED(err)) {
-			ERR("No formats could be opened\n");
-			HeapFree(GetProcessHeap(), 0, device->primary_pwfx);
-			device->primary_pwfx = old_fmt;
-		} else
-			HeapFree(GetProcessHeap(), 0, old_fmt);
+	if (FAILED(err) && device->priolevel == DSSCL_WRITEPRIMARY) {
+		ERR("No formats could be opened\n");
+		HeapFree(GetProcessHeap(), 0, device->primary_pwfx);
+		device->primary_pwfx = old_fmt;
 	} else {
-		WAVEFORMATEX *wfx = DSOUND_CopyFormat(passed_fmt);
-		if (wfx) {
-			HeapFree(GetProcessHeap(), 0, device->primary_pwfx);
-			device->primary_pwfx = wfx;
-		} else
-			err = DSERR_OUTOFMEMORY;
+		/* ignore failures */
+		err = S_OK;
+		HeapFree(GetProcessHeap(), 0, old_fmt);
 	}
 
 out:
