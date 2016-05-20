@@ -2292,12 +2292,12 @@ static WCHAR *get_proxy_autoconfig_url(void)
     SIZE_T len;
     const void *ref;
 
-    if (!settings) return FALSE;
+    if (!settings) return NULL;
 
     if (!(ref = CFDictionaryGetValue( settings, kCFNetworkProxiesProxyAutoConfigURLString )))
     {
         CFRelease( settings );
-        return FALSE;
+        return NULL;
     }
     len = CFStringGetLength( ref );
     if (len)
