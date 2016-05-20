@@ -3872,7 +3872,7 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
         {"den mul",{FALSE, FALSE, FALSE, FALSE}, {0x7f800000, 0xff800000, 0xbb94f209, 0x000051ec}},
         {"dot",    {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x7f800000, 0x41f00000, 0x00000000}},
         {"prec",   {FALSE, FALSE,  TRUE, FALSE}, {0x2b8cbccc, 0x2c0cbccc, 0xac531800, 0x00000000}},
-        {"dotswiz", { TRUE,  TRUE,  TRUE, FALSE}, {0xc00ccccd, 0xc0d33334, 0xc10ccccd, 0}},
+        {"dotswiz", {FALSE, FALSE, FALSE, FALSE}, {0xc00ccccd, 0xc0d33334, 0xc10ccccd, 0}},
         {"reladdr", { TRUE,  TRUE,  TRUE,  TRUE}, {0xc00ccccd, 0x40000000, 0x41a00000, 0x41500000}},
     };
 #define TEST_EFFECT_PRES_NFLOATV ARRAY_SIZE(test_effect_preshader_fconstsv)

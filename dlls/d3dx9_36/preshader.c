@@ -44,6 +44,8 @@ enum pres_ops
     PRESHADER_OP_COS,
     PRESHADER_OP_RSQ,
     PRESHADER_OP_EXP,
+    PRESHADER_OP_DOTSWIZ6,
+    PRESHADER_OP_DOTSWIZ8,
 };
 
 typedef double (*pres_op_func)(double *args, int n);
@@ -61,6 +63,17 @@ static double pres_dot(double *args, int n)
         sum += args[i] * args[i + n];
     return sum;
 }
+
+static double pres_dotswiz6(double *args, int n)
+{
+    return pres_dot(args, 3);
+}
+
+static double pres_dotswiz8(double *args, int n)
+{
+    return pres_dot(args, 4);
+}
+
 static double pres_neg(double *args, int n) {return -args[0];}
 static double pres_rcp(double *args, int n) {return 1.0 / args[0];}
 static double pres_lt(double *args, int n)  {return args[0] < args[1] ? 1.0 : 0.0;}
@@ -97,7 +110,7 @@ static double pres_exp(double *args, int n) {return pow(2.0, args[0]);}
 struct op_info
 {
     unsigned int opcode;
-    char mnem[8];
+    char mnem[16];
     unsigned int input_count;
     BOOL func_all_comps;
     pres_op_func func;
@@ -122,6 +135,8 @@ static const struct op_info pres_op_info[] =
     {0x109, "cos", 1, 0, pres_cos}, /* PRESHADER_OP_COS */
     {0x107, "rsq", 1, 0, pres_rsq}, /* PRESHADER_OP_RSQ */
     {0x105, "exp", 1, 0, pres_exp}, /* PRESHADER_OP_EXP */
+    {0x70e, "d3ds_dotswiz", 6, 0, pres_dotswiz6}, /* PRESHADER_OP_DOTSWIZ6 */
+    {0x70e, "d3ds_dotswiz", 8, 0, pres_dotswiz8}, /* PRESHADER_OP_DOTSWIZ8 */
 };
 
 enum pres_value_type
@@ -178,7 +193,7 @@ struct d3dx_pres_operand
     unsigned int offset;
 };
 
-#define MAX_INPUTS_COUNT 3
+#define MAX_INPUTS_COUNT 8
 
 struct d3dx_pres_ins
 {
@@ -410,18 +425,18 @@ static unsigned int *parse_pres_ins(unsigned int *ptr, unsigned int count, struc
     input_count = *ptr++;
     count -= 2;
     for (i = 0; i < ARRAY_SIZE(pres_op_info); ++i)
-        if (ins_code == pres_op_info[i].opcode)
+        if (ins_code == pres_op_info[i].opcode && input_count == pres_op_info[i].input_count)
             break;
     if (i == ARRAY_SIZE(pres_op_info))
     {
-        FIXME("Unknown opcode %#x, raw %#x.\n", ins_code, ins_raw);
+        FIXME("Unknown opcode %#x, input_count %u, raw %#x.\n", ins_code, input_count, ins_raw);
         return NULL;
     }
     ins->op = i;
-    if (input_count > ARRAY_SIZE(ins->inputs) || input_count != pres_op_info[i].input_count)
+    if (input_count > ARRAY_SIZE(ins->inputs))
     {
-        FIXME("Actual input args %u, expected %u, instruction %s.\n", input_count,
-                pres_op_info[i].input_count, pres_op_info[i].mnem);
+        FIXME("Actual input args count %u exceeds inputs array size, instruction %s.\n", input_count,
+                pres_op_info[i].mnem);
         return NULL;
     }
     for (i = 0; i < input_count; ++i)
