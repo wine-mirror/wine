@@ -159,6 +159,8 @@ struct glsl_gs_program
 {
     struct list shader_entry;
     GLuint id;
+
+    GLint pos_fixup_location;
 };
 
 struct glsl_ps_program
@@ -1347,10 +1349,13 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
     if (update_mask & WINED3D_SHADER_CONST_VS_POINTSIZE)
         shader_glsl_pointsize_uniform(context, state, prog);
 
-    if (update_mask & WINED3D_SHADER_CONST_VS_POS_FIXUP)
+    if (update_mask & WINED3D_SHADER_CONST_POS_FIXUP)
     {
         shader_get_position_fixup(context, state, position_fixup);
-        GL_EXTCALL(glUniform4fv(prog->vs.pos_fixup_location, 1, position_fixup));
+        if (state->shader[WINED3D_SHADER_TYPE_GEOMETRY])
+            GL_EXTCALL(glUniform4fv(prog->gs.pos_fixup_location, 1, position_fixup));
+        else
+            GL_EXTCALL(glUniform4fv(prog->vs.pos_fixup_location, 1, position_fixup));
         checkGLcall("glUniform4fv");
     }
 
@@ -1949,7 +1954,6 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
         }
 
-        shader_addline(buffer, "uniform vec4 posFixup;\n");
         if (version->major < 4)
             shader_addline(buffer, "void setup_vs_output(in vec4[%u]);\n", shader->limits->packed_output);
     }
@@ -2971,6 +2975,28 @@ static void PRINTF_ATTR(9, 10) shader_glsl_gen_sample_code(const struct wined3d_
 
     if (!is_identity_fixup(fixup))
         shader_glsl_color_correction(ins, fixup);
+}
+
+static void shader_glsl_fixup_position(struct wined3d_string_buffer *buffer)
+{
+    /* Write the final position.
+     *
+     * OpenGL coordinates specify the center of the pixel while D3D coords
+     * specify the corner. The offsets are stored in z and w in
+     * pos_fixup. pos_fixup.y contains 1.0 or -1.0 to turn the rendering
+     * upside down for offscreen rendering. pos_fixup.x contains 1.0 to allow
+     * a MAD. */
+    shader_addline(buffer, "gl_Position.y = gl_Position.y * pos_fixup.y;\n");
+    shader_addline(buffer, "gl_Position.xy += pos_fixup.zw * gl_Position.ww;\n");
+
+    /* Z coord [0;1]->[-1;1] mapping, see comment in get_projection_matrix()
+     * in utils.c
+     *
+     * Basically we want (in homogeneous coordinates) z = z * 2 - 1. However,
+     * shaders are run before the homogeneous divide, so we have to take the w
+     * into account: z = ((z / w) * 2 - 1) * w, which is the same as
+     * z = z * 2 - w. */
+    shader_addline(buffer, "gl_Position.z = gl_Position.z * 2.0 - gl_Position.w;\n");
 }
 
 /*****************************************************************************
@@ -4109,6 +4135,7 @@ static void shader_glsl_else(const struct wined3d_shader_instruction *ins)
 static void shader_glsl_emit(const struct wined3d_shader_instruction *ins)
 {
     shader_addline(ins->ctx->buffer, "setup_gs_output(gs_out);\n");
+    shader_glsl_fixup_position(ins->ctx->buffer);
     shader_addline(ins->ctx->buffer, "EmitVertex();\n");
 }
 
@@ -5720,6 +5747,9 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     /* Base Declarations */
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
 
+    if (args->next_shader_type == WINED3D_SHADER_TYPE_PIXEL)
+        shader_addline(buffer, "uniform vec4 pos_fixup;\n");
+
     if (reg_maps->shader_version.major >= 4)
     {
         if (args->next_shader_type == WINED3D_SHADER_TYPE_PIXEL)
@@ -5758,23 +5788,8 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     if (args->point_size && !args->per_vertex_point_size)
         shader_addline(buffer, "gl_PointSize = clamp(ffp_point.size, ffp_point.size_min, ffp_point.size_max);\n");
 
-    /* Write the final position.
-     *
-     * OpenGL coordinates specify the center of the pixel while d3d coords specify
-     * the corner. The offsets are stored in z and w in posFixup. posFixup.y contains
-     * 1.0 or -1.0 to turn the rendering upside down for offscreen rendering. PosFixup.x
-     * contains 1.0 to allow a mad.
-     */
-    shader_addline(buffer, "gl_Position.y = gl_Position.y * posFixup.y;\n");
-    shader_addline(buffer, "gl_Position.xy += posFixup.zw * gl_Position.ww;\n");
-
-    /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
-     *
-     * Basically we want (in homogeneous coordinates) z = z * 2 - 1. However, shaders are run
-     * before the homogeneous divide, so we have to take the w into account: z = ((z / w) * 2 - 1) * w,
-     * which is the same as z = z * 2 - w.
-     */
-    shader_addline(buffer, "gl_Position.z = gl_Position.z * 2.0 - gl_Position.w;\n");
+    if (args->next_shader_type == WINED3D_SHADER_TYPE_PIXEL)
+        shader_glsl_fixup_position(buffer);
 
     shader_addline(buffer, "}\n");
 
@@ -5816,6 +5831,7 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.string_buffers = string_buffers;
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
+    shader_addline(buffer, "uniform vec4 pos_fixup;\n");
     shader_glsl_generate_sm4_rasterizer_input_setup(priv, shader, args->ps_input_count, gl_info);
     shader_addline(buffer, "void main()\n{\n");
     shader_generate_main(shader, buffer, reg_maps, function, &priv_ctx);
@@ -7206,7 +7222,7 @@ static void shader_glsl_init_vs_uniform_locations(const struct wined3d_gl_info *
         vs->uniform_b_locations[i] = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
     }
 
-    vs->pos_fixup_location = GL_EXTCALL(glGetUniformLocation(program_id, "posFixup"));
+    vs->pos_fixup_location = GL_EXTCALL(glGetUniformLocation(program_id, "pos_fixup"));
 
     for (i = 0; i < MAX_VERTEX_BLENDS; ++i)
     {
@@ -7261,6 +7277,12 @@ static void shader_glsl_init_vs_uniform_locations(const struct wined3d_gl_info *
     vs->pointsize_q_att_location = GL_EXTCALL(glGetUniformLocation(program_id, "ffp_point.q_att"));
 
     string_buffer_release(&priv->string_buffers, name);
+}
+
+static void shader_glsl_init_gs_uniform_locations(const struct wined3d_gl_info *gl_info,
+        struct shader_glsl_priv *priv, GLuint program_id, struct glsl_gs_program *gs)
+{
+    gs->pos_fixup_location = GL_EXTCALL(glGetUniformLocation(program_id, "pos_fixup"));
 }
 
 static void shader_glsl_init_ps_uniform_locations(const struct wined3d_gl_info *gl_info,
@@ -7554,6 +7576,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
 
     shader_glsl_init_vs_uniform_locations(gl_info, priv, program_id, &entry->vs,
             vshader ? vshader->limits->constant_float : 0);
+    shader_glsl_init_gs_uniform_locations(gl_info, priv, program_id, &entry->gs);
     shader_glsl_init_ps_uniform_locations(gl_info, priv, program_id, &entry->ps,
             pshader ? pshader->limits->constant_float : 0);
     checkGLcall("Find glsl program uniform locations");
@@ -7595,7 +7618,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
             entry->constant_update_mask |= WINED3D_SHADER_CONST_VS_I;
         if (vshader->reg_maps.boolean_constants)
             entry->constant_update_mask |= WINED3D_SHADER_CONST_VS_B;
-        entry->constant_update_mask |= WINED3D_SHADER_CONST_VS_POS_FIXUP;
+        if (entry->vs.pos_fixup_location != -1)
+            entry->constant_update_mask |= WINED3D_SHADER_CONST_POS_FIXUP;
 
         shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &vshader->reg_maps,
                 0, gl_info->limits.vertex_uniform_blocks);
@@ -7634,8 +7658,11 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         entry->constant_update_mask |= WINED3D_SHADER_CONST_VS_POINTSIZE;
 
     if (gshader)
+    {
+        entry->constant_update_mask |= WINED3D_SHADER_CONST_POS_FIXUP;
         shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &gshader->reg_maps,
                 gl_info->limits.vertex_uniform_blocks, gl_info->limits.geometry_uniform_blocks);
+    }
 
     if (ps_id)
     {
@@ -8744,7 +8771,7 @@ static void glsl_vertex_pipe_viewport(struct wined3d_context *context,
     if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE))
             && state->render_states[WINED3D_RS_POINTSCALEENABLE])
         context->constant_update_mask |= WINED3D_SHADER_CONST_VS_POINTSIZE;
-    context->constant_update_mask |= WINED3D_SHADER_CONST_VS_POS_FIXUP;
+    context->constant_update_mask |= WINED3D_SHADER_CONST_POS_FIXUP;
 }
 
 static void glsl_vertex_pipe_texmatrix(struct wined3d_context *context,

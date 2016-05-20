@@ -4608,7 +4608,7 @@ static void viewport_vertexpart(struct wined3d_context *context, const struct wi
             && state->render_states[WINED3D_RS_POINTSCALEENABLE])
         state_pscale(context, state, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE));
     /* Update the position fixup. */
-    context->constant_update_mask |= WINED3D_SHADER_CONST_VS_POS_FIXUP;
+    context->constant_update_mask |= WINED3D_SHADER_CONST_POS_FIXUP;
 }
 
 static void light(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
