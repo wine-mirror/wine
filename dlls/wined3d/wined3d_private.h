@@ -201,6 +201,13 @@ extern const GLenum magLookup[WINED3D_TEXF_LINEAR + 1] DECLSPEC_HIDDEN;
 
 GLenum wined3d_gl_compare_func(enum wined3d_cmp_func f) DECLSPEC_HIDDEN;
 
+static inline enum wined3d_cmp_func wined3d_sanitize_cmp_func(enum wined3d_cmp_func func)
+{
+    if (func < WINED3D_CMP_NEVER || func > WINED3D_CMP_ALWAYS)
+        return WINED3D_CMP_ALWAYS;
+    return func;
+}
+
 static inline GLenum wined3d_gl_mag_filter(enum wined3d_texture_filter_type mag_filter)
 {
     return magLookup[mag_filter];
@@ -330,16 +337,17 @@ enum wined3d_shader_resource_type
 #define WINED3D_SHADER_CONST_PS_B            0x00000080
 #define WINED3D_SHADER_CONST_PS_BUMP_ENV     0x00000100
 #define WINED3D_SHADER_CONST_PS_FOG          0x00000200
-#define WINED3D_SHADER_CONST_PS_Y_CORR       0x00000400
-#define WINED3D_SHADER_CONST_PS_NP2_FIXUP    0x00000800
-#define WINED3D_SHADER_CONST_FFP_MODELVIEW   0x00001000
-#define WINED3D_SHADER_CONST_FFP_VERTEXBLEND 0x00002000
-#define WINED3D_SHADER_CONST_FFP_PROJ        0x00004000
-#define WINED3D_SHADER_CONST_FFP_TEXMATRIX   0x00008000
-#define WINED3D_SHADER_CONST_FFP_MATERIAL    0x00010000
-#define WINED3D_SHADER_CONST_FFP_LIGHTS      0x00020000
-#define WINED3D_SHADER_CONST_FFP_PS          0x00040000
-#define WINED3D_SHADER_CONST_FFP_COLOR_KEY   0x00080000
+#define WINED3D_SHADER_CONST_PS_ALPHA_TEST   0x00000400
+#define WINED3D_SHADER_CONST_PS_Y_CORR       0x00000800
+#define WINED3D_SHADER_CONST_PS_NP2_FIXUP    0x00001000
+#define WINED3D_SHADER_CONST_FFP_MODELVIEW   0x00002000
+#define WINED3D_SHADER_CONST_FFP_VERTEXBLEND 0x00004000
+#define WINED3D_SHADER_CONST_FFP_PROJ        0x00008000
+#define WINED3D_SHADER_CONST_FFP_TEXMATRIX   0x00010000
+#define WINED3D_SHADER_CONST_FFP_MATERIAL    0x00020000
+#define WINED3D_SHADER_CONST_FFP_LIGHTS      0x00040000
+#define WINED3D_SHADER_CONST_FFP_PS          0x00080000
+#define WINED3D_SHADER_CONST_FFP_COLOR_KEY   0x00100000
 
 enum wined3d_shader_register_type
 {
@@ -1018,8 +1026,10 @@ struct ps_compile_args {
     WORD                        np2_fixup;
     WORD shadow; /* MAX_FRAGMENT_SAMPLERS, 16 */
     WORD texcoords_initialized; /* MAX_TEXTURES, 8 */
-    BOOL pointsprite;
-    BOOL flatshading;
+    DWORD pointsprite : 1;
+    DWORD flatshading : 1;
+    DWORD alpha_test_func : 3;
+    DWORD padding : 27;
 };
 
 enum fog_src_type {
@@ -2087,7 +2097,8 @@ struct ffp_frag_settings
     unsigned char color_key_enabled : 1;
     unsigned char pointsprite : 1;
     unsigned char flatshading : 1;
-    unsigned char padding : 5;
+    unsigned char alpha_test_func : 3;
+    unsigned char padding : 2;
 };
 
 struct ffp_frag_desc

@@ -2682,7 +2682,7 @@ void find_vs_compile_args(const struct wined3d_state *state, const struct wined3
     if (d3d_info->emulated_flatshading)
         args->flatshading = state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
     else
-        args->flatshading = FALSE;
+        args->flatshading = 0;
 }
 
 static BOOL match_usage(BYTE usage1, BYTE usage_idx1, BYTE usage2, BYTE usage_idx2)
@@ -3104,6 +3104,13 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
 
     args->pointsprite = state->render_states[WINED3D_RS_POINTSPRITEENABLE]
             && state->gl_primitive_type == GL_POINTS;
+
+    if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+        args->alpha_test_func = WINED3D_CMP_ALWAYS - 1;
+    else
+        args->alpha_test_func = (state->render_states[WINED3D_RS_ALPHATESTENABLE]
+                ? wined3d_sanitize_cmp_func(state->render_states[WINED3D_RS_ALPHAFUNC])
+                : WINED3D_CMP_ALWAYS) - 1;
 
     if (d3d_info->emulated_flatshading)
         args->flatshading = state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
