@@ -1300,7 +1300,7 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
                             if (file != INVALID_HANDLE_VALUE)
                             {
                                 CloseHandle(file);
-                                if (FAILED(hr = d3drm_texture_create(&texture_object)))
+                                if (FAILED(hr = d3drm_texture_create(&texture_object, NULL)))
                                 {
                                     IDirectXFileData_Release(data);
                                     goto end;

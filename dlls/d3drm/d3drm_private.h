@@ -40,6 +40,7 @@ struct d3drm_texture
     IDirect3DRMTexture IDirect3DRMTexture_iface;
     IDirect3DRMTexture2 IDirect3DRMTexture2_iface;
     IDirect3DRMTexture3 IDirect3DRMTexture3_iface;
+    IDirect3DRM *d3drm;
 };
 
 void d3drm_object_init(struct d3drm_object *object) DECLSPEC_HIDDEN;
@@ -48,7 +49,7 @@ HRESULT d3drm_object_delete_destroy_callback(struct d3drm_object *object, D3DRMO
 void d3drm_object_cleanup(IDirect3DRMObject *iface, struct d3drm_object *object) DECLSPEC_HIDDEN;
 
 HRESULT d3drm_device_create(struct d3drm_device **out) DECLSPEC_HIDDEN;
-HRESULT d3drm_texture_create(struct d3drm_texture **texture) DECLSPEC_HIDDEN;
+HRESULT d3drm_texture_create(struct d3drm_texture **texture, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 IDirect3DRMDevice *IDirect3DRMDevice_from_impl(struct d3drm_device *device) DECLSPEC_HIDDEN;
 IDirect3DRMDevice2 *IDirect3DRMDevice2_from_impl(struct d3drm_device *device) DECLSPEC_HIDDEN;
 IDirect3DRMDevice3 *IDirect3DRMDevice3_from_impl(struct d3drm_device *device) DECLSPEC_HIDDEN;
