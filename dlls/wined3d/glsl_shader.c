@@ -7447,7 +7447,9 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
 
             if (!(context->shader_update_mask & (1u << WINED3D_SHADER_TYPE_GEOMETRY))
                     && ctx_data->glsl_program->gs.id)
+            {
                 gs_id = ctx_data->glsl_program->gs.id;
+            }
             else if (gshader)
             {
                 struct gs_compile_args args;
@@ -7462,12 +7464,18 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         struct vs_compile_args vs_compile_args;
 
         vshader = state->shader[WINED3D_SHADER_TYPE_VERTEX];
+        gshader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY];
 
         find_vs_compile_args(state, vshader, context->stream_info.swizzle_map, &vs_compile_args, d3d_info);
         vs_id = find_glsl_vshader(context, priv, vshader, &vs_compile_args);
         vs_list = &vshader->linked_programs;
 
-        if ((gshader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY]))
+        if (!(context->shader_update_mask & (1u << WINED3D_SHADER_TYPE_GEOMETRY))
+                && ctx_data->glsl_program->gs.id)
+        {
+            gs_id = ctx_data->glsl_program->gs.id;
+        }
+        else if (gshader)
         {
             struct gs_compile_args gs_compile_args;
 
