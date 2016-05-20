@@ -49,7 +49,24 @@ static void d3drm_texture_destroy(struct d3drm_texture *texture)
     TRACE("texture %p is being destroyed.\n", texture);
 
     d3drm_object_cleanup((IDirect3DRMObject*)&texture->IDirect3DRMTexture3_iface, &texture->obj);
+    if (texture->image)
+        IDirect3DRM_Release(texture->d3drm);
     HeapFree(GetProcessHeap(), 0, texture);
+}
+
+static BOOL d3drm_validate_image(D3DRMIMAGE *image)
+{
+    if (!image
+            || !image->red_mask
+            || !image->green_mask
+            || !image->blue_mask
+            || !image->buffer1
+            || !(image->rgb || (image->palette && image->palette_size)))
+    {
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 static HRESULT WINAPI d3drm_texture1_QueryInterface(IDirect3DRMTexture *iface, REFIID riid, void **out)
@@ -620,9 +637,11 @@ static D3DCOLOR WINAPI d3drm_texture2_GetDecalTransparentColor(IDirect3DRMTextur
 
 static HRESULT WINAPI d3drm_texture2_InitFromImage(IDirect3DRMTexture2 *iface, D3DRMIMAGE *image)
 {
-    FIXME("iface %p, image %p stub!\n", iface, image);
+    struct d3drm_texture *texture = impl_from_IDirect3DRMTexture2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, image %p.\n", iface, image);
+
+    return IDirect3DRMTexture3_InitFromImage(&texture->IDirect3DRMTexture3_iface, image);
 }
 
 static HRESULT WINAPI d3drm_texture2_InitFromResource2(IDirect3DRMTexture2 *iface,
@@ -947,9 +966,22 @@ static D3DCOLOR WINAPI d3drm_texture3_GetDecalTransparentColor(IDirect3DRMTextur
 
 static HRESULT WINAPI d3drm_texture3_InitFromImage(IDirect3DRMTexture3 *iface, D3DRMIMAGE *image)
 {
-    FIXME("iface %p, image %p stub!\n", iface, image);
+    struct d3drm_texture *texture = impl_from_IDirect3DRMTexture3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, image %p.\n", iface, image);
+
+    if (!d3drm_validate_image(image))
+        return D3DRMERR_BADOBJECT;
+
+    /* d3drm intentionally leaks a reference to IDirect3DRM here if texture has already been initialized. */
+    IDirect3DRM_AddRef(texture->d3drm);
+
+    if (texture->image)
+        return D3DRMERR_BADOBJECT;
+
+    texture->image = image;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm_texture3_InitFromResource2(IDirect3DRMTexture3 *iface,

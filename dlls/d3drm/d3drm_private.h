@@ -41,6 +41,7 @@ struct d3drm_texture
     IDirect3DRMTexture2 IDirect3DRMTexture2_iface;
     IDirect3DRMTexture3 IDirect3DRMTexture3_iface;
     IDirect3DRM *d3drm;
+    D3DRMIMAGE *image;
 };
 
 void d3drm_object_init(struct d3drm_object *object) DECLSPEC_HIDDEN;
