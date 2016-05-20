@@ -14,7 +14,7 @@
 @ stub BluetoothFindDeviceClose
 @ stub BluetoothFindFirstBrowseGroup
 @ stub BluetoothFindFirstClassId
-@ stub BluetoothFindFirstDevice
+@ stdcall BluetoothFindFirstDevice(ptr ptr)
 @ stub BluetoothFindFirstProfileDescriptor
 @ stub BluetoothFindFirstProtocolDescriptorStack
 @ stub BluetoothFindFirstProtocolEntry

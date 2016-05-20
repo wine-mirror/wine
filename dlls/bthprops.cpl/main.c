@@ -32,6 +32,17 @@
 WINE_DEFAULT_DEBUG_CHANNEL(bthpropscpl);
 
 /*********************************************************************
+ *  BluetoothFindFirstDevice
+ */
+HBLUETOOTH_DEVICE_FIND WINAPI BluetoothFindFirstDevice(BLUETOOTH_DEVICE_SEARCH_PARAMS *params,
+                                                       BLUETOOTH_DEVICE_INFO *info)
+{
+    FIXME("(%p %p): stub!\n", params, info);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
+}
+
+/*********************************************************************
  *  BluetoothFindFirstRadio
  */
 HBLUETOOTH_RADIO_FIND WINAPI BluetoothFindFirstRadio(BLUETOOTH_FIND_RADIO_PARAMS *params, HANDLE *radio)
