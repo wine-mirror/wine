@@ -122,6 +122,8 @@ static VOID SYSLINK_FreeDocItem (PDOC_ITEM DocItem)
         Free(DocItem->u.Link.szUrl);
     }
 
+    Free(DocItem->Blocks);
+
     /* we don't free Text because it's just a pointer to a character in the
        entire window text string */
 
