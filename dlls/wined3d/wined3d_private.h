@@ -1044,9 +1044,15 @@ struct vs_compile_args
     BYTE point_size : 1;
     BYTE per_vertex_point_size : 1;
     BYTE flatshading : 1;
-    BYTE padding : 4;
+    BYTE next_shader_type : 3;
+    BYTE padding : 1;
     WORD swizzle_map;   /* MAX_ATTRIBS, 16 */
     unsigned int next_shader_input_count;
+};
+
+struct gs_compile_args
+{
+    unsigned int ps_input_count;
 };
 
 struct wined3d_context;
@@ -3295,6 +3301,9 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
 void find_vs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
         WORD swizzle_map, struct vs_compile_args *args,
         const struct wined3d_d3d_info *d3d_info) DECLSPEC_HIDDEN;
+
+void find_gs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
+        struct gs_compile_args *args) DECLSPEC_HIDDEN;
 
 void string_buffer_clear(struct wined3d_string_buffer *buffer) DECLSPEC_HIDDEN;
 BOOL string_buffer_init(struct wined3d_string_buffer *buffer) DECLSPEC_HIDDEN;

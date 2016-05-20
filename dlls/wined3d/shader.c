@@ -2678,6 +2678,9 @@ void find_vs_compile_args(const struct wined3d_state *state, const struct wined3
             && state->render_states[WINED3D_RS_CLIPPLANEENABLE];
     args->point_size = state->gl_primitive_type == GL_POINTS;
     args->per_vertex_point_size = shader->reg_maps.point_size;
+    args->next_shader_type = state->shader[WINED3D_SHADER_TYPE_HULL] ? WINED3D_SHADER_TYPE_HULL
+            : state->shader[WINED3D_SHADER_TYPE_GEOMETRY] ? WINED3D_SHADER_TYPE_GEOMETRY
+            : WINED3D_SHADER_TYPE_PIXEL;
     if (shader->reg_maps.shader_version.major >= 4)
         args->next_shader_input_count = state->shader[WINED3D_SHADER_TYPE_HULL]
                 ? state->shader[WINED3D_SHADER_TYPE_HULL]->limits->packed_input
@@ -2899,6 +2902,13 @@ static HRESULT geometry_shader_init(struct wined3d_shader *shader, struct wined3
     shader->load_local_constsF = shader->lconst_inf_or_nan;
 
     return WINED3D_OK;
+}
+
+void find_gs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
+        struct gs_compile_args *args)
+{
+    args->ps_input_count = state->shader[WINED3D_SHADER_TYPE_PIXEL]
+            ? state->shader[WINED3D_SHADER_TYPE_PIXEL]->limits->packed_input : 0;
 }
 
 void find_ps_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
