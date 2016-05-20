@@ -3139,7 +3139,8 @@ static HRESULT pixel_shader_init(struct wined3d_shader *shader, struct wined3d_d
     /* Don't do any register mapping magic if it is not needed, or if we can't
      * achieve anything anyway */
     if (highest_reg_used < (gl_info->limits.glsl_varyings / 4)
-            || num_regs_used > (gl_info->limits.glsl_varyings / 4))
+            || num_regs_used > (gl_info->limits.glsl_varyings / 4)
+            || shader->reg_maps.shader_version.major >= 4)
     {
         if (num_regs_used > (gl_info->limits.glsl_varyings / 4))
         {

@@ -5152,7 +5152,7 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const struc
     HeapFree(GetProcessHeap(), 0, entry);
 }
 
-static void shader_glsl_setup_shader_output(struct shader_glsl_priv *priv,
+static void shader_glsl_setup_vs3_output(struct shader_glsl_priv *priv,
         const struct wined3d_gl_info *gl_info, const DWORD *map,
         const struct wined3d_shader_signature *input_signature,
         const struct wined3d_shader_reg_maps *reg_maps_in,
@@ -5256,6 +5256,33 @@ static void shader_glsl_setup_shader_output(struct shader_glsl_priv *priv,
     string_buffer_release(&priv->string_buffers, destination);
 }
 
+static void shader_glsl_setup_sm4_shader_output(struct shader_glsl_priv *priv,
+        const struct wined3d_shader_signature *output_signature,
+        const struct wined3d_shader_reg_maps *reg_maps_out, const char *out_array_name)
+{
+    struct wined3d_string_buffer *destination = string_buffer_get(&priv->string_buffers);
+    struct wined3d_string_buffer *buffer = &priv->shader_buffer;
+    char reg_mask[6];
+    unsigned int i;
+
+    for (i = 0; i < output_signature->element_count; ++i)
+    {
+        const struct wined3d_shader_signature_element *output = &output_signature->elements[i];
+
+        if (!(reg_maps_out->output_registers & (1u << output->register_idx)))
+            continue;
+
+        string_buffer_sprintf(destination, "%s[%u]", out_array_name, output->register_idx);
+
+        shader_glsl_write_mask_to_str(output->mask, reg_mask);
+
+        shader_addline(buffer, "%s%s = shader_out[%u]%s;\n",
+                destination->buffer, reg_mask, output->register_idx, reg_mask);
+    }
+
+    string_buffer_release(&priv->string_buffers, destination);
+}
+
 static void shader_glsl_setup_sm3_rasterizer_input(struct shader_glsl_priv *priv,
         const struct wined3d_gl_info *gl_info, const DWORD *map,
         const struct wined3d_shader_signature *input_signature,
@@ -5294,8 +5321,11 @@ static void shader_glsl_setup_sm3_rasterizer_input(struct shader_glsl_priv *priv
     }
 
     /* Then, setup the pixel shader input. */
-    shader_glsl_setup_shader_output(priv, gl_info, map, input_signature, reg_maps_in,
-            output_signature, reg_maps_out, "ps_link");
+    if (reg_maps_out->shader_version.major < 4)
+        shader_glsl_setup_vs3_output(priv, gl_info, map, input_signature, reg_maps_in,
+                output_signature, reg_maps_out, "ps_link");
+    else
+        shader_glsl_setup_sm4_shader_output(priv, output_signature, reg_maps_out, "ps_link");
 }
 
 /* Context activation is done by the caller. */
