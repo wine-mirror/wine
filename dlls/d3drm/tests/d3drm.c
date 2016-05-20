@@ -1884,8 +1884,8 @@ static void test_Texture(void)
     ok(!strcmp(cname, "test"), "Expected cname to be \"test\", but got \"%s\"\n", cname);
 
     d3drm_img = IDirect3DRMTexture_GetImage(texture1);
-    todo_wine ok(!!d3drm_img, "Failed to get image.\n");
-    todo_wine ok(d3drm_img == &initimg, "Expected image returned == %p, got %p.\n", &initimg, d3drm_img);
+    ok(!!d3drm_img, "Failed to get image.\n");
+    ok(d3drm_img == &initimg, "Expected image returned == %p, got %p.\n", &initimg, d3drm_img);
 
     size = sizeof(cname);
     hr = IDirect3DRMTexture_GetClassName(texture1, &size, cname);
@@ -1908,8 +1908,8 @@ static void test_Texture(void)
 
     d3drm_img = NULL;
     d3drm_img = IDirect3DRMTexture2_GetImage(texture2);
-    todo_wine ok(!!d3drm_img, "Failed to get image.\n");
-    todo_wine ok(d3drm_img == &initimg, "Expected image returned == %p, got %p.\n", &initimg, d3drm_img);
+    ok(!!d3drm_img, "Failed to get image.\n");
+    ok(d3drm_img == &initimg, "Expected image returned == %p, got %p.\n", &initimg, d3drm_img);
 
     size = sizeof(cname);
     hr = IDirect3DRMTexture2_GetClassName(texture2, &size, cname);
@@ -1932,8 +1932,8 @@ static void test_Texture(void)
 
     d3drm_img = NULL;
     d3drm_img = IDirect3DRMTexture3_GetImage(texture3);
-    todo_wine ok(!!d3drm_img, "Failed to get image.\n");
-    todo_wine ok(d3drm_img == &initimg, "Expected image returned == %p, got %p.\n", &initimg, d3drm_img);
+    ok(!!d3drm_img, "Failed to get image.\n");
+    ok(d3drm_img == &initimg, "Expected image returned == %p, got %p.\n", &initimg, d3drm_img);
 
     size = sizeof(cname);
     hr = IDirect3DRMTexture3_GetClassName(texture3, &size, cname);
@@ -2053,8 +2053,8 @@ static void test_Texture(void)
     IDirect3DRM_Release(d3drm1);
 
     d3drm_img = IDirect3DRMTexture2_GetImage(texture2);
-    todo_wine ok(!!d3drm_img, "Failed to get image.\n");
-    todo_wine ok(d3drm_img == &initimg, "Expected image returned == %p, got %p.\n", &initimg, d3drm_img);
+    ok(!!d3drm_img, "Failed to get image.\n");
+    ok(d3drm_img == &initimg, "Expected image returned == %p, got %p.\n", &initimg, d3drm_img);
     IDirect3DRMTexture2_Release(texture2);
     ref2 = get_refcount((IUnknown *)d3drm1);
     ok(ref2 == ref1, "expected ref2 == ref1, got ref1 = %u, ref2 = %u.\n", ref1, ref2);
@@ -2078,8 +2078,8 @@ static void test_Texture(void)
     IDirect3DRM_Release(d3drm1);
 
     d3drm_img = IDirect3DRMTexture3_GetImage(texture3);
-    todo_wine ok(!!d3drm_img, "Failed to get image.\n");
-    todo_wine ok(d3drm_img == &initimg, "Expected image returned == %p, got %p.\n", &initimg, d3drm_img);
+    ok(!!d3drm_img, "Failed to get image.\n");
+    ok(d3drm_img == &initimg, "Expected image returned == %p, got %p.\n", &initimg, d3drm_img);
     IDirect3DRMTexture3_Release(texture3);
     ref2 = get_refcount((IUnknown *)d3drm1);
     ok(ref2 == ref1, "expected ref2 == ref1, got ref1 = %u, ref2 = %u.\n", ref1, ref2);

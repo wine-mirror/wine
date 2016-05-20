@@ -924,9 +924,11 @@ static HRESULT WINAPI d3drm_texture3_GetDecalOrigin(IDirect3DRMTexture3 *iface, 
 
 static D3DRMIMAGE * WINAPI d3drm_texture3_GetImage(IDirect3DRMTexture3 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3drm_texture *texture = impl_from_IDirect3DRMTexture3(iface);
 
-    return NULL;
+    TRACE("iface %p.\n", iface);
+
+    return texture->image;
 }
 
 static DWORD WINAPI d3drm_texture3_GetShades(IDirect3DRMTexture3 *iface)
