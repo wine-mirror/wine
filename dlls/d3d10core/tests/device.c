@@ -88,6 +88,30 @@ static BOOL compare_color(DWORD c1, DWORD c2, BYTE max_diff)
     return TRUE;
 }
 
+#define create_buffer(a, b, c, d) create_buffer_(__LINE__, a, b, c, d)
+static ID3D10Buffer *create_buffer_(unsigned int line, ID3D10Device *device,
+        unsigned int bind_flags, unsigned int size, const void *data)
+{
+    D3D10_SUBRESOURCE_DATA resource_data;
+    D3D10_BUFFER_DESC buffer_desc;
+    ID3D10Buffer *buffer;
+    HRESULT hr;
+
+    buffer_desc.ByteWidth = size;
+    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
+    buffer_desc.BindFlags = bind_flags;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+
+    resource_data.pSysMem = data;
+    resource_data.SysMemPitch = 0;
+    resource_data.SysMemSlicePitch = 0;
+
+    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, data ? &resource_data : NULL, &buffer);
+    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    return buffer;
+}
+
 struct texture_readback
 {
     ID3D10Texture2D *texture;
@@ -459,8 +483,6 @@ static void draw_quad_(unsigned int line, struct d3d10core_test_context *context
     };
 
     ID3D10Device *device = context->device;
-    D3D10_SUBRESOURCE_DATA resource_data;
-    D3D10_BUFFER_DESC buffer_desc;
     unsigned int stride, offset;
     HRESULT hr;
 
@@ -471,18 +493,7 @@ static void draw_quad_(unsigned int line, struct d3d10core_test_context *context
                 default_vs_code, sizeof(default_vs_code), &context->input_layout);
         ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
-        buffer_desc.ByteWidth = sizeof(quad);
-        buffer_desc.Usage = D3D10_USAGE_DEFAULT;
-        buffer_desc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
-        buffer_desc.CPUAccessFlags = 0;
-        buffer_desc.MiscFlags = 0;
-
-        resource_data.pSysMem = quad;
-        resource_data.SysMemPitch = 0;
-        resource_data.SysMemSlicePitch = 0;
-
-        hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &resource_data, &context->vb);
-        ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
+        context->vb = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(quad), quad);
 
         hr = ID3D10Device_CreateVertexShader(device, default_vs_code, sizeof(default_vs_code), &context->vs);
         ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
@@ -520,7 +531,6 @@ static void draw_color_quad_(unsigned int line, struct d3d10core_test_context *c
     };
 
     ID3D10Device *device = context->device;
-    D3D10_BUFFER_DESC buffer_desc;
     HRESULT hr;
 
     if (!context->ps)
@@ -530,16 +540,7 @@ static void draw_color_quad_(unsigned int line, struct d3d10core_test_context *c
     }
 
     if (!context->ps_cb)
-    {
-        buffer_desc.ByteWidth = sizeof(*color);
-        buffer_desc.Usage = D3D10_USAGE_DEFAULT;
-        buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
-        buffer_desc.CPUAccessFlags = 0;
-        buffer_desc.MiscFlags = 0;
-
-        hr = ID3D10Device_CreateBuffer(device, &buffer_desc, NULL, &context->ps_cb);
-        ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create constant buffer, hr %#x.\n", hr);
-    }
+        context->ps_cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(*color), NULL);
 
     ID3D10Device_PSSetShader(device, context->ps);
     ID3D10Device_PSSetConstantBuffers(device, 0, 1, &context->ps_cb);
@@ -1148,15 +1149,7 @@ static void test_buffer_interfaces(void)
         return;
     }
 
-    desc.ByteWidth = 1024;
-    desc.Usage = D3D10_USAGE_DEFAULT;
-    desc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
-    desc.CPUAccessFlags = 0;
-    desc.MiscFlags = 0;
-
-    hr = ID3D10Device_CreateBuffer(device, &desc, NULL, &buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
-
+    buffer = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, 1024, NULL);
     hr = ID3D10Buffer_QueryInterface(buffer, &IID_ID3D11Buffer, (void **)&d3d11_buffer);
     ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
             "Buffer should implement ID3D11Buffer.\n");
@@ -1661,7 +1654,6 @@ static void test_create_shader_resource_view(void)
     D3D10_TEXTURE2D_DESC texture_desc;
     ULONG refcount, expected_refcount;
     ID3D10ShaderResourceView *srview;
-    D3D10_BUFFER_DESC buffer_desc;
     ID3D10Device *device, *tmp;
     ID3D10Texture2D *texture;
     ID3D10Buffer *buffer;
@@ -1674,14 +1666,7 @@ static void test_create_shader_resource_view(void)
         return;
     }
 
-    buffer_desc.ByteWidth = 1024;
-    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
-    buffer_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
-    buffer_desc.CPUAccessFlags = 0;
-    buffer_desc.MiscFlags = 0;
-
-    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x\n", hr);
+    buffer = create_buffer(device, D3D10_BIND_SHADER_RESOURCE, 1024, NULL);
 
     hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)buffer, NULL, &srview);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
@@ -2919,7 +2904,6 @@ float4 main(float4 color : COLOR) : SV_TARGET
     D3D10_QUERY_DESC predicate_desc;
     ID3D10PixelShader *tmp_ps, *ps;
     D3D10_RASTERIZER_DESC rs_desc;
-    D3D10_BUFFER_DESC buffer_desc;
     D3D10_BLEND_DESC blend_desc;
     ID3D10Texture2D *ds_texture;
     float tmp_blend_factor[4];
@@ -3068,36 +3052,21 @@ float4 main(float4 color : COLOR) : SV_TARGET
 
     /* Create resources. */
 
-    buffer_desc.ByteWidth = 1024;
-    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
-    buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
-    buffer_desc.CPUAccessFlags = 0;
-    buffer_desc.MiscFlags = 0;
-
     for (i = 0; i < D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
-    {
-        hr = ID3D10Device_CreateBuffer(device, &buffer_desc, NULL, &cb[i]);
-        ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
-    }
-
-    buffer_desc.BindFlags = D3D10_BIND_VERTEX_BUFFER | D3D10_BIND_INDEX_BUFFER | D3D10_BIND_SHADER_RESOURCE;
+        cb[i] = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, 1024, NULL);
 
     for (i = 0; i < D3D10_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT; ++i)
     {
-        hr = ID3D10Device_CreateBuffer(device, &buffer_desc, NULL, &buffer[i]);
-        ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+        buffer[i] = create_buffer(device,
+                D3D10_BIND_VERTEX_BUFFER | D3D10_BIND_INDEX_BUFFER | D3D10_BIND_SHADER_RESOURCE,
+                1024, NULL);
 
         stride[i] = (i + 1) * 4;
         offset[i] = (i + 1) * 16;
     }
 
-    buffer_desc.BindFlags = D3D10_BIND_STREAM_OUTPUT;
-
     for (i = 0; i < D3D10_SO_BUFFER_SLOT_COUNT; ++i)
-    {
-        hr = ID3D10Device_CreateBuffer(device, &buffer_desc, NULL, &so_buffer[i]);
-        ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
-    }
+        so_buffer[i] = create_buffer(device, D3D10_BIND_STREAM_OUTPUT, 1024, NULL);
 
     srv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
     srv_desc.ViewDimension = D3D10_SRV_DIMENSION_BUFFER;
@@ -3683,10 +3652,8 @@ static void test_blend(void)
     struct d3d10core_test_context test_context;
     ID3D10BlendState *src_blend, *dst_blend;
     ID3D10RenderTargetView *offscreen_rtv;
-    D3D10_SUBRESOURCE_DATA buffer_data;
     D3D10_TEXTURE2D_DESC texture_desc;
     ID3D10InputLayout *input_layout;
-    D3D10_BUFFER_DESC buffer_desc;
     D3D10_BLEND_DESC blend_desc;
     unsigned int stride, offset;
     ID3D10Texture2D *offscreen;
@@ -3786,18 +3753,7 @@ static void test_blend(void)
             vs_code, sizeof(vs_code), &input_layout);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
-    buffer_desc.ByteWidth = sizeof(quads);
-    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
-    buffer_desc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
-    buffer_desc.CPUAccessFlags = 0;
-    buffer_desc.MiscFlags = 0;
-
-    buffer_data.pSysMem = quads;
-    buffer_data.SysMemPitch = 0;
-    buffer_data.SysMemSlicePitch = 0;
-
-    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &buffer_data, &vb);
-    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
+    vb = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(quads), quads);
     hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &vs);
     ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
     hr = ID3D10Device_CreatePixelShader(device, ps_code, sizeof(ps_code), &ps);
@@ -3923,7 +3879,6 @@ static void test_texture(void)
     D3D10_SAMPLER_DESC sampler_desc;
     const struct shader *current_ps;
     ID3D10ShaderResourceView *srv;
-    D3D10_BUFFER_DESC buffer_desc;
     ID3D10SamplerState *sampler;
     struct texture_readback rb;
     ID3D10Texture2D *texture;
@@ -4462,14 +4417,7 @@ static void test_texture(void)
 
     device = test_context.device;
 
-    buffer_desc.ByteWidth = sizeof(ps_constant);
-    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
-    buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
-    buffer_desc.CPUAccessFlags = 0;
-    buffer_desc.MiscFlags = 0;
-
-    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, NULL, &cb);
-    ok(SUCCEEDED(hr), "Failed to create constant buffer, hr %#x.\n", hr);
+    cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(ps_constant), NULL);
 
     ID3D10Device_PSSetConstantBuffers(device, 0, 1, &cb);
 
@@ -4600,12 +4548,10 @@ static void test_texture(void)
 
 static void test_multiple_render_targets(void)
 {
-    D3D10_SUBRESOURCE_DATA resource_data;
     D3D10_TEXTURE2D_DESC texture_desc;
     ID3D10InputLayout *input_layout;
     unsigned int stride, offset, i;
     ID3D10RenderTargetView *rtv[4];
-    D3D10_BUFFER_DESC buffer_desc;
     ID3D10Texture2D *rt[4];
     ID3D10VertexShader *vs;
     ID3D10PixelShader *ps;
@@ -4694,18 +4640,7 @@ static void test_multiple_render_targets(void)
             vs_code, sizeof(vs_code), &input_layout);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
-    buffer_desc.ByteWidth = sizeof(quad);
-    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
-    buffer_desc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
-    buffer_desc.CPUAccessFlags = 0;
-    buffer_desc.MiscFlags = 0;
-
-    resource_data.pSysMem = quad;
-    resource_data.SysMemPitch = 0;
-    resource_data.SysMemSlicePitch = 0;
-
-    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &resource_data, &vb);
-    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
+    vb = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(quad), quad);
 
     texture_desc.Width = 640;
     texture_desc.Height = 480;
@@ -4977,9 +4912,7 @@ static void test_private_data(void)
 static void test_il_append_aligned(void)
 {
     struct d3d10core_test_context test_context;
-    D3D10_SUBRESOURCE_DATA resource_data;
     ID3D10InputLayout *input_layout;
-    D3D10_BUFFER_DESC buffer_desc;
     unsigned int stride, offset;
     ID3D10VertexShader *vs;
     ID3D10PixelShader *ps;
@@ -5118,30 +5051,9 @@ static void test_il_append_aligned(void)
             vs_code, sizeof(vs_code), &input_layout);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
-    buffer_desc.ByteWidth = sizeof(stream0);
-    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
-    buffer_desc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
-    buffer_desc.CPUAccessFlags = 0;
-    buffer_desc.MiscFlags = 0;
-
-    resource_data.pSysMem = stream0;
-    resource_data.SysMemPitch = 0;
-    resource_data.SysMemSlicePitch = 0;
-
-    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &resource_data, &vb[0]);
-    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
-
-    buffer_desc.ByteWidth = sizeof(stream1);
-    resource_data.pSysMem = stream1;
-
-    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &resource_data, &vb[1]);
-    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
-
-    buffer_desc.ByteWidth = sizeof(stream2);
-    resource_data.pSysMem = stream2;
-
-    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &resource_data, &vb[2]);
-    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
+    vb[0] = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(stream0), stream0);
+    vb[1] = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(stream1), stream1);
+    vb[2] = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(stream2), stream2);
 
     hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &vs);
     ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
@@ -5185,9 +5097,7 @@ static void test_il_append_aligned(void)
 static void test_fragment_coords(void)
 {
     struct d3d10core_test_context test_context;
-    D3D10_SUBRESOURCE_DATA resource_data;
     ID3D10PixelShader *ps, *ps_frac;
-    D3D10_BUFFER_DESC buffer_desc;
     ID3D10Device *device;
     ID3D10Buffer *ps_cb;
     DWORD color;
@@ -5247,18 +5157,7 @@ static void test_fragment_coords(void)
 
     device = test_context.device;
 
-    buffer_desc.ByteWidth = sizeof(cutoff);
-    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
-    buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
-    buffer_desc.CPUAccessFlags = 0;
-    buffer_desc.MiscFlags = 0;
-
-    resource_data.pSysMem = &cutoff;
-    resource_data.SysMemPitch = 0;
-    resource_data.SysMemSlicePitch = 0;
-
-    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &resource_data, &ps_cb);
-    ok(SUCCEEDED(hr), "Failed to create constant buffer, hr %#x.\n", hr);
+    ps_cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(cutoff), &cutoff);
 
     hr = ID3D10Device_CreatePixelShader(device, ps_code, sizeof(ps_code), &ps);
     ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
@@ -5284,8 +5183,7 @@ static void test_fragment_coords(void)
     ID3D10Buffer_Release(ps_cb);
     cutoff.x = 16.0f;
     cutoff.y = 16.0f;
-    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &resource_data, &ps_cb);
-    ok(SUCCEEDED(hr), "Failed to create constant buffer, hr %#x.\n", hr);
+    ps_cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(cutoff), &cutoff);
     ID3D10Device_PSSetConstantBuffers(device, 0, 1, &ps_cb);
 
     draw_quad(&test_context);
@@ -5489,7 +5387,6 @@ static void test_copy_subresource_region(void)
     ID3D10SamplerState *sampler_state;
     ID3D10ShaderResourceView *ps_srv;
     D3D10_SAMPLER_DESC sampler_desc;
-    D3D10_BUFFER_DESC buffer_desc;
     struct vec4 float_colors[16];
     struct texture_readback rb;
     ID3D10PixelShader *ps;
@@ -5689,22 +5586,11 @@ static void test_copy_subresource_region(void)
     ID3D10Device_PSSetSamplers(device, 0, 1, &sampler_state);
     ID3D10Device_PSSetShader(device, ps);
 
-    buffer_desc.ByteWidth = sizeof(float_colors);
-    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
-    buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
-    buffer_desc.CPUAccessFlags = 0;
-    buffer_desc.MiscFlags = 0;
-
-    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, NULL, &dst_buffer);
-    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    dst_buffer = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(float_colors), NULL);
 
     ID3D10Device_PSSetConstantBuffers(device, 0, 1, &dst_buffer);
 
-    buffer_desc.ByteWidth = 256 * sizeof(*float_colors);
-    buffer_desc.BindFlags = 0;
-
-    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, NULL, &src_buffer);
-    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    src_buffer = create_buffer(device, 0, 256 * sizeof(*float_colors), NULL);
 
     for (i = 0; i < 4; ++i)
     {
@@ -5932,10 +5818,8 @@ static void test_cb_relative_addressing(void)
 {
     struct d3d10core_test_context test_context;
     ID3D10Buffer *vb, *colors_cb, *index_cb;
-    D3D10_SUBRESOURCE_DATA resource_data;
     ID3D10InputLayout *input_layout;
     unsigned int i, index[4] = {0};
-    D3D10_BUFFER_DESC buffer_desc;
     unsigned int stride, offset;
     ID3D10VertexShader *vs;
     ID3D10PixelShader *ps;
@@ -6071,28 +5955,9 @@ float4 main(const ps_in v) : SV_TARGET
             vs_code, sizeof(vs_code), &input_layout);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
-    buffer_desc.ByteWidth = sizeof(quad);
-    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
-    buffer_desc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
-    buffer_desc.CPUAccessFlags = 0;
-    buffer_desc.MiscFlags = 0;
-
-    resource_data.pSysMem = quad;
-    resource_data.SysMemPitch = 0;
-    resource_data.SysMemSlicePitch = 0;
-
-    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &resource_data, &vb);
-    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
-
-    buffer_desc.ByteWidth = sizeof(colors);
-    buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
-    resource_data.pSysMem = &colors;
-    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &resource_data, &colors_cb);
-    ok(SUCCEEDED(hr), "Failed to create constant buffer, hr %#x.\n", hr);
-
-    buffer_desc.ByteWidth = sizeof(index);
-    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, NULL, &index_cb);
-    ok(SUCCEEDED(hr), "Failed to create constant buffer, hr %#x.\n", hr);
+    vb = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(quad), quad);
+    colors_cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(colors), &colors);
+    index_cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(index), NULL);
 
     hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &vs);
     ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
@@ -6144,8 +6009,6 @@ static void test_swapchain_flip(void)
     ID3D10PixelShader *ps;
     ID3D10InputLayout *input_layout;
     ID3D10Buffer *vb;
-    D3D10_SUBRESOURCE_DATA resource_data;
-    D3D10_BUFFER_DESC buffer_desc;
     unsigned int stride, offset;
     ID3D10Device *device;
     D3D10_VIEWPORT vp;
@@ -6303,18 +6166,7 @@ static void test_swapchain_flip(void)
     vp.MaxDepth = 1.0f;
     ID3D10Device_RSSetViewports(device, 1, &vp);
 
-    buffer_desc.ByteWidth = sizeof(quad);
-    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
-    buffer_desc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
-    buffer_desc.CPUAccessFlags = 0;
-    buffer_desc.MiscFlags = 0;
-
-    resource_data.pSysMem = quad;
-    resource_data.SysMemPitch = 0;
-    resource_data.SysMemSlicePitch = 0;
-
-    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &resource_data, &vb);
-    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
+    vb = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(quad), quad);
 
     hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &vs);
     ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
@@ -6585,7 +6437,6 @@ static void test_draw_depth_only(void)
     struct d3d10core_test_context test_context;
     ID3D10PixelShader *ps_color, *ps_depth;
     D3D10_TEXTURE2D_DESC texture_desc;
-    D3D10_BUFFER_DESC buffer_desc;
     ID3D10DepthStencilView *dsv;
     struct texture_readback rb;
     ID3D10Texture2D *texture;
@@ -6635,14 +6486,7 @@ static void test_draw_depth_only(void)
 
     device = test_context.device;
 
-    buffer_desc.ByteWidth = sizeof(depth);
-    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
-    buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
-    buffer_desc.CPUAccessFlags = 0;
-    buffer_desc.MiscFlags = 0;
-
-    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, NULL, &cb);
-    ok(SUCCEEDED(hr), "Failed to create constant buffer, hr %#x.\n", hr);
+    cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(depth), NULL);
 
     texture_desc.Width = 640;
     texture_desc.Height = 480;
