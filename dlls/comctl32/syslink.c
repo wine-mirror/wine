@@ -38,6 +38,7 @@
 #include "comctl32.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(syslink);
 
@@ -61,7 +62,7 @@ typedef enum
 
 typedef struct _DOC_ITEM
 {
-    struct _DOC_ITEM *Next; /* Address to the next item */
+    struct list entry;
     UINT nText;             /* Number of characters of the text */
     SL_ITEM_TYPE Type;      /* type of the item */
     PDOC_TEXTBLOCK Blocks;  /* Array of text blocks */
@@ -86,7 +87,7 @@ typedef struct
     HWND      Self;         /* The window handle for this control */
     HWND      Notify;       /* The parent handle to receive notifications */
     DWORD     Style;        /* Styles for this control */
-    PDOC_ITEM Items;        /* Address to the first document item */
+    struct list Items;      /* Document items list */
     BOOL      HasFocus;     /* Whether the control has the input focus */
     int       MouseDownID;  /* ID of the link that the mouse button first selected */
     HFONT     Font;         /* Handle to the font for text */
@@ -147,22 +148,15 @@ static PDOC_ITEM SYSLINK_AppendDocItem (SYSLINK_INFO *infoPtr, LPCWSTR Text, UIN
         return NULL;
     }
 
-    Item->Next = NULL;
     Item->nText = textlen;
     Item->Type = type;
     Item->Blocks = NULL;
-    
-    if(LastItem != NULL)
-    {
-        LastItem->Next = Item;
-    }
-    else
-    {
-        infoPtr->Items = Item;
-    }
-    
     lstrcpynW(Item->Text, Text, textlen + 1);
-    
+    if (LastItem)
+        list_add_after(&LastItem->entry, &Item->entry);
+    else
+        list_add_tail(&infoPtr->Items, &Item->entry);
+
     return Item;
 }
 
@@ -172,17 +166,13 @@ static PDOC_ITEM SYSLINK_AppendDocItem (SYSLINK_INFO *infoPtr, LPCWSTR Text, UIN
  */
 static VOID SYSLINK_ClearDoc (SYSLINK_INFO *infoPtr)
 {
-    PDOC_ITEM Item, Next;
-    
-    Item = infoPtr->Items;
-    while(Item != NULL)
+    DOC_ITEM *Item, *Item2;
+
+    LIST_FOR_EACH_ENTRY_SAFE(Item, Item2, &infoPtr->Items, DOC_ITEM, entry)
     {
-        Next = Item->Next;
+        list_remove(&Item->entry);
         SYSLINK_FreeDocItem(Item);
-        Item = Next;
     }
-    
-    infoPtr->Items = NULL;
 }
 
 /***********************************************************************
@@ -526,15 +516,12 @@ static VOID SYSLINK_RepaintLink (const SYSLINK_INFO *infoPtr, const DOC_ITEM *Do
  */
 static PDOC_ITEM SYSLINK_GetLinkItemByIndex (const SYSLINK_INFO *infoPtr, int iLink)
 {
-    PDOC_ITEM Current = infoPtr->Items;
+    DOC_ITEM *Current;
 
-    while(Current != NULL)
+    LIST_FOR_EACH_ENTRY(Current, &infoPtr->Items, DOC_ITEM, entry)
     {
-        if((Current->Type == slLink) && (iLink-- <= 0))
-        {
+        if ((Current->Type == slLink) && (iLink-- <= 0))
             return Current;
-        }
-        Current = Current->Next;
     }
     return NULL;
 }
@@ -545,10 +532,10 @@ static PDOC_ITEM SYSLINK_GetLinkItemByIndex (const SYSLINK_INFO *infoPtr, int iL
  */
 static PDOC_ITEM SYSLINK_GetFocusLink (const SYSLINK_INFO *infoPtr, int *LinkId)
 {
-    PDOC_ITEM Current = infoPtr->Items;
+    DOC_ITEM *Current;
     int id = 0;
 
-    while(Current != NULL)
+    LIST_FOR_EACH_ENTRY(Current, &infoPtr->Items, DOC_ITEM, entry)
     {
         if(Current->Type == slLink)
         {
@@ -560,8 +547,8 @@ static PDOC_ITEM SYSLINK_GetFocusLink (const SYSLINK_INFO *infoPtr, int *LinkId)
             }
             id++;
         }
-        Current = Current->Next;
     }
+
     return NULL;
 }
 
@@ -571,13 +558,13 @@ static PDOC_ITEM SYSLINK_GetFocusLink (const SYSLINK_INFO *infoPtr, int *LinkId)
  */
 static PDOC_ITEM SYSLINK_GetNextLink (const SYSLINK_INFO *infoPtr, PDOC_ITEM Current)
 {
-    for(Current = (Current != NULL ? Current->Next : infoPtr->Items);
-        Current != NULL;
-        Current = Current->Next)
+    DOC_ITEM *Next;
+
+    LIST_FOR_EACH_ENTRY(Next, Current ? &Current->entry : &infoPtr->Items, DOC_ITEM, entry)
     {
-        if(Current->Type == slLink)
+        if (Next->Type == slLink)
         {
-            return Current;
+            return Next;
         }
     }
     return NULL;
@@ -589,38 +576,17 @@ static PDOC_ITEM SYSLINK_GetNextLink (const SYSLINK_INFO *infoPtr, PDOC_ITEM Cur
  */
 static PDOC_ITEM SYSLINK_GetPrevLink (const SYSLINK_INFO *infoPtr, PDOC_ITEM Current)
 {
-    if(Current == NULL)
+    DOC_ITEM *Prev;
+
+    LIST_FOR_EACH_ENTRY_REV(Prev, Current ? &Current->entry : list_tail(&infoPtr->Items), DOC_ITEM, entry)
     {
-        /* returns the last link */
-        PDOC_ITEM Last = NULL;
-        
-        for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
+        if (Prev->Type == slLink)
         {
-            if(Current->Type == slLink)
-            {
-                Last = Current;
-            }
+            return Prev;
         }
-        return Last;
     }
-    else
-    {
-        /* returns the previous link */
-        PDOC_ITEM Cur, Prev = NULL;
-        
-        for(Cur = infoPtr->Items; Cur != NULL; Cur = Cur->Next)
-        {
-            if(Cur == Current)
-            {
-                break;
-            }
-            if(Cur->Type == slLink)
-            {
-                Prev = Cur;
-            }
-        }
-        return Prev;
-    }
+
+    return NULL;
 }
 
 /***********************************************************************
@@ -684,7 +650,7 @@ static VOID SYSLINK_Render (const SYSLINK_INFO *infoPtr, HDC hdc, PRECT pRect)
     GetTextMetricsW( hdc, &tm );
     LineHeight = tm.tmHeight + tm.tmExternalLeading;
 
-    for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
+    LIST_FOR_EACH_ENTRY(Current, &infoPtr->Items, DOC_ITEM, entry)
     {
         int n, nBlocks;
         LPWSTR tx;
@@ -861,7 +827,7 @@ static LRESULT SYSLINK_Draw (const SYSLINK_INFO *infoPtr, HDC hdc)
 
     DeleteObject(hBrush);
 
-    for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
+    LIST_FOR_EACH_ENTRY(Current, &infoPtr->Items, DOC_ITEM, entry)
     {
         int n;
         LPWSTR tx;
@@ -1025,8 +991,8 @@ static LRESULT SYSLINK_SetText (SYSLINK_INFO *infoPtr, LPCWSTR Text)
 static PDOC_ITEM SYSLINK_SetFocusLink (const SYSLINK_INFO *infoPtr, const DOC_ITEM *DocItem)
 {
     PDOC_ITEM Current, PrevFocus = NULL;
-    
-    for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
+
+    LIST_FOR_EACH_ENTRY(Current, &infoPtr->Items, DOC_ITEM, entry)
     {
         if(Current->Type == slLink)
         {
@@ -1234,7 +1200,7 @@ static LRESULT SYSLINK_HitTest (const SYSLINK_INFO *infoPtr, PLHITTESTINFO HitTe
     PDOC_ITEM Current;
     int id = 0;
 
-    for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
+    LIST_FOR_EACH_ENTRY(Current, &infoPtr->Items, DOC_ITEM, entry)
     {
         if(Current->Type == slLink)
         {
@@ -1383,7 +1349,7 @@ static PDOC_ITEM SYSLINK_LinkAtPt (const SYSLINK_INFO *infoPtr, const POINT *pt,
     PDOC_ITEM Current;
     int id = 0;
 
-    for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
+    LIST_FOR_EACH_ENTRY(Current, &infoPtr->Items, DOC_ITEM, entry)
     {
         if((Current->Type == slLink) && SYSLINK_PtInDocItem(Current, *pt) &&
            (!MustBeEnabled || (Current->u.Link.state & LIS_ENABLED)))
@@ -1749,6 +1715,9 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
         return 0;
 
     case WM_CREATE:
+    {
+        CREATESTRUCTW *cs = (CREATESTRUCTW*)lParam;
+
         /* allocate memory for info struct */
         infoPtr = Alloc (sizeof(SYSLINK_INFO));
         if (!infoPtr) return -1;
@@ -1756,11 +1725,11 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
 
         /* initialize the info struct */
         infoPtr->Self = hwnd;
-        infoPtr->Notify = ((LPCREATESTRUCTW)lParam)->hwndParent;
-        infoPtr->Style = ((LPCREATESTRUCTW)lParam)->style;
+        infoPtr->Notify = cs->hwndParent;
+        infoPtr->Style = cs->style;
         infoPtr->Font = 0;
         infoPtr->LinkFont = 0;
-        infoPtr->Items = NULL;
+        list_init(&infoPtr->Items);
         infoPtr->HasFocus = FALSE;
         infoPtr->MouseDownID = -1;
         infoPtr->TextColor = comctl32_color.clrWindowText;
@@ -1769,9 +1738,9 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
         infoPtr->BreakChar = ' ';
         infoPtr->IgnoreReturn = infoPtr->Style & LWS_IGNORERETURN;
         TRACE("SysLink Ctrl creation, hwnd=%p\n", hwnd);
-        SYSLINK_SetText(infoPtr, ((LPCREATESTRUCTW)lParam)->lpszName);
+        SYSLINK_SetText(infoPtr, cs->lpszName);
         return 0;
-
+    }
     case WM_DESTROY:
         TRACE("SysLink Ctrl destruction, hwnd=%p\n", hwnd);
         SYSLINK_ClearDoc(infoPtr);
