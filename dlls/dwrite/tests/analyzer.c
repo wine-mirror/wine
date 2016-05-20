@@ -284,14 +284,22 @@ static HRESULT WINAPI analysissink_SetLineBreakpoints(IDWriteTextAnalysisSink *i
     return S_OK;
 }
 
+#define BIDI_LEVELS_COUNT 10
+static UINT8 g_explicit_levels[BIDI_LEVELS_COUNT];
+static UINT8 g_resolved_levels[BIDI_LEVELS_COUNT];
 static HRESULT WINAPI analysissink_SetBidiLevel(IDWriteTextAnalysisSink *iface,
         UINT32 position,
         UINT32 length,
         UINT8 explicitLevel,
         UINT8 resolvedLevel)
 {
-    ok(0, "unexpected\n");
-    return E_NOTIMPL;
+    if (position + length > BIDI_LEVELS_COUNT) {
+        ok(0, "SetBidiLevel: reported pos=%u, len=%u overflows expected length %d\n", position, length, BIDI_LEVELS_COUNT);
+        return E_FAIL;
+    }
+    memset(g_explicit_levels + position, explicitLevel, length);
+    memset(g_resolved_levels + position, resolvedLevel, length);
+    return S_OK;
 }
 
 static HRESULT WINAPI analysissink_SetNumberSubstitution(IDWriteTextAnalysisSink *iface,
@@ -345,20 +353,32 @@ static ULONG WINAPI analysissource_Release(IDWriteTextAnalysisSource *iface)
     return 1;
 }
 
-static const WCHAR *g_source;
+struct testanalysissource
+{
+    IDWriteTextAnalysisSource IDWriteTextAnalysisSource_iface;
+    const WCHAR *text;
+    DWRITE_READING_DIRECTION direction;
+};
+
+static inline struct testanalysissource *impl_from_IDWriteTextAnalysisSource(IDWriteTextAnalysisSource *iface)
+{
+    return CONTAINING_RECORD(iface, struct testanalysissource, IDWriteTextAnalysisSource_iface);
+}
 
 static HRESULT WINAPI analysissource_GetTextAtPosition(IDWriteTextAnalysisSource *iface,
     UINT32 position, WCHAR const** text, UINT32* text_len)
 {
-    if (position >= lstrlenW(g_source))
+    struct testanalysissource *source = impl_from_IDWriteTextAnalysisSource(iface);
+
+    if (position >= lstrlenW(source->text))
     {
         *text = NULL;
         *text_len = 0;
     }
     else
     {
-        *text = &g_source[position];
-        *text_len = lstrlenW(g_source) - position;
+        *text = source->text + position;
+        *text_len = lstrlenW(source->text) - position;
     }
 
     return S_OK;
@@ -374,8 +394,8 @@ static HRESULT WINAPI analysissource_GetTextBeforePosition(IDWriteTextAnalysisSo
 static DWRITE_READING_DIRECTION WINAPI analysissource_GetParagraphReadingDirection(
     IDWriteTextAnalysisSource *iface)
 {
-    ok(0, "unexpected\n");
-    return DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
+    struct testanalysissource *source = impl_from_IDWriteTextAnalysisSource(iface);
+    return source->direction;
 }
 
 static HRESULT WINAPI analysissource_GetLocaleName(IDWriteTextAnalysisSource *iface,
@@ -404,7 +424,7 @@ static IDWriteTextAnalysisSourceVtbl analysissourcevtbl = {
     analysissource_GetNumberSubstitution
 };
 
-static IDWriteTextAnalysisSource analysissource = { &analysissourcevtbl };
+static struct testanalysissource analysissource = { { &analysissourcevtbl } };
 
 static IDWriteFontFace *create_fontface(void)
 {
@@ -918,12 +938,12 @@ static void get_script_analysis(const WCHAR *str, DWRITE_SCRIPT_ANALYSIS *sa)
     IDWriteTextAnalyzer *analyzer;
     HRESULT hr;
 
-    g_source = str;
-
+    analysissource.text = str;
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &analysissource, 0, lstrlenW(g_source), &analysissink2);
+    hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &analysissource.IDWriteTextAnalysisSource_iface, 0,
+        lstrlenW(analysissource.text), &analysissink2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     *sa = g_sa;
@@ -940,10 +960,11 @@ static void test_AnalyzeScript(void)
 
     while (*ptr->string)
     {
-        g_source = ptr->string;
+        analysissource.text = ptr->string;
 
         init_expected_sa(expected_seq, ptr);
-        hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &analysissource, 0, lstrlenW(g_source), &analysissink);
+        hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &analysissource.IDWriteTextAnalysisSource_iface, 0,
+            lstrlenW(ptr->string), &analysissink);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok_sequence(sequences, ANALYZER_ID, expected_seq[0]->sequence, wine_dbgstr_w(ptr->string), FALSE);
         ptr++;
@@ -1041,16 +1062,17 @@ static void test_AnalyzeLineBreakpoints(void)
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    g_source = emptyW;
-    hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, &analysissource, 0, 0, &analysissink);
+    analysissource.text = emptyW;
+    hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, &analysissource.IDWriteTextAnalysisSource_iface, 0, 0,
+        &analysissink);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     while (*ptr->text)
     {
         UINT32 len;
 
-        g_source = ptr->text;
-        len = lstrlenW(g_source);
+        analysissource.text = ptr->text;
+        len = lstrlenW(ptr->text);
 
         if (len > BREAKPOINT_COUNT) {
             ok(0, "test %u: increase BREAKPOINT_COUNT to at least %u\n", i, len);
@@ -1060,7 +1082,8 @@ static void test_AnalyzeLineBreakpoints(void)
         }
 
         memset(g_actual_bp, 0, sizeof(g_actual_bp));
-        hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, &analysissource, 0, len, &analysissink);
+        hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, &analysissource.IDWriteTextAnalysisSource_iface,
+            0, len, &analysissink);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         compare_breakpoints(ptr, g_actual_bp);
 
@@ -2130,6 +2153,101 @@ static void test_GetGdiCompatibleGlyphPlacements(void)
     IDWriteTextAnalyzer_Release(analyzer);
 }
 
+struct bidi_test
+{
+    const WCHAR text[BIDI_LEVELS_COUNT];
+    DWRITE_READING_DIRECTION direction;
+    UINT8 explicit[BIDI_LEVELS_COUNT];
+    UINT8 resolved[BIDI_LEVELS_COUNT];
+};
+
+static const struct bidi_test bidi_tests[] = {
+    {
+      { 0x645, 0x6cc, 0x200c, 0x6a9, 0x646, 0x645, 0 },
+      DWRITE_READING_DIRECTION_RIGHT_TO_LEFT,
+      { 1, 1, 1, 1, 1, 1 },
+      { 1, 1, 1, 1, 1, 1 }
+    },
+    {
+      { 0x645, 0x6cc, 0x200c, 0x6a9, 0x646, 0x645, 0 },
+      DWRITE_READING_DIRECTION_LEFT_TO_RIGHT,
+      { 0, 0, 0, 0, 0, 0 },
+      { 1, 1, 1, 1, 1, 1 }
+    },
+    {
+      { 0x200c, 0x645, 0x6cc, 0x6a9, 0x646, 0x645, 0 },
+      DWRITE_READING_DIRECTION_RIGHT_TO_LEFT,
+      { 1, 1, 1, 1, 1, 1 },
+      { 1, 1, 1, 1, 1, 1 }
+    },
+    {
+      { 0x200c, 0x645, 0x6cc, 0x6a9, 0x646, 0x645, 0 },
+      DWRITE_READING_DIRECTION_LEFT_TO_RIGHT,
+      { 0, 0, 0, 0, 0, 0 },
+      { 0, 1, 1, 1, 1, 1 }
+    },
+    {
+      { 'A', 0x200c, 'B', 0 },
+      DWRITE_READING_DIRECTION_RIGHT_TO_LEFT,
+      { 1, 1, 1 },
+      { 2, 2, 2 }
+    },
+    {
+      { 'A', 0x200c, 'B', 0 },
+      DWRITE_READING_DIRECTION_LEFT_TO_RIGHT,
+      { 0, 0, 0 },
+      { 0, 0, 0 }
+    },
+    {
+      { 0 }
+    }
+};
+
+static void compare_bidi_levels(const struct bidi_test *test, UINT32 len, UINT8 *explicit, UINT8 *resolved)
+{
+    ok(!memcmp(explicit, test->explicit, len), "wrong explicit levels\n");
+    ok(!memcmp(resolved, test->resolved, len), "wrong resolved levels\n");
+}
+
+static void test_AnalyzeBidi(void)
+{
+    const struct bidi_test *ptr = bidi_tests;
+    IDWriteTextAnalyzer *analyzer;
+    UINT32 i = 0;
+    HRESULT hr;
+
+    hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    while (*ptr->text)
+    {
+        UINT32 len;
+
+        analysissource.text = ptr->text;
+        len = lstrlenW(ptr->text);
+        analysissource.direction = ptr->direction;
+
+        if (len > BIDI_LEVELS_COUNT) {
+            ok(0, "test %u: increase BIDI_LEVELS_COUNT to at least %u\n", i, len);
+            i++;
+            ptr++;
+            continue;
+        }
+
+        memset(g_explicit_levels, 0, sizeof(g_explicit_levels));
+        memset(g_resolved_levels, 0, sizeof(g_resolved_levels));
+        hr = IDWriteTextAnalyzer_AnalyzeBidi(analyzer, &analysissource.IDWriteTextAnalysisSource_iface, 0,
+            len, &analysissink);
+        ok(hr == S_OK, "%u: got 0x%08x\n", i, hr);
+        compare_bidi_levels(ptr, len, g_explicit_levels, g_resolved_levels);
+
+        i++;
+        ptr++;
+    }
+
+    IDWriteTextAnalyzer_Release(analyzer);
+}
+
 START_TEST(analyzer)
 {
     HRESULT hr;
@@ -2147,6 +2265,7 @@ START_TEST(analyzer)
 
     test_AnalyzeScript();
     test_AnalyzeLineBreakpoints();
+    test_AnalyzeBidi();
     test_GetScriptProperties();
     test_GetTextComplexity();
     test_GetGlyphs();

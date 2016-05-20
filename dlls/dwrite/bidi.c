@@ -946,6 +946,10 @@ static void bidi_resolve_resolved(UINT8 baselevel, const UINT8 *classes, UINT8 *
                 levels[j--] = baselevel;
             levels[i] = baselevel;
         }
+        else if (classes[i] == LRE || classes[i] == RLE || classes[i] == LRO || classes[i] == RLO ||
+                 classes[i] == PDF || classes[i] == BN) {
+            levels[i] = i ? levels[i - 1] : baselevel;
+        }
         if (i == eos && is_rule_L1_reset_class(classes[i])) {
             int j = i;
             while (j >= sos && is_rule_L1_reset_class(classes[j]))
