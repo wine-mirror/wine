@@ -44,6 +44,14 @@ static inline struct d3drm_texture *impl_from_IDirect3DRMTexture3(IDirect3DRMTex
     return CONTAINING_RECORD(iface, struct d3drm_texture, IDirect3DRMTexture3_iface);
 }
 
+static void d3drm_texture_destroy(struct d3drm_texture *texture)
+{
+    TRACE("texture %p is being destroyed.\n", texture);
+
+    d3drm_object_cleanup((IDirect3DRMObject*)&texture->IDirect3DRMTexture3_iface, &texture->obj);
+    HeapFree(GetProcessHeap(), 0, texture);
+}
+
 static HRESULT WINAPI d3drm_texture1_QueryInterface(IDirect3DRMTexture *iface, REFIID riid, void **out)
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture(iface);
@@ -722,10 +730,7 @@ static ULONG WINAPI d3drm_texture3_Release(IDirect3DRMTexture3 *iface)
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
-    {
-        d3drm_object_cleanup((IDirect3DRMObject*)iface, &texture->obj);
-        HeapFree(GetProcessHeap(), 0, texture);
-    }
+        d3drm_texture_destroy(texture);
 
     return refcount;
 }
