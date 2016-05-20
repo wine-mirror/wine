@@ -5053,7 +5053,7 @@ static void shader_glsl_input_pack(const struct wined3d_shader *shader, struct w
 
         if (args->vp_mode == vertexshader)
         {
-            if (input->sysval_semantic == WINED3D_SV_POSITION)
+            if (input->sysval_semantic == WINED3D_SV_POSITION && !semantic_idx)
                 shader_addline(buffer, "ps_in[%u]%s = vpos%s;\n",
                         shader->u.ps.input_reg_map[input->register_idx], reg_mask, reg_mask);
             else if (args->pointsprite && shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
@@ -5392,7 +5392,7 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
             semantic_idx = output->semantic_idx;
             shader_glsl_write_mask_to_str(output->mask, reg_mask);
 
-            if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_POSITION) && !semantic_idx)
+            if (output->sysval_semantic == WINED3D_SV_POSITION && !semantic_idx)
             {
                 shader_addline(buffer, "gl_Position%s = vs_out[%u]%s;\n",
                         reg_mask, output->register_idx, reg_mask);
