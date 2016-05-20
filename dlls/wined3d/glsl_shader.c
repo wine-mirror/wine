@@ -1635,6 +1635,37 @@ static const char *get_fragment_output(const struct wined3d_gl_info *gl_info)
     return needs_legacy_glsl_syntax(gl_info) ? "gl_FragData" : "ps_out";
 }
 
+static const char *glsl_primitive_type_from_d3d(enum wined3d_primitive_type primitive_type)
+{
+    switch (primitive_type)
+    {
+        case WINED3D_PT_POINTLIST:
+            return "points";
+
+        case WINED3D_PT_LINELIST:
+            return "lines";
+
+        case WINED3D_PT_LINESTRIP:
+            return "line_strip";
+
+        case WINED3D_PT_TRIANGLELIST:
+            return "triangles";
+
+        case WINED3D_PT_TRIANGLESTRIP:
+            return "triangle_strip";
+
+        case WINED3D_PT_LINELIST_ADJ:
+            return "lines_adjacency";
+
+        case WINED3D_PT_TRIANGLELIST_ADJ:
+            return "triangles_adjacency";
+
+        default:
+            FIXME("Unhandled primitive type %s.\n", debug_d3dprimitivetype(primitive_type));
+            return "";
+    }
+}
+
 static BOOL glsl_is_color_reg_read(const struct wined3d_shader *shader, unsigned int idx)
 {
     const struct wined3d_shader_signature *input_signature = &shader->input_signature;
@@ -1959,7 +1990,17 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     }
     else if (version->type == WINED3D_SHADER_TYPE_GEOMETRY)
     {
-        shader_addline(buffer, "varying in vec4 gs_in[][%u];\n", shader->limits->packed_input);
+        if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+        {
+            shader_addline(buffer, "varying in vec4 gs_in[][%u];\n", shader->limits->packed_input);
+        }
+        else
+        {
+            shader_addline(buffer, "layout(%s) in;\n", glsl_primitive_type_from_d3d(shader->u.gs.input_type));
+            shader_addline(buffer, "layout(%s, max_vertices = %u) out;\n",
+                    glsl_primitive_type_from_d3d(shader->u.gs.output_type), shader->u.gs.vertices_out);
+            shader_addline(buffer, "in vs_gs_iface { vec4 gs_in[%u]; } gs_in[];\n", shader->limits->packed_input);
+        }
     }
     else if (version->type == WINED3D_SHADER_TYPE_PIXEL)
     {
@@ -2206,17 +2247,24 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                 if (reg->idx[0].rel_addr)
                 {
                     if (reg->idx[1].rel_addr)
-                        sprintf(register_name, "gs_in[%s + %u][%s + %u]",
-                                rel_param0.param_str, reg->idx[0].offset, rel_param1.param_str, reg->idx[1].offset);
+                        sprintf(register_name, "gs_in[%s + %u]%s[%s + %u]",
+                                rel_param0.param_str, reg->idx[0].offset,
+                                gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] ? "" : ".gs_in",
+                                rel_param1.param_str, reg->idx[1].offset);
                     else
-                        sprintf(register_name, "gs_in[%s + %u][%u]",
-                                rel_param0.param_str, reg->idx[0].offset, reg->idx[1].offset);
+                        sprintf(register_name, "gs_in[%s + %u]%s[%u]",
+                                rel_param0.param_str, reg->idx[0].offset,
+                                gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] ? "" : ".gs_in",
+                                reg->idx[1].offset);
                 }
                 else if (reg->idx[1].rel_addr)
-                    sprintf(register_name, "gs_in[%u][%s + %u]",
-                            reg->idx[0].offset, rel_param1.param_str, reg->idx[1].offset);
+                    sprintf(register_name, "gs_in[%u]%s[%s + %u]", reg->idx[0].offset,
+                            gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] ? "" : ".gs_in",
+                            rel_param1.param_str, reg->idx[1].offset);
                 else
-                    sprintf(register_name, "gs_in[%u][%u]", reg->idx[0].offset, reg->idx[1].offset);
+                    sprintf(register_name, "gs_in[%u]%s[%u]", reg->idx[0].offset,
+                            gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] ? "" : ".gs_in",
+                            reg->idx[1].offset);
                 break;
             }
 
@@ -5292,12 +5340,17 @@ static void shader_glsl_generate_vs_gs_setup(struct shader_glsl_priv *priv,
         const struct wined3d_shader *vs, unsigned int input_count,
         const struct wined3d_gl_info *gl_info)
 {
+    BOOL legacy_context = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
 
-    shader_addline(buffer, "varying out vec4 gs_in[%u];\n", input_count);
+    if (legacy_context)
+        shader_addline(buffer, "varying out vec4 gs_in[%u];\n", input_count);
+    else
+        shader_addline(buffer, "out vs_gs_iface { vec4 gs_in[%u]; } gs_in;\n", input_count);
     shader_addline(buffer, "void setup_vs_output(in vec4 shader_out[%u])\n{\n", vs->limits->packed_output);
 
-    shader_glsl_setup_sm4_shader_output(priv, input_count, &vs->output_signature, &vs->reg_maps, "gs_in");
+    shader_glsl_setup_sm4_shader_output(priv, input_count, &vs->output_signature, &vs->reg_maps,
+            legacy_context ? "gs_in" : "gs_in.gs_in");
 
     shader_addline(buffer, "}\n");
 }
@@ -7544,17 +7597,20 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         GL_EXTCALL(glAttachShader(program_id, gs_id));
         checkGLcall("glAttachShader");
 
-        TRACE("input type %s, output type %s, vertices out %u.\n",
-                debug_d3dprimitivetype(gshader->u.gs.input_type),
-                debug_d3dprimitivetype(gshader->u.gs.output_type),
-                gshader->u.gs.vertices_out);
-        GL_EXTCALL(glProgramParameteriARB(program_id, GL_GEOMETRY_INPUT_TYPE_ARB,
-                gl_primitive_type_from_d3d(gshader->u.gs.input_type)));
-        GL_EXTCALL(glProgramParameteriARB(program_id, GL_GEOMETRY_OUTPUT_TYPE_ARB,
-                gl_primitive_type_from_d3d(gshader->u.gs.output_type)));
-        GL_EXTCALL(glProgramParameteriARB(program_id, GL_GEOMETRY_VERTICES_OUT_ARB,
-                gshader->u.gs.vertices_out));
-        checkGLcall("glProgramParameteriARB");
+        if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+        {
+            TRACE("input type %s, output type %s, vertices out %u.\n",
+                    debug_d3dprimitivetype(gshader->u.gs.input_type),
+                    debug_d3dprimitivetype(gshader->u.gs.output_type),
+                    gshader->u.gs.vertices_out);
+            GL_EXTCALL(glProgramParameteriARB(program_id, GL_GEOMETRY_INPUT_TYPE_ARB,
+                    gl_primitive_type_from_d3d(gshader->u.gs.input_type)));
+            GL_EXTCALL(glProgramParameteriARB(program_id, GL_GEOMETRY_OUTPUT_TYPE_ARB,
+                    gl_primitive_type_from_d3d(gshader->u.gs.output_type)));
+            GL_EXTCALL(glProgramParameteriARB(program_id, GL_GEOMETRY_VERTICES_OUT_ARB,
+                    gshader->u.gs.vertices_out));
+            checkGLcall("glProgramParameteriARB");
+        }
 
         list_add_head(&gshader->linked_programs, &entry->gs.shader_entry);
     }
