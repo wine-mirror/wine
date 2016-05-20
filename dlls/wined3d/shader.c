@@ -2678,6 +2678,15 @@ void find_vs_compile_args(const struct wined3d_state *state, const struct wined3
             && state->render_states[WINED3D_RS_CLIPPLANEENABLE];
     args->point_size = state->gl_primitive_type == GL_POINTS;
     args->per_vertex_point_size = shader->reg_maps.point_size;
+    if (shader->reg_maps.shader_version.major >= 4)
+        args->next_shader_input_count = state->shader[WINED3D_SHADER_TYPE_HULL]
+                ? state->shader[WINED3D_SHADER_TYPE_HULL]->limits->packed_input
+                : state->shader[WINED3D_SHADER_TYPE_GEOMETRY]
+                ? state->shader[WINED3D_SHADER_TYPE_GEOMETRY]->limits->packed_input
+                : state->shader[WINED3D_SHADER_TYPE_PIXEL]
+                ? state->shader[WINED3D_SHADER_TYPE_PIXEL]->limits->packed_input : 0;
+    else
+        args->next_shader_input_count = 0;
     args->swizzle_map = swizzle_map;
     if (d3d_info->emulated_flatshading)
         args->flatshading = state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;

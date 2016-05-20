@@ -1046,6 +1046,7 @@ struct vs_compile_args
     BYTE flatshading : 1;
     BYTE padding : 4;
     WORD swizzle_map;   /* MAX_ATTRIBS, 16 */
+    unsigned int next_shader_input_count;
 };
 
 struct wined3d_context;

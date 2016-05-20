@@ -1949,7 +1949,8 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         }
 
         shader_addline(buffer, "uniform vec4 posFixup;\n");
-        shader_addline(buffer, "void setup_vs_output(in vec4[%u]);\n", shader->limits->packed_output);
+        if (version->major < 4)
+            shader_addline(buffer, "void setup_vs_output(in vec4[%u]);\n", shader->limits->packed_output);
     }
     else if (version->type == WINED3D_SHADER_TYPE_GEOMETRY)
     {
@@ -2071,35 +2072,6 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             shader_glsl_append_imm_vec4(buffer, (const float *)lconst->value);
             shader_addline(buffer, ";\n");
         }
-    }
-
-    /* Start the main program. */
-    shader_addline(buffer, "void main()\n{\n");
-
-    /* Direct3D applications expect integer vPos values, while OpenGL drivers
-     * add approximately 0.5. This causes off-by-one problems as spotted by
-     * the vPos d3d9 visual test. Unfortunately ATI cards do not add exactly
-     * 0.5, but rather something like 0.49999999 or 0.50000001, which still
-     * causes precision troubles when we just subtract 0.5.
-     *
-     * To deal with that, just floor() the position. This will eliminate the
-     * fraction on all cards.
-     *
-     * TODO: Test how this behaves with multisampling.
-     *
-     * An advantage of floor is that it works even if the driver doesn't add
-     * 0.5. It is somewhat questionable if 1.5, 2.5, ... are the proper values
-     * to return in gl_FragCoord, even though coordinates specify the pixel
-     * centers instead of the pixel corners. This code will behave correctly
-     * on drivers that returns integer values. */
-    if (version->type == WINED3D_SHADER_TYPE_PIXEL && reg_maps->vpos)
-    {
-        if (shader->device->wined3d->flags & WINED3D_PIXEL_CENTER_INTEGER)
-            shader_addline(buffer,
-                    "vpos = floor(vec4(0, ycorrection[0], 0, 0) + gl_FragCoord * vec4(1, ycorrection[1], 1, 1));\n");
-        else
-            shader_addline(buffer,
-                    "vpos = vec4(0, ycorrection[0], 0, 0) + gl_FragCoord * vec4(1, ycorrection[1], 1, 1);\n");
     }
 }
 
@@ -5257,7 +5229,7 @@ static void shader_glsl_setup_vs3_output(struct shader_glsl_priv *priv,
 }
 
 static void shader_glsl_setup_sm4_shader_output(struct shader_glsl_priv *priv,
-        const struct wined3d_shader_signature *output_signature,
+        unsigned int input_count, const struct wined3d_shader_signature *output_signature,
         const struct wined3d_shader_reg_maps *reg_maps_out, const char *out_array_name)
 {
     struct wined3d_string_buffer *destination = string_buffer_get(&priv->string_buffers);
@@ -5270,6 +5242,9 @@ static void shader_glsl_setup_sm4_shader_output(struct shader_glsl_priv *priv,
         const struct wined3d_shader_signature_element *output = &output_signature->elements[i];
 
         if (!(reg_maps_out->output_registers & (1u << output->register_idx)))
+            continue;
+
+        if (output->register_idx >= input_count)
             continue;
 
         string_buffer_sprintf(destination, "%s[%u]", out_array_name, output->register_idx);
@@ -5286,7 +5261,7 @@ static void shader_glsl_setup_sm4_shader_output(struct shader_glsl_priv *priv,
 static void shader_glsl_setup_sm3_rasterizer_input(struct shader_glsl_priv *priv,
         const struct wined3d_gl_info *gl_info, const DWORD *map,
         const struct wined3d_shader_signature *input_signature,
-        const struct wined3d_shader_reg_maps *reg_maps_in,
+        const struct wined3d_shader_reg_maps *reg_maps_in, unsigned int input_count,
         const struct wined3d_shader_signature *output_signature,
         const struct wined3d_shader_reg_maps *reg_maps_out, BOOL per_vertex_point_size)
 {
@@ -5325,11 +5300,11 @@ static void shader_glsl_setup_sm3_rasterizer_input(struct shader_glsl_priv *priv
         shader_glsl_setup_vs3_output(priv, gl_info, map, input_signature, reg_maps_in,
                 output_signature, reg_maps_out, "ps_link");
     else
-        shader_glsl_setup_sm4_shader_output(priv, output_signature, reg_maps_out, "ps_link");
+        shader_glsl_setup_sm4_shader_output(priv, input_count, output_signature, reg_maps_out, "ps_link");
 }
 
 /* Context activation is done by the caller. */
-static GLuint shader_glsl_generate_vs_rasterizer_input_setup(struct shader_glsl_priv *priv,
+static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl_priv *priv,
         const struct wined3d_shader *vs, const struct wined3d_shader *ps,
         BOOL per_vertex_point_size, BOOL flatshading, const struct wined3d_gl_info *gl_info)
 {
@@ -5460,7 +5435,7 @@ static GLuint shader_glsl_generate_vs_rasterizer_input_setup(struct shader_glsl_
         declare_out_varying(gl_info, buffer, FALSE, "vec4 ps_link[%u];\n", in_count);
         shader_addline(buffer, "void setup_vs_output(in vec4 shader_out[%u])\n{\n", vs->limits->packed_output);
         shader_glsl_setup_sm3_rasterizer_input(priv, gl_info, ps->u.ps.input_reg_map, &ps->input_signature,
-                &ps->reg_maps, &vs->output_signature, &vs->reg_maps, per_vertex_point_size);
+                &ps->reg_maps, 0, &vs->output_signature, &vs->reg_maps, per_vertex_point_size);
     }
 
     shader_addline(buffer, "}\n");
@@ -5470,6 +5445,23 @@ static GLuint shader_glsl_generate_vs_rasterizer_input_setup(struct shader_glsl_
     shader_glsl_compile(gl_info, ret, buffer->buffer);
 
     return ret;
+}
+
+static void shader_glsl_generate_vs4_rasterizer_input_setup(struct shader_glsl_priv *priv,
+        const struct wined3d_shader *vs, unsigned int input_count,
+        const struct wined3d_gl_info *gl_info)
+{
+    struct wined3d_string_buffer *buffer = &priv->shader_buffer;
+
+    if (input_count)
+        declare_out_varying(gl_info, buffer, FALSE, "vec4 ps_link[%u];\n", min(vec4_varyings(4, gl_info), input_count));
+
+    shader_addline(buffer, "void setup_vs_output(in vec4 shader_out[%u])\n{\n", vs->limits->packed_output);
+
+    shader_glsl_setup_sm3_rasterizer_input(priv, gl_info, NULL, NULL,
+            NULL, input_count, &vs->output_signature, &vs->reg_maps, FALSE);
+
+    shader_addline(buffer, "}\n");
 }
 
 static void shader_glsl_generate_srgb_write_correction(struct wined3d_string_buffer *buffer,
@@ -5585,6 +5577,34 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     /* Base Declarations */
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
 
+    shader_addline(buffer, "void main()\n{\n");
+
+    /* Direct3D applications expect integer vPos values, while OpenGL drivers
+     * add approximately 0.5. This causes off-by-one problems as spotted by
+     * the vPos d3d9 visual test. Unfortunately ATI cards do not add exactly
+     * 0.5, but rather something like 0.49999999 or 0.50000001, which still
+     * causes precision troubles when we just subtract 0.5.
+     *
+     * To deal with that, just floor() the position. This will eliminate the
+     * fraction on all cards.
+     *
+     * TODO: Test how this behaves with multisampling.
+     *
+     * An advantage of floor is that it works even if the driver doesn't add
+     * 0.5. It is somewhat questionable if 1.5, 2.5, ... are the proper values
+     * to return in gl_FragCoord, even though coordinates specify the pixel
+     * centers instead of the pixel corners. This code will behave correctly
+     * on drivers that returns integer values. */
+    if (reg_maps->vpos)
+    {
+        if (shader->device->wined3d->flags & WINED3D_PIXEL_CENTER_INTEGER)
+            shader_addline(buffer,
+                    "vpos = floor(vec4(0, ycorrection[0], 0, 0) + gl_FragCoord * vec4(1, ycorrection[1], 1, 1));\n");
+        else
+            shader_addline(buffer,
+                    "vpos = vec4(0, ycorrection[0], 0, 0) + gl_FragCoord * vec4(1, ycorrection[1], 1, 1);\n");
+    }
+
     if (reg_maps->shader_version.major < 3 || args->vp_mode != vertexshader)
     {
         unsigned int i;
@@ -5647,11 +5667,11 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
 
 /* Context activation is done by the caller. */
 static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context,
-        struct wined3d_string_buffer *buffer, struct wined3d_string_buffer_list *string_buffers,
-        const struct wined3d_shader *shader,
-        const struct vs_compile_args *args)
+        struct shader_glsl_priv *priv, const struct wined3d_shader *shader, const struct vs_compile_args *args)
 {
+    struct wined3d_string_buffer_list *string_buffers = &priv->string_buffers;
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
+    struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const DWORD *function = shader->function;
     struct shader_glsl_ctx_priv priv_ctx;
@@ -5681,6 +5701,11 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
 
     /* Base Declarations */
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
+
+    if (reg_maps->shader_version.major >= 4)
+        shader_glsl_generate_vs4_rasterizer_input_setup(priv, shader, args->next_shader_input_count, gl_info);
+
+    shader_addline(buffer, "void main()\n{\n");
 
     /* Base Shader Body */
     shader_generate_main(shader, buffer, reg_maps, function, &priv_ctx);
@@ -5767,6 +5792,7 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.string_buffers = string_buffers;
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
+    shader_addline(buffer, "void main()\n{\n");
     shader_generate_main(shader, buffer, reg_maps, function, &priv_ctx);
     shader_addline(buffer, "}\n");
 
@@ -5863,13 +5889,13 @@ static inline BOOL vs_args_equal(const struct vs_compile_args *stored, const str
         return FALSE;
     if (stored->flatshading != new->flatshading)
         return FALSE;
+    if (stored->next_shader_input_count != new->next_shader_input_count)
+        return FALSE;
     return stored->fog_src == new->fog_src;
 }
 
-static GLuint find_glsl_vshader(const struct wined3d_context *context,
-        struct wined3d_string_buffer *buffer, struct wined3d_string_buffer_list *string_buffers,
-        struct wined3d_shader *shader,
-        const struct vs_compile_args *args)
+static GLuint find_glsl_vshader(const struct wined3d_context *context, struct shader_glsl_priv *priv,
+        struct wined3d_shader *shader, const struct vs_compile_args *args)
 {
     UINT i;
     DWORD new_size;
@@ -5926,8 +5952,8 @@ static GLuint find_glsl_vshader(const struct wined3d_context *context,
 
     gl_shaders[shader_data->num_gl_shaders].args = *args;
 
-    string_buffer_clear(buffer);
-    ret = shader_glsl_generate_vshader(context, buffer, string_buffers, shader, args);
+    string_buffer_clear(&priv->shader_buffer);
+    ret = shader_glsl_generate_vshader(context, priv, shader, args);
     gl_shaders[shader_data->num_gl_shaders++].id = ret;
 
     return ret;
@@ -7314,7 +7340,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         vshader = state->shader[WINED3D_SHADER_TYPE_VERTEX];
 
         find_vs_compile_args(state, vshader, context->stream_info.swizzle_map, &vs_compile_args, d3d_info);
-        vs_id = find_glsl_vshader(context, &priv->shader_buffer, &priv->string_buffers, vshader, &vs_compile_args);
+        vs_id = find_glsl_vshader(context, priv, vshader, &vs_compile_args);
         vs_list = &vshader->linked_programs;
 
         if ((gshader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY]))
@@ -7396,17 +7422,19 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     if (vshader)
     {
         attribs_map = vshader->reg_maps.input_registers;
-        reorder_shader_id = shader_glsl_generate_vs_rasterizer_input_setup(priv, vshader, pshader,
-                state->gl_primitive_type == GL_POINTS && vshader->reg_maps.point_size,
-                d3d_info->emulated_flatshading
-                && state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT, gl_info);
-        TRACE("Attaching GLSL shader object %u to program %u.\n", reorder_shader_id, program_id);
-        GL_EXTCALL(glAttachShader(program_id, reorder_shader_id));
-        checkGLcall("glAttachShader");
-        /* Flag the reorder function for deletion, then it will be freed automatically when the program
-         * is destroyed
-         */
-        GL_EXTCALL(glDeleteShader(reorder_shader_id));
+        if (vshader->reg_maps.shader_version.major < 4)
+        {
+            reorder_shader_id = shader_glsl_generate_vs3_rasterizer_input_setup(priv, vshader, pshader,
+                    state->gl_primitive_type == GL_POINTS && vshader->reg_maps.point_size,
+                    d3d_info->emulated_flatshading
+                    && state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT, gl_info);
+            TRACE("Attaching GLSL shader object %u to program %u.\n", reorder_shader_id, program_id);
+            GL_EXTCALL(glAttachShader(program_id, reorder_shader_id));
+            checkGLcall("glAttachShader");
+            /* Flag the reorder function for deletion, it will be freed
+             * automatically when the program is destroyed. */
+            GL_EXTCALL(glDeleteShader(reorder_shader_id));
+        }
     }
     else
     {
@@ -8598,6 +8626,14 @@ static void glsl_vertex_pipe_vs(struct wined3d_context *context,
         context_apply_state(context, state, STATE_VDECL);
 }
 
+static void glsl_vertex_pipe_pixel_shader(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
+{
+    if (state->shader[WINED3D_SHADER_TYPE_VERTEX]
+            && state->shader[WINED3D_SHADER_TYPE_VERTEX]->reg_maps.shader_version.major >= 4)
+        context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
+}
+
 static void glsl_vertex_pipe_world(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
@@ -8722,6 +8758,7 @@ static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
 {
     {STATE_VDECL,                                                {STATE_VDECL,                                                glsl_vertex_pipe_vdecl }, WINED3D_GL_EXT_NONE          },
     {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   glsl_vertex_pipe_vs    }, WINED3D_GL_EXT_NONE          },
+    {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    glsl_vertex_pipe_pixel_shader}, WINED3D_GL_EXT_NONE    },
     {STATE_MATERIAL,                                             {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    glsl_vertex_pipe_material}, WINED3D_GL_EXT_NONE        },
     /* Clip planes */
