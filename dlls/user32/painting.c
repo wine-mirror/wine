@@ -338,16 +338,17 @@ static struct dce *get_window_dce( HWND hwnd )
  */
 void free_dce( struct dce *dce, HWND hwnd )
 {
+    struct dce *dce_to_free = NULL;
+
     USER_Lock();
 
     if (dce)
     {
         if (!--dce->count)
         {
-            /* turn it into a cache entry */
-            SetHookFlags( dce->hdc, DCHF_RESETDC );
             release_dce( dce );
-            dce->flags |= DCX_CACHE;
+            list_remove( &dce->entry );
+            dce_to_free = dce;
         }
         else if (dce->hwnd == hwnd)
         {
@@ -362,7 +363,7 @@ void free_dce( struct dce *dce, HWND hwnd )
         LIST_FOR_EACH_ENTRY( dce, &dce_list, struct dce, entry )
         {
             if (dce->hwnd != hwnd) continue;
-            if (!(dce->flags & DCX_CACHE)) continue;
+            if (!(dce->flags & DCX_CACHE)) break;
 
             if (dce->count) WARN( "GetDC() without ReleaseDC() for window %p\n", hwnd );
             dce->count = 0;
@@ -371,6 +372,13 @@ void free_dce( struct dce *dce, HWND hwnd )
     }
 
     USER_Unlock();
+
+    if (dce_to_free)
+    {
+        SetDCHook( dce_to_free->hdc, NULL, 0 );
+        DeleteDC( dce_to_free->hdc );
+        HeapFree( GetProcessHeap(), 0, dce_to_free );
+    }
 }
 
 

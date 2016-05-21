@@ -812,7 +812,6 @@ static void test_DeleteDC(void)
     ok(ret, "UnregisterClassA failed\n");
 
     ret = GetObjectType(hdc_test);
-todo_wine
     ok(!ret, "GetObjectType should fail for a deleted DC\n");
 
     /* CS_OWNDC */
