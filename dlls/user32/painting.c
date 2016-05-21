@@ -311,7 +311,6 @@ static struct dce *get_window_dce( HWND hwnd )
                 {
                     win->dce = dce;
                     dce->hwnd = hwnd;
-                    dce->count++;
                     list_add_tail( &dce_list, &dce->entry );
                 }
                 WIN_ReleasePtr( win );
@@ -501,14 +500,10 @@ static BOOL CALLBACK dc_hook( HDC hDC, WORD code, DWORD_PTR data, LPARAM lParam 
             WARN("DC is not in use!\n");
         break;
     case DCHC_DELETEDC:
-        /*
-         * Windows will not let you delete a DC that is busy
-         * (between GetDC and ReleaseDC)
-         */
         USER_Lock();
-        if (dce->count > 1)
+        if (!(dce->flags & DCX_CACHE))
         {
-            WARN("Application trying to delete a busy DC %p\n", dce->hdc);
+            WARN("Application trying to delete an owned DC %p\n", dce->hdc);
             retv = FALSE;
         }
         else
