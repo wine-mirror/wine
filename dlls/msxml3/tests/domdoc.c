@@ -6704,9 +6704,9 @@ static void test_TransformWithLoadingLocalFile(void)
         BSTR sPart1 = _bstr_(szBasicTransformSSXMLPart1);
         BSTR sPart2 = _bstr_(szBasicTransformSSXMLPart2);
         BSTR sFileName = _bstr_(lpPathBuffer);
-        int nLegnth = lstrlenW(sPart1) + lstrlenW(sPart2) + lstrlenW(sFileName) + 1;
+        int nLength = lstrlenW(sPart1) + lstrlenW(sPart2) + lstrlenW(sFileName) + 1;
 
-        sXSL = SysAllocStringLen(NULL, nLegnth);
+        sXSL = SysAllocStringLen(NULL, nLength);
         lstrcpyW(sXSL, sPart1);
         lstrcatW(sXSL, sFileName);
         lstrcatW(sXSL, sPart2);
