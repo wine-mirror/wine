@@ -784,13 +784,9 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
 
     if (surface->texture_target == GL_TEXTURE_2D_ARRAY)
     {
-        /* We don't expect to ever need to emulate NP2 textures when we have EXT_texture_array. */
+        /* NP2 emulation is not allowed on array textures. */
         if (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
-        {
-            FIXME("Cannot download surface %p, level %u, layer %u.\n",
-                    surface, surface->texture_level, surface->texture_layer);
-            return;
-        }
+            ERR("Array texture %p uses NP2 emulation.\n", texture);
 
         WARN_(d3d_perf)("Downloading all miplevel layers to get the surface data for a single sub-resource.\n");
 
