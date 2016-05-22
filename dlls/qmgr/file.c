@@ -522,6 +522,8 @@ BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job)
     uc.nPort             = 0;
     uc.lpszUrlPath       = NULL;
     uc.dwUrlPathLength   = ~0u;
+    uc.lpszExtraInfo     = NULL;
+    uc.dwExtraInfoLength = 0;
     ret = WinHttpCrackUrl(file->info.RemoteName, 0, 0, &uc);
     if (!ret)
     {
