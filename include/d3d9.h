@@ -290,7 +290,7 @@ DECLARE_INTERFACE_(IDirect3D9Ex,IDirect3D9)
             UINT mode_idx, D3DDISPLAYMODEEX *mode) PURE;
     STDMETHOD(GetAdapterDisplayModeEx)(THIS_ UINT Adapter, D3DDISPLAYMODEEX *pMode, D3DDISPLAYROTATION *pRotation);
     STDMETHOD(CreateDeviceEx)(THIS_ UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, D3DDISPLAYMODEEX* pFullscreenDisplayMode, struct IDirect3DDevice9Ex **ppReturnedDeviceInterface) PURE;
-    STDMETHOD(GetAdapterLUID)(THIS_ UINT Adatper, LUID *pLUID) PURE;
+    STDMETHOD(GetAdapterLUID)(THIS_ UINT adapter, LUID *luid) PURE;
 };
 #undef INTERFACE
 
