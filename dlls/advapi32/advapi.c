@@ -188,7 +188,7 @@ BOOL WINAPI IsTextUnicode( LPCVOID buf, INT len, LPINT flags )
  */
 BOOL WINAPI AbortSystemShutdownA( LPSTR lpMachineName )
 {
-    TRACE("stub %s (harmless)\n", lpMachineName);
+    TRACE("stub %s (harmless)\n", debugstr_a(lpMachineName));
     return TRUE;
 }
 
