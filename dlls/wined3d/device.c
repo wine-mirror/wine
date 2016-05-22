@@ -682,19 +682,23 @@ out:
 /* Context activation is done by the caller. */
 static void create_dummy_textures(struct wined3d_device *device, struct wined3d_context *context)
 {
+    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     unsigned int i, j, count;
+    DWORD color;
+
+    if (d3d_info->wined3d_creation_flags & WINED3D_LEGACY_UNBOUND_RESOURCE_COLOR)
+        color = 0x000000ff;
+    else
+        color = 0x00000000;
+
     /* Under DirectX you can sample even if no texture is bound, whereas
      * OpenGL will only allow that when a valid texture is bound.
      * We emulate this by creating dummy textures and binding them
      * to each texture stage when the currently set D3D texture is NULL. */
-
     count = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers);
     for (i = 0; i < count; ++i)
     {
-        static const DWORD d3d10_color = 0x00000000;
-        static const DWORD color = 0x000000ff;
-
         /* Make appropriate texture active */
         context_active_texture(context, gl_info, i);
 
@@ -732,7 +736,8 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
             gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_3D, device->dummy_texture_3d[i]);
             checkGLcall("glBindTexture");
 
-            GL_EXTCALL(glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8, 1, 1, 1, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &color));
+            GL_EXTCALL(glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8, 1, 1, 1, 0,
+                    GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &color));
             checkGLcall("glTexImage3D");
         }
 
@@ -763,7 +768,7 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
             checkGLcall("glBindTexture");
 
             GL_EXTCALL(glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA8, 1, 1, 1, 0,
-                    GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &d3d10_color));
+                    GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, &color));
             checkGLcall("glTexImage3D");
         }
     }
@@ -820,7 +825,6 @@ static void create_default_sampler(struct wined3d_device *device)
      * sampler object is used to emulate the direct resource access when there is no sampler state
      * to use.
      */
-
     if (gl_info->supported[ARB_SAMPLER_OBJECTS])
     {
         GL_EXTCALL(glGenSamplers(1, &device->default_sampler));
