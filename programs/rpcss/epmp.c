@@ -113,7 +113,6 @@ void __cdecl ept_insert(handle_t h,
             *status = EPT_S_CANT_PERFORM_OP;
             break;
         }
-        list_init(&entry->entry);
         memcpy(entry->annotation, entries[i].annotation, sizeof(entries[i].annotation));
         rpc_status = TowerExplode(entries[i].tower, &entry->iface, &entry->syntax,
                                   &entry->protseq, &entry->endpoint,
