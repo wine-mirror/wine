@@ -327,7 +327,7 @@ static SECURITY_STATUS setupClient(SspiData *sspi_data, SEC_CHAR *provider)
         trace("AcquireCredentialsHandle() returned %s\n", getSecError(ret));
     }
 
-    ok(ret == SEC_E_OK, "AcquireCredentialsHande() returned %s\n", 
+    ok(ret == SEC_E_OK, "AcquireCredentialsHandle() returned %s\n",
             getSecError(ret));
 
     return ret;
@@ -355,7 +355,7 @@ static SECURITY_STATUS setupServer(SspiData *sspi_data, SEC_CHAR *provider)
         trace("AcquireCredentialsHandle() returned %s\n", getSecError(ret));
     }
 
-    ok(ret == SEC_E_OK, "AcquireCredentialsHande() returned %s\n",
+    ok(ret == SEC_E_OK, "AcquireCredentialsHandle() returned %s\n",
             getSecError(ret));
 
     return ret;
@@ -1211,21 +1211,21 @@ static BOOL testAcquireCredentialsHandle(void)
 
     ret = pAcquireCredentialsHandleA(NULL, sec_pkg_name, SECPKG_CRED_OUTBOUND,
             NULL, &id, NULL, NULL, &cred, &ttl);
-    ok(ret == SEC_E_OK, "AcquireCredentialsHande() returned %s\n",
+    ok(ret == SEC_E_OK, "AcquireCredentialsHandle() returned %s\n",
             getSecError(ret));
     pFreeCredentialsHandle(&cred);
 
     id.DomainLength = 0;
     ret = pAcquireCredentialsHandleA(NULL, sec_pkg_name, SECPKG_CRED_OUTBOUND,
             NULL, &id, NULL, NULL, &cred, &ttl);
-    ok(ret == SEC_E_OK, "AcquireCredentialsHande() returned %s\n",
+    ok(ret == SEC_E_OK, "AcquireCredentialsHandle() returned %s\n",
             getSecError(ret));
     pFreeCredentialsHandle(&cred);
 
     id.Domain = NULL;
     ret = pAcquireCredentialsHandleA(NULL, sec_pkg_name, SECPKG_CRED_OUTBOUND,
             NULL, &id, NULL, NULL, &cred, &ttl);
-    ok(ret == SEC_E_OK, "AcquireCredentialsHande() returned %s\n",
+    ok(ret == SEC_E_OK, "AcquireCredentialsHandle() returned %s\n",
             getSecError(ret));
     pFreeCredentialsHandle(&cred);
 
@@ -1235,7 +1235,7 @@ static BOOL testAcquireCredentialsHandle(void)
     id.User = NULL;
     ret = pAcquireCredentialsHandleA(NULL, sec_pkg_name, SECPKG_CRED_OUTBOUND,
             NULL, &id, NULL, NULL, &cred, &ttl);
-    ok(ret == SEC_E_OK, "AcquireCredentialsHande() returned %s\n",
+    ok(ret == SEC_E_OK, "AcquireCredentialsHandle() returned %s\n",
             getSecError(ret));
     pFreeCredentialsHandle(&cred);
 
@@ -1245,7 +1245,7 @@ static BOOL testAcquireCredentialsHandle(void)
     id.PasswordLength = 0;
     ret = pAcquireCredentialsHandleA(NULL, sec_pkg_name, SECPKG_CRED_OUTBOUND,
             NULL, &id, NULL, NULL, &cred, &ttl);
-    ok(ret == SEC_E_OK, "AcquireCredentialsHande() returned %s\n",
+    ok(ret == SEC_E_OK, "AcquireCredentialsHandle() returned %s\n",
             getSecError(ret));
     pFreeCredentialsHandle(&cred);
     return TRUE;
@@ -1289,7 +1289,7 @@ static void test_cred_multiple_use(void)
 
     ret = pAcquireCredentialsHandleA(NULL, sec_pkg_name, SECPKG_CRED_OUTBOUND,
             NULL, &id, NULL, NULL, &cred, &ttl);
-    ok(ret == SEC_E_OK, "AcquireCredentialsHande() returned %s\n",
+    ok(ret == SEC_E_OK, "AcquireCredentialsHandle() returned %s\n",
             getSecError(ret));
 
     buffer_desc.ulVersion = SECBUFFER_VERSION;
@@ -1337,7 +1337,7 @@ static void test_null_auth_data(void)
 
     status = pAcquireCredentialsHandleA(NULL, (SEC_CHAR *)"NTLM", SECPKG_CRED_OUTBOUND,
                                         NULL, NULL, NULL, NULL, &cred, &ttl);
-    ok(status == SEC_E_OK, "AcquireCredentialsHande() failed %s\n", getSecError(status));
+    ok(status == SEC_E_OK, "AcquireCredentialsHandle() failed %s\n", getSecError(status));
 
     buffers[0].cbBuffer = info->cbMaxToken;
     buffers[0].BufferType = SECBUFFER_TOKEN;
