@@ -165,6 +165,11 @@ void __cdecl ept_delete(handle_t h,
         if (rpc_status != RPC_S_OK)
             break;
         entry = find_ept_entry(&iface, &syntax, protseq, endpoint, address, &entries[i].object);
+
+        I_RpcFree(protseq);
+        I_RpcFree(endpoint);
+        I_RpcFree(address);
+
         if (entry)
             delete_registered_ept_entry(entry);
         else
@@ -172,9 +177,6 @@ void __cdecl ept_delete(handle_t h,
             *status = EPT_S_NOT_REGISTERED;
             break;
         }
-        I_RpcFree(protseq);
-        I_RpcFree(endpoint);
-        I_RpcFree(address);
     }
 
     LeaveCriticalSection(&csEpm);
