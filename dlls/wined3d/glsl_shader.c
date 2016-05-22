@@ -1540,11 +1540,6 @@ static void shader_glsl_update_float_vertex_constants(struct wined3d_device *dev
     {
         update_heap_entry(heap, i, priv->next_constant_version);
     }
-
-    for (i = 0; i < device->context_count; ++i)
-    {
-        device->contexts[i]->constant_update_mask |= WINED3D_SHADER_CONST_VS_F;
-    }
 }
 
 static void shader_glsl_update_float_pixel_constants(struct wined3d_device *device, UINT start, UINT count)
@@ -1556,11 +1551,6 @@ static void shader_glsl_update_float_pixel_constants(struct wined3d_device *devi
     for (i = start; i < count + start; ++i)
     {
         update_heap_entry(heap, i, priv->next_constant_version);
-    }
-
-    for (i = 0; i < device->context_count; ++i)
-    {
-        device->contexts[i]->constant_update_mask |= WINED3D_SHADER_CONST_PS_F;
     }
 }
 

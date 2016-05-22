@@ -1070,10 +1070,54 @@ static void wined3d_cs_st_submit(struct wined3d_cs *cs)
     wined3d_cs_op_handlers[opcode](cs, cs->data);
 }
 
+static void wined3d_cs_st_push_constants(struct wined3d_cs *cs, enum wined3d_push_constants p,
+        unsigned int start_idx, unsigned int count, const void *constants)
+{
+    struct wined3d_device *device = cs->device;
+    unsigned int context_count;
+    unsigned int i;
+    size_t offset;
+
+    static const struct
+    {
+        size_t offset;
+        size_t size;
+        DWORD mask;
+    }
+    push_constant_info[] =
+    {
+        /* WINED3D_PUSH_CONSTANTS_VS_F */
+        {FIELD_OFFSET(struct wined3d_state, vs_consts_f), sizeof(struct wined3d_vec4),  WINED3D_SHADER_CONST_VS_F},
+        /* WINED3D_PUSH_CONSTANTS_PS_F */
+        {FIELD_OFFSET(struct wined3d_state, ps_consts_f), sizeof(struct wined3d_vec4),  WINED3D_SHADER_CONST_PS_F},
+        /* WINED3D_PUSH_CONSTANTS_VS_I */
+        {FIELD_OFFSET(struct wined3d_state, vs_consts_i), sizeof(struct wined3d_ivec4), WINED3D_SHADER_CONST_VS_I},
+        /* WINED3D_PUSH_CONSTANTS_PS_I */
+        {FIELD_OFFSET(struct wined3d_state, ps_consts_i), sizeof(struct wined3d_ivec4), WINED3D_SHADER_CONST_PS_I},
+        /* WINED3D_PUSH_CONSTANTS_VS_B */
+        {FIELD_OFFSET(struct wined3d_state, vs_consts_b), sizeof(BOOL),                 WINED3D_SHADER_CONST_VS_B},
+        /* WINED3D_PUSH_CONSTANTS_PS_B */
+        {FIELD_OFFSET(struct wined3d_state, ps_consts_b), sizeof(BOOL),                 WINED3D_SHADER_CONST_PS_B},
+    };
+
+    if (p == WINED3D_PUSH_CONSTANTS_VS_F)
+        device->shader_backend->shader_update_float_vertex_constants(device, start_idx, count);
+    else if (p == WINED3D_PUSH_CONSTANTS_PS_F)
+        device->shader_backend->shader_update_float_pixel_constants(device, start_idx, count);
+
+    offset = push_constant_info[p].offset + start_idx * push_constant_info[p].size;
+    memcpy((BYTE *)&cs->state + offset, constants, count * push_constant_info[p].size);
+    for (i = 0, context_count = device->context_count; i < context_count; ++i)
+    {
+        device->contexts[i]->constant_update_mask |= push_constant_info[p].mask;
+    }
+}
+
 static const struct wined3d_cs_ops wined3d_cs_st_ops =
 {
     wined3d_cs_st_require_space,
     wined3d_cs_st_submit,
+    wined3d_cs_st_push_constants,
 };
 
 struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
