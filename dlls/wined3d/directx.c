@@ -5620,13 +5620,13 @@ HRESULT CDECL wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx, e
 
 static void WINE_GLAPI invalid_func(const void *data)
 {
-    ERR("Invalid vertex attribute function called\n");
+    ERR("Invalid vertex attribute function called.\n");
     DebugBreak();
 }
 
 static void WINE_GLAPI invalid_texcoord_func(GLenum unit, const void *data)
 {
-    ERR("Invalid texcoord function called\n");
+    ERR("Invalid texcoord function called.\n");
     DebugBreak();
 }
 
@@ -5643,7 +5643,7 @@ static void WINE_GLAPI position_d3dcolor(const void *data)
 {
     DWORD pos = *((const DWORD *)data);
 
-    FIXME("Add a test for fixed function position from d3dcolor type\n");
+    FIXME("Add a test for fixed function position from d3dcolor type.\n");
     context_get_current()->gl_info->gl_ops.gl.p_glVertex4s(D3DCOLOR_B_R(pos),
             D3DCOLOR_B_G(pos),
             D3DCOLOR_B_B(pos),
@@ -5691,7 +5691,7 @@ static void WINE_GLAPI specular_d3dcolor(const void *data)
 
 static void WINE_GLAPI warn_no_specular_func(const void *data)
 {
-    WARN("GL_EXT_secondary_color not supported\n");
+    WARN("GL_EXT_secondary_color not supported.\n");
 }
 
 static void WINE_GLAPI generic_d3dcolor(GLuint idx, const void *data)
@@ -5740,112 +5740,56 @@ static void wined3d_adapter_init_ffp_attrib_ops(struct wined3d_adapter *adapter)
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
     struct wined3d_d3d_info *d3d_info = &adapter->d3d_info;
     struct wined3d_ffp_attrib_ops *ops = &d3d_info->ffp_attrib_ops;
+    unsigned int i;
 
-    ops->position[WINED3D_FFP_EMIT_FLOAT1]    = invalid_func;
-    ops->position[WINED3D_FFP_EMIT_FLOAT2]    = invalid_func;
+    for (i = 0; i < WINED3D_FFP_EMIT_COUNT; ++i)
+    {
+        ops->position[i] = invalid_func;
+        ops->diffuse[i]  = invalid_func;
+        ops->specular[i] = invalid_func;
+        ops->normal[i]   = invalid_func;
+        ops->texcoord[i] = invalid_texcoord_func;
+        ops->generic[i]  = invalid_generic_attrib_func;
+    }
+
     ops->position[WINED3D_FFP_EMIT_FLOAT3]    = (wined3d_ffp_attrib_func)gl_info->gl_ops.gl.p_glVertex3fv;
     if (!d3d_info->xyzrhw)
         ops->position[WINED3D_FFP_EMIT_FLOAT4]    = position_float4;
     else
         ops->position[WINED3D_FFP_EMIT_FLOAT4]    = (wined3d_ffp_attrib_func)gl_info->gl_ops.gl.p_glVertex4fv;
     ops->position[WINED3D_FFP_EMIT_D3DCOLOR]  = position_d3dcolor;
-    ops->position[WINED3D_FFP_EMIT_UBYTE4]    = invalid_func;
-    ops->position[WINED3D_FFP_EMIT_SHORT2]    = invalid_func;
     ops->position[WINED3D_FFP_EMIT_SHORT4]    = (wined3d_ffp_attrib_func)gl_info->gl_ops.gl.p_glVertex2sv;
-    ops->position[WINED3D_FFP_EMIT_UBYTE4N]   = invalid_func;
-    ops->position[WINED3D_FFP_EMIT_SHORT2N]   = invalid_func;
-    ops->position[WINED3D_FFP_EMIT_SHORT4N]   = invalid_func;
-    ops->position[WINED3D_FFP_EMIT_USHORT2N]  = invalid_func;
-    ops->position[WINED3D_FFP_EMIT_USHORT4N]  = invalid_func;
-    ops->position[WINED3D_FFP_EMIT_UDEC3]     = invalid_func;
-    ops->position[WINED3D_FFP_EMIT_DEC3N]     = invalid_func;
-    ops->position[WINED3D_FFP_EMIT_FLOAT16_2] = invalid_func;
-    ops->position[WINED3D_FFP_EMIT_FLOAT16_4] = invalid_func;
-    ops->position[WINED3D_FFP_EMIT_INVALID]   = invalid_func;
 
-    ops->diffuse[WINED3D_FFP_EMIT_FLOAT1]     = invalid_func;
-    ops->diffuse[WINED3D_FFP_EMIT_FLOAT2]     = invalid_func;
     ops->diffuse[WINED3D_FFP_EMIT_FLOAT3]     = (wined3d_ffp_attrib_func)gl_info->gl_ops.gl.p_glColor3fv;
     ops->diffuse[WINED3D_FFP_EMIT_FLOAT4]     = (wined3d_ffp_attrib_func)gl_info->gl_ops.gl.p_glColor4fv;
     ops->diffuse[WINED3D_FFP_EMIT_D3DCOLOR]   = diffuse_d3dcolor;
-    ops->diffuse[WINED3D_FFP_EMIT_UBYTE4]     = invalid_func;
-    ops->diffuse[WINED3D_FFP_EMIT_SHORT2]     = invalid_func;
-    ops->diffuse[WINED3D_FFP_EMIT_SHORT4]     = invalid_func;
     ops->diffuse[WINED3D_FFP_EMIT_UBYTE4N]    = (wined3d_ffp_attrib_func)gl_info->gl_ops.gl.p_glColor4ubv;
-    ops->diffuse[WINED3D_FFP_EMIT_SHORT2N]    = invalid_func;
     ops->diffuse[WINED3D_FFP_EMIT_SHORT4N]    = (wined3d_ffp_attrib_func)gl_info->gl_ops.gl.p_glColor4sv;
-    ops->diffuse[WINED3D_FFP_EMIT_USHORT2N]   = invalid_func;
     ops->diffuse[WINED3D_FFP_EMIT_USHORT4N]   = (wined3d_ffp_attrib_func)gl_info->gl_ops.gl.p_glColor4usv;
-    ops->diffuse[WINED3D_FFP_EMIT_UDEC3]      = invalid_func;
-    ops->diffuse[WINED3D_FFP_EMIT_DEC3N]      = invalid_func;
-    ops->diffuse[WINED3D_FFP_EMIT_FLOAT16_2]  = invalid_func;
-    ops->diffuse[WINED3D_FFP_EMIT_FLOAT16_4]  = invalid_func;
-    ops->diffuse[WINED3D_FFP_EMIT_INVALID]    = invalid_func;
 
     /* No 4 component entry points here. */
-    ops->specular[WINED3D_FFP_EMIT_FLOAT1]    = invalid_func;
-    ops->specular[WINED3D_FFP_EMIT_FLOAT2]    = invalid_func;
     if (gl_info->supported[EXT_SECONDARY_COLOR])
         ops->specular[WINED3D_FFP_EMIT_FLOAT3]    = (wined3d_ffp_attrib_func)GL_EXTCALL(glSecondaryColor3fvEXT);
     else
         ops->specular[WINED3D_FFP_EMIT_FLOAT3]    = warn_no_specular_func;
-    ops->specular[WINED3D_FFP_EMIT_FLOAT4]    = invalid_func;
     if (gl_info->supported[EXT_SECONDARY_COLOR])
         ops->specular[WINED3D_FFP_EMIT_D3DCOLOR]  = specular_d3dcolor;
     else
         ops->specular[WINED3D_FFP_EMIT_D3DCOLOR]  = warn_no_specular_func;
-    ops->specular[WINED3D_FFP_EMIT_UBYTE4]    = invalid_func;
-    ops->specular[WINED3D_FFP_EMIT_SHORT2]    = invalid_func;
-    ops->specular[WINED3D_FFP_EMIT_SHORT4]    = invalid_func;
-    ops->specular[WINED3D_FFP_EMIT_UBYTE4N]   = invalid_func;
-    ops->specular[WINED3D_FFP_EMIT_SHORT2N]   = invalid_func;
-    ops->specular[WINED3D_FFP_EMIT_SHORT4N]   = invalid_func;
-    ops->specular[WINED3D_FFP_EMIT_USHORT2N]  = invalid_func;
-    ops->specular[WINED3D_FFP_EMIT_USHORT4N]  = invalid_func;
-    ops->specular[WINED3D_FFP_EMIT_UDEC3]     = invalid_func;
-    ops->specular[WINED3D_FFP_EMIT_DEC3N]     = invalid_func;
-    ops->specular[WINED3D_FFP_EMIT_FLOAT16_2] = invalid_func;
-    ops->specular[WINED3D_FFP_EMIT_FLOAT16_4] = invalid_func;
-    ops->specular[WINED3D_FFP_EMIT_INVALID]   = invalid_func;
 
     /* Only 3 component entry points here. Test how others behave. Float4
      * normals are used by one of our tests, trying to pass it to the pixel
      * shader, which fails on Windows. */
-    ops->normal[WINED3D_FFP_EMIT_FLOAT1]      = invalid_func;
-    ops->normal[WINED3D_FFP_EMIT_FLOAT2]      = invalid_func;
     ops->normal[WINED3D_FFP_EMIT_FLOAT3]      = (wined3d_ffp_attrib_func)gl_info->gl_ops.gl.p_glNormal3fv;
     /* Just ignore the 4th value. */
     ops->normal[WINED3D_FFP_EMIT_FLOAT4]      = (wined3d_ffp_attrib_func)gl_info->gl_ops.gl.p_glNormal3fv;
-    ops->normal[WINED3D_FFP_EMIT_D3DCOLOR]    = invalid_func;
-    ops->normal[WINED3D_FFP_EMIT_UBYTE4]      = invalid_func;
-    ops->normal[WINED3D_FFP_EMIT_SHORT2]      = invalid_func;
-    ops->normal[WINED3D_FFP_EMIT_SHORT4]      = invalid_func;
-    ops->normal[WINED3D_FFP_EMIT_UBYTE4N]     = invalid_func;
-    ops->normal[WINED3D_FFP_EMIT_SHORT2N]     = invalid_func;
-    ops->normal[WINED3D_FFP_EMIT_SHORT4N]     = invalid_func;
-    ops->normal[WINED3D_FFP_EMIT_USHORT2N]    = invalid_func;
-    ops->normal[WINED3D_FFP_EMIT_USHORT4N]    = invalid_func;
-    ops->normal[WINED3D_FFP_EMIT_UDEC3]       = invalid_func;
-    ops->normal[WINED3D_FFP_EMIT_DEC3N]       = invalid_func;
-    ops->normal[WINED3D_FFP_EMIT_FLOAT16_2]   = invalid_func;
-    ops->normal[WINED3D_FFP_EMIT_FLOAT16_4]   = invalid_func;
-    ops->normal[WINED3D_FFP_EMIT_INVALID]     = invalid_func;
 
     ops->texcoord[WINED3D_FFP_EMIT_FLOAT1]    = (wined3d_ffp_texcoord_func)gl_info->gl_ops.ext.p_glMultiTexCoord1fvARB;
     ops->texcoord[WINED3D_FFP_EMIT_FLOAT2]    = (wined3d_ffp_texcoord_func)gl_info->gl_ops.ext.p_glMultiTexCoord2fvARB;
     ops->texcoord[WINED3D_FFP_EMIT_FLOAT3]    = (wined3d_ffp_texcoord_func)gl_info->gl_ops.ext.p_glMultiTexCoord3fvARB;
     ops->texcoord[WINED3D_FFP_EMIT_FLOAT4]    = (wined3d_ffp_texcoord_func)gl_info->gl_ops.ext.p_glMultiTexCoord4fvARB;
-    ops->texcoord[WINED3D_FFP_EMIT_D3DCOLOR]  = invalid_texcoord_func;
-    ops->texcoord[WINED3D_FFP_EMIT_UBYTE4]    = invalid_texcoord_func;
     ops->texcoord[WINED3D_FFP_EMIT_SHORT2]    = (wined3d_ffp_texcoord_func)gl_info->gl_ops.ext.p_glMultiTexCoord2svARB;
     ops->texcoord[WINED3D_FFP_EMIT_SHORT4]    = (wined3d_ffp_texcoord_func)gl_info->gl_ops.ext.p_glMultiTexCoord4svARB;
-    ops->texcoord[WINED3D_FFP_EMIT_UBYTE4N]   = invalid_texcoord_func;
-    ops->texcoord[WINED3D_FFP_EMIT_SHORT2N]   = invalid_texcoord_func;
-    ops->texcoord[WINED3D_FFP_EMIT_SHORT4N]   = invalid_texcoord_func;
-    ops->texcoord[WINED3D_FFP_EMIT_USHORT2N]  = invalid_texcoord_func;
-    ops->texcoord[WINED3D_FFP_EMIT_USHORT4N]  = invalid_texcoord_func;
-    ops->texcoord[WINED3D_FFP_EMIT_UDEC3]     = invalid_texcoord_func;
-    ops->texcoord[WINED3D_FFP_EMIT_DEC3N]     = invalid_texcoord_func;
     if (gl_info->supported[NV_HALF_FLOAT])
     {
         /* Not supported by ARB_HALF_FLOAT_VERTEX, so check for NV_HALF_FLOAT. */
@@ -5854,12 +5798,6 @@ static void wined3d_adapter_init_ffp_attrib_ops(struct wined3d_adapter *adapter)
         ops->texcoord[WINED3D_FFP_EMIT_FLOAT16_4] =
                 (wined3d_ffp_texcoord_func)gl_info->gl_ops.ext.p_glMultiTexCoord4hvNV;
     }
-    else
-    {
-        ops->texcoord[WINED3D_FFP_EMIT_FLOAT16_2] = invalid_texcoord_func;
-        ops->texcoord[WINED3D_FFP_EMIT_FLOAT16_4] = invalid_texcoord_func;
-    }
-    ops->texcoord[WINED3D_FFP_EMIT_INVALID]   = invalid_texcoord_func;
 
     ops->generic[WINED3D_FFP_EMIT_FLOAT1]     = (wined3d_generic_attrib_func)gl_info->gl_ops.ext.p_glVertexAttrib1fv;
     ops->generic[WINED3D_FFP_EMIT_FLOAT2]     = (wined3d_generic_attrib_func)gl_info->gl_ops.ext.p_glVertexAttrib2fv;
@@ -5878,8 +5816,6 @@ static void wined3d_adapter_init_ffp_attrib_ops(struct wined3d_adapter *adapter)
     ops->generic[WINED3D_FFP_EMIT_SHORT4N]    = (wined3d_generic_attrib_func)gl_info->gl_ops.ext.p_glVertexAttrib4Nsv;
     ops->generic[WINED3D_FFP_EMIT_USHORT2N]   = generic_ushort2n;
     ops->generic[WINED3D_FFP_EMIT_USHORT4N]   = (wined3d_generic_attrib_func)gl_info->gl_ops.ext.p_glVertexAttrib4Nusv;
-    ops->generic[WINED3D_FFP_EMIT_UDEC3]      = invalid_generic_attrib_func;
-    ops->generic[WINED3D_FFP_EMIT_DEC3N]      = invalid_generic_attrib_func;
     if (gl_info->supported[NV_HALF_FLOAT] && gl_info->supported[NV_VERTEX_PROGRAM])
     {
         ops->generic[WINED3D_FFP_EMIT_FLOAT16_2] =
@@ -5892,7 +5828,6 @@ static void wined3d_adapter_init_ffp_attrib_ops(struct wined3d_adapter *adapter)
         ops->generic[WINED3D_FFP_EMIT_FLOAT16_2] = generic_float16_2;
         ops->generic[WINED3D_FFP_EMIT_FLOAT16_4] = generic_float16_4;
     }
-    ops->generic[WINED3D_FFP_EMIT_INVALID]    = invalid_generic_attrib_func;
 }
 
 static void wined3d_adapter_init_fb_cfgs(struct wined3d_adapter *adapter, HDC dc)
