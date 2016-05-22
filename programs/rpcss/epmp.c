@@ -122,6 +122,7 @@ void __cdecl ept_insert(handle_t h,
         {
             WINE_WARN("TowerExplode failed %u\n", rpc_status);
             *status = rpc_status;
+            HeapFree(GetProcessHeap(), 0, entry);
             break; /* FIXME: more cleanup? */
         }
 
