@@ -1672,7 +1672,7 @@ static void test_text_position_style(DWORD style)
 
     /* Get a stock font for which we can determine the metrics */
     font = GetStockObject(SYSTEM_FONT);
-    ok (font != NULL, "GetStockObjcet SYSTEM_FONT failed\n");
+    ok (font != NULL, "GetStockObject SYSTEM_FONT failed\n");
     dc = GetDC(NULL);
     ok (dc != NULL, "GetDC() failed\n");
     oldFont = SelectObject(dc, font);
