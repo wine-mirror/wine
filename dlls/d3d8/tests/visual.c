@@ -3185,7 +3185,7 @@ static void depth_clamp_test(void)
     ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
-    ok(SUCCEEDED(hr), "SetVertexSahder failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "SetVertexShader failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, sizeof(*quad1));
     ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
