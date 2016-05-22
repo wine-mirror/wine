@@ -4594,8 +4594,7 @@ DWORD wined3d_format_convert_from_float(const struct wined3d_format *format, con
     };
     unsigned int i;
 
-    TRACE("Converting color {%.8e %.8e %.8e %.8e} to format %s.\n",
-            color->r, color->g, color->b, color->a, debug_d3dformat(format->id));
+    TRACE("Converting color %s to format %s.\n", debug_color(color), debug_d3dformat(format->id));
 
     for (i = 0; i < sizeof(conv) / sizeof(*conv); ++i)
     {
