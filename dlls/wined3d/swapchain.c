@@ -980,9 +980,8 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
 
     if (swapchain->desc.backbuffer_count > 0)
     {
-        swapchain->back_buffers = HeapAlloc(GetProcessHeap(), 0,
-                sizeof(*swapchain->back_buffers) * swapchain->desc.backbuffer_count);
-        if (!swapchain->back_buffers)
+        if (!(swapchain->back_buffers = wined3d_calloc(swapchain->desc.backbuffer_count,
+                sizeof(*swapchain->back_buffers))))
         {
             ERR("Failed to allocate backbuffer array memory.\n");
             hr = E_OUTOFMEMORY;
@@ -1113,7 +1112,7 @@ HRESULT CDECL wined3d_swapchain_create(struct wined3d_device *device, struct win
 
 static struct wined3d_context *swapchain_create_context(struct wined3d_swapchain *swapchain)
 {
-    struct wined3d_context **newArray;
+    struct wined3d_context **ctx_array;
     struct wined3d_context *ctx;
 
     TRACE("Creating a new context for swapchain %p, thread %u.\n", swapchain, GetCurrentThreadId());
@@ -1125,16 +1124,16 @@ static struct wined3d_context *swapchain_create_context(struct wined3d_swapchain
     }
     context_release(ctx);
 
-    newArray = HeapAlloc(GetProcessHeap(), 0, sizeof(*newArray) * (swapchain->num_contexts + 1));
-    if(!newArray) {
+    if (!(ctx_array = wined3d_calloc(swapchain->num_contexts + 1, sizeof(*ctx_array))))
+    {
         ERR("Out of memory when trying to allocate a new context array\n");
         context_destroy(swapchain->device, ctx);
         return NULL;
     }
-    memcpy(newArray, swapchain->context, sizeof(*newArray) * swapchain->num_contexts);
+    memcpy(ctx_array, swapchain->context, sizeof(*ctx_array) * swapchain->num_contexts);
     HeapFree(GetProcessHeap(), 0, swapchain->context);
-    newArray[swapchain->num_contexts] = ctx;
-    swapchain->context = newArray;
+    ctx_array[swapchain->num_contexts] = ctx;
+    swapchain->context = ctx_array;
     swapchain->num_contexts++;
 
     TRACE("Returning context %p\n", ctx);

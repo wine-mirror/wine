@@ -442,8 +442,7 @@ static void shader_glsl_dump_program_source(const struct wined3d_gl_info *gl_inf
     char *source = NULL;
 
     GL_EXTCALL(glGetProgramiv(program, GL_ATTACHED_SHADERS, &shader_count));
-    shaders = HeapAlloc(GetProcessHeap(), 0, shader_count * sizeof(*shaders));
-    if (!shaders)
+    if (!(shaders = wined3d_calloc(shader_count, sizeof(*shaders))))
     {
         ERR("Failed to allocate shader array memory.\n");
         return;
@@ -5217,7 +5216,7 @@ static void shader_glsl_setup_vs3_output(struct shader_glsl_priv *priv,
     unsigned int i, j;
     char reg_mask[6];
 
-    set = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*set) * max_varyings);
+    set = wined3d_calloc(max_varyings, sizeof(*set));
 
     for (i = 0; i < input_signature->element_count; ++i)
     {
@@ -8234,8 +8233,7 @@ static HRESULT shader_glsl_alloc(struct wined3d_device *device, const struct win
         goto fail;
     }
 
-    priv->stack = HeapAlloc(GetProcessHeap(), 0, stack_size * sizeof(*priv->stack));
-    if (!priv->stack)
+    if (!(priv->stack = wined3d_calloc(stack_size, sizeof(*priv->stack))))
     {
         ERR("Failed to allocate memory.\n");
         goto fail;

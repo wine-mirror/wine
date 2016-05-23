@@ -1938,7 +1938,8 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
     if (wined3d_texture_use_pbo(texture, gl_info))
         texture->resource.map_binding = WINED3D_LOCATION_BUFFER;
 
-    if (!(surfaces = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*surfaces) * level_count * layer_count)))
+    if (level_count > ~(SIZE_T)0 / layer_count
+            || !(surfaces = wined3d_calloc(level_count * layer_count, sizeof(*surfaces))))
     {
         wined3d_texture_cleanup(texture);
         return E_OUTOFMEMORY;
@@ -2205,7 +2206,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
         texture->resource.map_binding = WINED3D_LOCATION_BUFFER;
     }
 
-    if (!(volumes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*volumes) * level_count)))
+    if (!(volumes = wined3d_calloc(level_count, sizeof(*volumes))))
     {
         wined3d_texture_cleanup(texture);
         return E_OUTOFMEMORY;

@@ -62,7 +62,7 @@ void wined3d_volume_upload_data(struct wined3d_texture *texture, unsigned int su
 
         wined3d_texture_get_pitch(texture, level, &src_row_pitch, &src_slice_pitch);
 
-        converted_mem = HeapAlloc(GetProcessHeap(), 0, dst_slice_pitch * depth);
+        converted_mem = wined3d_calloc(depth, dst_slice_pitch);
         format->convert(data->addr, converted_mem, src_row_pitch, src_slice_pitch,
                 dst_row_pitch, dst_slice_pitch, width, height, depth);
         mem = converted_mem;

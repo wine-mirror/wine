@@ -1636,14 +1636,10 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     if (!ret)
         return NULL;
 
-    ret->blit_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            gl_info->limits.buffers * sizeof(*ret->blit_targets));
-    if (!ret->blit_targets)
+    if (!(ret->blit_targets = wined3d_calloc(gl_info->limits.buffers, sizeof(*ret->blit_targets))))
         goto out;
 
-    ret->draw_buffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            gl_info->limits.buffers * sizeof(*ret->draw_buffers));
-    if (!ret->draw_buffers)
+    if (!(ret->draw_buffers = wined3d_calloc(gl_info->limits.buffers, sizeof(*ret->draw_buffers))))
         goto out;
 
     ret->fbo_key = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -1652,24 +1648,21 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         goto out;
 
     ret->free_timestamp_query_size = 4;
-    ret->free_timestamp_queries = HeapAlloc(GetProcessHeap(), 0,
-            ret->free_timestamp_query_size * sizeof(*ret->free_timestamp_queries));
-    if (!ret->free_timestamp_queries)
+    if (!(ret->free_timestamp_queries = wined3d_calloc(ret->free_timestamp_query_size,
+            sizeof(*ret->free_timestamp_queries))))
         goto out;
     list_init(&ret->timestamp_queries);
 
     ret->free_occlusion_query_size = 4;
-    ret->free_occlusion_queries = HeapAlloc(GetProcessHeap(), 0,
-            ret->free_occlusion_query_size * sizeof(*ret->free_occlusion_queries));
-    if (!ret->free_occlusion_queries)
+    if (!(ret->free_occlusion_queries = wined3d_calloc(ret->free_occlusion_query_size,
+            sizeof(*ret->free_occlusion_queries))))
         goto out;
 
     list_init(&ret->occlusion_queries);
 
     ret->free_event_query_size = 4;
-    ret->free_event_queries = HeapAlloc(GetProcessHeap(), 0,
-            ret->free_event_query_size * sizeof(*ret->free_event_queries));
-    if (!ret->free_event_queries)
+    if (!(ret->free_event_queries = wined3d_calloc(ret->free_event_query_size,
+            sizeof(*ret->free_event_queries))))
         goto out;
 
     list_init(&ret->event_queries);

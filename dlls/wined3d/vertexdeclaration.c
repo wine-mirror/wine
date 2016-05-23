@@ -180,8 +180,7 @@ static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declara
     declaration->parent = parent;
     declaration->parent_ops = parent_ops;
     declaration->device = device;
-    declaration->elements = HeapAlloc(GetProcessHeap(), 0, sizeof(*declaration->elements) * element_count);
-    if (!declaration->elements)
+    if (!(declaration->elements = wined3d_calloc(element_count, sizeof(*declaration->elements))))
     {
         ERR("Failed to allocate elements memory.\n");
         return E_OUTOFMEMORY;
@@ -339,8 +338,8 @@ static unsigned int convert_fvf_to_declaration(const struct wined3d_gl_info *gl_
            has_psize + has_diffuse + has_specular + num_textures;
 
     state.gl_info = gl_info;
-    state.elements = HeapAlloc(GetProcessHeap(), 0, size * sizeof(*state.elements));
-    if (!state.elements) return ~0U;
+    if (!(state.elements = wined3d_calloc(size, sizeof(*state.elements))))
+        return ~0u;
     state.offset = 0;
     state.idx = 0;
 

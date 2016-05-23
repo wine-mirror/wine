@@ -452,8 +452,10 @@ BOOL wined3d_register_window(HWND window, struct wined3d_device *device)
         unsigned int new_size = max(1, wndproc_table.size * 2);
         struct wined3d_wndproc *new_entries;
 
-        if (!wndproc_table.entries) new_entries = HeapAlloc(GetProcessHeap(), 0, new_size * sizeof(*new_entries));
-        else new_entries = HeapReAlloc(GetProcessHeap(), 0, wndproc_table.entries, new_size * sizeof(*new_entries));
+        if (!wndproc_table.entries)
+            new_entries = wined3d_calloc(new_size, sizeof(*new_entries));
+        else
+            new_entries = HeapReAlloc(GetProcessHeap(), 0, wndproc_table.entries, new_size * sizeof(*new_entries));
 
         if (!new_entries)
         {

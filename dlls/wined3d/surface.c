@@ -790,7 +790,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
 
         WARN_(d3d_perf)("Downloading all miplevel layers to get the surface data for a single sub-resource.\n");
 
-        if (!(temporary_mem = HeapAlloc(GetProcessHeap(), 0, texture->layer_count * sub_resource->size)))
+        if (!(temporary_mem = wined3d_calloc(texture->layer_count, sub_resource->size)))
         {
             ERR("Out of memory.\n");
             return;

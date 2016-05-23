@@ -211,7 +211,7 @@ fail:
     buffer_clear_dirty_areas(This);
 }
 
-static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
+static BOOL buffer_process_converted_attribute(struct wined3d_buffer *buffer,
         const enum wined3d_buffer_conversion_type conversion_type,
         const struct wined3d_stream_info_element *attrib, DWORD *stride_this_run)
 {
@@ -237,31 +237,30 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
     else
     {
         *stride_this_run = attrib->stride;
-        if (This->stride != *stride_this_run)
+        if (buffer->stride != *stride_this_run)
         {
             /* We rely that this happens only on the first converted attribute that is found,
              * if at all. See above check
              */
             TRACE("Reconverting because converted attributes occur, and the stride changed\n");
-            This->stride = *stride_this_run;
-            HeapFree(GetProcessHeap(), HEAP_ZERO_MEMORY, This->conversion_map);
-            This->conversion_map = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                    sizeof(*This->conversion_map) * This->stride);
+            buffer->stride = *stride_this_run;
+            HeapFree(GetProcessHeap(), HEAP_ZERO_MEMORY, buffer->conversion_map);
+            buffer->conversion_map = wined3d_calloc(buffer->stride, sizeof(*buffer->conversion_map));
             ret = TRUE;
         }
     }
 
-    data = ((DWORD_PTR)attrib->data.addr) % This->stride;
+    data = ((DWORD_PTR)attrib->data.addr) % buffer->stride;
     attrib_size = attrib->format->component_count * attrib->format->component_size;
     for (i = 0; i < attrib_size; ++i)
     {
-        DWORD_PTR idx = (data + i) % This->stride;
-        if (This->conversion_map[idx] != conversion_type)
+        DWORD_PTR idx = (data + i) % buffer->stride;
+        if (buffer->conversion_map[idx] != conversion_type)
         {
-            TRACE("Byte %ld in vertex changed\n", idx);
-            TRACE("It was type %d, is %d now\n", This->conversion_map[idx], conversion_type);
+            TRACE("Byte %lu in vertex changed:\n", idx);
+            TRACE("    It was type %#x, is %#x now.\n", buffer->conversion_map[idx], conversion_type);
             ret = TRUE;
-            This->conversion_map[idx] = conversion_type;
+            buffer->conversion_map[idx] = conversion_type;
         }
     }
 

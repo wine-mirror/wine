@@ -752,7 +752,7 @@ static void shader_record_sample(struct wined3d_shader_reg_maps *reg_maps,
 
     if (!map->size)
     {
-        if (!(entries = HeapAlloc(GetProcessHeap(), 0, sizeof(*entries) * 4)))
+        if (!(entries = wined3d_calloc(4, sizeof(*entries))))
         {
             ERR("Failed to allocate sampler map entries.\n");
             return;
@@ -823,9 +823,8 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
 
     shader_set_limits(shader);
 
-    reg_maps->constf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(*reg_maps->constf) * ((min(shader->limits->constant_float, constf_size) + 31) / 32));
-    if (!reg_maps->constf)
+    if (!(reg_maps->constf = wined3d_calloc(((min(shader->limits->constant_float, constf_size) + 31) / 32),
+            sizeof(*reg_maps->constf))))
     {
         ERR("Failed to allocate constant map memory.\n");
         return E_OUTOFMEMORY;
@@ -1255,7 +1254,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         struct wined3d_shader_signature_element *e;
         unsigned int i;
 
-        if (!(input_signature->elements = HeapAlloc(GetProcessHeap(), 0, sizeof(*input_signature->elements) * count)))
+        if (!(input_signature->elements = wined3d_calloc(count, sizeof(*input_signature->elements))))
             return E_OUTOFMEMORY;
         input_signature->element_count = count;
 
@@ -1281,7 +1280,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         unsigned int count = wined3d_popcount(reg_maps->output_registers);
         struct wined3d_shader_signature_element *e;
 
-        if (!(output_signature->elements = HeapAlloc(GetProcessHeap(), 0, sizeof(*output_signature->elements) * count)))
+        if (!(output_signature->elements = wined3d_calloc(count, sizeof(*output_signature->elements))))
             return E_OUTOFMEMORY;
         output_signature->element_count = count;
 
@@ -2742,7 +2741,7 @@ static HRESULT shader_signature_copy(struct wined3d_shader_signature *dst,
     ptr = *signature_strings;
 
     dst->element_count = src->element_count;
-    if (!(dst->elements = HeapAlloc(GetProcessHeap(), 0, sizeof(*dst->elements) * dst->element_count)))
+    if (!(dst->elements = wined3d_calloc(dst->element_count, sizeof(*dst->elements))))
         return E_OUTOFMEMORY;
 
     for (i = 0; i < src->element_count; ++i)
