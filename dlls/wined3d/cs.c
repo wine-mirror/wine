@@ -1144,6 +1144,8 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
     cs->data_size = WINED3D_INITIAL_CS_SIZE;
     if (!(cs->data = HeapAlloc(GetProcessHeap(), 0, cs->data_size)))
     {
+        state_cleanup(&cs->state);
+        HeapFree(GetProcessHeap(), 0, cs->fb.render_targets);
         HeapFree(GetProcessHeap(), 0, cs);
         return NULL;
     }
