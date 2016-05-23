@@ -26,25 +26,26 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
 static HRESULT shdr_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
 {
-    struct d3d_shader_info *shader_info = ctx;
+    struct wined3d_shader_desc *desc = ctx;
     HRESULT hr;
 
     switch (tag)
     {
         case TAG_ISGN:
-            if (FAILED(hr = shader_parse_signature(data, data_size, shader_info->input_signature)))
+            if (FAILED(hr = shader_parse_signature(data, data_size, &desc->input_signature)))
                 return hr;
             break;
 
         case TAG_OSGN:
-            if (FAILED(hr = shader_parse_signature(data, data_size, shader_info->output_signature)))
+            if (FAILED(hr = shader_parse_signature(data, data_size, &desc->output_signature)))
                 return hr;
             break;
 
         case TAG_SHDR:
         case TAG_SHEX:
-            if (shader_info->shader_code) FIXME("Multiple SHDR/SHEX chunks.\n");
-            shader_info->shader_code = (const DWORD *)data;
+            if (desc->byte_code)
+                FIXME("Multiple SHDR/SHEX chunks.\n");
+            desc->byte_code = (const DWORD *)data;
             break;
 
         default:
@@ -55,22 +56,23 @@ static HRESULT shdr_handler(const char *data, DWORD data_size, DWORD tag, void *
     return S_OK;
 }
 
-static HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, struct d3d_shader_info *shader_info)
+static HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, struct wined3d_shader_desc *desc)
 {
     HRESULT hr;
 
-    shader_info->shader_code = NULL;
-    memset(shader_info->input_signature, 0, sizeof(*shader_info->input_signature));
-    memset(shader_info->output_signature, 0, sizeof(*shader_info->output_signature));
+    desc->byte_code = NULL;
+    memset(&desc->input_signature, 0, sizeof(desc->input_signature));
+    memset(&desc->output_signature, 0, sizeof(desc->output_signature));
 
-    hr = parse_dxbc(dxbc, dxbc_length, shdr_handler, shader_info);
-    if (!shader_info->shader_code) hr = E_INVALIDARG;
+    hr = parse_dxbc(dxbc, dxbc_length, shdr_handler, desc);
+    if (!desc->byte_code)
+        hr = E_INVALIDARG;
 
     if (FAILED(hr))
     {
         FIXME("Failed to parse shader, hr %#x.\n", hr);
-        shader_free_signature(shader_info->input_signature);
-        shader_free_signature(shader_info->output_signature);
+        shader_free_signature(&desc->input_signature);
+        shader_free_signature(&desc->output_signature);
     }
 
     return hr;
@@ -385,7 +387,6 @@ static unsigned int d3d_sm_from_feature_level(D3D_FEATURE_LEVEL feature_level)
 static HRESULT d3d_vertex_shader_init(struct d3d_vertex_shader *shader, struct d3d_device *device,
         const void *byte_code, SIZE_T byte_code_length)
 {
-    struct d3d_shader_info shader_info;
     struct wined3d_shader_desc desc;
     HRESULT hr;
 
@@ -395,17 +396,13 @@ static HRESULT d3d_vertex_shader_init(struct d3d_vertex_shader *shader, struct d
     wined3d_mutex_lock();
     wined3d_private_store_init(&shader->private_store);
 
-    shader_info.input_signature = &desc.input_signature;
-    shader_info.output_signature = &desc.output_signature;
-    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &shader_info)))
+    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &desc)))
     {
         WARN("Failed to extract shader, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
         wined3d_mutex_unlock();
         return hr;
     }
-
-    desc.byte_code = shader_info.shader_code;
     desc.max_version = d3d_sm_from_feature_level(device->feature_level);
 
     hr = wined3d_shader_create_vs(device->wined3d_device, &desc, shader,
@@ -597,7 +594,6 @@ static const struct wined3d_parent_ops d3d11_hull_shader_wined3d_parent_ops =
 static HRESULT d3d11_hull_shader_init(struct d3d11_hull_shader *shader, struct d3d_device *device,
         const void *byte_code, SIZE_T byte_code_length)
 {
-    struct d3d_shader_info shader_info;
     struct wined3d_shader_desc desc;
     HRESULT hr;
 
@@ -606,17 +602,13 @@ static HRESULT d3d11_hull_shader_init(struct d3d11_hull_shader *shader, struct d
     wined3d_mutex_lock();
     wined3d_private_store_init(&shader->private_store);
 
-    shader_info.input_signature = &desc.input_signature;
-    shader_info.output_signature = &desc.output_signature;
-    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &shader_info)))
+    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &desc)))
     {
         WARN("Failed to extract shader, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
         wined3d_mutex_unlock();
         return hr;
     }
-
-    desc.byte_code = shader_info.shader_code;
     desc.max_version = d3d_sm_from_feature_level(device->feature_level);
 
     hr = wined3d_shader_create_hs(device->wined3d_device, &desc, shader,
@@ -789,7 +781,6 @@ static const struct wined3d_parent_ops d3d11_domain_shader_wined3d_parent_ops =
 static HRESULT d3d11_domain_shader_init(struct d3d11_domain_shader *shader, struct d3d_device *device,
         const void *byte_code, SIZE_T byte_code_length)
 {
-    struct d3d_shader_info shader_info;
     struct wined3d_shader_desc desc;
     HRESULT hr;
 
@@ -798,17 +789,13 @@ static HRESULT d3d11_domain_shader_init(struct d3d11_domain_shader *shader, stru
     wined3d_mutex_lock();
     wined3d_private_store_init(&shader->private_store);
 
-    shader_info.input_signature = &desc.input_signature;
-    shader_info.output_signature = &desc.output_signature;
-    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &shader_info)))
+    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &desc)))
     {
         WARN("Failed to extract shader, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
         wined3d_mutex_unlock();
         return hr;
     }
-
-    desc.byte_code = shader_info.shader_code;
     desc.max_version = d3d_sm_from_feature_level(device->feature_level);
 
     hr = wined3d_shader_create_ds(device->wined3d_device, &desc, shader,
@@ -1084,7 +1071,6 @@ static const struct wined3d_parent_ops d3d_geometry_shader_wined3d_parent_ops =
 static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader, struct d3d_device *device,
         const void *byte_code, SIZE_T byte_code_length)
 {
-    struct d3d_shader_info shader_info;
     struct wined3d_shader_desc desc;
     HRESULT hr;
 
@@ -1094,17 +1080,13 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader, stru
     wined3d_mutex_lock();
     wined3d_private_store_init(&shader->private_store);
 
-    shader_info.input_signature = &desc.input_signature;
-    shader_info.output_signature = &desc.output_signature;
-    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &shader_info)))
+    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &desc)))
     {
         WARN("Failed to extract shader, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
         wined3d_mutex_unlock();
         return hr;
     }
-
-    desc.byte_code = shader_info.shader_code;
     desc.max_version = d3d_sm_from_feature_level(device->feature_level);
 
     hr = wined3d_shader_create_gs(device->wined3d_device, &desc, shader,
@@ -1406,7 +1388,6 @@ static const struct wined3d_parent_ops d3d_pixel_shader_wined3d_parent_ops =
 static HRESULT d3d_pixel_shader_init(struct d3d_pixel_shader *shader, struct d3d_device *device,
         const void *byte_code, SIZE_T byte_code_length)
 {
-    struct d3d_shader_info shader_info;
     struct wined3d_shader_desc desc;
     HRESULT hr;
 
@@ -1416,17 +1397,13 @@ static HRESULT d3d_pixel_shader_init(struct d3d_pixel_shader *shader, struct d3d
     wined3d_mutex_lock();
     wined3d_private_store_init(&shader->private_store);
 
-    shader_info.input_signature = &desc.input_signature;
-    shader_info.output_signature = &desc.output_signature;
-    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &shader_info)))
+    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &desc)))
     {
         WARN("Failed to extract shader, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
         wined3d_mutex_unlock();
         return hr;
     }
-
-    desc.byte_code = shader_info.shader_code;
     desc.max_version = d3d_sm_from_feature_level(device->feature_level);
 
     hr = wined3d_shader_create_ps(device->wined3d_device, &desc, shader,

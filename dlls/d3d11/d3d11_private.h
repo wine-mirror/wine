@@ -48,13 +48,6 @@
 
 struct d3d_device;
 
-struct d3d_shader_info
-{
-    const DWORD *shader_code;
-    struct wined3d_shader_signature *input_signature;
-    struct wined3d_shader_signature *output_signature;
-};
-
 extern const struct wined3d_parent_ops d3d_null_wined3d_parent_ops DECLSPEC_HIDDEN;
 
 /* TRACE helper functions */
