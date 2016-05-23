@@ -108,6 +108,13 @@ const char *debug_d3dxparameter_registerset(D3DXREGISTER_SET r) DECLSPEC_HIDDEN;
 void set_number(void *outdata, D3DXPARAMETER_TYPE outtype,
         const void *indata, D3DXPARAMETER_TYPE intype) DECLSPEC_HIDDEN;
 
+static inline BOOL is_param_type_sampler(D3DXPARAMETER_TYPE type)
+{
+    return type == D3DXPT_SAMPLER
+            || type == D3DXPT_SAMPLER1D || type == D3DXPT_SAMPLER2D
+            || type == D3DXPT_SAMPLER3D || type == D3DXPT_SAMPLERCUBE;
+}
+
 struct d3dx_parameter;
 
 enum pres_reg_tables

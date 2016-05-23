@@ -1326,9 +1326,7 @@ static HRESULT d3dx9_base_effect_set_value(struct d3dx9_base_effect *base,
     }
 
     /* samplers don't touch data */
-    if (param->class == D3DXPC_OBJECT && (param->type == D3DXPT_SAMPLER
-            || param->type == D3DXPT_SAMPLER1D || param->type == D3DXPT_SAMPLER2D
-            || param->type == D3DXPT_SAMPLER3D || param->type == D3DXPT_SAMPLERCUBE))
+    if (param->class == D3DXPC_OBJECT && is_param_type_sampler(param->type))
     {
         TRACE("Sampler: returning E_FAIL\n");
         return E_FAIL;
@@ -1391,9 +1389,7 @@ static HRESULT d3dx9_base_effect_get_value(struct d3dx9_base_effect *base,
     }
 
     /* samplers don't touch data */
-    if (param->class == D3DXPC_OBJECT && (param->type == D3DXPT_SAMPLER
-            || param->type == D3DXPT_SAMPLER1D || param->type == D3DXPT_SAMPLER2D
-            || param->type == D3DXPT_SAMPLER3D || param->type == D3DXPT_SAMPLERCUBE))
+    if (param->class == D3DXPC_OBJECT && is_param_type_sampler(param->type))
     {
         TRACE("Sampler: returning E_FAIL\n");
         return E_FAIL;
@@ -2743,9 +2739,7 @@ static HRESULT d3dx_set_shader_constants(struct ID3DXEffectImpl *effect, struct 
     ret = D3D_OK;
     for (i = 0; i < parameters_count; ++i)
     {
-        if (params[i] && params[i]->class == D3DXPC_OBJECT && (params[i]->type == D3DXPT_SAMPLER
-                || params[i]->type == D3DXPT_SAMPLER1D || params[i]->type == D3DXPT_SAMPLER2D
-                || params[i]->type == D3DXPT_SAMPLER3D || params[i]->type == D3DXPT_SAMPLERCUBE))
+        if (params[i] && params[i]->class == D3DXPC_OBJECT && is_param_type_sampler(params[i]->type))
         {
             struct d3dx_sampler *sampler;
 
