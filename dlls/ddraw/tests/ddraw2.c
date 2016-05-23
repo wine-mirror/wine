@@ -2337,7 +2337,7 @@ static void test_redundant_mode_set(void)
 
     surface_desc.dwSize = sizeof(surface_desc);
     hr = IDirectDraw2_GetDisplayMode(ddraw, &surface_desc);
-    ok(SUCCEEDED(hr), "GetDipslayMode failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "GetDisplayMode failed, hr %#x.\n", hr);
 
     hr = IDirectDraw2_SetDisplayMode(ddraw, surface_desc.dwWidth, surface_desc.dwHeight,
             U1(surface_desc.ddpfPixelFormat).dwRGBBitCount, 0, 0);
