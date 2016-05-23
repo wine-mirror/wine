@@ -548,7 +548,7 @@ static void *shader_sm1_init(const DWORD *byte_code, const struct wined3d_shader
     if (!priv)
         return NULL;
 
-    if (output_signature)
+    if (output_signature->element_count)
     {
         FIXME("SM 1-3 shader shouldn't have output signatures.\n");
     }
