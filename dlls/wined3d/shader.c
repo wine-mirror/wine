@@ -2737,6 +2737,9 @@ static HRESULT shader_signature_copy(struct wined3d_shader_signature *dst,
     SIZE_T len;
     char *ptr;
 
+    if (!src->element_count)
+        return WINED3D_OK;
+
     ptr = *signature_strings;
 
     dst->element_count = src->element_count;
@@ -2778,42 +2781,34 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
     shader->parent_ops = parent_ops;
 
     total = 0;
-    if (desc->input_signature)
+    for (i = 0; i < desc->input_signature.element_count; ++i)
     {
-        for (i = 0; i < desc->input_signature->element_count; ++i)
-        {
-            e = &desc->input_signature->elements[i];
-            len = strlen(e->semantic_name);
-            if (len >= ~(SIZE_T)0 - total)
-                return E_OUTOFMEMORY;
+        e = &desc->input_signature.elements[i];
+        len = strlen(e->semantic_name);
+        if (len >= ~(SIZE_T)0 - total)
+            return E_OUTOFMEMORY;
 
-            total += len + 1;
-        }
+        total += len + 1;
     }
-    if (desc->output_signature)
+    for (i = 0; i < desc->output_signature.element_count; ++i)
     {
-        for (i = 0; i < desc->output_signature->element_count; ++i)
-        {
-            e = &desc->output_signature->elements[i];
-            len = strlen(e->semantic_name);
-            if (len >= ~(SIZE_T)0 - total)
-                return E_OUTOFMEMORY;
+        e = &desc->output_signature.elements[i];
+        len = strlen(e->semantic_name);
+        if (len >= ~(SIZE_T)0 - total)
+            return E_OUTOFMEMORY;
 
-            total += len + 1;
-        }
+        total += len + 1;
     }
-    if (!(shader->signature_strings = HeapAlloc(GetProcessHeap(), 0, total)))
+    if (total && !(shader->signature_strings = HeapAlloc(GetProcessHeap(), 0, total)))
         return E_OUTOFMEMORY;
     ptr = shader->signature_strings;
 
-    if (desc->input_signature && FAILED(hr = shader_signature_copy(&shader->input_signature,
-            desc->input_signature, &ptr)))
+    if (FAILED(hr = shader_signature_copy(&shader->input_signature, &desc->input_signature, &ptr)))
     {
         HeapFree(GetProcessHeap(), 0, shader->signature_strings);
         return hr;
     }
-    if (desc->output_signature && FAILED(hr = shader_signature_copy(&shader->output_signature,
-            desc->output_signature, &ptr)))
+    if (FAILED(hr = shader_signature_copy(&shader->output_signature, &desc->output_signature, &ptr)))
     {
         HeapFree(GetProcessHeap(), 0, shader->input_signature.elements);
         HeapFree(GetProcessHeap(), 0, shader->signature_strings);
