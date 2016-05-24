@@ -9890,12 +9890,12 @@ msgstr ""
 msgid "Are you sure?"
 msgstr ""
 
-#: cmd.rc:354 reg.rc:45 xcopy.rc:43
+#: cmd.rc:354 reg.rc:50 xcopy.rc:43
 msgctxt "Yes key"
 msgid "Y"
 msgstr ""
 
-#: cmd.rc:355 reg.rc:46 xcopy.rc:44
+#: cmd.rc:355 reg.rc:51 xcopy.rc:44
 msgctxt "No key"
 msgid "N"
 msgstr ""
@@ -10032,7 +10032,7 @@ msgstr ""
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
 
-#: cmd.rc:390 reg.rc:44
+#: cmd.rc:390 reg.rc:49
 msgid " (Yes|No)"
 msgstr ""
 
@@ -11193,126 +11193,131 @@ msgstr ""
 msgid "Icons (*.ico)"
 msgstr ""
 
-#: reg.rc:30
+#: reg.rc:35
 msgid ""
-"The syntax of this command is:\n"
+"Usage:\n"
+"  REG [operation] [parameters]\n"
 "\n"
-"REG [ ADD | DELETE | QUERY ]\n"
-"REG command /?\n"
+"Supported operations:\n"
+"  ADD | DELETE | QUERY\n"
+"\n"
+"For help on a specific operation, type:\n"
+"  REG [operation] /?\n"
+"\n"
 msgstr ""
 
-#: reg.rc:31
+#: reg.rc:36
 msgid ""
 "REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
 "f]\n"
 msgstr ""
 
-#: reg.rc:32
+#: reg.rc:37
 msgid "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
 msgstr ""
 
-#: reg.rc:33
+#: reg.rc:38
 msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
 msgstr ""
 
-#: reg.rc:34
+#: reg.rc:39
 msgid "The operation completed successfully\n"
 msgstr ""
 
-#: reg.rc:35
+#: reg.rc:40
 #, fuzzy
 msgid "reg: Invalid key name\n"
 msgstr "Μη έγγυρος(οι) χαρακτήρας(ες) στο μονοπάτι.\n"
 
-#: reg.rc:36
+#: reg.rc:41
 #, fuzzy
 msgid "reg: Invalid command line parameters\n"
 msgstr "Μη έγγυρος(οι) χαρακτήρας(ες) στο μονοπάτι.\n"
 
-#: reg.rc:37
+#: reg.rc:42
 msgid "reg: Unable to access remote machine\n"
 msgstr ""
 
-#: reg.rc:38
+#: reg.rc:43
 msgid ""
 "reg: The system was unable to find the specified registry key or value\n"
 msgstr ""
 
-#: reg.rc:39
+#: reg.rc:44
 #, fuzzy
 msgid "reg: Unsupported registry data type [%1]\n"
 msgstr "Επιλογές.\n"
 
-#: reg.rc:40
+#: reg.rc:45
 msgid "reg: The option [/d] must be followed by a valid integer\n"
 msgstr ""
 
-#: reg.rc:41
+#: reg.rc:46
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
 msgstr ""
 
-#: reg.rc:42
+#: reg.rc:47
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
 msgstr ""
 
-#: reg.rc:43
+#: reg.rc:48
 #, fuzzy
 msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgstr ""
 "Το αρχείο υπάρχει ήδη.\n"
 "Θέλετε να το αντικαταστήσετε;"
 
-#: reg.rc:47
+#: reg.rc:52
 msgid "The registry operation was cancelled\n"
 msgstr ""
 
-#: reg.rc:48 regedit.rc:204
+#: reg.rc:53 regedit.rc:204
 msgid "(Default)"
 msgstr ""
 
-#: reg.rc:49
+#: reg.rc:54
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr ""
 
-#: reg.rc:50
+#: reg.rc:55
 msgid "Are you sure you want to delete all registry values in '%1'?"
 msgstr ""
 
-#: reg.rc:51
+#: reg.rc:56
 msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr ""
 
-#: reg.rc:52
+#: reg.rc:57
 msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr ""
 
-#: reg.rc:53
+#: reg.rc:58
 msgid ""
 "reg: Unable to delete all registry values in '%1'. An unexpected error "
 "occurred.\n"
 msgstr ""
 
-#: reg.rc:54
+#: reg.rc:59
 msgid ""
 "reg: Unable to complete the specified operation. An unexpected error "
 "occurred.\n"
 msgstr ""
 
-#: reg.rc:55
+#: reg.rc:60
 msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr ""
 
-#: reg.rc:56
+#: reg.rc:61
 #, fuzzy
 msgid "reg: Invalid syntax. "
 msgstr "Μη έγγυρος(οι) χαρακτήρας(ες) στο μονοπάτι.\n"
 
-#: reg.rc:57
+#: reg.rc:62
 #, fuzzy
 msgid "reg: Invalid option [%1]. "
 msgstr "Μη έγγυρος(οι) χαρακτήρας(ες) στο μονοπάτι.\n"
 
-#: reg.rc:58
+#: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
 msgstr ""
 

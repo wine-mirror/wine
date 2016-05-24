@@ -10367,12 +10367,12 @@ msgstr ""
 msgid "Are you sure?"
 msgstr "您確定嗎？"
 
-#: cmd.rc:354 reg.rc:45 xcopy.rc:43
+#: cmd.rc:354 reg.rc:50 xcopy.rc:43
 msgctxt "Yes key"
 msgid "Y"
 msgstr "Y"
 
-#: cmd.rc:355 reg.rc:46 xcopy.rc:44
+#: cmd.rc:355 reg.rc:51 xcopy.rc:44
 msgctxt "No key"
 msgid "N"
 msgstr "N"
@@ -10510,7 +10510,7 @@ msgstr "位於儲存裝置 %1!c! 的卷冊為 %2\n"
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "位於儲存裝置 %1!c! 的卷冊沒有任何標貼。\n"
 
-#: cmd.rc:390 reg.rc:44
+#: cmd.rc:390 reg.rc:49
 #, fuzzy
 msgid " (Yes|No)"
 msgstr " (是|否)"
@@ -11680,56 +11680,57 @@ msgstr "圖示檔案"
 msgid "Icons (*.ico)"
 msgstr "圖示 (*.ico)"
 
-#: reg.rc:30
+#: reg.rc:35
 msgid ""
-"The syntax of this command is:\n"
+"Usage:\n"
+"  REG [operation] [parameters]\n"
 "\n"
-"REG [ ADD | DELETE | QUERY ]\n"
-"REG command /?\n"
+"Supported operations:\n"
+"  ADD | DELETE | QUERY\n"
+"\n"
+"For help on a specific operation, type:\n"
+"  REG [operation] /?\n"
+"\n"
 msgstr ""
-"這個命令的語法是：\n"
-"\n"
-"REG [ ADD | DELETE | QUERY ]\n"
-"REG 命令 /?\n"
 
-#: reg.rc:31
+#: reg.rc:36
 msgid ""
 "REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
 "f]\n"
 msgstr ""
 "REG ADD 索引鍵名稱 [/v 值名稱 | /ve] [/t 型態] [/s 分隔符號] [/d 資料] [/f]\n"
 
-#: reg.rc:32
+#: reg.rc:37
 msgid "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
 msgstr "REG DELETE 索引鍵名稱 [/v 值名稱 | /ve | /va] [/f]\n"
 
-#: reg.rc:33
+#: reg.rc:38
 msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
 msgstr "REG QUERY 索引鍵名稱 [/v 值名稱 | /ve] [/s]\n"
 
-#: reg.rc:34
+#: reg.rc:39
 msgid "The operation completed successfully\n"
 msgstr "作業已成功完成\n"
 
-#: reg.rc:35
+#: reg.rc:40
 #, fuzzy
 #| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid key name\n"
 msgstr "錯誤：無效的索引鍵名稱\n"
 
-#: reg.rc:36
+#: reg.rc:41
 #, fuzzy
 #| msgid "Error: Invalid command line parameters\n"
 msgid "reg: Invalid command line parameters\n"
 msgstr "錯誤：無效的命令列參數\n"
 
-#: reg.rc:37
+#: reg.rc:42
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "reg: Unable to access remote machine\n"
 msgstr "錯誤：無法加入索引鍵到遠端機器\n"
 
-#: reg.rc:38
+#: reg.rc:43
 #, fuzzy
 #| msgid ""
 #| "Error: The system was unable to find the specified registry key or value\n"
@@ -11737,89 +11738,89 @@ msgid ""
 "reg: The system was unable to find the specified registry key or value\n"
 msgstr "錯誤：系統無法找到指定的註冊表索引鍵或值\n"
 
-#: reg.rc:39
+#: reg.rc:44
 #, fuzzy
 #| msgid "Unsupported type.\n"
 msgid "reg: Unsupported registry data type [%1]\n"
 msgstr "不受支援的型態。\n"
 
-#: reg.rc:40
+#: reg.rc:45
 msgid "reg: The option [/d] must be followed by a valid integer\n"
 msgstr ""
 
-#: reg.rc:41
+#: reg.rc:46
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
 msgstr ""
 
-#: reg.rc:42
+#: reg.rc:47
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
 msgstr ""
 
-#: reg.rc:43
+#: reg.rc:48
 #, fuzzy
 #| msgid "The specified file already exists. Do you want to replace it?"
 msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgstr "檔案已經存在。您要取代嗎？"
 
-#: reg.rc:47
+#: reg.rc:52
 msgid "The registry operation was cancelled\n"
 msgstr ""
 
-#: reg.rc:48 regedit.rc:204
+#: reg.rc:53 regedit.rc:204
 msgid "(Default)"
 msgstr "(預設)"
 
-#: reg.rc:49
+#: reg.rc:54
 #, fuzzy
 #| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "您確認要刪除這些數值嗎？"
 
-#: reg.rc:50
+#: reg.rc:55
 #, fuzzy
 #| msgid "Are you sure you want to delete value '%s'?"
 msgid "Are you sure you want to delete all registry values in '%1'?"
 msgstr "您確認要刪除這個數值 %s 嗎？"
 
-#: reg.rc:51
+#: reg.rc:56
 #, fuzzy
 #| msgid "Are you sure you want to delete '%1'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "確定要刪除 %1？"
 
-#: reg.rc:52
+#: reg.rc:57
 msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr ""
 
-#: reg.rc:53
+#: reg.rc:58
 msgid ""
 "reg: Unable to delete all registry values in '%1'. An unexpected error "
 "occurred.\n"
 msgstr ""
 
-#: reg.rc:54
+#: reg.rc:59
 msgid ""
 "reg: Unable to complete the specified operation. An unexpected error "
 "occurred.\n"
 msgstr ""
 
-#: reg.rc:55
+#: reg.rc:60
 msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr ""
 
-#: reg.rc:56
+#: reg.rc:61
 #, fuzzy
 #| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid syntax. "
 msgstr "錯誤：無效的索引鍵名稱\n"
 
-#: reg.rc:57
+#: reg.rc:62
 #, fuzzy
 #| msgid "Error: Invalid option '%c'.\n"
 msgid "reg: Invalid option [%1]. "
 msgstr "錯誤：無效的選項 %c。\n"
 
-#: reg.rc:58
+#: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
 msgstr ""
 
