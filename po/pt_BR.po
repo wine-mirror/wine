@@ -11742,6 +11742,22 @@ msgstr ""
 msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr ""
 
+#: reg.rc:56
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "reg: Invalid syntax. "
+msgstr "Erro: Nome de chave inválido\n"
+
+#: reg.rc:57
+#, fuzzy
+#| msgid "uninstaller: Invalid option [%1]\n"
+msgid "reg: Invalid option [%1]. "
+msgstr "uninstaller: Opção inválida [%1].\n"
+
+#: reg.rc:58
+msgid "Type \"REG /?\" for help.\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registro"

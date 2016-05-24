@@ -11652,6 +11652,22 @@ msgstr "reg: не удалось завершить операцию. Произ
 msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr "Поиск завершён. Найдено совпадений: %1!d!\n"
 
+#: reg.rc:56
+#, fuzzy
+#| msgid "reg: Invalid key name\n"
+msgid "reg: Invalid syntax. "
+msgstr "reg: неверное имя раздела\n"
+
+#: reg.rc:57
+#, fuzzy
+#| msgid "uninstaller: Invalid option [%1]\n"
+msgid "reg: Invalid option [%1]. "
+msgstr "uninstaller: неверная опция [%1]\n"
+
+#: reg.rc:58
+msgid "Type \"REG /?\" for help.\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Реестр"

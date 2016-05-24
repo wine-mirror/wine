@@ -11646,6 +11646,22 @@ msgstr ""
 msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr "Søk fullført. Antall treff: %1!d!\n"
 
+#: reg.rc:56
+#, fuzzy
+#| msgid "reg: Invalid key name\n"
+msgid "reg: Invalid syntax. "
+msgstr "reg: Ugyldig nøkkelnavn\n"
+
+#: reg.rc:57
+#, fuzzy
+#| msgid "uninstaller: Invalid option [%1]\n"
+msgid "reg: Invalid option [%1]. "
+msgstr "uninstaller: [%1] er et ugyldig valg.\n"
+
+#: reg.rc:58
+msgid "Type \"REG /?\" for help.\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Register"

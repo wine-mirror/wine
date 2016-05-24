@@ -11933,6 +11933,22 @@ msgstr ""
 msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr ""
 
+#: reg.rc:56
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "reg: Invalid syntax. "
+msgstr "Errore: nome della chiave non valido\n"
+
+#: reg.rc:57
+#, fuzzy
+#| msgid "Error: Invalid option '%c'.\n"
+msgid "reg: Invalid option [%1]. "
+msgstr "Errore: opzione non valida '%c'.\n"
+
+#: reg.rc:58
+msgid "Type \"REG /?\" for help.\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registro"

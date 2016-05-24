@@ -11651,6 +11651,18 @@ msgstr ""
 msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr "Search complete. Number of matches found: %1!d!\n"
 
+#: reg.rc:56
+msgid "reg: Invalid syntax. "
+msgstr "reg: Invalid syntax. "
+
+#: reg.rc:57
+msgid "reg: Invalid option [%1]. "
+msgstr "reg: Invalid option [%1]. "
+
+#: reg.rc:58
+msgid "Type \"REG /?\" for help.\n"
+msgstr "Type \"REG /?\" for help.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registry"

@@ -894,8 +894,14 @@ int wmain(int argc, WCHAR *argvW[])
     static const WCHAR slashVEW[] = {'/','v','e',0};
     static const WCHAR slashHelpW[] = {'/','?',0};
 
-    if (argc < 2 || !lstrcmpW(argvW[1], slashHelpW)
-                 || !lstrcmpiW(argvW[1], slashHW))
+    if (argc == 1)
+    {
+        output_message(STRING_INVALID_SYNTAX);
+        output_message(STRING_REG_HELP);
+        return 1;
+    }
+
+    if (!lstrcmpW(argvW[1], slashHelpW) || !lstrcmpiW(argvW[1], slashHW))
     {
         output_message(STRING_USAGE);
         return 0;
@@ -1032,7 +1038,8 @@ int wmain(int argc, WCHAR *argvW[])
     }
     else
     {
-        output_message(STRING_INVALID_CMDLINE);
+        output_message(STRING_INVALID_OPTION, argvW[1]);
+        output_message(STRING_REG_HELP);
         return 1;
     }
 }

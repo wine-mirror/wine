@@ -11807,6 +11807,22 @@ msgstr ""
 msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr ""
 
+#: reg.rc:56
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "reg: Invalid syntax. "
+msgstr "錯誤：無效的索引鍵名稱\n"
+
+#: reg.rc:57
+#, fuzzy
+#| msgid "Error: Invalid option '%c'.\n"
+msgid "reg: Invalid option [%1]. "
+msgstr "錯誤：無效的選項 %c。\n"
+
+#: reg.rc:58
+msgid "Type \"REG /?\" for help.\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "註冊表(&R)"

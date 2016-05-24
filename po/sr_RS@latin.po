@@ -11907,6 +11907,20 @@ msgstr ""
 msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr ""
 
+#: reg.rc:56
+#, fuzzy
+msgid "reg: Invalid syntax. "
+msgstr "Neispravna sintaksa.\n"
+
+#: reg.rc:57
+#, fuzzy
+msgid "reg: Invalid option [%1]. "
+msgstr "Neispravna sintaksa"
+
+#: reg.rc:58
+msgid "Type \"REG /?\" for help.\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr ""

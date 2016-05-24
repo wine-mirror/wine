@@ -11635,6 +11635,22 @@ msgstr ""
 msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr "検索が完了しました。該当箇所の数: %1!d!\n"
 
+#: reg.rc:56
+#, fuzzy
+#| msgid "reg: Invalid key name\n"
+msgid "reg: Invalid syntax. "
+msgstr "reg: キー名が無効です\n"
+
+#: reg.rc:57
+#, fuzzy
+#| msgid "uninstaller: Invalid option [%1]\n"
+msgid "reg: Invalid option [%1]. "
+msgstr "uninstaller: 無効なオプション [%1]\n"
+
+#: reg.rc:58
+msgid "Type \"REG /?\" for help.\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "レジストリ(&R)"
