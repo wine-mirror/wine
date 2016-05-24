@@ -2764,21 +2764,23 @@ done:
     DestroyWindow(window);
 }
 
-/* Test what happens when IDirect3DDevice9_DrawIndexedPrimitive is called without a valid index buffer set. */
-static void test_draw_indexed(void)
+static void test_draw_primitive(void)
 {
-    static const struct {
+    static const struct
+    {
         float position[3];
         DWORD color;
-    } quad[] = {
+    }
+    quad[] =
+    {
         {{-1.0f, -1.0f, 0.0f}, 0xffff0000},
         {{-1.0f,  1.0f, 0.0f}, 0xffff0000},
         {{ 1.0f,  1.0f, 0.0f}, 0xffff0000},
         {{ 1.0f, -1.0f, 0.0f}, 0xffff0000},
     };
-    WORD indices[] = {0, 1, 2, 3, 0, 2};
-
-    static const D3DVERTEXELEMENT9 decl_elements[] = {
+    static const WORD indices[] = {0, 1, 2, 3, 0, 2};
+    static const D3DVERTEXELEMENT9 decl_elements[] =
+    {
         {0, 0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
         {0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT,    D3DDECLUSAGE_COLOR, 0},
         D3DDECL_END()
@@ -2794,79 +2796,111 @@ static void test_draw_indexed(void)
     HRESULT hr;
     void *ptr;
 
-    window = CreateWindowA("d3d9_test_wc", "d3d9_test", 0,
-            0, 0, 640, 480, 0, 0, 0, 0);
-    ok(!!window, "Failed to create a window.\n");
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d9, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d9, window, NULL)))
     {
-        skip("Failed to create a 3D device, skipping test.\n");
-        goto cleanup;
+        skip("Failed to create a D3D device.\n");
+        IDirect3D9_Release(d3d9);
+        DestroyWindow(window);
+        return;
     }
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vertex_declaration);
-    ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (0x%08x)\n", hr);
-    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
-    ok(SUCCEEDED(hr), "SetVertexDeclaration failed (0x%08x)\n", hr);
+    ok(SUCCEEDED(hr), "CreateVertexDeclaration failed, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(quad), 0, 0, D3DPOOL_DEFAULT, &vertex_buffer, NULL);
-    ok(SUCCEEDED(hr), "CreateVertexBuffer failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(quad), 0, 0,
+            D3DPOOL_DEFAULT, &vertex_buffer, NULL);
+    ok(SUCCEEDED(hr), "CreateVertexBuffer failed, hr %#x.\n", hr);
     hr = IDirect3DVertexBuffer9_Lock(vertex_buffer, 0, 0, &ptr, D3DLOCK_DISCARD);
-    ok(SUCCEEDED(hr), "Lock failed (0x%08x)\n", hr);
+    ok(SUCCEEDED(hr), "Lock failed, hr %#x.\n", hr);
     memcpy(ptr, quad, sizeof(quad));
     hr = IDirect3DVertexBuffer9_Unlock(vertex_buffer);
-    ok(SUCCEEDED(hr), "Unlock failed (0x%08x)\n", hr);
+    ok(SUCCEEDED(hr), "Unlock failed, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetStreamSource(device, 0, vertex_buffer, 0, sizeof(*quad));
-    ok(SUCCEEDED(hr), "SetStreamSource failed (0x%08x)\n", hr);
+    ok(SUCCEEDED(hr), "SetStreamSource failed, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_CreateIndexBuffer(device, sizeof(indices), 0, D3DFMT_INDEX16, D3DPOOL_DEFAULT, &index_buffer, NULL);
-    ok(SUCCEEDED(hr), "CreateIndexBuffer failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_CreateIndexBuffer(device, sizeof(indices), 0, D3DFMT_INDEX16,
+            D3DPOOL_DEFAULT, &index_buffer, NULL);
+    ok(SUCCEEDED(hr), "CreateIndexBuffer failed, hr %#x.\n", hr);
     hr = IDirect3DIndexBuffer9_Lock(index_buffer, 0, 0, &ptr, D3DLOCK_DISCARD);
-    ok(SUCCEEDED(hr), "Lock failed (0x%08x)\n", hr);
+    ok(SUCCEEDED(hr), "Lock failed, hr %#x.\n", hr);
     memcpy(ptr, indices, sizeof(indices));
     hr = IDirect3DIndexBuffer9_Unlock(index_buffer);
-    ok(SUCCEEDED(hr), "Unlock failed (0x%08x)\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
-    ok(SUCCEEDED(hr), "SetRenderState D3DRS_LIGHTING failed (0x%08x)\n", hr);
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(SUCCEEDED(hr), "BeginScene failed (0x%08x)\n", hr);
+    ok(SUCCEEDED(hr), "Unlock failed, hr %#x.\n", hr);
 
-    /* NULL index buffer. Should fail */
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState D3DRS_LIGHTING failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLELIST, 0, 2);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, 2, quad, sizeof(*quad));
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
     hr = IDirect3DDevice9_SetIndices(device, NULL);
-    ok(SUCCEEDED(hr), "SetIndices failed (0x%08x)\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, 0 /* BaseVertexIndex */, 0 /* MinIndex */,
-            4 /* NumVerts */, 0 /* StartIndex */, 2 /*PrimCount */);
-    ok(hr == D3DERR_INVALIDCALL, "DrawIndexedPrimitive returned 0x%08x, expected D3DERR_INVALIDCALL (0x%08x)\n",
-            hr, D3DERR_INVALIDCALL);
+    ok(SUCCEEDED(hr), "SetIndices failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, 0 /* BaseVertexIndex */,
+            0 /* MinIndex */, 4 /* NumVerts */, 0 /* StartIndex */, 2 /*PrimCount */);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /* Valid index buffer, NULL vertex declaration. Should fail */
     hr = IDirect3DDevice9_SetIndices(device, index_buffer);
-    ok(SUCCEEDED(hr), "SetIndices failed (0x%08x)\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, 0 /* BaseVertexIndex */, 0 /* MinIndex */,
-            4 /* NumVerts */, 0 /* StartIndex */, 2 /*PrimCount */);
-    ok(hr == D3DERR_INVALIDCALL, "DrawIndexedPrimitive returned 0x%08x, expected D3DERR_INVALIDCALL (0x%08x)\n",
-            hr, D3DERR_INVALIDCALL);
+    ok(SUCCEEDED(hr), "SetIndices failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, 0 /* BaseVertexIndex */,
+            0 /* MinIndex */, 4 /* NumVerts */, 0 /* StartIndex */, 2 /*PrimCount */);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4, 2,
+            indices, D3DFMT_INDEX16, quad, sizeof(*quad));
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLELIST, 0, 2);
+    ok(SUCCEEDED(hr), "DrawPrimitive failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLELIST, 2, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+
+    /* NULL index buffer, valid vertex vertex declaration. Should succeed */
+    hr = IDirect3DDevice9_SetIndices(device, NULL);
+    ok(SUCCEEDED(hr), "SetIndices failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, 0 /* BaseVertexIndex */,
+            0 /* MinIndex */, 4 /* NumVerts */, 0 /* StartIndex */, 2 /*PrimCount */);
+    todo_wine ok(SUCCEEDED(hr), "DrawIndexedPrimitive failed, hr %#x.\n", hr);
 
     /* Valid index buffer and vertex declaration. Should succeed */
-    hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
-    ok(SUCCEEDED(hr), "SetVertexDeclaration failed (0x%08x)\n", hr);
-    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, 0 /* BaseVertexIndex */, 0 /* MinIndex */,
-            4 /* NumVerts */, 0 /* StartIndex */, 2 /*PrimCount */);
-    ok(SUCCEEDED(hr), "DrawIndexedPrimitive failed (0x%08x)\n", hr);
+    hr = IDirect3DDevice9_SetIndices(device, index_buffer);
+    ok(SUCCEEDED(hr), "SetIndices failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, 0 /* BaseVertexIndex */,
+            0 /* MinIndex */, 4 /* NumVerts */, 0 /* StartIndex */, 2 /*PrimCount */);
+    ok(SUCCEEDED(hr), "DrawIndexedPrimitive failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0, 4, 2,
+            indices, D3DFMT_INDEX16, quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "DrawIndexedPrimitiveUP failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_EndScene(device);
-    ok(SUCCEEDED(hr), "EndScene failed (0x%08x)\n", hr);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.n", hr);
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+    ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
 
     IDirect3DVertexBuffer9_Release(vertex_buffer);
     IDirect3DIndexBuffer9_Release(index_buffer);
     IDirect3DVertexDeclaration9_Release(vertex_declaration);
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
-cleanup:
     IDirect3D9_Release(d3d9);
     DestroyWindow(window);
 }
@@ -11223,7 +11257,7 @@ START_TEST(device)
     test_limits();
     test_depthstenciltest();
     test_get_rt();
-    test_draw_indexed();
+    test_draw_primitive();
     test_null_stream();
     test_lights();
     test_set_stream_source();
