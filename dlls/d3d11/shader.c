@@ -78,6 +78,25 @@ static HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, st
     return hr;
 }
 
+static const char *shader_get_string(const char *data, size_t data_size, DWORD offset)
+{
+    size_t len, max_len;
+
+    if (offset >= data_size)
+    {
+        WARN("Invalid offset %#x (data size %#lx).\n", offset, (long)data_size);
+        return NULL;
+    }
+
+    max_len = data_size - offset;
+    len = strnlen(data + offset, max_len);
+
+    if (len == max_len)
+        return NULL;
+
+    return data + offset;
+}
+
 HRESULT shader_parse_signature(const char *data, DWORD data_size, struct wined3d_shader_signature *s)
 {
     struct wined3d_shader_signature_element *e;
@@ -85,10 +104,22 @@ HRESULT shader_parse_signature(const char *data, DWORD data_size, struct wined3d
     unsigned int i;
     DWORD count;
 
+    if (!require_space(0, 2, sizeof(DWORD), data_size))
+    {
+        WARN("Invalid data size %#x.\n", data_size);
+        return E_INVALIDARG;
+    }
+
     read_dword(&ptr, &count);
     TRACE("%u elements\n", count);
 
     skip_dword_unknown(&ptr, 1);
+
+    if (!require_space(ptr - data, count, 6 * sizeof(DWORD), data_size))
+    {
+        WARN("Invalid count %#x (data size %#x).\n", count, data_size);
+        return E_INVALIDARG;
+    }
 
     e = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*e));
     if (!e)
@@ -102,7 +133,12 @@ HRESULT shader_parse_signature(const char *data, DWORD data_size, struct wined3d
         UINT name_offset;
 
         read_dword(&ptr, &name_offset);
-        e[i].semantic_name = data + name_offset;
+        if (!(e[i].semantic_name = shader_get_string(data, data_size, name_offset)))
+        {
+            WARN("Invalid name offset %#x (data size %#x).\n", name_offset, data_size);
+            HeapFree(GetProcessHeap(), 0, e);
+            return E_INVALIDARG;
+        }
         read_dword(&ptr, &e[i].semantic_idx);
         read_dword(&ptr, &e[i].sysval_semantic);
         read_dword(&ptr, &e[i].component_type);
