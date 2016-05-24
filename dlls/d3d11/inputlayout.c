@@ -54,8 +54,7 @@ static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEME
         return E_FAIL;
     }
 
-    *wined3d_elements = HeapAlloc(GetProcessHeap(), 0, element_count * sizeof(**wined3d_elements));
-    if (!*wined3d_elements)
+    if (!(*wined3d_elements = d3d11_calloc(element_count, sizeof(**wined3d_elements))))
     {
         ERR("Failed to allocate wined3d vertex element array memory.\n");
         HeapFree(GetProcessHeap(), 0, is.elements);

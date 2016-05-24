@@ -121,8 +121,7 @@ HRESULT shader_parse_signature(const char *data, DWORD data_size, struct wined3d
         return E_INVALIDARG;
     }
 
-    e = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*e));
-    if (!e)
+    if (!(e = d3d11_calloc(count, sizeof(*e))))
     {
         ERR("Failed to allocate input signature memory.\n");
         return E_OUTOFMEMORY;
