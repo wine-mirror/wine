@@ -340,7 +340,7 @@ typedef struct _TEB
     ULONG                        GdiClientTID;                      /* 6f8/086c */
     PVOID                        GdiThreadLocaleInfo;               /* 6fc/0870 */
     ULONG                        UserReserved[5];                   /* 700/0878 */
-    PVOID                        glDispachTable[280];               /* 714/0890 */
+    PVOID                        glDispatchTable[280];              /* 714/0890 */
     PVOID                        glReserved1[26];                   /* b74/1150 */
     PVOID                        glReserved2;                       /* bdc/1220 */
     PVOID                        glSectionInfo;                     /* be0/1228 */
