@@ -85,6 +85,11 @@ static inline void read_dword(const char **ptr, DWORD *d)
     *ptr += sizeof(*d);
 }
 
+static inline BOOL require_space(size_t offset, size_t size, size_t data_size)
+{
+    return data_size - offset >= size;
+}
+
 void skip_dword_unknown(const char **ptr, unsigned int count) DECLSPEC_HIDDEN;
 
 HRESULT parse_dxbc(const char *data, SIZE_T data_size,
