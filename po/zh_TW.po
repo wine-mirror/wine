@@ -11824,6 +11824,10 @@ msgstr "錯誤：無效的選項 %c。\n"
 msgid "Type \"REG /?\" for help.\n"
 msgstr ""
 
+#: reg.rc:64
+msgid "Type \"REG %1 /?\" for help.\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "註冊表(&R)"

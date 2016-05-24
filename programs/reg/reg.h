@@ -50,3 +50,4 @@
 #define STRING_INVALID_SYNTAX   127
 #define STRING_INVALID_OPTION   128
 #define STRING_REG_HELP         129
+#define STRING_FUNC_HELP        130

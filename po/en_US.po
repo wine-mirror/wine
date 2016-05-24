@@ -11673,6 +11673,10 @@ msgstr "reg: Invalid option [%1]. "
 msgid "Type \"REG /?\" for help.\n"
 msgstr "Type \"REG /?\" for help.\n"
 
+#: reg.rc:64
+msgid "Type \"REG %1 /?\" for help.\n"
+msgstr "Type \"REG %1 /?\" for help.\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registry"

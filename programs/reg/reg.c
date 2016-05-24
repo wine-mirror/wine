@@ -914,7 +914,8 @@ int wmain(int argc, WCHAR *argvW[])
 
         if (argc < 3)
         {
-            output_message(STRING_INVALID_CMDLINE);
+            output_message(STRING_INVALID_SYNTAX);
+            output_message(STRING_FUNC_HELP, struprW(argvW[1]));
             return 1;
         }
         else if (argc == 3 && (!lstrcmpW(argvW[2], slashHelpW) ||
@@ -971,7 +972,8 @@ int wmain(int argc, WCHAR *argvW[])
 
         if (argc < 3)
         {
-            output_message(STRING_INVALID_CMDLINE);
+            output_message(STRING_INVALID_SYNTAX);
+            output_message(STRING_FUNC_HELP, struprW(argvW[1]));
             return 1;
         }
         else if (argc == 3 && (!lstrcmpW(argvW[2], slashHelpW) ||
@@ -1008,7 +1010,8 @@ int wmain(int argc, WCHAR *argvW[])
 
         if (argc < 3)
         {
-            output_message(STRING_INVALID_CMDLINE);
+            output_message(STRING_INVALID_SYNTAX);
+            output_message(STRING_FUNC_HELP, struprW(argvW[1]));
             return 1;
         }
         else if (argc == 3 && (!lstrcmpW(argvW[2], slashHelpW) ||

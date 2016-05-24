@@ -11565,6 +11565,10 @@ msgstr "uninstaller: Flaggan [%1] är ogiltig\n"
 msgid "Type \"REG /?\" for help.\n"
 msgstr ""
 
+#: reg.rc:64
+msgid "Type \"REG %1 /?\" for help.\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Register"
