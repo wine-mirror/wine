@@ -217,7 +217,7 @@ HRESULT parse_dxbc(const char *data, SIZE_T data_size,
         read_dword(&ptr, &chunk_offset);
         TRACE("chunk %u at offset %#x\n", i, chunk_offset);
 
-        if (chunk_offset >= data_size || !require_space(chunk_offset, 2 * sizeof(DWORD), data_size))
+        if (chunk_offset >= data_size || !require_space(chunk_offset, 2, sizeof(DWORD), data_size))
         {
             WARN("Invalid chunk offset %#x (data size %#lx).\n", chunk_offset, data_size);
             return E_FAIL;
@@ -228,7 +228,7 @@ HRESULT parse_dxbc(const char *data, SIZE_T data_size,
         read_dword(&chunk_ptr, &chunk_tag);
         read_dword(&chunk_ptr, &chunk_size);
 
-        if (!require_space(chunk_ptr - data, chunk_size, data_size))
+        if (!require_space(chunk_ptr - data, 1, chunk_size, data_size))
         {
             WARN("Invalid chunk size %#x (data size %#lx, chunk offset %#x).\n", chunk_size, data_size, chunk_offset);
             return E_FAIL;
