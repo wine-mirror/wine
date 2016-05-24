@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-05-03 21:19+0300\n"
+"PO-Revision-Date: 2016-05-24 22:38+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -7629,7 +7629,7 @@ msgstr "Kopijuoti failus iš:"
 
 #: setupapi.rc:34
 msgid "Type the path where the file is located, and then click OK."
-msgstr "Įveskite kelią iki failo, o tada spauskite Gerai."
+msgstr "Įrašykite kelią iki failo, o tada spauskite Gerai."
 
 #: shdoclc.rc:42
 msgid "F&orward"
@@ -11557,6 +11557,15 @@ msgid ""
 "  REG [operation] /?\n"
 "\n"
 msgstr ""
+"Naudojimas:\n"
+"  REG [operacija] [parametrai]\n"
+"\n"
+"Palaikomos operacijos:\n"
+"  ADD | DELETE | QUERY\n"
+"\n"
+"Pagalbai apie specifinę operaciją, įrašykite:\n"
+"  REG [operacija] /?\n"
+"\n"
 
 #: reg.rc:36
 msgid ""
@@ -11657,24 +11666,20 @@ msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr "Paieška baigta. Rasta atitikimų: %1!d!\n"
 
 #: reg.rc:61
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "reg: Invalid syntax. "
-msgstr "reg: Netinkamas rakto vardas\n"
+msgstr "reg: Netinkama sintaksė. "
 
 #: reg.rc:62
-#, fuzzy
-#| msgid "uninstaller: Invalid option [%1]\n"
 msgid "reg: Invalid option [%1]. "
-msgstr "šalinimo programa: Netinkamas parametras [%1]\n"
+msgstr "reg: Netinkamas parametras [%1]. "
 
 #: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
-msgstr ""
+msgstr "Pagalbai įrašykite „REG /?“.\n"
 
 #: reg.rc:64
 msgid "Type \"REG %1 /?\" for help.\n"
-msgstr ""
+msgstr "Pagalbai įrašykite „REG %1 /?“.\n"
 
 #: regedit.rc:34
 msgid "&Registry"
