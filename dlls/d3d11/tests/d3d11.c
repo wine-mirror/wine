@@ -6756,6 +6756,125 @@ static void test_getdc(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_shader_stage_input_output_matching(void)
+{
+    struct d3d11_test_context test_context;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11Texture2D *render_target;
+    ID3D11RenderTargetView *rtv[2];
+    ID3D11DeviceContext *context;
+    ID3D11VertexShader *vs;
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    static const DWORD vs_code[] =
+    {
+#if 0
+        struct output
+        {
+            float4 position : SV_PoSiTion;
+            float4 color0 : COLOR0;
+            float4 color1 : COLOR1;
+        };
+
+        void main(uint id : SV_VertexID, out output o)
+        {
+            float2 coords = float2((id << 1) & 2, id & 2);
+            o.position = float4(coords * float2(2, -2) + float2(-1, 1), 0, 1);
+            o.color0 = float4(1.0f, 0.0f, 0.0f, 1.0f);
+            o.color1 = float4(0.0f, 1.0f, 0.0f, 1.0f);
+        }
+#endif
+        0x43425844, 0x93c216a1, 0xbaa7e8d4, 0xd5368c6a, 0x4e889e07, 0x00000001, 0x00000224, 0x00000003,
+        0x0000002c, 0x00000060, 0x000000cc, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000006, 0x00000001, 0x00000000, 0x00000101, 0x565f5653, 0x65747265, 0x00444978,
+        0x4e47534f, 0x00000064, 0x00000003, 0x00000008, 0x00000050, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x0000005c, 0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x0000000f,
+        0x0000005c, 0x00000001, 0x00000000, 0x00000003, 0x00000002, 0x0000000f, 0x505f5653, 0x5469536f,
+        0x006e6f69, 0x4f4c4f43, 0xabab0052, 0x52444853, 0x00000150, 0x00010040, 0x00000054, 0x04000060,
+        0x00101012, 0x00000000, 0x00000006, 0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x03000065,
+        0x001020f2, 0x00000001, 0x03000065, 0x001020f2, 0x00000002, 0x02000068, 0x00000001, 0x07000029,
+        0x00100012, 0x00000000, 0x0010100a, 0x00000000, 0x00004001, 0x00000001, 0x07000001, 0x00100012,
+        0x00000000, 0x0010000a, 0x00000000, 0x00004001, 0x00000002, 0x07000001, 0x00100042, 0x00000000,
+        0x0010100a, 0x00000000, 0x00004001, 0x00000002, 0x05000056, 0x00100032, 0x00000000, 0x00100086,
+        0x00000000, 0x0f000032, 0x00102032, 0x00000000, 0x00100046, 0x00000000, 0x00004002, 0x40000000,
+        0xc0000000, 0x00000000, 0x00000000, 0x00004002, 0xbf800000, 0x3f800000, 0x00000000, 0x00000000,
+        0x08000036, 0x001020c2, 0x00000000, 0x00004002, 0x00000000, 0x00000000, 0x00000000, 0x3f800000,
+        0x08000036, 0x001020f2, 0x00000001, 0x00004002, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000,
+        0x08000036, 0x001020f2, 0x00000002, 0x00004002, 0x00000000, 0x3f800000, 0x00000000, 0x3f800000,
+        0x0100003e,
+    };
+    static const DWORD ps_code[] =
+    {
+#if 0
+        struct input
+        {
+            float4 position : SV_PoSiTiOn;
+            float4 color1 : COLOR1;
+            float4 color0 : COLOR0;
+        };
+
+        struct output
+        {
+            float4 target0 : SV_Target0;
+            float4 target1 : SV_Target1;
+        };
+
+        void main(const in input i, out output o)
+        {
+            o.target0 = i.color0;
+            o.target1 = i.color1;
+        }
+#endif
+        0x43425844, 0x620ef963, 0xed8f19fe, 0x7b3a0a53, 0x126ce021, 0x00000001, 0x00000150, 0x00000003,
+        0x0000002c, 0x00000098, 0x000000e4, 0x4e475349, 0x00000064, 0x00000003, 0x00000008, 0x00000050,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x0000005c, 0x00000001, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x0000005c, 0x00000000, 0x00000000, 0x00000003, 0x00000002,
+        0x00000f0f, 0x505f5653, 0x5469536f, 0x006e4f69, 0x4f4c4f43, 0xabab0052, 0x4e47534f, 0x00000044,
+        0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x0000000f,
+        0x00000038, 0x00000001, 0x00000000, 0x00000003, 0x00000001, 0x0000000f, 0x545f5653, 0x65677261,
+        0xabab0074, 0x52444853, 0x00000064, 0x00000040, 0x00000019, 0x03001062, 0x001010f2, 0x00000001,
+        0x03001062, 0x001010f2, 0x00000002, 0x03000065, 0x001020f2, 0x00000000, 0x03000065, 0x001020f2,
+        0x00000001, 0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000002, 0x05000036, 0x001020f2,
+        0x00000001, 0x00101e46, 0x00000001, 0x0100003e,
+    };
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+
+    ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &render_target);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    rtv[0] = test_context.backbuffer_rtv;
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)render_target, NULL, &rtv[1]);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_VSSetShader(context, vs, NULL, 0);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+    ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    ID3D11DeviceContext_OMSetRenderTargets(context, 2, rtv, NULL);
+    ID3D11DeviceContext_Draw(context, 3, 0);
+
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
+    check_texture_color(render_target, 0xff0000ff, 0);
+
+    ID3D11RenderTargetView_Release(rtv[1]);
+    ID3D11Texture2D_Release(render_target);
+    ID3D11PixelShader_Release(ps);
+    ID3D11VertexShader_Release(vs);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -6796,4 +6915,5 @@ START_TEST(d3d11)
     test_draw_depth_only();
     test_cb_relative_addressing();
     test_getdc();
+    test_shader_stage_input_output_matching();
 }
