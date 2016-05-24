@@ -3544,7 +3544,8 @@ static inline BOOL use_vs(const struct wined3d_state *state)
 {
     /* Check state->vertex_declaration to allow this to be used before the
      * stream info is validated, for example in device_update_tex_unit_map(). */
-    return state->shader[WINED3D_SHADER_TYPE_VERTEX] && !state->vertex_declaration->position_transformed;
+    return state->shader[WINED3D_SHADER_TYPE_VERTEX]
+            && (!state->vertex_declaration || !state->vertex_declaration->position_transformed);
 }
 
 static inline BOOL use_ps(const struct wined3d_state *state)

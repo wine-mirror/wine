@@ -3013,12 +3013,17 @@ void context_stream_info_from_declaration(struct wined3d_context *context,
 {
     /* We need to deal with frequency data! */
     struct wined3d_vertex_declaration *declaration = state->vertex_declaration;
-    BOOL use_vshader = use_vs(state);
     BOOL generic_attributes = context->d3d_info->ffp_generic_attributes;
+    BOOL use_vshader = use_vs(state);
     unsigned int i;
 
     stream_info->use_map = 0;
     stream_info->swizzle_map = 0;
+    stream_info->position_transformed = 0;
+
+    if (!declaration)
+        return;
+
     stream_info->position_transformed = declaration->position_transformed;
 
     /* Translate the declaration into strided data. */
@@ -3113,9 +3118,9 @@ void context_stream_info_from_declaration(struct wined3d_context *context,
 /* Context activation is done by the caller. */
 static void context_update_stream_info(struct wined3d_context *context, const struct wined3d_state *state)
 {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     struct wined3d_stream_info *stream_info = &context->stream_info;
+    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     DWORD prev_all_vbo = stream_info->all_vbo;
     unsigned int i;
     WORD map;
@@ -3170,16 +3175,20 @@ static void context_update_stream_info(struct wined3d_context *context, const st
         TRACE("Load array %u {%#x:%p}.\n", i, element->data.buffer_object, element->data.addr);
     }
 
+    if (prev_all_vbo != stream_info->all_vbo)
+        context_invalidate_state(context, STATE_INDEXBUFFER);
+
+    context->use_immediate_mode_draw = FALSE;
+
+    if (stream_info->all_vbo)
+        return;
+
     if (use_vs(state))
     {
-        if (state->vertex_declaration->half_float_conv_needed && !stream_info->all_vbo)
+        if (state->vertex_declaration->half_float_conv_needed)
         {
             TRACE("Using immediate mode draw with vertex shaders for FLOAT16 conversion.\n");
             context->use_immediate_mode_draw = TRUE;
-        }
-        else
-        {
-            context->use_immediate_mode_draw = FALSE;
         }
     }
     else
@@ -3188,15 +3197,10 @@ static void context_update_stream_info(struct wined3d_context *context, const st
         slow_mask |= -!gl_info->supported[ARB_VERTEX_ARRAY_BGRA]
                 & ((1u << WINED3D_FFP_DIFFUSE) | (1u << WINED3D_FFP_SPECULAR));
 
-        if (((stream_info->position_transformed && !d3d_info->xyzrhw)
-                || (stream_info->use_map & slow_mask)) && !stream_info->all_vbo)
+        if ((stream_info->position_transformed && !d3d_info->xyzrhw)
+                || (stream_info->use_map & slow_mask))
             context->use_immediate_mode_draw = TRUE;
-        else
-            context->use_immediate_mode_draw = FALSE;
     }
-
-    if (prev_all_vbo != stream_info->all_vbo)
-        context_invalidate_state(context, STATE_INDEXBUFFER);
 }
 
 /* Context activation is done by the caller. */

@@ -3482,12 +3482,6 @@ HRESULT CDECL wined3d_device_draw_primitive(struct wined3d_device *device, UINT 
 {
     TRACE("device %p, start_vertex %u, vertex_count %u.\n", device, start_vertex, vertex_count);
 
-    if (!device->state.vertex_declaration)
-    {
-        WARN("Called without a valid vertex declaration set.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
     if (device->state.load_base_vertex_index)
     {
         device->state.load_base_vertex_index = 0;
@@ -3524,14 +3518,8 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *devic
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (!device->state.vertex_declaration)
-    {
-        WARN("Called without a valid vertex declaration set.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
     if (!gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX] &&
-        device->state.load_base_vertex_index != device->state.base_vertex_index)
+            device->state.load_base_vertex_index != device->state.base_vertex_index)
     {
         device->state.load_base_vertex_index = device->state.base_vertex_index;
         device_invalidate_state(device, STATE_BASEVERTEXINDEX);
