@@ -159,7 +159,7 @@ static BOOL ask_confirm(unsigned int msgid, WCHAR *reg_info)
     LoadStringW(hmod, STRING_NO,  Nbuffer, ARRAY_SIZE(Nbuffer));
     LoadStringW(hmod, STRING_DEFAULT_VALUE, defval, ARRAY_SIZE(defval));
 
-    str = (reg_info && strlenW(reg_info)) ? reg_info : defval;
+    str = (reg_info && *reg_info) ? reg_info : defval;
 
     while (1)
     {
