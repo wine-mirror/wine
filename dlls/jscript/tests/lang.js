@@ -208,9 +208,12 @@ function argumentsTest() {
         return 1;
     });
 }
-/* FIXME: It seems that when function is called as an expression, instance object arguments is not set.
- * We currently always set it in Wine. */
+
 argumentsTest();
+
+(function callAsExprTest() {
+    ok(callAsExprTest.arguments === null, "callAsExprTest.arguments = " + callAsExprTest.arguments);
+})(1,2);
 
 tmp = (function() {1;})();
 ok(tmp === undefined, "tmp = " + tmp);
