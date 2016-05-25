@@ -110,7 +110,8 @@ static struct d3d10_effect_variable anonymous_ps = {{(const ID3D10EffectVariable
 static struct d3d10_effect_variable anonymous_gs = {{(const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_variable_vtbl},
         &null_local_buffer, &anonymous_gs_type, anonymous_name};
 
-static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, const char *data, DWORD offset);
+static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect,
+        const char *data, size_t data_size, DWORD offset);
 
 static inline struct d3d10_effect_variable *impl_from_ID3D10EffectVariable(ID3D10EffectVariable *iface)
 {
@@ -242,6 +243,38 @@ static const struct d3d10_effect_state_storage_info d3d10_effect_state_storage_i
     {D3D10_SVT_BLEND,        sizeof(default_blend_desc),         &default_blend_desc        },
     {D3D10_SVT_SAMPLER,      sizeof(default_sampler_desc),       &default_sampler_desc      },
 };
+
+static BOOL fx10_copy_string(const char *data, size_t data_size, DWORD offset, char **s)
+{
+    size_t len, max_len;
+
+    if (offset >= data_size)
+    {
+        WARN("Invalid offset %#x (data size %#lx).\n", offset, (long)data_size);
+        return FALSE;
+    }
+
+    max_len = data_size - offset;
+    if (!(len = strnlen(data + offset, max_len)))
+    {
+        *s = NULL;
+        return TRUE;
+    }
+
+    if (len == max_len)
+        return FALSE;
+
+    ++len;
+    if (!(*s = HeapAlloc(GetProcessHeap(), 0, len)))
+    {
+        ERR("Failed to allocate string memory.\n");
+        return FALSE;
+    }
+
+    memcpy(*s, data + offset, len);
+
+    return TRUE;
+}
 
 static BOOL copy_name(const char *ptr, char **name)
 {
@@ -541,17 +574,17 @@ static D3D10_SHADER_VARIABLE_TYPE d3d10_variable_type(DWORD t, BOOL is_object)
     }
 }
 
-static HRESULT parse_fx10_type(struct d3d10_effect_type *t, const char *ptr, const char *data)
+static HRESULT parse_fx10_type(const char *data, size_t data_size, DWORD offset, struct d3d10_effect_type *t)
 {
+    const char *ptr = data + offset;
     DWORD unknown0;
-    DWORD offset;
     DWORD typeinfo;
     unsigned int i;
 
     read_dword(&ptr, &offset);
     TRACE("Type name at offset %#x.\n", offset);
 
-    if (!copy_name(data + offset, &t->name))
+    if (!fx10_copy_string(data, data_size, offset, &t->name))
     {
         ERR("Failed to copy name.\n");
         return E_OUTOFMEMORY;
@@ -633,7 +666,7 @@ static HRESULT parse_fx10_type(struct d3d10_effect_type *t, const char *ptr, con
                 read_dword(&ptr, &offset);
                 TRACE("Member name at offset %#x.\n", offset);
 
-                if (!copy_name(data + offset, &typem->name))
+                if (!fx10_copy_string(data, data_size, offset, &typem->name))
                 {
                     ERR("Failed to copy name.\n");
                     return E_OUTOFMEMORY;
@@ -643,7 +676,7 @@ static HRESULT parse_fx10_type(struct d3d10_effect_type *t, const char *ptr, con
                 read_dword(&ptr, &offset);
                 TRACE("Member semantic at offset %#x.\n", offset);
 
-                if (!copy_name(data + offset, &typem->semantic))
+                if (!fx10_copy_string(data, data_size, offset, &typem->semantic))
                 {
                     ERR("Failed to copy semantic.\n");
                     return E_OUTOFMEMORY;
@@ -656,8 +689,7 @@ static HRESULT parse_fx10_type(struct d3d10_effect_type *t, const char *ptr, con
                 read_dword(&ptr, &offset);
                 TRACE("Member type info at offset %#x.\n", offset);
 
-                typem->type = get_fx10_type(t->effect, data, offset);
-                if (!typem->type)
+                if (!(typem->type = get_fx10_type(t->effect, data, data_size, offset)))
                 {
                     ERR("Failed to get variable type.\n");
                     return E_FAIL;
@@ -730,7 +762,8 @@ static HRESULT parse_fx10_type(struct d3d10_effect_type *t, const char *ptr, con
     return S_OK;
 }
 
-static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, const char *data, DWORD offset)
+static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect,
+        const char *data, size_t data_size, DWORD offset)
 {
     struct d3d10_effect_type *type;
     struct wine_rb_entry *entry;
@@ -753,8 +786,7 @@ static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, cons
     type->ID3D10EffectType_iface.lpVtbl = &d3d10_effect_type_vtbl;
     type->id = offset;
     type->effect = effect;
-    hr = parse_fx10_type(type, data + offset, data);
-    if (FAILED(hr))
+    if (FAILED(hr = parse_fx10_type(data, data_size, offset, type)))
     {
         ERR("Failed to parse type info, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, type);
@@ -950,14 +982,15 @@ static HRESULT copy_variableinfo_from_type(struct d3d10_effect_variable *v)
     return S_OK;
 }
 
-static HRESULT parse_fx10_variable_head(struct d3d10_effect_variable *v, const char **ptr, const char *data)
+static HRESULT parse_fx10_variable_head(const char *data, size_t data_size,
+        const char **ptr, struct d3d10_effect_variable *v)
 {
     DWORD offset;
 
     read_dword(ptr, &offset);
     TRACE("Variable name at offset %#x.\n", offset);
 
-    if (!copy_name(data + offset, &v->name))
+    if (!fx10_copy_string(data, data_size, offset, &v->name))
     {
         ERR("Failed to copy name.\n");
         return E_OUTOFMEMORY;
@@ -967,8 +1000,7 @@ static HRESULT parse_fx10_variable_head(struct d3d10_effect_variable *v, const c
     read_dword(ptr, &offset);
     TRACE("Variable type info at offset %#x.\n", offset);
 
-    v->type = get_fx10_type(v->effect, data, offset);
-    if (!v->type)
+    if (!(v->type = get_fx10_type(v->effect, data, data_size, offset)))
     {
         ERR("Failed to get variable type.\n");
         return E_FAIL;
@@ -978,12 +1010,13 @@ static HRESULT parse_fx10_variable_head(struct d3d10_effect_variable *v, const c
     return copy_variableinfo_from_type(v);
 }
 
-static HRESULT parse_fx10_annotation(struct d3d10_effect_variable *a, const char **ptr, const char *data)
+static HRESULT parse_fx10_annotation(const char *data, size_t data_size,
+        const char **ptr, struct d3d10_effect_variable *a)
 {
     HRESULT hr;
 
-    hr = parse_fx10_variable_head(a, ptr, data);
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr = parse_fx10_variable_head(data, data_size, ptr, a)))
+        return hr;
 
     skip_dword_unknown("annotation", ptr, 1);
 
@@ -1438,7 +1471,8 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
     return S_OK;
 }
 
-static HRESULT parse_fx10_pass(struct d3d10_effect_pass *p, const char **ptr, const char *data)
+static HRESULT parse_fx10_pass(const char *data, size_t data_size,
+        const char **ptr, struct d3d10_effect_pass *p)
 {
     HRESULT hr = S_OK;
     unsigned int i;
@@ -1447,7 +1481,7 @@ static HRESULT parse_fx10_pass(struct d3d10_effect_pass *p, const char **ptr, co
     read_dword(ptr, &offset);
     TRACE("Pass name at offset %#x.\n", offset);
 
-    if (!copy_name(data + offset, &p->name))
+    if (!fx10_copy_string(data, data_size, offset, &p->name))
     {
         ERR("Failed to copy name.\n");
         return E_OUTOFMEMORY;
@@ -1473,8 +1507,8 @@ static HRESULT parse_fx10_pass(struct d3d10_effect_pass *p, const char **ptr, co
         a->effect = p->technique->effect;
         a->buffer = &null_local_buffer;
 
-        hr = parse_fx10_annotation(a, ptr, data);
-        if (FAILED(hr)) return hr;
+        if (FAILED(hr = parse_fx10_annotation(data, data_size, ptr, a)))
+            return hr;
     }
 
     if (!(p->objects = d3d10_calloc(p->object_count, sizeof(*p->objects))))
@@ -1500,7 +1534,8 @@ static HRESULT parse_fx10_pass(struct d3d10_effect_pass *p, const char **ptr, co
     return hr;
 }
 
-static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char **ptr, const char *data)
+static HRESULT parse_fx10_technique(const char *data, size_t data_size,
+        const char **ptr, struct d3d10_effect_technique *t)
 {
     unsigned int i;
     DWORD offset;
@@ -1509,7 +1544,7 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
     read_dword(ptr, &offset);
     TRACE("Technique name at offset %#x.\n", offset);
 
-    if (!copy_name(data + offset, &t->name))
+    if (!fx10_copy_string(data, data_size, offset, &t->name))
     {
         ERR("Failed to copy name.\n");
         return E_OUTOFMEMORY;
@@ -1535,8 +1570,8 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
         a->effect = t->effect;
         a->buffer = &null_local_buffer;
 
-        hr = parse_fx10_annotation(a, ptr, data);
-        if (FAILED(hr)) return hr;
+        if (FAILED(hr = parse_fx10_annotation(data, data_size, ptr, a)))
+            return hr;
     }
 
     if (!(t->passes = d3d10_calloc(t->pass_count, sizeof(*t->passes))))
@@ -1552,26 +1587,27 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
         p->ID3D10EffectPass_iface.lpVtbl = &d3d10_effect_pass_vtbl;
         p->technique = t;
 
-        hr = parse_fx10_pass(p, ptr, data);
-        if (FAILED(hr)) return hr;
+        if (FAILED(hr = parse_fx10_pass(data, data_size, ptr, p)))
+            return hr;
     }
 
     return S_OK;
 }
 
-static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char **ptr, const char *data)
+static HRESULT parse_fx10_variable(const char *data, size_t data_size,
+        const char **ptr, struct d3d10_effect_variable *v)
 {
     DWORD offset;
     unsigned int i;
     HRESULT hr;
 
-    hr = parse_fx10_variable_head(v, ptr, data);
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr = parse_fx10_variable_head(data, data_size, ptr, v)))
+        return hr;
 
     read_dword(ptr, &offset);
     TRACE("Variable semantic at offset %#x.\n", offset);
 
-    if (!copy_name(data + offset, &v->semantic))
+    if (!fx10_copy_string(data, data_size, offset, &v->semantic))
     {
         ERR("Failed to copy semantic.\n");
         return E_OUTOFMEMORY;
@@ -1602,8 +1638,8 @@ static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *
         a->effect = v->effect;
         a->buffer = &null_local_buffer;
 
-        hr = parse_fx10_annotation(a, ptr, data);
-        if (FAILED(hr)) return hr;
+        if (FAILED(hr = parse_fx10_annotation(data, data_size, ptr, a)))
+            return hr;
     }
 
     return S_OK;
@@ -1648,19 +1684,20 @@ static HRESULT create_state_object(struct d3d10_effect_variable *v)
     return S_OK;
 }
 
-static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const char **ptr, const char *data)
+static HRESULT parse_fx10_local_variable(const char *data, size_t data_size,
+        const char **ptr, struct d3d10_effect_variable *v)
 {
     unsigned int i;
     HRESULT hr;
     DWORD offset;
 
-    hr = parse_fx10_variable_head(v, ptr, data);
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr = parse_fx10_variable_head(data, data_size, ptr, v)))
+        return hr;
 
     read_dword(ptr, &offset);
     TRACE("Variable semantic at offset %#x.\n", offset);
 
-    if (!copy_name(data + offset, &v->semantic))
+    if (!fx10_copy_string(data, data_size, offset, &v->semantic))
     {
         ERR("Failed to copy semantic.\n");
         return E_OUTOFMEMORY;
@@ -1775,14 +1812,15 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
         a->effect = v->effect;
         a->buffer = &null_local_buffer;
 
-        hr = parse_fx10_annotation(a, ptr, data);
-        if (FAILED(hr)) return hr;
+        if (FAILED(hr = parse_fx10_annotation(data, data_size, ptr, a)))
+            return hr;
     }
 
     return S_OK;
 }
 
-static HRESULT parse_fx10_local_buffer(struct d3d10_effect_variable *l, const char **ptr, const char *data)
+static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
+        const char **ptr, struct d3d10_effect_variable *l)
 {
     unsigned int i;
     DWORD offset;
@@ -1804,7 +1842,7 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_variable *l, const ch
     read_dword(ptr, &offset);
     TRACE("Local buffer name at offset %#x.\n", offset);
 
-    if (!copy_name(data + offset, &l->name))
+    if (!fx10_copy_string(data, data_size, offset, &l->name))
     {
         ERR("Failed to copy name.\n");
         return E_OUTOFMEMORY;
@@ -1863,8 +1901,8 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_variable *l, const ch
         a->effect = l->effect;
         a->buffer = &null_local_buffer;
 
-        hr = parse_fx10_annotation(a, ptr, data);
-        if (FAILED(hr)) return hr;
+        if (FAILED(hr = parse_fx10_annotation(data, data_size, ptr, a)))
+            return hr;
     }
 
     if (!(l->members = d3d10_calloc(l->type->member_count, sizeof(*l->members))))
@@ -1887,8 +1925,8 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_variable *l, const ch
         v->buffer = l;
         v->effect = l->effect;
 
-        hr = parse_fx10_variable(v, ptr, data);
-        if (FAILED(hr)) return hr;
+        if (FAILED(hr = parse_fx10_variable(data, data_size, ptr, v)))
+            return hr;
 
         /*
          * Copy the values from the variable type to the constant buffers type
@@ -2072,8 +2110,8 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
         l->effect = e;
         l->buffer = &null_local_buffer;
 
-        hr = parse_fx10_local_buffer(l, &ptr, data);
-        if (FAILED(hr)) return hr;
+        if (FAILED(hr = parse_fx10_local_buffer(data, data_size, &ptr, l)))
+            return hr;
     }
 
     for (i = 0; i < e->local_variable_count; ++i)
@@ -2084,8 +2122,8 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
         v->ID3D10EffectVariable_iface.lpVtbl = &d3d10_effect_variable_vtbl;
         v->buffer = &null_local_buffer;
 
-        hr = parse_fx10_local_variable(v, &ptr, data);
-        if (FAILED(hr)) return hr;
+        if (FAILED(hr = parse_fx10_local_variable(data, data_size, &ptr, v)))
+            return hr;
     }
 
     for (i = 0; i < e->technique_count; ++i)
@@ -2095,8 +2133,8 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
         t->ID3D10EffectTechnique_iface.lpVtbl = &d3d10_effect_technique_vtbl;
         t->effect = e;
 
-        hr = parse_fx10_technique(t, &ptr, data);
-        if (FAILED(hr)) return hr;
+        if (FAILED(hr = parse_fx10_technique(data, data_size, &ptr, t)))
+            return hr;
     }
 
     return S_OK;
