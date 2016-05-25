@@ -6727,6 +6727,101 @@ static void test_shader_stage_input_output_matching(void)
     release_test_context(&test_context);
 }
 
+static void test_sm4_if_instruction(void)
+{
+    struct d3d10core_test_context test_context;
+    ID3D10PixelShader *ps_if_nz, *ps_if_z;
+    ID3D10Device *device;
+    unsigned int bits[4];
+    DWORD expected_color;
+    ID3D10Buffer *cb;
+    unsigned int i;
+    HRESULT hr;
+
+    static const DWORD ps_if_nz_code[] =
+    {
+#if 0
+        uint bits;
+
+        float4 main() : SV_TARGET
+        {
+            if (bits)
+                return float4(0.0f, 1.0f, 0.0f, 1.0f);
+            else
+                return float4(1.0f, 0.0f, 0.0f, 1.0f);
+        }
+#endif
+        0x43425844, 0x2a94f6f1, 0xdbe88943, 0x3426a708, 0x09cec990, 0x00000001, 0x00000100, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x00000088, 0x00000040, 0x00000022,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x0404001f,
+        0x0020800a, 0x00000000, 0x00000000, 0x08000036, 0x001020f2, 0x00000000, 0x00004002, 0x00000000,
+        0x3f800000, 0x00000000, 0x3f800000, 0x0100003e, 0x01000012, 0x08000036, 0x001020f2, 0x00000000,
+        0x00004002, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, 0x0100003e, 0x01000015, 0x0100003e,
+    };
+    static const DWORD ps_if_z_code[] =
+    {
+#if 0
+        uint bits;
+
+        float4 main() : SV_TARGET
+        {
+            if (!bits)
+                return float4(0.0f, 1.0f, 0.0f, 1.0f);
+            else
+                return float4(1.0f, 0.0f, 0.0f, 1.0f);
+        }
+#endif
+        0x43425844, 0x2e3030ca, 0x94c8610c, 0xdf0c1b1f, 0x80f2ca2c, 0x00000001, 0x00000100, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x00000088, 0x00000040, 0x00000022,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x0400001f,
+        0x0020800a, 0x00000000, 0x00000000, 0x08000036, 0x001020f2, 0x00000000, 0x00004002, 0x00000000,
+        0x3f800000, 0x00000000, 0x3f800000, 0x0100003e, 0x01000012, 0x08000036, 0x001020f2, 0x00000000,
+        0x00004002, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, 0x0100003e, 0x01000015, 0x0100003e,
+    };
+    static unsigned int bit_patterns[] =
+    {
+        0x00000000, 0x00000001, 0x10010001, 0x10000000, 0x80000000, 0xffff0000, 0x0000ffff, 0xffffffff,
+    };
+
+    if (!init_test_context(&test_context))
+        return;
+
+    device = test_context.device;
+
+    hr = ID3D10Device_CreatePixelShader(device, ps_if_nz_code, sizeof(ps_if_nz_code), &ps_if_nz);
+    ok(SUCCEEDED(hr), "Failed to create if_nz pixel shader, hr %#x.\n", hr);
+    hr = ID3D10Device_CreatePixelShader(device, ps_if_z_code, sizeof(ps_if_z_code), &ps_if_z);
+    ok(SUCCEEDED(hr), "Failed to create if_z pixel shader, hr %#x.\n", hr);
+
+    cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(bits), NULL);
+    ID3D10Device_PSSetConstantBuffers(device, 0, 1, &cb);
+
+    for (i = 0; i < sizeof(bit_patterns) / sizeof(*bit_patterns); ++i)
+    {
+        *bits = bit_patterns[i];
+        ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, bits, 0, 0);
+
+        ID3D10Device_PSSetShader(device, ps_if_nz);
+        expected_color = *bits ? 0xff00ff00 : 0xff0000ff;
+        draw_quad(&test_context);
+        check_texture_color(test_context.backbuffer, expected_color, 0);
+
+        ID3D10Device_PSSetShader(device, ps_if_z);
+        expected_color = *bits ? 0xff0000ff : 0xff00ff00;
+        draw_quad(&test_context);
+        check_texture_color(test_context.backbuffer, expected_color, 0);
+    }
+
+    ID3D10Buffer_Release(cb);
+    ID3D10PixelShader_Release(ps_if_z);
+    ID3D10PixelShader_Release(ps_if_nz);
+    release_test_context(&test_context);
+}
+
 START_TEST(device)
 {
     test_feature_level();
@@ -6765,4 +6860,5 @@ START_TEST(device)
     test_clear_depth_stencil_view();
     test_draw_depth_only();
     test_shader_stage_input_output_matching();
+    test_sm4_if_instruction();
 }
