@@ -2072,24 +2072,35 @@ static BOOL texture3d_load_location(struct wined3d_texture *texture, unsigned in
 
 static void texture3d_prepare_texture(struct wined3d_texture *texture, struct wined3d_context *context, BOOL srgb)
 {
-    unsigned int sub_count = texture->level_count * texture->layer_count;
     const struct wined3d_format *format = texture->resource.format;
+    GLenum internal = srgb ? format->glGammaInternal : format->glInternal;
+    unsigned int sub_count = texture->level_count * texture->layer_count;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int i;
 
     wined3d_texture_bind_and_dirtify(texture, context, srgb);
 
-    for (i = 0; i < sub_count; ++i)
+    if (wined3d_texture_use_immutable_storage(texture, gl_info))
     {
-        struct wined3d_volume *volume = texture->sub_resources[i].u.volume;
+        GL_EXTCALL(glTexStorage3D(GL_TEXTURE_3D, texture->level_count, internal,
+                wined3d_texture_get_level_width(texture, 0),
+                wined3d_texture_get_level_height(texture, 0),
+                wined3d_texture_get_level_depth(texture, 0)));
+        checkGLcall("glTexStorage3D");
+    }
+    else
+    {
+        for (i = 0; i < sub_count; ++i)
+        {
+            struct wined3d_volume *volume = texture->sub_resources[i].u.volume;
 
-        GL_EXTCALL(glTexImage3D(GL_TEXTURE_3D, volume->texture_level,
-                srgb ? format->glGammaInternal : format->glInternal,
-                wined3d_texture_get_level_width(texture, volume->texture_level),
-                wined3d_texture_get_level_height(texture, volume->texture_level),
-                wined3d_texture_get_level_depth(texture, volume->texture_level),
-                0, format->glFormat, format->glType, NULL));
-        checkGLcall("glTexImage3D");
+            GL_EXTCALL(glTexImage3D(GL_TEXTURE_3D, volume->texture_level, internal,
+                    wined3d_texture_get_level_width(texture, volume->texture_level),
+                    wined3d_texture_get_level_height(texture, volume->texture_level),
+                    wined3d_texture_get_level_depth(texture, volume->texture_level),
+                    0, format->glFormat, format->glType, NULL));
+            checkGLcall("glTexImage3D");
+        }
     }
 }
 
