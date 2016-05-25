@@ -662,9 +662,14 @@ ok(/abc/.toString(1, false, "3") === "/abc/", "/abc/.toString(1, false, \"3\") =
 
 re = /x/;
 ok(re.ignoreCase === false, "re.ignoreCase = " + re.ignoreCase);
+ok(re.multiline === false, "re.multiline = " + re.multiline);
 re = /x/i;
 ok(re.ignoreCase === true, "re.ignoreCase = " + re.ignoreCase);
+ok(re.multiline === false, "re.multiline = " + re.multiline);
 re = new RegExp("xxx", "gi");
 ok(re.ignoreCase === true, "re.ignoreCase = " + re.ignoreCase);
+ok(re.multiline === false, "re.multiline = " + re.multiline);
+re = /x/mg;
+ok(re.multiline === true, "re.multiline = " + re.multiline);
 
 reportSuccess();
