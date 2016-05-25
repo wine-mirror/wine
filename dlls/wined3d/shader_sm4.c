@@ -381,7 +381,7 @@ static BOOL shader_sm4_read_src_param(struct wined3d_sm4_data *priv, const DWORD
 static BOOL shader_sm4_read_dst_param(struct wined3d_sm4_data *priv, const DWORD **ptr,
         enum wined3d_data_type data_type, struct wined3d_shader_dst_param *dst_param);
 
-static void shader_sm4_read_if(struct wined3d_shader_instruction *ins,
+static void shader_sm4_read_conditional_op(struct wined3d_shader_instruction *ins,
         DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
         struct wined3d_sm4_data *priv)
 {
@@ -618,7 +618,8 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM4_OP_ADD,                              WINED3DSIH_ADD,                              "f",    "ff"},
     {WINED3D_SM4_OP_AND,                              WINED3DSIH_AND,                              "u",    "uu"},
     {WINED3D_SM4_OP_BREAK,                            WINED3DSIH_BREAK,                            "",     ""},
-    {WINED3D_SM4_OP_BREAKC,                           WINED3DSIH_BREAKP,                           "",     "u"},
+    {WINED3D_SM4_OP_BREAKC,                           WINED3DSIH_BREAKP,                           "",     "u",
+            shader_sm4_read_conditional_op},
     {WINED3D_SM4_OP_CUT,                              WINED3DSIH_CUT,                              "",     ""},
     {WINED3D_SM4_OP_DERIV_RTX,                        WINED3DSIH_DSX,                              "f",    "f"},
     {WINED3D_SM4_OP_DERIV_RTY,                        WINED3DSIH_DSY,                              "f",    "f"},
@@ -639,7 +640,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM4_OP_GE,                               WINED3DSIH_GE,                               "u",    "ff"},
     {WINED3D_SM4_OP_IADD,                             WINED3DSIH_IADD,                             "i",    "ii"},
     {WINED3D_SM4_OP_IF,                               WINED3DSIH_IF,                               "",     "u",
-            shader_sm4_read_if},
+            shader_sm4_read_conditional_op},
     {WINED3D_SM4_OP_IEQ,                              WINED3DSIH_IEQ,                              "u",    "ii"},
     {WINED3D_SM4_OP_IGE,                              WINED3DSIH_IGE,                              "u",    "ii"},
     {WINED3D_SM4_OP_ILT,                              WINED3DSIH_ILT,                              "u",    "ii"},

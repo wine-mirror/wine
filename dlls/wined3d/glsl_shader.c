@@ -4207,10 +4207,11 @@ static void shader_glsl_breakc(const struct wined3d_shader_instruction *ins)
 
 static void shader_glsl_breakp(const struct wined3d_shader_instruction *ins)
 {
+    const char *condition = (ins->flags == WINED3D_SHADER_CONDITIONAL_OP_NZ) ? "bool" : "!bool";
     struct glsl_src_param src_param;
 
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &src_param);
-    shader_addline(ins->ctx->buffer, "if (bool(%s)) break;\n", src_param.param_str);
+    shader_addline(ins->ctx->buffer, "if (%s(%s)) break;\n", condition, src_param.param_str);
 }
 
 static void shader_glsl_label(const struct wined3d_shader_instruction *ins)

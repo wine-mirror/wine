@@ -2259,7 +2259,8 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
 
             shader_addline(&buffer, "%s", shader_opcode_names[ins.handler_idx]);
 
-            if (ins.handler_idx == WINED3DSIH_IF)
+            if (ins.handler_idx == WINED3DSIH_BREAKP
+                    || ins.handler_idx == WINED3DSIH_IF)
             {
                 switch (ins.flags)
                 {
