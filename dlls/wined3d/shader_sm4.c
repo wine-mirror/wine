@@ -103,6 +103,8 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 
 #define WINED3D_SM4_INSTRUCTION_FLAG_SATURATE   0x4
 
+#define WINED3D_SM4_CONDITIONAL_NZ              (0x1u << 18)
+
 enum wined3d_sm4_opcode
 {
     WINED3D_SM4_OP_ADD                              = 0x00,
@@ -379,6 +381,15 @@ static BOOL shader_sm4_read_src_param(struct wined3d_sm4_data *priv, const DWORD
 static BOOL shader_sm4_read_dst_param(struct wined3d_sm4_data *priv, const DWORD **ptr,
         enum wined3d_data_type data_type, struct wined3d_shader_dst_param *dst_param);
 
+static void shader_sm4_read_if(struct wined3d_shader_instruction *ins,
+        DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
+        struct wined3d_sm4_data *priv)
+{
+    shader_sm4_read_src_param(priv, &tokens, WINED3D_DATA_UINT, &priv->src_param[0]);
+    ins->flags = (opcode_token & WINED3D_SM4_CONDITIONAL_NZ) ?
+            WINED3D_SHADER_CONDITIONAL_OP_NZ : WINED3D_SHADER_CONDITIONAL_OP_Z;
+}
+
 static void shader_sm4_read_shader_data(struct wined3d_shader_instruction *ins,
         DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
         struct wined3d_sm4_data *priv)
@@ -627,7 +638,8 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM4_OP_FTOU,                             WINED3DSIH_FTOU,                             "u",    "f"},
     {WINED3D_SM4_OP_GE,                               WINED3DSIH_GE,                               "u",    "ff"},
     {WINED3D_SM4_OP_IADD,                             WINED3DSIH_IADD,                             "i",    "ii"},
-    {WINED3D_SM4_OP_IF,                               WINED3DSIH_IF,                               "",     "u"},
+    {WINED3D_SM4_OP_IF,                               WINED3DSIH_IF,                               "",     "u",
+            shader_sm4_read_if},
     {WINED3D_SM4_OP_IEQ,                              WINED3DSIH_IEQ,                              "u",    "ii"},
     {WINED3D_SM4_OP_IGE,                              WINED3DSIH_IGE,                              "u",    "ii"},
     {WINED3D_SM4_OP_ILT,                              WINED3DSIH_ILT,                              "u",    "ii"},

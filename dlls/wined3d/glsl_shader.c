@@ -4156,10 +4156,11 @@ static void shader_glsl_rep(const struct wined3d_shader_instruction *ins)
 
 static void shader_glsl_if(const struct wined3d_shader_instruction *ins)
 {
+    const char *condition = (ins->flags == WINED3D_SHADER_CONDITIONAL_OP_NZ) ? "bool" : "!bool";
     struct glsl_src_param src0_param;
 
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &src0_param);
-    shader_addline(ins->ctx->buffer, "if (bool(%s)) {\n", src0_param.param_str);
+    shader_addline(ins->ctx->buffer, "if (%s(%s)) {\n", condition, src0_param.param_str);
 }
 
 static void shader_glsl_ifc(const struct wined3d_shader_instruction *ins)

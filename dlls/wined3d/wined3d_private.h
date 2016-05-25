@@ -497,6 +497,12 @@ enum wined3d_shader_rel_op
     WINED3D_SHADER_REL_OP_LE = 6,
 };
 
+enum wined3d_shader_conditional_op
+{
+    WINED3D_SHADER_CONDITIONAL_OP_NZ = 0,
+    WINED3D_SHADER_CONDITIONAL_OP_Z  = 1
+};
+
 #define WINED3D_SM1_VS  0xfffeu
 #define WINED3D_SM1_PS  0xffffu
 #define WINED3D_SM4_PS  0x0000u

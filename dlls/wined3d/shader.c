@@ -2259,7 +2259,16 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
 
             shader_addline(&buffer, "%s", shader_opcode_names[ins.handler_idx]);
 
-            if (ins.handler_idx == WINED3DSIH_IFC
+            if (ins.handler_idx == WINED3DSIH_IF)
+            {
+                switch (ins.flags)
+                {
+                    case WINED3D_SHADER_CONDITIONAL_OP_NZ: shader_addline(&buffer, "_nz"); break;
+                    case WINED3D_SHADER_CONDITIONAL_OP_Z:  shader_addline(&buffer, "_z"); break;
+                    default: shader_addline(&buffer, "_unrecognized(%#x)", ins.flags); break;
+                }
+            }
+            else if (ins.handler_idx == WINED3DSIH_IFC
                     || ins.handler_idx == WINED3DSIH_BREAKC)
             {
                 switch (ins.flags)
