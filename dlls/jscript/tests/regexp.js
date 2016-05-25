@@ -660,4 +660,11 @@ tmp = new RegExp("abc/", "mgi");
 ok(tmp.toString() === "/abc//igm", "(new RegExp(\"abc/\")).toString() = " + tmp.toString());
 ok(/abc/.toString(1, false, "3") === "/abc/", "/abc/.toString(1, false, \"3\") = " + /abc/.toString());
 
+re = /x/;
+ok(re.ignoreCase === false, "re.ignoreCase = " + re.ignoreCase);
+re = /x/i;
+ok(re.ignoreCase === true, "re.ignoreCase = " + re.ignoreCase);
+re = new RegExp("xxx", "gi");
+ok(re.ignoreCase === true, "re.ignoreCase = " + re.ignoreCase);
+
 reportSuccess();
