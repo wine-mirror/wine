@@ -517,11 +517,7 @@ static BOOL match_apple(const struct wined3d_gl_info *gl_info, const char *gl_re
      *
      * This test has been moved into wined3d_guess_gl_vendor()
      */
-    if (gl_vendor == GL_VENDOR_APPLE)
-    {
-        return TRUE;
-    }
-    return FALSE;
+    return gl_vendor == GL_VENDOR_APPLE;
 }
 
 /* Context activation is done by the caller. */
@@ -1634,7 +1630,6 @@ static DWORD wined3d_parse_gl_version(const char *gl_version)
 static enum wined3d_gl_vendor wined3d_guess_gl_vendor(const struct wined3d_gl_info *gl_info,
         const char *gl_vendor_string, const char *gl_renderer)
 {
-
     /* MacOS has various specialities in the extensions it advertises. Some have to be loaded from
      * the opengl 1.2+ core, while other extensions are advertised, but software emulated. So try to
      * detect the Apple OpenGL implementation to apply some extension fixups afterwards.
@@ -1646,8 +1641,7 @@ static enum wined3d_gl_vendor wined3d_guess_gl_vendor(const struct wined3d_gl_in
      * is specific to the Mac OS X window management, and GL_APPLE_ycbcr_422 is QuickTime specific. So
      * the chance that other implementations support them is rather small since Win32 QuickTime uses
      * DirectDraw, not OpenGL. */
-    if (gl_info->supported[APPLE_FENCE]
-            && gl_info->supported[APPLE_YCBCR_422])
+    if (gl_info->supported[APPLE_FENCE] && gl_info->supported[APPLE_YCBCR_422])
         return GL_VENDOR_APPLE;
 
     if (strstr(gl_vendor_string, "NVIDIA"))
