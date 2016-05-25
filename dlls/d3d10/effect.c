@@ -310,8 +310,7 @@ static HRESULT shader_parse_signature(const char *data, DWORD data_size, struct 
         return E_INVALIDARG;
     }
 
-    e = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*e));
-    if (!e)
+    if (!(e = d3d10_calloc(count, sizeof(*e))))
     {
         ERR("Failed to allocate signature memory.\n");
         return E_OUTOFMEMORY;
@@ -621,8 +620,7 @@ static HRESULT parse_fx10_type(struct d3d10_effect_type *t, const char *ptr, con
             t->basetype = 0;
             t->type_class = D3D10_SVC_STRUCT;
 
-            t->members = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, t->member_count * sizeof(*t->members));
-            if (!t->members)
+            if (!(t->members = d3d10_calloc(t->member_count, sizeof(*t->members))))
             {
                 ERR("Failed to allocate members memory.\n");
                 return E_OUTOFMEMORY;
@@ -866,8 +864,7 @@ static HRESULT copy_variableinfo_from_type(struct d3d10_effect_variable *v)
 
     if (v->type->member_count)
     {
-        v->members = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, v->type->member_count * sizeof(*v->members));
-        if (!v->members)
+        if (!(v->members = d3d10_calloc(v->type->member_count, sizeof(*v->members))))
         {
             ERR("Failed to allocate members memory.\n");
             return E_OUTOFMEMORY;
@@ -909,8 +906,7 @@ static HRESULT copy_variableinfo_from_type(struct d3d10_effect_variable *v)
     {
         unsigned int bufferoffset = v->buffer_offset;
 
-        v->elements = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, v->type->element_count * sizeof(*v->elements));
-        if (!v->elements)
+        if (!(v->elements = d3d10_calloc(v->type->element_count, sizeof(*v->elements))))
         {
             ERR("Failed to allocate elements memory.\n");
             return E_OUTOFMEMORY;
@@ -1464,8 +1460,7 @@ static HRESULT parse_fx10_pass(struct d3d10_effect_pass *p, const char **ptr, co
     read_dword(ptr, &p->annotation_count);
     TRACE("Pass has %u annotations.\n", p->annotation_count);
 
-    p->annotations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, p->annotation_count * sizeof(*p->annotations));
-    if (!p->annotations)
+    if (!(p->annotations = d3d10_calloc(p->annotation_count, sizeof(*p->annotations))))
     {
         ERR("Failed to allocate pass annotations memory.\n");
         return E_OUTOFMEMORY;
@@ -1482,8 +1477,7 @@ static HRESULT parse_fx10_pass(struct d3d10_effect_pass *p, const char **ptr, co
         if (FAILED(hr)) return hr;
     }
 
-    p->objects = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, p->object_count * sizeof(*p->objects));
-    if (!p->objects)
+    if (!(p->objects = d3d10_calloc(p->object_count, sizeof(*p->objects))))
     {
         ERR("Failed to allocate effect objects memory.\n");
         return E_OUTOFMEMORY;
@@ -1528,8 +1522,7 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
     read_dword(ptr, &t->annotation_count);
     TRACE("Technique has %u annotations.\n", t->annotation_count);
 
-    t->annotations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, t->annotation_count * sizeof(*t->annotations));
-    if (!t->annotations)
+    if (!(t->annotations = d3d10_calloc(t->annotation_count, sizeof(*t->annotations))))
     {
         ERR("Failed to allocate technique annotations memory.\n");
         return E_OUTOFMEMORY;
@@ -1546,8 +1539,7 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
         if (FAILED(hr)) return hr;
     }
 
-    t->passes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, t->pass_count * sizeof(*t->passes));
-    if (!t->passes)
+    if (!(t->passes = d3d10_calloc(t->pass_count, sizeof(*t->passes))))
     {
         ERR("Failed to allocate passes memory\n");
         return E_OUTOFMEMORY;
@@ -1597,8 +1589,7 @@ static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *
     read_dword(ptr, &v->annotation_count);
     TRACE("Variable has %u annotations.\n", v->annotation_count);
 
-    v->annotations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, v->annotation_count * sizeof(*v->annotations));
-    if (!v->annotations)
+    if (!(v->annotations = d3d10_calloc(v->annotation_count, sizeof(*v->annotations))))
     {
         ERR("Failed to allocate variable annotations memory.\n");
         return E_OUTOFMEMORY;
@@ -1771,8 +1762,7 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
     read_dword(ptr, &v->annotation_count);
     TRACE("Variable has %u annotations.\n", v->annotation_count);
 
-    v->annotations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, v->annotation_count * sizeof(*v->annotations));
-    if (!v->annotations)
+    if (!(v->annotations = d3d10_calloc(v->annotation_count, sizeof(*v->annotations))))
     {
         ERR("Failed to allocate variable annotations memory.\n");
         return E_OUTOFMEMORY;
@@ -1860,8 +1850,7 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_variable *l, const ch
     read_dword(ptr, &l->annotation_count);
     TRACE("Local buffer has %u annotations.\n", l->annotation_count);
 
-    l->annotations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, l->annotation_count * sizeof(*l->annotations));
-    if (!l->annotations)
+    if (!(l->annotations = d3d10_calloc(l->annotation_count, sizeof(*l->annotations))))
     {
         ERR("Failed to allocate local buffer annotations memory.\n");
         return E_OUTOFMEMORY;
@@ -1878,15 +1867,13 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_variable *l, const ch
         if (FAILED(hr)) return hr;
     }
 
-    l->members = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, l->type->member_count * sizeof(*l->members));
-    if (!l->members)
+    if (!(l->members = d3d10_calloc(l->type->member_count, sizeof(*l->members))))
     {
         ERR("Failed to allocate members memory.\n");
         return E_OUTOFMEMORY;
     }
 
-    l->type->members = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, l->type->member_count * sizeof(*l->type->members));
-    if (!l->type->members)
+    if (!(l->type->members = d3d10_calloc(l->type->member_count, sizeof(*l->type->members))))
     {
         ERR("Failed to allocate type members memory.\n");
         return E_OUTOFMEMORY;
@@ -2048,36 +2035,31 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
         return E_FAIL;
     }
 
-    e->local_buffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, e->local_buffer_count * sizeof(*e->local_buffers));
-    if (!e->local_buffers)
+    if (!(e->local_buffers = d3d10_calloc(e->local_buffer_count, sizeof(*e->local_buffers))))
     {
         ERR("Failed to allocate local buffer memory.\n");
         return E_OUTOFMEMORY;
     }
 
-    e->local_variables = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, e->local_variable_count * sizeof(*e->local_variables));
-    if (!e->local_variables)
+    if (!(e->local_variables = d3d10_calloc(e->local_variable_count, sizeof(*e->local_variables))))
     {
         ERR("Failed to allocate local variable memory.\n");
         return E_OUTOFMEMORY;
     }
 
-    e->anonymous_shaders = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, e->anonymous_shader_count * sizeof(*e->anonymous_shaders));
-    if (!e->anonymous_shaders)
+    if (!(e->anonymous_shaders = d3d10_calloc(e->anonymous_shader_count, sizeof(*e->anonymous_shaders))))
     {
         ERR("Failed to allocate anonymous shaders memory\n");
         return E_OUTOFMEMORY;
     }
 
-    e->used_shaders = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, e->used_shader_count * sizeof(*e->used_shaders));
-    if (!e->used_shaders)
+    if (!(e->used_shaders = d3d10_calloc(e->used_shader_count, sizeof(*e->used_shaders))))
     {
         ERR("Failed to allocate used shaders memory\n");
         return E_OUTOFMEMORY;
     }
 
-    e->techniques = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, e->technique_count * sizeof(*e->techniques));
-    if (!e->techniques)
+    if (!(e->techniques = d3d10_calloc(e->technique_count, sizeof(*e->techniques))))
     {
         ERR("Failed to allocate techniques memory\n");
         return E_OUTOFMEMORY;
