@@ -1178,16 +1178,30 @@ static BOOL read_int8_value(DWORD value, D3D_SHADER_VARIABLE_TYPE in_type, INT8 
     }
 }
 
-static BOOL read_value_list(const char *ptr, D3D_SHADER_VARIABLE_TYPE out_type,
-        UINT out_base, UINT out_size, void *out_data)
+static BOOL read_value_list(const char *data, size_t data_size, DWORD offset,
+        D3D_SHADER_VARIABLE_TYPE out_type, UINT out_base, UINT out_size, void *out_data)
 {
     D3D_SHADER_VARIABLE_TYPE in_type;
+    const char *ptr;
     DWORD t, value;
     DWORD count, i;
 
+    if (offset >= data_size || !require_space(offset, 1, sizeof(count), data_size))
+    {
+        WARN("Invalid offset %#x (data size %#lx).\n", offset, (long)data_size);
+        return FALSE;
+    }
+
+    ptr = data + offset;
     read_dword(&ptr, &count);
     if (count != out_size)
         return FALSE;
+
+    if (!require_space(ptr - data, count, 2 * sizeof(DWORD), data_size))
+    {
+        WARN("Invalid value count %#x (offset %#x, data size %#lx).\n", count, offset, (long)data_size);
+        return FALSE;
+    }
 
     TRACE("%u values:\n", count);
     for (i = 0; i < count; ++i)
@@ -1228,8 +1242,8 @@ static BOOL read_value_list(const char *ptr, D3D_SHADER_VARIABLE_TYPE out_type,
     return TRUE;
 }
 
-static BOOL parse_fx10_state_group(const char **ptr, const char *data,
-        D3D_SHADER_VARIABLE_TYPE container_type, void *container)
+static BOOL parse_fx10_state_group(const char *data, size_t data_size,
+        const char **ptr, D3D_SHADER_VARIABLE_TYPE container_type, void *container)
 {
     const struct d3d10_effect_state_property_info *property_info;
     UINT value_offset;
@@ -1269,7 +1283,7 @@ static BOOL parse_fx10_state_group(const char **ptr, const char *data,
             return FALSE;
         }
 
-        if (!read_value_list(data + value_offset, property_info->type, idx,
+        if (!read_value_list(data, data_size, value_offset, property_info->type, idx,
                 property_info->size, (char *)container + property_info->offset))
         {
             ERR("Failed to read values for property %#x.\n", id);
@@ -1335,7 +1349,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
                     break;
 
                 case D3D10_EOT_STENCIL_REF:
-                    if (!read_value_list(data + offset, D3D10_SVT_UINT, 0, 1, &o->pass->stencil_ref))
+                    if (!read_value_list(data, data_size, offset, D3D10_SVT_UINT, 0, 1, &o->pass->stencil_ref))
                     {
                         ERR("Failed to read stencil ref.\n");
                         return E_FAIL;
@@ -1343,7 +1357,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
                     break;
 
                 case D3D10_EOT_SAMPLE_MASK:
-                    if (!read_value_list(data + offset, D3D10_SVT_UINT, 0, 1, &o->pass->sample_mask))
+                    if (!read_value_list(data, data_size, offset, D3D10_SVT_UINT, 0, 1, &o->pass->sample_mask))
                     {
                         FIXME("Failed to read sample mask.\n");
                         return E_FAIL;
@@ -1351,7 +1365,7 @@ static HRESULT parse_fx10_object(const char *data, size_t data_size,
                     break;
 
                 case D3D10_EOT_BLEND_FACTOR:
-                    if (!read_value_list(data + offset, D3D10_SVT_FLOAT, 0, 4, &o->pass->blend_factor[0]))
+                    if (!read_value_list(data, data_size, offset, D3D10_SVT_FLOAT, 0, 4, &o->pass->blend_factor[0]))
                     {
                         FIXME("Failed to read blend factor.\n");
                         return E_FAIL;
@@ -1822,7 +1836,7 @@ static HRESULT parse_fx10_local_variable(const char *data, size_t data_size,
                         var = v;
 
                     memcpy(&var->u.state.desc, storage_info->default_state, storage_info->size);
-                    if (!parse_fx10_state_group(ptr, data, var->type->basetype, &var->u.state.desc))
+                    if (!parse_fx10_state_group(data, data_size, ptr, var->type->basetype, &var->u.state.desc))
                     {
                         ERR("Failed to read property list.\n");
                         return E_FAIL;
