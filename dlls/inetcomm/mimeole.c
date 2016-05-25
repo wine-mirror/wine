@@ -3178,7 +3178,7 @@ static HRESULT WINAPI propschema_ModifyProperty(IMimePropertySchema *iface, cons
 {
     propschema *This = impl_from_IMimePropertySchema(iface);
     FIXME("(%p)->(%s, %x, %d, %d) stub\n", This, debugstr_a(name), flags, rownumber, vtdefault);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI propschema_GetPropertyId(IMimePropertySchema *iface, const char *name, DWORD *propid)
