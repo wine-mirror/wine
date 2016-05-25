@@ -156,6 +156,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_texture_rectangle",            ARB_TEXTURE_RECTANGLE         },
     {"GL_ARB_texture_rg",                   ARB_TEXTURE_RG                },
     {"GL_ARB_texture_rgb10_a2ui",           ARB_TEXTURE_RGB10_A2UI        },
+    {"GL_ARB_texture_storage",              ARB_TEXTURE_STORAGE           },
     {"GL_ARB_texture_swizzle",              ARB_TEXTURE_SWIZZLE           },
     {"GL_ARB_timer_query",                  ARB_TIMER_QUERY               },
     {"GL_ARB_uniform_buffer_object",        ARB_UNIFORM_BUFFER_OBJECT     },
@@ -2691,6 +2692,10 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glCompressedTexSubImage2DARB)
     USE_GL_FUNC(glCompressedTexSubImage3DARB)
     USE_GL_FUNC(glGetCompressedTexImageARB)
+    /* GL_ARB_texture_storage */
+    USE_GL_FUNC(glTexStorage1D)
+    USE_GL_FUNC(glTexStorage2D)
+    USE_GL_FUNC(glTexStorage3D)
     /* GL_ARB_timer_query */
     USE_GL_FUNC(glQueryCounter)
     USE_GL_FUNC(glGetQueryObjectui64v)
@@ -3515,6 +3520,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
 
         {ARB_INTERNALFORMAT_QUERY,         MAKEDWORD_VERSION(4, 2)},
         {ARB_MAP_BUFFER_ALIGNMENT,         MAKEDWORD_VERSION(4, 2)},
+        {ARB_TEXTURE_STORAGE,              MAKEDWORD_VERSION(4, 2)},
 
         {ARB_DEBUG_OUTPUT,                 MAKEDWORD_VERSION(4, 3)},
         {ARB_INTERNALFORMAT_QUERY2,        MAKEDWORD_VERSION(4, 3)},
@@ -3772,6 +3778,12 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
     {
         TRACE(" IMPLIED: ARB_texture_mirror_clamp_to_edge support (by ATI_texture_mirror_once).\n");
         gl_info->supported[ARB_TEXTURE_MIRROR_CLAMP_TO_EDGE] = TRUE;
+    }
+    if (gl_info->supported[ARB_TEXTURE_STORAGE] && gl_info->supported[APPLE_YCBCR_422])
+    {
+        /* AFAIK APPLE_ycbcr_422 is only available in legacy contexts so we shouldn't ever hit this. */
+        FIXME("Disabling APPLE_ycbcr_422 because of ARB_texture_storage.\n");
+        gl_info->supported[APPLE_YCBCR_422] = FALSE;
     }
 
     wined3d_adapter_init_limits(gl_info);
