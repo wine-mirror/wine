@@ -244,7 +244,7 @@ static const struct d3d10_effect_state_storage_info d3d10_effect_state_storage_i
     {D3D10_SVT_SAMPLER,      sizeof(default_sampler_desc),       &default_sampler_desc      },
 };
 
-static BOOL fx10_copy_string(const char *data, size_t data_size, DWORD offset, char **s)
+static BOOL fx10_get_string(const char *data, size_t data_size, DWORD offset, const char **s, size_t *l)
 {
     size_t len, max_len;
 
@@ -258,20 +258,40 @@ static BOOL fx10_copy_string(const char *data, size_t data_size, DWORD offset, c
     if (!(len = strnlen(data + offset, max_len)))
     {
         *s = NULL;
+        *l = 0;
         return TRUE;
     }
 
     if (len == max_len)
         return FALSE;
 
-    ++len;
+    *s = data + offset;
+    *l = ++len;
+
+    return TRUE;
+}
+
+static BOOL fx10_copy_string(const char *data, size_t data_size, DWORD offset, char **s)
+{
+    const char *p;
+    size_t len;
+
+    if (!fx10_get_string(data, data_size, offset, &p, &len))
+        return FALSE;
+
+    if (!p)
+    {
+        *s = NULL;
+        return TRUE;
+    }
+
     if (!(*s = HeapAlloc(GetProcessHeap(), 0, len)))
     {
         ERR("Failed to allocate string memory.\n");
         return FALSE;
     }
 
-    memcpy(*s, data + offset, len);
+    memcpy(*s, p, len);
 
     return TRUE;
 }
@@ -302,21 +322,13 @@ static BOOL copy_name(const char *ptr, char **name)
 
 static const char *shader_get_string(const char *data, size_t data_size, DWORD offset)
 {
-    size_t len, max_len;
+    const char *s;
+    size_t l;
 
-    if (offset >= data_size)
-    {
-        WARN("Invalid offset %#x (data size %#lx).\n", offset, (long)data_size);
-        return NULL;
-    }
-
-    max_len = data_size - offset;
-    len = strnlen(data + offset, max_len);
-
-    if (len == max_len)
+    if (!fx10_get_string(data, data_size, offset, &s, &l))
         return NULL;
 
-    return data + offset;
+    return l ? s : "";
 }
 
 static HRESULT shader_parse_signature(const char *data, DWORD data_size, struct d3d10_effect_shader_signature *s)
@@ -1268,7 +1280,8 @@ static BOOL parse_fx10_state_group(const char **ptr, const char *data,
     return TRUE;
 }
 
-static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr, const char *data)
+static HRESULT parse_fx10_object(const char *data, size_t data_size,
+        const char **ptr, struct d3d10_effect_object *o)
 {
     ID3D10EffectVariable *variable = &null_variable.ID3D10EffectVariable_iface;
     const char *data_ptr = NULL;
@@ -1278,6 +1291,14 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
     struct d3d10_effect *effect = o->pass->technique->effect;
     ID3D10Effect *e = &effect->ID3D10Effect_iface;
     DWORD tmp, variable_idx = 0;
+    const char *name;
+    size_t name_len;
+
+    if (!require_space(*ptr - data, 4, sizeof(DWORD), data_size))
+    {
+        WARN("Invalid offset %#lx (data size %#lx).\n", (long)(*ptr - data), (long)data_size);
+        return E_FAIL;
+    }
 
     read_dword(ptr, &o->type);
     TRACE("Effect object is of type %#x.\n", o->type);
@@ -1345,19 +1366,36 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
 
         case D3D10_EOO_PARSED_OBJECT:
             /* This is a local object, we've parsed in parse_fx10_local_object. */
-            TRACE("Variable name %s.\n", debugstr_a(data + offset));
+            if (!fx10_get_string(data, data_size, offset, &name, &name_len))
+            {
+                WARN("Failed to get variable name.\n");
+                return E_FAIL;
+            }
+            TRACE("Variable name %s.\n", debugstr_a(name));
 
-            variable = e->lpVtbl->GetVariableByName(e, data + offset);
+            variable = e->lpVtbl->GetVariableByName(e, name);
             break;
 
         case D3D10_EOO_PARSED_OBJECT_INDEX:
             /* This is a local object, we've parsed in parse_fx10_local_object, which has an array index. */
+            if (offset >= data_size || !require_space(offset, 2, sizeof(DWORD), data_size))
+            {
+                WARN("Invalid offset %#x (data size %#lx).\n", offset, (long)data_size);
+                return E_FAIL;
+            }
             data_ptr = data + offset;
             read_dword(&data_ptr, &offset);
             read_dword(&data_ptr, &variable_idx);
-            TRACE("Variable name %s[%u].\n", debugstr_a(data + offset), variable_idx);
 
-            variable = e->lpVtbl->GetVariableByName(e, data + offset);
+            if (!fx10_get_string(data, data_size, offset, &name, &name_len))
+            {
+                WARN("Failed to get variable name.\n");
+                return E_FAIL;
+            }
+
+            TRACE("Variable name %s[%u].\n", debugstr_a(name), variable_idx);
+
+            variable = e->lpVtbl->GetVariableByName(e, name);
             break;
 
         case D3D10_EOO_ANONYMOUS_SHADER:
@@ -1370,6 +1408,11 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
                 return E_FAIL;
             }
 
+            if (offset >= data_size || !require_space(offset, 1, sizeof(DWORD), data_size))
+            {
+                WARN("Invalid offset %#x (data size %#lx).\n", offset, (long)data_size);
+                return E_FAIL;
+            }
             data_ptr = data + offset;
             read_dword(&data_ptr, &offset);
             TRACE("Effect object starts at offset %#x.\n", offset);
@@ -1527,8 +1570,8 @@ static HRESULT parse_fx10_pass(const char *data, size_t data_size,
 
         o->pass = p;
 
-        hr = parse_fx10_object(o, ptr, data);
-        if (FAILED(hr)) return hr;
+        if (FAILED(hr = parse_fx10_object(data, data_size, ptr, o)))
+            return hr;
     }
 
     return hr;
