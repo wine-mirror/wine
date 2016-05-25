@@ -199,6 +199,22 @@ HRESULT WINAPI D3D10CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D10_DRIVER
     return S_OK;
 }
 
+static int d3d10_effect_type_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    const struct d3d10_effect_type *t = WINE_RB_ENTRY_VALUE(entry, const struct d3d10_effect_type, entry);
+    const DWORD *id = key;
+
+    return *id - t->id;
+}
+
+static const struct wine_rb_functions d3d10_effect_type_rb_functions =
+{
+    d3d10_rb_alloc,
+    d3d10_rb_realloc,
+    d3d10_rb_free,
+    d3d10_effect_type_compare,
+};
+
 HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT flags,
         ID3D10Device *device, ID3D10EffectPool *effect_pool, ID3D10Effect **effect)
 {
@@ -213,6 +229,13 @@ HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT fl
     {
         ERR("Failed to allocate D3D10 effect object memory\n");
         return E_OUTOFMEMORY;
+    }
+
+    if (wine_rb_init(&object->types, &d3d10_effect_type_rb_functions) == -1)
+    {
+        ERR("Failed to initialize type rbtree.\n");
+        HeapFree(GetProcessHeap(), 0, object);
+        return E_FAIL;
     }
 
     object->ID3D10Effect_iface.lpVtbl = &d3d10_effect_vtbl;

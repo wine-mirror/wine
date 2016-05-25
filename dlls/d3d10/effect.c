@@ -2066,14 +2066,6 @@ static HRESULT parse_fx10_local_buffer(const char *data, size_t data_size,
     return S_OK;
 }
 
-static int d3d10_effect_type_compare(const void *key, const struct wine_rb_entry *entry)
-{
-    const struct d3d10_effect_type *t = WINE_RB_ENTRY_VALUE(entry, const struct d3d10_effect_type, entry);
-    const DWORD *id = key;
-
-    return *id - t->id;
-}
-
 static void d3d10_effect_type_member_destroy(struct d3d10_effect_type_member *typem)
 {
     TRACE("effect type member %p.\n", typem);
@@ -2110,25 +2102,11 @@ static void d3d10_effect_type_destroy(struct wine_rb_entry *entry, void *context
     HeapFree(GetProcessHeap(), 0, t);
 }
 
-static const struct wine_rb_functions d3d10_effect_type_rb_functions =
-{
-    d3d10_rb_alloc,
-    d3d10_rb_realloc,
-    d3d10_rb_free,
-    d3d10_effect_type_compare,
-};
-
 static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD data_size)
 {
     const char *ptr = data + e->index_offset;
     unsigned int i;
     HRESULT hr;
-
-    if (wine_rb_init(&e->types, &d3d10_effect_type_rb_functions) == -1)
-    {
-        ERR("Failed to initialize type rbtree.\n");
-        return E_FAIL;
-    }
 
     if (!(e->local_buffers = d3d10_calloc(e->local_buffer_count, sizeof(*e->local_buffers))))
     {
