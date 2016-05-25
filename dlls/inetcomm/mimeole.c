@@ -924,6 +924,10 @@ static HRESULT WINAPI MimeBody_SetOption(
         FIXME("OID_SECURITY_HWND_OWNER (value %08x): ignoring\n", pValue->u.ulVal);
         hr = S_OK;
         break;
+    case OID_TRANSMIT_BODY_ENCODING:
+        FIXME("OID_TRANSMIT_BODY_ENCODING (value %08x): ignoring\n", pValue->u.ulVal);
+        hr = S_OK;
+        break;
     default:
         FIXME("Unhandled oid %08x\n", oid);
     }
