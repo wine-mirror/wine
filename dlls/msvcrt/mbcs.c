@@ -664,7 +664,7 @@ int CDECL _mbsnbcpy_s_l(unsigned char* dst, MSVCRT_size_t size,
 
     if((locale ? locale->mbcinfo : get_mbcinfo())->ismbcodepage)
     {
-        int is_lead = 0;
+        BOOL is_lead = FALSE;
         while (*src && n)
         {
             if(pos == size)
@@ -745,7 +745,7 @@ unsigned char* CDECL _mbsnbcpy(unsigned char* dst, const unsigned char* src, MSV
     return dst;
   if(get_mbcinfo()->ismbcodepage)
   {
-    int is_lead = 0;
+    BOOL is_lead = FALSE;
     while (*src && n)
     {
       is_lead = (!is_lead && _ismbblead(*src));
