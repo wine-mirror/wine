@@ -708,6 +708,19 @@ static void shader_sm1_read_comment(const DWORD **ptr)
     }
 }
 
+static void shader_sm1_validate_instruction(struct wined3d_shader_instruction *ins)
+{
+    if (ins->handler_idx == WINED3DSIH_BREAKP || ins->handler_idx == WINED3DSIH_IF)
+    {
+        if (ins->flags)
+        {
+            FIXME("Ignoring unexpected instruction flags %#x for %s.\n",
+                    ins->flags, debug_d3dshaderinstructionhandler(ins->handler_idx));
+            ins->flags = 0;
+        }
+    }
+}
+
 static void shader_sm1_read_instruction(void *data, const DWORD **ptr, struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_sm1_opcode_info *opcode_info;
@@ -775,6 +788,8 @@ static void shader_sm1_read_instruction(void *data, const DWORD **ptr, struct wi
             shader_sm1_read_src_param(priv, &p, &priv->src_param[i], &priv->src_rel_addr[i]);
         }
     }
+
+    shader_sm1_validate_instruction(ins);
 }
 
 static BOOL shader_sm1_is_end(void *data, const DWORD **ptr)
