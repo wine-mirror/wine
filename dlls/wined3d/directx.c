@@ -3834,6 +3834,17 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
     adapter->d3d_info.wined3d_creation_flags = wined3d_creation_flags;
     TRACE("Max texture stages: %u.\n", adapter->d3d_info.limits.ffp_blend_stages);
 
+    adapter->d3d_info.valid_rt_mask = 0;
+    for (i = 0; i < gl_info->limits.buffers; ++i)
+        adapter->d3d_info.valid_rt_mask |= (1u << i);
+
+    if (!adapter->d3d_info.shader_color_key)
+    {
+        /* We do not want to deal with re-creating immutable texture storage for color keying emulation. */
+        WARN("Disabling ARB_texture_storage because fragment pipe doesn't support color keying.\n");
+        gl_info->supported[ARB_TEXTURE_STORAGE] = FALSE;
+    }
+
     if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT])
     {
         gl_info->fbo_ops.glIsRenderbuffer = gl_info->gl_ops.ext.p_glIsRenderbuffer;
@@ -3910,10 +3921,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
             gl_info->supported[ARB_TEXTURE_BORDER_CLAMP] ? GL_CLAMP_TO_BORDER_ARB : GL_REPEAT;
     gl_info->wrap_lookup[WINED3D_TADDRESS_MIRROR_ONCE - WINED3D_TADDRESS_WRAP] =
             gl_info->supported[ARB_TEXTURE_MIRROR_CLAMP_TO_EDGE] ? GL_MIRROR_CLAMP_TO_EDGE : GL_REPEAT;
-
-    adapter->d3d_info.valid_rt_mask = 0;
-    for (i = 0; i < gl_info->limits.buffers; ++i)
-        adapter->d3d_info.valid_rt_mask |= (1u << i);
 
     if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
     {

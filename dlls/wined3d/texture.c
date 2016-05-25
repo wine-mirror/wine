@@ -39,6 +39,15 @@ static BOOL wined3d_texture_use_pbo(const struct wined3d_texture *texture, const
             && !(texture->flags & (WINED3D_TEXTURE_PIN_SYSMEM | WINED3D_TEXTURE_COND_NP2_EMULATED));
 }
 
+static BOOL wined3d_texture_use_immutable_storage(const struct wined3d_texture *texture,
+        const struct wined3d_gl_info *gl_info)
+{
+    /* We don't expect to create texture views for textures with height-scaled formats.
+     * Besides, ARB_texture_storage doesn't allow to specify exact sizes for all levels. */
+    return gl_info->supported[ARB_TEXTURE_STORAGE]
+            && !(texture->resource.format_flags & WINED3DFMT_FLAG_HEIGHT_SCALE);
+}
+
 GLenum wined3d_texture_get_gl_buffer(const struct wined3d_texture *texture)
 {
     const struct wined3d_swapchain *swapchain = texture->swapchain;
@@ -349,6 +358,72 @@ static void gltexture_delete(struct wined3d_device *device, const struct wined3d
     context_gl_resource_released(device, tex->name, FALSE);
     gl_info->gl_ops.gl.p_glDeleteTextures(1, &tex->name);
     tex->name = 0;
+}
+
+/* Context activation is done by the caller. */
+/* The caller is responsible for binding the correct texture. */
+static void wined3d_texture_allocate_gl_mutable_storage(struct wined3d_texture *texture,
+        GLenum gl_internal_format, const struct wined3d_format *format,
+        const struct wined3d_gl_info *gl_info)
+{
+    unsigned int i, sub_call_count;
+
+    sub_call_count = texture->level_count;
+    if (texture->target != GL_TEXTURE_2D_ARRAY)
+        sub_call_count *= texture->layer_count;
+
+    for (i = 0; i < sub_call_count; ++i)
+    {
+        struct wined3d_surface *surface = texture->sub_resources[i].u.surface;
+        GLsizei width, height;
+
+        width = wined3d_texture_get_level_pow2_width(texture, surface->texture_level);
+        height = wined3d_texture_get_level_pow2_height(texture, surface->texture_level);
+        if (texture->resource.format_flags & WINED3DFMT_FLAG_HEIGHT_SCALE)
+        {
+            height *= format->height_scale.numerator;
+            height /= format->height_scale.denominator;
+        }
+
+        TRACE("surface %p, target %#x, level %u, width %u, height %u.\n",
+                surface, surface->texture_target, surface->texture_level, width, height);
+
+        if (texture->target == GL_TEXTURE_2D_ARRAY)
+        {
+            GL_EXTCALL(glTexImage3D(surface->texture_target, surface->texture_level,
+                    gl_internal_format, width, height, texture->layer_count, 0,
+                    format->glFormat, format->glType, NULL));
+            checkGLcall("glTexImage3D");
+        }
+        else
+        {
+            gl_info->gl_ops.gl.p_glTexImage2D(surface->texture_target, surface->texture_level,
+                    gl_internal_format, width, height, 0, format->glFormat, format->glType, NULL);
+            checkGLcall("glTexImage2D");
+        }
+    }
+}
+
+/* Context activation is done by the caller. */
+/* The caller is responsible for binding the correct texture. */
+static void wined3d_texture_allocate_gl_immutable_storage(struct wined3d_texture *texture,
+        GLenum gl_internal_format, const struct wined3d_gl_info *gl_info)
+{
+    GLsizei width = wined3d_texture_get_level_pow2_width(texture, 0);
+    GLsizei height = wined3d_texture_get_level_pow2_height(texture, 0);
+
+    if (texture->target == GL_TEXTURE_2D_ARRAY)
+    {
+        GL_EXTCALL(glTexStorage3D(texture->target, texture->level_count, gl_internal_format,
+                width, height, texture->layer_count));
+        checkGLcall("glTexStorage3D");
+    }
+    else
+    {
+        GL_EXTCALL(glTexStorage2D(texture->target, texture->level_count, gl_internal_format,
+                width, height));
+        checkGLcall("glTexStorage2D");
+    }
 }
 
 static void wined3d_texture_unload_gl_texture(struct wined3d_texture *texture)
@@ -1362,9 +1437,7 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
     const struct wined3d_format *format = texture->resource.format;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_color_key_conversion *conversion;
-    unsigned int sub_call_count;
     GLenum internal;
-    UINT i;
 
     TRACE("texture %p, context %p, format %s.\n", texture, context, debug_d3dformat(format->id));
 
@@ -1394,39 +1467,10 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
 
     TRACE("internal %#x, format %#x, type %#x.\n", internal, format->glFormat, format->glType);
 
-    sub_call_count = texture->level_count;
-    if (texture->target != GL_TEXTURE_2D_ARRAY)
-        sub_call_count *= texture->layer_count;
-    for (i = 0; i < sub_call_count; ++i)
-    {
-        struct wined3d_surface *surface = texture->sub_resources[i].u.surface;
-        GLsizei width, height;
-
-        width = wined3d_texture_get_level_pow2_width(texture, surface->texture_level);
-        height = wined3d_texture_get_level_pow2_height(texture, surface->texture_level);
-        if (texture->resource.format_flags & WINED3DFMT_FLAG_HEIGHT_SCALE)
-        {
-            height *= format->height_scale.numerator;
-            height /= format->height_scale.denominator;
-        }
-
-        TRACE("surface %p, target %#x, level %u, width %u, height %u.\n",
-                surface, surface->texture_target, surface->texture_level, width, height);
-
-        if (texture->target == GL_TEXTURE_2D_ARRAY)
-        {
-            GL_EXTCALL(glTexImage3D(surface->texture_target, surface->texture_level,
-                    internal, width, height, texture->layer_count, 0,
-                    format->glFormat, format->glType, NULL));
-            checkGLcall("glTexImage3D");
-        }
-        else
-        {
-            gl_info->gl_ops.gl.p_glTexImage2D(surface->texture_target, surface->texture_level,
-                    internal, width, height, 0, format->glFormat, format->glType, NULL);
-            checkGLcall("glTexImage2D");
-        }
-    }
+    if (wined3d_texture_use_immutable_storage(texture, gl_info))
+        wined3d_texture_allocate_gl_immutable_storage(texture, internal, gl_info);
+    else
+        wined3d_texture_allocate_gl_mutable_storage(texture, internal, format, gl_info);
 }
 
 static void texture2d_cleanup_sub_resources(struct wined3d_texture *texture)
