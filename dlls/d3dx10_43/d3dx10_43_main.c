@@ -35,6 +35,7 @@
 
 #include "d3d10_1.h"
 #include "d3dx10core.h"
+#include "d3dx10tex.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
@@ -192,4 +193,13 @@ HRESULT WINAPI D3DX10GetFeatureLevel1(ID3D10Device *device, ID3D10Device1 **devi
     TRACE("device %p, device1 %p.\n", device, device1);
 
     return ID3D10Device_QueryInterface(device, &IID_ID3D10Device1, (void **)device1);
+}
+
+HRESULT WINAPI D3DX10GetImageInfoFromMemory(const void *src_data, SIZE_T src_data_size, ID3DX10ThreadPump *pump,
+        D3DX10_IMAGE_INFO *img_info, HRESULT *hresult)
+{
+    FIXME("src_data %p, src_data_size %lu, pump %p, img_info %p, hresult %p.\n",
+            src_data, src_data_size, pump, img_info, hresult);
+
+    return E_NOTIMPL;
 }

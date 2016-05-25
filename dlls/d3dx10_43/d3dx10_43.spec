@@ -51,7 +51,7 @@
 @ stdcall D3DX10GetFeatureLevel1(ptr ptr)
 @ stub D3DX10GetImageInfoFromFileA(str ptr ptr ptr)
 @ stub D3DX10GetImageInfoFromFileW(wstr ptr ptr ptr)
-@ stub D3DX10GetImageInfoFromMemory(ptr long ptr ptr ptr)
+@ stdcall D3DX10GetImageInfoFromMemory(ptr long ptr ptr ptr)
 @ stub D3DX10GetImageInfoFromResourceA(long str ptr ptr ptr)
 @ stub D3DX10GetImageInfoFromResourceW(long wstr ptr ptr ptr)
 @ stub D3DX10LoadTextureFromTexture(ptr ptr ptr)
