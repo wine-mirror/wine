@@ -49,6 +49,7 @@ typedef enum {
     EVENTID_SCROLL,
     EVENTID_SELECTSTART,
     EVENTID_SUBMIT,
+    EVENTID_UNLOAD,
     EVENTID_LAST
 } eventid_t;
 
