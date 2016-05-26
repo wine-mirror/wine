@@ -2373,36 +2373,39 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
         HeapFree(GetProcessHeap(), 0, v->elements);
     }
 
-    switch(v->type->basetype)
+    if (v->type)
     {
-        case D3D10_SVT_VERTEXSHADER:
-        case D3D10_SVT_PIXELSHADER:
-        case D3D10_SVT_GEOMETRYSHADER:
-            d3d10_effect_shader_variable_destroy(&v->u.shader, v->type->basetype);
-            break;
+        switch (v->type->basetype)
+        {
+            case D3D10_SVT_VERTEXSHADER:
+            case D3D10_SVT_PIXELSHADER:
+            case D3D10_SVT_GEOMETRYSHADER:
+                d3d10_effect_shader_variable_destroy(&v->u.shader, v->type->basetype);
+                break;
 
-        case D3D10_SVT_DEPTHSTENCIL:
-            if (v->u.state.object.depth_stencil)
-                ID3D10DepthStencilState_Release(v->u.state.object.depth_stencil);
-            break;
+            case D3D10_SVT_DEPTHSTENCIL:
+                if (v->u.state.object.depth_stencil)
+                    ID3D10DepthStencilState_Release(v->u.state.object.depth_stencil);
+                break;
 
-        case D3D10_SVT_BLEND:
-            if (v->u.state.object.blend)
-                ID3D10BlendState_Release(v->u.state.object.blend);
-            break;
+            case D3D10_SVT_BLEND:
+                if (v->u.state.object.blend)
+                    ID3D10BlendState_Release(v->u.state.object.blend);
+                break;
 
-        case D3D10_SVT_RASTERIZER:
-            if (v->u.state.object.rasterizer)
-                ID3D10RasterizerState_Release(v->u.state.object.rasterizer);
-            break;
+            case D3D10_SVT_RASTERIZER:
+                if (v->u.state.object.rasterizer)
+                    ID3D10RasterizerState_Release(v->u.state.object.rasterizer);
+                break;
 
-        case D3D10_SVT_SAMPLER:
-            if (v->u.state.object.sampler)
-                ID3D10SamplerState_Release(v->u.state.object.sampler);
-            break;
+            case D3D10_SVT_SAMPLER:
+                if (v->u.state.object.sampler)
+                    ID3D10SamplerState_Release(v->u.state.object.sampler);
+                break;
 
-        default:
-            break;
+            default:
+                break;
+        }
     }
 }
 
