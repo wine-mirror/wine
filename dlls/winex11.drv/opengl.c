@@ -373,8 +373,6 @@ static void (*pglXDestroyContext)( Display *dpy, GLXContext ctx );
 static Bool (*pglXMakeCurrent)( Display *dpy, GLXDrawable drawable, GLXContext ctx);
 static void (*pglXCopyContext)( Display *dpy, GLXContext src, GLXContext dst, unsigned long mask );
 static void (*pglXSwapBuffers)( Display *dpy, GLXDrawable drawable );
-static GLXPixmap (*pglXCreateGLXPixmap)( Display *dpy, XVisualInfo *visual, Pixmap pixmap );
-static void (*pglXDestroyGLXPixmap)( Display *dpy, GLXPixmap pixmap );
 static Bool (*pglXQueryExtension)( Display *dpy, int *errorb, int *event );
 static Bool (*pglXQueryVersion)( Display *dpy, int *maj, int *min );
 static Bool (*pglXIsDirect)( Display *dpy, GLXContext ctx );
@@ -397,6 +395,8 @@ static void (*pglXDestroyPbuffer)( Display *dpy, GLXPbuffer pbuf );
 static void (*pglXQueryDrawable)( Display *dpy, GLXDrawable draw, int attribute, unsigned int *value );
 static GLXContext (*pglXCreateNewContext)( Display *dpy, GLXFBConfig config, int renderType, GLXContext shareList, Bool direct );
 static Bool (*pglXMakeContextCurrent)( Display *dpy, GLXDrawable draw, GLXDrawable read, GLXContext ctx );
+static GLXPixmap (*pglXCreatePixmap)( Display *dpy, GLXFBConfig config, Pixmap pixmap, const int *attrib_list );
+static void (*pglXDestroyPixmap)( Display *dpy, GLXPixmap pixmap );
 
 /* GLX Extensions */
 static GLXContext (*pglXCreateContextAttribsARB)(Display *dpy, GLXFBConfig config, GLXContext share_context, Bool direct, const int *attrib_list);
@@ -624,11 +624,9 @@ static BOOL WINAPI init_opengl( INIT_ONCE *once, void *param, void **context )
     LOAD_FUNCPTR(glXChooseVisual);
     LOAD_FUNCPTR(glXCopyContext);
     LOAD_FUNCPTR(glXCreateContext);
-    LOAD_FUNCPTR(glXCreateGLXPixmap);
     LOAD_FUNCPTR(glXGetCurrentContext);
     LOAD_FUNCPTR(glXGetCurrentDrawable);
     LOAD_FUNCPTR(glXDestroyContext);
-    LOAD_FUNCPTR(glXDestroyGLXPixmap);
     LOAD_FUNCPTR(glXGetConfig);
     LOAD_FUNCPTR(glXIsDirect);
     LOAD_FUNCPTR(glXMakeCurrent);
@@ -647,6 +645,8 @@ static BOOL WINAPI init_opengl( INIT_ONCE *once, void *param, void **context )
     LOAD_FUNCPTR(glXDestroyPbuffer);
     LOAD_FUNCPTR(glXMakeContextCurrent);
     LOAD_FUNCPTR(glXGetFBConfigs);
+    LOAD_FUNCPTR(glXCreatePixmap);
+    LOAD_FUNCPTR(glXDestroyPixmap);
 #undef LOAD_FUNCPTR
 
 /* It doesn't matter if these fail. They'll only be used if the driver reports
@@ -1314,7 +1314,7 @@ static void free_gl_drawable( struct gl_drawable *gl )
         XFreeColormap( gdi_display, gl->colormap );
         break;
     case DC_GL_PIXMAP_WIN:
-        pglXDestroyGLXPixmap( gdi_display, gl->drawable );
+        pglXDestroyPixmap( gdi_display, gl->drawable );
         XFreePixmap( gdi_display, gl->pixmap );
         break;
     default:
@@ -1387,7 +1387,7 @@ static BOOL create_gl_drawable( HWND hwnd, struct gl_drawable *gl )
                                     gl->visual->depth );
         if (gl->pixmap)
         {
-            gl->drawable = pglXCreateGLXPixmap( gdi_display, gl->visual, gl->pixmap );
+            gl->drawable = pglXCreatePixmap( gdi_display, gl->format->fbconfig, gl->pixmap, NULL );
             if (!gl->drawable) XFreePixmap( gdi_display, gl->pixmap );
         }
     }
@@ -1522,7 +1522,7 @@ void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_r
         if (!mask) break;
         pix = XCreatePixmap(gdi_display, root_window, changes.width, changes.height, gl->visual->depth);
         if (!pix) goto done;
-        glxp = pglXCreateGLXPixmap(gdi_display, gl->visual, pix);
+        glxp = pglXCreatePixmap(gdi_display, gl->format->fbconfig, pix, NULL );
         if (!glxp)
         {
             XFreePixmap(gdi_display, pix);
@@ -1532,7 +1532,7 @@ void sync_gl_drawable( HWND hwnd, const RECT *visible_rect, const RECT *client_r
         XFlush( gdi_display );
 
         XFreePixmap(gdi_display, gl->pixmap);
-        pglXDestroyGLXPixmap(gdi_display, gl->drawable);
+        pglXDestroyPixmap(gdi_display, gl->drawable);
         TRACE( "Recreated GL drawable %lx to replace %lx\n", glxp, gl->drawable );
 
         gl->pixmap = pix;
@@ -1571,7 +1571,7 @@ void set_gl_drawable_parent( HWND hwnd, HWND parent )
         break;
     case DC_GL_PIXMAP_WIN:
         if (parent != GetDesktopWindow()) goto done;
-        pglXDestroyGLXPixmap( gdi_display, gl->drawable );
+        pglXDestroyPixmap( gdi_display, gl->drawable );
         XFreePixmap( gdi_display, gl->pixmap );
         break;
     default:
