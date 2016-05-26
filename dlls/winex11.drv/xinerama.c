@@ -87,6 +87,20 @@ static void query_work_area( RECT *rc_work )
     }
 }
 
+static void query_desktop_work_area( RECT *rc_work )
+{
+    static const WCHAR trayW[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
+    RECT rect;
+    HWND hwnd = FindWindowW( trayW, NULL );
+
+    if (!hwnd || !IsWindowVisible( hwnd )) return;
+    if (!GetWindowRect( hwnd, &rect )) return;
+    if (rect.top) rc_work->bottom = rect.top;
+    else rc_work->top = rect.bottom;
+    TRACE( "found tray %p %s work area %s\n", hwnd,
+           wine_dbgstr_rect( &rect ), wine_dbgstr_rect( rc_work ));
+}
+
 #ifdef SONAME_LIBXINERAMA
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
@@ -198,6 +212,8 @@ void xinerama_init( unsigned int width, unsigned int height )
         default_monitor.rcWork = default_monitor.rcMonitor = rect;
         if (root_window == DefaultRootWindow( gdi_display ))
             query_work_area( &default_monitor.rcWork );
+        else
+            query_desktop_work_area( &default_monitor.rcWork );
         nb_monitors = 1;
         monitors = &default_monitor;
     }
