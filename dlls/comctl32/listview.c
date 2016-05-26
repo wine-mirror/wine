@@ -4747,7 +4747,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, ITERAT
 
        - CDDS_ITEMPREPAINT
        - CDDS_ITEMPREPAINT|CDDS_SUBITEM   | => sent n times, where n is number of subitems,
-         CDDS_ITEMPOSTPAINT|CDDS_SUBITEM  |    including item iself
+         CDDS_ITEMPOSTPAINT|CDDS_SUBITEM  |    including item itself
        - CDDS_ITEMPOSTPAINT
 
        other styles:
