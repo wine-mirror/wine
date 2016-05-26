@@ -2104,9 +2104,16 @@ static void d3d10_effect_type_destroy(struct wine_rb_entry *entry, void *context
 
 static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD data_size)
 {
-    const char *ptr = data + e->index_offset;
+    const char *ptr;
     unsigned int i;
     HRESULT hr;
+
+    if (e->index_offset >= data_size)
+    {
+        WARN("Invalid index offset %#x (data size %#x).\n", e->index_offset, data_size);
+        return E_FAIL;
+    }
+    ptr = data + e->index_offset;
 
     if (!(e->local_buffers = d3d10_calloc(e->local_buffer_count, sizeof(*e->local_buffers))))
     {
