@@ -188,6 +188,8 @@ static HRESULT d3dx9_parse_state(struct d3dx9_base_effect *base, struct d3dx_sta
         const char *data, const char **ptr, struct d3dx_object *objects);
 static void free_parameter(struct d3dx_parameter *param, BOOL element, BOOL child);
 
+typedef BOOL (*walk_parameter_dep_func)(void *data, struct d3dx_parameter *param);
+
 static const struct
 {
     enum STATE_CLASS class;
@@ -3545,15 +3547,119 @@ static HRESULT WINAPI ID3DXEffectImpl_FindNextValidTechnique(ID3DXEffect* iface,
     return E_NOTIMPL;
 }
 
+static BOOL walk_parameter_dep(struct d3dx_parameter *param, walk_parameter_dep_func param_func,
+        void *data);
+
+static BOOL walk_param_eval_dep(struct d3dx_param_eval *param_eval, walk_parameter_dep_func param_func,
+        void *data)
+{
+    struct d3dx_parameter **params;
+    unsigned int i, param_count;
+
+    if (!param_eval)
+        return FALSE;
+
+    params = param_eval->shader_inputs.inputs_param;
+    param_count = param_eval->shader_inputs.input_count;
+    for (i = 0; i < param_count; ++i)
+    {
+        if (walk_parameter_dep(params[i], param_func, data))
+            return TRUE;
+    }
+
+    params = param_eval->pres.inputs.inputs_param;
+    param_count = param_eval->pres.inputs.input_count;
+    for (i = 0; i < param_count; ++i)
+    {
+        if (walk_parameter_dep(params[i], param_func, data))
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static BOOL walk_state_dep(struct d3dx_state *state, walk_parameter_dep_func param_func,
+        void *data)
+{
+    if (state->type == ST_CONSTANT && is_param_type_sampler(state->parameter.type))
+    {
+        if (walk_parameter_dep(&state->parameter, param_func, data))
+            return TRUE;
+    }
+    else if (state->type == ST_ARRAY_SELECTOR || state->type == ST_PARAMETER)
+    {
+        if (walk_parameter_dep(state->parameter.referenced_param, param_func, data))
+            return TRUE;
+    }
+    return walk_param_eval_dep(state->parameter.param_eval, param_func, data);
+}
+
+static BOOL walk_parameter_dep(struct d3dx_parameter *param, walk_parameter_dep_func param_func,
+        void *data)
+{
+    unsigned int i;
+    unsigned int member_count;
+
+    if (param_func(data, param))
+        return TRUE;
+
+    if (walk_param_eval_dep(param->param_eval, param_func, data))
+        return TRUE;
+
+    if (param->class == D3DXPC_OBJECT && is_param_type_sampler(param->type))
+    {
+        struct d3dx_sampler *sampler;
+
+        sampler = (struct d3dx_sampler *)param->data;
+        for (i = 0; i < sampler->state_count; ++i)
+        {
+            if (walk_state_dep(&sampler->states[i], param_func, data))
+                return TRUE;
+        }
+        return FALSE;
+    }
+
+    member_count = param->element_count ? param->element_count : param->member_count;
+    for (i = 0; i < member_count; ++i)
+    {
+        if (walk_param_eval_dep(param->members[i].param_eval, param_func, data))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL compare_param_ptr(void *param_comp, struct d3dx_parameter *param)
+{
+    return param_comp == param;
+}
+
 static BOOL WINAPI ID3DXEffectImpl_IsParameterUsed(ID3DXEffect* iface, D3DXHANDLE parameter, D3DXHANDLE technique)
 {
     struct ID3DXEffectImpl *effect = impl_from_ID3DXEffect(iface);
+    unsigned int i, j;
     struct d3dx_parameter *param = get_valid_parameter(&effect->base_effect, parameter);
+    struct d3dx_technique *tech = get_valid_technique(&effect->base_effect, technique);
+    struct d3dx_pass *pass;
 
-    FIXME("iface %p, parameter %p, technique %p stub.\n", iface, parameter, technique);
-    TRACE("param %p (%s).\n", param, param ? debugstr_a(param->name) : "");
+    TRACE("iface %p, parameter %p, technique %p.\n", iface, parameter, technique);
+    TRACE("param %p, name %s, tech %p.\n", param, param ? debugstr_a(param->name) : "", tech);
+    if (!tech || !param)
+        return FALSE;
 
-    return TRUE;
+    for (i = 0; i < tech->pass_count; ++i)
+    {
+        pass = &tech->passes[i];
+        for (j = 0; j < pass->state_count; ++j)
+        {
+            if (walk_state_dep(&pass->states[j], compare_param_ptr, param))
+            {
+                TRACE("Returning TRUE.\n");
+                return TRUE;
+            }
+        }
+    }
+    TRACE("Returning FALSE.\n");
+    return FALSE;
 }
 
 static HRESULT WINAPI ID3DXEffectImpl_Begin(ID3DXEffect *iface, UINT *passes, DWORD flags)
