@@ -212,3 +212,272 @@ error:
     ws_free( heap, url );
     return hr;
 }
+
+static const WCHAR *scheme_str( WS_URL_SCHEME_TYPE scheme, ULONG *len )
+{
+    switch (scheme)
+    {
+    case WS_URL_HTTP_SCHEME_TYPE:
+        *len = sizeof(http)/sizeof(http[0]);
+        return http;
+
+    case WS_URL_HTTPS_SCHEME_TYPE:
+        *len = sizeof(https)/sizeof(https[0]);
+        return https;
+
+    case WS_URL_NETTCP_SCHEME_TYPE:
+        *len = sizeof(nettcp)/sizeof(nettcp[0]);
+        return nettcp;
+
+    case WS_URL_SOAPUDP_SCHEME_TYPE:
+        *len = sizeof(soapudp)/sizeof(soapudp[0]);
+        return soapudp;
+
+    case WS_URL_NETPIPE_SCHEME_TYPE:
+        *len = sizeof(netpipe)/sizeof(netpipe[0]);
+        return netpipe;
+
+    default:
+        ERR( "unhandled scheme %u\n", scheme );
+        return NULL;
+    }
+}
+
+static inline ULONG escape_size( unsigned char ch, const char *except )
+{
+    const char *p = except;
+    while (*p)
+    {
+        if (*p == ch) return 1;
+        p++;
+    }
+    if ((ch >= 'a' && ch <= 'z' ) || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9')) return 1;
+    if (ch < 33 || ch > 126) return 3;
+    switch (ch)
+    {
+    case '/':
+    case '?':
+    case '"':
+    case '#':
+    case '%':
+    case '<':
+    case '>':
+    case '\\':
+    case '[':
+    case ']':
+    case '^':
+    case '`':
+    case '{':
+    case '|':
+    case '}':
+        return 3;
+    default:
+        return 1;
+    }
+}
+
+static char *strdup_utf8( const WCHAR *str, ULONG len, ULONG *ret_len )
+{
+    char *ret;
+    *ret_len = WideCharToMultiByte( CP_UTF8, 0, str, len, NULL, 0, NULL, NULL );
+    if ((ret = heap_alloc( *ret_len )))
+        WideCharToMultiByte( CP_UTF8, 0, str, len, ret, *ret_len, NULL, NULL );
+    return ret;
+}
+
+static HRESULT url_encode_size( const WCHAR *str, ULONG len, const char *except, ULONG *ret_len )
+{
+    ULONG i, len_utf8;
+    BOOL convert = FALSE;
+    char *utf8;
+
+    *ret_len = 0;
+    for (i = 0; i < len; i++)
+    {
+        if (str[i] > 159)
+        {
+            convert = TRUE;
+            break;
+        }
+        *ret_len += escape_size( str[i], except );
+    }
+    if (!convert) return S_OK;
+
+    *ret_len = 0;
+    if (!(utf8 = strdup_utf8( str, len, &len_utf8 ))) return E_OUTOFMEMORY;
+    for (i = 0; i < len_utf8; i++) *ret_len += escape_size( utf8[i], except );
+    heap_free( utf8 );
+
+    return S_OK;
+}
+
+static ULONG url_encode_byte( unsigned char byte, const char *except, WCHAR *buf )
+{
+    static const WCHAR hex[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+    switch (escape_size( byte, except ))
+    {
+    case 3:
+        buf[0] = '%';
+        buf[1] = hex[(byte >> 4) & 0xf];
+        buf[2] = hex[byte & 0xf];
+        return 3;
+
+    case 1:
+        buf[0] = byte;
+        return 1;
+
+    default:
+        ERR( "unhandled escape size\n" );
+        return 0;
+    }
+
+}
+
+static HRESULT url_encode( const WCHAR *str, ULONG len, WCHAR *buf, const char *except, ULONG *ret_len )
+{
+    HRESULT hr = S_OK;
+    ULONG i, len_utf8, len_enc;
+    BOOL convert = FALSE;
+    WCHAR *p = buf;
+    char *utf8;
+
+    *ret_len = 0;
+    for (i = 0; i < len; i++)
+    {
+        if (str[i] > 159)
+        {
+            convert = TRUE;
+            break;
+        }
+        len_enc = url_encode_byte( str[i], except, p );
+        *ret_len += len_enc;
+        p += len_enc;
+    }
+    if (!convert) return S_OK;
+
+    p = buf;
+    *ret_len = 0;
+    if (!(utf8 = strdup_utf8( str, len, &len_utf8 ))) return E_OUTOFMEMORY;
+    for (i = 0; i < len_utf8; i++)
+    {
+        len_enc = url_encode_byte( utf8[i], except, p );
+        *ret_len += len_enc;
+        p += len_enc;
+    }
+
+    heap_free( utf8 );
+    return hr;
+}
+
+/**************************************************************************
+ *          WsEncodeUrl		[webservices.@]
+ */
+HRESULT WINAPI WsEncodeUrl( const WS_URL *base, ULONG flags, WS_HEAP *heap, WS_STRING *ret,
+                            WS_ERROR *error )
+{
+    static const WCHAR fmtW[] = {':','%','u',0};
+    ULONG len = 0, len_scheme, len_enc;
+    const WS_HTTP_URL *url = (const WS_HTTP_URL *)base;
+    const WCHAR *scheme;
+    WCHAR *str, *p, *q;
+    ULONG port = 0;
+    HRESULT hr;
+
+    TRACE( "%p %08x %p %p %p\n", base, flags, heap, ret, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!url || !heap || !ret) return E_INVALIDARG;
+    if (flags)
+    {
+        FIXME( "unimplemented flags %08x\n", flags );
+        return E_NOTIMPL;
+    }
+    if (!(scheme = scheme_str( url->url.scheme, &len_scheme ))) return WS_E_INVALID_FORMAT;
+    len = len_scheme + 3; /* '://' */
+    len += 6; /* ':65535' */
+
+    if ((hr = url_encode_size( url->host.chars, url->host.length, "", &len_enc )) != S_OK)
+        return hr;
+    len += len_enc;
+
+    if ((hr = url_encode_size( url->path.chars, url->path.length, "/", &len_enc )) != S_OK)
+        return hr;
+    len += len_enc;
+
+    if ((hr = url_encode_size( url->query.chars, url->query.length, "/?", &len_enc )) != S_OK)
+        return hr;
+    len += len_enc + 1; /* '?' */
+
+    if ((hr = url_encode_size( url->fragment.chars, url->fragment.length, "/?", &len_enc )) != S_OK)
+        return hr;
+    len += len_enc + 1; /* '#' */
+
+    if (!(str = ws_alloc( heap, len * sizeof(WCHAR) ))) return WS_E_QUOTA_EXCEEDED;
+
+    memcpy( str, scheme, len_scheme * sizeof(WCHAR) );
+    p = str + len_scheme;
+    p[0] = ':';
+    p[1] = p[2] = '/';
+    p += 3;
+
+    if ((hr = url_encode( url->host.chars, url->host.length, p, "", &len_enc )) != S_OK)
+        goto error;
+    p += len_enc;
+
+    if (url->portAsString.length)
+    {
+        q = url->portAsString.chars;
+        len = url->portAsString.length;
+        while (len && isdigitW( *q ))
+        {
+            if ((port = port * 10 + *q - '0') > 65535)
+            {
+                hr = WS_E_INVALID_FORMAT;
+                goto error;
+            }
+            q++; len--;
+        }
+        if (url->port && port != url->port)
+        {
+            hr = E_INVALIDARG;
+            goto error;
+        }
+    } else port = url->port;
+
+    if (port == default_port( url->url.scheme )) port = 0;
+    if (port)
+    {
+        WCHAR buf[7];
+        len = sprintfW( buf, fmtW, port );
+        memcpy( p, buf, len * sizeof(WCHAR) );
+        p += len;
+    }
+
+    if ((hr = url_encode( url->path.chars, url->path.length, p, "/", &len_enc )) != S_OK)
+        goto error;
+    p += len_enc;
+
+    if (url->query.length)
+    {
+        *p++ = '?';
+        if ((hr = url_encode( url->query.chars, url->query.length, p, "/?", &len_enc )) != S_OK)
+            goto error;
+        p += len_enc;
+    }
+
+    if (url->fragment.length)
+    {
+        *p++ = '#';
+        if ((hr = url_encode( url->fragment.chars, url->fragment.length, p, "/?", &len_enc )) != S_OK)
+            goto error;
+        p += len_enc;
+    }
+
+    ret->length = p - str;
+    ret->chars  = str;
+    return S_OK;
+
+error:
+    ws_free( heap, str );
+    return hr;
+}
