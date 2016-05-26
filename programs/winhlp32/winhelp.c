@@ -519,7 +519,7 @@ WINHELP_WINDOW* WINHELP_GrabWindow(WINHELP_WINDOW* win)
 
 /***********************************************************************
  *
- *           WINHELP_RelaseWindow
+ *           WINHELP_ReleaseWindow
  */
 BOOL WINHELP_ReleaseWindow(WINHELP_WINDOW* win)
 {
