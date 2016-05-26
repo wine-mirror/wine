@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-05-16 22:15+0300\n"
+"PO-Revision-Date: 2016-05-26 20:47+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -11552,6 +11552,15 @@ msgid ""
 "  REG [operation] /?\n"
 "\n"
 msgstr ""
+"Вызов:\n"
+"  REG [операция] [параметры]\n"
+"\n"
+"Поддерживаемые операции:\n"
+"  ADD | DELETE | QUERY\n"
+"\n"
+"Для получения справки по конкретной операции используйте:\n"
+"  REG [операция] /?\n"
+"\n"
 
 #: reg.rc:36
 msgid ""
@@ -11654,24 +11663,20 @@ msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr "Поиск завершён. Найдено совпадений: %1!d!\n"
 
 #: reg.rc:61
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "reg: Invalid syntax. "
-msgstr "reg: неверное имя раздела\n"
+msgstr "reg: неверный синтаксис. "
 
 #: reg.rc:62
-#, fuzzy
-#| msgid "uninstaller: Invalid option [%1]\n"
 msgid "reg: Invalid option [%1]. "
-msgstr "uninstaller: неверная опция [%1]\n"
+msgstr "reg: неверная опция [%1]. "
 
 #: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
-msgstr ""
+msgstr "Для справки введите «REG /?».\n"
 
 #: reg.rc:64
 msgid "Type \"REG %1 /?\" for help.\n"
-msgstr ""
+msgstr "Для справки введите «REG %1 /?».\n"
 
 #: regedit.rc:34
 msgid "&Registry"
