@@ -852,7 +852,11 @@ static POINT WINPOS_FindIconPos( HWND hwnd, POINT pt )
     RECT rect, rectParent;
     HWND parent, child;
     HRGN hrgn, tmp;
-    int xspacing, yspacing;
+    int x, y, xspacing, yspacing;
+    MINIMIZEDMETRICS metrics;
+
+    metrics.cbSize = sizeof(metrics);
+    SystemParametersInfoW( SPI_GETMINIMIZEDMETRICS, sizeof(metrics), &metrics, 0 );
 
     parent = GetAncestor( hwnd, GA_PARENT );
     GetClientRect( parent, &rectParent );
@@ -868,7 +872,7 @@ static POINT WINPOS_FindIconPos( HWND hwnd, POINT pt )
 
     hrgn = CreateRectRgn( 0, 0, 0, 0 );
     tmp = CreateRectRgn( 0, 0, 0, 0 );
-    for (child = GetWindow( parent, GW_HWNDFIRST ); child; child = GetWindow( child, GW_HWNDNEXT ))
+    for (child = GetWindow( parent, GW_CHILD ); child; child = GetWindow( child, GW_HWNDNEXT ))
     {
         if (child == hwnd) continue;
         if ((GetWindowLongW( child, GWL_STYLE ) & (WS_VISIBLE|WS_MINIMIZE)) != (WS_VISIBLE|WS_MINIMIZE))
@@ -881,12 +885,30 @@ static POINT WINPOS_FindIconPos( HWND hwnd, POINT pt )
     }
     DeleteObject( tmp );
 
-    for (rect.bottom = rectParent.bottom; rect.bottom >= yspacing; rect.bottom -= yspacing)
+    for (y = 0; y < (rectParent.bottom - rectParent.top) / yspacing; y++)
     {
-        for (rect.left = rectParent.left; rect.left <= rectParent.right - xspacing; rect.left += xspacing)
+        if (metrics.iArrange & ARW_STARTTOP)
         {
-            rect.right = rect.left + xspacing;
+            rect.top = rectParent.top + y * yspacing;
+            rect.bottom = rect.top + yspacing;
+        }
+        else
+        {
+            rect.bottom = rectParent.bottom - y * yspacing;
             rect.top = rect.bottom - yspacing;
+        }
+        for (x = 0; x < (rectParent.right - rectParent.left) / xspacing; x++)
+        {
+            if (metrics.iArrange & ARW_STARTRIGHT)
+            {
+                rect.right = rectParent.right - x * xspacing;
+                rect.left = rect.right - xspacing;
+            }
+            else
+            {
+                rect.left = rectParent.left + x * xspacing;
+                rect.right = rect.left + xspacing;
+            }
             if (!RectInRegion( hrgn, &rect ))
             {
                 /* No window was found, so it's OK for us */
@@ -2459,10 +2481,13 @@ UINT WINAPI ArrangeIconicWindows( HWND parent )
     RECT rectParent;
     HWND hwndChild;
     INT x, y, xspacing, yspacing;
+    POINT pt;
+    MINIMIZEDMETRICS metrics;
 
+    metrics.cbSize = sizeof(metrics);
+    SystemParametersInfoW( SPI_GETMINIMIZEDMETRICS, sizeof(metrics), &metrics, 0 );
     GetClientRect( parent, &rectParent );
-    x = rectParent.left;
-    y = rectParent.bottom;
+    x = y = 0;
     xspacing = GetSystemMetrics(SM_CXICONSPACING);
     yspacing = GetSystemMetrics(SM_CYICONSPACING);
 
@@ -2473,17 +2498,25 @@ UINT WINAPI ArrangeIconicWindows( HWND parent )
         {
             WINPOS_ShowIconTitle( hwndChild, FALSE );
 
-            SetWindowPos( hwndChild, 0, x + (xspacing - GetSystemMetrics(SM_CXICON)) / 2,
-                            y - yspacing - GetSystemMetrics(SM_CYICON)/2, 0, 0,
-                            SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+            if (metrics.iArrange & ARW_STARTRIGHT)
+                pt.x = rectParent.right - (x + 1) * xspacing;
+            else
+                pt.x = rectParent.left + x * xspacing;
+            if (metrics.iArrange & ARW_STARTTOP)
+                pt.y = rectParent.top + y * yspacing;
+            else
+                pt.y = rectParent.bottom - (y + 1) * yspacing;
+
+            SetWindowPos( hwndChild, 0, pt.x + (xspacing - GetSystemMetrics(SM_CXICON)) / 2,
+                          pt.y + (yspacing - GetSystemMetrics(SM_CYICON)) / 2, 0, 0,
+                          SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
 	    if( IsWindow(hwndChild) )
                 WINPOS_ShowIconTitle(hwndChild , TRUE );
 
-            if (x <= rectParent.right - xspacing) x += xspacing;
-            else
+            if (++x >= (rectParent.right - rectParent.left) / xspacing)
             {
-                x = rectParent.left;
-                y -= yspacing;
+                x = 0;
+                y++;
             }
         }
         hwndChild = GetWindow( hwndChild, GW_HWNDNEXT );
