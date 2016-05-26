@@ -1,0 +1,4 @@
+MODULE    = ncrypt.dll
+
+C_SRCS = \
+	main.c
