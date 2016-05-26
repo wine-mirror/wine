@@ -8068,7 +8068,7 @@ static void test_dbmerge(void)
     r = run_query(href, 0, query);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    /* column sting types don't match exactly */
+    /* column string types don't match exactly */
     r = MsiDatabaseMergeA(hdb, href, "MergeErrors");
     ok(r == ERROR_SUCCESS,
        "Expected ERROR_SUCCESS, got %d\n", r);
