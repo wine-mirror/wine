@@ -2517,18 +2517,8 @@ static void d3d10_effect_local_buffer_destroy(struct d3d10_effect_variable *l)
         HeapFree(GetProcessHeap(), 0, l->members);
     }
 
-    if (l->type->members)
-    {
-        for (i = 0; i < l->type->member_count; ++i)
-        {
-            /* Do not release l->type->members[i].type, it will be covered by d3d10_effect_type_destroy(). */
-            HeapFree(GetProcessHeap(), 0, l->type->members[i].semantic);
-            HeapFree(GetProcessHeap(), 0, l->type->members[i].name);
-        }
-        HeapFree(GetProcessHeap(), 0, l->type->members);
-    }
-    HeapFree(GetProcessHeap(), 0, l->type->name);
-    HeapFree(GetProcessHeap(), 0, l->type);
+    if (l->type)
+        d3d10_effect_type_destroy(&l->type->entry, NULL);
 
     if (l->annotations)
     {
