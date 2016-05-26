@@ -7,4 +7,5 @@ C_SRCS = \
 	main.c \
 	proxy.c \
 	reader.c \
+	url.c \
 	writer.c

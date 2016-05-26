@@ -59,6 +59,12 @@ typedef struct _WS_CALL_PROPERTY WS_CALL_PROPERTY;
 typedef struct _WS_DOUBLE_DESCRIPTION WS_DOUBLE_DESCRIPTION;
 typedef struct _WS_DATETIME WS_DATETIME;
 typedef struct _WS_DATETIME_DESCRIPTION WS_DATETIME_DESCRIPTION;
+typedef struct _WS_URL WS_URL;
+typedef struct _WS_HTTP_URL WS_HTTP_URL;
+typedef struct _WS_HTTPS_URL WS_HTTPS_URL;
+typedef struct _WS_NETTCP_URL WS_NETTCP_URL;
+typedef struct _WS_SOAPUDP_URL WS_SOAPUDP_URL;
+typedef struct _WS_NETPIPE_URL WS_NETPIPE_URL;
 
 struct _WS_STRUCT_DESCRIPTION;
 struct _WS_XML_STRING;
@@ -1007,12 +1013,71 @@ struct _WS_DATETIME_DESCRIPTION {
     WS_DATETIME maxValue;
 };
 
+typedef enum {
+    WS_URL_HTTP_SCHEME_TYPE,
+    WS_URL_HTTPS_SCHEME_TYPE,
+    WS_URL_NETTCP_SCHEME_TYPE,
+    WS_URL_SOAPUDP_SCHEME_TYPE,
+    WS_URL_NETPIPE_SCHEME_TYPE
+} WS_URL_SCHEME_TYPE;
+
+enum {
+    WS_URL_FLAGS_ALLOW_HOST_WILDCARDS   = 0x1,
+    WS_URL_FLAGS_NO_PATH_COLLAPSE       = 0x2,
+    WS_URL_FLAGS_ZERO_TERMINATE         = 0x4
+};
+
+struct _WS_URL {
+    WS_URL_SCHEME_TYPE scheme;
+};
+
+struct _WS_HTTP_URL {
+    WS_URL url;
+    WS_STRING host;
+    USHORT port;
+    WS_STRING portAsString;
+    WS_STRING path;
+    WS_STRING query;
+    WS_STRING fragment;
+};
+
+struct _WS_HTTPS_URL {
+    WS_URL url;
+    WS_STRING host;
+    USHORT port;
+    WS_STRING portAsString;
+    WS_STRING path;
+    WS_STRING query;
+    WS_STRING fragment;
+};
+
+struct _WS_SOAPUDP_URL {
+    WS_URL url;
+    WS_STRING host;
+    USHORT port;
+    WS_STRING portAsString;
+    WS_STRING path;
+    WS_STRING query;
+    WS_STRING fragment;
+};
+
+struct _WS_NETPIPE_URL {
+    WS_URL url;
+    WS_STRING host;
+    USHORT port;
+    WS_STRING portAsString;
+    WS_STRING path;
+    WS_STRING query;
+    WS_STRING fragment;
+};
+
 HRESULT WINAPI WsAlloc(WS_HEAP*, SIZE_T, void**, WS_ERROR*);
 HRESULT WINAPI WsCall(WS_SERVICE_PROXY*, const WS_OPERATION_DESCRIPTION*, const void**,
                       WS_HEAP*, const WS_CALL_PROPERTY*, const ULONG, const WS_ASYNC_CONTEXT*,
                       WS_ERROR*);
 HRESULT WINAPI WsCloseChannel(WS_CHANNEL*, const WS_ASYNC_CONTEXT*, WS_ERROR*);
 HRESULT WINAPI WsCloseServiceProxy(WS_SERVICE_PROXY*, const WS_ASYNC_CONTEXT*, WS_ERROR*);
+HRESULT WINAPI WsCombineUrl(const WS_STRING*, const WS_STRING*, ULONG, WS_HEAP*, WS_STRING*, WS_ERROR*);
 HRESULT WINAPI WsCreateChannel(WS_CHANNEL_TYPE, WS_CHANNEL_BINDING, const WS_CHANNEL_PROPERTY*,
                                ULONG, const WS_SECURITY_DESCRIPTION*, WS_CHANNEL**, WS_ERROR*);
 HRESULT WINAPI WsCreateError(const WS_ERROR_PROPERTY*, ULONG, WS_ERROR**);
@@ -1034,6 +1099,8 @@ HRESULT WINAPI WsCreateWriter(const WS_XML_WRITER_PROPERTY*, ULONG, WS_XML_WRITE
 HRESULT WINAPI WsCreateXmlBuffer(WS_HEAP*, const WS_XML_BUFFER_PROPERTY*, ULONG, WS_XML_BUFFER**,
                                  WS_ERROR*);
 HRESULT WINAPI WsDateTimeToFileTime(const WS_DATETIME*, FILETIME*, WS_ERROR*);
+HRESULT WINAPI WsDecodeUrl(const WS_STRING*, ULONG, WS_HEAP*, WS_URL**, WS_ERROR*);
+HRESULT WINAPI WsEncodeUrl(const WS_URL*, ULONG, WS_HEAP*, WS_STRING*, WS_ERROR*);
 HRESULT WINAPI WsFileTimeToDateTime(const FILETIME*, WS_DATETIME*, WS_ERROR*);
 HRESULT WINAPI WsFillReader(WS_XML_READER*, ULONG, const WS_ASYNC_CONTEXT*, WS_ERROR*);
 HRESULT WINAPI WsFindAttribute(WS_XML_READER*, const WS_XML_STRING*, const WS_XML_STRING*, BOOL,

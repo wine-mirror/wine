@@ -5,4 +5,5 @@ C_SRCS = \
 	channel.c \
 	proxy.c \
 	reader.c \
+	url.c \
 	writer.c
