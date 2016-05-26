@@ -312,12 +312,13 @@ BOOL WINAPI DrawCaptionTempW (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
         if (!hIcon) hIcon = NC_IconForWindow(hwnd);
         DrawIconEx (hdc, pt.x, pt.y, hIcon, GetSystemMetrics(SM_CXSMICON),
                     GetSystemMetrics(SM_CYSMICON), 0, 0, DI_NORMAL);
-        rc.left += (rc.bottom - rc.top);
+        rc.left = pt.x + GetSystemMetrics( SM_CXSMICON );
     }
 
     /* drawing text */
     if (uFlags & DC_TEXT) {
         HFONT hOldFont;
+        WCHAR text[128];
 
         if (uFlags & DC_INBUTTON)
             SetTextColor (hdc, GetSysColor (COLOR_BTNTEXT));
@@ -340,16 +341,14 @@ BOOL WINAPI DrawCaptionTempW (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
             hOldFont = SelectObject (hdc, hNewFont);
         }
 
-        if (str)
-            DrawTextW (hdc, str, -1, &rc,
-                         DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_LEFT);
-        else {
-            WCHAR szText[128];
-            INT nLen;
-            nLen = GetWindowTextW (hwnd, szText, 128);
-            DrawTextW (hdc, szText, nLen, &rc,
-                         DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_LEFT);
+        if (!str)
+        {
+            if (!GetWindowTextW( hwnd, text, sizeof(text)/sizeof(WCHAR) )) text[0] = 0;
+            str = text;
         }
+        rc.left += 2;
+        DrawTextW( hdc, str, -1, &rc, ((uFlags & 0x4000) ? DT_CENTER : DT_LEFT) |
+                   DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_END_ELLIPSIS );
 
         if (hFont)
             SelectObject (hdc, hOldFont);
