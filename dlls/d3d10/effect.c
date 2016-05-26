@@ -2692,7 +2692,7 @@ static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_GetCon
     {
         struct d3d10_effect_variable *l = &This->local_buffers[i];
 
-        if (!strcmp(l->name, name))
+        if (l->name && !strcmp(l->name, name))
         {
             TRACE("Returning buffer %p.\n", l);
             return (ID3D10EffectConstantBuffer *)l;
@@ -2761,7 +2761,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
         {
             struct d3d10_effect_variable *v = &l->members[j];
 
-            if (!strcmp(v->name, name))
+            if (v->name && !strcmp(v->name, name))
             {
                 TRACE("Returning variable %p.\n", v);
                 return &v->ID3D10EffectVariable_iface;
@@ -2773,7 +2773,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
     {
         struct d3d10_effect_variable *v = &This->local_variables[i];
 
-        if (!strcmp(v->name, name))
+        if (v->name && !strcmp(v->name, name))
         {
             TRACE("Returning variable %p.\n", v);
             return &v->ID3D10EffectVariable_iface;
@@ -2808,7 +2808,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
         {
             struct d3d10_effect_variable *v = &l->members[j];
 
-            if (!strcmp(v->semantic, semantic))
+            if (v->semantic && !strcmp(v->semantic, semantic))
             {
                 TRACE("Returning variable %p.\n", v);
                 return &v->ID3D10EffectVariable_iface;
@@ -2820,7 +2820,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
     {
         struct d3d10_effect_variable *v = &This->local_variables[i];
 
-        if (!strcmp(v->semantic, semantic))
+        if (v->semantic && !strcmp(v->semantic, semantic))
         {
             TRACE("Returning variable %p.\n", v);
             return &v->ID3D10EffectVariable_iface;
@@ -2870,7 +2870,7 @@ static struct ID3D10EffectTechnique * STDMETHODCALLTYPE d3d10_effect_GetTechniqu
     for (i = 0; i < This->technique_count; ++i)
     {
         struct d3d10_effect_technique *t = &This->techniques[i];
-        if (!strcmp(t->name, name))
+        if (t->name && !strcmp(t->name, name))
         {
             TRACE("Returning technique %p\n", t);
             return &t->ID3D10EffectTechnique_iface;
@@ -2992,7 +2992,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_technique_Ge
     for (i = 0; i < This->annotation_count; ++i)
     {
         struct d3d10_effect_variable *a = &This->annotations[i];
-        if (!strcmp(a->name, name))
+        if (a->name && !strcmp(a->name, name))
         {
             TRACE("Returning annotation %p\n", a);
             return &a->ID3D10EffectVariable_iface;
@@ -3038,7 +3038,7 @@ static struct ID3D10EffectPass * STDMETHODCALLTYPE d3d10_effect_technique_GetPas
     for (i = 0; i < This->pass_count; ++i)
     {
         struct d3d10_effect_pass *p = &This->passes[i];
-        if (!strcmp(p->name, name))
+        if (p->name && !strcmp(p->name, name))
         {
             TRACE("Returning pass %p\n", p);
             return &p->ID3D10EffectPass_iface;
@@ -3224,7 +3224,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_pass_GetAnno
     for (i = 0; i < This->annotation_count; ++i)
     {
         struct d3d10_effect_variable *a = &This->annotations[i];
-        if (!strcmp(a->name, name))
+        if (a->name && !strcmp(a->name, name))
         {
             TRACE("Returning annotation %p\n", a);
             return &a->ID3D10EffectVariable_iface;
@@ -3362,7 +3362,7 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
     for (i = 0; i < This->annotation_count; ++i)
     {
         struct d3d10_effect_variable *a = &This->annotations[i];
-        if (!strcmp(a->name, name))
+        if (a->name && !strcmp(a->name, name))
         {
             TRACE("Returning annotation %p\n", a);
             return &a->ID3D10EffectVariable_iface;
@@ -3413,13 +3413,10 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
     {
         struct d3d10_effect_variable *m = &This->members[i];
 
-        if (m->name)
+        if (m->name && !strcmp(m->name, name))
         {
-            if (!strcmp(m->name, name))
-            {
-                TRACE("Returning member %p\n", m);
-                return &m->ID3D10EffectVariable_iface;
-            }
+            TRACE("Returning member %p\n", m);
+            return &m->ID3D10EffectVariable_iface;
         }
     }
 
@@ -3446,13 +3443,10 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_Get
     {
         struct d3d10_effect_variable *m = &This->members[i];
 
-        if (m->semantic)
+        if (m->semantic && !strcmp(m->semantic, semantic))
         {
-            if (!strcmp(m->semantic, semantic))
-            {
-                TRACE("Returning member %p\n", m);
-                return &m->ID3D10EffectVariable_iface;
-            }
+            TRACE("Returning member %p\n", m);
+            return &m->ID3D10EffectVariable_iface;
         }
     }
 
@@ -7049,13 +7043,10 @@ static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTy
     {
         struct d3d10_effect_type_member *typem = &This->members[i];
 
-        if (typem->name)
+        if (typem->name && !strcmp(typem->name, name))
         {
-            if (!strcmp(typem->name, name))
-            {
-                TRACE("Returning type %p.\n", typem->type);
-                return &typem->type->ID3D10EffectType_iface;
-            }
+            TRACE("Returning type %p.\n", typem->type);
+            return &typem->type->ID3D10EffectType_iface;
         }
     }
 
@@ -7082,13 +7073,10 @@ static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_type_GetMemberTy
     {
         struct d3d10_effect_type_member *typem = &This->members[i];
 
-        if (typem->semantic)
+        if (typem->semantic && !strcmp(typem->semantic, semantic))
         {
-            if (!strcmp(typem->semantic, semantic))
-            {
-                TRACE("Returning type %p.\n", typem->type);
-                return &typem->type->ID3D10EffectType_iface;
-            }
+            TRACE("Returning type %p.\n", typem->type);
+            return &typem->type->ID3D10EffectType_iface;
         }
     }
 
