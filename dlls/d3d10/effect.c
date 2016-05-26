@@ -2180,6 +2180,12 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     const char *ptr = data;
     DWORD unknown;
 
+    if (!require_space(0, 19, sizeof(DWORD), data_size))
+    {
+        WARN("Invalid data size %#x.\n", data_size);
+        return E_INVALIDARG;
+    }
+
     /* Compiled target version (e.g. fx_4_0=0xfeff1001, fx_4_1=0xfeff1011). */
     read_dword(&ptr, &e->version);
     TRACE("Target: %#x\n", e->version);
