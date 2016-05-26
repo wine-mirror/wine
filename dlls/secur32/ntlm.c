@@ -131,6 +131,8 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
 {
     SECURITY_STATUS ret;
     PNtlmCredentials ntlm_cred;
+    LPWSTR domain = NULL, user = NULL, password = NULL;
+    PSEC_WINNT_AUTH_IDENTITY_W auth_data = NULL;
 
     TRACE("(%s, %s, 0x%08x, %p, %p, %p, %p, %p, %p)\n",
      debugstr_w(pszPrincipal), debugstr_w(pszPackage), fCredentialUse,
@@ -158,6 +160,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
             break;
         case SECPKG_CRED_OUTBOUND:
             {
+                auth_data = pAuthData;
                 ntlm_cred = HeapAlloc(GetProcessHeap(), 0, sizeof(*ntlm_cred));
                 if (!ntlm_cred)
                 {
@@ -173,26 +176,84 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
 
                 if(pAuthData != NULL)
                 {
-                    PSEC_WINNT_AUTH_IDENTITY_W auth_data = pAuthData;
+                    int domain_len = 0, user_len = 0, password_len = 0;
 
-                    TRACE("Username is %s\n", debugstr_wn(auth_data->User, auth_data->UserLength));
-                    TRACE("Domain name is %s\n", debugstr_wn(auth_data->Domain, auth_data->DomainLength));
-
-                    ntlm_cred->username_arg = ntlm_GetUsernameArg(auth_data->User, auth_data->UserLength);
-                    ntlm_cred->domain_arg = ntlm_GetDomainArg(auth_data->Domain, auth_data->DomainLength);
-
-                    if(auth_data->PasswordLength != 0)
+                    if (auth_data->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
                     {
-                        ntlm_cred->pwlen = WideCharToMultiByte(CP_UNIXCP,
-                                                               WC_NO_BEST_FIT_CHARS, auth_data->Password,
-                                                               auth_data->PasswordLength, NULL, 0, NULL,
-                                                               NULL);
+                        if (auth_data->DomainLength)
+                        {
+                            domain_len = MultiByteToWideChar(CP_ACP, 0, (char *)auth_data->Domain,
+                                                             auth_data->DomainLength, NULL, 0);
+                            domain = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * domain_len);
+                            if(!domain)
+                            {
+                                ret = SEC_E_INSUFFICIENT_MEMORY;
+                                break;
+                            }
+                            MultiByteToWideChar(CP_ACP, 0, (char *)auth_data->Domain, auth_data->DomainLength,
+                                                domain, domain_len);
+                        }
+
+                        if (auth_data->UserLength)
+                        {
+                            user_len = MultiByteToWideChar(CP_ACP, 0, (char *)auth_data->User,
+                                                           auth_data->UserLength, NULL, 0);
+                            user = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * user_len);
+                            if(!user)
+                            {
+                                ret = SEC_E_INSUFFICIENT_MEMORY;
+                                break;
+                            }
+                            MultiByteToWideChar(CP_ACP, 0, (char *)auth_data->User, auth_data->UserLength,
+                                                user, user_len);
+                        }
+
+                        if (auth_data->PasswordLength)
+                        {
+                            password_len = MultiByteToWideChar(CP_ACP, 0,(char *)auth_data->Password,
+                                                               auth_data->PasswordLength, NULL, 0);
+                            password = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * password_len);
+                            if(!password)
+                            {
+                                ret = SEC_E_INSUFFICIENT_MEMORY;
+                                break;
+                            }
+                            MultiByteToWideChar(CP_ACP, 0, (char *)auth_data->Password, auth_data->PasswordLength,
+                                                password, password_len);
+                        }
+                    }
+                    else
+                    {
+                        domain = auth_data->Domain;
+                        domain_len = auth_data->DomainLength;
+
+                        user = auth_data->User;
+                        user_len = auth_data->UserLength;
+
+                        password = auth_data->Password;
+                        password_len = auth_data->PasswordLength;
+                    }
+
+                    TRACE("Username is %s\n", debugstr_wn(user, user_len));
+                    TRACE("Domain name is %s\n", debugstr_wn(domain, domain_len));
+
+                    ntlm_cred->username_arg = ntlm_GetUsernameArg(user, user_len);
+                    ntlm_cred->domain_arg = ntlm_GetDomainArg(domain, domain_len);
+
+                    if(password_len != 0)
+                    {
+                        ntlm_cred->pwlen = WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS, password,
+                                                               password_len, NULL, 0, NULL, NULL);
 
                         ntlm_cred->password = HeapAlloc(GetProcessHeap(), 0,
                                                         ntlm_cred->pwlen);
+                        if(!ntlm_cred->password)
+                        {
+                            ret = SEC_E_INSUFFICIENT_MEMORY;
+                            break;
+                        }
 
-                        WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS,
-                                            auth_data->Password, auth_data->PasswordLength,
+                        WideCharToMultiByte(CP_UNIXCP, WC_NO_BEST_FIT_CHARS, password, password_len,
                                             ntlm_cred->password, ntlm_cred->pwlen, NULL, NULL);
                     }
                 }
@@ -212,6 +273,13 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
         default:
             phCredential = NULL;
             ret = SEC_E_UNKNOWN_CREDENTIALS;
+    }
+
+    if (auth_data && auth_data->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+    {
+        HeapFree(GetProcessHeap(), 0, domain);
+        HeapFree(GetProcessHeap(), 0, user);
+        HeapFree(GetProcessHeap(), 0, password);
     }
     return ret;
 }
