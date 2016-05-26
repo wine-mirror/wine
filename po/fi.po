@@ -11529,6 +11529,15 @@ msgid ""
 "  REG [operation] /?\n"
 "\n"
 msgstr ""
+"Käyttö:\n"
+"  REG [toiminto] [parametrit]\n"
+"\n"
+"Tuetut toiminnot:\n"
+"  ADD, DELETE, QUERY\n"
+"\n"
+"Tietystä toiminnosta saa apua komennolla\n"
+"  REG [toiminto] /?\n"
+"\n"
 
 #: reg.rc:36
 msgid ""
@@ -11632,24 +11641,20 @@ msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr "Haku on valmis. Osumia: %1!d!\n"
 
 #: reg.rc:61
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "reg: Invalid syntax. "
-msgstr "reg: Avaimen nimi ei kelpaa\n"
+msgstr "reg: Syntaksi ei kelpaa. "
 
 #: reg.rc:62
-#, fuzzy
-#| msgid "uninstaller: Invalid option [%1]\n"
 msgid "reg: Invalid option [%1]. "
-msgstr "uninstaller: Virheellinen valitsin [%1]\n"
+msgstr "reg: Valitsin [%1] ei kelpaa. "
 
 #: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
-msgstr ""
+msgstr "Komennolla \"REG /?\" saat apua.\n"
 
 #: reg.rc:64
 msgid "Type \"REG %1 /?\" for help.\n"
-msgstr ""
+msgstr "Komennolla \"REG %1 /?\" saat apua.\n"
 
 #: regedit.rc:34
 msgid "&Registry"
