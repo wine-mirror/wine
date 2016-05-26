@@ -859,7 +859,17 @@ static POINT WINPOS_FindIconPos( HWND hwnd, POINT pt )
     SystemParametersInfoW( SPI_GETMINIMIZEDMETRICS, sizeof(metrics), &metrics, 0 );
 
     parent = GetAncestor( hwnd, GA_PARENT );
-    GetClientRect( parent, &rectParent );
+    if (parent == GetDesktopWindow())
+    {
+        MONITORINFO mon_info;
+        HMONITOR monitor = MonitorFromWindow( hwnd, MONITOR_DEFAULTTOPRIMARY );
+
+        mon_info.cbSize = sizeof( mon_info );
+        GetMonitorInfoW( monitor, &mon_info );
+        rectParent = mon_info.rcWork;
+    }
+    else GetClientRect( parent, &rectParent );
+
     if ((pt.x >= rectParent.left) && (pt.x + GetSystemMetrics(SM_CXICON) < rectParent.right) &&
         (pt.y >= rectParent.top) && (pt.y + GetSystemMetrics(SM_CYICON) < rectParent.bottom))
         return pt;  /* The icon already has a suitable position */
@@ -2486,7 +2496,18 @@ UINT WINAPI ArrangeIconicWindows( HWND parent )
 
     metrics.cbSize = sizeof(metrics);
     SystemParametersInfoW( SPI_GETMINIMIZEDMETRICS, sizeof(metrics), &metrics, 0 );
-    GetClientRect( parent, &rectParent );
+
+    if (parent == GetDesktopWindow())
+    {
+        MONITORINFO mon_info;
+        HMONITOR monitor = MonitorFromWindow( 0, MONITOR_DEFAULTTOPRIMARY );
+
+        mon_info.cbSize = sizeof( mon_info );
+        GetMonitorInfoW( monitor, &mon_info );
+        rectParent = mon_info.rcWork;
+    }
+    else GetClientRect( parent, &rectParent );
+
     x = y = 0;
     xspacing = GetSystemMetrics(SM_CXICONSPACING);
     yspacing = GetSystemMetrics(SM_CYICONSPACING);
