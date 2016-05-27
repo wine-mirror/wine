@@ -468,6 +468,16 @@ typedef struct
     DWORD count;
 } *_Mtx_t;
 
+#if _MSVCP_VER >= 140
+typedef _Mtx_t _Mtx_arg_t;
+#define MTX_T_FROM_ARG(m)   (m)
+#define MTX_T_TO_ARG(m)     (m)
+#else
+typedef _Mtx_t *_Mtx_arg_t;
+#define MTX_T_FROM_ARG(m)   (*(m))
+#define MTX_T_TO_ARG(m)     (&(m))
+#endif
+
 int __cdecl _Mtx_init(_Mtx_t *mtx, int flags)
 {
     if(flags & ~MTX_MULTI_LOCK)
@@ -481,57 +491,57 @@ int __cdecl _Mtx_init(_Mtx_t *mtx, int flags)
     return 0;
 }
 
-void __cdecl _Mtx_destroy(_Mtx_t *mtx)
+void __cdecl _Mtx_destroy(_Mtx_arg_t mtx)
 {
-    call_func1(critical_section_dtor, &(*mtx)->cs);
-    MSVCRT_operator_delete(*mtx);
+    call_func1(critical_section_dtor, &MTX_T_FROM_ARG(mtx)->cs);
+    MSVCRT_operator_delete(MTX_T_FROM_ARG(mtx));
 }
 
-int __cdecl _Mtx_current_owns(_Mtx_t *mtx)
+int __cdecl _Mtx_current_owns(_Mtx_arg_t mtx)
 {
-    return (*mtx)->thread_id == GetCurrentThreadId();
+    return MTX_T_FROM_ARG(mtx)->thread_id == GetCurrentThreadId();
 }
 
-int __cdecl _Mtx_lock(_Mtx_t *mtx)
+int __cdecl _Mtx_lock(_Mtx_arg_t mtx)
 {
-    if((*mtx)->thread_id != GetCurrentThreadId()) {
-        call_func1(critical_section_lock, &(*mtx)->cs);
-        (*mtx)->thread_id = GetCurrentThreadId();
-    }else if(!((*mtx)->flags & MTX_MULTI_LOCK)) {
+    if(MTX_T_FROM_ARG(mtx)->thread_id != GetCurrentThreadId()) {
+        call_func1(critical_section_lock, &MTX_T_FROM_ARG(mtx)->cs);
+        MTX_T_FROM_ARG(mtx)->thread_id = GetCurrentThreadId();
+    }else if(!(MTX_T_FROM_ARG(mtx)->flags & MTX_MULTI_LOCK)) {
         return MTX_LOCKED;
     }
 
-    (*mtx)->count++;
+    MTX_T_FROM_ARG(mtx)->count++;
     return 0;
 }
 
-int __cdecl _Mtx_unlock(_Mtx_t *mtx)
+int __cdecl _Mtx_unlock(_Mtx_arg_t mtx)
 {
-    if(--(*mtx)->count)
+    if(--MTX_T_FROM_ARG(mtx)->count)
         return 0;
 
-    (*mtx)->thread_id = -1;
-    call_func1(critical_section_unlock, &(*mtx)->cs);
+    MTX_T_FROM_ARG(mtx)->thread_id = -1;
+    call_func1(critical_section_unlock, &MTX_T_FROM_ARG(mtx)->cs);
     return 0;
 }
 
-int __cdecl _Mtx_trylock(_Mtx_t *mtx)
+int __cdecl _Mtx_trylock(_Mtx_arg_t mtx)
 {
-    if((*mtx)->thread_id != GetCurrentThreadId()) {
-        if(!call_func1(critical_section_trylock, &(*mtx)->cs))
+    if(MTX_T_FROM_ARG(mtx)->thread_id != GetCurrentThreadId()) {
+        if(!call_func1(critical_section_trylock, &MTX_T_FROM_ARG(mtx)->cs))
             return MTX_LOCKED;
-        (*mtx)->thread_id = GetCurrentThreadId();
-    }else if(!((*mtx)->flags & MTX_MULTI_LOCK)) {
+        MTX_T_FROM_ARG(mtx)->thread_id = GetCurrentThreadId();
+    }else if(!(MTX_T_FROM_ARG(mtx)->flags & MTX_MULTI_LOCK)) {
         return MTX_LOCKED;
     }
 
-    (*mtx)->count++;
+    MTX_T_FROM_ARG(mtx)->count++;
     return 0;
 }
 
-critical_section* __cdecl _Mtx_getconcrtcs(_Mtx_t *mtx)
+critical_section* __cdecl _Mtx_getconcrtcs(_Mtx_arg_t mtx)
 {
-    return &(*mtx)->cs;
+    return &MTX_T_FROM_ARG(mtx)->cs;
 }
 
 static inline LONG interlocked_dec_if_nonzero( LONG *dest )
@@ -552,6 +562,16 @@ typedef struct
     CONDITION_VARIABLE cv;
 } *_Cnd_t;
 
+#if _MSVCP_VER >= 140
+typedef _Cnd_t _Cnd_arg_t;
+#define CND_T_FROM_ARG(c)   (c)
+#define CND_T_TO_ARG(c)     (c)
+#else
+typedef _Cnd_t *_Cnd_arg_t;
+#define CND_T_FROM_ARG(c)   (*(c))
+#define CND_T_TO_ARG(c)     (&(c))
+#endif
+
 static HANDLE keyed_event;
 
 int __cdecl _Cnd_init(_Cnd_t *cnd)
@@ -570,9 +590,9 @@ int __cdecl _Cnd_init(_Cnd_t *cnd)
     return 0;
 }
 
-int __cdecl _Cnd_wait(_Cnd_t *cnd, _Mtx_t *mtx)
+int __cdecl _Cnd_wait(_Cnd_arg_t cnd, _Mtx_arg_t mtx)
 {
-    CONDITION_VARIABLE *cv = &(*cnd)->cv;
+    CONDITION_VARIABLE *cv = &CND_T_FROM_ARG(cnd)->cv;
 
     InterlockedExchangeAdd( (LONG *)&cv->Ptr, 1 );
     _Mtx_unlock(mtx);
@@ -583,9 +603,9 @@ int __cdecl _Cnd_wait(_Cnd_t *cnd, _Mtx_t *mtx)
     return 0;
 }
 
-int __cdecl _Cnd_timedwait(_Cnd_t *cnd, _Mtx_t *mtx, const xtime *xt)
+int __cdecl _Cnd_timedwait(_Cnd_arg_t cnd, _Mtx_arg_t mtx, const xtime *xt)
 {
-    CONDITION_VARIABLE *cv = &(*cnd)->cv;
+    CONDITION_VARIABLE *cv = &CND_T_FROM_ARG(cnd)->cv;
     LARGE_INTEGER timeout;
     NTSTATUS status;
 
@@ -604,28 +624,28 @@ int __cdecl _Cnd_timedwait(_Cnd_t *cnd, _Mtx_t *mtx, const xtime *xt)
     return status ? CND_TIMEDOUT : 0;
 }
 
-int __cdecl _Cnd_broadcast(_Cnd_t *cnd)
+int __cdecl _Cnd_broadcast(_Cnd_arg_t cnd)
 {
-    CONDITION_VARIABLE *cv = &(*cnd)->cv;
+    CONDITION_VARIABLE *cv = &CND_T_FROM_ARG(cnd)->cv;
     LONG val = InterlockedExchange( (LONG *)&cv->Ptr, 0 );
     while (val-- > 0)
         NtReleaseKeyedEvent( keyed_event, &cv->Ptr, FALSE, NULL );
     return 0;
 }
 
-int __cdecl _Cnd_signal(_Cnd_t *cnd)
+int __cdecl _Cnd_signal(_Cnd_arg_t cnd)
 {
-    CONDITION_VARIABLE *cv = &(*cnd)->cv;
+    CONDITION_VARIABLE *cv = &CND_T_FROM_ARG(cnd)->cv;
     if (interlocked_dec_if_nonzero( (LONG *)&cv->Ptr ))
         NtReleaseKeyedEvent( keyed_event, &cv->Ptr, FALSE, NULL );
     return 0;
 }
 
-void __cdecl _Cnd_destroy(_Cnd_t *cnd)
+void __cdecl _Cnd_destroy(_Cnd_arg_t cnd)
 {
     if(cnd) {
         _Cnd_broadcast(cnd);
-        MSVCRT_operator_delete(*cnd);
+        MSVCRT_operator_delete(CND_T_FROM_ARG(cnd));
     }
 }
 #endif
@@ -969,7 +989,7 @@ _Pad* __thiscall _Pad_ctor(_Pad *this)
     _Cnd_init(&this->cnd);
     _Mtx_init(&this->mtx, 0);
     this->launched = FALSE;
-    _Mtx_lock(&this->mtx);
+    _Mtx_lock(MTX_T_TO_ARG(this->mtx));
     return this;
 }
 
@@ -1004,9 +1024,9 @@ void __thiscall _Pad_dtor(_Pad *this)
 {
     TRACE("(%p)\n", this);
 
-    _Mtx_unlock(&this->mtx);
-    _Mtx_destroy(&this->mtx);
-    _Cnd_destroy(&this->cnd);
+    _Mtx_unlock(MTX_T_TO_ARG(this->mtx));
+    _Mtx_destroy(MTX_T_TO_ARG(this->mtx));
+    _Cnd_destroy(CND_T_TO_ARG(this->cnd));
 }
 
 DEFINE_THISCALL_WRAPPER(_Pad__Go, 4)
@@ -1031,7 +1051,7 @@ void __thiscall _Pad__Launch(_Pad *this, _Thrd_t *thr)
     TRACE("(%p %p)\n", this, thr);
 
     _Thrd_start(thr, launch_thread_proc, this);
-    _Cnd_wait(&this->cnd, &this->mtx);
+    _Cnd_wait(CND_T_TO_ARG(this->cnd), MTX_T_TO_ARG(this->mtx));
 }
 
 /* ?_Release@_Pad@std@@QAEXXZ */
@@ -1041,10 +1061,10 @@ void __thiscall _Pad__Release(_Pad *this)
 {
     TRACE("(%p)\n", this);
 
-    _Mtx_lock(&this->mtx);
+    _Mtx_lock(MTX_T_TO_ARG(this->mtx));
     this->launched = TRUE;
-    _Cnd_signal(&this->cnd);
-    _Mtx_unlock(&this->mtx);
+    _Cnd_signal(CND_T_TO_ARG(this->cnd));
+    _Mtx_unlock(MTX_T_TO_ARG(this->mtx));
 }
 #endif
 
