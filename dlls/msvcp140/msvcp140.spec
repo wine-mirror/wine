@@ -3725,7 +3725,7 @@
 @ cdecl _Thrd_detach(ptr) msvcp110._Thrd_detach
 @ cdecl _Thrd_equal(ptr ptr) _Thrd_equal
 @ stub _Thrd_exit
-@ stub _Thrd_hardware_concurrency
+@ cdecl _Thrd_hardware_concurrency() _Thrd_hardware_concurrency
 @ stub _Thrd_id
 @ cdecl _Thrd_join(ptr long) _Thrd_join
 @ cdecl _Thrd_sleep(ptr) _Thrd_sleep

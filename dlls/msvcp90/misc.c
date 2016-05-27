@@ -942,6 +942,22 @@ DEFINE_RTTI_DATA0(_Pad, 0, ".?AV_Pad@std@@")
 /* ??_7_Pad@std@@6B@ */
 extern const vtable_ptr MSVCP__Pad_vtable;
 
+unsigned int __cdecl _Thrd_hardware_concurrency(void)
+{
+    static unsigned int val = -1;
+
+    TRACE("()\n");
+
+    if(val == -1) {
+        SYSTEM_INFO si;
+
+        GetSystemInfo(&si);
+        val = si.dwNumberOfProcessors;
+    }
+
+    return val;
+}
+
 /* ??0_Pad@std@@QAE@XZ */
 /* ??0_Pad@std@@QEAA@XZ */
 DEFINE_THISCALL_WRAPPER(_Pad_ctor, 4)
