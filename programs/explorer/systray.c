@@ -125,8 +125,8 @@ static RECT get_icon_rect( struct icon *icon )
 
     rect.right = tray_width - icon_cx * icon->display;
     rect.left = rect.right - icon_cx;
-    rect.top = 0;
-    rect.bottom = icon_cy;
+    rect.top = (tray_height - icon_cy) / 2;
+    rect.bottom = rect.top + icon_cy;
     return rect;
 }
 
@@ -297,9 +297,9 @@ static void invalidate_icons( unsigned int start, unsigned int end )
     RECT rect;
 
     rect.left = tray_width - (end + 1) * icon_cx;
-    rect.top  = 0;
+    rect.top  = (tray_height - icon_cy) / 2;
     rect.right = tray_width - start * icon_cx;
-    rect.bottom = icon_cy;
+    rect.bottom = rect.top + icon_cy;
     InvalidateRect( tray_window, &rect, TRUE );
 }
 
