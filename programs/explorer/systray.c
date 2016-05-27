@@ -87,7 +87,8 @@ static unsigned int nb_displayed;
 static struct icon **displayed;  /* array of currently displayed icons */
 
 static BOOL hide_systray, enable_shell;
-static int icon_cx, icon_cy, tray_width;
+static int icon_cx, icon_cy, tray_width, tray_height;
+static WCHAR start_label[50];
 
 static struct icon *balloon_icon;
 static HWND balloon_window;
@@ -103,6 +104,8 @@ static HWND start_button;
 #define BALLOON_CREATE_TIMEOUT   2000
 #define BALLOON_SHOW_MIN_TIMEOUT 10000
 #define BALLOON_SHOW_MAX_TIMEOUT 30000
+
+static void do_show_systray(void);
 
 /* Retrieves icon record by owner window and ID */
 static struct icon *get_icon(HWND owner, UINT id)
@@ -323,7 +326,7 @@ static BOOL show_icon(struct icon *icon)
     update_tooltip_position( icon );
     invalidate_icons( nb_displayed-1, nb_displayed-1 );
 
-    if (nb_displayed == 1 && !hide_systray) ShowWindow( tray_window, SW_SHOWNA );
+    if (nb_displayed == 1 && !hide_systray) do_show_systray();
 
     create_tooltip(icon);
     update_balloon( icon );
@@ -543,6 +546,26 @@ static void do_hide_systray(void)
                   0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
 }
 
+static void do_show_systray(void)
+{
+    SIZE start_button_size;
+    HDC hdc = GetDC( 0 );
+
+    /* FIXME: Implement BCM_GETIDEALSIZE and use that instead. */
+    GetTextExtentPointW( hdc, start_label, lstrlenW(start_label), &start_button_size );
+    /* add some margins (FIXME) */
+    start_button_size.cx += 8;
+    start_button_size.cy += 4;
+    ReleaseDC( 0, hdc );
+
+    tray_width = GetSystemMetrics( SM_CXSCREEN );
+    tray_height = max( icon_cy, start_button_size.cy );
+    SetWindowPos( start_button, 0, 0, 0, start_button_size.cx, tray_height,
+                  SWP_NOACTIVATE | SWP_NOZORDER );
+    SetWindowPos( tray_window, HWND_TOPMOST, 0, GetSystemMetrics( SM_CYSCREEN ) - tray_height,
+                  tray_width, tray_height, SWP_NOACTIVATE | SWP_SHOWWINDOW );
+}
+
 static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
@@ -552,12 +575,7 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
     case WM_DISPLAYCHANGE:
         if (hide_systray) do_hide_systray();
-        else
-        {
-            tray_width = GetSystemMetrics( SM_CXSCREEN );
-            SetWindowPos( tray_window, 0, 0, GetSystemMetrics( SM_CYSCREEN ) - icon_cy,
-                          tray_width, icon_cy, SWP_NOZORDER | SWP_NOACTIVATE );
-        }
+        else do_show_systray();
         break;
 
     case WM_TIMER:
@@ -641,24 +659,12 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     return 0;
 }
 
-static void get_system_text_size( const WCHAR *text, SIZE *size )
-{
-    /* FIXME: Implement BCM_GETIDEALSIZE and use that instead. */
-    HDC hdc = GetDC( 0 );
-
-    GetTextExtentPointW(hdc, text, lstrlenW(text), size);
-
-    ReleaseDC( 0, hdc );
-}
-
 /* this function creates the listener window */
 void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enable_shell )
 {
     WNDCLASSEXW class;
     static const WCHAR classname[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
     static const WCHAR button_class[] = {'B','u','t','t','o','n',0};
-    WCHAR start_label[50];
-    SIZE start_text_size;
 
     wine_notify_icon = (void *)GetProcAddress( graphics_driver, "wine_notify_icon" );
 
@@ -684,10 +690,8 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enab
         return;
     }
 
-    tray_width = GetSystemMetrics( SM_CXSCREEN );
     tray_window = CreateWindowExW( WS_EX_NOACTIVATE, classname, NULL, WS_POPUP,
-                                   0, GetSystemMetrics( SM_CYSCREEN ) - icon_cy,
-                                   tray_width, icon_cy, 0, 0, 0, 0 );
+                                   0, GetSystemMetrics( SM_CYSCREEN ), 0, 0, 0, 0, 0, 0 );
     if (!tray_window)
     {
         WINE_ERR("Could not create tray window\n");
@@ -696,12 +700,9 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enab
 
     LoadStringW( NULL, IDS_START_LABEL, start_label, sizeof(start_label)/sizeof(WCHAR) );
 
-    get_system_text_size( start_label, &start_text_size );
-
     start_button = CreateWindowW( button_class, start_label, WS_CHILD|WS_VISIBLE|BS_PUSHBUTTON,
-        0, 0, start_text_size.cx + 8, icon_cy, tray_window, 0, 0, 0 );
-
-    if (enable_shell && !hide_systray) ShowWindow( tray_window, SW_SHOWNA );
+                                  0, 0, 0, 0, tray_window, 0, 0, 0 );
 
     if (hide_systray) do_hide_systray();
+    else if (enable_shell) do_show_systray();
 }
