@@ -74,6 +74,7 @@ static INT  test_OnPushContext = SINK_UNEXPECTED;
 static INT  test_OnPopContext = SINK_UNEXPECTED;
 static INT  test_KEV_OnSetFocus = SINK_UNEXPECTED;
 static INT  test_ACP_AdviseSink = SINK_UNEXPECTED;
+static INT  test_ACP_UnadviseSink = SINK_UNEXPECTED;
 static INT  test_ACP_GetStatus = SINK_UNEXPECTED;
 static INT  test_ACP_RequestLock = SINK_UNEXPECTED;
 static INT  test_ACP_GetEndACP = SINK_UNEXPECTED;
@@ -232,6 +233,9 @@ static HRESULT WINAPI TextStoreACP_AdviseSink(ITextStoreACP *iface,
 
     sink_fire_ok(&test_ACP_AdviseSink,"TextStoreACP_AdviseSink");
 
+    if(ACPSink)
+        return S_OK;
+
     hr = IUnknown_QueryInterface(punk, &IID_ITextStoreACPSink, (void**)&ACPSink);
     ok(SUCCEEDED(hr),"Unable to QueryInterface on sink\n");
 
@@ -245,7 +249,7 @@ static HRESULT WINAPI TextStoreACP_AdviseSink(ITextStoreACP *iface,
 static HRESULT WINAPI TextStoreACP_UnadviseSink(ITextStoreACP *iface,
     IUnknown *punk)
 {
-    trace("\n");
+    sink_fire_ok(&test_ACP_UnadviseSink,"TextStoreACP_UnadviseSink");
     return S_OK;
 }
 
@@ -1474,7 +1478,7 @@ static void test_startSession(void)
     DWORD editCookie;
     ITfDocumentMgr *dmtest;
     ITfContext *cxt,*cxt2,*cxt3,*cxtTest;
-    ITextStoreACP *ts;
+    ITextStoreACP *ts = NULL;
     TfClientId cid2 = 0;
     ITfThreadMgrEx *tmex;
 
@@ -1641,6 +1645,8 @@ static void test_startSession(void)
     ok(hr == S_FALSE, "ITfContext_GetDocumentMgr wrong rc %x\n",hr);
     ok(dmtest == NULL,"returned documentmgr should be null\n");
 
+    ITfContext_Release(cxt2);
+
     hr = ITfDocumentMgr_GetTop(g_dm, &cxtTest);
     ok(SUCCEEDED(hr),"GetTop Failed\n");
     ok(cxtTest == cxt, "Wrong context on top\n");
@@ -1650,6 +1656,25 @@ static void test_startSession(void)
     ok(SUCCEEDED(hr),"GetBase Failed\n");
     ok(cxtTest == cxt, "Wrong context on base\n");
     ITfContext_Release(cxtTest);
+
+    hr = ITfDocumentMgr_CreateContext(g_dm, cid, 0, (IUnknown*)ts, &cxt2, &editCookie);
+    ok(hr == S_OK,"CreateContext Failed\n");
+
+    test_OnPushContext = SINK_EXPECTED;
+    test_ACP_AdviseSink = SINK_EXPECTED;
+    hr = ITfDocumentMgr_Push(g_dm, cxt2);
+    ok(hr == S_OK,"Push Failed\n");
+    sink_check_ok(&test_OnPushContext,"OnPushContext");
+    sink_check_ok(&test_ACP_AdviseSink,"TextStoreACP_AdviseSink");
+
+    test_ACP_UnadviseSink = SINK_EXPECTED;
+    cnt = check_context_refcount(cxt2);
+    test_OnPopContext = SINK_EXPECTED;
+    hr = ITfDocumentMgr_Pop(g_dm, 0);
+    ok(hr == S_OK,"Pop Failed\n");
+    ok(check_context_refcount(cxt2) < cnt, "Ref count did not decrease\n");
+    sink_check_ok(&test_OnPopContext,"OnPopContext");
+    sink_check_ok(&test_ACP_UnadviseSink,"TextStoreACP_AdviseSink");
 
     hr = ITfDocumentMgr_Pop(g_dm, 0);
     ok(FAILED(hr),"Pop Succeeded\n");
