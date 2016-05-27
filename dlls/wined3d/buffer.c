@@ -30,7 +30,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 #define WINED3D_BUFFER_HASDESC      0x01    /* A vertex description has been found. */
-#define WINED3D_BUFFER_CREATEBO     0x02    /* Create a buffer object for this buffer. */
+#define WINED3D_BUFFER_USE_BO       0x02    /* Use a buffer object for this buffer. */
 #define WINED3D_BUFFER_DOUBLEBUFFER 0x04    /* Keep both a buffer object and a system memory copy for this buffer. */
 #define WINED3D_BUFFER_DISCARD      0x08    /* A DISCARD lock has occurred since the last preload. */
 #define WINED3D_BUFFER_SYNC         0x10    /* There has been at least one synchronized map since the last preload. */
@@ -199,8 +199,9 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, struct wine
     return;
 
 fail:
-    /* Clean up all vbo init, but continue because we can work without a vbo :-) */
+    /* Clean up all VBO init, but continue because we can work without a VBO :-) */
     ERR("Failed to create a vertex buffer object. Continuing, but performance issues may occur\n");
+    This->flags &= ~WINED3D_BUFFER_USE_BO;
     delete_gl_buffer(This, gl_info);
     buffer_clear_dirty_areas(This);
 }
@@ -457,10 +458,9 @@ void buffer_get_memory(struct wined3d_buffer *buffer, struct wined3d_context *co
     data->buffer_object = buffer->buffer_object;
     if (!buffer->buffer_object)
     {
-        if ((buffer->flags & WINED3D_BUFFER_CREATEBO) && !buffer->resource.map_count)
+        if ((buffer->flags & WINED3D_BUFFER_USE_BO) && !buffer->resource.map_count)
         {
             buffer_create_buffer_object(buffer, context);
-            buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
             if (buffer->buffer_object)
             {
                 data->buffer_object = buffer->buffer_object;
@@ -526,7 +526,6 @@ static void buffer_unload(struct wined3d_resource *resource)
         }
 
         delete_gl_buffer(buffer, context->gl_info);
-        buffer->flags |= WINED3D_BUFFER_CREATEBO; /* Recreate the buffer object next load */
         buffer_clear_dirty_areas(buffer);
 
         context_release(context);
@@ -739,10 +738,9 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
     if (!buffer->buffer_object)
     {
         /* TODO: Make converting independent from VBOs */
-        if (buffer->flags & WINED3D_BUFFER_CREATEBO)
+        if (buffer->flags & WINED3D_BUFFER_USE_BO)
         {
             buffer_create_buffer_object(buffer, context);
-            buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
         }
         else
         {
@@ -793,8 +791,8 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
         {
             FIXME("Too many declaration changes or converting dynamic buffer, stopping converting\n");
 
+            buffer->flags &= ~WINED3D_BUFFER_USE_BO;
             buffer_unload(&buffer->resource);
-            buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
 
             /* The stream source state handler might have read the memory of
              * the vertex buffer already and got the memory in the vbo which
@@ -826,8 +824,8 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
             if (buffer->full_conversion_count > VB_MAXFULLCONVERSIONS)
             {
                 FIXME("Too many full buffer conversions, stopping converting.\n");
+                buffer->flags &= ~WINED3D_BUFFER_USE_BO;
                 buffer_unload(&buffer->resource);
-                buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
                 if (buffer->resource.bind_count)
                     device_invalidate_state(device, STATE_STREAMSRC);
                 return;
@@ -1008,8 +1006,8 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
                          * that returns unaligned pointers
                          */
                         TRACE("Dynamic buffer, dropping VBO\n");
+                        buffer->flags &= ~WINED3D_BUFFER_USE_BO;
                         buffer_unload(&buffer->resource);
-                        buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
                         if (buffer->resource.bind_count)
                             device_invalidate_state(device, STATE_STREAMSRC);
                     }
@@ -1278,7 +1276,7 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
 
     if (!size)
     {
-        WARN("Size 0 requested, returning WINED3DERR_INVALIDCALL\n");
+        WARN("Size 0 requested, returning WINED3DERR_INVALIDCALL.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -1292,7 +1290,7 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
             WINED3D_MULTISAMPLE_NONE, 0, usage, pool, size, 1, 1, size, parent, parent_ops, &buffer_resource_ops);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize resource, hr %#x\n", hr);
+        WARN("Failed to initialize resource, hr %#x.\n", hr);
         return hr;
     }
     buffer->buffer_type_hint = bind_hint;
@@ -1305,7 +1303,7 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
         /* SWvp always returns the same pointer in buffer maps and retains data in DISCARD maps.
          * Keep a system memory copy of the buffer to provide the same behavior to the application.
          * Still use a VBO to support OpenGL 3 core contexts. */
-        TRACE("Using doublebuffer mode because of software vertex processing\n");
+        TRACE("Using doublebuffer mode because of software vertex processing.\n");
         buffer->flags |= WINED3D_BUFFER_DOUBLEBUFFER;
     }
 
@@ -1316,19 +1314,19 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
 
     if (!gl_info->supported[ARB_VERTEX_BUFFER_OBJECT])
     {
-        TRACE("Not creating a vbo because GL_ARB_vertex_buffer is not supported\n");
+        TRACE("Not creating a BO because GL_ARB_vertex_buffer is not supported.\n");
     }
-    else if(buffer->resource.pool == WINED3D_POOL_SYSTEM_MEM)
+    else if (buffer->resource.pool == WINED3D_POOL_SYSTEM_MEM)
     {
-        TRACE("Not creating a vbo because the vertex buffer is in system memory\n");
+        TRACE("Not creating a BO because the buffer is in system memory.\n");
     }
-    else if(!dynamic_buffer_ok && (buffer->resource.usage & WINED3DUSAGE_DYNAMIC))
+    else if (!dynamic_buffer_ok && (buffer->resource.usage & WINED3DUSAGE_DYNAMIC))
     {
-        TRACE("Not creating a vbo because the buffer has dynamic usage and no GL support\n");
+        TRACE("Not creating a BO because the buffer has dynamic usage and no GL support.\n");
     }
     else
     {
-        buffer->flags |= WINED3D_BUFFER_CREATEBO;
+        buffer->flags |= WINED3D_BUFFER_USE_BO;
     }
 
     if (!(buffer->maps = HeapAlloc(GetProcessHeap(), 0, sizeof(*buffer->maps))))
