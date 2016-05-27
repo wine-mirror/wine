@@ -3675,10 +3675,10 @@
 @ stub _Mtx_clear_owner
 @ cdecl _Mtx_current_owns(ptr) msvcp110._Mtx_current_owns
 @ cdecl _Mtx_destroy(ptr) _Mtx_destroy
-@ stub _Mtx_destroy_in_situ
+@ cdecl _Mtx_destroy_in_situ(ptr) _Mtx_destroy_in_situ
 @ cdecl _Mtx_getconcrtcs(ptr) _Mtx_getconcrtcs
 @ cdecl _Mtx_init(ptr long) _Mtx_init
-@ stub _Mtx_init_in_situ
+@ cdecl _Mtx_init_in_situ(ptr long) _Mtx_init_in_situ
 @ cdecl _Mtx_lock(ptr) _Mtx_lock
 @ stub _Mtx_reset_owner
 @ stub _Mtx_timedlock

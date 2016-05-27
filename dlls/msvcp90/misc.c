@@ -478,17 +478,27 @@ typedef _Mtx_t *_Mtx_arg_t;
 #define MTX_T_TO_ARG(m)     (&(m))
 #endif
 
-int __cdecl _Mtx_init(_Mtx_t *mtx, int flags)
+void __cdecl _Mtx_init_in_situ(_Mtx_t mtx, int flags)
 {
     if(flags & ~MTX_MULTI_LOCK)
         FIXME("unknown flags ignored: %x\n", flags);
 
+    mtx->flags = flags;
+    call_func1(critical_section_ctor, &mtx->cs);
+    mtx->thread_id = -1;
+    mtx->count = 0;
+}
+
+int __cdecl _Mtx_init(_Mtx_t *mtx, int flags)
+{
     *mtx = MSVCRT_operator_new(sizeof(**mtx));
-    (*mtx)->flags = flags;
-    call_func1(critical_section_ctor, &(*mtx)->cs);
-    (*mtx)->thread_id = -1;
-    (*mtx)->count = 0;
+    _Mtx_init_in_situ(*mtx, flags);
     return 0;
+}
+
+void __cdecl _Mtx_destroy_in_situ(_Mtx_t mtx)
+{
+    call_func1(critical_section_dtor, &mtx->cs);
 }
 
 void __cdecl _Mtx_destroy(_Mtx_arg_t mtx)
