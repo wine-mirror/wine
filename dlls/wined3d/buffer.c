@@ -89,14 +89,8 @@ static BOOL buffer_is_dirty(const struct wined3d_buffer *buffer)
 
 static BOOL buffer_is_fully_dirty(const struct wined3d_buffer *buffer)
 {
-    unsigned int i;
-
-    for (i = 0; i < buffer->modified_areas; ++i)
-    {
-        if (!buffer->maps[i].offset && buffer->maps[i].size == buffer->resource.size)
-            return TRUE;
-    }
-    return FALSE;
+    return buffer->modified_areas == 1
+            && !buffer->maps->offset && buffer->maps->size == buffer->resource.size;
 }
 
 /* Context activation is done by the caller. */
@@ -1348,10 +1342,9 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
         }
     }
 
-    buffer->maps = HeapAlloc(GetProcessHeap(), 0, sizeof(*buffer->maps));
-    if (!buffer->maps)
+    if (!(buffer->maps = HeapAlloc(GetProcessHeap(), 0, sizeof(*buffer->maps))))
     {
-        ERR("Out of memory\n");
+        ERR("Out of memory.\n");
         buffer_unload(&buffer->resource);
         resource_cleanup(&buffer->resource);
         return E_OUTOFMEMORY;
