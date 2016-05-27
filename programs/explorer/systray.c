@@ -549,14 +549,21 @@ static void do_hide_systray(void)
 static void do_show_systray(void)
 {
     SIZE start_button_size;
+    NONCLIENTMETRICSW ncm;
+    HFONT font;
     HDC hdc = GetDC( 0 );
 
+    ncm.cbSize = sizeof(NONCLIENTMETRICSW);
+    SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSW), &ncm, 0 );
+    font = CreateFontIndirectW( &ncm.lfCaptionFont );
     /* FIXME: Implement BCM_GETIDEALSIZE and use that instead. */
+    SelectObject( hdc, font );
     GetTextExtentPointW( hdc, start_label, lstrlenW(start_label), &start_button_size );
     /* add some margins (FIXME) */
     start_button_size.cx += 8;
     start_button_size.cy += 4;
     ReleaseDC( 0, hdc );
+    SendMessageW( start_button, WM_SETFONT, (WPARAM)font, 0 );
 
     tray_width = GetSystemMetrics( SM_CXSCREEN );
     tray_height = max( icon_cy, start_button_size.cy );
