@@ -567,9 +567,9 @@ ITfContext *pic)
     hr = ITfContext_GetDocumentMgr(pic,&docmgr);
     ok(SUCCEEDED(hr),"GetDocumentMgr failed\n");
     test = (ITfContext*)0xdeadbeef;
-    ITfDocumentMgr_Release(docmgr);
     hr = ITfDocumentMgr_GetTop(docmgr,&test);
     ok(SUCCEEDED(hr),"GetTop failed\n");
+    ITfDocumentMgr_Release(docmgr);
     ok(test == pic, "Wrong context is on top\n");
     if (test)
         ITfContext_Release(test);
@@ -2345,6 +2345,9 @@ START_TEST(inputprocessor)
         test_UnregisterCategory();
         test_Unregister();
         test_profile_mgr();
+
+        ITextStoreACPSink_Release(ACPSink);
+        ITfDocumentMgr_Release(g_dm);
     }
     else
         skip("Unable to create InputProcessor\n");
