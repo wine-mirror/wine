@@ -538,6 +538,16 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
     return ret;
 }
 
+static void paint_taskbar_button( const DRAWITEMSTRUCT *dis )
+{
+    RECT rect;
+
+    GetClientRect( dis->hwndItem, &rect );
+    DrawFrameControl( dis->hDC, &rect, DFC_BUTTON, DFCS_BUTTONPUSH | DFCS_ADJUSTRECT |
+                      ((dis->itemState & ODS_SELECTED) ? DFCS_PUSHED : 0 ));
+    DrawCaptionTempW( 0, dis->hDC, &rect, 0, 0, start_label, DC_TEXT | DC_INBUTTON | DC_ICON );
+}
+
 static void do_hide_systray(void)
 {
     SetWindowPos( tray_window, 0,
@@ -560,10 +570,10 @@ static void do_show_systray(void)
     SelectObject( hdc, font );
     GetTextExtentPointW( hdc, start_label, lstrlenW(start_label), &start_button_size );
     /* add some margins (FIXME) */
-    start_button_size.cx += 8;
+    start_button_size.cx += 12 + GetSystemMetrics( SM_CXSMICON );
     start_button_size.cy += 4;
     ReleaseDC( 0, hdc );
-    SendMessageW( start_button, WM_SETFONT, (WPARAM)font, 0 );
+    DeleteObject( font );
 
     tray_width = GetSystemMetrics( SM_CXSCREEN );
     tray_height = max( icon_cy, start_button_size.cy );
@@ -651,6 +661,10 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
         ShowWindow( hwnd, SW_HIDE );
         return 0;
 
+    case WM_DRAWITEM:
+        paint_taskbar_button( (const DRAWITEMSTRUCT *)lparam );
+        break;
+
     case WM_COMMAND:
         if ((HWND)lparam == start_button && HIWORD(wparam) == BN_CLICKED)
             do_startmenu(hwnd);
@@ -707,7 +721,7 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enab
 
     LoadStringW( NULL, IDS_START_LABEL, start_label, sizeof(start_label)/sizeof(WCHAR) );
 
-    start_button = CreateWindowW( button_class, start_label, WS_CHILD|WS_VISIBLE|BS_PUSHBUTTON,
+    start_button = CreateWindowW( button_class, NULL, WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
                                   0, 0, 0, 0, tray_window, 0, 0, 0 );
 
     if (hide_systray) do_hide_systray();
