@@ -904,6 +904,20 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         }
     }
 
+    if (type == FD_TYPE_SERIAL && async_read && length)
+    {
+        /* an asynchronous serial port read with a read interval timeout needs to
+           skip the synchronous read to make sure that the server starts the read
+           interval timer after the first read */
+        if ((status = get_io_timeouts( hFile, type, length, TRUE, &timeouts ))) goto err;
+        if (timeouts.interval)
+        {
+            status = register_async_file_read( hFile, hEvent, apc, apc_user, io_status,
+                                               buffer, total, length, FALSE );
+            goto err;
+        }
+    }
+
     for (;;)
     {
         if ((result = read( unix_handle, (char *)buffer + total, length - total )) >= 0)
