@@ -25,7 +25,7 @@ use strict;
 use locale;
 use POSIX;
 use Text::CSV::Encoded;
-binmode STDOUT, ':utf8';
+use open ':encoding(utf8)';
 
 sub unescape($)
 {
