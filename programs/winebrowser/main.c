@@ -45,6 +45,7 @@
 
 #include <windows.h>
 #include <shlwapi.h>
+#include <shellapi.h>
 #include <urlmon.h>
 #include <ddeml.h>
 #include <stdio.h>
@@ -71,27 +72,31 @@ static char *strdup_unixcp( const WCHAR *str )
 /* try to launch a unix app from a comma separated string of app names */
 static int launch_app( const WCHAR *candidates, const WCHAR *argv1 )
 {
-    char *app, *cmdline;
-    const char *argv_new[3];
+    char *cmdline;
+    int i, count;
+    char **argv_new;
 
     if (!(cmdline = strdup_unixcp( argv1 ))) return 1;
 
     while (*candidates)
     {
-        if (!(app = strdup_unixcp( candidates ))) break;
+        WCHAR **args = CommandLineToArgvW( candidates, &count );
 
-        WINE_TRACE( "Considering: %s\n", wine_dbgstr_a(app) );
-        WINE_TRACE( "argv[1]: %s\n", wine_dbgstr_a(cmdline) );
+        if (!(argv_new = HeapAlloc( GetProcessHeap(), 0, (count + 1) * sizeof(*argv_new) ))) break;
+        for (i = 0; i < count; i++) argv_new[i] = strdup_unixcp( args[i] );
+        argv_new[count] = cmdline;
+        argv_new[count + 1] = NULL;
 
-        argv_new[0] = app;
-        argv_new[1] = cmdline;
-        argv_new[2] = NULL;
+        TRACE( "Trying" );
+        for (i = 0; i <= count; i++) TRACE( " %s", wine_dbgstr_a( argv_new[i] ));
+        TRACE( "\n" );
 
-        _spawnvp( _P_OVERLAY, app, argv_new );  /* only returns on error */
-        HeapFree( GetProcessHeap(), 0, app );
+        _spawnvp( _P_OVERLAY, argv_new[0], (const char **)argv_new );  /* only returns on error */
+        for (i = 0; i < count; i++) HeapFree( GetProcessHeap(), 0, argv_new[i] );
+        HeapFree( GetProcessHeap(), 0, argv_new );
         candidates += strlenW( candidates ) + 1;  /* grab the next app */
     }
-    WINE_ERR( "could not find a suitable app to run\n" );
+    WINE_ERR( "could not find a suitable app to open %s\n", debugstr_w( argv1 ));
 
     HeapFree( GetProcessHeap(), 0, cmdline );
     return 1;
