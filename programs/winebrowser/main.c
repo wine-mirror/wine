@@ -69,20 +69,17 @@ static char *strdup_unixcp( const WCHAR *str )
 }
 
 /* try to launch a unix app from a comma separated string of app names */
-static int launch_app( WCHAR *candidates, const WCHAR *argv1 )
+static int launch_app( const WCHAR *candidates, const WCHAR *argv1 )
 {
-    char *app, *applist, *cmdline;
+    char *app, *cmdline;
     const char *argv_new[3];
 
-    if (!(applist = strdup_unixcp( candidates ))) return 1;
-    if (!(cmdline = strdup_unixcp( argv1 )))
+    if (!(cmdline = strdup_unixcp( argv1 ))) return 1;
+
+    while (*candidates)
     {
-        HeapFree( GetProcessHeap(), 0, applist );
-        return 1;
-    }
-    app = strtok( applist, "," );
-    while (app)
-    {
+        if (!(app = strdup_unixcp( candidates ))) break;
+
         WINE_TRACE( "Considering: %s\n", wine_dbgstr_a(app) );
         WINE_TRACE( "argv[1]: %s\n", wine_dbgstr_a(cmdline) );
 
@@ -91,44 +88,62 @@ static int launch_app( WCHAR *candidates, const WCHAR *argv1 )
         argv_new[2] = NULL;
 
         _spawnvp( _P_OVERLAY, app, argv_new );  /* only returns on error */
-        app = strtok( NULL, "," );  /* grab the next app */
+        HeapFree( GetProcessHeap(), 0, app );
+        candidates += strlenW( candidates ) + 1;  /* grab the next app */
     }
     WINE_ERR( "could not find a suitable app to run\n" );
 
-    HeapFree( GetProcessHeap(), 0, applist );
     HeapFree( GetProcessHeap(), 0, cmdline );
     return 1;
+}
+
+static LSTATUS get_commands( HKEY key, const WCHAR *value, WCHAR *buffer, DWORD size )
+{
+    DWORD type;
+    LSTATUS res;
+
+    size -= sizeof(WCHAR);
+    if (!(res = RegQueryValueExW( key, value, 0, &type, (LPBYTE)buffer, &size )) && (type == REG_SZ))
+    {
+        /* convert to REG_MULTI_SZ type */
+        WCHAR *p = buffer;
+        p[strlenW(p) + 1] = 0;
+        while ((p = strchrW( p, ',' ))) *p++ = 0;
+    }
+    return res;
 }
 
 static int open_http_url( const WCHAR *url )
 {
 #ifdef __APPLE__
     static const WCHAR defaultbrowsers[] =
-        { '/', 'u', 's', 'r', '/', 'b', 'i', 'n', '/', 'o', 'p', 'e', 'n', 0 };
+        { '/','u','s','r','/','b','i','n','/','o','p','e','n',0,0 };
 #else
     static const WCHAR defaultbrowsers[] =
-        {'x','d','g','-','o','p','e','n',',','f','i','r','e','f','o','x',',',
-         'k','o','n','q','u','e','r','o','r',',','m','o','z','i','l','l','a',',',
-         'n','e','t','s','c','a','p','e',',','g','a','l','e','o','n',',',
-         'o','p','e','r','a',',','d','i','l','l','o',0};
+        {'x','d','g','-','o','p','e','n',0,
+         'f','i','r','e','f','o','x',0,
+         'k','o','n','q','u','e','r','o','r',0,
+         'm','o','z','i','l','l','a',0,
+         'n','e','t','s','c','a','p','e',0,
+         'g','a','l','e','o','n',0,
+         'o','p','e','r','a',0,
+         'd','i','l','l','o',0,0};
 #endif
     static const WCHAR browsersW[] =
         {'B','r','o','w','s','e','r','s',0};
 
     WCHAR browsers[256];
-    DWORD length, type;
     HKEY key;
     LONG r;
 
-    length = sizeof(browsers);
     /* @@ Wine registry key: HKCU\Software\Wine\WineBrowser */
     if  (!(r = RegOpenKeyW( HKEY_CURRENT_USER, browser_key, &key )))
     {
-        r = RegQueryValueExW( key, browsersW, 0, &type, (LPBYTE)browsers, &length );
+        r = get_commands( key, browsersW, browsers, sizeof(browsers) );
         RegCloseKey( key );
     }
     if (r != ERROR_SUCCESS)
-        strcpyW( browsers, defaultbrowsers );
+        memcpy( browsers, defaultbrowsers, sizeof(defaultbrowsers) );
 
     return launch_app( browsers, url );
 }
@@ -137,31 +152,29 @@ static int open_mailto_url( const WCHAR *url )
 {
 #ifdef __APPLE__
     static const WCHAR defaultmailers[] =
-        { '/', 'u', 's', 'r', '/', 'b', 'i', 'n', '/', 'o', 'p', 'e', 'n', 0 };
+        { '/','u','s','r','/','b','i','n','/','o','p','e','n',0,0 };
 #else
     static const WCHAR defaultmailers[] =
-        {'x','d','g','-','e','m','a','i','l',',',
-         'm','o','z','i','l','l','a','-','t','h','u','n','d','e','r','b','i','r','d',',',
-         't','h','u','n','d','e','r','b','i','r','d',',',
-         'e','v','o','l','u','t','i','o','n',0};
+        {'x','d','g','-','e','m','a','i','l',0,
+         'm','o','z','i','l','l','a','-','t','h','u','n','d','e','r','b','i','r','d',0,
+         't','h','u','n','d','e','r','b','i','r','d',0,
+         'e','v','o','l','u','t','i','o','n',0,0 };
 #endif
     static const WCHAR mailersW[] =
         {'M','a','i','l','e','r','s',0};
 
     WCHAR mailers[256];
-    DWORD length, type;
     HKEY key;
     LONG r;
 
-    length = sizeof(mailers);
     /* @@ Wine registry key: HKCU\Software\Wine\WineBrowser */
     if (!(r = RegOpenKeyW( HKEY_CURRENT_USER, browser_key, &key )))
     {
-        r = RegQueryValueExW( key, mailersW, 0, &type, (LPBYTE)mailers, &length );
+        r = get_commands( key, mailersW, mailers, sizeof(mailers) );
         RegCloseKey( key );
     }
     if (r != ERROR_SUCCESS)
-        strcpyW( mailers, defaultmailers );
+        memcpy( mailers, defaultmailers, sizeof(defaultmailers) );
 
     return launch_app( mailers, url );
 }
