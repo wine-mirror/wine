@@ -43,7 +43,7 @@ static BOOL wined3d_texture_use_immutable_storage(const struct wined3d_texture *
         const struct wined3d_gl_info *gl_info)
 {
     /* We don't expect to create texture views for textures with height-scaled formats.
-     * Besides, ARB_texture_storage doesn't allow to specify exact sizes for all levels. */
+     * Besides, ARB_texture_storage doesn't allow specifying exact sizes for all levels. */
     return gl_info->supported[ARB_TEXTURE_STORAGE]
             && !(texture->resource.format_flags & WINED3DFMT_FLAG_HEIGHT_SCALE);
 }

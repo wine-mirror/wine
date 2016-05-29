@@ -819,9 +819,9 @@ static void create_default_sampler(struct wined3d_device *device)
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     /*
-     * In SM4+ shaders there is a separation between resources and samplers. Some of shader
-     * instructions allow to access resources without using samplers.
-     * In GLSL resources are always accessed through sampler or image variables. The default
+     * In SM4+ shaders there is a separation between resources and samplers. Some shader
+     * instructions allow access to resources without using samplers.
+     * In GLSL, resources are always accessed through sampler or image variables. The default
      * sampler object is used to emulate the direct resource access when there is no sampler state
      * to use.
      */
