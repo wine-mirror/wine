@@ -172,7 +172,8 @@ static void msg_spy_cleanup(void) {
  * messages being sent to this window in response.
  */
 static const char wndcls[] = "winetest_imm32_wndcls";
-static enum { PHASE_UNKNOWN, FIRST_WINDOW, SECOND_WINDOW } test_phase;
+static enum { PHASE_UNKNOWN, FIRST_WINDOW, SECOND_WINDOW,
+              CREATE_CANCEL, NCCREATE_CANCEL } test_phase;
 static HWND hwnd;
 
 static HWND get_ime_window(void);
@@ -196,13 +197,16 @@ static LRESULT WINAPI wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 default:
                     break; /* do nothing */
             }
+            if (test_phase == NCCREATE_CANCEL)
+                return FALSE;
             return TRUE;
         case WM_NCCALCSIZE:
             default_ime_wnd = get_ime_window();
             switch(test_phase) {
                 case FIRST_WINDOW:
                 case SECOND_WINDOW:
-                    todo_wine_if(test_phase == FIRST_WINDOW)
+                case CREATE_CANCEL:
+                    todo_wine_if(test_phase == FIRST_WINDOW || test_phase == CREATE_CANCEL)
                     ok(default_ime_wnd != NULL, "expected IME window existence\n");
                     break;
                 default:
@@ -214,12 +218,15 @@ static LRESULT WINAPI wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             switch(test_phase) {
                 case FIRST_WINDOW:
                 case SECOND_WINDOW:
-                    todo_wine_if(test_phase == FIRST_WINDOW)
+                case CREATE_CANCEL:
+                    todo_wine_if(test_phase == FIRST_WINDOW || test_phase == CREATE_CANCEL)
                     ok(default_ime_wnd != NULL, "expected IME window existence\n");
                     break;
                 default:
                     break; /* do nothing */
             }
+            if (test_phase == CREATE_CANCEL)
+                return -1;
             return TRUE;
     }
 
@@ -957,6 +964,44 @@ static DWORD WINAPI test_default_ime_window_cb(void *arg)
     return 1;
 }
 
+static DWORD WINAPI test_default_ime_window_cancel_cb(void *arg)
+{
+    struct testcase_ime_window *testcase = (struct testcase_ime_window *)arg;
+    DWORD visible = testcase->visible ? WS_VISIBLE : 0;
+    HWND hwnd1, hwnd2, default_ime_wnd, ime_wnd;
+
+    ok(!get_ime_window(), "Expected no IME windows\n");
+    test_phase = NCCREATE_CANCEL;
+    hwnd1 = CreateWindowExA(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
+                            WS_OVERLAPPEDWINDOW | visible,
+                            CW_USEDEFAULT, CW_USEDEFAULT,
+                            240, 120, NULL, NULL, GetModuleHandleW(NULL), NULL);
+    ok(hwnd1 == NULL, "creation suceeded, got %p\n", hwnd1);
+    ok(!get_ime_window(), "Expected no IME windows\n");
+
+    test_phase = CREATE_CANCEL;
+    hwnd1 = CreateWindowExA(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
+                            WS_OVERLAPPEDWINDOW | visible,
+                            CW_USEDEFAULT, CW_USEDEFAULT,
+                            240, 120, NULL, NULL, GetModuleHandleW(NULL), NULL);
+    ok(hwnd1 == NULL, "creation suceeded, got %p\n", hwnd1);
+    ok(!get_ime_window(), "Expected no IME windows\n");
+
+    test_phase = FIRST_WINDOW;
+    hwnd2 = CreateWindowExA(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
+                            WS_OVERLAPPEDWINDOW | visible,
+                            CW_USEDEFAULT, CW_USEDEFAULT,
+                            240, 120, NULL, NULL, GetModuleHandleW(NULL), NULL);
+    ime_wnd = get_ime_window();
+    todo_wine ok(ime_wnd != NULL, "Expected IME window existence\n");
+    default_ime_wnd = ImmGetDefaultIMEWnd(hwnd2);
+    todo_wine ok(ime_wnd == default_ime_wnd, "Expected %p, got %p\n", ime_wnd, default_ime_wnd);
+
+    DestroyWindow(hwnd2);
+    ok(!IsWindow(ime_wnd), "Expected no IME windows\n");
+    return 1;
+}
+
 static void test_default_ime_window_creation(void)
 {
     HANDLE thread;
@@ -983,6 +1028,14 @@ static void test_default_ime_window_creation(void)
             }
         }
         CloseHandle(thread);
+
+        if (testcases[i].top_level_window)
+        {
+            thread = CreateThread(NULL, 0, test_default_ime_window_cancel_cb, &testcases[i], 0, NULL);
+            ok(thread != NULL, "CreateThread failed with error %u\n", GetLastError());
+            WaitForSingleObject(thread, INFINITE);
+            CloseHandle(thread);
+        }
     }
 
     test_phase = PHASE_UNKNOWN;
