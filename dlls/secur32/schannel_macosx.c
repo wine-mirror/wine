@@ -596,7 +596,7 @@ static OSStatus schan_pull_adapter(SSLConnectionRef transport, void *buff,
  *
  *  Returns:
  *      noErr on complete or partial success; *buff_len indicates how much data
- *          was actually written, which may be less than requrested.
+ *          was actually written, which may be less than requested.
  *      errSSLWouldBlock when no data could be written without blocking.  The
  *          caller should try again.
  *      other error code for failure.
