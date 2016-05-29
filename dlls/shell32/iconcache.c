@@ -106,7 +106,7 @@ static int SIC_LoadOverlayIcon(int icon_idx);
  * SIC_OverlayShortcutImage			[internal]
  *
  * NOTES
- *  Creates a new icon as a copy of the passed-in icon, overlayed with a
+ *  Creates a new icon as a copy of the passed-in icon, overlaid with a
  *  shortcut image. 
  */
 static HICON SIC_OverlayShortcutImage(HICON SourceIcon, BOOL large)
@@ -332,7 +332,7 @@ static INT SIC_LoadIcon (LPCWSTR sSourceFile, INT dwSourceIndex, DWORD dwFlags)
 	  }
 	  else
 	  {
-	    WARN("Failed to create shortcut overlayed icons\n");
+	    WARN("Failed to create shortcut overlaid icons\n");
 	    if (NULL != hiconLargeShortcut) DestroyIcon(hiconLargeShortcut);
 	    if (NULL != hiconSmallShortcut) DestroyIcon(hiconSmallShortcut);
 	    dwFlags &= ~ GIL_FORSHORTCUT;
