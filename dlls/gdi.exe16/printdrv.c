@@ -62,7 +62,7 @@ static const char Printers[]          = "System\\CurrentControlSet\\Control\\Pri
 /****************** misc. printer related functions */
 
 /*
- * The following function should implement a queing system
+ * The following function should implement a queuing system
  */
 struct hpq
 {
