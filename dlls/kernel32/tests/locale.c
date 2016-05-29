@@ -4784,6 +4784,8 @@ static void test_GetSystemPreferredUILanguages(void)
     ok(!ret, "Expected GetSystemPreferredUILanguages to fail\n");
     ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
        "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+
+    HeapFree(GetProcessHeap(), 0, buffer);
 }
 
 static void test_GetThreadPreferredUILanguages(void)
