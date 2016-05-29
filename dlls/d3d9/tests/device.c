@@ -2891,7 +2891,7 @@ static void test_draw_primitive(void)
     ok(SUCCEEDED(hr), "DrawIndexedPrimitiveUP failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_EndScene(device);
-    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.n", hr);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
