@@ -147,7 +147,7 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_Download(LPDIRECTMUSICSYNTH8 iface,
         TRACE(" - cbSize                  = %u\n", info->cbSize);
     }
 
-    /* The struct should have at least one offset corresponding to the donwload object itself */
+    /* The struct should have at least one offset corresponding to the download object itself */
     if (!info->dwNumOffsetTableEntries)
     {
         FIXME("Offset table is empty\n");
