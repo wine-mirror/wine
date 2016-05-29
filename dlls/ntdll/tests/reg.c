@@ -1694,6 +1694,7 @@ static void test_NtQueryKey(void)
     pRtlCreateUnicodeStringFromAsciiz(&str, "test_subkey");
     status = pNtCreateKey(&subkey, GENERIC_ALL, &attr, 0, 0, 0, 0);
     ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status);
+    pRtlFreeUnicodeString(&str);
 
     status = pNtQueryKey(subkey, KeyCachedInformation, &cached_info, sizeof(cached_info), &len);
     ok(status == STATUS_SUCCESS, "NtQueryKey Failed: 0x%08x\n", status);
@@ -1714,11 +1715,13 @@ static void test_NtQueryKey(void)
     pRtlCreateUnicodeStringFromAsciiz(&str, "test_subkey2");
     status = pNtCreateKey(&subkey2, GENERIC_ALL, &attr, 0, 0, 0, 0);
     ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status);
+    pRtlFreeUnicodeString(&str);
 
     pRtlCreateUnicodeStringFromAsciiz(&str, "val");
     dw = 64;
     status = pNtSetValueKey( subkey, &str, 0, REG_DWORD, &dw, sizeof(dw) );
     ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    pRtlFreeUnicodeString(&str);
 
     status = pNtQueryKey(subkey, KeyCachedInformation, &cached_info, sizeof(cached_info), &len);
     ok(status == STATUS_SUCCESS, "NtQueryKey Failed: 0x%08x\n", status);
@@ -1779,6 +1782,7 @@ static void test_notify(void)
     pRtlCreateUnicodeStringFromAsciiz(&str, "test_subkey");
     status = pNtCreateKey(&subkey, GENERIC_ALL, &attr, 0, 0, 0, 0);
     ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status);
+    pRtlFreeUnicodeString(&str);
 
     status = pNtWaitForSingleObject(events[0], FALSE, &timeout);
     todo_wine ok(status == STATUS_SUCCESS, "NtWaitForSingleObject returned %x\n", status);
@@ -1830,6 +1834,7 @@ static void test_notify(void)
         pRtlCreateUnicodeStringFromAsciiz(&str, "test_subkey");
         status = pNtCreateKey(&subkey, GENERIC_ALL, &attr, 0, 0, 0, 0);
         ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status);
+        pRtlFreeUnicodeString(&str);
 
         status = pNtWaitForSingleObject(events[0], FALSE, &timeout);
         ok(status == STATUS_SUCCESS, "NtWaitForSingleObject returned %x\n", status);
