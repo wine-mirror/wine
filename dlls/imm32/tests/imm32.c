@@ -172,15 +172,54 @@ static void msg_spy_cleanup(void) {
  * messages being sent to this window in response.
  */
 static const char wndcls[] = "winetest_imm32_wndcls";
+static enum { PHASE_UNKNOWN, FIRST_WINDOW, SECOND_WINDOW } test_phase;
 static HWND hwnd;
+
+static HWND get_ime_window(void);
 
 static LRESULT WINAPI wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    HWND default_ime_wnd;
     switch (msg)
     {
         case WM_IME_SETCONTEXT:
+            return TRUE;
         case WM_NCCREATE:
+            default_ime_wnd = get_ime_window();
+            switch(test_phase) {
+                case FIRST_WINDOW:
+                    ok(!default_ime_wnd, "expected no IME windows\n");
+                    break;
+                case SECOND_WINDOW:
+                    ok(default_ime_wnd != NULL, "expected IME window existence\n");
+                    break;
+                default:
+                    break; /* do nothing */
+            }
+            return TRUE;
+        case WM_NCCALCSIZE:
+            default_ime_wnd = get_ime_window();
+            switch(test_phase) {
+                case FIRST_WINDOW:
+                case SECOND_WINDOW:
+                    todo_wine_if(test_phase == FIRST_WINDOW)
+                    ok(default_ime_wnd != NULL, "expected IME window existence\n");
+                    break;
+                default:
+                    break; /* do nothing */
+            }
+            break;
         case WM_CREATE:
+            default_ime_wnd = get_ime_window();
+            switch(test_phase) {
+                case FIRST_WINDOW:
+                case SECOND_WINDOW:
+                    todo_wine_if(test_phase == FIRST_WINDOW)
+                    ok(default_ime_wnd != NULL, "expected IME window existence\n");
+                    break;
+                default:
+                    break; /* do nothing */
+            }
             return TRUE;
     }
 
@@ -879,6 +918,7 @@ static DWORD WINAPI test_default_ime_window_cb(void *arg)
     HWND hwnd1, hwnd2, default_ime_wnd, ime_wnd;
 
     ok(!get_ime_window(), "Expected no IME windows\n");
+    test_phase = FIRST_WINDOW;
     hwnd1 = CreateWindowExA(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
                             WS_OVERLAPPEDWINDOW | visible,
                             CW_USEDEFAULT, CW_USEDEFAULT,
@@ -887,6 +927,8 @@ static DWORD WINAPI test_default_ime_window_cb(void *arg)
     todo_wine ok(ime_wnd != NULL, "Expected IME window existence\n");
     default_ime_wnd = ImmGetDefaultIMEWnd(hwnd1);
     todo_wine ok(ime_wnd == default_ime_wnd, "Expected %p, got %p\n", ime_wnd, default_ime_wnd);
+
+    test_phase = SECOND_WINDOW;
     hwnd2 = CreateWindowExA(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
                             WS_OVERLAPPEDWINDOW | visible,
                             CW_USEDEFAULT, CW_USEDEFAULT,
@@ -909,6 +951,8 @@ static void test_default_ime_window_creation(void)
     thread = CreateThread(NULL, 0, test_default_ime_window_cb, (LPVOID)TRUE, 0, NULL);
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
+
+    test_phase = PHASE_UNKNOWN;
 }
 
 static void test_ImmGetIMCLockCount(void)
