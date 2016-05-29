@@ -1003,6 +1003,7 @@ DWORD set_cookie(substr_t domain, substr_t path, substr_t name, substr_t data, D
         if ((thisCookie->flags & INTERNET_COOKIE_HTTPONLY) && !(flags & INTERNET_COOKIE_HTTPONLY)) {
             WARN("An attempt to override httponly cookie\n");
             SetLastError(ERROR_INVALID_OPERATION);
+            LeaveCriticalSection(&cookie_cs);
             return COOKIE_STATE_REJECT;
         }
 
