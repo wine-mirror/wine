@@ -1629,6 +1629,7 @@ static ULONG WINAPI dwritefontlist_Release(IDWriteFontList1 *iface)
         for (i = 0; i < This->font_count; i++)
             release_font_data(This->fonts[i]);
         IDWriteFontFamily1_Release(This->family);
+        heap_free(This->fonts);
         heap_free(This);
     }
 
