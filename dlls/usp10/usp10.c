@@ -2762,9 +2762,9 @@ static inline int get_cluster_advance(const int* piAdvance,
  *      ScriptXtoCP (USP10.@)
  *
  * Basic algorithm :
- *  use piAdvance to find the cluster we are looking at
- *  Find the character that is the first character of the cluster
- *  That is our base piCP
+ *  Use piAdvance to find the cluster we are looking at.
+ *  Find the character that is the first character of the cluster.
+ *  That is our base piCP.
  *  If the script snaps to cluster boundaries (Hebrew, Indic, Thai) then we
  *  are good. Otherwise if the cluster is larger than 1 glyph we need to
  *  determine how far through the cluster to advance the cursor.
