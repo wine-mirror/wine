@@ -238,7 +238,7 @@ BOOL WINAPI VirtualProtectEx( HANDLE process, LPVOID addr, SIZE_T size,
     NTSTATUS status;
     DWORD prot;
 
-    /* Win9x allows to pass NULL as old_prot while it fails on NT */
+    /* Win9x allows passing NULL as old_prot while this fails on NT */
     if (!old_prot && (GetVersion() & 0x80000000)) old_prot = &prot;
 
     status = NtProtectVirtualMemory( process, &addr, &size, new_prot, old_prot );
