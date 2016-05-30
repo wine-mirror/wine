@@ -118,6 +118,7 @@ typedef struct {
 
 #define	COLUMNS	10
 	int		widths[COLUMNS];
+	int		widths_shown[COLUMNS];
 	int		positions[COLUMNS+1];
 
 	BOOL	treePane;
@@ -2354,6 +2355,7 @@ static HWND create_header(HWND parent, Pane* pane, UINT id)
 		hdi.pszText = g_pos_names[idx];
 		hdi.fmt = HDF_STRING | g_pos_align[idx];
 		hdi.cxy = pane->widths[idx];
+		pane->widths_shown[idx] = hdi.cxy;
 		SendMessageW(hwnd, HDM_INSERTITEMW, idx, (LPARAM)&hdi);
 	}
 
@@ -3173,17 +3175,20 @@ static void set_header(Pane* pane)
 
 	for(; (i < COLUMNS) && (x+pane->widths[i] < scroll_pos); i++) {
 		x += pane->widths[i];
+		pane->widths_shown[i] = item.cxy;
 		SendMessageW(pane->hwndHeader, HDM_SETITEMW, i, (LPARAM)&item);
 	}
 
 	if (i < COLUMNS) {
 		x += pane->widths[i];
 		item.cxy = x - scroll_pos;
+		pane->widths_shown[i] = item.cxy;
 		SendMessageW(pane->hwndHeader, HDM_SETITEMW, i++, (LPARAM)&item);
 
 		for(; i < COLUMNS; i++) {
 			item.cxy = pane->widths[i];
 			x += pane->widths[i];
+			pane->widths_shown[i] = item.cxy;
 			SendMessageW(pane->hwndHeader, HDM_SETITEMW, i, (LPARAM)&item);
 		}
 	}
@@ -3195,13 +3200,14 @@ static LRESULT pane_notify(Pane* pane, NMHDR* pnmh)
 		case HDN_ITEMCHANGEDW: {
 			LPNMHEADERW phdn = (LPNMHEADERW)pnmh;
 			int idx = phdn->iItem;
-			int dx = phdn->pitem->cxy - pane->widths[idx];
+			int dx = phdn->pitem->cxy - pane->widths_shown[idx];
 			int i;
 
 			RECT clnt;
 			GetClientRect(pane->hwnd, &clnt);
 
 			pane->widths[idx] += dx;
+			pane->widths_shown[idx] += dx;
 
 			for(i=idx; ++i<=COLUMNS; )
 				pane->positions[i] += dx;
