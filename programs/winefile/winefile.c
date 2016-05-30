@@ -3163,29 +3163,20 @@ static void set_header(Pane* pane)
 {
 	HDITEMW item;
 	int scroll_pos = GetScrollPos(pane->hwnd, SB_HORZ);
-	int i=0, x=0;
+	int i;
 
 	item.mask = HDI_WIDTH;
-	item.cxy = 0;
 
-	for(; (i < COLUMNS) && (x+pane->widths[i] < scroll_pos); i++) {
-		x += pane->widths[i];
+	for (i = 0; i < COLUMNS; ++i) {
+		if (pane->positions[i] >= scroll_pos) {
+			item.cxy = pane->widths[i];
+		} else if (pane->positions[i+1] <= scroll_pos) {
+			item.cxy = 0;
+		} else {
+			item.cxy = pane->positions[i+1] - scroll_pos;
+		}
 		pane->widths_shown[i] = item.cxy;
 		SendMessageW(pane->hwndHeader, HDM_SETITEMW, i, (LPARAM)&item);
-	}
-
-	if (i < COLUMNS) {
-		x += pane->widths[i];
-		item.cxy = x - scroll_pos;
-		pane->widths_shown[i] = item.cxy;
-		SendMessageW(pane->hwndHeader, HDM_SETITEMW, i++, (LPARAM)&item);
-
-		for(; i < COLUMNS; i++) {
-			item.cxy = pane->widths[i];
-			x += pane->widths[i];
-			pane->widths_shown[i] = item.cxy;
-			SendMessageW(pane->hwndHeader, HDM_SETITEMW, i, (LPARAM)&item);
-		}
 	}
 }
 
