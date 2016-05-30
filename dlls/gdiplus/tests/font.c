@@ -781,6 +781,7 @@ static void test_font_substitution(void)
     expect(Ok, status);
     strcpy(fallback_font,lf.lfFaceName);
     trace("fallback font %s\n", fallback_font);
+    GdipDeleteFont(font);
 
     lstrcpyA(lf.lfFaceName, "ThisFontShouldNotExist");
     status = GdipCreateFontFromLogfontA(hdc, &lf, &font);
