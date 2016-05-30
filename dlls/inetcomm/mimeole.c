@@ -496,7 +496,15 @@ static HRESULT find_prop(MimeBody *body, const char *name, header_t **prop)
 
     LIST_FOR_EACH_ENTRY(header, &body->headers, header_t, entry)
     {
-        if(!lstrcmpiA(name, header->prop->name))
+        if(ISPIDSTR(name))
+        {
+            if(STRTOPID(name) == header->prop->id)
+            {
+                *prop = header;
+                return S_OK;
+            }
+        }
+        else if(!lstrcmpiA(name, header->prop->name))
         {
             *prop = header;
             return S_OK;
@@ -504,6 +512,33 @@ static HRESULT find_prop(MimeBody *body, const char *name, header_t **prop)
     }
 
     return MIME_E_NOT_FOUND;
+}
+
+static const property_t *find_default_prop(const char *name)
+{
+    const property_t *prop_def = NULL;
+
+    for(prop_def = default_props; prop_def->name; prop_def++)
+    {
+        if(ISPIDSTR(name))
+        {
+            if(STRTOPID(name) == prop_def->id)
+            {
+                break;
+            }
+        }
+        else if(!lstrcmpiA(name, prop_def->name))
+        {
+            break;
+        }
+    }
+
+    if(prop_def->id)
+       TRACE("%s: found match with default property id %d\n", prop_def->name, prop_def->id);
+    else
+       prop_def = NULL;
+
+    return prop_def;
 }
 
 static HRESULT WINAPI MimeBody_QueryInterface(IMimeBody* iface,
@@ -650,7 +685,7 @@ static HRESULT WINAPI MimeBody_GetProp(
     if(!pszName || !pValue)
         return E_INVALIDARG;
 
-    if(!lstrcmpiA(pszName, "att:pri-content-type"))
+    if(!ISPIDSTR(pszName) && !lstrcmpiA(pszName, "att:pri-content-type"))
     {
         PropVariantClear(pValue);
         pValue->vt = VT_LPSTR;
@@ -690,7 +725,16 @@ static HRESULT WINAPI MimeBody_SetProp(
 
         LIST_FOR_EACH_ENTRY(prop_entry, &This->new_props, property_list_entry_t, entry)
         {
-            if(!lstrcmpiA(pszName, prop_entry->prop.name))
+            if(ISPIDSTR(pszName))
+            {
+                if(STRTOPID(pszName) == prop_entry->prop.id)
+                {
+                    TRACE("Found match with already added new property id %d\n", prop_entry->prop.id);
+                    prop = &prop_entry->prop;
+                    break;
+                }
+            }
+            else if(!lstrcmpiA(pszName, prop_entry->prop.name))
             {
                 TRACE("Found match with already added new property id %d\n", prop_entry->prop.id);
                 prop = &prop_entry->prop;
@@ -704,14 +748,33 @@ static HRESULT WINAPI MimeBody_SetProp(
 
         if(!prop)
         {
+            const property_t *prop_def = NULL;
             prop_entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*prop_entry));
             if(!prop_entry)
             {
                 HeapFree(GetProcessHeap(), 0, header);
                 return E_OUTOFMEMORY;
             }
-            prop_entry->prop.name = strdupA(pszName);
-            prop_entry->prop.id = This->next_prop_id++;
+
+            prop_def = find_default_prop(pszName);
+            if(prop_def)
+            {
+                prop_entry->prop.name = strdupA(prop_def->name);
+                prop_entry->prop.id =  prop_def->id;
+            }
+            else
+            {
+                if(ISPIDSTR(pszName))
+                {
+                    HeapFree(GetProcessHeap(), 0, prop_entry);
+                    HeapFree(GetProcessHeap(), 0, header);
+                    return MIME_E_NOT_FOUND;
+                }
+
+                prop_entry->prop.name = strdupA(pszName);
+                prop_entry->prop.id = This->next_prop_id++;
+            }
+
             prop_entry->prop.flags = 0;
             prop_entry->prop.default_vt = pValue->vt;
             list_add_tail(&This->new_props, &prop_entry->entry);

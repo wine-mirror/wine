@@ -379,6 +379,47 @@ static void test_MessageSetProp(void)
         PropVariantClear(&prop);
     }
 
+    prop.vt = VT_LPSTR;
+    prop.u.pszVal = CoTaskMemAlloc(strlen(topic)+1);
+    strcpy(prop.u.pszVal, topic);
+    hr = IMimeBody_SetProp(body, PIDTOSTR(PID_HDR_SUBJECT), 0, &prop);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    PropVariantClear(&prop);
+
+    hr = IMimeBody_GetProp(body, PIDTOSTR(PID_HDR_SUBJECT), 0, &prop);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    if(hr == S_OK)
+    {
+        ok(prop.vt == VT_LPSTR, "type %d\n", prop.vt);
+        ok(!strcmp(prop.u.pszVal, topic), "got  %s\n", prop.u.pszVal);
+        PropVariantClear(&prop);
+    }
+
+    /* Using the name or PID returns the same result. */
+    hr = IMimeBody_GetProp(body, "Subject", 0, &prop);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    if(hr == S_OK)
+    {
+        ok(prop.vt == VT_LPSTR, "type %d\n", prop.vt);
+        ok(!strcmp(prop.u.pszVal, topic), "got  %s\n", prop.u.pszVal);
+        PropVariantClear(&prop);
+    }
+
+    prop.vt = VT_LPSTR;
+    prop.u.pszVal = CoTaskMemAlloc(strlen(topic)+1);
+    strcpy(prop.u.pszVal, topic);
+    hr = IMimeBody_SetProp(body, PIDTOSTR(PID_HDR_TO), 0, &prop);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    PropVariantClear(&prop);
+
+    /* Out of Range PID */
+    prop.vt = VT_LPSTR;
+    prop.u.pszVal = CoTaskMemAlloc(strlen(topic)+1);
+    strcpy(prop.u.pszVal, topic);
+    hr = IMimeBody_SetProp(body, PIDTOSTR(124), 0, &prop);
+    ok(hr == MIME_E_NOT_FOUND, "ret %08x\n", hr);
+    PropVariantClear(&prop);
+
     IMimeBody_Release(body);
     IMimeMessage_Release(msg);
 }

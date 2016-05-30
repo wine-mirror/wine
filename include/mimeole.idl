@@ -153,6 +153,10 @@ cpp_quote("    PID_ATT_ACCOUNTNAME   = 78,")
 cpp_quote("    PID_LAST              = 79,")
 cpp_quote("} MIMEPROPID;")
 
+cpp_quote("#define ISPIDSTR(_name)               (((DWORD_PTR)(_name) >> 16) == 0)")
+cpp_quote("#define STRTOPID(_name)               ((DWORD)((DWORD_PTR)((LPCSTR)(_name))))")
+cpp_quote("#define PIDTOSTR(_id)                 ((LPCSTR)((DWORD_PTR)(_id)))")
+
 cpp_quote("#define TYPEDID_ID(_typedid)          (((ULONG)(_typedid))>>16)")
 cpp_quote("#define TYPEDID_MASK                  ((ULONG)0xffff)")
 cpp_quote("#define TYPEDID_TYPE(t)               ((VARTYPE)((t) & TYPEDID_MASK))")
