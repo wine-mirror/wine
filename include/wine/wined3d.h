@@ -765,9 +765,10 @@ enum wined3d_sysval_semantic
 
 enum wined3d_component_type
 {
-    WINED3D_TYPE_UINT  = 1,
-    WINED3D_TYPE_INT   = 2,
-    WINED3D_TYPE_FLOAT = 3,
+    WINED3D_TYPE_UNKNOWN = 0,
+    WINED3D_TYPE_UINT    = 1,
+    WINED3D_TYPE_INT     = 2,
+    WINED3D_TYPE_FLOAT   = 3,
 };
 
 enum wined3d_scanline_ordering

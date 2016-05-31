@@ -1584,6 +1584,11 @@ static BOOL needs_legacy_glsl_syntax(const struct wined3d_gl_info *gl_info)
     return gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
 }
 
+static BOOL shader_glsl_use_explicit_attrib_location(const struct wined3d_gl_info *gl_info)
+{
+    return !needs_legacy_glsl_syntax(gl_info) && gl_info->supported[ARB_EXPLICIT_ATTRIB_LOCATION];
+}
+
 static const char *get_attribute_keyword(const struct wined3d_gl_info *gl_info)
 {
     return needs_legacy_glsl_syntax(gl_info) ? "attribute" : "in";
@@ -1713,6 +1718,46 @@ static void shader_glsl_declare_typed_vertex_attribute(struct wined3d_string_buf
             get_attribute_keyword(gl_info), vector_type, scalar_type, index);
     shader_addline(buffer, "vec4 vs_in%u = %sBitsToFloat(vs_in_%s%u);\n",
             index, scalar_type, scalar_type, index);
+}
+
+static void shader_glsl_declare_generic_vertex_attribute(struct wined3d_string_buffer *buffer,
+        const struct wined3d_gl_info *gl_info, const struct wined3d_shader_signature_element *e)
+{
+    unsigned int index = e->register_idx;
+
+    if (e->sysval_semantic == WINED3D_SV_VERTEX_ID)
+    {
+        shader_addline(buffer, "vec4 vs_in%u = vec4(intBitsToFloat(gl_VertexID), 0.0, 0.0, 0.0);\n",
+                index);
+        return;
+    }
+    if (e->sysval_semantic == WINED3D_SV_INSTANCE_ID)
+    {
+        shader_addline(buffer, "vec4 vs_in%u = vec4(intBitsToFloat(gl_InstanceID), 0.0, 0.0, 0.0);\n",
+                index);
+        return;
+    }
+
+    if (shader_glsl_use_explicit_attrib_location(gl_info))
+        shader_addline(buffer, "layout(location = %u) ", index);
+
+    switch (e->component_type)
+    {
+        case WINED3D_TYPE_UINT:
+            shader_glsl_declare_typed_vertex_attribute(buffer, gl_info, "uvec", "uint", index);
+            break;
+        case WINED3D_TYPE_INT:
+            shader_glsl_declare_typed_vertex_attribute(buffer, gl_info, "ivec", "int", index);
+            break;
+
+        default:
+            FIXME("Unhandled type %#x.\n", e->component_type);
+            /* Fall through. */
+        case WINED3D_TYPE_UNKNOWN:
+        case WINED3D_TYPE_FLOAT:
+            shader_addline(buffer, "%s vec4 vs_in%u;\n", get_attribute_keyword(gl_info), index);
+            break;
+    }
 }
 
 /** Generate the variable & register declarations for the GLSL output target */
@@ -1964,34 +2009,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     if (version->type == WINED3D_SHADER_TYPE_VERTEX)
     {
         for (i = 0; i < shader->input_signature.element_count; ++i)
-        {
-            const struct wined3d_shader_signature_element *e = &shader->input_signature.elements[i];
-            if (e->sysval_semantic == WINED3D_SV_VERTEX_ID)
-            {
-                shader_addline(buffer, "vec4 %s_in%u = vec4(intBitsToFloat(gl_VertexID), 0.0, 0.0, 0.0);\n",
-                        prefix, e->register_idx);
-            }
-            else if (e->sysval_semantic == WINED3D_SV_INSTANCE_ID)
-            {
-                shader_addline(buffer, "vec4 %s_in%u = vec4(intBitsToFloat(gl_InstanceID), 0.0, 0.0, 0.0);\n",
-                        prefix, e->register_idx);
-            }
-            else if (e->component_type == WINED3D_TYPE_UINT)
-            {
-                shader_glsl_declare_typed_vertex_attribute(buffer, gl_info, "uvec", "uint", e->register_idx);
-            }
-            else if (e->component_type == WINED3D_TYPE_INT)
-            {
-                shader_glsl_declare_typed_vertex_attribute(buffer, gl_info, "ivec", "int", e->register_idx);
-            }
-            else
-            {
-                if (e->component_type && e->component_type != WINED3D_TYPE_FLOAT)
-                    FIXME("Unhandled type %#x.\n", e->component_type);
-                shader_addline(buffer, "%s vec4 %s_in%u;\n",
-                        get_attribute_keyword(gl_info), prefix, e->register_idx);
-            }
-        }
+            shader_glsl_declare_generic_vertex_attribute(buffer, gl_info, &shader->input_signature.elements[i]);
 
         if (vs_args->point_size && !vs_args->per_vertex_point_size)
         {
@@ -5809,6 +5827,8 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
 
     if (gl_info->supported[ARB_DRAW_INSTANCED])
         shader_addline(buffer, "#extension GL_ARB_draw_instanced : enable\n");
+    if (gl_info->supported[ARB_EXPLICIT_ATTRIB_LOCATION])
+        shader_addline(buffer, "#extension GL_ARB_explicit_attrib_location : enable\n");
     if (gl_info->supported[ARB_SHADER_BIT_ENCODING])
         shader_addline(buffer, "#extension GL_ARB_shader_bit_encoding : enable\n");
     if (gl_info->supported[ARB_TEXTURE_QUERY_LEVELS])
@@ -7605,33 +7625,36 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         attribs_map = (1u << WINED3D_FFP_ATTRIBS_COUNT) - 1;
     }
 
-    /* Bind vertex attributes to a corresponding index number to match
-     * the same index numbers as ARB_vertex_programs (makes loading
-     * vertex attributes simpler).  With this method, we can use the
-     * exact same code to load the attributes later for both ARB and
-     * GLSL shaders.
-     *
-     * We have to do this here because we need to know the Program ID
-     * in order to make the bindings work, and it has to be done prior
-     * to linking the GLSL program. */
-    tmp_name = string_buffer_get(&priv->string_buffers);
-    for (i = 0; attribs_map; attribs_map >>= 1, ++i)
+    if (!shader_glsl_use_explicit_attrib_location(gl_info))
     {
-        if (!(attribs_map & 1))
-            continue;
-
-        string_buffer_sprintf(tmp_name, "vs_in%u", i);
-        GL_EXTCALL(glBindAttribLocation(program_id, i, tmp_name->buffer));
-        if (vshader && vshader->reg_maps.shader_version.major >= 4)
+        /* Bind vertex attributes to a corresponding index number to match
+         * the same index numbers as ARB_vertex_programs (makes loading
+         * vertex attributes simpler).  With this method, we can use the
+         * exact same code to load the attributes later for both ARB and
+         * GLSL shaders.
+         *
+         * We have to do this here because we need to know the Program ID
+         * in order to make the bindings work, and it has to be done prior
+         * to linking the GLSL program. */
+        tmp_name = string_buffer_get(&priv->string_buffers);
+        for (i = 0; attribs_map; attribs_map >>= 1, ++i)
         {
-            string_buffer_sprintf(tmp_name, "vs_in_uint%u", i);
+            if (!(attribs_map & 1))
+                continue;
+
+            string_buffer_sprintf(tmp_name, "vs_in%u", i);
             GL_EXTCALL(glBindAttribLocation(program_id, i, tmp_name->buffer));
-            string_buffer_sprintf(tmp_name, "vs_in_int%u", i);
-            GL_EXTCALL(glBindAttribLocation(program_id, i, tmp_name->buffer));
+            if (vshader && vshader->reg_maps.shader_version.major >= 4)
+            {
+                string_buffer_sprintf(tmp_name, "vs_in_uint%u", i);
+                GL_EXTCALL(glBindAttribLocation(program_id, i, tmp_name->buffer));
+                string_buffer_sprintf(tmp_name, "vs_in_int%u", i);
+                GL_EXTCALL(glBindAttribLocation(program_id, i, tmp_name->buffer));
+            }
         }
+        checkGLcall("glBindAttribLocation");
+        string_buffer_release(&priv->string_buffers, tmp_name);
     }
-    checkGLcall("glBindAttribLocation");
-    string_buffer_release(&priv->string_buffers, tmp_name);
 
     if (gshader)
     {
