@@ -3646,7 +3646,6 @@ void LOCALE_Init(void)
     CFStringGetCString( user_locale_string_ref, user_locale, sizeof(user_locale), kCFStringEncodingUTF8 );
     strcat(user_locale, ".UTF-8");
 
-    unix_cp = CP_UTF8;  /* default to utf-8 even if we don't get a valid locale */
     setenv( "LANG", user_locale, 0 );
     TRACE( "setting locale to '%s'\n", user_locale );
 #endif /* __APPLE__ */
@@ -3657,6 +3656,9 @@ void LOCALE_Init(void)
     if (!lcid_LC_MESSAGES) lcid_LC_MESSAGES = lcid_LC_CTYPE;
 
 #ifdef __APPLE__
+    if (!unix_cp)
+        unix_cp = CP_UTF8;  /* default to utf-8 even if we don't get a valid locale */
+
     /* Override lcid_LC_MESSAGES with user's preferred language if LC_MESSAGES is set to default */
     if (!getenv("LC_ALL") && !getenv("LC_MESSAGES"))
     {
