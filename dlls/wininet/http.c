@@ -1771,7 +1771,7 @@ static BOOL HTTP_ShouldBypassProxy(appinfo_t *lpwai, LPCWSTR server)
         if (!ptr)
             ptr = strchrW( tmp, ' ' );
         if (!ptr)
-            ptr = tmp + strlenW(ptr);
+            ptr = tmp + strlenW(tmp);
         ret = HTTP_DomainMatches( server, substr(tmp, ptr-tmp) );
         if (ret || !*ptr)
             break;
