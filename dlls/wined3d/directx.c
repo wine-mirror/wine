@@ -117,6 +117,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_draw_elements_base_vertex",    ARB_DRAW_ELEMENTS_BASE_VERTEX },
     {"GL_ARB_draw_instanced",               ARB_DRAW_INSTANCED            },
     {"GL_ARB_ES2_compatibility",            ARB_ES2_COMPATIBILITY         },
+    {"GL_ARB_explicit_attrib_location",     ARB_EXPLICIT_ATTRIB_LOCATION  },
     {"GL_ARB_fragment_program",             ARB_FRAGMENT_PROGRAM          },
     {"GL_ARB_fragment_shader",              ARB_FRAGMENT_SHADER           },
     {"GL_ARB_framebuffer_object",           ARB_FRAMEBUFFER_OBJECT        },
@@ -3513,6 +3514,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
         {ARB_VERTEX_ARRAY_BGRA,            MAKEDWORD_VERSION(3, 2)},
 
         {ARB_BLEND_FUNC_EXTENDED,          MAKEDWORD_VERSION(3, 3)},
+        {ARB_EXPLICIT_ATTRIB_LOCATION,     MAKEDWORD_VERSION(3, 3)},
         {ARB_INSTANCED_ARRAYS,             MAKEDWORD_VERSION(3, 3)},
         {ARB_SAMPLER_OBJECTS,              MAKEDWORD_VERSION(3, 3)},
         {ARB_SHADER_BIT_ENCODING,          MAKEDWORD_VERSION(3, 3)},
