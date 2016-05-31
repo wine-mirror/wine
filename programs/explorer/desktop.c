@@ -636,7 +636,7 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
         return 0;
 
     case WM_PARENTNOTIFY:
-        if (LOWORD(wp) == WM_DESTROY) cleanup_systray_window( (HWND)lp );
+        handle_parent_notify( (HWND)lp, wp );
         return 0;
 
     case WM_LBUTTONDBLCLK:

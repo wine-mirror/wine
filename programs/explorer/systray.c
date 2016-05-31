@@ -447,7 +447,7 @@ static BOOL delete_icon(struct icon *icon)
 }
 
 /* cleanup icons belonging to a window that has been destroyed */
-void cleanup_systray_window( HWND hwnd )
+static void cleanup_systray_window( HWND hwnd )
 {
     struct icon *icon, *next;
 
@@ -678,6 +678,17 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
         return DefWindowProcW( hwnd, msg, wparam, lparam );
     }
     return 0;
+}
+
+/* notifcation posted to the desktop window */
+void handle_parent_notify( HWND hwnd, WPARAM wp )
+{
+    switch (LOWORD(wp))
+    {
+    case WM_DESTROY:
+        cleanup_systray_window( hwnd );
+        break;
+    }
 }
 
 /* this function creates the listener window */
