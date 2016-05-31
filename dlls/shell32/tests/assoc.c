@@ -109,10 +109,10 @@ static void getstring_test(LPCWSTR assocName, HKEY progIdKey, ASSOCSTR str, LPCW
 
     hr = CoCreateInstance(&CLSID_QueryAssociations, NULL, CLSCTX_INPROC_SERVER, &IID_IQueryAssociations, (void*)&assoc);
     ok_(__FILE__, line)(hr == S_OK, "failed to create IQueryAssociations, 0x%x\n", hr);
-    hr = IQueryAssociations_Init(assoc, 0, assocName, progIdKey, NULL);
+    hr = IQueryAssociations_Init(assoc, ASSOCF_NONE, assocName, progIdKey, NULL);
     ok_(__FILE__, line)(hr == S_OK, "IQueryAssociations::Init failed, 0x%x\n", hr);
 
-    hr = IQueryAssociations_GetString(assoc, 0, str, NULL, NULL, &len);
+    hr = IQueryAssociations_GetString(assoc, ASSOCF_NONE, str, NULL, NULL, &len);
     if (hr != S_FALSE) {
         if (expected_string) {
             ok_(__FILE__, line)(SUCCEEDED(hr), "GetString returned 0x%x, expected success\n", hr);
@@ -123,7 +123,7 @@ static void getstring_test(LPCWSTR assocName, HKEY progIdKey, ASSOCSTR str, LPCW
 
     buffer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     ok_(__FILE__, line)(buffer != NULL, "out of memory\n");
-    hr = IQueryAssociations_GetString(assoc, 0, str, NULL, buffer, &len);
+    hr = IQueryAssociations_GetString(assoc, ASSOCF_NONE, str, NULL, buffer, &len);
 
     if (expected_string) {
         ok_(__FILE__, line)(lstrcmpW(buffer, expected_string) == 0, "GetString returned %s, expected %s\n",
@@ -182,11 +182,11 @@ static void test_IQueryAssociations_GetString(void)
     hr = CoCreateInstance(&CLSID_QueryAssociations, NULL, CLSCTX_INPROC_SERVER, &IID_IQueryAssociations, (void*)&assoc);
     ok(hr == S_OK, "failed to create object, 0x%x\n", hr);
 
-    hr = IQueryAssociations_Init(assoc, 0, httpW, NULL, NULL);
+    hr = IQueryAssociations_Init(assoc, ASSOCF_NONE, httpW, NULL, NULL);
     ok(hr == S_OK, "Init failed, 0x%x\n", hr);
 
     len = 0;
-    hr = IQueryAssociations_GetString(assoc, 0, ASSOCSTR_EXECUTABLE, NULL, NULL, &len);
+    hr = IQueryAssociations_GetString(assoc, ASSOCF_NONE, ASSOCSTR_EXECUTABLE, NULL, NULL, &len);
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
     ok(len > 0, "got wrong needed length, %d\n", len);
 
@@ -195,7 +195,7 @@ static void test_IQueryAssociations_GetString(void)
         WCHAR buffW[MAX_PATH];
         DWORD len;
 
-        hr = IQueryAssociations_Init(assoc, 0, ptr->key, NULL, NULL);
+        hr = IQueryAssociations_Init(assoc, ASSOCF_NONE, ptr->key, NULL, NULL);
         ok(hr == S_OK, "%d: Init failed, 0x%x\n", i, hr);
 
         len = ptr->len;
@@ -232,17 +232,17 @@ static void test_IQueryAssociations_Init(void)
     hr = CoCreateInstance(&CLSID_QueryAssociations, NULL, CLSCTX_INPROC_SERVER, &IID_IQueryAssociations, (void*)&assoc);
     ok(hr == S_OK, "failed to create object, 0x%x\n", hr);
 
-    hr = IQueryAssociations_Init(assoc, 0, NULL, NULL, NULL);
+    hr = IQueryAssociations_Init(assoc, ASSOCF_NONE, NULL, NULL, NULL);
     ok(hr == E_INVALIDARG, "Init failed, 0x%08x\n", hr);
 
-    hr = IQueryAssociations_Init(assoc, 0, httpW, NULL, NULL);
+    hr = IQueryAssociations_Init(assoc, ASSOCF_NONE, httpW, NULL, NULL);
     ok(hr == S_OK, "Init failed, 0x%08x\n", hr);
 
-    hr = IQueryAssociations_Init(assoc, 0, badW, NULL, NULL);
+    hr = IQueryAssociations_Init(assoc, ASSOCF_NONE, badW, NULL, NULL);
     ok(hr == S_OK || broken(hr == S_FALSE) /* pre-vista */, "Init failed, 0x%08x\n", hr);
 
     len = 0;
-    hr = IQueryAssociations_GetString(assoc, 0, ASSOCSTR_EXECUTABLE, NULL, NULL, &len);
+    hr = IQueryAssociations_GetString(assoc, ASSOCF_NONE, ASSOCSTR_EXECUTABLE, NULL, NULL, &len);
     ok(hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION) || broken(hr == E_FAIL) /* pre-vista */, "got 0x%08x\n", hr);
 
     IQueryAssociations_Release(assoc);
