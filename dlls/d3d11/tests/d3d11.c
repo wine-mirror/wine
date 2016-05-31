@@ -98,6 +98,14 @@ static BOOL compare_float(float f, float g, unsigned int ulps)
     return TRUE;
 }
 
+static BOOL compare_vec4(const struct vec4 *v1, const struct vec4 *v2, unsigned int ulps)
+{
+    return compare_float(v1->x, v2->x, ulps)
+            && compare_float(v1->y, v2->y, ulps)
+            && compare_float(v1->z, v2->z, ulps)
+            && compare_float(v1->w, v2->w, ulps);
+}
+
 static BOOL compare_color(DWORD c1, DWORD c2, BYTE max_diff)
 {
     if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff)
@@ -200,6 +208,11 @@ static DWORD get_readback_color(struct texture_readback *rb, unsigned int x, uns
 static float get_readback_float(struct texture_readback *rb, unsigned int x, unsigned int y)
 {
     return ((float *)rb->map_desc.pData)[rb->map_desc.RowPitch * y / sizeof(float) + x];
+}
+
+static const struct vec4 *get_readback_vec4(struct texture_readback *rb, unsigned int x, unsigned int y)
+{
+    return &((const struct vec4 *)rb->map_desc.pData)[rb->map_desc.RowPitch * y / sizeof(struct vec4) + x];
 }
 
 static void release_texture_readback(struct texture_readback *rb)
@@ -7089,6 +7102,350 @@ static void test_sm4_breakc_instruction(void)
     release_test_context(&test_context);
 }
 
+static void test_input_assembler(void)
+{
+    enum layout_id
+    {
+        LAYOUT_FLOAT32,
+        LAYOUT_UINT16,
+        LAYOUT_SINT16,
+        LAYOUT_UNORM16,
+        LAYOUT_SNORM16,
+        LAYOUT_UINT8,
+        LAYOUT_SINT8,
+        LAYOUT_UNORM8,
+        LAYOUT_SNORM8,
+
+        LAYOUT_COUNT,
+    };
+
+    D3D11_INPUT_ELEMENT_DESC input_layout_desc[] =
+    {
+        {"POSITION",  0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"ATTRIBUTE", 0, DXGI_FORMAT_UNKNOWN,      1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    };
+    ID3D11VertexShader *vs_float, *vs_uint, *vs_sint;
+    ID3D11InputLayout *input_layout[LAYOUT_COUNT];
+    ID3D11Buffer *vb_position, *vb_attribute;
+    struct d3d11_test_context test_context;
+    unsigned int i, x, y, max_data_size;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11Texture2D *render_target;
+    ID3D11DeviceContext *context;
+    ID3D11RenderTargetView *rtv;
+    struct texture_readback rb;
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    UINT stride, offset;
+    HRESULT hr;
+
+    static const DXGI_FORMAT layout_formats[LAYOUT_COUNT] =
+    {
+        DXGI_FORMAT_R32G32B32A32_FLOAT,
+        DXGI_FORMAT_R16G16B16A16_UINT,
+        DXGI_FORMAT_R16G16B16A16_SINT,
+        DXGI_FORMAT_R16G16B16A16_UNORM,
+        DXGI_FORMAT_R16G16B16A16_SNORM,
+        DXGI_FORMAT_R8G8B8A8_UINT,
+        DXGI_FORMAT_R8G8B8A8_SINT,
+        DXGI_FORMAT_R8G8B8A8_UNORM,
+        DXGI_FORMAT_R8G8B8A8_SNORM,
+    };
+    static const struct
+    {
+        struct vec2 position;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f}},
+        {{-1.0f,  1.0f}},
+        {{ 1.0f, -1.0f}},
+        {{ 1.0f,  1.0f}},
+    };
+    static const DWORD ps_code[] =
+    {
+#if 0
+        float4 main(float4 position : POSITION, float4 color: COLOR) : SV_Target
+        {
+            return color;
+        }
+#endif
+        0x43425844, 0xa9150342, 0x70e18d2e, 0xf7769835, 0x4c3a7f02, 0x00000001, 0x000000f0, 0x00000003,
+        0x0000002c, 0x0000007c, 0x000000b0, 0x4e475349, 0x00000048, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x0000000f, 0x00000041, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0x4c4f4300, 0xab00524f, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000038, 0x00000040, 0x0000000e,
+        0x03001062, 0x001010f2, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x05000036, 0x001020f2,
+        0x00000000, 0x00101e46, 0x00000001, 0x0100003e,
+    };
+    static const DWORD vs_float_code[] =
+    {
+#if 0
+        struct output
+        {
+            float4 position : SV_Position;
+            float4 color : COLOR;
+        };
+
+        void main(float4 position : POSITION, float4 color : ATTRIBUTE, out output o)
+        {
+            o.position = position;
+            o.color = color;
+        }
+#endif
+        0x43425844, 0xf6051ffd, 0xd9e49503, 0x171ad197, 0x3764fe47, 0x00000001, 0x00000144, 0x00000003,
+        0x0000002c, 0x00000080, 0x000000d4, 0x4e475349, 0x0000004c, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x00000041, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0x54544100, 0x55424952, 0xab004554,
+        0x4e47534f, 0x0000004c, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x0000000f,
+        0x505f5653, 0x7469736f, 0x006e6f69, 0x4f4c4f43, 0xabab0052, 0x52444853, 0x00000068, 0x00010040,
+        0x0000001a, 0x0300005f, 0x001010f2, 0x00000000, 0x0300005f, 0x001010f2, 0x00000001, 0x04000067,
+        0x001020f2, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000001, 0x05000036, 0x001020f2,
+        0x00000000, 0x00101e46, 0x00000000, 0x05000036, 0x001020f2, 0x00000001, 0x00101e46, 0x00000001,
+        0x0100003e,
+    };
+    static const DWORD vs_uint_code[] =
+    {
+#if 0
+        struct output
+        {
+            float4 position : SV_Position;
+            float4 color : COLOR;
+        };
+
+        void main(float4 position : POSITION, uint4 color : ATTRIBUTE, out output o)
+        {
+            o.position = position;
+            o.color = color;
+        }
+#endif
+        0x43425844, 0x0bae0bc0, 0xf6473aa5, 0x4ecf4a25, 0x414fac23, 0x00000001, 0x00000144, 0x00000003,
+        0x0000002c, 0x00000080, 0x000000d4, 0x4e475349, 0x0000004c, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x00000041, 0x00000000, 0x00000000,
+        0x00000001, 0x00000001, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0x54544100, 0x55424952, 0xab004554,
+        0x4e47534f, 0x0000004c, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x0000000f,
+        0x505f5653, 0x7469736f, 0x006e6f69, 0x4f4c4f43, 0xabab0052, 0x52444853, 0x00000068, 0x00010040,
+        0x0000001a, 0x0300005f, 0x001010f2, 0x00000000, 0x0300005f, 0x001010f2, 0x00000001, 0x04000067,
+        0x001020f2, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000001, 0x05000036, 0x001020f2,
+        0x00000000, 0x00101e46, 0x00000000, 0x05000056, 0x001020f2, 0x00000001, 0x00101e46, 0x00000001,
+        0x0100003e,
+    };
+    static const DWORD vs_sint_code[] =
+    {
+#if 0
+        struct output
+        {
+            float4 position : SV_Position;
+            float4 color : COLOR;
+        };
+
+        void main(float4 position : POSITION, int4 color : ATTRIBUTE, out output o)
+        {
+            o.position = position;
+            o.color = color;
+        }
+#endif
+        0x43425844, 0xaf60aad9, 0xba91f3a4, 0x2015d384, 0xf746fdf5, 0x00000001, 0x00000144, 0x00000003,
+        0x0000002c, 0x00000080, 0x000000d4, 0x4e475349, 0x0000004c, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x00000041, 0x00000000, 0x00000000,
+        0x00000002, 0x00000001, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0x54544100, 0x55424952, 0xab004554,
+        0x4e47534f, 0x0000004c, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x0000000f,
+        0x505f5653, 0x7469736f, 0x006e6f69, 0x4f4c4f43, 0xabab0052, 0x52444853, 0x00000068, 0x00010040,
+        0x0000001a, 0x0300005f, 0x001010f2, 0x00000000, 0x0300005f, 0x001010f2, 0x00000001, 0x04000067,
+        0x001020f2, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000001, 0x05000036, 0x001020f2,
+        0x00000000, 0x00101e46, 0x00000000, 0x0500002b, 0x001020f2, 0x00000001, 0x00101e46, 0x00000001,
+        0x0100003e,
+    };
+    static const float float32_data[] =
+    {
+        1.0f, 2.0f, 3.0f, 4.0f, 1.0f, 2.0f, 3.0f, 4.0f, 1.0f, 2.0f, 3.0f, 4.0f, 1.0f, 2.0f, 3.0f, 4.0f,
+    };
+    static const unsigned short uint16_data[] =
+    {
+        6, 8, 55, 777, 6, 8, 55, 777, 6, 8, 55, 777, 6, 8, 55, 777,
+    };
+    static const short sint16_data[] =
+    {
+        -1, 33, 8, -77, -1, 33, 8, -77, -1, 33, 8, -77, -1, 33, 8, -77,
+    };
+    static const unsigned short unorm16_data[] =
+    {
+        0, 16383, 32767, 65535, 0, 16383, 32767, 65535, 0, 16383, 32767, 65535, 0, 16383, 32767, 65535,
+    };
+    static const short snorm16_data[] =
+    {
+        -32768, 0, 32767, 0, -32768, 0, 32767, 0, -32768, 0, 32767, 0, -32768, 0, 32767, 0,
+    };
+    static const unsigned char uint8_data[] =
+    {
+        0, 64, 128, 255, 0, 64, 128, 255, 0, 64, 128, 255, 0, 64, 128, 255,
+    };
+    static const signed char sint8_data[] =
+    {
+        -128, 0, 127, 64, -128, 0, 127, 64, -128, 0, 127, 64, -128, 0, 127, 64,
+    };
+    static const struct
+    {
+        enum layout_id layout_id;
+        unsigned int stride;
+        unsigned int data_size;
+        const void *data;
+        struct vec4 expected_color;
+        BOOL todo;
+    }
+    tests[] =
+    {
+        {LAYOUT_FLOAT32, 4 * sizeof(*float32_data), sizeof(float32_data), float32_data,
+                {1.0f, 2.0f, 3.0f, 4.0f}},
+        {LAYOUT_UINT16,  4 * sizeof(*uint16_data),  sizeof(uint16_data),  uint16_data,
+                {6.0f, 8.0f, 55.0f, 777.0f}, TRUE},
+        {LAYOUT_SINT16,  4 * sizeof(*sint16_data),  sizeof(sint16_data),  sint16_data,
+                {-1.0f, 33.0f, 8.0f, -77.0f}, TRUE},
+        {LAYOUT_UNORM16, 4 * sizeof(*unorm16_data), sizeof(unorm16_data), unorm16_data,
+                {0.0f, 16383.0f / 65535.0f, 32767.0f / 65535.0f, 1.0f}},
+        {LAYOUT_SNORM16, 4 * sizeof(*snorm16_data), sizeof(snorm16_data), snorm16_data,
+                {-1.0f, 0.0f, 1.0f, 0.0f}},
+        {LAYOUT_UINT8,   4 * sizeof(*uint8_data),   sizeof(uint8_data),   uint8_data,
+                {0.0f, 64.0f, 128.0f, 255.0f}},
+        {LAYOUT_SINT8,   4 * sizeof(*sint8_data),   sizeof(sint8_data),   sint8_data,
+                {-128.0f, 0.0f, 127.0f, 64.0f}},
+        {LAYOUT_UNORM8,  4 * sizeof(*uint8_data),   sizeof(uint8_data),   uint8_data,
+                {0.0f, 64.0f / 255.0f, 128.0f / 255.0f, 1.0f}},
+        {LAYOUT_SNORM8,  4 * sizeof(*sint8_data),   sizeof(sint8_data),   sint8_data,
+                {-1.0f, 0.0f, 1.0f, 64.0f / 127.0f}},
+    };
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateVertexShader(device, vs_float_code, sizeof(vs_float_code), NULL, &vs_float);
+    ok(SUCCEEDED(hr), "Failed to create float vertex shader, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateVertexShader(device, vs_uint_code, sizeof(vs_uint_code), NULL, &vs_uint);
+    ok(SUCCEEDED(hr), "Failed to create uint vertex shader, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateVertexShader(device, vs_sint_code, sizeof(vs_sint_code), NULL, &vs_sint);
+    ok(SUCCEEDED(hr), "Failed to create sint vertex shader, hr %#x.\n", hr);
+
+    for (i = 0; i < LAYOUT_COUNT; ++i)
+    {
+        input_layout_desc[1].Format = layout_formats[i];
+        hr = ID3D11Device_CreateInputLayout(device, input_layout_desc,
+                sizeof(input_layout_desc) / sizeof(*input_layout_desc),
+                vs_float_code, sizeof(vs_float_code), &input_layout[i]);
+        ok(SUCCEEDED(hr), "Failed to create input layout for format %#x, hr %#x.\n", layout_formats[i], hr);
+    }
+
+    max_data_size = 0;
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        if (tests[i].data_size > max_data_size)
+            max_data_size = tests[i].data_size;
+    }
+
+    vb_position = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(quad), quad);
+    vb_attribute = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, max_data_size, NULL);
+
+    texture_desc.Width = 640;
+    texture_desc.Height = 480;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &render_target);
+    ok(SUCCEEDED(hr), "Failed to create 2d texture, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)render_target, NULL, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    offset = 0;
+    stride = sizeof(*quad);
+    ID3D11DeviceContext_IASetVertexBuffers(context, 0, 1, &vb_position, &stride, &offset);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        D3D11_BOX box = {0, 0, 0, 1, 1, 1};
+        const struct vec4 *color;
+
+        assert(tests[i].layout_id < LAYOUT_COUNT);
+        ID3D11DeviceContext_IASetInputLayout(context, input_layout[tests[i].layout_id]);
+
+        box.right = tests[i].data_size;
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)vb_attribute, 0,
+                &box, tests[i].data, 0, 0);
+
+        stride = tests[i].stride;
+        ID3D11DeviceContext_IASetVertexBuffers(context, 1, 1, &vb_attribute, &stride, &offset);
+
+        switch (layout_formats[tests[i].layout_id])
+        {
+            case DXGI_FORMAT_R16G16B16A16_UINT:
+            case DXGI_FORMAT_R8G8B8A8_UINT:
+                ID3D11DeviceContext_VSSetShader(context, vs_uint, NULL, 0);
+                break;
+            case DXGI_FORMAT_R16G16B16A16_SINT:
+            case DXGI_FORMAT_R8G8B8A8_SINT:
+                ID3D11DeviceContext_VSSetShader(context, vs_sint, NULL, 0);
+                break;
+
+            default:
+                trace("Unhandled format %#x.\n", layout_formats[tests[i].layout_id]);
+                /*  Fall through. */
+            case DXGI_FORMAT_R32G32B32A32_FLOAT:
+            case DXGI_FORMAT_R16G16B16A16_UNORM:
+            case DXGI_FORMAT_R16G16B16A16_SNORM:
+            case DXGI_FORMAT_R8G8B8A8_UNORM:
+            case DXGI_FORMAT_R8G8B8A8_SNORM:
+                ID3D11DeviceContext_VSSetShader(context, vs_float, NULL, 0);
+                break;
+        }
+
+        ID3D11DeviceContext_Draw(context, 4, 0);
+
+        get_texture_readback(render_target, 0, &rb);
+        for (y = 0; y < rb.height; ++y)
+        {
+            for (x = 0; x < rb.width; ++x)
+            {
+                color = get_readback_vec4(&rb, x, y);
+                ok(compare_vec4(color, &tests[i].expected_color, 2),
+                        "Test %u: Got unexpected color {%.8e, %.8e, %.8e, %.8e} at (%u, %u).\n",
+                        i, color->x, color->y, color->z, color->w, x, y);
+            }
+        }
+        release_texture_readback(&rb);
+    }
+
+    ID3D11Texture2D_Release(render_target);
+    ID3D11RenderTargetView_Release(rtv);
+    ID3D11Buffer_Release(vb_attribute);
+    ID3D11Buffer_Release(vb_position);
+    for (i = 0; i < LAYOUT_COUNT; ++i)
+        ID3D11InputLayout_Release(input_layout[i]);
+    ID3D11PixelShader_Release(ps);
+    ID3D11VertexShader_Release(vs_float);
+    ID3D11VertexShader_Release(vs_uint);
+    ID3D11VertexShader_Release(vs_sint);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -7132,4 +7489,5 @@ START_TEST(d3d11)
     test_shader_stage_input_output_matching();
     test_sm4_if_instruction();
     test_sm4_breakc_instruction();
+    test_input_assembler();
 }
