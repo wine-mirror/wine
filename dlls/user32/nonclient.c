@@ -1102,6 +1102,7 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip )
  */
 LRESULT NC_HandleNCPaint( HWND hwnd , HRGN clip)
 {
+    HWND parent = GetAncestor( hwnd, GA_PARENT );
     DWORD dwStyle = GetWindowLongW( hwnd, GWL_STYLE );
 
     if( dwStyle & WS_VISIBLE )
@@ -1110,6 +1111,9 @@ LRESULT NC_HandleNCPaint( HWND hwnd , HRGN clip)
 	    WINPOS_RedrawIconTitle( hwnd );
 	else
 	    NC_DoNCPaint( hwnd, clip );
+
+        if (parent == GetDesktopWindow())
+            PostMessageW( parent, WM_PARENTNOTIFY, WM_NCPAINT, (LPARAM)hwnd );
     }
     return 0;
 }
@@ -1122,6 +1126,7 @@ LRESULT NC_HandleNCPaint( HWND hwnd , HRGN clip)
  */
 LRESULT NC_HandleNCActivate( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
+    HWND parent;
     WND* wndPtr = WIN_GetPtr( hwnd );
 
     if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return FALSE;
@@ -1133,6 +1138,7 @@ LRESULT NC_HandleNCActivate( HWND hwnd, WPARAM wParam, LPARAM lParam )
      */
     if (wParam) wndPtr->flags |= WIN_NCACTIVATED;
     else wndPtr->flags &= ~WIN_NCACTIVATED;
+    parent = wndPtr->parent;
     WIN_ReleasePtr( wndPtr );
 
     /* This isn't documented but is reproducible in at least XP SP2 and
@@ -1144,6 +1150,9 @@ LRESULT NC_HandleNCActivate( HWND hwnd, WPARAM wParam, LPARAM lParam )
             WINPOS_RedrawIconTitle( hwnd );
         else
             NC_DoNCPaint( hwnd, (HRGN)1 );
+
+        if (parent == GetDesktopWindow())
+            PostMessageW( parent, WM_PARENTNOTIFY, WM_NCACTIVATE, (LPARAM)hwnd );
     }
 
     return TRUE;
