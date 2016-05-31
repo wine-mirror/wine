@@ -308,7 +308,7 @@ static void shader_signature_from_semantic(struct wined3d_shader_signature_eleme
     e->semantic_name = shader_semantic_name_from_usage(s->usage);
     e->semantic_idx = s->usage_idx;
     e->sysval_semantic = shader_sysval_semantic_from_usage(s->usage);
-    e->component_type = 0;
+    e->component_type = WINED3D_TYPE_FLOAT;
     e->register_idx = s->reg.reg.idx[0].offset;
     e->mask = s->reg.write_mask;
 }
@@ -319,7 +319,7 @@ static void shader_signature_from_usage(struct wined3d_shader_signature_element 
     e->semantic_name = shader_semantic_name_from_usage(usage);
     e->semantic_idx = usage_idx;
     e->sysval_semantic = shader_sysval_semantic_from_usage(usage);
-    e->component_type = 0;
+    e->component_type = WINED3D_TYPE_FLOAT;
     e->register_idx = reg_idx;
     e->mask = write_mask;
 }

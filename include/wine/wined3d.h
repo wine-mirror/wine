@@ -763,6 +763,13 @@ enum wined3d_sysval_semantic
     WINED3D_SV_LINE_DENSITY_TESS_FACTOR     = 22,
 };
 
+enum wined3d_component_type
+{
+    WINED3D_TYPE_UINT  = 1,
+    WINED3D_TYPE_INT   = 2,
+    WINED3D_TYPE_FLOAT = 3,
+};
+
 enum wined3d_scanline_ordering
 {
     WINED3D_SCANLINE_ORDERING_UNKNOWN       = 0,
@@ -1915,7 +1922,7 @@ struct wined3d_shader_signature_element
     const char *semantic_name;
     UINT semantic_idx;
     enum wined3d_sysval_semantic sysval_semantic;
-    DWORD component_type;
+    enum wined3d_component_type component_type;
     UINT register_idx;
     DWORD mask;
 };

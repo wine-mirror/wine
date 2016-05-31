@@ -1705,6 +1705,16 @@ static BOOL glsl_is_shadow_sampler(const struct wined3d_shader *shader,
         return version->type == WINED3D_SHADER_TYPE_PIXEL && (ps_args->shadow & (1u << resource_idx));
 }
 
+static void shader_glsl_declare_typed_vertex_attribute(struct wined3d_string_buffer *buffer,
+        const struct wined3d_gl_info *gl_info, const char *vector_type, const char *scalar_type,
+        unsigned int index)
+{
+    shader_addline(buffer, "%s %s4 vs_in_%s%u;\n",
+            get_attribute_keyword(gl_info), vector_type, scalar_type, index);
+    shader_addline(buffer, "vec4 vs_in%u = %sBitsToFloat(vs_in_%s%u);\n",
+            index, scalar_type, scalar_type, index);
+}
+
 /** Generate the variable & register declarations for the GLSL output target */
 static void shader_generate_glsl_declarations(const struct wined3d_context *context,
         struct wined3d_string_buffer *buffer, const struct wined3d_shader *shader,
@@ -1957,14 +1967,30 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         {
             const struct wined3d_shader_signature_element *e = &shader->input_signature.elements[i];
             if (e->sysval_semantic == WINED3D_SV_VERTEX_ID)
+            {
                 shader_addline(buffer, "vec4 %s_in%u = vec4(intBitsToFloat(gl_VertexID), 0.0, 0.0, 0.0);\n",
                         prefix, e->register_idx);
+            }
             else if (e->sysval_semantic == WINED3D_SV_INSTANCE_ID)
+            {
                 shader_addline(buffer, "vec4 %s_in%u = vec4(intBitsToFloat(gl_InstanceID), 0.0, 0.0, 0.0);\n",
                         prefix, e->register_idx);
+            }
+            else if (e->component_type == WINED3D_TYPE_UINT)
+            {
+                shader_glsl_declare_typed_vertex_attribute(buffer, gl_info, "uvec", "uint", e->register_idx);
+            }
+            else if (e->component_type == WINED3D_TYPE_INT)
+            {
+                shader_glsl_declare_typed_vertex_attribute(buffer, gl_info, "ivec", "int", e->register_idx);
+            }
             else
+            {
+                if (e->component_type && e->component_type != WINED3D_TYPE_FLOAT)
+                    FIXME("Unhandled type %#x.\n", e->component_type);
                 shader_addline(buffer, "%s vec4 %s_in%u;\n",
                         get_attribute_keyword(gl_info), prefix, e->register_idx);
+            }
         }
 
         if (vs_args->point_size && !vs_args->per_vertex_point_size)
@@ -7596,6 +7622,13 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
 
         string_buffer_sprintf(tmp_name, "vs_in%u", i);
         GL_EXTCALL(glBindAttribLocation(program_id, i, tmp_name->buffer));
+        if (vshader && vshader->reg_maps.shader_version.major >= 4)
+        {
+            string_buffer_sprintf(tmp_name, "vs_in_uint%u", i);
+            GL_EXTCALL(glBindAttribLocation(program_id, i, tmp_name->buffer));
+            string_buffer_sprintf(tmp_name, "vs_in_int%u", i);
+            GL_EXTCALL(glBindAttribLocation(program_id, i, tmp_name->buffer));
+        }
     }
     checkGLcall("glBindAttribLocation");
     string_buffer_release(&priv->string_buffers, tmp_name);

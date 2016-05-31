@@ -3963,15 +3963,17 @@ static void unload_numbered_arrays(struct wined3d_context *context)
 static void load_numbered_arrays(struct wined3d_context *context,
         const struct wined3d_stream_info *stream_info, const struct wined3d_state *state)
 {
+    const struct wined3d_shader *vs = state->shader[WINED3D_SHADER_TYPE_VERTEX];
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLuint curVBO = gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] ? ~0U : 0;
-    int i;
+    unsigned int i;
 
     /* Default to no instancing */
     context->instance_count = 0;
 
-    for (i = 0; i < MAX_ATTRIBS; i++)
+    for (i = 0; i < MAX_ATTRIBS; ++i)
     {
+        const struct wined3d_stream_info_element *element = &stream_info->elements[i];
         const struct wined3d_stream_state *stream;
 
         if (!(stream_info->use_map & (1u << i)))
@@ -3985,16 +3987,16 @@ static void load_numbered_arrays(struct wined3d_context *context,
             continue;
         }
 
-        stream = &state->streams[stream_info->elements[i].stream_idx];
+        stream = &state->streams[element->stream_idx];
 
         if ((stream->flags & WINED3DSTREAMSOURCE_INSTANCEDATA) && !context->instance_count)
             context->instance_count = state->streams[0].frequency ? state->streams[0].frequency : 1;
 
         if (gl_info->supported[ARB_INSTANCED_ARRAYS])
         {
-            GL_EXTCALL(glVertexAttribDivisor(i, stream_info->elements[i].divisor));
+            GL_EXTCALL(glVertexAttribDivisor(i, element->divisor));
         }
-        else if (stream_info->elements[i].divisor)
+        else if (element->divisor)
         {
             /* Unload instanced arrays, they will be loaded using
              * immediate mode instead. */
@@ -4003,25 +4005,32 @@ static void load_numbered_arrays(struct wined3d_context *context,
             continue;
         }
 
-        TRACE_(d3d_shader)("Loading array %u [VBO=%u]\n", i, stream_info->elements[i].data.buffer_object);
+        TRACE_(d3d_shader)("Loading array %u [VBO=%u].\n", i, element->data.buffer_object);
 
-        if (stream_info->elements[i].stride)
+        if (element->stride)
         {
-            if (curVBO != stream_info->elements[i].data.buffer_object)
+            if (curVBO != element->data.buffer_object)
             {
-                GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, stream_info->elements[i].data.buffer_object));
+                GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, element->data.buffer_object));
                 checkGLcall("glBindBuffer");
-                curVBO = stream_info->elements[i].data.buffer_object;
+                curVBO = element->data.buffer_object;
             }
             /* Use the VBO to find out if a vertex buffer exists, not the vb
              * pointer. vb can point to a user pointer data blob. In that case
              * curVBO will be 0. If there is a vertex buffer but no vbo we
              * won't be load converted attributes anyway. */
-            GL_EXTCALL(glVertexAttribPointer(i, stream_info->elements[i].format->gl_vtx_format,
-                    stream_info->elements[i].format->gl_vtx_type,
-                    stream_info->elements[i].format->gl_normalized,
-                    stream_info->elements[i].stride, stream_info->elements[i].data.addr
-                    + state->load_base_vertex_index * stream_info->elements[i].stride));
+            if (vs && vs->reg_maps.shader_version.major >= 4
+                    && (element->format->flags[WINED3D_GL_RES_TYPE_BUFFER] & WINED3DFMT_FLAG_INTEGER))
+            {
+                GL_EXTCALL(glVertexAttribIPointer(i, element->format->gl_vtx_format, element->format->gl_vtx_type,
+                        element->stride, element->data.addr + state->load_base_vertex_index * element->stride));
+            }
+            else
+            {
+                GL_EXTCALL(glVertexAttribPointer(i, element->format->gl_vtx_format, element->format->gl_vtx_type,
+                        element->format->gl_normalized, element->stride,
+                        element->data.addr + state->load_base_vertex_index * element->stride));
+            }
 
             if (!(context->numbered_array_mask & (1u << i)))
             {
@@ -4035,15 +4044,14 @@ static void load_numbered_arrays(struct wined3d_context *context,
              * glVertexAttribPointer doesn't do that. Instead disable the
              * pointer and set up the attribute statically. But we have to
              * figure out the system memory address. */
-            const BYTE *ptr = stream_info->elements[i].data.addr;
-            if (stream_info->elements[i].data.buffer_object)
-            {
+            const BYTE *ptr = element->data.addr;
+            if (element->data.buffer_object)
                 ptr += (ULONG_PTR)buffer_get_sysmem(stream->buffer, context);
-            }
 
-            if (context->numbered_array_mask & (1u << i)) unload_numbered_array(context, i);
+            if (context->numbered_array_mask & (1u << i))
+                unload_numbered_array(context, i);
 
-            switch (stream_info->elements[i].format->id)
+            switch (element->format->id)
             {
                 case WINED3DFMT_R32_FLOAT:
                     GL_EXTCALL(glVertexAttrib1fv(i, (const GLfloat *)ptr));
@@ -4103,11 +4111,11 @@ static void load_numbered_arrays(struct wined3d_context *context,
                     break;
 
                 case WINED3DFMT_R10G10B10A2_UINT:
-                    FIXME("Unsure about WINED3DDECLTYPE_UDEC3\n");
+                    FIXME("Unsure about WINED3DDECLTYPE_UDEC3.\n");
                     /*glVertexAttrib3usvARB(i, (const GLushort *)ptr); Does not exist */
                     break;
                 case WINED3DFMT_R10G10B10A2_SNORM:
-                    FIXME("Unsure about WINED3DDECLTYPE_DEC3N\n");
+                    FIXME("Unsure about WINED3DDECLTYPE_DEC3N.\n");
                     /*glVertexAttrib3NusvARB(i, (const GLushort *)ptr); Does not exist */
                     break;
 
@@ -4141,7 +4149,7 @@ static void load_numbered_arrays(struct wined3d_context *context,
                     break;
 
                 default:
-                    ERR("Unexpected declaration in stride 0 attributes\n");
+                    ERR("Unexpected declaration in stride 0 attributes.\n");
                     break;
 
             }
