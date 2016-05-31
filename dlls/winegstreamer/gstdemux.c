@@ -84,7 +84,7 @@ struct GSTOutPin {
     GstPad *their_src;
     GstPad *my_sink;
     GstBufferPool *gstpool;
-    int isaud, isvid;
+    BOOL isaud, isvid;
     AM_MEDIA_TYPE * pmt;
     HANDLE caps_event;
     GstSegment *segment;
@@ -783,7 +783,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, GSTImpl *This)
     GstPad *mypad;
     GSTOutPin *pin;
     int ret;
-    int isvid = 0, isaud = 0;
+    BOOL isvid = FALSE, isaud = FALSE;
     gchar my_name[1024];
 
     TRACE("%p %p %p\n", This, bin, pad);
@@ -809,9 +809,9 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, GSTImpl *This)
     gst_pad_set_query_function(mypad, query_sink_wrapper);
 
     if (!strcmp(typename, "audio/x-raw")) {
-        isaud = 1;
+        isaud = TRUE;
     } else if (!strcmp(typename, "video/x-raw")) {
-        isvid = 1;
+        isvid = TRUE;
     } else {
         FIXME("Unknown type \'%s\'\n", typename);
         return;
