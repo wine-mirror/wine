@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-05-10 18:09+0200\n"
+"PO-Revision-Date: 2016-06-01 11:19+0200\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -11626,6 +11626,15 @@ msgid ""
 "  REG [operation] /?\n"
 "\n"
 msgstr ""
+"Aufruf:\n"
+"  REG [Operation] [Parameter]\n"
+"\n"
+"Unterstützte Operationen:\n"
+"  ADD | DELETE | QUERY\n"
+"\n"
+"Hilfe für eine spezifische Operation:\n"
+"  REG [Operation] /?\n"
+"\n"
 
 #: reg.rc:36
 msgid ""
@@ -11729,24 +11738,20 @@ msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr "Suche abgeschlossen. Gefundene Übereinstimmungen: %1!d!\n"
 
 #: reg.rc:61
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "reg: Invalid syntax. "
-msgstr "reg: Ungültiger Schlüsselname\n"
+msgstr "reg: Ungültige Syntax. "
 
 #: reg.rc:62
-#, fuzzy
-#| msgid "uninstaller: Invalid option [%1]\n"
 msgid "reg: Invalid option [%1]. "
-msgstr "Uninstaller: Ungültige Option [%1]\n"
+msgstr "reg: Ungültige Option [%1]. "
 
 #: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
-msgstr ""
+msgstr "Geben Sie \"REG /?\" ein, um Hilfe zu erhalten.\n"
 
 #: reg.rc:64
 msgid "Type \"REG %1 /?\" for help.\n"
-msgstr ""
+msgstr "Geben Sie \"REG %1 /?\" ein, um Hilfe zu erhalten.\n"
 
 #: regedit.rc:34
 msgid "&Registry"
