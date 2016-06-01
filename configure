@@ -17537,7 +17537,7 @@ wine_fn_config_dll comsvcs enable_comsvcs implib
 wine_fn_config_dll connect enable_connect
 wine_fn_config_dll credui enable_credui clean,implib
 wine_fn_config_test dlls/credui/tests credui_test
-wine_fn_config_dll crtdll enable_crtdll implib
+wine_fn_config_dll crtdll enable_crtdll
 wine_fn_config_dll crypt32 enable_crypt32 clean,implib
 wine_fn_config_test dlls/crypt32/tests crypt32_test
 wine_fn_config_dll cryptdlg enable_cryptdlg clean
@@ -17549,7 +17549,7 @@ wine_fn_config_dll cryptui enable_cryptui clean,implib
 wine_fn_config_test dlls/cryptui/tests cryptui_test
 wine_fn_config_dll ctapi32 enable_ctapi32
 wine_fn_config_dll ctl3d.dll16 enable_win16
-wine_fn_config_dll ctl3d32 enable_ctl3d32 implib
+wine_fn_config_dll ctl3d32 enable_ctl3d32
 wine_fn_config_dll ctl3dv2.dll16 enable_win16
 wine_fn_config_dll d2d1 enable_d2d1 implib
 wine_fn_config_test dlls/d2d1/tests d2d1_test
@@ -17579,7 +17579,7 @@ wine_fn_config_dll d3dcompiler_43 enable_d3dcompiler_43 implib d3dcompiler
 wine_fn_config_test dlls/d3dcompiler_43/tests d3dcompiler_43_test
 wine_fn_config_dll d3dcompiler_46 enable_d3dcompiler_46
 wine_fn_config_dll d3dcompiler_47 enable_d3dcompiler_47
-wine_fn_config_dll d3dim enable_d3dim implib
+wine_fn_config_dll d3dim enable_d3dim
 wine_fn_config_dll d3drm enable_d3drm implib
 wine_fn_config_test dlls/d3drm/tests d3drm_test
 wine_fn_config_dll d3dx10_33 enable_d3dx10_33
@@ -17656,10 +17656,10 @@ wine_fn_config_dll dmsynth enable_dmsynth clean
 wine_fn_config_test dlls/dmsynth/tests dmsynth_test
 wine_fn_config_dll dmusic enable_dmusic clean
 wine_fn_config_test dlls/dmusic/tests dmusic_test
-wine_fn_config_dll dmusic32 enable_dmusic32 implib
+wine_fn_config_dll dmusic32 enable_dmusic32
 wine_fn_config_dll dnsapi enable_dnsapi implib
 wine_fn_config_test dlls/dnsapi/tests dnsapi_test
-wine_fn_config_dll dplay enable_dplay implib
+wine_fn_config_dll dplay enable_dplay
 wine_fn_config_dll dplayx enable_dplayx clean,implib
 wine_fn_config_test dlls/dplayx/tests dplayx_test
 wine_fn_config_dll dpnaddr enable_dpnaddr
@@ -17868,8 +17868,8 @@ wine_fn_config_dll msvcr90 enable_msvcr90 implib
 wine_fn_config_test dlls/msvcr90/tests msvcr90_test
 wine_fn_config_dll msvcrt enable_msvcrt implib
 wine_fn_config_test dlls/msvcrt/tests msvcrt_test
-wine_fn_config_dll msvcrt20 enable_msvcrt20 implib
-wine_fn_config_dll msvcrt40 enable_msvcrt40 implib
+wine_fn_config_dll msvcrt20 enable_msvcrt20
+wine_fn_config_dll msvcrt40 enable_msvcrt40
 wine_fn_config_dll msvcrtd enable_msvcrtd implib
 wine_fn_config_test dlls/msvcrtd/tests msvcrtd_test
 wine_fn_config_dll msvfw32 enable_msvfw32 clean,implib
@@ -17990,7 +17990,7 @@ wine_fn_config_dll secur32 enable_secur32 implib
 wine_fn_config_test dlls/secur32/tests secur32_test
 wine_fn_config_dll security enable_security
 wine_fn_config_dll sensapi enable_sensapi implib
-wine_fn_config_dll serialui enable_serialui clean,implib
+wine_fn_config_dll serialui enable_serialui clean
 wine_fn_config_test dlls/serialui/tests serialui_test
 wine_fn_config_dll setupapi enable_setupapi clean,implib
 wine_fn_config_test dlls/setupapi/tests setupapi_test

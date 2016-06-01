@@ -1,5 +1,4 @@
 MODULE    = ctl3d32.dll
-IMPORTLIB = ctl3d32
 IMPORTS   = user32
 
 C_SRCS = ctl3d32.c

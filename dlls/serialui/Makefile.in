@@ -1,5 +1,4 @@
 MODULE    = serialui.dll
-IMPORTLIB = serialui
 IMPORTS   = user32 advapi32
 
 C_SRCS = \
