@@ -574,8 +574,8 @@ void state_alpha_test(struct wined3d_context *context, const struct wined3d_stat
 void state_clipping(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    DWORD enable  = 0xffffffff;
-    DWORD disable = 0x00000000;
+    unsigned int clipplane_count = gl_info->limits.clipplanes;
+    unsigned int i, enable_mask, disable_mask;
 
     if (use_vs(state) && !context->d3d_info->vs_clipping)
     {
@@ -607,29 +607,29 @@ void state_clipping(struct wined3d_context *context, const struct wined3d_state 
      */
     if (state->render_states[WINED3D_RS_CLIPPING])
     {
-        enable = state->render_states[WINED3D_RS_CLIPPLANEENABLE];
-        disable = ~state->render_states[WINED3D_RS_CLIPPLANEENABLE];
+        enable_mask = state->render_states[WINED3D_RS_CLIPPLANEENABLE];
+        disable_mask = ~state->render_states[WINED3D_RS_CLIPPLANEENABLE];
     }
     else
     {
-        disable = 0xffffffff;
-        enable  = 0x00;
+        enable_mask = 0;
+        disable_mask = ~0u;
     }
 
-    if (enable & WINED3DCLIPPLANE0) gl_info->gl_ops.gl.p_glEnable(GL_CLIP_PLANE0);
-    if (enable & WINED3DCLIPPLANE1) gl_info->gl_ops.gl.p_glEnable(GL_CLIP_PLANE1);
-    if (enable & WINED3DCLIPPLANE2) gl_info->gl_ops.gl.p_glEnable(GL_CLIP_PLANE2);
-    if (enable & WINED3DCLIPPLANE3) gl_info->gl_ops.gl.p_glEnable(GL_CLIP_PLANE3);
-    if (enable & WINED3DCLIPPLANE4) gl_info->gl_ops.gl.p_glEnable(GL_CLIP_PLANE4);
-    if (enable & WINED3DCLIPPLANE5) gl_info->gl_ops.gl.p_glEnable(GL_CLIP_PLANE5);
+    if (clipplane_count < 32)
+    {
+        enable_mask &= (1u << clipplane_count) - 1;
+        disable_mask &= (1u << clipplane_count) - 1;
+    }
+
+    for (i = 0; enable_mask && i < clipplane_count; enable_mask >>= 1, ++i)
+        if (enable_mask & 1)
+            gl_info->gl_ops.gl.p_glEnable(GL_CLIP_DISTANCE0 + i);
     checkGLcall("clip plane enable");
 
-    if (disable & WINED3DCLIPPLANE0) gl_info->gl_ops.gl.p_glDisable(GL_CLIP_PLANE0);
-    if (disable & WINED3DCLIPPLANE1) gl_info->gl_ops.gl.p_glDisable(GL_CLIP_PLANE1);
-    if (disable & WINED3DCLIPPLANE2) gl_info->gl_ops.gl.p_glDisable(GL_CLIP_PLANE2);
-    if (disable & WINED3DCLIPPLANE3) gl_info->gl_ops.gl.p_glDisable(GL_CLIP_PLANE3);
-    if (disable & WINED3DCLIPPLANE4) gl_info->gl_ops.gl.p_glDisable(GL_CLIP_PLANE4);
-    if (disable & WINED3DCLIPPLANE5) gl_info->gl_ops.gl.p_glDisable(GL_CLIP_PLANE5);
+    for (i = 0; disable_mask && i < clipplane_count; disable_mask >>= 1, ++i)
+        if (disable_mask & 1)
+            gl_info->gl_ops.gl.p_glDisable(GL_CLIP_DISTANCE0 + i);
     checkGLcall("clip plane disable");
 }
 
