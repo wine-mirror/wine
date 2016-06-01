@@ -1070,6 +1070,14 @@ typedef struct _settextex {
 #define ST_NEWCHARS           0x00000004
 #define ST_UNICODE            0x00000008
 
+/* Flags for EM_AUTOURLDETECT message */
+#define AURL_ENABLEURL            0x00000001
+#define AURL_ENABLEMAILADDR       0x00000002
+#define AURL_ENABLETELNO          0x00000004
+#define AURL_ENABLEEAURLS         0x00000008
+#define AURL_ENABLEDRIVELETTERS   0x00000010
+#define AURL_DISABLEMIXEDLGC      0x00000020
+
 #ifdef __cplusplus
 }
 #endif
