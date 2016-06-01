@@ -963,11 +963,11 @@ static void WINAPI XA2M_DestroyVoice(IXAudio2MasteringVoice *iface)
     IAudioClient_Release(This->aclient);
     This->aclient = NULL;
 
-    alcCloseDevice(This->al_device);
-    This->al_device = NULL;
-
     alcDestroyContext(This->al_ctx);
     This->al_ctx = NULL;
+
+    alcCloseDevice(This->al_device);
+    This->al_device = NULL;
 
     LeaveCriticalSection(&This->lock);
 }
