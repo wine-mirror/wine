@@ -5038,8 +5038,8 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor,
                                     ME_Cursor *candidate_min,
                                     ME_Cursor *candidate_max)
 {
-  ME_Cursor cursor = *start, neutral_end;
-  BOOL candidateStarted = FALSE;
+  ME_Cursor cursor = *start, neutral_end, space_end;
+  BOOL candidateStarted = FALSE, quoted = FALSE;
   WCHAR c;
 
   while (nChars > 0)
@@ -5060,9 +5060,11 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor,
           *candidate_min = cursor;
           candidateStarted = TRUE;
           neutral_end.pPara = NULL;
+          space_end.pPara = NULL;
           cursor.nOffset++;
           break;
         }
+        quoted = (c == '<');
         cursor.nOffset++;
       }
     }
@@ -5074,9 +5076,28 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor,
       {
         c = str[cursor.nOffset];
         if (isspaceW( c ))
-          goto done;
+        {
+          if (quoted && c != '\r')
+          {
+            if (!space_end.pPara)
+            {
+              if (neutral_end.pPara)
+                space_end = neutral_end;
+              else
+                space_end = cursor;
+            }
+          }
+          else
+            goto done;
+        }
         else if (isurlneutral( c ))
         {
+          if (quoted && c == '>')
+          {
+            neutral_end.pPara = NULL;
+            space_end.pPara = NULL;
+            goto done;
+          }
           if (!neutral_end.pPara)
             neutral_end = cursor;
         }
@@ -5095,7 +5116,9 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor,
 done:
   if (candidateStarted)
   {
-    if (neutral_end.pPara)
+    if (space_end.pPara)
+      *candidate_max = space_end;
+    else if (neutral_end.pPara)
       *candidate_max = neutral_end;
     else
       *candidate_max = cursor;
