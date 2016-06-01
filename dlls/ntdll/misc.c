@@ -27,6 +27,8 @@
 #include <sys/utsname.h>
 #endif
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/library.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
@@ -329,13 +331,31 @@ void * __cdecl _lfind( const void *key, const void *base, unsigned int *nmemb,
     return NULL;
 }
 
+/******************************************************************************
+ *                  WinSqmEndSession   (NTDLL.@)
+ */
+NTSTATUS WINAPI WinSqmEndSession(HANDLE session)
+{
+    FIXME("(%p): stub\n", session);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 /*********************************************************************
  *                  WinSqmIsOptedIn   (NTDLL.@)
  */
 BOOL WINAPI WinSqmIsOptedIn(void)
 {
-    FIXME("() stub\n");
+    FIXME("(): stub\n");
     return FALSE;
+}
+
+/******************************************************************************
+ *                  WinSqmStartSession   (NTDLL.@)
+ */
+HANDLE WINAPI WinSqmStartSession(GUID *sessionguid, DWORD sessionid, DWORD unknown1)
+{
+    FIXME("(%p, 0x%x, 0x%x): stub\n", sessionguid, sessionid, unknown1);
+    return INVALID_HANDLE_VALUE;
 }
 
 /******************************************************************************
