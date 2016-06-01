@@ -54,8 +54,10 @@ static void test_WsDecodeUrl(void)
                             '%','2','0','2',0};
     static WCHAR url26[] = {'h','t','t','p',':','/','/','h','o','s','t','#','f','r','a','g',
                             '%','2','0','2',0};
+    static WCHAR url27[] = {'h','t','t','p',':','/','/','h','o','s','t','/','%','c','3','%','a','b','/',0};
     static WCHAR host2[] = {'h','o','s','t',' ','2'};
     static WCHAR path2[] = {'/','p','a','t','h',' ','2'};
+    static WCHAR path3[] = {'/',0xeb,'/'};
     static WCHAR query2[] = {'q','u','e','r','y',' ','2'};
     static WCHAR frag2[] = {'f','r','a','g',' ','2'};
     static const struct
@@ -103,8 +105,9 @@ static void test_WsDecodeUrl(void)
           url22 + 12, 4  },
         { url23, S_OK, WS_URL_HTTP_SCHEME_TYPE, host2, 6, 80 },
         { url24, S_OK, WS_URL_HTTP_SCHEME_TYPE, url24 + 7, 4, 80, NULL, 0, path2, 7 },
-        { url25, S_OK, WS_URL_HTTP_SCHEME_TYPE, url24 + 7, 4, 80, NULL, 0, NULL, 0, query2, 7 },
-        { url26, S_OK, WS_URL_HTTP_SCHEME_TYPE, url24 + 7, 4, 80, NULL, 0, NULL, 0, NULL, 0, frag2, 6 },
+        { url25, S_OK, WS_URL_HTTP_SCHEME_TYPE, url25 + 7, 4, 80, NULL, 0, NULL, 0, query2, 7 },
+        { url26, S_OK, WS_URL_HTTP_SCHEME_TYPE, url26 + 7, 4, 80, NULL, 0, NULL, 0, NULL, 0, frag2, 6 },
+        { url27, S_OK, WS_URL_HTTP_SCHEME_TYPE, url27 + 7, 4, 80, NULL, 0, path3, 3 },
     };
     WS_HEAP *heap;
     WS_STRING str;

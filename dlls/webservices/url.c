@@ -71,11 +71,36 @@ static USHORT default_port( WS_URL_SCHEME_TYPE scheme )
     }
 }
 
+static unsigned char *strdup_utf8( const WCHAR *str, ULONG len, ULONG *ret_len )
+{
+    unsigned char *ret;
+    *ret_len = WideCharToMultiByte( CP_UTF8, 0, str, len, NULL, 0, NULL, NULL );
+    if ((ret = heap_alloc( *ret_len )))
+        WideCharToMultiByte( CP_UTF8, 0, str, len, (char *)ret, *ret_len, NULL, NULL );
+    return ret;
+}
+
+static inline int url_decode_byte( char c1, char c2 )
+{
+    int ret;
+
+    if (c1 >= '0' && c1 <= '9') ret = (c1 - '0') * 16;
+    else if (c1 >= 'a' && c1 <= 'f') ret = (c1 - 'a' + 10) * 16;
+    else ret = (c1 - 'A' + 10) * 16;
+
+    if (c2 >= '0' && c2 <= '9') ret += c2 - '0';
+    else if (c2 >= 'a' && c2 <= 'f') ret += c2 - 'a' + 10;
+    else ret += c2 - 'A' + 10;
+
+    return ret;
+}
+
 static WCHAR *url_decode( WCHAR *str, ULONG len, WS_HEAP *heap, ULONG *ret_len )
 {
     WCHAR *p = str, *q, *ret;
-    BOOL decode = FALSE;
-    ULONG i, val;
+    BOOL decode = FALSE, convert = FALSE;
+    ULONG i, len_utf8, len_left;
+    unsigned char *utf8, *r;
 
     *ret_len = len;
     for (i = 0; i < len; i++, p++)
@@ -84,36 +109,62 @@ static WCHAR *url_decode( WCHAR *str, ULONG len, WS_HEAP *heap, ULONG *ret_len )
         if (p[0] == '%' && isxdigitW( p[1] ) && isxdigitW( p[2] ))
         {
             decode = TRUE;
+            if (url_decode_byte( p[1], p[2] ) > 159)
+            {
+                convert = TRUE;
+                break;
+            }
             *ret_len -= 2;
         }
     }
     if (!decode) return str;
-
-    if (!(q = ret = ws_alloc( heap, *ret_len * sizeof(WCHAR) ))) return NULL;
-    p = str;
-    while (len)
+    if (!convert)
     {
-        if (len >= 3 && p[0] == '%' && isxdigitW( p[1] ) && isxdigitW( p[2] ))
+        if (!(q = ret = ws_alloc( heap, *ret_len * sizeof(WCHAR) ))) return NULL;
+        p = str;
+        while (len)
         {
-            if (p[1] >= '0' && p[1] <= '9') val = (p[1] - '0') * 16;
-            else if (p[1] >= 'a' && p[1] <= 'f') val = (p[1] - 'a') * 16;
-            else val = (p[1] - 'A') * 16;
-
-            if (p[2] >= '0' && p[2] <= '9') val += p[2] - '0';
-            else if (p[1] >= 'a' && p[1] <= 'f') val += p[2] - 'a';
-            else val += p[1] - 'A';
-
-            *q++ = val;
-            p += 3;
-            len -= 3;
+            if (len >= 3 && p[0] == '%' && isxdigitW( p[1] ) && isxdigitW( p[2] ))
+            {
+                *q++ = url_decode_byte( p[1], p[2] );
+                p += 3;
+                len -= 3;
+            }
+            else
+            {
+                *q++ = *p++;
+                len -= 1;
+            }
         }
-        else
-        {
-            *q++ = *p++;
-            len -= 1;
-        }
+        return ret;
     }
 
+    if (!(r = utf8 = strdup_utf8( str, len, &len_utf8 ))) return NULL;
+    len_left = len_utf8;
+    while (len_left)
+    {
+        if (len_left >= 3 && r[0] == '%' && isxdigit( r[1] ) && isxdigit( r[2] ))
+        {
+            r[0] = url_decode_byte( r[1], r[2] );
+            len_left -= 3;
+            memmove( r + 1, r + 3, len_left );
+            len_utf8 -= 2;
+        }
+        else len_left -= 1;
+        r++;
+    }
+
+    if (!(*ret_len = MultiByteToWideChar( CP_UTF8, MB_ERR_INVALID_CHARS, (char *)utf8,
+                                          len_utf8, NULL, 0 )))
+    {
+        WARN( "invalid UTF-8 sequence\n" );
+        heap_free( utf8 );
+        return NULL;
+    }
+    if ((ret = ws_alloc( heap, *ret_len * sizeof(WCHAR) )))
+        MultiByteToWideChar( CP_UTF8, 0, (char *)utf8, len_utf8, ret, *ret_len );
+
+    heap_free( utf8 );
     return ret;
 }
 
@@ -276,20 +327,11 @@ static inline ULONG escape_size( unsigned char ch, const char *except )
     }
 }
 
-static char *strdup_utf8( const WCHAR *str, ULONG len, ULONG *ret_len )
-{
-    char *ret;
-    *ret_len = WideCharToMultiByte( CP_UTF8, 0, str, len, NULL, 0, NULL, NULL );
-    if ((ret = heap_alloc( *ret_len )))
-        WideCharToMultiByte( CP_UTF8, 0, str, len, ret, *ret_len, NULL, NULL );
-    return ret;
-}
-
 static HRESULT url_encode_size( const WCHAR *str, ULONG len, const char *except, ULONG *ret_len )
 {
     ULONG i, len_utf8;
     BOOL convert = FALSE;
-    char *utf8;
+    unsigned char *utf8;
 
     *ret_len = 0;
     for (i = 0; i < len; i++)
@@ -339,7 +381,7 @@ static HRESULT url_encode( const WCHAR *str, ULONG len, WCHAR *buf, const char *
     ULONG i, len_utf8, len_enc;
     BOOL convert = FALSE;
     WCHAR *p = buf;
-    char *utf8;
+    unsigned char *utf8;
 
     *ret_len = 0;
     for (i = 0; i < len; i++)
