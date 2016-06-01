@@ -976,7 +976,7 @@ static DWORD WINAPI test_default_ime_window_cancel_cb(void *arg)
                             WS_OVERLAPPEDWINDOW | visible,
                             CW_USEDEFAULT, CW_USEDEFAULT,
                             240, 120, NULL, NULL, GetModuleHandleW(NULL), NULL);
-    ok(hwnd1 == NULL, "creation suceeded, got %p\n", hwnd1);
+    ok(hwnd1 == NULL, "creation succeeded, got %p\n", hwnd1);
     ok(!get_ime_window(), "Expected no IME windows\n");
 
     test_phase = CREATE_CANCEL;
@@ -984,7 +984,7 @@ static DWORD WINAPI test_default_ime_window_cancel_cb(void *arg)
                             WS_OVERLAPPEDWINDOW | visible,
                             CW_USEDEFAULT, CW_USEDEFAULT,
                             240, 120, NULL, NULL, GetModuleHandleW(NULL), NULL);
-    ok(hwnd1 == NULL, "creation suceeded, got %p\n", hwnd1);
+    ok(hwnd1 == NULL, "creation succeeded, got %p\n", hwnd1);
     ok(!get_ime_window(), "Expected no IME windows\n");
 
     test_phase = FIRST_WINDOW;
