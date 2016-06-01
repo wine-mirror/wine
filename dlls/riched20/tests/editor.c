@@ -1781,6 +1781,7 @@ static void test_EM_AUTOURLDETECT(void)
     "This is some text with #X on it",
     "This is some text with @X on it",
     "This is some text with \\X on it",
+    "This is some text with _X on it",
   };
   /* All of these cause the URL detection to be extended by one more byte,
      thus demonstrating that the tested character is considered as part
@@ -1794,6 +1795,33 @@ static void test_EM_AUTOURLDETECT(void)
     "This is some text with X# on it",
     "This is some text with X@ on it",
     "This is some text with X\\ on it",
+    "This is some text with X_ on it",
+  };
+  /* These delims act as neutral breaks.  Whether the url is ended
+     or not depends on the next non-neutral character.  We'll test
+     with Y unchanged, in which case the url should include the
+     deliminator and the Y.  We'll also test with the Y changed
+     to a space, in which case the url stops before the
+     deliminator. */
+  const char * templates_neutral_delim[] = {
+    "This is some text with X-Y on it",
+    "This is some text with X--Y on it",
+    "This is some text with X!Y on it",
+    "This is some text with X[Y on it",
+    "This is some text with X]Y on it",
+    "This is some text with X{Y on it",
+    "This is some text with X}Y on it",
+    "This is some text with X(Y on it",
+    "This is some text with X)Y on it",
+    "This is some text with X\"Y on it",
+    "This is some text with X;Y on it",
+    "This is some text with X:Y on it",
+    "This is some text with X'Y on it",
+    "This is some text with X?Y on it",
+    "This is some text with X<Y on it",
+    "This is some text with X>Y on it",
+    "This is some text with X.Y on it",
+    "This is some text with X,Y on it",
   };
   char buffer[1024];
 
@@ -1972,6 +2000,55 @@ static void test_EM_AUTOURLDETECT(void)
             "CFE_LINK incorrectly set in (%d-%d), text: %s\n", end_offset +2, end_offset +3, buffer);
         }
       }
+    }
+
+    for (j = 0; j < sizeof(templates_neutral_delim) / sizeof(const char *); j++) {
+      char * at_pos, * end_pos;
+      int at_offset;
+      int end_offset;
+
+      if (!urls[i].is_url) continue;
+
+      at_pos = strchr(templates_neutral_delim[j], 'X');
+      at_offset = at_pos - templates_neutral_delim[j];
+      memcpy(buffer, templates_neutral_delim[j], at_offset);
+      buffer[at_offset] = '\0';
+      strcat(buffer, urls[i].text);
+      strcat(buffer, templates_neutral_delim[j] + at_offset + 1);
+
+      end_pos = strchr(buffer, 'Y');
+      end_offset = end_pos - buffer;
+
+      SendMessageA(hwndRichEdit, EM_AUTOURLDETECT, TRUE, 0);
+      SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)buffer);
+
+      /* This assumes no templates start with the URL itself, and that they
+         have at least two characters before the URL text */
+      ok(!check_CFE_LINK_selection(hwndRichEdit, 0, 1),
+         "CFE_LINK incorrectly set in (%d-%d), text: %s\n", 0, 1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset -2, at_offset -1),
+         "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset -2, at_offset -1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, at_offset -1, at_offset),
+         "CFE_LINK incorrectly set in (%d-%d), text: %s\n", at_offset -1, at_offset, buffer);
+
+      ok(check_CFE_LINK_selection(hwndRichEdit, at_offset, at_offset +1),
+         "CFE_LINK not set in (%d-%d), text: %s\n", at_offset, at_offset +1, buffer);
+      ok(check_CFE_LINK_selection(hwndRichEdit, end_offset -1, end_offset),
+         "CFE_LINK not set in (%d-%d), text: %s\n", end_offset -1, end_offset, buffer);
+      ok(check_CFE_LINK_selection(hwndRichEdit, end_offset, end_offset +1),
+         "CFE_LINK not set in (%d-%d), text: %s\n", end_offset, end_offset +1, buffer);
+
+      *end_pos = ' ';
+
+      SendMessageA(hwndRichEdit, EM_AUTOURLDETECT, TRUE, 0);
+      SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)buffer);
+
+      ok(check_CFE_LINK_selection(hwndRichEdit, at_offset, at_offset +1),
+         "CFE_LINK not set in (%d-%d), text: %s\n", at_offset, at_offset +1, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset -1, end_offset),
+         "CFE_LINK set in (%d-%d), text: %s\n", end_offset -1, end_offset, buffer);
+      ok(!check_CFE_LINK_selection(hwndRichEdit, end_offset, end_offset +1),
+         "CFE_LINK set in (%d-%d), text: %s\n", end_offset, end_offset +1, buffer);
     }
 
     DestroyWindow(hwndRichEdit);

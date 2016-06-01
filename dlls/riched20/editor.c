@@ -5005,10 +5005,24 @@ LRESULT WINAPI REExtendedRegisterClass(void)
   return result;
 }
 
-static BOOL isurlspecial(WCHAR c)
+static int wchar_comp( const void *key, const void *elem )
 {
-  static const WCHAR special_chars[] = {'.','/','%','@','*','|','\\','+','#',0};
-  return strchrW( special_chars, c ) != NULL;
+    return *(const WCHAR *)key - *(const WCHAR *)elem;
+}
+
+/* neutral characters end the url if the next non-neutral character is a space character,
+   otherwise they are included in the url. */
+static BOOL isurlneutral( WCHAR c )
+{
+    /* NB this list is sorted */
+    static const WCHAR neutral_chars[] = {'!','\"','\'','(',')',',','-','.',':',';','<','>','?','[',']','{','}'};
+
+    /* Some shortcuts */
+    if (isalnum( c )) return FALSE;
+    if (c > neutral_chars[sizeof(neutral_chars) / sizeof(neutral_chars[0]) - 1]) return FALSE;
+
+    return !!bsearch( &c, neutral_chars, sizeof(neutral_chars) / sizeof(neutral_chars[0]),
+                      sizeof(c), wchar_comp );
 }
 
 /**
@@ -5024,87 +5038,67 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor,
                                     ME_Cursor *candidate_min,
                                     ME_Cursor *candidate_max)
 {
-  ME_Cursor cursor = *start;
-  BOOL foundColon = FALSE;
+  ME_Cursor cursor = *start, neutral_end;
   BOOL candidateStarted = FALSE;
-  WCHAR lastAcceptedChar = '\0';
+  WCHAR c;
 
   while (nChars > 0)
   {
-    WCHAR *strStart = get_text( &cursor.pRun->member.run, 0 );
-    WCHAR *str = strStart + cursor.nOffset;
-    int nLen = cursor.pRun->member.run.len - cursor.nOffset;
-    nChars -= nLen;
+    WCHAR *str = get_text( &cursor.pRun->member.run, 0 );
+    int run_len = cursor.pRun->member.run.len;
 
-    if (~cursor.pRun->member.run.nFlags & MERF_ENDPARA)
+    nChars -= run_len - cursor.nOffset;
+
+    /* Find start of candidate */
+    if (!candidateStarted)
     {
-      /* Find start of candidate */
-      if (!candidateStarted)
+      while (cursor.nOffset < run_len)
       {
-        while (nLen)
+        c = str[cursor.nOffset];
+        if (!isspaceW( c ) && !isurlneutral( c ))
         {
-          nLen--;
-          if (isalnumW(*str) || isurlspecial(*str))
-          {
-            cursor.nOffset = str - strStart;
-            *candidate_min = cursor;
-            candidateStarted = TRUE;
-            lastAcceptedChar = *str++;
-            break;
-          }
-          str++;
+          *candidate_min = cursor;
+          candidateStarted = TRUE;
+          neutral_end.pPara = NULL;
+          cursor.nOffset++;
+          break;
         }
-      }
-
-      /* Find end of candidate */
-      if (candidateStarted) {
-        while (nLen)
-        {
-          nLen--;
-          if (*str == ':' && !foundColon) {
-            foundColon = TRUE;
-          } else if (!isalnumW(*str) && !isurlspecial(*str)) {
-            cursor.nOffset = str - strStart;
-            if (lastAcceptedChar == ':')
-              ME_MoveCursorChars(editor, &cursor, -1);
-            *candidate_max = cursor;
-            return TRUE;
-          }
-          lastAcceptedChar = *str++;
-        }
-      }
-    } else {
-      /* End of paragraph: skip it if before candidate span, or terminates
-         current active span */
-      if (candidateStarted) {
-        if (lastAcceptedChar == ':')
-          ME_MoveCursorChars(editor, &cursor, -1);
-        *candidate_max = cursor;
-        return TRUE;
+        cursor.nOffset++;
       }
     }
 
-    /* Reaching this point means no span was found, so get next span */
-    if (!ME_NextRun(&cursor.pPara, &cursor.pRun)) {
-      if (candidateStarted) {
-        /* There are no further runs, so take end of text as end of candidate */
-        cursor.nOffset = str - strStart;
-        if (lastAcceptedChar == ':')
-          ME_MoveCursorChars(editor, &cursor, -1);
-        *candidate_max = cursor;
-        return TRUE;
+    /* Find end of candidate */
+    if (candidateStarted)
+    {
+      while (cursor.nOffset < run_len)
+      {
+        c = str[cursor.nOffset];
+        if (isspaceW( c ))
+          goto done;
+        else if (isurlneutral( c ))
+        {
+          if (!neutral_end.pPara)
+            neutral_end = cursor;
+        }
+        else
+          neutral_end.pPara = NULL;
+
+        cursor.nOffset++;
       }
-      *candidate_max = *candidate_min = cursor;
-      return FALSE;
     }
+
     cursor.nOffset = 0;
+    if (!ME_NextRun(&cursor.pPara, &cursor.pRun))
+      goto done;
   }
 
-  if (candidateStarted) {
-    /* There are no further runs, so take end of text as end of candidate */
-    if (lastAcceptedChar == ':')
-      ME_MoveCursorChars(editor, &cursor, -1);
-    *candidate_max = cursor;
+done:
+  if (candidateStarted)
+  {
+    if (neutral_end.pPara)
+      *candidate_max = neutral_end;
+    else
+      *candidate_max = cursor;
     return TRUE;
   }
   *candidate_max = *candidate_min = cursor;
