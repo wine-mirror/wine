@@ -79,6 +79,7 @@
  *     Add Flags parameter to IXAudio2SourceVoice::GetState
  *     Add IXAudio2MasteringVoice::GetChannelMask
  *     Add DisableLateField member to XAUDIO2FX_REVERB_PARAMETERS
+ *     Add ActiveFlags member to XAUDIO2_VOICE_DETAILS
  *
  * 2.9
  *   Change IID_IXAudio2
@@ -110,10 +111,16 @@ static XA2SourceImpl *impl_from_IXAudio20SourceVoice(IXAudio20SourceVoice *iface
 }
 
 static void WINAPI XA20SRC_GetVoiceDetails(IXAudio20SourceVoice *iface,
-        XAUDIO2_VOICE_DETAILS *pVoiceDetails)
+        XAUDIO27_VOICE_DETAILS *pVoiceDetails)
 {
     XA2SourceImpl *This = impl_from_IXAudio20SourceVoice(iface);
-    return IXAudio2SourceVoice_GetVoiceDetails(&This->IXAudio2SourceVoice_iface, pVoiceDetails);
+    XAUDIO2_VOICE_DETAILS details;
+
+    IXAudio2SourceVoice_GetVoiceDetails(&This->IXAudio2SourceVoice_iface, &details);
+
+    pVoiceDetails->CreationFlags = details.CreationFlags;
+    pVoiceDetails->InputChannels = details.InputChannels;
+    pVoiceDetails->InputSampleRate = details.InputSampleRate;
 }
 
 static HRESULT WINAPI XA20SRC_SetOutputVoices(IXAudio20SourceVoice *iface,
@@ -362,10 +369,16 @@ static XA2SourceImpl *impl_from_IXAudio23SourceVoice(IXAudio23SourceVoice *iface
 }
 
 static void WINAPI XA23SRC_GetVoiceDetails(IXAudio23SourceVoice *iface,
-        XAUDIO2_VOICE_DETAILS *pVoiceDetails)
+        XAUDIO27_VOICE_DETAILS *pVoiceDetails)
 {
     XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
-    return IXAudio2SourceVoice_GetVoiceDetails(&This->IXAudio2SourceVoice_iface, pVoiceDetails);
+    XAUDIO2_VOICE_DETAILS details;
+
+    IXAudio2SourceVoice_GetVoiceDetails(&This->IXAudio2SourceVoice_iface, &details);
+
+    pVoiceDetails->CreationFlags = details.CreationFlags;
+    pVoiceDetails->InputChannels = details.InputChannels;
+    pVoiceDetails->InputSampleRate = details.InputSampleRate;
 }
 
 static HRESULT WINAPI XA23SRC_SetOutputVoices(IXAudio23SourceVoice *iface,
@@ -613,10 +626,16 @@ static XA2SourceImpl *impl_from_IXAudio27SourceVoice(IXAudio27SourceVoice *iface
 }
 
 static void WINAPI XA27SRC_GetVoiceDetails(IXAudio27SourceVoice *iface,
-        XAUDIO2_VOICE_DETAILS *pVoiceDetails)
+        XAUDIO27_VOICE_DETAILS *pVoiceDetails)
 {
     XA2SourceImpl *This = impl_from_IXAudio27SourceVoice(iface);
-    return IXAudio2SourceVoice_GetVoiceDetails(&This->IXAudio2SourceVoice_iface, pVoiceDetails);
+    XAUDIO2_VOICE_DETAILS details;
+
+    IXAudio2SourceVoice_GetVoiceDetails(&This->IXAudio2SourceVoice_iface, &details);
+
+    pVoiceDetails->CreationFlags = details.CreationFlags;
+    pVoiceDetails->InputChannels = details.InputChannels;
+    pVoiceDetails->InputSampleRate = details.InputSampleRate;
 }
 
 static HRESULT WINAPI XA27SRC_SetOutputVoices(IXAudio27SourceVoice *iface,
@@ -871,10 +890,16 @@ static XA2SubmixImpl *impl_from_IXAudio20SubmixVoice(IXAudio20SubmixVoice *iface
 }
 
 static void WINAPI XA20SUB_GetVoiceDetails(IXAudio20SubmixVoice *iface,
-        XAUDIO2_VOICE_DETAILS *pVoiceDetails)
+        XAUDIO27_VOICE_DETAILS *pVoiceDetails)
 {
     XA2SubmixImpl *This = impl_from_IXAudio20SubmixVoice(iface);
-    return IXAudio2SubmixVoice_GetVoiceDetails(&This->IXAudio2SubmixVoice_iface, pVoiceDetails);
+    XAUDIO2_VOICE_DETAILS details;
+
+    IXAudio2SubmixVoice_GetVoiceDetails(&This->IXAudio2SubmixVoice_iface, &details);
+
+    pVoiceDetails->CreationFlags = details.CreationFlags;
+    pVoiceDetails->InputChannels = details.InputChannels;
+    pVoiceDetails->InputSampleRate = details.InputSampleRate;
 }
 
 static HRESULT WINAPI XA20SUB_SetOutputVoices(IXAudio20SubmixVoice *iface,
@@ -1051,10 +1076,16 @@ static XA2SubmixImpl *impl_from_IXAudio23SubmixVoice(IXAudio23SubmixVoice *iface
 }
 
 static void WINAPI XA23SUB_GetVoiceDetails(IXAudio23SubmixVoice *iface,
-        XAUDIO2_VOICE_DETAILS *pVoiceDetails)
+        XAUDIO27_VOICE_DETAILS *pVoiceDetails)
 {
     XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
-    return IXAudio2SubmixVoice_GetVoiceDetails(&This->IXAudio2SubmixVoice_iface, pVoiceDetails);
+    XAUDIO2_VOICE_DETAILS details;
+
+    IXAudio2SubmixVoice_GetVoiceDetails(&This->IXAudio2SubmixVoice_iface, &details);
+
+    pVoiceDetails->CreationFlags = details.CreationFlags;
+    pVoiceDetails->InputChannels = details.InputChannels;
+    pVoiceDetails->InputSampleRate = details.InputSampleRate;
 }
 
 static HRESULT WINAPI XA23SUB_SetOutputVoices(IXAudio23SubmixVoice *iface,
@@ -1221,6 +1252,194 @@ const IXAudio23SubmixVoiceVtbl XAudio23SubmixVoice_Vtbl = {
     XA23SUB_GetOutputMatrix,
     XA23SUB_DestroyVoice
 };
+
+#elif XAUDIO2_VER <= 7
+
+static XA2SubmixImpl *impl_from_IXAudio27SubmixVoice(IXAudio27SubmixVoice *iface)
+{
+    return CONTAINING_RECORD(iface, XA2SubmixImpl, IXAudio27SubmixVoice_iface);
+}
+
+static void WINAPI XA27SUB_GetVoiceDetails(IXAudio27SubmixVoice *iface,
+        XAUDIO27_VOICE_DETAILS *pVoiceDetails)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    XAUDIO2_VOICE_DETAILS details;
+
+    IXAudio2SubmixVoice_GetVoiceDetails(&This->IXAudio2SubmixVoice_iface, &details);
+
+    pVoiceDetails->CreationFlags = details.CreationFlags;
+    pVoiceDetails->InputChannels = details.InputChannels;
+    pVoiceDetails->InputSampleRate = details.InputSampleRate;
+}
+
+static HRESULT WINAPI XA27SUB_SetOutputVoices(IXAudio27SubmixVoice *iface,
+        const XAUDIO2_VOICE_SENDS *pSendList)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    return IXAudio2SubmixVoice_SetOutputVoices(&This->IXAudio2SubmixVoice_iface, pSendList);
+}
+
+static HRESULT WINAPI XA27SUB_SetEffectChain(IXAudio27SubmixVoice *iface,
+        const XAUDIO2_EFFECT_CHAIN *pEffectChain)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    return IXAudio2SubmixVoice_SetEffectChain(&This->IXAudio2SubmixVoice_iface, pEffectChain);
+}
+
+static HRESULT WINAPI XA27SUB_EnableEffect(IXAudio27SubmixVoice *iface,
+        UINT32 EffectIndex, UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    return IXAudio2SubmixVoice_EnableEffect(&This->IXAudio2SubmixVoice_iface,
+            EffectIndex, OperationSet);
+}
+
+static HRESULT WINAPI XA27SUB_DisableEffect(IXAudio27SubmixVoice *iface,
+        UINT32 EffectIndex, UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    return IXAudio2SubmixVoice_DisableEffect(&This->IXAudio2SubmixVoice_iface,
+            EffectIndex, OperationSet);
+}
+
+static void WINAPI XA27SUB_GetEffectState(IXAudio27SubmixVoice *iface,
+        UINT32 EffectIndex, BOOL *pEnabled)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    return IXAudio2SubmixVoice_GetEffectState(&This->IXAudio2SubmixVoice_iface,
+            EffectIndex, pEnabled);
+}
+
+static HRESULT WINAPI XA27SUB_SetEffectParameters(IXAudio27SubmixVoice *iface,
+        UINT32 EffectIndex, const void *pParameters, UINT32 ParametersByteSize,
+        UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    return IXAudio2SubmixVoice_SetEffectParameters(&This->IXAudio2SubmixVoice_iface,
+            EffectIndex, pParameters, ParametersByteSize, OperationSet);
+}
+
+static HRESULT WINAPI XA27SUB_GetEffectParameters(IXAudio27SubmixVoice *iface,
+        UINT32 EffectIndex, void *pParameters, UINT32 ParametersByteSize)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    return IXAudio2SubmixVoice_GetEffectParameters(&This->IXAudio2SubmixVoice_iface,
+            EffectIndex, pParameters, ParametersByteSize);
+}
+
+static HRESULT WINAPI XA27SUB_SetFilterParameters(IXAudio27SubmixVoice *iface,
+        const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    return IXAudio2SubmixVoice_SetFilterParameters(&This->IXAudio2SubmixVoice_iface,
+            pParameters, OperationSet);
+}
+
+static void WINAPI XA27SUB_GetFilterParameters(IXAudio27SubmixVoice *iface,
+        XAUDIO2_FILTER_PARAMETERS *pParameters)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    return IXAudio2SubmixVoice_GetFilterParameters(&This->IXAudio2SubmixVoice_iface, pParameters);
+}
+
+static HRESULT WINAPI XA27SUB_SetOutputFilterParameters(IXAudio27SubmixVoice *iface,
+        IXAudio2Voice *pDestinationVoice,
+        const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    return IXAudio2SubmixVoice_SetOutputFilterParameters(&This->IXAudio2SubmixVoice_iface,
+            pDestinationVoice, pParameters, OperationSet);
+}
+
+static void WINAPI XA27SUB_GetOutputFilterParameters(IXAudio27SubmixVoice *iface,
+        IXAudio2Voice *pDestinationVoice,
+        XAUDIO2_FILTER_PARAMETERS *pParameters)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    IXAudio2SubmixVoice_GetOutputFilterParameters(&This->IXAudio2SubmixVoice_iface,
+            pDestinationVoice, pParameters);
+}
+
+static HRESULT WINAPI XA27SUB_SetVolume(IXAudio27SubmixVoice *iface,
+        float Volume, UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    return IXAudio2SubmixVoice_SetVolume(&This->IXAudio2SubmixVoice_iface,
+            Volume, OperationSet);
+}
+
+static void WINAPI XA27SUB_GetVolume(IXAudio27SubmixVoice *iface,
+        float *pVolume)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    return IXAudio2SubmixVoice_GetVolume(&This->IXAudio2SubmixVoice_iface, pVolume);
+}
+
+static HRESULT WINAPI XA27SUB_SetChannelVolumes(IXAudio27SubmixVoice *iface,
+        UINT32 Channels, const float *pVolumes, UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    return IXAudio2SubmixVoice_SetChannelVolumes(&This->IXAudio2SubmixVoice_iface,
+            Channels, pVolumes, OperationSet);
+}
+
+static void WINAPI XA27SUB_GetChannelVolumes(IXAudio27SubmixVoice *iface,
+        UINT32 Channels, float *pVolumes)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    return IXAudio2SubmixVoice_GetChannelVolumes(&This->IXAudio2SubmixVoice_iface,
+            Channels, pVolumes);
+}
+
+static HRESULT WINAPI XA27SUB_SetOutputMatrix(IXAudio27SubmixVoice *iface,
+        IXAudio2Voice *pDestinationVoice, UINT32 SubmixChannels,
+        UINT32 DestinationChannels, const float *pLevelMatrix,
+        UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    return IXAudio2SubmixVoice_SetOutputMatrix(&This->IXAudio2SubmixVoice_iface,
+            pDestinationVoice, SubmixChannels, DestinationChannels,
+            pLevelMatrix, OperationSet);
+}
+
+static void WINAPI XA27SUB_GetOutputMatrix(IXAudio27SubmixVoice *iface,
+        IXAudio2Voice *pDestinationVoice, UINT32 SubmixChannels,
+        UINT32 DestinationChannels, float *pLevelMatrix)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    return IXAudio2SubmixVoice_GetOutputMatrix(&This->IXAudio2SubmixVoice_iface,
+            pDestinationVoice, SubmixChannels, DestinationChannels,
+            pLevelMatrix);
+}
+
+static void WINAPI XA27SUB_DestroyVoice(IXAudio27SubmixVoice *iface)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio27SubmixVoice(iface);
+    return IXAudio2SubmixVoice_DestroyVoice(&This->IXAudio2SubmixVoice_iface);
+}
+
+const IXAudio27SubmixVoiceVtbl XAudio27SubmixVoice_Vtbl = {
+    XA27SUB_GetVoiceDetails,
+    XA27SUB_SetOutputVoices,
+    XA27SUB_SetEffectChain,
+    XA27SUB_EnableEffect,
+    XA27SUB_DisableEffect,
+    XA27SUB_GetEffectState,
+    XA27SUB_SetEffectParameters,
+    XA27SUB_GetEffectParameters,
+    XA27SUB_SetFilterParameters,
+    XA27SUB_GetFilterParameters,
+    XA27SUB_SetOutputFilterParameters,
+    XA27SUB_GetOutputFilterParameters,
+    XA27SUB_SetVolume,
+    XA27SUB_GetVolume,
+    XA27SUB_SetChannelVolumes,
+    XA27SUB_GetChannelVolumes,
+    XA27SUB_SetOutputMatrix,
+    XA27SUB_GetOutputMatrix,
+    XA27SUB_DestroyVoice
+};
 #endif
 /* END IXAudio2SubmixVoice */
 
@@ -1233,10 +1452,16 @@ static IXAudio2Impl *impl_from_IXAudio20MasteringVoice(IXAudio20MasteringVoice *
 }
 
 static void WINAPI XA20M_GetVoiceDetails(IXAudio20MasteringVoice *iface,
-        XAUDIO2_VOICE_DETAILS *pVoiceDetails)
+        XAUDIO27_VOICE_DETAILS *pVoiceDetails)
 {
     IXAudio2Impl *This = impl_from_IXAudio20MasteringVoice(iface);
-    return IXAudio2MasteringVoice_GetVoiceDetails(&This->IXAudio2MasteringVoice_iface, pVoiceDetails);
+    XAUDIO2_VOICE_DETAILS details;
+
+    IXAudio2MasteringVoice_GetVoiceDetails(&This->IXAudio2MasteringVoice_iface, &details);
+
+    pVoiceDetails->CreationFlags = details.CreationFlags;
+    pVoiceDetails->InputChannels = details.InputChannels;
+    pVoiceDetails->InputSampleRate = details.InputSampleRate;
 }
 
 static HRESULT WINAPI XA20M_SetOutputVoices(IXAudio20MasteringVoice *iface,
@@ -1413,10 +1638,16 @@ static IXAudio2Impl *impl_from_IXAudio23MasteringVoice(IXAudio23MasteringVoice *
 }
 
 static void WINAPI XA23M_GetVoiceDetails(IXAudio23MasteringVoice *iface,
-        XAUDIO2_VOICE_DETAILS *pVoiceDetails)
+        XAUDIO27_VOICE_DETAILS *pVoiceDetails)
 {
     IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
-    return IXAudio2MasteringVoice_GetVoiceDetails(&This->IXAudio2MasteringVoice_iface, pVoiceDetails);
+    XAUDIO2_VOICE_DETAILS details;
+
+    IXAudio2MasteringVoice_GetVoiceDetails(&This->IXAudio2MasteringVoice_iface, &details);
+
+    pVoiceDetails->CreationFlags = details.CreationFlags;
+    pVoiceDetails->InputChannels = details.InputChannels;
+    pVoiceDetails->InputSampleRate = details.InputSampleRate;
 }
 
 static HRESULT WINAPI XA23M_SetOutputVoices(IXAudio23MasteringVoice *iface,
@@ -1582,6 +1813,194 @@ const IXAudio23MasteringVoiceVtbl XAudio23MasteringVoice_Vtbl = {
     XA23M_SetOutputMatrix,
     XA23M_GetOutputMatrix,
     XA23M_DestroyVoice
+};
+
+#elif XAUDIO2_VER <= 7
+
+static IXAudio2Impl *impl_from_IXAudio27MasteringVoice(IXAudio27MasteringVoice *iface)
+{
+    return CONTAINING_RECORD(iface, IXAudio2Impl, IXAudio27MasteringVoice_iface);
+}
+
+static void WINAPI XA27M_GetVoiceDetails(IXAudio27MasteringVoice *iface,
+        XAUDIO27_VOICE_DETAILS *pVoiceDetails)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    XAUDIO2_VOICE_DETAILS details;
+
+    IXAudio2MasteringVoice_GetVoiceDetails(&This->IXAudio2MasteringVoice_iface, &details);
+
+    pVoiceDetails->CreationFlags = details.CreationFlags;
+    pVoiceDetails->InputChannels = details.InputChannels;
+    pVoiceDetails->InputSampleRate = details.InputSampleRate;
+}
+
+static HRESULT WINAPI XA27M_SetOutputVoices(IXAudio27MasteringVoice *iface,
+        const XAUDIO2_VOICE_SENDS *pSendList)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    return IXAudio2MasteringVoice_SetOutputVoices(&This->IXAudio2MasteringVoice_iface, pSendList);
+}
+
+static HRESULT WINAPI XA27M_SetEffectChain(IXAudio27MasteringVoice *iface,
+        const XAUDIO2_EFFECT_CHAIN *pEffectChain)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    return IXAudio2MasteringVoice_SetEffectChain(&This->IXAudio2MasteringVoice_iface, pEffectChain);
+}
+
+static HRESULT WINAPI XA27M_EnableEffect(IXAudio27MasteringVoice *iface,
+        UINT32 EffectIndex, UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    return IXAudio2MasteringVoice_EnableEffect(&This->IXAudio2MasteringVoice_iface,
+            EffectIndex, OperationSet);
+}
+
+static HRESULT WINAPI XA27M_DisableEffect(IXAudio27MasteringVoice *iface,
+        UINT32 EffectIndex, UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    return IXAudio2MasteringVoice_DisableEffect(&This->IXAudio2MasteringVoice_iface,
+            EffectIndex, OperationSet);
+}
+
+static void WINAPI XA27M_GetEffectState(IXAudio27MasteringVoice *iface,
+        UINT32 EffectIndex, BOOL *pEnabled)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    return IXAudio2MasteringVoice_GetEffectState(&This->IXAudio2MasteringVoice_iface,
+            EffectIndex, pEnabled);
+}
+
+static HRESULT WINAPI XA27M_SetEffectParameters(IXAudio27MasteringVoice *iface,
+        UINT32 EffectIndex, const void *pParameters, UINT32 ParametersByteSize,
+        UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    return IXAudio2MasteringVoice_SetEffectParameters(&This->IXAudio2MasteringVoice_iface,
+            EffectIndex, pParameters, ParametersByteSize, OperationSet);
+}
+
+static HRESULT WINAPI XA27M_GetEffectParameters(IXAudio27MasteringVoice *iface,
+        UINT32 EffectIndex, void *pParameters, UINT32 ParametersByteSize)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    return IXAudio2MasteringVoice_GetEffectParameters(&This->IXAudio2MasteringVoice_iface,
+            EffectIndex, pParameters, ParametersByteSize);
+}
+
+static HRESULT WINAPI XA27M_SetFilterParameters(IXAudio27MasteringVoice *iface,
+        const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    return IXAudio2MasteringVoice_SetFilterParameters(&This->IXAudio2MasteringVoice_iface,
+            pParameters, OperationSet);
+}
+
+static void WINAPI XA27M_GetFilterParameters(IXAudio27MasteringVoice *iface,
+        XAUDIO2_FILTER_PARAMETERS *pParameters)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    return IXAudio2MasteringVoice_GetFilterParameters(&This->IXAudio2MasteringVoice_iface, pParameters);
+}
+
+static HRESULT WINAPI XA27M_SetOutputFilterParameters(IXAudio27MasteringVoice *iface,
+        IXAudio2Voice *pDestinationVoice,
+        const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    return IXAudio2MasteringVoice_SetOutputFilterParameters(&This->IXAudio2MasteringVoice_iface,
+            pDestinationVoice, pParameters, OperationSet);
+}
+
+static void WINAPI XA27M_GetOutputFilterParameters(IXAudio27MasteringVoice *iface,
+        IXAudio2Voice *pDestinationVoice,
+        XAUDIO2_FILTER_PARAMETERS *pParameters)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    IXAudio2MasteringVoice_GetOutputFilterParameters(&This->IXAudio2MasteringVoice_iface,
+            pDestinationVoice, pParameters);
+}
+
+static HRESULT WINAPI XA27M_SetVolume(IXAudio27MasteringVoice *iface,
+        float Volume, UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    return IXAudio2MasteringVoice_SetVolume(&This->IXAudio2MasteringVoice_iface,
+            Volume, OperationSet);
+}
+
+static void WINAPI XA27M_GetVolume(IXAudio27MasteringVoice *iface,
+        float *pVolume)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    return IXAudio2MasteringVoice_GetVolume(&This->IXAudio2MasteringVoice_iface, pVolume);
+}
+
+static HRESULT WINAPI XA27M_SetChannelVolumes(IXAudio27MasteringVoice *iface,
+        UINT32 Channels, const float *pVolumes, UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    return IXAudio2MasteringVoice_SetChannelVolumes(&This->IXAudio2MasteringVoice_iface,
+            Channels, pVolumes, OperationSet);
+}
+
+static void WINAPI XA27M_GetChannelVolumes(IXAudio27MasteringVoice *iface,
+        UINT32 Channels, float *pVolumes)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    return IXAudio2MasteringVoice_GetChannelVolumes(&This->IXAudio2MasteringVoice_iface,
+            Channels, pVolumes);
+}
+
+static HRESULT WINAPI XA27M_SetOutputMatrix(IXAudio27MasteringVoice *iface,
+        IXAudio2Voice *pDestinationVoice, UINT32 MasteringChannels,
+        UINT32 DestinationChannels, const float *pLevelMatrix,
+        UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    return IXAudio2MasteringVoice_SetOutputMatrix(&This->IXAudio2MasteringVoice_iface,
+            pDestinationVoice, MasteringChannels, DestinationChannels,
+            pLevelMatrix, OperationSet);
+}
+
+static void WINAPI XA27M_GetOutputMatrix(IXAudio27MasteringVoice *iface,
+        IXAudio2Voice *pDestinationVoice, UINT32 MasteringChannels,
+        UINT32 DestinationChannels, float *pLevelMatrix)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    return IXAudio2MasteringVoice_GetOutputMatrix(&This->IXAudio2MasteringVoice_iface,
+            pDestinationVoice, MasteringChannels, DestinationChannels,
+            pLevelMatrix);
+}
+
+static void WINAPI XA27M_DestroyVoice(IXAudio27MasteringVoice *iface)
+{
+    IXAudio2Impl *This = impl_from_IXAudio27MasteringVoice(iface);
+    return IXAudio2MasteringVoice_DestroyVoice(&This->IXAudio2MasteringVoice_iface);
+}
+
+const IXAudio27MasteringVoiceVtbl XAudio27MasteringVoice_Vtbl = {
+    XA27M_GetVoiceDetails,
+    XA27M_SetOutputVoices,
+    XA27M_SetEffectChain,
+    XA27M_EnableEffect,
+    XA27M_DisableEffect,
+    XA27M_GetEffectState,
+    XA27M_SetEffectParameters,
+    XA27M_GetEffectParameters,
+    XA27M_SetFilterParameters,
+    XA27M_GetFilterParameters,
+    XA27M_SetOutputFilterParameters,
+    XA27M_GetOutputFilterParameters,
+    XA27M_SetVolume,
+    XA27M_GetVolume,
+    XA27M_SetChannelVolumes,
+    XA27M_GetChannelVolumes,
+    XA27M_SetOutputMatrix,
+    XA27M_GetOutputMatrix,
+    XA27M_DestroyVoice
 };
 #endif
 /* END IXAudio2MasteringVoice */

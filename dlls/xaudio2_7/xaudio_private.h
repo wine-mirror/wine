@@ -93,9 +93,13 @@ typedef struct _XA2SubmixImpl {
     IXAudio20SubmixVoice IXAudio20SubmixVoice_iface;
 #elif XAUDIO2_VER <= 3
     IXAudio23SubmixVoice IXAudio23SubmixVoice_iface;
+#elif XAUDIO2_VER <= 7
+    IXAudio27SubmixVoice IXAudio27SubmixVoice_iface;
 #endif
 
     BOOL in_use;
+
+    XAUDIO2_VOICE_DETAILS details;
 
     CRITICAL_SECTION lock;
 
@@ -118,6 +122,8 @@ struct _IXAudio2Impl {
     IXAudio20MasteringVoice IXAudio20MasteringVoice_iface;
 #elif XAUDIO2_VER <= 3
     IXAudio23MasteringVoice IXAudio23MasteringVoice_iface;
+#elif XAUDIO2_VER <= 7
+    IXAudio27MasteringVoice IXAudio27MasteringVoice_iface;
 #endif
 
     LONG ref;
@@ -163,6 +169,8 @@ extern const IXAudio23SubmixVoiceVtbl XAudio23SubmixVoice_Vtbl DECLSPEC_HIDDEN;
 extern const IXAudio23MasteringVoiceVtbl XAudio23MasteringVoice_Vtbl DECLSPEC_HIDDEN;
 #elif XAUDIO2_VER <= 7
 extern const IXAudio27SourceVoiceVtbl XAudio27SourceVoice_Vtbl DECLSPEC_HIDDEN;
+extern const IXAudio27SubmixVoiceVtbl XAudio27SubmixVoice_Vtbl DECLSPEC_HIDDEN;
+extern const IXAudio27MasteringVoiceVtbl XAudio27MasteringVoice_Vtbl DECLSPEC_HIDDEN;
 #endif
 
 #if XAUDIO2_VER == 0

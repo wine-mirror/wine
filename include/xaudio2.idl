@@ -223,9 +223,17 @@ typedef struct XAUDIO2_DEVICE_DETAILS
     WAVEFORMATEXTENSIBLE OutputFormat;
 } XAUDIO2_DEVICE_DETAILS;
 
+typedef struct XAUDIO27_VOICE_DETAILS
+{
+    UINT32 CreationFlags;
+    UINT32 InputChannels;
+    UINT32 InputSampleRate;
+} XAUDIO27_VOICE_DETAILS;
+
 typedef struct XAUDIO2_VOICE_DETAILS
 {
     UINT32 CreationFlags;
+    UINT32 ActiveFlags;
     UINT32 InputChannels;
     UINT32 InputSampleRate;
 } XAUDIO2_VOICE_DETAILS;
@@ -323,7 +331,7 @@ typedef struct XAUDIO2_FILTER_PARAMETERS
 ]
 interface IXAudio20Voice
 {
-    void GetVoiceDetails([out] XAUDIO2_VOICE_DETAILS* pVoiceDetails);
+    void GetVoiceDetails([out] XAUDIO27_VOICE_DETAILS* pVoiceDetails);
 
     HRESULT SetOutputVoices([in] const XAUDIO23_VOICE_SENDS* pSendList);
 
@@ -398,7 +406,7 @@ interface IXAudio20Voice
 ]
 interface IXAudio23Voice
 {
-    void GetVoiceDetails([out] XAUDIO2_VOICE_DETAILS* pVoiceDetails);
+    void GetVoiceDetails([out] XAUDIO27_VOICE_DETAILS* pVoiceDetails);
 
     HRESULT SetOutputVoices([in] const XAUDIO23_VOICE_SENDS* pSendList);
 
@@ -432,6 +440,90 @@ interface IXAudio23Voice
         [in, defaultvalue(XAUDIO2_COMMIT_NOW)] UINT32 OperationSet);
 
     void GetFilterParameters([out] XAUDIO2_FILTER_PARAMETERS* pParameters);
+
+    HRESULT SetVolume(
+        [in] float Volume,
+        [in, defaultvalue(XAUDIO2_COMMIT_NOW)] UINT32 OperationSet);
+
+    void GetVolume([out] float* pVolume);
+
+    HRESULT SetChannelVolumes(
+        [in] UINT32 Channels,
+        [in, size_is(Channels)] const float* pVolumes,
+        [in, defaultvalue(XAUDIO2_COMMIT_NOW)] UINT32 OperationSet);
+
+    void GetChannelVolumes(
+        [in] UINT32 Channels,
+        [out, size_is(Channels)] float* pVolumes);
+
+    HRESULT SetOutputMatrix(
+        [in] IXAudio2Voice* pDestinationVoice,
+        [in] UINT32 SourceChannels,
+        [in] UINT32 DestinationChannels,
+        [in, size_is(SourceChannels * DestinationChannels)] const float* pLevelMatrix,
+        [in, defaultvalue(XAUDIO2_COMMIT_NOW)] UINT32 OperationSet);
+
+    void GetOutputMatrix(
+        [in] IXAudio2Voice* pDestinationVoice,
+        [in] UINT32 SourceChannels,
+        [in] UINT32 DestinationChannels,
+        [out, size_is(SourceChannels * DestinationChannels)] float* pLevelMatrix);
+
+    void DestroyVoice();
+}
+
+/* XAudio 2.7's IXAudio2Voice */
+/* XAudio2 2.7's IXAudio2Voice interface. Actually called
+ * IXAudio2Voice in the Jun 2010 DX SDK */
+[
+    object,
+    local
+]
+interface IXAudio27Voice
+{
+    void GetVoiceDetails([out] XAUDIO27_VOICE_DETAILS* pVoiceDetails);
+
+    HRESULT SetOutputVoices([in] const XAUDIO2_VOICE_SENDS* pSendList);
+
+    HRESULT SetEffectChain([in] const XAUDIO2_EFFECT_CHAIN* pEffectChain);
+
+    HRESULT EnableEffect(
+        [in] UINT32 EffectIndex,
+        [in, defaultvalue(XAUDIO2_COMMIT_NOW)] UINT32 OperationSet);
+
+    HRESULT DisableEffect(
+        [in] UINT32 EffectIndex,
+        [in, defaultvalue(XAUDIO2_COMMIT_NOW)] UINT32 OperationSet);
+
+    void GetEffectState(
+        [in] UINT32 EffectIndex,
+        [out] BOOL* pEnabled);
+
+    HRESULT SetEffectParameters(
+        [in] UINT32 EffectIndex,
+        [in] const void* pParameters,
+        [in] UINT32 ParametersByteSize,
+        [in, defaultvalue(XAUDIO2_COMMIT_NOW)] UINT32 OperationSet);
+
+    HRESULT GetEffectParameters(
+        [in] UINT32 EffectIndex,
+        [out] void* pParameters,
+        [in] UINT32 ParametersByteSize);
+
+    HRESULT SetFilterParameters(
+        [in] const XAUDIO2_FILTER_PARAMETERS* pParameters,
+        [in, defaultvalue(XAUDIO2_COMMIT_NOW)] UINT32 OperationSet);
+
+    void GetFilterParameters([out] XAUDIO2_FILTER_PARAMETERS* pParameters);
+
+    HRESULT SetOutputFilterParameters(
+        [in] IXAudio2Voice* pDestinationVoice,
+        [in] const XAUDIO2_FILTER_PARAMETERS* pParameters,
+        [in, defaultvalue(XAUDIO2_COMMIT_NOW)] UINT32 OperationSet);
+
+    void GetOutputFilterParameters(
+        [in] IXAudio2Voice* pDestinationVoice,
+        [out] XAUDIO2_FILTER_PARAMETERS* pParameters);
 
     HRESULT SetVolume(
         [in] float Volume,
@@ -644,7 +736,7 @@ interface IXAudio23SourceVoice : IXAudio23Voice
 ]
 /* XAudio2 2.7's IXAudio2SourceVoice interface. Actually called
  * IXAudio2SourceVoice in the Jun 2010 DX SDK */
-interface IXAudio27SourceVoice : IXAudio2Voice
+interface IXAudio27SourceVoice : IXAudio27Voice
 {
     HRESULT Start(
         [in, defaultvalue(0)] UINT32 Flags,
@@ -731,6 +823,15 @@ interface IXAudio23SubmixVoice : IXAudio23Voice
 [
     local
 ]
+/* XAudio2 2.7's IXAudio2SubmixVoice interface. Actually called
+ * IXAudio2SubmixVoice in the Jun 2010 DX SDK */
+interface IXAudio27SubmixVoice : IXAudio27Voice
+{
+}
+
+[
+    local
+]
 interface IXAudio2SubmixVoice : IXAudio2Voice
 {
 }
@@ -750,6 +851,15 @@ interface IXAudio20MasteringVoice : IXAudio20Voice
 /* XAudio2 2.3's IXAudio2MasteringVoice interface. Actually called
  * IXAudio2MasteringVoice in the Nov 2008 DX SDK */
 interface IXAudio23MasteringVoice : IXAudio23Voice
+{
+}
+
+[
+    local
+]
+/* XAudio2 2.7's IXAudio2MasteringVoice interface. Actually called
+ * IXAudio2MasteringVoice in the Jun 2010 DX SDK */
+interface IXAudio27MasteringVoice : IXAudio27Voice
 {
 }
 

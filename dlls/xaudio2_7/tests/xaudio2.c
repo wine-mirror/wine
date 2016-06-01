@@ -216,6 +216,21 @@ static void test_simple_streaming(IXAudio2 *xa)
     XA2CALL(CreateSourceVoice, &src, &fmt, 0, 1.f, &vcb1, NULL, NULL);
     ok(hr == S_OK, "CreateSourceVoice failed: %08x\n", hr);
 
+    if(xaudio27){
+        XAUDIO27_VOICE_DETAILS details;
+        IXAudio27SourceVoice_GetVoiceDetails((IXAudio27SourceVoice*)src, &details);
+        ok(details.CreationFlags == 0, "Got wrong flags: 0x%x\n", details.CreationFlags);
+        ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
+        ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
+    }else{
+        XAUDIO2_VOICE_DETAILS details;
+        IXAudio2SourceVoice_GetVoiceDetails(src, &details);
+        ok(details.CreationFlags == 0, "Got wrong creation flags: 0x%x\n", details.CreationFlags);
+        ok(details.ActiveFlags == 0, "Got wrong active flags: 0x%x\n", details.CreationFlags);
+        ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
+        ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
+    }
+
     memset(&buf, 0, sizeof(buf));
     buf.AudioBytes = 22050 * fmt.nBlockAlign;
     buf.pAudioData = HeapAlloc(GetProcessHeap(), 0, buf.AudioBytes);
@@ -230,6 +245,21 @@ static void test_simple_streaming(IXAudio2 *xa)
     /* create second source voice */
     XA2CALL(CreateSourceVoice, &src2, &fmt, 0, 1.f, &vcb2, NULL, NULL);
     ok(hr == S_OK, "CreateSourceVoice failed: %08x\n", hr);
+
+    if(xaudio27){
+        XAUDIO27_VOICE_DETAILS details;
+        IXAudio27SourceVoice_GetVoiceDetails((IXAudio27SourceVoice*)src2, &details);
+        ok(details.CreationFlags == 0, "Got wrong flags: 0x%x\n", details.CreationFlags);
+        ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
+        ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
+    }else{
+        XAUDIO2_VOICE_DETAILS details;
+        IXAudio2SourceVoice_GetVoiceDetails(src2, &details);
+        ok(details.CreationFlags == 0, "Got wrong creation flags: 0x%x\n", details.CreationFlags);
+        ok(details.ActiveFlags == 0, "Got wrong active flags: 0x%x\n", details.CreationFlags);
+        ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
+        ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
+    }
 
     memset(&buf2, 0, sizeof(buf2));
     buf2.AudioBytes = 22050 * fmt.nBlockAlign;
@@ -775,6 +805,42 @@ static void test_looping(IXAudio2 *xa)
     HeapFree(GetProcessHeap(), 0, (void*)buf.pAudioData);
 }
 
+static void test_submix(IXAudio2 *xa)
+{
+    HRESULT hr;
+    IXAudio2MasteringVoice *master;
+    IXAudio2SubmixVoice *sub;
+
+    XA2CALL_0V(StopEngine);
+
+    if(xaudio27)
+        hr = IXAudio27_CreateMasteringVoice((IXAudio27*)xa, &master, 2, 44100, 0, 0, NULL);
+    else
+        hr = IXAudio2_CreateMasteringVoice(xa, &master, 2, 44100, 0, NULL, NULL, AudioCategory_GameEffects);
+    ok(hr == S_OK, "CreateMasteringVoice failed: %08x\n", hr);
+
+    XA2CALL(CreateSubmixVoice, &sub, 2, 44100, 0, 0, NULL, NULL);
+    ok(hr == S_OK, "CreateSubmixVoice failed: %08x\n", hr);
+
+    if(xaudio27){
+        XAUDIO27_VOICE_DETAILS details;
+        IXAudio27SubmixVoice_GetVoiceDetails((IXAudio27SubmixVoice*)sub, &details);
+        ok(details.CreationFlags == 0, "Got wrong flags: 0x%x\n", details.CreationFlags);
+        ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
+        ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
+    }else{
+        XAUDIO2_VOICE_DETAILS details;
+        IXAudio2SubmixVoice_GetVoiceDetails(sub, &details);
+        ok(details.CreationFlags == 0, "Got wrong creation flags: 0x%x\n", details.CreationFlags);
+        ok(details.ActiveFlags == 0, "Got wrong active flags: 0x%x\n", details.CreationFlags);
+        ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
+        ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
+    }
+
+    IXAudio2SubmixVoice_DestroyVoice(sub);
+    IXAudio2MasteringVoice_DestroyVoice(master);
+}
+
 static UINT32 test_DeviceDetails(IXAudio27 *xa)
 {
     HRESULT hr;
@@ -1069,6 +1135,7 @@ START_TEST(xaudio2)
             test_simple_streaming((IXAudio2*)xa27);
             test_buffer_callbacks((IXAudio2*)xa27);
             test_looping((IXAudio2*)xa27);
+            test_submix((IXAudio2*)xa27);
         }else
             skip("No audio devices available\n");
 
@@ -1091,6 +1158,7 @@ START_TEST(xaudio2)
             test_simple_streaming(xa);
             test_buffer_callbacks(xa);
             test_looping(xa);
+            test_submix(xa);
         }else
             skip("No audio devices available\n");
 

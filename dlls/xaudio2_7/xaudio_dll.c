@@ -173,7 +173,13 @@ static void WINAPI XA2SRC_GetVoiceDetails(IXAudio2SourceVoice *iface,
         XAUDIO2_VOICE_DETAILS *pVoiceDetails)
 {
     XA2SourceImpl *This = impl_from_IXAudio2SourceVoice(iface);
+
     TRACE("%p, %p\n", This, pVoiceDetails);
+
+    pVoiceDetails->CreationFlags = 0;
+    pVoiceDetails->ActiveFlags = 0;
+    pVoiceDetails->InputChannels = This->fmt->nChannels;
+    pVoiceDetails->InputSampleRate = This->fmt->nSamplesPerSec;
 }
 
 static HRESULT WINAPI XA2SRC_SetOutputVoices(IXAudio2SourceVoice *iface,
@@ -799,6 +805,7 @@ static void WINAPI XA2M_GetVoiceDetails(IXAudio2MasteringVoice *iface,
     IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
     TRACE("%p, %p\n", This, pVoiceDetails);
     pVoiceDetails->CreationFlags = 0;
+    pVoiceDetails->ActiveFlags = 0;
     pVoiceDetails->InputChannels = This->fmt.Format.nChannels;
     pVoiceDetails->InputSampleRate = This->fmt.Format.nSamplesPerSec;
 }
@@ -1010,7 +1017,10 @@ static void WINAPI XA2SUB_GetVoiceDetails(IXAudio2SubmixVoice *iface,
         XAUDIO2_VOICE_DETAILS *pVoiceDetails)
 {
     XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+
     TRACE("%p, %p\n", This, pVoiceDetails);
+
+    *pVoiceDetails = This->details;
 }
 
 static HRESULT WINAPI XA2SUB_SetOutputVoices(IXAudio2SubmixVoice *iface,
@@ -1499,6 +1509,8 @@ static HRESULT WINAPI IXAudio2Impl_CreateSubmixVoice(IXAudio2 *iface,
         sub->IXAudio20SubmixVoice_iface.lpVtbl = &XAudio20SubmixVoice_Vtbl;
 #elif XAUDIO2_VER <= 3
         sub->IXAudio23SubmixVoice_iface.lpVtbl = &XAudio23SubmixVoice_Vtbl;
+#elif XAUDIO2_VER <= 7
+        sub->IXAudio27SubmixVoice_iface.lpVtbl = &XAudio27SubmixVoice_Vtbl;
 #endif
 
         InitializeCriticalSection(&sub->lock);
@@ -1509,6 +1521,11 @@ static HRESULT WINAPI IXAudio2Impl_CreateSubmixVoice(IXAudio2 *iface,
 
     sub->in_use = TRUE;
 
+    sub->details.CreationFlags = flags;
+    sub->details.ActiveFlags = flags;
+    sub->details.InputChannels = inputChannels;
+    sub->details.InputSampleRate = inputSampleRate;
+
     LeaveCriticalSection(&This->lock);
     LeaveCriticalSection(&sub->lock);
 
@@ -1516,6 +1533,8 @@ static HRESULT WINAPI IXAudio2Impl_CreateSubmixVoice(IXAudio2 *iface,
     *ppSubmixVoice = (IXAudio2SubmixVoice*)&sub->IXAudio20SubmixVoice_iface;
 #elif XAUDIO2_VER <= 3
     *ppSubmixVoice = (IXAudio2SubmixVoice*)&sub->IXAudio23SubmixVoice_iface;
+#elif XAUDIO2_VER <= 7
+    *ppSubmixVoice = (IXAudio2SubmixVoice*)&sub->IXAudio27SubmixVoice_iface;
 #else
     *ppSubmixVoice = &sub->IXAudio2SubmixVoice_iface;
 #endif
@@ -1751,6 +1770,8 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
     *ppMasteringVoice = (IXAudio2MasteringVoice*)&This->IXAudio20MasteringVoice_iface;
 #elif XAUDIO2_VER <= 3
     *ppMasteringVoice = (IXAudio2MasteringVoice*)&This->IXAudio23MasteringVoice_iface;
+#elif XAUDIO2_VER <= 7
+    *ppMasteringVoice = (IXAudio2MasteringVoice*)&This->IXAudio27MasteringVoice_iface;
 #else
     *ppMasteringVoice = &This->IXAudio2MasteringVoice_iface;
 #endif
@@ -2001,6 +2022,8 @@ static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *p
     object->IXAudio20MasteringVoice_iface.lpVtbl = &XAudio20MasteringVoice_Vtbl;
 #elif XAUDIO2_VER <= 3
     object->IXAudio23MasteringVoice_iface.lpVtbl = &XAudio23MasteringVoice_Vtbl;
+#elif XAUDIO2_VER <= 7
+    object->IXAudio27MasteringVoice_iface.lpVtbl = &XAudio27MasteringVoice_Vtbl;
 #endif
 
     list_init(&object->source_voices);
