@@ -152,7 +152,7 @@ void *alloc_object(object_header_t *parent, const object_vtbl_t *vtbl, size_t si
         handle_table[handle] = ret;
         ret->valid_handle = TRUE;
 
-        while(handle_table[next_handle] && next_handle < handle_table_size)
+        while(next_handle < handle_table_size && handle_table[next_handle])
             next_handle++;
     }
 
