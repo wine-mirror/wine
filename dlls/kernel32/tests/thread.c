@@ -1644,7 +1644,7 @@ static void test_thread_actctx(void)
 
     handle = (void*)0xdeadbeef;
     b = pGetCurrentActCtx(&handle);
-    ok(b, "GetCurentActCtx failed: %u\n", GetLastError());
+    ok(b, "GetCurrentActCtx failed: %u\n", GetLastError());
     ok(handle == 0, "active context %p\n", handle);
 
     /* without active context */
@@ -1663,7 +1663,7 @@ static void test_thread_actctx(void)
 
     handle = 0;
     b = pGetCurrentActCtx(&handle);
-    ok(b, "GetCurentActCtx failed: %u\n", GetLastError());
+    ok(b, "GetCurrentActCtx failed: %u\n", GetLastError());
     ok(handle != 0, "no active context\n");
     pReleaseActCtx(handle);
 
