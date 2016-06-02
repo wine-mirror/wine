@@ -7457,7 +7457,7 @@ static void test_interthread_messages(void)
 
     handle = (void*)0xdeadbeef;
     ret = pGetCurrentActCtx(&handle);
-    ok(ret, "GetCurentActCtx failed: %u\n", GetLastError());
+    ok(ret, "GetCurrentActCtx failed: %u\n", GetLastError());
     ok(handle == 0, "active context %p\n", handle);
 
     wnd_event.start_event = CreateEventW(NULL, 0, 0, NULL);
@@ -7472,7 +7472,7 @@ static void test_interthread_messages(void)
 
     handle = 0;
     ret = pGetCurrentActCtx(&handle);
-    ok(ret, "GetCurentActCtx failed: %u\n", GetLastError());
+    ok(ret, "GetCurrentActCtx failed: %u\n", GetLastError());
     ok(handle != 0, "active context %p\n", handle);
     pReleaseActCtx(handle);
 
