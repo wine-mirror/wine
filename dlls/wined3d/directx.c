@@ -4462,7 +4462,7 @@ static BOOL wined3d_check_pixel_format_depth(const struct wined3d_gl_info *gl_in
         lockable = TRUE;
 
     /* On some modern cards like the Geforce8/9, GLX doesn't offer some
-     * dephth/stencil formats which D3D9 reports. We can safely report
+     * depth/stencil formats which D3D9 reports. We can safely report
      * "compatible" formats (e.g. D24 can be used for D16) as long as we
      * aren't dealing with a lockable format. This also helps D3D <= 7 as they
      * expect D16 which isn't offered without this on Geforce8 cards. */
