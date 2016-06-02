@@ -112,8 +112,63 @@ static void test_SubtractRect(void)
         "(dest rect={%d, %d, %d, %d})\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
 }
 
+static void test_EqualRect(void)
+{
+    RECT rect1, rect2;
+    BOOL ret;
+
+    SetRect(&rect1, 0, 0, 0, 0);
+    SetRect(&rect2, 1, 1, 1, 1);
+
+    ret = EqualRect(NULL, NULL);
+    ok(!ret, "got %d\n", ret);
+
+    ret = EqualRect(&rect1, NULL);
+    ok(!ret, "got %d\n", ret);
+
+    ret = EqualRect(NULL, &rect2);
+    ok(!ret, "got %d\n", ret);
+
+    ret = EqualRect(&rect1, &rect2);
+    ok(!ret, "got %d\n", ret);
+
+    SetRect(&rect1, 0, 0, 10, 10);
+    SetRect(&rect2, 10, 10, 0, 0);
+
+    ret = EqualRect(&rect1, &rect2);
+    ok(!ret, "got %d\n", ret);
+
+    ret = EqualRect(&rect1, &rect1);
+    ok(ret, "got %d\n", ret);
+
+    rect2 = rect1;
+    ret = EqualRect(&rect1, &rect2);
+    ok(ret, "got %d\n", ret);
+}
+
+static void test_SetRect(void)
+{
+    RECT rect;
+    BOOL ret;
+
+    ret = SetRect(NULL, 0, 0, 0, 0);
+    ok(!ret, "got %d\n", ret);
+
+    ret = SetRect(&rect, 1, 2, 3, 4);
+    ok(ret, "got %d\n", ret);
+    ok(rect.left == 1 && rect.top == 2 && rect.right == 3 && rect.bottom == 4,
+        "got wrong rectangle\n");
+
+    ret = SetRect(&rect, 10, 10, 5, 5);
+    ok(ret, "got %d\n", ret);
+    ok(rect.left == 10 && rect.top == 10 && rect.right == 5 && rect.bottom == 5,
+        "got wrong rectangle\n");
+}
+
 START_TEST(uitools)
 {
     test_FillRect();
     test_SubtractRect();
+    test_EqualRect();
+    test_SetRect();
 }
