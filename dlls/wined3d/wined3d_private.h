@@ -2351,6 +2351,7 @@ struct wined3d_device
 
     /* Default sampler used to emulate the direct resource access without using wined3d_sampler */
     GLuint default_sampler;
+    GLuint null_sampler;
 
     /* Command stream */
     struct wined3d_cs *cs;

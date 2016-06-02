@@ -6251,7 +6251,7 @@ static void test_swapchain_flip(void)
     color = get_texture_color(offscreen, 120, 240); /* blue, buf 0 */
     todo_wine ok(compare_color(color, 0x7fff0000, 1), "Got unexpected color 0x%08x.\n", color);
     color = get_texture_color(offscreen, 360, 240); /* red, buf 1 */
-    todo_wine ok(compare_color(color, 0x7f0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x7f0000ff, 1), "Got unexpected color 0x%08x.\n", color);
 
     color = get_texture_color(backbuffer_0, 320, 240); /* blue */
     ok(compare_color(color, 0x7fff0000, 1), "Got unexpected color 0x%08x.\n", color);

@@ -3339,18 +3339,11 @@ static void context_bind_shader_resources(struct wined3d_context *context, const
             }
 
             if (entry->sampler_idx == WINED3D_SAMPLER_DEFAULT)
-            {
                 sampler_name = device->default_sampler;
-            }
             else if ((sampler = state->sampler[shader_types[i].type][entry->sampler_idx]))
-            {
                 sampler_name = sampler->name;
-            }
             else
-            {
-                WARN("No sampler object bound at index %u, %u.\n", shader_types[i].type, entry->sampler_idx);
-                continue;
-            }
+                sampler_name = device->null_sampler;
 
             texture = texture_from_resource(view->resource);
             context_active_texture(context, gl_info, shader_types[i].base_idx + entry->bind_idx);

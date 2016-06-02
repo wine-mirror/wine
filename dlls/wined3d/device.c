@@ -814,43 +814,52 @@ static void destroy_dummy_textures(struct wined3d_device *device, const struct w
 }
 
 /* Context activation is done by the caller. */
-static void create_default_sampler(struct wined3d_device *device)
+static void create_default_samplers(struct wined3d_device *device)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
-    /*
-     * In SM4+ shaders there is a separation between resources and samplers. Some shader
-     * instructions allow access to resources without using samplers.
-     * In GLSL, resources are always accessed through sampler or image variables. The default
-     * sampler object is used to emulate the direct resource access when there is no sampler state
-     * to use.
-     */
     if (gl_info->supported[ARB_SAMPLER_OBJECTS])
     {
+        /* In SM4+ shaders there is a separation between resources and samplers. Some shader
+         * instructions allow access to resources without using samplers.
+         * In GLSL, resources are always accessed through sampler or image variables. The default
+         * sampler object is used to emulate the direct resource access when there is no sampler state
+         * to use.
+         */
         GL_EXTCALL(glGenSamplers(1, &device->default_sampler));
-        checkGLcall("glGenSamplers");
         GL_EXTCALL(glSamplerParameteri(device->default_sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
         GL_EXTCALL(glSamplerParameteri(device->default_sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST));
-        checkGLcall("glSamplerParameteri");
+        checkGLcall("Create default sampler");
+
+        /* In D3D10+, a NULL sampler maps to the default sampler state. */
+        GL_EXTCALL(glGenSamplers(1, &device->null_sampler));
+        GL_EXTCALL(glSamplerParameteri(device->null_sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
+        GL_EXTCALL(glSamplerParameteri(device->null_sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+        GL_EXTCALL(glSamplerParameteri(device->null_sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+        GL_EXTCALL(glSamplerParameteri(device->null_sampler, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
+        checkGLcall("Create null sampler");
     }
     else
     {
         device->default_sampler = 0;
+        device->null_sampler = 0;
     }
 }
 
 /* Context activation is done by the caller. */
-static void destroy_default_sampler(struct wined3d_device *device)
+static void destroy_default_samplers(struct wined3d_device *device)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     if (gl_info->supported[ARB_SAMPLER_OBJECTS])
     {
         GL_EXTCALL(glDeleteSamplers(1, &device->default_sampler));
+        GL_EXTCALL(glDeleteSamplers(1, &device->null_sampler));
         checkGLcall("glDeleteSamplers");
     }
 
     device->default_sampler = 0;
+    device->null_sampler = 0;
 }
 
 static LONG fullscreen_style(LONG style)
@@ -1058,7 +1067,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     context = context_acquire(device, swapchain->front_buffer->sub_resources[0].u.surface);
 
     create_dummy_textures(device, context);
-    create_default_sampler(device);
+    create_default_samplers(device);
 
     device->contexts[0]->last_was_rhw = 0;
 
@@ -1183,7 +1192,7 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     device->blitter->free_private(device);
     device->shader_backend->shader_free_private(device);
     destroy_dummy_textures(device, gl_info);
-    destroy_default_sampler(device);
+    destroy_default_samplers(device);
 
     /* Release the context again as soon as possible. In particular,
      * releasing the render target views below may release the last reference
@@ -4548,7 +4557,7 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
     device->blitter->free_private(device);
     device->shader_backend->shader_free_private(device);
     destroy_dummy_textures(device, gl_info);
-    destroy_default_sampler(device);
+    destroy_default_samplers(device);
 
     context_release(context);
 
@@ -4604,7 +4613,7 @@ static HRESULT create_primary_opengl_context(struct wined3d_device *device, stru
     swapchain->context[0] = context;
     swapchain->num_contexts = 1;
     create_dummy_textures(device, context);
-    create_default_sampler(device);
+    create_default_samplers(device);
     context_release(context);
 
     return WINED3D_OK;
