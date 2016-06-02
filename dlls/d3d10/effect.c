@@ -2228,8 +2228,8 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     read_dword(&ptr, &e->texture_count);
     TRACE("Texture count: %u\n", e->texture_count);
 
-    read_dword(&ptr, &e->dephstencilstate_count);
-    TRACE("Depthstencilstate count: %u\n", e->dephstencilstate_count);
+    read_dword(&ptr, &e->depthstencilstate_count);
+    TRACE("Depthstencilstate count: %u\n", e->depthstencilstate_count);
 
     read_dword(&ptr, &e->blendstate_count);
     TRACE("Blendstate count: %u\n", e->blendstate_count);

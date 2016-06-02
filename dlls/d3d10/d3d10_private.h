@@ -236,7 +236,7 @@ struct d3d10_effect
     DWORD technique_count;
     DWORD index_offset;
     DWORD texture_count;
-    DWORD dephstencilstate_count;
+    DWORD depthstencilstate_count;
     DWORD blendstate_count;
     DWORD rasterizerstate_count;
     DWORD samplerstate_count;
