@@ -637,7 +637,7 @@ static void test_HlinkParseDisplayName(void)
     ok(mon != NULL, "mon == NULL\n");
 
     hres = IMoniker_GetDisplayName(mon, bctx, 0, &name);
-    ok(hres == S_OK, "GetDiasplayName failed: %08x\n", hres);
+    ok(hres == S_OK, "GetDisplayName failed: %08x\n", hres);
     ok(!lstrcmpW(name, winehq_urlW), "wrong display name %s\n", wine_dbgstr_w(name));
     CoTaskMemFree(name);
 
@@ -664,7 +664,7 @@ static void test_HlinkParseDisplayName(void)
     ok(mon != NULL, "mon == NULL\n");
 
     hres = IMoniker_GetDisplayName(mon, bctx, 0, &name);
-    ok(hres == S_OK, "GetDiasplayName failed: %08x\n", hres);
+    ok(hres == S_OK, "GetDisplayName failed: %08x\n", hres);
     ok(!lstrcmpW(name, invalid_urlW), "wrong display name %s\n", wine_dbgstr_w(name));
     CoTaskMemFree(name);
 
@@ -680,7 +680,7 @@ static void test_HlinkParseDisplayName(void)
     ok(mon != NULL, "mon == NULL\n");
 
     hres = IMoniker_GetDisplayName(mon, bctx, 0, &name);
-    ok(hres == S_OK, "GetDiasplayName failed: %08x\n", hres);
+    ok(hres == S_OK, "GetDisplayName failed: %08x\n", hres);
     ok(!lstrcmpW(name, file_urlW+8), "wrong display name %s\n", wine_dbgstr_w(name));
     CoTaskMemFree(name);
 
