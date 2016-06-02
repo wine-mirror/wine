@@ -486,19 +486,19 @@ enum wined3d_format_id wined3dformat_from_ddrawformat(const DDPIXELFORMAT *DDPix
             {
                 case 16:
                     if (DDPixelFormat->u2.dwStencilBitDepth == 1) return WINED3DFMT_S1_UINT_D15_UNORM;
-                    WARN("Unknown depth stenil format: 16 z bits, %u stencil bits\n",
+                    WARN("Unknown depth stencil format: 16 z bits, %u stencil bits.\n",
                             DDPixelFormat->u2.dwStencilBitDepth);
                     return WINED3DFMT_UNKNOWN;
 
                 case 32:
                     if (DDPixelFormat->u2.dwStencilBitDepth == 8) return WINED3DFMT_D24_UNORM_S8_UINT;
                     else if (DDPixelFormat->u2.dwStencilBitDepth == 4) return WINED3DFMT_S4X4_UINT_D24_UNORM;
-                    WARN("Unknown depth stenil format: 32 z bits, %u stencil bits\n",
+                    WARN("Unknown depth stencil format: 32 z bits, %u stencil bits.\n",
                             DDPixelFormat->u2.dwStencilBitDepth);
                     return WINED3DFMT_UNKNOWN;
 
                 default:
-                    WARN("Unknown depth stenil format: %u z bits, %u stencil bits\n",
+                    WARN("Unknown depth stencil format: %u z bits, %u stencil bits.\n",
                             DDPixelFormat->u1.dwZBufferBitDepth, DDPixelFormat->u2.dwStencilBitDepth);
                     return WINED3DFMT_UNKNOWN;
             }
