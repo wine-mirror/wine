@@ -2363,7 +2363,7 @@ BOOL WINAPI SystemFunction035(LPCSTR lpszDllFilePath)
  * MSDN documents this function as RtlGenRandom and declares it in ntsecapi.h
  *
  * PARAMS
- *  pbBufer [O] Pointer to memory to receive random bytes.
+ *  pbBuffer [O] Pointer to memory to receive random bytes.
  *  dwLen   [I] Number of random bytes to fetch.
  *
  * RETURNS
