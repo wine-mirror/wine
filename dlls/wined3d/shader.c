@@ -123,6 +123,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_INE                              */ "ine",
     /* WINED3DSIH_INEG                             */ "ineg",
     /* WINED3DSIH_ISHL                             */ "ishl",
+    /* WINED3DSIH_ISHR                             */ "ishr",
     /* WINED3DSIH_ITOF                             */ "itof",
     /* WINED3DSIH_LABEL                            */ "label",
     /* WINED3DSIH_LD                               */ "ld",
