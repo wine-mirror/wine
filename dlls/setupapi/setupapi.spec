@@ -71,8 +71,8 @@
 @ stdcall CM_Get_DevNode_Registry_PropertyW(long long ptr ptr long long)
 @ stdcall CM_Get_DevNode_Registry_Property_ExA(long long ptr ptr ptr long ptr)
 @ stdcall CM_Get_DevNode_Registry_Property_ExW(long long ptr ptr ptr long ptr)
-@ stub CM_Get_DevNode_Status
-@ stub CM_Get_DevNode_Status_Ex
+@ stdcall CM_Get_DevNode_Status(ptr ptr long long)
+@ stdcall CM_Get_DevNode_Status_Ex(ptr ptr long long ptr)
 @ stdcall CM_Get_Device_IDA(ptr ptr long long)
 @ stdcall CM_Get_Device_IDW(ptr ptr long long)
 @ stdcall CM_Get_Device_ID_ExA(ptr ptr long long ptr)
