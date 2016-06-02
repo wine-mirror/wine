@@ -3392,7 +3392,7 @@ float4 main(float4 color : COLOR) : SV_TARGET
     ok(tmp_buffer[0] == buffer[0], "Got unexpected index buffer %p, expected %p.\n", tmp_buffer[0], buffer[0]);
     ID3D10Buffer_Release(tmp_buffer[0]);
     ok(format == DXGI_FORMAT_R32_UINT, "Got unexpected index buffer format %#x.\n", format);
-    todo_wine ok(offset[0] == 16, "Got unexpected index buffer offset %u.\n", offset[0]);
+    ok(offset[0] == 16, "Got unexpected index buffer offset %u.\n", offset[0]);
     ID3D10Device_IAGetInputLayout(device, &tmp_input_layout);
     ok(tmp_input_layout == input_layout, "Got unexpected input layout %p, expected %p.\n",
             tmp_input_layout, input_layout);

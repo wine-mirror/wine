@@ -360,13 +360,10 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_IASetIndexBuffer(ID3D11Dev
     TRACE("iface %p, buffer %p, format %s, offset %u.\n",
             iface, buffer, debug_dxgi_format(format), offset);
 
-    if (offset)
-        FIXME("offset %u not supported.\n", offset);
-
     wined3d_mutex_lock();
     wined3d_device_set_index_buffer(device->wined3d_device,
             buffer_impl ? buffer_impl->wined3d_buffer : NULL,
-            wined3dformat_from_dxgi_format(format));
+            wined3dformat_from_dxgi_format(format), offset);
     wined3d_mutex_unlock();
 }
 
@@ -3061,9 +3058,8 @@ static void STDMETHODCALLTYPE d3d10_device_IASetIndexBuffer(ID3D10Device1 *iface
     wined3d_mutex_lock();
     wined3d_device_set_index_buffer(This->wined3d_device,
             buffer_impl ? buffer_impl->wined3d_buffer : NULL,
-            wined3dformat_from_dxgi_format(format));
+            wined3dformat_from_dxgi_format(format), offset);
     wined3d_mutex_unlock();
-    if (offset) FIXME("offset %u not supported.\n", offset);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_DrawIndexedInstanced(ID3D10Device1 *iface,
@@ -3724,9 +3720,8 @@ static void STDMETHODCALLTYPE d3d10_device_IAGetIndexBuffer(ID3D10Device1 *iface
     TRACE("iface %p, buffer %p, format %p, offset %p.\n", iface, buffer, format, offset);
 
     wined3d_mutex_lock();
-    wined3d_buffer = wined3d_device_get_index_buffer(device->wined3d_device, &wined3d_format);
+    wined3d_buffer = wined3d_device_get_index_buffer(device->wined3d_device, &wined3d_format, offset);
     *format = dxgi_format_from_wined3dformat(wined3d_format);
-    *offset = 0; /* FIXME */
     if (!wined3d_buffer)
     {
         wined3d_mutex_unlock();
@@ -4212,7 +4207,7 @@ static void STDMETHODCALLTYPE d3d10_device_ClearState(ID3D10Device1 *iface)
     {
         wined3d_device_set_stream_source(device->wined3d_device, i, NULL, 0, 0);
     }
-    wined3d_device_set_index_buffer(device->wined3d_device, NULL, WINED3DFMT_UNKNOWN);
+    wined3d_device_set_index_buffer(device->wined3d_device, NULL, WINED3DFMT_UNKNOWN, 0);
     wined3d_device_set_vertex_declaration(device->wined3d_device, NULL);
     wined3d_device_set_primitive_type(device->wined3d_device, WINED3D_PT_UNDEFINED);
     for (i = 0; i < D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)

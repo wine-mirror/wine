@@ -1952,40 +1952,45 @@ void CDECL wined3d_device_get_material(const struct wined3d_device *device, stru
 }
 
 void CDECL wined3d_device_set_index_buffer(struct wined3d_device *device,
-        struct wined3d_buffer *buffer, enum wined3d_format_id format_id)
+        struct wined3d_buffer *buffer, enum wined3d_format_id format_id, unsigned int offset)
 {
     enum wined3d_format_id prev_format;
     struct wined3d_buffer *prev_buffer;
+    unsigned int prev_offset;
 
-    TRACE("device %p, buffer %p, format %s.\n",
-            device, buffer, debug_d3dformat(format_id));
+    TRACE("device %p, buffer %p, format %s, offset %u.\n",
+            device, buffer, debug_d3dformat(format_id), offset);
 
     prev_buffer = device->update_state->index_buffer;
     prev_format = device->update_state->index_format;
+    prev_offset = device->update_state->index_offset;
 
     device->update_state->index_buffer = buffer;
     device->update_state->index_format = format_id;
+    device->update_state->index_offset = offset;
 
     if (device->recording)
         device->recording->changed.indices = TRUE;
 
-    if (prev_buffer == buffer && prev_format == format_id)
+    if (prev_buffer == buffer && prev_format == format_id && prev_offset == offset)
         return;
 
     if (buffer)
         wined3d_buffer_incref(buffer);
     if (!device->recording)
-        wined3d_cs_emit_set_index_buffer(device->cs, buffer, format_id);
+        wined3d_cs_emit_set_index_buffer(device->cs, buffer, format_id, offset);
     if (prev_buffer)
         wined3d_buffer_decref(prev_buffer);
 }
 
 struct wined3d_buffer * CDECL wined3d_device_get_index_buffer(const struct wined3d_device *device,
-        enum wined3d_format_id *format)
+        enum wined3d_format_id *format, unsigned int *offset)
 {
-    TRACE("device %p, format %p.\n", device, format);
+    TRACE("device %p, format %p, offset %p.\n", device, format, offset);
 
     *format = device->state.index_format;
+    if (offset)
+        *offset = device->state.index_offset;
     return device->state.index_buffer;
 }
 

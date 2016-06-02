@@ -153,6 +153,7 @@ struct wined3d_cs_set_index_buffer
     enum wined3d_cs_op opcode;
     struct wined3d_buffer *buffer;
     enum wined3d_format_id format_id;
+    unsigned int offset;
 };
 
 struct wined3d_cs_set_constant_buffer
@@ -580,6 +581,7 @@ static void wined3d_cs_exec_set_index_buffer(struct wined3d_cs *cs, const void *
     prev = cs->state.index_buffer;
     cs->state.index_buffer = op->buffer;
     cs->state.index_format = op->format_id;
+    cs->state.index_offset = op->offset;
 
     if (op->buffer)
         InterlockedIncrement(&op->buffer->resource.bind_count);
@@ -590,7 +592,7 @@ static void wined3d_cs_exec_set_index_buffer(struct wined3d_cs *cs, const void *
 }
 
 void wined3d_cs_emit_set_index_buffer(struct wined3d_cs *cs, struct wined3d_buffer *buffer,
-        enum wined3d_format_id format_id)
+        enum wined3d_format_id format_id, unsigned int offset)
 {
     struct wined3d_cs_set_index_buffer *op;
 
@@ -598,6 +600,7 @@ void wined3d_cs_emit_set_index_buffer(struct wined3d_cs *cs, struct wined3d_buff
     op->opcode = WINED3D_CS_OP_SET_INDEX_BUFFER;
     op->buffer = buffer;
     op->format_id = format_id;
+    op->offset = offset;
 
     cs->ops->submit(cs);
 }

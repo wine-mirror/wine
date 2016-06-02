@@ -418,12 +418,12 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     struct wined3d_rendertarget_view *dsv;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
-    BOOL emulation = FALSE;
+    unsigned int i, idx_size = 0;
     const void *idx_data = NULL;
-    UINT idx_size = 0;
-    unsigned int i;
+    BOOL emulation = FALSE;
 
-    if (!index_count) return;
+    if (!index_count)
+        return;
 
     context = context_acquire(device, wined3d_rendertarget_view_get_surface(fb->render_targets[0]));
     if (!context->valid)
@@ -521,12 +521,15 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     {
         struct wined3d_buffer *index_buffer = state->index_buffer;
         if (!index_buffer->buffer_object || !stream_info->all_vbo)
+        {
             idx_data = index_buffer->resource.heap_memory;
+        }
         else
         {
             ib_query = index_buffer->query;
             idx_data = NULL;
         }
+        idx_data = (const BYTE *)idx_data + state->index_offset;
 
         if (state->index_format == WINED3DFMT_R16_UINT)
             idx_size = 2;
@@ -579,14 +582,12 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     if (ib_query)
         wined3d_event_query_issue(ib_query, device);
     for (i = 0; i < context->num_buffer_queries; ++i)
-    {
         wined3d_event_query_issue(context->buffer_queries[i], device);
-    }
 
     if (wined3d_settings.strict_draw_ordering)
         gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
 
-    TRACE("Done all gl drawing\n");
+    TRACE("Done all gl drawing.\n");
 }

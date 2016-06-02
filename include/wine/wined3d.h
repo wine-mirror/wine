@@ -2121,7 +2121,7 @@ struct wined3d_shader_resource_view * __cdecl wined3d_device_get_gs_resource_vie
         UINT idx);
 struct wined3d_sampler * __cdecl wined3d_device_get_gs_sampler(const struct wined3d_device *device, UINT idx);
 struct wined3d_buffer * __cdecl wined3d_device_get_index_buffer(const struct wined3d_device *device,
-        enum wined3d_format_id *format);
+        enum wined3d_format_id *format, unsigned int *offset);
 HRESULT __cdecl wined3d_device_get_light(const struct wined3d_device *device,
         UINT light_idx, struct wined3d_light *light);
 HRESULT __cdecl wined3d_device_get_light_enable(const struct wined3d_device *device, UINT light_idx, BOOL *enable);
@@ -2211,7 +2211,7 @@ void __cdecl wined3d_device_set_gs_resource_view(struct wined3d_device *device,
         UINT idx, struct wined3d_shader_resource_view *view);
 void __cdecl wined3d_device_set_gs_sampler(struct wined3d_device *device, UINT idx, struct wined3d_sampler *sampler);
 void __cdecl wined3d_device_set_index_buffer(struct wined3d_device *device,
-        struct wined3d_buffer *index_buffer, enum wined3d_format_id format_id);
+        struct wined3d_buffer *index_buffer, enum wined3d_format_id format_id, unsigned int offset);
 HRESULT __cdecl wined3d_device_set_light(struct wined3d_device *device,
         UINT light_idx, const struct wined3d_light *light);
 HRESULT __cdecl wined3d_device_set_light_enable(struct wined3d_device *device, UINT light_idx, BOOL enable);
