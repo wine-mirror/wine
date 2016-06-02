@@ -486,7 +486,7 @@ int free_console( struct process *process )
 /* let process inherit the console from parent... this handle two cases :
  *	1/ generic console inheritance
  *	2/ parent is a renderer which launches process, and process should attach to the console
- *	   renderered by parent
+ *	   rendered by parent
  */
 void inherit_console(struct thread *parent_thread, struct process *process, obj_handle_t hconin)
 {
