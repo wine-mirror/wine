@@ -3539,7 +3539,6 @@ WINUSERAPI BOOL        WINAPI EnumWindows(WNDENUMPROC,LPARAM);
 WINUSERAPI BOOL        WINAPI EnumWindowStationsA(WINSTAENUMPROCA,LPARAM);
 WINUSERAPI BOOL        WINAPI EnumWindowStationsW(WINSTAENUMPROCW,LPARAM);
 #define                       EnumWindowStations WINELIB_NAME_AW(EnumWindowStations)
-WINUSERAPI BOOL        WINAPI EqualRect(const RECT*,const RECT*);
 WINUSERAPI INT         WINAPI ExcludeUpdateRgn(HDC,HWND);
 #define                       ExitWindows(a,b) ExitWindowsEx(EWX_LOGOFF,0xffffffff)
 WINUSERAPI BOOL        WINAPI ExitWindowsEx(UINT,DWORD);
@@ -4091,6 +4090,7 @@ WINUSERAPI INT         WINAPI wvsprintfW(LPWSTR,LPCWSTR,__ms_va_list);
 
 #if !defined(__WINESRC__) || defined(WINE_NO_INLINE_RECT)
 
+WINUSERAPI BOOL        WINAPI EqualRect(const RECT*,const RECT*);
 WINUSERAPI BOOL        WINAPI IsRectEmpty(const RECT*);
 WINUSERAPI BOOL        WINAPI SetRect(LPRECT,INT,INT,INT,INT);
 WINUSERAPI BOOL        WINAPI SetRectEmpty(LPRECT);
@@ -4098,6 +4098,13 @@ WINUSERAPI BOOL        WINAPI SetRectEmpty(LPRECT);
 #else
 
 /* Inline versions of common RECT helpers */
+
+static inline BOOL WINAPI EqualRect(const RECT *rect1, const RECT *rect2)
+{
+    if (!rect1 || !rect2) return FALSE;
+    return ((rect1->left == rect2->left) && (rect1->right == rect2->right) &&
+            (rect1->top == rect2->top) && (rect1->bottom == rect2->bottom));
+}
 
 static inline BOOL WINAPI IsRectEmpty(const RECT *rect)
 {
