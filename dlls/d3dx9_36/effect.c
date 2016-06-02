@@ -198,7 +198,7 @@ static const struct
 }
 state_table[] =
 {
-    /* Render sates */
+    /* Render states */
     {SC_RENDERSTATE, D3DRS_ZENABLE, "D3DRS_ZENABLE"}, /* 0x0 */
     {SC_RENDERSTATE, D3DRS_FILLMODE, "D3DRS_FILLMODE"},
     {SC_RENDERSTATE, D3DRS_SHADEMODE, "D3DRS_SHADEMODE"},
@@ -350,7 +350,7 @@ state_table[] =
     {SC_LIGHT, LT_ATTENUATION2, "LightAttenuation2"},
     {SC_LIGHT, LT_THETA, "LightTheta"},
     {SC_LIGHT, LT_PHI, "LightPhi"}, /* 0x90 */
-    /* Ligthenable */
+    /* Lightenable */
     {SC_LIGHTENABLE, 0, "LightEnable"},
     /* Vertexshader */
     {SC_VERTEXSHADER, 0, "Vertexshader"},
