@@ -192,12 +192,13 @@ static void start_dosbox( const char *appname, const char *args )
     p += sprintf( p, "exit\n" );
     if (WriteFile( file, buffer, strlen(buffer), &written, NULL ) && written == strlen(buffer))
     {
-        const char *args[4];
+        const char *args[5];
         char *config_file = wine_get_unix_file_name( config );
         args[0] = dosbox;
-        args[1] = "-conf";
-        args[2] = config_file;
-        args[3] = NULL;
+        args[1] = "-userconf";
+        args[2] = "-conf";
+        args[3] = config_file;
+        args[4] = NULL;
         ret = _spawnvp( _P_WAIT, args[0], args );
     }
     CloseHandle( file );
