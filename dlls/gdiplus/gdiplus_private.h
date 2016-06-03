@@ -314,7 +314,7 @@ struct GpCustomLineCap{
     REAL scale;
 };
 
-struct GpAdustableArrowCap{
+struct GpAdjustableArrowCap{
     GpCustomLineCap cap;
 };
 
