@@ -3343,11 +3343,11 @@ void macdrv_set_view_superview(macdrv_view v, macdrv_view s, macdrv_window w, ma
         {
             NSArray* subviews = [superview subviews];
             NSUInteger index = [subviews indexOfObjectIdenticalTo:view];
-            if (!prev && !next && index == 0)
+            if (!prev && !next && index == [subviews count] - 1)
                 return;
-            if (prev && index > 0 && [subviews objectAtIndex:index - 1] == prev)
+            if (prev && index + 1 < [subviews count] && [subviews objectAtIndex:index + 1] == prev)
                 return;
-            if (!prev && next && index + 1 < [subviews count] && [subviews objectAtIndex:index + 1] == next)
+            if (!prev && next && index > 0 && [subviews objectAtIndex:index - 1] == next)
                 return;
         }
 
