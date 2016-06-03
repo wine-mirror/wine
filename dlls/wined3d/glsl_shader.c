@@ -3465,6 +3465,7 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_ROUND_PI: instruction = "ceil"; break;
         case WINED3DSIH_ROUND_Z: instruction = "trunc"; break;
         case WINED3DSIH_SQRT: instruction = "sqrt"; break;
+        case WINED3DSIH_UMAX: instruction = "max"; break;
         default: instruction = "";
             FIXME("Opcode %s not yet handled in GLSL.\n", debug_d3dshaderinstructionhandler(ins->handler_idx));
             break;
@@ -8682,6 +8683,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_UDIV                             */ shader_glsl_udiv,
     /* WINED3DSIH_UGE                              */ shader_glsl_relop,
     /* WINED3DSIH_ULT                              */ shader_glsl_relop,
+    /* WINED3DSIH_UMAX                             */ shader_glsl_map2gl,
     /* WINED3DSIH_USHR                             */ shader_glsl_binop,
     /* WINED3DSIH_UTOF                             */ shader_glsl_to_float,
     /* WINED3DSIH_XOR                              */ shader_glsl_binop,
