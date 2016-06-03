@@ -939,6 +939,13 @@ int wmain(int argc, WCHAR *argvW[])
 
     op = get_operation(argvW[1]);
 
+    if (op == REG_INVALID)
+    {
+        output_message(STRING_INVALID_OPTION, argvW[1]);
+        output_message(STRING_REG_HELP);
+        return 1;
+    }
+
     if (op == REG_ADD)
     {
         WCHAR *key_name, *value_name = NULL, *type = NULL, separator = '\0', *data = NULL;
