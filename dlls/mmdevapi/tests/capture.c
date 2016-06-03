@@ -920,7 +920,7 @@ static void test_volume_dependence(void)
     ok(hr == S_OK, "GetService (SimpleAudioVolume) failed: %08x\n", hr);
 
     hr = IAudioClient_GetService(ac, &IID_IChannelAudioVolume, (void**)&cav);
-    ok(hr == S_OK, "GetService (ChannelAudioVolme) failed: %08x\n", hr);
+    ok(hr == S_OK, "GetService (ChannelAudioVolume) failed: %08x\n", hr);
 
     hr = IAudioClient_GetService(ac, &IID_IAudioStreamVolume, (void**)&asv);
     ok(hr == S_OK, "GetService (AudioStreamVolume) failed: %08x\n", hr);
