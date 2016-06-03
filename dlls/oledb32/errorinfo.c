@@ -53,12 +53,6 @@ typedef struct ErrorInfoImpl
     IErrorRecords  IErrorRecords_iface;
     LONG ref;
 
-    GUID m_Guid;
-    BSTR source;
-    BSTR description;
-    BSTR help_file;
-    DWORD help_context;
-
     struct list errors;
 } ErrorInfoImpl;
 
@@ -115,10 +109,6 @@ static ULONG WINAPI IErrorInfoImpl_Release(IErrorInfo* iface)
 
     if (!ref)
     {
-        SysFreeString(This->source);
-        SysFreeString(This->description);
-        SysFreeString(This->help_file);
-
         LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &This->errors, struct ErrorEntry, entry)
         {
             list_remove(&cursor->entry);
@@ -132,74 +122,74 @@ static ULONG WINAPI IErrorInfoImpl_Release(IErrorInfo* iface)
     return ref;
 }
 
-static HRESULT WINAPI IErrorInfoImpl_GetGUID(IErrorInfo* iface, GUID * pGUID)
+static HRESULT WINAPI IErrorInfoImpl_GetGUID(IErrorInfo* iface, GUID *guid)
 {
     ErrorInfoImpl *This = impl_from_IErrorInfo(iface);
 
-    TRACE("(%p)\n",This);
+    TRACE("(%p)->(%p)\n", This, guid);
 
-    if(!pGUID )
+    if (!guid)
         return E_INVALIDARG;
 
-    *pGUID = This->m_Guid;
+    *guid = GUID_NULL;
 
     return S_OK;
 }
 
-static HRESULT WINAPI IErrorInfoImpl_GetSource(IErrorInfo* iface, BSTR *pBstrSource)
+static HRESULT WINAPI IErrorInfoImpl_GetSource(IErrorInfo* iface, BSTR *source)
 {
     ErrorInfoImpl *This = impl_from_IErrorInfo(iface);
 
-    TRACE("(%p)->(%p)\n",This, pBstrSource);
+    TRACE("(%p)->(%p)\n", This, source);
 
-    if (pBstrSource == NULL)
+    if (!source)
         return E_INVALIDARG;
 
-    *pBstrSource = SysAllocString(This->source);
+    *source = NULL;
 
-    return S_OK;
+    return E_FAIL;
 }
 
-static HRESULT WINAPI IErrorInfoImpl_GetDescription(IErrorInfo* iface, BSTR *pBstrDescription)
+static HRESULT WINAPI IErrorInfoImpl_GetDescription(IErrorInfo* iface, BSTR *description)
 {
     ErrorInfoImpl *This = impl_from_IErrorInfo(iface);
 
-    TRACE("(%p)->(%p)\n",This, pBstrDescription);
+    TRACE("(%p)->(%p)\n", This, description);
 
-    if (pBstrDescription == NULL)
+    if (!description)
         return E_INVALIDARG;
 
-    *pBstrDescription = SysAllocString(This->description);
+    *description = NULL;
 
-    return S_OK;
+    return E_FAIL;
 }
 
-static HRESULT WINAPI IErrorInfoImpl_GetHelpFile(IErrorInfo* iface, BSTR *pBstrHelpFile)
+static HRESULT WINAPI IErrorInfoImpl_GetHelpFile(IErrorInfo* iface, BSTR *helpfile)
 {
     ErrorInfoImpl *This = impl_from_IErrorInfo(iface);
 
-    TRACE("(%p)->(%p)\n",This, pBstrHelpFile);
+    TRACE("(%p)->(%p)\n", This, helpfile);
 
-    if (pBstrHelpFile == NULL)
+    if (!helpfile)
         return E_INVALIDARG;
 
-    *pBstrHelpFile = SysAllocString(This->help_file);
+    *helpfile = NULL;
 
-    return S_OK;
+    return E_FAIL;
 }
 
-static HRESULT WINAPI IErrorInfoImpl_GetHelpContext(IErrorInfo* iface, DWORD *pdwHelpContext)
+static HRESULT WINAPI IErrorInfoImpl_GetHelpContext(IErrorInfo* iface, DWORD *context)
 {
     ErrorInfoImpl *This = impl_from_IErrorInfo(iface);
 
-    TRACE("(%p)->(%p)\n",This, pdwHelpContext);
+    TRACE("(%p)->(%p)\n", This, context);
 
-    if (pdwHelpContext == NULL)
+    if (!context)
         return E_INVALIDARG;
 
-    *pdwHelpContext = This->help_context;
+    *context = 0;
 
-    return S_OK;
+    return E_FAIL;
 }
 
 static const IErrorInfoVtbl ErrorInfoVtbl =
@@ -371,10 +361,6 @@ HRESULT create_error_info(IUnknown *outer, void **obj)
     This->IErrorInfo_iface.lpVtbl = &ErrorInfoVtbl;
     This->IErrorRecords_iface.lpVtbl = &ErrorRecordsVtbl;
     This->ref = 1;
-    This->source = NULL;
-    This->description = NULL;
-    This->help_file = NULL;
-    This->help_context = 0;
 
     list_init(&This->errors);
 
