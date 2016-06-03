@@ -549,7 +549,7 @@ interface IWMReaderAdvanced : IUnknown
         [in] BOOL fAllocate);
 
     HRESULT GetAllocateForStream(
-        [in] WORD dwSreamNum,
+        [in] WORD dwStreamNum,
         [out] BOOL *pfAllocate);
 
     HRESULT GetStatistics(
