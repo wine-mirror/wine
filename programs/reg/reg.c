@@ -877,6 +877,17 @@ static int reg_query(WCHAR *key_name, WCHAR *value_name, BOOL value_empty, BOOL 
     return ret;
 }
 
+static BOOL is_help_switch(const WCHAR *s)
+{
+    if (strlenW(s) > 2)
+        return FALSE;
+
+    if ((s[0] == '/' || s[0] == '-') && (s[1] == 'h' || s[1] == '?'))
+        return TRUE;
+
+    return FALSE;
+}
+
 int wmain(int argc, WCHAR *argvW[])
 {
     int i;
@@ -886,13 +897,11 @@ int wmain(int argc, WCHAR *argvW[])
     static const WCHAR queryW[] = {'q','u','e','r','y',0};
     static const WCHAR slashDW[] = {'/','d',0};
     static const WCHAR slashFW[] = {'/','f',0};
-    static const WCHAR slashHW[] = {'/','h',0};
     static const WCHAR slashSW[] = {'/','s',0};
     static const WCHAR slashTW[] = {'/','t',0};
     static const WCHAR slashVW[] = {'/','v',0};
     static const WCHAR slashVAW[] = {'/','v','a',0};
     static const WCHAR slashVEW[] = {'/','v','e',0};
-    static const WCHAR slashHelpW[] = {'/','?',0};
 
     if (argc == 1)
     {
@@ -901,7 +910,7 @@ int wmain(int argc, WCHAR *argvW[])
         return 1;
     }
 
-    if (!lstrcmpW(argvW[1], slashHelpW) || !lstrcmpiW(argvW[1], slashHW))
+    if (is_help_switch(argvW[1]))
     {
         output_message(STRING_USAGE);
         return 0;
@@ -918,8 +927,7 @@ int wmain(int argc, WCHAR *argvW[])
             output_message(STRING_FUNC_HELP, struprW(argvW[1]));
             return 1;
         }
-        else if (argc == 3 && (!lstrcmpW(argvW[2], slashHelpW) ||
-                               !lstrcmpiW(argvW[2], slashHW)))
+        else if (argc == 3 && is_help_switch(argvW[2]))
         {
             output_message(STRING_ADD_USAGE);
             return 0;
@@ -976,8 +984,7 @@ int wmain(int argc, WCHAR *argvW[])
             output_message(STRING_FUNC_HELP, struprW(argvW[1]));
             return 1;
         }
-        else if (argc == 3 && (!lstrcmpW(argvW[2], slashHelpW) ||
-                               !lstrcmpiW(argvW[2], slashHW)))
+        else if (argc == 3 && is_help_switch(argvW[2]))
         {
             output_message(STRING_DELETE_USAGE);
             return 0;
@@ -1014,8 +1021,7 @@ int wmain(int argc, WCHAR *argvW[])
             output_message(STRING_FUNC_HELP, struprW(argvW[1]));
             return 1;
         }
-        else if (argc == 3 && (!lstrcmpW(argvW[2], slashHelpW) ||
-                               !lstrcmpiW(argvW[2], slashHW)))
+        else if (argc == 3 && is_help_switch(argvW[2]))
         {
             output_message(STRING_QUERY_USAGE);
             return 0;
