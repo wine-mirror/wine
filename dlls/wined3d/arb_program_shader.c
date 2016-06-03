@@ -5217,6 +5217,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_BREAKP                           */ NULL,
     /* WINED3DSIH_CALL                             */ shader_hw_call,
     /* WINED3DSIH_CALLNZ                           */ NULL,
+    /* WINED3DSIH_CASE                             */ NULL,
     /* WINED3DSIH_CMP                              */ pshader_hw_cmp,
     /* WINED3DSIH_CND                              */ pshader_hw_cnd,
     /* WINED3DSIH_CRS                              */ shader_hw_map2gl,
