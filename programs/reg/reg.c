@@ -351,9 +351,6 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     LPWSTR p;
     HKEY root,subkey;
 
-    if (!sane_path(key_name))
-        return 1;
-
     p = strchrW(key_name,'\\');
     if (p) p++;
 
@@ -430,9 +427,6 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
 {
     LPWSTR p;
     HKEY root,subkey;
-
-    if (!sane_path(key_name))
-        return 1;
 
     p = strchrW(key_name,'\\');
     if (p) p++;
@@ -836,9 +830,6 @@ static int reg_query(WCHAR *key_name, WCHAR *value_name, BOOL value_empty, BOOL 
     WCHAR newlineW[] = {'\n',0};
     int ret;
 
-    if (!sane_path(key_name))
-        return 1;
-
     if (value_name && value_empty)
     {
         output_message(STRING_INVALID_CMDLINE);
@@ -917,6 +908,7 @@ int wmain(int argc, WCHAR *argvW[])
 {
     int i, op;
     BOOL show_op_help = FALSE;
+    WCHAR *key_name;
     static const WCHAR slashDW[] = {'/','d',0};
     static const WCHAR slashFW[] = {'/','f',0};
     static const WCHAR slashSW[] = {'/','s',0};
@@ -967,12 +959,16 @@ int wmain(int argc, WCHAR *argvW[])
         return 0;
     }
 
+    key_name = argvW[2];
+
+    if (!sane_path(key_name))
+        return 1;
+
     if (op == REG_ADD)
     {
-        WCHAR *key_name, *value_name = NULL, *type = NULL, separator = '\0', *data = NULL;
+        WCHAR *value_name = NULL, *type = NULL, separator = '\0', *data = NULL;
         BOOL value_empty = FALSE, force = FALSE;
 
-        key_name = argvW[2];
         for (i = 1; i < argc; i++)
         {
             if (!lstrcmpiW(argvW[i], slashVW))
@@ -1014,10 +1010,9 @@ int wmain(int argc, WCHAR *argvW[])
     }
     else if (op == REG_DELETE)
     {
-        WCHAR *key_name, *value_name = NULL;
+        WCHAR *value_name = NULL;
         BOOL value_empty = FALSE, value_all = FALSE, force = FALSE;
 
-        key_name = argvW[2];
         for (i = 1; i < argc; i++)
         {
             if (!lstrcmpiW(argvW[i], slashVW))
@@ -1039,10 +1034,9 @@ int wmain(int argc, WCHAR *argvW[])
     }
     else if (op == REG_QUERY)
     {
-        WCHAR *key_name, *value_name = NULL;
+        WCHAR *value_name = NULL;
         BOOL value_empty = FALSE, recurse = FALSE;
 
-        key_name = argvW[2];
         for (i = 1; i < argc; i++)
         {
             if (!lstrcmpiW(argvW[i], slashVW))
