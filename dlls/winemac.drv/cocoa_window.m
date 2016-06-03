@@ -3354,7 +3354,6 @@ void macdrv_set_view_superview(macdrv_view v, macdrv_view s, macdrv_window w, ma
         WineWindow* oldWindow = (WineWindow*)[view window];
         WineWindow* newWindow = (WineWindow*)[superview window];
 
-        [view removeFromSuperview];
         if (prev)
             [superview addSubview:view positioned:NSWindowBelow relativeTo:prev];
         else
