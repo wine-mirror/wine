@@ -888,13 +888,34 @@ static BOOL is_help_switch(const WCHAR *s)
     return FALSE;
 }
 
+enum operations {
+    REG_ADD,
+    REG_DELETE,
+    REG_QUERY,
+    REG_INVALID
+};
+
+static const WCHAR addW[] = {'a','d','d',0};
+static const WCHAR deleteW[] = {'d','e','l','e','t','e',0};
+static const WCHAR queryW[] = {'q','u','e','r','y',0};
+
+static enum operations get_operation(const WCHAR *str)
+{
+    if (!lstrcmpiW(str, addW))
+        return REG_ADD;
+
+    if (!lstrcmpiW(str, deleteW))
+        return REG_DELETE;
+
+    if (!lstrcmpiW(str, queryW))
+        return REG_QUERY;
+
+    return REG_INVALID;
+}
+
 int wmain(int argc, WCHAR *argvW[])
 {
-    int i;
-
-    static const WCHAR addW[] = {'a','d','d',0};
-    static const WCHAR deleteW[] = {'d','e','l','e','t','e',0};
-    static const WCHAR queryW[] = {'q','u','e','r','y',0};
+    int i, op;
     static const WCHAR slashDW[] = {'/','d',0};
     static const WCHAR slashFW[] = {'/','f',0};
     static const WCHAR slashSW[] = {'/','s',0};
@@ -916,7 +937,9 @@ int wmain(int argc, WCHAR *argvW[])
         return 0;
     }
 
-    if (!lstrcmpiW(argvW[1], addW))
+    op = get_operation(argvW[1]);
+
+    if (op == REG_ADD)
     {
         WCHAR *key_name, *value_name = NULL, *type = NULL, separator = '\0', *data = NULL;
         BOOL value_empty = FALSE, force = FALSE;
@@ -973,7 +996,7 @@ int wmain(int argc, WCHAR *argvW[])
         return reg_add(key_name, value_name, value_empty, type, separator,
             data, force);
     }
-    else if (!lstrcmpiW(argvW[1], deleteW))
+    else if (op == REG_DELETE)
     {
         WCHAR *key_name, *value_name = NULL;
         BOOL value_empty = FALSE, value_all = FALSE, force = FALSE;
@@ -1010,7 +1033,7 @@ int wmain(int argc, WCHAR *argvW[])
         }
         return reg_delete(key_name, value_name, value_empty, value_all, force);
     }
-    else if (!lstrcmpiW(argvW[1], queryW))
+    else if (op == REG_QUERY)
     {
         WCHAR *key_name, *value_name = NULL;
         BOOL value_empty = FALSE, recurse = FALSE;
