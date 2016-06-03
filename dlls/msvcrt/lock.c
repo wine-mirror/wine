@@ -514,7 +514,8 @@ MSVCRT_bool __thiscall critical_section_try_lock_for(
 typedef struct
 {
     critical_section *cs;
-    void *unknown[3];
+    void *unknown[4];
+    int unknown2[2];
 } critical_section_scoped_lock;
 
 /* ??0scoped_lock@critical_section@Concurrency@@QAE@AAV12@@Z */
