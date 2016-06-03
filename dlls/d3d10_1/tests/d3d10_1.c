@@ -297,6 +297,9 @@ static void test_device_interfaces(void)
                 "Device should implement ID3D10Multithread interface, hr %#x.\n", hr);
         if (SUCCEEDED(hr)) IUnknown_Release(iface);
 
+        hr = ID3D10Device1_QueryInterface(device, &IID_ID3D10InfoQueue, (void **)&iface);
+        ok(hr == E_NOINTERFACE, "Found ID3D10InfoQueue interface in non-debug mode, hr %#x.\n", hr);
+
         hr = ID3D10Device1_QueryInterface(device, &IID_ID3D10Device, (void **)&iface);
         ok(SUCCEEDED(hr), "Device should implement ID3D10Device interface, hr %#x.\n", hr);
         IUnknown_Release(iface);
@@ -304,6 +307,26 @@ static void test_device_interfaces(void)
         hr = ID3D10Device1_QueryInterface(device, &IID_ID3D11Device, (void **)&iface);
         ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
                 "Device should implement ID3D11Device interface, hr %#x.\n", hr);
+        if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
+        refcount = ID3D10Device1_Release(device);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+
+    for (i = 0; i < sizeof(d3d10_feature_levels) / sizeof(*d3d10_feature_levels); ++i)
+    {
+        struct device_desc device_desc;
+
+        device_desc.feature_level = d3d10_feature_levels[i];
+        device_desc.flags = D3D10_CREATE_DEVICE_DEBUG;
+        if (!(device = create_device(&device_desc)))
+        {
+            skip("Failed to create device for feature level %#x.\n", d3d10_feature_levels[i]);
+            continue;
+        }
+
+        hr = ID3D10Device1_QueryInterface(device, &IID_ID3D10InfoQueue, (void **)&iface);
+        todo_wine ok(hr == S_OK, "Device should implement ID3D10InfoQueue interface, hr %#x.\n", hr);
         if (SUCCEEDED(hr)) IUnknown_Release(iface);
 
         refcount = ID3D10Device1_Release(device);
