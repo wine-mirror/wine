@@ -916,6 +916,7 @@ static enum operations get_operation(const WCHAR *str)
 int wmain(int argc, WCHAR *argvW[])
 {
     int i, op;
+    BOOL show_op_help = FALSE;
     static const WCHAR slashDW[] = {'/','d',0};
     static const WCHAR slashFW[] = {'/','f',0};
     static const WCHAR slashSW[] = {'/','s',0};
@@ -946,18 +947,22 @@ int wmain(int argc, WCHAR *argvW[])
         return 1;
     }
 
+    if (argc > 2)
+        show_op_help = is_help_switch(argvW[2]);
+
+    if (argc == 2 || (show_op_help && argc > 3))
+    {
+        output_message(STRING_INVALID_SYNTAX);
+        output_message(STRING_FUNC_HELP, struprW(argvW[1]));
+        return 1;
+    }
+
     if (op == REG_ADD)
     {
         WCHAR *key_name, *value_name = NULL, *type = NULL, separator = '\0', *data = NULL;
         BOOL value_empty = FALSE, force = FALSE;
 
-        if (argc < 3)
-        {
-            output_message(STRING_INVALID_SYNTAX);
-            output_message(STRING_FUNC_HELP, struprW(argvW[1]));
-            return 1;
-        }
-        else if (argc == 3 && is_help_switch(argvW[2]))
+        if (show_op_help)
         {
             output_message(STRING_ADD_USAGE);
             return 0;
@@ -1008,13 +1013,7 @@ int wmain(int argc, WCHAR *argvW[])
         WCHAR *key_name, *value_name = NULL;
         BOOL value_empty = FALSE, value_all = FALSE, force = FALSE;
 
-        if (argc < 3)
-        {
-            output_message(STRING_INVALID_SYNTAX);
-            output_message(STRING_FUNC_HELP, struprW(argvW[1]));
-            return 1;
-        }
-        else if (argc == 3 && is_help_switch(argvW[2]))
+        if (show_op_help)
         {
             output_message(STRING_DELETE_USAGE);
             return 0;
@@ -1045,13 +1044,7 @@ int wmain(int argc, WCHAR *argvW[])
         WCHAR *key_name, *value_name = NULL;
         BOOL value_empty = FALSE, recurse = FALSE;
 
-        if (argc < 3)
-        {
-            output_message(STRING_INVALID_SYNTAX);
-            output_message(STRING_FUNC_HELP, struprW(argvW[1]));
-            return 1;
-        }
-        else if (argc == 3 && is_help_switch(argvW[2]))
+        if (show_op_help)
         {
             output_message(STRING_QUERY_USAGE);
             return 0;
