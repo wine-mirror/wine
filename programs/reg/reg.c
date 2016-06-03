@@ -956,17 +956,21 @@ int wmain(int argc, WCHAR *argvW[])
         output_message(STRING_FUNC_HELP, struprW(argvW[1]));
         return 1;
     }
+    else if (show_op_help)
+    {
+        if (op == REG_ADD)
+            output_message(STRING_ADD_USAGE);
+        else if (op == REG_DELETE)
+            output_message(STRING_DELETE_USAGE);
+        else
+            output_message(STRING_QUERY_USAGE);
+        return 0;
+    }
 
     if (op == REG_ADD)
     {
         WCHAR *key_name, *value_name = NULL, *type = NULL, separator = '\0', *data = NULL;
         BOOL value_empty = FALSE, force = FALSE;
-
-        if (show_op_help)
-        {
-            output_message(STRING_ADD_USAGE);
-            return 0;
-        }
 
         key_name = argvW[2];
         for (i = 1; i < argc; i++)
@@ -1013,12 +1017,6 @@ int wmain(int argc, WCHAR *argvW[])
         WCHAR *key_name, *value_name = NULL;
         BOOL value_empty = FALSE, value_all = FALSE, force = FALSE;
 
-        if (show_op_help)
-        {
-            output_message(STRING_DELETE_USAGE);
-            return 0;
-        }
-
         key_name = argvW[2];
         for (i = 1; i < argc; i++)
         {
@@ -1043,12 +1041,6 @@ int wmain(int argc, WCHAR *argvW[])
     {
         WCHAR *key_name, *value_name = NULL;
         BOOL value_empty = FALSE, recurse = FALSE;
-
-        if (show_op_help)
-        {
-            output_message(STRING_QUERY_USAGE);
-            return 0;
-        }
 
         key_name = argvW[2];
         for (i = 1; i < argc; i++)
