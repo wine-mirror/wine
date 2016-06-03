@@ -8603,6 +8603,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_ENDIF                            */ shader_glsl_end,
     /* WINED3DSIH_ENDLOOP                          */ shader_glsl_end,
     /* WINED3DSIH_ENDREP                           */ shader_glsl_end,
+    /* WINED3DSIH_ENDSWITCH                        */ shader_glsl_end,
     /* WINED3DSIH_EQ                               */ shader_glsl_relop,
     /* WINED3DSIH_EXP                              */ shader_glsl_scalar_op,
     /* WINED3DSIH_EXPP                             */ shader_glsl_expp,
