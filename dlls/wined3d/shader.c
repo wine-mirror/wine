@@ -81,6 +81,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DCL_UAV_TYPED                    */ "dcl_uav_typed",
     /* WINED3DSIH_DCL_VERTICES_OUT                 */ "dcl_maxOutputVertexCount",
     /* WINED3DSIH_DEF                              */ "def",
+    /* WINED3DSIH_DEFAULT                          */ "default",
     /* WINED3DSIH_DEFB                             */ "defb",
     /* WINED3DSIH_DEFI                             */ "defi",
     /* WINED3DSIH_DIV                              */ "div",

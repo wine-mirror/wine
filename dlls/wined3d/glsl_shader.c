@@ -4244,6 +4244,11 @@ static void shader_glsl_case(const struct wined3d_shader_instruction *ins)
     shader_addline(ins->ctx->buffer, "case %s:\n", src0_param.param_str);
 }
 
+static void shader_glsl_default(const struct wined3d_shader_instruction *ins)
+{
+    shader_addline(ins->ctx->buffer, "default:\n");
+}
+
 static void shader_glsl_if(const struct wined3d_shader_instruction *ins)
 {
     const char *condition = (ins->flags == WINED3D_SHADER_CONDITIONAL_OP_NZ) ? "bool" : "!bool";
@@ -8578,6 +8583,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DCL_UAV_TYPED                    */ NULL,
     /* WINED3DSIH_DCL_VERTICES_OUT                 */ shader_glsl_nop,
     /* WINED3DSIH_DEF                              */ shader_glsl_nop,
+    /* WINED3DSIH_DEFAULT                          */ shader_glsl_default,
     /* WINED3DSIH_DEFB                             */ shader_glsl_nop,
     /* WINED3DSIH_DEFI                             */ shader_glsl_nop,
     /* WINED3DSIH_DIV                              */ shader_glsl_binop,
