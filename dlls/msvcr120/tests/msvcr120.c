@@ -28,8 +28,80 @@
 #include <winbase.h>
 #include <winnls.h>
 #include "wine/test.h"
+#include <process.h>
 
 #include <locale.h>
+
+#ifdef __i386__
+#include "pshpack1.h"
+struct thiscall_thunk
+{
+    BYTE pop_eax;    /* popl  %eax (ret addr) */
+    BYTE pop_edx;    /* popl  %edx (func) */
+    BYTE pop_ecx;    /* popl  %ecx (this) */
+    BYTE push_eax;   /* pushl %eax */
+    WORD jmp_edx;    /* jmp  *%edx */
+};
+#include "poppack.h"
+
+static ULONG_PTR (WINAPI *call_thiscall_func1)( void *func, void *this );
+static ULONG_PTR (WINAPI *call_thiscall_func2)( void *func, void *this, const void *a );
+
+static void init_thiscall_thunk(void)
+{
+    struct thiscall_thunk *thunk = VirtualAlloc( NULL, sizeof(*thunk),
+            MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+    thunk->pop_eax  = 0x58;   /* popl  %eax */
+    thunk->pop_edx  = 0x5a;   /* popl  %edx */
+    thunk->pop_ecx  = 0x59;   /* popl  %ecx */
+    thunk->push_eax = 0x50;   /* pushl %eax */
+    thunk->jmp_edx  = 0xe2ff; /* jmp  *%edx */
+    call_thiscall_func1 = (void *)thunk;
+    call_thiscall_func2 = (void *)thunk;
+}
+
+#define call_func1(func,_this) call_thiscall_func1(func,_this)
+#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)(a))
+
+#else
+
+#define init_thiscall_thunk()
+#define call_func1(func,_this) func(_this)
+#define call_func2(func,_this,a) func(_this,a)
+
+#endif /* __i386__ */
+
+#undef __thiscall
+#ifdef __i386__
+#define __thiscall __stdcall
+#else
+#define __thiscall __cdecl
+#endif
+
+typedef unsigned char MSVCRT_bool;
+
+typedef struct cs_queue
+{
+    struct cs_queue *next;
+    BOOL free;
+    int unknown;
+} cs_queue;
+
+typedef struct
+{
+    ULONG_PTR unk_thread_id;
+    cs_queue unk_active;
+    void *unknown[2];
+    cs_queue *head;
+    void *tail;
+} critical_section;
+
+typedef struct
+{
+    critical_section *cs;
+    void *unknown[4];
+    int unknown2[2];
+} critical_section_scoped_lock;
 
 static inline float __port_infinity(void)
 {
@@ -95,6 +167,20 @@ static int* (CDECL *p_errno)(void);
 #undef errno
 #define errno (*p_errno())
 
+static critical_section* (__thiscall *p_critical_section_ctor)(critical_section*);
+static void (__thiscall *p_critical_section_dtor)(critical_section*);
+static void (__thiscall *p_critical_section_lock)(critical_section*);
+static void (__thiscall *p_critical_section_unlock)(critical_section*);
+static critical_section* (__thiscall *p_critical_section_native_handle)(critical_section*);
+static MSVCRT_bool (__thiscall *p_critical_section_try_lock)(critical_section*);
+static MSVCRT_bool (__thiscall *p_critical_section_try_lock_for)(critical_section*, unsigned int);
+static critical_section_scoped_lock* (__thiscall *p_critical_section_scoped_lock_ctor)
+    (critical_section_scoped_lock*, critical_section *);
+static void (__thiscall *p_critical_section_scoped_lock_dtor)(critical_section_scoped_lock*);
+
+#define SETNOFAIL(x,y) x = (void*)GetProcAddress(module,y)
+#define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
+
 static BOOL init(void)
 {
     HMODULE module;
@@ -121,6 +207,68 @@ static BOOL init(void)
     p_wcstof = (void*)GetProcAddress(module, "wcstof");
     p_remainder = (void*)GetProcAddress(module, "remainder");
     p_errno = (void*)GetProcAddress(module, "_errno");
+    if(sizeof(void*) == 8) { /* 64-bit initialization */
+        SET(p_critical_section_ctor,
+                "??0critical_section@Concurrency@@QEAA@XZ");
+        SET(p_critical_section_dtor,
+                "??1critical_section@Concurrency@@QEAA@XZ");
+        SET(p_critical_section_lock,
+                "?lock@critical_section@Concurrency@@QEAAXXZ");
+        SET(p_critical_section_unlock,
+                "?unlock@critical_section@Concurrency@@QEAAXXZ");
+        SET(p_critical_section_native_handle,
+                "?native_handle@critical_section@Concurrency@@QEAAAEAV12@XZ");
+        SET(p_critical_section_try_lock,
+                "?try_lock@critical_section@Concurrency@@QEAA_NXZ");
+        SET(p_critical_section_try_lock_for,
+                "?try_lock_for@critical_section@Concurrency@@QEAA_NI@Z");
+        SET(p_critical_section_scoped_lock_ctor,
+                "??0scoped_lock@critical_section@Concurrency@@QEAA@AEAV12@@Z");
+        SET(p_critical_section_scoped_lock_dtor,
+                "??1scoped_lock@critical_section@Concurrency@@QEAA@XZ");
+    } else {
+#ifdef __arm__
+        SET(p_critical_section_ctor,
+                "??0critical_section@Concurrency@@QAA@XZ");
+        SET(p_critical_section_dtor,
+                "??1critical_section@Concurrency@@QAA@XZ");
+        SET(p_critical_section_lock,
+                "?lock@critical_section@Concurrency@@QAAXXZ");
+        SET(p_critical_section_unlock,
+                "?unlock@critical_section@Concurrency@@QAAXXZ");
+        SET(p_critical_section_native_handle,
+                "?native_handle@critical_section@Concurrency@@QAAAAV12@XZ");
+        SET(p_critical_section_try_lock,
+                "?try_lock@critical_section@Concurrency@@QAA_NXZ");
+        SET(p_critical_section_try_lock_for,
+                "?try_lock_for@critical_section@Concurrency@@QAA_NI@Z");
+        SET(p_critical_section_scoped_lock_ctor,
+                "??0scoped_lock@critical_section@Concurrency@@QAA@AAV12@@Z");
+        SET(p_critical_section_scoped_lock_dtor,
+                "??1scoped_lock@critical_section@Concurrency@@QAA@XZ");
+#else
+        SET(p_critical_section_ctor,
+                "??0critical_section@Concurrency@@QAE@XZ");
+        SET(p_critical_section_dtor,
+                "??1critical_section@Concurrency@@QAE@XZ");
+        SET(p_critical_section_lock,
+                "?lock@critical_section@Concurrency@@QAEXXZ");
+        SET(p_critical_section_unlock,
+                "?unlock@critical_section@Concurrency@@QAEXXZ");
+        SET(p_critical_section_native_handle,
+                "?native_handle@critical_section@Concurrency@@QAEAAV12@XZ");
+        SET(p_critical_section_try_lock,
+                "?try_lock@critical_section@Concurrency@@QAE_NXZ");
+        SET(p_critical_section_try_lock_for,
+                "?try_lock_for@critical_section@Concurrency@@QAE_NI@Z");
+        SET(p_critical_section_scoped_lock_ctor,
+                "??0scoped_lock@critical_section@Concurrency@@QAE@AAV12@@Z");
+        SET(p_critical_section_scoped_lock_dtor,
+                "??1scoped_lock@critical_section@Concurrency@@QAE@XZ");
+#endif
+    }
+
+    init_thiscall_thunk();
     return TRUE;
 }
 
@@ -436,6 +584,108 @@ static void test_remainder(void)
     }
 }
 
+static int enter_flag;
+static critical_section cs;
+static unsigned __stdcall test_critical_section_lock(void *arg)
+{
+    critical_section *native_handle;
+    native_handle = (critical_section*)call_func1(p_critical_section_native_handle, &cs);
+    ok(native_handle == &cs, "native_handle = %p\n", native_handle);
+    call_func1(p_critical_section_lock, &cs);
+    ok(enter_flag == 1, "enter_flag = %d\n", enter_flag);
+    call_func1(p_critical_section_unlock, &cs);
+    return 0;
+}
+
+static unsigned __stdcall test_critical_section_try_lock(void *arg)
+{
+    ok(!(MSVCRT_bool)call_func1(p_critical_section_try_lock, &cs),
+            "critical_section_try_lock succeeded\n");
+    return 0;
+}
+
+static unsigned __stdcall test_critical_section_try_lock_for(void *arg)
+{
+    ok((MSVCRT_bool)call_func2(p_critical_section_try_lock_for, &cs, 5000),
+            "critical_section_try_lock_for failed\n");
+    ok(enter_flag == 1, "enter_flag = %d\n", enter_flag);
+    call_func1(p_critical_section_unlock, &cs);
+    return 0;
+}
+
+static unsigned __stdcall test_critical_section_scoped_lock(void *arg)
+{
+    critical_section_scoped_lock counter_scope_lock;
+
+    call_func2(p_critical_section_scoped_lock_ctor, &counter_scope_lock, &cs);
+    ok(enter_flag == 1, "enter_flag = %d\n", enter_flag);
+    call_func1(p_critical_section_scoped_lock_dtor, &counter_scope_lock);
+    return 0;
+}
+
+static void test_critical_section(void)
+{
+    HANDLE thread;
+    DWORD ret;
+
+    enter_flag = 0;
+    call_func1(p_critical_section_ctor, &cs);
+    call_func1(p_critical_section_lock, &cs);
+    thread = (HANDLE)_beginthreadex(NULL, 0, test_critical_section_lock, NULL, 0, NULL);
+    ok(thread != INVALID_HANDLE_VALUE, "_beginthread failed (%d)\n", errno);
+    ret = WaitForSingleObject(thread, 100);
+    ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned  %d\n", ret);
+    enter_flag = 1;
+    call_func1(p_critical_section_unlock, &cs);
+    ret = WaitForSingleObject(thread, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", ret);
+    ret = CloseHandle(thread);
+    ok(ret, "CloseHandle failed\n");
+
+    ok((MSVCRT_bool)call_func1(p_critical_section_try_lock, &cs),
+            "critical_section_try_lock failed\n");
+    thread = (HANDLE)_beginthreadex(NULL, 0, test_critical_section_try_lock, NULL, 0, NULL);
+    ok(thread != INVALID_HANDLE_VALUE, "_beginthread failed (%d)\n", errno);
+    ret = WaitForSingleObject(thread, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", ret);
+    ret = CloseHandle(thread);
+    ok(ret, "CloseHandle failed\n");
+    call_func1(p_critical_section_unlock, &cs);
+
+    enter_flag = 0;
+    ok((MSVCRT_bool)call_func2(p_critical_section_try_lock_for, &cs, 50),
+            "critical_section_try_lock_for failed\n");
+    thread = (HANDLE)_beginthreadex(NULL, 0, test_critical_section_try_lock, NULL, 0, NULL);
+    ok(thread != INVALID_HANDLE_VALUE, "_beginthread failed (%d)\n", errno);
+    ret = WaitForSingleObject(thread, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", ret);
+    ret = CloseHandle(thread);
+    ok(ret, "CloseHandle failed\n");
+    thread = (HANDLE)_beginthreadex(NULL, 0, test_critical_section_try_lock_for, NULL, 0, NULL);
+    ok(thread != INVALID_HANDLE_VALUE, "_beginthread failed (%d)\n", errno);
+    enter_flag = 1;
+    Sleep(10);
+    call_func1(p_critical_section_unlock, &cs);
+    ret = WaitForSingleObject(thread, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", ret);
+    ret = CloseHandle(thread);
+    ok(ret, "CloseHandle failed\n");
+
+    enter_flag = 0;
+    call_func1(p_critical_section_lock, &cs);
+    thread = (HANDLE)_beginthreadex(NULL, 0, test_critical_section_scoped_lock, NULL, 0, NULL);
+    ok(thread != INVALID_HANDLE_VALUE, "_beginthread failed (%d)\n", errno);
+    ret = WaitForSingleObject(thread, 100);
+    ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned  %d\n", ret);
+    enter_flag = 1;
+    call_func1(p_critical_section_unlock, &cs);
+    ret = WaitForSingleObject(thread, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", ret);
+    ret = CloseHandle(thread);
+    ok(ret, "CloseHandle failed\n");
+    call_func1(p_critical_section_dtor, &cs);
+}
+
 START_TEST(msvcr120)
 {
     if (!init()) return;
@@ -448,4 +698,5 @@ START_TEST(msvcr120)
     test__W_Gettnames();
     test__strtof();
     test_remainder();
+    test_critical_section();
 }
