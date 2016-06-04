@@ -49,6 +49,7 @@ enum wined3d_display_driver
     DRIVER_INTEL_GMA900,
     DRIVER_INTEL_GMA950,
     DRIVER_INTEL_GMA3000,
+    DRIVER_INTEL_HD4000,
     DRIVER_NVIDIA_TNT,
     DRIVER_NVIDIA_GEFORCE2MX,
     DRIVER_NVIDIA_GEFORCEFX,
@@ -1162,6 +1163,7 @@ static const struct driver_version_information driver_version_table[] =
     {DRIVER_INTEL_GMA3000,      DRIVER_MODEL_NT5X,  "igxprd32.dll", 14, 10, 5218},
     {DRIVER_INTEL_GMA950,       DRIVER_MODEL_NT6X,  "igdumd32.dll", 14, 10, 1504},
     {DRIVER_INTEL_GMA3000,      DRIVER_MODEL_NT6X,  "igdumd32.dll", 15, 10, 1666},
+    {DRIVER_INTEL_HD4000,       DRIVER_MODEL_NT6X,  "igdumdim32.dll", 19, 15, 4352},
 
     /* Nvidia
      * - Geforce8 and newer is supported by the current 340.52 driver on XP-Win8
@@ -1378,15 +1380,15 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_INTEL,      CARD_INTEL_Q45,                 "Intel(R) Q45/Q43",                                          DRIVER_INTEL_GMA3000, 512},
     {HW_VENDOR_INTEL,      CARD_INTEL_G41,                 "Intel(R) G41",                                              DRIVER_INTEL_GMA3000, 512},
     {HW_VENDOR_INTEL,      CARD_INTEL_B43,                 "Intel(R) B43",                                              DRIVER_INTEL_GMA3000, 512},
-    {HW_VENDOR_INTEL,      CARD_INTEL_ILKD,                "Intel(R) Ironlake Desktop",                                 DRIVER_INTEL_GMA3000, 1024},
-    {HW_VENDOR_INTEL,      CARD_INTEL_ILKM,                "Intel(R) Ironlake Mobile",                                  DRIVER_INTEL_GMA3000, 1024},
-    {HW_VENDOR_INTEL,      CARD_INTEL_SNBD,                "Intel(R) Sandybridge Desktop",                              DRIVER_INTEL_GMA3000, 1024},
-    {HW_VENDOR_INTEL,      CARD_INTEL_SNBM,                "Intel(R) Sandybridge Mobile",                               DRIVER_INTEL_GMA3000, 1024},
-    {HW_VENDOR_INTEL,      CARD_INTEL_SNBS,                "Intel(R) Sandybridge Server",                               DRIVER_INTEL_GMA3000, 1024},
-    {HW_VENDOR_INTEL,      CARD_INTEL_IVBD,                "Intel(R) Ivybridge Desktop",                                DRIVER_INTEL_GMA3000, 1024},
-    {HW_VENDOR_INTEL,      CARD_INTEL_IVBM,                "Intel(R) Ivybridge Mobile",                                 DRIVER_INTEL_GMA3000, 1024},
-    {HW_VENDOR_INTEL,      CARD_INTEL_IVBS,                "Intel(R) Ivybridge Server",                                 DRIVER_INTEL_GMA3000, 1024},
-    {HW_VENDOR_INTEL,      CARD_INTEL_HWM,                 "Intel(R) Haswell Mobile",                                   DRIVER_INTEL_GMA3000, 1024},
+    {HW_VENDOR_INTEL,      CARD_INTEL_ILKD,                "Intel(R) HD Graphics",                                      DRIVER_INTEL_GMA3000, 1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_ILKM,                "Intel(R) HD Graphics",                                      DRIVER_INTEL_GMA3000, 1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_SNBD,                "Intel(R) HD Graphics 3000",                                 DRIVER_INTEL_GMA3000, 1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_SNBM,                "Intel(R) HD Graphics 3000",                                 DRIVER_INTEL_GMA3000, 1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_SNBS,                "Intel(R) HD Graphics Family",                               DRIVER_INTEL_GMA3000, 1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_IVBD,                "Intel(R) HD Graphics 4000",                                 DRIVER_INTEL_HD4000,  1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_IVBM,                "Intel(R) HD Graphics 4000",                                 DRIVER_INTEL_HD4000,  1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_IVBS,                "Intel(R) HD Graphics Family",                               DRIVER_INTEL_HD4000,  1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_HWM,                 "Intel(R) HD Graphics 4600",                                 DRIVER_INTEL_HD4000,  1536},
 };
 
 static const struct driver_version_information *get_driver_version_info(enum wined3d_display_driver driver,
