@@ -575,18 +575,18 @@ static const itemTest t74[4] = {{{0,0,0,0,0,0},0,0,0,0,1,latn_tag,FALSE},
                                     {{0,0,0,0,0,0}, 3,0,1,2,0,arab_tag,FALSE},{{0,1,0,1,0,0}, 6,0,1,2,0,arab_tag,FALSE},
                                     {{0,0,0,0,0,0}, 7,0,1,2,0,arab_tag,FALSE},{{0,1,0,1,0,0},10,0,1,2,0,arab_tag,FALSE},
                                     {{0,0,0,0,0,0},11,0,1,2,0,arab_tag,FALSE},{{0,0,0,0,0,0},13,0,0,0,0,-1,FALSE}};
-    static const itemTest t572[] = {{{0,0,0,1,0,0}, 0,0,0,2,0,arab_tag,FALSE},{{0,0,1,0,0,0}, 2,0,1,2,0,arab_tag,FALSE},
-                                    {{0,0,0,1,0,0}, 3,0,0,2,0,arab_tag,FALSE},{{0,0,1,0,0,0}, 6,0,1,2,0,arab_tag,FALSE},
-                                    {{0,0,0,1,0,0}, 7,0,0,2,0,arab_tag,FALSE},{{0,0,1,0,0,0},10,0,1,2,0,arab_tag,FALSE},
-                                    {{0,0,0,1,0,0},11,0,0,2,0,arab_tag,FALSE},{{0,0,0,0,0,0},13,0,0,0,0,-1,FALSE}};
+    static const itemTest t572[] = {{{0,0,0,0,0,0}, 0,0,0,2,0,arab_tag,FALSE},{{0,0,1,0,0,0}, 2,0,1,2,0,arab_tag,FALSE},
+                                    {{0,0,0,0,0,0}, 3,0,0,2,0,arab_tag,FALSE},{{0,0,1,0,0,0}, 6,0,1,2,0,arab_tag,FALSE},
+                                    {{0,0,0,0,0,0}, 7,0,0,2,0,arab_tag,FALSE},{{0,0,1,0,0,0},10,0,1,2,0,arab_tag,FALSE},
+                                    {{0,0,0,0,0,0},11,0,0,2,0,arab_tag,FALSE},{{0,0,0,0,0,0},13,0,0,0,0,-1,FALSE}};
     static const itemTest t573[] = {{{0,0,0,0,0,0}, 0,0,0,0,1,arab_tag,FALSE},{{0,0,0,0,0,0}, 2,0,0,0,1,arab_tag,FALSE},
                                     {{0,0,0,0,0,0}, 3,0,0,0,1,arab_tag,FALSE},{{0,0,0,0,0,0}, 6,0,0,0,1,arab_tag,FALSE},
                                     {{0,0,0,0,0,0}, 7,0,0,0,1,arab_tag,FALSE},{{0,0,0,0,0,0},10,0,0,0,1,arab_tag,FALSE},
                                     {{0,0,0,0,0,0},11,0,0,0,1,arab_tag,FALSE},{{0,0,0,0,0,0},13,0,0,0,0,-1,FALSE}};
-    static const itemTest t574[] = {{{0,0,1,0,0,0}, 0,0,1,2,0,arab_tag,FALSE},{{0,0,1,0,0,0}, 2,0,1,2,0,arab_tag,FALSE},
-                                    {{0,0,1,0,0,0}, 3,0,1,2,0,arab_tag,FALSE},{{0,0,1,0,0,0}, 6,0,1,2,0,arab_tag,FALSE},
-                                    {{0,0,1,0,0,0}, 7,0,1,2,0,arab_tag,FALSE},{{0,0,1,0,0,0},10,0,1,2,0,arab_tag,FALSE},
-                                    {{0,0,1,0,0,0},11,0,1,2,0,arab_tag,FALSE},{{0,0,0,0,0,0},13,0,0,0,0,-1,FALSE}};
+    static const itemTest t574[] = {{{0,0,0,0,0,0}, 0,0,1,2,0,arab_tag,FALSE},{{0,0,1,0,0,0}, 2,0,1,2,0,arab_tag,FALSE},
+                                    {{0,0,0,0,0,0}, 3,0,1,2,0,arab_tag,FALSE},{{0,0,1,0,0,0}, 6,0,1,2,0,arab_tag,FALSE},
+                                    {{0,0,0,0,0,0}, 7,0,1,2,0,arab_tag,FALSE},{{0,0,1,0,0,0},10,0,1,2,0,arab_tag,FALSE},
+                                    {{0,0,0,0,0,0},11,0,1,2,0,arab_tag,FALSE},{{0,0,0,0,0,0},13,0,0,0,0,-1,FALSE}};
 
     SCRIPT_ITEM items[15];
     SCRIPT_CONTROL  Control;

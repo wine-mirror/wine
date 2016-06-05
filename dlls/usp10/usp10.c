@@ -1253,6 +1253,10 @@ static inline WORD base_indic(WORD script)
     };
 }
 
+static BOOL script_is_numeric(WORD script)
+{
+    return scriptInformation[script].props.fNumeric;
+}
 
 static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
                 int cMaxItems, const SCRIPT_CONTROL *psControl,
@@ -1451,12 +1455,12 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
             for (i = 0; i < cInChars; i++)
             {
                 if (i > 0 && i < cInChars-1 &&
-                    scripts[i-1] == Script_Numeric &&
+                    script_is_numeric(scripts[i-1]) &&
                     strchrW(math_punc, pwcInChars[i]))
                 {
-                    if (scripts[i+1] == Script_Numeric)
+                    if (script_is_numeric(scripts[i+1]))
                     {
-                        scripts[i] = Script_Numeric;
+                        scripts[i] = scripts[i+1];
                         levels[i] = levels[i-1];
                         strength[i] = strength[i-1];
                         i++;
@@ -1466,11 +1470,11 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
                         int j;
                         for (j = i+1; j < cInChars; j++)
                         {
-                            if (scripts[j] == Script_Numeric)
+                            if (script_is_numeric(scripts[j]))
                             {
                                 for(;i<j; i++)
                                 {
-                                    scripts[i] = Script_Numeric;
+                                    scripts[i] = scripts[j];
                                     levels[i] = levels[i-1];
                                     strength[i] = strength[i-1];
                                 }
@@ -1483,8 +1487,9 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
 
             for (i = 0; i < cInChars; i++)
             {
-                /* Script_Numeric at level 0 get bumped to level 2 */
-                if (!overrides[i] && (levels[i] == 0 || (odd(psState->uBidiLevel) && levels[i] == psState->uBidiLevel+1)) && scripts[i] == Script_Numeric)
+                /* Numerics at level 0 get bumped to level 2 */
+                if (!overrides[i] && (levels[i] == 0 || (odd(psState->uBidiLevel)
+                        && levels[i] == psState->uBidiLevel + 1)) && script_is_numeric(scripts[i]))
                 {
                     levels[i] = 2;
                 }
@@ -1576,8 +1581,7 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
         if (overrides)
             pItems[index].a.s.fOverrideDirection = (overrides[cnt] != 0);
         pItems[index].a.fRTL = odd(levels[cnt]);
-        if (pItems[index].a.eScript == Script_Numeric ||
-            pItems[index].a.eScript == Script_Numeric2)
+        if (script_is_numeric(pItems[index].a.eScript))
             pItems[index].a.fLayoutRTL = layoutRTL;
         else
             pItems[index].a.fLayoutRTL = pItems[index].a.fRTL;
@@ -1590,8 +1594,7 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
         layoutRTL = odd(baselayout);
         pItems[index].a.s.uBidiLevel = baselevel;
         pItems[index].a.fRTL = odd(baselevel);
-        if (pItems[index].a.eScript == Script_Numeric ||
-            pItems[index].a.eScript == Script_Numeric2)
+        if (script_is_numeric(pItems[index].a.eScript))
             pItems[index].a.fLayoutRTL = odd(baselayout);
         else
             pItems[index].a.fLayoutRTL = pItems[index].a.fRTL;
@@ -1646,8 +1649,7 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
         if (!new_run && strength && str == BIDI_STRONG)
         {
             layoutRTL = odd(layout_levels[cnt]);
-            if (pItems[index].a.eScript == Script_Numeric ||
-                pItems[index].a.eScript == Script_Numeric2)
+            if (script_is_numeric(pItems[index].a.eScript))
                 pItems[index].a.fLayoutRTL = layoutRTL;
         }
 
@@ -1677,8 +1679,7 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
                 else
                     layoutRTL = (layoutRTL || odd(layout_levels[cnt]));
                 pItems[index].a.fRTL = odd(levels[cnt]);
-                if (pItems[index].a.eScript == Script_Numeric ||
-                    pItems[index].a.eScript == Script_Numeric2)
+                if (script_is_numeric(pItems[index].a.eScript))
                     pItems[index].a.fLayoutRTL = layoutRTL;
                 else
                     pItems[index].a.fLayoutRTL = pItems[index].a.fRTL;
@@ -1690,8 +1691,7 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
                     pItems[index].a.s.fOverrideDirection = TRUE;
                 pItems[index].a.s.uBidiLevel = baselevel;
                 pItems[index].a.fRTL = odd(baselevel);
-                if (pItems[index].a.eScript == Script_Numeric||
-                    pItems[index].a.eScript == Script_Numeric2)
+                if (script_is_numeric(pItems[index].a.eScript))
                     pItems[index].a.fLayoutRTL = layoutRTL;
                 else
                     pItems[index].a.fLayoutRTL = pItems[index].a.fRTL;
