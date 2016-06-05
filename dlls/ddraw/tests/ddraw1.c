@@ -5921,6 +5921,9 @@ static void test_palette_gdi(void)
     PALETTEENTRY palette_entries[256];
     UINT i;
     HDC dc;
+    DDBLTFX fx;
+    RECT r;
+    COLORREF color;
     /* On the Windows 8 testbot palette index 0 of the onscreen palette is forced to
      * r = 0, g = 0, b = 0. Do not attempt to set it to something else as this is
      * not the point of this test. */
@@ -6064,6 +6067,8 @@ static void test_palette_gdi(void)
     refcount = IDirectDrawSurface_Release(surface);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
 
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
     if (FAILED(IDirectDraw_SetDisplayMode(ddraw, 640, 480, 8)))
     {
         win_skip("Failed to set 8 bpp display mode, skipping test.\n");
@@ -6073,8 +6078,6 @@ static void test_palette_gdi(void)
         return;
     }
     ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
-    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
-    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
@@ -6083,10 +6086,27 @@ static void test_palette_gdi(void)
     hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &primary, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+    fx.dwFillColor = 3;
+    SetRect(&r, 0, 0, 319, 479);
+    hr = IDirectDrawSurface_Blt(primary, &r, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to clear surface, hr %#x.\n", hr);
+    SetRect(&r, 320, 0, 639, 479);
+    fx.dwFillColor = 4;
+    hr = IDirectDrawSurface_Blt(primary, &r, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to clear surface, hr %#x.\n", hr);
+
     hr = IDirectDrawSurface_SetPalette(primary, palette);
     ok(SUCCEEDED(hr), "Failed to set palette, hr %#x.\n", hr);
     hr = IDirectDrawSurface_GetDC(primary, &dc);
     ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
+
+    color = GetPixel(dc, 160, 240);
+    ok(color == 0x00030000, "Clear index 3: Got unexpected color 0x%08x.\n", color);
+    color = GetPixel(dc, 480, 240);
+    ok(color == 0x00252423, "Clear index 4: Got unexpected color 0x%08x.\n", color);
+
     ddraw_palette_handle = SelectPalette(dc, GetStockObject(DEFAULT_PALETTE), FALSE);
     /* Windows 2000 on the testbot assigns a different palette to the primary. Refrast? */
     ok(ddraw_palette_handle == GetStockObject(DEFAULT_PALETTE) || broken(TRUE),
