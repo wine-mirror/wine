@@ -104,7 +104,7 @@ static void getstring_test(LPCWSTR assocName, HKEY progIdKey, ASSOCSTR str, LPCW
 {
     IQueryAssociations *assoc;
     HRESULT hr;
-    WCHAR *buffer;
+    WCHAR *buffer = NULL;
     DWORD len;
 
     hr = CoCreateInstance(&CLSID_QueryAssociations, NULL, CLSCTX_INPROC_SERVER, &IID_IQueryAssociations, (void*)&assoc);
@@ -115,8 +115,11 @@ static void getstring_test(LPCWSTR assocName, HKEY progIdKey, ASSOCSTR str, LPCW
     hr = IQueryAssociations_GetString(assoc, ASSOCF_NONE, str, NULL, NULL, &len);
     if (expected_string) {
         ok_(__FILE__, line)(hr == S_FALSE, "GetString returned 0x%x, expected S_FALSE\n", hr);
-        if (hr != S_FALSE)
-            return; /* don't try to allocate memory */
+        if (hr != S_FALSE) {
+            /* don't try to allocate memory using unitialized len */
+            IQueryAssociations_Release(assoc);
+            return;
+        }
 
         buffer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         ok_(__FILE__, line)(buffer != NULL, "out of memory\n");
@@ -128,6 +131,9 @@ static void getstring_test(LPCWSTR assocName, HKEY progIdKey, ASSOCSTR str, LPCW
     } else {
         ok_(__FILE__, line)(FAILED(hr), "GetString returned 0x%x, expected failure\n", hr);
     }
+
+    IQueryAssociations_Release(assoc);
+    HeapFree(GetProcessHeap(), 0, buffer);
 }
 
 static void test_IQueryAssociations_GetString(void)
