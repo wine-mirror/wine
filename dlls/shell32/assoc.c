@@ -259,7 +259,9 @@ static HRESULT WINAPI IQueryAssociations_fnInit(
     }
     else if (hkeyProgid != NULL)
     {
-        This->hkeySource = This->hkeyProgID = hkeyProgid;
+        /* reopen the key so we don't end up closing a key owned by the caller */
+        RegOpenKeyExW(hkeyProgid, NULL, 0, KEY_READ, &This->hkeyProgID);
+        This->hkeySource = This->hkeyProgID;
         return S_OK;
     }
     else
