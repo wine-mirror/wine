@@ -571,10 +571,10 @@ static const itemTest t74[4] = {{{0,0,0,0,0,0},0,0,0,0,1,latn_tag,FALSE},
     /* Persian numerals and punctuation. */
     static const WCHAR test57[] = {0x06f1, 0x06f2, 0x066c, 0x06f3, 0x06f4, 0x06f5, 0x066c,  /* ۱۲٬۳۴۵٬ */
                                    0x06f6, 0x06f7, 0x06f8, 0x066b, 0x06f9, 0x06f0};         /* ۶۷۸٫۹۰ */
-    static const itemTest t571[] = {{{0,0,0,1,0,0}, 0,0,1,2,0,arab_tag,FALSE},{{0,1,0,1,0,0}, 2,0,1,2,0,arab_tag,FALSE},
-                                    {{0,0,0,1,0,0}, 3,0,1,2,0,arab_tag,FALSE},{{0,1,0,1,0,0}, 6,0,1,2,0,arab_tag,FALSE},
-                                    {{0,0,0,1,0,0}, 7,0,1,2,0,arab_tag,FALSE},{{0,1,0,1,0,0},10,0,1,2,0,arab_tag,FALSE},
-                                    {{0,0,0,1,0,0},11,0,1,2,0,arab_tag,FALSE},{{0,0,0,0,0,0},13,0,0,0,0,-1,FALSE}};
+    static const itemTest t571[] = {{{0,0,0,0,0,0}, 0,0,1,2,0,arab_tag,FALSE},{{0,1,0,1,0,0}, 2,0,1,2,0,arab_tag,FALSE},
+                                    {{0,0,0,0,0,0}, 3,0,1,2,0,arab_tag,FALSE},{{0,1,0,1,0,0}, 6,0,1,2,0,arab_tag,FALSE},
+                                    {{0,0,0,0,0,0}, 7,0,1,2,0,arab_tag,FALSE},{{0,1,0,1,0,0},10,0,1,2,0,arab_tag,FALSE},
+                                    {{0,0,0,0,0,0},11,0,1,2,0,arab_tag,FALSE},{{0,0,0,0,0,0},13,0,0,0,0,-1,FALSE}};
     static const itemTest t572[] = {{{0,0,0,1,0,0}, 0,0,0,2,0,arab_tag,FALSE},{{0,0,1,0,0,0}, 2,0,1,2,0,arab_tag,FALSE},
                                     {{0,0,0,1,0,0}, 3,0,0,2,0,arab_tag,FALSE},{{0,0,1,0,0,0}, 6,0,1,2,0,arab_tag,FALSE},
                                     {{0,0,0,1,0,0}, 7,0,0,2,0,arab_tag,FALSE},{{0,0,1,0,0,0},10,0,1,2,0,arab_tag,FALSE},

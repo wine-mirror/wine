@@ -342,7 +342,7 @@ const scriptData scriptInformation[] = {
      {LANG_SYRIAC, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 1, 0},
      MS_MAKE_TAG('s','y','r','c'),
      {'E','s','t','r','a','n','g','e','l','o',' ','E','d','e','s','s','a',0}},
-    {{Script_Persian, 0, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
+    {{Script_Persian, 0, 1, 0, 0, 0, 0, { 2,0,0,0,0,0,0,0,0,0,0}},
      {LANG_PERSIAN, 1, 1, 0, 0, ARABIC_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('a','r','a','b'),
      {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0}},
