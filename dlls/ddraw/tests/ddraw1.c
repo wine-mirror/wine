@@ -5323,18 +5323,21 @@ static void test_palette_complex(void)
     DestroyWindow(window);
 }
 
-static void test_p8_rgb_blit(void)
+static void test_p8_blit(void)
 {
-    IDirectDrawSurface *src, *dst;
+    IDirectDrawSurface *src, *dst, *dst_p8;
     DDSURFACEDESC surface_desc;
     IDirectDraw *ddraw;
-    IDirectDrawPalette *palette;
+    IDirectDrawPalette *palette, *palette2;
     ULONG refcount;
     HWND window;
     HRESULT hr;
     PALETTEENTRY palette_entries[256];
     unsigned int x;
+    DDBLTFX fx;
     static const BYTE src_data[] = {0x10, 0x1, 0x2, 0x3, 0x4, 0x5, 0xff, 0x80};
+    static const BYTE src_data2[] = {0x10, 0x5, 0x4, 0x3, 0x2, 0x1, 0xff, 0x80};
+    static const BYTE expected_p8[] = {0x10, 0x1, 0x4, 0x3, 0x4, 0x5, 0xff, 0x80};
     static const D3DCOLOR expected[] =
     {
         0x00101010, 0x00010101, 0x00020202, 0x00030303,
@@ -5357,6 +5360,13 @@ static void test_p8_rgb_blit(void)
     hr = IDirectDraw_CreatePalette(ddraw, DDPCAPS_8BIT | DDPCAPS_ALLOW256,
             palette_entries, &palette, NULL);
     ok(SUCCEEDED(hr), "Failed to create palette, hr %#x.\n", hr);
+    palette_entries[1].peBlue = 0xff;
+    palette_entries[2].peGreen = 0xff;
+    palette_entries[3].peRed = 0xff;
+    palette_entries[4].peFlags = 0x0;
+    hr = IDirectDraw_CreatePalette(ddraw, DDPCAPS_8BIT | DDPCAPS_ALLOW256,
+            palette_entries, &palette2, NULL);
+    ok(SUCCEEDED(hr), "Failed to create palette, hr %#x.\n", hr);
 
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
@@ -5369,6 +5379,10 @@ static void test_p8_rgb_blit(void)
     U1(surface_desc.ddpfPixelFormat).dwRGBBitCount = 8;
     hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &src, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &dst_p8, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    hr = IDirectDrawSurface_SetPalette(dst_p8, palette2);
+    ok(SUCCEEDED(hr), "Failed to set palette, hr %#x.\n", hr);
 
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
@@ -5388,11 +5402,17 @@ static void test_p8_rgb_blit(void)
 
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
-    hr = IDirectDrawSurface_Lock(src, NULL, &surface_desc, 0, NULL);
+    hr = IDirectDrawSurface_Lock(src, NULL, &surface_desc, DDLOCK_WAIT, NULL);
     ok(SUCCEEDED(hr), "Failed to lock source surface, hr %#x.\n", hr);
     memcpy(surface_desc.lpSurface, src_data, sizeof(src_data));
     hr = IDirectDrawSurface_Unlock(src, NULL);
     ok(SUCCEEDED(hr), "Failed to unlock source surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_Lock(dst_p8, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock destination surface, hr %#x.\n", hr);
+    memcpy(surface_desc.lpSurface, src_data2, sizeof(src_data2));
+    hr = IDirectDrawSurface_Unlock(dst_p8, NULL);
+    ok(SUCCEEDED(hr), "Failed to unlock destination surface, hr %#x.\n", hr);
 
     hr = IDirectDrawSurface_SetPalette(src, palette);
     ok(SUCCEEDED(hr), "Failed to set palette, hr %#x.\n", hr);
@@ -5413,9 +5433,25 @@ static void test_p8_rgb_blit(void)
         }
     }
 
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+    fx.ddckSrcColorkey.dwColorSpaceHighValue = 0x2;
+    fx.ddckSrcColorkey.dwColorSpaceLowValue = 0x2;
+    hr = IDirectDrawSurface_Blt(dst_p8, NULL, src, NULL, DDBLT_WAIT | DDBLT_KEYSRCOVERRIDE, &fx);
+    ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_Lock(dst_p8, NULL, &surface_desc, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock destination surface, hr %#x.\n", hr);
+    ok(!memcmp(surface_desc.lpSurface, expected_p8, sizeof(expected_p8)),
+            "Got unexpected P8 color key blit result.\n");
+    hr = IDirectDrawSurface_Unlock(dst_p8, NULL);
+    ok(SUCCEEDED(hr), "Failed to unlock destination surface, hr %#x.\n", hr);
+
     IDirectDrawSurface_Release(src);
     IDirectDrawSurface_Release(dst);
+    IDirectDrawSurface_Release(dst_p8);
     IDirectDrawPalette_Release(palette);
+    IDirectDrawPalette_Release(palette2);
 
     refcount = IDirectDraw_Release(ddraw);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
@@ -9056,7 +9092,7 @@ START_TEST(ddraw1)
     test_create_surface_pitch();
     test_mipmap();
     test_palette_complex();
-    test_p8_rgb_blit();
+    test_p8_blit();
     test_material();
     test_lighting();
     test_palette_gdi();
