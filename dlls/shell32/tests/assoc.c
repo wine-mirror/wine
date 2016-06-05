@@ -113,21 +113,20 @@ static void getstring_test(LPCWSTR assocName, HKEY progIdKey, ASSOCSTR str, LPCW
     ok_(__FILE__, line)(hr == S_OK, "IQueryAssociations::Init failed, 0x%x\n", hr);
 
     hr = IQueryAssociations_GetString(assoc, ASSOCF_NONE, str, NULL, NULL, &len);
-    if (hr != S_FALSE) {
-        if (expected_string) {
-            ok_(__FILE__, line)(SUCCEEDED(hr), "GetString returned 0x%x, expected success\n", hr);
-        } else {
-            ok_(__FILE__, line)(FAILED(hr), "GetString returned 0x%x, expected failure\n", hr);
-        }
-    }
-
-    buffer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    ok_(__FILE__, line)(buffer != NULL, "out of memory\n");
-    hr = IQueryAssociations_GetString(assoc, ASSOCF_NONE, str, NULL, buffer, &len);
-
     if (expected_string) {
+        ok_(__FILE__, line)(hr == S_FALSE, "GetString returned 0x%x, expected S_FALSE\n", hr);
+        if (hr != S_FALSE)
+            return; /* don't try to allocate memory */
+
+        buffer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        ok_(__FILE__, line)(buffer != NULL, "out of memory\n");
+        hr = IQueryAssociations_GetString(assoc, 0, str, NULL, buffer, &len);
+        ok_(__FILE__, line)(hr == S_OK, "GetString returned 0x%x, expected S_OK\n", hr);
+
         ok_(__FILE__, line)(lstrcmpW(buffer, expected_string) == 0, "GetString returned %s, expected %s\n",
                 wine_dbgstr_w(buffer), wine_dbgstr_w(expected_string));
+    } else {
+        ok_(__FILE__, line)(FAILED(hr), "GetString returned 0x%x, expected failure\n", hr);
     }
 }
 
@@ -176,8 +175,9 @@ static void test_IQueryAssociations_GetString(void)
     getstring_test(test_progidW, NULL, ASSOCSTR_DEFAULTICON, test_iconW, __LINE__);
     getstring_test(NULL, test_progid_key, ASSOCSTR_DEFAULTICON, test_iconW, __LINE__);
 
-    RegDeleteKeyW(HKEY_CLASSES_ROOT, test_extensionW);
+    RegDeleteKeyW(test_progid_key, DefaultIconW);
     RegDeleteKeyW(HKEY_CLASSES_ROOT, test_progidW);
+    RegDeleteKeyW(HKEY_CLASSES_ROOT, test_extensionW);
 
     hr = CoCreateInstance(&CLSID_QueryAssociations, NULL, CLSCTX_INPROC_SERVER, &IID_IQueryAssociations, (void*)&assoc);
     ok(hr == S_OK, "failed to create object, 0x%x\n", hr);
