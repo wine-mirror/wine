@@ -181,6 +181,7 @@ enum wined3d_channel_type
     WINED3D_CHANNEL_TYPE_FLOAT,
     WINED3D_CHANNEL_TYPE_DEPTH,
     WINED3D_CHANNEL_TYPE_STENCIL,
+    WINED3D_CHANNEL_TYPE_UNUSED,
 };
 
 struct wined3d_typed_format_info
@@ -200,6 +201,7 @@ struct wined3d_typed_format_info
  * F - WINED3D_CHANNEL_TYPE_FLOAT
  * D - WINED3D_CHANNEL_TYPE_DEPTH
  * S - WINED3D_CHANNEL_TYPE_STENCIL
+ * X - WINED3D_CHANNEL_TYPE_UNUSED
  */
 static const struct wined3d_typed_format_info typed_formats[] =
 {
@@ -232,6 +234,8 @@ static const struct wined3d_typed_format_info typed_formats[] =
     {WINED3DFMT_R32_UINT,               WINED3DFMT_R32_TYPELESS,          "U"},
     {WINED3DFMT_R32_SINT,               WINED3DFMT_R32_TYPELESS,          "I"},
     {WINED3DFMT_R32_FLOAT,              WINED3DFMT_R32_TYPELESS,          "F"},
+    {WINED3DFMT_R24_UNORM_X8_TYPELESS,  WINED3DFMT_R24G8_TYPELESS,        "DX"},
+    {WINED3DFMT_X24_TYPELESS_G8_UINT,   WINED3DFMT_R24G8_TYPELESS,        "XS"},
     {WINED3DFMT_D24_UNORM_S8_UINT,      WINED3DFMT_R24G8_TYPELESS,        "DS"},
     {WINED3DFMT_R8G8_SNORM,             WINED3DFMT_R8G8_TYPELESS,         "ii"},
     {WINED3DFMT_R8G8_UNORM,             WINED3DFMT_R8G8_TYPELESS,         "uu"},
@@ -250,8 +254,8 @@ static const struct wined3d_typed_format_info typed_formats[] =
     {WINED3DFMT_BC5_UNORM,              WINED3DFMT_BC5_TYPELESS,          ""},
     {WINED3DFMT_B8G8R8A8_UNORM_SRGB,    WINED3DFMT_B8G8R8A8_TYPELESS,     "uuuu"},
     {WINED3DFMT_B8G8R8A8_UNORM,         WINED3DFMT_B8G8R8A8_TYPELESS,     "uuuu"},
-    {WINED3DFMT_B8G8R8X8_UNORM_SRGB,    WINED3DFMT_B8G8R8X8_TYPELESS,     "uuu"},
-    {WINED3DFMT_B8G8R8X8_UNORM,         WINED3DFMT_B8G8R8X8_TYPELESS,     "uuu"},
+    {WINED3DFMT_B8G8R8X8_UNORM_SRGB,    WINED3DFMT_B8G8R8X8_TYPELESS,     "uuuX"},
+    {WINED3DFMT_B8G8R8X8_UNORM,         WINED3DFMT_B8G8R8X8_TYPELESS,     "uuuX"},
 };
 
 struct wined3d_format_ddi_info
@@ -1574,6 +1578,8 @@ static enum wined3d_channel_type map_channel_type(char t)
             return WINED3D_CHANNEL_TYPE_DEPTH;
         case 'S':
             return WINED3D_CHANNEL_TYPE_STENCIL;
+        case 'X':
+            return WINED3D_CHANNEL_TYPE_UNUSED;
         default:
             ERR("Invalid channel type '%c'.\n", t);
             return WINED3D_CHANNEL_TYPE_NONE;
