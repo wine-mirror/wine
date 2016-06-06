@@ -5081,6 +5081,7 @@ static const struct recommendedmode_test recmode_tests1[] = {
 static void test_GetRecommendedRenderingMode(void)
 {
     IDWriteRenderingParams *params;
+    IDWriteFontFace3 *fontface3;
     IDWriteFontFace2 *fontface2;
     IDWriteFontFace1 *fontface1;
     IDWriteFontFace  *fontface;
@@ -5101,6 +5102,11 @@ static void test_GetRecommendedRenderingMode(void)
     hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace2, (void**)&fontface2);
     if (hr != S_OK)
         win_skip("IDWriteFontFace2::GetRecommendedRenderingMode() is not supported.\n");
+
+    fontface3 = NULL;
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace3, (void**)&fontface3);
+    if (hr != S_OK)
+        win_skip("IDWriteFontFace3::GetRecommendedRenderingMode() is not supported.\n");
 
 if (0) /* crashes on native */
     hr = IDWriteFontFace_GetRecommendedRenderingMode(fontface, 3.0, 1.0,
@@ -5252,12 +5258,31 @@ if (0) /* crashes on native */
             gasp = get_gasp_flags(fontface, emsize, 1.0f);
             for (i = 0; i < sizeof(recmode_tests1)/sizeof(recmode_tests1[0]); i++) {
                 mode = 10;
-                expected = get_expected_rendering_mode(emsize, gasp, recmode_tests1[0].measuring, recmode_tests1[0].threshold);
-                expected_gridfit = get_expected_gridfit_mode(emsize, gasp, recmode_tests1[0].measuring, DWRITE_OUTLINE_THRESHOLD_ANTIALIASED);
-                hr = IDWriteFontFace2_GetRecommendedRenderingMode(fontface2, emsize, 96.0, 96.0,
-                    NULL, FALSE, recmode_tests1[0].threshold, recmode_tests1[0].measuring, params, &mode, &gridfit);
+                expected = get_expected_rendering_mode(emsize, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
+                expected_gridfit = get_expected_gridfit_mode(emsize, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
+                hr = IDWriteFontFace2_GetRecommendedRenderingMode(fontface2, emsize, 96.0f, 96.0f,
+                    NULL, FALSE, recmode_tests1[i].threshold, recmode_tests1[i].measuring, params, &mode, &gridfit);
                 ok(hr == S_OK, "got 0x%08x\n", hr);
                 ok(mode == expected, "%.2f: got %d, flags 0x%04x, expected %d\n", emsize, mode, gasp, expected);
+                ok(gridfit == expected_gridfit, "%.2f/%d: gridfit: got %d, flags 0x%04x, expected %d\n", emsize, i, gridfit,
+                    gasp, expected_gridfit);
+            }
+        }
+
+        /* IDWriteFontFace3 - and another one */
+        if (fontface3) {
+            DWRITE_GRID_FIT_MODE gridfit, expected_gridfit;
+            DWRITE_RENDERING_MODE1 mode1, expected1;
+
+            gasp = get_gasp_flags(fontface, emsize, 1.0f);
+            for (i = 0; i < sizeof(recmode_tests1)/sizeof(recmode_tests1[0]); i++) {
+                mode1 = 10;
+                expected1 = get_expected_rendering_mode(emsize, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
+                expected_gridfit = get_expected_gridfit_mode(emsize, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
+                hr = IDWriteFontFace3_GetRecommendedRenderingMode(fontface3, emsize, 96.0f, 96.0f,
+                    NULL, FALSE, recmode_tests1[i].threshold, recmode_tests1[i].measuring, params, &mode1, &gridfit);
+                ok(hr == S_OK, "got 0x%08x\n", hr);
+                ok(mode1 == expected1, "%.2f: got %d, flags 0x%04x, expected %d\n", emsize, mode1, gasp, expected1);
                 ok(gridfit == expected_gridfit, "%.2f/%d: gridfit: got %d, flags 0x%04x, expected %d\n", emsize, i, gridfit,
                     gasp, expected_gridfit);
             }
@@ -5312,6 +5337,65 @@ if (0) /* crashes on native */
         IDWriteFactory2_Release(factory2);
     }
 
+    if (fontface3) {
+        IDWriteRenderingParams3 *params3;
+        IDWriteRenderingParams2 *params2;
+        IDWriteRenderingParams *params;
+        IDWriteFactory3 *factory3;
+        DWRITE_GRID_FIT_MODE gridfit;
+        DWRITE_RENDERING_MODE1 mode1;
+
+        hr = IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory3, (void**)&factory3);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFactory3_CreateCustomRenderingParams(factory3, 1.0f, 0.0f, 0.0f, 0.5f, DWRITE_PIXEL_GEOMETRY_FLAT,
+            DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC_DOWNSAMPLED, DWRITE_GRID_FIT_MODE_ENABLED, &params3);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        mode1 = IDWriteRenderingParams3_GetRenderingMode1(params3);
+        ok(mode1 == DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC_DOWNSAMPLED, "got %d\n", mode1);
+
+        mode1 = IDWriteRenderingParams3_GetRenderingMode(params3);
+        ok(mode1 == DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC, "got %d\n", mode1);
+
+        hr = IDWriteRenderingParams3_QueryInterface(params3, &IID_IDWriteRenderingParams, (void**)&params);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(params == (IDWriteRenderingParams*)params3, "got %p, %p\n", params3, params);
+        mode = IDWriteRenderingParams_GetRenderingMode(params);
+        ok(mode == DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC, "got %d\n", mode);
+        IDWriteRenderingParams_Release(params);
+
+        hr = IDWriteRenderingParams3_QueryInterface(params3, &IID_IDWriteRenderingParams2, (void**)&params2);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(params2 == (IDWriteRenderingParams2*)params3, "got %p, %p\n", params3, params2);
+        mode = IDWriteRenderingParams2_GetRenderingMode(params2);
+        ok(mode == DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC, "got %d\n", mode);
+        IDWriteRenderingParams2_Release(params2);
+
+        mode = 10;
+        gridfit = 10;
+        hr = IDWriteFontFace2_GetRecommendedRenderingMode(fontface2, 5.0f, 96.0f, 96.0f,
+            NULL, FALSE, DWRITE_OUTLINE_THRESHOLD_ANTIALIASED, DWRITE_MEASURING_MODE_GDI_CLASSIC,
+            NULL, &mode, &gridfit);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(mode == DWRITE_RENDERING_MODE_GDI_CLASSIC, "got %d\n", mode);
+        ok(gridfit == DWRITE_GRID_FIT_MODE_ENABLED, "got %d\n", gridfit);
+
+        mode = 10;
+        gridfit = 10;
+        hr = IDWriteFontFace2_GetRecommendedRenderingMode(fontface2, 5.0f, 96.0f, 96.0f,
+            NULL, FALSE, DWRITE_OUTLINE_THRESHOLD_ANTIALIASED, DWRITE_MEASURING_MODE_GDI_CLASSIC,
+            (IDWriteRenderingParams*)params3, &mode, &gridfit);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(mode == DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC, "got %d\n", mode);
+        ok(gridfit == DWRITE_GRID_FIT_MODE_ENABLED, "got %d\n", gridfit);
+
+        IDWriteRenderingParams3_Release(params3);
+        IDWriteFactory3_Release(factory3);
+    }
+
+    if (fontface3)
+        IDWriteFontFace3_Release(fontface3);
     if (fontface2)
         IDWriteFontFace2_Release(fontface2);
     if (fontface1)

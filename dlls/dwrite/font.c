@@ -1130,14 +1130,64 @@ static BOOL WINAPI dwritefontface3_HasCharacter(IDWriteFontFace3 *iface, UINT32 
     return index != 0;
 }
 
-static HRESULT WINAPI dwritefontface3_GetRecommendedRenderingMode(IDWriteFontFace3 *iface, FLOAT emsize, FLOAT dpi_x, FLOAT dpi_y,
-    DWRITE_MATRIX const *transform, BOOL is_sideways, DWRITE_OUTLINE_THRESHOLD threshold, DWRITE_MEASURING_MODE measuring_mode,
+static HRESULT WINAPI dwritefontface3_GetRecommendedRenderingMode(IDWriteFontFace3 *iface, FLOAT emSize, FLOAT dpiX, FLOAT dpiY,
+    DWRITE_MATRIX const *m, BOOL is_sideways, DWRITE_OUTLINE_THRESHOLD threshold, DWRITE_MEASURING_MODE measuring_mode,
     IDWriteRenderingParams *params, DWRITE_RENDERING_MODE1 *rendering_mode, DWRITE_GRID_FIT_MODE *gridfit_mode)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace3(iface);
-    FIXME("(%p)->(%f %f %f %p %d %u %u %p %p %p): stub\n", This, emsize, dpi_x, dpi_y, transform, is_sideways, threshold,
+    FLOAT emthreshold;
+    WORD gasp, *ptr;
+    UINT32 size;
+
+    TRACE("(%p)->(%.2f %.2f %.2f %p %d %d %d %p %p %p)\n", This, emSize, dpiX, dpiY, m, is_sideways, threshold,
         measuring_mode, params, rendering_mode, gridfit_mode);
-    return E_NOTIMPL;
+
+    if (m)
+        FIXME("transform not supported %s\n", debugstr_matrix(m));
+
+    if (is_sideways)
+        FIXME("sideways mode not supported\n");
+
+    emSize *= max(dpiX, dpiY) / 96.0f;
+
+    *rendering_mode = DWRITE_RENDERING_MODE_DEFAULT;
+    *gridfit_mode = DWRITE_GRID_FIT_MODE_DEFAULT;
+    if (params) {
+        IDWriteRenderingParams3 *params3;
+        HRESULT hr;
+
+        hr = IDWriteRenderingParams_QueryInterface(params, &IID_IDWriteRenderingParams3, (void**)&params3);
+        if (hr == S_OK) {
+            *rendering_mode = IDWriteRenderingParams3_GetRenderingMode1(params3);
+            *gridfit_mode = IDWriteRenderingParams3_GetGridFitMode(params3);
+            IDWriteRenderingParams3_Release(params3);
+        }
+        else
+            *rendering_mode = IDWriteRenderingParams_GetRenderingMode(params);
+    }
+
+    emthreshold = threshold == DWRITE_OUTLINE_THRESHOLD_ANTIALIASED ? RECOMMENDED_OUTLINE_AA_THRESHOLD : RECOMMENDED_OUTLINE_A_THRESHOLD;
+
+    ptr = get_fontface_gasp(This, &size);
+    gasp = opentype_get_gasp_flags(ptr, size, emSize);
+
+    if (*rendering_mode == DWRITE_RENDERING_MODE1_DEFAULT) {
+        if (emSize >= emthreshold)
+            *rendering_mode = DWRITE_RENDERING_MODE1_OUTLINE;
+        else
+            *rendering_mode = fontface_renderingmode_from_measuringmode(measuring_mode, emSize, gasp);
+    }
+
+    if (*gridfit_mode == DWRITE_GRID_FIT_MODE_DEFAULT) {
+        if (emSize >= emthreshold)
+            *gridfit_mode = DWRITE_GRID_FIT_MODE_DISABLED;
+        else if (measuring_mode == DWRITE_MEASURING_MODE_GDI_CLASSIC || measuring_mode == DWRITE_MEASURING_MODE_GDI_NATURAL)
+            *gridfit_mode = DWRITE_GRID_FIT_MODE_ENABLED;
+        else
+            *gridfit_mode = (gasp & (GASP_GRIDFIT|GASP_SYMMETRIC_GRIDFIT)) ? DWRITE_GRID_FIT_MODE_ENABLED : DWRITE_GRID_FIT_MODE_DISABLED;
+    }
+
+    return S_OK;
 }
 
 static BOOL WINAPI dwritefontface3_IsCharacterLocal(IDWriteFontFace3 *iface, UINT32 ch)
