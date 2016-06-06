@@ -349,7 +349,7 @@ static int reg_add(HKEY root, WCHAR *key_name, WCHAR *value_name, BOOL value_emp
                    WCHAR *type, WCHAR separator, WCHAR *data, BOOL force)
 {
     LPWSTR p;
-    HKEY subkey;
+    HKEY key;
 
     p = strchrW(key_name,'\\');
     if (p) p++;
@@ -360,7 +360,7 @@ static int reg_add(HKEY root, WCHAR *key_name, WCHAR *value_name, BOOL value_emp
         return 1;
     }
 
-    if(RegCreateKeyW(root,p,&subkey)!=ERROR_SUCCESS)
+    if (RegCreateKeyW(root, p, &key) != ERROR_SUCCESS)
     {
         output_message(STRING_INVALID_KEY);
         return 1;
@@ -374,11 +374,11 @@ static int reg_add(HKEY root, WCHAR *key_name, WCHAR *value_name, BOOL value_emp
 
         if (!force)
         {
-            if (RegQueryValueExW(subkey, value_name, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+            if (RegQueryValueExW(key, value_name, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
             {
                 if (!ask_confirm(STRING_OVERWRITE_VALUE, value_name))
                 {
-                    RegCloseKey(subkey);
+                    RegCloseKey(key);
                     output_message(STRING_CANCELLED);
                     return 0;
                 }
@@ -388,28 +388,28 @@ static int reg_add(HKEY root, WCHAR *key_name, WCHAR *value_name, BOOL value_emp
         reg_type = wchar_get_type(type);
         if (reg_type == ~0u)
         {
-            RegCloseKey(subkey);
+            RegCloseKey(key);
             output_message(STRING_UNSUPPORTED_TYPE, type);
             return 1;
         }
         if ((reg_type == REG_DWORD || reg_type == REG_DWORD_BIG_ENDIAN) && !data)
         {
-             RegCloseKey(subkey);
+             RegCloseKey(key);
              output_message(STRING_INVALID_CMDLINE);
              return 1;
         }
 
         if (!(reg_data = get_regdata(data, reg_type, separator, &reg_count)))
         {
-            RegCloseKey(subkey);
+            RegCloseKey(key);
             return 1;
         }
 
-        RegSetValueExW(subkey,value_name,0,reg_type,reg_data,reg_count);
+        RegSetValueExW(key, value_name, 0, reg_type, reg_data, reg_count);
         HeapFree(GetProcessHeap(),0,reg_data);
     }
 
-    RegCloseKey(subkey);
+    RegCloseKey(key);
     output_message(STRING_SUCCESS);
 
     return 0;
@@ -419,7 +419,7 @@ static int reg_delete(HKEY root, WCHAR *key_name, WCHAR *value_name, BOOL value_
                       BOOL value_all, BOOL force)
 {
     LPWSTR p;
-    HKEY subkey;
+    HKEY key;
 
     p = strchrW(key_name,'\\');
     if (p) p++;
@@ -460,7 +460,7 @@ static int reg_delete(HKEY root, WCHAR *key_name, WCHAR *value_name, BOOL value_
         return 0;
     }
 
-    if(RegOpenKeyW(root,p,&subkey)!=ERROR_SUCCESS)
+    if (RegOpenKeyW(root, p, &key) != ERROR_SUCCESS)
     {
         output_message(STRING_CANNOT_FIND);
         return 1;
@@ -473,11 +473,11 @@ static int reg_delete(HKEY root, WCHAR *key_name, WCHAR *value_name, BOOL value_
         DWORD count;
         LONG rc;
 
-        rc = RegQueryInfoKeyW(subkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-            &maxValue, NULL, NULL, NULL);
+        rc = RegQueryInfoKeyW(key, NULL, NULL, NULL, NULL, NULL, NULL,
+                              NULL, &maxValue, NULL, NULL, NULL);
         if (rc != ERROR_SUCCESS)
         {
-            RegCloseKey(subkey);
+            RegCloseKey(key);
             output_message(STRING_GENERAL_FAILURE);
             return 1;
         }
@@ -487,14 +487,14 @@ static int reg_delete(HKEY root, WCHAR *key_name, WCHAR *value_name, BOOL value_
         while (1)
         {
             count = maxValue;
-            rc = RegEnumValueW(subkey, 0, szValue, &count, NULL, NULL, NULL, NULL);
+            rc = RegEnumValueW(key, 0, szValue, &count, NULL, NULL, NULL, NULL);
             if (rc == ERROR_SUCCESS)
             {
-                rc = RegDeleteValueW(subkey, szValue);
+                rc = RegDeleteValueW(key, szValue);
                 if (rc != ERROR_SUCCESS)
                 {
                     HeapFree(GetProcessHeap(), 0, szValue);
-                    RegCloseKey(subkey);
+                    RegCloseKey(key);
                     output_message(STRING_VALUEALL_FAILED, key_name);
                     return 1;
                 }
@@ -504,15 +504,15 @@ static int reg_delete(HKEY root, WCHAR *key_name, WCHAR *value_name, BOOL value_
     }
     else if (value_name || value_empty)
     {
-        if (RegDeleteValueW(subkey, value_empty ? NULL : value_name) != ERROR_SUCCESS)
+        if (RegDeleteValueW(key, value_empty ? NULL : value_name) != ERROR_SUCCESS)
         {
-            RegCloseKey(subkey);
+            RegCloseKey(key);
             output_message(STRING_CANNOT_FIND);
             return 1;
         }
     }
 
-    RegCloseKey(subkey);
+    RegCloseKey(key);
     output_message(STRING_SUCCESS);
     return 0;
 }
