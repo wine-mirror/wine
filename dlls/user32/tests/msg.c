@@ -6499,8 +6499,7 @@ static void check_update_rgn( HWND hwnd, HRGN hrgn )
     }
     GetRgnBox( update, &r1 );
     GetUpdateRect( hwnd, &r2, FALSE );
-    ok( r1.left == r2.left && r1.top == r2.top && r1.right == r2.right && r1.bottom == r2.bottom,
-        "Rectangles are different: %d,%d-%d,%d / %d,%d-%d,%d\n",
+    ok( EqualRect( &r1, &r2 ), "Rectangles are different: %d,%d-%d,%d / %d,%d-%d,%d\n",
         r1.left, r1.top, r1.right, r1.bottom, r2.left, r2.top, r2.right, r2.bottom );
 
     DeleteObject( tmp );

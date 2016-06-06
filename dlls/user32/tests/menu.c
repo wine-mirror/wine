@@ -393,9 +393,7 @@ static void test_getmenubarinfo(void)
     ok(ret, "GetMenuBarInfo failed with error %d\n", GetLastError());
     ret = GetMenuItemRect(hwnd, hmenu, 1, &rci);
     ok(ret, "GetMenuItemRect failed.\n");
-    ok(mbi.rcBar.left == rci.left && mbi.rcBar.top == rci.top &&
-            mbi.rcBar.bottom == rci.bottom && mbi.rcBar.right == rci.right,
-            "rcBar: Got %d,%d-%d,%d instead of %d,%d-%d,%d\n",
+    ok(EqualRect(&mbi.rcBar, &rci), "rcBar: Got %d,%d-%d,%d instead of %d,%d-%d,%d\n",
             mbi.rcBar.left, mbi.rcBar.top, mbi.rcBar.right, mbi.rcBar.bottom,
             rci.left, rci.top, rci.right, rci.bottom);
     ok(mbi.hMenu == hmenu, "hMenu: Got %p instead of %p\n", mbi.hMenu, hmenu);

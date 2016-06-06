@@ -2461,9 +2461,7 @@ static void test_SetWindowPos(HWND hwnd, HWND hwnd2)
     ret = SetWindowPos(hwnd_child, hwnd2 , 1, 2, 3, 4, 0);
     ok(ret, "Got %d\n", ret);
     GetWindowRect(hwnd_child, &rc2);
-    ok(rc1.left == rc2.left && rc1.top == rc2.top &&
-       rc1.right == rc2.right && rc1.bottom == rc2.bottom,
-       "(%d, %d, %d, %d) != (%d, %d, %d, %d)\n",
+    ok(EqualRect(&rc1, &rc2), "(%d, %d, %d, %d) != (%d, %d, %d, %d)\n",
        rc1.left, rc1.top, rc1.right, rc1.bottom, rc2.left, rc2.top, rc2.right, rc2.bottom);
     check_active_state(hwnd2, hwnd2, hwnd2);
 
@@ -2472,9 +2470,7 @@ static void test_SetWindowPos(HWND hwnd, HWND hwnd2)
     ret = SetWindowPos(hwnd2, hwnd_child, 1, 2, 3, 4, 0);
     ok(ret, "Got %d\n", ret);
     GetWindowRect(hwnd2, &rc2);
-    ok(rc1.left == rc2.left && rc1.top == rc2.top &&
-       rc1.right == rc2.right && rc1.bottom == rc2.bottom,
-       "(%d, %d, %d, %d) != (%d, %d, %d, %d)\n",
+    ok(EqualRect(&rc1, &rc2), "(%d, %d, %d, %d) != (%d, %d, %d, %d)\n",
        rc1.left, rc1.top, rc1.right, rc1.bottom, rc2.left, rc2.top, rc2.right, rc2.bottom);
     check_active_state(hwnd2, hwnd2, hwnd2);
 
@@ -2483,9 +2479,7 @@ static void test_SetWindowPos(HWND hwnd, HWND hwnd2)
     ret = SetWindowPos(hwnd_grandchild, hwnd_child2, 1, 2, 3, 4, 0);
     ok(ret, "Got %d\n", ret);
     GetWindowRect(hwnd_grandchild, &rc2);
-    ok(rc1.left == rc2.left && rc1.top == rc2.top &&
-       rc1.right == rc2.right && rc1.bottom == rc2.bottom,
-       "(%d, %d, %d, %d) != (%d, %d, %d, %d)\n",
+    ok(EqualRect(&rc1, &rc2), "(%d, %d, %d, %d) != (%d, %d, %d, %d)\n",
        rc1.left, rc1.top, rc1.right, rc1.bottom, rc2.left, rc2.top, rc2.right, rc2.bottom);
     check_active_state(hwnd2, hwnd2, hwnd2);
 
@@ -2520,9 +2514,7 @@ static void test_SetWindowPos(HWND hwnd, HWND hwnd2)
     ret = SetWindowPos(hwnd_child, hwnd_desktop, 0, 0, 0, 0, 0);
     ok(!ret, "Got %d\n", ret);
     GetWindowRect(hwnd_child, &rc2);
-    ok(rc1.top == rc2.top && rc1.left == rc2.left &&
-       rc1.bottom == rc2.bottom && rc1.right == rc2.right,
-       "(%d, %d, %d, %d) != (%d, %d, %d, %d)\n",
+    ok(EqualRect(&rc1, &rc2), "(%d, %d, %d, %d) != (%d, %d, %d, %d)\n",
        rc1.top, rc1.left, rc1.bottom, rc1.right, rc2.top, rc2.left, rc2.bottom, rc2.right);
     check_active_state(hwnd2, hwnd2, hwnd2);
 
