@@ -723,10 +723,7 @@ static void draw_margin_lines(HDC hdc, int x, int y, float ratio)
     page_margin.bottom = (int)((float)twips_to_pixels(page_margin.bottom, dpi.cy) * ratio);
     page_margin.right = (int)((float)twips_to_pixels(page_margin.right, dpi.cx) * ratio);
 
-    page_margin.left += x;
-    page_margin.top += y;
-    page_margin.bottom += y;
-    page_margin.right += x;
+    OffsetRect(&page_margin, x, y);
 
     hPen = CreatePen(PS_DOT, 1, RGB(0,0,0));
     oldPen = SelectObject(hdc, hPen);
