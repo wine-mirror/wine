@@ -2313,6 +2313,29 @@ static void test_GdipGetVisibleClipBounds_window(void)
         recti.X, recti.Y, recti.Width, recti.Height,
         exp.X, exp.Y, exp.Width, exp.Height);
 
+    /* window bounds with transform applied */
+    status = GdipResetClip(graphics);
+    expect(Ok, status);
+
+    status = GdipScaleWorldTransform(graphics, 0.5, 0.5, MatrixOrderPrepend);
+    expect(Ok, status);
+
+    exp.X = window.X * 2.0;
+    exp.Y = window.Y * 2.0;
+    exp.Width = window.Width * 2.0;
+    exp.Height = window.Height * 2.0;
+
+    status = GdipGetVisibleClipBounds(graphics, &rectf);
+    expect(Ok, status);
+    ok(rectf.X == exp.X &&
+        rectf.Y == exp.Y &&
+        rectf.Width == exp.Width &&
+        rectf.Height == exp.Height,
+        "Expected clip bounds (%0.f, %0.f, %0.f, %0.f) to be "
+        "twice the window size (%0.f, %0.f, %0.f, %0.f)\n",
+        rectf.X, rectf.Y, rectf.Width, rectf.Height,
+        exp.X, exp.Y, exp.Width, exp.Height);
+
     GdipDeleteGraphics(graphics);
     EndPaint(hwnd, &ps);
 }
