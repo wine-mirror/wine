@@ -874,7 +874,7 @@ static enum operations get_operation(const WCHAR *str)
 
 int wmain(int argc, WCHAR *argvW[])
 {
-    int i, op;
+    int i, op, ret;
     BOOL show_op_help = FALSE;
     WCHAR *key_name, *path, *value_name = NULL, *type = NULL, *data = NULL, separator = '\0';
     BOOL value_empty = FALSE, value_all = FALSE, recurse = FALSE, force = FALSE;
@@ -991,15 +991,10 @@ int wmain(int argc, WCHAR *argvW[])
     }
 
     if (op == REG_ADD)
-        return reg_add(root, path, value_name, value_empty, type, separator, data, force);
+        ret = reg_add(root, path, value_name, value_empty, type, separator, data, force);
     else if (op == REG_DELETE)
-        return reg_delete(root, path, key_name, value_name, value_empty, value_all, force);
+        ret = reg_delete(root, path, key_name, value_name, value_empty, value_all, force);
     else if (op == REG_QUERY)
-        return reg_query(root, path, key_name, value_name, value_empty, recurse);
-    else
-    {
-        output_message(STRING_INVALID_OPTION, argvW[1]);
-        output_message(STRING_REG_HELP);
-        return 1;
-    }
+        ret = reg_query(root, path, key_name, value_name, value_empty, recurse);
+    return ret;
 }
