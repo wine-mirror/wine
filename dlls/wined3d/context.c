@@ -378,7 +378,7 @@ static inline void context_set_fbo_key_for_surface(const struct wined3d_context 
         struct wined3d_fbo_entry_key *key, UINT idx, struct wined3d_surface *surface,
         DWORD location)
 {
-    if (!surface)
+    if (!surface || surface->container->resource.format->id == WINED3DFMT_NULL)
     {
         key->objects[idx].object = 0;
         key->objects[idx].target = 0;
