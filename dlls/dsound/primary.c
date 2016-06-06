@@ -387,8 +387,7 @@ err:
         IAudioStreamVolume_Release(volume);
     if (render)
         IAudioRenderClient_Release(render);
-    if (client)
-        IAudioClient_Release(client);
+    IAudioClient_Release(client);
     HeapFree(GetProcessHeap(), 0, wfx);
     return hres;
 }
