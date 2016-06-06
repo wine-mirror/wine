@@ -876,7 +876,8 @@ int wmain(int argc, WCHAR *argvW[])
 {
     int i, op;
     BOOL show_op_help = FALSE;
-    WCHAR *key_name, *path;
+    WCHAR *key_name, *path, *value_name = NULL, *type = NULL, *data = NULL, separator = '\0';
+    BOOL value_empty = FALSE, value_all = FALSE, recurse = FALSE, force = FALSE;
     HKEY root;
     static const WCHAR slashDW[] = {'/','d',0};
     static const WCHAR slashFW[] = {'/','f',0};
@@ -943,95 +944,58 @@ int wmain(int argc, WCHAR *argvW[])
     path = strchrW(key_name, '\\');
     if (path) path++;
 
-    if (op == REG_ADD)
+    for (i = 3; i < argc; i++)
     {
-        WCHAR *value_name = NULL, *type = NULL, separator = '\0', *data = NULL;
-        BOOL value_empty = FALSE, force = FALSE;
-
-        for (i = 1; i < argc; i++)
+        if (!lstrcmpiW(argvW[i], slashVW))
         {
-            if (!lstrcmpiW(argvW[i], slashVW))
+            if (value_name || !(value_name = argvW[++i]))
             {
-                if (value_name || !(value_name = argvW[++i]))
-                {
-                    output_message(STRING_INVALID_CMDLINE);
-                    return 1;
-                }
+                output_message(STRING_INVALID_CMDLINE);
+                return 1;
             }
-            else if (!lstrcmpiW(argvW[i], slashVEW))
-                value_empty = TRUE;
-            else if (!lstrcmpiW(argvW[i], slashTW))
-                type = argvW[++i];
-            else if (!lstrcmpiW(argvW[i], slashSW))
-            {
-                WCHAR *ptr = argvW[++i];
-
-                if (!ptr || strlenW(ptr) != 1)
-                {
-                    output_message(STRING_INVALID_CMDLINE);
-                    return 1;
-                }
-                separator = ptr[0];
-            }
-            else if (!lstrcmpiW(argvW[i], slashDW))
-            {
-                if (!(data = argvW[++i]))
-                {
-                    output_message(STRING_INVALID_CMDLINE);
-                    return 1;
-                }
-            }
-            else if (!lstrcmpiW(argvW[i], slashFW))
-                force = TRUE;
         }
-        return reg_add(root, path, value_name, value_empty, type, separator, data, force);
-    }
-    else if (op == REG_DELETE)
-    {
-        WCHAR *value_name = NULL;
-        BOOL value_empty = FALSE, value_all = FALSE, force = FALSE;
-
-        for (i = 1; i < argc; i++)
+        else if (!lstrcmpiW(argvW[i], slashVEW))
+            value_empty = TRUE;
+        else if (!lstrcmpiW(argvW[i], slashVAW))
+            value_all = TRUE;
+        else if (!lstrcmpiW(argvW[i], slashTW))
+            type = argvW[++i];
+        else if (!lstrcmpiW(argvW[i], slashDW))
         {
-            if (!lstrcmpiW(argvW[i], slashVW))
+            if (!(data = argvW[++i]))
             {
-                if (value_name || !(value_name = argvW[++i]))
-                {
-                    output_message(STRING_INVALID_CMDLINE);
-                    return 1;
-                }
+                output_message(STRING_INVALID_CMDLINE);
+                return 1;
             }
-            else if (!lstrcmpiW(argvW[i], slashVEW))
-                value_empty = TRUE;
-            else if (!lstrcmpiW(argvW[i], slashVAW))
-                value_all = TRUE;
-            else if (!lstrcmpiW(argvW[i], slashFW))
-                force = TRUE;
         }
-        return reg_delete(root, path, key_name, value_name, value_empty, value_all, force);
-    }
-    else if (op == REG_QUERY)
-    {
-        WCHAR *value_name = NULL;
-        BOOL value_empty = FALSE, recurse = FALSE;
-
-        for (i = 1; i < argc; i++)
+        else if (!lstrcmpiW(argvW[i], slashSW))
         {
-            if (!lstrcmpiW(argvW[i], slashVW))
+            WCHAR *ptr;
+
+            if (op == REG_QUERY)
             {
-                if (value_name || !(value_name = argvW[++i]))
-                {
-                    output_message(STRING_INVALID_CMDLINE);
-                    return 1;
-                }
-            }
-            else if (!lstrcmpiW(argvW[i], slashVEW))
-                value_empty = TRUE;
-            else if (!lstrcmpiW(argvW[i], slashSW))
                 recurse = TRUE;
+                continue;
+            }
+
+            ptr = argvW[++i];
+            if (!ptr || strlenW(ptr) != 1)
+            {
+                output_message(STRING_INVALID_CMDLINE);
+                return 1;
+            }
+            separator = ptr[0];
         }
-        return reg_query(root, path, key_name, value_name, value_empty, recurse);
+        else if (!lstrcmpiW(argvW[i], slashFW))
+            force = TRUE;
     }
+
+    if (op == REG_ADD)
+        return reg_add(root, path, value_name, value_empty, type, separator, data, force);
+    else if (op == REG_DELETE)
+        return reg_delete(root, path, key_name, value_name, value_empty, value_all, force);
+    else if (op == REG_QUERY)
+        return reg_query(root, path, key_name, value_name, value_empty, recurse);
     else
     {
         output_message(STRING_INVALID_OPTION, argvW[1]);
