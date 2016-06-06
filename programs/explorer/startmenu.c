@@ -131,6 +131,50 @@ static HRESULT pidl_to_shellfolder(LPITEMIDLIST pidl, LPWSTR *displayname, IShel
     return hr;
 }
 
+static BOOL shell_folder_is_empty(IShellFolder* folder)
+{
+    IEnumIDList* enumidl;
+    LPITEMIDLIST pidl=NULL;
+
+    if (IShellFolder_EnumObjects(folder, NULL, SHCONTF_NONFOLDERS, &enumidl) == S_OK)
+    {
+        if (IEnumIDList_Next(enumidl, 1, &pidl, NULL) == S_OK)
+        {
+            CoTaskMemFree(pidl);
+            IEnumIDList_Release(enumidl);
+            return FALSE;
+        }
+
+        IEnumIDList_Release(enumidl);
+    }
+
+    if (IShellFolder_EnumObjects(folder, NULL, SHCONTF_FOLDERS, &enumidl) == S_OK)
+    {
+        BOOL found = FALSE;
+        IShellFolder *child_folder;
+
+        while (!found && IEnumIDList_Next(enumidl, 1, &pidl, NULL) == S_OK)
+        {
+            if (IShellFolder_BindToObject(folder, pidl, NULL, &IID_IShellFolder, (void *)&child_folder) == S_OK)
+            {
+                if (!shell_folder_is_empty(child_folder))
+                    found = TRUE;
+
+                IShellFolder_Release(child_folder);
+            }
+
+            CoTaskMemFree(pidl);
+        }
+
+        IEnumIDList_Release(enumidl);
+
+        if (found)
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 /* add an individual file or folder to the menu, takes ownership of pidl */
 static struct menu_item* add_shell_item(struct menu_item* parent, LPITEMIDLIST pidl)
 {
@@ -159,6 +203,15 @@ static struct menu_item* add_shell_item(struct menu_item* parent, LPITEMIDLIST p
 
         if (flags & SFGAO_FOLDER)
             IShellFolder_BindToObject(parent->folder, pidl, NULL, &IID_IShellFolder, (void *)&item->folder);
+    }
+
+    if (item->folder && shell_folder_is_empty(item->folder))
+    {
+        IShellFolder_Release(item->folder);
+        HeapFree(GetProcessHeap(), 0, item->displayname);
+        HeapFree(GetProcessHeap(), 0, item);
+        CoTaskMemFree(pidl);
+        return NULL;
     }
 
     parent_menu = parent->menuhandle;
@@ -411,9 +464,13 @@ void do_startmenu(HWND hwnd)
     if (!public_startmenu.folder)
         pidl_to_shellfolder(public_startmenu.pidl, NULL, &public_startmenu.folder);
 
-    fill_menu(&user_startmenu);
+    if (!shell_folder_is_empty(user_startmenu.folder) ||
+        !shell_folder_is_empty(public_startmenu.folder))
+    {
+        fill_menu(&user_startmenu);
 
-    AppendMenuW(root_menu.menuhandle, MF_SEPARATOR, 0, NULL);
+        AppendMenuW(root_menu.menuhandle, MF_SEPARATOR, 0, NULL);
+    }
 
     if (SUCCEEDED(SHGetSpecialFolderLocation(NULL, CSIDL_CONTROLS, &pidl)))
         add_shell_item(&root_menu, pidl);
