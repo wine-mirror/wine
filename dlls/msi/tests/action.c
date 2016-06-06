@@ -234,7 +234,7 @@ static const char service_install2_dat[] =
     "LoadOrderGroup\tDependencies\tStartName\tPassword\tArguments\tComponent_\tDescription\n"
     "s72\ts255\tL255\ti4\ti4\ti4\tS255\tS255\tS255\tS255\tS255\ts72\tL255\n"
     "ServiceInstall\tServiceInstall\n"
-    "TestService\tTestService\tTestService\t2\t3\t0\t\t\tTestService\t\t\tservice_comp\t\n"
+    "TestService\tTestService\tTestService\t2\t3\t32768\t\t\tTestService\t\t\tservice_comp\t\n"
     "TestService4\tTestService4\tTestService4\t2\t3\t0\t\t\tTestService4\t\t\tservice_comp3\t\n";
 
 static const char service_control_dat[] =
@@ -5559,6 +5559,19 @@ static void test_install_services(void)
     service = OpenServiceA(manager, "TestService4", GENERIC_ALL);
     ok(service == NULL, "TestService4 installed\n");
     CloseServiceHandle(manager);
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Services\\TestService", &hKey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    if (res == ERROR_SUCCESS)
+    {
+        err_control = 0xBEEF;
+        err_controltype = REG_DWORD;
+        err_controlsize = sizeof(err_control);
+        res = RegQueryValueExA(hKey, "ErrorControl", NULL, &err_controltype, (LPBYTE)&err_control, &err_controlsize);
+        ok(err_control == 0, "TestService.ErrorControl wrong, expected 0, got %u\n", err_control);
+        RegCloseKey(hKey);
+    }
 
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
