@@ -665,6 +665,18 @@ enum wined3d_resource_type
     WINED3D_RTYPE_TEXTURE_3D                = 3,
 };
 
+enum wined3d_view_type
+{
+    WINED3D_VTYPE_BUFFER                    = 1,
+    WINED3D_VTYPE_TEXTURE_1D                = 2,
+    WINED3D_VTYPE_TEXTURE_1D_ARRAY          = 3,
+    WINED3D_VTYPE_TEXTURE_2D                = 4,
+    WINED3D_VTYPE_TEXTURE_2D_ARRAY          = 5,
+    WINED3D_VTYPE_TEXTURE_3D                = 6,
+    WINED3D_VTYPE_TEXTURE_CUBE              = 7,
+    WINED3D_VTYPE_TEXTURE_CUBE_ARRAY        = 8,
+};
+
 enum wined3d_pool
 {
     WINED3D_POOL_DEFAULT                    = 0,
@@ -1942,6 +1954,28 @@ struct wined3d_shader_desc
     unsigned int max_version;
 };
 
+struct wined3d_shader_resource_view_desc
+{
+    enum wined3d_format_id format_id;
+    enum wined3d_view_type view_type;
+    union
+    {
+        struct
+        {
+            unsigned int start_idx;
+            unsigned int count;
+            unsigned int flags;
+        } buffer;
+        struct
+        {
+            unsigned int level_idx;
+            unsigned int level_count;
+            unsigned int layer_idx;
+            unsigned int layer_count;
+        } texture;
+    } u;
+};
+
 struct wined3d_output_desc
 {
     WCHAR device_name[CCHDEVICENAME];
@@ -2417,8 +2451,9 @@ ULONG __cdecl wined3d_shader_incref(struct wined3d_shader *shader);
 HRESULT __cdecl wined3d_shader_set_local_constants_float(struct wined3d_shader *shader,
         UINT start_idx, const float *src_data, UINT vector4f_count);
 
-HRESULT __cdecl wined3d_shader_resource_view_create(struct wined3d_resource *resource, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_shader_resource_view **view);
+HRESULT __cdecl wined3d_shader_resource_view_create(const struct wined3d_shader_resource_view_desc *desc,
+        struct wined3d_resource *resource, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_shader_resource_view **view);
 ULONG __cdecl wined3d_shader_resource_view_decref(struct wined3d_shader_resource_view *view);
 void * __cdecl wined3d_shader_resource_view_get_parent(const struct wined3d_shader_resource_view *view);
 ULONG __cdecl wined3d_shader_resource_view_incref(struct wined3d_shader_resource_view *view);

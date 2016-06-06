@@ -202,12 +202,14 @@ void * CDECL wined3d_shader_resource_view_get_parent(const struct wined3d_shader
     return view->parent;
 }
 
-HRESULT CDECL wined3d_shader_resource_view_create(struct wined3d_resource *resource, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_shader_resource_view **view)
+HRESULT CDECL wined3d_shader_resource_view_create(const struct wined3d_shader_resource_view_desc *desc,
+        struct wined3d_resource *resource, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_shader_resource_view **view)
 {
     struct wined3d_shader_resource_view *object;
 
-    TRACE("resource %p, parent %p, parent_ops %p, view %p.\n", resource, parent, parent_ops, view);
+    TRACE("desc %p, resource %p, parent %p, parent_ops %p, view %p.\n",
+            desc, resource, parent, parent_ops, view);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
