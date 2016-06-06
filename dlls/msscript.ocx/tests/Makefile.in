@@ -1,0 +1,7 @@
+TESTDLL   = msscript.ocx
+IMPORTS   = ole32
+
+C_SRCS = \
+	msscript.c
+
+IDL_SRCS = msscript.idl
