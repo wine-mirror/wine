@@ -888,8 +888,10 @@ static void test_nullframerect(void) {
     expect(UnitPixel, unit);
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
-    expectf(1.0, bounds.Width);
-    expectf(1.0, bounds.Height);
+    ok(bounds.Width == 1.0 || broken(bounds.Width == 0.0) /* xp sp1 */,
+        "expected 1.0, got %f\n", bounds.Width);
+    ok(bounds.Height == 1.0 || broken(bounds.Height == 0.0) /* xp sp1 */,
+        "expected 1.0, got %f\n", bounds.Height);
 
     stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
     expect(Ok, stat);
@@ -908,8 +910,10 @@ static void test_nullframerect(void) {
     expect(UnitPixel, unit);
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
-    expectf(1.0, bounds.Width);
-    expectf(1.0, bounds.Height);
+    ok(bounds.Width == 1.0 || broken(bounds.Width == 0.0) /* xp sp1 */,
+        "expected 1.0, got %f\n", bounds.Width);
+    ok(bounds.Height == 1.0 || broken(bounds.Height == 0.0) /* xp sp1 */,
+        "expected 1.0, got %f\n", bounds.Height);
 
     stat = GdipDeleteGraphics(graphics);
     expect(Ok, stat);
@@ -1279,8 +1283,10 @@ static void test_frameunit(void)
     expect(UnitPixel, unit);
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
-    expectf(1.0, bounds.Width);
-    expectf(1.0, bounds.Height);
+    ok(bounds.Width == 1.0 || broken(bounds.Width == 0.0) /* xp sp1 */,
+        "expected 1.0, got %f\n", bounds.Width);
+    ok(bounds.Height == 1.0 || broken(bounds.Height == 0.0) /* xp sp1 */,
+        "expected 1.0, got %f\n", bounds.Height);
 
     stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
     expect(Ok, stat);
@@ -1290,8 +1296,10 @@ static void test_frameunit(void)
     expect(UnitPixel, unit);
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
-    expectf(1.0, bounds.Width);
-    expectf(1.0, bounds.Height);
+    ok(bounds.Width == 1.0 || broken(bounds.Width == 0.0) /* xp sp1 */,
+        "expected 1.0, got %f\n", bounds.Width);
+    ok(bounds.Height == 1.0 || broken(bounds.Height == 0.0) /* xp sp1 */,
+        "expected 1.0, got %f\n", bounds.Height);
 
     stat = GdipDeleteGraphics(graphics);
     expect(Ok, stat);
