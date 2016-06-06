@@ -35,8 +35,8 @@ static HWND hMainWnd;
 static int system_font_height;
 
 
-#define check_rect(name, val, exp) ok(val.top == exp.top && val.bottom == exp.bottom && \
-    val.left == exp.left && val.right == exp.right, "invalid rect (" name ") (%d,%d) (%d,%d) - expected (%d,%d) (%d,%d)\n", \
+#define check_rect(name, val, exp) ok(EqualRect(&val, &exp), \
+    "invalid rect (" name ") (%d,%d) (%d,%d) - expected (%d,%d) (%d,%d)\n", \
     val.left, val.top, val.right, val.bottom, exp.left, exp.top, exp.right, exp.bottom);
 
 #define check_rect_no_top(name, val, exp) { \
