@@ -360,18 +360,12 @@ static BOOL SCROLL_PtInRectEx( LPRECT lpRect, POINT pt, BOOL vertical )
     if (vertical)
     {
         scrollbarWidth = lpRect->right - lpRect->left;
-        rect.left -= scrollbarWidth*8;
-        rect.right += scrollbarWidth*8;
-        rect.top -= scrollbarWidth*2;
-        rect.bottom += scrollbarWidth*2;
+        InflateRect(&rect, scrollbarWidth * 8, scrollbarWidth * 2);
     }
     else
     {
         scrollbarWidth = lpRect->bottom - lpRect->top;
-        rect.left -= scrollbarWidth*2;
-        rect.right += scrollbarWidth*2;
-        rect.top -= scrollbarWidth*8;
-        rect.bottom += scrollbarWidth*8;
+        InflateRect(&rect, scrollbarWidth * 2, scrollbarWidth * 8);
     }
     return PtInRect( &rect, pt );
 }
