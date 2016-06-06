@@ -350,12 +350,6 @@ static int reg_add(HKEY root, WCHAR *path, WCHAR *value_name, BOOL value_empty,
 {
     HKEY key;
 
-    if (value_name && value_empty)
-    {
-        output_message(STRING_INVALID_CMDLINE);
-        return 1;
-    }
-
     if (RegCreateKeyW(root, path, &key) != ERROR_SUCCESS)
     {
         output_message(STRING_INVALID_KEY);
@@ -415,12 +409,6 @@ static int reg_delete(HKEY root, WCHAR *path, WCHAR *key_name, WCHAR *value_name
                       BOOL value_empty, BOOL value_all, BOOL force)
 {
     HKEY key;
-
-    if ((value_name && value_empty) || (value_name && value_all) || (value_empty && value_all))
-    {
-        output_message(STRING_INVALID_CMDLINE);
-        return 1;
-    }
 
     if (!force)
     {
@@ -808,12 +796,6 @@ static int reg_query(HKEY root, WCHAR *path, WCHAR *key_name, WCHAR *value_name,
     WCHAR newlineW[] = {'\n',0};
     int ret;
 
-    if (value_name && value_empty)
-    {
-        output_message(STRING_INVALID_CMDLINE);
-        return 1;
-    }
-
     if (RegOpenKeyExW(root, path, 0, KEY_READ, &key) != ERROR_SUCCESS)
     {
         output_message(STRING_CANNOT_FIND);
@@ -988,6 +970,12 @@ int wmain(int argc, WCHAR *argvW[])
         }
         else if (!lstrcmpiW(argvW[i], slashFW))
             force = TRUE;
+    }
+
+    if ((value_name && value_empty) || (value_name && value_all) || (value_empty && value_all))
+    {
+        output_message(STRING_INVALID_CMDLINE);
+        return 1;
     }
 
     if (op == REG_ADD)
