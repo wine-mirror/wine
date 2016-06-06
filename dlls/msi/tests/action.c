@@ -5427,6 +5427,30 @@ static void test_start_stop_services(void)
     DeleteFileA(msifile);
 }
 
+static void delete_TestService(void)
+{
+    BOOL ret;
+    SC_HANDLE manager, service;
+
+    manager = OpenSCManagerA(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    ok(manager != NULL, "can't open service manager\n");
+    if (!manager)
+        return;
+
+    service = OpenServiceA(manager, "TestService", GENERIC_ALL);
+    ok(service != NULL, "TestService doesn't exist\n");
+
+    if (service)
+    {
+        ret = DeleteService( service );
+        ok( ret, "failed to delete service %u\n", GetLastError() );
+
+        CloseServiceHandle(service);
+    }
+    CloseServiceHandle(manager);
+
+}
+
 static void test_delete_services(void)
 {
     UINT r;
@@ -5492,6 +5516,7 @@ static void test_delete_services(void)
     ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
 error:
+    delete_TestService();
     delete_test_files();
     DeleteFileA(msifile);
 }
@@ -5500,7 +5525,9 @@ static void test_install_services(void)
 {
     UINT r;
     SC_HANDLE manager, service;
-    BOOL ret;
+    LONG res;
+    HKEY hKey;
+    DWORD err_control, err_controlsize, err_controltype;
 
     if (is_process_limited())
     {
@@ -5550,20 +5577,8 @@ static void test_install_services(void)
     ok(delete_pf("msitest\\service2.exe", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
-    manager = OpenSCManagerA(NULL, NULL, SC_MANAGER_ALL_ACCESS);
-    ok(manager != NULL, "can't open service manager\n");
-    if (!manager) goto error;
-
-    service = OpenServiceA(manager, "TestService", GENERIC_ALL);
-    ok(service != NULL, "TestService doesn't exist\n");
-
-    ret = DeleteService( service );
-    ok( ret, "failed to delete service %u\n", GetLastError() );
-
-    CloseServiceHandle(service);
-    CloseServiceHandle(manager);
-
 error:
+    delete_TestService();
     delete_test_files();
     DeleteFileA(msifile);
 }
