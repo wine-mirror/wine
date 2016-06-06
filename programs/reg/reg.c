@@ -345,14 +345,10 @@ static BOOL sane_path(const WCHAR *key)
     return TRUE;
 }
 
-static int reg_add(HKEY root, WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
+static int reg_add(HKEY root, WCHAR *path, WCHAR *value_name, BOOL value_empty,
                    WCHAR *type, WCHAR separator, WCHAR *data, BOOL force)
 {
-    LPWSTR p;
     HKEY key;
-
-    p = strchrW(key_name,'\\');
-    if (p) p++;
 
     if (value_name && value_empty)
     {
@@ -360,7 +356,7 @@ static int reg_add(HKEY root, WCHAR *key_name, WCHAR *value_name, BOOL value_emp
         return 1;
     }
 
-    if (RegCreateKeyW(root, p, &key) != ERROR_SUCCESS)
+    if (RegCreateKeyW(root, path, &key) != ERROR_SUCCESS)
     {
         output_message(STRING_INVALID_KEY);
         return 1;
@@ -415,14 +411,10 @@ static int reg_add(HKEY root, WCHAR *key_name, WCHAR *value_name, BOOL value_emp
     return 0;
 }
 
-static int reg_delete(HKEY root, WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
-                      BOOL value_all, BOOL force)
+static int reg_delete(HKEY root, WCHAR *path, WCHAR *key_name, WCHAR *value_name,
+                      BOOL value_empty, BOOL value_all, BOOL force)
 {
-    LPWSTR p;
     HKEY key;
-
-    p = strchrW(key_name,'\\');
-    if (p) p++;
 
     if ((value_name && value_empty) || (value_name && value_all) || (value_empty && value_all))
     {
@@ -451,7 +443,7 @@ static int reg_delete(HKEY root, WCHAR *key_name, WCHAR *value_name, BOOL value_
     /* Delete subtree only if no /v* option is given */
     if (!value_name && !value_empty && !value_all)
     {
-        if (RegDeleteTreeW(root,p)!=ERROR_SUCCESS)
+        if (RegDeleteTreeW(root, path) != ERROR_SUCCESS)
         {
             output_message(STRING_CANNOT_FIND);
             return 1;
@@ -460,7 +452,7 @@ static int reg_delete(HKEY root, WCHAR *key_name, WCHAR *value_name, BOOL value_
         return 0;
     }
 
-    if (RegOpenKeyW(root, p, &key) != ERROR_SUCCESS)
+    if (RegOpenKeyW(root, path, &key) != ERROR_SUCCESS)
     {
         output_message(STRING_CANNOT_FIND);
         return 1;
@@ -809,9 +801,9 @@ static int query_all(HKEY key, WCHAR *path, BOOL recurse)
     return 0;
 }
 
-static int reg_query(HKEY root, WCHAR *key_name, WCHAR *value_name, BOOL value_empty, BOOL recurse)
+static int reg_query(HKEY root, WCHAR *path, WCHAR *key_name, WCHAR *value_name,
+                     BOOL value_empty, BOOL recurse)
 {
-    WCHAR *p;
     HKEY key;
     WCHAR newlineW[] = {'\n',0};
     int ret;
@@ -822,10 +814,7 @@ static int reg_query(HKEY root, WCHAR *key_name, WCHAR *value_name, BOOL value_e
         return 1;
     }
 
-    p = strchrW(key_name, '\\');
-    if (p) p++;
-
-    if (RegOpenKeyExW(root, p, 0, KEY_READ, &key) != ERROR_SUCCESS)
+    if (RegOpenKeyExW(root, path, 0, KEY_READ, &key) != ERROR_SUCCESS)
     {
         output_message(STRING_CANNOT_FIND);
         return 1;
@@ -887,7 +876,7 @@ int wmain(int argc, WCHAR *argvW[])
 {
     int i, op;
     BOOL show_op_help = FALSE;
-    WCHAR *key_name;
+    WCHAR *key_name, *path;
     HKEY root;
     static const WCHAR slashDW[] = {'/','d',0};
     static const WCHAR slashFW[] = {'/','f',0};
@@ -951,6 +940,9 @@ int wmain(int argc, WCHAR *argvW[])
         return 1;
     }
 
+    path = strchrW(key_name, '\\');
+    if (path) path++;
+
     if (op == REG_ADD)
     {
         WCHAR *value_name = NULL, *type = NULL, separator = '\0', *data = NULL;
@@ -992,7 +984,7 @@ int wmain(int argc, WCHAR *argvW[])
             else if (!lstrcmpiW(argvW[i], slashFW))
                 force = TRUE;
         }
-        return reg_add(root, key_name, value_name, value_empty, type, separator, data, force);
+        return reg_add(root, path, value_name, value_empty, type, separator, data, force);
     }
     else if (op == REG_DELETE)
     {
@@ -1016,7 +1008,7 @@ int wmain(int argc, WCHAR *argvW[])
             else if (!lstrcmpiW(argvW[i], slashFW))
                 force = TRUE;
         }
-        return reg_delete(root, key_name, value_name, value_empty, value_all, force);
+        return reg_delete(root, path, key_name, value_name, value_empty, value_all, force);
     }
     else if (op == REG_QUERY)
     {
@@ -1038,7 +1030,7 @@ int wmain(int argc, WCHAR *argvW[])
             else if (!lstrcmpiW(argvW[i], slashSW))
                 recurse = TRUE;
         }
-        return reg_query(root, key_name, value_name, value_empty, recurse);
+        return reg_query(root, path, key_name, value_name, value_empty, recurse);
     }
     else
     {
