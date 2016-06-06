@@ -467,51 +467,80 @@ static HRESULT set_srdesc_from_resource(D3D11_SHADER_RESOURCE_VIEW_DESC *desc, I
 
 static void normalize_srv_desc(D3D11_SHADER_RESOURCE_VIEW_DESC *desc, ID3D11Resource *resource)
 {
+    unsigned int miplevel_count, layer_count;
     D3D11_RESOURCE_DIMENSION dimension;
-
-    if (desc->Format != DXGI_FORMAT_UNKNOWN)
-        return;
+    DXGI_FORMAT format;
 
     ID3D11Resource_GetType(resource, &dimension);
     switch (dimension)
     {
-        case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
-        {
-            D3D11_TEXTURE1D_DESC texture_desc;
-            ID3D11Texture1D *texture;
-
-            if (FAILED(ID3D11Resource_QueryInterface(resource, &IID_ID3D11Texture1D, (void **)&texture)))
-            {
-                ERR("Resource of type TEXTURE1D doesn't implement ID3D11Texture1D.\n");
-                break;
-            }
-
-            ID3D11Texture1D_GetDesc(texture, &texture_desc);
-            ID3D11Texture1D_Release(texture);
-
-            if (desc->Format == DXGI_FORMAT_UNKNOWN)
-                desc->Format = texture_desc.Format;
-            break;
-        }
-
         case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
         {
-            D3D11_TEXTURE2D_DESC texture_desc;
-            ID3D11Texture2D *texture;
+            const struct d3d_texture2d *texture;
 
-            if (FAILED(ID3D11Resource_QueryInterface(resource, &IID_ID3D11Texture2D, (void **)&texture)))
+            if (!(texture = unsafe_impl_from_ID3D11Texture2D((ID3D11Texture2D *)resource)))
             {
-                ERR("Resource of type TEXTURE2D doesn't implement ID3D11Texture2D.\n");
-                break;
+                ERR("Cannot get implementation from ID3D11Texture2D.\n");
+                return;
             }
 
-            ID3D11Texture2D_GetDesc(texture, &texture_desc);
-            ID3D11Texture2D_Release(texture);
-
-            if (desc->Format == DXGI_FORMAT_UNKNOWN)
-                desc->Format = texture_desc.Format;
+            format = texture->desc.Format;
+            miplevel_count = texture->desc.MipLevels;
+            layer_count = texture->desc.ArraySize;
             break;
         }
+
+        case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
+        {
+            const struct d3d_texture3d *texture;
+
+            if (!(texture = unsafe_impl_from_ID3D11Texture3D((ID3D11Texture3D *)resource)))
+            {
+                ERR("Cannot get implementation from ID3D11Texture3D.\n");
+                return;
+            }
+
+            format = texture->desc.Format;
+            miplevel_count = texture->desc.MipLevels;
+            layer_count = 1;
+            break;
+        }
+
+        default:
+            return;
+    }
+
+    if (desc->Format == DXGI_FORMAT_UNKNOWN)
+        desc->Format = format;
+
+    switch (desc->ViewDimension)
+    {
+        case D3D11_SRV_DIMENSION_TEXTURE1D:
+            if (desc->u.Texture1D.MipLevels == -1 && desc->u.Texture1D.MostDetailedMip < miplevel_count)
+                desc->u.Texture1D.MipLevels = miplevel_count - desc->u.Texture1D.MostDetailedMip;
+            break;
+
+        case D3D11_SRV_DIMENSION_TEXTURE2D:
+            if (desc->u.Texture2D.MipLevels == -1 && desc->u.Texture2D.MostDetailedMip < miplevel_count)
+                desc->u.Texture2D.MipLevels = miplevel_count - desc->u.Texture2D.MostDetailedMip;
+            break;
+
+        case D3D11_SRV_DIMENSION_TEXTURE2DARRAY:
+            if (desc->u.Texture2DArray.MipLevels == -1 && desc->u.Texture2DArray.MostDetailedMip < miplevel_count)
+                desc->u.Texture2DArray.MipLevels = miplevel_count - desc->u.Texture2DArray.MostDetailedMip;
+            if (desc->u.Texture2DArray.ArraySize == -1 && desc->u.Texture2DArray.FirstArraySlice < layer_count)
+                desc->u.Texture2DArray.ArraySize = layer_count - desc->u.Texture2DArray.FirstArraySlice;
+            break;
+
+        case D3D11_SRV_DIMENSION_TEXTURE3D:
+            if (desc->u.Texture3D.MipLevels == -1 && desc->u.Texture3D.MostDetailedMip < miplevel_count)
+                desc->u.Texture3D.MipLevels = miplevel_count - desc->u.Texture3D.MostDetailedMip;
+            break;
+
+        case D3D11_SRV_DIMENSION_TEXTURECUBE:
+            if (desc->u.TextureCube.MipLevels == -1 && desc->u.TextureCube.MostDetailedMip < miplevel_count)
+                desc->u.TextureCube.MipLevels = miplevel_count - desc->u.TextureCube.MostDetailedMip;
+            break;
 
         default:
             break;

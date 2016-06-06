@@ -1774,7 +1774,7 @@ static void test_create_shader_resource_view(void)
             "Got unexpected view dimension %#x.\n", srv_desc.ViewDimension);
     ok(U(srv_desc).Texture2D.MostDetailedMip == 0, "Got unexpected MostDetailedMip %u.\n",
             U(srv_desc).Texture2D.MostDetailedMip);
-    todo_wine ok(U(srv_desc).Texture2D.MipLevels == 10, "Got unexpected MipLevels %u.\n",
+    ok(U(srv_desc).Texture2D.MipLevels == 10, "Got unexpected MipLevels %u.\n",
             U(srv_desc).Texture2D.MipLevels);
 
     ID3D10ShaderResourceView_Release(srview);
