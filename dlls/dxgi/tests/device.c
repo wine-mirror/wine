@@ -649,11 +649,9 @@ static void test_get_containing_output(void)
             wine_dbgstr_w(output_desc.DeviceName), wine_dbgstr_w(output_desc2.DeviceName));
     ok(!memcmp(&output_desc.DesktopCoordinates, &output_desc2.DesktopCoordinates,
             sizeof(output_desc.DesktopCoordinates)),
-            "Got unexpected desktop coordinates {%d, %d, %d, %d}, expected {%d, %d, %d, %d}.\n",
-            output_desc.DesktopCoordinates.left, output_desc.DesktopCoordinates.top,
-            output_desc.DesktopCoordinates.right, output_desc.DesktopCoordinates.bottom,
-            output_desc2.DesktopCoordinates.left, output_desc2.DesktopCoordinates.top,
-            output_desc2.DesktopCoordinates.right, output_desc2.DesktopCoordinates.bottom);
+            "Got unexpected desktop coordinates %s, expected %s.\n",
+            wine_dbgstr_rect(&output_desc.DesktopCoordinates),
+            wine_dbgstr_rect(&output_desc2.DesktopCoordinates));
 
     refcount = IDXGIOutput_Release(output2);
     ok(!refcount, "IDXGIOuput has %u references left.\n", refcount);
@@ -932,9 +930,8 @@ static void test_swapchain_resize(void)
 
     ret = GetClientRect(window, &r);
     ok(ret, "Failed to get client rect.\n");
-    ok(EqualRect(&r, &client_rect), "Got unexpected rect {%d, %d, %d, %d}, expected {%d, %d, %d, %d}.\n",
-            r.left, r.top, r.right, r.bottom,
-            client_rect.left, client_rect.top, client_rect.right, client_rect.bottom);
+    ok(EqualRect(&r, &client_rect), "Got unexpected rect %s, expected %s.\n",
+            wine_dbgstr_rect(&r), wine_dbgstr_rect(&client_rect));
 
     hr = IDXGISwapChain_GetDesc(swapchain, &swapchain_desc);
     ok(SUCCEEDED(hr), "Failed to get swapchain desc, hr %#x.\n", hr);
@@ -997,9 +994,8 @@ static void test_swapchain_resize(void)
 
     ret = GetClientRect(window, &r);
     ok(ret, "Failed to get client rect.\n");
-    ok(EqualRect(&r, &client_rect), "Got unexpected rect {%d, %d, %d, %d}, expected {%d, %d, %d, %d}.\n",
-            r.left, r.top, r.right, r.bottom,
-            client_rect.left, client_rect.top, client_rect.right, client_rect.bottom);
+    ok(EqualRect(&r, &client_rect), "Got unexpected rect %s, expected %s.\n",
+            wine_dbgstr_rect(&r), wine_dbgstr_rect(&client_rect));
 
     hr = IDXGISwapChain_GetDesc(swapchain, &swapchain_desc);
     ok(SUCCEEDED(hr), "Failed to get swapchain desc, hr %#x.\n", hr);
@@ -1068,9 +1064,8 @@ static void test_swapchain_resize(void)
 
     ret = GetClientRect(window, &r);
     ok(ret, "Failed to get client rect.\n");
-    ok(EqualRect(&r, &client_rect), "Got unexpected rect {%d, %d, %d, %d}, expected {%d, %d, %d, %d}.\n",
-            r.left, r.top, r.right, r.bottom,
-            client_rect.left, client_rect.top, client_rect.right, client_rect.bottom);
+    ok(EqualRect(&r, &client_rect), "Got unexpected rect %s, expected %s.\n",
+            wine_dbgstr_rect(&r), wine_dbgstr_rect(&client_rect));
 
     hr = IDXGISwapChain_GetDesc(swapchain, &swapchain_desc);
     ok(SUCCEEDED(hr), "Failed to get swapchain desc, hr %#x.\n", hr);
@@ -1493,11 +1488,9 @@ static void test_output_desc(void)
             ok(!lstrcmpW(desc.DeviceName, monitor_info.szDevice), "Got unexpected device name %s, expected %s.\n",
                     wine_dbgstr_w(desc.DeviceName), wine_dbgstr_w(monitor_info.szDevice));
             ok(!memcmp(&desc.DesktopCoordinates, &monitor_info.rcMonitor, sizeof(desc.DesktopCoordinates)),
-                    "Got unexpected desktop coordinates {%d, %d, %d, %d}, expected {%d, %d, %d, %d}.\n",
-                    desc.DesktopCoordinates.left, desc.DesktopCoordinates.top,
-                    desc.DesktopCoordinates.right, desc.DesktopCoordinates.bottom,
-                    monitor_info.rcMonitor.left, monitor_info.rcMonitor.top,
-                    monitor_info.rcMonitor.right, monitor_info.rcMonitor.bottom);
+                    "Got unexpected desktop coordinates %s, expected %s.\n",
+                    wine_dbgstr_rect(&desc.DesktopCoordinates),
+                    wine_dbgstr_rect(&monitor_info.rcMonitor));
 
             IDXGIOutput_Release(output);
             refcount = get_refcount((IUnknown *)adapter);
