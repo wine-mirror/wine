@@ -1962,8 +1962,9 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
         props.cbAlign = 1;
         props.cbPrefix = 0;
 
-        if (SUCCEEDED(hr) && IPin_QueryAccept(iface, pmt) != S_OK)
+        if (IPin_QueryAccept(iface, pmt) != S_OK)
             hr = VFW_E_TYPE_NOT_ACCEPTED;
+
         if (SUCCEEDED(hr)) {
             IPin_QueryDirection(pReceivePin, &pindirReceive);
             if (pindirReceive != PINDIR_OUTPUT) {
