@@ -3537,6 +3537,8 @@ struct wined3d_format
     struct color_fixup_desc color_fixup;
     void (*convert)(const BYTE *src, BYTE *dst, UINT src_row_pitch, UINT src_slice_pitch,
             UINT dst_row_pitch, UINT dst_slice_pitch, UINT width, UINT height, UINT depth);
+
+    GLenum gl_view_class;
 };
 
 const struct wined3d_format *wined3d_get_format(const struct wined3d_gl_info *gl_info,
