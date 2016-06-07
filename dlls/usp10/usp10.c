@@ -330,7 +330,7 @@ const scriptData scriptInformation[] = {
      {LANG_ARABIC, 0, 1, 0, 0, ARABIC_CHARSET, 0, 0, 0, 0, 0, 0, 1, 1, 0},
      MS_MAKE_TAG('a','r','a','b'),
      {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0}},
-    {{Script_Arabic_Numeric, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
+    {{Script_Arabic_Numeric, 0, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
      {LANG_ARABIC, 1, 1, 0, 0, ARABIC_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
      MS_MAKE_TAG('a','r','a','b'),
      {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0}},
