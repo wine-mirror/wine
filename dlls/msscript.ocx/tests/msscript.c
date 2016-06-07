@@ -25,8 +25,77 @@
 #include "msscript.h"
 #include "wine/test.h"
 
+static HRESULT WINAPI OleClientSite_QueryInterface(IOleClientSite *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IOleClientSite) || IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IOleClientSite_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI OleClientSite_AddRef(IOleClientSite *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI OleClientSite_Release(IOleClientSite *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI OleClientSite_SaveObject(IOleClientSite *iface)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleClientSite_GetMoniker(IOleClientSite *iface, DWORD assign,
+    DWORD which, IMoniker **moniker)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleClientSite_GetContainer(IOleClientSite *iface, IOleContainer **container)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleClientSite_ShowObject(IOleClientSite *iface)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleClientSite_OnShowWindow(IOleClientSite *iface, BOOL show)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleClientSite_RequestNewObjectLayout(IOleClientSite *iface)
+{
+    return E_NOTIMPL;
+}
+
+static const IOleClientSiteVtbl OleClientSiteVtbl = {
+    OleClientSite_QueryInterface,
+    OleClientSite_AddRef,
+    OleClientSite_Release,
+    OleClientSite_SaveObject,
+    OleClientSite_GetMoniker,
+    OleClientSite_GetContainer,
+    OleClientSite_ShowObject,
+    OleClientSite_OnShowWindow,
+    OleClientSite_RequestNewObjectLayout
+};
+
+static IOleClientSite testclientsite = { &OleClientSiteVtbl };
+
 static void test_oleobject(void)
 {
+    IOleClientSite *site;
     IOleObject *obj;
     DWORD status;
     HRESULT hr;
@@ -42,6 +111,24 @@ static void test_oleobject(void)
     hr = IOleObject_GetMiscStatus(obj, DVASPECT_CONTENT, &status);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(status != 0, "got 0x%08x\n", status);
+
+    hr = IOleObject_SetClientSite(obj, &testclientsite);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    if (0) /* crashes on w2k3 */
+        hr = IOleObject_GetClientSite(obj, NULL);
+
+    hr = IOleObject_GetClientSite(obj, &site);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(site == &testclientsite, "got %p, %p\n", site, &testclientsite);
+    IOleClientSite_Release(site);
+
+    hr = IOleObject_SetClientSite(obj, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IOleObject_GetClientSite(obj, &site);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(site == NULL, "got %p\n", site);
 
     IOleObject_Release(obj);
 }

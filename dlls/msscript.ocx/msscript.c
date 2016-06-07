@@ -32,6 +32,7 @@ struct ScriptControl {
     IScriptControl IScriptControl_iface;
     IOleObject IOleObject_iface;
     LONG ref;
+    IOleClientSite *site;
 };
 
 static HINSTANCE msscript_instance;
@@ -168,8 +169,11 @@ static ULONG WINAPI ScriptControl_Release(IScriptControl *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        if (This->site)
+            IOleClientSite_Release(This->site);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -445,18 +449,30 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
 {
     ScriptControl *This = impl_from_IOleObject(iface);
 
-    FIXME("(%p)->(%p)\n", This, site);
+    TRACE("(%p)->(%p)\n", This, site);
 
-    return E_NOTIMPL;
+    if (This->site)
+        IOleClientSite_Release(This->site);
+
+    if ((This->site = site))
+        IOleClientSite_AddRef(site);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_GetClientSite(IOleObject *iface, IOleClientSite **site)
 {
     ScriptControl *This = impl_from_IOleObject(iface);
 
-    FIXME("(%p)->(%p)\n", This, site);
+    TRACE("(%p)->(%p)\n", This, site);
 
-    return E_NOTIMPL;
+    if (!site)
+        return E_POINTER;
+
+    if ((*site = This->site))
+        IOleClientSite_AddRef(*site);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_SetHostNames(IOleObject *iface, LPCOLESTR containerapp, LPCOLESTR containerobj)
@@ -673,6 +689,7 @@ static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknow
     script_control->IScriptControl_iface.lpVtbl = &ScriptControlVtbl;
     script_control->IOleObject_iface.lpVtbl = &OleObjectVtbl;
     script_control->ref = 1;
+    script_control->site = NULL;
 
     hres = IScriptControl_QueryInterface(&script_control->IScriptControl_iface, riid, ppv);
     IScriptControl_Release(&script_control->IScriptControl_iface);
