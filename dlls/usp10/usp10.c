@@ -891,7 +891,7 @@ static inline DWORD decode_surrogate_pair(LPCWSTR str, INT index, INT end)
 static WORD get_char_script( LPCWSTR str, INT index, INT end, INT *consumed)
 {
     static const WCHAR latin_punc[] = {'#','$','&','\'',',',';','<','>','?','@','\\','^','_','`','{','|','}','~', 0x00a0, 0};
-    WORD type = 0;
+    WORD type = 0, type2 = 0;
     DWORD ch;
     int i;
 
@@ -921,6 +921,7 @@ static WORD get_char_script( LPCWSTR str, INT index, INT end, INT *consumed)
     }
 
     GetStringTypeW(CT_CTYPE1, &str[index], 1, &type);
+    GetStringTypeW(CT_CTYPE2, &str[index], 1, &type2);
 
     if (type == 0)
         return SCRIPT_UNDEFINED;
@@ -942,7 +943,7 @@ static WORD get_char_script( LPCWSTR str, INT index, INT end, INT *consumed)
 
         if (ch >= scriptRanges[i].rangeFirst && ch <= scriptRanges[i].rangeLast)
         {
-            if (scriptRanges[i].numericScript && type & C1_DIGIT)
+            if (scriptRanges[i].numericScript && (type & C1_DIGIT || type2 == C2_ARABICNUMBER))
                 return scriptRanges[i].numericScript;
             if (scriptRanges[i].punctScript && type & C1_PUNCT)
                 return scriptRanges[i].punctScript;
