@@ -3292,7 +3292,6 @@ static void context_bind_shader_resources(struct wined3d_context *context, const
     struct wined3d_shader_sampler_map_entry *entry;
     struct wined3d_shader_resource_view *view;
     struct wined3d_sampler *sampler;
-    struct wined3d_texture *texture;
     struct wined3d_shader *shader;
     unsigned int i, j, count;
     GLuint sampler_name;
@@ -3332,12 +3331,6 @@ static void context_bind_shader_resources(struct wined3d_context *context, const
                 continue;
             }
 
-            if (view->resource->type == WINED3D_RTYPE_BUFFER)
-            {
-                FIXME("Buffer shader resources not supported.\n");
-                continue;
-            }
-
             if (entry->sampler_idx == WINED3D_SAMPLER_DEFAULT)
                 sampler_name = device->default_sampler;
             else if ((sampler = state->sampler[shader_types[i].type][entry->sampler_idx]))
@@ -3345,12 +3338,10 @@ static void context_bind_shader_resources(struct wined3d_context *context, const
             else
                 sampler_name = device->null_sampler;
 
-            texture = texture_from_resource(view->resource);
             context_active_texture(context, gl_info, shader_types[i].base_idx + entry->bind_idx);
-            wined3d_texture_bind(texture, context, FALSE);
-
             GL_EXTCALL(glBindSampler(shader_types[i].base_idx + entry->bind_idx, sampler_name));
             checkGLcall("glBindSampler");
+            wined3d_shader_resource_view_bind(view, context);
         }
     }
 }

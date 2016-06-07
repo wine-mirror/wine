@@ -185,6 +185,17 @@ ULONG CDECL wined3d_shader_resource_view_decref(struct wined3d_shader_resource_v
 
     if (!refcount)
     {
+        if (view->object)
+        {
+            const struct wined3d_gl_info *gl_info;
+            struct wined3d_context *context;
+
+            context = context_acquire(view->resource->device, NULL);
+            gl_info = context->gl_info;
+            gl_info->gl_ops.gl.p_glDeleteTextures(1, &view->object);
+            checkGLcall("glDeleteTextures");
+            context_release(context);
+        }
         /* Call wined3d_object_destroyed() before releasing the resource,
          * since releasing the resource may end up destroying the parent. */
         view->parent_ops->wined3d_object_destroyed(view->parent);
@@ -202,11 +213,132 @@ void * CDECL wined3d_shader_resource_view_get_parent(const struct wined3d_shader
     return view->parent;
 }
 
+static void wined3d_shader_resource_view_create_texture_view(struct wined3d_shader_resource_view *view,
+        const struct wined3d_shader_resource_view_desc *desc, struct wined3d_texture *texture,
+        const struct wined3d_format *view_format)
+{
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context *context;
+    struct gl_texture *gl_texture;
+
+    context = context_acquire(texture->resource.device, NULL);
+    gl_info = context->gl_info;
+
+    if (!gl_info->supported[ARB_TEXTURE_VIEW])
+    {
+        context_release(context);
+        FIXME("OpenGL implementation does not support texture views.\n");
+        return;
+    }
+
+    wined3d_texture_prepare_texture(texture, context, FALSE);
+    gl_texture = wined3d_texture_get_gl_texture(texture, FALSE);
+
+    gl_info->gl_ops.gl.p_glGenTextures(1, &view->object);
+    GL_EXTCALL(glTextureView(view->object, view->target, gl_texture->name, view_format->glInternal,
+            desc->u.texture.level_idx, desc->u.texture.level_count,
+            desc->u.texture.layer_idx, desc->u.texture.layer_count));
+    checkGLcall("Create texture view");
+
+    context_release(context);
+}
+
+static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_view *view,
+        const struct wined3d_shader_resource_view_desc *desc, struct wined3d_resource *resource,
+        void *parent, const struct wined3d_parent_ops *parent_ops)
+{
+    static const struct
+    {
+        GLenum texture_target;
+        unsigned int view_flags;
+        GLenum view_target;
+    }
+    view_types[] =
+    {
+        {GL_TEXTURE_2D,       0,                          GL_TEXTURE_2D},
+        {GL_TEXTURE_2D,       WINED3D_VIEW_TEXTURE_ARRAY, GL_TEXTURE_2D_ARRAY},
+        {GL_TEXTURE_2D_ARRAY, 0,                          GL_TEXTURE_2D},
+        {GL_TEXTURE_2D_ARRAY, WINED3D_VIEW_TEXTURE_ARRAY, GL_TEXTURE_2D_ARRAY},
+        {GL_TEXTURE_2D_ARRAY, WINED3D_VIEW_TEXTURE_CUBE,  GL_TEXTURE_CUBE_MAP},
+        {GL_TEXTURE_3D,       0,                          GL_TEXTURE_3D},
+    };
+
+    const struct wined3d_gl_info *gl_info = &resource->device->adapter->gl_info;
+    const struct wined3d_format *view_format;
+
+    view_format = wined3d_get_format(gl_info, desc->format_id);
+    if (view_format->id == view_format->typeless_id)
+    {
+        WARN("Trying to create view for typeless format %s.\n", debug_d3dformat(view_format->id));
+        return E_FAIL;
+    }
+
+    view->refcount = 1;
+    view->parent = parent;
+    view->parent_ops = parent_ops;
+
+    view->target = GL_NONE;
+    view->object = 0;
+
+    if (resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        FIXME("Buffer shader resource views not supported.\n");
+    }
+    else
+    {
+        struct wined3d_texture *texture = texture_from_resource(resource);
+        unsigned int i;
+
+        if (desc->u.texture.level_idx >= texture->level_count
+                || desc->u.texture.level_count > texture->level_count - desc->u.texture.level_idx
+                || desc->u.texture.layer_idx >= texture->layer_count
+                || desc->u.texture.layer_count > texture->layer_count - desc->u.texture.layer_idx)
+            return E_FAIL;
+
+        view->target = texture->target;
+        for (i = 0; i < ARRAY_SIZE(view_types); ++i)
+        {
+            if (view_types[i].texture_target == texture->target && view_types[i].view_flags == desc->flags)
+            {
+                view->target = view_types[i].view_target;
+                break;
+            }
+        }
+        if (i == ARRAY_SIZE(view_types))
+            FIXME("Unhandled view flags %#x for texture target %#x.\n", desc->flags, texture->target);
+
+        if (resource->format->id == view_format->id && texture->target == view->target
+                && !desc->u.texture.level_idx && desc->u.texture.level_count == texture->level_count
+                && !desc->u.texture.layer_idx && desc->u.texture.layer_count == texture->layer_count)
+        {
+            TRACE("Creating identity shader resource view.\n");
+        }
+        else if (texture->swapchain && texture->swapchain->desc.backbuffer_count > 1)
+        {
+            FIXME("Swapchain shader resource views not supported.\n");
+        }
+        else if (resource->format->typeless_id == view_format->typeless_id
+                && resource->format->gl_view_class == view_format->gl_view_class)
+        {
+            wined3d_shader_resource_view_create_texture_view(view, desc, texture, view_format);
+        }
+        else
+        {
+            FIXME("Shader resource view not supported, resource format %s, view format %s.\n",
+                    debug_d3dformat(resource->format->id), debug_d3dformat(view_format->id));
+        }
+    }
+    wined3d_resource_incref(view->resource = resource);
+
+    return WINED3D_OK;
+}
+
 HRESULT CDECL wined3d_shader_resource_view_create(const struct wined3d_shader_resource_view_desc *desc,
         struct wined3d_resource *resource, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_shader_resource_view **view)
 {
     struct wined3d_shader_resource_view *object;
+    HRESULT hr;
 
     TRACE("desc %p, resource %p, parent %p, parent_ops %p, view %p.\n",
             desc, resource, parent, parent_ops, view);
@@ -214,14 +346,36 @@ HRESULT CDECL wined3d_shader_resource_view_create(const struct wined3d_shader_re
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    object->refcount = 1;
-    object->resource = resource;
-    wined3d_resource_incref(resource);
-    object->parent = parent;
-    object->parent_ops = parent_ops;
+    if (FAILED(hr = wined3d_shader_resource_view_init(object, desc, resource, parent, parent_ops)))
+    {
+        HeapFree(GetProcessHeap(), 0, object);
+        WARN("Failed to initialise view, hr %#x.\n", hr);
+        return hr;
+    }
 
     TRACE("Created shader resource view %p.\n", object);
     *view = object;
 
     return WINED3D_OK;
+}
+
+void wined3d_shader_resource_view_bind(struct wined3d_shader_resource_view *view,
+        struct wined3d_context *context)
+{
+    struct wined3d_texture *texture;
+
+    if (view->object)
+    {
+        context_bind_texture(context, view->target, view->object);
+        return;
+    }
+
+    if (view->resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        FIXME("Buffer shader resources not supported.\n");
+        return;
+    }
+
+    texture = wined3d_texture_from_resource(view->resource);
+    wined3d_texture_bind(texture, context, FALSE);
 }

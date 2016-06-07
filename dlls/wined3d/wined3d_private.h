@@ -3082,7 +3082,13 @@ struct wined3d_shader_resource_view
     struct wined3d_resource *resource;
     void *parent;
     const struct wined3d_parent_ops *parent_ops;
+
+    GLenum target;
+    GLuint object;
 };
+
+void wined3d_shader_resource_view_bind(struct wined3d_shader_resource_view *view,
+        struct wined3d_context *context) DECLSPEC_HIDDEN;
 
 struct wined3d_swapchain_ops
 {
@@ -3538,6 +3544,7 @@ struct wined3d_format
     void (*convert)(const BYTE *src, BYTE *dst, UINT src_row_pitch, UINT src_slice_pitch,
             UINT dst_row_pitch, UINT dst_slice_pitch, UINT width, UINT height, UINT depth);
 
+    enum wined3d_format_id typeless_id;
     GLenum gl_view_class;
 };
 

@@ -1667,6 +1667,7 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
         format->block_width = typeless_format->block_width;
         format->block_height = typeless_format->block_height;
         format->block_byte_count = typeless_format->block_byte_count;
+        format->typeless_id = typeless_format->id;
 
         for (j = 0; j < strlen(typed_formats[i].channels); ++j)
         {
