@@ -160,6 +160,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_texture_rgb10_a2ui",           ARB_TEXTURE_RGB10_A2UI        },
     {"GL_ARB_texture_storage",              ARB_TEXTURE_STORAGE           },
     {"GL_ARB_texture_swizzle",              ARB_TEXTURE_SWIZZLE           },
+    {"GL_ARB_texture_view",                 ARB_TEXTURE_VIEW              },
     {"GL_ARB_timer_query",                  ARB_TIMER_QUERY               },
     {"GL_ARB_uniform_buffer_object",        ARB_UNIFORM_BUFFER_OBJECT     },
     {"GL_ARB_vertex_array_bgra",            ARB_VERTEX_ARRAY_BGRA         },
@@ -2706,6 +2707,8 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glTexStorage1D)
     USE_GL_FUNC(glTexStorage2D)
     USE_GL_FUNC(glTexStorage3D)
+    /* GL_ARB_texture_view */
+    USE_GL_FUNC(glTextureView)
     /* GL_ARB_timer_query */
     USE_GL_FUNC(glQueryCounter)
     USE_GL_FUNC(glGetQueryObjectui64v)
@@ -3538,6 +3541,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
         {ARB_DEBUG_OUTPUT,                 MAKEDWORD_VERSION(4, 3)},
         {ARB_INTERNALFORMAT_QUERY2,        MAKEDWORD_VERSION(4, 3)},
         {ARB_TEXTURE_QUERY_LEVELS,         MAKEDWORD_VERSION(4, 3)},
+        {ARB_TEXTURE_VIEW,                 MAKEDWORD_VERSION(4, 3)},
     };
     struct wined3d_driver_info *driver_info = &adapter->driver_info;
     const char *gl_vendor_str, *gl_renderer_str, *gl_version_str;
