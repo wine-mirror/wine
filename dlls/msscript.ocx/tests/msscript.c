@@ -28,11 +28,20 @@
 static void test_oleobject(void)
 {
     IOleObject *obj;
+    DWORD status;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IOleObject, (void**)&obj);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    if (0) /* crashes on w2k3 */
+        hr = IOleObject_GetMiscStatus(obj, DVASPECT_CONTENT, NULL);
+
+    status = 0;
+    hr = IOleObject_GetMiscStatus(obj, DVASPECT_CONTENT, &status);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(status != 0, "got 0x%08x\n", status);
 
     IOleObject_Release(obj);
 }

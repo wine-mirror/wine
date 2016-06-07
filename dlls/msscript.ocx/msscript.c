@@ -618,9 +618,9 @@ static HRESULT WINAPI OleObject_GetMiscStatus(IOleObject *iface, DWORD aspect, D
 {
     ScriptControl *This = impl_from_IOleObject(iface);
 
-    FIXME("(%p)->(%d %p)\n", This, aspect, status);
+    TRACE("(%p)->(%d %p)\n", This, aspect, status);
 
-    return E_NOTIMPL;
+    return OleRegGetMiscStatus(&CLSID_ScriptControl, aspect, status);
 }
 
 static HRESULT WINAPI OleObject_SetColorScheme(IOleObject *iface, LOGPALETTE *logpal)
