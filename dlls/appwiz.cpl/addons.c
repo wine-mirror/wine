@@ -64,8 +64,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
 #define GECKO_SHA "???"
 #endif
 
-#define MONO_VERSION "4.6.2"
-#define MONO_SHA "0a5090a3b81b6250a5d7104fc585bd871a9e467d"
+#define MONO_VERSION "4.6.3"
+#define MONO_SHA "c1d6d223c99c41a9d4e674e967042f10bfe02b8b"
 
 typedef struct {
     const char *version;
