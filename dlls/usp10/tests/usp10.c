@@ -86,7 +86,8 @@ static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
         return;
     }
     todo_wine_if (nItemsToDo)
-        winetest_ok(outnItems == nItems, "Wrong number of items\n");
+        winetest_ok(outnItems == nItems, "Wrong number of items (%u)\n", outnItems);
+    outnItems = min(outnItems, nItems);
     for (x = 0; x <= outnItems; x++)
     {
         if (items[x].isBroken && broken(outpItems[x].iCharPos == items[x].broken_value[0]))
@@ -587,6 +588,15 @@ static const itemTest t74[4] = {{{0,0,0,0,0,0},0,0,0,0,1,latn_tag,FALSE},
                                     {{0,0,0,0,0,0}, 3,0,1,2,0,arab_tag,FALSE},{{0,0,1,0,0,0}, 6,0,1,2,0,arab_tag,FALSE},
                                     {{0,0,0,0,0,0}, 7,0,1,2,0,arab_tag,FALSE},{{0,0,1,0,0,0},10,0,1,2,0,arab_tag,FALSE},
                                     {{0,0,0,0,0,0},11,0,1,2,0,arab_tag,FALSE},{{0,0,0,0,0,0},13,0,0,0,0,-1,FALSE}};
+    /* Arabic numerals and punctuation. */
+    static const WCHAR test58[] = {0x0661, 0x0662, 0x066c, 0x0663, 0x0664, 0x0665, 0x066c,  /* ١٢٬٣٤٥٬ */
+                                   0x0666, 0x0667, 0x0668, 0x066b, 0x0669, 0x0660};         /* ٦٧٨٫٩٠ */
+    static const itemTest t581[] = {{{0,1,0,1,0,0}, 0,0,1,2,0,arab_tag,FALSE},
+                                    {{1,1,1,1,1,0},13,0,0,0,0,-1,FALSE}};
+    static const itemTest t582[] = {{{0,1,1,1,0,1}, 0,0,0,0,1,arab_tag,FALSE},
+                                    {{1,1,1,1,1,0},13,0,0,0,0,-1,FALSE}};
+    static const itemTest t583[] = {{{0,0,0,0,0,0}, 0,0,1,2,0,arab_tag,FALSE},
+                                    {{1,0,0,1,1,0},13,0,0,0,0,-1,FALSE}};
 
     SCRIPT_ITEM items[15];
     SCRIPT_CONTROL  Control;
@@ -670,6 +680,7 @@ static const itemTest t74[4] = {{{0,0,0,0,0,0},0,0,0,0,1,latn_tag,FALSE},
     test_items_ok(test47,26,NULL,NULL,1,t471,FALSE,0);
     test_items_ok(test56,6,NULL,NULL,1,t561,FALSE,0);
     test_items_ok(test57,13,NULL,NULL,7,t571,FALSE,0);
+    test_items_ok(test58,13,NULL,NULL,1,t581,TRUE,0);
 
     State.uBidiLevel = 0;
     test_items_ok(test1,4,&Control,&State,1,t11,FALSE,0);
@@ -734,6 +745,7 @@ static const itemTest t74[4] = {{{0,0,0,0,0,0},0,0,0,0,1,latn_tag,FALSE},
     test_items_ok(test55,8,&Control,&State,2,t551,FALSE,0);
     test_items_ok(test56,6,&Control,&State,1,t561,FALSE,0);
     test_items_ok(test57,13,&Control,&State,7,t572,FALSE,0);
+    test_items_ok(test58,13,&Control,&State,1,t581,TRUE,0);
 
     State.uBidiLevel = 1;
     test_items_ok(test1,4,&Control,&State,1,t12,FALSE,0);
@@ -790,6 +802,7 @@ static const itemTest t74[4] = {{{0,0,0,0,0,0},0,0,0,0,1,latn_tag,FALSE},
     test_items_ok(test47,26,&Control,&State,1,t472,FALSE,0);
     test_items_ok(test56,6,&Control,&State,1,t561,FALSE,0);
     test_items_ok(test57,13,&Control,&State,7,t574,FALSE,0);
+    test_items_ok(test58,13,&Control,&State,1,t583,TRUE,0);
 
     State.uBidiLevel = 1;
     Control.fMergeNeutralItems = TRUE;
@@ -847,6 +860,7 @@ static const itemTest t74[4] = {{{0,0,0,0,0,0},0,0,0,0,1,latn_tag,FALSE},
     test_items_ok(test47,26,&Control,&State,1,t472,FALSE,0);
     test_items_ok(test56,6,&Control,&State,1,t561,FALSE,0);
     test_items_ok(test57,13,&Control,&State,7,t574,FALSE,0);
+    test_items_ok(test58,13,&Control,&State,1,t583,TRUE,0);
 
     State.uBidiLevel = 0;
     Control.fMergeNeutralItems = FALSE;
@@ -913,6 +927,7 @@ static const itemTest t74[4] = {{{0,0,0,0,0,0},0,0,0,0,1,latn_tag,FALSE},
     test_items_ok(test55,8,&Control,&State,2,t552,FALSE,0);
     test_items_ok(test56,6,&Control,&State,1,t562,FALSE,0);
     test_items_ok(test57,13,&Control,&State,7,t573,FALSE,0);
+    test_items_ok(test58,13,&Control,&State,1,t582,TRUE,0);
 }
 
 static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
