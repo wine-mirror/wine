@@ -122,6 +122,80 @@ static BOOL compare_color(DWORD c1, DWORD c2, BYTE max_diff)
     return TRUE;
 }
 
+struct srv_desc
+{
+    DXGI_FORMAT format;
+    D3D11_SRV_DIMENSION dimension;
+    unsigned int miplevel_idx;
+    unsigned int miplevel_count;
+    unsigned int layer_idx;
+    unsigned int layer_count;
+};
+
+static void get_srv_desc(D3D11_SHADER_RESOURCE_VIEW_DESC *d3d11_desc, const struct srv_desc *desc)
+{
+    d3d11_desc->Format = desc->format;
+    d3d11_desc->ViewDimension = desc->dimension;
+    if (desc->dimension == D3D11_SRV_DIMENSION_TEXTURE2D)
+    {
+        U(*d3d11_desc).Texture2D.MostDetailedMip = desc->miplevel_idx;
+        U(*d3d11_desc).Texture2D.MipLevels = desc->miplevel_count;
+    }
+    else if (desc->dimension == D3D11_SRV_DIMENSION_TEXTURE2DARRAY)
+    {
+        U(*d3d11_desc).Texture2DArray.MostDetailedMip = desc->miplevel_idx;
+        U(*d3d11_desc).Texture2DArray.MipLevels = desc->miplevel_count;
+        U(*d3d11_desc).Texture2DArray.FirstArraySlice = desc->layer_idx;
+        U(*d3d11_desc).Texture2DArray.ArraySize = desc->layer_count;
+    }
+    else
+    {
+        trace("Unhandled view dimension %#x.\n", desc->dimension);
+    }
+}
+
+#define check_srv_desc(a, b) check_srv_desc_(__LINE__, a, b)
+static void check_srv_desc_(unsigned int line, const D3D11_SHADER_RESOURCE_VIEW_DESC *desc,
+        const struct srv_desc *expected_desc)
+{
+    ok_(__FILE__, line)(desc->Format == expected_desc->format,
+            "Got format %#x, expected %#x.\n", desc->Format, expected_desc->format);
+    ok_(__FILE__, line)(desc->ViewDimension == expected_desc->dimension,
+            "Got view dimension %#x, expected %#x.\n", desc->ViewDimension, expected_desc->dimension);
+
+    if (desc->ViewDimension != expected_desc->dimension)
+        return;
+
+    if (desc->ViewDimension == D3D11_SRV_DIMENSION_TEXTURE2D)
+    {
+        ok_(__FILE__, line)(U(*desc).Texture2D.MostDetailedMip == expected_desc->miplevel_idx,
+                "Got MostDetailedMip %u, expected %u.\n",
+                U(*desc).Texture2D.MostDetailedMip, expected_desc->miplevel_idx);
+        ok_(__FILE__, line)(U(*desc).Texture2D.MipLevels == expected_desc->miplevel_count,
+                "Got MipLevels %u, expected %u.\n",
+                U(*desc).Texture2D.MipLevels, expected_desc->miplevel_count);
+    }
+    else if (desc->ViewDimension == D3D11_SRV_DIMENSION_TEXTURE2DARRAY)
+    {
+        ok_(__FILE__, line)(U(*desc).Texture2DArray.MostDetailedMip == expected_desc->miplevel_idx,
+                "Got MostDetailedMip %u, expected %u.\n",
+                U(*desc).Texture2DArray.MostDetailedMip, expected_desc->miplevel_idx);
+        ok_(__FILE__, line)(U(*desc).Texture2DArray.MipLevels == expected_desc->miplevel_count,
+                "Got MipLevels %u, expected %u.\n",
+                U(*desc).Texture2DArray.MipLevels, expected_desc->miplevel_count);
+        ok_(__FILE__, line)(U(*desc).Texture2DArray.FirstArraySlice == expected_desc->layer_idx,
+                "Got FirstArraySlice %u, expected %u.\n",
+                U(*desc).Texture2DArray.FirstArraySlice, expected_desc->layer_idx);
+        ok_(__FILE__, line)(U(*desc).Texture2DArray.ArraySize == expected_desc->layer_count,
+                "Got ArraySize %u, expected %u.\n",
+                U(*desc).Texture2DArray.ArraySize, expected_desc->layer_count);
+    }
+    else
+    {
+        trace("Unhandled view dimension %#x.\n", desc->ViewDimension);
+    }
+}
+
 #define create_buffer(a, b, c, d) create_buffer_(__LINE__, a, b, c, d)
 static ID3D11Buffer *create_buffer_(unsigned int line, ID3D11Device *device,
         unsigned int bind_flags, unsigned int size, const void *data)
@@ -2103,7 +2177,44 @@ static void test_create_shader_resource_view(void)
     ID3D11Texture2D *texture;
     ID3D11Buffer *buffer;
     IUnknown *iface;
+    unsigned int i;
     HRESULT hr;
+
+    static const struct
+    {
+        struct
+        {
+            unsigned int miplevel_count;
+            unsigned int array_size;
+            DXGI_FORMAT format;
+        } texture;
+        struct srv_desc srv_desc;
+        struct srv_desc expected_srv_desc;
+    }
+    tests[] =
+    {
+#define FMT_UNKNOWN DXGI_FORMAT_UNKNOWN
+#define RGBA8_UNORM DXGI_FORMAT_R8G8B8A8_UNORM
+#define TEX2D       D3D11_SRV_DIMENSION_TEXTURE2D
+#define TEX2DARRAY  D3D11_SRV_DIMENSION_TEXTURE2DARRAY
+        {{10, 1, RGBA8_UNORM}, {0},                                     {RGBA8_UNORM, TEX2D,      0, 10}},
+        {{10, 1, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2D, 0, -1},             {RGBA8_UNORM, TEX2D,      0, 10}},
+        {{10, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX2D, 0, -1},             {RGBA8_UNORM, TEX2D,      0, 10}},
+        {{10, 1, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2D, 0, 10},             {RGBA8_UNORM, TEX2D,      0, 10}},
+        {{10, 4, RGBA8_UNORM}, {0},                                     {RGBA8_UNORM, TEX2DARRAY, 0, 10, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2DARRAY, 0, -1, 0, -1}, {RGBA8_UNORM, TEX2DARRAY, 0, 10, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2DARRAY, 1, -1, 0, -1}, {RGBA8_UNORM, TEX2DARRAY, 1,  9, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2DARRAY, 3, -1, 0, -1}, {RGBA8_UNORM, TEX2DARRAY, 3,  7, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2DARRAY, 5, -1, 0, -1}, {RGBA8_UNORM, TEX2DARRAY, 5,  5, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2DARRAY, 9, -1, 0, -1}, {RGBA8_UNORM, TEX2DARRAY, 9,  1, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2DARRAY, 0, -1, 1, -1}, {RGBA8_UNORM, TEX2DARRAY, 0, 10, 1, 3}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2DARRAY, 0, -1, 2, -1}, {RGBA8_UNORM, TEX2DARRAY, 0, 10, 2, 2}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2DARRAY, 0, -1, 3, -1}, {RGBA8_UNORM, TEX2DARRAY, 0, 10, 3, 1}},
+#undef FMT_UNKNOWN
+#undef RGBA8_UNORM
+#undef TEX2D
+#undef TEX2DARRAY
+    };
 
     if (!(device = create_device(NULL)))
     {
@@ -2148,9 +2259,6 @@ static void test_create_shader_resource_view(void)
 
     texture_desc.Width = 512;
     texture_desc.Height = 512;
-    texture_desc.MipLevels = 0;
-    texture_desc.ArraySize = 1;
-    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     texture_desc.SampleDesc.Count = 1;
     texture_desc.SampleDesc.Quality = 0;
     texture_desc.Usage = D3D11_USAGE_DEFAULT;
@@ -2158,75 +2266,46 @@ static void test_create_shader_resource_view(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
 
-    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x.\n", hr);
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        D3D11_SHADER_RESOURCE_VIEW_DESC *current_desc;
 
-    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srview);
-    ok(SUCCEEDED(hr), "Failed to create a shader resource view, hr %#x.\n", hr);
+        texture_desc.MipLevels = tests[i].texture.miplevel_count;
+        texture_desc.ArraySize = tests[i].texture.array_size;
+        texture_desc.Format = tests[i].texture.format;
 
-    hr = ID3D11ShaderResourceView_QueryInterface(srview, &IID_ID3D10ShaderResourceView, (void **)&iface);
-    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-            "Shader resource view should implement ID3D10ShaderResourceView.\n");
-    if (SUCCEEDED(hr)) IUnknown_Release(iface);
-    hr = ID3D11ShaderResourceView_QueryInterface(srview, &IID_ID3D10ShaderResourceView1, (void **)&iface);
-    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-            "Shader resource view should implement ID3D10ShaderResourceView1.\n");
-    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+        hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+        ok(SUCCEEDED(hr), "Test %u: Failed to create a 2d texture, hr %#x.\n", i, hr);
 
-    memset(&srv_desc, 0, sizeof(srv_desc));
-    ID3D11ShaderResourceView_GetDesc(srview, &srv_desc);
-    ok(srv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", srv_desc.Format);
-    ok(srv_desc.ViewDimension == D3D11_SRV_DIMENSION_TEXTURE2D,
-            "Got unexpected view dimension %#x.\n", srv_desc.ViewDimension);
-    ok(U(srv_desc).Texture2D.MostDetailedMip == 0, "Got unexpected MostDetailedMip %u.\n",
-            U(srv_desc).Texture2D.MostDetailedMip);
-    ok(U(srv_desc).Texture2D.MipLevels == 10, "Got unexpected MipLevels %u.\n", U(srv_desc).Texture2D.MipLevels);
+        if (tests[i].srv_desc.dimension == D3D11_SRV_DIMENSION_UNKNOWN)
+        {
+            current_desc = NULL;
+        }
+        else
+        {
+            current_desc = &srv_desc;
+            get_srv_desc(current_desc, &tests[i].srv_desc);
+        }
 
-    ID3D11ShaderResourceView_Release(srview);
+        hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, current_desc, &srview);
+        ok(SUCCEEDED(hr), "Test %u: Failed to create a shader resource view, hr %#x.\n", i, hr);
 
-    srv_desc.Format = DXGI_FORMAT_UNKNOWN;
-    U(srv_desc).Texture2D.MipLevels = -1;
+        hr = ID3D11ShaderResourceView_QueryInterface(srview, &IID_ID3D10ShaderResourceView, (void **)&iface);
+        ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+                "Test %u: Shader resource view should implement ID3D10ShaderResourceView.\n", i);
+        if (SUCCEEDED(hr)) IUnknown_Release(iface);
+        hr = ID3D11ShaderResourceView_QueryInterface(srview, &IID_ID3D10ShaderResourceView1, (void **)&iface);
+        ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+                "Test %u: Shader resource view should implement ID3D10ShaderResourceView1.\n", i);
+        if (SUCCEEDED(hr)) IUnknown_Release(iface);
 
-    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &srview);
-    ok(SUCCEEDED(hr), "Failed to create a shader resource view, hr %#x.\n", hr);
+        memset(&srv_desc, 0, sizeof(srv_desc));
+        ID3D11ShaderResourceView_GetDesc(srview, &srv_desc);
+        check_srv_desc(&srv_desc, &tests[i].expected_srv_desc);
 
-    memset(&srv_desc, 0, sizeof(srv_desc));
-    ID3D11ShaderResourceView_GetDesc(srview, &srv_desc);
-    ok(srv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", srv_desc.Format);
-    ok(srv_desc.ViewDimension == D3D11_SRV_DIMENSION_TEXTURE2D,
-            "Got unexpected view dimension %#x.\n", srv_desc.ViewDimension);
-    ok(U(srv_desc).Texture2D.MostDetailedMip == 0, "Got unexpected MostDetailedMip %u.\n",
-            U(srv_desc).Texture2D.MostDetailedMip);
-    ok(U(srv_desc).Texture2D.MipLevels == 10, "Got unexpected MipLevels %u.\n",
-            U(srv_desc).Texture2D.MipLevels);
-
-    ID3D11ShaderResourceView_Release(srview);
-    ID3D11Texture2D_Release(texture);
-
-    texture_desc.ArraySize = 4;
-
-    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create 2d texture, hr %#x.\n", hr);
-
-    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srview);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
-
-    memset(&srv_desc, 0, sizeof(srv_desc));
-    ID3D11ShaderResourceView_GetDesc(srview, &srv_desc);
-    ok(srv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", srv_desc.Format);
-    ok(srv_desc.ViewDimension == D3D11_SRV_DIMENSION_TEXTURE2DARRAY,
-            "Got unexpected view dimension %#x.\n", srv_desc.ViewDimension);
-    ok(!U(srv_desc).Texture2DArray.MostDetailedMip, "Got unexpected MostDetailedMip %u.\n",
-            U(srv_desc).Texture2DArray.MostDetailedMip);
-    ok(U(srv_desc).Texture2DArray.MipLevels == 10, "Got unexpected MipLevels %u.\n",
-            U(srv_desc).Texture2DArray.MipLevels);
-    ok(!U(srv_desc).Texture2DArray.FirstArraySlice, "Got unexpected FirstArraySlice %u.\n",
-            U(srv_desc).Texture2DArray.FirstArraySlice);
-    ok(U(srv_desc).Texture2DArray.ArraySize == texture_desc.ArraySize, "Got unexpected ArraySize %u.\n",
-            U(srv_desc).Texture2DArray.ArraySize);
-
-    ID3D11ShaderResourceView_Release(srview);
-    ID3D11Texture2D_Release(texture);
+        ID3D11ShaderResourceView_Release(srview);
+        ID3D11Texture2D_Release(texture);
+    }
 
     refcount = ID3D11Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
