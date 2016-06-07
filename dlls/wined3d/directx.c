@@ -1999,6 +1999,8 @@ cards_amd_binary[] =
 },
 cards_intel[] =
 {
+    /* Skylake */
+    {"Skylake",                     CARD_INTEL_HD520},
     /* Haswell */
     {"Haswell Mobile",              CARD_INTEL_HWM},
     /* Ivybridge */
