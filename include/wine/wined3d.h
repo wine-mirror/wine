@@ -665,18 +665,6 @@ enum wined3d_resource_type
     WINED3D_RTYPE_TEXTURE_3D                = 3,
 };
 
-enum wined3d_view_type
-{
-    WINED3D_VTYPE_BUFFER                    = 1,
-    WINED3D_VTYPE_TEXTURE_1D                = 2,
-    WINED3D_VTYPE_TEXTURE_1D_ARRAY          = 3,
-    WINED3D_VTYPE_TEXTURE_2D                = 4,
-    WINED3D_VTYPE_TEXTURE_2D_ARRAY          = 5,
-    WINED3D_VTYPE_TEXTURE_3D                = 6,
-    WINED3D_VTYPE_TEXTURE_CUBE              = 7,
-    WINED3D_VTYPE_TEXTURE_CUBE_ARRAY        = 8,
-};
-
 enum wined3d_pool
 {
     WINED3D_POOL_DEFAULT                    = 0,
@@ -1495,6 +1483,12 @@ enum wined3d_display_rotation
 #define WINED3D_OUTPUT_SLOT_SEMANTIC                            0xffffffff
 #define WINED3D_OUTPUT_SLOT_UNUSED                              0xfffffffe
 
+#define WINED3D_VIEW_BUFFER_RAW                                 0x00000001
+#define WINED3D_VIEW_BUFFER_APPEND                              0x00000002
+#define WINED3D_VIEW_BUFFER_COUNTER                             0x00000004
+#define WINED3D_VIEW_TEXTURE_CUBE                               0x00000008
+#define WINED3D_VIEW_TEXTURE_ARRAY                              0x00000010
+
 struct wined3d_display_mode
 {
     UINT width;
@@ -1957,14 +1951,13 @@ struct wined3d_shader_desc
 struct wined3d_shader_resource_view_desc
 {
     enum wined3d_format_id format_id;
-    enum wined3d_view_type view_type;
+    unsigned int flags;
     union
     {
         struct
         {
             unsigned int start_idx;
             unsigned int count;
-            unsigned int flags;
         } buffer;
         struct
         {

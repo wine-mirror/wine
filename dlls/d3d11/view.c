@@ -1674,18 +1674,16 @@ static HRESULT wined3d_shader_resource_view_desc_from_d3d11(struct wined3d_shade
         const D3D11_SHADER_RESOURCE_VIEW_DESC *desc)
 {
     wined3d_desc->format_id = wined3dformat_from_dxgi_format(desc->Format);
+    wined3d_desc->flags = 0;
 
     switch (desc->ViewDimension)
     {
         case D3D11_SRV_DIMENSION_BUFFER:
-            wined3d_desc->view_type = WINED3D_VTYPE_BUFFER;
             wined3d_desc->u.buffer.start_idx = desc->u.Buffer.u1.FirstElement;
             wined3d_desc->u.buffer.count = desc->u.Buffer.u2.NumElements;
-            wined3d_desc->u.buffer.flags = 0;
             break;
 
         case D3D11_SRV_DIMENSION_TEXTURE1D:
-            wined3d_desc->view_type = WINED3D_VTYPE_TEXTURE_1D;
             wined3d_desc->u.texture.level_idx = desc->u.Texture1D.MostDetailedMip;
             wined3d_desc->u.texture.level_count = desc->u.Texture1D.MipLevels;
             wined3d_desc->u.texture.layer_idx = 0;
@@ -1693,7 +1691,7 @@ static HRESULT wined3d_shader_resource_view_desc_from_d3d11(struct wined3d_shade
             break;
 
         case D3D11_SRV_DIMENSION_TEXTURE1DARRAY:
-            wined3d_desc->view_type = WINED3D_VTYPE_TEXTURE_1D_ARRAY;
+            wined3d_desc->flags = WINED3D_VIEW_TEXTURE_ARRAY;
             wined3d_desc->u.texture.level_idx = desc->u.Texture1DArray.MostDetailedMip;
             wined3d_desc->u.texture.level_count = desc->u.Texture1DArray.MipLevels;
             wined3d_desc->u.texture.layer_idx = desc->u.Texture1DArray.FirstArraySlice;
@@ -1701,7 +1699,6 @@ static HRESULT wined3d_shader_resource_view_desc_from_d3d11(struct wined3d_shade
             break;
 
         case D3D11_SRV_DIMENSION_TEXTURE2D:
-            wined3d_desc->view_type = WINED3D_VTYPE_TEXTURE_2D;
             wined3d_desc->u.texture.level_idx = desc->u.Texture2D.MostDetailedMip;
             wined3d_desc->u.texture.level_count = desc->u.Texture2D.MipLevels;
             wined3d_desc->u.texture.layer_idx = 0;
@@ -1709,7 +1706,7 @@ static HRESULT wined3d_shader_resource_view_desc_from_d3d11(struct wined3d_shade
             break;
 
         case D3D11_SRV_DIMENSION_TEXTURE2DARRAY:
-            wined3d_desc->view_type = WINED3D_VTYPE_TEXTURE_2D_ARRAY;
+            wined3d_desc->flags = WINED3D_VIEW_TEXTURE_ARRAY;
             wined3d_desc->u.texture.level_idx = desc->u.Texture2DArray.MostDetailedMip;
             wined3d_desc->u.texture.level_count = desc->u.Texture2DArray.MipLevels;
             wined3d_desc->u.texture.layer_idx = desc->u.Texture2DArray.FirstArraySlice;
@@ -1717,7 +1714,6 @@ static HRESULT wined3d_shader_resource_view_desc_from_d3d11(struct wined3d_shade
             break;
 
         case D3D11_SRV_DIMENSION_TEXTURE2DMS:
-            wined3d_desc->view_type = WINED3D_VTYPE_TEXTURE_2D;
             wined3d_desc->u.texture.level_idx = 0;
             wined3d_desc->u.texture.level_count = 1;
             wined3d_desc->u.texture.layer_idx = 0;
@@ -1725,7 +1721,7 @@ static HRESULT wined3d_shader_resource_view_desc_from_d3d11(struct wined3d_shade
             break;
 
         case D3D11_SRV_DIMENSION_TEXTURE2DMSARRAY:
-            wined3d_desc->view_type = WINED3D_VTYPE_TEXTURE_2D_ARRAY;
+            wined3d_desc->flags = WINED3D_VIEW_TEXTURE_ARRAY;
             wined3d_desc->u.texture.level_idx = 0;
             wined3d_desc->u.texture.level_count = 1;
             wined3d_desc->u.texture.layer_idx = desc->u.Texture2DMSArray.FirstArraySlice;
@@ -1733,7 +1729,6 @@ static HRESULT wined3d_shader_resource_view_desc_from_d3d11(struct wined3d_shade
             break;
 
         case D3D11_SRV_DIMENSION_TEXTURE3D:
-            wined3d_desc->view_type = WINED3D_VTYPE_TEXTURE_3D;
             wined3d_desc->u.texture.level_idx = desc->u.Texture3D.MostDetailedMip;
             wined3d_desc->u.texture.level_count = desc->u.Texture3D.MipLevels;
             wined3d_desc->u.texture.layer_idx = 0;
@@ -1741,7 +1736,7 @@ static HRESULT wined3d_shader_resource_view_desc_from_d3d11(struct wined3d_shade
             break;
 
         case D3D11_SRV_DIMENSION_TEXTURECUBE:
-            wined3d_desc->view_type = WINED3D_VTYPE_TEXTURE_CUBE;
+            wined3d_desc->flags = WINED3D_VIEW_TEXTURE_CUBE;
             wined3d_desc->u.texture.level_idx = desc->u.TextureCube.MostDetailedMip;
             wined3d_desc->u.texture.level_count = desc->u.TextureCube.MipLevels;
             wined3d_desc->u.texture.layer_idx = 0;
@@ -1749,7 +1744,7 @@ static HRESULT wined3d_shader_resource_view_desc_from_d3d11(struct wined3d_shade
             break;
 
         case D3D11_SRV_DIMENSION_TEXTURECUBEARRAY:
-            wined3d_desc->view_type = WINED3D_VTYPE_TEXTURE_CUBE_ARRAY;
+            wined3d_desc->flags = WINED3D_VIEW_TEXTURE_CUBE | WINED3D_VIEW_TEXTURE_ARRAY;
             wined3d_desc->u.texture.level_idx = desc->u.TextureCubeArray.MostDetailedMip;
             wined3d_desc->u.texture.level_count = desc->u.TextureCubeArray.MipLevels;
             wined3d_desc->u.texture.layer_idx = desc->u.TextureCubeArray.First2DArrayFace;
@@ -1757,10 +1752,9 @@ static HRESULT wined3d_shader_resource_view_desc_from_d3d11(struct wined3d_shade
             break;
 
         case D3D11_SRV_DIMENSION_BUFFEREX:
-            wined3d_desc->view_type = WINED3D_VTYPE_BUFFER;
+            wined3d_desc->flags = desc->u.BufferEx.Flags;
             wined3d_desc->u.buffer.start_idx = desc->u.BufferEx.FirstElement;
             wined3d_desc->u.buffer.count = desc->u.BufferEx.NumElements;
-            wined3d_desc->u.buffer.flags = desc->u.BufferEx.Flags;
             break;
 
         default:
