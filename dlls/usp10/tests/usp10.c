@@ -572,9 +572,9 @@ static const itemTest t74[4] = {{{0,0,0,0,0,0},0,0,0,0,1,latn_tag,FALSE},
     /* Persian numerals and punctuation. */
     static const WCHAR test57[] = {0x06f1, 0x06f2, 0x066c, 0x06f3, 0x06f4, 0x06f5, 0x066c,  /* ۱۲٬۳۴۵٬ */
                                    0x06f6, 0x06f7, 0x06f8, 0x066b, 0x06f9, 0x06f0};         /* ۶۷۸٫۹۰ */
-    static const itemTest t571[] = {{{0,0,0,0,0,0}, 0,0,1,2,0,arab_tag,FALSE},{{0,0,0,1,0,0}, 2,0,1,2,0,arab_tag,FALSE},
-                                    {{0,0,0,0,0,0}, 3,0,1,2,0,arab_tag,FALSE},{{0,0,0,1,0,0}, 6,0,1,2,0,arab_tag,FALSE},
-                                    {{0,0,0,0,0,0}, 7,0,1,2,0,arab_tag,FALSE},{{0,0,0,1,0,0},10,0,1,2,0,arab_tag,FALSE},
+    static const itemTest t571[] = {{{0,0,0,0,0,0}, 0,0,1,2,0,arab_tag,FALSE},{{0,0,0,0,0,0}, 2,0,1,2,0,arab_tag,FALSE},
+                                    {{0,0,0,0,0,0}, 3,0,1,2,0,arab_tag,FALSE},{{0,0,0,0,0,0}, 6,0,1,2,0,arab_tag,FALSE},
+                                    {{0,0,0,0,0,0}, 7,0,1,2,0,arab_tag,FALSE},{{0,0,0,0,0,0},10,0,1,2,0,arab_tag,FALSE},
                                     {{0,0,0,0,0,0},11,0,1,2,0,arab_tag,FALSE},{{0,0,0,0,0,0},13,0,0,0,0,-1,FALSE}};
     static const itemTest t572[] = {{{0,0,0,0,0,0}, 0,0,0,2,0,arab_tag,FALSE},{{0,0,1,0,0,0}, 2,0,1,2,0,arab_tag,FALSE},
                                     {{0,0,0,0,0,0}, 3,0,0,2,0,arab_tag,FALSE},{{0,0,1,0,0,0}, 6,0,1,2,0,arab_tag,FALSE},
@@ -584,18 +584,12 @@ static const itemTest t74[4] = {{{0,0,0,0,0,0},0,0,0,0,1,latn_tag,FALSE},
                                     {{0,0,0,0,0,0}, 3,0,0,0,1,arab_tag,FALSE},{{0,0,0,0,0,0}, 6,0,0,0,1,arab_tag,FALSE},
                                     {{0,0,0,0,0,0}, 7,0,0,0,1,arab_tag,FALSE},{{0,0,0,0,0,0},10,0,0,0,1,arab_tag,FALSE},
                                     {{0,0,0,0,0,0},11,0,0,0,1,arab_tag,FALSE},{{0,0,0,0,0,0},13,0,0,0,0,-1,FALSE}};
-    static const itemTest t574[] = {{{0,0,0,0,0,0}, 0,0,1,2,0,arab_tag,FALSE},{{0,0,0,0,0,0}, 2,0,1,2,0,arab_tag,FALSE},
-                                    {{0,0,0,0,0,0}, 3,0,1,2,0,arab_tag,FALSE},{{0,0,0,0,0,0}, 6,0,1,2,0,arab_tag,FALSE},
-                                    {{0,0,0,0,0,0}, 7,0,1,2,0,arab_tag,FALSE},{{0,0,0,0,0,0},10,0,1,2,0,arab_tag,FALSE},
-                                    {{0,0,0,0,0,0},11,0,1,2,0,arab_tag,FALSE},{{0,0,0,0,0,0},13,0,0,0,0,-1,FALSE}};
     /* Arabic numerals and punctuation. */
     static const WCHAR test58[] = {0x0661, 0x0662, 0x066c, 0x0663, 0x0664, 0x0665, 0x066c,  /* ١٢٬٣٤٥٬ */
                                    0x0666, 0x0667, 0x0668, 0x066b, 0x0669, 0x0660};         /* ٦٧٨٫٩٠ */
-    static const itemTest t581[] = {{{0,0,0,1,0,0}, 0,0,1,2,0,arab_tag,FALSE},
+    static const itemTest t581[] = {{{0,0,0,0,0,0}, 0,0,1,2,0,arab_tag,FALSE},
                                     {{0,0,0,0,0,0},13,0,0,0,0,-1,FALSE}};
     static const itemTest t582[] = {{{0,0,1,1,0,1}, 0,0,0,0,1,arab_tag,FALSE},
-                                    {{0,0,0,0,0,0},13,0,0,0,0,-1,FALSE}};
-    static const itemTest t583[] = {{{0,0,0,0,0,0}, 0,0,1,2,0,arab_tag,FALSE},
                                     {{0,0,0,0,0,0},13,0,0,0,0,-1,FALSE}};
 
     SCRIPT_ITEM items[15];
@@ -801,8 +795,8 @@ static const itemTest t74[4] = {{{0,0,0,0,0,0},0,0,0,0,1,latn_tag,FALSE},
     test_items_ok(test46,16,&Control,&State,1,t462,FALSE,0);
     test_items_ok(test47,26,&Control,&State,1,t472,FALSE,0);
     test_items_ok(test56,6,&Control,&State,1,t561,FALSE,0);
-    test_items_ok(test57,13,&Control,&State,7,t574,FALSE,0);
-    test_items_ok(test58,13,&Control,&State,1,t583,FALSE,0);
+    test_items_ok(test57,13,&Control,&State,7,t571,FALSE,0);
+    test_items_ok(test58,13,&Control,&State,1,t581,FALSE,0);
 
     State.uBidiLevel = 1;
     Control.fMergeNeutralItems = TRUE;
@@ -859,8 +853,8 @@ static const itemTest t74[4] = {{{0,0,0,0,0,0},0,0,0,0,1,latn_tag,FALSE},
     test_items_ok(test46,16,&Control,&State,1,t462,FALSE,0);
     test_items_ok(test47,26,&Control,&State,1,t472,FALSE,0);
     test_items_ok(test56,6,&Control,&State,1,t561,FALSE,0);
-    test_items_ok(test57,13,&Control,&State,7,t574,FALSE,0);
-    test_items_ok(test58,13,&Control,&State,1,t583,FALSE,0);
+    test_items_ok(test57,13,&Control,&State,7,t571,FALSE,0);
+    test_items_ok(test58,13,&Control,&State,1,t581,FALSE,0);
 
     State.uBidiLevel = 0;
     Control.fMergeNeutralItems = FALSE;
