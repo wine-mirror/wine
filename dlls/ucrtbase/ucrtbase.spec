@@ -375,7 +375,7 @@
 @ stub _get_purecall_handler
 @ cdecl _get_stream_buffer_pointers(ptr ptr ptr ptr) MSVCRT__get_stream_buffer_pointers
 @ cdecl _get_terminate() MSVCRT__get_terminate
-@ stub _get_thread_local_invalid_parameter_handler
+@ cdecl _get_thread_local_invalid_parameter_handler()
 @ cdecl _get_timezone(ptr)
 @ cdecl _get_tzname(ptr str long long) MSVCRT__get_tzname
 @ cdecl _get_unexpected() MSVCRT__get_unexpected
@@ -1893,7 +1893,7 @@
 @ cdecl _set_printf_count_output(long) MSVCRT__set_printf_count_output
 @ cdecl _set_purecall_handler(ptr)
 @ stub _set_se_translator
-@ stub _set_thread_local_invalid_parameter_handler
+@ cdecl _set_thread_local_invalid_parameter_handler(ptr)
 @ cdecl _seterrormode(long)
 @ cdecl -arch=i386 -norelay _setjmp3(ptr long) MSVCRT__setjmp3
 @ cdecl _setmaxstdio(long) MSVCRT__setmaxstdio

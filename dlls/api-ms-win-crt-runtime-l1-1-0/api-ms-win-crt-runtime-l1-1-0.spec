@@ -46,7 +46,7 @@
 @ stub _get_narrow_winmain_command_line
 @ cdecl _get_pgmptr(ptr) ucrtbase._get_pgmptr
 @ cdecl _get_terminate() ucrtbase._get_terminate
-@ stub _get_thread_local_invalid_parameter_handler
+@ cdecl _get_thread_local_invalid_parameter_handler() ucrtbase._get_thread_local_invalid_parameter_handler
 @ stub _get_wide_winmain_command_line
 @ cdecl _get_wpgmptr(ptr) ucrtbase._get_wpgmptr
 @ cdecl _getdllprocaddr(long str long) ucrtbase._getdllprocaddr
@@ -73,7 +73,7 @@
 @ cdecl _set_error_mode(long) ucrtbase._set_error_mode
 @ cdecl _set_invalid_parameter_handler(ptr) ucrtbase._set_invalid_parameter_handler
 @ cdecl _set_new_handler(ptr) ucrtbase._set_new_handler
-@ stub _set_thread_local_invalid_parameter_handler
+@ cdecl _set_thread_local_invalid_parameter_handler(ptr) ucrtbase._set_thread_local_invalid_parameter_handler
 @ cdecl _seterrormode(long) ucrtbase._seterrormode
 @ cdecl _sleep(long) ucrtbase._sleep
 @ cdecl _statusfp() ucrtbase._statusfp

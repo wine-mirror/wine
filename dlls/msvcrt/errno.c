@@ -473,3 +473,22 @@ MSVCRT_invalid_parameter_handler CDECL _set_invalid_parameter_handler(
     invalid_parameter_handler = handler;
     return old;
 }
+
+/*********************************************************************
+ * _get_thread_local_invalid_parameter_handler (UCRTBASE.@)
+ */
+MSVCRT_invalid_parameter_handler CDECL _get_thread_local_invalid_parameter_handler(void)
+{
+    FIXME(" stub\n");
+    return NULL;
+}
+
+/*********************************************************************
+ * _set_thread_local_invalid_parameter_handler (UCRTBASE.@)
+ */
+MSVCRT_invalid_parameter_handler CDECL _set_thread_local_invalid_parameter_handler(
+        MSVCRT_invalid_parameter_handler handler)
+{
+    FIXME("(%p) stub\n", handler);
+    return NULL;
+}
