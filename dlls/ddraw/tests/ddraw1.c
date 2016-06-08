@@ -723,10 +723,8 @@ static void test_clipper_blt(void)
     ok(rgn_data->rdh.iType == RDH_RECTANGLES, "Got unexpected type %#x.\n", rgn_data->rdh.iType);
     ok(rgn_data->rdh.nCount >= 1, "Got unexpected count %u.\n", rgn_data->rdh.nCount);
     ok(EqualRect(&rgn_data->rdh.rcBound, &client_rect),
-            "Got unexpected bounding rect {%d, %d, %d, %d}, expected {%d, %d, %d, %d}.\n",
-            rgn_data->rdh.rcBound.left, rgn_data->rdh.rcBound.top,
-            rgn_data->rdh.rcBound.right, rgn_data->rdh.rcBound.bottom,
-            client_rect.left, client_rect.top, client_rect.right, client_rect.bottom);
+            "Got unexpected bounding rect %s, expected %s.\n",
+            wine_dbgstr_rect(&rgn_data->rdh.rcBound), wine_dbgstr_rect(&client_rect));
     HeapFree(GetProcessHeap(), 0, rgn_data);
 
     r1 = CreateRectRgn(0, 0, 320, 240);
@@ -2113,9 +2111,8 @@ static void test_window_style(void)
     todo_wine ok(tmp == exstyle, "Expected window extended style %#x, got %#x.\n", exstyle, tmp);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &fullscreen_rect), "Expected %s, got %s.\n",
+            wine_dbgstr_rect(&fullscreen_rect), wine_dbgstr_rect(&r));
     GetClientRect(window, &r);
     todo_wine ok(!EqualRect(&r, &fullscreen_rect), "Client rect and window rect are equal.\n");
 
@@ -2197,18 +2194,14 @@ static void test_redundant_mode_set(void)
     r.bottom /= 2;
     SetWindowPos(window, HWND_TOP, r.left, r.top, r.right, r.bottom, 0);
     GetWindowRect(window, &s);
-    ok(EqualRect(&r, &s), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            r.left, r.top, r.right, r.bottom,
-            s.left, s.top, s.right, s.bottom);
+    ok(EqualRect(&r, &s), "Expected %s, got %s.\n", wine_dbgstr_rect(&r), wine_dbgstr_rect(&s));
 
     hr = IDirectDraw_SetDisplayMode(ddraw, surface_desc.dwWidth, surface_desc.dwHeight,
             U1(surface_desc.ddpfPixelFormat).dwRGBBitCount);
     ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
 
     GetWindowRect(window, &s);
-    ok(EqualRect(&r, &s), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            r.left, r.top, r.right, r.bottom,
-            s.left, s.top, s.right, s.bottom);
+    ok(EqualRect(&r, &s), "Expected %s, got %s.\n", wine_dbgstr_rect(&r), wine_dbgstr_rect(&s));
 
     ref = IDirectDraw_Release(ddraw);
     ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
@@ -2383,9 +2376,8 @@ static void test_coop_level_mode_set(void)
     ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &user32_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            user32_rect.left, user32_rect.top, user32_rect.right, user32_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &user32_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&user32_rect),
+            wine_dbgstr_rect(&r));
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
@@ -2402,9 +2394,8 @@ static void test_coop_level_mode_set(void)
             param.user32_height, ddsd.dwHeight);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &user32_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            user32_rect.left, user32_rect.top, user32_rect.right, user32_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &user32_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&user32_rect),
+            wine_dbgstr_rect(&r));
 
     PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE);
     expect_messages = exclusive_messages;
@@ -2425,9 +2416,8 @@ static void test_coop_level_mode_set(void)
             param.ddraw_width, param.ddraw_height, screen_size.cx, screen_size.cy);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &ddraw_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            ddraw_rect.left, ddraw_rect.top, ddraw_rect.right, ddraw_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &ddraw_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&ddraw_rect),
+            wine_dbgstr_rect(&r));
 
     hr = IDirectDrawSurface_GetSurfaceDesc(primary, &ddsd);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
@@ -2452,9 +2442,8 @@ static void test_coop_level_mode_set(void)
             param.ddraw_height, ddsd.dwHeight);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &ddraw_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            ddraw_rect.left, ddraw_rect.top, ddraw_rect.right, ddraw_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &ddraw_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&ddraw_rect),
+            wine_dbgstr_rect(&r));
 
     PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE);
     expect_messages = exclusive_messages;
@@ -2475,9 +2464,8 @@ static void test_coop_level_mode_set(void)
             param.user32_width, param.user32_height, screen_size.cx, screen_size.cy);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &user32_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            user32_rect.left, user32_rect.top, user32_rect.right, user32_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &user32_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&user32_rect),
+            wine_dbgstr_rect(&r));
 
     expect_messages = exclusive_focus_loss_messages;
     ret = SetForegroundWindow(GetDesktopWindow());
@@ -2496,9 +2484,8 @@ static void test_coop_level_mode_set(void)
     ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &ddraw_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            ddraw_rect.left, ddraw_rect.top, ddraw_rect.right, ddraw_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &ddraw_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&ddraw_rect),
+            wine_dbgstr_rect(&r));
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
     ok(ret, "Failed to get display mode.\n");
     ok(devmode.dmPelsWidth == param.ddraw_width
@@ -2550,9 +2537,8 @@ static void test_coop_level_mode_set(void)
             registry_mode.dmPelsWidth, registry_mode.dmPelsHeight, screen_size.cx, screen_size.cy);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &registry_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            registry_rect.left, registry_rect.top, registry_rect.right, registry_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &registry_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&registry_rect),
+            wine_dbgstr_rect(&r));
 
     hr = IDirectDrawSurface_GetSurfaceDesc(primary, &ddsd);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
@@ -2581,17 +2567,15 @@ static void test_coop_level_mode_set(void)
             registry_mode.dmPelsHeight, ddsd.dwHeight);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &registry_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            registry_rect.left, registry_rect.top, registry_rect.right, registry_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &registry_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&registry_rect),
+            wine_dbgstr_rect(&r));
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &registry_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            registry_rect.left, registry_rect.top, registry_rect.right, registry_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &registry_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&registry_rect),
+            wine_dbgstr_rect(&r));
 
     hr = IDirectDrawSurface_GetSurfaceDesc(primary, &ddsd);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
@@ -2616,9 +2600,8 @@ static void test_coop_level_mode_set(void)
             registry_mode.dmPelsHeight, ddsd.dwHeight);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &registry_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            registry_rect.left, registry_rect.top, registry_rect.right, registry_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &registry_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&registry_rect),
+            wine_dbgstr_rect(&r));
 
     PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE);
     expect_messages = normal_messages;
@@ -2640,9 +2623,8 @@ static void test_coop_level_mode_set(void)
     ok(!screen_size.cx && !screen_size.cy, "Got unexpected screen size %ux%u.\n", screen_size.cx, screen_size.cy);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &registry_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            registry_rect.left, registry_rect.top, registry_rect.right, registry_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &registry_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&registry_rect),
+            wine_dbgstr_rect(&r));
 
     PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE);
     expect_messages = normal_messages;
@@ -2670,9 +2652,8 @@ static void test_coop_level_mode_set(void)
     ok(!screen_size.cx && !screen_size.cy, "Got unexpected screen size %ux%u.\n", screen_size.cx, screen_size.cy);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &registry_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            registry_rect.left, registry_rect.top, registry_rect.right, registry_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &registry_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&registry_rect),
+            wine_dbgstr_rect(&r));
 
     hr = IDirectDrawSurface_GetSurfaceDesc(primary, &ddsd);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
@@ -2697,9 +2678,8 @@ static void test_coop_level_mode_set(void)
             param.ddraw_height, ddsd.dwHeight);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &registry_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            registry_rect.left, registry_rect.top, registry_rect.right, registry_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &registry_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&registry_rect),
+            wine_dbgstr_rect(&r));
 
     PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE);
     expect_messages = normal_messages;
@@ -2718,9 +2698,8 @@ static void test_coop_level_mode_set(void)
     ok(!screen_size.cx && !screen_size.cy, "Got unexpected screen size %ux%u.\n", screen_size.cx, screen_size.cy);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &registry_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            registry_rect.left, registry_rect.top, registry_rect.right, registry_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &registry_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&registry_rect),
+            wine_dbgstr_rect(&r));
 
     hr = IDirectDrawSurface_GetSurfaceDesc(primary, &ddsd);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
@@ -2755,9 +2734,8 @@ static void test_coop_level_mode_set(void)
             registry_mode.dmPelsHeight, ddsd.dwHeight);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &registry_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            registry_rect.left, registry_rect.top, registry_rect.right, registry_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &registry_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&registry_rect),
+            wine_dbgstr_rect(&r));
 
     /* DDSCL_NORMAL | DDSCL_FULLSCREEN behaves the same as just DDSCL_NORMAL.
      * Resizing the window on mode changes is a property of DDSCL_EXCLUSIVE,
@@ -2766,9 +2744,8 @@ static void test_coop_level_mode_set(void)
     ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &registry_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            registry_rect.left, registry_rect.top, registry_rect.right, registry_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &registry_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&registry_rect),
+            wine_dbgstr_rect(&r));
 
     hr = IDirectDrawSurface_GetSurfaceDesc(primary, &ddsd);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
@@ -2793,9 +2770,8 @@ static void test_coop_level_mode_set(void)
             registry_mode.dmPelsHeight, ddsd.dwHeight);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &registry_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            registry_rect.left, registry_rect.top, registry_rect.right, registry_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &registry_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&registry_rect),
+            wine_dbgstr_rect(&r));
 
     PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE);
     expect_messages = normal_messages;
@@ -2817,9 +2793,8 @@ static void test_coop_level_mode_set(void)
     ok(!screen_size.cx && !screen_size.cy, "Got unexpected screen size %ux%u.\n", screen_size.cx, screen_size.cy);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &registry_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            registry_rect.left, registry_rect.top, registry_rect.right, registry_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &registry_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&registry_rect),
+            wine_dbgstr_rect(&r));
 
     PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE);
     expect_messages = normal_messages;
@@ -2840,9 +2815,8 @@ static void test_coop_level_mode_set(void)
     ok(!screen_size.cx && !screen_size.cy, "Got unexpected screen size %ux%u.\n", screen_size.cx, screen_size.cy);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &registry_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            registry_rect.left, registry_rect.top, registry_rect.right, registry_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &registry_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&registry_rect),
+            wine_dbgstr_rect(&r));
 
     hr = IDirectDrawSurface_GetSurfaceDesc(primary, &ddsd);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
@@ -2867,9 +2841,8 @@ static void test_coop_level_mode_set(void)
             param.ddraw_height, ddsd.dwHeight);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &registry_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            registry_rect.left, registry_rect.top, registry_rect.right, registry_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &registry_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&registry_rect),
+            wine_dbgstr_rect(&r));
 
     PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE);
     expect_messages = normal_messages;
@@ -2888,9 +2861,8 @@ static void test_coop_level_mode_set(void)
     ok(!screen_size.cx && !screen_size.cy, "Got unexpected screen size %ux%u.\n", screen_size.cx, screen_size.cy);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &registry_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            registry_rect.left, registry_rect.top, registry_rect.right, registry_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &registry_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&registry_rect),
+            wine_dbgstr_rect(&r));
 
     hr = IDirectDrawSurface_GetSurfaceDesc(primary, &ddsd);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
@@ -2926,9 +2898,8 @@ static void test_coop_level_mode_set(void)
     IDirectDrawSurface_Release(primary);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &registry_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            registry_rect.left, registry_rect.top, registry_rect.right, registry_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &registry_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&registry_rect),
+            wine_dbgstr_rect(&r));
 
     /* Unlike ddraw2-7, changing from EXCLUSIVE to NORMAL does not restore the resolution */
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
@@ -2960,9 +2931,8 @@ static void test_coop_level_mode_set(void)
     ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
 
     GetWindowRect(window, &r);
-    ok(EqualRect(&r, &ddraw_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            ddraw_rect.left, ddraw_rect.top, ddraw_rect.right, ddraw_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &ddraw_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&ddraw_rect),
+            wine_dbgstr_rect(&r));
 
 done:
     expect_messages = NULL;
@@ -8273,8 +8243,8 @@ static void test_lockrect_invalid(void)
             surface_desc.dwSize = sizeof(surface_desc);
 
             hr = IDirectDrawSurface_Lock(surface, rect, &surface_desc, DDLOCK_WAIT, NULL);
-            ok(SUCCEEDED(hr), "Lock failed (%#x) for rect [%d, %d]->[%d, %d], type %s.\n",
-                    hr, rect->left, rect->top, rect->right, rect->bottom, resources[r].name);
+            ok(SUCCEEDED(hr), "Lock failed (%#x) for rect %s, type %s.\n",
+                    hr, wine_dbgstr_rect(rect), resources[r].name);
 
             hr = IDirectDrawSurface_Unlock(surface, NULL);
             ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, type %s.\n", hr, resources[r].name);
@@ -8288,8 +8258,8 @@ static void test_lockrect_invalid(void)
             surface_desc.dwSize = sizeof(surface_desc);
 
             hr = IDirectDrawSurface_Lock(surface, rect, &surface_desc, DDLOCK_WAIT, NULL);
-            ok(hr == resources[r].hr, "Lock returned %#x for rect [%d, %d]->[%d, %d], type %s.\n",
-                    hr, rect->left, rect->top, rect->right, rect->bottom, resources[r].name);
+            ok(hr == resources[r].hr, "Lock returned %#x for rect %s, type %s.\n",
+                    hr, wine_dbgstr_rect(rect), resources[r].name);
             if (SUCCEEDED(hr))
             {
                 hr = IDirectDrawSurface_Unlock(surface, NULL);
@@ -8309,11 +8279,10 @@ static void test_lockrect_invalid(void)
         ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, type %s.\n", hr, resources[r].name);
 
         hr = IDirectDrawSurface_Lock(surface, &valid[0], &surface_desc, DDLOCK_WAIT, NULL);
-        ok(SUCCEEDED(hr), "Lock(rect = [%d, %d]->[%d, %d]) failed (%#x).\n",
-                valid[0].left, valid[0].top, valid[0].right, valid[0].bottom, hr);
+        ok(SUCCEEDED(hr), "Lock(rect = %s) failed (%#x).\n", wine_dbgstr_rect(&valid[0]), hr);
         hr = IDirectDrawSurface_Lock(surface, &valid[0], &surface_desc, DDLOCK_WAIT, NULL);
-        ok(hr == DDERR_SURFACEBUSY, "Double lock(rect = [%d, %d]->[%d, %d]) failed (%#x).\n",
-                valid[0].left, valid[0].top, valid[0].right, valid[0].bottom, hr);
+        ok(hr == DDERR_SURFACEBUSY, "Double lock(rect = %s) failed (%#x).\n",
+                wine_dbgstr_rect(&valid[0]), hr);
 
         /* Locking a different rectangle returns DD_OK, but it seems to break the surface.
          * Afterwards unlocking the surface fails(NULL rectangle or both locked rectangles) */
