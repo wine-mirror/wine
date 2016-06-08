@@ -2739,7 +2739,7 @@ done:
     return emf;
 }
 
-typedef struct gdi_mf_comment
+typedef struct wmf_in_emf_comment
 {
     DWORD ident;
     DWORD iComment;
@@ -2747,7 +2747,7 @@ typedef struct gdi_mf_comment
     DWORD nChecksum;
     DWORD fFlags;
     DWORD cbWinMetaFile;
-} gdi_mf_comment;
+} wmf_in_emf_comment;
 
 /******************************************************************
  *         SetWinMetaFileBits   (GDI32.@)
@@ -2830,10 +2830,10 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer, const BYTE *lpbBuffer, HDC
      */
     if (mm != MM_TEXT)
     {
-        gdi_mf_comment *mfcomment;
+        wmf_in_emf_comment *mfcomment;
         UINT mfcomment_size;
 
-        mfcomment_size = sizeof (gdi_mf_comment) + cbBuffer;
+        mfcomment_size = sizeof (*mfcomment) + cbBuffer;
         mfcomment = HeapAlloc(GetProcessHeap(), 0, mfcomment_size);
         if (mfcomment)
         {
