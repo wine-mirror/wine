@@ -196,6 +196,89 @@ static void check_srv_desc_(unsigned int line, const D3D11_SHADER_RESOURCE_VIEW_
     }
 }
 
+struct rtv_desc
+{
+    DXGI_FORMAT format;
+    D3D11_RTV_DIMENSION dimension;
+    unsigned int miplevel_idx;
+    unsigned int layer_idx;
+    unsigned int layer_count;
+};
+
+static void get_rtv_desc(D3D11_RENDER_TARGET_VIEW_DESC *d3d11_desc, const struct rtv_desc *desc)
+{
+    d3d11_desc->Format = desc->format;
+    d3d11_desc->ViewDimension = desc->dimension;
+    if (desc->dimension == D3D11_RTV_DIMENSION_TEXTURE2D)
+    {
+        U(*d3d11_desc).Texture2D.MipSlice = desc->miplevel_idx;
+    }
+    else if (desc->dimension == D3D11_RTV_DIMENSION_TEXTURE2DARRAY)
+    {
+        U(*d3d11_desc).Texture2DArray.MipSlice = desc->miplevel_idx;
+        U(*d3d11_desc).Texture2DArray.FirstArraySlice = desc->layer_idx;
+        U(*d3d11_desc).Texture2DArray.ArraySize = desc->layer_count;
+    }
+    else if (desc->dimension == D3D11_RTV_DIMENSION_TEXTURE3D)
+    {
+        U(*d3d11_desc).Texture3D.MipSlice = desc->miplevel_idx;
+        U(*d3d11_desc).Texture3D.FirstWSlice = desc->layer_idx;
+        U(*d3d11_desc).Texture3D.WSize = desc->layer_count;
+    }
+    else
+    {
+        trace("Unhandled view dimension %#x.\n", desc->dimension);
+    }
+}
+
+#define check_rtv_desc(a, b) check_rtv_desc_(__LINE__, a, b)
+static void check_rtv_desc_(unsigned int line, const D3D11_RENDER_TARGET_VIEW_DESC *desc,
+        const struct rtv_desc *expected_desc)
+{
+    ok_(__FILE__, line)(desc->Format == expected_desc->format,
+            "Got format %#x, expected %#x.\n", desc->Format, expected_desc->format);
+    ok_(__FILE__, line)(desc->ViewDimension == expected_desc->dimension,
+            "Got view dimension %#x, expected %#x.\n", desc->ViewDimension, expected_desc->dimension);
+
+    if (desc->ViewDimension != expected_desc->dimension)
+        return;
+
+    if (desc->ViewDimension == D3D11_RTV_DIMENSION_TEXTURE2D)
+    {
+        ok_(__FILE__, line)(U(*desc).Texture2D.MipSlice == expected_desc->miplevel_idx,
+                "Got MipSlice %u, expected %u.\n",
+                U(*desc).Texture2D.MipSlice, expected_desc->miplevel_idx);
+    }
+    else if (desc->ViewDimension == D3D11_RTV_DIMENSION_TEXTURE2DARRAY)
+    {
+        ok_(__FILE__, line)(U(*desc).Texture2DArray.MipSlice == expected_desc->miplevel_idx,
+                "Got MipSlice %u, expected %u.\n",
+                U(*desc).Texture2DArray.MipSlice, expected_desc->miplevel_idx);
+        ok_(__FILE__, line)(U(*desc).Texture2DArray.FirstArraySlice == expected_desc->layer_idx,
+                "Got FirstArraySlice %u, expected %u.\n",
+                U(*desc).Texture2DArray.FirstArraySlice, expected_desc->layer_idx);
+        ok_(__FILE__, line)(U(*desc).Texture2DArray.ArraySize == expected_desc->layer_count,
+                "Got ArraySize %u, expected %u.\n",
+                U(*desc).Texture2DArray.ArraySize, expected_desc->layer_count);
+    }
+    else if (desc->ViewDimension == D3D11_RTV_DIMENSION_TEXTURE3D)
+    {
+        ok_(__FILE__, line)(U(*desc).Texture3D.MipSlice == expected_desc->miplevel_idx,
+                "Got MipSlice %u, expected %u.\n",
+                U(*desc).Texture3D.MipSlice, expected_desc->miplevel_idx);
+        ok_(__FILE__, line)(U(*desc).Texture3D.FirstWSlice == expected_desc->layer_idx,
+                "Got FirstWSlice %u, expected %u.\n",
+                U(*desc).Texture3D.FirstWSlice, expected_desc->layer_idx);
+        ok_(__FILE__, line)(U(*desc).Texture3D.WSize == expected_desc->layer_count,
+                "Got WSize %u, expected %u.\n",
+                U(*desc).Texture3D.WSize, expected_desc->layer_count);
+    }
+    else
+    {
+        trace("Unhandled view dimension %#x.\n", desc->ViewDimension);
+    }
+}
+
 #define create_buffer(a, b, c, d) create_buffer_(__LINE__, a, b, c, d)
 static ID3D11Buffer *create_buffer_(unsigned int line, ID3D11Device *device,
         unsigned int bind_flags, unsigned int size, const void *data)
@@ -2026,16 +2109,76 @@ done:
 static void test_create_rendertarget_view(void)
 {
     D3D11_RENDER_TARGET_VIEW_DESC rtv_desc;
+    D3D11_TEXTURE3D_DESC texture3d_desc;
+    D3D11_TEXTURE2D_DESC texture2d_desc;
     D3D11_SUBRESOURCE_DATA data = {0};
-    D3D11_TEXTURE2D_DESC texture_desc;
     ULONG refcount, expected_refcount;
     D3D11_BUFFER_DESC buffer_desc;
     ID3D11RenderTargetView *rtview;
     ID3D11Device *device, *tmp;
-    ID3D11Texture2D *texture;
+    ID3D11Texture3D *texture3d;
+    ID3D11Texture2D *texture2d;
     ID3D11Buffer *buffer;
     IUnknown *iface;
+    unsigned int i;
     HRESULT hr;
+
+    static const struct
+    {
+        struct
+        {
+            unsigned int miplevel_count;
+            unsigned int depth_or_array_size;
+            DXGI_FORMAT format;
+        } texture;
+        struct rtv_desc rtv_desc;
+        struct rtv_desc expected_rtv_desc;
+    }
+    tests[] =
+    {
+#define FMT_UNKNOWN  DXGI_FORMAT_UNKNOWN
+#define RGBA8_UNORM  DXGI_FORMAT_R8G8B8A8_UNORM
+#define TEX_2D       D3D11_RTV_DIMENSION_TEXTURE2D
+#define TEX_2D_ARRAY D3D11_RTV_DIMENSION_TEXTURE2DARRAY
+#define TEX_3D       D3D11_RTV_DIMENSION_TEXTURE3D
+        {{ 1, 1, RGBA8_UNORM}, {0},                                   {RGBA8_UNORM, TEX_2D,       0}},
+        {{10, 1, RGBA8_UNORM}, {0},                                   {RGBA8_UNORM, TEX_2D,       0}},
+        {{10, 1, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D, 0},              {RGBA8_UNORM, TEX_2D,       0}},
+        {{10, 1, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D, 1},              {RGBA8_UNORM, TEX_2D,       1}},
+        {{10, 1, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D, 9},              {RGBA8_UNORM, TEX_2D,       9}},
+        {{ 1, 4, RGBA8_UNORM}, {0},                                   {RGBA8_UNORM, TEX_2D_ARRAY, 0, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {0},                                   {RGBA8_UNORM, TEX_2D_ARRAY, 0, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 0, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 0, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 1, 0, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 1, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 3, 0, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 3, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 5, 0, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 5, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 9, 0, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 9, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 1, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 0, 1, 3}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 2, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 0, 2, 2}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 3, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 0, 3, 1}},
+        {{ 1, 6, RGBA8_UNORM}, {0},                                   {RGBA8_UNORM, TEX_3D,       0, 0, 6}},
+        {{ 2, 6, RGBA8_UNORM}, {0},                                   {RGBA8_UNORM, TEX_3D,       0, 0, 6}},
+        {{ 2, 6, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       0, 0, -1}, {RGBA8_UNORM, TEX_3D,       0, 0, 6}},
+        {{ 2, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       1, 0, -1}, {RGBA8_UNORM, TEX_3D,       1, 0, 2}},
+        {{ 2, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       1, 0, -1}, {RGBA8_UNORM, TEX_3D,       1, 0, 2}},
+        {{ 2, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       0, 1, -1}, {RGBA8_UNORM, TEX_3D,       0, 1, 3}},
+        {{ 2, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       0, 2, -1}, {RGBA8_UNORM, TEX_3D,       0, 2, 2}},
+        {{ 2, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       0, 3, -1}, {RGBA8_UNORM, TEX_3D,       0, 3, 1}},
+        {{ 2, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       0, 1,  1}, {RGBA8_UNORM, TEX_3D,       0, 1, 1}},
+        {{ 2, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       1, 1,  1}, {RGBA8_UNORM, TEX_3D,       1, 1, 1}},
+        {{ 2, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       1, 1, -1}, {RGBA8_UNORM, TEX_3D,       1, 1, 1}},
+        {{ 6, 8, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       0, 0, -1}, {RGBA8_UNORM, TEX_3D,       0, 0, 8}},
+        {{ 6, 8, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       1, 0, -1}, {RGBA8_UNORM, TEX_3D,       1, 0, 4}},
+        {{ 6, 8, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       2, 0, -1}, {RGBA8_UNORM, TEX_3D,       2, 0, 2}},
+        {{ 6, 8, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       3, 0, -1}, {RGBA8_UNORM, TEX_3D,       3, 0, 1}},
+        {{ 6, 8, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       4, 0, -1}, {RGBA8_UNORM, TEX_3D,       4, 0, 1}},
+        {{ 6, 8, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       5, 0, -1}, {RGBA8_UNORM, TEX_3D,       5, 0, 1}},
+#undef FMT_UNKNOWN
+#undef RGBA8_UNORM
+#undef TEX_2D
+#undef TEX_2D_ARRAY
+#undef TEX_3D
+    };
 
     if (!(device = create_device(NULL)))
     {
@@ -2092,76 +2235,73 @@ static void test_create_rendertarget_view(void)
     ID3D11RenderTargetView_Release(rtview);
     ID3D11Buffer_Release(buffer);
 
-    texture_desc.Width = 512;
-    texture_desc.Height = 512;
-    texture_desc.MipLevels = 1;
-    texture_desc.ArraySize = 1;
-    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    texture_desc.SampleDesc.Count = 1;
-    texture_desc.SampleDesc.Quality = 0;
-    texture_desc.Usage = D3D11_USAGE_DEFAULT;
-    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
-    texture_desc.CPUAccessFlags = 0;
-    texture_desc.MiscFlags = 0;
+    texture2d_desc.Width = 512;
+    texture2d_desc.Height = 512;
+    texture2d_desc.SampleDesc.Count = 1;
+    texture2d_desc.SampleDesc.Quality = 0;
+    texture2d_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture2d_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    texture2d_desc.CPUAccessFlags = 0;
+    texture2d_desc.MiscFlags = 0;
 
-    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x.\n", hr);
+    texture3d_desc.Width = 64;
+    texture3d_desc.Height = 64;
+    texture3d_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture3d_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    texture3d_desc.CPUAccessFlags = 0;
+    texture3d_desc.MiscFlags = 0;
 
-    /* For texture resources it's allowed to specify NULL as desc */
-    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtview);
-    ok(SUCCEEDED(hr), "Failed to create a rendertarget view, hr %#x.\n", hr);
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        D3D11_RENDER_TARGET_VIEW_DESC *current_desc;
+        ID3D11Resource *texture;
 
-    memset(&rtv_desc, 0, sizeof(rtv_desc));
-    ID3D11RenderTargetView_GetDesc(rtview, &rtv_desc);
-    ok(rtv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", rtv_desc.Format);
-    ok(rtv_desc.ViewDimension == D3D11_RTV_DIMENSION_TEXTURE2D, "Got unexpected view dimension %#x.\n",
-            rtv_desc.ViewDimension);
-    ok(!U(rtv_desc).Texture2D.MipSlice, "Got unexpected mip slice %u.\n", U(rtv_desc).Texture2D.MipSlice);
+        if (tests[i].expected_rtv_desc.dimension != D3D11_RTV_DIMENSION_TEXTURE3D)
+        {
+            texture2d_desc.MipLevels = tests[i].texture.miplevel_count;
+            texture2d_desc.ArraySize = tests[i].texture.depth_or_array_size;
+            texture2d_desc.Format = tests[i].texture.format;
 
-    hr = ID3D11RenderTargetView_QueryInterface(rtview, &IID_ID3D10RenderTargetView, (void **)&iface);
-    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-            "Render target view should implement ID3D10RenderTargetView.\n");
-    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+            hr = ID3D11Device_CreateTexture2D(device, &texture2d_desc, NULL, &texture2d);
+            ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+            texture = (ID3D11Resource *)texture2d;
+        }
+        else
+        {
+            texture3d_desc.MipLevels = tests[i].texture.miplevel_count;
+            texture3d_desc.Depth = tests[i].texture.depth_or_array_size;
+            texture3d_desc.Format = tests[i].texture.format;
 
-    ID3D11RenderTargetView_Release(rtview);
+            hr = ID3D11Device_CreateTexture3D(device, &texture3d_desc, NULL, &texture3d);
+            ok(SUCCEEDED(hr), "Test %u: Failed to create 3d texture, hr %#x.\n", i, hr);
+            texture = (ID3D11Resource *)texture3d;
+        }
 
-    rtv_desc.Format = DXGI_FORMAT_UNKNOWN;
+        if (tests[i].rtv_desc.dimension == D3D11_RTV_DIMENSION_UNKNOWN)
+        {
+            current_desc = NULL;
+        }
+        else
+        {
+            current_desc = &rtv_desc;
+            get_rtv_desc(current_desc, &tests[i].rtv_desc);
+        }
 
-    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtview);
-    ok(SUCCEEDED(hr), "Failed to create a rendertarget view, hr %#x.\n", hr);
+        hr = ID3D11Device_CreateRenderTargetView(device, texture, current_desc, &rtview);
+        ok(SUCCEEDED(hr), "Test %u: Failed to create render target view, hr %#x.\n", i, hr);
 
-    memset(&rtv_desc, 0, sizeof(rtv_desc));
-    ID3D11RenderTargetView_GetDesc(rtview, &rtv_desc);
-    ok(rtv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", rtv_desc.Format);
-    ok(rtv_desc.ViewDimension == D3D11_RTV_DIMENSION_TEXTURE2D, "Got unexpected view dimension %#x.\n",
-            rtv_desc.ViewDimension);
-    ok(!U(rtv_desc).Texture2D.MipSlice, "Got unexpected mip slice %u.\n", U(rtv_desc).Texture2D.MipSlice);
+        hr = ID3D11RenderTargetView_QueryInterface(rtview, &IID_ID3D10RenderTargetView, (void **)&iface);
+        ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+                "Test %u: Render target view should implement ID3D10RenderTargetView.\n", i);
+        if (SUCCEEDED(hr)) IUnknown_Release(iface);
 
-    ID3D11RenderTargetView_Release(rtview);
-    ID3D11Texture2D_Release(texture);
+        memset(&rtv_desc, 0, sizeof(rtv_desc));
+        ID3D11RenderTargetView_GetDesc(rtview, &rtv_desc);
+        check_rtv_desc(&rtv_desc, &tests[i].expected_rtv_desc);
 
-    texture_desc.ArraySize = 4;
-
-    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create 2d texture, hr %#x.\n", hr);
-
-    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtview);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
-
-    memset(&rtv_desc, 0, sizeof(rtv_desc));
-    ID3D11RenderTargetView_GetDesc(rtview, &rtv_desc);
-    ok(rtv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", rtv_desc.Format);
-    ok(rtv_desc.ViewDimension == D3D11_RTV_DIMENSION_TEXTURE2DARRAY, "Got unexpected view dimension %#x.\n",
-            rtv_desc.ViewDimension);
-    ok(!U(rtv_desc).Texture2DArray.MipSlice, "Got unexpected mip slice %u.\n",
-            U(rtv_desc).Texture2DArray.MipSlice);
-    ok(!U(rtv_desc).Texture2DArray.FirstArraySlice, "Got unexpected first array slice %u.\n",
-            U(rtv_desc).Texture2DArray.FirstArraySlice);
-    ok(U(rtv_desc).Texture2DArray.ArraySize == texture_desc.ArraySize, "Got unexpected array size %u.\n",
-            U(rtv_desc).Texture2DArray.ArraySize);
-
-    ID3D11RenderTargetView_Release(rtview);
-    ID3D11Texture2D_Release(texture);
+        ID3D11RenderTargetView_Release(rtview);
+        ID3D11Resource_Release(texture);
+    }
 
     refcount = ID3D11Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
