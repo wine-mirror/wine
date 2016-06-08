@@ -116,6 +116,8 @@ static HWND balloon_window;
 #define BALLOON_SHOW_MIN_TIMEOUT 10000
 #define BALLOON_SHOW_MAX_TIMEOUT 30000
 
+#define WM_POPUPSYSTEMMENU  0x0313
+
 static void do_show_systray(void);
 
 /* Retrieves icon record by owner window and ID */
@@ -689,6 +691,13 @@ static void click_taskbar_button( HWND button )
     SetForegroundWindow( hwnd );
 }
 
+static void show_taskbar_contextmenu( HWND button, LPARAM lparam )
+{
+    ULONG_PTR id = GetWindowLongPtrW( button, GWLP_ID );
+
+    if (id) SendNotifyMessageW( (HWND)id, WM_POPUPSYSTEMMENU, 0, lparam );
+}
+
 static void do_hide_systray(void)
 {
     SetWindowPos( tray_window, 0,
@@ -810,6 +819,10 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
     case WM_COMMAND:
         if (HIWORD(wparam) == BN_CLICKED) click_taskbar_button( (HWND)lparam );
+        break;
+
+    case WM_CONTEXTMENU:
+        show_taskbar_contextmenu( (HWND)wparam, lparam );
         break;
 
     case WM_MOUSEACTIVATE:
