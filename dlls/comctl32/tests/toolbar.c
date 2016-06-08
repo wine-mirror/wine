@@ -109,8 +109,8 @@ static const struct message restore_parent_seq[] = {
 #define expect(EXPECTED,GOT) ok((GOT)==(EXPECTED), "Expected %d, got %d\n", (EXPECTED), (GOT))
 
 #define check_rect(name, val, exp, ...) ok(EqualRect(&val, &exp), \
-    "invalid rect (%d,%d) (%d,%d) - expected (%d,%d) (%d,%d) - (" name ")\n", \
-    val.left, val.top, val.right, val.bottom, exp.left, exp.top, exp.right, exp.bottom, __VA_ARGS__);
+    "invalid rect %s - expected %s - (" name ")\n", \
+    wine_dbgstr_rect(&val), wine_dbgstr_rect(&exp), __VA_ARGS__);
  
 #define compare(val, exp, format) ok((val) == (exp), #val " value " format " expected " format "\n", (val), (exp));
 
