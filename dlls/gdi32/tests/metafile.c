@@ -3249,16 +3249,17 @@ static BOOL near_match(int x, int y)
 
 static void getwinmetafilebits(UINT mode, int scale, RECT *rc)
 {
-    HENHMETAFILE emf;
+    HENHMETAFILE emf, emf2;
     HDC display_dc, emf_dc;
-    ENHMETAHEADER *enh_header;
-    UINT size, emf_size, i;
+    ENHMETAHEADER *enh_header, *enh2_header;
+    UINT size, emf_size, i, emf2_size;
     WORD check = 0;
     DWORD rec_num = 0;
     METAHEADER *mh = NULL;
     METARECORD *rec;
     INT horz_res, vert_res, horz_size, vert_size;
     INT curve_caps, line_caps, poly_caps;
+    METAFILEPICT mfp;
 
     display_dc = GetDC(NULL);
     ok(display_dc != NULL, "display_dc is NULL\n");
@@ -3400,6 +3401,21 @@ static void getwinmetafilebits(UINT mode, int scale, RECT *rc)
         rec_num++;
         rec = (METARECORD*)((WORD*)rec + rec->rdSize);
     }
+
+    /* Show that we get the original back when we do the reverse conversion.
+       mfp is ignored in this case. */
+    mfp.mm = MM_ISOTROPIC;
+    mfp.xExt = 0xcafe;
+    mfp.yExt = 0xbeef;
+    emf2 = SetWinMetaFileBits( size, (BYTE*)mh, NULL, &mfp );
+    ok( !!emf2, "got NULL\n" );
+    emf2_size = GetEnhMetaFileBits( emf2, 0, NULL );
+    enh2_header = HeapAlloc( GetProcessHeap(), 0, emf2_size );
+    emf2_size = GetEnhMetaFileBits( emf2, emf2_size, (BYTE*)enh2_header );
+    ok( emf_size == emf2_size, "%d %d\n", emf_size, emf2_size );
+    ok( !memcmp( enh_header, enh2_header, emf_size ), "mismatch\n" );
+    HeapFree( GetProcessHeap(), 0, enh2_header );
+    DeleteEnhMetaFile( emf2 );
 
 end:
     HeapFree(GetProcessHeap(), 0, mh);

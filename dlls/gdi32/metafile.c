@@ -1114,26 +1114,6 @@ UINT WINAPI GetMetaFileBitsEx( HMETAFILE hmf, UINT nSize, LPVOID buf )
     return mfSize;
 }
 
-#include <pshpack2.h>
-typedef struct
-{
-    DWORD magic;   /* WMFC */
-    WORD unk04;    /* 1 */
-    WORD unk06;    /* 0 */
-    WORD unk08;    /* 0 */
-    WORD unk0a;    /* 1 */
-    WORD checksum;
-    DWORD unk0e;   /* 0 */
-    DWORD num_chunks;
-    DWORD chunk_size;
-    DWORD remaining_size;
-    DWORD emf_size;
-    BYTE emf_data[1];
-} emf_in_wmf_comment;
-#include <poppack.h>
-
-static const DWORD wmfc_magic = 0x43464d57;
-
 /******************************************************************
  *         add_mf_comment
  *
@@ -1158,7 +1138,7 @@ static BOOL add_mf_comment(HDC hdc, HENHMETAFILE emf)
     chunk = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(emf_in_wmf_comment, emf_data[max_chunk_size]));
     if(!chunk) goto end;
 
-    chunk->magic = wmfc_magic;
+    chunk->magic = WMFC_MAGIC;
     chunk->unk04 = 1;
     chunk->unk06 = 0;
     chunk->unk08 = 0;

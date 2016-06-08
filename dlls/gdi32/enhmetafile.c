@@ -2686,6 +2686,59 @@ UINT WINAPI GetEnhMetaFilePaletteEntries( HENHMETAFILE hEmf,
   return infoForCallBack.cEntries;
 }
 
+/******************************************************************
+ *             extract_emf_from_comment
+ *
+ * If the WMF was created by GetWinMetaFileBits, then extract the
+ * original EMF that is stored in MFCOMMENT chunks.
+ */
+static HENHMETAFILE extract_emf_from_comment( const BYTE *buf, UINT mf_size )
+{
+    METAHEADER *mh = (METAHEADER *)buf;
+    METARECORD *mr;
+    emf_in_wmf_comment *chunk;
+    WORD checksum = 0;
+    DWORD size = 0, remaining, chunks;
+    BYTE *emf_bits = NULL, *ptr;
+    UINT offset;
+    HENHMETAFILE emf = NULL;
+
+    if (mf_size < sizeof(*mh)) return NULL;
+
+    for (offset = mh->mtHeaderSize * 2; offset < mf_size; offset += (mr->rdSize * 2))
+    {
+	mr = (METARECORD *)((char *)mh + offset);
+        chunk = (emf_in_wmf_comment *)(mr->rdParm + 2);
+
+        if (mr->rdFunction != META_ESCAPE || mr->rdParm[0] != MFCOMMENT) goto done;
+        if (chunk->magic != WMFC_MAGIC) goto done;
+
+        if (!emf_bits)
+        {
+            size = remaining = chunk->emf_size;
+            chunks = chunk->num_chunks;
+            emf_bits = ptr = HeapAlloc( GetProcessHeap(), 0, size );
+            if (!emf_bits) goto done;
+        }
+        if (chunk->chunk_size > remaining) goto done;
+        remaining -= chunk->chunk_size;
+        if (chunk->remaining_size != remaining) goto done;
+        memcpy( ptr, chunk->emf_data, chunk->chunk_size );
+        ptr += chunk->chunk_size;
+        if (--chunks == 0) break;
+    }
+
+    for (offset = 0; offset < mf_size / 2; offset++)
+        checksum += *((WORD *)buf + offset);
+    if (checksum) goto done;
+
+    emf = SetEnhMetaFileBits( size, emf_bits );
+
+done:
+    HeapFree( GetProcessHeap(), 0, emf_bits );
+    return emf;
+}
+
 typedef struct gdi_mf_comment
 {
     DWORD ident;
@@ -2721,6 +2774,9 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer, const BYTE *lpbBuffer, HDC
         WARN("SetMetaFileBitsEx failed\n");
         return NULL;
     }
+
+    ret = extract_emf_from_comment( lpbBuffer, cbBuffer );
+    if (ret) return ret;
 
     if(!hdcRef)
         hdcRef = hdcdisp = CreateDCW(szDisplayW, NULL, NULL, NULL);
