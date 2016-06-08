@@ -35,6 +35,7 @@ struct ScriptControl {
     IOleObject IOleObject_iface;
     LONG ref;
     IOleClientSite *site;
+    SIZEL extent;
 };
 
 static HINSTANCE msscript_instance;
@@ -611,9 +612,13 @@ static HRESULT WINAPI OleObject_GetExtent(IOleObject *iface, DWORD aspect, SIZEL
 {
     ScriptControl *This = impl_from_IOleObject(iface);
 
-    FIXME("(%p)->(%d %p)\n", This, aspect, size);
+    TRACE("(%p)->(%d %p)\n", This, aspect, size);
 
-    return E_NOTIMPL;
+    if (aspect != DVASPECT_CONTENT)
+        return DV_E_DVASPECT;
+
+    *size = This->extent;
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_Advise(IOleObject *iface, IAdviseSink *sink, DWORD *connection)
@@ -775,7 +780,9 @@ static const IPersistStreamInitVtbl PersistStreamInitVtbl = {
 static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
 {
     ScriptControl *script_control;
+    DWORD dpi_x, dpi_y;
     HRESULT hres;
+    HDC hdc;
 
     TRACE("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
 
@@ -788,6 +795,14 @@ static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknow
     script_control->IOleObject_iface.lpVtbl = &OleObjectVtbl;
     script_control->ref = 1;
     script_control->site = NULL;
+
+    hdc = GetDC(0);
+    dpi_x = GetDeviceCaps(hdc, LOGPIXELSX);
+    dpi_y = GetDeviceCaps(hdc, LOGPIXELSY);
+    ReleaseDC(0, hdc);
+
+    script_control->extent.cx = MulDiv(38, 2540, dpi_x);
+    script_control->extent.cy = MulDiv(38, 2540, dpi_y);
 
     hres = IScriptControl_QueryInterface(&script_control->IScriptControl_iface, riid, ppv);
     IScriptControl_Release(&script_control->IScriptControl_iface);

@@ -96,10 +96,12 @@ static IOleClientSite testclientsite = { &OleClientSiteVtbl };
 
 static void test_oleobject(void)
 {
+    DWORD status, dpi_x, dpi_y;
     IOleClientSite *site;
     IOleObject *obj;
-    DWORD status;
+    SIZEL extent;
     HRESULT hr;
+    HDC hdc;
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IOleObject, (void**)&obj);
@@ -130,6 +132,36 @@ static void test_oleobject(void)
     hr = IOleObject_GetClientSite(obj, &site);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(site == NULL, "got %p\n", site);
+
+    /* extents */
+    hdc = GetDC(0);
+    dpi_x = GetDeviceCaps(hdc, LOGPIXELSX);
+    dpi_y = GetDeviceCaps(hdc, LOGPIXELSY);
+    ReleaseDC(0, hdc);
+
+    memset(&extent, 0, sizeof(extent));
+    hr = IOleObject_GetExtent(obj, DVASPECT_CONTENT, &extent);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(extent.cx == MulDiv(38, 2540, dpi_x), "got %d\n", extent.cx);
+    ok(extent.cy == MulDiv(38, 2540, dpi_y), "got %d\n", extent.cy);
+
+    extent.cx = extent.cy = 0xdeadbeef;
+    hr = IOleObject_GetExtent(obj, DVASPECT_THUMBNAIL, &extent);
+    ok(hr == DV_E_DVASPECT, "got 0x%08x\n", hr);
+    ok(extent.cx == 0xdeadbeef, "got %d\n", extent.cx);
+    ok(extent.cy == 0xdeadbeef, "got %d\n", extent.cy);
+
+    extent.cx = extent.cy = 0xdeadbeef;
+    hr = IOleObject_GetExtent(obj, DVASPECT_ICON, &extent);
+    ok(hr == DV_E_DVASPECT, "got 0x%08x\n", hr);
+    ok(extent.cx == 0xdeadbeef, "got %d\n", extent.cx);
+    ok(extent.cy == 0xdeadbeef, "got %d\n", extent.cy);
+
+    extent.cx = extent.cy = 0xdeadbeef;
+    hr = IOleObject_GetExtent(obj, DVASPECT_DOCPRINT, &extent);
+    ok(hr == DV_E_DVASPECT, "got 0x%08x\n", hr);
+    ok(extent.cx == 0xdeadbeef, "got %d\n", extent.cx);
+    ok(extent.cy == 0xdeadbeef, "got %d\n", extent.cy);
 
     IOleObject_Release(obj);
 }
