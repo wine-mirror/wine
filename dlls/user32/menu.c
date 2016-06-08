@@ -3479,6 +3479,10 @@ BOOL WINAPI TrackPopupMenuEx( HMENU hMenu, UINT wFlags, INT x, INT y,
         if (!(wFlags & TPM_NONOTIFY))
             SendMessageW( hWnd, WM_INITMENUPOPUP, (WPARAM)hMenu, 0);
 
+        if (menu->wFlags & MF_SYSMENU)
+            MENU_InitSysMenuPopup( hMenu, GetWindowLongW( hWnd, GWL_STYLE ),
+                                   GetClassLongW( hWnd, GCL_STYLE));
+
         if (MENU_ShowPopup( hWnd, hMenu, 0, wFlags, x, y, 0, 0 ))
             ret = MENU_TrackMenu( hMenu, wFlags | TPM_POPUPMENU, 0, 0, hWnd,
                                   lpTpm ? &lpTpm->rcExclude : NULL );
