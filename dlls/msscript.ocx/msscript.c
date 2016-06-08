@@ -21,6 +21,7 @@
 #include "windows.h"
 #include "initguid.h"
 #include "ole2.h"
+#include "olectl.h"
 #include "rpcproxy.h"
 #include "msscript.h"
 
@@ -30,6 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msscript);
 
 struct ScriptControl {
     IScriptControl IScriptControl_iface;
+    IPersistStreamInit IPersistStreamInit_iface;
     IOleObject IOleObject_iface;
     LONG ref;
     IOleClientSite *site;
@@ -126,6 +128,11 @@ static inline ScriptControl *impl_from_IOleObject(IOleObject *iface)
     return CONTAINING_RECORD(iface, ScriptControl, IOleObject_iface);
 }
 
+static inline ScriptControl *impl_from_IPersistStreamInit(IPersistStreamInit *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptControl, IPersistStreamInit_iface);
+}
+
 static HRESULT WINAPI ScriptControl_QueryInterface(IScriptControl *iface, REFIID riid, void **ppv)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
@@ -142,6 +149,12 @@ static HRESULT WINAPI ScriptControl_QueryInterface(IScriptControl *iface, REFIID
     }else if(IsEqualGUID(&IID_IOleObject, riid)) {
         TRACE("(%p)->(IID_IOleObject %p\n", This, ppv);
         *ppv = &This->IOleObject_iface;
+    }else if(IsEqualGUID(&IID_IPersistStreamInit, riid)) {
+        TRACE("(%p)->(IID_IPersistStreamInit %p\n", This, ppv);
+        *ppv = &This->IPersistStreamInit_iface;
+    }else if(IsEqualGUID(&IID_IPersist, riid)) {
+        TRACE("(%p)->(IID_IPersist %p\n", This, ppv);
+        *ppv = &This->IPersistStreamInit_iface;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -675,6 +688,90 @@ static const IOleObjectVtbl OleObjectVtbl = {
     OleObject_SetColorScheme
 };
 
+static HRESULT WINAPI PersistStreamInit_QueryInterface(IPersistStreamInit *iface, REFIID riid, void **obj)
+{
+    ScriptControl *This = impl_from_IPersistStreamInit(iface);
+    return IScriptControl_QueryInterface(&This->IScriptControl_iface, riid, obj);
+}
+
+static ULONG WINAPI PersistStreamInit_AddRef(IPersistStreamInit *iface)
+{
+    ScriptControl *This = impl_from_IPersistStreamInit(iface);
+    return IScriptControl_AddRef(&This->IScriptControl_iface);
+}
+
+static ULONG WINAPI PersistStreamInit_Release(IPersistStreamInit *iface)
+{
+    ScriptControl *This = impl_from_IPersistStreamInit(iface);
+    return IScriptControl_Release(&This->IScriptControl_iface);
+}
+
+static HRESULT WINAPI PersistStreamInit_GetClassID(IPersistStreamInit *iface, CLSID *clsid)
+{
+    ScriptControl *This = impl_from_IPersistStreamInit(iface);
+
+    FIXME("(%p)->(%p)\n", This, clsid);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStreamInit_IsDirty(IPersistStreamInit *iface)
+{
+    ScriptControl *This = impl_from_IPersistStreamInit(iface);
+
+    FIXME("(%p)\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, IStream *stream)
+{
+    ScriptControl *This = impl_from_IPersistStreamInit(iface);
+
+    FIXME("(%p)->(%p)\n", This, stream);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, IStream *stream, BOOL clear_dirty)
+{
+    ScriptControl *This = impl_from_IPersistStreamInit(iface);
+
+    FIXME("(%p)->(%p %d)\n", This, stream, clear_dirty);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStreamInit_GetSizeMax(IPersistStreamInit *iface, ULARGE_INTEGER *size)
+{
+    ScriptControl *This = impl_from_IPersistStreamInit(iface);
+
+    FIXME("(%p)->(%p)\n", This, size);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStreamInit_InitNew(IPersistStreamInit *iface)
+{
+    ScriptControl *This = impl_from_IPersistStreamInit(iface);
+
+    FIXME("(%p)\n", This);
+
+    return E_NOTIMPL;
+}
+
+static const IPersistStreamInitVtbl PersistStreamInitVtbl = {
+    PersistStreamInit_QueryInterface,
+    PersistStreamInit_AddRef,
+    PersistStreamInit_Release,
+    PersistStreamInit_GetClassID,
+    PersistStreamInit_IsDirty,
+    PersistStreamInit_Load,
+    PersistStreamInit_Save,
+    PersistStreamInit_GetSizeMax,
+    PersistStreamInit_InitNew
+};
+
 static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
 {
     ScriptControl *script_control;
@@ -687,6 +784,7 @@ static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknow
         return E_OUTOFMEMORY;
 
     script_control->IScriptControl_iface.lpVtbl = &ScriptControlVtbl;
+    script_control->IPersistStreamInit_iface.lpVtbl = &PersistStreamInitVtbl;
     script_control->IOleObject_iface.lpVtbl = &OleObjectVtbl;
     script_control->ref = 1;
     script_control->site = NULL;
