@@ -452,16 +452,16 @@ static void test_add(void)
 
     /* Test invalid switches */
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v invalid1 /a", &r);
-    todo_wine ok(r == REG_EXIT_FAILURE, "got exit code %u, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %u, expected 1\n", r);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v invalid2 /ae", &r);
-    todo_wine ok(r == REG_EXIT_FAILURE, "got exit code %u, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %u, expected 1\n", r);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v invalid3 /", &r);
-    todo_wine ok(r == REG_EXIT_FAILURE, "got exit code %u, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %u, expected 1\n", r);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v invalid4 -", &r);
-    todo_wine ok(r == REG_EXIT_FAILURE, "got exit code %u, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %u, expected 1\n", r);
 
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(err == ERROR_SUCCESS, "got %d\n", err);

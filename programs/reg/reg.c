@@ -858,16 +858,11 @@ int wmain(int argc, WCHAR *argvW[])
 {
     int i, op, ret;
     BOOL show_op_help = FALSE;
+    static const WCHAR switchVAW[] = {'v','a',0};
+    static const WCHAR switchVEW[] = {'v','e',0};
     WCHAR *key_name, *path, *value_name = NULL, *type = NULL, *data = NULL, separator = '\0';
     BOOL value_empty = FALSE, value_all = FALSE, recurse = FALSE, force = FALSE;
     HKEY root;
-    static const WCHAR slashDW[] = {'/','d',0};
-    static const WCHAR slashFW[] = {'/','f',0};
-    static const WCHAR slashSW[] = {'/','s',0};
-    static const WCHAR slashTW[] = {'/','t',0};
-    static const WCHAR slashVW[] = {'/','v',0};
-    static const WCHAR slashVAW[] = {'/','v','a',0};
-    static const WCHAR slashVEW[] = {'/','v','e',0};
 
     if (argc == 1)
     {
@@ -928,54 +923,72 @@ int wmain(int argc, WCHAR *argvW[])
 
     for (i = 3; i < argc; i++)
     {
-        if (!lstrcmpiW(argvW[i], slashVW))
+        if (argvW[i][0] == '/' || argvW[i][0] == '-')
         {
-            if (value_name || !(value_name = argvW[++i]))
-            {
-                output_message(STRING_INVALID_CMDLINE);
-                return 1;
-            }
-        }
-        else if (!lstrcmpiW(argvW[i], slashVEW))
-            value_empty = TRUE;
-        else if (!lstrcmpiW(argvW[i], slashVAW))
-            value_all = TRUE;
-        else if (!lstrcmpiW(argvW[i], slashTW))
-        {
-            if (type || !(type = argvW[++i]))
-            {
-                output_message(STRING_INVALID_CMDLINE);
-                return 1;
-            }
-        }
-        else if (!lstrcmpiW(argvW[i], slashDW))
-        {
-            if (data || !(data = argvW[++i]))
-            {
-                output_message(STRING_INVALID_CMDLINE);
-                return 1;
-            }
-        }
-        else if (!lstrcmpiW(argvW[i], slashSW))
-        {
-            WCHAR *ptr;
+            WCHAR *ptr = &argvW[i][1];
 
-            if (op == REG_QUERY)
+            if (!lstrcmpiW(ptr, switchVEW))
             {
-                recurse = TRUE;
+                value_empty = TRUE;
                 continue;
             }
-
-            ptr = argvW[++i];
-            if (!ptr || strlenW(ptr) != 1)
+            else if (!lstrcmpiW(ptr, switchVAW))
+            {
+                value_all = TRUE;
+                continue;
+            }
+            else if (ptr[1])
             {
                 output_message(STRING_INVALID_CMDLINE);
                 return 1;
             }
-            separator = ptr[0];
+
+            switch(tolowerW(argvW[i][1]))
+            {
+            case 'v':
+                if (value_name || !(value_name = argvW[++i]))
+                {
+                    output_message(STRING_INVALID_CMDLINE);
+                    return 1;
+                }
+                break;
+            case 't':
+                if (type || !(type = argvW[++i]))
+                {
+                    output_message(STRING_INVALID_CMDLINE);
+                    return 1;
+                }
+                break;
+            case 'd':
+                if (data || !(data = argvW[++i]))
+                {
+                    output_message(STRING_INVALID_CMDLINE);
+                    return 1;
+                }
+                break;
+            case 's':
+                if (op == REG_QUERY)
+                {
+                    recurse = TRUE;
+                    break;
+                }
+
+                ptr = argvW[++i];
+                if (!ptr || strlenW(ptr) != 1)
+                {
+                    output_message(STRING_INVALID_CMDLINE);
+                    return 1;
+                }
+                separator = ptr[0];
+                break;
+            case 'f':
+                force = TRUE;
+                break;
+            default:
+                output_message(STRING_INVALID_CMDLINE);
+                return 1;
+            }
         }
-        else if (!lstrcmpiW(argvW[i], slashFW))
-            force = TRUE;
     }
 
     if ((value_name && value_empty) || (value_name && value_all) || (value_empty && value_all))
