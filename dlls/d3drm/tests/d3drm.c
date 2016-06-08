@@ -2566,7 +2566,7 @@ static void test_frame_qi(void)
 
     hr = IDirect3DRM_CreateFrame(d3drm1, NULL, &frame1);
     ok(hr == D3DRM_OK, "Failed to create frame1 (hr = %x)\n", hr);
-    IDirect3DRMFrame_QueryInterface(frame1, &IID_IUnknown, (void **)&unknown);
+    hr = IDirect3DRMFrame_QueryInterface(frame1, &IID_IUnknown, (void **)&unknown);
     ok(hr == D3DRM_OK, "Failed to create IUnknown from frame1 (hr = %x)\n", hr);
     IDirect3DRMFrame_Release(frame1);
     test_qi("frame1_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
@@ -2576,7 +2576,7 @@ static void test_frame_qi(void)
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM2 interface (hr = %x).\n", hr);
     hr = IDirect3DRM2_CreateFrame(d3drm2, NULL, &frame2);
     ok(hr == D3DRM_OK, "Failed to create frame2 (hr = %x)\n", hr);
-    IDirect3DRMFrame2_QueryInterface(frame2, &IID_IUnknown, (void **)&unknown);
+    hr = IDirect3DRMFrame2_QueryInterface(frame2, &IID_IUnknown, (void **)&unknown);
     ok(hr == D3DRM_OK, "Failed to create IUnknown from frame2 (hr = %x)\n", hr);
     IDirect3DRMFrame2_Release(frame2);
     test_qi("frame2_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
@@ -2586,7 +2586,7 @@ static void test_frame_qi(void)
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM3 interface (hr = %x).\n", hr);
     hr = IDirect3DRM3_CreateFrame(d3drm3, NULL, &frame3);
     ok(hr == D3DRM_OK, "Failed to create frame3 (hr = %x)\n", hr);
-    IDirect3DRMFrame3_QueryInterface(frame3, &IID_IUnknown, (void **)&unknown);
+    hr = IDirect3DRMFrame3_QueryInterface(frame3, &IID_IUnknown, (void **)&unknown);
     ok(hr == D3DRM_OK, "Failed to create IUnknown from frame3 (hr = %x)\n", hr);
     IDirect3DRMFrame3_Release(frame3);
     test_qi("frame3_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
