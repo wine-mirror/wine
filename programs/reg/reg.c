@@ -941,10 +941,16 @@ int wmain(int argc, WCHAR *argvW[])
         else if (!lstrcmpiW(argvW[i], slashVAW))
             value_all = TRUE;
         else if (!lstrcmpiW(argvW[i], slashTW))
-            type = argvW[++i];
+        {
+            if (type || !(type = argvW[++i]))
+            {
+                output_message(STRING_INVALID_CMDLINE);
+                return 1;
+            }
+        }
         else if (!lstrcmpiW(argvW[i], slashDW))
         {
-            if (!(data = argvW[++i]))
+            if (data || !(data = argvW[++i]))
             {
                 output_message(STRING_INVALID_CMDLINE);
                 return 1;
