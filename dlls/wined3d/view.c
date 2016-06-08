@@ -109,12 +109,21 @@ static HRESULT wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *
     else
     {
         struct wined3d_texture *texture = texture_from_resource(resource);
+        unsigned int depth_or_layer_count;
+
+        if (resource->type == WINED3D_RTYPE_TEXTURE_3D)
+            depth_or_layer_count = wined3d_texture_get_level_depth(texture, desc->u.texture.level_idx);
+        else
+            depth_or_layer_count = texture->layer_count;
 
         if (desc->u.texture.level_idx >= texture->level_count
-                || desc->u.texture.layer_idx >= texture->layer_count
-                || desc->u.texture.layer_count > texture->layer_count - desc->u.texture.layer_idx)
+                || desc->u.texture.layer_idx >= depth_or_layer_count
+                || desc->u.texture.layer_count > depth_or_layer_count - desc->u.texture.layer_idx)
             return WINED3DERR_INVALIDCALL;
-        view->sub_resource_idx = desc->u.texture.layer_idx * texture->level_count + desc->u.texture.level_idx;
+
+        view->sub_resource_idx = desc->u.texture.level_idx;
+        if (resource->type != WINED3D_RTYPE_TEXTURE_3D)
+            view->sub_resource_idx += desc->u.texture.layer_idx * texture->level_count;
         view->buffer_offset = 0;
         view->width = wined3d_texture_get_level_width(texture, desc->u.texture.level_idx);
         view->height = wined3d_texture_get_level_height(texture, desc->u.texture.level_idx);
