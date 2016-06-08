@@ -148,6 +148,18 @@ static void get_srv_desc(D3D11_SHADER_RESOURCE_VIEW_DESC *d3d11_desc, const stru
         U(*d3d11_desc).Texture2DArray.FirstArraySlice = desc->layer_idx;
         U(*d3d11_desc).Texture2DArray.ArraySize = desc->layer_count;
     }
+    else if (desc->dimension == D3D11_SRV_DIMENSION_TEXTURECUBE)
+    {
+        U(*d3d11_desc).TextureCube.MostDetailedMip = desc->miplevel_idx;
+        U(*d3d11_desc).TextureCube.MipLevels = desc->miplevel_count;
+    }
+    else if (desc->dimension == D3D11_SRV_DIMENSION_TEXTURECUBEARRAY)
+    {
+        U(*d3d11_desc).TextureCubeArray.MostDetailedMip = desc->miplevel_idx;
+        U(*d3d11_desc).TextureCubeArray.MipLevels = desc->miplevel_count;
+        U(*d3d11_desc).TextureCubeArray.First2DArrayFace = desc->layer_idx;
+        U(*d3d11_desc).TextureCubeArray.NumCubes = desc->layer_count;
+    }
     else
     {
         trace("Unhandled view dimension %#x.\n", desc->dimension);
@@ -189,6 +201,30 @@ static void check_srv_desc_(unsigned int line, const D3D11_SHADER_RESOURCE_VIEW_
         ok_(__FILE__, line)(U(*desc).Texture2DArray.ArraySize == expected_desc->layer_count,
                 "Got ArraySize %u, expected %u.\n",
                 U(*desc).Texture2DArray.ArraySize, expected_desc->layer_count);
+    }
+    else if (desc->ViewDimension == D3D11_SRV_DIMENSION_TEXTURECUBE)
+    {
+        ok_(__FILE__, line)(U(*desc).TextureCube.MostDetailedMip == expected_desc->miplevel_idx,
+                "Got MostDetailedMip %u, expected %u.\n",
+                U(*desc).TextureCube.MostDetailedMip, expected_desc->miplevel_idx);
+        ok_(__FILE__, line)(U(*desc).TextureCube.MipLevels == expected_desc->miplevel_count,
+                "Got MipLevels %u, expected %u.\n",
+                U(*desc).TextureCube.MipLevels, expected_desc->miplevel_count);
+    }
+    else if (desc->ViewDimension == D3D11_SRV_DIMENSION_TEXTURECUBEARRAY)
+    {
+        ok_(__FILE__, line)(U(*desc).TextureCubeArray.MostDetailedMip == expected_desc->miplevel_idx,
+                "Got MostDetailedMip %u, expected %u.\n",
+                U(*desc).TextureCubeArray.MostDetailedMip, expected_desc->miplevel_idx);
+        ok_(__FILE__, line)(U(*desc).TextureCubeArray.MipLevels == expected_desc->miplevel_count,
+                "Got MipLevels %u, expected %u.\n",
+                U(*desc).TextureCubeArray.MipLevels, expected_desc->miplevel_count);
+        ok_(__FILE__, line)(U(*desc).TextureCubeArray.First2DArrayFace == expected_desc->layer_idx,
+                "Got First2DArrayFace %u, expected %u.\n",
+                U(*desc).TextureCubeArray.First2DArrayFace, expected_desc->layer_idx);
+        ok_(__FILE__, line)(U(*desc).TextureCubeArray.NumCubes == expected_desc->layer_count,
+                "Got NumCubes %u, expected %u.\n",
+                U(*desc).TextureCubeArray.NumCubes, expected_desc->layer_count);
     }
     else
     {
@@ -2417,6 +2453,7 @@ static void test_create_shader_resource_view(void)
     D3D11_TEXTURE2D_DESC texture_desc;
     ULONG refcount, expected_refcount;
     ID3D11ShaderResourceView *srview;
+    D3D_FEATURE_LEVEL feature_level;
     ID3D11Device *device, *tmp;
     ID3D11Texture2D *texture;
     ID3D11Buffer *buffer;
@@ -2437,27 +2474,40 @@ static void test_create_shader_resource_view(void)
     }
     tests[] =
     {
-#define FMT_UNKNOWN DXGI_FORMAT_UNKNOWN
-#define RGBA8_UNORM DXGI_FORMAT_R8G8B8A8_UNORM
-#define TEX2D       D3D11_SRV_DIMENSION_TEXTURE2D
-#define TEX2DARRAY  D3D11_SRV_DIMENSION_TEXTURE2DARRAY
-        {{10, 1, RGBA8_UNORM}, {0},                                     {RGBA8_UNORM, TEX2D,      0, 10}},
-        {{10, 1, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2D, 0, -1},             {RGBA8_UNORM, TEX2D,      0, 10}},
-        {{10, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX2D, 0, -1},             {RGBA8_UNORM, TEX2D,      0, 10}},
-        {{10, 1, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2D, 0, 10},             {RGBA8_UNORM, TEX2D,      0, 10}},
-        {{10, 4, RGBA8_UNORM}, {0},                                     {RGBA8_UNORM, TEX2DARRAY, 0, 10, 0, 4}},
-        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2DARRAY, 0, -1, 0, -1}, {RGBA8_UNORM, TEX2DARRAY, 0, 10, 0, 4}},
-        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2DARRAY, 1, -1, 0, -1}, {RGBA8_UNORM, TEX2DARRAY, 1,  9, 0, 4}},
-        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2DARRAY, 3, -1, 0, -1}, {RGBA8_UNORM, TEX2DARRAY, 3,  7, 0, 4}},
-        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2DARRAY, 5, -1, 0, -1}, {RGBA8_UNORM, TEX2DARRAY, 5,  5, 0, 4}},
-        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2DARRAY, 9, -1, 0, -1}, {RGBA8_UNORM, TEX2DARRAY, 9,  1, 0, 4}},
-        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2DARRAY, 0, -1, 1, -1}, {RGBA8_UNORM, TEX2DARRAY, 0, 10, 1, 3}},
-        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2DARRAY, 0, -1, 2, -1}, {RGBA8_UNORM, TEX2DARRAY, 0, 10, 2, 2}},
-        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX2DARRAY, 0, -1, 3, -1}, {RGBA8_UNORM, TEX2DARRAY, 0, 10, 3, 1}},
+#define FMT_UNKNOWN  DXGI_FORMAT_UNKNOWN
+#define RGBA8_UNORM  DXGI_FORMAT_R8G8B8A8_UNORM
+#define TEX_2D       D3D11_SRV_DIMENSION_TEXTURE2D
+#define TEX_2D_ARRAY D3D11_SRV_DIMENSION_TEXTURE2DARRAY
+#define TEX_CUBE     D3D11_SRV_DIMENSION_TEXTURECUBE
+#define CUBE_ARRAY   D3D11_SRV_DIMENSION_TEXTURECUBEARRAY
+        {{10,  1, RGBA8_UNORM}, {0},                                       {RGBA8_UNORM, TEX_2D,       0, 10}},
+        {{10,  1, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D, 0, -1},              {RGBA8_UNORM, TEX_2D,       0, 10}},
+        {{10,  1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_2D, 0, -1},              {RGBA8_UNORM, TEX_2D,       0, 10}},
+        {{10,  1, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D, 0, 10},              {RGBA8_UNORM, TEX_2D,       0, 10}},
+        {{10,  4, RGBA8_UNORM}, {0},                                       {RGBA8_UNORM, TEX_2D_ARRAY, 0, 10, 0, 4}},
+        {{10,  4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, -1, 0, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 0, 10, 0, 4}},
+        {{10,  4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 1, -1, 0, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 1,  9, 0, 4}},
+        {{10,  4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 3, -1, 0, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 3,  7, 0, 4}},
+        {{10,  4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 5, -1, 0, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 5,  5, 0, 4}},
+        {{10,  4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 9, -1, 0, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 9,  1, 0, 4}},
+        {{10,  4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, -1, 1, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 0, 10, 1, 3}},
+        {{10,  4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, -1, 2, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 0, 10, 2, 2}},
+        {{10,  4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, -1, 3, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 0, 10, 3, 1}},
+        {{2,   6, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_CUBE,     0, -1,},       {RGBA8_UNORM, TEX_CUBE,     0,  2}},
+        {{2,   6, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_CUBE,     0,  1,},       {RGBA8_UNORM, TEX_CUBE ,    0,  1}},
+        {{2,   6, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_CUBE,     1,  1,},       {RGBA8_UNORM, TEX_CUBE ,    1,  1}},
+        {{2,   6, RGBA8_UNORM}, {FMT_UNKNOWN, CUBE_ARRAY,   0,  1, 0,  1}, {RGBA8_UNORM, CUBE_ARRAY,   0,  1, 0, 1}},
+        {{2,   6, RGBA8_UNORM}, {FMT_UNKNOWN, CUBE_ARRAY,   0, -1, 0, -1}, {RGBA8_UNORM, CUBE_ARRAY,   0,  2, 0, 1}},
+        {{1,   8, RGBA8_UNORM}, {FMT_UNKNOWN, CUBE_ARRAY,   0, -1, 0, -1}, {RGBA8_UNORM, CUBE_ARRAY,   0,  1, 0, 1}},
+        {{1,  12, RGBA8_UNORM}, {FMT_UNKNOWN, CUBE_ARRAY,   0, -1, 0, -1}, {RGBA8_UNORM, CUBE_ARRAY,   0,  1, 0, 2}},
+        {{1,  12, RGBA8_UNORM}, {FMT_UNKNOWN, CUBE_ARRAY,   0, -1, 0,  1}, {RGBA8_UNORM, CUBE_ARRAY,   0,  1, 0, 1}},
+        {{1,  12, RGBA8_UNORM}, {FMT_UNKNOWN, CUBE_ARRAY,   0, -1, 0,  2}, {RGBA8_UNORM, CUBE_ARRAY,   0,  1, 0, 2}},
 #undef FMT_UNKNOWN
 #undef RGBA8_UNORM
-#undef TEX2D
-#undef TEX2DARRAY
+#undef TEX_2D
+#undef TEX_2D_ARRAY
+#undef TEX_CUBE
+#undef CUBE_ARRAY
     };
 
     if (!(device = create_device(NULL)))
@@ -2465,6 +2515,7 @@ static void test_create_shader_resource_view(void)
         skip("Failed to create device.\n");
         return;
     }
+    feature_level = ID3D11Device_GetFeatureLevel(device);
 
     buffer = create_buffer(device, D3D11_BIND_SHADER_RESOURCE, 1024, NULL);
 
@@ -2508,7 +2559,6 @@ static void test_create_shader_resource_view(void)
     texture_desc.Usage = D3D11_USAGE_DEFAULT;
     texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
     texture_desc.CPUAccessFlags = 0;
-    texture_desc.MiscFlags = 0;
 
     for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
@@ -2517,6 +2567,18 @@ static void test_create_shader_resource_view(void)
         texture_desc.MipLevels = tests[i].texture.miplevel_count;
         texture_desc.ArraySize = tests[i].texture.array_size;
         texture_desc.Format = tests[i].texture.format;
+        texture_desc.MiscFlags = 0;
+
+        if (tests[i].srv_desc.dimension == D3D11_SRV_DIMENSION_TEXTURECUBE
+                || tests[i].srv_desc.dimension == D3D11_SRV_DIMENSION_TEXTURECUBEARRAY)
+            texture_desc.MiscFlags |= D3D11_RESOURCE_MISC_TEXTURECUBE;
+
+        if (tests[i].srv_desc.dimension == D3D11_SRV_DIMENSION_TEXTURECUBEARRAY
+                && feature_level < D3D_FEATURE_LEVEL_10_1)
+        {
+            skip("Test %u: Cube map array textures require feature level 10_1.\n", i);
+            continue;
+        }
 
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
         ok(SUCCEEDED(hr), "Test %u: Failed to create a 2d texture, hr %#x.\n", i, hr);
@@ -7738,7 +7800,7 @@ static void test_input_assembler(void)
 
             default:
                 trace("Unhandled format %#x.\n", layout_formats[tests[i].layout_id]);
-                /*  Fall through. */
+                /* Fall through. */
             case DXGI_FORMAT_R32G32B32A32_FLOAT:
             case DXGI_FORMAT_R16G16B16A16_UNORM:
             case DXGI_FORMAT_R16G16B16A16_SNORM:

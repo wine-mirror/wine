@@ -122,6 +122,11 @@ static void get_srv_desc(D3D10_SHADER_RESOURCE_VIEW_DESC *d3d10_desc, const stru
         U(*d3d10_desc).Texture2DArray.FirstArraySlice = desc->layer_idx;
         U(*d3d10_desc).Texture2DArray.ArraySize = desc->layer_count;
     }
+    else if (desc->dimension == D3D10_SRV_DIMENSION_TEXTURECUBE)
+    {
+        U(*d3d10_desc).TextureCube.MostDetailedMip = desc->miplevel_idx;
+        U(*d3d10_desc).TextureCube.MipLevels = desc->miplevel_count;
+    }
     else
     {
         trace("Unhandled view dimension %#x.\n", desc->dimension);
@@ -163,6 +168,15 @@ static void check_srv_desc_(unsigned int line, const D3D10_SHADER_RESOURCE_VIEW_
         ok_(__FILE__, line)(U(*desc).Texture2DArray.ArraySize == expected_desc->layer_count,
                 "Got ArraySize %u, expected %u.\n",
                 U(*desc).Texture2DArray.ArraySize, expected_desc->layer_count);
+    }
+    else if (desc->ViewDimension == D3D10_SRV_DIMENSION_TEXTURECUBE)
+    {
+        ok_(__FILE__, line)(U(*desc).TextureCube.MostDetailedMip == expected_desc->miplevel_idx,
+                "Got MostDetailedMip %u, expected %u.\n",
+                U(*desc).TextureCube.MostDetailedMip, expected_desc->miplevel_idx);
+        ok_(__FILE__, line)(U(*desc).TextureCube.MipLevels == expected_desc->miplevel_count,
+                "Got MipLevels %u, expected %u.\n",
+                U(*desc).TextureCube.MipLevels, expected_desc->miplevel_count);
     }
     else
     {
@@ -1774,6 +1788,7 @@ static void test_create_shader_resource_view(void)
 #define RGBA8_UNORM  DXGI_FORMAT_R8G8B8A8_UNORM
 #define TEX_2D       D3D10_SRV_DIMENSION_TEXTURE2D
 #define TEX_2D_ARRAY D3D10_SRV_DIMENSION_TEXTURE2DARRAY
+#define TEX_CUBE     D3D10_SRV_DIMENSION_TEXTURECUBE
         {{10, 1, RGBA8_UNORM}, {0},                                       {RGBA8_UNORM, TEX_2D,       0, 10}},
         {{10, 1, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D, 0, -1},              {RGBA8_UNORM, TEX_2D,       0, 10}},
         {{10, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_2D, 0, -1},              {RGBA8_UNORM, TEX_2D,       0, 10}},
@@ -1787,10 +1802,14 @@ static void test_create_shader_resource_view(void)
         {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, -1, 1, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 0, 10, 1, 3}},
         {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, -1, 2, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 0, 10, 2, 2}},
         {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, -1, 3, -1}, {RGBA8_UNORM, TEX_2D_ARRAY, 0, 10, 3, 1}},
+        {{2,  6, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_CUBE,     0, -1,},       {RGBA8_UNORM, TEX_CUBE,     0,  2}},
+        {{2,  6, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_CUBE,     0,  1,},       {RGBA8_UNORM, TEX_CUBE ,    0,  1}},
+        {{2,  6, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_CUBE,     1,  1,},       {RGBA8_UNORM, TEX_CUBE ,    1,  1}},
 #undef FMT_UNKNOWN
 #undef RGBA8_UNORM
 #undef TEX_2D
 #undef TEX_2D_ARRAY
+#undef TEX_CUBE
     };
 
     if (!(device = create_device()))
@@ -1841,7 +1860,6 @@ static void test_create_shader_resource_view(void)
     texture_desc.Usage = D3D10_USAGE_DEFAULT;
     texture_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
     texture_desc.CPUAccessFlags = 0;
-    texture_desc.MiscFlags = 0;
 
     for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
@@ -1850,6 +1868,10 @@ static void test_create_shader_resource_view(void)
         texture_desc.MipLevels = tests[i].texture.miplevel_count;
         texture_desc.ArraySize = tests[i].texture.array_size;
         texture_desc.Format = tests[i].texture.format;
+        texture_desc.MiscFlags = 0;
+
+        if (tests[i].srv_desc.dimension == D3D10_SRV_DIMENSION_TEXTURECUBE)
+            texture_desc.MiscFlags |= D3D10_RESOURCE_MISC_TEXTURECUBE;
 
         hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
         ok(SUCCEEDED(hr), "Test %u: Failed to create a 2d texture, hr %#x.\n", i, hr);
