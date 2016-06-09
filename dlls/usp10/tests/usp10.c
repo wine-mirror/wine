@@ -1696,7 +1696,8 @@ static void test_ScriptShape(HDC hdc)
     for (i = 0; i < 2; i++)
     {
         static const WCHAR space[]  = {' ', 0};
-        static const WCHAR blanks[] = {'\t', '\r', '\n', 0x001C, 0x001D, 0x001E, 0x001F,0};
+        static const WCHAR blanks[] = {'\t', '\r', '\n', 0x001c, 0x001d, 0x001e, 0x001f, 0x200e, 0x200f, /* LRM, RLM */
+                                       0x202a, 0x202b, 0x202c, 0x202d, 0x202e, 0};      /* LRE, RLE, PDF, LRO, RLO */
         HFONT font, oldfont = NULL;
         LOGFONTA lf;
 
