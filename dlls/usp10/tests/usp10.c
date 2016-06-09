@@ -1720,9 +1720,13 @@ static void test_ScriptShape(HDC hdc)
             hr = ScriptItemize(&blanks[j], 1, 2, NULL, NULL, items, NULL);
             ok(hr == S_OK, "%s: [%02x] expected S_OK, got %08x\n", lf.lfFaceName, blanks[j], hr);
 
+            ok(!items[0].a.fNoGlyphIndex, "%s: [%02x] got unexpected fNoGlyphIndex %#x.\n",
+               lf.lfFaceName, blanks[j], items[0].a.fNoGlyphIndex);
             hr = ScriptShape(hdc, &sc, &blanks[j], 1, 1, &items[0].a, glyphs2, logclust, attrs, &nb);
             ok(hr == S_OK, "%s: [%02x] expected S_OK, got %08x\n", lf.lfFaceName, blanks[j], hr);
             ok(nb == 1, "%s: [%02x] expected 1, got %d\n", lf.lfFaceName, blanks[j], nb);
+            ok(!items[0].a.fNoGlyphIndex, "%s: [%02x] got unexpected fNoGlyphIndex %#x.\n",
+               lf.lfFaceName, blanks[j], items[0].a.fNoGlyphIndex);
 
             ok(glyphs[0] == glyphs2[0] ||
                broken(glyphs2[0] == blanks[j] && (blanks[j] < 0x10)),
