@@ -1696,7 +1696,8 @@ static void test_ScriptShape(HDC hdc)
     for (i = 0; i < 2; i++)
     {
         static const WCHAR space[]  = {' ', 0};
-        static const WCHAR blanks[] = {'\t', '\r', '\n', 0x001c, 0x001d, 0x001e, 0x001f, 0x200e, 0x200f, /* LRM, RLM */
+        static const WCHAR blanks[] = {'\t', '\r', '\n', 0x001c, 0x001d, 0x001e, 0x001f,
+                                       0x200b, 0x200c, 0x200d, 0x200e, 0x200f,          /* ZWSP, ZWNJ, ZWJ, LRM, RLM */
                                        0x202a, 0x202b, 0x202c, 0x202d, 0x202e, 0};      /* LRE, RLE, PDF, LRO, RLO */
         HFONT font, oldfont = NULL;
         LOGFONTA lf;
@@ -1740,10 +1741,20 @@ static void test_ScriptShape(HDC hdc)
             ok(hr == S_OK, "%s: [%02x] expected S_OK, got %08x\n", lf.lfFaceName, blanks[j], hr);
             ok(nb == 1, "%s: [%02x] expected 1, got %d\n", lf.lfFaceName, blanks[j], nb);
 
-            ok(glyphs2[0] == blanks[j],
-               "%s: [%02x] got unexpected %04x.\n", lf.lfFaceName, blanks[j], glyphs2[0]);
-            ok(!attrs[0].fZeroWidth, "%s: [%02x] got unexpected fZeroWidth %#x.\n",
-               lf.lfFaceName, blanks[j], attrs[0].fZeroWidth);
+            if (blanks[j] == 0x200b || blanks[j] == 0x200c || blanks[j] == 0x200d)
+            {
+                ok(glyphs2[0] == 0x0020,
+                   "%s: [%02x] got unexpected %04x.\n", lf.lfFaceName, blanks[j], glyphs2[0]);
+                ok(attrs[0].fZeroWidth, "%s: [%02x] got unexpected fZeroWidth %#x.\n",
+                   lf.lfFaceName, blanks[j], attrs[0].fZeroWidth);
+            }
+            else
+            {
+                ok(glyphs2[0] == blanks[j],
+                   "%s: [%02x] got unexpected %04x.\n", lf.lfFaceName, blanks[j], glyphs2[0]);
+                ok(!attrs[0].fZeroWidth, "%s: [%02x] got unexpected fZeroWidth %#x.\n",
+                   lf.lfFaceName, blanks[j], attrs[0].fZeroWidth);
+            }
         }
         if (oldfont)
             DeleteObject(SelectObject(hdc, oldfont));

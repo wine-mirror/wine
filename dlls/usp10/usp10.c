@@ -1266,6 +1266,7 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
 {
 
 #define Numeric_space 0x0020
+#define ZWSP 0x200B
 #define ZWNJ 0x200C
 #define ZWJ  0x200D
 
@@ -3176,8 +3177,19 @@ HRESULT WINAPI ScriptShapeOpenType( HDC hdc, SCRIPT_CACHE *psc,
             if (rtl) idx = cChars - 1 - i;
             pwOutGlyphs[i] = pwcChars[idx];
 
+            if (!psa)
+                continue;
+
             /* overwrite some basic control glyphs to blank */
-            if (psa && !psa->fNoGlyphIndex && psa->eScript == Script_Control)
+            if (psa->fNoGlyphIndex)
+            {
+                if (pwcChars[idx] == ZWSP || pwcChars[idx] == ZWNJ || pwcChars[idx] == ZWJ)
+                {
+                    pwOutGlyphs[i] = 0x20;
+                    pOutGlyphProps[i].sva.fZeroWidth = 1;
+                }
+            }
+            else if (psa->eScript == Script_Control)
             {
                 if (pwcChars[idx] == 0x0009 || pwcChars[idx] == 0x000A ||
                     pwcChars[idx] == 0x000D || pwcChars[idx] >= 0x001C)
