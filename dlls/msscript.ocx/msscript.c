@@ -762,7 +762,7 @@ static HRESULT WINAPI PersistStreamInit_InitNew(IPersistStreamInit *iface)
 
     FIXME("(%p)\n", This);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const IPersistStreamInitVtbl PersistStreamInitVtbl = {
