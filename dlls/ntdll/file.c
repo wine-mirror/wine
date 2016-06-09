@@ -774,6 +774,42 @@ static NTSTATUS get_io_avail_mode( HANDLE handle, enum server_fd_type type, BOOL
     return status;
 }
 
+/* register an async I/O for a file read; helper for NtReadFile */
+static NTSTATUS register_async_file_read( HANDLE handle, HANDLE event,
+                                          PIO_APC_ROUTINE apc, void *apc_user,
+                                          IO_STATUS_BLOCK *iosb, void *buffer,
+                                          ULONG already, ULONG length, BOOL avail_mode )
+{
+    ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
+    struct async_fileio_read *fileio;
+    NTSTATUS status;
+
+    if (!(fileio = (struct async_fileio_read *)alloc_fileio( sizeof(*fileio), handle, apc, apc_user )))
+        return STATUS_NO_MEMORY;
+
+    fileio->already = already;
+    fileio->count = length;
+    fileio->buffer = buffer;
+    fileio->avail_mode = avail_mode;
+
+    SERVER_START_REQ( register_async )
+    {
+        req->type   = ASYNC_TYPE_READ;
+        req->count  = length;
+        req->async.handle   = wine_server_obj_handle( handle );
+        req->async.event    = wine_server_obj_handle( event );
+        req->async.callback = wine_server_client_ptr( FILE_AsyncReadService );
+        req->async.iosb     = wine_server_client_ptr( iosb );
+        req->async.arg      = wine_server_client_ptr( fileio );
+        req->async.cvalue   = cvalue;
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, fileio );
+    return status;
+}
+
 
 /******************************************************************************
  *  NtReadFile					[NTDLL.@]
@@ -910,7 +946,6 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
 
         if (async_read)
         {
-            struct async_fileio_read *fileio;
             BOOL avail_mode;
 
             if ((status = get_io_avail_mode( hFile, type, &avail_mode )))
@@ -920,33 +955,8 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                 status = STATUS_SUCCESS;
                 goto done;
             }
-
-            fileio = (struct async_fileio_read *)alloc_fileio( sizeof(*fileio), hFile, apc, apc_user );
-            if (!fileio)
-            {
-                status = STATUS_NO_MEMORY;
-                goto err;
-            }
-            fileio->already = total;
-            fileio->count = length;
-            fileio->buffer = buffer;
-            fileio->avail_mode = avail_mode;
-
-            SERVER_START_REQ( register_async )
-            {
-                req->type   = ASYNC_TYPE_READ;
-                req->count  = length;
-                req->async.handle   = wine_server_obj_handle( hFile );
-                req->async.event    = wine_server_obj_handle( hEvent );
-                req->async.callback = wine_server_client_ptr( FILE_AsyncReadService );
-                req->async.iosb     = wine_server_client_ptr( io_status );
-                req->async.arg      = wine_server_client_ptr( fileio );
-                req->async.cvalue   = cvalue;
-                status = wine_server_call( req );
-            }
-            SERVER_END_REQ;
-
-            if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, fileio );
+            status = register_async_file_read( hFile, hEvent, apc, apc_user, io_status,
+                                               buffer, total, length, avail_mode );
             goto err;
         }
         else  /* synchronous read, wait for the fd to become ready */
