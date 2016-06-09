@@ -3186,7 +3186,10 @@ HRESULT WINAPI ScriptShapeOpenType( HDC hdc, SCRIPT_CACHE *psc,
             {
                 if (pwcChars[idx] == 0x0009 || pwcChars[idx] == 0x000A ||
                     pwcChars[idx] == 0x000D || pwcChars[idx] >= 0x001C)
+                {
                     pwOutGlyphs[i] = ((ScriptCache *)*psc)->sfp.wgBlank;
+                    pOutGlyphProps[i].sva.fZeroWidth = 1;
+                }
             }
         }
     }

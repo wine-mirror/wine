@@ -1727,6 +1727,8 @@ static void test_ScriptShape(HDC hdc)
             ok(glyphs[0] == glyphs2[0] ||
                broken(glyphs2[0] == blanks[j] && (blanks[j] < 0x10)),
                "%s: [%02x] expected %04x, got %04x\n", lf.lfFaceName, blanks[j], glyphs[0], glyphs2[0]);
+            ok(attrs[0].fZeroWidth || broken(!attrs[0].fZeroWidth && (blanks[j] < 0x10) /* Vista */),
+               "%s: [%02x] got unexpected fZeroWidth %#x.\n", lf.lfFaceName, blanks[j], attrs[0].fZeroWidth);
         }
         if (oldfont)
             DeleteObject(SelectObject(hdc, oldfont));
