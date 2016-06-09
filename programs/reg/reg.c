@@ -937,7 +937,7 @@ int wmain(int argc, WCHAR *argvW[])
                 value_all = TRUE;
                 continue;
             }
-            else if (ptr[1])
+            else if (!ptr[0] || ptr[1])
             {
                 output_message(STRING_INVALID_CMDLINE);
                 return 1;
