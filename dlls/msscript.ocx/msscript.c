@@ -33,6 +33,7 @@ struct ScriptControl {
     IScriptControl IScriptControl_iface;
     IPersistStreamInit IPersistStreamInit_iface;
     IOleObject IOleObject_iface;
+    IOleControl IOleControl_iface;
     LONG ref;
     IOleClientSite *site;
     SIZEL extent;
@@ -134,6 +135,11 @@ static inline ScriptControl *impl_from_IPersistStreamInit(IPersistStreamInit *if
     return CONTAINING_RECORD(iface, ScriptControl, IPersistStreamInit_iface);
 }
 
+static inline ScriptControl *impl_from_IOleControl(IOleControl *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptControl, IOleControl_iface);
+}
+
 static HRESULT WINAPI ScriptControl_QueryInterface(IScriptControl *iface, REFIID riid, void **ppv)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
@@ -148,14 +154,17 @@ static HRESULT WINAPI ScriptControl_QueryInterface(IScriptControl *iface, REFIID
         TRACE("(%p)->(IID_IScriptControl %p)\n", This, ppv);
         *ppv = &This->IScriptControl_iface;
     }else if(IsEqualGUID(&IID_IOleObject, riid)) {
-        TRACE("(%p)->(IID_IOleObject %p\n", This, ppv);
+        TRACE("(%p)->(IID_IOleObject %p)\n", This, ppv);
         *ppv = &This->IOleObject_iface;
     }else if(IsEqualGUID(&IID_IPersistStreamInit, riid)) {
-        TRACE("(%p)->(IID_IPersistStreamInit %p\n", This, ppv);
+        TRACE("(%p)->(IID_IPersistStreamInit %p)\n", This, ppv);
         *ppv = &This->IPersistStreamInit_iface;
     }else if(IsEqualGUID(&IID_IPersist, riid)) {
-        TRACE("(%p)->(IID_IPersist %p\n", This, ppv);
+        TRACE("(%p)->(IID_IPersist %p)\n", This, ppv);
         *ppv = &This->IPersistStreamInit_iface;
+    }else if(IsEqualGUID(&IID_IOleControl, riid)) {
+        TRACE("(%p)->(IID_IOleControl %p)\n", This, ppv);
+        *ppv = &This->IOleControl_iface;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -777,6 +786,70 @@ static const IPersistStreamInitVtbl PersistStreamInitVtbl = {
     PersistStreamInit_InitNew
 };
 
+static HRESULT WINAPI OleControl_QueryInterface(IOleControl *iface, REFIID riid, void **obj)
+{
+    ScriptControl *This = impl_from_IOleControl(iface);
+    return IScriptControl_QueryInterface(&This->IScriptControl_iface, riid, obj);
+}
+
+static ULONG WINAPI OleControl_AddRef(IOleControl *iface)
+{
+    ScriptControl *This = impl_from_IOleControl(iface);
+    return IScriptControl_AddRef(&This->IScriptControl_iface);
+}
+
+static ULONG WINAPI OleControl_Release(IOleControl *iface)
+{
+    ScriptControl *This = impl_from_IOleControl(iface);
+    return IScriptControl_Release(&This->IScriptControl_iface);
+}
+
+static HRESULT WINAPI OleControl_GetControlInfo(IOleControl *iface, CONTROLINFO *info)
+{
+    ScriptControl *This = impl_from_IOleControl(iface);
+
+    FIXME("(%p)->(%p)\n", This, info);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControl_OnMnemonic(IOleControl *iface, MSG *msg)
+{
+    ScriptControl *This = impl_from_IOleControl(iface);
+
+    FIXME("(%p)->(%p)\n", This, msg);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DISPID dispid)
+{
+    ScriptControl *This = impl_from_IOleControl(iface);
+
+    FIXME("(%p)->(%#x)\n", This, dispid);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControl_FreezeEvents(IOleControl *iface, BOOL freeze)
+{
+    ScriptControl *This = impl_from_IOleControl(iface);
+
+    FIXME("(%p)->(%d)\n", This, freeze);
+
+    return E_NOTIMPL;
+}
+
+static const IOleControlVtbl OleControlVtbl = {
+    OleControl_QueryInterface,
+    OleControl_AddRef,
+    OleControl_Release,
+    OleControl_GetControlInfo,
+    OleControl_OnMnemonic,
+    OleControl_OnAmbientPropertyChange,
+    OleControl_FreezeEvents
+};
+
 static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
 {
     ScriptControl *script_control;
@@ -793,6 +866,7 @@ static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknow
     script_control->IScriptControl_iface.lpVtbl = &ScriptControlVtbl;
     script_control->IPersistStreamInit_iface.lpVtbl = &PersistStreamInitVtbl;
     script_control->IOleObject_iface.lpVtbl = &OleObjectVtbl;
+    script_control->IOleControl_iface.lpVtbl = &OleControlVtbl;
     script_control->ref = 1;
     script_control->site = NULL;
 

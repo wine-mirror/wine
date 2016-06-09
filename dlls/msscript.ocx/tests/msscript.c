@@ -178,6 +178,18 @@ static void test_persiststreaminit(void)
     IPersistStreamInit_Release(init);
 }
 
+static void test_olecontrol(void)
+{
+    IOleControl *olecontrol;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IOleControl, (void**)&olecontrol);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IOleControl_Release(olecontrol);
+}
+
 START_TEST(msscript)
 {
     IUnknown *unk;
@@ -195,6 +207,7 @@ START_TEST(msscript)
 
     test_oleobject();
     test_persiststreaminit();
+    test_olecontrol();
 
     CoUninitialize();
 }
