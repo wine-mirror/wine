@@ -108,6 +108,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_FRC                              */ "frc",
     /* WINED3DSIH_FTOI                             */ "ftoi",
     /* WINED3DSIH_FTOU                             */ "ftou",
+    /* WINED3DSIH_GATHER4                          */ "gather4",
     /* WINED3DSIH_GE                               */ "ge",
     /* WINED3DSIH_HS_CONTROL_POINT_PHASE           */ "hs_control_point_phase",
     /* WINED3DSIH_HS_DECLS                         */ "hs_decls",
