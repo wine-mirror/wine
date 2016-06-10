@@ -516,8 +516,8 @@ float4 main(float4 color : COLOR) : SV_TARGET
                     && tmp_rect[i].top == i * 2
                     && tmp_rect[i].right == i + 1
                     && tmp_rect[i].bottom == (i + 1) * 2,
-                    "Got unexpected scissor rect {%d, %d, %d, %d} in slot %u.\n",
-                    tmp_rect[i].left, tmp_rect[i].top, tmp_rect[i].right, tmp_rect[i].bottom, i);
+                    "Got unexpected scissor rect %s in slot %u.\n",
+                    wine_dbgstr_rect(&tmp_rect[i]), i);
     }
     ID3D10Device_RSGetViewports(device, &count, NULL);
     todo_wine ok(count == D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE,
