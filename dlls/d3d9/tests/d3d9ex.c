@@ -1011,8 +1011,7 @@ static void test_reset(void)
     hr = IDirect3DDevice9Ex_GetScissorRect(device, &rect);
     ok(SUCCEEDED(hr), "Failed to get scissor rect, hr %#x.\n", hr);
     ok(rect.left == 0 && rect.top == 0 && rect.right == modes[i].w && rect.bottom == modes[i].h,
-            "Got unexpected scissor rect {%d, %d, %d, %d}.\n",
-            rect.left, rect.top, rect.right, rect.bottom);
+            "Got unexpected scissor rect %s.\n", wine_dbgstr_rect(&rect));
 
     hr = IDirect3DDevice9Ex_GetViewport(device, &vp);
     ok(SUCCEEDED(hr), "Failed to get viewport, hr %#x.\n", hr);
@@ -1060,8 +1059,7 @@ static void test_reset(void)
     hr = IDirect3DDevice9Ex_GetScissorRect(device, &rect);
     ok(SUCCEEDED(hr), "Failed to get scissor rect, hr %#x.\n", hr);
     ok(rect.left == 0 && rect.top == 0 && rect.right == modes[i].w && rect.bottom == modes[i].h,
-            "Got unexpected scissor rect {%d, %d, %d, %d}.\n",
-            rect.left, rect.top, rect.right, rect.bottom);
+            "Got unexpected scissor rect %s.\n", wine_dbgstr_rect(&rect));
 
     hr = IDirect3DDevice9Ex_GetViewport(device, &vp);
     ok(SUCCEEDED(hr), "Failed to get viewport, hr %#x.\n", hr);
@@ -1106,8 +1104,7 @@ static void test_reset(void)
     hr = IDirect3DDevice9Ex_GetScissorRect(device, &rect);
     ok(SUCCEEDED(hr), "Failed to get scissor rect, hr %#x.\n", hr);
     ok(rect.left == 0 && rect.top == 0 && rect.right == 400 && rect.bottom == 300,
-            "Got unexpected scissor rect {%d, %d, %d, %d}.\n",
-            rect.left, rect.top, rect.right, rect.bottom);
+            "Got unexpected scissor rect %s.\n", wine_dbgstr_rect(&rect));
 
     hr = IDirect3DDevice9Ex_GetViewport(device, &vp);
     ok(SUCCEEDED(hr), "Failed to get viewport, hr %#x.\n", hr);
@@ -1162,8 +1159,7 @@ static void test_reset(void)
     hr = IDirect3DDevice9Ex_GetScissorRect(device, &rect);
     ok(SUCCEEDED(hr), "Failed to get scissor rect, hr %#x.\n", hr);
     ok(rect.left == 0 && rect.top == 0 && rect.right == 200 && rect.bottom == 150,
-            "Got unexpected scissor rect {%d, %d, %d, %d}.\n",
-            rect.left, rect.top, rect.right, rect.bottom);
+            "Got unexpected scissor rect %s.\n", wine_dbgstr_rect(&rect));
 
     hr = IDirect3DDevice9Ex_GetViewport(device, &vp);
     ok(SUCCEEDED(hr), "Failed to get viewport, hr %#x.\n", hr);
@@ -2858,19 +2854,16 @@ static void test_window_style(void)
 
         GetWindowRect(device_window, &r);
         if (tests[i].device_flags & CREATE_DEVICE_NOWINDOWCHANGES)
-            todo_wine ok(EqualRect(&r, &device_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}, i=%u.\n",
-                    device_rect.left, device_rect.top, device_rect.right, device_rect.bottom,
-                    r.left, r.top, r.right, r.bottom, i);
+            todo_wine ok(EqualRect(&r, &device_rect), "Expected %s, got %s, i=%u.\n",
+                    wine_dbgstr_rect(&device_rect), wine_dbgstr_rect(&r), i);
         else
-            ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}, i=%u.\n",
-                    fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
-                    r.left, r.top, r.right, r.bottom, i);
+            ok(EqualRect(&r, &fullscreen_rect), "Expected %s, got %s, i=%u.\n",
+                    wine_dbgstr_rect(&fullscreen_rect), wine_dbgstr_rect(&r), i);
         GetClientRect(device_window, &r2);
         todo_wine ok(!EqualRect(&r, &r2), "Client rect and window rect are equal, i=%u.\n", i);
         GetWindowRect(focus_window, &r);
-        ok(EqualRect(&r, &focus_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}, i=%u.\n",
-                focus_rect.left, focus_rect.top, focus_rect.right, focus_rect.bottom,
-                r.left, r.top, r.right, r.bottom, i);
+        ok(EqualRect(&r, &focus_rect), "Expected %s, got %s, i=%u.\n",
+                wine_dbgstr_rect(&focus_rect), wine_dbgstr_rect(&r), i);
 
         device_desc.flags = 0;
         hr = reset_device(device, &device_desc);

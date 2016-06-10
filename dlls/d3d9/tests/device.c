@@ -4491,19 +4491,16 @@ static void test_window_style(void)
 
         GetWindowRect(device_window, &r);
         if (tests[i].device_flags & CREATE_DEVICE_NOWINDOWCHANGES)
-            todo_wine ok(EqualRect(&r, &device_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}, i=%u.\n",
-                    device_rect.left, device_rect.top, device_rect.right, device_rect.bottom,
-                    r.left, r.top, r.right, r.bottom, i);
+            todo_wine ok(EqualRect(&r, &device_rect), "Expected %s, got %s, i=%u.\n",
+                    wine_dbgstr_rect(&device_rect), wine_dbgstr_rect(&r), i);
         else
-            ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}, i=%u.\n",
-                    fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
-                    r.left, r.top, r.right, r.bottom, i);
+            ok(EqualRect(&r, &fullscreen_rect), "Expected %s, got %s, i=%u.\n",
+                    wine_dbgstr_rect(&fullscreen_rect), wine_dbgstr_rect(&r), i);
         GetClientRect(device_window, &r2);
         todo_wine ok(!EqualRect(&r, &r2), "Client rect and window rect are equal.\n");
         GetWindowRect(focus_window, &r);
-        ok(EqualRect(&r, &focus_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}, i=%u.\n",
-                focus_rect.left, focus_rect.top, focus_rect.right, focus_rect.bottom,
-                r.left, r.top, r.right, r.bottom, i);
+        ok(EqualRect(&r, &focus_rect), "Expected %s, got %s, i=%u.\n",
+                wine_dbgstr_rect(&focus_rect), wine_dbgstr_rect(&r), i);
 
         device_desc.flags = 0;
         hr = reset_device(device, &device_desc);
@@ -4795,13 +4792,11 @@ static void test_mode_change(void)
             user32_width, user32_height, devmode.dmPelsWidth, devmode.dmPelsHeight);
 
     GetWindowRect(device_window, &r);
-    ok(EqualRect(&r, &d3d_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            d3d_rect.left, d3d_rect.top, d3d_rect.right, d3d_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &d3d_rect), "Expected %s, got %s.\n",
+            wine_dbgstr_rect(&d3d_rect), wine_dbgstr_rect(&r));
     GetWindowRect(focus_window, &r);
-    ok(EqualRect(&r, &focus_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            focus_rect.left, focus_rect.top, focus_rect.right, focus_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &focus_rect), "Expected %s, got %s.\n",
+            wine_dbgstr_rect(&focus_rect), wine_dbgstr_rect(&r));
 
     hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
     ok(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
@@ -4898,13 +4893,11 @@ static void test_device_window_reset(void)
     }
 
     GetWindowRect(focus_window, &r);
-    ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &fullscreen_rect), "Expected %s, got %s.\n",
+            wine_dbgstr_rect(&fullscreen_rect), wine_dbgstr_rect(&r));
     GetWindowRect(device_window, &r);
-    ok(EqualRect(&r, &device_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            device_rect.left, device_rect.top, device_rect.right, device_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &device_rect), "Expected %s, got %s.\n",
+            wine_dbgstr_rect(&device_rect), wine_dbgstr_rect(&r));
 
     proc = GetWindowLongPtrA(device_window, GWLP_WNDPROC);
     ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
@@ -4917,13 +4910,11 @@ static void test_device_window_reset(void)
     ok(SUCCEEDED(hr), "Failed to reset device.\n");
 
     GetWindowRect(focus_window, &r);
-    ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &fullscreen_rect), "Expected %s, got %s.\n",
+            wine_dbgstr_rect(&fullscreen_rect), wine_dbgstr_rect(&r));
     GetWindowRect(device_window, &r);
-    ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
-            fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
-            r.left, r.top, r.right, r.bottom);
+    ok(EqualRect(&r, &fullscreen_rect), "Expected %s, got %s.\n",
+            wine_dbgstr_rect(&fullscreen_rect), wine_dbgstr_rect(&r));
 
     proc = GetWindowLongPtrA(device_window, GWLP_WNDPROC);
     ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#lx, got %#lx.\n",
@@ -5051,8 +5042,7 @@ static void test_set_rt_vp_scissor(void)
     hr = IDirect3DDevice9_GetScissorRect(device, &rect);
     ok(SUCCEEDED(hr), "Failed to get scissor rect, hr %#x.\n", hr);
     ok(rect.left == 0 && rect.top == 0 && rect.right == 640 && rect.bottom == 480,
-            "Got unexpected scissor rect {%d, %d, %d, %d}.\n",
-            rect.left, rect.top, rect.right, rect.bottom);
+            "Got unexpected scissor rect %s.\n", wine_dbgstr_rect(&rect));
 
     hr = IDirect3DDevice9_BeginStateBlock(device);
     ok(SUCCEEDED(hr), "Failed to begin stateblock, hr %#x.\n", hr);
@@ -5076,8 +5066,7 @@ static void test_set_rt_vp_scissor(void)
     hr = IDirect3DDevice9_GetScissorRect(device, &rect);
     ok(SUCCEEDED(hr), "Failed to get scissor rect, hr %#x.\n", hr);
     ok(rect.left == 0 && rect.top == 0 && rect.right == 128 && rect.bottom == 128,
-            "Got unexpected scissor rect {%d, %d, %d, %d}.\n",
-            rect.left, rect.top, rect.right, rect.bottom);
+            "Got unexpected scissor rect %s.\n", wine_dbgstr_rect(&rect));
 
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
     ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
@@ -5110,8 +5099,7 @@ static void test_set_rt_vp_scissor(void)
     hr = IDirect3DDevice9_GetScissorRect(device, &rect);
     ok(SUCCEEDED(hr), "Failed to get scissor rect, hr %#x.\n", hr);
     ok(rect.left == 0 && rect.top == 0 && rect.right == 128 && rect.bottom == 128,
-            "Got unexpected scissor rect {%d, %d, %d, %d}.\n",
-            rect.left, rect.top, rect.right, rect.bottom);
+            "Got unexpected scissor rect %s.\n", wine_dbgstr_rect(&rect));
 
     IDirect3DSurface9_Release(rt);
     refcount = IDirect3DDevice9_Release(device);
@@ -7257,17 +7245,16 @@ static void test_lockrect_invalid(void)
              * them. Some games (C&C3) depend on the XP behavior, mark the Win 7
              * one broken. */
             ok(SUCCEEDED(hr) || broken(hr == test_data[i].win7_result),
-                    "Failed to lock surface with rect [%d, %d]->[%d, %d], hr %#x, type %s.\n",
-                    rect->left, rect->top, rect->right, rect->bottom, hr, resources[r].name);
+                    "Failed to lock surface with rect %s, hr %#x, type %s.\n",
+                    wine_dbgstr_rect(rect), hr, resources[r].name);
             if (FAILED(hr))
                 continue;
 
             offset = (BYTE *)locked_rect.pBits - base;
             expected_offset = rect->top * locked_rect.Pitch + rect->left * 4;
             ok(offset == expected_offset,
-                    "Got unexpected offset %u (expected %u) for rect [%d, %d]->[%d, %d], type %s.\n",
-                    offset, expected_offset, rect->left, rect->top,
-                    rect->right, rect->bottom, resources[r].name);
+                    "Got unexpected offset %u (expected %u) for rect %s, type %s.\n",
+                    offset, expected_offset, wine_dbgstr_rect(rect), resources[r].name);
 
             hr = IDirect3DSurface9_UnlockRect(surface);
             ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, type %s.\n", hr, resources[r].name);
@@ -7276,17 +7263,16 @@ static void test_lockrect_invalid(void)
             {
                 hr = IDirect3DTexture9_LockRect(texture, 0, &locked_rect, rect, 0);
                 ok(SUCCEEDED(hr),
-                        "Failed to lock texture with rect [%d, %d]->[%d, %d], hr %#x, type %s.\n",
-                        rect->left, rect->top, rect->right, rect->bottom, hr, resources[r].name);
+                        "Failed to lock texture with rect %s, hr %#x, type %s.\n",
+                        wine_dbgstr_rect(rect), hr, resources[r].name);
                 if (FAILED(hr))
                     continue;
 
                 offset = (BYTE *)locked_rect.pBits - base;
                 expected_offset = rect->top * locked_rect.Pitch + rect->left * 4;
                 ok(offset == expected_offset,
-                        "Got unexpected offset %u (expected %u) for rect [%d, %d]->[%d, %d], type %s.\n",
-                        offset, expected_offset, rect->left, rect->top,
-                        rect->right, rect->bottom, resources[r].name);
+                        "Got unexpected offset %u (expected %u) for rect %s, type %s.\n",
+                        offset, expected_offset, wine_dbgstr_rect(rect), resources[r].name);
 
                 hr = IDirect3DTexture9_UnlockRect(texture, 0);
                 ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x, type %s.\n", hr, resources[r].name);
@@ -7296,17 +7282,16 @@ static void test_lockrect_invalid(void)
                 hr = IDirect3DCubeTexture9_LockRect(cube_texture, D3DCUBEMAP_FACE_NEGATIVE_X, 0,
                         &locked_rect, rect, 0);
                 ok(SUCCEEDED(hr),
-                        "Failed to lock texture with rect [%d, %d]->[%d, %d], hr %#x, type %s.\n",
-                        rect->left, rect->top, rect->right, rect->bottom, hr, resources[r].name);
+                        "Failed to lock texture with rect %s, hr %#x, type %s.\n",
+                        wine_dbgstr_rect(rect), hr, resources[r].name);
                 if (FAILED(hr))
                     continue;
 
                 offset = (BYTE *)locked_rect.pBits - base;
                 expected_offset = rect->top * locked_rect.Pitch + rect->left * 4;
                 ok(offset == expected_offset,
-                        "Got unexpected offset %u (expected %u) for rect [%d, %d]->[%d, %d], type %s.\n",
-                        offset, expected_offset, rect->left, rect->top,
-                        rect->right, rect->bottom, resources[r].name);
+                        "Got unexpected offset %u (expected %u) for rect %s, type %s.\n",
+                        offset, expected_offset, wine_dbgstr_rect(rect), resources[r].name);
 
                 hr = IDirect3DCubeTexture9_UnlockRect(cube_texture, D3DCUBEMAP_FACE_NEGATIVE_X, 0);
                 ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x, type %s.\n", hr, resources[r].name);
@@ -7327,17 +7312,14 @@ static void test_lockrect_invalid(void)
         ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, type %s.\n", hr, resources[r].name);
 
         hr = IDirect3DSurface9_LockRect(surface, &locked_rect, &test_data[0].rect, 0);
-        ok(hr == D3D_OK, "Got unexpected hr %#x for rect [%d, %d]->[%d, %d], type %s.\n",
-                hr, test_data[0].rect.left, test_data[0].rect.top,
-                test_data[0].rect.right, test_data[0].rect.bottom, resources[r].name);
+        ok(hr == D3D_OK, "Got unexpected hr %#x for rect %s, type %s.\n",
+                hr, wine_dbgstr_rect(&test_data[0].rect), resources[r].name);
         hr = IDirect3DSurface9_LockRect(surface, &locked_rect, &test_data[0].rect, 0);
-        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for rect [%d, %d]->[%d, %d], type %s.\n",
-                hr, test_data[0].rect.left, test_data[0].rect.top,
-                test_data[0].rect.right, test_data[0].rect.bottom, resources[r].name);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for rect %s, type %s.\n",
+                hr, wine_dbgstr_rect(&test_data[0].rect), resources[r].name);
         hr = IDirect3DSurface9_LockRect(surface, &locked_rect, &test_rect_2, 0);
-        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for rect [%d, %d]->[%d, %d], type %s.\n",
-                hr, test_rect_2.left, test_rect_2.top,
-                test_rect_2.right, test_rect_2.bottom, resources[r].name);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for rect %s, type %s.\n",
+                hr, wine_dbgstr_rect(&test_rect_2), resources[r].name);
         hr = IDirect3DSurface9_UnlockRect(surface);
         ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, type %s.\n", hr, resources[r].name);
 
@@ -7362,17 +7344,14 @@ static void test_lockrect_invalid(void)
             ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x, type %s.\n", hr, resources[r].name);
 
             hr = IDirect3DTexture9_LockRect(texture, 0, &locked_rect, &test_data[0].rect, 0);
-            ok(hr == D3D_OK, "Got unexpected hr %#x for rect [%d, %d]->[%d, %d], type %s.\n",
-                    hr, test_data[0].rect.left, test_data[0].rect.top,
-                    test_data[0].rect.right, test_data[0].rect.bottom, resources[r].name);
+            ok(hr == D3D_OK, "Got unexpected hr %#x for rect %s, type %s.\n",
+                    hr, wine_dbgstr_rect(&test_data[0].rect), resources[r].name);
             hr = IDirect3DTexture9_LockRect(texture, 0, &locked_rect, &test_data[0].rect, 0);
-            ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for rect [%d, %d]->[%d, %d], type %s.\n",
-                    hr, test_data[0].rect.left, test_data[0].rect.top,
-                    test_data[0].rect.right, test_data[0].rect.bottom, resources[r].name);
+            ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for rect %s, type %s.\n",
+                    hr, wine_dbgstr_rect(&test_data[0].rect), resources[r].name);
             hr = IDirect3DTexture9_LockRect(texture, 0, &locked_rect, &test_rect_2, 0);
-            ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for rect [%d, %d]->[%d, %d], type %s.\n",
-                    hr, test_rect_2.left, test_rect_2.top,
-                    test_rect_2.right, test_rect_2.bottom, resources[r].name);
+            ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for rect %s, type %s.\n",
+                    hr, wine_dbgstr_rect(&test_rect_2), resources[r].name);
             hr = IDirect3DTexture9_UnlockRect(texture, 0);
             ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x, type %s.\n", hr, resources[r].name);
 
@@ -7400,19 +7379,16 @@ static void test_lockrect_invalid(void)
 
             hr = IDirect3DCubeTexture9_LockRect(cube_texture, D3DCUBEMAP_FACE_NEGATIVE_X, 0,
                     &locked_rect, &test_data[0].rect, 0);
-            ok(hr == D3D_OK, "Got unexpected hr %#x for rect [%d, %d]->[%d, %d], type %s.\n",
-                    hr, test_data[0].rect.left, test_data[0].rect.top,
-                    test_data[0].rect.right, test_data[0].rect.bottom, resources[r].name);
+            ok(hr == D3D_OK, "Got unexpected hr %#x for rect %s, type %s.\n",
+                    hr, wine_dbgstr_rect(&test_data[0].rect), resources[r].name);
             hr = IDirect3DCubeTexture9_LockRect(cube_texture, D3DCUBEMAP_FACE_NEGATIVE_X, 0,
                     &locked_rect, &test_data[0].rect, 0);
-            ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for rect [%d, %d]->[%d, %d], type %s.\n",
-                    hr, test_data[0].rect.left, test_data[0].rect.top,
-                    test_data[0].rect.right, test_data[0].rect.bottom, resources[r].name);
+            ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for rect %s, type %s.\n",
+                    hr, wine_dbgstr_rect(&test_data[0].rect), resources[r].name);
             hr = IDirect3DCubeTexture9_LockRect(cube_texture, D3DCUBEMAP_FACE_NEGATIVE_X, 0,
                     &locked_rect, &test_rect_2, 0);
-            ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for rect [%d, %d]->[%d, %d], type %s.\n",
-                    hr, test_rect_2.left, test_rect_2.top,
-                    test_rect_2.right, test_rect_2.bottom, resources[r].name);
+            ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x for rect %s, type %s.\n",
+                    hr, wine_dbgstr_rect(&test_rect_2), resources[r].name);
             hr = IDirect3DCubeTexture9_UnlockRect(cube_texture, D3DCUBEMAP_FACE_NEGATIVE_X, 0);
             ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x, type %s.\n", hr, resources[r].name);
 
