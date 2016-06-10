@@ -483,6 +483,8 @@ static void sync_taskbar_buttons(void)
     int right = tray_width - nb_displayed * icon_cx;
     HWND foreground = GetAncestor( GetForegroundWindow(), GA_ROOTOWNER );
 
+    if (!IsWindowVisible( tray_window )) return;
+
     LIST_FOR_EACH_ENTRY( win, &taskbar_buttons, struct taskbar_button, entry )
     {
         if (!win->hwnd)  /* start button */
@@ -596,6 +598,8 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
 static void add_taskbar_button( HWND hwnd )
 {
     struct taskbar_button *win;
+
+    if (hide_systray) return;
 
     /* ignore our own windows */
     if (hwnd)
@@ -730,9 +734,9 @@ static void do_show_systray(void)
     tray_width = GetSystemMetrics( SM_CXSCREEN );
     tray_height = max( icon_cy, size.cy );
     start_button_width = size.cx;
-    sync_taskbar_buttons();
     SetWindowPos( tray_window, HWND_TOPMOST, 0, GetSystemMetrics( SM_CYSCREEN ) - tray_height,
                   tray_width, tray_height, SWP_NOACTIVATE | SWP_SHOWWINDOW );
+    sync_taskbar_buttons();
 }
 
 static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
