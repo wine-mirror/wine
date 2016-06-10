@@ -4204,11 +4204,13 @@ static void test_texture(void)
         D3D11_SUBRESOURCE_DATA data[3];
     };
 
+    D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
     struct d3d11_test_context test_context;
     const struct texture *current_texture;
     D3D11_TEXTURE2D_DESC texture_desc;
     D3D11_SAMPLER_DESC sampler_desc;
     const struct shader *current_ps;
+    D3D_FEATURE_LEVEL feature_level;
     ID3D11ShaderResourceView *srv;
     ID3D11DeviceContext *context;
     ID3D11SamplerState *sampler;
@@ -4541,6 +4543,8 @@ static void test_texture(void)
     };
     static const struct texture srgb_texture = {4, 4, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
             {{srgb_data, 4 * sizeof(*srgb_data)}}};
+    static const struct texture srgb_typeless = {4, 4, 1, 1, DXGI_FORMAT_R8G8B8A8_TYPELESS,
+            {{srgb_data, 4 * sizeof(*srgb_data)}}};
     static const struct texture a8_texture = {4, 4, 1, 1, DXGI_FORMAT_A8_UNORM,
             {{a8_data, 4 * sizeof(*a8_data)}}};
     static const struct texture bc1_texture = {8, 8, 1, 1, DXGI_FORMAT_BC1_UNORM, {{bc1_data, 2 * 8}}};
@@ -4551,6 +4555,9 @@ static void test_texture(void)
     static const struct texture bc1_texture_srgb = {8, 8, 1, 1, DXGI_FORMAT_BC1_UNORM_SRGB, {{bc1_data, 2 * 8}}};
     static const struct texture bc2_texture_srgb = {8, 8, 1, 1, DXGI_FORMAT_BC2_UNORM_SRGB, {{bc2_data, 2 * 16}}};
     static const struct texture bc3_texture_srgb = {8, 8, 1, 1, DXGI_FORMAT_BC3_UNORM_SRGB, {{bc3_data, 2 * 16}}};
+    static const struct texture bc1_typeless = {8, 8, 1, 1, DXGI_FORMAT_BC1_TYPELESS, {{bc1_data, 2 * 8}}};
+    static const struct texture bc2_typeless = {8, 8, 1, 1, DXGI_FORMAT_BC2_TYPELESS, {{bc2_data, 2 * 16}}};
+    static const struct texture bc3_typeless = {8, 8, 1, 1, DXGI_FORMAT_BC3_TYPELESS, {{bc3_data, 2 * 16}}};
     static const struct texture sint8_texture = {4, 4, 1, 1, DXGI_FORMAT_R8G8B8A8_SINT,
             {{rgba_level_0, 4 * sizeof(*rgba_level_0)}}};
     static const struct texture uint8_texture = {4, 4, 1, 1, DXGI_FORMAT_R8G8B8A8_UINT,
@@ -4644,7 +4651,7 @@ static void test_texture(void)
     static const DWORD zero_colors[4 * 4] = {0};
     static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
 
-    static const struct test
+    static const struct texture_test
     {
         const struct shader *ps;
         const struct texture *texture;
@@ -4655,7 +4662,7 @@ static void test_texture(void)
         float ps_constant;
         const DWORD *expected_colors;
     }
-    tests[] =
+    texture_tests[] =
     {
 #define POINT        D3D11_FILTER_MIN_MAG_MIP_POINT
 #define POINT_LINEAR D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR
@@ -4759,12 +4766,58 @@ static void test_texture(void)
 #undef POINT_LINEAR
 #undef MIP_MAX
     };
+    static const struct srv_test
+    {
+        const struct shader *ps;
+        const struct texture *texture;
+        struct srv_desc srv_desc;
+        float ps_constant;
+        const DWORD *expected_colors;
+    }
+    srv_tests[] =
+    {
+#define TEX_2D              D3D11_SRV_DIMENSION_TEXTURE2D
+#define TEX_2D_ARRAY        D3D11_SRV_DIMENSION_TEXTURE2DARRAY
+#define BC1_UNORM           DXGI_FORMAT_BC1_UNORM
+#define BC1_UNORM_SRGB      DXGI_FORMAT_BC1_UNORM_SRGB
+#define BC2_UNORM           DXGI_FORMAT_BC2_UNORM
+#define BC2_UNORM_SRGB      DXGI_FORMAT_BC2_UNORM_SRGB
+#define BC3_UNORM           DXGI_FORMAT_BC3_UNORM
+#define BC3_UNORM_SRGB      DXGI_FORMAT_BC3_UNORM_SRGB
+#define R8G8B8A8_UNORM_SRGB DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
+#define R8G8B8A8_UNORM      DXGI_FORMAT_R8G8B8A8_UNORM
+#define FMT_UNKNOWN         DXGI_FORMAT_UNKNOWN
+        {&ps_sample,          &bc1_typeless,     {BC1_UNORM,           TEX_2D,       0, 1},       0.0f, bc_colors},
+        {&ps_sample,          &bc1_typeless,     {BC1_UNORM_SRGB,      TEX_2D,       0, 1},       0.0f, bc_colors},
+        {&ps_sample,          &bc2_typeless,     {BC2_UNORM,           TEX_2D,       0, 1},       0.0f, bc_colors},
+        {&ps_sample,          &bc2_typeless,     {BC2_UNORM_SRGB,      TEX_2D,       0, 1},       0.0f, bc_colors},
+        {&ps_sample,          &bc3_typeless,     {BC3_UNORM,           TEX_2D,       0, 1},       0.0f, bc_colors},
+        {&ps_sample,          &bc3_typeless,     {BC3_UNORM_SRGB,      TEX_2D,       0, 1},       0.0f, bc_colors},
+        {&ps_sample,          &srgb_typeless,    {R8G8B8A8_UNORM_SRGB, TEX_2D,       0, 1},       0.0f, srgb_colors},
+        {&ps_sample,          &srgb_typeless,    {R8G8B8A8_UNORM,      TEX_2D,       0, 1},       0.0f, srgb_data},
+        {&ps_sample,          &array_2d_texture, {FMT_UNKNOWN,         TEX_2D,       0, 1},       0.0f, red_colors},
+        {&ps_sample_2d_array, &array_2d_texture, {FMT_UNKNOWN,         TEX_2D_ARRAY, 0, 1, 0, 1}, 0.0f, red_colors},
+        {&ps_sample_2d_array, &array_2d_texture, {FMT_UNKNOWN,         TEX_2D_ARRAY, 0, 1, 1, 1}, 0.0f, green_data},
+        {&ps_sample_2d_array, &array_2d_texture, {FMT_UNKNOWN,         TEX_2D_ARRAY, 0, 1, 2, 1}, 0.0f, blue_colors},
+#undef TEX_2D
+#undef TEX_2D_ARRAY
+#undef BC1_UNORM
+#undef BC1_UNORM_SRGB
+#undef BC2_UNORM
+#undef BC2_UNORM_SRGB
+#undef BC3_UNORM
+#undef BC3_UNORM_SRGB
+#undef R8G8B8A8_UNORM_SRGB
+#undef R8G8B8A8_UNORM
+#undef FMT_UNKNOWN
+    };
 
     if (!init_test_context(&test_context, NULL))
         return;
 
     device = test_context.device;
     context = test_context.immediate_context;
+    feature_level = ID3D11Device_GetFeatureLevel(device);
 
     cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(ps_constant), NULL);
 
@@ -4797,9 +4850,9 @@ static void test_texture(void)
     texture = NULL;
     current_ps = NULL;
     current_texture = NULL;
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < sizeof(texture_tests) / sizeof(*texture_tests); ++i)
     {
-        const struct test *test = &tests[i];
+        const struct texture_test *test = &texture_tests[i];
 
         if (current_ps != test->ps)
         {
@@ -4890,6 +4943,96 @@ static void test_texture(void)
     if (texture)
         ID3D11Texture2D_Release(texture);
     ID3D11PixelShader_Release(ps);
+
+    if (is_warp_device(device) && feature_level < D3D_FEATURE_LEVEL_10_1)
+    {
+        win_skip("SRV tests are broken on WARP.\n");
+        ID3D11Buffer_Release(cb);
+        release_test_context(&test_context);
+        return;
+    }
+
+    sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    sampler_desc.MipLODBias = 0.0f;
+    sampler_desc.MinLOD = 0.0f;
+    sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler);
+    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler);
+
+    ps = NULL;
+    srv = NULL;
+    texture = NULL;
+    current_ps = NULL;
+    current_texture = NULL;
+    for (i = 0; i < sizeof(srv_tests) / sizeof(*srv_tests); ++i)
+    {
+        const struct srv_test *test = &srv_tests[i];
+
+        if (current_ps != test->ps)
+        {
+            if (ps)
+                ID3D11PixelShader_Release(ps);
+
+            current_ps = test->ps;
+
+            hr = ID3D11Device_CreatePixelShader(device, current_ps->code, current_ps->size, NULL, &ps);
+            ok(SUCCEEDED(hr), "Test %u: Failed to create pixel shader, hr %#x.\n", i, hr);
+
+            ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+        }
+
+        if (current_texture != test->texture)
+        {
+            if (texture)
+                ID3D11Texture2D_Release(texture);
+
+            current_texture = test->texture;
+
+            texture_desc.Width = current_texture->width;
+            texture_desc.Height = current_texture->height;
+            texture_desc.MipLevels = current_texture->miplevel_count;
+            texture_desc.ArraySize = current_texture->array_size;
+            texture_desc.Format = current_texture->format;
+
+            hr = ID3D11Device_CreateTexture2D(device, &texture_desc, current_texture->data, &texture);
+            ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+        }
+
+        if (srv)
+            ID3D11ShaderResourceView_Release(srv);
+
+        get_srv_desc(&srv_desc, &test->srv_desc);
+        hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &srv);
+        ok(SUCCEEDED(hr), "Test %u: Failed to create shader resource view, hr %#x.\n", i, hr);
+
+        ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
+
+        ps_constant.x = test->ps_constant;
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &ps_constant, 0, 0);
+
+        ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
+
+        draw_quad(&test_context);
+
+        get_texture_readback(test_context.backbuffer, 0, &rb);
+        for (y = 0; y < 4; ++y)
+        {
+            for (x = 0; x < 4; ++x)
+            {
+                color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120);
+                ok(compare_color(color, test->expected_colors[y * 4 + x], 1),
+                        "Test %u: Got unexpected color 0x%08x at (%u, %u).\n", i, color, x, y);
+            }
+        }
+        release_texture_readback(&rb);
+    }
+    ID3D11PixelShader_Release(ps);
+    ID3D11Texture2D_Release(texture);
+    ID3D11ShaderResourceView_Release(srv);
+    ID3D11SamplerState_Release(sampler);
 
     ID3D11Buffer_Release(cb);
     release_test_context(&test_context);
