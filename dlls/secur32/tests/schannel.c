@@ -47,11 +47,6 @@ static BOOL (WINAPI *pCertFreeCertificateContext)(PCCERT_CONTEXT);
 static BOOL (WINAPI *pCertSetCertificateContextProperty)(PCCERT_CONTEXT,DWORD,DWORD,const void*);
 static PCCERT_CONTEXT (WINAPI *pCertEnumCertificatesInStore)(HCERTSTORE,PCCERT_CONTEXT);
 
-static BOOL (WINAPI *pCryptAcquireContextW)(HCRYPTPROV*, LPCWSTR, LPCWSTR, DWORD, DWORD);
-static BOOL (WINAPI *pCryptDestroyKey)(HCRYPTKEY);
-static BOOL (WINAPI *pCryptImportKey)(HCRYPTPROV,const BYTE*,DWORD,HCRYPTKEY,DWORD,HCRYPTKEY*);
-static BOOL (WINAPI *pCryptReleaseContext)(HCRYPTPROV,ULONG_PTR);
-
 static const BYTE bigCert[] = { 0x30, 0x7a, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06,
  0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13,
  0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x22,
@@ -119,13 +114,10 @@ static CHAR unisp_name_a[] = UNISP_NAME_A;
 
 static void InitFunctionPtrs(void)
 {
-    HMODULE advapi32dll;
-
     crypt32dll = LoadLibraryA("crypt32.dll");
     secdll = LoadLibraryA("secur32.dll");
     if(!secdll)
         secdll = LoadLibraryA("security.dll");
-    advapi32dll = LoadLibraryA("advapi32.dll");
 
 #define GET_PROC(h, func)  p ## func = (void*)GetProcAddress(h, #func)
 
@@ -142,11 +134,6 @@ static void InitFunctionPtrs(void)
         GET_PROC(secdll, DecryptMessage);
         GET_PROC(secdll, EncryptMessage);
     }
-
-    GET_PROC(advapi32dll, CryptAcquireContextW);
-    GET_PROC(advapi32dll, CryptDestroyKey);
-    GET_PROC(advapi32dll, CryptImportKey);
-    GET_PROC(advapi32dll, CryptReleaseContext);
 
     GET_PROC(crypt32dll, CertFreeCertificateContext);
     GET_PROC(crypt32dll, CertSetCertificateContextProperty);
@@ -338,7 +325,7 @@ static void testAcquireSecurityContext(void)
 
     if (!pAcquireCredentialsHandleA || !pCertCreateCertificateContext ||
         !pEnumerateSecurityPackagesA || !pFreeContextBuffer ||
-        !pFreeCredentialsHandle || !pCryptAcquireContextW)
+        !pFreeCredentialsHandle)
     {
         win_skip("Needed functions are not available\n");
         return;
@@ -378,7 +365,7 @@ static void testAcquireSecurityContext(void)
      sizeof(selfSignedCert));
 
     SetLastError(0xdeadbeef);
-    ret = pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    ret = CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
     if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
@@ -513,15 +500,13 @@ static void testAcquireSecurityContext(void)
            "Expected SEC_E_UNKNOWN_CREDENTIALS or SEC_E_INTERNAL_ERROR, got %08x\n", st);
     }
 
-    ret = pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
+    ret = CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
      CRYPT_NEWKEYSET);
     ok(ret, "CryptAcquireContextW failed: %08x\n", GetLastError());
     ret = 0;
-    if (pCryptImportKey)
-    {
-        ret = pCryptImportKey(csp, privKey, sizeof(privKey), 0, 0, &key);
-        ok(ret, "CryptImportKey failed: %08x\n", GetLastError());
-    }
+
+    ret = CryptImportKey(csp, privKey, sizeof(privKey), 0, 0, &key);
+    ok(ret, "CryptImportKey failed: %08x\n", GetLastError());
     if (ret)
     {
         PCCERT_CONTEXT tmp;
@@ -610,14 +595,11 @@ static void testAcquireSecurityContext(void)
          "Expected SEC_E_UNKNOWN_CREDENTIALS, got %08x\n", st);
         /* FIXME: what about two valid certs? */
 
-        if (pCryptDestroyKey)
-            pCryptDestroyKey(key);
+        CryptDestroyKey(key);
     }
 
-    if (pCryptReleaseContext)
-        pCryptReleaseContext(csp, 0);
-    pCryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
-     CRYPT_DELETEKEYSET);
+    CryptReleaseContext(csp, 0);
+    CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
 
     if (pCertFreeCertificateContext)
     {
