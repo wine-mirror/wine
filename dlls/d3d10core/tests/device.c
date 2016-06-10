@@ -267,6 +267,71 @@ static void check_rtv_desc_(unsigned int line, const D3D10_RENDER_TARGET_VIEW_DE
     }
 }
 
+struct dsv_desc
+{
+    DXGI_FORMAT format;
+    D3D10_DSV_DIMENSION dimension;
+    unsigned int miplevel_idx;
+    unsigned int layer_idx;
+    unsigned int layer_count;
+};
+
+static void get_dsv_desc(D3D10_DEPTH_STENCIL_VIEW_DESC *d3d10_desc, const struct dsv_desc *desc)
+{
+    d3d10_desc->Format = desc->format;
+    d3d10_desc->ViewDimension = desc->dimension;
+    if (desc->dimension == D3D10_DSV_DIMENSION_TEXTURE2D)
+    {
+        U(*d3d10_desc).Texture2D.MipSlice = desc->miplevel_idx;
+    }
+    else if (desc->dimension == D3D10_DSV_DIMENSION_TEXTURE2DARRAY)
+    {
+        U(*d3d10_desc).Texture2DArray.MipSlice = desc->miplevel_idx;
+        U(*d3d10_desc).Texture2DArray.FirstArraySlice = desc->layer_idx;
+        U(*d3d10_desc).Texture2DArray.ArraySize = desc->layer_count;
+    }
+    else
+    {
+        trace("Unhandled view dimension %#x.\n", desc->dimension);
+    }
+}
+
+#define check_dsv_desc(a, b) check_dsv_desc_(__LINE__, a, b)
+static void check_dsv_desc_(unsigned int line, const D3D10_DEPTH_STENCIL_VIEW_DESC *desc,
+        const struct dsv_desc *expected_desc)
+{
+    ok_(__FILE__, line)(desc->Format == expected_desc->format,
+            "Got format %#x, expected %#x.\n", desc->Format, expected_desc->format);
+    ok_(__FILE__, line)(desc->ViewDimension == expected_desc->dimension,
+            "Got view dimension %#x, expected %#x.\n", desc->ViewDimension, expected_desc->dimension);
+
+    if (desc->ViewDimension != expected_desc->dimension)
+        return;
+
+    if (desc->ViewDimension == D3D10_DSV_DIMENSION_TEXTURE2D)
+    {
+        ok_(__FILE__, line)(U(*desc).Texture2D.MipSlice == expected_desc->miplevel_idx,
+                "Got MipSlice %u, expected %u.\n",
+                U(*desc).Texture2D.MipSlice, expected_desc->miplevel_idx);
+    }
+    else if (desc->ViewDimension == D3D10_DSV_DIMENSION_TEXTURE2DARRAY)
+    {
+        ok_(__FILE__, line)(U(*desc).Texture2DArray.MipSlice == expected_desc->miplevel_idx,
+                "Got MipSlice %u, expected %u.\n",
+                U(*desc).Texture2DArray.MipSlice, expected_desc->miplevel_idx);
+        ok_(__FILE__, line)(U(*desc).Texture2DArray.FirstArraySlice == expected_desc->layer_idx,
+                "Got FirstArraySlice %u, expected %u.\n",
+                U(*desc).Texture2DArray.FirstArraySlice, expected_desc->layer_idx);
+        ok_(__FILE__, line)(U(*desc).Texture2DArray.ArraySize == expected_desc->layer_count,
+                "Got ArraySize %u, expected %u.\n",
+                U(*desc).Texture2DArray.ArraySize, expected_desc->layer_count);
+    }
+    else
+    {
+        trace("Unhandled view dimension %#x.\n", desc->ViewDimension);
+    }
+}
+
 #define create_buffer(a, b, c, d) create_buffer_(__LINE__, a, b, c, d)
 static ID3D10Buffer *create_buffer_(unsigned int line, ID3D10Device *device,
         unsigned int bind_flags, unsigned int size, const void *data)
@@ -1416,7 +1481,47 @@ static void test_create_depthstencil_view(void)
     ID3D10DepthStencilView *dsview;
     ID3D10Device *device, *tmp;
     ID3D10Texture2D *texture;
+    IUnknown *iface;
+    unsigned int i;
     HRESULT hr;
+
+    static const struct
+    {
+        struct
+        {
+            unsigned int miplevel_count;
+            unsigned int array_size;
+            DXGI_FORMAT format;
+        } texture;
+        struct dsv_desc dsv_desc;
+        struct dsv_desc expected_dsv_desc;
+    }
+    tests[] =
+    {
+#define FMT_UNKNOWN  DXGI_FORMAT_UNKNOWN
+#define D24_S8       DXGI_FORMAT_D24_UNORM_S8_UINT
+#define TEX_2D       D3D10_DSV_DIMENSION_TEXTURE2D
+#define TEX_2D_ARRAY D3D10_DSV_DIMENSION_TEXTURE2DARRAY
+        {{ 1, 1, D24_S8}, {0},                                   {D24_S8, TEX_2D,       0}},
+        {{10, 1, D24_S8}, {0},                                   {D24_S8, TEX_2D,       0}},
+        {{10, 1, D24_S8}, {FMT_UNKNOWN, TEX_2D, 0},              {D24_S8, TEX_2D,       0}},
+        {{10, 1, D24_S8}, {FMT_UNKNOWN, TEX_2D, 1},              {D24_S8, TEX_2D,       1}},
+        {{10, 1, D24_S8}, {FMT_UNKNOWN, TEX_2D, 9},              {D24_S8, TEX_2D,       9}},
+        {{ 1, 4, D24_S8}, {0},                                   {D24_S8, TEX_2D_ARRAY, 0, 0, 4}},
+        {{10, 4, D24_S8}, {0},                                   {D24_S8, TEX_2D_ARRAY, 0, 0, 4}},
+        {{10, 4, D24_S8}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 0, -1}, {D24_S8, TEX_2D_ARRAY, 0, 0, 4}},
+        {{10, 4, D24_S8}, {FMT_UNKNOWN, TEX_2D_ARRAY, 1, 0, -1}, {D24_S8, TEX_2D_ARRAY, 1, 0, 4}},
+        {{10, 4, D24_S8}, {FMT_UNKNOWN, TEX_2D_ARRAY, 3, 0, -1}, {D24_S8, TEX_2D_ARRAY, 3, 0, 4}},
+        {{10, 4, D24_S8}, {FMT_UNKNOWN, TEX_2D_ARRAY, 5, 0, -1}, {D24_S8, TEX_2D_ARRAY, 5, 0, 4}},
+        {{10, 4, D24_S8}, {FMT_UNKNOWN, TEX_2D_ARRAY, 9, 0, -1}, {D24_S8, TEX_2D_ARRAY, 9, 0, 4}},
+        {{10, 4, D24_S8}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 1, -1}, {D24_S8, TEX_2D_ARRAY, 0, 1, 3}},
+        {{10, 4, D24_S8}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 2, -1}, {D24_S8, TEX_2D_ARRAY, 0, 2, 2}},
+        {{10, 4, D24_S8}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 3, -1}, {D24_S8, TEX_2D_ARRAY, 0, 3, 1}},
+#undef FMT_UNKNOWN
+#undef D24_S8
+#undef TEX_2D
+#undef TEX_2D_ARRAY
+    };
 
     if (!(device = create_device()))
     {
@@ -1460,44 +1565,44 @@ static void test_create_depthstencil_view(void)
     ok(!U(dsv_desc).Texture2D.MipSlice, "Got unexpected mip slice %u.\n", U(dsv_desc).Texture2D.MipSlice);
 
     ID3D10DepthStencilView_Release(dsview);
-
-    dsv_desc.Format = DXGI_FORMAT_UNKNOWN;
-
-    hr = ID3D10Device_CreateDepthStencilView(device, (ID3D10Resource *)texture, &dsv_desc, &dsview);
-    ok(SUCCEEDED(hr), "Failed to create a depthstencil view, hr %#x.\n", hr);
-
-    memset(&dsv_desc, 0, sizeof(dsv_desc));
-    ID3D10DepthStencilView_GetDesc(dsview, &dsv_desc);
-    ok(dsv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", dsv_desc.Format);
-    ok(dsv_desc.ViewDimension == D3D10_DSV_DIMENSION_TEXTURE2D,
-            "Got unexpected view dimension %#x.\n", dsv_desc.ViewDimension);
-    ok(!U(dsv_desc).Texture2D.MipSlice, "Got unexpected mip slice %u.\n", U(dsv_desc).Texture2D.MipSlice);
-
-    ID3D10DepthStencilView_Release(dsview);
     ID3D10Texture2D_Release(texture);
 
-    texture_desc.ArraySize = 4;
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        D3D10_DEPTH_STENCIL_VIEW_DESC *current_desc;
 
-    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create 2d texture, hr %#x.\n", hr);
+        texture_desc.MipLevels = tests[i].texture.miplevel_count;
+        texture_desc.ArraySize = tests[i].texture.array_size;
+        texture_desc.Format = tests[i].texture.format;
 
-    hr = ID3D10Device_CreateDepthStencilView(device, (ID3D10Resource *)texture, NULL, &dsview);
-    ok(SUCCEEDED(hr), "Failed to create depthstencil view, hr %#x.\n", hr);
+        hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+        ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
 
-    memset(&dsv_desc, 0, sizeof(dsv_desc));
-    ID3D10DepthStencilView_GetDesc(dsview, &dsv_desc);
-    ok(dsv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", dsv_desc.Format);
-    ok(dsv_desc.ViewDimension == D3D10_DSV_DIMENSION_TEXTURE2DARRAY,
-            "Got unexpected view dimension %#x.\n", dsv_desc.ViewDimension);
-    ok(!U(dsv_desc).Texture2DArray.MipSlice, "Got unexpected mip slice %u.\n",
-            U(dsv_desc).Texture2DArray.MipSlice);
-    ok(!U(dsv_desc).Texture2DArray.FirstArraySlice, "Got unexpected first array slice %u.\n",
-            U(dsv_desc).Texture2DArray.FirstArraySlice);
-    ok(U(dsv_desc).Texture2DArray.ArraySize == texture_desc.ArraySize,
-            "Got unexpected array size %u.\n", U(dsv_desc).Texture2DArray.ArraySize);
+        if (tests[i].dsv_desc.dimension == D3D10_DSV_DIMENSION_UNKNOWN)
+        {
+            current_desc = NULL;
+        }
+        else
+        {
+            current_desc = &dsv_desc;
+            get_dsv_desc(current_desc, &tests[i].dsv_desc);
+        }
 
-    ID3D10DepthStencilView_Release(dsview);
-    ID3D10Texture2D_Release(texture);
+        hr = ID3D10Device_CreateDepthStencilView(device, (ID3D10Resource *)texture, current_desc, &dsview);
+        ok(SUCCEEDED(hr), "Test %u: Failed to create depth stencil view, hr %#x.\n", i, hr);
+
+        hr = ID3D10DepthStencilView_QueryInterface(dsview, &IID_ID3D11DepthStencilView, (void **)&iface);
+        ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+                "Test %u: Depth stencil view should implement ID3D11DepthStencilView.\n", i);
+        if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
+        memset(&dsv_desc, 0, sizeof(dsv_desc));
+        ID3D10DepthStencilView_GetDesc(dsview, &dsv_desc);
+        check_dsv_desc(&dsv_desc, &tests[i].expected_dsv_desc);
+
+        ID3D10DepthStencilView_Release(dsview);
+        ID3D10Texture2D_Release(texture);
+    }
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
