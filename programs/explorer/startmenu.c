@@ -464,8 +464,8 @@ void do_startmenu(HWND hwnd)
     if (!public_startmenu.folder)
         pidl_to_shellfolder(public_startmenu.pidl, NULL, &public_startmenu.folder);
 
-    if (!shell_folder_is_empty(user_startmenu.folder) ||
-        !shell_folder_is_empty(public_startmenu.folder))
+    if ((user_startmenu.folder && !shell_folder_is_empty(user_startmenu.folder)) ||
+        (public_startmenu.folder && !shell_folder_is_empty(public_startmenu.folder)))
     {
         fill_menu(&user_startmenu);
 
