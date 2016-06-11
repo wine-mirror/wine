@@ -181,11 +181,34 @@ static void test_persiststreaminit(void)
 static void test_olecontrol(void)
 {
     IOleControl *olecontrol;
+    CONTROLINFO info;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IOleControl, (void**)&olecontrol);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    memset(&info, 0xab, sizeof(info));
+    info.cb = sizeof(info);
+    hr = IOleControl_GetControlInfo(olecontrol, &info);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(info.hAccel == NULL, "got %p\n", info.hAccel);
+    ok(info.cAccel == 0, "got %d\n", info.cAccel);
+    ok(info.dwFlags == 0xabababab, "got %x\n", info.dwFlags);
+
+    memset(&info, 0xab, sizeof(info));
+    info.cb = sizeof(info) - 1;
+    hr = IOleControl_GetControlInfo(olecontrol, &info);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(info.hAccel == NULL, "got %p\n", info.hAccel);
+    ok(info.cAccel == 0, "got %d\n", info.cAccel);
+    ok(info.dwFlags == 0xabababab, "got %x\n", info.dwFlags);
+
+    if (0) /* crashes on win2k3 */
+    {
+        hr = IOleControl_GetControlInfo(olecontrol, NULL);
+        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    }
 
     IOleControl_Release(olecontrol);
 }

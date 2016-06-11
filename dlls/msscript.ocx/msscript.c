@@ -808,9 +808,15 @@ static HRESULT WINAPI OleControl_GetControlInfo(IOleControl *iface, CONTROLINFO 
 {
     ScriptControl *This = impl_from_IOleControl(iface);
 
-    FIXME("(%p)->(%p)\n", This, info);
+    TRACE("(%p)->(%p)\n", This, info);
 
-    return E_NOTIMPL;
+    if (!info)
+        return E_POINTER;
+
+    info->hAccel = NULL;
+    info->cAccel = 0;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI OleControl_OnMnemonic(IOleControl *iface, MSG *msg)
