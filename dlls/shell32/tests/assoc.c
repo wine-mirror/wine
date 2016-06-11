@@ -116,7 +116,7 @@ static void getstring_test(LPCWSTR assocName, HKEY progIdKey, ASSOCSTR str, LPCW
     if (expected_string) {
         ok_(__FILE__, line)(hr == S_FALSE, "GetString returned 0x%x, expected S_FALSE\n", hr);
         if (hr != S_FALSE) {
-            /* don't try to allocate memory using unitialized len */
+            /* don't try to allocate memory using uninitialized len */
             IQueryAssociations_Release(assoc);
             return;
         }
