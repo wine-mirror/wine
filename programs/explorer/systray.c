@@ -842,7 +842,7 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     return 0;
 }
 
-/* notifcation posted to the desktop window */
+/* notification posted to the desktop window */
 void handle_parent_notify( HWND hwnd, WPARAM wp )
 {
     switch (LOWORD(wp))
