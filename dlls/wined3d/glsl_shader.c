@@ -9062,7 +9062,7 @@ static void glsl_vertex_pipe_shademode(struct wined3d_context *context,
     context->shader_update_mask |= 1 << WINED3D_SHADER_TYPE_VERTEX;
 }
 
-void glsl_vertex_pipe_clip_plane(struct wined3d_context *context,
+static void glsl_vertex_pipe_clip_plane(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
