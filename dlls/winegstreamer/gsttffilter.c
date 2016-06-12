@@ -583,7 +583,7 @@ static HRESULT WINAPI Gstreamer_Mp3_SetMediaType(TransformFilter *tf, PIN_DIRECT
                                  "channels", G_TYPE_INT, wfx->nChannels,
                                  NULL);
     capsout = gst_caps_new_simple("audio/x-raw",
-                                  "format", G_TYPE_STRING, "S16LE"
+                                  "format", G_TYPE_STRING, "S16LE",
                                   "rate", G_TYPE_INT, wfx->nSamplesPerSec,
                                   "channels", G_TYPE_INT, wfx->nChannels,
                                    NULL);
