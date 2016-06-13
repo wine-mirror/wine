@@ -124,6 +124,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_IMAD                             */ "imad",
     /* WINED3DSIH_IMAX                             */ "imax",
     /* WINED3DSIH_IMIN                             */ "imin",
+    /* WINED3DSIH_IMM_ATOMIC_CONSUME               */ "imm_atomic_consume",
     /* WINED3DSIH_IMUL                             */ "imul",
     /* WINED3DSIH_INE                              */ "ine",
     /* WINED3DSIH_INEG                             */ "ineg",
