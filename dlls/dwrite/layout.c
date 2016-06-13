@@ -727,7 +727,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
     free_layout_runs(layout);
 
     /* Cluster data arrays are allocated once, assuming one text position per cluster. */
-    if (!layout->clustermetrics) {
+    if (!layout->clustermetrics && layout->len) {
         layout->clustermetrics = heap_alloc(layout->len*sizeof(*layout->clustermetrics));
         layout->clusters = heap_alloc(layout->len*sizeof(*layout->clusters));
         if (!layout->clustermetrics || !layout->clusters) {
@@ -1694,12 +1694,13 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     layout->metrics.lineCount = 0;
     origin_x = is_rtl ? layout->metrics.layoutWidth : 0.0f;
     line = 0;
-    run = layout->clusters[0].run;
     memset(&metrics, 0, sizeof(metrics));
 
     layout_splitting_params_from_pos(layout, 0, &params);
     prev_params = params;
 
+    if (layout->cluster_count)
+        run = layout->clusters[0].run;
     for (i = 0, start = 0, textpos = 0, width = 0.0f; i < layout->cluster_count; i++) {
         BOOL overflow;
 
