@@ -2090,6 +2090,8 @@ todo_wine
     ok(metrics[4].isWhitespace == 0, "got %d\n", metrics[4].isWhitespace);
     ok(metrics[5].isWhitespace == 1, "got %d\n", metrics[5].isWhitespace);
 
+    IDWriteTextLayout_Release(layout);
+
     IDWriteInlineObject_Release(trimm);
     IDWriteTextFormat_Release(format);
     IDWriteFactory_Release(factory);
@@ -3298,6 +3300,7 @@ static void test_GetLineMetrics(void)
     ok(metrics[0].isTrimmed == FALSE, "got %d\n", metrics[0].isTrimmed);
 
     IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
 
     /* Test line height and baseline calculation */
     hr = IDWriteFactory_GetSystemFontCollection(factory, &syscollection, FALSE);
@@ -3618,6 +3621,8 @@ static void test_SetTextAlignment(void)
     }
     else
         win_skip("IDWriteTextFormat1 is not supported\n");
+
+    IDWriteTextLayout_Release(layout);
 
     for (i = 0; i < sizeof(stringsW)/sizeof(stringsW[0]); i++) {
         FLOAT text_width;
@@ -4653,6 +4658,8 @@ static void test_SetLastLineWrapping(void)
     hr = IDWriteTextLayout2_SetLastLineWrapping(layout2, TRUE);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    IDWriteTextLayout2_Release(layout2);
+    IDWriteTextFormat1_Release(format1);
     IDWriteFactory_Release(factory);
 }
 
