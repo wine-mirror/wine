@@ -1199,6 +1199,28 @@ int CDECL _controlfp_s(unsigned int *cur, unsigned int newval, unsigned int mask
 }
 
 /*********************************************************************
+ *		__fpe_flt_rounds (UCRTBASE.@)
+ */
+int CDECL __fpe_flt_rounds(void)
+{
+    unsigned int fpc = _controlfp(0, 0) & MSVCRT__RC_CHOP;
+
+    TRACE("()\n");
+
+    switch(fpc) {
+        case MSVCRT__RC_CHOP: return 0;
+        case MSVCRT__RC_NEAR: return 1;
+#ifdef _WIN64
+        case MSVCRT__RC_UP: return 3;
+        default: return 2;
+#else
+        case MSVCRT__RC_UP: return 2;
+        default: return 3;
+#endif
+    }
+}
+
+/*********************************************************************
  *		_copysign (MSVCRT.@)
  */
 double CDECL MSVCRT__copysign(double num, double sign)

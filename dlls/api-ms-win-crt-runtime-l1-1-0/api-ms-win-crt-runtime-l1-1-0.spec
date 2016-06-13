@@ -1,7 +1,7 @@
 @ stub _Exit
 @ cdecl -arch=i386 __control87_2(long long ptr ptr) ucrtbase.__control87_2
 @ cdecl __doserrno() ucrtbase.__doserrno
-@ stub __fpe_flt_rounds
+@ cdecl __fpe_flt_rounds() ucrtbase.__fpe_flt_rounds
 @ cdecl __fpecode() ucrtbase.__fpecode
 @ cdecl __p___argc() ucrtbase.__p___argc
 @ cdecl __p___argv() ucrtbase.__p___argv

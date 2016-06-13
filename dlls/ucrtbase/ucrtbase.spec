@@ -89,7 +89,7 @@
 @ stub __dcrt_initial_narrow_environment
 @ cdecl __doserrno() MSVCRT___doserrno
 @ cdecl __dstbias() MSVCRT___p__dstbias
-@ stub __fpe_flt_rounds
+@ cdecl __fpe_flt_rounds()
 @ cdecl __fpecode()
 @ stub __initialize_lconv_for_unsigned_char
 @ stub __intrinsic_abnormal_termination

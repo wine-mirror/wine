@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <wchar.h>
 #include <stdio.h>
+#include <float.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -38,6 +39,8 @@ typedef struct MSVCRT__onexit_table_t
 static int (CDECL *p_initialize_onexit_table)(MSVCRT__onexit_table_t *table);
 static int (CDECL *p_register_onexit_function)(MSVCRT__onexit_table_t *table, MSVCRT__onexit_t func);
 static int (CDECL *p_execute_onexit_table)(MSVCRT__onexit_table_t *table);
+static int (CDECL *p___fpe_flt_rounds)(void);
+static unsigned int (CDECL *p__controlfp)(unsigned int, unsigned int);
 
 static void test__initialize_onexit_table(void)
 {
@@ -211,20 +214,58 @@ static void test__execute_onexit_table(void)
     ok(g_onexit_called == 2, "got %d\n", g_onexit_called);
 }
 
-static void init(void)
+static void test___fpe_flt_rounds(void)
+{
+    unsigned int cfp = p__controlfp(0, 0);
+    int ret;
+
+    if(!cfp) {
+        skip("_controlfp not supported\n");
+        return;
+    }
+
+    ok((p__controlfp(_RC_NEAR, _RC_CHOP) & _RC_CHOP) == _RC_NEAR, "_controlfp(_RC_NEAR, _RC_CHOP) failed\n");
+    ret = p___fpe_flt_rounds();
+    ok(ret == 1, "__fpe_flt_rounds returned %d\n", ret);
+
+    ok((p__controlfp(_RC_UP, _RC_CHOP) & _RC_CHOP) == _RC_UP, "_controlfp(_RC_UP, _RC_CHOP) failed\n");
+    ret = p___fpe_flt_rounds();
+    ok(ret == 2 + (sizeof(void*)>sizeof(int)), "__fpe_flt_rounds returned %d\n", ret);
+
+    ok((p__controlfp(_RC_DOWN, _RC_CHOP) & _RC_CHOP) == _RC_DOWN, "_controlfp(_RC_DOWN, _RC_CHOP) failed\n");
+    ret = p___fpe_flt_rounds();
+    ok(ret == 3 - (sizeof(void*)>sizeof(int)), "__fpe_flt_rounds returned %d\n", ret);
+
+    ok((p__controlfp(_RC_CHOP, _RC_CHOP) & _RC_CHOP) == _RC_CHOP, "_controlfp(_RC_CHOP, _RC_CHOP) failed\n");
+    ret = p___fpe_flt_rounds();
+    ok(ret == 0, "__fpe_flt_rounds returned %d\n", ret);
+}
+
+static BOOL init(void)
 {
     HMODULE module = LoadLibraryA("ucrtbase.dll");
+
+    if(!module) {
+        win_skip("ucrtbase.dll not available\n");
+        return FALSE;
+    }
 
     p_initialize_onexit_table = (void*)GetProcAddress(module, "_initialize_onexit_table");
     p_register_onexit_function = (void*)GetProcAddress(module, "_register_onexit_function");
     p_execute_onexit_table = (void*)GetProcAddress(module, "_execute_onexit_table");
+    p___fpe_flt_rounds = (void*)GetProcAddress(module, "__fpe_flt_rounds");
+    p__controlfp = (void*)GetProcAddress(module, "_controlfp");
+
+    return TRUE;
 }
 
 START_TEST(misc)
 {
-    init();
+    if(!init())
+        return;
 
     test__initialize_onexit_table();
     test__register_onexit_function();
     test__execute_onexit_table();
+    test___fpe_flt_rounds();
 }
