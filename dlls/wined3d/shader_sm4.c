@@ -224,6 +224,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM5_OP_LD_RAW                           = 0xa5,
     WINED3D_SM5_OP_STORE_RAW                        = 0xa6,
     WINED3D_SM5_OP_LD_STRUCTURED                    = 0xa7,
+    WINED3D_SM5_OP_STORE_STRUCTURED                 = 0xa8,
     WINED3D_SM5_OP_IMM_ATOMIC_CONSUME               = 0xb3,
 };
 
@@ -773,6 +774,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM5_OP_LD_RAW,                           WINED3DSIH_LD_RAW,                           "u",    "iU"},
     {WINED3D_SM5_OP_STORE_RAW,                        WINED3DSIH_STORE_RAW,                        "U",    "iu"},
     {WINED3D_SM5_OP_LD_STRUCTURED,                    WINED3DSIH_LD_STRUCTURED,                    "u",    "uuR"},
+    {WINED3D_SM5_OP_STORE_STRUCTURED,                 WINED3DSIH_STORE_STRUCTURED,                 "U",    "iiu"},
     {WINED3D_SM5_OP_IMM_ATOMIC_CONSUME,               WINED3DSIH_IMM_ATOMIC_CONSUME,               "u",    "U"},
 };
 
