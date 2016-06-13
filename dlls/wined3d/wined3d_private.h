@@ -386,6 +386,7 @@ enum wined3d_shader_register_type
     WINED3DSPR_INCONTROLPOINT,
     WINED3DSPR_PATCHCONST,
     WINED3DSPR_TESSCOORD,
+    WINED3DSPR_GROUPSHAREDMEM,
 };
 
 enum wined3d_data_type

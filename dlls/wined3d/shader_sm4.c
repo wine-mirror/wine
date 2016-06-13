@@ -242,6 +242,7 @@ enum wined3d_sm4_register_type
     WINED3D_SM5_RT_PATCH_CONSTANT_DATA     = 0x1b,
     WINED3D_SM5_RT_DOMAIN_LOCATION         = 0x1c,
     WINED3D_SM5_RT_UAV                     = 0x1e,
+    WINED3D_SM5_RT_SHARED_MEMORY           = 0x1f,
 };
 
 enum wined3d_sm4_output_primitive_type
@@ -800,6 +801,7 @@ static const enum wined3d_shader_register_type register_type_table[] =
     /* WINED3D_SM5_RT_DOMAIN_LOCATION */         WINED3DSPR_TESSCOORD,
     /* UNKNOWN */                                ~0u,
     /* WINED3D_SM5_RT_UAV */                     WINED3DSPR_UAV,
+    /* WINED3D_SM5_RT_SHARED_MEMORY */           WINED3DSPR_GROUPSHAREDMEM,
 };
 
 static const struct wined3d_sm4_opcode_info *get_opcode_info(enum wined3d_sm4_opcode opcode)
