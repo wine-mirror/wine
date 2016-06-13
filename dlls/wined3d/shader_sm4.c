@@ -220,6 +220,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM5_OP_DCL_UAV_TYPED                    = 0x9c,
     WINED3D_SM5_OP_DCL_RESOURCE_STRUCTURED          = 0xa2,
     WINED3D_SM5_OP_STORE_UAV_TYPED                  = 0xa4,
+    WINED3D_SM5_OP_LD_RAW                           = 0xa5,
     WINED3D_SM5_OP_STORE_RAW                        = 0xa6,
     WINED3D_SM5_OP_LD_STRUCTURED                    = 0xa7,
 };
@@ -766,6 +767,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM5_OP_DCL_RESOURCE_STRUCTURED,          WINED3DSIH_DCL_RESOURCE_STRUCTURED,          "",     "",
             shader_sm5_read_dcl_resource_structured},
     {WINED3D_SM5_OP_STORE_UAV_TYPED,                  WINED3DSIH_STORE_UAV_TYPED,                  "U",    "iu"},
+    {WINED3D_SM5_OP_LD_RAW,                           WINED3DSIH_LD_RAW,                           "u",    "iU"},
     {WINED3D_SM5_OP_STORE_RAW,                        WINED3DSIH_STORE_RAW,                        "U",    "iu"},
     {WINED3D_SM5_OP_LD_STRUCTURED,                    WINED3DSIH_LD_STRUCTURED,                    "u",    "uuR"},
 };
