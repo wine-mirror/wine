@@ -180,6 +180,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_SINCOS                           */ "sincos",
     /* WINED3DSIH_SLT                              */ "slt",
     /* WINED3DSIH_SQRT                             */ "sqrt",
+    /* WINED3DSIH_STORE_RAW                        */ "store_raw",
     /* WINED3DSIH_STORE_UAV_TYPED                  */ "store_uav_typed",
     /* WINED3DSIH_SUB                              */ "sub",
     /* WINED3DSIH_SWITCH                           */ "switch",
