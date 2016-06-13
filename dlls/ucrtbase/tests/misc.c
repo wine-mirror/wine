@@ -47,12 +47,6 @@ static void test__initialize_onexit_table(void)
     MSVCRT__onexit_table_t table, table2;
     int ret;
 
-    if (!p_initialize_onexit_table)
-    {
-        win_skip("_initialize_onexit_table() is not available.\n");
-        return;
-    }
-
     ret = p_initialize_onexit_table(NULL);
     ok(ret == -1, "got %d\n", ret);
 
@@ -122,12 +116,6 @@ static void test__register_onexit_function(void)
     MSVCRT__onexit_t *f;
     int ret;
 
-    if (!p_register_onexit_function)
-    {
-        win_skip("_register_onexit_function() is not available.\n");
-        return;
-    }
-
     memset(&table, 0, sizeof(table));
     ret = p_initialize_onexit_table(&table);
     ok(ret == 0, "got %d\n", ret);
@@ -156,12 +144,6 @@ static void test__execute_onexit_table(void)
 {
     MSVCRT__onexit_table_t table;
     int ret;
-
-    if (!p_execute_onexit_table)
-    {
-        win_skip("_execute_onexit_table() is not available.\n");
-        return;
-    }
 
     ret = p_execute_onexit_table(NULL);
     ok(ret == -1, "got %d\n", ret);
