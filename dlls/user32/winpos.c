@@ -940,7 +940,6 @@ static POINT WINPOS_FindIconPos( HWND hwnd, POINT pt )
  */
 UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
 {
-    WND *wndPtr;
     UINT swpFlags = 0;
     POINT size;
     LONG old_style;
@@ -974,10 +973,8 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
     case SW_SHOWMINIMIZED:
     case SW_FORCEMINIMIZE:
     case SW_MINIMIZE:
-        if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
-        if( wndPtr->dwStyle & WS_MAXIMIZE) wndPtr->flags |= WIN_RESTORE_MAX;
-        else wndPtr->flags &= ~WIN_RESTORE_MAX;
-        WIN_ReleasePtr( wndPtr );
+        if (IsZoomed( hwnd )) win_set_flags( hwnd, WIN_RESTORE_MAX, 0 );
+        else win_set_flags( hwnd, 0, WIN_RESTORE_MAX );
 
         old_style = WIN_SetStyle( hwnd, WS_MINIMIZE, WS_MAXIMIZE );
 
@@ -999,11 +996,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         old_style = WIN_SetStyle( hwnd, WS_MAXIMIZE, WS_MINIMIZE );
         if (old_style & WS_MINIMIZE)
         {
-            if ((wndPtr = WIN_GetPtr( hwnd )) && wndPtr != WND_OTHER_PROCESS)
-            {
-                wndPtr->flags |= WIN_RESTORE_MAX;
-                WIN_ReleasePtr( wndPtr );
-            }
+            win_set_flags( hwnd, WIN_RESTORE_MAX, 0 );
             WINPOS_ShowIconTitle( hwnd, FALSE );
         }
 
@@ -1013,11 +1006,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         break;
 
     case SW_SHOWNOACTIVATE:
-        if ((wndPtr = WIN_GetPtr( hwnd )) && wndPtr != WND_OTHER_PROCESS)
-        {
-            wndPtr->flags &= ~WIN_RESTORE_MAX;
-            WIN_ReleasePtr( wndPtr );
-        }
+        win_set_flags( hwnd, 0, WIN_RESTORE_MAX );
         /* fall through */
     case SW_SHOWNORMAL:
     case SW_RESTORE:
@@ -1025,14 +1014,8 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         old_style = WIN_SetStyle( hwnd, 0, WS_MINIMIZE | WS_MAXIMIZE );
         if (old_style & WS_MINIMIZE)
         {
-            BOOL restore_max;
-
             WINPOS_ShowIconTitle( hwnd, FALSE );
-
-            if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
-            restore_max = (wndPtr->flags & WIN_RESTORE_MAX) != 0;
-            WIN_ReleasePtr( wndPtr );
-            if (restore_max)
+            if (win_get_flags( hwnd ) & WIN_RESTORE_MAX)
             {
                 /* Restore to maximized position */
                 WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL);
@@ -1454,14 +1437,7 @@ static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT f
 
         /* SDK: ...valid only the next time... */
         if( wndpl->flags & WPF_RESTORETOMAXIMIZED )
-        {
-            pWnd = WIN_GetPtr( hwnd );
-            if (pWnd && pWnd != WND_OTHER_PROCESS)
-            {
-                pWnd->flags |= WIN_RESTORE_MAX;
-                WIN_ReleasePtr( pWnd );
-            }
-        }
+            win_set_flags( hwnd, WIN_RESTORE_MAX, 0 );
     }
     return TRUE;
 }

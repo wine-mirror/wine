@@ -88,6 +88,7 @@ extern WND *WIN_GetPtr( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND WIN_GetFullHandle( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND WIN_IsCurrentProcess( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND WIN_IsCurrentThread( HWND hwnd ) DECLSPEC_HIDDEN;
+extern UINT win_set_flags( HWND hwnd, UINT set_mask, UINT clear_mask ) DECLSPEC_HIDDEN;
 extern HWND WIN_SetOwner( HWND hwnd, HWND owner ) DECLSPEC_HIDDEN;
 extern ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits ) DECLSPEC_HIDDEN;
 extern BOOL WIN_GetRectangles( HWND hwnd, enum coords_relative relative, RECT *rectWindow, RECT *rectClient ) DECLSPEC_HIDDEN;
@@ -135,6 +136,11 @@ static inline void mirror_rect( const RECT *window_rect, RECT *rect )
     int tmp = rect->left;
     rect->left = width - rect->right;
     rect->right = width - tmp;
+}
+
+static inline UINT win_get_flags( HWND hwnd )
+{
+    return win_set_flags( hwnd, 0, 0 );
 }
 
 #endif  /* __WINE_WIN_H */

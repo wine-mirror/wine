@@ -1054,12 +1054,7 @@ LRESULT MDIClientWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
     if (!(ci = get_client_info( hwnd )))
     {
-        if (message == WM_NCCREATE)
-        {
-            WND *wndPtr = WIN_GetPtr( hwnd );
-            wndPtr->flags |= WIN_ISMDICLIENT;
-            WIN_ReleasePtr( wndPtr );
-        }
+        if (message == WM_NCCREATE) win_set_flags( hwnd, WIN_ISMDICLIENT, 0 );
         return unicode ? DefWindowProcW( hwnd, message, wParam, lParam ) :
                          DefWindowProcA( hwnd, message, wParam, lParam );
     }

@@ -664,6 +664,24 @@ HWND WIN_IsCurrentThread( HWND hwnd )
 
 
 /***********************************************************************
+ *           win_set_flags
+ *
+ * Set the flags of a window and return the previous value.
+ */
+UINT win_set_flags( HWND hwnd, UINT set_mask, UINT clear_mask )
+{
+    UINT ret;
+    WND *ptr = WIN_GetPtr( hwnd );
+
+    if (!ptr || ptr == WND_OTHER_PROCESS || ptr == WND_DESKTOP) return 0;
+    ret = ptr->flags;
+    ptr->flags = (ret & ~clear_mask) | set_mask;
+    WIN_ReleasePtr( ptr );
+    return ret;
+}
+
+
+/***********************************************************************
  *           WIN_GetFullHandle
  *
  * Convert a possibly truncated window handle to a full 32-bit handle.
@@ -1323,16 +1341,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     /* Fix the styles for MDI children */
     if (cs->dwExStyle & WS_EX_MDICHILD)
     {
-        UINT flags = 0;
-
-        wndPtr = WIN_GetPtr(cs->hwndParent);
-        if (wndPtr && wndPtr != WND_OTHER_PROCESS && wndPtr != WND_DESKTOP)
-        {
-            flags = wndPtr->flags;
-            WIN_ReleasePtr(wndPtr);
-        }
-
-        if (!(flags & WIN_ISMDICLIENT))
+        if (!(win_get_flags( cs->hwndParent ) & WIN_ISMDICLIENT))
         {
             WARN("WS_EX_MDICHILD, but parent %p is not MDIClient\n", cs->hwndParent);
             return 0;
@@ -1627,17 +1636,13 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
 
     /* send the size messages */
 
-    if (!(wndPtr = WIN_GetPtr( hwnd )) ||
-          wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return 0;
-    if (!(wndPtr->flags & WIN_NEED_SIZE))
+    if (!(win_get_flags( hwnd ) & WIN_NEED_SIZE))
     {
-        WIN_ReleasePtr( wndPtr );
         WIN_GetRectangles( hwnd, COORDS_PARENT, NULL, &rect );
         SendMessageW( hwnd, WM_SIZE, SIZE_RESTORED,
                       MAKELONG(rect.right-rect.left, rect.bottom-rect.top));
         SendMessageW( hwnd, WM_MOVE, 0, MAKELONG( rect.left, rect.top ) );
     }
-    else WIN_ReleasePtr( wndPtr );
 
     /* Show the window, maximizing or minimizing if needed */
 
@@ -3212,7 +3217,6 @@ HWND WINAPI GetWindow( HWND hwnd, UINT rel )
 BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
 {
     int count = 0;
-    WND *pWnd;
     HWND *win_array = WIN_ListChildren( GetDesktopWindow() );
 
     if (!win_array) return TRUE;
@@ -3221,35 +3225,24 @@ BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
     while (--count >= 0)
     {
         if (GetWindow( win_array[count], GW_OWNER ) != owner) continue;
-        if (!(pWnd = WIN_GetPtr( win_array[count] ))) continue;
-        if (pWnd == WND_OTHER_PROCESS) continue;
         if (fShow)
         {
-            if (pWnd->flags & WIN_NEEDS_SHOW_OWNEDPOPUP)
-            {
-                WIN_ReleasePtr( pWnd );
+            if (win_get_flags( win_array[count] ) & WIN_NEEDS_SHOW_OWNEDPOPUP)
                 /* In Windows, ShowOwnedPopups(TRUE) generates
                  * WM_SHOWWINDOW messages with SW_PARENTOPENING,
                  * regardless of the state of the owner
                  */
                 SendMessageW(win_array[count], WM_SHOWWINDOW, SW_SHOWNORMAL, SW_PARENTOPENING);
-                continue;
-            }
         }
         else
         {
-            if (pWnd->dwStyle & WS_VISIBLE)
-            {
-                WIN_ReleasePtr( pWnd );
+            if (GetWindowLongW( win_array[count], GWL_STYLE ) & WS_VISIBLE)
                 /* In Windows, ShowOwnedPopups(FALSE) generates
                  * WM_SHOWWINDOW messages with SW_PARENTCLOSING,
                  * regardless of the state of the owner
                  */
                 SendMessageW(win_array[count], WM_SHOWWINDOW, SW_HIDE, SW_PARENTCLOSING);
-                continue;
-            }
         }
-        WIN_ReleasePtr( pWnd );
     }
     HeapFree( GetProcessHeap(), 0, win_array );
     return TRUE;
