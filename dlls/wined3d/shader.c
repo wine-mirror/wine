@@ -48,6 +48,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_BREAK                            */ "break",
     /* WINED3DSIH_BREAKC                           */ "breakc",
     /* WINED3DSIH_BREAKP                           */ "breakp",
+    /* WINED3DSIH_BUFINFO                          */ "bufinfo",
     /* WINED3DSIH_CALL                             */ "call",
     /* WINED3DSIH_CALLNZ                           */ "callnz",
     /* WINED3DSIH_CASE                             */ "case",
