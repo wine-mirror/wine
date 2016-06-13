@@ -263,7 +263,7 @@ static CFIndex find_top_level(IOHIDDeviceRef hid_device, CFMutableArrayRef main_
                 int usage = IOHIDElementGetUsage(element);
 
                 if (usage_page == kHIDPage_GenericDesktop &&
-                    (usage == kHIDUsage_GD_Joystick || usage == kHIDUsage_GD_GamePad))
+                    (usage == kHIDUsage_GD_Joystick || usage == kHIDUsage_GD_GamePad || usage == kHIDUsage_GD_MultiAxisController))
                 {
                     CFArrayAppendValue(main_elements, element);
                     total++;
@@ -283,7 +283,7 @@ static CFIndex find_top_level(IOHIDDeviceRef hid_device, CFMutableArrayRef main_
 static int find_osx_devices(void)
 {
     IOHIDManagerRef hid_manager;
-    int usages[] = { kHIDUsage_GD_Joystick, kHIDUsage_GD_GamePad };
+    int usages[] = { kHIDUsage_GD_Joystick, kHIDUsage_GD_GamePad, kHIDUsage_GD_MultiAxisController };
     int i;
     CFDictionaryRef matching_dicts[sizeof(usages) / sizeof(usages[0])];
     CFArrayRef matching;
