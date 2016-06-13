@@ -661,7 +661,7 @@ static BOOL color_is_gray(ARGB color)
 }
 
 /* returns preferred pixel format for the applied attributes */
-static PixelFormat apply_image_attributes(const GpImageAttributes *attributes, LPBYTE data,
+PixelFormat apply_image_attributes(const GpImageAttributes *attributes, LPBYTE data,
     UINT width, UINT height, INT stride, ColorAdjustType type, PixelFormat fmt)
 {
     UINT x, y;

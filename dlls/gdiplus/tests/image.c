@@ -4725,6 +4725,71 @@ static void test_createeffect(void)
     }
 }
 
+static void test_getadjustedpalette(void)
+{
+    ColorMap colormap;
+    GpImageAttributes *imageattributes;
+    ColorPalette *palette;
+    GpStatus stat;
+
+    stat = GdipCreateImageAttributes(&imageattributes);
+    expect(Ok, stat);
+
+    colormap.oldColor.Argb = 0xffffff00;
+    colormap.newColor.Argb = 0xffff00ff;
+    stat = GdipSetImageAttributesRemapTable(imageattributes, ColorAdjustTypeBitmap,
+        TRUE, 1, &colormap);
+    expect(Ok, stat);
+
+    colormap.oldColor.Argb = 0xffffff80;
+    colormap.newColor.Argb = 0xffff80ff;
+    stat = GdipSetImageAttributesRemapTable(imageattributes, ColorAdjustTypeDefault,
+        TRUE, 1, &colormap);
+    expect(Ok, stat);
+
+    palette = GdipAlloc(sizeof(*palette) + sizeof(ARGB) * 2);
+    palette->Count = 0;
+
+    stat = GdipGetImageAttributesAdjustedPalette(imageattributes, palette, ColorAdjustTypeBitmap);
+    expect(InvalidParameter, stat);
+
+    palette->Count = 3;
+    palette->Entries[0] = 0xffffff00;
+    palette->Entries[1] = 0xffffff80;
+    palette->Entries[2] = 0xffffffff;
+
+    stat = GdipGetImageAttributesAdjustedPalette(imageattributes, palette, ColorAdjustTypeBitmap);
+    expect(Ok, stat);
+    expect(0xffff00ff, palette->Entries[0]);
+    expect(0xffffff80, palette->Entries[1]);
+    expect(0xffffffff, palette->Entries[2]);
+
+    palette->Entries[0] = 0xffffff00;
+    palette->Entries[1] = 0xffffff80;
+    palette->Entries[2] = 0xffffffff;
+
+    stat = GdipGetImageAttributesAdjustedPalette(imageattributes, palette, ColorAdjustTypeBrush);
+    expect(Ok, stat);
+    expect(0xffffff00, palette->Entries[0]);
+    expect(0xffff80ff, palette->Entries[1]);
+    expect(0xffffffff, palette->Entries[2]);
+
+    stat = GdipGetImageAttributesAdjustedPalette(NULL, palette, ColorAdjustTypeBitmap);
+    expect(InvalidParameter, stat);
+
+    stat = GdipGetImageAttributesAdjustedPalette(imageattributes, NULL, ColorAdjustTypeBitmap);
+    expect(InvalidParameter, stat);
+
+    stat = GdipGetImageAttributesAdjustedPalette(imageattributes, palette, -1);
+    expect(InvalidParameter, stat);
+
+    stat = GdipGetImageAttributesAdjustedPalette(imageattributes, palette, ColorAdjustTypeDefault);
+    expect(InvalidParameter, stat);
+
+    GdipFree(palette);
+    GdipDisposeImageAttributes(imageattributes);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -4782,6 +4847,7 @@ START_TEST(image)
     test_colorkey();
     test_dispose();
     test_createeffect();
+    test_getadjustedpalette();
 
     GdiplusShutdown(gdiplusToken);
 }
