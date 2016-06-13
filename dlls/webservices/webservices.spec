@@ -134,7 +134,7 @@
 @ stub WsRequestReply
 @ stub WsRequestSecurityToken
 @ stub WsResetChannel
-@ stub WsResetError
+@ stdcall WsResetError(ptr)
 @ stdcall WsResetHeap(ptr ptr)
 @ stub WsResetListener
 @ stub WsResetMessage

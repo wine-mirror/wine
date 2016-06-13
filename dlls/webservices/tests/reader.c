@@ -3359,6 +3359,63 @@ static void test_WsReadValue(void)
     WsFreeReader( reader );
 }
 
+static void test_WsResetError(void)
+{
+    WS_ERROR_PROPERTY prop;
+    ULONG size, code;
+    WS_ERROR *error;
+    LANGID langid;
+    HRESULT hr;
+
+    hr = WsResetError( NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    error = NULL;
+    hr = WsCreateError( NULL, 0, &error );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( error != NULL, "error not set\n" );
+
+    code = 0xdeadbeef;
+    size = sizeof(code);
+    hr = WsSetErrorProperty( error, WS_ERROR_PROPERTY_ORIGINAL_ERROR_CODE, &code, size );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsResetError( error );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    code = 0xdeadbeef;
+    size = sizeof(code);
+    hr = WsGetErrorProperty( error, WS_ERROR_PROPERTY_ORIGINAL_ERROR_CODE, &code, size );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !code, "got %u\n", code );
+
+    WsFreeError( error );
+
+    langid = MAKELANGID( LANG_DUTCH, SUBLANG_DEFAULT );
+    prop.id = WS_ERROR_PROPERTY_LANGID;
+    prop.value = &langid;
+    prop.valueSize = sizeof(langid);
+    hr = WsCreateError( &prop, 1, &error );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    langid = 0xdead;
+    size = sizeof(langid);
+    hr = WsGetErrorProperty( error, WS_ERROR_PROPERTY_LANGID, &langid, size );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( langid == MAKELANGID( LANG_DUTCH, SUBLANG_DEFAULT ), "got %u\n", langid );
+
+    hr = WsResetError( error );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    langid = 0xdead;
+    size = sizeof(langid);
+    hr = WsGetErrorProperty( error, WS_ERROR_PROPERTY_LANGID, &langid, size );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( langid == MAKELANGID( LANG_DUTCH, SUBLANG_DEFAULT ), "got %u\n", langid );
+
+    WsFreeError( error );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -3390,4 +3447,5 @@ START_TEST(reader)
     test_double();
     test_WsReadElement();
     test_WsReadValue();
+    test_WsResetError();
 }

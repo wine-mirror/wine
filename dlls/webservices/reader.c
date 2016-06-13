@@ -142,6 +142,23 @@ void WINAPI WsFreeError( WS_ERROR *handle )
     heap_free( error );
 }
 
+/**************************************************************************
+ *          WsResetError	[webservices.@]
+ */
+HRESULT WINAPI WsResetError( WS_ERROR *handle )
+{
+    struct error *error = (struct error *)handle;
+    ULONG code;
+
+    TRACE( "%p\n", handle );
+
+    if (!handle) return E_INVALIDARG;
+
+    /* FIXME: release strings added with WsAddErrorString when it's implemented, reset string count */
+    code = 0;
+    return prop_set( error->prop, error->prop_count, WS_ERROR_PROPERTY_ORIGINAL_ERROR_CODE, &code, sizeof(code) );
+}
+
 static const struct prop_desc heap_props[] =
 {
     { sizeof(SIZE_T), FALSE }, /* WS_HEAP_PROPERTY_MAX_SIZE */
