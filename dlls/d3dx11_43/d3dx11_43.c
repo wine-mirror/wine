@@ -26,7 +26,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "objbase.h"
-#include "d3d11.h"
+#include "d3dx11.h"
 
 BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
 {

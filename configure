@@ -17595,7 +17595,7 @@ wine_fn_config_dll d3dx10_42 enable_d3dx10_42
 wine_fn_config_dll d3dx10_43 enable_d3dx10_43 implib d3dx10
 wine_fn_config_test dlls/d3dx10_43/tests d3dx10_43_test
 wine_fn_config_dll d3dx11_42 enable_d3dx11_42
-wine_fn_config_dll d3dx11_43 enable_d3dx11_43
+wine_fn_config_dll d3dx11_43 enable_d3dx11_43 implib d3dx11
 wine_fn_config_dll d3dx9_24 enable_d3dx9_24
 wine_fn_config_dll d3dx9_25 enable_d3dx9_25
 wine_fn_config_dll d3dx9_26 enable_d3dx9_26
