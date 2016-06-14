@@ -2426,7 +2426,19 @@ int __thiscall ostream_opfx(ostream *this)
 DEFINE_THISCALL_WRAPPER(ostream_osfx, 4)
 void __thiscall ostream_osfx(ostream *this)
 {
-    FIXME("(%p) stub\n", this);
+    ios *base = ostream_get_ios(this);
+
+    TRACE("(%p)\n", this);
+
+    ios_unlockbuf(base);
+    ios_width_set(base, 0);
+    if (base->flags & FLAGS_unitbuf)
+        ostream_flush(this);
+    if (base->flags & FLAGS_stdio) {
+        fflush(stdout);
+        fflush(stderr);
+    }
+    ios_unlock(base);
 }
 
 /* ?put@ostream@@QAEAAV1@D@Z */
