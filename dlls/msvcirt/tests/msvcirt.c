@@ -269,6 +269,7 @@ static ostream* (*__thiscall p_ostream_write_char)(ostream*, const char*, int);
 static ostream* (*__thiscall p_ostream_seekp_offset)(ostream*, streamoff, ios_seek_dir);
 static ostream* (*__thiscall p_ostream_seekp)(ostream*, streampos);
 static streampos (*__thiscall p_ostream_tellp)(ostream*);
+static ostream* (*__thiscall p_ostream_writepad)(ostream*, const char*, const char*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -442,6 +443,7 @@ static BOOL init(void)
         SET(p_ostream_seekp_offset, "?seekp@ostream@@QEAAAEAV1@JW4seek_dir@ios@@@Z");
         SET(p_ostream_seekp, "?seekp@ostream@@QEAAAEAV1@J@Z");
         SET(p_ostream_tellp, "?tellp@ostream@@QEAAJXZ");
+        SET(p_ostream_writepad, "?writepad@ostream@@AEAAAEAV1@PEBD0@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -545,6 +547,7 @@ static BOOL init(void)
         SET(p_ostream_seekp_offset, "?seekp@ostream@@QAEAAV1@JW4seek_dir@ios@@@Z");
         SET(p_ostream_seekp, "?seekp@ostream@@QAEAAV1@J@Z");
         SET(p_ostream_tellp, "?tellp@ostream@@QAEJXZ");
+        SET(p_ostream_writepad, "?writepad@ostream@@AAEAAV1@PBD0@Z");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -2881,6 +2884,86 @@ if (0) /* crashes on native */
     ok(ret == EOF, "wrong return, expected EOF got %d\n", ret);
     ok(os1.base_ios.state == (IOSTATE_eofbit|IOSTATE_failbit), "expected %d got %d\n",
         IOSTATE_eofbit|IOSTATE_failbit, os1.base_ios.state);
+    fb1.fd = fd;
+
+    /* writepad */
+    os1.base_ios.state = IOSTATE_eofbit;
+    os1.base_ios.flags =
+        FLAGS_right|FLAGS_hex|FLAGS_showbase|FLAGS_showpoint|FLAGS_showpos|FLAGS_uppercase|FLAGS_fixed;
+    os1.base_ios.fill = 'z';
+    os1.base_ios.width = 9;
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, "a", "b");
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(!strncmp(fb1.base.pptr - 9, "zzzzzzzab", 9), "expected 'zzzzzzzab' got '%s'\n", fb1.base.pptr - 9);
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, "aa", "bb");
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(!strncmp(fb1.base.pptr - 9, "zzzzzaabb", 9), "expected 'zzzzzaabb' got '%s'\n", fb1.base.pptr - 9);
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, "aaaaa", "bbbbb");
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(!strncmp(fb1.base.pptr - 10, "aaaaabbbbb", 10), "expected 'aaaaabbbbb' got '%s'\n", fb1.base.pptr - 10);
+    os1.base_ios.flags |= FLAGS_internal;
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, "aa", "bb");
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(!strncmp(fb1.base.pptr - 9, "aazzzzzbb", 9), "expected 'aazzzzzbb' got '%s'\n", fb1.base.pptr - 9);
+    os1.base_ios.flags &= ~FLAGS_right;
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, "a", "b");
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(!strncmp(fb1.base.pptr - 9, "azzzzzzzb", 9), "expected 'azzzzzzzb' got '%s'\n", fb1.base.pptr - 9);
+    os1.base_ios.width = 6;
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, "1", "2");
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(!strncmp(fb1.base.pptr - 6, "1zzzz2", 6), "expected '1zzzz2' got '%s'\n", fb1.base.pptr - 6);
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, "12345678", "");
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(!strncmp(fb1.base.pptr - 8, "12345678", 8), "expected '12345678' got '%s'\n", fb1.base.pptr - 8);
+    os1.base_ios.flags |= FLAGS_left;
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, "z1", "2z");
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(!strncmp(fb1.base.pptr - 6, "z1zz2z", 6), "expected 'z1zz2z' got '%s'\n", fb1.base.pptr - 6);
+    os1.base_ios.flags &= ~FLAGS_internal;
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, "hell", "o");
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(!strncmp(fb1.base.pptr - 6, "helloz", 6), "expected 'helloz' got '%s'\n", fb1.base.pptr - 6);
+    os1.base_ios.flags |= FLAGS_right;
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, "a", "b");
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(!strncmp(fb1.base.pptr - 6, "abzzzz", 6), "expected 'abzzzz' got '%s'\n", fb1.base.pptr - 6);
+if (0) /* crashes on native */
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, NULL, "o");
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, "", "hello");
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(!strncmp(fb1.base.pptr - 6, "helloz", 6), "expected 'helloz' got '%s'\n", fb1.base.pptr - 6);
+    os1.base_ios.fill = '*';
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, "", "");
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(!strncmp(fb1.base.pptr - 6, "******", 6), "expected '******' got '%s'\n", fb1.base.pptr - 6);
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, "aa", "");
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(!strncmp(fb1.base.pptr - 6, "aa****", 6), "expected 'aa****' got '%s'\n", fb1.base.pptr - 6);
+    os1.base_ios.flags = 0;
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, "a", "b");
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(!strncmp(fb1.base.pptr - 6, "****ab", 6), "expected '****ab' got '%s'\n", fb1.base.pptr - 6);
+    call_func1(p_filebuf_sync, &fb1);
+    fb1.fd = -1;
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, "aa", "bb");
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(os1.base_ios.state == (IOSTATE_badbit|IOSTATE_failbit|IOSTATE_eofbit), "expected %d got %d\n",
+        IOSTATE_badbit|IOSTATE_failbit|IOSTATE_eofbit, os1.base_ios.state);
+    os1.base_ios.state = IOSTATE_goodbit;
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, "", "");
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(os1.base_ios.state == (IOSTATE_badbit|IOSTATE_failbit), "expected %d got %d\n",
+        IOSTATE_badbit|IOSTATE_failbit, os1.base_ios.state);
+    os1.base_ios.state = IOSTATE_goodbit;
+    os1.base_ios.width = 0;
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, "", "");
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(os1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, os1.base_ios.state);
+    pos = (ostream*) call_func3(p_ostream_writepad, &os1, "a", "");
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(os1.base_ios.state == (IOSTATE_badbit|IOSTATE_failbit), "expected %d got %d\n",
+        IOSTATE_badbit|IOSTATE_failbit, os1.base_ios.state);
     fb1.fd = fd;
 
     call_func1(p_ostream_vbase_dtor, &os1);

@@ -2561,7 +2561,31 @@ ostream* __thiscall ostream_write_unsigned_char(ostream *this, const unsigned ch
 DEFINE_THISCALL_WRAPPER(ostream_writepad, 12)
 ostream* __thiscall ostream_writepad(ostream *this, const char *str1, const char *str2)
 {
-    FIXME("(%p %s %s) stub\n", this, str1, str2);
+    ios *base = ostream_get_ios(this);
+    int len1 = strlen(str1), len2 = strlen(str2), i;
+
+    TRACE("(%p %p %p)\n", this, str1, str2);
+
+    /* left of the padding */
+    if (base->flags & (FLAGS_left|FLAGS_internal)) {
+        if (streambuf_sputn(base->sb, str1, len1) != len1)
+            ios_clear(base, base->state | IOSTATE_failbit | IOSTATE_badbit);
+        if (!(base->flags & FLAGS_internal))
+            if (streambuf_sputn(base->sb, str2, len2) != len2)
+                ios_clear(base, base->state | IOSTATE_failbit | IOSTATE_badbit);
+    }
+    /* add padding to fill the width */
+    for (i = len1 + len2; i < base->width; i++)
+        if (streambuf_sputc(base->sb, base->fill) == EOF)
+            ios_clear(base, base->state | IOSTATE_failbit | IOSTATE_badbit);
+    /* right of the padding */
+    if ((base->flags & (FLAGS_left|FLAGS_internal)) != FLAGS_left) {
+        if (!(base->flags & (FLAGS_left|FLAGS_internal)))
+            if (streambuf_sputn(base->sb, str1, len1) != len1)
+                ios_clear(base, base->state | IOSTATE_failbit | IOSTATE_badbit);
+        if (streambuf_sputn(base->sb, str2, len2) != len2)
+            ios_clear(base, base->state | IOSTATE_failbit | IOSTATE_badbit);
+    }
     return this;
 }
 
