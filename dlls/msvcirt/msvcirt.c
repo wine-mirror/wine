@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2007 Alexandre Julliard
- * Copyright (C) 2015 Iván Matellanes
+ * Copyright (C) 2015-2016 Iván Matellanes
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -150,7 +150,8 @@ void __cdecl ios_unlockc(void);
 
 /* class ostream */
 typedef struct _ostream {
-    const vtable_ptr *vtable;
+    const int *vbtable;
+    int unknown;
 } ostream;
 
 /* ??_7streambuf@@6B@ */
@@ -163,6 +164,8 @@ extern const vtable_ptr MSVCP_strstreambuf_vtable;
 extern const vtable_ptr MSVCP_stdiobuf_vtable;
 /* ??_7ios@@6B@ */
 extern const vtable_ptr MSVCP_ios_vtable;
+/* ??_7ostream@@6B@ */
+extern const vtable_ptr MSVCP_ostream_vtable;
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
@@ -217,15 +220,24 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(streambuf_doallocate));
     __ASM_VTABLE(ios,
             VTABLE_ADD_FUNC(ios_vector_dtor));
+    __ASM_VTABLE(ostream,
+            VTABLE_ADD_FUNC(ostream_vector_dtor));
 #ifndef __GNUC__
 }
 #endif
+
+#define ALIGNED_SIZE(size, alignment) (((size)+((alignment)-1))/(alignment)*(alignment))
+#define VBTABLE_ENTRY(class, offset, vbase) ALIGNED_SIZE(sizeof(class), TYPE_ALIGNMENT(vbase))-offset
+
+/* ??_8ostream@@7B@ */
+const int ostream_vbtable[] = {0, VBTABLE_ENTRY(ostream, FIELD_OFFSET(ostream, vbtable), ios)};
 
 DEFINE_RTTI_DATA0(streambuf, 0, ".?AVstreambuf@@")
 DEFINE_RTTI_DATA1(filebuf, 0, &streambuf_rtti_base_descriptor, ".?AVfilebuf@@")
 DEFINE_RTTI_DATA1(strstreambuf, 0, &streambuf_rtti_base_descriptor, ".?AVstrstreambuf@@")
 DEFINE_RTTI_DATA1(stdiobuf, 0, &streambuf_rtti_base_descriptor, ".?AVstdiobuf@@")
 DEFINE_RTTI_DATA0(ios, 0, ".?AVios@@")
+DEFINE_RTTI_DATA1(ostream, sizeof(ostream), &ios_rtti_base_descriptor, ".?AVostream@@")
 
 /* ??0streambuf@@IAE@PADH@Z */
 /* ??0streambuf@@IEAA@PEADH@Z */
@@ -2217,6 +2229,223 @@ int __cdecl ios_xalloc(void)
     return ret;
 }
 
+/* ??0ostream@@QAE@PAVstreambuf@@@Z */
+/* ??0ostream@@QEAA@PEAVstreambuf@@@Z */
+DEFINE_THISCALL_WRAPPER(ostream_sb_ctor, 12)
+ostream* __thiscall ostream_sb_ctor(ostream *this, streambuf *sb, BOOL virt_init)
+{
+    FIXME("(%p %p %d) stub\n", this, sb, virt_init);
+    return this;
+}
+
+/* ??0ostream@@IAE@ABV0@@Z */
+/* ??0ostream@@IEAA@AEBV0@@Z */
+DEFINE_THISCALL_WRAPPER(ostream_copy_ctor, 12)
+ostream* __thiscall ostream_copy_ctor(ostream *this, const ostream *copy, BOOL virt_init)
+{
+    FIXME("(%p %p %d) stub\n", this, copy, virt_init);
+    return this;
+}
+
+/* ??0ostream@@IAE@XZ */
+/* ??0ostream@@IEAA@XZ */
+DEFINE_THISCALL_WRAPPER(ostream_ctor, 8)
+ostream* __thiscall ostream_ctor(ostream *this, BOOL virt_init)
+{
+    FIXME("(%p %d) stub\n", this, virt_init);
+    return this;
+}
+
+/* ??1ostream@@UAE@XZ */
+/* ??1ostream@@UEAA@XZ */
+DEFINE_THISCALL_WRAPPER(ostream_dtor, 4)
+void __thiscall ostream_dtor(ios *base)
+{
+    FIXME("(%p) stub\n", base);
+}
+
+/* ??4ostream@@IAEAAV0@PAVstreambuf@@@Z */
+/* ??4ostream@@IEAAAEAV0@PEAVstreambuf@@@Z */
+DEFINE_THISCALL_WRAPPER(ostream_assign_sb, 8)
+ostream* __thiscall ostream_assign_sb(ostream *this, streambuf *sb)
+{
+    FIXME("(%p %p) stub\n", this, sb);
+    return this;
+}
+
+/* ??4ostream@@IAEAAV0@ABV0@@Z */
+/* ??4ostream@@IEAAAEAV0@AEBV0@@Z */
+DEFINE_THISCALL_WRAPPER(ostream_assign, 8)
+ostream* __thiscall ostream_assign(ostream *this, const ostream *rhs)
+{
+    FIXME("(%p %p) stub\n", this, rhs);
+    return this;
+}
+
+/* ??_Dostream@@QAEXXZ */
+/* ??_Dostream@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(ostream_vbase_dtor, 4)
+void __thiscall ostream_vbase_dtor(ostream *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ??_Eostream@@UAEPAXI@Z */
+DEFINE_THISCALL_WRAPPER(ostream_vector_dtor, 8)
+ostream* __thiscall ostream_vector_dtor(ios *base, unsigned int flags)
+{
+    FIXME("(%p %x) stub\n", base, flags);
+    return NULL;
+}
+
+/* ??_Gostream@@UAEPAXI@Z */
+DEFINE_THISCALL_WRAPPER(ostream_scalar_dtor, 8)
+ostream* __thiscall ostream_scalar_dtor(ios *base, unsigned int flags)
+{
+    FIXME("(%p %x) stub\n", base, flags);
+    return NULL;
+}
+
+/* ?flush@ostream@@QAEAAV1@XZ */
+/* ?flush@ostream@@QEAAAEAV1@XZ */
+DEFINE_THISCALL_WRAPPER(ostream_flush, 4)
+ostream* __thiscall ostream_flush(ostream *this)
+{
+    FIXME("(%p) stub\n", this);
+    return this;
+}
+
+/* ?opfx@ostream@@QAEHXZ */
+/* ?opfx@ostream@@QEAAHXZ */
+DEFINE_THISCALL_WRAPPER(ostream_opfx, 4)
+int __thiscall ostream_opfx(ostream *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?osfx@ostream@@QAEXXZ */
+/* ?osfx@ostream@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(ostream_osfx, 4)
+void __thiscall ostream_osfx(ostream *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?put@ostream@@QAEAAV1@D@Z */
+/* ?put@ostream@@QEAAAEAV1@D@Z */
+DEFINE_THISCALL_WRAPPER(ostream_put_char, 8)
+ostream* __thiscall ostream_put_char(ostream *this, char c)
+{
+    FIXME("(%p %c) stub\n", this, c);
+    return this;
+}
+
+/* ?put@ostream@@QAEAAV1@C@Z */
+/* ?put@ostream@@QEAAAEAV1@C@Z */
+DEFINE_THISCALL_WRAPPER(ostream_put_signed_char, 8)
+ostream* __thiscall ostream_put_signed_char(ostream *this, signed char c)
+{
+    FIXME("(%p %c) stub\n", this, c);
+    return this;
+}
+
+/* ?put@ostream@@QAEAAV1@E@Z */
+/* ?put@ostream@@QEAAAEAV1@E@Z */
+DEFINE_THISCALL_WRAPPER(ostream_put_unsigned_char, 8)
+ostream* __thiscall ostream_put_unsigned_char(ostream *this, unsigned char c)
+{
+    FIXME("(%p %c) stub\n", this, c);
+    return this;
+}
+
+/* ?seekp@ostream@@QAEAAV1@J@Z */
+/* ?seekp@ostream@@QEAAAEAV1@J@Z */
+DEFINE_THISCALL_WRAPPER(ostream_seekp, 8)
+ostream* __thiscall ostream_seekp(ostream *this, streampos pos)
+{
+    FIXME("(%p %d) stub\n", this, pos);
+    return this;
+}
+
+/* ?seekp@ostream@@QAEAAV1@JW4seek_dir@ios@@@Z */
+/* ?seekp@ostream@@QEAAAEAV1@JW4seek_dir@ios@@@Z */
+DEFINE_THISCALL_WRAPPER(ostream_seekp_offset, 12)
+ostream* __thiscall ostream_seekp_offset(ostream *this, streamoff off, ios_seek_dir dir)
+{
+    FIXME("(%p %d %d) stub\n", this, off, dir);
+    return this;
+}
+
+/* ?tellp@ostream@@QAEJXZ */
+/* ?tellp@ostream@@QEAAJXZ */
+DEFINE_THISCALL_WRAPPER(ostream_tellp, 4)
+streampos __thiscall ostream_tellp(ostream *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?write@ostream@@QAEAAV1@PBDH@Z */
+/* ?write@ostream@@QEAAAEAV1@PEBDH@Z */
+DEFINE_THISCALL_WRAPPER(ostream_write_char, 12)
+ostream* __thiscall ostream_write_char(ostream *this, const char *str, int count)
+{
+    FIXME("(%p %s %d) stub\n", this, str, count);
+    return this;
+}
+
+/* ?write@ostream@@QAEAAV1@PBCH@Z */
+/* ?write@ostream@@QEAAAEAV1@PEBCH@Z */
+DEFINE_THISCALL_WRAPPER(ostream_write_signed_char, 12)
+ostream* __thiscall ostream_write_signed_char(ostream *this, const signed char *str, int count)
+{
+    FIXME("(%p %s %d) stub\n", this, str, count);
+    return this;
+}
+
+/* ?write@ostream@@QAEAAV1@PBEH@Z */
+/* ?write@ostream@@QEAAAEAV1@PEBEH@Z */
+DEFINE_THISCALL_WRAPPER(ostream_write_unsigned_char, 12)
+ostream* __thiscall ostream_write_unsigned_char(ostream *this, const unsigned char *str, int count)
+{
+    FIXME("(%p %s %d) stub\n", this, str, count);
+    return this;
+}
+
+/* ?writepad@ostream@@AAEAAV1@PBD0@Z */
+/* ?writepad@ostream@@AEAAAEAV1@PEBD0@Z */
+DEFINE_THISCALL_WRAPPER(ostream_writepad, 12)
+ostream* __thiscall ostream_writepad(ostream *this, const char *str1, const char *str2)
+{
+    FIXME("(%p %s %s) stub\n", this, str1, str2);
+    return this;
+}
+
+/* ?endl@@YAAAVostream@@AAV1@@Z */
+/* ?endl@@YAAEAVostream@@AEAV1@@Z */
+ostream* __cdecl ostream_endl(ostream *this)
+{
+   FIXME("(%p) stub\n", this);
+   return this;
+}
+
+/* ?ends@@YAAAVostream@@AAV1@@Z */
+/* ?ends@@YAAEAVostream@@AEAV1@@Z */
+ostream* __cdecl ostream_ends(ostream *this)
+{
+   FIXME("(%p) stub\n", this);
+   return this;
+}
+
+/* ?flush@@YAAAVostream@@AAV1@@Z */
+/* ?flush@@YAAEAVostream@@AEAV1@@Z */
+ostream* __cdecl ostream_flush_manip(ostream *this)
+{
+   FIXME("(%p) stub\n", this);
+   return this;
+}
+
 /******************************************************************
  *		 ??0ostrstream@@QAE@XZ (MSVCRTI.@)
  */
@@ -2280,26 +2509,6 @@ void * __thiscall MSVCIRT_operator_sl_callback(ostream * _this, ostream * (__cde
    return func(_this);
 }
 
-/******************************************************************
- *		?endl@@YAAAVostream@@AAV1@@Z (MSVCRTI.@)
- *           class ostream & __cdecl endl(class ostream &)
- */
-void * CDECL MSVCIRT_endl(ostream * _this)
-{
-   FIXME("(%p)->() stub\n", _this);
-   return _this;
-}
-
-/******************************************************************
- *		?ends@@YAAAVostream@@AAV1@@Z (MSVCRTI.@)
- *           class ostream & __cdecl ends(class ostream &)
- */
-void * CDECL MSVCIRT_ends(ostream * _this)
-{
-   FIXME("(%p)->() stub\n", _this);
-   return _this;
-}
-
 #ifdef __i386__
 
 #define DEFINE_VTBL_WRAPPER(off)            \
@@ -2355,6 +2564,7 @@ static void init_io(void *base)
     init_strstreambuf_rtti(base);
     init_stdiobuf_rtti(base);
     init_ios_rtti(base);
+    init_ostream_rtti(base);
 #endif
 }
 
