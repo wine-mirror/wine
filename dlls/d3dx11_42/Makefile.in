@@ -1,5 +1,9 @@
 MODULE = d3dx11_42.dll
+IMPORTS = d3dcompiler
+PARENTSRC = ../d3dx11_43
 
-C_SRCS = d3dx11_42.c
+C_SRCS = \
+	async.c \
+	d3dx11_42.c
 
 RC_SRCS = version.rc
