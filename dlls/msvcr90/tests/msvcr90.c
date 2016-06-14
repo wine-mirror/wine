@@ -123,6 +123,9 @@ static unsigned long (__cdecl *p_byteswap_ulong)(unsigned long);
 static void** (__cdecl *p__pxcptinfoptrs)(void);
 static void* (__cdecl *p__AdjustPointer)(void*, const void*);
 static int (__cdecl *p_fflush_nolock)(FILE*);
+static size_t (__cdecl *p_mbstowcs)(wchar_t*, const char*, size_t);
+static size_t (__cdecl *p_wcstombs)(char*, const wchar_t*, size_t);
+static char* (__cdecl *p_setlocale)(int, const char*);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -383,6 +386,9 @@ static BOOL init(void)
     SET(p__pxcptinfoptrs, "__pxcptinfoptrs");
     SET(p__AdjustPointer, "__AdjustPointer");
     SET(p_fflush_nolock, "_fflush_nolock");
+    SET(p_mbstowcs, "mbstowcs");
+    SET(p_wcstombs, "wcstombs");
+    SET(p_setlocale, "setlocale");
     if (sizeof(void *) == 8)
     {
         SET(p_type_info_name_internal_method, "?_name_internal_method@type_info@@QEBAPEBDPEAU__type_info_node@@@Z");
@@ -1479,6 +1485,68 @@ static void test__AdjustPointer(void)
     }
 }
 
+static void test_mbstowcs(void)
+{
+    wchar_t bufw[16];
+    char buf[16];
+    size_t ret;
+
+    buf[0] = 'a';
+    buf[1] = 0;
+    memset(bufw, 'x', sizeof(bufw));
+    ret = p_mbstowcs(bufw, buf, -1);
+    ok(ret == 1, "ret = %d\n", (int)ret);
+    ok(bufw[0] == 'a', "bufw[0] = '%c'\n", bufw[0]);
+    ok(bufw[1] == 0, "bufw[1] = '%c'\n", bufw[1]);
+
+    memset(bufw, 'x', sizeof(bufw));
+    ret = p_mbstowcs(bufw, buf, -1000);
+    ok(ret == 1, "ret = %d\n", (int)ret);
+    ok(bufw[0] == 'a', "bufw[0] = '%c'\n", bufw[0]);
+    ok(bufw[1] == 0, "bufw[1] = '%c'\n", bufw[1]);
+
+    memset(buf, 'x', sizeof(buf));
+    ret = p_wcstombs(buf, bufw, -1);
+    ok(ret == 1, "ret = %d\n", (int)ret);
+    ok(buf[0] == 'a', "buf[0] = '%c'\n", buf[0]);
+    ok(buf[1] == 0, "buf[1] = '%c'\n", buf[1]);
+
+    memset(buf, 'x', sizeof(buf));
+    ret = p_wcstombs(buf, bufw, -1000);
+    ok(ret == 1, "ret = %d\n", (int)ret);
+    ok(buf[0] == 'a', "buf[0] = '%c'\n", buf[0]);
+    ok(buf[1] == 0, "buf[1] = '%c'\n", buf[1]);
+
+    if(!p_setlocale(LC_ALL, "English")) {
+        win_skip("English locale not available\n");
+        return;
+    }
+
+    buf[0] = 'a';
+    buf[1] = 0;
+    memset(bufw, 'x', sizeof(bufw));
+    ret = p_mbstowcs(bufw, buf, -1);
+    ok(ret == -1, "ret = %d\n", (int)ret);
+    ok(bufw[0] == 0, "bufw[0] = '%c'\n", bufw[0]);
+
+    memset(bufw, 'x', sizeof(bufw));
+    ret = p_mbstowcs(bufw, buf, -1000);
+    ok(ret == -1, "ret = %d\n", (int)ret);
+    ok(bufw[0] == 0, "bufw[0] = '%c'\n", bufw[0]);
+
+    memset(buf, 'x', sizeof(buf));
+    ret = p_wcstombs(buf, bufw, -1);
+    ok(ret == 0, "ret = %d\n", (int)ret);
+    ok(buf[0] == 0, "buf[0] = '%c'\n", buf[0]);
+
+    memset(buf, 'x', sizeof(buf));
+    ret = p_wcstombs(buf, bufw, -1000);
+    ok(ret == 0, "ret = %d\n", (int)ret);
+    ok(buf[0] == 0, "buf[0] = '%c'\n", buf[0]);
+
+    p_setlocale(LC_ALL, "C");
+}
+
 START_TEST(msvcr90)
 {
     if(!init())
@@ -1507,4 +1575,5 @@ START_TEST(msvcr90)
     test_access_s();
     test_is_exception_typeof();
     test__AdjustPointer();
+    test_mbstowcs();
 }
