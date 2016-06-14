@@ -477,6 +477,24 @@ static MSVCRT_size_t MSVCRT_wcsrtombs_l(char *mbstr, const MSVCRT_wchar_t **wcst
     else
         locinfo = locale->locinfo;
 
+    if(!locinfo->lc_codepage) {
+        MSVCRT_size_t i;
+
+        if(!mbstr)
+            return strlenW(*wcstr);
+
+        for(i=0; i<count; i++) {
+            if((*wcstr)[i] > 255) {
+                *MSVCRT__errno() = MSVCRT_EILSEQ;
+                return -1;
+            }
+
+            mbstr[i] = (*wcstr)[i];
+            if(!(*wcstr)[i]) break;
+        }
+        return i;
+    }
+
     if(!mbstr) {
         tmp = WideCharToMultiByte(locinfo->lc_codepage, WC_NO_BEST_FIT_CHARS,
                 *wcstr, -1, NULL, 0, NULL, &used_default)-1;
