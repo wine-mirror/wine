@@ -71,6 +71,11 @@ typedef enum tagSCRIPTUICHANDLING {
     SCRIPTUICHANDLING_NOUIDEFAULT = 2
 } SCRIPTUICHANDLING;
 
+typedef enum tagSCRIPTGCTYPE {
+    SCRIPTGCTYPE_NORMAL     = 0,
+    SCRIPTGCTYPE_EXHAUSTIVE = 1
+} SCRIPTGCTYPE;
+
 typedef DWORD SCRIPTTHREADID;
 cpp_quote("#define SCRIPTTHREADID_CURRENT ((SCRIPTTHREADID)-1)")
 cpp_quote("#define SCRIPTTHREADID_BASE ((SCRIPTTHREADID)-2)")
@@ -550,4 +555,15 @@ interface IActiveScriptProperty : IUnknown
             [in] DWORD dwProperty,
             [in] VARIANT *pvarIndex,
             [in] VARIANT *pvarValue);
+}
+
+[
+    object,
+    uuid(6aa2c4a0-2b53-11d4-a2a0-00104bd35090),
+    pointer_default(unique)
+]
+interface IActiveScriptGarbageCollector : IUnknown
+{
+    HRESULT CollectGarbage(
+            [in] SCRIPTGCTYPE gctype);
 }
