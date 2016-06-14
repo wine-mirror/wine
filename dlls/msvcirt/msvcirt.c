@@ -2511,8 +2511,16 @@ ostream* __thiscall ostream_seekp_offset(ostream *this, streamoff off, ios_seek_
 DEFINE_THISCALL_WRAPPER(ostream_tellp, 4)
 streampos __thiscall ostream_tellp(ostream *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    ios *base = ostream_get_ios(this);
+    streampos pos;
+
+    TRACE("(%p)\n", this);
+
+    ios_lockbuf(base);
+    if ((pos = call_streambuf_seekoff(base->sb, 0, SEEKDIR_cur, OPENMODE_out)) == EOF)
+        ios_clear(base, base->state | IOSTATE_failbit);
+    ios_unlockbuf(base);
+    return pos;
 }
 
 /* ?write@ostream@@QAEAAV1@PBDH@Z */
