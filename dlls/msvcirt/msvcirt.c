@@ -2446,7 +2446,15 @@ void __thiscall ostream_osfx(ostream *this)
 DEFINE_THISCALL_WRAPPER(ostream_put_char, 8)
 ostream* __thiscall ostream_put_char(ostream *this, char c)
 {
-    FIXME("(%p %c) stub\n", this, c);
+    ios *base = ostream_get_ios(this);
+
+    TRACE("(%p %c)\n", this, c);
+
+    if (ostream_opfx(this)) {
+        if (streambuf_sputc(base->sb, c) == EOF)
+            base->state = IOSTATE_badbit | IOSTATE_failbit;
+        ostream_osfx(this);
+    }
     return this;
 }
 
@@ -2455,8 +2463,7 @@ ostream* __thiscall ostream_put_char(ostream *this, char c)
 DEFINE_THISCALL_WRAPPER(ostream_put_signed_char, 8)
 ostream* __thiscall ostream_put_signed_char(ostream *this, signed char c)
 {
-    FIXME("(%p %c) stub\n", this, c);
-    return this;
+    return ostream_put_char(this, (char) c);
 }
 
 /* ?put@ostream@@QAEAAV1@E@Z */
@@ -2464,8 +2471,7 @@ ostream* __thiscall ostream_put_signed_char(ostream *this, signed char c)
 DEFINE_THISCALL_WRAPPER(ostream_put_unsigned_char, 8)
 ostream* __thiscall ostream_put_unsigned_char(ostream *this, unsigned char c)
 {
-    FIXME("(%p %c) stub\n", this, c);
-    return this;
+    return ostream_put_char(this, (char) c);
 }
 
 /* ?seekp@ostream@@QAEAAV1@J@Z */

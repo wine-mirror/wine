@@ -264,6 +264,7 @@ static void (*__thiscall p_ostream_vbase_dtor)(ostream*);
 static ostream* (*__thiscall p_ostream_flush)(ostream*);
 static int (*__thiscall p_ostream_opfx)(ostream*);
 static void (*__thiscall p_ostream_osfx)(ostream*);
+static ostream* (*__thiscall p_ostream_put_char)(ostream*, char);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -432,6 +433,7 @@ static BOOL init(void)
         SET(p_ostream_flush, "?flush@ostream@@QEAAAEAV1@XZ");
         SET(p_ostream_opfx, "?opfx@ostream@@QEAAHXZ");
         SET(p_ostream_osfx, "?osfx@ostream@@QEAAXXZ");
+        SET(p_ostream_put_char, "?put@ostream@@QEAAAEAV1@D@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -530,6 +532,7 @@ static BOOL init(void)
         SET(p_ostream_flush, "?flush@ostream@@QAEAAV1@XZ");
         SET(p_ostream_opfx, "?opfx@ostream@@QAEHXZ");
         SET(p_ostream_osfx, "?osfx@ostream@@QAEXXZ");
+        SET(p_ostream_put_char, "?put@ostream@@QAEAAV1@D@Z");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -2520,7 +2523,7 @@ static void test_ostream(void) {
     filebuf fb1, fb2, *pfb;
     const char filename1[] = "test1";
     const char filename2[] = "test2";
-    int ret;
+    int fd, ret;
 
     memset(&os1, 0xab, sizeof(ostream));
     memset(&os2, 0xab, sizeof(ostream));
@@ -2731,6 +2734,52 @@ if (0) /* crashes on native */
     ok(os1.base_ios.flags == FLAGS_unitbuf, "expected %d got %d\n", FLAGS_unitbuf, os1.base_ios.flags);
     ok(fb1.base.pbase == NULL, "wrong put base, expected %p got %p\n", NULL, fb1.base.pbase);
     ok(fb1.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb1.base.pptr);
+
+    /* put */
+    ret = (int) call_func3(p_streambuf_xsputn, &fb2.base, "for so long", 11);
+    ok(ret == 11, "expected 11 got %d\n", ret);
+    os1.base_ios.state = IOSTATE_badbit;
+    os1.base_ios.width = 2;
+    pos = (ostream*) call_func2(p_ostream_put_char, &os1, 'a');
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(os1.base_ios.state == (IOSTATE_badbit|IOSTATE_failbit), "expected %d got %d\n",
+        IOSTATE_badbit|IOSTATE_failbit, os1.base_ios.state);
+    ok(os1.base_ios.width == 2, "expected 2 got %d\n", os1.base_ios.width);
+    ok(fb1.base.pbase == NULL, "wrong put base, expected %p got %p\n", NULL, fb1.base.pbase);
+    ok(fb1.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb1.base.pptr);
+    ok(fb2.base.pbase == fb2.base.base, "wrong put base, expected %p got %p\n", fb2.base.base, fb2.base.pbase);
+    ok(fb2.base.pptr == fb2.base.base + 11, "wrong put pointer, expected %p got %p\n", fb2.base.base + 11, fb2.base.pptr);
+    os1.base_ios.state = IOSTATE_goodbit;
+    pos = (ostream*) call_func2(p_ostream_put_char, &os1, 'a');
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(os1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, os1.base_ios.state);
+    ok(os1.base_ios.width == 0, "expected 0 got %d\n", os1.base_ios.width);
+    ok(fb1.base.pbase == NULL, "wrong put base, expected %p got %p\n", NULL, fb1.base.pbase);
+    ok(fb1.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb1.base.pptr);
+    ok(fb2.base.pbase == NULL, "wrong put base, expected %p got %p\n", NULL, fb2.base.pbase);
+    ok(fb2.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb2.base.pptr);
+    os1.base_ios.flags = 0;
+    pos = (ostream*) call_func2(p_ostream_put_char, &os1, 'b');
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(os1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, os1.base_ios.state);
+    ok(fb1.base.pbase == fb1.base.base, "wrong put base, expected %p got %p\n", fb1.base.base, fb1.base.pbase);
+    ok(fb1.base.pptr == fb1.base.base + 1, "wrong put pointer, expected %p got %p\n", fb1.base.base + 1, fb1.base.pptr);
+    os1.base_ios.sb = NULL;
+if (0) /* crashes on native */
+    pos = (ostream*) call_func2(p_ostream_put_char, &os1, 'c');
+    os1.base_ios.sb = (streambuf*) &fb1;
+    os1.base_ios.width = 5;
+    call_func1(p_filebuf_sync, &fb1);
+    fd = fb1.fd;
+    fb1.fd = -1;
+    pos = (ostream*) call_func2(p_ostream_put_char, &os1, 'c');
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(os1.base_ios.state == (IOSTATE_badbit|IOSTATE_failbit), "expected %d got %d\n",
+        IOSTATE_badbit|IOSTATE_failbit, os1.base_ios.state);
+    ok(os1.base_ios.width == 0, "expected 0 got %d\n", os1.base_ios.width);
+    ok(fb1.base.pbase == NULL, "wrong put base, expected %p got %p\n", NULL, fb1.base.pbase);
+    ok(fb1.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb1.base.pptr);
+    fb1.fd = fd;
 
     call_func1(p_ostream_vbase_dtor, &os1);
     call_func1(p_ostream_vbase_dtor, &os2);
