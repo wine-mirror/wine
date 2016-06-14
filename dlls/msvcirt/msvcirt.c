@@ -2479,7 +2479,14 @@ ostream* __thiscall ostream_put_unsigned_char(ostream *this, unsigned char c)
 DEFINE_THISCALL_WRAPPER(ostream_seekp, 8)
 ostream* __thiscall ostream_seekp(ostream *this, streampos pos)
 {
-    FIXME("(%p %d) stub\n", this, pos);
+    ios *base = ostream_get_ios(this);
+
+    TRACE("(%p %d)\n", this, pos);
+
+    ios_lockbuf(base);
+    if (streambuf_seekpos(base->sb, pos, OPENMODE_out) == EOF)
+        ios_clear(base, base->state | IOSTATE_failbit);
+    ios_unlockbuf(base);
     return this;
 }
 
@@ -2488,7 +2495,14 @@ ostream* __thiscall ostream_seekp(ostream *this, streampos pos)
 DEFINE_THISCALL_WRAPPER(ostream_seekp_offset, 12)
 ostream* __thiscall ostream_seekp_offset(ostream *this, streamoff off, ios_seek_dir dir)
 {
-    FIXME("(%p %d %d) stub\n", this, off, dir);
+    ios *base = ostream_get_ios(this);
+
+    TRACE("(%p %d %d)\n", this, off, dir);
+
+    ios_lockbuf(base);
+    if (call_streambuf_seekoff(base->sb, off, dir, OPENMODE_out) == EOF)
+        ios_clear(base, base->state | IOSTATE_failbit);
+    ios_unlockbuf(base);
     return this;
 }
 
