@@ -11,9 +11,9 @@
 @ cdecl _free_locale(ptr) ucrtbase._free_locale
 @ cdecl _get_current_locale() ucrtbase._get_current_locale
 @ cdecl _getmbcp() ucrtbase._getmbcp
-@ stub _lock_locales
+@ cdecl _lock_locales() ucrtbase._lock_locales
 @ cdecl _setmbcp(long) ucrtbase._setmbcp
-@ stub _unlock_locales
+@ cdecl _unlock_locales() ucrtbase._unlock_locales
 @ stub _wcreate_locale
 @ cdecl _wsetlocale(long wstr) ucrtbase._wsetlocale
 @ cdecl localeconv() ucrtbase.localeconv
