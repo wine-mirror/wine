@@ -2229,12 +2229,40 @@ int __cdecl ios_xalloc(void)
     return ret;
 }
 
+static inline ios* ostream_get_ios(const ostream *this)
+{
+    return (ios*)((char*)this + this->vbtable[1]);
+}
+
+static inline ios* ostream_to_ios(const ostream *this)
+{
+    return (ios*)((char*)this + ostream_vbtable[1]);
+}
+
+static inline ostream* ios_to_ostream(const ios *base)
+{
+    return (ostream*)((char*)base - ostream_vbtable[1]);
+}
+
 /* ??0ostream@@QAE@PAVstreambuf@@@Z */
 /* ??0ostream@@QEAA@PEAVstreambuf@@@Z */
 DEFINE_THISCALL_WRAPPER(ostream_sb_ctor, 12)
 ostream* __thiscall ostream_sb_ctor(ostream *this, streambuf *sb, BOOL virt_init)
 {
-    FIXME("(%p %p %d) stub\n", this, sb, virt_init);
+    ios *base;
+
+    TRACE("(%p %p %d)\n", this, sb, virt_init);
+
+    if (virt_init) {
+        this->vbtable = ostream_vbtable;
+        base = ostream_get_ios(this);
+        ios_sb_ctor(base, sb);
+    } else {
+        base = ostream_get_ios(this);
+        ios_init(base, sb);
+    }
+    base->vtable = &MSVCP_ostream_vtable;
+    this->unknown = 0;
     return this;
 }
 
@@ -2243,8 +2271,7 @@ ostream* __thiscall ostream_sb_ctor(ostream *this, streambuf *sb, BOOL virt_init
 DEFINE_THISCALL_WRAPPER(ostream_copy_ctor, 12)
 ostream* __thiscall ostream_copy_ctor(ostream *this, const ostream *copy, BOOL virt_init)
 {
-    FIXME("(%p %p %d) stub\n", this, copy, virt_init);
-    return this;
+    return ostream_sb_ctor(this, ostream_get_ios(copy)->sb, virt_init);
 }
 
 /* ??0ostream@@IAE@XZ */
@@ -2252,7 +2279,18 @@ ostream* __thiscall ostream_copy_ctor(ostream *this, const ostream *copy, BOOL v
 DEFINE_THISCALL_WRAPPER(ostream_ctor, 8)
 ostream* __thiscall ostream_ctor(ostream *this, BOOL virt_init)
 {
-    FIXME("(%p %d) stub\n", this, virt_init);
+    ios *base;
+
+    TRACE("(%p %d)\n", this, virt_init);
+
+    if (virt_init) {
+        this->vbtable = ostream_vbtable;
+        base = ostream_get_ios(this);
+        ios_ctor(base);
+    } else
+        base = ostream_get_ios(this);
+    base->vtable = &MSVCP_ostream_vtable;
+    this->unknown = 0;
     return this;
 }
 
@@ -2261,7 +2299,9 @@ ostream* __thiscall ostream_ctor(ostream *this, BOOL virt_init)
 DEFINE_THISCALL_WRAPPER(ostream_dtor, 4)
 void __thiscall ostream_dtor(ios *base)
 {
-    FIXME("(%p) stub\n", base);
+    ostream *this = ios_to_ostream(base);
+
+    TRACE("(%p)\n", this);
 }
 
 /* ??4ostream@@IAEAAV0@PAVstreambuf@@@Z */
@@ -2269,7 +2309,18 @@ void __thiscall ostream_dtor(ios *base)
 DEFINE_THISCALL_WRAPPER(ostream_assign_sb, 8)
 ostream* __thiscall ostream_assign_sb(ostream *this, streambuf *sb)
 {
-    FIXME("(%p %p) stub\n", this, sb);
+    ios *base = ostream_get_ios(this);
+
+    TRACE("(%p %p)\n", this, sb);
+
+    ios_init(base, sb);
+    base->state &= IOSTATE_badbit;
+    base->delbuf = 0;
+    base->tie = NULL;
+    base->flags = 0;
+    base->precision = 6;
+    base->fill = ' ';
+    base->width = 0;
     return this;
 }
 
@@ -2278,8 +2329,11 @@ ostream* __thiscall ostream_assign_sb(ostream *this, streambuf *sb)
 DEFINE_THISCALL_WRAPPER(ostream_assign, 8)
 ostream* __thiscall ostream_assign(ostream *this, const ostream *rhs)
 {
-    FIXME("(%p %p) stub\n", this, rhs);
-    return this;
+    ios *base_rhs = ostream_get_ios(rhs);
+
+    TRACE("(%p %p)\n", this, rhs);
+
+    return ostream_assign_sb(this, base_rhs->sb);
 }
 
 /* ??_Dostream@@QAEXXZ */
@@ -2287,23 +2341,48 @@ ostream* __thiscall ostream_assign(ostream *this, const ostream *rhs)
 DEFINE_THISCALL_WRAPPER(ostream_vbase_dtor, 4)
 void __thiscall ostream_vbase_dtor(ostream *this)
 {
-    FIXME("(%p) stub\n", this);
+    ios *base = ostream_to_ios(this);
+
+    TRACE("(%p)\n", this);
+
+    ostream_dtor(base);
+    ios_dtor(base);
 }
 
 /* ??_Eostream@@UAEPAXI@Z */
 DEFINE_THISCALL_WRAPPER(ostream_vector_dtor, 8)
 ostream* __thiscall ostream_vector_dtor(ios *base, unsigned int flags)
 {
-    FIXME("(%p %x) stub\n", base, flags);
-    return NULL;
+    ostream *this = ios_to_ostream(base);
+
+    TRACE("(%p %x)\n", this, flags);
+
+    if (flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
+
+        for (i = *ptr-1; i >= 0; i--)
+            ostream_vbase_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        ostream_vbase_dtor(this);
+        if (flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+    return this;
 }
 
 /* ??_Gostream@@UAEPAXI@Z */
 DEFINE_THISCALL_WRAPPER(ostream_scalar_dtor, 8)
 ostream* __thiscall ostream_scalar_dtor(ios *base, unsigned int flags)
 {
-    FIXME("(%p %x) stub\n", base, flags);
-    return NULL;
+    ostream *this = ios_to_ostream(base);
+
+    TRACE("(%p %x)\n", this, flags);
+
+    ostream_vbase_dtor(this);
+    if (flags & 1) MSVCRT_operator_delete(this);
+    return this;
 }
 
 /* ?flush@ostream@@QAEAAV1@XZ */
