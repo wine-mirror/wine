@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-05-08 20:00+0200\n"
+"PO-Revision-Date: 2016-06-10 19:00+0200\n"
 "Last-Translator: Kim Malmo <berencamlost@msn.com>\n"
 "Language-Team: Norwegian Bokmål <alexsornes@gmail.com>\n"
 "Language: nb_NO\n"
@@ -5701,7 +5701,7 @@ msgstr "Krokprosedyren er ikke installert.\n"
 
 #: winerror.mc:2556
 msgid "Invalid list box message.\n"
-msgstr "Ugyldig melding for listeelement\n"
+msgstr "Ugyldig melding for listeelement.\n"
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent.\n"
@@ -11157,7 +11157,7 @@ msgstr "versjon 1.0"
 
 #: oleview.rc:103
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
-msgstr "TypeLib-filer (*.tlb; *.olb; *.dll ;*.ocx; *.exe)"
+msgstr "TypeLib-filer (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 
 #: oleview.rc:106
 msgid "Bind to file via a File Moniker"
@@ -11544,6 +11544,15 @@ msgid ""
 "  REG [operation] /?\n"
 "\n"
 msgstr ""
+"Bruk:\n"
+"  REG [operasjon] [parametere]\n"
+"\n"
+"Støttede operasjoner:\n"
+"  ADD | DELETE | QUERY\n"
+"\n"
+"For hjelp med spesifikke operasjoner, skriv:\n"
+"  REG [operasjon] /?\n"
+"\n"
 
 #: reg.rc:36
 msgid ""
@@ -11648,24 +11657,20 @@ msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr "Søk fullført. Antall treff: %1!d!\n"
 
 #: reg.rc:61
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "reg: Invalid syntax. "
-msgstr "reg: Ugyldig nøkkelnavn\n"
+msgstr "reg: Ugyldig syntaks. "
 
 #: reg.rc:62
-#, fuzzy
-#| msgid "uninstaller: Invalid option [%1]\n"
 msgid "reg: Invalid option [%1]. "
-msgstr "uninstaller: [%1] er et ugyldig valg.\n"
+msgstr "reg: [%1] er et ugyldig valg. "
 
 #: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
-msgstr ""
+msgstr "Skriv \"REG /?\" for hjelp.\n"
 
 #: reg.rc:64
 msgid "Type \"REG %1 /?\" for help.\n"
-msgstr ""
+msgstr "Skriv \"REG %1 /?\" for hjelp.\n"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -12988,7 +12993,7 @@ msgstr ""
 
 #: uninstaller.rc:33
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "uninstaller: [%1] er et ugyldig valg.\n"
+msgstr "uninstaller: [%1] er et ugyldig valg\n"
 
 #: uninstaller.rc:35
 msgid ""
@@ -13857,7 +13862,7 @@ msgid ""
 msgstr ""
 "  --backend={user|curses}  'user' lager et nytt vindu, mens 'curses'\n"
 "                            prøver å bruke gjeldende terminal som Wine-"
-"konsoll\n"
+"konsoll.\n"
 
 #: wineconsole.rc:53
 msgid "  <command>                The Wine program to launch in the console.\n"
@@ -13938,7 +13943,7 @@ msgstr "Klarte ikke lagre"
 
 #: winedbg.rc:44
 msgid "Loading detailed information, please wait..."
-msgstr "Laster detaljert informasjon. Vent litt ..."
+msgstr "Laster detaljert informasjon, vent litt ..."
 
 #: winefile.rc:29
 msgid "&Open\tEnter"
