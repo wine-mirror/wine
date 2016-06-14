@@ -27,5 +27,6 @@
 #define DXGI_FORMAT_FROM_FILE ((DXGI_FORMAT)0xfffffffdu)
 
 #include "d3d11.h"
+#include "d3dx11core.h"
 
 #endif
