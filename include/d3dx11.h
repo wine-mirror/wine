@@ -28,5 +28,6 @@
 
 #include "d3d11.h"
 #include "d3dx11core.h"
+#include "d3dx11tex.h"
 
 #endif

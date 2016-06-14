@@ -258,6 +258,7 @@ HEADER_SRCS = \
 	d3dx10async.h \
 	d3dx10tex.h \
 	d3dx11.h \
+	d3dx11tex.h \
 	d3dx9.h \
 	d3dx9anim.h \
 	d3dx9core.h \
