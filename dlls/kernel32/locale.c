@@ -3490,7 +3490,7 @@ INT WINAPI CompareStringA(LCID lcid, DWORD flags,
  */
 INT WINAPI CompareStringOrdinal(const WCHAR *str1, INT len1, const WCHAR *str2, INT len2, BOOL ignore_case)
 {
-    int ret, len;
+    int ret;
 
     if (!str1 || !str2)
     {
@@ -3500,19 +3500,7 @@ INT WINAPI CompareStringOrdinal(const WCHAR *str1, INT len1, const WCHAR *str2, 
     if (len1 < 0) len1 = strlenW(str1);
     if (len2 < 0) len2 = strlenW(str2);
 
-    len = min(len1, len2);
-    if (ignore_case)
-    {
-        ret = memicmpW(str1, str2, len);
-    }
-    else
-    {
-        ret = 0;
-        for (; len > 0; len--)
-            if ((ret = (*str1++ - *str2++))) break;
-    }
-    if (!ret) ret = len1 - len2;
-
+    ret = RtlCompareUnicodeStrings( str1, len1, str2, len2, ignore_case );
     if (ret < 0) return CSTR_LESS_THAN;
     if (ret > 0) return CSTR_GREATER_THAN;
     return CSTR_EQUAL;

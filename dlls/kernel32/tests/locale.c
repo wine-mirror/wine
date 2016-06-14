@@ -71,7 +71,6 @@ static inline BOOL isdigitW( WCHAR wc )
 }
 
 /* Some functions are only in later versions of kernel32.dll */
-static HMODULE hKernel32;
 static WORD enumCount;
 
 static INT (WINAPI *pGetTimeFormatEx)(LPCWSTR, DWORD, const SYSTEMTIME *, LPCWSTR, LPWSTR, INT);
@@ -99,12 +98,13 @@ static INT (WINAPI *pGetGeoInfoW)(GEOID, GEOTYPE, LPWSTR, INT, LANGID);
 static BOOL (WINAPI *pEnumSystemGeoID)(GEOCLASS, GEOID, GEO_ENUMPROC);
 static BOOL (WINAPI *pGetSystemPreferredUILanguages)(DWORD, ULONG*, WCHAR*, ULONG*);
 static BOOL (WINAPI *pGetThreadPreferredUILanguages)(DWORD, ULONG*, WCHAR*, ULONG*);
+static WCHAR (WINAPI *pRtlUpcaseUnicodeChar)(WCHAR);
 
 static void InitFunctionPointers(void)
 {
-  hKernel32 = GetModuleHandleA("kernel32");
+  HMODULE mod = GetModuleHandleA("kernel32");
 
-#define X(f) p##f = (void*)GetProcAddress(hKernel32, #f)
+#define X(f) p##f = (void*)GetProcAddress(mod, #f)
   X(GetTimeFormatEx);
   X(GetDateFormatEx);
   X(EnumSystemLanguageGroupsA);
@@ -129,6 +129,9 @@ static void InitFunctionPointers(void)
   X(EnumSystemGeoID);
   X(GetSystemPreferredUILanguages);
   X(GetThreadPreferredUILanguages);
+
+  mod = GetModuleHandleA("ntdll");
+  X(RtlUpcaseUnicodeChar);
 #undef X
 }
 
@@ -4209,6 +4212,7 @@ static void test_CompareStringOrdinal(void)
     WCHAR coop2[] = { 'c','o','o','p',0 };
     WCHAR nonascii1[] = { 0x0102,0 };
     WCHAR nonascii2[] = { 0x0201,0 };
+    WCHAR ch1, ch2;
 
     if (!pCompareStringOrdinal)
     {
@@ -4265,6 +4269,21 @@ static void test_CompareStringOrdinal(void)
     ok(ret == CSTR_LESS_THAN, "Got %u, expected %u\n", ret, CSTR_LESS_THAN);
     ret = pCompareStringOrdinal(nonascii1, -1, nonascii2, -1, TRUE);
     ok(ret == CSTR_LESS_THAN, "Got %u, expected %u\n", ret, CSTR_LESS_THAN);
+
+    for (ch1 = 0; ch1 < 512; ch1++)
+    {
+        for (ch2 = 0; ch2 < 1024; ch2++)
+        {
+            int diff = ch1 - ch2;
+            ret = pCompareStringOrdinal( &ch1, 1, &ch2, 1, FALSE );
+            ok( ret == (diff > 0 ? CSTR_GREATER_THAN : diff < 0 ? CSTR_LESS_THAN : CSTR_EQUAL),
+                        "wrong result %d %04x %04x\n", ret, ch1, ch2 );
+            diff = pRtlUpcaseUnicodeChar( ch1 ) - pRtlUpcaseUnicodeChar( ch2 );
+            ret = pCompareStringOrdinal( &ch1, 1, &ch2, 1, TRUE );
+            ok( ret == (diff > 0 ? CSTR_GREATER_THAN : diff < 0 ? CSTR_LESS_THAN : CSTR_EQUAL),
+                        "wrong result %d %04x %04x\n", ret, ch1, ch2 );
+        }
+    }
 }
 
 static void test_GetGeoInfo(void)
