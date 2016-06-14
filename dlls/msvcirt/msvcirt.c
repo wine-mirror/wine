@@ -2506,7 +2506,15 @@ streampos __thiscall ostream_tellp(ostream *this)
 DEFINE_THISCALL_WRAPPER(ostream_write_char, 12)
 ostream* __thiscall ostream_write_char(ostream *this, const char *str, int count)
 {
-    FIXME("(%p %s %d) stub\n", this, str, count);
+    ios *base = ostream_get_ios(this);
+
+    TRACE("(%p %p %d)\n", this, str, count);
+
+    if (ostream_opfx(this)) {
+        if (streambuf_sputn(base->sb, str, count) != count)
+            base->state = IOSTATE_badbit | IOSTATE_failbit;
+        ostream_osfx(this);
+    }
     return this;
 }
 
@@ -2515,8 +2523,7 @@ ostream* __thiscall ostream_write_char(ostream *this, const char *str, int count
 DEFINE_THISCALL_WRAPPER(ostream_write_signed_char, 12)
 ostream* __thiscall ostream_write_signed_char(ostream *this, const signed char *str, int count)
 {
-    FIXME("(%p %s %d) stub\n", this, str, count);
-    return this;
+    return ostream_write_char(this, (const char*) str, count);
 }
 
 /* ?write@ostream@@QAEAAV1@PBEH@Z */
@@ -2524,8 +2531,7 @@ ostream* __thiscall ostream_write_signed_char(ostream *this, const signed char *
 DEFINE_THISCALL_WRAPPER(ostream_write_unsigned_char, 12)
 ostream* __thiscall ostream_write_unsigned_char(ostream *this, const unsigned char *str, int count)
 {
-    FIXME("(%p %s %d) stub\n", this, str, count);
-    return this;
+    return ostream_write_char(this, (const char*) str, count);
 }
 
 /* ?writepad@ostream@@AAEAAV1@PBD0@Z */

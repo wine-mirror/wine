@@ -265,6 +265,7 @@ static ostream* (*__thiscall p_ostream_flush)(ostream*);
 static int (*__thiscall p_ostream_opfx)(ostream*);
 static void (*__thiscall p_ostream_osfx)(ostream*);
 static ostream* (*__thiscall p_ostream_put_char)(ostream*, char);
+static ostream* (*__thiscall p_ostream_write_char)(ostream*, const char*, int);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -434,6 +435,7 @@ static BOOL init(void)
         SET(p_ostream_opfx, "?opfx@ostream@@QEAAHXZ");
         SET(p_ostream_osfx, "?osfx@ostream@@QEAAXXZ");
         SET(p_ostream_put_char, "?put@ostream@@QEAAAEAV1@D@Z");
+        SET(p_ostream_write_char, "?write@ostream@@QEAAAEAV1@PEBDH@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -533,6 +535,7 @@ static BOOL init(void)
         SET(p_ostream_opfx, "?opfx@ostream@@QAEHXZ");
         SET(p_ostream_osfx, "?osfx@ostream@@QAEXXZ");
         SET(p_ostream_put_char, "?put@ostream@@QAEAAV1@D@Z");
+        SET(p_ostream_write_char, "?write@ostream@@QAEAAV1@PBDH@Z");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -2773,6 +2776,38 @@ if (0) /* crashes on native */
     fd = fb1.fd;
     fb1.fd = -1;
     pos = (ostream*) call_func2(p_ostream_put_char, &os1, 'c');
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(os1.base_ios.state == (IOSTATE_badbit|IOSTATE_failbit), "expected %d got %d\n",
+        IOSTATE_badbit|IOSTATE_failbit, os1.base_ios.state);
+    ok(os1.base_ios.width == 0, "expected 0 got %d\n", os1.base_ios.width);
+    ok(fb1.base.pbase == NULL, "wrong put base, expected %p got %p\n", NULL, fb1.base.pbase);
+    ok(fb1.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb1.base.pptr);
+    fb1.fd = fd;
+
+    /* write */
+    pos = (ostream*) call_func3(p_ostream_write_char, &os1, "Your", 4);
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(os1.base_ios.state == (IOSTATE_badbit|IOSTATE_failbit), "expected %d got %d\n",
+        IOSTATE_badbit|IOSTATE_failbit, os1.base_ios.state);
+    ok(fb1.base.pbase == NULL, "wrong put base, expected %p got %p\n", NULL, fb1.base.pbase);
+    ok(fb1.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb1.base.pptr);
+    os1.base_ios.state = IOSTATE_goodbit;
+    os1.base_ios.width = 1;
+    pos = (ostream*) call_func3(p_ostream_write_char, &os1, "heart's", 7);
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(os1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, os1.base_ios.state);
+    ok(os1.base_ios.width == 0, "expected 0 got %d\n", os1.base_ios.width);
+    ok(fb1.base.pbase == fb1.base.base, "wrong put base, expected %p got %p\n", fb1.base.base, fb1.base.pbase);
+    ok(fb1.base.pptr == fb1.base.base + 7, "wrong put pointer, expected %p got %p\n", fb1.base.base + 7, fb1.base.pptr);
+    os1.base_ios.sb = NULL;
+if (0) /* crashes on native */
+    pos = (ostream*) call_func3(p_ostream_write_char, &os1, "been", 4);
+    os1.base_ios.sb = (streambuf*) &fb1;
+    os1.base_ios.width = 5;
+    call_func1(p_filebuf_sync, &fb1);
+    fd = fb1.fd;
+    fb1.fd = -1;
+    pos = (ostream*) call_func3(p_ostream_write_char, &os1, "aching,", 7);
     ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
     ok(os1.base_ios.state == (IOSTATE_badbit|IOSTATE_failbit), "expected %d got %d\n",
         IOSTATE_badbit|IOSTATE_failbit, os1.base_ios.state);
