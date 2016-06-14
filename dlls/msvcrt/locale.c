@@ -1592,6 +1592,22 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
 }
 
 /*********************************************************************
+ *      _lock_locales (UCRTBASE.@)
+ */
+void CDECL _lock_locales(void)
+{
+    LOCK_LOCALE
+}
+
+/*********************************************************************
+ *      _unlock_locales (UCRTBASE.@)
+ */
+void CDECL _unlock_locales(void)
+{
+    UNLOCK_LOCALE
+}
+
+/*********************************************************************
  *      _create_locale (MSVCRT.@)
  */
 MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
