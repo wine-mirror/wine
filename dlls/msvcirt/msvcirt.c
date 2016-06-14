@@ -2390,7 +2390,14 @@ ostream* __thiscall ostream_scalar_dtor(ios *base, unsigned int flags)
 DEFINE_THISCALL_WRAPPER(ostream_flush, 4)
 ostream* __thiscall ostream_flush(ostream *this)
 {
-    FIXME("(%p) stub\n", this);
+    ios *base = ostream_get_ios(this);
+
+    TRACE("(%p)\n", this);
+
+    ios_lockbuf(base);
+    if (call_streambuf_sync(base->sb) == EOF)
+        ios_clear(base, base->state | IOSTATE_failbit);
+    ios_unlockbuf(base);
     return this;
 }
 

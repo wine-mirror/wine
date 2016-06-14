@@ -261,6 +261,7 @@ static void (*__thiscall p_ostream_dtor)(ios*);
 static ostream* (*__thiscall p_ostream_assign)(ostream*, const ostream*);
 static ostream* (*__thiscall p_ostream_assign_sb)(ostream*, streambuf*);
 static void (*__thiscall p_ostream_vbase_dtor)(ostream*);
+static ostream* (*__thiscall p_ostream_flush)(ostream*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -426,6 +427,7 @@ static BOOL init(void)
         SET(p_ostream_assign, "??4ostream@@IEAAAEAV0@AEBV0@@Z");
         SET(p_ostream_assign_sb, "??4ostream@@IEAAAEAV0@PEAVstreambuf@@@Z");
         SET(p_ostream_vbase_dtor, "??_Dostream@@QEAAXXZ");
+        SET(p_ostream_flush, "?flush@ostream@@QEAAAEAV1@XZ");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -521,6 +523,7 @@ static BOOL init(void)
         SET(p_ostream_assign, "??4ostream@@IAEAAV0@ABV0@@Z");
         SET(p_ostream_assign_sb, "??4ostream@@IAEAAV0@PAVstreambuf@@@Z");
         SET(p_ostream_vbase_dtor, "??_Dostream@@QAEXXZ");
+        SET(p_ostream_flush, "?flush@ostream@@QAEAAV1@XZ");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -2508,12 +2511,15 @@ static void test_ios(void)
 
 static void test_ostream(void) {
     ostream os1, os2, *pos;
-    filebuf fb1, *pfb;
+    filebuf fb1, fb2, *pfb;
     const char filename1[] = "test1";
+    const char filename2[] = "test2";
+    int ret;
 
     memset(&os1, 0xab, sizeof(ostream));
     memset(&os2, 0xab, sizeof(ostream));
     memset(&fb1, 0xab, sizeof(filebuf));
+    memset(&fb2, 0xab, sizeof(filebuf));
 
     /* constructors/destructors */
     pos = (ostream*) call_func2(p_ostream_ctor, &os1, TRUE);
@@ -2626,10 +2632,46 @@ static void test_ostream(void) {
     ok(os2.base_ios.state == IOSTATE_badbit, "expected %d got %d\n", IOSTATE_badbit, os2.base_ios.state);
     ok(os2.base_ios.special[0] == 0xcdcdcdcd, "expected %d got %d\n", 0xcdcdcdcd, os2.base_ios.fill);
 
+    /* flush */
+if (0) /* crashes on native */
+    pos = (ostream*) call_func1(p_ostream_flush, &os1);
+    os1.base_ios.sb = (streambuf*) &fb2;
+    call_func1(p_filebuf_ctor, &fb2);
+    pos = (ostream*) call_func1(p_ostream_flush, &os1);
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(os1.base_ios.state == (IOSTATE_badbit|IOSTATE_failbit), "expected %d got %d\n",
+        IOSTATE_badbit|IOSTATE_failbit, os1.base_ios.state);
+    os1.base_ios.sb = (streambuf*) &fb1;
+    os1.base_ios.state = IOSTATE_eofbit;
+    ret = (int) call_func3(p_streambuf_xsputn, &fb1.base, "Never gonna tell a lie", 22);
+    ok(ret == 22, "expected 22 got %d\n", ret);
+    ok(fb1.base.pbase == fb1.base.base, "wrong put base, expected %p got %p\n", fb1.base.base, fb1.base.pbase);
+    ok(fb1.base.pptr == fb1.base.base + 22, "wrong put pointer, expected %p got %p\n", fb1.base.base + 22, fb1.base.pptr);
+    pos = (ostream*) call_func1(p_ostream_flush, &os1);
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(os1.base_ios.state == IOSTATE_eofbit, "expected %d got %d\n", IOSTATE_eofbit, os1.base_ios.state);
+    ok(fb1.base.pbase == NULL, "wrong put base, expected %p got %p\n", NULL, fb1.base.pbase);
+    ok(fb1.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb1.base.pptr);
+    os1.base_ios.tie = &os2;
+    os2.base_ios.sb = (streambuf*) &fb2;
+    os2.base_ios.state = IOSTATE_goodbit;
+    pfb = (filebuf*) call_func4(p_filebuf_open, &fb2, filename2, OPENMODE_out, filebuf_openprot);
+    ok(pfb == &fb2, "wrong return, expected %p got %p\n", &fb2, pfb);
+    ret = (int) call_func3(p_streambuf_xsputn, &fb2.base, "and hurt you", 12);
+    ok(ret == 12, "expected 12 got %d\n", ret);
+    ok(fb2.base.pbase == fb2.base.base, "wrong put base, expected %p got %p\n", fb2.base.base, fb2.base.pbase);
+    ok(fb2.base.pptr == fb2.base.base + 12, "wrong put pointer, expected %p got %p\n", fb2.base.base + 12, fb2.base.pptr);
+    pos = (ostream*) call_func1(p_ostream_flush, &os1);
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ok(fb2.base.pbase == fb2.base.base, "wrong put base, expected %p got %p\n", fb2.base.base, fb2.base.pbase);
+    ok(fb2.base.pptr == fb2.base.base + 12, "wrong put pointer, expected %p got %p\n", fb2.base.base + 12, fb2.base.pptr);
+
     call_func1(p_ostream_vbase_dtor, &os1);
     call_func1(p_ostream_vbase_dtor, &os2);
     call_func1(p_filebuf_dtor, &fb1);
+    call_func1(p_filebuf_dtor, &fb2);
     ok(_unlink(filename1) == 0, "Couldn't unlink file named '%s'\n", filename1);
+    ok(_unlink(filename2) == 0, "Couldn't unlink file named '%s'\n", filename2);
 }
 
 START_TEST(msvcirt)
