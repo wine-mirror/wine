@@ -1,6 +1,6 @@
 MODULE    = usbd.sys
-IMPORTLIB = usbd.sys
-IMPORTS   = ntoskrnl.exe
+IMPORTLIB = usbd
+IMPORTS   = ntoskrnl
 EXTRADLLFLAGS = -Wb,--subsystem,native
 
 C_SRCS = \

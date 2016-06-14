@@ -1,5 +1,5 @@
 MODULE    = scsiport.sys
-IMPORTS   = ntoskrnl.exe
+IMPORTS   = ntoskrnl
 EXTRADLLFLAGS = -Wb,--subsystem,native
 
 C_SRCS = \

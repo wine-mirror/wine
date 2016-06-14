@@ -1,5 +1,5 @@
 MODULE    = mountmgr.sys
-IMPORTS   = uuid advapi32 ntoskrnl.exe
+IMPORTS   = uuid advapi32 ntoskrnl
 DELAYIMPORTS = user32
 EXTRADLLFLAGS = -Wb,--subsystem,native
 EXTRAINCL = $(DBUS_CFLAGS) $(HAL_CFLAGS)

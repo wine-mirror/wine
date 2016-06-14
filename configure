@@ -17901,7 +17901,7 @@ wine_fn_config_dll ntdll enable_ntdll implib
 wine_fn_config_test dlls/ntdll/tests ntdll_test
 wine_fn_config_dll ntdsapi enable_ntdsapi implib
 wine_fn_config_test dlls/ntdsapi/tests ntdsapi_test
-wine_fn_config_dll ntoskrnl.exe enable_ntoskrnl_exe implib
+wine_fn_config_dll ntoskrnl.exe enable_ntoskrnl_exe implib ntoskrnl
 wine_fn_config_dll ntprint enable_ntprint
 wine_fn_config_test dlls/ntprint/tests ntprint_test
 wine_fn_config_dll objsel enable_objsel clean
@@ -18047,7 +18047,7 @@ wine_fn_config_dll updspapi enable_updspapi
 wine_fn_config_dll url enable_url implib
 wine_fn_config_dll urlmon enable_urlmon clean,implib
 wine_fn_config_test dlls/urlmon/tests urlmon_test
-wine_fn_config_dll usbd.sys enable_usbd_sys implib
+wine_fn_config_dll usbd.sys enable_usbd_sys implib usbd
 wine_fn_config_dll user.exe16 enable_win16
 wine_fn_config_dll user32 enable_user32 clean,implib
 wine_fn_config_test dlls/user32/tests user32_test

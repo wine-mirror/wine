@@ -1,5 +1,5 @@
 MODULE    = ntoskrnl.exe
-IMPORTLIB = ntoskrnl.exe
+IMPORTLIB = ntoskrnl
 
 C_SRCS = \
 	instr.c \

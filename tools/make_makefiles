@@ -485,6 +485,7 @@ sub update_makefiles(@)
                 die "Invalid MODULE in $file" unless $make{"MODULE"} eq "$name.dll";
             }
             my $implib = $make{"IMPORTLIB"} || "";
+            die "Invalid IMPORTLIB name in $file" if $implib =~ /\./;
             $args .= "," if $is_win16 || defined $make{"=flags"};
             $args .= "enable_win16" if $is_win16;
             $args .= $flag_args;
