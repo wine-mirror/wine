@@ -524,7 +524,7 @@ static HRESULT get_constants_desc(unsigned int *byte_code, struct d3dx_const_tab
         if (cdesc[i].Class == D3DXPC_OBJECT)
             TRACE("Object %s, parameter %p.\n", cdesc[i].Name, inputs_param[i]);
         else if (!inputs_param[i])
-            ERR("Could not find parameter %s in effect.\n", cdesc[i].Name);
+            WARN("Could not find parameter %s in effect.\n", cdesc[i].Name);
     }
     out->input_count = desc.Constants;
     out->inputs = cdesc;
