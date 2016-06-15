@@ -876,11 +876,6 @@ static ULONG DirectSoundCaptureDevice_Release(
 
 static HRESULT DSOUND_capture_data(DirectSoundCaptureDevice *device)
 {
-    HRESULT hr;
-    UINT32 packet_frames, packet_bytes, avail_bytes, skip_bytes = 0;
-    DWORD flags;
-    BYTE *buf;
-
     if(!device->capture_buffer || device->state == STATE_STOPPED)
         return S_FALSE;
 
@@ -892,45 +887,54 @@ static HRESULT DSOUND_capture_data(DirectSoundCaptureDevice *device)
     if(device->state == STATE_STARTING)
         device->state = STATE_CAPTURING;
 
-    hr = IAudioCaptureClient_GetBuffer(device->capture, &buf, &packet_frames,
-            &flags, NULL, NULL);
-    if(FAILED(hr)){
-        WARN("GetBuffer failed: %08x\n", hr);
-        return hr;
-    }
+    while(1){
+        HRESULT hr;
+        UINT32 packet_frames, packet_bytes, avail_bytes, skip_bytes = 0;
+        DWORD flags;
+        BYTE *buf;
 
-    packet_bytes = packet_frames * device->pwfx->nBlockAlign;
-    if(packet_bytes > device->buflen){
-        TRACE("audio glitch: dsound buffer too small for data\n");
-        skip_bytes = packet_bytes - device->buflen;
-        packet_bytes = device->buflen;
-    }
-
-    avail_bytes = device->buflen - device->write_pos_bytes;
-    if(avail_bytes > packet_bytes)
-        avail_bytes = packet_bytes;
-
-    memcpy(device->buffer + device->write_pos_bytes, buf + skip_bytes, avail_bytes);
-    capture_CheckNotify(device->capture_buffer, device->write_pos_bytes, avail_bytes);
-
-    packet_bytes -= avail_bytes;
-    if(packet_bytes > 0){
-        if(device->capture_buffer->flags & DSCBSTART_LOOPING){
-            memcpy(device->buffer, buf + skip_bytes + avail_bytes, packet_bytes);
-            capture_CheckNotify(device->capture_buffer, 0, packet_bytes);
-        }else{
-            device->state = STATE_STOPPED;
-            capture_CheckNotify(device->capture_buffer, 0, 0);
+        hr = IAudioCaptureClient_GetBuffer(device->capture, &buf, &packet_frames,
+                &flags, NULL, NULL);
+        if(FAILED(hr)){
+            WARN("GetBuffer failed: %08x\n", hr);
+            return hr;
         }
-    }
+        if(hr == AUDCLNT_S_BUFFER_EMPTY)
+            break;
 
-    device->write_pos_bytes += avail_bytes + packet_bytes;
-    device->write_pos_bytes %= device->buflen;
+        packet_bytes = packet_frames * device->pwfx->nBlockAlign;
+        if(packet_bytes > device->buflen){
+            TRACE("audio glitch: dsound buffer too small for data\n");
+            skip_bytes = packet_bytes - device->buflen;
+            packet_bytes = device->buflen;
+        }
 
-    hr = IAudioCaptureClient_ReleaseBuffer(device->capture, packet_frames);
-    if(FAILED(hr)){
-        WARN("ReleaseBuffer failed: %08x\n", hr);
-        return hr;
+        avail_bytes = device->buflen - device->write_pos_bytes;
+        if(avail_bytes > packet_bytes)
+            avail_bytes = packet_bytes;
+
+        memcpy(device->buffer + device->write_pos_bytes, buf + skip_bytes, avail_bytes);
+        capture_CheckNotify(device->capture_buffer, device->write_pos_bytes, avail_bytes);
+
+        packet_bytes -= avail_bytes;
+        if(packet_bytes > 0){
+            if(device->capture_buffer->flags & DSCBSTART_LOOPING){
+                memcpy(device->buffer, buf + skip_bytes + avail_bytes, packet_bytes);
+                capture_CheckNotify(device->capture_buffer, 0, packet_bytes);
+            }else{
+                device->state = STATE_STOPPED;
+                capture_CheckNotify(device->capture_buffer, 0, 0);
+            }
+        }
+
+        device->write_pos_bytes += avail_bytes + packet_bytes;
+        device->write_pos_bytes %= device->buflen;
+
+        hr = IAudioCaptureClient_ReleaseBuffer(device->capture, packet_frames);
+        if(FAILED(hr)){
+            WARN("ReleaseBuffer failed: %08x\n", hr);
+            return hr;
+        }
     }
 
     return S_OK;
