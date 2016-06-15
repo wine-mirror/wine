@@ -26,7 +26,7 @@
 @ stub WsCreateFaultFromError
 @ stdcall WsCreateHeap(long long ptr long ptr ptr)
 @ stub WsCreateListener
-@ stub WsCreateMessage
+@ stdcall WsCreateMessage(long long ptr long ptr ptr)
 @ stub WsCreateMessageForChannel
 @ stub WsCreateMetadata
 @ stdcall WsCreateReader(ptr long ptr ptr)
@@ -52,7 +52,7 @@
 @ stdcall WsFreeError(ptr)
 @ stdcall WsFreeHeap(ptr)
 @ stub WsFreeListener
-@ stub WsFreeMessage
+@ stdcall WsFreeMessage(ptr)
 @ stub WsFreeMetadata
 @ stdcall WsFreeReader(ptr)
 @ stub WsFreeSecurityToken
