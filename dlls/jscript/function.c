@@ -426,7 +426,7 @@ static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 
     TRACE("\n");
 
-    if(!(function = function_this(jsthis)))
+    if(!(function = function_this(jsthis)) && (jsthis->flags & VDISP_JSDISP))
         return throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
 
     if(argc) {
@@ -458,8 +458,20 @@ static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
         }
     }
 
-    if(SUCCEEDED(hres))
-        hres = call_function(ctx, function, this_obj, cnt, args, (flags & DISPATCH_JSCRIPT_CALLEREXECSSOURCE) != 0, r);
+    if(SUCCEEDED(hres)) {
+        if(function) {
+            hres = call_function(ctx, function, this_obj, cnt, args, (flags & DISPATCH_JSCRIPT_CALLEREXECSSOURCE) != 0, r);
+        }else {
+            jsval_t res;
+            hres = disp_call_value(ctx, jsthis->u.disp, this_obj, DISPATCH_METHOD, cnt, args, &res);
+            if(SUCCEEDED(hres)) {
+                if(r)
+                    *r = res;
+                else
+                    jsval_release(res);
+            }
+        }
+    }
 
     if(this_obj)
         IDispatch_Release(this_obj);
