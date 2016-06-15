@@ -3483,7 +3483,7 @@ static void png_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
         { "Source", PropertyTagEquipModel },
         { "Comment", PropertyTagExifUserComment },
     };
-    BOOL seen_gamma=FALSE;
+    BOOL seen_gamma=FALSE, seen_whitepoint=FALSE, seen_chrm=FALSE;
 
     hr = IWICBitmapDecoder_GetFrame(decoder, active_frame, &frame);
     if (hr != S_OK) return;
@@ -3549,6 +3549,57 @@ static void png_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
                                 add_property(bitmap, item);
                                 seen_gamma = TRUE;
                                 heap_free(item);
+                            }
+                        }
+                    }
+                    else if (SUCCEEDED(hr) && IsEqualGUID(&GUID_MetadataFormatChunkcHRM, &format))
+                    {
+                        PropertyItem* item;
+
+                        if (!seen_whitepoint)
+                        {
+                            item = GdipAlloc(sizeof(PropertyItem) + sizeof(ULONG) * 4);
+                            if (item)
+                            {
+                                ULONG *rational;
+                                item->length = sizeof(ULONG) * 4;
+                                item->type = PropertyTagTypeRational;
+                                item->id = PropertyTagWhitePoint;
+                                rational = item->value = item + 1;
+                                rational[0] = get_ulong_by_index(reader, 0);
+                                rational[1] = 100000;
+                                rational[2] = get_ulong_by_index(reader, 1);
+                                rational[3] = 100000;
+                                add_property(bitmap, item);
+                                seen_whitepoint = TRUE;
+                                GdipFree(item);
+                            }
+                        }
+                        if (!seen_chrm)
+                        {
+                            item = GdipAlloc(sizeof(PropertyItem) + sizeof(ULONG) * 12);
+                            if (item)
+                            {
+                                ULONG *rational;
+                                item->length = sizeof(ULONG) * 12;
+                                item->type = PropertyTagTypeRational;
+                                item->id = PropertyTagPrimaryChromaticities;
+                                rational = item->value = item + 1;
+                                rational[0] = get_ulong_by_index(reader, 2);
+                                rational[1] = 100000;
+                                rational[2] = get_ulong_by_index(reader, 3);
+                                rational[3] = 100000;
+                                rational[4] = get_ulong_by_index(reader, 4);
+                                rational[5] = 100000;
+                                rational[6] = get_ulong_by_index(reader, 5);
+                                rational[7] = 100000;
+                                rational[8] = get_ulong_by_index(reader, 6);
+                                rational[9] = 100000;
+                                rational[10] = get_ulong_by_index(reader, 7);
+                                rational[11] = 100000;
+                                add_property(bitmap, item);
+                                seen_chrm = TRUE;
+                                GdipFree(item);
                             }
                         }
                     }
