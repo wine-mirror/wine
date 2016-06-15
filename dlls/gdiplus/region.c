@@ -1114,6 +1114,12 @@ static GpStatus get_path_hrgn(GpPath *path, GpGraphics *graphics, HRGN *hrgn)
     GpStatus stat;
     INT save_state;
 
+    if (!path->pathdata.Count)  /* PathToRegion doesn't support empty paths */
+    {
+        *hrgn = CreateRectRgn( 0, 0, 0, 0 );
+        return *hrgn ? Ok : OutOfMemory;
+    }
+
     if (!graphics)
     {
         new_hdc = CreateCompatibleDC(0);
