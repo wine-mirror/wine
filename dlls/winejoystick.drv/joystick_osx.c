@@ -165,8 +165,7 @@ static const char* debugstr_element(IOHIDElementRef element)
                             IOHIDElementGetUsage(element), IOHIDElementGetDevice(element));
 }
 
-
-static int axis_for_usage(int usage)
+static int axis_for_usage_GD(int usage)
 {
     switch (usage)
     {
@@ -181,6 +180,19 @@ static int axis_for_usage(int usage)
     return -1;
 }
 
+static int axis_for_usage_Sim(int usage)
+{
+    switch (usage)
+    {
+        case kHIDUsage_Sim_Rudder: return AXIS_RZ;
+        case kHIDUsage_Sim_Throttle: return AXIS_Z;
+        case kHIDUsage_Sim_Steering: return AXIS_X;
+        case kHIDUsage_Sim_Accelerator: return AXIS_Y;
+        case kHIDUsage_Sim_Brake: return AXIS_RZ;
+    }
+
+    return -1;
+}
 
 /**************************************************************************
  *                              joystick_from_id
@@ -383,10 +395,13 @@ static void collect_joystick_elements(joystick_t* joystick, IOHIDElementRef coll
     {
         IOHIDElementRef child;
         int type;
+        uint32_t usage_page;
 
         child = (IOHIDElementRef)CFArrayGetValueAtIndex(children, i);
         TRACE("child %s\n", debugstr_element(child));
         type = IOHIDElementGetType(child);
+        usage_page = IOHIDElementGetUsagePage(child);
+
         switch (type)
         {
             case kIOHIDElementTypeCollection:
@@ -394,8 +409,6 @@ static void collect_joystick_elements(joystick_t* joystick, IOHIDElementRef coll
                 break;
             case kIOHIDElementTypeInput_Button:
             {
-                int usage_page = IOHIDElementGetUsagePage(child);
-
                 TRACE("kIOHIDElementTypeInput_Button usage_page %d\n", usage_page);
 
                 /* avoid strange elements found on the 360 controller */
@@ -411,58 +424,96 @@ static void collect_joystick_elements(joystick_t* joystick, IOHIDElementRef coll
             case kIOHIDElementTypeInput_Misc:
             {
                 uint32_t usage = IOHIDElementGetUsage( child );
-                switch(usage)
+                switch (usage_page)
                 {
-                    case kHIDUsage_GD_Hatswitch:
+                    case kHIDPage_GenericDesktop:
                     {
-                        TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_Hatswitch\n");
-                        if (joystick->hatswitch)
-                            TRACE("    ignoring additional hatswitch\n");
-                        else
-                            joystick->hatswitch = (IOHIDElementRef)CFRetain(child);
-                        break;
-                    }
-                    case kHIDUsage_GD_X:
-                    case kHIDUsage_GD_Y:
-                    case kHIDUsage_GD_Z:
-                    case kHIDUsage_GD_Rx:
-                    case kHIDUsage_GD_Ry:
-                    case kHIDUsage_GD_Rz:
-                    {
-                        int axis = axis_for_usage(usage);
-                        TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_<axis> (%d) axis %d\n", usage, axis);
-                        if (axis < 0 || joystick->axes[axis].element)
-                            TRACE("    ignoring\n");
-                        else
+                        switch(usage)
                         {
-                            joystick->axes[axis].element = (IOHIDElementRef)CFRetain(child);
-                            joystick->axes[axis].min_value = IOHIDElementGetLogicalMin(child);
-                            joystick->axes[axis].max_value = IOHIDElementGetLogicalMax(child);
+                            case kHIDUsage_GD_Hatswitch:
+                            {
+                                TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_Hatswitch\n");
+                                if (joystick->hatswitch)
+                                    TRACE("    ignoring additional hatswitch\n");
+                                else
+                                    joystick->hatswitch = (IOHIDElementRef)CFRetain(child);
+                                break;
+                            }
+                            case kHIDUsage_GD_X:
+                            case kHIDUsage_GD_Y:
+                            case kHIDUsage_GD_Z:
+                            case kHIDUsage_GD_Rx:
+                            case kHIDUsage_GD_Ry:
+                            case kHIDUsage_GD_Rz:
+                            {
+                                int axis = axis_for_usage_GD(usage);
+                                TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_<axis> (%d) axis %d\n", usage, axis);
+                                if (axis < 0 || joystick->axes[axis].element)
+                                    TRACE("    ignoring\n");
+                                else
+                                {
+                                    joystick->axes[axis].element = (IOHIDElementRef)CFRetain(child);
+                                    joystick->axes[axis].min_value = IOHIDElementGetLogicalMin(child);
+                                    joystick->axes[axis].max_value = IOHIDElementGetLogicalMax(child);
+                                }
+                                break;
+                            }
+                            case kHIDUsage_GD_Slider:
+                            case kHIDUsage_GD_Dial:
+                            case kHIDUsage_GD_Wheel:
+                            {
+                                /* if one axis is taken, fall to the next until axes are filled */
+                                int possible_axes[3] = {AXIS_Z,AXIS_RY,AXIS_RX};
+                                int axis = 0;
+                                while(axis < 3 && joystick->axes[possible_axes[axis]].element)
+                                    axis++;
+                                if (axis == 3)
+                                    TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_<axis> (%d)\n    ignoring\n", usage);
+                                else
+                                {
+                                    TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_<axis> (%d) axis %d\n", usage, possible_axes[axis]);
+                                    joystick->axes[possible_axes[axis]].element = (IOHIDElementRef)CFRetain(child);
+                                    joystick->axes[possible_axes[axis]].min_value = IOHIDElementGetLogicalMin(child);
+                                    joystick->axes[possible_axes[axis]].max_value = IOHIDElementGetLogicalMax(child);
+                                }
+                                break;
+                            }
+                            default:
+                                FIXME("kIOHIDElementTypeInput_Misc / Unhandled GD Page usage %d\n", usage);
+                                break;
                         }
                         break;
                     }
-                    case kHIDUsage_GD_Slider:
-                    case kHIDUsage_GD_Dial:
-                    case kHIDUsage_GD_Wheel:
+                    case kHIDPage_Simulation:
                     {
-                        /* if one axis is taken, fall to the next until axes are filled */
-                        int possible_axes[3] = {AXIS_Z,AXIS_RY,AXIS_RX};
-                        int axis = 0;
-                        while(axis < 3 && joystick->axes[possible_axes[axis]].element)
-                            axis++;
-                        if (axis == 3)
-                            TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_<axis> (%d)\n    ignoring\n", usage);
-                        else
+                        switch(usage)
                         {
-                            TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_<axis> (%d) axis %d\n", usage, possible_axes[axis]);
-                            joystick->axes[possible_axes[axis]].element = (IOHIDElementRef)CFRetain(child);
-                            joystick->axes[possible_axes[axis]].min_value = IOHIDElementGetLogicalMin(child);
-                            joystick->axes[possible_axes[axis]].max_value = IOHIDElementGetLogicalMax(child);
+                            case kHIDUsage_Sim_Rudder:
+                            case kHIDUsage_Sim_Throttle:
+                            case kHIDUsage_Sim_Steering:
+                            case kHIDUsage_Sim_Accelerator:
+                            case kHIDUsage_Sim_Brake:
+                            {
+                                int axis = axis_for_usage_Sim(usage);
+                                TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_Sim_<axis> (%d) axis %d\n", usage, axis);
+                                if (axis < 0 || joystick->axes[axis].element)
+                                    TRACE("    ignoring\n");
+                                else
+                                {
+                                    joystick->axes[axis].element = (IOHIDElementRef)CFRetain(child);
+                                    joystick->axes[axis].min_value = IOHIDElementGetLogicalMin(child);
+                                    joystick->axes[axis].max_value = IOHIDElementGetLogicalMax(child);
+                                }
+                                break;
+                            }
+                            default:
+                                FIXME("kIOHIDElementTypeInput_Misc / Unhandled Sim Page usage %d\n", usage);
+                                break;
                         }
                         break;
                     }
                     default:
-                        FIXME("kIOHIDElementTypeInput_Misc / Unhandled usage %d\n", usage);
+                        FIXME("kIOHIDElementTypeInput_Misc / Unhandled Usage Page %d\n", usage_page);
                         break;
                 }
                 break;
