@@ -911,6 +911,139 @@ void LOCALE_InitRegistry(void)
 }
 
 
+#ifdef __APPLE__
+/***********************************************************************
+ *           get_mac_locale
+ *
+ * Return a locale identifer string reflecting the Mac locale, in a form
+ * that parse_locale_name() will understand.  So, strip out unusual
+ * things like script, variant, etc.  Or, rather, just construct it as
+ * <lang>[_<country>].UTF-8.
+ */
+static const char* get_mac_locale(void)
+{
+    static char mac_locale[50];
+
+    if (!mac_locale[0])
+    {
+        CFLocaleRef locale = CFLocaleCopyCurrent();
+        CFStringRef lang = CFLocaleGetValue( locale, kCFLocaleLanguageCode );
+        CFStringRef country = CFLocaleGetValue( locale, kCFLocaleCountryCode );
+        CFStringRef locale_string;
+
+        if (country)
+            locale_string = CFStringCreateWithFormat(NULL, NULL, CFSTR("%@_%@"), lang, country);
+        else
+            locale_string = CFStringCreateCopy(NULL, lang);
+
+        CFStringGetCString(locale_string, mac_locale, sizeof(mac_locale), kCFStringEncodingUTF8);
+        strcat(mac_locale, ".UTF-8");
+
+        CFRelease(locale);
+        CFRelease(locale_string);
+    }
+
+    return mac_locale;
+}
+
+
+/***********************************************************************
+ *           has_env
+ */
+static BOOL has_env(const char* name)
+{
+    const char* value = getenv( name );
+    return value && value[0];
+}
+#endif
+
+
+/***********************************************************************
+ *           get_locale
+ *
+ * Get the locale identifier for a given category.  On most platforms,
+ * this is just a thin wrapper around setlocale().  On OS X, though, it
+ * is common for the Mac locale settings to not be supported by the C
+ * library.  So, we sometimes override the result with the Mac locale.
+ */
+static const char* get_locale(int category, const char* category_name)
+{
+    const char* ret = setlocale(category, NULL);
+
+#ifdef __APPLE__
+    /* If LC_ALL is set, respect it as a user override.
+       If LC_* is set, respect it as a user override, except if it's LC_CTYPE
+       and equal to UTF-8.  That's because, when the Mac locale isn't supported
+       by the C library, Terminal.app sets LC_CTYPE=UTF-8 and doesn't set LANG.
+       parse_locale_name() doesn't handle that properly, so we override that
+       with the Mac locale (which uses UTF-8 for the charset, anyway).
+       Otherwise:
+       For LC_MESSAGES, we override the C library because the user language
+       setting is separate from the locale setting on which LANG was based.
+       If the C library didn't get anything better from LANG than C or POSIX,
+       override that.  That probably means the Mac locale isn't supported by
+       the C library. */
+    if (!has_env( "LC_ALL" ) &&
+        ((category == LC_CTYPE && !strcmp( ret, "UTF-8" )) ||
+         (!has_env( category_name ) &&
+          (category == LC_MESSAGES || !strcmp( ret, "C" ) || !strcmp( ret, "POSIX" )))))
+    {
+        const char* override = get_mac_locale();
+
+        if (category == LC_MESSAGES)
+        {
+            /* Retrieve the preferred language as chosen in System Preferences. */
+            static char messages_locale[50];
+
+            if (!messages_locale[0])
+            {
+                CFArrayRef preferred_langs = CFLocaleCopyPreferredLanguages();
+                if (preferred_langs && CFArrayGetCount( preferred_langs ))
+                {
+                    CFStringRef preferred_lang = CFArrayGetValueAtIndex( preferred_langs, 0 );
+                    CFDictionaryRef components = CFLocaleCreateComponentsFromLocaleIdentifier( NULL, preferred_lang );
+                    if (components)
+                    {
+                        CFStringRef lang = CFDictionaryGetValue( components, kCFLocaleLanguageCode );
+                        CFStringRef country = CFDictionaryGetValue( components, kCFLocaleCountryCode );
+                        CFLocaleRef locale = NULL;
+                        CFStringRef locale_string;
+
+                        if (!country)
+                        {
+                            locale = CFLocaleCopyCurrent();
+                            country = CFLocaleGetValue( locale, kCFLocaleCountryCode );
+                        }
+
+                        if (country)
+                            locale_string = CFStringCreateWithFormat( NULL, NULL, CFSTR("%@_%@"), lang, country );
+                        else
+                            locale_string = CFStringCreateCopy( NULL, lang );
+                        CFStringGetCString( locale_string, messages_locale, sizeof(messages_locale), kCFStringEncodingUTF8 );
+                        strcat( messages_locale, ".UTF-8" );
+
+                        CFRelease( locale_string );
+                        if (locale) CFRelease( locale );
+                        CFRelease( components );
+                    }
+                }
+                if (preferred_langs)
+                    CFRelease( preferred_langs );
+            }
+
+            if (messages_locale[0])
+                override = messages_locale;
+        }
+
+        TRACE( "%s is %s; overriding with %s\n", category_name, debugstr_a(ret), debugstr_a(override) );
+        ret = override;
+    }
+#endif
+
+    return ret;
+}
+
+
 /***********************************************************************
  *           setup_unix_locales
  */
@@ -918,10 +1051,10 @@ static UINT setup_unix_locales(void)
 {
     struct locale_name locale_name;
     WCHAR buffer[128], ctype_buff[128];
-    char *locale;
+    const char *locale;
     UINT unix_cp = 0;
 
-    if ((locale = setlocale( LC_CTYPE, NULL )))
+    if ((locale = get_locale( LC_CTYPE, "LC_CTYPE" )))
     {
         strcpynAtoW( ctype_buff, locale, sizeof(ctype_buff)/sizeof(WCHAR) );
         parse_locale_name( ctype_buff, &locale_name );
@@ -935,7 +1068,7 @@ static UINT setup_unix_locales(void)
            locale_name.lcid, locale_name.matches, debugstr_a(locale) );
 
 #define GET_UNIX_LOCALE(cat) do \
-    if ((locale = setlocale( cat, NULL ))) \
+    if ((locale = get_locale( cat, #cat ))) \
     { \
         strcpynAtoW( buffer, locale, sizeof(buffer)/sizeof(WCHAR) ); \
         if (!strcmpW( buffer, ctype_buff )) lcid_##cat = lcid_LC_CTYPE; \
@@ -3612,33 +3745,25 @@ void LOCALE_Init(void)
 
     UINT ansi_cp = 1252, oem_cp = 437, mac_cp = 10000, unix_cp;
 
+    setlocale( LC_ALL, "" );
+
 #ifdef __APPLE__
     /* MacOS doesn't set the locale environment variables so we have to do it ourselves */
-    char user_locale[50];
-
-    CFLocaleRef user_locale_ref = CFLocaleCopyCurrent();
-    CFStringRef user_locale_lang_ref = CFLocaleGetValue( user_locale_ref, kCFLocaleLanguageCode );
-    CFStringRef user_locale_country_ref = CFLocaleGetValue( user_locale_ref, kCFLocaleCountryCode );
-    CFStringRef user_locale_string_ref;
-
-    if (user_locale_country_ref)
+    if (!has_env("LANG"))
     {
-        user_locale_string_ref = CFStringCreateWithFormat(NULL, NULL, CFSTR("%@_%@"),
-            user_locale_lang_ref, user_locale_country_ref);
-    }
-    else
-    {
-        user_locale_string_ref = CFStringCreateCopy(NULL, user_locale_lang_ref);
-    }
+        const char* mac_locale = get_mac_locale();
 
-    CFStringGetCString( user_locale_string_ref, user_locale, sizeof(user_locale), kCFStringEncodingUTF8 );
-    strcat(user_locale, ".UTF-8");
-
-    setenv( "LANG", user_locale, 0 );
-    TRACE( "setting locale to '%s'\n", user_locale );
+        setenv( "LANG", mac_locale, 1 );
+        if (setlocale( LC_ALL, "" ))
+            TRACE( "setting LANG to '%s'\n", mac_locale );
+        else
+        {
+            /* no C library locale matching Mac locale; don't pass garbage to children */
+            unsetenv("LANG");
+            TRACE( "Mac locale %s is not supported by the C library\n", debugstr_a(mac_locale) );
+        }
+    }
 #endif /* __APPLE__ */
-
-    setlocale( LC_ALL, "" );
 
     unix_cp = setup_unix_locales();
     if (!lcid_LC_MESSAGES) lcid_LC_MESSAGES = lcid_LC_CTYPE;
@@ -3646,37 +3771,6 @@ void LOCALE_Init(void)
 #ifdef __APPLE__
     if (!unix_cp)
         unix_cp = CP_UTF8;  /* default to utf-8 even if we don't get a valid locale */
-
-    /* Override lcid_LC_MESSAGES with user's preferred language if LC_MESSAGES is set to default */
-    if (!getenv("LC_ALL") && !getenv("LC_MESSAGES"))
-    {
-        /* Retrieve the preferred language as chosen in System Preferences. */
-        /* If language is a less specific variant of locale (e.g. 'en' vs. 'en_US'),
-           leave things be. */
-        CFArrayRef preferred_langs = CFLocaleCopyPreferredLanguages();
-        CFStringRef canonical_lang_string_ref = CFLocaleCreateCanonicalLanguageIdentifierFromString(NULL, user_locale_string_ref);
-        CFStringRef user_language_string_ref;
-        if (preferred_langs && canonical_lang_string_ref && CFArrayGetCount( preferred_langs ) &&
-            (user_language_string_ref = CFArrayGetValueAtIndex( preferred_langs, 0 )) &&
-            !CFEqual(user_language_string_ref, user_locale_lang_ref) &&
-            !CFEqual(user_language_string_ref, canonical_lang_string_ref))
-        {
-            struct locale_name locale_name;
-            WCHAR buffer[128];
-            CFStringGetCString( user_language_string_ref, user_locale, sizeof(user_locale), kCFStringEncodingUTF8 );
-            strcpynAtoW( buffer, user_locale, sizeof(buffer)/sizeof(WCHAR) );
-            parse_locale_name( buffer, &locale_name );
-            lcid_LC_MESSAGES = locale_name.lcid;
-            TRACE( "setting lcid_LC_MESSAGES to '%s' %04x\n", user_locale, lcid_LC_MESSAGES );
-        }
-        if (preferred_langs)
-            CFRelease( preferred_langs );
-        if (canonical_lang_string_ref)
-            CFRelease( canonical_lang_string_ref );
-    }
-
-    CFRelease( user_locale_ref );
-    CFRelease( user_locale_string_ref );
 #endif
 
     NtSetDefaultUILanguage( LANGIDFROMLCID(lcid_LC_MESSAGES) );
