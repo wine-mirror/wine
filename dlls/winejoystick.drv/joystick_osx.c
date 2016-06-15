@@ -417,10 +417,6 @@ static void collect_joystick_elements(joystick_t* joystick, IOHIDElementRef coll
                 break;
             }
             case kIOHIDElementTypeInput_Axis:
-            {
-                TRACE("kIOHIDElementTypeInput_Axis; ignoring\n");
-                break;
-            }
             case kIOHIDElementTypeInput_Misc:
             {
                 uint32_t usage = IOHIDElementGetUsage( child );
@@ -432,7 +428,7 @@ static void collect_joystick_elements(joystick_t* joystick, IOHIDElementRef coll
                         {
                             case kHIDUsage_GD_Hatswitch:
                             {
-                                TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_Hatswitch\n");
+                                TRACE("kIOHIDElementTypeInput_Axis/Misc / kHIDUsage_GD_Hatswitch\n");
                                 if (joystick->hatswitch)
                                     TRACE("    ignoring additional hatswitch\n");
                                 else
@@ -447,7 +443,7 @@ static void collect_joystick_elements(joystick_t* joystick, IOHIDElementRef coll
                             case kHIDUsage_GD_Rz:
                             {
                                 int axis = axis_for_usage_GD(usage);
-                                TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_<axis> (%d) axis %d\n", usage, axis);
+                                TRACE("kIOHIDElementTypeInput_Axis/Misc / kHIDUsage_GD_<axis> (%d) axis %d\n", usage, axis);
                                 if (axis < 0 || joystick->axes[axis].element)
                                     TRACE("    ignoring\n");
                                 else
@@ -468,10 +464,10 @@ static void collect_joystick_elements(joystick_t* joystick, IOHIDElementRef coll
                                 while(axis < 3 && joystick->axes[possible_axes[axis]].element)
                                     axis++;
                                 if (axis == 3)
-                                    TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_<axis> (%d)\n    ignoring\n", usage);
+                                    TRACE("kIOHIDElementTypeInput_Axis/Misc / kHIDUsage_GD_<axis> (%d)\n    ignoring\n", usage);
                                 else
                                 {
-                                    TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_<axis> (%d) axis %d\n", usage, possible_axes[axis]);
+                                    TRACE("kIOHIDElementTypeInput_Axis/Misc / kHIDUsage_GD_<axis> (%d) axis %d\n", usage, possible_axes[axis]);
                                     joystick->axes[possible_axes[axis]].element = (IOHIDElementRef)CFRetain(child);
                                     joystick->axes[possible_axes[axis]].min_value = IOHIDElementGetLogicalMin(child);
                                     joystick->axes[possible_axes[axis]].max_value = IOHIDElementGetLogicalMax(child);
@@ -479,7 +475,7 @@ static void collect_joystick_elements(joystick_t* joystick, IOHIDElementRef coll
                                 break;
                             }
                             default:
-                                FIXME("kIOHIDElementTypeInput_Misc / Unhandled GD Page usage %d\n", usage);
+                                FIXME("kIOHIDElementTypeInput_Axis/Misc / Unhandled GD Page usage %d\n", usage);
                                 break;
                         }
                         break;
@@ -495,7 +491,7 @@ static void collect_joystick_elements(joystick_t* joystick, IOHIDElementRef coll
                             case kHIDUsage_Sim_Brake:
                             {
                                 int axis = axis_for_usage_Sim(usage);
-                                TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_Sim_<axis> (%d) axis %d\n", usage, axis);
+                                TRACE("kIOHIDElementTypeInput_Axis/Misc / kHIDUsage_Sim_<axis> (%d) axis %d\n", usage, axis);
                                 if (axis < 0 || joystick->axes[axis].element)
                                     TRACE("    ignoring\n");
                                 else
@@ -507,13 +503,13 @@ static void collect_joystick_elements(joystick_t* joystick, IOHIDElementRef coll
                                 break;
                             }
                             default:
-                                FIXME("kIOHIDElementTypeInput_Misc / Unhandled Sim Page usage %d\n", usage);
+                                FIXME("kIOHIDElementTypeInput_Axis/Misc / Unhandled Sim Page usage %d\n", usage);
                                 break;
                         }
                         break;
                     }
                     default:
-                        FIXME("kIOHIDElementTypeInput_Misc / Unhandled Usage Page %d\n", usage_page);
+                        FIXME("kIOHIDElementTypeInput_Axis/Misc / Unhandled Usage Page %d\n", usage_page);
                         break;
                 }
                 break;
