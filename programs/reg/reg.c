@@ -818,7 +818,34 @@ static int reg_query(HKEY root, WCHAR *path, WCHAR *key_name, WCHAR *value_name,
     return ret;
 }
 
-static BOOL parse_registry_key(const WCHAR *key, HKEY *root, WCHAR **path)
+static WCHAR *get_long_key(HKEY root, WCHAR *path)
+{
+    DWORD i, array_size = ARRAY_SIZE(root_rels), len;
+    WCHAR *long_key;
+    WCHAR fmt[] = {'%','s','\\','%','s',0};
+
+    for (i = 0; i < array_size; i++)
+    {
+        if (root == root_rels[i].key)
+            break;
+    }
+
+    len = strlenW(root_rels[i].long_name);
+
+    if (!path)
+    {
+        long_key = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+        strcpyW(long_key, root_rels[i].long_name);
+        return long_key;
+    }
+
+    len += strlenW(path) + 1; /* add one for the backslash */
+    long_key = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+    sprintfW(long_key, fmt, root_rels[i].long_name, path);
+    return long_key;
+}
+
+static BOOL parse_registry_key(const WCHAR *key, HKEY *root, WCHAR **path, WCHAR **long_key)
 {
     if (!sane_path(key))
         return FALSE;
@@ -832,6 +859,8 @@ static BOOL parse_registry_key(const WCHAR *key, HKEY *root, WCHAR **path)
 
     *path = strchrW(key, '\\');
     if (*path) (*path)++;
+
+    *long_key = get_long_key(*root, *path);
 
     return TRUE;
 }
@@ -924,10 +953,8 @@ int wmain(int argc, WCHAR *argvW[])
         return 0;
     }
 
-    if (!parse_registry_key(argvW[2], &root, &path))
+    if (!parse_registry_key(argvW[2], &root, &path, &key_name))
         return 1;
-
-    key_name = argvW[2];
 
     for (i = 3; i < argc; i++)
     {
