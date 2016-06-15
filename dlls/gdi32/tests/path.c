@@ -38,6 +38,7 @@ static void test_path_state(void)
     BYTE buffer[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD)];
     BITMAPINFO *bi = (BITMAPINFO *)buffer;
     HDC hdc;
+    HRGN rgn;
     HBITMAP orig, dib;
     void *bits;
     BOOL ret;
@@ -139,6 +140,12 @@ static void test_path_state(void)
         "wrong error %u\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
+    rgn = PathToRegion( hdc );
+    ok( !rgn, "PathToRegion succeeded\n" );
+    ok( GetLastError() == ERROR_CAN_NOT_COMPLETE || broken(GetLastError() == 0xdeadbeef),
+        "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
     ret = EndPath( hdc );
     ok( !ret, "SelectClipPath succeeded\n" );
     ok( GetLastError() == ERROR_CAN_NOT_COMPLETE || broken(GetLastError() == 0xdeadbeef),
@@ -202,6 +209,15 @@ static void test_path_state(void)
 
     AbortPath( hdc );
     BeginPath( hdc );
+    Rectangle( hdc, 1, 1, 10, 10 );  /* region needs some contents */
+    SetLastError( 0xdeadbeef );
+    rgn = PathToRegion( hdc );
+    ok( !rgn, "PathToRegion succeeded\n" );
+    ok( GetLastError() == ERROR_CAN_NOT_COMPLETE || broken(GetLastError() == 0xdeadbeef),
+        "wrong error %u\n", GetLastError() );
+
+    AbortPath( hdc );
+    BeginPath( hdc );
     ret = CloseFigure( hdc );
     ok( ret, "CloseFigure failed\n" );
 
@@ -211,39 +227,66 @@ static void test_path_state(void)
     EndPath( hdc );
     ret = WidenPath( hdc );
     ok( ret, "WidenPath failed\n" );
+    ok( GetPath( hdc, NULL, NULL, 0 ) != -1, "path deleted\n" );
 
     AbortPath( hdc );
     BeginPath( hdc );
     EndPath( hdc );
     ret = FlattenPath( hdc );
     ok( ret, "FlattenPath failed\n" );
+    ok( GetPath( hdc, NULL, NULL, 0 ) != -1, "path deleted\n" );
 
     AbortPath( hdc );
     BeginPath( hdc );
     EndPath( hdc );
     ret = StrokePath( hdc );
     ok( ret, "StrokePath failed\n" );
+    ok( GetPath( hdc, NULL, NULL, 0 ) == -1, "path not deleted\n" );
 
-    AbortPath( hdc );
     BeginPath( hdc );
     EndPath( hdc );
     ret = FillPath( hdc );
     ok( ret, "FillPath failed\n" );
+    ok( GetPath( hdc, NULL, NULL, 0 ) == -1, "path not deleted\n" );
 
-    AbortPath( hdc );
     BeginPath( hdc );
     EndPath( hdc );
     ret = StrokeAndFillPath( hdc );
     ok( ret, "StrokeAndFillPath failed\n" );
+    ok( GetPath( hdc, NULL, NULL, 0 ) == -1, "path not deleted\n" );
 
-    AbortPath( hdc );
     BeginPath( hdc );
     Rectangle( hdc, 1, 1, 10, 10 );  /* region needs some contents */
     EndPath( hdc );
     ret = SelectClipPath( hdc, RGN_OR );
     ok( ret, "SelectClipPath failed\n" );
+    ok( GetPath( hdc, NULL, NULL, 0 ) == -1, "path not deleted\n" );
 
-    AbortPath( hdc );
+    BeginPath( hdc );
+    EndPath( hdc );
+    SetLastError( 0xdeadbeef );
+    ret = SelectClipPath( hdc, RGN_OR );
+    todo_wine ok( !ret, "SelectClipPath succeeded on empty path\n" );
+    ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
+    ok( GetPath( hdc, NULL, NULL, 0 ) == -1, "path not deleted\n" );
+
+    BeginPath( hdc );
+    Rectangle( hdc, 1, 1, 10, 10 );  /* region needs some contents */
+    EndPath( hdc );
+    rgn = PathToRegion( hdc );
+    ok( rgn != 0, "PathToRegion failed\n" );
+    DeleteObject( rgn );
+    ok( GetPath( hdc, NULL, NULL, 0 ) == -1, "path not deleted\n" );
+
+    BeginPath( hdc );
+    EndPath( hdc );
+    SetLastError( 0xdeadbeef );
+    rgn = PathToRegion( hdc );
+    todo_wine ok( !rgn, "PathToRegion succeeded on empty path\n" );
+    ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
+    DeleteObject( rgn );
+    ok( GetPath( hdc, NULL, NULL, 0 ) == -1, "path not deleted\n" );
+
     BeginPath( hdc );
     EndPath( hdc );
     SetLastError( 0xdeadbeef );
@@ -257,7 +300,7 @@ static void test_path_state(void)
     EndPath( hdc );
     SetLastError( 0xdeadbeef );
     ret = EndPath( hdc );
-    ok( !ret, "SelectClipPath succeeded\n" );
+    ok( !ret, "EndPath succeeded\n" );
     ok( GetLastError() == ERROR_CAN_NOT_COMPLETE || broken(GetLastError() == 0xdeadbeef),
         "wrong error %u\n", GetLastError() );
 
