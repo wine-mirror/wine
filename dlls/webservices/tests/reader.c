@@ -1321,6 +1321,8 @@ static void prepare_type_test( WS_XML_READER *reader, const char *data, ULONG si
 static void test_WsReadType(void)
 {
     static const WCHAR testW[] = {'t','e','s','t',0};
+    static const GUID guid1 = {0,0,0,{0,0,0,0,0,0,0,0}};
+    static const GUID guid2 = {0,0,0,{0,0,0,0,0,0,0,0xa1}};
     HRESULT hr;
     WS_XML_READER *reader;
     WS_HEAP *heap;
@@ -1340,6 +1342,7 @@ static void test_WsReadType(void)
     UINT16 val_uint16;
     UINT32 val_uint32;
     UINT64 val_uint64;
+    GUID val_guid;
 
     hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -1578,6 +1581,36 @@ static void test_WsReadType(void)
                      WS_READ_REQUIRED_VALUE, heap, &val_enum, sizeof(val_enum), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( val_enum == 1, "got %d\n", val_enum );
+
+    prepare_type_test( reader, "<t>{00000000-0000-0000-0000-000000000000}</t>",
+                       sizeof("<t>{00000000-0000-0000-0000-000000000000}</t>") - 1 );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_GUID_TYPE, NULL,
+                     WS_READ_REQUIRED_VALUE, heap, &val_guid, sizeof(val_guid), NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    memset( &val_guid, 0xff, sizeof(val_guid) );
+    prepare_type_test( reader, "<t> 00000000-0000-0000-0000-000000000000 </t>",
+                       sizeof("<t> 00000000-0000-0000-0000-000000000000 </t>") - 1 );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_GUID_TYPE, NULL,
+                     WS_READ_REQUIRED_VALUE, heap, &val_guid, sizeof(val_guid), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !memcmp( &val_guid, &guid1, sizeof(val_guid) ), "wrong guid\n" );
+
+    memset( &val_guid, 0, sizeof(val_guid) );
+    prepare_type_test( reader, "<t>00000000-0000-0000-0000-0000000000a1</t>",
+                       sizeof("<t>00000000-0000-0000-0000-0000000000a1</t>") - 1 );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_GUID_TYPE, NULL,
+                     WS_READ_REQUIRED_VALUE, heap, &val_guid, sizeof(val_guid), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !memcmp( &val_guid, &guid2, sizeof(val_guid) ), "wrong guid\n" );
+
+    memset( &val_guid, 0, sizeof(val_guid) );
+    prepare_type_test( reader, "<t>00000000-0000-0000-0000-0000000000A1</t>",
+                       sizeof("<t>00000000-0000-0000-0000-0000000000A1</t>") - 1 );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_GUID_TYPE, NULL,
+                     WS_READ_REQUIRED_VALUE, heap, &val_guid, sizeof(val_guid), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !memcmp( &val_guid, &guid2, sizeof(val_guid) ), "wrong guid\n" );
 
     WsFreeReader( reader );
     WsFreeHeap( heap );

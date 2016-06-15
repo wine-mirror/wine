@@ -2108,6 +2108,52 @@ done:
     return hr;
 }
 
+static HRESULT str_to_guid( const unsigned char *str, ULONG len, GUID *ret )
+{
+    static const unsigned char hex[] =
+    {
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,        /* 0x00 */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,        /* 0x10 */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,        /* 0x20 */
+        0,1,2,3,4,5,6,7,8,9,0,0,0,0,0,0,        /* 0x30 */
+        0,10,11,12,13,14,15,0,0,0,0,0,0,0,0,0,  /* 0x40 */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,        /* 0x50 */
+        0,10,11,12,13,14,15                     /* 0x60 */
+    };
+    const unsigned char *p = str;
+    ULONG i;
+
+    while (len && read_isspace( *p )) { p++; len--; }
+    while (len && read_isspace( p[len - 1] )) { len--; }
+    if (len != 36) return WS_E_INVALID_FORMAT;
+
+    if (p[8] != '-' || p[13] != '-' || p[18] != '-' || p[23] != '-')
+        return WS_E_INVALID_FORMAT;
+
+    for (i = 0; i < 36; i++)
+    {
+        if (i == 8 || i == 13 || i == 18 || i == 23) continue;
+        if (p[i] > 'f' || (!hex[p[i]] && p[i] != '0')) return WS_E_INVALID_FORMAT;
+    }
+
+    ret->Data1 = hex[p[0]] << 28 | hex[p[1]] << 24 | hex[p[2]] << 20 | hex[p[3]] << 16 |
+                 hex[p[4]] << 12 | hex[p[5]] << 8  | hex[p[6]] << 4  | hex[p[7]];
+
+    ret->Data2 = hex[p[9]]  << 12 | hex[p[10]] << 8 | hex[p[11]] << 4 | hex[p[12]];
+    ret->Data3 = hex[p[14]] << 12 | hex[p[15]] << 8 | hex[p[16]] << 4 | hex[p[17]];
+
+    ret->Data4[0] = hex[p[19]] << 4 | hex[p[20]];
+    ret->Data4[1] = hex[p[21]] << 4 | hex[p[22]];
+    ret->Data4[2] = hex[p[24]] << 4 | hex[p[25]];
+    ret->Data4[3] = hex[p[26]] << 4 | hex[p[27]];
+    ret->Data4[4] = hex[p[28]] << 4 | hex[p[29]];
+    ret->Data4[5] = hex[p[30]] << 4 | hex[p[31]];
+    ret->Data4[6] = hex[p[32]] << 4 | hex[p[33]];
+    ret->Data4[7] = hex[p[34]] << 4 | hex[p[35]];
+
+    return S_OK;
+}
+
 #define TICKS_PER_SEC   10000000
 #define TICKS_PER_MIN   (60 * (ULONGLONG)TICKS_PER_SEC)
 #define TICKS_PER_HOUR  (3600 * (ULONGLONG)TICKS_PER_SEC)
@@ -3074,6 +3120,53 @@ static HRESULT read_type_datetime( struct reader *reader, WS_TYPE_MAPPING mappin
     return S_OK;
 }
 
+static HRESULT read_type_guid( struct reader *reader, WS_TYPE_MAPPING mapping,
+                               const WS_XML_STRING *localname, const WS_XML_STRING *ns,
+                               const WS_GUID_DESCRIPTION *desc, WS_READ_OPTION option,
+                               WS_HEAP *heap, void *ret, ULONG size )
+{
+    WS_XML_UTF8_TEXT *utf8;
+    GUID val;
+    HRESULT hr;
+    BOOL found;
+
+    if (desc) FIXME( "ignoring description\n" );
+
+    if ((hr = read_get_text( reader, mapping, localname, ns, &utf8, &found )) != S_OK) return hr;
+    if (found && (hr = str_to_guid( utf8->value.bytes, utf8->value.length, &val )) != S_OK) return hr;
+
+    switch (option)
+    {
+    case WS_READ_REQUIRED_VALUE:
+        if (!found) return WS_E_INVALID_FORMAT;
+        if (size != sizeof(GUID)) return E_INVALIDARG;
+        *(GUID *)ret = val;
+        break;
+
+    case WS_READ_REQUIRED_POINTER:
+        if (!found) return WS_E_INVALID_FORMAT;
+        /* fall through */
+
+    case WS_READ_OPTIONAL_POINTER:
+    {
+        GUID *heap_val = NULL;
+        if (size != sizeof(heap_val)) return E_INVALIDARG;
+        if (found)
+        {
+            if (!(heap_val = ws_alloc( heap, sizeof(*heap_val) ))) return WS_E_QUOTA_EXCEEDED;
+            *heap_val = val;
+        }
+        *(GUID **)ret = heap_val;
+        break;
+    }
+    default:
+        FIXME( "read option %u not supported\n", option );
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 static BOOL is_empty_text_node( const struct node *node )
 {
     const WS_XML_TEXT_NODE *text = (const WS_XML_TEXT_NODE *)node;
@@ -3182,6 +3275,9 @@ static ULONG get_type_size( WS_TYPE type, const WS_STRUCT_DESCRIPTION *desc )
     case WS_DATETIME_TYPE:
         return sizeof(WS_DATETIME);
 
+    case WS_GUID_TYPE:
+        return sizeof(GUID);
+
     case WS_WSZ_TYPE:
         return sizeof(WCHAR *);
 
@@ -3211,6 +3307,7 @@ static WS_READ_OPTION get_array_read_option( WS_TYPE type )
     case WS_ENUM_TYPE:
     case WS_STRUCT_TYPE:
     case WS_DATETIME_TYPE:
+    case WS_GUID_TYPE:
         return WS_READ_REQUIRED_VALUE;
 
     case WS_WSZ_TYPE:
@@ -3315,6 +3412,7 @@ static WS_READ_OPTION get_field_read_option( WS_TYPE type )
     case WS_DOUBLE_TYPE:
     case WS_ENUM_TYPE:
     case WS_DATETIME_TYPE:
+    case WS_GUID_TYPE:
         return WS_READ_REQUIRED_VALUE;
 
     case WS_WSZ_TYPE:
@@ -3561,6 +3659,11 @@ static HRESULT read_type( struct reader *reader, WS_TYPE_MAPPING mapping, WS_TYP
 
     case WS_DATETIME_TYPE:
         if ((hr = read_type_datetime( reader, mapping, localname, ns, desc, option, heap, value, size )) != S_OK)
+            return hr;
+        break;
+
+    case WS_GUID_TYPE:
+        if ((hr = read_type_guid( reader, mapping, localname, ns, desc, option, heap, value, size )) != S_OK)
             return hr;
         break;
 
