@@ -633,21 +633,28 @@ static HRESULT write_add_namespace_attribute( struct writer *writer, const WS_XM
     return S_OK;
 }
 
-static const WS_XML_ATTRIBUTE *find_namespace_attribute( const WS_XML_ELEMENT_NODE *elem,
-                                                         const WS_XML_STRING *prefix,
-                                                         const WS_XML_STRING *ns )
+static BOOL namespace_in_scope( const WS_XML_ELEMENT_NODE *elem, const WS_XML_STRING *prefix,
+                                const WS_XML_STRING *ns )
 {
     ULONG i;
-    for (i = 0; i < elem->attributeCount; i++)
+    const struct node *node;
+
+    for (node = (const struct node *)elem; node; node = node->parent)
     {
-        if (!elem->attributes[i]->isXmlNs) continue;
-        if (WsXmlStringEquals( elem->attributes[i]->prefix, prefix, NULL ) == S_OK &&
-            WsXmlStringEquals( elem->attributes[i]->ns, ns, NULL ) == S_OK)
+        if (node_type( node ) != WS_XML_NODE_TYPE_ELEMENT) break;
+
+        elem = &node->hdr;
+        for (i = 0; i < elem->attributeCount; i++)
         {
-            return elem->attributes[i];
+            if (!elem->attributes[i]->isXmlNs) continue;
+            if (WsXmlStringEquals( elem->attributes[i]->prefix, prefix, NULL ) == S_OK &&
+                WsXmlStringEquals( elem->attributes[i]->ns, ns, NULL ) == S_OK)
+            {
+                return TRUE;
+            }
         }
     }
-    return NULL;
+    return FALSE;
 }
 
 static HRESULT write_set_element_namespace( struct writer *writer )
@@ -656,7 +663,7 @@ static HRESULT write_set_element_namespace( struct writer *writer )
     HRESULT hr;
 
     if (!elem->ns->length || is_current_namespace( writer, elem->ns ) ||
-        find_namespace_attribute( elem, elem->prefix, elem->ns )) return S_OK;
+        namespace_in_scope( elem, elem->prefix, elem->ns )) return S_OK;
 
     if ((hr = write_add_namespace_attribute( writer, elem->prefix, elem->ns, FALSE )) != S_OK)
         return hr;
@@ -1689,6 +1696,6 @@ HRESULT WINAPI WsWriteXmlnsAttribute( WS_XML_WRITER *handle, const WS_XML_STRING
     if (!writer || !ns) return E_INVALIDARG;
     if (writer->state != WRITER_STATE_STARTELEMENT) return WS_E_INVALID_OPERATION;
 
-    if (find_namespace_attribute( &writer->current->hdr, prefix, ns )) return S_OK;
+    if (namespace_in_scope( &writer->current->hdr, prefix, ns )) return S_OK;
     return write_add_namespace_attribute( writer, prefix, ns, single );
 }

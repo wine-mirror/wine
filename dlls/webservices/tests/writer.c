@@ -1072,6 +1072,7 @@ static void test_WsWriteXmlnsAttribute(void)
     WS_XML_STRING ns = {2, (BYTE *)"ns"}, ns2 = {3, (BYTE *)"ns2"};
     WS_XML_STRING prefix = {6, (BYTE *)"prefix"}, prefix2 = {7, (BYTE *)"prefix2"};
     WS_XML_STRING xmlns = {6, (BYTE *)"xmlns"}, attr = {4, (BYTE *)"attr"};
+    WS_XML_STRING localname = {1, (BYTE *)"u"};
     WS_HEAP *heap;
     WS_XML_BUFFER *buffer;
     WS_XML_WRITER *writer;
@@ -1209,6 +1210,20 @@ static void test_WsWriteXmlnsAttribute(void)
     hr = WsWriteEndElement( writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output_buffer( buffer, "<prefix:t prefix:attr='' xmlns:prefix='ns' xmlns:prefix2='ns2'/>", __LINE__ );
+    WsFreeHeap( heap );
+
+    /* scope */
+    prepare_xmlns_test( writer, &heap, &buffer );
+    hr = WsWriteXmlnsAttribute( writer, &prefix2, &ns2, TRUE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, &prefix2, &localname, &ns2, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_buffer( buffer, "<prefix:t xmlns:prefix2='ns2' xmlns:prefix=\"ns\"><prefix2:u/></prefix:t>",
+                        __LINE__ );
     WsFreeHeap( heap );
 
     WsFreeWriter( writer );
