@@ -442,8 +442,25 @@ static void collect_joystick_elements(joystick_t* joystick, IOHIDElementRef coll
                         break;
                     }
                     case kHIDUsage_GD_Slider:
-                        TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_Slider; ignoring\n");
+                    case kHIDUsage_GD_Dial:
+                    case kHIDUsage_GD_Wheel:
+                    {
+                        /* if one axis is taken, fall to the next until axes are filled */
+                        int possible_axes[3] = {AXIS_Z,AXIS_RY,AXIS_RX};
+                        int axis = 0;
+                        while(axis < 3 && joystick->axes[possible_axes[axis]].element)
+                            axis++;
+                        if (axis == 3)
+                            TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_<axis> (%d)\n    ignoring\n", usage);
+                        else
+                        {
+                            TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_<axis> (%d) axis %d\n", usage, possible_axes[axis]);
+                            joystick->axes[possible_axes[axis]].element = (IOHIDElementRef)CFRetain(child);
+                            joystick->axes[possible_axes[axis]].min_value = IOHIDElementGetLogicalMin(child);
+                            joystick->axes[possible_axes[axis]].max_value = IOHIDElementGetLogicalMax(child);
+                        }
                         break;
+                    }
                     default:
                         FIXME("kIOHIDElementTypeInput_Misc / Unhandled usage %d\n", usage);
                         break;
