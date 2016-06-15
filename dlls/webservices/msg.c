@@ -126,3 +126,31 @@ void WINAPI WsFreeMessage( WS_MESSAGE *handle )
     TRACE( "%p\n", handle );
     free_msg( msg );
 }
+
+/**************************************************************************
+ *          WsGetMessageProperty		[webservices.@]
+ */
+HRESULT WINAPI WsGetMessageProperty( WS_MESSAGE *handle, WS_MESSAGE_PROPERTY_ID id, void *buf,
+                                     ULONG size, WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+
+    TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    return prop_get( msg->prop, msg->prop_count, id, buf, size );
+}
+
+/**************************************************************************
+ *          WsSetMessageProperty		[webservices.@]
+ */
+HRESULT WINAPI WsSetMessageProperty( WS_MESSAGE *handle, WS_MESSAGE_PROPERTY_ID id, const void *value,
+                                     ULONG size, WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+
+    TRACE( "%p %u %p %u\n", handle, id, value, size );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    return prop_set( msg->prop, msg->prop_count, id, value, size );
+}
