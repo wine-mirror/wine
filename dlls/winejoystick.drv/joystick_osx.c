@@ -9,6 +9,7 @@
  * Copyright 2002 David Hagood
  * Copyright 2009 CodeWeavers, Aric Stewart
  * Copyright 2015 Ken Thomases for CodeWeavers Inc.
+ * Copyright 2016 David Lawrie
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -94,12 +95,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(joystick);
 
 
 enum {
-    AXIS_X,
-    AXIS_Y,
-    AXIS_Z,
-    AXIS_RX,
-    AXIS_RY,
-    AXIS_RZ,
+    AXIS_X,  /* Winmm X */
+    AXIS_Y,  /* Winmm Y */
+    AXIS_Z,  /* Winmm Z */
+    AXIS_RX, /* Winmm V */
+    AXIS_RY, /* Winmm U */
+    AXIS_RZ, /* Winmm R */
     NUM_AXES
 };
 
@@ -617,8 +618,8 @@ LRESULT driver_joyGetDevCaps(DWORD_PTR device_id, JOYCAPSW* caps, DWORD size)
                 switch (i)
                 {
                     case AXIS_Z:  caps->wCaps |= JOYCAPS_HASZ; break;
-                    case AXIS_RX: caps->wCaps |= JOYCAPS_HASU; break;
-                    case AXIS_RY: caps->wCaps |= JOYCAPS_HASV; break;
+                    case AXIS_RX: caps->wCaps |= JOYCAPS_HASV; break;
+                    case AXIS_RY: caps->wCaps |= JOYCAPS_HASU; break;
                     case AXIS_RZ: caps->wCaps |= JOYCAPS_HASR; break;
                 }
             }
@@ -664,8 +665,8 @@ LRESULT driver_joyGetPosEx(DWORD_PTR device_id, JOYINFOEX* info)
         { JOY_RETURNX, FIELD_OFFSET(JOYINFOEX, dwXpos) },
         { JOY_RETURNY, FIELD_OFFSET(JOYINFOEX, dwYpos) },
         { JOY_RETURNZ, FIELD_OFFSET(JOYINFOEX, dwZpos) },
-        { JOY_RETURNU, FIELD_OFFSET(JOYINFOEX, dwUpos) },
         { JOY_RETURNV, FIELD_OFFSET(JOYINFOEX, dwVpos) },
+        { JOY_RETURNU, FIELD_OFFSET(JOYINFOEX, dwUpos) },
         { JOY_RETURNR, FIELD_OFFSET(JOYINFOEX, dwRpos) },
     };
 
