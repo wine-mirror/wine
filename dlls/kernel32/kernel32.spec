@@ -696,7 +696,7 @@
 @ stdcall GetHandleInformation(long ptr)
 @ stub -i386 GetLSCallbackTarget
 @ stub -i386 GetLSCallbackTemplate
-# @ stub GetLargePageMinimum
+@ stdcall GetLargePageMinimum()
 @ stdcall GetLargestConsoleWindowSize(long)
 @ stdcall GetLastError()
 @ stub GetLinguistLangSize

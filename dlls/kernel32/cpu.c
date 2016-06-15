@@ -291,3 +291,15 @@ err:
     }
     return TRUE;
 }
+
+/***********************************************************************
+ *           GetLargePageMinimum (KERNEL32.@)
+ */
+SIZE_T WINAPI GetLargePageMinimum(void)
+{
+#if defined(__i386___) || defined(__x86_64__)
+    return 2 * 1024 * 1024;
+#endif
+    FIXME("Not implemented on your platform/architecture.\n");
+    return 0;
+}
