@@ -18,7 +18,7 @@
 @ stdcall D3DXCompileShaderFromResourceW(ptr wstr ptr ptr str str long ptr ptr ptr) d3dx9_36.D3DXCompileShaderFromResourceW
 @ stdcall D3DXComputeBoundingBox(ptr long long ptr ptr) d3dx9_36.D3DXComputeBoundingBox
 @ stdcall D3DXComputeBoundingSphere(ptr long long ptr ptr) d3dx9_36.D3DXComputeBoundingSphere
-@ stdcall D3DXComputeNormalMap(ptr ptr ptr long long long) d3dx9_36.D3DXComputeNormalMap
+@ stdcall D3DXComputeNormalMap(ptr ptr ptr long long float) d3dx9_36.D3DXComputeNormalMap
 @ stdcall D3DXComputeNormals(ptr ptr) d3dx9_36.D3DXComputeNormals
 @ stdcall D3DXComputeTangent(ptr long long long long ptr) d3dx9_36.D3DXComputeTangent
 @ stdcall D3DXComputeTangentFrame(ptr long) d3dx9_36.D3DXComputeTangentFrame
@@ -131,7 +131,7 @@
 @ stdcall D3DXFrameAppendChild(ptr ptr) d3dx9_36.D3DXFrameAppendChild
 @ stdcall D3DXFrameCalculateBoundingSphere(ptr ptr ptr) d3dx9_36.D3DXFrameCalculateBoundingSphere
 @ stdcall D3DXFrameDestroy(ptr ptr) d3dx9_36.D3DXFrameDestroy
-@ stdcall D3DXFrameFind(ptr ptr) d3dx9_36.D3DXFrameFind
+@ stdcall D3DXFrameFind(ptr str) d3dx9_36.D3DXFrameFind
 @ stdcall D3DXFrameNumNamedMatrices(ptr) d3dx9_36.D3DXFrameNumNamedMatrices
 @ stdcall D3DXFrameRegisterNamedMatrices(ptr ptr) d3dx9_36.D3DXFrameRegisterNamedMatrices
 @ stdcall D3DXFresnelTerm(float float) d3dx9_36.D3DXFresnelTerm
