@@ -1976,7 +1976,7 @@ static HRESULT range_Collapse(LONG bStart, LONG *start, LONG *end)
   if (*end == *start)
       return S_FALSE;
 
-  if (bStart == tomEnd || bStart == tomFalse)
+  if (bStart == tomEnd)
       *start = *end;
   else
       *end = *start;
