@@ -47,7 +47,7 @@
 @ stub D3DX10CreateTextureFromMemory(ptr ptr long ptr ptr ptr ptr)
 @ stub D3DX10CreateTextureFromResourceA(ptr long str ptr ptr ptr ptr)
 @ stub D3DX10CreateTextureFromResourceW(ptr long wstr ptr ptr ptr ptr)
-@ stub D3DX10FilterTexture(ptr long long)
+@ stdcall D3DX10FilterTexture(ptr long long)
 @ stdcall D3DX10GetFeatureLevel1(ptr ptr)
 @ stub D3DX10GetImageInfoFromFileA(str ptr ptr ptr)
 @ stub D3DX10GetImageInfoFromFileW(wstr ptr ptr ptr)

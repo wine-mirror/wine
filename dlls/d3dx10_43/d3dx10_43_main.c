@@ -188,6 +188,13 @@ HRESULT WINAPI D3DX10CreateDevice(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE drive
     return hr;
 }
 
+HRESULT WINAPI D3DX10FilterTexture(ID3D10Resource *texture, UINT src_level, UINT filter)
+{
+    FIXME("texture %p, src_level %u, filter %#x stub!\n", texture, src_level, filter);
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI D3DX10GetFeatureLevel1(ID3D10Device *device, ID3D10Device1 **device1)
 {
     TRACE("device %p, device1 %p.\n", device, device1);
