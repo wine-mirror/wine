@@ -514,6 +514,9 @@ static void collect_joystick_elements(joystick_t* joystick, IOHIDElementRef coll
                 }
                 break;
             }
+            case kIOHIDElementTypeFeature:
+                /* Describes input and output elements not intended for consumption by the end user. Ignoring. */
+                break;
             default:
                 FIXME("Unhandled type %i\n",type);
                 break;
