@@ -516,7 +516,11 @@ static BOOL paint_path( PHYSDEV dev, BOOL stroke, BOOL fill )
     int i, size = GetPath( dev->hdc, NULL, NULL, 0 );
 
     if (size == -1) return FALSE;
-    if (!size) return TRUE;
+    if (!size)
+    {
+        AbortPath( dev->hdc );
+        return TRUE;
+    }
     points = HeapAlloc( GetProcessHeap(), 0, size * sizeof(*points) );
     types = HeapAlloc( GetProcessHeap(), 0, size * sizeof(*types) );
     if (!points || !types) goto done;
@@ -549,6 +553,7 @@ static BOOL paint_path( PHYSDEV dev, BOOL stroke, BOOL fill )
     if (stroke) PSDRV_DrawLine(dev);
     else PSDRV_WriteNewPath(dev);
     PSDRV_ResetClip(dev);
+    AbortPath( dev->hdc );
 
 done:
     HeapFree( GetProcessHeap(), 0, points );
