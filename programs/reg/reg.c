@@ -818,6 +818,24 @@ static int reg_query(HKEY root, WCHAR *path, WCHAR *key_name, WCHAR *value_name,
     return ret;
 }
 
+static BOOL parse_registry_key(const WCHAR *key, HKEY *root, WCHAR **path)
+{
+    if (!sane_path(key))
+        return FALSE;
+
+    *root = path_get_rootkey(key);
+    if (!*root)
+    {
+        output_message(STRING_INVALID_KEY);
+        return FALSE;
+    }
+
+    *path = strchrW(key, '\\');
+    if (*path) (*path)++;
+
+    return TRUE;
+}
+
 static BOOL is_help_switch(const WCHAR *s)
 {
     if (strlenW(s) > 2)
@@ -906,20 +924,10 @@ int wmain(int argc, WCHAR *argvW[])
         return 0;
     }
 
+    if (!parse_registry_key(argvW[2], &root, &path))
+        return 1;
+
     key_name = argvW[2];
-
-    if (!sane_path(key_name))
-        return 1;
-
-    root = path_get_rootkey(key_name);
-    if (!root)
-    {
-        output_message(STRING_INVALID_KEY);
-        return 1;
-    }
-
-    path = strchrW(key_name, '\\');
-    if (path) path++;
 
     for (i = 3; i < argc; i++)
     {
