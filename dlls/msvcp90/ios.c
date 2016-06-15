@@ -6275,9 +6275,12 @@ void __thiscall basic_ostream_char_dtor(basic_ios_char *base)
 DEFINE_THISCALL_WRAPPER(basic_ostream_char_vbase_dtor, 4)
 void __thiscall basic_ostream_char_vbase_dtor(basic_ostream_char *this)
 {
+    basic_ios_char *base = basic_ostream_char_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
-    basic_ostream_char_dtor(basic_ostream_char_to_basic_ios(this));
-    basic_ios_char_dtor(basic_ostream_char_get_basic_ios(this));
+
+    basic_ostream_char_dtor(base);
+    basic_ios_char_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(basic_ostream_char_vector_dtor, 8)
@@ -7126,9 +7129,12 @@ void __thiscall basic_ostream_wchar_dtor(basic_ios_wchar *base)
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_vbase_dtor, 4)
 void __thiscall basic_ostream_wchar_vbase_dtor(basic_ostream_wchar *this)
 {
+    basic_ios_wchar *base = basic_ostream_wchar_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
-    basic_ostream_wchar_dtor(basic_ostream_wchar_to_basic_ios(this));
-    basic_ios_wchar_dtor(basic_ostream_wchar_get_basic_ios(this));
+
+    basic_ostream_wchar_dtor(base);
+    basic_ios_wchar_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(basic_ostream_wchar_vector_dtor, 8)
@@ -8156,9 +8162,12 @@ void __thiscall basic_istream_char_dtor(basic_ios_char *base)
 DEFINE_THISCALL_WRAPPER(basic_istream_char_vbase_dtor, 4)
 void __thiscall basic_istream_char_vbase_dtor(basic_istream_char *this)
 {
+    basic_ios_char *base = basic_istream_char_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
-    basic_istream_char_dtor(basic_istream_char_to_basic_ios(this));
-    basic_ios_char_dtor(basic_istream_char_get_basic_ios(this));
+
+    basic_istream_char_dtor(base);
+    basic_ios_char_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(basic_istream_char_vector_dtor, 8)
@@ -9630,9 +9639,12 @@ void __thiscall basic_istream_wchar_dtor(basic_ios_wchar *base)
 DEFINE_THISCALL_WRAPPER(basic_istream_wchar_vbase_dtor, 4)
 void __thiscall basic_istream_wchar_vbase_dtor(basic_istream_wchar *this)
 {
+    basic_ios_wchar *base = basic_istream_wchar_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
-    basic_istream_wchar_dtor(basic_istream_wchar_to_basic_ios(this));
-    basic_ios_wchar_dtor(basic_istream_wchar_get_basic_ios(this));
+
+    basic_istream_wchar_dtor(base);
+    basic_ios_wchar_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(basic_istream_wchar_vector_dtor, 8)
@@ -11108,9 +11120,12 @@ void __thiscall basic_iostream_char_dtor(basic_ios_char *base)
 DEFINE_THISCALL_WRAPPER(basic_iostream_char_vbase_dtor, 4)
 void __thiscall basic_iostream_char_vbase_dtor(basic_iostream_char *this)
 {
+    basic_ios_char *base = basic_iostream_char_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
-    basic_iostream_char_dtor(basic_iostream_char_to_basic_ios(this));
-    basic_ios_char_dtor(basic_istream_char_get_basic_ios(&this->base1));
+
+    basic_iostream_char_dtor(base);
+    basic_ios_char_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(basic_iostream_char_vector_dtor, 8)
@@ -11219,9 +11234,12 @@ void __thiscall basic_iostream_wchar_dtor(basic_ios_wchar *base)
 DEFINE_THISCALL_WRAPPER(basic_iostream_wchar_vbase_dtor, 4)
 void __thiscall basic_iostream_wchar_vbase_dtor(basic_iostream_wchar *this)
 {
+    basic_ios_wchar *base = basic_iostream_wchar_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
-    basic_iostream_wchar_dtor(basic_iostream_wchar_to_basic_ios(this));
-    basic_ios_wchar_dtor(basic_istream_wchar_get_basic_ios(&this->base1));
+
+    basic_iostream_wchar_dtor(base);
+    basic_ios_wchar_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(basic_iostream_wchar_vector_dtor, 8)
@@ -11376,10 +11394,12 @@ void __thiscall basic_ofstream_char_dtor(basic_ios_char *base)
 DEFINE_THISCALL_WRAPPER(basic_ofstream_char_vbase_dtor, 4)
 void __thiscall basic_ofstream_char_vbase_dtor(basic_ofstream_char *this)
 {
+    basic_ios_char *base = basic_ofstream_char_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
 
-    basic_ofstream_char_dtor(basic_ofstream_char_to_basic_ios(this));
-    basic_ios_char_dtor(basic_ostream_char_get_basic_ios(&this->base));
+    basic_ofstream_char_dtor(base);
+    basic_ios_char_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(basic_ofstream_char_vector_dtor, 8)
@@ -11648,10 +11668,12 @@ void __thiscall basic_ofstream_wchar_dtor(basic_ios_wchar *base)
 DEFINE_THISCALL_WRAPPER(basic_ofstream_wchar_vbase_dtor, 4)
 void __thiscall basic_ofstream_wchar_vbase_dtor(basic_ofstream_wchar *this)
 {
+    basic_ios_wchar *base = basic_ofstream_wchar_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
 
-    basic_ofstream_wchar_dtor(basic_ofstream_wchar_to_basic_ios(this));
-    basic_ios_wchar_dtor(basic_ostream_wchar_get_basic_ios(&this->base));
+    basic_ofstream_wchar_dtor(base);
+    basic_ios_wchar_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(basic_ofstream_wchar_vector_dtor, 8)
@@ -11898,10 +11920,12 @@ void __thiscall basic_ifstream_char_dtor(basic_ios_char *base)
 DEFINE_THISCALL_WRAPPER(basic_ifstream_char_vbase_dtor, 4)
 void __thiscall basic_ifstream_char_vbase_dtor(basic_ifstream_char *this)
 {
+    basic_ios_char *base = basic_ifstream_char_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
 
-    basic_ifstream_char_dtor(basic_ifstream_char_to_basic_ios(this));
-    basic_ios_char_dtor(basic_istream_char_get_basic_ios(&this->base));
+    basic_ifstream_char_dtor(base);
+    basic_ios_char_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(basic_ifstream_char_vector_dtor, 8)
@@ -12188,10 +12212,12 @@ void __thiscall basic_ifstream_wchar_dtor(basic_ios_wchar *base)
 DEFINE_THISCALL_WRAPPER(basic_ifstream_wchar_vbase_dtor, 4)
 void __thiscall basic_ifstream_wchar_vbase_dtor(basic_ifstream_wchar *this)
 {
+    basic_ios_wchar *base = basic_ifstream_wchar_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
 
-    basic_ifstream_wchar_dtor(basic_ifstream_wchar_to_basic_ios(this));
-    basic_ios_wchar_dtor(basic_istream_wchar_get_basic_ios(&this->base));
+    basic_ifstream_wchar_dtor(base);
+    basic_ios_wchar_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(basic_ifstream_wchar_vector_dtor, 8)
@@ -12440,10 +12466,12 @@ void __thiscall basic_fstream_char_dtor(basic_ios_char *base)
 DEFINE_THISCALL_WRAPPER(basic_fstream_char_vbase_dtor, 4)
 void __thiscall basic_fstream_char_vbase_dtor(basic_fstream_char *this)
 {
+    basic_ios_char *base = basic_fstream_char_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
 
-    basic_fstream_char_dtor(basic_fstream_char_to_basic_ios(this));
-    basic_ios_char_dtor(basic_istream_char_get_basic_ios(&this->base.base1));
+    basic_fstream_char_dtor(base);
+    basic_ios_char_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(basic_fstream_char_vector_dtor, 8)
@@ -12731,10 +12759,12 @@ void __thiscall basic_fstream_wchar_dtor(basic_ios_wchar *base)
 DEFINE_THISCALL_WRAPPER(basic_fstream_wchar_vbase_dtor, 4)
 void __thiscall basic_fstream_wchar_vbase_dtor(basic_fstream_wchar *this)
 {
+    basic_ios_wchar *base = basic_fstream_wchar_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
 
-    basic_fstream_wchar_dtor(basic_fstream_wchar_to_basic_ios(this));
-    basic_ios_wchar_dtor(basic_istream_wchar_get_basic_ios(&this->base.base1));
+    basic_fstream_wchar_dtor(base);
+    basic_ios_wchar_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(basic_fstream_wchar_vector_dtor, 8)
@@ -12946,10 +12976,12 @@ void __thiscall basic_ostringstream_char_dtor(basic_ios_char *base)
 DEFINE_THISCALL_WRAPPER(basic_ostringstream_char_vbase_dtor, 4)
 void __thiscall basic_ostringstream_char_vbase_dtor(basic_ostringstream_char *this)
 {
+    basic_ios_char *base = basic_ostringstream_char_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
 
-    basic_ostringstream_char_dtor(basic_ostringstream_char_to_basic_ios(this));
-    basic_ios_char_dtor(basic_ostream_char_get_basic_ios(&this->base));
+    basic_ostringstream_char_dtor(base);
+    basic_ios_char_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(basic_ostringstream_char_vector_dtor, 8)
@@ -13124,10 +13156,12 @@ void __thiscall basic_ostringstream_wchar_dtor(basic_ios_wchar *base)
 DEFINE_THISCALL_WRAPPER(basic_ostringstream_wchar_vbase_dtor, 4)
 void __thiscall basic_ostringstream_wchar_vbase_dtor(basic_ostringstream_wchar *this)
 {
+    basic_ios_wchar *base = basic_ostringstream_wchar_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
 
-    basic_ostringstream_wchar_dtor(basic_ostringstream_wchar_to_basic_ios(this));
-    basic_ios_wchar_dtor(basic_ostream_wchar_get_basic_ios(&this->base));
+    basic_ostringstream_wchar_dtor(base);
+    basic_ios_wchar_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(basic_ostringstream_wchar_vector_dtor, 8)
@@ -13273,10 +13307,12 @@ void __thiscall basic_istringstream_char_dtor(basic_ios_char *base)
 DEFINE_THISCALL_WRAPPER(basic_istringstream_char_vbase_dtor, 4)
 void __thiscall basic_istringstream_char_vbase_dtor(basic_istringstream_char *this)
 {
+    basic_ios_char *base = basic_istringstream_char_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
 
-    basic_istringstream_char_dtor(basic_istringstream_char_to_basic_ios(this));
-    basic_ios_char_dtor(basic_istream_char_get_basic_ios(&this->base));
+    basic_istringstream_char_dtor(base);
+    basic_ios_char_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(basic_istringstream_char_vector_dtor, 8)
@@ -13451,10 +13487,12 @@ void __thiscall basic_istringstream_wchar_dtor(basic_ios_wchar *base)
 DEFINE_THISCALL_WRAPPER(basic_istringstream_wchar_vbase_dtor, 4)
 void __thiscall basic_istringstream_wchar_vbase_dtor(basic_istringstream_wchar *this)
 {
+    basic_ios_wchar *base = basic_istringstream_wchar_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
 
-    basic_istringstream_wchar_dtor(basic_istringstream_wchar_to_basic_ios(this));
-    basic_ios_wchar_dtor(basic_istream_wchar_get_basic_ios(&this->base));
+    basic_istringstream_wchar_dtor(base);
+    basic_ios_wchar_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(basic_istringstream_wchar_vector_dtor, 8)
@@ -13603,10 +13641,12 @@ void __thiscall basic_stringstream_char_dtor(basic_ios_char *base)
 DEFINE_THISCALL_WRAPPER(basic_stringstream_char_vbase_dtor, 4)
 void __thiscall basic_stringstream_char_vbase_dtor(basic_stringstream_char *this)
 {
+    basic_ios_char *base = basic_stringstream_char_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
 
-    basic_stringstream_char_dtor(basic_stringstream_char_to_basic_ios(this));
-    basic_ios_char_dtor(basic_istream_char_get_basic_ios(&this->base.base1));
+    basic_stringstream_char_dtor(base);
+    basic_ios_char_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(basic_stringstream_char_vector_dtor, 8)
@@ -13785,10 +13825,12 @@ void __thiscall basic_stringstream_wchar_dtor(basic_ios_wchar *base)
 DEFINE_THISCALL_WRAPPER(basic_stringstream_wchar_vbase_dtor, 4)
 void __thiscall basic_stringstream_wchar_vbase_dtor(basic_stringstream_wchar *this)
 {
+    basic_ios_wchar *base = basic_stringstream_wchar_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
 
-    basic_stringstream_wchar_dtor(basic_stringstream_wchar_to_basic_ios(this));
-    basic_ios_wchar_dtor(basic_istream_wchar_get_basic_ios(&this->base.base1));
+    basic_stringstream_wchar_dtor(base);
+    basic_ios_wchar_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(basic_stringstream_wchar_vector_dtor, 8)
@@ -14294,10 +14336,12 @@ void __thiscall ostrstream_dtor(basic_ios_char *base)
 
 static void ostrstream_vbase_dtor(ostrstream *this)
 {
+    basic_ios_char *base = ostrstream_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
 
-    ostrstream_dtor(ostrstream_to_basic_ios(this));
-    basic_ios_char_dtor(basic_ostream_char_get_basic_ios(&this->base));
+    ostrstream_dtor(base);
+    basic_ios_char_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(ostrstream_vector_dtor, 8)
@@ -14838,10 +14882,12 @@ void __thiscall strstream_dtor(basic_ios_char *base)
 
 static void strstream_vbase_dtor(strstream *this)
 {
+    basic_ios_char *base = strstream_to_basic_ios(this);
+
     TRACE("(%p)\n", this);
 
-    strstream_dtor(strstream_to_basic_ios(this));
-    basic_ios_char_dtor(basic_istream_char_get_basic_ios(&this->base.base1));
+    strstream_dtor(base);
+    basic_ios_char_dtor(base);
 }
 
 DEFINE_THISCALL_WRAPPER(strstream_vector_dtor, 8)
