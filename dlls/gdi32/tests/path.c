@@ -266,7 +266,7 @@ static void test_path_state(void)
     EndPath( hdc );
     SetLastError( 0xdeadbeef );
     ret = SelectClipPath( hdc, RGN_OR );
-    todo_wine ok( !ret, "SelectClipPath succeeded on empty path\n" );
+    ok( !ret, "SelectClipPath succeeded on empty path\n" );
     ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
     ok( GetPath( hdc, NULL, NULL, 0 ) == -1, "path not deleted\n" );
 
@@ -282,7 +282,7 @@ static void test_path_state(void)
     EndPath( hdc );
     SetLastError( 0xdeadbeef );
     rgn = PathToRegion( hdc );
-    todo_wine ok( !rgn, "PathToRegion succeeded on empty path\n" );
+    ok( !rgn, "PathToRegion succeeded on empty path\n" );
     ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
     DeleteObject( rgn );
     ok( GetPath( hdc, NULL, NULL, 0 ) == -1, "path not deleted\n" );

@@ -374,9 +374,9 @@ static HRGN PATH_PathToRegion(const struct gdi_path *pPath, INT nPolyFillMode)
     INT  *pNumPointsInStroke;
     HRGN hrgn;
 
-    if (!(rgn_path = PATH_FlattenPath( pPath ))) return 0;
+    if (!pPath->count) return 0;
 
-    /* FIXME: What happens when number of points is zero? */
+    if (!(rgn_path = PATH_FlattenPath( pPath ))) return 0;
 
     /* First pass: Find out how many strokes there are in the path */
     /* FIXME: We could eliminate this with some bookkeeping in GdiPath */
@@ -636,30 +636,20 @@ INT WINAPI GetPath(HDC hdc, LPPOINT pPoints, LPBYTE pTypes, INT nSize)
 
 /***********************************************************************
  *           PathToRegion    (GDI32.@)
- *
- * FIXME
- *   Check that SetLastError is being called correctly
- *
- * The documentation does not state this explicitly, but a test under Windows
- * shows that the region which is returned should be in device coordinates.
  */
 HRGN WINAPI PathToRegion(HDC hdc)
 {
    HRGN  hrgnRval = 0;
    DC *dc = get_dc_ptr( hdc );
 
-   /* Get pointer to path */
    if(!dc) return 0;
 
    if (!dc->path) SetLastError(ERROR_CAN_NOT_COMPLETE);
    else
    {
-       if ((hrgnRval = PATH_PathToRegion(dc->path, GetPolyFillMode(hdc))))
-       {
-           /* FIXME: Should we empty the path even if conversion failed? */
-           free_gdi_path( dc->path );
-           dc->path = NULL;
-       }
+       hrgnRval = PATH_PathToRegion(dc->path, GetPolyFillMode(hdc));
+       free_gdi_path( dc->path );
+       dc->path = NULL;
    }
    release_dc_ptr( dc );
    return hrgnRval;
@@ -674,6 +664,7 @@ static BOOL PATH_FillPath( HDC hdc, const struct gdi_path *pPath )
    HRGN  hrgn;
 
    /* Construct a region from the path and fill it */
+   if (!pPath->count) return TRUE;
    if ((hrgn = PATH_PathToRegion(pPath, GetPolyFillMode(hdc))))
    {
       /* Since PaintRgn interprets the region as being in logical coordinates
@@ -752,8 +743,6 @@ BOOL WINAPI FillPath(HDC hdc)
 
 /***********************************************************************
  *           SelectClipPath    (GDI32.@)
- * FIXME
- *  Check that SetLastError is being called correctly
  */
 BOOL WINAPI SelectClipPath(HDC hdc, INT iMode)
 {
@@ -2116,24 +2105,14 @@ BOOL nulldrv_CloseFigure( PHYSDEV dev )
 
 BOOL nulldrv_SelectClipPath( PHYSDEV dev, INT mode )
 {
-    BOOL ret;
-    HRGN hrgn;
-    DC *dc = get_nulldrv_dc( dev );
+    BOOL ret = FALSE;
+    HRGN hrgn = PathToRegion( dev->hdc );
 
-    if (!dc->path)
+    if (hrgn)
     {
-        SetLastError( ERROR_CAN_NOT_COMPLETE );
-        return FALSE;
+        ret = ExtSelectClipRgn( dev->hdc, hrgn, mode ) != ERROR;
+        DeleteObject( hrgn );
     }
-    if (!(hrgn = PATH_PathToRegion( dc->path, GetPolyFillMode(dev->hdc)))) return FALSE;
-    ret = ExtSelectClipRgn( dev->hdc, hrgn, mode ) != ERROR;
-    if (ret)
-    {
-        free_gdi_path( dc->path );
-        dc->path = NULL;
-    }
-    /* FIXME: Should this function delete the path even if it failed? */
-    DeleteObject( hrgn );
     return ret;
 }
 
