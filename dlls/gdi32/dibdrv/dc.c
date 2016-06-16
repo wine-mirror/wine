@@ -424,7 +424,7 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_ExtFloodFill,                /* pExtFloodFill */
     NULL,                               /* pExtSelectClipRgn */
     dibdrv_ExtTextOut,                  /* pExtTextOut */
-    NULL,                               /* pFillPath */
+    dibdrv_FillPath,                    /* pFillPath */
     NULL,                               /* pFillRgn */
     NULL,                               /* pFlattenPath */
     NULL,                               /* pFontIsLinked */
@@ -519,8 +519,8 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pStartPage */
     dibdrv_StretchBlt,                  /* pStretchBlt */
     NULL,                               /* pStretchDIBits */
-    NULL,                               /* pStrokeAndFillPath */
-    NULL,                               /* pStrokePath */
+    dibdrv_StrokeAndFillPath,           /* pStrokeAndFillPath */
+    dibdrv_StrokePath,                  /* pStrokePath */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
     dibdrv_wine_get_wgl_driver,         /* wine_get_wgl_driver */

@@ -402,6 +402,73 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     return ret;
 }
 
+/* helper for path stroking and filling functions */
+static BOOL stroke_and_fill_path( dibdrv_physdev *dev, BOOL stroke, BOOL fill )
+{
+    POINT *points;
+    BYTE *types;
+    BOOL ret = TRUE;
+    HRGN outline = 0, interior = 0;
+    int i, pos, total;
+
+    if (dev->brush.style == BS_NULL) fill = FALSE;
+
+    total = get_gdi_flat_path( dev->dev.hdc, &points, &types, fill ? &interior : NULL );
+    if (total == -1) return FALSE;
+    if (!total) goto done;
+
+    if (stroke && dev->pen_uses_region) outline = CreateRectRgn( 0, 0, 0, 0 );
+
+    /* if not using a region, paint the interior first so the outline can overlap it */
+    if (interior && !outline)
+    {
+        ret = brush_region( dev, interior );
+        DeleteObject( interior );
+        interior = 0;
+    }
+
+    if (stroke)
+    {
+        pos = 0;
+        for (i = 1; i < total; i++)
+        {
+            if (types[i] != PT_MOVETO) continue;
+            if (i > pos + 1)
+            {
+                reset_dash_origin( dev );
+                dev->pen_lines( dev, i - pos, points + pos,
+                                fill || types[i - 1] & PT_CLOSEFIGURE, outline );
+            }
+            pos = i;
+        }
+        if (i > pos + 1)
+        {
+            reset_dash_origin( dev );
+            dev->pen_lines( dev, i - pos, points + pos,
+                            fill || types[i - 1] & PT_CLOSEFIGURE, outline );
+        }
+    }
+
+    add_pen_lines_bounds( dev, total, points, outline );
+
+    if (interior)
+    {
+        CombineRgn( interior, interior, outline, RGN_DIFF );
+        ret = brush_region( dev, interior );
+        DeleteObject( interior );
+    }
+    if (outline)
+    {
+        if (ret) ret = pen_region( dev, outline );
+        DeleteObject( outline );
+    }
+
+done:
+    HeapFree( GetProcessHeap(), 0, points );
+    HeapFree( GetProcessHeap(), 0, types );
+    return ret;
+}
+
 /* Intensities of the 17 glyph levels when drawn with text component of 0xff on a
    black bkgnd.  [A log-log plot of these data gives: y = 77.05 * x^0.4315]. */
 static const BYTE ramp[17] =
@@ -1000,6 +1067,16 @@ BOOL dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
 }
 
 /***********************************************************************
+ *           dibdrv_FillPath
+ */
+BOOL dibdrv_FillPath( PHYSDEV dev )
+{
+    dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+
+    return stroke_and_fill_path( pdev, FALSE, TRUE );
+}
+
+/***********************************************************************
  *           dibdrv_GetNearestColor
  */
 COLORREF dibdrv_GetNearestColor( PHYSDEV dev, COLORREF color )
@@ -1498,4 +1575,24 @@ COLORREF dibdrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
     pdev->dib.funcs->solid_rects( &pdev->dib, clipped_rects.count, clipped_rects.rects, 0, pixel );
     free_clipped_rects( &clipped_rects );
     return color;
+}
+
+/***********************************************************************
+ *           dibdrv_StrokeAndFillPath
+ */
+BOOL dibdrv_StrokeAndFillPath( PHYSDEV dev )
+{
+    dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+
+    return stroke_and_fill_path( pdev, TRUE, TRUE );
+}
+
+/***********************************************************************
+ *           dibdrv_StrokePath
+ */
+BOOL dibdrv_StrokePath( PHYSDEV dev )
+{
+    dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+
+    return stroke_and_fill_path( pdev, TRUE, FALSE );
 }

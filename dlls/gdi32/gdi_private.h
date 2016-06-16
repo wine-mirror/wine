@@ -335,6 +335,7 @@ typedef struct
 /* path.c */
 
 extern void free_gdi_path( struct gdi_path *path ) DECLSPEC_HIDDEN;
+extern int get_gdi_flat_path( HDC hdc, POINT **points, BYTE **flags, HRGN *rgn ) DECLSPEC_HIDDEN;
 extern BOOL PATH_SavePath( DC *dst, DC *src ) DECLSPEC_HIDDEN;
 extern BOOL PATH_RestorePath( DC *dst, DC *src ) DECLSPEC_HIDDEN;
 

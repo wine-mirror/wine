@@ -120,6 +120,7 @@ extern BOOL     dibdrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT b
 extern BOOL     dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                                    const RECT *rect, LPCWSTR str, UINT count, const INT *dx ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_FillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern DWORD    dibdrv_GetImage( PHYSDEV dev, BITMAPINFO *info, struct gdi_image_bits *bits,
                                  struct bitblt_coords *src ) DECLSPEC_HIDDEN;
 extern COLORREF dibdrv_GetNearestColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
@@ -150,6 +151,8 @@ extern COLORREF dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HID
 extern COLORREF dibdrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
                                    PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_StrokeAndFillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_StrokePath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern struct opengl_funcs *dibdrv_wine_get_wgl_driver( PHYSDEV dev, UINT version ) DECLSPEC_HIDDEN;
 
 static inline dibdrv_physdev *get_dibdrv_pdev( PHYSDEV dev )

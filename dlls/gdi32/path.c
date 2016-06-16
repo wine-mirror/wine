@@ -273,6 +273,32 @@ static BOOL start_new_stroke( struct path_physdev *physdev )
     return add_log_points( physdev, &pos, 1, PT_MOVETO ) != NULL;
 }
 
+/* convert a (flattened) path to a region */
+static HRGN path_to_region( const struct gdi_path *path, int mode )
+{
+    int i, pos, polygons, *counts;
+    HRGN hrgn;
+
+    if (!path->count) return 0;
+
+    if (!(counts = HeapAlloc( GetProcessHeap(), 0, (path->count / 2) * sizeof(*counts) ))) return 0;
+
+    pos = polygons = 0;
+    assert( path->flags[0] == PT_MOVETO );
+    for (i = 1; i < path->count; i++)
+    {
+        if (path->flags[i] != PT_MOVETO) continue;
+        counts[polygons++] = i - pos;
+        pos = i;
+    }
+    if (i > pos + 1) counts[polygons++] = i - pos;
+
+    assert( polygons <= path->count / 2 );
+    hrgn = CreatePolyPolygonRgn( path->points, counts, polygons, mode );
+    HeapFree( GetProcessHeap(), 0, counts );
+    return hrgn;
+}
+
 /* PATH_CheckCorners
  *
  * Helper function for RoundRect() and Rectangle()
@@ -503,6 +529,37 @@ static BOOL PATH_DoArcPart(struct gdi_path *pPath, FLOAT_POINT corners[],
     }
 
     return TRUE;
+}
+
+/* retrieve a flattened path in device coordinates, and optionally its region */
+/* the DC path is deleted; the returned data must be freed by caller */
+/* helper for stroke_and_fill_path in the DIB driver */
+int get_gdi_flat_path( HDC hdc, POINT **points, BYTE **flags, HRGN *rgn )
+{
+    DC *dc = get_dc_ptr( hdc );
+    int ret = -1;
+
+    if (!dc) return -1;
+
+    if (dc->path)
+    {
+        struct gdi_path *path = PATH_FlattenPath( dc->path );
+
+        free_gdi_path( dc->path );
+        dc->path = NULL;
+        if (path)
+        {
+            ret = path->count;
+            *points = path->points;
+            *flags = path->flags;
+            if (rgn) *rgn = path_to_region( path, GetPolyFillMode( hdc ));
+            HeapFree( GetProcessHeap(), 0, path );
+        }
+    }
+    else SetLastError( ERROR_CAN_NOT_COMPLETE );
+
+    release_dc_ptr( dc );
+    return ret;
 }
 
 
