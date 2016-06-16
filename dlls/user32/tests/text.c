@@ -600,8 +600,7 @@ static void test_DrawTextCalcRect(void)
     ok(textheight >= heightcheck, "Got unexpected textheight %d\n", textheight);
     ok(dtp.iTabLength == 0, "invalid dtp.iTabLength = %i\n",dtp.iTabLength);
     ok(rect.left == rect2.left && rect.right != rect2.right && rect.top == rect2.top && rect.bottom == rect2.bottom,
-        "incorrect rect %d,%d-%d,%d rect2 %d,%d-%d,%d\n",
-        rect.left, rect.top, rect.right, rect.bottom, rect2.left, rect2.top, rect2.right, rect2.bottom );
+       "incorrect rect %s rect2 %s\n", wine_dbgstr_rect(&rect), wine_dbgstr_rect(&rect2));
 
     SetRect( &rect, 0,0, 10, 10);
     memset(&dtp, 0, sizeof(dtp));

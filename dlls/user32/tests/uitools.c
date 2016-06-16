@@ -76,8 +76,8 @@ static void test_SubtractRect(void)
     result = SubtractRect(&rectr, &rect1, &rect2);
     ok(result, "SubtractRect returned FALSE but subtraction should not be empty\n");
     ok(result && rectr.left == 50 && rectr.top == 50 && rectr.right ==150
-        && rectr.bottom == 100, "wrong rect subtraction of SubtractRect "
-        "(dest rect={%d, %d, %d, %d})\n", rectr.left, rectr.top, rectr.right, rectr.bottom);
+       && rectr.bottom == 100, "wrong rect subtraction of SubtractRect (dest rect=%s)\n",
+       wine_dbgstr_rect(&rectr));
 
     /* source rect 2 partially overlaps rect 1 */
     SetRect(&rect1, 2431, 626, 3427, 1608);
@@ -85,8 +85,8 @@ static void test_SubtractRect(void)
     result = SubtractRect(&rectr, &rect1, &rect2);
     ok(result, "SubtractRect returned FALSE but subtraction should not be empty\n");
     ok(result && rectr.left == 2431 && rectr.top == 626 && rectr.right == 2499
-        && rectr.bottom == 1608, "wrong rect subtraction of SubtractRect "
-        "(dest rect={%d, %d, %d, %d})\n", rectr.left, rectr.top, rectr.right, rectr.bottom);
+       && rectr.bottom == 1608, "wrong rect subtraction of SubtractRect (dest rect=%s)\n",
+       wine_dbgstr_rect(&rectr));
 
     /* source rect 2 partially overlaps rect 1 - dest is src rect 2 */
     SetRect(&rect1, 2431, 626, 3427, 1608);
@@ -94,22 +94,22 @@ static void test_SubtractRect(void)
     result = SubtractRect(&rect2, &rect1, &rect2);
     ok(result, "SubtractRect returned FALSE but subtraction should not be empty\n");
     ok(result && rectr.left == 2431 && rectr.top == 626 && rectr.right == 2499
-        && rectr.bottom == 1608, "wrong rect subtraction of SubtractRect "
-        "(dest rect={%d, %d, %d, %d})\n", rectr.left, rectr.top, rectr.right, rectr.bottom);
+       && rectr.bottom == 1608, "wrong rect subtraction of SubtractRect (dest rect=%s)\n",
+       wine_dbgstr_rect(&rectr));
 
     /* source rect 2 completely overlaps rect 1 */
     SetRect(&rect1, 250, 250, 400, 500);
     SetRect(&rect2, 50, 50, 1500, 1000);
     result = SubtractRect(&rectr, &rect1, &rect2);
-    ok(!result, "SubtractRect returned TRUE but subtraction should be empty "
-        "(dest rect={%d, %d, %d, %d})\n", rectr.left, rectr.top, rectr.right, rectr.bottom);
+    ok(!result, "SubtractRect returned TRUE but subtraction should be empty (dest rect=%s)\n",
+       wine_dbgstr_rect(&rectr));
 
     /* source rect 2 completely overlaps rect 1 - dest is src rect 2 */
     SetRect(&rect1, 250, 250, 400, 500);
     SetRect(&rect2, 50, 50, 1500, 1000);
     result = SubtractRect(&rect2, &rect1, &rect2);
-    ok(!result, "SubtractRect returned TRUE but subtraction should be empty "
-        "(dest rect={%d, %d, %d, %d})\n", rect2.left, rect2.top, rect2.right, rect2.bottom);
+    ok(!result, "SubtractRect returned TRUE but subtraction should be empty (dest rect=%s)\n",
+       wine_dbgstr_rect(&rect2));
 }
 
 static void test_EqualRect(void)
