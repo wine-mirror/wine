@@ -279,7 +279,7 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
     if (view_format->id == view_format->typeless_id)
     {
         WARN("Trying to create view for typeless format %s.\n", debug_d3dformat(view_format->id));
-        return E_FAIL;
+        return E_INVALIDARG;
     }
 
     view->refcount = 1;
@@ -302,7 +302,7 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
                 || desc->u.texture.level_count > texture->level_count - desc->u.texture.level_idx
                 || desc->u.texture.layer_idx >= texture->layer_count
                 || desc->u.texture.layer_count > texture->layer_count - desc->u.texture.layer_idx)
-            return E_FAIL;
+            return E_INVALIDARG;
 
         view->target = texture->target;
         for (i = 0; i < ARRAY_SIZE(view_types); ++i)
