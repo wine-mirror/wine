@@ -34,6 +34,7 @@ struct ScriptControl {
     IPersistStreamInit IPersistStreamInit_iface;
     IOleObject IOleObject_iface;
     IOleControl IOleControl_iface;
+    IConnectionPointContainer IConnectionPointContainer_iface;
     LONG ref;
     IOleClientSite *site;
     SIZEL extent;
@@ -140,6 +141,11 @@ static inline ScriptControl *impl_from_IOleControl(IOleControl *iface)
     return CONTAINING_RECORD(iface, ScriptControl, IOleControl_iface);
 }
 
+static inline ScriptControl *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptControl, IConnectionPointContainer_iface);
+}
+
 static HRESULT WINAPI ScriptControl_QueryInterface(IScriptControl *iface, REFIID riid, void **ppv)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
@@ -165,6 +171,9 @@ static HRESULT WINAPI ScriptControl_QueryInterface(IScriptControl *iface, REFIID
     }else if(IsEqualGUID(&IID_IOleControl, riid)) {
         TRACE("(%p)->(IID_IOleControl %p)\n", This, ppv);
         *ppv = &This->IOleControl_iface;
+    }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
+        TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
+        *ppv = &This->IConnectionPointContainer_iface;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -856,6 +865,50 @@ static const IOleControlVtbl OleControlVtbl = {
     OleControl_FreezeEvents
 };
 
+static HRESULT WINAPI ConnectionPointContainer_QueryInterface(IConnectionPointContainer *iface, REFIID riid, void **obj)
+{
+    ScriptControl *This = impl_from_IConnectionPointContainer(iface);
+    return IScriptControl_QueryInterface(&This->IScriptControl_iface, riid, obj);
+}
+
+static ULONG WINAPI ConnectionPointContainer_AddRef(IConnectionPointContainer *iface)
+{
+    ScriptControl *This = impl_from_IConnectionPointContainer(iface);
+    return IScriptControl_AddRef(&This->IScriptControl_iface);
+}
+
+static ULONG WINAPI ConnectionPointContainer_Release(IConnectionPointContainer *iface)
+{
+    ScriptControl *This = impl_from_IConnectionPointContainer(iface);
+    return IScriptControl_Release(&This->IScriptControl_iface);
+}
+
+static HRESULT WINAPI ConnectionPointContainer_EnumConnectionPoints(IConnectionPointContainer *iface, IEnumConnectionPoints **enum_points)
+{
+    ScriptControl *This = impl_from_IConnectionPointContainer(iface);
+
+    FIXME("(%p)->(%p)\n", This, enum_points);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPointContainer *iface, REFIID riid, IConnectionPoint **cp)
+{
+    ScriptControl *This = impl_from_IConnectionPointContainer(iface);
+
+    FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), cp);
+
+    return E_NOTIMPL;
+}
+
+static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl = {
+    ConnectionPointContainer_QueryInterface,
+    ConnectionPointContainer_AddRef,
+    ConnectionPointContainer_Release,
+    ConnectionPointContainer_EnumConnectionPoints,
+    ConnectionPointContainer_FindConnectionPoint
+};
+
 static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
 {
     ScriptControl *script_control;
@@ -873,6 +926,7 @@ static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknow
     script_control->IPersistStreamInit_iface.lpVtbl = &PersistStreamInitVtbl;
     script_control->IOleObject_iface.lpVtbl = &OleObjectVtbl;
     script_control->IOleControl_iface.lpVtbl = &OleControlVtbl;
+    script_control->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
     script_control->ref = 1;
     script_control->site = NULL;
 

@@ -93,6 +93,15 @@ DEFINE_EXPECT(InitNew);
 DEFINE_EXPECT(Close);
 DEFINE_EXPECT(SetScriptSite);
 
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
+static void _expect_ref(IUnknown* obj, ULONG ref, int line)
+{
+    ULONG rc;
+    IUnknown_AddRef(obj);
+    rc = IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
+}
+
 static IActiveScriptSite *site;
 static SCRIPTSTATE state;
 
@@ -769,7 +778,26 @@ if (hr == S_OK)
     }
     else
         skip("Could not register TestScript engine\n");
+}
 
+static void test_connectionpoints(void)
+{
+    IConnectionPointContainer *container;
+    IScriptControl *sc;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IScriptControl, (void**)&sc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    EXPECT_REF(sc, 1);
+    hr = IScriptControl_QueryInterface(sc, &IID_IConnectionPointContainer, (void**)&container);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(sc, 2);
+    EXPECT_REF(container, 2);
+
+    IConnectionPointContainer_Release(container);
+    IScriptControl_Release(sc);
 }
 
 START_TEST(msscript)
@@ -791,6 +819,7 @@ START_TEST(msscript)
     test_persiststreaminit();
     test_olecontrol();
     test_Language();
+    test_connectionpoints();
 
     CoUninitialize();
 }
