@@ -146,6 +146,42 @@ static void test_EqualRect(void)
     ok(ret, "got %d\n", ret);
 }
 
+static void test_IsRectEmpty(void)
+{
+    BOOL ret;
+    unsigned int i;
+    static const struct {
+        RECT rect;
+        BOOL ret;
+    } rtest[] = {
+        {{0, 0, 0, 0}, TRUE},
+        {{127, 131, 127, 131}, TRUE},
+        {{MAXLONG, MAXLONG, MAXLONG, MAXLONG}, TRUE},
+        {{-1, -1, -1, -1}, TRUE},
+        {{-2011, -2017, -2011, -2017}, TRUE},
+        {{MINLONG, MINLONG, MINLONG, MINLONG}, TRUE},
+        /* Only width or height are 0 */
+        {{31, 37, 31, 41}, TRUE},
+        {{881, 883, 887, 883}, TRUE},
+        {{-1721, 1723, -1721, 7213}, TRUE},
+        /* Negative width and/or height */
+        {{11, 13, 5, 7}, TRUE},
+        {{-11, -13, -19, -23}, TRUE},
+        {{11, 13, -17, 19}, TRUE},
+        {{11, 13, 17, 11}, TRUE},
+        /* Non emty rects */
+        {{101, 103, 107, 109}, FALSE},
+        {{1, -9, 7, 3}, FALSE},
+        {{-109, -107, -103, -101}, FALSE},
+    };
+
+    for (i = 0; i < sizeof(rtest)/sizeof(rtest[0]); i++) {
+        ret = IsRectEmpty(&rtest[i].rect);
+        ok(ret == rtest[i].ret, "Test %d: IsRectEmpty returned %s for %s\n", i,
+           ret ? "TRUE" : "FALSE", wine_dbgstr_rect(&rtest[i].rect));
+    }
+}
+
 static void test_SetRect(void)
 {
     RECT rect;
@@ -170,5 +206,6 @@ START_TEST(uitools)
     test_FillRect();
     test_SubtractRect();
     test_EqualRect();
+    test_IsRectEmpty();
     test_SetRect();
 }
