@@ -42,7 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 /* Not present in gnutls version < 2.9.10. */
-extern int gnutls_cipher_get_block_size(gnutls_cipher_algorithm_t algorithm);
+static int (*pgnutls_cipher_get_block_size)(gnutls_cipher_algorithm_t algorithm);
 
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
@@ -52,7 +52,6 @@ MAKE_FUNCPTR(gnutls_certificate_allocate_credentials);
 MAKE_FUNCPTR(gnutls_certificate_free_credentials);
 MAKE_FUNCPTR(gnutls_certificate_get_peers);
 MAKE_FUNCPTR(gnutls_cipher_get);
-MAKE_FUNCPTR(gnutls_cipher_get_block_size);
 MAKE_FUNCPTR(gnutls_cipher_get_key_size);
 MAKE_FUNCPTR(gnutls_credentials_set);
 MAKE_FUNCPTR(gnutls_deinit);
