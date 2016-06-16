@@ -789,17 +789,48 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
     /* resolve run fonts */
     LIST_FOR_EACH_ENTRY(r, &layout->runs, struct layout_run, entry) {
         struct regular_layout_run *run = &r->u.regular;
+        IDWriteFont *font;
         UINT32 length;
 
         if (r->kind == LAYOUT_RUN_INLINE)
             continue;
 
         range = get_layout_range_by_pos(layout, run->descr.textPosition);
+
+        if (run->sa.shapes == DWRITE_SCRIPT_SHAPES_NO_VISUAL) {
+            IDWriteFontCollection *collection;
+
+            if (range->collection) {
+                collection = range->collection;
+                IDWriteFontCollection_AddRef(collection);
+            }
+            else
+                IDWriteFactory_GetSystemFontCollection((IDWriteFactory*)layout->factory, &collection, FALSE);
+
+            hr = create_matching_font(range->collection, range->fontfamily, range->weight,
+                range->style, range->stretch, &font);
+
+            IDWriteFontCollection_Release(collection);
+
+            if (FAILED(hr)) {
+                WARN("%s: failed to create a font for non visual run, %s, collection %p\n", debugstr_rundescr(&run->descr),
+                    debugstr_w(range->fontfamily), range->collection);
+                return hr;
+            }
+
+            hr = IDWriteFont_CreateFontFace(font, &run->run.fontFace);
+            IDWriteFont_Release(font);
+            if (FAILED(hr))
+                return hr;
+
+            run->run.fontEmSize = range->fontsize;
+            continue;
+        }
+
         length = run->descr.stringLength;
 
         while (length) {
             UINT32 mapped_length;
-            IDWriteFont *font;
             FLOAT scale;
 
             run = &r->u.regular;
