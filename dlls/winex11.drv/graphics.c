@@ -1227,6 +1227,107 @@ BOOL X11DRV_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWO
     return TRUE;
 }
 
+/* helper for path stroking and filling functions */
+static BOOL x11drv_stroke_and_fill_path( PHYSDEV dev, BOOL stroke, BOOL fill )
+{
+    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+    POINT *points;
+    BYTE *flags;
+    BOOL ret = FALSE;
+    XPoint *xpoints;
+    int i, j, size;
+
+    FlattenPath( dev->hdc );
+    if ((size = GetPath( dev->hdc, NULL, NULL, 0 )) == -1) return FALSE;
+    if (!size)
+    {
+        AbortPath( dev->hdc );
+        return TRUE;
+    }
+    xpoints = HeapAlloc( GetProcessHeap(), 0, (size + 1) * sizeof(*xpoints) );
+    points = HeapAlloc( GetProcessHeap(), 0, size * sizeof(*points) );
+    flags = HeapAlloc( GetProcessHeap(), 0, size * sizeof(*flags) );
+    if (!points || !flags || !xpoints) goto done;
+    if (GetPath( dev->hdc, points, flags, size ) == -1) goto done;
+    LPtoDP( dev->hdc, points, size );
+
+    if (fill && X11DRV_SetupGCForBrush( physDev ))
+    {
+        XRectangle *rect;
+        HRGN hrgn = PathToRegion( dev->hdc );
+        RGNDATA *data = X11DRV_GetRegionData( hrgn, 0 );
+
+        DeleteObject( hrgn );
+        if (!data) goto done;
+        rect = (XRectangle *)data->Buffer;
+        for (i = 0; i < data->rdh.nCount; i++)
+        {
+            rect[i].x += physDev->dc_rect.left;
+            rect[i].y += physDev->dc_rect.top;
+        }
+
+        XFillRectangles( gdi_display, physDev->drawable, physDev->gc, rect, data->rdh.nCount );
+        HeapFree( GetProcessHeap(), 0, data );
+    }
+
+    if (stroke && X11DRV_SetupGCForPen ( physDev ))
+    {
+        for (i = j = 0; i < size; i++, j++)
+        {
+            if (flags[i] == PT_MOVETO)
+            {
+                if (j > 1)
+                {
+                    if (fill || (flags[i - 1] & PT_CLOSEFIGURE)) xpoints[j++] = xpoints[0];
+                    XDrawLines( gdi_display, physDev->drawable, physDev->gc, xpoints, j, CoordModeOrigin );
+                }
+                j = 0;
+            }
+            xpoints[j].x = physDev->dc_rect.left + points[i].x;
+            xpoints[j].y = physDev->dc_rect.top + points[i].y;
+        }
+        if (j > 1)
+        {
+            if (fill || (flags[i - 1] & PT_CLOSEFIGURE)) xpoints[j++] = xpoints[0];
+            XDrawLines( gdi_display, physDev->drawable, physDev->gc, xpoints, j, CoordModeOrigin );
+        }
+    }
+
+    add_pen_device_bounds( physDev, points, size );
+    AbortPath( dev->hdc );
+    ret = TRUE;
+
+done:
+    HeapFree( GetProcessHeap(), 0, xpoints );
+    HeapFree( GetProcessHeap(), 0, points );
+    HeapFree( GetProcessHeap(), 0, flags );
+    return ret;
+}
+
+/**********************************************************************
+ *          X11DRV_FillPath
+ */
+BOOL X11DRV_FillPath( PHYSDEV dev )
+{
+    return x11drv_stroke_and_fill_path( dev, FALSE, TRUE );
+}
+
+/**********************************************************************
+ *          X11DRV_StrokeAndFillPath
+ */
+BOOL X11DRV_StrokeAndFillPath( PHYSDEV dev )
+{
+    return x11drv_stroke_and_fill_path( dev, TRUE, TRUE );
+}
+
+/**********************************************************************
+ *          X11DRV_StrokePath
+ */
+BOOL X11DRV_StrokePath( PHYSDEV dev )
+{
+    return x11drv_stroke_and_fill_path( dev, TRUE, FALSE );
+}
+
 
 /**********************************************************************
  *          X11DRV_InternalFloodFill
