@@ -388,61 +388,6 @@ static struct gdi_path *PATH_FlattenPath(const struct gdi_path *pPath)
     return new_path;
 }
 
-/* PATH_PathToRegion
- *
- * Creates a region from the specified path using the specified polygon
- * filling mode. The path is left unchanged.
- */
-static HRGN PATH_PathToRegion(const struct gdi_path *pPath, INT nPolyFillMode)
-{
-    struct gdi_path *rgn_path;
-    int    numStrokes, iStroke, i;
-    INT  *pNumPointsInStroke;
-    HRGN hrgn;
-
-    if (!pPath->count) return 0;
-
-    if (!(rgn_path = PATH_FlattenPath( pPath ))) return 0;
-
-    /* First pass: Find out how many strokes there are in the path */
-    /* FIXME: We could eliminate this with some bookkeeping in GdiPath */
-    numStrokes=0;
-    for(i=0; i<rgn_path->count; i++)
-        if((rgn_path->flags[i] & ~PT_CLOSEFIGURE) == PT_MOVETO)
-            numStrokes++;
-
-    /* Allocate memory for number-of-points-in-stroke array */
-    pNumPointsInStroke=HeapAlloc( GetProcessHeap(), 0, sizeof(int) * numStrokes );
-    if(!pNumPointsInStroke)
-    {
-        free_gdi_path( rgn_path );
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return 0;
-    }
-
-    /* Second pass: remember number of points in each polygon */
-    iStroke=-1;  /* Will get incremented to 0 at beginning of first stroke */
-    for(i=0; i<rgn_path->count; i++)
-    {
-        /* Is this the beginning of a new stroke? */
-        if((rgn_path->flags[i] & ~PT_CLOSEFIGURE) == PT_MOVETO)
-        {
-            iStroke++;
-            pNumPointsInStroke[iStroke]=0;
-        }
-
-        pNumPointsInStroke[iStroke]++;
-    }
-
-    /* Create a region from the strokes */
-    hrgn=CreatePolyPolygonRgn(rgn_path->points, pNumPointsInStroke,
-                              numStrokes, nPolyFillMode);
-
-    HeapFree( GetProcessHeap(), 0, pNumPointsInStroke );
-    free_gdi_path( rgn_path );
-    return hrgn;
-}
-
 /* PATH_ScaleNormalizedPoint
  *
  * Scales a normalized point (x, y) with respect to the box whose corners are
@@ -696,84 +641,27 @@ INT WINAPI GetPath(HDC hdc, LPPOINT pPoints, LPBYTE pTypes, INT nSize)
  */
 HRGN WINAPI PathToRegion(HDC hdc)
 {
-   HRGN  hrgnRval = 0;
-   DC *dc = get_dc_ptr( hdc );
+    HRGN ret = 0;
+    DC *dc = get_dc_ptr( hdc );
 
-   if(!dc) return 0;
+    if (!dc) return 0;
 
-   if (!dc->path) SetLastError(ERROR_CAN_NOT_COMPLETE);
-   else
-   {
-       hrgnRval = PATH_PathToRegion(dc->path, GetPolyFillMode(hdc));
-       free_gdi_path( dc->path );
-       dc->path = NULL;
-   }
-   release_dc_ptr( dc );
-   return hrgnRval;
-}
+    if (dc->path)
+    {
+        struct gdi_path *path = PATH_FlattenPath( dc->path );
 
-static BOOL PATH_FillPath( HDC hdc, const struct gdi_path *pPath )
-{
-   INT   mapMode, graphicsMode;
-   SIZE  ptViewportExt, ptWindowExt;
-   POINT ptViewportOrg, ptWindowOrg;
-   XFORM xform;
-   HRGN  hrgn;
+        free_gdi_path( dc->path );
+        dc->path = NULL;
+        if (path)
+        {
+            ret = path_to_region( path, GetPolyFillMode( hdc ));
+            free_gdi_path( path );
+        }
+    }
+    else SetLastError( ERROR_CAN_NOT_COMPLETE );
 
-   /* Construct a region from the path and fill it */
-   if (!pPath->count) return TRUE;
-   if ((hrgn = PATH_PathToRegion(pPath, GetPolyFillMode(hdc))))
-   {
-      /* Since PaintRgn interprets the region as being in logical coordinates
-       * but the points we store for the path are already in device
-       * coordinates, we have to set the mapping mode to MM_TEXT temporarily.
-       * Using SaveDC to save information about the mapping mode / world
-       * transform would be easier but would require more overhead, especially
-       * now that SaveDC saves the current path.
-       */
-
-      /* Save the information about the old mapping mode */
-      mapMode=GetMapMode(hdc);
-      GetViewportExtEx(hdc, &ptViewportExt);
-      GetViewportOrgEx(hdc, &ptViewportOrg);
-      GetWindowExtEx(hdc, &ptWindowExt);
-      GetWindowOrgEx(hdc, &ptWindowOrg);
-
-      /* Save world transform
-       * NB: The Windows documentation on world transforms would lead one to
-       * believe that this has to be done only in GM_ADVANCED; however, my
-       * tests show that resetting the graphics mode to GM_COMPATIBLE does
-       * not reset the world transform.
-       */
-      GetWorldTransform(hdc, &xform);
-
-      /* Set MM_TEXT */
-      SetMapMode(hdc, MM_TEXT);
-      SetViewportOrgEx(hdc, 0, 0, NULL);
-      SetWindowOrgEx(hdc, 0, 0, NULL);
-      graphicsMode=GetGraphicsMode(hdc);
-      SetGraphicsMode(hdc, GM_ADVANCED);
-      ModifyWorldTransform(hdc, &xform, MWT_IDENTITY);
-      SetGraphicsMode(hdc, graphicsMode);
-
-      /* Paint the region */
-      PaintRgn(hdc, hrgn);
-      DeleteObject(hrgn);
-      /* Restore the old mapping mode */
-      SetMapMode(hdc, mapMode);
-      SetViewportExtEx(hdc, ptViewportExt.cx, ptViewportExt.cy, NULL);
-      SetViewportOrgEx(hdc, ptViewportOrg.x, ptViewportOrg.y, NULL);
-      SetWindowExtEx(hdc, ptWindowExt.cx, ptWindowExt.cy, NULL);
-      SetWindowOrgEx(hdc, ptWindowOrg.x, ptWindowOrg.y, NULL);
-
-      /* Go to GM_ADVANCED temporarily to restore the world transform */
-      graphicsMode=GetGraphicsMode(hdc);
-      SetGraphicsMode(hdc, GM_ADVANCED);
-      SetWorldTransform(hdc, &xform);
-      SetGraphicsMode(hdc, graphicsMode);
-      return TRUE;
-   }
-   return FALSE;
+    release_dc_ptr( dc );
+    return ret;
 }
 
 
@@ -1640,134 +1528,6 @@ BOOL WINAPI FlattenPath(HDC hdc)
 }
 
 
-static BOOL PATH_StrokePath( HDC hdc, const struct gdi_path *pPath )
-{
-    INT i, nLinePts, nAlloc;
-    POINT *pLinePts;
-    POINT ptViewportOrg, ptWindowOrg;
-    SIZE szViewportExt, szWindowExt;
-    DWORD mapMode, graphicsMode;
-    XFORM xform;
-    BOOL ret = TRUE;
-
-    /* Save the mapping mode info */
-    mapMode=GetMapMode(hdc);
-    GetViewportExtEx(hdc, &szViewportExt);
-    GetViewportOrgEx(hdc, &ptViewportOrg);
-    GetWindowExtEx(hdc, &szWindowExt);
-    GetWindowOrgEx(hdc, &ptWindowOrg);
-    GetWorldTransform(hdc, &xform);
-
-    /* Set MM_TEXT */
-    SetMapMode(hdc, MM_TEXT);
-    SetViewportOrgEx(hdc, 0, 0, NULL);
-    SetWindowOrgEx(hdc, 0, 0, NULL);
-    graphicsMode=GetGraphicsMode(hdc);
-    SetGraphicsMode(hdc, GM_ADVANCED);
-    ModifyWorldTransform(hdc, &xform, MWT_IDENTITY);
-    SetGraphicsMode(hdc, graphicsMode);
-
-    /* Allocate enough memory for the worst case without beziers (one PT_MOVETO
-     * and the rest PT_LINETO with PT_CLOSEFIGURE at the end) plus some buffer 
-     * space in case we get one to keep the number of reallocations small. */
-    nAlloc = pPath->count + 1 + 300;
-    pLinePts = HeapAlloc(GetProcessHeap(), 0, nAlloc * sizeof(POINT));
-    nLinePts = 0;
-    
-    for(i = 0; i < pPath->count; i++) {
-        if((i == 0 || (pPath->flags[i-1] & PT_CLOSEFIGURE)) &&
-	   (pPath->flags[i] != PT_MOVETO)) {
-	    ERR("Expected PT_MOVETO %s, got path flag %d\n", 
-	        i == 0 ? "as first point" : "after PT_CLOSEFIGURE",
-		pPath->flags[i]);
-	    ret = FALSE;
-	    goto end;
-	}
-        switch(pPath->flags[i]) {
-	case PT_MOVETO:
-            TRACE("Got PT_MOVETO (%d, %d)\n",
-		  pPath->points[i].x, pPath->points[i].y);
-	    if(nLinePts >= 2)
-	        Polyline(hdc, pLinePts, nLinePts);
-	    nLinePts = 0;
-	    pLinePts[nLinePts++] = pPath->points[i];
-	    break;
-	case PT_LINETO:
-	case (PT_LINETO | PT_CLOSEFIGURE):
-            TRACE("Got PT_LINETO (%d, %d)\n",
-		  pPath->points[i].x, pPath->points[i].y);
-	    pLinePts[nLinePts++] = pPath->points[i];
-	    break;
-	case PT_BEZIERTO:
-	    TRACE("Got PT_BEZIERTO\n");
-	    if(pPath->flags[i+1] != PT_BEZIERTO ||
-	       (pPath->flags[i+2] & ~PT_CLOSEFIGURE) != PT_BEZIERTO) {
-	        ERR("Path didn't contain 3 successive PT_BEZIERTOs\n");
-		ret = FALSE;
-		goto end;
-	    } else {
-	        INT nBzrPts, nMinAlloc;
-	        POINT *pBzrPts = GDI_Bezier(&pPath->points[i-1], 4, &nBzrPts);
-		/* Make sure we have allocated enough memory for the lines of 
-		 * this bezier and the rest of the path, assuming we won't get
-		 * another one (since we won't reallocate again then). */
-		nMinAlloc = nLinePts + (pPath->count - i) + nBzrPts;
-		if(nAlloc < nMinAlloc)
-		{
-		    nAlloc = nMinAlloc * 2;
-		    pLinePts = HeapReAlloc(GetProcessHeap(), 0, pLinePts,
-		                           nAlloc * sizeof(POINT));
-		}
-		memcpy(&pLinePts[nLinePts], &pBzrPts[1],
-		       (nBzrPts - 1) * sizeof(POINT));
-		nLinePts += nBzrPts - 1;
-		HeapFree(GetProcessHeap(), 0, pBzrPts);
-		i += 2;
-	    }
-	    break;
-	default:
-	    ERR("Got path flag %d\n", pPath->flags[i]);
-	    ret = FALSE;
-	    goto end;
-	}
-	if(pPath->flags[i] & PT_CLOSEFIGURE)
-	    pLinePts[nLinePts++] = pLinePts[0];
-    }
-    if(nLinePts >= 2)
-        Polyline(hdc, pLinePts, nLinePts);
-
- end:
-    HeapFree(GetProcessHeap(), 0, pLinePts);
-
-    /* Restore the old mapping mode */
-    SetMapMode(hdc, mapMode);
-    SetWindowExtEx(hdc, szWindowExt.cx, szWindowExt.cy, NULL);
-    SetWindowOrgEx(hdc, ptWindowOrg.x, ptWindowOrg.y, NULL);
-    SetViewportExtEx(hdc, szViewportExt.cx, szViewportExt.cy, NULL);
-    SetViewportOrgEx(hdc, ptViewportOrg.x, ptViewportOrg.y, NULL);
-
-    /* Go to GM_ADVANCED temporarily to restore the world transform */
-    graphicsMode=GetGraphicsMode(hdc);
-    SetGraphicsMode(hdc, GM_ADVANCED);
-    SetWorldTransform(hdc, &xform);
-    SetGraphicsMode(hdc, graphicsMode);
-
-    /* If we've moved the current point then get its new position
-       which will be in device (MM_TEXT) co-ords, convert it to
-       logical co-ords and re-set it.  This basically updates
-       dc->CurPosX|Y so that their values are in the correct mapping
-       mode.
-    */
-    if(i > 0) {
-        POINT pt;
-        GetCurrentPositionEx(hdc, &pt);
-        DPtoLP(hdc, &pt, 1);
-        MoveToEx(hdc, pt.x, pt.y, NULL);
-    }
-
-    return ret;
-}
-
 #define round(x) ((int)((x)>0?(x)+0.5:(x)-0.5))
 
 static struct gdi_path *PATH_WidenPath(DC *dc)
@@ -2175,48 +1935,22 @@ BOOL nulldrv_SelectClipPath( PHYSDEV dev, INT mode )
 
 BOOL nulldrv_FillPath( PHYSDEV dev )
 {
-    DC *dc = get_nulldrv_dc( dev );
-
-    if (!dc->path)
-    {
-        SetLastError( ERROR_CAN_NOT_COMPLETE );
-        return FALSE;
-    }
-    if (!PATH_FillPath( dev->hdc, dc->path )) return FALSE;
-    /* FIXME: Should the path be emptied even if conversion failed? */
-    free_gdi_path( dc->path );
-    dc->path = NULL;
+    if (GetPath( dev->hdc, NULL, NULL, 0 ) == -1) return FALSE;
+    AbortPath( dev->hdc );
     return TRUE;
 }
 
 BOOL nulldrv_StrokeAndFillPath( PHYSDEV dev )
 {
-    DC *dc = get_nulldrv_dc( dev );
-
-    if (!dc->path)
-    {
-        SetLastError( ERROR_CAN_NOT_COMPLETE );
-        return FALSE;
-    }
-    if (!PATH_FillPath( dev->hdc, dc->path )) return FALSE;
-    if (!PATH_StrokePath( dev->hdc, dc->path )) return FALSE;
-    free_gdi_path( dc->path );
-    dc->path = NULL;
+    if (GetPath( dev->hdc, NULL, NULL, 0 ) == -1) return FALSE;
+    AbortPath( dev->hdc );
     return TRUE;
 }
 
 BOOL nulldrv_StrokePath( PHYSDEV dev )
 {
-    DC *dc = get_nulldrv_dc( dev );
-
-    if (!dc->path)
-    {
-        SetLastError( ERROR_CAN_NOT_COMPLETE );
-        return FALSE;
-    }
-    if (!PATH_StrokePath( dev->hdc, dc->path )) return FALSE;
-    free_gdi_path( dc->path );
-    dc->path = NULL;
+    if (GetPath( dev->hdc, NULL, NULL, 0 ) == -1) return FALSE;
+    AbortPath( dev->hdc );
     return TRUE;
 }
 
