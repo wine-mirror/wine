@@ -298,8 +298,10 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
         struct wined3d_texture *texture = texture_from_resource(resource);
         unsigned int i;
 
-        if (desc->u.texture.level_idx >= texture->level_count
+        if (!desc->u.texture.level_count
+                || desc->u.texture.level_idx >= texture->level_count
                 || desc->u.texture.level_count > texture->level_count - desc->u.texture.level_idx
+                || !desc->u.texture.layer_count
                 || desc->u.texture.layer_idx >= texture->layer_count
                 || desc->u.texture.layer_count > texture->layer_count - desc->u.texture.layer_idx)
             return E_INVALIDARG;
