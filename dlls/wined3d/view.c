@@ -120,7 +120,7 @@ static HRESULT wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *
                 || desc->u.texture.layer_idx >= depth_or_layer_count
                 || !desc->u.texture.layer_count
                 || desc->u.texture.layer_count > depth_or_layer_count - desc->u.texture.layer_idx)
-            return WINED3DERR_INVALIDCALL;
+            return E_INVALIDARG;
 
         view->sub_resource_idx = desc->u.texture.level_idx;
         if (resource->type != WINED3D_RTYPE_TEXTURE_3D)
