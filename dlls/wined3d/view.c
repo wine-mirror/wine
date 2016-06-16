@@ -98,6 +98,13 @@ static HRESULT wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *
 
     view->format = wined3d_get_format(gl_info, desc->format_id);
     view->format_flags = view->format->flags[resource->gl_type];
+
+    if (wined3d_format_is_typeless(view->format))
+    {
+        WARN("Trying to create view for typeless format %s.\n", debug_d3dformat(view->format->id));
+        return E_INVALIDARG;
+    }
+
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
         view->sub_resource_idx = 0;
@@ -277,7 +284,7 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
     const struct wined3d_format *view_format;
 
     view_format = wined3d_get_format(gl_info, desc->format_id);
-    if (view_format->id == view_format->typeless_id)
+    if (wined3d_format_is_typeless(view_format))
     {
         WARN("Trying to create view for typeless format %s.\n", debug_d3dformat(view_format->id));
         return E_INVALIDARG;

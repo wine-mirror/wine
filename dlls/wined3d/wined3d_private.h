@@ -3574,6 +3574,11 @@ void wined3d_format_get_float_color_key(const struct wined3d_format *format,
 const struct wined3d_color_key_conversion * wined3d_format_get_color_key_conversion(
         const struct wined3d_texture *texture, BOOL need_alpha_ck) DECLSPEC_HIDDEN;
 
+static inline BOOL wined3d_format_is_typeless(const struct wined3d_format *format)
+{
+    return format->id == format->typeless_id && format->id != WINED3DFMT_UNKNOWN;
+}
+
 static inline void *wined3d_calloc(SIZE_T count, SIZE_T size)
 {
     if (count > ~(SIZE_T)0 / size)
