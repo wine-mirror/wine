@@ -49,10 +49,6 @@ LCID MSVCRT___lc_handle[MSVCRT_LC_MAX - MSVCRT_LC_MIN + 1] = { 0 };
 int MSVCRT___mb_cur_max = 1;
 static unsigned char charmax = CHAR_MAX;
 
-/* MT */
-#define LOCK_LOCALE   _mlock(_SETLOCALE_LOCK);
-#define UNLOCK_LOCALE _munlock(_SETLOCALE_LOCK);
-
 #define MSVCRT_LEADBYTE  0x8000
 #define MSVCRT_C1_DEFINED 0x200
 
@@ -1596,7 +1592,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
  */
 void CDECL _lock_locales(void)
 {
-    LOCK_LOCALE
+    _mlock(_SETLOCALE_LOCK);
 }
 
 /*********************************************************************
@@ -1604,7 +1600,7 @@ void CDECL _lock_locales(void)
  */
 void CDECL _unlock_locales(void)
 {
-    UNLOCK_LOCALE
+    _munlock(_SETLOCALE_LOCK);
 }
 
 /*********************************************************************
@@ -1661,7 +1657,7 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
         return NULL;
     }
 
-    LOCK_LOCALE;
+    _lock_locales();
 
     if(locinfo->lc_handle[MSVCRT_LC_COLLATE]!=newlocinfo->lc_handle[MSVCRT_LC_COLLATE]
             || locinfo->lc_id[MSVCRT_LC_COLLATE].wCodePage!=newlocinfo->lc_id[MSVCRT_LC_COLLATE].wCodePage) {
@@ -1816,7 +1812,7 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
     }
 
     free_locinfo(newlocinfo);
-    UNLOCK_LOCALE;
+    _unlock_locales();
 
     if(locinfo == MSVCRT_locale->locinfo) {
         int i;
@@ -1858,14 +1854,14 @@ MSVCRT_wchar_t* CDECL MSVCRT__wsetlocale(int category, const MSVCRT_wchar_t* wlo
         MSVCRT_wcstombs(locale, wlocale, len);
     }
 
-    LOCK_LOCALE;
+    _lock_locales();
     ret = MSVCRT_setlocale(category, locale);
     MSVCRT_free(locale);
 
     if(ret && MSVCRT_mbstowcs(current_lc_all, ret, MAX_LOCALE_LENGTH)==-1)
         ret = NULL;
 
-    UNLOCK_LOCALE;
+    _unlock_locales();
     return ret ? current_lc_all : NULL;
 }
 
@@ -1921,9 +1917,9 @@ BOOL msvcrt_init_locale(void)
 {
     int i;
 
-    LOCK_LOCALE;
+    _lock_locales();
     MSVCRT_locale = MSVCRT__create_locale(0, "C");
-    UNLOCK_LOCALE;
+    _unlock_locales();
     if(!MSVCRT_locale)
         return FALSE;
 
