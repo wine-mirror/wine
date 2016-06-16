@@ -89,6 +89,9 @@ extern "C" {
 HRESULT WINAPI D3DX11CreateTextureFromMemory(ID3D11Device *device, const void *src_data, SIZE_T src_data_size,
         D3DX11_IMAGE_LOAD_INFO *loadinfo, ID3DX11ThreadPump *pump, ID3D11Resource **texture, HRESULT *hresult);
 
+HRESULT WINAPI D3DX11GetImageInfoFromMemory(const void *src_data, SIZE_T src_data_size, ID3DX11ThreadPump *pump,
+        D3DX11_IMAGE_INFO *img_info, HRESULT *hresult);
+
 #ifdef __cplusplus
 }
 #endif

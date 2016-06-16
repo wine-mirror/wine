@@ -26,7 +26,14 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "objbase.h"
+
 #include "d3dx11.h"
+#include "d3dx11core.h"
+#include "d3dx11tex.h"
+
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
 {
@@ -52,4 +59,13 @@ BOOL WINAPI D3DX11CheckVersion(UINT d3dsdkversion, UINT d3dxsdkversion)
         return TRUE;
 
     return FALSE;
+}
+
+HRESULT WINAPI D3DX11GetImageInfoFromMemory(const void *src_data, SIZE_T src_data_size, ID3DX11ThreadPump *pump,
+        D3DX11_IMAGE_INFO *img_info, HRESULT *hresult)
+{
+    FIXME("src_data %p, src_data_size %lu, pump %p, img_info %p, hresult %p stub!\n",
+            src_data, src_data_size, pump, img_info, hresult);
+
+    return E_NOTIMPL;
 }

@@ -29,7 +29,7 @@
 @ stub D3DX11FilterTexture
 @ stub D3DX11GetImageInfoFromFileA
 @ stub D3DX11GetImageInfoFromFileW
-@ stub D3DX11GetImageInfoFromMemory
+@ stdcall D3DX11GetImageInfoFromMemory(ptr long ptr ptr ptr) d3dx11_43.D3DX11GetImageInfoFromMemory
 @ stub D3DX11GetImageInfoFromResourceA
 @ stub D3DX11GetImageInfoFromResourceW
 @ stub D3DX11LoadTextureFromTexture
