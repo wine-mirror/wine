@@ -8,7 +8,7 @@
 @ stub D3DCreateLinker
 @ stub D3DDecompressShaders
 @ stdcall D3DDisassemble(ptr long long ptr ptr)
-@ stdcall D3DDisassemble10Effect(ptr long ptr) d3dcompiler_43.D3DDisassemble10Effect
+@ stub D3DDisassemble10Effect(ptr long ptr)
 @ stub D3DDisassemble11Trace
 @ stub D3DDisassembleRegion
 @ stdcall D3DGetBlobPart(ptr long long long ptr)
