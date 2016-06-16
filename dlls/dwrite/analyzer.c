@@ -966,9 +966,10 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     HRESULT hr = S_OK;
     UINT16 script;
 
-    TRACE("(%s:%u %p %d %d %p %s %p %p %p %u %u %p %p %p %p %p)\n", debugstr_wn(text, length),
-        length, fontface, is_sideways, is_rtl, analysis, debugstr_w(locale), substitution, features, feature_range_len,
-        feature_ranges, max_glyph_count, clustermap, text_props, glyph_indices, glyph_props, actual_glyph_count);
+    TRACE("(%s:%u %p %d %d %s %s %p %p %p %u %u %p %p %p %p %p)\n", debugstr_wn(text, length),
+        length, fontface, is_sideways, is_rtl, debugstr_sa_script(analysis->script), debugstr_w(locale), substitution,
+        features, feature_range_len, feature_ranges, max_glyph_count, clustermap, text_props, glyph_indices,
+        glyph_props, actual_glyph_count);
 
     script = analysis->script > Script_LastId ? Script_Unknown : analysis->script;
 
@@ -1099,9 +1100,10 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
     HRESULT hr;
     UINT32 i;
 
-    TRACE("(%s %p %p %u %p %p %u %p %.2f %d %d %p %s %p %p %u %p %p)\n", debugstr_wn(text, text_len),
+    TRACE("(%s %p %p %u %p %p %u %p %.2f %d %d %s %s %p %p %u %p %p)\n", debugstr_wn(text, text_len),
         clustermap, props, text_len, glyphs, glyph_props, glyph_count, fontface, emSize, is_sideways,
-        is_rtl, analysis, debugstr_w(locale), features, feature_range_len, feature_ranges, advances, offsets);
+        is_rtl, debugstr_sa_script(analysis->script), debugstr_w(locale), features, feature_range_len,
+        feature_ranges, advances, offsets);
 
     if (glyph_count == 0)
         return S_OK;
@@ -1147,10 +1149,10 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
     HRESULT hr;
     UINT32 i;
 
-    TRACE("(%s %p %p %u %p %p %u %p %.2f %.2f %p %d %d %d %p %s %p %p %u %p %p)\n", debugstr_wn(text, text_len),
+    TRACE("(%s %p %p %u %p %p %u %p %.2f %.2f %p %d %d %d %s %s %p %p %u %p %p)\n", debugstr_wn(text, text_len),
         clustermap, props, text_len, glyphs, glyph_props, glyph_count, fontface, emSize, ppdip,
-        transform, use_gdi_natural, is_sideways, is_rtl, analysis, debugstr_w(locale), features, feature_range_lengths,
-        feature_ranges, advances, offsets);
+        transform, use_gdi_natural, is_sideways, is_rtl, debugstr_sa_script(analysis->script), debugstr_w(locale),
+        features, feature_range_lengths, feature_ranges, advances, offsets);
 
     if (glyph_count == 0)
         return S_OK;
