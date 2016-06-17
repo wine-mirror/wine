@@ -258,9 +258,9 @@
 @ stub ilogbf
 @ stub ilogbl
 @ cdecl ldexp(double long) ucrtbase.ldexp
-@ stub lgamma
-@ stub lgammaf
-@ stub lgammal
+@ cdecl lgamma(double) ucrtbase.lgamma
+@ cdecl lgammaf(float) ucrtbase.lgammaf
+@ cdecl lgammal(double) ucrtbase.lgammal
 @ cdecl -ret64 llrint(double) ucrtbase.llrint
 @ cdecl -ret64 llrintf(float) ucrtbase.llrintf
 @ cdecl -ret64 llrintl(double) ucrtbase.llrintl

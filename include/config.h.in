@@ -351,6 +351,12 @@
 /* Define to 1 if you have the `ldap_parse_vlv_control' function. */
 #undef HAVE_LDAP_PARSE_VLV_CONTROL
 
+/* Define to 1 if you have the `lgamma' function. */
+#undef HAVE_LGAMMA
+
+/* Define to 1 if you have the `lgammaf' function. */
+#undef HAVE_LGAMMAF
+
 /* Define to 1 if you have the `gettextpo' library (-lgettextpo). */
 #undef HAVE_LIBGETTEXTPO
 

@@ -2377,9 +2377,9 @@
 @ cdecl labs(long) MSVCRT_labs
 @ cdecl ldexp(double long) MSVCRT_ldexp
 @ cdecl ldiv(long long) MSVCRT_ldiv
-@ stub lgamma
-@ stub lgammaf
-@ stub lgammal
+@ cdecl lgamma(double) MSVCR120_lgamma
+@ cdecl lgammaf(float) MSVCR120_lgammaf
+@ cdecl lgammal(double) MSVCR120_lgammal
 @ cdecl -ret64 llabs(int64) MSVCRT_llabs
 @ stub lldiv
 @ cdecl -ret64 llrint(double) MSVCR120_llrint

@@ -1906,9 +1906,9 @@
 @ cdecl labs(long) msvcr120.labs
 @ cdecl ldexp(double long) msvcr120.ldexp
 @ cdecl ldiv(long long) msvcr120.ldiv
-@ stub lgamma
-@ stub lgammaf
-@ stub lgammal
+@ cdecl lgamma(double) msvcr120.lgamma
+@ cdecl lgammaf(float) msvcr120.lgammaf
+@ cdecl lgammal(double) msvcr120.lgammal
 @ cdecl -ret64 llabs(int64) msvcr120.llabs
 @ stub lldiv
 @ cdecl -ret64 llrint(double) msvcr120.llrint

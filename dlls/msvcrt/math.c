@@ -2843,3 +2843,37 @@ LDOUBLE CDECL MSVCR120_remainderl(LDOUBLE x, LDOUBLE y)
 {
     return MSVCR120_remainder(x, y);
 }
+
+/*********************************************************************
+ *      lgamma (MSVCR120.@)
+ */
+double CDECL MSVCR120_lgamma(double x)
+{
+#ifdef HAVE_LGAMMA
+    return lgamma(x);
+#else
+    FIXME( "not implemented\n" );
+    return 0.0;
+#endif
+}
+
+/*********************************************************************
+ *      lgammaf (MSVCR120.@)
+ */
+float CDECL MSVCR120_lgammaf(float x)
+{
+#ifdef HAVE_LGAMMAF
+    return lgammaf(x);
+#else
+    FIXME( "not implemented\n" );
+    return 0.0f;
+#endif
+}
+
+/*********************************************************************
+ *      lgammal (MSVCR120.@)
+ */
+LDOUBLE CDECL MSVCR120_lgammal(LDOUBLE x)
+{
+    return MSVCR120_lgamma(x);
+}

@@ -2527,6 +2527,8 @@ AC_CHECK_FUNCS(\
 	erff \
 	exp2 \
 	exp2f \
+	lgamma \
+	lgammaf \
 	llrint \
 	llrintf \
 	llround \
