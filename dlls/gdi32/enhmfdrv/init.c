@@ -41,7 +41,7 @@ static const struct gdi_dc_funcs EMFDRV_Funcs =
     NULL,                            /* pAlphaBlend */
     NULL,                            /* pAngleArc */
     EMFDRV_Arc,                      /* pArc */
-    NULL,                            /* pArcTo */
+    EMFDRV_ArcTo,                    /* pArcTo */
     EMFDRV_BeginPath,                /* pBeginPath */
     NULL,                            /* pBlendImage */
     EMFDRV_Chord,                    /* pChord */

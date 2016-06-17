@@ -56,6 +56,8 @@ extern DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush ) DECLSPEC_H
 extern BOOL     EMFDRV_AbortPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right,
                             INT bottom, INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
+extern BOOL     EMFDRV_ArcTo( PHYSDEV dev, INT left, INT top, INT right,
+                              INT bottom, INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_BeginPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_BitBlt( PHYSDEV devDst, INT xDst, INT yDst, INT width, INT height,
                                PHYSDEV devSrc, INT xSrc, INT ySrc, DWORD rop ) DECLSPEC_HIDDEN;

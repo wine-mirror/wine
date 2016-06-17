@@ -177,6 +177,15 @@ EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 	if(bounds.top > yCentre) bounds.top = yCentre;
 	else if(bounds.bottom < yCentre) bounds.bottom = yCentre;
     }
+    if (iType == EMR_ARCTO)
+    {
+        POINT pt;
+        GetCurrentPositionEx( dev->hdc, &pt );
+        bounds.left   = min( bounds.left, pt.x );
+        bounds.top    = min( bounds.top, pt.y );
+        bounds.right  = max( bounds.right, pt.x );
+        bounds.bottom = max( bounds.bottom, pt.y );
+    }
     if(!EMFDRV_WriteRecord( dev, &emr.emr ))
         return FALSE;
     if(!physDev->path)
@@ -193,6 +202,16 @@ BOOL EMFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 {
     return EMFDRV_ArcChordPie( dev, left, top, right, bottom, xstart, ystart,
 			       xend, yend, EMR_ARC );
+}
+
+/***********************************************************************
+ *           EMFDRV_ArcTo
+ */
+BOOL EMFDRV_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                   INT xstart, INT ystart, INT xend, INT yend )
+{
+    return EMFDRV_ArcChordPie( dev, left, top, right, bottom, xstart, ystart,
+			       xend, yend, EMR_ARCTO );
 }
 
 /***********************************************************************
