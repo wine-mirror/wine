@@ -8641,6 +8641,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_LD2DMS                           */ NULL,
     /* WINED3DSIH_LD_RAW                           */ NULL,
     /* WINED3DSIH_LD_STRUCTURED                    */ NULL,
+    /* WINED3DSIH_LD_UAV_TYPED                     */ NULL,
     /* WINED3DSIH_LIT                              */ shader_glsl_lit,
     /* WINED3DSIH_LOG                              */ shader_glsl_scalar_op,
     /* WINED3DSIH_LOGP                             */ shader_glsl_scalar_op,
