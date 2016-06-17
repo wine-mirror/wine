@@ -344,7 +344,17 @@ static void get_dsv_desc(D3D10_DEPTH_STENCIL_VIEW_DESC *d3d10_desc, const struct
 {
     d3d10_desc->Format = desc->format;
     d3d10_desc->ViewDimension = desc->dimension;
-    if (desc->dimension == D3D10_DSV_DIMENSION_TEXTURE2D)
+    if (desc->dimension == D3D10_DSV_DIMENSION_TEXTURE1D)
+    {
+        U(*d3d10_desc).Texture1D.MipSlice = desc->miplevel_idx;
+    }
+    else if (desc->dimension == D3D10_DSV_DIMENSION_TEXTURE1DARRAY)
+    {
+        U(*d3d10_desc).Texture1DArray.MipSlice = desc->miplevel_idx;
+        U(*d3d10_desc).Texture1DArray.FirstArraySlice = desc->layer_idx;
+        U(*d3d10_desc).Texture1DArray.ArraySize = desc->layer_count;
+    }
+    else if (desc->dimension == D3D10_DSV_DIMENSION_TEXTURE2D)
     {
         U(*d3d10_desc).Texture2D.MipSlice = desc->miplevel_idx;
     }
@@ -354,7 +364,13 @@ static void get_dsv_desc(D3D10_DEPTH_STENCIL_VIEW_DESC *d3d10_desc, const struct
         U(*d3d10_desc).Texture2DArray.FirstArraySlice = desc->layer_idx;
         U(*d3d10_desc).Texture2DArray.ArraySize = desc->layer_count;
     }
-    else
+    else if (desc->dimension == D3D10_DSV_DIMENSION_TEXTURE2DMSARRAY)
+    {
+        U(*d3d10_desc).Texture2DMSArray.FirstArraySlice = desc->layer_idx;
+        U(*d3d10_desc).Texture2DMSArray.ArraySize = desc->layer_count;
+    }
+    else if (desc->dimension != D3D10_DSV_DIMENSION_UNKNOWN
+            && desc->dimension != D3D10_DSV_DIMENSION_TEXTURE2DMS)
     {
         trace("Unhandled view dimension %#x.\n", desc->dimension);
     }
@@ -390,7 +406,16 @@ static void check_dsv_desc_(unsigned int line, const D3D10_DEPTH_STENCIL_VIEW_DE
                 "Got ArraySize %u, expected %u.\n",
                 U(*desc).Texture2DArray.ArraySize, expected_desc->layer_count);
     }
-    else
+    else if (desc->ViewDimension == D3D10_DSV_DIMENSION_TEXTURE2DMSARRAY)
+    {
+        ok_(__FILE__, line)(U(*desc).Texture2DMSArray.FirstArraySlice == expected_desc->layer_idx,
+                "Got FirstArraySlice %u, expected %u.\n",
+                U(*desc).Texture2DMSArray.FirstArraySlice, expected_desc->layer_idx);
+        ok_(__FILE__, line)(U(*desc).Texture2DMSArray.ArraySize == expected_desc->layer_count,
+                "Got ArraySize %u, expected %u.\n",
+                U(*desc).Texture2DMSArray.ArraySize, expected_desc->layer_count);
+    }
+    else if (desc->ViewDimension != D3D10_DSV_DIMENSION_TEXTURE2DMS)
     {
         trace("Unhandled view dimension %#x.\n", desc->ViewDimension);
     }
@@ -1558,6 +1583,16 @@ static void test_create_depthstencil_view(void)
     unsigned int i;
     HRESULT hr;
 
+#define FMT_UNKNOWN  DXGI_FORMAT_UNKNOWN
+#define D24S8        DXGI_FORMAT_D24_UNORM_S8_UINT
+#define R24G8_TL     DXGI_FORMAT_R24G8_TYPELESS
+#define DIM_UNKNOWN  D3D10_DSV_DIMENSION_UNKNOWN
+#define TEX_1D       D3D10_DSV_DIMENSION_TEXTURE1D
+#define TEX_1D_ARRAY D3D10_DSV_DIMENSION_TEXTURE1DARRAY
+#define TEX_2D       D3D10_DSV_DIMENSION_TEXTURE2D
+#define TEX_2D_ARRAY D3D10_DSV_DIMENSION_TEXTURE2DARRAY
+#define TEX_2DMS     D3D10_DSV_DIMENSION_TEXTURE2DMS
+#define TEX_2DMS_ARR D3D10_DSV_DIMENSION_TEXTURE2DMSARRAY
     static const struct
     {
         struct
@@ -1571,34 +1606,74 @@ static void test_create_depthstencil_view(void)
     }
     tests[] =
     {
-#define FMT_UNKNOWN  DXGI_FORMAT_UNKNOWN
-#define D24_S8       DXGI_FORMAT_D24_UNORM_S8_UINT
-#define TEX_2D       D3D10_DSV_DIMENSION_TEXTURE2D
-#define TEX_2D_ARRAY D3D10_DSV_DIMENSION_TEXTURE2DARRAY
-        {{ 1, 1, D24_S8}, {0},                                   {D24_S8, TEX_2D,       0}},
-        {{10, 1, D24_S8}, {0},                                   {D24_S8, TEX_2D,       0}},
-        {{10, 1, D24_S8}, {FMT_UNKNOWN, TEX_2D, 0},              {D24_S8, TEX_2D,       0}},
-        {{10, 1, D24_S8}, {FMT_UNKNOWN, TEX_2D, 1},              {D24_S8, TEX_2D,       1}},
-        {{10, 1, D24_S8}, {FMT_UNKNOWN, TEX_2D, 9},              {D24_S8, TEX_2D,       9}},
-        {{ 1, 4, D24_S8}, {0},                                   {D24_S8, TEX_2D_ARRAY, 0, 0, 4}},
-        {{10, 4, D24_S8}, {0},                                   {D24_S8, TEX_2D_ARRAY, 0, 0, 4}},
-        {{10, 4, D24_S8}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 0, -1}, {D24_S8, TEX_2D_ARRAY, 0, 0, 4}},
-        {{10, 4, D24_S8}, {FMT_UNKNOWN, TEX_2D_ARRAY, 1, 0, -1}, {D24_S8, TEX_2D_ARRAY, 1, 0, 4}},
-        {{10, 4, D24_S8}, {FMT_UNKNOWN, TEX_2D_ARRAY, 3, 0, -1}, {D24_S8, TEX_2D_ARRAY, 3, 0, 4}},
-        {{10, 4, D24_S8}, {FMT_UNKNOWN, TEX_2D_ARRAY, 5, 0, -1}, {D24_S8, TEX_2D_ARRAY, 5, 0, 4}},
-        {{10, 4, D24_S8}, {FMT_UNKNOWN, TEX_2D_ARRAY, 9, 0, -1}, {D24_S8, TEX_2D_ARRAY, 9, 0, 4}},
-        {{10, 4, D24_S8}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 1, -1}, {D24_S8, TEX_2D_ARRAY, 0, 1, 3}},
-        {{10, 4, D24_S8}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 2, -1}, {D24_S8, TEX_2D_ARRAY, 0, 2, 2}},
-        {{10, 4, D24_S8}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 3, -1}, {D24_S8, TEX_2D_ARRAY, 0, 3, 1}},
+        {{ 1, 1, D24S8},    {0},                                   {D24S8, TEX_2D,       0}},
+        {{10, 1, D24S8},    {0},                                   {D24S8, TEX_2D,       0}},
+        {{10, 1, D24S8},    {FMT_UNKNOWN, TEX_2D, 0},              {D24S8, TEX_2D,       0}},
+        {{10, 1, D24S8},    {FMT_UNKNOWN, TEX_2D, 1},              {D24S8, TEX_2D,       1}},
+        {{10, 1, D24S8},    {FMT_UNKNOWN, TEX_2D, 9},              {D24S8, TEX_2D,       9}},
+        {{ 1, 1, R24G8_TL}, {D24S8,       TEX_2D, 0},              {D24S8, TEX_2D,       0}},
+        {{10, 1, R24G8_TL}, {D24S8,       TEX_2D, 0},              {D24S8, TEX_2D,       0}},
+        {{ 1, 4, D24S8},    {0},                                   {D24S8, TEX_2D_ARRAY, 0, 0, 4}},
+        {{10, 4, D24S8},    {0},                                   {D24S8, TEX_2D_ARRAY, 0, 0, 4}},
+        {{10, 4, D24S8},    {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 0, -1}, {D24S8, TEX_2D_ARRAY, 0, 0, 4}},
+        {{10, 4, D24S8},    {FMT_UNKNOWN, TEX_2D_ARRAY, 1, 0, -1}, {D24S8, TEX_2D_ARRAY, 1, 0, 4}},
+        {{10, 4, D24S8},    {FMT_UNKNOWN, TEX_2D_ARRAY, 3, 0, -1}, {D24S8, TEX_2D_ARRAY, 3, 0, 4}},
+        {{10, 4, D24S8},    {FMT_UNKNOWN, TEX_2D_ARRAY, 5, 0, -1}, {D24S8, TEX_2D_ARRAY, 5, 0, 4}},
+        {{10, 4, D24S8},    {FMT_UNKNOWN, TEX_2D_ARRAY, 9, 0, -1}, {D24S8, TEX_2D_ARRAY, 9, 0, 4}},
+        {{10, 4, D24S8},    {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 1, -1}, {D24S8, TEX_2D_ARRAY, 0, 1, 3}},
+        {{10, 4, D24S8},    {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 2, -1}, {D24S8, TEX_2D_ARRAY, 0, 2, 2}},
+        {{10, 4, D24S8},    {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 3, -1}, {D24S8, TEX_2D_ARRAY, 0, 3, 1}},
+        {{ 1, 1, D24S8},    {FMT_UNKNOWN, TEX_2DMS},               {D24S8, TEX_2DMS}},
+        {{ 1, 4, D24S8},    {FMT_UNKNOWN, TEX_2DMS},               {D24S8, TEX_2DMS}},
+        {{10, 4, D24S8},    {FMT_UNKNOWN, TEX_2DMS},               {D24S8, TEX_2DMS}},
+        {{ 1, 1, D24S8},    {FMT_UNKNOWN, TEX_2DMS_ARR, 0, 0,  1}, {D24S8, TEX_2DMS_ARR, 0, 0, 1}},
+        {{ 1, 1, D24S8},    {FMT_UNKNOWN, TEX_2DMS_ARR, 0, 0, -1}, {D24S8, TEX_2DMS_ARR, 0, 0, 1}},
+        {{10, 1, D24S8},    {FMT_UNKNOWN, TEX_2DMS_ARR, 0, 0,  1}, {D24S8, TEX_2DMS_ARR, 0, 0, 1}},
+        {{10, 1, D24S8},    {FMT_UNKNOWN, TEX_2DMS_ARR, 0, 0, -1}, {D24S8, TEX_2DMS_ARR, 0, 0, 1}},
+        {{10, 4, D24S8},    {FMT_UNKNOWN, TEX_2DMS_ARR, 0, 0,  1}, {D24S8, TEX_2DMS_ARR, 0, 0, 1}},
+        {{10, 4, D24S8},    {FMT_UNKNOWN, TEX_2DMS_ARR, 0, 0,  4}, {D24S8, TEX_2DMS_ARR, 0, 0, 4}},
+        {{10, 4, D24S8},    {FMT_UNKNOWN, TEX_2DMS_ARR, 0, 0, -1}, {D24S8, TEX_2DMS_ARR, 0, 0, 4}},
+    };
+    static const struct
+    {
+        struct
+        {
+            unsigned int miplevel_count;
+            unsigned int array_size;
+            DXGI_FORMAT format;
+        } texture;
+        struct dsv_desc dsv_desc;
+    }
+    invalid_desc_tests[] =
+    {
+        {{1, 1, D24S8},    {D24S8,       DIM_UNKNOWN}},
+        {{6, 4, D24S8},    {D24S8,       DIM_UNKNOWN}},
+        {{1, 1, D24S8},    {D24S8,       TEX_1D,        0}},
+        {{1, 1, D24S8},    {D24S8,       TEX_1D_ARRAY,  0,  0,  1}},
+        {{1, 1, D24S8},    {R24G8_TL,    TEX_2D,        0}},
+        {{1, 1, R24G8_TL}, {FMT_UNKNOWN, TEX_2D,        0}},
+        {{1, 1, D24S8},    {D24S8,       TEX_2D,        1}},
+        {{1, 1, D24S8},    {D24S8,       TEX_2D_ARRAY,  0,  0,  0}},
+        {{1, 1, D24S8},    {D24S8,       TEX_2D_ARRAY,  1,  0,  1}},
+        {{1, 1, D24S8},    {D24S8,       TEX_2D_ARRAY,  0,  0,  2}},
+        {{1, 1, D24S8},    {D24S8,       TEX_2D_ARRAY,  0,  1,  1}},
+        {{1, 1, D24S8},    {D24S8,       TEX_2DMS_ARR,  0,  0,  2}},
+        {{1, 1, D24S8},    {D24S8,       TEX_2DMS_ARR,  0,  1,  1}},
+    };
 #undef FMT_UNKNOWN
-#undef D24_S8
+#undef D24S8
+#undef R24S8_TL
+#undef DIM_UNKNOWN
+#undef TEX_1D
+#undef TEX_1D_ARRAY
 #undef TEX_2D
 #undef TEX_2D_ARRAY
-    };
+#undef TEX_2DMS
+#undef TEX_2DMS_ARR
 
     if (!(device = create_device()))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -1615,11 +1690,11 @@ static void test_create_depthstencil_view(void)
     texture_desc.MiscFlags = 0;
 
     hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x\n", hr);
+    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x.\n", hr);
 
     expected_refcount = get_refcount((IUnknown *)device) + 1;
     hr = ID3D10Device_CreateDepthStencilView(device, (ID3D10Resource *)texture, NULL, &dsview);
-    ok(SUCCEEDED(hr), "Failed to create a depthstencil view, hr %#x\n", hr);
+    ok(SUCCEEDED(hr), "Failed to create a depthstencil view, hr %#x.\n", hr);
     refcount = get_refcount((IUnknown *)device);
     ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
     tmp = NULL;
@@ -1674,6 +1749,22 @@ static void test_create_depthstencil_view(void)
         check_dsv_desc(&dsv_desc, &tests[i].expected_dsv_desc);
 
         ID3D10DepthStencilView_Release(dsview);
+        ID3D10Texture2D_Release(texture);
+    }
+
+    for (i = 0; i < sizeof(invalid_desc_tests) / sizeof(*invalid_desc_tests); ++i)
+    {
+        texture_desc.MipLevels = invalid_desc_tests[i].texture.miplevel_count;
+        texture_desc.ArraySize = invalid_desc_tests[i].texture.array_size;
+        texture_desc.Format = invalid_desc_tests[i].texture.format;
+
+        hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+        ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+
+        get_dsv_desc(&dsv_desc, &invalid_desc_tests[i].dsv_desc);
+        hr = ID3D10Device_CreateDepthStencilView(device, (ID3D10Resource *)texture, &dsv_desc, &dsview);
+        ok(hr == E_INVALIDARG, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
         ID3D10Texture2D_Release(texture);
     }
 
