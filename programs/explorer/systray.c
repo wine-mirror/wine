@@ -118,6 +118,7 @@ static HWND balloon_window;
 
 #define WM_POPUPSYSTEMMENU  0x0313
 
+static void do_hide_systray(void);
 static void do_show_systray(void);
 
 /* Retrieves icon record by owner window and ID */
@@ -366,7 +367,7 @@ static BOOL hide_icon(struct icon *icon)
     invalidate_icons( icon->display, nb_displayed );
     icon->display = -1;
 
-    if (!nb_displayed && !enable_shell) ShowWindow( tray_window, SW_HIDE );
+    if (!nb_displayed && !enable_shell) do_hide_systray();
 
     update_balloon( icon );
     update_tooltip_position( icon );
@@ -747,7 +748,7 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
         return handle_incoming((HWND)wparam, (COPYDATASTRUCT *)lparam);
 
     case WM_DISPLAYCHANGE:
-        if (hide_systray) do_hide_systray();
+        if (hide_systray || (!nb_displayed && !enable_shell)) do_hide_systray();
         else do_show_systray();
         break;
 
