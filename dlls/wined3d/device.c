@@ -1041,13 +1041,14 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
 
     if (swapchain_desc->backbuffer_count)
     {
+        struct wined3d_resource *back_buffer = &swapchain->back_buffers[0]->resource;
         struct wined3d_rendertarget_view_desc view_desc;
 
-        view_desc.format_id = swapchain_desc->backbuffer_format;
+        view_desc.format_id = back_buffer->format->id;
         view_desc.u.texture.level_idx = 0;
         view_desc.u.texture.layer_idx = 0;
         view_desc.u.texture.layer_count = 1;
-        if (FAILED(hr = wined3d_rendertarget_view_create(&view_desc, &swapchain->back_buffers[0]->resource,
+        if (FAILED(hr = wined3d_rendertarget_view_create(&view_desc, back_buffer,
                 NULL, &wined3d_null_parent_ops, &device->back_buffer_view)))
         {
             ERR("Failed to create rendertarget view, hr %#x.\n", hr);
@@ -4865,11 +4866,13 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     }
     if (swapchain->desc.backbuffer_count)
     {
-        view_desc.format_id = swapchain_desc->backbuffer_format;
+        struct wined3d_resource *back_buffer = &swapchain->back_buffers[0]->resource;
+
+        view_desc.format_id = back_buffer->format->id;
         view_desc.u.texture.level_idx = 0;
         view_desc.u.texture.layer_idx = 0;
         view_desc.u.texture.layer_count = 1;
-        if (FAILED(hr = wined3d_rendertarget_view_create(&view_desc, &swapchain->back_buffers[0]->resource,
+        if (FAILED(hr = wined3d_rendertarget_view_create(&view_desc, back_buffer,
                 NULL, &wined3d_null_parent_ops, &device->back_buffer_view)))
         {
             ERR("Failed to create rendertarget view, hr %#x.\n", hr);
