@@ -398,6 +398,14 @@ void* CDECL MSVCRT_calloc(MSVCRT_size_t size, MSVCRT_size_t count)
 }
 
 /*********************************************************************
+ *		_calloc_base (UCRTBASE.@)
+ */
+void* CDECL _calloc_base(MSVCRT_size_t count, MSVCRT_size_t size)
+{
+  return MSVCRT_calloc(count, size);
+}
+
+/*********************************************************************
  *		free (MSVCRT.@)
  */
 void CDECL MSVCRT_free(void* ptr)
