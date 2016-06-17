@@ -299,6 +299,24 @@ BOOL EMFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 }
 
 /***********************************************************************
+ *           EMFDRV_AngleArc
+ */
+BOOL EMFDRV_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT start, FLOAT sweep )
+{
+    EMRANGLEARC emr;
+
+    emr.emr.iType   = EMR_ANGLEARC;
+    emr.emr.nSize   = sizeof( emr );
+    emr.ptlCenter.x = x;
+    emr.ptlCenter.y = y;
+    emr.nRadius     = radius;
+    emr.eStartAngle = start;
+    emr.eSweepAngle = sweep;
+
+    return EMFDRV_WriteRecord( dev, &emr.emr );
+}
+
+/***********************************************************************
  *           EMFDRV_Ellipse
  */
 BOOL EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )

@@ -39,7 +39,7 @@ static const struct gdi_dc_funcs EMFDRV_Funcs =
     NULL,                            /* pAbortDoc */
     EMFDRV_AbortPath,                /* pAbortPath */
     NULL,                            /* pAlphaBlend */
-    NULL,                            /* pAngleArc */
+    EMFDRV_AngleArc,                 /* pAngleArc */
     EMFDRV_Arc,                      /* pArc */
     EMFDRV_ArcTo,                    /* pArcTo */
     EMFDRV_BeginPath,                /* pBeginPath */

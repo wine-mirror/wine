@@ -54,6 +54,7 @@ extern DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush ) DECLSPEC_H
 
 /* Metafile driver functions */
 extern BOOL     EMFDRV_AbortPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern BOOL     EMFDRV_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT start, FLOAT sweep ) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right,
                             INT bottom, INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_ArcTo( PHYSDEV dev, INT left, INT top, INT right,
