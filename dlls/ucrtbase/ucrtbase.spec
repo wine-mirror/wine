@@ -580,7 +580,7 @@
 @ cdecl _ltow_s(long ptr long long) MSVCRT__ltow_s
 @ cdecl _makepath(ptr str str str str) MSVCRT__makepath
 @ cdecl _makepath_s(ptr long str str str str) MSVCRT__makepath_s
-@ stub _malloc_base
+@ cdecl _malloc_base(long)
 @ cdecl _mbbtombc(long)
 @ stub _mbbtombc_l
 @ cdecl _mbbtype(long long)
