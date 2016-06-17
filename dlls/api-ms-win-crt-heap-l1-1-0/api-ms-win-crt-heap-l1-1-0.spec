@@ -7,7 +7,7 @@
 @ cdecl _aligned_realloc(ptr long long) ucrtbase._aligned_realloc
 @ stub _aligned_recalloc
 @ cdecl _callnewh(long) ucrtbase._callnewh
-@ stub _calloc_base
+@ cdecl _calloc_base(long long) ucrtbase._calloc_base
 @ cdecl _expand(ptr long) ucrtbase._expand
 @ stub _free_base
 @ cdecl _get_heap_handle() ucrtbase._get_heap_handle
