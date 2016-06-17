@@ -14,7 +14,7 @@
 @ cdecl _heapchk() ucrtbase._heapchk
 @ cdecl _heapmin() ucrtbase._heapmin
 @ cdecl _heapwalk(ptr) ucrtbase._heapwalk
-@ stub _malloc_base
+@ cdecl _malloc_base(long) ucrtbase._malloc_base
 @ cdecl _msize(ptr) ucrtbase._msize
 @ stub _query_new_handler
 @ stub _query_new_mode
