@@ -18,7 +18,7 @@
 @ cdecl _msize(ptr) ucrtbase._msize
 @ stub _query_new_handler
 @ stub _query_new_mode
-@ stub _realloc_base
+@ cdecl _realloc_base(ptr long) ucrtbase._realloc_base
 @ cdecl _recalloc(ptr long long) ucrtbase._recalloc
 @ cdecl _set_new_mode(long) ucrtbase._set_new_mode
 @ cdecl calloc(long long) ucrtbase.calloc

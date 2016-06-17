@@ -1859,7 +1859,7 @@
 @ stub _query_new_handler
 @ stub _query_new_mode
 @ cdecl _read(long ptr long) MSVCRT__read
-@ stub _realloc_base
+@ cdecl _realloc_base(ptr long)
 @ cdecl _recalloc(ptr long long)
 @ cdecl _register_onexit_function(ptr ptr) MSVCRT__register_onexit_function
 @ stub _register_thread_local_exe_atexit_callback
