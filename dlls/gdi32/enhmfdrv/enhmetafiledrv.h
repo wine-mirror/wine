@@ -98,6 +98,7 @@ extern BOOL     EMFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* cou
 extern BOOL     EMFDRV_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polys) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count ) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_Polyline( PHYSDEV dev, const POINT* pt,INT count) DECLSPEC_HIDDEN;
+extern BOOL     EMFDRV_PolylineTo( PHYSDEV dev, const POINT* pt,INT count) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_RestoreDC( PHYSDEV dev, INT level ) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,

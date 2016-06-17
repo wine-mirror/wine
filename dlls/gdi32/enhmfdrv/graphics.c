@@ -389,7 +389,7 @@ EMFDRV_Polylinegon( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
         return ret;
     }
 
-    if(iType == EMR_POLYBEZIERTO) {
+    if(iType == EMR_POLYBEZIERTO || iType == EMR_POLYLINETO) {
         POINT cur_pt;
 
         GetCurrentPositionEx( dev->hdc, &cur_pt );
@@ -467,7 +467,7 @@ EMFDRV_Polylinegon16( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
         return ret;
     }
 
-    if(iType == EMR_POLYBEZIERTO16) {
+    if(iType == EMR_POLYBEZIERTO16 || iType == EMR_POLYLINETO16) {
         POINT cur_pt;
 
         GetCurrentPositionEx( dev->hdc, &cur_pt );
@@ -509,6 +509,16 @@ BOOL EMFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
     if( EMFDRV_Polylinegon16( dev, pt, count, EMR_POLYLINE16 ) )
         return TRUE;
     return EMFDRV_Polylinegon( dev, pt, count, EMR_POLYLINE );
+}
+
+/**********************************************************************
+ *          EMFDRV_PolylineTo
+ */
+BOOL EMFDRV_PolylineTo( PHYSDEV dev, const POINT* pt, INT count )
+{
+    if( EMFDRV_Polylinegon16( dev, pt, count, EMR_POLYLINETO16 ) )
+        return TRUE;
+    return EMFDRV_Polylinegon( dev, pt, count, EMR_POLYLINETO );
 }
 
 /**********************************************************************

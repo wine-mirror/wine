@@ -111,7 +111,7 @@ static const struct gdi_dc_funcs EMFDRV_Funcs =
     EMFDRV_PolyPolyline,             /* pPolyPolyline */
     EMFDRV_Polygon,                  /* pPolygon */
     EMFDRV_Polyline,                 /* pPolyline */
-    NULL,                            /* pPolylineTo */
+    EMFDRV_PolylineTo,               /* pPolylineTo */
     NULL,                            /* pPutImage */
     NULL,                            /* pRealizeDefaultPalette */
     NULL,                            /* pRealizePalette */
