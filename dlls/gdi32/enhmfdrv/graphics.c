@@ -576,6 +576,43 @@ BOOL EMFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT p
 
 
 /**********************************************************************
+ *          EMFDRV_PolyDraw
+ */
+BOOL EMFDRV_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, DWORD count )
+{
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+    EMRPOLYDRAW *emr;
+    BOOL ret;
+    BYTE *types_dest;
+    BOOL use_small_emr = can_use_short_points( pts, count );
+    DWORD size;
+
+    size = use_small_emr ? offsetof( EMRPOLYDRAW16, apts[count] ) : offsetof( EMRPOLYDRAW, aptl[count] );
+    size += (count + 3) & ~3;
+
+    if (!(emr = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
+
+    emr->emr.iType = use_small_emr ? EMR_POLYDRAW16 : EMR_POLYDRAW;
+    emr->emr.nSize = size;
+    emr->cptl = count;
+
+    types_dest = store_points( emr->aptl, pts, count, use_small_emr );
+    memcpy( types_dest, types, count );
+    if (count & 3) memset( types_dest + count, 0, 4 - (count & 3) );
+
+    if (!physDev->path)
+        get_points_bounds( &emr->rclBounds, pts, count, 0 );
+    else
+        emr->rclBounds = empty_bounds;
+
+    ret = EMFDRV_WriteRecord( dev, &emr->emr );
+    if (ret && !physDev->path) EMFDRV_UpdateBBox( dev, &emr->rclBounds );
+    HeapFree( GetProcessHeap(), 0, emr );
+    return ret;
+}
+
+
+/**********************************************************************
  *          EMFDRV_ExtFloodFill
  */
 BOOL EMFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType )
