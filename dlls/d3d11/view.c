@@ -25,7 +25,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
-static HRESULT set_dsdesc_from_resource(D3D11_DEPTH_STENCIL_VIEW_DESC *desc, ID3D11Resource *resource)
+static HRESULT set_dsv_desc_from_resource(D3D11_DEPTH_STENCIL_VIEW_DESC *desc, ID3D11Resource *resource)
 {
     D3D11_RESOURCE_DIMENSION dimension;
 
@@ -114,7 +114,7 @@ static HRESULT set_dsdesc_from_resource(D3D11_DEPTH_STENCIL_VIEW_DESC *desc, ID3
         }
 
         default:
-            FIXME("Unhandled resource dimension %#x.\n", dimension);
+            ERR("Unhandled resource dimension %#x.\n", dimension);
         case D3D11_RESOURCE_DIMENSION_BUFFER:
         case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
             return E_INVALIDARG;
@@ -204,7 +204,7 @@ static HRESULT normalize_dsv_desc(D3D11_DEPTH_STENCIL_VIEW_DESC *desc, ID3D11Res
     return S_OK;
 }
 
-static HRESULT set_rtdesc_from_resource(D3D11_RENDER_TARGET_VIEW_DESC *desc, ID3D11Resource *resource)
+static HRESULT set_rtv_desc_from_resource(D3D11_RENDER_TARGET_VIEW_DESC *desc, ID3D11Resource *resource)
 {
     D3D11_RESOURCE_DIMENSION dimension;
     HRESULT hr;
@@ -438,7 +438,7 @@ static HRESULT normalize_rtv_desc(D3D11_RENDER_TARGET_VIEW_DESC *desc, ID3D11Res
     return S_OK;
 }
 
-static HRESULT set_srdesc_from_resource(D3D11_SHADER_RESOURCE_VIEW_DESC *desc, ID3D11Resource *resource)
+static HRESULT set_srv_desc_from_resource(D3D11_SHADER_RESOURCE_VIEW_DESC *desc, ID3D11Resource *resource)
 {
     D3D11_RESOURCE_DIMENSION dimension;
 
@@ -551,7 +551,7 @@ static HRESULT set_srdesc_from_resource(D3D11_SHADER_RESOURCE_VIEW_DESC *desc, I
         }
 
         default:
-            FIXME("Unhandled resource dimension %#x.\n", dimension);
+            ERR("Unhandled resource dimension %#x.\n", dimension);
         case D3D11_RESOURCE_DIMENSION_BUFFER:
             return E_INVALIDARG;
     }
@@ -1043,7 +1043,7 @@ static HRESULT d3d_depthstencil_view_init(struct d3d_depthstencil_view *view, st
 
     if (!desc)
     {
-        hr = set_dsdesc_from_resource(&view->desc, resource);
+        hr = set_dsv_desc_from_resource(&view->desc, resource);
     }
     else
     {
@@ -1466,7 +1466,7 @@ static HRESULT d3d_rendertarget_view_init(struct d3d_rendertarget_view *view, st
 
     if (!desc)
     {
-        hr = set_rtdesc_from_resource(&view->desc, resource);
+        hr = set_rtv_desc_from_resource(&view->desc, resource);
     }
     else
     {
@@ -1935,7 +1935,7 @@ static HRESULT d3d_shader_resource_view_init(struct d3d_shader_resource_view *vi
 
     if (!desc)
     {
-        hr = set_srdesc_from_resource(&view->desc, resource);
+        hr = set_srv_desc_from_resource(&view->desc, resource);
     }
     else
     {
