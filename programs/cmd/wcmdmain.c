@@ -375,7 +375,7 @@ static void WCMD_show_prompt (void) {
 	  *q++ = '(';
 	  break;
 	case 'D':
-	  GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL, NULL, q, MAX_PATH);
+	  GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL, NULL, q, MAX_PATH - (q - out_string));
 	  while (*q) q++;
 	  break;
 	case 'E':
