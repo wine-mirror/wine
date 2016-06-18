@@ -996,19 +996,19 @@ static HRESULT WINAPI d3drm_device3_QueryInterface(IDirect3DRMDevice3 *iface, RE
 
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    if (IsEqualGUID(riid, &IID_IDirect3DRMDevice3)
+    if (IsEqualGUID(riid, &IID_IDirect3DRMDevice)
             || IsEqualGUID(riid, &IID_IDirect3DRMObject)
             || IsEqualGUID(riid, &IID_IUnknown))
     {
-        *out = &device->IDirect3DRMDevice3_iface;
+        *out = &device->IDirect3DRMDevice_iface;
     }
     else if (IsEqualGUID(riid, &IID_IDirect3DRMDevice2))
     {
         *out = &device->IDirect3DRMDevice2_iface;
     }
-    else if (IsEqualGUID(riid, &IID_IDirect3DRMDevice))
+    else if (IsEqualGUID(riid, &IID_IDirect3DRMDevice3))
     {
-        *out = &device->IDirect3DRMDevice_iface;
+        *out = &device->IDirect3DRMDevice3_iface;
     }
     else if (IsEqualGUID(riid, &IID_IDirect3DRMWinDevice))
     {
