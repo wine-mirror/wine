@@ -38,26 +38,6 @@ static D3DRMMATRIX4D identity = {
     { 0.0f, 0.0f, 0.0f, 1.0f }
 };
 
-struct d3drm_frame
-{
-    IDirect3DRMFrame IDirect3DRMFrame_iface;
-    IDirect3DRMFrame2 IDirect3DRMFrame2_iface;
-    IDirect3DRMFrame3 IDirect3DRMFrame3_iface;
-    LONG ref;
-    struct d3drm_frame *parent;
-    ULONG nb_children;
-    ULONG children_capacity;
-    IDirect3DRMFrame3** children;
-    ULONG nb_visuals;
-    ULONG visuals_capacity;
-    IDirect3DRMVisual** visuals;
-    ULONG nb_lights;
-    ULONG lights_capacity;
-    IDirect3DRMLight** lights;
-    D3DRMMATRIX4D transform;
-    D3DCOLOR scenebackground;
-};
-
 struct d3drm_frame_array
 {
     IDirect3DRMFrameArray IDirect3DRMFrameArray_iface;
@@ -2926,12 +2906,12 @@ static inline struct d3drm_frame *unsafe_impl_from_IDirect3DRMFrame(IDirect3DRMF
     return impl_from_IDirect3DRMFrame(iface);
 }
 
-HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown *parent, IUnknown **out)
+HRESULT d3drm_frame_create(struct d3drm_frame **frame, IUnknown *parent_frame, IDirect3DRM *d3drm)
 {
     struct d3drm_frame *object;
-    HRESULT hr;
+    HRESULT hr = D3DRM_OK;
 
-    TRACE("riid %s, parent %p, out %p.\n", debugstr_guid(riid), parent, out);
+    TRACE("frame %p, parent_frame %p, d3drm %p.\n", frame, parent_frame, d3drm);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -2939,26 +2919,26 @@ HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown *parent, IUnknown **out)
     object->IDirect3DRMFrame_iface.lpVtbl = &d3drm_frame1_vtbl;
     object->IDirect3DRMFrame2_iface.lpVtbl = &d3drm_frame2_vtbl;
     object->IDirect3DRMFrame3_iface.lpVtbl = &d3drm_frame3_vtbl;
+    object->d3drm = d3drm;
     object->ref = 1;
     object->scenebackground = RGBA_MAKE(0, 0, 0, 0xff);
 
     memcpy(object->transform, identity, sizeof(D3DRMMATRIX4D));
 
-    if (parent)
+    if (parent_frame)
     {
         IDirect3DRMFrame3 *p;
 
-        hr = IDirect3DRMFrame_QueryInterface(parent, &IID_IDirect3DRMFrame3, (void**)&p);
-        if (hr != S_OK)
+        if (FAILED(hr = IDirect3DRMFrame_QueryInterface(parent_frame, &IID_IDirect3DRMFrame3, (void **)&p)))
         {
             HeapFree(GetProcessHeap(), 0, object);
             return hr;
         }
-        IDirect3DRMFrame_Release(parent);
+        IDirect3DRMFrame_Release(parent_frame);
         IDirect3DRMFrame3_AddChild(p, &object->IDirect3DRMFrame3_iface);
     }
 
-    hr = IDirect3DRMFrame3_QueryInterface(&object->IDirect3DRMFrame3_iface, riid, (void **)out);
-    IDirect3DRMFrame3_Release(&object->IDirect3DRMFrame3_iface);
+    *frame = object;
+
     return hr;
 }

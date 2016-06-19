@@ -150,9 +150,17 @@ static HRESULT WINAPI d3drm1_CreateObject(IDirect3DRM *iface,
 static HRESULT WINAPI d3drm1_CreateFrame(IDirect3DRM *iface,
         IDirect3DRMFrame *parent_frame, IDirect3DRMFrame **frame)
 {
+    struct d3drm_frame *object;
+    HRESULT hr;
+
     TRACE("iface %p, parent_frame %p, frame %p.\n", iface, parent_frame, frame);
 
-    return Direct3DRMFrame_create(&IID_IDirect3DRMFrame, (IUnknown *)parent_frame, (IUnknown **)frame);
+    if (FAILED(hr = d3drm_frame_create(&object, (IUnknown *)parent_frame, iface)))
+        return hr;
+
+    *frame = &object->IDirect3DRMFrame_iface;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm1_CreateMesh(IDirect3DRM *iface, IDirect3DRMMesh **mesh)
@@ -624,9 +632,18 @@ static HRESULT WINAPI d3drm2_CreateObject(IDirect3DRM2 *iface,
 static HRESULT WINAPI d3drm2_CreateFrame(IDirect3DRM2 *iface,
         IDirect3DRMFrame *parent_frame, IDirect3DRMFrame2 **frame)
 {
+    struct d3drm *d3drm = impl_from_IDirect3DRM2(iface);
+    struct d3drm_frame *object;
+    HRESULT hr;
+
     TRACE("iface %p, parent_frame %p, frame %p.\n", iface, parent_frame, frame);
 
-    return Direct3DRMFrame_create(&IID_IDirect3DRMFrame2, (IUnknown*)parent_frame, (IUnknown**)frame);
+    if (FAILED(hr = d3drm_frame_create(&object, (IUnknown *)parent_frame, &d3drm->IDirect3DRM_iface)))
+        return hr;
+
+    *frame = &object->IDirect3DRMFrame2_iface;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm2_CreateMesh(IDirect3DRM2 *iface, IDirect3DRMMesh **mesh)
@@ -1126,9 +1143,18 @@ static HRESULT WINAPI d3drm3_CreateObject(IDirect3DRM3 *iface,
 static HRESULT WINAPI d3drm3_CreateFrame(IDirect3DRM3 *iface,
         IDirect3DRMFrame3 *parent, IDirect3DRMFrame3 **frame)
 {
+    struct d3drm *d3drm = impl_from_IDirect3DRM3(iface);
+    struct d3drm_frame *object;
+    HRESULT hr;
+
     TRACE("iface %p, parent %p, frame %p.\n", iface, parent, frame);
 
-    return Direct3DRMFrame_create(&IID_IDirect3DRMFrame3, (IUnknown *)parent, (IUnknown **)frame);
+    if (FAILED(hr = d3drm_frame_create(&object, (IUnknown *)parent, &d3drm->IDirect3DRM_iface)))
+        return hr;
+
+    *frame = &object->IDirect3DRMFrame3_iface;
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm3_CreateMesh(IDirect3DRM3 *iface, IDirect3DRMMesh **mesh)
