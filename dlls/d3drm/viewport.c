@@ -29,17 +29,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
-struct d3drm_viewport
-{
-    struct d3drm_object obj;
-    IDirect3DRMViewport IDirect3DRMViewport_iface;
-    IDirect3DRMViewport2 IDirect3DRMViewport2_iface;
-    D3DVALUE back;
-    D3DVALUE front;
-    D3DVALUE field;
-    D3DRMPROJECTIONTYPE projection;
-};
-
 static inline struct d3drm_viewport *impl_from_IDirect3DRMViewport(IDirect3DRMViewport *iface)
 {
     return CONTAINING_RECORD(iface, struct d3drm_viewport, IDirect3DRMViewport_iface);
@@ -829,23 +818,21 @@ static const struct IDirect3DRMViewport2Vtbl d3drm_viewport2_vtbl =
     d3drm_viewport2_InverseTransformVectors,
 };
 
-HRESULT Direct3DRMViewport_create(REFIID riid, IUnknown **out)
+HRESULT d3drm_viewport_create(struct d3drm_viewport **viewport, IDirect3DRM *d3drm)
 {
     struct d3drm_viewport *object;
 
-    TRACE("riid %s, out %p.\n", debugstr_guid(riid), out);
+    TRACE("viewport %p, d3drm %p.\n", viewport, d3drm);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDirect3DRMViewport_iface.lpVtbl = &d3drm_viewport1_vtbl;
     object->IDirect3DRMViewport2_iface.lpVtbl = &d3drm_viewport2_vtbl;
+    object->d3drm = d3drm;
     d3drm_object_init(&object->obj);
 
-    if (IsEqualGUID(riid, &IID_IDirect3DRMViewport2))
-        *out = (IUnknown *)&object->IDirect3DRMViewport2_iface;
-    else
-        *out = (IUnknown *)&object->IDirect3DRMViewport_iface;
+    *viewport = object;
 
     return S_OK;
 }
