@@ -4545,7 +4545,6 @@ static void test_gethostbyname(void)
             }
         }
     }
-todo_wine
     ok (found_default, "failed to find the first IP from gethostbyname!\n");
 
 cleanup:
