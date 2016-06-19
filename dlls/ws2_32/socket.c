@@ -596,7 +596,7 @@ struct per_thread_data
 struct route {
     struct in_addr addr;
     IF_INDEX interface;
-    DWORD metric;
+    DWORD metric, default_route;
 };
 
 static INT num_startup;          /* reference counter */
@@ -6044,7 +6044,14 @@ struct WS_hostent* WINAPI WS_gethostbyaddr(const char *addr, int len, int type)
  */
 static int WS_compare_routes_by_metric_asc(const void *left, const void *right)
 {
-    return ((const struct route*)left)->metric - ((const struct route*)right)->metric;
+    const struct route *a = left, *b = right;
+    if (a->default_route && b->default_route)
+        return a->default_route - b->default_route;
+    if (a->default_route && !b->default_route)
+        return -1;
+    if (b->default_route && !a->default_route)
+        return 1;
+    return a->metric - b->metric;
 }
 
 /***********************************************************************
@@ -6061,7 +6068,7 @@ static int WS_compare_routes_by_metric_asc(const void *left, const void *right)
  */
 static struct WS_hostent* WS_get_local_ips( char *hostname )
 {
-    int numroutes = 0, i, j;
+    int numroutes = 0, i, j, default_routes = 0;
     DWORD n;
     PIP_ADAPTER_INFO adapters = NULL, k;
     struct WS_hostent *hostlist = NULL;
@@ -6088,10 +6095,13 @@ static struct WS_hostent* WS_get_local_ips( char *hostname )
     for (n = 0; n < routes->dwNumEntries; n++)
     {
         IF_INDEX ifindex;
-        DWORD ifmetric;
+        DWORD ifmetric, ifdefault = 0;
         BOOL exists = FALSE;
 
-        if (routes->table[n].u1.ForwardType != MIB_IPROUTE_TYPE_DIRECT)
+        /* Check if this is a default route (there may be more than one) */
+        if (!routes->table[n].dwForwardDest)
+            ifdefault = ++default_routes;
+        else if (routes->table[n].u1.ForwardType != MIB_IPROUTE_TYPE_DIRECT)
             continue;
         ifindex = routes->table[n].dwForwardIfIndex;
         ifmetric = routes->table[n].dwForwardMetric1;
@@ -6112,13 +6122,14 @@ static struct WS_hostent* WS_get_local_ips( char *hostname )
             goto cleanup; /* Memory allocation error, fail gracefully */
         route_addrs[numroutes].interface = ifindex;
         route_addrs[numroutes].metric = ifmetric;
+        route_addrs[numroutes].default_route = ifdefault;
         /* If no IP is found in the next step (for whatever reason)
          * then fall back to the magic loopback address.
          */
         memcpy(&(route_addrs[numroutes].addr.s_addr), magic_loopback_addr, 4);
         numroutes++;
     }
-   if (numroutes == 0)
+    if (numroutes == 0)
        goto cleanup; /* No routes, fall back to the Magic IP */
     /* Find the IP address associated with each found interface */
     for (i = 0; i < numroutes; i++)
