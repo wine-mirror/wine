@@ -46,6 +46,7 @@ struct ScriptControl {
     IOleControl IOleControl_iface;
     IQuickActivate IQuickActivate_iface;
     IViewObject IViewObject_iface;
+    IPointerInactive IPointerInactive_iface;
     IConnectionPointContainer IConnectionPointContainer_iface;
     LONG ref;
     IOleClientSite *site;
@@ -168,6 +169,11 @@ static inline ScriptControl *impl_from_IViewObject(IViewObject *iface)
     return CONTAINING_RECORD(iface, ScriptControl, IViewObject_iface);
 }
 
+static inline ScriptControl *impl_from_IPointerInactive(IPointerInactive *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptControl, IPointerInactive_iface);
+}
+
 static inline ScriptControl *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
 {
     return CONTAINING_RECORD(iface, ScriptControl, IConnectionPointContainer_iface);
@@ -209,6 +215,9 @@ static HRESULT WINAPI ScriptControl_QueryInterface(IScriptControl *iface, REFIID
     }else if(IsEqualGUID(&IID_IViewObject, riid)) {
         TRACE("(%p)->(IID_IViewObject %p)\n", This, ppv);
         *ppv = &This->IViewObject_iface;
+    }else if(IsEqualGUID(&IID_IPointerInactive, riid)) {
+        TRACE("(%p)->(IID_IPointerInactive %p)\n", This, ppv);
+        *ppv = &This->IPointerInactive_iface;
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
         *ppv = &This->IConnectionPointContainer_iface;
@@ -1047,6 +1056,62 @@ static const IViewObjectVtbl ViewObjectVtbl = {
     ViewObject_GetAdvise
 };
 
+static HRESULT WINAPI PointerInactive_QueryInterface(IPointerInactive *iface, REFIID riid, void **obj)
+{
+    ScriptControl *This = impl_from_IPointerInactive(iface);
+    return IScriptControl_QueryInterface(&This->IScriptControl_iface, riid, obj);
+}
+
+static ULONG WINAPI PointerInactive_AddRef(IPointerInactive *iface)
+{
+    ScriptControl *This = impl_from_IPointerInactive(iface);
+    return IScriptControl_AddRef(&This->IScriptControl_iface);
+}
+
+static ULONG WINAPI PointerInactive_Release(IPointerInactive *iface)
+{
+    ScriptControl *This = impl_from_IPointerInactive(iface);
+    return IScriptControl_Release(&This->IScriptControl_iface);
+}
+
+static HRESULT WINAPI PointerInactive_GetActivationPolicy(IPointerInactive *iface, DWORD *policy)
+{
+    ScriptControl *This = impl_from_IPointerInactive(iface);
+
+    FIXME("(%p)->(%p)\n", This, policy);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PointerInactive_OnInactiveMouseMove(IPointerInactive *iface, const RECT *bounds,
+    LONG x, LONG y, DWORD key_state)
+{
+    ScriptControl *This = impl_from_IPointerInactive(iface);
+
+    FIXME("(%p)->(%s %d %d %#x)\n", This, wine_dbgstr_rect(bounds), x, y, key_state);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PointerInactive_OnInactiveSetCursor(IPointerInactive *iface, const RECT *bounds,
+    LONG x, LONG y, DWORD msg, BOOL set_always)
+{
+    ScriptControl *This = impl_from_IPointerInactive(iface);
+
+    FIXME("(%p)->(%s %d %d %#x %d)\n", This, wine_dbgstr_rect(bounds), x, y, msg, set_always);
+
+    return E_NOTIMPL;
+}
+
+static const IPointerInactiveVtbl PointerInactiveVtbl = {
+    PointerInactive_QueryInterface,
+    PointerInactive_AddRef,
+    PointerInactive_Release,
+    PointerInactive_GetActivationPolicy,
+    PointerInactive_OnInactiveMouseMove,
+    PointerInactive_OnInactiveSetCursor
+};
+
 static HRESULT WINAPI ConnectionPointContainer_QueryInterface(IConnectionPointContainer *iface, REFIID riid, void **obj)
 {
     ScriptControl *This = impl_from_IConnectionPointContainer(iface);
@@ -1227,6 +1292,7 @@ static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknow
     script_control->IOleControl_iface.lpVtbl = &OleControlVtbl;
     script_control->IQuickActivate_iface.lpVtbl = &QuickActivateVtbl;
     script_control->IViewObject_iface.lpVtbl = &ViewObjectVtbl;
+    script_control->IPointerInactive_iface.lpVtbl = &PointerInactiveVtbl;
     script_control->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
     script_control->ref = 1;
     script_control->site = NULL;
