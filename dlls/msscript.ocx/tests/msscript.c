@@ -847,6 +847,7 @@ static void test_pointerinactive(void)
 {
     IPointerInactive *pi;
     IScriptControl *sc;
+    DWORD policy;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -855,6 +856,14 @@ static void test_pointerinactive(void)
 
     hr = IScriptControl_QueryInterface(sc, &IID_IPointerInactive, (void**)&pi);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    if (0) /* crashes w2k3 */
+        hr = IPointerInactive_GetActivationPolicy(pi, NULL);
+
+    policy = 123;
+    hr = IPointerInactive_GetActivationPolicy(pi, &policy);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(policy == 0, "got %#x\n", policy);
 
     IPointerInactive_Release(pi);
     IScriptControl_Release(sc);

@@ -1078,9 +1078,13 @@ static HRESULT WINAPI PointerInactive_GetActivationPolicy(IPointerInactive *ifac
 {
     ScriptControl *This = impl_from_IPointerInactive(iface);
 
-    FIXME("(%p)->(%p)\n", This, policy);
+    TRACE("(%p)->(%p)\n", This, policy);
 
-    return E_NOTIMPL;
+    if (!policy)
+        return E_POINTER;
+
+    *policy = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI PointerInactive_OnInactiveMouseMove(IPointerInactive *iface, const RECT *bounds,
