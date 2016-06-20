@@ -968,7 +968,7 @@ static BOOL pathdrv_Rectangle( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
  * else FALSE.
  */
 static BOOL PATH_Arc( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2,
-                      INT xStart, INT yStart, INT xEnd, INT yEnd, INT lines )
+                      INT xStart, INT yStart, INT xEnd, INT yEnd, int direction, int lines )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
     double angleStart, angleEnd, angleStartQuadrant, angleEndQuadrant=0.0;
@@ -977,7 +977,7 @@ static BOOL PATH_Arc( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2,
     FLOAT_POINT corners[2], pointStart, pointEnd;
     POINT centre;
     BOOL start, end;
-    INT temp, direction = GetArcDirection(dev->hdc);
+    INT temp;
 
    /* FIXME: Do we have to respect newStroke? */
 
@@ -1111,17 +1111,12 @@ static BOOL PATH_Arc( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2,
  */
 static BOOL pathdrv_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT eStartAngle, FLOAT eSweepAngle)
 {
-    INT x1, y1, x2, y2, arcdir;
-    BOOL ret;
-
-    x1 = GDI_ROUND( x + cos(eStartAngle*M_PI/180) * radius );
-    y1 = GDI_ROUND( y - sin(eStartAngle*M_PI/180) * radius );
-    x2 = GDI_ROUND( x + cos((eStartAngle+eSweepAngle)*M_PI/180) * radius );
-    y2 = GDI_ROUND( y - sin((eStartAngle+eSweepAngle)*M_PI/180) * radius );
-    arcdir = SetArcDirection( dev->hdc, eSweepAngle >= 0 ? AD_COUNTERCLOCKWISE : AD_CLOCKWISE);
-    ret = PATH_Arc( dev, x-radius, y-radius, x+radius, y+radius, x1, y1, x2, y2, -1 );
-    SetArcDirection( dev->hdc, arcdir );
-    return ret;
+    int x1 = GDI_ROUND( x + cos(eStartAngle*M_PI/180) * radius );
+    int y1 = GDI_ROUND( y - sin(eStartAngle*M_PI/180) * radius );
+    int x2 = GDI_ROUND( x + cos((eStartAngle+eSweepAngle)*M_PI/180) * radius );
+    int y2 = GDI_ROUND( y - sin((eStartAngle+eSweepAngle)*M_PI/180) * radius );
+    return PATH_Arc( dev, x-radius, y-radius, x+radius, y+radius, x1, y1, x2, y2,
+                     eSweepAngle >= 0 ? AD_COUNTERCLOCKWISE : AD_CLOCKWISE, -1 );
 }
 
 
@@ -1131,7 +1126,8 @@ static BOOL pathdrv_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT eSt
 static BOOL pathdrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                          INT xstart, INT ystart, INT xend, INT yend )
 {
-    return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend, 0 );
+    return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend,
+                     GetArcDirection( dev->hdc ), 0 );
 }
 
 
@@ -1141,7 +1137,8 @@ static BOOL pathdrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 static BOOL pathdrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                            INT xstart, INT ystart, INT xend, INT yend )
 {
-    return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend, -1 );
+    return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend,
+                     GetArcDirection( dev->hdc ), -1 );
 }
 
 
@@ -1151,7 +1148,8 @@ static BOOL pathdrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom
 static BOOL pathdrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                            INT xstart, INT ystart, INT xend, INT yend )
 {
-    return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend, 1);
+    return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend,
+                     GetArcDirection( dev->hdc ), 1 );
 }
 
 
@@ -1161,7 +1159,8 @@ static BOOL pathdrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom
 static BOOL pathdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                          INT xstart, INT ystart, INT xend, INT yend )
 {
-    return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend, 2 );
+    return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend,
+                     GetArcDirection( dev->hdc ), 2 );
 }
 
 
@@ -1170,7 +1169,7 @@ static BOOL pathdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
  */
 static BOOL pathdrv_Ellipse( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
 {
-    return PATH_Arc( dev, x1, y1, x2, y2, x1, (y1+y2)/2, x1, (y1+y2)/2, 0 ) && CloseFigure( dev->hdc );
+    return PATH_Arc( dev, x1, y1, x2, y2, x1, (y1+y2)/2, x1, (y1+y2)/2, GetArcDirection( dev->hdc ), 1 );
 }
 
 
