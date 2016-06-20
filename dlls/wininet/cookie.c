@@ -911,6 +911,7 @@ DWORD set_cookie(substr_t domain, substr_t path, substr_t name, substr_t data, D
         static const WCHAR szSecure[] = {'s','e','c','u','r','e'};
         static const WCHAR szHttpOnly[] = {'h','t','t','p','o','n','l','y'};
         static const WCHAR szVersion[] = {'v','e','r','s','i','o','n','='};
+        static const WCHAR max_ageW[] = {'m','a','x','-','a','g','e','='};
 
         /* Skip ';' */
         if(data.len)
@@ -976,9 +977,11 @@ DWORD set_cookie(substr_t domain, substr_t path, substr_t name, substr_t data, D
             substr_skip(&data, len);
 
             FIXME("version not handled (%s)\n",debugstr_wn(data.str, data.len));
+        }else if(data.len >= (len = sizeof(max_ageW)/sizeof(WCHAR)) && !strncmpiW(data.str, max_ageW, len)) {
+            /* Native doesn't support Max-Age attribute. */
+            WARN("Max-Age ignored\n");
         }else if(data.len) {
             FIXME("Unknown additional option %s\n", debugstr_wn(data.str, data.len));
-            break;
         }
 
         substr_skip(&data, end_ptr - data.str);
