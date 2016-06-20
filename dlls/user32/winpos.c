@@ -2095,7 +2095,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
         req->client.top    = client_rect->top;
         req->client.right  = client_rect->right;
         req->client.bottom = client_rect->bottom;
-        if (memcmp( window_rect, &visible_rect, sizeof(RECT) ) || !IsRectEmpty( &valid_rects[0] ))
+        if (!EqualRect( window_rect, &visible_rect ) || !IsRectEmpty( &valid_rects[0] ))
         {
             wine_server_add_data( req, &visible_rect, sizeof(visible_rect) );
             if (!IsRectEmpty( &valid_rects[0] ))
