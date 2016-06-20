@@ -1573,7 +1573,7 @@ REBAR_AutoSize(REBAR_INFO *infoPtr, BOOL needsLayout)
     GetClientRect(infoPtr->hwndSelf, &rcNew);
 
     GetClientRect(infoPtr->hwndSelf, &autosize.rcTarget);
-    autosize.fChanged = (memcmp(&rc, &rcNew, sizeof(RECT)) == 0);
+    autosize.fChanged = EqualRect(&rc, &rcNew);
     autosize.rcTarget = rc;
     autosize.rcActual = rcNew;
     REBAR_Notify((NMHDR *)&autosize, infoPtr, RBN_AUTOSIZE);
