@@ -1232,7 +1232,7 @@ static DWORD tbsize_alt_numtests = 0;
         for (i=0; i<min(buttonCount, res->nButtons); i++) { \
             ok(SendMessageA(hToolbar, TB_GETITEMRECT, i, (LPARAM)&rc) == 1, "TB_GETITEMRECT\n"); \
             if (broken(tbsize_alt_numtests < sizeof(tbsize_alt_results)/sizeof(tbsize_alt_results[0]) && \
-                       memcmp(&rc, &tbsize_alt_results[tbsize_alt_numtests].rcButton, sizeof(RECT)) == 0)) { \
+                       EqualRect(&rc, &tbsize_alt_results[tbsize_alt_numtests].rcButton))) { \
                 win_skip("Alternate rect found\n"); \
                 tbsize_alt_numtests++; \
             } else if (!(mask&1)) { \

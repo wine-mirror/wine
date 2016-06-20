@@ -908,7 +908,7 @@ static void test_images(void)
     r = SendMessageA(hwnd, LVM_GETITEMRECT, 0, (LPARAM) &r2);
     expect(1, r);
 
-    ok(!memcmp(&r1, &r2, sizeof r1), "rectangle should be the same\n");
+    ok(EqualRect(&r1, &r2), "rectangle should be the same\n");
 
     DestroyWindow(hwnd);
 }
