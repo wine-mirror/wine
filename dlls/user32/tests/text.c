@@ -146,8 +146,7 @@ static void test_DrawTextCalcRect(void)
     SetRect( &rect, 10,10, 100, 100);
     SetLastError( 0);
     heightcheck = textheight = DrawTextExA(hdc, NULL, -1, &rect, DT_CALCRECT, NULL );
-    ok( EMPTY(rect) || !MODIFIED(rect),
-        "rectangle should be empty or not modified got %d,%d-%d,%d\n", rect.left, rect.top, rect.right, rect.bottom );
+    ok(EMPTY(rect), "rectangle should be empty got %s\n", wine_dbgstr_rect(&rect));
     if (!textheight) /* Windows NT 4 */
     {
         if (conform_xp)
@@ -159,9 +158,7 @@ static void test_DrawTextCalcRect(void)
 
     SetRect( &rect, 10,10, 100, 100);
     textheight = DrawTextA(hdc, NULL, -1, &rect, DT_CALCRECT);
-    ok( EMPTY(rect) || !MODIFIED(rect),
-        "rectangle should be empty or NOT modified got %d,%d-%d,%d\n",
-        rect.left, rect.top, rect.right, rect.bottom );
+    ok(EMPTY(rect), "rectangle should be empty got %s\n", wine_dbgstr_rect(&rect));
     if (conform_xp)
         ok(textheight!=0,"Failed to get textheight from DrawTextA\n");
     ok(textheight == heightcheck,"DrawTextEx and DrawText differ in return\n");
@@ -218,16 +215,15 @@ static void test_DrawTextCalcRect(void)
     SetRect( &rect, 10,10, 100, 100);
     SetLastError( 0);
     heightcheck = textheight = DrawTextExA(hdc, NULL, -1, &rect, DT_CALCRECT|DT_SINGLELINE, NULL );
-    ok( (!EMPTY(rect) && MODIFIED(rect)) || !MODIFIED(rect),
-        "rectangle should be modified got %d,%d-%d,%d\n", rect.left, rect.top, rect.right, rect.bottom );
+    ok(!EMPTY(rect) && MODIFIED(rect), "rectangle should be modified got %s\n",
+       wine_dbgstr_rect(&rect));
     if (conform_xp)
         ok(textheight!=0,"Failed to get textheight from DrawTextExA\n");
 
     SetRect( &rect, 10,10, 100, 100);
     textheight = DrawTextA(hdc, NULL, -1, &rect, DT_CALCRECT|DT_SINGLELINE);
-    ok( (!EMPTY(rect) && MODIFIED(rect)) || !MODIFIED(rect),
-        "rectangle should be modified got %d,%d-%d,%d\n",
-        rect.left, rect.top, rect.right, rect.bottom );
+    ok(!EMPTY(rect) && MODIFIED(rect), "rectangle should be modified got %s\n",
+       wine_dbgstr_rect(&rect));
     if (conform_xp)
         ok(textheight!=0,"Failed to get textheight from DrawTextA\n");
     ok(textheight == heightcheck,"DrawTextEx and DrawText differ in return\n");
