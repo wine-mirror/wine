@@ -29,6 +29,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msscript);
 
+struct ScriptControl;
+typedef struct ConnectionPoint ConnectionPoint;
+
+struct ConnectionPoint {
+    IConnectionPoint IConnectionPoint_iface;
+    ScriptControl *control;
+    const IID *riid;
+    ConnectionPoint *next;
+};
+
 struct ScriptControl {
     IScriptControl IScriptControl_iface;
     IPersistStreamInit IPersistStreamInit_iface;
@@ -38,6 +48,11 @@ struct ScriptControl {
     LONG ref;
     IOleClientSite *site;
     SIZEL extent;
+
+    /* connection points */
+    ConnectionPoint *cp_list;
+    ConnectionPoint cp_scsource;
+    ConnectionPoint cp_propnotif;
 };
 
 static HINSTANCE msscript_instance;
@@ -144,6 +159,11 @@ static inline ScriptControl *impl_from_IOleControl(IOleControl *iface)
 static inline ScriptControl *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
 {
     return CONTAINING_RECORD(iface, ScriptControl, IConnectionPointContainer_iface);
+}
+
+static inline ConnectionPoint *impl_from_IConnectionPoint(IConnectionPoint *iface)
+{
+    return CONTAINING_RECORD(iface, ConnectionPoint, IConnectionPoint_iface);
 }
 
 static HRESULT WINAPI ScriptControl_QueryInterface(IScriptControl *iface, REFIID riid, void **ppv)
@@ -895,10 +915,24 @@ static HRESULT WINAPI ConnectionPointContainer_EnumConnectionPoints(IConnectionP
 static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPointContainer *iface, REFIID riid, IConnectionPoint **cp)
 {
     ScriptControl *This = impl_from_IConnectionPointContainer(iface);
+    ConnectionPoint *iter;
 
-    FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), cp);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), cp);
 
-    return E_NOTIMPL;
+    *cp = NULL;
+
+    for (iter = This->cp_list; iter; iter = iter->next) {
+        if (IsEqualIID(iter->riid, riid))
+            *cp = &iter->IConnectionPoint_iface;
+    }
+
+    if (*cp) {
+        IConnectionPoint_AddRef(*cp);
+        return S_OK;
+    }
+
+    FIXME("unsupported connection point %s\n", debugstr_guid(riid));
+    return CONNECT_E_NOCONNECTION;
 }
 
 static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl = {
@@ -908,6 +942,109 @@ static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl = {
     ConnectionPointContainer_EnumConnectionPoints,
     ConnectionPointContainer_FindConnectionPoint
 };
+
+static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface,
+        REFIID riid, void **ppv)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IConnectionPoint_iface;
+    }else if(IsEqualGUID(&IID_IConnectionPoint, riid)) {
+        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
+        *ppv = &This->IConnectionPoint_iface;
+    }else {
+        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI ConnectionPoint_AddRef(IConnectionPoint *iface)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    return IConnectionPointContainer_AddRef(&This->control->IConnectionPointContainer_iface);
+}
+
+static ULONG WINAPI ConnectionPoint_Release(IConnectionPoint *iface)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    return IConnectionPointContainer_Release(&This->control->IConnectionPointContainer_iface);
+}
+
+static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *iface, IID *iid)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+
+    FIXME("(%p)->(%p)\n", This, iid);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoint *iface,
+        IConnectionPointContainer **container)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+
+    FIXME("(%p)->(%p)\n", This, container);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *unk_sink,
+        DWORD *cookie)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+
+    FIXME("(%p)->(%p %p)\n", This, unk_sink, cookie);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD cookie)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+
+    FIXME("(%p)->(%d)\n", This, cookie);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPoint_EnumConnections(IConnectionPoint *iface,
+        IEnumConnections **ppEnum)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+
+    FIXME("(%p)->(%p): stub\n", This, ppEnum);
+
+    return E_NOTIMPL;
+}
+
+static const IConnectionPointVtbl ConnectionPointVtbl =
+{
+    ConnectionPoint_QueryInterface,
+    ConnectionPoint_AddRef,
+    ConnectionPoint_Release,
+    ConnectionPoint_GetConnectionInterface,
+    ConnectionPoint_GetConnectionPointContainer,
+    ConnectionPoint_Advise,
+    ConnectionPoint_Unadvise,
+    ConnectionPoint_EnumConnections
+};
+
+static void ConnectionPoint_Init(ConnectionPoint *cp, ScriptControl *sc, REFIID riid)
+{
+    cp->IConnectionPoint_iface.lpVtbl = &ConnectionPointVtbl;
+    cp->control = sc;
+    cp->riid = riid;
+
+    cp->next = sc->cp_list;
+    sc->cp_list = cp;
+}
 
 static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
 {
@@ -929,6 +1066,10 @@ static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknow
     script_control->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
     script_control->ref = 1;
     script_control->site = NULL;
+    script_control->cp_list = NULL;
+
+    ConnectionPoint_Init(&script_control->cp_scsource, script_control, &DIID_DScriptControlSource);
+    ConnectionPoint_Init(&script_control->cp_propnotif, script_control, &IID_IPropertyNotifySink);
 
     hdc = GetDC(0);
     dpi_x = GetDeviceCaps(hdc, LOGPIXELSX);

@@ -783,6 +783,7 @@ if (hr == S_OK)
 static void test_connectionpoints(void)
 {
     IConnectionPointContainer *container;
+    IConnectionPoint *cp;
     IScriptControl *sc;
     HRESULT hr;
 
@@ -795,6 +796,14 @@ static void test_connectionpoints(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     EXPECT_REF(sc, 2);
     EXPECT_REF(container, 2);
+
+    hr = IConnectionPointContainer_FindConnectionPoint(container, &IID_IPropertyNotifySink, &cp);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IConnectionPoint_Release(cp);
+
+    hr = IConnectionPointContainer_FindConnectionPoint(container, &DIID_DScriptControlSource, &cp);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IConnectionPoint_Release(cp);
 
     IConnectionPointContainer_Release(container);
     IScriptControl_Release(sc);
