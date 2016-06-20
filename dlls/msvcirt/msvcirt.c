@@ -1469,8 +1469,11 @@ int __thiscall strstreambuf_underflow(strstreambuf *this)
     if (this->base.gptr < this->base.egptr)
         return *this->base.gptr;
     /* extend the get area to include the characters written */
-    if (this->base.egptr < this->base.pptr)
+    if (this->base.egptr < this->base.pptr) {
+        this->base.gptr = this->base.base + (this->base.gptr - this->base.eback);
+        this->base.eback = this->base.base;
         this->base.egptr = this->base.pptr;
+    }
     return (this->base.gptr < this->base.egptr) ? *this->base.gptr : EOF;
 }
 
