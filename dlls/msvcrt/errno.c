@@ -433,6 +433,16 @@ void CDECL _seterrormode(int mode)
 void __cdecl MSVCRT__invalid_parameter(const MSVCRT_wchar_t *expr, const MSVCRT_wchar_t *func,
                                        const MSVCRT_wchar_t *file, unsigned int line, MSVCRT_uintptr_t arg)
 {
+#if _MSVCR_VER >= 140
+    thread_data_t *data = msvcrt_get_thread_data();
+
+    if (data->invalid_parameter_handler)
+    {
+        data->invalid_parameter_handler( expr, func, file, line, arg );
+        return;
+    }
+#endif
+
     if (invalid_parameter_handler) invalid_parameter_handler( expr, func, file, line, arg );
     else
     {
@@ -474,13 +484,14 @@ MSVCRT_invalid_parameter_handler CDECL _set_invalid_parameter_handler(
     return old;
 }
 
+#if _MSVCR_VER >= 140
 /*********************************************************************
  * _get_thread_local_invalid_parameter_handler (UCRTBASE.@)
  */
 MSVCRT_invalid_parameter_handler CDECL _get_thread_local_invalid_parameter_handler(void)
 {
-    FIXME(" stub\n");
-    return NULL;
+    TRACE("\n");
+    return msvcrt_get_thread_data()->invalid_parameter_handler;
 }
 
 /*********************************************************************
@@ -489,6 +500,12 @@ MSVCRT_invalid_parameter_handler CDECL _get_thread_local_invalid_parameter_handl
 MSVCRT_invalid_parameter_handler CDECL _set_thread_local_invalid_parameter_handler(
         MSVCRT_invalid_parameter_handler handler)
 {
-    FIXME("(%p) stub\n", handler);
-    return NULL;
+    thread_data_t *data = msvcrt_get_thread_data();
+    MSVCRT_invalid_parameter_handler old = data->invalid_parameter_handler;
+
+    TRACE("(%p)\n", handler);
+
+    data->invalid_parameter_handler = handler;
+    return old;
 }
+#endif

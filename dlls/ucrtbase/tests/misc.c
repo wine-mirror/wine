@@ -27,6 +27,33 @@
 #include <winbase.h>
 #include "wine/test.h"
 
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    expect_ ## func = TRUE
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT(func) \
+    do { \
+        CHECK_EXPECT2(func); \
+        expect_ ## func = FALSE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+DEFINE_EXPECT(global_invalid_parameter_handler);
+DEFINE_EXPECT(thread_invalid_parameter_handler);
+
 typedef int (CDECL *MSVCRT__onexit_t)(void);
 
 typedef struct MSVCRT__onexit_table_t
@@ -41,6 +68,11 @@ static int (CDECL *p_register_onexit_function)(MSVCRT__onexit_table_t *table, MS
 static int (CDECL *p_execute_onexit_table)(MSVCRT__onexit_table_t *table);
 static int (CDECL *p___fpe_flt_rounds)(void);
 static unsigned int (CDECL *p__controlfp)(unsigned int, unsigned int);
+static _invalid_parameter_handler (CDECL *p__set_invalid_parameter_handler)(_invalid_parameter_handler);
+static _invalid_parameter_handler (CDECL *p__get_invalid_parameter_handler)(void);
+static _invalid_parameter_handler (CDECL *p__set_thread_local_invalid_parameter_handler)(_invalid_parameter_handler);
+static _invalid_parameter_handler (CDECL *p__get_thread_local_invalid_parameter_handler)(void);
+static int (CDECL *p__ltoa_s)(LONG, char*, size_t, int);
 
 static void test__initialize_onexit_table(void)
 {
@@ -223,6 +255,63 @@ static void test___fpe_flt_rounds(void)
     ok(ret == 0, "__fpe_flt_rounds returned %d\n", ret);
 }
 
+static void __cdecl global_invalid_parameter_handler(
+        const wchar_t *expression, const wchar_t *function,
+        const wchar_t *file, unsigned line, uintptr_t arg)
+{
+    CHECK_EXPECT(global_invalid_parameter_handler);
+}
+
+static void __cdecl thread_invalid_parameter_handler(
+        const wchar_t *expression, const wchar_t *function,
+        const wchar_t *file, unsigned line, uintptr_t arg)
+{
+    CHECK_EXPECT(thread_invalid_parameter_handler);
+}
+
+static void test_invalid_parameter_handler(void)
+{
+    _invalid_parameter_handler ret;
+
+    ret = p__get_invalid_parameter_handler();
+    ok(!ret, "ret != NULL\n");
+
+    ret = p__get_thread_local_invalid_parameter_handler();
+    ok(!ret, "ret != NULL\n");
+
+    ret = p__set_thread_local_invalid_parameter_handler(thread_invalid_parameter_handler);
+    ok(!ret, "ret != NULL\n");
+
+    ret = p__get_thread_local_invalid_parameter_handler();
+    ok(ret == thread_invalid_parameter_handler, "ret = %p\n", ret);
+
+    ret = p__get_invalid_parameter_handler();
+    ok(!ret, "ret != NULL\n");
+
+    ret = p__set_invalid_parameter_handler(global_invalid_parameter_handler);
+    ok(!ret, "ret != NULL\n");
+
+    ret = p__get_invalid_parameter_handler();
+    ok(ret == global_invalid_parameter_handler, "ret = %p\n", ret);
+
+    ret = p__get_thread_local_invalid_parameter_handler();
+    ok(ret == thread_invalid_parameter_handler, "ret = %p\n", ret);
+
+    SET_EXPECT(thread_invalid_parameter_handler);
+    p__ltoa_s(0, NULL, 0, 0);
+    CHECK_CALLED(thread_invalid_parameter_handler);
+
+    ret = p__set_thread_local_invalid_parameter_handler(NULL);
+    ok(ret == thread_invalid_parameter_handler, "ret = %p\n", ret);
+
+    SET_EXPECT(global_invalid_parameter_handler);
+    p__ltoa_s(0, NULL, 0, 0);
+    CHECK_CALLED(global_invalid_parameter_handler);
+
+    ret = p__set_invalid_parameter_handler(NULL);
+    ok(ret == global_invalid_parameter_handler, "ret = %p\n", ret);
+}
+
 static BOOL init(void)
 {
     HMODULE module = LoadLibraryA("ucrtbase.dll");
@@ -237,6 +326,11 @@ static BOOL init(void)
     p_execute_onexit_table = (void*)GetProcAddress(module, "_execute_onexit_table");
     p___fpe_flt_rounds = (void*)GetProcAddress(module, "__fpe_flt_rounds");
     p__controlfp = (void*)GetProcAddress(module, "_controlfp");
+    p__set_invalid_parameter_handler = (void*)GetProcAddress(module, "_set_invalid_parameter_handler");
+    p__get_invalid_parameter_handler = (void*)GetProcAddress(module, "_get_invalid_parameter_handler");
+    p__set_thread_local_invalid_parameter_handler = (void*)GetProcAddress(module, "_set_thread_local_invalid_parameter_handler");
+    p__get_thread_local_invalid_parameter_handler = (void*)GetProcAddress(module, "_get_thread_local_invalid_parameter_handler");
+    p__ltoa_s = (void*)GetProcAddress(module, "_ltoa_s");
 
     return TRUE;
 }
@@ -246,6 +340,7 @@ START_TEST(misc)
     if(!init())
         return;
 
+    test_invalid_parameter_handler();
     test__initialize_onexit_table();
     test__register_onexit_function();
     test__execute_onexit_table();

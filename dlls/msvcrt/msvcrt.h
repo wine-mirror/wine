@@ -266,6 +266,9 @@ struct __thread_data {
     DWORD                           cached_cp;
     char                            cached_locale[131];
     void                           *unk10[100];
+#if _MSVCR_VER >= 140
+    MSVCRT_invalid_parameter_handler invalid_parameter_handler;
+#endif
 };
 
 typedef struct __thread_data thread_data_t;
