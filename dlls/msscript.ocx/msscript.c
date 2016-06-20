@@ -44,6 +44,7 @@ struct ScriptControl {
     IPersistStreamInit IPersistStreamInit_iface;
     IOleObject IOleObject_iface;
     IOleControl IOleControl_iface;
+    IQuickActivate IQuickActivate_iface;
     IConnectionPointContainer IConnectionPointContainer_iface;
     LONG ref;
     IOleClientSite *site;
@@ -156,6 +157,11 @@ static inline ScriptControl *impl_from_IOleControl(IOleControl *iface)
     return CONTAINING_RECORD(iface, ScriptControl, IOleControl_iface);
 }
 
+static inline ScriptControl *impl_from_IQuickActivate(IQuickActivate *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptControl, IQuickActivate_iface);
+}
+
 static inline ScriptControl *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
 {
     return CONTAINING_RECORD(iface, ScriptControl, IConnectionPointContainer_iface);
@@ -191,6 +197,9 @@ static HRESULT WINAPI ScriptControl_QueryInterface(IScriptControl *iface, REFIID
     }else if(IsEqualGUID(&IID_IOleControl, riid)) {
         TRACE("(%p)->(IID_IOleControl %p)\n", This, ppv);
         *ppv = &This->IOleControl_iface;
+    }else if(IsEqualGUID(&IID_IQuickActivate, riid)) {
+        TRACE("(%p)->(IID_IQuickActivate %p)\n", This, ppv);
+        *ppv = &This->IQuickActivate_iface;
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
         *ppv = &This->IConnectionPointContainer_iface;
@@ -885,6 +894,60 @@ static const IOleControlVtbl OleControlVtbl = {
     OleControl_FreezeEvents
 };
 
+static HRESULT WINAPI QuickActivate_QueryInterface(IQuickActivate *iface, REFIID riid, void **obj)
+{
+    ScriptControl *This = impl_from_IQuickActivate(iface);
+    return IScriptControl_QueryInterface(&This->IScriptControl_iface, riid, obj);
+}
+
+static ULONG WINAPI QuickActivate_AddRef(IQuickActivate *iface)
+{
+    ScriptControl *This = impl_from_IQuickActivate(iface);
+    return IScriptControl_AddRef(&This->IScriptControl_iface);
+}
+
+static ULONG WINAPI QuickActivate_Release(IQuickActivate *iface)
+{
+    ScriptControl *This = impl_from_IQuickActivate(iface);
+    return IScriptControl_Release(&This->IScriptControl_iface);
+}
+
+static HRESULT WINAPI QuickActivate_QuickActivate(IQuickActivate *iface, QACONTAINER *container, QACONTROL *control)
+{
+    ScriptControl *This = impl_from_IQuickActivate(iface);
+
+    FIXME("(%p)->(%p %p)\n", This, container, control);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI QuickActivate_SetContentExtent(IQuickActivate *iface, SIZEL *size)
+{
+    ScriptControl *This = impl_from_IQuickActivate(iface);
+
+    FIXME("(%p)->(%p)\n", This, size);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI QuickActivate_GetContentExtent(IQuickActivate *iface, SIZEL *size)
+{
+    ScriptControl *This = impl_from_IQuickActivate(iface);
+
+    FIXME("(%p)->(%p)\n", This, size);
+
+    return E_NOTIMPL;
+}
+
+static const IQuickActivateVtbl QuickActivateVtbl = {
+    QuickActivate_QueryInterface,
+    QuickActivate_AddRef,
+    QuickActivate_Release,
+    QuickActivate_QuickActivate,
+    QuickActivate_SetContentExtent,
+    QuickActivate_GetContentExtent
+};
+
 static HRESULT WINAPI ConnectionPointContainer_QueryInterface(IConnectionPointContainer *iface, REFIID riid, void **obj)
 {
     ScriptControl *This = impl_from_IConnectionPointContainer(iface);
@@ -1063,6 +1126,7 @@ static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknow
     script_control->IPersistStreamInit_iface.lpVtbl = &PersistStreamInitVtbl;
     script_control->IOleObject_iface.lpVtbl = &OleObjectVtbl;
     script_control->IOleControl_iface.lpVtbl = &OleControlVtbl;
+    script_control->IQuickActivate_iface.lpVtbl = &QuickActivateVtbl;
     script_control->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
     script_control->ref = 1;
     script_control->site = NULL;
