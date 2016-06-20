@@ -88,6 +88,7 @@ struct gdi_path
     int          count;
     int          allocated;
     BOOL         newStroke;
+    POINT        pos;         /* current cursor position */
 };
 
 struct path_physdev
@@ -129,6 +130,7 @@ static struct gdi_path *alloc_gdi_path( int count )
     path->count = 0;
     path->allocated = count;
     path->newStroke = TRUE;
+    path->pos.x = path->pos.y = 0;
     return path;
 }
 
@@ -143,6 +145,7 @@ static struct gdi_path *copy_gdi_path( const struct gdi_path *src_path )
     }
     path->count = path->allocated = src_path->count;
     path->newStroke = src_path->newStroke;
+    path->pos = src_path->pos;
     path->points = HeapAlloc( GetProcessHeap(), 0, path->count * sizeof(*path->points) );
     path->flags = HeapAlloc( GetProcessHeap(), 0, path->count * sizeof(*path->flags) );
     if (!path->points || !path->flags)
@@ -276,7 +279,6 @@ static BYTE *add_points( struct gdi_path *path, const POINT *points, DWORD count
 /* start a new path stroke if necessary */
 static BOOL start_new_stroke( struct path_physdev *physdev )
 {
-    POINT pos;
     struct gdi_path *path = physdev->path;
 
     if (!path->newStroke && path->count &&
@@ -284,8 +286,14 @@ static BOOL start_new_stroke( struct path_physdev *physdev )
         return TRUE;
 
     path->newStroke = FALSE;
-    GetCurrentPositionEx( physdev->dev.hdc, &pos );
-    return add_log_points( physdev, &pos, 1, PT_MOVETO ) != NULL;
+    return add_points( physdev->path, &path->pos, 1, PT_MOVETO ) != NULL;
+}
+
+/* set current position to the last point that was added to the path */
+static void update_current_pos( struct gdi_path *path )
+{
+    assert( path->count );
+    path->pos = path->points[path->count - 1];
 }
 
 /* close the current figure */
@@ -301,6 +309,7 @@ static BOOL add_log_points_new_stroke( struct path_physdev *physdev, const POINT
 {
     if (!start_new_stroke( physdev )) return FALSE;
     if (!add_log_points( physdev, points, count, type )) return FALSE;
+    update_current_pos( physdev->path );
     return TRUE;
 }
 
@@ -850,6 +859,9 @@ static BOOL pathdrv_MoveTo( PHYSDEV dev, INT x, INT y )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
     physdev->path->newStroke = TRUE;
+    physdev->path->pos.x = x;
+    physdev->path->pos.y = y;
+    LPtoDP( physdev->dev.hdc, &physdev->path->pos, 1 );
     return TRUE;
 }
 
@@ -1077,6 +1089,9 @@ static BOOL PATH_Arc( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2,
    /* chord: close figure. pie: add line and close figure */
    switch (lines)
    {
+   case -1:
+       update_current_pos( physdev->path );
+       break;
    case 1:
        close_figure( physdev->path );
        break;
@@ -1907,6 +1922,9 @@ BOOL nulldrv_BeginPath( PHYSDEV dev )
     }
     physdev = get_path_physdev( find_dc_driver( dc, &path_driver ));
     physdev->path = path;
+    path->pos.x = dc->CursPosX;
+    path->pos.y = dc->CursPosY;
+    LPtoDP( dev->hdc, &path->pos, 1 );
     if (dc->path) free_gdi_path( dc->path );
     dc->path = NULL;
     return TRUE;
