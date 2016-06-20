@@ -1271,7 +1271,7 @@ static void compare_bounds( HDC hdc, const char *info )
         current_bounds->right == -1 &&
         current_bounds->bottom == -1)
     {
-        ok( 0, "missing bounds, got { %d, %d, %d, %d },\n", rect.left, rect.top, rect.right, rect.bottom );
+        ok( 0, "missing bounds, got %s,\n", wine_dbgstr_rect( &rect ));
         return;
     }
 

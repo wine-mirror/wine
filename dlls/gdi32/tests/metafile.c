@@ -2508,16 +2508,15 @@ static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
 
         rgn1 = (const union _rgn *)clip->RgnData;
 
-        trace("size %u, type %u, count %u, rgn size %u, bound (%d,%d-%d,%d)\n",
+        trace("size %u, type %u, count %u, rgn size %u, bound %s\n",
               rgn1->data.rdh.dwSize, rgn1->data.rdh.iType,
               rgn1->data.rdh.nCount, rgn1->data.rdh.nRgnSize,
-              rgn1->data.rdh.rcBound.left, rgn1->data.rdh.rcBound.top,
-              rgn1->data.rdh.rcBound.right, rgn1->data.rdh.rcBound.bottom);
+              wine_dbgstr_rect(&rgn1->data.rdh.rcBound));
 
         ok(EqualRect(&rgn1->data.rdh.rcBound, rc), "rects don't match\n");
 
         rect = *(const RECT *)rgn1->data.Buffer;
-        trace("rect (%d,%d-%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom);
+        trace("rect %s\n", wine_dbgstr_rect(&rect));
         ok(EqualRect(&rect, rc), "rects don't match\n");
 
         ok(rgn1->data.rdh.dwSize == sizeof(rgn1->data.rdh), "expected sizeof(rdh), got %u\n", rgn1->data.rdh.dwSize);
@@ -2555,25 +2554,21 @@ static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         ret = GetRegionData(hrgn, sizeof(rgn2), &rgn2.data);
         ok(ret == sizeof(rgn2), "expected sizeof(rgn2), got %u\n", ret);
 
-        trace("size %u, type %u, count %u, rgn size %u, bound (%d,%d-%d,%d)\n",
-              rgn2.data.rdh.dwSize, rgn2.data.rdh.iType,
-              rgn2.data.rdh.nCount, rgn2.data.rdh.nRgnSize,
-              rgn2.data.rdh.rcBound.left, rgn2.data.rdh.rcBound.top,
-              rgn2.data.rdh.rcBound.right, rgn2.data.rdh.rcBound.bottom);
+        trace("size %u, type %u, count %u, rgn size %u, bound %s\n", rgn2.data.rdh.dwSize,
+              rgn2.data.rdh.iType, rgn2.data.rdh.nCount, rgn2.data.rdh.nRgnSize,
+              wine_dbgstr_rect(&rgn2.data.rdh.rcBound));
 
         rect = rgn2.data.rdh.rcBound;
         rc_transformed = *rc;
         translate((POINT *)&rc_transformed, 2, &xform);
-        trace("transformed (%d,%d-%d,%d)\n", rc_transformed.left, rc_transformed.top,
-              rc_transformed.right, rc_transformed.bottom);
+        trace("transformed %s\n", wine_dbgstr_rect(&rc_transformed));
         ok(is_equal_rect(&rect, &rc_transformed), "rects don't match\n");
 
         rect = *(const RECT *)rgn2.data.Buffer;
-        trace("rect (%d,%d-%d,%d)\n", rect.left, rect.top, rect.right, rect.bottom);
+        trace("rect %s\n", wine_dbgstr_rect(&rect));
         rc_transformed = *rc;
         translate((POINT *)&rc_transformed, 2, &xform);
-        trace("transformed (%d,%d-%d,%d)\n", rc_transformed.left, rc_transformed.top,
-              rc_transformed.right, rc_transformed.bottom);
+        trace("transformed %s\n", wine_dbgstr_rect(&rc_transformed));
         ok(is_equal_rect(&rect, &rc_transformed), "rects don't match\n");
 
         ok(rgn2.data.rdh.dwSize == sizeof(rgn1->data.rdh), "expected sizeof(rdh), got %u\n", rgn2.data.rdh.dwSize);
@@ -2645,10 +2640,8 @@ static void test_emf_clipping(void)
     SetRect(&rc_res, -1, -1, -1, -1);
     ret = GetClipBox(hdc, &rc_res);
     ok(ret == SIMPLEREGION, "got %d\n", ret);
-    ok(EqualRect(&rc_res, &rc_sclip),
-       "expected (%d,%d)-(%d,%d), got (%d,%d)-(%d,%d)\n",
-       rc_sclip.left, rc_sclip.top, rc_sclip.right, rc_sclip.bottom,
-       rc_res.left, rc_res.top, rc_res.right, rc_res.bottom);
+    ok(EqualRect(&rc_res, &rc_sclip), "expected %s, got %s\n", wine_dbgstr_rect(&rc_sclip),
+       wine_dbgstr_rect(&rc_res));
 
     OffsetRect(&rc_sclip, -100, -100);
     ret = OffsetClipRgn(hdc, -100, -100);
@@ -2656,10 +2649,8 @@ static void test_emf_clipping(void)
     SetRect(&rc_res, -1, -1, -1, -1);
     ret = GetClipBox(hdc, &rc_res);
     ok(ret == SIMPLEREGION, "got %d\n", ret);
-    ok(EqualRect(&rc_res, &rc_sclip),
-       "expected (%d,%d)-(%d,%d), got (%d,%d)-(%d,%d)\n",
-       rc_sclip.left, rc_sclip.top, rc_sclip.right, rc_sclip.bottom,
-       rc_res.left, rc_res.top, rc_res.right, rc_res.bottom);
+    ok(EqualRect(&rc_res, &rc_sclip), "expected %s, got %s\n", wine_dbgstr_rect(&rc_sclip),
+       wine_dbgstr_rect(&rc_res));
 
     ret = IntersectClipRect(hdc, 0, 0, 100, 100);
     ok(ret == SIMPLEREGION || broken(ret == COMPLEXREGION) /* XP */, "got %d\n", ret);
@@ -2674,10 +2665,8 @@ static void test_emf_clipping(void)
     SetRect(&rc_res, -1, -1, -1, -1);
     ret = GetClipBox(hdc, &rc_res);
     ok(ret == SIMPLEREGION, "got %d\n", ret);
-    ok(EqualRect(&rc_res, &rc),
-       "expected (%d,%d)-(%d,%d), got (%d,%d)-(%d,%d)\n",
-       rc.left, rc.top, rc.right, rc.bottom,
-       rc_res.left, rc_res.top, rc_res.right, rc_res.bottom);
+    ok(EqualRect(&rc_res, &rc), "expected %s, got %s\n", wine_dbgstr_rect(&rc),
+       wine_dbgstr_rect(&rc_res));
 
     SetRect(&rc_sclip, 0, 0, 100, 50);
     ret = ExcludeClipRect(hdc, 0, 50, 100, 100);
@@ -2693,10 +2682,8 @@ static void test_emf_clipping(void)
     SetRect(&rc_res, -1, -1, -1, -1);
     ret = GetClipBox(hdc, &rc_res);
     ok(ret == SIMPLEREGION, "got %d\n", ret);
-    ok(EqualRect(&rc_res, &rc_sclip),
-       "expected (%d,%d)-(%d,%d), got (%d,%d)-(%d,%d)\n",
-       rc_sclip.left, rc_sclip.top, rc_sclip.right, rc_sclip.bottom,
-       rc_res.left, rc_res.top, rc_res.right, rc_res.bottom);
+    ok(EqualRect(&rc_res, &rc_sclip), "expected %s, got %s\n", wine_dbgstr_rect(&rc_sclip),
+       wine_dbgstr_rect(&rc_res));
 
     hemf = CloseEnhMetaFile(hdc);
     DeleteEnhMetaFile(hemf);
