@@ -826,6 +826,23 @@ static void test_quickactivate(void)
     IScriptControl_Release(sc);
 }
 
+static void test_viewobject(void)
+{
+    IScriptControl *sc;
+    IViewObject *view;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IScriptControl, (void**)&sc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_QueryInterface(sc, &IID_IViewObject, (void**)&view);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IViewObject_Release(view);
+    IScriptControl_Release(sc);
+}
+
 START_TEST(msscript)
 {
     IUnknown *unk;
@@ -847,6 +864,7 @@ START_TEST(msscript)
     test_Language();
     test_connectionpoints();
     test_quickactivate();
+    test_viewobject();
 
     CoUninitialize();
 }

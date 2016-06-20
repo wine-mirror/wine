@@ -45,6 +45,7 @@ struct ScriptControl {
     IOleObject IOleObject_iface;
     IOleControl IOleControl_iface;
     IQuickActivate IQuickActivate_iface;
+    IViewObject IViewObject_iface;
     IConnectionPointContainer IConnectionPointContainer_iface;
     LONG ref;
     IOleClientSite *site;
@@ -162,6 +163,11 @@ static inline ScriptControl *impl_from_IQuickActivate(IQuickActivate *iface)
     return CONTAINING_RECORD(iface, ScriptControl, IQuickActivate_iface);
 }
 
+static inline ScriptControl *impl_from_IViewObject(IViewObject *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptControl, IViewObject_iface);
+}
+
 static inline ScriptControl *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
 {
     return CONTAINING_RECORD(iface, ScriptControl, IConnectionPointContainer_iface);
@@ -200,6 +206,9 @@ static HRESULT WINAPI ScriptControl_QueryInterface(IScriptControl *iface, REFIID
     }else if(IsEqualGUID(&IID_IQuickActivate, riid)) {
         TRACE("(%p)->(IID_IQuickActivate %p)\n", This, ppv);
         *ppv = &This->IQuickActivate_iface;
+    }else if(IsEqualGUID(&IID_IViewObject, riid)) {
+        TRACE("(%p)->(IID_IViewObject %p)\n", This, ppv);
+        *ppv = &This->IViewObject_iface;
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
         *ppv = &This->IConnectionPointContainer_iface;
@@ -948,6 +957,96 @@ static const IQuickActivateVtbl QuickActivateVtbl = {
     QuickActivate_GetContentExtent
 };
 
+static HRESULT WINAPI ViewObject_QueryInterface(IViewObject *iface, REFIID riid, void **obj)
+{
+    ScriptControl *This = impl_from_IViewObject(iface);
+    return IScriptControl_QueryInterface(&This->IScriptControl_iface, riid, obj);
+}
+
+static ULONG WINAPI ViewObject_AddRef(IViewObject *iface)
+{
+    ScriptControl *This = impl_from_IViewObject(iface);
+    return IScriptControl_AddRef(&This->IScriptControl_iface);
+}
+
+static ULONG WINAPI ViewObject_Release(IViewObject *iface)
+{
+    ScriptControl *This = impl_from_IViewObject(iface);
+    return IScriptControl_Release(&This->IScriptControl_iface);
+}
+
+static HRESULT WINAPI ViewObject_Draw(IViewObject *iface, DWORD drawaspect, LONG index, void *aspect,
+    DVTARGETDEVICE *device, HDC target_dev, HDC hdc_draw, const RECTL *bounds, const RECTL *win_bounds,
+    BOOL (STDMETHODCALLTYPE *fn_continue)(ULONG_PTR cont), ULONG_PTR cont)
+{
+    ScriptControl *This = impl_from_IViewObject(iface);
+
+    FIXME("(%p)->(%d %d %p %p %p %p %p %p %p %lu)\n", This, drawaspect, index, aspect, device, target_dev,
+        hdc_draw, bounds, win_bounds, fn_continue, cont);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObject_GetColorSet(IViewObject *iface, DWORD drawaspect, LONG index, void *aspect,
+    DVTARGETDEVICE *device, HDC hic_target, LOGPALETTE **colorset)
+{
+    ScriptControl *This = impl_from_IViewObject(iface);
+
+    FIXME("(%p)->(%d %d %p %p %p %p)\n", This, drawaspect, index, aspect, device, hic_target,
+        colorset);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObject_Freeze(IViewObject *iface, DWORD drawaspect, LONG index, void *aspect,
+    DWORD *freeze)
+{
+    ScriptControl *This = impl_from_IViewObject(iface);
+
+    FIXME("(%p)->(%d %d %p %p)\n", This, drawaspect, index, aspect, freeze);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObject_Unfreeze(IViewObject *iface, DWORD freeze)
+{
+    ScriptControl *This = impl_from_IViewObject(iface);
+
+    FIXME("(%p)->(%d)\n", This, freeze);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObject_SetAdvise(IViewObject *iface, DWORD aspects, DWORD advf, IAdviseSink *sink)
+{
+    ScriptControl *This = impl_from_IViewObject(iface);
+
+    FIXME("(%p)->(%d %d %p)\n", This, aspects, advf, sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObject_GetAdvise(IViewObject *iface, DWORD *aspects, DWORD *advf, IAdviseSink **sink)
+{
+    ScriptControl *This = impl_from_IViewObject(iface);
+
+    FIXME("(%p)->(%p %p %p)\n", This, aspects, advf, sink);
+
+    return E_NOTIMPL;
+}
+
+static const IViewObjectVtbl ViewObjectVtbl = {
+    ViewObject_QueryInterface,
+    ViewObject_AddRef,
+    ViewObject_Release,
+    ViewObject_Draw,
+    ViewObject_GetColorSet,
+    ViewObject_Freeze,
+    ViewObject_Unfreeze,
+    ViewObject_SetAdvise,
+    ViewObject_GetAdvise
+};
+
 static HRESULT WINAPI ConnectionPointContainer_QueryInterface(IConnectionPointContainer *iface, REFIID riid, void **obj)
 {
     ScriptControl *This = impl_from_IConnectionPointContainer(iface);
@@ -1127,6 +1226,7 @@ static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknow
     script_control->IOleObject_iface.lpVtbl = &OleObjectVtbl;
     script_control->IOleControl_iface.lpVtbl = &OleControlVtbl;
     script_control->IQuickActivate_iface.lpVtbl = &QuickActivateVtbl;
+    script_control->IViewObject_iface.lpVtbl = &ViewObjectVtbl;
     script_control->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
     script_control->ref = 1;
     script_control->site = NULL;
