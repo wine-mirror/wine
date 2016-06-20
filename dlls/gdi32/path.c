@@ -258,6 +258,21 @@ static BYTE *add_log_points( struct path_physdev *physdev, const POINT *points, 
     return ret;
 }
 
+/* add a number of points that are already in device coords */
+/* return a pointer to the first type byte so it can be fixed up if necessary */
+static BYTE *add_points( struct gdi_path *path, const POINT *points, DWORD count, BYTE type )
+{
+    BYTE *ret;
+
+    if (!PATH_ReserveEntries( path, path->count + count )) return NULL;
+
+    ret = &path->flags[path->count];
+    memcpy( &path->points[path->count], points, count * sizeof(*points) );
+    memset( ret, type, count );
+    path->count += count;
+    return ret;
+}
+
 /* start a new path stroke if necessary */
 static BOOL start_new_stroke( struct path_physdev *physdev )
 {
@@ -271,6 +286,22 @@ static BOOL start_new_stroke( struct path_physdev *physdev )
     path->newStroke = FALSE;
     GetCurrentPositionEx( physdev->dev.hdc, &pos );
     return add_log_points( physdev, &pos, 1, PT_MOVETO ) != NULL;
+}
+
+/* close the current figure */
+static void close_figure( struct gdi_path *path )
+{
+    assert( path->count );
+    path->flags[path->count - 1] |= PT_CLOSEFIGURE;
+}
+
+/* add a number of points, starting a new stroke if necessary */
+static BOOL add_log_points_new_stroke( struct path_physdev *physdev, const POINT *points,
+                                       DWORD count, BYTE type )
+{
+    if (!start_new_stroke( physdev )) return FALSE;
+    if (!add_log_points( physdev, points, count, type )) return FALSE;
+    return TRUE;
 }
 
 /* convert a (flattened) path to a region */
@@ -341,15 +372,16 @@ static void PATH_CheckCorners( HDC hdc, POINT corners[], INT x1, INT y1, INT x2,
 static BOOL PATH_AddFlatBezier(struct gdi_path *pPath, POINT *pt, BOOL closed)
 {
     POINT *pts;
-    INT no, i;
+    BOOL ret;
+    INT no;
 
     pts = GDI_Bezier( pt, 4, &no );
     if(!pts) return FALSE;
 
-    for(i = 1; i < no; i++)
-        PATH_AddEntry(pPath, &pts[i], (i == no-1 && closed) ? PT_LINETO | PT_CLOSEFIGURE : PT_LINETO);
+    ret = (add_points( pPath, pts + 1, no - 1, PT_LINETO ) != NULL);
+    if (ret && closed) close_figure( pPath );
     HeapFree( GetProcessHeap(), 0, pts );
-    return TRUE;
+    return ret;
 }
 
 /* PATH_FlattenPath
@@ -429,8 +461,9 @@ static BOOL PATH_DoArcPart(struct gdi_path *pPath, FLOAT_POINT corners[],
 {
     double  halfAngle, a;
     double  xNorm[4], yNorm[4];
-    POINT point;
-    int     i;
+    POINT points[4];
+    BYTE *type;
+    int i, start;
 
     assert(fabs(angleEnd-angleStart)<=M_PI_2);
 
@@ -458,21 +491,10 @@ static BOOL PATH_DoArcPart(struct gdi_path *pPath, FLOAT_POINT corners[],
         }
 
     /* Add starting point to path if desired */
-    if(startEntryType)
-    {
-        PATH_ScaleNormalizedPoint(corners, xNorm[0], yNorm[0], &point);
-        if(!PATH_AddEntry(pPath, &point, startEntryType))
-            return FALSE;
-    }
-
-    /* Add remaining control points */
-    for(i=1; i<4; i++)
-    {
-        PATH_ScaleNormalizedPoint(corners, xNorm[i], yNorm[i], &point);
-        if(!PATH_AddEntry(pPath, &point, PT_BEZIERTO))
-            return FALSE;
-    }
-
+    start = !startEntryType;
+    for (i = start; i < 4; i++) PATH_ScaleNormalizedPoint(corners, xNorm[i], yNorm[i], &points[i]);
+    if (!(type = add_points( pPath, points + start, 4 - start, PT_BEZIERTO ))) return FALSE;
+    if (!start) type[0] = startEntryType;
     return TRUE;
 }
 
@@ -840,10 +862,9 @@ static BOOL pathdrv_LineTo( PHYSDEV dev, INT x, INT y )
     struct path_physdev *physdev = get_path_physdev( dev );
     POINT point;
 
-    if (!start_new_stroke( physdev )) return FALSE;
     point.x = x;
     point.y = y;
-    return add_log_points( physdev, &point, 1, PT_LINETO ) != NULL;
+    return add_log_points_new_stroke( physdev, &point, 1, PT_LINETO );
 }
 
 
@@ -875,7 +896,7 @@ static BOOL pathdrv_RoundRect( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2, INT 
       return FALSE;
    ellCorners[0].x = corners[0].x;
    ellCorners[1].x = corners[0].x+ell_width;
-   if(!PATH_DoArcPart(physdev->path, ellCorners, -M_PI_2, -M_PI, FALSE))
+   if(!PATH_DoArcPart(physdev->path, ellCorners, -M_PI_2, -M_PI, 0))
       return FALSE;
    pointTemp.x = corners[0].x;
    pointTemp.y = corners[1].y-ell_height/2;
@@ -883,7 +904,7 @@ static BOOL pathdrv_RoundRect( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2, INT 
       return FALSE;
    ellCorners[0].y = corners[1].y-ell_height;
    ellCorners[1].y = corners[1].y;
-   if(!PATH_DoArcPart(physdev->path, ellCorners, M_PI, M_PI_2, FALSE))
+   if(!PATH_DoArcPart(physdev->path, ellCorners, M_PI, M_PI_2, 0))
       return FALSE;
    pointTemp.x = corners[1].x-ell_width/2;
    pointTemp.y = corners[1].y;
@@ -891,11 +912,12 @@ static BOOL pathdrv_RoundRect( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2, INT 
       return FALSE;
    ellCorners[0].x = corners[1].x-ell_width;
    ellCorners[1].x = corners[1].x;
-   if(!PATH_DoArcPart(physdev->path, ellCorners, M_PI_2, 0, FALSE))
+   if(!PATH_DoArcPart(physdev->path, ellCorners, M_PI_2, 0, 0))
       return FALSE;
 
    /* Close the roundrect figure */
-   return CloseFigure( dev->hdc );
+   close_figure( physdev->path );
+   return TRUE;
 }
 
 
@@ -905,26 +927,21 @@ static BOOL pathdrv_RoundRect( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2, INT 
 static BOOL pathdrv_Rectangle( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
-    POINT corners[2], pointTemp;
+    POINT corners[2], points[4];
+    BYTE *type;
 
     PATH_CheckCorners(dev->hdc,corners,x1,y1,x2,y2);
 
-   /* Add four points to the path */
-   pointTemp.x=corners[1].x;
-   pointTemp.y=corners[0].y;
-   if(!PATH_AddEntry(physdev->path, &pointTemp, PT_MOVETO))
-      return FALSE;
-   if(!PATH_AddEntry(physdev->path, corners, PT_LINETO))
-      return FALSE;
-   pointTemp.x=corners[0].x;
-   pointTemp.y=corners[1].y;
-   if(!PATH_AddEntry(physdev->path, &pointTemp, PT_LINETO))
-      return FALSE;
-   if(!PATH_AddEntry(physdev->path, corners+1, PT_LINETO))
-      return FALSE;
-
-   /* Close the rectangle figure */
-   return CloseFigure( dev->hdc );
+    points[0].x = corners[1].x;
+    points[0].y = corners[0].y;
+    points[1]   = corners[0];
+    points[2].x = corners[0].x;
+    points[2].y = corners[1].y;
+    points[3]   = corners[1];
+    if (!(type = add_points( physdev->path, points, 4, PT_LINETO ))) return FALSE;
+    type[0] = PT_MOVETO;
+    type[3] |= PT_CLOSEFIGURE;
+    return TRUE;
 }
 
 
@@ -1053,23 +1070,23 @@ static BOOL PATH_Arc( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2,
 
       /* Add the Bezier spline to the path */
       PATH_DoArcPart(physdev->path, corners, angleStartQuadrant, angleEndQuadrant,
-         start ? (lines==-1 ? PT_LINETO : PT_MOVETO) : FALSE);
+         start ? (lines==-1 ? PT_LINETO : PT_MOVETO) : 0);
       start=FALSE;
    }  while(!end);
 
    /* chord: close figure. pie: add line and close figure */
-   if(lines==1)
+   switch (lines)
    {
-      return CloseFigure(dev->hdc);
-   }
-   else if(lines==2)
-   {
+   case 1:
+       close_figure( physdev->path );
+       break;
+   case 2:
       centre.x = (corners[0].x+corners[1].x)/2;
       centre.y = (corners[0].y+corners[1].y)/2;
       if(!PATH_AddEntry(physdev->path, &centre, PT_LINETO | PT_CLOSEFIGURE))
          return FALSE;
+      break;
    }
-
    return TRUE;
 }
 
@@ -1149,8 +1166,7 @@ static BOOL pathdrv_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD cbPoints 
 {
     struct path_physdev *physdev = get_path_physdev( dev );
 
-    if (!start_new_stroke( physdev )) return FALSE;
-    return add_log_points( physdev, pts, cbPoints, PT_BEZIERTO ) != NULL;
+    return add_log_points_new_stroke( physdev, pts, cbPoints, PT_BEZIERTO );
 }
 
 
@@ -1249,8 +1265,7 @@ static BOOL pathdrv_PolylineTo( PHYSDEV dev, const POINT *pts, INT cbPoints )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
 
-    if (!start_new_stroke( physdev )) return FALSE;
-    return add_log_points( physdev, pts, cbPoints, PT_LINETO ) != NULL;
+    return add_log_points_new_stroke( physdev, pts, cbPoints, PT_LINETO );
 }
 
 
@@ -1325,9 +1340,7 @@ static void PATH_BezierTo(struct gdi_path *pPath, POINT *lppt, INT n)
     }
     else if (n == 3)
     {
-        PATH_AddEntry(pPath, &lppt[0], PT_BEZIERTO);
-        PATH_AddEntry(pPath, &lppt[1], PT_BEZIERTO);
-        PATH_AddEntry(pPath, &lppt[2], PT_BEZIERTO);
+        add_points( pPath, lppt, 3, PT_BEZIERTO );
     }
     else
     {
@@ -1343,7 +1356,7 @@ static void PATH_BezierTo(struct gdi_path *pPath, POINT *lppt, INT n)
             pt[1] = lppt[i+1];
             pt[2].x = (lppt[i+2].x + lppt[i+1].x) / 2;
             pt[2].y = (lppt[i+2].y + lppt[i+1].y) / 2;
-            PATH_BezierTo(pPath, pt, 3);
+            add_points( pPath, pt, 3, PT_BEZIERTO );
             n--;
             i++;
         }
@@ -1351,7 +1364,7 @@ static void PATH_BezierTo(struct gdi_path *pPath, POINT *lppt, INT n)
         pt[0] = pt[2];
         pt[1] = lppt[i+1];
         pt[2] = lppt[i+2];
-        PATH_BezierTo(pPath, pt, 3);
+        add_points( pPath, pt, 3, PT_BEZIERTO );
     }
 }
 
@@ -1435,7 +1448,8 @@ static BOOL PATH_add_outline(struct path_physdev *physdev, INT x, INT y,
         header = (TTPOLYGONHEADER *)((char *)header + header->cb);
     }
 
-    return CloseFigure(physdev->dev.hdc);
+    close_figure( physdev->path );
+    return TRUE;
 }
 
 /*************************************************************
@@ -1502,8 +1516,7 @@ static BOOL pathdrv_CloseFigure( PHYSDEV dev )
 
     /* Set PT_CLOSEFIGURE on the last entry and start a new stroke */
     /* It is not necessary to draw a line, PT_CLOSEFIGURE is a virtual closing line itself */
-    if (physdev->path->count)
-        physdev->path->flags[physdev->path->count - 1] |= PT_CLOSEFIGURE;
+    if (physdev->path->count) close_figure( physdev->path );
     return TRUE;
 }
 
@@ -1667,10 +1680,10 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
                         corners[0].y = yo - penWidthIn;
                         corners[1].x = xo + penWidthOut;
                         corners[1].y = yo + penWidthOut;
-                        PATH_DoArcPart(pUpPath ,corners, theta + M_PI_2 , theta + 3 * M_PI_4, (j == 0 ? PT_MOVETO : FALSE));
-                        PATH_DoArcPart(pUpPath ,corners, theta + 3 * M_PI_4 , theta + M_PI, FALSE);
-                        PATH_DoArcPart(pUpPath ,corners, theta + M_PI, theta +  5 * M_PI_4, FALSE);
-                        PATH_DoArcPart(pUpPath ,corners, theta + 5 * M_PI_4 , theta + 3 * M_PI_2, FALSE);
+                        PATH_DoArcPart(pUpPath ,corners, theta + M_PI_2 , theta + 3 * M_PI_4, (j == 0 ? PT_MOVETO : 0));
+                        PATH_DoArcPart(pUpPath ,corners, theta + 3 * M_PI_4 , theta + M_PI, 0);
+                        PATH_DoArcPart(pUpPath ,corners, theta + M_PI, theta +  5 * M_PI_4, 0);
+                        PATH_DoArcPart(pUpPath ,corners, theta + 5 * M_PI_4 , theta + 3 * M_PI_2, 0);
                         break;
                 }
             }
