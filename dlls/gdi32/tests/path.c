@@ -565,33 +565,37 @@ done:
 }
 
 static const path_test_t polydraw_path[] = {
-    {0, 0, PT_MOVETO, 0, 0}, /*0*/
-    {10, 10, PT_LINETO, 0, 0}, /*1*/
-    {10, 15, PT_LINETO | PT_CLOSEFIGURE, 0, 0}, /*2*/
-    {100, 100, PT_MOVETO, 0, 0}, /*3*/
-    {95, 95, PT_LINETO, 0, 0}, /*4*/
-    {10, 10, PT_LINETO, 0, 0}, /*5*/
-    {10, 15, PT_LINETO | PT_CLOSEFIGURE, 0, 0}, /*6*/
-    {100, 100, PT_MOVETO, 0, 0}, /*7*/
-    {15, 15, PT_LINETO, 0, 0}, /*8*/
-    {25, 25, PT_MOVETO, 0, 0}, /*9*/
-    {25, 30, PT_LINETO, 0, 0}, /*10*/
-    {100, 100, PT_MOVETO, 0, 0}, /*11*/
-    {30, 30, PT_BEZIERTO, 0, 0}, /*12*/
-    {30, 35, PT_BEZIERTO, 0, 0}, /*13*/
-    {35, 35, PT_BEZIERTO, 0, 0}, /*14*/
-    {35, 40, PT_LINETO, 0, 0}, /*15*/
-    {40, 40, PT_MOVETO, 0, 0}, /*16*/
-    {40, 45, PT_LINETO, 0, 0}, /*17*/
-    {35, 40, PT_MOVETO, 0, 0}, /*18*/
-    {45, 50, PT_LINETO, 0, 0}, /*19*/
+    {-20, -20, PT_MOVETO, 0, 0}, /*0*/
+    {10, 10, PT_LINETO, 0, 0},
+    {10, 15, PT_LINETO | PT_CLOSEFIGURE, 0, 0},
+    {-20, -20, PT_MOVETO, 0, 0},
+    {-10, -10, PT_LINETO, 0, 0},
+    {100, 100, PT_MOVETO, 0, 0}, /*5*/
+    {95, 95, PT_LINETO, 0, 0},
+    {10, 10, PT_LINETO, 0, 0},
+    {10, 15, PT_LINETO | PT_CLOSEFIGURE, 0, 0},
+    {100, 100, PT_MOVETO, 0, 0},
+    {15, 15, PT_LINETO, 0, 0}, /*10*/
+    {25, 25, PT_MOVETO, 0, 0},
+    {25, 30, PT_LINETO, 0, 0},
+    {100, 100, PT_MOVETO, 0, 0},
+    {30, 30, PT_BEZIERTO, 0, 0},
+    {30, 35, PT_BEZIERTO, 0, 0}, /*15*/
+    {35, 35, PT_BEZIERTO, 0, 0},
+    {35, 40, PT_LINETO, 0, 0},
+    {40, 40, PT_MOVETO, 0, 0},
+    {40, 45, PT_LINETO, 0, 0},
     {35, 40, PT_MOVETO, 0, 0}, /*20*/
-    {50, 55, PT_LINETO, 0, 0}, /*21*/
-    {45, 50, PT_LINETO, 0, 0}, /*22*/
-    {35, 40, PT_MOVETO, 0, 0}, /*23*/
-    {60, 60, PT_LINETO, 0, 0}, /*24*/
-    {60, 65, PT_MOVETO, 0, 0}, /*25*/
-    {65, 65, PT_LINETO, 0, 0} /*26*/
+    {45, 50, PT_LINETO, 0, 0},
+    {35, 40, PT_MOVETO, 0, 0},
+    {50, 55, PT_LINETO, 0, 0},
+    {45, 50, PT_LINETO, 0, 0},
+    {35, 40, PT_MOVETO, 0, 0}, /*25*/
+    {60, 60, PT_LINETO, 0, 0},
+    {60, 65, PT_MOVETO, 0, 0},
+    {65, 65, PT_LINETO, 0, 0},
+    {75, 75, PT_MOVETO, 0, 0},
+    {80, 80, PT_LINETO | PT_CLOSEFIGURE, 0, 0} /*30*/
     };
 
 static POINT polydraw_pts[] = {
@@ -602,7 +606,8 @@ static POINT polydraw_pts[] = {
     {40, 40}, {40, 45}, {45, 45},
     {45, 50}, {50, 50},
     {50, 55}, {45, 50}, {55, 60},
-    {60, 60}, {60, 65}, {65, 65}};
+    {60, 60}, {60, 65}, {65, 65},
+    {70, 70}, {75, 70}, {75, 75}, {80, 80}};
 
 static BYTE polydraw_tps[] =
     {PT_LINETO, PT_CLOSEFIGURE | PT_LINETO, /* 2 */
@@ -612,13 +617,20 @@ static BYTE polydraw_tps[] =
      PT_MOVETO, PT_LINETO, PT_CLOSEFIGURE, /* 15 */
      PT_LINETO, PT_MOVETO | PT_CLOSEFIGURE, /* 17 */
      PT_LINETO, PT_LINETO, PT_MOVETO | PT_CLOSEFIGURE, /* 20 */
-     PT_LINETO, PT_MOVETO | PT_LINETO, PT_LINETO}; /* 23 */
+     PT_LINETO, PT_MOVETO | PT_LINETO, PT_LINETO,  /* 23 */
+     PT_MOVETO, PT_MOVETO, PT_MOVETO, PT_LINETO | PT_CLOSEFIGURE}; /* 27 */
 
 static void test_polydraw(void)
 {
     BOOL retb;
+    POINT pos;
     HDC hdc = GetDC(0);
+
+    MoveToEx( hdc, -20, -20, NULL );
+
     BeginPath(hdc);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == -20 && pos.y == -20, "wrong pos %d,%d\n", pos.x, pos.y );
 
     /* closefigure with no previous moveto */
     if (!(retb = PolyDraw(hdc, polydraw_pts, polydraw_tps, 2)) &&
@@ -629,50 +641,99 @@ static void test_polydraw(void)
         goto done;
     }
     expect(TRUE, retb);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 10 && pos.y == 15, "wrong pos %d,%d\n", pos.x, pos.y );
+    LineTo(hdc, -10, -10);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == -10 && pos.y == -10, "wrong pos %d,%d\n", pos.x, pos.y );
 
     MoveToEx(hdc, 100, 100, NULL);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 100 && pos.y == 100, "wrong pos %d,%d\n", pos.x, pos.y );
     LineTo(hdc, 95, 95);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 95 && pos.y == 95, "wrong pos %d,%d\n", pos.x, pos.y );
     /* closefigure with previous moveto */
     retb = PolyDraw(hdc, polydraw_pts, polydraw_tps, 2);
     expect(TRUE, retb);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 10 && pos.y == 15, "wrong pos %d,%d\n", pos.x, pos.y );
     /* bad bezier points */
     retb = PolyDraw(hdc, &(polydraw_pts[2]), &(polydraw_tps[2]), 4);
     expect(FALSE, retb);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 10 && pos.y == 15, "wrong pos %d,%d\n", pos.x, pos.y );
     retb = PolyDraw(hdc, &(polydraw_pts[6]), &(polydraw_tps[6]), 4);
     expect(FALSE, retb);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 10 && pos.y == 15, "wrong pos %d,%d\n", pos.x, pos.y );
     /* good bezier points */
     retb = PolyDraw(hdc, &(polydraw_pts[8]), &(polydraw_tps[8]), 4);
     expect(TRUE, retb);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 35 && pos.y == 40, "wrong pos %d,%d\n", pos.x, pos.y );
     /* does lineto or bezierto take precedence? */
     retb = PolyDraw(hdc, &(polydraw_pts[12]), &(polydraw_tps[12]), 4);
     expect(FALSE, retb);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 35 && pos.y == 40, "wrong pos %d,%d\n", pos.x, pos.y );
     /* bad point type, has already moved cursor position */
     retb = PolyDraw(hdc, &(polydraw_pts[15]), &(polydraw_tps[15]), 4);
     expect(FALSE, retb);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 35 && pos.y == 40, "wrong pos %d,%d\n", pos.x, pos.y );
     /* bad point type, cursor position is moved, but back to its original spot */
     retb = PolyDraw(hdc, &(polydraw_pts[17]), &(polydraw_tps[17]), 4);
     expect(FALSE, retb);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 35 && pos.y == 40, "wrong pos %d,%d\n", pos.x, pos.y );
     /* does lineto or moveto take precedence? */
     retb = PolyDraw(hdc, &(polydraw_pts[20]), &(polydraw_tps[20]), 3);
     expect(TRUE, retb);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 65 && pos.y == 65, "wrong pos %d,%d\n", pos.x, pos.y );
+    /* consecutive movetos */
+    retb = PolyDraw(hdc, &(polydraw_pts[23]), &(polydraw_tps[23]), 4);
+    expect(TRUE, retb);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 80 && pos.y == 80, "wrong pos %d,%d\n", pos.x, pos.y );
 
     EndPath(hdc);
     ok_path(hdc, "polydraw_path", polydraw_path, sizeof(polydraw_path)/sizeof(path_test_t), 0);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 80 && pos.y == 80, "wrong pos %d,%d\n", pos.x, pos.y );
 done:
     ReleaseDC(0, hdc);
 }
 
 static void test_closefigure(void) {
     int nSize, nSizeWitness;
+    POINT pos;
     HDC hdc = GetDC(0);
 
+    MoveToEx( hdc, 100, 100, NULL );
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 100 && pos.y == 100, "wrong pos %d,%d\n", pos.x, pos.y );
+
     BeginPath(hdc);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 100 && pos.y == 100, "wrong pos %d,%d\n", pos.x, pos.y );
     MoveToEx(hdc, 95, 95, NULL);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 95 && pos.y == 95, "wrong pos %d,%d\n", pos.x, pos.y );
     LineTo(hdc, 95,  0);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 95 && pos.y == 0, "wrong pos %d,%d\n", pos.x, pos.y );
     LineTo(hdc,  0, 95);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 0 && pos.y == 95, "wrong pos %d,%d\n", pos.x, pos.y );
 
     CloseFigure(hdc);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 0 && pos.y == 95, "wrong pos %d,%d\n", pos.x, pos.y );
     EndPath(hdc);
+    GetCurrentPositionEx( hdc, &pos );
+    ok( pos.x == 0 && pos.y == 95, "wrong pos %d,%d\n", pos.x, pos.y );
     nSize = GetPath(hdc, NULL, NULL, 0);
 
     AbortPath(hdc);

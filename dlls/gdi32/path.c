@@ -1204,56 +1204,52 @@ static BOOL pathdrv_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD cbPoints )
 static BOOL pathdrv_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, DWORD cbPoints )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
-    POINT lastmove, orig_pos;
-    INT i;
+    struct gdi_path *path = physdev->path;
+    POINT orig_pos;
+    INT i, lastmove = 0;
 
-    GetCurrentPositionEx( dev->hdc, &orig_pos );
-    lastmove = orig_pos;
-
-    for(i = physdev->path->count - 1; i >= 0; i--){
-        if(physdev->path->flags[i] == PT_MOVETO){
-            lastmove = physdev->path->points[i];
-            DPtoLP(dev->hdc, &lastmove, 1);
-            break;
-        }
-    }
+    for (i = 0; i < path->count; i++) if (path->flags[i] == PT_MOVETO) lastmove = i;
+    orig_pos = path->pos;
 
     for(i = 0; i < cbPoints; i++)
     {
         switch (types[i])
         {
         case PT_MOVETO:
-            MoveToEx( dev->hdc, pts[i].x, pts[i].y, NULL );
+            path->newStroke = TRUE;
+            path->pos = pts[i];
+            LPtoDP( dev->hdc, &path->pos, 1 );
+            lastmove = path->count;
             break;
         case PT_LINETO:
         case PT_LINETO | PT_CLOSEFIGURE:
-            LineTo( dev->hdc, pts[i].x, pts[i].y );
+            if (!add_log_points_new_stroke( physdev, &pts[i], 1, PT_LINETO )) return FALSE;
             break;
         case PT_BEZIERTO:
             if ((i + 2 < cbPoints) && (types[i + 1] == PT_BEZIERTO) &&
                 (types[i + 2] & ~PT_CLOSEFIGURE) == PT_BEZIERTO)
             {
-                PolyBezierTo( dev->hdc, &pts[i], 3 );
+                if (!add_log_points_new_stroke( physdev, &pts[i], 3, PT_BEZIERTO )) return FALSE;
                 i += 2;
                 break;
             }
             /* fall through */
         default:
-            if (i)  /* restore original position */
+            /* restore original position */
+            if (path->pos.x != orig_pos.x || path->pos.y != orig_pos.y)
             {
-                if (!(types[i - 1] & PT_CLOSEFIGURE)) lastmove = pts[i - 1];
-                if (lastmove.x != orig_pos.x || lastmove.y != orig_pos.y)
-                    MoveToEx( dev->hdc, orig_pos.x, orig_pos.y, NULL );
+                path->newStroke = TRUE;
+                path->pos = orig_pos;
             }
             return FALSE;
         }
 
-        if(types[i] & PT_CLOSEFIGURE){
-            physdev->path->flags[physdev->path->count-1] |= PT_CLOSEFIGURE;
-            MoveToEx( dev->hdc, lastmove.x, lastmove.y, NULL );
+        if (types[i] & PT_CLOSEFIGURE)
+        {
+            close_figure( path );
+            path->pos = path->points[lastmove];
         }
     }
-
     return TRUE;
 }
 

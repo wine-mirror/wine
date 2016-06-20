@@ -205,7 +205,6 @@ BOOL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types, DWOR
     }
 
     if (num_pts >= 2) Polyline( dev->hdc, line_pts, num_pts );
-    MoveToEx( dev->hdc, line_pts[num_pts - 1].x, line_pts[num_pts - 1].y, NULL );
     HeapFree( GetProcessHeap(), 0, line_pts );
     return TRUE;
 }
@@ -830,6 +829,11 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pPolyDraw );
     result = physdev->funcs->pPolyDraw( physdev, lppt, lpbTypes, cCount );
+    if (result && cCount)
+    {
+        dc->CursPosX = lppt[cCount - 1].x;
+        dc->CursPosY = lppt[cCount - 1].y;
+    }
     release_dc_ptr( dc );
     return result;
 }
