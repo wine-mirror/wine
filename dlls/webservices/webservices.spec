@@ -157,7 +157,7 @@
 @ stdcall WsSetOutput(ptr ptr ptr ptr long ptr)
 @ stdcall WsSetOutputToBuffer(ptr ptr ptr long ptr)
 @ stub WsSetReaderPosition
-@ stub WsSetWriterPosition
+@ stdcall WsSetWriterPosition(ptr ptr ptr)
 @ stub WsShutdownSessionChannel
 @ stub WsSkipNode
 @ stub WsStartReaderCanonicalization

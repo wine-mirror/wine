@@ -1532,6 +1532,53 @@ static void test_WsGetWriterPosition(void)
     WsFreeHeap( heap );
 }
 
+static void test_WsSetWriterPosition(void)
+{
+    WS_HEAP *heap;
+    WS_XML_WRITER *writer;
+    WS_XML_BUFFER *buf1, *buf2;
+    WS_XML_NODE_POSITION pos;
+    HRESULT hr;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetWriterPosition( NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateXmlBuffer( heap, NULL, 0, &buf1, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetOutputToBuffer( writer, buf1, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetWriterPosition( writer, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    pos.buffer = pos.node = NULL;
+    hr = WsGetWriterPosition( writer, &pos, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( pos.buffer == buf1, "wrong buffer\n" );
+    ok( pos.node != NULL, "node not set\n" );
+
+    hr = WsSetWriterPosition( writer, &pos, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* different buffer */
+    hr = WsCreateXmlBuffer( heap, NULL, 0, &buf2, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    pos.buffer = buf2;
+    hr = WsSetWriterPosition( writer, &pos, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    WsFreeWriter( writer );
+    WsFreeHeap( heap );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -1552,4 +1599,5 @@ START_TEST(writer)
     test_complex_struct_type();
     test_WsMoveWriter();
     test_WsGetWriterPosition();
+    test_WsSetWriterPosition();
 }
