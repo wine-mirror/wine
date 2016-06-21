@@ -41,7 +41,7 @@ INT EMFDRV_SaveDC( PHYSDEV dev )
 BOOL EMFDRV_RestoreDC( PHYSDEV dev, INT level )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pRestoreDC );
-    EMFDRV_PDEVICE* physDev = (EMFDRV_PDEVICE*)dev;
+    EMFDRV_PDEVICE* physDev = get_emf_physdev( dev );
     DC *dc = get_dc_ptr( dev->hdc );
     EMRRESTOREDC emr;
     BOOL ret;
@@ -94,7 +94,7 @@ INT EMFDRV_SetBkMode( PHYSDEV dev, INT mode )
 COLORREF EMFDRV_SetBkColor( PHYSDEV dev, COLORREF color )
 {
     EMRSETBKCOLOR emr;
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
 
     if (physDev->restoring) return color;  /* don't output records during RestoreDC */
 
@@ -108,7 +108,7 @@ COLORREF EMFDRV_SetBkColor( PHYSDEV dev, COLORREF color )
 COLORREF EMFDRV_SetTextColor( PHYSDEV dev, COLORREF color )
 {
     EMRSETTEXTCOLOR emr;
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
 
     if (physDev->restoring) return color;  /* don't output records during RestoreDC */
 
@@ -420,7 +420,7 @@ BOOL EMFDRV_AbortPath( PHYSDEV dev )
 
 BOOL EMFDRV_BeginPath( PHYSDEV dev )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRBEGINPATH emr;
 
     physDev->path = TRUE;
@@ -531,7 +531,7 @@ BOOL EMFDRV_WidenPath( PHYSDEV dev )
 
 INT EMFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
 
     return GetDeviceCaps( physDev->ref_dc, cap );
 }

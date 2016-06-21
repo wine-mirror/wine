@@ -45,6 +45,10 @@ typedef struct
     BOOL       path;
 } EMFDRV_PDEVICE;
 
+static inline EMFDRV_PDEVICE *get_emf_physdev( PHYSDEV dev )
+{
+    return CONTAINING_RECORD( dev, EMFDRV_PDEVICE, dev );
+}
 
 extern BOOL EMFDRV_WriteRecord( PHYSDEV dev, EMR *emr ) DECLSPEC_HIDDEN;
 extern void EMFDRV_UpdateBBox( PHYSDEV dev, RECTL *rect ) DECLSPEC_HIDDEN;

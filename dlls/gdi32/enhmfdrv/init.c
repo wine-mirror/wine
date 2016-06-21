@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
 static BOOL EMFDRV_DeleteDC( PHYSDEV dev );
 
-static const struct gdi_dc_funcs EMFDRV_Funcs =
+static const struct gdi_dc_funcs emfdrv_driver =
 {
     NULL,                            /* pAbortDoc */
     EMFDRV_AbortPath,                /* pAbortPath */
@@ -172,7 +172,7 @@ static const struct gdi_dc_funcs EMFDRV_Funcs =
  */
 static BOOL EMFDRV_DeleteDC( PHYSDEV dev )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     UINT index;
 
     if (physDev->emh) HeapFree( GetProcessHeap(), 0, physDev->emh );
@@ -195,7 +195,7 @@ BOOL EMFDRV_WriteRecord( PHYSDEV dev, EMR *emr )
     DWORD len;
     DWORD bytes_written;
     ENHMETAHEADER *emh;
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
 
     TRACE("record %d, size %d %s\n",
           emr->iType, emr->nSize, physDev->hFile ? "(to disk)" : "");
@@ -229,7 +229,7 @@ BOOL EMFDRV_WriteRecord( PHYSDEV dev, EMR *emr )
  */
 void EMFDRV_UpdateBBox( PHYSDEV dev, RECTL *rect )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     RECTL *bounds = &physDev->emh->rclBounds;
     RECTL vportRect = *rect;
 
@@ -342,7 +342,7 @@ HDC WINAPI CreateEnhMetaFileW(
         return 0;
     }
 
-    push_dc_driver( &dc->physDev, &physDev->dev, &EMFDRV_Funcs );
+    push_dc_driver( &dc->physDev, &physDev->dev, &emfdrv_driver );
 
     physDev->handles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, HANDLE_LIST_INC * sizeof(physDev->handles[0]));
     physDev->handles_size = HANDLE_LIST_INC;
@@ -450,7 +450,7 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
         release_dc_ptr( dc );
         return NULL;
     }
-    physDev = (EMFDRV_PDEVICE *)dc->physDev;
+    physDev = get_emf_physdev( find_dc_driver( dc, &emfdrv_driver ));
 
     if(dc->saveLevel)
         RestoreDC(hdc, 1);
@@ -464,7 +464,7 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
     emr.nPalEntries = 0;
     emr.offPalEntries = FIELD_OFFSET(EMREOF, nSizeLast);
     emr.nSizeLast = emr.emr.nSize;
-    EMFDRV_WriteRecord( dc->physDev, &emr.emr );
+    EMFDRV_WriteRecord( &physDev->dev, &emr.emr );
 
     /* Update rclFrame if not initialized in CreateEnhMetaFile */
     if(physDev->emh->rclFrame.left > physDev->emh->rclFrame.right) {

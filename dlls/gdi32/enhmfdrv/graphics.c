@@ -116,7 +116,7 @@ BOOL EMFDRV_MoveTo(PHYSDEV dev, INT x, INT y)
  */
 BOOL EMFDRV_LineTo( PHYSDEV dev, INT x, INT y )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     POINT pt;
     EMRLINETO emr;
     RECTL bounds;
@@ -150,7 +150,7 @@ static BOOL
 EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 		    INT xstart, INT ystart, INT xend, INT yend, DWORD iType )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     INT temp, xCentre, yCentre, i;
     double angleStart, angleEnd;
     double xinterStart, yinterStart, xinterEnd, yinterEnd;
@@ -321,7 +321,7 @@ BOOL EMFDRV_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT start, FLOA
  */
 BOOL EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRELLIPSE emr;
     INT temp;
 
@@ -354,7 +354,7 @@ BOOL EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
  */
 BOOL EMFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRRECTANGLE emr;
     INT temp;
 
@@ -388,7 +388,7 @@ BOOL EMFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 BOOL EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
 		  INT bottom, INT ell_width, INT ell_height )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRROUNDRECT emr;
     INT temp;
 
@@ -447,7 +447,7 @@ COLORREF EMFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 static BOOL
 EMFDRV_Polylinegon( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRPOLYLINE *emr;
     DWORD size;
     BOOL ret, use_small_emr = can_use_short_points( pt, count );
@@ -526,7 +526,7 @@ static BOOL
 EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polys,
 			DWORD iType)
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRPOLYPOLYLINE *emr;
     DWORD cptl = 0, poly, size;
     BOOL ret, use_small_emr, bounds_valid = TRUE;
@@ -598,7 +598,7 @@ BOOL EMFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT p
  */
 BOOL EMFDRV_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, DWORD count )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRPOLYDRAW *emr;
     BOOL ret;
     BYTE *types_dest;
@@ -772,7 +772,7 @@ BOOL EMFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn )
 BOOL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *lprect,
                         LPCWSTR str, UINT count, const INT *lpDx )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMREXTTEXTOUTW *pemr;
     DWORD nSize;
     BOOL ret;

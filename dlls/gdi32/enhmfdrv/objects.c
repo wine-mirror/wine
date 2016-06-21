@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
  */
 static UINT EMFDRV_AddHandle( PHYSDEV dev, HGDIOBJ obj )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     UINT index;
 
     for(index = 0; index < physDev->handles_size; index++)
@@ -59,7 +59,7 @@ static UINT EMFDRV_AddHandle( PHYSDEV dev, HGDIOBJ obj )
  */
 static UINT EMFDRV_FindObject( PHYSDEV dev, HGDIOBJ obj )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     UINT index;
 
     for(index = 0; index < physDev->handles_size; index++)
@@ -77,7 +77,7 @@ static UINT EMFDRV_FindObject( PHYSDEV dev, HGDIOBJ obj )
 BOOL EMFDRV_DeleteObject( PHYSDEV dev, HGDIOBJ obj )
 {
     EMRDELETEOBJECT emr;
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     UINT index;
     BOOL ret = TRUE;
 
@@ -200,7 +200,7 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
  */
 HBRUSH EMFDRV_SelectBrush( PHYSDEV dev, HBRUSH hBrush, const struct brush_pattern *pattern )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRSELECTOBJECT emr;
     DWORD index;
     int i;
@@ -279,7 +279,7 @@ static BOOL EMFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont )
  */
 HFONT EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont, UINT *aa_flags )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRSELECTOBJECT emr;
     DWORD index;
     int i;
@@ -364,7 +364,7 @@ static DWORD EMFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen)
  */
 HPEN EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen, const struct brush_pattern *pattern )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRSELECTOBJECT emr;
     DWORD index;
     int i;
@@ -432,7 +432,7 @@ static DWORD EMFDRV_CreatePalette(PHYSDEV dev, HPALETTE hPal)
  */
 HPALETTE EMFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPal, BOOL force )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRSELECTPALETTE emr;
     DWORD index;
 
@@ -462,7 +462,7 @@ found:
  */
 COLORREF EMFDRV_SetDCBrushColor( PHYSDEV dev, COLORREF color )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRSELECTOBJECT emr;
     DWORD index;
 
@@ -483,7 +483,7 @@ COLORREF EMFDRV_SetDCBrushColor( PHYSDEV dev, COLORREF color )
  */
 COLORREF EMFDRV_SetDCPenColor( PHYSDEV dev, COLORREF color )
 {
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
+    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRSELECTOBJECT emr;
     DWORD index;
     LOGPEN logpen = { PS_SOLID, { 0, 0 }, color };
