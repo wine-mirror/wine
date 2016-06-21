@@ -311,9 +311,17 @@ void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *
 
 static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
 {
+    struct wined3d_state *state = &cs->device->state;
     const struct wined3d_cs_draw *op = data;
 
-    draw_primitive(cs->device, &cs->device->state, op->base_vertex_idx, op->start_idx,
+    if (!cs->device->adapter->gl_info.supported[ARB_DRAW_ELEMENTS_BASE_VERTEX]
+            && state->load_base_vertex_index != op->base_vertex_idx)
+    {
+        state->load_base_vertex_index = op->base_vertex_idx;
+        device_invalidate_state(cs->device, STATE_BASEVERTEXINDEX);
+    }
+
+    draw_primitive(cs->device, state, op->base_vertex_idx, op->start_idx,
             op->index_count, op->start_instance, op->instance_count, op->indexed);
 }
 
