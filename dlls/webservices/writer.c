@@ -1801,3 +1801,21 @@ HRESULT WINAPI WsMoveWriter( WS_XML_WRITER *handle, WS_MOVE_TO move, BOOL *found
 
     return write_move_to( writer, move, found );
 }
+
+/**************************************************************************
+ *          WsGetWriterPosition		[webservices.@]
+ */
+HRESULT WINAPI WsGetWriterPosition( WS_XML_WRITER *handle, WS_XML_NODE_POSITION *pos, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+
+    TRACE( "%p %p %p\n", handle, pos, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer || !pos) return E_INVALIDARG;
+    if (!writer->output_type) return WS_E_INVALID_OPERATION;
+
+    pos->buffer = (WS_XML_BUFFER *)writer->output_buf;
+    pos->node   = writer->current;
+    return S_OK;
+}
