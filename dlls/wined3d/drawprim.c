@@ -38,8 +38,8 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 /* Context activation is done by the caller. */
 static void draw_primitive_arrays(struct wined3d_context *context, const struct wined3d_state *state,
-        unsigned int count, const void *idx_data, unsigned int idx_size, unsigned int start_idx,
-        unsigned int start_instance, unsigned int instance_count)
+        const void *idx_data, unsigned int idx_size, int base_vertex_idx, unsigned int start_idx,
+        unsigned int count, unsigned int start_instance, unsigned int instance_count)
 {
     const struct wined3d_ffp_attrib_ops *ops = &context->d3d_info->ffp_attrib_ops;
     GLenum idx_type = idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
@@ -61,7 +61,7 @@ static void draw_primitive_arrays(struct wined3d_context *context, const struct 
         if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
         {
             GL_EXTCALL(glDrawElementsBaseVertex(state->gl_primitive_type, count, idx_type,
-                    (const char *)idx_data + (idx_size * start_idx), state->base_vertex_index));
+                    (const char *)idx_data + (idx_size * start_idx), base_vertex_idx));
             checkGLcall("glDrawElementsBaseVertex");
             return;
         }
@@ -87,7 +87,7 @@ static void draw_primitive_arrays(struct wined3d_context *context, const struct 
         if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
         {
             GL_EXTCALL(glDrawElementsInstancedBaseVertex(state->gl_primitive_type, count, idx_type,
-                        (const char *)idx_data + (idx_size * start_idx), instance_count, state->base_vertex_index));
+                        (const char *)idx_data + (idx_size * start_idx), instance_count, base_vertex_idx));
             checkGLcall("glDrawElementsInstancedBaseVertex");
             return;
         }
@@ -142,7 +142,7 @@ static void draw_primitive_arrays(struct wined3d_context *context, const struct 
         if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
         {
             GL_EXTCALL(glDrawElementsBaseVertex(state->gl_primitive_type, count, idx_type,
-                        (const char *)idx_data + (idx_size * start_idx), state->base_vertex_index));
+                        (const char *)idx_data + (idx_size * start_idx), base_vertex_idx));
             checkGLcall("glDrawElementsBaseVertex");
         }
         else
@@ -166,8 +166,8 @@ static unsigned int get_stride_idx(const void *idx_data, unsigned int idx_size,
 
 /* Context activation is done by the caller. */
 static void draw_primitive_immediate_mode(struct wined3d_context *context, const struct wined3d_state *state,
-        const struct wined3d_stream_info *si, unsigned int vertex_count, const void *idx_data,
-        unsigned int idx_size, unsigned int start_idx, unsigned int instance_count)
+        const struct wined3d_stream_info *si, const void *idx_data, unsigned int idx_size,
+        int base_vertex_idx, unsigned int start_idx, unsigned int vertex_count, unsigned int instance_count)
 {
     const BYTE *position = NULL, *normal = NULL, *diffuse = NULL, *specular = NULL;
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
@@ -214,7 +214,7 @@ static void draw_primitive_immediate_mode(struct wined3d_context *context, const
             unsigned int use_map = si->use_map;
             unsigned int element_idx;
 
-            stride_idx = get_stride_idx(idx_data, idx_size, state->base_vertex_index, start_idx, vertex_idx);
+            stride_idx = get_stride_idx(idx_data, idx_size, base_vertex_idx, start_idx, vertex_idx);
             for (element_idx = MAX_ATTRIBS - 1; use_map; use_map &= ~(1u << element_idx), --element_idx)
             {
                 if (!(use_map & 1u << element_idx))
@@ -328,7 +328,7 @@ static void draw_primitive_immediate_mode(struct wined3d_context *context, const
     {
         unsigned int tmp_tex_mask;
 
-        stride_idx = get_stride_idx(idx_data, idx_size, state->base_vertex_index, start_idx, vertex_idx);
+        stride_idx = get_stride_idx(idx_data, idx_size, base_vertex_idx, start_idx, vertex_idx);
 
         if (normal)
         {
@@ -409,8 +409,8 @@ static void remove_vbos(struct wined3d_context *context,
 
 /* Routine common to the draw primitive and draw indexed primitive routines */
 void draw_primitive(struct wined3d_device *device, const struct wined3d_state *state,
-        unsigned int start_idx, unsigned int index_count, unsigned int start_instance,
-        unsigned int instance_count, BOOL indexed)
+        int base_vertex_idx, unsigned int start_idx, unsigned int index_count,
+        unsigned int start_instance, unsigned int instance_count, BOOL indexed)
 {
     const struct wined3d_fb_state *fb = state->fb;
     const struct wined3d_stream_info *stream_info;
@@ -574,11 +574,11 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     }
 
     if (context->use_immediate_mode_draw || emulation)
-        draw_primitive_immediate_mode(context, state, stream_info, index_count,
-                idx_data, idx_size, start_idx, instance_count);
+        draw_primitive_immediate_mode(context, state, stream_info, idx_data,
+                idx_size, base_vertex_idx, start_idx, index_count, instance_count);
     else
-        draw_primitive_arrays(context, state, index_count, idx_data,
-                idx_size, start_idx, start_instance, instance_count);
+        draw_primitive_arrays(context, state, idx_data, idx_size, base_vertex_idx,
+                start_idx, index_count, start_instance, instance_count);
 
     if (ib_query)
         wined3d_event_query_issue(ib_query, device);

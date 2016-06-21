@@ -78,10 +78,11 @@ struct wined3d_cs_clear
 struct wined3d_cs_draw
 {
     enum wined3d_cs_op opcode;
-    UINT start_idx;
-    UINT index_count;
-    UINT start_instance;
-    UINT instance_count;
+    int base_vertex_idx;
+    unsigned int start_idx;
+    unsigned int index_count;
+    unsigned int start_instance;
+    unsigned int instance_count;
     BOOL indexed;
 };
 
@@ -312,17 +313,18 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_draw *op = data;
 
-    draw_primitive(cs->device, &cs->device->state, op->start_idx, op->index_count,
-            op->start_instance, op->instance_count, op->indexed);
+    draw_primitive(cs->device, &cs->device->state, op->base_vertex_idx, op->start_idx,
+            op->index_count, op->start_instance, op->instance_count, op->indexed);
 }
 
-void wined3d_cs_emit_draw(struct wined3d_cs *cs, UINT start_idx, UINT index_count,
-        UINT start_instance, UINT instance_count, BOOL indexed)
+void wined3d_cs_emit_draw(struct wined3d_cs *cs, int base_vertex_idx, unsigned int start_idx,
+        unsigned int index_count, unsigned int start_instance, unsigned int instance_count, BOOL indexed)
 {
     struct wined3d_cs_draw *op;
 
     op = cs->ops->require_space(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_DRAW;
+    op->base_vertex_idx = base_vertex_idx;
     op->start_idx = start_idx;
     op->index_count = index_count;
     op->start_instance = start_instance;
