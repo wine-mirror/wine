@@ -1714,3 +1714,90 @@ HRESULT WINAPI WsWriteXmlnsAttribute( WS_XML_WRITER *handle, const WS_XML_STRING
     if (namespace_in_scope( &writer->current->hdr, prefix, ns )) return S_OK;
     return write_add_namespace_attribute( writer, prefix, ns, single );
 }
+
+static HRESULT write_move_to( struct writer *writer, WS_MOVE_TO move, BOOL *found )
+{
+    BOOL success = FALSE;
+    struct node *node = writer->current;
+
+    switch (move)
+    {
+    case WS_MOVE_TO_ROOT_ELEMENT:
+        success = move_to_root_element( writer->root, &node );
+        break;
+
+    case WS_MOVE_TO_NEXT_ELEMENT:
+        success = move_to_next_element( &node );
+        break;
+
+    case WS_MOVE_TO_PREVIOUS_ELEMENT:
+        success = move_to_prev_element( &node );
+        break;
+
+    case WS_MOVE_TO_CHILD_ELEMENT:
+        success = move_to_child_element( &node );
+        break;
+
+    case WS_MOVE_TO_END_ELEMENT:
+        success = move_to_end_element( &node );
+        break;
+
+    case WS_MOVE_TO_PARENT_ELEMENT:
+        success = move_to_parent_element( &node );
+        break;
+
+    case WS_MOVE_TO_FIRST_NODE:
+        success = move_to_first_node( &node );
+        break;
+
+    case WS_MOVE_TO_NEXT_NODE:
+        success = move_to_next_node( &node );
+        break;
+
+    case WS_MOVE_TO_PREVIOUS_NODE:
+        success = move_to_prev_node( &node );
+        break;
+
+    case WS_MOVE_TO_CHILD_NODE:
+        success = move_to_child_node( &node );
+        break;
+
+    case WS_MOVE_TO_BOF:
+        success = move_to_bof( writer->root, &node );
+        break;
+
+    case WS_MOVE_TO_EOF:
+        success = move_to_eof( writer->root, &node );
+        break;
+
+    default:
+        FIXME( "unhandled move %u\n", move );
+        return E_NOTIMPL;
+    }
+
+    if (success && node == writer->root) return E_INVALIDARG;
+    writer->current = node;
+
+    if (found)
+    {
+        *found = success;
+        return S_OK;
+    }
+    return success ? S_OK : WS_E_INVALID_FORMAT;
+}
+
+/**************************************************************************
+ *          WsMoveWriter		[webservices.@]
+ */
+HRESULT WINAPI WsMoveWriter( WS_XML_WRITER *handle, WS_MOVE_TO move, BOOL *found, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+
+    TRACE( "%p %u %p %p\n", handle, move, found, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer) return E_INVALIDARG;
+    if (!writer->output_type) return WS_E_INVALID_OPERATION;
+
+    return write_move_to( writer, move, found );
+}

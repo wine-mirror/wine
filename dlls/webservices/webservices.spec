@@ -94,7 +94,7 @@
 @ stub WsMarkHeaderAsUnderstood
 @ stub WsMatchPolicyAlternative
 @ stdcall WsMoveReader(ptr long ptr ptr)
-@ stub WsMoveWriter
+@ stdcall WsMoveWriter(ptr long ptr ptr)
 @ stdcall WsOpenChannel(ptr ptr ptr ptr)
 @ stub WsOpenListener
 @ stub WsOpenServiceHost

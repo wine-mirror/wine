@@ -52,6 +52,19 @@ static inline WS_XML_NODE_TYPE node_type( const struct node *node )
     return node->hdr.node.nodeType;
 }
 
+BOOL move_to_root_element( struct node *, struct node ** ) DECLSPEC_HIDDEN;
+BOOL move_to_next_element( struct node ** ) DECLSPEC_HIDDEN;
+BOOL move_to_prev_element( struct node ** ) DECLSPEC_HIDDEN;
+BOOL move_to_child_element( struct node ** ) DECLSPEC_HIDDEN;
+BOOL move_to_end_element( struct node ** ) DECLSPEC_HIDDEN;
+BOOL move_to_parent_element( struct node ** ) DECLSPEC_HIDDEN;
+BOOL move_to_first_node( struct node ** ) DECLSPEC_HIDDEN;
+BOOL move_to_next_node( struct node ** ) DECLSPEC_HIDDEN;
+BOOL move_to_prev_node( struct node ** ) DECLSPEC_HIDDEN;
+BOOL move_to_bof( struct node *, struct node ** ) DECLSPEC_HIDDEN;
+BOOL move_to_eof( struct node *, struct node ** ) DECLSPEC_HIDDEN;
+BOOL move_to_child_node( struct node ** ) DECLSPEC_HIDDEN;
+
 struct prop_desc
 {
     ULONG size;

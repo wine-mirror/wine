@@ -1549,24 +1549,24 @@ HRESULT WINAPI WsReadToStartElement( WS_XML_READER *handle, const WS_XML_STRING 
     return read_to_startelement( reader, found );
 }
 
-static BOOL move_to_root_element( struct reader *reader )
+BOOL move_to_root_element( struct node *root, struct node **current )
 {
     struct list *ptr;
     struct node *node;
 
-    if (!(ptr = list_head( &reader->root->children ))) return FALSE;
+    if (!(ptr = list_head( &root->children ))) return FALSE;
     node = LIST_ENTRY( ptr, struct node, entry );
     if (node_type( node ) == WS_XML_NODE_TYPE_ELEMENT)
     {
-        reader->current = node;
+        *current = node;
         return TRUE;
     }
-    while ((ptr = list_next( &reader->root->children, &node->entry )))
+    while ((ptr = list_next( &root->children, &node->entry )))
     {
         struct node *next = LIST_ENTRY( ptr, struct node, entry );
         if (node_type( next ) == WS_XML_NODE_TYPE_ELEMENT)
         {
-            reader->current = next;
+            *current = next;
             return TRUE;
         }
         node = next;
@@ -1574,17 +1574,18 @@ static BOOL move_to_root_element( struct reader *reader )
     return FALSE;
 }
 
-static BOOL move_to_next_element( struct reader *reader )
+BOOL move_to_next_element( struct node **current )
 {
     struct list *ptr;
-    struct node *node = reader->current;
+    struct node *node = *current, *parent = (*current)->parent;
 
-    while ((ptr = list_next( &node->parent->children, &node->entry )))
+    if (!parent) return FALSE;
+    while ((ptr = list_next( &parent->children, &node->entry )))
     {
         struct node *next = LIST_ENTRY( ptr, struct node, entry );
         if (node_type( next ) == WS_XML_NODE_TYPE_ELEMENT)
         {
-            reader->current = next;
+            *current = next;
             return TRUE;
         }
         node = next;
@@ -1592,17 +1593,18 @@ static BOOL move_to_next_element( struct reader *reader )
     return FALSE;
 }
 
-static BOOL move_to_prev_element( struct reader *reader )
+BOOL move_to_prev_element( struct node **current )
 {
     struct list *ptr;
-    struct node *node = reader->current;
+    struct node *node = *current, *parent = (*current)->parent;
 
-    while ((ptr = list_prev( &node->parent->children, &node->entry )))
+    if (!parent) return FALSE;
+    while ((ptr = list_prev( &parent->children, &node->entry )))
     {
         struct node *prev = LIST_ENTRY( ptr, struct node, entry );
         if (node_type( prev ) == WS_XML_NODE_TYPE_ELEMENT)
         {
-            reader->current = prev;
+            *current = prev;
             return TRUE;
         }
         node = prev;
@@ -1610,35 +1612,35 @@ static BOOL move_to_prev_element( struct reader *reader )
     return FALSE;
 }
 
-static BOOL move_to_child_element( struct reader *reader )
+BOOL move_to_child_element( struct node **current )
 {
     struct list *ptr;
-    struct node *node;
+    struct node *child, *node = *current;
 
-    if (!(ptr = list_head( &reader->current->children ))) return FALSE;
-    node = LIST_ENTRY( ptr, struct node, entry );
-    if (node_type( node ) == WS_XML_NODE_TYPE_ELEMENT)
+    if (!(ptr = list_head( &node->children ))) return FALSE;
+    child = LIST_ENTRY( ptr, struct node, entry );
+    if (node_type( child ) == WS_XML_NODE_TYPE_ELEMENT)
     {
-        reader->current = node;
+        *current = child;
         return TRUE;
     }
-    while ((ptr = list_next( &reader->current->children, &node->entry )))
+    while ((ptr = list_next( &node->children, &child->entry )))
     {
         struct node *next = LIST_ENTRY( ptr, struct node, entry );
         if (node_type( next ) == WS_XML_NODE_TYPE_ELEMENT)
         {
-            reader->current = next;
+            *current = next;
             return TRUE;
         }
-        node = next;
+        child = next;
     }
     return FALSE;
 }
 
-static BOOL move_to_end_element( struct reader *reader )
+BOOL move_to_end_element( struct node **current )
 {
     struct list *ptr;
-    struct node *node = reader->current;
+    struct node *node = *current;
 
     if (node_type( node ) != WS_XML_NODE_TYPE_ELEMENT) return FALSE;
 
@@ -1647,81 +1649,105 @@ static BOOL move_to_end_element( struct reader *reader )
         struct node *tail = LIST_ENTRY( ptr, struct node, entry );
         if (node_type( tail ) == WS_XML_NODE_TYPE_END_ELEMENT)
         {
-            reader->current = tail;
+            *current = tail;
             return TRUE;
         }
     }
     return FALSE;
 }
 
-static BOOL move_to_parent_element( struct reader *reader )
+BOOL move_to_parent_element( struct node **current )
 {
-    struct node *parent = reader->current->parent;
+    struct node *parent = (*current)->parent;
 
     if (parent && (node_type( parent ) == WS_XML_NODE_TYPE_ELEMENT ||
                    node_type( parent ) == WS_XML_NODE_TYPE_BOF))
     {
-        reader->current = parent;
+        *current = parent;
         return TRUE;
     }
     return FALSE;
 }
 
-static BOOL move_to_first_node( struct reader *reader )
+BOOL move_to_first_node( struct node **current )
 {
     struct list *ptr;
-    if ((ptr = list_head( &reader->current->parent->children )))
+    struct node *node = *current;
+
+    if ((ptr = list_head( &node->parent->children )))
     {
-        reader->current = LIST_ENTRY( ptr, struct node, entry );
+        *current = LIST_ENTRY( ptr, struct node, entry );
         return TRUE;
     }
     return FALSE;
 }
 
-static BOOL move_to_next_node( struct reader *reader )
+BOOL move_to_next_node( struct node **current )
 {
     struct list *ptr;
-    if ((ptr = list_next( &reader->current->parent->children, &reader->current->entry )))
+    struct node *node = *current;
+
+    if ((ptr = list_next( &node->parent->children, &node->entry )))
     {
-        reader->current = LIST_ENTRY( ptr, struct node, entry );
+        *current = LIST_ENTRY( ptr, struct node, entry );
         return TRUE;
     }
     return FALSE;
 }
 
-static BOOL move_to_prev_node( struct reader *reader )
+BOOL move_to_prev_node( struct node **current )
 {
     struct list *ptr;
-    if ((ptr = list_prev( &reader->current->parent->children, &reader->current->entry )))
+    struct node *node = *current;
+
+    if ((ptr = list_prev( &node->parent->children, &node->entry )))
     {
-        reader->current = LIST_ENTRY( ptr, struct node, entry );
+        *current = LIST_ENTRY( ptr, struct node, entry );
         return TRUE;
     }
     return FALSE;
 }
 
-static BOOL move_to_child_node( struct reader *reader )
+BOOL move_to_bof( struct node *root, struct node **current )
+{
+    *current = root;
+    return TRUE;
+}
+
+BOOL move_to_eof( struct node *root, struct node **current )
 {
     struct list *ptr;
-    if ((ptr = list_head( &reader->current->children )))
+    if ((ptr = list_tail( &root->children )))
     {
-        reader->current = LIST_ENTRY( ptr, struct node, entry );
+        *current = LIST_ENTRY( ptr, struct node, entry );
         return TRUE;
     }
     return FALSE;
 }
 
-static BOOL move_to_parent_node( struct reader *reader )
+BOOL move_to_child_node( struct node **current )
 {
-    struct node *parent = reader->current->parent;
+    struct list *ptr;
+    struct node *node = *current;
+
+    if ((ptr = list_head( &node->children )))
+    {
+        *current = LIST_ENTRY( ptr, struct node, entry );
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static BOOL move_to_parent_node( struct node **current )
+{
+    struct node *parent = (*current)->parent;
     if (!parent) return FALSE;
-    reader->current = parent;
+    *current = parent;
     return TRUE;
 }
 
 static HRESULT read_move_to( struct reader *reader, WS_MOVE_TO move, BOOL *found )
 {
-    struct list *ptr;
     BOOL success = FALSE;
     HRESULT hr = S_OK;
 
@@ -1733,56 +1759,51 @@ static HRESULT read_move_to( struct reader *reader, WS_MOVE_TO move, BOOL *found
     switch (move)
     {
     case WS_MOVE_TO_ROOT_ELEMENT:
-        success = move_to_root_element( reader );
+        success = move_to_root_element( reader->root, &reader->current );
         break;
 
     case WS_MOVE_TO_NEXT_ELEMENT:
-        success = move_to_next_element( reader );
+        success = move_to_next_element( &reader->current );
         break;
 
     case WS_MOVE_TO_PREVIOUS_ELEMENT:
-        success = move_to_prev_element( reader );
+        success = move_to_prev_element( &reader->current );
         break;
 
     case WS_MOVE_TO_CHILD_ELEMENT:
-        success = move_to_child_element( reader );
+        success = move_to_child_element( &reader->current );
         break;
 
     case WS_MOVE_TO_END_ELEMENT:
-        success = move_to_end_element( reader );
+        success = move_to_end_element( &reader->current );
         break;
 
     case WS_MOVE_TO_PARENT_ELEMENT:
-        success = move_to_parent_element( reader );
+        success = move_to_parent_element( &reader->current );
         break;
 
     case WS_MOVE_TO_FIRST_NODE:
-        success = move_to_first_node( reader );
+        success = move_to_first_node( &reader->current );
         break;
 
     case WS_MOVE_TO_NEXT_NODE:
-        success = move_to_next_node( reader );
+        success = move_to_next_node( &reader->current );
         break;
 
     case WS_MOVE_TO_PREVIOUS_NODE:
-        success = move_to_prev_node( reader );
+        success = move_to_prev_node( &reader->current );
         break;
 
     case WS_MOVE_TO_CHILD_NODE:
-        success = move_to_child_node( reader );
+        success = move_to_child_node( &reader->current );
         break;
 
     case WS_MOVE_TO_BOF:
-        reader->current = reader->root;
-        success = TRUE;
+        success = move_to_bof( reader->root, &reader->current );
         break;
 
     case WS_MOVE_TO_EOF:
-        if ((ptr = list_tail( &reader->root->children )))
-        {
-            reader->current = LIST_ENTRY( ptr, struct node, entry );
-            success = TRUE;
-        }
+        success = move_to_eof( reader->root, &reader->current );
         break;
 
     default:
@@ -3186,10 +3207,10 @@ static BOOL is_empty_text_node( const struct node *node )
 static HRESULT read_next_node( struct reader *reader )
 {
     if (reader->current == reader->last) return read_node( reader );
-    if (move_to_child_node( reader )) return S_OK;
-    if (move_to_next_node( reader )) return S_OK;
-    if (!move_to_parent_node( reader )) return WS_E_INVALID_FORMAT;
-    if (move_to_next_node( reader )) return S_OK;
+    if (move_to_child_node( &reader->current )) return S_OK;
+    if (move_to_next_node( &reader->current )) return S_OK;
+    if (!move_to_parent_node( &reader->current )) return WS_E_INVALID_FORMAT;
+    if (move_to_next_node( &reader->current )) return S_OK;
     return WS_E_INVALID_FORMAT;
 }
 

@@ -1415,6 +1415,76 @@ static void test_complex_struct_type(void)
     WsFreeHeap( heap );
 }
 
+static void test_WsMoveWriter(void)
+{
+    WS_XML_STRING localname = {1, (BYTE *)"a"}, localname2 = {1, (BYTE *)"b"}, ns = {0, NULL};
+    WS_HEAP *heap;
+    WS_XML_WRITER *writer;
+    WS_XML_BUFFER *buffer;
+    HRESULT hr;
+
+    hr = WsMoveWriter( NULL, WS_MOVE_TO_EOF, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* writer must be set to an XML buffer */
+    hr = WsMoveWriter( writer, WS_MOVE_TO_EOF, NULL, NULL );
+    todo_wine ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = WsCreateXmlBuffer( heap, NULL, 0, &buffer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetOutputToBuffer( writer, buffer, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsMoveWriter( writer, WS_MOVE_TO_EOF, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* <a><b/></a> */
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, NULL, &localname2, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsMoveWriter( writer, WS_MOVE_TO_EOF, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsMoveWriter( writer, WS_MOVE_TO_ROOT_ELEMENT, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsMoveWriter( writer, WS_MOVE_TO_CHILD_ELEMENT, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsMoveWriter( writer, WS_MOVE_TO_END_ELEMENT, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsMoveWriter( writer, WS_MOVE_TO_PARENT_ELEMENT, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsMoveWriter( writer, WS_MOVE_TO_END_ELEMENT, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsMoveWriter( writer, WS_MOVE_TO_BOF, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    WsFreeWriter( writer );
+    WsFreeHeap( heap );
+}
 
 START_TEST(writer)
 {
@@ -1434,4 +1504,5 @@ START_TEST(writer)
     test_WsWriteXmlnsAttribute();
     test_WsGetPrefixFromNamespace();
     test_complex_struct_type();
+    test_WsMoveWriter();
 }
