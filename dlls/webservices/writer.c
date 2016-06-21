@@ -1424,55 +1424,55 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
     case WS_BOOL_TYPE:
     {
         const BOOL *ptr = value;
-        if (option != WS_WRITE_REQUIRED_VALUE || size != sizeof(*ptr)) return E_INVALIDARG;
+        if ((option && option != WS_WRITE_REQUIRED_VALUE) || size != sizeof(*ptr)) return E_INVALIDARG;
         return write_type_bool( writer, mapping, desc, ptr );
     }
     case WS_INT8_TYPE:
     {
         const INT8 *ptr = value;
-        if (option != WS_WRITE_REQUIRED_VALUE || size != sizeof(*ptr)) return E_INVALIDARG;
+        if ((option && option != WS_WRITE_REQUIRED_VALUE) || size != sizeof(*ptr)) return E_INVALIDARG;
         return write_type_int8( writer, mapping, desc, ptr );
     }
     case WS_INT16_TYPE:
     {
         const INT16 *ptr = value;
-        if (option != WS_WRITE_REQUIRED_VALUE || size != sizeof(*ptr)) return E_INVALIDARG;
+        if ((option && option != WS_WRITE_REQUIRED_VALUE) || size != sizeof(*ptr)) return E_INVALIDARG;
         return write_type_int16( writer, mapping, desc, ptr );
     }
     case WS_INT32_TYPE:
     {
         const INT32 *ptr = value;
-        if (option != WS_WRITE_REQUIRED_VALUE || size != sizeof(*ptr)) return E_INVALIDARG;
+        if ((option && option != WS_WRITE_REQUIRED_VALUE) || size != sizeof(*ptr)) return E_INVALIDARG;
         return write_type_int32( writer, mapping, desc, ptr );
     }
     case WS_INT64_TYPE:
     {
         const INT64 *ptr = value;
-        if (option != WS_WRITE_REQUIRED_VALUE || size != sizeof(*ptr)) return E_INVALIDARG;
+        if ((option && option != WS_WRITE_REQUIRED_VALUE) || size != sizeof(*ptr)) return E_INVALIDARG;
         return write_type_int64( writer, mapping, desc, ptr );
     }
     case WS_UINT8_TYPE:
     {
         const UINT8 *ptr = value;
-        if (option != WS_WRITE_REQUIRED_VALUE || size != sizeof(*ptr)) return E_INVALIDARG;
+        if ((option && option != WS_WRITE_REQUIRED_VALUE) || size != sizeof(*ptr)) return E_INVALIDARG;
         return write_type_uint8( writer, mapping, desc, ptr );
     }
     case WS_UINT16_TYPE:
     {
         const UINT16 *ptr = value;
-        if (option != WS_WRITE_REQUIRED_VALUE || size != sizeof(*ptr)) return E_INVALIDARG;
+        if ((option && option != WS_WRITE_REQUIRED_VALUE) || size != sizeof(*ptr)) return E_INVALIDARG;
         return write_type_uint16( writer, mapping, desc, ptr );
     }
     case WS_UINT32_TYPE:
     {
         const UINT32 *ptr = value;
-        if (option != WS_WRITE_REQUIRED_VALUE || size != sizeof(*ptr)) return E_INVALIDARG;
+        if ((option && option != WS_WRITE_REQUIRED_VALUE) || size != sizeof(*ptr)) return E_INVALIDARG;
         return write_type_uint32( writer, mapping, desc, ptr );
     }
     case WS_UINT64_TYPE:
     {
         const UINT64 *ptr = value;
-        if (option != WS_WRITE_REQUIRED_VALUE || size != sizeof(*ptr)) return E_INVALIDARG;
+        if ((option && option != WS_WRITE_REQUIRED_VALUE) || size != sizeof(*ptr)) return E_INVALIDARG;
         return write_type_uint64( writer, mapping, desc, ptr );
     }
     case WS_WSZ_TYPE:
