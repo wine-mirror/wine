@@ -838,8 +838,16 @@ static void test_viewobject(void)
 
     hr = IScriptControl_QueryInterface(sc, &IID_IViewObject, (void**)&view);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-
     IViewObject_Release(view);
+
+    hr = IScriptControl_QueryInterface(sc, &IID_IViewObject2, (void**)&view);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IViewObject_Release(view);
+
+    hr = IScriptControl_QueryInterface(sc, &IID_IViewObjectEx, (void**)&view);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IViewObject_Release(view);
+
     IScriptControl_Release(sc);
 }
 
