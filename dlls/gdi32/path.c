@@ -99,7 +99,7 @@ struct path_physdev
 
 static inline struct path_physdev *get_path_physdev( PHYSDEV dev )
 {
-    return (struct path_physdev *)dev;
+    return CONTAINING_RECORD( dev, struct path_physdev, dev );
 }
 
 void free_gdi_path( struct gdi_path *path )
@@ -750,13 +750,9 @@ static BOOL pathdrv_BeginPath( PHYSDEV dev )
  */
 static BOOL pathdrv_AbortPath( PHYSDEV dev )
 {
-    struct path_physdev *physdev = get_path_physdev( dev );
     DC *dc = get_dc_ptr( dev->hdc );
 
-    if (!dc) return FALSE;
-    free_gdi_path( physdev->path );
-    pop_dc_driver( dc, &path_driver );
-    HeapFree( GetProcessHeap(), 0, physdev );
+    path_driver.pDeleteDC( pop_dc_driver( dc, &path_driver ));
     release_dc_ptr( dc );
     return TRUE;
 }
@@ -770,7 +766,6 @@ static BOOL pathdrv_EndPath( PHYSDEV dev )
     struct path_physdev *physdev = get_path_physdev( dev );
     DC *dc = get_dc_ptr( dev->hdc );
 
-    if (!dc) return FALSE;
     dc->path = physdev->path;
     pop_dc_driver( dc, &path_driver );
     HeapFree( GetProcessHeap(), 0, physdev );
@@ -801,7 +796,10 @@ static BOOL pathdrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
  */
 static BOOL pathdrv_DeleteDC( PHYSDEV dev )
 {
-    assert( 0 );  /* should never be called */
+    struct path_physdev *physdev = get_path_physdev( dev );
+
+    free_gdi_path( physdev->path );
+    HeapFree( GetProcessHeap(), 0, physdev );
     return TRUE;
 }
 
