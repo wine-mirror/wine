@@ -251,6 +251,7 @@ enum wined3d_sm4_register_type
     WINED3D_SM5_RT_DOMAIN_LOCATION         = 0x1c,
     WINED3D_SM5_RT_UAV                     = 0x1e,
     WINED3D_SM5_RT_SHARED_MEMORY           = 0x1f,
+    WINED3D_SM5_RT_THREAD_GROUP_ID         = 0x21,
     WINED3D_SM5_RT_LOCAL_THREAD_INDEX      = 0x24,
 };
 
@@ -820,7 +821,7 @@ static const enum wined3d_shader_register_type register_type_table[] =
     /* WINED3D_SM5_RT_UAV */                     WINED3DSPR_UAV,
     /* WINED3D_SM5_RT_SHARED_MEMORY */           WINED3DSPR_GROUPSHAREDMEM,
     /* UNKNOWN */                                ~0u,
-    /* UNKNOWN */                                ~0u,
+    /* WINED3D_SM5_RT_THREAD_GROUP_ID */         WINED3DSPR_THREADGROUPID,
     /* UNKNOWN */                                ~0u,
     /* UNKNOWN */                                ~0u,
     /* WINED3D_SM5_RT_LOCAL_THREAD_INDEX */      WINED3DSPR_LOCALTHREADINDEX,
