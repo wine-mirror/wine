@@ -380,6 +380,9 @@ static void test_URLOpenStreamW(void)
     CHECK_CALLED(OnProgress_ENDDOWNLOADDATA);
     CHECK_CALLED(OnDataAvailable);
     CHECK_CALLED(OnStopBinding);
+
+    hr = URLOpenStreamW(NULL, INDEX_HTML, 0, NULL);
+    ok(hr == S_OK, "URLOpenStreamW failed with error 0x%08x\n", hr);
 }
 
 START_TEST(stream)
