@@ -194,6 +194,25 @@ ULONG CDECL wined3d_shader_resource_view_incref(struct wined3d_shader_resource_v
     return refcount;
 }
 
+static void wined3d_shader_resource_view_destroy_object(void *object)
+{
+    struct wined3d_shader_resource_view *view = object;
+
+    if (view->object)
+    {
+        const struct wined3d_gl_info *gl_info;
+        struct wined3d_context *context;
+
+        context = context_acquire(view->resource->device, NULL);
+        gl_info = context->gl_info;
+        gl_info->gl_ops.gl.p_glDeleteTextures(1, &view->object);
+        checkGLcall("glDeleteTextures");
+        context_release(context);
+    }
+
+    HeapFree(GetProcessHeap(), 0, view);
+}
+
 ULONG CDECL wined3d_shader_resource_view_decref(struct wined3d_shader_resource_view *view)
 {
     ULONG refcount = InterlockedDecrement(&view->refcount);
@@ -202,22 +221,13 @@ ULONG CDECL wined3d_shader_resource_view_decref(struct wined3d_shader_resource_v
 
     if (!refcount)
     {
-        if (view->object)
-        {
-            const struct wined3d_gl_info *gl_info;
-            struct wined3d_context *context;
+        struct wined3d_device *device = view->resource->device;
 
-            context = context_acquire(view->resource->device, NULL);
-            gl_info = context->gl_info;
-            gl_info->gl_ops.gl.p_glDeleteTextures(1, &view->object);
-            checkGLcall("glDeleteTextures");
-            context_release(context);
-        }
         /* Call wined3d_object_destroyed() before releasing the resource,
          * since releasing the resource may end up destroying the parent. */
         view->parent_ops->wined3d_object_destroyed(view->parent);
         wined3d_resource_decref(view->resource);
-        HeapFree(GetProcessHeap(), 0, view);
+        wined3d_cs_emit_destroy_object(device->cs, wined3d_shader_resource_view_destroy_object, view);
     }
 
     return refcount;

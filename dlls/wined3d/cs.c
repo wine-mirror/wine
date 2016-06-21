@@ -52,6 +52,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_COLOR_KEY,
     WINED3D_CS_OP_SET_MATERIAL,
     WINED3D_CS_OP_RESET_STATE,
+    WINED3D_CS_OP_DESTROY_OBJECT,
 };
 
 struct wined3d_cs_present
@@ -250,6 +251,13 @@ struct wined3d_cs_set_material
 struct wined3d_cs_reset_state
 {
     enum wined3d_cs_op opcode;
+};
+
+struct wined3d_cs_destroy_object
+{
+    enum wined3d_cs_op opcode;
+    void (*callback)(void *object);
+    void *object;
 };
 
 static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
@@ -1029,6 +1037,25 @@ void wined3d_cs_emit_reset_state(struct wined3d_cs *cs)
     cs->ops->submit(cs);
 }
 
+static void wined3d_cs_exec_destroy_object(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_destroy_object *op = data;
+
+    op->callback(op->object);
+}
+
+void wined3d_cs_emit_destroy_object(struct wined3d_cs *cs, void (*callback)(void *object), void *object)
+{
+    struct wined3d_cs_destroy_object *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_DESTROY_OBJECT;
+    op->callback = callback;
+    op->object = object;
+
+    cs->ops->submit(cs);
+}
+
 static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_PRESENT                    */ wined3d_cs_exec_present,
@@ -1057,6 +1084,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_COLOR_KEY              */ wined3d_cs_exec_set_color_key,
     /* WINED3D_CS_OP_SET_MATERIAL               */ wined3d_cs_exec_set_material,
     /* WINED3D_CS_OP_RESET_STATE                */ wined3d_cs_exec_reset_state,
+    /* WINED3D_CS_OP_DESTROY_OBJECT             */ wined3d_cs_exec_destroy_object,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)
