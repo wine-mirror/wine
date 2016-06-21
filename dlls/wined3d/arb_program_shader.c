@@ -4842,7 +4842,8 @@ static void shader_arb_disable(void *shader_priv, struct wined3d_context *contex
             | (1u << WINED3D_SHADER_TYPE_VERTEX)
             | (1u << WINED3D_SHADER_TYPE_GEOMETRY)
             | (1u << WINED3D_SHADER_TYPE_HULL)
-            | (1u << WINED3D_SHADER_TYPE_DOMAIN);
+            | (1u << WINED3D_SHADER_TYPE_DOMAIN)
+            | (1u << WINED3D_SHADER_TYPE_COMPUTE);
 }
 
 /* Context activation is done by the caller. */
@@ -5117,6 +5118,7 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
     caps->hs_version = 0;
     caps->ds_version = 0;
     caps->gs_version = 0;
+    caps->cs_version = 0;
 
     if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
     {

@@ -279,6 +279,7 @@ static const char *debug_gl_shader_type(GLenum type)
         WINED3D_TO_STR(GL_TESS_EVALUATION_SHADER);
         WINED3D_TO_STR(GL_GEOMETRY_SHADER);
         WINED3D_TO_STR(GL_FRAGMENT_SHADER);
+        WINED3D_TO_STR(GL_COMPUTE_SHADER);
 #undef WINED3D_TO_STR
         default:
             return wine_dbg_sprintf("UNKNOWN(%#x)", type);
@@ -303,6 +304,9 @@ static const char *shader_glsl_get_prefix(enum wined3d_shader_type type)
 
         case WINED3D_SHADER_TYPE_PIXEL:
             return "ps";
+
+        case WINED3D_SHADER_TYPE_COMPUTE:
+            return "cs";
 
         default:
             FIXME("Unhandled shader type %#x.\n", type);
@@ -8092,7 +8096,8 @@ static void shader_glsl_invalidate_current_program(struct wined3d_context *conte
             | (1u << WINED3D_SHADER_TYPE_VERTEX)
             | (1u << WINED3D_SHADER_TYPE_GEOMETRY)
             | (1u << WINED3D_SHADER_TYPE_HULL)
-            | (1u << WINED3D_SHADER_TYPE_DOMAIN);
+            | (1u << WINED3D_SHADER_TYPE_DOMAIN)
+            | (1u << WINED3D_SHADER_TYPE_COMPUTE);
 }
 
 /* Context activation is done by the caller. */
@@ -8492,6 +8497,7 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
     caps->ds_version = min(wined3d_settings.max_sm_ds, shader_model);
     caps->gs_version = min(wined3d_settings.max_sm_gs, shader_model);
     caps->ps_version = min(wined3d_settings.max_sm_ps, shader_model);
+    caps->cs_version = min(wined3d_settings.max_sm_cs, shader_model);
 
     caps->vs_uniform_count = min(WINED3D_MAX_VS_CONSTS_F, gl_info->limits.glsl_vs_float_constants);
     caps->ps_uniform_count = min(WINED3D_MAX_PS_CONSTS_F, gl_info->limits.glsl_ps_float_constants);

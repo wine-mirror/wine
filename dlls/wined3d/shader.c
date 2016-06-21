@@ -582,6 +582,11 @@ static void shader_set_limits(struct wined3d_shader *shader)
         {WINED3D_SHADER_VERSION(3, 0), WINED3D_SHADER_VERSION(3, 0), {16, 16, 224, 16,  0, 12}},
         {WINED3D_SHADER_VERSION(4, 0), WINED3D_SHADER_VERSION(5, 0), {16,  0,   0,  0,  0, 32}},
         {0}
+    },
+    cs_limits[] =
+    {
+        /* min_version, max_version, sampler, constant_int, constant_float, constant_bool, packed_output, packed_input */
+        {WINED3D_SHADER_VERSION(5, 0), WINED3D_SHADER_VERSION(5, 0), {16,  0,   0,  0,  0,  0}},
     };
     const struct limits_entry *limits_array;
     DWORD shader_version = WINED3D_SHADER_VERSION(shader->reg_maps.shader_version.major,
@@ -607,6 +612,9 @@ static void shader_set_limits(struct wined3d_shader *shader)
             break;
         case WINED3D_SHADER_TYPE_PIXEL:
             limits_array = ps_limits;
+            break;
+        case WINED3D_SHADER_TYPE_COMPUTE:
+            limits_array = cs_limits;
             break;
     }
 
@@ -2111,6 +2119,10 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
             type_prefix = "ps";
             break;
 
+        case WINED3D_SHADER_TYPE_COMPUTE:
+            type_prefix = "cs";
+            break;
+
         default:
             FIXME("Unhandled shader type %#x.\n", shader_version.type);
             type_prefix = "unknown";
@@ -2413,7 +2425,8 @@ static void shader_none_disable(void *shader_priv, struct wined3d_context *conte
             | (1u << WINED3D_SHADER_TYPE_VERTEX)
             | (1u << WINED3D_SHADER_TYPE_GEOMETRY)
             | (1u << WINED3D_SHADER_TYPE_HULL)
-            | (1u << WINED3D_SHADER_TYPE_DOMAIN);
+            | (1u << WINED3D_SHADER_TYPE_DOMAIN)
+            | (1u << WINED3D_SHADER_TYPE_COMPUTE);
 }
 
 static HRESULT shader_none_alloc(struct wined3d_device *device, const struct wined3d_vertex_pipe_ops *vertex_pipe,
@@ -2475,6 +2488,7 @@ static void shader_none_get_caps(const struct wined3d_gl_info *gl_info, struct s
     caps->ds_version = 0;
     caps->gs_version = 0;
     caps->ps_version = 0;
+    caps->cs_version = 0;
     caps->vs_uniform_count = 0;
     caps->ps_uniform_count = 0;
     caps->ps_1x_max_value = 0.0f;
@@ -2584,8 +2598,11 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *b
         case WINED3D_SHADER_TYPE_PIXEL:
             backend_version = d3d_info->limits.ps_version;
             break;
+        case WINED3D_SHADER_TYPE_COMPUTE:
+            backend_version = d3d_info->limits.cs_version;
+            break;
         default:
-            FIXME("No backend version-checking for this shader type\n");
+            FIXME("No backend version-checking for this shader type.\n");
             backend_version = 0;
     }
     if (reg_maps->shader_version.major > backend_version)

@@ -4186,6 +4186,7 @@ const char *debug_shader_type(enum wined3d_shader_type type)
         WINED3D_TO_STR(WINED3D_SHADER_TYPE_GEOMETRY);
         WINED3D_TO_STR(WINED3D_SHADER_TYPE_HULL);
         WINED3D_TO_STR(WINED3D_SHADER_TYPE_DOMAIN);
+        WINED3D_TO_STR(WINED3D_SHADER_TYPE_COMPUTE);
 #undef WINED3D_TO_STR
         default:
             FIXME("Unrecognized shader type %#x.\n", type);
