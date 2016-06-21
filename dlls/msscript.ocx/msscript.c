@@ -1073,9 +1073,10 @@ static HRESULT WINAPI ViewObject_GetViewStatus(IViewObjectEx *iface, DWORD *stat
 {
     ScriptControl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%p)\n", This, status);
+    TRACE("(%p)->(%p)\n", This, status);
 
-    return E_NOTIMPL;
+    *status = VIEWSTATUS_OPAQUE;
+    return S_OK;
 }
 
 static HRESULT WINAPI ViewObject_QueryHitPoint(IViewObjectEx *iface, DWORD aspect, const RECT *bounds,

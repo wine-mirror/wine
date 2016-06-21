@@ -828,8 +828,10 @@ static void test_quickactivate(void)
 
 static void test_viewobject(void)
 {
+    IViewObjectEx *viewex;
     IScriptControl *sc;
     IViewObject *view;
+    DWORD status;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -844,9 +846,18 @@ static void test_viewobject(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     IViewObject_Release(view);
 
-    hr = IScriptControl_QueryInterface(sc, &IID_IViewObjectEx, (void**)&view);
+    hr = IScriptControl_QueryInterface(sc, &IID_IViewObjectEx, (void**)&viewex);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    IViewObject_Release(view);
+
+    if (0) /* crashes */
+        hr = IViewObjectEx_GetViewStatus(viewex, NULL);
+
+    status = 0;
+    hr = IViewObjectEx_GetViewStatus(viewex, &status);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(status == VIEWSTATUS_OPAQUE, "got %#x\n", status);
+
+    IViewObjectEx_Release(viewex);
 
     IScriptControl_Release(sc);
 }
