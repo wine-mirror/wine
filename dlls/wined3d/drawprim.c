@@ -31,6 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_draw);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
+WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 #include <stdio.h>
 #include <math.h>

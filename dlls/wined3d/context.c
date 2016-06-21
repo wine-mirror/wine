@@ -1550,6 +1550,25 @@ static void bind_dummy_textures(const struct wined3d_device *device, const struc
     }
 }
 
+void wined3d_check_gl_call(const struct wined3d_gl_info *gl_info,
+        const char *file, unsigned int line, const char *name)
+{
+    GLint err;
+
+    if (gl_info->supported[ARB_DEBUG_OUTPUT] || (err = gl_info->gl_ops.gl.p_glGetError()) == GL_NO_ERROR)
+    {
+        TRACE("%s call ok %s / %u.\n", name, file, line);
+        return;
+    }
+
+    do
+    {
+        ERR(">>>>>>> %s (%#x) from %s @ %s / %u.\n",
+                debug_glerror(err), err, name, file,line);
+        err = gl_info->gl_ops.gl.p_glGetError();
+    } while (err != GL_NO_ERROR);
+}
+
 static BOOL context_debug_output_enabled(const struct wined3d_gl_info *gl_info)
 {
     return gl_info->supported[ARB_DEBUG_OUTPUT]

@@ -1130,22 +1130,17 @@ static inline void wined3d_color_from_d3dcolor(struct wined3d_color *wined3d_col
 
 #define HIGHEST_TRANSFORMSTATE WINED3D_TS_WORLD_MATRIX(255) /* Highest value in wined3d_transform_state. */
 
+void wined3d_check_gl_call(const struct wined3d_gl_info *gl_info,
+        const char *file, unsigned int line, const char *name) DECLSPEC_HIDDEN;
+
 /* Checking of API calls */
 /* --------------------- */
 #ifndef WINE_NO_DEBUG_MSGS
 #define checkGLcall(A)                                              \
 do {                                                                \
-    GLint err;                                                      \
-    if (!__WINE_IS_DEBUG_ON(_ERR, __wine_dbch___default)) break;    \
-    err = gl_info->gl_ops.gl.p_glGetError();                        \
-    if (err == GL_NO_ERROR) {                                       \
-       TRACE("%s call ok %s / %d\n", A, __FILE__, __LINE__);        \
-                                                                    \
-    } else do {                                                     \
-        ERR(">>>>>>>>>>>>>>>>> %s (%#x) from %s @ %s / %d\n",       \
-            debug_glerror(err), err, A, __FILE__, __LINE__);        \
-       err = gl_info->gl_ops.gl.p_glGetError();                     \
-    } while (err != GL_NO_ERROR);                                   \
+    if (__WINE_IS_DEBUG_ON(_ERR, &__wine_dbch_d3d)                  \
+            && !gl_info->supported[ARB_DEBUG_OUTPUT])               \
+        wined3d_check_gl_call(gl_info, __FILE__, __LINE__, A);      \
 } while(0)
 #else
 #define checkGLcall(A) do {} while(0)
