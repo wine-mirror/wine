@@ -122,12 +122,18 @@ static HRESULT WINAPI ProxyBindStatusCallback_OnStopBinding(IBindStatusCallback 
 
 static HRESULT WINAPI ProxyBindStatusCallback_GetBindInfo(IBindStatusCallback *iface, DWORD *grfBINDF, BINDINFO *pbindinfo)
 {
+    DWORD size = pbindinfo->cbSize;
     ProxyBindStatusCallback *This = impl_from_IBindStatusCallback(iface);
 
     if(This->pBSC)
         return IBindStatusCallback_GetBindInfo(This->pBSC, grfBINDF, pbindinfo);
 
-    return E_INVALIDARG;
+    memset(pbindinfo, 0, size);
+    pbindinfo->cbSize = size;
+
+    *grfBINDF = 0;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ProxyBindStatusCallback_OnDataAvailable(IBindStatusCallback *iface, DWORD grfBSCF,
