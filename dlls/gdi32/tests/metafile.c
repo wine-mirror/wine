@@ -3097,8 +3097,7 @@ static void test_SetWinMetaFileBits(void)
   if (!wmfDC) return;
 
   SetWindowExtEx(wmfDC, 100, 100, NULL);
-  rect.left = rect.top = 0;
-  rect.right = rect.bottom = 50;
+  SetRect(&rect, 0, 0, 50, 50);
   FillRect(wmfDC, &rect, GetStockObject(BLACK_BRUSH));
   wmf = CloseMetaFile(wmfDC);
   ok(wmf != NULL, "Metafile creation failed\n");
