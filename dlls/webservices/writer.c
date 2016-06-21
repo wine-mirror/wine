@@ -880,10 +880,11 @@ static HRESULT write_flush( struct writer *writer )
 static HRESULT write_add_element_node( struct writer *writer, const WS_XML_STRING *prefix,
                                        const WS_XML_STRING *localname, const WS_XML_STRING *ns )
 {
-    struct node *node;
+    struct node *node, *parent;
     WS_XML_ELEMENT_NODE *elem;
     HRESULT hr;
 
+    if (!(parent = find_parent( writer->current ))) return WS_E_INVALID_FORMAT;
     if ((hr = write_flush( writer )) != S_OK) return hr;
 
     if (!prefix && node_type( writer->current ) == WS_XML_NODE_TYPE_ELEMENT)
@@ -907,7 +908,7 @@ static HRESULT write_add_element_node( struct writer *writer, const WS_XML_STRIN
         free_node( node );
         return E_OUTOFMEMORY;
     }
-    write_insert_node( writer, writer->current, node );
+    write_insert_node( writer, parent, node );
     writer->state = WRITER_STATE_STARTELEMENT;
     return S_OK;
 }
@@ -938,14 +939,16 @@ static inline void write_set_attribute_value( struct writer *writer, WS_XML_TEXT
 
 static HRESULT write_add_text_node( struct writer *writer, WS_XML_TEXT *value )
 {
-    struct node *node;
+    struct node *node, *parent;
     WS_XML_TEXT_NODE *text;
+
+    if (!(parent = find_parent( writer->current ))) return WS_E_INVALID_FORMAT;
 
     if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return E_OUTOFMEMORY;
     text = (WS_XML_TEXT_NODE *)node;
     text->text = value;
 
-    write_insert_node( writer, writer->current, node );
+    write_insert_node( writer, parent, node );
     writer->state = WRITER_STATE_TEXT;
     return S_OK;
 }

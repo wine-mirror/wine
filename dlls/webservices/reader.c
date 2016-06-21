@@ -1100,9 +1100,8 @@ static inline BOOL is_valid_parent( const struct node *node )
     return node_type( node ) == WS_XML_NODE_TYPE_ELEMENT || node_type( node ) == WS_XML_NODE_TYPE_BOF;
 }
 
-static struct node *read_find_parent( struct reader *reader )
+struct node *find_parent( struct node *node )
 {
-    struct node *node = reader->current;
     if (node_type( node ) == WS_XML_NODE_TYPE_END_ELEMENT)
     {
         if (!node->parent || !is_valid_parent( node->parent->parent )) return NULL;
@@ -1168,7 +1167,7 @@ static HRESULT read_element( struct reader *reader )
     }
     if (!len) goto error;
 
-    if (!(parent = read_find_parent( reader ))) goto error;
+    if (!(parent = find_parent( reader->current ))) goto error;
 
     hr = E_OUTOFMEMORY;
     if (!(node = alloc_node( WS_XML_NODE_TYPE_ELEMENT ))) goto error;
@@ -1217,7 +1216,7 @@ static HRESULT read_text( struct reader *reader )
         len += skip;
     }
 
-    if (!(parent = read_find_parent( reader ))) return WS_E_INVALID_FORMAT;
+    if (!(parent = find_parent( reader->current ))) return WS_E_INVALID_FORMAT;
 
     if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return E_OUTOFMEMORY;
     text = (WS_XML_TEXT_NODE *)node;
@@ -1386,7 +1385,7 @@ static HRESULT read_comment( struct reader *reader )
         len += skip;
     }
 
-    if (!(parent = read_find_parent( reader ))) return WS_E_INVALID_FORMAT;
+    if (!(parent = find_parent( reader->current ))) return WS_E_INVALID_FORMAT;
 
     if (!(node = alloc_node( WS_XML_NODE_TYPE_COMMENT ))) return E_OUTOFMEMORY;
     comment = (WS_XML_COMMENT_NODE *)node;
@@ -1410,7 +1409,7 @@ static HRESULT read_startcdata( struct reader *reader )
     if (read_cmp( reader, "<![CDATA[", 9 )) return WS_E_INVALID_FORMAT;
     read_skip( reader, 9 );
 
-    if (!(parent = read_find_parent( reader ))) return WS_E_INVALID_FORMAT;
+    if (!(parent = find_parent( reader->current ))) return WS_E_INVALID_FORMAT;
 
     if (!(node = alloc_node( WS_XML_NODE_TYPE_CDATA ))) return E_OUTOFMEMORY;
     read_insert_node( reader, parent, node );
