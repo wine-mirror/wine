@@ -936,6 +936,20 @@ static inline void write_set_attribute_value( struct writer *writer, WS_XML_TEXT
     elem->attributes[elem->attributeCount - 1]->value = text;
 }
 
+static HRESULT write_add_text_node( struct writer *writer, WS_XML_TEXT *value )
+{
+    struct node *node;
+    WS_XML_TEXT_NODE *text;
+
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return E_OUTOFMEMORY;
+    text = (WS_XML_TEXT_NODE *)node;
+    text->text = value;
+
+    write_insert_node( writer, writer->current, node );
+    writer->state = WRITER_STATE_TEXT;
+    return S_OK;
+}
+
 /**************************************************************************
  *          WsWriteText		[webservices.@]
  */
@@ -961,13 +975,23 @@ HRESULT WINAPI WsWriteText( WS_XML_WRITER *handle, const WS_XML_TEXT *text, WS_E
             return E_OUTOFMEMORY;
 
         write_set_attribute_value( writer, &dst->text );
+        return S_OK;
     }
-    else
+
+    if ((hr = write_flush( writer )) != S_OK) return hr;
+    if (writer->state != WRITER_STATE_STARTCDATA)
     {
-        if ((hr = write_flush( writer )) != S_OK) return hr;
-        if ((hr = write_grow_buffer( writer, src->value.length )) != S_OK) return hr;
-        write_bytes( writer, src->value.bytes, src->value.length );
+        if (!(dst = alloc_utf8_text( src->value.bytes, src->value.length )))
+            return E_OUTOFMEMORY;
+
+        if ((hr = write_add_text_node( writer, &dst->text )) != S_OK)
+        {
+            heap_free( dst );
+            return hr;
+        }
     }
+    if ((hr = write_grow_buffer( writer, src->value.length )) != S_OK) return hr;
+    write_bytes( writer, src->value.bytes, src->value.length );
 
     return S_OK;
 }
@@ -1051,20 +1075,6 @@ static WS_XML_UTF8_TEXT *format_uint64( const UINT64 *ptr )
     char buf[21]; /* "18446744073709551615" */
     int len = wsprintfA( buf, "%I64u", *ptr );
     return alloc_utf8_text( (const unsigned char *)buf, len );
-}
-
-static HRESULT write_add_text_node( struct writer *writer, WS_XML_TEXT *value )
-{
-    struct node *node;
-    WS_XML_TEXT_NODE *text;
-
-    if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return E_OUTOFMEMORY;
-    text = (WS_XML_TEXT_NODE *)node;
-    text->text = value;
-
-    write_insert_node( writer, writer->current, node );
-    writer->state = WRITER_STATE_TEXT;
-    return S_OK;
 }
 
 static HRESULT write_text_node( struct writer *writer )
