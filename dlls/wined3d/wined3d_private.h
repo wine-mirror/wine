@@ -513,6 +513,7 @@ enum wined3d_shader_conditional_op
 #define WINED3D_SM4_GS  0x0002u
 #define WINED3D_SM5_HS  0x0003u
 #define WINED3D_SM5_DS  0x0004u
+#define WINED3D_SM5_CS  0x0005u
 
 /* Shader version tokens, and shader end tokens */
 #define WINED3DPS_VERSION(major, minor) ((WINED3D_SM1_PS << 16) | ((major) << 8) | (minor))

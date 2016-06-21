@@ -980,6 +980,10 @@ static void shader_sm4_read_header(void *data, const DWORD **ptr, struct wined3d
             priv->shader_version.type = WINED3D_SHADER_TYPE_DOMAIN;
             break;
 
+        case WINED3D_SM5_CS:
+            priv->shader_version.type = WINED3D_SHADER_TYPE_COMPUTE;
+            break;
+
         default:
             FIXME("Unrecognized shader type %#x.\n", version_token >> 16);
     }

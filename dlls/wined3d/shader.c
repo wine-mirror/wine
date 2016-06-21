@@ -353,6 +353,7 @@ static const struct wined3d_shader_frontend *shader_select_frontend(DWORD versio
         case WINED3D_SM4_GS:
         case WINED3D_SM5_HS:
         case WINED3D_SM5_DS:
+        case WINED3D_SM5_CS:
             return &sm4_shader_frontend;
 
         default:
@@ -3261,6 +3262,44 @@ void pixelshader_update_resource_types(struct wined3d_shader *shader, WORD tex_t
                 break;
         }
     }
+}
+
+static HRESULT compute_shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
+        const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
+{
+    HRESULT hr;
+
+    if (FAILED(hr = shader_init(shader, device, desc, 0, WINED3D_SHADER_TYPE_COMPUTE, parent, parent_ops)))
+        return hr;
+
+    shader->load_local_constsF = shader->lconst_inf_or_nan;
+
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_shader_create_cs(struct wined3d_device *device, const struct wined3d_shader_desc *desc,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader)
+{
+    struct wined3d_shader *object;
+    HRESULT hr;
+
+    TRACE("device %p, desc %p, parent %p, parent_ops %p, shader %p.\n",
+            device, desc, parent, parent_ops, shader);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = compute_shader_init(object, device, desc, parent, parent_ops)))
+    {
+        WARN("Failed to initialize compute shader, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created compute shader %p.\n", object);
+    *shader = object;
+
+    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_shader_create_ds(struct wined3d_device *device, const struct wined3d_shader_desc *desc,
