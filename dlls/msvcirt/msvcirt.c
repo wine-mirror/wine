@@ -2592,6 +2592,143 @@ ostream* __thiscall ostream_writepad(ostream *this, const char *str1, const char
     return this;
 }
 
+/* ??6ostream@@QAEAAV0@C@Z */
+/* ??6ostream@@QEAAAEAV0@C@Z */
+/* ??6ostream@@QAEAAV0@D@Z */
+/* ??6ostream@@QEAAAEAV0@D@Z */
+DEFINE_THISCALL_WRAPPER(ostream_print_char, 8)
+ostream* __thiscall ostream_print_char(ostream *this, char c)
+{
+    FIXME("(%p %c) stub\n", this, c);
+    return this;
+}
+
+/* ??6ostream@@QAEAAV0@E@Z */
+/* ??6ostream@@QEAAAEAV0@E@Z */
+DEFINE_THISCALL_WRAPPER(ostream_print_unsigned_char, 8)
+ostream* __thiscall ostream_print_unsigned_char(ostream *this, unsigned char c)
+{
+    FIXME("(%p %c) stub\n", this, c);
+    return this;
+}
+
+/* ??6ostream@@QAEAAV0@PBC@Z */
+/* ??6ostream@@QEAAAEAV0@PEBC@Z */
+/* ??6ostream@@QAEAAV0@PBD@Z */
+/* ??6ostream@@QEAAAEAV0@PEBD@Z */
+DEFINE_THISCALL_WRAPPER(ostream_print_str, 8)
+ostream* __thiscall ostream_print_str(ostream *this, const char *str)
+{
+    FIXME("(%p %s) stub\n", this, str);
+    return this;
+}
+
+/* ??6ostream@@QAEAAV0@PBE@Z */
+/* ??6ostream@@QEAAAEAV0@PEBE@Z */
+DEFINE_THISCALL_WRAPPER(ostream_print_unsigned_str, 8)
+ostream* __thiscall ostream_print_unsigned_str(ostream *this, const unsigned char *str)
+{
+    FIXME("(%p %s) stub\n", this, str);
+    return this;
+}
+
+/* ??6ostream@@QAEAAV0@F@Z */
+/* ??6ostream@@QEAAAEAV0@F@Z */
+DEFINE_THISCALL_WRAPPER(ostream_print_short, 8)
+ostream* __thiscall ostream_print_short(ostream *this, short n)
+{
+    FIXME("(%p %d) stub\n", this, n);
+    return this;
+}
+
+/* ??6ostream@@QAEAAV0@G@Z */
+/* ??6ostream@@QEAAAEAV0@G@Z */
+DEFINE_THISCALL_WRAPPER(ostream_print_unsigned_short, 8)
+ostream* __thiscall ostream_print_unsigned_short(ostream *this, unsigned short n)
+{
+    FIXME("(%p %u) stub\n", this, n);
+    return this;
+}
+
+/* ??6ostream@@QAEAAV0@H@Z */
+/* ??6ostream@@QEAAAEAV0@H@Z */
+/* ??6ostream@@QAEAAV0@J@Z */
+/* ??6ostream@@QEAAAEAV0@J@Z */
+DEFINE_THISCALL_WRAPPER(ostream_print_int, 8)
+ostream* __thiscall ostream_print_int(ostream *this, int n)
+{
+    FIXME("(%p %d) stub\n", this, n);
+    return this;
+}
+
+/* ??6ostream@@QAEAAV0@I@Z */
+/* ??6ostream@@QEAAAEAV0@I@Z */
+/* ??6ostream@@QAEAAV0@K@Z */
+/* ??6ostream@@QEAAAEAV0@K@Z */
+DEFINE_THISCALL_WRAPPER(ostream_print_unsigned_int, 8)
+ostream* __thiscall ostream_print_unsigned_int(ostream *this, unsigned int n)
+{
+    FIXME("(%p %u) stub\n", this, n);
+    return this;
+}
+
+/* ??6ostream@@QAEAAV0@M@Z */
+/* ??6ostream@@QEAAAEAV0@M@Z */
+DEFINE_THISCALL_WRAPPER(ostream_print_float, 8)
+ostream* __thiscall ostream_print_float(ostream *this, float f)
+{
+    FIXME("(%p %f) stub\n", this, f);
+    return this;
+}
+
+/* ??6ostream@@QAEAAV0@N@Z */
+/* ??6ostream@@QEAAAEAV0@N@Z */
+/* ??6ostream@@QAEAAV0@O@Z */
+/* ??6ostream@@QEAAAEAV0@O@Z */
+DEFINE_THISCALL_WRAPPER(ostream_print_double, 12)
+ostream* __thiscall ostream_print_double(ostream *this, double d)
+{
+    FIXME("(%p %lf) stub\n", this, d);
+    return this;
+}
+
+/* ??6ostream@@QAEAAV0@PBX@Z */
+/* ??6ostream@@QEAAAEAV0@PEBX@Z */
+DEFINE_THISCALL_WRAPPER(ostream_print_ptr, 8)
+ostream* __thiscall ostream_print_ptr(ostream *this, const void *ptr)
+{
+    FIXME("(%p %p) stub\n", this, ptr);
+    return this;
+}
+
+/* ??6ostream@@QAEAAV0@PAVstreambuf@@@Z */
+/* ??6ostream@@QEAAAEAV0@PEAVstreambuf@@@Z */
+DEFINE_THISCALL_WRAPPER(ostream_print_streambuf, 8)
+ostream* __thiscall ostream_print_streambuf(ostream *this, streambuf *sb)
+{
+    FIXME("(%p %p) stub\n", this, sb);
+    return this;
+}
+
+/* ??6ostream@@QAEAAV0@P6AAAV0@AAV0@@Z@Z */
+/* ??6ostream@@QEAAAEAV0@P6AAEAV0@AEAV0@@Z@Z */
+DEFINE_THISCALL_WRAPPER(ostream_print_manip, 8)
+ostream* __thiscall ostream_print_manip(ostream *this, ostream* (__cdecl *func)(ostream*))
+{
+    TRACE("(%p %p)\n", this, func);
+    return func(this);
+}
+
+/* ??6ostream@@QAEAAV0@P6AAAVios@@AAV1@@Z@Z */
+/* ??6ostream@@QEAAAEAV0@P6AAEAVios@@AEAV1@@Z@Z */
+DEFINE_THISCALL_WRAPPER(ostream_print_ios_manip, 8)
+ostream* __thiscall ostream_print_ios_manip(ostream *this, ios* (__cdecl *func)(ios*))
+{
+    TRACE("(%p %p)\n", this, func);
+    func(ostream_get_ios(this));
+    return this;
+}
+
 /* ?endl@@YAAAVostream@@AAV1@@Z */
 /* ?endl@@YAAEAVostream@@AEAV1@@Z */
 ostream* __cdecl ostream_endl(ostream *this)
@@ -2633,50 +2770,6 @@ DEFINE_THISCALL_WRAPPER(MSVCIRT_ostrstream_dtor,4)
 void __thiscall MSVCIRT_ostrstream_dtor(ios *base)
 {
     FIXME("(%p) stub\n", base);
-}
-
-/******************************************************************
- *		??6ostream@@QAEAAV0@E@Z (MSVCRTI.@)
- *    class ostream & __thiscall ostream::operator<<(unsigned char)
- */
-DEFINE_THISCALL_WRAPPER(MSVCIRT_operator_sl_uchar,8)
-void * __thiscall MSVCIRT_operator_sl_uchar(ostream * _this, unsigned char ch)
-{
-   FIXME("(%p)->(%c) stub\n", _this, ch);
-   return _this;
-}
-
-/******************************************************************
- *		 ??6ostream@@QAEAAV0@H@Z (MSVCRTI.@)
- *        class ostream & __thiscall ostream::operator<<(int)
- */
-DEFINE_THISCALL_WRAPPER(MSVCIRT_operator_sl_int,8)
-void * __thiscall MSVCIRT_operator_sl_int(ostream * _this, int integer)
-{
-   FIXME("(%p)->(%d) stub\n", _this, integer);
-   return _this;
-}
-
-/******************************************************************
- *		??6ostream@@QAEAAV0@PBD@Z (MSVCRTI.@)
- *    class ostream & __thiscall ostream::operator<<(char const *)
- */
-DEFINE_THISCALL_WRAPPER(MSVCIRT_operator_sl_pchar,8)
-void * __thiscall MSVCIRT_operator_sl_pchar(ostream * _this, const char * string)
-{
-   FIXME("(%p)->(%s) stub\n", _this, debugstr_a(string));
-   return _this;
-}
-
-/******************************************************************
- *		??6ostream@@QAEAAV0@P6AAAV0@AAV0@@Z@Z (MSVCRTI.@)
- *    class ostream & __thiscall ostream::operator<<(class ostream & (__cdecl*)(class ostream &))
- */
-DEFINE_THISCALL_WRAPPER(MSVCIRT_operator_sl_callback,8)
-void * __thiscall MSVCIRT_operator_sl_callback(ostream * _this, ostream * (__cdecl*func)(ostream*))
-{
-   TRACE("%p, %p\n", _this, func);
-   return func(_this);
 }
 
 #ifdef __i386__
