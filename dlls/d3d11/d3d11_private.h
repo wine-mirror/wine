@@ -317,6 +317,20 @@ HRESULT d3d_pixel_shader_create(struct d3d_device *device, const void *byte_code
 struct d3d_pixel_shader *unsafe_impl_from_ID3D11PixelShader(ID3D11PixelShader *iface) DECLSPEC_HIDDEN;
 struct d3d_pixel_shader *unsafe_impl_from_ID3D10PixelShader(ID3D10PixelShader *iface) DECLSPEC_HIDDEN;
 
+/* ID3D11ComputeShader */
+struct d3d11_compute_shader
+{
+    ID3D11ComputeShader ID3D11ComputeShader_iface;
+    LONG refcount;
+
+    struct wined3d_private_store private_store;
+    struct wined3d_shader *wined3d_shader;
+    ID3D11Device *device;
+};
+
+HRESULT d3d11_compute_shader_create(struct d3d_device *device, const void *byte_code, SIZE_T byte_code_length,
+        struct d3d11_compute_shader **shader) DECLSPEC_HIDDEN;
+
 HRESULT shader_parse_signature(const char *data, DWORD data_size, struct wined3d_shader_signature *s) DECLSPEC_HIDDEN;
 void shader_free_signature(struct wined3d_shader_signature *s) DECLSPEC_HIDDEN;
 
