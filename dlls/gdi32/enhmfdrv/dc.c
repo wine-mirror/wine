@@ -471,20 +471,6 @@ BOOL EMFDRV_EndPath( PHYSDEV dev )
     return FALSE;  /* always fails without a path */
 }
 
-BOOL EMFDRV_FillPath( PHYSDEV dev )
-{
-    EMRFILLPATH emr;
-
-    emr.emr.iType = EMR_FILLPATH;
-    emr.emr.nSize = sizeof(emr);
-    FIXME("Bounds\n");
-    emr.rclBounds.left = 0;
-    emr.rclBounds.top = 0;
-    emr.rclBounds.right = 0;
-    emr.rclBounds.bottom = 0;
-    return EMFDRV_WriteRecord( dev, &emr.emr );
-}
-
 BOOL EMFDRV_FlattenPath( PHYSDEV dev )
 {
     EMRFLATTENPATH emr;
@@ -506,34 +492,6 @@ BOOL EMFDRV_SelectClipPath( PHYSDEV dev, INT iMode )
 
     if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
     return next->funcs->pSelectClipPath( next, iMode );
-}
-
-BOOL EMFDRV_StrokeAndFillPath( PHYSDEV dev )
-{
-    EMRSTROKEANDFILLPATH emr;
-
-    emr.emr.iType = EMR_STROKEANDFILLPATH;
-    emr.emr.nSize = sizeof(emr);
-    FIXME("Bounds\n");
-    emr.rclBounds.left = 0;
-    emr.rclBounds.top = 0;
-    emr.rclBounds.right = 0;
-    emr.rclBounds.bottom = 0;
-    return EMFDRV_WriteRecord( dev, &emr.emr );
-}
-
-BOOL EMFDRV_StrokePath( PHYSDEV dev )
-{
-    EMRSTROKEPATH emr;
-
-    emr.emr.iType = EMR_STROKEPATH;
-    emr.emr.nSize = sizeof(emr);
-    FIXME("Bounds\n");
-    emr.rclBounds.left = 0;
-    emr.rclBounds.top = 0;
-    emr.rclBounds.right = 0;
-    emr.rclBounds.bottom = 0;
-    return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
 BOOL EMFDRV_WidenPath( PHYSDEV dev )

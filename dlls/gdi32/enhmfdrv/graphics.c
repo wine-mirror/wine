@@ -96,6 +96,32 @@ static void get_points_bounds( RECTL *bounds, const POINT *pts, UINT count, HDC 
     }
 }
 
+/* helper for path stroke and fill functions */
+static BOOL emfdrv_stroke_and_fill_path( PHYSDEV dev, INT type )
+{
+    EMRSTROKEANDFILLPATH emr;
+    int count;
+    POINT *points;
+    BYTE *flags;
+
+    emr.emr.iType = type;
+    emr.emr.nSize = sizeof(emr);
+
+    count = get_gdi_flat_path( dev->hdc, &points, &flags, NULL );
+    if (count >= 0)
+    {
+        get_points_bounds( &emr.rclBounds, points, count, 0 );
+        HeapFree( GetProcessHeap(), 0, points );
+        HeapFree( GetProcessHeap(), 0, flags );
+    }
+    else emr.rclBounds = empty_bounds;
+
+    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
+    if (count < 0) return FALSE;
+    EMFDRV_UpdateBBox( dev, &emr.rclBounds );
+    return TRUE;
+}
+
 /**********************************************************************
  *	     EMFDRV_MoveTo
  */
@@ -960,4 +986,28 @@ BOOL EMFDRV_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
     ret = EMFDRV_WriteRecord( dev, &emr->emr );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
+}
+
+/**********************************************************************
+ *	     EMFDRV_FillPath
+ */
+BOOL EMFDRV_FillPath( PHYSDEV dev )
+{
+    return emfdrv_stroke_and_fill_path( dev, EMR_FILLPATH );
+}
+
+/**********************************************************************
+ *	     EMFDRV_StrokeAndFillPath
+ */
+BOOL EMFDRV_StrokeAndFillPath( PHYSDEV dev )
+{
+    return emfdrv_stroke_and_fill_path( dev, EMR_STROKEANDFILLPATH );
+}
+
+/**********************************************************************
+ *	     EMFDRV_MoveTo
+ */
+BOOL EMFDRV_StrokePath( PHYSDEV dev )
+{
+    return emfdrv_stroke_and_fill_path( dev, EMR_STROKEPATH );
 }
