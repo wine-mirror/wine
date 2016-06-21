@@ -1755,6 +1755,10 @@ static void shader_dump_register(struct wined3d_string_buffer *buffer,
             shader_addline(buffer, "vThreadGroupID");
             break;
 
+        case WINED3DSPR_LOCALTHREADID:
+            shader_addline(buffer, "vThreadIDInGroup");
+            break;
+
         case WINED3DSPR_LOCALTHREADINDEX:
             shader_addline(buffer, "vThreadIDInGroupFlattened");
             break;
