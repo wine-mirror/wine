@@ -2401,7 +2401,7 @@ static void test_emf_ExtTextOut_on_path(void)
     ok(ret, "BeginPath error %d\n", GetLastError());
 
     ret = ExtTextOutA(hdcMetafile, 11, 22, 0, NULL, "Test", 4, dx);
-    ok(ret, "ExtTextOut error %d\n", GetLastError());
+    todo_wine ok(ret, "ExtTextOut error %d\n", GetLastError());
 
     ret = EndPath(hdcMetafile);
     ok(ret, "EndPath error %d\n", GetLastError());
@@ -3673,7 +3673,36 @@ static const unsigned char EMF_PATH_BITS[] =
     0x10, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00
 };
 
-static void test_emf_GetPath(void)
+static const unsigned char EMF_EMPTY_PATH_BITS[] =
+{
+    0x01, 0x00, 0x00, 0x00, 0x6c, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0xd8, 0xff, 0xff, 0xff, 0xd8, 0xff, 0xff, 0xff,
+    0x20, 0x45, 0x4d, 0x46, 0x00, 0x00, 0x01, 0x00,
+    0xc8, 0x00, 0x00, 0x00, 0x0b, 0x00, 0x00, 0x00,
+    0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x20, 0x03, 0x00, 0x00, 0x58, 0x02, 0x00, 0x00,
+    0x40, 0x01, 0x00, 0x00, 0xf0, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0xe2, 0x04, 0x00,
+    0x80, 0xa9, 0x03, 0x00, 0x3b, 0x00, 0x00, 0x00,
+    0x08, 0x00, 0x00, 0x00, 0x3d, 0x00, 0x00, 0x00,
+    0x08, 0x00, 0x00, 0x00, 0x3b, 0x00, 0x00, 0x00,
+    0x08, 0x00, 0x00, 0x00, 0x3c, 0x00, 0x00, 0x00,
+    0x08, 0x00, 0x00, 0x00, 0x3c, 0x00, 0x00, 0x00,
+    0x08, 0x00, 0x00, 0x00, 0x3d, 0x00, 0x00, 0x00,
+    0x08, 0x00, 0x00, 0x00, 0x3b, 0x00, 0x00, 0x00,
+    0x08, 0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00,
+    0x08, 0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00,
+    0x08, 0x00, 0x00, 0x00, 0x0e, 0x00, 0x00, 0x00,
+    0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x10, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00
+};
+
+static void test_emf_paths(void)
 {
     POINT pts[9] = {{10, 10}, {20, 10}, {10, 20}, {20, 20}, {30, 30}, {40, 20}, {20, 30}, {20, 20}, {20, 10}};
     DWORD counts[2] = {2, 2};
@@ -3719,10 +3748,44 @@ static void test_emf_GetPath(void)
     hemf = CloseEnhMetaFile(hdcMetafile);
     ok(hemf != 0, "CloseEnhMetaFile error %d\n", GetLastError());
 
-    if (compare_emf_bits(hemf, EMF_PATH_BITS, sizeof(EMF_PATH_BITS), "test_emf_GetPath", FALSE) != 0)
+    if (compare_emf_bits(hemf, EMF_PATH_BITS, sizeof(EMF_PATH_BITS), "test_emf_paths", FALSE) != 0)
     {
-        dump_emf_bits(hemf, "test_emf_GetPath");
-        dump_emf_records(hemf, "test_emf_GetPath");
+        dump_emf_bits(hemf, "test_emf_paths");
+        dump_emf_records(hemf, "test_emf_paths");
+    }
+
+    DeleteEnhMetaFile(hemf);
+
+    SetLastError(0xdeadbeef);
+    hdcMetafile = CreateEnhMetaFileA(GetDC(0), NULL, NULL, NULL);
+    ok(hdcMetafile != 0, "CreateEnhMetaFileA error %d\n", GetLastError());
+
+    ret = BeginPath(hdcMetafile);
+    ok( ret, "BeginPath failed error %d\n", GetLastError() );
+    ret = CloseFigure(hdcMetafile);
+    ok( ret, "CloseFigure failed error %d\n", GetLastError() );
+    ret = BeginPath(hdcMetafile);
+    ok( ret, "BeginPath failed error %d\n", GetLastError() );
+    ret = EndPath(hdcMetafile);
+    ok( ret, "EndPath failed error %d\n", GetLastError() );
+    ret = EndPath(hdcMetafile);
+    ok( !ret, "EndPath succeeded\n" );
+    ret = CloseFigure(hdcMetafile);
+    ok( !ret, "CloseFigure succeeded\n" );
+    ret = BeginPath(hdcMetafile);
+    ok( ret, "BeginPath failed error %d\n", GetLastError() );
+    ret = AbortPath(hdcMetafile);
+    ok( ret, "AbortPath failed error %d\n", GetLastError() );
+    ret = AbortPath(hdcMetafile);
+    ok( ret, "AbortPath failed error %d\n", GetLastError() );
+
+    hemf = CloseEnhMetaFile(hdcMetafile);
+    ok(hemf != 0, "CloseEnhMetaFile error %d\n", GetLastError());
+
+    if (compare_emf_bits(hemf, EMF_EMPTY_PATH_BITS, sizeof(EMF_EMPTY_PATH_BITS), "empty path", FALSE) != 0)
+    {
+        dump_emf_bits(hemf, "empty path");
+        dump_emf_records(hemf, "empty path");
     }
 
     DeleteEnhMetaFile(hemf);
@@ -3839,7 +3902,7 @@ START_TEST(metafile)
     test_emf_ExtTextOut_on_path();
     test_emf_clipping();
     test_emf_polybezier();
-    test_emf_GetPath();
+    test_emf_paths();
     test_emf_PolyPolyline();
     test_emf_GradientFill();
 
