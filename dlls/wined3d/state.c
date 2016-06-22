@@ -4832,51 +4832,22 @@ void state_srgbwrite(struct wined3d_context *context, const struct wined3d_state
         gl_info->gl_ops.gl.p_glDisable(GL_FRAMEBUFFER_SRGB);
 }
 
-static void state_cb(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state,
-        enum wined3d_shader_type type, unsigned int base, unsigned int count)
+static void state_cb(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
+    enum wined3d_shader_type shader_type = state_id - STATE_CONSTANT_BUFFER(0);
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_buffer *buffer;
-    unsigned int i;
+    unsigned int i, base, count;
 
+    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+
+    wined3d_gl_limits_get_uniform_block_range(&gl_info->limits, shader_type, &base, &count);
     for (i = 0; i < count; ++i)
     {
-        buffer = state->cb[type][i];
+        buffer = state->cb[shader_type][i];
         GL_EXTCALL(glBindBufferBase(GL_UNIFORM_BUFFER, base + i, buffer ? buffer->buffer_object : 0));
     }
     checkGLcall("glBindBufferBase");
-}
-
-static void state_cb_vs(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    const struct wined3d_gl_limits *limits = &context->gl_info->limits;
-    unsigned int base, count;
-
-    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
-
-    wined3d_gl_limits_get_uniform_block_range(limits, WINED3D_SHADER_TYPE_VERTEX, &base, &count);
-    state_cb(context->gl_info, state, WINED3D_SHADER_TYPE_VERTEX, base, count);
-}
-
-static void state_cb_gs(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    const struct wined3d_gl_limits *limits = &context->gl_info->limits;
-    unsigned int base, count;
-
-    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
-
-    wined3d_gl_limits_get_uniform_block_range(limits, WINED3D_SHADER_TYPE_GEOMETRY, &base, &count);
-    state_cb(context->gl_info, state, WINED3D_SHADER_TYPE_GEOMETRY, base, count);
-}
-
-static void state_cb_ps(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    const struct wined3d_gl_limits *limits = &context->gl_info->limits;
-    unsigned int base, count;
-
-    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
-
-    wined3d_gl_limits_get_uniform_block_range(limits, WINED3D_SHADER_TYPE_PIXEL, &base, &count);
-    state_cb(context->gl_info, state, WINED3D_SHADER_TYPE_PIXEL, base, count);
 }
 
 static void state_cb_warn(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -4896,11 +4867,11 @@ static void state_shader_resource_binding(struct wined3d_context *context,
 
 const struct StateEntryTemplate misc_state_template[] =
 {
-    { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_VERTEX),  { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_VERTEX),  state_cb_vs,        }, ARB_UNIFORM_BUFFER_OBJECT       },
+    { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_VERTEX),  { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_VERTEX),  state_cb,           }, ARB_UNIFORM_BUFFER_OBJECT       },
     { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_VERTEX),  { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_VERTEX),  state_cb_warn,      }, WINED3D_GL_EXT_NONE             },
-    { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_GEOMETRY),{ STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_GEOMETRY),state_cb_gs,        }, ARB_UNIFORM_BUFFER_OBJECT       },
+    { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_GEOMETRY),{ STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_GEOMETRY),state_cb,           }, ARB_UNIFORM_BUFFER_OBJECT       },
     { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_GEOMETRY),{ STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_GEOMETRY),state_cb_warn,      }, WINED3D_GL_EXT_NONE             },
-    { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL),   { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL),   state_cb_ps,        }, ARB_UNIFORM_BUFFER_OBJECT       },
+    { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL),   { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL),   state_cb,           }, ARB_UNIFORM_BUFFER_OBJECT       },
     { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL),   { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL),   state_cb_warn,      }, WINED3D_GL_EXT_NONE             },
     { STATE_SHADER_RESOURCE_BINDING,                      { STATE_SHADER_RESOURCE_BINDING,                      state_shader_resource_binding}, WINED3D_GL_EXT_NONE    },
     { STATE_RENDER(WINED3D_RS_SRCBLEND),                  { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
