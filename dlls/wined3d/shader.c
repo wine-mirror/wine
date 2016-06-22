@@ -1752,6 +1752,10 @@ static void shader_dump_register(struct wined3d_string_buffer *buffer,
             shader_addline(buffer, "g");
             break;
 
+        case WINED3DSPR_THREADID:
+            shader_addline(buffer, "vThreadID");
+            break;
+
         case WINED3DSPR_THREADGROUPID:
             shader_addline(buffer, "vThreadGroupID");
             break;
