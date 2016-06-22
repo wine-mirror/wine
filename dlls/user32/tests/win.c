@@ -1078,7 +1078,7 @@ static void test_nonclient_area(HWND hwnd)
     if (IsRectEmpty(&rc_window) || IsRectEmpty(&rc_client) ||
 	rc_window.right > 32768 || rc_window.bottom > 32768) return;
 
-    CopyRect(&rc, &rc_client);
+    rc = rc_client;
     MapWindowPoints(hwnd, 0, (LPPOINT)&rc, 2);
     FixedAdjustWindowRectEx(&rc, style, menu, exstyle);
 
@@ -1086,7 +1086,7 @@ static void test_nonclient_area(HWND hwnd)
        "window rect does not match: style:exstyle=0x%08x:0x%08x, menu=%d, win=%s, calc=%s\n",
        style, exstyle, menu, wine_dbgstr_rect(&rc_window), wine_dbgstr_rect(&rc));
 
-    CopyRect(&rc, &rc_client);
+    rc = rc_client;
     MapWindowPoints(hwnd, 0, (LPPOINT)&rc, 2);
     wine_AdjustWindowRectEx(&rc, style, menu, exstyle);
     ok(EqualRect(&rc, &rc_window),
@@ -1094,7 +1094,7 @@ static void test_nonclient_area(HWND hwnd)
        style, exstyle, menu, wine_dbgstr_rect(&rc_window), wine_dbgstr_rect(&rc));
 
 
-    CopyRect(&rc, &rc_window);
+    rc = rc_window;
     DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc);
     MapWindowPoints(0, hwnd, (LPPOINT)&rc, 2);
     ok(EqualRect(&rc, &rc_client),
@@ -1111,11 +1111,11 @@ static void test_nonclient_area(HWND hwnd)
 
     /* and now test AdjustWindowRectEx and WM_NCCALCSIZE on synthetic data */
     SetRect(&rc_client, 0, 0, 250, 150);
-    CopyRect(&rc_window, &rc_client);
+    rc_window = rc_client;
     MapWindowPoints(hwnd, 0, (LPPOINT)&rc_window, 2);
     FixedAdjustWindowRectEx(&rc_window, style, menu, exstyle);
 
-    CopyRect(&rc, &rc_window);
+    rc = rc_window;
     DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc);
     MapWindowPoints(0, hwnd, (LPPOINT)&rc, 2);
     ok(EqualRect(&rc, &rc_client),
@@ -5278,14 +5278,14 @@ static LRESULT WINAPI parentdc_window_procA(HWND hwnd, UINT msg, WPARAM wparam, 
     {
     case WM_PAINT:
         GetClientRect(hwnd, &rc);
-        CopyRect(&t->client, &rc);
+        t->client = rc;
         GetWindowRect(hwnd, &rc);
         trace("WM_PAINT: hwnd %p, client rect %s, window rect %s\n", hwnd,
               wine_dbgstr_rect(&t->client), wine_dbgstr_rect(&rc));
         BeginPaint(hwnd, &ps);
-        CopyRect(&t->paint, &ps.rcPaint);
+        t->paint = ps.rcPaint;
         GetClipBox(ps.hdc, &rc);
-        CopyRect(&t->clip, &rc);
+        t->clip = rc;
         trace("clip rect %s, paint rect %s\n", wine_dbgstr_rect(&rc),
               wine_dbgstr_rect(&ps.rcPaint));
         EndPaint(hwnd, &ps);
