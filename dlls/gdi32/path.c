@@ -282,7 +282,9 @@ static BOOL start_new_stroke( struct path_physdev *physdev )
     struct gdi_path *path = physdev->path;
 
     if (!path->newStroke && path->count &&
-        !(path->flags[path->count - 1] & PT_CLOSEFIGURE))
+        !(path->flags[path->count - 1] & PT_CLOSEFIGURE) &&
+        path->points[path->count - 1].x == path->pos.x &&
+        path->points[path->count - 1].y == path->pos.y)
         return TRUE;
 
     path->newStroke = FALSE;
@@ -1234,11 +1236,7 @@ static BOOL pathdrv_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, 
             /* fall through */
         default:
             /* restore original position */
-            if (path->pos.x != orig_pos.x || path->pos.y != orig_pos.y)
-            {
-                path->newStroke = TRUE;
-                path->pos = orig_pos;
-            }
+            path->pos = orig_pos;
             return FALSE;
         }
 
