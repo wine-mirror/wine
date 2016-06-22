@@ -2592,6 +2592,45 @@ ostream* __thiscall ostream_writepad(ostream *this, const char *str1, const char
     return this;
 }
 
+static ostream* ostream_internal_print_integer(ostream *ostr, int n, BOOL unsig, BOOL shrt)
+{
+    ios *base = ostream_get_ios(ostr);
+    char prefix_str[3] = {0}, number_str[12], sprintf_fmt[4] = {'%','d',0};
+
+    TRACE("(%p %d %d %d)\n", ostr, n, unsig, shrt);
+
+    if (ostream_opfx(ostr)) {
+        if (base->flags & FLAGS_hex) {
+            sprintf_fmt[1] = (base->flags & FLAGS_uppercase) ? 'X' : 'x';
+            if (base->flags & FLAGS_showbase) {
+                prefix_str[0] = '0';
+                prefix_str[1] = (base->flags & FLAGS_uppercase) ? 'X' : 'x';
+            }
+        } else if (base->flags & FLAGS_oct) {
+            sprintf_fmt[1]  = 'o';
+            if (base->flags & FLAGS_showbase)
+                prefix_str[0] = '0';
+        } else { /* FLAGS_dec */
+            if (unsig)
+                sprintf_fmt[1] = 'u';
+            if ((base->flags & FLAGS_showpos) && n != 0 && (unsig || n > 0))
+                prefix_str[0] = '+';
+        }
+
+        if (shrt) {
+            sprintf_fmt[2] = sprintf_fmt[1];
+            sprintf_fmt[1] = 'h';
+        }
+
+        if (sprintf(number_str, sprintf_fmt, n) > 0)
+            ostream_writepad(ostr, prefix_str, number_str);
+        else
+            base->state |= IOSTATE_failbit;
+        ostream_osfx(ostr);
+    }
+    return ostr;
+}
+
 /* ??6ostream@@QAEAAV0@C@Z */
 /* ??6ostream@@QEAAAEAV0@C@Z */
 /* ??6ostream@@QAEAAV0@D@Z */
@@ -2646,8 +2685,7 @@ ostream* __thiscall ostream_print_unsigned_str(ostream *this, const unsigned cha
 DEFINE_THISCALL_WRAPPER(ostream_print_short, 8)
 ostream* __thiscall ostream_print_short(ostream *this, short n)
 {
-    FIXME("(%p %d) stub\n", this, n);
-    return this;
+    return ostream_internal_print_integer(this, n, FALSE, TRUE);
 }
 
 /* ??6ostream@@QAEAAV0@G@Z */
@@ -2655,8 +2693,7 @@ ostream* __thiscall ostream_print_short(ostream *this, short n)
 DEFINE_THISCALL_WRAPPER(ostream_print_unsigned_short, 8)
 ostream* __thiscall ostream_print_unsigned_short(ostream *this, unsigned short n)
 {
-    FIXME("(%p %u) stub\n", this, n);
-    return this;
+    return ostream_internal_print_integer(this, n, TRUE, TRUE);
 }
 
 /* ??6ostream@@QAEAAV0@H@Z */
@@ -2666,8 +2703,7 @@ ostream* __thiscall ostream_print_unsigned_short(ostream *this, unsigned short n
 DEFINE_THISCALL_WRAPPER(ostream_print_int, 8)
 ostream* __thiscall ostream_print_int(ostream *this, int n)
 {
-    FIXME("(%p %d) stub\n", this, n);
-    return this;
+    return ostream_internal_print_integer(this, n, FALSE, FALSE);
 }
 
 /* ??6ostream@@QAEAAV0@I@Z */
@@ -2677,8 +2713,7 @@ ostream* __thiscall ostream_print_int(ostream *this, int n)
 DEFINE_THISCALL_WRAPPER(ostream_print_unsigned_int, 8)
 ostream* __thiscall ostream_print_unsigned_int(ostream *this, unsigned int n)
 {
-    FIXME("(%p %u) stub\n", this, n);
-    return this;
+    return ostream_internal_print_integer(this, n, TRUE, FALSE);
 }
 
 /* ??6ostream@@QAEAAV0@M@Z */
