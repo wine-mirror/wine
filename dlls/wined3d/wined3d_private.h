@@ -595,6 +595,7 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_DCL_TESSELLATOR_OUTPUT_PRIMITIVE,
     WINED3DSIH_DCL_TESSELLATOR_PARTITIONING,
     WINED3DSIH_DCL_TGSM_RAW,
+    WINED3DSIH_DCL_TGSM_STRUCTURED,
     WINED3DSIH_DCL_THREAD_GROUP,
     WINED3DSIH_DCL_UAV_TYPED,
     WINED3DSIH_DCL_VERTICES_OUT,
@@ -920,6 +921,13 @@ struct wined3d_shader_tgsm_raw
     unsigned int byte_count;
 };
 
+struct wined3d_shader_tgsm_structured
+{
+    struct wined3d_shader_dst_param reg;
+    unsigned int byte_stride;
+    unsigned int structure_count;
+};
+
 struct wined3d_shader_thread_group_size
 {
     unsigned int x, y, z;
@@ -953,6 +961,7 @@ struct wined3d_shader_instruction
         const struct wined3d_shader_immediate_constant_buffer *icb;
         struct wined3d_shader_structured_resource structured_resource;
         struct wined3d_shader_tgsm_raw tgsm_raw;
+        struct wined3d_shader_tgsm_structured tgsm_structured;
         struct wined3d_shader_thread_group_size thread_group_size;
         enum wined3d_tessellator_domain tessellator_domain;
         enum wined3d_tessellator_output_primitive tessellator_output_primitive;

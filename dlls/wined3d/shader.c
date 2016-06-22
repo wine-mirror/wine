@@ -81,6 +81,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DCL_TESSELLATOR_OUTPUT_PRIMITIVE */ "dcl_tessellator_output_primitive",
     /* WINED3DSIH_DCL_TESSELLATOR_PARTITIONING     */ "dcl_tessellator_partitioning",
     /* WINED3DSIH_DCL_TGSM_RAW                     */ "dcl_tgsm_raw",
+    /* WINED3DSIH_DCL_TGSM_STRUCTURED              */ "dcl_tgsm_structured",
     /* WINED3DSIH_DCL_THREAD_GROUP                 */ "dcl_thread_group",
     /* WINED3DSIH_DCL_UAV_TYPED                    */ "dcl_uav_typed",
     /* WINED3DSIH_DCL_VERTICES_OUT                 */ "dcl_maxOutputVertexCount",
@@ -2278,6 +2279,13 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
             shader_addline(&buffer, "%s ", shader_opcode_names[ins.handler_idx]);
             shader_dump_dst_param(&buffer, &ins.declaration.tgsm_raw.reg, &shader_version);
             shader_addline(&buffer, ", %u", ins.declaration.tgsm_raw.byte_count);
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_TGSM_STRUCTURED)
+        {
+            shader_addline(&buffer, "%s ", shader_opcode_names[ins.handler_idx]);
+            shader_dump_dst_param(&buffer, &ins.declaration.tgsm_structured.reg, &shader_version);
+            shader_addline(&buffer, ", %u, %u", ins.declaration.tgsm_structured.byte_stride,
+                    ins.declaration.tgsm_structured.structure_count);
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_THREAD_GROUP)
         {
