@@ -2631,6 +2631,47 @@ static ostream* ostream_internal_print_integer(ostream *ostr, int n, BOOL unsig,
     return ostr;
 }
 
+static ostream* ostream_internal_print_float(ostream *ostr, double d, BOOL dbl)
+{
+    ios *base = ostream_get_ios(ostr);
+    char prefix_str[2] = {0}, number_str[24], sprintf_fmt[6] = {'%','.','*','f',0};
+    int prec, max_prec = dbl ? 15 : 6;
+    int str_length = 1; /* null end char */
+
+    TRACE("(%p %lf %d)\n", ostr, d, dbl);
+
+    if (ostream_opfx(ostr)) {
+        if ((base->flags & FLAGS_showpos) && d > 0) {
+            prefix_str[0] = '+';
+            str_length++; /* plus sign */
+        }
+        if ((base->flags & (FLAGS_scientific|FLAGS_fixed)) == FLAGS_scientific)
+            sprintf_fmt[3] = (base->flags & FLAGS_uppercase) ? 'E' : 'e';
+        else if ((base->flags & (FLAGS_scientific|FLAGS_fixed)) != FLAGS_fixed)
+            sprintf_fmt[3] = (base->flags & FLAGS_uppercase) ? 'G' : 'g';
+        if (base->flags & FLAGS_showpoint) {
+            sprintf_fmt[4] = sprintf_fmt[3];
+            sprintf_fmt[3] = sprintf_fmt[2];
+            sprintf_fmt[2] = sprintf_fmt[1];
+            sprintf_fmt[1] = '#';
+        }
+
+        prec = (base->precision >= 0 && base->precision <= max_prec) ? base->precision : max_prec;
+        str_length += _scprintf(sprintf_fmt, prec, d); /* number representation */
+        if (str_length > 24) {
+            /* when the output length exceeds 24 characters, Windows prints an empty string with padding */
+            ostream_writepad(ostr, "", "");
+        } else {
+            if (sprintf(number_str, sprintf_fmt, prec, d) > 0)
+                ostream_writepad(ostr, prefix_str, number_str);
+            else
+                base->state |= IOSTATE_failbit;
+        }
+        ostream_osfx(ostr);
+    }
+    return ostr;
+}
+
 /* ??6ostream@@QAEAAV0@C@Z */
 /* ??6ostream@@QEAAAEAV0@C@Z */
 /* ??6ostream@@QAEAAV0@D@Z */
@@ -2721,8 +2762,7 @@ ostream* __thiscall ostream_print_unsigned_int(ostream *this, unsigned int n)
 DEFINE_THISCALL_WRAPPER(ostream_print_float, 8)
 ostream* __thiscall ostream_print_float(ostream *this, float f)
 {
-    FIXME("(%p %f) stub\n", this, f);
-    return this;
+    return ostream_internal_print_float(this, f, FALSE);
 }
 
 /* ??6ostream@@QAEAAV0@N@Z */
@@ -2732,8 +2772,7 @@ ostream* __thiscall ostream_print_float(ostream *this, float f)
 DEFINE_THISCALL_WRAPPER(ostream_print_double, 12)
 ostream* __thiscall ostream_print_double(ostream *this, double d)
 {
-    FIXME("(%p %lf) stub\n", this, d);
-    return this;
+    return ostream_internal_print_float(this, d, TRUE);
 }
 
 /* ??6ostream@@QAEAAV0@PBX@Z */
