@@ -1298,16 +1298,24 @@ static BOOL pathdrv_Polygon( PHYSDEV dev, const POINT *pts, INT cbPoints )
 static BOOL pathdrv_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* counts, UINT polygons )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
-    UINT poly;
+    UINT poly, count;
     BYTE *type;
 
-    for(poly = 0; poly < polygons; poly++) {
-        type = add_log_points( physdev, pts, counts[poly], PT_LINETO );
-        if (!type) return FALSE;
+    if (!polygons) return FALSE;
+    for (poly = count = 0; poly < polygons; poly++)
+    {
+        if (counts[poly] < 2) return FALSE;
+        count += counts[poly];
+    }
+
+    type = add_log_points( physdev, pts, count, PT_LINETO );
+    if (!type) return FALSE;
+
+    /* make the first point of each polyline a PT_MOVETO, and close the last one */
+    for (poly = 0; poly < polygons; type += counts[poly++])
+    {
         type[0] = PT_MOVETO;
-        /* win98 adds an extra line to close the figure for some reason */
-        add_log_points( physdev, pts, 1, PT_LINETO | PT_CLOSEFIGURE );
-        pts += counts[poly];
+        type[counts[poly] - 1] = PT_LINETO | PT_CLOSEFIGURE;
     }
     return TRUE;
 }
@@ -1322,13 +1330,18 @@ static BOOL pathdrv_PolyPolyline( PHYSDEV dev, const POINT* pts, const DWORD* co
     UINT poly, count;
     BYTE *type;
 
-    for (poly = count = 0; poly < polylines; poly++) count += counts[poly];
+    if (!polylines) return FALSE;
+    for (poly = count = 0; poly < polylines; poly++)
+    {
+        if (counts[poly] < 2) return FALSE;
+        count += counts[poly];
+    }
 
     type = add_log_points( physdev, pts, count, PT_LINETO );
     if (!type) return FALSE;
 
     /* make the first point of each polyline a PT_MOVETO */
-    for (poly = 0; poly < polylines; poly++, type += counts[poly]) *type = PT_MOVETO;
+    for (poly = 0; poly < polylines; type += counts[poly++]) *type = PT_MOVETO;
     return TRUE;
 }
 
