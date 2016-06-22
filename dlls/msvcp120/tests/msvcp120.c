@@ -592,7 +592,7 @@ static void test_xtime_get(void)
         diff = p__Xtime_diff_to_millis2(&after, &before);
 
         ok(diff >= tests[i],
-                "xtime_get() not functioning correctly, test: %d, expect: ge %d, got: %d\n",
+                "xtime_get() not functioning correctly, test: %d, expect: %d, got: %d\n",
                 i, tests[i], diff);
     }
 
