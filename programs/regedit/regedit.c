@@ -66,12 +66,6 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, char **argv, int *i)
             char *filename = argv[*i];
             FILE *reg_file;
 
-            if (!filename[0]) {
-                fprintf(stderr, "regedit: No file name was specified\n");
-                fprintf(stderr,usage);
-                exit(1);
-            }
-
             if (filename[0]) {
                 char* realname = NULL;
 
@@ -113,29 +107,15 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, char **argv, int *i)
             break;
         }
     case ACTION_DELETE: {
-            char *reg_key_name = argv[*i];
+            WCHAR *reg_key_nameW = GetWideString(argv[*i]);
 
-            if (!reg_key_name[0]) {
-                fprintf(stderr, "regedit: No registry key was specified for removal\n");
-                fprintf(stderr,usage);
-                exit(1);
-            } else
-            {
-                WCHAR* reg_key_nameW = GetWideString(reg_key_name);
-                delete_registry_key(reg_key_nameW);
-                HeapFree(GetProcessHeap(), 0, reg_key_nameW);
-            }
+            delete_registry_key(reg_key_nameW);
+            HeapFree(GetProcessHeap(), 0, reg_key_nameW);
             break;
         }
     case ACTION_EXPORT: {
             char *filename = argv[*i];
             WCHAR* filenameW;
-
-            if (!filename[0]) {
-                fprintf(stderr, "regedit: No filename was specified\n");
-                fprintf(stderr,usage);
-                exit(1);
-            }
 
             filenameW = GetWideString(filename);
             if (filenameW[0]) {
@@ -263,6 +243,22 @@ BOOL ProcessCmdLine(LPSTR lpCmdLine)
             fprintf(stderr, "regedit: Invalid switch [%ls]\n", argv[i]);
             exit(1);
         }
+    }
+
+    if (i == argc)
+    {
+        switch (action)
+        {
+        case ACTION_ADD:
+        case ACTION_EXPORT:
+            fprintf(stderr, "regedit: No file name was specified\n\n");
+            break;
+        case ACTION_DELETE:
+            fprintf(stderr,"regedit: No registry key was specified for removal\n\n");
+            break;
+        }
+        fprintf(stderr, usage);
+        exit(1);
     }
 
     PerformRegAction(action, argv, &i);
