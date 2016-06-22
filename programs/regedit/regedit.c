@@ -59,12 +59,6 @@ typedef enum {
     ACTION_UNDEF, ACTION_ADD, ACTION_EXPORT, ACTION_DELETE
 } REGEDIT_ACTION;
 
-
-const CHAR *getAppName(void)
-{
-    return "regedit";
-}
-
 /******************************************************************************
  * Copies file name from command line string to the buffer.
  * Rewinds the command line string pointer to the next non-space character
@@ -91,8 +85,7 @@ static void get_file_name(CHAR **command_line, CHAR *file_name)
         (*command_line)++;
         while(s[0] != '"') {
             if (!s[0]) {
-                fprintf(stderr,"%s: Unexpected end of file name!\n",
-                        getAppName());
+                fprintf(stderr, "regedit: Unexpected end of file name!\n");
                 exit(1);
             }
             s++;
@@ -132,7 +125,7 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
 
             get_file_name(&s, filename);
             if (!filename[0]) {
-                fprintf(stderr,"%s: No file name was specified\n", getAppName());
+                fprintf(stderr, "regedit: No file name was specified\n");
                 fprintf(stderr,usage);
                 exit(1);
             }
@@ -156,15 +149,15 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
                     }
                     if (size == 0)
                     {
-                        fprintf(stderr, "%s: File not found \"%s\" (%d)\n",
-                                getAppName(), filename, GetLastError());
+                        fprintf(stderr, "regedit: File not found \"%s\" (%d)\n",
+                                filename, GetLastError());
                         exit(1);
                     }
                     reg_file = fopen(realname, "rb");
                     if (reg_file == NULL)
                     {
                         perror("");
-                        fprintf(stderr, "%s: Can't open file \"%s\"\n", getAppName(), filename);
+                        fprintf(stderr, "regedit: Can't open file \"%s\"\n", filename);
                         exit(1);
                     }
                 }
@@ -183,8 +176,7 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
 
             get_file_name(&s, reg_key_name);
             if (!reg_key_name[0]) {
-                fprintf(stderr,"%s: No registry key was specified for removal\n",
-                        getAppName());
+                fprintf(stderr, "regedit: No registry key was specified for removal\n");
                 fprintf(stderr,usage);
                 exit(1);
             } else
@@ -202,7 +194,7 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
             filename[0] = '\0';
             get_file_name(&s, filename);
             if (!filename[0]) {
-                fprintf(stderr,"%s: No file name was specified\n", getAppName());
+                fprintf(stderr, "regedit: No filename was specified\n");
                 fprintf(stderr,usage);
                 exit(1);
             }
@@ -223,7 +215,7 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
             break;
         }
     default:
-        fprintf(stderr,"%s: Unhandled action!\n", getAppName());
+        fprintf(stderr, "regedit: Unhandled action!\n");
         exit(1);
         break;
     }
