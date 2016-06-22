@@ -2843,24 +2843,25 @@ ostream* __thiscall ostream_print_ios_manip(ostream *this, ios* (__cdecl *func)(
 /* ?endl@@YAAEAVostream@@AEAV1@@Z */
 ostream* __cdecl ostream_endl(ostream *this)
 {
-   FIXME("(%p) stub\n", this);
-   return this;
+   TRACE("(%p)\n", this);
+   ostream_put_char(this, '\n');
+   return ostream_flush(this);
 }
 
 /* ?ends@@YAAAVostream@@AAV1@@Z */
 /* ?ends@@YAAEAVostream@@AEAV1@@Z */
 ostream* __cdecl ostream_ends(ostream *this)
 {
-   FIXME("(%p) stub\n", this);
-   return this;
+   TRACE("(%p)\n", this);
+   return ostream_put_char(this, 0);
 }
 
 /* ?flush@@YAAAVostream@@AAV1@@Z */
 /* ?flush@@YAAEAVostream@@AEAV1@@Z */
 ostream* __cdecl ostream_flush_manip(ostream *this)
 {
-   FIXME("(%p) stub\n", this);
-   return this;
+   TRACE("(%p)\n", this);
+   return ostream_flush(this);
 }
 
 /******************************************************************
