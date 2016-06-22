@@ -56,81 +56,23 @@ static const char *usage =
     "regedit.\n";
 
 typedef enum {
-    ACTION_UNDEF, ACTION_ADD, ACTION_EXPORT, ACTION_DELETE
+    ACTION_ADD, ACTION_EXPORT, ACTION_DELETE
 } REGEDIT_ACTION;
 
-/******************************************************************************
- * Copies file name from command line string to the buffer.
- * Rewinds the command line string pointer to the next non-space character
- * after the file name.
- * Buffer contains an empty string if no filename was found;
- *
- * params:
- * command_line - command line current position pointer
- *      where *s[0] is the first symbol of the file name.
- * file_name - buffer to write the file name to.
- */
-static void get_file_name(CHAR **command_line, CHAR *file_name)
-{
-    CHAR *s = *command_line;
-    int pos = 0;                /* position of pointer "s" in *command_line */
-    file_name[0] = 0;
-
-    if (!s[0]) {
-        return;
-    }
-
-    if (s[0] == '"') {
-        s++;
-        (*command_line)++;
-        while(s[0] != '"') {
-            if (!s[0]) {
-                fprintf(stderr, "regedit: Unexpected end of file name!\n");
-                exit(1);
-            }
-            s++;
-            pos++;
-        }
-    } else {
-        while(s[0] && !isspace(s[0])) {
-            s++;
-            pos++;
-        }
-    }
-    memcpy(file_name, *command_line, pos * sizeof((*command_line)[0]));
-    /* Terminate the string and remove the trailing backslash */
-    if (pos > 0 && file_name[pos - 1] == '\\') {
-        file_name[pos - 1] = '\0';
-    } else {
-        file_name[pos] = '\0';
-    }
-
-    if (s[0]) {
-        s++;
-        pos++;
-    }
-    while(s[0] && isspace(s[0])) {
-        s++;
-        pos++;
-    }
-    (*command_line) += pos;
-}
-
-static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
+static BOOL PerformRegAction(REGEDIT_ACTION action, char **argv, int *i)
 {
     switch (action) {
     case ACTION_ADD: {
-            CHAR filename[MAX_PATH];
+            char *filename = argv[*i];
             FILE *reg_file;
 
-            get_file_name(&s, filename);
             if (!filename[0]) {
                 fprintf(stderr, "regedit: No file name was specified\n");
                 fprintf(stderr,usage);
                 exit(1);
             }
 
-            while(filename[0]) {
+            if (filename[0]) {
                 char* realname = NULL;
 
                 if (strcmp(filename, "-") == 0)
@@ -167,14 +109,12 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
                     HeapFree(GetProcessHeap(),0,realname);
                     fclose(reg_file);
                 }
-                get_file_name(&s, filename);
             }
             break;
         }
     case ACTION_DELETE: {
-            CHAR reg_key_name[KEY_MAX_LEN];
+            char *reg_key_name = argv[*i];
 
-            get_file_name(&s, reg_key_name);
             if (!reg_key_name[0]) {
                 fprintf(stderr, "regedit: No registry key was specified for removal\n");
                 fprintf(stderr,usage);
@@ -188,11 +128,9 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
             break;
         }
     case ACTION_EXPORT: {
-            CHAR filename[MAX_PATH];
+            char *filename = argv[*i];
             WCHAR* filenameW;
 
-            filename[0] = '\0';
-            get_file_name(&s, filename);
             if (!filename[0]) {
                 fprintf(stderr, "regedit: No filename was specified\n");
                 fprintf(stderr,usage);
@@ -200,11 +138,10 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
             }
 
             filenameW = GetWideString(filename);
-            if (s[0]) {
-                CHAR reg_key_name[KEY_MAX_LEN];
+            if (filenameW[0]) {
+                char *reg_key_name = argv[++(*i)];
                 WCHAR* reg_key_nameW;
 
-                get_file_name(&s, reg_key_name);
                 reg_key_nameW = GetWideString(reg_key_name);
                 export_registry_key(filenameW, reg_key_nameW, REG_FORMAT_4);
                 HeapFree(GetProcessHeap(), 0, reg_key_nameW);
@@ -222,83 +159,117 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
     return TRUE;
 }
 
-BOOL ProcessCmdLine(LPSTR lpCmdLine)
+char *get_token(char *input, char **next)
 {
-    REGEDIT_ACTION action = ACTION_UNDEF;
-    LPSTR s = lpCmdLine;        /* command line pointer */
-    CHAR ch = *s;               /* current character */
+    char *ch = input;
+    char *str;
 
-    while (ch && ((ch == '-') || (ch == '/'))) {
-        char chu;
-        char ch2;
+    while (*ch && isspace(*ch))
+        ch++;
 
-        s++;
-        ch = *s;
-        if (!ch || isspace(ch))
-        {
-            /* '-' is a file name. It indicates we should use stdin */
-            s--;
+    str = ch;
+
+    if (*ch == '"') {
+        ch++;
+        str = ch;
+        for (;;) {
+            while (*ch && (*ch != '"'))
+                ch++;
+
+            if (!*ch)
+                break;
+
+            if (*(ch - 1) == '\\') {
+                ch++;
+                continue;
+            }
             break;
         }
-        ch2 = *(s+1);
-        chu = toupper(ch);
-        if (!ch2 || isspace(ch2)) {
-            if (chu == 'S' || chu == 'V') {
-                /* ignore these switches */
-            } else {
-                switch (chu) {
-                case 'D':
-                    action = ACTION_DELETE;
-                    break;
-                case 'E':
-                    action = ACTION_EXPORT;
-                    break;
-                case '?':
-                    fprintf(stderr,usage);
-                    exit(0);
-                    break;
-                default:
-                    fprintf(stderr, "regedit: Invalid or unrecognized switch [/%c]\n", chu);
-                    exit(1);
-                    break;
-                }
-            }
-            s++;
-        } else {
-            if (ch2 == ':') {
-                switch (chu) {
-                case 'L':
-                    /* fall through */
-                case 'R':
-                    s += 2;
-                    while (*s && !isspace(*s)) {
-                        s++;
-                    }
-                    break;
-                default:
-                    fprintf(stderr, "regedit: Invalid or unrecognized switch [/%c]\n", chu);
-                    exit(1);
-                    break;
-                }
-            } else {
-                /* this is a file name, starting from '/' */
-                s--;
-                break;
-            }
-        }
-        /* skip spaces to the next parameter */
-        ch = *s;
-        while (ch && isspace(ch)) {
-            s++;
-            ch = *s;
+    }
+    else {
+        while (*ch && !isspace(*ch))
+            ch++;
+    }
+
+    if (*ch) {
+        *ch = 0;
+        ch++;
+    }
+
+    *next = ch;
+    return str;
+}
+
+BOOL ProcessCmdLine(LPSTR lpCmdLine)
+{
+    char *s = lpCmdLine;
+    char **argv;
+    char *tok;
+    int argc = 0, i = 1;
+    REGEDIT_ACTION action = ACTION_ADD;
+
+    if (!*lpCmdLine)
+        return FALSE;
+
+    while (*s) {
+        if (isspace(*s))
+            i++;
+        s++;
+    }
+
+    s = lpCmdLine;
+    argv = HeapAlloc(GetProcessHeap(), 0, i * sizeof(char *));
+
+    for (i = 0; *s; i++)
+    {
+        tok = get_token(s, &s);
+        argv[i] = HeapAlloc(GetProcessHeap(), 0, strlen(tok) + 1);
+        strcpy(argv[i], tok);
+        argc++;
+    }
+
+    for (i = 0; i < argc; i++)
+    {
+        if (argv[i][0] != '/' && argv[i][0] != '-')
+            break; /* No flags specified. */
+
+        if (!argv[i][1] && argv[i][0] == '-')
+            break; /* '-' is a filename. It indicates we should use stdin. */
+
+        if (argv[i][1] && argv[i][2] && argv[i][2] != ':')
+            break; /* This is a file path beginning with '/'. */
+
+        switch (toupper(argv[i][1]))
+        {
+        case '?':
+            fprintf(stderr, usage);
+            exit(0);
+            break;
+        case 'D':
+            action = ACTION_DELETE;
+            break;
+        case 'E':
+            action = ACTION_EXPORT;
+            break;
+        case 'L':
+        case 'R':
+            /* unhandled */;
+            break;
+        case 'S':
+        case 'V':
+            /* ignored */;
+            break;
+        default:
+            fprintf(stderr, "regedit: Invalid switch [%ls]\n", argv[i]);
+            exit(1);
         }
     }
 
-    if (*s && action == ACTION_UNDEF)
-        action = ACTION_ADD;
+    PerformRegAction(action, argv, &i);
 
-    if (action == ACTION_UNDEF)
-        return FALSE;
+    for (i = 0; i < argc; i++)
+        HeapFree(GetProcessHeap(), 0, argv[i]);
+    HeapFree(GetProcessHeap(), 0, argv);
 
-    return PerformRegAction(action, s);
+    return TRUE;
 }
