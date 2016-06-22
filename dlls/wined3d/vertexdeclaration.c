@@ -50,6 +50,14 @@ ULONG CDECL wined3d_vertex_declaration_incref(struct wined3d_vertex_declaration 
     return refcount;
 }
 
+static void wined3d_vertex_declaration_destroy_object(void *object)
+{
+    struct wined3d_vertex_declaration *declaration = object;
+
+    HeapFree(GetProcessHeap(), 0, declaration->elements);
+    HeapFree(GetProcessHeap(), 0, declaration);
+}
+
 ULONG CDECL wined3d_vertex_declaration_decref(struct wined3d_vertex_declaration *declaration)
 {
     ULONG refcount = InterlockedDecrement(&declaration->ref);
@@ -58,9 +66,9 @@ ULONG CDECL wined3d_vertex_declaration_decref(struct wined3d_vertex_declaration 
 
     if (!refcount)
     {
-        HeapFree(GetProcessHeap(), 0, declaration->elements);
         declaration->parent_ops->wined3d_object_destroyed(declaration->parent);
-        HeapFree(GetProcessHeap(), 0, declaration);
+        wined3d_cs_emit_destroy_object(declaration->device->cs,
+                wined3d_vertex_declaration_destroy_object, declaration);
     }
 
     return refcount;
