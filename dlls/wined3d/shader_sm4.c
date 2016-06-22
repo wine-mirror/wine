@@ -221,6 +221,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM5_OP_DCL_HS_FORK_PHASE_INSTANCE_COUNT = 0x99,
     WINED3D_SM5_OP_DCL_THREAD_GROUP                 = 0x9b,
     WINED3D_SM5_OP_DCL_UAV_TYPED                    = 0x9c,
+    WINED3D_SM5_OP_DCL_TGSM_RAW                     = 0x9f,
     WINED3D_SM5_OP_DCL_RESOURCE_STRUCTURED          = 0xa2,
     WINED3D_SM5_OP_LD_UAV_TYPED                     = 0xa3,
     WINED3D_SM5_OP_STORE_UAV_TYPED                  = 0xa4,
@@ -628,6 +629,14 @@ static void shader_sm5_read_dcl_thread_group(struct wined3d_shader_instruction *
     ins->declaration.thread_group_size.z = *tokens++;
 }
 
+static void shader_sm5_read_dcl_tgsm_raw(struct wined3d_shader_instruction *ins,
+        DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
+        struct wined3d_sm4_data *priv)
+{
+    shader_sm4_read_dst_param(priv, &tokens, WINED3D_DATA_FLOAT, &ins->declaration.tgsm_raw.reg);
+    ins->declaration.tgsm_raw.byte_count = *tokens;
+}
+
 static void shader_sm5_read_dcl_resource_structured(struct wined3d_shader_instruction *ins,
         DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
         struct wined3d_sm4_data *priv)
@@ -788,6 +797,8 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
             shader_sm5_read_dcl_thread_group},
     {WINED3D_SM5_OP_DCL_UAV_TYPED,                    WINED3DSIH_DCL_UAV_TYPED,                    "",     "",
             shader_sm4_read_dcl_resource},
+    {WINED3D_SM5_OP_DCL_TGSM_RAW,                     WINED3DSIH_DCL_TGSM_RAW,                     "",     "",
+            shader_sm5_read_dcl_tgsm_raw},
     {WINED3D_SM5_OP_DCL_RESOURCE_STRUCTURED,          WINED3DSIH_DCL_RESOURCE_STRUCTURED,          "",     "",
             shader_sm5_read_dcl_resource_structured},
     {WINED3D_SM5_OP_LD_UAV_TYPED,                     WINED3DSIH_LD_UAV_TYPED,                     "u",    "iU"},
