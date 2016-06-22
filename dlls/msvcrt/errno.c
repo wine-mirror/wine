@@ -344,6 +344,31 @@ void CDECL MSVCRT_perror(const char* str)
 }
 
 /*********************************************************************
+ *		_wperror (MSVCRT.@)
+ */
+void CDECL MSVCRT__wperror(const MSVCRT_wchar_t* str)
+{
+    MSVCRT_size_t size;
+    char *buffer = NULL;
+
+    if (str && *str)
+    {
+        size = MSVCRT_wcstombs(NULL, str, 0);
+        if (size == -1) return;
+        size++;
+        buffer = MSVCRT_malloc(size);
+        if (!buffer) return;
+        if (MSVCRT_wcstombs(buffer, str, size) == -1)
+        {
+            MSVCRT_free(buffer);
+            return;
+        }
+    }
+    MSVCRT_perror(buffer);
+    if (buffer) MSVCRT_free(buffer);
+}
+
+/*********************************************************************
  *		_wcserror_s (MSVCRT.@)
  */
 int CDECL MSVCRT__wcserror_s(MSVCRT_wchar_t* buffer, MSVCRT_size_t nc, int err)
