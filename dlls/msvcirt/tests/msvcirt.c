@@ -291,6 +291,7 @@ static ostream* (*__thiscall p_ostream_print_int)(ostream*, int);
 static ostream* (*__thiscall p_ostream_print_float)(ostream*, float);
 static ostream* (*__thiscall p_ostream_print_double)(ostream*, double);
 static ostream* (*__thiscall p_ostream_print_ptr)(ostream*, const void*);
+static ostream* (*__thiscall p_ostream_print_streambuf)(ostream*, streambuf*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -479,6 +480,7 @@ static BOOL init(void)
         SET(p_ostream_print_float, "??6ostream@@QEAAAEAV0@M@Z");
         SET(p_ostream_print_double, "??6ostream@@QEAAAEAV0@N@Z");
         SET(p_ostream_print_ptr, "??6ostream@@QEAAAEAV0@PEBX@Z");
+        SET(p_ostream_print_streambuf, "??6ostream@@QEAAAEAV0@PEAVstreambuf@@@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -589,6 +591,7 @@ static BOOL init(void)
         SET(p_ostream_print_float, "??6ostream@@QAEAAV0@M@Z");
         SET(p_ostream_print_double, "??6ostream@@QAEAAV0@N@Z");
         SET(p_ostream_print_ptr, "??6ostream@@QAEAAV0@PBX@Z");
+        SET(p_ostream_print_streambuf, "??6ostream@@QAEAAV0@PAVstreambuf@@@Z");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -3047,9 +3050,9 @@ static void test_ostream_print(void)
 {
     const BOOL is_64 = (sizeof(void*) == 8);
     ostream os, *pos;
-    strstreambuf ssb, *pssb;
+    strstreambuf ssb, ssb_test1, ssb_test2, ssb_test3, *pssb;
     LONG length, expected_length;
-    int i;
+    int ret, i;
 
     char param_char[] = {'a', '9', 'e'};
     const char* param_str[] = {"Test", "800", "3.14159", " Test"};
@@ -3059,8 +3062,9 @@ static void test_ostream_print(void)
     double param_double[] = {1.0, 3.141592653589793238, 314.1592653589793238, 314.159265358979,
         1231314.269811862199, 9.961472e6, 8.98846567431e307, DBL_MAX};
     void* param_ptr[] = {NULL, (void*) 0xdeadbeef, (void*) 0x1234cdef, (void*) 0x1, (void*) 0xffffffff};
+    streambuf* param_streambuf[] = {NULL, &ssb_test1.base, &ssb_test2.base, &ssb_test3.base};
     struct ostream_print_test {
-        enum { type_chr, type_str, type_int, type_flt, type_dbl, type_ptr } type;
+        enum { type_chr, type_str, type_int, type_flt, type_dbl, type_ptr, type_sbf } type;
         int param_index;
         ios_io_state state;
         ios_flags flags;
@@ -3215,13 +3219,35 @@ static void test_ostream_print(void)
         {type_ptr, /* NULL */ 0, IOSTATE_goodbit, FLAGS_uppercase|FLAGS_showbase, 12, 'x', 12,
             is_64 ? "0x0000000000000000" : "xx0x00000000", IOSTATE_goodbit},
         {type_ptr, /* NULL */ 0, IOSTATE_goodbit, FLAGS_internal|FLAGS_uppercase|FLAGS_showbase, 6, '?', 20,
-            is_64 ? "0x??0000000000000000" : "0x??????????00000000", IOSTATE_goodbit}
+            is_64 ? "0x??0000000000000000" : "0x??????????00000000", IOSTATE_goodbit},
+        /* streambuf* */
+        {type_sbf, /* NULL */ 0, IOSTATE_badbit, 0, 6, ' ', 0, "", IOSTATE_badbit|IOSTATE_failbit},
+        {type_sbf, /* NULL */ 0, IOSTATE_eofbit, 0, 6, ' ', 0, "", IOSTATE_eofbit|IOSTATE_failbit},
+        /* crashes on native {STREAMBUF, NULL 0, IOSTATE_goodbit, 0, 6, ' ', 0, "", IOSTATE_goodbit}, */
+        {type_sbf, /* &ssb_test1.base */ 1, IOSTATE_goodbit, FLAGS_skipws|FLAGS_showpos|FLAGS_uppercase,
+            6, ' ', 0, "  we both know what's been going on ", IOSTATE_goodbit},
+        {type_sbf, /* &ssb_test1.base */ 2, IOSTATE_goodbit, FLAGS_left|FLAGS_hex|FLAGS_showbase,
+            6, '*', 50, "123 We know the game and", IOSTATE_goodbit},
+        {type_sbf, /* &ssb_test1.base */ 3, IOSTATE_goodbit, FLAGS_internal|FLAGS_scientific|FLAGS_showpoint,
+            6, '*', 50, "we're gonna play it 3.14159", IOSTATE_goodbit}
     };
 
     pssb = call_func1(p_strstreambuf_ctor, &ssb);
     ok(pssb == &ssb, "wrong return, expected %p got %p\n", &ssb, pssb);
     pos = call_func3(p_ostream_sb_ctor, &os, &ssb.base, TRUE);
     ok(pos == &os, "wrong return, expected %p got %p\n", &os, pos);
+    pssb = call_func1(p_strstreambuf_ctor, &ssb_test1);
+    ok(pssb == &ssb_test1, "wrong return, expected %p got %p\n", &ssb_test1, pssb);
+    ret = (int) call_func3(p_streambuf_xsputn, &ssb_test1.base, "  we both know what's been going on ", 36);
+    ok(ret == 36, "expected 36 got %d\n", ret);
+    pssb = call_func1(p_strstreambuf_ctor, &ssb_test2);
+    ok(pssb == &ssb_test2, "wrong return, expected %p got %p\n", &ssb_test2, pssb);
+    ret = (int) call_func3(p_streambuf_xsputn, &ssb_test2.base, "123 We know the game and", 24);
+    ok(ret == 24, "expected 24 got %d\n", ret);
+    pssb = call_func1(p_strstreambuf_ctor, &ssb_test3);
+    ok(pssb == &ssb_test3, "wrong return, expected %p got %p\n", &ssb_test3, pssb);
+    ret = (int) call_func3(p_streambuf_xsputn, &ssb_test3.base, "we're gonna play it 3.14159", 27);
+    ok(ret == 27, "expected 27 got %d\n", ret);
 
     for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
         os.base_ios.state = tests[i].state;
@@ -3244,6 +3270,8 @@ static void test_ostream_print(void)
             pos = call_func2_ptr_dbl(p_ostream_print_double, &os, param_double[tests[i].param_index]); break;
         case type_ptr:
             pos = call_func2(p_ostream_print_ptr, &os, param_ptr[tests[i].param_index]); break;
+        case type_sbf:
+            pos = call_func2(p_ostream_print_streambuf, &os, param_streambuf[tests[i].param_index]); break;
         }
 
         length = ssb.base.pptr - ssb.base.pbase;
@@ -3259,6 +3287,9 @@ static void test_ostream_print(void)
 
     call_func1(p_ostream_vbase_dtor, &os);
     call_func1(p_strstreambuf_dtor, &ssb);
+    call_func1(p_strstreambuf_dtor, &ssb_test1);
+    call_func1(p_strstreambuf_dtor, &ssb_test2);
+    call_func1(p_strstreambuf_dtor, &ssb_test3);
 }
 
 START_TEST(msvcirt)

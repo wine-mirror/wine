@@ -2803,7 +2803,20 @@ ostream* __thiscall ostream_print_ptr(ostream *this, const void *ptr)
 DEFINE_THISCALL_WRAPPER(ostream_print_streambuf, 8)
 ostream* __thiscall ostream_print_streambuf(ostream *this, streambuf *sb)
 {
-    FIXME("(%p %p) stub\n", this, sb);
+    ios *base = ostream_get_ios(this);
+    int c;
+
+    TRACE("(%p %p)\n", this, sb);
+
+    if (ostream_opfx(this)) {
+        while ((c = streambuf_sbumpc(sb)) != EOF) {
+            if (streambuf_sputc(base->sb, c) == EOF) {
+                base->state |= IOSTATE_failbit;
+                break;
+            }
+        }
+        ostream_osfx(this);
+    }
     return this;
 }
 
