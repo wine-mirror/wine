@@ -2599,7 +2599,14 @@ ostream* __thiscall ostream_writepad(ostream *this, const char *str1, const char
 DEFINE_THISCALL_WRAPPER(ostream_print_char, 8)
 ostream* __thiscall ostream_print_char(ostream *this, char c)
 {
-    FIXME("(%p %c) stub\n", this, c);
+    const char c_str[2] = {c, 0};
+
+    TRACE("(%p %c)\n", this, c);
+
+    if (ostream_opfx(this)) {
+        ostream_writepad(this, "", c_str);
+        ostream_osfx(this);
+    }
     return this;
 }
 
@@ -2608,8 +2615,7 @@ ostream* __thiscall ostream_print_char(ostream *this, char c)
 DEFINE_THISCALL_WRAPPER(ostream_print_unsigned_char, 8)
 ostream* __thiscall ostream_print_unsigned_char(ostream *this, unsigned char c)
 {
-    FIXME("(%p %c) stub\n", this, c);
-    return this;
+    return ostream_print_char(this, c);
 }
 
 /* ??6ostream@@QAEAAV0@PBC@Z */

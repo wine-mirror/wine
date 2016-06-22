@@ -270,6 +270,7 @@ static ostream* (*__thiscall p_ostream_seekp_offset)(ostream*, streamoff, ios_se
 static ostream* (*__thiscall p_ostream_seekp)(ostream*, streampos);
 static streampos (*__thiscall p_ostream_tellp)(ostream*);
 static ostream* (*__thiscall p_ostream_writepad)(ostream*, const char*, const char*);
+static ostream* (*__thiscall p_ostream_print_char)(ostream*, char);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -444,6 +445,7 @@ static BOOL init(void)
         SET(p_ostream_seekp, "?seekp@ostream@@QEAAAEAV1@J@Z");
         SET(p_ostream_tellp, "?tellp@ostream@@QEAAJXZ");
         SET(p_ostream_writepad, "?writepad@ostream@@AEAAAEAV1@PEBD0@Z");
+        SET(p_ostream_print_char, "??6ostream@@QEAAAEAV0@D@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -548,6 +550,7 @@ static BOOL init(void)
         SET(p_ostream_seekp, "?seekp@ostream@@QAEAAV1@J@Z");
         SET(p_ostream_tellp, "?tellp@ostream@@QAEJXZ");
         SET(p_ostream_writepad, "?writepad@ostream@@AAEAAV1@PBD0@Z");
+        SET(p_ostream_print_char, "??6ostream@@QAEAAV0@D@Z");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -3002,6 +3005,72 @@ if (0) /* crashes on native */
     ok(_unlink(filename2) == 0, "Couldn't unlink file named '%s'\n", filename2);
 }
 
+static void test_ostream_print(void)
+{
+    ostream os, *pos;
+    strstreambuf ssb, *pssb;
+    LONG length, expected_length;
+    int i;
+
+    char param_char[] = {'a', '9', 'e'};
+    struct ostream_print_test {
+        enum { type_chr } type;
+        int param_index;
+        ios_io_state state;
+        ios_flags flags;
+        int precision;
+        int fill;
+        int width;
+        const char *expected_text;
+        ios_io_state expected_flags;
+    } tests[] = {
+        /* char */
+        {type_chr, /* 'a' */ 0, IOSTATE_badbit, 0, 6, ' ', 0, "", IOSTATE_badbit|IOSTATE_failbit},
+        {type_chr, /* 'a' */ 0, IOSTATE_eofbit, 0, 6, ' ', 0, "", IOSTATE_eofbit|IOSTATE_failbit},
+        {type_chr, /* 'a' */ 0, IOSTATE_goodbit, 0, 6, ' ', 0, "a", IOSTATE_goodbit},
+        {type_chr, /* 'a' */ 0, IOSTATE_goodbit, 0, 6, ' ', 4, "   a", IOSTATE_goodbit},
+        {type_chr, /* 'a' */ 0, IOSTATE_goodbit, 0, 6, 'x', 3, "xxa", IOSTATE_goodbit},
+        {type_chr, /* 'a' */ 0, IOSTATE_goodbit, FLAGS_left, 6, ' ', 4, "a   ", IOSTATE_goodbit},
+        {type_chr, /* 'a' */ 0, IOSTATE_goodbit, FLAGS_left|FLAGS_internal, 6, ' ', 4, "   a", IOSTATE_goodbit},
+        {type_chr, /* 'a' */ 0, IOSTATE_goodbit, FLAGS_internal|FLAGS_hex|FLAGS_showbase, 6, ' ', 4, "   a", IOSTATE_goodbit},
+        {type_chr, /* '9' */ 1, IOSTATE_goodbit, FLAGS_oct|FLAGS_showbase|FLAGS_uppercase, 6, 'i', 2, "i9", IOSTATE_goodbit},
+        {type_chr, /* '9' */ 1, IOSTATE_goodbit, FLAGS_showpos|FLAGS_scientific, 0, 'i', 2, "i9", IOSTATE_goodbit},
+        {type_chr, /* 'e' */ 2, IOSTATE_goodbit, FLAGS_left|FLAGS_right|FLAGS_uppercase, 0, '*', 8, "e*******", IOSTATE_goodbit}
+    };
+
+    pssb = call_func1(p_strstreambuf_ctor, &ssb);
+    ok(pssb == &ssb, "wrong return, expected %p got %p\n", &ssb, pssb);
+    pos = call_func3(p_ostream_sb_ctor, &os, &ssb.base, TRUE);
+    ok(pos == &os, "wrong return, expected %p got %p\n", &os, pos);
+
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
+        os.base_ios.state = tests[i].state;
+        os.base_ios.flags = tests[i].flags;
+        os.base_ios.precision = tests[i].precision;
+        os.base_ios.fill = tests[i].fill;
+        os.base_ios.width = tests[i].width;
+        ssb.base.pptr = ssb.base.pbase;
+
+        switch (tests[i].type) {
+        case type_chr:
+            pos = call_func2(p_ostream_print_char, &os, (int) param_char[tests[i].param_index]); break;
+        }
+
+        length = ssb.base.pptr - ssb.base.pbase;
+        expected_length = strlen(tests[i].expected_text);
+        ok(pos == &os, "Test %d: wrong return, expected %p got %p\n", i, &os, pos);
+        ok(os.base_ios.state == tests[i].expected_flags, "Test %d: expected %d got %d\n", i,
+            tests[i].expected_flags, os.base_ios.state);
+        ok(os.base_ios.width == 0, "Test %d: expected 0 got %d\n", i, os.base_ios.width);
+        ok(expected_length == length, "Test %d: wrong output length, expected %d got %d\n", i, expected_length, length);
+        ok(!strncmp(tests[i].expected_text, ssb.base.pbase, length),
+            "Test %d: wrong output, expected '%s' got '%s'\n", i, tests[i].expected_text, ssb.base.pbase);
+    }
+
+    call_func1(p_ostream_vbase_dtor, &os);
+    call_func1(p_strstreambuf_dtor, &ssb);
+}
+
 START_TEST(msvcirt)
 {
     if(!init())
@@ -3013,6 +3082,7 @@ START_TEST(msvcirt)
     test_stdiobuf();
     test_ios();
     test_ostream();
+    test_ostream_print();
 
     FreeLibrary(msvcrt);
     FreeLibrary(msvcirt);
