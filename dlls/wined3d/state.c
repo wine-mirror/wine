@@ -4849,30 +4849,34 @@ static void state_cb(const struct wined3d_gl_info *gl_info, const struct wined3d
 static void state_cb_vs(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_limits *limits = &context->gl_info->limits;
+    unsigned int base, count;
 
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
-    state_cb(context->gl_info, state, WINED3D_SHADER_TYPE_VERTEX, 0, limits->vertex_uniform_blocks);
+    wined3d_gl_limits_get_uniform_block_range(limits, WINED3D_SHADER_TYPE_VERTEX, &base, &count);
+    state_cb(context->gl_info, state, WINED3D_SHADER_TYPE_VERTEX, base, count);
 }
 
 static void state_cb_gs(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_limits *limits = &context->gl_info->limits;
+    unsigned int base, count;
 
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
-    state_cb(context->gl_info, state, WINED3D_SHADER_TYPE_GEOMETRY,
-            limits->vertex_uniform_blocks, limits->geometry_uniform_blocks);
+    wined3d_gl_limits_get_uniform_block_range(limits, WINED3D_SHADER_TYPE_GEOMETRY, &base, &count);
+    state_cb(context->gl_info, state, WINED3D_SHADER_TYPE_GEOMETRY, base, count);
 }
 
 static void state_cb_ps(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_limits *limits = &context->gl_info->limits;
+    unsigned int base, count;
 
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
-    state_cb(context->gl_info, state, WINED3D_SHADER_TYPE_PIXEL,
-            limits->vertex_uniform_blocks + limits->geometry_uniform_blocks, limits->fragment_uniform_blocks);
+    wined3d_gl_limits_get_uniform_block_range(limits, WINED3D_SHADER_TYPE_PIXEL, &base, &count);
+    state_cb(context->gl_info, state, WINED3D_SHADER_TYPE_PIXEL, base, count);
 }
 
 static void state_cb_warn(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)

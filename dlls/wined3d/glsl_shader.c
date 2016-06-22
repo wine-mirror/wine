@@ -7518,13 +7518,14 @@ static void shader_glsl_init_ps_uniform_locations(const struct wined3d_gl_info *
 
 static void shader_glsl_init_uniform_block_bindings(const struct wined3d_gl_info *gl_info,
         struct shader_glsl_priv *priv, GLuint program_id,
-        const struct wined3d_shader_reg_maps *reg_maps, unsigned int base, unsigned int count)
+        const struct wined3d_shader_reg_maps *reg_maps)
 {
-    const char *prefix = shader_glsl_get_prefix(reg_maps->shader_version.type);
-    GLuint block_idx;
-    unsigned int i;
     struct wined3d_string_buffer *name = string_buffer_get(&priv->string_buffers);
+    const char *prefix = shader_glsl_get_prefix(reg_maps->shader_version.type);
+    unsigned int i, base, count;
+    GLuint block_idx;
 
+    wined3d_gl_limits_get_uniform_block_range(&gl_info->limits, reg_maps->shader_version.type, &base, &count);
     for (i = 0; i < count; ++i)
     {
         if (!reg_maps->cb_sizes[i])
@@ -7819,8 +7820,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         if (entry->vs.pos_fixup_location != -1)
             entry->constant_update_mask |= WINED3D_SHADER_CONST_POS_FIXUP;
 
-        shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &vshader->reg_maps,
-                0, gl_info->limits.vertex_uniform_blocks);
+        shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &vshader->reg_maps);
     }
     else
     {
@@ -7860,8 +7860,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     if (gshader)
     {
         entry->constant_update_mask |= WINED3D_SHADER_CONST_POS_FIXUP;
-        shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &gshader->reg_maps,
-                gl_info->limits.vertex_uniform_blocks, gl_info->limits.geometry_uniform_blocks);
+        shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &gshader->reg_maps);
     }
 
     if (ps_id)
@@ -7876,9 +7875,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
             if (entry->ps.ycorrection_location != -1)
                 entry->constant_update_mask |= WINED3D_SHADER_CONST_PS_Y_CORR;
 
-            shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &pshader->reg_maps,
-                    gl_info->limits.vertex_uniform_blocks + gl_info->limits.geometry_uniform_blocks,
-                    gl_info->limits.fragment_uniform_blocks);
+            shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &pshader->reg_maps);
         }
         else
         {

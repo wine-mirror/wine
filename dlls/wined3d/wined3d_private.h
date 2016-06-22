@@ -1971,9 +1971,9 @@ struct wined3d_gl_limits
     UINT lights;
     UINT textures;
     UINT texture_coords;
-    UINT vertex_uniform_blocks;
-    UINT geometry_uniform_blocks;
-    UINT fragment_uniform_blocks;
+    unsigned int vertex_uniform_blocks;
+    unsigned int geometry_uniform_blocks;
+    unsigned int fragment_uniform_blocks;
     UINT fragment_samplers;
     UINT vertex_samplers;
     UINT combined_samplers;
@@ -2003,6 +2003,9 @@ struct wined3d_gl_limits
     UINT arb_ps_instructions;
     UINT arb_ps_temps;
 };
+
+void wined3d_gl_limits_get_uniform_block_range(const struct wined3d_gl_limits *gl_limits,
+        enum wined3d_shader_type shader_type, unsigned int *base, unsigned int *count) DECLSPEC_HIDDEN;
 
 struct wined3d_gl_info
 {
