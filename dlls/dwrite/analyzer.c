@@ -45,6 +45,7 @@ struct dwritescript_properties {
 static const struct dwritescript_properties dwritescripts_properties[Script_LastId+1] = {
     { /* Zzzz */ { 0x7a7a7a5a, 999, 15, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
     { /* Zyyy */ { 0x7979795a, 998,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
+    { /* Adlm */ { 0x6d6c6441, 166,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
     { /* Ahom */ { 0x6d6f6841, 338,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
     { /* Hluw */ { 0x77756c48,  80,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
     { /* Arab */ { 0x62617241, 160,  8, 0x0640, 0, 1, 0, 0, 0, 1, 1 }, _OT('a','r','a','b'), 0, TRUE },
@@ -55,6 +56,7 @@ static const struct dwritescript_properties dwritescripts_properties[Script_Last
     { /* Bass */ { 0x73736142, 259,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
     { /* Batk */ { 0x6b746142, 365,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, _OT('b','a','t','k') },
     { /* Beng */ { 0x676e6542, 325, 15, 0x0020, 1, 1, 0, 0, 0, 1, 0 }, _OT('b','e','n','g'), _OT('b','n','g','2'), TRUE },
+    { /* Bhks */ { 0x736b6842, 334,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 } },
     { /* Bopo */ { 0x6f706f42, 285,  1, 0x0020, 0, 0, 1, 1, 0, 0, 0 }, _OT('b','o','p','o') },
     { /* Brah */ { 0x68617242, 300,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, _OT('b','r','a','h') },
     { /* Brai */ { 0x69617242, 570,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, _OT('b','r','a','i'), 0, TRUE },
@@ -114,6 +116,7 @@ static const struct dwritescript_properties dwritescripts_properties[Script_Last
     { /* Mlym */ { 0x6d796c4d, 347, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, _OT('m','l','y','m'), _OT('m','l','m','2'), TRUE },
     { /* Mand */ { 0x646e614d, 140,  8, 0x0640, 0, 1, 0, 0, 0, 1, 1 }, _OT('m','a','n','d') },
     { /* Mani */ { 0x696e614d, 139,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
+    { /* Marc */ { 0x6372614d, 332,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
     { /* Mtei */ { 0x6965744d, 337,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, _OT('m','t','e','i') },
     { /* Mend */ { 0x646e654d, 438,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
     { /* Merc */ { 0x6372654d, 101,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 }, _OT('m','e','r','c') },
@@ -126,6 +129,7 @@ static const struct dwritescript_properties dwritescripts_properties[Script_Last
     { /* Mymr */ { 0x726d794d, 350, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, _OT('m','y','m','r'), 0, TRUE },
     { /* Nbat */ { 0x7461624e, 159,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
     { /* Talu */ { 0x756c6154, 354,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, _OT('t','a','l','u'), 0, TRUE },
+    { /* Newa */ { 0x6177654e, 333,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
     { /* Nkoo */ { 0x6f6f6b4e, 165,  8, 0x0020, 0, 1, 0, 0, 0, 1, 1 }, _OT('n','k','o',' '), 0, TRUE },
     { /* Ogam */ { 0x6d61674f, 212,  1, 0x1680, 0, 1, 0, 0, 0, 1, 0 }, _OT('o','g','a','m'), 0, TRUE },
     { /* Olck */ { 0x6b636c4f, 261,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, _OT('o','l','c','k') },
@@ -137,6 +141,7 @@ static const struct dwritescript_properties dwritescripts_properties[Script_Last
     { /* Sarb */ { 0x62726153, 105,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, _OT('s','a','r','b') },
     { /* Orkh */ { 0x686b724f, 175,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, _OT('o','r','k','h') },
     { /* Orya */ { 0x6179724f, 327, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, _OT('o','r','y','a'), _OT('o','r','y','2'), TRUE },
+    { /* Osge */ { 0x6567734f, 219,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
     { /* Osma */ { 0x616d734f, 260,  8, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, _OT('o','s','m','a'), 0, TRUE },
     { /* Hmng */ { 0x676e6d48, 450,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
     { /* Palm */ { 0x6d6c6150, 126,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
@@ -164,6 +169,7 @@ static const struct dwritescript_properties dwritescripts_properties[Script_Last
     { /* Tavt */ { 0x74766154, 359,  8, 0x0020, 1, 0, 1, 0, 1, 0, 0 }, _OT('t','a','v','t') },
     { /* Takr */ { 0x726b6154, 321,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 }, _OT('t','a','k','r') },
     { /* Taml */ { 0x6c6d6154, 346, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, _OT('t','a','m','l'), _OT('t','m','l','2'), TRUE },
+    { /* Tang */ { 0x676e6154, 520,  1, 0x0020, 0, 0, 0, 0, 0, 0, 0 } },
     { /* Telu */ { 0x756c6554, 340, 15, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, _OT('t','e','l','u'), _OT('t','e','l','2'), TRUE },
     { /* Thaa */ { 0x61616854, 170,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, _OT('t','h','a','a'), 0, TRUE },
     { /* Thai */ { 0x69616854, 352,  8, 0x0020, 1, 0, 1, 0, 1, 0, 0 }, _OT('t','h','a','i'), 0, TRUE },
@@ -348,7 +354,10 @@ enum linebreaking_classes {
     b_B2,
     b_HL,
     b_CJ,
-    b_RI
+    b_RI,
+    b_EB,
+    b_EM,
+    b_ZWJ,
 };
 
 /* "Can break" is a weak condition, stronger "may not break" and "must break" override it. Initially all conditions are

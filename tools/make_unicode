@@ -23,7 +23,7 @@ use strict;
 
 # base URLs for www.unicode.org files
 my $MAPPINGS = "http://www.unicode.org/Public/MAPPINGS";
-my $UNIDATA = "http://www.unicode.org/Public/8.0.0/ucd";
+my $UNIDATA = "http://www.unicode.org/Public/9.0.0/ucd";
 my $REPORTS = "http://www.unicode.org/reports";
 my $RFCS = "http://www.rfc-editor.org/rfc";
 my $VERTICALDATA = "http://www.unicode.org/Public/vertical/revision-15";
@@ -244,6 +244,9 @@ my %break_types =
     "HL"  => 0x0026,
     "CJ"  => 0x0027,
     "RI"  => 0x0028,
+    "EB"  => 0x0029,
+    "EM"  => 0x002a,
+    "ZWJ" => 0x002b,
 );
 
 my %vertical_types =
@@ -1266,7 +1269,24 @@ sub dump_linebreak($)
         next if /^\#/;  # skip comments
         next if /^\s*$/;  # skip empty lines
         next if /\x1a/;  # skip ^Z
-        if (/^\s*([0-9a-fA-F]+)\s*;\s*([0-9A-Z][0-9A-Z])+\s*/)
+        if (/^\s*([0-9a-fA-F]+)\s*;\s*([0-9A-Z][0-9A-Z][0-9A-Z])+\s*/)
+        {
+            my $type = $2;
+            die "unknown breaktype $type" unless defined $break_types{$type};
+            $break_table[hex $1] = $break_types{$type};
+            next;
+        }
+        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([0-9A-Z][0-9A-Z][0-9A-Z])+\s*/)
+        {
+            my $type = $3;
+            die "unknown breaktype $type" unless defined $break_types{$type};
+            foreach my $i (hex $1 .. hex $2)
+            {
+                $break_table[$i] = $break_types{$type};
+            }
+            next;
+        }
+        elsif (/^\s*([0-9a-fA-F]+)\s*;\s*([0-9A-Z][0-9A-Z])+\s*/)
         {
             my $type = $2;
             die "unknown breaktype $type" unless defined $break_types{$type};
