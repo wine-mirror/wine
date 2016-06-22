@@ -2650,6 +2650,12 @@ ULONG CDECL wined3d_shader_incref(struct wined3d_shader *shader)
     return refcount;
 }
 
+static void wined3d_shader_destroy_object(void *object)
+{
+    shader_cleanup(object);
+    HeapFree(GetProcessHeap(), 0, object);
+}
+
 ULONG CDECL wined3d_shader_decref(struct wined3d_shader *shader)
 {
     ULONG refcount = InterlockedDecrement(&shader->ref);
@@ -2658,9 +2664,8 @@ ULONG CDECL wined3d_shader_decref(struct wined3d_shader *shader)
 
     if (!refcount)
     {
-        shader_cleanup(shader);
         shader->parent_ops->wined3d_object_destroyed(shader->parent);
-        HeapFree(GetProcessHeap(), 0, shader);
+        wined3d_cs_emit_destroy_object(shader->device->cs, wined3d_shader_destroy_object, shader);
     }
 
     return refcount;
