@@ -2460,7 +2460,7 @@ static void test_LocaleNameToLCID(void)
     SetLastError(0xdeadbeef);
     lcid = pLocaleNameToLCID(fooW, 0);
     ok(!lcid && GetLastError() == ERROR_INVALID_PARAMETER,
-       "Expected lcid == 0, got got %08x, error %d\n", lcid, GetLastError());
+       "Expected lcid == 0, got %08x, error %d\n", lcid, GetLastError());
 
     /* english neutral name */
     lcid = pLocaleNameToLCID(enW, 0);
