@@ -498,7 +498,7 @@ static LRESULT navpane_splitter_beginresize(ExplorerBrowserImpl *This, HWND hwnd
 
     SetCapture(hwnd);
 
-    CopyRect(&This->splitter_rc, &This->navpane.rc);
+    This->splitter_rc = This->navpane.rc;
     This->splitter_rc.left = This->splitter_rc.right - SPLITTER_WIDTH;
 
     splitter_draw(GetParent(hwnd), &This->splitter_rc);
@@ -516,8 +516,7 @@ static LRESULT navpane_splitter_resizing(ExplorerBrowserImpl *This, HWND hwnd, L
     dx = (SHORT)LOWORD(lParam);
     TRACE("%d.\n", dx);
 
-    CopyRect(&rc, &This->navpane.rc);
-
+    rc = This->navpane.rc;
     new_width = This->navpane.width + dx;
     if(new_width > NP_MIN_WIDTH && This->sv_rc.right - new_width > SV_MIN_WIDTH)
     {
@@ -525,7 +524,7 @@ static LRESULT navpane_splitter_resizing(ExplorerBrowserImpl *This, HWND hwnd, L
         rc.left = rc.right - SPLITTER_WIDTH;
         splitter_draw(GetParent(hwnd), &This->splitter_rc);
         splitter_draw(GetParent(hwnd), &rc);
-        CopyRect(&This->splitter_rc, &rc);
+        This->splitter_rc = rc;
     }
 
     return TRUE;

@@ -613,7 +613,7 @@ LRESULT WINAPI FileMenu_DrawItem(
 	  clrPrevBkgnd = SetBkColor(lpdis->hDC, GetSysColor (COLOR_MENU));
 	}
 
-	CopyRect(&TextRect, &(lpdis->rcItem));
+        TextRect = lpdis->rcItem;
 
 	/* add the menubitmap */
 	menuinfo = FM_GetMenuInfo(pMyItem->hMenu);
