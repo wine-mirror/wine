@@ -230,24 +230,6 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
     return TRUE;
 }
 
-/**
- * Process unknown switch.
- *
- * Params:
- *   chu - the switch character in upper-case.
- *   s - the command line string where s points to the switch character.
- */
-static void error_unknown_switch(char chu, char *s)
-{
-    if (isalpha(chu)) {
-        fprintf(stderr,"%s: Undefined switch /%c!\n", getAppName(), chu);
-    } else {
-        fprintf(stderr,"%s: Alphabetic character is expected after '%c' "
-                "in switch specification\n", getAppName(), *(s - 1));
-    }
-    exit(1);
-}
-
 BOOL ProcessCmdLine(LPSTR lpCmdLine)
 {
     REGEDIT_ACTION action = ACTION_UNDEF;
@@ -284,7 +266,8 @@ BOOL ProcessCmdLine(LPSTR lpCmdLine)
                     exit(0);
                     break;
                 default:
-                    error_unknown_switch(chu, s);
+                    fprintf(stderr, "regedit: Invalid or unrecognized switch [/%c]\n", chu);
+                    exit(1);
                     break;
                 }
             }
@@ -301,7 +284,8 @@ BOOL ProcessCmdLine(LPSTR lpCmdLine)
                     }
                     break;
                 default:
-                    error_unknown_switch(chu, s);
+                    fprintf(stderr, "regedit: Invalid or unrecognized switch [/%c]\n", chu);
+                    exit(1);
                     break;
                 }
             } else {
