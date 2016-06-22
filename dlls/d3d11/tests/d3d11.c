@@ -5637,20 +5637,12 @@ static void test_render_target_views(void)
         UINT miplevel_count;
         UINT array_size;
     };
-    struct rtv
-    {
-        DXGI_FORMAT format;
-        D3D11_RTV_DIMENSION dimension;
-        unsigned int miplevel_idx;
-        unsigned int layer_idx;
-        unsigned int layer_count;
-    };
 
     static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
     static struct test
     {
         struct texture texture;
-        struct rtv rtv;
+        struct rtv_desc rtv;
         DWORD expected_colors[4];
     }
     tests[] =
@@ -5724,23 +5716,7 @@ static void test_render_target_views(void)
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
         ok(SUCCEEDED(hr), "Test %u: Failed to create texture, hr %#x.\n", i, hr);
 
-        rtv_desc.Format = texture_desc.Format;
-        rtv_desc.ViewDimension = test->rtv.dimension;
-        if (test->rtv.dimension == D3D11_RTV_DIMENSION_TEXTURE2D)
-        {
-            U(rtv_desc).Texture2D.MipSlice = test->rtv.miplevel_idx;
-        }
-        else if (test->rtv.dimension == D3D11_RTV_DIMENSION_TEXTURE2DARRAY)
-        {
-            U(rtv_desc).Texture2DArray.MipSlice = test->rtv.miplevel_idx;
-            U(rtv_desc).Texture2DArray.FirstArraySlice = test->rtv.layer_idx;
-            U(rtv_desc).Texture2DArray.ArraySize = test->rtv.layer_count;
-        }
-        else
-        {
-            trace("Test %u: Unhandled view dimension %#x.\n", i, test->rtv.dimension);
-        }
-
+        get_rtv_desc(&rtv_desc, &test->rtv);
         hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtv);
         ok(SUCCEEDED(hr), "Test %u: Failed to create render target view, hr %#x.\n", i, hr);
 
