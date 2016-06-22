@@ -233,6 +233,38 @@ ULONG CDECL wined3d_query_incref(struct wined3d_query *query)
     return refcount;
 }
 
+static void wined3d_query_destroy_object(void *object)
+{
+    struct wined3d_query *query = object;
+
+    /* Queries are specific to the GL context that created them. Not
+     * deleting the query will obviously leak it, but that's still better
+     * than potentially deleting a different query with the same id in this
+     * context, and (still) leaking the actual query. */
+    if (query->type == WINED3D_QUERY_TYPE_EVENT)
+    {
+        struct wined3d_event_query *event_query = query->extendedData;
+        if (event_query) wined3d_event_query_destroy(event_query);
+    }
+    else if (query->type == WINED3D_QUERY_TYPE_OCCLUSION)
+    {
+        struct wined3d_occlusion_query *oq = query->extendedData;
+
+        if (oq->context) context_free_occlusion_query(oq);
+        HeapFree(GetProcessHeap(), 0, query->extendedData);
+    }
+    else if (query->type == WINED3D_QUERY_TYPE_TIMESTAMP)
+    {
+        struct wined3d_timestamp_query *tq = query->extendedData;
+
+        if (tq->context)
+            context_free_timestamp_query(tq);
+        HeapFree(GetProcessHeap(), 0, query->extendedData);
+    }
+
+    HeapFree(GetProcessHeap(), 0, query);
+}
+
 ULONG CDECL wined3d_query_decref(struct wined3d_query *query)
 {
     ULONG refcount = InterlockedDecrement(&query->ref);
@@ -240,34 +272,7 @@ ULONG CDECL wined3d_query_decref(struct wined3d_query *query)
     TRACE("%p decreasing refcount to %u.\n", query, refcount);
 
     if (!refcount)
-    {
-        /* Queries are specific to the GL context that created them. Not
-         * deleting the query will obviously leak it, but that's still better
-         * than potentially deleting a different query with the same id in this
-         * context, and (still) leaking the actual query. */
-        if (query->type == WINED3D_QUERY_TYPE_EVENT)
-        {
-            struct wined3d_event_query *event_query = query->extendedData;
-            if (event_query) wined3d_event_query_destroy(event_query);
-        }
-        else if (query->type == WINED3D_QUERY_TYPE_OCCLUSION)
-        {
-            struct wined3d_occlusion_query *oq = query->extendedData;
-
-            if (oq->context) context_free_occlusion_query(oq);
-            HeapFree(GetProcessHeap(), 0, query->extendedData);
-        }
-        else if (query->type == WINED3D_QUERY_TYPE_TIMESTAMP)
-        {
-            struct wined3d_timestamp_query *tq = query->extendedData;
-
-            if (tq->context)
-                context_free_timestamp_query(tq);
-            HeapFree(GetProcessHeap(), 0, query->extendedData);
-        }
-
-        HeapFree(GetProcessHeap(), 0, query);
-    }
+        wined3d_cs_emit_destroy_object(query->device->cs, wined3d_query_destroy_object, query);
 
     return refcount;
 }
