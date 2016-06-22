@@ -1,7 +1,25 @@
 MODULE    = d3dx9_37.dll
-IMPORTS   = d3d9
+IMPORTS   = d3d9 d3dcompiler dxguid d3dxof ole32 gdi32 user32
+PARENTSRC = ../d3dx9_36
 
 C_SRCS = \
-	d3dx9_37_main.c
+	animation.c \
+	core.c \
+	d3dx9_37_main.c \
+	effect.c \
+	font.c \
+	line.c \
+	math.c \
+	mesh.c \
+	preshader.c \
+	render.c \
+	shader.c \
+	skin.c \
+	sprite.c \
+	surface.c \
+	texture.c \
+	util.c \
+	volume.c \
+	xfile.c
 
 RC_SRCS = version.rc
