@@ -290,6 +290,7 @@ static ostream* (*__thiscall p_ostream_print_str)(ostream*, const char*);
 static ostream* (*__thiscall p_ostream_print_int)(ostream*, int);
 static ostream* (*__thiscall p_ostream_print_float)(ostream*, float);
 static ostream* (*__thiscall p_ostream_print_double)(ostream*, double);
+static ostream* (*__thiscall p_ostream_print_ptr)(ostream*, const void*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -477,6 +478,7 @@ static BOOL init(void)
         SET(p_ostream_print_int, "??6ostream@@QEAAAEAV0@H@Z");
         SET(p_ostream_print_float, "??6ostream@@QEAAAEAV0@M@Z");
         SET(p_ostream_print_double, "??6ostream@@QEAAAEAV0@N@Z");
+        SET(p_ostream_print_ptr, "??6ostream@@QEAAAEAV0@PEBX@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -586,6 +588,7 @@ static BOOL init(void)
         SET(p_ostream_print_int, "??6ostream@@QAEAAV0@H@Z");
         SET(p_ostream_print_float, "??6ostream@@QAEAAV0@M@Z");
         SET(p_ostream_print_double, "??6ostream@@QAEAAV0@N@Z");
+        SET(p_ostream_print_ptr, "??6ostream@@QAEAAV0@PBX@Z");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -3042,6 +3045,7 @@ if (0) /* crashes on native */
 
 static void test_ostream_print(void)
 {
+    const BOOL is_64 = (sizeof(void*) == 8);
     ostream os, *pos;
     strstreambuf ssb, *pssb;
     LONG length, expected_length;
@@ -3054,8 +3058,9 @@ static void test_ostream_print(void)
         13.14159f, 0.00013f, 0.000013f, INFINITY, -INFINITY, NAN};
     double param_double[] = {1.0, 3.141592653589793238, 314.1592653589793238, 314.159265358979,
         1231314.269811862199, 9.961472e6, 8.98846567431e307, DBL_MAX};
+    void* param_ptr[] = {NULL, (void*) 0xdeadbeef, (void*) 0x1234cdef, (void*) 0x1, (void*) 0xffffffff};
     struct ostream_print_test {
-        enum { type_chr, type_str, type_int, type_flt, type_dbl } type;
+        enum { type_chr, type_str, type_int, type_flt, type_dbl, type_ptr } type;
         int param_index;
         ios_io_state state;
         ios_flags flags;
@@ -3181,7 +3186,36 @@ static void test_ostream_print(void)
         {type_dbl, /* 9.961472e6 */ 5, IOSTATE_goodbit, FLAGS_fixed, 500, ' ', 0, "9961472.000000000000000", IOSTATE_goodbit},
         /* crashes on XP/2k3 {type_dbl, 8.98846567431e307 6, IOSTATE_goodbit, FLAGS_fixed, 500, ' ', 0, "", IOSTATE_goodbit}, */
         /* crashes on XP/2k3 {type_dbl, DBL_MAX 7, IOSTATE_goodbit, FLAGS_fixed|FLAGS_showpos, 500, ' ', 5, "     ", IOSTATE_goodbit}, */
-        {type_dbl, /* DBL_MAX */ 7, IOSTATE_goodbit, FLAGS_showpoint, 500, ' ', 0, "1.79769313486232e+308", IOSTATE_goodbit}
+        {type_dbl, /* DBL_MAX */ 7, IOSTATE_goodbit, FLAGS_showpoint, 500, ' ', 0, "1.79769313486232e+308", IOSTATE_goodbit},
+        /* void* */
+        {type_ptr, /* NULL */ 0, IOSTATE_badbit, 0, 6, ' ', 0, "", IOSTATE_badbit|IOSTATE_failbit},
+        {type_ptr, /* NULL */ 0, IOSTATE_eofbit, 0, 6, ' ', 0, "", IOSTATE_eofbit|IOSTATE_failbit},
+        {type_ptr, /* NULL */ 0, IOSTATE_goodbit, 0, 6, ' ', 0,
+            is_64 ? "0x0000000000000000" : "0x00000000", IOSTATE_goodbit},
+        {type_ptr, /* 0xdeadbeef */ 1, IOSTATE_goodbit, 0, 6, ' ', 0,
+            is_64 ? "0x00000000DEADBEEF" : "0xDEADBEEF", IOSTATE_goodbit},
+        {type_ptr, /* 0xdeadbeef */ 1, IOSTATE_goodbit, 0, 6, '*', 12,
+            is_64 ? "0x00000000DEADBEEF" : "**0xDEADBEEF", IOSTATE_goodbit},
+        {type_ptr, /* 0xdeadbeef */ 1, IOSTATE_goodbit, FLAGS_internal, 6, ' ', 14,
+            is_64 ? "0x00000000DEADBEEF" : "0x    DEADBEEF", IOSTATE_goodbit},
+        {type_ptr, /* 0xdeadbeef */ 1, IOSTATE_goodbit, FLAGS_left, 6, 'x', 11,
+            is_64 ? "0x00000000DEADBEEF" : "0xDEADBEEFx", IOSTATE_goodbit},
+        {type_ptr, /* 0x1234cdef */ 2, IOSTATE_goodbit, FLAGS_dec|FLAGS_showpos, 6, ' ', 0,
+            is_64 ? "0x000000001234CDEF" : "0x1234CDEF", IOSTATE_goodbit},
+        {type_ptr, /* 0x1 */ 3, IOSTATE_goodbit, FLAGS_oct|FLAGS_showbase, 6, ' ', 0,
+            is_64 ? "0x0000000000000001" : "0x00000001", IOSTATE_goodbit},
+        {type_ptr, /* 0xffffffff */ 4, IOSTATE_goodbit, FLAGS_hex|FLAGS_showpoint, 6, ' ', 0,
+            is_64 ? "0x00000000FFFFFFFF" : "0xFFFFFFFF", IOSTATE_goodbit},
+        {type_ptr, /* 0xffffffff */ 4, IOSTATE_goodbit, FLAGS_uppercase|FLAGS_fixed, 6, ' ', 0,
+            is_64 ? "0X00000000FFFFFFFF" : "0XFFFFFFFF", IOSTATE_goodbit},
+        {type_ptr, /* 0x1 */ 3, IOSTATE_goodbit, FLAGS_uppercase, 6, ' ', 0,
+            is_64 ? "0X0000000000000001" : "0X00000001", IOSTATE_goodbit},
+        {type_ptr, /* NULL */ 0, IOSTATE_goodbit, FLAGS_uppercase, 6, ' ', 0,
+            is_64 ? "0x0000000000000000" : "0x00000000", IOSTATE_goodbit},
+        {type_ptr, /* NULL */ 0, IOSTATE_goodbit, FLAGS_uppercase|FLAGS_showbase, 12, 'x', 12,
+            is_64 ? "0x0000000000000000" : "xx0x00000000", IOSTATE_goodbit},
+        {type_ptr, /* NULL */ 0, IOSTATE_goodbit, FLAGS_internal|FLAGS_uppercase|FLAGS_showbase, 6, '?', 20,
+            is_64 ? "0x??0000000000000000" : "0x??????????00000000", IOSTATE_goodbit}
     };
 
     pssb = call_func1(p_strstreambuf_ctor, &ssb);
@@ -3208,6 +3242,8 @@ static void test_ostream_print(void)
             pos = call_func2_ptr_flt(p_ostream_print_float, &os, param_float[tests[i].param_index]); break;
         case type_dbl:
             pos = call_func2_ptr_dbl(p_ostream_print_double, &os, param_double[tests[i].param_index]); break;
+        case type_ptr:
+            pos = call_func2(p_ostream_print_ptr, &os, param_ptr[tests[i].param_index]); break;
         }
 
         length = ssb.base.pptr - ssb.base.pbase;

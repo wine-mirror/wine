@@ -2780,7 +2780,21 @@ ostream* __thiscall ostream_print_double(ostream *this, double d)
 DEFINE_THISCALL_WRAPPER(ostream_print_ptr, 8)
 ostream* __thiscall ostream_print_ptr(ostream *this, const void *ptr)
 {
-    FIXME("(%p %p) stub\n", this, ptr);
+    ios *base = ostream_get_ios(this);
+    char prefix_str[3] = {'0','x',0}, pointer_str[17];
+
+    TRACE("(%p %p)\n", this, ptr);
+
+    if (ostream_opfx(this)) {
+        if (ptr && base->flags & FLAGS_uppercase)
+            prefix_str[1] = 'X';
+
+        if (sprintf(pointer_str, "%p", ptr) > 0)
+            ostream_writepad(this, prefix_str, pointer_str);
+        else
+            base->state |= IOSTATE_failbit;
+        ostream_osfx(this);
+    }
     return this;
 }
 
