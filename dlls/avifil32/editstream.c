@@ -655,7 +655,7 @@ static HRESULT WINAPI IAVIEditStream_fnSetInfo(IAVIEditStream*iface,
   This->sInfo.dwRate    = asi->dwRate;
   This->sInfo.dwScale   = asi->dwScale;
   This->sInfo.dwQuality = asi->dwQuality;
-  CopyRect(&This->sInfo.rcFrame, &asi->rcFrame);
+  This->sInfo.rcFrame   = asi->rcFrame;
   memcpy(This->sInfo.szName, asi->szName, sizeof(asi->szName));
   This->sInfo.dwEditCount++;
 
