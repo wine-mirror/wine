@@ -8123,7 +8123,7 @@ static void test_reset_default_para_fmt( void )
     SendMessageA( richedit, WM_CUT, 0, 0 );
 
     SendMessageA( richedit, EM_GETPARAFORMAT, 0, (LPARAM)&fmt );
-    ok( fmt.wAlignment == def_align, "got %d exppect %d\n", fmt.wAlignment, def_align );
+    ok( fmt.wAlignment == def_align, "got %d expect %d\n", fmt.wAlignment, def_align );
 
     DestroyWindow( richedit );
 }
@@ -8290,7 +8290,7 @@ static void test_alignment_style(void)
         SendMessageW(richedit, WM_CUT, 0, 0);
 
         SendMessageW(richedit, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
-        ok(pf.wAlignment == align_mask[i], "got %d exppect %d\n", pf.wAlignment, align_mask[i]);
+        ok(pf.wAlignment == align_mask[i], "got %d expect %d\n", pf.wAlignment, align_mask[i]);
 
         DestroyWindow(richedit);
     }
