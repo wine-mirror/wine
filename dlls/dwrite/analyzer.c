@@ -463,13 +463,18 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
                     i++;
                 set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_CAN_BREAK, &state);
                 break;
+            /* LB8a - do not break between ZWJ and an ideograph, emoji base or emoji modifier */
+            case b_ZWJ:
+                if (i < count-1 && (break_class[i+1] == b_ID || break_class[i+1] == b_EB || break_class[i+1] == b_EM))
+                    set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
+                break;
         }
     }
 
     /* LB9 - LB10 */
     for (i = 0; i < count; i++)
     {
-        if (break_class[i] == b_CM)
+        if (break_class[i] == b_CM || break_class[i] == b_ZWJ)
         {
             if (i > 0)
             {
@@ -607,6 +612,8 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
                         case b_HL:
                         case b_EX:
                         case b_ID:
+                        case b_EB:
+                        case b_EM:
                         case b_IN:
                         case b_NU:
                             set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
@@ -617,19 +624,31 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
 
         if (i < count-1)
         {
-            /* LB23 */
-            if ((break_class[i] == b_ID && break_class[i+1] == b_PO) ||
-                (break_class[i] == b_AL && break_class[i+1] == b_NU) ||
+            /* LB23 - do not break between digits and letters */
+            if ((break_class[i] == b_AL && break_class[i+1] == b_NU) ||
                 (break_class[i] == b_HL && break_class[i+1] == b_NU) ||
                 (break_class[i] == b_NU && break_class[i+1] == b_AL) ||
                 (break_class[i] == b_NU && break_class[i+1] == b_HL))
                     set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
-            /* LB24 */
+
+            /* LB23a - do not break between numeric prefixes and ideographs, or between ideographs and numeric postfixes */
             if ((break_class[i] == b_PR && break_class[i+1] == b_ID) ||
-                (break_class[i] == b_PR && break_class[i+1] == b_AL) ||
+                (break_class[i] == b_PR && break_class[i+1] == b_EB) ||
+                (break_class[i] == b_PR && break_class[i+1] == b_EM) ||
+                (break_class[i] == b_ID && break_class[i+1] == b_PO) ||
+                (break_class[i] == b_EM && break_class[i+1] == b_PO) ||
+                (break_class[i] == b_EB && break_class[i+1] == b_PO))
+                    set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
+
+            /* LB24 - do not break between numeric prefix/postfix and letters, or letters and prefix/postfix */
+            if ((break_class[i] == b_PR && break_class[i+1] == b_AL) ||
                 (break_class[i] == b_PR && break_class[i+1] == b_HL) ||
                 (break_class[i] == b_PO && break_class[i+1] == b_AL) ||
-                (break_class[i] == b_PO && break_class[i+1] == b_HL))
+                (break_class[i] == b_PO && break_class[i+1] == b_HL) ||
+                (break_class[i] == b_AL && break_class[i+1] == b_PR) ||
+                (break_class[i] == b_HL && break_class[i+1] == b_PR) ||
+                (break_class[i] == b_AL && break_class[i+1] == b_PO) ||
+                (break_class[i] == b_HL && break_class[i+1] == b_PO))
                     set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
 
             /* LB25 */
@@ -712,8 +731,20 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
                (break_class[i+1] == b_AL || break_class[i] == b_HL || break_class[i] == b_NU))
                 set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
 
-            /* LB30a */
-            if (break_class[i] == b_RI && break_class[i+1] == b_RI)
+            /* LB30a - break between two RIs if and only if there are an even number of RIs preceding position of the break */
+            if (break_class[i] == b_RI && break_class[i+1] == b_RI) {
+                unsigned int c = 0;
+
+                j = i + 1;
+                while (j > 0 && break_class[--j] == b_RI)
+                    c++;
+
+                if ((c & 1) == 0)
+                    set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
+            }
+
+            /* LB30b - do not break between an emoji base and an emoji modifier */
+            if (break_class[i] == b_EB && break_class[i+1] == b_EM)
                 set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
         }
     }
