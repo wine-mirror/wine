@@ -1771,6 +1771,10 @@ static void shader_dump_register(struct wined3d_string_buffer *buffer,
             shader_addline(buffer, "vThreadIDInGroupFlattened");
             break;
 
+        case WINED3DSPR_IDXTEMP:
+            shader_addline(buffer, "x");
+            break;
+
         default:
             shader_addline(buffer, "<unhandled_rtype(%#x)>", reg->type);
             break;

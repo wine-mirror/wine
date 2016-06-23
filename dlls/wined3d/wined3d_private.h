@@ -392,6 +392,7 @@ enum wined3d_shader_register_type
     WINED3DSPR_THREADGROUPID,
     WINED3DSPR_LOCALTHREADID,
     WINED3DSPR_LOCALTHREADINDEX,
+    WINED3DSPR_IDXTEMP,
 };
 
 enum wined3d_data_type
