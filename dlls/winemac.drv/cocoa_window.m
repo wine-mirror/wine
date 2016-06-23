@@ -43,10 +43,12 @@ enum {
 #endif
 
 
+#if !defined(MAC_OS_X_VERSION_10_12) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12
 /* Additional Mac virtual keycode, to complement those in Carbon's <HIToolbox/Events.h>. */
 enum {
     kVK_RightCommand              = 0x36, /* Invented for Wine; was unused */
 };
+#endif
 
 
 static NSUInteger style_mask_for_features(const struct macdrv_window_features* wf)
