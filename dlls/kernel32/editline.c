@@ -469,6 +469,7 @@ static void    WCEL_FindPrevInHist(WCEL_Context* ctx)
               return;
            }
        }
+       HeapFree(GetProcessHeap(), 0, data);
     } while (ctx->histPos != startPos);
 
     return;
