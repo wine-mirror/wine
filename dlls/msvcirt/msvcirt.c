@@ -2572,22 +2572,22 @@ ostream* __thiscall ostream_writepad(ostream *this, const char *str1, const char
     /* left of the padding */
     if (base->flags & (FLAGS_left|FLAGS_internal)) {
         if (streambuf_sputn(base->sb, str1, len1) != len1)
-            ios_clear(base, base->state | IOSTATE_failbit | IOSTATE_badbit);
+            base->state |= IOSTATE_failbit | IOSTATE_badbit;
         if (!(base->flags & FLAGS_internal))
             if (streambuf_sputn(base->sb, str2, len2) != len2)
-                ios_clear(base, base->state | IOSTATE_failbit | IOSTATE_badbit);
+                base->state |= IOSTATE_failbit | IOSTATE_badbit;
     }
     /* add padding to fill the width */
     for (i = len1 + len2; i < base->width; i++)
         if (streambuf_sputc(base->sb, base->fill) == EOF)
-            ios_clear(base, base->state | IOSTATE_failbit | IOSTATE_badbit);
+            base->state |= IOSTATE_failbit | IOSTATE_badbit;
     /* right of the padding */
     if ((base->flags & (FLAGS_left|FLAGS_internal)) != FLAGS_left) {
         if (!(base->flags & (FLAGS_left|FLAGS_internal)))
             if (streambuf_sputn(base->sb, str1, len1) != len1)
-                ios_clear(base, base->state | IOSTATE_failbit | IOSTATE_badbit);
+                base->state |= IOSTATE_failbit | IOSTATE_badbit;
         if (streambuf_sputn(base->sb, str2, len2) != len2)
-            ios_clear(base, base->state | IOSTATE_failbit | IOSTATE_badbit);
+            base->state |= IOSTATE_failbit | IOSTATE_badbit;
     }
     return this;
 }
