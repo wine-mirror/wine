@@ -744,6 +744,7 @@ enum wined3d_decl_usage
 enum wined3d_sysval_semantic
 {
     WINED3D_SV_POSITION                     = 1,
+    WINED3D_SV_CLIP_DISTANCE                = 2,
     WINED3D_SV_VERTEX_ID                    = 6,
     WINED3D_SV_PRIMITIVE_ID                 = 7,
     WINED3D_SV_INSTANCE_ID                  = 8,
