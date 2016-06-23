@@ -1253,13 +1253,14 @@ static BOOL pathdrv_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, 
 /*************************************************************
  *           pathdrv_Polyline
  */
-static BOOL pathdrv_Polyline( PHYSDEV dev, const POINT *pts, INT cbPoints )
+static BOOL pathdrv_Polyline( PHYSDEV dev, const POINT *pts, INT count )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
-    BYTE *type = add_log_points( physdev, pts, cbPoints, PT_LINETO );
+    BYTE *type;
 
-    if (!type) return FALSE;
-    if (cbPoints) type[0] = PT_MOVETO;
+    if (count < 2) return FALSE;
+    if (!(type = add_log_points( physdev, pts, count, PT_LINETO ))) return FALSE;
+    type[0] = PT_MOVETO;
     return TRUE;
 }
 
@@ -1267,25 +1268,27 @@ static BOOL pathdrv_Polyline( PHYSDEV dev, const POINT *pts, INT cbPoints )
 /*************************************************************
  *           pathdrv_PolylineTo
  */
-static BOOL pathdrv_PolylineTo( PHYSDEV dev, const POINT *pts, INT cbPoints )
+static BOOL pathdrv_PolylineTo( PHYSDEV dev, const POINT *pts, INT count )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
 
-    return add_log_points_new_stroke( physdev, pts, cbPoints, PT_LINETO );
+    if (count < 1) return FALSE;
+    return add_log_points_new_stroke( physdev, pts, count, PT_LINETO );
 }
 
 
 /*************************************************************
  *           pathdrv_Polygon
  */
-static BOOL pathdrv_Polygon( PHYSDEV dev, const POINT *pts, INT cbPoints )
+static BOOL pathdrv_Polygon( PHYSDEV dev, const POINT *pts, INT count )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
-    BYTE *type = add_log_points( physdev, pts, cbPoints, PT_LINETO );
+    BYTE *type;
 
-    if (!type) return FALSE;
-    if (cbPoints) type[0] = PT_MOVETO;
-    if (cbPoints > 1) type[cbPoints - 1] = PT_LINETO | PT_CLOSEFIGURE;
+    if (count < 2) return FALSE;
+    if (!(type = add_log_points( physdev, pts, count, PT_LINETO ))) return FALSE;
+    type[0] = PT_MOVETO;
+    type[count - 1] = PT_LINETO | PT_CLOSEFIGURE;
     return TRUE;
 }
 
