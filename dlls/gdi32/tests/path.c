@@ -381,15 +381,6 @@ typedef struct
 {
     int x, y;
     BYTE type;
-
-    /* How many extra entries before this one only on wine
-     * but not on native? */
-    int wine_only_entries_preceding;
-
-    /* 0 - This entry matches on wine.
-     * 1 - This entry corresponds to a single entry on wine that does not match the native entry.
-     * 2 - This entry is currently skipped on wine but present on native. */
-    int todo;
 } path_test_t;
 
 /* Helper function to verify that the current path in the given DC matches the expected path.
@@ -407,25 +398,21 @@ typedef struct
  * greater than 2, the trace() output is a C path_test_t array structure, useful for making
  * new tests that use this function.
  */
-static void ok_path(HDC hdc, const char *path_name, const path_test_t *expected, int expected_size, BOOL todo_size)
+static void ok_path(HDC hdc, const char *path_name, const path_test_t *expected, int expected_size)
 {
     static const char *type_string[8] = { "Unknown (0)", "PT_CLOSEFIGURE", "PT_LINETO",
                                           "PT_LINETO | PT_CLOSEFIGURE", "PT_BEZIERTO",
                                           "PT_BEZIERTO | PT_CLOSEFIGURE", "PT_MOVETO", "PT_MOVETO | PT_CLOSEFIGURE"};
-    POINT *pnt = NULL;
-    BYTE *types = NULL;
-    int size, numskip,
-        idx = 0, eidx = 0;
+    POINT *pnt;
+    BYTE *types;
+    int size, idx;
 
     /* Get the path */
     assert(hdc != 0);
     size = GetPath(hdc, NULL, NULL, 0);
     ok(size > 0, "GetPath returned size %d, last error %d\n", size, GetLastError());
-    if (size <= 0)
-    {
-        skip("Cannot perform path comparisons due to failure to retrieve path.\n");
-        return;
-    }
+    if (size <= 0) return;
+
     pnt = HeapAlloc(GetProcessHeap(), 0, size*sizeof(POINT));
     assert(pnt != 0);
     types = HeapAlloc(GetProcessHeap(), 0, size*sizeof(BYTE));
@@ -433,70 +420,62 @@ static void ok_path(HDC hdc, const char *path_name, const path_test_t *expected,
     size = GetPath(hdc, pnt, types, size);
     assert(size > 0);
 
-    todo_wine_if (todo_size)
-        ok(size == expected_size, "Path size %d does not match expected size %d\n", size, expected_size);
+    ok( size == expected_size, "%s: Path size %d does not match expected size %d\n",
+        path_name, size, expected_size);
 
-    if (winetest_debug > 2)
-        trace("static const path_test_t %s[] = {\n", path_name);
-
-    numskip = expected_size ? expected[eidx].wine_only_entries_preceding : 0;
-    while (idx < size && eidx < expected_size)
+    for (idx = 0; idx < min( size, expected_size ); idx++)
     {
         /* We allow a few pixels fudge in matching X and Y coordinates to account for imprecision in
          * floating point to integer conversion */
-        BOOL match = (types[idx] == expected[eidx].type) &&
-            (pnt[idx].x >= expected[eidx].x-2 && pnt[idx].x <= expected[eidx].x+2) &&
-            (pnt[idx].y >= expected[eidx].y-2 && pnt[idx].y <= expected[eidx].y+2);
+        static const int fudge = 2;
 
-        todo_wine_if (expected[eidx].todo || numskip)
-            ok(match, "Expected #%d: %s (%d,%d) but got %s (%d,%d)\n", eidx,
-               type_string[expected[eidx].type], expected[eidx].x, expected[eidx].y,
-               type_string[types[idx]], pnt[idx].x, pnt[idx].y);
+        ok( types[idx] == expected[idx].type, "%s: Expected #%d: %s (%d,%d) but got %s (%d,%d)\n",
+            path_name, idx, type_string[expected[idx].type], expected[idx].x, expected[idx].y,
+            type_string[types[idx]], pnt[idx].x, pnt[idx].y);
 
-        if (match || expected[eidx].todo != 2)
-        {
-            if (winetest_debug > 2)
-                trace("    {%d, %d, %s, 0, 0}%s /* %d */\n", pnt[idx].x, pnt[idx].y,
-                      type_string[types[idx]], idx < size-1 ? "," : "};", idx);
-            idx++;
-        }
-        if (match || !numskip--)
-            numskip = expected[++eidx].wine_only_entries_preceding;
+        if (types[idx] == expected[idx].type)
+            ok( (pnt[idx].x >= expected[idx].x - fudge && pnt[idx].x <= expected[idx].x + fudge) &&
+                (pnt[idx].y >= expected[idx].y - fudge && pnt[idx].y <= expected[idx].y + fudge),
+                "%s: Expected #%d: %s  position (%d,%d) but got (%d,%d)\n", path_name, idx,
+                type_string[expected[idx].type], expected[idx].x, expected[idx].y, pnt[idx].x, pnt[idx].y);
     }
 
-    /* If we are debugging and the actual path is longer than the expected path, make
-     * sure to display the entire path */
-    if (winetest_debug > 2 && idx < size)
-        for (; idx < size; idx++)
-            trace("    {%d, %d, %s, 0, 0}%s /* %d */\n", pnt[idx].x, pnt[idx].y,
-                  type_string[types[idx]], idx < size-1 ? "," : "};", idx);
+    if (winetest_debug > 2)
+    {
+        printf("static const path_test_t %s[] =\n{\n", path_name);
+        for (idx = 0; idx < size; idx++)
+            printf("    {%d, %d, %s}, /* %d */\n", pnt[idx].x, pnt[idx].y, type_string[types[idx]], idx);
+        printf("};\n" );
+    }
 
     HeapFree(GetProcessHeap(), 0, types);
     HeapFree(GetProcessHeap(), 0, pnt);
 }
 
-static const path_test_t arcto_path[] = {
-    {0, 0, PT_MOVETO, 0, 0}, /* 0 */
-    {229, 215, PT_LINETO, 0, 0}, /* 1 */
-    {248, 205, PT_BEZIERTO, 0, 0}, /* 2 */
-    {273, 200, PT_BEZIERTO, 0, 0}, /* 3 */
-    {300, 200, PT_BEZIERTO, 0, 0}, /* 4 */
-    {355, 200, PT_BEZIERTO, 0, 0}, /* 5 */
-    {399, 222, PT_BEZIERTO, 0, 0}, /* 6 */
-    {399, 250, PT_BEZIERTO, 0, 0}, /* 7 */
-    {399, 263, PT_BEZIERTO, 0, 0}, /* 8 */
-    {389, 275, PT_BEZIERTO, 0, 0}, /* 9 */
-    {370, 285, PT_BEZIERTO, 0, 0}, /* 10 */
-    {363, 277, PT_LINETO, 0, 0}, /* 11 */
-    {380, 270, PT_BEZIERTO, 0, 0}, /* 12 */
-    {389, 260, PT_BEZIERTO, 0, 0}, /* 13 */
-    {389, 250, PT_BEZIERTO, 0, 0}, /* 14 */
-    {389, 228, PT_BEZIERTO, 0, 0}, /* 15 */
-    {349, 210, PT_BEZIERTO, 0, 0}, /* 16 */
-    {300, 210, PT_BEZIERTO, 0, 0}, /* 17 */
-    {276, 210, PT_BEZIERTO, 0, 0}, /* 18 */
-    {253, 214, PT_BEZIERTO, 0, 0}, /* 19 */
-    {236, 222, PT_BEZIERTO | PT_CLOSEFIGURE, 0, 0}}; /* 20 */
+static const path_test_t arcto_path[] =
+{
+    {0, 0, PT_MOVETO}, /* 0 */
+    {229, 215, PT_LINETO}, /* 1 */
+    {248, 205, PT_BEZIERTO}, /* 2 */
+    {273, 200, PT_BEZIERTO}, /* 3 */
+    {300, 200, PT_BEZIERTO}, /* 4 */
+    {355, 200, PT_BEZIERTO}, /* 5 */
+    {399, 222, PT_BEZIERTO}, /* 6 */
+    {399, 250, PT_BEZIERTO}, /* 7 */
+    {399, 263, PT_BEZIERTO}, /* 8 */
+    {389, 275, PT_BEZIERTO}, /* 9 */
+    {370, 285, PT_BEZIERTO}, /* 10 */
+    {363, 277, PT_LINETO}, /* 11 */
+    {380, 270, PT_BEZIERTO}, /* 12 */
+    {389, 260, PT_BEZIERTO}, /* 13 */
+    {389, 250, PT_BEZIERTO}, /* 14 */
+    {389, 228, PT_BEZIERTO}, /* 15 */
+    {349, 210, PT_BEZIERTO}, /* 16 */
+    {300, 210, PT_BEZIERTO}, /* 17 */
+    {276, 210, PT_BEZIERTO}, /* 18 */
+    {253, 214, PT_BEZIERTO}, /* 19 */
+    {236, 222, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 20 */
+};
 
 static void test_arcto(void)
 {
@@ -516,33 +495,35 @@ static void test_arcto(void)
     CloseFigure(hdc);
     EndPath(hdc);
 
-    ok_path(hdc, "arcto_path", arcto_path, sizeof(arcto_path)/sizeof(path_test_t), 0);
+    ok_path(hdc, "arcto_path", arcto_path, sizeof(arcto_path)/sizeof(path_test_t));
 done:
     ReleaseDC(0, hdc);
 }
 
-static const path_test_t anglearc_path[] = {
-    {0, 0, PT_MOVETO, 0, 0}, /* 0 */
-    {371, 229, PT_LINETO, 0, 0}, /* 1 */
-    {352, 211, PT_BEZIERTO, 0, 0}, /* 2 */
-    {327, 200, PT_BEZIERTO, 0, 0}, /* 3 */
-    {300, 200, PT_BEZIERTO, 0, 0}, /* 4 */
-    {245, 200, PT_BEZIERTO, 0, 0}, /* 5 */
-    {200, 245, PT_BEZIERTO, 0, 0}, /* 6 */
-    {200, 300, PT_BEZIERTO, 0, 0}, /* 7 */
-    {200, 300, PT_BEZIERTO, 0, 0}, /* 8 */
-    {200, 300, PT_BEZIERTO, 0, 0}, /* 9 */
-    {200, 300, PT_BEZIERTO, 0, 0}, /* 10 */
-    {231, 260, PT_LINETO, 0, 0}, /* 11 */
-    {245, 235, PT_BEZIERTO, 0, 0}, /* 12 */
-    {271, 220, PT_BEZIERTO, 0, 0}, /* 13 */
-    {300, 220, PT_BEZIERTO, 0, 0}, /* 14 */
-    {344, 220, PT_BEZIERTO, 0, 0}, /* 15 */
-    {380, 256, PT_BEZIERTO, 0, 0}, /* 16 */
-    {380, 300, PT_BEZIERTO, 0, 0}, /* 17 */
-    {380, 314, PT_BEZIERTO, 0, 0}, /* 18 */
-    {376, 328, PT_BEZIERTO, 0, 0}, /* 19 */
-    {369, 340, PT_BEZIERTO | PT_CLOSEFIGURE, 0, 0}}; /* 20 */
+static const path_test_t anglearc_path[] =
+{
+    {0, 0, PT_MOVETO}, /* 0 */
+    {371, 229, PT_LINETO}, /* 1 */
+    {352, 211, PT_BEZIERTO}, /* 2 */
+    {327, 200, PT_BEZIERTO}, /* 3 */
+    {300, 200, PT_BEZIERTO}, /* 4 */
+    {245, 200, PT_BEZIERTO}, /* 5 */
+    {200, 245, PT_BEZIERTO}, /* 6 */
+    {200, 300, PT_BEZIERTO}, /* 7 */
+    {200, 300, PT_BEZIERTO}, /* 8 */
+    {200, 300, PT_BEZIERTO}, /* 9 */
+    {200, 300, PT_BEZIERTO}, /* 10 */
+    {231, 260, PT_LINETO}, /* 11 */
+    {245, 235, PT_BEZIERTO}, /* 12 */
+    {271, 220, PT_BEZIERTO}, /* 13 */
+    {300, 220, PT_BEZIERTO}, /* 14 */
+    {344, 220, PT_BEZIERTO}, /* 15 */
+    {380, 256, PT_BEZIERTO}, /* 16 */
+    {380, 300, PT_BEZIERTO}, /* 17 */
+    {380, 314, PT_BEZIERTO}, /* 18 */
+    {376, 328, PT_BEZIERTO}, /* 19 */
+    {369, 340, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 20 */
+};
 
 static void test_anglearc(void)
 {
@@ -559,44 +540,45 @@ static void test_anglearc(void)
     CloseFigure(hdc);
     EndPath(hdc);
 
-    ok_path(hdc, "anglearc_path", anglearc_path, sizeof(anglearc_path)/sizeof(path_test_t), 0);
+    ok_path(hdc, "anglearc_path", anglearc_path, sizeof(anglearc_path)/sizeof(path_test_t));
 done:
     ReleaseDC(0, hdc);
 }
 
-static const path_test_t polydraw_path[] = {
-    {-20, -20, PT_MOVETO, 0, 0}, /*0*/
-    {10, 10, PT_LINETO, 0, 0},
-    {10, 15, PT_LINETO | PT_CLOSEFIGURE, 0, 0},
-    {-20, -20, PT_MOVETO, 0, 0},
-    {-10, -10, PT_LINETO, 0, 0},
-    {100, 100, PT_MOVETO, 0, 0}, /*5*/
-    {95, 95, PT_LINETO, 0, 0},
-    {10, 10, PT_LINETO, 0, 0},
-    {10, 15, PT_LINETO | PT_CLOSEFIGURE, 0, 0},
-    {100, 100, PT_MOVETO, 0, 0},
-    {15, 15, PT_LINETO, 0, 0}, /*10*/
-    {25, 25, PT_MOVETO, 0, 0},
-    {25, 30, PT_LINETO, 0, 0},
-    {100, 100, PT_MOVETO, 0, 0},
-    {30, 30, PT_BEZIERTO, 0, 0},
-    {30, 35, PT_BEZIERTO, 0, 0}, /*15*/
-    {35, 35, PT_BEZIERTO, 0, 0},
-    {35, 40, PT_LINETO, 0, 0},
-    {40, 40, PT_MOVETO, 0, 0},
-    {40, 45, PT_LINETO, 0, 0},
-    {35, 40, PT_MOVETO, 0, 0}, /*20*/
-    {45, 50, PT_LINETO, 0, 0},
-    {35, 40, PT_MOVETO, 0, 0},
-    {50, 55, PT_LINETO, 0, 0},
-    {45, 50, PT_LINETO, 0, 0},
-    {35, 40, PT_MOVETO, 0, 0}, /*25*/
-    {60, 60, PT_LINETO, 0, 0},
-    {60, 65, PT_MOVETO, 0, 0},
-    {65, 65, PT_LINETO, 0, 0},
-    {75, 75, PT_MOVETO, 0, 0},
-    {80, 80, PT_LINETO | PT_CLOSEFIGURE, 0, 0} /*30*/
-    };
+static const path_test_t polydraw_path[] =
+{
+    {-20, -20, PT_MOVETO}, /* 0 */
+    {10, 10, PT_LINETO}, /* 1 */
+    {10, 15, PT_LINETO | PT_CLOSEFIGURE}, /* 2 */
+    {-20, -20, PT_MOVETO}, /* 3 */
+    {-10, -10, PT_LINETO}, /* 4 */
+    {100, 100, PT_MOVETO}, /* 5 */
+    {95, 95, PT_LINETO}, /* 6 */
+    {10, 10, PT_LINETO}, /* 7 */
+    {10, 15, PT_LINETO | PT_CLOSEFIGURE}, /* 8 */
+    {100, 100, PT_MOVETO}, /* 9 */
+    {15, 15, PT_LINETO}, /* 10 */
+    {25, 25, PT_MOVETO}, /* 11 */
+    {25, 30, PT_LINETO}, /* 12 */
+    {100, 100, PT_MOVETO}, /* 13 */
+    {30, 30, PT_BEZIERTO}, /* 14 */
+    {30, 35, PT_BEZIERTO}, /* 15 */
+    {35, 35, PT_BEZIERTO}, /* 16 */
+    {35, 40, PT_LINETO}, /* 17 */
+    {40, 40, PT_MOVETO}, /* 18 */
+    {40, 45, PT_LINETO}, /* 19 */
+    {35, 40, PT_MOVETO}, /* 20 */
+    {45, 50, PT_LINETO}, /* 21 */
+    {35, 40, PT_MOVETO}, /* 22 */
+    {50, 55, PT_LINETO}, /* 23 */
+    {45, 50, PT_LINETO}, /* 24 */
+    {35, 40, PT_MOVETO}, /* 25 */
+    {60, 60, PT_LINETO}, /* 26 */
+    {60, 65, PT_MOVETO}, /* 27 */
+    {65, 65, PT_LINETO}, /* 28 */
+    {75, 75, PT_MOVETO}, /* 29 */
+    {80, 80, PT_LINETO | PT_CLOSEFIGURE}, /* 30 */
+};
 
 static POINT polydraw_pts[] = {
     {10, 10}, {10, 15},
@@ -699,7 +681,7 @@ static void test_polydraw(void)
     ok( pos.x == 80 && pos.y == 80, "wrong pos %d,%d\n", pos.x, pos.y );
 
     EndPath(hdc);
-    ok_path(hdc, "polydraw_path", polydraw_path, sizeof(polydraw_path)/sizeof(path_test_t), 0);
+    ok_path(hdc, "polydraw_path", polydraw_path, sizeof(polydraw_path)/sizeof(path_test_t));
     GetCurrentPositionEx( hdc, &pos );
     ok( pos.x == 80 && pos.y == 80, "wrong pos %d,%d\n", pos.x, pos.y );
 done:
