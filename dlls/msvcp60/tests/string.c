@@ -377,9 +377,9 @@ static void test_basic_string_char_swap(void) {
     strcpy(atmp1, "qwerty");
     call_func3(p_basic_string_char_ctor_cstr_alloc, &str1, atmp1, &fake_allocator);
     call_func2(p_basic_string_char_swap, &str1, &str1);
-    ok(strcmp(atmp1, (const char *) call_func1(p_basic_string_char_cstr, &str1)) == 0, "Invalid value of str1\n");
+    ok(strcmp(atmp1, call_func1(p_basic_string_char_cstr, &str1)) == 0, "Invalid value of str1\n");
     call_func2(p_basic_string_char_swap, &str1, &str1);
-    ok(strcmp(atmp1, (const char *) call_func1(p_basic_string_char_cstr, &str1)) == 0, "Invalid value of str1\n");
+    ok(strcmp(atmp1, call_func1(p_basic_string_char_cstr, &str1)) == 0, "Invalid value of str1\n");
     call_func1(p_basic_string_char_dtor, &str1);
 
     /* str1 allocated, str2 local */
@@ -388,11 +388,11 @@ static void test_basic_string_char_swap(void) {
     call_func3(p_basic_string_char_ctor_cstr_alloc, &str1, atmp1, &fake_allocator);
     call_func3(p_basic_string_char_ctor_cstr_alloc, &str2, atmp2, &fake_allocator);
     call_func2(p_basic_string_char_swap, &str1, &str2);
-    ok(strcmp(atmp2, (const char *) call_func1(p_basic_string_char_cstr, &str1)) == 0, "Invalid value of str1\n");
-    ok(strcmp(atmp1, (const char *) call_func1(p_basic_string_char_cstr, &str2)) == 0, "Invalid value of str2\n");
+    ok(strcmp(atmp2, call_func1(p_basic_string_char_cstr, &str1)) == 0, "Invalid value of str1\n");
+    ok(strcmp(atmp1, call_func1(p_basic_string_char_cstr, &str2)) == 0, "Invalid value of str2\n");
     call_func2(p_basic_string_char_swap, &str1, &str2);
-    ok(strcmp(atmp1, (const char *) call_func1(p_basic_string_char_cstr, &str1)) == 0, "Invalid value of str1\n");
-    ok(strcmp(atmp2, (const char *) call_func1(p_basic_string_char_cstr, &str2)) == 0, "Invalid value of str2\n");
+    ok(strcmp(atmp1, call_func1(p_basic_string_char_cstr, &str1)) == 0, "Invalid value of str1\n");
+    ok(strcmp(atmp2, call_func1(p_basic_string_char_cstr, &str2)) == 0, "Invalid value of str2\n");
     call_func1(p_basic_string_char_dtor, &str1);
     call_func1(p_basic_string_char_dtor, &str2);
 }
@@ -580,8 +580,8 @@ static void test_basic_string_char_replace(void) {
 
         ret = call_func4(p_basic_string_char_replace_cstr, &str, tests[i].off, tests[i].len, tests[i].replace);
         ok(ret == &str, "str = %p ret = %p\n", ret, &str);
-        ok(strcmp(tests[i].ret, (const char *) call_func1(p_basic_string_char_cstr, ret)) == 0, "str = %s ret = %s\n",
-                  tests[i].ret, (const char *) call_func1(p_basic_string_char_cstr, ret));
+        ok(strcmp(tests[i].ret, call_func1(p_basic_string_char_cstr, ret)) == 0, "str = %s ret = %s\n",
+                  tests[i].ret, (const char*)call_func1(p_basic_string_char_cstr, ret));
 
         call_func1(p_basic_string_char_dtor, &str);
     }
@@ -667,9 +667,9 @@ static void test_basic_string_wchar_swap(void) {
     mbstowcs(wtmp1, "qwerty", 32);
     call_func3(p_basic_string_wchar_ctor_cstr_alloc, &str1, wtmp1, &fake_allocator);
     call_func2(p_basic_string_wchar_swap, &str1, &str1);
-    ok(wcscmp(wtmp1, (const wchar_t *) call_func1(p_basic_string_wchar_cstr, &str1)) == 0, "Invalid value of str1\n");
+    ok(wcscmp(wtmp1, call_func1(p_basic_string_wchar_cstr, &str1)) == 0, "Invalid value of str1\n");
     call_func2(p_basic_string_wchar_swap, &str1, &str1);
-    ok(wcscmp(wtmp1, (const wchar_t *) call_func1(p_basic_string_wchar_cstr, &str1)) == 0, "Invalid value of str1\n");
+    ok(wcscmp(wtmp1, call_func1(p_basic_string_wchar_cstr, &str1)) == 0, "Invalid value of str1\n");
     call_func1(p_basic_string_wchar_dtor, &str1);
 
     /* str1 allocated, str2 local */
@@ -678,11 +678,11 @@ static void test_basic_string_wchar_swap(void) {
     call_func3(p_basic_string_wchar_ctor_cstr_alloc, &str1, wtmp1, &fake_allocator);
     call_func3(p_basic_string_wchar_ctor_cstr_alloc, &str2, wtmp2, &fake_allocator);
     call_func2(p_basic_string_wchar_swap, &str1, &str2);
-    ok(wcscmp(wtmp2, (const wchar_t *) call_func1(p_basic_string_wchar_cstr, &str1)) == 0, "Invalid value of str1\n");
-    ok(wcscmp(wtmp1, (const wchar_t *) call_func1(p_basic_string_wchar_cstr, &str2)) == 0, "Invalid value of str2\n");
+    ok(wcscmp(wtmp2, call_func1(p_basic_string_wchar_cstr, &str1)) == 0, "Invalid value of str1\n");
+    ok(wcscmp(wtmp1, call_func1(p_basic_string_wchar_cstr, &str2)) == 0, "Invalid value of str2\n");
     call_func2(p_basic_string_wchar_swap, &str1, &str2);
-    ok(wcscmp(wtmp1, (const wchar_t *) call_func1(p_basic_string_wchar_cstr, &str1)) == 0, "Invalid value of str1\n");
-    ok(wcscmp(wtmp2, (const wchar_t *) call_func1(p_basic_string_wchar_cstr, &str2)) == 0, "Invalid value of str2\n");
+    ok(wcscmp(wtmp1, call_func1(p_basic_string_wchar_cstr, &str1)) == 0, "Invalid value of str1\n");
+    ok(wcscmp(wtmp2, call_func1(p_basic_string_wchar_cstr, &str2)) == 0, "Invalid value of str2\n");
     call_func1(p_basic_string_wchar_dtor, &str1);
     call_func1(p_basic_string_wchar_dtor, &str2);
 }
