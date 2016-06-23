@@ -4717,7 +4717,7 @@ static void test_GetSystemPreferredUILanguages(void)
     size_buffer = max(size_id, size_name);
     if(!size_buffer)
     {
-        skip("No vaild buffer size\n");
+        skip("No valid buffer size\n");
         return;
     }
 
