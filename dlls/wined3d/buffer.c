@@ -540,6 +540,22 @@ static void buffer_unload(struct wined3d_resource *resource)
     resource_unload(resource);
 }
 
+static void wined3d_buffer_drop_bo(struct wined3d_buffer *buffer)
+{
+    struct wined3d_device *device = buffer->resource.device;
+
+    buffer->flags &= ~WINED3D_BUFFER_USE_BO;
+    buffer_unload(&buffer->resource);
+
+    /* The stream source state handler might have read the memory of
+     * the vertex buffer already and got the memory in the vbo which
+     * is not valid any longer. Dirtify the stream source to force a
+     * reload. This happens only once per changed vertexbuffer and
+     * should occur rather rarely. */
+    if (buffer->resource.bind_count)
+        device_invalidate_state(device, STATE_STREAMSRC);
+}
+
 ULONG CDECL wined3d_buffer_decref(struct wined3d_buffer *buffer)
 {
     ULONG refcount = InterlockedDecrement(&buffer->resource.ref);
@@ -789,17 +805,8 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
         if (buffer->decl_change_count > VB_MAXDECLCHANGES
                 || (buffer->conversion_map && (buffer->resource.usage & WINED3DUSAGE_DYNAMIC)))
         {
-            FIXME("Too many declaration changes or converting dynamic buffer, stopping converting\n");
-
-            buffer->flags &= ~WINED3D_BUFFER_USE_BO;
-            buffer_unload(&buffer->resource);
-
-            /* The stream source state handler might have read the memory of
-             * the vertex buffer already and got the memory in the vbo which
-             * is not valid any longer. Dirtify the stream source to force a
-             * reload. This happens only once per changed vertexbuffer and
-             * should occur rather rarely. */
-            device_invalidate_state(device, STATE_STREAMSRC);
+            FIXME("Too many declaration changes or converting dynamic buffer, stopping converting.\n");
+            wined3d_buffer_drop_bo(buffer);
             return;
         }
 
@@ -824,10 +831,7 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
             if (buffer->full_conversion_count > VB_MAXFULLCONVERSIONS)
             {
                 FIXME("Too many full buffer conversions, stopping converting.\n");
-                buffer->flags &= ~WINED3D_BUFFER_USE_BO;
-                buffer_unload(&buffer->resource);
-                if (buffer->resource.bind_count)
-                    device_invalidate_state(device, STATE_STREAMSRC);
+                wined3d_buffer_drop_bo(buffer);
                 return;
             }
         }
@@ -938,7 +942,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
     LONG count;
     BYTE *base;
 
-    TRACE("buffer %p, offset %u, size %u, data %p, flags %#x\n", buffer, offset, size, data, flags);
+    TRACE("buffer %p, offset %u, size %u, data %p, flags %#x.\n", buffer, offset, size, data, flags);
 
     flags = wined3d_resource_sanitize_map_flags(&buffer->resource, flags);
     /* Filter redundant WINED3D_MAP_DISCARD maps. The 3DMark2001 multitexture
@@ -1003,17 +1007,14 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
                     {
                         /* The extra copy is more expensive than not using VBOs at
                          * all on the Nvidia Linux driver, which is the only driver
-                         * that returns unaligned pointers
+                         * that returns unaligned pointers.
                          */
-                        TRACE("Dynamic buffer, dropping VBO\n");
-                        buffer->flags &= ~WINED3D_BUFFER_USE_BO;
-                        buffer_unload(&buffer->resource);
-                        if (buffer->resource.bind_count)
-                            device_invalidate_state(device, STATE_STREAMSRC);
+                        TRACE("Dynamic buffer, dropping VBO.\n");
+                        wined3d_buffer_drop_bo(buffer);
                     }
                     else
                     {
-                        TRACE("Falling back to doublebuffered operation\n");
+                        TRACE("Falling back to doublebuffered operation.\n");
                         buffer_get_sysmem(buffer, context);
                     }
                     TRACE("New pointer is %p.\n", buffer->resource.heap_memory);
@@ -1357,14 +1358,14 @@ HRESULT CDECL wined3d_buffer_create(struct wined3d_device *device, const struct 
     struct wined3d_buffer *object;
     HRESULT hr;
 
-    TRACE("device %p, desc %p, data %p, parent %p, parent_ops %p, buffer %p\n",
+    TRACE("device %p, desc %p, data %p, parent %p, parent_ops %p, buffer %p.\n",
             device, desc, data, parent, parent_ops, buffer);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
-    FIXME("Ignoring access flags (pool)\n");
+    FIXME("Ignoring access flags (pool).\n");
 
     hr = buffer_init(object, device, desc->byte_width, desc->usage, WINED3DFMT_UNKNOWN,
             WINED3D_POOL_MANAGED, GL_ARRAY_BUFFER_ARB, data, parent, parent_ops);
