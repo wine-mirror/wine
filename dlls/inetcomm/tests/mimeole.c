@@ -424,6 +424,96 @@ static void test_MessageSetProp(void)
     IMimeMessage_Release(msg);
 }
 
+static void test_MessageGetPropInfo(void)
+{
+    static const char topic[] = "wine topic";
+    static const char subject[] = "wine testing";
+    HRESULT hr;
+    IMimeMessage *msg;
+    IMimeBody *body;
+    PROPVARIANT prop;
+    MIMEPROPINFO info;
+
+    hr = MimeOleCreateMessage(NULL, &msg);
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    PropVariantInit(&prop);
+
+    hr = IMimeMessage_BindToObject(msg, HBODY_ROOT, &IID_IMimeBody, (void**)&body);
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    prop.vt = VT_LPSTR;
+    prop.u.pszVal = CoTaskMemAlloc(strlen(topic)+1);
+    strcpy(prop.u.pszVal, topic);
+    hr = IMimeBody_SetProp(body, "Thread-Topic", 0, &prop);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    PropVariantClear(&prop);
+
+    prop.vt = VT_LPSTR;
+    prop.u.pszVal = CoTaskMemAlloc(strlen(subject)+1);
+    strcpy(prop.u.pszVal, subject);
+    hr = IMimeBody_SetProp(body, PIDTOSTR(PID_HDR_SUBJECT), 0, &prop);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    PropVariantClear(&prop);
+
+    memset(&info, 0, sizeof(info));
+    info.dwMask = PIM_ENCODINGTYPE | PIM_FLAGS | PIM_PROPID;
+    hr = IMimeBody_GetPropInfo(body, NULL, &info);
+    ok(hr == E_INVALIDARG, "ret %08x\n", hr);
+
+    memset(&info, 0, sizeof(info));
+    info.dwMask = PIM_ENCODINGTYPE | PIM_FLAGS | PIM_PROPID;
+    hr = IMimeBody_GetPropInfo(body, "Subject", NULL);
+    ok(hr == E_INVALIDARG, "ret %08x\n", hr);
+
+    memset(&info, 0xfe, sizeof(info));
+    info.dwMask = PIM_ENCODINGTYPE | PIM_FLAGS | PIM_PROPID;
+    hr = IMimeBody_GetPropInfo(body, "Subject", &info);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    if(hr == S_OK)
+    {
+       ok(info.dwMask & (PIM_ENCODINGTYPE | PIM_FLAGS| PIM_PROPID), "Invalid mask 0x%08x\n", info.dwFlags);
+       todo_wine ok(info.dwFlags & 0x10000000, "Invalid flags 0x%08x\n", info.dwFlags);
+       ok(info.ietEncoding == 0, "Invalid encoding %d\n", info.ietEncoding);
+       ok(info.dwPropId == PID_HDR_SUBJECT, "Invalid propid %d\n", info.dwPropId);
+       ok(info.cValues == 0xfefefefe, "Invalid cValues %d\n", info.cValues);
+    }
+
+    memset(&info, 0xfe, sizeof(info));
+    info.dwMask = 0;
+    hr = IMimeBody_GetPropInfo(body, "Subject", &info);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    if(hr == S_OK)
+    {
+       ok(info.dwMask == 0, "Invalid mask 0x%08x\n", info.dwFlags);
+       ok(info.dwFlags == 0xfefefefe, "Invalid flags 0x%08x\n", info.dwFlags);
+       ok(info.ietEncoding == -16843010, "Invalid encoding %d\n", info.ietEncoding);
+       ok(info.dwPropId == -16843010, "Invalid propid %d\n", info.dwPropId);
+    }
+
+    memset(&info, 0xfe, sizeof(info));
+    info.dwMask = 0;
+    info.dwPropId = 1024;
+    info.ietEncoding = 99;
+    hr = IMimeBody_GetPropInfo(body, "Subject", &info);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    if(hr == S_OK)
+    {
+       ok(info.dwMask == 0, "Invalid mask 0x%08x\n", info.dwFlags);
+       ok(info.dwFlags == 0xfefefefe, "Invalid flags 0x%08x\n", info.dwFlags);
+       ok(info.ietEncoding == 99, "Invalid encoding %d\n", info.ietEncoding);
+       ok(info.dwPropId == 1024, "Invalid propid %d\n", info.dwPropId);
+    }
+
+    memset(&info, 0, sizeof(info));
+    info.dwMask = PIM_ENCODINGTYPE | PIM_FLAGS | PIM_PROPID;
+    hr = IMimeBody_GetPropInfo(body, "Invalid Property", &info);
+    ok(hr == MIME_E_NOT_FOUND, "ret %08x\n", hr);
+
+    IMimeBody_Release(body);
+    IMimeMessage_Release(msg);
+}
+
 static void test_MessageOptions(void)
 {
     static const char string[] = "XXXXX";
@@ -534,6 +624,7 @@ START_TEST(mimeole)
     test_Allocator();
     test_CreateMessage();
     test_MessageSetProp();
+    test_MessageGetPropInfo();
     test_MessageOptions();
     test_BindToObject();
     test_MimeOleGetPropertySchema();
