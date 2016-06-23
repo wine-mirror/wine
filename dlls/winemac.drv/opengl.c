@@ -4058,7 +4058,7 @@ static BOOL macdrv_wglSetPbufferAttribARB(struct wgl_pbuffer *pbuffer, const int
                 }
                 break;
             default:
-                WARN("invalide attribute 0x%x\n", attr);
+                WARN("invalid attribute 0x%x\n", attr);
                 SetLastError(ERROR_INVALID_DATA);
                 return GL_FALSE;
         }
