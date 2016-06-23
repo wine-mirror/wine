@@ -1833,7 +1833,7 @@ static void test_istream_tellg(void)
 
         if (tests[i].seekoff != -1) /* to test without seek */
             call_func2_ptr_fpos(p_basic_istream_char_seekg_fpos, &ss.base.base1, spos);
-        rpos = (fpos_int *)call_func2(p_basic_istream_char_tellg, &ss.base.base1, &tpos);
+        rpos = call_func2(p_basic_istream_char_tellg, &ss.base.base1, &tpos);
 
         ok(tests[i].telloff_ss == tpos.off, "wrong offset, expected = %ld found = %ld\n", tests[i].telloff_ss, tpos.off);
         if (tests[i].telloff_ss != -1 && spos.off != -1) /* check if tell == seek but only if not hit EOF */
@@ -1860,7 +1860,7 @@ static void test_istream_tellg(void)
 
         if (tests[i].seekoff != -1) /* to test without seek */
             call_func2_ptr_fpos(p_basic_istream_wchar_seekg_fpos, &wss.base.base1, spos);
-        rpos = (fpos_int *)call_func2(p_basic_istream_wchar_tellg, &wss.base.base1, &tpos);
+        rpos = call_func2(p_basic_istream_wchar_tellg, &wss.base.base1, &tpos);
 
         ok(tests[i].telloff_ss == tpos.off, "wrong offset, expected = %ld found = %ld\n", tests[i].telloff_ss, tpos.off);
         if (tests[i].telloff_ss != -1 && spos.off != -1) /* check if tell == seek but only if not hit EOF */
@@ -1890,7 +1890,7 @@ static void test_istream_tellg(void)
 
         if (tests[i].seekoff != -1) /* to test without seek */
             call_func2_ptr_fpos(p_basic_istream_char_seekg_fpos, &fs.base.base1, spos);
-        rpos = (fpos_int *)call_func2(p_basic_istream_char_tellg, &fs.base.base1, &tpos);
+        rpos = call_func2(p_basic_istream_char_tellg, &fs.base.base1, &tpos);
 
         ok(tests[i].tellpos == tpos.pos, "wrong filepos, expected = %s found = %s\n",
             debugstr_longlong(tests[i].tellpos), debugstr_longlong(tpos.pos));
@@ -1913,7 +1913,7 @@ static void test_istream_tellg(void)
 
         if (tests[i].seekoff != -1) /* to test without seek */
             call_func2_ptr_fpos(p_basic_istream_wchar_seekg_fpos, &wfs.base.base1, spos);
-        rpos = (fpos_int *)call_func2(p_basic_istream_wchar_tellg, &wfs.base.base1, &tpos);
+        rpos = call_func2(p_basic_istream_wchar_tellg, &wfs.base.base1, &tpos);
 
         ok(tests[i].tellpos == tpos.pos, "wrong filepos, expected = %s found = %s\n",
             debugstr_longlong(tests[i].tellpos), debugstr_longlong(tpos.pos));
