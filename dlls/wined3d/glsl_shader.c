@@ -65,7 +65,8 @@ struct glsl_src_param
 struct glsl_sample_function
 {
     struct wined3d_string_buffer *name;
-    DWORD coord_mask;
+    unsigned int coord_mask;
+    unsigned int deriv_mask;
     enum wined3d_data_type data_type;
     BOOL output_single_component;
     unsigned int offset_size;
@@ -2803,24 +2804,23 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
     static const struct
     {
         unsigned int coord_size;
-        unsigned int offset_size;
         const char *type_part;
     }
     resource_types[] =
     {
-        {0, 0, ""},        /* WINED3D_SHADER_RESOURCE_NONE */
-        {1, 0, ""},        /* WINED3D_SHADER_RESOURCE_BUFFER */
-        {1, 1, "1D"},      /* WINED3D_SHADER_RESOURCE_TEXTURE_1D */
-        {2, 2, "2D"},      /* WINED3D_SHADER_RESOURCE_TEXTURE_2D */
-        {2, 0, ""},        /* WINED3D_SHADER_RESOURCE_TEXTURE_2DMS */
-        {3, 3, "3D"},      /* WINED3D_SHADER_RESOURCE_TEXTURE_3D */
-        {3, 0, "Cube"},    /* WINED3D_SHADER_RESOURCE_TEXTURE_CUBE */
-        {2, 1, ""},        /* WINED3D_SHADER_RESOURCE_TEXTURE_1DARRAY */
-        {3, 2, "2DArray"}, /* WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY */
-        {3, 0, ""},        /* WINED3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY */
+        {0, ""},        /* WINED3D_SHADER_RESOURCE_NONE */
+        {1, ""},        /* WINED3D_SHADER_RESOURCE_BUFFER */
+        {1, "1D"},      /* WINED3D_SHADER_RESOURCE_TEXTURE_1D */
+        {2, "2D"},      /* WINED3D_SHADER_RESOURCE_TEXTURE_2D */
+        {2, ""},        /* WINED3D_SHADER_RESOURCE_TEXTURE_2DMS */
+        {3, "3D"},      /* WINED3D_SHADER_RESOURCE_TEXTURE_3D */
+        {3, "Cube"},    /* WINED3D_SHADER_RESOURCE_TEXTURE_CUBE */
+        {2, ""},        /* WINED3D_SHADER_RESOURCE_TEXTURE_1DARRAY */
+        {3, "2DArray"}, /* WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY */
+        {3, ""},        /* WINED3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY */
     };
-    struct shader_glsl_ctx_priv *priv = ctx->backend_data;
     enum wined3d_shader_resource_type resource_type = ctx->reg_maps->resource_info[resource_idx].type;
+    struct shader_glsl_ctx_priv *priv = ctx->backend_data;
     const struct wined3d_gl_info *gl_info = ctx->gl_info;
     BOOL shadow = glsl_is_shadow_sampler(ctx->shader, priv->cur_ps_args, resource_idx, sampler_idx);
     BOOL projected = flags & WINED3D_GLSL_SAMPLE_PROJECTED;
@@ -2831,7 +2831,8 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
     BOOL grad = flags & WINED3D_GLSL_SAMPLE_GRAD;
     BOOL offset = flags & WINED3D_GLSL_SAMPLE_OFFSET;
     const char *base = "texture", *type_part = "", *suffix = "";
-    unsigned int coord_size;
+    unsigned int coord_size, deriv_size;
+    BOOL array;
 
     sample_function->data_type = ctx->reg_maps->resource_info[resource_idx].data_type;
 
@@ -2840,6 +2841,8 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
         ERR("Unexpected resource type %#x.\n", resource_type);
         resource_type = WINED3D_SHADER_RESOURCE_TEXTURE_2D;
     }
+    array = resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_1DARRAY
+            || resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY;
 
     /* Note that there's no such thing as a projected cube texture. */
     if (resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_CUBE)
@@ -2875,21 +2878,19 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
         type_part = "";
     }
 
-    sample_function->offset_size = offset ? resource_types[resource_type].offset_size : 0;
-    if (offset && !sample_function->offset_size)
-    {
-        FIXME("Offset not supported for resource type %#x.\n", resource_type);
-        offset = FALSE;
-    }
-
     sample_function->name = string_buffer_get(priv->string_buffers);
     string_buffer_sprintf(sample_function->name, "%s%s%s%s%s%s", base, type_part, projected ? "Proj" : "",
             lod ? "Lod" : grad ? "Grad" : "", offset ? "Offset" : "", suffix);
 
     coord_size = resource_types[resource_type].coord_size;
+    deriv_size = coord_size;
     if (shadow)
         ++coord_size;
+    if (array)
+        --deriv_size;
+    sample_function->offset_size = offset ? deriv_size : 0;
     sample_function->coord_mask = (1u << coord_size) - 1;
+    sample_function->deriv_mask = (1u << deriv_size) - 1;
     sample_function->output_single_component = shadow && !needs_legacy_glsl_syntax(gl_info);
 }
 
@@ -4464,8 +4465,8 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
 
     shader_glsl_get_sample_function(ins->ctx, sampler_idx, sampler_idx, WINED3D_GLSL_SAMPLE_GRAD, &sample_function);
     shader_glsl_add_src_param(ins, &ins->src[0], sample_function.coord_mask, &coord_param);
-    shader_glsl_add_src_param(ins, &ins->src[2], sample_function.coord_mask, &dx_param);
-    shader_glsl_add_src_param(ins, &ins->src[3], sample_function.coord_mask, &dy_param);
+    shader_glsl_add_src_param(ins, &ins->src[2], sample_function.deriv_mask, &dx_param);
+    shader_glsl_add_src_param(ins, &ins->src[3], sample_function.deriv_mask, &dy_param);
 
     shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, swizzle, dx_param.param_str, dy_param.param_str,
             NULL, NULL, "%s", coord_param.param_str);
@@ -4641,8 +4642,8 @@ static void shader_glsl_sample(const struct wined3d_shader_instruction *ins)
             lod_param_str = lod_param.param_str;
             break;
         case WINED3DSIH_SAMPLE_GRAD:
-            shader_glsl_add_src_param(ins, &ins->src[3], sample_function.coord_mask, &dx_param);
-            shader_glsl_add_src_param(ins, &ins->src[4], sample_function.coord_mask, &dy_param);
+            shader_glsl_add_src_param(ins, &ins->src[3], sample_function.deriv_mask, &dx_param);
+            shader_glsl_add_src_param(ins, &ins->src[4], sample_function.deriv_mask, &dy_param);
             dx_param_str = dx_param.param_str;
             dy_param_str = dy_param.param_str;
             break;
