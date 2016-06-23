@@ -428,9 +428,9 @@ static void    WCEL_MoveToHist(WCEL_Context* ctx, int idx)
     if (WCEL_Grow(ctx, len))
     {
 	WCEL_InsertString(ctx, data);
-	HeapFree(GetProcessHeap(), 0, data);
 	ctx->histPos = idx;
     }
+    HeapFree(GetProcessHeap(), 0, data);
 }
 
 static void    WCEL_FindPrevInHist(WCEL_Context* ctx)
