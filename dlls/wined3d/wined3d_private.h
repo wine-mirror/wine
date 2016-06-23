@@ -577,6 +577,7 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT,
     WINED3DSIH_DCL_HS_MAX_TESSFACTOR,
     WINED3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER,
+    WINED3DSIH_DCL_INDEXABLE_TEMP,
     WINED3DSIH_DCL_INPUT,
     WINED3DSIH_DCL_INPUT_CONTROL_POINT_COUNT,
     WINED3DSIH_DCL_INPUT_PRIMITIVE,
@@ -895,6 +896,13 @@ struct wined3d_shader_src_param
     enum wined3d_shader_src_modifier modifiers;
 };
 
+struct wined3d_shader_indexable_temp
+{
+    unsigned int register_idx;
+    unsigned int register_size;
+    unsigned int component_count;
+};
+
 struct wined3d_shader_semantic
 {
     enum wined3d_decl_usage usage;
@@ -968,6 +976,7 @@ struct wined3d_shader_instruction
         enum wined3d_tessellator_output_primitive tessellator_output_primitive;
         enum wined3d_tessellator_partitioning tessellator_partitioning;
         float max_tessellation_factor;
+        struct wined3d_shader_indexable_temp indexable_temp;
     } declaration;
 };
 

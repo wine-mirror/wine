@@ -199,6 +199,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM4_OP_DCL_OUTPUT                       = 0x65,
     WINED3D_SM4_OP_DCL_OUTPUT_SIV                   = 0x67,
     WINED3D_SM4_OP_DCL_TEMPS                        = 0x68,
+    WINED3D_SM4_OP_DCL_INDEXABLE_TEMP               = 0x69,
     WINED3D_SM4_OP_DCL_GLOBAL_FLAGS                 = 0x6a,
     WINED3D_SM4_OP_GATHER4                          = 0x6d,
     WINED3D_SM5_OP_HS_DECLS                         = 0x71,
@@ -576,6 +577,15 @@ static void shader_sm4_read_dcl_input_ps_siv(struct wined3d_shader_instruction *
     ins->declaration.register_semantic.sysval_semantic = *tokens;
 }
 
+static void shader_sm4_read_dcl_indexable_temp(struct wined3d_shader_instruction *ins,
+        DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
+        struct wined3d_sm4_data *priv)
+{
+    ins->declaration.indexable_temp.register_idx = *tokens++;
+    ins->declaration.indexable_temp.register_size = *tokens++;
+    ins->declaration.indexable_temp.component_count = *tokens;
+}
+
 static void shader_sm4_read_dcl_global_flags(struct wined3d_shader_instruction *ins,
         DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
         struct wined3d_sm4_data *priv)
@@ -776,6 +786,8 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
             shader_sm4_read_declaration_register_semantic},
     {WINED3D_SM4_OP_DCL_TEMPS,                        WINED3DSIH_DCL_TEMPS,                        "",     "",
             shader_sm4_read_declaration_count},
+    {WINED3D_SM4_OP_DCL_INDEXABLE_TEMP,               WINED3DSIH_DCL_INDEXABLE_TEMP,               "",     "",
+            shader_sm4_read_dcl_indexable_temp},
     {WINED3D_SM4_OP_DCL_GLOBAL_FLAGS,                 WINED3DSIH_DCL_GLOBAL_FLAGS,                 "",     "",
             shader_sm4_read_dcl_global_flags},
     {WINED3D_SM4_OP_GATHER4,                          WINED3DSIH_GATHER4,                          "u",    "fRS"},

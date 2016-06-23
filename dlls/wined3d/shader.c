@@ -62,6 +62,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT */ "dcl_hs_fork_phase_instance_count",
     /* WINED3DSIH_DCL_HS_MAX_TESSFACTOR            */ "dcl_hs_max_tessfactor",
     /* WINED3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER    */ "dcl_immediateConstantBuffer",
+    /* WINED3DSIH_DCL_INDEXABLE_TEMP               */ "dcl_indexableTemp",
     /* WINED3DSIH_DCL_INPUT                        */ "dcl_input",
     /* WINED3DSIH_DCL_INPUT_CONTROL_POINT_COUNT    */ "dcl_input_control_point_count",
     /* WINED3DSIH_DCL_INPUT_PRIMITIVE              */ "dcl_inputPrimitive",
@@ -2204,6 +2205,13 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
                         ins.declaration.icb->data[4 * i + 3]);
             }
             shader_addline(&buffer, "}");
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_INDEXABLE_TEMP)
+        {
+            shader_addline(&buffer, "%s x[%u][%u], %u", shader_opcode_names[ins.handler_idx],
+                    ins.declaration.indexable_temp.register_idx,
+                    ins.declaration.indexable_temp.register_size,
+                    ins.declaration.indexable_temp.component_count);
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_INPUT_PS)
         {
