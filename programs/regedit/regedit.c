@@ -262,7 +262,8 @@ BOOL ProcessCmdLine(LPSTR lpCmdLine)
         exit(1);
     }
 
-    PerformRegAction(action, argv, &i);
+    for (; i < argc; i++)
+        PerformRegAction(action, argv, &i);
 
     for (i = 0; i < argc; i++)
         HeapFree(GetProcessHeap(), 0, argv[i]);
