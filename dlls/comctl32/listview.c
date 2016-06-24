@@ -3856,9 +3856,8 @@ static void LISTVIEW_MarqueeHighlight(LISTVIEW_INFO *infoPtr, const POINT *coord
 
     iterator_frameditems_absolute(&old_elems, infoPtr, &infoPtr->marqueeRect);
 
-    CopyRect(&infoPtr->marqueeRect, &rect);
-
-    CopyRect(&infoPtr->marqueeDrawRect, &rect);
+    infoPtr->marqueeRect = rect;
+    infoPtr->marqueeDrawRect = rect;
     OffsetRect(&infoPtr->marqueeDrawRect, offset->x, offset->y);
 
     iterator_frameditems_absolute(&new_elems, infoPtr, &infoPtr->marqueeRect);
