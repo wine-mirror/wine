@@ -277,6 +277,15 @@ GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF 
     (*metafile)->comment_data_length = 0;
     (*metafile)->hemf = NULL;
 
+    if (!frameRect)
+    {
+        (*metafile)->auto_frame = TRUE;
+        (*metafile)->auto_frame_min.X = 0;
+        (*metafile)->auto_frame_min.Y = 0;
+        (*metafile)->auto_frame_max.X = -1;
+        (*metafile)->auto_frame_max.Y = -1;
+    }
+
     stat = METAFILE_WriteHeader(*metafile, hdc);
 
     if (stat != Ok)
@@ -333,6 +342,30 @@ GpStatus WINGDIPAPI GdipRecordMetafileStream(IStream *stream, HDC hdc, EmfType t
     }
 
     return stat;
+}
+
+static void METAFILE_AdjustFrame(GpMetafile* metafile, const GpPointF *points,
+    UINT num_points)
+{
+    int i;
+
+    if (!metafile->auto_frame || !num_points)
+        return;
+
+    if (metafile->auto_frame_max.X < metafile->auto_frame_min.X)
+        metafile->auto_frame_max = metafile->auto_frame_min = points[0];
+
+    for (i=0; i<num_points; i++)
+    {
+        if (points[i].X < metafile->auto_frame_min.X)
+            metafile->auto_frame_min.X = points[i].X;
+        if (points[i].X > metafile->auto_frame_max.X)
+            metafile->auto_frame_max.X = points[i].X;
+        if (points[i].Y < metafile->auto_frame_min.Y)
+            metafile->auto_frame_min.Y = points[i].Y;
+        if (points[i].Y > metafile->auto_frame_max.Y)
+            metafile->auto_frame_max.Y = points[i].Y;
+    }
 }
 
 GpStatus METAFILE_GetGraphicsContext(GpMetafile* metafile, GpGraphics **result)
@@ -473,6 +506,29 @@ GpStatus METAFILE_FillRectangles(GpMetafile* metafile, GpBrush* brush,
         METAFILE_WriteRecords(metafile);
     }
 
+    if (metafile->auto_frame)
+    {
+        GpPointF corners[4];
+        int i;
+
+        for (i=0; i<count; i++)
+        {
+            corners[0].X = rects[i].X;
+            corners[0].Y = rects[i].Y;
+            corners[1].X = rects[i].X + rects[i].Width;
+            corners[1].Y = rects[i].Y;
+            corners[2].X = rects[i].X;
+            corners[2].Y = rects[i].Y + rects[i].Height;
+            corners[3].X = rects[i].X + rects[i].Width;
+            corners[3].Y = rects[i].Y + rects[i].Height;
+
+            GdipTransformPoints(metafile->record_graphics, CoordinateSpaceDevice,
+                CoordinateSpaceWorld, corners, 4);
+
+            METAFILE_AdjustFrame(metafile, corners, 4);
+        }
+    }
+
     return Ok;
 }
 
@@ -526,6 +582,57 @@ GpStatus METAFILE_GraphicsDeleted(GpMetafile* metafile)
         MetafileHeader header;
 
         stat = GdipGetMetafileHeaderFromEmf(metafile->hemf, &header);
+        if (stat == Ok && metafile->auto_frame &&
+            metafile->auto_frame_max.X >= metafile->auto_frame_min.X)
+        {
+            RECTL bounds_rc, gdi_bounds_rc;
+            REAL x_scale = 2540.0 / header.DpiX;
+            REAL y_scale = 2540.0 / header.DpiY;
+            BYTE* buffer;
+            UINT buffer_size;
+
+            bounds_rc.left = floorf(metafile->auto_frame_min.X * x_scale);
+            bounds_rc.top = floorf(metafile->auto_frame_min.Y * y_scale);
+            bounds_rc.right = ceilf(metafile->auto_frame_max.X * x_scale);
+            bounds_rc.bottom = ceilf(metafile->auto_frame_max.Y * y_scale);
+
+            gdi_bounds_rc = header.EmfHeader.rclBounds;
+            if (gdi_bounds_rc.right > gdi_bounds_rc.left && gdi_bounds_rc.bottom > gdi_bounds_rc.top)
+            {
+                bounds_rc.left = min(bounds_rc.left, gdi_bounds_rc.left);
+                bounds_rc.top = min(bounds_rc.top, gdi_bounds_rc.top);
+                bounds_rc.right = max(bounds_rc.right, gdi_bounds_rc.right);
+                bounds_rc.bottom = max(bounds_rc.bottom, gdi_bounds_rc.bottom);
+            }
+
+            buffer_size = GetEnhMetaFileBits(metafile->hemf, 0, NULL);
+            buffer = heap_alloc(buffer_size);
+            if (buffer)
+            {
+                HENHMETAFILE new_hemf;
+
+                GetEnhMetaFileBits(metafile->hemf, buffer_size, buffer);
+
+                ((ENHMETAHEADER*)buffer)->rclFrame = bounds_rc;
+
+                new_hemf = SetEnhMetaFileBits(buffer_size, buffer);
+
+                if (new_hemf)
+                {
+                    DeleteEnhMetaFile(metafile->hemf);
+                    metafile->hemf = new_hemf;
+                }
+                else
+                    stat = OutOfMemory;
+
+                heap_free(buffer);
+            }
+            else
+                stat = OutOfMemory;
+
+            if (stat == Ok)
+                stat = GdipGetMetafileHeaderFromEmf(metafile->hemf, &header);
+        }
         if (stat == Ok)
         {
             metafile->bounds.X = header.X;

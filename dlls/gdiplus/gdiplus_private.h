@@ -348,6 +348,8 @@ struct GpMetafile{
     DWORD comment_data_size;
     DWORD comment_data_length;
     IStream *record_stream;
+    BOOL auto_frame; /* If true, determine the frame automatically */
+    GpPointF auto_frame_min, auto_frame_max;
 
     /* playback */
     GpGraphics *playback_graphics;
