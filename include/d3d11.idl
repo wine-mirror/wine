@@ -439,6 +439,12 @@ typedef enum D3D11_FEATURE
     D3D11_FEATURE_D3D9_SHADOW_SUPPORT
 } D3D11_FEATURE;
 
+typedef struct D3D11_FEATURE_DATA_THREADING
+{
+    BOOL DriverConcurrentCreates;
+    BOOL DriverCommandLists;
+} D3D11_FEATURE_DATA_THREADING;
+
 typedef struct D3D11_FEATURE_DATA_D3D11_OPTIONS
 {
     BOOL OutputMergerLogicOp;

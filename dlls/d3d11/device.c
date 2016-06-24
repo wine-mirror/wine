@@ -2689,10 +2689,29 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckCounter(ID3D11Device *iface, 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device *iface, D3D11_FEATURE feature,
         void *feature_support_data, UINT feature_support_data_size)
 {
-    FIXME("iface %p, feature %u, feature_support_data %p, feature_support_data_size %u stub!\n",
+    TRACE("iface %p, feature %u, feature_support_data %p, feature_support_data_size %u.\n",
             iface, feature, feature_support_data, feature_support_data_size);
 
-    return E_NOTIMPL;
+    switch (feature)
+    {
+        case D3D11_FEATURE_THREADING:
+        {
+            D3D11_FEATURE_DATA_THREADING *threading_data = feature_support_data;
+            if (feature_support_data_size != sizeof(*threading_data))
+            {
+                WARN("Invalid data size.\n");
+                return E_INVALIDARG;
+            }
+
+            threading_data->DriverConcurrentCreates = FALSE;
+            threading_data->DriverCommandLists = FALSE;
+            return S_OK;
+        }
+
+        default:
+            FIXME("Unhandled feature %#x.\n", feature);
+            return E_NOTIMPL;
+    }
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_GetPrivateData(ID3D11Device *iface, REFGUID guid,

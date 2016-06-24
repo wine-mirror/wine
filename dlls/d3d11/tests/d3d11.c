@@ -8468,6 +8468,54 @@ static void test_null_sampler(void)
     release_test_context(&test_context);
 }
 
+static void test_check_feature_support(void)
+{
+    D3D11_FEATURE_DATA_THREADING threading[2];
+    ID3D11Device *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device(NULL)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    memset(threading, 0xef, sizeof(threading));
+
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_THREADING, NULL, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_THREADING, threading, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_THREADING, threading, sizeof(*threading) - 1);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_THREADING, threading, sizeof(*threading) / 2);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_THREADING, threading, sizeof(*threading) + 1);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_THREADING, threading, sizeof(*threading) * 2);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    ok(threading[0].DriverConcurrentCreates == 0xefefefef,
+            "Got unexpected concurrent creates %#x.\n", threading[0].DriverConcurrentCreates);
+    ok(threading[0].DriverCommandLists == 0xefefefef,
+            "Got unexpected command lists %#x.\n", threading[0].DriverCommandLists);
+    ok(threading[1].DriverConcurrentCreates == 0xefefefef,
+            "Got unexpected concurrent creates %#x.\n", threading[1].DriverConcurrentCreates);
+    ok(threading[1].DriverCommandLists == 0xefefefef,
+            "Got unexpected command lists %#x.\n", threading[1].DriverCommandLists);
+
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_THREADING, threading, sizeof(*threading));
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(threading->DriverConcurrentCreates == TRUE || threading->DriverConcurrentCreates == FALSE,
+            "Got unexpected concurrent creates %#x.\n", threading->DriverConcurrentCreates);
+    ok(threading->DriverCommandLists == TRUE || threading->DriverCommandLists == FALSE,
+            "Got unexpected command lists %#x.\n", threading->DriverCommandLists);
+
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -8513,4 +8561,5 @@ START_TEST(d3d11)
     test_sm4_breakc_instruction();
     test_input_assembler();
     test_null_sampler();
+    test_check_feature_support();
 }
