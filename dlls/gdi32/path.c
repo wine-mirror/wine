@@ -357,7 +357,7 @@ static HRGN path_to_region( const struct gdi_path *path, int mode )
  *
  * Helper function for RoundRect() and Rectangle()
  */
-static void PATH_CheckCorners( HDC hdc, POINT corners[], INT x1, INT y1, INT x2, INT y2 )
+static BOOL PATH_CheckCorners( HDC hdc, POINT corners[], INT x1, INT y1, INT x2, INT y2 )
 {
     INT temp;
 
@@ -385,9 +385,12 @@ static void PATH_CheckCorners( HDC hdc, POINT corners[], INT x1, INT y1, INT x2,
     /* In GM_COMPATIBLE, don't include bottom and right edges */
     if (GetGraphicsMode( hdc ) == GM_COMPATIBLE)
     {
+        if (corners[0].x == corners[1].x) return FALSE;
+        if (corners[0].y == corners[1].y) return FALSE;
         corners[1].x--;
         corners[1].y--;
     }
+    return TRUE;
 }
 
 /* PATH_AddFlatBezier
@@ -954,7 +957,7 @@ static BOOL pathdrv_Rectangle( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
     POINT corners[2], points[4];
     BYTE *type;
 
-    PATH_CheckCorners(dev->hdc,corners,x1,y1,x2,y2);
+    if (!PATH_CheckCorners( dev->hdc, corners, x1, y1, x2, y2 )) return TRUE;
 
     points[0].x = corners[1].x;
     points[0].y = corners[0].y;
@@ -962,9 +965,11 @@ static BOOL pathdrv_Rectangle( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
     points[2].x = corners[0].x;
     points[2].y = corners[1].y;
     points[3]   = corners[1];
+    if (GetArcDirection( dev->hdc ) == AD_CLOCKWISE) reverse_points( points, 4 );
+
     if (!(type = add_points( physdev->path, points, 4, PT_LINETO ))) return FALSE;
     type[0] = PT_MOVETO;
-    type[3] |= PT_CLOSEFIGURE;
+    close_figure( physdev->path );
     return TRUE;
 }
 

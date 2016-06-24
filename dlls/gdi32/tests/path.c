@@ -815,6 +815,161 @@ static void test_linedda(void)
     ok(pt->x == -1 && pt->y == -1, "didn't find terminator\n");
 }
 
+static const path_test_t rectangle_path[] =
+{
+    {39, 20, PT_MOVETO}, /* 0 */
+    {20, 20, PT_LINETO}, /* 1 */
+    {20, 39, PT_LINETO}, /* 2 */
+    {39, 39, PT_LINETO | PT_CLOSEFIGURE}, /* 3 */
+    {54, 35, PT_MOVETO}, /* 4 */
+    {30, 35, PT_LINETO}, /* 5 */
+    {30, 49, PT_LINETO}, /* 6 */
+    {54, 49, PT_LINETO | PT_CLOSEFIGURE}, /* 7 */
+    {59, 45, PT_MOVETO}, /* 8 */
+    {35, 45, PT_LINETO}, /* 9 */
+    {35, 59, PT_LINETO}, /* 10 */
+    {59, 59, PT_LINETO | PT_CLOSEFIGURE}, /* 11 */
+    {80, 80, PT_MOVETO}, /* 12 */
+    {80, 80, PT_LINETO}, /* 13 */
+    {80, 80, PT_LINETO}, /* 14 */
+    {80, 80, PT_LINETO | PT_CLOSEFIGURE}, /* 15 */
+    {39, 39, PT_MOVETO}, /* 16 */
+    {20, 39, PT_LINETO}, /* 17 */
+    {20, 20, PT_LINETO}, /* 18 */
+    {39, 20, PT_LINETO | PT_CLOSEFIGURE}, /* 19 */
+    {54, 49, PT_MOVETO}, /* 20 */
+    {30, 49, PT_LINETO}, /* 21 */
+    {30, 35, PT_LINETO}, /* 22 */
+    {54, 35, PT_LINETO | PT_CLOSEFIGURE}, /* 23 */
+    {59, 59, PT_MOVETO}, /* 24 */
+    {35, 59, PT_LINETO}, /* 25 */
+    {35, 45, PT_LINETO}, /* 26 */
+    {59, 45, PT_LINETO | PT_CLOSEFIGURE}, /* 27 */
+    {80, 80, PT_MOVETO}, /* 28 */
+    {80, 80, PT_LINETO}, /* 29 */
+    {80, 80, PT_LINETO}, /* 30 */
+    {80, 80, PT_LINETO | PT_CLOSEFIGURE}, /* 31 */
+    {-41, 40, PT_MOVETO}, /* 32 */
+    {-80, 40, PT_LINETO}, /* 33 */
+    {-80, 79, PT_LINETO}, /* 34 */
+    {-41, 79, PT_LINETO | PT_CLOSEFIGURE}, /* 35 */
+    {-61, 70, PT_MOVETO}, /* 36 */
+    {-110, 70, PT_LINETO}, /* 37 */
+    {-110, 99, PT_LINETO}, /* 38 */
+    {-61, 99, PT_LINETO | PT_CLOSEFIGURE}, /* 39 */
+    {119, -120, PT_MOVETO}, /* 40 */
+    {60, -120, PT_LINETO}, /* 41 */
+    {60, -61, PT_LINETO}, /* 42 */
+    {119, -61, PT_LINETO | PT_CLOSEFIGURE}, /* 43 */
+    {164, -150, PT_MOVETO}, /* 44 */
+    {90, -150, PT_LINETO}, /* 45 */
+    {90, -106, PT_LINETO}, /* 46 */
+    {164, -106, PT_LINETO | PT_CLOSEFIGURE}, /* 47 */
+    {-4, -6, PT_MOVETO}, /* 48 */
+    {-6, -6, PT_LINETO}, /* 49 */
+    {-6, -4, PT_LINETO}, /* 50 */
+    {-4, -4, PT_LINETO | PT_CLOSEFIGURE}, /* 51 */
+    {40, 20, PT_MOVETO}, /* 52 */
+    {20, 20, PT_LINETO}, /* 53 */
+    {20, 40, PT_LINETO}, /* 54 */
+    {40, 40, PT_LINETO | PT_CLOSEFIGURE}, /* 55 */
+    {55, 35, PT_MOVETO}, /* 56 */
+    {30, 35, PT_LINETO}, /* 57 */
+    {30, 50, PT_LINETO}, /* 58 */
+    {55, 50, PT_LINETO | PT_CLOSEFIGURE}, /* 59 */
+    {60, 45, PT_MOVETO}, /* 60 */
+    {35, 45, PT_LINETO}, /* 61 */
+    {35, 60, PT_LINETO}, /* 62 */
+    {60, 60, PT_LINETO | PT_CLOSEFIGURE}, /* 63 */
+    {70, 70, PT_MOVETO}, /* 64 */
+    {50, 70, PT_LINETO}, /* 65 */
+    {50, 70, PT_LINETO}, /* 66 */
+    {70, 70, PT_LINETO | PT_CLOSEFIGURE}, /* 67 */
+    {75, 75, PT_MOVETO}, /* 68 */
+    {75, 75, PT_LINETO}, /* 69 */
+    {75, 85, PT_LINETO}, /* 70 */
+    {75, 85, PT_LINETO | PT_CLOSEFIGURE}, /* 71 */
+    {81, 80, PT_MOVETO}, /* 72 */
+    {80, 80, PT_LINETO}, /* 73 */
+    {80, 81, PT_LINETO}, /* 74 */
+    {81, 81, PT_LINETO | PT_CLOSEFIGURE}, /* 75 */
+    {40, 40, PT_MOVETO}, /* 76 */
+    {20, 40, PT_LINETO}, /* 77 */
+    {20, 20, PT_LINETO}, /* 78 */
+    {40, 20, PT_LINETO | PT_CLOSEFIGURE}, /* 79 */
+    {55, 50, PT_MOVETO}, /* 80 */
+    {30, 50, PT_LINETO}, /* 81 */
+    {30, 35, PT_LINETO}, /* 82 */
+    {55, 35, PT_LINETO | PT_CLOSEFIGURE}, /* 83 */
+    {60, 60, PT_MOVETO}, /* 84 */
+    {35, 60, PT_LINETO}, /* 85 */
+    {35, 45, PT_LINETO}, /* 86 */
+    {60, 45, PT_LINETO | PT_CLOSEFIGURE}, /* 87 */
+    {70, 70, PT_MOVETO}, /* 88 */
+    {50, 70, PT_LINETO}, /* 89 */
+    {50, 70, PT_LINETO}, /* 90 */
+    {70, 70, PT_LINETO | PT_CLOSEFIGURE}, /* 91 */
+    {75, 85, PT_MOVETO}, /* 92 */
+    {75, 85, PT_LINETO}, /* 93 */
+    {75, 75, PT_LINETO}, /* 94 */
+    {75, 75, PT_LINETO | PT_CLOSEFIGURE}, /* 95 */
+    {81, 81, PT_MOVETO}, /* 96 */
+    {80, 81, PT_LINETO}, /* 97 */
+    {80, 80, PT_LINETO}, /* 98 */
+    {81, 80, PT_LINETO | PT_CLOSEFIGURE}, /* 99 */
+};
+
+static void test_rectangle(void)
+{
+    HDC hdc = GetDC( 0 );
+
+    BeginPath( hdc );
+    Rectangle( hdc, 20, 20, 40, 40 );
+    Rectangle( hdc, 30, 50, 55, 35 );
+    Rectangle( hdc, 60, 60, 35, 45 );
+    Rectangle( hdc, 70, 70, 50, 70 );
+    Rectangle( hdc, 75, 75, 75, 85 );
+    Rectangle( hdc, 80, 80, 81, 81 );
+    SetArcDirection( hdc, AD_CLOCKWISE );
+    Rectangle( hdc, 20, 20, 40, 40 );
+    Rectangle( hdc, 30, 50, 55, 35 );
+    Rectangle( hdc, 60, 60, 35, 45 );
+    Rectangle( hdc, 70, 70, 50, 70 );
+    Rectangle( hdc, 75, 75, 75, 85 );
+    Rectangle( hdc, 80, 80, 81, 81 );
+    SetArcDirection( hdc, AD_COUNTERCLOCKWISE );
+    SetMapMode( hdc, MM_ANISOTROPIC );
+    SetViewportExtEx( hdc, -2, 2, NULL );
+    Rectangle( hdc, 20, 20, 40, 40 );
+    Rectangle( hdc, 30, 50, 55, 35 );
+    SetViewportExtEx( hdc, 3, -3, NULL );
+    Rectangle( hdc, 20, 20, 40, 40 );
+    Rectangle( hdc, 30, 50, 55, 35 );
+    SetWindowExtEx( hdc, -20, 20, NULL );
+    Rectangle( hdc, 20, 20, 40, 40 );
+    Rectangle( hdc, 24, 22, 21, 20 );
+    SetMapMode( hdc, MM_TEXT );
+    SetGraphicsMode( hdc, GM_ADVANCED );
+    Rectangle( hdc, 20, 20, 40, 40 );
+    Rectangle( hdc, 30, 50, 55, 35 );
+    Rectangle( hdc, 60, 60, 35, 45 );
+    Rectangle( hdc, 70, 70, 50, 70 );
+    Rectangle( hdc, 75, 75, 75, 85 );
+    Rectangle( hdc, 80, 80, 81, 81 );
+    SetArcDirection( hdc, AD_CLOCKWISE );
+    Rectangle( hdc, 20, 20, 40, 40 );
+    Rectangle( hdc, 30, 50, 55, 35 );
+    Rectangle( hdc, 60, 60, 35, 45 );
+    Rectangle( hdc, 70, 70, 50, 70 );
+    Rectangle( hdc, 75, 75, 75, 85 );
+    Rectangle( hdc, 80, 80, 81, 81 );
+    SetArcDirection( hdc, AD_COUNTERCLOCKWISE );
+    EndPath( hdc );
+    SetMapMode( hdc, MM_TEXT );
+    ok_path( hdc, "rectangle_path", rectangle_path, sizeof(rectangle_path)/sizeof(path_test_t) );
+    ReleaseDC( 0, hdc );
+}
+
 START_TEST(path)
 {
     test_path_state();
@@ -824,4 +979,5 @@ START_TEST(path)
     test_polydraw();
     test_closefigure();
     test_linedda();
+    test_rectangle();
 }
