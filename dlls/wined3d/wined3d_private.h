@@ -3145,6 +3145,17 @@ struct wined3d_shader_resource_view
 void wined3d_shader_resource_view_bind(struct wined3d_shader_resource_view *view,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
 
+struct wined3d_unordered_access_view
+{
+    LONG refcount;
+
+    struct wined3d_resource *resource;
+    void *parent;
+    const struct wined3d_parent_ops *parent_ops;
+
+    const struct wined3d_format *format;
+};
+
 struct wined3d_swapchain_ops
 {
     void (*swapchain_present)(struct wined3d_swapchain *swapchain,

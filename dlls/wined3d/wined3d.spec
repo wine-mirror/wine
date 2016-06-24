@@ -267,6 +267,11 @@
 @ cdecl wined3d_texture_update_desc(ptr long long long long long ptr long)
 @ cdecl wined3d_texture_update_overlay(ptr long ptr ptr long ptr long)
 
+@ cdecl wined3d_unordered_access_view_create(ptr ptr ptr ptr ptr)
+@ cdecl wined3d_unordered_access_view_decref(ptr)
+@ cdecl wined3d_unordered_access_view_get_parent(ptr)
+@ cdecl wined3d_unordered_access_view_incref(ptr)
+
 @ cdecl wined3d_vertex_declaration_create(ptr ptr long ptr ptr ptr)
 @ cdecl wined3d_vertex_declaration_create_from_fvf(ptr long ptr ptr ptr)
 @ cdecl wined3d_vertex_declaration_decref(ptr)

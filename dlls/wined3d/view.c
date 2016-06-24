@@ -415,3 +415,109 @@ void wined3d_shader_resource_view_bind(struct wined3d_shader_resource_view *view
     texture = wined3d_texture_from_resource(view->resource);
     wined3d_texture_bind(texture, context, FALSE);
 }
+
+ULONG CDECL wined3d_unordered_access_view_incref(struct wined3d_unordered_access_view *view)
+{
+    ULONG refcount = InterlockedIncrement(&view->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", view, refcount);
+
+    return refcount;
+}
+
+static void wined3d_unordered_access_view_destroy_object(void *object)
+{
+    HeapFree(GetProcessHeap(), 0, object);
+}
+
+ULONG CDECL wined3d_unordered_access_view_decref(struct wined3d_unordered_access_view *view)
+{
+    ULONG refcount = InterlockedDecrement(&view->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", view, refcount);
+
+    if (!refcount)
+    {
+        struct wined3d_device *device = view->resource->device;
+
+        /* Call wined3d_object_destroyed() before releasing the resource,
+         * since releasing the resource may end up destroying the parent. */
+        view->parent_ops->wined3d_object_destroyed(view->parent);
+        wined3d_resource_decref(view->resource);
+        wined3d_cs_emit_destroy_object(device->cs, wined3d_unordered_access_view_destroy_object, view);
+    }
+
+    return refcount;
+}
+
+void * CDECL wined3d_unordered_access_view_get_parent(const struct wined3d_unordered_access_view *view)
+{
+    TRACE("view %p.\n", view);
+
+    return view->parent;
+}
+
+static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_access_view *view,
+        const struct wined3d_unordered_access_view_desc *desc, struct wined3d_resource *resource,
+        void *parent, const struct wined3d_parent_ops *parent_ops)
+{
+    const struct wined3d_gl_info *gl_info = &resource->device->adapter->gl_info;
+
+    view->refcount = 1;
+    view->parent = parent;
+    view->parent_ops = parent_ops;
+
+    view->format = wined3d_get_format(gl_info, desc->format_id);
+
+    if (wined3d_format_is_typeless(view->format))
+    {
+        WARN("Trying to create view for typeless format %s.\n", debug_d3dformat(view->format->id));
+        return E_INVALIDARG;
+    }
+
+    if (resource->type != WINED3D_RTYPE_BUFFER)
+    {
+        struct wined3d_texture *texture = texture_from_resource(resource);
+        unsigned int depth_or_layer_count;
+
+        if (resource->type == WINED3D_RTYPE_TEXTURE_3D)
+            depth_or_layer_count = wined3d_texture_get_level_depth(texture, desc->u.texture.level_idx);
+        else
+            depth_or_layer_count = texture->layer_count;
+
+        if (desc->u.texture.level_idx >= texture->level_count
+                || desc->u.texture.layer_idx >= depth_or_layer_count
+                || !desc->u.texture.layer_count
+                || desc->u.texture.layer_count > depth_or_layer_count - desc->u.texture.layer_idx)
+            return E_INVALIDARG;
+    }
+    wined3d_resource_incref(view->resource = resource);
+
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_unordered_access_view_create(const struct wined3d_unordered_access_view_desc *desc,
+        struct wined3d_resource *resource, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_unordered_access_view **view)
+{
+    struct wined3d_unordered_access_view *object;
+    HRESULT hr;
+
+    TRACE("desc %p, resource %p, parent %p, parent_ops %p, view %p.\n",
+            desc, resource, parent, parent_ops, view);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = wined3d_unordered_access_view_init(object, desc, resource, parent, parent_ops)))
+    {
+        HeapFree(GetProcessHeap(), 0, object);
+        WARN("Failed to initialise view, hr %#x.\n", hr);
+        return hr;
+    }
+
+    TRACE("Created unordered access view %p.\n", object);
+    *view = object;
+
+    return WINED3D_OK;
+}

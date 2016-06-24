@@ -1970,6 +1970,26 @@ struct wined3d_shader_resource_view_desc
     } u;
 };
 
+struct wined3d_unordered_access_view_desc
+{
+    enum wined3d_format_id format_id;
+    unsigned int flags;
+    union
+    {
+        struct
+        {
+            unsigned int start_idx;
+            unsigned int count;
+        } buffer;
+        struct
+        {
+            unsigned int level_idx;
+            unsigned int layer_idx;
+            unsigned int layer_count;
+        } texture;
+    } u;
+};
+
 struct wined3d_output_desc
 {
     WCHAR device_name[CCHDEVICENAME];
@@ -1997,6 +2017,7 @@ struct wined3d_shader_resource_view;
 struct wined3d_stateblock;
 struct wined3d_swapchain;
 struct wined3d_texture;
+struct wined3d_unordered_access_view;
 struct wined3d_vertex_declaration;
 
 struct wined3d_device_parent
@@ -2532,6 +2553,13 @@ HRESULT __cdecl wined3d_texture_update_desc(struct wined3d_texture *texture,
 HRESULT __cdecl wined3d_texture_update_overlay(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         const RECT *src_rect, struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
         const RECT *dst_rect, DWORD flags);
+
+HRESULT __cdecl wined3d_unordered_access_view_create(const struct wined3d_unordered_access_view_desc *desc,
+        struct wined3d_resource *resource, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_unordered_access_view **view);
+ULONG __cdecl wined3d_unordered_access_view_decref(struct wined3d_unordered_access_view *view);
+void * __cdecl wined3d_unordered_access_view_get_parent(const struct wined3d_unordered_access_view *view);
+ULONG __cdecl wined3d_unordered_access_view_incref(struct wined3d_unordered_access_view *view);
 
 HRESULT __cdecl wined3d_vertex_declaration_create(struct wined3d_device *device,
         const struct wined3d_vertex_element *elements, UINT element_count, void *parent,
