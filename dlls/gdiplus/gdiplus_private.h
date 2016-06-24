@@ -358,6 +358,7 @@ struct GpMetafile{
     GpMatrix *world_transform;
     GpUnit page_unit;
     REAL page_scale;
+    GpRegion *base_clip; /* clip region in device space for all metafile output */
 };
 
 struct GpBitmap{

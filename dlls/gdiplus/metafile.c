@@ -591,6 +591,11 @@ static void METAFILE_PlaybackReleaseDC(GpMetafile *metafile)
     }
 }
 
+static GpStatus METAFILE_PlaybackUpdateClip(GpMetafile *metafile)
+{
+    return GdipCombineRegionRegion(metafile->playback_graphics->clip, metafile->base_clip, CombineModeReplace);
+}
+
 static GpStatus METAFILE_PlaybackUpdateWorldTransform(GpMetafile *metafile)
 {
     GpMatrix *real_transform;
@@ -822,6 +827,7 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics *graphics,
     GpStatus stat;
     GpMetafile *real_metafile = (GpMetafile*)metafile; /* whoever made this const was joking */
     GraphicsContainer state;
+    GpPath *dst_path;
 
     TRACE("(%p,%p,%p,%i,%p,%i,%p,%p,%p)\n", graphics, metafile,
         destPoints, count, srcRect, srcUnit, callback, callbackData,
@@ -862,6 +868,38 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics *graphics,
             stat = GdipSetPageUnit(graphics, UnitPixel);
 
         if (stat == Ok)
+            stat = GdipResetWorldTransform(graphics);
+
+        if (stat == Ok)
+            stat = GdipCreateRegion(&real_metafile->base_clip);
+
+        if (stat == Ok)
+            stat = GdipGetClip(graphics, real_metafile->base_clip);
+
+        if (stat == Ok)
+            stat = GdipCreatePath(FillModeAlternate, &dst_path);
+
+        if (stat == Ok)
+        {
+            GpPointF clip_points[4];
+
+            clip_points[0] = real_metafile->playback_points[0];
+            clip_points[1] = real_metafile->playback_points[1];
+            clip_points[2].X = real_metafile->playback_points[1].X + real_metafile->playback_points[2].X
+                - real_metafile->playback_points[0].X;
+            clip_points[2].Y = real_metafile->playback_points[1].Y + real_metafile->playback_points[2].Y
+                - real_metafile->playback_points[0].Y;
+            clip_points[3] = real_metafile->playback_points[2];
+
+            stat = GdipAddPathPolygon(dst_path, clip_points, 4);
+
+            if (stat == Ok)
+                stat = GdipCombineRegionPath(real_metafile->base_clip, dst_path, CombineModeIntersect);
+
+            GdipDeletePath(dst_path);
+        }
+
+        if (stat == Ok)
             stat = GdipCreateMatrix(&real_metafile->world_transform);
 
         if (stat == Ok)
@@ -869,6 +907,11 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics *graphics,
             real_metafile->page_unit = UnitDisplay;
             real_metafile->page_scale = 1.0;
             stat = METAFILE_PlaybackUpdateWorldTransform(real_metafile);
+        }
+
+        if (stat == Ok)
+        {
+            stat = METAFILE_PlaybackUpdateClip(real_metafile);
         }
 
         if (stat == Ok && (metafile->metafile_type == MetafileTypeEmf ||
@@ -883,6 +926,9 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics *graphics,
 
         GdipDeleteMatrix(real_metafile->world_transform);
         real_metafile->world_transform = NULL;
+
+        GdipDeleteRegion(real_metafile->base_clip);
+        real_metafile->base_clip = NULL;
 
         GdipEndContainer(graphics, state);
     }
