@@ -995,6 +995,62 @@ static BOOL pathdrv_RoundRect( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2, INT 
 }
 
 
+/*************************************************************
+ *           pathdrv_Ellipse
+ */
+static BOOL pathdrv_Ellipse( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
+{
+    const double factor = 0.55428475; /* 4 / 3 * (sqrt(2) - 1) */
+    struct path_physdev *physdev = get_path_physdev( dev );
+    POINT corners[2], points[13];
+    BYTE *type;
+    double width, height;
+
+    if (!PATH_CheckCorners( dev->hdc, corners, x1, y1, x2, y2 )) return TRUE;
+
+    width  = (corners[1].x - corners[0].x) / 2.0;
+    height = (corners[1].y - corners[0].y) / 2.0;
+
+    /* starting point */
+    points[0].x = corners[1].x;
+    points[0].y = corners[0].y + GDI_ROUND( height );
+    /* first curve */
+    points[1].x = corners[1].x;
+    points[1].y = corners[0].y + GDI_ROUND( height * (1 - factor) );
+    points[2].x = corners[1].x - GDI_ROUND( width * (1 - factor) );
+    points[2].y = corners[0].y;
+    points[3].x = corners[0].x + GDI_ROUND( width );
+    points[3].y = corners[0].y;
+    /* second curve */
+    points[4].x = corners[0].x + GDI_ROUND( width * (1 - factor) );
+    points[4].y = corners[0].y;
+    points[5].x = corners[0].x;
+    points[5].y = corners[0].y + GDI_ROUND( height * (1 - factor) );
+    points[6].x = corners[0].x;
+    points[6].y = corners[0].y + GDI_ROUND( height );
+    /* third curve */
+    points[7].x = corners[0].x;
+    points[7].y = corners[1].y - GDI_ROUND( height * (1 - factor) );
+    points[8].x = corners[0].x + GDI_ROUND( width * (1 - factor) );
+    points[8].y = corners[1].y;
+    points[9].x = corners[0].x + GDI_ROUND( width );
+    points[9].y = corners[1].y;
+    /* fourth curve */
+    points[10].x = corners[1].x - GDI_ROUND( width * (1 - factor) );
+    points[10].y = corners[1].y;
+    points[11].x = corners[1].x;
+    points[11].y = corners[1].y - GDI_ROUND( height * (1 - factor) );
+    points[12].x = corners[1].x;
+    points[12].y = corners[1].y - GDI_ROUND( height );
+
+    if (GetArcDirection( dev->hdc ) == AD_CLOCKWISE) reverse_points( points, 13 );
+    if (!(type = add_points( physdev->path, points, 13, PT_BEZIERTO ))) return FALSE;
+    type[0] = PT_MOVETO;
+    close_figure( physdev->path );
+    return TRUE;
+}
+
+
 /* PATH_Arc
  *
  * Should be called when a call to Arc is performed on a DC that has
@@ -1199,15 +1255,6 @@ static BOOL pathdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 {
     return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend,
                      GetArcDirection( dev->hdc ), 2 );
-}
-
-
-/*************************************************************
- *           pathdrv_Ellipse
- */
-static BOOL pathdrv_Ellipse( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
-{
-    return PATH_Arc( dev, x1, y1, x2, y2, x1, (y1+y2)/2, x1, (y1+y2)/2, GetArcDirection( dev->hdc ), 1 );
 }
 
 

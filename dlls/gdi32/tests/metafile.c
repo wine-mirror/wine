@@ -3748,7 +3748,7 @@ static void test_emf_paths(void)
     EndPath(hdcMetafile);
 
     size = GetPath(hdcMetafile, NULL, NULL, 0);
-    todo_wine ok( size == 112, "GetPath returned %d.\n", size);
+    ok( size == 112, "GetPath returned %d.\n", size);
 
     ret = StrokeAndFillPath( hdcMetafile );
     ok( ret, "StrokeAndFillPath failed err %d\n", GetLastError() );

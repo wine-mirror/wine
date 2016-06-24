@@ -1331,6 +1331,386 @@ static void test_roundrect(void)
     ReleaseDC( 0, hdc );
 }
 
+static const path_test_t ellipse_path[] =
+{
+    {39, 30, PT_MOVETO}, /* 0 */
+    {39, 24, PT_BEZIERTO}, /* 1 */
+    {35, 20, PT_BEZIERTO}, /* 2 */
+    {30, 20, PT_BEZIERTO}, /* 3 */
+    {24, 20, PT_BEZIERTO}, /* 4 */
+    {20, 24, PT_BEZIERTO}, /* 5 */
+    {20, 30, PT_BEZIERTO}, /* 6 */
+    {20, 35, PT_BEZIERTO}, /* 7 */
+    {24, 39, PT_BEZIERTO}, /* 8 */
+    {30, 39, PT_BEZIERTO}, /* 9 */
+    {35, 39, PT_BEZIERTO}, /* 10 */
+    {39, 35, PT_BEZIERTO}, /* 11 */
+    {39, 30, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 12 */
+    {54, 42, PT_MOVETO}, /* 13 */
+    {54, 38, PT_BEZIERTO}, /* 14 */
+    {49, 35, PT_BEZIERTO}, /* 15 */
+    {42, 35, PT_BEZIERTO}, /* 16 */
+    {35, 35, PT_BEZIERTO}, /* 17 */
+    {30, 38, PT_BEZIERTO}, /* 18 */
+    {30, 42, PT_BEZIERTO}, /* 19 */
+    {30, 46, PT_BEZIERTO}, /* 20 */
+    {35, 49, PT_BEZIERTO}, /* 21 */
+    {42, 49, PT_BEZIERTO}, /* 22 */
+    {49, 49, PT_BEZIERTO}, /* 23 */
+    {54, 46, PT_BEZIERTO}, /* 24 */
+    {54, 42, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 25 */
+    {59, 52, PT_MOVETO}, /* 26 */
+    {59, 48, PT_BEZIERTO}, /* 27 */
+    {54, 45, PT_BEZIERTO}, /* 28 */
+    {47, 45, PT_BEZIERTO}, /* 29 */
+    {40, 45, PT_BEZIERTO}, /* 30 */
+    {35, 48, PT_BEZIERTO}, /* 31 */
+    {35, 52, PT_BEZIERTO}, /* 32 */
+    {35, 56, PT_BEZIERTO}, /* 33 */
+    {40, 59, PT_BEZIERTO}, /* 34 */
+    {47, 59, PT_BEZIERTO}, /* 35 */
+    {54, 59, PT_BEZIERTO}, /* 36 */
+    {59, 56, PT_BEZIERTO}, /* 37 */
+    {59, 52, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 38 */
+    {80, 80, PT_MOVETO}, /* 39 */
+    {80, 80, PT_BEZIERTO}, /* 40 */
+    {80, 80, PT_BEZIERTO}, /* 41 */
+    {80, 80, PT_BEZIERTO}, /* 42 */
+    {80, 80, PT_BEZIERTO}, /* 43 */
+    {80, 80, PT_BEZIERTO}, /* 44 */
+    {80, 80, PT_BEZIERTO}, /* 45 */
+    {80, 80, PT_BEZIERTO}, /* 46 */
+    {80, 80, PT_BEZIERTO}, /* 47 */
+    {80, 80, PT_BEZIERTO}, /* 48 */
+    {80, 80, PT_BEZIERTO}, /* 49 */
+    {80, 80, PT_BEZIERTO}, /* 50 */
+    {80, 80, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 51 */
+    {39, 30, PT_MOVETO}, /* 52 */
+    {39, 35, PT_BEZIERTO}, /* 53 */
+    {35, 39, PT_BEZIERTO}, /* 54 */
+    {30, 39, PT_BEZIERTO}, /* 55 */
+    {24, 39, PT_BEZIERTO}, /* 56 */
+    {20, 35, PT_BEZIERTO}, /* 57 */
+    {20, 30, PT_BEZIERTO}, /* 58 */
+    {20, 24, PT_BEZIERTO}, /* 59 */
+    {24, 20, PT_BEZIERTO}, /* 60 */
+    {30, 20, PT_BEZIERTO}, /* 61 */
+    {35, 20, PT_BEZIERTO}, /* 62 */
+    {39, 24, PT_BEZIERTO}, /* 63 */
+    {39, 30, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 64 */
+    {54, 42, PT_MOVETO}, /* 65 */
+    {54, 46, PT_BEZIERTO}, /* 66 */
+    {49, 49, PT_BEZIERTO}, /* 67 */
+    {42, 49, PT_BEZIERTO}, /* 68 */
+    {35, 49, PT_BEZIERTO}, /* 69 */
+    {30, 46, PT_BEZIERTO}, /* 70 */
+    {30, 42, PT_BEZIERTO}, /* 71 */
+    {30, 38, PT_BEZIERTO}, /* 72 */
+    {35, 35, PT_BEZIERTO}, /* 73 */
+    {42, 35, PT_BEZIERTO}, /* 74 */
+    {49, 35, PT_BEZIERTO}, /* 75 */
+    {54, 38, PT_BEZIERTO}, /* 76 */
+    {54, 42, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 77 */
+    {59, 52, PT_MOVETO}, /* 78 */
+    {59, 56, PT_BEZIERTO}, /* 79 */
+    {54, 59, PT_BEZIERTO}, /* 80 */
+    {47, 59, PT_BEZIERTO}, /* 81 */
+    {40, 59, PT_BEZIERTO}, /* 82 */
+    {35, 56, PT_BEZIERTO}, /* 83 */
+    {35, 52, PT_BEZIERTO}, /* 84 */
+    {35, 48, PT_BEZIERTO}, /* 85 */
+    {40, 45, PT_BEZIERTO}, /* 86 */
+    {47, 45, PT_BEZIERTO}, /* 87 */
+    {54, 45, PT_BEZIERTO}, /* 88 */
+    {59, 48, PT_BEZIERTO}, /* 89 */
+    {59, 52, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 90 */
+    {80, 80, PT_MOVETO}, /* 91 */
+    {80, 80, PT_BEZIERTO}, /* 92 */
+    {80, 80, PT_BEZIERTO}, /* 93 */
+    {80, 80, PT_BEZIERTO}, /* 94 */
+    {80, 80, PT_BEZIERTO}, /* 95 */
+    {80, 80, PT_BEZIERTO}, /* 96 */
+    {80, 80, PT_BEZIERTO}, /* 97 */
+    {80, 80, PT_BEZIERTO}, /* 98 */
+    {80, 80, PT_BEZIERTO}, /* 99 */
+    {80, 80, PT_BEZIERTO}, /* 100 */
+    {80, 80, PT_BEZIERTO}, /* 101 */
+    {80, 80, PT_BEZIERTO}, /* 102 */
+    {80, 80, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 103 */
+    {-41, 60, PT_MOVETO}, /* 104 */
+    {-41, 49, PT_BEZIERTO}, /* 105 */
+    {-50, 40, PT_BEZIERTO}, /* 106 */
+    {-60, 40, PT_BEZIERTO}, /* 107 */
+    {-71, 40, PT_BEZIERTO}, /* 108 */
+    {-80, 49, PT_BEZIERTO}, /* 109 */
+    {-80, 60, PT_BEZIERTO}, /* 110 */
+    {-80, 70, PT_BEZIERTO}, /* 111 */
+    {-71, 79, PT_BEZIERTO}, /* 112 */
+    {-60, 79, PT_BEZIERTO}, /* 113 */
+    {-50, 79, PT_BEZIERTO}, /* 114 */
+    {-41, 70, PT_BEZIERTO}, /* 115 */
+    {-41, 60, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 116 */
+    {-61, 85, PT_MOVETO}, /* 117 */
+    {-61, 77, PT_BEZIERTO}, /* 118 */
+    {-72, 70, PT_BEZIERTO}, /* 119 */
+    {-85, 70, PT_BEZIERTO}, /* 120 */
+    {-99, 70, PT_BEZIERTO}, /* 121 */
+    {-110, 77, PT_BEZIERTO}, /* 122 */
+    {-110, 85, PT_BEZIERTO}, /* 123 */
+    {-110, 93, PT_BEZIERTO}, /* 124 */
+    {-99, 99, PT_BEZIERTO}, /* 125 */
+    {-85, 99, PT_BEZIERTO}, /* 126 */
+    {-72, 99, PT_BEZIERTO}, /* 127 */
+    {-61, 93, PT_BEZIERTO}, /* 128 */
+    {-61, 85, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 129 */
+    {119, -90, PT_MOVETO}, /* 130 */
+    {119, -107, PT_BEZIERTO}, /* 131 */
+    {106, -120, PT_BEZIERTO}, /* 132 */
+    {90, -120, PT_BEZIERTO}, /* 133 */
+    {73, -120, PT_BEZIERTO}, /* 134 */
+    {60, -107, PT_BEZIERTO}, /* 135 */
+    {60, -90, PT_BEZIERTO}, /* 136 */
+    {60, -74, PT_BEZIERTO}, /* 137 */
+    {73, -61, PT_BEZIERTO}, /* 138 */
+    {90, -61, PT_BEZIERTO}, /* 139 */
+    {106, -61, PT_BEZIERTO}, /* 140 */
+    {119, -74, PT_BEZIERTO}, /* 141 */
+    {119, -90, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 142 */
+    {164, -128, PT_MOVETO}, /* 143 */
+    {164, -140, PT_BEZIERTO}, /* 144 */
+    {147, -150, PT_BEZIERTO}, /* 145 */
+    {127, -150, PT_BEZIERTO}, /* 146 */
+    {107, -150, PT_BEZIERTO}, /* 147 */
+    {90, -140, PT_BEZIERTO}, /* 148 */
+    {90, -128, PT_BEZIERTO}, /* 149 */
+    {90, -116, PT_BEZIERTO}, /* 150 */
+    {107, -106, PT_BEZIERTO}, /* 151 */
+    {127, -106, PT_BEZIERTO}, /* 152 */
+    {147, -106, PT_BEZIERTO}, /* 153 */
+    {164, -116, PT_BEZIERTO}, /* 154 */
+    {164, -128, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 155 */
+    {-4, -5, PT_MOVETO}, /* 156 */
+    {-4, -5, PT_BEZIERTO}, /* 157 */
+    {-4, -6, PT_BEZIERTO}, /* 158 */
+    {-5, -6, PT_BEZIERTO}, /* 159 */
+    {-6, -6, PT_BEZIERTO}, /* 160 */
+    {-6, -5, PT_BEZIERTO}, /* 161 */
+    {-6, -5, PT_BEZIERTO}, /* 162 */
+    {-6, -4, PT_BEZIERTO}, /* 163 */
+    {-6, -4, PT_BEZIERTO}, /* 164 */
+    {-5, -4, PT_BEZIERTO}, /* 165 */
+    {-4, -4, PT_BEZIERTO}, /* 166 */
+    {-4, -4, PT_BEZIERTO}, /* 167 */
+    {-4, -5, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 168 */
+    {40, 30, PT_MOVETO}, /* 169 */
+    {40, 25, PT_BEZIERTO}, /* 170 */
+    {36, 20, PT_BEZIERTO}, /* 171 */
+    {30, 20, PT_BEZIERTO}, /* 172 */
+    {24, 20, PT_BEZIERTO}, /* 173 */
+    {20, 25, PT_BEZIERTO}, /* 174 */
+    {20, 30, PT_BEZIERTO}, /* 175 */
+    {20, 36, PT_BEZIERTO}, /* 176 */
+    {24, 40, PT_BEZIERTO}, /* 177 */
+    {30, 40, PT_BEZIERTO}, /* 178 */
+    {36, 40, PT_BEZIERTO}, /* 179 */
+    {40, 36, PT_BEZIERTO}, /* 180 */
+    {40, 30, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 181 */
+    {55, 43, PT_MOVETO}, /* 182 */
+    {55, 38, PT_BEZIERTO}, /* 183 */
+    {49, 35, PT_BEZIERTO}, /* 184 */
+    {43, 35, PT_BEZIERTO}, /* 185 */
+    {36, 35, PT_BEZIERTO}, /* 186 */
+    {30, 38, PT_BEZIERTO}, /* 187 */
+    {30, 43, PT_BEZIERTO}, /* 188 */
+    {30, 47, PT_BEZIERTO}, /* 189 */
+    {36, 50, PT_BEZIERTO}, /* 190 */
+    {43, 50, PT_BEZIERTO}, /* 191 */
+    {49, 50, PT_BEZIERTO}, /* 192 */
+    {55, 47, PT_BEZIERTO}, /* 193 */
+    {55, 43, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 194 */
+    {60, 53, PT_MOVETO}, /* 195 */
+    {60, 48, PT_BEZIERTO}, /* 196 */
+    {54, 45, PT_BEZIERTO}, /* 197 */
+    {48, 45, PT_BEZIERTO}, /* 198 */
+    {41, 45, PT_BEZIERTO}, /* 199 */
+    {35, 48, PT_BEZIERTO}, /* 200 */
+    {35, 53, PT_BEZIERTO}, /* 201 */
+    {35, 57, PT_BEZIERTO}, /* 202 */
+    {41, 60, PT_BEZIERTO}, /* 203 */
+    {48, 60, PT_BEZIERTO}, /* 204 */
+    {54, 60, PT_BEZIERTO}, /* 205 */
+    {60, 57, PT_BEZIERTO}, /* 206 */
+    {60, 53, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 207 */
+    {70, 70, PT_MOVETO}, /* 208 */
+    {70, 70, PT_BEZIERTO}, /* 209 */
+    {66, 70, PT_BEZIERTO}, /* 210 */
+    {60, 70, PT_BEZIERTO}, /* 211 */
+    {54, 70, PT_BEZIERTO}, /* 212 */
+    {50, 70, PT_BEZIERTO}, /* 213 */
+    {50, 70, PT_BEZIERTO}, /* 214 */
+    {50, 70, PT_BEZIERTO}, /* 215 */
+    {54, 70, PT_BEZIERTO}, /* 216 */
+    {60, 70, PT_BEZIERTO}, /* 217 */
+    {66, 70, PT_BEZIERTO}, /* 218 */
+    {70, 70, PT_BEZIERTO}, /* 219 */
+    {70, 70, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 220 */
+    {75, 80, PT_MOVETO}, /* 221 */
+    {75, 77, PT_BEZIERTO}, /* 222 */
+    {75, 75, PT_BEZIERTO}, /* 223 */
+    {75, 75, PT_BEZIERTO}, /* 224 */
+    {75, 75, PT_BEZIERTO}, /* 225 */
+    {75, 77, PT_BEZIERTO}, /* 226 */
+    {75, 80, PT_BEZIERTO}, /* 227 */
+    {75, 83, PT_BEZIERTO}, /* 228 */
+    {75, 85, PT_BEZIERTO}, /* 229 */
+    {75, 85, PT_BEZIERTO}, /* 230 */
+    {75, 85, PT_BEZIERTO}, /* 231 */
+    {75, 83, PT_BEZIERTO}, /* 232 */
+    {75, 80, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 233 */
+    {81, 81, PT_MOVETO}, /* 234 */
+    {81, 80, PT_BEZIERTO}, /* 235 */
+    {81, 80, PT_BEZIERTO}, /* 236 */
+    {81, 80, PT_BEZIERTO}, /* 237 */
+    {80, 80, PT_BEZIERTO}, /* 238 */
+    {80, 80, PT_BEZIERTO}, /* 239 */
+    {80, 81, PT_BEZIERTO}, /* 240 */
+    {80, 81, PT_BEZIERTO}, /* 241 */
+    {80, 81, PT_BEZIERTO}, /* 242 */
+    {81, 81, PT_BEZIERTO}, /* 243 */
+    {81, 81, PT_BEZIERTO}, /* 244 */
+    {81, 81, PT_BEZIERTO}, /* 245 */
+    {81, 81, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 246 */
+    {40, 30, PT_MOVETO}, /* 247 */
+    {40, 36, PT_BEZIERTO}, /* 248 */
+    {36, 40, PT_BEZIERTO}, /* 249 */
+    {30, 40, PT_BEZIERTO}, /* 250 */
+    {24, 40, PT_BEZIERTO}, /* 251 */
+    {20, 36, PT_BEZIERTO}, /* 252 */
+    {20, 30, PT_BEZIERTO}, /* 253 */
+    {20, 24, PT_BEZIERTO}, /* 254 */
+    {24, 20, PT_BEZIERTO}, /* 255 */
+    {30, 20, PT_BEZIERTO}, /* 256 */
+    {36, 20, PT_BEZIERTO}, /* 257 */
+    {40, 24, PT_BEZIERTO}, /* 258 */
+    {40, 30, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 259 */
+    {55, 43, PT_MOVETO}, /* 260 */
+    {55, 47, PT_BEZIERTO}, /* 261 */
+    {49, 50, PT_BEZIERTO}, /* 262 */
+    {43, 50, PT_BEZIERTO}, /* 263 */
+    {36, 50, PT_BEZIERTO}, /* 264 */
+    {30, 47, PT_BEZIERTO}, /* 265 */
+    {30, 43, PT_BEZIERTO}, /* 266 */
+    {30, 38, PT_BEZIERTO}, /* 267 */
+    {36, 35, PT_BEZIERTO}, /* 268 */
+    {43, 35, PT_BEZIERTO}, /* 269 */
+    {49, 35, PT_BEZIERTO}, /* 270 */
+    {55, 38, PT_BEZIERTO}, /* 271 */
+    {55, 43, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 272 */
+    {60, 53, PT_MOVETO}, /* 273 */
+    {60, 57, PT_BEZIERTO}, /* 274 */
+    {54, 60, PT_BEZIERTO}, /* 275 */
+    {48, 60, PT_BEZIERTO}, /* 276 */
+    {41, 60, PT_BEZIERTO}, /* 277 */
+    {35, 57, PT_BEZIERTO}, /* 278 */
+    {35, 53, PT_BEZIERTO}, /* 279 */
+    {35, 48, PT_BEZIERTO}, /* 280 */
+    {41, 45, PT_BEZIERTO}, /* 281 */
+    {48, 45, PT_BEZIERTO}, /* 282 */
+    {54, 45, PT_BEZIERTO}, /* 283 */
+    {60, 48, PT_BEZIERTO}, /* 284 */
+    {60, 53, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 285 */
+    {70, 70, PT_MOVETO}, /* 286 */
+    {70, 70, PT_BEZIERTO}, /* 287 */
+    {66, 70, PT_BEZIERTO}, /* 288 */
+    {60, 70, PT_BEZIERTO}, /* 289 */
+    {54, 70, PT_BEZIERTO}, /* 290 */
+    {50, 70, PT_BEZIERTO}, /* 291 */
+    {50, 70, PT_BEZIERTO}, /* 292 */
+    {50, 70, PT_BEZIERTO}, /* 293 */
+    {54, 70, PT_BEZIERTO}, /* 294 */
+    {60, 70, PT_BEZIERTO}, /* 295 */
+    {66, 70, PT_BEZIERTO}, /* 296 */
+    {70, 70, PT_BEZIERTO}, /* 297 */
+    {70, 70, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 298 */
+    {75, 80, PT_MOVETO}, /* 299 */
+    {75, 83, PT_BEZIERTO}, /* 300 */
+    {75, 85, PT_BEZIERTO}, /* 301 */
+    {75, 85, PT_BEZIERTO}, /* 302 */
+    {75, 85, PT_BEZIERTO}, /* 303 */
+    {75, 83, PT_BEZIERTO}, /* 304 */
+    {75, 80, PT_BEZIERTO}, /* 305 */
+    {75, 77, PT_BEZIERTO}, /* 306 */
+    {75, 75, PT_BEZIERTO}, /* 307 */
+    {75, 75, PT_BEZIERTO}, /* 308 */
+    {75, 75, PT_BEZIERTO}, /* 309 */
+    {75, 77, PT_BEZIERTO}, /* 310 */
+    {75, 80, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 311 */
+    {81, 81, PT_MOVETO}, /* 312 */
+    {81, 81, PT_BEZIERTO}, /* 313 */
+    {81, 81, PT_BEZIERTO}, /* 314 */
+    {81, 81, PT_BEZIERTO}, /* 315 */
+    {80, 81, PT_BEZIERTO}, /* 316 */
+    {80, 81, PT_BEZIERTO}, /* 317 */
+    {80, 81, PT_BEZIERTO}, /* 318 */
+    {80, 80, PT_BEZIERTO}, /* 319 */
+    {80, 80, PT_BEZIERTO}, /* 320 */
+    {81, 80, PT_BEZIERTO}, /* 321 */
+    {81, 80, PT_BEZIERTO}, /* 322 */
+    {81, 80, PT_BEZIERTO}, /* 323 */
+    {81, 81, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 324 */
+};
+
+static void test_ellipse(void)
+{
+    HDC hdc = GetDC( 0 );
+
+    BeginPath( hdc );
+    Ellipse( hdc, 20, 20, 40, 40 );
+    Ellipse( hdc, 30, 50, 55, 35 );
+    Ellipse( hdc, 60, 60, 35, 45 );
+    Ellipse( hdc, 70, 70, 50, 70 );
+    Ellipse( hdc, 75, 75, 75, 85 );
+    Ellipse( hdc, 80, 80, 81, 81 );
+    SetArcDirection( hdc, AD_CLOCKWISE );
+    Ellipse( hdc, 20, 20, 40, 40 );
+    Ellipse( hdc, 30, 50, 55, 35 );
+    Ellipse( hdc, 60, 60, 35, 45 );
+    Ellipse( hdc, 70, 70, 50, 70 );
+    Ellipse( hdc, 75, 75, 75, 85 );
+    Ellipse( hdc, 80, 80, 81, 81 );
+    SetArcDirection( hdc, AD_COUNTERCLOCKWISE );
+    SetMapMode( hdc, MM_ANISOTROPIC );
+    SetViewportExtEx( hdc, -2, 2, NULL );
+    Ellipse( hdc, 20, 20, 40, 40 );
+    Ellipse( hdc, 30, 50, 55, 35 );
+    SetViewportExtEx( hdc, 3, -3, NULL );
+    Ellipse( hdc, 20, 20, 40, 40 );
+    Ellipse( hdc, 30, 50, 55, 35 );
+    SetWindowExtEx( hdc, -20, 20, NULL );
+    Ellipse( hdc, 20, 20, 40, 40 );
+    Ellipse( hdc, 24, 22, 21, 20 );
+    SetMapMode( hdc, MM_TEXT );
+    SetGraphicsMode( hdc, GM_ADVANCED );
+    Ellipse( hdc, 20, 20, 40, 40 );
+    Ellipse( hdc, 30, 50, 55, 35 );
+    Ellipse( hdc, 60, 60, 35, 45 );
+    Ellipse( hdc, 70, 70, 50, 70 );
+    Ellipse( hdc, 75, 75, 75, 85 );
+    Ellipse( hdc, 80, 80, 81, 81 );
+    SetArcDirection( hdc, AD_CLOCKWISE );
+    Ellipse( hdc, 20, 20, 40, 40 );
+    Ellipse( hdc, 30, 50, 55, 35 );
+    Ellipse( hdc, 60, 60, 35, 45 );
+    Ellipse( hdc, 70, 70, 50, 70 );
+    Ellipse( hdc, 75, 75, 75, 85 );
+    Ellipse( hdc, 80, 80, 81, 81 );
+    SetArcDirection( hdc, AD_COUNTERCLOCKWISE );
+    EndPath( hdc );
+    SetMapMode( hdc, MM_TEXT );
+    ok_path( hdc, "ellipse_path", ellipse_path, sizeof(ellipse_path)/sizeof(path_test_t) );
+    ReleaseDC( 0, hdc );
+}
+
 START_TEST(path)
 {
     test_path_state();
@@ -1342,4 +1722,5 @@ START_TEST(path)
     test_linedda();
     test_rectangle();
     test_roundrect();
+    test_ellipse();
 }
