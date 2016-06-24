@@ -970,6 +970,367 @@ static void test_rectangle(void)
     ReleaseDC( 0, hdc );
 }
 
+static const path_test_t roundrect_path[] =
+{
+    {39, 25, PT_MOVETO}, /* 0 */
+    {39, 22, PT_BEZIERTO}, /* 1 */
+    {37, 20, PT_BEZIERTO}, /* 2 */
+    {34, 20, PT_BEZIERTO}, /* 3 */
+    {25, 20, PT_LINETO}, /* 4 */
+    {22, 20, PT_BEZIERTO}, /* 5 */
+    {20, 22, PT_BEZIERTO}, /* 6 */
+    {20, 25, PT_BEZIERTO}, /* 7 */
+    {20, 34, PT_LINETO}, /* 8 */
+    {20, 37, PT_BEZIERTO}, /* 9 */
+    {22, 39, PT_BEZIERTO}, /* 10 */
+    {25, 39, PT_BEZIERTO}, /* 11 */
+    {34, 39, PT_LINETO}, /* 12 */
+    {37, 39, PT_BEZIERTO}, /* 13 */
+    {39, 37, PT_BEZIERTO}, /* 14 */
+    {39, 34, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 15 */
+    {54, 42, PT_MOVETO}, /* 16 */
+    {54, 38, PT_BEZIERTO}, /* 17 */
+    {49, 35, PT_BEZIERTO}, /* 18 */
+    {42, 35, PT_BEZIERTO}, /* 19 */
+    {42, 35, PT_LINETO}, /* 20 */
+    {35, 35, PT_BEZIERTO}, /* 21 */
+    {30, 38, PT_BEZIERTO}, /* 22 */
+    {30, 42, PT_BEZIERTO}, /* 23 */
+    {30, 42, PT_LINETO}, /* 24 */
+    {30, 46, PT_BEZIERTO}, /* 25 */
+    {35, 49, PT_BEZIERTO}, /* 26 */
+    {42, 49, PT_BEZIERTO}, /* 27 */
+    {42, 49, PT_LINETO}, /* 28 */
+    {49, 49, PT_BEZIERTO}, /* 29 */
+    {54, 46, PT_BEZIERTO}, /* 30 */
+    {54, 42, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 31 */
+    {59, 46, PT_MOVETO}, /* 32 */
+    {59, 45, PT_BEZIERTO}, /* 33 */
+    {58, 45, PT_BEZIERTO}, /* 34 */
+    {57, 45, PT_BEZIERTO}, /* 35 */
+    {37, 45, PT_LINETO}, /* 36 */
+    {36, 45, PT_BEZIERTO}, /* 37 */
+    {35, 45, PT_BEZIERTO}, /* 38 */
+    {35, 46, PT_BEZIERTO}, /* 39 */
+    {35, 58, PT_LINETO}, /* 40 */
+    {35, 59, PT_BEZIERTO}, /* 41 */
+    {36, 59, PT_BEZIERTO}, /* 42 */
+    {37, 59, PT_BEZIERTO}, /* 43 */
+    {57, 59, PT_LINETO}, /* 44 */
+    {58, 59, PT_BEZIERTO}, /* 45 */
+    {59, 59, PT_BEZIERTO}, /* 46 */
+    {59, 58, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 47 */
+    {80, 80, PT_MOVETO}, /* 48 */
+    {80, 80, PT_BEZIERTO}, /* 49 */
+    {80, 80, PT_BEZIERTO}, /* 50 */
+    {80, 80, PT_BEZIERTO}, /* 51 */
+    {80, 80, PT_LINETO}, /* 52 */
+    {80, 80, PT_BEZIERTO}, /* 53 */
+    {80, 80, PT_BEZIERTO}, /* 54 */
+    {80, 80, PT_BEZIERTO}, /* 55 */
+    {80, 80, PT_LINETO}, /* 56 */
+    {80, 80, PT_BEZIERTO}, /* 57 */
+    {80, 80, PT_BEZIERTO}, /* 58 */
+    {80, 80, PT_BEZIERTO}, /* 59 */
+    {80, 80, PT_LINETO}, /* 60 */
+    {80, 80, PT_BEZIERTO}, /* 61 */
+    {80, 80, PT_BEZIERTO}, /* 62 */
+    {80, 80, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 63 */
+    {94, 85, PT_MOVETO}, /* 64 */
+    {90, 85, PT_LINETO}, /* 65 */
+    {90, 89, PT_LINETO}, /* 66 */
+    {94, 89, PT_LINETO | PT_CLOSEFIGURE}, /* 67 */
+    {39, 34, PT_MOVETO}, /* 68 */
+    {39, 37, PT_BEZIERTO}, /* 69 */
+    {37, 39, PT_BEZIERTO}, /* 70 */
+    {34, 39, PT_BEZIERTO}, /* 71 */
+    {25, 39, PT_LINETO}, /* 72 */
+    {22, 39, PT_BEZIERTO}, /* 73 */
+    {20, 37, PT_BEZIERTO}, /* 74 */
+    {20, 34, PT_BEZIERTO}, /* 75 */
+    {20, 25, PT_LINETO}, /* 76 */
+    {20, 22, PT_BEZIERTO}, /* 77 */
+    {22, 20, PT_BEZIERTO}, /* 78 */
+    {25, 20, PT_BEZIERTO}, /* 79 */
+    {34, 20, PT_LINETO}, /* 80 */
+    {37, 20, PT_BEZIERTO}, /* 81 */
+    {39, 22, PT_BEZIERTO}, /* 82 */
+    {39, 25, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 83 */
+    {54, 42, PT_MOVETO}, /* 84 */
+    {54, 46, PT_BEZIERTO}, /* 85 */
+    {49, 49, PT_BEZIERTO}, /* 86 */
+    {42, 49, PT_BEZIERTO}, /* 87 */
+    {42, 49, PT_LINETO}, /* 88 */
+    {35, 49, PT_BEZIERTO}, /* 89 */
+    {30, 46, PT_BEZIERTO}, /* 90 */
+    {30, 42, PT_BEZIERTO}, /* 91 */
+    {30, 42, PT_LINETO}, /* 92 */
+    {30, 38, PT_BEZIERTO}, /* 93 */
+    {35, 35, PT_BEZIERTO}, /* 94 */
+    {42, 35, PT_BEZIERTO}, /* 95 */
+    {42, 35, PT_LINETO}, /* 96 */
+    {49, 35, PT_BEZIERTO}, /* 97 */
+    {54, 38, PT_BEZIERTO}, /* 98 */
+    {54, 42, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 99 */
+    {-41, 52, PT_MOVETO}, /* 100 */
+    {-41, 45, PT_BEZIERTO}, /* 101 */
+    {-47, 40, PT_BEZIERTO}, /* 102 */
+    {-56, 40, PT_BEZIERTO}, /* 103 */
+    {-65, 40, PT_LINETO}, /* 104 */
+    {-73, 40, PT_BEZIERTO}, /* 105 */
+    {-80, 45, PT_BEZIERTO}, /* 106 */
+    {-80, 52, PT_BEZIERTO}, /* 107 */
+    {-80, 67, PT_LINETO}, /* 108 */
+    {-80, 74, PT_BEZIERTO}, /* 109 */
+    {-73, 79, PT_BEZIERTO}, /* 110 */
+    {-65, 79, PT_BEZIERTO}, /* 111 */
+    {-56, 79, PT_LINETO}, /* 112 */
+    {-47, 79, PT_BEZIERTO}, /* 113 */
+    {-41, 74, PT_BEZIERTO}, /* 114 */
+    {-41, 67, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 115 */
+    {-61, 79, PT_MOVETO}, /* 116 */
+    {-61, 74, PT_BEZIERTO}, /* 117 */
+    {-64, 70, PT_BEZIERTO}, /* 118 */
+    {-68, 70, PT_BEZIERTO}, /* 119 */
+    {-103, 70, PT_LINETO}, /* 120 */
+    {-107, 70, PT_BEZIERTO}, /* 121 */
+    {-110, 74, PT_BEZIERTO}, /* 122 */
+    {-110, 79, PT_BEZIERTO}, /* 123 */
+    {-110, 90, PT_LINETO}, /* 124 */
+    {-110, 95, PT_BEZIERTO}, /* 125 */
+    {-107, 99, PT_BEZIERTO}, /* 126 */
+    {-103, 99, PT_BEZIERTO}, /* 127 */
+    {-68, 99, PT_LINETO}, /* 128 */
+    {-64, 99, PT_BEZIERTO}, /* 129 */
+    {-61, 95, PT_BEZIERTO}, /* 130 */
+    {-61, 90, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 131 */
+    {119, -102, PT_MOVETO}, /* 132 */
+    {119, -112, PT_BEZIERTO}, /* 133 */
+    {109, -120, PT_BEZIERTO}, /* 134 */
+    {97, -120, PT_BEZIERTO}, /* 135 */
+    {82, -120, PT_LINETO}, /* 136 */
+    {70, -120, PT_BEZIERTO}, /* 137 */
+    {60, -112, PT_BEZIERTO}, /* 138 */
+    {60, -102, PT_BEZIERTO}, /* 139 */
+    {60, -79, PT_LINETO}, /* 140 */
+    {60, -69, PT_BEZIERTO}, /* 141 */
+    {70, -61, PT_BEZIERTO}, /* 142 */
+    {82, -61, PT_BEZIERTO}, /* 143 */
+    {97, -61, PT_LINETO}, /* 144 */
+    {109, -61, PT_BEZIERTO}, /* 145 */
+    {119, -69, PT_BEZIERTO}, /* 146 */
+    {119, -79, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 147 */
+    {164, -144, PT_MOVETO}, /* 148 */
+    {164, -147, PT_BEZIERTO}, /* 149 */
+    {162, -150, PT_BEZIERTO}, /* 150 */
+    {160, -150, PT_BEZIERTO}, /* 151 */
+    {94, -150, PT_LINETO}, /* 152 */
+    {92, -150, PT_BEZIERTO}, /* 153 */
+    {90, -147, PT_BEZIERTO}, /* 154 */
+    {90, -144, PT_BEZIERTO}, /* 155 */
+    {90, -112, PT_LINETO}, /* 156 */
+    {90, -109, PT_BEZIERTO}, /* 157 */
+    {92, -106, PT_BEZIERTO}, /* 158 */
+    {94, -106, PT_BEZIERTO}, /* 159 */
+    {160, -106, PT_LINETO}, /* 160 */
+    {162, -106, PT_BEZIERTO}, /* 161 */
+    {164, -109, PT_BEZIERTO}, /* 162 */
+    {164, -112, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 163 */
+    {-4, -6, PT_MOVETO}, /* 164 */
+    {-4, -6, PT_BEZIERTO}, /* 165 */
+    {-4, -6, PT_BEZIERTO}, /* 166 */
+    {-4, -6, PT_BEZIERTO}, /* 167 */
+    {-6, -6, PT_LINETO}, /* 168 */
+    {-6, -6, PT_BEZIERTO}, /* 169 */
+    {-6, -6, PT_BEZIERTO}, /* 170 */
+    {-6, -6, PT_BEZIERTO}, /* 171 */
+    {-6, -4, PT_LINETO}, /* 172 */
+    {-6, -4, PT_BEZIERTO}, /* 173 */
+    {-6, -4, PT_BEZIERTO}, /* 174 */
+    {-6, -4, PT_BEZIERTO}, /* 175 */
+    {-4, -4, PT_LINETO}, /* 176 */
+    {-4, -4, PT_BEZIERTO}, /* 177 */
+    {-4, -4, PT_BEZIERTO}, /* 178 */
+    {-4, -4, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 179 */
+    {40, 25, PT_MOVETO}, /* 180 */
+    {40, 22, PT_BEZIERTO}, /* 181 */
+    {38, 20, PT_BEZIERTO}, /* 182 */
+    {35, 20, PT_BEZIERTO}, /* 183 */
+    {25, 20, PT_LINETO}, /* 184 */
+    {22, 20, PT_BEZIERTO}, /* 185 */
+    {20, 22, PT_BEZIERTO}, /* 186 */
+    {20, 25, PT_BEZIERTO}, /* 187 */
+    {20, 35, PT_LINETO}, /* 188 */
+    {20, 38, PT_BEZIERTO}, /* 189 */
+    {22, 40, PT_BEZIERTO}, /* 190 */
+    {25, 40, PT_BEZIERTO}, /* 191 */
+    {35, 40, PT_LINETO}, /* 192 */
+    {38, 40, PT_BEZIERTO}, /* 193 */
+    {40, 38, PT_BEZIERTO}, /* 194 */
+    {40, 35, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 195 */
+    {55, 43, PT_MOVETO}, /* 196 */
+    {55, 38, PT_BEZIERTO}, /* 197 */
+    {49, 35, PT_BEZIERTO}, /* 198 */
+    {43, 35, PT_BEZIERTO}, /* 199 */
+    {43, 35, PT_LINETO}, /* 200 */
+    {36, 35, PT_BEZIERTO}, /* 201 */
+    {30, 38, PT_BEZIERTO}, /* 202 */
+    {30, 43, PT_BEZIERTO}, /* 203 */
+    {30, 43, PT_LINETO}, /* 204 */
+    {30, 47, PT_BEZIERTO}, /* 205 */
+    {36, 50, PT_BEZIERTO}, /* 206 */
+    {43, 50, PT_BEZIERTO}, /* 207 */
+    {43, 50, PT_LINETO}, /* 208 */
+    {49, 50, PT_BEZIERTO}, /* 209 */
+    {55, 47, PT_BEZIERTO}, /* 210 */
+    {55, 43, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 211 */
+    {60, 46, PT_MOVETO}, /* 212 */
+    {60, 46, PT_BEZIERTO}, /* 213 */
+    {59, 45, PT_BEZIERTO}, /* 214 */
+    {58, 45, PT_BEZIERTO}, /* 215 */
+    {38, 45, PT_LINETO}, /* 216 */
+    {36, 45, PT_BEZIERTO}, /* 217 */
+    {35, 46, PT_BEZIERTO}, /* 218 */
+    {35, 46, PT_BEZIERTO}, /* 219 */
+    {35, 59, PT_LINETO}, /* 220 */
+    {35, 60, PT_BEZIERTO}, /* 221 */
+    {36, 60, PT_BEZIERTO}, /* 222 */
+    {38, 60, PT_BEZIERTO}, /* 223 */
+    {58, 60, PT_LINETO}, /* 224 */
+    {59, 60, PT_BEZIERTO}, /* 225 */
+    {60, 60, PT_BEZIERTO}, /* 226 */
+    {60, 59, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 227 */
+    {70, 70, PT_MOVETO}, /* 228 */
+    {70, 70, PT_BEZIERTO}, /* 229 */
+    {70, 70, PT_BEZIERTO}, /* 230 */
+    {70, 70, PT_BEZIERTO}, /* 231 */
+    {50, 70, PT_LINETO}, /* 232 */
+    {50, 70, PT_BEZIERTO}, /* 233 */
+    {50, 70, PT_BEZIERTO}, /* 234 */
+    {50, 70, PT_BEZIERTO}, /* 235 */
+    {50, 70, PT_LINETO}, /* 236 */
+    {50, 70, PT_BEZIERTO}, /* 237 */
+    {50, 70, PT_BEZIERTO}, /* 238 */
+    {50, 70, PT_BEZIERTO}, /* 239 */
+    {70, 70, PT_LINETO}, /* 240 */
+    {70, 70, PT_BEZIERTO}, /* 241 */
+    {70, 70, PT_BEZIERTO}, /* 242 */
+    {70, 70, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 243 */
+    {75, 75, PT_MOVETO}, /* 244 */
+    {75, 75, PT_BEZIERTO}, /* 245 */
+    {75, 75, PT_BEZIERTO}, /* 246 */
+    {75, 75, PT_BEZIERTO}, /* 247 */
+    {75, 75, PT_LINETO}, /* 248 */
+    {75, 75, PT_BEZIERTO}, /* 249 */
+    {75, 75, PT_BEZIERTO}, /* 250 */
+    {75, 75, PT_BEZIERTO}, /* 251 */
+    {75, 85, PT_LINETO}, /* 252 */
+    {75, 85, PT_BEZIERTO}, /* 253 */
+    {75, 85, PT_BEZIERTO}, /* 254 */
+    {75, 85, PT_BEZIERTO}, /* 255 */
+    {75, 85, PT_LINETO}, /* 256 */
+    {75, 85, PT_BEZIERTO}, /* 257 */
+    {75, 85, PT_BEZIERTO}, /* 258 */
+    {75, 85, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 259 */
+    {81, 81, PT_MOVETO}, /* 260 */
+    {81, 80, PT_BEZIERTO}, /* 261 */
+    {81, 80, PT_BEZIERTO}, /* 262 */
+    {81, 80, PT_BEZIERTO}, /* 263 */
+    {81, 80, PT_LINETO}, /* 264 */
+    {80, 80, PT_BEZIERTO}, /* 265 */
+    {80, 80, PT_BEZIERTO}, /* 266 */
+    {80, 81, PT_BEZIERTO}, /* 267 */
+    {80, 81, PT_LINETO}, /* 268 */
+    {80, 81, PT_BEZIERTO}, /* 269 */
+    {80, 81, PT_BEZIERTO}, /* 270 */
+    {81, 81, PT_BEZIERTO}, /* 271 */
+    {81, 81, PT_LINETO}, /* 272 */
+    {81, 81, PT_BEZIERTO}, /* 273 */
+    {81, 81, PT_BEZIERTO}, /* 274 */
+    {81, 81, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 275 */
+    {95, 85, PT_MOVETO}, /* 276 */
+    {90, 85, PT_LINETO}, /* 277 */
+    {90, 90, PT_LINETO}, /* 278 */
+    {95, 90, PT_LINETO | PT_CLOSEFIGURE}, /* 279 */
+    {40, 35, PT_MOVETO}, /* 280 */
+    {40, 38, PT_BEZIERTO}, /* 281 */
+    {38, 40, PT_BEZIERTO}, /* 282 */
+    {35, 40, PT_BEZIERTO}, /* 283 */
+    {25, 40, PT_LINETO}, /* 284 */
+    {22, 40, PT_BEZIERTO}, /* 285 */
+    {20, 38, PT_BEZIERTO}, /* 286 */
+    {20, 35, PT_BEZIERTO}, /* 287 */
+    {20, 25, PT_LINETO}, /* 288 */
+    {20, 22, PT_BEZIERTO}, /* 289 */
+    {22, 20, PT_BEZIERTO}, /* 290 */
+    {25, 20, PT_BEZIERTO}, /* 291 */
+    {35, 20, PT_LINETO}, /* 292 */
+    {38, 20, PT_BEZIERTO}, /* 293 */
+    {40, 22, PT_BEZIERTO}, /* 294 */
+    {40, 25, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 295 */
+    {55, 43, PT_MOVETO}, /* 296 */
+    {55, 47, PT_BEZIERTO}, /* 297 */
+    {49, 50, PT_BEZIERTO}, /* 298 */
+    {43, 50, PT_BEZIERTO}, /* 299 */
+    {43, 50, PT_LINETO}, /* 300 */
+    {36, 50, PT_BEZIERTO}, /* 301 */
+    {30, 47, PT_BEZIERTO}, /* 302 */
+    {30, 43, PT_BEZIERTO}, /* 303 */
+    {30, 43, PT_LINETO}, /* 304 */
+    {30, 38, PT_BEZIERTO}, /* 305 */
+    {36, 35, PT_BEZIERTO}, /* 306 */
+    {43, 35, PT_BEZIERTO}, /* 307 */
+    {43, 35, PT_LINETO}, /* 308 */
+    {49, 35, PT_BEZIERTO}, /* 309 */
+    {55, 38, PT_BEZIERTO}, /* 310 */
+    {55, 43, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 311 */
+};
+
+static void test_roundrect(void)
+{
+    HDC hdc = GetDC( 0 );
+
+    BeginPath( hdc );
+    RoundRect( hdc, 20, 20, 40, 40, 10, 10 );
+    RoundRect( hdc, 30, 50, 55, 35, -30, -30 );
+    RoundRect( hdc, 60, 60, 35, 45, 5, 2 );
+    RoundRect( hdc, 70, 70, 50, 70, 3, 5 );
+    RoundRect( hdc, 75, 75, 75, 85, 6, 4 );
+    RoundRect( hdc, 80, 80, 81, 81, 8, 9 );
+    RoundRect( hdc, 90, 90, 95, 85, 0, 7 );
+    SetArcDirection( hdc, AD_CLOCKWISE );
+    RoundRect( hdc, 20, 20, 40, 40, 10, 10 );
+    RoundRect( hdc, 30, 50, 55, 35, -30, -30 );
+    SetArcDirection( hdc, AD_COUNTERCLOCKWISE );
+    SetMapMode( hdc, MM_ANISOTROPIC );
+    SetViewportExtEx( hdc, -2, 2, NULL );
+    RoundRect( hdc, 20, 20, 40, 40, 15, 12 );
+    RoundRect( hdc, 30, 50, 55, 35, 7, 9 );
+    SetViewportExtEx( hdc, 3, -3, NULL );
+    RoundRect( hdc, 20, 20, 40, 40, 15, 12 );
+    RoundRect( hdc, 30, 50, 55, 35, 3, 4 );
+    SetWindowExtEx( hdc, -20, 20, NULL );
+    RoundRect( hdc, 20, 20, 40, 40, 2, 1 );
+    RoundRect( hdc, 24, 22, 21, 20, 4, 4 );
+    SetMapMode( hdc, MM_TEXT );
+    SetGraphicsMode( hdc, GM_ADVANCED );
+    RoundRect( hdc, 20, 20, 40, 40, 10, 10 );
+    RoundRect( hdc, 30, 50, 55, 35, -30, -30 );
+    RoundRect( hdc, 60, 60, 35, 45, 5, 2 );
+    RoundRect( hdc, 70, 70, 50, 70, 3, 5 );
+    RoundRect( hdc, 75, 75, 75, 85, 6, 4 );
+    RoundRect( hdc, 80, 80, 81, 81, 8, 9 );
+    RoundRect( hdc, 90, 90, 95, 85, 0, 7 );
+    SetArcDirection( hdc, AD_CLOCKWISE );
+    RoundRect( hdc, 20, 20, 40, 40, 10, 10 );
+    RoundRect( hdc, 30, 50, 55, 35, -30, -30 );
+    SetArcDirection( hdc, AD_COUNTERCLOCKWISE );
+    EndPath( hdc );
+    SetMapMode( hdc, MM_TEXT );
+    ok_path( hdc, "roundrect_path", roundrect_path, sizeof(roundrect_path)/sizeof(path_test_t) );
+    ReleaseDC( 0, hdc );
+}
+
 START_TEST(path)
 {
     test_path_state();
@@ -980,4 +1341,5 @@ START_TEST(path)
     test_closefigure();
     test_linedda();
     test_rectangle();
+    test_roundrect();
 }
