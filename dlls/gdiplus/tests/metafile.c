@@ -928,7 +928,7 @@ static void test_clear(void)
 
     stat = GdipBitmapGetPixel(bitmap, 15, 15, &color);
     expect(Ok, stat);
-    todo_wine expect(0xffffff00, color);
+    expect(0xffffff00, color);
 
     stat = GdipBitmapGetPixel(bitmap, 25, 25, &color);
     expect(Ok, stat);

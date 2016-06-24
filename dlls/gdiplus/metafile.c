@@ -700,6 +700,12 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
         case EmfPlusRecordTypeGetDC:
             METAFILE_PlaybackGetDC((GpMetafile*)metafile);
             break;
+        case EmfPlusRecordTypeClear:
+        {
+            EmfPlusClear *record = (EmfPlusClear*)header;
+
+            return GdipGraphicsClear(metafile->playback_graphics, record->Color);
+        }
         case EmfPlusRecordTypeFillRects:
         {
             EmfPlusFillRects *record = (EmfPlusFillRects*)header;
