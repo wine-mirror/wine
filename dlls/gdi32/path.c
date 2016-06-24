@@ -276,6 +276,18 @@ static BYTE *add_points( struct gdi_path *path, const POINT *points, DWORD count
     return ret;
 }
 
+/* reverse the order of an array of points */
+static void reverse_points( POINT *points, UINT count )
+{
+    UINT i;
+    for (i = 0; i < count / 2; i++)
+    {
+        POINT pt = points[i];
+        points[i] = points[count - i - 1];
+        points[count - i - 1] = pt;
+    }
+}
+
 /* start a new path stroke if necessary */
 static BOOL start_new_stroke( struct path_physdev *physdev )
 {
@@ -1570,6 +1582,7 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
     INT i, j, numStrokes, penWidth, penWidthIn, penWidthOut, size, penStyle;
     struct gdi_path *flat_path, *pNewPath, **pStrokes = NULL, *pUpPath, *pDownPath;
     EXTLOGPEN *elp;
+    BYTE *type;
     DWORD obj_type, joint, endcap, penType;
 
     size = GetObjectW( dc->hPen, 0, NULL );
@@ -1828,18 +1841,11 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
                 }
             }
         }
-        for(j = 0; j < pUpPath->count; j++) {
-            POINT pt;
-            pt.x = pUpPath->points[j].x;
-            pt.y = pUpPath->points[j].y;
-            PATH_AddEntry(pNewPath, &pt, (j == 0 ? PT_MOVETO : PT_LINETO));
-        }
-        for(j = 0; j < pDownPath->count; j++) {
-            POINT pt;
-            pt.x = pDownPath->points[pDownPath->count - j - 1].x;
-            pt.y = pDownPath->points[pDownPath->count - j - 1].y;
-            PATH_AddEntry(pNewPath, &pt, ( (j == 0 && (pStrokes[i]->flags[pStrokes[i]->count - 1] & PT_CLOSEFIGURE)) ? PT_MOVETO : PT_LINETO));
-        }
+        type = add_points( pNewPath, pUpPath->points, pUpPath->count, PT_LINETO );
+        type[0] = PT_MOVETO;
+        reverse_points( pDownPath->points, pDownPath->count );
+        type = add_points( pNewPath, pDownPath->points, pDownPath->count, PT_LINETO );
+        if (pStrokes[i]->flags[pStrokes[i]->count - 1] & PT_CLOSEFIGURE) type[0] = PT_MOVETO;
 
         free_gdi_path( pStrokes[i] );
         free_gdi_path( pUpPath );
