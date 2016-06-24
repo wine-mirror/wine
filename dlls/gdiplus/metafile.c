@@ -57,6 +57,12 @@ typedef struct EmfPlusHeader
     DWORD LogicalDpiY;
 } EmfPlusHeader;
 
+typedef struct EmfPlusClear
+{
+    EmfPlusRecordHeader Header;
+    DWORD Color;
+} EmfPlusClear;
+
 typedef struct EmfPlusFillRects
 {
     EmfPlusRecordHeader Header;
@@ -366,6 +372,27 @@ GpStatus METAFILE_GetDC(GpMetafile* metafile, HDC *hdc)
     }
 
     *hdc = metafile->record_dc;
+
+    return Ok;
+}
+
+GpStatus METAFILE_GraphicsClear(GpMetafile* metafile, ARGB color)
+{
+    if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
+    {
+        EmfPlusClear *record;
+        GpStatus stat;
+
+        stat = METAFILE_AllocateRecord(metafile, sizeof(EmfPlusClear), (void**)&record);
+        if (stat != Ok)
+            return stat;
+
+        record->Header.Type = EmfPlusRecordTypeClear;
+        record->Header.Flags = 0;
+        record->Color = color;
+
+        METAFILE_WriteRecords(metafile);
+    }
 
     return Ok;
 }
