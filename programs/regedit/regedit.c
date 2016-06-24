@@ -231,6 +231,7 @@ BOOL ProcessCmdLine(LPSTR lpCmdLine)
         case 'E':
             action = ACTION_EXPORT;
             break;
+        case 'C':
         case 'L':
         case 'R':
             /* unhandled */;
