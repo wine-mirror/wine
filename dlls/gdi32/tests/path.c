@@ -1708,6 +1708,189 @@ static void test_ellipse(void)
     EndPath( hdc );
     SetMapMode( hdc, MM_TEXT );
     ok_path( hdc, "ellipse_path", ellipse_path, sizeof(ellipse_path)/sizeof(path_test_t) );
+}
+
+static const path_test_t all_funcs_path[] =
+{
+    {0, 0, PT_MOVETO}, /* 0 */
+    {50, 150, PT_LINETO}, /* 1 */
+    {50, 50, PT_MOVETO}, /* 2 */
+    {150, 150, PT_LINETO}, /* 3 */
+    {150, 50, PT_LINETO}, /* 4 */
+    {50, 50, PT_LINETO}, /* 5 */
+    {37, 13, PT_LINETO}, /* 6 */
+    {24, 13, PT_BEZIERTO}, /* 7 */
+    {14, 23, PT_BEZIERTO}, /* 8 */
+    {14, 36, PT_BEZIERTO}, /* 9 */
+    {14, 49, PT_BEZIERTO}, /* 10 */
+    {24, 59, PT_BEZIERTO}, /* 11 */
+    {37, 59, PT_BEZIERTO}, /* 12 */
+    {37, 59, PT_BEZIERTO}, /* 13 */
+    {37, 59, PT_BEZIERTO}, /* 14 */
+    {37, 59, PT_BEZIERTO}, /* 15 */
+    {10, 10, PT_MOVETO}, /* 16 */
+    {20, 10, PT_LINETO}, /* 17 */
+    {10, 20, PT_LINETO}, /* 18 */
+    {20, 20, PT_LINETO}, /* 19 */
+    {36, 27, PT_MOVETO}, /* 20 */
+    {37, 26, PT_BEZIERTO}, /* 21 */
+    {38, 25, PT_BEZIERTO}, /* 22 */
+    {38, 25, PT_BEZIERTO}, /* 23 */
+    {38, 23, PT_BEZIERTO}, /* 24 */
+    {34, 21, PT_BEZIERTO}, /* 25 */
+    {30, 21, PT_BEZIERTO}, /* 26 */
+    {27, 21, PT_BEZIERTO}, /* 27 */
+    {25, 21, PT_BEZIERTO}, /* 28 */
+    {24, 22, PT_BEZIERTO}, /* 29 */
+    {37, 59, PT_MOVETO}, /* 30 */
+    {10, 10, PT_LINETO}, /* 31 */
+    {20, 10, PT_LINETO}, /* 32 */
+    {10, 20, PT_LINETO}, /* 33 */
+    {20, 20, PT_LINETO}, /* 34 */
+    {34, 26, PT_LINETO}, /* 35 */
+    {35, 25, PT_BEZIERTO}, /* 36 */
+    {36, 25, PT_BEZIERTO}, /* 37 */
+    {36, 25, PT_BEZIERTO}, /* 38 */
+    {36, 24, PT_BEZIERTO}, /* 39 */
+    {33, 23, PT_BEZIERTO}, /* 40 */
+    {30, 23, PT_BEZIERTO}, /* 41 */
+    {28, 23, PT_BEZIERTO}, /* 42 */
+    {26, 23, PT_BEZIERTO}, /* 43 */
+    {25, 23, PT_BEZIERTO}, /* 44 */
+    {10, 10, PT_MOVETO}, /* 45 */
+    {20, 10, PT_LINETO}, /* 46 */
+    {10, 20, PT_LINETO}, /* 47 */
+    {20, 20, PT_LINETO}, /* 48 */
+    {30, 30, PT_MOVETO}, /* 49 */
+    {40, 20, PT_LINETO}, /* 50 */
+    {20, 30, PT_LINETO}, /* 51 */
+    {30, 40, PT_LINETO}, /* 52 */
+    {10, 50, PT_LINETO}, /* 53 */
+    {45, 45, PT_MOVETO}, /* 54 */
+    {45, 45, PT_BEZIERTO}, /* 55 */
+    {44, 46, PT_BEZIERTO}, /* 56 */
+    {43, 47, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 57 */
+    {10, 10, PT_MOVETO}, /* 58 */
+    {20, 10, PT_LINETO}, /* 59 */
+    {10, 20, PT_BEZIERTO}, /* 60 */
+    {20, 20, PT_BEZIERTO}, /* 61 */
+    {30, 30, PT_BEZIERTO}, /* 62 */
+    {40, 20, PT_LINETO}, /* 63 */
+    {20, 30, PT_LINETO | PT_CLOSEFIGURE}, /* 64 */
+    {30, 40, PT_MOVETO}, /* 65 */
+    {10, 50, PT_LINETO}, /* 66 */
+    {55, 55, PT_MOVETO}, /* 67 */
+    {54, 55, PT_BEZIERTO}, /* 68 */
+    {54, 56, PT_BEZIERTO}, /* 69 */
+    {54, 56, PT_BEZIERTO}, /* 70 */
+    {58, 61, PT_LINETO | PT_CLOSEFIGURE}, /* 71 */
+    {10, 10, PT_MOVETO}, /* 72 */
+    {20, 10, PT_LINETO}, /* 73 */
+    {10, 20, PT_LINETO}, /* 74 */
+    {20, 20, PT_LINETO}, /* 75 */
+    {30, 30, PT_LINETO}, /* 76 */
+    {40, 20, PT_LINETO}, /* 77 */
+    {20, 30, PT_LINETO}, /* 78 */
+    {30, 40, PT_LINETO}, /* 79 */
+    {10, 50, PT_LINETO | PT_CLOSEFIGURE}, /* 80 */
+    {43, 49, PT_MOVETO}, /* 81 */
+    {43, 40, PT_BEZIERTO}, /* 82 */
+    {38, 33, PT_BEZIERTO}, /* 83 */
+    {33, 33, PT_BEZIERTO}, /* 84 */
+    {27, 33, PT_BEZIERTO}, /* 85 */
+    {22, 40, PT_BEZIERTO}, /* 86 */
+    {22, 49, PT_BEZIERTO}, /* 87 */
+    {22, 58, PT_BEZIERTO}, /* 88 */
+    {27, 65, PT_BEZIERTO}, /* 89 */
+    {33, 65, PT_BEZIERTO}, /* 90 */
+    {38, 65, PT_BEZIERTO}, /* 91 */
+    {43, 58, PT_BEZIERTO}, /* 92 */
+    {43, 49, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 93 */
+    {79, 70, PT_MOVETO}, /* 94 */
+    {60, 70, PT_LINETO}, /* 95 */
+    {60, 89, PT_LINETO}, /* 96 */
+    {79, 89, PT_LINETO | PT_CLOSEFIGURE}, /* 97 */
+    {199, 122, PT_MOVETO}, /* 98 */
+    {199, 110, PT_BEZIERTO}, /* 99 */
+    {191, 100, PT_BEZIERTO}, /* 100 */
+    {182, 100, PT_BEZIERTO}, /* 101 */
+    {117, 100, PT_LINETO}, /* 102 */
+    {108, 100, PT_BEZIERTO}, /* 103 */
+    {100, 110, PT_BEZIERTO}, /* 104 */
+    {100, 122, PT_BEZIERTO}, /* 105 */
+    {100, 177, PT_LINETO}, /* 106 */
+    {100, 189, PT_BEZIERTO}, /* 107 */
+    {108, 199, PT_BEZIERTO}, /* 108 */
+    {117, 199, PT_BEZIERTO}, /* 109 */
+    {182, 199, PT_LINETO}, /* 110 */
+    {191, 199, PT_BEZIERTO}, /* 111 */
+    {199, 189, PT_BEZIERTO}, /* 112 */
+    {199, 177, PT_BEZIERTO | PT_CLOSEFIGURE}, /* 113 */
+    {10, 10, PT_MOVETO}, /* 114 */
+    {20, 10, PT_BEZIERTO}, /* 115 */
+    {10, 20, PT_BEZIERTO}, /* 116 */
+    {20, 20, PT_BEZIERTO}, /* 117 */
+    {30, 30, PT_BEZIERTO}, /* 118 */
+    {40, 20, PT_BEZIERTO}, /* 119 */
+    {20, 30, PT_BEZIERTO}, /* 120 */
+    {10, 10, PT_MOVETO}, /* 121 */
+    {20, 10, PT_LINETO}, /* 122 */
+    {10, 20, PT_LINETO}, /* 123 */
+    {20, 20, PT_LINETO | PT_CLOSEFIGURE}, /* 124 */
+    {30, 30, PT_MOVETO}, /* 125 */
+    {40, 20, PT_LINETO}, /* 126 */
+    {20, 30, PT_LINETO}, /* 127 */
+    {30, 40, PT_LINETO}, /* 128 */
+    {10, 50, PT_LINETO | PT_CLOSEFIGURE}, /* 129 */
+    {10, 50, PT_MOVETO}, /* 130 */
+    {10, 10, PT_BEZIERTO}, /* 131 */
+    {20, 10, PT_BEZIERTO}, /* 132 */
+    {10, 20, PT_BEZIERTO}, /* 133 */
+    {20, 20, PT_BEZIERTO}, /* 134 */
+    {30, 30, PT_BEZIERTO}, /* 135 */
+    {40, 20, PT_BEZIERTO}, /* 136 */
+    {20, 30, PT_BEZIERTO}, /* 137 */
+    {30, 40, PT_BEZIERTO}, /* 138 */
+    {10, 50, PT_BEZIERTO}, /* 139 */
+    {150, 150, PT_LINETO}, /* 140 */
+};
+
+/* run once through all functions that support paths */
+static void test_all_functions(void)
+{
+    POINT pts[9] = {{10, 10}, {20, 10}, {10, 20}, {20, 20}, {30, 30}, {40, 20},
+                    {20, 30}, {30, 40}, {10, 50}};
+    DWORD counts[5] = {4, 5, 0, 1, 2};
+    BYTE types[9] = { PT_MOVETO, PT_LINETO, PT_BEZIERTO, PT_BEZIERTO, PT_BEZIERTO, PT_LINETO,
+                      PT_LINETO | PT_CLOSEFIGURE, PT_MOVETO, PT_LINETO };
+    HDC hdc = GetDC( 0 );
+
+    BeginPath( hdc );
+    LineTo( hdc, 50, 150 );
+    MoveToEx( hdc, 50, 50, NULL );
+    LineTo( hdc, 150, 150 );
+    LineTo( hdc, 150, 50 );
+    LineTo( hdc, 50, 50 );
+    AngleArc( hdc, 37, 36, 23, 90, 180 );
+    Polyline( hdc, pts, 4 );
+    Arc( hdc, 21, 21, 39, 29, 39, 29, 21, 21 );
+    PolylineTo( hdc, pts, 4 );
+    ArcTo( hdc, 23, 23, 37, 27, 37, 27, 23, 23 );
+    PolyPolyline( hdc, pts, counts, 2 );
+    Chord( hdc, 42, 43, 57, 66, 39, 29, 21, 21 );
+    PolyDraw( hdc, pts, types, 9 );
+    Pie( hdc, 52, 54, 65, 68, 39, 29, 21, 21 );
+    Polygon( hdc, pts, 9 );
+    Ellipse( hdc, 22, 33, 44, 66 );
+    Rectangle( hdc, 60, 70, 80, 90 );
+    RoundRect( hdc, 100, 100, 200, 200, 35, 45 );
+    PolyBezier( hdc, pts, 7 );
+    PolyPolygon( hdc, pts, (int *)counts, 2 );
+    PolyBezierTo( hdc, pts, 9 );
+    LineTo( hdc, 150, 150 );
+    /* FIXME: ExtTextOut */
+    EndPath( hdc );
+    ok_path( hdc, "all_funcs_path", all_funcs_path, sizeof(all_funcs_path)/sizeof(path_test_t) );
     ReleaseDC( 0, hdc );
 }
 
@@ -1723,4 +1906,5 @@ START_TEST(path)
     test_rectangle();
     test_roundrect();
     test_ellipse();
+    test_all_functions();
 }
