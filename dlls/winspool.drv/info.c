@@ -3487,6 +3487,10 @@ BOOL WINAPI SetPrinterW( HANDLE printer, DWORD level, LPBYTE data, DWORD command
         break;
     }
 
+    case 8:
+        /* 8 is the global default printer info and 9 already sets it instead of the per-user one */
+        /* still, PRINTER_INFO_8W is the same as PRINTER_INFO_9W */
+        /* fall through */
     case 9:
     {
         PRINTER_INFO_9W *pi = (PRINTER_INFO_9W *)data;
