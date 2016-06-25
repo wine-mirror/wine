@@ -342,6 +342,8 @@ static void set_cocoa_window_properties(struct macdrv_win_data *data)
     ex_style = GetWindowLongW(data->hwnd, GWL_EXSTYLE);
 
     owner = GetWindow(data->hwnd, GW_OWNER);
+    if (owner)
+        owner = GetAncestor(owner, GA_ROOT);
     owner_win = macdrv_get_cocoa_window(owner, TRUE);
     macdrv_set_cocoa_parent_window(data->cocoa_window, owner_win);
 
