@@ -748,9 +748,15 @@ static void set_style_hints( struct x11drv_win_data *data, DWORD style, DWORD ex
 {
     Window group_leader = data->whole_window;
     HWND owner = GetWindow( data->hwnd, GW_OWNER );
-    Window owner_win = X11DRV_get_whole_window( owner );
+    Window owner_win = 0;
     XWMHints *wm_hints;
     Atom window_type;
+
+    if (owner)
+    {
+        owner = GetAncestor( owner, GA_ROOT );
+        owner_win = X11DRV_get_whole_window( owner );
+    }
 
     if (owner_win)
     {
