@@ -112,7 +112,7 @@ HINTERNET alloc_handle( object_header_t *hdr )
     if (handles[handle]) ERR("handle isn't free but should be\n");
 
     handles[handle] = addref_object( hdr );
-    while (handles[next_handle] && (next_handle < max_handles)) next_handle++;
+    while ((next_handle < max_handles) && handles[next_handle]) next_handle++;
 
 end:
     LeaveCriticalSection( &handle_cs );
