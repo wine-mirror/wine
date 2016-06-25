@@ -638,14 +638,14 @@ static VOID WINAPI oob_server ( server_params *par )
     ok ( n_sent == n_expected,
          "oob_server (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
 
-    /* Receive a part of the out-of-band data and check atmark state */
+    /* Receive a part of the out-of-band data and print atmark state */
     n_recvd = do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, 8, 0, par->buflen );
     ok ( n_recvd == 8,
          "oob_server (%x): received less data than expected: %d of %d\n", id, n_recvd, 8 );
     n_expected -= 8;
 
     ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
-    todo_wine ok ( atmark == 0, "oob_server (%x): not at the OOB mark: %i\n", id, atmark );
+    trace( "oob_server (%x): %s the OOB mark: %i\n", id, atmark == 1 ? "not at" : "at", atmark );
 
     /* Receive the rest of the out-of-band data and check atmark state */
     do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, n_expected, 0, par->buflen );
