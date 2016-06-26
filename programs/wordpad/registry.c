@@ -298,7 +298,7 @@ void registry_set_filelist(LPCWSTR newFile, HWND hMainWnd)
                 if(!lstrcmpiW(pFiles[i], newFile))
                 {
                     int j;
-                    for(j = 0; pFiles[j] && j < i; j++)
+                    for(j = 0; j < i; j++)
                     {
                         pFiles[i-j] = pFiles[i-j-1];
                     }
