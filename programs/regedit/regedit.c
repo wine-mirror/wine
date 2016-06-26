@@ -241,7 +241,7 @@ BOOL ProcessCmdLine(LPSTR lpCmdLine)
             /* ignored */;
             break;
         default:
-            fprintf(stderr, "regedit: Invalid switch [%ls]\n", argv[i]);
+            fprintf(stderr, "regedit: Invalid switch [%s]\n", argv[i]);
             exit(1);
         }
     }
