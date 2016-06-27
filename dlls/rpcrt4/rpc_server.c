@@ -1315,6 +1315,37 @@ struct rpc_server_registered_auth_info
     USHORT auth_type;
 };
 
+static RPC_STATUS find_security_package(ULONG auth_type, SecPkgInfoW **packages_buf, SecPkgInfoW **ret)
+{
+    SECURITY_STATUS sec_status;
+    SecPkgInfoW *packages;
+    ULONG package_count;
+    ULONG i;
+
+    sec_status = EnumerateSecurityPackagesW(&package_count, &packages);
+    if (sec_status != SEC_E_OK)
+    {
+        ERR("EnumerateSecurityPackagesW failed with error 0x%08x\n", sec_status);
+        return RPC_S_SEC_PKG_ERROR;
+    }
+
+    for (i = 0; i < package_count; i++)
+        if (packages[i].wRPCID == auth_type)
+            break;
+
+    if (i == package_count)
+    {
+        WARN("unsupported AuthnSvc %u\n", auth_type);
+        FreeContextBuffer(packages);
+        return RPC_S_UNKNOWN_AUTHN_SERVICE;
+    }
+
+    TRACE("found package %s for service %u\n", debugstr_w(packages[i].Name), auth_type);
+    *packages_buf = packages;
+    *ret = packages + i;
+    return RPC_S_OK;
+}
+
 RPC_STATUS RPCRT4_ServerGetRegisteredAuthInfo(
     USHORT auth_type, CredHandle *cred, TimeStamp *exp, ULONG *max_token)
 {
@@ -1381,39 +1412,22 @@ RPC_STATUS WINAPI RpcServerRegisterAuthInfoW( RPC_WSTR ServerPrincName, ULONG Au
     SECURITY_STATUS sec_status;
     CredHandle cred;
     TimeStamp exp;
-    ULONG package_count;
-    ULONG i;
-    PSecPkgInfoW packages;
-    ULONG max_token;
     struct rpc_server_registered_auth_info *auth_info;
+    SecPkgInfoW *packages, *package;
+    ULONG max_token;
+    RPC_STATUS status;
 
     TRACE("(%s,%u,%p,%p)\n", debugstr_w(ServerPrincName), AuthnSvc, GetKeyFn, Arg);
 
-    sec_status = EnumerateSecurityPackagesW(&package_count, &packages);
-    if (sec_status != SEC_E_OK)
-    {
-        ERR("EnumerateSecurityPackagesW failed with error 0x%08x\n",
-            sec_status);
-        return RPC_S_SEC_PKG_ERROR;
-    }
+    status = find_security_package(AuthnSvc, &packages, &package);
+    if (status != RPC_S_OK)
+        return status;
 
-    for (i = 0; i < package_count; i++)
-        if (packages[i].wRPCID == AuthnSvc)
-            break;
-
-    if (i == package_count)
-    {
-        WARN("unsupported AuthnSvc %u\n", AuthnSvc);
-        FreeContextBuffer(packages);
-        return RPC_S_UNKNOWN_AUTHN_SERVICE;
-    }
-    TRACE("found package %s for service %u\n", debugstr_w(packages[i].Name),
-          AuthnSvc);
     sec_status = AcquireCredentialsHandleW((SEC_WCHAR *)ServerPrincName,
-                                           packages[i].Name,
+                                           package->Name,
                                            SECPKG_CRED_INBOUND, NULL, NULL,
                                            NULL, NULL, &cred, &exp);
-    max_token = packages[i].cbMaxToken;
+    max_token = package->cbMaxToken;
     FreeContextBuffer(packages);
     if (sec_status != SEC_E_OK)
         return RPC_S_SEC_PKG_ERROR;
