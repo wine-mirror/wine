@@ -151,10 +151,7 @@ BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int mode
 		HBRUSH hBrush;
 		RECT rect;
 		hBrush = CreateSolidBrush(color);
-		rect.left = x;
-		rect.top = y;
-		rect.right = x + cardWidth - 1;
-		rect.bottom = y + cardHeight - 1;
+                SetRect(&rect, x, y, x + cardWidth - 1, y + cardHeight - 1);
 		FillRect(hdc, &rect, hBrush);
 	}
 
