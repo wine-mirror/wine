@@ -89,6 +89,9 @@
 /* Define to 1 if you have the <cups/cups.h> header file. */
 #undef HAVE_CUPS_CUPS_H
 
+/* Define to 1 if you have the <cups/ppd.h> header file. */
+#undef HAVE_CUPS_PPD_H
+
 /* Define to 1 if you have the <curses.h> header file. */
 #undef HAVE_CURSES_H
 

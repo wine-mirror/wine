@@ -44,6 +44,9 @@
 #ifdef HAVE_CUPS_CUPS_H
 # include <cups/cups.h>
 #endif
+#ifdef HAVE_CUPS_PPD_H
+# include <cups/ppd.h>
+#endif
 
 #ifdef HAVE_APPLICATIONSERVICES_APPLICATIONSERVICES_H
 #define GetCurrentProcess GetCurrentProcess_Mac

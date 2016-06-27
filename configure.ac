@@ -1543,7 +1543,8 @@ then
     AC_CHECK_HEADERS(cups/cups.h,
             [WINE_CHECK_SONAME(cups,cupsGetDefault,
                        [CUPS_CFLAGS="$ac_cups_cflags"],,
-                       [$ac_cups_libs])])
+                       [$ac_cups_libs])
+             AC_CHECK_HEADERS(cups/ppd.h)])
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_NOTICE_WITH(cups,[test "x$ac_cv_lib_soname_cups" = "x"],
