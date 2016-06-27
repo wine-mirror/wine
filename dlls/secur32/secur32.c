@@ -564,6 +564,7 @@ static void SECUR32_initializeProviders(void)
     /* First load built-in providers */
     SECUR32_initSchannelSP();
     SECUR32_initNTLMSP();
+    SECUR32_initKerberosSP();
     /* Load the Negotiate provider last so apps stumble over the working NTLM
      * provider first. Attempting to fix bug #16905 while keeping the
      * application reported on wine-users on 2006-09-12 working. */

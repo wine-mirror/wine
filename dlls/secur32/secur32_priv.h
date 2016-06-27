@@ -136,6 +136,7 @@ PSTR  SECUR32_AllocMultiByteFromWide(PCWSTR str) DECLSPEC_HIDDEN;
 void SECUR32_initSchannelSP(void) DECLSPEC_HIDDEN;
 void SECUR32_initNegotiateSP(void) DECLSPEC_HIDDEN;
 void SECUR32_initNTLMSP(void) DECLSPEC_HIDDEN;
+void SECUR32_initKerberosSP(void) DECLSPEC_HIDDEN;
 
 /* Cleanup functions for built-in providers */
 void SECUR32_deinitSchannelSP(void) DECLSPEC_HIDDEN;
