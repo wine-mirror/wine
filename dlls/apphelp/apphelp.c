@@ -111,3 +111,9 @@ void WINAPI SdbCloseDatabase(PDB pdb)
 {
     FIXME("stub: %p\n", pdb);
 }
+
+void WINAPI SdbGetAppPatchDir(HSDB hsdb, WCHAR *path, DWORD size)
+{
+    FIXME("stub: %p %p %d\n", hsdb, path, size);
+    if (size && path) *path = 0;
+}
