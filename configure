@@ -13053,6 +13053,18 @@ _ACEOF
 
        CUPS_CFLAGS="$ac_cups_cflags"
 fi
+             for ac_header in cups/ppd.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "cups/ppd.h" "ac_cv_header_cups_ppd_h" "$ac_includes_default"
+if test "x$ac_cv_header_cups_ppd_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_CUPS_PPD_H 1
+_ACEOF
+
+fi
+
+done
+
 fi
 
 done
