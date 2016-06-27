@@ -1041,10 +1041,7 @@ static void clear_test(void)
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
 
-    scissor.left = 160;
-    scissor.right = 480;
-    scissor.top = 120;
-    scissor.bottom = 360;
+    SetRect(&scissor, 160, 120, 480, 360);
     hr = IDirect3DDevice9_SetScissorRect(device, &scissor);
     ok(hr == D3D_OK, "IDirect3DDevice_SetScissorRect failed with %08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SCISSORTESTENABLE, TRUE);

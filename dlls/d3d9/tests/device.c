@@ -1990,10 +1990,7 @@ static void test_reset(void)
     ok(d3dpp.BackBufferHeight == 300, "Got unexpected BackBufferHeight %u.\n", d3dpp.BackBufferHeight);
     IDirect3DSwapChain9_Release(swapchain);
 
-    winrect.left = 0;
-    winrect.top = 0;
-    winrect.right = 200;
-    winrect.bottom = 150;
+    SetRect(&winrect, 0, 0, 200, 150);
     ok(AdjustWindowRect(&winrect, WS_OVERLAPPEDWINDOW, FALSE), "AdjustWindowRect failed\n");
     ok(SetWindowPos(hwnd, NULL, 0, 0,
                     winrect.right-winrect.left,
@@ -8465,17 +8462,14 @@ static void test_surface_blocks(void)
         hr = IDirect3DTexture9_UnlockRect(texture, 1);
         ok(SUCCEEDED(hr), "Failed lock texture, hr %#x.\n", hr);
 
-        rect.left = 0;
-        rect.top = 0;
-        rect.right = formats[i].block_width == 1 ? 1 : formats[i].block_width >> 1;
-        rect.bottom = formats[i].block_height == 1 ? 1 : formats[i].block_height >> 1;
+        SetRect(&rect, 0, 0, formats[i].block_width == 1 ? 1 : formats[i].block_width >> 1,
+                formats[i].block_height == 1 ? 1 : formats[i].block_height >> 1);
         hr = IDirect3DTexture9_LockRect(texture, 1, &locked_rect, &rect, 0);
         ok(SUCCEEDED(hr), "Failed lock texture, hr %#x.\n", hr);
         hr = IDirect3DTexture9_UnlockRect(texture, 1);
         ok(SUCCEEDED(hr), "Failed lock texture, hr %#x.\n", hr);
 
-        rect.right = formats[i].block_width;
-        rect.bottom = formats[i].block_height;
+        SetRect(&rect, 0, 0, formats[i].block_width, formats[i].block_height);
         hr = IDirect3DTexture9_LockRect(texture, 1, &locked_rect, &rect, 0);
         ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
         if (SUCCEEDED(hr))
