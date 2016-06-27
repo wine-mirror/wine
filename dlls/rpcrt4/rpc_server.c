@@ -1358,63 +1358,18 @@ void RPCRT4_ServerFreeAllRegisteredAuthInfo(void)
 RPC_STATUS WINAPI RpcServerRegisterAuthInfoA( RPC_CSTR ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
                             LPVOID Arg )
 {
-    SECURITY_STATUS sec_status;
-    CredHandle cred;
-    TimeStamp exp;
-    ULONG package_count;
-    ULONG i;
-    PSecPkgInfoA packages;
-    ULONG max_token;
-    struct rpc_server_registered_auth_info *auth_info;
+    WCHAR *principal_name = NULL;
+    RPC_STATUS status;
 
     TRACE("(%s,%u,%p,%p)\n", ServerPrincName, AuthnSvc, GetKeyFn, Arg);
 
-    sec_status = EnumerateSecurityPackagesA(&package_count, &packages);
-    if (sec_status != SEC_E_OK)
-    {
-        ERR("EnumerateSecurityPackagesA failed with error 0x%08x\n",
-            sec_status);
-        return RPC_S_SEC_PKG_ERROR;
-    }
-
-    for (i = 0; i < package_count; i++)
-        if (packages[i].wRPCID == AuthnSvc)
-            break;
-
-    if (i == package_count)
-    {
-        WARN("unsupported AuthnSvc %u\n", AuthnSvc);
-        FreeContextBuffer(packages);
-        return RPC_S_UNKNOWN_AUTHN_SERVICE;
-    }
-    TRACE("found package %s for service %u\n", packages[i].Name,
-          AuthnSvc);
-    sec_status = AcquireCredentialsHandleA((SEC_CHAR *)ServerPrincName,
-                                           packages[i].Name,
-                                           SECPKG_CRED_INBOUND, NULL, NULL,
-                                           NULL, NULL, &cred, &exp);
-    max_token = packages[i].cbMaxToken;
-    FreeContextBuffer(packages);
-    if (sec_status != SEC_E_OK)
-        return RPC_S_SEC_PKG_ERROR;
-
-    auth_info = HeapAlloc(GetProcessHeap(), 0, sizeof(*auth_info));
-    if (!auth_info)
-    {
-        FreeCredentialsHandle(&cred);
+    if(ServerPrincName && !(principal_name = RPCRT4_strdupAtoW((const char*)ServerPrincName)))
         return RPC_S_OUT_OF_RESOURCES;
-    }
 
-    auth_info->exp = exp;
-    auth_info->cred = cred;
-    auth_info->max_token = max_token;
-    auth_info->auth_type = AuthnSvc;
+    status = RpcServerRegisterAuthInfoW(principal_name, AuthnSvc, GetKeyFn, Arg);
 
-    EnterCriticalSection(&server_auth_info_cs);
-    list_add_tail(&server_registered_auth_info, &auth_info->entry);
-    LeaveCriticalSection(&server_auth_info_cs);
-
-    return RPC_S_OK;
+    HeapFree(GetProcessHeap(), 0, principal_name);
+    return status;
 }
 
 /***********************************************************************
