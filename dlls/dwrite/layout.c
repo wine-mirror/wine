@@ -807,7 +807,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
             else
                 IDWriteFactory_GetSystemFontCollection((IDWriteFactory*)layout->factory, &collection, FALSE);
 
-            hr = create_matching_font(range->collection, range->fontfamily, range->weight,
+            hr = create_matching_font(collection, range->fontfamily, range->weight,
                 range->style, range->stretch, &font);
 
             IDWriteFontCollection_Release(collection);
