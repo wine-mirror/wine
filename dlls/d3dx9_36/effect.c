@@ -5969,7 +5969,22 @@ static HRESULT d3dx9_base_effect_init(struct d3dx9_base_effect *base,
             if (bytecode)
                 ID3D10Blob_Release(bytecode);
             if (temp_errors)
-                TRACE("%s\n", (char *)ID3D10Blob_GetBufferPointer(temp_errors));
+            {
+                const char *error_string = ID3D10Blob_GetBufferPointer(temp_errors);
+                const char *string_ptr;
+
+                while (*error_string)
+                {
+                    string_ptr = error_string;
+                    while (*string_ptr && *string_ptr != '\n' && *string_ptr != '\r'
+                           && string_ptr - error_string < 80)
+                        ++string_ptr;
+                    TRACE("%s\n", debugstr_an(error_string, string_ptr - error_string));
+                    error_string = string_ptr;
+                    while (*error_string == '\n' || *error_string == '\r')
+                        ++error_string;
+                }
+            }
             if (errors)
                 *errors = temp_errors;
             else if (temp_errors)
