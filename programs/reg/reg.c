@@ -481,6 +481,7 @@ static int reg_delete(HKEY root, WCHAR *path, WCHAR *key_name, WCHAR *value_name
             }
             else break;
         }
+        HeapFree(GetProcessHeap(), 0, szValue);
     }
     else if (value_name || value_empty)
     {
