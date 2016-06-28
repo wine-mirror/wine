@@ -1393,10 +1393,13 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_INTEL,      CARD_INTEL_IVBS,                "Intel(R) HD Graphics Family",                               DRIVER_INTEL_HD4000,  1536},
     {HW_VENDOR_INTEL,      CARD_INTEL_HWD,                 "Intel(R) HD Graphics 4600",                                 DRIVER_INTEL_HD4000,  1536},
     {HW_VENDOR_INTEL,      CARD_INTEL_HWM,                 "Intel(R) HD Graphics 4600",                                 DRIVER_INTEL_HD4000,  1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_IG6100,              "Intel(R) Iris(TM) Graphics 6100",                           DRIVER_INTEL_HD4000,  2048},
+    {HW_VENDOR_INTEL,      CARD_INTEL_IP6200,              "Intel(R) Iris(TM) Pro Graphics 6200",                       DRIVER_INTEL_HD4000,  2048},
     {HW_VENDOR_INTEL,      CARD_INTEL_HD520,               "Intel(R) HD Graphics 520",                                  DRIVER_INTEL_HD4000,  2048},
     {HW_VENDOR_INTEL,      CARD_INTEL_HD530_1,             "Intel(R) HD Graphics 530",                                  DRIVER_INTEL_HD4000,  2048},
     {HW_VENDOR_INTEL,      CARD_INTEL_HD530_2,             "Intel(R) HD Graphics 530",                                  DRIVER_INTEL_HD4000,  2048},
     {HW_VENDOR_INTEL,      CARD_INTEL_HD540,               "Intel(R) Iris(TM) Graphics 540",                            DRIVER_INTEL_HD4000,  2048},
+    {HW_VENDOR_INTEL,      CARD_INTEL_IPP580,              "Intel(R) Iris(TM) Pro Graphics P580",                       DRIVER_INTEL_HD4000,  2048},
 };
 
 static const struct driver_version_information *get_driver_version_info(enum wined3d_display_driver driver,
@@ -2003,7 +2006,11 @@ cards_amd_binary[] =
 cards_intel[] =
 {
     /* Skylake */
+    {"Iris Pro Graphics P580",      CARD_INTEL_IPP580},
     {"Skylake",                     CARD_INTEL_HD520},
+    /* Broadwell */
+    {"Iris Pro 6200",               CARD_INTEL_IP6200},
+    {"Iris 6100",                   CARD_INTEL_IG6100},
     /* Haswell */
     {"Haswell Mobile",              CARD_INTEL_HWM},
     /* Ivybridge */
