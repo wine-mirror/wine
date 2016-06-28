@@ -1402,11 +1402,7 @@ GpStatus WINGDIPAPI GdipIsVisibleRegionRect(GpRegion* region, REAL x, REAL y, RE
         return Ok;
     }
 
-    rect.left = ceilr(x);
-    rect.top = ceilr(y);
-    rect.right = ceilr(x + w);
-    rect.bottom = ceilr(y + h);
-
+    SetRect(&rect, ceilr(x), ceilr(y), ceilr(x + w), ceilr(y + h));
     *res = RectInRegion(hrgn, &rect);
 
     DeleteObject(hrgn);
