@@ -53,15 +53,6 @@ static HRESULT WINAPI d3drm_viewport2_QueryInterface(IDirect3DRMViewport2 *iface
 
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    return IDirect3DRMViewport_QueryInterface(&viewport->IDirect3DRMViewport_iface, riid, out);
-}
-
-static HRESULT WINAPI d3drm_viewport1_QueryInterface(IDirect3DRMViewport *iface, REFIID riid, void **out)
-{
-    struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport(iface);
-
-    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
-
     if (IsEqualGUID(riid, &IID_IDirect3DRMViewport)
             || IsEqualGUID(riid, &IID_IDirect3DRMObject)
             || IsEqualGUID(riid, &IID_IUnknown))
@@ -83,18 +74,18 @@ static HRESULT WINAPI d3drm_viewport1_QueryInterface(IDirect3DRMViewport *iface,
     return S_OK;
 }
 
+static HRESULT WINAPI d3drm_viewport1_QueryInterface(IDirect3DRMViewport *iface, REFIID riid, void **out)
+{
+    struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport(iface);
+
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
+
+    return d3drm_viewport2_QueryInterface(&viewport->IDirect3DRMViewport2_iface, riid, out);
+}
+
 static ULONG WINAPI d3drm_viewport2_AddRef(IDirect3DRMViewport2 *iface)
 {
     struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport2(iface);
-
-    TRACE("iface %p.\n", iface);
-
-    return IDirect3DRMViewport_AddRef(&viewport->IDirect3DRMViewport_iface);
-}
-
-static ULONG WINAPI d3drm_viewport1_AddRef(IDirect3DRMViewport *iface)
-{
-    struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport(iface);
     ULONG refcount = InterlockedIncrement(&viewport->obj.ref);
 
     TRACE("%p increasing refcount to %u.\n", iface, refcount);
@@ -102,18 +93,18 @@ static ULONG WINAPI d3drm_viewport1_AddRef(IDirect3DRMViewport *iface)
     return refcount;
 }
 
-static ULONG WINAPI d3drm_viewport2_Release(IDirect3DRMViewport2 *iface)
+static ULONG WINAPI d3drm_viewport1_AddRef(IDirect3DRMViewport *iface)
 {
-    struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport2(iface);
+    struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport(iface);
 
     TRACE("iface %p.\n", iface);
 
-    return IDirect3DRMViewport_Release(&viewport->IDirect3DRMViewport_iface);
+    return d3drm_viewport2_AddRef(&viewport->IDirect3DRMViewport2_iface);
 }
 
-static ULONG WINAPI d3drm_viewport1_Release(IDirect3DRMViewport *iface)
+static ULONG WINAPI d3drm_viewport2_Release(IDirect3DRMViewport2 *iface)
 {
-    struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport(iface);
+    struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport2(iface);
     ULONG refcount = InterlockedDecrement(&viewport->obj.ref);
 
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
@@ -122,6 +113,15 @@ static ULONG WINAPI d3drm_viewport1_Release(IDirect3DRMViewport *iface)
         d3drm_viewport_destroy(viewport);
 
     return refcount;
+}
+
+static ULONG WINAPI d3drm_viewport1_Release(IDirect3DRMViewport *iface)
+{
+    struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return d3drm_viewport2_Release(&viewport->IDirect3DRMViewport2_iface);
 }
 
 static HRESULT WINAPI d3drm_viewport2_Clone(IDirect3DRMViewport2 *iface,
