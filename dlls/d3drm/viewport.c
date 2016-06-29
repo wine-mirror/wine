@@ -39,6 +39,14 @@ static inline struct d3drm_viewport *impl_from_IDirect3DRMViewport2(IDirect3DRMV
     return CONTAINING_RECORD(iface, struct d3drm_viewport, IDirect3DRMViewport2_iface);
 }
 
+static void d3drm_viewport_destroy(struct d3drm_viewport *viewport)
+{
+    TRACE("viewport %p.\n", viewport);
+
+    d3drm_object_cleanup((IDirect3DRMObject *)&viewport->IDirect3DRMViewport_iface, &viewport->obj);
+    HeapFree(GetProcessHeap(), 0, viewport);
+}
+
 static HRESULT WINAPI d3drm_viewport1_QueryInterface(IDirect3DRMViewport *iface, REFIID riid, void **out)
 {
     struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport(iface);
@@ -84,10 +92,7 @@ static ULONG WINAPI d3drm_viewport1_Release(IDirect3DRMViewport *iface)
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
-    {
-        d3drm_object_cleanup((IDirect3DRMObject*)iface, &viewport->obj);
-        HeapFree(GetProcessHeap(), 0, viewport);
-    }
+        d3drm_viewport_destroy(viewport);
 
     return refcount;
 }
