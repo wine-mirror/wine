@@ -368,10 +368,8 @@ HRESULT WINAPI BaseControlVideoImpl_SetSourcePosition(IBasicVideo *iface, LONG L
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%d, %d, %d, %d)\n", This, iface, Left, Top, Width, Height);
-    SourceRect.left = Left;
-    SourceRect.top = Top;
-    SourceRect.right = Left + Width;
-    SourceRect.bottom = Top + Height;
+
+    SetRect(&SourceRect, Left, Top, Left + Width, Top + Height);
     This->pFuncsTable->pfnSetSourceRect(This, &SourceRect);
 
     return S_OK;
@@ -408,10 +406,7 @@ HRESULT WINAPI BaseControlVideoImpl_SetDestinationPosition(IBasicVideo *iface, L
 
     TRACE("(%p/%p)->(%d, %d, %d, %d)\n", This, iface, Left, Top, Width, Height);
 
-    DestRect.left = Left;
-    DestRect.top = Top;
-    DestRect.right = Left + Width;
-    DestRect.bottom = Top + Height;
+    SetRect(&DestRect, Left, Top, Left + Width, Top + Height);
     This->pFuncsTable->pfnSetTargetRect(This, &DestRect);
 
     return S_OK;
