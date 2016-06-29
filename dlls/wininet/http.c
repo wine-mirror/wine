@@ -29,6 +29,8 @@
 
 #include "config.h"
 
+#include <stdlib.h>
+
 #ifdef HAVE_ZLIB
 #  include <zlib.h>
 #endif
@@ -38,9 +40,9 @@
 
 #include <stdarg.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <time.h>
 #include <assert.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "wininet.h"
