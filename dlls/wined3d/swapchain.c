@@ -678,10 +678,8 @@ static void swapchain_gdi_frontbuffer_updated(struct wined3d_swapchain *swapchai
 
     TRACE("offset %s.\n", wine_dbgstr_point(&offset));
 
-    draw_rect.left = 0;
-    draw_rect.right = swapchain->front_buffer->resource.width;
-    draw_rect.top = 0;
-    draw_rect.bottom = swapchain->front_buffer->resource.height;
+    SetRect(&draw_rect, 0, 0, swapchain->front_buffer->resource.width,
+            swapchain->front_buffer->resource.height);
     IntersectRect(&draw_rect, &draw_rect, &swapchain->front_buffer_update);
 
     BitBlt(dst_dc, draw_rect.left - offset.x, draw_rect.top - offset.y,
