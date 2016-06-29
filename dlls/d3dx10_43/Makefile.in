@@ -1,8 +1,9 @@
 MODULE    = d3dx10_43.dll
 IMPORTLIB = d3dx10
-IMPORTS   = d3d10_1 dxguid
+IMPORTS   = d3d10_1 d3dcompiler dxguid
 
 C_SRCS = \
+	async.c \
 	d3dx10_43_main.c
 
 RC_SRCS = version.rc

@@ -2,7 +2,7 @@
 @ stdcall D3DX10CheckVersion(long long)
 @ stub D3DX10CompileFromFileA(str ptr ptr str str long long ptr ptr ptr ptr)
 @ stub D3DX10CompileFromFileW(wstr ptr ptr str str long long ptr ptr ptr ptr)
-@ stub D3DX10CompileFromMemory(str long str ptr ptr str str long long ptr ptr ptr ptr)
+@ stdcall D3DX10CompileFromMemory(str long str ptr ptr str str long long ptr ptr ptr ptr)
 @ stub D3DX10CompileFromResourceA(long str str ptr ptr str str long long ptr ptr ptr ptr)
 @ stub D3DX10CompileFromResourceW(long wstr wstr ptr ptr str str long long ptr ptr ptr ptr)
 @ stub D3DX10ComputeNormalMap(ptr long long long ptr)
