@@ -3960,10 +3960,7 @@ float4 main(float4 color : COLOR) : SV_TARGET
 
     for (i = 0; i < D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE; ++i)
     {
-        tmp_rect[i].left = i;
-        tmp_rect[i].top = i * 2;
-        tmp_rect[i].right = i + 1;
-        tmp_rect[i].bottom = (i + 1) * 2;
+        SetRect(&tmp_rect[i], i, i * 2, i + 1, (i + 1) * 2);
 
         tmp_viewport[i].TopLeftX = i * 3;
         tmp_viewport[i].TopLeftY = i * 4;
