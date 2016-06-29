@@ -6350,6 +6350,23 @@ static void test_palette_complex(void)
     DestroyWindow(window);
 }
 
+static BOOL ddraw_is_warp(IDirectDraw2 *ddraw)
+{
+    IDirectDraw4 *ddraw4;
+    DDDEVICEIDENTIFIER identifier;
+    HRESULT hr;
+
+    if (!strcmp(winetest_platform, "wine"))
+        return FALSE;
+
+    hr = IDirectDraw2_QueryInterface(ddraw, &IID_IDirectDraw4, (void **)&ddraw4);
+    ok(SUCCEEDED(hr), "Failed to get IDirectDraw4 interface, hr %#x.\n", hr);
+    hr = IDirectDraw4_GetDeviceIdentifier(ddraw4, &identifier, 0);
+    ok(SUCCEEDED(hr), "Failed to get device identifier, hr %#x.\n", hr);
+    IDirectDraw4_Release(ddraw4);
+    return !!strstr(identifier.szDriver, "warp");
+}
+
 static void test_p8_blit(void)
 {
     IDirectDrawSurface *src, *dst, *dst_p8;
@@ -6362,6 +6379,7 @@ static void test_p8_blit(void)
     PALETTEENTRY palette_entries[256];
     unsigned int x;
     DDBLTFX fx;
+    BOOL is_warp;
     static const BYTE src_data[] = {0x10, 0x1, 0x2, 0x3, 0x4, 0x5, 0xff, 0x80};
     static const BYTE src_data2[] = {0x10, 0x5, 0x4, 0x3, 0x2, 0x1, 0xff, 0x80};
     static const BYTE expected_p8[] = {0x10, 0x1, 0x4, 0x3, 0x4, 0x5, 0xff, 0x80};
@@ -6378,6 +6396,7 @@ static void test_p8_blit(void)
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    is_warp = ddraw_is_warp(ddraw);
 
     memset(palette_entries, 0, sizeof(palette_entries));
     palette_entries[1].peGreen = 0xff;
@@ -6469,7 +6488,14 @@ static void test_p8_blit(void)
 
     hr = IDirectDrawSurface_Lock(dst_p8, NULL, &surface_desc, DDLOCK_READONLY | DDLOCK_WAIT, NULL);
     ok(SUCCEEDED(hr), "Failed to lock destination surface, hr %#x.\n", hr);
-    ok(!memcmp(surface_desc.lpSurface, expected_p8, sizeof(expected_p8)),
+    /* A color keyed P8 blit doesn't do anything on WARP - it just leaves the data in the destination
+     * surface untouched. P8 blits without color keys work. Error checking (DDBLT_KEYSRC without a key
+     * for example) also works as expected.
+     *
+     * Using DDBLT_KEYSRC instead of DDBLT_KEYSRCOVERRIDE doesn't change this. Doing this blit with
+     * the display mode set to P8 doesn't help either. */
+    ok(!memcmp(surface_desc.lpSurface, expected_p8, sizeof(expected_p8))
+            || broken(is_warp && !memcmp(surface_desc.lpSurface, src_data2, sizeof(src_data2))),
             "Got unexpected P8 color key blit result.\n");
     hr = IDirectDrawSurface_Unlock(dst_p8, NULL);
     ok(SUCCEEDED(hr), "Failed to unlock destination surface, hr %#x.\n", hr);
