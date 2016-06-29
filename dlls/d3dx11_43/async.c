@@ -31,7 +31,7 @@ HRESULT WINAPI D3DX11CompileFromMemory(const char *data, SIZE_T data_size, const
         ID3D10Blob **error_messages, HRESULT *hresult)
 {
     TRACE("data %s, data_size %lu, filename %s, defines %p, include %p, entry_point %s, target %s, "
-            "sflags %#x, eflage %#x, pump %p, shader %p, error_messages %p, hresult %p.\n",
+            "sflags %#x, eflags %#x, pump %p, shader %p, error_messages %p, hresult %p.\n",
             debugstr_a(data), data_size, debugstr_a(filename), defines, include, entry_point,
             debugstr_a(target), sflags, eflags, pump, shader, error_messages, hresult);
 
