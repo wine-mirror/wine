@@ -51,6 +51,19 @@ static const char* get_IID_string(const GUID* guid)
     return "?";
 }
 
+static HRESULT d3drm_create_texture_object(void **object, IDirect3DRM *d3drm)
+{
+    struct d3drm_texture *texture;
+    HRESULT hr;
+
+    if (FAILED(hr = d3drm_texture_create(&texture, d3drm)))
+        return hr;
+
+    *object = &texture->IDirect3DRMTexture_iface;
+
+    return hr;
+}
+
 struct d3drm
 {
     IDirect3DRM IDirect3DRM_iface;
@@ -1106,7 +1119,18 @@ static HRESULT WINAPI d3drm3_CreateObject(IDirect3DRM3 *iface,
 {
     struct d3drm *d3drm = impl_from_IDirect3DRM3(iface);
     IUnknown *object;
+    unsigned int i;
     HRESULT hr;
+
+    static const struct
+    {
+        const CLSID *clsid;
+        HRESULT (*create_object)(void **object, IDirect3DRM *d3drm);
+    }
+    object_table[] =
+    {
+        {&CLSID_CDirect3DRMTexture, d3drm_create_texture_object},
+    };
 
     TRACE("iface %p, clsid %s, outer %p, iid %s, out %p.\n",
             iface, debugstr_guid(clsid), outer, debugstr_guid(iid), out);
@@ -1127,17 +1151,19 @@ static HRESULT WINAPI d3drm3_CreateObject(IDirect3DRM3 *iface,
         return E_NOTIMPL;
     }
 
-    if (IsEqualGUID(clsid, &CLSID_CDirect3DRMTexture))
+    for (i = 0; i < ARRAY_SIZE(object_table); ++i)
     {
-        struct d3drm_texture *texture;
-        if (FAILED(hr = d3drm_texture_create(&texture, &d3drm->IDirect3DRM_iface)))
+        if (IsEqualGUID(clsid, object_table[i].clsid))
         {
-            *out = NULL;
-            return hr;
+            if (FAILED(hr = object_table[i].create_object((void **)&object, &d3drm->IDirect3DRM_iface)))
+            {
+                *out = NULL;
+                return hr;
+            }
+            break;
         }
-        object = (IUnknown *)&texture->IDirect3DRMTexture3_iface;
     }
-    else
+    if (i == ARRAY_SIZE(object_table))
     {
         FIXME("%s not implemented. Returning CLASSFACTORY_E_FIRST.\n", debugstr_guid(clsid));
         *out = NULL;
