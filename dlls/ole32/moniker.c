@@ -1527,7 +1527,7 @@ static HRESULT WINAPI MonikerMarshalInner_QueryInterface(IUnknown *iface, REFIID
     if (IsEqualIID(&IID_IUnknown, riid) || IsEqualIID(&IID_IMarshal, riid))
     {
         *ppv = &This->IMarshal_iface;
-        IUnknown_AddRef((IUnknown *)&This->IMarshal_iface);
+        IMarshal_AddRef(&This->IMarshal_iface);
         return S_OK;
     }
     FIXME("No interface for %s\n", debugstr_guid(riid));
