@@ -881,10 +881,7 @@ static LRESULT print_preview(HWND hwndPreview)
 
             draw_margin_lines(hdc, x, y, preview.zoomratio);
         } else {
-            background.left += 2;
-            background.right -= 2;
-            background.top += 2;
-            background.bottom -= 2;
+            InflateRect(&background, -2, -2);
             FillRect(hdc, &background, GetStockObject(WHITE_BRUSH));
         }
     }
