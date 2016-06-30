@@ -2764,7 +2764,7 @@ static void test_create_device_from_clipper1(void)
     IDirectDrawSurface *surface = NULL, *ds = NULL, *d3drm_primary = NULL;
     IDirectDrawSurface7 *surface7 = NULL;
     DDSURFACEDESC desc, surface_desc;
-    DWORD expected_flags;
+    DWORD expected_flags, ret_val;
     HWND window;
     GUID driver = IID_IDirect3DRGBDevice;
     HRESULT hr;
@@ -2800,6 +2800,10 @@ static void test_create_device_from_clipper1(void)
     ok(ref2 > ref1, "expected ref2 > ref1, got ref1 = %u , ref2 = %u.\n", ref1, ref2);
     cref2 = get_refcount((IUnknown *)clipper);
     ok(cref2 > cref1, "expected cref2 > cref1, got cref1 = %u , cref2 = %u.\n", cref1, cref2);
+    ret_val = IDirect3DRMDevice_GetWidth(device1);
+    ok(ret_val == 300, "Expected device width = 300, got %u.\n", ret_val);
+    ret_val = IDirect3DRMDevice_GetHeight(device1);
+    ok(ret_val == 200, "Expected device height == 200, got %u.\n", ret_val);
 
     /* Fetch immediate mode device in order to access render target */
     hr = IDirect3DRMDevice_GetDirect3DDevice(device1, &d3ddevice1);
@@ -2931,7 +2935,7 @@ static void test_create_device_from_clipper2(void)
     IDirectDrawSurface *surface = NULL, *ds = NULL, *d3drm_primary = NULL;
     IDirectDrawSurface7 *surface7 = NULL;
     DDSURFACEDESC desc, surface_desc;
-    DWORD expected_flags;
+    DWORD expected_flags, ret_val;
     HWND window;
     GUID driver = IID_IDirect3DRGBDevice;
     HRESULT hr;
@@ -2973,6 +2977,10 @@ static void test_create_device_from_clipper2(void)
     ok(ref3 == ref2, "expected ref3 == ref2, got ref2 = %u , ref3 = %u.\n", ref2, ref3);
     cref2 = get_refcount((IUnknown *)clipper);
     ok(cref2 > cref1, "expected cref2 > cref1, got cref1 = %u , cref2 = %u.\n", cref1, cref2);
+    ret_val = IDirect3DRMDevice2_GetWidth(device2);
+    ok(ret_val == 300, "Expected device width = 300, got %u.\n", ret_val);
+    ret_val = IDirect3DRMDevice2_GetHeight(device2);
+    ok(ret_val == 200, "Expected device height == 200, got %u.\n", ret_val);
 
     /* Fetch immediate mode device in order to access render target */
     hr = IDirect3DRMDevice2_GetDirect3DDevice2(device2, &d3ddevice2);
@@ -3105,7 +3113,7 @@ static void test_create_device_from_clipper3(void)
     IDirectDrawSurface *surface = NULL, *ds = NULL, *d3drm_primary = NULL;
     IDirectDrawSurface7 *surface7 = NULL;
     DDSURFACEDESC desc, surface_desc;
-    DWORD expected_flags;
+    DWORD expected_flags, ret_val;
     HWND window;
     GUID driver = IID_IDirect3DRGBDevice;
     HRESULT hr;
@@ -3147,6 +3155,10 @@ static void test_create_device_from_clipper3(void)
     ok(ref3 == ref2, "expected ref3 == ref2, got ref2 = %u , ref3 = %u.\n", ref2, ref3);
     cref2 = get_refcount((IUnknown *)clipper);
     ok(cref2 > cref1, "expected cref2 > cref1, got cref1 = %u , cref2 = %u.\n", cref1, cref2);
+    ret_val = IDirect3DRMDevice3_GetWidth(device3);
+    ok(ret_val == 300, "Expected device width = 300, got %u.\n", ret_val);
+    ret_val = IDirect3DRMDevice3_GetHeight(device3);
+    ok(ret_val == 200, "Expected device height == 200, got %u.\n", ret_val);
 
     /* Fetch immediate mode device in order to access render target */
     hr = IDirect3DRMDevice3_GetDirect3DDevice2(device3, &d3ddevice2);
@@ -3275,7 +3287,7 @@ static void test_create_device_from_surface1(void)
     IDirect3DRMDevice *device1 = (IDirect3DRMDevice *)0xdeadbeef;
     IDirect3DDevice *d3ddevice1 = NULL;
     IDirectDrawSurface *surface = NULL, *ds = NULL, *d3drm_surface = NULL, *d3drm_ds = NULL;
-    DWORD expected_flags;
+    DWORD expected_flags, ret_val;
     HWND window;
     GUID driver = IID_IDirect3DRGBDevice;
     ULONG ref1, ref2, surface_ref1, surface_ref2;
@@ -3330,6 +3342,10 @@ static void test_create_device_from_surface1(void)
     ok(ref2 > ref1, "expected ref2 > ref1, got ref1 = %u , ref2 = %u.\n", ref1, ref2);
     surface_ref2 = get_refcount((IUnknown *)surface);
     ok(surface_ref2 > surface_ref1, "Expected surface_ref2 > surface_ref1, got surface_ref1 = %u, surface_ref2 = %u.\n", surface_ref1, surface_ref2);
+    ret_val = IDirect3DRMDevice_GetWidth(device1);
+    ok(ret_val == rc.right, "Expected device width = 300, got %u.\n", ret_val);
+    ret_val = IDirect3DRMDevice_GetHeight(device1);
+    ok(ret_val == rc.bottom, "Expected device height == 200, got %u.\n", ret_val);
 
     /* Check if CreateDeviceFromSurface creates a primary surface */
     hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_ALL | DDENUMSURFACES_DOESEXIST,
@@ -3443,7 +3459,7 @@ static void test_create_device_from_surface2(void)
     IDirect3DRMDevice2 *device2 = (IDirect3DRMDevice2 *)0xdeadbeef;
     IDirect3DDevice2 *d3ddevice2 = NULL;
     IDirectDrawSurface *surface = NULL, *ds = NULL, *d3drm_surface = NULL, *d3drm_ds = NULL;
-    DWORD expected_flags;
+    DWORD expected_flags, ret_val;
     HWND window;
     GUID driver = IID_IDirect3DRGBDevice;
     ULONG ref1, ref2, ref3, surface_ref1, surface_ref2;
@@ -3504,6 +3520,10 @@ static void test_create_device_from_surface2(void)
     ok(ref3 == ref2, "expected ref3 == ref2, got ref2 = %u , ref3 = %u.\n", ref2, ref3);
     surface_ref2 = get_refcount((IUnknown *)surface);
     ok(surface_ref2 > surface_ref1, "Expected surface_ref2 > surface_ref1, got surface_ref1 = %u, surface_ref2 = %u.\n", surface_ref1, surface_ref2);
+    ret_val = IDirect3DRMDevice2_GetWidth(device2);
+    ok(ret_val == rc.right, "Expected device width = 300, got %u.\n", ret_val);
+    ret_val = IDirect3DRMDevice2_GetHeight(device2);
+    ok(ret_val == rc.bottom, "Expected device height == 200, got %u.\n", ret_val);
 
     /* Check if CreateDeviceFromSurface creates a primary surface */
     hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_ALL | DDENUMSURFACES_DOESEXIST,
@@ -3621,7 +3641,7 @@ static void test_create_device_from_surface3(void)
     IDirect3DRMDevice3 *device3 = (IDirect3DRMDevice3 *)0xdeadbeef;
     IDirect3DDevice2 *d3ddevice2 = NULL;
     IDirectDrawSurface *surface = NULL, *ds = NULL, *d3drm_surface = NULL, *d3drm_ds = NULL;
-    DWORD expected_flags;
+    DWORD expected_flags, ret_val;
     HWND window;
     GUID driver = IID_IDirect3DRGBDevice;
     ULONG ref1, ref2, ref3, surface_ref1, surface_ref2;
@@ -3682,6 +3702,10 @@ static void test_create_device_from_surface3(void)
     ok(ref3 == ref2, "expected ref3 == ref2, got ref2 = %u , ref3 = %u.\n", ref2, ref3);
     surface_ref2 = get_refcount((IUnknown *)surface);
     ok(surface_ref2 > surface_ref1, "Expected surface_ref2 > surface_ref1, got surface_ref1 = %u, surface_ref2 = %u.\n", surface_ref1, surface_ref2);
+    ret_val = IDirect3DRMDevice3_GetWidth(device3);
+    ok(ret_val == rc.right, "Expected device width = 300, got %u.\n", ret_val);
+    ret_val = IDirect3DRMDevice3_GetHeight(device3);
+    ok(ret_val == rc.bottom, "Expected device height == 200, got %u.\n", ret_val);
 
     /* Check if CreateDeviceFromSurface creates a primary surface */
     hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_ALL | DDENUMSURFACES_DOESEXIST,
@@ -3914,7 +3938,7 @@ static void test_create_device_from_d3d1(void)
     IDirect3DDevice *d3ddevice1 = NULL, *d3drm_d3ddevice1 = NULL;
     IDirect3DDevice2 *d3ddevice2 = (IDirect3DDevice2 *)0xdeadbeef;
     IDirectDrawSurface *surface = NULL, *ds = NULL, *d3drm_ds = NULL;
-    DWORD expected_flags;
+    DWORD expected_flags, ret_val;
     DDSCAPS caps = { DDSCAPS_ZBUFFER };
     DDSURFACEDESC desc;
     RECT rc;
@@ -3960,6 +3984,10 @@ static void test_create_device_from_d3d1(void)
     ok(ref2 > ref1, "expected ref2 > ref1, got ref1 = %u , ref2 = %u.\n", ref1, ref2);
     device_ref2 = get_refcount((IUnknown *)d3ddevice1);
     ok(device_ref2 > device_ref1, "Expected device_ref2 > device_ref1, got device_ref1 = %u, device_ref2 = %u.\n", device_ref1, device_ref2);
+    ret_val = IDirect3DRMDevice_GetWidth(device1);
+    ok(ret_val == rc.right, "Expected device width = 300, got %u.\n", ret_val);
+    ret_val = IDirect3DRMDevice_GetHeight(device1);
+    ok(ret_val == rc.bottom, "Expected device height == 200, got %u.\n", ret_val);
 
     hr = IDirect3DRMDevice_QueryInterface(device1, &IID_IDirect3DRMDevice2, (void **)&device2);
     ok(SUCCEEDED(hr), "Cannot get IDirect3DRMDevice2 Interface (hr = %x).\n", hr);
@@ -4111,7 +4139,7 @@ static void test_create_device_from_d3d2(void)
     IDirect3DRMDevice2 *device2 = (IDirect3DRMDevice2 *)0xdeadbeef;
     IDirect3DDevice2 *d3ddevice2 = NULL, *d3drm_d3ddevice2 = NULL;
     IDirectDrawSurface *surface = NULL, *ds = NULL, *d3drm_ds = NULL;
-    DWORD expected_flags;
+    DWORD expected_flags, ret_val;
     DDSCAPS caps = { DDSCAPS_ZBUFFER };
     DDSURFACEDESC desc;
     RECT rc;
@@ -4166,6 +4194,10 @@ static void test_create_device_from_d3d2(void)
     ok(ref3 == ref2, "expected ref3 == ref2, got ref2 = %u , ref3 = %u.\n", ref2, ref3);
     device_ref2 = get_refcount((IUnknown *)d3ddevice2);
     ok(device_ref2 > device_ref1, "Expected device_ref2 > device_ref1, got device_ref1 = %u, device_ref2 = %u.\n", device_ref1, device_ref2);
+    ret_val = IDirect3DRMDevice2_GetWidth(device2);
+    ok(ret_val == rc.right, "Expected device width = 300, got %u.\n", ret_val);
+    ret_val = IDirect3DRMDevice2_GetHeight(device2);
+    ok(ret_val == rc.bottom, "Expected device height == 200, got %u.\n", ret_val);
 
     hr = IDirectDraw_EnumSurfaces(ddraw1, DDENUMSURFACES_ALL | DDENUMSURFACES_DOESEXIST,
             NULL, &surface, surface_callback);
@@ -4237,7 +4269,7 @@ static void test_create_device_from_d3d3(void)
     IDirect3DRMDevice3 *device3 = (IDirect3DRMDevice3 *)0xdeadbeef;
     IDirect3DDevice2 *d3ddevice2 = NULL, *d3drm_d3ddevice2 = NULL;
     IDirectDrawSurface *surface = NULL, *ds = NULL, *d3drm_ds = NULL;
-    DWORD expected_flags;
+    DWORD expected_flags, ret_val;
     DDSCAPS caps = { DDSCAPS_ZBUFFER };
     DDSURFACEDESC desc;
     RECT rc;
@@ -4292,6 +4324,10 @@ static void test_create_device_from_d3d3(void)
     ok(ref3 == ref2, "expected ref3 == ref2, got ref2 = %u , ref3 = %u.\n", ref2, ref3);
     device_ref2 = get_refcount((IUnknown *)d3ddevice2);
     ok(device_ref2 > device_ref1, "Expected device_ref2 > device_ref1, got device_ref1 = %u, device_ref2 = %u.\n", device_ref1, device_ref2);
+    ret_val = IDirect3DRMDevice3_GetWidth(device3);
+    ok(ret_val == rc.right, "Expected device width = 300, got %u.\n", ret_val);
+    ret_val = IDirect3DRMDevice3_GetHeight(device3);
+    ok(ret_val == rc.bottom, "Expected device height == 200, got %u.\n", ret_val);
 
     hr = IDirectDraw_EnumSurfaces(ddraw1, DDENUMSURFACES_ALL | DDENUMSURFACES_DOESEXIST,
             NULL, &surface, surface_callback);
