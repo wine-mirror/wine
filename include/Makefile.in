@@ -671,6 +671,7 @@ HEADER_SRCS = \
 	winver.h \
 	wlanapi.h \
 	wmistr.h \
+	wmium.h \
 	wnaspi32.h \
 	wownt32.h \
 	ws2def.h \
