@@ -3734,7 +3734,6 @@ WINUSERAPI BOOL        WINAPI GrayStringW(HDC,HBRUSH,GRAYSTRINGPROC,LPARAM,INT,I
 #define                       GrayString WINELIB_NAME_AW(GrayString)
 WINUSERAPI BOOL        WINAPI HideCaret(HWND);
 WINUSERAPI BOOL        WINAPI HiliteMenuItem(HWND,HMENU,UINT,UINT);
-WINUSERAPI BOOL        WINAPI InflateRect(LPRECT,INT,INT);
 WINUSERAPI BOOL        WINAPI InSendMessage(void);
 WINUSERAPI DWORD       WINAPI InSendMessageEx(LPVOID);
 WINUSERAPI BOOL        WINAPI InsertMenuA(HMENU,UINT,UINT,UINT_PTR,LPCSTR);
@@ -3849,7 +3848,6 @@ WINUSERAPI BOOL        WINAPI OemToCharW(LPCSTR,LPWSTR);
 WINUSERAPI BOOL        WINAPI OemToCharBuffA(LPCSTR,LPSTR,DWORD);
 WINUSERAPI BOOL        WINAPI OemToCharBuffW(LPCSTR,LPWSTR,DWORD);
 #define                       OemToCharBuff WINELIB_NAME_AW(OemToCharBuff)
-WINUSERAPI BOOL        WINAPI OffsetRect(LPRECT,INT,INT);
 WINUSERAPI BOOL        WINAPI OpenClipboard(HWND);
 WINUSERAPI HDESK       WINAPI OpenDesktopA(LPCSTR,DWORD,BOOL,ACCESS_MASK);
 WINUSERAPI HDESK       WINAPI OpenDesktopW(LPCWSTR,DWORD,BOOL,ACCESS_MASK);
@@ -4091,7 +4089,9 @@ WINUSERAPI INT         WINAPI wvsprintfW(LPWSTR,LPCWSTR,__ms_va_list);
 #if !defined(__WINESRC__) || defined(WINE_NO_INLINE_RECT)
 
 WINUSERAPI BOOL        WINAPI EqualRect(const RECT*,const RECT*);
+WINUSERAPI BOOL        WINAPI InflateRect(LPRECT,INT,INT);
 WINUSERAPI BOOL        WINAPI IsRectEmpty(const RECT*);
+WINUSERAPI BOOL        WINAPI OffsetRect(LPRECT,INT,INT);
 WINUSERAPI BOOL        WINAPI SetRect(LPRECT,INT,INT,INT,INT);
 WINUSERAPI BOOL        WINAPI SetRectEmpty(LPRECT);
 
@@ -4106,10 +4106,30 @@ static inline BOOL WINAPI EqualRect(const RECT *rect1, const RECT *rect2)
             (rect1->top == rect2->top) && (rect1->bottom == rect2->bottom));
 }
 
+static inline BOOL WINAPI InflateRect(LPRECT rect, INT x, INT y)
+{
+    if (!rect) return FALSE;
+    rect->left   -= x;
+    rect->top    -= y;
+    rect->right  += x;
+    rect->bottom += y;
+    return TRUE;
+}
+
 static inline BOOL WINAPI IsRectEmpty(const RECT *rect)
 {
     if (!rect) return TRUE;
     return ((rect->left >= rect->right) || (rect->top >= rect->bottom));
+}
+
+static inline BOOL WINAPI OffsetRect(LPRECT rect, INT x, INT y)
+{
+    if (!rect) return FALSE;
+    rect->left   += x;
+    rect->right  += x;
+    rect->top    += y;
+    rect->bottom += y;
+    return TRUE;
 }
 
 static inline BOOL WINAPI SetRect(LPRECT rect, INT left, INT top, INT right, INT bottom)
