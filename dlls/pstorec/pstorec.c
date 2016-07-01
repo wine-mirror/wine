@@ -364,7 +364,7 @@ HRESULT WINAPI PStoreCreateInstance( IPStore** ppProvider,
     ips->IPStore_iface.lpVtbl = &pstores_vtbl;
     ips->ref = 1;
 
-    *ppProvider = (IPStore*) ips;
+    *ppProvider = &ips->IPStore_iface;
 
     return S_OK;
 }
