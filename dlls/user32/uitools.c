@@ -706,12 +706,7 @@ static BOOL UITOOLS95_DFC_ButtonPush(HDC dc, LPRECT r, UINT uFlags)
 
     /* Adjust rectangle if asked */
     if(uFlags & DFCS_ADJUSTRECT)
-    {
-        r->left   += 2;
-        r->right  -= 2;
-        r->top    += 2;
-        r->bottom -= 2;
-    }
+        InflateRect(r, -2, -2);
 
     return TRUE;
 }
@@ -832,11 +827,7 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
             SelectObject(dc, GetSysColorBrush(COLOR_BTNSHADOW));
             Pie(dc, myr.left, myr.top, myr.right+1, myr.bottom+1, myr.right+1, myr.top, myr.left-1, myr.bottom);
 
-            myr.left   += BorderShrink;
-            myr.right  -= BorderShrink;
-            myr.top    += BorderShrink;
-            myr.bottom -= BorderShrink;
-
+            InflateRect(&myr, -BorderShrink, -BorderShrink);
             SelectObject(dc, SYSCOLOR_GetPen(COLOR_3DLIGHT));
             SelectObject(dc, GetSysColorBrush(COLOR_3DLIGHT));
             Pie(dc, myr.left, myr.top, myr.right+1, myr.bottom+1, myr.left-1, myr.bottom, myr.right+1, myr.top);
