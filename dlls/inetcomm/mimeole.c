@@ -898,8 +898,27 @@ static HRESULT WINAPI MimeBody_DeleteProp(
                                  LPCSTR pszName)
 {
     MimeBody *This = impl_from_IMimeBody(iface);
-    FIXME("(%p)->(%s) stub\n", This, debugstr_a(pszName));
-    return E_NOTIMPL;
+    header_t *cursor;
+    BOOL found;
+
+    TRACE("(%p)->(%s) stub\n", This, debugstr_a(pszName));
+
+    LIST_FOR_EACH_ENTRY(cursor, &This->headers, header_t, entry)
+    {
+        if(ISPIDSTR(pszName))
+            found = STRTOPID(pszName) == cursor->prop->id;
+        else
+            found = !lstrcmpiA(pszName, cursor->prop->name);
+
+        if(found)
+        {
+             list_remove(&cursor->entry);
+             HeapFree(GetProcessHeap(), 0, cursor);
+             return S_OK;
+        }
+    }
+
+    return MIME_E_NOT_FOUND;
 }
 
 static HRESULT WINAPI MimeBody_CopyProps(
