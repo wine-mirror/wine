@@ -4289,7 +4289,7 @@ static HRESULT WINAPI ddraw_surface7_GetClipper(IDirectDrawSurface7 *iface, IDir
         return DDERR_NOCLIPPERATTACHED;
     }
 
-    *Clipper = (IDirectDrawClipper *)surface->clipper;
+    *Clipper = &surface->clipper->IDirectDrawClipper_iface;
     IDirectDrawClipper_AddRef(*Clipper);
     wined3d_mutex_unlock();
 
