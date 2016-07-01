@@ -7057,10 +7057,7 @@ static void test_format_rect(void)
     for (n = -3; n <= 3; n++)
     {
       rc = clientRect;
-      rc.top += n;
-      rc.left += n;
-      rc.bottom -= n;
-      rc.right -= n;
+      InflateRect(&rc, -n, -n);
       SendMessageA(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
 
       expected = rc;
@@ -7206,10 +7203,7 @@ static void test_format_rect(void)
        expected.top, expected.left, expected.bottom, expected.right);
 
     rc = clientRect;
-    rc.top += 5;
-    rc.left += 5;
-    rc.bottom -= 5;
-    rc.right -= 5;
+    InflateRect(&rc, -5, -5);
     expected = rc;
     expected.top -= 1;
     expected.left -= 1;
