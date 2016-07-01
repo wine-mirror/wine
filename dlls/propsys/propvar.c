@@ -209,6 +209,43 @@ HRESULT WINAPI PropVariantToUInt64(REFPROPVARIANT propvarIn, ULONGLONG *ret)
     return hr;
 }
 
+HRESULT WINAPI PropVariantToStringAlloc(REFPROPVARIANT propvarIn, WCHAR **ret)
+{
+    WCHAR *res = NULL;
+    HRESULT hr = S_OK;
+
+    TRACE("%p,%p semi-stub\n", propvarIn, ret);
+
+    switch(propvarIn->vt)
+    {
+        case VT_NULL:
+            res = CoTaskMemAlloc(1*sizeof(WCHAR));
+            res[0] = '\0';
+            break;
+        case VT_LPSTR:
+            if(propvarIn->u.pszVal)
+            {
+                DWORD len;
+
+                len = MultiByteToWideChar(CP_ACP, 0, propvarIn->u.pszVal, -1, NULL, 0);
+                res = CoTaskMemAlloc(len*sizeof(WCHAR));
+                if(!res)
+                    return E_OUTOFMEMORY;
+
+                MultiByteToWideChar(CP_ACP, 0, propvarIn->u.pszVal, -1, res, len);
+            }
+            break;
+        default:
+            FIXME("Unsupported conversion (%d)\n", propvarIn->vt);
+            hr = E_FAIL;
+            break;
+    }
+
+    *ret = res;
+
+    return hr;
+}
+
 /******************************************************************
  *  PropVariantChangeType   (PROPSYS.@)
  */

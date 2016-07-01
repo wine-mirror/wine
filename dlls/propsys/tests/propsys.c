@@ -38,6 +38,10 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(dummy_guid, 0xdeadbeef, 0xdead, 0xbeef, 0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0xba, 0xbe);
 DEFINE_GUID(expect_guid, 0x12345678, 0x1234, 0x1234, 0x12, 0x34, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12);
 
+static const char topic[] = "wine topic";
+static const WCHAR topicW[] = {'w','i','n','e',' ','t','o','p','i','c',0};
+static const WCHAR emptyW[] = {0};
+
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
     CHAR buf[512];
@@ -150,7 +154,6 @@ static void test_PSStringFromPropertyKey(void)
 
 static void test_PSPropertyKeyFromString(void)
 {
-    static const WCHAR emptyW[] = {0};
     static const WCHAR fmtid_clsidW[] = {'S','t','d','F','o','n','t',' ','1',0};
     static const WCHAR fmtid_truncatedW[] = {'{','1','2','3','4','5','6','7','8','-','1','2','3','4','-',
                                              '1','2','3','4','-',0};
@@ -616,6 +619,28 @@ static void test_PropVariantToGUID(void)
     PropVariantClear(&propvar);
 }
 
+static void test_PropVariantToStringAlloc(void)
+{
+    PROPVARIANT prop;
+    WCHAR *str;
+    HRESULT hres;
+
+    prop.vt = VT_NULL;
+    hres = PropVariantToStringAlloc(&prop, &str);
+    ok(hres == S_OK, "returned %x\n", hres);
+    ok(!lstrcmpW(str, emptyW), "got %s\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
+
+    prop.vt = VT_LPSTR;
+    prop.u.pszVal = CoTaskMemAlloc(strlen(topic)+1);
+    strcpy(prop.u.pszVal, topic);
+    hres = PropVariantToStringAlloc(&prop, &str);
+    ok(hres == S_OK, "returned %x\n", hres);
+    ok(!lstrcmpW(str, topicW), "got %s\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
+    PropVariantClear(&prop);
+}
+
 static void test_PropVariantCompare(void)
 {
     PROPVARIANT empty, null, emptyarray, i2_0, i2_2, i4_large, i4_largeneg, i4_2, str_2, str_02, str_b;
@@ -874,6 +899,7 @@ START_TEST(propsys)
     test_InitPropVariantFromGUIDAsString();
     test_InitPropVariantFromBuffer();
     test_PropVariantToGUID();
+    test_PropVariantToStringAlloc();
     test_PropVariantCompare();
     test_intconversions();
 }
