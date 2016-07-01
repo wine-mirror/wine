@@ -1609,12 +1609,7 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
 	}
       }
       else
-      {
-	drawRect->left   += 2;
-	drawRect->top    += 2;
-	drawRect->right  -= 2;
-	drawRect->bottom -= 2;
-      }
+        InflateRect(drawRect, -2, -2);
     }
     else
     {
