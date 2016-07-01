@@ -2077,7 +2077,7 @@ static HRESULT WINAPI MimeMessage_Commit(
     DWORD dwFlags)
 {
     FIXME("(%p)->(0x%x)\n", iface, dwFlags);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 
