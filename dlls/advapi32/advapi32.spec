@@ -795,35 +795,35 @@
 # @ stub WmiDevInstToInstanceNameA
 # @ stub WmiDevInstToInstanceNameW
 # @ stub WmiEnumerateGuids
-# @ stub WmiExecuteMethodA
-# @ stub WmiExecuteMethodW
+@ stdcall WmiExecuteMethodA(long str long long ptr ptr ptr)
+@ stdcall WmiExecuteMethodW(long wstr long long ptr ptr ptr)
 # @ stub WmiFileHandleToInstanceNameA
 # @ stub WmiFileHandleToInstanceNameW
-# @ stub WmiFreeBuffer
+@ stdcall WmiFreeBuffer(ptr)
 # @ stub WmiGetFirstTraceOffset
 # @ stub WmiGetNextEvent
 # @ stub WmiGetTraceHeader
-# @ stub WmiMofEnumerateResourcesA
-# @ stub WmiMofEnumerateResourcesW
-# @ stub WmiNotificationRegistrationA
-# @ stub WmiNotificationRegistrationW
+@ stdcall WmiMofEnumerateResourcesA(long ptr ptr)
+@ stdcall WmiMofEnumerateResourcesW(long ptr ptr)
+@ stdcall WmiNotificationRegistrationA(ptr long ptr long long)
+@ stdcall WmiNotificationRegistrationW(ptr long ptr long long)
 @ stdcall WmiOpenBlock(ptr long ptr)
 # @ stub WmiOpenTraceWithCursor
 # @ stub WmiParseTraceEvent
-# @ stub WmiQueryAllDataA
+@ stdcall WmiQueryAllDataA(long ptr ptr)
 # @ stub WmiQueryAllDataMultipleA
 # @ stub WmiQueryAllDataMultipleW
-# @ stub WmiQueryAllDataW
-# @ stub WmiQueryGuidInformation
+@ stdcall WmiQueryAllDataW(long ptr ptr)
+@ stdcall WmiQueryGuidInformation(long ptr)
 # @ stub WmiQuerySingleInstanceA
 # @ stub WmiQuerySingleInstanceMultipleA
 # @ stub WmiQuerySingleInstanceMultipleW
 @ stub WmiQuerySingleInstanceW
 # @ stub WmiReceiveNotificationsA
 # @ stub WmiReceiveNotificationsW
-# @ stub WmiSetSingleInstanceA
-@ stub WmiSetSingleInstanceW
-# @ stub WmiSetSingleItemA
-# @ stub WmiSetSingleItemW
+@ stdcall WmiSetSingleInstanceA(long str long long ptr)
+@ stdcall WmiSetSingleInstanceW(long wstr long long ptr)
+@ stdcall WmiSetSingleItemA(long str long long long ptr)
+@ stdcall WmiSetSingleItemW(long wstr long long long ptr)
 # @ stub Wow64Win32ApiEntry
 @ stdcall WriteEncryptedFileRaw(ptr ptr ptr)

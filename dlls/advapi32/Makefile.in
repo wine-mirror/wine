@@ -18,7 +18,8 @@ C_SRCS = \
 	lsa.c \
 	registry.c \
 	security.c \
-	service.c
+	service.c \
+	wmi.c
 
 IDL_SRCS = svcctl.idl
 
