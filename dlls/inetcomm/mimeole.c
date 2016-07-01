@@ -2509,6 +2509,9 @@ static HRESULT WINAPI MimeMessage_SetOption(
     case OID_SAVEBODY_KEEPBOUNDARY:
         FIXME("OID_SAVEBODY_KEEPBOUNDARY (value %d): ignoring\n", pValue->u.boolVal);
         break;
+    case OID_CLEANUP_TREE_ON_SAVE:
+        FIXME("OID_CLEANUP_TREE_ON_SAVE (value %d): ignoring\n", pValue->u.boolVal);
+        break;
     default:
         FIXME("Unhandled oid %08x\n", oid);
         hr = MIME_E_INVALID_OPTION_ID;
