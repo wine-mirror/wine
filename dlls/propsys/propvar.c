@@ -257,6 +257,9 @@ HRESULT WINAPI PropVariantChangeType(PROPVARIANT *ppropvarDest, REFPROPVARIANT p
     FIXME("(%p, %p, %d, %d, %d): semi-stub!\n", ppropvarDest, propvarSrc,
           propvarSrc->vt, flags, vt);
 
+    if(vt == propvarSrc->vt)
+        return PropVariantCopy(ppropvarDest, propvarSrc);
+
     switch (vt)
     {
     case VT_I2:
@@ -322,6 +325,17 @@ HRESULT WINAPI PropVariantChangeType(PROPVARIANT *ppropvarDest, REFPROPVARIANT p
         {
             ppropvarDest->vt = VT_UI8;
             ppropvarDest->u.uhVal.QuadPart = res;
+        }
+        return hr;
+    }
+    case VT_LPWSTR:
+    {
+        WCHAR *res;
+        hr = PropVariantToStringAlloc(propvarSrc, &res);
+        if (SUCCEEDED(hr))
+        {
+            ppropvarDest->vt = VT_LPWSTR;
+            ppropvarDest->u.pwszVal = res;
         }
         return hr;
     }

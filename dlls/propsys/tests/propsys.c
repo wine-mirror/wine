@@ -891,6 +891,42 @@ static void test_intconversions(void)
     ok(llval == -7, "got wrong value %s\n", debugstr_longlong(llval));
 }
 
+static void test_PropVariantChangeType_LPWSTR(void)
+{
+    PROPVARIANT dest, src;
+    HRESULT hr;
+
+    PropVariantInit(&dest);
+
+    src.vt = VT_NULL;
+    hr = PropVariantChangeType(&dest, &src, 0, VT_LPWSTR);
+    ok(hr == S_OK, "hr=%x\n", hr);
+    ok(dest.vt == VT_LPWSTR, "got %d\n", dest.vt);
+    ok(!lstrcmpW(dest.u.pwszVal, emptyW), "got %s\n", wine_dbgstr_w(dest.u.pwszVal));
+    PropVariantClear(&dest);
+    PropVariantClear(&src);
+
+    src.vt = VT_LPSTR;
+    src.u.pszVal = CoTaskMemAlloc(strlen(topic)+1);
+    strcpy(src.u.pszVal, topic);
+    hr = PropVariantChangeType(&dest, &src, 0, VT_LPWSTR);
+    ok(hr == S_OK, "hr=%x\n", hr);
+    ok(dest.vt == VT_LPWSTR, "got %d\n", dest.vt);
+    ok(!lstrcmpW(dest.u.pwszVal, topicW), "got %s\n", wine_dbgstr_w(dest.u.pwszVal));
+    PropVariantClear(&dest);
+    PropVariantClear(&src);
+
+    src.vt = VT_LPWSTR;
+    src.u.pwszVal = CoTaskMemAlloc( (lstrlenW(topicW)+1) * sizeof(WCHAR));
+    lstrcpyW(src.u.pwszVal, topicW);
+    hr = PropVariantChangeType(&dest, &src, 0, VT_LPWSTR);
+    ok(hr == S_OK, "hr=%x\n", hr);
+    ok(dest.vt == VT_LPWSTR, "got %d\n", dest.vt);
+    ok(!lstrcmpW(dest.u.pwszVal, topicW), "got %s\n", wine_dbgstr_w(dest.u.pwszVal));
+    PropVariantClear(&dest);
+    PropVariantClear(&src);
+}
+
 START_TEST(propsys)
 {
     test_PSStringFromPropertyKey();
@@ -902,4 +938,5 @@ START_TEST(propsys)
     test_PropVariantToStringAlloc();
     test_PropVariantCompare();
     test_intconversions();
+    test_PropVariantChangeType_LPWSTR();
 }
