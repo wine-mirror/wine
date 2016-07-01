@@ -31,6 +31,7 @@
 #include "objbase.h"
 #include "ole2.h"
 #include "mimeole.h"
+#include "propvarutil.h"
 
 #include "wine/list.h"
 #include "wine/debug.h"
@@ -785,7 +786,11 @@ static HRESULT WINAPI MimeBody_GetProp(
     hr = find_prop(This, pszName, &header);
     if(hr == S_OK)
     {
-        PropVariantCopy(pValue, &header->value);
+        TRACE("type %d->%d\n", header->value.vt, pValue->vt);
+
+        hr = PropVariantChangeType(pValue, &header->value, 0,  pValue->vt);
+        if(FAILED(hr))
+            FIXME("Conversion not currently supported (%d->%d)\n", header->value.vt, pValue->vt);
     }
 
     return hr;

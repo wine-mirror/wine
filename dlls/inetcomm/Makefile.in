@@ -1,6 +1,6 @@
 MODULE    = inetcomm.dll
 IMPORTLIB = inetcomm
-IMPORTS   = uuid oleaut32 ole32 ws2_32 user32 advapi32
+IMPORTS   = uuid propsys oleaut32 ole32 ws2_32 user32 advapi32
 
 C_SRCS = \
 	imaptransport.c \

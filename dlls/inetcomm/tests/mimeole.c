@@ -335,6 +335,7 @@ static void test_CreateMessage(void)
 static void test_MessageSetProp(void)
 {
     static const char topic[] = "wine topic";
+    static const WCHAR topicW[] = {'w','i','n','e',' ','t','o','p','i','c',0};
     HRESULT hr;
     IMimeMessage *msg;
     IMimeBody *body;
@@ -370,6 +371,7 @@ static void test_MessageSetProp(void)
     hr = IMimeBody_GetProp(body, "Wine-Topic", 0, &prop);
     ok(hr == MIME_E_NOT_FOUND, "ret %08x\n", hr);
 
+    prop.vt = VT_LPSTR;
     hr = IMimeBody_GetProp(body, "Thread-Topic", 0, &prop);
     ok(hr == S_OK, "ret %08x\n", hr);
     if(hr == S_OK)
@@ -386,6 +388,7 @@ static void test_MessageSetProp(void)
     ok(hr == S_OK, "ret %08x\n", hr);
     PropVariantClear(&prop);
 
+    prop.vt = VT_LPSTR;
     hr = IMimeBody_GetProp(body, PIDTOSTR(PID_HDR_SUBJECT), 0, &prop);
     ok(hr == S_OK, "ret %08x\n", hr);
     if(hr == S_OK)
@@ -396,12 +399,23 @@ static void test_MessageSetProp(void)
     }
 
     /* Using the name or PID returns the same result. */
+    prop.vt = VT_LPSTR;
     hr = IMimeBody_GetProp(body, "Subject", 0, &prop);
     ok(hr == S_OK, "ret %08x\n", hr);
     if(hr == S_OK)
     {
         ok(prop.vt == VT_LPSTR, "type %d\n", prop.vt);
         ok(!strcmp(prop.u.pszVal, topic), "got  %s\n", prop.u.pszVal);
+        PropVariantClear(&prop);
+    }
+
+    prop.vt = VT_LPWSTR;
+    hr = IMimeBody_GetProp(body, "Subject", 0, &prop);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    if(hr == S_OK)
+    {
+        ok(prop.vt == VT_LPWSTR, "type %d\n", prop.vt);
+        ok(!lstrcmpW(prop.u.pwszVal, topicW), "got %s\n", wine_dbgstr_w(prop.u.pwszVal));
         PropVariantClear(&prop);
     }
 
