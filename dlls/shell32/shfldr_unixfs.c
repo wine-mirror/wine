@@ -847,7 +847,7 @@ static HRESULT UNIXFS_copy(LPCWSTR pwszDosSrc, LPCWSTR pwszDosDst)
         op.pFrom = pwszSrc;
         op.pTo = pwszDst;
         op.fFlags = FOF_ALLOWUNDO;
-        if (!SHFileOperationW(&op))
+        if (SHFileOperationW(&op))
         {
             WARN("SHFileOperationW failed\n");
             res = E_FAIL;
@@ -1981,7 +1981,7 @@ static HRESULT UNIXFS_delete_with_shfileop(UnixFolder *This, UINT cidl, const LP
     op.wFunc = FO_DELETE;
     op.pFrom = wszPathsList;
     op.fFlags = FOF_ALLOWUNDO;
-    if (!SHFileOperationW(&op))
+    if (SHFileOperationW(&op))
     {
         WARN("SHFileOperationW failed\n");
         ret = E_FAIL;
