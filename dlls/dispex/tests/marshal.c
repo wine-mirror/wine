@@ -356,7 +356,7 @@ static IDispatchEx *dispex_create(void)
     if (!This) return NULL;
     This->IDispatchEx_iface.lpVtbl = &dispex_vtable;
     This->refs = 1;
-    return (IDispatchEx *)This;
+    return &This->IDispatchEx_iface;
 }
 
 static void test_dispex(void)
