@@ -1209,7 +1209,7 @@ static NTSTATUS RTL_GetKeyHandle(ULONG RelativeTo, PCWSTR Path, PHANDLE handle)
 /*************************************************************************
  * RtlQueryRegistryValues   [NTDLL.@]
  *
- * Query multiple registry values with a signle call.
+ * Query multiple registry values with a single call.
  *
  * PARAMS
  *  RelativeTo  [I] Registry path that Path refers to
@@ -1386,7 +1386,7 @@ out:
 /*************************************************************************
  * RtlCheckRegistryKey   [NTDLL.@]
  *
- * Query multiple registry values with a signle call.
+ * Query multiple registry values with a single call.
  *
  * PARAMS
  *  RelativeTo [I] Registry path that Path refers to
@@ -1416,7 +1416,7 @@ NTSTATUS WINAPI RtlCheckRegistryKey(IN ULONG RelativeTo, IN PWSTR Path)
 /*************************************************************************
  * RtlDeleteRegistryValue   [NTDLL.@]
  *
- * Query multiple registry values with a signle call.
+ * Query multiple registry values with a single call.
  *
  * PARAMS
  *  RelativeTo [I] Registry path that Path refers to
