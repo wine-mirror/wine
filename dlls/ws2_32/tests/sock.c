@@ -2652,7 +2652,7 @@ static void test_WSADuplicateSocket(void)
     closesocket(source);
 
     /* create a socket, bind it, duplicate it then send data on source and
-     * receve in the duplicated socket */
+     * receive in the duplicated socket */
     source = WSASocketA(AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL, 0, 0);
     ok(source != INVALID_SOCKET, "WSASocketA should have succeeded\n");
 
