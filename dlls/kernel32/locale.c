@@ -915,7 +915,7 @@ void LOCALE_InitRegistry(void)
 /***********************************************************************
  *           get_mac_locale
  *
- * Return a locale identifer string reflecting the Mac locale, in a form
+ * Return a locale identifier string reflecting the Mac locale, in a form
  * that parse_locale_name() will understand.  So, strip out unusual
  * things like script, variant, etc.  Or, rather, just construct it as
  * <lang>[_<country>].UTF-8.

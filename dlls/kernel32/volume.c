@@ -416,7 +416,7 @@ static enum fs_type VOLUME_ReadCDSuperblock( HANDLE handle, BYTE *buff )
     /* Check UDF first as UDF and ISO9660 structures can coexist on the same medium
      *  Starting from sector 16, we may find :
      *  - a CD-ROM Volume Descriptor Set (ISO9660) containing one or more Volume Descriptors
-     *  - an Extented Area (UDF) -- [E] 2/8.3.1 and [U] 2.1.7
+     *  - an Extended Area (UDF) -- [E] 2/8.3.1 and [U] 2.1.7
      *  There is no explicit end so read 16 sectors and then give up */
     for( i=16; i<16+16; i++)
     {
