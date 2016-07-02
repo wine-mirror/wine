@@ -361,7 +361,7 @@ static void test_audioclient(void)
     ok(hr == S_OK, "Reset on an initialized stream returns %08x\n", hr);
 
     hr = IAudioClient_Reset(ac);
-    ok(hr == S_OK, "Reset on a resetted stream returns %08x\n", hr);
+    ok(hr == S_OK, "Reset on an already reset stream returns %08x\n", hr);
 
     hr = IAudioClient_Stop(ac);
     ok(hr == S_FALSE, "Stop on a stopped stream returns %08x\n", hr);
@@ -1090,7 +1090,7 @@ static void test_clock(int share)
     slept = sum = 0;
 
     hr = IAudioClient_Reset(ac);
-    ok(hr == S_OK, "Reset on a resetted stream returns %08x\n", hr);
+    ok(hr == S_OK, "Reset on an already reset stream returns %08x\n", hr);
 
     hr = IAudioClock_GetPosition(acl, &pos, &pcpos);
     ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
@@ -1164,7 +1164,7 @@ static void test_clock(int share)
     ok(QueryPerformanceCounter(&hpctime0), "PerfCounter unavailable\n");
 
     hr = IAudioClient_Reset(ac);
-    ok(hr == S_OK, "Reset on a resetted stream returns %08x\n", hr);
+    ok(hr == S_OK, "Reset on an already reset stream returns %08x\n", hr);
 
     hr = IAudioClient_Start(ac);
     ok(hr == S_OK, "Start failed: %08x\n", hr);

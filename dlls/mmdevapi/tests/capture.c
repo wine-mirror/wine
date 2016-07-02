@@ -414,7 +414,7 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
         sum += frames;
     }
     else if(hr == AUDCLNT_S_BUFFER_EMPTY){
-        ok(!pad, "resetted GCP %u\n", pad);
+        ok(!pad, "reset GCP %u\n", pad);
         Sleep(180);
     }
 
@@ -590,7 +590,7 @@ static void test_audioclient(void)
     ok(hr == S_OK, "SetEventHandle returns %08x\n", hr);
 
     hr = IAudioClient_Reset(ac);
-    ok(hr == S_OK, "Reset on a resetted stream returns %08x\n", hr);
+    ok(hr == S_OK, "Reset on an already reset stream returns %08x\n", hr);
 
     hr = IAudioClient_Stop(ac);
     ok(hr == S_FALSE, "Stop on a stopped stream returns %08x\n", hr);
