@@ -139,7 +139,7 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, char **argv, int *i)
     return TRUE;
 }
 
-char *get_token(char *input, char **next)
+static char *get_token(char *input, char **next)
 {
     char *ch = input;
     char *str;
