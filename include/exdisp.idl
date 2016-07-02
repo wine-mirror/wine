@@ -486,7 +486,7 @@ dispinterface DWebBrowserEvents2
             [in] BSTR bstrWorkerLabel);
 
     [id(DISPID_WEBWORKERFINISHED)]
-    void WebWorkerFinsihed([in] DWORD dwUniqueID);
+    void WebWorkerFinished([in] DWORD dwUniqueID);
 }
 
 [
