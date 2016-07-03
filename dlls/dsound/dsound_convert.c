@@ -224,7 +224,7 @@ void put_surround512stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD c
         break;
 
     case 0: /* front left */
-        value *= 0.503; /* 1 / (sum of left volumes) */
+        value *= 0.503f; /* 1 / (sum of left volumes) */
         dsb->put_aux(dsb, pos, 0, value);
         break;
 
