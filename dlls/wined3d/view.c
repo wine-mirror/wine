@@ -439,13 +439,14 @@ ULONG CDECL wined3d_unordered_access_view_decref(struct wined3d_unordered_access
 
     if (!refcount)
     {
-        struct wined3d_device *device = view->resource->device;
+        struct wined3d_resource *resource = view->resource;
+        struct wined3d_device *device = resource->device;
 
         /* Call wined3d_object_destroyed() before releasing the resource,
          * since releasing the resource may end up destroying the parent. */
         view->parent_ops->wined3d_object_destroyed(view->parent);
-        wined3d_resource_decref(view->resource);
         wined3d_cs_emit_destroy_object(device->cs, wined3d_unordered_access_view_destroy_object, view);
+        wined3d_resource_decref(resource);
     }
 
     return refcount;
