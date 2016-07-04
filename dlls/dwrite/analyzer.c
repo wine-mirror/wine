@@ -249,7 +249,8 @@ static HRESULT analyze_script(const WCHAR *text, UINT32 position, UINT32 length,
     DWRITE_SCRIPT_ANALYSIS sa;
     UINT32 pos, i, seq_length;
 
-    if (!length) return S_OK;
+    if (!length)
+        return S_OK;
 
     sa = get_char_sa(*text);
 
@@ -268,11 +269,11 @@ static HRESULT analyze_script(const WCHAR *text, UINT32 position, UINT32 length,
         case Script_Common:
             if (cur_sa.script == Script_Unknown)
                 cur_sa.script = sa.script;
-            else if (cur_sa.script != Script_Common)
+            else if ((cur_sa.script != Script_Common) && sa.shapes == DWRITE_SCRIPT_SHAPES_DEFAULT)
                 sa.script = cur_sa.script;
             break;
         default:
-            if (cur_sa.script == Script_Unknown || cur_sa.script == Script_Common)
+            if ((cur_sa.script == Script_Common && cur_sa.shapes == DWRITE_SCRIPT_SHAPES_DEFAULT) || cur_sa.script == Script_Unknown)
                 cur_sa.script = sa.script;
         }
 

@@ -906,7 +906,57 @@ static struct sa_test sa_tests[] = {
             { 2, 2, DWRITE_SCRIPT_SHAPES_DEFAULT   },
             { 4, 2, DWRITE_SCRIPT_SHAPES_NO_VISUAL } }
     },
-    /* keep this as end marker */
+    {
+      /* Inherited on its own */
+      {0x300,0x300,0}, 1,
+          { { 0, 2, DWRITE_SCRIPT_SHAPES_DEFAULT } }
+    },
+    {
+      /* Inherited followed by Latin */
+      {0x300,0x300,'a',0}, 1,
+          { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT } }
+    },
+    {
+      /* Inherited mixed with Arabic and Latin */
+      {0x300,'+',0x627,0x300,'a',0}, 2,
+          { { 0, 4, DWRITE_SCRIPT_SHAPES_DEFAULT },
+            { 4, 1, DWRITE_SCRIPT_SHAPES_DEFAULT } }
+    },
+    {
+      {'a',0x300,'+',0x627,0x300,')','a',0}, 3,
+          { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT },
+            { 3, 3, DWRITE_SCRIPT_SHAPES_DEFAULT },
+            { 6, 1, DWRITE_SCRIPT_SHAPES_DEFAULT } }
+    },
+    /* Paired punctuation */
+    {
+      {0x627,'(','a',')','a',0}, 2,
+          { { 0, 2, DWRITE_SCRIPT_SHAPES_DEFAULT },
+            { 2, 3, DWRITE_SCRIPT_SHAPES_DEFAULT } }
+    },
+    {
+      {0x627,'[','a',']',0x627,0}, 3,
+          { { 0, 2, DWRITE_SCRIPT_SHAPES_DEFAULT },
+            { 2, 2, DWRITE_SCRIPT_SHAPES_DEFAULT },
+            { 4, 1, DWRITE_SCRIPT_SHAPES_DEFAULT } }
+    },
+    /* Combining marks */
+    {
+      /* dotted circle - Common, followed by accent - Inherited */
+      {0x25cc,0x300,0}, 1,
+          { { 0, 2, DWRITE_SCRIPT_SHAPES_DEFAULT } }
+    },
+    {
+      /* combining mark with explicit script value */
+      {0x25cc,0x300,0x5c4,0}, 1,
+          { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT } }
+    },
+    {
+      /* inherited merges with following explicit script */
+      {0x25cc,0x300,'a',0}, 1,
+          { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT } }
+    },
+    /* keep this as end test data marker */
     { {0} }
 };
 
