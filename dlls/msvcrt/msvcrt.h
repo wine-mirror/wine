@@ -910,6 +910,12 @@ struct MSVCRT__stat64 {
 #define MSVCRT__DN_SAVE_OPERANDS_FLUSH_RESULTS 0x03000000
 #define MSVCRT__EM_AMBIGUOUS  0x80000000
 
+typedef struct
+{
+    unsigned int control;
+    unsigned int status;
+} fenv_t;
+
 #define MSVCRT_CLOCKS_PER_SEC 1000
 
 /* signals */

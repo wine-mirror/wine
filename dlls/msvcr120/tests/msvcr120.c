@@ -147,6 +147,12 @@ struct MSVCRT_lconv
     wchar_t* _W_negative_sign;
 };
 
+typedef struct
+{
+    unsigned int control;
+    unsigned int status;
+} fenv_t;
+
 static char* (CDECL *p_setlocale)(int category, const char* locale);
 static struct MSVCRT_lconv* (CDECL *p_localeconv)(void);
 static size_t (CDECL *p_wcstombs_s)(size_t *ret, char* dest, size_t sz, const wchar_t* src, size_t max);
@@ -162,6 +168,8 @@ static int (CDECL *p__finite)(double);
 static float (CDECL *p_wcstof)(const wchar_t*, wchar_t**);
 static double (CDECL *p_remainder)(double, double);
 static int* (CDECL *p_errno)(void);
+static int (CDECL *p_fegetenv)(fenv_t*);
+static int (CDECL *p__clearfp)(void);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -207,6 +215,8 @@ static BOOL init(void)
     p_wcstof = (void*)GetProcAddress(module, "wcstof");
     p_remainder = (void*)GetProcAddress(module, "remainder");
     p_errno = (void*)GetProcAddress(module, "_errno");
+    SET(p_fegetenv, "fegetenv");
+    SET(p__clearfp, "_clearfp");
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(p_critical_section_ctor,
                 "??0critical_section@Concurrency@@QEAA@XZ");
@@ -686,6 +696,20 @@ static void test_critical_section(void)
     call_func1(p_critical_section_dtor, &cs);
 }
 
+static void test_fegetenv(void)
+{
+    int ret;
+    fenv_t env;
+
+    p__clearfp();
+
+    ret = p_fegetenv(&env);
+    ok(!ret, "fegetenv returned %x\n", ret);
+    ok(env.control == (_EM_INEXACT|_EM_UNDERFLOW|_EM_OVERFLOW|_EM_ZERODIVIDE|_EM_INVALID),
+            "env.control = %x\n", env.control);
+    ok(!env.status, "env.status = %x\n", env.status);
+}
+
 START_TEST(msvcr120)
 {
     if (!init()) return;
@@ -699,4 +723,5 @@ START_TEST(msvcr120)
     test__strtof();
     test_remainder();
     test_critical_section();
+    test_fegetenv();
 }

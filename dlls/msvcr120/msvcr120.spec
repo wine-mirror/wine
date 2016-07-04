@@ -2144,7 +2144,7 @@
 @ stub fdimf
 @ stub fdiml
 @ stub feclearexcept
-@ stub fegetenv
+@ cdecl fegetenv(ptr) MSVCRT_fegetenv
 @ stub fegetexceptflag
 @ stub fegetround
 @ stub feholdexcept
