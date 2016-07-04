@@ -1598,6 +1598,28 @@ static INT REGION_Coalesce (
     return (curStart);
 }
 
+/**********************************************************************
+ *          REGION_compact
+ *
+ * To keep regions from growing without bound, shrink the array of rectangles
+ * to match the new number of rectangles in the region.
+ *
+ * Only do this if the number of rectangles allocated is more than
+ * twice the number of rectangles in the region.
+ */
+static void REGION_compact( WINEREGION *reg )
+{
+    if ((reg->numRects < reg->size / 2) && (reg->numRects > 2))
+    {
+        RECT *new_rects = HeapReAlloc( GetProcessHeap(), 0, reg->rects, reg->numRects * sizeof(RECT) );
+        if (new_rects)
+        {
+            reg->rects = new_rects;
+            reg->size = reg->numRects;
+        }
+    }
+}
+
 /***********************************************************************
  *           REGION_RegionOp
  *
@@ -1839,23 +1861,7 @@ static BOOL REGION_RegionOp(
 	REGION_Coalesce (&newReg, prevBand, curBand);
     }
 
-    /*
-     * A bit of cleanup. To keep regions from growing without bound,
-     * we shrink the array of rectangles to match the new number of
-     * rectangles in the region. This never goes to 0, however...
-     *
-     * Only do this stuff if the number of rectangles allocated is more than
-     * twice the number of rectangles in the region (a simple optimization...).
-     */
-    if ((newReg.numRects < (newReg.size >> 1)) && (newReg.numRects > 2))
-    {
-        RECT *new_rects = HeapReAlloc( GetProcessHeap(), 0, newReg.rects, newReg.numRects * sizeof(RECT) );
-        if (new_rects)
-        {
-            newReg.rects = new_rects;
-            newReg.size = newReg.numRects;
-        }
-    }
+    REGION_compact( &newReg );
     HeapFree( GetProcessHeap(), 0, destReg->rects );
     destReg->rects    = newReg.rects;
     destReg->size     = newReg.size;
@@ -2633,8 +2639,9 @@ static BOOL REGION_PtsToRegion( struct point_block *FirstPtBlock, WINEREGION *re
 	extents->right = 0;
 	extents->bottom = 0;
     }
+    REGION_compact( reg );
 
-    return(TRUE);
+    return TRUE;
 }
 
 /***********************************************************************
