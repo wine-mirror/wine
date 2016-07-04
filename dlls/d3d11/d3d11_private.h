@@ -359,6 +359,11 @@ struct d3d_blend_state
     ID3D11Device *device;
 };
 
+static inline struct d3d_blend_state *impl_from_ID3D11BlendState(ID3D11BlendState *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d_blend_state, ID3D11BlendState_iface);
+}
+
 HRESULT d3d_blend_state_init(struct d3d_blend_state *state, struct d3d_device *device,
         const D3D11_BLEND_DESC *desc) DECLSPEC_HIDDEN;
 struct d3d_blend_state *unsafe_impl_from_ID3D11BlendState(ID3D11BlendState *iface) DECLSPEC_HIDDEN;

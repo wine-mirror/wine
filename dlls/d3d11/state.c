@@ -26,11 +26,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
 /* ID3D11BlendState methods */
 
-static inline struct d3d_blend_state *impl_from_ID3D11BlendState(ID3D11BlendState *iface)
-{
-    return CONTAINING_RECORD(iface, struct d3d_blend_state, ID3D11BlendState_iface);
-}
-
 static HRESULT STDMETHODCALLTYPE d3d11_blend_state_QueryInterface(ID3D11BlendState *iface,
         REFIID riid, void **object)
 {

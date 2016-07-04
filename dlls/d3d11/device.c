@@ -1655,8 +1655,17 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMGetRenderTargetsAndUnord
 static void STDMETHODCALLTYPE d3d11_immediate_context_OMGetBlendState(ID3D11DeviceContext *iface,
         ID3D11BlendState **blend_state, FLOAT blend_factor[4], UINT *sample_mask)
 {
-    FIXME("iface %p, blend_state %p, blend_factor %p, sample_mask %p stub!\n",
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+
+    TRACE("iface %p, blend_state %p, blend_factor %p, sample_mask %p.\n",
             iface, blend_state, blend_factor, sample_mask);
+
+    if ((*blend_state = device->blend_state ? &device->blend_state->ID3D11BlendState_iface : NULL))
+        ID3D11BlendState_AddRef(*blend_state);
+    wined3d_mutex_lock();
+    memcpy(blend_factor, device->blend_factor, 4 * sizeof(*blend_factor));
+    *sample_mask = wined3d_device_get_render_state(device->wined3d_device, WINED3D_RS_MULTISAMPLEMASK);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_OMGetDepthStencilState(ID3D11DeviceContext *iface,
@@ -4063,16 +4072,18 @@ static void STDMETHODCALLTYPE d3d10_device_OMGetBlendState(ID3D10Device1 *iface,
         ID3D10BlendState **blend_state, FLOAT blend_factor[4], UINT *sample_mask)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
+    ID3D11BlendState *d3d11_blend_state;
 
     TRACE("iface %p, blend_state %p, blend_factor %p, sample_mask %p.\n",
             iface, blend_state, blend_factor, sample_mask);
 
-    if ((*blend_state = device->blend_state ? (ID3D10BlendState *)&device->blend_state->ID3D10BlendState1_iface : NULL))
-        ID3D10BlendState_AddRef(*blend_state);
-    wined3d_mutex_lock();
-    memcpy(blend_factor, device->blend_factor, 4 * sizeof(*blend_factor));
-    *sample_mask = wined3d_device_get_render_state(device->wined3d_device, WINED3D_RS_MULTISAMPLEMASK);
-    wined3d_mutex_unlock();
+    d3d11_immediate_context_OMGetBlendState(&device->immediate_context.ID3D11DeviceContext_iface,
+            &d3d11_blend_state, blend_factor, sample_mask);
+
+    if (d3d11_blend_state)
+        *blend_state = (ID3D10BlendState *)&impl_from_ID3D11BlendState(d3d11_blend_state)->ID3D10BlendState1_iface;
+    else
+        *blend_state = NULL;
 }
 
 static void STDMETHODCALLTYPE d3d10_device_OMGetDepthStencilState(ID3D10Device1 *iface,
