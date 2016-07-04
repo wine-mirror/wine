@@ -46,6 +46,7 @@ struct node *alloc_node( WS_XML_NODE_TYPE ) DECLSPEC_HIDDEN;
 void free_node( struct node * ) DECLSPEC_HIDDEN;
 void destroy_nodes( struct node * ) DECLSPEC_HIDDEN;
 struct node *find_parent( struct node * ) DECLSPEC_HIDDEN;
+HRESULT copy_node( WS_XML_READER *, struct node ** ) DECLSPEC_HIDDEN;
 
 static inline WS_XML_NODE_TYPE node_type( const struct node *node )
 {
@@ -64,6 +65,7 @@ BOOL move_to_prev_node( struct node ** ) DECLSPEC_HIDDEN;
 BOOL move_to_bof( struct node *, struct node ** ) DECLSPEC_HIDDEN;
 BOOL move_to_eof( struct node *, struct node ** ) DECLSPEC_HIDDEN;
 BOOL move_to_child_node( struct node ** ) DECLSPEC_HIDDEN;
+BOOL move_to_parent_node( struct node ** ) DECLSPEC_HIDDEN;
 
 struct prop_desc
 {

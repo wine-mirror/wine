@@ -19,7 +19,7 @@
 @ stdcall WsCloseServiceProxy(ptr ptr ptr)
 @ stub WsCombineUrl
 @ stub WsCopyError
-@ stub WsCopyNode
+@ stdcall WsCopyNode(ptr ptr ptr)
 @ stdcall WsCreateChannel(long long ptr long ptr ptr ptr)
 @ stub WsCreateChannelForListener
 @ stdcall WsCreateError(ptr long ptr)

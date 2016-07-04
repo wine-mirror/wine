@@ -378,6 +378,161 @@ void destroy_nodes( struct node *node )
     free_node( node );
 }
 
+static WS_XML_ATTRIBUTE *dup_attribute( const WS_XML_ATTRIBUTE *src )
+{
+    WS_XML_ATTRIBUTE *dst;
+    const WS_XML_STRING *prefix = (src->prefix && src->prefix->length) ? src->prefix : NULL;
+    const WS_XML_STRING *localname = src->localName;
+    const WS_XML_STRING *ns = src->localName;
+
+    if (!(dst = heap_alloc( sizeof(*dst) ))) return NULL;
+    dst->singleQuote = src->singleQuote;
+    dst->isXmlNs     = src->isXmlNs;
+    if (prefix && !(dst->prefix = alloc_xml_string( prefix->bytes, prefix->length ))) goto error;
+    if (localname && !(dst->localName = alloc_xml_string( localname->bytes, localname->length ))) goto error;
+    if (ns && !(dst->ns = alloc_xml_string( ns->bytes, ns->length ))) goto error;
+    return dst;
+
+error:
+    free_attribute( dst );
+    return NULL;
+}
+
+static WS_XML_ATTRIBUTE **dup_attributes( WS_XML_ATTRIBUTE * const *src, ULONG count )
+{
+    WS_XML_ATTRIBUTE **dst;
+    ULONG i;
+
+    if (!(dst = heap_alloc( sizeof(*dst) * count ))) return NULL;
+    for (i = 0; i < count; i++)
+    {
+        if (!(dst[i] = dup_attribute( src[i] )))
+        {
+            for (; i > 0; i--) free_attribute( dst[i - 1] );
+            heap_free( dst );
+            return NULL;
+        }
+    }
+    return dst;
+}
+
+static struct node *dup_element_node( const WS_XML_ELEMENT_NODE *src )
+{
+    struct node *node;
+    WS_XML_ELEMENT_NODE *dst;
+    ULONG count = src->attributeCount;
+    WS_XML_ATTRIBUTE **attrs = src->attributes;
+    const WS_XML_STRING *prefix = (src->prefix && src->prefix->length) ? src->prefix : NULL;
+    const WS_XML_STRING *localname = src->localName;
+    const WS_XML_STRING *ns = src->ns;
+
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_ELEMENT ))) return NULL;
+    dst = &node->hdr;
+
+    if (count && !(dst->attributes = dup_attributes( attrs, count ))) goto error;
+    dst->attributeCount = count;
+
+    if (prefix && !(dst->prefix = alloc_xml_string( prefix->bytes, prefix->length ))) goto error;
+    if (localname && !(dst->localName = alloc_xml_string( localname->bytes, localname->length ))) goto error;
+    if (ns && !(dst->ns = alloc_xml_string( ns->bytes, ns->length ))) goto error;
+    return node;
+
+error:
+    free_node( node );
+    return NULL;
+}
+
+static struct node *dup_text_node( const WS_XML_TEXT_NODE *src )
+{
+    struct node *node;
+    WS_XML_TEXT_NODE *dst;
+
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return NULL;
+    dst = (WS_XML_TEXT_NODE *)node;
+
+    if (src->text)
+    {
+        WS_XML_UTF8_TEXT *utf8;
+        const WS_XML_UTF8_TEXT *utf8_src = (WS_XML_UTF8_TEXT *)src->text;
+        if (!(utf8 = alloc_utf8_text( utf8_src->value.bytes, utf8_src->value.length )))
+        {
+            free_node( node );
+            return NULL;
+        }
+        dst->text = &utf8->text;
+    }
+    return node;
+}
+
+static struct node *dup_comment_node( const WS_XML_COMMENT_NODE *src )
+{
+    struct node *node;
+    WS_XML_COMMENT_NODE *dst;
+
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_COMMENT ))) return NULL;
+    dst = (WS_XML_COMMENT_NODE *)node;
+
+    if (src->value.length && !(dst->value.bytes = heap_alloc( src->value.length )))
+    {
+        free_node( node );
+        return NULL;
+    }
+    memcpy( dst->value.bytes, src->value.bytes, src->value.length );
+    dst->value.length = src->value.length;
+    return node;
+}
+
+static struct node *dup_node( const struct node *src )
+{
+    switch (node_type( src ))
+    {
+    case WS_XML_NODE_TYPE_ELEMENT:
+        return dup_element_node( &src->hdr );
+
+    case WS_XML_NODE_TYPE_TEXT:
+        return dup_text_node( (const WS_XML_TEXT_NODE *)src );
+
+    case WS_XML_NODE_TYPE_COMMENT:
+        return dup_comment_node( (const WS_XML_COMMENT_NODE *)src );
+
+    case WS_XML_NODE_TYPE_CDATA:
+    case WS_XML_NODE_TYPE_END_CDATA:
+    case WS_XML_NODE_TYPE_END_ELEMENT:
+    case WS_XML_NODE_TYPE_EOF:
+    case WS_XML_NODE_TYPE_BOF:
+        return alloc_node( node_type( src ) );
+
+    default:
+        ERR( "unhandled type %u\n", node_type( src ) );
+        break;
+    }
+    return NULL;
+}
+
+static HRESULT dup_tree( struct node **dst, const struct node *src )
+{
+    struct node *parent;
+    const struct node *child;
+
+    if (!*dst && !(*dst = dup_node( src ))) return E_OUTOFMEMORY;
+    parent = *dst;
+
+    LIST_FOR_EACH_ENTRY( child, &src->children, struct node, entry )
+    {
+        HRESULT hr = E_OUTOFMEMORY;
+        struct node *new_child;
+
+        if (!(new_child = dup_node( child )) || (hr = dup_tree( &new_child, child )) != S_OK)
+        {
+            destroy_nodes( *dst );
+            return hr;
+        }
+        new_child->parent = parent;
+        list_add_tail( &parent->children, &new_child->entry );
+    }
+    return S_OK;
+}
+
 static const struct prop_desc reader_props[] =
 {
     { sizeof(ULONG), FALSE },      /* WS_XML_READER_PROPERTY_MAX_DEPTH */
@@ -480,6 +635,12 @@ static void free_reader( struct reader *reader )
     clear_prefixes( reader->prefixes, reader->nb_prefixes );
     heap_free( reader->prefixes );
     heap_free( reader );
+}
+
+HRESULT copy_node( WS_XML_READER *handle, struct node **node )
+{
+    struct reader *reader = (struct reader *)handle;
+    return dup_tree( node, reader->current );
 }
 
 static HRESULT set_prefix( struct prefix *prefix, const WS_XML_STRING *str, const WS_XML_STRING *ns )
@@ -1871,7 +2032,7 @@ BOOL move_to_child_node( struct node **current )
     return FALSE;
 }
 
-static BOOL move_to_parent_node( struct node **current )
+BOOL move_to_parent_node( struct node **current )
 {
     struct node *parent = (*current)->parent;
     if (!parent) return FALSE;

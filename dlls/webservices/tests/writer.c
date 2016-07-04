@@ -1733,6 +1733,88 @@ static void test_WsWriteNode(void)
     WsFreeHeap( heap );
 }
 
+static HRESULT set_input( WS_XML_READER *reader, const char *data, ULONG size )
+{
+    WS_XML_READER_TEXT_ENCODING enc;
+    WS_XML_READER_BUFFER_INPUT input;
+
+    enc.encoding.encodingType = WS_XML_READER_ENCODING_TYPE_TEXT;
+    enc.charSet               = WS_CHARSET_AUTO;
+
+    input.input.inputType = WS_XML_READER_INPUT_TYPE_BUFFER;
+    input.encodedData     = (void *)data;
+    input.encodedDataSize = size;
+
+    return WsSetInput( reader, &enc.encoding, &input.input, NULL, 0, NULL );
+}
+
+static void test_WsCopyNode(void)
+{
+    WS_XML_STRING localname = {1, (BYTE *)"t"}, localname2 = {1, (BYTE *)"u"}, ns = {0, NULL};
+    WS_XML_NODE_POSITION pos, pos2;
+    WS_XML_WRITER *writer;
+    WS_XML_READER *reader;
+    WS_XML_BUFFER *buffer;
+    WS_HEAP *heap;
+    HRESULT hr;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateXmlBuffer( heap, NULL, 0, &buffer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetOutputToBuffer( writer, buffer, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, NULL, &localname2, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetWriterPosition( writer, &pos, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_buffer( buffer, "<t><u/></t>", __LINE__ );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_input( reader, "<v/>", sizeof("<v/>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsFillReader( reader, sizeof("<v/>") - 1, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetWriterPosition( writer, &pos, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCopyNode( writer, reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_buffer( buffer, "<t><u/><v/></t>", __LINE__ );
+
+    hr = WsGetWriterPosition( writer, &pos2, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( pos2.buffer == pos.buffer, "wrong buffer\n" );
+    ok( pos2.node == pos.node, "wrong node\n" );
+
+    WsFreeReader( reader );
+    WsFreeWriter( writer );
+    WsFreeHeap( heap );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -1756,4 +1838,5 @@ START_TEST(writer)
     test_WsSetWriterPosition();
     test_WsWriteXmlBuffer();
     test_WsWriteNode();
+    test_WsCopyNode();
 }

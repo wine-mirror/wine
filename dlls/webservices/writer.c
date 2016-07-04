@@ -1988,3 +1988,117 @@ HRESULT WINAPI WsWriteNode( WS_XML_WRITER *handle, const WS_XML_NODE *node, WS_E
 
     return write_node( writer, node );
 }
+
+static HRESULT write_tree_node( struct writer *writer )
+{
+    HRESULT hr;
+
+    switch (node_type( writer->current ))
+    {
+    case WS_XML_NODE_TYPE_ELEMENT:
+        if (writer->state == WRITER_STATE_STARTELEMENT && (hr = write_endstartelement( writer )) != S_OK)
+            return hr;
+        if ((hr = write_startelement( writer )) != S_OK) return hr;
+        writer->state = WRITER_STATE_STARTELEMENT;
+        return S_OK;
+
+    case WS_XML_NODE_TYPE_TEXT:
+        if (writer->state == WRITER_STATE_STARTELEMENT && (hr = write_endstartelement( writer )) != S_OK)
+            return hr;
+        if ((hr = write_text( writer )) != S_OK) return hr;
+        writer->state = WRITER_STATE_TEXT;
+        return S_OK;
+
+    case WS_XML_NODE_TYPE_END_ELEMENT:
+        if ((hr = write_close_element( writer, writer->current->parent )) != S_OK) return hr;
+        writer->state = WRITER_STATE_ENDELEMENT;
+        return S_OK;
+
+    case WS_XML_NODE_TYPE_COMMENT:
+        if (writer->state == WRITER_STATE_STARTELEMENT && (hr = write_endstartelement( writer )) != S_OK)
+            return hr;
+        if ((hr = write_comment( writer )) != S_OK) return hr;
+        writer->state = WRITER_STATE_COMMENT;
+        return S_OK;
+
+    case WS_XML_NODE_TYPE_CDATA:
+        if (writer->state == WRITER_STATE_STARTELEMENT && (hr = write_endstartelement( writer )) != S_OK)
+            return hr;
+        if ((hr = write_cdata( writer )) != S_OK) return hr;
+        writer->state = WRITER_STATE_STARTCDATA;
+        return S_OK;
+
+    case WS_XML_NODE_TYPE_END_CDATA:
+        if ((hr = write_endcdata( writer )) != S_OK) return hr;
+        writer->state = WRITER_STATE_ENDCDATA;
+        return S_OK;
+
+    case WS_XML_NODE_TYPE_EOF:
+    case WS_XML_NODE_TYPE_BOF:
+        return S_OK;
+
+    default:
+        ERR( "unknown node type %u\n", node_type(writer->current) );
+        return E_INVALIDARG;
+    }
+}
+
+static HRESULT write_tree( struct writer *writer )
+{
+    HRESULT hr;
+
+    if ((hr = write_tree_node( writer )) != S_OK) return hr;
+    for (;;)
+    {
+        if (node_type( writer->current ) == WS_XML_NODE_TYPE_EOF) break;
+        if (move_to_child_node( &writer->current ))
+        {
+            if ((hr = write_tree_node( writer )) != S_OK) return hr;
+            continue;
+        }
+        if (move_to_next_node( &writer->current ))
+        {
+            if ((hr = write_tree_node( writer )) != S_OK) return hr;
+            continue;
+        }
+        if (!move_to_parent_node( &writer->current ) || !move_to_next_node( &writer->current ))
+        {
+            ERR( "invalid tree\n" );
+            return WS_E_INVALID_FORMAT;
+        }
+        if ((hr = write_tree_node( writer )) != S_OK) return hr;
+    }
+    return S_OK;
+}
+
+static void write_rewind( struct writer *writer )
+{
+    writer->write_pos = 0;
+    writer->current   = writer->root;
+    writer->state     = WRITER_STATE_INITIAL;
+}
+
+/**************************************************************************
+ *          WsCopyNode		[webservices.@]
+ */
+HRESULT WINAPI WsCopyNode( WS_XML_WRITER *handle, WS_XML_READER *reader, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    struct node *parent, *current = writer->current, *node = NULL;
+    HRESULT hr;
+
+    TRACE( "%p %p %p\n", handle, reader, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer) return E_INVALIDARG;
+    if (!(parent = find_parent( writer->current ))) return WS_E_INVALID_FORMAT;
+
+    if ((hr = copy_node( reader, &node )) != S_OK) return hr;
+    write_insert_node( writer, parent, node );
+
+    write_rewind( writer );
+    if ((hr = write_tree( writer )) != S_OK) return hr;
+
+    writer->current = current;
+    return S_OK;
+}
