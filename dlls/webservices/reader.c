@@ -1008,11 +1008,129 @@ static HRESULT parse_name( const unsigned char *str, unsigned int len,
     return S_OK;
 }
 
+static int codepoint_to_utf8( int cp, unsigned char *dst )
+{
+    if (cp < 0x80)
+    {
+        *dst = cp;
+        return 1;
+    }
+    if (cp < 0x800)
+    {
+        dst[1] = 0x80 | (cp & 0x3f);
+        cp >>= 6;
+        dst[0] = 0xc0 | cp;
+        return 2;
+    }
+    if ((cp >= 0xd800 && cp <= 0xdfff) || cp == 0xfffe || cp == 0xffff) return -1;
+    if (cp < 0x10000)
+    {
+        dst[2] = 0x80 | (cp & 0x3f);
+        cp >>= 6;
+        dst[1] = 0x80 | (cp & 0x3f);
+        cp >>= 6;
+        dst[0] = 0xe0 | cp;
+        return 3;
+    }
+    dst[3] = 0x80 | (cp & 0x3f);
+    cp >>= 6;
+    dst[2] = 0x80 | (cp & 0x3f);
+    cp >>= 6;
+    dst[1] = 0x80 | (cp & 0x3f);
+    cp >>= 6;
+    dst[0] = 0xf0 | cp;
+    return 4;
+}
+
+static HRESULT decode_text( const unsigned char *str, ULONG len, unsigned char *ret, ULONG *ret_len  )
+{
+    const unsigned char *p = str;
+    unsigned char *q = ret;
+
+    *ret_len = 0;
+    while (len)
+    {
+        if (*p == '&')
+        {
+            p++; len--;
+            if (!len) return WS_E_INVALID_FORMAT;
+
+            if (len >= 3 && !memcmp( p, "lt;", 3 ))
+            {
+                *q++ = '<';
+                p += 3;
+                len -= 3;
+            }
+            else if (len >= 3 && !memcmp( p, "gt;", 3 ))
+            {
+                *q++ = '>';
+                p += 3;
+                len -= 3;
+            }
+            else if (len >= 5 && !memcmp( p, "quot;", 5 ))
+            {
+                *q++ = '"';
+                p += 5;
+                len -= 5;
+            }
+            else if (len >= 4 && !memcmp( p, "amp;", 4 ))
+            {
+                *q++ = '&';
+                p += 4;
+                len -= 4;
+            }
+            else if (len >= 5 && !memcmp( p, "apos;", 5 ))
+            {
+                *q++ = '\'';
+                p += 5;
+                len -= 5;
+            }
+            else if (*p == '#')
+            {
+                ULONG start, nb_digits, i;
+                int len_utf8, cp = 0;
+
+                p++; len--;
+                if (!len || *p != 'x') return WS_E_INVALID_FORMAT;
+                p++; len--;
+
+                start = len;
+                while (len && isxdigit( *p )) { p++; len--; };
+                if (!len) return WS_E_INVALID_FORMAT;
+
+                p -= nb_digits = start - len;
+                if (!nb_digits || nb_digits > 5 || p[nb_digits] != ';') return WS_E_INVALID_FORMAT;
+                for (i = 0; i < nb_digits; i++)
+                {
+                    cp *= 16;
+                    if (*p >= '0' && *p <= '9') cp += *p - '0';
+                    else if (*p >= 'a' && *p <= 'f') cp += *p - 'a' + 10;
+                    else cp += *p - 'A' + 10;
+                    p++;
+                }
+                p++; len--;
+                if ((len_utf8 = codepoint_to_utf8( cp, q )) < 0) return WS_E_INVALID_FORMAT;
+                *ret_len += len_utf8;
+                q += len_utf8;
+                continue;
+            }
+            else return WS_E_INVALID_FORMAT;
+        }
+        else
+        {
+            *q++ = *p++;
+            len--;
+        }
+        *ret_len += 1;
+    }
+    return S_OK;
+}
+
 static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
 {
     static const WS_XML_STRING xmlns = {5, (BYTE *)"xmlns"};
     WS_XML_ATTRIBUTE *attr;
-    WS_XML_UTF8_TEXT *text;
+    WS_XML_UTF8_TEXT *text = NULL;
     unsigned int len = 0, ch, skip, quote;
     const unsigned char *start;
     WS_XML_STRING *prefix, *localname;
@@ -1083,7 +1201,11 @@ static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
         if ((hr = bind_prefix( reader, attr->prefix, attr->ns )) != S_OK) goto error;
         if (!(text = alloc_utf8_text( NULL, 0 ))) goto error;
     }
-    else if (!(text = alloc_utf8_text( start, len ))) goto error;
+    else
+    {
+        if (!(text = alloc_utf8_text( NULL, len ))) goto error;
+        if ((hr = decode_text( start, len, text->value.bytes, &text->value.length )) != S_OK) goto error;
+    }
 
     attr->value = &text->text;
     attr->singleQuote = (quote == '\'');
@@ -1092,6 +1214,7 @@ static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
     return S_OK;
 
 error:
+    heap_free( text );
     free_attribute( attr );
     return hr;
 }
@@ -1207,6 +1330,7 @@ static HRESULT read_text( struct reader *reader )
     struct node *node, *parent;
     WS_XML_TEXT_NODE *text;
     WS_XML_UTF8_TEXT *utf8;
+    HRESULT hr;
 
     start = read_current_ptr( reader );
     for (;;)
@@ -1222,10 +1346,16 @@ static HRESULT read_text( struct reader *reader )
 
     if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return E_OUTOFMEMORY;
     text = (WS_XML_TEXT_NODE *)node;
-    if (!(utf8 = alloc_utf8_text( start, len )))
+    if (!(utf8 = alloc_utf8_text( NULL, len )))
     {
         heap_free( node );
         return E_OUTOFMEMORY;
+    }
+    if ((hr = decode_text( start, len, utf8->value.bytes, &utf8->value.length )) != S_OK)
+    {
+        heap_free( utf8 );
+        heap_free( node );
+        return hr;
     }
     text->text = &utf8->text;
 
