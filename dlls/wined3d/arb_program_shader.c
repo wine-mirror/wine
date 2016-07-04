@@ -5274,6 +5274,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_DSY_FINE                         */ NULL,
     /* WINED3DSIH_ELSE                             */ shader_hw_else,
     /* WINED3DSIH_EMIT                             */ NULL,
+    /* WINED3DSIH_EMIT_STREAM                      */ NULL,
     /* WINED3DSIH_ENDIF                            */ shader_hw_endif,
     /* WINED3DSIH_ENDLOOP                          */ shader_hw_endloop,
     /* WINED3DSIH_ENDREP                           */ shader_hw_endrep,

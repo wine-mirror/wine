@@ -104,6 +104,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DSY_FINE                         */ "deriv_rty_fine",
     /* WINED3DSIH_ELSE                             */ "else",
     /* WINED3DSIH_EMIT                             */ "emit",
+    /* WINED3DSIH_EMIT_STREAM                      */ "emit_stream",
     /* WINED3DSIH_ENDIF                            */ "endif",
     /* WINED3DSIH_ENDLOOP                          */ "endloop",
     /* WINED3DSIH_ENDREP                           */ "endrep",
@@ -1777,6 +1778,10 @@ static void shader_dump_register(struct wined3d_string_buffer *buffer,
 
         case WINED3DSPR_IDXTEMP:
             shader_addline(buffer, "x");
+            break;
+
+        case WINED3DSPR_STREAM:
+            shader_addline(buffer, "m");
             break;
 
         default:
