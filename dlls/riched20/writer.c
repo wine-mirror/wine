@@ -981,7 +981,7 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
       if (!ME_StreamOutPrint(pStream, "}"))
         return FALSE;
     }
-  } while (cursor.pRun != endCur.pRun && ME_NextRun(&cursor.pPara, &cursor.pRun));
+  } while (cursor.pRun != endCur.pRun && ME_NextRun(&cursor.pPara, &cursor.pRun, TRUE));
 
   if (!ME_StreamOutMove(pStream, "}\0", 2))
     return FALSE;

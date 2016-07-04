@@ -1863,7 +1863,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
       cursor.nOffset++;
       if (cursor.nOffset == cursor.pRun->member.run.len)
       {
-        ME_NextRun(&cursor.pPara, &cursor.pRun);
+        ME_NextRun(&cursor.pPara, &cursor.pRun, TRUE);
         cursor.nOffset = 0;
       }
     }
@@ -1889,7 +1889,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
 
       if (nCurEnd == 0)
       {
-        ME_PrevRun(&pCurPara, &pCurItem);
+        ME_PrevRun(&pCurPara, &pCurItem, TRUE);
         nCurEnd = pCurItem->member.run.len;
       }
 
@@ -1938,7 +1938,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
         }
         if (nCurEnd - nMatched == 0)
         {
-          ME_PrevRun(&pCurPara, &pCurItem);
+          ME_PrevRun(&pCurPara, &pCurItem, TRUE);
           /* Don't care about pCurItem becoming NULL here; it's already taken
            * care of in the exterior loop condition */
           nCurEnd = pCurItem->member.run.len + nMatched;
@@ -1952,7 +1952,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
       cursor.nOffset--;
       if (cursor.nOffset < 0)
       {
-        ME_PrevRun(&cursor.pPara, &cursor.pRun);
+        ME_PrevRun(&cursor.pPara, &cursor.pRun, TRUE);
         cursor.nOffset = cursor.pRun->member.run.len;
       }
     }
@@ -5109,7 +5109,7 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor,
     }
 
     cursor.nOffset = 0;
-    if (!ME_NextRun(&cursor.pPara, &cursor.pRun))
+    if (!ME_NextRun(&cursor.pPara, &cursor.pRun, TRUE))
       goto done;
   }
 
