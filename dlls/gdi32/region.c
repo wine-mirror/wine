@@ -2589,10 +2589,9 @@ static void REGION_FreeStorage(ScanLineListBlock *pSLLBlock)
  */
 static BOOL REGION_PtsToRegion( struct point_block *FirstPtBlock, WINEREGION *reg )
 {
-    RECT *rects;
     POINT *pts;
     struct point_block *pb;
-    int i, size;
+    int i, size, cur_band = 0, prev_band = 0;
     RECT *extents;
 
     extents = &reg->extents;
@@ -2600,7 +2599,6 @@ static BOOL REGION_PtsToRegion( struct point_block *FirstPtBlock, WINEREGION *re
     for (pb = FirstPtBlock, size = 0; pb; pb = pb->next) size += pb->count;
     if (!init_region( reg, size )) return FALSE;
 
-    rects = reg->rects - 1;
     extents->left = LARGE_COORDINATE,  extents->right = SMALL_COORDINATE;
 
     for (pb = FirstPtBlock; pb; pb = pb->next)
@@ -2610,15 +2608,14 @@ static BOOL REGION_PtsToRegion( struct point_block *FirstPtBlock, WINEREGION *re
 	for (pts = pb->pts; i--; pts += 2) {
 	    if (pts->x == pts[1].x)
 		continue;
-	    if (reg->numRects && pts->x == rects->left && pts->y == rects->bottom &&
-		pts[1].x == rects->right &&
-		(reg->numRects == 1 || rects[-1].top != rects->top) &&
-		(i && pts[2].y > pts[1].y)) {
-		rects->bottom = pts[1].y + 1;
-		continue;
-	    }
+
+            if (reg->numRects && pts[0].y != reg->rects[cur_band].top)
+            {
+                prev_band = REGION_Coalesce( reg, prev_band, cur_band );
+                cur_band = reg->numRects;
+            }
+
             add_rect( reg, pts[0].x, pts[0].y, pts[1].x, pts[1].y + 1 );
-	    rects++;
             if (pts[0].x < extents->left)
                 extents->left = pts[0].x;
             if (pts[1].x > extents->right)
@@ -2627,6 +2624,7 @@ static BOOL REGION_PtsToRegion( struct point_block *FirstPtBlock, WINEREGION *re
     }
 
     if (reg->numRects) {
+        REGION_Coalesce( reg, prev_band, cur_band );
         extents->top = reg->rects[0].top;
         extents->bottom = reg->rects[reg->numRects-1].bottom;
     } else {
