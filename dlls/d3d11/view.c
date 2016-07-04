@@ -183,17 +183,17 @@ static HRESULT normalize_dsv_desc(D3D11_DEPTH_STENCIL_VIEW_DESC *desc, ID3D11Res
     switch (desc->ViewDimension)
     {
         case D3D11_DSV_DIMENSION_TEXTURE1DARRAY:
-            if (desc->u.Texture1DArray.ArraySize == -1 && desc->u.Texture1DArray.FirstArraySlice < layer_count)
+            if (desc->u.Texture1DArray.ArraySize == ~0u && desc->u.Texture1DArray.FirstArraySlice < layer_count)
                 desc->u.Texture1DArray.ArraySize = layer_count - desc->u.Texture1DArray.ArraySize;
             break;
 
         case D3D11_DSV_DIMENSION_TEXTURE2DARRAY:
-            if (desc->u.Texture2DArray.ArraySize == -1 && desc->u.Texture2DArray.FirstArraySlice < layer_count)
+            if (desc->u.Texture2DArray.ArraySize == ~0u && desc->u.Texture2DArray.FirstArraySlice < layer_count)
                 desc->u.Texture2DArray.ArraySize = layer_count - desc->u.Texture2DArray.FirstArraySlice;
             break;
 
         case D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY:
-            if (desc->u.Texture2DMSArray.ArraySize == -1 && desc->u.Texture2DMSArray.FirstArraySlice < layer_count)
+            if (desc->u.Texture2DMSArray.ArraySize == ~0u && desc->u.Texture2DMSArray.FirstArraySlice < layer_count)
                 desc->u.Texture2DMSArray.ArraySize = layer_count - desc->u.Texture2DMSArray.FirstArraySlice;
             break;
 
@@ -411,23 +411,23 @@ static HRESULT normalize_rtv_desc(D3D11_RENDER_TARGET_VIEW_DESC *desc, ID3D11Res
     switch (desc->ViewDimension)
     {
         case D3D11_RTV_DIMENSION_TEXTURE1DARRAY:
-            if (desc->u.Texture1DArray.ArraySize == -1 && desc->u.Texture1DArray.FirstArraySlice < layer_count)
+            if (desc->u.Texture1DArray.ArraySize == ~0u && desc->u.Texture1DArray.FirstArraySlice < layer_count)
                 desc->u.Texture1DArray.ArraySize = layer_count - desc->u.Texture1DArray.ArraySize;
             break;
 
         case D3D11_RTV_DIMENSION_TEXTURE2DARRAY:
-            if (desc->u.Texture2DArray.ArraySize == -1 && desc->u.Texture2DArray.FirstArraySlice < layer_count)
+            if (desc->u.Texture2DArray.ArraySize == ~0u && desc->u.Texture2DArray.FirstArraySlice < layer_count)
                 desc->u.Texture2DArray.ArraySize = layer_count - desc->u.Texture2DArray.FirstArraySlice;
             break;
 
         case D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY:
-            if (desc->u.Texture2DMSArray.ArraySize == -1 && desc->u.Texture2DMSArray.FirstArraySlice < layer_count)
+            if (desc->u.Texture2DMSArray.ArraySize == ~0u && desc->u.Texture2DMSArray.FirstArraySlice < layer_count)
                 desc->u.Texture2DMSArray.ArraySize = layer_count - desc->u.Texture2DMSArray.FirstArraySlice;
             break;
 
         case D3D11_RTV_DIMENSION_TEXTURE3D:
             layer_count = max(1, layer_count >> desc->u.Texture3D.MipSlice);
-            if (desc->u.Texture3D.WSize == -1 && desc->u.Texture3D.FirstWSlice < layer_count)
+            if (desc->u.Texture3D.WSize == ~0u && desc->u.Texture3D.FirstWSlice < layer_count)
                 desc->u.Texture3D.WSize = layer_count - desc->u.Texture3D.FirstWSlice;
             break;
 
@@ -650,48 +650,48 @@ static HRESULT normalize_srv_desc(D3D11_SHADER_RESOURCE_VIEW_DESC *desc, ID3D11R
     switch (desc->ViewDimension)
     {
         case D3D11_SRV_DIMENSION_TEXTURE1D:
-            if (desc->u.Texture1D.MipLevels == -1 && desc->u.Texture1D.MostDetailedMip < miplevel_count)
+            if (desc->u.Texture1D.MipLevels == ~0u && desc->u.Texture1D.MostDetailedMip < miplevel_count)
                 desc->u.Texture1D.MipLevels = miplevel_count - desc->u.Texture1D.MostDetailedMip;
             break;
 
         case D3D11_SRV_DIMENSION_TEXTURE1DARRAY:
-            if (desc->u.Texture1DArray.MipLevels == -1 && desc->u.Texture1DArray.MostDetailedMip < miplevel_count)
+            if (desc->u.Texture1DArray.MipLevels == ~0u && desc->u.Texture1DArray.MostDetailedMip < miplevel_count)
                 desc->u.Texture1DArray.MipLevels = miplevel_count - desc->u.Texture1DArray.MostDetailedMip;
-            if (desc->u.Texture1DArray.ArraySize == -1 && desc->u.Texture1DArray.FirstArraySlice < miplevel_count)
+            if (desc->u.Texture1DArray.ArraySize == ~0u && desc->u.Texture1DArray.FirstArraySlice < miplevel_count)
                 desc->u.Texture1DArray.ArraySize = layer_count - desc->u.Texture1DArray.FirstArraySlice;
             break;
 
         case D3D11_SRV_DIMENSION_TEXTURE2D:
-            if (desc->u.Texture2D.MipLevels == -1 && desc->u.Texture2D.MostDetailedMip < miplevel_count)
+            if (desc->u.Texture2D.MipLevels == ~0u && desc->u.Texture2D.MostDetailedMip < miplevel_count)
                 desc->u.Texture2D.MipLevels = miplevel_count - desc->u.Texture2D.MostDetailedMip;
             break;
 
         case D3D11_SRV_DIMENSION_TEXTURE2DARRAY:
-            if (desc->u.Texture2DArray.MipLevels == -1 && desc->u.Texture2DArray.MostDetailedMip < miplevel_count)
+            if (desc->u.Texture2DArray.MipLevels == ~0u && desc->u.Texture2DArray.MostDetailedMip < miplevel_count)
                 desc->u.Texture2DArray.MipLevels = miplevel_count - desc->u.Texture2DArray.MostDetailedMip;
-            if (desc->u.Texture2DArray.ArraySize == -1 && desc->u.Texture2DArray.FirstArraySlice < layer_count)
+            if (desc->u.Texture2DArray.ArraySize == ~0u && desc->u.Texture2DArray.FirstArraySlice < layer_count)
                 desc->u.Texture2DArray.ArraySize = layer_count - desc->u.Texture2DArray.FirstArraySlice;
             break;
 
         case D3D11_SRV_DIMENSION_TEXTURE2DMSARRAY:
-            if (desc->u.Texture2DMSArray.ArraySize == -1 && desc->u.Texture2DMSArray.FirstArraySlice < layer_count)
+            if (desc->u.Texture2DMSArray.ArraySize == ~0u && desc->u.Texture2DMSArray.FirstArraySlice < layer_count)
                 desc->u.Texture2DMSArray.ArraySize = layer_count - desc->u.Texture2DMSArray.FirstArraySlice;
             break;
 
         case D3D11_SRV_DIMENSION_TEXTURE3D:
-            if (desc->u.Texture3D.MipLevels == -1 && desc->u.Texture3D.MostDetailedMip < miplevel_count)
+            if (desc->u.Texture3D.MipLevels == ~0u && desc->u.Texture3D.MostDetailedMip < miplevel_count)
                 desc->u.Texture3D.MipLevels = miplevel_count - desc->u.Texture3D.MostDetailedMip;
             break;
 
         case D3D11_SRV_DIMENSION_TEXTURECUBE:
-            if (desc->u.TextureCube.MipLevels == -1 && desc->u.TextureCube.MostDetailedMip < miplevel_count)
+            if (desc->u.TextureCube.MipLevels == ~0u && desc->u.TextureCube.MostDetailedMip < miplevel_count)
                 desc->u.TextureCube.MipLevels = miplevel_count - desc->u.TextureCube.MostDetailedMip;
             break;
 
         case D3D11_SRV_DIMENSION_TEXTURECUBEARRAY:
-            if (desc->u.TextureCubeArray.MipLevels == -1 && desc->u.TextureCubeArray.MostDetailedMip < miplevel_count)
+            if (desc->u.TextureCubeArray.MipLevels == ~0u && desc->u.TextureCubeArray.MostDetailedMip < miplevel_count)
                 desc->u.TextureCubeArray.MipLevels = miplevel_count - desc->u.TextureCubeArray.MostDetailedMip;
-            if (desc->u.TextureCubeArray.NumCubes == -1 && desc->u.TextureCubeArray.First2DArrayFace < layer_count)
+            if (desc->u.TextureCubeArray.NumCubes == ~0u && desc->u.TextureCubeArray.First2DArrayFace < layer_count)
                 desc->u.TextureCubeArray.NumCubes = (layer_count - desc->u.TextureCubeArray.First2DArrayFace) / 6;
             break;
 
