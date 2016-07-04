@@ -557,6 +557,36 @@ typedef struct _WS_XML_UTF16_TEXT {
     ULONG byteCount;
 } WS_XML_UTF16_TEXT;
 
+typedef struct _WS_XML_BOOL_TEXT {
+    WS_XML_TEXT text;
+    BOOL value;
+} WS_XML_BOOL_TEXT;
+
+typedef struct _WS_XML_INT32_TEXT {
+    WS_XML_TEXT text;
+    __int32 value;
+} WS_XML_INT32_TEXT;
+
+typedef struct _WS_XML_INT64_TEXT {
+    WS_XML_TEXT text;
+    __int64 value;
+} WS_XML_INT64_TEXT;
+
+typedef struct _WS_XML_UINT64_TEXT {
+    WS_XML_TEXT text;
+    unsigned __int64 value;
+} WS_XML_UINT64_TEXT;
+
+typedef struct _WS_XML_GUID_TEXT {
+    WS_XML_TEXT text;
+    GUID value;
+} WS_XML_GUID_TEXT;
+
+typedef struct _WS_XML_UNIQUE_ID_TEXT {
+    WS_XML_TEXT text;
+    GUID value;
+} WS_XML_UNIQUE_ID_TEXT;
+
 typedef enum {
     WS_BOOL_VALUE_TYPE,
     WS_INT8_VALUE_TYPE,

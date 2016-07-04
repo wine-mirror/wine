@@ -1815,6 +1815,62 @@ static void test_WsCopyNode(void)
     WsFreeHeap( heap );
 }
 
+static void test_text_types(void)
+{
+    static const WCHAR utf16W[] = {'u','t','f','1','6'};
+    WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL};
+    WS_XML_WRITER *writer;
+    static const WS_XML_UTF8_TEXT val_utf8 = { {WS_XML_TEXT_TYPE_UTF8}, {4, (BYTE *)"utf8"} };
+    static WS_XML_UTF16_TEXT val_utf16 = { {WS_XML_TEXT_TYPE_UTF16} };
+    static const WS_XML_GUID_TEXT val_guid = { {WS_XML_TEXT_TYPE_GUID} };
+    static const WS_XML_UNIQUE_ID_TEXT val_urn = { {WS_XML_TEXT_TYPE_UNIQUE_ID} };
+    static const WS_XML_BOOL_TEXT val_bool = { {WS_XML_TEXT_TYPE_BOOL}, TRUE };
+    static const WS_XML_INT32_TEXT val_int32 = { {WS_XML_TEXT_TYPE_INT32}, -2147483647 - 1 };
+    static const WS_XML_INT64_TEXT val_int64 = { {WS_XML_TEXT_TYPE_INT64}, -9223372036854775807 - 1 };
+    static const WS_XML_UINT64_TEXT val_uint64 = { {WS_XML_TEXT_TYPE_UINT64}, ~0 };
+    static const struct
+    {
+        const WS_XML_TEXT *text;
+        const char        *result;
+    }
+    tests[] =
+    {
+        { &val_utf8.text,   "<t>utf8</t>" },
+        { &val_utf16.text,  "<t>utf16</t>" },
+        { &val_guid.text,   "<t>00000000-0000-0000-0000-000000000000</t>" },
+        { &val_urn.text,    "<t>urn:uuid:00000000-0000-0000-0000-000000000000</t>" },
+        { &val_bool.text,   "<t>true</t>" },
+        { &val_int32.text,  "<t>-2147483648</t>" },
+        { &val_int64.text,  "<t>-9223372036854775808</t>" },
+        { &val_uint64.text, "<t>18446744073709551615</t>" },
+    };
+    HRESULT hr;
+    ULONG i;
+
+    val_utf16.bytes     = (BYTE *)utf16W;
+    val_utf16.byteCount = sizeof(utf16W);
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        hr = set_output( writer );
+        ok( hr == S_OK, "got %08x\n", hr );
+        hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+
+        hr = WsWriteText( writer, tests[i].text, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+
+        hr = WsWriteEndElement( writer, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+        check_output( writer, tests[i].result, __LINE__ );
+    }
+
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -1839,4 +1895,5 @@ START_TEST(writer)
     test_WsWriteXmlBuffer();
     test_WsWriteNode();
     test_WsCopyNode();
+    test_text_types();
 }

@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -989,6 +990,74 @@ HRESULT WINAPI WsWriteStartElement( WS_XML_WRITER *handle, const WS_XML_STRING *
     return write_element_node( writer, prefix, localname, ns );
 }
 
+static ULONG format_bool( const BOOL *ptr, unsigned char *buf )
+{
+    static const unsigned char bool_true[] = {'t','r','u','e'}, bool_false[] = {'f','a','l','s','e'};
+    if (*ptr)
+    {
+        memcpy( buf, bool_true, sizeof(bool_true) );
+        return sizeof(bool_true);
+    }
+    memcpy( buf, bool_false, sizeof(bool_false) );
+    return sizeof(bool_false);
+}
+
+static ULONG format_int8( const INT8 *ptr, unsigned char *buf )
+{
+    return wsprintfA( (char *)buf, "%d", *ptr );
+}
+
+static ULONG format_int16( const INT16 *ptr, unsigned char *buf )
+{
+    return wsprintfA( (char *)buf, "%d", *ptr );
+}
+
+static ULONG format_int32( const INT32 *ptr, unsigned char *buf )
+{
+    return wsprintfA( (char *)buf, "%d", *ptr );
+}
+
+static ULONG format_int64( const INT64 *ptr, unsigned char *buf )
+{
+    return wsprintfA( (char *)buf, "%I64d", *ptr );
+}
+
+static ULONG format_uint8( const UINT8 *ptr, unsigned char *buf )
+{
+    return wsprintfA( (char *)buf, "%u", *ptr );
+}
+
+static ULONG format_uint16( const UINT16 *ptr, unsigned char *buf )
+{
+    return wsprintfA( (char *)buf, "%u", *ptr );
+}
+
+static ULONG format_uint32( const UINT32 *ptr, unsigned char *buf )
+{
+    return wsprintfA( (char *)buf, "%u", *ptr );
+}
+
+static ULONG format_uint64( const UINT64 *ptr, unsigned char *buf )
+{
+    return wsprintfA( (char *)buf, "%I64u", *ptr );
+}
+
+static ULONG format_guid( const GUID *ptr, unsigned char *buf )
+{
+    static const char fmt[] = "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x";
+    return sprintf( (char *)buf, fmt, ptr->Data1, ptr->Data2, ptr->Data3,
+                    ptr->Data4[0], ptr->Data4[1], ptr->Data4[2], ptr->Data4[3],
+                    ptr->Data4[4], ptr->Data4[5], ptr->Data4[6], ptr->Data4[7] );
+}
+
+static ULONG format_urn( const GUID *ptr, unsigned char *buf )
+{
+    static const char fmt[] = "urn:uuid:%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x";
+    return sprintf( (char *)buf, fmt, ptr->Data1, ptr->Data2, ptr->Data3,
+                    ptr->Data4[0], ptr->Data4[1], ptr->Data4[2], ptr->Data4[3],
+                    ptr->Data4[4], ptr->Data4[5], ptr->Data4[6], ptr->Data4[7] );
+}
+
 static HRESULT text_to_utf8text( const WS_XML_TEXT *text, WS_XML_UTF8_TEXT **ret )
 {
     switch (text->textType)
@@ -1009,6 +1078,51 @@ static HRESULT text_to_utf8text( const WS_XML_TEXT *text, WS_XML_UTF8_TEXT **ret
         len_utf8 = WideCharToMultiByte( CP_UTF8, 0, str, len, NULL, 0, NULL, NULL );
         if (!(*ret = alloc_utf8_text( NULL, len_utf8 ))) return E_OUTOFMEMORY;
         WideCharToMultiByte( CP_UTF8, 0, str, len, (char *)(*ret)->value.bytes, (*ret)->value.length, NULL, NULL );
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_BOOL:
+    {
+        const WS_XML_BOOL_TEXT *bool_text = (const WS_XML_BOOL_TEXT *)text;
+        if (!(*ret = alloc_utf8_text( NULL, 5 ))) return E_OUTOFMEMORY;
+        (*ret)->value.length = format_bool( &bool_text->value, (*ret)->value.bytes );
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_INT32:
+    {
+        const WS_XML_INT32_TEXT *int32_text = (const WS_XML_INT32_TEXT *)text;
+        unsigned char buf[12]; /* "-2147483648" */
+        ULONG len = format_int32( &int32_text->value, buf );
+        if (!(*ret = alloc_utf8_text( buf, len ))) return E_OUTOFMEMORY;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_INT64:
+    {
+        const WS_XML_INT64_TEXT *int64_text = (const WS_XML_INT64_TEXT *)text;
+        unsigned char buf[21]; /* "-9223372036854775808" */
+        ULONG len = format_int64( &int64_text->value, buf );
+        if (!(*ret = alloc_utf8_text( buf, len ))) return E_OUTOFMEMORY;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_UINT64:
+    {
+        const WS_XML_UINT64_TEXT *uint64_text = (const WS_XML_UINT64_TEXT *)text;
+        unsigned char buf[21]; /* "18446744073709551615" */
+        ULONG len = format_uint64( &uint64_text->value, buf );
+        if (!(*ret = alloc_utf8_text( buf, len ))) return E_OUTOFMEMORY;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_GUID:
+    {
+        const WS_XML_GUID_TEXT *id = (const WS_XML_GUID_TEXT *)text;
+        if (!(*ret = alloc_utf8_text( NULL, 37 ))) return E_OUTOFMEMORY;
+        (*ret)->value.length = format_guid( &id->value, (*ret)->value.bytes );
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_UNIQUE_ID:
+    {
+        const WS_XML_UNIQUE_ID_TEXT *id = (const WS_XML_UNIQUE_ID_TEXT *)text;
+        if (!(*ret = alloc_utf8_text( NULL, 46 ))) return E_OUTOFMEMORY;
+        (*ret)->value.length = format_urn( &id->value, (*ret)->value.bytes );
         return S_OK;
     }
     default:
@@ -1086,58 +1200,6 @@ HRESULT WINAPI WsWriteText( WS_XML_WRITER *handle, const WS_XML_TEXT *text, WS_E
 
     if (writer->state == WRITER_STATE_STARTATTRIBUTE) return write_set_attribute_value( writer, text );
     return write_text_node( writer, text );
-}
-
-static ULONG format_bool( const BOOL *ptr, unsigned char *buf )
-{
-    static const unsigned char bool_true[] = {'t','r','u','e'}, bool_false[] = {'f','a','l','s','e'};
-    if (*ptr)
-    {
-        memcpy( buf, bool_true, sizeof(bool_true) );
-        return sizeof(bool_true);
-    }
-    memcpy( buf, bool_false, sizeof(bool_false) );
-    return sizeof(bool_false);
-}
-
-static ULONG format_int8( const INT8 *ptr, unsigned char *buf )
-{
-    return wsprintfA( (char *)buf, "%d", *ptr );
-}
-
-static ULONG format_int16( const INT16 *ptr, unsigned char *buf )
-{
-    return wsprintfA( (char *)buf, "%d", *ptr );
-}
-
-static ULONG format_int32( const INT32 *ptr, unsigned char *buf )
-{
-    return wsprintfA( (char *)buf, "%d", *ptr );
-}
-
-static ULONG format_int64( const INT64 *ptr, unsigned char *buf )
-{
-    return wsprintfA( (char *)buf, "%I64d", *ptr );
-}
-
-static ULONG format_uint8( const UINT8 *ptr, unsigned char *buf )
-{
-    return wsprintfA( (char *)buf, "%u", *ptr );
-}
-
-static ULONG format_uint16( const UINT16 *ptr, unsigned char *buf )
-{
-    return wsprintfA( (char *)buf, "%u", *ptr );
-}
-
-static ULONG format_uint32( const UINT32 *ptr, unsigned char *buf )
-{
-    return wsprintfA( (char *)buf, "%u", *ptr );
-}
-
-static ULONG format_uint64( const UINT64 *ptr, unsigned char *buf )
-{
-    return wsprintfA( (char *)buf, "%I64u", *ptr );
 }
 
 static HRESULT write_type_text( struct writer *writer, WS_TYPE_MAPPING mapping, const WS_XML_TEXT *text )
