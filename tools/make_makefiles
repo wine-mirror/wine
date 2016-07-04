@@ -51,8 +51,26 @@ my %ignored_source_files = (
     "dlls/wineps.drv/afm2c.c" => 1,
     "dlls/wineps.drv/mkagl.c" => 1,
     "include/config.h.in" => 1,
+    "include/stamp-h.in" => 1,
     "programs/winetest/dist.rc" => 1,
     "tools/makedep.c" => 1,
+);
+
+my @source_vars = (
+    "BISON_SRCS",
+    "C_SRCS",
+    "FONT_SRCS",
+    "HEADER_SRCS",
+    "IDL_SRCS",
+    "IN_SRCS",
+    "LEX_SRCS",
+    "MANPAGES",
+    "MC_SRCS",
+    "OBJC_SRCS",
+    "PO_SRCS",
+    "RC_SRCS",
+    "SVG_SRCS",
+    "XTEMPLATE_SRCS"
 );
 
 my (@makefiles, %makefiles);
@@ -123,64 +141,79 @@ sub replace_in_file($$$@)
     return update_file($file);
 }
 
-# replace a variable in a makefile
-sub replace_makefile_variable($$)
+# replace all source variables in a makefile
+sub replace_makefile_variables($)
 {
-    my ($file, $var) = @_;
+    my $file = shift;
     my $make = $makefiles{$file};
-    my $replaced = 0;
-    my @values;
-
-    if (defined ${$make}{"=$var"})
-    {
-        @values = @{${$make}{"=$var"}};
-        ${$make}{$var} = \@values;
-    }
-    else
-    {
-        return unless defined ${$make}{$var};
-        undef ${$make}{$var};
-    }
+    my $source_vars_regexp = join "|", @source_vars;
+    my $modified = 0;
+    my %replaced;
 
     open NEW_FILE, ">$file.in.new" or die "cannot create $file.in.new";
 
     open OLD_FILE, "$file.in" or die "cannot open $file.in";
     while (<OLD_FILE>)
     {
-        if (/^\s*($var\s*)=/)
+        if (/^\s*($source_vars_regexp)(\s*)=/)
         {
             # try to preserve formatting
-            my $prefix = $1;
+            my $var = $1;
+            my $spaces = $2;
+            my $replaced = 0;
+            my @values;
+
+            if (defined ${$make}{"=$var"})
+            {
+                @values = @{${$make}{"=$var"}};
+                ${$make}{$var} = \@values;
+            }
+            else
+            {
+                undef ${$make}{$var};
+            }
             my $multiline = /\\$/ || (@values > 1);
+            my $old_str = $_;
             while (/\\$/)
             {
                 $_ = <OLD_FILE>;
                 last unless $_;
+                $old_str .= $_;
             }
+            my $new_str = "";
             if (!@values)
             {
                 # nothing
             }
             elsif ($multiline)
             {
-                print NEW_FILE "$var = \\\n\t" . join(" \\\n\t", sort @values) . "\n";
+                $new_str = "$var = \\\n\t" . join(" \\\n\t", sort @values) . "\n";
+                print NEW_FILE $new_str;
             }
             else
             {
-                print NEW_FILE "$prefix= @values\n";
+                $new_str = "$var$spaces= @values\n";
+                print NEW_FILE $new_str;
             }
-            $replaced = 1;
+            $modified = 1 if ($old_str ne $new_str);
+            $replaced{$var} = 1;
             next;
-        }
-        if (/^\@MAKE/ && !$replaced && @values)
-        {
-            print NEW_FILE "$var = \\\n\t" . join(" \\\n\t", sort @values) . "\n";
         }
         print NEW_FILE $_;
     }
+    foreach my $var (@source_vars)
+    {
+        next if defined $replaced{$var};
+        next unless defined ${$make}{"=$var"};
+        my @values = @{${$make}{"=$var"}};
+        next unless @values;
+        print NEW_FILE "\n$var = \\\n\t" . join(" \\\n\t", sort @values) . "\n";
+        $modified = 1;
+    }
     close OLD_FILE;
     close NEW_FILE;
-    return update_file("$file.in");
+    return update_file("$file.in") if $modified;
+    unlink "$file.in.new";
 }
 
 # parse the specified makefile and load the variables
@@ -211,7 +244,8 @@ sub parse_makefile($)
             ${$make{"=flags"}}{"implib"} = 1 if $var eq "IMPORTLIB";
             next;
         }
-        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|FONT_SRCS|IN_SRCS|PO_SRCS|PROGRAMS|EXTRA_TARGETS|MANPAGES|EXTRA_OBJS|INSTALL_LIB|INSTALL_DEV)\s*=\s*(.*)/)
+        my $source_vars_regexp = join "|", @source_vars;
+        if (/^\s*($source_vars_regexp|PROGRAMS|EXTRA_TARGETS|EXTRA_OBJS|INSTALL_LIB|INSTALL_DEV)\s*=\s*(.*)/)
         {
             my $var = $1;
             my @list = split(/\s+/, $2);
@@ -510,23 +544,7 @@ sub update_makefiles(@)
 
     # update the source variables in all the makefiles
 
-    foreach my $file (sort @_)
-    {
-        replace_makefile_variable( $file, "LEX_SRCS" );
-        replace_makefile_variable( $file, "BISON_SRCS" );
-        replace_makefile_variable( $file, "MC_SRCS" );
-        replace_makefile_variable( $file, "SVG_SRCS" );
-        replace_makefile_variable( $file, "FONT_SRCS" );
-        replace_makefile_variable( $file, "C_SRCS" );
-        replace_makefile_variable( $file, "OBJC_SRCS" );
-        replace_makefile_variable( $file, "RC_SRCS" );
-        replace_makefile_variable( $file, "IDL_SRCS" );
-        replace_makefile_variable( $file, "HEADER_SRCS" );
-        replace_makefile_variable( $file, "XTEMPLATE_SRCS" );
-        replace_makefile_variable( $file, "PO_SRCS" );
-        replace_makefile_variable( $file, "IN_SRCS" );
-        replace_makefile_variable( $file, "MANPAGES" );
-    }
+    foreach my $file (sort @_) { replace_makefile_variables( $file ); }
 
     push @lines, "dnl End of auto-generated output commands\n";
     replace_in_file( "configure.ac", '^WINE_CONFIG_DLL', '^dnl End of auto-generated output commands\n$', @lines);
