@@ -220,6 +220,22 @@ struct d3d_shader_resource_view *unsafe_impl_from_ID3D11ShaderResourceView(
 struct d3d_shader_resource_view *unsafe_impl_from_ID3D10ShaderResourceView(
         ID3D10ShaderResourceView *iface) DECLSPEC_HIDDEN;
 
+/* ID3D11UnorderedAccessView */
+struct d3d11_unordered_access_view
+{
+    ID3D11UnorderedAccessView ID3D11UnorderedAccessView_iface;
+    LONG refcount;
+
+    struct wined3d_private_store private_store;
+    struct wined3d_unordered_access_view *wined3d_view;
+    D3D11_UNORDERED_ACCESS_VIEW_DESC desc;
+    ID3D11Resource *resource;
+    ID3D11Device *device;
+};
+
+HRESULT d3d11_unordered_access_view_create(struct d3d_device *device, ID3D11Resource *resource,
+        const D3D11_UNORDERED_ACCESS_VIEW_DESC *desc, struct d3d11_unordered_access_view **view) DECLSPEC_HIDDEN;
+
 /* ID3D11InputLayout, ID3D10InputLayout */
 struct d3d_input_layout
 {
