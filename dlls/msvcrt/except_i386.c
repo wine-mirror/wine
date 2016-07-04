@@ -161,12 +161,6 @@ static inline void call_copy_ctor( void *func, void *this, void *src, int has_vb
                              : : "r" (func), "c" (this), "r" (src) : "eax", "edx", "memory" );
 }
 
-/* call the destructor of the exception object */
-static inline void call_dtor( void *func, void *object )
-{
-    __asm__ __volatile__("call *%0" : : "r" (func), "c" (object) : "eax", "edx", "memory" );
-}
-
 /* continue execution to the specified address after exception is caught */
 static inline void DECLSPEC_NORETURN continue_after_catch( cxx_exception_frame* frame, void *addr )
 {
