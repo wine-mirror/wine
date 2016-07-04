@@ -1796,6 +1796,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     const struct vs_compile_args *vs_args = ctx_priv->cur_vs_args;
     const struct ps_compile_args *ps_args = ctx_priv->cur_ps_args;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_shader_indexable_temp *idx_temp_reg;
     unsigned int i, extra_constants_needed = 0;
     const struct wined3d_shader_lconst *lconst;
     const char *prefix;
@@ -2170,6 +2171,14 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     for (i = 0, map = reg_maps->temporary; map; map >>= 1, ++i)
     {
         if (map & 1) shader_addline(buffer, "vec4 R%u;\n", i);
+    }
+
+    /* Declare indexable temporary variables */
+    LIST_FOR_EACH_ENTRY(idx_temp_reg, &reg_maps->indexable_temps, struct wined3d_shader_indexable_temp, entry)
+    {
+        if (idx_temp_reg->component_count != 4)
+            FIXME("Ignoring component count %u.\n", idx_temp_reg->component_count);
+        shader_addline(buffer, "vec4 X%u[%u];\n", idx_temp_reg->register_idx, idx_temp_reg->register_size);
     }
 
     /* Declare loop registers aLx */
@@ -2573,6 +2582,13 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
 
         case WINED3DSPR_PRIMID:
             sprintf(register_name, "uint(gl_PrimitiveIDIn)");
+            break;
+
+        case WINED3DSPR_IDXTEMP:
+            if (reg->idx[1].rel_addr)
+                sprintf(register_name, "X%u[%s + %u]", reg->idx[0].offset, rel_param1.param_str, reg->idx[1].offset);
+            else
+                sprintf(register_name, "X%u[%u]", reg->idx[0].offset, reg->idx[1].offset);
             break;
 
         default:
@@ -8568,7 +8584,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT */ NULL,
     /* WINED3DSIH_DCL_HS_MAX_TESSFACTOR            */ NULL,
     /* WINED3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER    */ NULL,
-    /* WINED3DSIH_DCL_INDEXABLE_TEMP               */ NULL,
+    /* WINED3DSIH_DCL_INDEXABLE_TEMP               */ shader_glsl_nop,
     /* WINED3DSIH_DCL_INPUT                        */ shader_glsl_nop,
     /* WINED3DSIH_DCL_INPUT_CONTROL_POINT_COUNT    */ NULL,
     /* WINED3DSIH_DCL_INPUT_PRIMITIVE              */ shader_glsl_nop,

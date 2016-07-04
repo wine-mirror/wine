@@ -791,6 +791,14 @@ struct wined3d_shader_immediate_constant_buffer
     DWORD data[MAX_IMMEDIATE_CONSTANT_BUFFER_SIZE];
 };
 
+struct wined3d_shader_indexable_temp
+{
+    struct list entry;
+    unsigned int register_idx;
+    unsigned int register_size;
+    unsigned int component_count;
+};
+
 #define WINED3D_SHADER_VERSION(major, minor) (((major) << 8) | (minor))
 
 struct wined3d_shader_reg_maps
@@ -801,6 +809,7 @@ struct wined3d_shader_reg_maps
     WORD labels;                                    /* MAX_LABELS, 16 */
     DWORD temporary;                                /* MAX_REG_TEMP, 32 */
     DWORD *constf;                                  /* pixel, vertex */
+    struct list indexable_temps;
     const struct wined3d_shader_immediate_constant_buffer *icb;
     union
     {
@@ -897,13 +906,6 @@ struct wined3d_shader_src_param
     struct wined3d_shader_register reg;
     DWORD swizzle;
     enum wined3d_shader_src_modifier modifiers;
-};
-
-struct wined3d_shader_indexable_temp
-{
-    unsigned int register_idx;
-    unsigned int register_size;
-    unsigned int component_count;
 };
 
 struct wined3d_shader_semantic

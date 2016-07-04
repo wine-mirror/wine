@@ -852,6 +852,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
     memset(input_signature_elements, 0, sizeof(input_signature_elements));
     memset(output_signature_elements, 0, sizeof(output_signature_elements));
     reg_maps->min_rel_offset = ~0U;
+    list_init(&reg_maps->indexable_temps);
 
     fe->shader_read_header(fe_data, &ptr, &shader_version);
     reg_maps->shader_version = shader_version;
@@ -946,6 +947,16 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             if (reg_maps->icb)
                 FIXME("Multiple immediate constant buffers.\n");
             reg_maps->icb = ins.declaration.icb;
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_INDEXABLE_TEMP)
+        {
+            struct wined3d_shader_indexable_temp *reg;
+
+            if (!(reg = HeapAlloc(GetProcessHeap(), 0, sizeof(*reg))))
+                return E_OUTOFMEMORY;
+
+            *reg = ins.declaration.indexable_temp;
+            list_add_tail(&reg_maps->indexable_temps, &reg->entry);
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_INPUT_PRIMITIVE)
         {
@@ -1329,6 +1340,18 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
     }
 
     return WINED3D_OK;
+}
+
+static void shader_cleanup_reg_maps(struct wined3d_shader_reg_maps *reg_maps)
+{
+    struct wined3d_shader_indexable_temp *reg, *reg_next;
+
+    HeapFree(GetProcessHeap(), 0, reg_maps->constf);
+    HeapFree(GetProcessHeap(), 0, reg_maps->sampler_map.entries);
+
+    LIST_FOR_EACH_ENTRY_SAFE(reg, reg_next, &reg_maps->indexable_temps, struct wined3d_shader_indexable_temp, entry)
+        HeapFree(GetProcessHeap(), 0, reg);
+    list_init(&reg_maps->indexable_temps);
 }
 
 unsigned int shader_find_free_input_register(const struct wined3d_shader_reg_maps *reg_maps, unsigned int max)
@@ -2432,8 +2455,7 @@ static void shader_cleanup(struct wined3d_shader *shader)
     HeapFree(GetProcessHeap(), 0, shader->input_signature.elements);
     HeapFree(GetProcessHeap(), 0, shader->signature_strings);
     shader->device->shader_backend->shader_destroy(shader);
-    HeapFree(GetProcessHeap(), 0, shader->reg_maps.constf);
-    HeapFree(GetProcessHeap(), 0, shader->reg_maps.sampler_map.entries);
+    shader_cleanup_reg_maps(&shader->reg_maps);
     HeapFree(GetProcessHeap(), 0, shader->function);
     shader_delete_constant_list(&shader->constantsF);
     shader_delete_constant_list(&shader->constantsB);
@@ -2609,6 +2631,7 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *b
     list_init(&shader->constantsB);
     list_init(&shader->constantsI);
     shader->lconst_inf_or_nan = FALSE;
+    list_init(&reg_maps->indexable_temps);
 
     fe = shader_select_frontend(*byte_code);
     if (!fe)
