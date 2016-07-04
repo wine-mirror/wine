@@ -2592,18 +2592,15 @@ static BOOL REGION_PtsToRegion( struct point_block *FirstPtBlock, WINEREGION *re
     RECT *rects;
     POINT *pts;
     struct point_block *pb;
-    int i;
+    int i, size;
     RECT *extents;
-    INT numRects;
 
     extents = &reg->extents;
 
-    for (pb = FirstPtBlock, numRects = 0; pb; pb = pb->next) numRects += pb->count;
-    if (!init_region( reg, numRects )) return FALSE;
+    for (pb = FirstPtBlock, size = 0; pb; pb = pb->next) size += pb->count;
+    if (!init_region( reg, size )) return FALSE;
 
-    reg->size = numRects;
     rects = reg->rects - 1;
-    numRects = 0;
     extents->left = LARGE_COORDINATE,  extents->right = SMALL_COORDINATE;
 
     for (pb = FirstPtBlock; pb; pb = pb->next)
@@ -2613,34 +2610,31 @@ static BOOL REGION_PtsToRegion( struct point_block *FirstPtBlock, WINEREGION *re
 	for (pts = pb->pts; i--; pts += 2) {
 	    if (pts->x == pts[1].x)
 		continue;
-	    if (numRects && pts->x == rects->left && pts->y == rects->bottom &&
+	    if (reg->numRects && pts->x == rects->left && pts->y == rects->bottom &&
 		pts[1].x == rects->right &&
-		(numRects == 1 || rects[-1].top != rects->top) &&
+		(reg->numRects == 1 || rects[-1].top != rects->top) &&
 		(i && pts[2].y > pts[1].y)) {
 		rects->bottom = pts[1].y + 1;
 		continue;
 	    }
-	    numRects++;
+            add_rect( reg, pts[0].x, pts[0].y, pts[1].x, pts[1].y + 1 );
 	    rects++;
-	    rects->left = pts->x;  rects->top = pts->y;
-	    rects->right = pts[1].x;  rects->bottom = pts[1].y + 1;
-	    if (rects->left < extents->left)
-		extents->left = rects->left;
-	    if (rects->right > extents->right)
-		extents->right = rects->right;
+            if (pts[0].x < extents->left)
+                extents->left = pts[0].x;
+            if (pts[1].x > extents->right)
+                extents->right = pts[1].x;
         }
     }
 
-    if (numRects) {
-	extents->top = reg->rects->top;
-	extents->bottom = rects->bottom;
+    if (reg->numRects) {
+        extents->top = reg->rects[0].top;
+        extents->bottom = reg->rects[reg->numRects-1].bottom;
     } else {
 	extents->left = 0;
 	extents->top = 0;
 	extents->right = 0;
 	extents->bottom = 0;
     }
-    reg->numRects = numRects;
 
     return(TRUE);
 }
