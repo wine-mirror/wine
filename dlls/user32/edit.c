@@ -2376,14 +2376,9 @@ static void EDIT_SetRectNP(EDITSTATE *es, const RECT *rc)
 	else if (es->style & WS_BORDER) {
 		bw = GetSystemMetrics(SM_CXBORDER) + 1;
 		bh = GetSystemMetrics(SM_CYBORDER) + 1;
-		es->format_rect.left += bw;
-		es->format_rect.right -= bw;
-		if (es->format_rect.bottom - es->format_rect.top
-		  >= es->line_height + 2 * bh)
-		{
-		    es->format_rect.top += bh;
-		    es->format_rect.bottom -= bh;
-		}
+                InflateRect(&es->format_rect, -bw, 0);
+                if (es->format_rect.bottom - es->format_rect.top >= es->line_height + 2 * bh)
+                    InflateRect(&es->format_rect, 0, -bh);
 	}
 	
 	es->format_rect.left += es->left_margin;
