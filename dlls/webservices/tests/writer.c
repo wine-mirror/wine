@@ -1636,6 +1636,103 @@ static void test_WsWriteXmlBuffer(void)
     WsFreeHeap( heap );
 }
 
+static void test_WsWriteNode(void)
+{
+    WS_XML_STRING localname = {1, (BYTE *)"t"}, localname2 = {4, (BYTE *)"attr"}, ns = {0, NULL};
+    WS_XML_WRITER *writer;
+    WS_XML_BUFFER *buffer;
+    WS_XML_UTF8_TEXT utf8;
+    WS_XML_ATTRIBUTE attr, *attrs[1];
+    WS_XML_ELEMENT_NODE elem;
+    WS_XML_COMMENT_NODE comment;
+    WS_XML_NODE node;
+    WS_XML_TEXT_NODE text;
+    WS_HEAP *heap;
+    HRESULT hr;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteNode( NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteNode( writer, NULL, NULL );
+    todo_wine ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = WsCreateXmlBuffer( heap, NULL, 0, &buffer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetOutputToBuffer( writer, buffer, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    utf8.text.textType = WS_XML_TEXT_TYPE_UTF8;
+    utf8.value.bytes   = (BYTE *)"value";
+    utf8.value.length  = sizeof("value") - 1;
+
+    attr.singleQuote = TRUE;
+    attr.isXmlNs     = FALSE;
+    attr.prefix      = NULL;
+    attr.localName   = &localname2;
+    attr.ns          = &ns;
+    attr.value       = &utf8.text;
+    attrs[0] = &attr;
+
+    elem.node.nodeType  = WS_XML_NODE_TYPE_ELEMENT;
+    elem.prefix         = NULL;
+    elem.localName      = &localname;
+    elem.ns             = &ns;
+    elem.attributeCount = 1;
+    elem.attributes     = attrs;
+    elem.isEmpty        = FALSE;
+    hr = WsWriteNode( writer, (const WS_XML_NODE *)&elem, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    comment.node.nodeType = WS_XML_NODE_TYPE_COMMENT;
+    comment.value.bytes   = (BYTE *)"comment";
+    comment.value.length  = sizeof("comment") - 1;
+    hr = WsWriteNode( writer, (const WS_XML_NODE *)&comment, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    node.nodeType = WS_XML_NODE_TYPE_EOF;
+    hr = WsWriteNode( writer, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    node.nodeType = WS_XML_NODE_TYPE_BOF;
+    hr = WsWriteNode( writer, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    node.nodeType = WS_XML_NODE_TYPE_CDATA;
+    hr = WsWriteNode( writer, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    utf8.value.bytes   = (BYTE *)"cdata";
+    utf8.value.length  = sizeof("cdata") - 1;
+    text.node.nodeType = WS_XML_NODE_TYPE_TEXT;
+    text.text          = &utf8.text;
+    hr = WsWriteNode( writer, (const WS_XML_NODE *)&text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    node.nodeType = WS_XML_NODE_TYPE_END_CDATA;
+    hr = WsWriteNode( writer, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    utf8.value.bytes   = (BYTE *)"text";
+    utf8.value.length  = sizeof("text") - 1;
+    hr = WsWriteNode( writer, (const WS_XML_NODE *)&text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    node.nodeType = WS_XML_NODE_TYPE_END_ELEMENT;
+    hr = WsWriteNode( writer, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_buffer( buffer, "<t attr='value'><!--comment--><![CDATA[cdata]]>text</t>", __LINE__ );
+
+    WsFreeWriter( writer );
+    WsFreeHeap( heap );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -1658,4 +1755,5 @@ START_TEST(writer)
     test_WsGetWriterPosition();
     test_WsSetWriterPosition();
     test_WsWriteXmlBuffer();
+    test_WsWriteNode();
 }

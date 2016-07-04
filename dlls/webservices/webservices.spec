@@ -179,7 +179,7 @@
 @ stub WsWriteEnvelopeStart
 @ stub WsWriteMessageEnd
 @ stub WsWriteMessageStart
-@ stub WsWriteNode
+@ stdcall WsWriteNode(ptr ptr ptr)
 @ stub WsWriteQualifiedName
 @ stdcall WsWriteStartAttribute(ptr ptr ptr ptr long ptr)
 @ stdcall WsWriteStartCData(ptr ptr)
