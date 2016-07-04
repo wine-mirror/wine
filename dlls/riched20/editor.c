@@ -2627,6 +2627,11 @@ static int ME_CalculateClickCount(ME_TextEditor *editor, UINT msg, WPARAM wParam
     return clickNum;
 }
 
+static BOOL is_link( ME_Run *run )
+{
+    return (run->style->fmt.dwMask & CFM_LINK) && (run->style->fmt.dwEffects & CFE_LINK);
+}
+
 static BOOL ME_SetCursor(ME_TextEditor *editor)
 {
   ME_Cursor cursor;
@@ -2692,8 +2697,7 @@ static BOOL ME_SetCursor(ME_TextEditor *editor)
       ME_Run *run;
 
       run = &cursor.pRun->member.run;
-      if (run->style->fmt.dwMask & CFM_LINK &&
-          run->style->fmt.dwEffects & CFE_LINK)
+      if (is_link( run ))
       {
           ITextHost_TxSetCursor(editor->texthost,
                                 LoadCursorW(NULL, (WCHAR*)IDC_HAND),
@@ -3128,8 +3132,7 @@ static void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM
   ME_CharFromPos(editor, x, y, &cursor, &isExact);
   if (!isExact) return;
 
-  if (cursor.pRun->member.run.style->fmt.dwMask & CFM_LINK &&
-      cursor.pRun->member.run.style->fmt.dwEffects & CFE_LINK)
+  if (is_link( &cursor.pRun->member.run ))
   { /* The clicked run has CFE_LINK set */
     ME_DisplayItem *di;
 
@@ -3143,21 +3146,15 @@ static void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM
 
     /* find the first contiguous run with CFE_LINK set */
     info.chrg.cpMin = ME_GetCursorOfs(&cursor);
-    for (di = cursor.pRun->prev;
-         di && di->type == diRun && (di->member.run.style->fmt.dwMask & CFM_LINK) && (di->member.run.style->fmt.dwEffects & CFE_LINK);
-         di = di->prev)
-    {
-      info.chrg.cpMin -= di->member.run.len;
-    }
+    di = cursor.pRun;
+    while (ME_PrevRun( NULL, &di, FALSE ) && is_link( &di->member.run ))
+        info.chrg.cpMin -= di->member.run.len;
 
     /* find the last contiguous run with CFE_LINK set */
     info.chrg.cpMax = ME_GetCursorOfs(&cursor) + cursor.pRun->member.run.len;
-    for (di = cursor.pRun->next;
-         di && di->type == diRun && (di->member.run.style->fmt.dwMask & CFM_LINK) && (di->member.run.style->fmt.dwEffects & CFE_LINK);
-         di = di->next)
-    {
-      info.chrg.cpMax += di->member.run.len;
-    }
+    di = cursor.pRun;
+    while (ME_NextRun( NULL, &di, FALSE ) && is_link( &di->member.run ))
+        info.chrg.cpMax += di->member.run.len;
 
     ITextHost_TxNotify(editor->texthost, info.nmhdr.code, &info);
   }
