@@ -253,6 +253,9 @@ sysval_semantic_names[] =
 {
     {WINED3D_SV_POSITION,                   "SV_Position"},
     {WINED3D_SV_CLIP_DISTANCE,              "SV_ClipDistance"},
+    {WINED3D_SV_CULL_DISTANCE,              "SV_CullDistance"},
+    {WINED3D_SV_RENDER_TARGET_ARRAY_INDEX,  "SV_RenderTargetArrayIndex"},
+    {WINED3D_SV_VIEWPORT_ARRAY_INDEX,       "SV_ViewportArrayIndex"},
     {WINED3D_SV_VERTEX_ID,                  "SV_VertexID"},
     {WINED3D_SV_INSTANCE_ID,                "SV_InstanceID"},
     {WINED3D_SV_PRIMITIVE_ID,               "SV_PrimitiveID"},
