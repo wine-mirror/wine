@@ -382,6 +382,11 @@ struct d3d_depthstencil_state
     ID3D11Device *device;
 };
 
+static inline struct d3d_depthstencil_state *impl_from_ID3D11DepthStencilState(ID3D11DepthStencilState *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d_depthstencil_state, ID3D11DepthStencilState_iface);
+}
+
 HRESULT d3d_depthstencil_state_init(struct d3d_depthstencil_state *state, struct d3d_device *device,
         const D3D11_DEPTH_STENCIL_DESC *desc) DECLSPEC_HIDDEN;
 struct d3d_depthstencil_state *unsafe_impl_from_ID3D11DepthStencilState(
