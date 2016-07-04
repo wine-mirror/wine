@@ -1579,6 +1579,63 @@ static void test_WsSetWriterPosition(void)
     WsFreeHeap( heap );
 }
 
+static void test_WsWriteXmlBuffer(void)
+{
+    WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL};
+    WS_XML_WRITER *writer1, *writer2;
+    WS_XML_BUFFER *buffer1, *buffer2;
+    WS_HEAP *heap;
+    HRESULT hr;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateXmlBuffer( NULL, NULL, 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateWriter( NULL, 0, &writer1, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateXmlBuffer( heap, NULL, 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateXmlBuffer( heap, NULL, 0, &buffer1, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetOutputToBuffer( writer1, buffer1, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer1, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer1, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_buffer( buffer1, "<t/>", __LINE__ );
+
+    hr = WsCreateWriter( NULL, 0, &writer2, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateXmlBuffer( heap, NULL, 0, &buffer2, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetOutputToBuffer( writer2, buffer2, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteXmlBuffer( writer2, buffer1, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_buffer( buffer2, "<t/>", __LINE__ );
+
+    hr = WsMoveWriter( writer2, WS_MOVE_TO_PREVIOUS_ELEMENT, NULL, NULL );
+    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteXmlBuffer( writer2, buffer1, NULL );
+    todo_wine ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    WsFreeWriter( writer1 );
+    WsFreeWriter( writer2 );
+    WsFreeHeap( heap );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -1600,4 +1657,5 @@ START_TEST(writer)
     test_WsMoveWriter();
     test_WsGetWriterPosition();
     test_WsSetWriterPosition();
+    test_WsWriteXmlBuffer();
 }
