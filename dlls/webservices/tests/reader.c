@@ -3495,6 +3495,53 @@ static void test_WsGetReaderPosition(void)
     WsFreeHeap( heap );
 }
 
+static void test_WsSetReaderPosition(void)
+{
+    WS_HEAP *heap;
+    WS_XML_READER *reader;
+    WS_XML_BUFFER *buf1, *buf2;
+    WS_XML_NODE_POSITION pos;
+    HRESULT hr;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetReaderPosition( NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateXmlBuffer( heap, NULL, 0, &buf1, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetInputToBuffer( reader, buf1, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetReaderPosition( reader, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    pos.buffer = pos.node = NULL;
+    hr = WsGetReaderPosition( reader, &pos, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( pos.buffer == buf1, "wrong buffer\n" );
+    ok( pos.node != NULL, "node not set\n" );
+
+    hr = WsSetReaderPosition( reader, &pos, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* different buffer */
+    hr = WsCreateXmlBuffer( heap, NULL, 0, &buf2, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    pos.buffer = buf2;
+    hr = WsSetReaderPosition( reader, &pos, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    WsFreeReader( reader );
+    WsFreeHeap( heap );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -3528,4 +3575,5 @@ START_TEST(reader)
     test_WsReadValue();
     test_WsResetError();
     test_WsGetReaderPosition();
+    test_WsSetReaderPosition();
 }

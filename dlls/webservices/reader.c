@@ -3979,3 +3979,20 @@ HRESULT WINAPI WsGetReaderPosition( WS_XML_READER *handle, WS_XML_NODE_POSITION 
     pos->node   = reader->current;
     return S_OK;
 }
+
+/**************************************************************************
+ *          WsSetReaderPosition		[webservices.@]
+ */
+HRESULT WINAPI WsSetReaderPosition( WS_XML_READER *handle, const WS_XML_NODE_POSITION *pos, WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+
+    TRACE( "%p %p %p\n", handle, pos, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader || !pos || (struct xmlbuf *)pos->buffer != reader->input_buf) return E_INVALIDARG;
+    if (!reader->input_buf) return WS_E_INVALID_OPERATION;
+
+    reader->current = pos->node;
+    return S_OK;
+}
