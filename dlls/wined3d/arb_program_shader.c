@@ -5247,6 +5247,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_DCL_OUTPUT_TOPOLOGY              */ shader_hw_nop,
     /* WINED3DSIH_DCL_RESOURCE_STRUCTURED          */ NULL,
     /* WINED3DSIH_DCL_SAMPLER                      */ NULL,
+    /* WINED3DSIH_DCL_STREAM                       */ NULL,
     /* WINED3DSIH_DCL_TEMPS                        */ NULL,
     /* WINED3DSIH_DCL_TESSELLATOR_DOMAIN           */ NULL,
     /* WINED3DSIH_DCL_TESSELLATOR_OUTPUT_PRIMITIVE */ NULL,

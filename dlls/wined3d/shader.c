@@ -77,6 +77,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DCL_OUTPUT_TOPOLOGY              */ "dcl_outputTopology",
     /* WINED3DSIH_DCL_RESOURCE_STRUCTURED          */ "dcl_resource_structured",
     /* WINED3DSIH_DCL_SAMPLER                      */ "dcl_sampler",
+    /* WINED3DSIH_DCL_STREAM                       */ "dcl_stream",
     /* WINED3DSIH_DCL_TEMPS                        */ "dcl_temps",
     /* WINED3DSIH_DCL_TESSELLATOR_DOMAIN           */ "dcl_tessellator_domain",
     /* WINED3DSIH_DCL_TESSELLATOR_OUTPUT_PRIMITIVE */ "dcl_tessellator_output_primitive",
