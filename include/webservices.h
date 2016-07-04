@@ -551,6 +551,12 @@ typedef struct _WS_XML_UTF8_TEXT {
     WS_XML_STRING value;
 } WS_XML_UTF8_TEXT;
 
+typedef struct _WS_XML_UTF16_TEXT {
+    WS_XML_TEXT text;
+    BYTE *bytes;
+    ULONG byteCount;
+} WS_XML_UTF16_TEXT;
+
 typedef enum {
     WS_BOOL_VALUE_TYPE,
     WS_INT8_VALUE_TYPE,
