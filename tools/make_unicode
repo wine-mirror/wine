@@ -1320,6 +1320,138 @@ sub dump_linebreak($)
     save_file($filename);
 }
 
+my %scripts =
+(
+    "Unknown"                => 0,
+    "Common"                 => 1,
+    "Inherited"              => 2,
+    "Arabic"                 => 3,
+    "Armenian"               => 4,
+    "Avestan"                => 5,
+    "Balinese"               => 6,
+    "Bamum"                  => 7,
+    "Batak"                  => 8,
+    "Bengali"                => 9,
+    "Bopomofo"               => 10,
+    "Brahmi"                 => 11,
+    "Braille"                => 12,
+    "Buginese"               => 13,
+    "Buhid"                  => 14,
+    "Canadian_Aboriginal"    => 15,
+    "Carian"                 => 16,
+    "Cham"                   => 17,
+    "Cherokee"               => 18,
+    "Coptic"                 => 19,
+    "Cuneiform"              => 20,
+    "Cypriot"                => 21,
+    "Cyrillic"               => 22,
+    "Deseret"                => 23,
+    "Devanagari"             => 24,
+    "Egyptian_Hieroglyphs"   => 25,
+    "Ethiopic"               => 26,
+    "Georgian"               => 27,
+    "Glagolitic"             => 28,
+    "Gothic"                 => 29,
+    "Greek"                  => 30,
+    "Gujarati"               => 31,
+    "Gurmukhi"               => 32,
+    "Han"                    => 33,
+    "Hangul"                 => 34,
+    "Hanunoo"                => 35,
+    "Hebrew"                 => 36,
+    "Hiragana"               => 37,
+    "Imperial_Aramaic"       => 38,
+    "Inscriptional_Pahlavi"  => 39,
+    "Inscriptional_Parthian" => 40,
+    "Javanese"               => 41,
+    "Kaithi"                 => 42,
+    "Kannada"                => 43,
+    "Katakana"               => 44,
+    "Kayah_Li"               => 45,
+    "Kharoshthi"             => 46,
+    "Khmer"                  => 47,
+    "Lao"                    => 48,
+    "Latin"                  => 49,
+    "Lepcha"                 => 50,
+    "Limbu"                  => 51,
+    "Linear_B"               => 52,
+    "Lisu"                   => 53,
+    "Lycian"                 => 54,
+    "Lydian"                 => 55,
+    "Malayalam"              => 56,
+    "Mandaic"                => 57,
+    "Meetei_Mayek"           => 58,
+    "Mongolian"              => 59,
+    "Myanmar"                => 60,
+    "New_Tai_Lue"            => 61,
+    "Nko"                    => 62,
+    "Ogham"                  => 63,
+    "Ol_Chiki"               => 64,
+    "Old_Italic"             => 65,
+    "Old_Persian"            => 66,
+    "Old_South_Arabian"      => 67,
+    "Old_Turkic"             => 68,
+    "Oriya"                  => 69,
+    "Osmanya"                => 70,
+    "Phags_Pa"               => 71,
+    "Phoenician"             => 72,
+    "Rejang"                 => 73,
+    "Runic"                  => 74,
+    "Samaritan"              => 75,
+    "Saurashtra"             => 76,
+    "Shavian"                => 77,
+    "Sinhala"                => 78,
+    "Sundanese"              => 79,
+    "Syloti_Nagri"           => 80,
+    "Syriac"                 => 81,
+    "Tagalog"                => 82,
+    "Tagbanwa"               => 83,
+    "Tai_Le"                 => 84,
+    "Tai_Tham"               => 85,
+    "Tai_Viet"               => 86,
+    "Tamil"                  => 87,
+    "Telugu"                 => 88,
+    "Thaana"                 => 89,
+    "Thai"                   => 90,
+    "Tibetan"                => 91,
+    "Tifinagh"               => 92,
+    "Ugaritic"               => 93,
+    "Vai"                    => 94,
+    "Yi"                     => 95,
+    # Win8/Win8.1
+    "Chakma"                 => 96,
+    "Meroitic_Cursive"       => 97,
+    "Meroitic_Hieroglyphs"   => 98,
+    "Miao"                   => 99,
+    "Sharada"                => 100,
+    "Sora_Sompeng"           => 101,
+    "Takri"                  => 102,
+    # Win10
+    "Bassa_Vah"              => 103,
+    "Caucasian_Albanian"     => 104,
+    "Duployan"               => 105,
+    "Elbasan"                => 106,
+    "Grantha"                => 107,
+    "Khojki"                 => 108,
+    "Khudawadi"              => 109,
+    "Linear_A"               => 110,
+    "Mahajani"               => 111,
+    "Manichaean"             => 112,
+    "Mende_Kikakui"          => 113,
+    "Modi"                   => 114,
+    "Mro"                    => 115,
+    "Nabataean"              => 116,
+    "Old_North_Arabian"      => 117,
+    "Old_Permic"             => 118,
+    "Pahawh_Hmong"           => 119,
+    "Palmyrene"              => 120,
+    "Pau_Cin_Hau"            => 121,
+    "Psalter_Pahlavi"        => 122,
+    "Siddham"                => 123,
+    "Tirhuta"                => 124,
+    "Warang_Citi"            => 125,
+);
+
 ################################################################
 # dump Script IDs table
 sub dump_scripts($)
@@ -1328,10 +1460,11 @@ sub dump_scripts($)
     my $header = $filename;
     my @scripts_table;
     my $script_index;
-    my %scripts;
     my $i;
 
     my $INPUT = open_data_file( $UNIDATA, "Scripts.txt" );
+    # Fill the table
+    # Unknown script id is always 0, so undefined scripts are automatically treated as such
     while (<$INPUT>)
     {
         my $type = "";
@@ -1339,49 +1472,7 @@ sub dump_scripts($)
         next if /^\#/;  # skip comments
         next if /^\s*$/;  # skip empty lines
         next if /\x1a/;  # skip ^Z
-        if (/^\s*([0-9a-fA-F]+)\s*;\s*([_a-zA-Z]+)\s*/)
-        {
-            $type = $2;
-        }
-        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([_a-zA-Z]+)\s*/)
-        {
-            $type = $3;
-        }
-        else
-        {
-            die "malformed line $_";
-        }
-
-        # ignore some scripts
-        if ($type eq "Common" || $type eq "Inherited")
-        {
-            next;
-        }
-
-        $scripts{$type} = -1;
-    }
-
-    # assign script indices, starting from index 2
-    $script_index = 1;
-    foreach my $script (sort keys %scripts) {
-        $scripts{$script} = ++$script_index;
-    }
-    # indices change when new scripts are added to the standard,
-    # keep Unknown/Common at fixed positions, Inherited is treated as Unknown
-    $scripts{"Unknown"} = 0;
-    $scripts{"Inherited"} = 0;
-    $scripts{"Common"} = 1;
-
-    # now fill a table
-    seek $INPUT, 0, 0;
-    while (<$INPUT>)
-    {
-        my $type = "";
-
-        next if /^\#/;  # skip comments
-        next if /^\s*$/;  # skip empty lines
-        next if /\x1a/;  # skip ^Z
-        if (/^\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z]+)\s*/)
+        if (/^\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z_]+)\s*/)
         {
             $type = $2;
             if (defined $scripts{$type})
@@ -1390,7 +1481,7 @@ sub dump_scripts($)
             }
             next;
         }
-        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z]+)\s*/)
+        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z_]+)\s*/)
         {
             $type = $3;
             if (defined $scripts{$type})
@@ -1413,14 +1504,12 @@ sub dump_scripts($)
     print OUTPUT "/* generated from $UNIDATA/Scripts.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
 
-    # Inherited was consumed by Unknown, we don't need it as a separate enum member
-    delete $scripts{"Inherited"};
     print OUTPUT "enum unicode_script_id {\n";
     foreach my $script (sort { $scripts{$a} <=> $scripts{$b} } keys %scripts)
     {
         print OUTPUT "    Script_$script = $scripts{$script},\n";
     }
-    print OUTPUT "    Script_LastId = $script_index\n";
+    print OUTPUT "    Script_LastId = ", (scalar keys %scripts) - 1, "\n";
     print OUTPUT "};\n";
 
     close OUTPUT;
