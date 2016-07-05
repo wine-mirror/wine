@@ -20,6 +20,7 @@
 #include "d2d1.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 #include "wine/unicode.h"
 
 static const DWRITE_MATRIX identity =
@@ -151,6 +152,17 @@ struct glyphrunanalysis_desc
     FLOAT ppdip;
 };
 
+struct fontface_desc
+{
+    IDWriteFactory3 *factory;
+    DWRITE_FONT_FACE_TYPE face_type;
+    IDWriteFontFile * const *files;
+    UINT32 files_number;
+    UINT32 index;
+    DWRITE_FONT_SIMULATIONS simulations;
+    struct dwrite_font_data *font_data; /* could be NULL when face is created directly with IDWriteFactory::CreateFontFace() */
+};
+
 extern HRESULT convert_fontface_to_logfont(IDWriteFontFace*, LOGFONTW*) DECLSPEC_HIDDEN;
 extern HRESULT create_numbersubstitution(DWRITE_NUMBER_SUBSTITUTION_METHOD,const WCHAR *locale,BOOL,IDWriteNumberSubstitution**) DECLSPEC_HIDDEN;
 extern HRESULT create_textformat(const WCHAR*,IDWriteFontCollection*,DWRITE_FONT_WEIGHT,DWRITE_FONT_STYLE,DWRITE_FONT_STRETCH,
@@ -168,7 +180,7 @@ extern HRESULT get_eudc_fontcollection(IDWriteFactory3*,IDWriteFontCollection**)
 extern HRESULT get_textanalyzer(IDWriteTextAnalyzer**) DECLSPEC_HIDDEN;
 extern HRESULT create_font_file(IDWriteFontFileLoader *loader, const void *reference_key, UINT32 key_size, IDWriteFontFile **font_file) DECLSPEC_HIDDEN;
 extern HRESULT create_localfontfileloader(IDWriteLocalFontFileLoader** iface) DECLSPEC_HIDDEN;
-extern HRESULT create_fontface(DWRITE_FONT_FACE_TYPE,UINT32,IDWriteFontFile* const*,UINT32,DWRITE_FONT_SIMULATIONS,IDWriteFontFace3**) DECLSPEC_HIDDEN;
+extern HRESULT create_fontface(const struct fontface_desc*,IDWriteFontFace3**) DECLSPEC_HIDDEN;
 extern HRESULT create_font_collection(IDWriteFactory3*,IDWriteFontFileEnumerator*,BOOL,IDWriteFontCollection**) DECLSPEC_HIDDEN;
 extern HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc*,IDWriteGlyphRunAnalysis**) DECLSPEC_HIDDEN;
 extern BOOL    is_system_collection(IDWriteFontCollection*) DECLSPEC_HIDDEN;
@@ -185,6 +197,9 @@ extern HRESULT create_matching_font(IDWriteFontCollection*,const WCHAR*,DWRITE_F
     IDWriteFont**) DECLSPEC_HIDDEN;
 extern HRESULT create_fontfacereference(IDWriteFactory3*,IDWriteFontFile*,UINT32,DWRITE_FONT_SIMULATIONS,
     IDWriteFontFaceReference**) DECLSPEC_HIDDEN;
+extern HRESULT factory_get_cached_fontface(IDWriteFactory3*,IDWriteFontFile*const*,UINT32,DWRITE_FONT_SIMULATIONS,IDWriteFontFace**,
+    struct list**) DECLSPEC_HIDDEN;
+extern void    factory_cache_fontface(struct list*,IDWriteFontFace3*) DECLSPEC_HIDDEN;
 
 /* Opentype font table functions */
 struct dwrite_font_props {

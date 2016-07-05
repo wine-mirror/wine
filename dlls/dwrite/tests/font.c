@@ -600,19 +600,20 @@ static ULONG WINAPI resourcefontfileloader_Release(IDWriteFontFileLoader *iface)
     return 1;
 }
 
-static HRESULT WINAPI resourcefontfileloader_CreateStreamFromKey(IDWriteFontFileLoader *iface, const void *fontFileReferenceKey, UINT32 fontFileReferenceKeySize, IDWriteFontFileStream **fontFileStream)
+static HRESULT WINAPI resourcefontfileloader_CreateStreamFromKey(IDWriteFontFileLoader *iface, const void *ref_key, UINT32 key_size,
+    IDWriteFontFileStream **stream)
 {
     LPVOID data;
     DWORD size;
     HGLOBAL mem;
 
-    mem = LoadResource(GetModuleHandleA(NULL), *(HRSRC*)fontFileReferenceKey);
+    mem = LoadResource(GetModuleHandleA(NULL), *(HRSRC*)ref_key);
     ok(mem != NULL, "Failed to lock font resource\n");
     if (mem)
     {
-        size = SizeofResource(GetModuleHandleA(NULL), *(HRSRC*)fontFileReferenceKey);
+        size = SizeofResource(GetModuleHandleA(NULL), *(HRSRC*)ref_key);
         data = LockResource(mem);
-        return create_fontdatastream(data, size, fontFileStream);
+        return create_fontdatastream(data, size, stream);
     }
     return E_FAIL;
 }
@@ -2452,7 +2453,8 @@ static ULONG WINAPI fontfileloader_Release(IDWriteFontFileLoader *iface)
     return 1;
 }
 
-static HRESULT WINAPI fontfileloader_CreateStreamFromKey(IDWriteFontFileLoader *iface, const void *fontFileReferenceKey, UINT32 fontFileReferenceKeySize, IDWriteFontFileStream **fontFileStream)
+static HRESULT WINAPI fontfileloader_CreateStreamFromKey(IDWriteFontFileLoader *iface, const void *ref_key, UINT32 key_size,
+    IDWriteFontFileStream **stream)
 {
     return 0x8faecafe;
 }
@@ -4476,7 +4478,6 @@ struct VDMX_vTable
     SHORT yMin;
 };
 
-
 static const struct VDMX_group *find_vdmx_group(const struct VDMX_Header *hdr)
 {
     WORD num_ratios, i, group_offset = 0;
@@ -4813,6 +4814,8 @@ static void test_GetPanose(void)
     hr = IDWriteFont_QueryInterface(font, &IID_IDWriteFont1, (void**)&font1);
     IDWriteFont_Release(font);
     if (hr == S_OK) {
+        IDWriteFontFace3 *fontface3;
+        IDWriteFontFace *fontface;
         DWRITE_PANOSE panose;
 
     if (0) /* crashes on native */
@@ -4840,6 +4843,20 @@ static void test_GetPanose(void)
             "got %u\n", panose.text.midline);
         ok(panose.text.xHeight == DWRITE_PANOSE_XHEIGHT_CONSTANT_LARGE,
             "got %u\n", panose.text.xHeight);
+
+        hr = IDWriteFont1_CreateFontFace(font1, &fontface);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace3, (void**)&fontface3);
+        IDWriteFontFace_Release(fontface);
+        if (hr == S_OK) {
+            DWRITE_PANOSE panose2;
+
+            IDWriteFontFace3_GetPanose(fontface3, &panose2);
+            ok(!memcmp(&panose, &panose2, sizeof(panose)), "wrong panose data\n");
+
+            IDWriteFontFace3_Release(fontface3);
+        }
 
         IDWriteFont1_Release(font1);
     }
@@ -6250,6 +6267,39 @@ static void test_GetFontSignature(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_font_properties(void)
+{
+    IDWriteFontFace3 *fontface3;
+    IDWriteFontFace *fontface;
+    IDWriteFactory *factory;
+    DWRITE_FONT_STYLE style;
+    IDWriteFont *font;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    /* this creates simulated font */
+    font = get_tahoma_instance(factory, DWRITE_FONT_STYLE_ITALIC);
+
+    style = IDWriteFont_GetStyle(font);
+    ok(style == DWRITE_FONT_STYLE_OBLIQUE, "got %u\n", style);
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace3, (void**)&fontface3);
+    IDWriteFontFace_Release(fontface);
+    if (hr == S_OK) {
+        style = IDWriteFontFace3_GetStyle(fontface3);
+        ok(style == DWRITE_FONT_STYLE_OBLIQUE, "got %u\n", style);
+
+        IDWriteFontFace3_Release(fontface3);
+    }
+
+    IDWriteFont_Release(font);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -6306,6 +6356,7 @@ START_TEST(font)
     test_HasCharacter();
     test_CreateFontFaceReference();
     test_GetFontSignature();
+    test_font_properties();
 
     IDWriteFactory_Release(factory);
 }

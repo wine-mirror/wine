@@ -30,7 +30,6 @@
 
 #include "dwrite_private.h"
 #include "wine/debug.h"
-#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
@@ -509,7 +508,7 @@ struct collectionloader
 struct fontfacecached
 {
     struct list entry;
-    IDWriteFontFace *fontface;
+    IDWriteFontFace3 *fontface;
 };
 
 struct fileloader
@@ -545,7 +544,7 @@ static void release_fontface_cache(struct list *fontfaces)
     struct fontfacecached *fontface, *fontface2;
     LIST_FOR_EACH_ENTRY_SAFE(fontface, fontface2, fontfaces, struct fontfacecached, entry) {
         list_remove(&fontface->entry);
-        IDWriteFontFace_Release(fontface->fontface);
+        IDWriteFontFace3_Release(fontface->fontface);
         heap_free(fontface);
     }
 }
@@ -807,6 +806,88 @@ static HRESULT WINAPI dwritefactory_CreateCustomFontFileReference(IDWriteFactory
     return create_font_file(loader, reference_key, key_size, font_file);
 }
 
+HRESULT factory_get_cached_fontface(IDWriteFactory3 *iface, IDWriteFontFile * const *font_files,
+    UINT32 index, DWRITE_FONT_SIMULATIONS simulations, IDWriteFontFace **font_face, struct list **cached_list)
+{
+    struct dwritefactory *factory = impl_from_IDWriteFactory3(iface);
+    struct fontfacecached *cached;
+    IDWriteFontFileLoader *loader;
+    struct list *fontfaces;
+    UINT32 key_size;
+    const void *key;
+    HRESULT hr;
+
+    *font_face = NULL;
+    *cached_list = NULL;
+
+    hr = IDWriteFontFile_GetReferenceKey(*font_files, &key, &key_size);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IDWriteFontFile_GetLoader(*font_files, &loader);
+    if (FAILED(hr))
+        return hr;
+
+    if (loader == (IDWriteFontFileLoader*)factory->localfontfileloader) {
+        fontfaces = &factory->localfontfaces;
+        IDWriteFontFileLoader_Release(loader);
+    }
+    else {
+        struct fileloader *fileloader = factory_get_file_loader(factory, loader);
+        IDWriteFontFileLoader_Release(loader);
+        if (!fileloader)
+            return E_INVALIDARG;
+        fontfaces = &fileloader->fontfaces;
+    }
+
+    *cached_list = fontfaces;
+
+    /* search through cache list */
+    LIST_FOR_EACH_ENTRY(cached, fontfaces, struct fontfacecached, entry) {
+        UINT32 cached_key_size, count = 1, cached_face_index;
+        DWRITE_FONT_SIMULATIONS cached_simulations;
+        const void *cached_key;
+        IDWriteFontFile *file;
+
+        cached_face_index = IDWriteFontFace3_GetIndex(cached->fontface);
+        cached_simulations = IDWriteFontFace3_GetSimulations(cached->fontface);
+
+        /* skip earlier */
+        if (cached_face_index != index || cached_simulations != simulations)
+            continue;
+
+        hr = IDWriteFontFace3_GetFiles(cached->fontface, &count, &file);
+        if (FAILED(hr))
+            return hr;
+
+        hr = IDWriteFontFile_GetReferenceKey(file, &cached_key, &cached_key_size);
+        IDWriteFontFile_Release(file);
+        if (FAILED(hr))
+            return hr;
+
+        if (cached_key_size == key_size && !memcmp(cached_key, key, key_size)) {
+            TRACE("returning cached fontface %p\n", cached->fontface);
+            *font_face = (IDWriteFontFace*)cached->fontface;
+            return S_OK;
+        }
+    }
+
+    return S_FALSE;
+}
+
+void factory_cache_fontface(struct list *fontfaces, IDWriteFontFace3 *fontface)
+{
+    struct fontfacecached *cached;
+
+    /* new cache entry */
+    cached = heap_alloc(sizeof(*cached));
+    if (!cached)
+        return;
+
+    cached->fontface = fontface;
+    list_add_tail(fontfaces, &cached->entry);
+}
+
 static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory3 *iface,
     DWRITE_FONT_FACE_TYPE req_facetype, UINT32 files_number, IDWriteFontFile* const* font_files,
     UINT32 index, DWRITE_FONT_SIMULATIONS simulations, IDWriteFontFace **font_face)
@@ -814,13 +895,11 @@ static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory3 *iface,
     struct dwritefactory *This = impl_from_IDWriteFactory3(iface);
     DWRITE_FONT_FILE_TYPE file_type;
     DWRITE_FONT_FACE_TYPE face_type;
-    IDWriteFontFileLoader *loader;
-    struct fontfacecached *cached;
+    struct fontface_desc desc;
     struct list *fontfaces;
     IDWriteFontFace3 *face;
-    UINT32 key_size, count;
     BOOL is_supported;
-    const void *key;
+    UINT32 count;
     HRESULT hr;
 
     TRACE("(%p)->(%d %u %p %u 0x%x %p)\n", This, req_facetype, files_number, font_files, index, simulations, font_face);
@@ -849,72 +928,27 @@ static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory3 *iface,
     if (face_type != req_facetype)
         return DWRITE_E_FILEFORMAT;
 
-    hr = IDWriteFontFile_GetReferenceKey(*font_files, &key, &key_size);
+    hr = factory_get_cached_fontface(iface, font_files, index, simulations, font_face, &fontfaces);
+    if (hr == S_OK)
+        IDWriteFontFace_AddRef(*font_face);
+
+    if (hr != S_FALSE)
+        return hr;
+
+    desc.factory = iface;
+    desc.face_type = req_facetype;
+    desc.files = font_files;
+    desc.files_number = files_number;
+    desc.index = index;
+    desc.simulations = simulations;
+    desc.font_data = NULL;
+    hr = create_fontface(&desc, &face);
     if (FAILED(hr))
         return hr;
 
-    hr = IDWriteFontFile_GetLoader(*font_files, &loader);
-    if (FAILED(hr))
-        return hr;
+    factory_cache_fontface(fontfaces, face);
 
-    if (loader == (IDWriteFontFileLoader*)This->localfontfileloader) {
-        fontfaces = &This->localfontfaces;
-        IDWriteFontFileLoader_Release(loader);
-    }
-    else {
-        struct fileloader *fileloader = factory_get_file_loader(This, loader);
-        IDWriteFontFileLoader_Release(loader);
-        if (!fileloader)
-            return E_INVALIDARG;
-        fontfaces = &fileloader->fontfaces;
-    }
-
-    /* search through cache list */
-    LIST_FOR_EACH_ENTRY(cached, fontfaces, struct fontfacecached, entry) {
-        UINT32 cached_key_size, count = 1, cached_face_index;
-        DWRITE_FONT_SIMULATIONS cached_simulations;
-        const void *cached_key;
-        IDWriteFontFile *file;
-
-        cached_face_index = IDWriteFontFace_GetIndex(cached->fontface);
-        cached_simulations = IDWriteFontFace_GetSimulations(cached->fontface);
-
-        /* skip earlier */
-        if (cached_face_index != index || cached_simulations != simulations)
-            continue;
-
-        hr = IDWriteFontFace_GetFiles(cached->fontface, &count, &file);
-        if (FAILED(hr))
-            return hr;
-
-        hr = IDWriteFontFile_GetReferenceKey(file, &cached_key, &cached_key_size);
-        IDWriteFontFile_Release(file);
-        if (FAILED(hr))
-            return hr;
-
-        if (cached_key_size == key_size && !memcmp(cached_key, key, key_size)) {
-            TRACE("returning cached fontface %p\n", cached->fontface);
-            *font_face = cached->fontface;
-            IDWriteFontFace_AddRef(*font_face);
-            return S_OK;
-        }
-    }
-
-    hr = create_fontface(req_facetype, files_number, font_files, index, simulations, &face);
-    if (FAILED(hr))
-        return hr;
-
-    /* new cache entry */
-    cached = heap_alloc(sizeof(*cached));
-    if (!cached) {
-        IDWriteFontFace3_Release(face);
-        return E_OUTOFMEMORY;
-    }
-
-    cached->fontface = (IDWriteFontFace*)face;
-    list_add_tail(fontfaces, &cached->entry);
-
-    *font_face = cached->fontface;
+    *font_face = (IDWriteFontFace*)face;
     IDWriteFontFace_AddRef(*font_face);
 
     return S_OK;

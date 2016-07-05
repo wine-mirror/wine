@@ -46,7 +46,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
-#include "wine/list.h"
 
 #include "dwrite_private.h"
 

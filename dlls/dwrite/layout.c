@@ -28,7 +28,6 @@
 #include "wingdi.h"
 #include "dwrite_private.h"
 #include "scripts.h"
-#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 

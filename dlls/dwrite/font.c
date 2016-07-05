@@ -23,7 +23,6 @@
 
 #define COBJMACROS
 
-#include "wine/list.h"
 #include "dwrite_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
@@ -230,6 +229,11 @@ struct dwrite_fontface {
     struct dwrite_fonttable cpal;
     struct dwrite_fonttable colr;
     DWRITE_GLYPH_METRICS *glyphs[GLYPH_MAX/GLYPH_BLOCK_SIZE];
+
+    DWRITE_FONT_STYLE style;
+    DWRITE_FONT_STRETCH stretch;
+    DWRITE_FONT_WEIGHT weight;
+    DWRITE_PANOSE panose;
 };
 
 struct dwrite_fontfile {
@@ -1068,28 +1072,29 @@ static HRESULT WINAPI dwritefontface3_GetFontFaceReference(IDWriteFontFace3 *ifa
 static void WINAPI dwritefontface3_GetPanose(IDWriteFontFace3 *iface, DWRITE_PANOSE *panose)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace3(iface);
-    FIXME("(%p)->(%p): stub\n", This, panose);
+    TRACE("(%p)->(%p)\n", This, panose);
+    *panose = This->panose;
 }
 
 static DWRITE_FONT_WEIGHT WINAPI dwritefontface3_GetWeight(IDWriteFontFace3 *iface)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace3(iface);
-    FIXME("(%p): stub\n", This);
-    return DWRITE_FONT_WEIGHT_NORMAL;
+    TRACE("(%p)\n", This);
+    return This->weight;
 }
 
 static DWRITE_FONT_STRETCH WINAPI dwritefontface3_GetStretch(IDWriteFontFace3 *iface)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace3(iface);
-    FIXME("(%p): stub\n", This);
-    return DWRITE_FONT_STRETCH_NORMAL;
+    TRACE("(%p)\n", This);
+    return This->stretch;
 }
 
 static DWRITE_FONT_STYLE WINAPI dwritefontface3_GetStyle(IDWriteFontFace3 *iface)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace3(iface);
-    FIXME("(%p): stub\n", This);
-    return DWRITE_FONT_STYLE_NORMAL;
+    TRACE("(%p)\n", This);
+    return This->style;
 }
 
 static HRESULT WINAPI dwritefontface3_GetFamilyNames(IDWriteFontFace3 *iface, IDWriteLocalizedStrings **names)
@@ -1275,20 +1280,31 @@ static const IDWriteFontFace3Vtbl dwritefontfacevtbl = {
 static HRESULT get_fontface_from_font(struct dwrite_font *font, IDWriteFontFace3 **fontface)
 {
     struct dwrite_font_data *data = font->data;
-    IDWriteFontFace *face;
+    struct fontface_desc desc;
+    struct list *cached_list;
     HRESULT hr;
 
     *fontface = NULL;
 
-    hr = IDWriteFactory3_CreateFontFace(data->factory, data->face_type, 1, &data->file,
-            data->face_index, font->data->simulations, &face);
+    hr = factory_get_cached_fontface(data->factory, &data->file, data->face_index,
+        font->data->simulations, (IDWriteFontFace**)fontface, &cached_list);
+    if (hr != S_FALSE)
+        return hr;
+
+    desc.factory = data->factory;
+    desc.face_type = data->face_type;
+    desc.files = &data->file;
+    desc.files_number = 1;
+    desc.index = data->face_index;
+    desc.simulations = data->simulations;
+    desc.font_data = data;
+    hr = create_fontface(&desc, fontface);
     if (FAILED(hr))
         return hr;
 
-    hr = IDWriteFontFace_QueryInterface(face, &IID_IDWriteFontFace3, (void**)fontface);
-    IDWriteFontFace_Release(face);
+    factory_cache_fontface(cached_list, *fontface);
 
-    return hr;
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefont_QueryInterface(IDWriteFont3 *iface, REFIID riid, void **obj)
@@ -3136,8 +3152,7 @@ static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
     return TRUE;
 }
 
-static HRESULT init_font_data(IDWriteFactory3 *factory, IDWriteFontFile *file, DWRITE_FONT_FACE_TYPE face_type, UINT32 face_index,
-    IDWriteLocalizedStrings **family_name, struct dwrite_font_data **ret)
+static HRESULT init_font_data(const struct fontface_desc *desc, IDWriteLocalizedStrings **family_name, struct dwrite_font_data **ret)
 {
     struct file_stream_desc stream_desc;
     struct dwrite_font_props props;
@@ -3151,26 +3166,26 @@ static HRESULT init_font_data(IDWriteFactory3 *factory, IDWriteFontFile *file, D
     if (!data)
         return E_OUTOFMEMORY;
 
-    hr = get_filestream_from_file(file, &stream);
+    hr = get_filestream_from_file(desc->files[0], &stream);
     if (FAILED(hr)) {
         heap_free(data);
         return hr;
     }
 
     data->ref = 1;
-    data->factory = factory;
-    data->file = file;
-    data->face_index = face_index;
-    data->face_type = face_type;
+    data->factory = desc->factory;
+    data->file = desc->files[0];
+    data->face_index = desc->index;
+    data->face_type = desc->face_type;
     data->simulations = DWRITE_FONT_SIMULATIONS_NONE;
     data->bold_sim_tested = 0;
     data->oblique_sim_tested = 0;
-    IDWriteFontFile_AddRef(file);
-    IDWriteFactory3_AddRef(factory);
+    IDWriteFontFile_AddRef(data->file);
+    IDWriteFactory3_AddRef(data->factory);
 
     stream_desc.stream = stream;
-    stream_desc.face_type = face_type;
-    stream_desc.face_index = face_index;
+    stream_desc.face_type = desc->face_type;
+    stream_desc.face_index = desc->index;
     opentype_get_font_properties(&stream_desc, &props);
     opentype_get_font_metrics(&stream_desc, &data->metrics, NULL);
     opentype_get_font_facename(&stream_desc, &data->names);
@@ -3550,11 +3565,20 @@ HRESULT create_font_collection(IDWriteFactory3 *factory, IDWriteFontFileEnumerat
         for (i = 0; i < face_count; i++) {
             IDWriteLocalizedStrings *family_name = NULL;
             struct dwrite_font_data *font_data;
+            struct fontface_desc desc;
             WCHAR familyW[255];
             UINT32 index;
 
+            desc.factory = factory;
+            desc.face_type = face_type;
+            desc.files = &file;
+            desc.files_number = 1;
+            desc.index = i;
+            desc.simulations = DWRITE_FONT_SIMULATIONS_NONE;
+            desc.font_data = NULL;
+
             /* alloc and init new font data structure */
-            hr = init_font_data(factory, file, face_type, i, &family_name, &font_data);
+            hr = init_font_data(&desc, &family_name, &font_data);
             if (FAILED(hr)) {
                 /* move to next one */
                 hr = S_OK;
@@ -3855,9 +3879,18 @@ static HRESULT eudc_collection_add_family(IDWriteFactory3 *factory, struct dwrit
     /* fill with faces */
     for (i = 0; i < face_count; i++) {
         struct dwrite_font_data *font_data;
+        struct fontface_desc desc;
 
         /* alloc and init new font data structure */
-        hr = init_font_data(factory, file, face_type, i, &names, &font_data);
+        desc.factory = factory;
+        desc.face_type = face_type;
+        desc.index = i;
+        desc.files = &file;
+        desc.files_number = 1;
+        desc.simulations = DWRITE_FONT_SIMULATIONS_NONE;
+        desc.font_data = NULL;
+
+        hr = init_font_data(&desc, &names, &font_data);
         if (FAILED(hr))
             continue;
 
@@ -4092,8 +4125,7 @@ static HRESULT get_stream_from_file(IDWriteFontFile *file, IDWriteFontFileStream
     return hr;
 }
 
-HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDWriteFontFile* const* font_files, UINT32 index,
-    DWRITE_FONT_SIMULATIONS simulations, IDWriteFontFace3 **ret)
+HRESULT create_fontface(const struct fontface_desc *desc, IDWriteFontFace3 **ret)
 {
     struct file_stream_desc stream_desc;
     struct dwrite_fontface *fontface;
@@ -4106,8 +4138,8 @@ HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDW
     if (!fontface)
         return E_OUTOFMEMORY;
 
-    fontface->files = heap_alloc_zero(sizeof(*fontface->files) * files_number);
-    fontface->streams = heap_alloc_zero(sizeof(*fontface->streams) * files_number);
+    fontface->files = heap_alloc_zero(sizeof(*fontface->files) * desc->files_number);
+    fontface->streams = heap_alloc_zero(sizeof(*fontface->streams) * desc->files_number);
 
     if (!fontface->files || !fontface->streams) {
         heap_free(fontface->files);
@@ -4118,8 +4150,8 @@ HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDW
 
     fontface->IDWriteFontFace3_iface.lpVtbl = &dwritefontfacevtbl;
     fontface->ref = 1;
-    fontface->type = facetype;
-    fontface->file_count = files_number;
+    fontface->type = desc->face_type;
+    fontface->file_count = desc->files_number;
     memset(&fontface->cmap, 0, sizeof(fontface->cmap));
     memset(&fontface->vdmx, 0, sizeof(fontface->vdmx));
     memset(&fontface->gasp, 0, sizeof(fontface->gasp));
@@ -4130,26 +4162,26 @@ HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDW
     fontface->gasp.exists = TRUE;
     fontface->cpal.exists = TRUE;
     fontface->colr.exists = TRUE;
-    fontface->index = index;
-    fontface->simulations = simulations;
+    fontface->index = desc->index;
+    fontface->simulations = desc->simulations;
     memset(fontface->glyphs, 0, sizeof(fontface->glyphs));
 
     for (i = 0; i < fontface->file_count; i++) {
-        hr = get_stream_from_file(font_files[i], &fontface->streams[i]);
+        hr = get_stream_from_file(desc->files[i], &fontface->streams[i]);
         if (FAILED(hr)) {
             IDWriteFontFace3_Release(&fontface->IDWriteFontFace3_iface);
             return hr;
         }
 
-        fontface->files[i] = font_files[i];
-        IDWriteFontFile_AddRef(font_files[i]);
+        fontface->files[i] = desc->files[i];
+        IDWriteFontFile_AddRef(fontface->files[i]);
     }
 
     stream_desc.stream = fontface->streams[0];
-    stream_desc.face_type = facetype;
-    stream_desc.face_index = index;
+    stream_desc.face_type = desc->face_type;
+    stream_desc.face_index = desc->index;
     opentype_get_font_metrics(&stream_desc, &fontface->metrics, &fontface->caret);
-    if (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE) {
+    if (desc->simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE) {
         /* TODO: test what happens if caret is already slanted */
         if (fontface->caret.slopeRise == 1) {
             fontface->caret.slopeRise = fontface->metrics.designUnitsPerEm;
@@ -4159,6 +4191,36 @@ HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDW
     fontface->charmap = freetype_get_charmap_index(&fontface->IDWriteFontFace3_iface, &fontface->is_symbol);
     fontface->has_kerning_pairs = freetype_has_kerning_pairs(&fontface->IDWriteFontFace3_iface);
     fontface->is_monospaced = freetype_is_monospaced(&fontface->IDWriteFontFace3_iface);
+
+    /* Font properties are reused from font object when 'normal' face creation path is used:
+       collection -> family -> matching font -> fontface.
+
+       If face is created directly from factory we have to go through properties resolution.
+    */
+    if (desc->font_data) {
+        fontface->weight = desc->font_data->weight;
+        fontface->style = desc->font_data->style;
+        fontface->stretch = desc->font_data->stretch;
+        fontface->panose = desc->font_data->panose;
+    }
+    else {
+        IDWriteLocalizedStrings *names;
+        struct dwrite_font_data *data;
+
+        hr = init_font_data(desc, &names, &data);
+        if (FAILED(hr)) {
+            IDWriteFontFace3_Release(&fontface->IDWriteFontFace3_iface);
+            return hr;
+        }
+
+        fontface->weight = data->weight;
+        fontface->style = data->style;
+        fontface->stretch = data->stretch;
+        fontface->panose = data->panose;
+
+        IDWriteLocalizedStrings_Release(names);
+        release_font_data(data);
+    }
 
     *ret = &fontface->IDWriteFontFace3_iface;
     return S_OK;
