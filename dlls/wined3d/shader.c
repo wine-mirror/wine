@@ -56,6 +56,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_CND                              */ "cnd",
     /* WINED3DSIH_CRS                              */ "crs",
     /* WINED3DSIH_CUT                              */ "cut",
+    /* WINED3DSIH_CUT_STREAM                       */ "cut_stream",
     /* WINED3DSIH_DCL                              */ "dcl",
     /* WINED3DSIH_DCL_CONSTANT_BUFFER              */ "dcl_constantBuffer",
     /* WINED3DSIH_DCL_GLOBAL_FLAGS                 */ "dcl_globalFlags",

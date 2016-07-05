@@ -8578,6 +8578,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_CND                              */ shader_glsl_cnd,
     /* WINED3DSIH_CRS                              */ shader_glsl_cross,
     /* WINED3DSIH_CUT                              */ shader_glsl_cut,
+    /* WINED3DSIH_CUT_STREAM                       */ NULL,
     /* WINED3DSIH_DCL                              */ shader_glsl_nop,
     /* WINED3DSIH_DCL_CONSTANT_BUFFER              */ shader_glsl_nop,
     /* WINED3DSIH_DCL_GLOBAL_FLAGS                 */ shader_glsl_nop,
