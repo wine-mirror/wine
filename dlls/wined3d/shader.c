@@ -982,6 +982,10 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             if (ins.flags & WINED3DSI_SAMPLER_COMPARISON_MODE)
                 reg_maps->sampler_comparison_mode |= (1u << ins.declaration.dst.reg.idx[0].offset);
         }
+        else if (ins.handler_idx == WINED3DSIH_DCL_TEMPS)
+        {
+            reg_maps->temporary_count = ins.declaration.count;
+        }
         else if (ins.handler_idx == WINED3DSIH_DCL_VERTICES_OUT)
         {
             if (shader_version.type == WINED3D_SHADER_TYPE_GEOMETRY)

@@ -530,7 +530,6 @@ enum wined3d_shader_conditional_op
 /* TODO: Make this dynamic, based on shader limits ? */
 #define MAX_ATTRIBS 16
 #define MAX_REG_ADDR 1
-#define MAX_REG_TEMP 32
 #define MAX_REG_TEXCRD 8
 #define MAX_REG_INPUT 32
 #define MAX_REG_OUTPUT 32
@@ -810,7 +809,8 @@ struct wined3d_shader_reg_maps
     BYTE texcoord;                                  /* MAX_REG_TEXCRD, 8 */
     BYTE address;                                   /* MAX_REG_ADDR, 1 */
     WORD labels;                                    /* MAX_LABELS, 16 */
-    DWORD temporary;                                /* MAX_REG_TEMP, 32 */
+    DWORD temporary;                                /* 32 */
+    unsigned int temporary_count;
     DWORD *constf;                                  /* pixel, vertex */
     struct list indexable_temps;
     const struct wined3d_shader_immediate_constant_buffer *icb;
