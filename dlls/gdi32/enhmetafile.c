@@ -2382,8 +2382,7 @@ BOOL WINAPI EnumEnhMetaFile(
             double xSrcPixSize, ySrcPixSize, xscale, yscale;
             XFORM xform;
 
-            TRACE("rect: %d,%d - %d,%d. rclFrame: %d,%d - %d,%d\n",
-               lpRect->left, lpRect->top, lpRect->right, lpRect->bottom,
+            TRACE("rect: %s. rclFrame: (%d,%d)-(%d,%d)\n", wine_dbgstr_rect(lpRect),
                emh->rclFrame.left, emh->rclFrame.top, emh->rclFrame.right,
                emh->rclFrame.bottom);
 
