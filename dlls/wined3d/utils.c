@@ -234,6 +234,7 @@ static const struct wined3d_typed_format_info typed_formats[] =
     {WINED3DFMT_R32_UINT,               WINED3DFMT_R32_TYPELESS,          "U"},
     {WINED3DFMT_R32_SINT,               WINED3DFMT_R32_TYPELESS,          "I"},
     {WINED3DFMT_R32_FLOAT,              WINED3DFMT_R32_TYPELESS,          "F"},
+    {WINED3DFMT_D32_FLOAT,              WINED3DFMT_R32_TYPELESS,          "D"},
     {WINED3DFMT_R24_UNORM_X8_TYPELESS,  WINED3DFMT_R24G8_TYPELESS,        "DX"},
     {WINED3DFMT_X24_TYPELESS_G8_UINT,   WINED3DFMT_R24G8_TYPELESS,        "XS"},
     {WINED3DFMT_D24_UNORM_S8_UINT,      WINED3DFMT_R24G8_TYPELESS,        "DS"},
@@ -243,6 +244,7 @@ static const struct wined3d_typed_format_info typed_formats[] =
     {WINED3DFMT_R16_UINT,               WINED3DFMT_R16_TYPELESS,          "U"},
     {WINED3DFMT_R16_SINT,               WINED3DFMT_R16_TYPELESS,          "I"},
     {WINED3DFMT_R16_FLOAT,              WINED3DFMT_R16_TYPELESS,          "F"},
+    {WINED3DFMT_D16_UNORM,              WINED3DFMT_R16_TYPELESS,          "D"},
     {WINED3DFMT_R8_UNORM,               WINED3DFMT_R8_TYPELESS,           "u"},
     {WINED3DFMT_BC1_UNORM_SRGB,         WINED3DFMT_BC1_TYPELESS,          ""},
     {WINED3DFMT_BC1_UNORM,              WINED3DFMT_BC1_TYPELESS,          ""},
@@ -1676,6 +1678,12 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
                 flags |= WINED3DFMT_FLAG_INTEGER;
             if (channel_type == WINED3D_CHANNEL_TYPE_FLOAT)
                 flags |= WINED3DFMT_FLAG_FLOAT;
+
+            if (channel_type == WINED3D_CHANNEL_TYPE_DEPTH && !format->depth_size)
+            {
+                format->depth_size = format->red_size;
+                format->red_size = format->red_offset = 0;
+            }
         }
 
         format_set_flag(format, flags);
