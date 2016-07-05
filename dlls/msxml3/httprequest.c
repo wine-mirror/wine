@@ -114,7 +114,6 @@ typedef struct
 {
     httprequest req;
     IServerXMLHTTPRequest IServerXMLHTTPRequest_iface;
-    LONG ref;
 } serverhttp;
 
 static inline httprequest *impl_from_IXMLHTTPRequest( IXMLHTTPRequest *iface )
@@ -1737,7 +1736,7 @@ static HRESULT WINAPI ServerXMLHTTPRequest_QueryInterface(IServerXMLHTTPRequest 
 static ULONG WINAPI ServerXMLHTTPRequest_AddRef(IServerXMLHTTPRequest *iface)
 {
     serverhttp *This = impl_from_IServerXMLHTTPRequest( iface );
-    ULONG ref = InterlockedIncrement( &This->ref );
+    ULONG ref = InterlockedIncrement( &This->req.ref );
     TRACE("(%p)->(%u)\n", This, ref );
     return ref;
 }
@@ -1745,7 +1744,7 @@ static ULONG WINAPI ServerXMLHTTPRequest_AddRef(IServerXMLHTTPRequest *iface)
 static ULONG WINAPI ServerXMLHTTPRequest_Release(IServerXMLHTTPRequest *iface)
 {
     serverhttp *This = impl_from_IServerXMLHTTPRequest( iface );
-    ULONG ref = InterlockedDecrement( &This->ref );
+    ULONG ref = InterlockedDecrement( &This->req.ref );
 
     TRACE("(%p)->(%u)\n", This, ref );
 
@@ -2041,7 +2040,6 @@ HRESULT ServerXMLHTTP_create(void **obj)
 
     init_httprequest(&req->req);
     req->IServerXMLHTTPRequest_iface.lpVtbl = &ServerXMLHTTPRequestVtbl;
-    req->ref = 1;
 
     *obj = &req->IServerXMLHTTPRequest_iface;
 
