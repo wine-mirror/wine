@@ -1300,7 +1300,8 @@ HRESULT SampleGrabber_create(IUnknown *pUnkOuter, LPVOID *ppv)
     else
         obj->outer_unk = &obj->IUnknown_inner;
 
-    hr = CoCreateInstance(&CLSID_SeekingPassThru, (IUnknown*)obj, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&obj->seekthru_unk);
+    hr = CoCreateInstance(&CLSID_SeekingPassThru, &obj->IUnknown_inner, CLSCTX_INPROC_SERVER,
+                          &IID_IUnknown, (void**)&obj->seekthru_unk);
     if(hr)
         return hr;
     IUnknown_QueryInterface(obj->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
