@@ -4330,6 +4330,11 @@ static void shader_glsl_breakp(const struct wined3d_shader_instruction *ins)
     shader_addline(ins->ctx->buffer, "if (%s(%s)) break;\n", condition, src_param.param_str);
 }
 
+static void shader_glsl_continue(const struct wined3d_shader_instruction *ins)
+{
+    shader_addline(ins->ctx->buffer, "continue;\n");
+}
+
 static void shader_glsl_label(const struct wined3d_shader_instruction *ins)
 {
     shader_addline(ins->ctx->buffer, "}\n");
@@ -8576,6 +8581,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_CASE                             */ shader_glsl_case,
     /* WINED3DSIH_CMP                              */ shader_glsl_conditional_move,
     /* WINED3DSIH_CND                              */ shader_glsl_cnd,
+    /* WINED3DSIH_CONTINUE                         */ shader_glsl_continue,
     /* WINED3DSIH_CRS                              */ shader_glsl_cross,
     /* WINED3DSIH_CUT                              */ shader_glsl_cut,
     /* WINED3DSIH_CUT_STREAM                       */ NULL,

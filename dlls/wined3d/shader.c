@@ -54,6 +54,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_CASE                             */ "case",
     /* WINED3DSIH_CMP                              */ "cmp",
     /* WINED3DSIH_CND                              */ "cnd",
+    /* WINED3DSIH_CONTINUE                         */ "continue",
     /* WINED3DSIH_CRS                              */ "crs",
     /* WINED3DSIH_CUT                              */ "cut",
     /* WINED3DSIH_CUT_STREAM                       */ "cut_stream",
