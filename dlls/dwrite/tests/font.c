@@ -40,6 +40,7 @@
 #define MS_HEAD_TAG DWRITE_MAKE_OPENTYPE_TAG('h','e','a','d')
 #define MS_HHEA_TAG DWRITE_MAKE_OPENTYPE_TAG('h','h','e','a')
 #define MS_POST_TAG DWRITE_MAKE_OPENTYPE_TAG('p','o','s','t')
+#define MS_GSUB_TAG DWRITE_MAKE_OPENTYPE_TAG('G','S','U','B')
 
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
@@ -219,6 +220,60 @@ typedef struct {
     SHORT  metricDataFormat;
     USHORT numberOfHMetrics;
 } TT_HHEA;
+
+typedef struct {
+    DWORD version;
+    WORD ScriptList;
+    WORD FeatureList;
+    WORD LookupList;
+} GSUB_Header;
+
+typedef struct {
+    CHAR FeatureTag[4];
+    WORD Feature;
+} OT_FeatureRecord;
+
+typedef struct {
+    WORD FeatureCount;
+    OT_FeatureRecord FeatureRecord[1];
+} OT_FeatureList;
+
+typedef struct {
+    WORD FeatureParams;
+    WORD LookupCount;
+    WORD LookupListIndex[1];
+} OT_Feature;
+
+typedef struct {
+    WORD LookupCount;
+    WORD Lookup[1];
+} OT_LookupList;
+
+typedef struct {
+    WORD LookupType;
+    WORD LookupFlag;
+    WORD SubTableCount;
+    WORD SubTable[1];
+} OT_LookupTable;
+
+typedef struct {
+    WORD SubstFormat;
+    WORD Coverage;
+    WORD DeltaGlyphID;
+} GSUB_SingleSubstFormat1;
+
+typedef struct {
+    WORD SubstFormat;
+    WORD Coverage;
+    WORD GlyphCount;
+    WORD Substitute[1];
+} GSUB_SingleSubstFormat2;
+
+typedef struct {
+    WORD SubstFormat;
+    WORD ExtensionLookupType;
+    DWORD ExtensionOffset;
+} GSUB_ExtensionPosFormat1;
 
 #include "poppack.h"
 
@@ -6300,6 +6355,153 @@ static void test_font_properties(void)
     IDWriteFactory_Release(factory);
 }
 
+static BOOL has_vertical_glyph_variants(IDWriteFontFace1 *fontface)
+{
+    const OT_FeatureList *featurelist;
+    const OT_LookupList *lookup_list;
+    BOOL exists = FALSE, ret = FALSE;
+    const GSUB_Header *header;
+    const void *data;
+    void *context;
+    UINT32 size;
+    HRESULT hr;
+    UINT16 i;
+
+    hr = IDWriteFontFace1_TryGetFontTable(fontface, MS_GSUB_TAG, &data, &size, &context, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    if (!exists)
+        return FALSE;
+
+    header = data;
+    featurelist = (OT_FeatureList*)((BYTE*)header + GET_BE_WORD(header->FeatureList));
+    lookup_list = (const OT_LookupList*)((BYTE*)header + GET_BE_WORD(header->LookupList));
+
+    for (i = 0; i < GET_BE_WORD(featurelist->FeatureCount); i++) {
+        if (*(UINT32*)featurelist->FeatureRecord[i].FeatureTag == DWRITE_FONT_FEATURE_TAG_VERTICAL_WRITING) {
+            const OT_Feature *feature = (const OT_Feature*)((BYTE*)featurelist + GET_BE_WORD(featurelist->FeatureRecord[i].Feature));
+            UINT16 lookup_count = GET_BE_WORD(feature->LookupCount), index, count, type;
+            const GSUB_SingleSubstFormat2 *subst2;
+            const OT_LookupTable *lookup_table;
+            UINT32 offset;
+
+            if (lookup_count == 0)
+                continue;
+
+            ok(lookup_count == 1, "got lookup count %u\n", lookup_count);
+
+            /* check if lookup is empty */
+            index = GET_BE_WORD(feature->LookupListIndex[0]);
+            lookup_table = (const OT_LookupTable*)((BYTE*)lookup_list + GET_BE_WORD(lookup_list->Lookup[index]));
+
+            type = GET_BE_WORD(lookup_table->LookupType);
+            ok(type == 1 || type == 7, "got unexpected lookup type %u\n", type);
+
+
+            count = GET_BE_WORD(lookup_table->SubTableCount);
+            if (count == 0)
+                continue;
+
+            ok(count > 0, "got unexpected subtable count %u\n", count);
+
+            offset = GET_BE_WORD(lookup_table->SubTable[0]);
+            if (type == 7) {
+                const GSUB_ExtensionPosFormat1 *ext = (const GSUB_ExtensionPosFormat1 *)((const BYTE *)lookup_table + offset);
+                if (GET_BE_WORD(ext->SubstFormat) == 1)
+                    offset += GET_BE_DWORD(ext->ExtensionOffset);
+                else
+                    ok(0, "Unhandled Extension Substitution Format %u\n", GET_BE_WORD(ext->SubstFormat));
+            }
+
+            subst2 = (const GSUB_SingleSubstFormat2*)((BYTE*)lookup_table + offset);
+            index = GET_BE_WORD(subst2->SubstFormat);
+            if (index == 1)
+                ok(0, "validate Single Substitution Format 1\n");
+            else if (index == 2) {
+                /* SimSun-ExtB has 0 glyph count for this substitution */
+                if (GET_BE_WORD(subst2->GlyphCount) > 0) {
+                    ret = TRUE;
+                    break;
+                }
+            }
+            else
+                ok(0, "unknown Single Substitution Format, %u\n", index);
+        }
+    }
+
+    IDWriteFontFace1_ReleaseFontTable(fontface, context);
+
+    return ret;
+}
+
+static void test_HasVerticalGlyphVariants(void)
+{
+    IDWriteFontCollection *syscollection;
+    IDWriteFontFace1 *fontface1;
+    IDWriteFontFace *fontface;
+    IDWriteFactory *factory;
+    UINT32 count, i;
+    HRESULT hr;
+
+    factory = create_factory();
+    fontface = create_fontface(factory);
+
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void**)&fontface1);
+    IDWriteFontFace_Release(fontface);
+    if (hr != S_OK) {
+        win_skip("HasVerticalGlyphVariants() is not supported.\n");
+        IDWriteFactory_Release(factory);
+        return;
+    }
+    IDWriteFontFace1_Release(fontface1);
+
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &syscollection, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    count = IDWriteFontCollection_GetFontFamilyCount(syscollection);
+
+    for (i = 0; i < count; i++) {
+        IDWriteLocalizedStrings *names;
+        BOOL expected_vert, has_vert;
+        IDWriteFontFamily *family;
+        IDWriteFont *font;
+        WCHAR nameW[256];
+
+        hr = IDWriteFontCollection_GetFontFamily(syscollection, i, &family);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
+            DWRITE_FONT_STYLE_NORMAL, &font);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFont_CreateFontFace(font, &fontface);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void**)&fontface1);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontFamily_GetFamilyNames(family, &names);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        get_enus_string(names, nameW, sizeof(nameW)/sizeof(nameW[0]));
+
+        expected_vert = has_vertical_glyph_variants(fontface1);
+        has_vert = IDWriteFontFace1_HasVerticalGlyphVariants(fontface1);
+
+        ok(expected_vert == has_vert, "%s: expected vertical feature %d, got %d\n",
+            wine_dbgstr_w(nameW), expected_vert, has_vert);
+
+        IDWriteLocalizedStrings_Release(names);
+        IDWriteFont_Release(font);
+
+        IDWriteFontFace1_Release(fontface1);
+        IDWriteFontFace_Release(fontface);
+        IDWriteFontFamily_Release(family);
+    }
+
+    IDWriteFontCollection_Release(syscollection);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -6357,6 +6559,7 @@ START_TEST(font)
     test_CreateFontFaceReference();
     test_GetFontSignature();
     test_font_properties();
+    test_HasVerticalGlyphVariants();
 
     IDWriteFactory_Release(factory);
 }

@@ -334,6 +334,49 @@ enum OPENTYPE_PLATFORM_ID
     OPENTYPE_PLATFORM_CUSTOM
 };
 
+typedef struct {
+    WORD FeatureParams;
+    WORD LookupCount;
+    WORD LookupListIndex[1];
+} OT_Feature;
+
+typedef struct {
+    WORD LookupCount;
+    WORD Lookup[1];
+} OT_LookupList;
+
+typedef struct {
+    WORD LookupType;
+    WORD LookupFlag;
+    WORD SubTableCount;
+    WORD SubTable[1];
+} OT_LookupTable;
+
+typedef struct {
+    WORD SubstFormat;
+    WORD Coverage;
+    WORD DeltaGlyphID;
+} GSUB_SingleSubstFormat1;
+
+typedef struct {
+    WORD SubstFormat;
+    WORD Coverage;
+    WORD GlyphCount;
+    WORD Substitute[1];
+} GSUB_SingleSubstFormat2;
+
+typedef struct {
+    WORD SubstFormat;
+    WORD ExtensionLookupType;
+    DWORD ExtensionOffset;
+} GSUB_ExtensionPosFormat1;
+
+enum OPENTYPE_GPOS_LOOKUPS
+{
+    OPENTYPE_GPOS_SINGLE_SUBST = 1,
+    OPENTYPE_GPOS_EXTENSION_SUBST = 7
+};
+
 enum TT_NAME_WINDOWS_ENCODING_ID
 {
     TT_NAME_WINDOWS_ENCODING_SYMBOL = 0,
@@ -1886,4 +1929,77 @@ HRESULT opentype_get_font_signature(struct file_stream_desc *stream_desc, FONTSI
     }
 
     return hr;
+}
+
+BOOL opentype_has_vertical_variants(IDWriteFontFace3 *fontface)
+{
+    const OT_FeatureList *featurelist;
+    const OT_LookupList *lookup_list;
+    BOOL exists = FALSE, ret = FALSE;
+    const GPOS_GSUB_Header *header;
+    const void *data;
+    void *context;
+    UINT32 size;
+    HRESULT hr;
+    UINT16 i;
+
+    hr = IDWriteFontFace3_TryGetFontTable(fontface, MS_GSUB_TAG, &data, &size, &context, &exists);
+    if (FAILED(hr) || !exists)
+        return FALSE;
+
+    header = data;
+    featurelist = (OT_FeatureList*)((BYTE*)header + GET_BE_WORD(header->FeatureList));
+    lookup_list = (const OT_LookupList*)((BYTE*)header + GET_BE_WORD(header->LookupList));
+
+    for (i = 0; i < GET_BE_WORD(featurelist->FeatureCount); i++) {
+        if (*(UINT32*)featurelist->FeatureRecord[i].FeatureTag == DWRITE_FONT_FEATURE_TAG_VERTICAL_WRITING) {
+            const OT_Feature *feature = (const OT_Feature*)((BYTE*)featurelist + GET_BE_WORD(featurelist->FeatureRecord[i].Feature));
+            UINT16 lookup_count = GET_BE_WORD(feature->LookupCount), index, count, type;
+            const GSUB_SingleSubstFormat2 *subst2;
+            const OT_LookupTable *lookup_table;
+            UINT32 offset;
+
+            if (lookup_count == 0)
+                continue;
+
+            /* check if lookup is empty */
+            index = GET_BE_WORD(feature->LookupListIndex[0]);
+            lookup_table = (const OT_LookupTable*)((BYTE*)lookup_list + GET_BE_WORD(lookup_list->Lookup[index]));
+
+            type = GET_BE_WORD(lookup_table->LookupType);
+            if (type != OPENTYPE_GPOS_SINGLE_SUBST && type != OPENTYPE_GPOS_EXTENSION_SUBST)
+                continue;
+
+            count = GET_BE_WORD(lookup_table->SubTableCount);
+            if (count == 0)
+                continue;
+
+            offset = GET_BE_WORD(lookup_table->SubTable[0]);
+            if (type == OPENTYPE_GPOS_EXTENSION_SUBST) {
+                const GSUB_ExtensionPosFormat1 *ext = (const GSUB_ExtensionPosFormat1 *)((const BYTE *)lookup_table + offset);
+                if (GET_BE_WORD(ext->SubstFormat) == 1)
+                    offset += GET_BE_DWORD(ext->ExtensionOffset);
+                else
+                    FIXME("Unhandled Extension Substitution Format %u\n", GET_BE_WORD(ext->SubstFormat));
+            }
+
+            subst2 = (const GSUB_SingleSubstFormat2*)((BYTE*)lookup_table + offset);
+            index = GET_BE_WORD(subst2->SubstFormat);
+            if (index == 1)
+                FIXME("Validate Single Substitution Format 1\n");
+            else if (index == 2) {
+                /* SimSun-ExtB has 0 glyph count for this substitution */
+                if (GET_BE_WORD(subst2->GlyphCount) > 0) {
+                    ret = TRUE;
+                    break;
+                }
+            }
+            else
+                WARN("Unknown Single Substitution Format, %u\n", index);
+        }
+    }
+
+    IDWriteFontFace3_ReleaseFontTable(fontface, context);
+
+    return ret;
 }

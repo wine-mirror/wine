@@ -205,6 +205,13 @@ struct dwrite_colorglyphenum {
 #define GLYPH_BLOCK_MASK  (GLYPH_BLOCK_SIZE - 1)
 #define GLYPH_MAX         65536
 
+enum fontface_flags {
+    FONTFACE_IS_SYMBOL             = 1 << 0,
+    FONTFACE_IS_MONOSPACED         = 1 << 1,
+    FONTFACE_HAS_KERN_PAIRS        = 1 << 2,
+    FONTFACE_HAS_VERTICAL_VARIANTS = 1 << 3
+};
+
 struct dwrite_fontface {
     IDWriteFontFace3 IDWriteFontFace3_iface;
     LONG ref;
@@ -219,9 +226,7 @@ struct dwrite_fontface {
     DWRITE_FONT_METRICS1 metrics;
     DWRITE_CARET_METRICS caret;
     INT charmap;
-    BOOL is_symbol;
-    BOOL has_kerning_pairs : 1;
-    BOOL is_monospaced : 1;
+    UINT16 flags;
 
     struct dwrite_fonttable cmap;
     struct dwrite_fonttable vdmx;
@@ -545,7 +550,7 @@ static BOOL WINAPI dwritefontface_IsSymbolFont(IDWriteFontFace3 *iface)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace3(iface);
     TRACE("(%p)\n", This);
-    return This->is_symbol;
+    return !!(This->flags & FONTFACE_IS_SYMBOL);
 }
 
 static void WINAPI dwritefontface_GetMetrics(IDWriteFontFace3 *iface, DWRITE_FONT_METRICS *metrics)
@@ -859,7 +864,7 @@ static BOOL WINAPI dwritefontface1_IsMonospacedFont(IDWriteFontFace3 *iface)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace3(iface);
     TRACE("(%p)\n", This);
-    return This->is_monospaced;
+    return !!(This->flags & FONTFACE_IS_MONOSPACED);
 }
 
 static HRESULT WINAPI dwritefontface1_GetDesignGlyphAdvances(IDWriteFontFace3 *iface,
@@ -929,7 +934,7 @@ static HRESULT WINAPI dwritefontface1_GetKerningPairAdjustments(IDWriteFontFace3
         return E_INVALIDARG;
     }
 
-    if (!This->has_kerning_pairs) {
+    if (This->flags & FONTFACE_HAS_KERN_PAIRS) {
         memset(adjustments, 0, count*sizeof(INT32));
         return S_OK;
     }
@@ -945,7 +950,7 @@ static BOOL WINAPI dwritefontface1_HasKerningPairs(IDWriteFontFace3 *iface)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace3(iface);
     TRACE("(%p)\n", This);
-    return This->has_kerning_pairs;
+    return !!(This->flags & FONTFACE_HAS_KERN_PAIRS);
 }
 
 static HRESULT WINAPI dwritefontface1_GetRecommendedRenderingMode(IDWriteFontFace3 *iface,
@@ -968,8 +973,8 @@ static HRESULT WINAPI dwritefontface1_GetVerticalGlyphVariants(IDWriteFontFace3 
 static BOOL WINAPI dwritefontface1_HasVerticalGlyphVariants(IDWriteFontFace3 *iface)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace3(iface);
-    FIXME("(%p): stub\n", This);
-    return FALSE;
+    TRACE("(%p)\n", This);
+    return !!(This->flags & FONTFACE_HAS_VERTICAL_VARIANTS);
 }
 
 static BOOL WINAPI dwritefontface2_IsColorFont(IDWriteFontFace3 *iface)
@@ -4130,6 +4135,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, IDWriteFontFace3 **ret
     struct file_stream_desc stream_desc;
     struct dwrite_fontface *fontface;
     HRESULT hr = S_OK;
+    BOOL is_symbol;
     int i;
 
     *ret = NULL;
@@ -4188,9 +4194,17 @@ HRESULT create_fontface(const struct fontface_desc *desc, IDWriteFontFace3 **ret
             fontface->caret.slopeRun = fontface->caret.slopeRise / 3;
         }
     }
-    fontface->charmap = freetype_get_charmap_index(&fontface->IDWriteFontFace3_iface, &fontface->is_symbol);
-    fontface->has_kerning_pairs = freetype_has_kerning_pairs(&fontface->IDWriteFontFace3_iface);
-    fontface->is_monospaced = freetype_is_monospaced(&fontface->IDWriteFontFace3_iface);
+
+    fontface->flags = 0;
+    fontface->charmap = freetype_get_charmap_index(&fontface->IDWriteFontFace3_iface, &is_symbol);
+    if (is_symbol)
+        fontface->flags |= FONTFACE_IS_SYMBOL;
+    if (freetype_has_kerning_pairs(&fontface->IDWriteFontFace3_iface))
+        fontface->flags |= FONTFACE_HAS_KERN_PAIRS;
+    if (freetype_is_monospaced(&fontface->IDWriteFontFace3_iface))
+        fontface->flags |= FONTFACE_IS_MONOSPACED;
+    if (opentype_has_vertical_variants(&fontface->IDWriteFontFace3_iface))
+        fontface->flags |= FONTFACE_HAS_VERTICAL_VARIANTS;
 
     /* Font properties are reused from font object when 'normal' face creation path is used:
        collection -> family -> matching font -> fontface.
