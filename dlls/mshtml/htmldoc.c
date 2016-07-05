@@ -4769,7 +4769,6 @@ static const tid_t HTMLDocumentNode_iface_tids[] = {
 static dispex_static_data_t HTMLDocumentNode_dispex = {
     &HTMLDocumentNode_dispex_vtbl,
     DispHTMLDocument_tid,
-    NULL,
     HTMLDocumentNode_iface_tids
 };
 
@@ -4997,7 +4996,6 @@ static const tid_t HTMLDocumentObj_iface_tids[] = {
 static dispex_static_data_t HTMLDocumentObj_dispex = {
     NULL,
     DispHTMLDocument_tid,
-    NULL,
     HTMLDocumentObj_iface_tids
 };
 
