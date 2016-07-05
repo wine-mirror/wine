@@ -294,10 +294,10 @@ static HRESULT WINAPI PStore_fnWriteItem( IPStore* This, PST_KEY Key,
  */
 static HRESULT WINAPI PStore_fnOpenItem( IPStore* This, PST_KEY Key,
     const GUID* pItemType, const GUID* pItemSubtype, LPCWSTR szItemName,
-    PST_ACCESSMODE ModeFlags, PPST_PROMPTINFO pProomptInfo, DWORD dwFlags )
+    PST_ACCESSMODE ModeFlags, PPST_PROMPTINFO pPromptInfo, DWORD dwFlags )
 {
     FIXME("(%p,%08x,%s,%s,%s,%08x,%p,%08x) stub\n", This, Key, debugstr_guid(pItemType),
-           debugstr_guid(pItemSubtype), debugstr_w(szItemName), ModeFlags, pProomptInfo, dwFlags);
+           debugstr_guid(pItemSubtype), debugstr_w(szItemName), ModeFlags, pPromptInfo, dwFlags);
     return E_NOTIMPL;
 }
 
