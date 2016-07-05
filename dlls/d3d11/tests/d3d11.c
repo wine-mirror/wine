@@ -472,6 +472,99 @@ static void check_dsv_desc_(unsigned int line, const D3D11_DEPTH_STENCIL_VIEW_DE
     }
 }
 
+struct uav_desc
+{
+    DXGI_FORMAT format;
+    D3D11_UAV_DIMENSION dimension;
+    unsigned int miplevel_idx;
+    unsigned int layer_idx;
+    unsigned int layer_count;
+};
+
+static void get_uav_desc(D3D11_UNORDERED_ACCESS_VIEW_DESC *d3d11_desc, const struct uav_desc *desc)
+{
+    d3d11_desc->Format = desc->format;
+    d3d11_desc->ViewDimension = desc->dimension;
+    if (desc->dimension == D3D11_UAV_DIMENSION_TEXTURE1D)
+    {
+        U(*d3d11_desc).Texture1D.MipSlice = desc->miplevel_idx;
+    }
+    else if (desc->dimension == D3D11_UAV_DIMENSION_TEXTURE1DARRAY)
+    {
+        U(*d3d11_desc).Texture1DArray.MipSlice = desc->miplevel_idx;
+        U(*d3d11_desc).Texture1DArray.FirstArraySlice = desc->layer_idx;
+        U(*d3d11_desc).Texture1DArray.ArraySize = desc->layer_count;
+    }
+    else if (desc->dimension == D3D11_UAV_DIMENSION_TEXTURE2D)
+    {
+        U(*d3d11_desc).Texture2D.MipSlice = desc->miplevel_idx;
+    }
+    else if (desc->dimension == D3D11_UAV_DIMENSION_TEXTURE2DARRAY)
+    {
+        U(*d3d11_desc).Texture2DArray.MipSlice = desc->miplevel_idx;
+        U(*d3d11_desc).Texture2DArray.FirstArraySlice = desc->layer_idx;
+        U(*d3d11_desc).Texture2DArray.ArraySize = desc->layer_count;
+    }
+    else if (desc->dimension == D3D11_UAV_DIMENSION_TEXTURE3D)
+    {
+        U(*d3d11_desc).Texture3D.MipSlice = desc->miplevel_idx;
+        U(*d3d11_desc).Texture3D.FirstWSlice = desc->layer_idx;
+        U(*d3d11_desc).Texture3D.WSize = desc->layer_count;
+    }
+    else if (desc->dimension != D3D11_UAV_DIMENSION_UNKNOWN)
+    {
+        trace("Unhandled view dimension %#x.\n", desc->dimension);
+    }
+}
+
+#define check_uav_desc(a, b) check_uav_desc_(__LINE__, a, b)
+static void check_uav_desc_(unsigned int line, const D3D11_UNORDERED_ACCESS_VIEW_DESC *desc,
+        const struct uav_desc *expected_desc)
+{
+    ok_(__FILE__, line)(desc->Format == expected_desc->format,
+            "Got format %#x, expected %#x.\n", desc->Format, expected_desc->format);
+    ok_(__FILE__, line)(desc->ViewDimension == expected_desc->dimension,
+            "Got view dimension %#x, expected %#x.\n", desc->ViewDimension, expected_desc->dimension);
+
+    if (desc->ViewDimension != expected_desc->dimension)
+        return;
+
+    if (desc->ViewDimension == D3D11_UAV_DIMENSION_TEXTURE2D)
+    {
+        ok_(__FILE__, line)(U(*desc).Texture2D.MipSlice == expected_desc->miplevel_idx,
+                "Got MipSlice %u, expected %u.\n",
+                U(*desc).Texture2D.MipSlice, expected_desc->miplevel_idx);
+    }
+    else if (desc->ViewDimension == D3D11_UAV_DIMENSION_TEXTURE2DARRAY)
+    {
+        ok_(__FILE__, line)(U(*desc).Texture2DArray.MipSlice == expected_desc->miplevel_idx,
+                "Got MipSlice %u, expected %u.\n",
+                U(*desc).Texture2DArray.MipSlice, expected_desc->miplevel_idx);
+        ok_(__FILE__, line)(U(*desc).Texture2DArray.FirstArraySlice == expected_desc->layer_idx,
+                "Got FirstArraySlice %u, expected %u.\n",
+                U(*desc).Texture2DArray.FirstArraySlice, expected_desc->layer_idx);
+        ok_(__FILE__, line)(U(*desc).Texture2DArray.ArraySize == expected_desc->layer_count,
+                "Got ArraySize %u, expected %u.\n",
+                U(*desc).Texture2DArray.ArraySize, expected_desc->layer_count);
+    }
+    else if (desc->ViewDimension == D3D11_UAV_DIMENSION_TEXTURE3D)
+    {
+        ok_(__FILE__, line)(U(*desc).Texture3D.MipSlice == expected_desc->miplevel_idx,
+                "Got MipSlice %u, expected %u.\n",
+                U(*desc).Texture3D.MipSlice, expected_desc->miplevel_idx);
+        ok_(__FILE__, line)(U(*desc).Texture3D.FirstWSlice == expected_desc->layer_idx,
+                "Got FirstWSlice %u, expected %u.\n",
+                U(*desc).Texture3D.FirstWSlice, expected_desc->layer_idx);
+        ok_(__FILE__, line)(U(*desc).Texture3D.WSize == expected_desc->layer_count,
+                "Got WSize %u, expected %u.\n",
+                U(*desc).Texture3D.WSize, expected_desc->layer_count);
+    }
+    else
+    {
+        trace("Unhandled view dimension %#x.\n", desc->ViewDimension);
+    }
+}
+
 #define create_buffer(a, b, c, d) create_buffer_(__LINE__, a, b, c, d)
 static ID3D11Buffer *create_buffer_(unsigned int line, ID3D11Device *device,
         unsigned int bind_flags, unsigned int size, const void *data)
@@ -8516,6 +8609,291 @@ static void test_check_feature_support(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_create_unordered_access_view(void)
+{
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
+    D3D11_TEXTURE3D_DESC texture3d_desc;
+    D3D11_TEXTURE2D_DESC texture2d_desc;
+    ULONG refcount, expected_refcount;
+    D3D11_SUBRESOURCE_DATA data = {0};
+    ID3D11UnorderedAccessView *uav;
+    struct device_desc device_desc;
+    D3D11_BUFFER_DESC buffer_desc;
+    ID3D11Device *device, *tmp;
+    ID3D11Texture3D *texture3d;
+    ID3D11Texture2D *texture2d;
+    ID3D11Resource *texture;
+    ID3D11Buffer *buffer;
+    unsigned int i;
+    HRESULT hr;
+
+#define FMT_UNKNOWN  DXGI_FORMAT_UNKNOWN
+#define RGBA8_UNORM  DXGI_FORMAT_R8G8B8A8_UNORM
+#define RGBA8_TL     DXGI_FORMAT_R8G8B8A8_TYPELESS
+#define DIM_UNKNOWN  D3D11_UAV_DIMENSION_UNKNOWN
+#define TEX_1D       D3D11_UAV_DIMENSION_TEXTURE1D
+#define TEX_1D_ARRAY D3D11_UAV_DIMENSION_TEXTURE1DARRAY
+#define TEX_2D       D3D11_UAV_DIMENSION_TEXTURE2D
+#define TEX_2D_ARRAY D3D11_UAV_DIMENSION_TEXTURE2DARRAY
+#define TEX_3D       D3D11_UAV_DIMENSION_TEXTURE3D
+    static const struct
+    {
+        struct
+        {
+            unsigned int miplevel_count;
+            unsigned int depth_or_array_size;
+            DXGI_FORMAT format;
+        } texture;
+        struct uav_desc uav_desc;
+        struct uav_desc expected_uav_desc;
+    }
+    tests[] =
+    {
+        {{ 1, 1, RGBA8_UNORM}, {0},                                    {RGBA8_UNORM, TEX_2D,       0}},
+        {{10, 1, RGBA8_UNORM}, {0},                                    {RGBA8_UNORM, TEX_2D,       0}},
+        {{10, 1, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D,       0},         {RGBA8_UNORM, TEX_2D,       0}},
+        {{10, 1, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D,       1},         {RGBA8_UNORM, TEX_2D,       1}},
+        {{10, 1, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D,       9},         {RGBA8_UNORM, TEX_2D,       9}},
+        {{ 1, 1, RGBA8_TL},    {RGBA8_UNORM, TEX_2D,       0},         {RGBA8_UNORM, TEX_2D,       0}},
+        {{10, 1, RGBA8_TL},    {RGBA8_UNORM, TEX_2D,       0},         {RGBA8_UNORM, TEX_2D,       0}},
+        {{ 1, 4, RGBA8_UNORM}, {0},                                    {RGBA8_UNORM, TEX_2D_ARRAY, 0, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {0},                                    {RGBA8_UNORM, TEX_2D_ARRAY, 0, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 0, ~0u}, {RGBA8_UNORM, TEX_2D_ARRAY, 0, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 1, 0, ~0u}, {RGBA8_UNORM, TEX_2D_ARRAY, 1, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 3, 0, ~0u}, {RGBA8_UNORM, TEX_2D_ARRAY, 3, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 5, 0, ~0u}, {RGBA8_UNORM, TEX_2D_ARRAY, 5, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 9, 0, ~0u}, {RGBA8_UNORM, TEX_2D_ARRAY, 9, 0, 4}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 1, ~0u}, {RGBA8_UNORM, TEX_2D_ARRAY, 0, 1, 3}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 2, ~0u}, {RGBA8_UNORM, TEX_2D_ARRAY, 0, 2, 2}},
+        {{10, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_2D_ARRAY, 0, 3, ~0u}, {RGBA8_UNORM, TEX_2D_ARRAY, 0, 3, 1}},
+        {{ 1, 6, RGBA8_UNORM}, {0},                                    {RGBA8_UNORM, TEX_3D,       0, 0, 6}},
+        {{ 2, 6, RGBA8_UNORM}, {0},                                    {RGBA8_UNORM, TEX_3D,       0, 0, 6}},
+        {{ 2, 6, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       0, 0, ~0u}, {RGBA8_UNORM, TEX_3D,       0, 0, 6}},
+        {{ 2, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       1, 0, ~0u}, {RGBA8_UNORM, TEX_3D,       1, 0, 2}},
+        {{ 2, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       1, 0, ~0u}, {RGBA8_UNORM, TEX_3D,       1, 0, 2}},
+        {{ 2, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       0, 1, ~0u}, {RGBA8_UNORM, TEX_3D,       0, 1, 3}},
+        {{ 2, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       0, 2, ~0u}, {RGBA8_UNORM, TEX_3D,       0, 2, 2}},
+        {{ 2, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       0, 3, ~0u}, {RGBA8_UNORM, TEX_3D,       0, 3, 1}},
+        {{ 2, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       0, 1,  1},  {RGBA8_UNORM, TEX_3D,       0, 1, 1}},
+        {{ 2, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       1, 1,  1},  {RGBA8_UNORM, TEX_3D,       1, 1, 1}},
+        {{ 2, 4, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       1, 1, ~0u}, {RGBA8_UNORM, TEX_3D,       1, 1, 1}},
+        {{ 6, 8, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       0, 0, ~0u}, {RGBA8_UNORM, TEX_3D,       0, 0, 8}},
+        {{ 6, 8, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       1, 0, ~0u}, {RGBA8_UNORM, TEX_3D,       1, 0, 4}},
+        {{ 6, 8, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       2, 0, ~0u}, {RGBA8_UNORM, TEX_3D,       2, 0, 2}},
+        {{ 6, 8, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       3, 0, ~0u}, {RGBA8_UNORM, TEX_3D,       3, 0, 1}},
+        {{ 6, 8, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       4, 0, ~0u}, {RGBA8_UNORM, TEX_3D,       4, 0, 1}},
+        {{ 6, 8, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       5, 0, ~0u}, {RGBA8_UNORM, TEX_3D,       5, 0, 1}},
+    };
+    static const struct
+    {
+        struct
+        {
+            D3D11_UAV_DIMENSION dimension;
+            unsigned int miplevel_count;
+            unsigned int depth_or_array_size;
+            DXGI_FORMAT format;
+        } texture;
+        struct uav_desc uav_desc;
+    }
+    invalid_desc_tests[] =
+    {
+        {{TEX_2D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, DIM_UNKNOWN}},
+        {{TEX_2D, 6, 4, RGBA8_UNORM}, {RGBA8_UNORM, DIM_UNKNOWN}},
+        {{TEX_2D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_1D,        0}},
+        {{TEX_2D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_1D_ARRAY,  0, 0,  1}},
+        {{TEX_2D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_3D,        0, 0,  1}},
+        {{TEX_2D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_3D,        0, 0, ~0u}},
+        {{TEX_2D, 1, 1, RGBA8_UNORM}, {RGBA8_TL,    TEX_2D,        0}},
+        {{TEX_2D, 1, 1, RGBA8_TL},    {FMT_UNKNOWN, TEX_2D,        0}},
+        {{TEX_2D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_2D,        1}},
+        {{TEX_2D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_2D_ARRAY,  0, 0,  0}},
+        {{TEX_2D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_2D_ARRAY,  1, 0,  1}},
+        {{TEX_2D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_2D_ARRAY,  0, 0,  2}},
+        {{TEX_2D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_2D_ARRAY,  0, 1,  1}},
+        {{TEX_3D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_1D,        0}},
+        {{TEX_3D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_1D_ARRAY,  0, 0,  1}},
+        {{TEX_3D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_2D,        0}},
+        {{TEX_3D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_2D_ARRAY,  0, 0,  1}},
+        {{TEX_3D, 1, 9, RGBA8_UNORM}, {RGBA8_UNORM, TEX_1D,        0}},
+        {{TEX_3D, 1, 9, RGBA8_UNORM}, {RGBA8_UNORM, TEX_1D_ARRAY,  0, 0,  1}},
+        {{TEX_3D, 1, 9, RGBA8_UNORM}, {RGBA8_UNORM, TEX_2D,        0}},
+        {{TEX_3D, 1, 9, RGBA8_UNORM}, {RGBA8_UNORM, TEX_2D_ARRAY,  0, 0,  1}},
+        {{TEX_3D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_3D,        0, 0,  0}},
+        {{TEX_3D, 1, 1, RGBA8_UNORM}, {RGBA8_UNORM, TEX_3D,        1, 0,  1}},
+        {{TEX_3D, 1, 1, RGBA8_UNORM}, {RGBA8_TL,    TEX_3D,        0, 0,  1}},
+        {{TEX_3D, 1, 9, RGBA8_UNORM}, {RGBA8_TL,    TEX_3D,        0, 0,  1}},
+        {{TEX_3D, 4, 8, RGBA8_UNORM}, {RGBA8_UNORM, TEX_3D,        0, 0,  9}},
+        {{TEX_3D, 4, 8, RGBA8_UNORM}, {RGBA8_UNORM, TEX_3D,        3, 0,  2}},
+        {{TEX_3D, 4, 8, RGBA8_UNORM}, {RGBA8_UNORM, TEX_3D,        2, 0,  4}},
+        {{TEX_3D, 4, 8, RGBA8_UNORM}, {RGBA8_UNORM, TEX_3D,        1, 0,  8}},
+        {{TEX_3D, 4, 8, RGBA8_UNORM}, {RGBA8_UNORM, TEX_3D,        0, 8, ~0u}},
+        {{TEX_3D, 4, 8, RGBA8_UNORM}, {RGBA8_UNORM, TEX_3D,        1, 4, ~0u}},
+        {{TEX_3D, 4, 8, RGBA8_UNORM}, {RGBA8_UNORM, TEX_3D,        2, 2, ~0u}},
+        {{TEX_3D, 4, 8, RGBA8_UNORM}, {RGBA8_UNORM, TEX_3D,        3, 1, ~0u}},
+    };
+#undef FMT_UNKNOWN
+#undef RGBA8_UNORM
+#undef RGBA8_TL
+#undef DIM_UNKNOWN
+#undef TEX_1D
+#undef TEX_1D_ARRAY
+#undef TEX_2D
+#undef TEX_2D_ARRAY
+#undef TEX_3D
+
+    device_desc.feature_level = &feature_level;
+    device_desc.flags = 0;
+    if (!(device = create_device(&device_desc)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    buffer_desc.ByteWidth = 1024;
+    buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+    buffer_desc.StructureByteStride = 0;
+
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &data, &buffer);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    expected_refcount = get_refcount((IUnknown *)device) + 1;
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
+    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    tmp = NULL;
+    expected_refcount = refcount + 1;
+    ID3D11Buffer_GetDevice(buffer, &tmp);
+    ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ID3D11Device_Release(tmp);
+
+    uav_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+    U(uav_desc).Buffer.FirstElement = 0;
+    U(uav_desc).Buffer.NumElements = 64;
+    U(uav_desc).Buffer.Flags = 0;
+
+    expected_refcount = get_refcount((IUnknown *)device) + 1;
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    tmp = NULL;
+    expected_refcount = refcount + 1;
+    ID3D11UnorderedAccessView_GetDevice(uav, &tmp);
+    ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ID3D11Device_Release(tmp);
+
+    ID3D11UnorderedAccessView_Release(uav);
+    ID3D11Buffer_Release(buffer);
+
+    texture2d_desc.Width = 512;
+    texture2d_desc.Height = 512;
+    texture2d_desc.SampleDesc.Count = 1;
+    texture2d_desc.SampleDesc.Quality = 0;
+    texture2d_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture2d_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+    texture2d_desc.CPUAccessFlags = 0;
+    texture2d_desc.MiscFlags = 0;
+
+    texture3d_desc.Width = 64;
+    texture3d_desc.Height = 64;
+    texture3d_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture3d_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+    texture3d_desc.CPUAccessFlags = 0;
+    texture3d_desc.MiscFlags = 0;
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        D3D11_UNORDERED_ACCESS_VIEW_DESC *current_desc;
+
+        if (tests[i].expected_uav_desc.dimension != D3D11_UAV_DIMENSION_TEXTURE3D)
+        {
+            texture2d_desc.MipLevels = tests[i].texture.miplevel_count;
+            texture2d_desc.ArraySize = tests[i].texture.depth_or_array_size;
+            texture2d_desc.Format = tests[i].texture.format;
+
+            hr = ID3D11Device_CreateTexture2D(device, &texture2d_desc, NULL, &texture2d);
+            ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+            texture = (ID3D11Resource *)texture2d;
+        }
+        else
+        {
+            texture3d_desc.MipLevels = tests[i].texture.miplevel_count;
+            texture3d_desc.Depth = tests[i].texture.depth_or_array_size;
+            texture3d_desc.Format = tests[i].texture.format;
+
+            hr = ID3D11Device_CreateTexture3D(device, &texture3d_desc, NULL, &texture3d);
+            ok(SUCCEEDED(hr), "Test %u: Failed to create 3d texture, hr %#x.\n", i, hr);
+            texture = (ID3D11Resource *)texture3d;
+        }
+
+        if (tests[i].uav_desc.dimension == D3D11_UAV_DIMENSION_UNKNOWN)
+        {
+            current_desc = NULL;
+        }
+        else
+        {
+            current_desc = &uav_desc;
+            get_uav_desc(current_desc, &tests[i].uav_desc);
+        }
+
+        hr = ID3D11Device_CreateUnorderedAccessView(device, texture, current_desc, &uav);
+        ok(SUCCEEDED(hr), "Test %u: Failed to create unordered access view, hr %#x.\n", i, hr);
+
+        memset(&uav_desc, 0, sizeof(uav_desc));
+        ID3D11UnorderedAccessView_GetDesc(uav, &uav_desc);
+        check_uav_desc(&uav_desc, &tests[i].expected_uav_desc);
+
+        ID3D11UnorderedAccessView_Release(uav);
+        ID3D11Resource_Release(texture);
+    }
+
+    for (i = 0; i < sizeof(invalid_desc_tests) / sizeof(*invalid_desc_tests); ++i)
+    {
+        assert(invalid_desc_tests[i].texture.dimension == D3D11_UAV_DIMENSION_TEXTURE2D
+                || invalid_desc_tests[i].texture.dimension == D3D11_UAV_DIMENSION_TEXTURE3D);
+
+        if (invalid_desc_tests[i].texture.dimension != D3D11_UAV_DIMENSION_TEXTURE3D)
+        {
+            texture2d_desc.MipLevels = invalid_desc_tests[i].texture.miplevel_count;
+            texture2d_desc.ArraySize = invalid_desc_tests[i].texture.depth_or_array_size;
+            texture2d_desc.Format = invalid_desc_tests[i].texture.format;
+
+            hr = ID3D11Device_CreateTexture2D(device, &texture2d_desc, NULL, &texture2d);
+            ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+            texture = (ID3D11Resource *)texture2d;
+        }
+        else
+        {
+            texture3d_desc.MipLevels = invalid_desc_tests[i].texture.miplevel_count;
+            texture3d_desc.Depth = invalid_desc_tests[i].texture.depth_or_array_size;
+            texture3d_desc.Format = invalid_desc_tests[i].texture.format;
+
+            hr = ID3D11Device_CreateTexture3D(device, &texture3d_desc, NULL, &texture3d);
+            ok(SUCCEEDED(hr), "Test %u: Failed to create 3d texture, hr %#x.\n", i, hr);
+            texture = (ID3D11Resource *)texture3d;
+        }
+
+        get_uav_desc(&uav_desc, &invalid_desc_tests[i].uav_desc);
+        hr = ID3D11Device_CreateUnorderedAccessView(device, texture, &uav_desc, &uav);
+        ok(hr == E_INVALIDARG, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        ID3D11Resource_Release(texture);
+    }
+
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -8562,4 +8940,5 @@ START_TEST(d3d11)
     test_input_assembler();
     test_null_sampler();
     test_check_feature_support();
+    test_create_unordered_access_view();
 }
