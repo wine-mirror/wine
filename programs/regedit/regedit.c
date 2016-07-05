@@ -88,7 +88,7 @@ typedef enum {
     ACTION_ADD, ACTION_EXPORT, ACTION_DELETE
 } REGEDIT_ACTION;
 
-static BOOL PerformRegAction(REGEDIT_ACTION action, WCHAR **argv, int *i)
+static void PerformRegAction(REGEDIT_ACTION action, WCHAR **argv, int *i)
 {
     switch (action) {
     case ACTION_ADD: {
@@ -113,7 +113,8 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, WCHAR **argv, int *i)
                 if (size == 0)
                 {
                     output_message(STRING_FILE_NOT_FOUND, filename);
-                    exit(1);
+                    HeapFree(GetProcessHeap(), 0, realname);
+                    return;
                 }
                 reg_file = _wfopen(realname, rb_mode);
                 if (reg_file == NULL)
@@ -121,7 +122,8 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, WCHAR **argv, int *i)
                     WCHAR regedit[] = {'r','e','g','e','d','i','t',0};
                     _wperror(regedit);
                     output_message(STRING_CANNOT_OPEN_FILE, filename);
-                    exit(1);
+                    HeapFree(GetProcessHeap(), 0, realname);
+                    return;
                 }
                 import_registry_file(reg_file);
                 if (realname)
@@ -150,7 +152,6 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, WCHAR **argv, int *i)
         exit(1);
         break;
     }
-    return TRUE;
 }
 
 BOOL ProcessCmdLine(WCHAR *cmdline)
