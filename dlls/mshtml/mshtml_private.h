@@ -261,7 +261,7 @@ struct DispatchEx {
 
     IUnknown *outer;
 
-    dispex_static_data_t *data;
+    dispex_data_t *info;
     dispex_dynamic_data_t *dynamic_data;
 };
 
