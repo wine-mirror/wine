@@ -4781,6 +4781,7 @@ static const tid_t HTMLDocumentNode_iface_tids[] = {
     IHTMLDocument3_tid,
     IHTMLDocument4_tid,
     IHTMLDocument5_tid,
+    IHTMLDocument6_tid,
     IDocumentSelector_tid,
     0
 };
