@@ -157,3 +157,13 @@
 #define IDC_EXPORT_PATH                 103
 
 #define IDC_STATIC                      -1
+
+/* Command-line strings */
+#define STRING_USAGE                    3001
+#define STRING_INVALID_SWITCH           3002
+#define STRING_HELP                     3003
+#define STRING_NO_FILENAME              3004
+#define STRING_NO_REG_KEY               3005
+#define STRING_FILE_NOT_FOUND           3006
+#define STRING_CANNOT_OPEN_FILE         3007
+#define STRING_UNHANDLED_ACTION         3008

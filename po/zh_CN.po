@@ -11441,6 +11441,73 @@ msgstr "(不能显示值)"
 msgid "(unknown %d)"
 msgstr "(未知 %d)"
 
+#: regedit.rc:359
+msgid ""
+"Usage:\n"
+"  regedit [options] [filename] [reg_key]\n"
+"\n"
+"Options:\n"
+"  [no option]    Launch the graphical version of this program.\n"
+"  /L:system.dat  The location of the system.dat file to be modified.\n"
+"                 Compatible with any other switch. Ignored.\n"
+"  /R:user.dat    The location of the user.dat file to be modified.\n"
+"                 Compatible with any other switch. Ignored.\n"
+"  /C             Import the contents of a registry file.\n"
+"  /D             Delete a specified registry key.\n"
+"  /E             Export the contents of a specified registry key to a file.\n"
+"                 If no key is specified, the entire registry is exported.\n"
+"  /S             Silent mode. No messages will be displayed.\n"
+"  /V             Launch the GUI in advanced mode. Ignored.\n"
+"  /?             Display this information and exit.\n"
+"  [filename]     The location of the file containing registry information "
+"to\n"
+"                 be imported. When used with [/E], this option specifies "
+"the\n"
+"                 file location where registry information will be exported.\n"
+"  [reg_key]      The registry key to be modified.\n"
+"\n"
+"Usage examples:\n"
+"  regedit \"import.reg\"\n"
+"  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
+msgstr ""
+
+#: regedit.rc:360
+msgid "regedit: Invalid or unrecognized switch [%1]\n"
+msgstr ""
+
+#: regedit.rc:361
+msgid "Type \"regedit /?\" for help.\n"
+msgstr ""
+
+#: regedit.rc:362
+#, fuzzy
+#| msgid "No command was specified."
+msgid "regedit: No filename was specified.\n"
+msgstr "未指定命令。"
+
+#: regedit.rc:363
+msgid "regedit: No registry key was specified for removal.\n"
+msgstr ""
+
+#: regedit.rc:364
+#, fuzzy
+#| msgid "uninstaller: The application with GUID '%1' was not found\n"
+msgid "regedit: The file '%1' was not found.\n"
+msgstr "uninstaller: 未找到 GUID 为 '%1' 的应用程序\n"
+
+#: regedit.rc:365
+#, fuzzy
+#| msgid "Error: Unable to access remote machine\n"
+msgid "regedit: Unable to open the file '%1'.\n"
+msgstr "错误：无法访问远程机器\n"
+
+#: regedit.rc:366
+#, fuzzy
+#| msgid "Invalid handle operation.\n"
+msgid "regedit: Unhandled action.\n"
+msgstr "句柄操作无效。\n"
+
 #: regedit.rc:163
 msgid "Quits the registry editor"
 msgstr "退出注册表编辑器"
