@@ -3437,6 +3437,44 @@ __ASM_GLOBAL_FUNC( call_consolidate_callback,
                    __ASM_CFI(".cfi_same_value %rbp\n\t")
                    "ret")
 
+/*******************************************************************
+ *              RtlRestoreContext (NTDLL.@)
+ */
+void WINAPI RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
+{
+    if (rec && rec->ExceptionCode == STATUS_LONGJUMP && rec->NumberParameters >= 1)
+    {
+        struct MSVCRT_JUMP_BUFFER *jmp = (struct MSVCRT_JUMP_BUFFER *)rec->ExceptionInformation[0];
+        context->Rbx       = jmp->Rbx;
+        context->Rsp       = jmp->Rsp;
+        context->Rbp       = jmp->Rbp;
+        context->Rsi       = jmp->Rsi;
+        context->Rdi       = jmp->Rdi;
+        context->R12       = jmp->R12;
+        context->R13       = jmp->R13;
+        context->R14       = jmp->R14;
+        context->R15       = jmp->R15;
+        context->u.s.Xmm6  = jmp->Xmm6;
+        context->u.s.Xmm7  = jmp->Xmm7;
+        context->u.s.Xmm8  = jmp->Xmm8;
+        context->u.s.Xmm9  = jmp->Xmm9;
+        context->u.s.Xmm10 = jmp->Xmm10;
+        context->u.s.Xmm11 = jmp->Xmm11;
+        context->u.s.Xmm12 = jmp->Xmm12;
+        context->u.s.Xmm13 = jmp->Xmm13;
+        context->u.s.Xmm14 = jmp->Xmm14;
+        context->u.s.Xmm15 = jmp->Xmm15;
+    }
+    else if (rec && rec->ExceptionCode == STATUS_UNWIND_CONSOLIDATE && rec->NumberParameters >= 1)
+    {
+        PVOID (CALLBACK *consolidate)(EXCEPTION_RECORD *) = (void *)rec->ExceptionInformation[0];
+        TRACE( "calling consolidate callback %p (rec=%p)\n", consolidate, rec );
+        context->Rip = (ULONG64)call_consolidate_callback( context, consolidate, rec );
+    }
+    TRACE( "returning to %lx stack %lx\n", context->Rip, context->Rsp );
+    set_cpu_context( context );
+}
+
 
 /*******************************************************************
  *		RtlUnwindEx (NTDLL.@)
@@ -3597,41 +3635,9 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
         *context = new_context;
     }
 
-    if (rec->ExceptionCode == STATUS_LONGJUMP && rec->NumberParameters >= 1)
-    {
-        struct MSVCRT_JUMP_BUFFER *jmp = (struct MSVCRT_JUMP_BUFFER *)rec->ExceptionInformation[0];
-        context->Rbx       = jmp->Rbx;
-        context->Rsp       = jmp->Rsp;
-        context->Rbp       = jmp->Rbp;
-        context->Rsi       = jmp->Rsi;
-        context->Rdi       = jmp->Rdi;
-        context->R12       = jmp->R12;
-        context->R13       = jmp->R13;
-        context->R14       = jmp->R14;
-        context->R15       = jmp->R15;
-        context->Rip       = jmp->Rip;
-        context->u.s.Xmm6  = jmp->Xmm6;
-        context->u.s.Xmm7  = jmp->Xmm7;
-        context->u.s.Xmm8  = jmp->Xmm8;
-        context->u.s.Xmm9  = jmp->Xmm9;
-        context->u.s.Xmm10 = jmp->Xmm10;
-        context->u.s.Xmm11 = jmp->Xmm11;
-        context->u.s.Xmm12 = jmp->Xmm12;
-        context->u.s.Xmm13 = jmp->Xmm13;
-        context->u.s.Xmm14 = jmp->Xmm14;
-        context->u.s.Xmm15 = jmp->Xmm15;
-    }
-    else if (rec->ExceptionCode == STATUS_UNWIND_CONSOLIDATE && rec->NumberParameters >= 1)
-    {
-        PVOID (CALLBACK *consolidate)(EXCEPTION_RECORD *) = (void *)rec->ExceptionInformation[0];
-        TRACE( "calling consolidate callback %p (rec=%p)\n", consolidate, rec );
-        target_ip = call_consolidate_callback( context, consolidate, rec );
-        TRACE( "-> target=%p\n", target_ip );
-    }
     context->Rax = (ULONG64)retval;
     context->Rip = (ULONG64)target_ip;
-    TRACE( "returning to %lx stack %lx\n", context->Rip, context->Rsp );
-    set_cpu_context( context );
+    RtlRestoreContext(context, rec);
 }
 
 
