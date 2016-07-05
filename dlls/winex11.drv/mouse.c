@@ -1388,7 +1388,7 @@ BOOL CDECL X11DRV_GetCursorPos(LPPOINT pos)
     {
         POINT old = *pos;
         *pos = root_to_virtual_screen( winX, winY );
-        TRACE( "pointer at (%d,%d) server pos %d,%d\n", pos->x, pos->y, old.x, old.y );
+        TRACE( "pointer at %s server pos %s\n", wine_dbgstr_point(pos), wine_dbgstr_point(&old) );
     }
     return ret;
 }
@@ -1458,7 +1458,7 @@ void move_resize_window( HWND hwnd, int dir )
     else if (GetKeyState( VK_MBUTTON ) & 0x8000) button = 2;
     else if (GetKeyState( VK_RBUTTON ) & 0x8000) button = 3;
 
-    TRACE( "hwnd %p/%lx, x %d, y %d, dir %d, button %d\n", hwnd, win, pos.x, pos.y, dir, button );
+    TRACE( "hwnd %p/%lx, pos %s, dir %d, button %d\n", hwnd, win, wine_dbgstr_point(&pos), dir, button );
 
     xev.xclient.type = ClientMessage;
     xev.xclient.window = win;
