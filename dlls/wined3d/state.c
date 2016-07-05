@@ -3736,7 +3736,7 @@ void clipplane(struct wined3d_context *context, const struct wined3d_state *stat
         gl_info->gl_ops.gl.p_glLoadMatrixf(&state->transforms[WINED3D_TS_VIEW]._11);
     else
         /* With vertex shaders, clip planes are not transformed in Direct3D,
-         * while in OpenGL they are still transformed by the model view matix. */
+         * while in OpenGL they are still transformed by the model view matrix. */
         gl_info->gl_ops.gl.p_glLoadIdentity();
 
     plane[0] = state->clip_planes[index].x;
