@@ -6177,17 +6177,19 @@ todo_wine
 
     /* references returned from IDWriteFontFace3 */
     hr = IDWriteFont3_CreateFontFace(font3, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFace3_GetFontFaceReference(fontface, &ref);
 todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-if (hr == S_OK) {
-    hr = IDWriteFontFace3_GetFontFaceReference(fontface, &ref);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
     hr = IDWriteFontFace3_GetFontFaceReference(fontface, &ref1);
+todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
+if (hr == S_OK)
     ok(ref == ref1, "got %p, %p\n", ref1, ref);
 
+if (hr == S_OK) {
     hr = IDWriteFontFaceReference_CreateFontFace(ref, &fontface1);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(fontface1 == fontface, "got %p, %p\n", fontface1, fontface);
@@ -6195,9 +6197,8 @@ if (hr == S_OK) {
 
     IDWriteFontFaceReference_Release(ref);
     IDWriteFontFaceReference_Release(ref1);
-
-    IDWriteFontFace3_Release(fontface);
 }
+    IDWriteFontFace3_Release(fontface);
     IDWriteFont3_Release(font3);
 
     IDWriteFactory3_Release(factory3);

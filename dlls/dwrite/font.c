@@ -1496,18 +1496,11 @@ static HRESULT WINAPI dwritefont_HasCharacter(IDWriteFont3 *iface, UINT32 value,
     return S_OK;
 }
 
-static HRESULT WINAPI dwritefont_CreateFontFace(IDWriteFont3 *iface, IDWriteFontFace **face)
+static HRESULT WINAPI dwritefont_CreateFontFace(IDWriteFont3 *iface, IDWriteFontFace **fontface)
 {
     struct dwrite_font *This = impl_from_IDWriteFont3(iface);
-    HRESULT hr;
-
-    TRACE("(%p)->(%p)\n", This, face);
-
-    hr = get_fontface_from_font(This, (IDWriteFontFace3**)face);
-    if (hr == S_OK)
-        IDWriteFontFace_AddRef(*face);
-
-    return hr;
+    TRACE("(%p)->(%p)\n", This, fontface);
+    return IDWriteFont3_CreateFontFace(iface, (IDWriteFontFace3**)fontface);
 }
 
 static void WINAPI dwritefont1_GetMetrics(IDWriteFont3 *iface, DWRITE_FONT_METRICS1 *metrics)
@@ -1572,8 +1565,15 @@ static BOOL WINAPI dwritefont2_IsColorFont(IDWriteFont3 *iface)
 static HRESULT WINAPI dwritefont3_CreateFontFace(IDWriteFont3 *iface, IDWriteFontFace3 **fontface)
 {
     struct dwrite_font *This = impl_from_IDWriteFont3(iface);
-    FIXME("(%p)->(%p): stub\n", This, fontface);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, fontface);
+
+    hr = get_fontface_from_font(This, fontface);
+    if (hr == S_OK)
+        IDWriteFontFace3_AddRef(*fontface);
+
+    return hr;
 }
 
 static BOOL WINAPI dwritefont3_Equals(IDWriteFont3 *iface, IDWriteFont *font)
