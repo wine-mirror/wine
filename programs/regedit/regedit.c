@@ -18,10 +18,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <windows.h>
+#include <shellapi.h>
+#include "wine/unicode.h"
 #include "regproc.h"
 
 static const char *usage =
@@ -59,43 +60,41 @@ typedef enum {
     ACTION_ADD, ACTION_EXPORT, ACTION_DELETE
 } REGEDIT_ACTION;
 
-static BOOL PerformRegAction(REGEDIT_ACTION action, char **argv, int *i)
+static BOOL PerformRegAction(REGEDIT_ACTION action, WCHAR **argv, int *i)
 {
     switch (action) {
     case ACTION_ADD: {
-            char *filename = argv[*i];
+            WCHAR *filename = argv[*i];
+            WCHAR hyphen[] = {'-',0};
             FILE *reg_file;
 
-            if (filename[0]) {
-                char* realname = NULL;
+            if (!strcmpW(filename, hyphen))
+                reg_file = stdin;
+            else
+            {
+                int size;
+                WCHAR *realname = NULL;
+                WCHAR rb_mode[] = {'r','b',0};
 
-                if (strcmp(filename, "-") == 0)
+                size = SearchPathW(NULL, filename, NULL, 0, NULL, NULL);
+                if (size > 0)
                 {
-                    reg_file = stdin;
+                    realname = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+                    size = SearchPathW(NULL, filename, NULL, size, realname, NULL);
                 }
-                else
+                if (size == 0)
                 {
-                    int size;
-
-                    size = SearchPathA(NULL, filename, NULL, 0, NULL, NULL);
-                    if (size > 0)
-                    {
-                        realname = HeapAlloc(GetProcessHeap(), 0, size);
-                        size = SearchPathA(NULL, filename, NULL, size, realname, NULL);
-                    }
-                    if (size == 0)
-                    {
-                        fprintf(stderr, "regedit: File not found \"%s\" (%d)\n",
-                                filename, GetLastError());
-                        exit(1);
-                    }
-                    reg_file = fopen(realname, "rb");
-                    if (reg_file == NULL)
-                    {
-                        perror("");
-                        fprintf(stderr, "regedit: Can't open file \"%s\"\n", filename);
-                        exit(1);
-                    }
+                    fprintf(stderr, "regedit: File not found \"%ls\" (%d)\n",
+                            filename, GetLastError());
+                    exit(1);
+                }
+                reg_file = _wfopen(realname, rb_mode);
+                if (reg_file == NULL)
+                {
+                    WCHAR regedit[] = {'r','e','g','e','d','i','t',0};
+                    _wperror(regedit);
+                    fprintf(stderr, "regedit: Can't open file \"%ls\"\n", filename);
+                    exit(1);
                 }
                 import_registry_file(reg_file);
                 if (realname)
@@ -106,29 +105,17 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, char **argv, int *i)
             }
             break;
         }
-    case ACTION_DELETE: {
-            WCHAR *reg_key_nameW = GetWideString(argv[*i]);
-
-            delete_registry_key(reg_key_nameW);
-            HeapFree(GetProcessHeap(), 0, reg_key_nameW);
+    case ACTION_DELETE:
+            delete_registry_key(argv[*i]);
             break;
-        }
     case ACTION_EXPORT: {
-            char *filename = argv[*i];
-            WCHAR* filenameW;
+            WCHAR *filename = argv[*i];
+            WCHAR *key_name = argv[++(*i)];
 
-            filenameW = GetWideString(filename);
-            if (filenameW[0]) {
-                char *reg_key_name = argv[++(*i)];
-                WCHAR* reg_key_nameW;
-
-                reg_key_nameW = GetWideString(reg_key_name);
-                export_registry_key(filenameW, reg_key_nameW, REG_FORMAT_4);
-                HeapFree(GetProcessHeap(), 0, reg_key_nameW);
-            } else {
-                export_registry_key(filenameW, NULL, REG_FORMAT_4);
-            }
-            HeapFree(GetProcessHeap(), 0, filenameW);
+            if (key_name && *key_name)
+                export_registry_key(filename, key_name, REG_FORMAT_4);
+            else
+                export_registry_key(filename, NULL, REG_FORMAT_4);
             break;
         }
     default:
@@ -139,76 +126,24 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, char **argv, int *i)
     return TRUE;
 }
 
-static char *get_token(char *input, char **next)
+BOOL ProcessCmdLine(WCHAR *cmdline)
 {
-    char *ch = input;
-    char *str;
-
-    while (*ch && isspace(*ch))
-        ch++;
-
-    str = ch;
-
-    if (*ch == '"') {
-        ch++;
-        str = ch;
-        for (;;) {
-            while (*ch && (*ch != '"'))
-                ch++;
-
-            if (!*ch)
-                break;
-
-            if (*(ch - 1) == '\\') {
-                ch++;
-                continue;
-            }
-            break;
-        }
-    }
-    else {
-        while (*ch && !isspace(*ch))
-            ch++;
-    }
-
-    if (*ch) {
-        *ch = 0;
-        ch++;
-    }
-
-    *next = ch;
-    return str;
-}
-
-BOOL ProcessCmdLine(LPSTR lpCmdLine)
-{
-    char *s = lpCmdLine;
-    char **argv;
-    char *tok;
-    int argc = 0, i = 1;
+    WCHAR **argv;
+    int argc, i;
     REGEDIT_ACTION action = ACTION_ADD;
 
-    if (!*lpCmdLine)
+    argv = CommandLineToArgvW(cmdline, &argc);
+
+    if (!argv)
         return FALSE;
 
-    while (*s) {
-        if (isspace(*s))
-            i++;
-        s++;
-    }
-
-    s = lpCmdLine;
-    argv = HeapAlloc(GetProcessHeap(), 0, i * sizeof(char *));
-
-    for (i = 0; *s; i++)
+    if (argc == 1)
     {
-        tok = get_token(s, &s);
-        argv[i] = HeapAlloc(GetProcessHeap(), 0, strlen(tok) + 1);
-        strcpy(argv[i], tok);
-        argc++;
+        LocalFree(argv);
+        return FALSE;
     }
 
-    for (i = 0; i < argc; i++)
+    for (i = 1; i < argc; i++)
     {
         if (argv[i][0] != '/' && argv[i][0] != '-')
             break; /* No flags specified. */
@@ -219,7 +154,7 @@ BOOL ProcessCmdLine(LPSTR lpCmdLine)
         if (argv[i][1] && argv[i][2] && argv[i][2] != ':')
             break; /* This is a file path beginning with '/'. */
 
-        switch (toupper(argv[i][1]))
+        switch (toupperW(argv[i][1]))
         {
         case '?':
             fprintf(stderr, usage);
@@ -241,7 +176,7 @@ BOOL ProcessCmdLine(LPSTR lpCmdLine)
             /* ignored */;
             break;
         default:
-            fprintf(stderr, "regedit: Invalid switch [%s]\n", argv[i]);
+            fprintf(stderr, "regedit: Invalid switch [%ls]\n", argv[i]);
             exit(1);
         }
     }
@@ -265,9 +200,7 @@ BOOL ProcessCmdLine(LPSTR lpCmdLine)
     for (; i < argc; i++)
         PerformRegAction(action, argv, &i);
 
-    for (i = 0; i < argc; i++)
-        HeapFree(GetProcessHeap(), 0, argv[i]);
-    HeapFree(GetProcessHeap(), 0, argv);
+    LocalFree(argv);
 
     return TRUE;
 }

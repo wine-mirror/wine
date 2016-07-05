@@ -30,7 +30,7 @@
 
 WCHAR g_pszDefaultValueName[64];
 
-BOOL ProcessCmdLine(LPSTR lpCmdLine);
+BOOL ProcessCmdLine(WCHAR *cmdline);
 
 static const WCHAR hkey_local_machine[] = {'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E',0};
 static const WCHAR hkey_users[] = {'H','K','E','Y','_','U','S','E','R','S',0};
@@ -134,15 +134,12 @@ static BOOL TranslateChildTabMessage(MSG *msg)
     return TRUE;
 }
 
-int APIENTRY WinMain(HINSTANCE hInstance,
-                     HINSTANCE hPrevInstance,
-                     LPSTR     lpCmdLine,
-                     int       nCmdShow)
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
     MSG msg;
     HACCEL hAccel;
 
-    if (ProcessCmdLine(lpCmdLine)) {
+    if (ProcessCmdLine(GetCommandLineW())) {
         return 0;
     }
 
