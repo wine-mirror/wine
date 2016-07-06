@@ -740,7 +740,7 @@ DEFINE_THISCALL_WRAPPER(streambuf_sputc, 8)
 int __thiscall streambuf_sputc(streambuf *this, int ch)
 {
     TRACE("(%p %d)\n", this, ch);
-    return (this->pptr < this->epptr) ? *this->pptr++ = ch : call_streambuf_overflow(this, ch);
+    return (this->pptr < this->epptr) ? (unsigned char)(*this->pptr++ = ch) : call_streambuf_overflow(this, ch);
 }
 
 /* ?sgetn@streambuf@@QAEHPADH@Z */
@@ -773,7 +773,7 @@ int __thiscall streambuf_snextc(streambuf *this)
         if (this->gptr >= this->egptr)
             call_streambuf_underflow(this);
         this->gptr++;
-        return (this->gptr < this->egptr) ? *this->gptr : call_streambuf_underflow(this);
+        return (this->gptr < this->egptr) ? (unsigned char)(*this->gptr) : call_streambuf_underflow(this);
     }
 }
 
@@ -792,7 +792,7 @@ int __thiscall streambuf_sbumpc(streambuf *this)
         if (ret == EOF)
             ret = call_streambuf_underflow(this);
     } else {
-        ret = (this->gptr < this->egptr) ? *this->gptr : call_streambuf_underflow(this);
+        ret = (this->gptr < this->egptr) ? (unsigned char)(*this->gptr) : call_streambuf_underflow(this);
         this->gptr++;
     }
     return ret;
@@ -1159,7 +1159,7 @@ int __thiscall filebuf_underflow(filebuf *this)
     TRACE("(%p)\n", this);
 
     if (this->base.unbuffered)
-        return (_read(this->fd, &c, 1) < 1) ? EOF : c;
+        return (_read(this->fd, &c, 1) < 1) ? EOF : (unsigned char) c;
 
     if (this->base.gptr >= this->base.egptr) {
         if (call_streambuf_sync(&this->base) == EOF)
@@ -1171,7 +1171,7 @@ int __thiscall filebuf_underflow(filebuf *this)
         this->base.eback = this->base.gptr = this->base.base;
         this->base.egptr = this->base.base + read_bytes;
     }
-    return *this->base.gptr;
+    return (unsigned char) *this->base.gptr;
 }
 
 /* ??0strstreambuf@@QAE@ABV0@@Z */
@@ -1467,14 +1467,14 @@ int __thiscall strstreambuf_underflow(strstreambuf *this)
 {
     TRACE("(%p)\n", this);
     if (this->base.gptr < this->base.egptr)
-        return *this->base.gptr;
+        return (unsigned char) *this->base.gptr;
     /* extend the get area to include the characters written */
     if (this->base.egptr < this->base.pptr) {
         this->base.gptr = this->base.base + (this->base.gptr - this->base.eback);
         this->base.eback = this->base.base;
         this->base.egptr = this->base.pptr;
     }
-    return (this->base.gptr < this->base.egptr) ? *this->base.gptr : EOF;
+    return (this->base.gptr < this->base.egptr) ? (unsigned char)(*this->base.gptr) : EOF;
 }
 
 /* ??0stdiobuf@@QAE@ABV0@@Z */
@@ -1701,7 +1701,7 @@ int __thiscall stdiobuf_underflow(stdiobuf *this)
         memmove(this->base.egptr - read_bytes, this->base.eback, read_bytes);
         this->base.gptr = this->base.egptr - read_bytes;
     }
-    return *this->base.gptr++;
+    return (unsigned char) *this->base.gptr++;
 }
 
 /* ??0ios@@IAE@ABV0@@Z */
