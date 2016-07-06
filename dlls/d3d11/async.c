@@ -136,9 +136,16 @@ static HRESULT STDMETHODCALLTYPE d3d11_query_SetPrivateDataInterface(ID3D11Query
 
 static UINT STDMETHODCALLTYPE d3d11_query_GetDataSize(ID3D11Query *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3d_query *query = impl_from_ID3D11Query(iface);
+    unsigned int data_size;
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    wined3d_mutex_lock();
+    data_size = wined3d_query_get_data_size(query->wined3d_query);
+    wined3d_mutex_unlock();
+
+    return data_size;
 }
 
 static void STDMETHODCALLTYPE d3d11_query_GetDesc(ID3D11Query *iface, D3D11_QUERY_DESC *desc)
