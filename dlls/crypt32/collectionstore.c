@@ -114,10 +114,10 @@ static BOOL CRYPT_CollectionAddContext(WINE_COLLECTIONSTORE *store,
     }
     else
     {
-        WINE_STORE_LIST_ENTRY *entry, *next;
+        WINE_STORE_LIST_ENTRY *entry;
 
         EnterCriticalSection(&store->cs);
-        LIST_FOR_EACH_ENTRY_SAFE(entry, next, &store->stores, WINE_STORE_LIST_ENTRY, entry)
+        LIST_FOR_EACH_ENTRY(entry, &store->stores, WINE_STORE_LIST_ENTRY, entry)
         {
             if (entry->dwUpdateFlags & CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG)
             {
@@ -559,7 +559,7 @@ void WINAPI CertRemoveStoreFromCollection(HCERTSTORE hCollectionStore,
 {
     WINE_COLLECTIONSTORE *collection = hCollectionStore;
     WINECRYPT_CERTSTORE *sibling = hSiblingStore;
-    WINE_STORE_LIST_ENTRY *store, *next;
+    WINE_STORE_LIST_ENTRY *store;
 
     TRACE("(%p, %p)\n", hCollectionStore, hSiblingStore);
 
@@ -578,8 +578,7 @@ void WINAPI CertRemoveStoreFromCollection(HCERTSTORE hCollectionStore,
         return;
     }
     EnterCriticalSection(&collection->cs);
-    LIST_FOR_EACH_ENTRY_SAFE(store, next, &collection->stores,
-     WINE_STORE_LIST_ENTRY, entry)
+    LIST_FOR_EACH_ENTRY(store, &collection->stores, WINE_STORE_LIST_ENTRY, entry)
     {
         if (store->store == sibling)
         {
