@@ -1038,15 +1038,7 @@ BOOL WINAPI PtInRegion( HRGN hrgn, INT x, INT y )
 
     if ((obj = GDI_GetObjPtr( hrgn, OBJ_REGION )))
     {
-	int i;
-
-	if (obj->numRects > 0 && is_in_rect(&obj->extents, x, y))
-	    for (i = 0; i < obj->numRects; i++)
-		if (is_in_rect(&obj->rects[i], x, y))
-                {
-		    ret = TRUE;
-                    break;
-                }
+        region_find_pt( obj, x, y, &ret );
 	GDI_ReleaseObj( hrgn );
     }
     return ret;
@@ -1071,6 +1063,7 @@ BOOL WINAPI RectInRegion( HRGN hrgn, const RECT *rect )
     WINEREGION *obj;
     BOOL ret = FALSE;
     RECT rc;
+    int i;
 
     /* swap the coordinates to make right >= left and bottom >= top */
     /* (region building rectangles are normalized the same way) */
@@ -1079,29 +1072,23 @@ BOOL WINAPI RectInRegion( HRGN hrgn, const RECT *rect )
 
     if ((obj = GDI_GetObjPtr( hrgn, OBJ_REGION )))
     {
-	RECT *pCurRect, *pRectEnd;
-
-    /* this is (just) a useful optimization */
 	if ((obj->numRects > 0) && overlapping(&obj->extents, &rc))
 	{
-	    for (pCurRect = obj->rects, pRectEnd = pCurRect +
-	     obj->numRects; pCurRect < pRectEnd; pCurRect++)
+	    for (i = region_find_pt( obj, rc.left, rc.top, &ret ); !ret && i < obj->numRects; i++ )
 	    {
-	        if (pCurRect->bottom <= rc.top)
+	        if (obj->rects[i].bottom <= rc.top)
 		    continue;             /* not far enough down yet */
 
-		if (pCurRect->top >= rc.bottom)
+		if (obj->rects[i].top >= rc.bottom)
 		    break;                /* too far down */
 
-		if (pCurRect->right <= rc.left)
+		if (obj->rects[i].right <= rc.left)
 		    continue;              /* not far enough over yet */
 
-		if (pCurRect->left >= rc.right) {
+		if (obj->rects[i].left >= rc.right)
 		    continue;
-		}
 
 		ret = TRUE;
-		break;
 	    }
 	}
 	GDI_ReleaseObj(hrgn);
