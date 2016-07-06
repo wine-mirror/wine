@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-05-24 22:38+0300\n"
+"PO-Revision-Date: 2016-07-06 11:31+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -11925,50 +11925,60 @@ msgid ""
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgstr ""
+"Naudojimas:\n"
+"  regedit [parametrai] [failas] [reg_key]\n"
+"\n"
+"Parametrai:\n"
+"  [be parametro] Paleidžia šios programos grafinę versiją.\n"
+"  /L:system.dat  Modifikuojamo system.dat failo vieta.\n"
+"                 Suderinamas su bet kuriuo kitu parametru. Ignoruojamas.\n"
+"  /R:user.dat    Modifikuojamo user.dat failo vieta.\n"
+"                 Suderinamas su bet kuriuo kitu parametru. Ignoruojamas.\n"
+"  /C             Importuoti registro failo turinį.\n"
+"  /D             Pašalinti nurodytą registro raktą.\n"
+"  /E             Eksportuoti nurodyto registro rakto turinį į failą.\n"
+"                 Jei nenurodytas raktas, eksportuojamas visas registras.\n"
+"  /S             Tyli veiksena. Nebus rodomi pranešimai.\n"
+"  /V             Paleisti grafinę sąsają išplėstinėje veiksenoje. "
+"Ignoruojamas.\n"
+"  /?             Parodyti šią informaciją ir išeiti.\n"
+"  [failas]       Failo su registro informacija importui vieta.\n"
+"                 Kai naudojama su [/E], šis parametras nurodo\n"
+"                 failo vietą registro informacijos eksportui.\n"
+"  [reg_key]      Registro raktas modifikavimui.\n"
+"\n"
+"Naudojimo pavyzdžiai:\n"
+"  regedit \"importui.reg\"\n"
+"  regedit /E \"eksportuota.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 
 #: regedit.rc:360
-#, fuzzy
-#| msgid ""
-#| "regsvr32: Invalid or unrecognized switch [%1]\n"
-#| "\n"
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
-msgstr ""
-"regsvr32: Netinkamas arba neatpažintas parametras [%1]\n"
-"\n"
+msgstr "regedit: Netinkamas arba neatpažintas parametras [%1]\n"
 
 #: regedit.rc:361
-#, fuzzy
-#| msgid "Type \"REG /?\" for help.\n"
 msgid "Type \"regedit /?\" for help.\n"
-msgstr "Pagalbai įrašykite „REG /?“.\n"
+msgstr "Pagalbai įrašykite „regedit /?“.\n"
 
 #: regedit.rc:362
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: No filename was specified.\n"
-msgstr "Nenurodyta jokia komanda."
+msgstr "regedit: Nenurodytas joks failas.\n"
 
 #: regedit.rc:363
 msgid "regedit: No registry key was specified for removal.\n"
-msgstr ""
+msgstr "regedit: Nenurodytas registro raktas šalinimui.\n"
 
 #: regedit.rc:364
-#, fuzzy
-#| msgid "uninstaller: The application with GUID '%1' was not found\n"
 msgid "regedit: The file '%1' was not found.\n"
-msgstr "šalinimo programa: Programa su GUID „%1“ nerasta\n"
+msgstr "regedit: Failas „%1“ nerastas.\n"
 
 #: regedit.rc:365
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to open the file '%1'.\n"
-msgstr "reg: Nepavyko prieiti prie nuotolinio kompiuterio\n"
+msgstr "regedit: Nepavyko atverti failo „%1“.\n"
 
 #: regedit.rc:366
-#, fuzzy
-#| msgid "Invalid handle operation.\n"
 msgid "regedit: Unhandled action.\n"
-msgstr "Neteisinga rodyklės operacija.\n"
+msgstr "regedit: Neapdorojamas veiksmas.\n"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
