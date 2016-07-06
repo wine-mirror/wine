@@ -2,7 +2,7 @@
  * IXmlWriter implementation
  *
  * Copyright 2011 Alistair Leslie-Hughes
- * Copyright 2014 Nikolay Sivov for CodeWeavers
+ * Copyright 2014, 2016 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -90,6 +90,7 @@ typedef struct _xmlwriter
     LONG ref;
     IMalloc *imalloc;
     xmlwriteroutput *output;
+    unsigned int indent_level;
     BOOL indent;
     BOOL bom;
     BOOL omitxmldecl;
@@ -417,6 +418,32 @@ static HRESULT writer_close_starttag(xmlwriter *writer)
     return hr;
 }
 
+static void writer_inc_indent(xmlwriter *writer)
+{
+    writer->indent_level++;
+}
+
+static void writer_dec_indent(xmlwriter *writer)
+{
+    if (writer->indent_level)
+        writer->indent_level--;
+}
+
+static void write_node_indent(xmlwriter *writer)
+{
+    static const WCHAR dblspaceW[] = {' ',' '};
+    static const WCHAR crlfW[] = {'\r','\n'};
+    unsigned int indent_level = writer->indent_level;
+
+    if (!writer->indent)
+        return;
+
+    if (writer->output->buffer.written)
+        write_output_buffer(writer->output, crlfW, ARRAY_SIZE(crlfW));
+    while (indent_level--)
+        write_output_buffer(writer->output, dblspaceW, ARRAY_SIZE(dblspaceW));
+}
+
 static HRESULT WINAPI xmlwriter_QueryInterface(IXmlWriter *iface, REFIID riid, void **ppvObject)
 {
     xmlwriter *This = impl_from_IXmlWriter(iface);
@@ -483,6 +510,7 @@ static HRESULT WINAPI xmlwriter_SetOutput(IXmlWriter *iface, IUnknown *output)
         IUnknown_Release(&This->output->IXmlWriterOutput_iface);
         This->output = NULL;
         This->bomwritten = FALSE;
+        This->indent_level = 0;
     }
 
     /* just reset current output */
@@ -554,6 +582,9 @@ static HRESULT WINAPI xmlwriter_SetProperty(IXmlWriter *iface, UINT property, LO
 
     switch (property)
     {
+        case XmlWriterProperty_Indent:
+            This->indent = !!value;
+            break;
         case XmlWriterProperty_ByteOrderMark:
             This->bom = !!value;
             break;
@@ -636,6 +667,7 @@ static HRESULT WINAPI xmlwriter_WriteCData(IXmlWriter *iface, LPCWSTR data)
 
     len = data ? strlenW(data) : 0;
 
+    write_node_indent(This);
     if (!len)
         write_cdata_section(This->output, NULL, 0);
     else {
@@ -696,6 +728,7 @@ static HRESULT WINAPI xmlwriter_WriteChars(IXmlWriter *iface, const WCHAR *pwch,
     return E_NOTIMPL;
 }
 
+
 static HRESULT WINAPI xmlwriter_WriteComment(IXmlWriter *iface, LPCWSTR comment)
 {
     static const WCHAR copenW[] = {'<','!','-','-'};
@@ -717,6 +750,7 @@ static HRESULT WINAPI xmlwriter_WriteComment(IXmlWriter *iface, LPCWSTR comment)
         ;
     }
 
+    write_node_indent(This);
     write_output_buffer(This->output, copenW, ARRAY_SIZE(copenW));
     if (comment) {
         int len = strlenW(comment), i;
@@ -841,6 +875,8 @@ static HRESULT WINAPI xmlwriter_WriteEndElement(IXmlWriter *iface)
     if (!element)
         return WR_E_INVALIDACTION;
 
+    writer_dec_indent(This);
+
     if (This->starttagopen) {
         static WCHAR closetagW[] = {' ','/','>'};
         write_output_buffer(This->output, closetagW, ARRAY_SIZE(closetagW));
@@ -848,6 +884,7 @@ static HRESULT WINAPI xmlwriter_WriteEndElement(IXmlWriter *iface)
     }
     else {
         /* write full end tag */
+        write_node_indent(This);
         write_output_buffer(This->output, closeelementW, ARRAY_SIZE(closeelementW));
         write_output_buffer(This->output, element->qname, element->len);
         write_output_buffer(This->output, gtW, ARRAY_SIZE(gtW));
@@ -994,6 +1031,7 @@ static HRESULT WINAPI xmlwriter_WriteProcessingInstruction(IXmlWriter *iface, LP
     }
 
     write_encoding_bom(This);
+    write_node_indent(This);
     write_output_buffer(This->output, openpiW, ARRAY_SIZE(openpiW));
     write_output_buffer(This->output, name, -1);
     write_output_buffer(This->output, spaceW, ARRAY_SIZE(spaceW));
@@ -1130,8 +1168,10 @@ static HRESULT WINAPI xmlwriter_WriteStartElement(IXmlWriter *iface, LPCWSTR pre
 
     push_element(This, element);
 
+    write_node_indent(This);
     write_output_buffer(This->output, ltW, ARRAY_SIZE(ltW));
     write_output_qname(This->output, prefix, local_name);
+    writer_inc_indent(This);
 
     return S_OK;
 }
@@ -1302,6 +1342,7 @@ HRESULT WINAPI CreateXmlWriter(REFIID riid, void **obj, IMalloc *imalloc)
     writer->imalloc = imalloc;
     if (imalloc) IMalloc_AddRef(imalloc);
     writer->output = NULL;
+    writer->indent_level = 0;
     writer->indent = FALSE;
     writer->bom = TRUE;
     writer->omitxmldecl = FALSE;
