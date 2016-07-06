@@ -225,6 +225,7 @@ LPITEMIDLIST  GetParentPidl(LPITEMIDLIST pidl);
 static LPITEMIDLIST GetPidlFromName(IShellFolder *psf,LPWSTR lpcstrFileName);
 static BOOL IsPidlFolder (LPSHELLFOLDER psf, LPCITEMIDLIST pidl);
 static UINT GetNumSelected( IDataObject *doSelected );
+static void COMCTL32_ReleaseStgMedium(STGMEDIUM medium);
 
 /* Shell memory allocation */
 static void *MemAlloc(UINT size);
@@ -3649,12 +3650,18 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
     LPITEMIDLIST      pidl;
     LPWSTR            lpstrAllFiles, lpstrTmp;
     UINT nFiles = 0, nFileToOpen, nFileSelected, nAllFilesLength = 0, nThisFileLength, nAllFilesMaxLength;
+    STGMEDIUM medium;
+    LPIDA cida;
+    FORMATETC formatetc = get_def_format();
 
     TRACE("\n");
     fodInfos = GetPropA(hwnd,FileOpenDlgInfosStr);
 
-    /* Count how many files we have */
-    nFileSelected = GetNumSelected( fodInfos->Shell.FOIDataObject );
+    if (FAILED(IDataObject_GetData(fodInfos->Shell.FOIDataObject, &formatetc, &medium)))
+        return;
+
+    cida = GlobalLock(medium.u.hGlobal);
+    nFileSelected = cida->cidl;
 
     /* Allocate a buffer */
     nAllFilesMaxLength = MAX_PATH + 3;
@@ -3665,7 +3672,7 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
     /* Loop through the selection, handle only files (not folders) */
     for (nFileToOpen = 0; nFileToOpen < nFileSelected; nFileToOpen++)
     {
-        pidl = GetPidlFromDataObject( fodInfos->Shell.FOIDataObject, nFileToOpen+1 );
+        pidl = (LPITEMIDLIST)((LPBYTE)cida + cida->aoffset[nFileToOpen + 1]);
         if (pidl)
         {
             if (!IsPidlFolder(fodInfos->Shell.FOIShellFolder, pidl))
@@ -3686,7 +3693,6 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
                 lpstrAllFiles[nAllFilesLength++] = '"';
                 lpstrAllFiles[nAllFilesLength++] = ' ';
             }
-            COMDLG32_SHFree(pidl);
         }
     }
 
@@ -3707,6 +3713,7 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
 
 ret:
     HeapFree(GetProcessHeap(), 0, lpstrAllFiles);
+    COMCTL32_ReleaseStgMedium(medium);
 }
 
 
