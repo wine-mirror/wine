@@ -500,7 +500,8 @@ static ALG_ID schan_get_kx_algid(const struct cipher_suite* c)
     case schan_kx_ECDHE_ECDSA:
     case schan_kx_ECDHE_RSA:        return CALG_ECDH;
     case schan_kx_NULL:             return 0;
-    case schan_kx_RSA:              return CALG_RSA_KEYX;
+    case schan_kx_RSA:
+    case schan_kx_RSA_EXPORT:       return CALG_RSA_KEYX;
 
     case schan_kx_DH_anon_EXPORT:
     case schan_kx_DH_anon:
@@ -509,7 +510,6 @@ static ALG_ID schan_get_kx_algid(const struct cipher_suite* c)
     case schan_kx_DH_RSA_EXPORT:
     case schan_kx_DH_RSA:
     case schan_kx_FORTEZZA_DMS:
-    case schan_kx_RSA_EXPORT:
         FIXME("Don't know CALG for key exchange algorithm %d for cipher suite %#x, returning 0\n", c->kx_alg, (unsigned)c->suite);
         return 0;
 
