@@ -1281,7 +1281,7 @@ static HRESULT WINAPI MMDevEnum_RegisterEndpointNotificationCallback(IMMDeviceEn
 static HRESULT WINAPI MMDevEnum_UnregisterEndpointNotificationCallback(IMMDeviceEnumerator *iface, IMMNotificationClient *client)
 {
     MMDevEnumImpl *This = impl_from_IMMDeviceEnumerator(iface);
-    struct NotificationClientWrapper *wrapper, *wrapper2;
+    struct NotificationClientWrapper *wrapper;
 
     TRACE("(%p)->(%p)\n", This, client);
 
@@ -1290,8 +1290,7 @@ static HRESULT WINAPI MMDevEnum_UnregisterEndpointNotificationCallback(IMMDevice
 
     EnterCriticalSection(&g_notif_lock);
 
-    LIST_FOR_EACH_ENTRY_SAFE(wrapper, wrapper2, &g_notif_clients,
-            struct NotificationClientWrapper, entry){
+    LIST_FOR_EACH_ENTRY(wrapper, &g_notif_clients, struct NotificationClientWrapper, entry){
         if(wrapper->client == client){
             list_remove(&wrapper->entry);
             HeapFree(GetProcessHeap(), 0, wrapper);
