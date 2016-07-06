@@ -11916,48 +11916,63 @@ msgid ""
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgstr ""
+"Bruk:\n"
+"  regedit [alternativer] [filnavn] [reg_key]\n"
+"\n"
+"Alternativer:\n"
+"  [Ingen alt.]   Kjør den grafiske versjonen av dette programmet.\n"
+"  /L:system.dat  Plasseringen til system.dat filen som skal modifiseres.\n"
+"                 Kompatibel med hvilken som helst annen bryter. Ignorert.\n"
+"  /R:user.dat    Plasseringen til user.dat filen som skal modifiseres.\n"
+"                 Kompatibel med hvilken som helst annen bryter. Ignorert.\n"
+"  /C             Importér innholdet av en registerfil.\n"
+"  /D             Slett en spesifikk registernøkkel.\n"
+"  /E             Eksportér innholdet av en spesifikk registernøkkel til en "
+"fil.\n"
+"                 Hvis ingen nøkkel er spesifisert, er hele registeret "
+"eksportert.\n"
+"  /S             Stille modus. Ingen beskjeder vil bli vist.\n"
+"  /V             Kjør GUI'et i avansert modus. Ignorert.\n"
+"  /?             Vis denne informasjonen og avslutt.\n"
+"  [filnavn]      Plasseringen til filen som inneholder registerinformasjonen "
+"som\n"
+"                 skal importeres. Når brukt med [/E], spesifiserer dette \n"
+"                 alternativet plasseringen hvor registerinformasjonen vil \n"
+"                 bli eksportert.\n"
+"  [reg_key]      Registernøkkelen som skal modifiseres.\n"
+"\n"
+"Brukseksempler:\n"
+"  regedit \"import.reg\"\n"
+"  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 
 #: regedit.rc:360
-#, fuzzy
-#| msgid ""
-#| "regsvr32: Invalid or unrecognized switch [%1]\n"
-#| "\n"
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
-msgstr "regsvr32: Ugyldig eller ukjent bryter [%1]\n"
+msgstr "regedit: Ugyldig eller ukjent bryter [%1]\n"
 
 #: regedit.rc:361
-#, fuzzy
-#| msgid "Type \"REG /?\" for help.\n"
 msgid "Type \"regedit /?\" for help.\n"
-msgstr "Skriv \"REG /?\" for hjelp.\n"
+msgstr "Skriv \"regedit /?\" for hjelp.\n"
 
 #: regedit.rc:362
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: No filename was specified.\n"
-msgstr "Ingen kommando ble oppgitt."
+msgstr "regedit: Intet filnavn ble oppgitt.\n"
 
 #: regedit.rc:363
 msgid "regedit: No registry key was specified for removal.\n"
-msgstr ""
+msgstr "regedit: Ingen registernøkkel ble oppgitt for fjerning.\n"
 
 #: regedit.rc:364
-#, fuzzy
-#| msgid "uninstaller: The application with GUID '%1' was not found\n"
 msgid "regedit: The file '%1' was not found.\n"
-msgstr "uninstaller: Programmet med GUID %1 ble ikke funnet\n"
+msgstr "regedit: Filen \"%1\" ble ikke funnet.\n"
 
 #: regedit.rc:365
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to open the file '%1'.\n"
-msgstr "reg: Ingen tilgang til ekstern maskin\n"
+msgstr "regedit: Kan ikke åpne filen \"%1\".\n"
 
 #: regedit.rc:366
-#, fuzzy
-#| msgid "Invalid handle operation.\n"
 msgid "regedit: Unhandled action.\n"
-msgstr "Ugyldig operasjon på referanse.\n"
+msgstr "regedit: Uhåndtert handling.\n"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
@@ -13005,7 +13020,7 @@ msgid ""
 "WARNING: Debugging this process may result in loss of data.\n"
 "Are you sure you wish to attach the debugger?"
 msgstr ""
-"ADVERSEL: Å feilsøke denne prosessen kan føre til tap av data.\n"
+"ADVARSEL: Å feilsøke denne prosessen kan føre til tap av data.\n"
 "Er du sikker på at du vil koble til feilsøkeren?"
 
 #: taskmgr.rc:314
