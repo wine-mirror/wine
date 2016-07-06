@@ -21,7 +21,6 @@ import "dwrite_2.idl";
 interface IDWriteFontFaceReference;
 interface IDWriteFontFace3;
 interface IDWriteFontSet;
-interface IDWriteFontSetBuilder;
 interface IDWriteFontDownloadQueue;
 
 cpp_quote("#ifndef _WINGDI_")
@@ -325,6 +324,21 @@ interface IDWriteGdiInterop1 : IDWriteGdiInterop
     HRESULT GetMatchingFontsByLOGFONT(LOGFONTW const *logfont,
         IDWriteFontSet *fontset,
         IDWriteFontSet **subset);
+}
+
+[
+    local,
+    object,
+    uuid(2f642afe-9c68-4f40-b8be-457401afcb3d)
+]
+interface IDWriteFontSetBuilder : IUnknown
+{
+    HRESULT AddFontFaceReference_(IDWriteFontFaceReference *ref,
+        DWRITE_FONT_PROPERTY const *props,
+        UINT32 prop_count);
+    HRESULT AddFontFaceReference(IDWriteFontFaceReference *ref);
+    HRESULT AddFontSet(IDWriteFontSet *fontset);
+    HRESULT CreateFontSet(IDWriteFontSet **fontset);
 }
 
 [
