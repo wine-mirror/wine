@@ -520,10 +520,28 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_End(ID3D11DeviceContext *i
 static HRESULT STDMETHODCALLTYPE d3d11_immediate_context_GetData(ID3D11DeviceContext *iface,
         ID3D11Asynchronous *asynchronous, void *data, UINT data_size, UINT data_flags)
 {
-    FIXME("iface %p, asynchronous %p, data %p, data_size %u, data_flags %#x stub!\n",
+    struct d3d_query *query = unsafe_impl_from_ID3D11Asynchronous(asynchronous);
+    unsigned int wined3d_flags;
+    HRESULT hr;
+
+    TRACE("iface %p, asynchronous %p, data %p, data_size %u, data_flags %#x.\n",
             iface, asynchronous, data, data_size, data_flags);
 
-    return E_NOTIMPL;
+    wined3d_flags = wined3d_getdata_flags_from_d3d11_async_getdata_flags(data_flags);
+
+    wined3d_mutex_lock();
+    if (!data_size || wined3d_query_get_data_size(query->wined3d_query) == data_size)
+    {
+        hr = wined3d_query_get_data(query->wined3d_query, data, data_size, wined3d_flags);
+    }
+    else
+    {
+        WARN("Invalid data size %u.\n", data_size);
+        hr = E_INVALIDARG;
+    }
+    wined3d_mutex_unlock();
+
+    return hr;
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_SetPredication(ID3D11DeviceContext *iface,

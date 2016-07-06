@@ -374,6 +374,17 @@ enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format)
     }
 }
 
+unsigned int wined3d_getdata_flags_from_d3d11_async_getdata_flags(unsigned int d3d11_flags)
+{
+    if (d3d11_flags & ~D3D11_ASYNC_GETDATA_DONOTFLUSH)
+        FIXME("Unhandled async getdata flags %#x.\n", d3d11_flags);
+
+    if (d3d11_flags & D3D11_ASYNC_GETDATA_DONOTFLUSH)
+        return 0;
+
+    return WINED3DGETDATA_FLUSH;
+}
+
 DWORD wined3d_usage_from_d3d11(UINT bind_flags, enum D3D11_USAGE usage)
 {
     static const DWORD handled = D3D11_BIND_SHADER_RESOURCE
