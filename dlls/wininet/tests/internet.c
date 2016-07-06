@@ -1173,6 +1173,28 @@ static void test_InternetSetOption(void)
     ok(ret == TRUE, "InternetCloseHandle failed: 0x%08x\n", GetLastError());
 }
 
+static void test_end_browser_session(void)
+{
+    DWORD len;
+    BOOL ret;
+
+    ret = InternetSetCookieA("http://www.example.com/test_end", NULL, "A=B");
+    ok(ret == TRUE, "InternetSetCookie failed\n");
+
+    len = 1024;
+    ret = InternetGetCookieA("http://www.example.com/test_end", NULL, NULL, &len);
+    ok(ret == TRUE,"InternetGetCookie failed\n");
+    ok(len != 0, "len = 0\n");
+
+    ret = InternetSetOptionA(NULL, INTERNET_OPTION_END_BROWSER_SESSION, NULL, 0);
+    ok(ret, "InternetSetOptio(INTERNET_OPTION_END_BROWSER_SESSION) failed: %u\n", GetLastError());
+
+    len = 1024;
+    ret = InternetGetCookieA("http://www.example.com/test_end", NULL, NULL, &len);
+    ok(!ret && GetLastError() == ERROR_NO_MORE_ITEMS, "InternetGetCookie returned %x (%u)\n", ret, GetLastError());
+    ok(!len, "len = %u\n", len);
+}
+
 #define verifyProxyEnable(e) r_verifyProxyEnable(__LINE__, e)
 static void r_verifyProxyEnable(LONG l, DWORD exp)
 {
@@ -1805,4 +1827,5 @@ START_TEST(internet)
         win_skip("Privacy[SG]etZonePreferenceW are not available\n");
 
     test_InternetSetOption();
+    test_end_browser_session();
 }
