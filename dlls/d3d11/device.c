@@ -492,7 +492,15 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_VSSetSamplers(ID3D11Device
 static void STDMETHODCALLTYPE d3d11_immediate_context_Begin(ID3D11DeviceContext *iface,
         ID3D11Asynchronous *asynchronous)
 {
-    FIXME("iface %p, asynchronous %p stub!\n", iface, asynchronous);
+    struct d3d_query *query = unsafe_impl_from_ID3D11Asynchronous(asynchronous);
+    HRESULT hr;
+
+    TRACE("iface %p, asynchronous %p.\n", iface, asynchronous);
+
+    wined3d_mutex_lock();
+    if (FAILED(hr = wined3d_query_issue(query->wined3d_query, WINED3DISSUE_BEGIN)))
+        ERR("Failed to issue query, hr %#x.\n", hr);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_End(ID3D11DeviceContext *iface,

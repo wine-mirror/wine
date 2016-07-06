@@ -171,6 +171,11 @@ struct d3d_query *unsafe_impl_from_ID3D11Query(ID3D11Query *iface)
     return CONTAINING_RECORD(iface, struct d3d_query, ID3D11Query_iface);
 }
 
+struct d3d_query *unsafe_impl_from_ID3D11Asynchronous(ID3D11Asynchronous *iface)
+{
+    return unsafe_impl_from_ID3D11Query((ID3D11Query *)iface);
+}
+
 /* ID3D10Query methods */
 
 static inline struct d3d_query *impl_from_ID3D10Query(ID3D10Query *iface)

@@ -464,6 +464,7 @@ HRESULT d3d_query_create(struct d3d_device *device, const D3D11_QUERY_DESC *desc
         struct d3d_query **query) DECLSPEC_HIDDEN;
 struct d3d_query *unsafe_impl_from_ID3D11Query(ID3D11Query *iface) DECLSPEC_HIDDEN;
 struct d3d_query *unsafe_impl_from_ID3D10Query(ID3D10Query *iface) DECLSPEC_HIDDEN;
+struct d3d_query *unsafe_impl_from_ID3D11Asynchronous(ID3D11Asynchronous *iface) DECLSPEC_HIDDEN;
 
 /* ID3D11DeviceContext - immediate context */
 struct d3d11_immediate_context
