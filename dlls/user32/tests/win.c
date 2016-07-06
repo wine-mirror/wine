@@ -2504,8 +2504,7 @@ static void test_SetWindowPos(HWND hwnd, HWND hwnd2)
     ret = SetWindowPos(hwnd_child, hwnd_desktop, 0, 0, 0, 0, 0);
     ok(!ret, "Got %d\n", ret);
     GetWindowRect(hwnd_child, &rc2);
-    ok(EqualRect(&rc1, &rc2), "(%d, %d, %d, %d) != (%d, %d, %d, %d)\n",
-       rc1.top, rc1.left, rc1.bottom, rc1.right, rc2.top, rc2.left, rc2.bottom, rc2.right);
+    ok(EqualRect(&rc1, &rc2), "%s != %s\n", wine_dbgstr_rect(&rc1), wine_dbgstr_rect(&rc2));
     check_active_state(hwnd2, hwnd2, hwnd2);
 
     ret = SetWindowPos(hwnd_desktop, hwnd_child, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
