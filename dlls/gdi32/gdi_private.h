@@ -370,6 +370,39 @@ static inline void release_wine_region(HRGN rgn)
     GDI_ReleaseObj(rgn);
 }
 
+/**********************************************************
+ *     region_find_pt
+ *
+ * Return either the index of the rectangle that contains (x,y) or the first
+ * rectangle after it.  Sets *hit to TRUE if the region contains (x,y).
+ * Note if (x,y) follows all rectangles, then the return value will be rgn->numRects.
+ */
+static inline int region_find_pt( const WINEREGION *rgn, int x, int y, BOOL *hit )
+{
+    int i, start = 0, end = rgn->numRects - 1;
+    BOOL h = FALSE;
+
+    while (start <= end)
+    {
+        i = (start + end) / 2;
+
+        if (rgn->rects[i].bottom <= y ||
+            (rgn->rects[i].top <= y && rgn->rects[i].right <= x))
+            start = i + 1;
+        else if (rgn->rects[i].top > y ||
+                 (rgn->rects[i].bottom > y && rgn->rects[i].left > x))
+            end = i - 1;
+        else
+        {
+            h = TRUE;
+            break;
+        }
+    }
+
+    if (hit) *hit = h;
+    return h ? i : start;
+}
+
 /* null driver entry points */
 extern BOOL nulldrv_AbortPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL nulldrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,

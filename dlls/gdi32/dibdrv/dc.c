@@ -280,7 +280,7 @@ int get_clipped_rects( const dib_info *dib, const RECT *rc, HRGN clip, struct cl
 
     if (!(region = get_wine_region( clip ))) return 0;
 
-    for (i = 0; i < region->numRects; i++)
+    for (i = region_find_pt( region, rect.left, rect.top, NULL ); i < region->numRects; i++)
     {
         if (region->rects[i].top >= rect.bottom) break;
         if (!intersect_rect( out, &rect, &region->rects[i] )) continue;
