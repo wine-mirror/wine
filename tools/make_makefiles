@@ -84,25 +84,21 @@ sub dirname($)
 }
 
 # update a file if changed
-sub update_file($)
+sub update_file($$)
 {
     my $file = shift;
-    my $ret = !(-f $file) || system "cmp $file $file.new >/dev/null";
-    if (!$ret)
+    my $new = shift;
+
+    open FILE, ">$file.new" or die "cannot create $file.new";
+    print FILE $new;
+    close FILE;
+    rename "$file.new", "$file";
+    print "$file updated\n";
+    if ($file eq "configure.ac")
     {
-        unlink "$file.new";
+        system "autoconf";
+        print "configure updated\n";
     }
-    else
-    {
-        rename "$file.new", "$file";
-        print "$file updated\n";
-        if ($file eq "configure.ac")
-        {
-            system "autoconf";
-            print "configure updated\n";
-        }
-    }
-    return $ret;
 }
 
 # replace some lines in a file between two markers
@@ -111,34 +107,28 @@ sub replace_in_file($$$@)
     my $file = shift;
     my $start = shift;
     my $end = shift;
+    my ($old, $new);
 
-    open NEW_FILE, ">$file.new" or die "cannot create $file.new";
-
-    if (defined($start))
+    open OLD_FILE, "$file" or die "cannot open $file";
+    while (<OLD_FILE>)
     {
-        open OLD_FILE, "$file" or die "cannot open $file";
-        while (<OLD_FILE>)
-        {
-            last if /$start/;
-            print NEW_FILE $_;
-        }
+        $old .= $_;
+        last if /$start/;
+        $new .= $_;
     }
 
-    print NEW_FILE @_;
+    $new .= join "", @_;
 
-    if (defined($end))
+    my $skip = 1;
+    while (<OLD_FILE>)
     {
-        my $skip=1;
-        while (<OLD_FILE>)
-        {
-            print NEW_FILE $_ unless $skip;
-            $skip = 0 if /$end/;
-        }
+        $old .= $_;
+        $new .= $_ unless $skip;
+        $skip = 0 if /$end/;
     }
 
-    close OLD_FILE if defined($start);
-    close NEW_FILE;
-    return update_file($file);
+    close OLD_FILE;
+    update_file($file, $new) if $old ne $new;
 }
 
 # replace all source variables in a makefile
@@ -147,14 +137,14 @@ sub replace_makefile_variables($)
     my $file = shift;
     my $make = $makefiles{$file};
     my $source_vars_regexp = join "|", @source_vars;
-    my $modified = 0;
     my %replaced;
-
-    open NEW_FILE, ">$file.in.new" or die "cannot create $file.in.new";
+    my $old;
+    my $new;
 
     open OLD_FILE, "$file.in" or die "cannot open $file.in";
     while (<OLD_FILE>)
     {
+        $old .= $_;
         if (/^\s*($source_vars_regexp)(\s*)=/)
         {
             # try to preserve formatting
@@ -178,6 +168,7 @@ sub replace_makefile_variables($)
             {
                 $_ = <OLD_FILE>;
                 last unless $_;
+                $old .= $_;
                 $old_str .= $_;
             }
             my $new_str = "";
@@ -188,18 +179,17 @@ sub replace_makefile_variables($)
             elsif ($multiline)
             {
                 $new_str = "$var = \\\n\t" . join(" \\\n\t", sort @values) . "\n";
-                print NEW_FILE $new_str;
+                $new .= $new_str;
             }
             else
             {
                 $new_str = "$var$spaces= @values\n";
-                print NEW_FILE $new_str;
+                $new .= $new_str;
             }
-            $modified = 1 if ($old_str ne $new_str);
             $replaced{$var} = 1;
             next;
         }
-        print NEW_FILE $_;
+        $new .= $_;
     }
     foreach my $var (@source_vars)
     {
@@ -207,13 +197,10 @@ sub replace_makefile_variables($)
         next unless defined ${$make}{"=$var"};
         my @values = @{${$make}{"=$var"}};
         next unless @values;
-        print NEW_FILE "\n$var = \\\n\t" . join(" \\\n\t", sort @values) . "\n";
-        $modified = 1;
+        $new .= "\n$var = \\\n\t" . join(" \\\n\t", sort @values) . "\n";
     }
     close OLD_FILE;
-    close NEW_FILE;
-    return update_file("$file.in") if $modified;
-    unlink "$file.in.new";
+    update_file("$file.in", $new) if $old ne $new;
 }
 
 # parse the specified makefile and load the variables
