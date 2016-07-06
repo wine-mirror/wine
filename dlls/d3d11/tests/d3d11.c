@@ -4300,6 +4300,163 @@ static void test_create_query(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_timestamp_query(void)
+{
+    static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
+
+    ID3D11Asynchronous *timestamp_query, *timestamp_disjoint_query;
+    D3D11_QUERY_DATA_TIMESTAMP_DISJOINT disjoint, prev_disjoint;
+    struct d3d11_test_context test_context;
+    ID3D11DeviceContext *context;
+    D3D11_QUERY_DESC query_desc;
+    unsigned int data_size, i;
+    ID3D11Device *device;
+    UINT64 timestamp;
+    HRESULT hr;
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    query_desc.Query = D3D11_QUERY_TIMESTAMP;
+    query_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&timestamp_query);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    data_size = ID3D11Asynchronous_GetDataSize(timestamp_query);
+    ok(data_size == sizeof(UINT64), "Got unexpected data size %u.\n", data_size);
+
+    query_desc.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
+    query_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&timestamp_disjoint_query);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    data_size = ID3D11Asynchronous_GetDataSize(timestamp_disjoint_query);
+    ok(data_size == sizeof(disjoint), "Got unexpected data size %u.\n", data_size);
+
+    /* Test a TIMESTAMP_DISJOINT query. */
+    ID3D11DeviceContext_Begin(context, timestamp_disjoint_query);
+    ID3D11DeviceContext_End(context, timestamp_disjoint_query);
+    for (i = 0; i < 500; ++i)
+    {
+        if ((hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, NULL, 0, 0)) != S_FALSE)
+            break;
+        Sleep(10);
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    disjoint.Frequency = 0xdeadbeef;
+    disjoint.Disjoint = 0xff;
+    hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint), 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(disjoint.Frequency != 0xdeadbeef, "Frequency data was not modified.\n");
+    ok(disjoint.Disjoint == TRUE || disjoint.Disjoint == FALSE, "Got unexpected disjoint %#x.\n", disjoint.Disjoint);
+
+    prev_disjoint = disjoint;
+
+    disjoint.Frequency = 0xdeadbeef;
+    disjoint.Disjoint = 0xff;
+    hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint) - 1, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint) + 1, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint) / 2, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint) * 2, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(disjoint.Frequency == 0xdeadbeef, "Frequency data was modified.\n");
+    ok(disjoint.Disjoint == 0xff, "Disjoint data was modified.\n");
+
+    hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, NULL, 0, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint),
+            D3D11_ASYNC_GETDATA_DONOTFLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(!memcmp(&disjoint, &prev_disjoint, sizeof(disjoint)), "Disjoint data mismatch.\n");
+
+    hr = ID3D11DeviceContext_GetData(context, timestamp_query, NULL, 0, 0);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp), 0);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    /* Test a TIMESTAMP query inside a TIMESTAMP_DISJOINT query. */
+    ID3D11DeviceContext_Begin(context, timestamp_disjoint_query);
+
+    hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp), 0);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    draw_color_quad(&test_context, &red);
+
+    ID3D11DeviceContext_End(context, timestamp_query);
+    for (i = 0; i < 500; ++i)
+    {
+        if ((hr = ID3D11DeviceContext_GetData(context, timestamp_query, NULL, 0, 0)) != S_FALSE)
+            break;
+        Sleep(10);
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    timestamp = 0xdeadbeef;
+    hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp) / 2, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(timestamp == 0xdeadbeef, "Timestamp was modified.\n");
+
+    hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp), 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(timestamp != 0xdeadbeef, "Timestamp was not modified.\n");
+
+    timestamp = 0xdeadbeef;
+    hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp) - 1, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp) + 1, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp) / 2, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp) * 2, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(timestamp == 0xdeadbeef, "Timestamp was modified.\n");
+
+    ID3D11DeviceContext_End(context, timestamp_disjoint_query);
+    for (i = 0; i < 500; ++i)
+    {
+        if ((hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, NULL, 0, 0)) != S_FALSE)
+            break;
+        Sleep(10);
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    disjoint.Frequency = 0xdeadbeef;
+    disjoint.Disjoint = 0xff;
+    hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint), 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(disjoint.Frequency != 0xdeadbeef, "Frequency data was not modified.\n");
+    ok(disjoint.Disjoint == TRUE || disjoint.Disjoint == FALSE, "Got unexpected disjoint %#x.\n", disjoint.Disjoint);
+
+    /* It's not strictly necessary for the TIMESTAMP query to be inside a TIMESTAMP_DISJOINT query. */
+    ID3D11Asynchronous_Release(timestamp_query);
+    query_desc.Query = D3D11_QUERY_TIMESTAMP;
+    query_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&timestamp_query);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    draw_color_quad(&test_context, &red);
+
+    ID3D11DeviceContext_End(context, timestamp_query);
+    for (i = 0; i < 500; ++i)
+    {
+        if ((hr = ID3D11DeviceContext_GetData(context, timestamp_query, NULL, 0, 0)) != S_FALSE)
+            break;
+        Sleep(10);
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp), 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ID3D11Asynchronous_Release(timestamp_query);
+    ID3D11Asynchronous_Release(timestamp_disjoint_query);
+    release_test_context(&test_context);
+}
+
 static void test_device_removed_reason(void)
 {
     ID3D11Device *device;
@@ -8915,6 +9072,7 @@ START_TEST(d3d11)
     test_create_depthstencil_state();
     test_create_rasterizer_state();
     test_create_query();
+    test_timestamp_query();
     test_device_removed_reason();
     test_private_data();
     test_blend();
