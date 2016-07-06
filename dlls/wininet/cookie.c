@@ -808,7 +808,7 @@ BOOL WINAPI InternetGetCookieExA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
         LPSTR lpCookieData, LPDWORD lpdwSize, DWORD flags, void *reserved)
 {
     WCHAR *url, *name;
-    DWORD len, size;
+    DWORD len, size = 0;
     BOOL r;
 
     TRACE("(%s %s %p %p(%u) %x %p)\n", debugstr_a(lpszUrl), debugstr_a(lpszCookieName),
@@ -841,12 +841,12 @@ BOOL WINAPI InternetGetCookieExA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
                         r = FALSE;
                     }
                 }
-                *lpdwSize = size;
             }
 
             heap_free( szCookieData );
         }
     }
+    *lpdwSize = size;
     heap_free( name );
     heap_free( url );
     return r;

@@ -360,11 +360,13 @@ static void test_get_cookie(void)
   DWORD len;
   BOOL ret;
 
+  len = 1024;
   SetLastError(0xdeadbeef);
   ret = InternetGetCookieA("http://www.example.com", NULL, NULL, &len);
   ok(!ret && GetLastError() == ERROR_NO_MORE_ITEMS,
     "InternetGetCookie should have failed with %s and error %d\n",
     ret ? "TRUE" : "FALSE", GetLastError());
+  ok(!len, "len = %u\n", len);
 }
 
 
