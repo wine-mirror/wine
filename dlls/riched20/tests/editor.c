@@ -7050,9 +7050,8 @@ static void test_format_rect(void)
     expected.left += 1;
     expected.right -= 1;
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
-    ok(EqualRect(&rc, &expected), "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
-       rc.top, rc.left, rc.bottom, rc.right,
-       expected.top, expected.left, expected.bottom, expected.right);
+    ok(EqualRect(&rc, &expected), "rect %s != %s\n", wine_dbgstr_rect(&rc),
+       wine_dbgstr_rect(&expected));
 
     for (n = -3; n <= 3; n++)
     {
@@ -7066,19 +7065,16 @@ static void test_format_rect(void)
       expected.bottom = min(clientRect.bottom, rc.bottom);
       expected.right = min(clientRect.right, rc.right);
       SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
-      ok(EqualRect(&rc, &expected),
-         "[n=%d] rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
-         n, rc.top, rc.left, rc.bottom, rc.right,
-         expected.top, expected.left, expected.bottom, expected.right);
+      ok(EqualRect(&rc, &expected), "[n=%d] rect %s != %s\n", n, wine_dbgstr_rect(&rc),
+         wine_dbgstr_rect(&expected));
     }
 
     rc = clientRect;
     SendMessageA(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
     expected = clientRect;
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
-    ok(EqualRect(&rc, &expected), "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
-       rc.top, rc.left, rc.bottom, rc.right,
-       expected.top, expected.left, expected.bottom, expected.right);
+    ok(EqualRect(&rc, &expected), "rect %s != %s\n", wine_dbgstr_rect(&rc),
+       wine_dbgstr_rect(&expected));
 
     /* Adding the selectionbar adds the selectionbar width to the left side. */
     SendMessageA(hwnd, EM_SETOPTIONS, ECOOP_OR, ECO_SELECTIONBAR);
@@ -7086,17 +7082,15 @@ static void test_format_rect(void)
     ok(options & ECO_SELECTIONBAR, "EM_SETOPTIONS failed to add selectionbar.\n");
     expected.left += 8; /* selection bar width */
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
-    ok(EqualRect(&rc, &expected), "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
-       rc.top, rc.left, rc.bottom, rc.right,
-       expected.top, expected.left, expected.bottom, expected.right);
+    ok(EqualRect(&rc, &expected), "rect %s != %s\n", wine_dbgstr_rect(&rc),
+       wine_dbgstr_rect(&expected));
 
     rc = clientRect;
     SendMessageA(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
     expected = clientRect;
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
-    ok(EqualRect(&rc, &expected), "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
-       rc.top, rc.left, rc.bottom, rc.right,
-       expected.top, expected.left, expected.bottom, expected.right);
+    ok(EqualRect(&rc, &expected), "rect %s != %s\n", wine_dbgstr_rect(&rc),
+       wine_dbgstr_rect(&expected));
 
     /* Removing the selectionbar subtracts the selectionbar width from the left side,
      * even if the left side is already 0. */
@@ -7105,19 +7099,16 @@ static void test_format_rect(void)
     ok(!(options & ECO_SELECTIONBAR), "EM_SETOPTIONS failed to remove selectionbar.\n");
     expected.left -= 8; /* selection bar width */
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
-    ok(EqualRect(&rc, &expected), "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
-       rc.top, rc.left, rc.bottom, rc.right,
-       expected.top, expected.left, expected.bottom, expected.right);
+    ok(EqualRect(&rc, &expected), "rect %s != %s\n", wine_dbgstr_rect(&rc),
+       wine_dbgstr_rect(&expected));
 
     /* Set the absolute value of the formatting rectangle. */
     rc = clientRect;
     SendMessageA(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
     expected = clientRect;
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
-    ok(EqualRect(&rc, &expected),
-       "[n=%d] rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
-       n, rc.top, rc.left, rc.bottom, rc.right,
-       expected.top, expected.left, expected.bottom, expected.right);
+    ok(EqualRect(&rc, &expected), "[n=%d] rect %s != %s\n", n, wine_dbgstr_rect(&rc),
+       wine_dbgstr_rect(&expected));
 
     /* MSDN documents the EM_SETRECT message as using the rectangle provided in
      * LPARAM as being a relative offset when the WPARAM value is 1, but these
@@ -7129,9 +7120,8 @@ static void test_format_rect(void)
     expected = rc;
     SendMessageA(hwnd, EM_SETRECT, 1, (LPARAM)&rc);
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
-    ok(EqualRect(&rc, &expected), "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
-       rc.top, rc.left, rc.bottom, rc.right,
-       expected.top, expected.left, expected.bottom, expected.right);
+    ok(EqualRect(&rc, &expected), "rect %s != %s\n", wine_dbgstr_rect(&rc),
+       wine_dbgstr_rect(&expected));
 
     /* For some reason it does not limit the values to the client rect with
      * a WPARAM value of 1. */
@@ -7142,9 +7132,8 @@ static void test_format_rect(void)
     expected = rc;
     SendMessageA(hwnd, EM_SETRECT, 1, (LPARAM)&rc);
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
-    ok(EqualRect(&rc, &expected), "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
-       rc.top, rc.left, rc.bottom, rc.right,
-       expected.top, expected.left, expected.bottom, expected.right);
+    ok(EqualRect(&rc, &expected), "rect %s != %s\n", wine_dbgstr_rect(&rc),
+       wine_dbgstr_rect(&expected));
 
     /* Reset to default rect and check how the format rect adjusts to window
      * resize and how it copes with very small windows */
@@ -7157,9 +7146,8 @@ static void test_format_rect(void)
     expected.left += 1;
     expected.right -= 1;
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
-    ok(EqualRect(&rc, &expected), "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
-       rc.top, rc.left, rc.bottom, rc.right,
-       expected.top, expected.left, expected.bottom, expected.right);
+    ok(EqualRect(&rc, &expected), "rect %s != %s\n", wine_dbgstr_rect(&rc),
+       wine_dbgstr_rect(&expected));
 
     MoveWindow(hwnd, 0, 0, 0, 30, FALSE);
     GetClientRect(hwnd, &clientRect);
@@ -7168,9 +7156,8 @@ static void test_format_rect(void)
     expected.left += 1;
     expected.right -= 1;
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
-    ok(EqualRect(&rc, &expected), "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
-       rc.top, rc.left, rc.bottom, rc.right,
-       expected.top, expected.left, expected.bottom, expected.right);
+    ok(EqualRect(&rc, &expected), "rect %s != %s\n", wine_dbgstr_rect(&rc),
+       wine_dbgstr_rect(&expected));
 
     MoveWindow(hwnd, 0, 0, 100, 0, FALSE);
     GetClientRect(hwnd, &clientRect);
@@ -7179,9 +7166,8 @@ static void test_format_rect(void)
     expected.left += 1;
     expected.right -= 1;
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
-    ok(EqualRect(&rc, &expected), "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
-       rc.top, rc.left, rc.bottom, rc.right,
-       expected.top, expected.left, expected.bottom, expected.right);
+    ok(EqualRect(&rc, &expected), "rect %s != %s\n", wine_dbgstr_rect(&rc),
+       wine_dbgstr_rect(&expected));
 
     DestroyWindow(hwnd);
 
@@ -7198,9 +7184,8 @@ static void test_format_rect(void)
     expected.top += 1;
     expected.right -= 1;
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
-    ok(EqualRect(&rc, &expected), "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
-       rc.top, rc.left, rc.bottom, rc.right,
-       expected.top, expected.left, expected.bottom, expected.right);
+    ok(EqualRect(&rc, &expected), "rect %s != %s\n", wine_dbgstr_rect(&rc),
+       wine_dbgstr_rect(&expected));
 
     rc = clientRect;
     InflateRect(&rc, -5, -5);
@@ -7210,9 +7195,8 @@ static void test_format_rect(void)
     expected.right += 1;
     SendMessageA(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
-    ok(EqualRect(&rc, &expected), "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
-       rc.top, rc.left, rc.bottom, rc.right,
-       expected.top, expected.left, expected.bottom, expected.right);
+    ok(EqualRect(&rc, &expected), "rect %s != %s\n", wine_dbgstr_rect(&rc),
+       wine_dbgstr_rect(&expected));
 
     DestroyWindow(hwnd);
 }
