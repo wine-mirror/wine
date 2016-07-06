@@ -3620,6 +3620,25 @@ static void FILEDLG95_LOOKIN_Clean(HWND hwnd)
 }
 
 /***********************************************************************
+ *          get_def_format
+ *
+ * Fill the FORMATETC used in the shell id list
+ */
+static FORMATETC get_def_format(void)
+{
+    static CLIPFORMAT cfFormat;
+    FORMATETC formatetc;
+
+    if (!cfFormat) cfFormat = RegisterClipboardFormatA(CFSTR_SHELLIDLISTA);
+    formatetc.cfFormat = cfFormat;
+    formatetc.ptd = 0;
+    formatetc.dwAspect = DVASPECT_CONTENT;
+    formatetc.lindex = -1;
+    formatetc.tymed = TYMED_HGLOBAL;
+    return formatetc;
+}
+
+/***********************************************************************
  * FILEDLG95_FILENAME_FillFromSelection
  *
  * fills the edit box from the cached DataObject
@@ -3766,15 +3785,6 @@ static int FILEDLG95_FILENAME_GetFileNames (HWND hwnd, LPWSTR * lpstrFileList, U
 	return nFileCount;
 }
 
-#define SETDefFormatEtc(fe,cf,med) \
-{ \
-    (fe).cfFormat = cf;\
-    (fe).dwAspect = DVASPECT_CONTENT; \
-    (fe).ptd =NULL;\
-    (fe).tymed = med;\
-    (fe).lindex = -1;\
-};
-
 /*
  * DATAOBJECT Helper functions
  */
@@ -3808,16 +3818,13 @@ LPITEMIDLIST GetPidlFromDataObject ( IDataObject *doSelected, UINT nPidlIndex)
 {
 
     STGMEDIUM medium;
-    FORMATETC formatetc;
+    FORMATETC formatetc = get_def_format();
     LPITEMIDLIST pidl = NULL;
 
     TRACE("sv=%p index=%u\n", doSelected, nPidlIndex);
 
     if (!doSelected)
         return NULL;
-	
-    /* Set the FORMATETC structure*/
-    SETDefFormatEtc(formatetc, RegisterClipboardFormatA(CFSTR_SHELLIDLISTA), TYMED_HGLOBAL);
 
     /* Get the pidls from IDataObject */
     if(SUCCEEDED(IDataObject_GetData(doSelected,&formatetc,&medium)))
@@ -3842,14 +3849,11 @@ static UINT GetNumSelected( IDataObject *doSelected )
 {
     UINT retVal = 0;
     STGMEDIUM medium;
-    FORMATETC formatetc;
+    FORMATETC formatetc = get_def_format();
 
     TRACE("sv=%p\n", doSelected);
 
     if (!doSelected) return 0;
-
-    /* Set the FORMATETC structure*/
-    SETDefFormatEtc(formatetc, RegisterClipboardFormatA(CFSTR_SHELLIDLISTA), TYMED_HGLOBAL);
 
     /* Get the pidls from IDataObject */
     if(SUCCEEDED(IDataObject_GetData(doSelected,&formatetc,&medium)))
