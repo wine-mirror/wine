@@ -6381,7 +6381,7 @@ static BOOL has_vertical_glyph_variants(IDWriteFontFace1 *fontface)
     for (i = 0; i < GET_BE_WORD(featurelist->FeatureCount); i++) {
         if (*(UINT32*)featurelist->FeatureRecord[i].FeatureTag == DWRITE_FONT_FEATURE_TAG_VERTICAL_WRITING) {
             const OT_Feature *feature = (const OT_Feature*)((BYTE*)featurelist + GET_BE_WORD(featurelist->FeatureRecord[i].Feature));
-            UINT16 lookup_count = GET_BE_WORD(feature->LookupCount), index, count, type;
+            UINT16 lookup_count = GET_BE_WORD(feature->LookupCount), i, index, count, type;
             const GSUB_SingleSubstFormat2 *subst2;
             const OT_LookupTable *lookup_table;
             UINT32 offset;
@@ -6389,44 +6389,43 @@ static BOOL has_vertical_glyph_variants(IDWriteFontFace1 *fontface)
             if (lookup_count == 0)
                 continue;
 
-            ok(lookup_count == 1, "got lookup count %u\n", lookup_count);
+            for (i = 0; i < lookup_count; i++) {
+                /* check if lookup is empty */
+                index = GET_BE_WORD(feature->LookupListIndex[i]);
+                lookup_table = (const OT_LookupTable*)((BYTE*)lookup_list + GET_BE_WORD(lookup_list->Lookup[index]));
 
-            /* check if lookup is empty */
-            index = GET_BE_WORD(feature->LookupListIndex[0]);
-            lookup_table = (const OT_LookupTable*)((BYTE*)lookup_list + GET_BE_WORD(lookup_list->Lookup[index]));
+                type = GET_BE_WORD(lookup_table->LookupType);
+                ok(type == 1 || type == 7, "got unexpected lookup type %u\n", type);
 
-            type = GET_BE_WORD(lookup_table->LookupType);
-            ok(type == 1 || type == 7, "got unexpected lookup type %u\n", type);
+                count = GET_BE_WORD(lookup_table->SubTableCount);
+                if (count == 0)
+                    continue;
 
+                ok(count > 0, "got unexpected subtable count %u\n", count);
 
-            count = GET_BE_WORD(lookup_table->SubTableCount);
-            if (count == 0)
-                continue;
-
-            ok(count > 0, "got unexpected subtable count %u\n", count);
-
-            offset = GET_BE_WORD(lookup_table->SubTable[0]);
-            if (type == 7) {
-                const GSUB_ExtensionPosFormat1 *ext = (const GSUB_ExtensionPosFormat1 *)((const BYTE *)lookup_table + offset);
-                if (GET_BE_WORD(ext->SubstFormat) == 1)
-                    offset += GET_BE_DWORD(ext->ExtensionOffset);
-                else
-                    ok(0, "Unhandled Extension Substitution Format %u\n", GET_BE_WORD(ext->SubstFormat));
-            }
-
-            subst2 = (const GSUB_SingleSubstFormat2*)((BYTE*)lookup_table + offset);
-            index = GET_BE_WORD(subst2->SubstFormat);
-            if (index == 1)
-                ok(0, "validate Single Substitution Format 1\n");
-            else if (index == 2) {
-                /* SimSun-ExtB has 0 glyph count for this substitution */
-                if (GET_BE_WORD(subst2->GlyphCount) > 0) {
-                    ret = TRUE;
-                    break;
+                offset = GET_BE_WORD(lookup_table->SubTable[0]);
+                if (type == 7) {
+                    const GSUB_ExtensionPosFormat1 *ext = (const GSUB_ExtensionPosFormat1 *)((const BYTE *)lookup_table + offset);
+                    if (GET_BE_WORD(ext->SubstFormat) == 1)
+                        offset += GET_BE_DWORD(ext->ExtensionOffset);
+                    else
+                        ok(0, "Unhandled Extension Substitution Format %u\n", GET_BE_WORD(ext->SubstFormat));
                 }
+
+                subst2 = (const GSUB_SingleSubstFormat2*)((BYTE*)lookup_table + offset);
+                index = GET_BE_WORD(subst2->SubstFormat);
+                if (index == 1)
+                    ok(0, "validate Single Substitution Format 1\n");
+                else if (index == 2) {
+                    /* SimSun-ExtB has 0 glyph count for this substitution */
+                    if (GET_BE_WORD(subst2->GlyphCount) > 0) {
+                        ret = TRUE;
+                        break;
+                    }
+                }
+                else
+                    ok(0, "unknown Single Substitution Format, %u\n", index);
             }
-            else
-                ok(0, "unknown Single Substitution Format, %u\n", index);
         }
     }
 
