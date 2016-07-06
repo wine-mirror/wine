@@ -1361,7 +1361,7 @@ static void test_device_interfaces(void)
         device_desc.flags = D3D11_CREATE_DEVICE_DEBUG;
         if (!(device = create_device(&device_desc)))
         {
-            skip("Failed to create device for feature level %#x.\n", d3d11_feature_levels[i]);
+            skip("Failed to create debug device for feature level %#x.\n", d3d11_feature_levels[i]);
             continue;
         }
 
