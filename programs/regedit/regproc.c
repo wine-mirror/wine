@@ -68,7 +68,7 @@ if (!(p)) \
  * Allocates memory and converts input from multibyte to wide chars
  * Returned string must be freed by the caller
  */
-WCHAR* GetWideString(const char* strA)
+static WCHAR* GetWideString(const char* strA)
 {
     if(strA)
     {
