@@ -131,8 +131,8 @@ struct DataCache
   /*
    * List all interface here
    */
+  IUnknown          IUnknown_inner;
   IDataObject       IDataObject_iface;
-  IUnknown          IUnknown_iface;
   IPersistStorage   IPersistStorage_iface;
   IViewObject2      IViewObject2_iface;
   IOleCache2        IOleCache2_iface;
@@ -150,7 +150,7 @@ struct DataCache
   /*
    * IUnknown implementation of the outer object.
    */
-  IUnknown* outerUnknown;
+  IUnknown *outer_unk;
 
   /*
    * The user of this object can setup ONE advise sink
@@ -188,7 +188,7 @@ static inline DataCache *impl_from_IDataObject( IDataObject *iface )
 
 static inline DataCache *impl_from_IUnknown( IUnknown *iface )
 {
-    return CONTAINING_RECORD(iface, DataCache, IUnknown_iface);
+    return CONTAINING_RECORD(iface, DataCache, IUnknown_inner);
 }
 
 static inline DataCache *impl_from_IPersistStorage( IPersistStorage *iface )
@@ -970,7 +970,7 @@ static HRESULT WINAPI DataCache_IDataObject_QueryInterface(
 {
   DataCache *this = impl_from_IDataObject(iface);
 
-  return IUnknown_QueryInterface(this->outerUnknown, riid, ppvObject);
+  return IUnknown_QueryInterface(this->outer_unk, riid, ppvObject);
 }
 
 /************************************************************************
@@ -981,7 +981,7 @@ static ULONG WINAPI DataCache_IDataObject_AddRef(
 {
   DataCache *this = impl_from_IDataObject(iface);
 
-  return IUnknown_AddRef(this->outerUnknown);
+  return IUnknown_AddRef(this->outer_unk);
 }
 
 /************************************************************************
@@ -992,7 +992,7 @@ static ULONG WINAPI DataCache_IDataObject_Release(
 {
   DataCache *this = impl_from_IDataObject(iface);
 
-  return IUnknown_Release(this->outerUnknown);
+  return IUnknown_Release(this->outer_unk);
 }
 
 /************************************************************************
@@ -1150,7 +1150,7 @@ static HRESULT WINAPI DataCache_IPersistStorage_QueryInterface(
 {
   DataCache *this = impl_from_IPersistStorage(iface);
 
-  return IUnknown_QueryInterface(this->outerUnknown, riid, ppvObject);
+  return IUnknown_QueryInterface(this->outer_unk, riid, ppvObject);
 }
 
 /************************************************************************
@@ -1161,7 +1161,7 @@ static ULONG WINAPI DataCache_IPersistStorage_AddRef(
 {
   DataCache *this = impl_from_IPersistStorage(iface);
 
-  return IUnknown_AddRef(this->outerUnknown);
+  return IUnknown_AddRef(this->outer_unk);
 }
 
 /************************************************************************
@@ -1172,7 +1172,7 @@ static ULONG WINAPI DataCache_IPersistStorage_Release(
 {
   DataCache *this = impl_from_IPersistStorage(iface);
 
-  return IUnknown_Release(this->outerUnknown);
+  return IUnknown_Release(this->outer_unk);
 }
 
 /************************************************************************
@@ -1511,7 +1511,7 @@ static HRESULT WINAPI DataCache_IViewObject2_QueryInterface(
 {
   DataCache *this = impl_from_IViewObject2(iface);
 
-  return IUnknown_QueryInterface(this->outerUnknown, riid, ppvObject);
+  return IUnknown_QueryInterface(this->outer_unk, riid, ppvObject);
 }
 
 /************************************************************************
@@ -1522,7 +1522,7 @@ static ULONG WINAPI DataCache_IViewObject2_AddRef(
 {
   DataCache *this = impl_from_IViewObject2(iface);
 
-  return IUnknown_AddRef(this->outerUnknown);
+  return IUnknown_AddRef(this->outer_unk);
 }
 
 /************************************************************************
@@ -1533,7 +1533,7 @@ static ULONG WINAPI DataCache_IViewObject2_Release(
 {
   DataCache *this = impl_from_IViewObject2(iface);
 
-  return IUnknown_Release(this->outerUnknown);
+  return IUnknown_Release(this->outer_unk);
 }
 
 /************************************************************************
@@ -1935,7 +1935,7 @@ static HRESULT WINAPI DataCache_IOleCache2_QueryInterface(
 {
   DataCache *this = impl_from_IOleCache2(iface);
 
-  return IUnknown_QueryInterface(this->outerUnknown, riid, ppvObject);
+  return IUnknown_QueryInterface(this->outer_unk, riid, ppvObject);
 }
 
 /************************************************************************
@@ -1946,7 +1946,7 @@ static ULONG WINAPI DataCache_IOleCache2_AddRef(
 {
   DataCache *this = impl_from_IOleCache2(iface);
 
-  return IUnknown_AddRef(this->outerUnknown);
+  return IUnknown_AddRef(this->outer_unk);
 }
 
 /************************************************************************
@@ -1957,7 +1957,7 @@ static ULONG WINAPI DataCache_IOleCache2_Release(
 {
   DataCache *this = impl_from_IOleCache2(iface);
 
-  return IUnknown_Release(this->outerUnknown);
+  return IUnknown_Release(this->outer_unk);
 }
 
 /*****************************************************************************
@@ -2134,7 +2134,7 @@ static HRESULT WINAPI DataCache_IOleCacheControl_QueryInterface(
 {
   DataCache *this = impl_from_IOleCacheControl(iface);
 
-  return IUnknown_QueryInterface(this->outerUnknown, riid, ppvObject);
+  return IUnknown_QueryInterface(this->outer_unk, riid, ppvObject);
 }
 
 /************************************************************************
@@ -2145,7 +2145,7 @@ static ULONG WINAPI DataCache_IOleCacheControl_AddRef(
 {
   DataCache *this = impl_from_IOleCacheControl(iface);
 
-  return IUnknown_AddRef(this->outerUnknown);
+  return IUnknown_AddRef(this->outer_unk);
 }
 
 /************************************************************************
@@ -2156,7 +2156,7 @@ static ULONG WINAPI DataCache_IOleCacheControl_Release(
 {
   DataCache *this = impl_from_IOleCacheControl(iface);
 
-  return IUnknown_Release(this->outerUnknown);
+  return IUnknown_Release(this->outer_unk);
 }
 
 /************************************************************************
@@ -2378,29 +2378,14 @@ static DataCache* DataCache_Construct(
    * Initialize the virtual function table.
    */
   newObject->IDataObject_iface.lpVtbl = &DataCache_IDataObject_VTable;
-  newObject->IUnknown_iface.lpVtbl = &DataCache_NDIUnknown_VTable;
+  newObject->IUnknown_inner.lpVtbl = &DataCache_NDIUnknown_VTable;
   newObject->IPersistStorage_iface.lpVtbl = &DataCache_IPersistStorage_VTable;
   newObject->IViewObject2_iface.lpVtbl = &DataCache_IViewObject2_VTable;
   newObject->IOleCache2_iface.lpVtbl = &DataCache_IOleCache2_VTable;
   newObject->IOleCacheControl_iface.lpVtbl = &DataCache_IOleCacheControl_VTable;
   newObject->IAdviseSink_iface.lpVtbl = &DataCache_IAdviseSink_VTable;
-
-  /*
-   * Start with one reference count. The caller of this function
-   * must release the interface pointer when it is done.
-   */
+  newObject->outer_unk = pUnkOuter ? pUnkOuter : &newObject->IUnknown_inner;
   newObject->ref = 1;
-
-  /*
-   * Initialize the outer unknown
-   * We don't keep a reference on the outer unknown since, the way
-   * aggregation works, our lifetime is at least as large as its
-   * lifetime.
-   */
-  if (pUnkOuter==NULL)
-    pUnkOuter = &newObject->IUnknown_iface;
-
-  newObject->outerUnknown = pUnkOuter;
 
   /*
    * Initialize the other members of the structure.
@@ -2475,16 +2460,8 @@ HRESULT WINAPI CreateDataCache(
   if (newCache == 0)
     return E_OUTOFMEMORY;
 
-  /*
-   * Make sure it supports the interface required by the caller.
-   */
-  hr = IUnknown_QueryInterface(&newCache->IUnknown_iface, riid, ppvObj);
-
-  /*
-   * Release the reference obtained in the constructor. If
-   * the QueryInterface was unsuccessful, it will free the class.
-   */
-  IUnknown_Release(&newCache->IUnknown_iface);
+  hr = IUnknown_QueryInterface(&newCache->IUnknown_inner, riid, ppvObj);
+  IUnknown_Release(&newCache->IUnknown_inner);
 
   return hr;
 }
