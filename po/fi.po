@@ -11900,50 +11900,59 @@ msgid ""
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgstr ""
+"Käyttö:\n"
+"  regedit [valitsimet] [tiedosto] [rek. avain]\n"
+"\n"
+"Valitsimet:\n"
+"  [ei mitään]    Käynnistä tämän ohjelman graafinen versio.\n"
+"  /L:system.dat  Muokattavan system.dat-tiedoston sijainti.\n"
+"                 Sopii yhteen muiden valitsinten kanssa. Ei huomioida.\n"
+"  /R:user.dat    Muokattavan user.dat-tiedoston sijainti.\n"
+"                 Sopii yhteen muiden valitsinten kanssa. Ei huomioida.\n"
+"  /C             Tuo rekisteritiedoston sisältö.\n"
+"  /D             Poista määritelty rekisteriavain.\n"
+"  /E             Vie valitun rekisteriavaimen sisältö tiedostoon.\n"
+"                 Jos avainta ei määritellä, koko rekisteri viedään.\n"
+"  /S             Hiljainen tila. Mitään viestejä ei näytetä.\n"
+"  /V             Käynnistä tämä ohjelma edistyneessä tilassa. Ei huomioida.\n"
+"  /?             Näytä nämä tiedot ja lopeta.\n"
+"  [tiedosto]     Sen tiedoston polku, josta rekisteritietoja tuodaan.\n"
+"                 Valitsimen [/E] yhteydessä sen tiedoston polku, johon\n"
+"                 rekisteritiedot viedään.\n"
+"  [rek. avain]   Rekisteriavain, jota muokataan.\n"
+"\n"
+"Käyttöesimerkkejä:\n"
+"  regedit \"tuotava.reg\"\n"
+"  regedit /E \"vietävä.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 
 #: regedit.rc:360
-#, fuzzy
-#| msgid ""
-#| "regsvr32: Invalid or unrecognized switch [%1]\n"
-#| "\n"
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
-msgstr ""
-"regsvr32: Virheellinen tai tuntematon valitsin [%1]\n"
-"\n"
+msgstr "regedit: Virheellinen tai tuntematon valitsin [%1]\n"
 
 #: regedit.rc:361
-#, fuzzy
-#| msgid "Type \"REG /?\" for help.\n"
 msgid "Type \"regedit /?\" for help.\n"
-msgstr "Komennolla \"REG /?\" saat apua.\n"
+msgstr "Komennolla \"regedit /?\" saat apua.\n"
 
 #: regedit.rc:362
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: No filename was specified.\n"
-msgstr "Komentoa ei määritelty."
+msgstr "regedit: Tiedostonimeä ei määritelty.\n"
 
 #: regedit.rc:363
 msgid "regedit: No registry key was specified for removal.\n"
-msgstr ""
+msgstr "regedit: Poistettavaa rekisteriavainta ei määritelty.\n"
 
 #: regedit.rc:364
-#, fuzzy
-#| msgid "uninstaller: The application with GUID '%1' was not found\n"
 msgid "regedit: The file '%1' was not found.\n"
-msgstr "uninstaller: Ei löydy ohjelmaa, jonka GUID olisi '%1'\n"
+msgstr "regedit: Tiedostoa '%1' ei löydy.\n"
 
 #: regedit.rc:365
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to open the file '%1'.\n"
-msgstr "reg: Ei pääsyä etäkoneelle\n"
+msgstr "regedit: Tiedostoa '%1' ei voida avata.\n"
 
 #: regedit.rc:366
-#, fuzzy
-#| msgid "Invalid handle operation.\n"
 msgid "regedit: Unhandled action.\n"
-msgstr "Kahvaoperaatio ei kelpaa.\n"
+msgstr "regedit: Käsittelemätön toiminto.\n"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
