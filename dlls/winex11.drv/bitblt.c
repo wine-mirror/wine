@@ -1436,10 +1436,10 @@ static DWORD put_pixmap_image( Pixmap pixmap, const XVisualInfo *vis,
         XPutImage( gdi_display, pixmap, gc, image, 0, 0, 0, 0, coords.width, coords.height );
         XFreeGC( gdi_display, gc );
         image->data = NULL;
+        if (dst_bits.free) dst_bits.free( &dst_bits );
     }
 
     XDestroyImage( image );
-    if (dst_bits.free) dst_bits.free( &dst_bits );
     return ret;
 
 update_format:
