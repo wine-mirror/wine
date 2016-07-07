@@ -283,9 +283,16 @@ static HRESULT STDMETHODCALLTYPE d3d10_query_GetData(ID3D10Query *iface, void *d
 
 static UINT STDMETHODCALLTYPE d3d10_query_GetDataSize(ID3D10Query *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3d_query *query = impl_from_ID3D10Query(iface);
+    unsigned int data_size;
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    wined3d_mutex_lock();
+    data_size = wined3d_query_get_data_size(query->wined3d_query);
+    wined3d_mutex_unlock();
+
+    return data_size;
 }
 
 /* ID3D10Query methods */
