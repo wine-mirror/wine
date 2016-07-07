@@ -92,7 +92,7 @@ static void X11DRV_ImmSetInternalString(DWORD dwOffset,
     ptr_new = CompositionString + byte_offset;
     memmove(ptr_new + byte_length, ptr_new + byte_selection,
             dwCompStringLength - byte_offset - byte_selection);
-    memcpy(ptr_new, lpComp, byte_length);
+    if (lpComp) memcpy(ptr_new, lpComp, byte_length);
     dwCompStringLength += byte_expansion;
 
     IME_SetCompositionString(SCS_SETSTR, CompositionString,
