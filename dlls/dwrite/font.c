@@ -3497,7 +3497,8 @@ static void fontcollection_add_replacements(struct dwrite_fontcollection *collec
     RegCloseKey(hkey);
 }
 
-HRESULT create_font_collection(IDWriteFactory3 *factory, IDWriteFontFileEnumerator *enumerator, BOOL is_system, IDWriteFontCollection **ret)
+HRESULT create_font_collection(IDWriteFactory3 *factory, IDWriteFontFileEnumerator *enumerator, BOOL is_system,
+    IDWriteFontCollection1 **ret)
 {
     struct fontfile_enum {
         struct list entry;
@@ -3521,7 +3522,7 @@ HRESULT create_font_collection(IDWriteFactory3 *factory, IDWriteFontFileEnumerat
         return hr;
     }
 
-    *ret = (IDWriteFontCollection*)&collection->IDWriteFontCollection1_iface;
+    *ret = &collection->IDWriteFontCollection1_iface;
 
     TRACE("building font collection:\n");
 
@@ -3820,7 +3821,7 @@ static HRESULT create_system_fontfile_enumerator(IDWriteFactory3 *factory, IDWri
     return S_OK;
 }
 
-HRESULT get_system_fontcollection(IDWriteFactory3 *factory, IDWriteFontCollection **collection)
+HRESULT get_system_fontcollection(IDWriteFactory3 *factory, IDWriteFontCollection1 **collection)
 {
     IDWriteFontFileEnumerator *enumerator;
     HRESULT hr;

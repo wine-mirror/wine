@@ -852,7 +852,7 @@ static HRESULT WINAPI gdiinterop1_CreateFontFromLOGFONT(IDWriteGdiInterop1 *ifac
     if (collection)
         IDWriteFontCollection_AddRef(collection);
     else {
-        hr = IDWriteFactory2_GetSystemFontCollection((IDWriteFactory2*)This->factory, &collection, FALSE);
+        hr = IDWriteFactory3_GetSystemFontCollection(This->factory, FALSE, (IDWriteFontCollection1**)&collection, FALSE);
         if (FAILED(hr)) {
             ERR("failed to get system font collection: 0x%08x.\n", hr);
             return hr;

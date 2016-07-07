@@ -522,7 +522,7 @@ struct dwritefactory {
     IDWriteFactory3 IDWriteFactory3_iface;
     LONG ref;
 
-    IDWriteFontCollection *system_collection;
+    IDWriteFontCollection1 *system_collection;
     IDWriteFontCollection *eudc_collection;
     struct gdiinterop interop;
     IDWriteFontFallback *fallback;
@@ -576,7 +576,7 @@ static void release_dwritefactory(struct dwritefactory *factory)
         release_fileloader(fileloader);
 
     if (factory->system_collection)
-        IDWriteFontCollection_Release(factory->system_collection);
+        IDWriteFontCollection1_Release(factory->system_collection);
     if (factory->eudc_collection)
         IDWriteFontCollection_Release(factory->eudc_collection);
     if (factory->fallback)
@@ -666,22 +666,7 @@ static ULONG WINAPI dwritefactory_Release(IDWriteFactory3 *iface)
 static HRESULT WINAPI dwritefactory_GetSystemFontCollection(IDWriteFactory3 *iface,
     IDWriteFontCollection **collection, BOOL check_for_updates)
 {
-    HRESULT hr = S_OK;
-    struct dwritefactory *This = impl_from_IDWriteFactory3(iface);
-    TRACE("(%p)->(%p %d)\n", This, collection, check_for_updates);
-
-    if (check_for_updates)
-        FIXME("checking for system font updates not implemented\n");
-
-    if (!This->system_collection)
-        hr = get_system_fontcollection(iface, &This->system_collection);
-
-    if (SUCCEEDED(hr))
-        IDWriteFontCollection_AddRef(This->system_collection);
-
-    *collection = This->system_collection;
-
-    return hr;
+    return IDWriteFactory3_GetSystemFontCollection(iface, FALSE, (IDWriteFontCollection1**)collection, check_for_updates);
 }
 
 static HRESULT WINAPI dwritefactory_CreateCustomFontCollection(IDWriteFactory3 *iface,
@@ -707,7 +692,7 @@ static HRESULT WINAPI dwritefactory_CreateCustomFontCollection(IDWriteFactory3 *
     if (FAILED(hr))
         return hr;
 
-    hr = create_font_collection(iface, enumerator, FALSE, collection);
+    hr = create_font_collection(iface, enumerator, FALSE, (IDWriteFontCollection1**)collection);
     IDWriteFontFileEnumerator_Release(enumerator);
     return hr;
 }
@@ -1062,7 +1047,7 @@ static HRESULT WINAPI dwritefactory_CreateTextFormat(IDWriteFactory3 *iface, WCH
         size, debugstr_w(locale), format);
 
     if (!collection) {
-        hr = IDWriteFactory2_GetSystemFontCollection((IDWriteFactory2*)iface, &syscollection, FALSE);
+        hr = IDWriteFactory3_GetSystemFontCollection(iface, FALSE, (IDWriteFontCollection1**)&syscollection, FALSE);
         if (FAILED(hr))
             return hr;
     }
@@ -1387,10 +1372,25 @@ static HRESULT WINAPI dwritefactory3_GetSystemFontCollection(IDWriteFactory3 *if
     IDWriteFontCollection1 **collection, BOOL check_for_updates)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory3(iface);
+    HRESULT hr = S_OK;
 
-    FIXME("(%p)->(%d %p %d): stub\n", This, include_downloadable, collection, check_for_updates);
+    TRACE("(%p)->(%d %p %d)\n", This, include_downloadable, collection, check_for_updates);
 
-    return E_NOTIMPL;
+    if (include_downloadable)
+        FIXME("remote fonts are not supported\n");
+
+    if (check_for_updates)
+        FIXME("checking for system font updates not implemented\n");
+
+    if (!This->system_collection)
+        hr = get_system_fontcollection(iface, &This->system_collection);
+
+    if (SUCCEEDED(hr))
+        IDWriteFontCollection1_AddRef(This->system_collection);
+
+    *collection = This->system_collection;
+
+    return hr;
 }
 
 static HRESULT WINAPI dwritefactory3_GetFontDownloadQueue(IDWriteFactory3 *iface, IDWriteFontDownloadQueue **queue)
