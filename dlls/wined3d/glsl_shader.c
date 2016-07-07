@@ -4307,9 +4307,15 @@ static void shader_glsl_else(const struct wined3d_shader_instruction *ins)
 
 static void shader_glsl_emit(const struct wined3d_shader_instruction *ins)
 {
+    unsigned int stream = ins->handler_idx == WINED3DSIH_EMIT ? 0 : ins->src[0].reg.idx[0].offset;
+
     shader_addline(ins->ctx->buffer, "setup_gs_output(gs_out);\n");
     shader_glsl_fixup_position(ins->ctx->buffer);
-    shader_addline(ins->ctx->buffer, "EmitVertex();\n");
+
+    if (!stream)
+        shader_addline(ins->ctx->buffer, "EmitVertex();\n");
+    else
+        FIXME("Unhandled primitive stream %u.\n", stream);
 }
 
 static void shader_glsl_break(const struct wined3d_shader_instruction *ins)
@@ -8644,7 +8650,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DSY_FINE                         */ NULL,
     /* WINED3DSIH_ELSE                             */ shader_glsl_else,
     /* WINED3DSIH_EMIT                             */ shader_glsl_emit,
-    /* WINED3DSIH_EMIT_STREAM                      */ NULL,
+    /* WINED3DSIH_EMIT_STREAM                      */ shader_glsl_emit,
     /* WINED3DSIH_ENDIF                            */ shader_glsl_end,
     /* WINED3DSIH_ENDLOOP                          */ shader_glsl_end,
     /* WINED3DSIH_ENDREP                           */ shader_glsl_end,
