@@ -1005,7 +1005,7 @@ BOOL EMFDRV_StrokeAndFillPath( PHYSDEV dev )
 }
 
 /**********************************************************************
- *	     EMFDRV_MoveTo
+ *           EMFDRV_StrokePath
  */
 BOOL EMFDRV_StrokePath( PHYSDEV dev )
 {
