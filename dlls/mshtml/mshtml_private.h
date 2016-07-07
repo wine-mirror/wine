@@ -265,8 +265,8 @@ typedef struct {
     const dispex_static_data_vtbl_t *vtbl;
     const tid_t disp_tid;
     const tid_t* const iface_tids;
-    void (*init_info)(dispex_data_t*);
-    dispex_data_t *data;
+    void (*init_info)(dispex_data_t*,compat_mode_t);
+    dispex_data_t *info_cache[COMPAT_MODE_CNT];
 } dispex_static_data_t;
 
 struct DispatchEx {
@@ -305,7 +305,7 @@ void (__cdecl *ccp_init)(ExternalCycleCollectionParticipant*,const CCObjCallback
 void (__cdecl *describe_cc_node)(nsCycleCollectingAutoRefCnt*,const char*,nsCycleCollectionTraversalCallback*) DECLSPEC_HIDDEN;
 void (__cdecl *note_cc_edge)(nsISupports*,const char*,nsCycleCollectionTraversalCallback*) DECLSPEC_HIDDEN;
 
-void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*) DECLSPEC_HIDDEN;
+void init_dispex_with_compat_mode(DispatchEx*,IUnknown*,dispex_static_data_t*,compat_mode_t) DECLSPEC_HIDDEN;
 void release_dispex(DispatchEx*) DECLSPEC_HIDDEN;
 BOOL dispex_query_interface(DispatchEx*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**) DECLSPEC_HIDDEN;
@@ -318,6 +318,11 @@ void release_typelib(void) DECLSPEC_HIDDEN;
 HRESULT get_htmldoc_classinfo(ITypeInfo **typeinfo) DECLSPEC_HIDDEN;
 const dispex_static_data_vtbl_t *dispex_get_vtbl(DispatchEx*) DECLSPEC_HIDDEN;
 void dispex_info_add_interface(dispex_data_t*,tid_t) DECLSPEC_HIDDEN;
+
+static inline void init_dispex(DispatchEx *dispex, IUnknown *outer, dispex_static_data_t *desc)
+{
+    init_dispex_with_compat_mode(dispex, outer, desc, COMPAT_MODE_NONE);
+}
 
 typedef enum {
     DISPEXPROP_CUSTOM,
