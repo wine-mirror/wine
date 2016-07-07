@@ -2991,11 +2991,11 @@ msgstr "%1!u!МБ використано, %2!u!МБ доступно"
 
 #: gdi32.rc:28
 msgid "Western"
-msgstr "Західне"
+msgstr "Західноєвропейський"
 
 #: gdi32.rc:29
 msgid "Central European"
-msgstr "Центральна Європа"
+msgstr "Центральноєвропейський"
 
 #: gdi32.rc:30
 msgid "Cyrillic"
@@ -3003,11 +3003,11 @@ msgstr "Кирилиця"
 
 #: gdi32.rc:31
 msgid "Greek"
-msgstr "Грецьке"
+msgstr "Грецький"
 
 #: gdi32.rc:32
 msgid "Turkish"
-msgstr "Турецьке"
+msgstr "Турецький"
 
 #: gdi32.rc:33
 msgid "Hebrew"
@@ -3015,27 +3015,27 @@ msgstr "Іврит"
 
 #: gdi32.rc:34
 msgid "Arabic"
-msgstr "Арабське"
+msgstr "Арабський"
 
 #: gdi32.rc:35
 msgid "Baltic"
-msgstr "Балтійське"
+msgstr "Балтійський"
 
 #: gdi32.rc:36
 msgid "Vietnamese"
-msgstr "В'єтнамське"
+msgstr "В'єтнамський"
 
 #: gdi32.rc:37
 msgid "Thai"
-msgstr "Тайське"
+msgstr "Тайський"
 
 #: gdi32.rc:38
 msgid "Japanese"
-msgstr "Японське"
+msgstr "Японський"
 
 #: gdi32.rc:39
 msgid "CHINESE_GB2312"
-msgstr ""
+msgstr "Китайський GB2312"
 
 #: gdi32.rc:40
 msgid "Hangul"
@@ -3043,7 +3043,7 @@ msgstr "Хангул"
 
 #: gdi32.rc:41
 msgid "CHINESE_BIG5"
-msgstr ""
+msgstr "Китайський BIG5"
 
 #: gdi32.rc:42
 msgid "Hangul(Johab)"
@@ -11635,6 +11635,15 @@ msgid ""
 "  REG [operation] /?\n"
 "\n"
 msgstr ""
+"Використання:\n"
+"  REG [операція] [параметри]\n"
+"\n"
+"Підтримувані операції:\n"
+"  ADD | DELETE | QUERY\n"
+"\n"
+"Для довідки по конкретній операції, введіть:\n"
+"  REG [операція] /?\n"
+"\n"
 
 #: reg.rc:36
 msgid ""
@@ -11739,24 +11748,20 @@ msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr "Пошук завершено. Знайдено збігів: %1!d!\n"
 
 #: reg.rc:61
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "reg: Invalid syntax. "
-msgstr "reg: невірне ім'я ключа\n"
+msgstr "reg: Невірний синтаксис. "
 
 #: reg.rc:62
-#, fuzzy
-#| msgid "uninstaller: Invalid option [%1]\n"
 msgid "reg: Invalid option [%1]. "
-msgstr "uninstaller: Невірний параметр [%1]\n"
+msgstr "reg: Невірна опція [%1]. "
 
 #: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
-msgstr ""
+msgstr "Введіть \"REG /?\" для довідки.\n"
 
 #: reg.rc:64
 msgid "Type \"REG %1 /?\" for help.\n"
-msgstr ""
+msgstr "Введіть \"REG %1 /?\" для довідки.\n"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -12002,46 +12007,60 @@ msgid ""
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgstr ""
+"Використання:\n"
+"  regedit [опції] [ім'я файлу] [ключ реєстру]\n"
+"\n"
+"Опції:\n"
+"  [без опцій]    Запуск програми з графічним інтерфейсом.\n"
+"  /L:system.dat  Шлях до файла system.dat для редагування.\n"
+"                 Сумісна з будь-якими іншими опціями. Ігнорується.\n"
+"  /R:user.dat    Шлях до файла user.dat для редагування.\n"
+"                 Сумісна з будь-якими іншими опціями. Ігнорується.\n"
+"  /C             Імпортувати вміст файлу реєстру.\n"
+"  /D             Видалення зазначеного ключа реєстру.\n"
+"  /E             Експортувати вміст зазначеного ключа реєстру у файл.\n"
+"                 Якщо параметр не заданий, експортується весь реєстр.\n"
+"  /S             Тихий режим. Повідомлення не відображатимуться.\n"
+"  /V             Запуск графічного інтерфейсу в розширеному режимі. "
+"Ігнорується.\n"
+"  /?             Показати цю інформацію і вийти.\n"
+"  [ім'я файлу]   Шлях до файлу, який містить дані реєстру для імпорту.\n"
+"                 Опція [/Е] вказує на шлях до файлу куди будуть експортовані "
+"дані реєстру.\n"
+"  [ключ реєстру] Ключ реєстру для редагування.\n"
+"\n"
+"Приклади використання:\n"
+"  regedit \"import.reg\"\n"
+"  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 
 #: regedit.rc:360
-#, fuzzy
-#| msgid ""
-#| "regsvr32: Invalid or unrecognized switch [%1]\n"
-#| "\n"
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
-msgstr ""
-"regsvr32: Невірний або нерозпізнаний параметр [%1]\n"
-"\n"
+msgstr "regedit: Невірний або нерозпізнаний параметр [%1]\n"
 
 #: regedit.rc:361
 msgid "Type \"regedit /?\" for help.\n"
-msgstr ""
+msgstr "Введіть \"regedit /?\" для довідки.\n"
 
 #: regedit.rc:362
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: No filename was specified.\n"
-msgstr "Команда не вказана."
+msgstr "regedit: Ім'я файлу не вказано.\n"
 
 #: regedit.rc:363
 msgid "regedit: No registry key was specified for removal.\n"
-msgstr ""
+msgstr "regedit: Не вказано ключ реєстру для видалення.\n"
 
 #: regedit.rc:364
-#, fuzzy
-#| msgid "uninstaller: The application with GUID '%1' was not found\n"
 msgid "regedit: The file '%1' was not found.\n"
-msgstr "uninstaller: Застосунок з ідентифікатором '%1' не знайдено\n"
+msgstr "regedit: Файл '%1' не знайдено.\n"
 
 #: regedit.rc:365
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to open the file '%1'.\n"
-msgstr "reg: неможливо отримати доступ до віддаленої машини\n"
+msgstr "regedit: Неможливо відкрити файл '%1'.\n"
 
 #: regedit.rc:366
 msgid "regedit: Unhandled action.\n"
-msgstr ""
+msgstr "regedit: Непідтримувана операція.\n"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
