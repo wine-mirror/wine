@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-05-26 20:47+0300\n"
+"PO-Revision-Date: 2016-07-07 13:26+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.7.1\n"
+"X-Generator: Poedit 1.8.8\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -11922,50 +11922,60 @@ msgid ""
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgstr ""
+"Использование:\n"
+"  regedit [опции] [имя файла] [ключ реестра]\n"
+"\n"
+"Опции:\n"
+"  [без опций]    Запуск графического интерфейса программы.\n"
+"  /L:system.dat  Путь к редактируемому файлу system.dat.\n"
+"                 Совместима с любыми другими опциями. Игнорируется.\n"
+"  /R:user.dat    Путь к редактируемому файлу user.dat.\n"
+"                 Совместима с любыми другими опциями. Игнорируется.\n"
+"  /C             Импортировать содержимое файла реестра.\n"
+"  /D             Удалить указанный ключ.\n"
+"  /E             Экспортировать содержимое ключа в файл.\n"
+"                 Если ключ не указан, экспортируется весь реестр.\n"
+"  /S             Тихий режим. Сообщения не отображаются.\n"
+"  /V             Запуск графического интерфейса в расширенном режиме. "
+"Игнорируется.\n"
+"  /?             Показать эту справку и завершить программу.\n"
+"  [имя файла]    Путь файла, содержащего импортируемые данные.\n"
+"                 При использовании с [/E], эта опция указывает путь к файлу "
+"для экспорта данных.\n"
+"  [ключ реестра] Редактируемый ключ реестра.\n"
+"\n"
+"Примеры использования:\n"
+"  regedit \"import.reg\"\n"
+"  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 
 #: regedit.rc:360
-#, fuzzy
-#| msgid ""
-#| "regsvr32: Invalid or unrecognized switch [%1]\n"
-#| "\n"
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
-msgstr ""
-"regsvr32: неверный или неизвестный параметр [%1]\n"
-"\n"
+msgstr "regedit: неверный или неизвестный параметр [%1]\n"
 
 #: regedit.rc:361
-#, fuzzy
-#| msgid "Type \"REG /?\" for help.\n"
 msgid "Type \"regedit /?\" for help.\n"
-msgstr "Для справки введите «REG /?».\n"
+msgstr "Для справки введите «regedit /?».\n"
 
 #: regedit.rc:362
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: No filename was specified.\n"
-msgstr "Команда не указана."
+msgstr "regedit: имя файла не указано.\n"
 
 #: regedit.rc:363
 msgid "regedit: No registry key was specified for removal.\n"
-msgstr ""
+msgstr "regedit: не указан удаляемый ключ.\n"
 
 #: regedit.rc:364
-#, fuzzy
-#| msgid "uninstaller: The application with GUID '%1' was not found\n"
 msgid "regedit: The file '%1' was not found.\n"
-msgstr "uninstaller: приложение с идентификатором «%1» не найдено\n"
+msgstr "regedit: файл «%1» не найден.\n"
 
 #: regedit.rc:365
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to open the file '%1'.\n"
-msgstr "reg: не удалось получить доступ к удалённому компьютеру\n"
+msgstr "regedit: не удалось открыть файл «%1».\n"
 
 #: regedit.rc:366
-#, fuzzy
-#| msgid "Invalid handle operation.\n"
 msgid "regedit: Unhandled action.\n"
-msgstr "Неверная операция с дескриптором.\n"
+msgstr "regedit: операция не поддерживается.\n"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
