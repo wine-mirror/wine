@@ -148,7 +148,7 @@ void heap_pool_clear(heap_pool_t *heap)
     if(!heap)
         return;
 
-    while((tmp = list_next(&heap->custom_blocks, &heap->custom_blocks))) {
+    while((tmp = list_head(&heap->custom_blocks))) {
         list_remove(tmp);
         heap_free(tmp);
     }
