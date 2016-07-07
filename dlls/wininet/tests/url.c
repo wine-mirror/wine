@@ -246,9 +246,9 @@ static void test_crack_url(const crack_url_test_t *test)
        test->url, url.dwPasswordLength, test->pass_len);
 
     if(test->path_off == -1)
-        ok(!url.lpszUrlPath, "[%s] url.lpszPath = %p, expected NULL\n", test->url, url.lpszUrlPath);
+        ok(!url.lpszUrlPath, "[%s] url.lpszUrlPath = %p, expected NULL\n", test->url, url.lpszUrlPath);
     else
-        ok(url.lpszUrlPath == test->url+test->path_off, "[%s] url.lpszPath = %p, expected %p\n",
+        ok(url.lpszUrlPath == test->url+test->path_off, "[%s] url.lpszUrlPath = %p, expected %p\n",
            test->url, url.lpszUrlPath, test->url+test->path_off);
     ok(url.dwUrlPathLength == test->path_len, "[%s] url.lpszUrlPathLength = %d, expected %d\n",
        test->url, url.dwUrlPathLength, test->path_len);
@@ -326,9 +326,9 @@ static void test_crack_url(const crack_url_test_t *test)
     }
 
     if(test->path_off == -1)
-        ok(!urlw.lpszUrlPath, "[%s] urlw.lpszPath = %p, expected NULL\n", test->url, urlw.lpszUrlPath);
+        ok(!urlw.lpszUrlPath, "[%s] urlw.lpszUrlPath = %p, expected NULL\n", test->url, urlw.lpszUrlPath);
     else
-        ok(urlw.lpszUrlPath == buf+test->path_off, "[%s] urlw.lpszPath = %p, expected %p\n",
+        ok(urlw.lpszUrlPath == buf+test->path_off, "[%s] urlw.lpszUrlPath = %p, expected %p\n",
            test->url, urlw.lpszUrlPath, buf+test->path_off);
     ok(urlw.dwUrlPathLength == test->path_len, "[%s] urlw.lpszUrlPathLength = %d, expected %d\n",
        test->url, urlw.dwUrlPathLength, test->path_len);
