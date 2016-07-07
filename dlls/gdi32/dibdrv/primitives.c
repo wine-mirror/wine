@@ -1977,15 +1977,19 @@ static void convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_8(src, src_rect->left, src_rect->top), *src_pixel;
+        DWORD dst_colors[256], i;
+
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+            dst_colors[i] = color_table[i].rgbRed << 16 | color_table[i].rgbGreen << 8 |
+                color_table[i].rgbBlue;
+
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
             dst_pixel = dst_start;
             src_pixel = src_start;
             for(x = src_rect->left; x < src_rect->right; x++)
-            {
-                RGBQUAD rgb = color_table[*src_pixel++];
-                *dst_pixel++ = rgb.rgbRed << 16 | rgb.rgbGreen << 8 | rgb.rgbBlue;
-            }
+                *dst_pixel++ = dst_colors[*src_pixel++];
+
             if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 4;
             src_start += src->stride;
@@ -1997,18 +2001,22 @@ static void convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_4(src, src_rect->left, src_rect->top), *src_pixel;
+        DWORD dst_colors[16], i;
+
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+            dst_colors[i] = color_table[i].rgbRed << 16 | color_table[i].rgbGreen << 8 |
+                color_table[i].rgbBlue;
+
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
             int pos = (src->rect.left + src_rect->left) & 1;
             src_pixel = src_start;
             for (x = 0; x < src_rect->right - src_rect->left; x++, pos++)
             {
-                RGBQUAD rgb;
                 if (pos & 1)
-                    rgb = color_table[*src_pixel++ & 0xf];
+                    dst_start[x] = dst_colors[*src_pixel++ & 0xf];
                 else
-                    rgb = color_table[*src_pixel >> 4];
-                dst_start[x] = rgb.rgbRed << 16 | rgb.rgbGreen << 8 | rgb.rgbBlue;
+                    dst_start[x] = dst_colors[*src_pixel >> 4];
             }
             if(pad_size) memset(dst_start + x, 0, pad_size);
             dst_start += dst->stride / 4;
@@ -2021,15 +2029,19 @@ static void convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top);
+        DWORD dst_colors[2], i;
+
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+            dst_colors[i] = color_table[i].rgbRed << 16 | color_table[i].rgbGreen << 8 |
+                color_table[i].rgbBlue;
+
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
             int pos = (src->rect.left + src_rect->left) & 7;
             for(x = 0; x < src_rect->right - src_rect->left; x++, pos++)
             {
-                RGBQUAD rgb;
                 src_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
-                rgb = color_table[src_val];
-                dst_start[x] = rgb.rgbRed << 16 | rgb.rgbGreen << 8 | rgb.rgbBlue;
+                dst_start[x] = dst_colors[src_val];
             }
             if(pad_size) memset(dst_start + x, 0, pad_size);
             dst_start += dst->stride / 4;
@@ -2238,17 +2250,23 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_8(src, src_rect->left, src_rect->top), *src_pixel;
+        DWORD dst_colors[256], i;
+
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        {
+            RGBQUAD rgb = color_table[i];
+            dst_colors[i] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
+                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
+                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
+        }
+
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
             dst_pixel = dst_start;
             src_pixel = src_start;
             for(x = src_rect->left; x < src_rect->right; x++)
-            {
-                RGBQUAD rgb = color_table[*src_pixel++];
-                *dst_pixel++ = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
-                               put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
-                               put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
-            }
+                *dst_pixel++ = dst_colors[*src_pixel++];
+
             if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 4;
             src_start += src->stride;
@@ -2260,20 +2278,26 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_4(src, src_rect->left, src_rect->top), *src_pixel;
+        DWORD dst_colors[16], i;
+
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        {
+            RGBQUAD rgb = color_table[i];
+            dst_colors[i] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
+                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
+                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
+        }
+
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
             int pos = (src->rect.left + src_rect->left) & 1;
             src_pixel = src_start;
             for (x = 0; x < src_rect->right - src_rect->left; x++, pos++)
             {
-                RGBQUAD rgb;
                 if (pos & 1)
-                    rgb = color_table[*src_pixel++ & 0xf];
+                    dst_start[x] = dst_colors[*src_pixel++ & 0xf];
                 else
-                    rgb = color_table[*src_pixel >> 4];
-                dst_start[x] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
-                               put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
-                               put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
+                    dst_start[x] = dst_colors[*src_pixel >> 4];
             }
             if(pad_size) memset(dst_start + x, 0, pad_size);
             dst_start += dst->stride / 4;
@@ -2286,17 +2310,23 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top);
+        DWORD dst_colors[2], i;
+
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        {
+            RGBQUAD rgb = color_table[i];
+            dst_colors[i] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
+                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
+                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
+        }
+
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
             int pos = (src->rect.left + src_rect->left) & 7;
             for (x = 0; x < src_rect->right - src_rect->left; x++, pos++)
             {
-                RGBQUAD rgb;
                 src_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
-                rgb = color_table[src_val];
-                dst_start[x] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
-                               put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
-                               put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
+                dst_start[x] = dst_colors[src_val];
             }
             if(pad_size) memset(dst_start + x, 0, pad_size);
             dst_start += dst->stride / 4;
@@ -2725,17 +2755,21 @@ static void convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_8(src, src_rect->left, src_rect->top), *src_pixel;
+        WORD dst_colors[256];
+        int i;
+
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+            dst_colors[i] = ((color_table[i].rgbRed   << 7) & 0x7c00) |
+                            ((color_table[i].rgbGreen << 2) & 0x03e0) |
+                            ((color_table[i].rgbBlue  >> 3) & 0x001f);
+
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
             dst_pixel = dst_start;
             src_pixel = src_start;
             for(x = src_rect->left; x < src_rect->right; x++)
-            {
-                RGBQUAD rgb = color_table[*src_pixel++];
-                *dst_pixel++ = ((rgb.rgbRed   << 7) & 0x7c00) |
-                               ((rgb.rgbGreen << 2) & 0x03e0) |
-                               ((rgb.rgbBlue  >> 3) & 0x001f);
-            }
+                *dst_pixel++ = dst_colors[*src_pixel++];
+
             if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 2;
             src_start += src->stride;
@@ -2747,20 +2781,24 @@ static void convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_4(src, src_rect->left, src_rect->top), *src_pixel;
+        WORD dst_colors[16];
+        int i;
+
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+            dst_colors[i] = ((color_table[i].rgbRed   << 7) & 0x7c00) |
+                            ((color_table[i].rgbGreen << 2) & 0x03e0) |
+                            ((color_table[i].rgbBlue  >> 3) & 0x001f);
+
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
             int pos = (src->rect.left + src_rect->left) & 1;
             src_pixel = src_start;
             for (x = 0; x < src_rect->right - src_rect->left; x++, pos++)
             {
-                RGBQUAD rgb;
                 if (pos & 1)
-                    rgb = color_table[*src_pixel++ & 0xf];
+                    dst_start[x] = dst_colors[*src_pixel++ & 0xf];
                 else
-                    rgb = color_table[*src_pixel >> 4];
-                dst_start[x] = ((rgb.rgbRed   << 7) & 0x7c00) |
-                               ((rgb.rgbGreen << 2) & 0x03e0) |
-                               ((rgb.rgbBlue  >> 3) & 0x001f);
+                    dst_start[x] = dst_colors[*src_pixel >> 4];
             }
             if(pad_size) memset(dst_start + x, 0, pad_size);
             dst_start += dst->stride / 2;
@@ -2773,17 +2811,21 @@ static void convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top);
+        WORD dst_colors[2];
+        int i;
+
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+            dst_colors[i] = ((color_table[i].rgbRed   << 7) & 0x7c00) |
+                            ((color_table[i].rgbGreen << 2) & 0x03e0) |
+                            ((color_table[i].rgbBlue  >> 3) & 0x001f);
+
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
             int pos = (src->rect.left + src_rect->left) & 7;
             for (x = 0; x < src_rect->right - src_rect->left; x++, pos++)
             {
-                RGBQUAD rgb;
                 src_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
-                rgb = color_table[src_val];
-                dst_start[x] = ((rgb.rgbRed   << 7) & 0x7c00) |
-                               ((rgb.rgbGreen << 2) & 0x03e0) |
-                               ((rgb.rgbBlue  >> 3) & 0x001f);
+                dst_start[x] = dst_colors[src_val];
             }
             if(pad_size) memset(dst_start + x, 0, pad_size);
             dst_start += dst->stride / 2;
@@ -2992,17 +3034,24 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_8(src, src_rect->left, src_rect->top), *src_pixel;
+        WORD dst_colors[256];
+        int i;
+
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        {
+            RGBQUAD rgb = color_table[i];
+            dst_colors[i] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
+                            put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
+                            put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
+        }
+
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
             dst_pixel = dst_start;
             src_pixel = src_start;
             for(x = src_rect->left; x < src_rect->right; x++)
-            {
-                RGBQUAD rgb = color_table[*src_pixel++];
-                *dst_pixel++ = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
-                               put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
-                               put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
-            }
+                *dst_pixel++ = dst_colors[*src_pixel++];
+
             if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 2;
             src_start += src->stride;
@@ -3014,20 +3063,27 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_4(src, src_rect->left, src_rect->top), *src_pixel;
+        WORD dst_colors[16];
+        int i;
+
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        {
+            RGBQUAD rgb = color_table[i];
+            dst_colors[i] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
+                            put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
+                            put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
+        }
+
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
             int pos = (src->rect.left + src_rect->left) & 1;
             src_pixel = src_start;
             for (x = 0; x < src_rect->right - src_rect->left; x++, pos++)
             {
-                RGBQUAD rgb;
                 if (pos & 1)
-                    rgb = color_table[*src_pixel++ & 0xf];
+                    dst_start[x] = dst_colors[*src_pixel++ & 0xf];
                 else
-                    rgb = color_table[*src_pixel >> 4];
-                dst_start[x] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
-                               put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
-                               put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
+                    dst_start[x] = dst_colors[*src_pixel >> 4];
             }
             if(pad_size) memset(dst_start + x, 0, pad_size);
             dst_start += dst->stride / 2;
@@ -3040,17 +3096,24 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top);
+        WORD dst_colors[2];
+        int i;
+
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        {
+            RGBQUAD rgb = color_table[i];
+            dst_colors[i] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
+                            put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
+                            put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
+        }
+
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
             int pos = (src->rect.left + src_rect->left) & 7;
             for (x = 0; x < src_rect->right - src_rect->left; x++, pos++)
             {
-                RGBQUAD rgb;
                 src_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
-                rgb = color_table[src_val];
-                dst_start[x] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
-                               put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
-                               put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
+                dst_start[x] = dst_colors[src_val];
             }
             if(pad_size) memset(dst_start + x, 0, pad_size);
             dst_start += dst->stride / 2;
@@ -3271,15 +3334,22 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
         else
         {
             const RGBQUAD *color_table = get_dib_color_table( src );
+            BYTE dst_colors[256];
+            int i;
+
+            for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+            {
+                RGBQUAD rgb = color_table[i];
+                dst_colors[i] = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
+            }
+
             for(y = src_rect->top; y < src_rect->bottom; y++)
             {
                 dst_pixel = dst_start;
                 src_pixel = src_start;
                 for(x = src_rect->left; x < src_rect->right; x++)
-                {
-                    RGBQUAD rgb = color_table[*src_pixel++];
-                    *dst_pixel++ = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
-                }
+                    *dst_pixel++ = dst_colors[*src_pixel++];
+
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
                 src_start += src->stride;
@@ -3292,18 +3362,25 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_4(src, src_rect->left, src_rect->top), *src_pixel;
+        BYTE dst_colors[16];
+        int i;
+
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        {
+            RGBQUAD rgb = color_table[i];
+            dst_colors[i] = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
+        }
+
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
             int pos = (src->rect.left + src_rect->left) & 1;
             src_pixel = src_start;
             for (x = 0; x < src_rect->right - src_rect->left; x++, pos++)
             {
-                RGBQUAD rgb;
                 if (pos & 1)
-                    rgb = color_table[*src_pixel++ & 0xf];
+                    dst_start[x] = dst_colors[*src_pixel++ & 0xf];
                 else
-                    rgb = color_table[*src_pixel >> 4];
-                dst_start[x] = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
+                    dst_start[x] = dst_colors[*src_pixel >> 4];
             }
             if(pad_size) memset(dst_start + x, 0, pad_size);
             dst_start += dst->stride;
@@ -3316,15 +3393,22 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top);
+        BYTE dst_colors[2];
+        int i;
+
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        {
+            RGBQUAD rgb = color_table[i];
+            dst_colors[i] = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
+        }
+
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
             int pos = (src->rect.left + src_rect->left) & 7;
             for (x = 0; x < src_rect->right - src_rect->left; x++, pos++)
             {
-                RGBQUAD rgb;
                 src_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
-                rgb = color_table[src_val];
-                dst_start[x] = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
+                dst_start[x] = dst_colors[src_val];
             }
             if(pad_size) memset(dst_start + x, 0, pad_size);
             dst_start += dst->stride;
@@ -3604,6 +3688,14 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_8(src, src_rect->left, src_rect->top), *src_pixel;
+        BYTE dst_colors[256];
+        int i;
+
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        {
+            RGBQUAD rgb = color_table[i];
+            dst_colors[i] = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
+        }
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -3611,8 +3703,7 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
             src_pixel = src_start;
             for(x = src_rect->left; x < src_rect->right; x++)
             {
-                RGBQUAD rgb = color_table[*src_pixel++];
-                dst_val = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
+                dst_val = dst_colors[*src_pixel++];
                 if((x - src_rect->left) & 1)
                 {
                     *dst_pixel = (dst_val & 0x0f) | (*dst_pixel & 0xf0);
@@ -3654,6 +3745,15 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
         else
         {
             const RGBQUAD *color_table = get_dib_color_table( src );
+            BYTE dst_colors[16];
+            int i;
+
+            for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+            {
+                RGBQUAD rgb = color_table[i];
+                dst_colors[i] = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
+            }
+
             for(y = src_rect->top; y < src_rect->bottom; y++)
             {
                 int pos = (src->rect.left + src_rect->left) & 1;
@@ -3661,12 +3761,10 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
                 src_pixel = src_start;
                 for(x = src_rect->left; x < src_rect->right; x++, pos++)
                 {
-                    RGBQUAD rgb;
                     if(pos & 1)
-                        rgb = color_table[*src_pixel++ & 0xf];
+                        dst_val = dst_colors[*src_pixel++ & 0xf];
                     else
-                        rgb = color_table[*src_pixel >> 4];
-                    dst_val = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
+                        dst_val = dst_colors[*src_pixel >> 4];
                     if((x - src_rect->left) & 1)
                     {
                         *dst_pixel = (dst_val & 0x0f) | (*dst_pixel & 0xf0);
@@ -3691,16 +3789,23 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top);
+        BYTE dst_colors[2];
+        int i;
+
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        {
+            RGBQUAD rgb = color_table[i];
+            dst_colors[i] = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
+        }
+
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
             int pos = (src->rect.left + src_rect->left) & 7;
             dst_pixel = dst_start;
             for(x = src_rect->left; x < src_rect->right; x++, pos++)
             {
-                RGBQUAD rgb;
                 src_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
-                rgb = color_table[src_val];
-                dst_val = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
+                dst_val = dst_colors[src_val];
                 if((x - src_rect->left) & 1)
                 {
                     *dst_pixel = (dst_val & 0x0f) | (*dst_pixel & 0xf0);
