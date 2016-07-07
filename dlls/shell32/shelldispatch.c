@@ -176,7 +176,7 @@ static HRESULT WINAPI FolderItemVerbImpl_QueryInterface(FolderItemVerb *iface,
 {
     FolderItemVerbImpl *This = impl_from_FolderItemVerb(iface);
 
-    TRACE("(%p,%p,%p)\n", iface, riid, ppv);
+    TRACE("(%p,%s,%p)\n", iface, shdebugstr_guid(riid), ppv);
 
     *ppv = NULL;
 
@@ -248,7 +248,7 @@ static HRESULT WINAPI FolderItemVerbImpl_GetIDsOfNames(FolderItemVerb *iface,
     ITypeInfo *ti;
     HRESULT hr;
 
-    TRACE("(%p,%p,%p,%u,%d,%p)\n", iface, riid, rgszNames, cNames, lcid,
+    TRACE("(%p,%s,%p,%u,%d,%p)\n", iface, shdebugstr_guid(riid), rgszNames, cNames, lcid,
             rgDispId);
 
     hr = get_typeinfo(FolderItemVerb_tid, &ti);
@@ -265,7 +265,7 @@ static HRESULT WINAPI FolderItemVerbImpl_Invoke(FolderItemVerb *iface,
     ITypeInfo *ti;
     HRESULT hr;
 
-    TRACE("(%p,%d,%p,%d,%u,%p,%p,%p,%p)\n", iface, dispIdMember, riid, lcid,
+    TRACE("(%p,%d,%s,%d,%u,%p,%p,%p,%p)\n", iface, dispIdMember, shdebugstr_guid(riid), lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(FolderItemVerb_tid, &ti);
@@ -342,7 +342,7 @@ static HRESULT WINAPI FolderItemVerbsImpl_QueryInterface(FolderItemVerbs *iface,
 {
     FolderItemVerbsImpl *This = impl_from_FolderItemVerbs(iface);
 
-    TRACE("(%p,%p,%p)\n", iface, riid, ppv);
+    TRACE("(%p,%s,%p)\n", iface, shdebugstr_guid(riid), ppv);
 
     *ppv = NULL;
 
@@ -414,7 +414,7 @@ static HRESULT WINAPI FolderItemVerbsImpl_GetIDsOfNames(FolderItemVerbs *iface,
     ITypeInfo *ti;
     HRESULT hr;
 
-    TRACE("(%p,%p,%p,%u,%d,%p)\n", iface, riid, rgszNames, cNames, lcid,
+    TRACE("(%p,%s,%p,%u,%d,%p)\n", iface, shdebugstr_guid(riid), rgszNames, cNames, lcid,
             rgDispId);
 
     hr = get_typeinfo(FolderItemVerbs_tid, &ti);
@@ -431,7 +431,7 @@ static HRESULT WINAPI FolderItemVerbsImpl_Invoke(FolderItemVerbs *iface,
     ITypeInfo *ti;
     HRESULT hr;
 
-    TRACE("(%p,%d,%p,%d,%u,%p,%p,%p,%p)\n", iface, dispIdMember, riid, lcid,
+    TRACE("(%p,%d,%s,%d,%u,%p,%p,%p,%p)\n", iface, dispIdMember, shdebugstr_guid(riid), lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(FolderItemVerbs_tid, &ti);
@@ -592,7 +592,7 @@ static HRESULT WINAPI FolderItemImpl_QueryInterface(FolderItem2 *iface,
 {
     FolderItemImpl *This = impl_from_FolderItem(iface);
 
-    TRACE("(%p,%p,%p)\n", iface, riid, ppv);
+    TRACE("(%p,%s,%p)\n", iface, shdebugstr_guid(riid), ppv);
 
     if (!ppv) return E_INVALIDARG;
 
@@ -665,7 +665,7 @@ static HRESULT WINAPI FolderItemImpl_GetIDsOfNames(FolderItem2 *iface,
     ITypeInfo *ti;
     HRESULT hr;
 
-    TRACE("(%p,%p,%p,%u,%d,%p)\n", iface, riid, rgszNames, cNames, lcid,
+    TRACE("(%p,%s,%p,%u,%d,%p)\n", iface, shdebugstr_guid(riid), rgszNames, cNames, lcid,
             rgDispId);
 
     hr = get_typeinfo(FolderItem2_tid, &ti);
@@ -683,7 +683,7 @@ static HRESULT WINAPI FolderItemImpl_Invoke(FolderItem2 *iface,
     ITypeInfo *ti;
     HRESULT hr;
 
-    TRACE("(%p,%d,%p,%d,%u,%p,%p,%p,%p)\n", iface, dispIdMember, riid, lcid,
+    TRACE("(%p,%d,%s,%d,%u,%p,%p,%p,%p)\n", iface, dispIdMember, shdebugstr_guid(riid), lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(FolderItem2_tid, &ti);
@@ -944,7 +944,7 @@ static HRESULT WINAPI FolderImpl_QueryInterface(Folder3 *iface, REFIID riid,
 {
     FolderImpl *This = impl_from_Folder(iface);
 
-    TRACE("(%p,%p,%p)\n", iface, riid, ppv);
+    TRACE("(%p,%s,%p)\n", iface, shdebugstr_guid(riid), ppv);
 
     if (!ppv) return E_INVALIDARG;
 
@@ -1017,7 +1017,7 @@ static HRESULT WINAPI FolderImpl_GetIDsOfNames(Folder3 *iface, REFIID riid,
     ITypeInfo *ti;
     HRESULT hr;
 
-    TRACE("(%p,%p,%p,%u,%d,%p)\n", iface, riid, rgszNames, cNames, lcid,
+    TRACE("(%p,%s,%p,%u,%d,%p)\n", iface, shdebugstr_guid(riid), rgszNames, cNames, lcid,
             rgDispId);
 
     hr = get_typeinfo(Folder3_tid, &ti);
@@ -1034,7 +1034,7 @@ static HRESULT WINAPI FolderImpl_Invoke(Folder3 *iface, DISPID dispIdMember,
     ITypeInfo *ti;
     HRESULT hr;
 
-    TRACE("(%p,%d,%p,%d,%u,%p,%p,%p,%p)\n", iface, dispIdMember, riid, lcid,
+    TRACE("(%p,%d,%s,%d,%u,%p,%p,%p,%p)\n", iface, dispIdMember, shdebugstr_guid(riid), lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(Folder3_tid, &ti);
@@ -1289,7 +1289,7 @@ static HRESULT WINAPI ShellDispatch_QueryInterface(IShellDispatch6 *iface,
 {
     ShellDispatch *This = impl_from_IShellDispatch6(iface);
 
-    TRACE("(%p,%p,%p)\n", iface, riid, ppv);
+    TRACE("(%p,%s,%p)\n", iface, shdebugstr_guid(riid), ppv);
 
     if (!ppv) return E_INVALIDARG;
 
@@ -1364,7 +1364,7 @@ static HRESULT WINAPI ShellDispatch_GetIDsOfNames(IShellDispatch6 *iface,
     ITypeInfo *ti;
     HRESULT hr;
 
-    TRACE("(%p,%p,%p,%u,%d,%p)\n", iface, riid, rgszNames, cNames, lcid,
+    TRACE("(%p,%s,%p,%u,%d,%p)\n", iface, shdebugstr_guid(riid), rgszNames, cNames, lcid,
             rgDispId);
 
     hr = get_typeinfo(IShellDispatch6_tid, &ti);
@@ -1382,7 +1382,7 @@ static HRESULT WINAPI ShellDispatch_Invoke(IShellDispatch6 *iface,
     ITypeInfo *ti;
     HRESULT hr;
 
-    TRACE("(%p,%d,%p,%d,%u,%p,%p,%p,%p)\n", iface, dispIdMember, riid, lcid,
+    TRACE("(%p,%d,%s,%d,%u,%p,%p,%p,%p)\n", iface, dispIdMember, shdebugstr_guid(riid), lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IShellDispatch6_tid, &ti);
