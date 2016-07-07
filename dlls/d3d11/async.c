@@ -279,7 +279,15 @@ static void STDMETHODCALLTYPE d3d10_query_Begin(ID3D10Query *iface)
 
 static void STDMETHODCALLTYPE d3d10_query_End(ID3D10Query *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3d_query *query = impl_from_ID3D10Query(iface);
+    HRESULT hr;
+
+    TRACE("iface %p.\n", iface);
+
+    wined3d_mutex_lock();
+    if (FAILED(hr = wined3d_query_issue(query->wined3d_query, WINED3DISSUE_END)))
+        ERR("Failed to issue query, hr %#x.\n", hr);
+    wined3d_mutex_unlock();
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_query_GetData(ID3D10Query *iface, void *data, UINT data_size, UINT flags)
