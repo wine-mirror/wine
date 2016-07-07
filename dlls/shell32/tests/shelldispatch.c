@@ -370,7 +370,6 @@ todo_wine
     r = FolderItems_Item(items, var, &item);
 todo_wine
     ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
-todo_wine
     ok(!item, "item is not null\n");
 
     if (0) /* crashes on xp */
@@ -395,7 +394,6 @@ todo_wine
     disp = (IDispatch*)0xdeadbeef;
     r = FolderItems_get_Parent(items, &disp);
     ok(r == E_NOTIMPL, "expected E_NOTIMPL, got %08x\n", r);
-todo_wine
     ok(!disp, "disp is not null\n");
 
     if (0) /* crashes on xp */
@@ -426,7 +424,6 @@ todo_wine
         r = FolderItems3_get_Verbs(items3, &verbs);
 todo_wine
         ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
-todo_wine
         ok(!verbs, "verbs is not null\n");
     }
 

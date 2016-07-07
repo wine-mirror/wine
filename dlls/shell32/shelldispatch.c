@@ -1063,12 +1063,16 @@ static HRESULT WINAPI FolderItemsImpl_get_Application(FolderItems3 *iface, IDisp
     if (!ppid)
         return E_INVALIDARG;
 
+    *ppid = NULL;
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI FolderItemsImpl_get_Parent(FolderItems3 *iface, IDispatch **ppid)
 {
-    FIXME("(%p,%p)\n", iface, ppid);
+    TRACE("(%p,%p)\n", iface, ppid);
+
+    if (ppid)
+        *ppid = NULL;
 
     return E_NOTIMPL;
 }
@@ -1077,6 +1081,7 @@ static HRESULT WINAPI FolderItemsImpl_Item(FolderItems3 *iface, VARIANT index, F
 {
     FIXME("(%p,%s,%p)\n", iface, debugstr_variant(&index), ppid);
 
+    *ppid = NULL;
     return E_NOTIMPL;
 }
 
@@ -1087,6 +1092,7 @@ static HRESULT WINAPI FolderItemsImpl__NewEnum(FolderItems3 *iface, IUnknown **p
     if (!ppunk)
         return E_INVALIDARG;
 
+    *ppunk = NULL;
     return E_NOTIMPL;
 }
 
@@ -1111,6 +1117,7 @@ static HRESULT WINAPI FolderItemsImpl_get_Verbs(FolderItems3 *iface, FolderItemV
     if (!ppfic)
         return E_INVALIDARG;
 
+    *ppfic = NULL;
     return E_NOTIMPL;
 }
 
