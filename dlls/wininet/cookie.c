@@ -690,15 +690,15 @@ static void free_cookie_domain_list(struct list *list)
     cookie_domain_t *domain;
 
     while(!list_empty(list)) {
-        domain = LIST_ENTRY(list_next(list, list), cookie_domain_t, entry);
+        domain = LIST_ENTRY(list_head(list), cookie_domain_t, entry);
 
         free_cookie_domain_list(&domain->subdomain_list);
 
         while(!list_empty(&domain->path_list)) {
-            container = LIST_ENTRY(list_next(&domain->path_list, &domain->path_list), cookie_container_t, entry);
+            container = LIST_ENTRY(list_head(&domain->path_list), cookie_container_t, entry);
 
             while(!list_empty(&container->cookie_list))
-                delete_cookie(LIST_ENTRY(list_next(&container->cookie_list, &container->cookie_list), cookie_t, entry));
+                delete_cookie(LIST_ENTRY(list_head(&container->cookie_list), cookie_t, entry));
 
             heap_free(container->cookie_url);
             list_remove(&container->entry);
