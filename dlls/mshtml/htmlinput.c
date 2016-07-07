@@ -1345,7 +1345,8 @@ static const tid_t HTMLInputElement_iface_tids[] = {
 static dispex_static_data_t HTMLInputElement_dispex = {
     NULL,
     DispHTMLInputElement_tid,
-    HTMLInputElement_iface_tids
+    HTMLInputElement_iface_tids,
+    HTMLElement_init_dispex_info
 };
 
 HRESULT HTMLInputElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
@@ -1538,7 +1539,8 @@ static const tid_t HTMLLabelElement_iface_tids[] = {
 static dispex_static_data_t HTMLLabelElement_dispex = {
     NULL,
     DispHTMLLabelElement_tid,
-    HTMLLabelElement_iface_tids
+    HTMLLabelElement_iface_tids,
+    HTMLElement_init_dispex_info
 };
 
 HRESULT HTMLLabelElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
@@ -1888,7 +1890,8 @@ static const tid_t HTMLButtonElement_iface_tids[] = {
 static dispex_static_data_t HTMLButtonElement_dispex = {
     NULL,
     DispHTMLButtonElement_tid,
-    HTMLButtonElement_iface_tids
+    HTMLButtonElement_iface_tids,
+    HTMLElement_init_dispex_info
 };
 
 HRESULT HTMLButtonElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
