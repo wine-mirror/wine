@@ -136,7 +136,7 @@ LPWSTR WINAPI CharPrevW(LPCWSTR start,LPCWSTR x)
  */
 BOOL WINAPI CharToOemA( LPCSTR s, LPSTR d )
 {
-    if ( !s || !d ) return TRUE;
+    if (!s || !d) return FALSE;
     return CharToOemBuffA( s, d, strlen( s ) + 1 );
 }
 
@@ -147,6 +147,8 @@ BOOL WINAPI CharToOemA( LPCSTR s, LPSTR d )
 BOOL WINAPI CharToOemBuffA( LPCSTR s, LPSTR d, DWORD len )
 {
     WCHAR *bufW;
+
+    if (!s || !d) return FALSE;
 
     bufW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
     if( bufW )
@@ -184,6 +186,7 @@ BOOL WINAPI CharToOemW( LPCWSTR s, LPSTR d )
  */
 BOOL WINAPI OemToCharA( LPCSTR s, LPSTR d )
 {
+    if (!s || !d) return FALSE;
     return OemToCharBuffA( s, d, strlen( s ) + 1 );
 }
 
@@ -194,6 +197,8 @@ BOOL WINAPI OemToCharA( LPCSTR s, LPSTR d )
 BOOL WINAPI OemToCharBuffA( LPCSTR s, LPSTR d, DWORD len )
 {
     WCHAR *bufW;
+
+    if (!s || !d) return FALSE;
 
     bufW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
     if( bufW )
