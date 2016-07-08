@@ -459,8 +459,7 @@ struct wined3d_string_buffer *string_buffer_get(struct wined3d_string_buffer_lis
         if (!buffer || !string_buffer_init(buffer))
         {
             ERR("Couldn't allocate buffer for temporary string.\n");
-            if (buffer)
-                HeapFree(GetProcessHeap(), 0, buffer);
+            HeapFree(GetProcessHeap(), 0, buffer);
             return NULL;
         }
     }
