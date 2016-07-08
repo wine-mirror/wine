@@ -33,8 +33,8 @@ static const struct prop_desc msg_props[] =
 {
     { sizeof(WS_MESSAGE_STATE), TRUE },         /* WS_MESSAGE_PROPERTY_STATE */
     { sizeof(WS_HEAP *), TRUE },                /* WS_MESSAGE_PROPERTY_HEAP */
-    { sizeof(WS_ENVELOPE_VERSION), FALSE },     /* WS_MESSAGE_PROPERTY_ENVELOPE_VERSION */
-    { sizeof(WS_ADDRESSING_VERSION), FALSE },   /* WS_MESSAGE_PROPERTY_ADDRESSING_VERSION */
+    { sizeof(WS_ENVELOPE_VERSION), TRUE },      /* WS_MESSAGE_PROPERTY_ENVELOPE_VERSION */
+    { sizeof(WS_ADDRESSING_VERSION), TRUE },    /* WS_MESSAGE_PROPERTY_ADDRESSING_VERSION */
     { sizeof(WS_XML_BUFFER *), TRUE },          /* WS_MESSAGE_PROPERTY_HEADER_BUFFER */
     { sizeof(WS_XML_NODE_POSITION *), TRUE },   /* WS_MESSAGE_PROPERTY_HEADER_POSITION */
     { sizeof(WS_XML_READER *), TRUE },          /* WS_MESSAGE_PROPERTY_BODY_READER */
@@ -45,6 +45,9 @@ static const struct prop_desc msg_props[] =
 struct msg
 {
     WS_MESSAGE_STATE          state;
+    WS_ENVELOPE_VERSION       version_env;
+    WS_ADDRESSING_VERSION     version_addr;
+    BOOL                      is_addressed;
     ULONG                     prop_count;
     struct prop               prop[sizeof(msg_props)/sizeof(msg_props[0])];
 };
@@ -76,11 +79,6 @@ static HRESULT create_msg( WS_ENVELOPE_VERSION env_version, WS_ADDRESSING_VERSIO
 
     if (!(msg = alloc_msg())) return E_OUTOFMEMORY;
 
-    prop_set( msg->prop, msg->prop_count, WS_MESSAGE_PROPERTY_ENVELOPE_VERSION, &env_version,
-              sizeof(env_version) );
-    prop_set( msg->prop, msg->prop_count, WS_MESSAGE_PROPERTY_ADDRESSING_VERSION, &addr_version,
-              sizeof(addr_version) );
-
     for (i = 0; i < count; i++)
     {
         if (properties[i].id == WS_MESSAGE_PROPERTY_ENVELOPE_VERSION ||
@@ -98,6 +96,9 @@ static HRESULT create_msg( WS_ENVELOPE_VERSION env_version, WS_ADDRESSING_VERSIO
         }
     }
 
+    msg->version_env  = env_version;
+    msg->version_addr = addr_version;
+
     *handle = (WS_MESSAGE *)msg;
     return S_OK;
 }
@@ -114,6 +115,32 @@ HRESULT WINAPI WsCreateMessage( WS_ENVELOPE_VERSION env_version, WS_ADDRESSING_V
 
     if (!handle || !env_version || !addr_version) return E_INVALIDARG;
     return create_msg( env_version, addr_version, properties, count, handle );
+}
+
+/**************************************************************************
+ *          WsCreateMessageForChannel		[webservices.@]
+ */
+HRESULT WINAPI WsCreateMessageForChannel( WS_CHANNEL *channel_handle, const WS_MESSAGE_PROPERTY *properties,
+                                          ULONG count, WS_MESSAGE **handle, WS_ERROR *error )
+{
+    WS_ENVELOPE_VERSION version_env;
+    WS_ADDRESSING_VERSION version_addr;
+    HRESULT hr;
+
+    TRACE( "%p %p %u %p %p\n", channel_handle, properties, count, handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!channel_handle || !handle) return E_INVALIDARG;
+
+    if ((hr = WsGetChannelProperty( channel_handle, WS_CHANNEL_PROPERTY_ENVELOPE_VERSION, &version_env,
+                                    sizeof(version_env), NULL )) != S_OK || !version_env)
+        version_env = WS_ENVELOPE_VERSION_SOAP_1_2;
+
+    if ((hr = WsGetChannelProperty( channel_handle, WS_CHANNEL_PROPERTY_ADDRESSING_VERSION, &version_addr,
+                                    sizeof(version_addr), NULL )) != S_OK || !version_addr)
+        version_addr = WS_ADDRESSING_VERSION_1_0;
+
+    return create_msg( version_env, version_addr, properties, count, handle );
 }
 
 /**************************************************************************
@@ -138,7 +165,33 @@ HRESULT WINAPI WsGetMessageProperty( WS_MESSAGE *handle, WS_MESSAGE_PROPERTY_ID 
     TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    return prop_get( msg->prop, msg->prop_count, id, buf, size );
+    if (!handle) return E_INVALIDARG;
+
+    switch (id)
+    {
+    case WS_MESSAGE_PROPERTY_STATE:
+        if (!buf || size != sizeof(msg->state)) return E_INVALIDARG;
+        *(WS_MESSAGE_STATE *)buf = msg->state;
+        return S_OK;
+
+    case WS_MESSAGE_PROPERTY_ENVELOPE_VERSION:
+        if (!buf || size != sizeof(msg->version_env)) return E_INVALIDARG;
+        *(WS_ENVELOPE_VERSION *)buf = msg->version_env;
+        return S_OK;
+
+    case WS_MESSAGE_PROPERTY_ADDRESSING_VERSION:
+        if (!buf || size != sizeof(msg->version_addr)) return E_INVALIDARG;
+        *(WS_ADDRESSING_VERSION *)buf = msg->version_addr;
+        return S_OK;
+
+    case WS_MESSAGE_PROPERTY_IS_ADDRESSED:
+        if (msg->state < WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
+        *(BOOL *)buf = msg->is_addressed;
+        return S_OK;
+
+    default:
+        return prop_get( msg->prop, msg->prop_count, id, buf, size );
+    }
 }
 
 /**************************************************************************
@@ -152,5 +205,19 @@ HRESULT WINAPI WsSetMessageProperty( WS_MESSAGE *handle, WS_MESSAGE_PROPERTY_ID 
     TRACE( "%p %u %p %u\n", handle, id, value, size );
     if (error) FIXME( "ignoring error parameter\n" );
 
+    if (!handle) return E_INVALIDARG;
+
+    switch (id)
+    {
+    case WS_MESSAGE_PROPERTY_STATE:
+    case WS_MESSAGE_PROPERTY_ENVELOPE_VERSION:
+    case WS_MESSAGE_PROPERTY_ADDRESSING_VERSION:
+    case WS_MESSAGE_PROPERTY_IS_ADDRESSED:
+        if (msg->state < WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
+        return E_INVALIDARG;
+
+    default:
+        break;
+    }
     return prop_set( msg->prop, msg->prop_count, id, value, size );
 }

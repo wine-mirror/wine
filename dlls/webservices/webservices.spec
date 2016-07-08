@@ -27,7 +27,7 @@
 @ stdcall WsCreateHeap(long long ptr long ptr ptr)
 @ stub WsCreateListener
 @ stdcall WsCreateMessage(long long ptr long ptr ptr)
-@ stub WsCreateMessageForChannel
+@ stdcall WsCreateMessageForChannel(ptr ptr long ptr ptr)
 @ stub WsCreateMetadata
 @ stdcall WsCreateReader(ptr long ptr ptr)
 @ stub WsCreateServiceEndpointFromTemplate
