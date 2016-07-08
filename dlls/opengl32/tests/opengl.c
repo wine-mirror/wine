@@ -21,38 +21,19 @@
 #include <windows.h>
 #include <wingdi.h>
 #include "wine/test.h"
-
-void WINAPI glClearColor(float red, float green, float blue, float alpha);
-void WINAPI glClear(unsigned int mask);
-#define GL_COLOR 0x1800
-typedef unsigned int GLenum;
-typedef int GLint;
-void WINAPI glCopyPixels(int x, int y, int width, int height, GLenum type);
-void WINAPI glFinish(void);
-#define GL_NO_ERROR 0x0
-#define GL_INVALID_OPERATION 0x502
-GLenum WINAPI glGetError(void);
-#define GL_COLOR_BUFFER_BIT 0x00004000
-const unsigned char * WINAPI glGetString(unsigned int);
-#define GL_VENDOR 0x1F00
-#define GL_RENDERER 0x1F01
-#define GL_VERSION 0x1F02
-#define GL_EXTENSIONS 0x1F03
-
-#define GL_VIEWPORT 0x0ba2
-void WINAPI glGetIntegerv(GLenum pname, GLint *params);
+#include "wine/wgl.h"
 
 #define MAX_FORMATS 256
 typedef void* HPBUFFERARB;
 
 /* WGL_ARB_create_context */
 static HGLRC (WINAPI *pwglCreateContextAttribsARB)(HDC hDC, HGLRC hShareContext, const int *attribList);
-/* GetLastError */
-#define ERROR_INVALID_VERSION_ARB 0x2095
+
 #define WGL_CONTEXT_MAJOR_VERSION_ARB 0x2091
 #define WGL_CONTEXT_MINOR_VERSION_ARB 0x2092
 #define WGL_CONTEXT_LAYER_PLANE_ARB 0x2093
 #define WGL_CONTEXT_FLAGS_ARB 0x2094
+
 /* Flags for WGL_CONTEXT_FLAGS_ARB */
 #define WGL_CONTEXT_DEBUG_BIT_ARB 0x0001
 #define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB	0x0002
