@@ -349,11 +349,8 @@ static HRESULT WINAPI AVIDec_BreakConnect(TransformFilter *tf, PIN_DIRECTION dir
     {
         if (This->hvid)
             ICClose(This->hvid);
-        if (This->pBihIn)
-            CoTaskMemFree(This->pBihIn);
-        if (This->pBihOut)
-            CoTaskMemFree(This->pBihOut);
-
+        CoTaskMemFree(This->pBihIn);
+        CoTaskMemFree(This->pBihOut);
         This->hvid = NULL;
         This->pBihIn = NULL;
         This->pBihOut = NULL;
