@@ -8,7 +8,7 @@
 @ stub WsAddCustomHeader
 @ stub WsAddErrorString
 @ stub WsAddMappedHeader
-@ stub WsAddressMessage
+@ stdcall WsAddressMessage(ptr ptr ptr)
 @ stdcall WsAlloc(ptr long ptr ptr)
 @ stub WsAsyncExecute
 @ stdcall WsCall(ptr ptr ptr ptr ptr long ptr ptr)

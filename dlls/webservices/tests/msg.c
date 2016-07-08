@@ -209,9 +209,72 @@ static void test_WsInitializeMessage(void)
     WsFreeMessage( msg );
 }
 
+static void test_WsAddressMessage(void)
+{
+    static WCHAR localhost[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t','/',0};
+    HRESULT hr;
+    WS_MESSAGE *msg;
+    WS_ENDPOINT_ADDRESS endpoint;
+    BOOL addressed;
+
+    hr = WsAddressMessage( NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL,
+                          0, &msg, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_IS_ADDRESSED, &addressed, sizeof(addressed),
+                               NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = WsAddressMessage( msg, NULL, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    addressed = -1;
+    hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_IS_ADDRESSED, &addressed, sizeof(addressed),
+                               NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !addressed, "unexpected value %d\n", addressed );
+
+    hr = WsAddressMessage( msg, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    addressed = -1;
+    hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_IS_ADDRESSED, &addressed, sizeof(addressed),
+                               NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( addressed == TRUE, "unexpected value %d\n", addressed );
+    WsFreeMessage( msg );
+
+    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL,
+                          0, &msg, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    memset( &endpoint, 0, sizeof(endpoint) );
+    endpoint.url.chars  = localhost;
+    endpoint.url.length = sizeof(localhost)/sizeof(localhost[0]);
+    hr = WsAddressMessage( msg, &endpoint, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    addressed = -1;
+    hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_IS_ADDRESSED, &addressed, sizeof(addressed),
+                               NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( addressed == TRUE, "unexpected value %d\n", addressed );
+    WsFreeMessage( msg );
+}
+
 START_TEST(msg)
 {
     test_WsCreateMessage();
     test_WsCreateMessageForChannel();
     test_WsInitializeMessage();
+    test_WsAddressMessage();
 }

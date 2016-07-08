@@ -49,6 +49,7 @@ struct msg
     WS_ENVELOPE_VERSION       version_env;
     WS_ADDRESSING_VERSION     version_addr;
     BOOL                      is_addressed;
+    WS_STRING                 addr;
     ULONG                     prop_count;
     struct prop               prop[sizeof(msg_props)/sizeof(msg_props[0])];
 };
@@ -68,6 +69,8 @@ static struct msg *alloc_msg(void)
 
 static void free_msg( struct msg *msg )
 {
+    if (!msg) return;
+    heap_free( msg->addr.chars );
     heap_free( msg );
 }
 
@@ -245,4 +248,33 @@ HRESULT WINAPI WsSetMessageProperty( WS_MESSAGE *handle, WS_MESSAGE_PROPERTY_ID 
         break;
     }
     return prop_set( msg->prop, msg->prop_count, id, value, size );
+}
+
+/**************************************************************************
+ *          WsAddressMessage		[webservices.@]
+ */
+HRESULT WINAPI WsAddressMessage( WS_MESSAGE *handle, const WS_ENDPOINT_ADDRESS *addr, WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+
+    TRACE( "%p %p %p\n", handle, addr, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+    if (addr && (addr->headers || addr->extensions || addr->identity))
+    {
+        FIXME( "headers, extensions or identity not supported\n" );
+        return E_NOTIMPL;
+    }
+
+    if (!handle) return E_INVALIDARG;
+    if (msg->state < WS_MESSAGE_STATE_INITIALIZED || msg->is_addressed) return WS_E_INVALID_OPERATION;
+
+    if (addr && addr->url.length)
+    {
+        if (!(msg->addr.chars = heap_alloc( addr->url.length * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+        memcpy( msg->addr.chars, addr->url.chars, addr->url.length * sizeof(WCHAR) );
+        msg->addr.length = addr->url.length;
+    }
+
+    msg->is_addressed = TRUE;
+    return S_OK;
 }
