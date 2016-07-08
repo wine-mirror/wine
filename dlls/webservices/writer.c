@@ -929,8 +929,11 @@ static HRESULT write_add_element_node( struct writer *writer, const WS_XML_STRIN
 
     if (!(parent = find_parent( writer->current ))) return WS_E_INVALID_FORMAT;
 
-    if (!prefix && node_type( writer->current ) == WS_XML_NODE_TYPE_ELEMENT)
-        prefix = writer->current->hdr.prefix;
+    if (!prefix && node_type( parent ) == WS_XML_NODE_TYPE_ELEMENT)
+    {
+        elem = &parent->hdr;
+        if (WsXmlStringEquals( ns, elem->ns, NULL ) == S_OK) prefix = elem->prefix;
+    }
 
     if (!(node = alloc_node( WS_XML_NODE_TYPE_ELEMENT ))) return E_OUTOFMEMORY;
     elem = &node->hdr;
