@@ -166,7 +166,7 @@ BOOL WINAPI CharToOemBuffA( LPCSTR s, LPSTR d, DWORD len )
  */
 BOOL WINAPI CharToOemBuffW( LPCWSTR s, LPSTR d, DWORD len )
 {
-    if ( !s || !d ) return TRUE;
+    if (!s || !d) return FALSE;
     WideCharToMultiByte( CP_OEMCP, 0, s, len, d, len, NULL, NULL );
     return TRUE;
 }
@@ -177,6 +177,7 @@ BOOL WINAPI CharToOemBuffW( LPCWSTR s, LPSTR d, DWORD len )
  */
 BOOL WINAPI CharToOemW( LPCWSTR s, LPSTR d )
 {
+    if (!s || !d) return FALSE;
     return CharToOemBuffW( s, d, lstrlenW( s ) + 1 );
 }
 
@@ -216,6 +217,7 @@ BOOL WINAPI OemToCharBuffA( LPCSTR s, LPSTR d, DWORD len )
  */
 BOOL WINAPI OemToCharBuffW( LPCSTR s, LPWSTR d, DWORD len )
 {
+    if (!s || !d) return FALSE;
     MultiByteToWideChar( CP_OEMCP, 0, s, len, d, len );
     return TRUE;
 }
@@ -226,6 +228,7 @@ BOOL WINAPI OemToCharBuffW( LPCSTR s, LPWSTR d, DWORD len )
  */
 BOOL WINAPI OemToCharW( LPCSTR s, LPWSTR d )
 {
+    if (!s || !d) return FALSE;
     return OemToCharBuffW( s, d, strlen( s ) + 1 );
 }
 
