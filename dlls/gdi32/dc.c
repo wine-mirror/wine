@@ -52,10 +52,11 @@ static const struct gdi_obj_funcs dc_funcs =
 
 static inline DC *get_dc_obj( HDC hdc )
 {
-    DC *dc = GDI_GetObjPtr( hdc, 0 );
+    WORD type;
+    DC *dc = get_any_obj_ptr( hdc, &type );
     if (!dc) return NULL;
 
-    switch (GetObjectType( hdc ))
+    switch (type)
     {
     case OBJ_DC:
     case OBJ_MEMDC:

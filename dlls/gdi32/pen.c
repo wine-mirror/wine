@@ -223,6 +223,7 @@ static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc )
     PENOBJ *pen;
     HGDIOBJ ret = 0;
     DC *dc = get_dc_ptr( hdc );
+    WORD type;
 
     if (!dc)
     {
@@ -230,12 +231,12 @@ static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc )
         return 0;
     }
 
-    if ((pen = GDI_GetObjPtr( handle, 0 )))
+    if ((pen = get_any_obj_ptr( handle, &type )))
     {
         struct brush_pattern *pattern;
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSelectPen );
 
-        switch (GetObjectType( handle ))
+        switch (type)
         {
         case OBJ_PEN:
             pattern = NULL;
@@ -287,12 +288,13 @@ static BOOL PEN_DeleteObject( HGDIOBJ handle )
  */
 static INT PEN_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
 {
-    PENOBJ *pen = GDI_GetObjPtr( handle, 0 );
+    WORD type;
+    PENOBJ *pen = get_any_obj_ptr( handle, &type );
     INT ret = 0;
 
     if (!pen) return 0;
 
-    switch (GetObjectType( handle ))
+    switch (type)
     {
     case OBJ_PEN:
     {

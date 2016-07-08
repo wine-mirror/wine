@@ -299,6 +299,7 @@ extern HGDIOBJ alloc_gdi_handle( void *obj, WORD type, const struct gdi_obj_func
 extern void *free_gdi_handle( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern HGDIOBJ get_full_gdi_handle( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern void *GDI_GetObjPtr( HGDIOBJ, WORD ) DECLSPEC_HIDDEN;
+extern void *get_any_obj_ptr( HGDIOBJ, WORD * ) DECLSPEC_HIDDEN;
 extern void GDI_ReleaseObj( HGDIOBJ ) DECLSPEC_HIDDEN;
 extern void GDI_CheckNotLock(void) DECLSPEC_HIDDEN;
 extern UINT GDI_get_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
