@@ -202,7 +202,7 @@ static BOOL str_array_push(struct parsed_symbol* sym, const char* ptr, int len,
             c = '>';
             if (i < a->start) c = '-';
             else if (i >= a->num) c = '}';
-            TRACE("%p\t%d%c %s\n", a, i, c, a->elts[i]);
+            TRACE("%p\t%d%c %s\n", a, i, c, debugstr_a(a->elts[i]));
         }
     }
 
@@ -224,7 +224,7 @@ static char* str_array_get_ref(struct array* cref, unsigned idx)
         return NULL;
     }
     TRACE("Returning %p[%d] => %s\n", 
-          cref, idx, cref->elts[cref->start + idx]);
+          cref, idx, debugstr_a(cref->elts[cref->start + idx]));
     return cref->elts[cref->start + idx];
 }
 
@@ -520,7 +520,7 @@ static char* get_literal_string(struct parsed_symbol* sym)
               (*sym->current >= 'a' && *sym->current <= 'z') ||
               (*sym->current >= '0' && *sym->current <= '9') ||
               *sym->current == '_' || *sym->current == '$')) {
-            TRACE("Failed at '%c' in %s\n", *sym->current, ptr);
+            TRACE("Failed at '%c' in %s\n", *sym->current, debugstr_a(ptr));
             return NULL;
         }
     } while (*++sym->current != '@');
@@ -1573,7 +1573,7 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
     else ret = FALSE;
 done:
     if (ret) assert(sym->result);
-    else WARN("Failed at %s\n", sym->current);
+    else WARN("Failed at %s\n", debugstr_a(sym->current));
 
     return ret;
 }
@@ -1604,7 +1604,7 @@ char* CDECL __unDNameEx(char* buffer, const char* mangled, int buflen,
     const char*                 result;
 
     TRACE("(%p,%s,%d,%p,%p,%p,%x)\n",
-          buffer, mangled, buflen, memget, memfree, unknown, flags);
+          buffer, debugstr_a(mangled), buflen, memget, memfree, unknown, flags);
     
     /* The flags details is not documented by MS. However, it looks exactly
      * like the UNDNAME_ manifest constants from imagehlp.h and dbghelp.h
