@@ -1618,8 +1618,7 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
         if (iItem != infoPtr->iSelected)
 	{
 	  drawRect->left   += 2;
-	  drawRect->top    += 2;
-	  drawRect->bottom -= 2;
+          InflateRect(drawRect, 0, -2);
 	}
       }
       else if (infoPtr->dwStyle & TCS_VERTICAL)
@@ -1630,9 +1629,8 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
 	}
 	else
 	{
-	  drawRect->top    += 2;
 	  drawRect->right  -= 2;
-	  drawRect->bottom -= 2;
+          InflateRect(drawRect, 0, -2);
 	}
       }
       else if (infoPtr->dwStyle & TCS_BOTTOM)
@@ -1715,10 +1713,7 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
     drawRect->top += 2;
     drawRect->right -= 1;
     if ( iItem == infoPtr->iSelected )
-    {
-        drawRect->right -= 1;
-        drawRect->left += 1;
-    }
+        InflateRect(drawRect, -1, 0);
 
     id = (UINT)GetWindowLongPtrW( infoPtr->hwnd, GWLP_ID );
 

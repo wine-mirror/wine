@@ -957,8 +957,7 @@ TOOLBAR_DrawButton (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, 
     /* calculate text position */
     if (lpText)
     {
-        rcText.left += GetSystemMetrics(SM_CXEDGE);
-        rcText.right -= GetSystemMetrics(SM_CXEDGE);
+        InflateRect(&rcText, -GetSystemMetrics(SM_CXEDGE), 0);
         if (dwStyle & TBSTYLE_LIST)
         {
             rcText.left += infoPtr->nBitmapWidth + infoPtr->iListGap + 2;
