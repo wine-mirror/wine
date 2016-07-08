@@ -717,11 +717,7 @@ static void InternetCrackUrlW_test(void)
     ok( comp.dwExtraInfoLength == 29, "extra length wrong\n");
  
     urlpart[0]=0;
-    scheme[0]=0;
-    extra[0]=0;
     host[0]=0;
-    user[0]=0;
-    pwd[0]=0;
     memset(&comp, 0, sizeof comp);
     comp.dwStructSize = sizeof comp;
     comp.lpszHostName = host;
@@ -739,11 +735,7 @@ static void InternetCrackUrlW_test(void)
     ok( comp.dwExtraInfoLength == 0, "extra length wrong\n");
 
     urlpart[0]=0;
-    scheme[0]=0;
-    extra[0]=0;
     host[0]=0;
-    user[0]=0;
-    pwd[0]=0;
     memset(&comp, 0, sizeof comp);
     comp.dwStructSize = sizeof comp;
     comp.lpszHostName = host;
