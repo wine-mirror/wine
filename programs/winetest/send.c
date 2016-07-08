@@ -395,10 +395,8 @@ send_file_wininet (const char *name)
     }
 
  done:
-    if (buffers_in.lpcszHeader != NULL)
-        heap_free((void *) buffers_in.lpcszHeader);
-    if (str != NULL)
-        heap_free (str);
+    heap_free((void *)buffers_in.lpcszHeader);
+    heap_free(str);
     if (pInternetCloseHandle != NULL && request != NULL)
         pInternetCloseHandle (request);
     if (pInternetCloseHandle != NULL && connection != NULL)
