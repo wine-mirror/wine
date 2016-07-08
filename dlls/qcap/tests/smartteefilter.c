@@ -1721,8 +1721,7 @@ static void test_smart_tee_filter(void)
     endwhile:
         if (pinInfo.pFilter)
             IBaseFilter_Release(pinInfo.pFilter);
-        if (id)
-            CoTaskMemFree(id);
+        CoTaskMemFree(id);
         IPin_Release(pin);
         pinNumber++;
     }
