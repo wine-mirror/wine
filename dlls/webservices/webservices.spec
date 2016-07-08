@@ -166,7 +166,7 @@
 @ stub WsVerifyXmlNCName
 @ stub WsWriteArray
 @ stdcall WsWriteAttribute(ptr ptr long ptr long ptr)
-@ stub WsWriteBody
+@ stdcall WsWriteBody(ptr ptr long ptr long ptr)
 @ stub WsWriteBytes
 @ stub WsWriteChars
 @ stub WsWriteCharsUtf8

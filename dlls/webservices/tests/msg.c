@@ -431,6 +431,98 @@ static void test_WsWriteEnvelopeEnd(void)
     WsFreeWriter( writer );
 }
 
+static void test_WsWriteBody(void)
+{
+    static char expected[] =
+        "<s:Envelope xmlns:a=\"http://www.w3.org/2005/08/addressing\" "
+        "xmlns:s=\"http://www.w3.org/2003/05/soap-envelope\"><s:Header>"
+        "<a:MessageID>urn:uuid:00000000-0000-0000-0000-000000000000</a:MessageID>"
+        "</s:Header><s:Body><u xmlns=\"ns\"><val>1</val></u></s:Body></s:Envelope>";
+    static char expected2[] =
+        "<s:Envelope xmlns:a=\"http://www.w3.org/2005/08/addressing\" "
+        "xmlns:s=\"http://www.w3.org/2003/05/soap-envelope\"><s:Header>"
+        "<a:MessageID>urn:uuid:00000000-0000-0000-0000-000000000000</a:MessageID>"
+        "</s:Header><s:Body/></s:Envelope>";
+    WS_XML_STRING localname = {1, (BYTE *)"t"}, localname2 = {1, (BYTE *)"u"};
+    WS_XML_STRING val = {3, (BYTE *)"val"}, ns = {2, (BYTE *)"ns"};
+    HRESULT hr;
+    WS_MESSAGE *msg;
+    WS_XML_WRITER *writer;
+    WS_MESSAGE_STATE state;
+    WS_ELEMENT_DESCRIPTION desc;
+    WS_STRUCT_DESCRIPTION s;
+    WS_FIELD_DESCRIPTION f, *fields[1];
+    struct test
+    {
+        UINT32 val;
+    } test, *ptr;
+
+    hr = WsCreateMessage( WS_ADDRESSING_VERSION_1_0, WS_ENVELOPE_VERSION_SOAP_1_2, NULL, 0, &msg,
+                          NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteBody( NULL, NULL, 0, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsWriteBody( msg, NULL, 0, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f.localName = &val;
+    f.ns        = &ns;
+    f.type      = WS_UINT32_TYPE;
+    fields[0] = &f;
+
+    memset( &s, 0, sizeof(s) );
+    s.size          = sizeof(struct test);
+    s.alignment     = TYPE_ALIGNMENT(struct test);
+    s.fields        = fields;
+    s.fieldCount    = 1;
+    s.typeLocalName = &localname;
+    s.typeNs        = &ns;
+
+    desc.elementLocalName = &localname2;
+    desc.elementNs        = &ns;
+    desc.type             = WS_STRUCT_TYPE;
+    desc.typeDescription  = &s;
+
+    ptr = &test;
+    test.val = 1;
+    hr = WsWriteBody( msg, &desc, WS_WRITE_REQUIRED_POINTER, &ptr, sizeof(ptr), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, expected, 240, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
+    check_output_header( msg, expected2, -1, strstr(expected2, "urn:uuid:") - expected2, 46, __LINE__ );
+
+    state = 0xdeadbeef;
+    hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == WS_MESSAGE_STATE_WRITING, "got %u\n", state );
+
+    hr = WsWriteEnvelopeEnd( msg, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
+    check_output_header( msg, expected2, -1, strstr(expected2, "urn:uuid:") - expected2, 46, __LINE__ );
+
+    hr = WsWriteBody( msg, &desc, WS_WRITE_REQUIRED_POINTER, &ptr, sizeof(ptr), NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    WsFreeMessage( msg );
+    WsFreeWriter( writer );
+}
+
 START_TEST(msg)
 {
     test_WsCreateMessage();
@@ -439,4 +531,5 @@ START_TEST(msg)
     test_WsAddressMessage();
     test_WsWriteEnvelopeStart();
     test_WsWriteEnvelopeEnd();
+    test_WsWriteBody();
 }
