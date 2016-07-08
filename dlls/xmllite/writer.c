@@ -44,6 +44,7 @@ static const WCHAR closepiW[] = {'?','>'};
 static const WCHAR ltW[] = {'<'};
 static const WCHAR gtW[] = {'>'};
 static const WCHAR spaceW[] = {' '};
+static const WCHAR quoteW[] = {'"'};
 
 struct output_buffer
 {
@@ -284,7 +285,6 @@ static HRESULT write_output_buffer(xmlwriteroutput *output, const WCHAR *data, i
 
 static HRESULT write_output_buffer_quoted(xmlwriteroutput *output, const WCHAR *data, int len)
 {
-    static const WCHAR quoteW[] = {'"'};
     write_output_buffer(output, quoteW, ARRAY_SIZE(quoteW));
     write_output_buffer(output, data, len);
     write_output_buffer(output, quoteW, ARRAY_SIZE(quoteW));
@@ -609,14 +609,14 @@ static HRESULT WINAPI xmlwriter_WriteAttributes(IXmlWriter *iface, IXmlReader *p
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR pwszPrefix,
-                                       LPCWSTR pwszLocalName, LPCWSTR pwszNamespaceUri,
-                                       LPCWSTR pwszValue)
+static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR ns_prefix,
+    LPCWSTR local_name, LPCWSTR ns_uri, LPCWSTR value)
 {
+    static const WCHAR eqW[] = {'=','"'};
     xmlwriter *This = impl_from_IXmlWriter(iface);
 
-    FIXME("%p %s %s %s %s\n", This, wine_dbgstr_w(pwszPrefix), wine_dbgstr_w(pwszLocalName),
-                        wine_dbgstr_w(pwszNamespaceUri), wine_dbgstr_w(pwszValue));
+    TRACE("%p %s %s %s %s\n", This, debugstr_w(ns_prefix), debugstr_w(local_name),
+                        debugstr_w(ns_uri), debugstr_w(value));
 
     switch (This->state)
     {
@@ -630,7 +630,19 @@ static HRESULT WINAPI xmlwriter_WriteAttributeString(IXmlWriter *iface, LPCWSTR 
         ;
     }
 
-    return E_NOTIMPL;
+    if (ns_prefix || ns_uri)
+    {
+        FIXME("namespaces are not supported.\n");
+        return E_NOTIMPL;
+    }
+
+    write_output_buffer(This->output, spaceW, ARRAY_SIZE(spaceW));
+    write_output_buffer(This->output, local_name, -1);
+    write_output_buffer(This->output, eqW, ARRAY_SIZE(eqW));
+    write_output_buffer(This->output, value, -1);
+    write_output_buffer(This->output, quoteW, ARRAY_SIZE(quoteW));
+
+    return S_OK;
 }
 
 static void write_cdata_section(xmlwriteroutput *output, const WCHAR *data, int len)

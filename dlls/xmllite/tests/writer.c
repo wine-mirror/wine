@@ -31,7 +31,7 @@
 #include "initguid.h"
 DEFINE_GUID(IID_IXmlWriterOutput, 0xc1131708, 0x0f59, 0x477f, 0x93, 0x59, 0x7d, 0x33, 0x24, 0x51, 0xbc, 0x1a);
 
-static void check_output(IStream *stream, const char *expected, int line)
+static void check_output(IStream *stream, const char *expected, BOOL todo, int line)
 {
     HGLOBAL hglobal;
     int len = strlen(expected), size;
@@ -43,16 +43,20 @@ static void check_output(IStream *stream, const char *expected, int line)
 
     size = GlobalSize(hglobal);
     ptr = GlobalLock(hglobal);
-    if (size != len)
+    todo_wine_if(todo)
     {
-        ok_(__FILE__, line)(0, "data size mismatch, expected %u, got %u\n", len, size);
-        ok_(__FILE__, line)(0, "got %s, expected %s\n", ptr, expected);
+        if (size != len)
+        {
+            ok_(__FILE__, line)(0, "data size mismatch, expected %u, got %u\n", len, size);
+            ok_(__FILE__, line)(0, "got %s, expected %s\n", ptr, expected);
+        }
+        else
+            ok_(__FILE__, line)(!strncmp(ptr, expected, len), "got %s, expected %s\n", ptr, expected);
     }
-    else
-        ok_(__FILE__, line)(!strncmp(ptr, expected, len), "got %s, expected %s\n", ptr, expected);
     GlobalUnlock(hglobal);
 }
-#define CHECK_OUTPUT(stream, expected) check_output(stream, expected, __LINE__)
+#define CHECK_OUTPUT(stream, expected) check_output(stream, expected, FALSE, __LINE__)
+#define CHECK_OUTPUT_TODO(stream, expected) check_output(stream, expected, TRUE, __LINE__)
 
 /* used to test all Write* methods for consistent error state */
 static void check_writer_state(IXmlWriter *writer, HRESULT exp_hr)
@@ -1054,6 +1058,91 @@ static void test_indentation(void)
     IStream_Release(stream);
 }
 
+static void test_WriteAttributeString(void)
+{
+    static const WCHAR prefixW[] = {'p','r','e','f','i','x',0};
+    static const WCHAR localW[] = {'l','o','c','a','l',0};
+    static const WCHAR uriW[] = {'u','r','i',0};
+    static const WCHAR uri2W[] = {'u','r','i','2',0};
+    static const WCHAR xmlnsW[] = {'x','m','l','n','s',0};
+    static const WCHAR aW[] = {'a',0};
+    static const WCHAR bW[] = {'b',0};
+    IXmlWriter *writer;
+    IStream *stream;
+    HRESULT hr;
+
+    hr = CreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_SetProperty(writer, XmlWriterProperty_OmitXmlDeclaration, TRUE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteAttributeString(writer, NULL, aW, NULL, bW);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteEndDocument(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    CHECK_OUTPUT(stream,
+        "<a a=\"b\" />");
+    IStream_Release(stream);
+
+    /* with namespaces */
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteAttributeString(writer, aW, NULL, NULL, bW);
+todo_wine
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteAttributeString(writer, prefixW, localW, uriW, bW);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteAttributeString(writer, NULL, aW, NULL, bW);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteAttributeString(writer, NULL, xmlnsW, uri2W, NULL);
+todo_wine
+    ok(hr == WR_E_XMLNSPREFIXDECLARATION, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteAttributeString(writer, NULL, xmlnsW, NULL, uri2W);
+todo_wine
+    ok(hr == WR_E_NSPREFIXDECLARED, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteAttributeString(writer, prefixW, localW, NULL, bW);
+todo_wine
+    ok(hr == WR_E_DUPLICATEATTRIBUTE, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteEndDocument(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    CHECK_OUTPUT_TODO(stream,
+        "<a prefix:local=\"b\" a=\"b\" xmlns:prefix=\"uri\" />");
+
+    IXmlWriter_Release(writer);
+    IStream_Release(stream);
+}
+
 START_TEST(writer)
 {
     test_writer_create();
@@ -1070,4 +1159,5 @@ START_TEST(writer)
     test_WriteCData();
     test_WriteRaw();
     test_indentation();
+    test_WriteAttributeString();
 }
