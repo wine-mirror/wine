@@ -2713,8 +2713,7 @@ static void OLE_FreeClipDataArray(ULONG count, CLIPDATA * pClipDataArray)
 {
     ULONG i;
     for (i = 0; i < count; i++)
-        if (pClipDataArray[i].pClipData)
-            CoTaskMemFree(pClipDataArray[i].pClipData);
+        CoTaskMemFree(pClipDataArray[i].pClipData);
 }
 
 /***********************************************************************
