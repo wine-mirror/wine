@@ -1443,8 +1443,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
 
 exit:
     if (FAILED(hr)) {
-        if(This->local_buffer)
-            HeapFree(GetProcessHeap(), 0, This->local_buffer);
+        HeapFree(GetProcessHeap(), 0, This->local_buffer);
         This->local_buffer = NULL;
         if (This->stream) {
             pa_stream_disconnect(This->stream);
