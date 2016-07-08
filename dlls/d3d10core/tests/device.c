@@ -7969,6 +7969,72 @@ static void test_sm4_breakc_instruction(void)
     release_test_context(&test_context);
 }
 
+static void test_create_input_layout(void)
+{
+    D3D10_INPUT_ELEMENT_DESC layout_desc[] =
+    {
+        {"POSITION", 0, DXGI_FORMAT_UNKNOWN, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+    };
+    ID3D10InputLayout *input_layout;
+    ID3D10Device *device;
+    ULONG refcount;
+    unsigned int i;
+    HRESULT hr;
+
+    static const DWORD vs_code[] =
+    {
+#if 0
+        float4 main(float4 position : POSITION) : SV_POSITION
+        {
+            return position;
+        }
+#endif
+        0x43425844, 0xa7a2f22d, 0x83ff2560, 0xe61638bd, 0x87e3ce90, 0x00000001, 0x000000d8, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0xababab00,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x52444853, 0x0000003c, 0x00010040,
+        0x0000000f, 0x0300005f, 0x001010f2, 0x00000000, 0x04000067, 0x001020f2, 0x00000000, 0x00000001,
+        0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
+    };
+    static const DXGI_FORMAT vertex_formats[] =
+    {
+        DXGI_FORMAT_R32G32_FLOAT,
+        DXGI_FORMAT_R32G32_UINT,
+        DXGI_FORMAT_R32G32_SINT,
+        DXGI_FORMAT_R16G16_FLOAT,
+        DXGI_FORMAT_R16G16_UINT,
+        DXGI_FORMAT_R16G16_SINT,
+        DXGI_FORMAT_R32_FLOAT,
+        DXGI_FORMAT_R32_UINT,
+        DXGI_FORMAT_R32_SINT,
+        DXGI_FORMAT_R16_UINT,
+        DXGI_FORMAT_R16_SINT,
+        DXGI_FORMAT_R8_UINT,
+        DXGI_FORMAT_R8_SINT,
+    };
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    for (i = 0; i < sizeof(vertex_formats) / sizeof(*vertex_formats); ++i)
+    {
+        layout_desc->Format = vertex_formats[i];
+        hr = ID3D10Device_CreateInputLayout(device, layout_desc,
+                sizeof(layout_desc) / sizeof(*layout_desc), vs_code, sizeof(vs_code),
+                &input_layout);
+        ok(SUCCEEDED(hr), "Failed to create input layout for format %#x, hr %#x.\n",
+                vertex_formats[i], hr);
+        ID3D10InputLayout_Release(input_layout);
+    }
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 static void test_input_assembler(void)
 {
     enum layout_id
@@ -8433,6 +8499,7 @@ START_TEST(device)
     test_shader_stage_input_output_matching();
     test_sm4_if_instruction();
     test_sm4_breakc_instruction();
+    test_create_input_layout();
     test_input_assembler();
     test_null_sampler();
 }
