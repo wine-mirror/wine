@@ -1929,6 +1929,7 @@ HRESULT WINAPI WsWriteXmlBufferToBytes( WS_XML_WRITER *handle, WS_XML_BUFFER *bu
     if (!(buf = ws_alloc( heap, xmlbuf->size ))) return WS_E_QUOTA_EXCEEDED;
     memcpy( buf, xmlbuf->ptr, xmlbuf->size );
     *bytes = buf;
+    *size = xmlbuf->size;
     return S_OK;
 }
 
