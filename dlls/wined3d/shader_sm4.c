@@ -447,7 +447,7 @@ static void shader_sm4_read_shader_data(struct wined3d_shader_instruction *ins,
         return;
     }
 
-    priv->icb.element_count = icb_size;
+    priv->icb.vec4_count = icb_size / 4;
     memcpy(priv->icb.data, tokens, sizeof(*tokens) * icb_size);
     ins->declaration.icb = &priv->icb;
 }

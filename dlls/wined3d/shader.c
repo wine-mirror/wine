@@ -2235,7 +2235,7 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
         else if (ins.handler_idx == WINED3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER)
         {
             shader_addline(&buffer, "%s {\n", shader_opcode_names[ins.handler_idx]);
-            for (i = 0; i < ins.declaration.icb->element_count / 4; ++i)
+            for (i = 0; i < ins.declaration.icb->vec4_count; ++i)
             {
                 shader_addline(&buffer, "    {0x%08x, 0x%08x, 0x%08x, 0x%08x},\n",
                         ins.declaration.icb->data[4 * i + 0],

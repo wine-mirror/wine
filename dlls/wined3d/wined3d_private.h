@@ -790,7 +790,7 @@ struct wined3d_shader_sampler_map
 
 struct wined3d_shader_immediate_constant_buffer
 {
-    UINT element_count;
+    unsigned int vec4_count;
     DWORD data[MAX_IMMEDIATE_CONSTANT_BUFFER_SIZE];
 };
 

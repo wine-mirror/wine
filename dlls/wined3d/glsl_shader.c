@@ -559,6 +559,26 @@ static void shader_glsl_load_samplers(const struct wined3d_gl_info *gl_info,
     string_buffer_release(&priv->string_buffers, sampler_name);
 }
 
+static void shader_glsl_load_icb(const struct wined3d_gl_info *gl_info, struct shader_glsl_priv *priv,
+        GLuint program_id, const struct wined3d_shader_reg_maps *reg_maps)
+{
+    const struct wined3d_shader_immediate_constant_buffer *icb = reg_maps->icb;
+
+    if (icb)
+    {
+        struct wined3d_string_buffer *icb_name = string_buffer_get(&priv->string_buffers);
+        const char *prefix = shader_glsl_get_prefix(reg_maps->shader_version.type);
+        GLint icb_location;
+
+        string_buffer_sprintf(icb_name, "%s_icb", prefix);
+        icb_location = GL_EXTCALL(glGetUniformLocation(program_id, icb_name->buffer));
+        GL_EXTCALL(glUniform4fv(icb_location, icb->vec4_count, (const GLfloat *)icb->data));
+        checkGLcall("Load immediate constant buffer");
+
+        string_buffer_release(&priv->string_buffers, icb_name);
+    }
+}
+
 /* Context activation is done by the caller. */
 static inline void walk_constant_heap(const struct wined3d_gl_info *gl_info, const struct wined3d_vec4 *constants,
         const GLint *constant_locations, const struct constant_heap *heap, unsigned char *stack, DWORD version)
@@ -1892,6 +1912,11 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     if (shader->limits->constant_bool > 0 && reg_maps->boolean_constants)
         shader_addline(buffer, "uniform bool %s_b[%u];\n", prefix, shader->limits->constant_bool);
 
+    /* Declare immediate constant buffer */
+    if (reg_maps->icb)
+        shader_addline(buffer, "uniform vec4 %s_icb[%u];\n", prefix, reg_maps->icb->vec4_count);
+
+    /* Declare constant buffers */
     for (i = 0; i < WINED3D_MAX_CBS; ++i)
     {
         if (reg_maps->cb_sizes[i])
@@ -7863,6 +7888,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
             entry->constant_update_mask |= WINED3D_SHADER_CONST_POS_FIXUP;
 
         shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &vshader->reg_maps);
+        shader_glsl_load_icb(gl_info, priv, program_id, &vshader->reg_maps);
     }
     else
     {
@@ -7903,6 +7929,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     {
         entry->constant_update_mask |= WINED3D_SHADER_CONST_POS_FIXUP;
         shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &gshader->reg_maps);
+        shader_glsl_load_icb(gl_info, priv, program_id, &gshader->reg_maps);
     }
 
     if (ps_id)
@@ -7918,6 +7945,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
                 entry->constant_update_mask |= WINED3D_SHADER_CONST_PS_Y_CORR;
 
             shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &pshader->reg_maps);
+            shader_glsl_load_icb(gl_info, priv, program_id, &pshader->reg_maps);
         }
         else
         {
@@ -8611,7 +8639,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DCL_GLOBAL_FLAGS                 */ shader_glsl_nop,
     /* WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT */ NULL,
     /* WINED3DSIH_DCL_HS_MAX_TESSFACTOR            */ NULL,
-    /* WINED3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER    */ NULL,
+    /* WINED3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER    */ shader_glsl_nop,
     /* WINED3DSIH_DCL_INDEXABLE_TEMP               */ shader_glsl_nop,
     /* WINED3DSIH_DCL_INPUT                        */ shader_glsl_nop,
     /* WINED3DSIH_DCL_INPUT_CONTROL_POINT_COUNT    */ NULL,
