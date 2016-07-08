@@ -3453,14 +3453,15 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
         ME_RewrapRepaint(editor);
       }
 
+      if ((changedSettings & settings & ES_NOHIDESEL) && !editor->bHaveFocus)
+          ME_InvalidateSelection( editor );
+
       if (changedSettings & settings & ECO_VERTICAL)
         FIXME("ECO_VERTICAL not implemented yet!\n");
       if (changedSettings & settings & ECO_AUTOHSCROLL)
         FIXME("ECO_AUTOHSCROLL not implemented yet!\n");
       if (changedSettings & settings & ECO_AUTOVSCROLL)
         FIXME("ECO_AUTOVSCROLL not implemented yet!\n");
-      if (changedSettings & settings & ECO_NOHIDESEL)
-        FIXME("ECO_NOHIDESEL not implemented yet!\n");
       if (changedSettings & settings & ECO_WANTRETURN)
         FIXME("ECO_WANTRETURN not implemented yet!\n");
       if (changedSettings & settings & ECO_AUTOWORDSELECTION)
@@ -4257,6 +4258,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     editor->bHaveFocus = TRUE;
     ME_ShowCaret(editor);
     ME_SendOldNotify(editor, EN_SETFOCUS);
+    if (!editor->bHideSelection && !(editor->styleFlags & ES_NOHIDESEL))
+        ME_InvalidateSelection( editor );
     return 0;
   case WM_KILLFOCUS:
     ME_CommitUndo(editor); /* End coalesced undos for typed characters */
@@ -4264,6 +4267,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     editor->wheel_remain = 0;
     ME_HideCaret(editor);
     ME_SendOldNotify(editor, EN_KILLFOCUS);
+    if (!editor->bHideSelection && !(editor->styleFlags & ES_NOHIDESEL))
+        ME_InvalidateSelection( editor );
     return 0;
   case WM_COMMAND:
     TRACE("editor wnd command = %d\n", LOWORD(wParam));
