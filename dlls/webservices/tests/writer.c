@@ -42,15 +42,9 @@ static inline float __port_nan(void)
 
 static HRESULT set_output( WS_XML_WRITER *writer )
 {
-    WS_XML_WRITER_TEXT_ENCODING encoding;
-    WS_XML_WRITER_BUFFER_OUTPUT output;
-
-    encoding.encoding.encodingType = WS_XML_WRITER_ENCODING_TYPE_TEXT;
-    encoding.charSet               = WS_CHARSET_UTF8;
-
-    output.output.outputType = WS_XML_WRITER_OUTPUT_TYPE_BUFFER;
-
-    return WsSetOutput( writer, &encoding.encoding, &output.output, NULL, 0, NULL );
+    WS_XML_WRITER_TEXT_ENCODING text = { {WS_XML_WRITER_ENCODING_TYPE_TEXT}, WS_CHARSET_UTF8 };
+    WS_XML_WRITER_BUFFER_OUTPUT buf = { {WS_XML_WRITER_OUTPUT_TYPE_BUFFER} };
+    return WsSetOutput( writer, &text.encoding, &buf.output, NULL, 0, NULL );
 }
 
 static void test_WsCreateWriter(void)
@@ -64,11 +58,11 @@ static void test_WsCreateWriter(void)
     WS_BUFFERS buffers;
     WS_BYTES bytes;
 
-    hr = WsCreateWriter( NULL, 0, NULL, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
     writer = NULL;
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( writer != NULL, "writer not set\n" );
 
@@ -173,7 +167,7 @@ static void test_WsCreateWriter(void)
     prop.id = WS_XML_WRITER_PROPERTY_MAX_DEPTH;
     prop.value = &max_depth;
     prop.valueSize = sizeof(max_depth);
-    hr = WsCreateWriter( &prop, 1, &writer, NULL ) ;
+    hr = WsCreateWriter( &prop, 1, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = set_output( writer );
@@ -191,21 +185,21 @@ static void test_WsCreateWriter(void)
     prop.id = WS_XML_WRITER_PROPERTY_IN_ATTRIBUTE;
     prop.value = &in_attr;
     prop.valueSize = sizeof(in_attr);
-    hr = WsCreateWriter( &prop, 1, &writer, NULL ) ;
+    hr = WsCreateWriter( &prop, 1, &writer, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
     size = 1;
     prop.id = WS_XML_WRITER_PROPERTY_BYTES_WRITTEN;
     prop.value = &size;
     prop.valueSize = sizeof(size);
-    hr = WsCreateWriter( &prop, 1, &writer, NULL ) ;
+    hr = WsCreateWriter( &prop, 1, &writer, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
     size = 1;
     prop.id = WS_XML_WRITER_PROPERTY_BYTES_TO_CLOSE;
     prop.value = &size;
     prop.valueSize = sizeof(size);
-    hr = WsCreateWriter( &prop, 1, &writer, NULL ) ;
+    hr = WsCreateWriter( &prop, 1, &writer, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 }
 
@@ -235,7 +229,7 @@ static void test_WsCreateXmlBuffer(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( buffer != NULL, "buffer not set\n" );
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     size = sizeof(bytes);
@@ -262,7 +256,7 @@ static void test_WsSetOutput(void)
     WS_XML_WRITER_BUFFER_OUTPUT output;
     ULONG size, max_depth;
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsSetOutput( NULL, NULL, NULL, NULL, 0, NULL );
@@ -308,7 +302,7 @@ static void test_WsSetOutputToBuffer(void)
     hr = WsSetOutputToBuffer( NULL, NULL, NULL, 0, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsSetOutputToBuffer( writer, NULL, NULL, 0, NULL );
@@ -367,7 +361,7 @@ static void test_WsWriteStartElement(void)
     WS_XML_STRING prefix = {1, (BYTE *)"p"}, ns = {2, (BYTE *)"ns"}, ns2 = {3, (BYTE *)"ns2"};
     WS_XML_STRING localname = {1, (BYTE *)"a"}, localname2 =  {1, (BYTE *)"b"};
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = set_output( writer );
@@ -449,7 +443,7 @@ static void test_WsWriteStartAttribute(void)
     WS_XML_STRING prefix = {1, (BYTE *)"p"}, localname = {3, (BYTE *)"str"}, ns = {2, (BYTE *)"ns"};
     WS_XML_UTF8_TEXT text;
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = set_output( writer );
@@ -495,7 +489,7 @@ static void test_WsWriteType(void)
     WS_XML_STRING prefix = {1, (BYTE*)"p"}, localname = {3, (BYTE *)"str"}, ns = {2, (BYTE *)"ns"};
     const WCHAR *val_str;
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = set_output( writer );
@@ -524,6 +518,10 @@ static void test_WsWriteType(void)
     /* required pointer */
     hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_WSZ_TYPE, NULL,
                       WS_WRITE_REQUIRED_POINTER, NULL, sizeof(val_str), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_WSZ_TYPE, NULL,
+                      WS_WRITE_REQUIRED_VALUE, testW, sizeof(testW), NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
     hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_WSZ_TYPE, NULL,
@@ -608,7 +606,7 @@ static void test_basic_type(void)
           "<t t=\"18446744073709551615\"/>" },
     };
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     /* element content type mapping */
@@ -632,6 +630,8 @@ static void test_basic_type(void)
     /* element type mapping is the same as element content type mapping for basic types */
     for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
     {
+        const INT64 *ptr = &tests[i].val;
+
         hr = set_output( writer );
         ok( hr == S_OK, "got %08x\n", hr );
 
@@ -639,7 +639,7 @@ static void test_basic_type(void)
         ok( hr == S_OK, "got %08x\n", hr );
 
         hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, tests[i].type, NULL,
-                          WS_WRITE_REQUIRED_VALUE, &tests[i].val, tests[i].size, NULL );
+                          WS_WRITE_REQUIRED_POINTER, &ptr, sizeof(ptr), NULL );
         ok( hr == S_OK, "%u: got %08x\n", i, hr );
 
         hr = WsWriteEndElement( writer, NULL );
@@ -687,7 +687,7 @@ static void test_simple_struct_type(void)
         const WCHAR *field;
     } *test;
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = set_output( writer );
@@ -711,6 +711,10 @@ static void test_simple_struct_type(void)
     test->field  = valueW;
     hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, NULL,
                       WS_WRITE_REQUIRED_POINTER, &test, sizeof(test), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, NULL,
+                      WS_WRITE_REQUIRED_VALUE, test, sizeof(*test), NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
     hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
@@ -770,7 +774,7 @@ static void test_WsWriteElement(void)
     WS_XML_STRING localname = {3, (BYTE *)"str"}, ns = {0, NULL};
     struct test { const WCHAR *str; } *test;
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = set_output( writer );
@@ -872,7 +876,7 @@ static void test_WsWriteValue(void)
           "<t t=\"18446744073709551615\"/>" },
     };
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = set_output( writer );
@@ -958,7 +962,7 @@ static void test_WsWriteAttribute(void)
     WS_XML_STRING localname = {3, (BYTE *)"str"}, ns = {0, NULL};
     struct test { const WCHAR *str; } *test;
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = set_output( writer );
@@ -1019,7 +1023,7 @@ static void test_WsWriteStartCData(void)
     WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL};
     WS_XML_UTF8_TEXT text;
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = set_output( writer );
@@ -1068,7 +1072,7 @@ static void check_output_buffer( WS_XML_BUFFER *buffer, const char *expected, un
     int len = strlen(expected);
     HRESULT hr;
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = set_output( writer );
@@ -1122,7 +1126,7 @@ static void test_WsWriteXmlnsAttribute(void)
     hr = WsCreateXmlBuffer( heap, NULL, 0, &buffer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsWriteXmlnsAttribute( NULL, NULL, NULL, FALSE, NULL );
@@ -1287,7 +1291,7 @@ static void test_WsGetPrefixFromNamespace(void)
     WS_XML_WRITER *writer;
     HRESULT hr;
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = set_output( writer );
@@ -1388,7 +1392,7 @@ static void test_complex_struct_type(void)
         struct services *services;
     } *test;
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
@@ -1467,7 +1471,7 @@ static void test_WsMoveWriter(void)
     hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = set_output( writer );
@@ -1538,7 +1542,7 @@ static void test_WsGetWriterPosition(void)
     hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsGetWriterPosition( writer, &pos, NULL );
@@ -1584,7 +1588,7 @@ static void test_WsSetWriterPosition(void)
     hr = WsSetWriterPosition( NULL, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsCreateXmlBuffer( heap, NULL, 0, &buf1, NULL );
@@ -1631,7 +1635,7 @@ static void test_WsWriteXmlBuffer(void)
     hr = WsCreateXmlBuffer( NULL, NULL, 0, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateWriter( NULL, 0, &writer1, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer1, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsCreateXmlBuffer( heap, NULL, 0, NULL, NULL );
@@ -1650,7 +1654,7 @@ static void test_WsWriteXmlBuffer(void)
     ok( hr == S_OK, "got %08x\n", hr );
     check_output_buffer( buffer1, "<t/>", __LINE__ );
 
-    hr = WsCreateWriter( NULL, 0, &writer2, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer2, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsCreateXmlBuffer( heap, NULL, 0, &buffer2, NULL );
@@ -1694,7 +1698,7 @@ static void test_WsWriteNode(void)
     hr = WsWriteNode( NULL, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsWriteNode( writer, NULL, NULL );
@@ -1799,7 +1803,7 @@ static void test_WsCopyNode(void)
     hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsCreateXmlBuffer( heap, NULL, 0, &buffer, NULL );
@@ -1888,7 +1892,7 @@ static void test_text_types(void)
     val_utf16.bytes     = (BYTE *)utf16W;
     val_utf16.byteCount = sizeof(utf16W);
 
-    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
