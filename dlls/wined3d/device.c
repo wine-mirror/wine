@@ -4993,8 +4993,6 @@ void device_resource_released(struct wined3d_device *device, struct wined3d_reso
 
     TRACE("device %p, resource %p, type %s.\n", device, resource, debug_d3dresourcetype(type));
 
-    context_resource_released(device, resource, type);
-
     for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
     {
         if ((rtv = device->fb.render_targets[i]) && rtv->resource == resource)
