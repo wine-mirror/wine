@@ -262,8 +262,8 @@ static void DEVENUM_ReadPinTypes(HKEY hkeyPinKey, REGFILTERPINS *rgPin)
 
             error_cleanup_types:
 
-            if (clsMajorType) CoTaskMemFree(clsMajorType);
-            if (clsMinorType) CoTaskMemFree(clsMinorType);
+            CoTaskMemFree(clsMajorType);
+            CoTaskMemFree(clsMinorType);
         }
 
         RegCloseKey(hkeyMajorType);
@@ -358,7 +358,7 @@ static void DEVENUM_ReadPins(HKEY hkeyFilterClass, REGFILTER2 *rgf2)
         error_cleanup:
 
         RegCloseKey(hkeyPinKey);
-        if (rgPin->strName) CoTaskMemFree(rgPin->strName);
+        CoTaskMemFree(rgPin->strName);
     }
 
     RegCloseKey(hkeyPins);
