@@ -494,6 +494,7 @@ AC_CHECK_HEADERS(\
 	sys/statvfs.h \
 	sys/strtio.h \
 	sys/syscall.h \
+	sys/sysinfo.h \
 	sys/tihdr.h \
 	sys/time.h \
 	sys/timeout.h \
