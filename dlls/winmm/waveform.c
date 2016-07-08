@@ -899,8 +899,7 @@ static MMRESULT WINMM_TryDeviceMapping(WINMM_Device *device, WAVEFORMATEX *fmt,
 
     hr = IAudioClient_IsFormatSupported(device->client,
             AUDCLNT_SHAREMODE_SHARED, &target, &closer_fmt);
-    if(closer_fmt)
-        CoTaskMemFree(closer_fmt);
+    CoTaskMemFree(closer_fmt);
     if(hr != S_OK)
         return WAVERR_BADFORMAT;
 
@@ -1119,8 +1118,7 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_OpenInfo *info,
 
         hr = IAudioClient_IsFormatSupported(device->client,
                 AUDCLNT_SHAREMODE_SHARED, device->orig_fmt, &closer_fmt);
-        if(closer_fmt)
-            CoTaskMemFree(closer_fmt);
+        CoTaskMemFree(closer_fmt);
         if((hr == S_FALSE || hr == AUDCLNT_E_UNSUPPORTED_FORMAT) && !(info->flags & WAVE_FORMAT_DIRECT))
             ret = WINMM_MapDevice(device, TRUE, is_out);
         else
