@@ -44,6 +44,7 @@ static const struct prop_desc msg_props[] =
 
 struct msg
 {
+    WS_MESSAGE_INITIALIZATION init;
     WS_MESSAGE_STATE          state;
     WS_ENVELOPE_VERSION       version_env;
     WS_ADDRESSING_VERSION     version_addr;
@@ -141,6 +142,30 @@ HRESULT WINAPI WsCreateMessageForChannel( WS_CHANNEL *channel_handle, const WS_M
         version_addr = WS_ADDRESSING_VERSION_1_0;
 
     return create_msg( version_env, version_addr, properties, count, handle );
+}
+
+/**************************************************************************
+ *          WsInitializeMessage		[webservices.@]
+ */
+HRESULT WINAPI WsInitializeMessage( WS_MESSAGE *handle, WS_MESSAGE_INITIALIZATION init,
+                                    WS_MESSAGE *src_handle, WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+
+    TRACE( "%p %u %p %p\n", handle, init, src_handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+    if (src_handle)
+    {
+        FIXME( "src message not supported\n" );
+        return E_NOTIMPL;
+    }
+
+    if (!handle || init > WS_FAULT_MESSAGE) return E_INVALIDARG;
+    if (msg->state >= WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
+
+    msg->init  = init;
+    msg->state = WS_MESSAGE_STATE_INITIALIZED;
+    return S_OK;
 }
 
 /**************************************************************************

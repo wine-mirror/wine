@@ -156,8 +156,62 @@ static void test_WsCreateMessageForChannel(void)
     WsFreeMessage( msg );
 }
 
+static void test_WsInitializeMessage(void)
+{
+    HRESULT hr;
+    WS_MESSAGE *msg;
+    WS_MESSAGE_STATE state;
+    WS_ENVELOPE_VERSION env_version;
+    WS_ADDRESSING_VERSION addr_version;
+    BOOL addressed;
+
+    return;
+    hr = WsInitializeMessage( NULL, WS_REQUEST_MESSAGE, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL,
+                          0, &msg, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsInitializeMessage( msg, 0xdeadbeef, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    state = 0xdeadbeef;
+    hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == WS_MESSAGE_STATE_INITIALIZED, "got %u\n", state );
+
+    addressed = -1;
+    hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_IS_ADDRESSED, &addressed, sizeof(addressed),
+                               NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !addressed, "unexpected value %d\n", addressed );
+
+    state = WS_MESSAGE_STATE_EMPTY;
+    hr = WsSetMessageProperty( msg, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    env_version = WS_ENVELOPE_VERSION_SOAP_1_1;
+    hr = WsSetMessageProperty( msg, WS_MESSAGE_PROPERTY_ENVELOPE_VERSION, &env_version,
+                               sizeof(env_version), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    addr_version = WS_ADDRESSING_VERSION_0_9;
+    hr = WsSetMessageProperty( msg, WS_MESSAGE_PROPERTY_ADDRESSING_VERSION, &addr_version,
+                               sizeof(addr_version), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    WsFreeMessage( msg );
+}
+
 START_TEST(msg)
 {
     test_WsCreateMessage();
     test_WsCreateMessageForChannel();
+    test_WsInitializeMessage();
 }

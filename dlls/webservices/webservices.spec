@@ -90,7 +90,7 @@
 @ stdcall WsGetWriterPosition(ptr ptr ptr)
 @ stdcall WsGetWriterProperty(ptr long ptr long ptr)
 @ stdcall WsGetXmlAttribute(ptr ptr ptr ptr ptr ptr)
-@ stub WsInitializeMessage
+@ stdcall WsInitializeMessage(ptr long ptr ptr)
 @ stub WsMarkHeaderAsUnderstood
 @ stub WsMatchPolicyAlternative
 @ stdcall WsMoveReader(ptr long ptr ptr)
