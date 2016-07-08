@@ -499,6 +499,16 @@ static void wined3d_texture_cleanup(struct wined3d_texture *texture)
     if (context)
         context_release(context);
 
+    for (i = 0; i < sub_count; ++i)
+    {
+        struct wined3d_texture_sub_resource *sub_resource = &texture->sub_resources[i];
+        if (sub_resource->parent)
+        {
+            TRACE("sub-resource %u.\n", i);
+            sub_resource->parent_ops->wined3d_object_destroyed(sub_resource->parent);
+        }
+    }
+
     texture->texture_ops->texture_cleanup_sub_resources(texture);
     wined3d_texture_unload_gl_texture(texture);
     resource_cleanup(&texture->resource);
@@ -1518,8 +1528,6 @@ static void texture2d_cleanup_sub_resources(struct wined3d_texture *texture)
             list_remove(&overlay->overlay_entry);
             overlay->overlay_dest = NULL;
         }
-
-        sub_resource->parent_ops->wined3d_object_destroyed(sub_resource->parent);
     }
     if (context)
         context_release(context);
@@ -2028,6 +2036,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
                     texture, idx, &sub_resource->parent, &sub_resource->parent_ops)))
             {
                 WARN("Failed to create surface parent, hr %#x.\n", hr);
+                sub_resource->parent = NULL;
                 wined3d_texture_cleanup(texture);
                 return hr;
             }
@@ -2106,21 +2115,6 @@ static void texture3d_prepare_texture(struct wined3d_texture *texture, struct wi
 
 static void texture3d_cleanup_sub_resources(struct wined3d_texture *texture)
 {
-    unsigned int sub_count = texture->level_count * texture->layer_count;
-    struct wined3d_texture_sub_resource *sub_resource;
-    struct wined3d_volume *volume;
-    unsigned int i;
-
-    for (i = 0; i < sub_count; ++i)
-    {
-        sub_resource = &texture->sub_resources[i];
-        if ((volume = sub_resource->u.volume))
-        {
-            TRACE("volume %p.\n", volume);
-
-            sub_resource->parent_ops->wined3d_object_destroyed(sub_resource->parent);
-        }
-    }
     HeapFree(GetProcessHeap(), 0, texture->sub_resources[0].u.volume);
 }
 
@@ -2285,6 +2279,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
                 texture, i, &sub_resource->parent, &sub_resource->parent_ops)))
         {
             WARN("Failed to create volume parent, hr %#x.\n", hr);
+            sub_resource->parent = NULL;
             wined3d_texture_cleanup(texture);
             return hr;
         }
