@@ -945,6 +945,7 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
     case '5': case '6': case '7': case '8': case '9':
         /* Referring back to previously parsed type */
         /* left and right are pushed as two separate strings */
+        if (!pmt_ref) goto done;
         ct->left = str_array_get_ref(pmt_ref, (dt - '0') * 2);
         ct->right = str_array_get_ref(pmt_ref, (dt - '0') * 2 + 1);
         if (!ct->left) goto done;
