@@ -380,6 +380,57 @@ static void test_WsWriteEnvelopeStart(void)
     WsFreeWriter( writer );
 }
 
+static void test_WsWriteEnvelopeEnd(void)
+{
+    static const char expected[] =
+        "<s:Envelope xmlns:a=\"http://www.w3.org/2005/08/addressing\" "
+        "xmlns:s=\"http://www.w3.org/2003/05/soap-envelope\"><s:Header>"
+        "<a:MessageID>urn:uuid:00000000-0000-0000-0000-000000000000</a:MessageID>"
+        "</s:Header><s:Body/></s:Envelope>";
+    HRESULT hr;
+    WS_MESSAGE *msg;
+    WS_XML_WRITER *writer;
+    WS_MESSAGE_STATE state;
+
+    hr = WsWriteEnvelopeEnd( NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateMessage( WS_ADDRESSING_VERSION_1_0, WS_ENVELOPE_VERSION_SOAP_1_2, NULL, 0, &msg,
+                          NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEnvelopeEnd( msg, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEnvelopeEnd( msg, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEnvelopeEnd( msg, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
+    check_output_header( msg, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
+
+    state = 0xdeadbeef;
+    hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == WS_MESSAGE_STATE_DONE, "got %u\n", state );
+
+    WsFreeMessage( msg );
+    WsFreeWriter( writer );
+}
+
 START_TEST(msg)
 {
     test_WsCreateMessage();
@@ -387,4 +438,5 @@ START_TEST(msg)
     test_WsInitializeMessage();
     test_WsAddressMessage();
     test_WsWriteEnvelopeStart();
+    test_WsWriteEnvelopeEnd();
 }

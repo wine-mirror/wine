@@ -433,3 +433,23 @@ HRESULT WINAPI WsWriteEnvelopeStart( WS_MESSAGE *handle, WS_XML_WRITER *writer,
     msg->state       = WS_MESSAGE_STATE_WRITING;
     return S_OK;
 }
+
+/**************************************************************************
+ *          WsWriteEnvelopeEnd		[webservices.@]
+ */
+HRESULT WINAPI WsWriteEnvelopeEnd( WS_MESSAGE *handle, WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p\n", handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!handle) return E_INVALIDARG;
+    if (msg->state != WS_MESSAGE_STATE_WRITING) return WS_E_INVALID_OPERATION;
+
+    if ((hr = write_envelope_end( msg, msg->writer_body )) != S_OK) return hr;
+
+    msg->state = WS_MESSAGE_STATE_DONE;
+    return S_OK;
+}
