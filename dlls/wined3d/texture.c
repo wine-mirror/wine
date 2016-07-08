@@ -816,6 +816,7 @@ static void wined3d_texture_cleanup_sync(struct wined3d_texture *texture)
 {
     wined3d_texture_sub_resources_destroyed(texture);
     resource_cleanup(&texture->resource);
+    wined3d_resource_wait_idle(&texture->resource);
     wined3d_texture_cleanup(texture);
 }
 

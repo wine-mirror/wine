@@ -2498,6 +2498,7 @@ struct wined3d_resource
     DWORD priority;
     void *heap_memory;
     struct list resource_list_entry;
+    LONG access_count;
 
     void *parent;
     const struct wined3d_parent_ops *parent_ops;
@@ -2512,6 +2513,21 @@ static inline ULONG wined3d_resource_incref(struct wined3d_resource *resource)
 static inline ULONG wined3d_resource_decref(struct wined3d_resource *resource)
 {
     return resource->resource_ops->resource_decref(resource);
+}
+
+static inline void wined3d_resource_acquire(struct wined3d_resource *resource)
+{
+    InterlockedIncrement(&resource->access_count);
+}
+
+static inline void wined3d_resource_release(struct wined3d_resource *resource)
+{
+    InterlockedDecrement(&resource->access_count);
+}
+
+static inline void wined3d_resource_wait_idle(struct wined3d_resource *resource)
+{
+    while (InterlockedCompareExchange(&resource->access_count, 0, 0));
 }
 
 void resource_cleanup(struct wined3d_resource *resource) DECLSPEC_HIDDEN;

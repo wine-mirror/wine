@@ -1342,6 +1342,7 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
         ERR("Out of memory.\n");
         buffer_unload(&buffer->resource);
         resource_cleanup(&buffer->resource);
+        wined3d_resource_wait_idle(&buffer->resource);
         return E_OUTOFMEMORY;
     }
     buffer->maps_size = 1;
@@ -1351,6 +1352,7 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
         ERR("Failed to upload data, hr %#x.\n", hr);
         buffer_unload(&buffer->resource);
         resource_cleanup(&buffer->resource);
+        wined3d_resource_wait_idle(&buffer->resource);
         HeapFree(GetProcessHeap(), 0, buffer->maps);
         return hr;
     }
