@@ -3498,8 +3498,7 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
         if (!WriteFile(hand, q, size, &num_written, NULL))
             num_written = -1;
         release_ioinfo(info);
-        if(p)
-            MSVCRT_free(p);
+        MSVCRT_free(p);
         if (num_written != size)
         {
             TRACE("WriteFile (fd %d, hand %p) failed-last error (%d), num_written %d\n",

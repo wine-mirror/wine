@@ -365,7 +365,7 @@ void CDECL MSVCRT__wperror(const MSVCRT_wchar_t* str)
         }
     }
     MSVCRT_perror(buffer);
-    if (buffer) MSVCRT_free(buffer);
+    MSVCRT_free(buffer);
 }
 
 /*********************************************************************
