@@ -175,7 +175,7 @@ static BOOL EMFDRV_DeleteDC( PHYSDEV dev )
     EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     UINT index;
 
-    if (physDev->emh) HeapFree( GetProcessHeap(), 0, physDev->emh );
+    HeapFree( GetProcessHeap(), 0, physDev->emh );
     for(index = 0; index < physDev->handles_size; index++)
         if(physDev->handles[index])
 	    GDI_hdc_not_using_object(physDev->handles[index], dev->hdc);
