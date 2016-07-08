@@ -21,6 +21,25 @@
 #include "webservices.h"
 #include "wine/test.h"
 
+#include <math.h>
+#ifndef INFINITY
+static inline float __port_infinity(void)
+{
+    static const unsigned __inf_bytes = 0x7f800000;
+    return *(const float *)&__inf_bytes;
+}
+#define INFINITY __port_infinity()
+#endif
+
+#ifndef NAN
+static inline float __port_nan(void)
+{
+    static const unsigned __nan_bytes = 0x7fc00000;
+    return *(const float *)&__nan_bytes;
+}
+#define NAN __port_nan()
+#endif
+
 static HRESULT set_output( WS_XML_WRITER *writer )
 {
     WS_XML_WRITER_TEXT_ENCODING encoding;
@@ -1871,6 +1890,99 @@ static void test_text_types(void)
     WsFreeWriter( writer );
 }
 
+static void test_double(void)
+{
+    WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL};
+    static const struct
+    {
+        double      val;
+        const char *result;
+    }
+    tests[] =
+    {
+        {0.0, "<t>0</t>"},
+        {1.0, "<t>1</t>"},
+        {-1.0, "<t>-1</t>"},
+        {1.0000000000000001, "<t>1</t>"},
+        {1.0000000000000002, "<t>1.0000000000000002</t>"},
+        {1.0000000000000003, "<t>1.0000000000000002</t>"},
+        {1.0000000000000004, "<t>1.0000000000000004</t>"},
+        {100000000000000, "<t>100000000000000</t>"},
+        {1000000000000000, "<t>1E+15</t>"},
+        {0.1, "<t>0.1</t>"},
+        {0.01, "<t>1E-2</t>"},
+        {-0.1, "<t>-0.1</t>"},
+        {-0.01, "<t>-1E-2</t>"},
+        {1.7976931348623158e308, "<t>1.7976931348623157E+308</t>"},
+        {-1.7976931348623158e308, "<t>-1.7976931348623157E+308</t>"},
+    };
+    HRESULT hr;
+    WS_XML_WRITER *writer;
+    WS_XML_DOUBLE_TEXT text;
+    ULONG i;
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    text.text.textType = WS_XML_TEXT_TYPE_DOUBLE;
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        hr = set_output( writer );
+        ok( hr == S_OK, "got %08x\n", hr );
+        hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+
+        text.value = tests[i].val;
+        hr = WsWriteText( writer, &text.text, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+
+        hr = WsWriteEndElement( writer, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+        check_output( writer, tests[i].result, __LINE__ );
+    }
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    text.value = NAN;
+    hr = WsWriteText( writer, &text.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>NaN</t>", __LINE__ );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    text.value = INFINITY;
+    hr = WsWriteText( writer, &text.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>INF</t>", __LINE__ );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    text.value = -INFINITY;
+    hr = WsWriteText( writer, &text.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>-INF</t>", __LINE__ );
+
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -1896,4 +2008,5 @@ START_TEST(writer)
     test_WsWriteNode();
     test_WsCopyNode();
     test_text_types();
+    test_double();
 }

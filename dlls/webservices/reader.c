@@ -2271,7 +2271,7 @@ static HRESULT str_to_uint64( const unsigned char *str, ULONG len, UINT64 max, U
 #if defined(__i386__) || defined(__x86_64__)
 
 #define RC_DOWN 0x100;
-static BOOL set_fp_rounding( unsigned short *save )
+BOOL set_fp_rounding( unsigned short *save )
 {
 #ifdef __GNUC__
     unsigned short fpword;
@@ -2286,7 +2286,7 @@ static BOOL set_fp_rounding( unsigned short *save )
     return FALSE;
 #endif
 }
-static void restore_fp_rounding( unsigned short fpword )
+void restore_fp_rounding( unsigned short fpword )
 {
 #ifdef __GNUC__
     __asm__ __volatile__( "fldcw %0" : : "m" (fpword) );
@@ -2295,12 +2295,12 @@ static void restore_fp_rounding( unsigned short fpword )
 #endif
 }
 #else
-static BOOL set_fp_rounding( unsigned short *save )
+BOOL set_fp_rounding( unsigned short *save )
 {
     FIXME( "not implemented\n" );
     return FALSE;
 }
-static void restore_fp_rounding( unsigned short fpword )
+void restore_fp_rounding( unsigned short fpword )
 {
     FIXME( "not implemented\n" );
 }

@@ -18,6 +18,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <math.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -1042,6 +1043,92 @@ static ULONG format_uint64( const UINT64 *ptr, unsigned char *buf )
     return wsprintfA( (char *)buf, "%I64u", *ptr );
 }
 
+static ULONG format_double( const double *ptr, unsigned char *buf )
+{
+    static const double precision = 0.0000000000000001;
+    unsigned char *p = buf;
+    double val = *ptr; /* FIXME: use long double */
+    int neg, mag, mag2, use_exp;
+
+    if (isnan( val ))
+    {
+        memcpy( buf, "NaN", 3 );
+        return 3;
+    }
+    if (isinf( val ))
+    {
+        if (val < 0)
+        {
+            memcpy( buf, "-INF", 4 );
+            return 4;
+        }
+        memcpy( buf, "INF", 3 );
+        return 3;
+    }
+    if (val == 0.0)
+    {
+        *p = '0';
+        return 1;
+    }
+
+    if ((neg = val < 0))
+    {
+        *p++ = '-';
+        val = -val;
+    }
+
+    mag = log10( val );
+    use_exp = (mag >= 15 || (neg && mag >= 1) || mag <= -1);
+    if (use_exp)
+    {
+        if (mag < 0) mag -= 1;
+        val = val / pow( 10.0, mag );
+        mag2 = mag;
+        mag = 0;
+    }
+    else if (mag < 1) mag = 0;
+
+    while (val > precision || mag >= 0)
+    {
+        double weight = pow( 10.0, mag );
+        if (weight > 0 && !isinf( weight ))
+        {
+            int digit = floor( val / weight );
+            val -= digit * weight;
+            *(p++) = '0' + digit;
+        }
+        if (!mag && val > 0) *(p++) = '.';
+        mag--;
+    }
+
+    if (use_exp)
+    {
+        int i, j;
+        *(p++) = 'E';
+        if (mag2 > 0) *(p++) = '+';
+        else
+        {
+            *(p++) = '-';
+            mag2 = -mag2;
+        }
+        mag = 0;
+        while (mag2 > 0)
+        {
+            *(p++) = '0' + mag2 % 10;
+            mag2 /= 10;
+            mag++;
+        }
+        for (i = -mag, j = -1; i < j; i++, j--)
+        {
+            p[i] ^= p[j];
+            p[j] ^= p[i];
+            p[i] ^= p[j];
+        }
+    }
+
+    return p - buf;
+}
+
 static ULONG format_guid( const GUID *ptr, unsigned char *buf )
 {
     static const char fmt[] = "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x";
@@ -1108,6 +1195,19 @@ static HRESULT text_to_utf8text( const WS_XML_TEXT *text, WS_XML_UTF8_TEXT **ret
         const WS_XML_UINT64_TEXT *uint64_text = (const WS_XML_UINT64_TEXT *)text;
         unsigned char buf[21]; /* "18446744073709551615" */
         ULONG len = format_uint64( &uint64_text->value, buf );
+        if (!(*ret = alloc_utf8_text( buf, len ))) return E_OUTOFMEMORY;
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_DOUBLE:
+    {
+        const WS_XML_DOUBLE_TEXT *double_text = (const WS_XML_DOUBLE_TEXT *)text;
+        unsigned char buf[24]; /* "-1.1111111111111111E-308" */
+        unsigned short fpword;
+        ULONG len;
+
+        if (!set_fp_rounding( &fpword )) return E_NOTIMPL;
+        len = format_double( &double_text->value, buf );
+        restore_fp_rounding( fpword );
         if (!(*ret = alloc_utf8_text( buf, len ))) return E_OUTOFMEMORY;
         return S_OK;
     }

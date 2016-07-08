@@ -577,6 +577,11 @@ typedef struct _WS_XML_UINT64_TEXT {
     unsigned __int64 value;
 } WS_XML_UINT64_TEXT;
 
+typedef struct _WS_XML_DOUBLE_TEXT {
+    WS_XML_TEXT text;
+    double value;
+} WS_XML_DOUBLE_TEXT;
+
 typedef struct _WS_XML_GUID_TEXT {
     WS_XML_TEXT text;
     GUID value;

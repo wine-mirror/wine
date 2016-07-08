@@ -33,6 +33,8 @@ WS_XML_UTF8_TEXT *alloc_utf8_text( const unsigned char *, ULONG ) DECLSPEC_HIDDE
 HRESULT append_attribute( WS_XML_ELEMENT_NODE *, WS_XML_ATTRIBUTE * ) DECLSPEC_HIDDEN;
 void free_attribute( WS_XML_ATTRIBUTE * ) DECLSPEC_HIDDEN;
 WS_TYPE map_value_type( WS_VALUE_TYPE ) DECLSPEC_HIDDEN;
+BOOL set_fp_rounding( unsigned short * ) DECLSPEC_HIDDEN;
+void restore_fp_rounding( unsigned short ) DECLSPEC_HIDDEN;
 
 struct node
 {
