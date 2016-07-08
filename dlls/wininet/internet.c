@@ -1917,9 +1917,7 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
     }
     else
     {
-        if (lpUC->lpszUrlPath && (lpUC->dwUrlPathLength > 0))
-            lpUC->lpszUrlPath[0] = 0;
-        lpUC->dwUrlPathLength = 0;
+        set_url_component(&lpUC->lpszUrlPath, &lpUC->dwUrlPathLength, lpszcp, 0);
     }
 
     TRACE("%s: scheme(%s) host(%s) path(%s) extra(%s)\n", debugstr_wn(lpszUrl,dwUrlLength),
