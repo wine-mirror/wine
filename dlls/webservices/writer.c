@@ -97,6 +97,7 @@ static struct writer *alloc_writer(void)
 
 static void free_writer( struct writer *writer )
 {
+    if (!writer) return;
     destroy_nodes( writer->root );
     heap_free( writer->current_ns );
     WsFreeHeap( writer->output_heap );

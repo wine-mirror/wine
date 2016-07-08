@@ -176,7 +176,7 @@
 @ stdcall WsWriteEndElement(ptr ptr)
 @ stdcall WsWriteEndStartElement(ptr ptr)
 @ stub WsWriteEnvelopeEnd
-@ stub WsWriteEnvelopeStart
+@ stdcall WsWriteEnvelopeStart(ptr ptr ptr ptr ptr)
 @ stub WsWriteMessageEnd
 @ stub WsWriteMessageStart
 @ stdcall WsWriteNode(ptr ptr ptr)
