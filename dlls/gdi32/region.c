@@ -1038,7 +1038,8 @@ BOOL WINAPI PtInRegion( HRGN hrgn, INT x, INT y )
 
     if ((obj = GDI_GetObjPtr( hrgn, OBJ_REGION )))
     {
-        region_find_pt( obj, x, y, &ret );
+        if (obj->numRects > 0 && is_in_rect( &obj->extents, x, y ))
+            region_find_pt( obj, x, y, &ret );
 	GDI_ReleaseObj( hrgn );
     }
     return ret;
