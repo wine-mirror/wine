@@ -258,6 +258,7 @@ void init_directories(void)
     static const WCHAR dir_mailslotW[] = {'\\','D','e','v','i','c','e','\\','M','a','i','l','S','l','o','t'};
     static const WCHAR dir_objtypeW[] = {'O','b','j','e','c','t','T','y','p','e','s'};
     static const WCHAR dir_sessionsW[] = {'S','e','s','s','i','o','n','s'};
+    static const WCHAR dir_1W[] = {'1'};
     static const WCHAR dir_kernelW[] = {'K','e','r','n','e','l','O','b','j','e','c','t','s'};
     static const WCHAR dir_windowsW[] = {'W','i','n','d','o','w','s'};
     static const WCHAR dir_winstationsW[] = {'W','i','n','d','o','w','S','t','a','t','i','o','n','s'};
@@ -270,6 +271,7 @@ void init_directories(void)
     static const struct unicode_str dir_mailslot_str = {dir_mailslotW, sizeof(dir_mailslotW)};
     static const struct unicode_str dir_objtype_str = {dir_objtypeW, sizeof(dir_objtypeW)};
     static const struct unicode_str dir_sessions_str = {dir_sessionsW, sizeof(dir_sessionsW)};
+    static const struct unicode_str dir_1_str      = {dir_1W, sizeof(dir_1W)};
     static const struct unicode_str dir_kernel_str = {dir_kernelW, sizeof(dir_kernelW)};
     static const struct unicode_str dir_windows_str = {dir_windowsW, sizeof(dir_windowsW)};
     static const struct unicode_str dir_winstations_str = {dir_winstationsW, sizeof(dir_winstationsW)};
@@ -281,7 +283,7 @@ void init_directories(void)
     static const WCHAR link_nulW[]    = {'N','U','L'};
     static const WCHAR link_pipeW[]   = {'P','I','P','E'};
     static const WCHAR link_mailslotW[] = {'M','A','I','L','S','L','O','T'};
-    static const WCHAR link_0W[]      = {'0'};
+    static const WCHAR link_basenamedW[] = {'B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s'};
     static const WCHAR link_sessionW[] = {'S','e','s','s','i','o','n'};
     static const WCHAR link_sessionsW[] = {'\\','S','e','s','s','i','o','n','s'};
     static const struct unicode_str link_dosdev_str = {link_dosdevW, sizeof(link_dosdevW)};
@@ -290,7 +292,7 @@ void init_directories(void)
     static const struct unicode_str link_nul_str    = {link_nulW, sizeof(link_nulW)};
     static const struct unicode_str link_pipe_str   = {link_pipeW, sizeof(link_pipeW)};
     static const struct unicode_str link_mailslot_str = {link_mailslotW, sizeof(link_mailslotW)};
-    static const struct unicode_str link_0_str      = {link_0W, sizeof(link_0W)};
+    static const struct unicode_str link_basenamed_str = {link_basenamedW, sizeof(link_basenamedW)};
     static const struct unicode_str link_session_str = {link_sessionW, sizeof(link_sessionW)};
     static const struct unicode_str link_sessions_str = {link_sessionsW, sizeof(link_sessionsW)};
 
@@ -321,8 +323,8 @@ void init_directories(void)
     };
     static const struct unicode_str keyed_event_crit_sect_str = {keyed_event_crit_sectW, sizeof(keyed_event_crit_sectW)};
 
-    struct directory *dir_driver, *dir_device, *dir_global, *dir_basenamed, *dir_sessions, *dir_kernel, *dir_windows, *dir_winstation;
-    struct symlink *link_dosdev, *link_global1, *link_global2, *link_local, *link_nul, *link_pipe, *link_mailslot, *link_0, *link_session;
+    struct directory *dir_driver, *dir_device, *dir_global, *dir_basenamed, *dir_sessions, *dir_1, *dir_kernel, *dir_windows, *dir_winstation;
+    struct symlink *link_dosdev, *link_global1, *link_global2, *link_local, *link_nul, *link_pipe, *link_mailslot, *link_basenamed, *link_session;
     struct keyed_event *keyed_event;
     unsigned int i;
 
@@ -331,6 +333,7 @@ void init_directories(void)
     dir_device     = create_directory( &root_directory->obj, &dir_device_str, 0, HASH_SIZE, NULL );
     dir_objtype    = create_directory( &root_directory->obj, &dir_objtype_str, 0, HASH_SIZE, NULL );
     dir_sessions   = create_directory( &root_directory->obj, &dir_sessions_str, 0, HASH_SIZE, NULL );
+    dir_1          = create_directory( &dir_sessions->obj, &dir_1_str, 0, HASH_SIZE, NULL );
     dir_kernel     = create_directory( &root_directory->obj, &dir_kernel_str, 0, HASH_SIZE, NULL );
     dir_windows    = create_directory( &root_directory->obj, &dir_windows_str, 0, HASH_SIZE, NULL );
     dir_winstation = create_directory( &dir_windows->obj, &dir_winstations_str, 0, HASH_SIZE, NULL );
@@ -356,7 +359,7 @@ void init_directories(void)
     link_nul       = create_symlink( &dir_global->obj, &link_nul_str, 0, &dir_null_str, NULL );
     link_pipe      = create_symlink( &dir_global->obj, &link_pipe_str, 0, &dir_named_pipe_str, NULL );
     link_mailslot  = create_symlink( &dir_global->obj, &link_mailslot_str, 0, &dir_mailslot_str, NULL );
-    link_0         = create_symlink( &dir_sessions->obj, &link_0_str, 0, &dir_basenamed_str, NULL );
+    link_basenamed = create_symlink( &dir_1->obj, &link_basenamed_str, 0, &dir_basenamed_str, NULL );
     link_session   = create_symlink( &dir_basenamed->obj, &link_session_str, 0, &link_sessions_str, NULL );
     make_object_static( (struct object *)link_dosdev );
     make_object_static( (struct object *)link_global1 );
@@ -365,7 +368,7 @@ void init_directories(void)
     make_object_static( (struct object *)link_nul );
     make_object_static( (struct object *)link_pipe );
     make_object_static( (struct object *)link_mailslot );
-    make_object_static( (struct object *)link_0 );
+    make_object_static( (struct object *)link_basenamed );
     make_object_static( (struct object *)link_session );
 
     /* events */
@@ -382,6 +385,7 @@ void init_directories(void)
     release_object( dir_device );
     release_object( dir_basenamed );
     release_object( dir_sessions );
+    release_object( dir_1 );
     release_object( dir_kernel );
     release_object( dir_windows );
 }
