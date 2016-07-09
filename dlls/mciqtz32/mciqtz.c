@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <math.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -1070,7 +1071,7 @@ static DWORD MCIQTZ_mciSetAudio(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SETAUDIO_P
         switch (lpParms->dwItem) {
         case MCI_DGV_SETAUDIO_VOLUME:
             if (dwFlags & MCI_DGV_SETAUDIO_VALUE) {
-                long vol = -10000;
+                long vol;
                 HRESULT hr;
                 if (lpParms->dwValue > 1000) {
                     ret = MCIERR_OUTOFRANGE;
@@ -1078,7 +1079,11 @@ static DWORD MCIQTZ_mciSetAudio(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SETAUDIO_P
                 }
                 if (dwFlags & MCI_TEST)
                     break;
-                vol += (long)lpParms->dwValue * 10;
+                if (lpParms->dwValue != 0)
+                    vol = (long)(2000.0 * (log10(lpParms->dwValue) - 3.0));
+                else
+                    vol = -10000;
+                TRACE("Setting volume to %ld\n", vol);
                 hr = IBasicAudio_put_Volume(wma->audio, vol);
                 if (FAILED(hr)) {
                     WARN("Cannot set volume (hr = %x)\n", hr);
