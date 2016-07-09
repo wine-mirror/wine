@@ -862,7 +862,7 @@ static void test_basics(void)
     process_msgs();
 
     /* Initialize the control */
-    rc.top = rc.left = 0; rc.right = rc.bottom = 200;
+    SetRect(&rc, 0, 0, 200, 200);
     hr = INameSpaceTreeControl_Initialize(pnstc, hwnd, &rc, 0);
     ok(hr == S_OK, "Got (0x%08x)\n", hr);
 
@@ -1563,7 +1563,7 @@ static void test_basics(void)
     ok(hr == S_OK, "Got (0x%08x)\n", hr);
 
     /* GetItemRect */
-    rc.top = rc.left = rc.bottom = rc.right = 0;
+    SetRectEmpty(&rc);
     if(0)
     {
         /* Crashes under win 7 */
