@@ -910,9 +910,9 @@ static HRESULT WINAPI NSTC2_fnInitialize(INameSpaceTreeControl2* iface,
     window_ex_style = nstcsFlags & NSTCS_TABSTOP ? WS_EX_CONTROLPARENT : 0;
 
     if(prc)
-        CopyRect(&rc, prc);
+        rc = *prc;
     else
-        rc.left = rc.right = rc.top = rc.bottom = 0;
+        SetRectEmpty(&rc);
 
     This->hwnd_main = CreateWindowExW(window_ex_style, NSTC2_CLASS_NAME, NULL, window_style,
                                       rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
