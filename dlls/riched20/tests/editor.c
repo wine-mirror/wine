@@ -7047,8 +7047,7 @@ static void test_format_rect(void)
     GetClientRect(hwnd, &clientRect);
 
     expected = clientRect;
-    expected.left += 1;
-    expected.right -= 1;
+    InflateRect(&expected, -1, 0);
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
     ok(EqualRect(&rc, &expected), "rect %s != %s\n", wine_dbgstr_rect(&rc),
        wine_dbgstr_rect(&expected));
@@ -7143,8 +7142,7 @@ static void test_format_rect(void)
     GetClientRect(hwnd, &clientRect);
 
     expected = clientRect;
-    expected.left += 1;
-    expected.right -= 1;
+    InflateRect(&expected, -1, 0);
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
     ok(EqualRect(&rc, &expected), "rect %s != %s\n", wine_dbgstr_rect(&rc),
        wine_dbgstr_rect(&expected));
@@ -7153,8 +7151,7 @@ static void test_format_rect(void)
     GetClientRect(hwnd, &clientRect);
 
     expected = clientRect;
-    expected.left += 1;
-    expected.right -= 1;
+    InflateRect(&expected, -1, 0);
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
     ok(EqualRect(&rc, &expected), "rect %s != %s\n", wine_dbgstr_rect(&rc),
        wine_dbgstr_rect(&expected));
@@ -7163,8 +7160,7 @@ static void test_format_rect(void)
     GetClientRect(hwnd, &clientRect);
 
     expected = clientRect;
-    expected.left += 1;
-    expected.right -= 1;
+    InflateRect(&expected, -1, 0);
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
     ok(EqualRect(&rc, &expected), "rect %s != %s\n", wine_dbgstr_rect(&rc),
        wine_dbgstr_rect(&expected));
@@ -7180,9 +7176,8 @@ static void test_format_rect(void)
     GetClientRect(hwnd, &clientRect);
 
     expected = clientRect;
-    expected.left += 1;
     expected.top += 1;
-    expected.right -= 1;
+    InflateRect(&expected, -1, 0);
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
     ok(EqualRect(&rc, &expected), "rect %s != %s\n", wine_dbgstr_rect(&rc),
        wine_dbgstr_rect(&expected));
@@ -7191,8 +7186,7 @@ static void test_format_rect(void)
     InflateRect(&rc, -5, -5);
     expected = rc;
     expected.top -= 1;
-    expected.left -= 1;
-    expected.right += 1;
+    InflateRect(&expected, 1, 0);
     SendMessageA(hwnd, EM_SETRECT, 0, (LPARAM)&rc);
     SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
     ok(EqualRect(&rc, &expected), "rect %s != %s\n", wine_dbgstr_rect(&rc),
