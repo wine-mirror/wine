@@ -1603,10 +1603,8 @@ static void test_basics(void)
 
             /* The NamespaceTreeControl returns screen coordinates. */
             MapWindowPoints(NULL, hwnd, (POINT*)&rc, 2);
-            ok(rc.left == tv_rc.left, "Differed, got %d and %d\n", rc.left, tv_rc.left);
-            ok(rc.top == tv_rc.top, "Differed, got %d and %d\n", rc.top, tv_rc.top);
-            ok(rc.right == tv_rc.right, "Differed, got %d and %d\n", rc.right, tv_rc.right);
-            ok(rc.bottom == tv_rc.bottom, "Differed, got %d and %d\n", rc.bottom, tv_rc.bottom);
+            ok(EqualRect(&rc, &tv_rc), "Differed, got %s and %s\n", wine_dbgstr_rect(&rc),
+               wine_dbgstr_rect(&tv_rc));
 
             /* Save the height and compare to that of other items.
                Observed values: 18, 19, 21 */
