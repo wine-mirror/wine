@@ -381,8 +381,7 @@ static void paint_ruler(HWND hWnd, LONG EditLeftmost, BOOL NewMetrics)
     GetClientRect(hWnd, &drawRect);
     FillRect(hdc, &drawRect, hBrush);
 
-    drawRect.top += 3;
-    drawRect.bottom -= 3;
+    InflateRect(&drawRect, 0, -3);
     drawRect.left = EditLeftmost;
     drawRect.right = twips_to_pixels(printRect.right - margins.left, GetDeviceCaps(hdc, LOGPIXELSX));
     FillRect(hdc, &drawRect, GetStockObject(WHITE_BRUSH));
