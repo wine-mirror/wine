@@ -1584,7 +1584,7 @@ static void test_basics(void)
     hr = INameSpaceTreeControl_GetItemRect(pnstc, psitestdir, &rc);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
     ok(rc.top != rc.bottom, "Got 0 height.\n");
-    ok(rc.left != rc.bottom, "Got 0 width.\n");
+    ok(rc.left != rc.right, "Got 0 width.\n");
 
     height = 0;
     hwnd_tv = get_treeview_hwnd(pnstc);
