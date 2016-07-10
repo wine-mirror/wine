@@ -264,17 +264,25 @@ static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_present *op = data;
     struct wined3d_swapchain *swapchain;
+    unsigned int i;
 
     swapchain = op->swapchain;
     wined3d_swapchain_set_window(swapchain, op->dst_window_override);
 
     swapchain->swapchain_ops->swapchain_present(swapchain, &op->src_rect, &op->dst_rect, op->flags);
+
+    wined3d_resource_release(&swapchain->front_buffer->resource);
+    for (i = 0; i < swapchain->desc.backbuffer_count; ++i)
+    {
+        wined3d_resource_release(&swapchain->back_buffers[i]->resource);
+    }
 }
 
 void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override, DWORD flags)
 {
     struct wined3d_cs_present *op;
+    unsigned int i;
 
     op = cs->ops->require_space(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_PRESENT;
@@ -283,6 +291,12 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
     op->src_rect = *src_rect;
     op->dst_rect = *dst_rect;
     op->flags = flags;
+
+    wined3d_resource_acquire(&swapchain->front_buffer->resource);
+    for (i = 0; i < swapchain->desc.backbuffer_count; ++i)
+    {
+        wined3d_resource_acquire(&swapchain->back_buffers[i]->resource);
+    }
 
     cs->ops->submit(cs);
 }
