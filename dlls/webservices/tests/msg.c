@@ -36,10 +36,10 @@ static void test_WsCreateMessage(void)
     hr = WsCreateMessage( 0, 0, NULL, 0, &msg, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, 0, NULL, 0, &msg, NULL );
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, 0, NULL, 0, &msg, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateMessage( 0, WS_ENVELOPE_VERSION_SOAP_1_1, NULL, 0, &msg, NULL );
+    hr = WsCreateMessage( 0, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
     env_version = WS_ENVELOPE_VERSION_SOAP_1_1;
@@ -50,7 +50,7 @@ static void test_WsCreateMessage(void)
                           1, &msg, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL,
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL,
                           0, &msg, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -169,7 +169,7 @@ static void test_WsInitializeMessage(void)
     hr = WsInitializeMessage( NULL, WS_REQUEST_MESSAGE, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL,
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL,
                           0, &msg, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -220,7 +220,7 @@ static void test_WsAddressMessage(void)
     hr = WsAddressMessage( NULL, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL,
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL,
                           0, &msg, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -250,7 +250,7 @@ static void test_WsAddressMessage(void)
     ok( addressed == TRUE, "unexpected value %d\n", addressed );
     WsFreeMessage( msg );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL,
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL,
                           0, &msg, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -353,7 +353,7 @@ static void test_WsWriteEnvelopeStart(void)
     hr = WsWriteEnvelopeStart( NULL, writer, NULL, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL, 0, &msg,
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg,
                           NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -395,7 +395,7 @@ static void test_WsWriteEnvelopeEnd(void)
     hr = WsWriteEnvelopeEnd( NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_1_0, WS_ENVELOPE_VERSION_SOAP_1_2, NULL, 0, &msg,
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg,
                           NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -457,7 +457,7 @@ static void test_WsWriteBody(void)
         UINT32 val;
     } test, *ptr;
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_1_0, WS_ENVELOPE_VERSION_SOAP_1_2, NULL, 0, &msg,
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg,
                           NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
