@@ -83,6 +83,7 @@ struct d3drm_viewport
 
 struct d3drm_device
 {
+    struct d3drm_object obj;
     IDirect3DRMDevice IDirect3DRMDevice_iface;
     IDirect3DRMDevice2 IDirect3DRMDevice2_iface;
     IDirect3DRMDevice3 IDirect3DRMDevice3_iface;
@@ -92,7 +93,6 @@ struct d3drm_device
     IDirectDrawSurface *primary_surface, *render_target;
     IDirectDrawClipper *clipper;
     IDirect3DDevice *device;
-    LONG ref;
     BOOL dither;
     D3DRMRENDERQUALITY quality;
     DWORD rendermode;

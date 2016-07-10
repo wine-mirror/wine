@@ -47,6 +47,7 @@ static inline struct d3drm_device *impl_from_IDirect3DRMDevice3(IDirect3DRMDevic
 
 void d3drm_device_destroy(struct d3drm_device *device)
 {
+    d3drm_object_cleanup((IDirect3DRMObject *)&device->IDirect3DRMDevice_iface, &device->obj);
     if (device->device)
     {
         TRACE("Releasing attached ddraw interfaces.\n");
@@ -299,7 +300,7 @@ static HRESULT WINAPI d3drm_device1_QueryInterface(IDirect3DRMDevice *iface, REF
 static ULONG WINAPI d3drm_device3_AddRef(IDirect3DRMDevice3 *iface)
 {
     struct d3drm_device *device = impl_from_IDirect3DRMDevice3(iface);
-    ULONG refcount = InterlockedIncrement(&device->ref);
+    ULONG refcount = InterlockedIncrement(&device->obj.ref);
 
     TRACE("%p increasing refcount to %u.\n", iface, refcount);
 
@@ -327,7 +328,7 @@ static ULONG WINAPI d3drm_device1_AddRef(IDirect3DRMDevice *iface)
 static ULONG WINAPI d3drm_device3_Release(IDirect3DRMDevice3 *iface)
 {
     struct d3drm_device *device = impl_from_IDirect3DRMDevice3(iface);
-    ULONG refcount = InterlockedDecrement(&device->ref);
+    ULONG refcount = InterlockedDecrement(&device->obj.ref);
 
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
@@ -386,49 +387,61 @@ static HRESULT WINAPI d3drm_device1_Clone(IDirect3DRMDevice *iface,
 static HRESULT WINAPI d3drm_device3_AddDestroyCallback(IDirect3DRMDevice3 *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return d3drm_object_add_destroy_callback(&device->obj, cb, ctx);
 }
 
 static HRESULT WINAPI d3drm_device2_AddDestroyCallback(IDirect3DRMDevice2 *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return d3drm_device3_AddDestroyCallback(&device->IDirect3DRMDevice3_iface, cb, ctx);
 }
 
 static HRESULT WINAPI d3drm_device1_AddDestroyCallback(IDirect3DRMDevice *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return d3drm_device3_AddDestroyCallback(&device->IDirect3DRMDevice3_iface, cb, ctx);
 }
 
 static HRESULT WINAPI d3drm_device3_DeleteDestroyCallback(IDirect3DRMDevice3 *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return d3drm_object_delete_destroy_callback(&device->obj, cb, ctx);
 }
 
 static HRESULT WINAPI d3drm_device2_DeleteDestroyCallback(IDirect3DRMDevice2 *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return d3drm_device3_DeleteDestroyCallback(&device->IDirect3DRMDevice3_iface, cb, ctx);
 }
 
 static HRESULT WINAPI d3drm_device1_DeleteDestroyCallback(IDirect3DRMDevice *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return d3drm_device3_DeleteDestroyCallback(&device->IDirect3DRMDevice3_iface, cb, ctx);
 }
 
 static HRESULT WINAPI d3drm_device3_SetAppData(IDirect3DRMDevice3 *iface, DWORD data)
@@ -1582,7 +1595,7 @@ HRESULT d3drm_device_create(struct d3drm_device **device, IDirect3DRM *d3drm)
     object->IDirect3DRMDevice3_iface.lpVtbl = &d3drm_device3_vtbl;
     object->IDirect3DRMWinDevice_iface.lpVtbl = &d3drm_device_win_vtbl;
     object->d3drm = d3drm;
-    object->ref = 1;
+    d3drm_object_init(&object->obj);
 
     *device = object;
 
