@@ -9884,6 +9884,19 @@ static void test_texcoordindex(void)
     DestroyWindow(window);
 }
 
+static BOOL ddraw_is_nvidia(IDirectDraw4 *ddraw)
+{
+    DDDEVICEIDENTIFIER identifier;
+    HRESULT hr;
+
+    if (!strcmp(winetest_platform, "wine"))
+        return FALSE;
+
+    hr = IDirectDraw4_GetDeviceIdentifier(ddraw, &identifier, 0);
+    ok(SUCCEEDED(hr), "Failed to get device identifier, hr %#x.\n", hr);
+    return identifier.dwVendorId == 0x10de;
+}
+
 static void test_colorkey_precision(void)
 {
     static struct
@@ -9915,18 +9928,18 @@ static void test_colorkey_precision(void)
     DDBLTFX fx;
     DWORD data[4] = {0}, color_mask;
     D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
-    D3DDEVICEDESC device_desc, hel_desc;
-    BOOL warp;
+    BOOL is_nvidia, is_warp;
     static const struct
     {
         unsigned int max, shift, bpp, clear;
         const char *name;
+        BOOL skip_nv;
         DDPIXELFORMAT fmt;
     }
     tests[] =
     {
         {
-            255, 0, 4, 0x00345678, "D3DFMT_X8R8G8B8",
+            255, 0, 4, 0x00345678, "D3DFMT_X8R8G8B8", FALSE,
             {
                 sizeof(DDPIXELFORMAT), DDPF_RGB, 0,
                 {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0x00000000}
@@ -9934,7 +9947,7 @@ static void test_colorkey_precision(void)
 
         },
         {
-            63, 5, 2, 0x5678, "D3DFMT_R5G6B5, G channel",
+            63, 5, 2, 0x5678, "D3DFMT_R5G6B5, G channel", FALSE,
             {
                 sizeof(DDPIXELFORMAT), DDPF_RGB, 0,
                 {16}, {0xf800}, {0x07e0}, {0x001f}, {0x0000}
@@ -9942,7 +9955,7 @@ static void test_colorkey_precision(void)
 
         },
         {
-            31, 0, 2, 0x5678, "D3DFMT_R5G6B5, B channel",
+            31, 0, 2, 0x5678, "D3DFMT_R5G6B5, B channel", FALSE,
             {
                 sizeof(DDPIXELFORMAT), DDPF_RGB, 0,
                 {16}, {0xf800}, {0x07e0}, {0x001f}, {0x0000}
@@ -9950,12 +9963,11 @@ static void test_colorkey_precision(void)
 
         },
         {
-            15, 0, 2, 0x0678, "D3DFMT_A4R4G4B4",
+            15, 0, 2, 0x0678, "D3DFMT_A4R4G4B4", TRUE,
             {
                 sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
                 {16}, {0x0f00}, {0x00f0}, {0x000f}, {0xf000}
             }
-
         },
     };
 
@@ -9968,21 +9980,6 @@ static void test_colorkey_precision(void)
         return;
     }
 
-    /* The Windows 8 WARP driver has plenty of false negatives in X8R8G8B8
-     * (color key doesn't match although the values are equal), and a false
-     * positive when the color key is 0 and the texture contains the value 1.
-     * I don't want to mark this broken unconditionally since this would
-     * essentially disable the test on Windows. Try to detect WARP (and I
-     * guess mismatch other SW renderers) by its ability to texture from
-     * system memory. Also on random occasions 254 == 255 and 255 != 255.*/
-    memset(&device_desc, 0, sizeof(device_desc));
-    device_desc.dwSize = sizeof(device_desc);
-    memset(&hel_desc, 0, sizeof(hel_desc));
-    hel_desc.dwSize = sizeof(hel_desc);
-    hr = IDirect3DDevice3_GetCaps(device, &device_desc, &hel_desc);
-    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
-    warp = !!(device_desc.dwDevCaps & D3DDEVCAPS_TEXTURESYSTEMMEMORY);
-
     hr = IDirect3DDevice3_GetDirect3D(device, &d3d);
     ok(SUCCEEDED(hr), "Failed to get Direct3D3 interface, hr %#x.\n", hr);
     hr = IDirect3D3_QueryInterface(d3d, &IID_IDirectDraw4, (void **)&ddraw);
@@ -9990,6 +9987,15 @@ static void test_colorkey_precision(void)
     IDirect3D3_Release(d3d);
     hr = IDirect3DDevice3_GetRenderTarget(device, &rt);
     ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    is_nvidia = ddraw_is_nvidia(ddraw);
+    /* The Windows 8 WARP driver has plenty of false negatives in X8R8G8B8
+     * (color key doesn't match although the values are equal), and a false
+     * positive when the color key is 0 and the texture contains the value 1.
+     * I don't want to mark this broken unconditionally since this would
+     * essentially disable the test on Windows. Also on random occasions
+     * 254 == 255 and 255 != 255.*/
+    is_warp = ddraw_is_warp(ddraw);
 
     viewport = create_viewport(device, 0, 0, 640, 480);
     hr = IDirect3DDevice3_SetCurrentViewport(device, viewport);
@@ -10021,6 +10027,12 @@ static void test_colorkey_precision(void)
 
     for (t = 0; t < sizeof(tests) / sizeof(*tests); ++t)
     {
+        if (is_nvidia && tests[t].skip_nv)
+        {
+            win_skip("Skipping test %s on Nvidia Windows drivers.\n", tests[t].name);
+            continue;
+        }
+
         memset(&surface_desc, 0, sizeof(surface_desc));
         surface_desc.dwSize = sizeof(surface_desc);
         surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
@@ -10126,6 +10138,9 @@ static void test_colorkey_precision(void)
                      * so we can detect the bug by looking at the otherwise unused 4th texel. It should
                      * never be masked out by the key.
                      *
+                     * On Windows 10 the problem is worse, Blt just hangs. For this reason the ARGB4444
+                     * test is disabled entirely.
+                     *
                      * Also appears to affect the testbot in some way with R5G6B5. Color keying is
                      * terrible on WARP. */
                     skip("Nvidia A4R4G4B4 color keying blit bug detected, skipping.\n");
@@ -10162,26 +10177,26 @@ static void test_colorkey_precision(void)
 
             color = get_surface_color(rt, 80, 240);
             if (!c)
-                ok(compare_color(color, 0x0000ff00, 1) || broken(warp && compare_color(color, 0x00000000, 1)),
+                ok(compare_color(color, 0x0000ff00, 1) || broken(is_warp && compare_color(color, 0x00000000, 1)),
                         "Got unexpected color 0x%08x, format %s, c=%u.\n",
                         color, tests[t].name, c);
             else
-                ok(compare_color(color, 0x00000000, 1) || broken(warp && compare_color(color, 0x0000ff00, 1)),
+                ok(compare_color(color, 0x00000000, 1) || broken(is_warp && compare_color(color, 0x0000ff00, 1)),
                         "Got unexpected color 0x%08x, format %s, c=%u.\n",
                         color, tests[t].name, c);
 
             color = get_surface_color(rt, 240, 240);
-            ok(compare_color(color, 0x0000ff00, 1) || broken(warp && compare_color(color, 0x00000000, 1)),
+            ok(compare_color(color, 0x0000ff00, 1) || broken(is_warp && compare_color(color, 0x00000000, 1)),
                     "Got unexpected color 0x%08x, format %s, c=%u.\n",
                     color, tests[t].name, c);
 
             color = get_surface_color(rt, 400, 240);
             if (c == tests[t].max)
-                ok(compare_color(color, 0x0000ff00, 1) || broken(warp && compare_color(color, 0x00000000, 1)),
+                ok(compare_color(color, 0x0000ff00, 1) || broken(is_warp && compare_color(color, 0x00000000, 1)),
                         "Got unexpected color 0x%08x, format %s, c=%u.\n",
                         color, tests[t].name, c);
             else
-                ok(compare_color(color, 0x00000000, 1) || broken(warp && compare_color(color, 0x0000ff00, 1)),
+                ok(compare_color(color, 0x00000000, 1) || broken(is_warp && compare_color(color, 0x0000ff00, 1)),
                         "Got unexpected color 0x%08x, format %s, c=%u.\n",
                         color, tests[t].name, c);
 
