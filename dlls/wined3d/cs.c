@@ -304,20 +304,36 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
 static void wined3d_cs_exec_clear(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_clear *op = data;
+    const struct wined3d_state *state;
     struct wined3d_device *device;
+    unsigned int i;
     RECT draw_rect;
 
     device = cs->device;
-    wined3d_get_draw_rect(&device->state, &draw_rect);
+    state = &device->state;
+    wined3d_get_draw_rect(state, &draw_rect);
     device_clear_render_targets(device, device->adapter->gl_info.limits.buffers,
             &device->fb, op->rect_count, op->rects, &draw_rect, op->flags,
             &op->color, op->depth, op->stencil);
+
+    if (op->flags & WINED3DCLEAR_TARGET)
+    {
+        for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
+        {
+            if (state->fb->render_targets[i])
+                wined3d_resource_release(state->fb->render_targets[i]->resource);
+        }
+    }
+    if (op->flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
+        wined3d_resource_release(state->fb->depth_stencil->resource);
 }
 
 void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *rects,
         DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil)
 {
+    const struct wined3d_state *state = &cs->device->state;
     struct wined3d_cs_clear *op;
+    unsigned int i;
 
     op = cs->ops->require_space(cs, FIELD_OFFSET(struct wined3d_cs_clear, rects[rect_count]));
     op->opcode = WINED3D_CS_OP_CLEAR;
@@ -327,6 +343,17 @@ void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *
     op->stencil = stencil;
     op->rect_count = rect_count;
     memcpy(op->rects, rects, sizeof(*rects) * rect_count);
+
+    if (flags & WINED3DCLEAR_TARGET)
+    {
+        for (i = 0; i < cs->device->adapter->gl_info.limits.buffers; ++i)
+        {
+            if (state->fb->render_targets[i])
+                wined3d_resource_acquire(state->fb->render_targets[i]->resource);
+        }
+    }
+    if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
+        wined3d_resource_acquire(state->fb->depth_stencil->resource);
 
     cs->ops->submit(cs);
 }
