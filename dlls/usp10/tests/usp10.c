@@ -2450,10 +2450,7 @@ static void test_ScriptTextOut(HDC hdc)
             ok (hr == S_OK, "ScriptTextOut should return S_OK not (%08x)\n", hr);
 
             /* Test Rect Rgn is acceptable */
-            rect.top = 10;
-            rect.bottom = 20;
-            rect.left = 10;
-            rect.right = 40;
+            SetRect(&rect, 10, 10, 40, 20);
             hr = ScriptTextOut(hdc, &psc, 0, 0, 0, &rect, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
                                piAdvance, NULL, pGoffset);
             ok (hr == S_OK, "ScriptTextOut should return S_OK not (%08x)\n", hr);
@@ -2616,10 +2613,7 @@ static void test_ScriptTextOut3(HDC hdc)
             ok (hr == S_OK, "Should return S_OK not (%08x)\n", hr);
 
             /* Test Rect Rgn is acceptable */
-            rect.top = 10;
-            rect.bottom = 20;
-            rect.left = 10;
-            rect.right = 40;
+            SetRect(&rect, 10, 10, 40, 20);
             hr = ScriptTextOut(hdc, &psc, 0, 0, 0, &rect, &pItem[0].a, NULL, 0, pwOutGlyphs1, pcGlyphs,
                                piAdvance, NULL, pGoffset);
             ok (hr == S_OK, "ScriptTextOut should return S_OK not (%08x)\n", hr);
