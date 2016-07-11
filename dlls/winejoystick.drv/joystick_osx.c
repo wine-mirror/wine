@@ -314,6 +314,33 @@ static CFIndex find_top_level(IOHIDDeviceRef hid_device, CFMutableArrayRef main_
 }
 
 /**************************************************************************
+ *                              device_location_comparator
+ *
+ * Helper to sort device array by location ID since location IDs are consistent across boots & launches
+ */
+static CFComparisonResult device_location_comparator(const void *val1, const void *val2, void *context)
+{
+    IOHIDDeviceRef device1 = (IOHIDDeviceRef)val1, device2 = (IOHIDDeviceRef)val2;
+    long loc1 = get_device_location_ID(device1), loc2 = get_device_location_ID(device2);
+
+    if (loc1 < loc2)
+        return kCFCompareLessThan;
+    else if (loc1 > loc2)
+        return kCFCompareGreaterThan;
+    return kCFCompareEqualTo;
+}
+
+/**************************************************************************
+ *                              copy_set_to_array
+ *
+ * Helper to copy the CFSet to a CFArray
+ */
+static void copy_set_to_array(const void *value, void *context)
+{
+    CFArrayAppendValue(context, value);
+}
+
+/**************************************************************************
  *                              find_osx_devices
  */
 static int find_osx_devices(void)
@@ -358,20 +385,13 @@ static int find_osx_devices(void)
     if (devset)
     {
         CFIndex num_devices, num_main_elements;
-        const void** refs;
-        CFArrayRef devices;
+        CFMutableArrayRef devices;
 
         num_devices = CFSetGetCount(devset);
-        refs = HeapAlloc(GetProcessHeap(), 0, num_devices * sizeof(*refs));
-        if (!refs)
-        {
-            CFRelease(devset);
-            goto fail;
-        }
+        devices = CFArrayCreateMutable(kCFAllocatorDefault, num_devices, &kCFTypeArrayCallBacks);
+        CFSetApplyFunction(devset, copy_set_to_array, (void *)devices);
+        CFArraySortValues(devices, CFRangeMake(0, num_devices), device_location_comparator, NULL);
 
-        CFSetGetValues(devset, refs);
-        devices = CFArrayCreate(NULL, refs, num_devices, &kCFTypeArrayCallBacks);
-        HeapFree(GetProcessHeap(), 0, refs);
         CFRelease(devset);
         if (!devices)
             goto fail;
