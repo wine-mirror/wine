@@ -1126,8 +1126,8 @@ int __thiscall filebuf_sync(filebuf *this)
         count = this->base.pptr - this->base.pbase;
         if (count > 0 && _write(this->fd, this->base.pbase, count) != count)
             return EOF;
-        this->base.pbase = this->base.pptr = this->base.epptr = NULL;
     }
+    this->base.pbase = this->base.pptr = this->base.epptr = NULL;
     /* flush input buffer */
     if (this->base.egptr != NULL) {
         offset = this->base.egptr - this->base.gptr;
@@ -1143,8 +1143,8 @@ int __thiscall filebuf_sync(filebuf *this)
             if (_lseek(this->fd, -offset, SEEK_CUR) < 0)
                 return EOF;
         }
-        this->base.eback = this->base.gptr = this->base.egptr = NULL;
     }
+    this->base.eback = this->base.gptr = this->base.egptr = NULL;
     return 0;
 }
 
