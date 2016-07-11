@@ -121,6 +121,28 @@ typedef struct {
 static joystick_t joysticks[MAXJOYSTICK];
 static CFMutableArrayRef device_main_elements = NULL;
 
+static long get_device_property_long(IOHIDDeviceRef device, CFStringRef key)
+{
+    CFTypeRef ref;
+    long result = 0;
+
+    if (device)
+    {
+        assert(IOHIDDeviceGetTypeID() == CFGetTypeID(device));
+
+        ref = IOHIDDeviceGetProperty(device, key);
+
+        if (ref && CFNumberGetTypeID() == CFGetTypeID(ref))
+            CFNumberGetValue((CFNumberRef)ref, kCFNumberLongType, &result);
+    }
+
+    return result;
+}
+
+static long get_device_location_ID(IOHIDDeviceRef device)
+{
+    return get_device_property_long(device, CFSTR(kIOHIDLocationIDKey));
+}
 
 static const char* debugstr_cf(CFTypeRef t)
 {
@@ -154,8 +176,9 @@ static const char* debugstr_cf(CFTypeRef t)
 
 static const char* debugstr_device(IOHIDDeviceRef device)
 {
-    return wine_dbg_sprintf("<IOHIDDevice %p product %s>", device,
-                            debugstr_cf(IOHIDDeviceGetProperty(device, CFSTR(kIOHIDProductKey))));
+    return wine_dbg_sprintf("<IOHIDDevice %p product %s IOHIDLocationID %lu>", device,
+                            debugstr_cf(IOHIDDeviceGetProperty(device, CFSTR(kIOHIDProductKey))),
+                            get_device_location_ID(device));
 }
 
 static const char* debugstr_element(IOHIDElementRef element)
