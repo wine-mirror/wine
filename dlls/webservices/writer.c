@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <math.h>
@@ -1049,9 +1050,10 @@ static ULONG format_uint64( const UINT64 *ptr, unsigned char *buf )
 
 static ULONG format_double( const double *ptr, unsigned char *buf )
 {
-    static const double precision = 0.0000000000000001;
+#ifdef HAVE_POWL
+    static const long double precision = 0.0000000000000001;
     unsigned char *p = buf;
-    double val = *ptr; /* FIXME: use long double */
+    long double val = *ptr;
     int neg, mag, mag2, use_exp;
 
     if (isnan( val ))
@@ -1081,12 +1083,12 @@ static ULONG format_double( const double *ptr, unsigned char *buf )
         val = -val;
     }
 
-    mag = log10( val );
+    mag = log10l( val );
     use_exp = (mag >= 15 || (neg && mag >= 1) || mag <= -1);
     if (use_exp)
     {
         if (mag < 0) mag -= 1;
-        val = val / pow( 10.0, mag );
+        val = val / powl( 10.0, mag );
         mag2 = mag;
         mag = 0;
     }
@@ -1094,14 +1096,14 @@ static ULONG format_double( const double *ptr, unsigned char *buf )
 
     while (val > precision || mag >= 0)
     {
-        double weight = pow( 10.0, mag );
+        long double weight = powl( 10.0, mag );
         if (weight > 0 && !isinf( weight ))
         {
-            int digit = floor( val / weight );
+            int digit = floorl( val / weight );
             val -= digit * weight;
             *(p++) = '0' + digit;
         }
-        if (!mag && val > 0) *(p++) = '.';
+        if (!mag && val > precision) *(p++) = '.';
         mag--;
     }
 
@@ -1131,6 +1133,10 @@ static ULONG format_double( const double *ptr, unsigned char *buf )
     }
 
     return p - buf;
+#else
+    FIXME( "powl not found at build time\n" );
+    return 0;
+#endif
 }
 
 static ULONG format_guid( const GUID *ptr, unsigned char *buf )
@@ -1212,6 +1218,7 @@ static HRESULT text_to_utf8text( const WS_XML_TEXT *text, WS_XML_UTF8_TEXT **ret
         if (!set_fp_rounding( &fpword )) return E_NOTIMPL;
         len = format_double( &double_text->value, buf );
         restore_fp_rounding( fpword );
+        if (!len) return E_NOTIMPL;
         if (!(*ret = alloc_utf8_text( buf, len ))) return E_OUTOFMEMORY;
         return S_OK;
     }

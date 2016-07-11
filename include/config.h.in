@@ -672,6 +672,9 @@
 /* Define to 1 if you have the <port.h> header file. */
 #undef HAVE_PORT_H
 
+/* Define to 1 if you have the `powl' function. */
+#undef HAVE_POWL
+
 /* Define if we can use ppdev.h for parallel port access */
 #undef HAVE_PPDEV
 

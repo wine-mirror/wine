@@ -16939,6 +16939,7 @@ for ac_func in \
 	lrintf \
 	lround \
 	lroundf \
+	powl \
 	remainder \
 	remainderf \
 	rint \
