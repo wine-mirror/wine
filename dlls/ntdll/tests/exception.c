@@ -38,7 +38,6 @@
 
 static void *code_mem;
 
-static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
 static NTSTATUS  (WINAPI *pNtGetContextThread)(HANDLE,CONTEXT*);
 static NTSTATUS  (WINAPI *pNtSetContextThread)(HANDLE,CONTEXT*);
 static NTSTATUS  (WINAPI *pRtlRaiseException)(EXCEPTION_RECORD *rec);
@@ -241,16 +240,16 @@ static void run_exception_test(void *handler, const void* context,
     DWORD oldaccess, oldaccess2;
 
     exc_frame.frame.Handler = handler;
-    exc_frame.frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
+    exc_frame.frame.Prev = NtCurrentTeb()->Tib.ExceptionList;
     exc_frame.context = context;
 
     memcpy(code_mem, code, code_size);
     if(access)
         VirtualProtect(code_mem, code_size, access, &oldaccess);
 
-    pNtCurrentTeb()->Tib.ExceptionList = &exc_frame.frame;
+    NtCurrentTeb()->Tib.ExceptionList = &exc_frame.frame;
     func();
-    pNtCurrentTeb()->Tib.ExceptionList = exc_frame.frame.Prev;
+    NtCurrentTeb()->Tib.ExceptionList = exc_frame.frame.Prev;
 
     if(access)
         VirtualProtect(code_mem, code_size, oldaccess, &oldaccess2);
@@ -266,7 +265,7 @@ static LONG CALLBACK rtlraiseexception_vectored_handler(EXCEPTION_POINTERS *Exce
     ok(rec->ExceptionAddress == (char *)code_mem + 0xb, "ExceptionAddress at %p instead of %p\n",
        rec->ExceptionAddress, (char *)code_mem + 0xb);
 
-    if (pNtCurrentTeb()->Peb->BeingDebugged)
+    if (NtCurrentTeb()->Peb->BeingDebugged)
         ok((void *)context->Eax == pRtlRaiseException ||
            broken( is_wow64 && context->Eax == 0xf00f00f1 ), /* broken on vista */
            "debugger managed to modify Eax to %x should be %p\n",
@@ -363,11 +362,11 @@ static void run_rtlraiseexception_test(DWORD exceptioncode)
     record.NumberParameters = 0;
 
     frame.Handler = rtlraiseexception_handler;
-    frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
+    frame.Prev = NtCurrentTeb()->Tib.ExceptionList;
 
     memcpy(code_mem, call_one_arg_code, sizeof(call_one_arg_code));
 
-    pNtCurrentTeb()->Tib.ExceptionList = &frame;
+    NtCurrentTeb()->Tib.ExceptionList = &frame;
     if (have_vectored_api)
     {
         vectored_handler = pRtlAddVectoredExceptionHandler(TRUE, &rtlraiseexception_vectored_handler);
@@ -380,7 +379,7 @@ static void run_rtlraiseexception_test(DWORD exceptioncode)
 
     if (have_vectored_api)
         pRtlRemoveVectoredExceptionHandler(vectored_handler);
-    pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
+    NtCurrentTeb()->Tib.ExceptionList = frame.Prev;
 }
 
 static void test_rtlraiseexception(void)
@@ -448,30 +447,30 @@ static void test_unwind(void)
 
     /* add first unwind handler */
     frame1->Handler = unwind_handler;
-    frame1->Prev = pNtCurrentTeb()->Tib.ExceptionList;
-    pNtCurrentTeb()->Tib.ExceptionList = frame1;
+    frame1->Prev = NtCurrentTeb()->Tib.ExceptionList;
+    NtCurrentTeb()->Tib.ExceptionList = frame1;
 
     /* add second unwind handler */
     frame2->Handler = unwind_handler;
-    frame2->Prev = pNtCurrentTeb()->Tib.ExceptionList;
-    pNtCurrentTeb()->Tib.ExceptionList = frame2;
+    frame2->Prev = NtCurrentTeb()->Tib.ExceptionList;
+    NtCurrentTeb()->Tib.ExceptionList = frame2;
 
     /* test unwind to current frame */
     unwind_expected_eax = 0xDEAD0000;
     retval = func(pRtlUnwind, frame2, NULL, 0xDEAD0000);
     ok(retval == 0xDEAD0000, "RtlUnwind returned eax %08x instead of %08x\n", retval, 0xDEAD0000);
-    ok(pNtCurrentTeb()->Tib.ExceptionList == frame2, "Exception record points to %p instead of %p\n",
-       pNtCurrentTeb()->Tib.ExceptionList, frame2);
+    ok(NtCurrentTeb()->Tib.ExceptionList == frame2, "Exception record points to %p instead of %p\n",
+       NtCurrentTeb()->Tib.ExceptionList, frame2);
 
     /* unwind to frame1 */
     unwind_expected_eax = 0xDEAD0000;
     retval = func(pRtlUnwind, frame1, NULL, 0xDEAD0000);
     ok(retval == 0xDEAD0001, "RtlUnwind returned eax %08x instead of %08x\n", retval, 0xDEAD0001);
-    ok(pNtCurrentTeb()->Tib.ExceptionList == frame1, "Exception record points to %p instead of %p\n",
-       pNtCurrentTeb()->Tib.ExceptionList, frame1);
+    ok(NtCurrentTeb()->Tib.ExceptionList == frame1, "Exception record points to %p instead of %p\n",
+       NtCurrentTeb()->Tib.ExceptionList, frame1);
 
     /* restore original handler */
-    pNtCurrentTeb()->Tib.ExceptionList = frame1->Prev;
+    NtCurrentTeb()->Tib.ExceptionList = frame1->Prev;
 }
 
 static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
@@ -861,7 +860,7 @@ static void test_debugger(void)
 
         if (de.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT)
         {
-            if(de.u.CreateProcessInfo.lpBaseOfImage != pNtCurrentTeb()->Peb->ImageBaseAddress)
+            if(de.u.CreateProcessInfo.lpBaseOfImage != NtCurrentTeb()->Peb->ImageBaseAddress)
             {
                 skip("child process loaded at different address, terminating it\n");
                 pNtTerminateProcess(pi.hProcess, 0);
@@ -2163,7 +2162,6 @@ START_TEST(exception)
         return;
     }
 
-    pNtCurrentTeb        = (void *)GetProcAddress( hntdll, "NtCurrentTeb" );
     pNtGetContextThread  = (void *)GetProcAddress( hntdll, "NtGetContextThread" );
     pNtSetContextThread  = (void *)GetProcAddress( hntdll, "NtSetContextThread" );
     pNtReadVirtualMemory = (void *)GetProcAddress( hntdll, "NtReadVirtualMemory" );
@@ -2185,11 +2183,6 @@ START_TEST(exception)
     pIsWow64Process = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
 
 #ifdef __i386__
-    if (!pNtCurrentTeb)
-    {
-        skip( "NtCurrentTeb not found\n" );
-        return;
-    }
     if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
 
     if (pRtlAddVectoredExceptionHandler && pRtlRemoveVectoredExceptionHandler)
@@ -2210,7 +2203,7 @@ START_TEST(exception)
         }
 
         /* child must be run under a debugger */
-        if (!pNtCurrentTeb()->Peb->BeingDebugged)
+        if (!NtCurrentTeb()->Peb->BeingDebugged)
         {
             ok(FALSE, "child process not being debugged?\n");
             return;
