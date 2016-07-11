@@ -204,6 +204,18 @@ static void CFSetApplierFunctionCopyToCFArray(const void *value, void *context)
     CFArrayAppendValue( ( CFMutableArrayRef ) context, value );
 }
 
+static CFComparisonResult device_location_comparator(const void *val1, const void *val2, void *context)
+{
+    IOHIDDeviceRef device1 = (IOHIDDeviceRef)val1, device2 = (IOHIDDeviceRef)val2;
+    long loc1 = get_device_location_ID(device1), loc2 = get_device_location_ID(device2);
+
+    if (loc1 < loc2)
+        return kCFCompareLessThan;
+    else if (loc1 > loc2)
+        return kCFCompareGreaterThan;
+    return kCFCompareEqualTo;
+}
+
 static const char* debugstr_cf(CFTypeRef t)
 {
     CFStringRef s;
@@ -478,6 +490,7 @@ static int find_osx_devices(void)
         CFSetApplyFunction(devset, CFSetApplierFunctionCopyToCFArray, devices);
         CFRelease( devset);
         num_devices = CFArrayGetCount(devices);
+        CFArraySortValues(devices, CFRangeMake(0, num_devices), device_location_comparator, NULL);
 
         device_main_elements = CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
         if (!device_main_elements)
