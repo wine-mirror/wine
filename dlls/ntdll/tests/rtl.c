@@ -82,7 +82,6 @@ static RTL_HANDLE * (WINAPI * pRtlAllocateHandle)(RTL_HANDLE_TABLE *, ULONG *);
 static BOOLEAN   (WINAPI * pRtlFreeHandle)(RTL_HANDLE_TABLE *, RTL_HANDLE *);
 static NTSTATUS  (WINAPI *pRtlAllocateAndInitializeSid)(PSID_IDENTIFIER_AUTHORITY,BYTE,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,PSID*);
 static NTSTATUS  (WINAPI *pRtlFreeSid)(PSID);
-static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
 static DWORD     (WINAPI *pRtlGetThreadErrorMode)(void);
 static NTSTATUS  (WINAPI *pRtlSetThreadErrorMode)(DWORD, LPDWORD);
 static IMAGE_BASE_RELOCATION *(WINAPI *pLdrProcessRelocationBlock)(void*,UINT,USHORT*,INT_PTR);
@@ -136,7 +135,6 @@ static void InitFunctionPtrs(void)
 	pRtlFreeHandle = (void *)GetProcAddress(hntdll, "RtlFreeHandle");
         pRtlAllocateAndInitializeSid = (void *)GetProcAddress(hntdll, "RtlAllocateAndInitializeSid");
         pRtlFreeSid = (void *)GetProcAddress(hntdll, "RtlFreeSid");
-        pNtCurrentTeb = (void *)GetProcAddress(hntdll, "NtCurrentTeb");
         pRtlGetThreadErrorMode = (void *)GetProcAddress(hntdll, "RtlGetThreadErrorMode");
         pRtlSetThreadErrorMode = (void *)GetProcAddress(hntdll, "RtlSetThreadErrorMode");
         pLdrProcessRelocationBlock  = (void *)GetProcAddress(hntdll, "LdrProcessRelocationBlock");
@@ -897,10 +895,12 @@ static void test_RtlThreadErrorMode(void)
        mode, oldmode);
     ok(pRtlGetThreadErrorMode() == 0x70,
        "RtlGetThreadErrorMode returned 0x%x, expected 0x%x\n", mode, 0x70);
-    if (!is_wow64 && pNtCurrentTeb)
-        ok(pNtCurrentTeb()->HardErrorDisabled == 0x70,
+    if (!is_wow64)
+    {
+        ok(NtCurrentTeb()->HardErrorDisabled == 0x70,
            "The TEB contains 0x%x, expected 0x%x\n",
-           pNtCurrentTeb()->HardErrorDisabled, 0x70);
+           NtCurrentTeb()->HardErrorDisabled, 0x70);
+    }
 
     status = pRtlSetThreadErrorMode(0, &mode);
     ok(status == STATUS_SUCCESS ||
@@ -911,10 +911,12 @@ static void test_RtlThreadErrorMode(void)
        mode, 0x70);
     ok(pRtlGetThreadErrorMode() == 0,
        "RtlGetThreadErrorMode returned 0x%x, expected 0x%x\n", mode, 0);
-    if (!is_wow64 && pNtCurrentTeb)
-        ok(pNtCurrentTeb()->HardErrorDisabled == 0,
+    if (!is_wow64)
+    {
+        ok(NtCurrentTeb()->HardErrorDisabled == 0,
            "The TEB contains 0x%x, expected 0x%x\n",
-           pNtCurrentTeb()->HardErrorDisabled, 0);
+           NtCurrentTeb()->HardErrorDisabled, 0);
+    }
 
     for (mode = 1; mode; mode <<= 1)
     {
