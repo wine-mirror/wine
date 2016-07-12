@@ -220,6 +220,7 @@ static void test_CreateMessage(void)
     ULONG count;
     FINDBODY find_struct;
     HCHARSET hcs;
+    HBODY handle = NULL;
 
     char text[] = "text";
     HBODY *body_list;
@@ -258,6 +259,13 @@ static void test_CreateMessage(void)
     hr = IMimeMessage_GetBody(msg, IBL_ROOT, NULL, &hbody);
     ok(hr == S_OK, "ret %08x\n", hr);
 
+    hr = IMimeBody_GetHandle(body, NULL);
+    ok(hr == E_INVALIDARG, "ret %08x\n", hr);
+
+    hr = IMimeBody_GetHandle(body, &handle);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(handle != NULL, "handle %p\n", handle);
+
     PropVariantInit(&prop);
     hr = IMimeMessage_GetBodyProp(msg, hbody, att_pritype, 0, &prop);
     ok(hr == S_OK, "ret %08x\n", hr);
@@ -269,6 +277,11 @@ static void test_CreateMessage(void)
     ok(hr == S_OK, "ret %08x\n", hr);
     hr = IMimeMessage_BindToObject(msg, hbody, &IID_IMimeBody, (void**)&body);
     ok(hr == S_OK, "ret %08x\n", hr);
+
+    hr = IMimeBody_GetHandle(body, &handle);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(handle == hbody, "handle %p\n", handle);
+
     hr = IMimeBody_GetOffsets(body, &offsets);
     ok(hr == S_OK, "ret %08x\n", hr);
     ok(offsets.cbBoundaryStart == 405, "got %d\n", offsets.cbBoundaryStart);
@@ -289,6 +302,11 @@ static void test_CreateMessage(void)
     ok(hr == S_OK, "ret %08x\n", hr);
     hr = IMimeMessage_BindToObject(msg, hbody, &IID_IMimeBody, (void**)&body);
     ok(hr == S_OK, "ret %08x\n", hr);
+
+    hr = IMimeBody_GetHandle(body, &handle);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(handle == hbody, "handle %p\n", handle);
+
     hr = IMimeBody_GetOffsets(body, &offsets);
     ok(hr == S_OK, "ret %08x\n", hr);
     ok(offsets.cbBoundaryStart == 525, "got %d\n", offsets.cbBoundaryStart);

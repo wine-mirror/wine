@@ -1314,6 +1314,9 @@ static HRESULT WINAPI MimeBody_GetHandle(
     MimeBody *This = impl_from_IMimeBody(iface);
     TRACE("(%p)->(%p)\n", iface, phBody);
 
+    if(!phBody)
+        return E_INVALIDARG;
+
     *phBody = This->handle;
     return This->handle ? S_OK : MIME_E_NO_DATA;
 }
@@ -1819,6 +1822,8 @@ static body_t *new_body_entry(MimeBody *mime_body, DWORD index, body_t *parent)
         body->index = index;
         list_init(&body->children);
         body->parent = parent;
+
+        mime_body->handle = UlongToHandle(body->index);
     }
     return body;
 }
