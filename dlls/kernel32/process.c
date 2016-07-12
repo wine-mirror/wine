@@ -1116,39 +1116,36 @@ static DWORD WINAPI start_process( PEB *peb )
  */
 static void set_process_name( int argc, char *argv[] )
 {
+    BOOL shift_strings;
+    char *p, *name;
+    int i;
+
 #ifdef HAVE_SETPROCTITLE
     setproctitle("-%s", argv[1]);
-    /* remove argv[0] */
-    memmove( argv, argv + 1, argc * sizeof(argv[0]) );
-#elif defined(HAVE_SETPROGNAME)
-    int i, offset;
-    char *end = argv[argc-1] + strlen(argv[argc-1]) + 1;
+    shift_strings = FALSE;
+#else
+    p = argv[0];
 
-    offset = argv[1] - argv[0];
-    memmove( argv[1] - offset, argv[1], end - argv[1] );
-    memset( end - offset, 0, offset );
-    for (i = 1; i < argc; i++) argv[i-1] = argv[i] - offset;
-    argv[i-1] = NULL;
-
-    setprogname( argv[0] );
-#elif defined(HAVE_PRCTL)
-    int i, offset;
-    char *p, *prctl_name = argv[1];
-    char *end = argv[argc-1] + strlen(argv[argc-1]) + 1;
-
-#ifndef PR_SET_NAME
-# define PR_SET_NAME 15
+    shift_strings = (argc >= 2);
+    for (i = 1; i < argc; i++)
+    {
+        p += strlen(p) + 1;
+        if (p != argv[i])
+        {
+            shift_strings = FALSE;
+            break;
+        }
+    }
 #endif
 
-    if ((p = strrchr( prctl_name, '\\' ))) prctl_name = p + 1;
-    if ((p = strrchr( prctl_name, '/' ))) prctl_name = p + 1;
-
-    if (prctl( PR_SET_NAME, prctl_name ) != -1)
+    if (shift_strings)
     {
-        offset = argv[1] - argv[0];
-        memmove( argv[1] - offset, argv[1], end - argv[1] );
+        int offset = argv[1] - argv[0];
+        char *end = argv[argc-1] + strlen(argv[argc-1]) + 1;
+        memmove( argv[0], argv[1], end - argv[1] );
         memset( end - offset, 0, offset );
-        for (i = 1; i < argc; i++) argv[i-1] = argv[i] - offset;
+        for (i = 1; i < argc; i++)
+            argv[i-1] = argv[i] - offset;
         argv[i-1] = NULL;
     }
     else
@@ -1156,6 +1153,20 @@ static void set_process_name( int argc, char *argv[] )
         /* remove argv[0] */
         memmove( argv, argv + 1, argc * sizeof(argv[0]) );
     }
+
+    name = argv[0];
+    if ((p = strrchr( name, '\\' ))) name = p + 1;
+    if ((p = strrchr( name, '/' ))) name = p + 1;
+
+#if defined(HAVE_SETPROGNAME)
+    setprogname( name );
+#endif
+
+#ifdef HAVE_PRCTL
+#ifndef PR_SET_NAME
+# define PR_SET_NAME 15
+#endif
+    prctl( PR_SET_NAME, name );
 #endif  /* HAVE_PRCTL */
 }
 
