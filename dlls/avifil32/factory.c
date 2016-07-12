@@ -57,11 +57,9 @@ static const IClassFactoryVtbl iclassfact = {
 
 typedef struct
 {
-  /* IUnknown fields */
   IClassFactory IClassFactory_iface;
-  DWORD	 dwRef;
-
-  CLSID  clsid;
+  LONG ref;
+  CLSID clsid;
 } IClassFactoryImpl;
 
 static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
@@ -82,7 +80,7 @@ static HRESULT AVIFILE_CreateClassFactory(const CLSID *pclsid, const IID *riid,
     return E_OUTOFMEMORY;
 
   pClassFactory->IClassFactory_iface.lpVtbl = &iclassfact;
-  pClassFactory->dwRef     = 0;
+  pClassFactory->ref = 0;
   pClassFactory->clsid     = *pclsid;
 
   hr = IClassFactory_QueryInterface(&pClassFactory->IClassFactory_iface, riid, ppv);
@@ -109,26 +107,26 @@ static HRESULT WINAPI IClassFactory_fnQueryInterface(LPCLASSFACTORY iface,
   return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IClassFactory_fnAddRef(LPCLASSFACTORY iface)
+static ULONG WINAPI IClassFactory_fnAddRef(IClassFactory *iface)
 {
-  IClassFactoryImpl *This = impl_from_IClassFactory(iface);
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p)\n", iface);
-
-  return ++(This->dwRef);
+    TRACE("(%p) ref = %u\n", This, ref);
+    return ref;
 }
 
-static ULONG WINAPI IClassFactory_fnRelease(LPCLASSFACTORY iface)
+static ULONG WINAPI IClassFactory_fnRelease(IClassFactory *iface)
 {
-  IClassFactoryImpl *This = impl_from_IClassFactory(iface);
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p)\n", iface);
-  if ((--(This->dwRef)) > 0)
-    return This->dwRef;
+    TRACE("(%p) ref = %u\n", This, ref);
 
-  HeapFree(GetProcessHeap(), 0, This);
+    if(!ref)
+        HeapFree(GetProcessHeap(), 0, This);
 
-  return 0;
+    return ref;
 }
 
 static HRESULT WINAPI IClassFactory_fnCreateInstance(LPCLASSFACTORY iface,
