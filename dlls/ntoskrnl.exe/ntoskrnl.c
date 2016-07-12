@@ -2502,3 +2502,12 @@ NTSTATUS WINAPI KeDelayExecutionThread(KPROCESSOR_MODE waitmode, BOOLEAN alertab
     FIXME("(%u, %u, %p): stub\n", waitmode, alertable, interval);
     return STATUS_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ *           IoAttachDevice  (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoAttachDevice(DEVICE_OBJECT *source, UNICODE_STRING *target, DEVICE_OBJECT *attached)
+{
+    FIXME("(%p, %s, %p): stub\n", source, debugstr_us(target), attached);
+    return STATUS_NOT_IMPLEMENTED;
+}
