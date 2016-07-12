@@ -1284,16 +1284,10 @@ static HRESULT WINAPI d3d9_device_GetRenderTargetData(IDirect3DDevice9Ex *iface,
 
     wined3d_mutex_lock();
     wined3d_texture_get_sub_resource_desc(dst_impl->wined3d_texture, dst_impl->sub_resource_idx, &wined3d_desc);
-    dst_rect.left = 0;
-    dst_rect.top = 0;
-    dst_rect.right = wined3d_desc.width;
-    dst_rect.bottom = wined3d_desc.height;
+    SetRect(&dst_rect, 0, 0, wined3d_desc.width, wined3d_desc.height);
 
     wined3d_texture_get_sub_resource_desc(rt_impl->wined3d_texture, rt_impl->sub_resource_idx, &wined3d_desc);
-    src_rect.left = 0;
-    src_rect.top = 0;
-    src_rect.right = wined3d_desc.width;
-    src_rect.bottom = wined3d_desc.height;
+    SetRect(&src_rect, 0, 0, wined3d_desc.width, wined3d_desc.height);
 
     /* TODO: Check surface sizes, pools, etc. */
     if (wined3d_desc.multisample_type)
@@ -1341,20 +1335,14 @@ static HRESULT WINAPI d3d9_device_StretchRect(IDirect3DDevice9Ex *iface, IDirect
     wined3d_texture_get_sub_resource_desc(dst->wined3d_texture, dst->sub_resource_idx, &dst_desc);
     if (!dst_rect)
     {
-        d.left = 0;
-        d.top = 0;
-        d.right = dst_desc.width;
-        d.bottom = dst_desc.height;
+        SetRect(&d, 0, 0, dst_desc.width, dst_desc.height);
         dst_rect = &d;
     }
 
     wined3d_texture_get_sub_resource_desc(src->wined3d_texture, src->sub_resource_idx, &src_desc);
     if (!src_rect)
     {
-        s.left = 0;
-        s.top = 0;
-        s.right = src_desc.width;
-        s.bottom = src_desc.height;
+        SetRect(&s, 0, 0, src_desc.width, src_desc.height);
         src_rect = &s;
     }
 
