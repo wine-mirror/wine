@@ -315,7 +315,7 @@
 @ stdcall IoAllocateMdl(ptr long long long ptr)
 @ stdcall IoAllocateWorkItem(ptr)
 @ stub IoAssignResources
-@ stub IoAttachDevice
+@ stdcall IoAttachDevice(ptr ptr ptr)
 @ stub IoAttachDeviceByPointer
 @ stdcall IoAttachDeviceToDeviceStack(ptr ptr)
 @ stub IoAttachDeviceToDeviceStackSafe
