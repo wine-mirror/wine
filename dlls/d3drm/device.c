@@ -159,7 +159,7 @@ HRESULT d3drm_device_create_surfaces_from_clipper(struct d3drm_device *object, I
     return D3DRM_OK;
 }
 
-HRESULT d3drm_device_init(struct d3drm_device *device, UINT version, IDirect3DRM *d3drm, IDirectDraw *ddraw, IDirectDrawSurface *surface,
+HRESULT d3drm_device_init(struct d3drm_device *device, UINT version, IDirectDraw *ddraw, IDirectDrawSurface *surface,
             BOOL create_z_surface)
 {
     DDSCAPS caps = { DDSCAPS_ZBUFFER };
@@ -172,8 +172,7 @@ HRESULT d3drm_device_init(struct d3drm_device *device, UINT version, IDirect3DRM
 
     device->ddraw = ddraw;
     IDirectDraw_AddRef(ddraw);
-    device->d3drm = d3drm;
-    IDirect3DRM_AddRef(d3drm);
+    IDirect3DRM_AddRef(device->d3drm);
     device->render_target = surface;
     IDirectDrawSurface_AddRef(surface);
 
@@ -243,7 +242,7 @@ HRESULT d3drm_device_init(struct d3drm_device *device, UINT version, IDirect3DRM
     return hr;
 }
 
-HRESULT d3drm_device_set_ddraw_device_d3d(struct d3drm_device *device, IDirect3DRM *d3drm, IDirect3D *d3d, IDirect3DDevice *d3d_device)
+HRESULT d3drm_device_set_ddraw_device_d3d(struct d3drm_device *device, IDirect3D *d3d, IDirect3DDevice *d3d_device)
 {
     IDirectDrawSurface *surface;
     IDirect3DDevice2 *d3d_device2;
@@ -272,8 +271,7 @@ HRESULT d3drm_device_set_ddraw_device_d3d(struct d3drm_device *device, IDirect3D
 
     device->width = desc.dwWidth;
     device->height = desc.dwHeight;
-    device->d3drm = d3drm;
-    IDirect3DRM_AddRef(d3drm);
+    IDirect3DRM_AddRef(device->d3drm);
     device->device = d3d_device;
     IDirect3DDevice_AddRef(d3d_device);
 
@@ -1605,11 +1603,11 @@ static const struct IDirect3DRMWinDeviceVtbl d3drm_device_win_vtbl =
     d3drm_device_win_HandleActivate,
 };
 
-HRESULT d3drm_device_create(struct d3drm_device **out)
+HRESULT d3drm_device_create(struct d3drm_device **device, IDirect3DRM *d3drm)
 {
     struct d3drm_device *object;
 
-    TRACE("out %p.\n", out);
+    TRACE("device %p, d3drm %p.\n", device, d3drm);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -1618,9 +1616,10 @@ HRESULT d3drm_device_create(struct d3drm_device **out)
     object->IDirect3DRMDevice2_iface.lpVtbl = &d3drm_device2_vtbl;
     object->IDirect3DRMDevice3_iface.lpVtbl = &d3drm_device3_vtbl;
     object->IDirect3DRMWinDevice_iface.lpVtbl = &d3drm_device_win_vtbl;
+    object->d3drm = d3drm;
     object->ref = 1;
 
-    *out = object;
+    *device = object;
 
     return D3DRM_OK;
 }

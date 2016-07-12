@@ -273,10 +273,10 @@ static HRESULT WINAPI d3drm1_CreateDevice(IDirect3DRM *iface,
 {
     struct d3drm_device *object;
     HRESULT hr;
+
     FIXME("iface %p, width %u, height %u, device %p partial stub!\n", iface, width, height, device);
 
-    hr = d3drm_device_create(&object);
-    if (FAILED(hr))
+    if (FAILED(hr = d3drm_device_create(&object, iface)))
         return hr;
 
     *device = IDirect3DRMDevice_from_impl(object);
@@ -287,7 +287,6 @@ static HRESULT WINAPI d3drm1_CreateDevice(IDirect3DRM *iface,
 static HRESULT WINAPI d3drm1_CreateDeviceFromSurface(IDirect3DRM *iface, GUID *guid,
         IDirectDraw *ddraw, IDirectDrawSurface *backbuffer, IDirect3DRMDevice **device)
 {
-    struct d3drm *d3drm = impl_from_IDirect3DRM(iface);
     struct d3drm_device *object;
     HRESULT hr;
 
@@ -301,12 +300,10 @@ static HRESULT WINAPI d3drm1_CreateDeviceFromSurface(IDirect3DRM *iface, GUID *g
     if (!backbuffer || !ddraw)
         return D3DRMERR_BADDEVICE;
 
-    hr = d3drm_device_create(&object);
-    if (FAILED(hr))
+    if (FAILED(hr = d3drm_device_create(&object, iface)))
         return hr;
 
-    hr = d3drm_device_init(object, 1, &d3drm->IDirect3DRM_iface, ddraw, backbuffer, TRUE);
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(hr = d3drm_device_init(object, 1, ddraw, backbuffer, TRUE)))
         *device = IDirect3DRMDevice_from_impl(object);
     else
         d3drm_device_destroy(object);
@@ -328,12 +325,10 @@ static HRESULT WINAPI d3drm1_CreateDeviceFromD3D(IDirect3DRM *iface,
     if (!d3d || !d3d_device)
         return D3DRMERR_BADVALUE;
 
-    hr = d3drm_device_create(&object);
-    if (FAILED(hr))
+    if (FAILED(hr = d3drm_device_create(&object, iface)))
         return hr;
 
-    hr = d3drm_device_set_ddraw_device_d3d(object, iface, d3d, d3d_device);
-    if (FAILED(hr))
+    if (FAILED(hr = d3drm_device_set_ddraw_device_d3d(object, d3d, d3d_device)))
     {
         d3drm_device_destroy(object);
         return hr;
@@ -366,8 +361,7 @@ static HRESULT WINAPI d3drm1_CreateDeviceFromClipper(IDirect3DRM *iface,
     if (FAILED(hr))
         return hr;
 
-    hr = d3drm_device_create(&object);
-    if (FAILED(hr))
+    if (FAILED(hr = d3drm_device_create(&object, iface)))
     {
         IDirectDraw_Release(ddraw);
         return hr;
@@ -381,7 +375,7 @@ static HRESULT WINAPI d3drm1_CreateDeviceFromClipper(IDirect3DRM *iface,
         return hr;
     }
 
-    hr = d3drm_device_init(object, 1, iface, ddraw, render_target, TRUE);
+    hr = d3drm_device_init(object, 1, ddraw, render_target, TRUE);
     IDirectDraw_Release(ddraw);
     IDirectDrawSurface_Release(render_target);
     if (FAILED(hr))
@@ -756,12 +750,13 @@ static HRESULT WINAPI d3drm2_CreateMaterial(IDirect3DRM2 *iface,
 static HRESULT WINAPI d3drm2_CreateDevice(IDirect3DRM2 *iface,
         DWORD width, DWORD height, IDirect3DRMDevice2 **device)
 {
+    struct d3drm *d3drm = impl_from_IDirect3DRM2(iface);
     struct d3drm_device *object;
     HRESULT hr;
+
     FIXME("iface %p, width %u, height %u, device %p partial stub!\n", iface, width, height, device);
 
-    hr = d3drm_device_create(&object);
-    if (FAILED(hr))
+    if (FAILED(hr = d3drm_device_create(&object, &d3drm->IDirect3DRM_iface)))
         return hr;
 
     *device = IDirect3DRMDevice2_from_impl(object);
@@ -1305,12 +1300,13 @@ static HRESULT WINAPI d3drm3_CreateMaterial(IDirect3DRM3 *iface,
 static HRESULT WINAPI d3drm3_CreateDevice(IDirect3DRM3 *iface,
         DWORD width, DWORD height, IDirect3DRMDevice3 **device)
 {
+    struct d3drm *d3drm = impl_from_IDirect3DRM3(iface);
     struct d3drm_device *object;
     HRESULT hr;
+
     FIXME("iface %p, width %u, height %u, device %p partial stub!\n", iface, width, height, device);
 
-    hr = d3drm_device_create(&object);
-    if (FAILED(hr))
+    if (FAILED(hr = d3drm_device_create(&object, &d3drm->IDirect3DRM_iface)))
         return hr;
 
     *device = IDirect3DRMDevice3_from_impl(object);
@@ -1336,14 +1332,12 @@ static HRESULT WINAPI d3drm3_CreateDeviceFromSurface(IDirect3DRM3 *iface, GUID *
     if (!backbuffer || !ddraw)
         return D3DRMERR_BADDEVICE;
 
-    hr = d3drm_device_create(&object);
-    if (FAILED(hr))
+    if (FAILED(hr = d3drm_device_create(&object, &d3drm->IDirect3DRM_iface)))
         return hr;
 
     use_z_surface = !(flags & D3DRMDEVICE_NOZBUFFER);
 
-    hr = d3drm_device_init(object, 3, &d3drm->IDirect3DRM_iface, ddraw, backbuffer, use_z_surface);
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(hr = d3drm_device_init(object, 3, ddraw, backbuffer, use_z_surface)))
         *device = IDirect3DRMDevice3_from_impl(object);
     else
         d3drm_device_destroy(object);
@@ -1414,8 +1408,7 @@ static HRESULT WINAPI d3drm3_CreateDeviceFromClipper(IDirect3DRM3 *iface,
     if (FAILED(hr))
         return hr;
 
-    hr = d3drm_device_create(&object);
-    if (FAILED(hr))
+    if (FAILED(hr = d3drm_device_create(&object, &d3drm->IDirect3DRM_iface)))
     {
         IDirectDraw_Release(ddraw);
         return hr;
@@ -1429,7 +1422,7 @@ static HRESULT WINAPI d3drm3_CreateDeviceFromClipper(IDirect3DRM3 *iface,
         return hr;
     }
 
-    hr = d3drm_device_init(object, 3, &d3drm->IDirect3DRM_iface, ddraw, render_target, TRUE);
+    hr = d3drm_device_init(object, 3, ddraw, render_target, TRUE);
     IDirectDraw_Release(ddraw);
     IDirectDrawSurface_Release(render_target);
     if (FAILED(hr))
