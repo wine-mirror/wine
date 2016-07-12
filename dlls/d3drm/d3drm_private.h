@@ -23,6 +23,7 @@
 
 #include "d3drm.h"
 #include "dxfile.h"
+#include "d3drmwin.h"
 
 #include "wine/list.h"
 
@@ -30,7 +31,6 @@
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
 #endif
 
-struct d3drm_device;
 struct d3drm_object
 {
     LONG ref;
@@ -81,6 +81,25 @@ struct d3drm_viewport
     D3DRMPROJECTIONTYPE projection;
 };
 
+struct d3drm_device
+{
+    IDirect3DRMDevice IDirect3DRMDevice_iface;
+    IDirect3DRMDevice2 IDirect3DRMDevice2_iface;
+    IDirect3DRMDevice3 IDirect3DRMDevice3_iface;
+    IDirect3DRMWinDevice IDirect3DRMWinDevice_iface;
+    IDirect3DRM *d3drm;
+    IDirectDraw *ddraw;
+    IDirectDrawSurface *primary_surface, *render_target;
+    IDirectDrawClipper *clipper;
+    IDirect3DDevice *device;
+    LONG ref;
+    BOOL dither;
+    D3DRMRENDERQUALITY quality;
+    DWORD rendermode;
+    DWORD height;
+    DWORD width;
+};
+
 HRESULT d3drm_device_create(struct d3drm_device **device, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 HRESULT d3drm_device_create_surfaces_from_clipper(struct d3drm_device *object, IDirectDraw *ddraw,
         IDirectDrawClipper *clipper, int width, int height, IDirectDrawSurface **surface) DECLSPEC_HIDDEN;
@@ -98,9 +117,6 @@ void d3drm_object_cleanup(IDirect3DRMObject *iface, struct d3drm_object *object)
 HRESULT d3drm_texture_create(struct d3drm_texture **texture, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 HRESULT d3drm_frame_create(struct d3drm_frame **frame, IUnknown *parent_frame, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 HRESULT d3drm_viewport_create(struct d3drm_viewport **viewport, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
-IDirect3DRMDevice *IDirect3DRMDevice_from_impl(struct d3drm_device *device) DECLSPEC_HIDDEN;
-IDirect3DRMDevice2 *IDirect3DRMDevice2_from_impl(struct d3drm_device *device) DECLSPEC_HIDDEN;
-IDirect3DRMDevice3 *IDirect3DRMDevice3_from_impl(struct d3drm_device *device) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMFace_create(REFIID riid, IUnknown** ret_iface) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMLight_create(IUnknown** ppObj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMMesh_create(IDirect3DRMMesh** obj) DECLSPEC_HIDDEN;

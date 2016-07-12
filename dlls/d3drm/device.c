@@ -27,28 +27,8 @@
 
 #include "d3drm_private.h"
 #include "initguid.h"
-#include "d3drmwin.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
-
-struct d3drm_device
-{
-    IDirect3DRMDevice IDirect3DRMDevice_iface;
-    IDirect3DRMDevice2 IDirect3DRMDevice2_iface;
-    IDirect3DRMDevice3 IDirect3DRMDevice3_iface;
-    IDirect3DRMWinDevice IDirect3DRMWinDevice_iface;
-    IDirect3DRM *d3drm;
-    IDirectDraw *ddraw;
-    IDirectDrawSurface *primary_surface, *render_target;
-    IDirectDrawClipper *clipper;
-    IDirect3DDevice *device;
-    LONG ref;
-    BOOL dither;
-    D3DRMRENDERQUALITY quality;
-    DWORD rendermode;
-    DWORD height;
-    DWORD width;
-};
 
 static inline struct d3drm_device *impl_from_IDirect3DRMDevice(IDirect3DRMDevice *iface)
 {
@@ -63,21 +43,6 @@ static inline struct d3drm_device *impl_from_IDirect3DRMDevice2(IDirect3DRMDevic
 static inline struct d3drm_device *impl_from_IDirect3DRMDevice3(IDirect3DRMDevice3 *iface)
 {
     return CONTAINING_RECORD(iface, struct d3drm_device, IDirect3DRMDevice3_iface);
-}
-
-IDirect3DRMDevice *IDirect3DRMDevice_from_impl(struct d3drm_device *device)
-{
-    return &device->IDirect3DRMDevice_iface;
-}
-
-IDirect3DRMDevice2 *IDirect3DRMDevice2_from_impl(struct d3drm_device *device)
-{
-    return &device->IDirect3DRMDevice2_iface;
-}
-
-IDirect3DRMDevice3 *IDirect3DRMDevice3_from_impl(struct d3drm_device *device)
-{
-    return &device->IDirect3DRMDevice3_iface;
 }
 
 void d3drm_device_destroy(struct d3drm_device *device)
