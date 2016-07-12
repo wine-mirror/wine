@@ -51,7 +51,7 @@ static void exec_tests(const char *name, struct shader_test tests[], unsigned in
     DWORD *res;
     unsigned int i, j;
     BOOL diff;
-    LPD3DBLOB shader, messages;
+    ID3DBlob *shader, *messages;
 
     for(i = 0; i < count; i++) {
         /* D3DAssemble sets messages to 0 if there aren't error messages */
@@ -1406,7 +1406,7 @@ static void failure_test(void) {
     };
     HRESULT hr;
     unsigned int i;
-    LPD3DBLOB shader, messages;
+    ID3DBlob *shader, *messages;
 
     for(i = 0; i < (sizeof(tests) / sizeof(tests[0])); i++) {
         shader = NULL;
@@ -1533,7 +1533,7 @@ static void assembleshader_test(void) {
         }
     };
     HRESULT hr;
-    LPD3DBLOB shader, messages;
+    ID3DBlob *shader, *messages;
     struct D3DIncludeImpl include;
 
     /* defines test */
