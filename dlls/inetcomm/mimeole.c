@@ -2175,7 +2175,10 @@ static HRESULT get_body(MimeMessage *msg, BODYLOCATION location, HBODY pivot, bo
         switch(location)
         {
         case IBL_PARENT:
-            *out = body->parent;
+            if(body->parent)
+                *out = body->parent;
+            else
+                hr = MIME_E_NOT_FOUND;
             break;
 
         case IBL_FIRST:
@@ -2238,6 +2241,11 @@ static HRESULT WINAPI MimeMessage_GetBody(IMimeMessage *iface, BODYLOCATION loca
     HRESULT hr;
 
     TRACE("(%p)->(%d, %p, %p)\n", iface, location, hPivot, phBody);
+
+    if(!phBody)
+        return E_INVALIDARG;
+
+    *phBody = NULL;
 
     hr = get_body(This, location, hPivot, &body);
 

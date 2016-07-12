@@ -214,7 +214,7 @@ static void test_CreateMessage(void)
     IStream *stream;
     LARGE_INTEGER pos;
     LONG ref;
-    HBODY hbody;
+    HBODY hbody, hbody2;
     IMimeBody *body;
     BODYOFFSETS offsets;
     ULONG count;
@@ -265,6 +265,14 @@ static void test_CreateMessage(void)
     hr = IMimeBody_GetHandle(body, &handle);
     ok(hr == S_OK, "ret %08x\n", hr);
     ok(handle != NULL, "handle %p\n", handle);
+
+    hr = IMimeMessage_GetBody(msg, IBL_PARENT, hbody, NULL);
+    ok(hr == E_INVALIDARG, "ret %08x\n", hr);
+
+    hbody2 = (HBODY)0xdeadbeef;
+    hr = IMimeMessage_GetBody(msg, IBL_PARENT, hbody, &hbody2);
+    ok(hr == MIME_E_NOT_FOUND, "ret %08x\n", hr);
+    ok(hbody2 == NULL, "hbody2 %p\n", hbody2);
 
     PropVariantInit(&prop);
     hr = IMimeMessage_GetBodyProp(msg, hbody, att_pritype, 0, &prop);
