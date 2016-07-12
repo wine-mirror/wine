@@ -41,20 +41,6 @@ HMODULE AVIFILE_hModule   = NULL;
 static BOOL    AVIFILE_bLocked;
 static UINT    AVIFILE_uUseCount;
 
-static HRESULT WINAPI IClassFactory_fnQueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj);
-static ULONG   WINAPI IClassFactory_fnAddRef(LPCLASSFACTORY iface);
-static ULONG   WINAPI IClassFactory_fnRelease(LPCLASSFACTORY iface);
-static HRESULT WINAPI IClassFactory_fnCreateInstance(LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj);
-static HRESULT WINAPI IClassFactory_fnLockServer(LPCLASSFACTORY iface,BOOL dolock);
-
-static const IClassFactoryVtbl iclassfact = {
-  IClassFactory_fnQueryInterface,
-  IClassFactory_fnAddRef,
-  IClassFactory_fnRelease,
-  IClassFactory_fnCreateInstance,
-  IClassFactory_fnLockServer
-};
-
 typedef struct
 {
   IClassFactory IClassFactory_iface;
@@ -65,31 +51,6 @@ typedef struct
 static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
 {
   return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
-}
-
-static HRESULT AVIFILE_CreateClassFactory(const CLSID *pclsid, const IID *riid,
-					  LPVOID *ppv)
-{
-  IClassFactoryImpl *pClassFactory = NULL;
-  HRESULT            hr;
-
-  *ppv = NULL;
-
-  pClassFactory = HeapAlloc(GetProcessHeap(), 0, sizeof(*pClassFactory));
-  if (pClassFactory == NULL)
-    return E_OUTOFMEMORY;
-
-  pClassFactory->IClassFactory_iface.lpVtbl = &iclassfact;
-  pClassFactory->ref = 0;
-  pClassFactory->clsid     = *pclsid;
-
-  hr = IClassFactory_QueryInterface(&pClassFactory->IClassFactory_iface, riid, ppv);
-  if (FAILED(hr)) {
-    HeapFree(GetProcessHeap(), 0, pClassFactory);
-    *ppv = NULL;
-  }
-
-  return hr;
 }
 
 static HRESULT WINAPI IClassFactory_fnQueryInterface(LPCLASSFACTORY iface,
@@ -168,6 +129,35 @@ static HRESULT WINAPI IClassFactory_fnLockServer(LPCLASSFACTORY iface,BOOL doloc
   AVIFILE_bLocked = dolock;
 
   return S_OK;
+}
+
+static const IClassFactoryVtbl iclassfact = {
+    IClassFactory_fnQueryInterface,
+    IClassFactory_fnAddRef,
+    IClassFactory_fnRelease,
+    IClassFactory_fnCreateInstance,
+    IClassFactory_fnLockServer
+};
+
+static HRESULT AVIFILE_CreateClassFactory(const CLSID *clsid, const IID *riid, void **ppv)
+{
+    IClassFactoryImpl *cf;
+    HRESULT hr;
+
+    *ppv = NULL;
+
+    cf = HeapAlloc(GetProcessHeap(), 0, sizeof(*cf));
+    if (!cf)
+        return E_OUTOFMEMORY;
+
+    cf->IClassFactory_iface.lpVtbl = &iclassfact;
+    cf->ref = 1;
+    cf->clsid = *clsid;
+
+    hr = IClassFactory_QueryInterface(&cf->IClassFactory_iface, riid, ppv);
+    IClassFactory_Release(&cf->IClassFactory_iface);
+
+    return hr;
 }
 
 LPCWSTR AVIFILE_BasenameW(LPCWSTR szPath)
