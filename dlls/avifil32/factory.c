@@ -53,8 +53,8 @@ static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
   return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
 }
 
-static HRESULT WINAPI IClassFactory_fnQueryInterface(LPCLASSFACTORY iface,
-						     REFIID riid,LPVOID *ppobj)
+static HRESULT WINAPI IClassFactory_fnQueryInterface(IClassFactory *iface, REFIID riid,
+        void **ppobj)
 {
   TRACE("(%p,%p,%p)\n", iface, riid, ppobj);
 
@@ -90,9 +90,8 @@ static ULONG WINAPI IClassFactory_fnRelease(IClassFactory *iface)
     return ref;
 }
 
-static HRESULT WINAPI IClassFactory_fnCreateInstance(LPCLASSFACTORY iface,
-						     LPUNKNOWN pOuter,
-						     REFIID riid,LPVOID *ppobj)
+static HRESULT WINAPI IClassFactory_fnCreateInstance(IClassFactory *iface, IUnknown *pOuter,
+        REFIID riid, void **ppobj)
 {
   IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
@@ -122,7 +121,7 @@ static HRESULT WINAPI IClassFactory_fnCreateInstance(LPCLASSFACTORY iface,
   return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI IClassFactory_fnLockServer(LPCLASSFACTORY iface,BOOL dolock)
+static HRESULT WINAPI IClassFactory_fnLockServer(IClassFactory *iface, BOOL dolock)
 {
   TRACE("(%p,%d)\n",iface,dolock);
 
