@@ -1328,6 +1328,7 @@ enable_slc
 enable_snmpapi
 enable_softpub
 enable_spoolss
+enable_sspicli
 enable_stdole2_tlb
 enable_stdole32_tlb
 enable_sti
@@ -18029,6 +18030,7 @@ wine_fn_config_dll softpub enable_softpub
 wine_fn_config_dll sound.drv16 enable_win16
 wine_fn_config_dll spoolss enable_spoolss implib
 wine_fn_config_test dlls/spoolss/tests spoolss_test
+wine_fn_config_dll sspicli enable_sspicli
 wine_fn_config_dll stdole2.tlb enable_stdole2_tlb clean
 wine_fn_config_dll stdole32.tlb enable_stdole32_tlb clean
 wine_fn_config_dll sti enable_sti clean,implib
