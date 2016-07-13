@@ -69,11 +69,11 @@
 @ stub SecpTranslateNameEx
 @ stdcall SetContextAttributesA(ptr long ptr long)
 @ stdcall SetContextAttributesW(ptr long ptr long)
-@ stdcall SspiEncodeAuthIdentityAsStrings(ptr ptr ptr ptr)
-@ stdcall SspiEncodeStringsAsAuthIdentity(wstr wstr wstr ptr)
-@ stdcall SspiFreeAuthIdentity(ptr)
-@ stdcall SspiLocalFree(ptr)
-@ stdcall SspiZeroAuthIdentity(ptr)
+@ stdcall SspiEncodeAuthIdentityAsStrings(ptr ptr ptr ptr) sspicli.SspiEncodeAuthIdentityAsStrings
+@ stdcall SspiEncodeStringsAsAuthIdentity(wstr wstr wstr ptr) sspicli.SspiEncodeStringsAsAuthIdentity
+@ stdcall SspiFreeAuthIdentity(ptr) sspicli.SspiFreeAuthIdentity
+@ stdcall SspiLocalFree(ptr) sspicli.SspiLocalFree
+@ stdcall SspiZeroAuthIdentity(ptr) sspicli.SspiZeroAuthIdentity
 @ stdcall TranslateNameA(str long long ptr ptr)
 @ stdcall TranslateNameW(wstr long long ptr ptr)
 @ stdcall UnsealMessage(ptr ptr long ptr) DecryptMessage
