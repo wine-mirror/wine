@@ -106,21 +106,6 @@ static void GraphCtrl_Init(TGraphCtrl* this)
     this->m_bitmapOldPlot = NULL;
 }
 
-#if 0
-TGraphCtrl::~TGraphCtrl(void)
-{
-    /*  just to be picky restore the bitmaps for the two memory dc's */
-    /*  (these dc's are being destroyed so there shouldn't be any leaks) */
-    if (m_bitmapOldGrid != NULL) SelectObject(m_dcGrid, m_bitmapOldGrid);  
-    if (m_bitmapOldPlot != NULL) SelectObject(m_dcPlot, m_bitmapOldPlot);  
-    if (m_bitmapGrid    != NULL) DeleteObject(m_bitmapGrid);
-    if (m_bitmapPlot    != NULL) DeleteObject(m_bitmapPlot);
-    if (m_dcGrid        != NULL) DeleteDC(m_dcGrid);
-    if (m_dcPlot        != NULL) DeleteDC(m_dcPlot);
-    if (m_brushBack     != NULL) DeleteObject(m_brushBack);
-}
-#endif
-
 static void GraphCtrl_Resize(TGraphCtrl* this)
 {
     /*  NOTE: Resize automatically gets called during the setup of the control */
@@ -132,17 +117,10 @@ static void GraphCtrl_Resize(TGraphCtrl* this)
 
     /*  the "left" coordinate and "width" will be modified in  */
     /*  InvalidateCtrl to be based on the width of the y axis scaling */
-#if 0
-    this->m_rectPlot.left   = 20;
-    this->m_rectPlot.top    = 10;
-    this->m_rectPlot.right  = this->m_rectClient.right-10;
-    this->m_rectPlot.bottom = this->m_rectClient.bottom-25;
-#else
     this->m_rectPlot.left   = 0;
     this->m_rectPlot.top    = -1;
     this->m_rectPlot.right  = this->m_rectClient.right-0;
     this->m_rectPlot.bottom = this->m_rectClient.bottom-0;
-#endif
 
     /*  set some member variables to avoid multiple function calls */
     this->m_nPlotHeight = this->m_rectPlot.bottom - this->m_rectPlot.top;/* m_rectPlot.Height(); */
@@ -242,61 +220,6 @@ static void GraphCtrl_InvalidateCtrl(TGraphCtrl* this)
         }
     }
 
-#if 0
-    /*  create some fonts (horizontal and vertical) */
-    /*  use a height of 14 pixels and 300 weight  */
-    /*  (these may need to be adjusted depending on the display) */
-    axisFont = CreateFont (14, 0, 0, 0, 300,
-                           FALSE, FALSE, 0, ANSI_CHARSET,
-                           OUT_DEFAULT_PRECIS, 
-                           CLIP_DEFAULT_PRECIS,
-                           DEFAULT_QUALITY, 
-                           DEFAULT_PITCH|FF_SWISS, "Arial");
-    yUnitFont = CreateFont (14, 0, 900, 0, 300,
-                            FALSE, FALSE, 0, ANSI_CHARSET,
-                            OUT_DEFAULT_PRECIS, 
-                            CLIP_DEFAULT_PRECIS,
-                            DEFAULT_QUALITY, 
-                            DEFAULT_PITCH|FF_SWISS, "Arial");
-  
-    /*  grab the horizontal font */
-    oldFont = SelectObject(m_dcGrid, axisFont);
-  
-    /*  y max */
-    SetTextColor(m_dcGrid, m_crGridColor);
-    SetTextAlign(m_dcGrid, TA_RIGHT|TA_TOP);
-    sprintf(strTemp, "%.*lf", m_nYDecimals, m_dUpperLimit);
-    TextOut(m_dcGrid, m_rectPlot.left-4, m_rectPlot.top, strTemp, _tcslen(strTemp));
-
-    /*  y min */
-    SetTextAlign(m_dcGrid, TA_RIGHT|TA_BASELINE);
-    sprintf(strTemp, "%.*lf", m_nYDecimals, m_dLowerLimit);
-    TextOut(m_dcGrid, m_rectPlot.left-4, m_rectPlot.bottom, strTemp, _tcslen(strTemp));
-
-    /*  x min */
-    SetTextAlign(m_dcGrid, TA_LEFT|TA_TOP);
-    TextOut(m_dcGrid, m_rectPlot.left, m_rectPlot.bottom+4, "0", 1);
-
-    /*  x max */
-    SetTextAlign(m_dcGrid, TA_RIGHT|TA_TOP);
-    sprintf(strTemp, "%d", m_nPlotWidth/m_nShiftPixels); 
-    TextOut(m_dcGrid, m_rectPlot.right, m_rectPlot.bottom+4, strTemp, _tcslen(strTemp));
-
-    /*  x units */
-    SetTextAlign(m_dcGrid, TA_CENTER|TA_TOP);
-    TextOut(m_dcGrid, (m_rectPlot.left+m_rectPlot.right)/2, 
-            m_rectPlot.bottom+4, m_strXUnitsString, _tcslen(m_strXUnitsString));
-
-    /*  restore the font */
-    SelectObject(m_dcGrid, oldFont);
-
-    /*  y units */
-    oldFont = SelectObject(m_dcGrid, yUnitFont);
-    SetTextAlign(m_dcGrid, TA_CENTER|TA_BASELINE);
-    TextOut(m_dcGrid, (m_rectClient.left+m_rectPlot.left)/2, 
-            (m_rectPlot.bottom+m_rectPlot.top)/2, m_strYUnitsString, _tcslen(m_strYUnitsString));
-    SelectObject(m_dcGrid, oldFont);
-#endif
     /*  at this point we are done filling the grid bitmap,  */
     /*  no more drawing to this bitmap is needed until the settings are changed */
   
@@ -328,22 +251,6 @@ void GraphCtrl_SetRange(TGraphCtrl* this, double dLower, double dUpper, int nDec
     /*  clear out the existing garbage, re-start with a clean plot */
     GraphCtrl_InvalidateCtrl(this);
 }
-
-#if 0
-void TGraphCtrl::SetXUnits(const char* string)
-{
-    lstrcpynA(m_strXUnitsString, string, sizeof(m_strXUnitsString));
-    /*  clear out the existing garbage, re-start with a clean plot */
-    InvalidateCtrl();
-}
-
-void TGraphCtrl::SetYUnits(const char* string)
-{
-    lstrcpynA(m_strYUnitsString, string, sizeof(m_strYUnitsString));
-    /*  clear out the existing garbage, re-start with a clean plot */
-    InvalidateCtrl();
-}
-#endif
 
 void GraphCtrl_SetGridColor(TGraphCtrl* this, COLORREF color)
 {
@@ -479,12 +386,6 @@ static void GraphCtrl_Paint(TGraphCtrl* this, HWND hWnd, HDC dc)
     HBITMAP memBitmap;
     HBITMAP oldBitmap; /*  bitmap originally found in CMemDC */
 
-/*   RECT rcClient; */
-/*   GetClientRect(hWnd, &rcClient); */
-/*   FillSolidRect(dc, &rcClient, RGB(255, 0, 255)); */
-/*   m_nClientWidth = rcClient.right - rcClient.left; */
-/*   m_nClientHeight = rcClient.bottom - rcClient.top; */
-
     /*  no real plotting work is performed here,  */
     /*  just putting the existing bitmaps on the client */
 
@@ -508,15 +409,6 @@ static void GraphCtrl_Paint(TGraphCtrl* this, HWND hWnd, HDC dc)
     DeleteObject(memBitmap);
     DeleteDC(memDC);
 }
-
-#if 0
-void TGraphCtrl::Reset(void)
-{
-    /*  to clear the existing data (in the form of a bitmap) */
-    /*  simply invalidate the entire control */
-    InvalidateCtrl();
-}
-#endif
 
 extern TGraphCtrl PerformancePageCpuUsageHistoryGraph;
 extern TGraphCtrl PerformancePageMemUsageHistoryGraph;

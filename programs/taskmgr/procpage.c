@@ -166,12 +166,6 @@ static void ProcessPageOnNotify(LPARAM lParam)
     {
         switch (pnmh->code)
         {
-#if 0
-        case LVN_ITEMCHANGED:
-            ProcessPageUpdate();
-            break;
-#endif
-            
         case LVN_GETDISPINFOW:
 
             if (!(pnmdi->item.mask & LVIF_TEXT))

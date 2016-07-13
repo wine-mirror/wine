@@ -30,19 +30,6 @@
 extern "C" {
 #endif
 
-#if 0
-
-/* Attributes */
-public:
-  void SetXUnits(const char* string);
-  void SetYUnits(const char* string);
-
-  /* Operations */
-public:
-  BOOL Create(DWORD dwStyle, const RECT& rect, HWND hParentWnd, UINT nID=NULL);
-
-#endif
-
 typedef struct
 {
   int m_nShiftPixels;          /* amount to shift with each new point */

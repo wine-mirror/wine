@@ -49,12 +49,6 @@ static HANDLE   hApplicationPageEvent = NULL;   /* When this event becomes signa
 static BOOL     bSortAscending = TRUE;
 
 static const WCHAR    wszUser32[] = {'U','S','E','R','3','2','.','D','L','L',0};
-#if 0
-void SwitchToThisWindow (
-HWND hWnd,   /* Handle to the window that should be activated */
-BOOL bRestore /* Restore the window if it is minimized */
-);
-#endif
 
 static void ApplicationPageUpdate(void)
 {
