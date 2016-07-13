@@ -88,7 +88,7 @@
 @ stub SspiEncryptAuthIdentity
 @ stub SspiEncryptAuthIdentityEx
 @ stub SspiExcludePackage
-@ stub SspiFreeAuthIdentity
+@ stdcall SspiFreeAuthIdentity(ptr)
 @ stub SspiGetComputerNameForSPN
 @ stub SspiGetTargetHostName
 @ stub SspiIsAuthIdentityEncrypted

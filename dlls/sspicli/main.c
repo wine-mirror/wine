@@ -122,3 +122,12 @@ SECURITY_STATUS SEC_ENTRY SspiEncodeAuthIdentityAsStrings(
 
     return SEC_E_OK;
 }
+
+/***********************************************************************
+ *		SspiFreeAuthIdentity (SECUR32.0)
+ */
+void SEC_ENTRY SspiFreeAuthIdentity( PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id )
+{
+    TRACE( "%p\n", opaque_id );
+    HeapFree( GetProcessHeap(), 0, opaque_id );
+}
