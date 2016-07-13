@@ -504,6 +504,7 @@ HEADER_SRCS = \
 	msxml6did.h \
 	msxmldid.h \
 	nb30.h \
+	ncrypt.h \
 	ndrtypes.h \
 	netioapi.h \
 	nldef.h \
