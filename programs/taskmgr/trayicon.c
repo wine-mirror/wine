@@ -90,10 +90,7 @@ static HICON TrayIcon_GetProcessorUsageIcon(void)
      * just having 10.
      */
     nLinesToDraw = (ProcessorUsage + (ProcessorUsage / 10)) / 11;
-    rc.left = 3;
-    rc.top = 12 - nLinesToDraw;
-    rc.right = 13;
-    rc.bottom = 13;
+    SetRect(&rc, 3, 12 - nLinesToDraw, 13, 13);
 
     /*
      * Now draw the cpu usage

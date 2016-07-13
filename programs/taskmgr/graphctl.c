@@ -117,10 +117,7 @@ static void GraphCtrl_Resize(TGraphCtrl* this)
 
     /*  the "left" coordinate and "width" will be modified in  */
     /*  InvalidateCtrl to be based on the width of the y axis scaling */
-    this->m_rectPlot.left   = 0;
-    this->m_rectPlot.top    = -1;
-    this->m_rectPlot.right  = this->m_rectClient.right-0;
-    this->m_rectPlot.bottom = this->m_rectClient.bottom-0;
+    SetRect(&this->m_rectPlot, 0, -1, this->m_rectClient.right, this->m_rectClient.bottom);
 
     /*  set some member variables to avoid multiple function calls */
     this->m_nPlotHeight = this->m_rectPlot.bottom - this->m_rectPlot.top;/* m_rectPlot.Height(); */
@@ -340,19 +337,14 @@ static void GraphCtrl_DrawPoint(TGraphCtrl* this)
             if ((prevY <= this->m_rectPlot.top) || (currY <= this->m_rectPlot.top)) 
             {
                 RECT rc;
-                rc.bottom = this->m_rectPlot.top+1;
-                rc.left = prevX;
-                rc.right = currX+1;
-                rc.top = this->m_rectClient.top;
+                SetRect(&rc, prevX, this->m_rectClient.top, currX + 1, this->m_rectPlot.top + 1);
                 FillRect(this->m_dcPlot, &rc, this->m_brushBack);
             }
             if ((prevY >= this->m_rectPlot.bottom) || (currY >= this->m_rectPlot.bottom)) 
             {
                 RECT rc;
-                rc.bottom = this->m_rectClient.bottom+1;
-                rc.left = prevX;
-                rc.right = currX+1;
-                rc.top = this->m_rectPlot.bottom+1;
+                SetRect(&rc, prevX, this->m_rectPlot.bottom + 1, currX + 1,
+                        this->m_rectClient.bottom + 1);
                 /* RECT rc(prevX, m_rectPlot.bottom+1, currX+1, m_rectClient.bottom+1); */
                 FillRect(this->m_dcPlot, &rc, this->m_brushBack);
             }

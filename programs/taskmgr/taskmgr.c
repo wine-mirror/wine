@@ -65,10 +65,7 @@ static void FillSolidRect2(HDC hDC, int x, int y, int cx, int cy, COLORREF clr)
     RECT rect;
 
     SetBkColor(hDC, clr);
-    rect.left = x;
-    rect.top = y;
-    rect.right = x + cx;
-    rect.bottom = y + cy;
+    SetRect(&rect, x, y, x + cx, y + cy);
     ExtTextOutW(hDC, 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
 }
 
