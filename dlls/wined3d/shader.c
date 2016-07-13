@@ -2704,8 +2704,7 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *b
         return WINED3DERR_INVALIDCALL;
     }
 
-    shader->function = HeapAlloc(GetProcessHeap(), 0, shader->functionLength);
-    if (!shader->function)
+    if (!(shader->function = HeapAlloc(GetProcessHeap(), 0, shader->functionLength)))
         return E_OUTOFMEMORY;
     memcpy(shader->function, byte_code, shader->functionLength);
 
@@ -2969,6 +2968,8 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
         shader_cleanup(shader);
     }
 
+    shader->load_local_constsF = shader->lconst_inf_or_nan;
+
     return hr;
 }
 
@@ -2995,8 +2996,8 @@ static HRESULT vertex_shader_init(struct wined3d_shader *shader, struct wined3d_
         shader->u.vs.attributes[input->register_idx].usage_idx = input->semantic_idx;
     }
 
-    shader->load_local_constsF = (reg_maps->usesrelconstF && !list_empty(&shader->constantsF)) ||
-            shader->lconst_inf_or_nan;
+    if (reg_maps->usesrelconstF && !list_empty(&shader->constantsF))
+        shader->load_local_constsF = TRUE;
 
     return WINED3D_OK;
 }
@@ -3004,41 +3005,19 @@ static HRESULT vertex_shader_init(struct wined3d_shader *shader, struct wined3d_
 static HRESULT domain_shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
         const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    HRESULT hr;
-
-    if (FAILED(hr = shader_init(shader, device, desc, 0, WINED3D_SHADER_TYPE_DOMAIN, parent, parent_ops)))
-        return hr;
-
-    shader->load_local_constsF = shader->lconst_inf_or_nan;
-
-    return WINED3D_OK;
+    return shader_init(shader, device, desc, 0, WINED3D_SHADER_TYPE_DOMAIN, parent, parent_ops);
 }
 
 static HRESULT hull_shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
         const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    HRESULT hr;
-
-    if (FAILED(hr = shader_init(shader, device, desc, 0, WINED3D_SHADER_TYPE_HULL, parent, parent_ops)))
-        return hr;
-
-    shader->load_local_constsF = shader->lconst_inf_or_nan;
-
-    return WINED3D_OK;
+    return shader_init(shader, device, desc, 0, WINED3D_SHADER_TYPE_HULL, parent, parent_ops);
 }
 
 static HRESULT geometry_shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
         const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    HRESULT hr;
-
-    if (FAILED(hr = shader_init(shader, device, desc, 0,
-            WINED3D_SHADER_TYPE_GEOMETRY, parent, parent_ops)))
-        return hr;
-
-    shader->load_local_constsF = shader->lconst_inf_or_nan;
-
-    return WINED3D_OK;
+    return shader_init(shader, device, desc, 0, WINED3D_SHADER_TYPE_GEOMETRY, parent, parent_ops);
 }
 
 void find_gs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
@@ -3324,8 +3303,6 @@ static HRESULT pixel_shader_init(struct wined3d_shader *shader, struct wined3d_d
         }
     }
 
-    shader->load_local_constsF = shader->lconst_inf_or_nan;
-
     return WINED3D_OK;
 }
 
@@ -3363,14 +3340,7 @@ void pixelshader_update_resource_types(struct wined3d_shader *shader, WORD tex_t
 static HRESULT compute_shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
         const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    HRESULT hr;
-
-    if (FAILED(hr = shader_init(shader, device, desc, 0, WINED3D_SHADER_TYPE_COMPUTE, parent, parent_ops)))
-        return hr;
-
-    shader->load_local_constsF = shader->lconst_inf_or_nan;
-
-    return WINED3D_OK;
+    return shader_init(shader, device, desc, 0, WINED3D_SHADER_TYPE_COMPUTE, parent, parent_ops);
 }
 
 HRESULT CDECL wined3d_shader_create_cs(struct wined3d_device *device, const struct wined3d_shader_desc *desc,

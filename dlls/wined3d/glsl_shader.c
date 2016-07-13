@@ -744,7 +744,7 @@ static void shader_glsl_load_constants_f(const struct wined3d_shader *shader, co
 
     if (!shader->load_local_constsF)
     {
-        TRACE("No need to load local float constants for this shader\n");
+        TRACE("No need to load local float constants for this shader.\n");
         return;
     }
 
