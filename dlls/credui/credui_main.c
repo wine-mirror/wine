@@ -929,3 +929,15 @@ ULONG SEC_ENTRY SspiPromptForCredentialsW( PCWSTR target, void *info,
 
     return ret;
 }
+
+/******************************************************************************
+ * CredUIPromptForWindowsCredentialsW [CREDUI.@]
+ */
+DWORD WINAPI CredUIPromptForWindowsCredentialsW( CREDUI_INFOW *info, DWORD error, ULONG *package,
+                                                 const void *in_buf, ULONG in_buf_size, void **out_buf,
+                                                 ULONG *out_buf_size, BOOL *save, DWORD flags )
+{
+    FIXME( "(%p, %u, %p, %p, %u, %p, %p, %p, %08x) stub\n", info, error, package, in_buf, in_buf_size,
+           out_buf, out_buf_size, save, flags );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}

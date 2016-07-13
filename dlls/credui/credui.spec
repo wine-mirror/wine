@@ -7,6 +7,7 @@
 @ stdcall CredUIParseUserNameW(wstr ptr long ptr long)
 @ stub CredUIPromptForCredentialsA
 @ stdcall CredUIPromptForCredentialsW(ptr wstr ptr long ptr long ptr long ptr long)
+@ stdcall CredUIPromptForWindowsCredentialsW(ptr long ptr ptr long ptr ptr ptr long)
 @ stdcall CredUIReadSSOCredA(str ptr)
 @ stdcall CredUIReadSSOCredW(wstr ptr)
 @ stdcall CredUIStoreSSOCredA(str str str long)
