@@ -581,14 +581,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
         if (dst_info->bmiHeader.biBitCount == 1 && !dst_colors)
         {
             if (src_info->bmiHeader.biBitCount > 1)
-            {
-                COLORREF color = GetBkColor( dev->hdc );
-                dst_info->bmiColors[0].rgbRed      = GetRValue( color );
-                dst_info->bmiColors[0].rgbGreen    = GetGValue( color );
-                dst_info->bmiColors[0].rgbBlue     = GetBValue( color );
-                dst_info->bmiColors[0].rgbReserved = 0;
-                dst_info->bmiHeader.biClrUsed = 1;
-            }
+                get_mono_dc_colors( dev->hdc, dst_info, 1 );
             else
             {
                 memcpy( dst_info->bmiColors, src_info->bmiColors, 2 * sizeof(dst_info->bmiColors[0]) );

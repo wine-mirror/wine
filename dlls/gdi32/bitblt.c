@@ -222,7 +222,7 @@ static DWORD blend_bits( const BITMAPINFO *src_info, const struct gdi_image_bits
 }
 
 /* helper to retrieve either both colors or only the background color for monochrome blits */
-static void get_mono_dc_colors( HDC hdc, BITMAPINFO *info, int count )
+void get_mono_dc_colors( HDC hdc, BITMAPINFO *info, int count )
 {
     RGBQUAD *colors = info->bmiColors;
     COLORREF color = GetBkColor( hdc );
