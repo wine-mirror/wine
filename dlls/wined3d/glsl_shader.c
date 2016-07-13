@@ -2548,7 +2548,10 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                     switch (reg->data_type)
                     {
                         case WINED3D_DATA_FLOAT:
-                            wined3d_ftoa(*(const float *)reg->immconst_data, register_name);
+                            if (gl_info->supported[ARB_SHADER_BIT_ENCODING])
+                                sprintf(register_name, "uintBitsToFloat(%#xu)", reg->immconst_data[0]);
+                            else
+                                wined3d_ftoa(*(const float *)reg->immconst_data, register_name);
                             break;
                         case WINED3D_DATA_INT:
                             sprintf(register_name, "%#x", reg->immconst_data[0]);
@@ -2568,12 +2571,21 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                     switch (reg->data_type)
                     {
                         case WINED3D_DATA_FLOAT:
-                            wined3d_ftoa(*(const float *)&reg->immconst_data[0], imm_str[0]);
-                            wined3d_ftoa(*(const float *)&reg->immconst_data[1], imm_str[1]);
-                            wined3d_ftoa(*(const float *)&reg->immconst_data[2], imm_str[2]);
-                            wined3d_ftoa(*(const float *)&reg->immconst_data[3], imm_str[3]);
-                            sprintf(register_name, "vec4(%s, %s, %s, %s)",
-                                    imm_str[0], imm_str[1], imm_str[2], imm_str[3]);
+                            if (gl_info->supported[ARB_SHADER_BIT_ENCODING])
+                            {
+                                sprintf(register_name, "uintBitsToFloat(uvec4(%#xu, %#xu, %#xu, %#xu))",
+                                        reg->immconst_data[0], reg->immconst_data[1],
+                                        reg->immconst_data[2], reg->immconst_data[3]);
+                            }
+                            else
+                            {
+                                wined3d_ftoa(*(const float *)&reg->immconst_data[0], imm_str[0]);
+                                wined3d_ftoa(*(const float *)&reg->immconst_data[1], imm_str[1]);
+                                wined3d_ftoa(*(const float *)&reg->immconst_data[2], imm_str[2]);
+                                wined3d_ftoa(*(const float *)&reg->immconst_data[3], imm_str[3]);
+                                sprintf(register_name, "vec4(%s, %s, %s, %s)",
+                                        imm_str[0], imm_str[1], imm_str[2], imm_str[3]);
+                            }
                             break;
                         case WINED3D_DATA_INT:
                             sprintf(register_name, "ivec4(%#x, %#x, %#x, %#x)",
