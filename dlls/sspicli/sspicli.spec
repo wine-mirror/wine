@@ -99,6 +99,6 @@
 @ stub SspiUnmarshalAuthIdentity
 @ stub SspiUnmarshalAuthIdentityInternal
 @ stub SspiValidateAuthIdentity
-@ stub SspiZeroAuthIdentity
+@ stdcall SspiZeroAuthIdentity(ptr)
 @ stub UnsealMessage
 @ stub VerifySignature

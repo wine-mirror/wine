@@ -79,3 +79,19 @@ SECURITY_STATUS SEC_ENTRY SspiEncodeStringsAsAuthIdentity(
     *opaque_id = id;
     return SEC_E_OK;
 }
+
+/***********************************************************************
+ *		SspiZeroAuthIdentity (SECUR32.0)
+ */
+void SEC_ENTRY SspiZeroAuthIdentity( PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id )
+{
+    SEC_WINNT_AUTH_IDENTITY_W *id = (SEC_WINNT_AUTH_IDENTITY_W *)opaque_id;
+
+    TRACE( "%p\n", opaque_id );
+
+    if (!id) return;
+    if (id->User) memset( id->User, 0, id->UserLength * sizeof(WCHAR) );
+    if (id->Domain) memset( id->Domain, 0, id->DomainLength * sizeof(WCHAR) );
+    if (id->Password) memset( id->Password, 0, id->PasswordLength * sizeof(WCHAR) );
+    memset( id, 0, sizeof(*id) );
+}
