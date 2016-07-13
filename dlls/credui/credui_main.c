@@ -941,3 +941,25 @@ DWORD WINAPI CredUIPromptForWindowsCredentialsW( CREDUI_INFOW *info, DWORD error
            out_buf, out_buf_size, save, flags );
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/******************************************************************************
+ * CredPackAuthenticationBufferW [CREDUI.@]
+ */
+BOOL  WINAPI CredPackAuthenticationBufferW( DWORD flags, WCHAR *username, WCHAR *password, BYTE *buf,
+                                            DWORD *size )
+{
+    FIXME( "(%08x, %s, %p, %p, %p) stub\n", flags, debugstr_w(username), password, buf, size );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * CredUnPackAuthenticationBufferW [CREDUI.@]
+ */
+BOOL  WINAPI CredUnPackAuthenticationBufferW( DWORD flags, void *buf, DWORD size, WCHAR *username,
+                                              DWORD *len_username, WCHAR *domain, DWORD *len_domain,
+                                              WCHAR *password, DWORD *len_password )
+{
+    FIXME( "(%08x, %p, %u, %p, %p, %p, %p, %p, %p) stub\n", flags, buf, size, username, len_username,
+           domain, len_domain, password, len_password );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
