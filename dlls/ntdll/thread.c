@@ -1051,6 +1051,16 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
                     {
                         if (sel == (wine_get_cs() & ~3))
                             tdi->Entry.HighWord.Bits.Type |= 8;  /* code segment */
+                        else if (sel == (ntdll_get_thread_data()->fs & ~3))
+                        {
+                            ULONG_PTR fs_base = (ULONG_PTR)NtCurrentTeb();
+                            tdi->Entry.BaseLow                   = fs_base & 0xffff;
+                            tdi->Entry.HighWord.Bits.BaseMid     = (fs_base >> 16) & 0xff;
+                            tdi->Entry.HighWord.Bits.BaseHi      = (fs_base >> 24) & 0xff;
+                            tdi->Entry.LimitLow                  = 0x0fff;
+                            tdi->Entry.HighWord.Bits.LimitHi     = 0;
+                            tdi->Entry.HighWord.Bits.Granularity = 0;
+                        }
                         else status = STATUS_ACCESS_DENIED;
                     }
                 }
