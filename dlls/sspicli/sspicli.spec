@@ -92,7 +92,7 @@
 @ stub SspiGetComputerNameForSPN
 @ stub SspiGetTargetHostName
 @ stub SspiIsAuthIdentityEncrypted
-@ stub SspiLocalFree
+@ stdcall SspiLocalFree(ptr)
 @ stub SspiMarshalAuthIdentity
 @ stub SspiPrepareForCredRead
 @ stub SspiPrepareForCredWrite

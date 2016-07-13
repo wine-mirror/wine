@@ -131,3 +131,12 @@ void SEC_ENTRY SspiFreeAuthIdentity( PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id )
     TRACE( "%p\n", opaque_id );
     HeapFree( GetProcessHeap(), 0, opaque_id );
 }
+
+/***********************************************************************
+ *		SspiLocalFree (SECUR32.0)
+ */
+void SEC_ENTRY SspiLocalFree( void *ptr )
+{
+    TRACE( "%p\n", ptr );
+    HeapFree( GetProcessHeap(), 0, ptr );
+}
