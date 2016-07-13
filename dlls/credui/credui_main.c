@@ -871,6 +871,7 @@ ULONG SEC_ENTRY SspiPromptForCredentialsW( PCWSTR target, void *info,
     DWORD len_password = sizeof(password) / sizeof(password[0]);
     DWORD ret, flags;
     CREDUI_INFOW *cred_info = info;
+    SEC_WINNT_AUTH_IDENTITY_W *id = input_id;
 
     FIXME( "(%s, %p, %u, %s, %p, %p, %p, %x) stub\n", debugstr_w(target), info,
            error, debugstr_w(package), input_id, output_id, save, sspi_flags );
@@ -882,11 +883,6 @@ ULONG SEC_ENTRY SspiPromptForCredentialsW( PCWSTR target, void *info,
         FIXME( "package %s not supported\n", debugstr_w(package) );
         return ERROR_NO_SUCH_PACKAGE;
     }
-    if (input_id)
-    {
-        FIXME( "input identity not supported\n" );
-        return ERROR_CALL_NOT_IMPLEMENTED;
-    }
 
     flags = CREDUI_FLAGS_ALWAYS_SHOW_UI | CREDUI_FLAGS_GENERIC_CREDENTIALS;
 
@@ -896,12 +892,24 @@ ULONG SEC_ENTRY SspiPromptForCredentialsW( PCWSTR target, void *info,
     if (!(sspi_flags & SSPIPFC_NO_CHECKBOX))
         flags |= CREDUI_FLAGS_SHOW_SAVE_CHECK_BOX;
 
-    find_existing_credential( target, username, len_username, password, len_password );
+    if (!id) find_existing_credential( target, username, len_username, password, len_password );
+    else
+    {
+        if (id->User && id->UserLength > 0 && id->UserLength <= CREDUI_MAX_USERNAME_LENGTH)
+        {
+            memcpy( username, id->User, id->UserLength * sizeof(WCHAR) );
+            username[id->UserLength] = 0;
+        }
+        if (id->Password && id->PasswordLength > 0 && id->PasswordLength <= CREDUI_MAX_PASSWORD_LENGTH)
+        {
+            memcpy( password, id->Password, id->PasswordLength * sizeof(WCHAR) );
+            password[id->PasswordLength] = 0;
+        }
+    }
 
     if (!(ret = CredUIPromptForCredentialsW( cred_info, target, NULL, error, username,
                                              len_username, password, len_password, save, flags )))
     {
-        SEC_WINNT_AUTH_IDENTITY_W *id;
         DWORD size = sizeof(*id);
         WCHAR *ptr;
 
