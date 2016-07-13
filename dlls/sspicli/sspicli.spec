@@ -83,7 +83,7 @@
 @ stub SspiCopyAuthIdentity
 @ stub SspiDecryptAuthIdentity
 @ stub SspiDecryptAuthIdentityEx
-@ stub SspiEncodeAuthIdentityAsStrings
+@ stdcall SspiEncodeAuthIdentityAsStrings(ptr ptr ptr ptr)
 @ stdcall SspiEncodeStringsAsAuthIdentity(wstr wstr wstr ptr)
 @ stub SspiEncryptAuthIdentity
 @ stub SspiEncryptAuthIdentityEx

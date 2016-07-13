@@ -95,3 +95,30 @@ void SEC_ENTRY SspiZeroAuthIdentity( PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id )
     if (id->Password) memset( id->Password, 0, id->PasswordLength * sizeof(WCHAR) );
     memset( id, 0, sizeof(*id) );
 }
+
+static inline WCHAR *strdupW( const WCHAR *src )
+{
+    WCHAR *dst;
+    if (!src) return NULL;
+    if ((dst = HeapAlloc( GetProcessHeap(), 0, (strlenW( src ) + 1) * sizeof(WCHAR) )))
+        strcpyW( dst, src );
+    return dst;
+}
+
+/***********************************************************************
+ *		SspiEncodeAuthIdentityAsStrings (SECUR32.0)
+ */
+SECURITY_STATUS SEC_ENTRY SspiEncodeAuthIdentityAsStrings(
+    PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id, PCWSTR *username,
+    PCWSTR *domainname, PCWSTR *creds )
+{
+    SEC_WINNT_AUTH_IDENTITY_W *id = (SEC_WINNT_AUTH_IDENTITY_W *)opaque_id;
+
+    FIXME("%p %p %p %p\n", opaque_id, username, domainname, creds);
+
+    *username = strdupW( id->User );
+    *domainname = strdupW( id->Domain );
+    *creds = strdupW( id->Password );
+
+    return SEC_E_OK;
+}
