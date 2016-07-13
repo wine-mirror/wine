@@ -612,6 +612,49 @@ static void check_texture_float_(unsigned int line, ID3D10Texture2D *texture,
         check_texture_sub_resource_float_(line, texture, sub_resource_idx, expected_value, max_diff);
 }
 
+#define check_texture_sub_resource_vec4(a, b, c, d) check_texture_sub_resource_vec4_(__LINE__, a, b, c, d)
+static void check_texture_sub_resource_vec4_(unsigned int line, ID3D10Texture2D *texture,
+        unsigned int sub_resource_idx, const struct vec4 *expected_value, BYTE max_diff)
+{
+    struct texture_readback rb;
+    unsigned int x = 0, y = 0;
+    struct vec4 value = {0};
+    BOOL all_match = TRUE;
+
+    get_texture_readback(texture, sub_resource_idx, &rb);
+    for (y = 0; y < rb.height; ++y)
+    {
+        for (x = 0; x < rb.width; ++x)
+        {
+            value = *get_readback_vec4(&rb, x, y);
+            if (!compare_vec4(&value, expected_value, max_diff))
+            {
+                all_match = FALSE;
+                break;
+            }
+        }
+        if (!all_match)
+            break;
+    }
+    release_texture_readback(&rb);
+    ok_(__FILE__, line)(all_match,
+            "Got unexpected value {%.8e, %.8e, %.8e, %.8e} at (%u, %u), sub-resource %u.\n",
+            value.x, value.y, value.z, value.w, x, y, sub_resource_idx);
+}
+
+#define check_texture_vec4(a, b, c) check_texture_vec4_(__LINE__, a, b, c)
+static void check_texture_vec4_(unsigned int line, ID3D10Texture2D *texture,
+        const struct vec4 *expected_value, BYTE max_diff)
+{
+    unsigned int sub_resource_idx, sub_resource_count;
+    D3D10_TEXTURE2D_DESC texture_desc;
+
+    ID3D10Texture2D_GetDesc(texture, &texture_desc);
+    sub_resource_count = texture_desc.ArraySize * texture_desc.MipLevels;
+    for (sub_resource_idx = 0; sub_resource_idx < sub_resource_count; ++sub_resource_idx)
+        check_texture_sub_resource_vec4_(line, texture, sub_resource_idx, expected_value, max_diff);
+}
+
 static ID3D10Device *create_device(void)
 {
     ID3D10Device *device;
@@ -8458,6 +8501,105 @@ static void test_null_sampler(void)
     release_test_context(&test_context);
 }
 
+static void test_immediate_constant_buffer(void)
+{
+    struct d3d10core_test_context test_context;
+    D3D10_TEXTURE2D_DESC texture_desc;
+    ID3D10RenderTargetView *rtv;
+    unsigned int index[4] = {0};
+    ID3D10Texture2D *texture;
+    ID3D10PixelShader *ps;
+    ID3D10Device *device;
+    ID3D10Buffer *cb;
+    unsigned int i;
+    HRESULT hr;
+
+    static const DWORD ps_code[] =
+    {
+#if 0
+        uint index;
+
+        static const int int_array[6] =
+        {
+            310, 111, 212, -513, -318, 0,
+        };
+
+        static const uint uint_array[6] =
+        {
+            2, 7, 0x7f800000, 0xff800000, 0x7fc00000, 0
+        };
+
+        static const float float_array[6] =
+        {
+            76, 83.5f, 0.5f, 0.75f, -0.5f, 0.0f,
+        };
+
+        float4 main() : SV_Target
+        {
+            return float4(int_array[index], uint_array[index], float_array[index], 1.0f);
+        }
+#endif
+        0x43425844, 0xbad068da, 0xd631ea3c, 0x41648374, 0x3ccd0120, 0x00000001, 0x00000184, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x0000010c, 0x00000040, 0x00000043,
+        0x00001835, 0x0000001a, 0x00000136, 0x00000002, 0x42980000, 0x00000000, 0x0000006f, 0x00000007,
+        0x42a70000, 0x00000000, 0x000000d4, 0x7f800000, 0x3f000000, 0x00000000, 0xfffffdff, 0xff800000,
+        0x3f400000, 0x00000000, 0xfffffec2, 0x7fc00000, 0xbf000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2,
+        0x00000000, 0x02000068, 0x00000001, 0x05000036, 0x00102082, 0x00000000, 0x00004001, 0x3f800000,
+        0x06000036, 0x00100012, 0x00000000, 0x0020800a, 0x00000000, 0x00000000, 0x06000056, 0x00102022,
+        0x00000000, 0x0090901a, 0x0010000a, 0x00000000, 0x0600002b, 0x00102012, 0x00000000, 0x0090900a,
+        0x0010000a, 0x00000000, 0x06000036, 0x00102042, 0x00000000, 0x0090902a, 0x0010000a, 0x00000000,
+        0x0100003e,
+    };
+    static struct vec4 expected_result[] =
+    {
+        { 310.0f,          2.0f, 76.00f, 1.0f},
+        { 111.0f,          7.0f, 83.50f, 1.0f},
+        { 212.0f, 2139095040.0f,  0.50f, 1.0f},
+        {-513.0f, 4286578688.0f,  0.75f, 1.0f},
+        {-318.0f, 2143289344.0f, -0.50f, 1.0f},
+        {   0.0f,          0.0f,  0.0f,  1.0f},
+    };
+
+    if (!init_test_context(&test_context))
+        return;
+
+    device = test_context.device;
+
+    hr = ID3D10Device_CreatePixelShader(device, ps_code, sizeof(ps_code), &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D10Device_PSSetShader(device, ps);
+
+    cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(index), NULL);
+    ID3D10Device_PSSetConstantBuffers(device, 0, 1, &cb);
+
+    ID3D10Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    texture_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, NULL, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ID3D10Device_OMSetRenderTargets(device, 1, &rtv, NULL);
+
+    for (i = 0; i < sizeof(expected_result) / sizeof(*expected_result); ++i)
+    {
+        *index = i;
+        ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, index, 0, 0);
+
+        draw_quad(&test_context);
+        check_texture_vec4(texture, &expected_result[i], 0);
+    }
+
+    ID3D10Buffer_Release(cb);
+    ID3D10PixelShader_Release(ps);
+    ID3D10Texture2D_Release(texture);
+    ID3D10RenderTargetView_Release(rtv);
+    release_test_context(&test_context);
+}
+
 START_TEST(device)
 {
     test_feature_level();
@@ -8502,4 +8644,5 @@ START_TEST(device)
     test_create_input_layout();
     test_input_assembler();
     test_null_sampler();
+    test_immediate_constant_buffer();
 }
