@@ -1,1 +1,4 @@
 MODULE    = sspicli.dll
+
+C_SRCS = \
+	main.c

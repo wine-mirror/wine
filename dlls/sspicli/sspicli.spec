@@ -84,7 +84,7 @@
 @ stub SspiDecryptAuthIdentity
 @ stub SspiDecryptAuthIdentityEx
 @ stub SspiEncodeAuthIdentityAsStrings
-@ stub SspiEncodeStringsAsAuthIdentity
+@ stdcall SspiEncodeStringsAsAuthIdentity(wstr wstr wstr ptr)
 @ stub SspiEncryptAuthIdentity
 @ stub SspiEncryptAuthIdentityEx
 @ stub SspiExcludePackage
