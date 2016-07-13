@@ -187,6 +187,8 @@ typedef struct primitive_funcs
     void             (* blend_rect)(const dib_info *dst, const RECT *rc, const dib_info *src,
                                     const POINT *origin, BLENDFUNCTION blend);
     BOOL          (* gradient_rect)(const dib_info *dib, const RECT *rc, const TRIVERTEX *v, int mode);
+    void              (* mask_rect)(const dib_info *dst, const RECT *rc, const dib_info *src,
+                                    const POINT *origin, int rop2);
     void             (* draw_glyph)(const dib_info *dst, const RECT *rc, const dib_info *glyph,
                                     const POINT *origin, DWORD text_pixel, const struct intensity_range *ranges);
     void    (* draw_subpixel_glyph)(const dib_info *dst, const RECT *rc, const dib_info *glyph,

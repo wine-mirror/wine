@@ -5019,6 +5019,345 @@ static BOOL gradient_rect_null( const dib_info *dib, const RECT *rc, const TRIVE
     return TRUE;
 }
 
+static void mask_rect_32( const dib_info *dst, const RECT *rc,
+                          const dib_info *src, const POINT *origin, int rop2 )
+{
+    DWORD *dst_start = get_pixel_ptr_32(dst, rc->left, rc->top), dst_colors[2];
+    DWORD src_val, bit_val, i, full, pos;
+    struct rop_codes codes;
+    int x, y;
+    const RGBQUAD *color_table = get_dib_color_table( src );
+    BYTE *src_start = get_pixel_ptr_1(src, origin->x, origin->y);
+
+    get_rop_codes( rop2, &codes );
+
+    if (dst->funcs == &funcs_8888)
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+            dst_colors[i] = color_table[i].rgbRed << 16 | color_table[i].rgbGreen << 8 |
+                color_table[i].rgbBlue;
+    else
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+            dst_colors[i] = put_field(color_table[i].rgbRed,   dst->red_shift,   dst->red_len) |
+                            put_field(color_table[i].rgbGreen, dst->green_shift, dst->green_len) |
+                            put_field(color_table[i].rgbBlue,  dst->blue_shift,  dst->blue_len);
+
+    for (y = rc->top; y < rc->bottom; y++)
+    {
+        pos = origin->x & 7;
+
+        for (x = 0; x < rc->right - rc->left && pos < 8; x++, pos++)
+        {
+            bit_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
+            do_rop_codes_32( dst_start + x, dst_colors[bit_val], &codes );
+        }
+
+        full = ((rc->right - rc->left) - x) / 8;
+        for (i = 0; i < full; i++, pos += 8)
+        {
+            src_val = src_start[pos / 8];
+
+            bit_val = (src_val >> 7) & 1;
+            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = (src_val >> 6) & 1;
+            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = (src_val >> 5) & 1;
+            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = (src_val >> 4) & 1;
+            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = (src_val >> 3) & 1;
+            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = (src_val >> 2) & 1;
+            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = (src_val >> 1) & 1;
+            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = src_val & 1;
+            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
+        }
+
+        for ( ; x < rc->right - rc->left; x++, pos++)
+        {
+            bit_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
+            do_rop_codes_32( dst_start + x, dst_colors[bit_val], &codes );
+        }
+
+        dst_start += dst->stride / 4;
+        src_start += src->stride;
+    }
+}
+
+static void mask_rect_24( const dib_info *dst, const RECT *rc,
+                          const dib_info *src, const POINT *origin, int rop2 )
+{
+    BYTE *dst_start = get_pixel_ptr_24(dst, rc->left, rc->top);
+    DWORD src_val, bit_val, i, full, pos;
+    struct rop_codes codes;
+    int x, y;
+    const RGBQUAD *color_table = get_dib_color_table( src );
+    BYTE *src_start = get_pixel_ptr_1(src, origin->x, origin->y);
+    RGBQUAD rgb;
+
+    get_rop_codes( rop2, &codes );
+
+    for (y = rc->top; y < rc->bottom; y++)
+    {
+        pos = origin->x & 7;
+
+        for (x = 0; x < rc->right - rc->left && pos < 8; x++, pos++)
+        {
+            bit_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
+            rgb = color_table[bit_val];
+            do_rop_codes_8( dst_start + x * 3, rgb.rgbBlue, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 1, rgb.rgbGreen, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 2, rgb.rgbRed, &codes );
+        }
+
+        full = ((rc->right - rc->left) - x) / 8;
+        for (i = 0; i < full; i++, pos += 8)
+        {
+            src_val = src_start[pos / 8];
+
+            bit_val = (src_val >> 7) & 1;
+            rgb = color_table[bit_val];
+            do_rop_codes_8( dst_start + x * 3, rgb.rgbBlue, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 1, rgb.rgbGreen, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 2, rgb.rgbRed, &codes );
+            x++;
+
+            bit_val = (src_val >> 6) & 1;
+            rgb = color_table[bit_val];
+            do_rop_codes_8( dst_start + x * 3, rgb.rgbBlue, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 1, rgb.rgbGreen, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 2, rgb.rgbRed, &codes );
+            x++;
+
+            bit_val = (src_val >> 5) & 1;
+            rgb = color_table[bit_val];
+            do_rop_codes_8( dst_start + x * 3, rgb.rgbBlue, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 1, rgb.rgbGreen, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 2, rgb.rgbRed, &codes );
+            x++;
+
+            bit_val = (src_val >> 4) & 1;
+            rgb = color_table[bit_val];
+            do_rop_codes_8( dst_start + x * 3, rgb.rgbBlue, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 1, rgb.rgbGreen, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 2, rgb.rgbRed, &codes );
+            x++;
+
+            bit_val = (src_val >> 3) & 1;
+            rgb = color_table[bit_val];
+            do_rop_codes_8( dst_start + x * 3, rgb.rgbBlue, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 1, rgb.rgbGreen, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 2, rgb.rgbRed, &codes );
+            x++;
+
+            bit_val = (src_val >> 2) & 1;
+            rgb = color_table[bit_val];
+            do_rop_codes_8( dst_start + x * 3, rgb.rgbBlue, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 1, rgb.rgbGreen, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 2, rgb.rgbRed, &codes );
+            x++;
+
+            bit_val = (src_val >> 1) & 1;
+            rgb = color_table[bit_val];
+            do_rop_codes_8( dst_start + x * 3, rgb.rgbBlue, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 1, rgb.rgbGreen, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 2, rgb.rgbRed, &codes );
+            x++;
+
+            bit_val = src_val & 1;
+            rgb = color_table[bit_val];
+            do_rop_codes_8( dst_start + x * 3, rgb.rgbBlue, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 1, rgb.rgbGreen, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 2, rgb.rgbRed, &codes );
+            x++;
+        }
+
+        for ( ; x < rc->right - rc->left; x++, pos++)
+        {
+            bit_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
+            rgb = color_table[bit_val];
+            do_rop_codes_8( dst_start + x * 3, rgb.rgbBlue, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 1, rgb.rgbGreen, &codes );
+            do_rop_codes_8( dst_start + x * 3 + 2, rgb.rgbRed, &codes );
+        }
+
+        dst_start += dst->stride;
+        src_start += src->stride;
+    }
+}
+
+static void mask_rect_16( const dib_info *dst, const RECT *rc,
+                          const dib_info *src, const POINT *origin, int rop2 )
+{
+    WORD *dst_start = get_pixel_ptr_16(dst, rc->left, rc->top), dst_colors[2];
+    DWORD src_val, bit_val, i, full, pos;
+    struct rop_codes codes;
+    int x, y;
+    const RGBQUAD *color_table = get_dib_color_table( src );
+    BYTE *src_start = get_pixel_ptr_1(src, origin->x, origin->y);
+
+    get_rop_codes( rop2, &codes );
+
+    if (dst->funcs == &funcs_555)
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+            dst_colors[i] = ((color_table[i].rgbRed   << 7) & 0x7c00) |
+                            ((color_table[i].rgbGreen << 2) & 0x03e0) |
+                            ((color_table[i].rgbBlue  >> 3) & 0x001f);
+    else
+        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+            dst_colors[i] = put_field(color_table[i].rgbRed,   dst->red_shift,   dst->red_len) |
+                            put_field(color_table[i].rgbGreen, dst->green_shift, dst->green_len) |
+                            put_field(color_table[i].rgbBlue,  dst->blue_shift,  dst->blue_len);
+
+    for (y = rc->top; y < rc->bottom; y++)
+    {
+        pos = origin->x & 7;
+
+        for (x = 0; x < rc->right - rc->left && pos < 8; x++, pos++)
+        {
+            bit_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
+            do_rop_codes_16( dst_start + x, dst_colors[bit_val], &codes );
+        }
+
+        full = ((rc->right - rc->left) - x) / 8;
+        for (i = 0; i < full; i++, pos += 8)
+        {
+            src_val = src_start[pos / 8];
+
+            bit_val = (src_val >> 7) & 1;
+            do_rop_codes_16( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = (src_val >> 6) & 1;
+            do_rop_codes_16( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = (src_val >> 5) & 1;
+            do_rop_codes_16( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = (src_val >> 4) & 1;
+            do_rop_codes_16( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = (src_val >> 3) & 1;
+            do_rop_codes_16( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = (src_val >> 2) & 1;
+            do_rop_codes_16( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = (src_val >> 1) & 1;
+            do_rop_codes_16( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = src_val & 1;
+            do_rop_codes_16( dst_start + x++, dst_colors[bit_val], &codes );
+        }
+
+        for ( ; x < rc->right - rc->left; x++, pos++)
+        {
+            bit_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
+            do_rop_codes_16( dst_start + x, dst_colors[bit_val], &codes );
+        }
+
+        dst_start += dst->stride / 2;
+        src_start += src->stride;
+    }
+}
+
+static void mask_rect_8( const dib_info *dst, const RECT *rc,
+                         const dib_info *src, const POINT *origin, int rop2 )
+{
+    BYTE *dst_start = get_pixel_ptr_8(dst, rc->left, rc->top), dst_colors[2];
+    DWORD src_val, bit_val, i, full, pos;
+    struct rop_codes codes;
+    int x, y;
+    const RGBQUAD *color_table = get_dib_color_table( src );
+    BYTE *src_start = get_pixel_ptr_1(src, origin->x, origin->y);
+
+    get_rop_codes( rop2, &codes );
+
+    for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        dst_colors[i] = rgb_to_pixel_colortable( dst, color_table[i].rgbRed, color_table[i].rgbGreen,
+                                                 color_table[i].rgbBlue );
+
+    for (y = rc->top; y < rc->bottom; y++)
+    {
+        pos = origin->x & 7;
+
+        for (x = 0; x < rc->right - rc->left && pos < 8; x++, pos++)
+        {
+            bit_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
+            do_rop_codes_8( dst_start + x, dst_colors[bit_val], &codes );
+        }
+
+        full = ((rc->right - rc->left) - x) / 8;
+        for (i = 0; i < full; i++, pos += 8)
+        {
+            src_val = src_start[pos / 8];
+
+            bit_val = (src_val >> 7) & 1;
+            do_rop_codes_8( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = (src_val >> 6) & 1;
+            do_rop_codes_8( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = (src_val >> 5) & 1;
+            do_rop_codes_8( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = (src_val >> 4) & 1;
+            do_rop_codes_8( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = (src_val >> 3) & 1;
+            do_rop_codes_8( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = (src_val >> 2) & 1;
+            do_rop_codes_8( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = (src_val >> 1) & 1;
+            do_rop_codes_8( dst_start + x++, dst_colors[bit_val], &codes );
+            bit_val = src_val & 1;
+            do_rop_codes_8( dst_start + x++, dst_colors[bit_val], &codes );
+        }
+
+        for ( ; x < rc->right - rc->left; x++, pos++)
+        {
+            bit_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
+            do_rop_codes_8( dst_start + x, dst_colors[bit_val], &codes );
+        }
+
+        dst_start += dst->stride;
+        src_start += src->stride;
+    }
+}
+
+static void mask_rect_4( const dib_info *dst, const RECT *rc,
+                         const dib_info *src, const POINT *origin, int rop2 )
+{
+    BYTE *dst_start = get_pixel_ptr_4(dst, rc->left, rc->top), dst_colors[2], *dst_ptr;
+    DWORD bit_val, i, pos;
+    struct rop_codes codes;
+    int x, y;
+    int left = dst->rect.left + rc->left;
+    int right = dst->rect.left + rc->right;
+    const RGBQUAD *color_table = get_dib_color_table( src );
+    BYTE *src_start = get_pixel_ptr_1(src, origin->x, origin->y);
+
+    get_rop_codes( rop2, &codes );
+
+    for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+    {
+        dst_colors[i] = rgb_to_pixel_colortable( dst, color_table[i].rgbRed, color_table[i].rgbGreen,
+                                                 color_table[i].rgbBlue );
+        /* Set high nibble to match so we don't need to shift it later. */
+        dst_colors[i] |= dst_colors[i] << 4;
+    }
+
+    for (y = rc->top; y < rc->bottom; y++)
+    {
+        pos = origin->x & 7;
+
+        for (x = left, dst_ptr = dst_start; x < right; x++, pos++)
+        {
+            bit_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
+            if (x & 1)
+                do_rop_codes_mask_8( dst_ptr++, dst_colors[bit_val], &codes, 0x0f );
+            else
+                do_rop_codes_mask_8( dst_ptr, dst_colors[bit_val], &codes, 0xf0 );
+        }
+        dst_start += dst->stride;
+        src_start += src->stride;
+    }
+}
+
+static void mask_rect_null( const dib_info *dst, const RECT *rc,
+                            const dib_info *src, const POINT *origin, int rop2 )
+{
+}
+
 static inline BYTE aa_color( BYTE dst, BYTE text, BYTE min_comp, BYTE max_comp )
 {
     if (dst == text) return dst;
@@ -6338,6 +6677,7 @@ const primitive_funcs funcs_8888 =
     copy_rect_32,
     blend_rect_8888,
     gradient_rect_8888,
+    mask_rect_32,
     draw_glyph_8888,
     draw_subpixel_glyph_8888,
     get_pixel_32,
@@ -6358,6 +6698,7 @@ const primitive_funcs funcs_32 =
     copy_rect_32,
     blend_rect_32,
     gradient_rect_32,
+    mask_rect_32,
     draw_glyph_32,
     draw_subpixel_glyph_32,
     get_pixel_32,
@@ -6378,6 +6719,7 @@ const primitive_funcs funcs_24 =
     copy_rect_24,
     blend_rect_24,
     gradient_rect_24,
+    mask_rect_24,
     draw_glyph_24,
     draw_subpixel_glyph_24,
     get_pixel_24,
@@ -6398,6 +6740,7 @@ const primitive_funcs funcs_555 =
     copy_rect_16,
     blend_rect_555,
     gradient_rect_555,
+    mask_rect_16,
     draw_glyph_555,
     draw_subpixel_glyph_555,
     get_pixel_16,
@@ -6418,6 +6761,7 @@ const primitive_funcs funcs_16 =
     copy_rect_16,
     blend_rect_16,
     gradient_rect_16,
+    mask_rect_16,
     draw_glyph_16,
     draw_subpixel_glyph_16,
     get_pixel_16,
@@ -6438,6 +6782,7 @@ const primitive_funcs funcs_8 =
     copy_rect_8,
     blend_rect_8,
     gradient_rect_8,
+    mask_rect_8,
     draw_glyph_8,
     draw_subpixel_glyph_null,
     get_pixel_8,
@@ -6458,6 +6803,7 @@ const primitive_funcs funcs_4 =
     copy_rect_4,
     blend_rect_4,
     gradient_rect_4,
+    mask_rect_4,
     draw_glyph_4,
     draw_subpixel_glyph_null,
     get_pixel_4,
@@ -6478,6 +6824,7 @@ const primitive_funcs funcs_1 =
     copy_rect_1,
     blend_rect_1,
     gradient_rect_1,
+    mask_rect_null,
     draw_glyph_1,
     draw_subpixel_glyph_null,
     get_pixel_1,
@@ -6498,6 +6845,7 @@ const primitive_funcs funcs_null =
     copy_rect_null,
     blend_rect_null,
     gradient_rect_null,
+    mask_rect_null,
     draw_glyph_null,
     draw_subpixel_glyph_null,
     get_pixel_null,
