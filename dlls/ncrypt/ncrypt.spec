@@ -60,20 +60,20 @@
 @ stub NCryptCloseKeyProtector
 @ stub NCryptCloseProtectionDescriptor
 @ stub NCryptCreateClaim
-@ stub NCryptCreatePersistedKey
+@ stdcall NCryptCreatePersistedKey(long ptr wstr wstr long long)
 @ stub NCryptCreateProtectionDescriptor
-@ stub NCryptDecrypt
+@ stdcall NCryptDecrypt(long ptr long ptr ptr long ptr long)
 @ stub NCryptDeleteKey
 @ stub NCryptDeriveKey
 @ stub NCryptDuplicateKeyProtectorHandle
-@ stub NCryptEncrypt
+@ stdcall NCryptEncrypt(long ptr long ptr ptr long ptr long)
 @ stub NCryptEnumAlgorithms
 @ stub NCryptEnumKeys
 @ stub NCryptEnumStorageProviders
 @ stub NCryptExportKey
-@ stub NCryptFinalizeKey
+@ stdcall NCryptFinalizeKey(long long)
 @ stub NCryptFreeBuffer
-@ stub NCryptFreeObject
+@ stdcall NCryptFreeObject(long)
 @ stub NCryptGetProperty
 @ stub NCryptGetProtectionDescriptorInfo
 @ stub NCryptImportKey
@@ -81,9 +81,9 @@
 @ stub NCryptIsKeyHandle
 @ stub NCryptKeyDerivation
 @ stub NCryptNotifyChangeKey
-@ stub NCryptOpenKey
+@ stdcall NCryptOpenKey(long ptr wstr long long)
 @ stub NCryptOpenKeyProtector
-@ stub NCryptOpenStorageProvider
+@ stdcall NCryptOpenStorageProvider(ptr wstr long)
 @ stub NCryptProtectKey
 @ stub NCryptProtectSecret
 @ stub NCryptQueryProtectionDescriptorName
