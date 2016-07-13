@@ -1789,7 +1789,24 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetViewports(ID3D11Devic
 static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetScissorRects(ID3D11DeviceContext *iface,
         UINT *rect_count, D3D11_RECT *rects)
 {
-    FIXME("iface %p, rect_count %p, rects %p stub!\n", iface, rect_count, rects);
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+
+    TRACE("iface %p, rect_count %p, rects %p.\n", iface, rect_count, rects);
+
+    if (!rects)
+    {
+        *rect_count = 1;
+        return;
+    }
+
+    if (!*rect_count)
+        return;
+
+    wined3d_mutex_lock();
+    wined3d_device_get_scissor_rect(device->wined3d_device, rects);
+    wined3d_mutex_unlock();
+    if (*rect_count > 1)
+        memset(&rects[1], 0, (*rect_count - 1) * sizeof(*rects));
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_HSGetShaderResources(ID3D11DeviceContext *iface,
