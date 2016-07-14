@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -203,7 +204,7 @@ TRACKBAR_ConvertPlaceToPosition (const TRACKBAR_INFO *infoPtr, int place)
         pos = infoPtr->lRangeMin;
 
     TRACE("%.2f\n", pos);
-    return (LONG)(pos + 0.5);
+    return (LONG)floor(pos + 0.5);
 }
 
 
