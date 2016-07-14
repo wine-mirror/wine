@@ -1478,8 +1478,8 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
 /***********************************************************************
  *           CreateDIBSection    (GDI32.@)
  */
-HBITMAP WINAPI CreateDIBSection(HDC hdc, const BITMAPINFO *bmi, UINT usage,
-                                VOID **bits, HANDLE section, DWORD offset)
+HBITMAP WINAPI DECLSPEC_HOTPATCH CreateDIBSection(HDC hdc, const BITMAPINFO *bmi, UINT usage,
+                                                  void **bits, HANDLE section, DWORD offset)
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
