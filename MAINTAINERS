@@ -85,6 +85,7 @@ F:	dlls/d3dcompiler*/
 F:	dlls/d3dx10*/
 F:	dlls/d3dx11*/
 F:	dlls/d3dx9*/
+F:	dlls/d3dxof/
 
 DirectInput
 P:	Andrew Eikum <aeikum@codeweavers.com>
