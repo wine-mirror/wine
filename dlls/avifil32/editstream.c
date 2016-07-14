@@ -404,11 +404,11 @@ static HRESULT WINAPI IAVIEditStream_fnCopy(IAVIEditStream*iface,LONG*plStart,
   if (pEdit == NULL)
     return AVIERR_MEMORY;
 
-  hr = IAVIEditStream_Paste((PAVIEDITSTREAM)pEdit, &start, plLength, &This->IAVIStream_iface,
+  hr = IAVIEditStream_Paste(&pEdit->IAVIEditStream_iface, &start, plLength, &This->IAVIStream_iface,
                             *plStart, *plStart + *plLength);
   *plStart = start;
   if (FAILED(hr))
-    IAVIEditStream_Release((PAVIEDITSTREAM)pEdit);
+    IAVIEditStream_Release(&pEdit->IAVIEditStream_iface);
   else
     *ppResult = &This->IAVIStream_iface;
 
