@@ -414,7 +414,6 @@ static HRESULT writer_close_starttag(xmlwriter *writer)
     if (!writer->starttagopen) return S_OK;
     hr = write_output_buffer(writer->output, gtW, ARRAY_SIZE(gtW));
     writer->starttagopen = FALSE;
-    writer->state = XmlWriterState_Content;
     return hr;
 }
 
@@ -957,6 +956,12 @@ static HRESULT WINAPI xmlwriter_WriteFullEndElement(IXmlWriter *iface)
 
     writer_close_starttag(This);
     writer_dec_indent(This);
+
+    /* don't force full end tag to the next line */
+    if (This->state == XmlWriterState_ElemStarted)
+        This->state = XmlWriterState_Content;
+    else
+        write_node_indent(This);
 
     /* write full end tag */
     write_output_buffer(This->output, closeelementW, ARRAY_SIZE(closeelementW));
