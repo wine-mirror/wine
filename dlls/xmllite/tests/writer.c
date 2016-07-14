@@ -1143,6 +1143,80 @@ todo_wine
     IStream_Release(stream);
 }
 
+static void test_WriteFullEndElement(void)
+{
+    static const WCHAR aW[] = {'a',0};
+    IXmlWriter *writer;
+    IStream *stream;
+    HRESULT hr;
+
+    hr = CreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    /* standalone element */
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_SetProperty(writer, XmlWriterProperty_OmitXmlDeclaration, TRUE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_SetProperty(writer, XmlWriterProperty_Indent, TRUE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteFullEndElement(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteEndDocument(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    CHECK_OUTPUT(stream,
+        "<a></a>");
+    IStream_Release(stream);
+
+    /* nested elements */
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_SetProperty(writer, XmlWriterProperty_OmitXmlDeclaration, TRUE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_SetProperty(writer, XmlWriterProperty_Indent, TRUE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteFullEndElement(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteEndDocument(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    CHECK_OUTPUT(stream,
+        "<a>\r\n"
+        "  <a></a>\r\n"
+        "</a>");
+
+    IXmlWriter_Release(writer);
+    IStream_Release(stream);
+}
+
 START_TEST(writer)
 {
     test_writer_create();
@@ -1160,4 +1234,5 @@ START_TEST(writer)
     test_WriteRaw();
     test_indentation();
     test_WriteAttributeString();
+    test_WriteFullEndElement();
 }

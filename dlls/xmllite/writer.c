@@ -947,11 +947,13 @@ static HRESULT WINAPI xmlwriter_WriteFullEndElement(IXmlWriter *iface)
     if (!element)
         return WR_E_INVALIDACTION;
 
+    writer_close_starttag(This);
+    writer_dec_indent(This);
+
     /* write full end tag */
     write_output_buffer(This->output, closeelementW, ARRAY_SIZE(closeelementW));
     write_output_buffer(This->output, element->qname, element->len);
     write_output_buffer(This->output, gtW, ARRAY_SIZE(gtW));
-    This->starttagopen = FALSE;
 
     return S_OK;
 }
