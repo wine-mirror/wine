@@ -782,10 +782,11 @@ if (hr == S_OK)
 
 static void test_connectionpoints(void)
 {
-    IConnectionPointContainer *container;
+    IConnectionPointContainer *container, *container2;
     IConnectionPoint *cp;
     IScriptControl *sc;
     HRESULT hr;
+    IID iid;
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IScriptControl, (void**)&sc);
@@ -799,10 +800,42 @@ static void test_connectionpoints(void)
 
     hr = IConnectionPointContainer_FindConnectionPoint(container, &IID_IPropertyNotifySink, &cp);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    if (0) /* crashes on win2k3 */
+    {
+        hr = IConnectionPoint_GetConnectionPointContainer(cp, NULL);
+        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    }
+
+    hr = IConnectionPoint_GetConnectionInterface(cp, &iid);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(IsEqualIID(&iid, &IID_IPropertyNotifySink), "got %s\n", wine_dbgstr_guid(&iid));
+
+    hr = IConnectionPoint_GetConnectionPointContainer(cp, &container2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(container2 == container, "got %p, expected %p\n", container2, container);
+    IConnectionPointContainer_Release(container2);
+
     IConnectionPoint_Release(cp);
 
     hr = IConnectionPointContainer_FindConnectionPoint(container, &DIID_DScriptControlSource, &cp);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    if (0) /* crashes on win2k3 */
+    {
+        hr = IConnectionPoint_GetConnectionPointContainer(cp, NULL);
+        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    }
+
+    hr = IConnectionPoint_GetConnectionInterface(cp, &iid);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(IsEqualIID(&iid, &DIID_DScriptControlSource), "got %s\n", wine_dbgstr_guid(&iid));
+
+    hr = IConnectionPoint_GetConnectionPointContainer(cp, &container2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(container2 == container, "got %p, expected %p\n", container2, container);
+    IConnectionPointContainer_Release(container2);
+
     IConnectionPoint_Release(cp);
 
     IConnectionPointContainer_Release(container);

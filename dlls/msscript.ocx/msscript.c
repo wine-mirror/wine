@@ -1282,9 +1282,10 @@ static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *i
 {
     ConnectionPoint *This = impl_from_IConnectionPoint(iface);
 
-    FIXME("(%p)->(%p)\n", This, iid);
+    TRACE("(%p)->(%p)\n", This, iid);
 
-    return E_NOTIMPL;
+    *iid = *This->riid;
+    return S_OK;
 }
 
 static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoint *iface,
@@ -1292,9 +1293,15 @@ static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoi
 {
     ConnectionPoint *This = impl_from_IConnectionPoint(iface);
 
-    FIXME("(%p)->(%p)\n", This, container);
+    TRACE("(%p)->(%p)\n", This, container);
 
-    return E_NOTIMPL;
+    if (!container)
+        return E_POINTER;
+
+    *container = &This->control->IConnectionPointContainer_iface;
+    IConnectionPointContainer_AddRef(*container);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *unk_sink,
