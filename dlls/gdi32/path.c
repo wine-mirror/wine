@@ -89,6 +89,8 @@ struct gdi_path
     int          allocated;
     BOOL         newStroke;
     POINT        pos;         /* current cursor position */
+    POINT        points_buf[NUM_ENTRIES_INITIAL];
+    BYTE         flags_buf[NUM_ENTRIES_INITIAL];
 };
 
 struct path_physdev
@@ -104,8 +106,8 @@ static inline struct path_physdev *get_path_physdev( PHYSDEV dev )
 
 void free_gdi_path( struct gdi_path *path )
 {
-    HeapFree( GetProcessHeap(), 0, path->points );
-    HeapFree( GetProcessHeap(), 0, path->flags );
+    if (path->points != path->points_buf)
+        HeapFree( GetProcessHeap(), 0, path->points );
     HeapFree( GetProcessHeap(), 0, path );
 }
 
@@ -119,13 +121,22 @@ static struct gdi_path *alloc_gdi_path( int count )
         return NULL;
     }
     count = max( NUM_ENTRIES_INITIAL, count );
-    path->points = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*path->points) );
-    path->flags = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*path->flags) );
-    if (!path->points || !path->flags)
+    if (count > NUM_ENTRIES_INITIAL)
     {
-        free_gdi_path( path );
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return NULL;
+        path->points = HeapAlloc( GetProcessHeap(), 0,
+                                  count * (sizeof(path->points[0]) + sizeof(path->flags[0])) );
+        if (!path->points)
+        {
+            HeapFree( GetProcessHeap(), 0, path );
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return NULL;
+        }
+        path->flags = (BYTE *)(path->points + count);
+    }
+    else
+    {
+        path->points = path->points_buf;
+        path->flags = path->flags_buf;
     }
     path->count = 0;
     path->allocated = count;
@@ -179,30 +190,39 @@ static inline INT int_from_fixed(FIXED f)
  * been allocated; allocates larger arrays and copies the existing entries
  * to those arrays, if necessary. Returns TRUE if successful, else FALSE.
  */
-static BOOL PATH_ReserveEntries(struct gdi_path *pPath, INT count)
+static BOOL PATH_ReserveEntries(struct gdi_path *path, INT count)
 {
-    POINT *pPointsNew;
-    BYTE    *pFlagsNew;
+    POINT *pts_new;
+    int size;
 
     assert(count>=0);
 
     /* Do we have to allocate more memory? */
-    if(count > pPath->allocated)
+    if (count > path->allocated)
     {
         /* Find number of entries to allocate. We let the size of the array
          * grow exponentially, since that will guarantee linear time
          * complexity. */
-        count = max( pPath->allocated * 2, count );
+        count = max( path->allocated * 2, count );
+        size = count * (sizeof(path->points[0]) + sizeof(path->flags[0]));
 
-        pPointsNew = HeapReAlloc( GetProcessHeap(), 0, pPath->points, count * sizeof(POINT) );
-        if (!pPointsNew) return FALSE;
-        pPath->points = pPointsNew;
+        if (path->points == path->points_buf)
+        {
+            pts_new = HeapAlloc( GetProcessHeap(), 0, size );
+            if (!pts_new) return FALSE;
+            memcpy( pts_new, path->points, path->count * sizeof(path->points[0]) );
+            memcpy( pts_new + count, path->flags, path->count * sizeof(path->flags[0]) );
+        }
+        else
+        {
+            pts_new = HeapReAlloc( GetProcessHeap(), 0, path->points, size );
+            if (!pts_new) return FALSE;
+            memmove( pts_new + count, pts_new + path->allocated, path->count * sizeof(path->flags[0]) );
+        }
 
-        pFlagsNew = HeapReAlloc( GetProcessHeap(), 0, pPath->flags, count * sizeof(BYTE) );
-        if (!pFlagsNew) return FALSE;
-        pPath->flags = pFlagsNew;
-
-        pPath->allocated = count;
+        path->points = pts_new;
+        path->flags = (BYTE *)(pts_new + count);
+        path->allocated = count;
     }
     return TRUE;
 }
