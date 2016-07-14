@@ -1249,21 +1249,21 @@ TRACKBAR_SetRange (TRACKBAR_INFO *infoPtr, BOOL redraw, LONG range)
     infoPtr->lRangeMin = (SHORT)LOWORD(range);
     infoPtr->lRangeMax = (SHORT)HIWORD(range);
 
-    if (infoPtr->lPos < infoPtr->lRangeMin) {
+    /* clip position to new min/max limit */
+    if (infoPtr->lPos < infoPtr->lRangeMin)
         infoPtr->lPos = infoPtr->lRangeMin;
-        infoPtr->flags |= TB_THUMBPOSCHANGED;
-    }
 
-    if (infoPtr->lPos > infoPtr->lRangeMax) {
+    if (infoPtr->lPos > infoPtr->lRangeMax)
         infoPtr->lPos = infoPtr->lRangeMax;
-        infoPtr->flags |= TB_THUMBPOSCHANGED;
-    }
 
     infoPtr->lPageSize = (infoPtr->lRangeMax - infoPtr->lRangeMin) / 5;
     if (infoPtr->lPageSize == 0) infoPtr->lPageSize = 1;
 
-    if (changed && (infoPtr->dwStyle & TBS_AUTOTICKS))
-        TRACKBAR_RecalculateTics (infoPtr);
+    if (changed) {
+        if (infoPtr->dwStyle & TBS_AUTOTICKS)
+            TRACKBAR_RecalculateTics (infoPtr);
+        infoPtr->flags |= TB_THUMBPOSCHANGED;
+    }
 
     if (redraw) TRACKBAR_InvalidateAll(infoPtr);
 
