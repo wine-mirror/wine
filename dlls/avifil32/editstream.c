@@ -70,7 +70,7 @@ struct _IAVIEditStreamImpl {
   LPBITMAPINFOHEADER   lpFrame;    /* frame of pCurStream */
 };
 
-static IAVIEditStream *AVIFILE_CreateEditStream(IAVIStream *stream);
+static IAVIEditStreamImpl *AVIFILE_CreateEditStream(IAVIStream *stream);
 
 static inline IAVIEditStreamImpl *impl_from_IAVIEditStream(IAVIEditStream *iface)
 {
@@ -400,7 +400,7 @@ static HRESULT WINAPI IAVIEditStream_fnCopy(IAVIEditStream*iface,LONG*plStart,
     *(LPDWORD)plLength = This->sInfo.dwStart + This->sInfo.dwLength -
       *(LPDWORD)plStart;
 
-  pEdit = (IAVIEditStreamImpl*)AVIFILE_CreateEditStream(NULL);
+  pEdit = AVIFILE_CreateEditStream(NULL);
   if (pEdit == NULL)
     return AVIERR_MEMORY;
 
@@ -616,7 +616,7 @@ static HRESULT WINAPI IAVIEditStream_fnClone(IAVIEditStream*iface,
     return AVIERR_BADPARAM;
   *ppResult = NULL;
 
-  pEdit = (IAVIEditStreamImpl*)AVIFILE_CreateEditStream(NULL);
+  pEdit = AVIFILE_CreateEditStream(NULL);
   if (pEdit == NULL)
     return AVIERR_MEMORY;
   if (This->nStreams > pEdit->nTableSize) {
@@ -1007,7 +1007,7 @@ static const struct IAVIStreamVtbl ieditstast = {
   IEditAVIStream_fnSetInfo
 };
 
-static IAVIEditStream *AVIFILE_CreateEditStream(IAVIStream *pstream)
+static IAVIEditStreamImpl *AVIFILE_CreateEditStream(IAVIStream *pstream)
 {
   IAVIEditStreamImpl *pedit = NULL;
 
@@ -1021,7 +1021,7 @@ static IAVIEditStream *AVIFILE_CreateEditStream(IAVIStream *pstream)
 
   IAVIStream_Create(&pedit->IAVIStream_iface, (LPARAM)pstream, 0);
 
-  return (PAVIEDITSTREAM)pedit;
+  return pedit;
 }
 
 /***********************************************************************
@@ -1030,6 +1030,7 @@ static IAVIEditStream *AVIFILE_CreateEditStream(IAVIStream *pstream)
 HRESULT WINAPI CreateEditableStream(IAVIStream **editable, IAVIStream *src)
 {
     IAVIEditStream *edit = NULL;
+    IAVIEditStreamImpl *editobj;
     HRESULT hr;
 
     TRACE("(%p,%p)\n", editable, src);
@@ -1049,12 +1050,10 @@ HRESULT WINAPI CreateEditableStream(IAVIStream **editable, IAVIStream *src)
     }
 
     /* Need own implementation of IAVIEditStream */
-    edit = AVIFILE_CreateEditStream(src);
-    if (!edit)
+    editobj = AVIFILE_CreateEditStream(src);
+    if (!editobj)
         return AVIERR_MEMORY;
+    *editable = &editobj->IAVIStream_iface;
 
-    hr = IAVIEditStream_QueryInterface(edit, &IID_IAVIStream, (void**)editable);
-    IAVIEditStream_Release(edit);
-
-    return hr;
+    return S_OK;
 }
