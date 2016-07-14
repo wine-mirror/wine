@@ -704,21 +704,29 @@ static HRESULT WINAPI xmlwriter_WriteCData(IXmlWriter *iface, LPCWSTR data)
 
 static HRESULT WINAPI xmlwriter_WriteCharEntity(IXmlWriter *iface, WCHAR ch)
 {
+    static const WCHAR fmtW[] = {'&','#','x','%','x',';',0};
     xmlwriter *This = impl_from_IXmlWriter(iface);
+    WCHAR bufW[16];
 
-    FIXME("%p %x\n", This, ch);
+    TRACE("%p %#x\n", This, ch);
 
     switch (This->state)
     {
     case XmlWriterState_Initial:
         return E_UNEXPECTED;
+    case XmlWriterState_ElemStarted:
+        writer_close_starttag(This);
+        break;
     case XmlWriterState_DocClosed:
         return WR_E_INVALIDACTION;
     default:
         ;
     }
 
-    return E_NOTIMPL;
+    sprintfW(bufW, fmtW, ch);
+    write_output_buffer(This->output, bufW, -1);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlwriter_WriteChars(IXmlWriter *iface, const WCHAR *pwch, UINT cwch)
