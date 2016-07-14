@@ -100,24 +100,23 @@ static void get_points_bounds( RECTL *bounds, const POINT *pts, UINT count, HDC 
 static BOOL emfdrv_stroke_and_fill_path( PHYSDEV dev, INT type )
 {
     EMRSTROKEANDFILLPATH emr;
-    int count;
+    struct gdi_path *path;
     POINT *points;
     BYTE *flags;
 
     emr.emr.iType = type;
     emr.emr.nSize = sizeof(emr);
 
-    count = get_gdi_flat_path( dev->hdc, &points, &flags, NULL );
-    if (count >= 0)
+    if ((path = get_gdi_flat_path( dev->hdc, NULL )))
     {
+        int count = get_gdi_path_data( path, &points, &flags );
         get_points_bounds( &emr.rclBounds, points, count, 0 );
-        HeapFree( GetProcessHeap(), 0, points );
-        HeapFree( GetProcessHeap(), 0, flags );
+        free_gdi_path( path );
     }
     else emr.rclBounds = empty_bounds;
 
     if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
-    if (count < 0) return FALSE;
+    if (!path) return FALSE;
     EMFDRV_UpdateBBox( dev, &emr.rclBounds );
     return TRUE;
 }

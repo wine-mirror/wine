@@ -514,29 +514,22 @@ static BOOL PATH_DoArcPart(struct gdi_path *pPath, FLOAT_POINT corners[],
 }
 
 /* retrieve a flattened path in device coordinates, and optionally its region */
-/* the DC path is deleted; the returned data must be freed by caller */
+/* the DC path is deleted; the returned data must be freed by caller using free_gdi_path() */
 /* helper for stroke_and_fill_path in the DIB driver */
-int get_gdi_flat_path( HDC hdc, POINT **points, BYTE **flags, HRGN *rgn )
+struct gdi_path *get_gdi_flat_path( HDC hdc, HRGN *rgn )
 {
     DC *dc = get_dc_ptr( hdc );
-    int ret = -1;
+    struct gdi_path *ret = NULL;
 
-    if (!dc) return -1;
+    if (!dc) return NULL;
 
     if (dc->path)
     {
-        struct gdi_path *path = PATH_FlattenPath( dc->path );
+        ret = PATH_FlattenPath( dc->path );
 
         free_gdi_path( dc->path );
         dc->path = NULL;
-        if (path)
-        {
-            ret = path->count;
-            *points = path->points;
-            *flags = path->flags;
-            if (rgn) *rgn = path_to_region( path, GetPolyFillMode( hdc ));
-            HeapFree( GetProcessHeap(), 0, path );
-        }
+        if (ret && rgn) *rgn = path_to_region( ret, GetPolyFillMode( hdc ) );
     }
     else SetLastError( ERROR_CAN_NOT_COMPLETE );
 
@@ -544,6 +537,12 @@ int get_gdi_flat_path( HDC hdc, POINT **points, BYTE **flags, HRGN *rgn )
     return ret;
 }
 
+int get_gdi_path_data( struct gdi_path *path, POINT **pts, BYTE **flags )
+{
+    *pts = path->points;
+    *flags = path->flags;
+    return path->count;
+}
 
 /***********************************************************************
  *           BeginPath    (GDI32.@)
