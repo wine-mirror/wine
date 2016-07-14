@@ -136,24 +136,13 @@ static struct gdi_path *alloc_gdi_path( int count )
 
 static struct gdi_path *copy_gdi_path( const struct gdi_path *src_path )
 {
-    struct gdi_path *path = HeapAlloc( GetProcessHeap(), 0, sizeof(*path) );
+    struct gdi_path *path = alloc_gdi_path( src_path->count );
 
-    if (!path)
-    {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return NULL;
-    }
-    path->count = path->allocated = src_path->count;
+    if (!path) return NULL;
+
+    path->count = src_path->count;
     path->newStroke = src_path->newStroke;
     path->pos = src_path->pos;
-    path->points = HeapAlloc( GetProcessHeap(), 0, path->count * sizeof(*path->points) );
-    path->flags = HeapAlloc( GetProcessHeap(), 0, path->count * sizeof(*path->flags) );
-    if (!path->points || !path->flags)
-    {
-        free_gdi_path( path );
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return NULL;
-    }
     memcpy( path->points, src_path->points, path->count * sizeof(*path->points) );
     memcpy( path->flags, src_path->flags, path->count * sizeof(*path->flags) );
     return path;
