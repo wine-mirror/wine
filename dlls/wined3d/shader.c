@@ -190,6 +190,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_SAMPLE_C_LZ                      */ "sample_c_lz",
     /* WINED3DSIH_SAMPLE_GRAD                      */ "sample_d",
     /* WINED3DSIH_SAMPLE_LOD                       */ "sample_l",
+    /* WINED3DSIH_SAMPLE_POS                       */ "sample_pos",
     /* WINED3DSIH_SETP                             */ "setp",
     /* WINED3DSIH_SGE                              */ "sge",
     /* WINED3DSIH_SGN                              */ "sgn",
