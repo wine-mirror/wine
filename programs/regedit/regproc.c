@@ -31,7 +31,10 @@
 #include <winreg.h>
 #include <assert.h>
 #include <wine/unicode.h>
+#include <wine/debug.h>
 #include "regproc.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(regedit);
 
 #define REG_VAL_BUF_SIZE        4096
 
@@ -856,20 +859,18 @@ static void processRegLinesW(FILE *in)
 
 static void REGPROC_print_error(void)
 {
-    LPVOID lpMsgBuf;
-    DWORD error_code;
-    int status;
+    WCHAR *str;
+    DWORD error_code, len;
 
-    error_code = GetLastError ();
-    status = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                            NULL, error_code, 0, (LPSTR) &lpMsgBuf, 0, NULL);
-    if (!status) {
-        fprintf(stderr, "regedit: Cannot display message for error %d, status %d\n",
-                error_code, GetLastError());
+    error_code = GetLastError();
+    len = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                         NULL, error_code, 0, (WCHAR *)&str, 0, NULL);
+    if (len == 0 && GetLastError() != NO_ERROR) {
+        WINE_FIXME("FormatMessage failed: le=%u, previous=%u\n", GetLastError(), error_code);
         exit(1);
     }
-    puts(lpMsgBuf);
-    LocalFree(lpMsgBuf);
+    output_writeconsole(str, len);
+    LocalFree(str);
     exit(1);
 }
 

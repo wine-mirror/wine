@@ -28,7 +28,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(regedit);
 
-static void output_writeconsole(const WCHAR *str, DWORD wlen)
+void output_writeconsole(const WCHAR *str, DWORD wlen)
 {
     DWORD count, ret;
 
