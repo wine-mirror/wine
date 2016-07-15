@@ -363,6 +363,20 @@ STRINGTABLE
     STRING_FILE_NOT_FOUND, "regedit: The file '%1' was not found.\n"
     STRING_CANNOT_OPEN_FILE, "regedit: Unable to open the file '%1'.\n"
     STRING_UNHANDLED_ACTION, "regedit: Unhandled action.\n"
+    STRING_OUT_OF_MEMORY, "regedit: Out of memory! (%1!S!, line %2!u!)\n"
+    STRING_INVALID_HEX, "regedit: Invalid hexadecimal value.\n"
+    STRING_CSV_HEX_ERROR, "regedit: Unable to convert hexadecimal data. An invalid value was encountered at '%1'.\n"
+    STRING_ESCAPE_SEQUENCE, "regedit: Unrecognized escape sequence [\\%1!c!]\n"
+    STRING_UNKNOWN_DATA_FORMAT, "regedit: Unsupported registry data type [%1!u!]\n"
+    STRING_UNEXPECTED_EOL, "regedit: Unexpected end of line in '%1'.\n"
+    STRING_UNRECOGNIZED_LINE, "regedit: The line '%1' was not recognized.\n"
+    STRING_SETVALUE_FAILED, "regedit: Unable to add the registry value '%1' to '%2!S!'.\n"
+    STRING_OPEN_KEY_FAILED, "regedit: Unable to open the registry key '%1'.\n"
+    STRING_UNSUPPORTED_TYPE, "regedit: Unsupported registry data type [%1!u!] encountered in '%2'.\n"
+    STRING_EXPORT_AS_BINARY, "regedit: The registry value '%1' will be exported as binary data.\n"
+    STRING_INCORRECT_REG_CLASS, "regedit: Incorrect registry class specification in '%1'.\n"
+    STRING_REG_KEY_NOT_FOUND, "regedit: Unable to export '%1'. The specified registry key was not found.\n"
+    STRING_DELETE_REG_CLASS_FAILED, "regedit: Unable to delete the registry class '%1'.\n"
 }
 
 /* define language neutral resources */

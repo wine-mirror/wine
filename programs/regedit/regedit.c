@@ -25,7 +25,6 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "regproc.h"
-#include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(regedit);
 
@@ -69,7 +68,7 @@ static void output_formatstring(const WCHAR *fmt, __ms_va_list va_args)
     LocalFree(str);
 }
 
-static void __cdecl output_message(unsigned int id, ...)
+void __cdecl output_message(unsigned int id, ...)
 {
     WCHAR fmt[1536];
     __ms_va_list va_args;

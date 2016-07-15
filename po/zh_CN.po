@@ -11508,6 +11508,84 @@ msgstr "错误：无法访问远程机器\n"
 msgid "regedit: Unhandled action.\n"
 msgstr "句柄操作无效。\n"
 
+#: regedit.rc:367
+msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
+msgstr ""
+
+#: regedit.rc:368
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "regedit: Invalid hexadecimal value.\n"
+msgstr "错误：键名无效\n"
+
+#: regedit.rc:369
+msgid ""
+"regedit: Unable to convert hexadecimal data. An invalid value was "
+"encountered at '%1'.\n"
+msgstr ""
+
+#: regedit.rc:370
+msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr ""
+
+#: regedit.rc:371
+#, fuzzy
+#| msgid "Error: Unsupported type\n"
+msgid "regedit: Unsupported registry data type [%1!u!]\n"
+msgstr "错误：不支持的格式\n"
+
+#: regedit.rc:372
+#, fuzzy
+#| msgid "Error: Unable to access remote machine\n"
+msgid "regedit: Unexpected end of line in '%1'.\n"
+msgstr "错误：无法访问远程机器\n"
+
+#: regedit.rc:373
+#, fuzzy
+#| msgid "uninstaller: The application with GUID '%1' was not found\n"
+msgid "regedit: The line '%1' was not recognized.\n"
+msgstr "uninstaller: 未找到 GUID 为 '%1' 的应用程序\n"
+
+#: regedit.rc:374
+#, fuzzy
+#| msgid "Error: Unable to access remote machine\n"
+msgid "regedit: Unable to add the registry value '%1' to '%2!S!'.\n"
+msgstr "错误：无法访问远程机器\n"
+
+#: regedit.rc:375
+#, fuzzy
+#| msgid "Error: Unable to access remote machine\n"
+msgid "regedit: Unable to open the registry key '%1'.\n"
+msgstr "错误：无法访问远程机器\n"
+
+#: regedit.rc:376
+#, fuzzy
+#| msgid "Error: Unsupported type\n"
+msgid "regedit: Unsupported registry data type [%1!u!] encountered in '%2'.\n"
+msgstr "错误：不支持的格式\n"
+
+#: regedit.rc:377
+msgid "regedit: The registry value '%1' will be exported as binary data.\n"
+msgstr ""
+
+#: regedit.rc:378
+msgid "regedit: Incorrect registry class specification in '%1'.\n"
+msgstr ""
+
+#: regedit.rc:379
+#, fuzzy
+#| msgid ""
+#| "Error: The system was unable to find the specified registry key or value\n"
+msgid ""
+"regedit: Unable to export '%1'. The specified registry key was not found.\n"
+msgstr "错误：系统无法找到指定的注册表键或值\n"
+
+#: regedit.rc:380
+#, fuzzy
+#| msgid "Error: Unable to access remote machine\n"
+msgid "regedit: Unable to delete the registry class '%1'.\n"
+msgstr "错误：无法访问远程机器\n"
+
 #: regedit.rc:163
 msgid "Quits the registry editor"
 msgstr "退出注册表编辑器"

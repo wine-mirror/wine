@@ -11974,6 +11974,89 @@ msgstr "regedit: Kan ikke åpne filen \"%1\".\n"
 msgid "regedit: Unhandled action.\n"
 msgstr "regedit: Uhåndtert handling.\n"
 
+#: regedit.rc:367
+msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
+msgstr ""
+
+#: regedit.rc:368
+#, fuzzy
+#| msgid "reg: Invalid key name\n"
+msgid "regedit: Invalid hexadecimal value.\n"
+msgstr "reg: Ugyldig nøkkelnavn\n"
+
+#: regedit.rc:369
+msgid ""
+"regedit: Unable to convert hexadecimal data. An invalid value was "
+"encountered at '%1'.\n"
+msgstr ""
+
+#: regedit.rc:370
+#, fuzzy
+#| msgid "regedit: Invalid or unrecognized switch [%1]\n"
+msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr "regedit: Ugyldig eller ukjent bryter [%1]\n"
+
+#: regedit.rc:371
+#, fuzzy
+#| msgid "reg: Unsupported registry data type [%1]\n"
+msgid "regedit: Unsupported registry data type [%1!u!]\n"
+msgstr "reg: Registerdatatypen støttes ikke [%1]\n"
+
+#: regedit.rc:372
+#, fuzzy
+#| msgid "regedit: Unable to open the file '%1'.\n"
+msgid "regedit: Unexpected end of line in '%1'.\n"
+msgstr "regedit: Kan ikke åpne filen \"%1\".\n"
+
+#: regedit.rc:373
+#, fuzzy
+#| msgid "regedit: The file '%1' was not found.\n"
+msgid "regedit: The line '%1' was not recognized.\n"
+msgstr "regedit: Filen \"%1\" ble ikke funnet.\n"
+
+#: regedit.rc:374
+#, fuzzy
+#| msgid "regedit: Unable to open the file '%1'.\n"
+msgid "regedit: Unable to add the registry value '%1' to '%2!S!'.\n"
+msgstr "regedit: Kan ikke åpne filen \"%1\".\n"
+
+#: regedit.rc:375
+#, fuzzy
+#| msgid "regedit: Unable to open the file '%1'.\n"
+msgid "regedit: Unable to open the registry key '%1'.\n"
+msgstr "regedit: Kan ikke åpne filen \"%1\".\n"
+
+#: regedit.rc:376
+#, fuzzy
+#| msgid "reg: Unsupported registry data type [%1]\n"
+msgid "regedit: Unsupported registry data type [%1!u!] encountered in '%2'.\n"
+msgstr "reg: Registerdatatypen støttes ikke [%1]\n"
+
+#: regedit.rc:377
+msgid "regedit: The registry value '%1' will be exported as binary data.\n"
+msgstr ""
+
+#: regedit.rc:378
+#, fuzzy
+#| msgid "regedit: No registry key was specified for removal.\n"
+msgid "regedit: Incorrect registry class specification in '%1'.\n"
+msgstr "regedit: Ingen registernøkkel ble oppgitt for fjerning.\n"
+
+#: regedit.rc:379
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid ""
+"regedit: Unable to export '%1'. The specified registry key was not found.\n"
+msgstr ""
+"reg: Systemet klarte ikke finne den angitte registernøkkelen eller -verdien\n"
+
+#: regedit.rc:380
+#, fuzzy
+#| msgid "regedit: Unable to open the file '%1'.\n"
+msgid "regedit: Unable to delete the registry class '%1'.\n"
+msgstr "regedit: Kan ikke åpne filen \"%1\".\n"
+
 #: regedit.rc:163
 msgid "Quits the registry editor"
 msgstr "Avslutter Registerredigering"

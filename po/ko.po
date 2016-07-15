@@ -12221,6 +12221,84 @@ msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니
 msgid "regedit: Unhandled action.\n"
 msgstr "올바르지 않은 핸들 작업.\n"
 
+#: regedit.rc:367
+msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
+msgstr ""
+
+#: regedit.rc:368
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "regedit: Invalid hexadecimal value.\n"
+msgstr "오류: 올바르지 않은 키 이름\n"
+
+#: regedit.rc:369
+msgid ""
+"regedit: Unable to convert hexadecimal data. An invalid value was "
+"encountered at '%1'.\n"
+msgstr ""
+
+#: regedit.rc:370
+msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr ""
+
+#: regedit.rc:371
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "regedit: Unsupported registry data type [%1!u!]\n"
+msgstr "지원하지 않는 형식.\n"
+
+#: regedit.rc:372
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "regedit: Unexpected end of line in '%1'.\n"
+msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+
+#: regedit.rc:373
+#, fuzzy
+#| msgid "No command was specified."
+msgid "regedit: The line '%1' was not recognized.\n"
+msgstr "어떤 명령도 정의되지 않았습니다."
+
+#: regedit.rc:374
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "regedit: Unable to add the registry value '%1' to '%2!S!'.\n"
+msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+
+#: regedit.rc:375
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "regedit: Unable to open the registry key '%1'.\n"
+msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+
+#: regedit.rc:376
+#, fuzzy
+#| msgid "Unsupported type.\n"
+msgid "regedit: Unsupported registry data type [%1!u!] encountered in '%2'.\n"
+msgstr "지원하지 않는 형식.\n"
+
+#: regedit.rc:377
+msgid "regedit: The registry value '%1' will be exported as binary data.\n"
+msgstr ""
+
+#: regedit.rc:378
+msgid "regedit: Incorrect registry class specification in '%1'.\n"
+msgstr ""
+
+#: regedit.rc:379
+#, fuzzy
+#| msgid ""
+#| "Error: The system was unable to find the specified registry key or value\n"
+msgid ""
+"regedit: Unable to export '%1'. The specified registry key was not found.\n"
+msgstr "오류: 이 시스템에서 지정된 레지스트리 키나 값을 찾을수 없습니다\n"
+
+#: regedit.rc:380
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "regedit: Unable to delete the registry class '%1'.\n"
+msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
+
 #: regedit.rc:163
 msgid "Quits the registry editor"
 msgstr "레지스트리 편집기 나가기"
