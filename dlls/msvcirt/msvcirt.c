@@ -3057,8 +3057,8 @@ void __thiscall istream_eatwhite(istream *this)
 DEFINE_THISCALL_WRAPPER(istream_gcount, 4)
 int __thiscall istream_gcount(const istream *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return this->count;
 }
 
 /* ?ipfx@istream@@QAEHH@Z */
