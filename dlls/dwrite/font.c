@@ -3593,6 +3593,14 @@ HRESULT create_font_collection(IDWriteFactory3 *factory, IDWriteFontFileEnumerat
 
             fontstrings_get_en_string(family_name, familyW, sizeof(familyW)/sizeof(WCHAR));
 
+            /* ignore dot named faces */
+            if (familyW[0] == '.') {
+                WARN("Ignoring face %s\n", debugstr_w(familyW));
+                IDWriteLocalizedStrings_Release(family_name);
+                release_font_data(font_data);
+                continue;
+            }
+
             index = collection_find_family(collection, familyW);
             if (index != ~0u)
                 hr = fontfamily_add_font(collection->family_data[index], font_data);
