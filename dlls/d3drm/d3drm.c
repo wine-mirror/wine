@@ -64,6 +64,19 @@ static HRESULT d3drm_create_texture_object(void **object, IDirect3DRM *d3drm)
     return hr;
 }
 
+static HRESULT d3drm_create_device_object(void **object, IDirect3DRM *d3drm)
+{
+    struct d3drm_device *device;
+    HRESULT hr;
+
+    if (FAILED(hr = d3drm_device_create(&device, d3drm)))
+        return hr;
+
+    *object = &device->IDirect3DRMDevice_iface;
+
+    return hr;
+}
+
 struct d3drm
 {
     IDirect3DRM IDirect3DRM_iface;
@@ -322,13 +335,11 @@ static HRESULT WINAPI d3drm1_CreateDeviceFromD3D(IDirect3DRM *iface,
     if (!device)
         return D3DRMERR_BADVALUE;
     *device = NULL;
-    if (!d3d || !d3d_device)
-        return D3DRMERR_BADVALUE;
 
     if (FAILED(hr = d3drm_device_create(&object, iface)))
         return hr;
 
-    if (FAILED(hr = d3drm_device_set_ddraw_device_d3d(object, d3d, d3d_device)))
+    if (FAILED(hr = IDirect3DRMDevice_InitFromD3D(&object->IDirect3DRMDevice_iface, d3d, d3d_device)))
     {
         d3drm_device_destroy(object);
         return hr;
@@ -1125,6 +1136,7 @@ static HRESULT WINAPI d3drm3_CreateObject(IDirect3DRM3 *iface,
     object_table[] =
     {
         {&CLSID_CDirect3DRMTexture, d3drm_create_texture_object},
+        {&CLSID_CDirect3DRMDevice, d3drm_create_device_object},
     };
 
     TRACE("iface %p, clsid %s, outer %p, iid %s, out %p.\n",

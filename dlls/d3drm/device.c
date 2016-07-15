@@ -210,10 +210,20 @@ HRESULT d3drm_device_init(struct d3drm_device *device, UINT version, IDirectDraw
 
 HRESULT d3drm_device_set_ddraw_device_d3d(struct d3drm_device *device, IDirect3D *d3d, IDirect3DDevice *d3d_device)
 {
+    IDirectDraw *ddraw;
     IDirectDrawSurface *surface;
     IDirect3DDevice2 *d3d_device2;
     DDSURFACEDESC desc;
     HRESULT hr;
+
+    /* AddRef these interfaces beforehand for the intentional leak on reinitialization. */
+    if (FAILED(hr = IDirect3D_QueryInterface(d3d, &IID_IDirectDraw, (void **)&ddraw)))
+        return hr;
+    IDirect3DRM_AddRef(device->d3drm);
+    IDirect3DDevice_AddRef(d3d_device);
+
+    if (device->ddraw)
+        return D3DRMERR_BADOBJECT;
 
     /* Fetch render target and get width/height from there */
     if (FAILED(hr = IDirect3DDevice_QueryInterface(d3d_device, &IID_IDirectDrawSurface, (void **)&surface)))
@@ -232,14 +242,10 @@ HRESULT d3drm_device_set_ddraw_device_d3d(struct d3drm_device *device, IDirect3D
     if (FAILED(hr))
         return hr;
 
-    if (FAILED(hr = IDirect3D_QueryInterface(d3d, &IID_IDirectDraw, (void **)&device->ddraw)))
-        return hr;
-
+    device->ddraw = ddraw;
     device->width = desc.dwWidth;
     device->height = desc.dwHeight;
-    IDirect3DRM_AddRef(device->d3drm);
     device->device = d3d_device;
-    IDirect3DDevice_AddRef(d3d_device);
 
     return hr;
 }
@@ -610,7 +616,10 @@ static HRESULT WINAPI d3drm_device3_InitFromD3D(IDirect3DRMDevice3 *iface,
 {
     FIXME("iface %p, d3d %p, d3d_device %p stub!\n", iface, d3d, d3d_device);
 
-    return E_NOTIMPL;
+    if (!d3d || !d3d_device)
+        return D3DRMERR_BADVALUE;
+
+    return E_NOINTERFACE;
 }
 
 static HRESULT WINAPI d3drm_device2_InitFromD3D(IDirect3DRMDevice2 *iface,
@@ -630,7 +639,10 @@ static HRESULT WINAPI d3drm_device1_InitFromD3D(IDirect3DRMDevice *iface,
 
     TRACE("iface %p, d3d %p, d3d_device %p.\n", iface, d3d, d3d_device);
 
-    return d3drm_device3_InitFromD3D(&device->IDirect3DRMDevice3_iface, d3d, d3d_device);
+    if (!d3d || !d3d_device)
+        return D3DRMERR_BADVALUE;
+
+    return d3drm_device_set_ddraw_device_d3d(device, d3d, d3d_device);
 }
 
 static HRESULT WINAPI d3drm_device3_InitFromClipper(IDirect3DRMDevice3 *iface,
