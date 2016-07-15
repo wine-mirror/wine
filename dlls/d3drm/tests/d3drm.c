@@ -3992,15 +3992,15 @@ static void test_create_device_from_d3d1(void)
     hr = IDirect3DRMDevice_QueryInterface(device1, &IID_IDirect3DRMDevice2, (void **)&device2);
     ok(SUCCEEDED(hr), "Cannot get IDirect3DRMDevice2 Interface (hr = %x).\n", hr);
     hr = IDirect3DRMDevice2_GetDirect3DDevice2(device2, &d3ddevice2);
-    ok(SUCCEEDED(hr), "Expected hr == DD_OK, got %x).\n", hr);
+    ok(SUCCEEDED(hr), "Expected hr == D3DRM_OK, got %#x.\n", hr);
     ok(d3ddevice2 == NULL, "Expected d3ddevice2 == NULL, got %p.\n", d3ddevice2);
     IDirect3DRMDevice2_Release(device2);
 
     d3ddevice2 = (IDirect3DDevice2 *)0xdeadbeef;
-    hr = IDirect3DRMDevice_QueryInterface(device1, &IID_IDirect3DRMDevice2, (void **)&device3);
-    ok(hr == DD_OK, "Cannot get IDirect3DRMDevice2 Interface (hr = %x).\n", hr);
+    hr = IDirect3DRMDevice_QueryInterface(device1, &IID_IDirect3DRMDevice3, (void **)&device3);
+    ok(hr == DD_OK, "Cannot get IDirect3DRMDevice3 Interface (hr = %x).\n", hr);
     hr = IDirect3DRMDevice3_GetDirect3DDevice2(device3, &d3ddevice2);
-    ok(hr == DD_OK, "Expected hr == DD_OK, got %x).\n", hr);
+    ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
     ok(d3ddevice2 == NULL, "Expected d3ddevice2 == NULL, got %p.\n", d3ddevice2);
     IDirect3DRMDevice3_Release(device3);
 
