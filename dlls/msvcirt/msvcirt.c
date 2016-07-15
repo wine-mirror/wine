@@ -3097,7 +3097,12 @@ int __thiscall istream_ipfx(istream *this, int need)
 DEFINE_THISCALL_WRAPPER(istream_isfx, 4)
 void __thiscall istream_isfx(istream *this)
 {
-    FIXME("(%p) stub\n", this);
+    ios *base = istream_get_ios(this);
+
+    TRACE("(%p)\n", this);
+
+    ios_unlockbuf(base);
+    ios_unlock(base);
 }
 
 /* ?get@istream@@IAEAAV1@PADHH@Z */
