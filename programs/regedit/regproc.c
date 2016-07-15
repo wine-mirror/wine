@@ -1238,15 +1238,15 @@ static FILE *REGPROC_open_export_file(WCHAR *file_name, BOOL unicode)
         _setmode(_fileno(file), _O_BINARY);
     } else
     {
-        CHAR* file_nameA = GetMultiByteString(file_name);
-        file = fopen(file_nameA, "wb");
+        WCHAR wb_mode[] = {'w','b',0};
+        WCHAR regedit[] = {'r','e','g','e','d','i','t',0};
+
+        file = _wfopen(file_name, wb_mode);
         if (!file) {
-            perror("");
+            _wperror(regedit);
             output_message(STRING_CANNOT_OPEN_FILE, file_name);
-            HeapFree(GetProcessHeap(), 0, file_nameA);
             exit(1);
         }
-        HeapFree(GetProcessHeap(), 0, file_nameA);
     }
     if(unicode)
     {
