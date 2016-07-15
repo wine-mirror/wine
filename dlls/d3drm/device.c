@@ -1200,9 +1200,29 @@ static HRESULT WINAPI d3drm_device1_GetDirect3DDevice(IDirect3DRMDevice *iface, 
 static HRESULT WINAPI d3drm_device3_InitFromD3D2(IDirect3DRMDevice3 *iface,
         IDirect3D2 *d3d, IDirect3DDevice2 *d3d_device)
 {
-    FIXME("iface %p, d3d %p, d3d_device %p stub!\n", iface, d3d, d3d_device);
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice3(iface);
+    IDirect3D *d3d1;
+    IDirect3DDevice *d3d_device1;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, d3d %p, d3d_device %p.\n", iface, d3d, d3d_device);
+
+    if (!d3d || !d3d_device)
+        return D3DRMERR_BADVALUE;
+
+    if (FAILED(hr = IDirect3D2_QueryInterface(d3d, &IID_IDirect3D, (void **)&d3d1)))
+        return hr;
+    if (FAILED(hr = IDirect3DDevice2_QueryInterface(d3d_device, &IID_IDirect3DDevice, (void **)&d3d_device1)))
+    {
+        IDirect3D_Release(d3d1);
+        return hr;
+    }
+
+    hr = d3drm_device_set_ddraw_device_d3d(device, d3d1, d3d_device1);
+    IDirect3D_Release(d3d1);
+    IDirect3DDevice_Release(d3d_device1);
+
+    return hr;
 }
 
 static HRESULT WINAPI d3drm_device2_InitFromD3D2(IDirect3DRMDevice2 *iface,
