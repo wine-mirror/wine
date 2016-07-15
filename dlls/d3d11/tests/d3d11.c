@@ -52,6 +52,11 @@ struct vec4
     float x, y, z, w;
 };
 
+struct uvec4
+{
+    unsigned int x, y, z, w;
+};
+
 struct device_desc
 {
     const D3D_FEATURE_LEVEL *feature_level;
@@ -104,6 +109,11 @@ static BOOL compare_vec4(const struct vec4 *v1, const struct vec4 *v2, unsigned 
             && compare_float(v1->y, v2->y, ulps)
             && compare_float(v1->z, v2->z, ulps)
             && compare_float(v1->w, v2->w, ulps);
+}
+
+static BOOL compare_uvec4(const struct uvec4* v1, const struct uvec4 *v2)
+{
+    return v1->x == v2->x && v1->y == v2->y && v1->z == v2->z && v1->w == v2->w;
 }
 
 static BOOL compare_color(DWORD c1, DWORD c2, BYTE max_diff)
@@ -656,6 +666,11 @@ static float get_readback_float(struct texture_readback *rb, unsigned int x, uns
 static const struct vec4 *get_readback_vec4(struct texture_readback *rb, unsigned int x, unsigned int y)
 {
     return &((const struct vec4 *)rb->map_desc.pData)[rb->map_desc.RowPitch * y / sizeof(struct vec4) + x];
+}
+
+static const struct uvec4 *get_readback_uvec4(struct texture_readback *rb, unsigned int x, unsigned int y)
+{
+    return &((const struct uvec4 *)rb->map_desc.pData)[rb->map_desc.RowPitch * y / sizeof(struct uvec4) + x];
 }
 
 static void release_texture_readback(struct texture_readback *rb)
@@ -9262,6 +9277,76 @@ static void test_immediate_constant_buffer(void)
     release_test_context(&test_context);
 }
 
+static void test_fp_specials(void)
+{
+    struct d3d11_test_context test_context;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11DeviceContext *context;
+    ID3D11RenderTargetView *rtv;
+    struct texture_readback rb;
+    ID3D11Texture2D *texture;
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    unsigned int x, y;
+    HRESULT hr;
+
+    static const DWORD ps_code[] =
+    {
+#if 0
+        float4 main() : SV_Target
+        {
+            return float4(0.0f / 0.0f, 1.0f / 0.0f, -1.0f / 0.0f, 1.0f);
+        }
+#endif
+        0x43425844, 0x86d7f319, 0x14cde598, 0xe7ce83a8, 0x0e06f3f0, 0x00000001, 0x000000b0, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000038, 0x00000040, 0x0000000e,
+        0x03000065, 0x001020f2, 0x00000000, 0x08000036, 0x001020f2, 0x00000000, 0x00004002, 0xffc00000,
+        0x7f800000, 0xff800000, 0x3f800000, 0x0100003e,
+    };
+    const struct uvec4 expected_result = {0xffc00000, 0x7f800000, 0xff800000, 0x3f800000};
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    texture_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
+
+    draw_quad(&test_context);
+    get_texture_readback(texture, 0, &rb);
+    for (y = 0; y < texture_desc.Height; ++y)
+    {
+        for (x = 0; x < texture_desc.Width; ++x)
+        {
+            const struct uvec4 *value = get_readback_uvec4(&rb, x, y);
+            ok(compare_uvec4(value, &expected_result),
+                    "Got unexpected value {0x%08x, 0x%08x, 0x%08x, 0x%08x} at (%u, %u).\n",
+                    value->x, value->y, value->z, value->w, x, y);
+        }
+    }
+    release_texture_readback(&rb);
+
+    ID3D11PixelShader_Release(ps);
+    ID3D11Texture2D_Release(texture);
+    ID3D11RenderTargetView_Release(rtv);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -9312,4 +9397,5 @@ START_TEST(d3d11)
     test_check_feature_support();
     test_create_unordered_access_view();
     test_immediate_constant_buffer();
+    test_fp_specials();
 }
