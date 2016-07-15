@@ -1201,7 +1201,7 @@ int CDECL _controlfp_s(unsigned int *cur, unsigned int newval, unsigned int mask
 /*********************************************************************
  *		fegetenv (MSVCR120.@)
  */
-int CDECL MSVCRT_fegetenv(fenv_t *env)
+int CDECL MSVCRT_fegetenv(MSVCRT_fenv_t *env)
 {
     env->control = _controlfp(0, 0) & (MSVCRT__EM_INEXACT | MSVCRT__EM_UNDERFLOW |
             MSVCRT__EM_OVERFLOW | MSVCRT__EM_ZERODIVIDE | MSVCRT__EM_INVALID);

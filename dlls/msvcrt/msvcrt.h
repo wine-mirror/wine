@@ -914,7 +914,7 @@ typedef struct
 {
     unsigned int control;
     unsigned int status;
-} fenv_t;
+} MSVCRT_fenv_t;
 
 #define MSVCRT_CLOCKS_PER_SEC 1000
 
