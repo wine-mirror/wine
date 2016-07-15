@@ -282,7 +282,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicSynthSinkImpl(LPCGUID riid, LPVOID* ret_i
 
     obj->IDirectMusicSynthSink_iface.lpVtbl = &DirectMusicSynthSink_Vtbl;
     obj->IKsControl_iface.lpVtbl = &DMSynthSinkImpl_IKsControl_Vtbl;
-    obj->ref = 0;
+    obj->ref = 1;
 
     hr = CoCreateInstance(&CLSID_SystemClock, NULL, CLSCTX_INPROC_SERVER, &IID_IReferenceClock, (LPVOID*)&obj->latency_clock);
     if (FAILED(hr))
@@ -291,13 +291,8 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicSynthSinkImpl(LPCGUID riid, LPVOID* ret_i
         return hr;
     }
 
-    hr = IDirectMusicSynthSinkImpl_QueryInterface((LPDIRECTMUSICSYNTHSINK)obj, riid, ret_iface);
-    if (FAILED(hr))
-    {
-        IReferenceClock_Release(obj->latency_clock);
-        HeapFree(GetProcessHeap(), 0, obj);
-        return hr;
-    }
+    hr = IDirectMusicSynthSink_QueryInterface(&obj->IDirectMusicSynthSink_iface, riid, ret_iface);
+    IDirectMusicSynthSink_Release(&obj->IDirectMusicSynthSink_iface);
 
-    return S_OK;
+    return hr;
 }
