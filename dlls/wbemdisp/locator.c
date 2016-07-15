@@ -1224,7 +1224,8 @@ static ULONG WINAPI locator_Release(
     if (!refs)
     {
         TRACE( "destroying %p\n", locator );
-        IWbemLocator_Release( locator->locator );
+        if (locator->locator)
+            IWbemLocator_Release( locator->locator );
         heap_free( locator );
     }
     return refs;
