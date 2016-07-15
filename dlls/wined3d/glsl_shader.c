@@ -8777,6 +8777,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_SAMPLE_C                         */ shader_glsl_sample_c,
     /* WINED3DSIH_SAMPLE_C_LZ                      */ shader_glsl_sample_c,
     /* WINED3DSIH_SAMPLE_GRAD                      */ shader_glsl_sample,
+    /* WINED3DSIH_SAMPLE_INFO                      */ NULL,
     /* WINED3DSIH_SAMPLE_LOD                       */ shader_glsl_sample,
     /* WINED3DSIH_SAMPLE_POS                       */ NULL,
     /* WINED3DSIH_SETP                             */ NULL,

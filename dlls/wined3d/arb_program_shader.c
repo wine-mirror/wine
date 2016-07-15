@@ -5359,6 +5359,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_SAMPLE_C                         */ NULL,
     /* WINED3DSIH_SAMPLE_C_LZ                      */ NULL,
     /* WINED3DSIH_SAMPLE_GRAD                      */ NULL,
+    /* WINED3DSIH_SAMPLE_INFO                      */ NULL,
     /* WINED3DSIH_SAMPLE_LOD                       */ NULL,
     /* WINED3DSIH_SAMPLE_POS                       */ NULL,
     /* WINED3DSIH_SETP                             */ NULL,

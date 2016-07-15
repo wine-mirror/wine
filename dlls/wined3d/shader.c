@@ -189,6 +189,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_SAMPLE_C                         */ "sample_c",
     /* WINED3DSIH_SAMPLE_C_LZ                      */ "sample_c_lz",
     /* WINED3DSIH_SAMPLE_GRAD                      */ "sample_d",
+    /* WINED3DSIH_SAMPLE_INFO                      */ "sample_info",
     /* WINED3DSIH_SAMPLE_LOD                       */ "sample_l",
     /* WINED3DSIH_SAMPLE_POS                       */ "sample_pos",
     /* WINED3DSIH_SETP                             */ "setp",
@@ -2420,13 +2421,20 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
             {
                 shader_addline(&buffer, "p");
             }
-            else if (ins.handler_idx == WINED3DSIH_RESINFO
-                    && ins.flags)
+            else if (ins.handler_idx == WINED3DSIH_RESINFO && ins.flags)
             {
                 switch (ins.flags)
                 {
                     case WINED3DSI_RESINFO_RCP_FLOAT: shader_addline(&buffer, "_rcpFloat"); break;
                     case WINED3DSI_RESINFO_UINT: shader_addline(&buffer, "_uint"); break;
+                    default: shader_addline(&buffer, "_unrecognized(%#x)", ins.flags);
+                }
+            }
+            else if (ins.handler_idx == WINED3DSIH_SAMPLE_INFO && ins.flags)
+            {
+                switch (ins.flags)
+                {
+                    case WINED3DSI_SAMPLE_INFO_UINT: shader_addline(&buffer, "_uint"); break;
                     default: shader_addline(&buffer, "_unrecognized(%#x)", ins.flags);
                 }
             }
