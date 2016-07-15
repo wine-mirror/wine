@@ -11716,7 +11716,7 @@ msgstr "Nebol špecifikovaný žiadny príkaz."
 #: regedit.rc:374
 #, fuzzy
 #| msgid "Error: Unable to terminate process \"%1\".\n"
-msgid "regedit: Unable to add the registry value '%1' to '%2!S!'.\n"
+msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
 msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
 #: regedit.rc:375

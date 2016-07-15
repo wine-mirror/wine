@@ -12089,7 +12089,7 @@ msgstr "usuwanie programów: Nie znaleziono aplikacji o GUID '%1'\n"
 #: regedit.rc:374
 #, fuzzy
 #| msgid "Error: Unable to access remote machine\n"
-msgid "regedit: Unable to add the registry value '%1' to '%2!S!'.\n"
+msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
 msgstr "Błąd: Błąd dostępu do zdalnej maszyny\n"
 
 #: regedit.rc:375

@@ -11989,7 +11989,7 @@ msgstr "uninstaller: GUID '%1' のアプリケーションは見つかりませ�
 #: regedit.rc:374
 #, fuzzy
 #| msgid "reg: Unable to access remote machine\n"
-msgid "regedit: Unable to add the registry value '%1' to '%2!S!'.\n"
+msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
 msgstr "reg: リモート マシンにアクセスできませんでした\n"
 
 #: regedit.rc:375

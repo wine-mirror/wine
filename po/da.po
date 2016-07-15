@@ -12195,7 +12195,7 @@ msgstr "Der blev ikke specificeret nogen kommando."
 #: regedit.rc:374
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
-msgid "regedit: Unable to add the registry value '%1' to '%2!S!'.\n"
+msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
 msgstr "Fejl: Kunne ikke tilføje nøgler til fjern maskinen\n"
 
 #: regedit.rc:375

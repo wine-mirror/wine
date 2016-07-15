@@ -12020,7 +12020,7 @@ msgstr "regedit: файл «%1» не найден.\n"
 #: regedit.rc:374
 #, fuzzy
 #| msgid "regedit: Unable to open the file '%1'.\n"
-msgid "regedit: Unable to add the registry value '%1' to '%2!S!'.\n"
+msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
 msgstr "regedit: не удалось открыть файл «%1».\n"
 
 #: regedit.rc:375

@@ -336,7 +336,7 @@ static BOOL parseKeyName(LPWSTR lpKeyName, HKEY *hKey, LPWSTR *lpKeyPath)
 }
 
 /* Globals used by the setValue() & co */
-static LPSTR currentKeyName;
+static WCHAR *currentKeyName;
 static HKEY  currentKeyHandle = NULL;
 
 /******************************************************************************
@@ -447,7 +447,11 @@ static LONG openKeyW(WCHAR* stdInput)
                                                         REG_OPENED_EXISTING_KEY */
 
     if (res == ERROR_SUCCESS)
-        currentKeyName = GetMultiByteString(stdInput);
+    {
+        currentKeyName = HeapAlloc(GetProcessHeap(), 0, (strlenW(stdInput) + 1) * sizeof(WCHAR));
+        CHECK_ENOUGH_MEMORY(currentKeyName);
+        strcpyW(currentKeyName, stdInput);
+    }
     else
         currentKeyHandle = NULL;
 

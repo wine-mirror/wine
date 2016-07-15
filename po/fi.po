@@ -11997,7 +11997,7 @@ msgstr "regedit: Tiedostoa '%1' ei löydy.\n"
 #: regedit.rc:374
 #, fuzzy
 #| msgid "regedit: Unable to open the file '%1'.\n"
-msgid "regedit: Unable to add the registry value '%1' to '%2!S!'.\n"
+msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
 msgstr "regedit: Tiedostoa '%1' ei voida avata.\n"
 
 #: regedit.rc:375

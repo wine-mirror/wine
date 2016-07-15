@@ -370,7 +370,7 @@ STRINGTABLE
     STRING_UNKNOWN_DATA_FORMAT, "regedit: Unsupported registry data type [%1!u!]\n"
     STRING_UNEXPECTED_EOL, "regedit: Unexpected end of line in '%1'.\n"
     STRING_UNRECOGNIZED_LINE, "regedit: The line '%1' was not recognized.\n"
-    STRING_SETVALUE_FAILED, "regedit: Unable to add the registry value '%1' to '%2!S!'.\n"
+    STRING_SETVALUE_FAILED, "regedit: Unable to add the registry value '%1' to '%2'.\n"
     STRING_OPEN_KEY_FAILED, "regedit: Unable to open the registry key '%1'.\n"
     STRING_UNSUPPORTED_TYPE, "regedit: Unsupported registry data type [%1!u!] encountered in '%2'.\n"
     STRING_EXPORT_AS_BINARY, "regedit: The registry value '%1' will be exported as binary data.\n"

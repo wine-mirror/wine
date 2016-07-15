@@ -12262,7 +12262,7 @@ msgstr "어떤 명령도 정의되지 않았습니다."
 #: regedit.rc:374
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
-msgid "regedit: Unable to add the registry value '%1' to '%2!S!'.\n"
+msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
 msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
 
 #: regedit.rc:375
