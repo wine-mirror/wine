@@ -3066,8 +3066,30 @@ int __thiscall istream_gcount(const istream *this)
 DEFINE_THISCALL_WRAPPER(istream_ipfx, 8)
 int __thiscall istream_ipfx(istream *this, int need)
 {
-    FIXME("(%p %d) stub\n", this, need);
-    return 0;
+    ios *base = istream_get_ios(this);
+
+    TRACE("(%p %d)\n", this, need);
+
+    if (need)
+        this->count = 0;
+    if (!ios_good(base)) {
+        ios_clear(base, base->state | IOSTATE_failbit);
+        return 0;
+    }
+    ios_lock(base);
+    ios_lockbuf(base);
+    if (base->tie && (!need || streambuf_in_avail(base->sb) < need))
+        ostream_flush(base->tie);
+    if ((base->flags & FLAGS_skipws) && !need) {
+        istream_eatwhite(this);
+        if (base->state & IOSTATE_eofbit) {
+            base->state |= IOSTATE_failbit;
+            ios_unlockbuf(base);
+            ios_unlock(base);
+            return 0;
+        }
+    }
+    return 1;
 }
 
 /* ?isfx@istream@@QAEXXZ */
