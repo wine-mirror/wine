@@ -309,6 +309,7 @@ static void (*__thiscall p_istream_dtor)(ios*);
 static istream* (*__thiscall p_istream_assign_sb)(istream*, streambuf*);
 static istream* (*__thiscall p_istream_assign)(istream*, const istream*);
 static void (*__thiscall p_istream_vbase_dtor)(istream*);
+static void (*__thiscall p_istream_eatwhite)(istream*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -506,6 +507,7 @@ static BOOL init(void)
         SET(p_istream_assign_sb, "??4istream@@IEAAAEAV0@PEAVstreambuf@@@Z");
         SET(p_istream_assign, "??4istream@@IEAAAEAV0@AEBV0@@Z");
         SET(p_istream_vbase_dtor, "??_Distream@@QEAAXXZ");
+        SET(p_istream_eatwhite, "?eatwhite@istream@@QEAAXXZ");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -625,6 +627,7 @@ static BOOL init(void)
         SET(p_istream_assign_sb, "??4istream@@IAEAAV0@PAVstreambuf@@@Z");
         SET(p_istream_assign, "??4istream@@IAEAAV0@ABV0@@Z");
         SET(p_istream_vbase_dtor, "??_Distream@@QAEXXZ");
+        SET(p_istream_eatwhite, "?eatwhite@istream@@QAEXXZ");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -3410,6 +3413,7 @@ static void test_istream(void)
     filebuf fb1, fb2, *pfb;
     const char filename1[] = "test1";
     const char filename2[] = "test2";
+    int ret;
 
     memset(&is1, 0xab, sizeof(istream));
     memset(&is2, 0xab, sizeof(istream));
@@ -3555,6 +3559,63 @@ if (0) /* crashes on native */
     ok(is2.count == 0, "expected 0 got %d\n", is2.count);
     ok(is2.base_ios.sb == &fb2.base, "expected %p got %p\n", &fb2.base, is2.base_ios.sb);
     ok(is2.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is2.base_ios.state);
+
+    /* eatwhite */
+    is1.extract_delim = is1.count = 0;
+if (0) /* crashes on native */
+    is1.base_ios.sb = NULL;
+    is1.base_ios.state = IOSTATE_badbit;
+    is1.base_ios.flags = 0;
+    call_func1(p_istream_eatwhite, &is1);
+    ok(is1.base_ios.state == (IOSTATE_badbit|IOSTATE_eofbit), "expected %d got %d\n",
+        IOSTATE_badbit|IOSTATE_eofbit, is1.base_ios.state);
+    is1.base_ios.state = IOSTATE_failbit;
+    call_func1(p_istream_eatwhite, &is1);
+    ok(is1.base_ios.state == (IOSTATE_failbit|IOSTATE_eofbit), "expected %d got %d\n",
+        IOSTATE_failbit|IOSTATE_eofbit, is1.base_ios.state);
+    is1.base_ios.state = IOSTATE_goodbit;
+    ret = (int) call_func3(p_streambuf_xsputn, &fb1.base, "And if \tyou ask\n\v\f\r  me", 23);
+    ok(ret == 23, "expected 23 got %d\n", ret);
+    ok(fb1.base.pbase == fb1.base.base, "wrong put base, expected %p got %p\n", fb1.base.base, fb1.base.pbase);
+    ok(fb1.base.pptr == fb1.base.base + 23, "wrong put pointer, expected %p got %p\n", fb1.base.base + 23, fb1.base.pptr);
+    call_func1(p_istream_eatwhite, &is1);
+    ok(is1.base_ios.state == IOSTATE_eofbit, "expected %d got %d\n", IOSTATE_eofbit, is1.base_ios.state);
+    ok(fb1.base.pbase == NULL, "wrong put base, expected %p got %p\n", NULL, fb1.base.pbase);
+    ok(fb1.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb1.base.pptr);
+    ok(fb1.base.epptr == NULL, "wrong put end, expected %p got %p\n", NULL, fb1.base.epptr);
+    is1.base_ios.state = IOSTATE_goodbit;
+    ret = (int) call_func4(p_filebuf_seekoff, &fb1, 0, SEEKDIR_beg, 0);
+    ok(ret == 0, "expected 0 got %d\n", ret);
+    call_func1(p_istream_eatwhite, &is1);
+    ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
+    ok(fb1.base.eback == fb1.base.base, "wrong get base, expected %p got %p\n", fb1.base.base, fb1.base.eback);
+    ok(fb1.base.gptr == fb1.base.base, "wrong get pointer, expected %p got %p\n", fb1.base.base, fb1.base.gptr);
+    ok(fb1.base.egptr == fb1.base.base + 23, "wrong get end, expected %p got %p\n", fb1.base.base + 23, fb1.base.egptr);
+    ret = (int) call_func4(p_filebuf_seekoff, &fb1, 3, SEEKDIR_beg, 0);
+    ok(ret == 3, "expected 3 got %d\n", ret);
+    call_func1(p_istream_eatwhite, &is1);
+    ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
+    ok(fb1.base.eback == fb1.base.base, "wrong get base, expected %p got %p\n", fb1.base.base, fb1.base.eback);
+    ok(fb1.base.gptr == fb1.base.base + 1, "wrong get pointer, expected %p got %p\n", fb1.base.base + 1, fb1.base.gptr);
+    ok(fb1.base.egptr == fb1.base.base + 20, "wrong get end, expected %p got %p\n", fb1.base.base + 20, fb1.base.egptr);
+    fb1.base.gptr += 2;
+    call_func1(p_istream_eatwhite, &is1);
+    ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
+    ok(fb1.base.eback == fb1.base.base, "wrong get base, expected %p got %p\n", fb1.base.base, fb1.base.eback);
+    ok(fb1.base.gptr == fb1.base.base + 5, "wrong get pointer, expected %p got %p\n", fb1.base.base + 5, fb1.base.gptr);
+    ok(fb1.base.egptr == fb1.base.base + 20, "wrong get end, expected %p got %p\n", fb1.base.base + 20, fb1.base.egptr);
+    fb1.base.gptr += 7;
+    call_func1(p_istream_eatwhite, &is1);
+    ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
+    ok(fb1.base.eback == fb1.base.base, "wrong get base, expected %p got %p\n", fb1.base.base, fb1.base.eback);
+    ok(fb1.base.gptr == fb1.base.base + 18, "wrong get pointer, expected %p got %p\n", fb1.base.base + 18, fb1.base.gptr);
+    ok(fb1.base.egptr == fb1.base.base + 20, "wrong get end, expected %p got %p\n", fb1.base.base + 20, fb1.base.egptr);
+    fb1.base.gptr += 9;
+    call_func1(p_istream_eatwhite, &is1);
+    ok(is1.base_ios.state == IOSTATE_eofbit, "expected %d got %d\n", IOSTATE_eofbit, is1.base_ios.state);
+    ok(fb1.base.eback == NULL, "wrong get base, expected %p got %p\n", NULL, fb1.base.eback);
+    ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
+    ok(fb1.base.egptr == NULL, "wrong get end, expected %p got %p\n", NULL, fb1.base.egptr);
 
     call_func1(p_istream_vbase_dtor, &is1);
     call_func1(p_istream_vbase_dtor, &is2);

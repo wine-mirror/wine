@@ -3040,7 +3040,16 @@ istream* __thiscall istream_scalar_dtor(ios *base, unsigned int flags)
 DEFINE_THISCALL_WRAPPER(istream_eatwhite, 4)
 void __thiscall istream_eatwhite(istream *this)
 {
-    FIXME("(%p) stub\n", this);
+    ios *base = istream_get_ios(this);
+    int c;
+
+    TRACE("(%p)\n", this);
+
+    ios_lockbuf(base);
+    for (c = streambuf_sgetc(base->sb); isspace(c); c = streambuf_snextc(base->sb));
+    ios_unlockbuf(base);
+    if (c == EOF)
+        ios_clear(base, base->state | IOSTATE_eofbit);
 }
 
 /* ?gcount@istream@@QBEHXZ */
