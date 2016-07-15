@@ -150,6 +150,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_LD_STRUCTURED                    */ "ld_structured",
     /* WINED3DSIH_LD_UAV_TYPED                     */ "ld_uav_typed",
     /* WINED3DSIH_LIT                              */ "lit",
+    /* WINED3DSIH_LOD                              */ "lod",
     /* WINED3DSIH_LOG                              */ "log",
     /* WINED3DSIH_LOGP                             */ "logp",
     /* WINED3DSIH_LOOP                             */ "loop",
