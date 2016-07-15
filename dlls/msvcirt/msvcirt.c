@@ -154,6 +154,13 @@ typedef struct _ostream {
     int unknown;
 } ostream;
 
+/* class istream */
+typedef struct {
+    const int *vbtable;
+    int extract_delim;
+    int count;
+} istream;
+
 /* ??_7streambuf@@6B@ */
 extern const vtable_ptr MSVCP_streambuf_vtable;
 /* ??_7filebuf@@6B@ */
@@ -166,6 +173,8 @@ extern const vtable_ptr MSVCP_stdiobuf_vtable;
 extern const vtable_ptr MSVCP_ios_vtable;
 /* ??_7ostream@@6B@ */
 extern const vtable_ptr MSVCP_ostream_vtable;
+/* ??_7istream@@6B@ */
+extern const vtable_ptr MSVCP_istream_vtable;
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
@@ -222,6 +231,8 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ios_vector_dtor));
     __ASM_VTABLE(ostream,
             VTABLE_ADD_FUNC(ostream_vector_dtor));
+    __ASM_VTABLE(istream,
+            VTABLE_ADD_FUNC(istream_vector_dtor));
 #ifndef __GNUC__
 }
 #endif
@@ -231,6 +242,8 @@ void __asm_dummy_vtables(void) {
 
 /* ??_8ostream@@7B@ */
 const int ostream_vbtable[] = {0, VBTABLE_ENTRY(ostream, FIELD_OFFSET(ostream, vbtable), ios)};
+/* ??_8istream@@7B@ */
+const int istream_vbtable[] = {0, VBTABLE_ENTRY(istream, FIELD_OFFSET(istream, vbtable), ios)};
 
 DEFINE_RTTI_DATA0(streambuf, 0, ".?AVstreambuf@@")
 DEFINE_RTTI_DATA1(filebuf, 0, &streambuf_rtti_base_descriptor, ".?AVfilebuf@@")
@@ -238,6 +251,7 @@ DEFINE_RTTI_DATA1(strstreambuf, 0, &streambuf_rtti_base_descriptor, ".?AVstrstre
 DEFINE_RTTI_DATA1(stdiobuf, 0, &streambuf_rtti_base_descriptor, ".?AVstdiobuf@@")
 DEFINE_RTTI_DATA0(ios, 0, ".?AVios@@")
 DEFINE_RTTI_DATA1(ostream, sizeof(ostream), &ios_rtti_base_descriptor, ".?AVostream@@")
+DEFINE_RTTI_DATA1(istream, sizeof(istream), &ios_rtti_base_descriptor, ".?AVistream@@")
 
 /* ??0streambuf@@IAE@PADH@Z */
 /* ??0streambuf@@IEAA@PEADH@Z */
@@ -2864,6 +2878,348 @@ ostream* __cdecl ostream_flush_manip(ostream *this)
    return ostream_flush(this);
 }
 
+static inline ios* istream_get_ios(const istream *this)
+{
+    return (ios*)((char*)this + this->vbtable[1]);
+}
+
+static inline ios* istream_to_ios(const istream *this)
+{
+    return (ios*)((char*)this + istream_vbtable[1]);
+}
+
+static inline istream* ios_to_istream(const ios *base)
+{
+    return (istream*)((char*)base - istream_vbtable[1]);
+}
+
+/* ??0istream@@QAE@PAVstreambuf@@@Z */
+/* ??0istream@@QEAA@PEAVstreambuf@@@Z */
+DEFINE_THISCALL_WRAPPER(istream_sb_ctor, 12)
+istream* __thiscall istream_sb_ctor(istream *this, streambuf *sb, BOOL virt_init)
+{
+    FIXME("(%p %p %d) stub\n", this, sb, virt_init);
+    return this;
+}
+
+/* ??0istream@@IAE@ABV0@@Z */
+/* ??0istream@@IEAA@AEBV0@@Z */
+DEFINE_THISCALL_WRAPPER(istream_copy_ctor, 12)
+istream* __thiscall istream_copy_ctor(istream *this, const istream *copy, BOOL virt_init)
+{
+    FIXME("(%p %p %d) stub\n", this, copy, virt_init);
+    return this;
+}
+
+/* ??0istream@@IAE@XZ */
+/* ??0istream@@IEAA@XZ */
+DEFINE_THISCALL_WRAPPER(istream_ctor, 8)
+istream* __thiscall istream_ctor(istream *this, BOOL virt_init)
+{
+    FIXME("(%p %d) stub\n", this, virt_init);
+    return this;
+}
+
+/* ??1istream@@UAE@XZ */
+/* ??1istream@@UEAA@XZ */
+DEFINE_THISCALL_WRAPPER(istream_dtor, 4)
+void __thiscall istream_dtor(ios *base)
+{
+    FIXME("(%p) stub\n", base);
+}
+
+/* ??4istream@@IAEAAV0@PAVstreambuf@@@Z */
+/* ??4istream@@IEAAAEAV0@PEAVstreambuf@@@Z */
+DEFINE_THISCALL_WRAPPER(istream_assign_sb, 8)
+istream* __thiscall istream_assign_sb(istream *this, streambuf *sb)
+{
+    FIXME("(%p %p) stub\n", this, sb);
+    return this;
+}
+
+/* ??4istream@@IAEAAV0@ABV0@@Z */
+/* ??4istream@@IEAAAEAV0@AEBV0@@Z */
+DEFINE_THISCALL_WRAPPER(istream_assign, 8)
+istream* __thiscall istream_assign(istream *this, const istream *rhs)
+{
+    FIXME("(%p %p) stub\n", this, rhs);
+    return this;
+}
+
+/* ??_Distream@@QAEXXZ */
+/* ??_Distream@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(istream_vbase_dtor, 4)
+void __thiscall istream_vbase_dtor(istream *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ??_Eistream@@UAEPAXI@Z */
+DEFINE_THISCALL_WRAPPER(istream_vector_dtor, 8)
+istream* __thiscall istream_vector_dtor(ios *base, unsigned int flags)
+{
+    istream *this = ios_to_istream(base);
+
+    TRACE("(%p %x)\n", this, flags);
+
+    if (flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
+
+        for (i = *ptr-1; i >= 0; i--)
+            istream_vbase_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        istream_vbase_dtor(this);
+        if (flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+    return this;
+}
+
+/* ??_Gistream@@UAEPAXI@Z */
+DEFINE_THISCALL_WRAPPER(istream_scalar_dtor, 8)
+istream* __thiscall istream_scalar_dtor(ios *base, unsigned int flags)
+{
+    istream *this = ios_to_istream(base);
+
+    TRACE("(%p %x)\n", this, flags);
+
+    istream_vbase_dtor(this);
+    if (flags & 1) MSVCRT_operator_delete(this);
+    return this;
+}
+
+/* ?eatwhite@istream@@QAEXXZ */
+/* ?eatwhite@istream@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(istream_eatwhite, 4)
+void __thiscall istream_eatwhite(istream *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?gcount@istream@@QBEHXZ */
+/* ?gcount@istream@@QEBAHXZ */
+DEFINE_THISCALL_WRAPPER(istream_gcount, 4)
+int __thiscall istream_gcount(const istream *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?ipfx@istream@@QAEHH@Z */
+/* ?ipfx@istream@@QEAAHH@Z */
+DEFINE_THISCALL_WRAPPER(istream_ipfx, 8)
+int __thiscall istream_ipfx(istream *this, int need)
+{
+    FIXME("(%p %d) stub\n", this, need);
+    return 0;
+}
+
+/* ?isfx@istream@@QAEXXZ */
+/* ?isfx@istream@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(istream_isfx, 4)
+void __thiscall istream_isfx(istream *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?get@istream@@IAEAAV1@PADHH@Z */
+/* ?get@istream@@IEAAAEAV1@PEADHH@Z */
+DEFINE_THISCALL_WRAPPER(istream_get_str_delim, 16)
+istream* __thiscall istream_get_str_delim(istream *this, char *str, int count, int delim)
+{
+    FIXME("(%p %p %d %d) stub\n", this, str, count, delim);
+    return this;
+}
+
+/* ?get@istream@@QAEAAV1@PACHD@Z */
+/* ?get@istream@@QEAAAEAV1@PEACHD@Z */
+/* ?get@istream@@QAEAAV1@PADHD@Z */
+/* ?get@istream@@QEAAAEAV1@PEADHD@Z */
+DEFINE_THISCALL_WRAPPER(istream_get_str, 16)
+istream* __thiscall istream_get_str(istream *this, char *str, int count, char delim)
+{
+    FIXME("(%p %p %d %c) stub\n", this, str, count, delim);
+    return this;
+}
+
+/* ?get@istream@@QAEAAV1@PAEHD@Z */
+/* ?get@istream@@QEAAAEAV1@PEAEHD@Z */
+DEFINE_THISCALL_WRAPPER(istream_get_unsigned_str, 16)
+istream* __thiscall istream_get_unsigned_str(istream *this, unsigned char *str, int count, char delim)
+{
+    FIXME("(%p %p %d %c) stub\n", this, str, count, delim);
+    return this;
+}
+
+/* ?get@istream@@QAEAAV1@AAC@Z */
+/* ?get@istream@@QEAAAEAV1@AEAC@Z */
+/* ?get@istream@@QAEAAV1@AAD@Z */
+/* ?get@istream@@QEAAAEAV1@AEAD@Z */
+DEFINE_THISCALL_WRAPPER(istream_get_char, 8)
+istream* __thiscall istream_get_char(istream *this, char *ch)
+{
+    FIXME("(%p %p) stub\n", this, ch);
+    return this;
+}
+
+/* ?get@istream@@QAEAAV1@AAE@Z */
+/* ?get@istream@@QEAAAEAV1@AEAE@Z */
+DEFINE_THISCALL_WRAPPER(istream_get_unsigned_char, 8)
+istream* __thiscall istream_get_unsigned_char(istream *this, unsigned char *ch)
+{
+    FIXME("(%p %p) stub\n", this, ch);
+    return this;
+}
+
+/* ?get@istream@@QAEHXZ */
+/* ?get@istream@@QEAAHXZ */
+DEFINE_THISCALL_WRAPPER(istream_get, 4)
+int __thiscall istream_get(istream *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?get@istream@@QAEAAV1@AAVstreambuf@@D@Z */
+/* ?get@istream@@QEAAAEAV1@AEAVstreambuf@@D@Z */
+DEFINE_THISCALL_WRAPPER(istream_get_sb, 12)
+istream* __thiscall istream_get_sb(istream *this, streambuf *sb, char delim)
+{
+    FIXME("(%p %p %c) stub\n", this, sb, delim);
+    return this;
+}
+
+/* ?getline@istream@@QAEAAV1@PACHD@Z */
+/* ?getline@istream@@QEAAAEAV1@PEACHD@Z */
+/* ?getline@istream@@QAEAAV1@PADHD@Z */
+/* ?getline@istream@@QEAAAEAV1@PEADHD@Z */
+DEFINE_THISCALL_WRAPPER(istream_getline, 16)
+istream* __thiscall istream_getline(istream *this, char *str, int count, char delim)
+{
+    FIXME("(%p %p %d %c) stub\n", this, str, count, delim);
+    return this;
+}
+
+/* ?getline@istream@@QAEAAV1@PAEHD@Z */
+/* ?getline@istream@@QEAAAEAV1@PEAEHD@Z */
+DEFINE_THISCALL_WRAPPER(istream_getline_unsigned, 16)
+istream* __thiscall istream_getline_unsigned(istream *this, unsigned char *str, int count, char delim)
+{
+    FIXME("(%p %p %d %c) stub\n", this, str, count, delim);
+    return this;
+}
+
+/* ?ignore@istream@@QAEAAV1@HH@Z */
+/* ?ignore@istream@@QEAAAEAV1@HH@Z */
+DEFINE_THISCALL_WRAPPER(istream_ignore, 12)
+istream* __thiscall istream_ignore(istream *this, int count, int delim)
+{
+    FIXME("(%p %d %d) stub\n", this, count, delim);
+    return this;
+}
+
+/* ?peek@istream@@QAEHXZ */
+/* ?peek@istream@@QEAAHXZ */
+DEFINE_THISCALL_WRAPPER(istream_peek, 4)
+int __thiscall istream_peek(istream *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?putback@istream@@QAEAAV1@D@Z */
+/* ?putback@istream@@QEAAAEAV1@D@Z */
+DEFINE_THISCALL_WRAPPER(istream_putback, 8)
+istream* __thiscall istream_putback(istream *this, char ch)
+{
+    FIXME("(%p %c) stub\n", this, ch);
+    return this;
+}
+
+/* ?read@istream@@QAEAAV1@PACH@Z */
+/* ?read@istream@@QEAAAEAV1@PEACH@Z */
+/* ?read@istream@@QAEAAV1@PADH@Z */
+/* ?read@istream@@QEAAAEAV1@PEADH@Z */
+DEFINE_THISCALL_WRAPPER(istream_read, 12)
+istream* __thiscall istream_read(istream *this, char *str, int count)
+{
+    FIXME("(%p %p %d) stub\n", this, str, count);
+    return this;
+}
+
+/* ?read@istream@@QAEAAV1@PAEH@Z */
+/* ?read@istream@@QEAAAEAV1@PEAEH@Z */
+DEFINE_THISCALL_WRAPPER(istream_read_unsigned, 12)
+istream* __thiscall istream_read_unsigned(istream *this, unsigned char *str, int count)
+{
+    FIXME("(%p %p %d) stub\n", this, str, count);
+    return this;
+}
+
+/* ?seekg@istream@@QAEAAV1@J@Z */
+/* ?seekg@istream@@QEAAAEAV1@J@Z */
+DEFINE_THISCALL_WRAPPER(istream_seekg, 8)
+istream* __thiscall istream_seekg(istream *this, streampos pos)
+{
+    FIXME("(%p %d) stub\n", this, pos);
+    return this;
+}
+
+/* ?seekg@istream@@QAEAAV1@JW4seek_dir@ios@@@Z */
+/* ?seekg@istream@@QEAAAEAV1@JW4seek_dir@ios@@@Z */
+DEFINE_THISCALL_WRAPPER(istream_seekg_offset, 12)
+istream* __thiscall istream_seekg_offset(istream *this, streamoff off, ios_seek_dir dir)
+{
+    FIXME("(%p %d %d) stub\n", this, off, dir);
+    return this;
+}
+
+/* ?sync@istream@@QAEHXZ */
+/* ?sync@istream@@QEAAHXZ */
+DEFINE_THISCALL_WRAPPER(istream_sync, 4)
+int __thiscall istream_sync(istream *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?tellg@istream@@QAEJXZ */
+/* ?tellg@istream@@QEAAJXZ */
+DEFINE_THISCALL_WRAPPER(istream_tellg, 4)
+streampos __thiscall istream_tellg(istream *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?getint@istream@@AAEHPAD@Z */
+/* ?getint@istream@@AEAAHPEAD@Z */
+DEFINE_THISCALL_WRAPPER(istream_getint, 8)
+int __thiscall istream_getint(istream *this, char *str)
+{
+    FIXME("(%p %p) stub\n", this, str);
+    return 0;
+}
+
+/* ?getdouble@istream@@AAEHPADH@Z */
+/* ?getdouble@istream@@AEAAHPEADH@Z */
+DEFINE_THISCALL_WRAPPER(istream_getdouble, 12)
+int __thiscall istream_getdouble(istream *this, char *str, int n)
+{
+    FIXME("(%p %p %d) stub\n", this, str, n);
+    return 0;
+}
+
+/* ?ws@@YAAAVistream@@AAV1@@Z */
+/* ?ws@@YAAEAVistream@@AEAV1@@Z */
+istream* __cdecl istream_ws(istream *this)
+{
+   FIXME("(%p) stub\n", this);
+   return this;
+}
+
 /******************************************************************
  *		 ??0ostrstream@@QAE@XZ (MSVCRTI.@)
  */
@@ -2939,6 +3295,7 @@ static void init_io(void *base)
     init_stdiobuf_rtti(base);
     init_ios_rtti(base);
     init_ostream_rtti(base);
+    init_istream_rtti(base);
 #endif
 }
 
