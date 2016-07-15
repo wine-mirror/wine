@@ -146,6 +146,14 @@ typedef struct _ostream {
     ios base_ios; /* virtually inherited */
 } ostream;
 
+/* class istream */
+typedef struct {
+    const int *vbtable;
+    int extract_delim;
+    int count;
+    ios base_ios; /* virtually inherited */
+} istream;
+
 static inline float __port_infinity(void)
 {
     static const unsigned __inf_bytes = 0x7f800000;
@@ -292,6 +300,15 @@ static ostream* (*__thiscall p_ostream_print_float)(ostream*, float);
 static ostream* (*__thiscall p_ostream_print_double)(ostream*, double);
 static ostream* (*__thiscall p_ostream_print_ptr)(ostream*, const void*);
 static ostream* (*__thiscall p_ostream_print_streambuf)(ostream*, streambuf*);
+
+/* istream */
+static istream* (*__thiscall p_istream_copy_ctor)(istream*, const istream*, BOOL);
+static istream* (*__thiscall p_istream_ctor)(istream*, BOOL);
+static istream* (*__thiscall p_istream_sb_ctor)(istream*, streambuf*, BOOL);
+static void (*__thiscall p_istream_dtor)(ios*);
+static istream* (*__thiscall p_istream_assign_sb)(istream*, streambuf*);
+static istream* (*__thiscall p_istream_assign)(istream*, const istream*);
+static void (*__thiscall p_istream_vbase_dtor)(istream*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -481,6 +498,14 @@ static BOOL init(void)
         SET(p_ostream_print_double, "??6ostream@@QEAAAEAV0@N@Z");
         SET(p_ostream_print_ptr, "??6ostream@@QEAAAEAV0@PEBX@Z");
         SET(p_ostream_print_streambuf, "??6ostream@@QEAAAEAV0@PEAVstreambuf@@@Z");
+
+        SET(p_istream_copy_ctor, "??0istream@@IEAA@AEBV0@@Z");
+        SET(p_istream_ctor, "??0istream@@IEAA@XZ");
+        SET(p_istream_sb_ctor, "??0istream@@QEAA@PEAVstreambuf@@@Z");
+        SET(p_istream_dtor, "??1istream@@UEAA@XZ");
+        SET(p_istream_assign_sb, "??4istream@@IEAAAEAV0@PEAVstreambuf@@@Z");
+        SET(p_istream_assign, "??4istream@@IEAAAEAV0@AEBV0@@Z");
+        SET(p_istream_vbase_dtor, "??_Distream@@QEAAXXZ");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -592,6 +617,14 @@ static BOOL init(void)
         SET(p_ostream_print_double, "??6ostream@@QAEAAV0@N@Z");
         SET(p_ostream_print_ptr, "??6ostream@@QAEAAV0@PBX@Z");
         SET(p_ostream_print_streambuf, "??6ostream@@QAEAAV0@PAVstreambuf@@@Z");
+
+        SET(p_istream_copy_ctor, "??0istream@@IAE@ABV0@@Z");
+        SET(p_istream_ctor, "??0istream@@IAE@XZ");
+        SET(p_istream_sb_ctor, "??0istream@@QAE@PAVstreambuf@@@Z");
+        SET(p_istream_dtor, "??1istream@@UAE@XZ");
+        SET(p_istream_assign_sb, "??4istream@@IAEAAV0@PAVstreambuf@@@Z");
+        SET(p_istream_assign, "??4istream@@IAEAAV0@ABV0@@Z");
+        SET(p_istream_vbase_dtor, "??_Distream@@QAEXXZ");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -3371,6 +3404,166 @@ static void test_ostream_print(void)
     call_func1(p_strstreambuf_dtor, &ssb_test3);
 }
 
+static void test_istream(void)
+{
+    istream is1, is2, *pis;
+    filebuf fb1, fb2, *pfb;
+    const char filename1[] = "test1";
+    const char filename2[] = "test2";
+
+    memset(&is1, 0xab, sizeof(istream));
+    memset(&is2, 0xab, sizeof(istream));
+    memset(&fb1, 0xab, sizeof(filebuf));
+    memset(&fb2, 0xab, sizeof(filebuf));
+
+    /* constructors/destructors */
+    pis = call_func3(p_istream_sb_ctor, &is1, NULL, TRUE);
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(is1.extract_delim == 0, "expected 0 got %d\n", is1.extract_delim);
+    ok(is1.count == 0, "expected 0 got %d\n", is1.count);
+    ok(is1.base_ios.sb == NULL, "expected %p got %p\n", NULL, is1.base_ios.sb);
+    ok(is1.base_ios.state == IOSTATE_badbit, "expected %d got %d\n", IOSTATE_badbit, is1.base_ios.state);
+    ok(is1.base_ios.flags == FLAGS_skipws, "expected %d got %d\n", FLAGS_skipws, is1.base_ios.flags);
+    call_func1(p_istream_vbase_dtor, &is1);
+    is1.extract_delim = is1.count = 0xabababab;
+    memset(&is1.base_ios, 0xab, sizeof(ios));
+    is1.base_ios.delbuf = 0;
+    pis = call_func3(p_istream_sb_ctor, &is1, NULL, FALSE);
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(is1.extract_delim == 0, "expected 0 got %d\n", is1.extract_delim);
+    ok(is1.count == 0, "expected 0 got %d\n", is1.count);
+    ok(is1.base_ios.sb == NULL, "expected %p got %p\n", NULL, is1.base_ios.sb);
+    ok(is1.base_ios.state == (0xabababab|IOSTATE_badbit), "expected %d got %d\n",
+        0xabababab|IOSTATE_badbit, is1.base_ios.state);
+    ok(is1.base_ios.flags == 0xabababab, "expected %d got %d\n", 0xabababab, is1.base_ios.flags);
+    call_func1(p_istream_dtor, &is1.base_ios);
+    pis = call_func3(p_istream_sb_ctor, &is1, &fb1.base, FALSE);
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(is1.extract_delim == 0, "expected 0 got %d\n", is1.extract_delim);
+    ok(is1.count == 0, "expected 0 got %d\n", is1.count);
+    ok(is1.base_ios.sb == &fb1.base, "expected %p got %p\n", &fb1.base, is1.base_ios.sb);
+    ok(is1.base_ios.state == 0xabababab, "expected %d got %d\n", 0xabababab, is1.base_ios.state);
+    ok(is1.base_ios.flags == 0xabababab, "expected %d got %d\n", 0xabababab, is1.base_ios.flags);
+    call_func1(p_istream_dtor, &is1.base_ios);
+    call_func1(p_filebuf_ctor, &fb1);
+    pfb = call_func4(p_filebuf_open, &fb1, filename1, OPENMODE_in|OPENMODE_out, filebuf_openprot);
+    ok(pfb == &fb1, "wrong return, expected %p got %p\n", &fb1, pfb);
+    ok(fb1.base.allocated == 1, "expected %d got %d\n", 1, fb1.base.allocated);
+    pis = call_func3(p_istream_sb_ctor, &is1, &fb1.base, TRUE);
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(is1.extract_delim == 0, "expected 0 got %d\n", is1.extract_delim);
+    ok(is1.count == 0, "expected 0 got %d\n", is1.count);
+    ok(is1.base_ios.sb == &fb1.base, "expected %p got %p\n", &fb1.base, is1.base_ios.sb);
+    ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
+    ok(is1.base_ios.flags == FLAGS_skipws, "expected %d got %d\n", FLAGS_skipws, is1.base_ios.flags);
+    pis = call_func2(p_istream_ctor, &is2, TRUE);
+    ok(pis == &is2, "wrong return, expected %p got %p\n", &is2, pis);
+    ok(is2.extract_delim == 0, "expected 0 got %d\n", is2.extract_delim);
+    ok(is2.count == 0, "expected 0 got %d\n", is2.count);
+    ok(is2.base_ios.sb == NULL, "expected %p got %p\n", NULL, is2.base_ios.sb);
+    ok(is2.base_ios.state == IOSTATE_badbit, "expected %d got %d\n", IOSTATE_badbit, is2.base_ios.state);
+    ok(is2.base_ios.flags == FLAGS_skipws, "expected %d got %d\n", FLAGS_skipws, is2.base_ios.flags);
+    call_func1(p_istream_vbase_dtor, &is2);
+    is2.extract_delim = is2.count = 0xabababab;
+    memset(&is2.base_ios, 0xab, sizeof(ios));
+    is2.base_ios.flags &= ~FLAGS_skipws;
+    pis = call_func2(p_istream_ctor, &is2, FALSE);
+    ok(pis == &is2, "wrong return, expected %p got %p\n", &is2, pis);
+    ok(is2.extract_delim == 0, "expected 0 got %d\n", is2.extract_delim);
+    ok(is2.count == 0, "expected 0 got %d\n", is2.count);
+    ok(is2.base_ios.sb != NULL, "expected not %p got %p\n", NULL, is2.base_ios.sb);
+    ok(is2.base_ios.state == 0xabababab, "expected %d got %d\n", 0xabababab, is2.base_ios.state);
+    ok(is2.base_ios.flags == 0xabababab, "expected %d got %d\n", 0xabababab, is2.base_ios.flags);
+    call_func1(p_istream_dtor, &is2.base_ios);
+    is1.extract_delim = is1.count = 0xcdcdcdcd;
+    is1.base_ios.state = 0xcdcdcdcd;
+    is1.base_ios.flags &= ~FLAGS_skipws;
+    is2.extract_delim = is2.count = 0xabababab;
+    memset(&is2.base_ios, 0xab, sizeof(ios));
+    is2.base_ios.flags &= ~FLAGS_skipws;
+    is2.base_ios.delbuf = 0;
+    pis = call_func3(p_istream_copy_ctor, &is2, &is1, FALSE);
+    ok(pis == &is2, "wrong return, expected %p got %p\n", &is2, pis);
+    ok(is2.extract_delim == 0, "expected 0 got %d\n", is2.extract_delim);
+    ok(is2.count == 0, "expected 0 got %d\n", is2.count);
+    ok(is2.base_ios.sb == is1.base_ios.sb, "expected %p got %p\n", is1.base_ios.sb, is2.base_ios.sb);
+    ok(is2.base_ios.state == 0xabababab, "expected %d got %d\n", 0xabababab, is2.base_ios.state);
+    ok(is2.base_ios.flags == 0xabababab, "expected %d got %d\n", 0xabababab, is2.base_ios.flags);
+    call_func1(p_istream_dtor, &is2.base_ios);
+    is2.extract_delim = is2.count = 0xabababab;
+    memset(&is2.base_ios, 0xab, sizeof(ios));
+    pis = call_func3(p_istream_copy_ctor, &is2, &is1, TRUE);
+    ok(pis == &is2, "wrong return, expected %p got %p\n", &is2, pis);
+    ok(is2.extract_delim == 0, "expected 0 got %d\n", is2.extract_delim);
+    ok(is2.count == 0, "expected 0 got %d\n", is2.count);
+    ok(is2.base_ios.sb == is1.base_ios.sb, "expected %p got %p\n", is1.base_ios.sb, is2.base_ios.sb);
+    ok(is2.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is2.base_ios.state);
+    ok(is2.base_ios.flags == FLAGS_skipws, "expected %d got %d\n", FLAGS_skipws, is2.base_ios.flags);
+
+    /* assignment */
+    is2.extract_delim = is2.count = 0xabababab;
+    is2.base_ios.sb = (streambuf*) 0xabababab;
+    is2.base_ios.state = 0xabababab;
+    is2.base_ios.special[0] = 0xabababab;
+    is2.base_ios.delbuf = 0;
+    is2.base_ios.tie = (ostream*) 0xabababab;
+    is2.base_ios.flags = 0xabababab;
+    is2.base_ios.precision = 0xabababab;
+    is2.base_ios.width = 0xabababab;
+    pis = call_func2(p_istream_assign, &is2, &is1);
+    ok(pis == &is2, "wrong return, expected %p got %p\n", &is2, pis);
+    ok(is2.extract_delim == 0xabababab, "expected %d got %d\n", 0xabababab, is2.extract_delim);
+    ok(is2.count == 0, "expected 0 got %d\n", is2.count);
+    ok(is2.base_ios.sb == is1.base_ios.sb, "expected %p got %p\n", is1.base_ios.sb, is2.base_ios.sb);
+    ok(is2.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is2.base_ios.state);
+    ok(is2.base_ios.special[0] == 0xabababab, "expected %d got %d\n", 0xabababab, is2.base_ios.fill);
+    ok(is2.base_ios.delbuf == 0, "expected 0 got %d\n", is2.base_ios.delbuf);
+    ok(is2.base_ios.tie == NULL, "expected %p got %p\n", NULL, is2.base_ios.tie);
+    ok(is2.base_ios.flags == FLAGS_skipws, "expected %d got %d\n", FLAGS_skipws, is2.base_ios.flags);
+    ok(is2.base_ios.precision == 6, "expected 6 got %d\n", is2.base_ios.precision);
+    ok(is2.base_ios.width == 0, "expected 0 got %d\n", is2.base_ios.width);
+if (0) /* crashes on native */
+    pis = call_func2(p_istream_assign, &is2, NULL);
+    is2.extract_delim = is2.count = 0xabababab;
+    is2.base_ios.sb = (streambuf*) 0xabababab;
+    is2.base_ios.state = 0xabababab;
+    is2.base_ios.special[0] = 0xabababab;
+    is2.base_ios.delbuf = 0;
+    is2.base_ios.tie = (ostream*) 0xabababab;
+    is2.base_ios.flags = 0xabababab;
+    is2.base_ios.precision = 0xabababab;
+    is2.base_ios.width = 0xabababab;
+    pis = call_func2(p_istream_assign_sb, &is2, NULL);
+    ok(pis == &is2, "wrong return, expected %p got %p\n", &is2, pis);
+    ok(is2.extract_delim == 0xabababab, "expected %d got %d\n", 0xabababab, is2.extract_delim);
+    ok(is2.count == 0, "expected 0 got %d\n", is2.count);
+    ok(is2.base_ios.sb == NULL, "expected %p got %p\n", NULL, is2.base_ios.sb);
+    ok(is2.base_ios.state == IOSTATE_badbit, "expected %d got %d\n", IOSTATE_badbit, is2.base_ios.state);
+    ok(is2.base_ios.special[0] == 0xabababab, "expected %d got %d\n", 0xabababab, is2.base_ios.fill);
+    ok(is2.base_ios.delbuf == 0, "expected 0 got %d\n", is2.base_ios.delbuf);
+    ok(is2.base_ios.tie == NULL, "expected %p got %p\n", NULL, is2.base_ios.tie);
+    ok(is2.base_ios.flags == FLAGS_skipws, "expected %d got %d\n", FLAGS_skipws, is2.base_ios.flags);
+    ok(is2.base_ios.precision == 6, "expected 6 got %d\n", is2.base_ios.precision);
+    ok(is2.base_ios.width == 0, "expected 0 got %d\n", is2.base_ios.width);
+    call_func1(p_filebuf_ctor, &fb2);
+    pfb = call_func4(p_filebuf_open, &fb2, filename2, OPENMODE_in|OPENMODE_out, filebuf_openprot);
+    ok(pfb == &fb2, "wrong return, expected %p got %p\n", &fb2, pfb);
+    ok(fb2.base.allocated == 1, "expected %d got %d\n", 1, fb2.base.allocated);
+    pis = call_func2(p_istream_assign_sb, &is2, &fb2.base);
+    ok(pis == &is2, "wrong return, expected %p got %p\n", &is2, pis);
+    ok(is2.extract_delim == 0xabababab, "expected %d got %d\n", 0xabababab, is2.extract_delim);
+    ok(is2.count == 0, "expected 0 got %d\n", is2.count);
+    ok(is2.base_ios.sb == &fb2.base, "expected %p got %p\n", &fb2.base, is2.base_ios.sb);
+    ok(is2.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is2.base_ios.state);
+
+    call_func1(p_istream_vbase_dtor, &is1);
+    call_func1(p_istream_vbase_dtor, &is2);
+    call_func1(p_filebuf_dtor, &fb1);
+    call_func1(p_filebuf_dtor, &fb2);
+    ok(_unlink(filename1) == 0, "Couldn't unlink file named '%s'\n", filename1);
+    ok(_unlink(filename2) == 0, "Couldn't unlink file named '%s'\n", filename2);
+}
+
 START_TEST(msvcirt)
 {
     if(!init())
@@ -3383,6 +3576,7 @@ START_TEST(msvcirt)
     test_ios();
     test_ostream();
     test_ostream_print();
+    test_istream();
 
     FreeLibrary(msvcrt);
     FreeLibrary(msvcirt);

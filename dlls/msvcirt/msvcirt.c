@@ -2898,7 +2898,22 @@ static inline istream* ios_to_istream(const ios *base)
 DEFINE_THISCALL_WRAPPER(istream_sb_ctor, 12)
 istream* __thiscall istream_sb_ctor(istream *this, streambuf *sb, BOOL virt_init)
 {
-    FIXME("(%p %p %d) stub\n", this, sb, virt_init);
+    ios *base;
+
+    TRACE("(%p %p %d)\n", this, sb, virt_init);
+
+    if (virt_init) {
+        this->vbtable = istream_vbtable;
+        base = istream_get_ios(this);
+        ios_sb_ctor(base, sb);
+    } else {
+        base = istream_get_ios(this);
+        ios_init(base, sb);
+    }
+    base->vtable = &MSVCP_istream_vtable;
+    base->flags |= FLAGS_skipws;
+    this->extract_delim = 0;
+    this->count = 0;
     return this;
 }
 
@@ -2907,8 +2922,7 @@ istream* __thiscall istream_sb_ctor(istream *this, streambuf *sb, BOOL virt_init
 DEFINE_THISCALL_WRAPPER(istream_copy_ctor, 12)
 istream* __thiscall istream_copy_ctor(istream *this, const istream *copy, BOOL virt_init)
 {
-    FIXME("(%p %p %d) stub\n", this, copy, virt_init);
-    return this;
+    return istream_sb_ctor(this, istream_get_ios(copy)->sb, virt_init);
 }
 
 /* ??0istream@@IAE@XZ */
@@ -2916,7 +2930,20 @@ istream* __thiscall istream_copy_ctor(istream *this, const istream *copy, BOOL v
 DEFINE_THISCALL_WRAPPER(istream_ctor, 8)
 istream* __thiscall istream_ctor(istream *this, BOOL virt_init)
 {
-    FIXME("(%p %d) stub\n", this, virt_init);
+    ios *base;
+
+    TRACE("(%p %d)\n", this, virt_init);
+
+    if (virt_init) {
+        this->vbtable = istream_vbtable;
+        base = istream_get_ios(this);
+        ios_ctor(base);
+    } else
+        base = istream_get_ios(this);
+    base->vtable = &MSVCP_istream_vtable;
+    base->flags |= FLAGS_skipws;
+    this->extract_delim = 0;
+    this->count = 0;
     return this;
 }
 
@@ -2925,7 +2952,9 @@ istream* __thiscall istream_ctor(istream *this, BOOL virt_init)
 DEFINE_THISCALL_WRAPPER(istream_dtor, 4)
 void __thiscall istream_dtor(ios *base)
 {
-    FIXME("(%p) stub\n", base);
+    istream *this = ios_to_istream(base);
+
+    TRACE("(%p)\n", this);
 }
 
 /* ??4istream@@IAEAAV0@PAVstreambuf@@@Z */
@@ -2933,7 +2962,19 @@ void __thiscall istream_dtor(ios *base)
 DEFINE_THISCALL_WRAPPER(istream_assign_sb, 8)
 istream* __thiscall istream_assign_sb(istream *this, streambuf *sb)
 {
-    FIXME("(%p %p) stub\n", this, sb);
+    ios *base = istream_get_ios(this);
+
+    TRACE("(%p %p)\n", this, sb);
+
+    ios_init(base, sb);
+    base->state &= IOSTATE_badbit;
+    base->delbuf = 0;
+    base->tie = NULL;
+    base->flags = FLAGS_skipws;
+    base->precision = 6;
+    base->fill = ' ';
+    base->width = 0;
+    this->count = 0;
     return this;
 }
 
@@ -2942,8 +2983,7 @@ istream* __thiscall istream_assign_sb(istream *this, streambuf *sb)
 DEFINE_THISCALL_WRAPPER(istream_assign, 8)
 istream* __thiscall istream_assign(istream *this, const istream *rhs)
 {
-    FIXME("(%p %p) stub\n", this, rhs);
-    return this;
+    return istream_assign_sb(this, istream_get_ios(rhs)->sb);
 }
 
 /* ??_Distream@@QAEXXZ */
@@ -2951,7 +2991,12 @@ istream* __thiscall istream_assign(istream *this, const istream *rhs)
 DEFINE_THISCALL_WRAPPER(istream_vbase_dtor, 4)
 void __thiscall istream_vbase_dtor(istream *this)
 {
-    FIXME("(%p) stub\n", this);
+    ios *base = istream_to_ios(this);
+
+    TRACE("(%p)\n", this);
+
+    istream_dtor(base);
+    ios_dtor(base);
 }
 
 /* ??_Eistream@@UAEPAXI@Z */
