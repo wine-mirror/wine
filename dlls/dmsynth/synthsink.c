@@ -291,6 +291,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicSynthSinkImpl(LPCGUID riid, LPVOID* ret_i
         return hr;
     }
 
+    DMSYNTH_LockModule();
     hr = IDirectMusicSynthSink_QueryInterface(&obj->IDirectMusicSynthSink_iface, riid, ret_iface);
     IDirectMusicSynthSink_Release(&obj->IDirectMusicSynthSink_iface);
 
