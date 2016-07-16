@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-07-06 11:31+0300\n"
+"PO-Revision-Date: 2016-07-16 12:20+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -11982,85 +11982,66 @@ msgstr "regedit: Neapdorojamas veiksmas.\n"
 
 #: regedit.rc:367
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
-msgstr ""
+msgstr "regedit: Trūksta atminties! (%1!S!, eilutė %2!u!)\n"
 
 #: regedit.rc:368
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "regedit: Invalid hexadecimal value.\n"
-msgstr "reg: Netinkamas rakto vardas\n"
+msgstr "regedit: Netinkama šešioliktainė reikšmė.\n"
 
 #: regedit.rc:369
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 msgstr ""
+"regedit: Nepavyko konvertuoti šešioliktainių duomenų. Neteisinga reikšmė "
+"sutikta „%1“.\n"
 
 #: regedit.rc:370
-#, fuzzy
-#| msgid "regedit: Invalid or unrecognized switch [%1]\n"
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr "regedit: Netinkamas arba neatpažintas parametras [%1]\n"
+msgstr "regedit: Neatpažinta kaitos seka [\\%1!c!]\n"
 
 #: regedit.rc:371
-#, fuzzy
-#| msgid "reg: Unsupported registry data type [%1]\n"
 msgid "regedit: Unsupported registry data type [%1!u!]\n"
-msgstr "reg: Nepalaikomas registro duomenų tipas [%1]\n"
+msgstr "regedit: Nepalaikomas registro duomenų tipas [%1!u!]\n"
 
 #: regedit.rc:372
-#, fuzzy
-#| msgid "regedit: Unable to open the file '%1'.\n"
 msgid "regedit: Unexpected end of line in '%1'.\n"
-msgstr "regedit: Nepavyko atverti failo „%1“.\n"
+msgstr "regedit: Netikėta eilutės pabaiga „%1“.\n"
 
 #: regedit.rc:373
-#, fuzzy
-#| msgid "regedit: The file '%1' was not found.\n"
 msgid "regedit: The line '%1' was not recognized.\n"
-msgstr "regedit: Failas „%1“ nerastas.\n"
+msgstr "regedit: Eilutė „%1“ neatpažinta.\n"
 
 #: regedit.rc:374
-#, fuzzy
-#| msgid "regedit: Unable to open the file '%1'.\n"
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
-msgstr "regedit: Nepavyko atverti failo „%1“.\n"
+msgstr "regedit: Nepavyko pridėti registro reikšmės „%1“ į „%2“.\n"
 
 #: regedit.rc:375
-#, fuzzy
-#| msgid "regedit: Unable to open the file '%1'.\n"
 msgid "regedit: Unable to open the registry key '%1'.\n"
-msgstr "regedit: Nepavyko atverti failo „%1“.\n"
+msgstr "regedit: Nepavyko atverti registro rakto „%1“.\n"
 
 #: regedit.rc:376
-#, fuzzy
-#| msgid "reg: Unsupported registry data type [%1]\n"
 msgid "regedit: Unsupported registry data type [%1!u!] encountered in '%2'.\n"
-msgstr "reg: Nepalaikomas registro duomenų tipas [%1]\n"
+msgstr "regedit: Nepalaikomas registro duomenų tipas [%1!u!] sutiktas „%2“.\n"
 
 #: regedit.rc:377
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr ""
+"regedit: Registro reikšmė „%1“ bus eksportuota kaip dvejetainiai duomenys.\n"
 
 #: regedit.rc:378
-#, fuzzy
-#| msgid "regedit: No registry key was specified for removal.\n"
 msgid "regedit: Incorrect registry class specification in '%1'.\n"
-msgstr "regedit: Nenurodytas registro raktas šalinimui.\n"
+msgstr "regedit: Neteisinga registro klasės specifikacija „%1“.\n"
 
 #: regedit.rc:379
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
-msgstr "reg: Sistemai nepavyko rasti nurodyto registro rakto ar reikšmės\n"
+msgstr ""
+"regedit: Nepavyko eksportuoti „%1“. Nurodytas registro raktas nerastas.\n"
 
 #: regedit.rc:380
-#, fuzzy
-#| msgid "regedit: Unable to open the file '%1'.\n"
 msgid "regedit: Unable to delete the registry class '%1'.\n"
-msgstr "regedit: Nepavyko atverti failo „%1“.\n"
+msgstr "regedit: Nepavyko pašalinti registro klasės „%1“.\n"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
