@@ -92,6 +92,7 @@ DEFINE_EXPECT(SetInterfaceSafetyOptions);
 DEFINE_EXPECT(InitNew);
 DEFINE_EXPECT(Close);
 DEFINE_EXPECT(SetScriptSite);
+DEFINE_EXPECT(QI_IActiveScriptParse);
 
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG ref, int line)
@@ -220,6 +221,7 @@ static HRESULT WINAPI ActiveScript_QueryInterface(IActiveScript *iface, REFIID r
     }
 
     if(IsEqualGUID(&IID_IActiveScriptParse, riid)) {
+        CHECK_EXPECT(QI_IActiveScriptParse);
         *ppv = &ActiveScriptParse;
         return S_OK;
     }
@@ -261,7 +263,6 @@ static HRESULT WINAPI ActiveScript_SetScriptSite(IActiveScript *iface, IActiveSc
     ok(hres == S_OK, "GetLCID failed: %08x\n", hres);
 
     hres = IActiveScriptSite_OnStateChange(pass, (state = SCRIPTSTATE_INITIALIZED));
-todo_wine
     ok(hres == E_NOTIMPL, "OnStateChange failed: %08x\n", hres);
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_IActiveScriptSiteDebug, (void**)&debug);
@@ -683,14 +684,12 @@ static void test_Language(void)
             &IID_IScriptControl, (void**)&sc);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-todo_wine {
     hr = IScriptControl_get_Language(sc, NULL);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
     str = (BSTR)0xdeadbeef;
     hr = IScriptControl_get_Language(sc, &str);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-if (hr == S_OK)
     ok(str == NULL, "got %s\n", wine_dbgstr_w(str));
 
     str = SysAllocString(vbW);
@@ -715,7 +714,6 @@ if (hr == S_OK)
 
     hr = IScriptControl_get_Language(sc, &str);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-if (hr == S_OK)
     ok(!lstrcmpW(str, vbW), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -725,7 +723,7 @@ if (hr == S_OK)
     SysFreeString(str);
 
     hr = IScriptControl_get_Language(sc, &str);
-if (hr == S_OK)
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(str, jsW), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -735,8 +733,8 @@ if (hr == S_OK)
     hr = IScriptControl_get_Language(sc, &str);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(str == NULL, "got %s\n", wine_dbgstr_w(str));
+
     IScriptControl_Release(sc);
-}
 
     /* custom script engine */
     if (register_script_engine()) {
@@ -746,10 +744,10 @@ if (hr == S_OK)
                 &IID_IScriptControl, (void**)&sc);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    todo_wine {
         SET_EXPECT(CreateInstance);
         SET_EXPECT(SetInterfaceSafetyOptions);
         SET_EXPECT(SetScriptSite);
+        SET_EXPECT(QI_IActiveScriptParse);
         SET_EXPECT(InitNew);
 
         str = SysAllocString(testscriptW);
@@ -760,8 +758,10 @@ if (hr == S_OK)
         CHECK_CALLED(CreateInstance);
         CHECK_CALLED(SetInterfaceSafetyOptions);
         CHECK_CALLED(SetScriptSite);
+        CHECK_CALLED(QI_IActiveScriptParse);
         CHECK_CALLED(InitNew);
         hr = IScriptControl_get_Language(sc, &str);
+    todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
      if (hr == S_OK)
         ok(!lstrcmpW(testscriptW, str), "%s\n", wine_dbgstr_w(str));
@@ -774,7 +774,6 @@ if (hr == S_OK)
         IScriptControl_Release(sc);
 
         CHECK_CALLED(Close);
-    }
     }
     else
         skip("Could not register TestScript engine\n");
