@@ -831,11 +831,20 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, GSTImpl *This)
     gst_segment_init(pin->segment, GST_FORMAT_TIME);
 
     if (isvid) {
+        GstElement *vconv;
+
         TRACE("setting up videoflip filter for pin %p, my_sink: %p, their_src: %p\n",
                 pin, pin->my_sink, pad);
 
         /* gstreamer outputs video top-down, but dshow expects bottom-up, so
          * make new transform filter to invert video */
+        vconv = gst_element_factory_make("videoconvert", NULL);
+        if(!vconv){
+            ERR("Missing videoconvert filter?\n");
+            ret = -1;
+            goto exit;
+        }
+
         pin->flipfilter = gst_element_factory_make("videoflip", NULL);
         if(!pin->flipfilter){
             ERR("Missing videoflip filter?\n");
@@ -845,10 +854,14 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, GSTImpl *This)
 
         gst_util_set_object_arg(G_OBJECT(pin->flipfilter), "method", "vertical-flip");
 
-        gst_bin_add(GST_BIN(This->container), pin->flipfilter);
+        gst_bin_add(GST_BIN(This->container), vconv); /* bin takes ownership */
+        gst_element_sync_state_with_parent(vconv);
+        gst_bin_add(GST_BIN(This->container), pin->flipfilter); /* bin takes ownership */
         gst_element_sync_state_with_parent(pin->flipfilter);
 
-        pin->flip_sink = gst_element_get_static_pad(pin->flipfilter, "sink");
+        gst_element_link (vconv, pin->flipfilter);
+
+        pin->flip_sink = gst_element_get_static_pad(vconv, "sink");
         if(!pin->flip_sink){
             WARN("Couldn't find sink on flip filter\n");
             gst_object_unref(pin->flipfilter);
