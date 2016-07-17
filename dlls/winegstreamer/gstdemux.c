@@ -65,7 +65,6 @@ typedef struct GSTImpl {
 
     BOOL discont, initial, ignore_flush;
     GstElement *container;
-    GstElement *gstfilter;
     GstPad *my_src, *their_sink;
     GstBus *bus;
     guint64 start, nextofs, nextpullofs, stop;
@@ -1091,6 +1090,7 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
         GST_PAD_SRC,
         GST_PAD_ALWAYS,
         GST_STATIC_CAPS_ANY);
+    GstElement *gstfilter;
 
     TRACE("%p %p %p\n", pPin, pConnectPin, props);
 
@@ -1105,19 +1105,19 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
     This->container = gst_bin_new(NULL);
     gst_element_set_bus(This->container, This->bus);
 
-    This->gstfilter = gst_element_factory_make("decodebin", NULL);
-    if (!This->gstfilter) {
+    gstfilter = gst_element_factory_make("decodebin", NULL);
+    if (!gstfilter) {
         FIXME("Could not make source filter, are gstreamer-plugins-* installed for %u bits?\n",
               8 * (int)sizeof(void*));
         return E_FAIL;
     }
 
-    gst_bin_add(GST_BIN(This->container), This->gstfilter);
+    gst_bin_add(GST_BIN(This->container), gstfilter);
 
-    g_signal_connect(This->gstfilter, "pad-added", G_CALLBACK(existing_new_pad_wrapper), This);
-    g_signal_connect(This->gstfilter, "pad-removed", G_CALLBACK(removed_decoded_pad_wrapper), This);
-    g_signal_connect(This->gstfilter, "autoplug-select", G_CALLBACK(autoplug_blacklist_wrapper), This);
-    g_signal_connect(This->gstfilter, "unknown-type", G_CALLBACK(unknown_type_wrapper), This);
+    g_signal_connect(gstfilter, "pad-added", G_CALLBACK(existing_new_pad_wrapper), This);
+    g_signal_connect(gstfilter, "pad-removed", G_CALLBACK(removed_decoded_pad_wrapper), This);
+    g_signal_connect(gstfilter, "autoplug-select", G_CALLBACK(autoplug_blacklist_wrapper), This);
+    g_signal_connect(gstfilter, "unknown-type", G_CALLBACK(unknown_type_wrapper), This);
 
     This->my_src = gst_pad_new_from_static_template(&src_template, "quartz-src");
     gst_pad_set_getrange_function(This->my_src, request_buffer_src_wrapper);
@@ -1125,9 +1125,9 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
     gst_pad_set_activatemode_function(This->my_src, activate_mode_wrapper);
     gst_pad_set_event_function(This->my_src, event_src_wrapper);
     gst_pad_set_element_private (This->my_src, This);
-    This->their_sink = gst_element_get_static_pad(This->gstfilter, "sink");
+    This->their_sink = gst_element_get_static_pad(gstfilter, "sink");
 
-    g_signal_connect(This->gstfilter, "no-more-pads", G_CALLBACK(no_more_pads_wrapper), This);
+    g_signal_connect(gstfilter, "no-more-pads", G_CALLBACK(no_more_pads_wrapper), This);
     ret = gst_pad_link(This->my_src, This->their_sink);
     if (ret < 0) {
         ERR("Returns: %i\n", ret);
@@ -1915,8 +1915,6 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This)
     }
     This->cStreams = 0;
     This->ppPins = NULL;
-    gst_object_unref(This->gstfilter);
-    This->gstfilter = NULL;
     gst_element_set_bus(This->container, NULL);
     gst_object_unref(This->container);
     This->container = NULL;
