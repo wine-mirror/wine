@@ -1103,6 +1103,7 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
     }
 
     This->container = gst_bin_new(NULL);
+    gst_element_set_bus(This->container, This->bus);
 
     This->gstfilter = gst_element_factory_make("decodebin", NULL);
     if (!This->gstfilter) {
@@ -1113,7 +1114,6 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
 
     gst_bin_add(GST_BIN(This->container), This->gstfilter);
 
-    gst_element_set_bus(This->gstfilter, This->bus);
     g_signal_connect(This->gstfilter, "pad-added", G_CALLBACK(existing_new_pad_wrapper), This);
     g_signal_connect(This->gstfilter, "pad-removed", G_CALLBACK(removed_decoded_pad_wrapper), This);
     g_signal_connect(This->gstfilter, "autoplug-select", G_CALLBACK(autoplug_blacklist_wrapper), This);
@@ -1902,7 +1902,6 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This)
 
     if (!This->container)
         return S_OK;
-    gst_element_set_bus(This->gstfilter, NULL);
     gst_element_set_state(This->container, GST_STATE_NULL);
     gst_pad_unlink(This->my_src, This->their_sink);
     gst_object_unref(This->my_src);
@@ -1918,6 +1917,7 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This)
     This->ppPins = NULL;
     gst_object_unref(This->gstfilter);
     This->gstfilter = NULL;
+    gst_element_set_bus(This->container, NULL);
     gst_object_unref(This->container);
     This->container = NULL;
     BaseFilterImpl_IncrementPinVersion((BaseFilter*)This);
