@@ -864,7 +864,6 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, GSTImpl *This)
         pin->flip_sink = gst_element_get_static_pad(vconv, "sink");
         if(!pin->flip_sink){
             WARN("Couldn't find sink on flip filter\n");
-            gst_object_unref(pin->flipfilter);
             pin->flipfilter = NULL;
             ret = -1;
             goto exit;
@@ -875,7 +874,6 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, GSTImpl *This)
             WARN("gst_pad_link failed: %d\n", ret);
             gst_object_unref(pin->flip_sink);
             pin->flip_sink = NULL;
-            gst_object_unref(pin->flipfilter);
             pin->flipfilter = NULL;
             goto exit;
         }
@@ -885,7 +883,6 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, GSTImpl *This)
             WARN("Couldn't find src on flip filter\n");
             gst_object_unref(pin->flip_sink);
             pin->flip_sink = NULL;
-            gst_object_unref(pin->flipfilter);
             pin->flipfilter = NULL;
             ret = -1;
             goto exit;
@@ -898,7 +895,6 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, GSTImpl *This)
             pin->flip_src = NULL;
             gst_object_unref(pin->flip_sink);
             pin->flip_sink = NULL;
-            gst_object_unref(pin->flipfilter);
             pin->flipfilter = NULL;
             goto exit;
         }
@@ -1760,7 +1756,8 @@ static ULONG WINAPI GSTOutPin_Release(IPin *iface)
                 gst_pad_unlink(This->flip_src, This->my_sink);
                 gst_object_unref(This->flip_src);
                 gst_object_unref(This->flip_sink);
-                gst_object_unref(This->flipfilter);
+                This->flipfilter = NULL;
+                This->flip_src = This->flip_sink = NULL;
             } else
                 gst_pad_unlink(This->their_src, This->my_sink);
             gst_object_unref(This->their_src);
