@@ -933,6 +933,7 @@ static void test_CreateGdiCompatibleTextLayout(void)
 
 static void test_CreateTextFormat(void)
 {
+    static const WCHAR emptyW[] = {0};
     IDWriteFontCollection *collection, *syscoll;
     DWRITE_PARAGRAPH_ALIGNMENT paralign;
     DWRITE_READING_DIRECTION readdir;
@@ -948,6 +949,34 @@ static void test_CreateTextFormat(void)
     HRESULT hr;
 
     factory = create_factory();
+
+    /* zero/negative font size */
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 0.0f, enusW, &format);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, -10.0f, enusW, &format);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    /* invalid font properties */
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, 1000, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0f, enusW, &format);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_ITALIC + 1,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0f, enusW, &format);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_ITALIC,
+        10, 10.0f, enusW, &format);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    /* empty family name */
+    hr = IDWriteFactory_CreateTextFormat(factory, emptyW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0f, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteTextFormat_Release(format);
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);

@@ -5133,6 +5133,14 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
 
     *format = NULL;
 
+    if (size <= 0.0f)
+        return E_INVALIDARG;
+
+    if (((UINT32)weight > DWRITE_FONT_WEIGHT_ULTRA_BLACK) ||
+        ((UINT32)stretch > DWRITE_FONT_STRETCH_ULTRA_EXPANDED) ||
+        ((UINT32)style > DWRITE_FONT_STYLE_ITALIC))
+        return E_INVALIDARG;
+
     This = heap_alloc(sizeof(struct dwrite_textformat));
     if (!This) return E_OUTOFMEMORY;
 
