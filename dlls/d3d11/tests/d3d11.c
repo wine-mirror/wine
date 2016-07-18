@@ -8429,6 +8429,7 @@ static void test_input_assembler(void)
         LAYOUT_SINT8,
         LAYOUT_UNORM8,
         LAYOUT_SNORM8,
+        LAYOUT_UNORM10_2,
 
         LAYOUT_COUNT,
     };
@@ -8442,15 +8443,13 @@ static void test_input_assembler(void)
     ID3D11InputLayout *input_layout[LAYOUT_COUNT];
     ID3D11Buffer *vb_position, *vb_attribute;
     struct d3d11_test_context test_context;
-    unsigned int i, x, y, max_data_size;
     D3D11_TEXTURE2D_DESC texture_desc;
+    unsigned int i, j, stride, offset;
     ID3D11Texture2D *render_target;
     ID3D11DeviceContext *context;
     ID3D11RenderTargetView *rtv;
-    struct texture_readback rb;
     ID3D11PixelShader *ps;
     ID3D11Device *device;
-    UINT stride, offset;
     HRESULT hr;
 
     static const DXGI_FORMAT layout_formats[LAYOUT_COUNT] =
@@ -8464,6 +8463,7 @@ static void test_input_assembler(void)
         DXGI_FORMAT_R8G8B8A8_SINT,
         DXGI_FORMAT_R8G8B8A8_UNORM,
         DXGI_FORMAT_R8G8B8A8_SNORM,
+        DXGI_FORMAT_R10G10B10A2_UNORM,
     };
     static const struct
     {
@@ -8574,63 +8574,70 @@ static void test_input_assembler(void)
         0x00000000, 0x00101e46, 0x00000000, 0x0500002b, 0x001020f2, 0x00000001, 0x00101e46, 0x00000001,
         0x0100003e,
     };
-    static const float float32_data[] =
-    {
-        1.0f, 2.0f, 3.0f, 4.0f, 1.0f, 2.0f, 3.0f, 4.0f, 1.0f, 2.0f, 3.0f, 4.0f, 1.0f, 2.0f, 3.0f, 4.0f,
-    };
-    static const unsigned short uint16_data[] =
-    {
-        6, 8, 55, 777, 6, 8, 55, 777, 6, 8, 55, 777, 6, 8, 55, 777,
-    };
-    static const short sint16_data[] =
-    {
-        -1, 33, 8, -77, -1, 33, 8, -77, -1, 33, 8, -77, -1, 33, 8, -77,
-    };
-    static const unsigned short unorm16_data[] =
-    {
-        0, 16383, 32767, 65535, 0, 16383, 32767, 65535, 0, 16383, 32767, 65535, 0, 16383, 32767, 65535,
-    };
-    static const short snorm16_data[] =
-    {
-        -32768, 0, 32767, 0, -32768, 0, 32767, 0, -32768, 0, 32767, 0, -32768, 0, 32767, 0,
-    };
-    static const unsigned char uint8_data[] =
-    {
-        0, 64, 128, 255, 0, 64, 128, 255, 0, 64, 128, 255, 0, 64, 128, 255,
-    };
-    static const signed char sint8_data[] =
-    {
-        -128, 0, 127, 64, -128, 0, 127, 64, -128, 0, 127, 64, -128, 0, 127, 64,
-    };
+    static const float float32_data[] = {1.0f, 2.0f, 3.0f, 4.0f};
+    static const unsigned short uint16_data[] = {6, 8, 55, 777};
+    static const short sint16_data[] = {-1, 33, 8, -77};
+    static const unsigned short unorm16_data[] = {0, 16383, 32767, 65535};
+    static const short snorm16_data[] = {-32768, 0, 32767, 0};
+    static const unsigned char uint8_data[] = {0, 64, 128, 255};
+    static const signed char sint8_data[] = {-128, 0, 127, 64};
+    static const unsigned int uint32_zero = 0;
+    static const unsigned int uint32_max = 0xffffffff;
+    static const unsigned int unorm10_2_data= 0xa00003ff;
+    static const unsigned int g10_data = 0x000ffc00;
+    static const unsigned int a2_data = 0xc0000000;
     static const struct
     {
         enum layout_id layout_id;
         unsigned int stride;
-        unsigned int data_size;
         const void *data;
         struct vec4 expected_color;
         BOOL todo;
     }
     tests[] =
     {
-        {LAYOUT_FLOAT32, 4 * sizeof(*float32_data), sizeof(float32_data), float32_data,
+        {LAYOUT_FLOAT32,   sizeof(float32_data),   float32_data,
                 {1.0f, 2.0f, 3.0f, 4.0f}},
-        {LAYOUT_UINT16,  4 * sizeof(*uint16_data),  sizeof(uint16_data),  uint16_data,
+        {LAYOUT_UINT16,    sizeof(uint16_data),    uint16_data,
                 {6.0f, 8.0f, 55.0f, 777.0f}, TRUE},
-        {LAYOUT_SINT16,  4 * sizeof(*sint16_data),  sizeof(sint16_data),  sint16_data,
+        {LAYOUT_SINT16,    sizeof(sint16_data),    sint16_data,
                 {-1.0f, 33.0f, 8.0f, -77.0f}, TRUE},
-        {LAYOUT_UNORM16, 4 * sizeof(*unorm16_data), sizeof(unorm16_data), unorm16_data,
+        {LAYOUT_UNORM16,   sizeof(unorm16_data),   unorm16_data,
                 {0.0f, 16383.0f / 65535.0f, 32767.0f / 65535.0f, 1.0f}},
-        {LAYOUT_SNORM16, 4 * sizeof(*snorm16_data), sizeof(snorm16_data), snorm16_data,
+        {LAYOUT_SNORM16,   sizeof(snorm16_data),   snorm16_data,
                 {-1.0f, 0.0f, 1.0f, 0.0f}},
-        {LAYOUT_UINT8,   4 * sizeof(*uint8_data),   sizeof(uint8_data),   uint8_data,
+        {LAYOUT_UINT8,     sizeof(uint32_zero),    &uint32_zero,
+                {0.0f, 0.0f, 0.0f, 0.0f}},
+        {LAYOUT_UINT8,     sizeof(uint32_max),     &uint32_max,
+                {255.0f, 255.0f, 255.0f, 255.0f}},
+        {LAYOUT_UINT8,     sizeof(uint8_data),     uint8_data,
                 {0.0f, 64.0f, 128.0f, 255.0f}},
-        {LAYOUT_SINT8,   4 * sizeof(*sint8_data),   sizeof(sint8_data),   sint8_data,
+        {LAYOUT_SINT8,     sizeof(uint32_zero),    &uint32_zero,
+                {0.0f, 0.0f, 0.0f, 0.0f}},
+        {LAYOUT_SINT8,     sizeof(uint32_max),     &uint32_max,
+                {-1.0f, -1.0f, -1.0f, -1.0f}},
+        {LAYOUT_SINT8,     sizeof(sint8_data),     sint8_data,
                 {-128.0f, 0.0f, 127.0f, 64.0f}},
-        {LAYOUT_UNORM8,  4 * sizeof(*uint8_data),   sizeof(uint8_data),   uint8_data,
+        {LAYOUT_UNORM8,    sizeof(uint32_zero),    &uint32_zero,
+                {0.0f, 0.0f, 0.0f, 0.0f}},
+        {LAYOUT_UNORM8,    sizeof(uint32_max),     &uint32_max,
+                {1.0f, 1.0f, 1.0f, 1.0f}},
+        {LAYOUT_UNORM8,    sizeof(uint8_data),     uint8_data,
                 {0.0f, 64.0f / 255.0f, 128.0f / 255.0f, 1.0f}},
-        {LAYOUT_SNORM8,  4 * sizeof(*sint8_data),   sizeof(sint8_data),   sint8_data,
+        {LAYOUT_SNORM8,    sizeof(uint32_zero),    &uint32_zero,
+                {0.0f, 0.0f, 0.0f, 0.0f}},
+        {LAYOUT_SNORM8,    sizeof(sint8_data),     sint8_data,
                 {-1.0f, 0.0f, 1.0f, 64.0f / 127.0f}},
+        {LAYOUT_UNORM10_2, sizeof(uint32_zero),    &uint32_zero,
+                {0.0f, 0.0f, 0.0f, 0.0f}},
+        {LAYOUT_UNORM10_2, sizeof(uint32_max),     &uint32_max,
+                {1.0f, 1.0f, 1.0f, 1.0f}},
+        {LAYOUT_UNORM10_2, sizeof(g10_data),       &g10_data,
+                {0.0f, 1.0f, 0.0f, 0.0f}},
+        {LAYOUT_UNORM10_2, sizeof(a2_data),        &a2_data,
+                {0.0f, 0.0f, 0.0f, 1.0f}},
+        {LAYOUT_UNORM10_2, sizeof(unorm10_2_data), &unorm10_2_data,
+                {1.0f, 0.0f, 512.0f / 1023.0f, 2.0f / 3.0f}},
     };
 
     if (!init_test_context(&test_context, NULL))
@@ -8658,15 +8665,8 @@ static void test_input_assembler(void)
         ok(SUCCEEDED(hr), "Failed to create input layout for format %#x, hr %#x.\n", layout_formats[i], hr);
     }
 
-    max_data_size = 0;
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
-    {
-        if (tests[i].data_size > max_data_size)
-            max_data_size = tests[i].data_size;
-    }
-
     vb_position = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(quad), quad);
-    vb_attribute = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, max_data_size, NULL);
+    vb_attribute = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, 1024, NULL);
 
     texture_desc.Width = 640;
     texture_desc.Height = 480;
@@ -8696,14 +8696,19 @@ static void test_input_assembler(void)
     for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
         D3D11_BOX box = {0, 0, 0, 1, 1, 1};
-        const struct vec4 *color;
 
         assert(tests[i].layout_id < LAYOUT_COUNT);
         ID3D11DeviceContext_IASetInputLayout(context, input_layout[tests[i].layout_id]);
 
-        box.right = tests[i].data_size;
-        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)vb_attribute, 0,
-                &box, tests[i].data, 0, 0);
+        assert(4 * tests[i].stride <= 1024);
+        box.right = tests[i].stride;
+        for (j = 0; j < 4; ++j)
+        {
+            ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)vb_attribute, 0,
+                    &box, tests[i].data, 0, 0);
+            box.left += tests[i].stride;
+            box.right += tests[i].stride;
+        }
 
         stride = tests[i].stride;
         ID3D11DeviceContext_IASetVertexBuffers(context, 1, 1, &vb_attribute, &stride, &offset);
@@ -8725,6 +8730,7 @@ static void test_input_assembler(void)
             case DXGI_FORMAT_R32G32B32A32_FLOAT:
             case DXGI_FORMAT_R16G16B16A16_UNORM:
             case DXGI_FORMAT_R16G16B16A16_SNORM:
+            case DXGI_FORMAT_R10G10B10A2_UNORM:
             case DXGI_FORMAT_R8G8B8A8_UNORM:
             case DXGI_FORMAT_R8G8B8A8_SNORM:
                 ID3D11DeviceContext_VSSetShader(context, vs_float, NULL, 0);
@@ -8732,19 +8738,7 @@ static void test_input_assembler(void)
         }
 
         ID3D11DeviceContext_Draw(context, 4, 0);
-
-        get_texture_readback(render_target, 0, &rb);
-        for (y = 0; y < rb.height; ++y)
-        {
-            for (x = 0; x < rb.width; ++x)
-            {
-                color = get_readback_vec4(&rb, x, y);
-                ok(compare_vec4(color, &tests[i].expected_color, 2),
-                        "Test %u: Got unexpected color {%.8e, %.8e, %.8e, %.8e} at (%u, %u).\n",
-                        i, color->x, color->y, color->z, color->w, x, y);
-            }
-        }
-        release_texture_readback(&rb);
+        check_texture_vec4(render_target, &tests[i].expected_color, 2);
     }
 
     ID3D11Texture2D_Release(render_target);
