@@ -112,7 +112,7 @@ static BOOL get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
     rect.top    = dst->log_y;
     rect.right  = dst->log_x + dst->log_width;
     rect.bottom = dst->log_y + dst->log_height;
-    LPtoDP( dc_dst->hSelf, (POINT *)&rect, 2 );
+    lp_to_dp( dc_dst, (POINT *)&rect, 2 );
     dst->x      = rect.left;
     dst->y      = rect.top;
     dst->width  = rect.right - rect.left;
@@ -134,7 +134,7 @@ static BOOL get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
     rect.top    = src->log_y;
     rect.right  = src->log_x + src->log_width;
     rect.bottom = src->log_y + src->log_height;
-    LPtoDP( dc_src->hSelf, (POINT *)&rect, 2 );
+    lp_to_dp( dc_src, (POINT *)&rect, 2 );
     src->x      = rect.left;
     src->y      = rect.top;
     src->width  = rect.right - rect.left;
@@ -420,7 +420,7 @@ BOOL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
         pts[i].x = vert_array[i].x;
         pts[i].y = vert_array[i].y;
     }
-    LPtoDP( dev->hdc, pts, nvert );
+    lp_to_dp( dc, pts, nvert );
 
     /* compute bounding rect of all the rectangles/triangles */
     reset_bounds( &dst.visrect );
@@ -496,7 +496,7 @@ COLORREF nulldrv_GetPixel( PHYSDEV dev, INT x, INT y )
 
     src.visrect.left = x;
     src.visrect.top  = y;
-    LPtoDP( dev->hdc, (POINT *)&src.visrect, 1 );
+    lp_to_dp( dc, (POINT *)&src.visrect, 1 );
     src.visrect.right  = src.visrect.left + 1;
     src.visrect.bottom = src.visrect.top + 1;
     src.x = src.visrect.left;

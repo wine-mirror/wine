@@ -350,13 +350,12 @@ BOOL WINAPI DPtoLP( HDC hdc, LPPOINT points, INT count )
 
 
 /***********************************************************************
- *           LPtoDP    (GDI32.@)
+ *           lp_to_dp
+ *
+ * Internal version of LPtoDP that takes a DC *.
  */
-BOOL WINAPI LPtoDP( HDC hdc, LPPOINT points, INT count )
+void lp_to_dp( DC *dc, POINT *points, INT count )
 {
-    DC * dc = get_dc_ptr( hdc );
-    if (!dc) return FALSE;
-
     while (count--)
     {
         double x = points->x;
@@ -369,6 +368,18 @@ BOOL WINAPI LPtoDP( HDC hdc, LPPOINT points, INT count )
                            dc->xformWorld2Vport.eDy + 0.5 );
         points++;
     }
+}
+
+/***********************************************************************
+ *           LPtoDP    (GDI32.@)
+ */
+BOOL WINAPI LPtoDP( HDC hdc, POINT *points, INT count )
+{
+    DC * dc = get_dc_ptr( hdc );
+    if (!dc) return FALSE;
+
+    lp_to_dp( dc, points, count );
+
     release_dc_ptr( dc );
     return TRUE;
 }

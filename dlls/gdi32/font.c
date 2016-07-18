@@ -87,7 +87,7 @@ static inline INT INTERNAL_YWSTODS(DC *dc, INT height)
     pt[0].x = pt[0].y = 0;
     pt[1].x = 0;
     pt[1].y = height;
-    LPtoDP(dc->hSelf, pt, 2);
+    lp_to_dp(dc, pt, 2);
     return pt[1].y - pt[0].y;
 }
 
@@ -2258,7 +2258,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     if (lprect && (flags & (ETO_OPAQUE | ETO_CLIPPED)))
     {
         rc = *lprect;
-        LPtoDP(hdc, (POINT*)&rc, 2);
+        lp_to_dp(dc, (POINT*)&rc, 2);
         order_rect( &rc );
         if (flags & ETO_OPAQUE)
             physdev->funcs->pExtTextOut( physdev, 0, 0, ETO_OPAQUE, &rc, NULL, 0, NULL );
@@ -2273,7 +2273,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
 
     pt.x = x;
     pt.y = y;
-    LPtoDP(hdc, &pt, 1);
+    lp_to_dp(dc, &pt, 1);
     x = pt.x;
     y = pt.y;
 
@@ -2335,7 +2335,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
             desired[1].x =  cosEsc * total.x + sinEsc * total.y;
             desired[1].y = -sinEsc * total.x + cosEsc * total.y;
 
-            LPtoDP(hdc, desired, 2);
+            lp_to_dp(dc, desired, 2);
             desired[1].x -= desired[0].x;
             desired[1].y -= desired[0].y;
 
@@ -2365,7 +2365,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         desired[0].x = desired[0].y = 0;
         desired[1].x = sz.cx;
         desired[1].y = 0;
-        LPtoDP(hdc, desired, 2);
+        lp_to_dp(dc, desired, 2);
         desired[1].x -= desired[0].x;
         desired[1].y -= desired[0].y;
 

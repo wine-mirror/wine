@@ -490,7 +490,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
     rect.top    = yDst;
     rect.right  = xDst + widthDst;
     rect.bottom = yDst + heightDst;
-    LPtoDP( dc->hSelf, (POINT *)&rect, 2 );
+    lp_to_dp( dc, (POINT *)&rect, 2 );
     dst.x      = rect.left;
     dst.y      = rect.top;
     dst.width  = rect.right - rect.left;
@@ -848,7 +848,7 @@ INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWOR
 
     pt.x = x_dst;
     pt.y = y_dst;
-    LPtoDP( dev->hdc, &pt, 1 );
+    lp_to_dp( dc, &pt, 1 );
     dst.x = pt.x;
     dst.y = pt.y;
     dst.width = cx;

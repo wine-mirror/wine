@@ -1535,7 +1535,7 @@ UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
     {
         RECT rc = *rect;
 
-        LPtoDP( hdc, (POINT *)&rc, 2 );
+        lp_to_dp( dc, (POINT *)&rc, 2 );
         add_bounds_rect( &dc->bounds, &rc );
     }
 
