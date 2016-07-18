@@ -57,8 +57,9 @@ static inline BOOL is_version_nt(void)
 HANDLE get_BaseNamedObjects_handle(void)
 {
     static HANDLE handle = NULL;
-    static const WCHAR basenameW[] =
-        {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s',0};
+    static const WCHAR basenameW[] = {'\\','S','e','s','s','i','o','n','s','\\','%','u',
+                                      '\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s',0};
+    WCHAR buffer[64];
     UNICODE_STRING str;
     OBJECT_ATTRIBUTES attr;
 
@@ -66,7 +67,8 @@ HANDLE get_BaseNamedObjects_handle(void)
     {
         HANDLE dir;
 
-        RtlInitUnicodeString(&str, basenameW);
+        sprintfW( buffer, basenameW, NtCurrentTeb()->Peb->SessionId );
+        RtlInitUnicodeString( &str, buffer );
         InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
         NtOpenDirectoryObject(&dir, DIRECTORY_CREATE_OBJECT|DIRECTORY_TRAVERSE,
                               &attr);

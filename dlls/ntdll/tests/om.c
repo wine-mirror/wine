@@ -231,13 +231,14 @@ static HANDLE get_base_dir(void)
     UNICODE_STRING str;
     OBJECT_ATTRIBUTES attr;
     HANDLE dir, h;
-    unsigned int i;
+    char name[40];
 
     h = CreateMutexA(NULL, FALSE, objname);
     ok(h != 0, "CreateMutexA failed got ret=%p (%d)\n", h, GetLastError());
     InitializeObjectAttributes(&attr, &str, OBJ_OPENIF, 0, NULL);
 
-    pRtlCreateUnicodeStringFromAsciiz(&str, "\\BaseNamedObjects\\Local");
+    sprintf( name, "\\BaseNamedObjects\\Session\\%u", NtCurrentTeb()->Peb->SessionId );
+    pRtlCreateUnicodeStringFromAsciiz(&str, name );
     status = pNtOpenDirectoryObject(&dir, DIRECTORY_QUERY, &attr);
     pRtlFreeUnicodeString(&str);
     if (!status && is_correct_dir( dir, objname )) goto done;
@@ -249,16 +250,6 @@ static HANDLE get_base_dir(void)
     if (!status && is_correct_dir( dir, objname )) goto done;
     if (!status) pNtClose( dir );
 
-    for (i = 0; i < 20; i++)
-    {
-        char name[40];
-        sprintf( name, "\\BaseNamedObjects\\Session\\%u", i );
-        pRtlCreateUnicodeStringFromAsciiz(&str, name );
-        status = pNtOpenDirectoryObject(&dir, DIRECTORY_QUERY, &attr);
-        pRtlFreeUnicodeString(&str);
-        if (!status && is_correct_dir( dir, objname )) goto done;
-        if (!status) pNtClose( dir );
-    }
     dir = 0;
 
 done:
@@ -1293,10 +1284,12 @@ static void test_query_object(void)
     NTSTATUS status;
     ULONG len, expected_len;
     OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING path, *str;
+    UNICODE_STRING path, session, *str;
     char dir[MAX_PATH], tmp_path[MAX_PATH], file1[MAX_PATH + 16];
     LARGE_INTEGER size;
 
+    sprintf( tmp_path, "\\Sessions\\%u", NtCurrentTeb()->Peb->SessionId );
+    pRtlCreateUnicodeStringFromAsciiz( &session, tmp_path );
     InitializeObjectAttributes( &attr, &path, 0, 0, 0 );
 
     handle = CreateEventA( NULL, FALSE, FALSE, "test_event" );
@@ -1330,8 +1323,11 @@ static void test_query_object(void)
     ok( str->Length >= sizeof(name), "unexpected len %u\n", str->Length );
     ok( len > sizeof(UNICODE_STRING) + sizeof("\\test_event") * sizeof(WCHAR),
         "name too short %s\n", wine_dbgstr_w(str->Buffer) );
-    /* there can be a \\Sessions prefix in the name */
-    ok( !memcmp( str->Buffer + (str->Length - sizeof(name)) / sizeof(WCHAR), name, sizeof(name) ),
+    /* check for \\Sessions prefix in the name */
+    ok( (str->Length > session.Length &&
+         !memcmp( str->Buffer, session.Buffer, session.Length ) &&
+         !memcmp( str->Buffer + session.Length / sizeof(WCHAR), name, sizeof(name) )) ||
+        broken( !memcmp( str->Buffer, name, sizeof(name) )), /* winxp */
         "wrong name %s\n", wine_dbgstr_w(str->Buffer) );
     trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );
 
@@ -1528,6 +1524,7 @@ static void test_query_object(void)
         trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );
         pNtClose( handle );
     }
+    pRtlFreeUnicodeString( &session );
 }
 
 static void test_type_mismatch(void)
