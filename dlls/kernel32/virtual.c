@@ -63,7 +63,7 @@ WINE_DECLARE_DEBUG_CHANNEL(file);
  *	Success: Base address of allocated region of pages.
  *	Failure: NULL.
  */
-LPVOID WINAPI VirtualAlloc( LPVOID addr, SIZE_T size, DWORD type, DWORD protect )
+LPVOID WINAPI DECLSPEC_HOTPATCH VirtualAlloc( void *addr, SIZE_T size, DWORD type, DWORD protect )
 {
     return VirtualAllocEx( GetCurrentProcess(), addr, size, type, protect );
 }
@@ -504,7 +504,7 @@ HANDLE WINAPI OpenFileMappingW( DWORD access, BOOL inherit, LPCWSTR name)
  *	Success: Starting address of mapped view.
  *	Failure: NULL.
  */
-LPVOID WINAPI MapViewOfFile( HANDLE mapping, DWORD access,
+LPVOID WINAPI DECLSPEC_HOTPATCH MapViewOfFile( HANDLE mapping, DWORD access,
     DWORD offset_high, DWORD offset_low, SIZE_T count )
 {
     return MapViewOfFileEx( mapping, access, offset_high,
