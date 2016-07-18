@@ -3301,7 +3301,16 @@ int __thiscall istream_peek(istream *this)
 DEFINE_THISCALL_WRAPPER(istream_putback, 8)
 istream* __thiscall istream_putback(istream *this, char ch)
 {
-    FIXME("(%p %c) stub\n", this, ch);
+    ios *base = istream_get_ios(this);
+
+    TRACE("(%p %c)\n", this, ch);
+
+    if (ios_good(base)) {
+        ios_lockbuf(base);
+        if (streambuf_sputbackc(base->sb, ch) == EOF)
+            ios_clear(base, base->state | IOSTATE_failbit);
+        ios_unlockbuf(base);
+    }
     return this;
 }
 
