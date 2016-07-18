@@ -238,6 +238,57 @@ static void CDECL _vcomp_fork_call_wrapper(void *wrapper, int nargs, __ms_va_lis
 
 #endif
 
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+
+static inline short interlocked_cmpxchg16(short *dest, short xchg, short compare)
+{
+    short ret;
+    __asm__ __volatile__( "lock; cmpxchgw %2,(%1)"
+                          : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
+    return ret;
+}
+
+static inline short interlocked_xchg_add16(short *dest, short incr)
+{
+    short ret;
+    __asm__ __volatile__( "lock; xaddw %0,(%1)"
+                          : "=r" (ret) : "r" (dest), "0" (incr) : "memory" );
+    return ret;
+}
+
+#else  /* __GNUC__ */
+
+#ifdef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_2
+static inline short interlocked_cmpxchg16(short *dest, short xchg, short compare)
+{
+    return __sync_val_compare_and_swap(dest, compare, xchg);
+}
+
+static inline short interlocked_xchg_add16(short *dest, short incr)
+{
+    return __sync_fetch_and_add(dest, incr);
+}
+#else
+static short interlocked_cmpxchg16(short *dest, short xchg, short compare)
+{
+    EnterCriticalSection(&vcomp_section);
+    if (*dest == compare) *dest = xchg; else compare = *dest;
+    LeaveCriticalSection(&vcomp_section);
+    return compare;
+}
+
+static short interlocked_xchg_add16(short *dest, short incr)
+{
+    short ret;
+    EnterCriticalSection(&vcomp_section);
+    ret = *dest; *dest += incr;
+    LeaveCriticalSection(&vcomp_section);
+    return ret;
+}
+#endif
+
+#endif  /* __GNUC__ */
+
 static inline struct vcomp_thread_data *vcomp_get_thread_data(void)
 {
     return (struct vcomp_thread_data *)TlsGetValue(vcomp_context_tls);
@@ -290,6 +341,70 @@ static void vcomp_free_thread_data(void)
 
     HeapFree(GetProcessHeap(), 0, thread_data);
     vcomp_set_thread_data(NULL);
+}
+
+void CDECL _vcomp_atomic_add_i2(short *dest, short val)
+{
+    interlocked_xchg_add16(dest, val);
+}
+
+void CDECL _vcomp_atomic_and_i2(short *dest, short val)
+{
+    short old;
+    do old = *dest; while (interlocked_cmpxchg16(dest, old & val, old) != old);
+}
+
+void CDECL _vcomp_atomic_div_i2(short *dest, short val)
+{
+    short old;
+    do old = *dest; while (interlocked_cmpxchg16(dest, old / val, old) != old);
+}
+
+void CDECL _vcomp_atomic_div_ui2(unsigned short *dest, unsigned short val)
+{
+    unsigned short old;
+    do old = *dest; while ((unsigned short)interlocked_cmpxchg16((short *)dest, old / val, old) != old);
+}
+
+void CDECL _vcomp_atomic_mul_i2(short *dest, short val)
+{
+    short old;
+    do old = *dest; while (interlocked_cmpxchg16(dest, old * val, old) != old);
+}
+
+void CDECL _vcomp_atomic_or_i2(short *dest, short val)
+{
+    short old;
+    do old = *dest; while (interlocked_cmpxchg16(dest, old | val, old) != old);
+}
+
+void CDECL _vcomp_atomic_shl_i2(short *dest, unsigned int val)
+{
+    short old;
+    do old = *dest; while (interlocked_cmpxchg16(dest, old << val, old) != old);
+}
+
+void CDECL _vcomp_atomic_shr_i2(short *dest, unsigned int val)
+{
+    short old;
+    do old = *dest; while (interlocked_cmpxchg16(dest, old >> val, old) != old);
+}
+
+void CDECL _vcomp_atomic_shr_ui2(unsigned short *dest, unsigned int val)
+{
+    unsigned short old;
+    do old = *dest; while ((unsigned short)interlocked_cmpxchg16((short *)dest, old >> val, old) != old);
+}
+
+void CDECL _vcomp_atomic_sub_i2(short *dest, short val)
+{
+    interlocked_xchg_add16(dest, -val);
+}
+
+void CDECL _vcomp_atomic_xor_i2(short *dest, short val)
+{
+    short old;
+    do old = *dest; while (interlocked_cmpxchg16(dest, old ^ val, old) != old);
 }
 
 void CDECL _vcomp_atomic_add_i4(int *dest, int val)
