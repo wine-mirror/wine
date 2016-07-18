@@ -35,44 +35,55 @@ static VOID   (WINAPI *pReleaseActCtx)(HANDLE);
 typedef CRITICAL_SECTION *omp_lock_t;
 typedef CRITICAL_SECTION *omp_nest_lock_t;
 
+static void  (CDECL   *p_vcomp_atomic_add_i1)(char *dest, char val);
 static void  (CDECL   *p_vcomp_atomic_add_i2)(short *dest, short val);
 static void  (CDECL   *p_vcomp_atomic_add_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_add_i8)(LONG64 *dest, LONG64 val);
 static void  (CDECL   *p_vcomp_atomic_add_r4)(float *dest, float val);
 static void  (CDECL   *p_vcomp_atomic_add_r8)(double *dest, double val);
+static void  (CDECL   *p_vcomp_atomic_and_i1)(char *dest, char val);
 static void  (CDECL   *p_vcomp_atomic_and_i2)(short *dest, short val);
 static void  (CDECL   *p_vcomp_atomic_and_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_and_i8)(LONG64 *dest, LONG64 val);
+static void  (CDECL   *p_vcomp_atomic_div_i1)(char *dest, char val);
 static void  (CDECL   *p_vcomp_atomic_div_i2)(short *dest, short val);
 static void  (CDECL   *p_vcomp_atomic_div_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_div_i8)(LONG64 *dest, LONG64 val);
 static void  (CDECL   *p_vcomp_atomic_div_r4)(float *dest, float val);
 static void  (CDECL   *p_vcomp_atomic_div_r8)(double *dest, double val);
+static void  (CDECL   *p_vcomp_atomic_div_ui1)(unsigned char *dest, unsigned char val);
 static void  (CDECL   *p_vcomp_atomic_div_ui2)(unsigned short *dest, unsigned short val);
 static void  (CDECL   *p_vcomp_atomic_div_ui4)(unsigned int *dest, unsigned int val);
 static void  (CDECL   *p_vcomp_atomic_div_ui8)(ULONG64 *dest, ULONG64 val);
+static void  (CDECL   *p_vcomp_atomic_mul_i1)(char *dest, char val);
 static void  (CDECL   *p_vcomp_atomic_mul_i2)(short *dest, short val);
 static void  (CDECL   *p_vcomp_atomic_mul_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_mul_i8)(LONG64 *dest, LONG64 val);
 static void  (CDECL   *p_vcomp_atomic_mul_r4)(float *dest, float val);
 static void  (CDECL   *p_vcomp_atomic_mul_r8)(double *dest, double val);
+static void  (CDECL   *p_vcomp_atomic_or_i1)(char *dest, char val);
 static void  (CDECL   *p_vcomp_atomic_or_i2)(short *dest, short val);
 static void  (CDECL   *p_vcomp_atomic_or_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_or_i8)(LONG64 *dest, LONG64 val);
+static void  (CDECL   *p_vcomp_atomic_shl_i1)(char *dest, unsigned int val);
 static void  (CDECL   *p_vcomp_atomic_shl_i2)(short *dest, unsigned int val);
 static void  (CDECL   *p_vcomp_atomic_shl_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_shl_i8)(LONG64 *dest, unsigned int val);
+static void  (CDECL   *p_vcomp_atomic_shr_i1)(char *dest, unsigned int val);
 static void  (CDECL   *p_vcomp_atomic_shr_i2)(short *dest, unsigned int val);
 static void  (CDECL   *p_vcomp_atomic_shr_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_shr_i8)(LONG64 *dest, unsigned int val);
+static void  (CDECL   *p_vcomp_atomic_shr_ui1)(unsigned char *dest, unsigned int val);
 static void  (CDECL   *p_vcomp_atomic_shr_ui2)(unsigned short *dest, unsigned int val);
 static void  (CDECL   *p_vcomp_atomic_shr_ui4)(unsigned int *dest, unsigned int val);
 static void  (CDECL   *p_vcomp_atomic_shr_ui8)(ULONG64 *dest, unsigned int val);
+static void  (CDECL   *p_vcomp_atomic_sub_i1)(char *dest, char val);
 static void  (CDECL   *p_vcomp_atomic_sub_i2)(short *dest, short val);
 static void  (CDECL   *p_vcomp_atomic_sub_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_sub_i8)(LONG64 *dest, LONG64 val);
 static void  (CDECL   *p_vcomp_atomic_sub_r4)(float *dest, float val);
 static void  (CDECL   *p_vcomp_atomic_sub_r8)(double *dest, double val);
+static void  (CDECL   *p_vcomp_atomic_xor_i1)(char *dest, char val);
 static void  (CDECL   *p_vcomp_atomic_xor_i2)(short *dest, short val);
 static void  (CDECL   *p_vcomp_atomic_xor_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_xor_i8)(LONG64 *dest, LONG64 val);
@@ -260,44 +271,55 @@ static BOOL init_vcomp(void)
         return FALSE;
     }
 
+    VCOMP_GET_PROC(_vcomp_atomic_add_i1);
     VCOMP_GET_PROC(_vcomp_atomic_add_i2);
     VCOMP_GET_PROC(_vcomp_atomic_add_i4);
     VCOMP_GET_PROC(_vcomp_atomic_add_i8);
     VCOMP_GET_PROC(_vcomp_atomic_add_r4);
     VCOMP_GET_PROC(_vcomp_atomic_add_r8);
+    VCOMP_GET_PROC(_vcomp_atomic_and_i1);
     VCOMP_GET_PROC(_vcomp_atomic_and_i2);
     VCOMP_GET_PROC(_vcomp_atomic_and_i4);
     VCOMP_GET_PROC(_vcomp_atomic_and_i8);
+    VCOMP_GET_PROC(_vcomp_atomic_div_i1);
     VCOMP_GET_PROC(_vcomp_atomic_div_i2);
     VCOMP_GET_PROC(_vcomp_atomic_div_i4);
     VCOMP_GET_PROC(_vcomp_atomic_div_i8);
     VCOMP_GET_PROC(_vcomp_atomic_div_r4);
     VCOMP_GET_PROC(_vcomp_atomic_div_r8);
+    VCOMP_GET_PROC(_vcomp_atomic_div_ui1);
     VCOMP_GET_PROC(_vcomp_atomic_div_ui2);
     VCOMP_GET_PROC(_vcomp_atomic_div_ui4);
     VCOMP_GET_PROC(_vcomp_atomic_div_ui8);
+    VCOMP_GET_PROC(_vcomp_atomic_mul_i1);
     VCOMP_GET_PROC(_vcomp_atomic_mul_i2);
     VCOMP_GET_PROC(_vcomp_atomic_mul_i4);
     VCOMP_GET_PROC(_vcomp_atomic_mul_i8);
     VCOMP_GET_PROC(_vcomp_atomic_mul_r4);
     VCOMP_GET_PROC(_vcomp_atomic_mul_r8);
+    VCOMP_GET_PROC(_vcomp_atomic_or_i1);
     VCOMP_GET_PROC(_vcomp_atomic_or_i2);
     VCOMP_GET_PROC(_vcomp_atomic_or_i4);
     VCOMP_GET_PROC(_vcomp_atomic_or_i8);
+    VCOMP_GET_PROC(_vcomp_atomic_shl_i1);
     VCOMP_GET_PROC(_vcomp_atomic_shl_i2);
     VCOMP_GET_PROC(_vcomp_atomic_shl_i4);
     VCOMP_GET_PROC(_vcomp_atomic_shl_i8);
+    VCOMP_GET_PROC(_vcomp_atomic_shr_i1);
     VCOMP_GET_PROC(_vcomp_atomic_shr_i2);
     VCOMP_GET_PROC(_vcomp_atomic_shr_i4);
     VCOMP_GET_PROC(_vcomp_atomic_shr_i8);
+    VCOMP_GET_PROC(_vcomp_atomic_shr_ui1);
     VCOMP_GET_PROC(_vcomp_atomic_shr_ui2);
     VCOMP_GET_PROC(_vcomp_atomic_shr_ui4);
     VCOMP_GET_PROC(_vcomp_atomic_shr_ui8);
+    VCOMP_GET_PROC(_vcomp_atomic_sub_i1);
     VCOMP_GET_PROC(_vcomp_atomic_sub_i2);
     VCOMP_GET_PROC(_vcomp_atomic_sub_i4);
     VCOMP_GET_PROC(_vcomp_atomic_sub_i8);
     VCOMP_GET_PROC(_vcomp_atomic_sub_r4);
     VCOMP_GET_PROC(_vcomp_atomic_sub_r8);
+    VCOMP_GET_PROC(_vcomp_atomic_xor_i1);
     VCOMP_GET_PROC(_vcomp_atomic_xor_i2);
     VCOMP_GET_PROC(_vcomp_atomic_xor_i4);
     VCOMP_GET_PROC(_vcomp_atomic_xor_i8);
@@ -1444,6 +1466,102 @@ static void test_omp_init_nest_lock(void)
     pomp_destroy_nest_lock(&lock);
 }
 
+static void test_atomic_integer8(void)
+{
+    struct
+    {
+        void (CDECL *func)(char *, char);
+        char v1, v2, expected;
+    }
+    tests1[] =
+    {
+        { p_vcomp_atomic_add_i1,  0x11,  0x77, -0x78 },
+        { p_vcomp_atomic_and_i1,  0x11,  0x77,  0x11 },
+        { p_vcomp_atomic_div_i1,  0x77,  0x11,     7 },
+        { p_vcomp_atomic_div_i1,  0x77, -0x11,    -7 },
+        { p_vcomp_atomic_mul_i1,  0x11,  0x77, -0x19 },
+        { p_vcomp_atomic_mul_i1,  0x11, -0x77,  0x19 },
+        { p_vcomp_atomic_or_i1,   0x11,  0x77,  0x77 },
+        { p_vcomp_atomic_sub_i1,  0x11,  0x77, -0x66 },
+        { p_vcomp_atomic_xor_i1,  0x11,  0x77,  0x66 },
+    };
+    struct
+    {
+        void (CDECL *func)(char *, unsigned int);
+        char v1;
+        unsigned int v2;
+        char expected;
+    }
+    tests2[] =
+    {
+        { p_vcomp_atomic_shl_i1,  0x11,  3, -0x78 },
+        { p_vcomp_atomic_shl_i1, -0x11,  3,  0x78 },
+        { p_vcomp_atomic_shr_i1,  0x11,  3,     2 },
+        { p_vcomp_atomic_shr_i1, -0x11,  3,    -3 },
+#if defined(__i386__) || defined(__x86_64__)
+        { p_vcomp_atomic_shl_i1,  0x11, 11,     0 },
+        { p_vcomp_atomic_shl_i1,  0x11, 19,     0 },
+        { p_vcomp_atomic_shl_i1,  0x11, 35, -0x78 },
+        { p_vcomp_atomic_shr_i1,  0x11, 11,     0 },
+        { p_vcomp_atomic_shr_i1,  0x11, 19,     0 },
+        { p_vcomp_atomic_shr_i1,  0x11, 35,     2 },
+#endif
+    };
+    struct
+    {
+        void (CDECL *func)(unsigned char *, unsigned char);
+        unsigned char v1, v2, expected;
+    }
+    tests3[] =
+    {
+        { p_vcomp_atomic_div_ui1, 0x77, 0x11, 7 },
+        { p_vcomp_atomic_div_ui1, 0x77, 0xef, 0 },
+    };
+    struct
+    {
+        void (CDECL *func)(unsigned char *, unsigned int);
+        unsigned char v1;
+        unsigned int v2;
+        unsigned char expected;
+    }
+    tests4[] =
+    {
+        { p_vcomp_atomic_shr_ui1, 0x11,  3,    2 },
+        { p_vcomp_atomic_shr_ui1, 0xef,  3, 0x1d },
+#if defined(__i386__) || defined(__x86_64__)
+        { p_vcomp_atomic_shr_ui1, 0x11, 11,    0 },
+        { p_vcomp_atomic_shr_ui1, 0x11, 19,    0 },
+        { p_vcomp_atomic_shr_ui1, 0x11, 35,    2 },
+#endif
+    };
+    int i;
+
+    for (i = 0; i < sizeof(tests1)/sizeof(tests1[0]); i++)
+    {
+        char val = tests1[i].v1;
+        tests1[i].func(&val, tests1[i].v2);
+        ok(val == tests1[i].expected, "test %d: expected val == %d, got %d\n", i, tests1[i].expected, val);
+    }
+    for (i = 0; i < sizeof(tests2)/sizeof(tests2[0]); i++)
+    {
+        char val = tests2[i].v1;
+        tests2[i].func(&val, tests2[i].v2);
+        ok(val == tests2[i].expected, "test %d: expected val == %d, got %d\n", i, tests2[i].expected, val);
+    }
+    for (i = 0; i < sizeof(tests3)/sizeof(tests3[0]); i++)
+    {
+        unsigned char val = tests3[i].v1;
+        tests3[i].func(&val, tests3[i].v2);
+        ok(val == tests3[i].expected, "test %d: expected val == %u, got %u\n", i, tests3[i].expected, val);
+    }
+    for (i = 0; i < sizeof(tests4)/sizeof(tests4[0]); i++)
+    {
+        unsigned char val = tests4[i].v1;
+        tests4[i].func(&val, tests4[i].v2);
+        ok(val == tests4[i].expected, "test %d: expected val == %u, got %u\n", i, tests4[i].expected, val);
+    }
+}
+
 static void test_atomic_integer16(void)
 {
     struct
@@ -1771,6 +1889,7 @@ START_TEST(vcomp)
     test_vcomp_flush();
     test_omp_init_lock();
     test_omp_init_nest_lock();
+    test_atomic_integer8();
     test_atomic_integer16();
     test_atomic_integer32();
     test_atomic_integer64();
