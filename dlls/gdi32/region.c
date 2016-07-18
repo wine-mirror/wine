@@ -131,8 +131,17 @@ static BOOL grow_region( WINEREGION *rgn, int size )
 
     if (size <= rgn->size) return TRUE;
 
-    new_rects = HeapReAlloc( GetProcessHeap(), 0, rgn->rects, size * sizeof(RECT) );
-    if (!new_rects) return FALSE;
+    if (rgn->rects == rgn->rects_buf)
+    {
+        new_rects = HeapAlloc( GetProcessHeap(), 0, size * sizeof(RECT) );
+        if (!new_rects) return FALSE;
+        memcpy( new_rects, rgn->rects, rgn->numRects * sizeof(RECT) );
+    }
+    else
+    {
+        new_rects = HeapReAlloc( GetProcessHeap(), 0, rgn->rects, size * sizeof(RECT) );
+        if (!new_rects) return FALSE;
+    }
     rgn->rects = new_rects;
     rgn->size = size;
     return TRUE;
@@ -406,9 +415,6 @@ static BOOL REGION_SubtractRegion(WINEREGION *d, WINEREGION *s1, WINEREGION *s2)
 static BOOL REGION_XorRegion(WINEREGION *d, WINEREGION *s1, WINEREGION *s2);
 static BOOL REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn);
 
-#define RGN_DEFAULT_RECTS	2
-
-
 /***********************************************************************
  *            get_region_type
  */
@@ -445,7 +451,16 @@ static void REGION_DumpRegion(WINEREGION *pReg)
  */
 static BOOL init_region( WINEREGION *pReg, INT n )
 {
-    if (!(pReg->rects = HeapAlloc(GetProcessHeap(), 0, n * sizeof( RECT )))) return FALSE;
+    n = max( n, RGN_DEFAULT_RECTS );
+
+    if (n > RGN_DEFAULT_RECTS)
+    {
+        if (!(pReg->rects = HeapAlloc( GetProcessHeap(), 0, n * sizeof( RECT ) )))
+            return FALSE;
+    }
+    else
+        pReg->rects = pReg->rects_buf;
+
     pReg->size = n;
     empty_region(pReg);
     return TRUE;
@@ -456,7 +471,8 @@ static BOOL init_region( WINEREGION *pReg, INT n )
  */
 static void destroy_region( WINEREGION *pReg )
 {
-    HeapFree( GetProcessHeap(), 0, pReg->rects );
+    if (pReg->rects != pReg->rects_buf)
+        HeapFree( GetProcessHeap(), 0, pReg->rects );
 }
 
 /***********************************************************************
@@ -491,12 +507,16 @@ static WINEREGION *alloc_region( INT n )
 static inline void move_rects( WINEREGION *dst, WINEREGION *src )
 {
     destroy_region( dst );
-    dst->rects = src->rects;
+    if (src->rects == src->rects_buf)
+    {
+        dst->rects = dst->rects_buf;
+        memcpy( dst->rects, src->rects, src->numRects * sizeof(RECT) );
+    }
+    else
+        dst->rects = src->rects;
     dst->size = src->size;
     dst->numRects = src->numRects;
-    src->rects = NULL;
-    src->size = 0;
-    src->numRects = 0;
+    init_region( src, 0 );
 }
 
 /***********************************************************************
@@ -1176,10 +1196,9 @@ static BOOL REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn)
 {
     WINEREGION region;
 
-    region.rects = &region.extents;
+    init_region( &region, 1 );
     region.numRects = 1;
-    region.size = 1;
-    region.extents = *rect;
+    region.extents = *region.rects = *rect;
     return REGION_UnionRegion(rgn, rgn, &region);
 }
 
@@ -1625,7 +1644,7 @@ static INT REGION_Coalesce (
  */
 static void REGION_compact( WINEREGION *reg )
 {
-    if ((reg->numRects < reg->size / 2) && (reg->numRects > 2))
+    if ((reg->numRects < reg->size / 2) && (reg->numRects > RGN_DEFAULT_RECTS))
     {
         RECT *new_rects = HeapReAlloc( GetProcessHeap(), 0, reg->rects, reg->numRects * sizeof(RECT) );
         if (new_rects)

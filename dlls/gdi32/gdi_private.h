@@ -355,12 +355,14 @@ extern BOOL add_rect_to_region( HRGN rgn, const RECT *rect ) DECLSPEC_HIDDEN;
 extern INT mirror_region( HRGN dst, HRGN src, INT width ) DECLSPEC_HIDDEN;
 extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y ) DECLSPEC_HIDDEN;
 
+#define RGN_DEFAULT_RECTS 4
 typedef struct
 {
     INT size;
     INT numRects;
     RECT *rects;
     RECT extents;
+    RECT rects_buf[RGN_DEFAULT_RECTS];
 } WINEREGION;
 
 /* return the region data without making a copy */
