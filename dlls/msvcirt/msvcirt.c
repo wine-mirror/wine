@@ -3217,7 +3217,23 @@ int __thiscall istream_get(istream *this)
 DEFINE_THISCALL_WRAPPER(istream_get_sb, 12)
 istream* __thiscall istream_get_sb(istream *this, streambuf *sb, char delim)
 {
-    FIXME("(%p %p %c) stub\n", this, sb, delim);
+    ios *base = istream_get_ios(this);
+    int ch;
+
+    TRACE("(%p %p %c)\n", this, sb, delim);
+
+    if (istream_ipfx(this, 1)) {
+        for (ch = streambuf_sgetc(base->sb); ch != delim; ch = streambuf_snextc(base->sb)) {
+            if (ch == EOF) {
+                base->state |= IOSTATE_eofbit;
+                break;
+            }
+            if (streambuf_sputc(sb, ch) == EOF)
+                base->state |= IOSTATE_failbit;
+            this->count++;
+        }
+        istream_isfx(this);
+    }
     return this;
 }
 
