@@ -61,28 +61,33 @@ void QualityControlImpl_Destroy(QualityControlImpl *This)
     HeapFree(GetProcessHeap(),0,This);
 }
 
+static inline QualityControlImpl *impl_from_IQualityControl(IQualityControl *iface)
+{
+    return CONTAINING_RECORD(iface, QualityControlImpl, IQualityControl_iface);
+}
+
 HRESULT WINAPI QualityControlImpl_QueryInterface(IQualityControl *iface, REFIID riid, void **ppv)
 {
-    QualityControlImpl *This = (QualityControlImpl*)iface;
+    QualityControlImpl *This = impl_from_IQualityControl(iface);
     return IBaseFilter_QueryInterface(This->self, riid, ppv);
 }
 
 ULONG WINAPI QualityControlImpl_AddRef(IQualityControl *iface)
 {
-    QualityControlImpl *This = (QualityControlImpl*)iface;
+    QualityControlImpl *This = impl_from_IQualityControl(iface);
     return IBaseFilter_AddRef(This->self);
 }
 
 ULONG WINAPI QualityControlImpl_Release(IQualityControl *iface)
 {
-    QualityControlImpl *This = (QualityControlImpl*)iface;
+    QualityControlImpl *This = impl_from_IQualityControl(iface);
     return IBaseFilter_Release(This->self);
 }
 
 HRESULT WINAPI QualityControlImpl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm)
 {
+    QualityControlImpl *This = impl_from_IQualityControl(iface);
     HRESULT hr = S_FALSE;
-    QualityControlImpl *This = (QualityControlImpl*)iface;
 
     TRACE("%p %p { 0x%x %u " XTIME_FMT " " XTIME_FMT " }\n",
             This, sender, qm.Type, qm.Proportion,
@@ -110,7 +115,7 @@ HRESULT WINAPI QualityControlImpl_Notify(IQualityControl *iface, IBaseFilter *se
 
 HRESULT WINAPI QualityControlImpl_SetSink(IQualityControl *iface, IQualityControl *tonotify)
 {
-    QualityControlImpl *This = (QualityControlImpl*)iface;
+    QualityControlImpl *This = impl_from_IQualityControl(iface);
     TRACE("%p %p\n", This, tonotify);
     This->tonotify = tonotify;
     return S_OK;
