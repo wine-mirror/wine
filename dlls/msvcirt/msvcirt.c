@@ -3162,6 +3162,28 @@ istream* __thiscall istream_get_unsigned_str(istream *this, unsigned char *str, 
     return istream_get_str(this, (char*) str, count, delim);
 }
 
+static int istream_internal_get_char(istream *this, char *ch)
+{
+    ios *base = istream_get_ios(this);
+    int ret = EOF;
+
+    TRACE("(%p %p)\n", this, ch);
+
+    if (istream_ipfx(this, 1)) {
+        if ((ret = streambuf_sbumpc(base->sb)) != EOF) {
+            this->count = 1;
+        } else {
+            base->state |= IOSTATE_eofbit;
+            if (ch)
+                base->state |= IOSTATE_failbit;
+        }
+        if (ch)
+            *ch = ret;
+        istream_isfx(this);
+    }
+    return ret;
+}
+
 /* ?get@istream@@QAEAAV1@AAC@Z */
 /* ?get@istream@@QEAAAEAV1@AEAC@Z */
 /* ?get@istream@@QAEAAV1@AAD@Z */
@@ -3169,7 +3191,7 @@ istream* __thiscall istream_get_unsigned_str(istream *this, unsigned char *str, 
 DEFINE_THISCALL_WRAPPER(istream_get_char, 8)
 istream* __thiscall istream_get_char(istream *this, char *ch)
 {
-    FIXME("(%p %p) stub\n", this, ch);
+    istream_internal_get_char(this, ch);
     return this;
 }
 
@@ -3178,7 +3200,7 @@ istream* __thiscall istream_get_char(istream *this, char *ch)
 DEFINE_THISCALL_WRAPPER(istream_get_unsigned_char, 8)
 istream* __thiscall istream_get_unsigned_char(istream *this, unsigned char *ch)
 {
-    FIXME("(%p %p) stub\n", this, ch);
+    istream_internal_get_char(this, (char*) ch);
     return this;
 }
 
@@ -3187,8 +3209,7 @@ istream* __thiscall istream_get_unsigned_char(istream *this, unsigned char *ch)
 DEFINE_THISCALL_WRAPPER(istream_get, 4)
 int __thiscall istream_get(istream *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    return istream_internal_get_char(this, NULL);
 }
 
 /* ?get@istream@@QAEAAV1@AAVstreambuf@@D@Z */
