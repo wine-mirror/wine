@@ -33,6 +33,7 @@
 #define TESTSCRIPT_CLSID "{178fc164-f585-4e24-9c13-4bb7faf80746}"
 static const GUID CLSID_TestScript =
     {0x178fc164,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x07,0x46}};
+static const WCHAR vbW[] = {'V','B','S','c','r','i','p','t',0};
 
 #ifdef _WIN64
 
@@ -672,7 +673,6 @@ static void test_olecontrol(void)
 
 static void test_Language(void)
 {
-    static const WCHAR vbW[] = {'V','B','S','c','r','i','p','t',0};
     static const WCHAR jsW[] = {'J','S','c','r','i','p','t',0};
     static const WCHAR vb2W[] = {'v','B','s','c','r','i','p','t',0};
     static const WCHAR dummyW[] = {'d','u','m','m','y',0};
@@ -920,6 +920,65 @@ static void test_pointerinactive(void)
     IScriptControl_Release(sc);
 }
 
+static void test_timeout(void)
+{
+    IScriptControl *sc;
+    HRESULT hr;
+    LONG val;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IScriptControl, (void**)&sc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_get_Timeout(sc, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    val = 0;
+    hr = IScriptControl_get_Timeout(sc, &val);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(val == 10000, "got %d\n", val);
+
+    hr = IScriptControl_put_Timeout(sc, -1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    val = 0;
+    hr = IScriptControl_get_Timeout(sc, &val);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(val == -1, "got %d\n", val);
+
+    hr = IScriptControl_put_Timeout(sc, -2);
+    ok(hr == CTL_E_INVALIDPROPERTYVALUE, "got 0x%08x\n", hr);
+
+    val = 0;
+    hr = IScriptControl_get_Timeout(sc, &val);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(val == -1, "got %d\n", val);
+
+    hr = IScriptControl_put_Timeout(sc, 0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    val = 1;
+    hr = IScriptControl_get_Timeout(sc, &val);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(val == 0, "got %d\n", val);
+
+    str = SysAllocString(vbW);
+    hr = IScriptControl_put_Language(sc, str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
+
+    val = 1;
+    hr = IScriptControl_get_Timeout(sc, &val);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(val == 0, "got %d\n", val);
+
+    hr = IScriptControl_put_Timeout(sc, 10000);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IScriptControl_Release(sc);
+}
+
 START_TEST(msscript)
 {
     IUnknown *unk;
@@ -943,6 +1002,7 @@ START_TEST(msscript)
     test_quickactivate();
     test_viewobject();
     test_pointerinactive();
+    test_timeout();
 
     CoUninitialize();
 }

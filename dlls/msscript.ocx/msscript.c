@@ -76,6 +76,7 @@ struct ScriptControl {
     LONG ref;
     IOleClientSite *site;
     SIZEL extent;
+    LONG timeout;
 
     /* connection points */
     ConnectionPoint *cp_list;
@@ -642,15 +643,30 @@ static HRESULT WINAPI ScriptControl_get_SitehWnd(IScriptControl *iface, LONG *p)
 static HRESULT WINAPI ScriptControl_get_Timeout(IScriptControl *iface, LONG *p)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if (!p)
+        return E_POINTER;
+
+    *p = This->timeout;
+    return S_OK;
 }
 
-static HRESULT WINAPI ScriptControl_put_Timeout(IScriptControl *iface, LONG milliseconds)
+static HRESULT WINAPI ScriptControl_put_Timeout(IScriptControl *iface, LONG timeout)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)->(%d)\n", This, milliseconds);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, timeout);
+
+    if (timeout < -1)
+        return CTL_E_INVALIDPROPERTYVALUE;
+
+    if (timeout != -1)
+        FIXME("execution timeout ignored\n");
+
+    This->timeout = timeout;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptControl_get_AllowUI(IScriptControl *iface, VARIANT_BOOL *p)
@@ -1659,6 +1675,7 @@ static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknow
     script_control->site = NULL;
     script_control->cp_list = NULL;
     script_control->host = NULL;
+    script_control->timeout = 10000;
 
     ConnectionPoint_Init(&script_control->cp_scsource, script_control, &DIID_DScriptControlSource);
     ConnectionPoint_Init(&script_control->cp_propnotif, script_control, &IID_IPropertyNotifySink);
