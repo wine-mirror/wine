@@ -224,10 +224,10 @@ struct layout_cluster {
 };
 
 enum layout_recompute_mask {
-    RECOMPUTE_NOMINAL_RUNS   = 1 << 0,
-    RECOMPUTE_MINIMAL_WIDTH  = 1 << 1,
-    RECOMPUTE_EFFECTIVE_RUNS = 1 << 2,
-    RECOMPUTE_EVERYTHING     = 0xffff
+    RECOMPUTE_CLUSTERS      = 1 << 0,
+    RECOMPUTE_MINIMAL_WIDTH = 1 << 1,
+    RECOMPUTE_LINES         = 1 << 2,
+    RECOMPUTE_EVERYTHING    = 0xffff
 };
 
 struct dwrite_textlayout {
@@ -1037,7 +1037,7 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
 {
     HRESULT hr;
 
-    if (!(layout->recompute & RECOMPUTE_NOMINAL_RUNS))
+    if (!(layout->recompute & RECOMPUTE_CLUSTERS))
         return S_OK;
 
     /* nominal breakpoints are evaluated only once, because string never changes */
@@ -1076,7 +1076,7 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
         }
     }
 
-    layout->recompute &= ~RECOMPUTE_NOMINAL_RUNS;
+    layout->recompute &= ~RECOMPUTE_CLUSTERS;
     return hr;
 }
 
@@ -1714,7 +1714,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     UINT32 i, start, line, textpos;
     HRESULT hr;
 
-    if (!(layout->recompute & RECOMPUTE_EFFECTIVE_RUNS))
+    if (!(layout->recompute & RECOMPUTE_LINES))
         return S_OK;
 
     hr = layout_compute(layout);
@@ -1910,7 +1910,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 
     layout->metrics.heightIncludingTrailingWhitespace = layout->metrics.height; /* FIXME: not true for vertical text */
 
-    layout->recompute &= ~RECOMPUTE_EFFECTIVE_RUNS;
+    layout->recompute &= ~RECOMPUTE_LINES;
     return hr;
 }
 
@@ -3765,7 +3765,7 @@ static HRESULT WINAPI dwritetextformat_layout_SetTextAlignment(IDWriteTextFormat
         return hr;
 
     /* if layout is not ready there's nothing to align */
-    if (changed && !(This->recompute & RECOMPUTE_EFFECTIVE_RUNS))
+    if (changed && !(This->recompute & RECOMPUTE_LINES))
         layout_apply_text_alignment(This);
 
     return S_OK;
@@ -3784,7 +3784,7 @@ static HRESULT WINAPI dwritetextformat_layout_SetParagraphAlignment(IDWriteTextF
         return hr;
 
     /* if layout is not ready there's nothing to align */
-    if (changed && !(This->recompute & RECOMPUTE_EFFECTIVE_RUNS))
+    if (changed && !(This->recompute & RECOMPUTE_LINES))
         layout_apply_par_alignment(This);
 
     return S_OK;
@@ -3803,7 +3803,7 @@ static HRESULT WINAPI dwritetextformat_layout_SetWordWrapping(IDWriteTextFormat1
         return hr;
 
     if (changed)
-        This->recompute |= RECOMPUTE_EFFECTIVE_RUNS;
+        This->recompute |= RECOMPUTE_LINES;
 
     return S_OK;
 }
