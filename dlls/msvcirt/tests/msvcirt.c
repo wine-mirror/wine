@@ -316,6 +316,7 @@ static istream* (*__thiscall p_istream_get_str)(istream*, char*, int, char);
 static int (*__thiscall p_istream_get)(istream*);
 static istream* (*__thiscall p_istream_get_char)(istream*, char*);
 static istream* (*__thiscall p_istream_get_sb)(istream*, streambuf*, char);
+static istream* (*__thiscall p_istream_getline)(istream*, char*, int, char);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -520,6 +521,7 @@ static BOOL init(void)
         SET(p_istream_get, "?get@istream@@QEAAHXZ");
         SET(p_istream_get_char, "?get@istream@@QEAAAEAV1@AEAD@Z");
         SET(p_istream_get_sb, "?get@istream@@QEAAAEAV1@AEAVstreambuf@@D@Z");
+        SET(p_istream_getline, "?getline@istream@@QEAAAEAV1@PEADHD@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -646,6 +648,7 @@ static BOOL init(void)
         SET(p_istream_get, "?get@istream@@QAEHXZ");
         SET(p_istream_get_char, "?get@istream@@QAEAAV1@AAD@Z");
         SET(p_istream_get_sb, "?get@istream@@QAEAAV1@AAVstreambuf@@D@Z");
+        SET(p_istream_getline, "?getline@istream@@QAEAAV1@PADHD@Z");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -4193,6 +4196,83 @@ if (0) /* crashes on native */
     ok(fb2.base.pbase == fb2.base.base, "wrong put base, expected %p got %p\n", fb2.base.base, fb2.base.pbase);
     ok(fb2.base.pptr == fb2.base.base + 46, "wrong put pointer, expected %p got %p\n", fb2.base.base + 46, fb2.base.pptr);
     ok(fb2.base.epptr == fb2.base.ebuf, "wrong put end, expected %p got %p\n", fb2.base.ebuf, fb2.base.epptr);
+
+    /* getline */
+    is1.extract_delim = is1.count = 0xabababab;
+    memset(buffer, 'A', sizeof(buffer));
+    pis = call_func4(p_istream_getline, &is1, buffer, 10, 0);
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(is1.extract_delim == 0, "expected 0 got %d\n", is1.extract_delim);
+    ok(is1.count == 0, "expected 0 got %d\n", is1.count);
+    ok(is1.base_ios.state == (IOSTATE_eofbit|IOSTATE_failbit), "expected %d got %d\n",
+        IOSTATE_eofbit|IOSTATE_failbit, is1.base_ios.state);
+    ok(buffer[0] == 0, "expected 0 got %d\n", buffer[0]);
+    is1.extract_delim = is1.count = 0xabababab;
+    is1.base_ios.state = IOSTATE_goodbit;
+    memset(buffer, 'A', sizeof(buffer));
+    pis = call_func4(p_istream_getline, &is1, buffer, 10, 0);
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(is1.extract_delim == 0, "expected 0 got %d\n", is1.extract_delim);
+    ok(is1.count == 0, "expected 0 got %d\n", is1.count);
+    ok(is1.base_ios.state == (IOSTATE_eofbit|IOSTATE_failbit), "expected %d got %d\n",
+        IOSTATE_eofbit|IOSTATE_failbit, is1.base_ios.state);
+    ok(buffer[0] == 0, "expected 0 got %d\n", buffer[0]);
+    is1.base_ios.state = IOSTATE_goodbit;
+    fb1.base.eback = fb1.base.gptr = fb1.base.base;
+    fb1.base.egptr = fb1.base.base + 30;
+    memset(buffer, 'A', sizeof(buffer));
+    pis = call_func4(p_istream_getline, &is1, buffer, 10, 'r');
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(is1.extract_delim == 0, "expected 0 got %d\n", is1.extract_delim);
+    ok(is1.count == 7, "expected 7 got %d\n", is1.count);
+    ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
+    ok(fb1.base.gptr == fb1.base.base + 7, "wrong get pointer, expected %p got %p\n", fb1.base.base + 7, fb1.base.gptr);
+    ok(!strncmp(buffer, fb1.base.base, 6), "unexpected buffer content, got '%s'\n", buffer);
+    ok(buffer[6] == 0, "expected 0 got %d\n", buffer[6]);
+    is1.extract_delim = -1;
+    memset(buffer, 'A', sizeof(buffer));
+    pis = call_func4(p_istream_getline, &is1, buffer, 10, -50);
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(is1.extract_delim == 0, "expected 0 got %d\n", is1.extract_delim);
+    ok(is1.count == 7, "expected 7 got %d\n", is1.count);
+    ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
+    ok(fb1.base.gptr == fb1.base.base + 14, "wrong get pointer, expected %p got %p\n", fb1.base.base + 14, fb1.base.gptr);
+    ok(!strncmp(buffer, fb1.base.base + 7, 7), "unexpected buffer content, got '%s'\n", buffer);
+    ok(buffer[7] == 0, "expected 0 got %d\n", buffer[7]);
+    is1.extract_delim = -1;
+    memset(buffer, 'A', sizeof(buffer));
+    pis = call_func4(p_istream_getline, &is1, buffer, 10, 206);
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(is1.extract_delim == 0, "expected 0 got %d\n", is1.extract_delim);
+    ok(is1.count == 0, "expected 0 got %d\n", is1.count);
+    ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
+    ok(fb1.base.gptr == fb1.base.base + 14, "wrong get pointer, expected %p got %p\n", fb1.base.base + 14, fb1.base.gptr);
+    ok(buffer[0] == 0, "expected 0 got %d\n", buffer[0]);
+    is1.extract_delim = -2;
+    memset(buffer, 'A', sizeof(buffer));
+    pis = call_func4(p_istream_getline, &is1, buffer, 20, '\r');
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(is1.extract_delim == 0, "expected 0 got %d\n", is1.extract_delim);
+    ok(is1.count == 10, "expected 10 got %d\n", is1.count);
+    ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
+    ok(fb1.base.gptr == fb1.base.base + 24, "wrong get pointer, expected %p got %p\n", fb1.base.base + 24, fb1.base.gptr);
+    ok(!strncmp(buffer, fb1.base.base + 14, 9), "unexpected buffer content, got '%s'\n", buffer);
+    ok(buffer[9] == 0, "expected 0 got %d\n", buffer[9]);
+    memset(buffer, 'A', sizeof(buffer));
+    pis = call_func4(p_istream_getline, &is1, NULL, 20, '?');
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(is1.extract_delim == 0, "expected 0 got %d\n", is1.extract_delim);
+    ok(is1.count == 6, "expected 6 got %d\n", is1.count);
+    ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
+    ok(fb1.base.gptr == fb1.base.base + 30, "wrong get pointer, expected %p got %p\n", fb1.base.base + 30, fb1.base.gptr);
+    memset(buffer, 'A', sizeof(buffer));
+    pis = call_func4(p_istream_getline, &is1, buffer, 0, 0);
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(is1.extract_delim == 0, "expected 0 got %d\n", is1.extract_delim);
+    ok(is1.count == 0, "expected 0 got %d\n", is1.count);
+    ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
+    ok(fb1.base.gptr == fb1.base.base + 30, "wrong get pointer, expected %p got %p\n", fb1.base.base + 30, fb1.base.gptr);
+    ok(buffer[0] == 'A', "expected 'A' got %d\n", buffer[0]);
 
     call_func1(p_istream_vbase_dtor, &is1);
     call_func1(p_istream_vbase_dtor, &is2);

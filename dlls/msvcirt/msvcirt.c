@@ -3244,7 +3244,14 @@ istream* __thiscall istream_get_sb(istream *this, streambuf *sb, char delim)
 DEFINE_THISCALL_WRAPPER(istream_getline, 16)
 istream* __thiscall istream_getline(istream *this, char *str, int count, char delim)
 {
-    FIXME("(%p %p %d %c) stub\n", this, str, count, delim);
+    ios *base = istream_get_ios(this);
+
+    TRACE("(%p %p %d %c)\n", this, str, count, delim);
+
+    ios_lock(base);
+    this->extract_delim++;
+    istream_get_str_delim(this, str, count, (unsigned char) delim);
+    ios_unlock(base);
     return this;
 }
 
@@ -3253,8 +3260,7 @@ istream* __thiscall istream_getline(istream *this, char *str, int count, char de
 DEFINE_THISCALL_WRAPPER(istream_getline_unsigned, 16)
 istream* __thiscall istream_getline_unsigned(istream *this, unsigned char *str, int count, char delim)
 {
-    FIXME("(%p %p %d %c) stub\n", this, str, count, delim);
-    return this;
+    return istream_getline(this, (char*) str, count, delim);
 }
 
 /* ?ignore@istream@@QAEAAV1@HH@Z */
