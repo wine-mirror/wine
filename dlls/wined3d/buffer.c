@@ -210,7 +210,7 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *buffer,
         const enum wined3d_buffer_conversion_type conversion_type,
         const struct wined3d_stream_info_element *attrib, DWORD *stride_this_run)
 {
-    DWORD attrib_size;
+    const struct wined3d_format *format = attrib->format;
     BOOL ret = FALSE;
     unsigned int i;
     DWORD_PTR data;
@@ -222,12 +222,12 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *buffer,
      */
     if (!attrib->stride)
     {
-        FIXME("%s used with stride 0, let's hope we get the vertex stride from somewhere else\n",
-                debug_d3dformat(attrib->format->id));
+        FIXME("%s used with stride 0, let's hope we get the vertex stride from somewhere else.\n",
+                debug_d3dformat(format->id));
     }
-    else if(attrib->stride != *stride_this_run && *stride_this_run)
+    else if (attrib->stride != *stride_this_run && *stride_this_run)
     {
-        FIXME("Got two concurrent strides, %d and %d\n", attrib->stride, *stride_this_run);
+        FIXME("Got two concurrent strides, %d and %d.\n", attrib->stride, *stride_this_run);
     }
     else
     {
@@ -237,7 +237,7 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *buffer,
             /* We rely that this happens only on the first converted attribute that is found,
              * if at all. See above check
              */
-            TRACE("Reconverting because converted attributes occur, and the stride changed\n");
+            TRACE("Reconverting because converted attributes occur, and the stride changed.\n");
             buffer->stride = *stride_this_run;
             HeapFree(GetProcessHeap(), HEAP_ZERO_MEMORY, buffer->conversion_map);
             buffer->conversion_map = wined3d_calloc(buffer->stride, sizeof(*buffer->conversion_map));
@@ -246,8 +246,7 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *buffer,
     }
 
     data = ((DWORD_PTR)attrib->data.addr) % buffer->stride;
-    attrib_size = attrib->format->component_count * attrib->format->component_size;
-    for (i = 0; i < attrib_size; ++i)
+    for (i = 0; i < format->attribute_size; ++i)
     {
         DWORD_PTR idx = (data + i) % buffer->stride;
         if (buffer->conversion_map[idx] != conversion_type)

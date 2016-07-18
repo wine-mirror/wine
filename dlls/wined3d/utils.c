@@ -3253,26 +3253,26 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
     gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
 }
 
-static unsigned int gl_type_size(GLenum type)
+static unsigned int calculate_vertex_attribute_size(GLenum type, unsigned int component_count)
 {
     switch (type)
     {
         case GL_HALF_FLOAT:
-            return sizeof(GLhalfNV);
+            return component_count * sizeof(GLhalfNV);
         case GL_FLOAT:
-            return sizeof(GLfloat);
+            return component_count * sizeof(GLfloat);
         case GL_BYTE:
-            return sizeof(GLbyte);
+            return component_count * sizeof(GLbyte);
         case GL_UNSIGNED_BYTE:
-            return sizeof(GLubyte);
+            return component_count * sizeof(GLubyte);
         case GL_SHORT:
-            return sizeof(GLshort);
+            return component_count * sizeof(GLshort);
         case GL_UNSIGNED_SHORT:
-            return sizeof(GLushort);
+            return component_count * sizeof(GLushort);
         case GL_INT:
-            return sizeof(GLint);
+            return component_count * sizeof(GLint);
         case GL_UNSIGNED_INT:
-            return sizeof(GLuint);
+            return component_count * sizeof(GLuint);
         default:
             FIXME("Unhandled GL type %#x.\n", type);
             return 0;
@@ -3301,9 +3301,10 @@ static BOOL init_format_vertex_info(struct wined3d_gl_info *gl_info)
         format->gl_vtx_type = format_vertex_info[i].gl_vtx_type;
         format->gl_vtx_format = format_vertex_info[i].component_count;
         format->gl_normalized = format_vertex_info[i].gl_normalized;
-        if (!(format->component_size = gl_type_size(format_vertex_info[i].gl_vtx_type)))
+        if (!(format->attribute_size = calculate_vertex_attribute_size(format->gl_vtx_type,
+                format->component_count)))
         {
-            ERR("Invalid component size for vertex format %s (%#x).\n",
+            ERR("Invalid attribute size for vertex format %s (%#x).\n",
                     debug_d3dformat(format_vertex_info[i].id), format_vertex_info[i].id);
             return FALSE;
         }

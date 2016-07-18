@@ -315,7 +315,7 @@ static void append_decl_element(struct wined3d_fvf_convert_state *state,
     elements[idx].usage_idx = usage_idx;
 
     format = wined3d_get_format(state->gl_info, format_id);
-    state->offset += format->component_count * format->component_size;
+    state->offset += format->attribute_size;
     ++state->idx;
 }
 
