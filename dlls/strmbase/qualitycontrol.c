@@ -324,7 +324,7 @@ void QualityControlRender_DoQOS(QualityControlImpl *priv)
         q.Late = priv->current_jitter;
         q.TimeStamp = priv->current_rstart;
         TRACE("Late: %i from %i, rate: %g\n", (int)(q.Late/10000), (int)(q.TimeStamp/10000), 1./priv->avg_rate);
-        hr = IQualityControl_Notify((IQualityControl *)priv, priv->self, q);
+        hr = IQualityControl_Notify(&priv->IQualityControl_iface, priv->self, q);
         priv->qos_handled = hr == S_OK;
     }
 
