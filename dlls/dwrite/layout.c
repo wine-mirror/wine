@@ -411,6 +411,30 @@ static inline HRESULT format_set_flowdirection(struct dwrite_textformat_data *fo
     return S_OK;
 }
 
+static inline HRESULT format_set_trimming(struct dwrite_textformat_data *format,
+    DWRITE_TRIMMING const *trimming, IDWriteInlineObject *trimming_sign, BOOL *changed)
+{
+    if (changed)
+        *changed = FALSE;
+
+    if ((UINT32)trimming->granularity > DWRITE_TRIMMING_GRANULARITY_WORD)
+        return E_INVALIDARG;
+
+    if (changed) {
+        *changed = !!memcmp(&format->trimming, trimming, sizeof(*trimming));
+        if (format->trimmingsign != trimming_sign)
+            *changed = TRUE;
+    }
+
+    format->trimming = *trimming;
+    if (format->trimmingsign)
+        IDWriteInlineObject_Release(format->trimmingsign);
+    format->trimmingsign = trimming_sign;
+    if (format->trimmingsign)
+        IDWriteInlineObject_AddRef(format->trimmingsign);
+    return S_OK;
+}
+
 static inline HRESULT format_set_linespacing(struct dwrite_textformat_data *format,
     DWRITE_LINE_SPACING_METHOD method, FLOAT spacing, FLOAT baseline, BOOL *changed)
 {
@@ -3855,8 +3879,17 @@ static HRESULT WINAPI dwritetextformat_layout_SetTrimming(IDWriteTextFormat1 *if
     IDWriteInlineObject *trimming_sign)
 {
     struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
-    FIXME("(%p)->(%p %p): stub\n", This, trimming, trimming_sign);
-    return E_NOTIMPL;
+    BOOL changed;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p %p)\n", This, trimming, trimming_sign);
+
+    hr = format_set_trimming(&This->format, trimming, trimming_sign, &changed);
+
+    if (changed)
+        This->recompute |= RECOMPUTE_LINES;
+
+    return hr;
 }
 
 static HRESULT WINAPI dwritetextformat_layout_SetLineSpacing(IDWriteTextFormat1 *iface, DWRITE_LINE_SPACING_METHOD method,
@@ -4839,14 +4872,7 @@ static HRESULT WINAPI dwritetextformat_SetTrimming(IDWriteTextFormat2 *iface, DW
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat2(iface);
     TRACE("(%p)->(%p %p)\n", This, trimming, trimming_sign);
-
-    This->format.trimming = *trimming;
-    if (This->format.trimmingsign)
-        IDWriteInlineObject_Release(This->format.trimmingsign);
-    This->format.trimmingsign = trimming_sign;
-    if (This->format.trimmingsign)
-        IDWriteInlineObject_AddRef(This->format.trimmingsign);
-    return S_OK;
+    return format_set_trimming(&This->format, trimming, trimming_sign, NULL);
 }
 
 static HRESULT WINAPI dwritetextformat_SetLineSpacing(IDWriteTextFormat2 *iface, DWRITE_LINE_SPACING_METHOD method,
