@@ -59,8 +59,10 @@ static BOOL CALLBACK enum_names_WtoA( LPWSTR name, LPARAM lparam )
 static HANDLE get_winstations_dir_handle(void)
 {
     static HANDLE handle = NULL;
-    static const WCHAR basenameW[] = {'\\','W','i','n','d','o','w','s','\\',
+    static const WCHAR basenameW[] = {'\\','S','e','s','s','i','o','n','s','\\','%','u',
+                                      '\\','W','i','n','d','o','w','s','\\',
                                       'W','i','n','d','o','w','S','t','a','t','i','o','n','s',0};
+    WCHAR buffer[64];
     UNICODE_STRING str;
     OBJECT_ATTRIBUTES attr;
 
@@ -68,7 +70,8 @@ static HANDLE get_winstations_dir_handle(void)
     {
         HANDLE dir;
 
-        RtlInitUnicodeString( &str, basenameW );
+        sprintfW( buffer, basenameW, NtCurrentTeb()->Peb->SessionId );
+        RtlInitUnicodeString( &str, buffer );
         InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
         NtOpenDirectoryObject( &dir, DIRECTORY_CREATE_OBJECT | DIRECTORY_TRAVERSE, &attr );
         if (InterlockedCompareExchangePointer( &handle, dir, 0 ) != 0) /* someone beat us here */
