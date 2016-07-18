@@ -3110,7 +3110,37 @@ void __thiscall istream_isfx(istream *this)
 DEFINE_THISCALL_WRAPPER(istream_get_str_delim, 16)
 istream* __thiscall istream_get_str_delim(istream *this, char *str, int count, int delim)
 {
-    FIXME("(%p %p %d %d) stub\n", this, str, count, delim);
+    ios *base = istream_get_ios(this);
+    int ch, i = 0;
+
+    TRACE("(%p %p %d %d)\n", this, str, count, delim);
+
+    if (istream_ipfx(this, 1)) {
+        while (i < count - 1) {
+            if ((ch = streambuf_sgetc(base->sb)) == EOF) {
+                base->state |= IOSTATE_eofbit;
+                if (!i) /* tried to read, but not a single character was obtained */
+                    base->state |= IOSTATE_failbit;
+                break;
+            }
+            if (ch == delim) {
+                if (this->extract_delim) { /* discard the delimiter */
+                    streambuf_stossc(base->sb);
+                    this->count++;
+                }
+                break;
+            }
+            if (str)
+                str[i] = ch;
+            streambuf_stossc(base->sb);
+            i++;
+        }
+        this->count += i;
+        istream_isfx(this);
+    }
+    if (str && count) /* append a null terminator, unless a string of 0 characters was requested */
+        str[i] = 0;
+    this->extract_delim = 0;
     return this;
 }
 
@@ -3121,8 +3151,7 @@ istream* __thiscall istream_get_str_delim(istream *this, char *str, int count, i
 DEFINE_THISCALL_WRAPPER(istream_get_str, 16)
 istream* __thiscall istream_get_str(istream *this, char *str, int count, char delim)
 {
-    FIXME("(%p %p %d %c) stub\n", this, str, count, delim);
-    return this;
+    return istream_get_str_delim(this, str, count, (unsigned char) delim);
 }
 
 /* ?get@istream@@QAEAAV1@PAEHD@Z */
@@ -3130,8 +3159,7 @@ istream* __thiscall istream_get_str(istream *this, char *str, int count, char de
 DEFINE_THISCALL_WRAPPER(istream_get_unsigned_str, 16)
 istream* __thiscall istream_get_unsigned_str(istream *this, unsigned char *str, int count, char delim)
 {
-    FIXME("(%p %p %d %c) stub\n", this, str, count, delim);
-    return this;
+    return istream_get_str(this, (char*) str, count, delim);
 }
 
 /* ?get@istream@@QAEAAV1@AAC@Z */
