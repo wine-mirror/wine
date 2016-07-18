@@ -3284,8 +3284,16 @@ istream* __thiscall istream_ignore(istream *this, int count, int delim)
 DEFINE_THISCALL_WRAPPER(istream_peek, 4)
 int __thiscall istream_peek(istream *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    ios *base = istream_get_ios(this);
+    int ret = EOF;
+
+    TRACE("(%p)\n", this);
+
+    if (istream_ipfx(this, 1)) {
+        ret = streambuf_sgetc(base->sb);
+        istream_isfx(this);
+    }
+    return ret;
 }
 
 /* ?putback@istream@@QAEAAV1@D@Z */

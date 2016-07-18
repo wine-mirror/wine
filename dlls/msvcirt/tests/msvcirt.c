@@ -318,6 +318,7 @@ static istream* (*__thiscall p_istream_get_char)(istream*, char*);
 static istream* (*__thiscall p_istream_get_sb)(istream*, streambuf*, char);
 static istream* (*__thiscall p_istream_getline)(istream*, char*, int, char);
 static istream* (*__thiscall p_istream_ignore)(istream*, int, int);
+static int (*__thiscall p_istream_peek)(istream*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -524,6 +525,7 @@ static BOOL init(void)
         SET(p_istream_get_sb, "?get@istream@@QEAAAEAV1@AEAVstreambuf@@D@Z");
         SET(p_istream_getline, "?getline@istream@@QEAAAEAV1@PEADHD@Z");
         SET(p_istream_ignore, "?ignore@istream@@QEAAAEAV1@HH@Z");
+        SET(p_istream_peek, "?peek@istream@@QEAAHXZ");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -652,6 +654,7 @@ static BOOL init(void)
         SET(p_istream_get_sb, "?get@istream@@QAEAAV1@AAVstreambuf@@D@Z");
         SET(p_istream_getline, "?getline@istream@@QAEAAV1@PADHD@Z");
         SET(p_istream_ignore, "?ignore@istream@@QAEAAV1@HH@Z");
+        SET(p_istream_peek, "?peek@istream@@QAEHXZ");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -4344,6 +4347,42 @@ if (0) /* crashes on native */
     ok(is1.extract_delim == 0, "expected 0 got %d\n", is1.extract_delim);
     ok(is1.count == 6, "expected 6 got %d\n", is1.count);
     ok(is1.base_ios.state == IOSTATE_eofbit, "expected %d got %d\n", IOSTATE_eofbit, is1.base_ios.state);
+    ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
+
+    /* peek */
+    is1.count = 0xabababab;
+    ret = (int) call_func1(p_istream_peek, &is1);
+    ok(ret == EOF, "expected -1 got %d\n", ret);
+    ok(is1.count == 0, "expected 0 got %d\n", is1.count);
+    ok(is1.base_ios.state == (IOSTATE_eofbit|IOSTATE_failbit), "expected %d got %d\n",
+        IOSTATE_eofbit|IOSTATE_failbit, is1.base_ios.state);
+    is1.count = 0xabababab;
+    is1.base_ios.state = IOSTATE_goodbit;
+    ret = (int) call_func1(p_istream_peek, &is1);
+    ok(ret == EOF, "expected -1 got %d\n", ret);
+    ok(is1.count == 0, "expected 0 got %d\n", is1.count);
+    ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
+    ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
+    fb1.base.eback = fb1.base.gptr = fb1.base.base;
+    fb1.base.egptr = fb1.base.base + 30;
+    ret = (int) call_func1(p_istream_peek, &is1);
+    ok(ret == ' ', "expected ' ' got %d\n", ret);
+    ok(is1.count == 0, "expected 0 got %d\n", is1.count);
+    ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
+    ok(fb1.base.gptr == fb1.base.base, "wrong get pointer, expected %p got %p\n", fb1.base.base, fb1.base.gptr);
+if (0) /* crashes on native */
+    is1.base_ios.sb = NULL;
+    fb1.base.gptr = fb1.base.base + 14;
+    ret = (int) call_func1(p_istream_peek, &is1);
+    ok(ret == 206, "expected 206 got %d\n", ret);
+    ok(is1.count == 0, "expected 0 got %d\n", is1.count);
+    ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
+    ok(fb1.base.gptr == fb1.base.base + 14, "wrong get pointer, expected %p got %p\n", fb1.base.base + 14, fb1.base.gptr);
+    fb1.base.gptr = fb1.base.base + 30;
+    ret = (int) call_func1(p_istream_peek, &is1);
+    ok(ret == EOF, "expected -1 got %d\n", ret);
+    ok(is1.count == 0, "expected 0 got %d\n", is1.count);
+    ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
     ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
 
     call_func1(p_istream_vbase_dtor, &is1);
