@@ -3321,7 +3321,15 @@ istream* __thiscall istream_putback(istream *this, char ch)
 DEFINE_THISCALL_WRAPPER(istream_read, 12)
 istream* __thiscall istream_read(istream *this, char *str, int count)
 {
-    FIXME("(%p %p %d) stub\n", this, str, count);
+    ios *base = istream_get_ios(this);
+
+    TRACE("(%p %p %d)\n", this, str, count);
+
+    if (istream_ipfx(this, 1)) {
+        if ((this->count = streambuf_sgetn(base->sb, str, count)) != count)
+            base->state = IOSTATE_eofbit | IOSTATE_failbit;
+        istream_isfx(this);
+    }
     return this;
 }
 
@@ -3330,8 +3338,7 @@ istream* __thiscall istream_read(istream *this, char *str, int count)
 DEFINE_THISCALL_WRAPPER(istream_read_unsigned, 12)
 istream* __thiscall istream_read_unsigned(istream *this, unsigned char *str, int count)
 {
-    FIXME("(%p %p %d) stub\n", this, str, count);
-    return this;
+    return istream_read(this, (char*) str, count);
 }
 
 /* ?seekg@istream@@QAEAAV1@J@Z */
