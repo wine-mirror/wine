@@ -3268,7 +3268,14 @@ istream* __thiscall istream_getline_unsigned(istream *this, unsigned char *str, 
 DEFINE_THISCALL_WRAPPER(istream_ignore, 12)
 istream* __thiscall istream_ignore(istream *this, int count, int delim)
 {
-    FIXME("(%p %d %d) stub\n", this, count, delim);
+    ios *base = istream_get_ios(this);
+
+    TRACE("(%p %d %d)\n", this, count, delim);
+
+    ios_lock(base);
+    this->extract_delim++;
+    istream_get_str_delim(this, NULL, count + 1, delim);
+    ios_unlock(base);
     return this;
 }
 
