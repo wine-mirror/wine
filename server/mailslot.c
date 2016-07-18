@@ -397,7 +397,7 @@ static enum server_fd_type mailslot_device_get_fd_type( struct fd *fd )
     return FD_TYPE_DEVICE;
 }
 
-void create_mailslot_device( struct object *root, const struct unicode_str *name )
+struct object *create_mailslot_device( struct object *root, const struct unicode_str *name )
 {
     struct mailslot_device *dev;
 
@@ -412,7 +412,7 @@ void create_mailslot_device( struct object *root, const struct unicode_str *name
             dev = NULL;
         }
     }
-    if (dev) make_object_static( &dev->obj );
+    return &dev->obj;
 }
 
 static struct mailslot *create_mailslot( struct object *root,

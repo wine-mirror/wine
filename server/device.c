@@ -618,7 +618,7 @@ static struct device *create_device( struct object *root, const struct unicode_s
     return device;
 }
 
-struct device *create_unix_device( struct object *root, const struct unicode_str *name,
+struct object *create_unix_device( struct object *root, const struct unicode_str *name,
                                    const char *unix_path )
 {
     struct device *device;
@@ -628,9 +628,8 @@ struct device *create_unix_device( struct object *root, const struct unicode_str
         device->unix_path = strdup( unix_path );
         device->manager = NULL;  /* no manager, requests go straight to the Unix device */
         list_init( &device->files );
-        make_object_static( &device->obj );
     }
-    return device;
+    return &device->obj;
 
 }
 

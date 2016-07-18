@@ -500,7 +500,7 @@ static enum server_fd_type named_pipe_device_get_fd_type( struct fd *fd )
     return FD_TYPE_DEVICE;
 }
 
-void create_named_pipe_device( struct object *root, const struct unicode_str *name )
+struct object *create_named_pipe_device( struct object *root, const struct unicode_str *name )
 {
     struct named_pipe_device *dev;
 
@@ -515,7 +515,7 @@ void create_named_pipe_device( struct object *root, const struct unicode_str *na
             dev = NULL;
         }
     }
-    if (dev) make_object_static( &dev->obj );
+    return &dev->obj;
 }
 
 static int pipe_data_remaining( struct pipe_server *server )
