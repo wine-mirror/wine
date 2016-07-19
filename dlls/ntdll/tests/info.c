@@ -1643,7 +1643,7 @@ static void test_mapprotection(void)
     status = pNtSetInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &flags, sizeof(flags) );
     ok( (status == STATUS_SUCCESS) || (status == STATUS_INVALID_INFO_CLASS), "Expected STATUS_SUCCESS, got %08x\n", status);
 
-    size.u.LowPart  = 0x1000;
+    size.u.LowPart  = 0x2000;
     size.u.HighPart = 0;
     status = pNtCreateSection ( &h,
         STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE,
@@ -1657,7 +1657,7 @@ static void test_mapprotection(void)
 
     offset.u.LowPart  = 0;
     offset.u.HighPart = 0;
-    count = 0x1000;
+    count = 0x2000;
     addr = NULL;
     status = pNtMapViewOfSection ( h, GetCurrentProcess(), &addr, 0, 0, &offset, &count, ViewShare, 0, PAGE_READWRITE);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
@@ -1680,7 +1680,7 @@ static void test_mapprotection(void)
     ok( retlen == sizeof(info), "Expected STATUS_SUCCESS, got %08x\n", status);
     ok((info.Protect & ~PAGE_NOCACHE) == PAGE_READWRITE, "addr.Protect is not PAGE_READWRITE, but 0x%x\n", info.Protect);
 
-    status = pNtUnmapViewOfSection (GetCurrentProcess(), addr);
+    status = pNtUnmapViewOfSection( GetCurrentProcess(), (char *)addr + 0x1050 );
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     pNtClose (h);
 

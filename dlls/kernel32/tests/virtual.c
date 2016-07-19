@@ -1007,15 +1007,13 @@ static void test_MapViewOfFile(void)
     ok( ptr != NULL, "MapViewOfFile failed with error %u\n", GetLastError() );
 
     ret = UnmapViewOfFile( (char *)ptr + 4096 );
-    todo_wine ok( ret, "UnmapViewOfFile failed with error %u\n", GetLastError() );
-    if (!ret) UnmapViewOfFile( ptr );
+    ok( ret, "UnmapViewOfFile failed with error %u\n", GetLastError() );
 
     ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 12288 );
     ok( ptr != NULL, "MapViewOfFile failed with error %u\n", GetLastError() );
 
     ret = UnmapViewOfFile( (char *)ptr + 4096 + 100 );
-    todo_wine ok( ret, "UnmapViewOfFile failed with error %u\n", GetLastError() );
-    if (!ret) UnmapViewOfFile( ptr );
+    ok( ret, "UnmapViewOfFile failed with error %u\n", GetLastError() );
 
     CloseHandle(mapping);
     CloseHandle(file);
