@@ -973,6 +973,11 @@ static void test_EnumLanguageProfiles(void)
 {
     BOOL found = FALSE;
     IEnumTfLanguageProfiles *ppEnum;
+    HRESULT hr;
+
+    hr = ITfInputProcessorProfiles_EnumLanguageProfiles(g_ipp, gLangid, NULL);
+    ok(hr == E_INVALIDARG, "EnumLanguageProfiles failed: %x\n", hr);
+
     if (SUCCEEDED(ITfInputProcessorProfiles_EnumLanguageProfiles(g_ipp,gLangid,&ppEnum)))
     {
         TF_LANGUAGEPROFILE profile;

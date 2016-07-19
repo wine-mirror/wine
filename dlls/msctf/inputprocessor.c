@@ -617,6 +617,10 @@ static HRESULT WINAPI InputProcessorProfiles_EnumLanguageProfiles(
 {
     InputProcessorProfiles *This = impl_from_ITfInputProcessorProfiles(iface);
     TRACE("(%p) %x %p\n",This,langid,ppEnum);
+
+    if (!ppEnum)
+        return E_INVALIDARG;
+
     return EnumTfLanguageProfiles_Constructor(langid, ppEnum);
 }
 
