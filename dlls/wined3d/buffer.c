@@ -381,6 +381,10 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This, const struct wined3d_s
             fixup_flags, &stride_this_run) || ret;
     fixup_flags &= ~WINED3D_BUFFER_FIXUP_XYZRHW;
 
+    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_BLENDWEIGHT,
+            fixup_flags, &stride_this_run) || ret;
+    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_BLENDINDICES,
+            fixup_flags, &stride_this_run) || ret;
     ret = buffer_check_attribute(This, si, state, WINED3D_FFP_NORMAL,
             fixup_flags, &stride_this_run) || ret;
     ret = buffer_check_attribute(This, si, state, WINED3D_FFP_DIFFUSE,
