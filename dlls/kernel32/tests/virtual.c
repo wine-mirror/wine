@@ -435,7 +435,7 @@ static void test_MapViewOfFile(void)
     SetLastError(0xdeadbeef);
     file = CreateFileA( testfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
     ok( file != INVALID_HANDLE_VALUE, "CreateFile error %u\n", GetLastError() );
-    SetFilePointer( file, 4096, NULL, FILE_BEGIN );
+    SetFilePointer( file, 12288, NULL, FILE_BEGIN );
     SetEndOfFile( file );
 
     /* read/write mapping */
@@ -994,6 +994,30 @@ static void test_MapViewOfFile(void)
     ok(info.State == MEM_FREE, "%#x != MEM_FREE\n", info.State);
     ok(info.Type == 0, "%#x != 0\n", info.Type);
 
+    mapping = CreateFileMappingA( file, NULL, PAGE_READONLY, 0, 12288, NULL );
+    ok( mapping != NULL, "CreateFileMappingA failed with error %u\n", GetLastError() );
+
+    ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 12288 );
+    ok( ptr != NULL, "MapViewOfFile failed with error %u\n", GetLastError() );
+
+    ret = UnmapViewOfFile( (char *)ptr + 100 );
+    ok( ret, "UnmapViewOfFile failed with error %u\n", GetLastError() );
+
+    ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 12288 );
+    ok( ptr != NULL, "MapViewOfFile failed with error %u\n", GetLastError() );
+
+    ret = UnmapViewOfFile( (char *)ptr + 4096 );
+    todo_wine ok( ret, "UnmapViewOfFile failed with error %u\n", GetLastError() );
+    if (!ret) UnmapViewOfFile( ptr );
+
+    ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 12288 );
+    ok( ptr != NULL, "MapViewOfFile failed with error %u\n", GetLastError() );
+
+    ret = UnmapViewOfFile( (char *)ptr + 4096 + 100 );
+    todo_wine ok( ret, "UnmapViewOfFile failed with error %u\n", GetLastError() );
+    if (!ret) UnmapViewOfFile( ptr );
+
+    CloseHandle(mapping);
     CloseHandle(file);
     DeleteFileA(testfile);
 }
