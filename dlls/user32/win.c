@@ -3567,11 +3567,7 @@ BOOL WINAPI DragDetect( HWND hWnd, POINT pt )
     WORD wDragWidth = GetSystemMetrics(SM_CXDRAG);
     WORD wDragHeight= GetSystemMetrics(SM_CYDRAG);
 
-    rect.left = pt.x - wDragWidth;
-    rect.right = pt.x + wDragWidth;
-
-    rect.top = pt.y - wDragHeight;
-    rect.bottom = pt.y + wDragHeight;
+    SetRect(&rect, pt.x - wDragWidth, pt.y - wDragHeight, pt.x + wDragWidth, pt.y + wDragHeight);
 
     SetCapture(hWnd);
 

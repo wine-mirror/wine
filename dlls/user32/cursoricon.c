@@ -2289,10 +2289,7 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
     if (DoOffscreen) {
         RECT r;
 
-        r.left = 0;
-        r.top = 0;
-        r.right = cxWidth;
-        r.bottom = cxWidth;
+        SetRect(&r, 0, 0, cxWidth, cxWidth);
 
         if (!(hdc_dest = CreateCompatibleDC(hdc))) goto failed;
         if (!(hB_off = CreateCompatibleBitmap(hdc, cxWidth, cyWidth)))

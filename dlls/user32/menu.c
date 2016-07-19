@@ -1343,10 +1343,7 @@ MENU_DrawScrollArrows(const POPUPMENU *lppop, HDC hdc)
         hOrigBitmap = SelectObject(hdcMem, get_up_arrow_bitmap());
     else
         hOrigBitmap = SelectObject(hdcMem, get_up_arrow_inactive_bitmap());
-    rect.left = 0;
-    rect.top = 0;
-    rect.right = lppop->Width;
-    rect.bottom = arrow_bitmap_height;
+    SetRect(&rect, 0, 0, lppop->Width, arrow_bitmap_height);
     FillRect(hdc, &rect, GetSysColorBrush(COLOR_MENU));
     BitBlt(hdc, (lppop->Width - arrow_bitmap_width) / 2, 0,
            arrow_bitmap_width, arrow_bitmap_height, hdcMem, 0, 0, SRCCOPY);

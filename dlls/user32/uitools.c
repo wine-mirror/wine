@@ -796,10 +796,7 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
 
     /* Define bounding box */
     i = 14*SmallDiam/16;
-    myr.left   = xc - i+i/2;
-    myr.right  = xc + i/2;
-    myr.top    = yc - i+i/2;
-    myr.bottom = yc + i/2;
+    SetRect(&myr, xc - i + i / 2, yc - i + i / 2, xc + i / 2, yc + i / 2);
 
     if((uFlags & 0xff) == DFCS_BUTTONRADIOMASK)
     {
@@ -840,10 +837,7 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
         }
 
         i = 10*SmallDiam/16;
-        myr.left   = xc - i+i/2;
-        myr.right  = xc + i/2;
-        myr.top    = yc - i+i/2;
-        myr.bottom = yc + i/2;
+        SetRect(&myr, xc - i + i / 2, yc - i + i / 2, xc + i / 2, yc + i / 2);
         i= !(uFlags & (DFCS_INACTIVE|DFCS_PUSHED)) ? COLOR_WINDOW : COLOR_BTNFACE;
         hpsave = SelectObject(dc, SYSCOLOR_GetPen(i));
         hbsave = SelectObject(dc, GetSysColorBrush(i));
@@ -856,10 +850,7 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
     {
         i = 6*SmallDiam/16;
         i = i < 1 ? 1 : i;
-        myr.left   = xc - i+i/2;
-        myr.right  = xc + i/2;
-        myr.top    = yc - i+i/2;
-        myr.bottom = yc + i/2;
+        SetRect(&myr, xc - i + i / 2, yc - i + i / 2, xc + i / 2, yc + i / 2);
 
         i = uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_WINDOWTEXT;
         hbsave = SelectObject(dc, GetSysColorBrush(i));
@@ -1189,10 +1180,7 @@ static BOOL UITOOLS95_DrawFrameMenu(HDC dc, LPRECT r, UINT uFlags)
         yc = myr.top  + SmallDiam - SmallDiam/2;
         i = 234*SmallDiam/750;
         i = i < 1 ? 1 : i;
-        myr.left   = xc - i+i/2;
-        myr.right  = xc + i/2;
-        myr.top    = yc - i+i/2;
-        myr.bottom = yc + i/2;
+        SetRect(&myr, xc - i + i / 2, yc - i + i / 2, xc + i / 2, yc + i / 2);
         Pie(dc, myr.left, myr.top, myr.right, myr.bottom, xe, ye, xe, ye);
         break;
 
@@ -1648,10 +1636,7 @@ static BOOL UITOOLS_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM lp
         if(!cy) cy = s.cy;
     }
 
-    rc.left   = x;
-    rc.top    = y;
-    rc.right  = x + cx;
-    rc.bottom = y + cy;
+    SetRect(&rc, x, y, x + cx, y + cy);
 
     if(flags & DSS_RIGHT)    /* This one is not documented in the win32.hlp file */
         dtflags |= DT_RIGHT;
@@ -1679,9 +1664,7 @@ static BOOL UITOOLS_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM lp
     if(!memdc) goto cleanup;
     hbmsave = SelectObject(memdc, hbm);
     if(!hbmsave) goto cleanup;
-    rc.left = rc.top = 0;
-    rc.right = cx;
-    rc.bottom = cy;
+    SetRect(&rc, 0, 0, cx, cy);
     if(!FillRect(memdc, &rc, GetStockObject(WHITE_BRUSH))) goto cleanup;
     SetBkColor(memdc, RGB(255, 255, 255));
     SetTextColor(memdc, RGB(0, 0, 0));
