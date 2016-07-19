@@ -30,6 +30,20 @@
 #include "dmusici.h"
 #include "dmksctrl.h"
 
+static BOOL missing_dmsynth(void)
+{
+    IDirectMusicSynth *dms;
+    HRESULT hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicSynth, (void**)&dms);
+
+    if (hr == S_OK && dms)
+    {
+        IDirectMusicSynth_Release(dms);
+        return FALSE;
+    }
+    return TRUE;
+}
+
 static void test_dmsynth(void)
 {
     IDirectMusicSynth *dmsynth = NULL;
@@ -44,11 +58,7 @@ static void test_dmsynth(void)
     ULONG bytes;
 
     hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth, (LPVOID*)&dmsynth);
-    if (hr != S_OK)
-    {
-        skip("Cannot create DirectMusicSync object (%x)\n", hr);
-        return;
-    }
+    ok(hr == S_OK, "CoCreateInstance returned: %x\n", hr);
 
     hr = CoCreateInstance(&CLSID_DirectMusicSynthSink, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynthSink, (LPVOID*)&dmsynth_sink);
     ok(hr == S_OK, "CoCreateInstance returned: %x\n", hr);
@@ -130,6 +140,12 @@ START_TEST(dmsynth)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
+    if (missing_dmsynth())
+    {
+        skip("dmsynth not available\n");
+        CoUninitialize();
+        return;
+    }
     test_dmsynth();
 
     CoUninitialize();
