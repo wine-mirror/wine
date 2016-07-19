@@ -2480,7 +2480,7 @@
 @ cdecl scalbnf(float long) MSVCRT__scalbf
 @ cdecl scalbnl(double long) MSVCR120_scalbnl
 @ stub set_terminate
-@ stub set_unexpected
+@ cdecl set_unexpected(ptr) MSVCRT_set_unexpected
 @ cdecl setbuf(ptr ptr) MSVCRT_setbuf
 @ cdecl -arch=arm,x86_64 -norelay -private setjmp(ptr) MSVCRT__setjmp
 @ cdecl setlocale(long str) MSVCRT_setlocale

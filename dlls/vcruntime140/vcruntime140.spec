@@ -77,7 +77,7 @@
 @ cdecl memcpy(ptr ptr long) ucrtbase.memcpy
 @ cdecl memmove(ptr ptr long) ucrtbase.memmove
 @ cdecl memset(ptr long long) ucrtbase.memset
-@ stub set_unexpected
+@ cdecl set_unexpected(ptr) ucrtbase.set_unexpected
 @ cdecl strchr(str long) ucrtbase.strchr
 @ cdecl strrchr(str long) ucrtbase.strrchr
 @ cdecl strstr(str str) ucrtbase.strstr
