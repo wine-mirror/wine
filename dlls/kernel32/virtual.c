@@ -576,7 +576,19 @@ LPVOID WINAPI MapViewOfFileEx( HANDLE handle, DWORD access,
  */
 BOOL WINAPI UnmapViewOfFile( LPCVOID addr )
 {
-    NTSTATUS status = NtUnmapViewOfSection( GetCurrentProcess(), (void *)addr );
+    NTSTATUS status;
+
+    if (GetVersion() & 0x80000000)
+    {
+        MEMORY_BASIC_INFORMATION info;
+        if (!VirtualQuery( addr, &info, sizeof(info) ) || info.AllocationBase != addr)
+        {
+            SetLastError( ERROR_INVALID_ADDRESS );
+            return FALSE;
+        }
+    }
+
+    status = NtUnmapViewOfSection( GetCurrentProcess(), (void *)addr );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }
