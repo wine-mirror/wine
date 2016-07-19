@@ -240,11 +240,27 @@ static void CDECL _vcomp_fork_call_wrapper(void *wrapper, int nargs, __ms_va_lis
 
 #if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
+static inline char interlocked_cmpxchg8(char *dest, char xchg, char compare)
+{
+    char ret;
+    __asm__ __volatile__( "lock; cmpxchgb %2,(%1)"
+                          : "=a" (ret) : "r" (dest), "q" (xchg), "0" (compare) : "memory" );
+    return ret;
+}
+
 static inline short interlocked_cmpxchg16(short *dest, short xchg, short compare)
 {
     short ret;
     __asm__ __volatile__( "lock; cmpxchgw %2,(%1)"
                           : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
+    return ret;
+}
+
+static inline char interlocked_xchg_add8(char *dest, char incr)
+{
+    char ret;
+    __asm__ __volatile__( "lock; xaddb %0,(%1)"
+                          : "=q" (ret) : "r" (dest), "0" (incr) : "memory" );
     return ret;
 }
 
@@ -257,6 +273,35 @@ static inline short interlocked_xchg_add16(short *dest, short incr)
 }
 
 #else  /* __GNUC__ */
+
+#ifdef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_1
+static inline char interlocked_cmpxchg8(char *dest, char xchg, char compare)
+{
+    return __sync_val_compare_and_swap(dest, compare, xchg);
+}
+
+static inline char interlocked_xchg_add8(char *dest, char incr)
+{
+    return __sync_fetch_and_add(dest, incr);
+}
+#else
+static char interlocked_cmpxchg8(char *dest, char xchg, char compare)
+{
+    EnterCriticalSection(&vcomp_section);
+    if (*dest == compare) *dest = xchg; else compare = *dest;
+    LeaveCriticalSection(&vcomp_section);
+    return compare;
+}
+
+static char interlocked_xchg_add8(char *dest, char incr)
+{
+    char ret;
+    EnterCriticalSection(&vcomp_section);
+    ret = *dest; *dest += incr;
+    LeaveCriticalSection(&vcomp_section);
+    return ret;
+}
+#endif
 
 #ifdef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_2
 static inline short interlocked_cmpxchg16(short *dest, short xchg, short compare)
@@ -341,6 +386,70 @@ static void vcomp_free_thread_data(void)
 
     HeapFree(GetProcessHeap(), 0, thread_data);
     vcomp_set_thread_data(NULL);
+}
+
+void CDECL _vcomp_atomic_add_i1(char *dest, char val)
+{
+    interlocked_xchg_add8(dest, val);
+}
+
+void CDECL _vcomp_atomic_and_i1(char *dest, char val)
+{
+    char old;
+    do old = *dest; while (interlocked_cmpxchg8(dest, old & val, old) != old);
+}
+
+void CDECL _vcomp_atomic_div_i1(char *dest, char val)
+{
+    char old;
+    do old = *dest; while (interlocked_cmpxchg8(dest, old / val, old) != old);
+}
+
+void CDECL _vcomp_atomic_div_ui1(unsigned char *dest, unsigned char val)
+{
+    unsigned char old;
+    do old = *dest; while ((unsigned char)interlocked_cmpxchg8((char *)dest, old / val, old) != old);
+}
+
+void CDECL _vcomp_atomic_mul_i1(char *dest, char val)
+{
+    char old;
+    do old = *dest; while (interlocked_cmpxchg8(dest, old * val, old) != old);
+}
+
+void CDECL _vcomp_atomic_or_i1(char *dest, char val)
+{
+    char old;
+    do old = *dest; while (interlocked_cmpxchg8(dest, old | val, old) != old);
+}
+
+void CDECL _vcomp_atomic_shl_i1(char *dest, unsigned int val)
+{
+    char old;
+    do old = *dest; while (interlocked_cmpxchg8(dest, old << val, old) != old);
+}
+
+void CDECL _vcomp_atomic_shr_i1(char *dest, unsigned int val)
+{
+    char old;
+    do old = *dest; while (interlocked_cmpxchg8(dest, old >> val, old) != old);
+}
+
+void CDECL _vcomp_atomic_shr_ui1(unsigned char *dest, unsigned int val)
+{
+    unsigned char old;
+    do old = *dest; while ((unsigned char)interlocked_cmpxchg8((char *)dest, old >> val, old) != old);
+}
+
+void CDECL _vcomp_atomic_sub_i1(char *dest, char val)
+{
+    interlocked_xchg_add8(dest, -val);
+}
+
+void CDECL _vcomp_atomic_xor_i1(char *dest, char val)
+{
+    char old;
+    do old = *dest; while (interlocked_cmpxchg8(dest, old ^ val, old) != old);
 }
 
 void CDECL _vcomp_atomic_add_i2(short *dest, short val)
