@@ -1249,6 +1249,11 @@ static void test_fontweight(void)
     ok(weight == DWRITE_FONT_WEIGHT_NORMAL, "got %d\n", weight);
     ok(range.length == 6, "got %d\n", range.length);
 
+    range.startPosition = 0;
+    range.length = 6;
+    hr = IDWriteTextLayout_SetFontWeight(layout, 1000, range);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
     size = IDWriteTextLayout_GetMaxWidth(layout);
     ok(size == 100.0, "got %.2f\n", size);
 

@@ -2889,6 +2889,9 @@ static HRESULT WINAPI dwritetextlayout_SetFontWeight(IDWriteTextLayout3 *iface, 
 
     TRACE("(%p)->(%d %s)\n", This, weight, debugstr_range(&range));
 
+    if ((UINT32)weight > DWRITE_FONT_WEIGHT_ULTRA_BLACK)
+        return E_INVALIDARG;
+
     value.range = range;
     value.u.weight = weight;
     return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_WEIGHT, &value);
