@@ -4451,6 +4451,11 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
 
     context->last_was_rhw = transformed;
 
+    if (context->stream_info.swizzle_map != context->last_swizzle_map)
+        context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
+
+    context->last_swizzle_map = context->stream_info.swizzle_map;
+
     /* Don't have to apply the matrices when vertex shaders are used. When
      * vshaders are turned off this function will be called again anyway to
      * make sure they're properly set. */

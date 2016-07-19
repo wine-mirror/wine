@@ -8972,8 +8972,11 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
     /* If the vertex declaration contains a transformed position attribute,
      * the draw uses the fixed function vertex pipeline regardless of any
      * vertex shader set by the application. */
-    if (transformed != wasrhw)
+    if (transformed != wasrhw
+            || context->stream_info.swizzle_map != context->last_swizzle_map)
         context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
+
+    context->last_swizzle_map = context->stream_info.swizzle_map;
 
     if (!use_vs(state))
     {
