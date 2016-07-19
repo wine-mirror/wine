@@ -943,6 +943,15 @@ VOID WINAPI Printers_UnregisterWindow(HANDLE hClassPidl, HWND hwnd)
 } 
 
 /*************************************************************************
+ * SHGetPropertyStoreForWindow [SHELL32.@]
+ */
+HRESULT WINAPI SHGetPropertyStoreForWindow(HWND hwnd, REFIID riid, void **ppv)
+{
+    FIXME("(%p %p %p) stub!\n", hwnd, riid, ppv);
+    return E_NOTIMPL;
+}
+
+/*************************************************************************
  * SHGetPropertyStoreFromParsingName [SHELL32.@]
  */
 HRESULT WINAPI SHGetPropertyStoreFromParsingName(PCWSTR pszPath, IBindCtx *pbc, GETPROPERTYSTOREFLAGS flags, REFIID riid, void **ppv)
