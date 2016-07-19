@@ -32,7 +32,7 @@ LONG DMSYNTH_refCount = 0;
 
 typedef struct {
         IClassFactory IClassFactory_iface;
-        HRESULT WINAPI (*fnCreateInstance)(REFIID riid, void **ppv, IUnknown *pUnkOuter);
+        HRESULT WINAPI (*fnCreateInstance)(REFIID riid, void **ppv);
 } IClassFactoryImpl;
 
 /******************************************************************
@@ -84,7 +84,10 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown
 
         TRACE ("(%p, %s, %p)\n", pUnkOuter, debugstr_dmguid(riid), ppv);
 
-        return This->fnCreateInstance(riid, ppv, pUnkOuter);
+        if (pUnkOuter)
+            return CLASS_E_NOAGGREGATION;
+
+        return This->fnCreateInstance(riid, ppv);
 }
 
 static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)

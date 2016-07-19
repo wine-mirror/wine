@@ -575,14 +575,14 @@ static const IKsControlVtbl DMSynthImpl_IKsControl_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl(REFIID riid, void **ppobj, IUnknown *outer)
+HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl(REFIID riid, void **ppobj)
 {
     static const WCHAR descrW[] = {'M','i','c','r','o','s','o','f','t',' ',
         'S','y','n','t','h','e','s','i','z','e','r',0};
     IDirectMusicSynth8Impl *obj;
     HRESULT hr;
 
-    TRACE("(%s, %p, %p)\n", debugstr_guid(riid), ppobj, outer);
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppobj);
 
     obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*obj));
     if (NULL == obj) {
