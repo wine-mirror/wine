@@ -67,8 +67,6 @@ static ULONG WINAPI IDirectMusicSynthSinkImpl_AddRef(LPDIRECTMUSICSYNTHSINK ifac
 
     TRACE("(%p)->(): new ref = %u\n", This, ref);
 
-    DMSYNTH_LockModule();
-
     return ref;
 }
 
@@ -83,9 +81,8 @@ static ULONG WINAPI IDirectMusicSynthSinkImpl_Release(LPDIRECTMUSICSYNTHSINK ifa
         if (This->latency_clock)
             IReferenceClock_Release(This->latency_clock);
         HeapFree(GetProcessHeap(), 0, This);
+        DMSYNTH_UnlockModule();
     }
-
-    DMSYNTH_UnlockModule();
 
     return ref;
 }

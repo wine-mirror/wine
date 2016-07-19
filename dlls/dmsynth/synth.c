@@ -72,8 +72,6 @@ static ULONG WINAPI IDirectMusicSynth8Impl_AddRef(LPDIRECTMUSICSYNTH8 iface)
 
     TRACE("(%p)->(): new ref = %u\n", This, ref);
 
-    DMSYNTH_LockModule();
-
     return ref;
 }
 
@@ -88,9 +86,8 @@ static ULONG WINAPI IDirectMusicSynth8Impl_Release(LPDIRECTMUSICSYNTH8 iface)
         if (This->pLatencyClock)
             IReferenceClock_Release(This->pLatencyClock);
         HeapFree(GetProcessHeap(), 0, This);
+        DMSYNTH_UnlockModule();
     }
-
-    DMSYNTH_UnlockModule();
 
     return ref;
 }
@@ -605,7 +602,9 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl(REFIID riid, void **ppobj)
     obj->pCaps.dwEffectFlags = DMUS_EFFECT_REVERB;
     strcpyW(obj->pCaps.wszDescription, descrW);
 
+    DMSYNTH_LockModule();
     hr = IDirectMusicSynth8_QueryInterface(&obj->IDirectMusicSynth8_iface, riid, ppobj);
     IDirectMusicSynth8_Release(&obj->IDirectMusicSynth8_iface);
+
     return hr;
 }
