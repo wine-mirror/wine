@@ -428,6 +428,8 @@ todo_wine
         ok(!verbs, "verbs is not null\n");
     }
 
+    GetTempPathW(MAX_PATH, wstr);
+    SetCurrentDirectoryW(wstr);
     RemoveDirectoryW(winetestW);
     SetCurrentDirectoryW(orig_dir);
 
