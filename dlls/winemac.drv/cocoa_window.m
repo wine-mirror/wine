@@ -1427,7 +1427,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             BOOL wasVisible;
 
             [controller transformProcessToForeground];
-            [NSApp unhide:nil];
+            if ([NSApp isHidden])
+                [NSApp unhide:nil];
             wasVisible = [self isVisible];
 
             if (activate)
