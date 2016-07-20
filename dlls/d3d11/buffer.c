@@ -372,7 +372,7 @@ struct d3d_buffer *unsafe_impl_from_ID3D10Buffer(ID3D10Buffer *iface)
     return CONTAINING_RECORD(iface, struct d3d_buffer, ID3D10Buffer_iface);
 }
 
-static void STDMETHODCALLTYPE d3d10_buffer_wined3d_object_released(void *parent)
+static void STDMETHODCALLTYPE d3d_buffer_wined3d_object_released(void *parent)
 {
     struct d3d_buffer *buffer = parent;
 
@@ -380,9 +380,9 @@ static void STDMETHODCALLTYPE d3d10_buffer_wined3d_object_released(void *parent)
     HeapFree(GetProcessHeap(), 0, parent);
 }
 
-static const struct wined3d_parent_ops d3d10_buffer_wined3d_parent_ops =
+static const struct wined3d_parent_ops d3d_buffer_wined3d_parent_ops =
 {
-    d3d10_buffer_wined3d_object_released,
+    d3d_buffer_wined3d_object_released,
 };
 
 static HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *device,
@@ -398,18 +398,51 @@ static HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *dev
     wined3d_private_store_init(&buffer->private_store);
     buffer->desc = *desc;
 
-    wined3d_desc.byte_width = desc->ByteWidth;
-    wined3d_desc.usage = wined3d_usage_from_d3d11(0, desc->Usage);
-    wined3d_desc.bind_flags = desc->BindFlags;
-    wined3d_desc.cpu_access_flags = desc->CPUAccessFlags;
-    wined3d_desc.misc_flags = desc->MiscFlags;
+    if (buffer->desc.MiscFlags & D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS)
+    {
+        if (buffer->desc.MiscFlags & D3D11_RESOURCE_MISC_BUFFER_STRUCTURED)
+        {
+            WARN("Raw and structure buffers are mutually exclusive.\n");
+            return E_INVALIDARG;
+        }
+        if (!(buffer->desc.BindFlags & (D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS)))
+        {
+            WARN("Invalid bind flags %#x for raw buffer.\n", buffer->desc.BindFlags);
+            return E_INVALIDARG;
+        }
+    }
 
-    if (desc->StructureByteStride)
-        FIXME("Ignoring structure byte stride %u.\n", desc->StructureByteStride);
+    if (buffer->desc.MiscFlags & D3D11_RESOURCE_MISC_BUFFER_STRUCTURED)
+    {
+        if (!buffer->desc.StructureByteStride || buffer->desc.StructureByteStride % 4)
+        {
+            WARN("Invalid structure byte stride %u.\n", buffer->desc.StructureByteStride);
+            return E_INVALIDARG;
+        }
+        if (buffer->desc.ByteWidth % buffer->desc.StructureByteStride)
+        {
+            WARN("Byte width %u is not divisible by structure byte stride %u.\n",
+                    buffer->desc.ByteWidth, buffer->desc.StructureByteStride);
+            return E_INVALIDARG;
+        }
+    }
+    else
+    {
+        buffer->desc.StructureByteStride = 0;
+    }
+
+    wined3d_desc.byte_width = buffer->desc.ByteWidth;
+    wined3d_desc.usage = wined3d_usage_from_d3d11(0, buffer->desc.Usage);
+    wined3d_desc.bind_flags = buffer->desc.BindFlags;
+    wined3d_desc.cpu_access_flags = buffer->desc.CPUAccessFlags;
+    wined3d_desc.misc_flags = buffer->desc.MiscFlags;
+
+    if (buffer->desc.StructureByteStride)
+        FIXME("Ignoring structure byte stride %u.\n", buffer->desc.StructureByteStride);
 
     if (FAILED(hr = wined3d_buffer_create(device->wined3d_device, &wined3d_desc,
             (const struct wined3d_sub_resource_data *)data, buffer,
-            &d3d10_buffer_wined3d_parent_ops, &buffer->wined3d_buffer)))
+            &d3d_buffer_wined3d_parent_ops, &buffer->wined3d_buffer)))
     {
         WARN("Failed to create wined3d buffer, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&buffer->private_store);
