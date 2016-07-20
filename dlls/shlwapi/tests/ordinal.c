@@ -1004,7 +1004,8 @@ static HRESULT WINAPI Disp_Invoke(
         EXCEPINFO *pExcepInfo,
         UINT *puArgErr)
 {
-    trace("%p %x %p %x %x %p %p %p %p\n",This,dispIdMember,riid,lcid,wFlags,pDispParams,pVarResult,pExcepInfo,puArgErr);
+    trace("%p %x %s %x %x %p %p %p %p\n", This, dispIdMember, wine_dbgstr_guid(riid), lcid, wFlags,
+          pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     ok(dispIdMember == 0xa0 || dispIdMember == 0xa1, "Unknown dispIdMember\n");
     ok(pDispParams != NULL, "Invoked with NULL pDispParams\n");
