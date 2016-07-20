@@ -3346,7 +3346,14 @@ istream* __thiscall istream_read_unsigned(istream *this, unsigned char *str, int
 DEFINE_THISCALL_WRAPPER(istream_seekg, 8)
 istream* __thiscall istream_seekg(istream *this, streampos pos)
 {
-    FIXME("(%p %d) stub\n", this, pos);
+    ios *base = istream_get_ios(this);
+
+    TRACE("(%p %d)\n", this, pos);
+
+    ios_lockbuf(base);
+    if (streambuf_seekpos(base->sb, pos, OPENMODE_in) == EOF)
+        ios_clear(base, base->state | IOSTATE_failbit);
+    ios_unlockbuf(base);
     return this;
 }
 
@@ -3355,7 +3362,14 @@ istream* __thiscall istream_seekg(istream *this, streampos pos)
 DEFINE_THISCALL_WRAPPER(istream_seekg_offset, 12)
 istream* __thiscall istream_seekg_offset(istream *this, streamoff off, ios_seek_dir dir)
 {
-    FIXME("(%p %d %d) stub\n", this, off, dir);
+    ios *base = istream_get_ios(this);
+
+    TRACE("(%p %d %d)\n", this, off, dir);
+
+    ios_lockbuf(base);
+    if (call_streambuf_seekoff(base->sb, off, dir, OPENMODE_in) == EOF)
+        ios_clear(base, base->state | IOSTATE_failbit);
+    ios_unlockbuf(base);
     return this;
 }
 

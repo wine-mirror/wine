@@ -321,6 +321,8 @@ static istream* (*__thiscall p_istream_ignore)(istream*, int, int);
 static int (*__thiscall p_istream_peek)(istream*);
 static istream* (*__thiscall p_istream_putback)(istream*, char);
 static istream* (*__thiscall p_istream_read)(istream*, char*, int);
+static istream* (*__thiscall p_istream_seekg)(istream*, streampos);
+static istream* (*__thiscall p_istream_seekg_offset)(istream*, streamoff, ios_seek_dir);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -530,6 +532,8 @@ static BOOL init(void)
         SET(p_istream_peek, "?peek@istream@@QEAAHXZ");
         SET(p_istream_putback, "?putback@istream@@QEAAAEAV1@D@Z");
         SET(p_istream_read, "?read@istream@@QEAAAEAV1@PEADH@Z");
+        SET(p_istream_seekg, "?seekg@istream@@QEAAAEAV1@J@Z");
+        SET(p_istream_seekg_offset, "?seekg@istream@@QEAAAEAV1@JW4seek_dir@ios@@@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -661,6 +665,8 @@ static BOOL init(void)
         SET(p_istream_peek, "?peek@istream@@QAEHXZ");
         SET(p_istream_putback, "?putback@istream@@QAEAAV1@D@Z");
         SET(p_istream_read, "?read@istream@@QAEAAV1@PADH@Z");
+        SET(p_istream_seekg, "?seekg@istream@@QAEAAV1@J@Z");
+        SET(p_istream_seekg_offset, "?seekg@istream@@QAEAAV1@JW4seek_dir@ios@@@Z");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -4494,6 +4500,54 @@ if (0) /* crashes on native */
     ok(fb1.base.gptr == fb1.base.base, "wrong get pointer, expected %p got %p\n", fb1.base.base, fb1.base.gptr);
     ok(buffer[0] == 'A', "expected 'A' got %d\n", buffer[0]);
     fb1.base.gptr = fb1.base.egptr;
+
+    /* seekg */
+    is1.extract_delim = is1.count = 0xabababab;
+    pis = call_func2(p_istream_seekg, &is1, 0);
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
+    ok(_tell(fb1.fd) == 0, "expected 0 got %d\n", _tell(fb1.fd));
+if (0) /* crashes on native */
+    is1.base_ios.sb = NULL;
+    pis = call_func2(p_istream_seekg, &is1, -5);
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(is1.base_ios.state == IOSTATE_failbit, "expected %d got %d\n", IOSTATE_failbit, is1.base_ios.state);
+    ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
+    ok(_tell(fb1.fd) == 0, "expected 0 got %d\n", _tell(fb1.fd));
+    fb1.base.epptr = fb1.base.ebuf;
+    pis = call_func2(p_istream_seekg, &is1, 5);
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(is1.base_ios.state == IOSTATE_failbit, "expected %d got %d\n", IOSTATE_failbit, is1.base_ios.state);
+    ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
+    ok(fb1.base.epptr == NULL, "wrong put end, expected %p got %p\n", NULL, fb1.base.epptr);
+    ok(_tell(fb1.fd) == 5, "expected 5 got %d\n", _tell(fb1.fd));
+    is1.base_ios.state = IOSTATE_goodbit;
+    fd = fb1.fd;
+    fb1.fd = -1;
+    pis = call_func2(p_istream_seekg, &is1, 0);
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(is1.base_ios.state == IOSTATE_failbit, "expected %d got %d\n", IOSTATE_failbit, is1.base_ios.state);
+    ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
+    fb1.base.eback = fb1.base.gptr = fb1.base.base;
+    fb1.base.egptr = fb1.base.base + 30;
+    pis = call_func3(p_istream_seekg_offset, &is1, 0, SEEKDIR_end);
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(is1.base_ios.state == IOSTATE_failbit, "expected %d got %d\n", IOSTATE_failbit, is1.base_ios.state);
+    ok(fb1.base.gptr == fb1.base.base, "wrong get pointer, expected %p got %p\n", fb1.base.base, fb1.base.gptr);
+    is1.base_ios.state = IOSTATE_goodbit;
+    fb1.fd = fd;
+    pis = call_func3(p_istream_seekg_offset, &is1, 0, SEEKDIR_end);
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(is1.base_ios.state == IOSTATE_failbit, "expected %d got %d\n", IOSTATE_failbit, is1.base_ios.state);
+    ok(fb1.base.gptr == fb1.base.base, "wrong get pointer, expected %p got %p\n", fb1.base.base, fb1.base.gptr);
+if (0) /* crashes on native */
+    is1.base_ios.sb = NULL;
+    fb1.base.gptr = fb1.base.egptr;
+    pis = call_func3(p_istream_seekg_offset, &is1, 0, SEEKDIR_end);
+    ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
+    ok(is1.base_ios.state == IOSTATE_failbit, "expected %d got %d\n", IOSTATE_failbit, is1.base_ios.state);
+    ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
+    ok(_tell(fb1.fd) == 24, "expected 24 got %d\n", _tell(fb1.fd));
 
     call_func1(p_istream_vbase_dtor, &is1);
     call_func1(p_istream_vbase_dtor, &is2);
