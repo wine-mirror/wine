@@ -25,13 +25,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
-/*
- * This IID is used to get jsdisp_t objecto from interface.
- * We might consider using private interface instead.
- */
-static const IID IID_IDispatchJS =
-        {0x719c3050,0xf9d3,0x11cf,{0xa4,0x93,0x00,0x40,0x05,0x23,0xa8,0xa6}};
-
 #define FDEX_VERSION_MASK 0xf0000000
 #define GOLDEN_RATIO 0x9E3779B9U
 
@@ -565,11 +558,6 @@ static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid,
     }else if(IsEqualGUID(&IID_IDispatchEx, riid)) {
         TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
         *ppv = &This->IDispatchEx_iface;
-    }else if(IsEqualGUID(&IID_IDispatchJS, riid)) {
-        TRACE("(%p)->(IID_IDispatchJS %p)\n", This, ppv);
-        jsdisp_addref(This);
-        *ppv = This;
-        return S_OK;
     }else {
         WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -1027,14 +1015,9 @@ HRESULT init_dispex_from_constr(jsdisp_t *dispex, script_ctx_t *ctx, const built
 
 jsdisp_t *iface_to_jsdisp(IDispatch *iface)
 {
-    jsdisp_t *ret;
-    HRESULT hres;
-
-    hres = IDispatch_QueryInterface(iface, &IID_IDispatchJS, (void**)&ret);
-    if(FAILED(hres))
-        return NULL;
-
-    return ret;
+    return iface->lpVtbl == (const IDispatchVtbl*)&DispatchExVtbl
+        ? jsdisp_addref( impl_from_IDispatchEx((IDispatchEx*)iface))
+        : NULL;
 }
 
 HRESULT jsdisp_get_id(jsdisp_t *jsdisp, const WCHAR *name, DWORD flags, DISPID *id)
