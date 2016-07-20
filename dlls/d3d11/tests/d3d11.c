@@ -3060,6 +3060,7 @@ static void test_create_shader_resource_view(void)
     ULONG refcount, expected_refcount;
     ID3D11ShaderResourceView *srview;
     D3D_FEATURE_LEVEL feature_level;
+    D3D11_BUFFER_DESC buffer_desc;
     ID3D11Device *device, *tmp;
     ID3D11Texture3D *texture3d;
     ID3D11Texture2D *texture2d;
@@ -3254,6 +3255,40 @@ static void test_create_shader_resource_view(void)
 
     ID3D11ShaderResourceView_Release(srview);
     ID3D11Buffer_Release(buffer);
+
+    if (feature_level >= D3D_FEATURE_LEVEL_11_0)
+    {
+        buffer_desc.ByteWidth = 1024;
+        buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+        buffer_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+        buffer_desc.CPUAccessFlags = 0;
+        buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+        buffer_desc.StructureByteStride = 4;
+
+        hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
+        ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+
+        hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)buffer, NULL, &srview);
+        ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+        memset(&srv_desc, 0, sizeof(srv_desc));
+        ID3D11ShaderResourceView_GetDesc(srview, &srv_desc);
+
+        ok(srv_desc.Format == DXGI_FORMAT_UNKNOWN, "Got unexpected format %#x.\n", srv_desc.Format);
+        ok(srv_desc.ViewDimension == D3D11_SRV_DIMENSION_BUFFER, "Got unexpected view dimension %#x.\n",
+                srv_desc.ViewDimension);
+        ok(!U(srv_desc).Buffer.FirstElement, "Got unexpected first element %u.\n",
+                U(srv_desc).Buffer.FirstElement);
+        ok(U(srv_desc).Buffer.NumElements == 256, "Got unexpected num elements %u.\n",
+                U(srv_desc).Buffer.NumElements);
+
+        ID3D11ShaderResourceView_Release(srview);
+        ID3D11Buffer_Release(buffer);
+    }
+    else
+    {
+        skip("Structured buffers require feature level 11_0.\n");
+    }
 
     texture2d_desc.Width = 512;
     texture2d_desc.Height = 512;
