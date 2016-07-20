@@ -860,10 +860,11 @@ static void test_quickactivate(void)
 
 static void test_viewobject(void)
 {
+    DWORD status, aspect, flags;
     IViewObjectEx *viewex;
     IScriptControl *sc;
     IViewObject *view;
-    DWORD status;
+    IAdviseSink *sink;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -876,6 +877,33 @@ static void test_viewobject(void)
 
     hr = IScriptControl_QueryInterface(sc, &IID_IViewObject2, (void**)&view);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    sink = (IAdviseSink*)0xdeadbeef;
+    hr = IViewObject_GetAdvise(view, &aspect, &flags, &sink);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(aspect == DVASPECT_CONTENT, "got %u\n", aspect);
+    ok(flags == 0, "got %#x\n", flags);
+    ok(sink == NULL, "got %p\n", sink);
+
+    hr = IViewObject_SetAdvise(view, DVASPECT_CONTENT, 0, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IViewObject_SetAdvise(view, DVASPECT_THUMBNAIL, 0, NULL);
+    ok(hr == DV_E_DVASPECT, "got 0x%08x\n", hr);
+
+    hr = IViewObject_SetAdvise(view, DVASPECT_ICON, 0, NULL);
+    ok(hr == DV_E_DVASPECT, "got 0x%08x\n", hr);
+
+    hr = IViewObject_SetAdvise(view, DVASPECT_DOCPRINT, 0, NULL);
+    ok(hr == DV_E_DVASPECT, "got 0x%08x\n", hr);
+
+    sink = (IAdviseSink*)0xdeadbeef;
+    hr = IViewObject_GetAdvise(view, &aspect, &flags, &sink);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(aspect == DVASPECT_CONTENT, "got %u\n", aspect);
+    ok(flags == 0, "got %#x\n", flags);
+    ok(sink == NULL, "got %p\n", sink);
+
     IViewObject_Release(view);
 
     hr = IScriptControl_QueryInterface(sc, &IID_IViewObjectEx, (void**)&viewex);

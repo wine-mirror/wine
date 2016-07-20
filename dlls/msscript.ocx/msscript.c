@@ -83,6 +83,10 @@ struct ScriptControl {
     ConnectionPoint cp_scsource;
     ConnectionPoint cp_propnotif;
 
+    /* IViewObject sink */
+    IAdviseSink *view_sink;
+    DWORD view_sink_flags;
+
     ScriptHost *host;
 };
 
@@ -1327,22 +1331,42 @@ static HRESULT WINAPI ViewObject_Unfreeze(IViewObjectEx *iface, DWORD freeze)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ViewObject_SetAdvise(IViewObjectEx *iface, DWORD aspects, DWORD advf, IAdviseSink *sink)
+static HRESULT WINAPI ViewObject_SetAdvise(IViewObjectEx *iface, DWORD aspects, DWORD flags, IAdviseSink *sink)
 {
     ScriptControl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%d %d %p)\n", This, aspects, advf, sink);
+    TRACE("(%p)->(%d %#x %p)\n", This, aspects, flags, sink);
 
-    return E_NOTIMPL;
+    if (aspects != DVASPECT_CONTENT)
+        return DV_E_DVASPECT;
+
+    This->view_sink_flags = flags;
+    if (This->view_sink)
+        IAdviseSink_Release(This->view_sink);
+    This->view_sink = sink;
+    if (This->view_sink)
+        IAdviseSink_AddRef(This->view_sink);
+
+    return S_OK;
 }
 
-static HRESULT WINAPI ViewObject_GetAdvise(IViewObjectEx *iface, DWORD *aspects, DWORD *advf, IAdviseSink **sink)
+static HRESULT WINAPI ViewObject_GetAdvise(IViewObjectEx *iface, DWORD *aspects, DWORD *flags, IAdviseSink **sink)
 {
     ScriptControl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%p %p %p)\n", This, aspects, advf, sink);
+    TRACE("(%p)->(%p %p %p)\n", This, aspects, flags, sink);
 
-    return E_NOTIMPL;
+    if (aspects)
+        *aspects = DVASPECT_CONTENT;
+    if (flags)
+        *flags = This->view_sink_flags;
+    if (sink) {
+        *sink = This->view_sink;
+        if (*sink)
+            IAdviseSink_AddRef(*sink);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ViewObject_GetExtent(IViewObjectEx *iface, DWORD draw_aspect, LONG index,
@@ -1676,6 +1700,8 @@ static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknow
     script_control->cp_list = NULL;
     script_control->host = NULL;
     script_control->timeout = 10000;
+    script_control->view_sink_flags = 0;
+    script_control->view_sink = NULL;
 
     ConnectionPoint_Init(&script_control->cp_scsource, script_control, &DIID_DScriptControlSource);
     ConnectionPoint_Init(&script_control->cp_propnotif, script_control, &IID_IPropertyNotifySink);
