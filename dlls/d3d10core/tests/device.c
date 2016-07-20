@@ -1569,7 +1569,7 @@ static void test_create_texture3d(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-static void test_buffer_interfaces(void)
+static void test_create_buffer(void)
 {
     ID3D11Buffer *d3d11_buffer;
     D3D10_BUFFER_DESC desc;
@@ -1685,6 +1685,17 @@ static void test_buffer_interfaces(void)
 
         ID3D11Buffer_Release(d3d11_buffer);
     }
+
+    desc.ByteWidth = 1024;
+    desc.Usage = D3D10_USAGE_DEFAULT;
+    desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+    desc.CPUAccessFlags = 0;
+    desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
+
+    hr = ID3D10Device_CreateBuffer(device, &desc, NULL, &buffer);
+    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D10Buffer_Release(buffer);
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -8849,7 +8860,7 @@ START_TEST(device)
     test_create_texture2d();
     test_texture2d_interfaces();
     test_create_texture3d();
-    test_buffer_interfaces();
+    test_create_buffer();
     test_create_depthstencil_view();
     test_depthstencil_view_interfaces();
     test_create_rendertarget_view();
