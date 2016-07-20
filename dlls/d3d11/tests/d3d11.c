@@ -2181,7 +2181,7 @@ static void test_texture3d_interfaces(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-static void test_buffer_interfaces(void)
+static void test_create_buffer(void)
 {
     ID3D10Buffer *d3d10_buffer;
     D3D11_BUFFER_DESC desc;
@@ -2193,6 +2193,7 @@ static void test_buffer_interfaces(void)
 
     static const struct test
     {
+        BOOL succeeds;
         BOOL implements_d3d10_interfaces;
         UINT bind_flags;
         UINT misc_flags;
@@ -2200,65 +2201,171 @@ static void test_buffer_interfaces(void)
         UINT expected_bind_flags;
         UINT expected_misc_flags;
     }
-    desc_conversion_tests[] =
+    tests[] =
     {
         {
-            TRUE,
+            TRUE, TRUE,
             D3D11_BIND_VERTEX_BUFFER, 0, 0,
             D3D10_BIND_VERTEX_BUFFER, 0
         },
         {
-            TRUE,
+            TRUE, TRUE,
             D3D11_BIND_INDEX_BUFFER, 0, 0,
             D3D10_BIND_INDEX_BUFFER, 0
         },
         {
-            TRUE,
+            TRUE, TRUE,
             D3D11_BIND_CONSTANT_BUFFER, 0, 0,
             D3D10_BIND_CONSTANT_BUFFER, 0
         },
         {
-            TRUE,
+            TRUE, TRUE,
             D3D11_BIND_SHADER_RESOURCE, 0, 0,
             D3D10_BIND_SHADER_RESOURCE, 0
         },
         {
-            TRUE,
+            TRUE, TRUE,
             D3D11_BIND_STREAM_OUTPUT, 0, 0,
             D3D10_BIND_STREAM_OUTPUT, 0
         },
         {
-            TRUE,
+            TRUE, TRUE,
             D3D11_BIND_RENDER_TARGET, 0, 0,
             D3D10_BIND_RENDER_TARGET, 0
         },
         {
-            TRUE,
+            TRUE, TRUE,
             D3D11_BIND_UNORDERED_ACCESS, 0, 0,
             D3D11_BIND_UNORDERED_ACCESS, 0
         },
         {
-            TRUE,
+            TRUE, TRUE,
             0, D3D11_RESOURCE_MISC_SHARED, 0,
             0, D3D10_RESOURCE_MISC_SHARED
         },
         {
-            TRUE,
+            TRUE, TRUE,
             0, D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS, 0,
             0, 0
         },
         {
-            TRUE,
+            FALSE, FALSE,
+            D3D11_BIND_VERTEX_BUFFER, D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS, 0,
+        },
+        {
+            FALSE, FALSE,
+            D3D11_BIND_INDEX_BUFFER, D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS, 0,
+        },
+        {
+            FALSE, FALSE,
+            D3D11_BIND_CONSTANT_BUFFER, D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS, 0,
+        },
+        {
+            TRUE, TRUE,
             D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS, 0,
             D3D10_BIND_SHADER_RESOURCE, 0
         },
         {
-            FALSE /* Structured buffers do not implement ID3D10Buffer. */,
+            FALSE, FALSE,
+            D3D11_BIND_STREAM_OUTPUT, D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS, 0,
+        },
+        {
+            FALSE, FALSE,
+            D3D11_BIND_RENDER_TARGET, D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS, 0,
+        },
+        {
+            TRUE, TRUE,
+            D3D11_BIND_UNORDERED_ACCESS, D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS, 0,
+            D3D11_BIND_UNORDERED_ACCESS, 0
+        },
+        {
+            FALSE, FALSE,
+            0, D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS, 0,
+        },
+        /* Structured buffers do not implement ID3D10Buffer. */
+        {
+            TRUE, FALSE,
             0, D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, 16,
+        },
+        {
+            TRUE, FALSE,
+            D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, 16,
+        },
+        {
+            FALSE, FALSE,
+            D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, ~0u,
+        },
+        {
+            FALSE, FALSE,
+            D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, 0,
+        },
+        {
+            FALSE, FALSE,
+            D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, 1,
+        },
+        {
+            FALSE, FALSE,
+            D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, 2,
+        },
+        {
+            FALSE, FALSE,
+            D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, 3,
+        },
+        {
+            TRUE, FALSE,
+            D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, 4,
+        },
+        {
+            FALSE, FALSE,
+            D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, 5,
+        },
+        {
+            TRUE, FALSE,
+            D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, 8,
+        },
+        {
+            TRUE, FALSE,
+            D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, 512,
+        },
+        {
+            FALSE, FALSE,
+            D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, 513,
+        },
+        {
+            TRUE, FALSE,
+            D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, 1024,
+        },
+        {
+            TRUE, TRUE,
+            0, 0, 513,
             0, 0
         },
         {
-            TRUE,
+            TRUE, TRUE,
+            D3D11_BIND_CONSTANT_BUFFER, 0, 513,
+            D3D10_BIND_CONSTANT_BUFFER, 0
+        },
+        {
+            TRUE, TRUE,
+            D3D11_BIND_SHADER_RESOURCE, 0, 513,
+            D3D10_BIND_SHADER_RESOURCE, 0
+        },
+        {
+            TRUE, TRUE,
+            D3D11_BIND_UNORDERED_ACCESS, 0, 513,
+            D3D11_BIND_UNORDERED_ACCESS, 0
+        },
+        {
+            FALSE, FALSE,
+            0, D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS | D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, 16,
+        },
+        {
+            FALSE, FALSE,
+            D3D11_BIND_SHADER_RESOURCE,
+            D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS | D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, 16,
+        },
+        {
+            TRUE, TRUE,
             0, D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX, 0,
             0, D3D10_RESOURCE_MISC_SHARED_KEYEDMUTEX
         },
@@ -2284,11 +2391,13 @@ static void test_buffer_interfaces(void)
         return;
     }
 
-    for (i = 0; i < sizeof(desc_conversion_tests) / sizeof(*desc_conversion_tests); ++i)
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
-        const struct test *current = &desc_conversion_tests[i];
+        const struct test *current = &tests[i];
+        D3D11_BUFFER_DESC obtained_desc;
         D3D10_BUFFER_DESC d3d10_desc;
         ID3D10Device *d3d10_device;
+        HRESULT expected_hr;
 
         desc.ByteWidth = 1024;
         desc.Usage = D3D11_USAGE_DEFAULT;
@@ -2298,13 +2407,34 @@ static void test_buffer_interfaces(void)
         desc.StructureByteStride = current->structure_stride;
 
         hr = ID3D11Device_CreateBuffer(device, &desc, NULL, &buffer);
+        expected_hr = current->succeeds ? S_OK : E_INVALIDARG;
         /* Shared resources are not supported by REF and WARP devices. */
-        ok(SUCCEEDED(hr) || broken(hr == E_OUTOFMEMORY), "Test %u: Failed to create a buffer, hr %#x.\n", i, hr);
+        ok(hr == expected_hr || broken(hr == E_OUTOFMEMORY), "Test %u: Got hr %#x, expected %#x.\n",
+                i, hr, expected_hr);
         if (FAILED(hr))
         {
-            win_skip("Failed to create a buffer, skipping test %u.\n", i);
+            if (hr == E_OUTOFMEMORY)
+                win_skip("Failed to create a buffer, skipping test %u.\n", i);
             continue;
         }
+
+        if (!(desc.MiscFlags & D3D11_RESOURCE_MISC_BUFFER_STRUCTURED))
+            desc.StructureByteStride = 0;
+
+        ID3D11Buffer_GetDesc(buffer, &obtained_desc);
+
+        ok(obtained_desc.ByteWidth == desc.ByteWidth,
+                "Test %u: Got unexpected ByteWidth %u.\n", i, obtained_desc.ByteWidth);
+        ok(obtained_desc.Usage == desc.Usage,
+                "Test %u: Got unexpected Usage %u.\n", i, obtained_desc.Usage);
+        ok(obtained_desc.BindFlags == desc.BindFlags,
+                "Test %u: Got unexpected BindFlags %#x.\n", i, obtained_desc.BindFlags);
+        ok(obtained_desc.CPUAccessFlags == desc.CPUAccessFlags,
+                "Test %u: Got unexpected CPUAccessFlags %#x.\n", i, obtained_desc.CPUAccessFlags);
+        ok(obtained_desc.MiscFlags == desc.MiscFlags,
+                "Test %u: Got unexpected MiscFlags %#x.\n", i, obtained_desc.MiscFlags);
+        ok(obtained_desc.StructureByteStride == desc.StructureByteStride,
+                "Test %u: Got unexpected StructureByteStride %u.\n", i, obtained_desc.StructureByteStride);
 
         hr = ID3D11Buffer_QueryInterface(buffer, &IID_ID3D10Buffer, (void **)&d3d10_buffer);
         ID3D11Buffer_Release(buffer);
@@ -9575,7 +9705,7 @@ START_TEST(d3d11)
     test_texture2d_interfaces();
     test_create_texture3d();
     test_texture3d_interfaces();
-    test_buffer_interfaces();
+    test_create_buffer();
     test_create_depthstencil_view();
     test_depthstencil_view_interfaces();
     test_create_rendertarget_view();
