@@ -94,6 +94,7 @@ DEFINE_EXPECT(InitNew);
 DEFINE_EXPECT(Close);
 DEFINE_EXPECT(SetScriptSite);
 DEFINE_EXPECT(QI_IActiveScriptParse);
+DEFINE_EXPECT(SetScriptState_INITIALIZED);
 
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG ref, int line)
@@ -295,7 +296,13 @@ static HRESULT WINAPI ActiveScript_GetScriptSite(IActiveScript *iface, REFIID ri
 
 static HRESULT WINAPI ActiveScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE ss)
 {
-    ok(0, "unexpected call\n");
+    if (ss == SCRIPTSTATE_INITIALIZED) {
+        CHECK_EXPECT(SetScriptState_INITIALIZED);
+        return S_OK;
+    }
+    else
+        ok(0, "unexpected call, state %u\n", ss);
+
     return E_NOTIMPL;
 }
 
@@ -1010,6 +1017,75 @@ static void test_timeout(void)
     IScriptControl_Release(sc);
 }
 
+static void test_Reset(void)
+{
+    IScriptControl *sc;
+    HRESULT hr;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IScriptControl, (void**)&sc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_Reset(sc);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+
+    str = SysAllocString(vbW);
+    hr = IScriptControl_put_Language(sc, str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
+
+    hr = IScriptControl_Reset(sc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_get_Language(sc, &str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(str, vbW), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IScriptControl_Release(sc);
+
+    /* custom script engine */
+    if (register_script_engine()) {
+        static const WCHAR testscriptW[] = {'t','e','s','t','s','c','r','i','p','t',0};
+
+        hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+                &IID_IScriptControl, (void**)&sc);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        SET_EXPECT(CreateInstance);
+        SET_EXPECT(SetInterfaceSafetyOptions);
+        SET_EXPECT(SetScriptSite);
+        SET_EXPECT(QI_IActiveScriptParse);
+        SET_EXPECT(InitNew);
+
+        str = SysAllocString(testscriptW);
+        hr = IScriptControl_put_Language(sc, str);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        SysFreeString(str);
+
+        SET_EXPECT(SetScriptState_INITIALIZED);
+        hr = IScriptControl_Reset(sc);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        CHECK_CALLED(SetScriptState_INITIALIZED);
+
+        SET_EXPECT(SetScriptState_INITIALIZED);
+        hr = IScriptControl_Reset(sc);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        CHECK_CALLED(SetScriptState_INITIALIZED);
+
+        init_registry(FALSE);
+
+        SET_EXPECT(Close);
+
+        IScriptControl_Release(sc);
+
+        CHECK_CALLED(Close);
+    }
+    else
+        skip("Could not register TestScript engine\n");
+}
+
 START_TEST(msscript)
 {
     IUnknown *unk;
@@ -1034,6 +1110,7 @@ START_TEST(msscript)
     test_viewobject();
     test_pointerinactive();
     test_timeout();
+    test_Reset();
 
     CoUninitialize();
 }

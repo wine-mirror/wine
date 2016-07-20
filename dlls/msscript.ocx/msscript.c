@@ -847,8 +847,13 @@ static HRESULT WINAPI ScriptControl_AddObject(IScriptControl *iface, BSTR name, 
 static HRESULT WINAPI ScriptControl_Reset(IScriptControl *iface)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    if (!This->host)
+        return E_FAIL;
+
+    return IActiveScript_SetScriptState(This->host->script, SCRIPTSTATE_INITIALIZED);
 }
 
 static HRESULT WINAPI ScriptControl_AddCode(IScriptControl *iface, BSTR code)
