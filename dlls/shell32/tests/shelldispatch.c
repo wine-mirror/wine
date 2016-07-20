@@ -338,6 +338,7 @@ static void test_items(void)
     r = IShellDispatch_NameSpace(sd, var, &folder);
     ok(r == S_OK, "IShellDispatch::NameSpace failed: %08x\n", r);
     ok(!!folder, "folder is null\n");
+    SysFreeString(V_BSTR(&var));
     IShellDispatch_Release(sd);
     SetCurrentDirectoryW(winetestW);
 
