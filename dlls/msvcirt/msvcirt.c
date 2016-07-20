@@ -3407,13 +3407,73 @@ streampos __thiscall istream_tellg(istream *this)
     return pos;
 }
 
+static int getint_is_valid_digit(char ch, int base)
+{
+    if (base == 8) return (ch >= '0' && ch <= '7');
+    if (base == 16) return isxdigit(ch);
+    return isdigit(ch);
+}
+
 /* ?getint@istream@@AAEHPAD@Z */
 /* ?getint@istream@@AEAAHPEAD@Z */
 DEFINE_THISCALL_WRAPPER(istream_getint, 8)
 int __thiscall istream_getint(istream *this, char *str)
 {
-    FIXME("(%p %p) stub\n", this, str);
-    return 0;
+    ios *base = istream_get_ios(this);
+    int ch, num_base = 0, i = 0;
+    BOOL scan_sign = TRUE, scan_prefix = TRUE, scan_x = FALSE, valid_integer = FALSE;
+
+    TRACE("(%p %p)\n", this, str);
+
+    if (istream_ipfx(this, 0)) {
+        num_base = (base->flags & FLAGS_dec) ? 10 :
+            (base->flags & FLAGS_hex) ? 16 :
+            (base->flags & FLAGS_oct) ? 8 : 0; /* 0 = autodetect */
+        /* scan valid characters, up to 15 (hard limit on Windows) */
+        for (ch = streambuf_sgetc(base->sb); i < 15; ch = streambuf_snextc(base->sb)) {
+            if ((ch == '+' || ch == '-') && scan_sign) {
+                /* no additional sign allowed */
+                scan_sign = FALSE;
+            } else if ((ch == 'x' || ch == 'X') && scan_x) {
+                /* only hex digits can (and must) follow */
+                scan_x = valid_integer = FALSE;
+                num_base = 16;
+            } else if (ch == '0' && scan_prefix) {
+                /* might be the octal prefix, the beginning of the hex prefix or a decimal zero */
+                scan_sign = scan_prefix = FALSE;
+                scan_x = !num_base || num_base == 16;
+                valid_integer = TRUE;
+                if (!num_base)
+                    num_base = 8;
+            } else if (getint_is_valid_digit(ch, num_base)) {
+                /* only digits in the corresponding base can follow */
+                scan_sign = scan_prefix = scan_x = FALSE;
+                valid_integer = TRUE;
+            } else {
+                /* unexpected character, stop scanning */
+                if (!valid_integer) {
+                    /* the result is not a valid integer */
+                    base->state |= IOSTATE_failbit;
+                    /* put any extracted character back into the stream */
+                    while (i > 0)
+                        if (streambuf_sputbackc(base->sb, str[--i]) == EOF)
+                            base->state |= IOSTATE_badbit; /* characters have been lost for good */
+                } else if (ch == EOF) {
+                    base->state |= IOSTATE_eofbit;
+                    if (scan_x && !(base->flags & ios_basefield)) {
+                        /* when autodetecting, a single zero followed by EOF is regarded as decimal */
+                        num_base = 0;
+                    }
+                }
+                break;
+            }
+            str[i++] = ch;
+        }
+        /* append a null terminator */
+        str[i] = 0;
+        istream_isfx(this);
+    }
+    return num_base;
 }
 
 /* ?getdouble@istream@@AAEHPADH@Z */
