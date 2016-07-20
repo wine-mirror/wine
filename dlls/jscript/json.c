@@ -421,7 +421,7 @@ static HRESULT maybe_to_primitive(script_ctx_t *ctx, jsval_t val, jsval_t *r)
     jsdisp_t *obj;
     HRESULT hres;
 
-    if(!is_object_instance(val) || !get_object(val) || !(obj = iface_to_jsdisp((IUnknown*)get_object(val))))
+    if(!is_object_instance(val) || !get_object(val) || !(obj = iface_to_jsdisp(get_object(val))))
         return jsval_copy(val, r);
 
     if(is_class(obj, JSCLASS_NUMBER)) {
@@ -672,7 +672,7 @@ static HRESULT stringify(stringify_ctx_t *ctx, jsval_t val)
         jsdisp_t *obj;
         DISPID id;
 
-        obj = iface_to_jsdisp((IUnknown*)get_object(val));
+        obj = iface_to_jsdisp(get_object(val));
         if(!obj)
             return S_FALSE;
 
@@ -730,7 +730,7 @@ static HRESULT stringify(stringify_ctx_t *ctx, jsval_t val)
     case JSV_OBJECT: {
         jsdisp_t *obj;
 
-        obj = iface_to_jsdisp((IUnknown*)get_object(value));
+        obj = iface_to_jsdisp(get_object(value));
         if(!obj) {
             hres = S_FALSE;
             break;

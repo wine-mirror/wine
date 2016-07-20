@@ -441,7 +441,7 @@ static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
         jsdisp_t *arg_array = NULL;
 
         if(is_object_instance(argv[1])) {
-            arg_array = iface_to_jsdisp((IUnknown*)get_object(argv[1]));
+            arg_array = iface_to_jsdisp(get_object(argv[1]));
             if(arg_array &&
                (!is_class(arg_array, JSCLASS_ARRAY) && !is_class(arg_array, JSCLASS_ARGUMENTS) )) {
                 jsdisp_release(arg_array);

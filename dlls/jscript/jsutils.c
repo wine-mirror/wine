@@ -392,7 +392,7 @@ HRESULT to_primitive(script_ctx_t *ctx, jsval_t val, jsval_t *ret, hint_t hint)
             return S_OK;
         }
 
-        jsdisp = iface_to_jsdisp((IUnknown*)get_object(val));
+        jsdisp = iface_to_jsdisp(get_object(val));
         if(!jsdisp)
             return disp_propget(ctx, get_object(val), DISPID_VALUE, ret);
 

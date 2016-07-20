@@ -314,7 +314,7 @@ static HRESULT disp_get_id(script_ctx_t *ctx, IDispatch *disp, const WCHAR *name
     BSTR bstr;
     HRESULT hres;
 
-    jsdisp = iface_to_jsdisp((IUnknown*)disp);
+    jsdisp = iface_to_jsdisp(disp);
     if(jsdisp) {
         hres = jsdisp_get_id(jsdisp, name, flags, id);
         jsdisp_release(jsdisp);
@@ -1321,7 +1321,7 @@ static HRESULT interp_instanceof(script_ctx_t *ctx)
         return throw_type_error(ctx, JS_E_FUNCTION_EXPECTED, NULL);
     }
 
-    obj = iface_to_jsdisp((IUnknown*)get_object(v));
+    obj = iface_to_jsdisp(get_object(v));
     IDispatch_Release(get_object(v));
     if(!obj) {
         FIXME("non-jsdisp objects not supported\n");
@@ -1341,7 +1341,7 @@ static HRESULT interp_instanceof(script_ctx_t *ctx)
 
     if(is_object_instance(prot)) {
         if(is_object_instance(v))
-            tmp = iface_to_jsdisp((IUnknown*)get_object(v));
+            tmp = iface_to_jsdisp(get_object(v));
         for(iter = tmp; !ret && iter; iter = iter->prototype) {
             hres = disp_cmp(get_object(prot), to_disp(iter), &ret);
             if(FAILED(hres))
@@ -1643,7 +1643,7 @@ static HRESULT typeof_string(jsval_t v, const WCHAR **ret)
     case JSV_OBJECT: {
         jsdisp_t *dispex;
 
-        if(get_object(v) && (dispex = iface_to_jsdisp((IUnknown*)get_object(v)))) {
+        if(get_object(v) && (dispex = iface_to_jsdisp(get_object(v)))) {
             *ret = is_class(dispex, JSCLASS_FUNCTION) ? functionW : objectW;
             jsdisp_release(dispex);
         }else {
@@ -2587,7 +2587,7 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
     if(this_obj) {
         jsdisp_t *jsthis;
 
-        jsthis = iface_to_jsdisp((IUnknown*)this_obj);
+        jsthis = iface_to_jsdisp(this_obj);
         if(jsthis) {
             if(jsthis->builtin_info->class == JSCLASS_GLOBAL || jsthis->builtin_info->class == JSCLASS_NONE)
                 this_obj = NULL;
