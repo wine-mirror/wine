@@ -860,7 +860,7 @@ case $host_os in
 
     AC_SUBST(LIBWINE_SHAREDLIB,"libwine.so")
     AC_SUBST(LIBWINE_INSTALL_LIB,"libwine.so")
-    AC_SUBST(LIBWINE_LDFLAGS,"-shared")
+    AC_SUBST(LIBWINE_LDFLAGS,["-shared -Wl,-soname,libwine.so"])
     ;;
 
   *)

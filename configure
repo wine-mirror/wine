@@ -8380,7 +8380,7 @@ fi
 
     LIBWINE_INSTALL_LIB="libwine.so"
 
-    LIBWINE_LDFLAGS="-shared"
+    LIBWINE_LDFLAGS="-shared -Wl,-soname,libwine.so"
 
     ;;
 
