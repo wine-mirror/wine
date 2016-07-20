@@ -57,6 +57,7 @@ struct ConnectionPoint {
 
 typedef struct ScriptHost {
     IActiveScriptSite IActiveScriptSite_iface;
+    IActiveScriptSiteWindow IActiveScriptSiteWindow_iface;
     IServiceProvider IServiceProvider_iface;
     LONG ref;
 
@@ -222,6 +223,11 @@ static inline ScriptHost *impl_from_IActiveScriptSite(IActiveScriptSite *iface)
     return CONTAINING_RECORD(iface, ScriptHost, IActiveScriptSite_iface);
 }
 
+static inline ScriptHost *impl_from_IActiveScriptSiteWindow(IActiveScriptSiteWindow *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptHost, IActiveScriptSiteWindow_iface);
+}
+
 static inline ScriptHost *impl_from_IServiceProvider(IServiceProvider *iface)
 {
     return CONTAINING_RECORD(iface, ScriptHost, IServiceProvider_iface);
@@ -238,6 +244,9 @@ static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, 
     }else if(IsEqualGUID(&IID_IActiveScriptSite, riid)) {
         TRACE("(%p)->(IID_IActiveScriptSite %p)\n", This, ppv);
         *ppv = &This->IActiveScriptSite_iface;
+    }else if(IsEqualGUID(&IID_IActiveScriptSiteWindow, riid)) {
+        TRACE("(%p)->(IID_IActiveScriptSiteWindow %p)\n", This, ppv);
+        *ppv = &This->IActiveScriptSiteWindow_iface;
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
         *ppv = &This->IServiceProvider_iface;
@@ -379,6 +388,51 @@ static const IActiveScriptSiteVtbl ActiveScriptSiteVtbl = {
     ActiveScriptSite_OnLeaveScript
 };
 
+/* IActiveScriptSiteWindow */
+static HRESULT WINAPI ActiveScriptSiteWindow_QueryInterface(IActiveScriptSiteWindow *iface, REFIID riid, void **obj)
+{
+    ScriptHost *This = impl_from_IActiveScriptSiteWindow(iface);
+    return IActiveScriptSite_QueryInterface(&This->IActiveScriptSite_iface, riid, obj);
+}
+
+static ULONG WINAPI ActiveScriptSiteWindow_AddRef(IActiveScriptSiteWindow *iface)
+{
+    ScriptHost *This = impl_from_IActiveScriptSiteWindow(iface);
+    return IActiveScriptSite_AddRef(&This->IActiveScriptSite_iface);
+}
+
+static ULONG WINAPI ActiveScriptSiteWindow_Release(IActiveScriptSiteWindow *iface)
+{
+    ScriptHost *This = impl_from_IActiveScriptSiteWindow(iface);
+    return IActiveScriptSite_Release(&This->IActiveScriptSite_iface);
+}
+
+static HRESULT WINAPI ActiveScriptSiteWindow_GetWindow(IActiveScriptSiteWindow *iface, HWND *hwnd)
+{
+    ScriptHost *This = impl_from_IActiveScriptSiteWindow(iface);
+
+    FIXME("(%p, %p)\n", This, hwnd);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ActiveScriptSiteWindow_EnableModeless(IActiveScriptSiteWindow *iface, BOOL enable)
+{
+    ScriptHost *This = impl_from_IActiveScriptSiteWindow(iface);
+
+    FIXME("(%p, %d)\n", This, enable);
+
+    return E_NOTIMPL;
+}
+
+static const IActiveScriptSiteWindowVtbl ActiveScriptSiteWindowVtbl = {
+    ActiveScriptSiteWindow_QueryInterface,
+    ActiveScriptSiteWindow_AddRef,
+    ActiveScriptSiteWindow_Release,
+    ActiveScriptSiteWindow_GetWindow,
+    ActiveScriptSiteWindow_EnableModeless
+};
+
 /* IServiceProvider */
 static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid, void **obj)
 {
@@ -428,6 +482,7 @@ static HRESULT init_script_host(const CLSID *clsid, ScriptHost **ret)
         return E_OUTOFMEMORY;
 
     host->IActiveScriptSite_iface.lpVtbl = &ActiveScriptSiteVtbl;
+    host->IActiveScriptSiteWindow_iface.lpVtbl = &ActiveScriptSiteWindowVtbl;
     host->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
     host->ref = 1;
     host->script = NULL;

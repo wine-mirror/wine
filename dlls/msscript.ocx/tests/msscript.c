@@ -247,6 +247,7 @@ static ULONG WINAPI ActiveScript_Release(IActiveScript *iface)
 static HRESULT WINAPI ActiveScript_SetScriptSite(IActiveScript *iface, IActiveScriptSite *pass)
 {
     IActiveScriptSiteInterruptPoll *poll;
+    IActiveScriptSiteWindow *window;
     IActiveScriptSiteDebug *debug;
     IServiceProvider *service;
     ICanHandleException *canexpection;
@@ -258,7 +259,7 @@ static HRESULT WINAPI ActiveScript_SetScriptSite(IActiveScript *iface, IActiveSc
     ok(pass != NULL, "pass == NULL\n");
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_IActiveScriptSiteInterruptPoll, (void**)&poll);
-    ok(hres == E_NOINTERFACE, "Could not get IActiveScriptSiteInterruptPoll interface: %08x\n", hres);
+    ok(hres == E_NOINTERFACE, "Got IActiveScriptSiteInterruptPoll interface: %08x\n", hres);
 
     hres = IActiveScriptSite_GetLCID(pass, &lcid);
     ok(hres == S_OK, "GetLCID failed: %08x\n", hres);
@@ -267,14 +268,18 @@ static HRESULT WINAPI ActiveScript_SetScriptSite(IActiveScript *iface, IActiveSc
     ok(hres == E_NOTIMPL, "OnStateChange failed: %08x\n", hres);
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_IActiveScriptSiteDebug, (void**)&debug);
-    ok(hres == E_NOINTERFACE, "Could not get IActiveScriptSiteDebug interface: %08x\n", hres);
+    ok(hres == E_NOINTERFACE, "Got IActiveScriptSiteDebug interface: %08x\n", hres);
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_ICanHandleException, (void**)&canexpection);
-    ok(hres == E_NOINTERFACE, "Could not get IID_ICanHandleException interface: %08x\n", hres);
+    ok(hres == E_NOINTERFACE, "Got IID_ICanHandleException interface: %08x\n", hres);
 
     hres = IActiveScriptSite_QueryInterface(pass, &IID_IServiceProvider, (void**)&service);
     ok(hres == S_OK, "Could not get IServiceProvider interface: %08x\n", hres);
     IServiceProvider_Release(service);
+
+    hres = IActiveScriptSite_QueryInterface(pass, &IID_IActiveScriptSiteWindow, (void**)&window);
+    ok(hres == S_OK, "Could not get IActiveScriptSiteWindow interface: %08x\n", hres);
+    IActiveScriptSiteWindow_Release(window);
 
     site = pass;
     IActiveScriptSite_AddRef(site);
