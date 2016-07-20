@@ -3378,8 +3378,16 @@ istream* __thiscall istream_seekg_offset(istream *this, streamoff off, ios_seek_
 DEFINE_THISCALL_WRAPPER(istream_sync, 4)
 int __thiscall istream_sync(istream *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    ios *base = istream_get_ios(this);
+    int ret;
+
+    TRACE("(%p)\n", this);
+
+    ios_lockbuf(base);
+    if ((ret = call_streambuf_sync(base->sb)) == EOF)
+        ios_clear(base, base->state | IOSTATE_badbit | IOSTATE_failbit);
+    ios_unlockbuf(base);
+    return ret;
 }
 
 /* ?tellg@istream@@QAEJXZ */
