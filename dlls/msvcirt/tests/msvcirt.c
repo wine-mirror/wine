@@ -324,6 +324,7 @@ static istream* (*__thiscall p_istream_read)(istream*, char*, int);
 static istream* (*__thiscall p_istream_seekg)(istream*, streampos);
 static istream* (*__thiscall p_istream_seekg_offset)(istream*, streamoff, ios_seek_dir);
 static int (*__thiscall p_istream_sync)(istream*);
+static streampos (*__thiscall p_istream_tellg)(istream*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -536,6 +537,7 @@ static BOOL init(void)
         SET(p_istream_seekg, "?seekg@istream@@QEAAAEAV1@J@Z");
         SET(p_istream_seekg_offset, "?seekg@istream@@QEAAAEAV1@JW4seek_dir@ios@@@Z");
         SET(p_istream_sync, "?sync@istream@@QEAAHXZ");
+        SET(p_istream_tellg, "?tellg@istream@@QEAAJXZ");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -670,6 +672,7 @@ static BOOL init(void)
         SET(p_istream_seekg, "?seekg@istream@@QAEAAV1@J@Z");
         SET(p_istream_seekg_offset, "?seekg@istream@@QAEAAV1@JW4seek_dir@ios@@@Z");
         SET(p_istream_sync, "?sync@istream@@QAEHXZ");
+        SET(p_istream_tellg, "?tellg@istream@@QAEJXZ");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -4587,6 +4590,29 @@ if (0) /* crashes on native */
     ok(is1.base_ios.state == (IOSTATE_badbit|IOSTATE_failbit|IOSTATE_eofbit), "expected %d got %d\n",
         IOSTATE_badbit|IOSTATE_failbit|IOSTATE_eofbit, is1.base_ios.state);
     fb1.fd = fd;
+
+    /* tellg */
+    ret = (int) call_func1(p_istream_tellg, &is1);
+    ok(ret == 24, "expected 24 got %d\n", ret);
+    ok(is1.base_ios.state == (IOSTATE_badbit|IOSTATE_failbit|IOSTATE_eofbit), "expected %d got %d\n",
+        IOSTATE_badbit|IOSTATE_failbit|IOSTATE_eofbit, is1.base_ios.state);
+    is1.base_ios.state = IOSTATE_goodbit;
+    ret = (int) call_func1(p_istream_tellg, &is1);
+    ok(ret == 24, "expected 24 got %d\n", ret);
+    ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
+if (0) /* crashes on native */
+    is1.base_ios.sb = NULL;
+    fb1.base.eback = fb1.base.gptr = fb1.base.base;
+    fb1.base.egptr = fb1.base.base + 30;
+    ret = (int) call_func1(p_istream_tellg, &is1);
+    ok(ret == EOF, "expected -1 got %d\n", ret);
+    ok(is1.base_ios.state == IOSTATE_failbit, "expected %d got %d\n", IOSTATE_failbit, is1.base_ios.state);
+    is1.base_ios.state = IOSTATE_eofbit;
+    ret = (int) call_func1(p_istream_tellg, &is1);
+    ok(ret == EOF, "expected -1 got %d\n", ret);
+    ok(is1.base_ios.state == (IOSTATE_eofbit|IOSTATE_failbit), "expected %d got %d\n",
+        IOSTATE_eofbit|IOSTATE_failbit, is1.base_ios.state);
+    fb1.base.eback = fb1.base.gptr = fb1.base.egptr = NULL;
 
     call_func1(p_istream_vbase_dtor, &is1);
     call_func1(p_istream_vbase_dtor, &is2);

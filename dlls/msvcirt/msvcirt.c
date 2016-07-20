@@ -3395,8 +3395,16 @@ int __thiscall istream_sync(istream *this)
 DEFINE_THISCALL_WRAPPER(istream_tellg, 4)
 streampos __thiscall istream_tellg(istream *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    ios *base = istream_get_ios(this);
+    streampos pos;
+
+    TRACE("(%p)\n", this);
+
+    ios_lockbuf(base);
+    if ((pos = call_streambuf_seekoff(base->sb, 0, SEEKDIR_cur, OPENMODE_in)) == EOF)
+        ios_clear(base, base->state | IOSTATE_failbit);
+    ios_unlockbuf(base);
+    return pos;
 }
 
 /* ?getint@istream@@AAEHPAD@Z */
