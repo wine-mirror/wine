@@ -1731,7 +1731,7 @@ static const WCHAR ref_monikerW[] = {'R','E','F','_','M','O','N','I','K','E','R'
 static HRESULT WINAPI hls_test_Moniker_BindToStorage(IMoniker *iface,
         IBindCtx *pbc, IMoniker *toLeft, REFIID riid, void **obj)
 {
-    ok(0, "BTS: %p %p %p %p %p\n", iface, pbc, toLeft, riid, obj);
+    ok(0, "BTS: %p %p %p %s %p\n", iface, pbc, toLeft, wine_dbgstr_guid(riid), obj);
     return E_NOTIMPL;
 }
 
