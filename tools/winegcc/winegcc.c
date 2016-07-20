@@ -1130,7 +1130,8 @@ static void build(struct options* opts)
         }
         break;
     case PLATFORM_ANDROID:
-        /* not supported on Android */
+        /* the Android loader requires a soname for all libraries */
+        strarray_add( link_args, strmake( "-Wl,-soname,%s.so", output_name ));
         break;
     default:
         if (opts->image_base)
