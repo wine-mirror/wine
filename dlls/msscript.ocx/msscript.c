@@ -57,6 +57,7 @@ struct ConnectionPoint {
 
 typedef struct ScriptHost {
     IActiveScriptSite IActiveScriptSite_iface;
+    IServiceProvider IServiceProvider_iface;
     LONG ref;
 
     IActiveScript *script;
@@ -221,6 +222,11 @@ static inline ScriptHost *impl_from_IActiveScriptSite(IActiveScriptSite *iface)
     return CONTAINING_RECORD(iface, ScriptHost, IActiveScriptSite_iface);
 }
 
+static inline ScriptHost *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptHost, IServiceProvider_iface);
+}
+
 /* IActiveScriptSite */
 static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, REFIID riid, void **ppv)
 {
@@ -232,6 +238,9 @@ static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface, 
     }else if(IsEqualGUID(&IID_IActiveScriptSite, riid)) {
         TRACE("(%p)->(IID_IActiveScriptSite %p)\n", This, ppv);
         *ppv = &This->IActiveScriptSite_iface;
+    }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
+        TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
+        *ppv = &This->IServiceProvider_iface;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -370,6 +379,42 @@ static const IActiveScriptSiteVtbl ActiveScriptSiteVtbl = {
     ActiveScriptSite_OnLeaveScript
 };
 
+/* IServiceProvider */
+static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid, void **obj)
+{
+    ScriptHost *This = impl_from_IServiceProvider(iface);
+    return IActiveScriptSite_QueryInterface(&This->IActiveScriptSite_iface, riid, obj);
+}
+
+static ULONG WINAPI ServiceProvider_AddRef(IServiceProvider *iface)
+{
+    ScriptHost *This = impl_from_IServiceProvider(iface);
+    return IActiveScriptSite_AddRef(&This->IActiveScriptSite_iface);
+}
+
+static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
+{
+    ScriptHost *This = impl_from_IServiceProvider(iface);
+    return IActiveScriptSite_Release(&This->IActiveScriptSite_iface);
+}
+
+static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFGUID service,
+    REFIID riid, void **obj)
+{
+    ScriptHost *This = impl_from_IServiceProvider(iface);
+
+    FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    return E_NOTIMPL;
+}
+
+static const IServiceProviderVtbl ServiceProviderVtbl = {
+    ServiceProvider_QueryInterface,
+    ServiceProvider_AddRef,
+    ServiceProvider_Release,
+    ServiceProvider_QueryService
+};
+
 static HRESULT init_script_host(const CLSID *clsid, ScriptHost **ret)
 {
     IObjectSafety *objsafety;
@@ -383,6 +428,7 @@ static HRESULT init_script_host(const CLSID *clsid, ScriptHost **ret)
         return E_OUTOFMEMORY;
 
     host->IActiveScriptSite_iface.lpVtbl = &ActiveScriptSiteVtbl;
+    host->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
     host->ref = 1;
     host->script = NULL;
     host->parse = NULL;
