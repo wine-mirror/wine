@@ -710,6 +710,33 @@ static HRESULT set_uav_desc_from_resource(D3D11_UNORDERED_ACCESS_VIEW_DESC *desc
 
     switch (dimension)
     {
+        case D3D11_RESOURCE_DIMENSION_BUFFER:
+        {
+            D3D11_BUFFER_DESC buffer_desc;
+            ID3D11Buffer *buffer;
+
+            if (FAILED(ID3D11Resource_QueryInterface(resource, &IID_ID3D11Buffer, (void **)&buffer)))
+            {
+                ERR("Resource of type BUFFER doesn't implement ID3D11Buffer.\n");
+                return E_INVALIDARG;
+            }
+
+            ID3D11Buffer_GetDesc(buffer, &buffer_desc);
+            ID3D11Buffer_Release(buffer);
+
+            if (buffer_desc.MiscFlags & D3D11_RESOURCE_MISC_BUFFER_STRUCTURED)
+            {
+                desc->Format = DXGI_FORMAT_UNKNOWN;
+                desc->ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+                desc->u.Buffer.FirstElement = 0;
+                desc->u.Buffer.NumElements = buffer_desc.ByteWidth / buffer_desc.StructureByteStride;
+                desc->u.Buffer.Flags = 0;
+                return S_OK;
+            }
+
+            return E_INVALIDARG;
+        }
+
         case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
         {
             D3D11_TEXTURE2D_DESC texture_desc;
