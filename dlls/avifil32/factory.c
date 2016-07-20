@@ -56,7 +56,7 @@ static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
 static HRESULT WINAPI IClassFactory_fnQueryInterface(IClassFactory *iface, REFIID riid,
         void **ppobj)
 {
-  TRACE("(%p,%p,%p)\n", iface, riid, ppobj);
+  TRACE("(%p,%s,%p)\n", iface, debugstr_guid(riid), ppobj);
 
   if ((IsEqualGUID(&IID_IUnknown, riid)) ||
       (IsEqualGUID(&IID_IClassFactory, riid))) {
