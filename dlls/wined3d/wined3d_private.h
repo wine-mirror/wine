@@ -1393,8 +1393,6 @@ struct wined3d_query
     enum wined3d_query_type type;
     DWORD data_size;
     const struct wined3d_query_ops *query_ops;
-
-    void *extendedData;
 };
 
 union wined3d_gl_query_object
@@ -1438,6 +1436,8 @@ struct wined3d_occlusion_query
 
 struct wined3d_timestamp_query
 {
+    struct wined3d_query query;
+
     struct list entry;
     GLuint id;
     struct wined3d_context *context;
