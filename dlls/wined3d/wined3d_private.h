@@ -1367,6 +1367,36 @@ enum fogsource {
     FOGSOURCE_COORD,
 };
 
+/* Direct3D terminology with little modifications. We do not have an issued
+ * state because only the driver knows about it, but we have a created state
+ * because D3D allows GetData() on a created query, but OpenGL doesn't. */
+enum wined3d_query_state
+{
+    QUERY_CREATED,
+    QUERY_SIGNALLED,
+    QUERY_BUILDING
+};
+
+struct wined3d_query_ops
+{
+    HRESULT (*query_get_data)(struct wined3d_query *query, void *data, DWORD data_size, DWORD flags);
+    HRESULT (*query_issue)(struct wined3d_query *query, DWORD flags);
+};
+
+struct wined3d_query
+{
+    LONG ref;
+
+    void *parent;
+    struct wined3d_device *device;
+    enum wined3d_query_state state;
+    enum wined3d_query_type type;
+    DWORD data_size;
+    const struct wined3d_query_ops *query_ops;
+
+    void *extendedData;
+};
+
 struct wined3d_occlusion_query
 {
     struct list entry;
@@ -1382,6 +1412,8 @@ union wined3d_gl_query_object
 
 struct wined3d_event_query
 {
+    struct wined3d_query query;
+
     struct list entry;
     union wined3d_gl_query_object object;
     struct wined3d_context *context;
@@ -3050,35 +3082,6 @@ static inline void wined3d_cs_push_constants(struct wined3d_cs *cs, enum wined3d
 {
     cs->ops->push_constants(cs, p, start_idx, count, constants);
 }
-
-/* Direct3D terminology with little modifications. We do not have an issued state
- * because only the driver knows about it, but we have a created state because d3d
- * allows GetData on a created issue, but opengl doesn't
- */
-enum query_state {
-    QUERY_CREATED,
-    QUERY_SIGNALLED,
-    QUERY_BUILDING
-};
-
-struct wined3d_query_ops
-{
-    HRESULT (*query_get_data)(struct wined3d_query *query, void *data, DWORD data_size, DWORD flags);
-    HRESULT (*query_issue)(struct wined3d_query *query, DWORD flags);
-};
-
-struct wined3d_query
-{
-    LONG ref;
-
-    void *parent;
-    const struct wined3d_query_ops *query_ops;
-    struct wined3d_device *device;
-    enum query_state         state;
-    enum wined3d_query_type type;
-    DWORD data_size;
-    void                     *extendedData;
-};
 
 /* TODO: Add tests and support for FLOAT16_4 POSITIONT, D3DCOLOR position, other
  * fixed function semantics as D3DCOLOR or FLOAT16 */
