@@ -1397,13 +1397,6 @@ struct wined3d_query
     void *extendedData;
 };
 
-struct wined3d_occlusion_query
-{
-    struct list entry;
-    GLuint id;
-    struct wined3d_context *context;
-};
-
 union wined3d_gl_query_object
 {
     GLuint id;
@@ -1433,6 +1426,15 @@ enum wined3d_event_query_result wined3d_event_query_finish(const struct wined3d_
         const struct wined3d_device *device) DECLSPEC_HIDDEN;
 void wined3d_event_query_issue(struct wined3d_event_query *query, const struct wined3d_device *device) DECLSPEC_HIDDEN;
 BOOL wined3d_event_query_supported(const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
+
+struct wined3d_occlusion_query
+{
+    struct wined3d_query query;
+
+    struct list entry;
+    GLuint id;
+    struct wined3d_context *context;
+};
 
 struct wined3d_timestamp_query
 {
