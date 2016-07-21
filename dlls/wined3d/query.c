@@ -337,14 +337,6 @@ static HRESULT wined3d_occlusion_query_ops_get_data(struct wined3d_query *query,
         return S_FALSE;
     }
 
-    if (!gl_info->supported[ARB_OCCLUSION_QUERY])
-    {
-        WARN("%p Occlusion queries not supported. Returning 1.\n", query);
-        samples = 1;
-        fill_query_data(data, size, &samples, sizeof(samples));
-        return S_OK;
-    }
-
     if (oq->context->tid != GetCurrentThreadId())
     {
         FIXME("%p Wrong thread, returning 1.\n", query);
@@ -461,76 +453,69 @@ static HRESULT wined3d_event_query_ops_issue(struct wined3d_query *query, DWORD 
 
 static HRESULT wined3d_occlusion_query_ops_issue(struct wined3d_query *query, DWORD flags)
 {
+    struct wined3d_occlusion_query *oq = query->extendedData;
     struct wined3d_device *device = query->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    struct wined3d_context *context;
 
     TRACE("query %p, flags %#x.\n", query, flags);
 
-    if (gl_info->supported[ARB_OCCLUSION_QUERY])
+    /* This is allowed according to MSDN and our tests. Reset the query and
+     * restart. */
+    if (flags & WINED3DISSUE_BEGIN)
     {
-        struct wined3d_occlusion_query *oq = query->extendedData;
-        struct wined3d_context *context;
-
-        /* This is allowed according to msdn and our tests. Reset the query and restart */
-        if (flags & WINED3DISSUE_BEGIN)
+        if (query->state == QUERY_BUILDING)
         {
-            if (query->state == QUERY_BUILDING)
+            if (oq->context->tid != GetCurrentThreadId())
             {
-                if (oq->context->tid != GetCurrentThreadId())
-                {
-                    FIXME("Wrong thread, can't restart query.\n");
+                FIXME("Wrong thread, can't restart query.\n");
 
-                    context_free_occlusion_query(oq);
-                    context = context_acquire(query->device, NULL);
-                    context_alloc_occlusion_query(context, oq);
-                }
-                else
-                {
-                    context = context_acquire(device, context_get_rt_surface(oq->context));
-
-                    GL_EXTCALL(glEndQuery(GL_SAMPLES_PASSED));
-                    checkGLcall("glEndQuery()");
-                }
-            }
-            else
-            {
-                if (oq->context) context_free_occlusion_query(oq);
+                context_free_occlusion_query(oq);
                 context = context_acquire(query->device, NULL);
                 context_alloc_occlusion_query(context, oq);
             }
-
-            GL_EXTCALL(glBeginQuery(GL_SAMPLES_PASSED, oq->id));
-            checkGLcall("glBeginQuery()");
-
-            context_release(context);
-        }
-        if (flags & WINED3DISSUE_END)
-        {
-            /* Msdn says _END on a non-building occlusion query returns an error, but
-             * our tests show that it returns OK. But OpenGL doesn't like it, so avoid
-             * generating an error
-             */
-            if (query->state == QUERY_BUILDING)
+            else
             {
-                if (oq->context->tid != GetCurrentThreadId())
-                {
-                    FIXME("Wrong thread, can't end query.\n");
-                }
-                else
-                {
-                    context = context_acquire(device, context_get_rt_surface(oq->context));
+                context = context_acquire(device, context_get_rt_surface(oq->context));
 
-                    GL_EXTCALL(glEndQuery(GL_SAMPLES_PASSED));
-                    checkGLcall("glEndQuery()");
-
-                    context_release(context);
-                }
+                GL_EXTCALL(glEndQuery(GL_SAMPLES_PASSED));
+                checkGLcall("glEndQuery()");
             }
         }
+        else
+        {
+            if (oq->context)
+                context_free_occlusion_query(oq);
+            context = context_acquire(query->device, NULL);
+            context_alloc_occlusion_query(context, oq);
+        }
+
+        GL_EXTCALL(glBeginQuery(GL_SAMPLES_PASSED, oq->id));
+        checkGLcall("glBeginQuery()");
+
+        context_release(context);
     }
-    else
+    if (flags & WINED3DISSUE_END)
     {
-        FIXME("%p Occlusion queries not supported.\n", query);
+        /* MSDN says END on a non-building occlusion query returns an error,
+         * but our tests show that it returns OK. But OpenGL doesn't like it,
+         * so avoid generating an error. */
+        if (query->state == QUERY_BUILDING)
+        {
+            if (oq->context->tid != GetCurrentThreadId())
+            {
+                FIXME("Wrong thread, can't end query.\n");
+            }
+            else
+            {
+                context = context_acquire(device, context_get_rt_surface(oq->context));
+
+                GL_EXTCALL(glEndQuery(GL_SAMPLES_PASSED));
+                checkGLcall("glEndQuery()");
+
+                context_release(context);
+            }
+        }
     }
 
     if (flags & WINED3DISSUE_BEGIN)
