@@ -1588,7 +1588,8 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
      *   This could be an indication that our database is not up to date, so this should be fixed.
      */
     if ((version_info = get_driver_version_info(driver, driver_model))
-            || (version_info = get_driver_version_info(driver, DRIVER_MODEL_NT5X)))
+            || (version_info = get_driver_version_info(driver, DRIVER_MODEL_NT5X))
+            || (version_info = get_driver_version_info(driver, DRIVER_MODEL_NT6X)))
     {
         driver_info->name = version_info->driver_name;
         driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, version_info->version);
