@@ -244,7 +244,7 @@ static void wined3d_query_destroy_object(void *object)
     if (query->type == WINED3D_QUERY_TYPE_EVENT)
     {
         struct wined3d_event_query *event_query = query->extendedData;
-        if (event_query) wined3d_event_query_destroy(event_query);
+        wined3d_event_query_destroy(event_query);
     }
     else if (query->type == WINED3D_QUERY_TYPE_OCCLUSION)
     {
@@ -389,14 +389,8 @@ static HRESULT wined3d_event_query_ops_get_data(struct wined3d_query *query,
 
     TRACE("query %p, data %p, size %#x, flags %#x.\n", query, data, size, flags);
 
-    if (!data || !size) return S_OK;
-    if (!event_query)
-    {
-        WARN("Event query not supported by GL, reporting GPU idle.\n");
-        signaled = TRUE;
-        fill_query_data(data, size, &signaled, sizeof(signaled));
+    if (!data || !size)
         return S_OK;
-    }
 
     ret = wined3d_event_query_test(event_query, query->device);
     switch(ret)
@@ -448,9 +442,6 @@ static HRESULT wined3d_event_query_ops_issue(struct wined3d_query *query, DWORD 
     if (flags & WINED3DISSUE_END)
     {
         struct wined3d_event_query *event_query = query->extendedData;
-
-        /* Faked event query support */
-        if (!event_query) return WINED3D_OK;
 
         wined3d_event_query_issue(event_query, query->device);
     }
