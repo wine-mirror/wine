@@ -596,144 +596,120 @@ static void processRegEntry(WCHAR* stdInput, BOOL isUnicode)
  */
 static void processRegLinesA(FILE *in, char* first_chars)
 {
-    LPSTR line           = NULL;  /* line read from input stream */
-    ULONG lineSize       = REG_VAL_BUF_SIZE;
+    char *buf = NULL;  /* the line read from the input stream */
+    unsigned long line_size = REG_VAL_BUF_SIZE;
+    size_t chars_in_buf = -1;
+    char *s; /* A pointer to buf for fread */
+    char *line; /* The start of the current line */
+    WCHAR *lineW;
 
-    line = HeapAlloc(GetProcessHeap(), 0, lineSize);
-    CHECK_ENOUGH_MEMORY(line);
+    buf = HeapAlloc(GetProcessHeap(), 0, line_size);
+    CHECK_ENOUGH_MEMORY(buf);
+    s = buf;
+    line = buf;
+
     memcpy(line, first_chars, 2);
 
-    while (!feof(in)) {
-        LPSTR s; /* The pointer into line for where the current fgets should read */
-        WCHAR* lineW;
-        s = line;
+    if (first_chars)
+        s += 2;
 
-        if(first_chars)
+    while (!feof(in)) {
+        size_t size_remaining;
+        int size_to_get;
+        char *s_eol = NULL; /* various local uses */
+
+        /* Do we need to expand the buffer? */
+        assert(s >= buf && s <= buf + line_size);
+        size_remaining = line_size - (s - buf);
+        if (size_remaining < 3) /* we need at least 3 bytes of room for \r\n\0 */
         {
-            s += 2;
-            first_chars = NULL;
+            char *new_buffer;
+            size_t new_size = line_size + REG_VAL_BUF_SIZE;
+            if (new_size > line_size) /* no arithmetic overflow */
+                new_buffer = HeapReAlloc(GetProcessHeap(), 0, buf, new_size);
+            else
+                new_buffer = NULL;
+            CHECK_ENOUGH_MEMORY(new_buffer);
+            buf = new_buffer;
+            line = buf;
+            s = buf + line_size - size_remaining;
+            line_size = new_size;
+            size_remaining = line_size - (s - buf);
         }
 
-        for (;;) {
-            size_t size_remaining;
-            int size_to_get, i;
-            char *s_eol; /* various local uses */
+        /* Get as much as possible into the buffer, terminating on EOF,
+         * error or once we have read the maximum amount. Abort on error.
+         */
+        size_to_get = (size_remaining > INT_MAX ? INT_MAX : size_remaining);
 
-            /* Do we need to expand the buffer ? */
-            assert (s >= line && s <= line + lineSize);
-            size_remaining = lineSize - (s-line);
-            if (size_remaining < 3) /* need at least 3 bytes of room for \r\n\0 */
-            {
-                char *new_buffer;
-                size_t new_size = lineSize + REG_VAL_BUF_SIZE;
-                if (new_size > lineSize) /* no arithmetic overflow */
-                    new_buffer = HeapReAlloc (GetProcessHeap(), 0, line, new_size);
-                else
-                    new_buffer = NULL;
-                CHECK_ENOUGH_MEMORY(new_buffer);
-                line = new_buffer;
-                s = line + lineSize - size_remaining;
-                lineSize = new_size;
-                size_remaining = lineSize - (s-line);
+        chars_in_buf = fread(s, 1, size_to_get - 1, in);
+        s[chars_in_buf] = 0;
+
+        if (chars_in_buf == 0) {
+            if (ferror(in)) {
+                perror("While reading input");
+                exit(IO_ERROR);
+            } else {
+                assert(feof(in));
+                *s = '\0';
+            }
+        }
+
+        /* If we didn't read the end-of-line sequence or EOF, go around again */
+        while (1)
+        {
+            s_eol = strpbrk(line, "\r\n");
+            if (!s_eol) {
+                /* Move the stub of the line to the start of the buffer so
+                 * we get the maximum space to read into, and so we don't
+                 * have to recalculate 'line' if the buffer expands */
+                MoveMemory(buf, line, strlen(line) + 1);
+                line = buf;
+                s = strchr(line, '\0');
+                break;
             }
 
-            /* Get as much as possible into the buffer, terminated either by
-             * eof, error, eol or getting the maximum amount.  Abort on error.
-             */
-            size_to_get = (size_remaining > INT_MAX ? INT_MAX : size_remaining);
-
-            /* get a single line. note that `i' must be one past the last
-             * meaningful character in `s' when this loop exits */
-            for(i = 0; i < size_to_get-1; ++i){
-                int xchar;
-
-                xchar = fgetc(in);
-                s[i] = xchar;
-                if(xchar == EOF){
-                    if(ferror(in)){
-                        perror("While reading input");
-                        exit(IO_ERROR);
-                    }else
-                        assert(feof(in));
-                    break;
-                }
-                if(s[i] == '\r'){
-                    /* read the next character iff it's \n */
-                    if(i+2 >= size_to_get){
-                        /* buffer too short, so put back the EOL char to
-                         * read next cycle */
-                        ungetc('\r', in);
-                        break;
-                    }
-                    s[i+1] = fgetc(in);
-                    if(s[i+1] != '\n'){
-                        ungetc(s[i+1], in);
-                        i = i+1;
-                    }else
-                        i = i+2;
-                    break;
-                }
-                if(s[i] == '\n'){
-                    i = i+1;
-                    break;
-                }
-            }
-            s[i] = '\0';
-
-            /* If we didn't read the eol nor the eof go around for the rest */
-            s_eol = strpbrk (s, "\r\n");
-            if (!feof (in) && !s_eol) {
-                s = strchr (s, '\0');
-                continue;
-            }
-
-            /* If it is a comment line then discard it and go around again */
+            /* If we find a comment line, discard it and go around again */
             if (line [0] == '#' || line [0] == ';') {
-                s = line;
-                continue;
-            }
-
-            /* Remove any line feed.  Leave s_eol on the first \0 */
-            if (s_eol) {
-               if (*s_eol == '\r' && *(s_eol+1) == '\n')
-                   *(s_eol+1) = '\0';
-               *s_eol = '\0';
-            } else
-                s_eol = strchr (s, '\0');
-
-            /* If there is a concatenating \\ then go around again */
-            if (s_eol > line && *(s_eol-1) == '\\') {
-                int c;
-                s = s_eol-1;
-
-                do
-                {
-                    c = fgetc(in);
-                } while(c == ' ' || c == '\t');
-
-                if(c == EOF)
-                {
-                    fprintf(stderr, "regedit: ERROR - invalid continuation.\n");
-                }
+                if (*s_eol == '\r' && *(s_eol + 1) == '\n')
+                    line = s_eol + 2;
                 else
-                {
-                    *s = c;
-                    s++;
-                }
+                    line = s_eol + 1;
                 continue;
             }
+
+            /* If there is a concatenating '\\', go around again */
+            if (*(s_eol - 1) == '\\') {
+                char *next_line = s_eol + 1;
+
+                if (*s_eol == '\r' && *(s_eol + 1) == '\n')
+                    next_line++;
+
+                while (*(next_line + 1) == ' ' || *(next_line + 1) == '\t')
+                    next_line++;
+
+                MoveMemory(s_eol - 1, next_line, chars_in_buf - (next_line - s) + 1);
+                chars_in_buf -= next_line - s_eol + 1;
+                s_eol = 0;
+                continue;
+            }
+
+            /* Remove any line feed. Leave s_eol on the last \0 */
+            if (*s_eol == '\r' && *(s_eol + 1) == '\n')
+                *s_eol++ = '\0';
+            *s_eol = '\0';
 
             lineW = GetWideString(line);
-
-            break; /* That is the full virtual line */
+            processRegEntry(lineW, FALSE);
+            HeapFree(GetProcessHeap(), 0, lineW);
+            line = s_eol + 1;
+            s_eol = 0;
+            continue; /* That is the full virtual line */
         }
-
-        processRegEntry(lineW, FALSE);
-        HeapFree(GetProcessHeap(), 0, lineW);
     }
     processRegEntry(NULL, FALSE);
 
-    HeapFree(GetProcessHeap(), 0, line);
+    HeapFree(GetProcessHeap(), 0, buf);
 }
 
 static void processRegLinesW(FILE *in)
