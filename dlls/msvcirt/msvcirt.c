@@ -3479,10 +3479,67 @@ int __thiscall istream_getint(istream *this, char *str)
 /* ?getdouble@istream@@AAEHPADH@Z */
 /* ?getdouble@istream@@AEAAHPEADH@Z */
 DEFINE_THISCALL_WRAPPER(istream_getdouble, 12)
-int __thiscall istream_getdouble(istream *this, char *str, int n)
+int __thiscall istream_getdouble(istream *this, char *str, int count)
 {
-    FIXME("(%p %p %d) stub\n", this, str, n);
-    return 0;
+    ios *base = istream_get_ios(this);
+    int ch, i = 0;
+    BOOL scan_sign = TRUE, scan_dot = TRUE, scan_exp = TRUE,
+        valid_mantissa = FALSE, valid_exponent = FALSE;
+
+    TRACE("(%p %p %d)\n", this, str, count);
+
+    if (istream_ipfx(this, 0)) {
+        if (!count) {
+            /* can't output anything */
+            base->state |= IOSTATE_failbit;
+            i = -1;
+        } else {
+            /* valid mantissas: +d. +.d +d.d (where d are sequences of digits and the sign is optional) */
+            /* valid exponents: e+d E+d (where d are sequences of digits and the sign is optional) */
+            for (ch = streambuf_sgetc(base->sb); i < count; ch = streambuf_snextc(base->sb)) {
+                if ((ch == '+' || ch == '-') && scan_sign) {
+                    /* no additional sign allowed */
+                    scan_sign = FALSE;
+                } else if (ch == '.' && scan_dot) {
+                    /* no sign or additional dot allowed */
+                    scan_sign = scan_dot = FALSE;
+                } else if ((ch == 'e' || ch == 'E') && scan_exp) {
+                    /* sign is allowed again but not dots or exponents */
+                    scan_sign = TRUE;
+                    scan_dot = scan_exp = FALSE;
+                } else if (isdigit(ch)) {
+                    if (scan_exp)
+                        valid_mantissa = TRUE;
+                    else
+                        valid_exponent = TRUE;
+                     /* no sign allowed after a digit */
+                    scan_sign = FALSE;
+                } else {
+                    /* unexpected character, stop scanning */
+                    /* check whether the result is a valid double */
+                    if (!scan_exp && !valid_exponent) {
+                        /* put the last character back into the stream, usually the 'e' or 'E' */
+                        if (streambuf_sputbackc(base->sb, str[i--]) == EOF)
+                            base->state |= IOSTATE_badbit; /* characters have been lost for good */
+                    } else if (ch == EOF)
+                        base->state |= IOSTATE_eofbit;
+                    if (!valid_mantissa)
+                        base->state |= IOSTATE_failbit;
+                    break;
+                }
+                str[i++] = ch;
+            }
+            /* check if character limit has been reached */
+            if (i == count) {
+                base->state |= IOSTATE_failbit;
+                i--;
+            }
+            /* append a null terminator */
+            str[i] = 0;
+        }
+        istream_isfx(this);
+    }
+    return i;
 }
 
 /* ?ws@@YAAAVistream@@AAV1@@Z */

@@ -326,6 +326,7 @@ static istream* (*__thiscall p_istream_seekg_offset)(istream*, streamoff, ios_se
 static int (*__thiscall p_istream_sync)(istream*);
 static streampos (*__thiscall p_istream_tellg)(istream*);
 static int (*__thiscall p_istream_getint)(istream*, char*);
+static int (*__thiscall p_istream_getdouble)(istream*, char*, int);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -540,6 +541,7 @@ static BOOL init(void)
         SET(p_istream_sync, "?sync@istream@@QEAAHXZ");
         SET(p_istream_tellg, "?tellg@istream@@QEAAJXZ");
         SET(p_istream_getint, "?getint@istream@@AEAAHPEAD@Z");
+        SET(p_istream_getdouble, "?getdouble@istream@@AEAAHPEADH@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -676,6 +678,7 @@ static BOOL init(void)
         SET(p_istream_sync, "?sync@istream@@QAEHXZ");
         SET(p_istream_tellg, "?tellg@istream@@QAEJXZ");
         SET(p_istream_getint, "?getint@istream@@AAEHPAD@Z");
+        SET(p_istream_getdouble, "?getdouble@istream@@AAEHPADH@Z");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -4735,6 +4738,119 @@ static void test_istream_getint(void)
     call_func1(p_strstreambuf_dtor, &ssb);
 }
 
+static void test_istream_getdouble(void)
+{
+    istream is, *pis;
+    strstreambuf ssb, *pssb;
+    int i, len, ret;
+    char buffer[32];
+
+    struct istream_getdouble_test {
+        const char *stream_content;
+        int count;
+        ios_io_state initial_state;
+        ios_flags flags;
+        int expected_return;
+        ios_io_state expected_state;
+        int expected_offset;
+        const char *expected_buffer;
+        BOOL broken;
+    } tests[] = {
+        {"", 32, IOSTATE_badbit, FLAGS_skipws, 0, IOSTATE_badbit|IOSTATE_failbit, 0, "", FALSE},
+        {"", 0, IOSTATE_badbit, FLAGS_skipws, 0, IOSTATE_badbit|IOSTATE_failbit, 0, "", FALSE},
+        {"", 32, IOSTATE_eofbit, FLAGS_skipws, 0, IOSTATE_eofbit|IOSTATE_failbit, 0, "", FALSE},
+        {"", 32, IOSTATE_goodbit, FLAGS_skipws, 0, IOSTATE_eofbit|IOSTATE_failbit, 0, "", FALSE},
+        {" ", 32, IOSTATE_goodbit, FLAGS_skipws, 0, IOSTATE_eofbit|IOSTATE_failbit, 1, "", FALSE},
+        {" 0", 32, IOSTATE_goodbit, FLAGS_skipws, 1, IOSTATE_eofbit, 2, "0", FALSE},
+        {"156", 32, IOSTATE_goodbit, FLAGS_skipws, 3, IOSTATE_eofbit, 3, "156", FALSE},
+        {"123 ", 32, IOSTATE_goodbit, FLAGS_skipws, 3, IOSTATE_goodbit, 3, "123", FALSE},
+        {"+4 5", 32, IOSTATE_goodbit, FLAGS_skipws, 2, IOSTATE_goodbit, 2, "+4", FALSE},
+        {"-88a", 32, IOSTATE_goodbit, FLAGS_skipws, 3, IOSTATE_goodbit, 3, "-88", FALSE},
+        {"-+5", 32, IOSTATE_goodbit, FLAGS_skipws, 1, IOSTATE_failbit, 1, "-", FALSE},
+        {"++7", 32, IOSTATE_goodbit, FLAGS_skipws, 1, IOSTATE_failbit, 1, "+", FALSE},
+        {"+", 32, IOSTATE_goodbit, FLAGS_skipws, 1, IOSTATE_eofbit|IOSTATE_failbit, 1, "+", FALSE},
+        {"abc", 32, IOSTATE_goodbit, FLAGS_skipws, 0, IOSTATE_failbit, 0, "", FALSE},
+        {"0xabc", 32, IOSTATE_goodbit, FLAGS_skipws, 1, IOSTATE_goodbit, 1, "0", FALSE},
+        {"01", 32, IOSTATE_goodbit, FLAGS_skipws, 2, IOSTATE_eofbit, 2, "01", FALSE},
+        {"10000000000000000000", 32, IOSTATE_goodbit, FLAGS_skipws, 20, IOSTATE_eofbit, 20, "10000000000000000000", FALSE},
+        {"1.2", 32, IOSTATE_goodbit, FLAGS_skipws, 3, IOSTATE_eofbit, 3, "1.2", FALSE},
+        {"\t-0.4444f", 32, IOSTATE_goodbit, FLAGS_skipws, 7, IOSTATE_goodbit, 8, "-0.4444", FALSE},
+        {"3.-14159", 32, IOSTATE_goodbit, FLAGS_skipws, 2, IOSTATE_goodbit, 2, "3.", FALSE},
+        {"3.14.159", 32, IOSTATE_goodbit, FLAGS_skipws, 4, IOSTATE_goodbit, 4, "3.14", FALSE},
+        {"3.000", 32, IOSTATE_goodbit, FLAGS_skipws, 5, IOSTATE_eofbit, 5, "3.000", FALSE},
+        {".125f", 32, IOSTATE_goodbit, FLAGS_skipws, 4, IOSTATE_goodbit, 4, ".125", FALSE},
+        {"-.125f", 32, IOSTATE_goodbit, FLAGS_skipws, 5, IOSTATE_goodbit, 5, "-.125", FALSE},
+        {"5L", 32, IOSTATE_goodbit, FLAGS_skipws, 1, IOSTATE_goodbit, 1, "5", FALSE},
+        {"1.", 32, IOSTATE_goodbit, FLAGS_skipws, 2, IOSTATE_eofbit, 2, "1.", FALSE},
+        {"55.!", 32, IOSTATE_goodbit, FLAGS_skipws, 3, IOSTATE_goodbit, 3, "55.", FALSE},
+        {"99.99999999999", 32, IOSTATE_goodbit, FLAGS_skipws, 14, IOSTATE_eofbit, 14, "99.99999999999", FALSE},
+        {"9.9999999999999999999", 32, IOSTATE_goodbit, FLAGS_skipws, 21, IOSTATE_eofbit, 21, "9.9999999999999999999", FALSE},
+        {"0.0000000000000f", 32, IOSTATE_goodbit, FLAGS_skipws, 15, IOSTATE_goodbit, 15, "0.0000000000000", FALSE},
+        {"1.0000e5 ", 32, IOSTATE_goodbit, FLAGS_skipws, 8, IOSTATE_goodbit, 8, "1.0000e5", FALSE},
+        {"-2.12345e1000 ", 32, IOSTATE_goodbit, FLAGS_skipws, 13, IOSTATE_goodbit, 13, "-2.12345e1000", FALSE},
+        {"  8E1", 32, IOSTATE_goodbit, FLAGS_skipws, 3, IOSTATE_eofbit, 5, "8E1", FALSE},
+        {"99.99E-99E5", 32, IOSTATE_goodbit, FLAGS_skipws, 9, IOSTATE_goodbit, 9, "99.99E-99", FALSE},
+        {"0e0", 32, IOSTATE_goodbit, FLAGS_skipws|FLAGS_uppercase, 3, IOSTATE_eofbit, 3, "0e0", FALSE},
+        {"1.e8.5", 32, IOSTATE_goodbit, 0, 4, IOSTATE_goodbit, 4, "1.e8", FALSE},
+        {"1.0e-1000000000000000000 ", 32, IOSTATE_goodbit, 0, 24, IOSTATE_goodbit, 24, "1.0e-1000000000000000000", FALSE},
+        {"1.e+f", 32, IOSTATE_goodbit, 0, 3, IOSTATE_goodbit, 3, "1.e", FALSE},
+        {"1.ef", 32, IOSTATE_goodbit, 0, 2, IOSTATE_goodbit, 2, "1.", FALSE},
+        {"1.E-z", 32, IOSTATE_goodbit, 0, 3, IOSTATE_goodbit, 3, "1.E", FALSE},
+        {".", 32, IOSTATE_goodbit, 0, 1, IOSTATE_eofbit|IOSTATE_failbit, 1, ".", FALSE},
+        {".e", 32, IOSTATE_goodbit, 0, 1, IOSTATE_failbit, 1, ".", FALSE},
+        {".e.", 32, IOSTATE_goodbit, 0, 1, IOSTATE_failbit, 1, ".", FALSE},
+        {".e5", 32, IOSTATE_goodbit, 0, 3, IOSTATE_eofbit|IOSTATE_failbit, 3, ".e5", FALSE},
+        {".2e5", 32, IOSTATE_goodbit, 0, 4, IOSTATE_eofbit, 4, ".2e5", FALSE},
+        {"9.e", 32, IOSTATE_goodbit, 0, 2, IOSTATE_goodbit, 2, "9.", FALSE},
+        {"0.0e-0", 32, IOSTATE_goodbit, 0, 6, IOSTATE_eofbit, 6, "0.0e-0", FALSE},
+        {"e5.2", 32, IOSTATE_goodbit, 0, 2, IOSTATE_failbit, 2, "e5", FALSE},
+        {"1.0000", 5, IOSTATE_goodbit, 0, 4, IOSTATE_failbit, 5, "1.00", TRUE},
+        {"-123456", 5, IOSTATE_goodbit, 0, 4, IOSTATE_failbit, 5, "-123", TRUE},
+        {"3.5e2", 5, IOSTATE_goodbit, 0, 4, IOSTATE_failbit, 5, "3.5e", TRUE},
+        {"3.e25", 5, IOSTATE_goodbit, 0, 4, IOSTATE_failbit, 5, "3.e2", TRUE},
+        {"1.11f", 5, IOSTATE_goodbit, 0, 4, IOSTATE_goodbit, 4, "1.11", FALSE},
+        {".5e-5", 5, IOSTATE_goodbit, 0, 4, IOSTATE_failbit, 5, ".5e-", TRUE},
+        {".5e-", 5, IOSTATE_goodbit, 0, 3, IOSTATE_goodbit, 3, ".5e", FALSE},
+        {".5e2", 5, IOSTATE_goodbit, 0, 4, IOSTATE_eofbit, 4, ".5e2", FALSE},
+        {"1", 0, IOSTATE_goodbit, 0, -1, IOSTATE_failbit, 0, "", TRUE},
+        {"x", 0, IOSTATE_goodbit, 0, -1, IOSTATE_failbit, 0, "", TRUE},
+        {"", 0, IOSTATE_goodbit, 0, -1, IOSTATE_failbit, 0, "", TRUE},
+        {"", 1, IOSTATE_goodbit, 0, 0, IOSTATE_eofbit|IOSTATE_failbit, 0, "", FALSE},
+        {"1.0", 1, IOSTATE_goodbit, 0, 0, IOSTATE_failbit, 1, "", TRUE},
+        {"1.0", 2, IOSTATE_goodbit, 0, 1, IOSTATE_failbit, 2, "1", TRUE}
+    };
+
+    pssb = call_func2(p_strstreambuf_dynamic_ctor, &ssb, 64);
+    ok(pssb == &ssb, "wrong return, expected %p got %p\n", &ssb, pssb);
+    ret = (int) call_func1(p_streambuf_allocate, &ssb.base);
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    pis = call_func3(p_istream_sb_ctor, &is, &ssb.base, TRUE);
+    ok(pis == &is, "wrong return, expected %p got %p\n", &is, pis);
+
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
+        len = strlen(tests[i].stream_content);
+        is.base_ios.state = tests[i].initial_state;
+        is.base_ios.flags = tests[i].flags;
+        ssb.base.eback = ssb.base.gptr = ssb.base.base;
+        ssb.base.egptr = ssb.base.base + len;
+        memcpy(ssb.base.base, tests[i].stream_content, len);
+
+        ret = (int) call_func3(p_istream_getdouble, &is, buffer, tests[i].count);
+        ok(ret == tests[i].expected_return ||
+            /* xp, 2k3 */ broken(tests[i].broken && ret == tests[i].expected_return + 1),
+            "Test %d: wrong return, expected %d got %d\n", i, tests[i].expected_return, ret);
+        ok(is.base_ios.state == tests[i].expected_state, "Test %d: expected %d got %d\n", i,
+            tests[i].expected_state, is.base_ios.state);
+        ok(ssb.base.gptr == ssb.base.base + tests[i].expected_offset, "Test %d: expected %p got %p\n",
+            i, ssb.base.base + tests[i].expected_offset, ssb.base.gptr);
+        ok(!strncmp(buffer, tests[i].expected_buffer, strlen(tests[i].expected_buffer)),
+            "Test %d: unexpected buffer content, got '%s'\n", i, buffer);
+    }
+
+    call_func1(p_istream_vbase_dtor, &is);
+    call_func1(p_strstreambuf_dtor, &ssb);
+}
+
 START_TEST(msvcirt)
 {
     if(!init())
@@ -4749,6 +4865,7 @@ START_TEST(msvcirt)
     test_ostream_print();
     test_istream();
     test_istream_getint();
+    test_istream_getdouble();
 
     FreeLibrary(msvcrt);
     FreeLibrary(msvcirt);
