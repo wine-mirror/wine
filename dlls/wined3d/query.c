@@ -271,7 +271,6 @@ static void wined3d_query_destroy_object(void *object)
     if (query->type == WINED3D_QUERY_TYPE_EVENT)
     {
         wined3d_event_query_destroy(wined3d_event_query_from_query(query));
-        return;
     }
     else if (query->type == WINED3D_QUERY_TYPE_OCCLUSION)
     {
@@ -280,7 +279,6 @@ static void wined3d_query_destroy_object(void *object)
         if (oq->context)
             context_free_occlusion_query(oq);
         HeapFree(GetProcessHeap(), 0, oq);
-        return;
     }
     else if (query->type == WINED3D_QUERY_TYPE_TIMESTAMP)
     {
@@ -289,10 +287,16 @@ static void wined3d_query_destroy_object(void *object)
         if (tq->context)
             context_free_timestamp_query(tq);
         HeapFree(GetProcessHeap(), 0, tq);
-        return;
     }
-
-    HeapFree(GetProcessHeap(), 0, query);
+    else if (query->type == WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT
+            || query->type == WINED3D_QUERY_TYPE_TIMESTAMP_FREQ)
+    {
+        HeapFree(GetProcessHeap(), 0, query);
+    }
+    else
+    {
+        ERR("Query %p has invalid type %#x.\n", query, query->type);
+    }
 }
 
 ULONG CDECL wined3d_query_decref(struct wined3d_query *query)
@@ -781,46 +785,31 @@ static const struct wined3d_query_ops timestamp_disjoint_query_ops =
     wined3d_timestamp_disjoint_query_ops_issue,
 };
 
-static HRESULT query_init(struct wined3d_query *query, struct wined3d_device *device,
-        enum wined3d_query_type type, void *parent)
+static HRESULT wined3d_timestamp_disjoint_query_create(struct wined3d_device *device,
+        enum wined3d_query_type type, void *parent, struct wined3d_query **query)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    struct wined3d_query *object;
 
-    query->parent = parent;
+    TRACE("device %p, type %#x, parent %p, query %p.\n", device, type, parent, query);
 
-    switch (type)
+    if (!gl_info->supported[ARB_TIMER_QUERY])
     {
-        case WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT:
-        case WINED3D_QUERY_TYPE_TIMESTAMP_FREQ:
-            TRACE("TIMESTAMP_DISJOINT query.\n");
-            if (!gl_info->supported[ARB_TIMER_QUERY])
-            {
-                WARN("Unsupported in local OpenGL implementation: ARB_TIMER_QUERY.\n");
-                return WINED3DERR_NOTAVAILABLE;
-            }
-            query->query_ops = &timestamp_disjoint_query_ops;
-            query->data_size = type == WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT
-                    ? sizeof(struct wined3d_query_data_timestamp_disjoint) : sizeof(UINT64);
-            break;
-
-        case WINED3D_QUERY_TYPE_VCACHE:
-        case WINED3D_QUERY_TYPE_RESOURCE_MANAGER:
-        case WINED3D_QUERY_TYPE_VERTEX_STATS:
-        case WINED3D_QUERY_TYPE_PIPELINE_TIMINGS:
-        case WINED3D_QUERY_TYPE_INTERFACE_TIMINGS:
-        case WINED3D_QUERY_TYPE_VERTEX_TIMINGS:
-        case WINED3D_QUERY_TYPE_PIXEL_TIMINGS:
-        case WINED3D_QUERY_TYPE_BANDWIDTH_TIMINGS:
-        case WINED3D_QUERY_TYPE_CACHE_UTILIZATION:
-        default:
-            FIXME("Unhandled query type %#x.\n", type);
-            return WINED3DERR_NOTAVAILABLE;
+        WARN("Unsupported in local OpenGL implementation: ARB_TIMER_QUERY.\n");
+        return WINED3DERR_NOTAVAILABLE;
     }
 
-    query->type = type;
-    query->state = QUERY_CREATED;
-    query->device = device;
-    query->ref = 1;
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (type == WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT)
+        wined3d_query_init(object, device, type,
+                sizeof(struct wined3d_query_data_timestamp_disjoint), &timestamp_disjoint_query_ops, parent);
+    else
+        wined3d_query_init(object, device, type, sizeof(UINT64), &timestamp_disjoint_query_ops, parent);
+
+    TRACE("Created query %p.\n", object);
+    *query = object;
 
     return WINED3D_OK;
 }
@@ -828,9 +817,6 @@ static HRESULT query_init(struct wined3d_query *query, struct wined3d_device *de
 HRESULT CDECL wined3d_query_create(struct wined3d_device *device,
         enum wined3d_query_type type, void *parent, struct wined3d_query **query)
 {
-    struct wined3d_query *object;
-    HRESULT hr;
-
     TRACE("device %p, type %#x, parent %p, query %p.\n", device, type, parent, query);
 
     switch (type)
@@ -844,23 +830,12 @@ HRESULT CDECL wined3d_query_create(struct wined3d_device *device,
         case WINED3D_QUERY_TYPE_TIMESTAMP:
             return wined3d_timestamp_query_create(device, type, parent, query);
 
+        case WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT:
+        case WINED3D_QUERY_TYPE_TIMESTAMP_FREQ:
+            return wined3d_timestamp_disjoint_query_create(device, type, parent, query);
+
         default:
-            break;
+            FIXME("Unhandled query type %#x.\n", type);
+            return WINED3DERR_NOTAVAILABLE;
     }
-
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
-        return E_OUTOFMEMORY;
-
-    if (FAILED(hr = query_init(object, device, type, parent)))
-    {
-        WARN("Failed to initialize query, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
-    }
-
-    TRACE("Created query %p.\n", object);
-    *query = object;
-
-    return WINED3D_OK;
 }
