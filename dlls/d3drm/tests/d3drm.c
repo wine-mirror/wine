@@ -4474,7 +4474,7 @@ static void test_create_device_from_d3d2(void)
     /* Release leaked references */
     while (IDirect3DRM_Release(d3drm1) > ref4);
     while (IDirect3DDevice2_Release(temp_d3ddevice2) > 0);
-    while (IDirect3D2_Release(temp_d3d2) > ref5);
+    while (IDirect3D2_Release(temp_d3d2) >= ref5);
     IDirectDrawSurface_Release(surface);
     IDirectDraw2_Release(temp_ddraw2);
     IDirectDraw_Release(temp_ddraw1);
@@ -4755,7 +4755,7 @@ static void test_create_device_from_d3d3(void)
     /* Release leaked references */
     while (IDirect3DRM_Release(d3drm1) > ref4);
     while (IDirect3DDevice2_Release(temp_d3ddevice2) > 0);
-    while (IDirect3D2_Release(temp_d3d2) > ref5);
+    while (IDirect3D2_Release(temp_d3d2) >= ref5);
     IDirectDrawSurface_Release(surface);
     IDirectDraw2_Release(temp_ddraw2);
     IDirectDraw_Release(temp_ddraw1);
