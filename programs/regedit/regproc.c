@@ -50,7 +50,7 @@ static HKEY reg_class_keys[] = {
             HKEY_CURRENT_CONFIG, HKEY_CURRENT_USER, HKEY_DYN_DATA
         };
 
-#define REG_CLASS_NUMBER (sizeof(reg_class_keys) / sizeof(reg_class_keys[0]))
+#define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
 
 /* return values */
 #define NOT_ENOUGH_MEMORY     1
@@ -317,7 +317,7 @@ static BOOL parseKeyName(LPWSTR lpKeyName, HKEY *hKey, LPWSTR *lpKeyPath)
     }
     *hKey = NULL;
 
-    for (i = 0; i < REG_CLASS_NUMBER; i++) {
+    for (i = 0; i < ARRAY_SIZE(reg_class_keys); i++) {
         if (CompareStringW(LOCALE_USER_DEFAULT, 0, lpKeyName, len, reg_class_namesW[i], -1) == CSTR_EQUAL &&
             len == lstrlenW(reg_class_namesW[i])) {
             *hKey = reg_class_keys[i];
@@ -1309,7 +1309,7 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format)
 
         /* export all registry classes */
         file = REGPROC_open_export_file(file_name, unicode);
-        for (i = 0; i < REG_CLASS_NUMBER; i++) {
+        for (i = 0; i < ARRAY_SIZE(reg_class_keys); i++) {
             /* do not export HKEY_CLASSES_ROOT */
             if (reg_class_keys[i] != HKEY_CLASSES_ROOT &&
                     reg_class_keys[i] != HKEY_CURRENT_USER &&
