@@ -732,11 +732,8 @@ static HRESULT query_init(struct wined3d_query *query, struct wined3d_device *de
             TRACE("Event query.\n");
             if (!wined3d_event_query_supported(gl_info))
             {
-                /* Half-Life 2 needs this query. It does not render the main
-                 * menu correctly otherwise. Pretend to support it, faking
-                 * this query does not do much harm except potentially
-                 * lowering performance. */
-                FIXME("Event query: Unimplemented, but pretending to be supported.\n");
+                WARN("Event queries not supported.\n");
+                return WINED3DERR_NOTAVAILABLE;
             }
             query->query_ops = &event_query_ops;
             query->data_size = sizeof(BOOL);
