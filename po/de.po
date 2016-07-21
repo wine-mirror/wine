@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-06-01 11:19+0200\n"
+"PO-Revision-Date: 2016-07-21 10:58+0200\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -11999,133 +11999,97 @@ msgid ""
 msgstr ""
 
 #: regedit.rc:360
-#, fuzzy
-#| msgid ""
-#| "regsvr32: Invalid or unrecognized switch [%1]\n"
-#| "\n"
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
-msgstr ""
-"regsvr32: Ungültiges oder nicht erkanntes Argument [%1]\n"
-"\n"
+msgstr "regedit: Ungültiges oder nicht erkanntes Argument [%1]\n"
 
 #: regedit.rc:361
-#, fuzzy
-#| msgid "Type \"REG /?\" for help.\n"
 msgid "Type \"regedit /?\" for help.\n"
-msgstr "Geben Sie \"REG /?\" ein, um Hilfe zu erhalten.\n"
+msgstr "Geben Sie \"regedit /?\" ein, um Hilfe zu erhalten.\n"
 
 #: regedit.rc:362
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: No filename was specified.\n"
-msgstr "Kein Befehl angegeben."
+msgstr "regedit: Kein Dateiname angegeben.\n"
 
 #: regedit.rc:363
 msgid "regedit: No registry key was specified for removal.\n"
-msgstr ""
+msgstr "regedit: Kein zu entfernender Schlüssel angegeben.\n"
 
 #: regedit.rc:364
-#, fuzzy
-#| msgid "uninstaller: The application with GUID '%1' was not found\n"
 msgid "regedit: The file '%1' was not found.\n"
-msgstr "Uninstaller: Die Anwendung mit der GUID '%1' wurde nicht gefunden\n"
+msgstr "regedit: Die Datei '%1' wurde nicht gefunden.\n"
 
 #: regedit.rc:365
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to open the file '%1'.\n"
-msgstr "reg: Auf den Remoterechner kann nicht zugegriffen werden\n"
+msgstr "regedit: Die Datei '%1' konnte nicht geöffnet werden.\n"
 
 #: regedit.rc:366
-#, fuzzy
-#| msgid "Invalid handle operation.\n"
 msgid "regedit: Unhandled action.\n"
-msgstr "Ungültige Handle-Operation.\n"
+msgstr "regedit: Unbehandelte Aktion.\n"
 
 #: regedit.rc:367
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
-msgstr ""
+msgstr "regedit: Freier Speicher erschöpft! (%1!S!, Zeile %2!u!)\n"
 
 #: regedit.rc:368
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "regedit: Invalid hexadecimal value.\n"
-msgstr "reg: Ungültiger Schlüsselname\n"
+msgstr "regedit: Ungültiger Hexadezimalwert.\n"
 
 #: regedit.rc:369
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 msgstr ""
+"regedit: Hexadezimaldaten konnten nicht konvertiert werden. Ein ungültiger "
+"Wert wurde bei '%1' gefunden.\n"
 
 #: regedit.rc:370
-#, fuzzy
-#| msgid ""
-#| "regsvr32: Invalid or unrecognized switch [%1]\n"
-#| "\n"
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr ""
-"regsvr32: Ungültiges oder nicht erkanntes Argument [%1]\n"
-"\n"
+msgstr "regedit: Unbekannte Escape-Sequenz [\\%1!c!]\n"
 
 #: regedit.rc:371
-#, fuzzy
-#| msgid "reg: Unsupported registry data type [%1]\n"
 msgid "regedit: Unsupported registry data type [%1!u!]\n"
-msgstr "reg: Nicht unterstützter Registrierungsdatentyp [%1]\n"
+msgstr "regedit: Nicht unterstützter Registrierungsdatentyp [%1!u!]\n"
 
 #: regedit.rc:372
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unexpected end of line in '%1'.\n"
-msgstr "reg: Auf den Remoterechner kann nicht zugegriffen werden\n"
+msgstr "regedit: Unerwartetes Zeilenende in '%1'.\n"
 
 #: regedit.rc:373
-#, fuzzy
-#| msgid "uninstaller: The application with GUID '%1' was not found\n"
 msgid "regedit: The line '%1' was not recognized.\n"
-msgstr "Uninstaller: Die Anwendung mit der GUID '%1' wurde nicht gefunden\n"
+msgstr "regedit: Zeile '%1' wurde nicht erkannt.\n"
 
 #: regedit.rc:374
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
-msgstr "reg: Auf den Remoterechner kann nicht zugegriffen werden\n"
+msgstr "regedit: Der Wert '%1' konnte nicht zu '%2' hinzugefügt werden.\n"
 
 #: regedit.rc:375
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to open the registry key '%1'.\n"
-msgstr "reg: Auf den Remoterechner kann nicht zugegriffen werden\n"
+msgstr "regedit: Der Schlüssel '%1' konnte nicht geöffnet werden.\n"
 
 #: regedit.rc:376
-#, fuzzy
-#| msgid "reg: Unsupported registry data type [%1]\n"
 msgid "regedit: Unsupported registry data type [%1!u!] encountered in '%2'.\n"
-msgstr "reg: Nicht unterstützter Registrierungsdatentyp [%1]\n"
+msgstr ""
+"regedit: Nicht unterstützter Registrierungsdatentyp [%1!u!] wurde in '%2' "
+"gefunden.\n"
 
 #: regedit.rc:377
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
-msgstr ""
+msgstr "regedit: Der Wert '%1' wird in Form von Binärdaten exportiert.\n"
 
 #: regedit.rc:378
 msgid "regedit: Incorrect registry class specification in '%1'.\n"
-msgstr ""
+msgstr "regedit: Ungültige Registrierungsklassen-Spezifikation in '%1'.\n"
 
 #: regedit.rc:379
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
 msgstr ""
-"reg: Das System konnte den angegebenen Schlüssel oder Wert nicht finden\n"
+"regedit: '%1' konnte nicht exportiert werden. Der angegebene Schlüssel wurde "
+"nicht gefunden.\n"
 
 #: regedit.rc:380
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to delete the registry class '%1'.\n"
-msgstr "reg: Auf den Remoterechner kann nicht zugegriffen werden\n"
+msgstr "regedit: Die Registrierungsklasse '%1' konnte nicht gelöscht werden.\n"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
