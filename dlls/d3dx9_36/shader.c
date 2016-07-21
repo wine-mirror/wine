@@ -2146,3 +2146,270 @@ HRESULT WINAPI D3DXDisassembleShader(const DWORD *shader, BOOL colorcode, const 
    FIXME("%p %d %s %p: stub\n", shader, colorcode, debugstr_a(comments), disassembly);
    return E_OUTOFMEMORY;
 }
+
+struct d3dx9_texture_shader
+{
+    ID3DXTextureShader ID3DXTextureShader_iface;
+    LONG ref;
+};
+
+static inline struct d3dx9_texture_shader *impl_from_ID3DXTextureShader(ID3DXTextureShader *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3dx9_texture_shader, ID3DXTextureShader_iface);
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_QueryInterface(ID3DXTextureShader *iface, REFIID riid, void **out)
+{
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_ID3DXTextureShader))
+    {
+        iface->lpVtbl->AddRef(iface);
+        *out = iface;
+        return D3D_OK;
+    }
+
+    WARN("Interface %s not found.\n", debugstr_guid(riid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI d3dx9_texture_shader_AddRef(ID3DXTextureShader *iface)
+{
+    struct d3dx9_texture_shader *texture_shader = impl_from_ID3DXTextureShader(iface);
+    ULONG refcount = InterlockedIncrement(&texture_shader->ref);
+
+    TRACE("%p increasing refcount to %u.\n", texture_shader, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI d3dx9_texture_shader_Release(ID3DXTextureShader *iface)
+{
+    struct d3dx9_texture_shader *texture_shader = impl_from_ID3DXTextureShader(iface);
+    ULONG refcount = InterlockedDecrement(&texture_shader->ref);
+
+    TRACE("%p decreasing refcount to %u.\n", texture_shader, refcount);
+
+    if (!refcount)
+    {
+        HeapFree(GetProcessHeap(), 0, texture_shader);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_GetFunction(ID3DXTextureShader *iface, struct ID3DXBuffer **function)
+{
+    FIXME("iface %p, function %p stub.\n", iface, function);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_GetConstantBuffer(ID3DXTextureShader *iface, struct ID3DXBuffer **constant_buffer)
+{
+    FIXME("iface %p, constant_buffer %p stub.\n", iface, constant_buffer);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_GetDesc(ID3DXTextureShader *iface, D3DXCONSTANTTABLE_DESC *desc)
+{
+    FIXME("iface %p, desc %p stub.\n", iface, desc);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_GetConstantDesc(ID3DXTextureShader *iface, D3DXHANDLE constant, D3DXCONSTANT_DESC *constant_desc, UINT *count)
+{
+    FIXME("iface %p, constant %p, constant_desc %p, count %p stub.\n", iface, constant, constant_desc, count);
+
+    return E_NOTIMPL;
+}
+
+static D3DXHANDLE WINAPI d3dx9_texture_shader_GetConstant(ID3DXTextureShader *iface, D3DXHANDLE constant, UINT index)
+{
+    FIXME("iface %p, constant %p, index %u stub.\n", iface, constant, index);
+
+    return NULL;
+}
+
+static D3DXHANDLE WINAPI d3dx9_texture_shader_GetConstantByName(ID3DXTextureShader *iface, D3DXHANDLE constant, const char *name)
+{
+    FIXME("iface %p, constant %p, name %s stub.\n", iface, constant, debugstr_a(name));
+
+    return NULL;
+}
+
+static D3DXHANDLE WINAPI d3dx9_texture_shader_GetConstantElement(ID3DXTextureShader *iface, D3DXHANDLE constant, UINT index)
+{
+    FIXME("iface %p, constant %p, index %u stub.\n", iface, constant, index);
+
+    return NULL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_SetDefaults(ID3DXTextureShader *iface)
+{
+    FIXME("iface %p stub.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_SetValue(ID3DXTextureShader *iface, D3DXHANDLE constant, const void *data, UINT bytes)
+{
+    FIXME("iface %p, constant %p, data %p, bytes %u stub.\n", iface, constant, data, bytes);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_SetBool(ID3DXTextureShader *iface, D3DXHANDLE constant, BOOL b)
+{
+    FIXME("iface %p, constant %p, b %u stub.\n", iface, constant, b);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_SetBoolArray(ID3DXTextureShader *iface, D3DXHANDLE constant, const BOOL *b, UINT count)
+{
+    FIXME("iface %p, constant %p, b %p, count %u stub.\n", iface, constant, b, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_SetInt(ID3DXTextureShader *iface, D3DXHANDLE constant, INT n)
+{
+    FIXME("iface %p, constant %p, n %d stub.\n", iface, constant, n);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_SetIntArray(ID3DXTextureShader *iface, D3DXHANDLE constant, const INT *n, UINT count)
+{
+    FIXME("iface %p, constant %p, n %p, count %u stub.\n", iface, constant, n, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_SetFloat(ID3DXTextureShader *iface, D3DXHANDLE constant, FLOAT f)
+{
+    FIXME("iface %p, constant %p, f %f stub.\n", iface, constant, f);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_SetFloatArray(ID3DXTextureShader *iface, D3DXHANDLE constant, const FLOAT *f, UINT count)
+{
+    FIXME("iface %p, constant %p, f %p, count %u stub.\n", iface, constant, f, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_SetVector(ID3DXTextureShader *iface, D3DXHANDLE constant, const D3DXVECTOR4 *vector)
+{
+    FIXME("iface %p, constant %p, vector %p stub.\n", iface, constant, vector);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_SetVectorArray(ID3DXTextureShader *iface, D3DXHANDLE constant, const D3DXVECTOR4 *vector, UINT count)
+{
+    FIXME("iface %p, constant %p, vector %p, count %u stub.\n", iface, constant, vector, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_SetMatrix(ID3DXTextureShader *iface, D3DXHANDLE constant, const D3DXMATRIX *matrix)
+{
+    FIXME("iface %p, constant %p, matrix %p stub.\n", iface, constant, matrix);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_SetMatrixArray(ID3DXTextureShader *iface, D3DXHANDLE constant, const D3DXMATRIX *matrix, UINT count)
+{
+    FIXME("iface %p, constant %p, matrix %p, count %u stub.\n", iface, constant, matrix, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_SetMatrixPointerArray(ID3DXTextureShader *iface, D3DXHANDLE constant, const D3DXMATRIX **matrix, UINT count)
+{
+    FIXME("iface %p, constant %p, matrix %p, count %u stub.\n", iface, constant, matrix, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_SetMatrixTranspose(ID3DXTextureShader *iface, D3DXHANDLE constant, const D3DXMATRIX *matrix)
+{
+    FIXME("iface %p, constant %p, matrix %p stub.\n", iface, constant, matrix);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_SetMatrixTransposeArray(ID3DXTextureShader *iface, D3DXHANDLE constant, const D3DXMATRIX *matrix, UINT count)
+{
+    FIXME("iface %p, constant %p, matrix %p, count %u stub.\n", iface, constant, matrix, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3dx9_texture_shader_SetMatrixTransposePointerArray(ID3DXTextureShader *iface, D3DXHANDLE constant, const D3DXMATRIX **matrix, UINT count)
+{
+    FIXME("iface %p, constant %p, matrix %p, count %u stub.\n", iface, constant, matrix, count);
+
+    return E_NOTIMPL;
+}
+
+static const struct ID3DXTextureShaderVtbl d3dx9_texture_shader_vtbl =
+{
+    /*** IUnknown methods ***/
+    d3dx9_texture_shader_QueryInterface,
+    d3dx9_texture_shader_AddRef,
+    d3dx9_texture_shader_Release,
+    /*** ID3DXTextureShader methods ***/
+    d3dx9_texture_shader_GetFunction,
+    d3dx9_texture_shader_GetConstantBuffer,
+    d3dx9_texture_shader_GetDesc,
+    d3dx9_texture_shader_GetConstantDesc,
+    d3dx9_texture_shader_GetConstant,
+    d3dx9_texture_shader_GetConstantByName,
+    d3dx9_texture_shader_GetConstantElement,
+    d3dx9_texture_shader_SetDefaults,
+    d3dx9_texture_shader_SetValue,
+    d3dx9_texture_shader_SetBool,
+    d3dx9_texture_shader_SetBoolArray,
+    d3dx9_texture_shader_SetInt,
+    d3dx9_texture_shader_SetIntArray,
+    d3dx9_texture_shader_SetFloat,
+    d3dx9_texture_shader_SetFloatArray,
+    d3dx9_texture_shader_SetVector,
+    d3dx9_texture_shader_SetVectorArray,
+    d3dx9_texture_shader_SetMatrix,
+    d3dx9_texture_shader_SetMatrixArray,
+    d3dx9_texture_shader_SetMatrixPointerArray,
+    d3dx9_texture_shader_SetMatrixTranspose,
+    d3dx9_texture_shader_SetMatrixTransposeArray,
+    d3dx9_texture_shader_SetMatrixTransposePointerArray
+};
+
+HRESULT WINAPI D3DXCreateTextureShader(const DWORD *function, ID3DXTextureShader **texture_shader)
+{
+    struct d3dx9_texture_shader *object;
+
+    TRACE("function %p, texture_shader %p.\n", function, texture_shader);
+
+    if (!function || !texture_shader)
+        return D3DERR_INVALIDCALL;
+
+    object = HeapAlloc(GetProcessHeap(), 0, sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->ID3DXTextureShader_iface.lpVtbl = &d3dx9_texture_shader_vtbl;
+    object->ref = 1;
+
+    *texture_shader = &object->ID3DXTextureShader_iface;
+
+    return D3D_OK;
+}
