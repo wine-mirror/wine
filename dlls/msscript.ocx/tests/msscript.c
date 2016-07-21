@@ -95,6 +95,7 @@ DEFINE_EXPECT(Close);
 DEFINE_EXPECT(SetScriptSite);
 DEFINE_EXPECT(QI_IActiveScriptParse);
 DEFINE_EXPECT(SetScriptState_INITIALIZED);
+DEFINE_EXPECT(AddNamedItem);
 
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG ref, int line)
@@ -318,11 +319,13 @@ static HRESULT WINAPI ActiveScript_Close(IActiveScript *iface)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ActiveScript_AddNamedItem(IActiveScript *iface,
-        LPCOLESTR pstrName, DWORD dwFlags)
+static HRESULT WINAPI ActiveScript_AddNamedItem(IActiveScript *iface, LPCOLESTR name, DWORD flags)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    static const WCHAR oW[] = {'o',0};
+    CHECK_EXPECT(AddNamedItem);
+    ok(!lstrcmpW(name, oW), "got name %s\n", wine_dbgstr_w(name));
+    ok(flags == (SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS), "got flags %#x\n", flags);
+    return S_OK;
 }
 
 static HRESULT WINAPI ActiveScript_AddTypeLib(IActiveScript *iface, REFGUID rguidTypeLib,
@@ -1086,6 +1089,144 @@ static void test_Reset(void)
         skip("Could not register TestScript engine\n");
 }
 
+static HRESULT WINAPI disp_QI(IDispatch *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IDispatch) || IsEqualIID(riid, &IID_IUnknown)) {
+        *obj = iface;
+        IDispatch_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI disp_AddRef(IDispatch *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI disp_Release(IDispatch *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI disp_GetTypeInfoCount(IDispatch *iface, UINT *count)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI disp_GetTypeInfo(IDispatch *iface, UINT index, LCID lcid, ITypeInfo **ti)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI disp_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *names,
+    UINT cnames, LCID lcid, DISPID *dispid)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI disp_Invoke(IDispatch *iface, DISPID dispid, REFIID riid, LCID lcid,
+    WORD flags, DISPPARAMS *dispparams, VARIANT *result, EXCEPINFO *ei, UINT *arg_err)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IDispatchVtbl dispvtbl = {
+    disp_QI,
+    disp_AddRef,
+    disp_Release,
+    disp_GetTypeInfoCount,
+    disp_GetTypeInfo,
+    disp_GetIDsOfNames,
+    disp_Invoke
+};
+
+static IDispatch testdisp = { &dispvtbl };
+
+static void test_AddObject(void)
+{
+    static const WCHAR oW[] = {'o',0};
+    IScriptControl *sc;
+    BSTR str, objname;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IScriptControl, (void**)&sc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    objname = SysAllocString(oW);
+    hr = IScriptControl_AddObject(sc, objname, NULL, VARIANT_FALSE);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_AddObject(sc, objname, &testdisp, VARIANT_FALSE);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+
+    str = SysAllocString(vbW);
+    hr = IScriptControl_put_Language(sc, str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
+
+    hr = IScriptControl_AddObject(sc, objname, &testdisp, VARIANT_TRUE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_Reset(sc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_AddObject(sc, objname, &testdisp, VARIANT_TRUE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IScriptControl_Release(sc);
+
+    /* custom script engine */
+    if (register_script_engine()) {
+        static const WCHAR testscriptW[] = {'t','e','s','t','s','c','r','i','p','t',0};
+
+        hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+                &IID_IScriptControl, (void**)&sc);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        SET_EXPECT(CreateInstance);
+        SET_EXPECT(SetInterfaceSafetyOptions);
+        SET_EXPECT(SetScriptSite);
+        SET_EXPECT(QI_IActiveScriptParse);
+        SET_EXPECT(InitNew);
+
+        str = SysAllocString(testscriptW);
+        hr = IScriptControl_put_Language(sc, str);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        SysFreeString(str);
+
+        hr = IScriptControl_AddObject(sc, objname, NULL, VARIANT_FALSE);
+        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+        SET_EXPECT(AddNamedItem);
+        hr = IScriptControl_AddObject(sc, objname, &testdisp, VARIANT_TRUE);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        CHECK_CALLED(AddNamedItem);
+
+        hr = IScriptControl_AddObject(sc, objname, &testdisp, VARIANT_TRUE);
+        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+        init_registry(FALSE);
+
+        SET_EXPECT(Close);
+
+        IScriptControl_Release(sc);
+
+        CHECK_CALLED(Close);
+    }
+    else
+        skip("Could not register TestScript engine\n");
+
+    SysFreeString(objname);
+}
+
 START_TEST(msscript)
 {
     IUnknown *unk;
@@ -1111,6 +1252,7 @@ START_TEST(msscript)
     test_pointerinactive();
     test_timeout();
     test_Reset();
+    test_AddObject();
 
     CoUninitialize();
 }

@@ -28,6 +28,7 @@
 #include "msscript.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msscript);
 
@@ -55,6 +56,12 @@ struct ConnectionPoint {
     ConnectionPoint *next;
 };
 
+struct named_item {
+    struct list entry;
+    BSTR name;
+    IDispatch *disp;
+};
+
 typedef struct ScriptHost {
     IActiveScriptSite IActiveScriptSite_iface;
     IActiveScriptSiteWindow IActiveScriptSiteWindow_iface;
@@ -64,6 +71,8 @@ typedef struct ScriptHost {
     IActiveScript *script;
     IActiveScriptParse *parse;
     CLSID clsid;
+
+    struct list named_items;
 } ScriptHost;
 
 struct ScriptControl {
@@ -171,6 +180,29 @@ static void release_typelib(void)
             ITypeInfo_Release(typeinfos[i]);
 
     ITypeLib_Release(typelib);
+}
+
+static void clear_named_items(ScriptHost *host)
+{
+    struct named_item *item, *item1;
+    LIST_FOR_EACH_ENTRY_SAFE(item, item1, &host->named_items, struct named_item, entry) {
+       list_remove(&item->entry);
+       SysFreeString(item->name);
+       IDispatch_Release(item->disp);
+       heap_free(item);
+    }
+}
+
+static struct named_item *host_get_named_item(ScriptHost *host, const WCHAR *nameW)
+{
+    struct named_item *item;
+
+    LIST_FOR_EACH_ENTRY(item, &host->named_items, struct named_item, entry) {
+        if (!lstrcmpW(item->name, nameW))
+            return item;
+    }
+
+    return NULL;
 }
 
 static inline ScriptControl *impl_from_IScriptControl(IScriptControl *iface)
@@ -293,8 +325,10 @@ static ULONG WINAPI ActiveScriptSite_Release(IActiveScriptSite *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        clear_named_items(This);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -309,14 +343,27 @@ static HRESULT WINAPI ActiveScriptSite_GetLCID(IActiveScriptSite *iface, LCID *l
     return S_OK;
 }
 
-static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPCOLESTR name, DWORD returnmask,
-    IUnknown **item, ITypeInfo **ti)
+static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPCOLESTR name, DWORD mask,
+    IUnknown **unk, ITypeInfo **ti)
 {
     ScriptHost *This = impl_from_IActiveScriptSite(iface);
+    struct named_item *item;
 
-    FIXME("(%p, %s, %#x, %p, %p)\n", This, debugstr_w(name), returnmask, item, ti);
+    TRACE("(%p, %s, %#x, %p, %p)\n", This, debugstr_w(name), mask, unk, ti);
 
-    return E_NOTIMPL;
+    item = host_get_named_item(This, name);
+    if (!item)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    if (mask != SCRIPTINFO_IUNKNOWN) {
+        FIXME("mask %#x is not supported\n", mask);
+        return E_NOTIMPL;
+    }
+
+    *unk = (IUnknown*)item->disp;
+    IUnknown_AddRef(*unk);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ActiveScriptSite_GetDocVersionString(IActiveScriptSite *iface, BSTR *version)
@@ -488,6 +535,7 @@ static HRESULT init_script_host(const CLSID *clsid, ScriptHost **ret)
     host->script = NULL;
     host->parse = NULL;
     host->clsid = *clsid;
+    list_init(&host->named_items);
 
     hr = CoCreateInstance(&host->clsid, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IActiveScript, (void**)&host->script);
@@ -840,8 +888,42 @@ static HRESULT WINAPI ScriptControl__AboutBox(IScriptControl *iface)
 static HRESULT WINAPI ScriptControl_AddObject(IScriptControl *iface, BSTR name, IDispatch *object, VARIANT_BOOL add_members)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)->(%s %p %x)\n", This, debugstr_w(name), object, add_members);
-    return E_NOTIMPL;
+    DWORD flags = SCRIPTITEM_ISVISIBLE | SCRIPTITEM_ISSOURCE;
+    struct named_item *item;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s %p %x)\n", This, debugstr_w(name), object, add_members);
+
+    if (!object)
+        return E_INVALIDARG;
+
+    if (!This->host)
+        return E_FAIL;
+
+    if (host_get_named_item(This->host, name))
+        return E_INVALIDARG;
+
+    item = heap_alloc(sizeof(*item));
+    if (!item)
+        return E_OUTOFMEMORY;
+
+    item->name = SysAllocString(name);
+    IDispatch_AddRef(item->disp = object);
+    list_add_tail(&This->host->named_items, &item->entry);
+
+    if (add_members)
+        flags |= SCRIPTITEM_GLOBALMEMBERS;
+    hr = IActiveScript_AddNamedItem(This->host->script, name, flags);
+    if (FAILED(hr)) {
+        list_remove(&item->entry);
+        IDispatch_Release(item->disp);
+        SysFreeString(item->name);
+        heap_free(item);
+        return hr;
+    }
+
+
+    return hr;
 }
 
 static HRESULT WINAPI ScriptControl_Reset(IScriptControl *iface)
@@ -853,6 +935,7 @@ static HRESULT WINAPI ScriptControl_Reset(IScriptControl *iface)
     if (!This->host)
         return E_FAIL;
 
+    clear_named_items(This->host);
     return IActiveScript_SetScriptState(This->host->script, SCRIPTSTATE_INITIALIZED);
 }
 
