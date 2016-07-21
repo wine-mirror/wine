@@ -11996,7 +11996,7 @@ msgstr ""
 #: regedit.rc:371
 #, fuzzy
 #| msgid "Error: Command line not supported\n"
-msgid "regedit: Unsupported registry data type [%1!u!]\n"
+msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr "Error: Command line not supported\n"
 
 #: regedit.rc:372
@@ -12024,7 +12024,7 @@ msgstr "Error: Unable to add keys to remote machine\n"
 #: regedit.rc:376
 #, fuzzy
 #| msgid "Error: Command line not supported\n"
-msgid "regedit: Unsupported registry data type [%1!u!] encountered in '%2'.\n"
+msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgstr "Error: Command line not supported\n"
 
 #: regedit.rc:377

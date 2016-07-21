@@ -12041,7 +12041,7 @@ msgstr ""
 #: regedit.rc:371
 #, fuzzy
 #| msgid "Error: Unsupported type\n"
-msgid "regedit: Unsupported registry data type [%1!u!]\n"
+msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr "Hata: Desteklenmeyen tür\n"
 
 #: regedit.rc:372
@@ -12071,7 +12071,7 @@ msgstr "Hata: Uzak makineye erişilemiyor\n"
 #: regedit.rc:376
 #, fuzzy
 #| msgid "Error: Unsupported type\n"
-msgid "regedit: Unsupported registry data type [%1!u!] encountered in '%2'.\n"
+msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgstr "Hata: Desteklenmeyen tür\n"
 
 #: regedit.rc:377

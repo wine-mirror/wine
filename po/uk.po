@@ -12083,8 +12083,8 @@ msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr "regedit: Нерозпізнана послідовність [\\%1!c!]\n"
 
 #: regedit.rc:371
-msgid "regedit: Unsupported registry data type [%1!u!]\n"
-msgstr "regedit: Непідтримуваний тип даних [%1!u!]\n"
+msgid "regedit: Unsupported registry data type [%1]\n"
+msgstr "regedit: Непідтримуваний тип даних [%1]\n"
 
 #: regedit.rc:372
 msgid "regedit: Unexpected end of line in '%1'.\n"
@@ -12103,8 +12103,8 @@ msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: Неможливо відкрити ключ '%1'.\n"
 
 #: regedit.rc:376
-msgid "regedit: Unsupported registry data type [%1!u!] encountered in '%2'.\n"
-msgstr "regedit: '%2' містить непідтримуваний тип даних [%1!u!].\n"
+msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
+msgstr "regedit: '%2' містить непідтримуваний тип даних [%1].\n"
 
 #: regedit.rc:377
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"

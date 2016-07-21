@@ -12078,7 +12078,7 @@ msgstr ""
 #: regedit.rc:371
 #, fuzzy
 #| msgid "Error: Unsupported type\n"
-msgid "regedit: Unsupported registry data type [%1!u!]\n"
+msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr "Erro: Tipo não suportado.\n"
 
 #: regedit.rc:372
@@ -12108,7 +12108,7 @@ msgstr "Erro: Não foi possível acessar a máquina remota\n"
 #: regedit.rc:376
 #, fuzzy
 #| msgid "Error: Unsupported type\n"
-msgid "regedit: Unsupported registry data type [%1!u!] encountered in '%2'.\n"
+msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgstr "Erro: Tipo não suportado.\n"
 
 #: regedit.rc:377

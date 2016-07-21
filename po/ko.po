@@ -12244,7 +12244,7 @@ msgstr ""
 #: regedit.rc:371
 #, fuzzy
 #| msgid "Unsupported type.\n"
-msgid "regedit: Unsupported registry data type [%1!u!]\n"
+msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr "지원하지 않는 형식.\n"
 
 #: regedit.rc:372
@@ -12274,7 +12274,7 @@ msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니
 #: regedit.rc:376
 #, fuzzy
 #| msgid "Unsupported type.\n"
-msgid "regedit: Unsupported registry data type [%1!u!] encountered in '%2'.\n"
+msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgstr "지원하지 않는 형식.\n"
 
 #: regedit.rc:377

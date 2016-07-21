@@ -11995,8 +11995,8 @@ msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr "regedit: Ukjent escape-sekvens [\\%1!c!]\n"
 
 #: regedit.rc:371
-msgid "regedit: Unsupported registry data type [%1!u!]\n"
-msgstr "regedit: Registerdatatypen [%1!u!] støttes ikke\n"
+msgid "regedit: Unsupported registry data type [%1]\n"
+msgstr "regedit: Registerdatatypen [%1] støttes ikke\n"
 
 #: regedit.rc:372
 msgid "regedit: Unexpected end of line in '%1'.\n"
@@ -12015,8 +12015,8 @@ msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: Kan ikke åpne registernøkkelen \"%1\".\n"
 
 #: regedit.rc:376
-msgid "regedit: Unsupported registry data type [%1!u!] encountered in '%2'.\n"
-msgstr "regedit: Registerdatatypen [%1!u!], funnet i \"%2\", støttes ikke.\n"
+msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
+msgstr "regedit: Registerdatatypen [%1], funnet i \"%2\", støttes ikke.\n"
 
 #: regedit.rc:377
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"

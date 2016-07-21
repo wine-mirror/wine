@@ -11657,7 +11657,7 @@ msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr ""
 
 #: regedit.rc:371
-msgid "regedit: Unsupported registry data type [%1!u!]\n"
+msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr ""
 
 #: regedit.rc:372
@@ -11678,7 +11678,7 @@ msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "แฟ้มตํารา (*.txt).\n"
 
 #: regedit.rc:376
-msgid "regedit: Unsupported registry data type [%1!u!] encountered in '%2'.\n"
+msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgstr ""
 
 #: regedit.rc:377

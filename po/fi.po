@@ -11979,7 +11979,7 @@ msgstr "regedit: Virheellinen tai tuntematon valitsin [%1]\n"
 #: regedit.rc:371
 #, fuzzy
 #| msgid "reg: Unsupported registry data type [%1]\n"
-msgid "regedit: Unsupported registry data type [%1!u!]\n"
+msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr "reg: Rekisterin tietotyypille [%1] ei ole tukea\n"
 
 #: regedit.rc:372
@@ -12009,7 +12009,7 @@ msgstr "regedit: Tiedostoa '%1' ei voida avata.\n"
 #: regedit.rc:376
 #, fuzzy
 #| msgid "reg: Unsupported registry data type [%1]\n"
-msgid "regedit: Unsupported registry data type [%1!u!] encountered in '%2'.\n"
+msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgstr "reg: Rekisterin tietotyypille [%1] ei ole tukea\n"
 
 #: regedit.rc:377

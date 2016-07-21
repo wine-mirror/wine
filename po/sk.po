@@ -11698,7 +11698,7 @@ msgstr ""
 #: regedit.rc:371
 #, fuzzy
 #| msgid "Unsupported type.\n"
-msgid "regedit: Unsupported registry data type [%1!u!]\n"
+msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr "Nepodporovaný typ.\n"
 
 #: regedit.rc:372
@@ -11728,7 +11728,7 @@ msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 #: regedit.rc:376
 #, fuzzy
 #| msgid "Unsupported type.\n"
-msgid "regedit: Unsupported registry data type [%1!u!] encountered in '%2'.\n"
+msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgstr "Nepodporovaný typ.\n"
 
 #: regedit.rc:377

@@ -12129,7 +12129,7 @@ msgstr ""
 #: regedit.rc:371
 #, fuzzy
 #| msgid "reg: Unsupported registry data type [%1]\n"
-msgid "regedit: Unsupported registry data type [%1!u!]\n"
+msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr "reg : type non pris en charge [%1]\n"
 
 #: regedit.rc:372
@@ -12159,7 +12159,7 @@ msgstr "reg : impossible d'accéder à une machine distante\n"
 #: regedit.rc:376
 #, fuzzy
 #| msgid "reg: Unsupported registry data type [%1]\n"
-msgid "regedit: Unsupported registry data type [%1!u!] encountered in '%2'.\n"
+msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgstr "reg : type non pris en charge [%1]\n"
 
 #: regedit.rc:377
