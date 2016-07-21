@@ -588,38 +588,29 @@ static HRESULT wined3d_timestamp_query_ops_get_data(struct wined3d_query *query,
 
 static HRESULT wined3d_timestamp_query_ops_issue(struct wined3d_query *query, DWORD flags)
 {
+    struct wined3d_timestamp_query *tq = query->extendedData;
     struct wined3d_device *device = query->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    struct wined3d_context *context;
 
     TRACE("query %p, flags %#x.\n", query, flags);
 
-    if (gl_info->supported[ARB_TIMER_QUERY])
+    if (flags & WINED3DISSUE_BEGIN)
     {
-        struct wined3d_timestamp_query *tq = query->extendedData;
-        struct wined3d_context *context;
-
-        if (flags & WINED3DISSUE_BEGIN)
-        {
-            WARN("Ignoring WINED3DISSUE_BEGIN with a TIMESTAMP query.\n");
-        }
-        if (flags & WINED3DISSUE_END)
-        {
-            if (tq->context)
-                context_free_timestamp_query(tq);
-            context = context_acquire(query->device, NULL);
-            context_alloc_timestamp_query(context, tq);
-            GL_EXTCALL(glQueryCounter(tq->id, GL_TIMESTAMP));
-            checkGLcall("glQueryCounter()");
-            context_release(context);
-        }
+        WARN("Ignoring WINED3DISSUE_BEGIN with a TIMESTAMP query.\n");
     }
-    else
-    {
-        ERR("Timestamp queries not supported.\n");
-    }
-
     if (flags & WINED3DISSUE_END)
+    {
+        if (tq->context)
+            context_free_timestamp_query(tq);
+        context = context_acquire(query->device, NULL);
+        context_alloc_timestamp_query(context, tq);
+        GL_EXTCALL(glQueryCounter(tq->id, GL_TIMESTAMP));
+        checkGLcall("glQueryCounter()");
+        context_release(context);
+
         query->state = QUERY_SIGNALLED;
+    }
 
     return WINED3D_OK;
 }
