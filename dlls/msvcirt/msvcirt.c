@@ -3546,8 +3546,9 @@ int __thiscall istream_getdouble(istream *this, char *str, int count)
 /* ?ws@@YAAEAVistream@@AEAV1@@Z */
 istream* __cdecl istream_ws(istream *this)
 {
-   FIXME("(%p) stub\n", this);
-   return this;
+    TRACE("(%p)\n", this);
+    istream_eatwhite(this);
+    return this;
 }
 
 /******************************************************************
