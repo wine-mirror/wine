@@ -2167,7 +2167,7 @@ ImageList_Merge (HIMAGELIST himl1, INT i1, HIMAGELIST himl2, INT i2,
 
 
 /* helper for ImageList_Read, see comments below */
-static void *read_bitmap(LPSTREAM pstm, BITMAPINFO *bmi)
+static void *read_bitmap(IStream *pstm, BITMAPINFO *bmi)
 {
     BITMAPFILEHEADER	bmfh;
     int bitsperpixel, palspace;
@@ -2243,7 +2243,7 @@ static void *read_bitmap(LPSTREAM pstm, BITMAPINFO *bmi)
  *
  *	BYTE			maskbits[imagesize];
  */
-HIMAGELIST WINAPI ImageList_Read (LPSTREAM pstm)
+HIMAGELIST WINAPI ImageList_Read(IStream *pstm)
 {
     char image_buf[sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * 256];
     char mask_buf[sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * 256];
@@ -2977,8 +2977,7 @@ ImageList_SetOverlayImage (HIMAGELIST himl, INT iImage, INT iOverlay)
 /* helper for ImageList_Write - write bitmap to pstm
  * currently everything is written as 24 bit RGB, except masks
  */
-static BOOL
-_write_bitmap(HBITMAP hBitmap, LPSTREAM pstm)
+static BOOL _write_bitmap(HBITMAP hBitmap, IStream *pstm)
 {
     LPBITMAPFILEHEADER bmfh;
     LPBITMAPINFOHEADER bmih;
@@ -3064,8 +3063,7 @@ failed:
  *     probably.
  */
 
-BOOL WINAPI
-ImageList_Write (HIMAGELIST himl, LPSTREAM pstm)
+BOOL WINAPI ImageList_Write(HIMAGELIST himl, IStream *pstm)
 {
     ILHEAD ilHead;
     int i;
