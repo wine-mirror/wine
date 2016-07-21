@@ -109,7 +109,14 @@ static void check_command_line( int argc, char *argv[] )
 }
 
 
-#if defined(__linux__) && (defined(__i386__) || defined(__arm__))
+#ifdef __ANDROID__
+
+static int pre_exec(void)
+{
+    return 0;  /* no exec needed */
+}
+
+#elif defined(__linux__) && (defined(__i386__) || defined(__arm__))
 
 #ifdef __i386__
 /* separate thread to check for NPTL and TLS features */
