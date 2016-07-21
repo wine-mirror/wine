@@ -11681,6 +11681,10 @@ msgstr "Pagalbai įrašykite „REG /?“.\n"
 msgid "Type \"REG %1 /?\" for help.\n"
 msgstr "Pagalbai įrašykite „REG %1 /?“.\n"
 
+#: reg.rc:65 regedit.rc:205
+msgid "(value not set)"
+msgstr "(reikšmė nenustatyta)"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "R&egistras"
@@ -11882,10 +11886,6 @@ msgstr "Registro failai (*.reg)"
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 registro failai (REGEDIT4)"
-
-#: regedit.rc:205
-msgid "(value not set)"
-msgstr "(reikšmė nenustatyta)"
 
 #: regedit.rc:206
 msgid "(cannot display value)"

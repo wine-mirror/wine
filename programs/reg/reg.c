@@ -583,6 +583,7 @@ static const WCHAR *reg_type_to_wchar(DWORD type)
 static void output_value(const WCHAR *value_name, DWORD type, BYTE *data, DWORD data_size)
 {
     WCHAR fmt[] = {' ',' ',' ',' ','%','1',0};
+    WCHAR defval[32];
     WCHAR *reg_data;
     WCHAR newlineW[] = {'\n',0};
 
@@ -590,14 +591,22 @@ static void output_value(const WCHAR *value_name, DWORD type, BYTE *data, DWORD 
         output_string(fmt, value_name);
     else
     {
-        WCHAR defval[32];
         LoadStringW(GetModuleHandleW(NULL), STRING_DEFAULT_VALUE, defval, ARRAY_SIZE(defval));
         output_string(fmt, defval);
     }
     output_string(fmt, reg_type_to_wchar(type));
-    reg_data = reg_data_to_wchar(type, data, data_size);
-    output_string(fmt, reg_data);
-    HeapFree(GetProcessHeap(), 0, reg_data);
+
+    if (data)
+    {
+        reg_data = reg_data_to_wchar(type, data, data_size);
+        output_string(fmt, reg_data);
+        HeapFree(GetProcessHeap(), 0, reg_data);
+    }
+    else
+    {
+        LoadStringW(GetModuleHandleW(NULL), STRING_VALUE_NOT_SET, defval, ARRAY_SIZE(defval));
+        output_string(fmt, defval);
+    }
     output_string(newlineW);
 }
 
@@ -661,8 +670,13 @@ static int query_value(HKEY key, WCHAR *value_name, WCHAR *path, BOOL recurse)
     {
         if (rc == ERROR_FILE_NOT_FOUND)
         {
-            output_message(STRING_CANNOT_FIND);
-            return 1;
+            if (value_name && *value_name)
+            {
+                output_message(STRING_CANNOT_FIND);
+                return 1;
+            }
+            output_string(fmt, path);
+            output_value(NULL, REG_SZ, NULL, 0);
         }
         return 0;
     }

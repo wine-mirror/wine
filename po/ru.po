@@ -11678,6 +11678,10 @@ msgstr "Для справки введите «REG /?».\n"
 msgid "Type \"REG %1 /?\" for help.\n"
 msgstr "Для справки введите «REG %1 /?».\n"
 
+#: reg.rc:65 regedit.rc:205
+msgid "(value not set)"
+msgstr "(значение не задано)"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Реестр"
@@ -11879,10 +11883,6 @@ msgstr "Файлы реестра (*.reg)"
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Файлы реестра Win9x/NT4 (REGEDIT4)"
-
-#: regedit.rc:205
-msgid "(value not set)"
-msgstr "(значение не задано)"
 
 #: regedit.rc:206
 msgid "(cannot display value)"

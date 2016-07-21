@@ -11672,6 +11672,10 @@ msgstr "Skriv \"REG /?\" for hjelp.\n"
 msgid "Type \"REG %1 /?\" for help.\n"
 msgstr "Skriv \"REG %1 /?\" for hjelp.\n"
 
+#: reg.rc:65 regedit.rc:205
+msgid "(value not set)"
+msgstr "(verdi ikke oppgitt)"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Register"
@@ -11873,10 +11877,6 @@ msgstr "Registerfiler (*.reg)"
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x-/NT4-registerfiler (REGEDIT4)"
-
-#: regedit.rc:205
-msgid "(value not set)"
-msgstr "(verdi ikke oppgitt)"
 
 #: regedit.rc:206
 msgid "(cannot display value)"

@@ -547,7 +547,7 @@ static void test_query(void)
     ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     run_reg_exe("reg query HKCU\\" KEY_BASE " /ve", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS || broken(r == REG_EXIT_FAILURE /* WinXP */),
+    ok(r == REG_EXIT_SUCCESS || broken(r == REG_EXIT_FAILURE /* WinXP */),
        "got exit code %d, expected 0\n", r);
 
     err = RegSetValueExA(key, "Test", 0, REG_SZ, (BYTE *)hello, sizeof(hello));

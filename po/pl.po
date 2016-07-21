@@ -11756,6 +11756,10 @@ msgstr ""
 msgid "Type \"REG %1 /?\" for help.\n"
 msgstr ""
 
+#: reg.rc:65 regedit.rc:205
+msgid "(value not set)"
+msgstr "(wartość nie ustalona)"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Rejestr"
@@ -11956,10 +11960,6 @@ msgstr "Pliki rejestru (*.reg)"
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Pliki rejestru Win9x/NT4 (REGEDIT4)"
-
-#: regedit.rc:205
-msgid "(value not set)"
-msgstr "(wartość nie ustalona)"
 
 #: regedit.rc:206
 msgid "(cannot display value)"

@@ -11725,6 +11725,10 @@ msgstr ""
 msgid "Type \"REG %1 /?\" for help.\n"
 msgstr ""
 
+#: reg.rc:65 regedit.rc:205
+msgid "(value not set)"
+msgstr "(değer belirlenmemiş)"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Kayıt"
@@ -11926,10 +11930,6 @@ msgstr "Kayıt dosyaları (*.reg)"
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9X/NT4 Kayıt Dosyaları (REGEDIT4)"
-
-#: regedit.rc:205
-msgid "(value not set)"
-msgstr "(değer belirlenmemiş)"
 
 #: regedit.rc:206
 msgid "(cannot display value)"

@@ -11791,6 +11791,10 @@ msgstr ""
 msgid "Type \"REG %1 /?\" for help.\n"
 msgstr ""
 
+#: reg.rc:65 regedit.rc:205
+msgid "(value not set)"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr ""
@@ -12008,10 +12012,6 @@ msgstr "Текстуалне датотеке (*.txt)"
 
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
-msgstr ""
-
-#: regedit.rc:205
-msgid "(value not set)"
 msgstr ""
 
 #: regedit.rc:206

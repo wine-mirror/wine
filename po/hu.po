@@ -11868,6 +11868,10 @@ msgstr ""
 msgid "Type \"REG %1 /?\" for help.\n"
 msgstr ""
 
+#: reg.rc:65 regedit.rc:205
+msgid "(value not set)"
+msgstr "(nem beállított)"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Fájl"
@@ -12073,10 +12077,6 @@ msgstr "Regisztrációs adatbázis fájlok (*.reg)"
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 Regisztrációs fájlok (REGEDIT4)"
-
-#: regedit.rc:205
-msgid "(value not set)"
-msgstr "(nem beállított)"
 
 #: regedit.rc:206
 msgid "(cannot display value)"

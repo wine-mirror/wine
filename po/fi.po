@@ -11656,6 +11656,10 @@ msgstr "Komennolla \"REG /?\" saat apua.\n"
 msgid "Type \"REG %1 /?\" for help.\n"
 msgstr "Komennolla \"REG %1 /?\" saat apua.\n"
 
+#: reg.rc:65 regedit.rc:205
+msgid "(value not set)"
+msgstr "(arvoa ei asetettu)"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Rekisteri"
@@ -11857,10 +11861,6 @@ msgstr "Rekisteritiedostot (*.reg)"
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4-rekisteritiedostot (REGEDIT4)"
-
-#: regedit.rc:205
-msgid "(value not set)"
-msgstr "(arvoa ei asetettu)"
 
 #: regedit.rc:206
 msgid "(cannot display value)"
