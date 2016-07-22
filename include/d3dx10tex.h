@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "d3dx10.h"
+
 #ifndef __D3DX10TEX_H__
 #define __D3DX10TEX_H__
 
