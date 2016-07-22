@@ -361,7 +361,7 @@
 @ stdcall NtSignalAndWaitForSingleObject(long long long ptr)
 @ stub NtStartProfile
 @ stub NtStopProfile
-# @ stub NtSuspendProcess
+@ stdcall NtSuspendProcess(long)
 @ stdcall NtSuspendThread(long ptr)
 @ stdcall NtSystemDebugControl(long ptr long ptr long ptr)
 @ stdcall NtTerminateJobObject(long long)
@@ -1286,7 +1286,7 @@
 @ stdcall ZwSignalAndWaitForSingleObject(long long long ptr) NtSignalAndWaitForSingleObject
 @ stub ZwStartProfile
 @ stub ZwStopProfile
-# @ stub ZwSuspendProcess
+@ stdcall ZwSuspendProcess(long) NtSuspendProcess
 @ stdcall ZwSuspendThread(long ptr) NtSuspendThread
 @ stdcall ZwSystemDebugControl(long ptr long ptr long ptr) NtSystemDebugControl
 @ stdcall ZwTerminateJobObject(long long) NtTerminateJobObject
