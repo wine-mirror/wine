@@ -3357,6 +3357,10 @@ void macdrv_set_view_superview(macdrv_view v, macdrv_view s, macdrv_window w, ma
         WineWindow* oldWindow = (WineWindow*)[view window];
         WineWindow* newWindow = (WineWindow*)[superview window];
 
+#if !defined(MAC_OS_X_VERSION_10_10) || MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_10
+        if (floor(NSAppKitVersionNumber) <= 1265 /*NSAppKitVersionNumber10_9*/)
+            [view removeFromSuperview];
+#endif
         if (prev)
             [superview addSubview:view positioned:NSWindowBelow relativeTo:prev];
         else
