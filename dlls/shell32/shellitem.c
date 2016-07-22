@@ -61,7 +61,7 @@ static HRESULT WINAPI ShellItem_QueryInterface(IShellItem2 *iface, REFIID riid,
 {
     ShellItem *This = impl_from_IShellItem2(iface);
 
-    TRACE("(%p,%p,%p)\n", iface, riid, ppv);
+    TRACE("(%p, %s, %p)\n", iface, debugstr_guid(riid), ppv);
 
     if (!ppv) return E_INVALIDARG;
 

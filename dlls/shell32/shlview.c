@@ -3502,8 +3502,8 @@ static HRESULT WINAPI shellfolderviewdual_GetIDsOfNames(
     ITypeInfo *ti;
     HRESULT hr;
 
-    TRACE("(%p,%p,%p,%u,%d,%p)\n", This, riid, rgszNames, cNames, lcid,
-            rgDispId);
+    TRACE("(%p, %s, %p, %u, %d, %p)\n", This, debugstr_guid(riid), rgszNames,
+            cNames, lcid, rgDispId);
 
     hr = get_typeinfo(IShellFolderViewDual3_tid, &ti);
     if (SUCCEEDED(hr))
@@ -3520,8 +3520,9 @@ static HRESULT WINAPI shellfolderviewdual_Invoke(IShellFolderViewDual3 *iface,
     ITypeInfo *ti;
     HRESULT hr;
 
-    TRACE("(%p,%d,%p,%d,%u,%p,%p,%p,%p)\n", This, dispIdMember, riid, lcid,
-            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    TRACE("(%p, %d, %s, %d, %u, %p, %p, %p, %p)\n", This, dispIdMember,
+            debugstr_guid(riid), lcid, wFlags, pDispParams, pVarResult,
+            pExcepInfo, puArgErr);
 
     hr = get_typeinfo(IShellFolderViewDual3_tid, &ti);
     if (SUCCEEDED(hr))
