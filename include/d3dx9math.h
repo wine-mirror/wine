@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <d3dx9.h>
+#include "d3dx9.h"
 
 #ifndef __D3DX9MATH_H__
 #define __D3DX9MATH_H__
@@ -469,6 +469,6 @@ HRESULT WINAPI D3DXCreateMatrixStack(DWORD flags, ID3DXMatrixStack **stack);
 }
 #endif
 
-#include <d3dx9math.inl>
+#include "d3dx9math.inl"
 
 #endif /* __D3DX9MATH_H__ */
