@@ -4318,7 +4318,7 @@ static void _SHCreateSymbolicLinks(void)
         }
 
         /* Replace 'My Documents' directory with a symlink or fail silently if not empty. */
-        rmdir(pszPersonal);
+        remove(pszPersonal);
         symlink(szPersonalTarget, pszPersonal);
     }
     else
@@ -4374,7 +4374,7 @@ static void _SHCreateSymbolicLinks(void)
             strcpy(szMyStuffTarget, szPersonalTarget);
             break;
         }
-        rmdir(pszMyStuff);
+        remove(pszMyStuff);
         symlink(szMyStuffTarget, pszMyStuff);
         HeapFree(GetProcessHeap(), 0, pszMyStuff);
     }
@@ -4395,7 +4395,7 @@ static void _SHCreateSymbolicLinks(void)
                               SHGFP_TYPE_DEFAULT, wszTempPath);
         if (SUCCEEDED(hr) && (pszDesktop = wine_get_unix_file_name(wszTempPath))) 
         {
-            rmdir(pszDesktop);
+            remove(pszDesktop);
             if (xdg_desktop_dir)
                 symlink(xdg_desktop_dir, pszDesktop);
             else
