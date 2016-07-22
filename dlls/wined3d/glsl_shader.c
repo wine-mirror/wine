@@ -5851,6 +5851,8 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     shader_addline(buffer, "%s\n", shader_glsl_get_version(gl_info, &reg_maps->shader_version));
 
     shader_glsl_enable_extensions(buffer, gl_info);
+    if (gl_info->supported[ARB_DERIVATIVE_CONTROL])
+        shader_addline(buffer, "#extension GL_ARB_derivative_control : enable\n");
     if (gl_info->supported[ARB_SHADER_TEXTURE_LOD])
         shader_addline(buffer, "#extension GL_ARB_shader_texture_lod : enable\n");
     /* The spec says that it doesn't have to be explicitly enabled, but the

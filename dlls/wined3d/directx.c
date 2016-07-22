@@ -114,6 +114,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_debug_output",                 ARB_DEBUG_OUTPUT              },
     {"GL_ARB_depth_buffer_float",           ARB_DEPTH_BUFFER_FLOAT        },
     {"GL_ARB_depth_texture",                ARB_DEPTH_TEXTURE             },
+    {"GL_ARB_derivative_control",           ARB_DERIVATIVE_CONTROL        },
     {"GL_ARB_draw_buffers",                 ARB_DRAW_BUFFERS              },
     {"GL_ARB_draw_elements_base_vertex",    ARB_DRAW_ELEMENTS_BASE_VERTEX },
     {"GL_ARB_draw_instanced",               ARB_DRAW_INSTANCED            },
@@ -3557,6 +3558,8 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
         {ARB_INTERNALFORMAT_QUERY2,        MAKEDWORD_VERSION(4, 3)},
         {ARB_TEXTURE_QUERY_LEVELS,         MAKEDWORD_VERSION(4, 3)},
         {ARB_TEXTURE_VIEW,                 MAKEDWORD_VERSION(4, 3)},
+
+        {ARB_DERIVATIVE_CONTROL,           MAKEDWORD_VERSION(4, 5)},
     };
     struct wined3d_driver_info *driver_info = &adapter->driver_info;
     const char *gl_vendor_str, *gl_renderer_str, *gl_version_str;
