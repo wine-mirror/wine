@@ -992,7 +992,7 @@ msgstr "Tulostinta ei löydy."
 
 #: comdlg32.rc:70 progman.rc:76
 msgid "Out of memory."
-msgstr "Muisti loppu."
+msgstr "Muisti ei riitä."
 
 #: comdlg32.rc:71
 msgid "An error occurred."
@@ -1128,7 +1128,7 @@ msgstr "Käyttäjän keskeyttämä; "
 
 #: comdlg32.rc:105
 msgid "Out of memory; "
-msgstr "Muisti loppu; "
+msgstr "Muisti ei riitä; "
 
 #: comdlg32.rc:106
 msgid "The printer door is open; "
@@ -3714,7 +3714,7 @@ msgstr "Muisti sotkeutunut.\n"
 
 #: winerror.mc:66
 msgid "Not enough memory.\n"
-msgstr "Muisti loppu.\n"
+msgstr "Muisti ei riitä.\n"
 
 #: winerror.mc:71
 msgid "Invalid block.\n"
@@ -3738,7 +3738,7 @@ msgstr "Data ei kelpaa.\n"
 
 #: winerror.mc:96
 msgid "Out of memory.\n"
-msgstr "Muisti loppu.\n"
+msgstr "Muisti ei riitä.\n"
 
 #: winerror.mc:101
 msgid "Invalid drive.\n"
@@ -11956,85 +11956,64 @@ msgstr "regedit: Käsittelemätön toiminto.\n"
 
 #: regedit.rc:367
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
-msgstr ""
+msgstr "regedit: Muisti ei riitä! (%1!S!, rivi %2!u!)\n"
 
 #: regedit.rc:368
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "regedit: Invalid hexadecimal value.\n"
-msgstr "reg: Avaimen nimi ei kelpaa\n"
+msgstr "regedit: Viallinen heksadesimaaliarvo.\n"
 
 #: regedit.rc:369
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 msgstr ""
+"regedit: Ei voida muuntaa heksadesimaalidataa. Viallinen arvo on kohteessa "
+"'%1'.\n"
 
 #: regedit.rc:370
-#, fuzzy
-#| msgid "regedit: Invalid or unrecognized switch [%1]\n"
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr "regedit: Virheellinen tai tuntematon valitsin [%1]\n"
+msgstr "regedit: Tuntematon merkintä [\\%1!c!]\n"
 
 #: regedit.rc:371
-#, fuzzy
-#| msgid "reg: Unsupported registry data type [%1]\n"
 msgid "regedit: Unsupported registry data type [%1]\n"
-msgstr "reg: Rekisterin tietotyypille [%1] ei ole tukea\n"
+msgstr "regedit: Rekisterin tietotyypille [%1] ei ole tukea\n"
 
 #: regedit.rc:372
-#, fuzzy
-#| msgid "regedit: Unable to open the file '%1'.\n"
 msgid "regedit: Unexpected end of line in '%1'.\n"
-msgstr "regedit: Tiedostoa '%1' ei voida avata.\n"
+msgstr "regedit: Tiedosto '%1' päättyi odottamattomasti.\n"
 
 #: regedit.rc:373
-#, fuzzy
-#| msgid "regedit: The file '%1' was not found.\n"
 msgid "regedit: The line '%1' was not recognized.\n"
-msgstr "regedit: Tiedostoa '%1' ei löydy.\n"
+msgstr "regedit: Riviä '%1' ei tunnisteta.\n"
 
 #: regedit.rc:374
-#, fuzzy
-#| msgid "regedit: Unable to open the file '%1'.\n"
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
-msgstr "regedit: Tiedostoa '%1' ei voida avata.\n"
+msgstr "regedit: Rekisteriarvoa '%1' ei voida lisätä kohteeseen '%2'.\n"
 
 #: regedit.rc:375
-#, fuzzy
-#| msgid "regedit: Unable to open the file '%1'.\n"
 msgid "regedit: Unable to open the registry key '%1'.\n"
-msgstr "regedit: Tiedostoa '%1' ei voida avata.\n"
+msgstr "regedit: Rekisteriavainta '%1' ei voida avata.\n"
 
 #: regedit.rc:376
-#, fuzzy
-#| msgid "reg: Unsupported registry data type [%1]\n"
 msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
-msgstr "reg: Rekisterin tietotyypille [%1] ei ole tukea\n"
+msgstr "regedit: Rekisterin tietotyypille [%1] kohteessa '%2' ei ole tukea.\n"
 
 #: regedit.rc:377
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
-msgstr ""
+msgstr "regedit: Rekisteriarvo '%1' viedään binääridatana.\n"
 
 #: regedit.rc:378
-#, fuzzy
-#| msgid "regedit: No registry key was specified for removal.\n"
 msgid "regedit: Incorrect registry class specification in '%1'.\n"
-msgstr "regedit: Poistettavaa rekisteriavainta ei määritelty.\n"
+msgstr "regedit: Viallinen rekisteriluokan määrite kohteessa '%1'.\n"
 
 #: regedit.rc:379
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
-msgstr "reg: Järjestelmä ei löytänyt annettua rekisteriavainta tai -arvoa\n"
+msgstr "regedit: Ei voida viedä kohdetta '%1'. Rekisteriavainta ei löydy.\n"
 
 #: regedit.rc:380
-#, fuzzy
-#| msgid "regedit: Unable to open the file '%1'.\n"
 msgid "regedit: Unable to delete the registry class '%1'.\n"
-msgstr "regedit: Tiedostoa '%1' ei voida avata.\n"
+msgstr "regedit: Rekisteriluokkaa '%1' ei voida poistaa.\n"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
