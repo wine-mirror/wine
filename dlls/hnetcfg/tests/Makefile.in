@@ -1,0 +1,5 @@
+TESTDLL   = hnetcfg.dll
+IMPORTS   = ole32 uuid
+
+C_SRCS = \
+	policy.c
