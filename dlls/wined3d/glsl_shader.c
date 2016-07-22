@@ -3562,6 +3562,31 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
     shader_addline(buffer, "));\n");
 }
 
+static void shader_glsl_derivative(const struct wined3d_shader_instruction *ins)
+{
+    const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
+    struct wined3d_string_buffer *buffer = ins->ctx->buffer;
+    struct glsl_src_param src_param;
+    const char *instruction;
+    DWORD write_mask;
+
+    if (!gl_info->supported[ARB_DERIVATIVE_CONTROL])
+    {
+        FIXME("OpenGL implementation does not support ARB_derivative_control.\n");
+        return;
+    }
+
+    switch (ins->handler_idx)
+    {
+        case WINED3DSIH_DSX_COARSE: instruction = "dFdxCoarse"; break;
+        default: ERR("Unhandled opcode %#x.\n", ins->handler_idx); return;
+    }
+
+    write_mask = shader_glsl_append_dst(buffer, ins);
+    shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src_param);
+    shader_addline(buffer, "%s(%s));\n", instruction, src_param.param_str);
+}
+
 static void shader_glsl_nop(const struct wined3d_shader_instruction *ins) {}
 
 static void shader_glsl_nrm(const struct wined3d_shader_instruction *ins)
@@ -8679,7 +8704,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DP4                              */ shader_glsl_dot,
     /* WINED3DSIH_DST                              */ shader_glsl_dst,
     /* WINED3DSIH_DSX                              */ shader_glsl_map2gl,
-    /* WINED3DSIH_DSX_COARSE                       */ NULL,
+    /* WINED3DSIH_DSX_COARSE                       */ shader_glsl_derivative,
     /* WINED3DSIH_DSX_FINE                         */ NULL,
     /* WINED3DSIH_DSY                              */ shader_glsl_map2gl,
     /* WINED3DSIH_DSY_COARSE                       */ NULL,
