@@ -817,6 +817,34 @@ PIRP WINAPI IoBuildSynchronousFsdRequest(ULONG majorfunc, PDEVICE_OBJECT device,
     return irp;
 }
 
+static void build_driver_keypath( const WCHAR *name, UNICODE_STRING *keypath )
+{
+    static const WCHAR driverW[] = {'\\','D','r','i','v','e','r','\\',0};
+    static const WCHAR servicesW[] = {'\\','R','e','g','i','s','t','r','y',
+                                      '\\','M','a','c','h','i','n','e',
+                                      '\\','S','y','s','t','e','m',
+                                      '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
+                                      '\\','S','e','r','v','i','c','e','s',
+                                      '\\',0};
+    WCHAR *str;
+
+    /* Check what prefix is present */
+    if (strncmpW( name, servicesW, strlenW(servicesW) ) == 0)
+    {
+        FIXME( "Driver name %s is malformed as the keypath\n", debugstr_w(name) );
+        RtlCreateUnicodeString( keypath, name );
+        return;
+    }
+    if (strncmpW( name, driverW, strlenW(driverW) ) == 0)
+        name += strlenW(driverW);
+    else
+        FIXME( "Driver name %s does not properly begin with \\Driver\\", debugstr_w(name) );
+
+    str = HeapAlloc( GetProcessHeap(), 0, sizeof(servicesW) + strlenW(name)*sizeof(WCHAR));
+    lstrcpyW( str, servicesW );
+    lstrcatW( str, name );
+    RtlInitUnicodeString( keypath, str );
+}
 
 /***********************************************************************
  *           IoCreateDriver   (NTOSKRNL.EXE.@)
@@ -844,9 +872,9 @@ NTSTATUS WINAPI IoCreateDriver( UNICODE_STRING *name, PDRIVER_INITIALIZE init )
     driver->DriverInit      = init;
     driver->DriverExtension = extension;
     extension->DriverObject   = driver;
-    extension->ServiceKeyName = driver->DriverName;
+    build_driver_keypath( driver->DriverName.Buffer, &extension->ServiceKeyName );
 
-    status = driver->DriverInit( driver, name );
+    status = driver->DriverInit( driver, &extension->ServiceKeyName );
 
     if (status)
     {
@@ -865,6 +893,7 @@ void WINAPI IoDeleteDriver( DRIVER_OBJECT *driver )
     TRACE("(%p)\n", driver);
 
     RtlFreeUnicodeString( &driver->DriverName );
+    RtlFreeUnicodeString( &driver->DriverExtension->ServiceKeyName );
     RtlFreeHeap( GetProcessHeap(), 0, driver );
 }
 
