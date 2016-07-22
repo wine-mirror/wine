@@ -289,7 +289,8 @@ static HRESULT WINAPI AutomationObject_GetIDsOfNames(
     ITypeInfo *ti;
     HRESULT hr;
 
-    TRACE("(%p/%p)->(%p,%p,%d,%d,%p)\n", iface, This, riid, rgszNames, cNames, lcid, rgDispId);
+    TRACE("(%p/%p)->(%s, %p, %d, %d, %p)\n", iface, This,
+            debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
 
     if (!IsEqualGUID(riid, &IID_NULL)) return E_INVALIDARG;
 
@@ -332,7 +333,9 @@ static HRESULT WINAPI AutomationObject_Invoke(
     BSTR bstrName = NULL;
     ITypeInfo *ti;
 
-    TRACE("(%p/%p)->(%d,%p,%d,%d,%p,%p,%p,%p)\n", iface, This, dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    TRACE("(%p/%p)->(%d, %s, %d, %d, %p, %p, %p, %p)\n", iface, This,
+            dispIdMember, debugstr_guid(riid), lcid, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     if (!IsEqualIID(riid, &IID_NULL))
     {
