@@ -3581,6 +3581,7 @@ static void shader_glsl_derivative(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_DSX_COARSE: instruction = "dFdxCoarse"; break;
         case WINED3DSIH_DSX_FINE: instruction = "dFdxFine"; break;
         case WINED3DSIH_DSY_COARSE: instruction = "ycorrection.y * dFdyCoarse"; break;
+        case WINED3DSIH_DSY_FINE: instruction = "ycorrection.y * dFdyFine"; break;
         default: ERR("Unhandled opcode %#x.\n", ins->handler_idx); return;
     }
 
@@ -8710,7 +8711,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DSX_FINE                         */ shader_glsl_derivative,
     /* WINED3DSIH_DSY                              */ shader_glsl_map2gl,
     /* WINED3DSIH_DSY_COARSE                       */ shader_glsl_derivative,
-    /* WINED3DSIH_DSY_FINE                         */ NULL,
+    /* WINED3DSIH_DSY_FINE                         */ shader_glsl_derivative,
     /* WINED3DSIH_ELSE                             */ shader_glsl_else,
     /* WINED3DSIH_EMIT                             */ shader_glsl_emit,
     /* WINED3DSIH_EMIT_STREAM                      */ shader_glsl_emit,
