@@ -457,7 +457,7 @@ static void test_handle_joychange(HWND hwnd, struct JoystickData *data)
 
     /* Enable only  buttons present in the device */
     for (i = 0; i < TEST_MAX_BUTTONS; i++)
-        ShowWindow(data->graphics.buttons[i], i <= data->joysticks[data->chosen_joystick].num_buttons);
+        ShowWindow(data->graphics.buttons[i], i < data->joysticks[data->chosen_joystick].num_buttons);
 }
 
 /*********************************************************************
