@@ -7818,6 +7818,26 @@ INT WINAPI InetPtonW(INT family, PCWSTR addr, PVOID buffer)
 }
 
 /***********************************************************************
+ *              InetNtopW                      (WS2_32.@)
+ */
+PCWSTR WINAPI InetNtopW(INT family, PVOID addr, PWSTR buffer, SIZE_T len)
+{
+    char bufferA[WS_INET6_ADDRSTRLEN];
+    PWSTR ret = NULL;
+
+    TRACE("family %d, addr (%p), buffer (%p), len %ld\n", family, addr, buffer, len);
+
+    if (WS_inet_ntop(family, addr, bufferA, sizeof(bufferA)))
+    {
+        if (MultiByteToWideChar(CP_ACP, 0, bufferA, -1, buffer, len))
+            ret = buffer;
+        else
+            SetLastError(ERROR_INVALID_PARAMETER);
+    }
+    return ret;
+}
+
+/***********************************************************************
  *              WSAStringToAddressA                      (WS2_32.80)
  */
 INT WINAPI WSAStringToAddressA(LPSTR AddressString,
