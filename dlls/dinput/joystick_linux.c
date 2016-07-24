@@ -81,6 +81,8 @@ struct JoyDev
     BYTE axis_count;
     BYTE button_count;
     int  *dev_axes_map;
+
+    WORD vendor_id, product_id;
 };
 
 typedef struct JoystickImpl JoystickImpl;
@@ -135,9 +137,10 @@ static INT find_joystick_devices(void)
     joystick_devices_count = 0;
     for (i = 0; i < MAX_JOYSTICKS; i++)
     {
-        int fd;
+        int fd, sys_fd;
         struct JoyDev joydev, *new_joydevs;
         BYTE axes_map[ABS_MAX + 1];
+        char sys_path[sizeof("/sys/class/input/js/device/id/product") + 10], id_str[5];
 
         snprintf(joydev.device, sizeof(joydev.device), "%s%d", JOYDEV_NEW, i);
         if ((fd = open(joydev.device, O_RDONLY)) < 0)
@@ -203,6 +206,36 @@ static INT find_joystick_devices(void)
                     else
                         joydev.dev_axes_map[j] = -1;
             }
+
+        /* Find vendor_id and product_id in sysfs */
+        joydev.vendor_id  = 0;
+        joydev.product_id = 0;
+
+        sprintf(sys_path, "/sys/class/input/js%d/device/id/vendor", i);
+        sys_fd = open(sys_path, O_RDONLY);
+        if (sys_fd > 0)
+        {
+            if (read(sys_fd, id_str, 4) == 4)
+            {
+                id_str[4] = '\0';
+                joydev.vendor_id = strtol(id_str, NULL, 16);
+            }
+
+            close(sys_fd);
+        }
+
+        sprintf(sys_path, "/sys/class/input/js%d/device/id/product", i);
+        sys_fd = open(sys_path, O_RDONLY);
+        if (sys_fd > 0)
+        {
+            if (read(sys_fd, id_str, 4) == 4)
+            {
+                id_str[4] = '\0';
+                joydev.product_id = strtol(id_str, NULL, 16);
+            }
+
+            close(sys_fd);
+        }
 
         close(fd);
 
