@@ -956,8 +956,11 @@ TRACKBAR_Refresh (TRACKBAR_INFO *infoPtr, HDC hdcDst)
         if (GetWindowTheme (infoPtr->hwndSelf)) {
             DrawThemeParentBackground (infoPtr->hwndSelf, hdc, 0);
         }
-        else
-	    FillRect (hdc, &rcClient, GetSysColorBrush(COLOR_BTNFACE));
+        else {
+            HBRUSH brush = (HBRUSH)SendMessageW(infoPtr->hwndNotify, WM_CTLCOLORSTATIC,
+                    (WPARAM)hdc, (LPARAM)infoPtr->hwndSelf);
+            FillRect (hdc, &rcClient, brush ? brush : GetSysColorBrush(COLOR_BTNFACE));
+        }
         if (gcdrf != CDRF_DODEFAULT)
 	    notify_customdraw(infoPtr, &nmcd, CDDS_POSTERASE);
     }
