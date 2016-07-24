@@ -77,6 +77,7 @@ struct JoyDev
 {
     char device[MAX_PATH];
     char name[MAX_PATH];
+    GUID guid_product;
 
     BYTE axis_count;
     BYTE button_count;
@@ -120,6 +121,19 @@ static const GUID DInput_Wine_Joystick_GUID = { /* 9e573ed9-7734-11d2-8d4a-23903
   0x7734,
   0x11d2,
   {0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7}
+};
+
+/*
+ * Construct the GUID in the same way of Windows doing this.
+ * Data1 is concatenation of productid and vendorid.
+ * Data2 and Data3 are NULL.
+ * Data4 seems to be a constant.
+ */
+static const GUID DInput_Wine_Joystick_Constant_Part_GUID = {
+  0x000000000,
+  0x0000,
+  0x0000,
+  {0x00, 0x00, 0x50, 0x49, 0x44, 0x56, 0x49, 0x44}
 };
 
 #define MAX_JOYSTICKS 64
@@ -237,6 +251,17 @@ static INT find_joystick_devices(void)
             close(sys_fd);
         }
 
+        if (joydev.vendor_id == 0 || joydev.product_id == 0)
+        {
+            joydev.guid_product = DInput_Wine_Joystick_GUID;
+        }
+        else
+        {
+            /* Concatenate product_id with vendor_id to mimic Windows behaviour */
+            joydev.guid_product       = DInput_Wine_Joystick_Constant_Part_GUID;
+            joydev.guid_product.Data1 = MAKELONG(joydev.vendor_id, joydev.product_id);
+        }
+
         close(fd);
 
         if (!joystick_devices_count)
@@ -267,7 +292,7 @@ static void fill_joystick_dideviceinstanceA(LPDIDEVICEINSTANCEA lpddi, DWORD ver
     lpddi->dwSize = dwSize;
     lpddi->guidInstance = DInput_Wine_Joystick_GUID;
     lpddi->guidInstance.Data3 = id;
-    lpddi->guidProduct = DInput_Wine_Joystick_GUID;
+    lpddi->guidProduct = joystick_devices[id].guid_product;
     /* we only support traditional joysticks for now */
     if (version >= 0x0800)
         lpddi->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
@@ -290,7 +315,7 @@ static void fill_joystick_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD ver
     lpddi->dwSize = dwSize;
     lpddi->guidInstance = DInput_Wine_Joystick_GUID;
     lpddi->guidInstance.Data3 = id;
-    lpddi->guidProduct = DInput_Wine_Joystick_GUID;
+    lpddi->guidProduct = joystick_devices[id].guid_product;
     /* we only support traditional joysticks for now */
     if (version >= 0x0800)
         lpddi->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
