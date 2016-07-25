@@ -262,7 +262,7 @@ struct dwrite_textlayout {
     UINT32 cluster_count;
     FLOAT  minwidth;
 
-    DWRITE_LINE_METRICS *lines;
+    DWRITE_LINE_METRICS1 *lines;
     UINT32 line_alloc;
 
     DWRITE_TEXT_METRICS1 metrics;
@@ -1303,7 +1303,7 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     return S_OK;
 }
 
-static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_LINE_METRICS *metrics, UINT32 *line)
+static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_LINE_METRICS1 *metrics, UINT32 *line)
 {
     if (!layout->line_alloc) {
         layout->line_alloc = 5;
@@ -1313,7 +1313,7 @@ static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_
     }
 
     if (layout->metrics.lineCount == layout->line_alloc) {
-        DWRITE_LINE_METRICS *l = heap_realloc(layout->lines, layout->line_alloc*2*sizeof(*layout->lines));
+        DWRITE_LINE_METRICS1 *l = heap_realloc(layout->lines, layout->line_alloc*2*sizeof(*layout->lines));
         if (!l)
             return E_OUTOFMEMORY;
         layout->lines = l;
@@ -1692,7 +1692,7 @@ static HRESULT layout_add_underline(struct dwrite_textlayout *layout, struct lay
 static HRESULT layout_set_dummy_line_metrics(struct dwrite_textlayout *layout, UINT32 pos, UINT32 *line)
 {
     DWRITE_FONT_METRICS fontmetrics;
-    DWRITE_LINE_METRICS metrics;
+    DWRITE_LINE_METRICS1 metrics;
     struct layout_range *range;
     IDWriteFontFace *fontface;
     IDWriteFont *font;
@@ -1720,6 +1720,8 @@ static HRESULT layout_set_dummy_line_metrics(struct dwrite_textlayout *layout, U
     metrics.trailingWhitespaceLength = 0;
     metrics.newlineLength = 0;
     metrics.isTrimmed = FALSE;
+    metrics.leadingBefore = 0.0f;
+    metrics.leadingAfter = 0.0f;
     return layout_set_line_metrics(layout, &metrics, line);
 }
 
@@ -1730,7 +1732,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     struct layout_effective_run *erun, *first_underlined;
     struct layout_effective_inline *inrun;
     const struct layout_run *run;
-    DWRITE_LINE_METRICS metrics;
+    DWRITE_LINE_METRICS1 metrics;
     FLOAT width, origin_x, origin_y;
     UINT32 i, start, line, textpos;
     HRESULT hr;
@@ -3368,8 +3370,11 @@ static HRESULT WINAPI dwritetextlayout_GetLineMetrics(IDWriteTextLayout3 *iface,
     if (FAILED(hr))
         return hr;
 
-    if (metrics)
-        memcpy(metrics, This->lines, sizeof(*metrics)*min(max_count, This->metrics.lineCount));
+    if (metrics) {
+        UINT32 i, c = min(max_count, This->metrics.lineCount);
+        for (i = 0; i < c; i++)
+            memcpy(metrics + i, This->lines + i, sizeof(*metrics));
+    }
 
     *count = This->metrics.lineCount;
     return max_count >= This->metrics.lineCount ? S_OK : E_NOT_SUFFICIENT_BUFFER;
@@ -3680,8 +3685,19 @@ static HRESULT WINAPI dwritetextlayout3_GetLineMetrics(IDWriteTextLayout3 *iface
     UINT32 max_count, UINT32 *count)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    FIXME("(%p)->(%p %u %p): stub\n", This, metrics, max_count, count);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p %u %p)\n", This, metrics, max_count, count);
+
+    hr = layout_compute_effective_runs(This);
+    if (FAILED(hr))
+        return hr;
+
+    if (metrics)
+        memcpy(metrics, This->lines, sizeof(*metrics)*min(max_count, This->metrics.lineCount));
+
+    *count = This->metrics.lineCount;
+    return max_count >= This->metrics.lineCount ? S_OK : E_NOT_SUFFICIENT_BUFFER;
 }
 
 static const IDWriteTextLayout3Vtbl dwritetextlayoutvtbl = {
