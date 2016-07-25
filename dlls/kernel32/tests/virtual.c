@@ -94,20 +94,13 @@ static void test_VirtualAllocEx(void)
     SetLastError(0xdeadbeef);
     addr1 = pVirtualAllocEx(hProcess, NULL, alloc_size, MEM_COMMIT,
                            PAGE_EXECUTE_READWRITE);
-    if (!addr1 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-    {   /* Win9x */
-        win_skip("VirtualAllocEx not implemented\n");
-        TerminateProcess(hProcess, 0);
-        CloseHandle(hProcess);
-        return;
-    }
+    ok(addr1 != NULL, "VirtualAllocEx error %u\n", GetLastError());
 
     src = VirtualAlloc( NULL, alloc_size, MEM_COMMIT, PAGE_READWRITE );
     dst = VirtualAlloc( NULL, alloc_size, MEM_COMMIT, PAGE_READWRITE );
     for (i = 0; i < alloc_size; i++)
         src[i] = i & 0xff;
 
-    ok(addr1 != NULL, "VirtualAllocEx error %u\n", GetLastError());
     b = WriteProcessMemory(hProcess, addr1, src, alloc_size, &bytes_written);
     ok(b && (bytes_written == alloc_size), "%lu bytes written\n",
        bytes_written);
@@ -156,9 +149,8 @@ static void test_VirtualAllocEx(void)
     SetLastError(0xdeadbeef);
     addr1 = pVirtualAllocEx(hProcess, 0, 0, MEM_RESERVE, PAGE_NOACCESS);
     ok(addr1 == NULL, "VirtualAllocEx should fail on zero-sized allocation\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER /* NT */ ||
-       GetLastError() == ERROR_NOT_ENOUGH_MEMORY, /* Win9x */
-        "got %u, expected ERROR_INVALID_PARAMETER\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "got %u, expected ERROR_INVALID_PARAMETER\n", GetLastError());
 
     addr1 = pVirtualAllocEx(hProcess, 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
     ok(addr1 != NULL, "VirtualAllocEx failed\n");
@@ -171,17 +163,13 @@ static void test_VirtualAllocEx(void)
     ok(info.AllocationProtect == PAGE_NOACCESS, "%x != PAGE_NOACCESS\n", info.AllocationProtect);
     ok(info.RegionSize == 0x10000, "%lx != 0x10000\n", info.RegionSize);
     ok(info.State == MEM_RESERVE, "%x != MEM_RESERVE\n", info.State);
-    /* NT reports Protect == 0 for a not committed memory block */
-    ok(info.Protect == 0 /* NT */ ||
-       info.Protect == PAGE_NOACCESS, /* Win9x */
-        "%x != PAGE_NOACCESS\n", info.Protect);
+    ok(info.Protect == 0, "%x != PAGE_NOACCESS\n", info.Protect);
     ok(info.Type == MEM_PRIVATE, "%x != MEM_PRIVATE\n", info.Type);
 
     SetLastError(0xdeadbeef);
     ok(!VirtualProtectEx(hProcess, addr1, 0xFFFC, PAGE_READONLY, &old_prot),
        "VirtualProtectEx should fail on a not committed memory\n");
-    ok(GetLastError() == ERROR_INVALID_ADDRESS /* NT */ ||
-       GetLastError() == ERROR_INVALID_PARAMETER, /* Win9x */
+    ok(GetLastError() == ERROR_INVALID_ADDRESS,
         "got %u, expected ERROR_INVALID_ADDRESS\n", GetLastError());
 
     addr2 = pVirtualAllocEx(hProcess, addr1, 0x1000, MEM_COMMIT, PAGE_NOACCESS);
@@ -203,9 +191,8 @@ static void test_VirtualAllocEx(void)
     SetLastError(0xdeadbeef);
     ok(!VirtualProtectEx(hProcess, addr1, 0xFFFC, PAGE_READONLY, &old_prot),
         "VirtualProtectEx should fail on a not committed memory\n");
-    ok(GetLastError() == ERROR_INVALID_ADDRESS /* NT */ ||
-       GetLastError() == ERROR_INVALID_PARAMETER, /* Win9x */
-        "got %u, expected ERROR_INVALID_ADDRESS\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_ADDRESS,
+       "got %u, expected ERROR_INVALID_ADDRESS\n", GetLastError());
 
     old_prot = 0;
     ok(VirtualProtectEx(hProcess, addr1, 0x1000, PAGE_READONLY, &old_prot), "VirtualProtectEx failed\n");
@@ -245,8 +232,7 @@ static void test_VirtualAlloc(void)
     SetLastError(0xdeadbeef);
     addr1 = VirtualAlloc(0, 0, MEM_RESERVE, PAGE_NOACCESS);
     ok(addr1 == NULL, "VirtualAlloc should fail on zero-sized allocation\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER /* NT */ ||
-       GetLastError() == ERROR_NOT_ENOUGH_MEMORY, /* Win9x */
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
         "got %d, expected ERROR_INVALID_PARAMETER\n", GetLastError());
 
     addr1 = VirtualAlloc(0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
@@ -260,17 +246,13 @@ static void test_VirtualAlloc(void)
     ok(info.AllocationProtect == PAGE_NOACCESS, "%x != PAGE_NOACCESS\n", info.AllocationProtect);
     ok(info.RegionSize == 0x10000, "%lx != 0x10000\n", info.RegionSize);
     ok(info.State == MEM_RESERVE, "%x != MEM_RESERVE\n", info.State);
-    /* NT reports Protect == 0 for a not committed memory block */
-    ok(info.Protect == 0 /* NT */ ||
-       info.Protect == PAGE_NOACCESS, /* Win9x */
-        "%x != PAGE_NOACCESS\n", info.Protect);
+    ok(info.Protect == 0, "%x != PAGE_NOACCESS\n", info.Protect);
     ok(info.Type == MEM_PRIVATE, "%x != MEM_PRIVATE\n", info.Type);
 
     SetLastError(0xdeadbeef);
     ok(!VirtualProtect(addr1, 0xFFFC, PAGE_READONLY, &old_prot),
        "VirtualProtect should fail on a not committed memory\n");
-    ok(GetLastError() == ERROR_INVALID_ADDRESS /* NT */ ||
-       GetLastError() == ERROR_INVALID_PARAMETER, /* Win9x */
+    ok( GetLastError() == ERROR_INVALID_ADDRESS,
         "got %d, expected ERROR_INVALID_ADDRESS\n", GetLastError());
 
     addr2 = VirtualAlloc(addr1, 0x1000, MEM_COMMIT, PAGE_NOACCESS);
@@ -292,8 +274,7 @@ static void test_VirtualAlloc(void)
     SetLastError(0xdeadbeef);
     ok(!VirtualProtect(addr1, 0xFFFC, PAGE_READONLY, &old_prot),
         "VirtualProtect should fail on a not committed memory\n");
-    ok(GetLastError() == ERROR_INVALID_ADDRESS /* NT */ ||
-       GetLastError() == ERROR_INVALID_PARAMETER, /* Win9x */
+    ok( GetLastError() == ERROR_INVALID_ADDRESS,
         "got %d, expected ERROR_INVALID_ADDRESS\n", GetLastError());
 
     ok(VirtualProtect(addr1, 0x1000, PAGE_READONLY, &old_prot), "VirtualProtect failed\n");
@@ -313,30 +294,26 @@ static void test_VirtualAlloc(void)
     ok( *(DWORD *)addr1 == 0x55555555, "wrong data %x\n", *(DWORD *)addr1 );
 
     addr2 = VirtualAlloc( addr1, 0x1000, MEM_RESET, PAGE_NOACCESS );
-    ok( addr2 == addr1 || broken( !addr2 && GetLastError() == ERROR_INVALID_PARAMETER), /* win9x */
-        "VirtualAlloc failed err %u\n", GetLastError() );
+    ok( addr2 == addr1, "VirtualAlloc failed err %u\n", GetLastError() );
     ok( *(DWORD *)addr1 == 0x55555555 || *(DWORD *)addr1 == 0, "wrong data %x\n", *(DWORD *)addr1 );
-    if (addr2)
-    {
-        ok(VirtualQuery(addr1, &info, sizeof(info)) == sizeof(info),
-           "VirtualQuery failed\n");
-        ok(info.RegionSize == 0x1000, "%lx != 0x1000\n", info.RegionSize);
-        ok(info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State);
-        ok(info.Protect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.Protect);
+    ok(VirtualQuery(addr1, &info, sizeof(info)) == sizeof(info),
+       "VirtualQuery failed\n");
+    ok(info.RegionSize == 0x1000, "%lx != 0x1000\n", info.RegionSize);
+    ok(info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State);
+    ok(info.Protect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.Protect);
 
-        addr2 = VirtualAlloc( (char *)addr1 + 0x1000, 0x1000, MEM_RESET, PAGE_NOACCESS );
-        ok( (char *)addr2 == (char *)addr1 + 0x1000, "VirtualAlloc failed\n" );
+    addr2 = VirtualAlloc( (char *)addr1 + 0x1000, 0x1000, MEM_RESET, PAGE_NOACCESS );
+    ok( (char *)addr2 == (char *)addr1 + 0x1000, "VirtualAlloc failed\n" );
 
-        ok(VirtualQuery(addr2, &info, sizeof(info)) == sizeof(info),
-           "VirtualQuery failed\n");
-        ok(info.RegionSize == 0xf000, "%lx != 0xf000\n", info.RegionSize);
-        ok(info.State == MEM_RESERVE, "%x != MEM_RESERVE\n", info.State);
-        ok(info.Protect == 0, "%x != 0\n", info.Protect);
+    ok(VirtualQuery(addr2, &info, sizeof(info)) == sizeof(info),
+       "VirtualQuery failed\n");
+    ok(info.RegionSize == 0xf000, "%lx != 0xf000\n", info.RegionSize);
+    ok(info.State == MEM_RESERVE, "%x != MEM_RESERVE\n", info.State);
+    ok(info.Protect == 0, "%x != 0\n", info.Protect);
 
-        addr2 = VirtualAlloc( (char *)addr1 + 0xf000, 0x2000, MEM_RESET, PAGE_NOACCESS );
-        ok( !addr2, "VirtualAlloc failed\n" );
-        ok( GetLastError() == ERROR_INVALID_ADDRESS, "wrong error %u\n", GetLastError() );
-    }
+    addr2 = VirtualAlloc( (char *)addr1 + 0xf000, 0x2000, MEM_RESET, PAGE_NOACCESS );
+    ok( !addr2, "VirtualAlloc failed\n" );
+    ok( GetLastError() == ERROR_INVALID_ADDRESS, "wrong error %u\n", GetLastError() );
 
     /* invalid protection values */
     SetLastError(0xdeadbeef);
@@ -431,6 +408,7 @@ static void test_MapViewOfFile(void)
     void *ptr, *ptr2, *addr;
     MEMORY_BASIC_INFORMATION info;
     BOOL ret;
+    SIZE_T size;
 
     SetLastError(0xdeadbeef);
     file = CreateFileA( testfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
@@ -446,14 +424,13 @@ static void test_MapViewOfFile(void)
 
     SetLastError(0xdeadbeef);
     ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 4096 );
-    ok( ptr != NULL, "MapViewOfFile FILE_MAPE_READ error %u\n", GetLastError() );
+    ok( ptr != NULL, "MapViewOfFile FILE_MAP_READ error %u\n", GetLastError() );
     UnmapViewOfFile( ptr );
 
-    /* this fails on win9x but succeeds on NT */
     SetLastError(0xdeadbeef);
     ptr = MapViewOfFile( mapping, FILE_MAP_COPY, 0, 0, 4096 );
-    if (ptr) UnmapViewOfFile( ptr );
-    else ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %d\n", GetLastError() );
+    ok( ptr != NULL, "MapViewOfFile FILE_MAP_COPY error %u\n", GetLastError() );
+    UnmapViewOfFile( ptr );
 
     SetLastError(0xdeadbeef);
     ptr = MapViewOfFile( mapping, 0, 0, 0, 4096 );
@@ -478,24 +455,21 @@ static void test_MapViewOfFile(void)
     ok( ret, "DuplicateHandle failed error %u\n", GetLastError());
     SetLastError(0xdeadbeef);
     ptr = MapViewOfFile( map2, FILE_MAP_WRITE, 0, 0, 4096 );
-    if (!ptr)
-    {
-        ok( GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
-        CloseHandle( map2 );
-        ret = DuplicateHandle( GetCurrentProcess(), mapping, GetCurrentProcess(), &map2, 0, FALSE, 0 );
-        ok( ret, "DuplicateHandle failed error %u\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        ptr = MapViewOfFile( map2, 0, 0, 0, 4096 );
-        ok( !ptr, "MapViewOfFile succeeded\n" );
-        ok( GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
-        CloseHandle( map2 );
-        ret = DuplicateHandle( GetCurrentProcess(), mapping, GetCurrentProcess(), &map2,
-                               FILE_MAP_READ, FALSE, 0 );
-        ok( ret, "DuplicateHandle failed error %u\n", GetLastError());
-        ptr = MapViewOfFile( map2, 0, 0, 0, 4096 );
-        ok( ptr != NULL, "MapViewOfFile NO_ACCESS error %u\n", GetLastError() );
-    }
-    else win_skip( "no access checks on win9x\n" );
+    ok( !ptr, "MapViewOfFile succeeded\n" );
+    ok( GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
+    CloseHandle( map2 );
+    ret = DuplicateHandle( GetCurrentProcess(), mapping, GetCurrentProcess(), &map2, 0, FALSE, 0 );
+    ok( ret, "DuplicateHandle failed error %u\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ptr = MapViewOfFile( map2, 0, 0, 0, 4096 );
+    ok( !ptr, "MapViewOfFile succeeded\n" );
+    ok( GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
+    CloseHandle( map2 );
+    ret = DuplicateHandle( GetCurrentProcess(), mapping, GetCurrentProcess(), &map2,
+                           FILE_MAP_READ, FALSE, 0 );
+    ok( ret, "DuplicateHandle failed error %u\n", GetLastError());
+    ptr = MapViewOfFile( map2, 0, 0, 0, 4096 );
+    ok( ptr != NULL, "MapViewOfFile NO_ACCESS error %u\n", GetLastError() );
 
     UnmapViewOfFile( ptr );
     CloseHandle( map2 );
@@ -512,11 +486,10 @@ static void test_MapViewOfFile(void)
     ok( ptr != NULL, "MapViewOfFile FILE_MAP_READ error %u\n", GetLastError() );
     UnmapViewOfFile( ptr );
 
-    /* this fails on win9x but succeeds on NT */
     SetLastError(0xdeadbeef);
     ptr = MapViewOfFile( mapping, FILE_MAP_COPY, 0, 0, 4096 );
-    if (ptr) UnmapViewOfFile( ptr );
-    else ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %d\n", GetLastError() );
+    ok( ptr != NULL, "MapViewOfFile FILE_MAP_COPY error %u\n", GetLastError() );
+    UnmapViewOfFile( ptr );
 
     SetLastError(0xdeadbeef);
     ptr = MapViewOfFile( mapping, 0, 0, 0, 4096 );
@@ -562,33 +535,8 @@ static void test_MapViewOfFile(void)
 
     SetLastError(0xdeadbeef);
     mapping = CreateFileMappingA( file, NULL, PAGE_NOACCESS, 0, 4096, NULL );
-    /* fails on NT but succeeds on win9x */
-    if (!mapping) ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %d\n", GetLastError() );
-    else
-    {
-        SetLastError(0xdeadbeef);
-        ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 4096 );
-        ok( ptr != NULL, "MapViewOfFile FILE_MAP_READ error %u\n", GetLastError() );
-        UnmapViewOfFile( ptr );
-
-        SetLastError(0xdeadbeef);
-        ptr = MapViewOfFile( mapping, FILE_MAP_COPY, 0, 0, 4096 );
-        ok( !ptr, "MapViewOfFile FILE_MAP_COPY succeeded\n" );
-        ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %d\n", GetLastError() );
-
-        SetLastError(0xdeadbeef);
-        ptr = MapViewOfFile( mapping, 0, 0, 0, 4096 );
-        ok( ptr != NULL, "MapViewOfFile 0 error %u\n", GetLastError() );
-        UnmapViewOfFile( ptr );
-
-        SetLastError(0xdeadbeef);
-        ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 4096 );
-        ok( !ptr, "MapViewOfFile FILE_MAP_WRITE succeeded\n" );
-        ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %d\n", GetLastError() );
-
-        CloseHandle( mapping );
-    }
-
+    ok( !mapping, "CreateFileMappingA succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %d\n", GetLastError() );
     CloseHandle( file );
 
     /* now try read-only file */
@@ -657,25 +605,21 @@ static void test_MapViewOfFile(void)
     ok( mapping != 0, "OpenFileMapping FILE_MAP_READ error %u\n", GetLastError() );
     SetLastError(0xdeadbeef);
     ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 0 );
-    if (!ptr)
-    {
-        SIZE_T size;
-        ok( GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
-        SetLastError(0xdeadbeef);
-        ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
-        ok( ptr != NULL, "MapViewOfFile FILE_MAP_READ error %u\n", GetLastError() );
-        SetLastError(0xdeadbeef);
-        size = VirtualQuery( ptr, &info, sizeof(info) );
-        ok( size == sizeof(info),
-            "VirtualQuery error %u\n", GetLastError() );
-        ok( info.BaseAddress == ptr, "%p != %p\n", info.BaseAddress, ptr );
-        ok( info.AllocationBase == ptr, "%p != %p\n", info.AllocationBase, ptr );
-        ok( info.AllocationProtect == PAGE_READONLY, "%x != PAGE_READONLY\n", info.AllocationProtect );
-        ok( info.RegionSize == 4096, "%lx != 4096\n", info.RegionSize );
-        ok( info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State );
-        ok( info.Protect == PAGE_READONLY, "%x != PAGE_READONLY\n", info.Protect );
-    }
-    else win_skip( "no access checks on win9x\n" );
+    ok( !ptr, "MapViewOfFile FILE_MAP_WRITE succeeded\n" );
+    ok( GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
+    ok( ptr != NULL, "MapViewOfFile FILE_MAP_READ error %u\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    size = VirtualQuery( ptr, &info, sizeof(info) );
+    ok( size == sizeof(info),
+        "VirtualQuery error %u\n", GetLastError() );
+    ok( info.BaseAddress == ptr, "%p != %p\n", info.BaseAddress, ptr );
+    ok( info.AllocationBase == ptr, "%p != %p\n", info.AllocationBase, ptr );
+    ok( info.AllocationProtect == PAGE_READONLY, "%x != PAGE_READONLY\n", info.AllocationProtect );
+    ok( info.RegionSize == 4096, "%lx != 4096\n", info.RegionSize );
+    ok( info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State );
+    ok( info.Protect == PAGE_READONLY, "%x != PAGE_READONLY\n", info.Protect );
     UnmapViewOfFile( ptr );
     CloseHandle( mapping );
 
@@ -684,25 +628,21 @@ static void test_MapViewOfFile(void)
     ok( mapping != 0, "OpenFileMapping FILE_MAP_WRITE error %u\n", GetLastError() );
     SetLastError(0xdeadbeef);
     ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
-    if (!ptr)
-    {
-        SIZE_T size;
-        ok( GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
-        SetLastError(0xdeadbeef);
-        ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 0 );
-        ok( ptr != NULL, "MapViewOfFile FILE_MAP_WRITE error %u\n", GetLastError() );
-        SetLastError(0xdeadbeef);
-        size = VirtualQuery( ptr, &info, sizeof(info) );
-        ok( size == sizeof(info),
-            "VirtualQuery error %u\n", GetLastError() );
-        ok( info.BaseAddress == ptr, "%p != %p\n", info.BaseAddress, ptr );
-        ok( info.AllocationBase == ptr, "%p != %p\n", info.AllocationBase, ptr );
-        ok( info.AllocationProtect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.AllocationProtect );
-        ok( info.RegionSize == 4096, "%lx != 4096\n", info.RegionSize );
-        ok( info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State );
-        ok( info.Protect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.Protect );
-    }
-    else win_skip( "no access checks on win9x\n" );
+    ok( !ptr, "MapViewOfFile succeeded\n " );
+    ok( GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 0 );
+    ok( ptr != NULL, "MapViewOfFile FILE_MAP_WRITE error %u\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    size = VirtualQuery( ptr, &info, sizeof(info) );
+    ok( size == sizeof(info),
+        "VirtualQuery error %u\n", GetLastError() );
+    ok( info.BaseAddress == ptr, "%p != %p\n", info.BaseAddress, ptr );
+    ok( info.AllocationBase == ptr, "%p != %p\n", info.AllocationBase, ptr );
+    ok( info.AllocationProtect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.AllocationProtect );
+    ok( info.RegionSize == 4096, "%lx != 4096\n", info.RegionSize );
+    ok( info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State );
+    ok( info.Protect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.Protect );
     UnmapViewOfFile( ptr );
     CloseHandle( mapping );
 
@@ -716,9 +656,8 @@ static void test_MapViewOfFile(void)
     ok(ptr != NULL, "MapViewOfFile failed with error %d\n", GetLastError());
 
     ptr2 = MapViewOfFile(mapping, FILE_MAP_WRITE, 0, 0, 0);
-    /* on NT ptr != ptr2 but on Win9x ptr == ptr2 */
-    ok(ptr2 != NULL, "MapViewOfFile failed with error %d\n", GetLastError());
-    trace("mapping same section resulted in views %p and %p\n", ptr, ptr2);
+    ok( ptr2 != NULL, "MapViewOfFile failed with error %d\n", GetLastError());
+    ok( ptr != ptr2, "MapViewOfFile returned same pointer\n" );
 
     ret = VirtualQuery(ptr, &info, sizeof(info));
     ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
@@ -726,40 +665,24 @@ static void test_MapViewOfFile(void)
     ok(info.AllocationBase == ptr, "AllocationBase should have been %p but was %p instead\n", ptr, info.AllocationBase);
     ok(info.RegionSize == MAPPING_SIZE, "RegionSize should have been 0x%x but was 0x%lx\n", MAPPING_SIZE, info.RegionSize);
     ok(info.State == MEM_RESERVE, "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
-    if (info.Type == MEM_PRIVATE)  /* win9x is different for uncommitted mappings */
-    {
-        ok(info.AllocationProtect == PAGE_NOACCESS,
-           "AllocationProtect should have been PAGE_NOACCESS but was 0x%x\n", info.AllocationProtect);
-        ok(info.Protect == PAGE_NOACCESS,
-           "Protect should have been PAGE_NOACCESS instead of 0x%x\n", info.Protect);
-    }
-    else
-    {
-        ok(info.AllocationProtect == PAGE_READWRITE,
-           "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
-        ok(info.Protect == 0, "Protect should have been 0 instead of 0x%x\n", info.Protect);
-        ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
-    }
+    ok(info.AllocationProtect == PAGE_READWRITE,
+       "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
+    ok(info.Protect == 0, "Protect should have been 0 instead of 0x%x\n", info.Protect);
+    ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
 
-    if (ptr != ptr2)
-    {
-        ret = VirtualQuery(ptr2, &info, sizeof(info));
-        ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
-        ok(info.BaseAddress == ptr2,
-           "BaseAddress should have been %p but was %p instead\n", ptr2, info.BaseAddress);
-        ok(info.AllocationBase == ptr2,
-           "AllocationBase should have been %p but was %p instead\n", ptr2, info.AllocationBase);
-        ok(info.AllocationProtect == PAGE_READWRITE,
-           "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
-        ok(info.RegionSize == MAPPING_SIZE,
-           "RegionSize should have been 0x%x but was 0x%lx\n", MAPPING_SIZE, info.RegionSize);
-        ok(info.State == MEM_RESERVE,
-           "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
-        ok(info.Protect == 0,
-           "Protect should have been 0 instead of 0x%x\n", info.Protect);
-        ok(info.Type == MEM_MAPPED,
-           "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
-    }
+    ret = VirtualQuery(ptr2, &info, sizeof(info));
+    ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
+    ok(info.BaseAddress == ptr2,
+       "BaseAddress should have been %p but was %p instead\n", ptr2, info.BaseAddress);
+    ok(info.AllocationBase == ptr2,
+       "AllocationBase should have been %p but was %p instead\n", ptr2, info.AllocationBase);
+    ok(info.AllocationProtect == PAGE_READWRITE,
+       "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
+    ok(info.RegionSize == MAPPING_SIZE,
+       "RegionSize should have been 0x%x but was 0x%lx\n", MAPPING_SIZE, info.RegionSize);
+    ok(info.State == MEM_RESERVE, "State should have been MEM_RESERVE instead of 0x%x\n", info.State);
+    ok(info.Protect == 0, "Protect should have been 0 instead of 0x%x\n", info.Protect);
+    ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
 
     ptr = VirtualAlloc(ptr, 0x10000, MEM_COMMIT, PAGE_READONLY);
     ok(ptr != NULL, "VirtualAlloc failed with error %d\n", GetLastError());
@@ -771,48 +694,35 @@ static void test_MapViewOfFile(void)
     ok(info.RegionSize == 0x10000, "RegionSize should have been 0x10000 but was 0x%lx\n", info.RegionSize);
     ok(info.State == MEM_COMMIT, "State should have been MEM_COMMIT instead of 0x%x\n", info.State);
     ok(info.Protect == PAGE_READONLY, "Protect should have been PAGE_READONLY instead of 0x%x\n", info.Protect);
-    if (info.Type == MEM_PRIVATE)  /* win9x is different for uncommitted mappings */
-    {
-        ok(info.AllocationProtect == PAGE_NOACCESS,
-           "AllocationProtect should have been PAGE_NOACCESS but was 0x%x\n", info.AllocationProtect);
-    }
-    else
-    {
-        ok(info.AllocationProtect == PAGE_READWRITE,
-           "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
-        ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
-    }
+    ok(info.AllocationProtect == PAGE_READWRITE,
+       "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
+    ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
 
     /* shows that the VirtualAlloc above affects the mapping, not just the
      * virtual memory in this process - it also affects all other processes
      * with a view of the mapping, but that isn't tested here */
-    if (ptr != ptr2)
-    {
-        ret = VirtualQuery(ptr2, &info, sizeof(info));
-        ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
-        ok(info.BaseAddress == ptr2,
-           "BaseAddress should have been %p but was %p instead\n", ptr2, info.BaseAddress);
-        ok(info.AllocationBase == ptr2,
-           "AllocationBase should have been %p but was %p instead\n", ptr2, info.AllocationBase);
-        ok(info.AllocationProtect == PAGE_READWRITE,
-           "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
-        ok(info.RegionSize == 0x10000,
-           "RegionSize should have been 0x10000 but was 0x%lx\n", info.RegionSize);
-        ok(info.State == MEM_COMMIT,
-           "State should have been MEM_COMMIT instead of 0x%x\n", info.State);
-        ok(info.Protect == PAGE_READWRITE,
-           "Protect should have been PAGE_READWRITE instead of 0x%x\n", info.Protect);
-        ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
-    }
+    ret = VirtualQuery(ptr2, &info, sizeof(info));
+    ok(ret, "VirtualQuery failed with error %d\n", GetLastError());
+    ok(info.BaseAddress == ptr2,
+       "BaseAddress should have been %p but was %p instead\n", ptr2, info.BaseAddress);
+    ok(info.AllocationBase == ptr2,
+       "AllocationBase should have been %p but was %p instead\n", ptr2, info.AllocationBase);
+    ok(info.AllocationProtect == PAGE_READWRITE,
+       "AllocationProtect should have been PAGE_READWRITE but was 0x%x\n", info.AllocationProtect);
+    ok(info.RegionSize == 0x10000,
+       "RegionSize should have been 0x10000 but was 0x%lx\n", info.RegionSize);
+    ok(info.State == MEM_COMMIT,
+       "State should have been MEM_COMMIT instead of 0x%x\n", info.State);
+    ok(info.Protect == PAGE_READWRITE,
+       "Protect should have been PAGE_READWRITE instead of 0x%x\n", info.Protect);
+    ok(info.Type == MEM_MAPPED, "Type should have been MEM_MAPPED instead of 0x%x\n", info.Type);
 
     addr = VirtualAlloc( ptr, MAPPING_SIZE, MEM_RESET, PAGE_READONLY );
-    ok( addr == ptr || broken(!addr && GetLastError() == ERROR_INVALID_PARAMETER), /* win9x */
-        "VirtualAlloc failed with error %u\n", GetLastError() );
+    ok( addr == ptr, "VirtualAlloc failed with error %u\n", GetLastError() );
 
     ret = VirtualFree( ptr, 0x10000, MEM_DECOMMIT );
-    ok( !ret || broken(ret) /* win9x */, "VirtualFree succeeded\n" );
-    if (!ret)
-        ok( GetLastError() == ERROR_INVALID_PARAMETER, "VirtualFree failed with %u\n", GetLastError() );
+    ok( !ret, "VirtualFree succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "VirtualFree failed with %u\n", GetLastError() );
 
     ret = UnmapViewOfFile(ptr2);
     ok(ret, "UnmapViewOfFile failed with error %d\n", GetLastError());
@@ -1392,8 +1302,7 @@ static void test_CreateFileMapping(void)
     SetLastError(0xdeadbeef);
     handle2 = OpenFileMappingA( FILE_MAP_ALL_ACCESS, FALSE, "WINE TEST MAPPING");
     ok( !handle2, "OpenFileMapping succeeded\n");
-    ok( GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_INVALID_NAME /* win9x */,
-        "wrong error %u\n", GetLastError());
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
 
     CloseHandle( handle );
 }
