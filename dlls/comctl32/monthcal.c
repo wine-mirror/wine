@@ -1969,7 +1969,7 @@ static void MONTHCAL_NotifyDayState(MONTHCAL_INFO *infoPtr)
 }
 
 /* no valid range check performed */
-static void MONTHCAL_Scroll(MONTHCAL_INFO *infoPtr, INT delta)
+static void MONTHCAL_Scroll(MONTHCAL_INFO *infoPtr, INT delta, BOOL keep_selection)
 {
   INT i, selIdx = -1;
 
@@ -1982,8 +1982,11 @@ static void MONTHCAL_Scroll(MONTHCAL_INFO *infoPtr, INT delta)
     MONTHCAL_GetMonth(&infoPtr->calendars[i].month, delta);
   }
 
+  if (keep_selection)
+    return;
+
   /* selection is always shifted to first calendar */
-  if(infoPtr->dwStyle & MCS_MULTISELECT)
+  if (infoPtr->dwStyle & MCS_MULTISELECT)
   {
     SYSTEMTIME range[2];
 
@@ -2004,6 +2007,7 @@ static void MONTHCAL_Scroll(MONTHCAL_INFO *infoPtr, INT delta)
 static void MONTHCAL_GoToMonth(MONTHCAL_INFO *infoPtr, enum nav_direction direction)
 {
   INT delta = infoPtr->delta ? infoPtr->delta : MONTHCAL_GetCalCount(infoPtr);
+  BOOL keep_selection;
   SYSTEMTIME st;
 
   TRACE("%s\n", direction == DIRECTION_BACKWARD ? "back" : "fwd");
@@ -2022,9 +2026,11 @@ static void MONTHCAL_GoToMonth(MONTHCAL_INFO *infoPtr, enum nav_direction direct
 
   if(!MONTHCAL_IsDateInValidRange(infoPtr, &st, FALSE)) return;
 
-  MONTHCAL_Scroll(infoPtr, direction == DIRECTION_BACKWARD ? -delta : delta);
+  keep_selection = infoPtr->dwStyle & MCS_NOSELCHANGEONNAV;
+  MONTHCAL_Scroll(infoPtr, direction == DIRECTION_BACKWARD ? -delta : delta, keep_selection);
   MONTHCAL_NotifyDayState(infoPtr);
-  MONTHCAL_NotifySelectionChange(infoPtr);
+  if (!keep_selection)
+    MONTHCAL_NotifySelectionChange(infoPtr);
 }
 
 static LRESULT
@@ -2212,7 +2218,7 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 
         if (MONTHCAL_IsDateInValidRange(infoPtr, &st, FALSE))
         {
-            MONTHCAL_Scroll(infoPtr, delta);
+            MONTHCAL_Scroll(infoPtr, delta, FALSE);
             MONTHCAL_NotifyDayState(infoPtr);
             MONTHCAL_NotifySelectionChange(infoPtr);
             InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
@@ -2851,7 +2857,7 @@ MONTHCAL_Notify(MONTHCAL_INFO *infoPtr, NMHDR *hdr)
     if (hdr->hwndFrom == infoPtr->hWndYearUpDown && nmud->iDelta)
     {
       /* year value limits are set up explicitly after updown creation */
-      MONTHCAL_Scroll(infoPtr, 12 * nmud->iDelta);
+      MONTHCAL_Scroll(infoPtr, 12 * nmud->iDelta, FALSE);
       MONTHCAL_NotifyDayState(infoPtr);
       MONTHCAL_NotifySelectionChange(infoPtr);
     }
