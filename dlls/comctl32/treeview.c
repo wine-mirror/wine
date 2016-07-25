@@ -3629,7 +3629,7 @@ TREEVIEW_HitTestPoint(const TREEVIEW_INFO *infoPtr, POINT pt)
     return item;
 }
 
-static LRESULT
+static TREEVIEW_ITEM *
 TREEVIEW_HitTest(const TREEVIEW_INFO *infoPtr, LPTVHITTESTINFO lpht)
 {
     TREEVIEW_ITEM *item;
@@ -3664,14 +3664,14 @@ TREEVIEW_HitTest(const TREEVIEW_INFO *infoPtr, LPTVHITTESTINFO lpht)
     if (status)
     {
 	lpht->flags = status;
-        return 0;
+        return NULL;
     }
 
     item = TREEVIEW_HitTestPoint(infoPtr, lpht->pt);
     if (!item)
     {
 	lpht->flags = TVHT_NOWHERE;
-        return 0;
+        return NULL;
     }
 
     if (x >= item->textOffset + item->textWidth)
@@ -3702,7 +3702,7 @@ TREEVIEW_HitTest(const TREEVIEW_INFO *infoPtr, LPTVHITTESTINFO lpht)
     lpht->hItem = item;
     TRACE("(%d,%d):result 0x%x\n", lpht->pt.x, lpht->pt.y, lpht->flags);
 
-    return (LRESULT)item;
+    return item;
 }
 
 /* Item Label Editing ***************************************************/
@@ -4125,7 +4125,7 @@ TREEVIEW_LButtonDoubleClick(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     hit.pt.x = (short)LOWORD(lParam);
     hit.pt.y = (short)HIWORD(lParam);
 
-    item = (TREEVIEW_ITEM *)TREEVIEW_HitTest(infoPtr, &hit);
+    item = TREEVIEW_HitTest(infoPtr, &hit);
     if (!item)
 	return 0;
     TRACE("item %d\n", TREEVIEW_GetItemIndex(infoPtr, item));
@@ -5325,9 +5325,9 @@ TREEVIEW_MouseLeave (TREEVIEW_INFO * infoPtr)
 static LRESULT
 TREEVIEW_MouseMove (TREEVIEW_INFO * infoPtr, LPARAM lParam)
 {
-    POINT pt;
     TRACKMOUSEEVENT trackinfo;
     TREEVIEW_ITEM * item;
+    TVHITTESTINFO ht;
 
     if (!(infoPtr->dwStyle & TVS_TRACKSELECT)) return 0;
 
@@ -5352,18 +5352,21 @@ TREEVIEW_MouseMove (TREEVIEW_INFO * infoPtr, LPARAM lParam)
         _TrackMouseEvent(&trackinfo);
     }
 
-    pt.x = (short)LOWORD(lParam);
-    pt.y = (short)HIWORD(lParam);
+    ht.pt.x = (short)LOWORD(lParam);
+    ht.pt.y = (short)HIWORD(lParam);
 
-    item = TREEVIEW_HitTestPoint(infoPtr, pt);
-
-    if (item != infoPtr->hotItem)
+    item = TREEVIEW_HitTest(infoPtr, &ht);
+    if ((item != infoPtr->hotItem) || !(ht.flags & TVHT_ONITEM))
     {
         /* redraw old hot item */
         TREEVIEW_InvalidateItem(infoPtr, infoPtr->hotItem);
-        infoPtr->hotItem = item;
-        /* redraw new hot item */
-        TREEVIEW_InvalidateItem(infoPtr, infoPtr->hotItem);
+        infoPtr->hotItem = NULL;
+        if (item && (ht.flags & TVHT_ONITEM))
+        {
+            infoPtr->hotItem = item;
+            /* redraw new hot item */
+            TREEVIEW_InvalidateItem(infoPtr, infoPtr->hotItem);
+        }
     }
 
     return 0;
@@ -5502,14 +5505,14 @@ TREEVIEW_StyleChanged(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TREEVIEW_SetCursor(const TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-    POINT pt;
     TREEVIEW_ITEM * item;
+    TVHITTESTINFO ht;
     NMMOUSE nmmouse;
 
-    GetCursorPos(&pt);
-    ScreenToClient(infoPtr->hwnd, &pt);
+    GetCursorPos(&ht.pt);
+    ScreenToClient(infoPtr->hwnd, &ht.pt);
 
-    item = TREEVIEW_HitTestPoint(infoPtr, pt);
+    item = TREEVIEW_HitTest(infoPtr, &ht);
 
     memset(&nmmouse, 0, sizeof(nmmouse));
     if (item)
@@ -5523,7 +5526,7 @@ TREEVIEW_SetCursor(const TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if (TREEVIEW_SendRealNotify(infoPtr, NM_SETCURSOR, &nmmouse.hdr))
         return 0;
 
-    if (item && (infoPtr->dwStyle & TVS_TRACKSELECT))
+    if (item && (infoPtr->dwStyle & TVS_TRACKSELECT) && (ht.flags & TVHT_ONITEM))
     {
         SetCursor(infoPtr->hcurHand);
         return 0;
@@ -5667,7 +5670,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return TREEVIEW_GetVisibleCount(infoPtr);
 
     case TVM_HITTEST:
-	return TREEVIEW_HitTest(infoPtr, (LPTVHITTESTINFO)lParam);
+	return (LRESULT)TREEVIEW_HitTest(infoPtr, (TVHITTESTINFO*)lParam);
 
     case TVM_INSERTITEMA:
     case TVM_INSERTITEMW:
