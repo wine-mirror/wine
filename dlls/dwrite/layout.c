@@ -3661,7 +3661,7 @@ static HRESULT WINAPI dwritetextlayout3_SetLineSpacing(IDWriteTextLayout3 *iface
         return hr;
 
     if (changed)
-        This->recompute = RECOMPUTE_EVERYTHING;
+        This->recompute = RECOMPUTE_LINES;
 
     return S_OK;
 }
