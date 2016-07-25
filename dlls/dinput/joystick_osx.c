@@ -193,6 +193,38 @@ static long get_device_property_long(IOHIDDeviceRef device, CFStringRef key)
     return result;
 }
 
+static CFStringRef copy_device_name(IOHIDDeviceRef device)
+{
+    CFStringRef name;
+
+    if (device)
+    {
+        CFTypeRef ref_name;
+
+        assert(IOHIDDeviceGetTypeID() == CFGetTypeID(device));
+
+        ref_name = IOHIDDeviceGetProperty(device, CFSTR(kIOHIDProductKey));
+
+        if (ref_name && CFStringGetTypeID() == CFGetTypeID(ref_name))
+            name = CFStringCreateCopy(kCFAllocatorDefault, ref_name);
+        else
+        {
+            long vendID, prodID;
+
+            vendID = get_device_property_long(device, CFSTR(kIOHIDVendorIDKey));
+            prodID = get_device_property_long(device, CFSTR(kIOHIDProductIDKey));
+            name = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("0x%04lx 0x%04lx"), vendID, prodID);
+        }
+    }
+    else
+    {
+        ERR("NULL device\n");
+        name = CFStringCreateCopy(kCFAllocatorDefault, CFSTR(""));
+    }
+
+    return name;
+}
+
 static long get_device_location_ID(IOHIDDeviceRef device)
 {
     return get_device_property_long(device, CFSTR(kIOHIDLocationIDKey));
@@ -203,7 +235,16 @@ static void copy_set_to_array(const void *value, void *context)
     CFArrayAppendValue(context, value);
 }
 
-static CFComparisonResult device_location_comparator(const void *val1, const void *val2, void *context)
+static CFComparisonResult device_name_comparator(IOHIDDeviceRef device1, IOHIDDeviceRef device2)
+{
+    CFStringRef name1 = copy_device_name(device1), name2 = copy_device_name(device2);
+    CFComparisonResult result = CFStringCompare(name1, name2, (kCFCompareForcedOrdering | kCFCompareNumerically));
+    CFRelease(name1);
+    CFRelease(name2);
+    return  result;
+}
+
+static CFComparisonResult device_location_name_comparator(const void *val1, const void *val2, void *context)
 {
     IOHIDDeviceRef device1 = (IOHIDDeviceRef)val1, device2 = (IOHIDDeviceRef)val2;
     long loc1 = get_device_location_ID(device1), loc2 = get_device_location_ID(device2);
@@ -212,7 +253,8 @@ static CFComparisonResult device_location_comparator(const void *val1, const voi
         return kCFCompareLessThan;
     else if (loc1 > loc2)
         return kCFCompareGreaterThan;
-    return kCFCompareEqualTo;
+    /* virtual joysticks may not have a kIOHIDLocationIDKey and will default to location ID of 0, this orders virtual joysticks by their name */
+    return device_name_comparator(device1, device2);
 }
 
 static const char* debugstr_cf(CFTypeRef t)
@@ -491,7 +533,7 @@ static int find_osx_devices(void)
         devices = CFArrayCreateMutable(kCFAllocatorDefault, num_devices, &kCFTypeArrayCallBacks);
         CFSetApplyFunction(devset, copy_set_to_array, devices);
         CFRelease(devset);
-        CFArraySortValues(devices, CFRangeMake(0, num_devices), device_location_comparator, NULL);
+        CFArraySortValues(devices, CFRangeMake(0, num_devices), device_location_name_comparator, NULL);
 
         device_main_elements = CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
         if (!device_main_elements)
