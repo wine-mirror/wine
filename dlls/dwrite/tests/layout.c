@@ -1054,17 +1054,6 @@ if (0) /* crashes on native */
     hr = IDWriteTextFormat_SetFlowDirection(format, DWRITE_FLOW_DIRECTION_TOP_TO_BOTTOM);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_DEFAULT, 0.0, 0.0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_DEFAULT, 0.0, -10.0);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_DEFAULT, -10.0, 0.0);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
-
-    hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_PROPORTIONAL+1, 0.0, 0.0);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     hr = IDWriteTextFormat_SetTrimming(format, &trimming, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -5002,6 +4991,96 @@ static void test_InvalidateLayout(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_line_spacing(void)
+{
+    static const WCHAR strW[] = {'a',0};
+    IDWriteTextFormat2 *format2;
+    IDWriteTextLayout *layout;
+    IDWriteTextFormat *format;
+    IDWriteFactory *factory;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0f, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_DEFAULT, 0.0f, 0.0f);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_DEFAULT, 0.0f, -10.0f);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_DEFAULT, -10.0f, 0.0f);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_PROPORTIONAL+1, 0.0f, 0.0f);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_SetLineSpacing(layout, DWRITE_LINE_SPACING_METHOD_DEFAULT, 0.0f, 0.0f);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_SetLineSpacing(layout, DWRITE_LINE_SPACING_METHOD_DEFAULT, 0.0f, -10.0f);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_SetLineSpacing(layout, DWRITE_LINE_SPACING_METHOD_DEFAULT, -10.0f, 0.0f);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_SetLineSpacing(layout, DWRITE_LINE_SPACING_METHOD_PROPORTIONAL+1, 0.0f, 0.0f);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    if (IDWriteTextFormat_QueryInterface(format, &IID_IDWriteTextFormat2, (void**)&format2) == S_OK) {
+        DWRITE_LINE_SPACING spacing;
+
+        hr = IDWriteTextFormat2_GetLineSpacing(format2, &spacing);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        ok(spacing.method == DWRITE_LINE_SPACING_METHOD_DEFAULT, "got method %d\n", spacing.method);
+        ok(spacing.height == 0.0f, "got %f\n", spacing.height);
+        ok(spacing.baseline == -10.0f, "got %f\n", spacing.baseline);
+        ok(spacing.leadingBefore == 0.0f, "got %f\n", spacing.leadingBefore);
+        ok(spacing.fontLineGapUsage == DWRITE_FONT_LINE_GAP_USAGE_DEFAULT, "got %f\n", spacing.leadingBefore);
+
+        spacing.leadingBefore = -1.0f;
+
+        hr = IDWriteTextFormat2_SetLineSpacing(format2, &spacing);
+        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+        spacing.leadingBefore = 1.1f;
+
+        hr = IDWriteTextFormat2_SetLineSpacing(format2, &spacing);
+        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+        spacing.leadingBefore = 1.0f;
+
+        hr = IDWriteTextFormat2_SetLineSpacing(format2, &spacing);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        spacing.method = DWRITE_LINE_SPACING_METHOD_PROPORTIONAL + 1;
+        hr = IDWriteTextFormat2_SetLineSpacing(format2, &spacing);
+        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+        spacing.method = DWRITE_LINE_SPACING_METHOD_PROPORTIONAL;
+        spacing.fontLineGapUsage = DWRITE_FONT_LINE_GAP_USAGE_ENABLED + 1;
+        hr = IDWriteTextFormat2_SetLineSpacing(format2, &spacing);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteTextFormat2_GetLineSpacing(format2, &spacing);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(spacing.fontLineGapUsage == DWRITE_FONT_LINE_GAP_USAGE_ENABLED + 1, "got %d\n", spacing.fontLineGapUsage);
+
+        IDWriteTextFormat2_Release(format2);
+    }
+
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(layout)
 {
     IDWriteFactory *factory;
@@ -5050,6 +5129,7 @@ START_TEST(layout)
     test_SetOpticalAlignment();
     test_SetUnderline();
     test_InvalidateLayout();
+    test_line_spacing();
 
     IDWriteFactory_Release(factory);
 }

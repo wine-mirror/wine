@@ -47,12 +47,10 @@ struct dwrite_textformat_data {
     BOOL last_line_wrapping;
     DWRITE_TEXT_ALIGNMENT textalignment;
     DWRITE_FLOW_DIRECTION flow;
-    DWRITE_LINE_SPACING_METHOD spacingmethod;
     DWRITE_VERTICAL_GLYPH_ORIENTATION vertical_orientation;
     DWRITE_OPTICAL_ALIGNMENT optical_alignment;
+    DWRITE_LINE_SPACING spacing;
 
-    FLOAT spacing;
-    FLOAT baseline;
     FLOAT fontsize;
 
     DWRITE_TRIMMING trimming;
@@ -436,17 +434,16 @@ static inline HRESULT format_set_trimming(struct dwrite_textformat_data *format,
 }
 
 static inline HRESULT format_set_linespacing(struct dwrite_textformat_data *format,
-    DWRITE_LINE_SPACING_METHOD method, FLOAT spacing, FLOAT baseline, BOOL *changed)
+    DWRITE_LINE_SPACING const *spacing, BOOL *changed)
 {
-    if (spacing < 0.0f || (UINT32)method > DWRITE_LINE_SPACING_METHOD_UNIFORM)
+    if (spacing->height < 0.0f || spacing->leadingBefore < 0.0f || spacing->leadingBefore > 1.0f ||
+        (UINT32)spacing->method > DWRITE_LINE_SPACING_METHOD_PROPORTIONAL)
         return E_INVALIDARG;
 
-    if (changed) *changed = format->spacingmethod != method ||
-        format->spacing != spacing || format->baseline != baseline;
+    if (changed)
+        *changed = memcmp(spacing, &format->spacing, sizeof(*spacing));
 
-    format->spacingmethod = method;
-    format->spacing = spacing;
-    format->baseline = baseline;
+    format->spacing = *spacing;
     return S_OK;
 }
 
@@ -3654,15 +3651,29 @@ static HRESULT WINAPI dwritetextlayout3_InvalidateLayout(IDWriteTextLayout3 *ifa
 static HRESULT WINAPI dwritetextlayout3_SetLineSpacing(IDWriteTextLayout3 *iface, DWRITE_LINE_SPACING const *spacing)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    FIXME("(%p)->(%p): stub\n", This, spacing);
-    return E_NOTIMPL;
+    BOOL changed;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, spacing);
+
+    hr = format_set_linespacing(&This->format, spacing, &changed);
+    if (FAILED(hr))
+        return hr;
+
+    if (changed)
+        This->recompute = RECOMPUTE_EVERYTHING;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout3_GetLineSpacing(IDWriteTextLayout3 *iface, DWRITE_LINE_SPACING *spacing)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    FIXME("(%p)->(%p): stub\n", This, spacing);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, spacing);
+
+    *spacing = This->format.spacing;
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout3_GetLineMetrics(IDWriteTextLayout3 *iface, DWRITE_LINE_METRICS1 *metrics,
@@ -3896,22 +3907,18 @@ static HRESULT WINAPI dwritetextformat_layout_SetTrimming(IDWriteTextFormat1 *if
 }
 
 static HRESULT WINAPI dwritetextformat_layout_SetLineSpacing(IDWriteTextFormat1 *iface, DWRITE_LINE_SPACING_METHOD method,
-    FLOAT spacing, FLOAT baseline)
+    FLOAT height, FLOAT baseline)
 {
     struct dwrite_textlayout *This = impl_layout_from_IDWriteTextFormat1(iface);
-    BOOL changed;
-    HRESULT hr;
+    DWRITE_LINE_SPACING spacing;
 
-    TRACE("(%p)->(%d %f %f)\n", This, method, spacing, baseline);
+    TRACE("(%p)->(%d %f %f)\n", This, method, height, baseline);
 
-    hr = format_set_linespacing(&This->format, method, spacing, baseline, &changed);
-    if (FAILED(hr))
-        return hr;
-
-    if (changed)
-        This->recompute = RECOMPUTE_EVERYTHING;
-
-    return S_OK;
+    spacing = This->format.spacing;
+    spacing.method = method;
+    spacing.height = height;
+    spacing.baseline = baseline;
+    return IDWriteTextLayout3_SetLineSpacing(&This->IDWriteTextLayout3_iface, &spacing);
 }
 
 static DWRITE_TEXT_ALIGNMENT WINAPI dwritetextformat_layout_GetTextAlignment(IDWriteTextFormat1 *iface)
@@ -3977,9 +3984,9 @@ static HRESULT WINAPI dwritetextformat_layout_GetLineSpacing(IDWriteTextFormat1 
 
     TRACE("(%p)->(%p %p %p)\n", This, method, spacing, baseline);
 
-    *method = This->format.spacingmethod;
-    *spacing = This->format.spacing;
-    *baseline = This->format.baseline;
+    *method = This->format.spacing.method;
+    *spacing = This->format.spacing.height;
+    *baseline = This->format.spacing.baseline;
     return S_OK;
 }
 
@@ -4462,8 +4469,10 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
     layout->format.readingdir = IDWriteTextFormat_GetReadingDirection(format);
     layout->format.flow = IDWriteTextFormat_GetFlowDirection(format);
     layout->format.fallback = NULL;
-    hr = IDWriteTextFormat_GetLineSpacing(format, &layout->format.spacingmethod,
-        &layout->format.spacing, &layout->format.baseline);
+    layout->format.spacing.leadingBefore = 0.0f;
+    layout->format.spacing.fontLineGapUsage = DWRITE_FONT_LINE_GAP_USAGE_DEFAULT;
+    hr = IDWriteTextFormat_GetLineSpacing(format, &layout->format.spacing.method,
+        &layout->format.spacing.height, &layout->format.spacing.baseline);
     if (FAILED(hr))
         return hr;
 
@@ -4495,9 +4504,17 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
 
     hr = IDWriteTextFormat_QueryInterface(format, &IID_IDWriteTextFormat1, (void**)&format1);
     if (hr == S_OK) {
+        IDWriteTextFormat2 *format2;
+
         layout->format.vertical_orientation = IDWriteTextFormat1_GetVerticalGlyphOrientation(format1);
         layout->format.optical_alignment = IDWriteTextFormat1_GetOpticalAlignment(format1);
         IDWriteTextFormat1_GetFontFallback(format1, &layout->format.fallback);
+
+        if (IDWriteTextFormat1_QueryInterface(format1, &IID_IDWriteTextFormat2, (void**)&format2) == S_OK) {
+            IDWriteTextFormat2_GetLineSpacing(format2, &layout->format.spacing);
+            IDWriteTextFormat2_Release(format2);
+        }
+
         IDWriteTextFormat1_Release(format1);
     }
     else {
@@ -4879,11 +4896,19 @@ static HRESULT WINAPI dwritetextformat_SetTrimming(IDWriteTextFormat2 *iface, DW
 }
 
 static HRESULT WINAPI dwritetextformat_SetLineSpacing(IDWriteTextFormat2 *iface, DWRITE_LINE_SPACING_METHOD method,
-    FLOAT spacing, FLOAT baseline)
+    FLOAT height, FLOAT baseline)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat2(iface);
-    TRACE("(%p)->(%d %f %f)\n", This, method, spacing, baseline);
-    return format_set_linespacing(&This->format, method, spacing, baseline, NULL);
+    DWRITE_LINE_SPACING spacing;
+
+    TRACE("(%p)->(%d %f %f)\n", This, method, height, baseline);
+
+    spacing = This->format.spacing;
+    spacing.method = method;
+    spacing.height = height;
+    spacing.baseline = baseline;
+
+    return format_set_linespacing(&This->format, &spacing, NULL);
 }
 
 static DWRITE_TEXT_ALIGNMENT WINAPI dwritetextformat_GetTextAlignment(IDWriteTextFormat2 *iface)
@@ -4947,9 +4972,9 @@ static HRESULT WINAPI dwritetextformat_GetLineSpacing(IDWriteTextFormat2 *iface,
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat2(iface);
     TRACE("(%p)->(%p %p %p)\n", This, method, spacing, baseline);
 
-    *method = This->format.spacingmethod;
-    *spacing = This->format.spacing;
-    *baseline = This->format.baseline;
+    *method = This->format.spacing.method;
+    *spacing = This->format.spacing.height;
+    *baseline = This->format.spacing.baseline;
     return S_OK;
 }
 
@@ -5097,15 +5122,18 @@ static HRESULT WINAPI dwritetextformat1_GetFontFallback(IDWriteTextFormat2 *ifac
 static HRESULT WINAPI dwritetextformat2_SetLineSpacing(IDWriteTextFormat2 *iface, DWRITE_LINE_SPACING const *spacing)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat2(iface);
-    FIXME("(%p)->(%p): stub\n", This, spacing);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, spacing);
+    return format_set_linespacing(&This->format, spacing, NULL);
 }
 
 static HRESULT WINAPI dwritetextformat2_GetLineSpacing(IDWriteTextFormat2 *iface, DWRITE_LINE_SPACING *spacing)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat2(iface);
-    FIXME("(%p)->(%p): stub\n", This, spacing);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, spacing);
+
+    *spacing = This->format.spacing;
+    return S_OK;
 }
 
 static const IDWriteTextFormat2Vtbl dwritetextformatvtbl = {
@@ -5192,10 +5220,12 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
     This->format.last_line_wrapping = TRUE;
     This->format.readingdir = DWRITE_READING_DIRECTION_LEFT_TO_RIGHT;
     This->format.flow = DWRITE_FLOW_DIRECTION_TOP_TO_BOTTOM;
-    This->format.spacingmethod = DWRITE_LINE_SPACING_METHOD_DEFAULT;
+    This->format.spacing.method = DWRITE_LINE_SPACING_METHOD_DEFAULT;
+    This->format.spacing.height = 0.0f;
+    This->format.spacing.baseline = 0.0f;
+    This->format.spacing.leadingBefore = 0.0f;
+    This->format.spacing.fontLineGapUsage = DWRITE_FONT_LINE_GAP_USAGE_DEFAULT;
     This->format.vertical_orientation = DWRITE_VERTICAL_GLYPH_ORIENTATION_DEFAULT;
-    This->format.spacing = 0.0f;
-    This->format.baseline = 0.0f;
     This->format.trimming.granularity = DWRITE_TRIMMING_GRANULARITY_NONE;
     This->format.trimming.delimiter = 0;
     This->format.trimming.delimiterCount = 0;
