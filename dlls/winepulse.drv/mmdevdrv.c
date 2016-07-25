@@ -304,7 +304,7 @@ static void pulse_contextcallback(pa_context *c, void *userdata)
             break;
 
         case PA_CONTEXT_FAILED:
-            ERR("Context failed: %s\n", pa_strerror(pa_context_errno(c)));
+            WARN("Context failed: %s\n", pa_strerror(pa_context_errno(c)));
             break;
     }
     pthread_cond_signal(&pulse_cond);
