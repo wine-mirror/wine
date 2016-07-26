@@ -124,6 +124,8 @@ static const struct wined3d_format_channels formats[] =
     {WINED3DFMT_R8G8_SNORM_L8X8_UNORM,      8,  8,  0,  0,   0,  8,  0,  0,    4,   0,     0},
     {WINED3DFMT_R8G8B8A8_SNORM,             8,  8,  8,  8,   0,  8, 16, 24,    4,   0,     0},
     {WINED3DFMT_R10G11B11_SNORM,           10, 11, 11,  0,   0, 10, 21,  0,    4,   0,     0},
+    {WINED3DFMT_R10G10B10X2_UINT,          10, 10, 10,  0,   0, 10, 20,  0,    4,   0,     0},
+    {WINED3DFMT_R10G10B10X2_SNORM,         10, 10, 10,  0,   0, 10, 20,  0,    4,   0,     0},
     {WINED3DFMT_R10G10B10_SNORM_A2_UNORM,  10, 10, 10,  2,   0, 10, 20, 30,    4,   0,     0},
     /* Depth stencil formats */
     {WINED3DFMT_D16_LOCKABLE,               0,  0,  0,  0,   0,  0,  0,  0,    2,  16,     0},
@@ -348,8 +350,8 @@ static const struct wined3d_format_vertex_info format_vertex_info[] =
     {WINED3DFMT_R16G16B16A16_SNORM, WINED3D_FFP_EMIT_SHORT4N,   4, GL_SHORT,                       GL_TRUE },
     {WINED3DFMT_R16G16_UNORM,       WINED3D_FFP_EMIT_USHORT2N,  2, GL_UNSIGNED_SHORT,              GL_TRUE },
     {WINED3DFMT_R16G16B16A16_UNORM, WINED3D_FFP_EMIT_USHORT4N,  4, GL_UNSIGNED_SHORT,              GL_TRUE },
-    {WINED3DFMT_R10G10B10A2_UINT,   WINED3D_FFP_EMIT_UDEC3,     3, GL_UNSIGNED_SHORT,              GL_FALSE},
-    {WINED3DFMT_R10G10B10A2_SNORM,  WINED3D_FFP_EMIT_DEC3N,     3, GL_SHORT,                       GL_TRUE },
+    {WINED3DFMT_R10G10B10X2_UINT,   WINED3D_FFP_EMIT_UDEC3,     3, GL_UNSIGNED_SHORT,              GL_FALSE},
+    {WINED3DFMT_R10G10B10X2_SNORM,  WINED3D_FFP_EMIT_DEC3N,     3, GL_SHORT,                       GL_TRUE },
     {WINED3DFMT_R10G10B10A2_UNORM,  WINED3D_FFP_EMIT_INVALID,   4, GL_UNSIGNED_INT_2_10_10_10_REV, GL_TRUE,
             ARB_VERTEX_TYPE_2_10_10_10_REV},
     {WINED3DFMT_R16G16_FLOAT,       WINED3D_FFP_EMIT_FLOAT16_2, 2, GL_HALF_FLOAT,                  GL_FALSE},
@@ -3613,6 +3615,8 @@ const char *debug_d3dformat(enum wined3d_format_id format_id)
         FMT_TO_STR(WINED3DFMT_R5G5_SNORM_L6_UNORM);
         FMT_TO_STR(WINED3DFMT_R8G8_SNORM_L8X8_UNORM);
         FMT_TO_STR(WINED3DFMT_R10G11B11_SNORM);
+        FMT_TO_STR(WINED3DFMT_R10G10B10X2_UINT);
+        FMT_TO_STR(WINED3DFMT_R10G10B10X2_SNORM);
         FMT_TO_STR(WINED3DFMT_R10G10B10_SNORM_A2_UNORM);
         FMT_TO_STR(WINED3DFMT_UYVY);
         FMT_TO_STR(WINED3DFMT_YUY2);

@@ -4110,11 +4110,11 @@ static void load_numbered_arrays(struct wined3d_context *context,
                     GL_EXTCALL(glVertexAttrib4Nusv(i, (const GLushort *)ptr));
                     break;
 
-                case WINED3DFMT_R10G10B10A2_UINT:
+                case WINED3DFMT_R10G10B10X2_UINT:
                     FIXME("Unsure about WINED3DDECLTYPE_UDEC3.\n");
                     /*glVertexAttrib3usvARB(i, (const GLushort *)ptr); Does not exist */
                     break;
-                case WINED3DFMT_R10G10B10A2_SNORM:
+                case WINED3DFMT_R10G10B10X2_SNORM:
                     FIXME("Unsure about WINED3DDECLTYPE_DEC3N.\n");
                     /*glVertexAttrib3NusvARB(i, (const GLushort *)ptr); Does not exist */
                     break;
