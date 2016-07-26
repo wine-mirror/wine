@@ -5743,6 +5743,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return TREEVIEW_HScroll(infoPtr, wParam);
 
     case WM_KEYDOWN:
+    case WM_SYSKEYDOWN:
 	return TREEVIEW_KeyDown(infoPtr, wParam);
 
     case WM_KILLFOCUS:
@@ -5806,8 +5807,6 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_SYSCOLORCHANGE:
         COMCTL32_RefreshSysColors();
         return 0;
-
-	/* WM_SYSKEYDOWN */
 
     case WM_TIMER:
 	return TREEVIEW_HandleTimer(infoPtr, wParam);
