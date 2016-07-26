@@ -4487,7 +4487,7 @@ static void test_create_device_from_d3d2(void)
 
     hr = IDirect3DRMDevice2_GetDirect3DDevice2(device2, &d3drm_d3ddevice2);
     ok(SUCCEEDED(hr), "Cannot get IDirect3DDevice2 interface (hr = %#x).\n", hr);
-    ok(d3ddevice2 == d3drm_d3ddevice2, "Expected Immediate Mode deivce created == %p, got %p.\n", d3ddevice2,
+    ok(d3ddevice2 == d3drm_d3ddevice2, "Expected Immediate Mode device created == %p, got %p.\n", d3ddevice2,
             d3drm_d3ddevice2);
 
     /* Check properties of render target and depth surfaces */
@@ -4768,7 +4768,7 @@ static void test_create_device_from_d3d3(void)
 
     hr = IDirect3DRMDevice3_GetDirect3DDevice2(device3, &d3drm_d3ddevice2);
     ok(SUCCEEDED(hr), "Cannot get IDirect3DDevice2 interface (hr = %#x).\n", hr);
-    ok(d3ddevice2 == d3drm_d3ddevice2, "Expected Immediate Mode deivce created == %p, got %p.\n", d3ddevice2,
+    ok(d3ddevice2 == d3drm_d3ddevice2, "Expected Immediate Mode device created == %p, got %p.\n", d3ddevice2,
             d3drm_d3ddevice2);
 
     /* Check properties of render target and depth surfaces */
