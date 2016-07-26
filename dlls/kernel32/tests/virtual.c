@@ -651,7 +651,7 @@ static void test_MapViewOfFile(void)
     ok( mapping != 0, "OpenFileMapping FILE_MAP_WRITE error %u\n", GetLastError() );
     SetLastError(0xdeadbeef);
     ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
-    ok( !ptr, "MapViewOfFile succeeded\n " );
+    ok( !ptr, "MapViewOfFile succeeded\n" );
     ok( GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
     SetLastError(0xdeadbeef);
     ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 0 );
