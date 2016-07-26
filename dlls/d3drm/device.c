@@ -208,7 +208,7 @@ HRESULT d3drm_device_init(struct d3drm_device *device, UINT version, IDirectDraw
     return hr;
 }
 
-HRESULT d3drm_device_set_ddraw_device_d3d(struct d3drm_device *device, IDirect3D *d3d, IDirect3DDevice *d3d_device)
+static HRESULT d3drm_device_set_ddraw_device_d3d(struct d3drm_device *device, IDirect3D *d3d, IDirect3DDevice *d3d_device)
 {
     IDirectDraw *ddraw;
     IDirectDrawSurface *surface;
