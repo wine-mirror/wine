@@ -351,7 +351,7 @@ static HRESULT get_addr_namespace( WS_ADDRESSING_VERSION ver, WS_XML_STRING *str
         return S_OK;
 
     default:
-        ERR( "unhandled adressing version %u\n", ver );
+        ERR( "unhandled addressing version %u\n", ver );
         return E_NOTIMPL;
     }
 }
