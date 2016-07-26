@@ -1651,6 +1651,7 @@ enum char_info_mode
 /* Create a file mapping */
 @REQ(create_mapping)
     unsigned int access;        /* wanted access rights */
+    unsigned int flags;         /* SEC_* flags */
     unsigned int protect;       /* protection flags (see below) */
     mem_size_t   size;          /* mapping size */
     obj_handle_t file_handle;   /* file handle */
@@ -1691,9 +1692,10 @@ enum char_info_mode
     unsigned int access;        /* wanted access rights */
 @REPLY
     mem_size_t   size;          /* mapping size */
+    unsigned int flags;         /* SEC_* flags */
     int          protect;       /* protection flags */
-    int          header_size;   /* header size (for VPROT_IMAGE mapping) */
     client_ptr_t base;          /* default base addr (for VPROT_IMAGE mapping) */
+    int          header_size;   /* header size (for VPROT_IMAGE mapping) */
     obj_handle_t mapping;       /* duplicate mapping handle unless removable */
     obj_handle_t shared_file;   /* shared mapping file handle */
 @END

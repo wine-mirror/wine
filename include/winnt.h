@@ -728,10 +728,13 @@ typedef struct _MEMORY_BASIC_INFORMATION
 
 #define SEC_FILE                0x00800000
 #define SEC_IMAGE               0x01000000
+#define SEC_PROTECTED_IMAGE     0x02000000
 #define SEC_RESERVE             0x04000000
 #define SEC_COMMIT              0x08000000
 #define SEC_NOCACHE             0x10000000
+#define SEC_WRITECOMBINE        0x40000000
 #define SEC_LARGE_PAGES         0x80000000
+#define SEC_IMAGE_NO_EXECUTE    (SEC_IMAGE | SEC_NOCACHE)
 #define MEM_IMAGE               SEC_IMAGE
 
 #define WRITE_WATCH_FLAG_RESET  0x00000001

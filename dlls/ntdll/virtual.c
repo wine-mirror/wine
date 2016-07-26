@@ -2477,20 +2477,13 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
     data_size_t len;
     struct object_attributes *objattr;
 
-    /* Check parameters */
-
     if ((ret = get_vprot_flags( protect, &vprot, sec_flags & SEC_IMAGE ))) return ret;
     if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
-
-    if (!(sec_flags & SEC_RESERVE)) vprot |= VPROT_COMMITTED;
-    if (sec_flags & SEC_NOCACHE) vprot |= VPROT_NOCACHE;
-    if (sec_flags & SEC_IMAGE) vprot |= VPROT_IMAGE;
-
-    /* Create the server object */
 
     SERVER_START_REQ( create_mapping )
     {
         req->access      = access;
+        req->flags       = sec_flags;
         req->file_handle = wine_server_obj_handle( file );
         req->size        = size ? size->QuadPart : 0;
         req->protect     = vprot;
@@ -2543,7 +2536,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     ACCESS_MASK access;
     SIZE_T size, mask = get_mask( zero_bits );
     int unix_handle = -1, needs_close;
-    unsigned int map_vprot, vprot;
+    unsigned int map_vprot, vprot, sec_flags;
     void *base;
     struct file_view *view;
     DWORD header_size;
@@ -2624,6 +2617,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         req->access = access;
         res = wine_server_call( req );
         map_vprot   = reply->protect;
+        sec_flags   = reply->flags;
         base        = wine_server_get_ptr( reply->base );
         full_size   = reply->size;
         header_size = reply->header_size;
@@ -2634,9 +2628,13 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     SERVER_END_REQ;
     if (res) return res;
 
+    if (!(sec_flags & SEC_RESERVE)) map_vprot |= VPROT_COMMITTED;
+    if (sec_flags & SEC_NOCACHE) map_vprot |= VPROT_NOCACHE;
+    if (sec_flags & SEC_IMAGE) map_vprot |= VPROT_IMAGE;
+
     if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, NULL, NULL ))) goto done;
 
-    if (map_vprot & VPROT_IMAGE)
+    if (sec_flags & SEC_IMAGE)
     {
         size = full_size;
         if (size != full_size)  /* truncated */
@@ -2689,7 +2687,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
-    get_vprot_flags( protect, &vprot, map_vprot & VPROT_IMAGE );
+    get_vprot_flags( protect, &vprot, sec_flags & SEC_IMAGE );
     vprot |= (map_vprot & VPROT_COMMITTED);
     res = map_view( &view, *addr_ptr, size, mask, FALSE, vprot );
     if (res)

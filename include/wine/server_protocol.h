@@ -2129,8 +2129,8 @@ struct create_mapping_request
 {
     struct request_header __header;
     unsigned int access;
+    unsigned int flags;
     unsigned int protect;
-    char __pad_20[4];
     mem_size_t   size;
     obj_handle_t file_handle;
     /* VARARG(objattr,object_attributes); */
@@ -2187,11 +2187,13 @@ struct get_mapping_info_reply
 {
     struct reply_header __header;
     mem_size_t   size;
+    unsigned int flags;
     int          protect;
-    int          header_size;
     client_ptr_t base;
+    int          header_size;
     obj_handle_t mapping;
     obj_handle_t shared_file;
+    char __pad_44[4];
 };
 
 
@@ -6221,6 +6223,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 504
+#define SERVER_PROTOCOL_VERSION 505
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

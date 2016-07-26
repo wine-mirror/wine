@@ -59,6 +59,7 @@ struct mapping
 {
     struct object   obj;             /* object header */
     mem_size_t      size;            /* mapping size */
+    unsigned int    flags;           /* SEC_* flags */
     int             protect;         /* protection flags */
     struct fd      *fd;              /* fd for mapped file */
     enum cpu_type   cpu;             /* client CPU (for PE image mapping) */
@@ -372,7 +373,7 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
 }
 
 /* retrieve the mapping parameters for an executable (PE) image */
-static unsigned int get_image_params( struct mapping *mapping, int unix_fd, int protect )
+static unsigned int get_image_params( struct mapping *mapping, int unix_fd )
 {
     IMAGE_DOS_HEADER dos;
     IMAGE_SECTION_HEADER *sec = NULL;
@@ -461,7 +462,6 @@ static unsigned int get_image_params( struct mapping *mapping, int unix_fd, int 
 
     if (mapping->shared_file) list_add_head( &shared_list, &mapping->shared_entry );
 
-    mapping->protect = protect;
     free( sec );
     return 0;
 
@@ -471,7 +471,7 @@ static unsigned int get_image_params( struct mapping *mapping, int unix_fd, int 
 }
 
 static struct object *create_mapping( struct object *root, const struct unicode_str *name,
-                                      unsigned int attr, mem_size_t size, int protect,
+                                      unsigned int attr, mem_size_t size, unsigned int flags, int protect,
                                       obj_handle_t handle, const struct security_descriptor *sd )
 {
     struct mapping *mapping;
@@ -490,6 +490,8 @@ static struct object *create_mapping( struct object *root, const struct unicode_
 
     mapping->header_size = 0;
     mapping->base        = 0;
+    mapping->flags       = flags & (SEC_IMAGE | SEC_NOCACHE | SEC_WRITECOMBINE | SEC_LARGE_PAGES);
+    mapping->protect     = protect;
     mapping->fd          = NULL;
     mapping->shared_file = NULL;
     mapping->committed   = NULL;
@@ -502,7 +504,7 @@ static struct object *create_mapping( struct object *root, const struct unicode_
         const unsigned int sharing = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
         unsigned int mapping_access = FILE_MAPPING_ACCESS;
 
-        if (!(protect & VPROT_COMMITTED))
+        if (flags & SEC_RESERVE)
         {
             set_error( STATUS_INVALID_PARAMETER );
             goto error;
@@ -511,9 +513,10 @@ static struct object *create_mapping( struct object *root, const struct unicode_
         fd = get_obj_fd( (struct object *)file );
 
         /* file sharing rules for mappings are different so we use magic the access rights */
-        if (protect & VPROT_IMAGE) mapping_access |= FILE_MAPPING_IMAGE;
+        if (flags & SEC_IMAGE) mapping_access |= FILE_MAPPING_IMAGE;
         else if (protect & VPROT_WRITE) mapping_access |= FILE_MAPPING_WRITE;
 
+        mapping->flags |= SEC_FILE;
         if (!(mapping->fd = get_fd_object_for_mapping( fd, mapping_access, sharing )))
         {
             mapping->fd = dup_fd_object( fd, mapping_access, sharing, FILE_SYNCHRONOUS_IO_NONALERT );
@@ -524,9 +527,9 @@ static struct object *create_mapping( struct object *root, const struct unicode_
         if (!mapping->fd) goto error;
 
         if ((unix_fd = get_unix_fd( mapping->fd )) == -1) goto error;
-        if (protect & VPROT_IMAGE)
+        if (flags & SEC_IMAGE)
         {
-            unsigned int err = get_image_params( mapping, unix_fd, protect );
+            unsigned int err = get_image_params( mapping, unix_fd );
             if (!err) return &mapping->obj;
             set_error( err );
             goto error;
@@ -548,12 +551,13 @@ static struct object *create_mapping( struct object *root, const struct unicode_
     }
     else  /* Anonymous mapping (no associated file) */
     {
-        if (!size || (protect & VPROT_IMAGE))
+        if (!size || (flags & SEC_IMAGE))
         {
             set_error( STATUS_INVALID_PARAMETER );
             goto error;
         }
-        if (!(protect & VPROT_COMMITTED))
+        mapping->flags |= flags & (SEC_COMMIT | SEC_RESERVE);
+        if (flags & SEC_RESERVE)
         {
             if (!(mapping->committed = mem_alloc( offsetof(struct ranges, ranges[8]) ))) goto error;
             mapping->committed->count = 0;
@@ -565,7 +569,6 @@ static struct object *create_mapping( struct object *root, const struct unicode_
         allow_fd_caching( mapping->fd );
     }
     mapping->size    = (size + page_mask) & ~((mem_size_t)page_mask);
-    mapping->protect = protect;
     return &mapping->obj;
 
  error:
@@ -601,10 +604,10 @@ static void mapping_dump( struct object *obj, int verbose )
 {
     struct mapping *mapping = (struct mapping *)obj;
     assert( obj->ops == &mapping_ops );
-    fprintf( stderr, "Mapping size=%08x%08x prot=%08x fd=%p header_size=%08x base=%08lx "
+    fprintf( stderr, "Mapping size=%08x%08x flags=%08x prot=%08x fd=%p header_size=%08x base=%08lx "
              "shared_file=%p\n",
              (unsigned int)(mapping->size >> 32), (unsigned int)mapping->size,
-             mapping->protect, mapping->fd, mapping->header_size,
+             mapping->flags, mapping->protect, mapping->fd, mapping->header_size,
              (unsigned long)mapping->base, mapping->shared_file );
 }
 
@@ -665,7 +668,7 @@ DECL_HANDLER(create_mapping)
     if (!objattr) return;
 
     if ((obj = create_mapping( root, &name, objattr->attributes,
-                               req->size, req->protect, req->file_handle, sd )))
+                               req->size, req->flags, req->protect, req->file_handle, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, obj, req->access, objattr->attributes );
@@ -695,18 +698,19 @@ DECL_HANDLER(get_mapping_info)
 
     if (!(mapping = get_mapping_obj( current->process, req->handle, req->access ))) return;
 
-    if ((mapping->protect & VPROT_IMAGE) && mapping->cpu != current->process->cpu)
+    reply->size        = mapping->size;
+    reply->flags       = mapping->flags;
+    reply->protect     = mapping->protect;
+    reply->header_size = mapping->header_size;
+    reply->base        = mapping->base;
+
+    if ((mapping->flags & SEC_IMAGE) && mapping->cpu != current->process->cpu)
     {
         set_error( STATUS_INVALID_IMAGE_FORMAT );
         release_object( mapping );
         return;
     }
 
-    reply->size        = mapping->size;
-    reply->protect     = mapping->protect;
-    reply->header_size = mapping->header_size;
-    reply->base        = mapping->base;
-    reply->shared_file = 0;
     if ((fd = get_obj_fd( &mapping->obj )))
     {
         if (!is_fd_removable(fd)) reply->mapping = alloc_handle( current->process, mapping, 0, 0 );

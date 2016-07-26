@@ -2144,6 +2144,7 @@ static void dump_read_change_reply( const struct read_change_reply *req )
 static void dump_create_mapping_request( const struct create_mapping_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
+    fprintf( stderr, ", flags=%08x", req->flags );
     fprintf( stderr, ", protect=%08x", req->protect );
     dump_uint64( ", size=", &req->size );
     fprintf( stderr, ", file_handle=%04x", req->file_handle );
@@ -2177,9 +2178,10 @@ static void dump_get_mapping_info_request( const struct get_mapping_info_request
 static void dump_get_mapping_info_reply( const struct get_mapping_info_reply *req )
 {
     dump_uint64( " size=", &req->size );
+    fprintf( stderr, ", flags=%08x", req->flags );
     fprintf( stderr, ", protect=%d", req->protect );
-    fprintf( stderr, ", header_size=%d", req->header_size );
     dump_uint64( ", base=", &req->base );
+    fprintf( stderr, ", header_size=%d", req->header_size );
     fprintf( stderr, ", mapping=%04x", req->mapping );
     fprintf( stderr, ", shared_file=%04x", req->shared_file );
 }
