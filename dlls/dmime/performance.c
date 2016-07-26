@@ -1198,7 +1198,7 @@ HRESULT WINAPI create_dmperformance(REFIID lpcGUID, void **ppobj)
 {
 	IDirectMusicPerformance8Impl *obj;
 
-        TRACE("(%p,%p)\n", lpcGUID, ppobj);
+        TRACE("(%s, %p)\n", debugstr_guid(lpcGUID), ppobj);
 
 	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicPerformance8Impl));
         if (NULL == obj) {
