@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Andrey Gusev
+ * Copyright (C) 2016 Alistair Leslie-Hughes
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,20 +16,30 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __D3DX10_H__
-#define __D3DX10_H__
+#include "d3dx10.h"
 
-#include <limits.h>
-#include <float.h>
+/* This guard is the same as D3DX9 to prevent double-inclusion */
+#ifndef __D3DX9MATH_H__
+#define __D3DX9MATH_H__
 
-#define D3DX10_DEFAULT        (0xffffffffu)
-#define D3DX10_FROM_FILE      (0xfffffffdu)
-#define DXGI_FORMAT_FROM_FILE ((DXGI_FORMAT)0xfffffffdu)
+#include <math.h>
 
-#include "d3d10.h"
-#include "d3dx10math.h"
-#include "d3dx10core.h"
-#include "d3dx10async.h"
-#include "d3dx10tex.h"
+typedef enum _D3DX_CPU_OPTIMIZATION
+{
+    D3DX_NOT_OPTIMIZED,
+    D3DX_3DNOW_OPTIMIZED,
+    D3DX_SSE2_OPTIMIZED,
+    D3DX_SSE_OPTIMIZED
+} D3DX_CPU_OPTIMIZATION;
 
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+D3DX_CPU_OPTIMIZATION WINAPI D3DXCpuOptimizations(BOOL enable);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __D3DX9MATH_H__ */

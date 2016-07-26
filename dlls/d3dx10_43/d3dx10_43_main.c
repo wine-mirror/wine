@@ -34,8 +34,7 @@
 #include "objbase.h"
 
 #include "d3d10_1.h"
-#include "d3dx10core.h"
-#include "d3dx10tex.h"
+#include "d3dx10.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
@@ -209,4 +208,11 @@ HRESULT WINAPI D3DX10GetImageInfoFromMemory(const void *src_data, SIZE_T src_dat
             src_data, src_data_size, pump, img_info, hresult);
 
     return E_NOTIMPL;
+}
+
+D3DX_CPU_OPTIMIZATION WINAPI D3DXCpuOptimizations(BOOL enable)
+{
+    FIXME("enable %#x stub.\n", enable);
+
+    return D3DX_NOT_OPTIMIZED;
 }

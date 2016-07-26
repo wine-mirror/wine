@@ -70,7 +70,7 @@
 @ stdcall D3DXColorAdjustSaturation(ptr ptr float) d3dx9_36.D3DXColorAdjustSaturation
 @ stdcall D3DXComputeBoundingBox(ptr long long ptr ptr) d3dx9_36.D3DXComputeBoundingBox
 @ stdcall D3DXComputeBoundingSphere(ptr long long ptr ptr) d3dx9_36.D3DXComputeBoundingSphere
-@ stub D3DXCpuOptimizations(long)
+@ stdcall D3DXCpuOptimizations(long)
 @ stdcall D3DXCreateMatrixStack(long ptr) d3dx9_36.D3DXCreateMatrixStack
 @ stdcall D3DXFloat16To32Array(ptr ptr long) d3dx9_36.D3DXFloat16To32Array
 @ stdcall D3DXFloat32To16Array(ptr ptr long) d3dx9_36.D3DXFloat32To16Array
