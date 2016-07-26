@@ -462,15 +462,55 @@ static ID3D10Buffer *create_buffer_(unsigned int line, ID3D10Device *device,
     return buffer;
 }
 
-struct texture_readback
+struct resource_readback
 {
-    ID3D10Texture2D *texture;
-    D3D10_MAPPED_TEXTURE2D mapped_texture;
+    D3D10_RESOURCE_DIMENSION dimension;
+    ID3D10Resource *resource;
+    D3D10_MAPPED_TEXTURE2D map_desc;
     unsigned int width, height, sub_resource_idx;
 };
 
+static void get_buffer_readback(ID3D10Buffer *buffer, struct resource_readback *rb)
+{
+    D3D10_BUFFER_DESC buffer_desc;
+    ID3D10Device *device;
+    HRESULT hr;
+
+    memset(rb, 0, sizeof(*rb));
+    rb->dimension = D3D10_RESOURCE_DIMENSION_BUFFER;
+
+    ID3D10Buffer_GetDevice(buffer, &device);
+
+    ID3D10Buffer_GetDesc(buffer, &buffer_desc);
+    buffer_desc.Usage = D3D10_USAGE_STAGING;
+    buffer_desc.BindFlags = 0;
+    buffer_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
+    buffer_desc.MiscFlags = 0;
+    if (FAILED(hr = ID3D10Device_CreateBuffer(device, &buffer_desc, NULL, (ID3D10Buffer **)&rb->resource)))
+    {
+        trace("Failed to create texture, hr %#x.\n", hr);
+        ID3D10Device_Release(device);
+        return;
+    }
+
+    rb->width = buffer_desc.ByteWidth;
+    rb->height = 1;
+    rb->sub_resource_idx = 0;
+
+    ID3D10Device_CopyResource(device, rb->resource, (ID3D10Resource *)buffer);
+    if (FAILED(hr = ID3D10Buffer_Map((ID3D10Buffer *)rb->resource, D3D10_MAP_READ, 0, &rb->map_desc.pData)))
+    {
+        trace("Failed to map buffer, hr %#x.\n", hr);
+        ID3D10Resource_Release(rb->resource);
+        rb->resource = NULL;
+    }
+    rb->map_desc.RowPitch = 0;
+
+    ID3D10Device_Release(device);
+}
+
 static void get_texture_readback(ID3D10Texture2D *texture, unsigned int sub_resource_idx,
-        struct texture_readback *rb)
+        struct resource_readback *rb)
 {
     D3D10_TEXTURE2D_DESC texture_desc;
     unsigned int miplevel;
@@ -478,6 +518,7 @@ static void get_texture_readback(ID3D10Texture2D *texture, unsigned int sub_reso
     HRESULT hr;
 
     memset(rb, 0, sizeof(*rb));
+    rb->dimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
 
     ID3D10Texture2D_GetDevice(texture, &device);
 
@@ -486,7 +527,7 @@ static void get_texture_readback(ID3D10Texture2D *texture, unsigned int sub_reso
     texture_desc.BindFlags = 0;
     texture_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
     texture_desc.MiscFlags = 0;
-    if (FAILED(hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &rb->texture)))
+    if (FAILED(hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, (ID3D10Texture2D **)&rb->resource)))
     {
         trace("Failed to create texture, hr %#x.\n", hr);
         ID3D10Device_Release(device);
@@ -498,52 +539,63 @@ static void get_texture_readback(ID3D10Texture2D *texture, unsigned int sub_reso
     rb->height = max(1, texture_desc.Height >> miplevel);
     rb->sub_resource_idx = sub_resource_idx;
 
-    ID3D10Device_CopyResource(device, (ID3D10Resource *)rb->texture, (ID3D10Resource *)texture);
-    if (FAILED(hr = ID3D10Texture2D_Map(rb->texture, sub_resource_idx,
-            D3D10_MAP_READ, 0, &rb->mapped_texture)))
+    ID3D10Device_CopyResource(device, rb->resource, (ID3D10Resource *)texture);
+    if (FAILED(hr = ID3D10Texture2D_Map((ID3D10Texture2D *)rb->resource, sub_resource_idx,
+            D3D10_MAP_READ, 0, &rb->map_desc)))
     {
         trace("Failed to map sub-resource %u, hr %#x.\n", sub_resource_idx, hr);
-        ID3D10Texture2D_Release(rb->texture);
-        rb->texture = NULL;
+        ID3D10Resource_Release(rb->resource);
+        rb->resource = NULL;
     }
 
     ID3D10Device_Release(device);
 }
 
-static DWORD get_readback_color(struct texture_readback *rb, unsigned int x, unsigned int y)
+static DWORD get_readback_color(struct resource_readback *rb, unsigned int x, unsigned int y)
 {
-    return ((DWORD *)rb->mapped_texture.pData)[rb->mapped_texture.RowPitch * y / sizeof(DWORD)  + x];
+    return ((DWORD *)rb->map_desc.pData)[rb->map_desc.RowPitch * y / sizeof(DWORD)  + x];
 }
 
-static float get_readback_float(struct texture_readback *rb, unsigned int x, unsigned int y)
+static float get_readback_float(struct resource_readback *rb, unsigned int x, unsigned int y)
 {
-    return ((float *)rb->mapped_texture.pData)[rb->mapped_texture.RowPitch * y / sizeof(float) + x];
+    return ((float *)rb->map_desc.pData)[rb->map_desc.RowPitch * y / sizeof(float) + x];
 }
 
-static const struct vec4 *get_readback_vec4(struct texture_readback *rb, unsigned int x, unsigned int y)
+static const struct vec4 *get_readback_vec4(struct resource_readback *rb, unsigned int x, unsigned int y)
 {
-    return &((const struct vec4 *)rb->mapped_texture.pData)[rb->mapped_texture.RowPitch * y / sizeof(struct vec4) + x];
+    return &((const struct vec4 *)rb->map_desc.pData)[rb->map_desc.RowPitch * y / sizeof(struct vec4) + x];
 }
 
-static const struct uvec4 *get_readback_uvec4(struct texture_readback *rb, unsigned int x, unsigned int y)
+static const struct uvec4 *get_readback_uvec4(struct resource_readback *rb, unsigned int x, unsigned int y)
 {
-    return &((const struct uvec4 *)rb->mapped_texture.pData)[rb->mapped_texture.RowPitch * y / sizeof(struct uvec4) + x];
+    return &((const struct uvec4 *)rb->map_desc.pData)[rb->map_desc.RowPitch * y / sizeof(struct uvec4) + x];
 }
 
-static void release_texture_readback(struct texture_readback *rb)
+static void release_resource_readback(struct resource_readback *rb)
 {
-    ID3D10Texture2D_Unmap(rb->texture, rb->sub_resource_idx);
-    ID3D10Texture2D_Release(rb->texture);
+    switch (rb->dimension)
+    {
+        case D3D10_RESOURCE_DIMENSION_BUFFER:
+            ID3D10Buffer_Unmap((ID3D10Buffer *)rb->resource);
+            break;
+        case D3D10_RESOURCE_DIMENSION_TEXTURE2D:
+            ID3D10Texture2D_Unmap((ID3D10Texture2D *)rb->resource, rb->sub_resource_idx);
+            break;
+        default:
+            trace("Unhandled resource dimension %#x.\n", rb->dimension);
+            break;
+    }
+    ID3D10Resource_Release(rb->resource);
 }
 
 static DWORD get_texture_color(ID3D10Texture2D *texture, unsigned int x, unsigned int y)
 {
-    struct texture_readback rb;
+    struct resource_readback rb;
     DWORD color;
 
     get_texture_readback(texture, 0, &rb);
     color = get_readback_color(&rb, x, y);
-    release_texture_readback(&rb);
+    release_resource_readback(&rb);
 
     return color;
 }
@@ -552,7 +604,7 @@ static DWORD get_texture_color(ID3D10Texture2D *texture, unsigned int x, unsigne
 static void check_texture_sub_resource_color_(unsigned int line, ID3D10Texture2D *texture,
         unsigned int sub_resource_idx, DWORD expected_color, BYTE max_diff)
 {
-    struct texture_readback rb;
+    struct resource_readback rb;
     unsigned int x = 0, y = 0;
     BOOL all_match = TRUE;
     DWORD color = 0;
@@ -572,7 +624,7 @@ static void check_texture_sub_resource_color_(unsigned int line, ID3D10Texture2D
         if (!all_match)
             break;
     }
-    release_texture_readback(&rb);
+    release_resource_readback(&rb);
     ok_(__FILE__, line)(all_match,
             "Got unexpected color 0x%08x at (%u, %u), sub-resource %u.\n",
             color, x, y, sub_resource_idx);
@@ -595,7 +647,7 @@ static void check_texture_color_(unsigned int line, ID3D10Texture2D *texture,
 static void check_texture_sub_resource_float_(unsigned int line, ID3D10Texture2D *texture,
         unsigned int sub_resource_idx, float expected_value, BYTE max_diff)
 {
-    struct texture_readback rb;
+    struct resource_readback rb;
     unsigned int x = 0, y = 0;
     BOOL all_match = TRUE;
     float value = 0.0f;
@@ -615,7 +667,7 @@ static void check_texture_sub_resource_float_(unsigned int line, ID3D10Texture2D
         if (!all_match)
             break;
     }
-    release_texture_readback(&rb);
+    release_resource_readback(&rb);
     ok_(__FILE__, line)(all_match,
             "Got unexpected value %.8e at (%u, %u), sub-resource %u.\n",
             value, x, y, sub_resource_idx);
@@ -638,7 +690,7 @@ static void check_texture_float_(unsigned int line, ID3D10Texture2D *texture,
 static void check_texture_sub_resource_vec4_(unsigned int line, ID3D10Texture2D *texture,
         unsigned int sub_resource_idx, const struct vec4 *expected_value, BYTE max_diff)
 {
-    struct texture_readback rb;
+    struct resource_readback rb;
     unsigned int x = 0, y = 0;
     struct vec4 value = {0};
     BOOL all_match = TRUE;
@@ -658,7 +710,7 @@ static void check_texture_sub_resource_vec4_(unsigned int line, ID3D10Texture2D 
         if (!all_match)
             break;
     }
-    release_texture_readback(&rb);
+    release_resource_readback(&rb);
     ok_(__FILE__, line)(all_match,
             "Got unexpected value {%.8e, %.8e, %.8e, %.8e} at (%u, %u), sub-resource %u.\n",
             value.x, value.y, value.z, value.w, x, y, sub_resource_idx);
@@ -681,7 +733,7 @@ static void check_texture_vec4_(unsigned int line, ID3D10Texture2D *texture,
 static void check_texture_sub_resource_uvec4_(unsigned int line, ID3D10Texture2D *texture,
         unsigned int sub_resource_idx, const struct uvec4 *expected_value)
 {
-    struct texture_readback rb;
+    struct resource_readback rb;
     unsigned int x = 0, y = 0;
     struct uvec4 value = {0};
     BOOL all_match = TRUE;
@@ -701,7 +753,7 @@ static void check_texture_sub_resource_uvec4_(unsigned int line, ID3D10Texture2D
         if (!all_match)
             break;
     }
-    release_texture_readback(&rb);
+    release_resource_readback(&rb);
     ok_(__FILE__, line)(all_match,
             "Got {0x%08x, 0x%08x, 0x%08x, 0x%08x}, expected {0x%08x, 0x%08x, 0x%08x, 0x%08x} "
             "at (%u, %u), sub-resource %u.\n",
@@ -4926,7 +4978,7 @@ static void test_texture(void)
     const struct shader *current_ps;
     ID3D10ShaderResourceView *srv;
     ID3D10SamplerState *sampler;
-    struct texture_readback rb;
+    struct resource_readback rb;
     ID3D10Texture2D *texture;
     struct vec4 ps_constant;
     ID3D10PixelShader *ps;
@@ -5645,7 +5697,7 @@ static void test_texture(void)
                         "Test %u: Got unexpected color 0x%08x at (%u, %u).\n", i, color, x, y);
             }
         }
-        release_texture_readback(&rb);
+        release_resource_readback(&rb);
     }
     if (srv)
         ID3D10ShaderResourceView_Release(srv);
@@ -5737,7 +5789,7 @@ static void test_texture(void)
                         "Test %u: Got unexpected color 0x%08x at (%u, %u).\n", i, color, x, y);
             }
         }
-        release_texture_readback(&rb);
+        release_resource_readback(&rb);
     }
     ID3D10PixelShader_Release(ps);
     ID3D10Texture2D_Release(texture);
@@ -6420,7 +6472,7 @@ static void test_update_subresource(void)
     ID3D10SamplerState *sampler_state;
     ID3D10ShaderResourceView *ps_srv;
     D3D10_SAMPLER_DESC sampler_desc;
-    struct texture_readback rb;
+    struct resource_readback rb;
     ID3D10Texture2D *texture;
     ID3D10PixelShader *ps;
     ID3D10Device *device;
@@ -6554,7 +6606,7 @@ static void test_update_subresource(void)
                     color, j, i, expected_colors[j + i * 4]);
         }
     }
-    release_texture_readback(&rb);
+    release_resource_readback(&rb);
 
     ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)texture, 0, NULL,
             bitmap_data, 4 * sizeof(*bitmap_data), 0);
@@ -6570,7 +6622,7 @@ static void test_update_subresource(void)
                     color, j, i, bitmap_data[j + i * 4]);
         }
     }
-    release_texture_readback(&rb);
+    release_resource_readback(&rb);
 
     ID3D10PixelShader_Release(ps);
     ID3D10SamplerState_Release(sampler_state);
@@ -6590,7 +6642,7 @@ static void test_copy_subresource_region(void)
     ID3D10ShaderResourceView *ps_srv;
     D3D10_SAMPLER_DESC sampler_desc;
     struct vec4 float_colors[16];
-    struct texture_readback rb;
+    struct resource_readback rb;
     ID3D10PixelShader *ps;
     ID3D10Device *device;
     unsigned int i, j;
@@ -6753,7 +6805,7 @@ static void test_copy_subresource_region(void)
                     color, j, i, expected_colors[j + i * 4]);
         }
     }
-    release_texture_readback(&rb);
+    release_resource_readback(&rb);
 
     ID3D10Device_CopySubresourceRegion(device, (ID3D10Resource *)dst_texture, 0,
             0, 0, 0, (ID3D10Resource *)src_texture, 0, NULL);
@@ -6769,7 +6821,7 @@ static void test_copy_subresource_region(void)
                     color, j, i, bitmap_data[j + i * 4]);
         }
     }
-    release_texture_readback(&rb);
+    release_resource_readback(&rb);
 
     ID3D10PixelShader_Release(ps);
     hr = ID3D10Device_CreatePixelShader(device, ps_buffer_code, sizeof(ps_buffer_code), &ps);
@@ -6840,12 +6892,39 @@ static void test_copy_subresource_region(void)
                     color, j, i, bitmap_data[j + i * 4]);
         }
     }
-    release_texture_readback(&rb);
+    release_resource_readback(&rb);
 
     ID3D10Buffer_Release(dst_buffer);
     ID3D10Buffer_Release(src_buffer);
     ID3D10PixelShader_Release(ps);
     release_test_context(&test_context);
+}
+
+static void test_buffer_data_init(void)
+{
+    struct resource_readback rb;
+    ID3D10Buffer *buffer;
+    ID3D10Device *device;
+    unsigned int i;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    buffer = create_buffer(device, D3D10_BIND_SHADER_RESOURCE, 1024, NULL);
+
+    get_buffer_readback(buffer, &rb);
+    for (i = 0; i < rb.width; ++i)
+    {
+        DWORD r = get_readback_color(&rb, i / sizeof(DWORD), 0);
+        ok(!r, "Got unexpected result %#x at offset %u.\n", r, i);
+    }
+    release_resource_readback(&rb);
+
+    ID3D10Buffer_Release(buffer);
+    ID3D10Device_Release(device);
 }
 
 static void test_texture_data_init(void)
@@ -7640,7 +7719,7 @@ static void test_draw_depth_only(void)
     ID3D10PixelShader *ps_color, *ps_depth;
     D3D10_TEXTURE2D_DESC texture_desc;
     ID3D10DepthStencilView *dsv;
-    struct texture_readback rb;
+    struct resource_readback rb;
     ID3D10Texture2D *texture;
     ID3D10Device *device;
     unsigned int i, j;
@@ -7784,7 +7863,7 @@ static void test_draw_depth_only(void)
                     obtained_depth, j, i, expected_depth);
         }
     }
-    release_texture_readback(&rb);
+    release_resource_readback(&rb);
 
     ID3D10Buffer_Release(cb);
     ID3D10PixelShader_Release(ps_color);
@@ -8884,6 +8963,7 @@ START_TEST(device)
     test_fragment_coords();
     test_update_subresource();
     test_copy_subresource_region();
+    test_buffer_data_init();
     test_texture_data_init();
     test_check_multisample_quality_levels();
     test_cb_relative_addressing();
