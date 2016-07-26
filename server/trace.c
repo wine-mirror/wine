@@ -1136,6 +1136,27 @@ static void dump_varargs_filesystem_event( const char *prefix, data_size_t size 
     fputc( '}', stderr );
 }
 
+static void dump_varargs_pe_image_info( const char *prefix, data_size_t size )
+{
+    pe_image_info_t info;
+
+    memset( &info, 0, sizeof(info) );
+    memcpy( &info, cur_data, min( size, sizeof(info) ));
+
+    fprintf( stderr, "%s{", prefix );
+    dump_uint64( "base=", &info.base );
+    dump_uint64( ",entry_point=", &info.entry_point );
+    dump_uint64( ",stack_size=", &info.stack_size );
+    dump_uint64( ",stack_commit=", &info.stack_commit );
+    fprintf( stderr, ",zerobits=%08x,subsystem=%08x,subsystem_low=%04x,subsystem_high=%04x,gp=%08x"
+             ",image_charact=%04x,dll_charact=%04x,machine=%04x,contains_code=%u,image_flags=%02x"
+             ",loader_flags=%08x,header_size=%08x,file_size=%08x,checksum=%08x}",
+             info.zerobits, info.subsystem, info.subsystem_low, info.subsystem_high, info.gp,
+             info.image_charact, info.dll_charact, info.machine, info.contains_code, info.image_flags,
+             info.loader_flags, info.header_size, info.file_size, info.checksum );
+    remove_data( size );
+}
+
 static void dump_varargs_rawinput_devices(const char *prefix, data_size_t size )
 {
     const struct rawinput_device *device;
@@ -2180,10 +2201,9 @@ static void dump_get_mapping_info_reply( const struct get_mapping_info_reply *re
     dump_uint64( " size=", &req->size );
     fprintf( stderr, ", flags=%08x", req->flags );
     fprintf( stderr, ", protect=%d", req->protect );
-    dump_uint64( ", base=", &req->base );
-    fprintf( stderr, ", header_size=%d", req->header_size );
     fprintf( stderr, ", mapping=%04x", req->mapping );
     fprintf( stderr, ", shared_file=%04x", req->shared_file );
+    dump_varargs_pe_image_info( ", image=", cur_size );
 }
 
 static void dump_get_mapping_committed_range_request( const struct get_mapping_committed_range_request *req )

@@ -410,6 +410,7 @@ static void test_MapViewOfFile(void)
     HANDLE file, mapping, map2;
     void *ptr, *ptr2, *addr;
     SECTION_BASIC_INFORMATION section_info;
+    SECTION_IMAGE_INFORMATION image_info;
     MEMORY_BASIC_INFORMATION info;
     BOOL ret;
     SIZE_T size;
@@ -1042,6 +1043,16 @@ static void test_MapViewOfFile(void)
     ok( section_info.BaseAddress == NULL, "NtQuerySection wrong base %p\n", section_info.BaseAddress );
     ok( section_info.Size.QuadPart == 0x4000, "NtQuerySection wrong size %x%08x\n",
         section_info.Size.u.HighPart, section_info.Size.u.LowPart );
+    status = pNtQuerySection( mapping, SectionBasicInformation, &section_info, sizeof(section_info)-1, NULL );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtQuerySection failed err %x\n", status );
+    status = pNtQuerySection( mapping, SectionBasicInformation, &section_info, sizeof(section_info)+1, NULL );
+    ok( !status, "NtQuerySection failed err %x\n", status );
+    status = pNtQuerySection( mapping, SectionImageInformation, &image_info, sizeof(image_info)-1, NULL );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtQuerySection failed err %x\n", status );
+    status = pNtQuerySection( mapping, SectionImageInformation, &image_info, sizeof(image_info), NULL );
+    ok( status == STATUS_SECTION_NOT_IMAGE, "NtQuerySection failed err %x\n", status );
+    status = pNtQuerySection( mapping, SectionImageInformation, &image_info, sizeof(image_info)+1, NULL );
+    ok( status == STATUS_SECTION_NOT_IMAGE, "NtQuerySection failed err %x\n", status );
     CloseHandle(mapping);
 
     CloseHandle(file);

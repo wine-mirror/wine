@@ -63,8 +63,7 @@ struct mapping
     int             protect;         /* protection flags */
     struct fd      *fd;              /* fd for mapped file */
     enum cpu_type   cpu;             /* client CPU (for PE image mapping) */
-    int             header_size;     /* size of headers (for PE image mapping) */
-    client_ptr_t    base;            /* default base addr (for PE image mapping) */
+    pe_image_info_t image;           /* image info (for PE image mapping) */
     struct ranges  *committed;       /* list of committed ranges in this mapping */
     struct file    *shared_file;     /* temp file for shared PE mapping */
     struct list     shared_entry;    /* entry in global shared PE mappings list */
@@ -373,7 +372,7 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
 }
 
 /* retrieve the mapping parameters for an executable (PE) image */
-static unsigned int get_image_params( struct mapping *mapping, int unix_fd )
+static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_size, int unix_fd )
 {
     IMAGE_DOS_HEADER dos;
     IMAGE_SECTION_HEADER *sec = NULL;
@@ -399,6 +398,7 @@ static unsigned int get_image_params( struct mapping *mapping, int unix_fd )
     size = pread( unix_fd, &nt, sizeof(nt), pos );
     if (size < sizeof(nt.Signature) + sizeof(nt.FileHeader)) return STATUS_INVALID_IMAGE_FORMAT;
     /* zero out Optional header in the case it's not present or partial */
+    size = min( size, nt.FileHeader.SizeOfOptionalHeader );
     if (size < sizeof(nt)) memset( (char *)&nt + size, 0, sizeof(nt) - size );
     if (nt.Signature != IMAGE_NT_SIGNATURE)
     {
@@ -438,23 +438,48 @@ static unsigned int get_image_params( struct mapping *mapping, int unix_fd )
     switch (nt.opt.hdr32.Magic)
     {
     case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-        mapping->size        = ROUND_SIZE( nt.opt.hdr32.SizeOfImage );
-        mapping->base        = nt.opt.hdr32.ImageBase;
-        mapping->header_size = nt.opt.hdr32.SizeOfHeaders;
+        mapping->size                 = ROUND_SIZE( nt.opt.hdr32.SizeOfImage );
+        mapping->image.base           = nt.opt.hdr32.ImageBase;
+        mapping->image.entry_point    = nt.opt.hdr32.ImageBase + nt.opt.hdr32.AddressOfEntryPoint;
+        mapping->image.stack_size     = nt.opt.hdr32.SizeOfStackReserve;
+        mapping->image.stack_commit   = nt.opt.hdr32.SizeOfStackCommit;
+        mapping->image.subsystem      = nt.opt.hdr32.Subsystem;
+        mapping->image.subsystem_low  = nt.opt.hdr32.MinorSubsystemVersion;
+        mapping->image.subsystem_high = nt.opt.hdr32.MajorSubsystemVersion;
+        mapping->image.dll_charact    = nt.opt.hdr32.DllCharacteristics;
+        mapping->image.loader_flags   = nt.opt.hdr32.LoaderFlags;
+        mapping->image.header_size    = nt.opt.hdr32.SizeOfHeaders;
+        mapping->image.checksum       = nt.opt.hdr32.CheckSum;
         break;
     case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-        mapping->size        = ROUND_SIZE( nt.opt.hdr64.SizeOfImage );
-        mapping->base        = nt.opt.hdr64.ImageBase;
-        mapping->header_size = nt.opt.hdr64.SizeOfHeaders;
+        mapping->size                 = ROUND_SIZE( nt.opt.hdr64.SizeOfImage );
+        mapping->image.base           = nt.opt.hdr64.ImageBase;
+        mapping->image.entry_point    = nt.opt.hdr64.ImageBase + nt.opt.hdr64.AddressOfEntryPoint;
+        mapping->image.stack_size     = nt.opt.hdr64.SizeOfStackReserve;
+        mapping->image.stack_commit   = nt.opt.hdr64.SizeOfStackCommit;
+        mapping->image.subsystem      = nt.opt.hdr64.Subsystem;
+        mapping->image.subsystem_low  = nt.opt.hdr64.MinorSubsystemVersion;
+        mapping->image.subsystem_high = nt.opt.hdr64.MajorSubsystemVersion;
+        mapping->image.dll_charact    = nt.opt.hdr64.DllCharacteristics;
+        mapping->image.loader_flags   = nt.opt.hdr64.LoaderFlags;
+        mapping->image.header_size    = nt.opt.hdr64.SizeOfHeaders;
+        mapping->image.checksum       = nt.opt.hdr64.CheckSum;
         break;
     }
+    mapping->image.image_charact = nt.FileHeader.Characteristics;
+    mapping->image.machine       = nt.FileHeader.Machine;
+    mapping->image.zerobits      = 0; /* FIXME */
+    mapping->image.gp            = 0; /* FIXME */
+    mapping->image.contains_code = 0; /* FIXME */
+    mapping->image.image_flags   = 0; /* FIXME */
+    mapping->image.file_size     = file_size;
 
     /* load the section headers */
 
     pos += sizeof(nt.Signature) + sizeof(nt.FileHeader) + nt.FileHeader.SizeOfOptionalHeader;
     size = sizeof(*sec) * nt.FileHeader.NumberOfSections;
     if (pos + size > mapping->size) goto error;
-    if (pos + size > mapping->header_size) mapping->header_size = pos + size;
+    if (pos + size > mapping->image.header_size) mapping->image.header_size = pos + size;
     if (!(sec = malloc( size ))) goto error;
     if (pread( unix_fd, sec, size, pos ) != size) goto error;
 
@@ -488,8 +513,6 @@ static struct object *create_mapping( struct object *root, const struct unicode_
     if (get_error() == STATUS_OBJECT_NAME_EXISTS)
         return &mapping->obj;  /* Nothing else to do */
 
-    mapping->header_size = 0;
-    mapping->base        = 0;
     mapping->flags       = flags & (SEC_IMAGE | SEC_NOCACHE | SEC_WRITECOMBINE | SEC_LARGE_PAGES);
     mapping->protect     = protect;
     mapping->fd          = NULL;
@@ -527,16 +550,16 @@ static struct object *create_mapping( struct object *root, const struct unicode_
         if (!mapping->fd) goto error;
 
         if ((unix_fd = get_unix_fd( mapping->fd )) == -1) goto error;
-        if (flags & SEC_IMAGE)
-        {
-            unsigned int err = get_image_params( mapping, unix_fd );
-            if (!err) return &mapping->obj;
-            set_error( err );
-            goto error;
-        }
         if (fstat( unix_fd, &st ) == -1)
         {
             file_set_error();
+            goto error;
+        }
+        if (flags & SEC_IMAGE)
+        {
+            unsigned int err = get_image_params( mapping, st.st_size, unix_fd );
+            if (!err) return &mapping->obj;
+            set_error( err );
             goto error;
         }
         if (!size)
@@ -604,11 +627,9 @@ static void mapping_dump( struct object *obj, int verbose )
 {
     struct mapping *mapping = (struct mapping *)obj;
     assert( obj->ops == &mapping_ops );
-    fprintf( stderr, "Mapping size=%08x%08x flags=%08x prot=%08x fd=%p header_size=%08x base=%08lx "
-             "shared_file=%p\n",
+    fprintf( stderr, "Mapping size=%08x%08x flags=%08x prot=%08x fd=%p shared_file=%p\n",
              (unsigned int)(mapping->size >> 32), (unsigned int)mapping->size,
-             mapping->flags, mapping->protect, mapping->fd, mapping->header_size,
-             (unsigned long)mapping->base, mapping->shared_file );
+             mapping->flags, mapping->protect, mapping->fd, mapping->shared_file );
 }
 
 static struct object_type *mapping_get_type( struct object *obj )
@@ -698,11 +719,12 @@ DECL_HANDLER(get_mapping_info)
 
     if (!(mapping = get_mapping_obj( current->process, req->handle, req->access ))) return;
 
-    reply->size        = mapping->size;
-    reply->flags       = mapping->flags;
-    reply->protect     = mapping->protect;
-    reply->header_size = mapping->header_size;
-    reply->base        = mapping->base;
+    reply->size    = mapping->size;
+    reply->flags   = mapping->flags;
+    reply->protect = mapping->protect;
+
+    if (mapping->flags & SEC_IMAGE)
+        set_reply_data( &mapping->image, min( sizeof(mapping->image), get_reply_max_size() ));
 
     if (!(req->access & (SECTION_MAP_READ | SECTION_MAP_WRITE)))  /* query only */
     {

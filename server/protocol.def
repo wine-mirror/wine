@@ -693,6 +693,29 @@ typedef union
     } ioctl;
 } irp_params_t;
 
+/* information about a PE image mapping, roughly equivalent to SECTION_IMAGE_INFORMATION */
+typedef struct
+{
+    client_ptr_t   base;
+    client_ptr_t   entry_point;
+    mem_size_t     stack_size;
+    mem_size_t     stack_commit;
+    unsigned int   zerobits;
+    unsigned int   subsystem;
+    unsigned short subsystem_low;
+    unsigned short subsystem_high;
+    unsigned int   gp;
+    unsigned short image_charact;
+    unsigned short dll_charact;
+    unsigned short machine;
+    unsigned char  contains_code;
+    unsigned char  image_flags;
+    unsigned int   loader_flags;
+    unsigned int   header_size;
+    unsigned int   file_size;
+    unsigned int   checksum;
+} pe_image_info_t;
+
 struct rawinput_device
 {
     unsigned short usage_page;
@@ -1694,10 +1717,9 @@ enum char_info_mode
     mem_size_t   size;          /* mapping size */
     unsigned int flags;         /* SEC_* flags */
     int          protect;       /* protection flags */
-    client_ptr_t base;          /* default base addr (for VPROT_IMAGE mapping) */
-    int          header_size;   /* header size (for VPROT_IMAGE mapping) */
     obj_handle_t mapping;       /* duplicate mapping handle unless removable */
     obj_handle_t shared_file;   /* shared mapping file handle */
+    VARARG(image,pe_image_info);/* image info for SEC_IMAGE mappings */
 @END
 
 

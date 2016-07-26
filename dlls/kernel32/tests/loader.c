@@ -223,6 +223,68 @@ static DWORD create_test_dll( const IMAGE_DOS_HEADER *dos_header, UINT dos_size,
     return size;
 }
 
+static void query_image_section( int id, const char *dll_name, const IMAGE_NT_HEADERS *nt_header )
+{
+    SECTION_IMAGE_INFORMATION image;
+    ULONG info_size = 0xdeadbeef;
+    NTSTATUS status;
+    HANDLE file, mapping;
+    ULONG file_size;
+
+    file = CreateFileA( dll_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "%u: CreateFile error %d\n", id, GetLastError() );
+    file_size = GetFileSize( file, NULL );
+
+    status = pNtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_MAP_READ | SECTION_QUERY,
+                               NULL, NULL, PAGE_READONLY, SEC_IMAGE, file );
+    ok( !status, "%u: NtCreateSection failed err %x\n", id, status );
+    if (status) return;
+    status = pNtQuerySection( mapping, SectionImageInformation, &image, sizeof(image), &info_size );
+    ok( !status, "%u: NtQuerySection failed err %x\n", id, status );
+    ok( info_size == sizeof(image), "%u: NtQuerySection wrong size %u\n", id, info_size );
+    ok( (char *)image.TransferAddress == (char *)nt_header->OptionalHeader.ImageBase + nt_header->OptionalHeader.AddressOfEntryPoint,
+        "%u: TransferAddress wrong %p / %p+%08x\n", id,
+        image.TransferAddress, (char *)nt_header->OptionalHeader.ImageBase,
+        nt_header->OptionalHeader.AddressOfEntryPoint );
+    ok( image.ZeroBits == 0, "%u: ZeroBits wrong %08x\n", id, image.ZeroBits );
+    ok( image.MaximumStackSize == nt_header->OptionalHeader.SizeOfStackReserve,
+        "%u: MaximumStackSize wrong %lx / %lx\n", id,
+        image.MaximumStackSize, (SIZE_T)nt_header->OptionalHeader.SizeOfStackReserve );
+    ok( image.CommittedStackSize == nt_header->OptionalHeader.SizeOfStackCommit,
+        "%u: CommittedStackSize wrong %lx / %lx\n", id,
+        image.CommittedStackSize, (SIZE_T)nt_header->OptionalHeader.SizeOfStackCommit );
+    ok( image.SubSystemType == nt_header->OptionalHeader.Subsystem,
+        "%u: SubSystemType wrong %08x / %08x\n", id,
+        image.SubSystemType, nt_header->OptionalHeader.Subsystem );
+    ok( image.SubsystemVersionLow == nt_header->OptionalHeader.MinorSubsystemVersion,
+        "%u: SubsystemVersionLow wrong %04x / %04x\n", id,
+        image.SubsystemVersionLow, nt_header->OptionalHeader.MinorSubsystemVersion );
+    ok( image.SubsystemVersionHigh == nt_header->OptionalHeader.MajorSubsystemVersion,
+        "%u: SubsystemVersionHigh wrong %04x / %04x\n", id,
+        image.SubsystemVersionHigh, nt_header->OptionalHeader.MajorSubsystemVersion );
+    ok( image.GpValue == 0, "%u: GpValue wrong %08x\n", id, image.GpValue );
+    ok( image.ImageCharacteristics == nt_header->FileHeader.Characteristics,
+        "%u: ImageCharacteristics wrong %04x / %04x\n", id,
+        image.ImageCharacteristics, nt_header->FileHeader.Characteristics );
+    ok( image.DllCharacteristics == nt_header->OptionalHeader.DllCharacteristics,
+        "%u: DllCharacteristics wrong %04x / %04x\n", id,
+        image.DllCharacteristics, nt_header->OptionalHeader.DllCharacteristics );
+    ok( image.Machine == nt_header->FileHeader.Machine, "%u: Machine wrong %04x / %04x\n", id,
+        image.Machine, nt_header->FileHeader.Machine );
+    ok( image.LoaderFlags == nt_header->OptionalHeader.LoaderFlags,
+        "%u: LoaderFlags wrong %08x / %08x\n", id,
+        image.LoaderFlags, nt_header->OptionalHeader.LoaderFlags );
+    ok( image.ImageFileSize == file_size, "%u: ImageFileSize wrong %08x / %08x\n", id,
+        image.ImageFileSize, file_size );
+    ok( image.CheckSum == nt_header->OptionalHeader.CheckSum, "%u: CheckSum wrong %08x / %08x\n", id,
+        image.CheckSum, nt_header->OptionalHeader.CheckSum );
+    /* FIXME: needs more work: */
+    /* image.ImageFlags */
+    /* image.ImageContainsCode */
+    CloseHandle( mapping );
+    CloseHandle( file );
+}
+
 /* helper to test image section mapping */
 static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header )
 {
@@ -256,6 +318,7 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header )
         todo_wine
         ok( info.Size.QuadPart == size.QuadPart, "NtQuerySection wrong size %x%08x / %x%08x\n",
             info.Size.u.HighPart, info.Size.u.LowPart, size.u.HighPart, size.u.LowPart );
+        query_image_section( 1000, dll_name, nt_header );
     }
     if (map) CloseHandle( map );
     CloseHandle( file );
@@ -588,6 +651,8 @@ static void test_Loader(void)
             SetLastError(0xdeadbeef);
             ret = FreeLibrary(hlib_as_data_file);
             ok(ret, "FreeLibrary error %d\n", GetLastError());
+
+            query_image_section( i, dll_name, &nt_header );
         }
         else
         {
@@ -614,6 +679,8 @@ static void test_Loader(void)
     nt_header.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER);
 
     nt_header.OptionalHeader.SectionAlignment = page_size;
+    nt_header.OptionalHeader.AddressOfEntryPoint = 0x1234;
+    nt_header.OptionalHeader.DllCharacteristics = IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
     nt_header.OptionalHeader.FileAlignment = page_size;
     nt_header.OptionalHeader.SizeOfHeaders = sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER);
     nt_header.OptionalHeader.SizeOfImage = sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + page_size;
