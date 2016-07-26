@@ -173,8 +173,8 @@ struct ACImpl {
 
     INT32 locked;
     UINT32 bufsize_frames, bufsize_bytes, capture_period, pad, started, peek_ofs, wri_offs_bytes, lcl_offs_bytes;
-    UINT32 tmp_buffer_bytes, held_bytes;
-    BYTE *local_buffer, *tmp_buffer;
+    UINT32 tmp_buffer_bytes, held_bytes, peek_len, peek_buffer_len;
+    BYTE *local_buffer, *tmp_buffer, *peek_buffer;
     void *locked_ptr;
 
     pa_stream *stream;
@@ -764,28 +764,42 @@ static void pulse_rd_loop(ACImpl *This, size_t bytes)
 
         dst = p->data;
         while (rem) {
-            pa_stream_peek(This->stream, (const void**)&src, &src_len);
-            assert(src_len);
-            assert(This->peek_ofs < src_len);
-            src += This->peek_ofs;
-            src_len -= This->peek_ofs;
-            assert(src_len <= bytes);
+            if (This->peek_len) {
+                copy = min(rem, This->peek_len - This->peek_ofs);
 
-            copy = rem;
-            if (copy > src_len)
-                copy = src_len;
-            memcpy(dst, src, rem);
-            src += copy;
-            src_len -= copy;
-            dst += copy;
-            rem -= copy;
+                memcpy(dst, This->peek_buffer + This->peek_ofs, copy);
 
-            if (!src_len) {
-                This->peek_ofs = 0;
-                pa_stream_drop(This->stream);
-            } else
+                rem -= copy;
+                dst += copy;
                 This->peek_ofs += copy;
+                if(This->peek_len == This->peek_ofs)
+                    This->peek_len = 0;
+            } else {
+                pa_stream_peek(This->stream, (const void**)&src, &src_len);
+
+                copy = min(rem, src_len);
+
+                memcpy(dst, src, rem);
+
+                dst += copy;
+                rem -= copy;
+
+                if (copy < src_len) {
+                    if (src_len > This->peek_buffer_len) {
+                        HeapFree(GetProcessHeap(), 0, This->peek_buffer);
+                        This->peek_buffer = HeapAlloc(GetProcessHeap(), 0, src_len);
+                        This->peek_buffer_len = src_len;
+                    }
+
+                    memcpy(This->peek_buffer, src + copy, src_len - copy);
+                    This->peek_len = src_len - copy;
+                    This->peek_ofs = 0;
+                }
+
+                pa_stream_drop(This->stream);
+            }
         }
+
         bytes -= This->capture_period;
     }
 }
@@ -1036,6 +1050,7 @@ static ULONG WINAPI AudioClient_Release(IAudioClient *iface)
         IUnknown_Release(This->marshal);
         IMMDevice_Release(This->parent);
         HeapFree(GetProcessHeap(), 0, This->tmp_buffer);
+        HeapFree(GetProcessHeap(), 0, This->peek_buffer);
         HeapFree(GetProcessHeap(), 0, This->local_buffer);
         HeapFree(GetProcessHeap(), 0, This);
     }
