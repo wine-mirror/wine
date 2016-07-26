@@ -41,8 +41,11 @@ static BOOL   (WINAPI *pVirtualFreeEx)(HANDLE, LPVOID, SIZE_T, DWORD);
 static UINT   (WINAPI *pGetWriteWatch)(DWORD,LPVOID,SIZE_T,LPVOID*,ULONG_PTR*,ULONG*);
 static UINT   (WINAPI *pResetWriteWatch)(LPVOID,SIZE_T);
 static NTSTATUS (WINAPI *pNtAreMappedFilesTheSame)(PVOID,PVOID);
+static NTSTATUS (WINAPI *pNtCreateSection)(HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *,
+                                           const LARGE_INTEGER *, ULONG, ULONG, HANDLE );
 static NTSTATUS (WINAPI *pNtMapViewOfSection)(HANDLE, HANDLE, PVOID *, ULONG, SIZE_T, const LARGE_INTEGER *, SIZE_T *, ULONG, ULONG, ULONG);
 static DWORD (WINAPI *pNtUnmapViewOfSection)(HANDLE, PVOID);
+static NTSTATUS (WINAPI *pNtQuerySection)(HANDLE, SECTION_INFORMATION_CLASS, void *, ULONG, ULONG *);
 static PVOID  (WINAPI *pRtlAddVectoredExceptionHandler)(ULONG, PVECTORED_EXCEPTION_HANDLER);
 static ULONG  (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID);
 static BOOL   (WINAPI *pGetProcessDEPPolicy)(HANDLE, LPDWORD, PBOOL);
@@ -406,9 +409,13 @@ static void test_MapViewOfFile(void)
     const char *name;
     HANDLE file, mapping, map2;
     void *ptr, *ptr2, *addr;
+    SECTION_BASIC_INFORMATION section_info;
     MEMORY_BASIC_INFORMATION info;
     BOOL ret;
     SIZE_T size;
+    NTSTATUS status;
+    ULONG info_size;
+    LARGE_INTEGER map_size;
 
     SetLastError(0xdeadbeef);
     file = CreateFileA( testfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
@@ -591,12 +598,12 @@ static void test_MapViewOfFile(void)
 
     SetLastError(0xdeadbeef);
     name = "Local\\Foo";
-    file = CreateFileMappingA( INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, name );
+    file = CreateFileMappingA( INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4090, name );
     /* nt4 doesn't have Local\\ */
     if (!file && GetLastError() == ERROR_PATH_NOT_FOUND)
     {
         name = "Foo";
-        file = CreateFileMappingA( INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, name );
+        file = CreateFileMappingA( INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4090, name );
     }
     ok( file != 0, "CreateFileMapping PAGE_READWRITE error %u\n", GetLastError() );
 
@@ -621,6 +628,21 @@ static void test_MapViewOfFile(void)
     ok( info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State );
     ok( info.Protect == PAGE_READONLY, "%x != PAGE_READONLY\n", info.Protect );
     UnmapViewOfFile( ptr );
+    status = pNtQuerySection( mapping, SectionBasicInformation, &section_info,
+                              sizeof(section_info), &info_size );
+    ok( status == STATUS_ACCESS_DENIED, "NtQuerySection failed err %x\n", status );
+    CloseHandle( mapping );
+    mapping = OpenFileMappingA( FILE_MAP_READ | SECTION_QUERY, FALSE, name );
+    ok( mapping != 0, "OpenFileMapping FILE_MAP_READ error %u\n", GetLastError() );
+    status = pNtQuerySection( mapping, SectionBasicInformation, &section_info,
+                              sizeof(section_info), &info_size );
+    ok( !status, "NtQuerySection failed err %x\n", status );
+    ok( info_size == sizeof(section_info), "NtQuerySection wrong size %u\n", info_size );
+    ok( section_info.Attributes == SEC_COMMIT, "NtQuerySection wrong attr %08x\n",
+        section_info.Attributes );
+    ok( section_info.BaseAddress == NULL, "NtQuerySection wrong base %p\n", section_info.BaseAddress );
+    ok( section_info.Size.QuadPart == info.RegionSize, "NtQuerySection wrong size %x%08x / %08lx\n",
+        section_info.Size.u.HighPart, section_info.Size.u.LowPart, info.RegionSize );
     CloseHandle( mapping );
 
     SetLastError(0xdeadbeef);
@@ -644,6 +666,22 @@ static void test_MapViewOfFile(void)
     ok( info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State );
     ok( info.Protect == PAGE_READWRITE, "%x != PAGE_READWRITE\n", info.Protect );
     UnmapViewOfFile( ptr );
+    status = pNtQuerySection( mapping, SectionBasicInformation, &section_info,
+                              sizeof(section_info), &info_size );
+    ok( status == STATUS_ACCESS_DENIED, "NtQuerySection failed err %x\n", status );
+    CloseHandle( mapping );
+
+    mapping = OpenFileMappingA( FILE_MAP_WRITE | SECTION_QUERY, FALSE, name );
+    ok( mapping != 0, "OpenFileMapping FILE_MAP_WRITE error %u\n", GetLastError() );
+    status = pNtQuerySection( mapping, SectionBasicInformation, &section_info,
+                              sizeof(section_info), &info_size );
+    ok( !status, "NtQuerySection failed err %x\n", status );
+    ok( info_size == sizeof(section_info), "NtQuerySection wrong size %u\n", info_size );
+    ok( section_info.Attributes == SEC_COMMIT, "NtQuerySection wrong attr %08x\n",
+        section_info.Attributes );
+    ok( section_info.BaseAddress == NULL, "NtQuerySection wrong base %p\n", section_info.BaseAddress );
+    ok( section_info.Size.QuadPart == info.RegionSize, "NtQuerySection wrong size %x%08x / %08lx\n",
+        section_info.Size.u.HighPart, section_info.Size.u.LowPart, info.RegionSize );
     CloseHandle( mapping );
 
     CloseHandle( file );
@@ -651,6 +689,14 @@ static void test_MapViewOfFile(void)
     /* read/write mapping with SEC_RESERVE */
     mapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE | SEC_RESERVE, 0, MAPPING_SIZE, NULL);
     ok(mapping != INVALID_HANDLE_VALUE, "CreateFileMappingA failed with error %d\n", GetLastError());
+    status = pNtQuerySection( mapping, SectionBasicInformation, &section_info,
+                              sizeof(section_info), NULL );
+    ok( !status, "NtQuerySection failed err %x\n", status );
+    ok( section_info.Attributes == SEC_RESERVE, "NtQuerySection wrong attr %08x\n",
+        section_info.Attributes );
+    ok( section_info.BaseAddress == NULL, "NtQuerySection wrong base %p\n", section_info.BaseAddress );
+    ok( section_info.Size.QuadPart == MAPPING_SIZE, "NtQuerySection wrong size %x%08x / %08x\n",
+        section_info.Size.u.HighPart, section_info.Size.u.LowPart, MAPPING_SIZE );
 
     ptr = MapViewOfFile(mapping, FILE_MAP_WRITE, 0, 0, 0);
     ok(ptr != NULL, "MapViewOfFile failed with error %d\n", GetLastError());
@@ -842,6 +888,15 @@ static void test_MapViewOfFile(void)
     SetLastError(0xdeadbeef);
     ret = CloseHandle(map2);
     ok(ret, "CloseHandle error %d\n", GetLastError());
+    status = pNtQuerySection( mapping, SectionBasicInformation, &section_info,
+                              sizeof(section_info), &info_size );
+    ok( !status, "NtQuerySection failed err %x\n", status );
+    ok( info_size == sizeof(section_info), "NtQuerySection wrong size %u\n", info_size );
+    ok( section_info.Attributes == SEC_FILE, "NtQuerySection wrong attr %08x\n",
+        section_info.Attributes );
+    ok( section_info.BaseAddress == NULL, "NtQuerySection wrong base %p\n", section_info.BaseAddress );
+    ok( section_info.Size.QuadPart == MAPPING_SIZE, "NtQuerySection wrong size %x%08x\n",
+        section_info.Size.u.HighPart, section_info.Size.u.LowPart );
     SetLastError(0xdeadbeef);
     ret = CloseHandle(mapping);
     ok(ret, "CloseHandle error %d\n", GetLastError());
@@ -926,6 +981,69 @@ static void test_MapViewOfFile(void)
     ok( ret, "UnmapViewOfFile failed with error %u\n", GetLastError() );
 
     CloseHandle(mapping);
+
+    mapping = CreateFileMappingA( file, NULL, PAGE_READONLY, 0, 36, NULL );
+    ok( mapping != NULL, "CreateFileMappingA failed with error %u\n", GetLastError() );
+    status = pNtQuerySection( mapping, SectionBasicInformation, &section_info,
+                              sizeof(section_info), &info_size );
+    ok( !status, "NtQuerySection failed err %x\n", status );
+    ok( info_size == sizeof(section_info), "NtQuerySection wrong size %u\n", info_size );
+    ok( section_info.Attributes == SEC_FILE, "NtQuerySection wrong attr %08x\n",
+        section_info.Attributes );
+    ok( section_info.BaseAddress == NULL, "NtQuerySection wrong base %p\n", section_info.BaseAddress );
+    todo_wine
+    ok( section_info.Size.QuadPart == 36, "NtQuerySection wrong size %x%08x\n",
+        section_info.Size.u.HighPart, section_info.Size.u.LowPart );
+    CloseHandle(mapping);
+
+    SetFilePointer(file, 0x3456, NULL, FILE_BEGIN);
+    SetEndOfFile(file);
+    mapping = CreateFileMappingA( file, NULL, PAGE_READONLY, 0, 0, NULL );
+    ok( mapping != NULL, "CreateFileMappingA failed with error %u\n", GetLastError() );
+    status = pNtQuerySection( mapping, SectionBasicInformation, &section_info,
+                              sizeof(section_info), &info_size );
+    ok( !status, "NtQuerySection failed err %x\n", status );
+    ok( info_size == sizeof(section_info), "NtQuerySection wrong size %u\n", info_size );
+    ok( section_info.Attributes == SEC_FILE, "NtQuerySection wrong attr %08x\n",
+        section_info.Attributes );
+    ok( section_info.BaseAddress == NULL, "NtQuerySection wrong base %p\n", section_info.BaseAddress );
+    todo_wine
+    ok( section_info.Size.QuadPart == 0x3456, "NtQuerySection wrong size %x%08x\n",
+        section_info.Size.u.HighPart, section_info.Size.u.LowPart );
+    CloseHandle(mapping);
+
+    map_size.QuadPart = 0x3457;
+    status = pNtCreateSection( &mapping, SECTION_QUERY | SECTION_MAP_READ, NULL,
+                               &map_size, PAGE_READONLY, SEC_COMMIT, file );
+    todo_wine
+    ok( status == STATUS_SECTION_TOO_BIG, "NtCreateSection failed %x\n", status );
+    if (!status) CloseHandle( mapping );
+    map_size.QuadPart = 0x3452;
+    status = pNtCreateSection( &mapping, SECTION_QUERY | SECTION_MAP_READ, NULL,
+                               &map_size, PAGE_READONLY, SEC_COMMIT, file );
+    ok( !status, "NtCreateSection failed %x\n", status );
+    status = pNtQuerySection( mapping, SectionBasicInformation, &section_info, sizeof(section_info), NULL );
+    ok( !status, "NtQuerySection failed err %x\n", status );
+    ok( section_info.Attributes == SEC_FILE, "NtQuerySection wrong attr %08x\n",
+        section_info.Attributes );
+    ok( section_info.BaseAddress == NULL, "NtQuerySection wrong base %p\n", section_info.BaseAddress );
+    todo_wine
+    ok( section_info.Size.QuadPart == 0x3452, "NtQuerySection wrong size %x%08x\n",
+        section_info.Size.u.HighPart, section_info.Size.u.LowPart );
+    CloseHandle(mapping);
+
+    status = pNtCreateSection( &mapping, SECTION_QUERY | SECTION_MAP_READ, NULL,
+                               &map_size, PAGE_READONLY, SEC_COMMIT, 0 );
+    ok( !status, "NtCreateSection failed %x\n", status );
+    status = pNtQuerySection( mapping, SectionBasicInformation, &section_info, sizeof(section_info), NULL );
+    ok( !status, "NtQuerySection failed err %x\n", status );
+    ok( section_info.Attributes == SEC_COMMIT, "NtQuerySection wrong attr %08x\n",
+        section_info.Attributes );
+    ok( section_info.BaseAddress == NULL, "NtQuerySection wrong base %p\n", section_info.BaseAddress );
+    ok( section_info.Size.QuadPart == 0x4000, "NtQuerySection wrong size %x%08x\n",
+        section_info.Size.u.HighPart, section_info.Size.u.LowPart );
+    CloseHandle(mapping);
+
     CloseHandle(file);
     DeleteFileA(testfile);
 }
@@ -3747,8 +3865,10 @@ START_TEST(virtual)
     pGetProcessDEPPolicy = (void *)GetProcAddress( hkernel32, "GetProcessDEPPolicy" );
     pIsWow64Process = (void *)GetProcAddress( hkernel32, "IsWow64Process" );
     pNtAreMappedFilesTheSame = (void *)GetProcAddress( hntdll, "NtAreMappedFilesTheSame" );
+    pNtCreateSection = (void *)GetProcAddress( hntdll, "NtCreateSection" );
     pNtMapViewOfSection = (void *)GetProcAddress( hntdll, "NtMapViewOfSection" );
     pNtUnmapViewOfSection = (void *)GetProcAddress( hntdll, "NtUnmapViewOfSection" );
+    pNtQuerySection = (void *)GetProcAddress( hntdll, "NtQuerySection" );
     pRtlAddVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlAddVectoredExceptionHandler" );
     pRtlRemoveVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlRemoveVectoredExceptionHandler" );
     pNtProtectVirtualMemory = (void *)GetProcAddress( hntdll, "NtProtectVirtualMemory" );

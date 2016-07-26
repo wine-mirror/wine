@@ -269,7 +269,7 @@
 @ stdcall NtQueryPerformanceCounter(ptr ptr)
 # @ stub NtQueryPortInformationProcess
 # @ stub NtQueryQuotaInformationFile
-@ stdcall NtQuerySection (long long long long long)
+@ stdcall NtQuerySection(long long ptr long ptr)
 @ stdcall NtQuerySecurityObject (long long long long long)
 @ stdcall NtQuerySemaphore (long long ptr long ptr)
 @ stdcall NtQuerySymbolicLinkObject(long ptr ptr)
@@ -1194,7 +1194,7 @@
 @ stdcall ZwQueryPerformanceCounter(ptr ptr) NtQueryPerformanceCounter
 # @ stub ZwQueryPortInformationProcess
 # @ stub ZwQueryQuotaInformationFile
-@ stdcall ZwQuerySection (long long long long long) NtQuerySection
+@ stdcall ZwQuerySection(long long ptr long ptr) NtQuerySection
 @ stdcall ZwQuerySecurityObject (long long long long long) NtQuerySecurityObject
 @ stdcall ZwQuerySemaphore(long long ptr long ptr) NtQuerySemaphore
 @ stdcall ZwQuerySymbolicLinkObject(long ptr ptr) NtQuerySymbolicLinkObject

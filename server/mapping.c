@@ -704,6 +704,12 @@ DECL_HANDLER(get_mapping_info)
     reply->header_size = mapping->header_size;
     reply->base        = mapping->base;
 
+    if (!(req->access & (SECTION_MAP_READ | SECTION_MAP_WRITE)))  /* query only */
+    {
+        release_object( mapping );
+        return;
+    }
+
     if ((mapping->flags & SEC_IMAGE) && mapping->cpu != current->process->cpu)
     {
         set_error( STATUS_INVALID_IMAGE_FORMAT );

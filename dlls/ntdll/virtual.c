@@ -2761,6 +2761,41 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
 }
 
 
+/******************************************************************************
+ *             NtQuerySection   (NTDLL.@)
+ *             ZwQuerySection   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQuerySection( HANDLE handle, SECTION_INFORMATION_CLASS class, void *ptr,
+                                ULONG size, ULONG *ret_size )
+{
+    NTSTATUS status;
+    SECTION_BASIC_INFORMATION *basic_info = ptr;
+
+    if (class != SectionBasicInformation)
+    {
+	FIXME( "class %u not implemented\n", class );
+	return STATUS_NOT_IMPLEMENTED;
+    }
+    if (size < sizeof(*basic_info)) return STATUS_INFO_LENGTH_MISMATCH;
+
+    SERVER_START_REQ( get_mapping_info )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        req->access = SECTION_QUERY;
+        if (!(status = wine_server_call( req )))
+        {
+            basic_info->Attributes    = reply->flags;
+            basic_info->BaseAddress   = NULL;
+            basic_info->Size.QuadPart = reply->size;
+            if (ret_size) *ret_size = sizeof(*basic_info);
+        }
+    }
+    SERVER_END_REQ;
+
+    return status;
+}
+
+
 /***********************************************************************
  *             NtFlushVirtualMemory   (NTDLL.@)
  *             ZwFlushVirtualMemory   (NTDLL.@)
