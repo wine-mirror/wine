@@ -834,6 +834,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetState(ID3D11DeviceCon
     wined3d_mutex_lock();
     if (!(device->rasterizer_state = unsafe_impl_from_ID3D11RasterizerState(rasterizer_state)))
     {
+        wined3d_device_set_rasterizer_state(device->wined3d_device, NULL);
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_FILLMODE, WINED3D_FILL_SOLID);
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_CULLMODE, WINED3D_CULL_CCW);
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SCISSORTESTENABLE, FALSE);
@@ -843,12 +844,11 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetState(ID3D11DeviceCon
         return;
     }
 
+    wined3d_device_set_rasterizer_state(device->wined3d_device, device->rasterizer_state->wined3d_state);
+
     desc = &device->rasterizer_state->desc;
     wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_FILLMODE, desc->FillMode);
     wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_CULLMODE, desc->CullMode);
-    /* glFrontFace() */
-    if (desc->FrontCounterClockwise)
-        FIXME("Ignoring FrontCounterClockwise %#x.\n", desc->FrontCounterClockwise);
     /* OpenGL style depth bias. */
     if (desc->DepthBias || desc->SlopeScaledDepthBias)
         FIXME("Ignoring depth bias.\n");

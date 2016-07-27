@@ -664,9 +664,10 @@ static ULONG STDMETHODCALLTYPE d3d11_rasterizer_state_Release(ID3D11RasterizerSt
         struct d3d_device *device = impl_from_ID3D11Device(state->device);
         wined3d_mutex_lock();
         wine_rb_remove(&device->rasterizer_states, &state->desc);
-        ID3D11Device_Release(state->device);
+        wined3d_rasterizer_state_decref(state->wined3d_state);
         wined3d_private_store_cleanup(&state->private_store);
         wined3d_mutex_unlock();
+        ID3D11Device_Release(state->device);
         HeapFree(GetProcessHeap(), 0, state);
     }
 
@@ -849,6 +850,9 @@ static const struct ID3D10RasterizerStateVtbl d3d10_rasterizer_state_vtbl =
 HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, struct d3d_device *device,
         const D3D11_RASTERIZER_DESC *desc)
 {
+    struct wined3d_rasterizer_state_desc wined3d_desc;
+    HRESULT hr;
+
     state->ID3D11RasterizerState_iface.lpVtbl = &d3d11_rasterizer_state_vtbl;
     state->ID3D10RasterizerState_iface.lpVtbl = &d3d10_rasterizer_state_vtbl;
     state->refcount = 1;
@@ -856,17 +860,27 @@ HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, struct d3d
     wined3d_private_store_init(&state->private_store);
     state->desc = *desc;
 
+    wined3d_desc.front_ccw = desc->FrontCounterClockwise;
+    if (FAILED(hr = wined3d_rasterizer_state_create(device->wined3d_device,
+            &wined3d_desc, &state->wined3d_state)))
+    {
+        WARN("Failed to create wined3d rasterizer state, hr %#x.\n", hr);
+        wined3d_private_store_cleanup(&state->private_store);
+        wined3d_mutex_unlock();
+        return hr;
+    }
+
     if (wine_rb_put(&device->rasterizer_states, desc, &state->entry) == -1)
     {
         ERR("Failed to insert rasterizer state entry.\n");
         wined3d_private_store_cleanup(&state->private_store);
+        wined3d_rasterizer_state_decref(state->wined3d_state);
         wined3d_mutex_unlock();
         return E_FAIL;
     }
     wined3d_mutex_unlock();
 
-    state->device = &device->ID3D11Device_iface;
-    ID3D11Device_AddRef(state->device);
+    ID3D11Device_AddRef(state->device = &device->ID3D11Device_iface);
 
     return S_OK;
 }

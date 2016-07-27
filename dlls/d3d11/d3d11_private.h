@@ -419,6 +419,7 @@ struct d3d_rasterizer_state
     LONG refcount;
 
     struct wined3d_private_store private_store;
+    struct wined3d_rasterizer_state *wined3d_state;
     D3D11_RASTERIZER_DESC desc;
     struct wine_rb_entry entry;
     ID3D11Device *device;
