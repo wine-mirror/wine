@@ -194,13 +194,13 @@ static void state_cullmode(struct wined3d_context *context, const struct wined3d
             gl_info->gl_ops.gl.p_glDisable(GL_CULL_FACE);
             checkGLcall("glDisable GL_CULL_FACE");
             break;
-        case WINED3D_CULL_CW:
+        case WINED3D_CULL_FRONT:
             gl_info->gl_ops.gl.p_glEnable(GL_CULL_FACE);
             checkGLcall("glEnable GL_CULL_FACE");
             gl_info->gl_ops.gl.p_glCullFace(GL_FRONT);
             checkGLcall("glCullFace(GL_FRONT)");
             break;
-        case WINED3D_CULL_CCW:
+        case WINED3D_CULL_BACK:
             gl_info->gl_ops.gl.p_glEnable(GL_CULL_FACE);
             checkGLcall("glEnable GL_CULL_FACE");
             gl_info->gl_ops.gl.p_glCullFace(GL_BACK);

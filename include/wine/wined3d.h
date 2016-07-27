@@ -462,8 +462,8 @@ enum wined3d_fill_mode
 enum wined3d_cull
 {
     WINED3D_CULL_NONE                       = 1,
-    WINED3D_CULL_CW                         = 2,
-    WINED3D_CULL_CCW                        = 3,
+    WINED3D_CULL_FRONT                      = 2,
+    WINED3D_CULL_BACK                       = 3,
 };
 
 enum wined3d_stencil_op
