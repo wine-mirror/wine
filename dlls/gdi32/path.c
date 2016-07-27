@@ -2016,8 +2016,7 @@ BOOL nulldrv_BeginPath( PHYSDEV dev )
     }
     physdev = get_path_physdev( find_dc_driver( dc, &path_driver ));
     physdev->path = path;
-    path->pos.x = dc->CursPosX;
-    path->pos.y = dc->CursPosY;
+    path->pos = dc->cur_pos;
     LPtoDP( dev->hdc, &path->pos, 1 );
     if (dc->path) free_gdi_path( dc->path );
     dc->path = NULL;

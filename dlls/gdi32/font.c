@@ -1029,7 +1029,7 @@ BOOL WINAPI SetTextJustification( HDC hdc, INT extra, INT breaks )
     ret = physdev->funcs->pSetTextJustification( physdev, extra, breaks );
     if (ret)
     {
-        extra = abs((extra * dc->vportExtX + dc->wndExtX / 2) / dc->wndExtX);
+        extra = abs((extra * dc->vport_ext.cx + dc->wnd_ext.cx / 2) / dc->wnd_ext.cx);
         if (!extra) breaks = 0;
         if (breaks)
         {

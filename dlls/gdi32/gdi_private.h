@@ -72,14 +72,10 @@ typedef struct tagDC
     BOOL         bounds_enabled:1; /* bounds tracking is enabled */
     BOOL         path_open:1;      /* path is currently open (only for saved DCs) */
 
-    INT          wndOrgX;          /* Window origin */
-    INT          wndOrgY;
-    INT          wndExtX;          /* Window extent */
-    INT          wndExtY;
-    INT          vportOrgX;        /* Viewport origin */
-    INT          vportOrgY;
-    INT          vportExtX;        /* Viewport extent */
-    INT          vportExtY;
+    POINT        wnd_org;          /* Window origin */
+    SIZE         wnd_ext;          /* Window extent */
+    POINT        vport_org;        /* Viewport origin */
+    SIZE         vport_ext;        /* Viewport extent */
     SIZE         virtual_res;      /* Initially HORZRES,VERTRES. Changed by SetVirtualResolution */
     SIZE         virtual_size;     /* Initially HORZSIZE,VERTSIZE. Changed by SetVirtualResolution */
     RECT         vis_rect;         /* visible rectangle in screen coords */
@@ -112,8 +108,7 @@ typedef struct tagDC
     COLORREF      textColor;
     COLORREF      dcBrushColor;
     COLORREF      dcPenColor;
-    short         brushOrgX;
-    short         brushOrgY;
+    POINT         brush_org;
 
     DWORD         mapperFlags;       /* Font mapper flags */
     WORD          textAlign;         /* Text alignment from SetTextAlign() */
@@ -123,8 +118,7 @@ typedef struct tagDC
     INT           MapMode;
     INT           GraphicsMode;      /* Graphics mode */
     ABORTPROC     pAbortProc;        /* AbortProc for Printing */
-    INT           CursPosX;          /* Current position */
-    INT           CursPosY;
+    POINT         cur_pos;           /* Current position */
     INT           ArcDirection;
     XFORM         xformWorld2Wnd;    /* World-to-window transformation */
     XFORM         xformWorld2Vport;  /* World-to-viewport transformation */

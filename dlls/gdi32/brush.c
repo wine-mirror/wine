@@ -394,12 +394,10 @@ BOOL WINAPI SetBrushOrgEx( HDC hdc, INT x, INT y, LPPOINT oldorg )
 
     if (!dc) return FALSE;
     if (oldorg)
-    {
-        oldorg->x = dc->brushOrgX;
-        oldorg->y = dc->brushOrgY;
-    }
-    dc->brushOrgX = x;
-    dc->brushOrgY = y;
+        *oldorg = dc->brush_org;
+
+    dc->brush_org.x = x;
+    dc->brush_org.y = y;
     release_dc_ptr( dc );
     return TRUE;
 }
