@@ -3528,7 +3528,11 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
     {
         case WINED3DSIH_ABS: instruction = "abs"; break;
         case WINED3DSIH_DSX: instruction = "dFdx"; break;
+        case WINED3DSIH_DSX_COARSE: instruction = "dFdxCoarse"; break;
+        case WINED3DSIH_DSX_FINE: instruction = "dFdxFine"; break;
         case WINED3DSIH_DSY: instruction = "ycorrection.y * dFdy"; break;
+        case WINED3DSIH_DSY_COARSE: instruction = "ycorrection.y * dFdyCoarse"; break;
+        case WINED3DSIH_DSY_FINE: instruction = "ycorrection.y * dFdyFine"; break;
         case WINED3DSIH_FRC: instruction = "fract"; break;
         case WINED3DSIH_IMAX: instruction = "max"; break;
         case WINED3DSIH_IMIN: instruction = "min"; break;
@@ -3542,7 +3546,7 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_UMAX: instruction = "max"; break;
         case WINED3DSIH_UMIN: instruction = "min"; break;
         default: instruction = "";
-            FIXME("Opcode %s not yet handled in GLSL.\n", debug_d3dshaderinstructionhandler(ins->handler_idx));
+            ERR("Opcode %s not yet handled in GLSL.\n", debug_d3dshaderinstructionhandler(ins->handler_idx));
             break;
     }
 
@@ -3562,27 +3566,6 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
     }
 
     shader_addline(buffer, "));\n");
-}
-
-static void shader_glsl_derivative(const struct wined3d_shader_instruction *ins)
-{
-    struct wined3d_string_buffer *buffer = ins->ctx->buffer;
-    struct glsl_src_param src_param;
-    const char *instruction;
-    DWORD write_mask;
-
-    switch (ins->handler_idx)
-    {
-        case WINED3DSIH_DSX_COARSE: instruction = "dFdxCoarse"; break;
-        case WINED3DSIH_DSX_FINE: instruction = "dFdxFine"; break;
-        case WINED3DSIH_DSY_COARSE: instruction = "ycorrection.y * dFdyCoarse"; break;
-        case WINED3DSIH_DSY_FINE: instruction = "ycorrection.y * dFdyFine"; break;
-        default: ERR("Unhandled opcode %#x.\n", ins->handler_idx); return;
-    }
-
-    write_mask = shader_glsl_append_dst(buffer, ins);
-    shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src_param);
-    shader_addline(buffer, "%s(%s));\n", instruction, src_param.param_str);
 }
 
 static void shader_glsl_nop(const struct wined3d_shader_instruction *ins) {}
@@ -8721,11 +8704,11 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DP4                              */ shader_glsl_dot,
     /* WINED3DSIH_DST                              */ shader_glsl_dst,
     /* WINED3DSIH_DSX                              */ shader_glsl_map2gl,
-    /* WINED3DSIH_DSX_COARSE                       */ shader_glsl_derivative,
-    /* WINED3DSIH_DSX_FINE                         */ shader_glsl_derivative,
+    /* WINED3DSIH_DSX_COARSE                       */ shader_glsl_map2gl,
+    /* WINED3DSIH_DSX_FINE                         */ shader_glsl_map2gl,
     /* WINED3DSIH_DSY                              */ shader_glsl_map2gl,
-    /* WINED3DSIH_DSY_COARSE                       */ shader_glsl_derivative,
-    /* WINED3DSIH_DSY_FINE                         */ shader_glsl_derivative,
+    /* WINED3DSIH_DSY_COARSE                       */ shader_glsl_map2gl,
+    /* WINED3DSIH_DSY_FINE                         */ shader_glsl_map2gl,
     /* WINED3DSIH_ELSE                             */ shader_glsl_else,
     /* WINED3DSIH_EMIT                             */ shader_glsl_emit,
     /* WINED3DSIH_EMIT_STREAM                      */ shader_glsl_emit,
