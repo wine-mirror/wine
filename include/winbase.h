@@ -2904,13 +2904,19 @@ static FORCEINLINE LONG WINAPI InterlockedDecrement( LONG volatile *dest )
 
 /* A few optimizations for gcc */
 
-#if defined(__GNUC__) && !defined(__MINGW32__) && (defined(__i386__) || (defined(__x86_64__) && !defined(__APPLE__))) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 2)))
+#if defined(__GNUC__) && !defined(__MINGW32__) && (defined(__i386__) || defined(__x86_64__)) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 2)))
 
 static FORCEINLINE DWORD WINAPI GetLastError(void)
 {
     DWORD ret;
 #ifdef __x86_64__
+#ifdef __APPLE__
+    DWORD* teb;
+    __asm__ __volatile__( ".byte 0x65\n\tmovq 0x30,%0" : "=r" (teb) );
+    ret = teb[0x68 / sizeof(DWORD)];
+#else
     __asm__ __volatile__( ".byte 0x65\n\tmovl 0x68,%0" : "=r" (ret) );
+#endif
 #else
     __asm__ __volatile__( ".byte 0x64\n\tmovl 0x34,%0" : "=r" (ret) );
 #endif
@@ -2921,7 +2927,13 @@ static FORCEINLINE DWORD WINAPI GetCurrentProcessId(void)
 {
     DWORD ret;
 #ifdef __x86_64__
+#ifdef __APPLE__
+    DWORD* teb;
+    __asm__ __volatile__( ".byte 0x65\n\tmovq 0x30,%0" : "=r" (teb) );
+    ret = teb[0x40 / sizeof(DWORD)];
+#else
     __asm__ __volatile__( ".byte 0x65\n\tmovl 0x40,%0" : "=r" (ret) );
+#endif
 #else
     __asm__ __volatile__( ".byte 0x64\n\tmovl 0x20,%0" : "=r" (ret) );
 #endif
@@ -2932,7 +2944,13 @@ static FORCEINLINE DWORD WINAPI GetCurrentThreadId(void)
 {
     DWORD ret;
 #ifdef __x86_64__
+#ifdef __APPLE__
+    DWORD* teb;
+    __asm__ __volatile__( ".byte 0x65\n\tmovq 0x30,%0" : "=r" (teb) );
+    ret = teb[0x48 / sizeof(DWORD)];
+#else
     __asm__ __volatile__( ".byte 0x65\n\tmovl 0x48,%0" : "=r" (ret) );
+#endif
 #else
     __asm__ __volatile__( ".byte 0x64\n\tmovl 0x24,%0" : "=r" (ret) );
 #endif
@@ -2942,7 +2960,13 @@ static FORCEINLINE DWORD WINAPI GetCurrentThreadId(void)
 static FORCEINLINE void WINAPI SetLastError( DWORD err )
 {
 #ifdef __x86_64__
+#ifdef __APPLE__
+    DWORD* teb;
+    __asm__ __volatile__( ".byte 0x65\n\tmovq 0x30,%0" : "=r" (teb) );
+    teb[0x68 / sizeof(DWORD)] = err;
+#else
     __asm__ __volatile__( ".byte 0x65\n\tmovl %0,0x68" : : "r" (err) : "memory" );
+#endif
 #else
     __asm__ __volatile__( ".byte 0x64\n\tmovl %0,0x34" : : "r" (err) : "memory" );
 #endif
@@ -2952,7 +2976,13 @@ static FORCEINLINE HANDLE WINAPI GetProcessHeap(void)
 {
     HANDLE *pdb;
 #ifdef __x86_64__
+#ifdef __APPLE__
+    HANDLE** teb;
+    __asm__ __volatile__( ".byte 0x65\n\tmovq 0x30,%0" : "=r" (teb) );
+    pdb = teb[0x60 / sizeof(HANDLE*)];
+#else
     __asm__ __volatile__( ".byte 0x65\n\tmovq 0x60,%0" : "=r" (pdb) );
+#endif
     return pdb[0x30 / sizeof(HANDLE)];  /* get dword at offset 0x30 in pdb */
 #else
     __asm__ __volatile__( ".byte 0x64\n\tmovl 0x30,%0" : "=r" (pdb) );
