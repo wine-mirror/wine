@@ -469,6 +469,13 @@ static inline DC *get_nulldrv_dc( PHYSDEV dev )
     return CONTAINING_RECORD( dev, DC, nulldrv );
 }
 
+static inline DC *get_physdev_dc( PHYSDEV dev )
+{
+    while (dev->funcs != &null_driver)
+        dev = dev->next;
+    return get_nulldrv_dc( dev );
+}
+
 /* Undocumented value for DIB's iUsage: Indicates a mono DIB w/o pal entries */
 #define DIB_PAL_MONO 2
 
