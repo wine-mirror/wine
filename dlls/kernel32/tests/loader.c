@@ -230,15 +230,22 @@ static void query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
     NTSTATUS status;
     HANDLE file, mapping;
     ULONG file_size;
+    /* truncated header is not handled correctly in windows <= w2k3 */
+    BOOL truncated = nt_header->FileHeader.SizeOfOptionalHeader < sizeof(nt_header->OptionalHeader);
 
-    file = CreateFileA( dll_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    file = CreateFileA( dll_name, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE,
+                        NULL, OPEN_EXISTING, 0, 0 );
     ok( file != INVALID_HANDLE_VALUE, "%u: CreateFile error %d\n", id, GetLastError() );
     file_size = GetFileSize( file, NULL );
 
     status = pNtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_MAP_READ | SECTION_QUERY,
                                NULL, NULL, PAGE_READONLY, SEC_IMAGE, file );
     ok( !status, "%u: NtCreateSection failed err %x\n", id, status );
-    if (status) return;
+    if (status)
+    {
+        CloseHandle( file );
+        return;
+    }
     status = pNtQuerySection( mapping, SectionImageInformation, &image, sizeof(image), &info_size );
     ok( !status, "%u: NtQuerySection failed err %x\n", id, status );
     ok( info_size == sizeof(image), "%u: NtQuerySection wrong size %u\n", id, info_size );
@@ -247,13 +254,13 @@ static void query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
         image.TransferAddress, (char *)nt_header->OptionalHeader.ImageBase,
         nt_header->OptionalHeader.AddressOfEntryPoint );
     ok( image.ZeroBits == 0, "%u: ZeroBits wrong %08x\n", id, image.ZeroBits );
-    ok( image.MaximumStackSize == nt_header->OptionalHeader.SizeOfStackReserve,
+    ok( image.MaximumStackSize == nt_header->OptionalHeader.SizeOfStackReserve || broken(truncated),
         "%u: MaximumStackSize wrong %lx / %lx\n", id,
         image.MaximumStackSize, (SIZE_T)nt_header->OptionalHeader.SizeOfStackReserve );
-    ok( image.CommittedStackSize == nt_header->OptionalHeader.SizeOfStackCommit,
+    ok( image.CommittedStackSize == nt_header->OptionalHeader.SizeOfStackCommit || broken(truncated),
         "%u: CommittedStackSize wrong %lx / %lx\n", id,
         image.CommittedStackSize, (SIZE_T)nt_header->OptionalHeader.SizeOfStackCommit );
-    ok( image.SubSystemType == nt_header->OptionalHeader.Subsystem,
+    ok( image.SubSystemType == nt_header->OptionalHeader.Subsystem || broken(truncated),
         "%u: SubSystemType wrong %08x / %08x\n", id,
         image.SubSystemType, nt_header->OptionalHeader.Subsystem );
     ok( image.SubsystemVersionLow == nt_header->OptionalHeader.MinorSubsystemVersion,
@@ -262,11 +269,10 @@ static void query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
     ok( image.SubsystemVersionHigh == nt_header->OptionalHeader.MajorSubsystemVersion,
         "%u: SubsystemVersionHigh wrong %04x / %04x\n", id,
         image.SubsystemVersionHigh, nt_header->OptionalHeader.MajorSubsystemVersion );
-    ok( image.GpValue == 0, "%u: GpValue wrong %08x\n", id, image.GpValue );
     ok( image.ImageCharacteristics == nt_header->FileHeader.Characteristics,
         "%u: ImageCharacteristics wrong %04x / %04x\n", id,
         image.ImageCharacteristics, nt_header->FileHeader.Characteristics );
-    ok( image.DllCharacteristics == nt_header->OptionalHeader.DllCharacteristics,
+    ok( image.DllCharacteristics == nt_header->OptionalHeader.DllCharacteristics || broken(truncated),
         "%u: DllCharacteristics wrong %04x / %04x\n", id,
         image.DllCharacteristics, nt_header->OptionalHeader.DllCharacteristics );
     ok( image.Machine == nt_header->FileHeader.Machine, "%u: Machine wrong %04x / %04x\n", id,
@@ -274,11 +280,12 @@ static void query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
     ok( image.LoaderFlags == nt_header->OptionalHeader.LoaderFlags,
         "%u: LoaderFlags wrong %08x / %08x\n", id,
         image.LoaderFlags, nt_header->OptionalHeader.LoaderFlags );
-    ok( image.ImageFileSize == file_size, "%u: ImageFileSize wrong %08x / %08x\n", id,
-        image.ImageFileSize, file_size );
+    ok( image.ImageFileSize == file_size || broken(!image.ImageFileSize), /* winxpsp1 */
+        "%u: ImageFileSize wrong %08x / %08x\n", id, image.ImageFileSize, file_size );
     ok( image.CheckSum == nt_header->OptionalHeader.CheckSum, "%u: CheckSum wrong %08x / %08x\n", id,
         image.CheckSum, nt_header->OptionalHeader.CheckSum );
     /* FIXME: needs more work: */
+    /* image.GpValue */
     /* image.ImageFlags */
     /* image.ImageContainsCode */
     CloseHandle( mapping );
