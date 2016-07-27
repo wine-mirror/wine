@@ -698,6 +698,7 @@ typedef struct
 {
     client_ptr_t   base;
     client_ptr_t   entry_point;
+    mem_size_t     map_size;
     mem_size_t     stack_size;
     mem_size_t     stack_commit;
     unsigned int   zerobits;

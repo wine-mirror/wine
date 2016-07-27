@@ -225,11 +225,13 @@ static DWORD create_test_dll( const IMAGE_DOS_HEADER *dos_header, UINT dos_size,
 
 static void query_image_section( int id, const char *dll_name, const IMAGE_NT_HEADERS *nt_header )
 {
+    SECTION_BASIC_INFORMATION info;
     SECTION_IMAGE_INFORMATION image;
     ULONG info_size = 0xdeadbeef;
     NTSTATUS status;
     HANDLE file, mapping;
     ULONG file_size;
+    LARGE_INTEGER map_size;
     /* truncated header is not handled correctly in windows <= w2k3 */
     BOOL truncated = nt_header->FileHeader.SizeOfOptionalHeader < sizeof(nt_header->OptionalHeader);
 
@@ -288,7 +290,45 @@ static void query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
     /* image.GpValue */
     /* image.ImageFlags */
     /* image.ImageContainsCode */
+
+    map_size.QuadPart = (nt_header->OptionalHeader.SizeOfImage + page_size - 1) & ~(page_size - 1);
+    status = pNtQuerySection( mapping, SectionBasicInformation, &info, sizeof(info), NULL );
+    ok( !status, "NtQuerySection failed err %x\n", status );
+    ok( info.Size.QuadPart == map_size.QuadPart, "NtQuerySection wrong size %x%08x / %x%08x\n",
+        info.Size.u.HighPart, info.Size.u.LowPart, map_size.u.HighPart, map_size.u.LowPart );
     CloseHandle( mapping );
+
+    map_size.QuadPart = (nt_header->OptionalHeader.SizeOfImage + page_size - 1) & ~(page_size - 1);
+    status = pNtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_MAP_READ | SECTION_QUERY,
+                               NULL, &map_size, PAGE_READONLY, SEC_IMAGE, file );
+    ok( !status, "%u: NtCreateSection failed err %x\n", id, status );
+    status = pNtQuerySection( mapping, SectionBasicInformation, &info, sizeof(info), NULL );
+    ok( !status, "NtQuerySection failed err %x\n", status );
+    ok( info.Size.QuadPart == map_size.QuadPart, "NtQuerySection wrong size %x%08x / %x%08x\n",
+        info.Size.u.HighPart, info.Size.u.LowPart, map_size.u.HighPart, map_size.u.LowPart );
+    CloseHandle( mapping );
+
+    map_size.QuadPart++;
+    status = pNtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_MAP_READ | SECTION_QUERY,
+                               NULL, &map_size, PAGE_READONLY, SEC_IMAGE, file );
+    ok( status == STATUS_SECTION_TOO_BIG, "%u: NtCreateSection failed err %x\n", id, status );
+
+    SetFilePointerEx( file, map_size, NULL, FILE_BEGIN );
+    SetEndOfFile( file );
+    status = pNtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_MAP_READ | SECTION_QUERY,
+                               NULL, &map_size, PAGE_READONLY, SEC_IMAGE, file );
+    ok( status == STATUS_SECTION_TOO_BIG, "%u: NtCreateSection failed err %x\n", id, status );
+
+    map_size.QuadPart = 1;
+    status = pNtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_MAP_READ | SECTION_QUERY,
+                               NULL, &map_size, PAGE_READONLY, SEC_IMAGE, file );
+    ok( !status, "%u: NtCreateSection failed err %x\n", id, status );
+    status = pNtQuerySection( mapping, SectionBasicInformation, &info, sizeof(info), NULL );
+    ok( !status, "NtQuerySection failed err %x\n", status );
+    ok( info.Size.QuadPart == map_size.QuadPart, "NtQuerySection wrong size %x%08x / %x%08x\n",
+        info.Size.u.HighPart, info.Size.u.LowPart, map_size.u.HighPart, map_size.u.LowPart );
+    CloseHandle( mapping );
+
     CloseHandle( file );
 }
 
@@ -322,7 +362,6 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header )
         ok( info_size == sizeof(info), "NtQuerySection wrong size %u\n", info_size );
         ok( info.Attributes == (SEC_IMAGE | SEC_FILE), "NtQuerySection wrong attr %x\n", info.Attributes );
         ok( info.BaseAddress == NULL, "NtQuerySection wrong base %p\n", info.BaseAddress );
-        todo_wine
         ok( info.Size.QuadPart == size.QuadPart, "NtQuerySection wrong size %x%08x / %x%08x\n",
             info.Size.u.HighPart, info.Size.u.LowPart, size.u.HighPart, size.u.LowPart );
         query_image_section( 1000, dll_name, nt_header );

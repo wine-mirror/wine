@@ -992,7 +992,6 @@ static void test_MapViewOfFile(void)
     ok( section_info.Attributes == SEC_FILE, "NtQuerySection wrong attr %08x\n",
         section_info.Attributes );
     ok( section_info.BaseAddress == NULL, "NtQuerySection wrong base %p\n", section_info.BaseAddress );
-    todo_wine
     ok( section_info.Size.QuadPart == 36, "NtQuerySection wrong size %x%08x\n",
         section_info.Size.u.HighPart, section_info.Size.u.LowPart );
     CloseHandle(mapping);
@@ -1008,7 +1007,6 @@ static void test_MapViewOfFile(void)
     ok( section_info.Attributes == SEC_FILE, "NtQuerySection wrong attr %08x\n",
         section_info.Attributes );
     ok( section_info.BaseAddress == NULL, "NtQuerySection wrong base %p\n", section_info.BaseAddress );
-    todo_wine
     ok( section_info.Size.QuadPart == 0x3456, "NtQuerySection wrong size %x%08x\n",
         section_info.Size.u.HighPart, section_info.Size.u.LowPart );
     CloseHandle(mapping);
@@ -1019,6 +1017,10 @@ static void test_MapViewOfFile(void)
     todo_wine
     ok( status == STATUS_SECTION_TOO_BIG, "NtCreateSection failed %x\n", status );
     if (!status) CloseHandle( mapping );
+    status = pNtCreateSection( &mapping, SECTION_QUERY | SECTION_MAP_READ, NULL,
+                               &map_size, PAGE_READONLY, SEC_IMAGE, file );
+    ok( status == STATUS_INVALID_IMAGE_NOT_MZ, "NtCreateSection failed %x\n", status );
+    if (!status) CloseHandle( mapping );
     map_size.QuadPart = 0x3452;
     status = pNtCreateSection( &mapping, SECTION_QUERY | SECTION_MAP_READ, NULL,
                                &map_size, PAGE_READONLY, SEC_COMMIT, file );
@@ -1028,9 +1030,17 @@ static void test_MapViewOfFile(void)
     ok( section_info.Attributes == SEC_FILE, "NtQuerySection wrong attr %08x\n",
         section_info.Attributes );
     ok( section_info.BaseAddress == NULL, "NtQuerySection wrong base %p\n", section_info.BaseAddress );
-    todo_wine
     ok( section_info.Size.QuadPart == 0x3452, "NtQuerySection wrong size %x%08x\n",
         section_info.Size.u.HighPart, section_info.Size.u.LowPart );
+    size = map_size.QuadPart;
+    status = pNtMapViewOfSection( mapping, GetCurrentProcess(), &ptr, 0, 0, NULL,
+                                  &size, ViewShare, 0, PAGE_READONLY );
+    ok( !status, "NtMapViewOfSection failed err %x\n", status );
+    pNtUnmapViewOfSection( GetCurrentProcess(), ptr );
+    size = map_size.QuadPart + 1;
+    status = pNtMapViewOfSection( mapping, GetCurrentProcess(), &ptr, 0, 0, NULL,
+                                  &size, ViewShare, 0, PAGE_READONLY );
+    ok( status == STATUS_INVALID_VIEW_SIZE, "NtMapViewOfSection failed err %x\n", status );
     CloseHandle(mapping);
 
     status = pNtCreateSection( &mapping, SECTION_QUERY | SECTION_MAP_READ, NULL,
@@ -1054,6 +1064,15 @@ static void test_MapViewOfFile(void)
     status = pNtQuerySection( mapping, SectionImageInformation, &image_info, sizeof(image_info)+1, NULL );
     ok( status == STATUS_SECTION_NOT_IMAGE, "NtQuerySection failed err %x\n", status );
     CloseHandle(mapping);
+
+    SetFilePointer(file, 0, NULL, FILE_BEGIN);
+    SetEndOfFile(file);
+    status = pNtCreateSection( &mapping, SECTION_QUERY | SECTION_MAP_READ, NULL,
+                               NULL, PAGE_READONLY, SEC_COMMIT, file );
+    ok( status == STATUS_MAPPED_FILE_SIZE_ZERO, "NtCreateSection failed %x\n", status );
+    status = pNtCreateSection( &mapping, SECTION_QUERY | SECTION_MAP_READ, NULL,
+                               NULL, PAGE_READONLY, SEC_IMAGE, file );
+    ok( status == STATUS_INVALID_FILE_FOR_SECTION, "NtCreateSection failed %x\n", status );
 
     CloseHandle(file);
     DeleteFileA(testfile);

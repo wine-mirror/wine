@@ -2636,10 +2636,11 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         void *base = wine_server_get_ptr( image_info.base );
 
         if ((ULONG_PTR)base != image_info.base) base = NULL;
-        size = full_size;
-        if (size != full_size)  /* truncated */
+        size = image_info.map_size;
+        if (size != image_info.map_size)  /* truncated */
         {
-            WARN( "Modules larger than 4Gb (%s) not supported\n", wine_dbgstr_longlong(full_size) );
+            WARN( "Modules larger than 4Gb (%s) not supported\n",
+                  wine_dbgstr_longlong(image_info.map_size) );
             res = STATUS_INVALID_PARAMETER;
             goto done;
         }
@@ -2668,9 +2669,12 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     if (offset.QuadPart >= full_size) goto done;
     if (*size_ptr)
     {
-        if (*size_ptr > full_size - offset.QuadPart) goto done;
-        size = ROUND_SIZE( offset.u.LowPart, *size_ptr );
-        if (size < *size_ptr) goto done;  /* wrap-around */
+        size = *size_ptr;
+        if (size > full_size - offset.QuadPart)
+        {
+            res = STATUS_INVALID_VIEW_SIZE;
+            goto done;
+        }
     }
     else
     {
@@ -2682,6 +2686,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
             goto done;
         }
     }
+    if (!(size = ROUND_SIZE( 0, size ))) goto done;  /* wrap-around */
 
     /* Reserve a properly aligned area */
 

@@ -1140,12 +1140,18 @@ static void dump_varargs_pe_image_info( const char *prefix, data_size_t size )
 {
     pe_image_info_t info;
 
+    if (!size)
+    {
+        fprintf( stderr, "%s{}", prefix );
+        return;
+    }
     memset( &info, 0, sizeof(info) );
     memcpy( &info, cur_data, min( size, sizeof(info) ));
 
     fprintf( stderr, "%s{", prefix );
     dump_uint64( "base=", &info.base );
     dump_uint64( ",entry_point=", &info.entry_point );
+    dump_uint64( ",map_size=", &info.map_size );
     dump_uint64( ",stack_size=", &info.stack_size );
     dump_uint64( ",stack_commit=", &info.stack_commit );
     fprintf( stderr, ",zerobits=%08x,subsystem=%08x,subsystem_low=%04x,subsystem_high=%04x,gp=%08x"

@@ -391,6 +391,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
 
     /* load the headers */
 
+    if (!file_size) return STATUS_INVALID_FILE_FOR_SECTION;
     if (pread( unix_fd, &dos, sizeof(dos), 0 ) != sizeof(dos)) return STATUS_INVALID_IMAGE_NOT_MZ;
     if (dos.e_magic != IMAGE_DOS_SIGNATURE) return STATUS_INVALID_IMAGE_NOT_MZ;
     pos = dos.e_lfanew;
@@ -438,9 +439,9 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     switch (nt.opt.hdr32.Magic)
     {
     case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-        mapping->size                 = ROUND_SIZE( nt.opt.hdr32.SizeOfImage );
         mapping->image.base           = nt.opt.hdr32.ImageBase;
         mapping->image.entry_point    = nt.opt.hdr32.ImageBase + nt.opt.hdr32.AddressOfEntryPoint;
+        mapping->image.map_size       = ROUND_SIZE( nt.opt.hdr32.SizeOfImage );
         mapping->image.stack_size     = nt.opt.hdr32.SizeOfStackReserve;
         mapping->image.stack_commit   = nt.opt.hdr32.SizeOfStackCommit;
         mapping->image.subsystem      = nt.opt.hdr32.Subsystem;
@@ -452,9 +453,9 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         mapping->image.checksum       = nt.opt.hdr32.CheckSum;
         break;
     case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-        mapping->size                 = ROUND_SIZE( nt.opt.hdr64.SizeOfImage );
         mapping->image.base           = nt.opt.hdr64.ImageBase;
         mapping->image.entry_point    = nt.opt.hdr64.ImageBase + nt.opt.hdr64.AddressOfEntryPoint;
+        mapping->image.map_size       = ROUND_SIZE( nt.opt.hdr64.SizeOfImage );
         mapping->image.stack_size     = nt.opt.hdr64.SizeOfStackReserve;
         mapping->image.stack_commit   = nt.opt.hdr64.SizeOfStackCommit;
         mapping->image.subsystem      = nt.opt.hdr64.Subsystem;
@@ -478,7 +479,9 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
 
     pos += sizeof(nt.Signature) + sizeof(nt.FileHeader) + nt.FileHeader.SizeOfOptionalHeader;
     size = sizeof(*sec) * nt.FileHeader.NumberOfSections;
-    if (pos + size > mapping->size) goto error;
+    if (!mapping->size) mapping->size = mapping->image.map_size;
+    else if (mapping->size > mapping->image.map_size) return STATUS_SECTION_TOO_BIG;
+    if (pos + size > mapping->image.map_size) return STATUS_INVALID_FILE_FOR_SECTION;
     if (pos + size > mapping->image.header_size) mapping->image.header_size = pos + size;
     if (!(sec = malloc( size ))) goto error;
     if (pread( unix_fd, sec, size, pos ) != size) goto error;
@@ -513,6 +516,7 @@ static struct object *create_mapping( struct object *root, const struct unicode_
     if (get_error() == STATUS_OBJECT_NAME_EXISTS)
         return &mapping->obj;  /* Nothing else to do */
 
+    mapping->size        = size;
     mapping->flags       = flags & (SEC_IMAGE | SEC_NOCACHE | SEC_WRITECOMBINE | SEC_LARGE_PAGES);
     mapping->protect     = protect;
     mapping->fd          = NULL;
@@ -562,19 +566,19 @@ static struct object *create_mapping( struct object *root, const struct unicode_
             set_error( err );
             goto error;
         }
-        if (!size)
+        if (!mapping->size)
         {
-            if (!(size = st.st_size))
+            if (!(mapping->size = st.st_size))
             {
                 set_error( STATUS_MAPPED_FILE_SIZE_ZERO );
                 goto error;
             }
         }
-        else if (st.st_size < size && !grow_file( unix_fd, size )) goto error;
+        else if (st.st_size < mapping->size && !grow_file( unix_fd, mapping->size )) goto error;
     }
     else  /* Anonymous mapping (no associated file) */
     {
-        if (!size || (flags & SEC_IMAGE))
+        if (!mapping->size || (flags & SEC_IMAGE))
         {
             set_error( STATUS_INVALID_PARAMETER );
             goto error;
@@ -586,12 +590,12 @@ static struct object *create_mapping( struct object *root, const struct unicode_
             mapping->committed->count = 0;
             mapping->committed->max   = 8;
         }
-        if ((unix_fd = create_temp_file( size )) == -1) goto error;
+        mapping->size = (mapping->size + page_mask) & ~((mem_size_t)page_mask);
+        if ((unix_fd = create_temp_file( mapping->size )) == -1) goto error;
         if (!(mapping->fd = create_anonymous_fd( &mapping_fd_ops, unix_fd, &mapping->obj,
                                                  FILE_SYNCHRONOUS_IO_NONALERT ))) goto error;
         allow_fd_caching( mapping->fd );
     }
-    mapping->size    = (size + page_mask) & ~((mem_size_t)page_mask);
     return &mapping->obj;
 
  error:

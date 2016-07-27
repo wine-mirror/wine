@@ -682,6 +682,7 @@ typedef struct
 {
     client_ptr_t   base;
     client_ptr_t   entry_point;
+    mem_size_t     map_size;
     mem_size_t     stack_size;
     mem_size_t     stack_commit;
     unsigned int   zerobits;
@@ -6244,6 +6245,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 506
+#define SERVER_PROTOCOL_VERSION 507
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
