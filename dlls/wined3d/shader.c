@@ -1217,8 +1217,18 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             }
 
             if (ins.handler_idx == WINED3DSIH_NRM) reg_maps->usesnrm = 1;
-            else if (ins.handler_idx == WINED3DSIH_DSY) reg_maps->usesdsy = 1;
-            else if (ins.handler_idx == WINED3DSIH_DSX) reg_maps->usesdsx = 1;
+            else if (ins.handler_idx == WINED3DSIH_DSY
+                    || ins.handler_idx == WINED3DSIH_DSY_COARSE
+                    || ins.handler_idx == WINED3DSIH_DSY_FINE)
+            {
+                reg_maps->usesdsy = 1;
+            }
+            else if (ins.handler_idx == WINED3DSIH_DSX
+                    || ins.handler_idx == WINED3DSIH_DSX_COARSE
+                    || ins.handler_idx == WINED3DSIH_DSX_FINE)
+            {
+                reg_maps->usesdsx = 1;
+            }
             else if (ins.handler_idx == WINED3DSIH_TEXLDD) reg_maps->usestexldd = 1;
             else if (ins.handler_idx == WINED3DSIH_TEXLDL) reg_maps->usestexldl = 1;
             else if (ins.handler_idx == WINED3DSIH_MOVA) reg_maps->usesmova = 1;
