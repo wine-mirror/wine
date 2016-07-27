@@ -982,16 +982,12 @@ static void draw_quad_(unsigned int line, struct d3d10core_test_context *context
         0x0000000f, 0x0300005f, 0x001010f2, 0x00000000, 0x04000067, 0x001020f2, 0x00000000, 0x00000001,
         0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
     };
-    static const struct
+    static const struct vec2 quad[] =
     {
-        struct vec2 position;
-    }
-    quad[] =
-    {
-        {{-1.0f, -1.0f}},
-        {{-1.0f,  1.0f}},
-        {{ 1.0f, -1.0f}},
-        {{ 1.0f,  1.0f}},
+        {-1.0f, -1.0f},
+        {-1.0f,  1.0f},
+        { 1.0f, -1.0f},
+        { 1.0f,  1.0f},
     };
 
     ID3D10Device *device = context->device;
@@ -5871,16 +5867,12 @@ static void test_multiple_render_targets(void)
         0x3e4ccccd, 0x08000036, 0x001020f2, 0x00000003, 0x00004002, 0x00000000, 0x3e4ccccd, 0x3f000000,
         0x3f800000, 0x0100003e,
     };
-    static const struct
+    static const struct vec2 quad[] =
     {
-        struct vec2 position;
-    }
-    quad[] =
-    {
-        {{-1.0f, -1.0f}},
-        {{-1.0f,  1.0f}},
-        {{ 1.0f, -1.0f}},
-        {{ 1.0f,  1.0f}},
+        {-1.0f, -1.0f},
+        {-1.0f,  1.0f},
+        { 1.0f, -1.0f},
+        { 1.0f,  1.0f},
     };
     static const float red[] = {1.0f, 0.0f, 0.0f, 1.0f};
 
@@ -7178,16 +7170,12 @@ float4 main(const ps_in v) : SV_TARGET
         0x0000000e, 0x03001062, 0x001010f2, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x05000036,
         0x001020f2, 0x00000000, 0x00101e46, 0x00000001, 0x0100003e,
     };
-    static const struct
+    static const struct vec2 quad[] =
     {
-        struct vec2 position;
-    }
-    quad[] =
-    {
-        {{-1.0f, -1.0f}},
-        {{-1.0f,  1.0f}},
-        {{ 1.0f, -1.0f}},
-        {{ 1.0f,  1.0f}},
+        {-1.0f, -1.0f},
+        {-1.0f,  1.0f},
+        { 1.0f, -1.0f},
+        { 1.0f,  1.0f},
     };
     static const struct
     {
@@ -7360,16 +7348,12 @@ static void test_swapchain_flip(void)
         0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
         0x00000000, 0x00000000, 0x00000000
     };
-    static const struct
+    static const struct vec2 quad[] =
     {
-        struct vec2 position;
-    }
-    quad[] =
-    {
-        {{-1.0f, -1.0f}},
-        {{-1.0f,  1.0f}},
-        {{ 1.0f, -1.0f}},
-        {{ 1.0f,  1.0f}},
+        {-1.0f, -1.0f},
+        {-1.0f,  1.0f},
+        { 1.0f, -1.0f},
+        { 1.0f,  1.0f},
     };
     static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
     static const float green[] = {0.0f, 1.0f, 0.0f, 0.5f};
@@ -8293,16 +8277,12 @@ static void test_input_assembler(void)
         DXGI_FORMAT_R10G10B10A2_UNORM,
         DXGI_FORMAT_R10G10B10A2_UINT,
     };
-    static const struct
+    static const struct vec2 quad[] =
     {
-        struct vec2 position;
-    }
-    quad[] =
-    {
-        {{-1.0f, -1.0f}},
-        {{-1.0f,  1.0f}},
-        {{ 1.0f, -1.0f}},
-        {{ 1.0f,  1.0f}},
+        {-1.0f, -1.0f},
+        {-1.0f,  1.0f},
+        { 1.0f, -1.0f},
+        { 1.0f,  1.0f},
     };
     static const DWORD ps_code[] =
     {
@@ -9128,6 +9108,164 @@ cleanup:
     release_test_context(&test_context);
 }
 
+static void test_face_culling(void)
+{
+    struct d3d10core_test_context test_context;
+    D3D10_RASTERIZER_DESC rasterizer_desc;
+    ID3D10RasterizerState *state;
+    ID3D10Buffer *cw_vb, *ccw_vb;
+    ID3D10Device *device;
+    BOOL broken_warp;
+    unsigned int i;
+    HRESULT hr;
+
+    static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
+    static const struct vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
+    static const DWORD ps_code[] =
+    {
+#if 0
+        float4 main(uint front : SV_IsFrontFace) : SV_Target
+        {
+            return (front == ~0u) ? float4(0.0f, 1.0f, 0.0f, 1.0f) : float4(0.0f, 0.0f, 1.0f, 1.0f);
+        }
+#endif
+        0x43425844, 0x92002fad, 0xc5c620b9, 0xe7a154fb, 0x78b54e63, 0x00000001, 0x00000128, 0x00000003,
+        0x0000002c, 0x00000064, 0x00000098, 0x4e475349, 0x00000030, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000009, 0x00000001, 0x00000000, 0x00000101, 0x495f5653, 0x6f724673, 0x6146746e,
+        0xab006563, 0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000,
+        0x00000003, 0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000088,
+        0x00000040, 0x00000022, 0x04000863, 0x00101012, 0x00000000, 0x00000009, 0x03000065, 0x001020f2,
+        0x00000000, 0x02000068, 0x00000001, 0x07000020, 0x00100012, 0x00000000, 0x0010100a, 0x00000000,
+        0x00004001, 0xffffffff, 0x0f000037, 0x001020f2, 0x00000000, 0x00100006, 0x00000000, 0x00004002,
+        0x00000000, 0x3f800000, 0x00000000, 0x3f800000, 0x00004002, 0x00000000, 0x00000000, 0x3f800000,
+        0x3f800000, 0x0100003e,
+    };
+    static const struct vec2 ccw_quad[] =
+    {
+        {-1.0f,  1.0f},
+        {-1.0f, -1.0f},
+        { 1.0f,  1.0f},
+        { 1.0f, -1.0f},
+    };
+    static const struct
+    {
+        D3D10_CULL_MODE cull_mode;
+        BOOL front_ccw;
+        BOOL expected_cw;
+        BOOL expected_ccw;
+    }
+    tests[] =
+    {
+        {D3D10_CULL_NONE,  FALSE, TRUE,  TRUE},
+        {D3D10_CULL_NONE,  TRUE,  TRUE,  TRUE},
+        {D3D10_CULL_FRONT, FALSE, FALSE, TRUE},
+        {D3D10_CULL_FRONT, TRUE,  TRUE,  FALSE},
+        {D3D10_CULL_BACK,  FALSE, TRUE,  FALSE},
+        {D3D10_CULL_BACK,  TRUE,  FALSE, TRUE},
+    };
+
+    if (!init_test_context(&test_context))
+        return;
+
+    device = test_context.device;
+
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
+
+    cw_vb = test_context.vb;
+    ccw_vb = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(ccw_quad), ccw_quad);
+
+    test_context.vb = ccw_vb;
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff0000ff, 0);
+
+    rasterizer_desc.FillMode = D3D10_FILL_SOLID;
+    rasterizer_desc.CullMode = D3D10_CULL_BACK;
+    rasterizer_desc.FrontCounterClockwise = FALSE;
+    rasterizer_desc.DepthBias = 0;
+    rasterizer_desc.DepthBiasClamp = 0.0f;
+    rasterizer_desc.SlopeScaledDepthBias = 0.0f;
+    rasterizer_desc.DepthClipEnable = TRUE;
+    rasterizer_desc.ScissorEnable = FALSE;
+    rasterizer_desc.MultisampleEnable = FALSE;
+    rasterizer_desc.AntialiasedLineEnable = FALSE;
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        rasterizer_desc.CullMode = tests[i].cull_mode;
+        rasterizer_desc.FrontCounterClockwise = tests[i].front_ccw;
+        hr = ID3D10Device_CreateRasterizerState(device, &rasterizer_desc, &state);
+        ok(SUCCEEDED(hr), "Test %u: Failed to create rasterizer state, hr %#x.\n", i, hr);
+
+        ID3D10Device_RSSetState(device, state);
+
+        test_context.vb = cw_vb;
+        ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+        draw_color_quad(&test_context, &green);
+        check_texture_color(test_context.backbuffer, tests[i].expected_cw ? 0xff00ff00 : 0xff0000ff, 0);
+
+        test_context.vb = ccw_vb;
+        ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+        draw_color_quad(&test_context, &green);
+        check_texture_color(test_context.backbuffer, tests[i].expected_ccw ? 0xff00ff00 : 0xff0000ff, 0);
+
+        ID3D10RasterizerState_Release(state);
+    }
+
+    broken_warp = is_warp_device(device) && !is_d3d11_interface_available(device);
+
+    /* Test SV_IsFrontFace. */
+    ID3D10PixelShader_Release(test_context.ps);
+    hr = ID3D10Device_CreatePixelShader(device, ps_code, sizeof(ps_code), &test_context.ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+
+    rasterizer_desc.CullMode = D3D10_CULL_NONE;
+    rasterizer_desc.FrontCounterClockwise = FALSE;
+    hr = ID3D10Device_CreateRasterizerState(device, &rasterizer_desc, &state);
+    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ID3D10Device_RSSetState(device, state);
+
+    test_context.vb = cw_vb;
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
+    test_context.vb = ccw_vb;
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    draw_color_quad(&test_context, &green);
+    if (!broken_warp)
+        check_texture_color(test_context.backbuffer, 0xffff0000, 0);
+    else
+        win_skip("Broken WARP.\n");
+
+    ID3D10RasterizerState_Release(state);
+
+    rasterizer_desc.CullMode = D3D10_CULL_NONE;
+    rasterizer_desc.FrontCounterClockwise = TRUE;
+    hr = ID3D10Device_CreateRasterizerState(device, &rasterizer_desc, &state);
+    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ID3D10Device_RSSetState(device, state);
+
+    test_context.vb = cw_vb;
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    draw_color_quad(&test_context, &green);
+    if (!broken_warp)
+        check_texture_color(test_context.backbuffer, 0xffff0000 , 0);
+    else
+        win_skip("Broken WARP.\n");
+    test_context.vb = ccw_vb;
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
+
+    ID3D10RasterizerState_Release(state);
+
+    test_context.vb = cw_vb;
+    ID3D10Buffer_Release(ccw_vb);
+    release_test_context(&test_context);
+}
+
 START_TEST(device)
 {
     test_feature_level();
@@ -9177,4 +9315,5 @@ START_TEST(device)
     test_fp_specials();
     test_uint_shader_instructions();
     test_index_buffer_offset();
+    test_face_culling();
 }
