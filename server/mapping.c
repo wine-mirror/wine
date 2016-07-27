@@ -574,7 +574,15 @@ static struct object *create_mapping( struct object *root, const struct unicode_
                 goto error;
             }
         }
-        else if (st.st_size < mapping->size && !grow_file( unix_fd, mapping->size )) goto error;
+        else if (st.st_size < mapping->size)
+        {
+            if (!(access & FILE_WRITE_DATA))
+            {
+                set_error( STATUS_SECTION_TOO_BIG );
+                goto error;
+            }
+            if (!grow_file( unix_fd, mapping->size )) goto error;
+        }
     }
     else  /* Anonymous mapping (no associated file) */
     {

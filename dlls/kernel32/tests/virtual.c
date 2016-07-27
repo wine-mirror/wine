@@ -1014,9 +1014,7 @@ static void test_MapViewOfFile(void)
     map_size.QuadPart = 0x3457;
     status = pNtCreateSection( &mapping, SECTION_QUERY | SECTION_MAP_READ, NULL,
                                &map_size, PAGE_READONLY, SEC_COMMIT, file );
-    todo_wine
     ok( status == STATUS_SECTION_TOO_BIG, "NtCreateSection failed %x\n", status );
-    if (!status) CloseHandle( mapping );
     status = pNtCreateSection( &mapping, SECTION_QUERY | SECTION_MAP_READ, NULL,
                                &map_size, PAGE_READONLY, SEC_IMAGE, file );
     ok( status == STATUS_INVALID_IMAGE_NOT_MZ, "NtCreateSection failed %x\n", status );
