@@ -8257,6 +8257,7 @@ static void test_input_assembler(void)
         LAYOUT_UNORM8,
         LAYOUT_SNORM8,
         LAYOUT_UNORM10_2,
+        LAYOUT_UINT10_2,
 
         LAYOUT_COUNT,
     };
@@ -8290,6 +8291,7 @@ static void test_input_assembler(void)
         DXGI_FORMAT_R8G8B8A8_UNORM,
         DXGI_FORMAT_R8G8B8A8_SNORM,
         DXGI_FORMAT_R10G10B10A2_UNORM,
+        DXGI_FORMAT_R10G10B10A2_UINT,
     };
     static const struct
     {
@@ -8464,6 +8466,16 @@ static void test_input_assembler(void)
                 {0.0f, 0.0f, 0.0f, 1.0f}},
         {LAYOUT_UNORM10_2, sizeof(unorm10_2_data), &unorm10_2_data,
                 {1.0f, 0.0f, 512.0f / 1023.0f, 2.0f / 3.0f}},
+        {LAYOUT_UINT10_2,  sizeof(uint32_zero),    &uint32_zero,
+                {0.0f, 0.0f, 0.0f, 0.0f}},
+        {LAYOUT_UINT10_2,  sizeof(uint32_max),     &uint32_max,
+                {1023.0f, 1023.0f, 1023.0f, 3.0f}},
+        {LAYOUT_UINT10_2,  sizeof(g10_data),       &g10_data,
+                {0.0f, 1023.0f, 0.0f, 0.0f}},
+        {LAYOUT_UINT10_2,  sizeof(a2_data),        &a2_data,
+                {0.0f, 0.0f, 0.0f, 3.0f}},
+        {LAYOUT_UINT10_2,  sizeof(unorm10_2_data), &unorm10_2_data,
+                {1023.0f, 0.0f, 512.0f, 2.0f}},
     };
 
     if (!init_test_context(&test_context))
@@ -8484,9 +8496,11 @@ static void test_input_assembler(void)
     for (i = 0; i < LAYOUT_COUNT; ++i)
     {
         input_layout_desc[1].Format = layout_formats[i];
+        input_layout[i] = NULL;
         hr = ID3D10Device_CreateInputLayout(device, input_layout_desc,
                 sizeof(input_layout_desc) / sizeof(*input_layout_desc),
                 vs_float_code, sizeof(vs_float_code), &input_layout[i]);
+        todo_wine_if(input_layout_desc[1].Format == DXGI_FORMAT_R10G10B10A2_UINT)
         ok(SUCCEEDED(hr), "Failed to create input layout for format %#x, hr %#x.\n", layout_formats[i], hr);
     }
 
@@ -8522,6 +8536,9 @@ static void test_input_assembler(void)
     {
         D3D10_BOX box = {0, 0, 0, 1, 1, 1};
 
+        if (tests[i].layout_id == LAYOUT_UINT10_2)
+            continue;
+
         assert(tests[i].layout_id < LAYOUT_COUNT);
         ID3D10Device_IASetInputLayout(device, input_layout[tests[i].layout_id]);
 
@@ -8541,6 +8558,7 @@ static void test_input_assembler(void)
         switch (layout_formats[tests[i].layout_id])
         {
             case DXGI_FORMAT_R16G16B16A16_UINT:
+            case DXGI_FORMAT_R10G10B10A2_UINT:
             case DXGI_FORMAT_R8G8B8A8_UINT:
                 ID3D10Device_VSSetShader(device, vs_uint);
                 break;
@@ -8571,7 +8589,10 @@ static void test_input_assembler(void)
     ID3D10Buffer_Release(vb_attribute);
     ID3D10Buffer_Release(vb_position);
     for (i = 0; i < LAYOUT_COUNT; ++i)
-        ID3D10InputLayout_Release(input_layout[i]);
+    {
+        if (input_layout[i])
+            ID3D10InputLayout_Release(input_layout[i]);
+    }
     ID3D10PixelShader_Release(ps);
     ID3D10VertexShader_Release(vs_float);
     ID3D10VertexShader_Release(vs_uint);
