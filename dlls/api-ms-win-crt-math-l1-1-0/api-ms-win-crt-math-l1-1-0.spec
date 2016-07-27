@@ -235,6 +235,7 @@
 @ stub expm1f
 @ stub expm1l
 @ cdecl fabs(double) ucrtbase.fabs
+@ cdecl -arch=arm fabsf(float) ucrtbase.fabsf
 @ stub fdim
 @ stub fdimf
 @ stub fdiml

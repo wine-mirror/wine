@@ -2281,6 +2281,7 @@
 @ stub expm1f
 @ stub expm1l
 @ cdecl fabs(double) MSVCRT_fabs
+@ cdecl -arch=arm fabsf(float) MSVCRT_fabsf
 @ cdecl fclose(ptr) MSVCRT_fclose
 @ stub fdim
 @ stub fdimf
