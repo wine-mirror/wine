@@ -92,7 +92,7 @@ static BOOL pen_region( dibdrv_physdev *pdev, HRGN region )
     return brush_rect( pdev, &pdev->pen_brush, NULL, region );
 }
 
-static RECT get_device_rect( HDC hdc, int left, int top, int right, int bottom, BOOL rtl_correction )
+static RECT get_device_rect( DC *dc, int left, int top, int right, int bottom, BOOL rtl_correction )
 {
     RECT rect;
 
@@ -100,21 +100,22 @@ static RECT get_device_rect( HDC hdc, int left, int top, int right, int bottom, 
     rect.top    = top;
     rect.right  = right;
     rect.bottom = bottom;
-    if (rtl_correction && GetLayout( hdc ) & LAYOUT_RTL)
+    if (rtl_correction && dc->layout & LAYOUT_RTL)
     {
         /* shift the rectangle so that the right border is included after mirroring */
         /* it would be more correct to do this after LPtoDP but that's not what Windows does */
         rect.left--;
         rect.right--;
     }
-    LPtoDP( hdc, (POINT *)&rect, 2 );
+    lp_to_dp( dc, (POINT *)&rect, 2 );
     order_rect( &rect );
     return rect;
 }
 
-static BOOL get_pen_device_rect( dibdrv_physdev *dev, RECT *rect, int left, int top, int right, int bottom )
+static BOOL get_pen_device_rect( DC *dc, dibdrv_physdev *dev, RECT *rect,
+                                 int left, int top, int right, int bottom )
 {
-    *rect = get_device_rect( dev->dev.hdc, left, top, right, bottom, TRUE );
+    *rect = get_device_rect( dc, left, top, right, bottom, TRUE );
     if (rect->left == rect->right || rect->top == rect->bottom) return FALSE;
 
     if (dev->pen_style == PS_INSIDEFRAME)
@@ -234,7 +235,7 @@ static int find_intersection( const POINT *points, int x, int y, int count )
     return 2 * count + i;
 }
 
-static int get_arc_points( PHYSDEV dev, const RECT *rect, POINT start, POINT end, POINT *points )
+static int get_arc_points( int arc_dir, const RECT *rect, POINT start, POINT end, POINT *points )
 {
     int i, pos, count, start_pos, end_pos;
     int width = rect->right - rect->left;
@@ -246,7 +247,7 @@ static int get_arc_points( PHYSDEV dev, const RECT *rect, POINT start, POINT end
         points[i].x -= width / 2;
         points[i].y -= height / 2;
     }
-    if (GetArcDirection( dev->hdc ) != AD_CLOCKWISE)
+    if (arc_dir != AD_CLOCKWISE)
     {
         start.y = -start.y;
         end.y = -end.y;
@@ -256,7 +257,7 @@ static int get_arc_points( PHYSDEV dev, const RECT *rect, POINT start, POINT end
     if (end_pos <= start_pos) end_pos += 4 * count;
 
     pos = count;
-    if (GetArcDirection( dev->hdc ) == AD_CLOCKWISE)
+    if (arc_dir == AD_CLOCKWISE)
     {
         for (i = start_pos; i < end_pos; i++, pos++)
         {
@@ -316,13 +317,14 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                       INT start_x, INT start_y, INT end_x, INT end_y, INT extra_lines )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+    DC *dc = get_physdev_dc( dev );
     RECT rect;
     POINT pt[2], *points;
     int width, height, count;
     BOOL ret = TRUE;
     HRGN outline = 0, interior = 0;
 
-    if (!get_pen_device_rect( pdev, &rect, left, top, right, bottom )) return TRUE;
+    if (!get_pen_device_rect( dc, pdev, &rect, left, top, right, bottom )) return TRUE;
 
     width = rect.right - rect.left;
     height = rect.bottom - rect.top;
@@ -331,7 +333,7 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     pt[0].y = start_y;
     pt[1].x = end_x;
     pt[1].y = end_y;
-    LPtoDP( dev->hdc, pt, 2 );
+    lp_to_dp( dc, pt, 2 );
     /* make them relative to the ellipse center */
     pt[0].x -= rect.left + width / 2;
     pt[0].y -= rect.top + height / 2;
@@ -343,11 +345,11 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 
     if (extra_lines == -1)
     {
-        GetCurrentPositionEx( dev->hdc, points );
-        LPtoDP( dev->hdc, points, 1 );
-        count = 1 + get_arc_points( dev, &rect, pt[0], pt[1], points + 1 );
+        points[0] = dc->cur_pos;
+        lp_to_dp( dc, points, 1 );
+        count = 1 + get_arc_points( dc->ArcDirection, &rect, pt[0], pt[1], points + 1 );
     }
-    else count = get_arc_points( dev, &rect, pt[0], pt[1], points );
+    else count = get_arc_points( dc->ArcDirection, &rect, pt[0], pt[1], points );
 
     if (extra_lines == 2)
     {
@@ -1199,6 +1201,7 @@ BOOL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
     const WINEREGION *region;
     int i;
     RECT rect, bounds;
+    DC *dc = get_physdev_dc( dev );
 
     TRACE("%p, %p\n", dev, rgn);
 
@@ -1209,7 +1212,7 @@ BOOL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
 
     for(i = 0; i < region->numRects; i++)
     {
-        rect = get_device_rect( dev->hdc, region->rects[i].left, region->rects[i].top,
+        rect = get_device_rect( dc, region->rects[i].left, region->rects[i].top,
                                 region->rects[i].right, region->rects[i].bottom, FALSE );
         add_bounds_rect( &bounds, &rect );
         brush_rect( pdev, &pdev->brush, &rect, pdev->clip );
@@ -1355,6 +1358,7 @@ BOOL dibdrv_Polyline( PHYSDEV dev, const POINT* pt, INT count )
 BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+    DC *dc = get_physdev_dc( dev );
     RECT rect;
     POINT pts[4];
     BOOL ret;
@@ -1362,7 +1366,7 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 
     TRACE("(%p, %d, %d, %d, %d)\n", dev, left, top, right, bottom);
 
-    if (GetGraphicsMode( dev->hdc ) == GM_ADVANCED)
+    if (dc->GraphicsMode == GM_ADVANCED)
     {
         pts[0].x = pts[3].x = left;
         pts[0].y = pts[1].y = top;
@@ -1371,7 +1375,7 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
         return dibdrv_Polygon( dev, pts, 4 );
     }
 
-    if (!get_pen_device_rect( pdev, &rect, left, top, right, bottom )) return TRUE;
+    if (!get_pen_device_rect( dc, pdev, &rect, left, top, right, bottom )) return TRUE;
 
     if (pdev->pen_uses_region && !(outline = CreateRectRgn( 0, 0, 0, 0 ))) return FALSE;
 
@@ -1379,7 +1383,7 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
     rect.bottom--;
     reset_dash_origin(pdev);
 
-    if (GetArcDirection( dev->hdc ) == AD_CLOCKWISE)
+    if (dc->ArcDirection == AD_CLOCKWISE)
     {
         /* 4 pts going clockwise starting from bottom-right */
         pts[0].x = pts[3].x = rect.right;
@@ -1430,18 +1434,19 @@ BOOL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                        INT ellipse_width, INT ellipse_height )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+    DC *dc = get_physdev_dc( dev );
     RECT rect;
     POINT pt[2], *points;
     int i, end, count;
     BOOL ret = TRUE;
     HRGN outline = 0, interior = 0;
 
-    if (!get_pen_device_rect( pdev, &rect, left, top, right, bottom )) return TRUE;
+    if (!get_pen_device_rect( dc, pdev, &rect, left, top, right, bottom )) return TRUE;
 
     pt[0].x = pt[0].y = 0;
     pt[1].x = ellipse_width;
     pt[1].y = ellipse_height;
-    LPtoDP( dev->hdc, pt, 2 );
+    lp_to_dp( dc, pt, 2 );
     ellipse_width = min( rect.right - rect.left, abs( pt[1].x - pt[0].x ));
     ellipse_height = min( rect.bottom - rect.top, abs( pt[1].y - pt[0].y ));
     if (ellipse_width <= 2|| ellipse_height <= 2)
@@ -1475,7 +1480,7 @@ BOOL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 
     count = ellipse_first_quadrant( ellipse_width, ellipse_height, points );
 
-    if (GetArcDirection( dev->hdc ) == AD_CLOCKWISE)
+    if (dc->ArcDirection == AD_CLOCKWISE)
     {
         for (i = 0; i < count; i++)
         {
