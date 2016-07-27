@@ -1351,7 +1351,7 @@
 @ stdcall ZwQueryInstallUILanguage(ptr) ntdll.ZwQueryInstallUILanguage
 @ stdcall ZwQueryKey(long long ptr long ptr) ntdll.ZwQueryKey
 @ stdcall ZwQueryObject(long long long long long) ntdll.ZwQueryObject
-@ stdcall ZwQuerySection(long long long long long) ntdll.ZwQuerySection
+@ stdcall ZwQuerySection(long long ptr long ptr) ntdll.ZwQuerySection
 @ stdcall ZwQuerySecurityObject(long long long long long) ntdll.ZwQuerySecurityObject
 @ stdcall ZwQuerySymbolicLinkObject(long ptr ptr) ntdll.ZwQuerySymbolicLinkObject
 @ stdcall ZwQuerySystemInformation(long long long long) ntdll.ZwQuerySystemInformation
