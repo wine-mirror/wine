@@ -1726,14 +1726,14 @@ static inline void scale_dash_pattern( dash_pattern *pattern, DWORD scale, DWORD
     }
 }
 
-static inline int get_pen_device_width( dibdrv_physdev *pdev, int width )
+static inline int get_pen_device_width( DC *dc, int width )
 {
     POINT pts[2];
 
     if (!width) return 1;
     pts[0].x = pts[0].y = pts[1].y = 0;
     pts[1].x = width;
-    LPtoDP( pdev->dev.hdc, pts, 2 );
+    lp_to_dp( dc, pts, 2 );
     width = floor( hypot( pts[1].x - pts[0].x, pts[1].y - pts[0].y ));
     return max( width, 1 );
 }
@@ -2113,6 +2113,7 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_patter
 HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+    DC *dc = get_physdev_dc( dev );
     LOGPEN logpen;
     LOGBRUSH logbrush;
     EXTLOGPEN *elp = NULL;
@@ -2147,7 +2148,7 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patte
 
     pdev->pen_join   = logpen.lopnStyle & PS_JOIN_MASK;
     pdev->pen_endcap = logpen.lopnStyle & PS_ENDCAP_MASK;
-    pdev->pen_width  = get_pen_device_width( pdev, logpen.lopnWidth.x );
+    pdev->pen_width  = get_pen_device_width( dc, logpen.lopnWidth.x );
 
     if (hpen == GetStockObject( DC_PEN ))
         logbrush.lbColor = GetDCPenColor( dev->hdc );

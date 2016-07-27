@@ -1416,6 +1416,7 @@ BOOL dibdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
                           void *grad_array, ULONG ngrad, ULONG mode )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+    DC *dc = get_physdev_dc( dev );
     const GRADIENT_TRIANGLE *tri = grad_array;
     const GRADIENT_RECT *rect = grad_array;
     unsigned int i;
@@ -1430,7 +1431,7 @@ BOOL dibdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
         pts[i].x = vert_array[i].x;
         pts[i].y = vert_array[i].y;
     }
-    LPtoDP( dev->hdc, pts, nvert );
+    lp_to_dp( dc, pts, nvert );
 
     switch (mode)
     {

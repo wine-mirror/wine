@@ -1097,6 +1097,7 @@ COLORREF dibdrv_GetNearestColor( PHYSDEV dev, COLORREF color )
 COLORREF dibdrv_GetPixel( PHYSDEV dev, INT x, INT y )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+    DC *dc = get_physdev_dc( dev );
     POINT pt;
     DWORD pixel;
 
@@ -1104,7 +1105,7 @@ COLORREF dibdrv_GetPixel( PHYSDEV dev, INT x, INT y )
 
     pt.x = x;
     pt.y = y;
-    LPtoDP( dev->hdc, &pt, 1 );
+    lp_to_dp( dc, &pt, 1 );
 
     if (pt.x < 0 || pt.x >= pdev->dib.rect.right - pdev->dib.rect.left ||
         pt.y < 0 || pt.y >= pdev->dib.rect.bottom - pdev->dib.rect.top)
@@ -1120,15 +1121,16 @@ COLORREF dibdrv_GetPixel( PHYSDEV dev, INT x, INT y )
 BOOL dibdrv_LineTo( PHYSDEV dev, INT x, INT y )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+    DC *dc = get_physdev_dc( dev );
     POINT pts[2];
     HRGN region = 0;
     BOOL ret;
 
-    GetCurrentPositionEx(dev->hdc, pts);
+    pts[0] = dc->cur_pos;
     pts[1].x = x;
     pts[1].y = y;
 
-    LPtoDP(dev->hdc, pts, 2);
+    lp_to_dp(dc, pts, 2);
 
     if (pdev->pen_uses_region && !(region = CreateRectRgn( 0, 0, 0, 0 ))) return FALSE;
 
@@ -1229,6 +1231,7 @@ BOOL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
 BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD polygons )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+    DC *dc = get_physdev_dc( dev );
     DWORD total, i, pos;
     BOOL ret = TRUE;
     POINT *points;
@@ -1243,10 +1246,10 @@ BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD 
     points = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*pt) );
     if (!points) return FALSE;
     memcpy( points, pt, total * sizeof(*pt) );
-    LPtoDP( dev->hdc, points, total );
+    lp_to_dp( dc, points, total );
 
     if (pdev->brush.style != BS_NULL &&
-        !(interior = CreatePolyPolygonRgn( points, counts, polygons, GetPolyFillMode( dev->hdc ))))
+        !(interior = CreatePolyPolygonRgn( points, counts, polygons, dc->polyFillMode )))
     {
         HeapFree( GetProcessHeap(), 0, points );
         return FALSE;
@@ -1291,6 +1294,7 @@ BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD 
 BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polylines )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+    DC *dc = get_physdev_dc( dev );
     DWORD total, pos, i;
     POINT *points;
     BOOL ret = TRUE;
@@ -1305,7 +1309,7 @@ BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWO
     points = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*pt) );
     if (!points) return FALSE;
     memcpy( points, pt, total * sizeof(*pt) );
-    LPtoDP( dev->hdc, points, total );
+    lp_to_dp( dc, points, total );
 
     if (pdev->pen_uses_region && !(outline = CreateRectRgn( 0, 0, 0, 0 )))
     {
@@ -1555,6 +1559,7 @@ BOOL dibdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 COLORREF dibdrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+    DC *dc = get_physdev_dc( dev );
     struct clipped_rects clipped_rects;
     RECT rect;
     POINT pt;
@@ -1564,7 +1569,7 @@ COLORREF dibdrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 
     pt.x = x;
     pt.y = y;
-    LPtoDP( dev->hdc, &pt, 1 );
+    lp_to_dp( dc, &pt, 1 );
     rect.left = pt.x;
     rect.top =  pt.y;
     rect.right = rect.left + 1;
