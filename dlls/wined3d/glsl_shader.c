@@ -5310,6 +5310,10 @@ static void shader_glsl_input_pack(const struct wined3d_shader *shader, struct w
                         shader->u.ps.input_reg_map[input->register_idx], reg_mask, reg_mask);
             else if (args->pointsprite && shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
                 shader_addline(buffer, "ps_in[%u] = vec4(gl_PointCoord.xy, 0.0, 0.0);\n", input->register_idx);
+            else if (input->sysval_semantic == WINED3D_SV_IS_FRONT_FACE)
+                shader_addline(buffer, "ps_in[%u] = vec4("
+                        "uintBitsToFloat(gl_FrontFacing ? 0xffffffffu : 0u), 0.0, 0.0, 0.0);\n",
+                        input->register_idx);
             else
                 shader_addline(buffer, "ps_in[%u]%s = ps_link[%u]%s;\n",
                         shader->u.ps.input_reg_map[input->register_idx], reg_mask,
