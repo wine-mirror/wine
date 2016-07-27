@@ -1784,6 +1784,8 @@ static void shader_glsl_declare_generic_vertex_attribute(struct wined3d_string_b
                 index);
         return;
     }
+    if (e->sysval_semantic)
+        FIXME("Unhandled sysval semantic %#x.\n", e->sysval_semantic);
 
     if (shader_glsl_use_explicit_attrib_location(gl_info))
         shader_addline(buffer, "layout(location = %u) ", index);
@@ -5306,18 +5308,28 @@ static void shader_glsl_input_pack(const struct wined3d_shader *shader, struct w
         if (args->vp_mode == vertexshader)
         {
             if (input->sysval_semantic == WINED3D_SV_POSITION && !semantic_idx)
+            {
                 shader_addline(buffer, "ps_in[%u]%s = vpos%s;\n",
                         shader->u.ps.input_reg_map[input->register_idx], reg_mask, reg_mask);
+            }
             else if (args->pointsprite && shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
+            {
                 shader_addline(buffer, "ps_in[%u] = vec4(gl_PointCoord.xy, 0.0, 0.0);\n", input->register_idx);
+            }
             else if (input->sysval_semantic == WINED3D_SV_IS_FRONT_FACE)
+            {
                 shader_addline(buffer, "ps_in[%u] = vec4("
                         "uintBitsToFloat(gl_FrontFacing ? 0xffffffffu : 0u), 0.0, 0.0, 0.0);\n",
                         input->register_idx);
+            }
             else
+            {
+                if (input->sysval_semantic)
+                    FIXME("Unhandled sysval semantic %#x.\n", input->sysval_semantic);
                 shader_addline(buffer, "ps_in[%u]%s = ps_link[%u]%s;\n",
                         shader->u.ps.input_reg_map[input->register_idx], reg_mask,
                         shader->u.ps.input_reg_map[input->register_idx], reg_mask);
+            }
         }
         else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
         {
@@ -5594,6 +5606,10 @@ static void shader_glsl_setup_sm3_rasterizer_input(struct shader_glsl_priv *priv
         {
             shader_addline(buffer, "gl_PointSize = clamp(shader_out[%u].%c, "
                     "ffp_point.size_min, ffp_point.size_max);\n", output->register_idx, reg_mask[1]);
+        }
+        else if (output->sysval_semantic)
+        {
+            FIXME("Unhandled sysval semantic %#x.\n", output->sysval_semantic);
         }
     }
 
