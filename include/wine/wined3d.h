@@ -1893,6 +1893,11 @@ struct wined3d_buffer_desc
     UINT misc_flags;
 };
 
+struct wined3d_rasterizer_state_desc
+{
+    BOOL front_ccw;
+};
+
 struct wined3d_rendertarget_view_desc
 {
     enum wined3d_format_id format_id;
@@ -2014,6 +2019,7 @@ struct wined3d_buffer;
 struct wined3d_device;
 struct wined3d_palette;
 struct wined3d_query;
+struct wined3d_rasterizer_state;
 struct wined3d_rendertarget_view;
 struct wined3d_resource;
 struct wined3d_sampler;
@@ -2197,6 +2203,7 @@ struct wined3d_shader_resource_view * __cdecl wined3d_device_get_ps_resource_vie
 struct wined3d_sampler * __cdecl wined3d_device_get_ps_sampler(const struct wined3d_device *device, UINT idx);
 HRESULT __cdecl wined3d_device_get_raster_status(const struct wined3d_device *device,
         UINT swapchain_idx, struct wined3d_raster_status *raster_status);
+struct wined3d_rasterizer_state * __cdecl wined3d_device_get_rasterizer_state(struct wined3d_device *device);
 DWORD __cdecl wined3d_device_get_render_state(const struct wined3d_device *device, enum wined3d_render_state state);
 struct wined3d_rendertarget_view * __cdecl wined3d_device_get_rendertarget_view(const struct wined3d_device *device,
         unsigned int view_idx);
@@ -2287,6 +2294,8 @@ HRESULT __cdecl wined3d_device_set_ps_consts_i(struct wined3d_device *device,
 void __cdecl wined3d_device_set_ps_resource_view(struct wined3d_device *device,
         UINT idx, struct wined3d_shader_resource_view *view);
 void __cdecl wined3d_device_set_ps_sampler(struct wined3d_device *device, UINT idx, struct wined3d_sampler *sampler);
+void __cdecl wined3d_device_set_rasterizer_state(struct wined3d_device *device,
+        struct wined3d_rasterizer_state *rasterizer_state);
 void __cdecl wined3d_device_set_render_state(struct wined3d_device *device,
         enum wined3d_render_state state, DWORD value);
 HRESULT __cdecl wined3d_device_set_rendertarget_view(struct wined3d_device *device,
@@ -2423,6 +2432,11 @@ static inline HRESULT wined3d_private_store_set_private_data(struct wined3d_priv
 
     return WINED3D_OK;
 }
+
+HRESULT __cdecl wined3d_rasterizer_state_create(struct wined3d_device *device,
+        const struct wined3d_rasterizer_state_desc *desc, struct wined3d_rasterizer_state **state);
+ULONG __cdecl wined3d_rasterizer_state_decref(struct wined3d_rasterizer_state *state);
+ULONG __cdecl wined3d_rasterizer_state_incref(struct wined3d_rasterizer_state *state);
 
 void __cdecl wined3d_resource_get_desc(const struct wined3d_resource *resource,
         struct wined3d_resource_desc *desc);

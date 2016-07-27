@@ -76,6 +76,7 @@
 @ cdecl wined3d_device_get_ps_resource_view(ptr long)
 @ cdecl wined3d_device_get_ps_sampler(ptr long)
 @ cdecl wined3d_device_get_raster_status(ptr long ptr)
+@ cdecl wined3d_device_get_rasterizer_state(ptr)
 @ cdecl wined3d_device_get_render_state(ptr long)
 @ cdecl wined3d_device_get_rendertarget_view(ptr long)
 @ cdecl wined3d_device_get_sampler_state(ptr long long)
@@ -134,6 +135,7 @@
 @ cdecl wined3d_device_set_ps_consts_i(ptr long long ptr)
 @ cdecl wined3d_device_set_ps_resource_view(ptr long ptr)
 @ cdecl wined3d_device_set_ps_sampler(ptr long ptr)
+@ cdecl wined3d_device_set_rasterizer_state(ptr ptr)
 @ cdecl wined3d_device_set_render_state(ptr long long)
 @ cdecl wined3d_device_set_rendertarget_view(ptr long ptr long)
 @ cdecl wined3d_device_set_sampler_state(ptr long long long)
@@ -177,6 +179,10 @@
 @ cdecl wined3d_query_get_type(ptr)
 @ cdecl wined3d_query_incref(ptr)
 @ cdecl wined3d_query_issue(ptr long)
+
+@ cdecl wined3d_rasterizer_state_create(ptr ptr ptr)
+@ cdecl wined3d_rasterizer_state_decref(ptr)
+@ cdecl wined3d_rasterizer_state_incref(ptr)
 
 @ cdecl wined3d_resource_get_desc(ptr ptr)
 @ cdecl wined3d_resource_get_parent(ptr)

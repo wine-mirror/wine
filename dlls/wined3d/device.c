@@ -2059,6 +2059,32 @@ static void resolve_depth_buffer(struct wined3d_state *state)
             src_view->sub_resource_idx, &src_rect, 0, NULL, WINED3D_TEXF_POINT);
 }
 
+void CDECL wined3d_device_set_rasterizer_state(struct wined3d_device *device,
+        struct wined3d_rasterizer_state *rasterizer_state)
+{
+    struct wined3d_rasterizer_state *prev;
+
+    TRACE("device %p, rasterizer_state %p.\n", device, rasterizer_state);
+
+    prev = device->update_state->rasterizer_state;
+    if (prev == rasterizer_state)
+        return;
+
+    if (rasterizer_state)
+        wined3d_rasterizer_state_incref(rasterizer_state);
+    device->update_state->rasterizer_state = rasterizer_state;
+    wined3d_cs_emit_set_rasterizer_state(device->cs, rasterizer_state);
+    if (prev)
+        wined3d_rasterizer_state_decref(prev);
+}
+
+struct wined3d_rasterizer_state * CDECL wined3d_device_get_rasterizer_state(struct wined3d_device *device)
+{
+    TRACE("device %p.\n", device);
+
+    return device->state.rasterizer_state;
+}
+
 void CDECL wined3d_device_set_render_state(struct wined3d_device *device,
         enum wined3d_render_state state, DWORD value)
 {

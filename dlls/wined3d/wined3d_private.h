@@ -2317,6 +2317,14 @@ HRESULT wined3d_init(struct wined3d *wined3d, DWORD flags) DECLSPEC_HIDDEN;
 BOOL wined3d_register_window(HWND window, struct wined3d_device *device) DECLSPEC_HIDDEN;
 void wined3d_unregister_window(HWND window) DECLSPEC_HIDDEN;
 
+struct wined3d_rasterizer_state
+{
+    LONG refcount;
+    struct wined3d_rasterizer_state_desc desc;
+
+    struct wined3d_device *device;
+};
+
 struct wined3d_stream_output
 {
     struct wined3d_buffer *buffer;
@@ -2382,6 +2390,7 @@ struct wined3d_state
     const struct wined3d_light_info *lights[MAX_ACTIVE_LIGHTS];
 
     DWORD render_states[WINEHIGHEST_RENDER_STATE + 1];
+    struct wined3d_rasterizer_state *rasterizer_state;
 };
 
 #define WINED3D_UNMAPPED_STAGE ~0U
@@ -3051,6 +3060,8 @@ void wined3d_cs_emit_set_index_buffer(struct wined3d_cs *cs, struct wined3d_buff
 void wined3d_cs_emit_set_material(struct wined3d_cs *cs, const struct wined3d_material *material) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_predication(struct wined3d_cs *cs,
         struct wined3d_query *predicate, BOOL value) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_set_rasterizer_state(struct wined3d_cs *cs,
+        struct wined3d_rasterizer_state *rasterizer_state) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_render_state(struct wined3d_cs *cs,
         enum wined3d_render_state state, DWORD value) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_rendertarget_view(struct wined3d_cs *cs, unsigned int view_idx,

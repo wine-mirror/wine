@@ -38,6 +38,53 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
 
+ULONG CDECL wined3d_rasterizer_state_incref(struct wined3d_rasterizer_state *state)
+{
+    ULONG refcount = InterlockedIncrement(&state->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", state, refcount);
+
+    return refcount;
+}
+
+static void wined3d_rasterizer_state_destroy_object(void *object)
+{
+    HeapFree(GetProcessHeap(), 0, object);
+}
+
+ULONG CDECL wined3d_rasterizer_state_decref(struct wined3d_rasterizer_state *state)
+{
+    ULONG refcount = InterlockedDecrement(&state->refcount);
+    struct wined3d_device *device = state->device;
+
+    TRACE("%p decreasing refcount to %u.\n", state, refcount);
+
+    if (!refcount)
+        wined3d_cs_emit_destroy_object(device->cs, wined3d_rasterizer_state_destroy_object, state);
+
+    return refcount;
+}
+
+HRESULT CDECL wined3d_rasterizer_state_create(struct wined3d_device *device,
+        const struct wined3d_rasterizer_state_desc *desc, struct wined3d_rasterizer_state **state)
+{
+    struct wined3d_rasterizer_state *object;
+
+    TRACE("device %p, desc %p, state %p.\n", device, desc, state);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->refcount = 1;
+    object->desc = *desc;
+    object->device = device;
+
+    TRACE("Created rasterizer state %p.\n", object);
+    *state = object;
+
+    return WINED3D_OK;
+}
+
 /* Context activation for state handler is done by the caller. */
 
 static void state_undefined(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -4792,17 +4839,14 @@ static void indexbuffer(struct wined3d_context *context, const struct wined3d_st
 static void frontface(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    GLenum mode;
 
+    mode = state->rasterizer_state && state->rasterizer_state->desc.front_ccw ? GL_CCW : GL_CW;
     if (context->render_offscreen)
-    {
-        gl_info->gl_ops.gl.p_glFrontFace(GL_CCW);
-        checkGLcall("glFrontFace(GL_CCW)");
-    }
-    else
-    {
-        gl_info->gl_ops.gl.p_glFrontFace(GL_CW);
-        checkGLcall("glFrontFace(GL_CW)");
-    }
+        mode = (mode == GL_CW) ? GL_CCW : GL_CW;
+
+    gl_info->gl_ops.gl.p_glFrontFace(mode);
+    checkGLcall("glFrontFace");
 }
 
 static void psorigin_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
