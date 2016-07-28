@@ -625,7 +625,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
 
     case ABSOLUTE_DRIVE_PATH:   /* c:\foo  */
         reqsize = sizeof(WCHAR);
-        tmp[0] = toupperW(name[0]);
+        tmp[0] = name[0];
         ins_str = tmp;
         dep = 1;
         mark = 3;
