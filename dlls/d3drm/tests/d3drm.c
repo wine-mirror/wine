@@ -5663,6 +5663,152 @@ static void test_texture_qi(void)
     HeapFree(GetProcessHeap(), 0, filename);
 }
 
+static void test_viewport_qi(void)
+{
+    IDirect3DRM *d3drm1;
+    IDirect3DRM2 *d3drm2;
+    IDirect3DRM3 *d3drm3;
+    IDirect3DRMFrame *frame1, *camera1;
+    IDirect3DRMFrame3 *frame3, *camera3;
+    IDirect3DRMDevice *device1;
+    IDirect3DRMDevice3 *device3;
+    IDirectDrawClipper *clipper;
+    IDirect3DRMViewport *viewport1;
+    IDirect3DRMViewport2 *viewport2;
+    IUnknown *unknown;
+    GUID driver = IID_IDirect3DRGBDevice;
+    HRESULT hr;
+
+    static const struct qi_test tests[] =
+    {
+        { &IID_IDirect3DRM3,               NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRM2,               NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRM,                NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMDevice,          NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMDevice2,         NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMDevice3,         NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMWinDevice,       NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMObject,          &IID_IUnknown, &IID_IDirect3DRMViewport,  S_OK                      },
+        { &IID_IDirect3DRMViewport,        &IID_IUnknown, &IID_IDirect3DRMViewport,  S_OK                      },
+        { &IID_IDirect3DRMViewport2,       &IID_IUnknown, &IID_IDirect3DRMViewport2, S_OK                      },
+        { &IID_IDirect3DRMFrame,           NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMFrame2,          NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMFrame3,          NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMVisual,          NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMMesh,            NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMMeshBuilder,     NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMMeshBuilder2,    NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMMeshBuilder3,    NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMFace,            NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMFace2,           NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMLight,           NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMTexture,         NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMTexture2,        NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMTexture3,        NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMWrap,            NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMMaterial,        NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMMaterial2,       NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMAnimation,       NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMAnimation2,      NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMAnimationSet,    NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMAnimationSet2,   NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMObjectArray,     NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMDeviceArray,     NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMViewportArray,   NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMFrameArray,      NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMVisualArray,     NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMLightArray,      NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMPickedArray,     NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMFaceArray,       NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMAnimationArray,  NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMUserVisual,      NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMShadow,          NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMShadow2,         NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMInterpolator,    NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMProgressiveMesh, NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMPicked2Array,    NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DRMClippedVisual,   NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirectDrawClipper,         NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirectDrawSurface7,        NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirectDrawSurface4,        NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirectDrawSurface3,        NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirectDrawSurface2,        NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirectDrawSurface,         NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DDevice7,           NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DDevice3,           NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DDevice2,           NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DDevice,            NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3D7,                 NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3D3,                 NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3D2,                 NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3D,                  NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirectDraw7,               NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirectDraw4,               NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirectDraw3,               NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirectDraw2,               NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirectDraw,                NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IDirect3DLight,             NULL,          NULL,                      CLASS_E_CLASSNOTAVAILABLE },
+        { &IID_IUnknown,                   &IID_IUnknown, NULL,                      S_OK,                     },
+    };
+
+    hr = DirectDrawCreateClipper(0, &clipper, NULL);
+    ok(SUCCEEDED(hr), "Cannot get IDirectDrawClipper interface (hr = %#x).\n", hr);
+
+    hr = Direct3DRMCreate(&d3drm1);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRM interface (hr = %#x).\n", hr);
+
+    hr = IDirect3DRM_CreateDeviceFromClipper(d3drm1, clipper, &driver, 640, 480, &device1);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMDevice interface (hr = %#x).\n", hr);
+    hr = IDirect3DRM_CreateFrame(d3drm1, NULL, &frame1);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMFrame interface (hr = %#x)\n", hr);
+    hr = IDirect3DRM_CreateFrame(d3drm1, frame1, &camera1);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMFrame interface (hr = %#x)\n", hr);
+    hr = IDirect3DRM_CreateViewport(d3drm1, device1, camera1, 0, 0, 640, 480, &viewport1);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMViewport interface (hr = %#x)\n", hr);
+    hr = IDirect3DRMViewport_QueryInterface(viewport1, &IID_IUnknown, (void **)&unknown);
+    ok(SUCCEEDED(hr), "Cannot get IUnknown interface (hr = %#x).\n", hr);
+    IDirect3DRMViewport_Release(viewport1);
+    test_qi("viewport1_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
+    IUnknown_Release(unknown);
+
+    hr = IDirect3DRM_QueryInterface(d3drm1, &IID_IDirect3DRM2, (void **)&d3drm2);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRM2 interface (hr = %#x).\n", hr);
+    hr = IDirect3DRM2_CreateViewport(d3drm2, device1, camera1, 0, 0, 640, 480, &viewport1);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMViewport interface (hr = %#x)\n", hr);
+    hr = IDirect3DRMViewport_QueryInterface(viewport1, &IID_IUnknown, (void **)&unknown);
+    ok(SUCCEEDED(hr), "Cannot get IUnknown interface (hr = %#x).\n", hr);
+    IDirect3DRMViewport_Release(viewport1);
+    test_qi("viewport1_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
+    IUnknown_Release(unknown);
+    IDirect3DRMDevice_Release(device1);
+    IDirect3DRMFrame_Release(camera1);
+    IDirect3DRMFrame_Release(frame1);
+
+    hr = IDirect3DRM_QueryInterface(d3drm1, &IID_IDirect3DRM3, (void **)&d3drm3);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRM3 interface (hr = %#x).\n", hr);
+    hr = IDirect3DRM3_CreateDeviceFromClipper(d3drm3, clipper, &driver, 640, 480, &device3);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMDevice3 interface (hr = %#x).\n", hr);
+    hr = IDirect3DRM3_CreateFrame(d3drm3, NULL, &frame3);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMFrame3 interface (hr = %#x)\n", hr);
+    hr = IDirect3DRM3_CreateFrame(d3drm3, frame3, &camera3);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMFrame3 interface (hr = %#x)\n", hr);
+    hr = IDirect3DRM3_CreateViewport(d3drm3, device3, camera3, 0, 0, 640, 480, &viewport2);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMViewport2 interface (hr = %#x)\n", hr);
+    hr = IDirect3DRMViewport2_QueryInterface(viewport2, &IID_IUnknown, (void **)&unknown);
+    ok(SUCCEEDED(hr), "Cannot get IUnknown interface (hr = %#x).\n", hr);
+    IDirect3DRMViewport_Release(viewport2);
+    test_qi("viewport2_qi", unknown, &IID_IUnknown, tests, sizeof(tests) / sizeof(*tests));
+    IUnknown_Release(unknown);
+    IDirect3DRMDevice3_Release(device3);
+    IDirect3DRMFrame3_Release(camera3);
+    IDirect3DRMFrame3_Release(frame3);
+
+    IDirectDrawClipper_Release(clipper);
+    IDirect3DRM3_Release(d3drm3);
+    IDirect3DRM2_Release(d3drm2);
+    IDirect3DRM_Release(d3drm1);
+}
+
 START_TEST(d3drm)
 {
     test_MeshBuilder();
@@ -5693,4 +5839,5 @@ START_TEST(d3drm)
     test_create_device_from_d3d3();
     test_load_texture();
     test_texture_qi();
+    test_viewport_qi();
 }
