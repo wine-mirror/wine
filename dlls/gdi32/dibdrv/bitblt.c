@@ -985,6 +985,7 @@ DWORD dibdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
                        const struct gdi_image_bits *bits, struct bitblt_coords *src,
                        struct bitblt_coords *dst, DWORD rop )
 {
+    DC *dc = get_physdev_dc( dev );
     struct clipped_rects clipped_rects;
     DWORD ret = ERROR_SUCCESS;
     dib_info src_dib;
@@ -1000,7 +1001,7 @@ DWORD dibdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
 
     /* For mask_rect, 1-bpp source without a color table uses the destination DC colors */
     if (info->bmiHeader.biBitCount == 1 && pdev->dib.bit_count != 1 && !info->bmiHeader.biClrUsed)
-        get_mono_dc_colors( dev->hdc, info, 2 );
+        get_mono_dc_colors( dc, info, 2 );
 
     init_dib_info_from_bitmapinfo( &src_dib, info, bits->ptr );
     src_dib.bits.is_copy = bits->is_copy;

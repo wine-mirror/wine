@@ -222,10 +222,10 @@ static DWORD blend_bits( const BITMAPINFO *src_info, const struct gdi_image_bits
 }
 
 /* helper to retrieve either both colors or only the background color for monochrome blits */
-void get_mono_dc_colors( HDC hdc, BITMAPINFO *info, int count )
+void get_mono_dc_colors( DC *dc, BITMAPINFO *info, int count )
 {
     RGBQUAD *colors = info->bmiColors;
-    COLORREF color = GetBkColor( hdc );
+    COLORREF color = dc->backgroundColor;
 
     colors[count - 1].rgbRed      = GetRValue( color );
     colors[count - 1].rgbGreen    = GetGValue( color );
@@ -234,7 +234,7 @@ void get_mono_dc_colors( HDC hdc, BITMAPINFO *info, int count )
 
     if (count > 1)
     {
-        color = GetTextColor( hdc );
+        color = dc->textColor;
         colors[0].rgbRed      = GetRValue( color );
         colors[0].rgbGreen    = GetGValue( color );
         colors[0].rgbBlue     = GetBValue( color );
@@ -275,7 +275,7 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
 
         /* 1-bpp source without a color table uses the destination DC colors */
         if (src_info->bmiHeader.biBitCount == 1 && !src_info->bmiHeader.biClrUsed)
-            get_mono_dc_colors( dst_dev->hdc, src_info, 2 );
+            get_mono_dc_colors( dc_dst, src_info, 2 );
 
         if (dst_info->bmiHeader.biBitCount == 1 && !dst_colors)
         {
@@ -283,9 +283,9 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
              * that contains only the background color; except with a 1-bpp source,
              * in which case it uses the source colors */
             if (src_info->bmiHeader.biBitCount > 1)
-                get_mono_dc_colors( src_dev->hdc, dst_info, 1 );
+                get_mono_dc_colors( dc_src, dst_info, 1 );
             else
-                get_mono_dc_colors( src_dev->hdc, dst_info, 2 );
+                get_mono_dc_colors( dc_src, dst_info, 2 );
         }
 
         if (!(err = convert_bits( src_info, src, dst_info, &bits )))

@@ -199,7 +199,7 @@ extern BOOL intersect_vis_rectangles( struct bitblt_coords *dst, struct bitblt_c
 extern DWORD stretch_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
                            BITMAPINFO *dst_info, struct bitblt_coords *dst,
                            struct gdi_image_bits *bits, int mode ) DECLSPEC_HIDDEN;
-extern void get_mono_dc_colors( HDC hdc, BITMAPINFO *info, int count ) DECLSPEC_HIDDEN;
+extern void get_mono_dc_colors( DC *dc, BITMAPINFO *info, int count ) DECLSPEC_HIDDEN;
 
 /* brush.c */
 extern BOOL store_brush_pattern( LOGBRUSH *brush, struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
