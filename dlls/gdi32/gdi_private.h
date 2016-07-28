@@ -248,7 +248,7 @@ extern DWORD blend_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struc
 extern DWORD gradient_bitmapinfo( const BITMAPINFO *info, void *bits, TRIVERTEX *vert_array, ULONG nvert,
                                   void *grad_array, ULONG ngrad, ULONG mode, const POINT *dev_pts, HRGN rgn ) DECLSPEC_HIDDEN;
 extern COLORREF get_pixel_bitmapinfo( const BITMAPINFO *info, void *bits, struct bitblt_coords *src ) DECLSPEC_HIDDEN;
-extern BOOL render_aa_text_bitmapinfo( HDC hdc, BITMAPINFO *info, struct gdi_image_bits *bits,
+extern BOOL render_aa_text_bitmapinfo( DC *dc, BITMAPINFO *info, struct gdi_image_bits *bits,
                                        struct bitblt_coords *src, INT x, INT y, UINT flags,
                                        UINT aa_flags, LPCWSTR str, UINT count, const INT *dx ) DECLSPEC_HIDDEN;
 extern DWORD get_image_from_bitmap( BITMAPOBJ *bmp, BITMAPINFO *info,

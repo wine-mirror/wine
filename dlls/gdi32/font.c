@@ -2008,7 +2008,7 @@ BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect
             /* make x,y relative to the image bits */
             x += src.visrect.left - dst.visrect.left;
             y += src.visrect.top - dst.visrect.top;
-            render_aa_text_bitmapinfo( dev->hdc, info, &bits, &src, x, y, flags,
+            render_aa_text_bitmapinfo( dc, info, &bits, &src, x, y, flags,
                                        aa_flags, str, count, dx );
             err = dst_dev->funcs->pPutImage( dst_dev, 0, info, &bits, &src, &dst, SRCCOPY );
             if (bits.free) bits.free( &bits );
