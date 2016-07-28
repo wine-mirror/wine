@@ -280,6 +280,7 @@ static HRESULT WINAPI d3drm_viewport2_Init(IDirect3DRMViewport2 *iface, IDirect3
         IDirect3DRMFrame3 *camera, DWORD x, DWORD y, DWORD width, DWORD height)
 {
     struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport2(iface);
+    struct d3drm_device *device_obj = unsafe_impl_from_IDirect3DRMDevice3(device);
     D3DVIEWPORT vp;
     D3DVALUE scale;
     IDirect3D *d3d1 = NULL;
@@ -293,9 +294,9 @@ static HRESULT WINAPI d3drm_viewport2_Init(IDirect3DRMViewport2 *iface, IDirect3
     TRACE("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u.\n",
             iface, device, camera, x, y, width, height);
 
-    if (!device || !camera
-            || width > IDirect3DRMDevice3_GetWidth(device)
-            || height > IDirect3DRMDevice3_GetHeight(device))
+    if (!device_obj || !camera
+            || width > device_obj->width
+            || height > device_obj->height)
     {
         return D3DRMERR_BADOBJECT;
     }
@@ -356,6 +357,7 @@ static HRESULT WINAPI d3drm_viewport2_Init(IDirect3DRMViewport2 *iface, IDirect3
 
     hr = IDirect3DViewport_SetBackground(viewport->d3d_viewport, hmat);
     viewport->material = material;
+    viewport->device = device_obj;
 
 cleanup:
 
@@ -634,16 +636,32 @@ static HRESULT WINAPI d3drm_viewport1_GetCamera(IDirect3DRMViewport *iface, IDir
 
 static HRESULT WINAPI d3drm_viewport2_GetDevice(IDirect3DRMViewport2 *iface, IDirect3DRMDevice3 **device)
 {
-    FIXME("iface %p, device %p stub!\n", iface, device);
+    struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    if (!viewport->device)
+        return D3DRMERR_BADOBJECT;
+
+    *device = &viewport->device->IDirect3DRMDevice3_iface;
+    IDirect3DRMDevice3_AddRef(*device);
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm_viewport1_GetDevice(IDirect3DRMViewport *iface, IDirect3DRMDevice **device)
 {
-    FIXME("iface %p, device %p stub!\n", iface, device);
+    struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, device %p.\n\n", iface, device);
+
+    if (!viewport->device)
+        return D3DRMERR_BADOBJECT;
+
+    *device = &viewport->device->IDirect3DRMDevice_iface;
+    IDirect3DRMDevice_AddRef(*device);
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm_viewport2_GetPlane(IDirect3DRMViewport2 *iface,

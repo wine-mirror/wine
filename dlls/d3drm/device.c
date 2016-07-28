@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 #include "wine/debug.h"
 
 #define COBJMACROS
@@ -1616,6 +1617,15 @@ static const struct IDirect3DRMWinDeviceVtbl d3drm_device_win_vtbl =
     d3drm_device_win_HandlePaint,
     d3drm_device_win_HandleActivate,
 };
+
+struct d3drm_device *unsafe_impl_from_IDirect3DRMDevice3(IDirect3DRMDevice3 *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3drm_device3_vtbl);
+
+    return impl_from_IDirect3DRMDevice3(iface);
+}
 
 HRESULT d3drm_device_create(struct d3drm_device **device, IDirect3DRM *d3drm)
 {

@@ -72,6 +72,7 @@ struct d3drm_frame
 struct d3drm_viewport
 {
     struct d3drm_object obj;
+    struct d3drm_device *device;
     IDirect3DRMFrame *camera;
     IDirect3DRMViewport IDirect3DRMViewport_iface;
     IDirect3DRMViewport2 IDirect3DRMViewport2_iface;
@@ -116,6 +117,7 @@ HRESULT d3drm_object_delete_destroy_callback(struct d3drm_object *object, D3DRMO
 void d3drm_object_cleanup(IDirect3DRMObject *iface, struct d3drm_object *object) DECLSPEC_HIDDEN;
 
 struct d3drm_frame *unsafe_impl_from_IDirect3DRMFrame(IDirect3DRMFrame *iface) DECLSPEC_HIDDEN;
+struct d3drm_device *unsafe_impl_from_IDirect3DRMDevice3(IDirect3DRMDevice3 *iface) DECLSPEC_HIDDEN;
 
 HRESULT d3drm_texture_create(struct d3drm_texture **texture, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 HRESULT d3drm_frame_create(struct d3drm_frame **frame, IUnknown *parent_frame, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
