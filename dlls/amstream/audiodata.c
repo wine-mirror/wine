@@ -30,6 +30,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 typedef struct {
     IAudioData IAudioData_iface;
     LONG ref;
+    DWORD size;
+    BYTE *data;
+    DWORD actual_data;
 } AMAudioDataImpl;
 
 static inline AMAudioDataImpl *impl_from_IAudioData(IAudioData *iface)
@@ -87,9 +90,29 @@ static HRESULT WINAPI IAudioDataImpl_SetBuffer(IAudioData* iface, DWORD size, BY
 
 static HRESULT WINAPI IAudioDataImpl_GetInfo(IAudioData* iface, DWORD *length, BYTE **data, DWORD *actual_data)
 {
-    FIXME("(%p)->(%p,%p,%p): stub\n", iface, length, data, actual_data);
+    AMAudioDataImpl *This = impl_from_IAudioData(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p,%p,%p)\n", iface, length, data, actual_data);
+
+    if (!This->data)
+    {
+        return MS_E_NOTINIT;
+    }
+
+    if (length)
+    {
+        *length = This->size;
+    }
+    if (data)
+    {
+        *data = This->data;
+    }
+    if (actual_data)
+    {
+        *actual_data = This->actual_data;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IAudioDataImpl_SetActual(IAudioData* iface, DWORD data_valid)

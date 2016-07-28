@@ -626,6 +626,30 @@ static void test_audiodata_query_interface(void)
     IUnknown_Release(unknown);
 }
 
+static void test_audiodata_get_info(void)
+{
+    IUnknown *unknown = create_audio_data();
+    IAudioData *audio_data = NULL;
+
+    HRESULT result;
+
+    result = IUnknown_QueryInterface(unknown, &IID_IAudioData, (void **)&audio_data);
+    if (FAILED(result))
+    {
+        /* test_audiodata_query_interface handles this case */
+        skip("No IAudioData\n");
+        goto out_unknown;
+    }
+
+    result = IAudioData_GetInfo(audio_data, NULL, NULL, NULL);
+    ok(MS_E_NOTINIT == result, "got 0x%08x\n", result);
+
+    IAudioData_Release(audio_data);
+
+out_unknown:
+    IUnknown_Release(unknown);
+}
+
 START_TEST(amstream)
 {
     HANDLE file;
@@ -645,6 +669,7 @@ START_TEST(amstream)
     }
 
     test_audiodata_query_interface();
+    test_audiodata_get_info();
 
     CoUninitialize();
 }
