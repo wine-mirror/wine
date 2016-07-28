@@ -79,8 +79,6 @@ static inline struct d3drm_frame *impl_from_IDirect3DRMFrame3(IDirect3DRMFrame3 
 
 static inline struct d3drm_frame *unsafe_impl_from_IDirect3DRMFrame3(IDirect3DRMFrame3 *iface);
 
-static inline struct d3drm_frame *unsafe_impl_from_IDirect3DRMFrame(IDirect3DRMFrame *iface);
-
 static inline struct d3drm_frame_array *impl_from_IDirect3DRMFrameArray(IDirect3DRMFrameArray *iface)
 {
     return CONTAINING_RECORD(iface, struct d3drm_frame_array, IDirect3DRMFrameArray_iface);
@@ -2897,7 +2895,7 @@ static inline struct d3drm_frame *unsafe_impl_from_IDirect3DRMFrame3(IDirect3DRM
     return impl_from_IDirect3DRMFrame3(iface);
 }
 
-static inline struct d3drm_frame *unsafe_impl_from_IDirect3DRMFrame(IDirect3DRMFrame *iface)
+struct d3drm_frame *unsafe_impl_from_IDirect3DRMFrame(IDirect3DRMFrame *iface)
 {
     if (!iface)
         return NULL;

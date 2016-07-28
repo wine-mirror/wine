@@ -77,6 +77,19 @@ static HRESULT d3drm_create_device_object(void **object, IDirect3DRM *d3drm)
     return hr;
 }
 
+static HRESULT d3drm_create_viewport_object(void **object, IDirect3DRM *d3drm)
+{
+    struct d3drm_viewport *viewport;
+    HRESULT hr;
+
+    if (FAILED(hr = d3drm_viewport_create(&viewport, d3drm)))
+        return hr;
+
+    *object = &viewport->IDirect3DRMViewport_iface;
+
+    return hr;
+}
+
 struct d3drm
 {
     IDirect3DRM IDirect3DRM_iface;
@@ -1121,6 +1134,7 @@ static HRESULT WINAPI d3drm3_CreateObject(IDirect3DRM3 *iface,
     {
         {&CLSID_CDirect3DRMTexture, d3drm_create_texture_object},
         {&CLSID_CDirect3DRMDevice, d3drm_create_device_object},
+        {&CLSID_CDirect3DRMViewport, d3drm_create_viewport_object},
     };
 
     TRACE("iface %p, clsid %s, outer %p, iid %s, out %p.\n",

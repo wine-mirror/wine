@@ -41,9 +41,18 @@ static inline struct d3drm_viewport *impl_from_IDirect3DRMViewport2(IDirect3DRMV
 
 static void d3drm_viewport_destroy(struct d3drm_viewport *viewport)
 {
-    TRACE("viewport %p.\n", viewport);
+    TRACE("viewport %p releasing attached interfaces.\n", viewport);
 
     d3drm_object_cleanup((IDirect3DRMObject *)&viewport->IDirect3DRMViewport_iface, &viewport->obj);
+
+    if (viewport->d3d_viewport)
+    {
+        IDirect3DViewport_Release(viewport->d3d_viewport);
+        IDirect3DMaterial_Release(viewport->material);
+        IDirect3DRMFrame_Release(viewport->camera);
+        IDirect3DRM_Release(viewport->d3drm);
+    }
+
     HeapFree(GetProcessHeap(), 0, viewport);
 }
 
@@ -270,19 +279,129 @@ static HRESULT WINAPI d3drm_viewport1_GetClassName(IDirect3DRMViewport *iface, D
 static HRESULT WINAPI d3drm_viewport2_Init(IDirect3DRMViewport2 *iface, IDirect3DRMDevice3 *device,
         IDirect3DRMFrame3 *camera, DWORD x, DWORD y, DWORD width, DWORD height)
 {
-    FIXME("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u stub!\n",
+    struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport2(iface);
+    D3DVIEWPORT vp;
+    D3DVALUE scale;
+    IDirect3D *d3d1 = NULL;
+    D3DCOLOR color;
+    IDirect3DDevice *d3d_device = NULL;
+    IDirect3DMaterial *material = NULL;
+    D3DMATERIAL mat;
+    D3DMATERIALHANDLE hmat;
+    HRESULT hr = D3DRM_OK;
+
+    TRACE("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u.\n",
             iface, device, camera, x, y, width, height);
 
-    return E_NOTIMPL;
+    if (!device || !camera
+            || width > IDirect3DRMDevice3_GetWidth(device)
+            || height > IDirect3DRMDevice3_GetHeight(device))
+    {
+        return D3DRMERR_BADOBJECT;
+    }
+
+    if (viewport->d3d_viewport)
+        return D3DRMERR_BADOBJECT;
+
+    IDirect3DRM_AddRef(viewport->d3drm);
+
+    if (FAILED(hr = IDirect3DRMDevice3_GetDirect3DDevice(device, &d3d_device)))
+        goto cleanup;
+
+    if (FAILED(hr = IDirect3DDevice_GetDirect3D(d3d_device, &d3d1)))
+        goto cleanup;
+
+    if (FAILED(hr = IDirect3D_CreateViewport(d3d1, &viewport->d3d_viewport, NULL)))
+        goto cleanup;
+
+    vp.dwSize = sizeof(vp);
+    vp.dwWidth = width;
+    vp.dwHeight = height;
+    vp.dwX = x;
+    vp.dwY = y;
+    scale = width > height ? (float)width / 2.0f : (float)height / 2.0f;
+    vp.dvScaleX = scale;
+    vp.dvScaleY = scale;
+    vp.dvMaxX = vp.dwWidth / (2.0f * vp.dvScaleX);
+    vp.dvMaxY = vp.dwHeight / (2.0f * vp.dvScaleY);
+    vp.dvMinZ = 0.0f;
+    vp.dvMaxZ = 1.0f;
+
+    if (FAILED(hr = IDirect3DViewport_SetViewport(viewport->d3d_viewport, &vp)))
+        goto cleanup;
+
+    if (FAILED(hr = IDirect3DDevice_AddViewport(d3d_device, viewport->d3d_viewport)))
+        goto cleanup;
+
+    if (FAILED(hr = IDirect3DRMFrame3_QueryInterface(camera, &IID_IDirect3DRMFrame, (void **)&viewport->camera)))
+        goto cleanup;
+
+    color = IDirect3DRMFrame3_GetSceneBackground(camera);
+    /* Create material (ambient/diffuse/emissive?), set material */
+    if (FAILED(hr = IDirect3D_CreateMaterial(d3d1, &material, NULL)))
+        goto cleanup;
+
+    memset(&mat, 0, sizeof(mat));
+    mat.dwSize = sizeof(mat);
+    mat.diffuse.r = RGBA_GETRED(color) / 255.0f;
+    mat.diffuse.g = RGBA_GETGREEN(color) / 255.0f;
+    mat.diffuse.b = RGBA_GETBLUE(color) / 255.0f;
+    mat.diffuse.a = RGBA_GETALPHA(color) / 255.0f;
+
+    if (FAILED(hr = IDirect3DMaterial_SetMaterial(material, &mat)))
+        goto cleanup;
+
+    if (FAILED(hr = IDirect3DMaterial_GetHandle(material, d3d_device, &hmat)))
+        goto cleanup;
+
+    hr = IDirect3DViewport_SetBackground(viewport->d3d_viewport, hmat);
+    viewport->material = material;
+
+cleanup:
+
+    if (FAILED(hr))
+    {
+        if (viewport->d3d_viewport)
+        {
+            IDirect3DViewport_Release(viewport->d3d_viewport);
+            viewport->d3d_viewport = NULL;
+        }
+        if (viewport->camera)
+            IDirect3DRMFrame_Release(viewport->camera);
+        if (material)
+            IDirect3DMaterial_Release(material);
+        IDirect3DRM_Release(viewport->d3drm);
+    }
+    if (d3d_device)
+        IDirect3DDevice_Release(d3d_device);
+    if (d3d1)
+        IDirect3D_Release(d3d1);
+
+    return hr;
 }
 
 static HRESULT WINAPI d3drm_viewport1_Init(IDirect3DRMViewport *iface, IDirect3DRMDevice *device,
         IDirect3DRMFrame *camera, DWORD x, DWORD y, DWORD width, DWORD height)
 {
-    FIXME("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u stub!\n",
-            iface, device, camera, x, y, width, height);
+    struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport(iface);
+    struct d3drm_frame *frame = unsafe_impl_from_IDirect3DRMFrame(camera);
+    IDirect3DRMDevice3 *device3;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u.\n",
+          iface, device, camera, x, y, width, height);
+
+    if (!device || !frame)
+        return D3DRMERR_BADOBJECT;
+
+    if (FAILED(hr = IDirect3DRMDevice_QueryInterface(device, &IID_IDirect3DRMDevice3, (void **)&device3)))
+        return hr;
+
+    hr = d3drm_viewport2_Init(&viewport->IDirect3DRMViewport2_iface, device3, &frame->IDirect3DRMFrame3_iface,
+            x, y, width, height);
+    IDirect3DRMDevice3_Release(device3);
+
+    return hr;
 }
 
 static HRESULT WINAPI d3drm_viewport2_Clear(IDirect3DRMViewport2 *iface, DWORD flags)
