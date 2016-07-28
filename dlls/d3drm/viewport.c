@@ -825,17 +825,27 @@ static D3DRMPROJECTIONTYPE WINAPI d3drm_viewport1_GetProjection(IDirect3DRMViewp
 static HRESULT WINAPI d3drm_viewport2_GetDirect3DViewport(IDirect3DRMViewport2 *iface,
         IDirect3DViewport **viewport)
 {
-    FIXME("iface %p, viewport %p stub!\n", iface, viewport);
+    struct d3drm_viewport *viewport_object = impl_from_IDirect3DRMViewport2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, viewport %p.\n", iface, viewport);
+
+    if (!viewport_object->d3d_viewport)
+        return D3DRMERR_BADOBJECT;
+
+    *viewport = viewport_object->d3d_viewport;
+    IDirect3DViewport_AddRef(*viewport);
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm_viewport1_GetDirect3DViewport(IDirect3DRMViewport *iface,
         IDirect3DViewport **viewport)
 {
-    FIXME("iface %p, viewport %p stub!\n", iface, viewport);
+    struct d3drm_viewport *viewport_object = impl_from_IDirect3DRMViewport(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, viewport %p.\n", iface, viewport);
+
+    return d3drm_viewport2_GetDirect3DViewport(&viewport_object->IDirect3DRMViewport2_iface, viewport);
 }
 
 static HRESULT WINAPI d3drm_viewport2_TransformVectors(IDirect3DRMViewport2 *iface,
