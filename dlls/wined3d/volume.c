@@ -88,10 +88,10 @@ void wined3d_volume_upload_data(struct wined3d_texture *texture, unsigned int su
 }
 
 /* Context activation is done by the caller. */
-static void wined3d_volume_download_data(struct wined3d_volume *volume,
+static void texture3d_download_data(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         const struct wined3d_context *context, const struct wined3d_bo_address *data)
 {
-    const struct wined3d_format *format = volume->container->resource.format;
+    const struct wined3d_format *format = texture->resource.format;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     if (format->convert)
@@ -107,7 +107,7 @@ static void wined3d_volume_download_data(struct wined3d_volume *volume,
         checkGLcall("glBindBuffer");
     }
 
-    gl_info->gl_ops.gl.p_glGetTexImage(GL_TEXTURE_3D, volume->texture_level,
+    gl_info->gl_ops.gl.p_glGetTexImage(GL_TEXTURE_3D, sub_resource_idx,
             format->glFormat, format->glType, data->addr);
     checkGLcall("glGetTexImage");
 
@@ -144,6 +144,7 @@ static DWORD volume_access_from_location(DWORD location)
 static void wined3d_volume_srgb_transfer(struct wined3d_volume *volume,
         struct wined3d_context *context, BOOL dest_is_srgb)
 {
+    unsigned int sub_resource_idx = volume->texture_level;
     struct wined3d_texture *texture = volume->container;
     struct wined3d_bo_address data;
     /* Optimizations are possible, but the effort should be put into either
@@ -155,13 +156,13 @@ static void wined3d_volume_srgb_transfer(struct wined3d_volume *volume,
 
     WARN_(d3d_perf)("Performing slow rgb/srgb volume transfer.\n");
     data.buffer_object = 0;
-    if (!(data.addr = HeapAlloc(GetProcessHeap(), 0, texture->sub_resources[volume->texture_level].size)))
+    if (!(data.addr = HeapAlloc(GetProcessHeap(), 0, texture->sub_resources[sub_resource_idx].size)))
         return;
 
     wined3d_texture_bind_and_dirtify(texture, context, !dest_is_srgb);
-    wined3d_volume_download_data(volume, context, &data);
+    texture3d_download_data(texture, sub_resource_idx, context, &data);
     wined3d_texture_bind_and_dirtify(texture, context, dest_is_srgb);
-    wined3d_volume_upload_data(texture, volume->texture_level, context, wined3d_const_bo_address(&data));
+    wined3d_volume_upload_data(texture, sub_resource_idx, context, wined3d_const_bo_address(&data));
 
     HeapFree(GetProcessHeap(), 0, data.addr);
 }
@@ -248,7 +249,7 @@ BOOL wined3d_volume_load_location(struct wined3d_volume *volume,
                 else
                     wined3d_texture_bind_and_dirtify(texture, context, TRUE);
 
-                wined3d_volume_download_data(volume, context, &data);
+                texture3d_download_data(texture, sub_resource_idx, context, &data);
                 ++texture->download_count;
             }
             else
@@ -269,7 +270,7 @@ BOOL wined3d_volume_load_location(struct wined3d_volume *volume,
                 else
                     wined3d_texture_bind_and_dirtify(texture, context, TRUE);
 
-                wined3d_volume_download_data(volume, context, &data);
+                texture3d_download_data(texture, sub_resource_idx, context, &data);
             }
             else
             {
