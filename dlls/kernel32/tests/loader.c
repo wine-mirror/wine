@@ -340,17 +340,18 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header )
     LARGE_INTEGER size;
     HANDLE file, map;
     NTSTATUS status;
+    ULONG file_size;
 
     GetTempPathA(MAX_PATH, temp_path);
     GetTempFileNameA(temp_path, "ldr", 0, dll_name);
 
-    size.u.LowPart = create_test_dll( &dos_header, sizeof(dos_header), nt_header, dll_name );
-    ok( size.u.LowPart, "could not create %s\n", dll_name);
-    size.u.HighPart = 0;
+    file_size = create_test_dll( &dos_header, sizeof(dos_header), nt_header, dll_name );
+    ok( file_size, "could not create %s\n", dll_name);
 
     file = CreateFileA(dll_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
     ok(file != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
 
+    size.QuadPart = file_size;
     status = pNtCreateSection(&map, STANDARD_RIGHTS_REQUIRED | SECTION_MAP_READ | SECTION_QUERY,
                               NULL, &size, PAGE_READONLY, SEC_IMAGE, file );
     if (!status)
@@ -362,8 +363,8 @@ static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header )
         ok( info_size == sizeof(info), "NtQuerySection wrong size %u\n", info_size );
         ok( info.Attributes == (SEC_IMAGE | SEC_FILE), "NtQuerySection wrong attr %x\n", info.Attributes );
         ok( info.BaseAddress == NULL, "NtQuerySection wrong base %p\n", info.BaseAddress );
-        ok( info.Size.QuadPart == size.QuadPart, "NtQuerySection wrong size %x%08x / %x%08x\n",
-            info.Size.u.HighPart, info.Size.u.LowPart, size.u.HighPart, size.u.LowPart );
+        ok( info.Size.QuadPart == file_size, "NtQuerySection wrong size %x%08x / %08x\n",
+            info.Size.u.HighPart, info.Size.u.LowPart, file_size );
         query_image_section( 1000, dll_name, nt_header );
     }
     if (map) CloseHandle( map );
@@ -1944,7 +1945,8 @@ static void child_process(const char *dll_name, DWORD target_offset)
         memset(&pbi, 0, sizeof(pbi));
         ret = pNtQueryInformationProcess(process, ProcessBasicInformation, &pbi, sizeof(pbi), NULL);
         ok(!ret, "NtQueryInformationProcess error %#x\n", ret);
-        ok(pbi.ExitStatus == STILL_ACTIVE, "expected STILL_ACTIVE, got %lu\n", pbi.ExitStatus);
+        ok(pbi.ExitStatus == STILL_ACTIVE || pbi.ExitStatus == 195,
+           "expected STILL_ACTIVE, got %lu\n", pbi.ExitStatus);
         affinity = 1;
         ret = pNtSetInformationProcess(process, ProcessAffinityMask, &affinity, sizeof(affinity));
         ok(!ret, "NtSetInformationProcess error %#x\n", ret);
@@ -1979,7 +1981,8 @@ static void child_process(const char *dll_name, DWORD target_offset)
         memset(&pbi, 0, sizeof(pbi));
         ret = pNtQueryInformationProcess(process, ProcessBasicInformation, &pbi, sizeof(pbi), NULL);
         ok(!ret, "NtQueryInformationProcess error %#x\n", ret);
-        ok(pbi.ExitStatus == STILL_ACTIVE, "expected STILL_ACTIVE, got %lu\n", pbi.ExitStatus);
+        ok(pbi.ExitStatus == STILL_ACTIVE || pbi.ExitStatus == 195,
+           "expected STILL_ACTIVE, got %lu\n", pbi.ExitStatus);
         affinity = 1;
         ret = pNtSetInformationProcess(process, ProcessAffinityMask, &affinity, sizeof(affinity));
         ok(!ret, "NtSetInformationProcess error %#x\n", ret);
