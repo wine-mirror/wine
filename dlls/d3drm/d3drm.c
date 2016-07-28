@@ -432,11 +432,38 @@ static HRESULT WINAPI d3drm1_CreateViewport(IDirect3DRM *iface, IDirect3DRMDevic
         IDirect3DRMFrame *camera, DWORD x, DWORD y, DWORD width, DWORD height, IDirect3DRMViewport **viewport)
 {
     struct d3drm *d3drm = impl_from_IDirect3DRM(iface);
+    IDirect3DRMDevice3 *device3;
+    IDirect3DRMFrame3 *camera3;
+    IDirect3DRMViewport2 *viewport2;
+    HRESULT hr;
 
-    FIXME("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u, viewport %p partial stub!\n",
+    TRACE("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u, viewport %p.\n",
             iface, device, camera, x, y, width, height, viewport);
 
-    return IDirect3DRM2_CreateViewport(&d3drm->IDirect3DRM2_iface, device, camera, x, y, width, height, viewport);
+    if (!device || !camera)
+        return D3DRMERR_BADOBJECT;
+    if (!viewport)
+        return D3DRMERR_BADVALUE;
+
+    if (FAILED(hr = IDirect3DRMDevice_QueryInterface(device, &IID_IDirect3DRMDevice3, (void **)&device3)))
+        return hr;
+
+    if (FAILED(hr = IDirect3DRMFrame_QueryInterface(camera, &IID_IDirect3DRMFrame3, (void **)&camera3)))
+    {
+        IDirect3DRMDevice3_Release(device3);
+        return hr;
+    }
+
+    hr = IDirect3DRM3_CreateViewport(&d3drm->IDirect3DRM3_iface, device3, camera3, x, y, width, height, &viewport2);
+    IDirect3DRMDevice3_Release(device3);
+    IDirect3DRMFrame3_Release(camera3);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IDirect3DRMViewport2_QueryInterface(viewport2, &IID_IDirect3DRMViewport, (void **)viewport);
+    IDirect3DRMViewport2_Release(viewport2);
+
+    return hr;
 }
 
 static HRESULT WINAPI d3drm1_CreateWrap(IDirect3DRM *iface, D3DRMWRAPTYPE type, IDirect3DRMFrame *frame,
@@ -880,18 +907,38 @@ static HRESULT WINAPI d3drm2_CreateViewport(IDirect3DRM2 *iface, IDirect3DRMDevi
         IDirect3DRMFrame *camera, DWORD x, DWORD y, DWORD width, DWORD height, IDirect3DRMViewport **viewport)
 {
     struct d3drm *d3drm = impl_from_IDirect3DRM2(iface);
-    struct d3drm_viewport *object;
+    IDirect3DRMDevice3 *device3;
+    IDirect3DRMFrame3 *camera3;
+    IDirect3DRMViewport2 *viewport2;
     HRESULT hr;
 
-    FIXME("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u, viewport %p partial stub!\n",
-            iface, device, camera, x, y, width, height, viewport);
+    TRACE("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u, viewport %p.\n",
+          iface, device, camera, x, y, width, height, viewport);
 
-    if (FAILED(hr = d3drm_viewport_create(&object, &d3drm->IDirect3DRM_iface)))
+    if (!device || !camera)
+        return D3DRMERR_BADOBJECT;
+    if (!viewport)
+        return D3DRMERR_BADVALUE;
+
+    if (FAILED(hr = IDirect3DRMDevice_QueryInterface(device, &IID_IDirect3DRMDevice3, (void **)&device3)))
         return hr;
 
-    *viewport = &object->IDirect3DRMViewport_iface;
+    if (FAILED(hr = IDirect3DRMFrame_QueryInterface(camera, &IID_IDirect3DRMFrame3, (void **)&camera3)))
+    {
+        IDirect3DRMDevice3_Release(device3);
+        return hr;
+    }
 
-    return D3DRM_OK;
+    hr = IDirect3DRM3_CreateViewport(&d3drm->IDirect3DRM3_iface, device3, camera3, x, y, width, height, &viewport2);
+    IDirect3DRMDevice3_Release(device3);
+    IDirect3DRMFrame3_Release(camera3);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IDirect3DRMViewport2_QueryInterface(viewport2, &IID_IDirect3DRMViewport, (void **)viewport);
+    IDirect3DRMViewport2_Release(viewport2);
+
+    return hr;
 }
 
 static HRESULT WINAPI d3drm2_CreateWrap(IDirect3DRM2 *iface, D3DRMWRAPTYPE type, IDirect3DRMFrame *frame,
@@ -1455,13 +1502,25 @@ static HRESULT WINAPI d3drm3_CreateViewport(IDirect3DRM3 *iface, IDirect3DRMDevi
     struct d3drm_viewport *object;
     HRESULT hr;
 
-    FIXME("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u, viewport %p partial stub!\n",
+    TRACE("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u, viewport %p.\n",
             iface, device, camera, x, y, width, height, viewport);
+
+    if (!device || !camera)
+        return D3DRMERR_BADOBJECT;
+    if (!viewport)
+        return D3DRMERR_BADVALUE;
 
     if (FAILED(hr = d3drm_viewport_create(&object, &d3drm->IDirect3DRM_iface)))
         return hr;
 
     *viewport = &object->IDirect3DRMViewport2_iface;
+
+    if (FAILED(hr = IDirect3DRMViewport2_Init(*viewport, device, camera, x, y, width, height)))
+    {
+        IDirect3DRMViewport2_Release(*viewport);
+        *viewport = NULL;
+        return D3DRMERR_BADVALUE;
+    }
 
     return D3DRM_OK;
 }

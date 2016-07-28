@@ -1512,6 +1512,137 @@ static void test_Viewport(void)
     hr = IDirect3DRM3_CreateFrame(d3drm3, NULL, &frame3);
     ok(SUCCEEDED(hr), "Cannot get IDirect3DRMFrame3 interface (hr = %x).\n", hr);
 
+    ref1 = get_refcount((IUnknown *)d3drm1);
+    ref2 = get_refcount((IUnknown *)d3drm2);
+    ref3 = get_refcount((IUnknown *)d3drm3);
+    device_ref = get_refcount((IUnknown *)device1);
+    frame_ref = get_refcount((IUnknown *)frame);
+
+    hr = IDirect3DRM_CreateViewport(d3drm1, device1, frame, 0, 0, 0, 0, &viewport);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMViewport interface (hr = %#x)\n", hr);
+    ref4 = get_refcount((IUnknown *)d3drm1);
+    ok(ref4 > ref1, "Expected ref4 > ref1, got ref1 = %u, ref4 = %u.\n", ref1, ref4);
+    ref4 = get_refcount((IUnknown *)d3drm2);
+    ok(ref4 == ref2, "Expected ref4 == ref2, got ref2 = %u, ref4 = %u.\n", ref2, ref4);
+    ref4 = get_refcount((IUnknown *)d3drm3);
+    ok(ref4 == ref3, "Expected ref4 == ref3, got ref3 = %u, ref4 = %u.\n", ref3, ref4);
+    ref4 = get_refcount((IUnknown *)device1);
+    ok(ref4 == device_ref, "Expected ref4 == device_ref, got device_ref = %u, ref4 = %u.\n", device_ref, ref4);
+    ref4 = get_refcount((IUnknown *)frame);
+    ok(ref4 > frame_ref, "Expected ref4 > frame_ref, got frame_ref = %u, ref4 = %u.\n", frame_ref, ref4);
+
+    IDirect3DRMViewport_Release(viewport);
+    ref4 = get_refcount((IUnknown *)d3drm1);
+    ok(ref4 == ref1, "Expected ref4 == ref1, got ref1 = %u, ref4 = %u.\n", ref1, ref4);
+    ref4 = get_refcount((IUnknown *)d3drm2);
+    ok(ref4 == ref2, "Expected ref4 == ref2, got ref2 = %u, ref4 = %u.\n", ref2, ref4);
+    ref4 = get_refcount((IUnknown *)d3drm3);
+    ok(ref4 == ref3, "Expected ref4 == ref3, got ref3 = %u, ref4 = %u.\n", ref3, ref4);
+    ref4 = get_refcount((IUnknown *)device1);
+    ok(ref4 == device_ref, "Expected ref4 == device_ref, got device_ref = %u, ref4 = %u.\n", device_ref, ref4);
+    ref4 = get_refcount((IUnknown *)frame);
+    ok(ref4 == frame_ref, "Expected ref4 == frame_ref, got frame_ref = %u, ref4 = %u.\n", frame_ref, ref4);
+
+    hr = IDirect3DRM2_CreateViewport(d3drm2, device1, frame, 0, 0, 0, 0, &viewport);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMViewport interface (hr = %#x)\n", hr);
+    ref4 = get_refcount((IUnknown *)d3drm1);
+    ok(ref4 > ref1, "Expected ref4 > ref1, got ref1 = %u, ref4 = %u.\n", ref1, ref4);
+    ref4 = get_refcount((IUnknown *)d3drm2);
+    ok(ref4 == ref2, "Expected ref4 == ref2, got ref2 = %u, ref4 = %u.\n", ref2, ref4);
+    ref4 = get_refcount((IUnknown *)d3drm3);
+    ok(ref4 == ref3, "Expected ref4 == ref3, got ref3 = %u, ref4 = %u.\n", ref3, ref4);
+    ref4 = get_refcount((IUnknown *)device1);
+    ok(ref4 == device_ref, "Expected ref4 == device_ref, got device_ref = %u, ref4 = %u.\n", device_ref, ref4);
+    ref4 = get_refcount((IUnknown *)frame);
+    ok(ref4 > frame_ref, "Expected ref4 > frame_ref, got frame_ref = %u, ref4 = %u.\n", frame_ref, ref4);
+
+    IDirect3DRMViewport_Release(viewport);
+    ref4 = get_refcount((IUnknown *)d3drm1);
+    ok(ref4 == ref1, "Expected ref4 == ref1, got ref1 = %u, ref4 = %u.\n", ref1, ref4);
+    ref4 = get_refcount((IUnknown *)d3drm2);
+    ok(ref4 == ref2, "Expected ref4 == ref2, got ref2 = %u, ref4 = %u.\n", ref2, ref4);
+    ref4 = get_refcount((IUnknown *)d3drm3);
+    ok(ref4 == ref3, "Expected ref4 == ref3, got ref3 = %u, ref4 = %u.\n", ref3, ref4);
+    ref4 = get_refcount((IUnknown *)device1);
+    ok(ref4 == device_ref, "Expected ref4 == device_ref, got device_ref = %u, ref4 = %u.\n", device_ref, ref4);
+    ref4 = get_refcount((IUnknown *)frame);
+    ok(ref4 == frame_ref, "Expected ref4 == frame_ref, got frame_ref = %u, ref4 = %u.\n", frame_ref, ref4);
+
+    device_ref = get_refcount((IUnknown *)device3);
+    frame_ref2 = get_refcount((IUnknown *)frame3);
+
+    hr = IDirect3DRM3_CreateViewport(d3drm3, device3, frame3, 0, 0, 0, 0, &viewport2);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMViewport2 interface (hr = %#x)\n", hr);
+    ref4 = get_refcount((IUnknown *)d3drm1);
+    ok(ref4 > ref1, "Expected ref4 > ref1, got ref1 = %u, ref4 = %u.\n", ref1, ref4);
+    ref4 = get_refcount((IUnknown *)d3drm2);
+    ok(ref4 == ref2, "Expected ref4 == ref2, got ref2 = %u, ref4 = %u.\n", ref2, ref4);
+    ref4 = get_refcount((IUnknown *)d3drm3);
+    ok(ref4 == ref3, "Expected ref4 == ref3, got ref3 = %u, ref4 = %u.\n", ref3, ref4);
+    ref4 = get_refcount((IUnknown *)device3);
+    ok(ref4 == device_ref, "Expected ref4 == device_ref, got device_ref = %u, ref4 = %u.\n", device_ref, ref4);
+    ref4 = get_refcount((IUnknown *)frame3);
+    ok(ref4 > frame_ref2, "Expected ref4 > frame_ref2, got frame_ref2 = %u, ref4 = %u.\n", frame_ref2, ref4);
+
+    IDirect3DRMViewport2_Release(viewport2);
+    ref4 = get_refcount((IUnknown *)d3drm1);
+    ok(ref4 == ref1, "Expected ref4 == ref1, got ref1 = %u, ref4 = %u.\n", ref1, ref4);
+    ref4 = get_refcount((IUnknown *)d3drm2);
+    ok(ref4 == ref2, "Expected ref4 == ref2, got ref2 = %u, ref4 = %u.\n", ref2, ref4);
+    ref4 = get_refcount((IUnknown *)d3drm3);
+    ok(ref4 == ref3, "Expected ref4 == ref3, got ref3 = %u, ref4 = %u.\n", ref3, ref4);
+    ref4 = get_refcount((IUnknown *)device3);
+    ok(ref4 == device_ref, "Expected ref4 == device_ref, got device_ref = %u, ref4 = %u.\n", device_ref, ref4);
+    ref4 = get_refcount((IUnknown *)frame3);
+    ok(ref4 == frame_ref2, "Expected ref4 == frame_ref2, got frame_ref2 = %u, ref4 = %u.\n", frame_ref2, ref4);
+
+    /* Test all failures together */
+    hr = IDirect3DRM_CreateViewport(d3drm1, NULL, frame, rc.left, rc.top, rc.right, rc.bottom, &viewport);
+    ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
+    hr = IDirect3DRM_CreateViewport(d3drm1, device1, NULL, rc.left, rc.top, rc.right, rc.bottom, &viewport);
+    ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
+    hr = IDirect3DRM_CreateViewport(d3drm1, device1, frame, rc.left, rc.top, rc.right + 1, rc.bottom + 1, &viewport);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+    hr = IDirect3DRM_CreateViewport(d3drm1, device1, frame, rc.left, rc.top, rc.right + 1, rc.bottom, &viewport);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+    hr = IDirect3DRM_CreateViewport(d3drm1, device1, frame, rc.left, rc.top, rc.right, rc.bottom + 1, &viewport);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+    hr = IDirect3DRM_CreateViewport(d3drm1, device1, frame, rc.left, rc.top, rc.right, rc.bottom, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+
+    hr = IDirect3DRM2_CreateViewport(d3drm2, NULL, frame, rc.left, rc.top, rc.right, rc.bottom, &viewport);
+    ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
+    hr = IDirect3DRM2_CreateViewport(d3drm2, device1, NULL, rc.left, rc.top, rc.right, rc.bottom, &viewport);
+    ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
+    hr = IDirect3DRM2_CreateViewport(d3drm2, device1, frame, rc.left, rc.top, rc.right + 1, rc.bottom + 1, &viewport);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+    hr = IDirect3DRM2_CreateViewport(d3drm2, device1, frame, rc.left, rc.top, rc.right + 1, rc.bottom, &viewport);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+    hr = IDirect3DRM2_CreateViewport(d3drm2, device1, frame, rc.left, rc.top, rc.right, rc.bottom + 1, &viewport);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+    hr = IDirect3DRM2_CreateViewport(d3drm2, device1, frame, rc.left, rc.top, rc.right, rc.bottom, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+
+    hr = IDirect3DRM3_CreateViewport(d3drm3, NULL, frame3, rc.left, rc.top, rc.right, rc.bottom, &viewport2);
+    ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
+    hr = IDirect3DRM3_CreateViewport(d3drm3, device3, NULL, rc.left, rc.top, rc.right, rc.bottom, &viewport2);
+    ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
+    hr = IDirect3DRM3_CreateViewport(d3drm3, device3, frame3, rc.left, rc.top, rc.right + 1, rc.bottom + 1, &viewport2);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+    hr = IDirect3DRM3_CreateViewport(d3drm3, device3, frame3, rc.left, rc.top, rc.right + 1, rc.bottom, &viewport2);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+    hr = IDirect3DRM3_CreateViewport(d3drm3, device3, frame3, rc.left, rc.top, rc.right, rc.bottom + 1, &viewport2);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+    hr = IDirect3DRM3_CreateViewport(d3drm3, device3, frame3, rc.left, rc.top, rc.right, rc.bottom, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+
+    hr = IDirect3DRM2_CreateViewport(d3drm2, device1, frame, rc.left, rc.top, rc.right, rc.bottom, &viewport);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMViewport interface (hr = %#x)\n", hr);
+    IDirect3DRMViewport_Release(viewport);
+    hr = IDirect3DRM3_CreateViewport(d3drm3, device3, frame3, rc.left, rc.top, rc.right, rc.bottom, &viewport2);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRMViewport2 interface (hr = %#x)\n", hr);
+    IDirect3DRMViewport2_Release(viewport2);
+
     hr = IDirect3DRM_CreateViewport(d3drm1, device1, frame, rc.left, rc.top, rc.right, rc.bottom, &viewport);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMViewport interface (hr = %x)\n", hr);
 
