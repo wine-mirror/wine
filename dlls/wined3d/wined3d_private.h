@@ -1380,7 +1380,7 @@ enum wined3d_query_state
 struct wined3d_query_ops
 {
     BOOL (*query_poll)(struct wined3d_query *query);
-    HRESULT (*query_issue)(struct wined3d_query *query, DWORD flags);
+    void (*query_issue)(struct wined3d_query *query, DWORD flags);
 };
 
 struct wined3d_query
