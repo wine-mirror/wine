@@ -178,6 +178,7 @@ typedef struct _scope_chain_t {
     LONG ref;
     jsdisp_t *jsobj;
     IDispatch *obj;
+    struct _call_frame_t *frame;
     struct _scope_chain_t *next;
 } scope_chain_t;
 
@@ -208,17 +209,23 @@ typedef struct _call_frame_t {
     jsdisp_t *arguments_obj;
     DWORD flags;
 
+    unsigned pop_locals;
+    unsigned arguments_off;
+
     bytecode_t *bytecode;
     function_code_t *function;
 
     struct _call_frame_t *prev_frame;
 } call_frame_t;
 
+HRESULT detach_variable_object(script_ctx_t*,call_frame_t*) DECLSPEC_HIDDEN;
+
 #define EXEC_GLOBAL            0x0001
 #define EXEC_CONSTRUCTOR       0x0002
 #define EXEC_RETURN_TO_INTERP  0x0004
+#define EXEC_EVAL              0x0008
 
 HRESULT exec_source(script_ctx_t*,DWORD,bytecode_t*,function_code_t*,scope_chain_t*,IDispatch*,
-        jsdisp_t*,jsdisp_t*,jsdisp_t*,jsval_t*) DECLSPEC_HIDDEN;
+        jsdisp_t*,jsdisp_t*,unsigned,jsval_t*,jsdisp_t*,jsval_t*) DECLSPEC_HIDDEN;
 
 HRESULT create_source_function(script_ctx_t*,bytecode_t*,function_code_t*,scope_chain_t*,jsdisp_t**) DECLSPEC_HIDDEN;

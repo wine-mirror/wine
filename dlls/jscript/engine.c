@@ -267,13 +267,8 @@ HRESULT scope_push(scope_chain_t *scope, jsdisp_t *jsobj, IDispatch *obj, scope_
     IDispatch_AddRef(obj);
     new_scope->jsobj = jsobj;
     new_scope->obj = obj;
-
-    if(scope) {
-        scope_addref(scope);
-        new_scope->next = scope;
-    }else {
-        new_scope->next = NULL;
-    }
+    new_scope->frame = NULL;
+    new_scope->next = scope ? scope_addref(scope) : NULL;
 
     *ret = new_scope;
     return S_OK;
@@ -427,6 +422,34 @@ static HRESULT equal2_values(jsval_t lval, jsval_t rval, BOOL *ret)
     return S_OK;
 }
 
+/*
+ * Transfers local variables from stack to variable object.
+ * It's slow, so we want to avoid it as much as possible.
+ */
+HRESULT detach_variable_object(script_ctx_t *ctx, call_frame_t *frame)
+{
+    unsigned i;
+    HRESULT hres;
+
+    if(!frame->base_scope || !frame->base_scope->frame)
+        return S_OK;
+
+    TRACE("detaching %p\n", frame);
+
+    assert(frame == frame->base_scope->frame);
+    assert(frame->variable_obj == frame->base_scope->jsobj);
+
+    frame->base_scope->frame = NULL;
+
+    for(i = 0; i < frame->function->param_cnt; i++) {
+        hres = jsdisp_propput_name(frame->variable_obj, frame->function->params[i], ctx->stack[frame->arguments_off+i]);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return S_OK;
+}
+
 static BOOL lookup_global_members(script_ctx_t *ctx, BSTR identifier, exprval_t *ret)
 {
     named_item_t *item;
@@ -459,6 +482,11 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
 
     if(ctx->call_ctx) {
         for(scope = ctx->call_ctx->scope; scope; scope = scope->next) {
+            if(scope->frame) {
+                hres = detach_variable_object(ctx, scope->frame);
+                if(FAILED(hres))
+                    return hres;
+            }
             if(scope->jsobj)
                 hres = jsdisp_get_id(scope->jsobj, identifier, fdexNameImplicit, &id);
             else
@@ -2379,8 +2407,10 @@ OP_LIST
 #undef X
 };
 
-static void release_call_frame(call_frame_t *frame)
+static void pop_call_frame(script_ctx_t *ctx)
 {
+    call_frame_t *frame = ctx->call_ctx;
+
     if(frame->arguments_obj) {
         /* Reset arguments value to cut the reference cycle. Note that since all activation contexts have
          * their own arguments property, it's impossible to use prototype's one during name lookup */
@@ -2388,14 +2418,28 @@ static void release_call_frame(call_frame_t *frame)
         jsdisp_propput_name(frame->variable_obj, argumentsW, jsval_undefined());
         jsdisp_release(frame->arguments_obj);
     }
+
+    if(frame->scope) {
+        /* If current scope will be kept alive, we need to transfer local variables to its variable object. */
+        if(frame->scope->ref > 1) {
+            HRESULT hres = detach_variable_object(ctx, frame);
+            if(FAILED(hres))
+                ERR("Failed to detach variable object: %08x\n", hres);
+        }
+        scope_release(frame->scope);
+    }
+
+    frame->stack_base -= frame->pop_locals;
+    stack_popn(ctx, frame->pop_locals);
+
+    ctx->call_ctx = frame->prev_frame;
+
     if(frame->function_instance)
         jsdisp_release(frame->function_instance);
     if(frame->variable_obj)
         jsdisp_release(frame->variable_obj);
     if(frame->this_obj)
         IDispatch_Release(frame->this_obj);
-    if(frame->scope)
-        scope_release(frame->scope);
     jsval_release(frame->ret);
     release_bytecode(frame->bytecode);
     heap_free(frame);
@@ -2417,9 +2461,8 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
 
         stack_popn(ctx, ctx->stack_top-frame->stack_base);
 
-        ctx->call_ctx = frame->prev_frame;
         flags = frame->flags;
-        release_call_frame(frame);
+        pop_call_frame(ctx);
         if(!(flags & EXEC_RETURN_TO_INTERP))
             return exception_hres;
     }
@@ -2492,14 +2535,13 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, jsval_t *r)
             assert(ctx->stack_top == frame->stack_base);
             assert(frame->scope == frame->base_scope);
 
-            ctx->call_ctx = frame->prev_frame;
             if(return_to_interp) {
-                clear_ret(ctx->call_ctx);
-                ctx->call_ctx->ret = steal_ret(frame);
+                clear_ret(frame->prev_frame);
+                frame->prev_frame->ret = steal_ret(frame);
             }else if(r) {
                 *r = steal_ret(frame);
             }
-            release_call_frame(frame);
+            pop_call_frame(ctx);
             if(!return_to_interp)
                 break;
         }else {
@@ -2547,8 +2589,41 @@ static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdis
     return hres;
 }
 
+static HRESULT setup_scope(script_ctx_t *ctx, call_frame_t *frame, unsigned argc, jsval_t *argv)
+{
+    unsigned i;
+    jsval_t v;
+    HRESULT hres;
+
+    frame->arguments_off = ctx->stack_top;
+
+    for(i = 0; i < argc; i++) {
+        hres = jsval_copy(argv[i], &v);
+        if(SUCCEEDED(hres))
+            hres = stack_push(ctx, v);
+        if(FAILED(hres)) {
+            stack_popn(ctx, i);
+            return hres;
+        }
+    }
+
+    /* If fewer than declared arguments were passed, fill remaining with undefined value. */
+    for(; i < frame->function->param_cnt; i++) {
+        hres = stack_push(ctx, jsval_undefined());
+        if(FAILED(hres)) {
+            stack_popn(ctx, i);
+            return hres;
+        }
+    }
+
+    frame->pop_locals = i;
+    frame->base_scope->frame = frame;
+    return S_OK;
+}
+
 HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, function_code_t *function, scope_chain_t *scope,
-        IDispatch *this_obj, jsdisp_t *function_instance, jsdisp_t *variable_obj, jsdisp_t *arguments_obj, jsval_t *r)
+        IDispatch *this_obj, jsdisp_t *function_instance, jsdisp_t *variable_obj, unsigned argc, jsval_t *argv,
+        jsdisp_t *arguments_obj, jsval_t *r)
 {
     call_frame_t *frame;
     unsigned i;
@@ -2595,18 +2670,34 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
         }
     }
 
+    if(ctx->call_ctx && (flags & EXEC_EVAL)) {
+        hres = detach_variable_object(ctx, ctx->call_ctx);
+        if(FAILED(hres))
+            return hres;
+    }
+
     frame = heap_alloc_zero(sizeof(*frame));
     if(!frame)
         return E_OUTOFMEMORY;
 
-    frame->bytecode = bytecode_addref(bytecode);
     frame->function = function;
-    frame->ip = function->instr_off;
-    frame->stack_base = ctx->stack_top;
     frame->ret = jsval_undefined();
-    if(scope)
+
+    if(scope) {
         frame->base_scope = frame->scope = scope_addref(scope);
 
+        if(!(flags & (EXEC_GLOBAL|EXEC_EVAL))) {
+            hres = setup_scope(ctx, frame, argc, argv);
+            if(FAILED(hres)) {
+                heap_free(frame);
+                return hres;
+            }
+        }
+    }
+
+    frame->bytecode = bytecode_addref(bytecode);
+    frame->ip = function->instr_off;
+    frame->stack_base = ctx->stack_top;
     if(this_obj)
         frame->this_obj = this_obj;
     else if(ctx->host_global)

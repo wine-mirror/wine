@@ -39,7 +39,7 @@ typedef struct {
 typedef struct {
     jsdisp_t jsdisp;
     FunctionInstance *function;
-    jsdisp_t *var_obj;
+    scope_chain_t *scope;
 } ArgumentsInstance;
 
 static inline FunctionInstance *function_from_jsdisp(jsdisp_t *jsdisp)
@@ -65,21 +65,6 @@ static const WCHAR applyW[] = {'a','p','p','l','y',0};
 static const WCHAR callW[] = {'c','a','l','l',0};
 static const WCHAR argumentsW[] = {'a','r','g','u','m','e','n','t','s',0};
 
-static HRESULT init_parameters(jsdisp_t *var_disp, FunctionInstance *function, unsigned argc, jsval_t *argv)
-{
-    DWORD i=0;
-    HRESULT hres;
-
-    for(i=0; i < function->func_code->param_cnt; i++) {
-        hres = jsdisp_propput_name(var_disp, function->func_code->params[i],
-                i < argc ? argv[i] : jsval_undefined());
-        if(FAILED(hres))
-            return hres;
-    }
-
-    return S_OK;
-}
-
 static HRESULT Arguments_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
@@ -91,8 +76,10 @@ static void Arguments_destructor(jsdisp_t *jsdisp)
 {
     ArgumentsInstance *arguments = (ArgumentsInstance*)jsdisp;
 
+    TRACE("(%p)\n", arguments);
+
     jsdisp_release(&arguments->function->dispex);
-    jsdisp_release(arguments->var_obj);
+    scope_release(arguments->scope);
     heap_free(arguments);
 }
 
@@ -108,8 +95,15 @@ static HRESULT Arguments_idx_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *res)
 
     TRACE("%p[%u]\n", arguments, idx);
 
+    if(arguments->scope->frame) {
+        HRESULT hres;
+        hres = detach_variable_object(jsdisp->ctx, arguments->scope->frame);
+        if(FAILED(hres))
+            return hres;
+    }
+
     /* FIXME: Accessing by name won't work for duplicated argument names */
-    return jsdisp_propget_name(arguments->var_obj, arguments->function->func_code->params[idx], res);
+    return jsdisp_propget_name(arguments->scope->jsobj, arguments->function->func_code->params[idx], res);
 }
 
 static HRESULT Arguments_idx_put(jsdisp_t *jsdisp, unsigned idx, jsval_t val)
@@ -118,8 +112,15 @@ static HRESULT Arguments_idx_put(jsdisp_t *jsdisp, unsigned idx, jsval_t val)
 
     TRACE("%p[%u] = %s\n", arguments, idx, debugstr_jsval(val));
 
+    if(arguments->scope->frame) {
+        HRESULT hres;
+        hres = detach_variable_object(jsdisp->ctx, arguments->scope->frame);
+        if(FAILED(hres))
+            return hres;
+    }
+
     /* FIXME: Accessing by name won't work for duplicated argument names */
-    return jsdisp_propput_name(arguments->var_obj, arguments->function->func_code->params[idx], val);
+    return jsdisp_propput_name(arguments->scope->jsobj, arguments->function->func_code->params[idx], val);
 }
 
 static const builtin_info_t Arguments_info = {
@@ -133,7 +134,7 @@ static const builtin_info_t Arguments_info = {
     Arguments_idx_put
 };
 
-static HRESULT create_arguments(script_ctx_t *ctx, FunctionInstance *calee, jsdisp_t *var_obj,
+static HRESULT create_arguments(script_ctx_t *ctx, FunctionInstance *calee, scope_chain_t *scope,
         unsigned argc, jsval_t *argv, jsdisp_t **ret)
 {
     ArgumentsInstance *args;
@@ -154,7 +155,7 @@ static HRESULT create_arguments(script_ctx_t *ctx, FunctionInstance *calee, jsdi
 
     jsdisp_addref(&calee->dispex);
     args->function = calee;
-    args->var_obj = jsdisp_addref(var_obj);
+    args->scope = scope_addref(scope);
 
     /* Store unnamed arguments directly in arguments object */
     for(i = calee->length; i < argc; i++) {
@@ -182,25 +183,6 @@ static HRESULT create_arguments(script_ctx_t *ctx, FunctionInstance *calee, jsdi
     return S_OK;
 }
 
-static HRESULT create_var_disp(script_ctx_t *ctx, FunctionInstance *function, unsigned argc, jsval_t *argv, jsdisp_t **ret)
-{
-    jsdisp_t *var_disp;
-    HRESULT hres;
-
-    hres = create_dispex(ctx, NULL, NULL, &var_disp);
-    if(FAILED(hres))
-        return hres;
-
-    hres = init_parameters(var_disp, function, argc, argv);
-    if(FAILED(hres)) {
-        jsdisp_release(var_disp);
-        return hres;
-    }
-
-    *ret = var_disp;
-    return S_OK;
-}
-
 static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDispatch *this_obj, unsigned argc, jsval_t *argv,
         BOOL is_constructor, BOOL caller_execs_source, jsval_t *r)
 {
@@ -218,24 +200,22 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
         return E_FAIL;
     }
 
-    hres = create_var_disp(ctx, function, argc, argv, &var_disp);
+    hres = create_dispex(ctx, NULL, NULL, &var_disp);
     if(FAILED(hres))
         return hres;
 
-    hres = create_arguments(ctx, function, var_disp, argc, argv, &arg_disp);
-    if(FAILED(hres)) {
-        jsdisp_release(var_disp);
-        return hres;
-    }
-
-    hres = jsdisp_propput(var_disp, argumentsW, PROPF_DONTDELETE, jsval_obj(arg_disp));
-    if(FAILED(hres)) {
-        jsdisp_release(arg_disp);
-        jsdisp_release(var_disp);
-        return hres;
-    }
-
     hres = scope_push(function->scope_chain, var_disp, to_disp(var_disp), &scope);
+    jsdisp_release(var_disp);
+    if(FAILED(hres))
+        return hres;
+
+    hres = create_arguments(ctx, function, scope, argc, argv, &arg_disp);
+    if(FAILED(hres)) {
+        scope_release(scope);
+        return hres;
+    }
+
+    hres = jsdisp_propput(scope->jsobj, argumentsW, PROPF_DONTDELETE, jsval_obj(arg_disp));
     if(SUCCEEDED(hres)) {
         DWORD exec_flags = 0;
 
@@ -244,13 +224,12 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
         if(is_constructor)
             exec_flags |= EXEC_CONSTRUCTOR;
         hres = exec_source(ctx, exec_flags, function->code, function->func_code, scope, this_obj,
-                &function->dispex, var_disp, arg_disp, r);
+                &function->dispex, scope->jsobj, argc, argv, arg_disp, r);
 
-        scope_release(scope);
     }
 
     jsdisp_release(arg_disp);
-    jsdisp_release(var_disp);
+    scope_release(scope);
     return hres;
 }
 
