@@ -34,6 +34,7 @@ typedef struct {
     BYTE *data;
     BOOL data_owned;
     DWORD actual_data;
+    WAVEFORMATEX wave_format;
 } AMAudioDataImpl;
 
 static inline AMAudioDataImpl *impl_from_IAudioData(IAudioData *iface)
@@ -168,9 +169,18 @@ static HRESULT WINAPI IAudioDataImpl_SetActual(IAudioData* iface, DWORD data_val
 /*** IAudioData methods ***/
 static HRESULT WINAPI IAudioDataImpl_GetFormat(IAudioData* iface, WAVEFORMATEX *wave_format_current)
 {
-    FIXME("(%p)->(%p): stub\n", iface, wave_format_current);
+    AMAudioDataImpl *This = impl_from_IAudioData(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, wave_format_current);
+
+    if (!wave_format_current)
+    {
+        return E_POINTER;
+    }
+
+    *wave_format_current = This->wave_format;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IAudioDataImpl_SetFormat(IAudioData* iface, const WAVEFORMATEX *wave_format)
@@ -210,6 +220,13 @@ HRESULT AMAudioData_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
     object->IAudioData_iface.lpVtbl = &AudioData_Vtbl;
     object->ref = 1;
+
+    object->wave_format.wFormatTag = WAVE_FORMAT_PCM;
+    object->wave_format.nChannels = 1;
+    object->wave_format.nSamplesPerSec = 11025;
+    object->wave_format.wBitsPerSample = 16;
+    object->wave_format.nBlockAlign = object->wave_format.wBitsPerSample * object->wave_format.nChannels / 8;
+    object->wave_format.nAvgBytesPerSec = object->wave_format.nBlockAlign * object->wave_format.nSamplesPerSec;
 
     *ppObj = &object->IAudioData_iface;
 
