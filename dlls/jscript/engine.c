@@ -2591,19 +2591,25 @@ static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdis
 
 static HRESULT setup_scope(script_ctx_t *ctx, call_frame_t *frame, unsigned argc, jsval_t *argv)
 {
+    const unsigned orig_stack = ctx->stack_top;
     unsigned i;
     jsval_t v;
     HRESULT hres;
 
-    frame->arguments_off = ctx->stack_top;
-
-    for(i = 0; i < argc; i++) {
-        hres = jsval_copy(argv[i], &v);
-        if(SUCCEEDED(hres))
-            hres = stack_push(ctx, v);
-        if(FAILED(hres)) {
-            stack_popn(ctx, i);
-            return hres;
+    /* If arguments are already on the stack, we may use them. */
+    if(argv + argc == ctx->stack + ctx->stack_top) {
+        frame->arguments_off = argv - ctx->stack;
+        i = argc;
+    }else {
+        frame->arguments_off = ctx->stack_top;
+        for(i = 0; i < argc; i++) {
+            hres = jsval_copy(argv[i], &v);
+            if(SUCCEEDED(hres))
+                hres = stack_push(ctx, v);
+            if(FAILED(hres)) {
+                stack_popn(ctx, i);
+                return hres;
+            }
         }
     }
 
@@ -2611,12 +2617,12 @@ static HRESULT setup_scope(script_ctx_t *ctx, call_frame_t *frame, unsigned argc
     for(; i < frame->function->param_cnt; i++) {
         hres = stack_push(ctx, jsval_undefined());
         if(FAILED(hres)) {
-            stack_popn(ctx, i);
+            stack_popn(ctx, ctx->stack_top - orig_stack);
             return hres;
         }
     }
 
-    frame->pop_locals = i;
+    frame->pop_locals = ctx->stack_top - orig_stack;
     frame->base_scope->frame = frame;
     return S_OK;
 }
