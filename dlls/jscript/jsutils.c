@@ -212,13 +212,17 @@ static HRESULT jsval_variant(jsval_t *val, VARIANT *var)
 
     __JSVAL_TYPE(*val) = JSV_VARIANT;
     __JSVAL_VAR(*val) = v = heap_alloc(sizeof(VARIANT));
-    if(!v)
+    if(!v) {
+        *val = jsval_undefined();
         return E_OUTOFMEMORY;
+    }
 
     V_VT(v) = VT_EMPTY;
     hres = VariantCopy(v, var);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
+        *val = jsval_undefined();
         heap_free(v);
+    }
     return hres;
 }
 
