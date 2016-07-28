@@ -593,6 +593,39 @@ error:
     IAMMultiMediaStream_Release(pams);
 }
 
+static IUnknown *create_audio_data(void)
+{
+    IUnknown *audio_data = NULL;
+    HRESULT result = CoCreateInstance(&CLSID_AMAudioData, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void **)&audio_data);
+    ok(S_OK == result, "got 0x%08x\n", result);
+    return audio_data;
+}
+
+static void test_audiodata_query_interface(void)
+{
+    IUnknown *unknown = create_audio_data();
+    IMemoryData *memory_data = NULL;
+    IAudioData *audio_data = NULL;
+
+    HRESULT result;
+
+    result = IUnknown_QueryInterface(unknown, &IID_IMemoryData, (void **)&memory_data);
+    ok(E_NOINTERFACE == result, "got 0x%08x\n", result);
+
+    result = IUnknown_QueryInterface(unknown, &IID_IAudioData, (void **)&audio_data);
+    ok(S_OK == result, "got 0x%08x\n", result);
+    if (S_OK == result)
+    {
+        result = IAudioData_QueryInterface(audio_data, &IID_IMemoryData, (void **)&memory_data);
+        ok(E_NOINTERFACE == result, "got 0x%08x\n", result);
+
+        IAudioData_Release(audio_data);
+    }
+
+    IUnknown_Release(unknown);
+}
+
 START_TEST(amstream)
 {
     HANDLE file;
@@ -610,6 +643,8 @@ START_TEST(amstream)
         test_openfile();
         test_renderfile();
     }
+
+    test_audiodata_query_interface();
 
     CoUninitialize();
 }

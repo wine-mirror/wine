@@ -43,7 +43,6 @@ static HRESULT WINAPI IAudioDataImpl_QueryInterface(IAudioData *iface, REFIID ri
     TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(riid), ret_iface);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IMemoryData) ||
         IsEqualGUID(riid, &IID_IAudioData))
     {
         IAudioData_AddRef(iface);
