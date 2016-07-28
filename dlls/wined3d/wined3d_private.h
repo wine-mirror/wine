@@ -2786,8 +2786,6 @@ struct wined3d_volume
     GLint texture_level;
 };
 
-BOOL wined3d_volume_load_location(struct wined3d_volume *volume,
-        struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
 void wined3d_volume_upload_data(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         const struct wined3d_context *context, const struct wined3d_const_bo_address *data) DECLSPEC_HIDDEN;
 
