@@ -810,6 +810,37 @@ static int CDECL MSVCRT_vsnprintf_s_l_opt( char *str, MSVCRT_size_t sizeOfBuffer
     return ret;
 }
 
+static int MSVCRT_vsnwprintf_s_l_opt( MSVCRT_wchar_t *str, MSVCRT_size_t sizeOfBuffer,
+        MSVCRT_size_t count, const MSVCRT_wchar_t *format, DWORD options,
+        MSVCRT__locale_t locale, __ms_va_list valist)
+{
+    static const MSVCRT_wchar_t nullbyte = '\0';
+    struct _str_ctx_w ctx;
+    int len, ret;
+
+    len = sizeOfBuffer;
+    if(count!=-1 && len>count+1)
+        len = count+1;
+
+    ctx.len = len;
+    ctx.buf = str;
+    ret = pf_printf_w(puts_clbk_str_w, &ctx, format, locale, MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER | options,
+            arg_clbk_valist, NULL, &valist);
+    puts_clbk_str_w(&ctx, 1, &nullbyte);
+
+    if(ret<0 || ret==len) {
+        if(count!=MSVCRT__TRUNCATE && count>sizeOfBuffer) {
+            MSVCRT_INVALID_PMT("str[sizeOfBuffer] is too small", MSVCRT_ERANGE);
+            memset(str, 0, sizeOfBuffer*sizeof(MSVCRT_wchar_t));
+        } else
+            str[len-1] = '\0';
+
+        return -1;
+    }
+
+    return ret;
+}
+
 /*********************************************************************
  *		_vsnprintf_s_l (MSVCRT.@)
  */
@@ -862,6 +893,18 @@ int CDECL MSVCRT__stdio_common_vsnprintf_s( unsigned __int64 options,
     if (options & ~UCRTBASE_PRINTF_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
     return MSVCRT_vsnprintf_s_l_opt(str, sizeOfBuffer, count, format, options & UCRTBASE_PRINTF_MASK, locale, valist);
+}
+
+/*********************************************************************
+ *		__stdio_common_vsnwprintf_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__stdio_common_vsnwprintf_s( unsigned __int64 options,
+        MSVCRT_wchar_t *str, MSVCRT_size_t sizeOfBuffer, MSVCRT_size_t count,
+        const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, __ms_va_list valist )
+{
+    if (options & ~UCRTBASE_PRINTF_MASK)
+        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+    return MSVCRT_vsnwprintf_s_l_opt(str, sizeOfBuffer, count, format, options & UCRTBASE_PRINTF_MASK, locale, valist);
 }
 
 /*********************************************************************
@@ -1064,6 +1107,7 @@ int CDECL MSVCRT__vswprintf_p(MSVCRT_wchar_t *buffer, MSVCRT_size_t length,
     return MSVCRT_vswprintf_p_l(buffer, length, format, NULL, args);
 }
 
+
 /*********************************************************************
  *              _vsnwprintf_s_l (MSVCRT.@)
  */
@@ -1071,31 +1115,7 @@ int CDECL MSVCRT_vsnwprintf_s_l( MSVCRT_wchar_t *str, MSVCRT_size_t sizeOfBuffer
         MSVCRT_size_t count, const MSVCRT_wchar_t *format,
         MSVCRT__locale_t locale, __ms_va_list valist)
 {
-    static const MSVCRT_wchar_t nullbyte = '\0';
-    struct _str_ctx_w ctx;
-    int len, ret;
-
-    len = sizeOfBuffer;
-    if(count!=-1 && len>count+1)
-        len = count+1;
-
-    ctx.len = len;
-    ctx.buf = str;
-    ret = pf_printf_w(puts_clbk_str_w, &ctx, format, locale, MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
-            arg_clbk_valist, NULL, &valist);
-    puts_clbk_str_w(&ctx, 1, &nullbyte);
-
-    if(ret<0 || ret==len) {
-        if(count!=MSVCRT__TRUNCATE && count>sizeOfBuffer) {
-            MSVCRT_INVALID_PMT("str[sizeOfBuffer] is too small", MSVCRT_ERANGE);
-            memset(str, 0, sizeOfBuffer*sizeof(MSVCRT_wchar_t));
-        } else
-            str[len-1] = '\0';
-
-        return -1;
-    }
-
-    return ret;
+    return MSVCRT_vsnwprintf_s_l_opt(str, sizeOfBuffer, count, format, 0, locale, valist);
 }
 
 /*********************************************************************
