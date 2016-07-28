@@ -697,6 +697,54 @@ out_unknown:
     IUnknown_Release(unknown);
 }
 
+static void test_audiodata_set_actual(void)
+{
+    IUnknown *unknown = create_audio_data();
+    IAudioData *audio_data = NULL;
+    BYTE buffer[100] = {0};
+    DWORD actual_data = 0;
+
+    HRESULT result;
+
+    result = IUnknown_QueryInterface(unknown, &IID_IAudioData, (void **)&audio_data);
+    if (FAILED(result))
+    {
+        /* test_audiodata_query_interface handles this case */
+        skip("No IAudioData\n");
+        goto out_unknown;
+    }
+
+    result = IAudioData_SetActual(audio_data, 0);
+    ok(S_OK == result, "got 0x%08x\n", result);
+
+    result = IAudioData_SetBuffer(audio_data, sizeof(buffer), buffer, 0);
+    ok(S_OK == result, "got 0x%08x\n", result);
+
+    result = IAudioData_SetActual(audio_data, sizeof(buffer) + 1);
+    ok(E_INVALIDARG == result, "got 0x%08x\n", result);
+
+    result = IAudioData_SetActual(audio_data, sizeof(buffer));
+    ok(S_OK == result, "got 0x%08x\n", result);
+
+    actual_data = 0xdeadbeef;
+    result = IAudioData_GetInfo(audio_data, NULL, NULL, &actual_data);
+    ok(S_OK == result, "got 0x%08x\n", result);
+    ok(sizeof(buffer) == actual_data, "got %u\n", actual_data);
+
+    result = IAudioData_SetActual(audio_data, 0);
+    ok(S_OK == result, "got 0x%08x\n", result);
+
+    actual_data = 0xdeadbeef;
+    result = IAudioData_GetInfo(audio_data, NULL, NULL, &actual_data);
+    ok(S_OK == result, "got 0x%08x\n", result);
+    ok(0 == actual_data, "got %u\n", actual_data);
+
+    IAudioData_Release(audio_data);
+
+out_unknown:
+    IUnknown_Release(unknown);
+}
+
 START_TEST(amstream)
 {
     HANDLE file;
@@ -718,6 +766,7 @@ START_TEST(amstream)
     test_audiodata_query_interface();
     test_audiodata_get_info();
     test_audiodata_set_buffer();
+    test_audiodata_set_actual();
 
     CoUninitialize();
 }

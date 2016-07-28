@@ -151,9 +151,18 @@ static HRESULT WINAPI IAudioDataImpl_GetInfo(IAudioData* iface, DWORD *length, B
 
 static HRESULT WINAPI IAudioDataImpl_SetActual(IAudioData* iface, DWORD data_valid)
 {
-    FIXME("(%p)->(%u): stub\n", iface, data_valid);
+    AMAudioDataImpl *This = impl_from_IAudioData(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%u)\n", iface, data_valid);
+
+    if (data_valid > This->size)
+    {
+        return E_INVALIDARG;
+    }
+
+    This->actual_data = data_valid;
+
+    return S_OK;
 }
 
 /*** IAudioData methods ***/
