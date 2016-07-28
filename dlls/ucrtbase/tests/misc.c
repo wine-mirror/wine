@@ -73,6 +73,7 @@ static _invalid_parameter_handler (CDECL *p__get_invalid_parameter_handler)(void
 static _invalid_parameter_handler (CDECL *p__set_thread_local_invalid_parameter_handler)(_invalid_parameter_handler);
 static _invalid_parameter_handler (CDECL *p__get_thread_local_invalid_parameter_handler)(void);
 static int (CDECL *p__ltoa_s)(LONG, char*, size_t, int);
+static char* (CDECL *p__get_narrow_winmain_command_line)(void);
 
 static void test__initialize_onexit_table(void)
 {
@@ -312,6 +313,38 @@ static void test_invalid_parameter_handler(void)
     ok(ret == global_invalid_parameter_handler, "ret = %p\n", ret);
 }
 
+static void test__get_narrow_winmain_command_line(char *path)
+{
+    PROCESS_INFORMATION proc;
+    STARTUPINFOA startup;
+    char cmd[MAX_PATH+32];
+    char *ret, *cmdline, *name;
+    int len;
+
+    ret = p__get_narrow_winmain_command_line();
+    cmdline = GetCommandLineA();
+    len = strlen(cmdline);
+    ok(ret>cmdline && ret<cmdline+len, "ret = %p, cmdline = %p (len = %d)\n", ret, cmdline, len);
+
+    if(!path) {
+        ok(!lstrcmpA(ret, "\"misc\" cmd"), "ret = %s\n", ret);
+        return;
+    }
+
+    for(len = strlen(path); len>0; len--)
+        if(path[len-1]=='\\' || path[len-1]=='/') break;
+    if(len) name = path+len;
+    else name = path;
+
+    sprintf(cmd, "\"\"%c\"\"\"%s\" \t \"misc\" cmd", name[0], name+1);
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    CreateProcessA(path, cmd, NULL, NULL, TRUE,
+            CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
+            NULL, NULL, &startup, &proc);
+    winetest_wait_child_process(proc.hProcess);
+}
+
 static BOOL init(void)
 {
     HMODULE module = LoadLibraryA("ucrtbase.dll");
@@ -331,18 +364,29 @@ static BOOL init(void)
     p__set_thread_local_invalid_parameter_handler = (void*)GetProcAddress(module, "_set_thread_local_invalid_parameter_handler");
     p__get_thread_local_invalid_parameter_handler = (void*)GetProcAddress(module, "_get_thread_local_invalid_parameter_handler");
     p__ltoa_s = (void*)GetProcAddress(module, "_ltoa_s");
+    p__get_narrow_winmain_command_line = (void*)GetProcAddress(GetModuleHandleA("ucrtbase.dll"), "_get_narrow_winmain_command_line");
 
     return TRUE;
 }
 
 START_TEST(misc)
 {
+    int arg_c;
+    char** arg_v;
+
     if(!init())
         return;
+
+    arg_c = winetest_get_mainargs(&arg_v);
+    if(arg_c == 3) {
+        test__get_narrow_winmain_command_line(NULL);
+        return;
+    }
 
     test_invalid_parameter_handler();
     test__initialize_onexit_table();
     test__register_onexit_function();
     test__execute_onexit_table();
     test___fpe_flt_rounds();
+    test__get_narrow_winmain_command_line(arg_v[0]);
 }
