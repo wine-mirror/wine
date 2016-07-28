@@ -1379,7 +1379,7 @@ enum wined3d_query_state
 
 struct wined3d_query_ops
 {
-    HRESULT (*query_get_data)(struct wined3d_query *query, void *data, DWORD data_size, DWORD flags);
+    BOOL (*query_poll)(struct wined3d_query *query);
     HRESULT (*query_issue)(struct wined3d_query *query, DWORD flags);
 };
 
@@ -1391,6 +1391,7 @@ struct wined3d_query
     struct wined3d_device *device;
     enum wined3d_query_state state;
     enum wined3d_query_type type;
+    const void *data;
     DWORD data_size;
     const struct wined3d_query_ops *query_ops;
 };
@@ -1408,6 +1409,7 @@ struct wined3d_event_query
     struct list entry;
     union wined3d_gl_query_object object;
     struct wined3d_context *context;
+    BOOL signalled;
 };
 
 enum wined3d_event_query_result
@@ -1432,6 +1434,7 @@ struct wined3d_occlusion_query
     struct list entry;
     GLuint id;
     struct wined3d_context *context;
+    DWORD samples;
 };
 
 struct wined3d_timestamp_query
@@ -1441,6 +1444,7 @@ struct wined3d_timestamp_query
     struct list entry;
     GLuint id;
     struct wined3d_context *context;
+    UINT64 timestamp;
 };
 
 void context_alloc_timestamp_query(struct wined3d_context *context, struct wined3d_timestamp_query *query) DECLSPEC_HIDDEN;
