@@ -117,7 +117,7 @@
 @ stub NDRcopy
 @ stdcall NdrAllocate(ptr long)
 @ varargs NdrAsyncClientCall(ptr ptr)
-@ stub NdrAsyncServerCall
+@ stdcall NdrAsyncServerCall(ptr)
 @ stdcall NdrAsyncStubCall(ptr ptr ptr ptr)
 @ stdcall NdrByteCountPointerBufferSize(ptr ptr ptr)
 @ stdcall NdrByteCountPointerFree(ptr ptr ptr)
