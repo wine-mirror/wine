@@ -650,6 +650,53 @@ out_unknown:
     IUnknown_Release(unknown);
 }
 
+static void test_audiodata_set_buffer(void)
+{
+    IUnknown *unknown = create_audio_data();
+    IAudioData *audio_data = NULL;
+    BYTE buffer[100] = {0};
+    DWORD length = 0;
+    BYTE *data = NULL;
+
+    HRESULT result;
+
+    result = IUnknown_QueryInterface(unknown, &IID_IAudioData, (void **)&audio_data);
+    if (FAILED(result))
+    {
+        /* test_audiodata_query_interface handles this case */
+        skip("No IAudioData\n");
+        goto out_unknown;
+    }
+
+    result = IAudioData_SetBuffer(audio_data, 100, NULL, 0);
+    ok(S_OK == result, "got 0x%08x\n", result);
+
+    data = (BYTE *)0xdeadbeef;
+    length = 0xdeadbeef;
+    result = IAudioData_GetInfo(audio_data, &length, &data, NULL);
+    ok(S_OK == result, "got 0x%08x\n", result);
+    ok(100 == length, "got %u\n", length);
+    ok(NULL != data, "got %p\n", data);
+
+    result = IAudioData_SetBuffer(audio_data, 0, buffer, 0);
+    ok(E_INVALIDARG == result, "got 0x%08x\n", result);
+
+    result = IAudioData_SetBuffer(audio_data, sizeof(buffer), buffer, 0);
+    ok(S_OK == result, "got 0x%08x\n", result);
+
+    data = (BYTE *)0xdeadbeef;
+    length = 0xdeadbeef;
+    result = IAudioData_GetInfo(audio_data, &length, &data, NULL);
+    ok(S_OK == result, "got 0x%08x\n", result);
+    ok(sizeof(buffer) == length, "got %u\n", length);
+    ok(buffer == data, "got %p\n", data);
+
+    IAudioData_Release(audio_data);
+
+out_unknown:
+    IUnknown_Release(unknown);
+}
+
 START_TEST(amstream)
 {
     HANDLE file;
@@ -670,6 +717,7 @@ START_TEST(amstream)
 
     test_audiodata_query_interface();
     test_audiodata_get_info();
+    test_audiodata_set_buffer();
 
     CoUninitialize();
 }

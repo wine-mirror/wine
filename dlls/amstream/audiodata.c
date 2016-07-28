@@ -32,6 +32,7 @@ typedef struct {
     LONG ref;
     DWORD size;
     BYTE *data;
+    BOOL data_owned;
     DWORD actual_data;
 } AMAudioDataImpl;
 
@@ -75,7 +76,14 @@ static ULONG WINAPI IAudioDataImpl_Release(IAudioData* iface)
     TRACE("(%p)->(): new ref = %u\n", iface, This->ref);
 
     if (!ref)
+    {
+        if (This->data_owned)
+        {
+            CoTaskMemFree(This->data);
+        }
+
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -83,9 +91,35 @@ static ULONG WINAPI IAudioDataImpl_Release(IAudioData* iface)
 /*** IMemoryData methods ***/
 static HRESULT WINAPI IAudioDataImpl_SetBuffer(IAudioData* iface, DWORD size, BYTE *data, DWORD flags)
 {
-    FIXME("(%p)->(%u,%p,%x): stub\n", iface, size, data, flags);
+    AMAudioDataImpl *This = impl_from_IAudioData(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%u,%p,%x)\n", iface, size, data, flags);
+
+    if (!size)
+    {
+        return E_INVALIDARG;
+    }
+
+    if (This->data_owned)
+    {
+        CoTaskMemFree(This->data);
+        This->data_owned = FALSE;
+    }
+
+    This->size = size;
+    This->data = data;
+
+    if (!This->data)
+    {
+        This->data = CoTaskMemAlloc(This->size);
+        This->data_owned = TRUE;
+        if (!This->data)
+        {
+            return E_OUTOFMEMORY;
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IAudioDataImpl_GetInfo(IAudioData* iface, DWORD *length, BYTE **data, DWORD *actual_data)
