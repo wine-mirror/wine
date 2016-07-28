@@ -368,7 +368,7 @@
 @ cdecl _get_initial_narrow_environment()
 @ cdecl _get_initial_wide_environment()
 @ cdecl _get_invalid_parameter_handler()
-@ stub _get_narrow_winmain_command_line
+@ cdecl _get_narrow_winmain_command_line()
 @ cdecl _get_osfhandle(long) MSVCRT__get_osfhandle
 @ cdecl _get_pgmptr(ptr)
 @ cdecl _get_printf_count_output() MSVCRT__get_printf_count_output
@@ -379,7 +379,7 @@
 @ cdecl _get_timezone(ptr)
 @ cdecl _get_tzname(ptr str long long) MSVCRT__get_tzname
 @ cdecl _get_unexpected() MSVCRT__get_unexpected
-@ stub _get_wide_winmain_command_line
+@ cdecl _get_wide_winmain_command_line()
 @ cdecl _get_wpgmptr(ptr)
 @ cdecl _getc_nolock(ptr) MSVCRT__fgetc_nolock
 @ cdecl _getch()
