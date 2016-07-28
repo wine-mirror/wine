@@ -185,9 +185,23 @@ static HRESULT WINAPI IAudioDataImpl_GetFormat(IAudioData* iface, WAVEFORMATEX *
 
 static HRESULT WINAPI IAudioDataImpl_SetFormat(IAudioData* iface, const WAVEFORMATEX *wave_format)
 {
-    FIXME("(%p)->(%p): stub\n", iface, wave_format);
+    AMAudioDataImpl *This = impl_from_IAudioData(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, wave_format);
+
+    if (!wave_format)
+    {
+        return E_POINTER;
+    }
+
+    if (WAVE_FORMAT_PCM != wave_format->wFormatTag)
+    {
+        return E_INVALIDARG;
+    }
+
+    This->wave_format = *wave_format;
+
+    return S_OK;
 }
 
 static const struct IAudioDataVtbl AudioData_Vtbl =
