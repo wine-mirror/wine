@@ -684,3 +684,57 @@ int CDECL _initialize_wide_environment(void)
   FIXME("stub\n");
   return 0;
 }
+
+/*********************************************************************
+ *		_get_narrow_winmain_command_line (UCRTBASE.@)
+ */
+char* CDECL _get_narrow_winmain_command_line(void)
+{
+  static char *narrow_command_line;
+  char *s;
+
+  if (narrow_command_line)
+      return narrow_command_line;
+
+  s = GetCommandLineA();
+  while (*s && *s != ' ' && *s != '\t')
+  {
+      if (*s++ == '"')
+      {
+          while (*s && *s++ != '"')
+              ;
+      }
+  }
+
+  while (*s == ' ' || *s == '\t')
+      s++;
+
+  return narrow_command_line = s;
+}
+
+/*********************************************************************
+ *		_get_wide_winmain_command_line (UCRTBASE.@)
+ */
+MSVCRT_wchar_t* CDECL _get_wide_winmain_command_line(void)
+{
+  static MSVCRT_wchar_t *wide_command_line;
+  MSVCRT_wchar_t *s;
+
+  if (wide_command_line)
+      return wide_command_line;
+
+  s = GetCommandLineW();
+  while (*s && *s != ' ' && *s != '\t')
+  {
+      if (*s++ == '"')
+      {
+          while (*s && *s++ != '"')
+              ;
+      }
+  }
+
+  while (*s == ' ' || *s == '\t')
+      s++;
+
+  return wide_command_line = s;
+}

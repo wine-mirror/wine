@@ -43,11 +43,11 @@
 @ cdecl _get_initial_narrow_environment() ucrtbase._get_initial_narrow_environment
 @ stub _get_initial_wide_environment
 @ cdecl _get_invalid_parameter_handler() ucrtbase._get_invalid_parameter_handler
-@ stub _get_narrow_winmain_command_line
+@ cdecl _get_narrow_winmain_command_line() ucrtbase._get_narrow_winmain_command_line
 @ cdecl _get_pgmptr(ptr) ucrtbase._get_pgmptr
 @ cdecl _get_terminate() ucrtbase._get_terminate
 @ cdecl _get_thread_local_invalid_parameter_handler() ucrtbase._get_thread_local_invalid_parameter_handler
-@ stub _get_wide_winmain_command_line
+@ cdecl _get_wide_winmain_command_line() ucrtbase._get_wide_winmain_command_line
 @ cdecl _get_wpgmptr(ptr) ucrtbase._get_wpgmptr
 @ cdecl _getdllprocaddr(long str long) ucrtbase._getdllprocaddr
 @ cdecl _getpid() ucrtbase._getpid
