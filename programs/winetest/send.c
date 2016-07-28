@@ -52,6 +52,7 @@ open_http (const char *server)
     sa.sin_family = AF_INET;
     sa.sin_port = htons (80);
     sa.sin_addr.s_addr = inet_addr (server);
+    memset (sa.sin_zero, 0, sizeof(sa.sin_zero));
     if (sa.sin_addr.s_addr == INADDR_NONE) {
         struct hostent *host = gethostbyname (server);
         if (!host) {
