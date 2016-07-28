@@ -1475,6 +1475,8 @@ static void test_Viewport(void)
     IDirect3DRMViewport *viewport;
     IDirect3DRMViewport2 *viewport2;
     IDirect3DViewport *d3d_viewport;
+    D3DVIEWPORT vp;
+    D3DVALUE expected_val;
     IDirect3DRMObject *obj, *obj2;
     GUID driver;
     HWND window;
@@ -1650,6 +1652,24 @@ static void test_Viewport(void)
     ref4 = get_refcount((IUnknown *)d3d_viewport);
     ok(ref4 == viewport_ref, "Expected ref4 == viewport_ref, got ref4 = %u, viewport_ref = %u.\n", ref4, viewport_ref);
     IDirect3DViewport_Release(d3d_viewport);
+
+    hr = IDirect3DRMViewport_GetDirect3DViewport(viewport, &d3d_viewport);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DViewport interface (hr = %#x).\n", hr);
+    vp.dwSize = sizeof(vp);
+    hr = IDirect3DViewport_GetViewport(d3d_viewport, &vp);
+    ok(SUCCEEDED(hr), "Cannot get D3DVIEWPORT struct (hr = %#x).\n", hr);
+    ok(vp.dwWidth == rc.right, "Expected viewport width = %u, got %u.\n", rc.right, vp.dwWidth);
+    ok(vp.dwHeight == rc.bottom, "Expected viewport height = %u, got %u.\n", rc.bottom, vp.dwHeight);
+    ok(vp.dwX == rc.left, "Expected viewport X position = %u, got %u.\n", rc.left, vp.dwX);
+    ok(vp.dwY == rc.top, "Expected viewport Y position = %u, got %u.\n", rc.top, vp.dwY);
+    expected_val = (rc.right > rc.bottom) ? (rc.right / 2.0f) : (rc.bottom / 2.0f);
+    ok(vp.dvScaleX == expected_val, "Expected dvScaleX = %f, got %f.\n", expected_val, vp.dvScaleX);
+    ok(vp.dvScaleY == expected_val, "Expected dvScaleY = %f, got %f.\n", expected_val, vp.dvScaleY);
+    expected_val = vp.dwWidth / (2.0f * vp.dvScaleX);
+    ok(vp.dvMaxX == expected_val, "Expected dvMaxX = %f, got %f.\n", expected_val, vp.dvMaxX);
+    expected_val = vp.dwHeight / (2.0f * vp.dvScaleY);
+    ok(vp.dvMaxY == expected_val, "Expected dvMaxY = %f, got %f.\n", expected_val, vp.dvMaxY);
+    IDirect3DViewport_Release(d3d_viewport);
     IDirect3DRMViewport_Release(viewport);
 
     hr = IDirect3DRM3_CreateViewport(d3drm3, device3, frame3, rc.left, rc.top, rc.right, rc.bottom, &viewport2);
@@ -1665,6 +1685,24 @@ static void test_Viewport(void)
     ref4 = get_refcount((IUnknown *)d3d_viewport);
     ok(ref4 == viewport_ref, "Expected ref4 == viewport_ref, got ref4 = %u, viewport_ref = %u.\n", ref4, viewport_ref);
     IDirect3DViewport_Release(d3d_viewport);
+
+    hr = IDirect3DRMViewport2_GetDirect3DViewport(viewport2, &d3d_viewport);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DViewport interface (hr = %#x).\n", hr);
+    vp.dwSize = sizeof(vp);
+    hr = IDirect3DViewport_GetViewport(d3d_viewport, &vp);
+    ok(SUCCEEDED(hr), "Cannot get D3DVIEWPORT struct (hr = %#x).\n", hr);
+    ok(vp.dwWidth == rc.right, "Expected viewport width = %u, got %u.\n", rc.right, vp.dwWidth);
+    ok(vp.dwHeight == rc.bottom, "Expected viewport height = %u, got %u.\n", rc.bottom, vp.dwHeight);
+    ok(vp.dwX == rc.left, "Expected viewport X position = %u, got %u.\n", rc.left, vp.dwX);
+    ok(vp.dwY == rc.top, "Expected viewport Y position = %u, got %u.\n", rc.top, vp.dwY);
+    expected_val = (rc.right > rc.bottom) ? (rc.right / 2.0f) : (rc.bottom / 2.0f);
+    ok(vp.dvScaleX == expected_val, "Expected dvScaleX = %f, got %f.\n", expected_val, vp.dvScaleX);
+    ok(vp.dvScaleY == expected_val, "Expected dvScaleY = %f, got %f.\n", expected_val, vp.dvScaleY);
+    expected_val = vp.dwWidth / (2.0f * vp.dvScaleX);
+    ok(vp.dvMaxX == expected_val, "Expected dvMaxX = %f, got %f.\n", expected_val, vp.dvMaxX);
+    expected_val = vp.dwHeight / (2.0f * vp.dvScaleY);
+    ok(vp.dvMaxY == expected_val, "Expected dvMaxY = %f, got %f.\n", expected_val, vp.dvMaxY);
+    IDirect3DViewport_Release(d3d_viewport);
     IDirect3DRMViewport2_Release(viewport2);
 
     hr = IDirect3DRM_CreateViewport(d3drm1, device1, frame, rc.left, rc.top, rc.right, rc.bottom, &viewport);
@@ -1679,6 +1717,24 @@ static void test_Viewport(void)
     IDirect3DViewport_Release(d3d_viewport);
     ref4 = get_refcount((IUnknown *)d3d_viewport);
     ok(ref4 == viewport_ref, "Expected ref4 == viewport_ref, got ref4 = %u, viewport_ref = %u.\n", ref4, viewport_ref);
+    IDirect3DViewport_Release(d3d_viewport);
+
+    hr = IDirect3DRMViewport_GetDirect3DViewport(viewport, &d3d_viewport);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DViewport interface (hr = %#x).\n", hr);
+    vp.dwSize = sizeof(vp);
+    hr = IDirect3DViewport_GetViewport(d3d_viewport, &vp);
+    ok(SUCCEEDED(hr), "Cannot get D3DVIEWPORT struct (hr = %#x).\n", hr);
+    ok(vp.dwWidth == rc.right, "Expected viewport width = %u, got %u.\n", rc.right, vp.dwWidth);
+    ok(vp.dwHeight == rc.bottom, "Expected viewport height = %u, got %u.\n", rc.bottom, vp.dwHeight);
+    ok(vp.dwX == rc.left, "Expected viewport X position = %u, got %u.\n", rc.left, vp.dwX);
+    ok(vp.dwY == rc.top, "Expected viewport Y position = %u, got %u.\n", rc.top, vp.dwY);
+    expected_val = (rc.right > rc.bottom) ? (rc.right / 2.0f) : (rc.bottom / 2.0f);
+    ok(vp.dvScaleX == expected_val, "Expected dvScaleX = %f, got %f.\n", expected_val, vp.dvScaleX);
+    ok(vp.dvScaleY == expected_val, "Expected dvScaleY = %f, got %f.\n", expected_val, vp.dvScaleY);
+    expected_val = vp.dwWidth / (2.0f * vp.dvScaleX);
+    ok(vp.dvMaxX == expected_val, "Expected dvMaxX = %f, got %f.\n", expected_val, vp.dvMaxX);
+    expected_val = vp.dwHeight / (2.0f * vp.dvScaleY);
+    ok(vp.dvMaxY == expected_val, "Expected dvMaxY = %f, got %f.\n", expected_val, vp.dvMaxY);
     IDirect3DViewport_Release(d3d_viewport);
 
     hr = IDirect3DRMViewport_QueryInterface(viewport, &IID_IDirect3DRMObject, (void**)&obj);
@@ -1787,6 +1843,24 @@ static void test_Viewport(void)
     ok(ref4 == viewport_ref, "Expected ref4 == viewport_ref, got ref4 = %u, viewport_ref = %u.\n", ref4, viewport_ref);
     IDirect3DViewport_Release(d3d_viewport);
 
+    hr = IDirect3DRMViewport_GetDirect3DViewport(viewport, &d3d_viewport);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DViewport interface (hr = %#x).\n", hr);
+    vp.dwSize = sizeof(vp);
+    hr = IDirect3DViewport_GetViewport(d3d_viewport, &vp);
+    ok(SUCCEEDED(hr), "Cannot get D3DVIEWPORT struct (hr = %#x).\n", hr);
+    ok(vp.dwWidth == rc.right, "Expected viewport width = %u, got %u.\n", rc.right, vp.dwWidth);
+    ok(vp.dwHeight == rc.bottom, "Expected viewport height = %u, got %u.\n", rc.bottom, vp.dwHeight);
+    ok(vp.dwX == rc.left, "Expected viewport X position = %u, got %u.\n", rc.left, vp.dwX);
+    ok(vp.dwY == rc.top, "Expected viewport Y position = %u, got %u.\n", rc.top, vp.dwY);
+    expected_val = (rc.right > rc.bottom) ? (rc.right / 2.0f) : (rc.bottom / 2.0f);
+    ok(vp.dvScaleX == expected_val, "Expected dvScaleX = %f, got %f.\n", expected_val, vp.dvScaleX);
+    ok(vp.dvScaleY == expected_val, "Expected dvScaleY = %f, got %f.\n", expected_val, vp.dvScaleY);
+    expected_val = vp.dwWidth / (2.0f * vp.dvScaleX);
+    ok(vp.dvMaxX == expected_val, "Expected dvMaxX = %f, got %f.\n", expected_val, vp.dvMaxX);
+    expected_val = vp.dwHeight / (2.0f * vp.dvScaleY);
+    ok(vp.dvMaxY == expected_val, "Expected dvMaxY = %f, got %f.\n", expected_val, vp.dvMaxY);
+    IDirect3DViewport_Release(d3d_viewport);
+
     hr = IDirect3DRMViewport_Init(viewport, device1, frame, rc.left, rc.top, rc.right, rc.bottom);
     ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
 
@@ -1848,6 +1922,24 @@ static void test_Viewport(void)
     IDirect3DViewport_Release(d3d_viewport);
     ref4 = get_refcount((IUnknown *)d3d_viewport);
     ok(ref4 == viewport_ref, "Expected ref4 == viewport_ref, got ref4 = %u, viewport_ref = %u.\n", ref4, viewport_ref);
+    IDirect3DViewport_Release(d3d_viewport);
+
+    hr = IDirect3DRMViewport2_GetDirect3DViewport(viewport2, &d3d_viewport);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DViewport interface (hr = %#x).\n", hr);
+    vp.dwSize = sizeof(vp);
+    hr = IDirect3DViewport_GetViewport(d3d_viewport, &vp);
+    ok(SUCCEEDED(hr), "Cannot get D3DVIEWPORT struct (hr = %#x).\n", hr);
+    ok(vp.dwWidth == rc.right, "Expected viewport width = %u, got %u.\n", rc.right, vp.dwWidth);
+    ok(vp.dwHeight == rc.bottom, "Expected viewport height = %u, got %u.\n", rc.bottom, vp.dwHeight);
+    ok(vp.dwX == rc.left, "Expected viewport X position = %u, got %u.\n", rc.left, vp.dwX);
+    ok(vp.dwY == rc.top, "Expected viewport Y position = %u, got %u.\n", rc.top, vp.dwY);
+    expected_val = (rc.right > rc.bottom) ? (rc.right / 2.0f) : (rc.bottom / 2.0f);
+    ok(vp.dvScaleX == expected_val, "Expected dvScaleX = %f, got %f.\n", expected_val, vp.dvScaleX);
+    ok(vp.dvScaleY == expected_val, "Expected dvScaleY = %f, got %f.\n", expected_val, vp.dvScaleY);
+    expected_val = vp.dwWidth / (2.0f * vp.dvScaleX);
+    ok(vp.dvMaxX == expected_val, "Expected dvMaxX = %f, got %f.\n", expected_val, vp.dvMaxX);
+    expected_val = vp.dwHeight / (2.0f * vp.dvScaleY);
+    ok(vp.dvMaxY == expected_val, "Expected dvMaxY = %f, got %f.\n", expected_val, vp.dvMaxY);
     IDirect3DViewport_Release(d3d_viewport);
 
     hr = IDirect3DRMViewport2_Init(viewport2, device3, frame3, rc.left, rc.top, rc.right, rc.bottom);
