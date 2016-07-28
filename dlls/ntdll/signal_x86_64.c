@@ -2832,6 +2832,69 @@ void signal_free_thread( TEB *teb )
     NtFreeVirtualMemory( NtCurrentProcess(), (void **)&teb, &size, MEM_RELEASE );
 }
 
+#ifdef __APPLE__
+/**********************************************************************
+ *		mac_thread_gsbase
+ */
+static void *mac_thread_gsbase(void)
+{
+    static int gsbase_offset = -1;
+    void *ret;
+
+    if (gsbase_offset < 0)
+    {
+        /* Search for the array of TLS slots within the pthread data structure.
+           That's what the macOS pthread implementation uses for gsbase. */
+        const void* const sentinel1 = (const void*)0x2bffb6b4f11228ae;
+        const void* const sentinel2 = (const void*)0x0845a7ff6ab76707;
+        int rc;
+        pthread_key_t key;
+        const void** p = (const void**)pthread_self();
+        int i;
+
+        gsbase_offset = 0;
+        if ((rc = pthread_key_create(&key, NULL)))
+        {
+            ERR("failed to create sentinel key for gsbase search: %d\n", rc);
+            return NULL;
+        }
+
+        pthread_setspecific(key, sentinel1);
+
+        for (i = key + 1; i < 2000; i++) /* arbitrary limit */
+        {
+            if (p[i] == sentinel1)
+            {
+                pthread_setspecific(key, sentinel2);
+
+                if (p[i] == sentinel2)
+                {
+                    gsbase_offset = (i - key) * sizeof(*p);
+                    break;
+                }
+
+                pthread_setspecific(key, sentinel1);
+            }
+        }
+
+        pthread_key_delete(key);
+    }
+
+    if (gsbase_offset)
+    {
+        ret = (char*)pthread_self() + gsbase_offset;
+        TRACE("pthread_self() %p + offset 0x%08x -> gsbase %p\n", pthread_self(), gsbase_offset, ret);
+    }
+    else
+    {
+        ret = NULL;
+        ERR("failed to locate gsbase; won't be able to poke ThreadLocalStoragePointer into pthread TLS; expect crashes\n");
+    }
+
+    return ret;
+}
+#endif
+
 /**********************************************************************
  *		signal_init_thread
  */
@@ -2850,6 +2913,14 @@ void signal_init_thread( TEB *teb )
     __asm__ volatile (".byte 0x65\n\tmovq %0,%c1"
                       :
                       : "r" (teb->Tib.Self), "n" (FIELD_OFFSET(TEB, Tib.Self)));
+    __asm__ volatile (".byte 0x65\n\tmovq %0,%c1"
+                      :
+                      : "r" (teb->ThreadLocalStoragePointer), "n" (FIELD_OFFSET(TEB, ThreadLocalStoragePointer)));
+
+    /* alloc_tls_slot() needs to poke a value to an address relative to each
+       thread's gsbase.  Have each thread record its gsbase pointer into its
+       TEB so alloc_tls_slot() can find it. */
+    teb->Reserved5[0] = mac_thread_gsbase();
 #else
 # error Please define setting %gs for your architecture
 #endif
