@@ -335,6 +335,7 @@ static HRESULT RegExp_set_lastIndex(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t
 
     TRACE("\n");
 
+    jsval_release(regexp->last_index_val);
     hres = jsval_copy(value, &regexp->last_index_val);
     if(FAILED(hres))
         return hres;
