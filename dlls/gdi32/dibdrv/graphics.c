@@ -68,12 +68,13 @@ static CRITICAL_SECTION font_cache_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static BOOL brush_rect( dibdrv_physdev *pdev, dib_brush *brush, const RECT *rect, HRGN clip )
 {
+    DC *dc = get_physdev_dc( &pdev->dev );
     struct clipped_rects clipped_rects;
     BOOL ret;
 
     if (!get_clipped_rects( &pdev->dib, rect, clip, &clipped_rects )) return TRUE;
     ret = brush->rects( pdev, brush, &pdev->dib, clipped_rects.count, clipped_rects.rects,
-                        GetROP2( pdev->dev.hdc ));
+                        dc->ROPmode );
     free_clipped_rects( &clipped_rects );
     return ret;
 }
