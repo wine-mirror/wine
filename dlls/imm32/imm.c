@@ -95,6 +95,7 @@ typedef struct _tagIMMThreadData {
     DWORD threadID;
     HIMC defaultContext;
     HWND hwndDefault;
+    BOOL disableIME;
 } IMMThreadData;
 
 static struct list ImmHklList = LIST_INIT(ImmHklList);
@@ -116,6 +117,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": threaddata_cs") }
 };
 static CRITICAL_SECTION threaddata_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
+static BOOL disable_ime;
 
 #define is_himc_ime_unicode(p)  (p->immKbd->imeInfo.fdwProperty & IME_PROP_UNICODE)
 #define is_kbd_ime_unicode(p)  (p->imeInfo.fdwProperty & IME_PROP_UNICODE)
@@ -225,17 +227,26 @@ static DWORD convert_candidatelist_AtoW(
     return ret;
 }
 
-static IMMThreadData *IMM_GetThreadData(HWND hwnd)
+static IMMThreadData *IMM_GetThreadData(HWND hwnd, DWORD thread)
 {
     IMMThreadData *data;
-    DWORD process, thread;
+    DWORD process;
 
     if (hwnd)
     {
         if (!(thread = GetWindowThreadProcessId(hwnd, &process))) return NULL;
         if (process != GetCurrentProcessId()) return NULL;
     }
-    else thread = GetCurrentThreadId();
+    else if (thread)
+    {
+        HANDLE h = OpenThread(THREAD_QUERY_INFORMATION, FALSE, thread);
+        if (!h) return NULL;
+        process = GetProcessIdOfThread(h);
+        CloseHandle(h);
+        if (process != GetCurrentProcessId()) return NULL;
+    }
+    else
+        thread = GetCurrentThreadId();
 
     EnterCriticalSection(&threaddata_cs);
     LIST_FOR_EACH_ENTRY(data, &ImmThreadDataList, IMMThreadData, entry)
@@ -492,7 +503,7 @@ static InputContextData* get_imc_data(HIMC hIMC)
 static HIMC get_default_context( HWND hwnd )
 {
     HIMC ret;
-    IMMThreadData* thread_data = IMM_GetThreadData( hwnd );
+    IMMThreadData* thread_data = IMM_GetThreadData( hwnd, 0 );
 
     if (!thread_data) return 0;
 
@@ -822,7 +833,14 @@ BOOL WINAPI ImmDestroyContext(HIMC hIMC)
  */
 BOOL WINAPI ImmDisableIME(DWORD idThread)
 {
-    FIXME("(%d): stub\n", idThread);
+    if (idThread == (DWORD)-1)
+        disable_ime = TRUE;
+    else {
+        IMMThreadData *thread_data = IMM_GetThreadData(NULL, idThread);
+        if (!thread_data) return FALSE;
+        thread_data->disableIME = TRUE;
+        LeaveCriticalSection(&threaddata_cs);
+    }
     return TRUE;
 }
 
@@ -1606,11 +1624,17 @@ BOOL WINAPI ImmGetConversionStatus(
 HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
 {
     HWND ret, new = NULL;
-    IMMThreadData* thread_data = IMM_GetThreadData(hWnd);
+    IMMThreadData* thread_data = IMM_GetThreadData(hWnd, 0);
     if (!thread_data)
         return NULL;
     if (thread_data->hwndDefault == NULL && thread_data->threadID == GetCurrentThreadId())
     {
+        if (thread_data->disableIME || disable_ime)
+        {
+            TRACE("IME for this thread is disabled\n");
+            LeaveCriticalSection(&threaddata_cs);
+            return NULL;
+        }
         /* Do not create the window inside of a critical section */
         LeaveCriticalSection(&threaddata_cs);
         new = CreateWindowExW( WS_EX_TOOLWINDOW,

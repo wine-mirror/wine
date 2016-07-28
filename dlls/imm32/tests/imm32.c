@@ -1021,7 +1021,7 @@ static DWORD WINAPI test_default_ime_disabled_cb(void *arg)
                             CW_USEDEFAULT, CW_USEDEFAULT,
                             240, 120, NULL, NULL, GetModuleHandleW(NULL), NULL);
     default_ime_wnd = ImmGetDefaultIMEWnd(hWnd);
-    todo_wine ok(!default_ime_wnd, "Expected no IME windows\n");
+    ok(!default_ime_wnd, "Expected no IME windows\n");
     DestroyWindow(hWnd);
     return 1;
 }
