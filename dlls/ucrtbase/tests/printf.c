@@ -99,6 +99,8 @@ static int (__cdecl *p_vsprintf_s)(unsigned __int64 options, char *str, size_t c
                                     void *locale, __ms_va_list valist);
 static int (__cdecl *p_vswprintf)(unsigned __int64 options, wchar_t *str, size_t len, const wchar_t *format,
                                   void *locale, __ms_va_list valist);
+static int (__cdecl *p_vsnwprintf_s)(unsigned __int64 options, WCHAR *str, size_t sizeOfBuffer, size_t count, const WCHAR *format,
+                                    void *locale, __ms_va_list valist);
 
 static FILE *(__cdecl *p_fopen)(const char *name, const char *mode);
 static int (__cdecl *p_fclose)(FILE *file);
@@ -135,6 +137,7 @@ static BOOL init( void )
     p_vfwprintf = (void *)GetProcAddress(hmod, "__stdio_common_vfwprintf");
     p_vsprintf = (void *)GetProcAddress(hmod, "__stdio_common_vsprintf");
     p_vsnprintf_s = (void *)GetProcAddress(hmod, "__stdio_common_vsnprintf_s");
+    p_vsnwprintf_s = (void *)GetProcAddress(hmod, "__stdio_common_vsnwprintf_s");
     p_vsprintf_s = (void *)GetProcAddress(hmod, "__stdio_common_vsprintf_s");
     p_vswprintf = (void *)GetProcAddress(hmod, "__stdio_common_vswprintf");
 
@@ -516,6 +519,58 @@ static void test_vsnprintf_s(void)
     ok( !strcmp(out1, buffer), "buffer wrong, got=%s\n", buffer);
 }
 
+static int __cdecl _vsnwprintf_s_wrapper(WCHAR *str, size_t sizeOfBuffer,
+                                        size_t count, const WCHAR *format, ...)
+{
+    int ret;
+    __ms_va_list valist;
+    __ms_va_start(valist, format);
+    ret = p_vsnwprintf_s(0, str, sizeOfBuffer, count, format, NULL, valist);
+    __ms_va_end(valist);
+    return ret;
+}
+
+static void test_vsnwprintf_s(void)
+{
+    const WCHAR format[] = {'A','B','%','u','C',0};
+    const WCHAR out7[] = {'A','B','1','2','3','C',0};
+    const WCHAR out6[] = {'A','B','1','2','3',0};
+    const WCHAR out2[] = {'A',0};
+    const WCHAR out1[] = {0};
+    WCHAR buffer[14] = { 0 };
+    int exp, got;
+
+    /* Enough room. */
+    exp = lstrlenW(out7);
+
+    got = _vsnwprintf_s_wrapper(buffer, 14, _TRUNCATE, format, 123);
+    ok( exp == got, "length wrong, expect=%d, got=%d\n", exp, got);
+    ok( !lstrcmpW(out7, buffer), "buffer wrong, got=%s\n", wine_dbgstr_w(buffer));
+
+    got = _vsnwprintf_s_wrapper(buffer, 12, _TRUNCATE, format, 123);
+    ok( exp == got, "length wrong, expect=%d, got=%d\n", exp, got);
+    ok( !lstrcmpW(out7, buffer), "buffer wrong, got=%s\n", wine_dbgstr_w(buffer));
+
+    got = _vsnwprintf_s_wrapper(buffer, 7, _TRUNCATE, format, 123);
+    ok( exp == got, "length wrong, expect=%d, got=%d\n", exp, got);
+    ok( !lstrcmpW(out7, buffer), "buffer wrong, got=%s\n", wine_dbgstr_w(buffer));
+
+    /* Not enough room. */
+    exp = -1;
+
+    got = _vsnwprintf_s_wrapper(buffer, 6, _TRUNCATE, format, 123);
+    ok( exp == got, "length wrong, expect=%d, got=%d\n", exp, got);
+    ok( !lstrcmpW(out6, buffer), "buffer wrong, got=%s\n", wine_dbgstr_w(buffer));
+
+    got = _vsnwprintf_s_wrapper(buffer, 2, _TRUNCATE, format, 123);
+    ok( exp == got, "length wrong, expect=%d, got=%d\n", exp, got);
+    ok( !lstrcmpW(out2, buffer), "buffer wrong, got=%s\n", wine_dbgstr_w(buffer));
+
+    got = _vsnwprintf_s_wrapper(buffer, 1, _TRUNCATE, format, 123);
+    ok( exp == got, "length wrong, expect=%d, got=%d\n", exp, got);
+    ok( !lstrcmpW(out1, buffer), "buffer wrong, got=%s\n", wine_dbgstr_w(buffer));
+}
+
 static void test_printf_legacy_wide(void)
 {
     const wchar_t wide[] = {'A','B','C','D',0};
@@ -614,6 +669,7 @@ START_TEST(printf)
     test_fprintf();
     test_fwprintf();
     test_vsnprintf_s();
+    test_vsnwprintf_s();
     test_printf_legacy_wide();
     test_printf_legacy_msvcrt();
     test_printf_legacy_three_digit_exp();

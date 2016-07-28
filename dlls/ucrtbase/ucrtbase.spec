@@ -155,7 +155,7 @@
 @ stub __stdio_common_vfwprintf_s
 @ stub __stdio_common_vfwscanf
 @ cdecl __stdio_common_vsnprintf_s(int64 ptr long long ptr ptr ptr) MSVCRT__stdio_common_vsnprintf_s
-@ stub __stdio_common_vsnwprintf_s
+@ cdecl __stdio_common_vsnwprintf_s(int64 ptr long long ptr ptr ptr) MSVCRT__stdio_common_vsnwprintf_s
 @ cdecl __stdio_common_vsprintf(int64 ptr long ptr ptr ptr) MSVCRT__stdio_common_vsprintf
 @ stub __stdio_common_vsprintf_p
 @ cdecl __stdio_common_vsprintf_s(int64 ptr long ptr ptr ptr) MSVCRT__stdio_common_vsprintf_s
