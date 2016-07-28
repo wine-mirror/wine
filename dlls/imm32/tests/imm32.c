@@ -173,7 +173,7 @@ static void msg_spy_cleanup(void) {
  */
 static const char wndcls[] = "winetest_imm32_wndcls";
 static enum { PHASE_UNKNOWN, FIRST_WINDOW, SECOND_WINDOW,
-              CREATE_CANCEL, NCCREATE_CANCEL } test_phase;
+              CREATE_CANCEL, NCCREATE_CANCEL, IME_DISABLED } test_phase;
 static HWND hwnd;
 
 static HWND get_ime_window(void);
@@ -189,6 +189,7 @@ static LRESULT WINAPI wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             default_ime_wnd = get_ime_window();
             switch(test_phase) {
                 case FIRST_WINDOW:
+                case IME_DISABLED:
                     ok(!default_ime_wnd, "expected no IME windows\n");
                     break;
                 case SECOND_WINDOW:
@@ -209,6 +210,9 @@ static LRESULT WINAPI wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     todo_wine_if(test_phase == FIRST_WINDOW || test_phase == CREATE_CANCEL)
                     ok(default_ime_wnd != NULL, "expected IME window existence\n");
                     break;
+                case IME_DISABLED:
+                    ok(!default_ime_wnd, "expected no IME windows\n");
+                    break;
                 default:
                     break; /* do nothing */
             }
@@ -221,6 +225,9 @@ static LRESULT WINAPI wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 case CREATE_CANCEL:
                     todo_wine_if(test_phase == FIRST_WINDOW || test_phase == CREATE_CANCEL)
                     ok(default_ime_wnd != NULL, "expected IME window existence\n");
+                    break;
+                case IME_DISABLED:
+                    ok(!default_ime_wnd, "expected no IME windows\n");
                     break;
                 default:
                     break; /* do nothing */
@@ -1002,6 +1009,23 @@ static DWORD WINAPI test_default_ime_window_cancel_cb(void *arg)
     return 1;
 }
 
+static DWORD WINAPI test_default_ime_disabled_cb(void *arg)
+{
+    HWND hWnd, default_ime_wnd;
+
+    ok(!get_ime_window(), "Expected no IME windows\n");
+    ImmDisableIME(GetCurrentThreadId());
+    test_phase = IME_DISABLED;
+    hWnd = CreateWindowExA(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
+                            WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                            CW_USEDEFAULT, CW_USEDEFAULT,
+                            240, 120, NULL, NULL, GetModuleHandleW(NULL), NULL);
+    default_ime_wnd = ImmGetDefaultIMEWnd(hWnd);
+    todo_wine ok(!default_ime_wnd, "Expected no IME windows\n");
+    DestroyWindow(hWnd);
+    return 1;
+}
+
 static void test_default_ime_window_creation(void)
 {
     HANDLE thread;
@@ -1037,6 +1061,10 @@ static void test_default_ime_window_creation(void)
             CloseHandle(thread);
         }
     }
+
+    thread = CreateThread(NULL, 0, test_default_ime_disabled_cb, NULL, 0, NULL);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
 
     test_phase = PHASE_UNKNOWN;
 }
