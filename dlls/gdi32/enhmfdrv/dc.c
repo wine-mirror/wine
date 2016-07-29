@@ -52,7 +52,7 @@ BOOL EMFDRV_RestoreDC( PHYSDEV dev, INT level )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pRestoreDC );
     EMFDRV_PDEVICE* physDev = get_emf_physdev( dev );
-    DC *dc = get_dc_ptr( dev->hdc );
+    DC *dc = get_physdev_dc( dev );
     EMRRESTOREDC emr;
     BOOL ret;
 
@@ -63,7 +63,6 @@ BOOL EMFDRV_RestoreDC( PHYSDEV dev, INT level )
         emr.iRelative = level;
     else
         emr.iRelative = level - dc->saveLevel - 1;
-    release_dc_ptr( dc );
 
     physDev->restoring++;
     ret = next->funcs->pRestoreDC( next, level );
@@ -433,7 +432,7 @@ BOOL EMFDRV_BeginPath( PHYSDEV dev )
     EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pBeginPath );
     EMRBEGINPATH emr;
-    DC *dc;
+    DC *dc = get_physdev_dc( dev );
 
     emr.emr.iType = EMR_BEGINPATH;
     emr.emr.nSize = sizeof(emr);
@@ -442,10 +441,8 @@ BOOL EMFDRV_BeginPath( PHYSDEV dev )
     if (physDev->path) return TRUE;  /* already open */
 
     if (!next->funcs->pBeginPath( next )) return FALSE;
-    dc = get_dc_ptr( dev->hdc );
     push_dc_driver( &dc->physDev, &physDev->pathdev, &emfpath_driver );
     physDev->path = TRUE;
-    release_dc_ptr( dc );
     return TRUE;
 }
 
@@ -519,10 +516,9 @@ static BOOL emfpathdrv_AbortPath( PHYSDEV dev )
 {
     PHYSDEV emfdev = get_emfdev( dev );
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pAbortPath );
-    DC *dc = get_dc_ptr( dev->hdc );
+    DC *dc = get_physdev_dc( dev );
 
     emfpath_driver.pDeleteDC( pop_dc_driver( dc, &emfpath_driver ));
-    release_dc_ptr( dc );
     emfdev->funcs->pAbortPath( emfdev );
     return next->funcs->pAbortPath( next );
 }
@@ -641,10 +637,9 @@ static BOOL emfpathdrv_EndPath( PHYSDEV dev )
 {
     PHYSDEV emfdev = get_emfdev( dev );
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pEndPath );
-    DC *dc = get_dc_ptr( dev->hdc );
+    DC *dc = get_physdev_dc( dev );
 
     emfpath_driver.pDeleteDC( pop_dc_driver( dc, &emfpath_driver ));
-    release_dc_ptr( dc );
     emfdev->funcs->pEndPath( emfdev );
     return next->funcs->pEndPath( next );
 }

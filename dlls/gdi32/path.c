@@ -767,10 +767,9 @@ static BOOL pathdrv_BeginPath( PHYSDEV dev )
  */
 static BOOL pathdrv_AbortPath( PHYSDEV dev )
 {
-    DC *dc = get_dc_ptr( dev->hdc );
+    DC *dc = get_physdev_dc( dev );
 
     path_driver.pDeleteDC( pop_dc_driver( dc, &path_driver ));
-    release_dc_ptr( dc );
     return TRUE;
 }
 
@@ -781,12 +780,11 @@ static BOOL pathdrv_AbortPath( PHYSDEV dev )
 static BOOL pathdrv_EndPath( PHYSDEV dev )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
-    DC *dc = get_dc_ptr( dev->hdc );
+    DC *dc = get_physdev_dc( dev );
 
     dc->path = physdev->path;
     pop_dc_driver( dc, &path_driver );
     HeapFree( GetProcessHeap(), 0, physdev );
-    release_dc_ptr( dc );
     return TRUE;
 }
 

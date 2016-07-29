@@ -5322,14 +5322,13 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     CHARSETINFO csi;
     FMAT2 dcmat;
     FontSubst *psub = NULL;
-    DC *dc = get_dc_ptr( dev->hdc );
+    DC *dc = get_physdev_dc( dev );
     const SYSTEM_LINKS *font_link;
 
     if (!hfont)  /* notification that the font has been changed by another driver */
     {
         release_font( physdev->font );
         physdev->font = NULL;
-        release_dc_ptr( dc );
         return 0;
     }
 
@@ -5779,7 +5778,6 @@ done:
         physdev->font = ret;
     }
     LeaveCriticalSection( &freetype_cs );
-    release_dc_ptr( dc );
     return ret ? hfont : 0;
 }
 
