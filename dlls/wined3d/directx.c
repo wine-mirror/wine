@@ -3104,6 +3104,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glVertexAttrib4f)           /* OpenGL 2.0 */
     USE_GL_FUNC(glVertexAttrib4fv)          /* OpenGL 2.0 */
     USE_GL_FUNC(glVertexAttrib4Nsv)         /* OpenGL 2.0 */
+    USE_GL_FUNC(glVertexAttrib4Nub)         /* OpenGL 2.0 */
     USE_GL_FUNC(glVertexAttrib4Nubv)        /* OpenGL 2.0 */
     USE_GL_FUNC(glVertexAttrib4Nusv)        /* OpenGL 2.0 */
     USE_GL_FUNC(glVertexAttrib4sv)          /* OpenGL 2.0 */
@@ -3219,6 +3220,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     MAP_GL_FUNCTION(glVertexAttrib4f, glVertexAttrib4fARB);
     MAP_GL_FUNCTION(glVertexAttrib4fv, glVertexAttrib4fvARB);
     MAP_GL_FUNCTION(glVertexAttrib4Nsv, glVertexAttrib4NsvARB);
+    MAP_GL_FUNCTION(glVertexAttrib4Nub, glVertexAttrib4NubARB);
     MAP_GL_FUNCTION(glVertexAttrib4Nubv, glVertexAttrib4NubvARB);
     MAP_GL_FUNCTION(glVertexAttrib4Nusv, glVertexAttrib4NusvARB);
     MAP_GL_FUNCTION(glVertexAttrib4sv, glVertexAttrib4svARB);
