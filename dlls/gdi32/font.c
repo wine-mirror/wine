@@ -1901,7 +1901,7 @@ static RECT get_total_extents( HDC hdc, INT x, INT y, UINT flags, UINT aa_flags,
 }
 
 /* helper for nulldrv_ExtTextOut */
-static void draw_glyph( HDC hdc, INT origin_x, INT origin_y, const GLYPHMETRICS *metrics,
+static void draw_glyph( DC *dc, INT origin_x, INT origin_y, const GLYPHMETRICS *metrics,
                         const struct gdi_image_bits *image, const RECT *clip )
 {
     static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
@@ -1941,8 +1941,8 @@ static void draw_glyph( HDC hdc, INT origin_x, INT origin_y, const GLYPHMETRICS 
         }
     }
     assert( count <= max_count );
-    DPtoLP( hdc, pts, count );
-    for (i = 0; i < count; i += 2) Polyline( hdc, pts + i, 2 );
+    dp_to_lp( dc, pts, count );
+    for (i = 0; i < count; i += 2) Polyline( dc->hSelf, pts + i, 2 );
     HeapFree( GetProcessHeap(), 0, pts );
 }
 
@@ -1966,7 +1966,7 @@ BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect
         if (brush)
         {
             orig = SelectObject( dev->hdc, brush );
-            DPtoLP( dev->hdc, (POINT *)&rc, 2 );
+            dp_to_lp( dc, (POINT *)&rc, 2 );
             PatBlt( dev->hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
             SelectObject( dev->hdc, orig );
             DeleteObject( brush );
@@ -2063,7 +2063,7 @@ BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect
         err = get_glyph_bitmap( dev->hdc, str[i], flags, GGO_BITMAP, &metrics, &image );
         if (err) continue;
 
-        if (image.ptr) draw_glyph( dev->hdc, x, y, &metrics, &image, (flags & ETO_CLIPPED) ? rect : NULL );
+        if (image.ptr) draw_glyph( dc, x, y, &metrics, &image, (flags & ETO_CLIPPED) ? rect : NULL );
         if (image.free) image.free( &image );
 
         if (dx)
@@ -2424,7 +2424,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         {
             pt.x = x + width.x;
             pt.y = y + width.y;
-            DPtoLP(hdc, &pt, 1);
+            dp_to_lp(dc, &pt, 1);
             MoveToEx(hdc, pt.x, pt.y, NULL);
         }
         break;
@@ -2441,7 +2441,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         {
             pt.x = x;
             pt.y = y;
-            DPtoLP(hdc, &pt, 1);
+            dp_to_lp(dc, &pt, 1);
             MoveToEx(hdc, pt.x, pt.y, NULL);
         }
         break;
@@ -2494,8 +2494,6 @@ done:
     if(reordered_str != str)
         HeapFree(GetProcessHeap(), 0, reordered_str);
 
-    release_dc_ptr( dc );
-
     if (ret && (lf.lfUnderline || lf.lfStrikeOut))
     {
         int underlinePos, strikeoutPos;
@@ -2541,7 +2539,7 @@ done:
             pts[3].y = pts[0].y + underlineWidth * cosEsc;
             pts[4].x = pts[0].x;
             pts[4].y = pts[0].y;
-            DPtoLP(hdc, pts, 5);
+            dp_to_lp(dc, pts, 5);
             Polygon(hdc, pts, 5);
         }
 
@@ -2557,7 +2555,7 @@ done:
             pts[3].y = pts[0].y + strikeoutWidth * cosEsc;
             pts[4].x = pts[0].x;
             pts[4].y = pts[0].y;
-            DPtoLP(hdc, pts, 5);
+            dp_to_lp(dc, pts, 5);
             Polygon(hdc, pts, 5);
         }
 
@@ -2565,6 +2563,8 @@ done:
         hbrush = SelectObject(hdc, hbrush);
         DeleteObject(hbrush);
     }
+
+    release_dc_ptr( dc );
 
     return ret;
 }

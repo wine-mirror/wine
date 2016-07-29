@@ -670,7 +670,7 @@ INT WINAPI GetPath(HDC hdc, LPPOINT pPoints, LPBYTE pTypes, INT nSize)
       memcpy(pTypes, dc->path->flags, sizeof(BYTE)*dc->path->count);
 
       /* Convert the points to logical coordinates */
-      if(!DPtoLP(hdc, pPoints, dc->path->count))
+      if(!dp_to_lp(dc, pPoints, dc->path->count))
       {
 	 /* FIXME: Is this the correct value? */
          SetLastError(ERROR_CAN_NOT_COMPLETE);

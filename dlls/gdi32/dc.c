@@ -1484,7 +1484,7 @@ UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
             rect->bottom = min( rect->bottom, dc->vis_rect.bottom - dc->vis_rect.top );
             ret = DCB_SET;
         }
-        DPtoLP( hdc, (POINT *)rect, 2 );
+        dp_to_lp( dc, (POINT *)rect, 2 );
     }
     else ret = 0;
 

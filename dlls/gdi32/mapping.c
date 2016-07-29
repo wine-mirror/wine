@@ -306,13 +306,12 @@ BOOL nulldrv_SetWorldTransform( PHYSDEV dev, const XFORM *xform )
 }
 
 /***********************************************************************
- *           DPtoLP    (GDI32.@)
+ *           dp_to_lp
+ *
+ * Internal version of DPtoLP that takes a DC *.
  */
-BOOL WINAPI DPtoLP( HDC hdc, LPPOINT points, INT count )
+BOOL dp_to_lp( DC *dc, POINT *points, INT count )
 {
-    DC * dc = get_dc_ptr( hdc );
-    if (!dc) return FALSE;
-
     if (dc->vport2WorldValid)
     {
         while (count--)
@@ -328,8 +327,23 @@ BOOL WINAPI DPtoLP( HDC hdc, LPPOINT points, INT count )
             points++;
         }
     }
-    release_dc_ptr( dc );
     return (count < 0);
+}
+
+/***********************************************************************
+ *           DPtoLP    (GDI32.@)
+ */
+BOOL WINAPI DPtoLP( HDC hdc, POINT *points, INT count )
+{
+    DC * dc = get_dc_ptr( hdc );
+    BOOL ret;
+
+    if (!dc) return FALSE;
+
+    ret = dp_to_lp( dc, points, count );
+
+    release_dc_ptr( dc );
+    return ret;
 }
 
 

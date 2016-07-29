@@ -438,7 +438,7 @@ INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
         rect->left = rect->right - 1;
         rect->right = tmp - 1;
     }
-    DPtoLP( hdc, (LPPOINT)rect, 2 );
+    dp_to_lp( dc, (LPPOINT)rect, 2 );
     release_dc_ptr( dc );
     TRACE("%p => %d %s\n", hdc, ret, wine_dbgstr_rect( rect ));
     return ret;
