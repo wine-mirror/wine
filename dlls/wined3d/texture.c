@@ -2320,12 +2320,10 @@ static void texture3d_prepare_texture(struct wined3d_texture *texture, struct wi
     {
         for (i = 0; i < sub_count; ++i)
         {
-            struct wined3d_volume *volume = texture->sub_resources[i].u.volume;
-
-            GL_EXTCALL(glTexImage3D(GL_TEXTURE_3D, volume->texture_level, internal,
-                    wined3d_texture_get_level_width(texture, volume->texture_level),
-                    wined3d_texture_get_level_height(texture, volume->texture_level),
-                    wined3d_texture_get_level_depth(texture, volume->texture_level),
+            GL_EXTCALL(glTexImage3D(GL_TEXTURE_3D, i, internal,
+                    wined3d_texture_get_level_width(texture, i),
+                    wined3d_texture_get_level_height(texture, i),
+                    wined3d_texture_get_level_depth(texture, i),
                     0, format->glFormat, format->glType, NULL));
             checkGLcall("glTexImage3D");
         }
@@ -2334,7 +2332,6 @@ static void texture3d_prepare_texture(struct wined3d_texture *texture, struct wi
 
 static void texture3d_cleanup_sub_resources(struct wined3d_texture *texture)
 {
-    HeapFree(GetProcessHeap(), 0, texture->sub_resources[0].u.volume);
 }
 
 static const struct wined3d_texture_ops texture3d_ops =
@@ -2380,7 +2377,6 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
 {
     struct wined3d_device_parent *device_parent = device->device_parent;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    struct wined3d_volume *volumes;
     unsigned int i;
     HRESULT hr;
 
@@ -2474,25 +2470,13 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
         texture->resource.map_binding = WINED3D_LOCATION_BUFFER;
     }
 
-    if (!(volumes = wined3d_calloc(level_count, sizeof(*volumes))))
-    {
-        wined3d_texture_cleanup_sync(texture);
-        return E_OUTOFMEMORY;
-    }
-
     /* Generate all the surfaces. */
     for (i = 0; i < texture->level_count; ++i)
     {
         struct wined3d_texture_sub_resource *sub_resource;
-        struct wined3d_volume *volume;
-
-        volume = &volumes[i];
-        volume->container = texture;
-        volume->texture_level = i;
 
         sub_resource = &texture->sub_resources[i];
         sub_resource->locations = WINED3D_LOCATION_DISCARDED;
-        sub_resource->u.volume = volume;
 
         if (FAILED(hr = device_parent->ops->volume_created(device_parent,
                 texture, i, &sub_resource->parent, &sub_resource->parent_ops)))
@@ -2505,7 +2489,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
 
         TRACE("parent %p, parent_ops %p.\n", parent, parent_ops);
 
-        TRACE("Created volume level %u @ %p.\n", i, volume);
+        TRACE("Created volume level %u.\n", i);
     }
 
     return WINED3D_OK;

@@ -2688,7 +2688,6 @@ struct wined3d_texture
         union
         {
             struct wined3d_surface *surface;
-            struct wined3d_volume *volume;
         } u;
         unsigned int offset;
         unsigned int size;
@@ -2782,13 +2781,6 @@ void wined3d_texture_validate_location(struct wined3d_texture *texture,
 #define WINED3D_LOCATION_RB_RESOLVED    0x00000100
 
 const char *wined3d_debug_location(DWORD location) DECLSPEC_HIDDEN;
-
-struct wined3d_volume
-{
-    struct wined3d_texture *container;
-
-    GLint texture_level;
-};
 
 void wined3d_volume_upload_data(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         const struct wined3d_context *context, const struct wined3d_const_bo_address *data) DECLSPEC_HIDDEN;
