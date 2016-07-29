@@ -51,6 +51,7 @@ typedef struct _xmlparser
     LONG ref;
 
     int flags;
+    XML_PARSER_STATE state;
 } xmlparser;
 
 static inline xmlparser *impl_from_IXMLParser( IXMLParser *iface )
@@ -345,9 +346,9 @@ static HRESULT WINAPI xmlparser_GetParserState(IXMLParser *iface)
 {
     xmlparser *This = impl_from_IXMLParser( iface );
 
-    FIXME("(%p)\n", This);
+    TRACE("(%p)\n", This);
 
-    return E_NOTIMPL;
+    return This->state;
 }
 
 static HRESULT WINAPI xmlparser_Suspend(IXMLParser *iface)
@@ -447,6 +448,7 @@ HRESULT XMLParser_create(void **ppObj)
     This->nodefactory = NULL;
     This->input = NULL;
     This->flags = 0;
+    This->state = XMLPARSER_IDLE;
     This->ref = 1;
 
     *ppObj = &This->IXMLParser_iface;

@@ -144,6 +144,9 @@ static void create_test(void)
     hr = IXMLParser_SetFlags(parser, 0);
     ok(hr == S_OK, "Expected S_OK got 0x%08x\n", hr);
 
+    hr = IXMLParser_GetParserState(parser);
+    ok(hr == XMLPARSER_IDLE, "got 0x%08x\n", hr);
+
     IXMLParser_Release(parser);
 }
 
