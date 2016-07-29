@@ -362,7 +362,7 @@ static HRGN path_to_region( const struct gdi_path *path, int mode )
  *
  * Helper function for RoundRect() and Rectangle()
  */
-static BOOL PATH_CheckCorners( HDC hdc, POINT corners[], INT x1, INT y1, INT x2, INT y2 )
+static BOOL PATH_CheckCorners( DC *dc, POINT corners[], INT x1, INT y1, INT x2, INT y2 )
 {
     INT temp;
 
@@ -371,7 +371,7 @@ static BOOL PATH_CheckCorners( HDC hdc, POINT corners[], INT x1, INT y1, INT x2,
     corners[0].y=y1;
     corners[1].x=x2;
     corners[1].y=y2;
-    LPtoDP( hdc, corners, 2 );
+    lp_to_dp( dc, corners, 2 );
 
     /* Make sure first corner is top left and second corner is bottom right */
     if(corners[0].x>corners[1].x)
@@ -388,7 +388,7 @@ static BOOL PATH_CheckCorners( HDC hdc, POINT corners[], INT x1, INT y1, INT x2,
     }
 
     /* In GM_COMPATIBLE, don't include bottom and right edges */
-    if (GetGraphicsMode( hdc ) == GM_COMPATIBLE)
+    if (dc->GraphicsMode == GM_COMPATIBLE)
     {
         if (corners[0].x == corners[1].x) return FALSE;
         if (corners[0].y == corners[1].y) return FALSE;
@@ -902,10 +902,11 @@ static BOOL pathdrv_LineTo( PHYSDEV dev, INT x, INT y )
 static BOOL pathdrv_Rectangle( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
+    DC *dc = get_physdev_dc( dev );
     POINT corners[2], points[4];
     BYTE *type;
 
-    if (!PATH_CheckCorners( dev->hdc, corners, x1, y1, x2, y2 )) return TRUE;
+    if (!PATH_CheckCorners( dc, corners, x1, y1, x2, y2 )) return TRUE;
 
     points[0].x = corners[1].x;
     points[0].y = corners[0].y;
@@ -913,7 +914,7 @@ static BOOL pathdrv_Rectangle( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
     points[2].x = corners[0].x;
     points[2].y = corners[1].y;
     points[3]   = corners[1];
-    if (GetArcDirection( dev->hdc ) == AD_CLOCKWISE) reverse_points( points, 4 );
+    if (dc->ArcDirection == AD_CLOCKWISE) reverse_points( points, 4 );
 
     if (!(type = add_points( physdev->path, points, 4, PT_LINETO ))) return FALSE;
     type[0] = PT_MOVETO;
@@ -929,18 +930,19 @@ static BOOL pathdrv_RoundRect( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2, INT 
 {
     const double factor = 0.55428475; /* 4 / 3 * (sqrt(2) - 1) */
     struct path_physdev *physdev = get_path_physdev( dev );
+    DC *dc = get_physdev_dc( dev );
     POINT corners[2], ellipse[2], points[16];
     BYTE *type;
     double width, height;
 
     if (!ell_width || !ell_height) return pathdrv_Rectangle( dev, x1, y1, x2, y2 );
 
-    if (!PATH_CheckCorners( dev->hdc, corners, x1, y1, x2, y2 )) return TRUE;
+    if (!PATH_CheckCorners( dc, corners, x1, y1, x2, y2 )) return TRUE;
 
     ellipse[0].x = ellipse[0].y = 0;
     ellipse[1].x = ell_width;
     ellipse[1].y = ell_height;
-    LPtoDP( dev->hdc, (POINT *)&ellipse, 2 );
+    lp_to_dp( dc, (POINT *)&ellipse, 2 );
     ell_width  = min( abs( ellipse[1].x - ellipse[0].x ), corners[1].x - corners[0].x );
     ell_height = min( abs( ellipse[1].y - ellipse[0].y ), corners[1].y - corners[0].y );
     width  = ell_width / 2.0;
@@ -987,7 +989,7 @@ static BOOL pathdrv_RoundRect( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2, INT 
     points[15].x = corners[1].x;
     points[15].y = corners[1].y - GDI_ROUND( height );
 
-    if (GetArcDirection( dev->hdc ) == AD_CLOCKWISE) reverse_points( points, 16 );
+    if (dc->ArcDirection == AD_CLOCKWISE) reverse_points( points, 16 );
     if (!(type = add_points( physdev->path, points, 16, PT_BEZIERTO ))) return FALSE;
     type[0] = PT_MOVETO;
     type[4] = type[8] = type[12] = PT_LINETO;
@@ -1003,11 +1005,12 @@ static BOOL pathdrv_Ellipse( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
 {
     const double factor = 0.55428475; /* 4 / 3 * (sqrt(2) - 1) */
     struct path_physdev *physdev = get_path_physdev( dev );
+    DC *dc = get_physdev_dc( dev );
     POINT corners[2], points[13];
     BYTE *type;
     double width, height;
 
-    if (!PATH_CheckCorners( dev->hdc, corners, x1, y1, x2, y2 )) return TRUE;
+    if (!PATH_CheckCorners( dc, corners, x1, y1, x2, y2 )) return TRUE;
 
     width  = (corners[1].x - corners[0].x) / 2.0;
     height = (corners[1].y - corners[0].y) / 2.0;
@@ -1044,7 +1047,7 @@ static BOOL pathdrv_Ellipse( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
     points[12].x = corners[1].x;
     points[12].y = corners[1].y - GDI_ROUND( height );
 
-    if (GetArcDirection( dev->hdc ) == AD_CLOCKWISE) reverse_points( points, 13 );
+    if (dc->ArcDirection == AD_CLOCKWISE) reverse_points( points, 13 );
     if (!(type = add_points( physdev->path, points, 13, PT_BEZIERTO ))) return FALSE;
     type[0] = PT_MOVETO;
     close_figure( physdev->path );
