@@ -1239,7 +1239,8 @@ BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD 
     DC *dc = get_physdev_dc( dev );
     DWORD total, i, pos;
     BOOL ret = TRUE;
-    POINT *points;
+    POINT pt_buf[32];
+    POINT *points = pt_buf;
     HRGN outline = 0, interior = 0;
 
     for (i = total = 0; i < polygons; i++)
@@ -1248,16 +1249,19 @@ BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD 
         total += counts[i];
     }
 
-    points = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*pt) );
-    if (!points) return FALSE;
+    if (total > sizeof(pt_buf) / sizeof(pt_buf[0]))
+    {
+        points = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*pt) );
+        if (!points) return FALSE;
+    }
     memcpy( points, pt, total * sizeof(*pt) );
     lp_to_dp( dc, points, total );
 
     if (pdev->brush.style != BS_NULL &&
         !(interior = CreatePolyPolygonRgn( points, counts, polygons, dc->polyFillMode )))
     {
-        HeapFree( GetProcessHeap(), 0, points );
-        return FALSE;
+        ret = FALSE;
+        goto done;
     }
 
     if (pdev->pen_uses_region) outline = CreateRectRgn( 0, 0, 0, 0 );
@@ -1289,7 +1293,9 @@ BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD 
         if (ret) ret = pen_region( pdev, outline );
         DeleteObject( outline );
     }
-    HeapFree( GetProcessHeap(), 0, points );
+
+done:
+    if (points != pt_buf) HeapFree( GetProcessHeap(), 0, points );
     return ret;
 }
 
@@ -1301,7 +1307,8 @@ BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWO
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     DC *dc = get_physdev_dc( dev );
     DWORD total, pos, i;
-    POINT *points;
+    POINT pt_buf[32];
+    POINT *points = pt_buf;
     BOOL ret = TRUE;
     HRGN outline = 0;
 
@@ -1311,15 +1318,18 @@ BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWO
         total += counts[i];
     }
 
-    points = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*pt) );
-    if (!points) return FALSE;
+    if (total > sizeof(pt_buf) / sizeof(pt_buf[0]))
+    {
+        points = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*pt) );
+        if (!points) return FALSE;
+    }
     memcpy( points, pt, total * sizeof(*pt) );
     lp_to_dp( dc, points, total );
 
     if (pdev->pen_uses_region && !(outline = CreateRectRgn( 0, 0, 0, 0 )))
     {
-        HeapFree( GetProcessHeap(), 0, points );
-        return FALSE;
+        ret = FALSE;
+        goto done;
     }
 
     for (i = pos = 0; i < polylines; i++)
@@ -1336,7 +1346,8 @@ BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWO
         DeleteObject( outline );
     }
 
-    HeapFree( GetProcessHeap(), 0, points );
+done:
+    if (points != pt_buf) HeapFree( GetProcessHeap(), 0, points );
     return ret;
 }
 
