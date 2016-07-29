@@ -2614,7 +2614,8 @@ struct gl_texture
 struct wined3d_texture_ops
 {
     void (*texture_upload_data)(struct wined3d_texture *texture, unsigned int sub_resource_idx,
-            const struct wined3d_context *context, const struct wined3d_sub_resource_data *data);
+            const struct wined3d_context *context, const struct wined3d_const_bo_address *data,
+            unsigned int row_pitch, unsigned int slice_pitch);
     BOOL (*texture_load_location)(struct wined3d_texture *texture, unsigned int sub_resource_idx,
             struct wined3d_context *context, DWORD location);
     void (*texture_prepare_texture)(struct wined3d_texture *texture,

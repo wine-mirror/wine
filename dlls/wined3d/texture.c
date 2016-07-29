@@ -1449,7 +1449,10 @@ static HRESULT wined3d_texture_upload_data(struct wined3d_texture *texture,
 
     for (i = 0; i < sub_count; ++i)
     {
-        texture->texture_ops->texture_upload_data(texture, i, context, &data[i]);
+        const struct wined3d_const_bo_address addr = {0, data[i].data};
+
+        texture->texture_ops->texture_upload_data(texture, i, context,
+                &addr, data[i].row_pitch, data[i].slice_pitch);
         wined3d_texture_validate_location(texture, i, WINED3D_LOCATION_TEXTURE_RGB);
         wined3d_texture_invalidate_location(texture, i, ~WINED3D_LOCATION_TEXTURE_RGB);
     }
@@ -1460,10 +1463,10 @@ static HRESULT wined3d_texture_upload_data(struct wined3d_texture *texture,
 }
 
 static void texture2d_upload_data(struct wined3d_texture *texture, unsigned int sub_resource_idx,
-        const struct wined3d_context *context, const struct wined3d_sub_resource_data *data)
+        const struct wined3d_context *context, const struct wined3d_const_bo_address *data,
+        unsigned int row_pitch, unsigned int slice_pitch)
 {
     static const POINT dst_point = {0, 0};
-    struct wined3d_const_bo_address addr;
     unsigned int texture_level;
     RECT src_rect;
 
@@ -1471,11 +1474,8 @@ static void texture2d_upload_data(struct wined3d_texture *texture, unsigned int 
     SetRect(&src_rect, 0, 0, wined3d_texture_get_level_width(texture, texture_level),
             wined3d_texture_get_level_height(texture, texture_level));
 
-    addr.buffer_object = 0;
-    addr.addr = data->data;
-
     wined3d_surface_upload_data(texture->sub_resources[sub_resource_idx].u.surface, context->gl_info,
-            texture->resource.format, &src_rect, data->row_pitch, &dst_point, FALSE, &addr);
+            texture->resource.format, &src_rect, row_pitch, &dst_point, FALSE, data);
 }
 
 static BOOL texture2d_load_location(struct wined3d_texture *texture, unsigned int sub_resource_idx,
@@ -2101,19 +2101,16 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
 }
 
 static void texture3d_upload_data(struct wined3d_texture *texture, unsigned int sub_resource_idx,
-        const struct wined3d_context *context, const struct wined3d_sub_resource_data *data)
+        const struct wined3d_context *context, const struct wined3d_const_bo_address *data,
+        unsigned int row_pitch, unsigned int slice_pitch)
 {
-    struct wined3d_const_bo_address addr;
-    unsigned int row_pitch, slice_pitch;
+    unsigned int dst_row_pitch, dst_slice_pitch;
 
-    wined3d_texture_get_pitch(texture, sub_resource_idx, &row_pitch, &slice_pitch);
-    if (row_pitch != data->row_pitch || slice_pitch != data->slice_pitch)
-        FIXME("Ignoring row/slice pitch (%u/%u).\n", data->row_pitch, data->slice_pitch);
+    wined3d_texture_get_pitch(texture, sub_resource_idx, &dst_row_pitch, &dst_slice_pitch);
+    if (row_pitch != dst_row_pitch || slice_pitch != dst_slice_pitch)
+        FIXME("Ignoring row/slice pitch (%u/%u).\n", row_pitch, slice_pitch);
 
-    addr.buffer_object = 0;
-    addr.addr = data->data;
-
-    wined3d_volume_upload_data(texture, sub_resource_idx, context, &addr);
+    wined3d_volume_upload_data(texture, sub_resource_idx, context, data);
 }
 
 /* Context activation is done by the caller. */
