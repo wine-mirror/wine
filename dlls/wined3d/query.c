@@ -567,8 +567,7 @@ static BOOL wined3d_timestamp_query_ops_poll(struct wined3d_query *query)
 static void wined3d_timestamp_query_ops_issue(struct wined3d_query *query, DWORD flags)
 {
     struct wined3d_timestamp_query *tq = wined3d_timestamp_query_from_query(query);
-    struct wined3d_device *device = query->device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
 
     TRACE("query %p, flags %#x.\n", query, flags);
@@ -582,6 +581,7 @@ static void wined3d_timestamp_query_ops_issue(struct wined3d_query *query, DWORD
         if (tq->context)
             context_free_timestamp_query(tq);
         context = context_acquire(query->device, NULL);
+        gl_info = context->gl_info;
         context_alloc_timestamp_query(context, tq);
         GL_EXTCALL(glQueryCounter(tq->id, GL_TIMESTAMP));
         checkGLcall("glQueryCounter()");
