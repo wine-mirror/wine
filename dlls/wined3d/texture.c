@@ -1426,40 +1426,12 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
     return WINED3D_OK;
 }
 
-static HRESULT wined3d_texture_upload_data(struct wined3d_texture *texture,
-        const struct wined3d_sub_resource_data *data)
+static void wined3d_texture_upload_data(struct wined3d_texture *texture, unsigned int sub_resource_idx,
+        const struct wined3d_context *context, const struct wined3d_const_bo_address *data,
+        unsigned int row_pitch, unsigned int slice_pitch)
 {
-    unsigned int sub_count = texture->level_count * texture->layer_count;
-    struct wined3d_context *context;
-    unsigned int i;
-
-    for (i = 0; i < sub_count; ++i)
-    {
-        if (!data[i].data)
-        {
-            WARN("Invalid sub-resource data specified for sub-resource %u.\n", i);
-            return E_INVALIDARG;
-        }
-    }
-
-    context = context_acquire(texture->resource.device, NULL);
-
-    wined3d_texture_prepare_texture(texture, context, FALSE);
-    wined3d_texture_bind_and_dirtify(texture, context, FALSE);
-
-    for (i = 0; i < sub_count; ++i)
-    {
-        const struct wined3d_const_bo_address addr = {0, data[i].data};
-
-        texture->texture_ops->texture_upload_data(texture, i, context,
-                &addr, data[i].row_pitch, data[i].slice_pitch);
-        wined3d_texture_validate_location(texture, i, WINED3D_LOCATION_TEXTURE_RGB);
-        wined3d_texture_invalidate_location(texture, i, ~WINED3D_LOCATION_TEXTURE_RGB);
-    }
-
-    context_release(context);
-
-    return WINED3D_OK;
+    texture->texture_ops->texture_upload_data(texture, sub_resource_idx,
+            context, data, row_pitch, slice_pitch);
 }
 
 static void texture2d_upload_data(struct wined3d_texture *texture, unsigned int sub_resource_idx,
@@ -2783,11 +2755,38 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
 
     /* FIXME: We'd like to avoid ever allocating system memory for the texture
      * in this case. */
-    if (data && FAILED(hr = wined3d_texture_upload_data(object, data)))
+    if (data)
     {
-        wined3d_texture_cleanup_sync(object);
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
+        unsigned int sub_count = level_count * layer_count;
+        struct wined3d_context *context;
+        unsigned int i;
+
+        for (i = 0; i < sub_count; ++i)
+        {
+            if (!data[i].data)
+            {
+                WARN("Invalid sub-resource data specified for sub-resource %u.\n", i);
+                wined3d_texture_cleanup_sync(object);
+                HeapFree(GetProcessHeap(), 0, object);
+                return E_INVALIDARG;
+            }
+        }
+
+        context = context_acquire(device, NULL);
+
+        wined3d_texture_prepare_texture(object, context, FALSE);
+        wined3d_texture_bind_and_dirtify(object, context, FALSE);
+
+        for (i = 0; i < sub_count; ++i)
+        {
+            const struct wined3d_const_bo_address addr = {0, data[i].data};
+
+            wined3d_texture_upload_data(object, i, context, &addr, data[i].row_pitch, data[i].slice_pitch);
+            wined3d_texture_validate_location(object, i, WINED3D_LOCATION_TEXTURE_RGB);
+            wined3d_texture_invalidate_location(object, i, ~WINED3D_LOCATION_TEXTURE_RGB);
+        }
+
+        context_release(context);
     }
 
     TRACE("Created texture %p.\n", object);
