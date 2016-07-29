@@ -162,9 +162,8 @@ static struct gdi_path *copy_gdi_path( const struct gdi_path *src_path )
 /* Performs a world-to-viewport transformation on the specified point (which
  * is in floating point format).
  */
-static inline void INTERNAL_LPTODP_FLOAT( HDC hdc, FLOAT_POINT *point, int count )
+static inline void INTERNAL_LPTODP_FLOAT( DC *dc, FLOAT_POINT *point, int count )
 {
-    DC *dc = get_dc_ptr( hdc );
     double x, y;
 
     while (count--)
@@ -175,7 +174,6 @@ static inline void INTERNAL_LPTODP_FLOAT( HDC hdc, FLOAT_POINT *point, int count
         point->y = x * dc->xformWorld2Vport.eM12 + y * dc->xformWorld2Vport.eM22 + dc->xformWorld2Vport.eDy;
         point++;
     }
-    release_dc_ptr( dc );
 }
 
 static inline INT int_from_fixed(FIXED f)
@@ -255,16 +253,16 @@ static BOOL PATH_AddEntry(struct gdi_path *pPath, const POINT *pPoint, BYTE flag
 
 /* add a number of points, converting them to device coords */
 /* return a pointer to the first type byte so it can be fixed up if necessary */
-static BYTE *add_log_points( struct path_physdev *physdev, const POINT *points, DWORD count, BYTE type )
+static BYTE *add_log_points( DC *dc, struct gdi_path *path, const POINT *points,
+                             DWORD count, BYTE type )
 {
     BYTE *ret;
-    struct gdi_path *path = physdev->path;
 
     if (!PATH_ReserveEntries( path, path->count + count )) return NULL;
 
     ret = &path->flags[path->count];
     memcpy( &path->points[path->count], points, count * sizeof(*points) );
-    LPtoDP( physdev->dev.hdc, &path->points[path->count], count );
+    lp_to_dp( dc, &path->points[path->count], count );
     memset( ret, type, count );
     path->count += count;
     return ret;
@@ -325,12 +323,12 @@ static void close_figure( struct gdi_path *path )
 }
 
 /* add a number of points, starting a new stroke if necessary */
-static BOOL add_log_points_new_stroke( struct path_physdev *physdev, const POINT *points,
+static BOOL add_log_points_new_stroke( DC *dc, struct gdi_path *path, const POINT *points,
                                        DWORD count, BYTE type )
 {
-    if (!start_new_stroke( physdev->path )) return FALSE;
-    if (!add_log_points( physdev, points, count, type )) return FALSE;
-    update_current_pos( physdev->path );
+    if (!start_new_stroke( path )) return FALSE;
+    if (!add_log_points( dc, path, points, count, type )) return FALSE;
+    update_current_pos( path );
     return TRUE;
 }
 
@@ -889,11 +887,12 @@ static BOOL pathdrv_MoveTo( PHYSDEV dev, INT x, INT y )
 static BOOL pathdrv_LineTo( PHYSDEV dev, INT x, INT y )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
+    DC *dc = get_physdev_dc( dev );
     POINT point;
 
     point.x = x;
     point.y = y;
-    return add_log_points_new_stroke( physdev, &point, 1, PT_LINETO );
+    return add_log_points_new_stroke( dc, physdev->path, &point, 1, PT_LINETO );
 }
 
 
@@ -1066,6 +1065,7 @@ static BOOL pathdrv_Ellipse( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
 static BOOL PATH_Arc( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2,
                       INT xStart, INT yStart, INT xEnd, INT yEnd, int direction, int lines )
 {
+    DC *dc = get_physdev_dc( dev );
     struct path_physdev *physdev = get_path_physdev( dev );
     double angleStart, angleEnd, angleStartQuadrant, angleEndQuadrant=0.0;
                /* Initialize angleEndQuadrant to silence gcc's warning */
@@ -1091,9 +1091,9 @@ static BOOL PATH_Arc( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2,
    pointStart.y = yStart;
    pointEnd.x = xEnd;
    pointEnd.y = yEnd;
-   INTERNAL_LPTODP_FLOAT(dev->hdc, corners, 2);
-   INTERNAL_LPTODP_FLOAT(dev->hdc, &pointStart, 1);
-   INTERNAL_LPTODP_FLOAT(dev->hdc, &pointEnd, 1);
+   INTERNAL_LPTODP_FLOAT(dc, corners, 2);
+   INTERNAL_LPTODP_FLOAT(dc, &pointStart, 1);
+   INTERNAL_LPTODP_FLOAT(dc, &pointEnd, 1);
 
    /* Make sure first corner is top left and second corner is bottom right */
    if(corners[0].x>corners[1].x)
@@ -1266,8 +1266,9 @@ static BOOL pathdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 static BOOL pathdrv_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD cbPoints )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
+    DC *dc = get_physdev_dc( dev );
 
-    return add_log_points_new_stroke( physdev, pts, cbPoints, PT_BEZIERTO );
+    return add_log_points_new_stroke( dc, physdev->path, pts, cbPoints, PT_BEZIERTO );
 }
 
 
@@ -1277,7 +1278,8 @@ static BOOL pathdrv_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD cbPoints 
 static BOOL pathdrv_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD cbPoints )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
-    BYTE *type = add_log_points( physdev, pts, cbPoints, PT_BEZIERTO );
+    DC *dc = get_physdev_dc( dev );
+    BYTE *type = add_log_points( dc, physdev->path, pts, cbPoints, PT_BEZIERTO );
 
     if (!type) return FALSE;
     type[0] = PT_MOVETO;
@@ -1292,6 +1294,7 @@ static BOOL pathdrv_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, 
 {
     struct path_physdev *physdev = get_path_physdev( dev );
     struct gdi_path *path = physdev->path;
+    DC *dc = get_physdev_dc( dev );
     POINT orig_pos;
     INT i, lastmove = 0;
 
@@ -1310,13 +1313,13 @@ static BOOL pathdrv_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, 
             break;
         case PT_LINETO:
         case PT_LINETO | PT_CLOSEFIGURE:
-            if (!add_log_points_new_stroke( physdev, &pts[i], 1, PT_LINETO )) return FALSE;
+            if (!add_log_points_new_stroke( dc, path, &pts[i], 1, PT_LINETO )) return FALSE;
             break;
         case PT_BEZIERTO:
             if ((i + 2 < cbPoints) && (types[i + 1] == PT_BEZIERTO) &&
                 (types[i + 2] & ~PT_CLOSEFIGURE) == PT_BEZIERTO)
             {
-                if (!add_log_points_new_stroke( physdev, &pts[i], 3, PT_BEZIERTO )) return FALSE;
+                if (!add_log_points_new_stroke( dc, path, &pts[i], 3, PT_BEZIERTO )) return FALSE;
                 i += 2;
                 break;
             }
@@ -1343,10 +1346,11 @@ static BOOL pathdrv_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, 
 static BOOL pathdrv_Polyline( PHYSDEV dev, const POINT *pts, INT count )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
+    DC *dc = get_physdev_dc( dev );
     BYTE *type;
 
     if (count < 2) return FALSE;
-    if (!(type = add_log_points( physdev, pts, count, PT_LINETO ))) return FALSE;
+    if (!(type = add_log_points( dc, physdev->path, pts, count, PT_LINETO ))) return FALSE;
     type[0] = PT_MOVETO;
     return TRUE;
 }
@@ -1358,9 +1362,10 @@ static BOOL pathdrv_Polyline( PHYSDEV dev, const POINT *pts, INT count )
 static BOOL pathdrv_PolylineTo( PHYSDEV dev, const POINT *pts, INT count )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
+    DC *dc = get_physdev_dc( dev );
 
     if (count < 1) return FALSE;
-    return add_log_points_new_stroke( physdev, pts, count, PT_LINETO );
+    return add_log_points_new_stroke( dc, physdev->path, pts, count, PT_LINETO );
 }
 
 
@@ -1370,10 +1375,11 @@ static BOOL pathdrv_PolylineTo( PHYSDEV dev, const POINT *pts, INT count )
 static BOOL pathdrv_Polygon( PHYSDEV dev, const POINT *pts, INT count )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
+    DC *dc = get_physdev_dc( dev );
     BYTE *type;
 
     if (count < 2) return FALSE;
-    if (!(type = add_log_points( physdev, pts, count, PT_LINETO ))) return FALSE;
+    if (!(type = add_log_points( dc, physdev->path, pts, count, PT_LINETO ))) return FALSE;
     type[0] = PT_MOVETO;
     type[count - 1] = PT_LINETO | PT_CLOSEFIGURE;
     return TRUE;
@@ -1386,6 +1392,7 @@ static BOOL pathdrv_Polygon( PHYSDEV dev, const POINT *pts, INT count )
 static BOOL pathdrv_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* counts, UINT polygons )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
+    DC *dc = get_physdev_dc( dev );
     UINT poly, count;
     BYTE *type;
 
@@ -1396,7 +1403,7 @@ static BOOL pathdrv_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* count
         count += counts[poly];
     }
 
-    type = add_log_points( physdev, pts, count, PT_LINETO );
+    type = add_log_points( dc, physdev->path, pts, count, PT_LINETO );
     if (!type) return FALSE;
 
     /* make the first point of each polyline a PT_MOVETO, and close the last one */
@@ -1415,6 +1422,7 @@ static BOOL pathdrv_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* count
 static BOOL pathdrv_PolyPolyline( PHYSDEV dev, const POINT* pts, const DWORD* counts, DWORD polylines )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
+    DC *dc = get_physdev_dc( dev );
     UINT poly, count;
     BYTE *type;
 
@@ -1425,7 +1433,7 @@ static BOOL pathdrv_PolyPolyline( PHYSDEV dev, const POINT* pts, const DWORD* co
         count += counts[poly];
     }
 
-    type = add_log_points( physdev, pts, count, PT_LINETO );
+    type = add_log_points( dc, physdev->path, pts, count, PT_LINETO );
     if (!type) return FALSE;
 
     /* make the first point of each polyline a PT_MOVETO */
