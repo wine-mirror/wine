@@ -407,6 +407,40 @@ DWORD WINAPI GdiGetCodePage( HDC hdc )
 }
 
 /***********************************************************************
+ *           get_text_charset_info
+ *
+ * Internal version of GetTextCharsetInfo() that takes a DC pointer.
+ */
+static UINT get_text_charset_info(DC *dc, FONTSIGNATURE *fs, DWORD flags)
+{
+    UINT ret = DEFAULT_CHARSET;
+    PHYSDEV dev;
+
+    dev = GET_DC_PHYSDEV( dc, pGetTextCharsetInfo );
+    ret = dev->funcs->pGetTextCharsetInfo( dev, fs, flags );
+
+    if (ret == DEFAULT_CHARSET && fs)
+        memset(fs, 0, sizeof(FONTSIGNATURE));
+    return ret;
+}
+
+/***********************************************************************
+ *           GetTextCharsetInfo    (GDI32.@)
+ */
+UINT WINAPI GetTextCharsetInfo(HDC hdc, FONTSIGNATURE *fs, DWORD flags)
+{
+    UINT ret = DEFAULT_CHARSET;
+    DC *dc = get_dc_ptr(hdc);
+
+    if (dc)
+    {
+        ret = get_text_charset_info( dc, fs, flags );
+        release_dc_ptr( dc );
+    }
+    return ret;
+}
+
+/***********************************************************************
  *           FONT_mbtowc
  *
  * Returns a Unicode translation of str using the charset of the
@@ -646,7 +680,7 @@ static DWORD get_associated_charset_info(void)
 static void update_font_code_page( DC *dc, HANDLE font )
 {
     CHARSETINFO csi;
-    int charset = GetTextCharsetInfo( dc->hSelf, NULL, 0 );
+    int charset = get_text_charset_info( dc, NULL, 0 );
     LOGFONTW lf;
 
     GetObjectW( font, sizeof(lf), &lf );
@@ -3686,27 +3720,6 @@ UINT WINAPI GetTextCharset(HDC hdc)
 {
     /* MSDN docs say this is equivalent */
     return GetTextCharsetInfo(hdc, NULL, 0);
-}
-
-/***********************************************************************
- *           GetTextCharsetInfo    (GDI32.@)
- */
-UINT WINAPI GetTextCharsetInfo(HDC hdc, LPFONTSIGNATURE fs, DWORD flags)
-{
-    UINT ret = DEFAULT_CHARSET;
-    DC *dc = get_dc_ptr(hdc);
-    PHYSDEV dev;
-
-    if (dc)
-    {
-        dev = GET_DC_PHYSDEV( dc, pGetTextCharsetInfo );
-        ret = dev->funcs->pGetTextCharsetInfo( dev, fs, flags );
-        release_dc_ptr( dc );
-    }
-
-    if (ret == DEFAULT_CHARSET && fs)
-        memset(fs, 0, sizeof(FONTSIGNATURE));
-    return ret;
 }
 
 /***********************************************************************
