@@ -124,12 +124,13 @@ BOOL nulldrv_PolyBezier( PHYSDEV dev, const POINT *points, DWORD count )
 
 BOOL nulldrv_PolyBezierTo( PHYSDEV dev, const POINT *points, DWORD count )
 {
+    DC *dc = get_nulldrv_dc( dev );
     BOOL ret = FALSE;
     POINT *pts = HeapAlloc( GetProcessHeap(), 0, sizeof(POINT) * (count + 1) );
 
     if (pts)
     {
-        GetCurrentPositionEx( dev->hdc, &pts[0] );
+        pts[0] = dc->cur_pos;
         memcpy( pts + 1, points, sizeof(POINT) * count );
         ret = PolyBezier( dev->hdc, pts, count + 1 );
         HeapFree( GetProcessHeap(), 0, pts );
@@ -139,6 +140,7 @@ BOOL nulldrv_PolyBezierTo( PHYSDEV dev, const POINT *points, DWORD count )
 
 BOOL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types, DWORD count )
 {
+    DC *dc = get_nulldrv_dc( dev );
     POINT *line_pts = NULL, *bzr_pts = NULL, bzr[4];
     DWORD i;
     INT num_pts, num_bzr_pts, space, size;
@@ -167,7 +169,7 @@ BOOL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types, DWOR
     line_pts = HeapAlloc( GetProcessHeap(), 0, space * sizeof(POINT) );
     num_pts = 1;
 
-    GetCurrentPositionEx( dev->hdc, &line_pts[0] );
+    line_pts[0] = dc->cur_pos;
     for (i = 0; i < count; i++)
     {
         switch (types[i])
@@ -211,13 +213,14 @@ BOOL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types, DWOR
 
 BOOL nulldrv_PolylineTo( PHYSDEV dev, const POINT *points, INT count )
 {
+    DC *dc = get_nulldrv_dc( dev );
     BOOL ret = FALSE;
     POINT *pts;
 
     if (!count) return FALSE;
     if ((pts = HeapAlloc( GetProcessHeap(), 0, sizeof(POINT) * (count + 1) )))
     {
-        GetCurrentPositionEx( dev->hdc, &pts[0] );
+        pts[0] = dc->cur_pos;
         memcpy( pts + 1, points, sizeof(POINT) * count );
         ret = Polyline( dev->hdc, pts, count + 1 );
         HeapFree( GetProcessHeap(), 0, pts );

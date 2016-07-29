@@ -600,7 +600,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
     if (err == ERROR_TRANSFORM_NOT_SUPPORTED)
     {
         copy_bitmapinfo( src_info, dst_info );
-        err = stretch_bits( src_info, &src, dst_info, &dst, &src_bits, GetStretchBltMode( dev->hdc ) );
+        err = stretch_bits( src_info, &src, dst_info, &dst, &src_bits, dc->stretchBltMode );
         if (!err) err = dev->funcs->pPutImage( dev, NULL, dst_info, &src_bits, &src, &dst, rop );
     }
     if (err) ret = 0;
@@ -853,7 +853,7 @@ INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWOR
     dst.y = pt.y;
     dst.width = cx;
     dst.height = cy;
-    if (GetLayout( dev->hdc ) & LAYOUT_RTL) dst.x -= cx - 1;
+    if (dc->layout & LAYOUT_RTL) dst.x -= cx - 1;
 
     rect.left = dst.x;
     rect.top = dst.y;

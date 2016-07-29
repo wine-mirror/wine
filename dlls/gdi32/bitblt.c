@@ -300,7 +300,7 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
         ((src->width != dst->width) || (src->height != dst->height)))
     {
         copy_bitmapinfo( src_info, dst_info );
-        err = stretch_bits( src_info, src, dst_info, dst, &bits, GetStretchBltMode( dst_dev->hdc ));
+        err = stretch_bits( src_info, src, dst_info, dst, &bits, dc_dst->stretchBltMode );
         if (!err) err = dst_dev->funcs->pPutImage( dst_dev, 0, dst_info, &bits, src, dst, rop );
     }
 
@@ -933,12 +933,12 @@ BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heig
         src.log_y      = ySrc;
         src.log_width  = widthSrc;
         src.log_height = heightSrc;
-        src.layout     = GetLayout( hdcSrc );
+        src.layout     = dcSrc->layout;
         dst.log_x      = xDst;
         dst.log_y      = yDst;
         dst.log_width  = widthDst;
         dst.log_height = heightDst;
-        dst.layout     = GetLayout( hdcDst );
+        dst.layout     = dcDst->layout;
         ret = !get_vis_rectangles( dcDst, &dst, dcSrc, &src );
 
         TRACE("src %p log=%d,%d %dx%d phys=%d,%d %dx%d vis=%s  dst %p log=%d,%d %dx%d phys=%d,%d %dx%d vis=%s  blend=%02x/%02x/%02x/%02x\n",

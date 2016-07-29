@@ -1961,7 +1961,7 @@ BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect
     if (flags & ETO_OPAQUE)
     {
         RECT rc = *rect;
-        HBRUSH brush = CreateSolidBrush( GetNearestColor( dev->hdc, GetBkColor(dev->hdc) ));
+        HBRUSH brush = CreateSolidBrush( GetNearestColor( dev->hdc, dc->backgroundColor ) );
 
         if (brush)
         {
@@ -2052,7 +2052,7 @@ BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect
         }
     }
 
-    pen = CreatePen( PS_SOLID, 1, GetTextColor(dev->hdc) );
+    pen = CreatePen( PS_SOLID, 1, dc->textColor );
     orig = SelectObject( dev->hdc, pen );
 
     for (i = 0; i < count; i++)
@@ -2194,8 +2194,8 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     BOOL ret = FALSE;
     LPWSTR reordered_str = (LPWSTR)str;
     WORD *glyphs = NULL;
-    UINT align = GetTextAlign( hdc );
-    DWORD layout = GetLayout( hdc );
+    UINT align;
+    DWORD layout;
     POINT pt;
     TEXTMETRICW tm;
     LOGFONTW lf;
@@ -2212,7 +2212,9 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
 
     if (!dc) return FALSE;
 
+    align = dc->textAlign;
     breakRem = dc->breakRem;
+    layout = dc->layout;
 
     if (quietfixme == 0 && flags & (ETO_NUMERICSLOCAL | ETO_NUMERICSLATIN))
     {
@@ -2259,11 +2261,11 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
 
     TRACE("%p, %d, %d, %08x, %s, %s, %d, %p)\n", hdc, x, y, flags,
           wine_dbgstr_rect(lprect), debugstr_wn(str, count), count, lpDx);
-    TRACE("align = %x bkmode = %x mapmode = %x\n", align, GetBkMode(hdc), GetMapMode(hdc));
+    TRACE("align = %x bkmode = %x mapmode = %x\n", align, dc->backgroundMode, dc->MapMode);
 
     if(align & TA_UPDATECP)
     {
-        GetCurrentPositionEx( hdc, &pt );
+        pt = dc->cur_pos;
         x = pt.x;
         y = pt.y;
     }
@@ -2463,7 +2465,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         break;
     }
 
-    if (GetBkMode(hdc) != TRANSPARENT)
+    if (dc->backgroundMode != TRANSPARENT)
     {
         if(!((flags & ETO_CLIPPED) && (flags & ETO_OPAQUE)))
         {
@@ -2502,7 +2504,7 @@ done:
         OUTLINETEXTMETRICW* otm = NULL;
         POINT pts[5];
         HPEN hpen = SelectObject(hdc, GetStockObject(NULL_PEN));
-        HBRUSH hbrush = CreateSolidBrush(GetTextColor(hdc));
+        HBRUSH hbrush = CreateSolidBrush(dc->textColor);
 
         hbrush = SelectObject(hdc, hbrush);
 

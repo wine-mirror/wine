@@ -69,16 +69,14 @@ static void *store_points( POINTL *dest, const POINT *pts, UINT count, BOOL shor
 }
 
 /* compute the bounds of an array of points, optionally including the current position */
-static void get_points_bounds( RECTL *bounds, const POINT *pts, UINT count, HDC hdc )
+static void get_points_bounds( RECTL *bounds, const POINT *pts, UINT count, DC *dc )
 {
     UINT i;
 
-    if (hdc)
+    if (dc)
     {
-        POINT cur_pt;
-        GetCurrentPositionEx( hdc, &cur_pt );
-        bounds->left = bounds->right = cur_pt.x;
-        bounds->top = bounds->bottom = cur_pt.y;
+        bounds->left = bounds->right = dc->cur_pos.x;
+        bounds->top = bounds->bottom = dc->cur_pos.y;
     }
     else if (count)
     {
@@ -143,6 +141,7 @@ BOOL EMFDRV_MoveTo(PHYSDEV dev, INT x, INT y)
 BOOL EMFDRV_LineTo( PHYSDEV dev, INT x, INT y )
 {
     EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
+    DC *dc = get_physdev_dc( dev );
     POINT pt;
     EMRLINETO emr;
     RECTL bounds;
@@ -155,7 +154,7 @@ BOOL EMFDRV_LineTo( PHYSDEV dev, INT x, INT y )
     if(!EMFDRV_WriteRecord( dev, &emr.emr ))
     	return FALSE;
 
-    GetCurrentPositionEx( dev->hdc, &pt );
+    pt = dc->cur_pos;
 
     bounds.left   = min(x, pt.x);
     bounds.top    = min(y, pt.y);
@@ -177,6 +176,7 @@ EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 		    INT xstart, INT ystart, INT xend, INT yend, DWORD iType )
 {
     EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
+    DC *dc = get_physdev_dc( dev );
     INT temp, xCentre, yCentre, i;
     double angleStart, angleEnd;
     double xinterStart, yinterStart, xinterEnd, yinterEnd;
@@ -188,7 +188,7 @@ EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    if(GetGraphicsMode(dev->hdc) == GM_COMPATIBLE) {
+    if(dc->GraphicsMode == GM_COMPATIBLE) {
         right--;
 	bottom--;
     }
@@ -269,7 +269,7 @@ EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     if (iType == EMR_ARCTO)
     {
         POINT pt;
-        GetCurrentPositionEx( dev->hdc, &pt );
+        pt = dc->cur_pos;
         bounds.left   = min( bounds.left, pt.x );
         bounds.top    = min( bounds.top, pt.y );
         bounds.right  = max( bounds.right, pt.x );
@@ -348,6 +348,7 @@ BOOL EMFDRV_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT start, FLOA
 BOOL EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
+    DC *dc = get_physdev_dc( dev );
     EMRELLIPSE emr;
     INT temp;
 
@@ -358,7 +359,7 @@ BOOL EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    if(GetGraphicsMode( dev->hdc ) == GM_COMPATIBLE) {
+    if(dc->GraphicsMode == GM_COMPATIBLE) {
         right--;
 	bottom--;
     }
@@ -381,6 +382,7 @@ BOOL EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 BOOL EMFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 {
     EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
+    DC *dc = get_physdev_dc( dev );
     EMRRECTANGLE emr;
     INT temp;
 
@@ -391,7 +393,7 @@ BOOL EMFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    if(GetGraphicsMode( dev->hdc ) == GM_COMPATIBLE) {
+    if(dc->GraphicsMode == GM_COMPATIBLE) {
         right--;
 	bottom--;
     }
@@ -415,6 +417,7 @@ BOOL EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
 		  INT bottom, INT ell_width, INT ell_height )
 {
     EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
+    DC *dc = get_physdev_dc( dev );
     EMRROUNDRECT emr;
     INT temp;
 
@@ -423,7 +426,7 @@ BOOL EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    if(GetGraphicsMode( dev->hdc ) == GM_COMPATIBLE) {
+    if(dc->GraphicsMode == GM_COMPATIBLE) {
         right--;
 	bottom--;
     }
@@ -474,6 +477,7 @@ static BOOL
 EMFDRV_Polylinegon( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
 {
     EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
+    DC *dc = get_physdev_dc( dev );
     EMRPOLYLINE *emr;
     DWORD size;
     BOOL ret, use_small_emr = can_use_short_points( pt, count );
@@ -489,7 +493,7 @@ EMFDRV_Polylinegon( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
 
     if (!physDev->path)
         get_points_bounds( &emr->rclBounds, pt, count,
-                           (iType == EMR_POLYBEZIERTO || iType == EMR_POLYLINETO) ? dev->hdc : 0 );
+                           (iType == EMR_POLYBEZIERTO || iType == EMR_POLYLINETO) ? dc : 0 );
     else
         emr->rclBounds = empty_bounds;
 
@@ -799,13 +803,14 @@ BOOL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *lprec
                         LPCWSTR str, UINT count, const INT *lpDx )
 {
     EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
+    DC *dc = get_physdev_dc( dev );
     EMREXTTEXTOUTW *pemr;
     DWORD nSize;
     BOOL ret;
     int textHeight = 0;
     int textWidth = 0;
-    const UINT textAlign = GetTextAlign( dev->hdc );
-    const INT graphicsMode = GetGraphicsMode( dev->hdc );
+    const UINT textAlign = dc->textAlign;
+    const INT graphicsMode = dc->GraphicsMode;
     FLOAT exScale, eyScale;
 
     nSize = sizeof(*pemr) + ((count+1) & ~1) * sizeof(WCHAR) + count * sizeof(INT);
