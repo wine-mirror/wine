@@ -2389,7 +2389,7 @@ REBAR_GetRect (const REBAR_INFO *infoPtr, INT iBand, RECT *lprc)
 
     lpBand = REBAR_GetBand(infoPtr, iBand);
     /* For CCS_VERT the coordinates will be swapped - like on Windows */
-    CopyRect (lprc, &lpBand->rcBand);
+    *lprc = lpBand->rcBand;
 
     TRACE("band %d, (%s)\n", iBand, wine_dbgstr_rect(lprc));
 
