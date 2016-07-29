@@ -702,7 +702,7 @@ HRGN WINAPI PathToRegion(HDC hdc)
         dc->path = NULL;
         if (path)
         {
-            ret = path_to_region( path, GetPolyFillMode( hdc ));
+            ret = path_to_region( path, dc->polyFillMode );
             free_gdi_path( path );
         }
     }
@@ -873,10 +873,12 @@ BOOL PATH_RestorePath( DC *dst, DC *src )
 static BOOL pathdrv_MoveTo( PHYSDEV dev, INT x, INT y )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
+    DC *dc = get_physdev_dc( dev );
+
     physdev->path->newStroke = TRUE;
     physdev->path->pos.x = x;
     physdev->path->pos.y = y;
-    LPtoDP( physdev->dev.hdc, &physdev->path->pos, 1 );
+    lp_to_dp( dc, &physdev->path->pos, 1 );
     return TRUE;
 }
 
@@ -1137,7 +1139,7 @@ static BOOL PATH_Arc( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2,
    }
 
    /* In GM_COMPATIBLE, don't include bottom and right edges */
-   if (GetGraphicsMode(dev->hdc) == GM_COMPATIBLE)
+   if (dc->GraphicsMode == GM_COMPATIBLE)
    {
       corners[1].x--;
       corners[1].y--;
@@ -1225,8 +1227,9 @@ static BOOL pathdrv_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT eSt
 static BOOL pathdrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                          INT xstart, INT ystart, INT xend, INT yend )
 {
+    DC *dc = get_physdev_dc( dev );
     return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend,
-                     GetArcDirection( dev->hdc ), 0 );
+                     dc->ArcDirection, 0 );
 }
 
 
@@ -1236,8 +1239,9 @@ static BOOL pathdrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 static BOOL pathdrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                            INT xstart, INT ystart, INT xend, INT yend )
 {
+    DC *dc = get_physdev_dc( dev );
     return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend,
-                     GetArcDirection( dev->hdc ), -1 );
+                     dc->ArcDirection, -1 );
 }
 
 
@@ -1247,8 +1251,9 @@ static BOOL pathdrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom
 static BOOL pathdrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                            INT xstart, INT ystart, INT xend, INT yend )
 {
+    DC *dc = get_physdev_dc( dev );
     return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend,
-                     GetArcDirection( dev->hdc ), 1 );
+                     dc->ArcDirection, 1 );
 }
 
 
@@ -1258,8 +1263,9 @@ static BOOL pathdrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom
 static BOOL pathdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                          INT xstart, INT ystart, INT xend, INT yend )
 {
+    DC *dc = get_physdev_dc( dev );
     return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend,
-                     GetArcDirection( dev->hdc ), 2 );
+                     dc->ArcDirection, 2 );
 }
 
 
@@ -1311,7 +1317,7 @@ static BOOL pathdrv_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, 
         case PT_MOVETO:
             path->newStroke = TRUE;
             path->pos = pts[i];
-            LPtoDP( dev->hdc, &path->pos, 1 );
+            lp_to_dp( dc, &path->pos, 1 );
             lastmove = path->count;
             break;
         case PT_LINETO:
@@ -2022,7 +2028,7 @@ BOOL nulldrv_BeginPath( PHYSDEV dev )
     physdev = get_path_physdev( find_dc_driver( dc, &path_driver ));
     physdev->path = path;
     path->pos = dc->cur_pos;
-    LPtoDP( dev->hdc, &path->pos, 1 );
+    lp_to_dp( dc, &path->pos, 1 );
     if (dc->path) free_gdi_path( dc->path );
     dc->path = NULL;
     return TRUE;
