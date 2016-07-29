@@ -298,10 +298,8 @@ static void reverse_points( POINT *points, UINT count )
 }
 
 /* start a new path stroke if necessary */
-static BOOL start_new_stroke( struct path_physdev *physdev )
+static BOOL start_new_stroke( struct gdi_path *path )
 {
-    struct gdi_path *path = physdev->path;
-
     if (!path->newStroke && path->count &&
         !(path->flags[path->count - 1] & PT_CLOSEFIGURE) &&
         path->points[path->count - 1].x == path->pos.x &&
@@ -309,7 +307,7 @@ static BOOL start_new_stroke( struct path_physdev *physdev )
         return TRUE;
 
     path->newStroke = FALSE;
-    return add_points( physdev->path, &path->pos, 1, PT_MOVETO ) != NULL;
+    return add_points( path, &path->pos, 1, PT_MOVETO ) != NULL;
 }
 
 /* set current position to the last point that was added to the path */
@@ -330,7 +328,7 @@ static void close_figure( struct gdi_path *path )
 static BOOL add_log_points_new_stroke( struct path_physdev *physdev, const POINT *points,
                                        DWORD count, BYTE type )
 {
-    if (!start_new_stroke( physdev )) return FALSE;
+    if (!start_new_stroke( physdev->path )) return FALSE;
     if (!add_log_points( physdev, points, count, type )) return FALSE;
     update_current_pos( physdev->path );
     return TRUE;
@@ -1143,7 +1141,7 @@ static BOOL PATH_Arc( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2,
    }
 
    /* arcto: Add a PT_MOVETO only if this is the first entry in a stroke */
-   if (lines==-1 && !start_new_stroke( physdev )) return FALSE;
+   if (lines == -1 && !start_new_stroke( physdev->path )) return FALSE;
 
    /* Add the arc to the path with one Bezier spline per quadrant that the
     * arc spans */
