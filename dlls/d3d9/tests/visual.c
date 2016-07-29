@@ -19390,6 +19390,7 @@ static void test_texcoordindex(void)
 
 static void test_vertex_blending(void)
 {
+    IDirect3DVertexDeclaration9 *vertex_declaration;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
     D3DCAPS9 caps;
@@ -19470,12 +19471,23 @@ static void test_vertex_blending(void)
 
     static const struct
     {
+        DWORD fvf;
+        D3DVERTEXELEMENT9 decl_elements[3];
         struct
         {
-            struct vec3 position;
-            struct vec3 blendweights;
-        }
-        vertex_data[4];
+            struct
+            {
+                struct vec3 position;
+                struct vec3 blendweights;
+            }
+            vertex_data_float[4];
+            struct
+            {
+                struct vec3 position;
+                D3DCOLOR blendweights;
+            }
+            vertex_data_d3dcolor[4];
+        } s;
         const POINT *quad_points;
         const POINT *empty_points;
     }
@@ -19483,36 +19495,59 @@ static void test_vertex_blending(void)
     {
         /* upper right */
         {
-            {{{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
-             {{-1.0f,  1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
-             {{ 1.0f, -1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
-             {{ 1.0f,  1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}}},
+            D3DFVF_XYZB3,
+            {{0}},
+            {{{{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+              {{-1.0f,  1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+              {{ 1.0f, -1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+              {{ 1.0f,  1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}}}},
             quad_upper_right_points, quad_upper_right_empty_points
         },
         /* center */
         {
-            {{{-1.0f, -1.0f, 0.0f}, {0.25f, 0.25f, 0.25f}},
-             {{-1.0f,  1.0f, 0.0f}, {0.25f, 0.25f, 0.25f}},
-             {{ 1.0f, -1.0f, 0.0f}, {0.25f, 0.25f, 0.25f}},
-             {{ 1.0f,  1.0f, 0.0f}, {0.25f, 0.25f, 0.25f}}},
+            D3DFVF_XYZB3,
+            {{0}},
+            {{{{-1.0f, -1.0f, 0.0f}, {0.25f, 0.25f, 0.25f}},
+              {{-1.0f,  1.0f, 0.0f}, {0.25f, 0.25f, 0.25f}},
+              {{ 1.0f, -1.0f, 0.0f}, {0.25f, 0.25f, 0.25f}},
+              {{ 1.0f,  1.0f, 0.0f}, {0.25f, 0.25f, 0.25f}}}},
             quad_center_points, quad_center_empty_points
         },
-        /*  upper center */
+        /* upper center */
         {
-            {{{-1.0f, -1.0f, 0.0f}, {0.5f, 0.0f, 0.0f}},
-             {{-1.0f,  1.0f, 0.0f}, {0.5f, 0.0f, 0.0f}},
-             {{ 1.0f, -1.0f, 0.0f}, {0.5f, 0.0f, 0.0f}},
-             {{ 1.0f,  1.0f, 0.0f}, {0.5f, 0.0f, 0.0f}}},
+            D3DFVF_XYZB3,
+            {{0}},
+            {{{{-1.0f, -1.0f, 0.0f}, {0.5f, 0.0f, 0.0f}},
+              {{-1.0f,  1.0f, 0.0f}, {0.5f, 0.0f, 0.0f}},
+              {{ 1.0f, -1.0f, 0.0f}, {0.5f, 0.0f, 0.0f}},
+              {{ 1.0f,  1.0f, 0.0f}, {0.5f, 0.0f, 0.0f}}}},
             quad_upper_center_points, quad_upper_center_empty_points
         },
-        /*  full screen */
+        /* full screen */
         {
-            {{{-1.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-             {{-1.0f,  1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-             {{ 1.0f, -1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
-             {{ 1.0f,  1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}}},
+            D3DFVF_XYZB3,
+            {{0}},
+            {{{{-1.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+              {{-1.0f,  1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+              {{ 1.0f, -1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+              {{ 1.0f,  1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}}}},
             quad_fullscreen_points, quad_fullscreen_empty_points
-        }
+        },
+        /* D3DCOLOR, full screen */
+        {
+            0,
+            {
+                {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+                {0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDWEIGHT, 0},
+                D3DDECL_END()
+            },
+            {{{{0}}},
+             {{{-1.0f, -1.0f, 0.0f}, 0x0000ff00},
+              {{-1.0f,  1.0f, 0.0f}, 0x00ff0000},
+              {{ 1.0f, -1.0f, 0.0f}, 0x000000ff},
+              {{ 1.0f,  1.0f, 0.0f}, 0x00000000}}},
+            quad_fullscreen_points, quad_fullscreen_empty_points
+        },
     };
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
@@ -19556,16 +19591,32 @@ static void test_vertex_blending(void)
     {
         const POINT *point;
 
+        if (tests[i].fvf)
+        {
+            hr = IDirect3DDevice9_SetFVF(device, tests[i].fvf);
+            ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+            vertex_declaration = NULL;
+        }
+        else
+        {
+            hr = IDirect3DDevice9_CreateVertexDeclaration(device, tests[i].decl_elements, &vertex_declaration);
+            ok(SUCCEEDED(hr), "Failed to create vertex declaration, hr %#x.\n", hr);
+            hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
+            ok(SUCCEEDED(hr), "Failed to set vertex declaration, hr %#x.\n", hr);
+        }
+
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff000000, 0.0, 0);
         ok(SUCCEEDED(hr), "Failed to clear %08x\n", hr);
 
         hr = IDirect3DDevice9_BeginScene(device);
         ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
 
-        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZB3);
-        ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
-
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, tests[i].vertex_data, 6 * sizeof(float));
+        if (tests[i].fvf)
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2,
+                    tests[i].s.vertex_data_float, sizeof(*tests[i].s.vertex_data_float));
+        else
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2,
+                    tests[i].s.vertex_data_d3dcolor, sizeof(*tests[i].s.vertex_data_d3dcolor));
         ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
 
         hr = IDirect3DDevice9_EndScene(device);
@@ -19589,6 +19640,9 @@ static void test_vertex_blending(void)
 
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+        if (vertex_declaration)
+            IDirect3DVertexDeclaration9_Release(vertex_declaration);
     }
 
     refcount = IDirect3DDevice9_Release(device);
