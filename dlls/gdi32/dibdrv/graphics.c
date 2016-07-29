@@ -408,6 +408,7 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 /* helper for path stroking and filling functions */
 static BOOL stroke_and_fill_path( dibdrv_physdev *dev, BOOL stroke, BOOL fill )
 {
+    DC *dc = get_physdev_dc( &dev->dev );
     struct gdi_path *path;
     POINT *points;
     BYTE *types;
@@ -417,7 +418,7 @@ static BOOL stroke_and_fill_path( dibdrv_physdev *dev, BOOL stroke, BOOL fill )
 
     if (dev->brush.style == BS_NULL) fill = FALSE;
 
-    if (!(path = get_gdi_flat_path( dev->dev.hdc, fill ? &interior : NULL ))) return FALSE;
+    if (!(path = get_gdi_flat_path( dc, fill ? &interior : NULL ))) return FALSE;
     if (!(total = get_gdi_path_data( path, &points, &types ))) goto done;
 
     if (stroke && dev->pen_uses_region) outline = CreateRectRgn( 0, 0, 0, 0 );

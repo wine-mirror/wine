@@ -536,12 +536,9 @@ static BOOL PATH_DoArcPart(struct gdi_path *pPath, FLOAT_POINT corners[],
 /* retrieve a flattened path in device coordinates, and optionally its region */
 /* the DC path is deleted; the returned data must be freed by caller using free_gdi_path() */
 /* helper for stroke_and_fill_path in the DIB driver */
-struct gdi_path *get_gdi_flat_path( HDC hdc, HRGN *rgn )
+struct gdi_path *get_gdi_flat_path( DC *dc, HRGN *rgn )
 {
-    DC *dc = get_dc_ptr( hdc );
     struct gdi_path *ret = NULL;
-
-    if (!dc) return NULL;
 
     if (dc->path)
     {
@@ -549,11 +546,10 @@ struct gdi_path *get_gdi_flat_path( HDC hdc, HRGN *rgn )
 
         free_gdi_path( dc->path );
         dc->path = NULL;
-        if (ret && rgn) *rgn = path_to_region( ret, GetPolyFillMode( hdc ) );
+        if (ret && rgn) *rgn = path_to_region( ret, dc->polyFillMode );
     }
     else SetLastError( ERROR_CAN_NOT_COMPLETE );
 
-    release_dc_ptr( dc );
     return ret;
 }
 
