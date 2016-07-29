@@ -371,14 +371,8 @@ static BOOL TAB_InternalGetItemRect(
          (itemIndex < infoPtr->leftmostVisible)))
     {
         TRACE("Not Visible\n");
-        /* need to initialize these to empty rects */
-        if (itemRect)
-        {
-            memset(itemRect,0,sizeof(RECT));
-            itemRect->bottom = infoPtr->tabHeight;
-        }
-        if (selectedRect)
-            memset(selectedRect,0,sizeof(RECT));
+        SetRect(itemRect, 0, 0, 0, infoPtr->tabHeight);
+        SetRectEmpty(selectedRect);
         return FALSE;
     }
 
