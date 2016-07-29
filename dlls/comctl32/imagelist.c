@@ -3469,7 +3469,9 @@ static HRESULT WINAPI ImageListImpl_GetImageRect(IImageList2 *iface, int i,
     if (!ImageList_GetImageInfo(imgl, i, &info))
         return E_FAIL;
 
-    return CopyRect(prc, &info.rcImage) ? S_OK : E_FAIL;
+    *prc = info.rcImage;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ImageListImpl_GetIconSize(IImageList2 *iface, int *cx,
