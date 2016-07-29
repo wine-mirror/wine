@@ -2984,7 +2984,7 @@ static void context_update_stream_info(struct wined3d_context *context, const st
     {
         WORD slow_mask = -!d3d_info->ffp_generic_attributes & (1u << WINED3D_FFP_PSIZE);
         slow_mask |= -!gl_info->supported[ARB_VERTEX_ARRAY_BGRA]
-                & ((1u << WINED3D_FFP_DIFFUSE) | (1u << WINED3D_FFP_SPECULAR));
+                & ((1u << WINED3D_FFP_DIFFUSE) | (1u << WINED3D_FFP_SPECULAR) | (1u << WINED3D_FFP_BLENDWEIGHT));
 
         if (((stream_info->position_transformed && !d3d_info->xyzrhw)
                 || (stream_info->use_map & slow_mask)) && !stream_info->all_vbo)
