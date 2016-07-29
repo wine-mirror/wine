@@ -44,7 +44,7 @@
 @ stub D3DX10CreateSprite(ptr long ptr)
 @ stub D3DX10CreateTextureFromFileA(ptr str ptr ptr ptr ptr)
 @ stub D3DX10CreateTextureFromFileW(ptr wstr ptr ptr ptr ptr)
-@ stub D3DX10CreateTextureFromMemory(ptr ptr long ptr ptr ptr ptr)
+@ stdcall D3DX10CreateTextureFromMemory(ptr ptr long ptr ptr ptr ptr)
 @ stub D3DX10CreateTextureFromResourceA(ptr long str ptr ptr ptr ptr)
 @ stub D3DX10CreateTextureFromResourceW(ptr long wstr ptr ptr ptr ptr)
 @ stdcall D3DX10FilterTexture(ptr long long)
