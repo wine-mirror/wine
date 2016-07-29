@@ -1037,9 +1037,9 @@ INT WINAPI SetGraphicsMode( HDC hdc, INT mode )
         ret = dc->GraphicsMode;
         dc->GraphicsMode = mode;
     }
-    release_dc_ptr( dc );
     /* font metrics depend on the graphics mode */
-    if (ret) SelectObject(dc->hSelf, GetCurrentObject(dc->hSelf, OBJ_FONT));
+    if (ret != mode) SelectObject(dc->hSelf, GetCurrentObject(dc->hSelf, OBJ_FONT));
+    release_dc_ptr( dc );
     return ret;
 }
 
