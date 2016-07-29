@@ -838,7 +838,7 @@ static void build_driver_keypath( const WCHAR *name, UNICODE_STRING *keypath )
     if (strncmpW( name, driverW, strlenW(driverW) ) == 0)
         name += strlenW(driverW);
     else
-        FIXME( "Driver name %s does not properly begin with \\Driver\\", debugstr_w(name) );
+        FIXME( "Driver name %s does not properly begin with \\Driver\\\n", debugstr_w(name) );
 
     str = HeapAlloc( GetProcessHeap(), 0, sizeof(servicesW) + strlenW(name)*sizeof(WCHAR));
     lstrcpyW( str, servicesW );
