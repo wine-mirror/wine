@@ -2269,7 +2269,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     }
 
     GetTextMetricsW(hdc, &tm);
-    GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf);
+    GetObjectW(dc->hFont, sizeof(lf), &lf);
 
     if(!(tm.tmPitchAndFamily & TMPF_VECTOR)) /* Non-scalable fonts shouldn't be rotated */
         lf.lfEscapement = 0;

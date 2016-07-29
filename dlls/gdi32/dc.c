@@ -354,8 +354,8 @@ void DC_UpdateXforms( DC *dc )
     if (memcmp(&oldworld2vport, &dc->xformWorld2Vport, sizeof(oldworld2vport)) &&
         !GdiIsMetaFileDC(dc->hSelf))
     {
-        SelectObject(dc->hSelf, GetCurrentObject(dc->hSelf, OBJ_FONT));
-        SelectObject(dc->hSelf, GetCurrentObject(dc->hSelf, OBJ_PEN));
+        SelectObject(dc->hSelf, dc->hFont);
+        SelectObject(dc->hSelf, dc->hPen);
     }
 }
 
@@ -1038,7 +1038,7 @@ INT WINAPI SetGraphicsMode( HDC hdc, INT mode )
         dc->GraphicsMode = mode;
     }
     /* font metrics depend on the graphics mode */
-    if (ret != mode) SelectObject(dc->hSelf, GetCurrentObject(dc->hSelf, OBJ_FONT));
+    if (ret != mode) SelectObject(dc->hSelf, dc->hFont);
     release_dc_ptr( dc );
     return ret;
 }

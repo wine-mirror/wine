@@ -503,6 +503,7 @@ UINT WINAPI GetNearestPaletteIndex(
 COLORREF nulldrv_GetNearestColor( PHYSDEV dev, COLORREF color )
 {
     unsigned char spec_type;
+    DC *dc = get_nulldrv_dc( dev );
 
     if (!(GetDeviceCaps( dev->hdc, RASTERCAPS ) & RC_PALETTE)) return color;
 
@@ -512,7 +513,7 @@ COLORREF nulldrv_GetNearestColor( PHYSDEV dev, COLORREF color )
         /* we need logical palette for PALETTERGB and PALETTEINDEX colorrefs */
         UINT index;
         PALETTEENTRY entry;
-        HPALETTE hpal = GetCurrentObject( dev->hdc, OBJ_PAL );
+        HPALETTE hpal = dc->hPalette;
 
         if (!hpal) hpal = GetStockObject( DEFAULT_PALETTE );
         if (spec_type == 2) /* PALETTERGB */

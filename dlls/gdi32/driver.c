@@ -390,9 +390,9 @@ static INT nulldrv_GetTextFace( PHYSDEV dev, INT size, LPWSTR name )
 {
     INT ret = 0;
     LOGFONTW font;
-    HFONT hfont = GetCurrentObject( dev->hdc, OBJ_FONT );
+    DC *dc = get_nulldrv_dc( dev );
 
-    if (GetObjectW( hfont, sizeof(font), &font ))
+    if (GetObjectW( dc->hFont, sizeof(font), &font ))
     {
         ret = strlenW( font.lfFaceName ) + 1;
         if (name)
