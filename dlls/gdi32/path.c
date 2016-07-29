@@ -798,12 +798,9 @@ static BOOL pathdrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
                               LPCWSTR output, const DEVMODEW *devmode )
 {
     struct path_physdev *physdev = HeapAlloc( GetProcessHeap(), 0, sizeof(*physdev) );
-    DC *dc;
 
     if (!physdev) return FALSE;
-    dc = get_dc_ptr( (*dev)->hdc );
     push_dc_driver( dev, &physdev->dev, &path_driver );
-    release_dc_ptr( dc );
     return TRUE;
 }
 
