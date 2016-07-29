@@ -681,13 +681,15 @@ static void update_font_code_page( DC *dc, HANDLE font )
 {
     CHARSETINFO csi;
     int charset = get_text_charset_info( dc, NULL, 0 );
-    LOGFONTW lf;
 
-    GetObjectW( font, sizeof(lf), &lf );
+    if (charset == ANSI_CHARSET && get_associated_charset_info() & ASSOC_CHARSET_ANSI)
+    {
+        LOGFONTW lf;
 
-    if (charset == ANSI_CHARSET && !(lf.lfClipPrecision & CLIP_DFA_DISABLE) &&
-        get_associated_charset_info() & ASSOC_CHARSET_ANSI)
-        charset = DEFAULT_CHARSET;
+        GetObjectW( font, sizeof(lf), &lf );
+        if (!(lf.lfClipPrecision & CLIP_DFA_DISABLE))
+            charset = DEFAULT_CHARSET;
+    }
 
     /* Hmm, nicely designed api this one! */
     if (TranslateCharsetInfo( ULongToPtr(charset), &csi, TCI_SRCCHARSET) )
