@@ -1028,7 +1028,7 @@ static void test_margin(void)
     ret = SendMessageA(hwnd, TTM_SETMARGIN, 0, (LPARAM)&r);
     ok(!ret, "got %d\n", ret);
 
-    SetRect(&r1, 0, 0, 0, 0);
+    SetRectEmpty(&r1);
     ret = SendMessageA(hwnd, TTM_GETMARGIN, 0, (LPARAM)&r1);
     ok(!ret, "got %d\n", ret);
     ok(EqualRect(&r, &r1), "got %s, was %s\n", wine_dbgstr_rect(&r1), wine_dbgstr_rect(&r));
@@ -1036,7 +1036,7 @@ static void test_margin(void)
     ret = SendMessageA(hwnd, TTM_SETMARGIN, 0, 0);
     ok(!ret, "got %d\n", ret);
 
-    SetRect(&r1, 0, 0, 0, 0);
+    SetRectEmpty(&r1);
     ret = SendMessageA(hwnd, TTM_GETMARGIN, 0, (LPARAM)&r1);
     ok(!ret, "got %d\n", ret);
     ok(EqualRect(&r, &r1), "got %s, was %s\n", wine_dbgstr_rect(&r1), wine_dbgstr_rect(&r));
