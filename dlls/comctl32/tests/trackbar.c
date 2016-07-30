@@ -655,8 +655,8 @@ static void test_position(void)
     oldproc = (WNDPROC)SetWindowLongPtrA(hWndTrackbar, GWLP_WNDPROC, (LONG_PTR)trackbar_no_wmpaint_proc);
     SetWindowLongPtrA(hWndTrackbar, GWLP_USERDATA, (LONG_PTR)oldproc);
 
-    memset(&rect, 0, sizeof(rect));
-    memset(&rect2, 0, sizeof(rect2));
+    SetRectEmpty(&rect);
+    SetRectEmpty(&rect2);
 
     SendMessageA(hWndTrackbar, TBM_GETTHUMBRECT, 0, (LPARAM)&rect);
 

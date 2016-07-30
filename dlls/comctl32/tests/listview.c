@@ -890,8 +890,7 @@ static void test_images(void)
     r = SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM) &item);
     ok(r == 0, "should not fail\n");
 
-    memset(&r1, 0, sizeof r1);
-    r1.left = LVIR_ICON;
+    SetRect(&r1, LVIR_ICON, 0, 0, 0);
     r = SendMessageA(hwnd, LVM_GETITEMRECT, 0, (LPARAM) &r1);
     expect(1, r);
 
@@ -903,8 +902,7 @@ static void test_images(void)
     r = SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM) &item);
     ok(r == 0, "should not fail\n");
 
-    memset(&r2, 0, sizeof r2);
-    r2.left = LVIR_ICON;
+    SetRect(&r2, LVIR_ICON, 0, 0, 0);
     r = SendMessageA(hwnd, LVM_GETITEMRECT, 0, (LPARAM) &r2);
     expect(1, r);
 
@@ -3605,8 +3603,7 @@ static void test_hittest(void)
     r = SendMessageA(hwnd, LVM_SETCOLUMNWIDTH, 1, MAKELPARAM(100, 0));
     expect(TRUE, r);
 
-    memset(&bounds, 0, sizeof(bounds));
-    bounds.left = LVIR_BOUNDS;
+    SetRect(&bounds, LVIR_BOUNDS, 0, 0, 0);
     r = SendMessageA(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&bounds);
     expect(1, r);
     ok(bounds.bottom - bounds.top > 0, "Expected non zero item height\n");
@@ -3834,7 +3831,7 @@ static void test_getitemposition(void)
     expect(TRUE, r);
     ok_sequence(sequences, LISTVIEW_SEQ_INDEX, getitemposition_seq2, "get item position 2", TRUE);
 
-    memset(&rect, 0, sizeof(rect));
+    SetRectEmpty(&rect);
     SendMessageA(header, HDM_GETITEMRECT, 0, (LPARAM)&rect);
     /* some padding? */
     expect(2, pt.x);
