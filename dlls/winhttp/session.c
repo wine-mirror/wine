@@ -1351,7 +1351,14 @@ static BOOL get_system_proxy_autoconfig_url( char *buf, DWORD buflen )
     CFRelease( settings );
     return ret;
 #else
-    FIXME( "no support on this platform\n" );
+    static BOOL first = TRUE;
+    if (first)
+    {
+        FIXME( "no support on this platform\n" );
+        first = FALSE;
+    }
+    else
+        TRACE( "no support on this platform\n" );
     return FALSE;
 #endif
 }
