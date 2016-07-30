@@ -25,9 +25,6 @@
 
 #include "shlobj.h"
 
-/* Not declared in commctrl.h ("for internal use (msdn)") */
-#define TVS_EX_NOSINGLECOLLAPSE 0x0001
-
 extern HINSTANCE explorerframe_hinstance DECLSPEC_HIDDEN;
 
 extern LONG EFRAME_refCount DECLSPEC_HIDDEN;

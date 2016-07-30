@@ -30,9 +30,6 @@
 
 static HWND hwnd;
 
-/* "Intended for internal use" */
-#define TVS_EX_NOSINGLECOLLAPSE 0x1
-
 static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMIDLIST,IShellItem**);
 static HRESULT (WINAPI *pSHGetIDListFromObject)(IUnknown*, PIDLIST_ABSOLUTE*);
 static HRESULT (WINAPI *pSHCreateItemFromParsingName)(PCWSTR,IBindCtx*,REFIID,void**);
