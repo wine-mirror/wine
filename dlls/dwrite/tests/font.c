@@ -4316,7 +4316,7 @@ static void test_CreateGlyphRunAnalysis(void)
        rect.top == 0 && rect.bottom == 0, "unexpected rect\n");
 
     /* check how origin affects bounds */
-    memset(&rect, 0, sizeof(rect));
+    SetRectEmpty(&rect);
     hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!IsRectEmpty(&rect), "got empty rect\n");
@@ -4327,7 +4327,7 @@ static void test_CreateGlyphRunAnalysis(void)
         DWRITE_RENDERING_MODE_ALIASED, DWRITE_MEASURING_MODE_NATURAL,
         0.0, 0.0, &analysis);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    memset(&rect2, 0, sizeof(rect2));
+    SetRectEmpty(&rect2);
     hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(rect.right - rect.left < rect2.right - rect2.left, "expected wider rect\n");
@@ -4339,7 +4339,7 @@ static void test_CreateGlyphRunAnalysis(void)
         10.0, -5.0, &analysis);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    memset(&rect2, 0, sizeof(rect2));
+    SetRectEmpty(&rect2);
     hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!IsRectEmpty(&rect2), "got empty rect\n");
@@ -4356,7 +4356,7 @@ static void test_CreateGlyphRunAnalysis(void)
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         if (rendermodes[i] == DWRITE_RENDERING_MODE_ALIASED) {
-            memset(&rect, 0, sizeof(rect));
+            SetRectEmpty(&rect);
             hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect);
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(!IsRectEmpty(&rect), "got empty rect\n");
@@ -4372,7 +4372,7 @@ static void test_CreateGlyphRunAnalysis(void)
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(IsRectEmpty(&rect), "got empty rect\n");
 
-            memset(&rect, 0, sizeof(rect));
+            SetRectEmpty(&rect);
             hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1, &rect);
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(!IsRectEmpty(&rect), "got empty rect\n");
@@ -4393,7 +4393,7 @@ static void test_CreateGlyphRunAnalysis(void)
             0.0, 0.0, &analysis);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        memset(&rect, 0, sizeof(rect));
+        SetRectEmpty(&rect);
         hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
