@@ -2299,6 +2299,8 @@ struct wined3d_ffp_vs_settings
     DWORD padding         : 10;
 
     DWORD texgen[MAX_TEXTURES];
+
+    WORD swizzle_map; /* MAX_ATTRIBS, 16 */
 };
 
 struct wined3d_ffp_vs_desc

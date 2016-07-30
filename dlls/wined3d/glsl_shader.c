@@ -6598,8 +6598,8 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
     for (i = 0; i < ARRAY_SIZE(attrib_info); ++i)
     {
         if (attrib_info[i].name[0])
-            shader_addline(buffer, "%s %s = vs_in%u;\n",
-                    attrib_info[i].type, attrib_info[i].name, i);
+            shader_addline(buffer, "%s %s = vs_in%u%s;\n", attrib_info[i].type, attrib_info[i].name,
+                    i, settings->swizzle_map & (1u << i) ? ".zyxw" : "");
     }
     for (i = 0; i < MAX_TEXTURES; ++i)
     {
