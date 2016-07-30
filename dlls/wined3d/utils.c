@@ -4804,6 +4804,8 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
         else
             settings->flatshading = FALSE;
 
+        settings->swizzle_map = si->swizzle_map;
+
         return;
     }
 
@@ -4888,6 +4890,8 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
         settings->flatshading = state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
     else
         settings->flatshading = FALSE;
+
+    settings->swizzle_map = si->swizzle_map;
 
     settings->padding = 0;
 }
