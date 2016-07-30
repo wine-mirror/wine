@@ -2602,10 +2602,7 @@ HRESULT CDECL wined3d_texture_set_overlay_position(struct wined3d_texture *textu
     surface = sub_resource->u.surface;
     w = surface->overlay_destrect.right - surface->overlay_destrect.left;
     h = surface->overlay_destrect.bottom - surface->overlay_destrect.top;
-    surface->overlay_destrect.left = x;
-    surface->overlay_destrect.top = y;
-    surface->overlay_destrect.right = x + w;
-    surface->overlay_destrect.bottom = y + h;
+    SetRect(&surface->overlay_destrect, x, y, x + w, y + h);
 
     return WINED3D_OK;
 }

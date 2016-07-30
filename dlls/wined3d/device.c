@@ -4271,10 +4271,7 @@ HRESULT CDECL wined3d_device_set_rendertarget_view(struct wined3d_device *device
         state->viewport.max_z = 1.0f;
         wined3d_cs_emit_set_viewport(device->cs, &state->viewport);
 
-        state->scissor_rect.top = 0;
-        state->scissor_rect.left = 0;
-        state->scissor_rect.right = view->width;
-        state->scissor_rect.bottom = view->height;
+        SetRect(&state->scissor_rect, 0, 0, view->width, view->height);
         wined3d_cs_emit_set_scissor_rect(device->cs, &state->scissor_rect);
     }
 
@@ -4928,10 +4925,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         state->viewport.height = view->height;
         wined3d_cs_emit_set_viewport(device->cs, &state->viewport);
 
-        state->scissor_rect.top = 0;
-        state->scissor_rect.left = 0;
-        state->scissor_rect.right = view->width;
-        state->scissor_rect.bottom = view->height;
+        SetRect(&state->scissor_rect, 0, 0, view->width, view->height);
         wined3d_cs_emit_set_scissor_rect(device->cs, &state->scissor_rect);
     }
 

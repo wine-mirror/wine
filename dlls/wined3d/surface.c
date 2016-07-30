@@ -216,10 +216,8 @@ static void surface_get_rect(const struct wined3d_surface *surface, const RECT *
     {
         const struct wined3d_texture *texture = surface->container;
 
-        rect_out->left = 0;
-        rect_out->top = 0;
-        rect_out->right = wined3d_texture_get_level_width(texture, surface->texture_level);
-        rect_out->bottom = wined3d_texture_get_level_height(texture, surface->texture_level);
+        SetRect(rect_out, 0, 0, wined3d_texture_get_level_width(texture, surface->texture_level),
+                wined3d_texture_get_level_height(texture, surface->texture_level));
     }
 }
 
