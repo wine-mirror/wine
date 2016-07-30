@@ -1012,7 +1012,7 @@ static HRESULT surface_lock(struct ddraw_surface *surface,
     if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
         if (flags & DDLOCK_READONLY)
-            memset(&surface->ddraw->primary_lock, 0, sizeof(surface->ddraw->primary_lock));
+            SetRectEmpty(&surface->ddraw->primary_lock);
         else if (rect)
             surface->ddraw->primary_lock = *rect;
         else
