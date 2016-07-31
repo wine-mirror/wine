@@ -21,9 +21,6 @@
 
 #include <assert.h>
 #include "enhmfdrv/enhmetafiledrv.h"
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
 /* get the emf physdev from the path physdev */
 static inline PHYSDEV get_emfdev( PHYSDEV path )
