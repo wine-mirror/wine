@@ -23,7 +23,9 @@
 
 #include "wine/debug.h"
 
+#if XAUDIO2_VER >= 8 || defined X3DAUDIO1_VER
 WINE_DEFAULT_DEBUG_CHANNEL(xaudio2);
+#endif
 
 #ifdef X3DAUDIO1_VER
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, void *pReserved)

@@ -101,7 +101,9 @@
 
 #include "wine/debug.h"
 
+#if XAUDIO2_VER <= 7
 WINE_DEFAULT_DEBUG_CHANNEL(xaudio2);
+#endif
 
 /* BEGIN IXAudio2SourceVoice */
 #if XAUDIO2_VER == 0
