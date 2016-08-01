@@ -325,6 +325,17 @@ static void construct_window_to_viewport(DC *dc, XFORM *xform)
 }
 
 /***********************************************************************
+ *        linear_xform_cmp
+ *
+ * Compares the linear transform portion of two XFORMs (i.e. the 2x2 submatrix).
+ * Returns 0 if they match.
+ */
+static inline int linear_xform_cmp( const XFORM *a, const XFORM *b )
+{
+    return memcmp( a, b, FIELD_OFFSET( XFORM, eDx ) );
+}
+
+/***********************************************************************
  *           DC_UpdateXforms
  *
  * Updates the xformWorld2Vport, xformVport2World and vport2WorldValid
@@ -351,7 +362,7 @@ void DC_UpdateXforms( DC *dc )
 
     /* Reselect the font and pen back into the dc so that the size
        gets updated. */
-    if (memcmp(&oldworld2vport, &dc->xformWorld2Vport, sizeof(oldworld2vport)) &&
+    if (linear_xform_cmp( &oldworld2vport, &dc->xformWorld2Vport ) &&
         !GdiIsMetaFileDC(dc->hSelf))
     {
         SelectObject(dc->hSelf, dc->hFont);
