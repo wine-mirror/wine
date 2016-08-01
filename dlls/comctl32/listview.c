@@ -5621,8 +5621,8 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
     
     TRACE("nColumn=%d\n", nColumn);
 
-    if (nColumn < 0 || DPA_GetPtrCount(infoPtr->hdpaColumns) == 0
-           || nColumn >= DPA_GetPtrCount(infoPtr->hdpaColumns)) return FALSE;
+    if (nColumn < 0 || nColumn >= DPA_GetPtrCount(infoPtr->hdpaColumns))
+        return FALSE;
 
     /* While the MSDN specifically says that column zero should not be deleted,
        what actually happens is that the column itself is deleted but no items or subitems

@@ -1420,6 +1420,12 @@ static void test_columns(void)
                 10, 10, 100, 200, hwndparent, NULL, NULL, NULL);
     ok(hwnd != NULL, "failed to create listview window\n");
 
+    rc = SendMessageA(hwnd, LVM_DELETECOLUMN, -1, 0);
+    ok(!rc, "got %d\n", rc);
+
+    rc = SendMessageA(hwnd, LVM_DELETECOLUMN, 0, 0);
+    ok(!rc, "got %d\n", rc);
+
     /* Add a column with no mask */
     memset(&column, 0xcc, sizeof(column));
     column.mask = 0;
