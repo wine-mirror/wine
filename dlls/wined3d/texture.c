@@ -1426,7 +1426,7 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
     return WINED3D_OK;
 }
 
-static void wined3d_texture_upload_data(struct wined3d_texture *texture, unsigned int sub_resource_idx,
+void wined3d_texture_upload_data(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         const struct wined3d_context *context, const struct wined3d_const_bo_address *data,
         unsigned int row_pitch, unsigned int slice_pitch)
 {

@@ -3607,7 +3607,7 @@ static HRESULT wined3d_device_update_texture_3d(struct wined3d_device *device,
 
         data.buffer_object = 0;
         data.addr = src.data;
-        wined3d_volume_upload_data(dst_texture, i, context, &data);
+        wined3d_texture_upload_data(dst_texture, i, context, &data, src.row_pitch, src.slice_pitch);
         wined3d_texture_invalidate_location(dst_texture, i, ~WINED3D_LOCATION_TEXTURE_RGB);
 
         if (FAILED(hr = wined3d_resource_unmap(&src_texture->resource, src_level + i)))
