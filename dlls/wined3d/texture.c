@@ -2152,6 +2152,7 @@ static BOOL texture3d_load_location(struct wined3d_texture *texture, unsigned in
 {
     struct wined3d_texture_sub_resource *sub_resource = &texture->sub_resources[sub_resource_idx];
     DWORD required_access = wined3d_resource_access_from_location(location);
+    unsigned int row_pitch, slice_pitch;
 
     TRACE("texture %p, sub_resource_idx %u, context %p, location %s.\n",
             texture, sub_resource_idx, context, wined3d_debug_location(location));
@@ -2192,14 +2193,16 @@ static BOOL texture3d_load_location(struct wined3d_texture *texture, unsigned in
                 data.addr += sub_resource->offset;
                 wined3d_texture_bind_and_dirtify(texture, context,
                         location == WINED3D_LOCATION_TEXTURE_SRGB);
-                wined3d_volume_upload_data(texture, sub_resource_idx, context, &data);
+                wined3d_texture_get_pitch(texture, sub_resource_idx, &row_pitch, &slice_pitch);
+                texture3d_upload_data(texture, sub_resource_idx, context, &data, row_pitch, slice_pitch);
             }
             else if (sub_resource->locations & WINED3D_LOCATION_BUFFER)
             {
                 struct wined3d_const_bo_address data = {sub_resource->buffer_object, NULL};
                 wined3d_texture_bind_and_dirtify(texture, context,
                         location == WINED3D_LOCATION_TEXTURE_SRGB);
-                wined3d_volume_upload_data(texture, sub_resource_idx, context, &data);
+                wined3d_texture_get_pitch(texture, sub_resource_idx, &row_pitch, &slice_pitch);
+                texture3d_upload_data(texture, sub_resource_idx, context, &data, row_pitch, slice_pitch);
             }
             else if (sub_resource->locations & WINED3D_LOCATION_TEXTURE_RGB)
             {
