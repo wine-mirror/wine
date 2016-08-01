@@ -2072,17 +2072,67 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
     return WINED3D_OK;
 }
 
+/* This call just uploads data, the caller is responsible for binding the
+ * correct texture. */
+/* Context activation is done by the caller. */
 static void texture3d_upload_data(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         const struct wined3d_context *context, const struct wined3d_const_bo_address *data,
         unsigned int row_pitch, unsigned int slice_pitch)
 {
+    const struct wined3d_format *format = texture->resource.format;
+    unsigned int level = sub_resource_idx % texture->level_count;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int dst_row_pitch, dst_slice_pitch;
+    unsigned int width, height, depth;
+    const void *mem = data->addr;
+    void *converted_mem = NULL;
 
-    wined3d_texture_get_pitch(texture, sub_resource_idx, &dst_row_pitch, &dst_slice_pitch);
-    if (row_pitch != dst_row_pitch || slice_pitch != dst_slice_pitch)
-        FIXME("Ignoring row/slice pitch (%u/%u).\n", row_pitch, slice_pitch);
+    TRACE("texture %p, sub_resource_idx %u, context %p, data {%#x:%p}, row_pitch %#x, slice_pitch %#x.\n",
+            texture, sub_resource_idx, context, data->buffer_object, data->addr, row_pitch, slice_pitch);
 
-    wined3d_volume_upload_data(texture, sub_resource_idx, context, data);
+    width = wined3d_texture_get_level_width(texture, level);
+    height = wined3d_texture_get_level_height(texture, level);
+    depth = wined3d_texture_get_level_depth(texture, level);
+
+    if (format->convert)
+    {
+        if (data->buffer_object)
+            ERR("Loading a converted texture from a PBO.\n");
+        if (texture->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
+            ERR("Converting a block-based format.\n");
+
+        dst_row_pitch = width * format->conv_byte_count;
+        dst_slice_pitch = dst_row_pitch * height;
+
+        converted_mem = wined3d_calloc(depth, dst_slice_pitch);
+        format->convert(data->addr, converted_mem, row_pitch, slice_pitch,
+                dst_row_pitch, dst_slice_pitch, width, height, depth);
+        mem = converted_mem;
+    }
+    else
+    {
+        wined3d_texture_get_pitch(texture, sub_resource_idx, &dst_row_pitch, &dst_slice_pitch);
+        if (row_pitch != dst_row_pitch || slice_pitch != dst_slice_pitch)
+            FIXME("Ignoring row/slice pitch (%u/%u).\n", row_pitch, slice_pitch);
+    }
+
+    if (data->buffer_object)
+    {
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, data->buffer_object));
+        checkGLcall("glBindBuffer");
+    }
+
+    GL_EXTCALL(glTexSubImage3D(GL_TEXTURE_3D, level, 0, 0, 0,
+            width, height, depth, format->glFormat, format->glType, mem));
+    checkGLcall("glTexSubImage3D");
+
+    if (data->buffer_object)
+    {
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+        checkGLcall("glBindBuffer");
+    }
+
+    HeapFree(GetProcessHeap(), 0, converted_mem);
 }
 
 /* Context activation is done by the caller. */
