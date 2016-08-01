@@ -821,7 +821,7 @@ static void write_element(const region_element* element, DWORD *buffer,
  *  their code followed by a second header for the path followed by the actual
  *  path data. Followed by the flags for each point. The pathheader contains
  *  the size of the data to follow, a version number again, followed by a count
- *  of how many points, and any special flags which may apply. 0x4000 means its
+ *  of how many points, and any special flags which may apply. 0x4000 means it's
  *  a path of shorts instead of FLOAT.
  *
  *  Combining Ops are stored in reverse order from when they were constructed;

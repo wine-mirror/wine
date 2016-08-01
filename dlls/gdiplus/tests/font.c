@@ -74,7 +74,7 @@ static void test_createfont(void)
     stat = GdipDeleteFontFamily(fontfamily2);
     expect(Ok, stat);
 
-    /* Test to see if returned size is based on unit (its not) */
+    /* Test to see if returned size is based on unit (it's not) */
     GdipGetFontSize(font, &size);
     ok (size == 12, "Expected 12, got %f\n", size);
     GdipDeleteFont(font);
