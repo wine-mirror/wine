@@ -180,7 +180,7 @@ struct ddraw_surface
      */
 #define MAX_COMPLEX_ATTACHED 6
     struct ddraw_surface *complex_array[MAX_COMPLEX_ATTACHED];
-    /* You can't traverse the tree upwards. Only a flag for Surface::Release because its needed there,
+    /* You can't traverse the tree upwards. Only a flag for Surface::Release because it's needed there,
      * but no pointer to prevent temptations to traverse it in the wrong direction.
      */
     BOOL                    is_complex_root;

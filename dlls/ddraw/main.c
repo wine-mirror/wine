@@ -772,7 +772,7 @@ HRESULT WINAPI DllUnregisterServer(void)
  *
  * Params:
  *  surf: The enumerated surface
- *  desc: it's description
+ *  desc: its description
  *  context: Pointer to the ddraw impl
  *
  * Returns:

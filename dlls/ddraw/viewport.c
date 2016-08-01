@@ -480,7 +480,7 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
     }
 
     /* According to the d3d test, the offscreen flag is set only
-     * if exactly one vertex is transformed. Its not documented,
+     * if exactly one vertex is transformed. It's not documented,
      * but the test shows that the lpOffscreen flag is set to the
      * flag combination of clipping planes that clips the vertex.
      *
@@ -580,7 +580,7 @@ static HRESULT WINAPI d3d_viewport_GetBackground(IDirect3DViewport3 *iface,
 /*****************************************************************************
  * IDirect3DViewport3::SetBackgroundDepth
  *
- * Sets a surface that represents the background depth. It's contents are
+ * Sets a surface that represents the background depth. Its contents are
  * used to set the depth buffer in IDirect3DViewport3::Clear
  *
  * Params:

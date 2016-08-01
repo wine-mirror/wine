@@ -415,7 +415,7 @@ static void StateTest( void )
 {
     HRESULT rc;
 
-    /* The msdn says its undocumented, does it return an error too? */
+    /* The msdn says it's undocumented, does it return an error too? */
     rc = IDirect3DDevice7_SetRenderState(lpD3DDevice, D3DRENDERSTATE_ZVISIBLE, TRUE);
     ok(rc == D3D_OK, "IDirect3DDevice7_SetRenderState(D3DRENDERSTATE_ZVISIBLE, TRUE) returned %08x\n", rc);
     rc = IDirect3DDevice7_SetRenderState(lpD3DDevice, D3DRENDERSTATE_ZVISIBLE, FALSE);
