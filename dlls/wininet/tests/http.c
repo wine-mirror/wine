@@ -4718,6 +4718,47 @@ static void test_http_read(int port)
 
     close_async_handle(req.session, hCompleteEvent, 2);
 
+    open_read_test_request(port, &req,
+                           "HTTP/1.1 200 OK\r\n"
+                           "Server: winetest\r\n"
+                           "Transfer-Encoding: chunked\r\n"
+                           "\r\n"
+                           "9\r\n123456789");
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "123456789");
+    readex_expect_async(req.request, IRF_NO_WAIT, &ib, sizeof(buf));
+
+    send_response_and_wait("\r\n1\r\na\r\n1\r\nb\r", FALSE, &ib);
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "ab");
+    readex_expect_async(req.request, IRF_NO_WAIT, &ib, sizeof(buf));
+
+    send_response_and_wait("\n3\r\nab", FALSE, &ib);
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "ab");
+    readex_expect_async(req.request, IRF_NO_WAIT, &ib, sizeof(buf));
+
+    send_response_and_wait("c", FALSE, &ib);
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "c");
+    readex_expect_async(req.request, IRF_NO_WAIT, &ib, sizeof(buf));
+
+    send_response_and_wait("\r\n1\r\nx\r\n0\r\n\r\n", TRUE, &ib);
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "x");
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "");
+
+    close_async_handle(req.session, hCompleteEvent, 2);
+
+    open_read_test_request(port, &req,
+                           "HTTP/1.1 200 OK\r\n"
+                           "Server: winetest\r\n"
+                           "Transfer-Encoding: chunked\r\n"
+                           "\r\n"
+                           "3\r\n123\r\n");
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "123");
+    readex_expect_async(req.request, IRF_NO_WAIT, &ib, sizeof(buf));
+
+    send_response_and_wait("0\r\n\r\n", TRUE, &ib);
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "");
+
+    close_async_handle(req.session, hCompleteEvent, 2);
+
     CloseHandle(hCompleteEvent);
     CloseHandle(conn_wait_event);
     CloseHandle(server_req_rec_event);
