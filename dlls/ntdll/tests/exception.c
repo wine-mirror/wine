@@ -79,11 +79,46 @@ typedef struct
     ULONG                 ScopeIndex;
 } DISPATCHER_CONTEXT;
 
+typedef struct _SETJMP_FLOAT128
+{
+    unsigned __int64 DECLSPEC_ALIGN(16) Part[2];
+} SETJMP_FLOAT128;
+
+typedef struct _JUMP_BUFFER
+{
+    unsigned __int64 Frame;
+    unsigned __int64 Rbx;
+    unsigned __int64 Rsp;
+    unsigned __int64 Rbp;
+    unsigned __int64 Rsi;
+    unsigned __int64 Rdi;
+    unsigned __int64 R12;
+    unsigned __int64 R13;
+    unsigned __int64 R14;
+    unsigned __int64 R15;
+    unsigned __int64 Rip;
+    unsigned __int64 Spare;
+    SETJMP_FLOAT128  Xmm6;
+    SETJMP_FLOAT128  Xmm7;
+    SETJMP_FLOAT128  Xmm8;
+    SETJMP_FLOAT128  Xmm9;
+    SETJMP_FLOAT128  Xmm10;
+    SETJMP_FLOAT128  Xmm11;
+    SETJMP_FLOAT128  Xmm12;
+    SETJMP_FLOAT128  Xmm13;
+    SETJMP_FLOAT128  Xmm14;
+    SETJMP_FLOAT128  Xmm15;
+} _JUMP_BUFFER;
+
 static BOOLEAN   (CDECL *pRtlAddFunctionTable)(RUNTIME_FUNCTION*, DWORD, DWORD64);
 static BOOLEAN   (CDECL *pRtlDeleteFunctionTable)(RUNTIME_FUNCTION*);
 static BOOLEAN   (CDECL *pRtlInstallFunctionTableCallback)(DWORD64, DWORD64, DWORD, PGET_RUNTIME_FUNCTION_CALLBACK, PVOID, PCWSTR);
 static PRUNTIME_FUNCTION (WINAPI *pRtlLookupFunctionEntry)(ULONG64, ULONG64*, UNWIND_HISTORY_TABLE*);
 static EXCEPTION_DISPOSITION (WINAPI *p__C_specific_handler)(EXCEPTION_RECORD*, ULONG64, CONTEXT*, DISPATCHER_CONTEXT*);
+static VOID      (WINAPI *pRtlCaptureContext)(CONTEXT*);
+static VOID      (CDECL *pRtlRestoreContext)(CONTEXT*, EXCEPTION_RECORD*);
+static VOID      (CDECL *pRtlUnwindEx)(VOID*, VOID*, EXCEPTION_RECORD*, VOID*, CONTEXT*, UNWIND_HISTORY_TABLE*);
+static int       (CDECL *p_setjmp)(_JUMP_BUFFER*);
 #endif
 
 #ifdef __i386__
@@ -1658,6 +1693,131 @@ static void test_virtual_unwind(void)
         call_virtual_unwind( i, &tests[i] );
 }
 
+static int consolidate_dummy_called;
+static PVOID CALLBACK test_consolidate_dummy(EXCEPTION_RECORD *rec)
+{
+    CONTEXT *ctx = (CONTEXT *)rec->ExceptionInformation[1];
+    consolidate_dummy_called = 1;
+    ok(ctx->Rip == 0xdeadbeef, "test_consolidate_dummy failed for Rip, expected: 0xdeadbeef, got: %lx\n", ctx->Rip);
+    return (PVOID)rec->ExceptionInformation[2];
+}
+
+static void test_restore_context(void)
+{
+    SETJMP_FLOAT128 *fltsave;
+    EXCEPTION_RECORD rec;
+    _JUMP_BUFFER buf;
+    CONTEXT ctx;
+    int i, pass;
+
+    if (!pRtlUnwindEx || !pRtlRestoreContext || !pRtlCaptureContext || !p_setjmp)
+    {
+        skip("RtlUnwindEx/RtlCaptureContext/RtlRestoreContext/_setjmp not found\n");
+        return;
+    }
+
+    /* RtlRestoreContext(NULL, NULL); crashes on Windows */
+
+    /* test simple case of capture and restore context */
+    pass = 0;
+    InterlockedIncrement(&pass); /* interlocked to prevent compiler from moving after capture */
+    pRtlCaptureContext(&ctx);
+    if (InterlockedIncrement(&pass) == 2) /* interlocked to prevent compiler from moving before capture */
+    {
+        pRtlRestoreContext(&ctx, NULL);
+        ok(0, "shouldn't be reached\n");
+    }
+    else
+        ok(pass < 4, "unexpected pass %d\n", pass);
+
+    /* test with jmp using RltRestoreContext */
+    pass = 0;
+    InterlockedIncrement(&pass);
+    RtlCaptureContext(&ctx);
+    InterlockedIncrement(&pass); /* only called once */
+    p_setjmp(&buf);
+    InterlockedIncrement(&pass);
+    if (pass == 3)
+    {
+        rec.ExceptionCode = STATUS_LONGJUMP;
+        rec.NumberParameters = 1;
+        rec.ExceptionInformation[0] = (DWORD64)&buf;
+
+        /* uses buf.Rip instead of ctx.Rip */
+        pRtlRestoreContext(&ctx, &rec);
+        ok(0, "shouldn't be reached\n");
+    }
+    else if (pass == 4)
+    {
+        ok(buf.Rbx == ctx.Rbx, "longjmp failed for Rbx, expected: %lx, got: %lx\n", buf.Rbx, ctx.Rbx);
+        ok(buf.Rsp == ctx.Rsp, "longjmp failed for Rsp, expected: %lx, got: %lx\n", buf.Rsp, ctx.Rsp);
+        ok(buf.Rbp == ctx.Rbp, "longjmp failed for Rbp, expected: %lx, got: %lx\n", buf.Rbp, ctx.Rbp);
+        ok(buf.Rsi == ctx.Rsi, "longjmp failed for Rsi, expected: %lx, got: %lx\n", buf.Rsi, ctx.Rsi);
+        ok(buf.Rdi == ctx.Rdi, "longjmp failed for Rdi, expected: %lx, got: %lx\n", buf.Rdi, ctx.Rdi);
+        ok(buf.R12 == ctx.R12, "longjmp failed for R12, expected: %lx, got: %lx\n", buf.R12, ctx.R12);
+        ok(buf.R13 == ctx.R13, "longjmp failed for R13, expected: %lx, got: %lx\n", buf.R13, ctx.R13);
+        ok(buf.R14 == ctx.R14, "longjmp failed for R14, expected: %lx, got: %lx\n", buf.R14, ctx.R14);
+        ok(buf.R15 == ctx.R15, "longjmp failed for R15, expected: %lx, got: %lx\n", buf.R15, ctx.R15);
+
+        fltsave = &buf.Xmm6;
+        for (i = 0; i < 10; i++)
+        {
+            ok(fltsave[i].Part[0] == ctx.u.FltSave.XmmRegisters[i + 6].Low,
+                "longjmp failed for Xmm%d, expected %lx, got %lx\n", i + 6,
+                fltsave[i].Part[0], ctx.u.FltSave.XmmRegisters[i + 6].Low);
+
+            ok(fltsave[i].Part[1] == ctx.u.FltSave.XmmRegisters[i + 6].High,
+                "longjmp failed for Xmm%d, expected %lx, got %lx\n", i + 6,
+                fltsave[i].Part[1], ctx.u.FltSave.XmmRegisters[i + 6].High);
+        }
+    }
+    else
+        ok(0, "unexpected pass %d\n", pass);
+
+    /* test with jmp through RtlUnwindEx */
+    pass = 0;
+    InterlockedIncrement(&pass);
+    pRtlCaptureContext(&ctx);
+    InterlockedIncrement(&pass); /* only called once */
+    p_setjmp(&buf);
+    InterlockedIncrement(&pass);
+    if (pass == 3)
+    {
+        rec.ExceptionCode = STATUS_LONGJUMP;
+        rec.NumberParameters = 1;
+        rec.ExceptionInformation[0] = (DWORD64)&buf;
+
+        /* uses buf.Rip instead of bogus 0xdeadbeef */
+        pRtlUnwindEx((void*)buf.Rsp, (void*)0xdeadbeef, &rec, NULL, &ctx, NULL);
+        ok(0, "shouldn't be reached\n");
+    }
+    else
+        ok(pass == 4, "unexpected pass %d\n", pass);
+
+
+    /* test with consolidate */
+    pass = 0;
+    InterlockedIncrement(&pass);
+    RtlCaptureContext(&ctx);
+    InterlockedIncrement(&pass);
+    if (pass == 2)
+    {
+        rec.ExceptionCode = STATUS_UNWIND_CONSOLIDATE;
+        rec.NumberParameters = 3;
+        rec.ExceptionInformation[0] = (DWORD64)test_consolidate_dummy;
+        rec.ExceptionInformation[1] = (DWORD64)&ctx;
+        rec.ExceptionInformation[2] = ctx.Rip;
+        ctx.Rip = 0xdeadbeef;
+
+        pRtlRestoreContext(&ctx, &rec);
+        ok(0, "shouldn't be reached\n");
+    }
+    else if (pass == 3)
+        ok(consolidate_dummy_called, "test_consolidate_dummy not called\n");
+    else
+        ok(0, "unexpected pass %d\n", pass);
+}
+
 static RUNTIME_FUNCTION* CALLBACK dynamic_unwind_callback( DWORD64 pc, PVOID context )
 {
     static const int code_offset = 1024;
@@ -2235,6 +2395,9 @@ static void test_vectored_continue_handler(void)
 START_TEST(exception)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
+#if defined(__x86_64__)
+    HMODULE hmsvcrt = LoadLibraryA("msvcrt.dll");
+#endif
 
     code_mem = VirtualAlloc(NULL, 65536, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     if(!code_mem) {
@@ -2349,6 +2512,14 @@ START_TEST(exception)
                                                                  "RtlLookupFunctionEntry" );
     p__C_specific_handler              = (void *)GetProcAddress( hntdll,
                                                                  "__C_specific_handler" );
+    pRtlCaptureContext                 = (void *)GetProcAddress( hntdll,
+                                                                 "RtlCaptureContext" );
+    pRtlRestoreContext                 = (void *)GetProcAddress( hntdll,
+                                                                 "RtlRestoreContext" );
+    pRtlUnwindEx                       = (void *)GetProcAddress( hntdll,
+                                                                 "RtlUnwindEx" );
+    p_setjmp                           = (void *)GetProcAddress( hmsvcrt,
+                                                                 "_setjmp" );
 
     test_debug_registers();
     test_outputdebugstring(1, FALSE);
@@ -2358,6 +2529,7 @@ START_TEST(exception)
     test_vectored_continue_handler();
     test_virtual_unwind();
     test___C_specific_handler();
+    test_restore_context();
 
     if (pRtlAddFunctionTable && pRtlDeleteFunctionTable && pRtlInstallFunctionTableCallback && pRtlLookupFunctionEntry)
       test_dynamic_unwind();

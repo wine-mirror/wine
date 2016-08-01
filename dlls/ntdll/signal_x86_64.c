@@ -3571,6 +3571,7 @@ void WINAPI RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
         context->R13       = jmp->R13;
         context->R14       = jmp->R14;
         context->R15       = jmp->R15;
+        context->Rip       = jmp->Rip;
         context->u.s.Xmm6  = jmp->Xmm6;
         context->u.s.Xmm7  = jmp->Xmm7;
         context->u.s.Xmm8  = jmp->Xmm8;
