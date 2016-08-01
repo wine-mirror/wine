@@ -2122,6 +2122,7 @@ static void texture3d_srgb_transfer(struct wined3d_texture *texture, unsigned in
         struct wined3d_context *context, BOOL dest_is_srgb)
 {
     struct wined3d_texture_sub_resource *sub_resource = &texture->sub_resources[sub_resource_idx];
+    unsigned int row_pitch, slice_pitch;
     struct wined3d_bo_address data;
 
     /* Optimisations are possible, but the effort should be put into either
@@ -2135,10 +2136,12 @@ static void texture3d_srgb_transfer(struct wined3d_texture *texture, unsigned in
     if (!(data.addr = HeapAlloc(GetProcessHeap(), 0, sub_resource->size)))
         return;
 
+    wined3d_texture_get_pitch(texture, sub_resource_idx, &row_pitch, &slice_pitch);
     wined3d_texture_bind_and_dirtify(texture, context, !dest_is_srgb);
     texture3d_download_data(texture, sub_resource_idx, context, &data);
     wined3d_texture_bind_and_dirtify(texture, context, dest_is_srgb);
-    wined3d_volume_upload_data(texture, sub_resource_idx, context, wined3d_const_bo_address(&data));
+    texture3d_upload_data(texture, sub_resource_idx, context,
+            wined3d_const_bo_address(&data), row_pitch, slice_pitch);
 
     HeapFree(GetProcessHeap(), 0, data.addr);
 }
