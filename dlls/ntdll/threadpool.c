@@ -1217,7 +1217,7 @@ static void CALLBACK timerqueue_thread_proc( void *param )
             timer->u.timer.timer_pending = FALSE;
             tp_object_submit( timer, FALSE );
 
-            /* Insert the timer back into the queue, except its marked for shutdown. */
+            /* Insert the timer back into the queue, except it's marked for shutdown. */
             if (timer->u.timer.period && !timer->shutdown)
             {
                 timer->u.timer.timeout += (ULONGLONG)timer->u.timer.period * 10000;

@@ -1537,7 +1537,7 @@ DWORD WINAPI RtlRunOnceExecuteOnce( RTL_RUN_ONCE *once, PRTL_RUN_ONCE_INIT_FN fu
  * purposes. The following table lists all possible states the lock can be
  * in, notation: [X, #exclusive, #shared]:
  *
- * [0,   0,   N] -> locked by N shared access threads, if N=0 its unlocked
+ * [0,   0,   N] -> locked by N shared access threads, if N=0 it's unlocked
  * [0, >=1, >=1] -> threads are requesting exclusive locks, but there are
  * still shared access threads inside. #shared should not be incremented
  * anymore!
