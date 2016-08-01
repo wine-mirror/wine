@@ -2257,7 +2257,29 @@ static void test_multiselect(void)
     item_count = SendMessageA(hwnd, LVM_GETITEMCOUNT, 0, 0);
     expect(items, item_count);
 
-    for (i = 0; i < 4; i++) {
+    r = SendMessageA(hwnd, LVM_SETSELECTIONMARK, 0, -1);
+    ok(r == -1, "got %d\n", r);
+
+    r = SendMessageA(hwnd, LVM_SETSELECTIONMARK, 0, 0);
+    ok(r == -1, "got %d\n", r);
+
+    r = SendMessageA(hwnd, LVM_SETSELECTIONMARK, 0, 0);
+    ok(r == 0, "got %d\n", r);
+
+    /* out of range index */
+    r = SendMessageA(hwnd, LVM_SETSELECTIONMARK, 0, items);
+    ok(r == 0, "got %d\n", r);
+
+    r = SendMessageA(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    ok(r == 0, "got %d\n", r);
+
+    r = SendMessageA(hwnd, LVM_SETSELECTIONMARK, 0, -2);
+    ok(r == 0, "got %d\n", r);
+
+    r = SendMessageA(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    ok(r == 0, "got %d\n", r);
+
+    for (i = 0; i < sizeof(task_list)/sizeof(task_list[0]); i++) {
         DWORD selected_count;
         LVITEMA item;
 

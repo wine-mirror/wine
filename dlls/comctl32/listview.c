@@ -9053,7 +9053,8 @@ static INT LISTVIEW_SetSelectionMark(LISTVIEW_INFO *infoPtr, INT nIndex)
 
   TRACE("(nIndex=%d)\n", nIndex);
 
-  infoPtr->nSelectionMark = nIndex;
+  if (nIndex >= -1 && nIndex < infoPtr->nItemCount)
+    infoPtr->nSelectionMark = nIndex;
 
   return nOldIndex;
 }
