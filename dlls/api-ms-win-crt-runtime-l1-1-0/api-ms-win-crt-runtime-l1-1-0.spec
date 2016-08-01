@@ -99,7 +99,7 @@
 @ cdecl perror(str) ucrtbase.perror
 @ stub quick_exit
 @ cdecl raise(long) ucrtbase.raise
-@ stub set_terminate
+@ cdecl set_terminate(ptr) ucrtbase.set_terminate
 @ cdecl signal(long long) ucrtbase.signal
 @ cdecl strerror(long) ucrtbase.strerror
 @ cdecl strerror_s(ptr long long) ucrtbase.strerror_s
