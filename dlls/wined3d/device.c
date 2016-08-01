@@ -4641,8 +4641,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     struct wined3d_rendertarget_view_desc view_desc;
     struct wined3d_resource *resource, *cursor;
     struct wined3d_swapchain *swapchain;
-    struct wined3d_display_mode m;
-    BOOL DisplayModeChanged;
     HRESULT hr = WINED3D_OK;
     unsigned int i;
 
@@ -4654,7 +4652,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         ERR("Failed to get the first implicit swapchain.\n");
         return WINED3DERR_INVALIDCALL;
     }
-    DisplayModeChanged = swapchain->reapply_mode;
 
     if (reset_state)
     {
@@ -4733,72 +4730,13 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         wined3d_swapchain_set_window(swapchain, NULL);
     }
 
-    if (mode)
-    {
-        DisplayModeChanged = TRUE;
-        m = *mode;
-    }
-    else if (swapchain_desc->windowed)
-    {
-        m = swapchain->original_mode;
-    }
-    else
-    {
-        m.width = swapchain_desc->backbuffer_width;
-        m.height = swapchain_desc->backbuffer_height;
-        m.refresh_rate = swapchain_desc->refresh_rate;
-        m.format_id = swapchain_desc->backbuffer_format;
-        m.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
-
-        if ((m.width != swapchain->desc.backbuffer_width
-                || m.height != swapchain->desc.backbuffer_height))
-            DisplayModeChanged = TRUE;
-    }
-
     if (!swapchain_desc->windowed != !swapchain->desc.windowed
-            || DisplayModeChanged)
+            || swapchain->reapply_mode || mode
+            || swapchain_desc->backbuffer_width != swapchain->desc.backbuffer_width
+            || swapchain_desc->backbuffer_height != swapchain->desc.backbuffer_height)
     {
-        if (FAILED(hr = wined3d_set_adapter_display_mode(device->wined3d, device->adapter->ordinal, &m)))
-        {
-            WARN("Failed to set display mode, hr %#x.\n", hr);
-            return WINED3DERR_INVALIDCALL;
-        }
-
-        if (!swapchain_desc->windowed)
-        {
-            if (swapchain->desc.windowed)
-            {
-                HWND focus_window = device->create_parms.focus_window;
-                if (!focus_window)
-                    focus_window = swapchain_desc->device_window;
-                if (FAILED(hr = wined3d_device_acquire_focus_window(device, focus_window)))
-                {
-                    ERR("Failed to acquire focus window, hr %#x.\n", hr);
-                    return hr;
-                }
-
-                /* switch from windowed to fs */
-                wined3d_device_setup_fullscreen_window(device, swapchain->device_window,
-                        swapchain_desc->backbuffer_width,
-                        swapchain_desc->backbuffer_height);
-            }
-            else
-            {
-                /* Fullscreen -> fullscreen mode change */
-                MoveWindow(swapchain->device_window, 0, 0,
-                        swapchain_desc->backbuffer_width,
-                        swapchain_desc->backbuffer_height,
-                        TRUE);
-            }
-            swapchain->d3d_mode = m;
-        }
-        else if (!swapchain->desc.windowed)
-        {
-            /* Fullscreen -> windowed switch */
-            wined3d_device_restore_fullscreen_window(device, swapchain->device_window);
-            wined3d_device_release_focus_window(device);
-        }
-        swapchain->desc.windowed = swapchain_desc->windowed;
+        if (FAILED(hr = wined3d_swapchain_set_fullscreen(swapchain, swapchain_desc, mode)))
+            return hr;
     }
     else if (!swapchain_desc->windowed)
     {
@@ -4832,7 +4770,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         struct wined3d_resource_desc texture_desc;
         struct wined3d_texture *texture;
 
-        TRACE("Creating the depth stencil buffer\n");
+        TRACE("Creating the depth stencil buffer.\n");
 
         texture_desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
         texture_desc.format = swapchain->desc.auto_depth_stencil_format;

@@ -2524,6 +2524,8 @@ HRESULT __cdecl wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
 HRESULT __cdecl wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapchain, unsigned int buffer_count,
         unsigned int width, unsigned int height, enum wined3d_format_id format_id,
         enum wined3d_multisample_type multisample_type, unsigned int multisample_quality);
+HRESULT __cdecl wined3d_swapchain_set_fullscreen(struct wined3d_swapchain *swapchain,
+        const struct wined3d_swapchain_desc *desc, const struct wined3d_display_mode *mode);
 HRESULT __cdecl wined3d_swapchain_set_gamma_ramp(const struct wined3d_swapchain *swapchain,
         DWORD flags, const struct wined3d_gamma_ramp *ramp);
 void __cdecl wined3d_swapchain_set_palette(struct wined3d_swapchain *swapchain, struct wined3d_palette *palette);
