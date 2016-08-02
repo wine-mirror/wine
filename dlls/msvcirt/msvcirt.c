@@ -3481,6 +3481,141 @@ int __thiscall istream_getdouble(istream *this, char *str, int count)
     return i;
 }
 
+/* ??5istream@@QAEAAV0@AAC@Z */
+/* ??5istream@@QEAAAEAV0@AEAC@Z */
+/* ??5istream@@QAEAAV0@AAD@Z */
+/* ??5istream@@QEAAAEAV0@AEAD@Z */
+/* ??5istream@@QAEAAV0@AAE@Z */
+/* ??5istream@@QEAAAEAV0@AEAE@Z */
+DEFINE_THISCALL_WRAPPER(istream_read_char, 8)
+istream* __thiscall istream_read_char(istream *this, char *ch)
+{
+    FIXME("(%p %p) stub\n", this, ch);
+    return this;
+}
+
+/* ??5istream@@QAEAAV0@PAC@Z */
+/* ??5istream@@QEAAAEAV0@PEAC@Z */
+/* ??5istream@@QAEAAV0@PAD@Z */
+/* ??5istream@@QEAAAEAV0@PEAD@Z */
+/* ??5istream@@QAEAAV0@PAE@Z */
+/* ??5istream@@QEAAAEAV0@PEAE@Z */
+DEFINE_THISCALL_WRAPPER(istream_read_str, 8)
+istream* __thiscall istream_read_str(istream *this, char *str)
+{
+    FIXME("(%p %p) stub\n", this, str);
+    return this;
+}
+
+/* ??5istream@@QAEAAV0@AAF@Z */
+/* ??5istream@@QEAAAEAV0@AEAF@Z */
+DEFINE_THISCALL_WRAPPER(istream_read_short, 8)
+istream* __thiscall istream_read_short(istream *this, short *p)
+{
+    FIXME("(%p %p) stub\n", this, p);
+    return this;
+}
+
+/* ??5istream@@QAEAAV0@AAG@Z */
+/* ??5istream@@QEAAAEAV0@AEAG@Z */
+DEFINE_THISCALL_WRAPPER(istream_read_unsigned_short, 8)
+istream* __thiscall istream_read_unsigned_short(istream *this, unsigned short *p)
+{
+    FIXME("(%p %p) stub\n", this, p);
+    return this;
+}
+
+/* ??5istream@@QAEAAV0@AAH@Z */
+/* ??5istream@@QEAAAEAV0@AEAH@Z */
+DEFINE_THISCALL_WRAPPER(istream_read_int, 8)
+istream* __thiscall istream_read_int(istream *this, int *p)
+{
+    FIXME("(%p %p) stub\n", this, p);
+    return this;
+}
+
+/* ??5istream@@QAEAAV0@AAI@Z */
+/* ??5istream@@QEAAAEAV0@AEAI@Z */
+DEFINE_THISCALL_WRAPPER(istream_read_unsigned_int, 8)
+istream* __thiscall istream_read_unsigned_int(istream *this, unsigned int *p)
+{
+    FIXME("(%p %p) stub\n", this, p);
+    return this;
+}
+
+/* ??5istream@@QAEAAV0@AAJ@Z */
+/* ??5istream@@QEAAAEAV0@AEAJ@Z */
+DEFINE_THISCALL_WRAPPER(istream_read_long, 8)
+istream* __thiscall istream_read_long(istream *this, LONG *p)
+{
+    FIXME("(%p %p) stub\n", this, p);
+    return this;
+}
+
+/* ??5istream@@QAEAAV0@AAK@Z */
+/* ??5istream@@QEAAAEAV0@AEAK@Z */
+DEFINE_THISCALL_WRAPPER(istream_read_unsigned_long, 8)
+istream* __thiscall istream_read_unsigned_long(istream *this, ULONG *p)
+{
+    FIXME("(%p %p) stub\n", this, p);
+    return this;
+}
+
+/* ??5istream@@QAEAAV0@AAM@Z */
+/* ??5istream@@QEAAAEAV0@AEAM@Z */
+DEFINE_THISCALL_WRAPPER(istream_read_float, 8)
+istream* __thiscall istream_read_float(istream *this, float *f)
+{
+    FIXME("(%p %p) stub\n", this, f);
+    return this;
+}
+
+/* ??5istream@@QAEAAV0@AAN@Z */
+/* ??5istream@@QEAAAEAV0@AEAN@Z */
+DEFINE_THISCALL_WRAPPER(istream_read_double, 8)
+istream* __thiscall istream_read_double(istream *this, double *d)
+{
+    FIXME("(%p %p) stub\n", this, d);
+    return this;
+}
+
+/* ??5istream@@QAEAAV0@AAO@Z */
+/* ??5istream@@QEAAAEAV0@AEAO@Z */
+DEFINE_THISCALL_WRAPPER(istream_read_long_double, 8)
+istream* __thiscall istream_read_long_double(istream *this, double *ld)
+{
+    FIXME("(%p %p) stub\n", this, ld);
+    return this;
+}
+
+/* ??5istream@@QAEAAV0@PAVstreambuf@@@Z */
+/* ??5istream@@QEAAAEAV0@PEAVstreambuf@@@Z */
+DEFINE_THISCALL_WRAPPER(istream_read_streambuf, 8)
+istream* __thiscall istream_read_streambuf(istream *this, streambuf *sb)
+{
+    FIXME("(%p %p) stub\n", this, sb);
+    return this;
+}
+
+/* ??5istream@@QAEAAV0@P6AAAV0@AAV0@@Z@Z */
+/* ??5istream@@QEAAAEAV0@P6AAEAV0@AEAV0@@Z@Z */
+DEFINE_THISCALL_WRAPPER(istream_read_manip, 8)
+istream* __thiscall istream_read_manip(istream *this, istream* (__cdecl *func)(istream*))
+{
+    TRACE("(%p %p)\n", this, func);
+    return func(this);
+}
+
+/* ??5istream@@QAEAAV0@P6AAAVios@@AAV1@@Z@Z */
+/* ??5istream@@QEAAAEAV0@P6AAEAVios@@AEAV1@@Z@Z */
+DEFINE_THISCALL_WRAPPER(istream_read_ios_manip, 8)
+istream* __thiscall istream_read_ios_manip(istream *this, ios* (__cdecl *func)(ios*))
+{
+    TRACE("(%p %p)\n", this, func);
+    func(istream_get_ios(this));
+    return this;
+}
+
 /* ?ws@@YAAAVistream@@AAV1@@Z */
 /* ?ws@@YAAEAVistream@@AEAV1@@Z */
 istream* __cdecl istream_ws(istream *this)
