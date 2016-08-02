@@ -438,21 +438,20 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     for (i = 0; i < gl_info->limits.buffers; ++i)
     {
         struct wined3d_rendertarget_view *rtv = fb->render_targets[i];
-        struct wined3d_surface *target = wined3d_rendertarget_view_get_surface(rtv);
+        struct wined3d_texture *rt;
 
-        if (target && rtv->format->id != WINED3DFMT_NULL)
+        if (!rtv || rtv->format->id == WINED3DFMT_NULL)
+            continue;
+
+        rt = wined3d_texture_from_resource(rtv->resource);
+        if (state->render_states[WINED3D_RS_COLORWRITEENABLE])
         {
-            if (state->render_states[WINED3D_RS_COLORWRITEENABLE])
-            {
-                surface_load_location(target, context, rtv->resource->draw_binding);
-                wined3d_texture_invalidate_location(target->container,
-                        rtv->sub_resource_idx, ~rtv->resource->draw_binding);
-            }
-            else
-            {
-                wined3d_texture_prepare_location(target->container, rtv->sub_resource_idx,
-                        context, rtv->resource->draw_binding);
-            }
+            wined3d_texture_load_location(rt, rtv->sub_resource_idx, context, rtv->resource->draw_binding);
+            wined3d_texture_invalidate_location(rt, rtv->sub_resource_idx, ~rtv->resource->draw_binding);
+        }
+        else
+        {
+            wined3d_texture_prepare_location(rt, rtv->sub_resource_idx, context, rtv->resource->draw_binding);
         }
     }
 
@@ -482,7 +481,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
 
             IntersectRect(&r, &draw_rect, &current_rect);
             if (!EqualRect(&r, &draw_rect))
-                surface_load_location(ds, context, location);
+                wined3d_texture_load_location(ds->container, dsv->sub_resource_idx, context, location);
             else
                 wined3d_texture_prepare_location(ds->container, dsv->sub_resource_idx, context, location);
         }
