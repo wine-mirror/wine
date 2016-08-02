@@ -577,6 +577,7 @@ static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
 {
     jsdisp_t *This = impl_from_IDispatchEx(iface);
     ULONG ref = --This->ref;
+    TRACE("(%p) ref=%d\n", This, ref);
     if(!ref)
         jsdisp_free(This);
     return ref;
