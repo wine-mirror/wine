@@ -1,21 +1,21 @@
 @ cdecl __acrt_iob_func(long) ucrtbase.__acrt_iob_func
 @ cdecl __p__commode() ucrtbase.__p__commode
 @ cdecl __p__fmode() ucrtbase.__p__fmode
-@ cdecl __stdio_common_vfprintf(int64 ptr ptr ptr ptr) ucrtbase.__stdio_common_vfprintf
+@ cdecl __stdio_common_vfprintf(int64 ptr str ptr ptr) ucrtbase.__stdio_common_vfprintf
 @ stub __stdio_common_vfprintf_p
 @ stub __stdio_common_vfprintf_s
 @ stub __stdio_common_vfscanf
-@ cdecl __stdio_common_vfwprintf(int64 ptr ptr ptr ptr) ucrtbase.__stdio_common_vfwprintf
+@ cdecl __stdio_common_vfwprintf(int64 ptr wstr ptr ptr) ucrtbase.__stdio_common_vfwprintf
 @ stub __stdio_common_vfwprintf_p
 @ stub __stdio_common_vfwprintf_s
 @ stub __stdio_common_vfwscanf
-@ cdecl __stdio_common_vsnprintf_s(int64 ptr long long ptr ptr ptr) ucrtbase.__stdio_common_vsnprintf_s
-@ cdecl __stdio_common_vsnwprintf_s(int64 ptr long long ptr ptr ptr) ucrtbase.__stdio_common_vsnwprintf_s
-@ cdecl __stdio_common_vsprintf(int64 ptr long ptr ptr ptr) ucrtbase.__stdio_common_vsprintf
+@ cdecl __stdio_common_vsnprintf_s(int64 ptr long long str ptr ptr) ucrtbase.__stdio_common_vsnprintf_s
+@ cdecl __stdio_common_vsnwprintf_s(int64 ptr long long wstr ptr ptr) ucrtbase.__stdio_common_vsnwprintf_s
+@ cdecl __stdio_common_vsprintf(int64 ptr long str ptr ptr) ucrtbase.__stdio_common_vsprintf
 @ stub __stdio_common_vsprintf_p
-@ cdecl __stdio_common_vsprintf_s(int64 ptr long ptr ptr ptr) ucrtbase.__stdio_common_vsprintf_s
-@ cdecl __stdio_common_vsscanf(int64 ptr long ptr ptr ptr) ucrtbase.__stdio_common_vsscanf
-@ cdecl __stdio_common_vswprintf(int64 ptr long ptr ptr ptr) ucrtbase.__stdio_common_vswprintf
+@ cdecl __stdio_common_vsprintf_s(int64 ptr long str ptr ptr) ucrtbase.__stdio_common_vsprintf_s
+@ cdecl __stdio_common_vsscanf(int64 ptr long str ptr ptr) ucrtbase.__stdio_common_vsscanf
+@ cdecl __stdio_common_vswprintf(int64 ptr long wstr ptr ptr) ucrtbase.__stdio_common_vswprintf
 @ stub __stdio_common_vswprintf_p
 @ cdecl __stdio_common_vswprintf_s(int64 ptr long wstr ptr ptr) ucrtbase.__stdio_common_vswprintf_s
 @ stub __stdio_common_vswscanf
