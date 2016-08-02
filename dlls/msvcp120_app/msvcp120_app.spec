@@ -949,7 +949,7 @@
 @ extern ??_7?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ msvcp120.??_7?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@
 @ extern ??_7?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@ msvcp120.??_7?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@
 @ extern ??_7?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@ msvcp120.??_7?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@
-@ stub ??_7_Facet_base@std@@6B@
+# extern ??_7_Facet_base@std@@6B@
 @ extern ??_7_Locimp@locale@std@@6B@ msvcp120.??_7_Locimp@locale@std@@6B@
 @ extern ??_7_Pad@std@@6B@ msvcp120.??_7_Pad@std@@6B@
 @ extern ??_7codecvt_base@std@@6B@ msvcp120.??_7codecvt_base@std@@6B@
@@ -1078,26 +1078,26 @@
 @ stub -arch=win64 ?NFS_Free@details@Concurrency@@YAXPEAX@Z
 @ stub -arch=win32 ?NFS_GetLineSize@details@Concurrency@@YAIXZ
 @ stub -arch=win64 ?NFS_GetLineSize@details@Concurrency@@YA_KXZ
-@ stub ?_10@placeholders@std@@3V?$_Ph@$09@2@A
-@ stub ?_11@placeholders@std@@3V?$_Ph@$0L@@2@A
-@ stub ?_12@placeholders@std@@3V?$_Ph@$0M@@2@A
-@ stub ?_13@placeholders@std@@3V?$_Ph@$0N@@2@A
-@ stub ?_14@placeholders@std@@3V?$_Ph@$0O@@2@A
-@ stub ?_15@placeholders@std@@3V?$_Ph@$0P@@2@A
-@ stub ?_16@placeholders@std@@3V?$_Ph@$0BA@@2@A
-@ stub ?_17@placeholders@std@@3V?$_Ph@$0BB@@2@A
-@ stub ?_18@placeholders@std@@3V?$_Ph@$0BC@@2@A
-@ stub ?_19@placeholders@std@@3V?$_Ph@$0BD@@2@A
-@ stub ?_1@placeholders@std@@3V?$_Ph@$00@2@A
-@ stub ?_20@placeholders@std@@3V?$_Ph@$0BE@@2@A
-@ stub ?_2@placeholders@std@@3V?$_Ph@$01@2@A
-@ stub ?_3@placeholders@std@@3V?$_Ph@$02@2@A
-@ stub ?_4@placeholders@std@@3V?$_Ph@$03@2@A
-@ stub ?_5@placeholders@std@@3V?$_Ph@$04@2@A
-@ stub ?_6@placeholders@std@@3V?$_Ph@$05@2@A
-@ stub ?_7@placeholders@std@@3V?$_Ph@$06@2@A
-@ stub ?_8@placeholders@std@@3V?$_Ph@$07@2@A
-@ stub ?_9@placeholders@std@@3V?$_Ph@$08@2@A
+# extern ?_10@placeholders@std@@3V?$_Ph@$09@2@A
+# extern ?_11@placeholders@std@@3V?$_Ph@$0L@@2@A
+# extern ?_12@placeholders@std@@3V?$_Ph@$0M@@2@A
+# extern ?_13@placeholders@std@@3V?$_Ph@$0N@@2@A
+# extern ?_14@placeholders@std@@3V?$_Ph@$0O@@2@A
+# extern ?_15@placeholders@std@@3V?$_Ph@$0P@@2@A
+# extern ?_16@placeholders@std@@3V?$_Ph@$0BA@@2@A
+# extern ?_17@placeholders@std@@3V?$_Ph@$0BB@@2@A
+# extern ?_18@placeholders@std@@3V?$_Ph@$0BC@@2@A
+# extern ?_19@placeholders@std@@3V?$_Ph@$0BD@@2@A
+# extern ?_1@placeholders@std@@3V?$_Ph@$00@2@A
+# extern ?_20@placeholders@std@@3V?$_Ph@$0BE@@2@A
+# extern ?_2@placeholders@std@@3V?$_Ph@$01@2@A
+# extern ?_3@placeholders@std@@3V?$_Ph@$02@2@A
+# extern ?_4@placeholders@std@@3V?$_Ph@$03@2@A
+# extern ?_5@placeholders@std@@3V?$_Ph@$04@2@A
+# extern ?_6@placeholders@std@@3V?$_Ph@$05@2@A
+# extern ?_7@placeholders@std@@3V?$_Ph@$06@2@A
+# extern ?_8@placeholders@std@@3V?$_Ph@$07@2@A
+# extern ?_9@placeholders@std@@3V?$_Ph@$08@2@A
 @ cdecl -arch=arm ?_Addcats@_Locinfo@std@@QAAAAV12@HPBD@Z(ptr long str) msvcp120.?_Addcats@_Locinfo@std@@QAAAAV12@HPBD@Z
 @ thiscall -arch=i386 ?_Addcats@_Locinfo@std@@QAEAAV12@HPBD@Z(ptr long str) msvcp120.?_Addcats@_Locinfo@std@@QAEAAV12@HPBD@Z
 @ cdecl -arch=win64 ?_Addcats@_Locinfo@std@@QEAAAEAV12@HPEBD@Z(ptr long str) msvcp120.?_Addcats@_Locinfo@std@@QEAAAEAV12@HPEBD@Z
@@ -1114,7 +1114,7 @@
 @ stub -arch=win64 ?_Assign@_Concurrent_queue_iterator_base_v4@details@Concurrency@@IEAAXAEBV123@@Z
 @ stub ?_Atexit@@YAXP6AXXZ@Z
 @ extern ?_BADOFF@std@@3_JB msvcp120.?_BADOFF@std@@3_JB
-@ stub ?_Byte_reverse_table@details@Concurrency@@3QBEB
+# extern ?_Byte_reverse_table@details@Concurrency@@3QBEB
 @ cdecl -arch=arm ?_C_str@?$_Yarn@D@std@@QBAPBDXZ(ptr) msvcp120.?_C_str@?$_Yarn@D@std@@QBAPBDXZ
 @ thiscall -arch=i386 ?_C_str@?$_Yarn@D@std@@QBEPBDXZ(ptr) msvcp120.?_C_str@?$_Yarn@D@std@@QBEPBDXZ
 @ cdecl -arch=win64 ?_C_str@?$_Yarn@D@std@@QEBAPEBDXZ(ptr) msvcp120.?_C_str@?$_Yarn@D@std@@QEBAPEBDXZ
@@ -1806,7 +1806,7 @@
 @ stub ?_Xregex_error@std@@YAXW4error_type@regex_constants@1@@Z
 @ cdecl -arch=win32 ?_Xruntime_error@std@@YAXPBD@Z(str) msvcp120.?_Xruntime_error@std@@YAXPBD@Z
 @ cdecl -arch=win64 ?_Xruntime_error@std@@YAXPEBD@Z(str) msvcp120.?_Xruntime_error@std@@YAXPEBD@Z
-@ stub ?adopt_lock@std@@3Uadopt_lock_t@1@B
+# extern ?adopt_lock@std@@3Uadopt_lock_t@1@B
 @ cdecl -arch=arm ?always_noconv@codecvt_base@std@@QBA_NXZ(ptr) msvcp120.?always_noconv@codecvt_base@std@@QBA_NXZ
 @ thiscall -arch=i386 ?always_noconv@codecvt_base@std@@QBE_NXZ(ptr) msvcp120.?always_noconv@codecvt_base@std@@QBE_NXZ
 @ cdecl -arch=win64 ?always_noconv@codecvt_base@std@@QEBA_NXZ(ptr) msvcp120.?always_noconv@codecvt_base@std@@QEBA_NXZ
@@ -1875,7 +1875,7 @@
 @ stub -arch=arm ?date_order@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBA?AW4dateorder@time_base@2@XZ
 @ stub -arch=i386 ?date_order@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AW4dateorder@time_base@2@XZ
 @ stub -arch=win64 ?date_order@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AW4dateorder@time_base@2@XZ
-@ stub ?defer_lock@std@@3Udefer_lock_t@1@B
+# extern ?defer_lock@std@@3Udefer_lock_t@1@B
 @ stub -arch=arm ?do_always_noconv@?$codecvt@DDH@std@@MBA_NXZ
 @ stub -arch=i386 ?do_always_noconv@?$codecvt@DDH@std@@MBE_NXZ
 @ stub -arch=win64 ?do_always_noconv@?$codecvt@DDH@std@@MEBA_NXZ
@@ -3546,7 +3546,7 @@
 @ cdecl -arch=arm ?toupper@?$ctype@_W@std@@QBA_W_W@Z(ptr long) msvcp120.?toupper@?$ctype@_W@std@@QBA_W_W@Z
 @ thiscall -arch=i386 ?toupper@?$ctype@_W@std@@QBE_W_W@Z(ptr long) msvcp120.?toupper@?$ctype@_W@std@@QBE_W_W@Z
 @ cdecl -arch=win64 ?toupper@?$ctype@_W@std@@QEBA_W_W@Z(ptr long) msvcp120.?toupper@?$ctype@_W@std@@QEBA_W_W@Z
-@ stub ?try_to_lock@std@@3Utry_to_lock_t@1@B
+# extern ?try_to_lock@std@@3Utry_to_lock_t@1@B
 @ cdecl -arch=arm ?uflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAAHXZ(ptr) msvcp120.?uflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAAHXZ
 @ thiscall -arch=i386 ?uflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHXZ(ptr) msvcp120.?uflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHXZ
 @ cdecl -arch=win64 ?uflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHXZ(ptr) msvcp120.?uflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHXZ
