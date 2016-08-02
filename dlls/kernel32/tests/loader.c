@@ -70,6 +70,10 @@ static PVOID    (WINAPI *pResolveDelayLoadedAPI)(PVOID, PCIMAGE_DELAYLOAD_DESCRI
                                                  PDELAYLOAD_FAILURE_DLL_CALLBACK, PVOID,
                                                  PIMAGE_THUNK_DATA ThunkAddress,ULONG);
 static PVOID (WINAPI *pRtlImageDirectoryEntryToData)(HMODULE,BOOL,WORD,ULONG *);
+static DWORD (WINAPI *pFlsAlloc)(PFLS_CALLBACK_FUNCTION);
+static BOOL (WINAPI *pFlsSetValue)(DWORD, PVOID);
+static PVOID (WINAPI *pFlsGetValue)(DWORD);
+static BOOL (WINAPI *pFlsFree)(DWORD);
 
 static PVOID RVAToAddr(DWORD_PTR rva, HMODULE module)
 {
@@ -1476,6 +1480,7 @@ static HANDLE attached_thread[MAX_COUNT];
 static DWORD attached_thread_count;
 HANDLE stop_event, event, mutex, semaphore, loader_lock_event, peb_lock_event, heap_lock_event, ack_event;
 static int test_dll_phase, inside_loader_lock, inside_peb_lock, inside_heap_lock;
+static LONG fls_callback_count;
 
 static DWORD WINAPI mutex_thread_proc(void *param)
 {
@@ -1558,9 +1563,18 @@ static DWORD WINAPI noop_thread_proc(void *param)
     return 195;
 }
 
+static VOID WINAPI fls_callback(PVOID lpFlsData)
+{
+    ok(lpFlsData == (void*) 0x31415, "lpFlsData is %p, expected %p\n", lpFlsData, (void*) 0x31415);
+    InterlockedIncrement(&fls_callback_count);
+}
+
 static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
 {
     static LONG noop_thread_started;
+    static DWORD fls_index = FLS_OUT_OF_INDEXES;
+    static int fls_count = 0;
+    static int thread_detach_count = 0;
     DWORD ret;
 
     ok(!inside_loader_lock, "inside_loader_lock should not be set\n");
@@ -1573,6 +1587,23 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
 
         ret = pRtlDllShutdownInProgress();
         ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
+
+        /* Set up the FLS slot, if FLS is available */
+        if (pFlsGetValue)
+        {
+            void* value;
+            BOOL bret;
+            ret = pFlsAlloc(&fls_callback);
+            ok(ret != FLS_OUT_OF_INDEXES, "FlsAlloc returned %d\n", ret);
+            fls_index = ret;
+            SetLastError(0xdeadbeef);
+            value = pFlsGetValue(fls_index);
+            ok(!value, "FlsGetValue returned %p, expected NULL\n", value);
+            ok(GetLastError() == ERROR_SUCCESS, "FlsGetValue failed with error %u\n", GetLastError());
+            bret = pFlsSetValue(fls_index, (void*) 0x31415);
+            ok(bret, "FlsSetValue failed\n");
+            fls_count++;
+        }
 
         break;
     case DLL_PROCESS_DETACH:
@@ -1625,6 +1656,43 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
             /* FIXME: remove once Wine is fixed */
             todo_wine_if (!(expected_code == STILL_ACTIVE || expected_code == 196))
                 ok(!ret || broken(ret) /* before Vista */, "RtlDllShutdownInProgress returned %d\n", ret);
+        }
+
+        /* In the case that the process is terminating, FLS slots should still be accessible, but
+         * the callback should be already run for this thread and the contents already NULL.
+         * Note that this is broken for Win2k3, which runs the callbacks *after* the DLL entry
+         * point has already run.
+         */
+        if (param && pFlsGetValue)
+        {
+            void* value;
+            SetLastError(0xdeadbeef);
+            value = pFlsGetValue(fls_index);
+            todo_wine
+            {
+                ok(broken(value == (void*) 0x31415) || /* Win2k3 */
+                   value == NULL, "FlsGetValue returned %p, expected NULL\n", value);
+            }
+            ok(GetLastError() == ERROR_SUCCESS, "FlsGetValue failed with error %u\n", GetLastError());
+            todo_wine
+            {
+                ok(broken(fls_callback_count == thread_detach_count) || /* Win2k3 */
+                   fls_callback_count == thread_detach_count + 1,
+                   "wrong FLS callback count %d, expected %d\n", fls_callback_count, thread_detach_count + 1);
+            }
+        }
+        if (pFlsFree)
+        {
+            BOOL ret;
+            /* Call FlsFree now and run the remaining callbacks from uncleanly terminated threads */
+            ret = pFlsFree(fls_index);
+            ok(ret, "FlsFree failed with error %u\n", GetLastError());
+            fls_index = FLS_OUT_OF_INDEXES;
+            todo_wine
+            {
+                ok(fls_callback_count == fls_count,
+                   "wrong FLS callback count %d, expected %d\n", fls_callback_count, fls_count);
+            }
         }
 
         ok(attached_thread_count >= 2, "attached thread count should be >= 2\n");
@@ -1797,9 +1865,26 @@ todo_wine
                             0, TRUE, DUPLICATE_SAME_ACCESS);
             attached_thread_count++;
         }
+
+        /* Make sure the FLS slot is empty, if FLS is available */
+        if (pFlsGetValue)
+        {
+            void* value;
+            BOOL ret;
+            SetLastError(0xdeadbeef);
+            value = pFlsGetValue(fls_index);
+            ok(!value, "FlsGetValue returned %p, expected NULL\n", value);
+            todo_wine
+                ok(GetLastError() == ERROR_SUCCESS, "FlsGetValue failed with error %u\n", GetLastError());
+            ret = pFlsSetValue(fls_index, (void*) 0x31415);
+            ok(ret, "FlsSetValue failed\n");
+            fls_count++;
+        }
+
         break;
     case DLL_THREAD_DETACH:
         trace("dll: %p, DLL_THREAD_DETACH, %p\n", hinst, param);
+        thread_detach_count++;
 
         ret = pRtlDllShutdownInProgress();
         /* win7 doesn't allow creating a thread during process shutdown but
@@ -1810,6 +1895,23 @@ todo_wine
             ok(ret, "RtlDllShutdownInProgress returned %d\n", ret);
         else
             ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
+
+        /* FLS data should already be destroyed, if FLS is available.
+         * Note that this is broken for Win2k3, which runs the callbacks *after* the DLL entry
+         * point has already run.
+         */
+        if (pFlsGetValue && fls_index != FLS_OUT_OF_INDEXES)
+        {
+            void* value;
+            SetLastError(0xdeadbeef);
+            value = pFlsGetValue(fls_index);
+            todo_wine
+            {
+                ok(broken(value == (void*) 0x31415) || /* Win2k3 */
+                   !value, "FlsGetValue returned %p, expected NULL\n", value);
+            }
+            ok(GetLastError() == ERROR_SUCCESS, "FlsGetValue failed with error %u\n", GetLastError());
+        }
 
         break;
     default:
@@ -2909,10 +3011,11 @@ START_TEST(loader)
 {
     int argc;
     char **argv;
-    HANDLE ntdll, mapping;
+    HANDLE ntdll, mapping, kernel32;
     SYSTEM_INFO si;
 
     ntdll = GetModuleHandleA("ntdll.dll");
+    kernel32 = GetModuleHandleA("kernel32.dll");
     pNtCreateSection = (void *)GetProcAddress(ntdll, "NtCreateSection");
     pNtQuerySection = (void *)GetProcAddress(ntdll, "NtQuerySection");
     pNtMapViewOfSection = (void *)GetProcAddress(ntdll, "NtMapViewOfSection");
@@ -2929,7 +3032,11 @@ START_TEST(loader)
     pRtlAcquirePebLock = (void *)GetProcAddress(ntdll, "RtlAcquirePebLock");
     pRtlReleasePebLock = (void *)GetProcAddress(ntdll, "RtlReleasePebLock");
     pRtlImageDirectoryEntryToData = (void *)GetProcAddress(ntdll, "RtlImageDirectoryEntryToData");
-    pResolveDelayLoadedAPI = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "ResolveDelayLoadedAPI");
+    pFlsAlloc = (void *)GetProcAddress(kernel32, "FlsAlloc");
+    pFlsSetValue = (void *)GetProcAddress(kernel32, "FlsSetValue");
+    pFlsGetValue = (void *)GetProcAddress(kernel32, "FlsGetValue");
+    pFlsFree = (void *)GetProcAddress(kernel32, "FlsFree");
+    pResolveDelayLoadedAPI = (void *)GetProcAddress(kernel32, "ResolveDelayLoadedAPI");
 
     GetSystemInfo( &si );
     page_size = si.dwPageSize;
