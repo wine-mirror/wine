@@ -908,6 +908,16 @@ int CDECL MSVCRT__stdio_common_vsnwprintf_s( unsigned __int64 options,
 }
 
 /*********************************************************************
+ *		__stdio_common_vswprintf_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__stdio_common_vswprintf_s( unsigned __int64 options,
+        MSVCRT_wchar_t *str, MSVCRT_size_t count, const MSVCRT_wchar_t *format,
+        MSVCRT__locale_t locale, __ms_va_list valist )
+{
+    return MSVCRT__stdio_common_vsnwprintf_s(options, str, INT_MAX, count, format, locale, valist);
+}
+
+/*********************************************************************
  *		__stdio_common_vsprintf_s (MSVCRT.@)
  */
 int CDECL MSVCRT__stdio_common_vsprintf_s( unsigned __int64 options,

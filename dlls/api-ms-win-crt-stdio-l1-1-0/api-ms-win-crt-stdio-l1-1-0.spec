@@ -17,7 +17,7 @@
 @ cdecl __stdio_common_vsscanf(int64 ptr long ptr ptr ptr) ucrtbase.__stdio_common_vsscanf
 @ cdecl __stdio_common_vswprintf(int64 ptr long ptr ptr ptr) ucrtbase.__stdio_common_vswprintf
 @ stub __stdio_common_vswprintf_p
-@ stub __stdio_common_vswprintf_s
+@ cdecl __stdio_common_vswprintf_s(int64 ptr long wstr ptr ptr) ucrtbase.__stdio_common_vswprintf_s
 @ stub __stdio_common_vswscanf
 @ cdecl _chsize(long long) ucrtbase._chsize
 @ cdecl _chsize_s(long int64) ucrtbase._chsize_s
