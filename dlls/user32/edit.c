@@ -4665,7 +4665,7 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 
 	case EM_GETRECT:
 		if (lParam)
-			CopyRect((LPRECT)lParam, &es->format_rect);
+			*((LPRECT)lParam) = es->format_rect;
 		break;
 
 	case EM_SETRECT:

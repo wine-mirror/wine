@@ -777,7 +777,7 @@ static void CBPaintBorder(
   }
   else
   {
-    CopyRect(&clientRect, &lphc->textRect);
+    clientRect = lphc->textRect;
 
     InflateRect(&clientRect, EDIT_CONTROL_PADDING(), EDIT_CONTROL_PADDING());
     InflateRect(&clientRect, COMBO_XBORDERSIZE(), COMBO_YBORDERSIZE());
