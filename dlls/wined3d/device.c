@@ -4151,7 +4151,7 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
     if (!dst_point.x && !dst_point.y && src_rect.right == width && src_rect.bottom == height)
         wined3d_texture_prepare_texture(texture, context, FALSE);
     else
-        surface_load_location(surface, context, WINED3D_LOCATION_TEXTURE_RGB);
+        wined3d_texture_load_location(texture, sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
     wined3d_texture_bind_and_dirtify(texture, context, FALSE);
 
     wined3d_surface_upload_data(surface, gl_info, resource->format,
