@@ -2145,23 +2145,23 @@
 @ cdecl -ret64 ?max@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_max
 @ cdecl ?max@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_max
 @ cdecl ?max@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_max
-@ stub ?max_digits10@?$numeric_limits@C@std@@2HB
-@ stub ?max_digits10@?$numeric_limits@D@std@@2HB
-@ stub ?max_digits10@?$numeric_limits@E@std@@2HB
-@ stub ?max_digits10@?$numeric_limits@F@std@@2HB
-@ stub ?max_digits10@?$numeric_limits@G@std@@2HB
-@ stub ?max_digits10@?$numeric_limits@H@std@@2HB
-@ stub ?max_digits10@?$numeric_limits@I@std@@2HB
-@ stub ?max_digits10@?$numeric_limits@J@std@@2HB
-@ stub ?max_digits10@?$numeric_limits@K@std@@2HB
-@ stub ?max_digits10@?$numeric_limits@M@std@@2HB
-@ stub ?max_digits10@?$numeric_limits@N@std@@2HB
-@ stub ?max_digits10@?$numeric_limits@O@std@@2HB
-@ stub ?max_digits10@?$numeric_limits@_J@std@@2HB
-@ stub ?max_digits10@?$numeric_limits@_K@std@@2HB
-@ stub ?max_digits10@?$numeric_limits@_N@std@@2HB
-@ stub ?max_digits10@?$numeric_limits@_W@std@@2HB
-@ stub ?max_digits10@_Num_base@std@@2HB
+# extern ?max_digits10@?$numeric_limits@C@std@@2HB
+# extern ?max_digits10@?$numeric_limits@D@std@@2HB
+# extern ?max_digits10@?$numeric_limits@E@std@@2HB
+# extern ?max_digits10@?$numeric_limits@F@std@@2HB
+# extern ?max_digits10@?$numeric_limits@G@std@@2HB
+# extern ?max_digits10@?$numeric_limits@H@std@@2HB
+# extern ?max_digits10@?$numeric_limits@I@std@@2HB
+# extern ?max_digits10@?$numeric_limits@J@std@@2HB
+# extern ?max_digits10@?$numeric_limits@K@std@@2HB
+# extern ?max_digits10@?$numeric_limits@M@std@@2HB
+# extern ?max_digits10@?$numeric_limits@N@std@@2HB
+# extern ?max_digits10@?$numeric_limits@O@std@@2HB
+# extern ?max_digits10@?$numeric_limits@_J@std@@2HB
+# extern ?max_digits10@?$numeric_limits@_K@std@@2HB
+# extern ?max_digits10@?$numeric_limits@_N@std@@2HB
+# extern ?max_digits10@?$numeric_limits@_W@std@@2HB
+# extern ?max_digits10@_Num_base@std@@2HB
 @ extern ?max_exponent10@?$numeric_limits@M@std@@2HB std_numeric_limits_float_max_exponent10
 @ extern ?max_exponent10@?$numeric_limits@N@std@@2HB std_numeric_limits_double_max_exponent10
 @ extern ?max_exponent10@?$numeric_limits@O@std@@2HB std_numeric_limits_long_double_max_exponent10
