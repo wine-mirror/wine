@@ -1615,7 +1615,11 @@ static void use_connection_set_accessnameW(struct use_connection_context *ctxt, 
 {
     WCHAR *accessname = ctxt->accessname;
     if (local_name)
+    {
         strcpyW(accessname, local_name);
+        if (ctxt->result)
+            *ctxt->result = CONNECT_LOCALDRIVE;
+    }
     else
         strcpyW(accessname, ctxt->resource->lpRemoteName);
 }
@@ -1759,7 +1763,11 @@ static void use_connection_set_accessnameA(struct use_connection_context *ctxt, 
 {
     char *accessname = ctxt->accessname;
     if (local_name)
+    {
         WideCharToMultiByte(CP_ACP, 0, local_name, -1, accessname, *ctxt->buffer_size, NULL, NULL);
+        if (ctxt->result)
+            *ctxt->result = CONNECT_LOCALDRIVE;
+    }
     else
         strcpy(accessname, ctxt->resourceA->lpRemoteName);
 }
