@@ -50,6 +50,7 @@ typedef struct {
     enum {
         EXPRVAL_JSVAL,
         EXPRVAL_IDREF,
+        EXPRVAL_STACK_REF,
         EXPRVAL_INVALID
     } type;
     union {
@@ -58,6 +59,7 @@ typedef struct {
             IDispatch *disp;
             DISPID id;
         } idref;
+        unsigned off;
         HRESULT hres;
     } u;
 } exprval_t;
@@ -103,10 +105,15 @@ static inline jsval_t stack_top(script_ctx_t *ctx)
     return ctx->stack[ctx->stack_top-1];
 }
 
-static inline jsval_t stack_topn(script_ctx_t *ctx, unsigned n)
+static inline jsval_t *stack_top_ref(script_ctx_t *ctx, unsigned n)
 {
     assert(ctx->stack_top > ctx->call_ctx->stack_base+n);
-    return ctx->stack[ctx->stack_top-1-n];
+    return ctx->stack+ctx->stack_top-1-n;
+}
+
+static inline jsval_t stack_topn(script_ctx_t *ctx, unsigned n)
+{
+    return *stack_top_ref(ctx, n);
 }
 
 static inline jsval_t *stack_args(script_ctx_t *ctx, unsigned n)
@@ -183,6 +190,11 @@ static HRESULT stack_push_exprval(script_ctx_t *ctx, exprval_t *val)
         else
             IDispatch_Release(val->u.idref.disp);
         return hres;
+    case EXPRVAL_STACK_REF:
+        hres = stack_push(ctx, jsval_number(val->u.off));
+        if(SUCCEEDED(hres))
+            hres = stack_push(ctx, jsval_undefined());
+        return hres;
     case EXPRVAL_INVALID:
         hres = stack_push(ctx, jsval_undefined());
         if(SUCCEEDED(hres))
@@ -194,19 +206,50 @@ static HRESULT stack_push_exprval(script_ctx_t *ctx, exprval_t *val)
     return E_FAIL;
 }
 
-static BOOL exprval_from_stack(jsval_t v1, jsval_t v2, exprval_t *r)
+static BOOL stack_topn_exprval(script_ctx_t *ctx, unsigned n, exprval_t *r)
 {
-    switch(jsval_type(v1)) {
+    jsval_t v = stack_topn(ctx, n+1);
+
+    switch(jsval_type(v)) {
+    case JSV_NUMBER: {
+        call_frame_t *frame = ctx->call_ctx;
+        unsigned off = get_number(v);
+
+        if(!frame->base_scope->frame && off >= frame->arguments_off) {
+            DISPID id;
+            HRESULT hres;
+
+            /* Got stack reference in deoptimized code. Need to convert it back to variable object reference. */
+
+            hres = jsdisp_get_id(ctx->call_ctx->base_scope->jsobj, frame->function->params[off - frame->arguments_off], 0, &id);
+            if(FAILED(hres)) {
+                r->type = EXPRVAL_INVALID;
+                r->u.hres = hres;
+                return FALSE;
+            }
+
+            *stack_top_ref(ctx, n+1) = jsval_obj(jsdisp_addref(frame->base_scope->jsobj));
+            *stack_top_ref(ctx, n) = jsval_number(id);
+            r->type = EXPRVAL_IDREF;
+            r->u.idref.disp = frame->base_scope->obj;
+            r->u.idref.id = id;
+            return TRUE;
+        }
+
+        r->type = EXPRVAL_STACK_REF;
+        r->u.off = off;
+        return TRUE;
+    }
     case JSV_OBJECT:
         r->type = EXPRVAL_IDREF;
-        r->u.idref.disp = get_object(v1);
-        assert(is_number(v2));
-        r->u.idref.id = get_number(v2);
+        r->u.idref.disp = get_object(v);
+        assert(is_number(stack_topn(ctx, n)));
+        r->u.idref.id = get_number(stack_topn(ctx, n));
         return TRUE;
     case JSV_UNDEFINED:
         r->type = EXPRVAL_INVALID;
-        assert(is_number(v2));
-        r->u.hres = get_number(v2);
+        assert(is_number(stack_topn(ctx, n)));
+        r->u.hres = get_number(stack_topn(ctx, n));
         return FALSE;
     default:
         assert(0);
@@ -216,31 +259,59 @@ static BOOL exprval_from_stack(jsval_t v1, jsval_t v2, exprval_t *r)
 
 static inline BOOL stack_pop_exprval(script_ctx_t *ctx, exprval_t *r)
 {
-    jsval_t v = stack_pop(ctx);
-    return exprval_from_stack(stack_pop(ctx), v, r);
-}
-
-static inline BOOL stack_topn_exprval(script_ctx_t *ctx, unsigned n, exprval_t *r)
-{
-    return exprval_from_stack(stack_topn(ctx, n+1), stack_topn(ctx, n), r);
+    BOOL ret = stack_topn_exprval(ctx, 0, r);
+    ctx->stack_top -= 2;
+    return ret;
 }
 
 static HRESULT exprval_propput(script_ctx_t *ctx, exprval_t *ref, jsval_t v)
 {
-    assert(ref->type == EXPRVAL_IDREF);
-    return disp_propput(ctx, ref->u.idref.disp, ref->u.idref.id, v);
+    switch(ref->type) {
+    case EXPRVAL_STACK_REF: {
+        jsval_t *r = ctx->stack + ref->u.off;
+        jsval_release(*r);
+        return jsval_copy(v, r);
+    }
+    case EXPRVAL_IDREF:
+        return disp_propput(ctx, ref->u.idref.disp, ref->u.idref.id, v);
+    default:
+        assert(0);
+        return E_FAIL;
+    }
 }
 
 static HRESULT exprval_propget(script_ctx_t *ctx, exprval_t *ref, jsval_t *r)
 {
-    assert(ref->type == EXPRVAL_IDREF);
-    return disp_propget(ctx, ref->u.idref.disp, ref->u.idref.id, r);
+    switch(ref->type) {
+    case EXPRVAL_STACK_REF:
+        return jsval_copy(ctx->stack[ref->u.off], r);
+    case EXPRVAL_IDREF:
+        return disp_propget(ctx, ref->u.idref.disp, ref->u.idref.id, r);
+    default:
+        assert(0);
+        return E_FAIL;
+    }
 }
 
 static HRESULT exprval_call(script_ctx_t *ctx, exprval_t *ref, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
-    assert(ref->type == EXPRVAL_IDREF);
-    return disp_call(ctx, ref->u.idref.disp, ref->u.idref.id, flags, argc, argv, r);
+    switch(ref->type) {
+    case EXPRVAL_STACK_REF: {
+        jsval_t v = ctx->stack[ref->u.off];
+
+        if(!is_object_instance(v)) {
+            FIXME("invoke %s\n", debugstr_jsval(v));
+            return E_FAIL;
+        }
+
+        return disp_call_value(ctx, get_object(v), NULL, flags, argc, argv, r);
+    }
+    case EXPRVAL_IDREF:
+        return disp_call(ctx, ref->u.idref.disp, ref->u.idref.id, flags, argc, argv, r);
+    default:
+        assert(0);
+        return E_FAIL;
+    }
 }
 
 /* ECMA-262 3rd Edition    8.7.1 */
@@ -271,6 +342,7 @@ static void exprval_release(exprval_t *val)
         if(val->u.idref.disp)
             IDispatch_Release(val->u.idref.disp);
         return;
+    case EXPRVAL_STACK_REF:
     case EXPRVAL_INVALID:
         return;
     }
@@ -530,9 +602,16 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
     if(ctx->call_ctx) {
         for(scope = ctx->call_ctx->scope; scope; scope = scope->next) {
             if(scope->frame) {
-                hres = detach_variable_object(ctx, scope->frame);
-                if(FAILED(hres))
-                    return hres;
+                function_code_t *func = scope->frame->function;
+                int i;
+
+                for(i = 0; i < func->param_cnt; i++) {
+                    if(!strcmpW(identifier, func->params[i])) {
+                        ret->type = EXPRVAL_STACK_REF;
+                        ret->u.off = scope->frame->arguments_off+i;
+                        return S_OK;
+                    }
+                }
             }
             if(scope->jsobj)
                 hres = jsdisp_get_id(scope->jsobj, identifier, fdexNameImplicit, &id);
@@ -1677,6 +1756,9 @@ static HRESULT interp_delete_ident(script_ctx_t *ctx)
         return hres;
 
     switch(exprval.type) {
+    case EXPRVAL_STACK_REF:
+        ret = FALSE;
+        break;
     case EXPRVAL_IDREF:
         hres = disp_delete(exprval.u.idref.disp, exprval.u.idref.id, &ret);
         IDispatch_Release(exprval.u.idref.disp);
