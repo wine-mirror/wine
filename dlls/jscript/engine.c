@@ -58,6 +58,7 @@ typedef struct {
             IDispatch *disp;
             DISPID id;
         } idref;
+        HRESULT hres;
     } u;
 } exprval_t;
 
@@ -219,6 +220,12 @@ static void exprval_release(exprval_t *val)
     case EXPRVAL_INVALID:
         return;
     }
+}
+
+static inline void exprval_set_exception(exprval_t *val, HRESULT hres)
+{
+    val->type = EXPRVAL_INVALID;
+    val->u.hres = hres;
 }
 
 /* ECMA-262 3rd Edition    8.7.1 */
@@ -537,7 +544,7 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
     if(lookup_global_members(ctx, identifier, ret))
         return S_OK;
 
-    ret->type = EXPRVAL_INVALID;
+    exprval_set_exception(ret, JS_E_UNDEFINED_VARIABLE);
     return S_OK;
 }
 
@@ -1060,7 +1067,7 @@ static HRESULT interp_ident(script_ctx_t *ctx)
         return hres;
 
     if(exprval.type == EXPRVAL_INVALID)
-        return throw_type_error(ctx, JS_E_UNDEFINED_VARIABLE, arg);
+        return throw_type_error(ctx, exprval.u.hres, arg);
 
     hres = exprval_to_value(ctx, &exprval, &v);
     exprval_release(&exprval);
