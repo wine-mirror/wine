@@ -2711,12 +2711,6 @@ static char next_chunked_data_char(chunked_stream_t *stream)
     return stream->buf[stream->buf_pos++];
 }
 
-static DWORD chunked_get_avail_data(data_stream_t *stream, http_request_t *req)
-{
-    /* Allow reading only from read buffer */
-    return 0;
-}
-
 static BOOL chunked_end_of_data(data_stream_t *stream, http_request_t *req)
 {
     chunked_stream_t *chunked_stream = (chunked_stream_t*)stream;
@@ -2856,6 +2850,26 @@ static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
     TRACE("read %d bytes\n", ret_read);
     *read = ret_read;
     return ERROR_SUCCESS;
+}
+
+static DWORD chunked_get_avail_data(data_stream_t *stream, http_request_t *req)
+{
+    chunked_stream_t *chunked_stream = (chunked_stream_t*)stream;
+    DWORD avail = 0;
+
+    if(chunked_stream->state != CHUNKED_STREAM_STATE_READING_CHUNK) {
+        DWORD res, read;
+
+        /* try to process to the next chunk */
+        res = chunked_read(stream, req, NULL, 0, &read, BLOCKING_DISALLOW);
+        if(res != ERROR_SUCCESS || chunked_stream->state != CHUNKED_STREAM_STATE_READING_CHUNK)
+            return 0;
+    }
+
+    if(is_valid_netconn(req->netconn) && chunked_stream->buf_size < chunked_stream->chunk_size)
+        NETCON_query_data_available(req->netconn, &avail);
+
+    return min(avail + chunked_stream->buf_size, chunked_stream->chunk_size);
 }
 
 static BOOL chunked_drain_content(data_stream_t *stream, http_request_t *req)
