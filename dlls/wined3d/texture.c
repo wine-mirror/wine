@@ -176,7 +176,7 @@ void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
 
 /* Context activation is done by the caller. Context may be NULL in
  * WINED3D_NO3D mode. */
-static BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
+BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, struct wined3d_context *context, DWORD location)
 {
     return texture->texture_ops->texture_load_location(texture, sub_resource_idx, context, location);

@@ -2455,7 +2455,6 @@ static void context_validate_onscreen_formats(struct wined3d_context *context,
 {
     /* Onscreen surfaces are always in a swapchain */
     struct wined3d_swapchain *swapchain = context->current_rt.texture->swapchain;
-    struct wined3d_surface *surface;
 
     if (context->render_offscreen || !depth_stencil) return;
     if (match_depth_stencil_format(swapchain->ds_format, depth_stencil->format)) return;
@@ -2466,8 +2465,9 @@ static void context_validate_onscreen_formats(struct wined3d_context *context,
     WARN("Depth stencil format is not supported by WGL, rendering the backbuffer in an FBO\n");
 
     /* The currently active context is the necessary context to access the swapchain's onscreen buffers */
-    surface = context->current_rt.texture->sub_resources[context->current_rt.sub_resource_idx].u.surface;
-    surface_load_location(surface, context, WINED3D_LOCATION_TEXTURE_RGB);
+    if (!(wined3d_texture_load_location(context->current_rt.texture, context->current_rt.sub_resource_idx,
+            context, WINED3D_LOCATION_TEXTURE_RGB)))
+        ERR("Failed to load location.\n");
     swapchain->render_to_fbo = TRUE;
     swapchain_update_draw_bindings(swapchain);
     context_set_render_offscreen(context, TRUE);
