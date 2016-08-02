@@ -324,15 +324,15 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     for (i = 0; i < rt_count; ++i)
     {
         struct wined3d_rendertarget_view *rtv = fb->render_targets[i];
-        struct wined3d_surface *rt = wined3d_rendertarget_view_get_surface(rtv);
 
-        if (rt && rtv->format->id != WINED3DFMT_NULL)
+        if (rtv && rtv->format->id != WINED3DFMT_NULL)
         {
+            struct wined3d_texture *rt = wined3d_texture_from_resource(rtv->resource);
+
             if (flags & WINED3DCLEAR_TARGET && !is_full_clear(target, draw_rect, rect_count ? clear_rect : NULL))
-                surface_load_location(rt, context, rtv->resource->draw_binding);
+                wined3d_texture_load_location(rt, rtv->sub_resource_idx, context, rtv->resource->draw_binding);
             else
-                wined3d_texture_prepare_location(rt->container, rtv->sub_resource_idx,
-                        context, rtv->resource->draw_binding);
+                wined3d_texture_prepare_location(rt, rtv->sub_resource_idx, context, rtv->resource->draw_binding);
         }
     }
 
