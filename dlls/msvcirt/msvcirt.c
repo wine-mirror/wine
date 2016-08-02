@@ -3490,7 +3490,18 @@ int __thiscall istream_getdouble(istream *this, char *str, int count)
 DEFINE_THISCALL_WRAPPER(istream_read_char, 8)
 istream* __thiscall istream_read_char(istream *this, char *ch)
 {
-    FIXME("(%p %p) stub\n", this, ch);
+    ios *base = istream_get_ios(this);
+    int ret;
+
+    TRACE("(%p %p)\n", this, ch);
+
+    if (istream_ipfx(this, 0)) {
+        if ((ret = streambuf_sbumpc(base->sb)) == EOF)
+            base->state |= IOSTATE_eofbit | IOSTATE_failbit;
+        else
+            *ch = ret;
+        istream_isfx(this);
+    }
     return this;
 }
 

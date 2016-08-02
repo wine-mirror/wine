@@ -327,6 +327,7 @@ static int (*__thiscall p_istream_sync)(istream*);
 static streampos (*__thiscall p_istream_tellg)(istream*);
 static int (*__thiscall p_istream_getint)(istream*, char*);
 static int (*__thiscall p_istream_getdouble)(istream*, char*, int);
+static istream* (*__thiscall p_istream_read_char)(istream*, char*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -542,6 +543,7 @@ static BOOL init(void)
         SET(p_istream_tellg, "?tellg@istream@@QEAAJXZ");
         SET(p_istream_getint, "?getint@istream@@AEAAHPEAD@Z");
         SET(p_istream_getdouble, "?getdouble@istream@@AEAAHPEADH@Z");
+        SET(p_istream_read_char, "??5istream@@QEAAAEAV0@AEAD@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -679,6 +681,7 @@ static BOOL init(void)
         SET(p_istream_tellg, "?tellg@istream@@QAEJXZ");
         SET(p_istream_getint, "?getint@istream@@AAEHPAD@Z");
         SET(p_istream_getdouble, "?getdouble@istream@@AAEHPADH@Z");
+        SET(p_istream_read_char, "??5istream@@QAEAAV0@AAD@Z");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -4851,6 +4854,75 @@ static void test_istream_getdouble(void)
     call_func1(p_strstreambuf_dtor, &ssb);
 }
 
+static void test_istream_read(void)
+{
+    istream is, *pis;
+    strstreambuf ssb, *pssb;
+    int len, ret, i;
+
+    /* makes tables narrower */
+    const ios_io_state IOSTATE_faileof = IOSTATE_failbit|IOSTATE_eofbit;
+
+    char c, char_out[] = {-85, ' ', 'a', -50};
+    struct istream_read_test {
+        enum { type_chr } type;
+        const char *stream_content;
+        ios_flags flags;
+        int width;
+        int expected_val;
+        ios_io_state expected_state;
+        int expected_width;
+        int expected_offset;
+        BOOL broken;
+    } tests[] = {
+        /* char */
+        {type_chr, "",      FLAGS_skipws, 6, /* -85 */ 0, IOSTATE_faileof, 6, 0, FALSE},
+        {type_chr, "  ",    FLAGS_skipws, 6, /* -85 */ 0, IOSTATE_faileof, 6, 2, FALSE},
+        {type_chr, " abc ", 0,            6, /* ' ' */ 1, IOSTATE_goodbit, 6, 1, FALSE},
+        {type_chr, " abc ", FLAGS_skipws, 6, /* 'a' */ 2, IOSTATE_goodbit, 6, 2, FALSE},
+        {type_chr, " a",    FLAGS_skipws, 0, /* 'a' */ 2, IOSTATE_goodbit, 0, 2, FALSE},
+        {type_chr, "\xce",  0,            6, /* -50 */ 3, IOSTATE_goodbit, 6, 1, FALSE},
+    };
+
+    pssb = call_func2(p_strstreambuf_dynamic_ctor, &ssb, 64);
+    ok(pssb == &ssb, "wrong return, expected %p got %p\n", &ssb, pssb);
+    ret = (int) call_func1(p_streambuf_allocate, &ssb.base);
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    pis = call_func3(p_istream_sb_ctor, &is, &ssb.base, TRUE);
+    ok(pis == &is, "wrong return, expected %p got %p\n", &is, pis);
+
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
+        len = strlen(tests[i].stream_content);
+        is.base_ios.state = IOSTATE_goodbit;
+        is.base_ios.flags = tests[i].flags;
+        is.base_ios.width = tests[i].width;
+        ssb.base.eback = ssb.base.gptr = ssb.base.base;
+        ssb.base.egptr = ssb.base.base + len;
+        memcpy(ssb.base.base, tests[i].stream_content, len);
+
+        switch (tests[i].type) {
+        case type_chr:
+            c = -85;
+            pis = call_func2(p_istream_read_char, &is, &c);
+            ok(c == char_out[tests[i].expected_val], "Test %d: expected %d got %d\n", i,
+                char_out[tests[i].expected_val], c);
+            break;
+        }
+
+        ok(pis == &is, "Test %d: wrong return, expected %p got %p\n", i, &is, pis);
+        ok(is.base_ios.state == tests[i].expected_state || /* xp, 2k3 */ broken(tests[i].broken),
+            "Test %d: expected %d got %d\n", i, tests[i].expected_state, is.base_ios.state);
+        ok(is.base_ios.width == tests[i].expected_width, "Test %d: expected %d got %d\n", i,
+            tests[i].expected_width, is.base_ios.width);
+        ok(ssb.base.gptr == ssb.base.base + tests[i].expected_offset ||
+            /* xp, 2k3 */ broken(tests[i].broken), "Test %d: expected %p got %p\n", i,
+            ssb.base.base + tests[i].expected_offset, ssb.base.gptr);
+    }
+
+    call_func1(p_istream_vbase_dtor, &is);
+    call_func1(p_strstreambuf_dtor, &ssb);
+}
+
 START_TEST(msvcirt)
 {
     if(!init())
@@ -4866,6 +4938,7 @@ START_TEST(msvcirt)
     test_istream();
     test_istream_getint();
     test_istream_getdouble();
+    test_istream_read();
 
     FreeLibrary(msvcrt);
     FreeLibrary(msvcirt);
