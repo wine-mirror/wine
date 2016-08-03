@@ -212,9 +212,21 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH dxgi_swapchain_SetFullscreenS
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetFullscreenState(IDXGISwapChain *iface,
         BOOL *fullscreen, IDXGIOutput **target)
 {
-    FIXME("iface %p, fullscreen %p, target %p stub!\n", iface, fullscreen, target);
+    struct dxgi_swapchain *swapchain = impl_from_IDXGISwapChain(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, fullscreen %p, target %p.\n", iface, fullscreen, target);
+
+    if (fullscreen)
+        *fullscreen = swapchain->fullscreen;
+
+    if (target)
+    {
+        *target = swapchain->target;
+        if (*target)
+            IDXGIOutput_AddRef(*target);
+    }
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDesc(IDXGISwapChain *iface, DXGI_SWAP_CHAIN_DESC *desc)
@@ -408,6 +420,8 @@ HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device
 
     swapchain->IDXGISwapChain_iface.lpVtbl = &dxgi_swapchain_vtbl;
     swapchain->refcount = 1;
+    swapchain->fullscreen = FALSE;
+    swapchain->target = NULL;
     wined3d_mutex_lock();
     wined3d_private_store_init(&swapchain->private_store);
 

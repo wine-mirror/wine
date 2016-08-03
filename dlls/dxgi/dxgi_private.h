@@ -160,6 +160,9 @@ struct dxgi_swapchain
     struct wined3d_swapchain *wined3d_swapchain;
     IWineDXGIDevice *device;
     IDXGIFactory *factory;
+
+    BOOL fullscreen;
+    IDXGIOutput *target;
 };
 
 HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device *device,
