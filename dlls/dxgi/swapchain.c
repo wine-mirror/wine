@@ -231,7 +231,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDesc(IDXGISwapChain *iface, D
     wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
     wined3d_mutex_unlock();
 
-    FIXME("Ignoring ScanlineOrdering, Scaling, SwapEffect and Flags\n");
+    FIXME("Ignoring ScanlineOrdering, Scaling and SwapEffect.\n");
 
     desc->BufferDesc.Width = wined3d_desc.backbuffer_width;
     desc->BufferDesc.Height = wined3d_desc.backbuffer_height;
@@ -245,7 +245,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDesc(IDXGISwapChain *iface, D
     desc->OutputWindow = wined3d_desc.device_window;
     desc->Windowed = wined3d_desc.windowed;
     desc->SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-    desc->Flags = 0;
+    desc->Flags = dxgi_swapchain_flags_from_wined3d(wined3d_desc.flags);
 
     return S_OK;
 }

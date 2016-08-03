@@ -614,7 +614,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
     {
         struct wined3d_surface *ds = wined3d_rendertarget_view_get_surface(fb->depth_stencil);
 
-        if (ds && (swapchain->desc.flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
+        if (ds && (swapchain->desc.flags & WINED3D_SWAPCHAIN_DISCARD_DEPTHSTENCIL
                 || ds->container->flags & WINED3D_TEXTURE_DISCARD))
         {
             surface_modify_ds_location(ds, WINED3D_LOCATION_DISCARDED,
@@ -841,11 +841,8 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
     }
 
     GetClientRect(window, &client_rect);
-    if (desc->windowed
-            && (!desc->backbuffer_width || !desc->backbuffer_height
-            || desc->backbuffer_format == WINED3DFMT_UNKNOWN))
+    if (desc->windowed)
     {
-
         if (!desc->backbuffer_width)
         {
             desc->backbuffer_width = client_rect.right;
@@ -899,22 +896,29 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
     /* MSDN says we're only allowed a single fullscreen swapchain per device,
      * so we should really check to see if there is a fullscreen swapchain
      * already. Does a single head count as full screen? */
-
     if (!desc->windowed)
     {
-        /* Change the display settings */
-        swapchain->d3d_mode.width = desc->backbuffer_width;
-        swapchain->d3d_mode.height = desc->backbuffer_height;
-        swapchain->d3d_mode.format_id = desc->backbuffer_format;
-        swapchain->d3d_mode.refresh_rate = desc->refresh_rate;
-        swapchain->d3d_mode.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
-
-        if (FAILED(hr = wined3d_set_adapter_display_mode(device->wined3d, adapter->ordinal, &swapchain->d3d_mode)))
+        if (desc->flags & WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH)
         {
-            WARN("Failed to set display mode, hr %#x.\n", hr);
-            goto err;
+            /* Change the display settings */
+            swapchain->d3d_mode.width = desc->backbuffer_width;
+            swapchain->d3d_mode.height = desc->backbuffer_height;
+            swapchain->d3d_mode.format_id = desc->backbuffer_format;
+            swapchain->d3d_mode.refresh_rate = desc->refresh_rate;
+            swapchain->d3d_mode.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
+
+            if (FAILED(hr = wined3d_set_adapter_display_mode(device->wined3d,
+                    adapter->ordinal, &swapchain->d3d_mode)))
+            {
+                WARN("Failed to set display mode, hr %#x.\n", hr);
+                goto err;
+            }
+            displaymode_set = TRUE;
         }
-        displaymode_set = TRUE;
+        else
+        {
+            swapchain->d3d_mode = swapchain->original_mode;
+        }
     }
 
     if (!(device->wined3d->flags & WINED3D_NO3D))
@@ -1398,30 +1402,49 @@ HRESULT CDECL wined3d_swapchain_set_fullscreen(struct wined3d_swapchain *swapcha
 
     TRACE("swapchain %p, desc %p, mode %p.\n", swapchain, swapchain_desc, mode);
 
-    width = swapchain_desc->backbuffer_width;
-    height = swapchain_desc->backbuffer_height;
-
-    if (!mode)
+    if (swapchain->desc.flags & WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH)
     {
-        if (!swapchain_desc->windowed)
+        width = swapchain_desc->backbuffer_width;
+        height = swapchain_desc->backbuffer_height;
+
+        if (!mode)
         {
-            default_mode.width = swapchain_desc->backbuffer_width;
-            default_mode.height = swapchain_desc->backbuffer_height;
-            default_mode.refresh_rate = swapchain_desc->refresh_rate;
-            default_mode.format_id = swapchain_desc->backbuffer_format;
-            default_mode.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
+            if (!swapchain_desc->windowed)
+            {
+                default_mode.width = swapchain_desc->backbuffer_width;
+                default_mode.height = swapchain_desc->backbuffer_height;
+                default_mode.refresh_rate = swapchain_desc->refresh_rate;
+                default_mode.format_id = swapchain_desc->backbuffer_format;
+                default_mode.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
+            }
+            else
+            {
+                default_mode = swapchain->original_mode;
+            }
+            mode = &default_mode;
         }
-        else
+
+        if (FAILED(hr = wined3d_set_adapter_display_mode(device->wined3d, device->adapter->ordinal, mode)))
         {
-            default_mode = swapchain->original_mode;
+            WARN("Failed to set display mode, hr %#x.\n", hr);
+            return WINED3DERR_INVALIDCALL;
+        }
+    }
+    else
+    {
+        if (mode)
+            WARN("WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH is not set, ignoring mode.\n");
+
+        if (FAILED(hr = wined3d_get_adapter_display_mode(device->wined3d, device->adapter->ordinal,
+                &default_mode, NULL)))
+        {
+            ERR("Failed to get display mode, hr %#x.\n", hr);
+            return WINED3DERR_INVALIDCALL;
         }
         mode = &default_mode;
-    }
 
-    if (FAILED(hr = wined3d_set_adapter_display_mode(device->wined3d, device->adapter->ordinal, mode)))
-    {
-        WARN("Failed to set display mode, hr %#x.\n", hr);
-        return WINED3DERR_INVALIDCALL;
+        width = mode->width;
+        height = mode->height;
     }
 
     if (!swapchain_desc->windowed)

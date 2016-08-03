@@ -193,9 +193,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IDXGIFactory1 *ifa
 {
     struct wined3d_swapchain *wined3d_swapchain;
     struct wined3d_swapchain_desc wined3d_desc;
+    unsigned int min_buffer_count;
     IWineDXGIDevice *dxgi_device;
     HRESULT hr;
-    UINT min_buffer_count;
 
     FIXME("iface %p, device %p, desc %p, swapchain %p partial stub!\n", iface, device, desc, swapchain);
 
@@ -223,7 +223,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IDXGIFactory1 *ifa
     }
     if (!desc->OutputWindow)
     {
-        FIXME("No output window, should use factory output window\n");
+        FIXME("No output window, should use factory output window.\n");
     }
 
     hr = IUnknown_QueryInterface(device, &IID_IWineDXGIDevice, (void **)&dxgi_device);
@@ -233,7 +233,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IDXGIFactory1 *ifa
         return hr;
     }
 
-    FIXME("Ignoring SwapEffect and Flags\n");
+    FIXME("Ignoring SwapEffect %#x.\n", desc->SwapEffect);
 
     wined3d_desc.backbuffer_width = desc->BufferDesc.Width;
     wined3d_desc.backbuffer_height = desc->BufferDesc.Height;
@@ -246,7 +246,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IDXGIFactory1 *ifa
     wined3d_desc.windowed = desc->Windowed;
     wined3d_desc.enable_auto_depth_stencil = FALSE;
     wined3d_desc.auto_depth_stencil_format = 0;
-    wined3d_desc.flags = 0; /* WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL? */
+    wined3d_desc.flags = wined3d_swapchain_flags_from_dxgi(desc->Flags);
     wined3d_desc.refresh_rate = dxgi_rational_to_uint(&desc->BufferDesc.RefreshRate);
     wined3d_desc.swap_interval = WINED3DPRESENT_INTERVAL_DEFAULT;
     wined3d_desc.auto_restore_display_mode = TRUE;

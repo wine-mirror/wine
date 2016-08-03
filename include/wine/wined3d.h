@@ -818,12 +818,13 @@ enum wined3d_display_rotation
 #define WINED3DTA_COMPLEMENT                                    0x00000010
 #define WINED3DTA_ALPHAREPLICATE                                0x00000020
 
-#define WINED3DPRESENTFLAG_LOCKABLE_BACKBUFFER                  0x00000001
-#define WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL                 0x00000002
-#define WINED3DPRESENTFLAG_DEVICECLIP                           0x00000004
-#define WINED3DPRESENTFLAG_VIDEO                                0x00000010
-#define WINED3DPRESENTFLAG_NOAUTOROTATE                         0x00000020
-#define WINED3DPRESENTFLAG_UNPRUNEDMODE                         0x00000040
+#define WINED3D_SWAPCHAIN_LOCKABLE_BACKBUFFER                   0x00000001u
+#define WINED3D_SWAPCHAIN_DISCARD_DEPTHSTENCIL                  0x00000002u
+#define WINED3D_SWAPCHAIN_DEVICECLIP                            0x00000004u
+#define WINED3D_SWAPCHAIN_VIDEO                                 0x00000010u
+#define WINED3D_SWAPCHAIN_NOAUTOROTATE                          0x00000020u
+#define WINED3D_SWAPCHAIN_UNPRUNEDMODE                          0x00000040u
+#define WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH                     0x00001000u
 
 #define WINED3DDP_MAXTEXCOORD                                   8
 

@@ -631,6 +631,7 @@ static HRESULT ddraw_create_swapchain(struct ddraw *ddraw, HWND window, BOOL win
     swapchain_desc.swap_effect = WINED3D_SWAP_EFFECT_COPY;
     swapchain_desc.device_window = window;
     swapchain_desc.windowed = windowed;
+    swapchain_desc.flags = WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH;
 
     if (!(ddraw->flags & DDRAW_NO3D))
         hr = ddraw_attach_d3d_device(ddraw, &swapchain_desc);

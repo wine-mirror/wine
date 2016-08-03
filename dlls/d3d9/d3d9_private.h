@@ -39,6 +39,8 @@
 #include "d3d9.h"
 #include "wine/wined3d.h"
 
+#define D3DPRESENTFLAGS_MASK 0x00000fffu
+
 extern HRESULT vdecl_convert_fvf(DWORD FVF, D3DVERTEXELEMENT9 **ppVertexElements) DECLSPEC_HIDDEN;
 D3DFORMAT d3dformat_from_wined3dformat(enum wined3d_format_id format) DECLSPEC_HIDDEN;
 enum wined3d_format_id wined3dformat_from_d3dformat(D3DFORMAT format) DECLSPEC_HIDDEN;

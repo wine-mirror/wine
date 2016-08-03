@@ -36,6 +36,8 @@
 #include "d3d8.h"
 #include "wine/wined3d.h"
 
+#define D3DPRESENTFLAGS_MASK 0x00000fffu
+
 /* CreateVertexShader can return > 0xFFFF */
 #define VS_HIGHESTFIXEDFXF 0xF0000000
 

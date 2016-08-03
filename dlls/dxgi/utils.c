@@ -401,6 +401,38 @@ void wined3d_sample_desc_from_dxgi(enum wined3d_multisample_type *wined3d_type,
     }
 }
 
+unsigned int dxgi_swapchain_flags_from_wined3d(unsigned int wined3d_flags)
+{
+    unsigned int flags = 0;
+
+    if (wined3d_flags & WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH)
+    {
+        wined3d_flags &= ~WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH;
+        flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+    }
+
+    if (wined3d_flags)
+        FIXME("Unhandled flags %#x.\n", flags);
+
+    return flags;
+}
+
+unsigned int wined3d_swapchain_flags_from_dxgi(unsigned int flags)
+{
+    unsigned int wined3d_flags = 0; /* WINED3D_SWAPCHAIN_DISCARD_DEPTHSTENCIL? */
+
+    if (flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH)
+    {
+        flags &= ~DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+        wined3d_flags |= WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH;
+    }
+
+    if (flags)
+        FIXME("Unhandled flags %#x.\n", flags);
+
+    return wined3d_flags;
+}
+
 HRESULT dxgi_get_private_data(struct wined3d_private_store *store,
         REFGUID guid, UINT *data_size, void *data)
 {
