@@ -502,6 +502,7 @@ static void surface_blt_fbo(const struct wined3d_device *device,
         struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect_in)
 {
     unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
+    unsigned int src_sub_resource_idx = surface_get_sub_resource_idx(src_surface);
     struct wined3d_texture *dst_texture = dst_surface->container;
     struct wined3d_texture *src_texture = src_surface->container;
     const struct wined3d_gl_info *gl_info;
@@ -545,9 +546,9 @@ static void surface_blt_fbo(const struct wined3d_device *device,
      * surface isn't required if the entire surface is overwritten. (And is
      * in fact harmful if we're being called by surface_load_location() with
      * the purpose of loading the destination surface.) */
-    surface_load_location(src_surface, old_ctx, src_location);
+    wined3d_texture_load_location(src_texture, src_sub_resource_idx, old_ctx, src_location);
     if (!surface_is_full_rect(dst_surface, &dst_rect))
-        surface_load_location(dst_surface, old_ctx, dst_location);
+        wined3d_texture_load_location(dst_texture, dst_sub_resource_idx, old_ctx, dst_location);
     else
         wined3d_texture_prepare_location(dst_texture, dst_sub_resource_idx, old_ctx, dst_location);
 
