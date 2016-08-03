@@ -49,6 +49,7 @@ my @dll_groups =
  [
   "msvcr120",
   "msvcr120_app",
+  "concrt140",
  ],
  [
   "ucrtbase",
