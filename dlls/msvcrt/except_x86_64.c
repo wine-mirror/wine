@@ -470,14 +470,20 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
         if (rec->ExceptionCode==STATUS_UNWIND_CONSOLIDATE && rec->NumberParameters==6 &&
                 rec->ExceptionInformation[0]==(ULONG_PTR)call_catch_block)
         {
-            ULONG64 orig_frame = rec->ExceptionInformation[1];
-            const cxx_function_descr *descr = (void*)rec->ExceptionInformation[2];
-            int end_level = rec->ExceptionInformation[3];
             EXCEPTION_RECORD *new_rec = (void*)rec->ExceptionInformation[4];
             thread_data_t *data = msvcrt_get_thread_data();
             frame_info *cur;
 
-            cxx_local_unwind(orig_frame, dispatch, descr, end_level);
+            if (rec->ExceptionFlags & EH_TARGET_UNWIND)
+            {
+                ULONG64 orig_frame = rec->ExceptionInformation[1];
+                const cxx_function_descr *orig_descr = (void*)rec->ExceptionInformation[2];
+                int end_level = rec->ExceptionInformation[3];
+
+                cxx_local_unwind(orig_frame, dispatch, orig_descr, end_level);
+            }
+            else
+                cxx_local_unwind(frame, dispatch, descr, -1);
 
             /* FIXME: we should only unregister frames registered by call_catch_block here */
             for (cur = data->frame_info_head; cur; cur = cur->next)
