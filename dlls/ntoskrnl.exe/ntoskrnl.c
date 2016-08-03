@@ -929,6 +929,7 @@ NTSTATUS WINAPI IoCreateDriver( UNICODE_STRING *name, PDRIVER_INITIALIZE init )
     if (status)
     {
         RtlFreeUnicodeString( &driver->driver_obj.DriverName );
+        RtlFreeUnicodeString( &driver->driver_extension.ServiceKeyName );
         RtlFreeHeap( GetProcessHeap(), 0, driver );
     }
     else
