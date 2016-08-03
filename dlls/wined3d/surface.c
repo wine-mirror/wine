@@ -1188,7 +1188,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     if (update_w == dst_w && update_h == dst_h)
         wined3d_texture_prepare_texture(dst_texture, context, FALSE);
     else
-        surface_load_location(dst_surface, context, WINED3D_LOCATION_TEXTURE_RGB);
+        wined3d_texture_load_location(dst_texture, dst_sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
     wined3d_texture_bind_and_dirtify(dst_texture, context, FALSE);
 
     wined3d_texture_get_memory(src_texture, src_sub_resource_idx, &data,
