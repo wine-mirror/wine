@@ -586,6 +586,28 @@ GpStatus METAFILE_ScaleWorldTransform(GpMetafile* metafile, REAL sx, REAL sy, Ma
     return Ok;
 }
 
+GpStatus METAFILE_ResetWorldTransform(GpMetafile* metafile)
+{
+    if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
+    {
+        EmfPlusRecordHeader *record;
+        GpStatus stat;
+
+        stat = METAFILE_AllocateRecord(metafile,
+            sizeof(EmfPlusRecordHeader),
+            (void**)&record);
+        if (stat != Ok)
+            return stat;
+
+        record->Type = EmfPlusRecordTypeResetWorldTransform;
+        record->Flags = 0;
+
+        METAFILE_WriteRecords(metafile);
+    }
+
+    return Ok;
+}
+
 GpStatus METAFILE_ReleaseDC(GpMetafile* metafile, HDC hdc)
 {
     if (hdc != metafile->record_dc)
@@ -932,6 +954,12 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                 return InvalidParameter;
 
             GdipScaleMatrix(real_metafile->world_transform, record->Sx, record->Sy, order);
+
+            return METAFILE_PlaybackUpdateWorldTransform(real_metafile);
+        }
+        case EmfPlusRecordTypeResetWorldTransform:
+        {
+            GdipSetMatrixElements(real_metafile->world_transform, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 
             return METAFILE_PlaybackUpdateWorldTransform(real_metafile);
         }

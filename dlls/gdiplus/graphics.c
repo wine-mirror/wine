@@ -5128,6 +5128,8 @@ GpStatus WINGDIPAPI GdipResetClip(GpGraphics *graphics)
 
 GpStatus WINGDIPAPI GdipResetWorldTransform(GpGraphics *graphics)
 {
+    GpStatus stat;
+
     TRACE("(%p)\n", graphics);
 
     if(!graphics)
@@ -5135,6 +5137,13 @@ GpStatus WINGDIPAPI GdipResetWorldTransform(GpGraphics *graphics)
 
     if(graphics->busy)
         return ObjectBusy;
+
+    if (graphics->image && graphics->image->type == ImageTypeMetafile) {
+        stat = METAFILE_ResetWorldTransform((GpMetafile*)graphics->image);
+
+        if (stat != Ok)
+            return stat;
+    }
 
     return GdipSetMatrixElements(&graphics->worldtrans, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 }

@@ -1273,6 +1273,8 @@ static const emfplus_record worldtransform_records[] = {
     {0, EmfPlusRecordTypeFillRects},
     {0, EmfPlusRecordTypeScaleWorldTransform},
     {0, EmfPlusRecordTypeFillRects},
+    {0, EmfPlusRecordTypeResetWorldTransform},
+    {0, EmfPlusRecordTypeFillRects},
     {0, EmfPlusRecordTypeEndOfFile},
     {0, EMR_EOF},
     {0}
@@ -1352,6 +1354,26 @@ static void test_worldtransform(void)
     stat = GdipDeleteBrush(brush);
     expect(Ok, stat);
 
+    /* reset transform */
+    stat = GdipResetWorldTransform(graphics);
+    expect(Ok, stat);
+
+    stat = GdipGetWorldTransform(graphics, transform);
+    expect(Ok, stat);
+
+    stat = GdipIsMatrixIdentity(transform, &identity);
+    expect(Ok, stat);
+    expect(TRUE, identity);
+
+    stat = GdipCreateSolidFill((ARGB)0xff00ffff, (GpSolidFill**)&brush);
+    expect(Ok, stat);
+
+    stat = GdipFillRectangle(graphics, brush, 1.0, 0.0, 1.0, 1.0);
+    expect(Ok, stat);
+
+    stat = GdipDeleteBrush(brush);
+    expect(Ok, stat);
+
     stat = GdipDeleteMatrix(transform);
     expect(Ok, stat);
 
@@ -1381,6 +1403,10 @@ static void test_worldtransform(void)
     stat = GdipBitmapGetPixel(bitmap, 30, 50, &color);
     expect(Ok, stat);
     expect(0xff00ff00, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 30, 10, &color);
+    expect(Ok, stat);
+    expect(0xff00ffff, color);
 
     stat = GdipDeleteGraphics(graphics);
     expect(Ok, stat);
