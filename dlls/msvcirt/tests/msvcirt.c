@@ -335,6 +335,9 @@ static istream* (*__thiscall p_istream_read_int)(istream*, int*);
 static istream* (*__thiscall p_istream_read_unsigned_int)(istream*, unsigned int*);
 static istream* (*__thiscall p_istream_read_long)(istream*, LONG*);
 static istream* (*__thiscall p_istream_read_unsigned_long)(istream*, ULONG*);
+static istream* (*__thiscall p_istream_read_float)(istream*, float*);
+static istream* (*__thiscall p_istream_read_double)(istream*, double*);
+static istream* (*__thiscall p_istream_read_long_double)(istream*, double*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -558,6 +561,9 @@ static BOOL init(void)
         SET(p_istream_read_unsigned_int, "??5istream@@QEAAAEAV0@AEAI@Z");
         SET(p_istream_read_long, "??5istream@@QEAAAEAV0@AEAJ@Z");
         SET(p_istream_read_unsigned_long, "??5istream@@QEAAAEAV0@AEAK@Z");
+        SET(p_istream_read_float, "??5istream@@QEAAAEAV0@AEAM@Z");
+        SET(p_istream_read_double, "??5istream@@QEAAAEAV0@AEAN@Z");
+        SET(p_istream_read_long_double, "??5istream@@QEAAAEAV0@AEAO@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -703,6 +709,9 @@ static BOOL init(void)
         SET(p_istream_read_unsigned_int, "??5istream@@QAEAAV0@AAI@Z");
         SET(p_istream_read_long, "??5istream@@QAEAAV0@AAJ@Z");
         SET(p_istream_read_unsigned_long, "??5istream@@QAEAAV0@AAK@Z");
+        SET(p_istream_read_float, "??5istream@@QAEAAV0@AAM@Z");
+        SET(p_istream_read_double, "??5istream@@QAEAAV0@AAN@Z");
+        SET(p_istream_read_long_double, "??5istream@@QAEAAV0@AAO@Z");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -4892,9 +4901,11 @@ static void test_istream_read(void)
     unsigned un, uint_out[] = {4294967295u, 4294967294u, 2147483648u, 1u};
     LONG l, long_out[] = {2147483647l, -2147483647l-1};
     ULONG ul, ulong_out[] = {4294967295ul, 4294967294ul, 2147483648ul, 1ul};
+    float f, float_out[] = {123.456f, 0.0f, 1.0f, 0.1f, -1.0f, -0.1f, FLT_MIN, -FLT_MIN, FLT_MAX, -FLT_MAX};
+    double d, double_out[] = {1.0, 0.1, 0.0, INFINITY, -INFINITY};
     struct istream_read_test {
         enum { type_chr, type_str, type_shrt, type_ushrt, type_int, type_uint,
-            type_long, type_ulong } type;
+            type_long, type_ulong, type_flt, type_dbl, type_ldbl } type;
         const char *stream_content;
         ios_flags flags;
         int width;
@@ -4992,6 +5003,44 @@ static void test_istream_read(void)
         {type_ulong, "-2147483648",    0, 6, /* 2147483648 */ 2, IOSTATE_eofbit,  6, 11, FALSE},
         {type_ulong, "-4294967295",    0, 6, /* 1 */          3, IOSTATE_eofbit,  6, 11, FALSE},
         {type_ulong, "-9999999999999", 0, 6, /* 1 */          3, IOSTATE_eofbit,  6, 14, FALSE},
+        /* float */
+        {type_flt, "",                      FLAGS_skipws, 6, /* 123.456 */  0, IOSTATE_faileof, 6, 0,  FALSE},
+        {type_flt, "",                      0,            6, /* 123.456 */  0, IOSTATE_faileof, 6, 0,  FALSE},
+        {type_flt, " 0",                    0,            6, /* 123.456 */  0, IOSTATE_failbit, 6, 0,  FALSE},
+        {type_flt, " 0",                    FLAGS_skipws, 6, /* 0.0 */      1, IOSTATE_eofbit,  6, 2,  FALSE},
+        {type_flt, "-0 ",                   0,            6, /* 0.0 */      1, IOSTATE_goodbit, 6, 2,  FALSE},
+        {type_flt, "+1.0",                  0,            6, /* 1.0 */      2, IOSTATE_eofbit,  6, 4,  FALSE},
+        {type_flt, "1.#INF",                0,            6, /* 1.0 */      2, IOSTATE_goodbit, 6, 2,  FALSE},
+        {type_flt, "0.100000000000000e1",   0,            6, /* 1.0 */      2, IOSTATE_eofbit,  6, 19, FALSE},
+/* crashes on xp
+        {type_flt, "0.1000000000000000e1",  0,            6,    0.1         3, IOSTATE_failbit, 6, 20, FALSE}, */
+        {type_flt, "0.10000000000000000e1", 0,            6, /* 0.1 */      3, IOSTATE_failbit, 6, 20, TRUE},
+        {type_flt, "-0.10000000000000e1",   0,            6, /* -1.0 */     4, IOSTATE_eofbit,  6, 19, FALSE},
+/* crashes on xp
+        {type_flt, "-0.100000000000000e1 ", 0,            6,    -0.1        5, IOSTATE_failbit, 6, 20, FALSE}, */
+        {type_flt, "-0.1000000000000000e1", 0,            6, /* -0.1 */     5, IOSTATE_failbit, 6, 20, TRUE},
+        {type_flt, "5.1691126e-77",         0,            6, /* FLT_MIN */  6, IOSTATE_eofbit,  6, 13, FALSE},
+        {type_flt, "-2.49873e-41f",         0,            6, /* -FLT_MIN */ 7, IOSTATE_goodbit, 6, 12, FALSE},
+        {type_flt, "1.23456789e1234",       0,            6, /* FLT_MAX */  8, IOSTATE_eofbit,  6, 15, FALSE},
+        {type_flt, "-1.23456789e1234",      0,            6, /* -FLT_MAX */ 9, IOSTATE_eofbit,  6, 16, FALSE},
+        /* double */
+        {type_dbl, "0.10000000000000000000000e1",   0, 6, /* 1.0 */  0, IOSTATE_eofbit,  6, 27, FALSE},
+/* crashes on xp
+        {type_dbl, "0.100000000000000000000000e1",  0, 6,    0.1     1, IOSTATE_failbit, 6, 28, FALSE}, */
+        {type_dbl, "0.1000000000000000000000000e1", 0, 6, /* 0.1 */  1, IOSTATE_failbit, 6, 28, TRUE},
+        {type_dbl, "3.698124698114778e-6228",       0, 6, /* 0.0 */  2, IOSTATE_eofbit,  6, 23, FALSE},
+        {type_dbl, "-3.698124698114778e-6228",      0, 6, /* 0.0 */  2, IOSTATE_eofbit,  6, 24, FALSE},
+        {type_dbl, "3.698124698114778e6228",        0, 6, /* INF */  3, IOSTATE_eofbit,  6, 22, FALSE},
+        {type_dbl, "-3.698124698114778e6228A",      0, 6, /* -INF */ 4, IOSTATE_goodbit, 6, 23, FALSE},
+        /* long double */
+        {type_ldbl, "0.100000000000000000000000000e1",   0, 6, /* 1.0 */  0, IOSTATE_eofbit,  6, 31, FALSE},
+/* crashes on xp
+        {type_ldbl, "0.1000000000000000000000000000e1",  0, 6,    0.1     1, IOSTATE_failbit, 6, 32, FALSE}, */
+        {type_ldbl, "0.10000000000000000000000000000e1", 0, 6, /* 0.1 */  1, IOSTATE_failbit, 6, 32, TRUE},
+        {type_ldbl, "1.69781699841e-1475",               0, 6, /* 0.0 */  2, IOSTATE_eofbit,  6, 19, FALSE},
+        {type_ldbl, "-1.69781699841e-1475l",             0, 6, /* 0.0 */  2, IOSTATE_goodbit, 6, 20, FALSE},
+        {type_ldbl, "1.69781699841e1475",                0, 6, /* INF */  3, IOSTATE_eofbit,  6, 18, FALSE},
+        {type_ldbl, "-1.69781699841e1475",               0, 6, /* -INF */ 4, IOSTATE_eofbit,  6, 19, FALSE},
     };
 
     pssb = call_func2(p_strstreambuf_dynamic_ctor, &ssb, 64);
@@ -5059,6 +5108,24 @@ static void test_istream_read(void)
             pis = call_func2(p_istream_read_unsigned_long, &is, &ul);
             ok(ul == ulong_out[tests[i].expected_val], "Test %d: expected %u got %u\n", i,
                 ulong_out[tests[i].expected_val], ul);
+            break;
+        case type_flt:
+            f = 123.456f;
+            pis = call_func2(p_istream_read_float, &is, &f);
+            ok(f == float_out[tests[i].expected_val], "Test %d: expected %f got %f\n", i,
+                float_out[tests[i].expected_val], f);
+            break;
+        case type_dbl:
+            d = 123.456;
+            pis = call_func2(p_istream_read_double, &is, &d);
+            ok(d == double_out[tests[i].expected_val], "Test %d: expected %f got %f\n", i,
+                double_out[tests[i].expected_val], d);
+            break;
+        case type_ldbl:
+            d = 123.456;
+            pis = call_func2(p_istream_read_long_double, &is, &d);
+            ok(d == double_out[tests[i].expected_val], "Test %d: expected %f got %f\n", i,
+                double_out[tests[i].expected_val], d);
             break;
         }
 

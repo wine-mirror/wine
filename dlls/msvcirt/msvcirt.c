@@ -21,6 +21,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <float.h>
 #include <io.h>
 #include <limits.h>
 #include <share.h>
@@ -3661,12 +3662,42 @@ istream* __thiscall istream_read_unsigned_long(istream *this, ULONG *p)
     return this;
 }
 
+static BOOL istream_internal_read_float(istream *this, int max_chars, double *out)
+{
+    char buffer[32];
+    BOOL read = FALSE;
+
+    TRACE("(%p %d %p)\n", this, max_chars, out);
+
+    if (istream_ipfx(this, 0)) {
+        /* character count is limited on Windows */
+        if (istream_getdouble(this, buffer, max_chars) > 0) {
+            *out = strtod(buffer, NULL);
+            read = TRUE;
+        }
+        istream_isfx(this);
+    }
+    return read;
+}
+
 /* ??5istream@@QAEAAV0@AAM@Z */
 /* ??5istream@@QEAAAEAV0@AEAM@Z */
 DEFINE_THISCALL_WRAPPER(istream_read_float, 8)
 istream* __thiscall istream_read_float(istream *this, float *f)
 {
-    FIXME("(%p %p) stub\n", this, f);
+    double tmp;
+    if (istream_internal_read_float(this, 20, &tmp)) {
+        /* check whether the value fits in the output var */
+        if (tmp > FLT_MAX)
+            tmp = FLT_MAX;
+        else if (tmp < -FLT_MAX)
+            tmp = -FLT_MAX;
+        else if (tmp > 0 && tmp < FLT_MIN)
+            tmp = FLT_MIN;
+        else if (tmp < 0 && tmp > -FLT_MIN)
+            tmp = -FLT_MIN;
+        *f = tmp;
+    }
     return this;
 }
 
@@ -3675,7 +3706,7 @@ istream* __thiscall istream_read_float(istream *this, float *f)
 DEFINE_THISCALL_WRAPPER(istream_read_double, 8)
 istream* __thiscall istream_read_double(istream *this, double *d)
 {
-    FIXME("(%p %p) stub\n", this, d);
+    istream_internal_read_float(this, 28, d);
     return this;
 }
 
@@ -3684,7 +3715,7 @@ istream* __thiscall istream_read_double(istream *this, double *d)
 DEFINE_THISCALL_WRAPPER(istream_read_long_double, 8)
 istream* __thiscall istream_read_long_double(istream *this, double *ld)
 {
-    FIXME("(%p %p) stub\n", this, ld);
+    istream_internal_read_float(this, 32, ld);
     return this;
 }
 
