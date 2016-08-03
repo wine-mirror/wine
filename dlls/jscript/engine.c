@@ -2529,13 +2529,8 @@ static void pop_call_frame(script_ctx_t *ctx)
 {
     call_frame_t *frame = ctx->call_ctx;
 
-    if(frame->arguments_obj) {
-        /* Reset arguments value to cut the reference cycle. Note that since all activation contexts have
-         * their own arguments property, it's impossible to use prototype's one during name lookup */
-        static const WCHAR argumentsW[] = {'a','r','g','u','m','e','n','t','s',0};
-        jsdisp_propput_name(frame->variable_obj, argumentsW, jsval_undefined());
-        jsdisp_release(frame->arguments_obj);
-    }
+    if(frame->arguments_obj)
+        detach_arguments_object(frame->arguments_obj);
 
     if(frame->scope) {
         /* If current scope will be kept alive, we need to transfer local variables to its variable object. */
@@ -2706,7 +2701,7 @@ static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdis
     return hres;
 }
 
-static HRESULT setup_scope(script_ctx_t *ctx, call_frame_t *frame, unsigned argc, jsval_t *argv)
+static HRESULT setup_scope(script_ctx_t *ctx, call_frame_t *frame, unsigned argc, jsval_t *argv, jsdisp_t *function_instance)
 {
     const unsigned orig_stack = ctx->stack_top;
     unsigned i;
@@ -2741,12 +2736,11 @@ static HRESULT setup_scope(script_ctx_t *ctx, call_frame_t *frame, unsigned argc
 
     frame->pop_locals = ctx->stack_top - orig_stack;
     frame->base_scope->frame = frame;
-    return S_OK;
+    return setup_arguments_object(ctx, frame, argc, function_instance);
 }
 
 HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, function_code_t *function, scope_chain_t *scope,
-        IDispatch *this_obj, jsdisp_t *function_instance, jsdisp_t *variable_obj, unsigned argc, jsval_t *argv,
-        jsdisp_t *arguments_obj, jsval_t *r)
+        IDispatch *this_obj, jsdisp_t *function_instance, jsdisp_t *variable_obj, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     call_frame_t *frame;
     unsigned i;
@@ -2810,7 +2804,7 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
         frame->base_scope = frame->scope = scope_addref(scope);
 
         if(!(flags & (EXEC_GLOBAL|EXEC_EVAL))) {
-            hres = setup_scope(ctx, frame, argc, argv);
+            hres = setup_scope(ctx, frame, argc, argv, function_instance);
             if(FAILED(hres)) {
                 heap_free(frame);
                 return hres;
@@ -2831,8 +2825,6 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
 
     if(function_instance)
         frame->function_instance = jsdisp_addref(function_instance);
-    if(arguments_obj)
-        frame->arguments_obj = jsdisp_addref(arguments_obj);
 
     frame->flags = flags;
     frame->variable_obj = jsdisp_addref(variable_obj);

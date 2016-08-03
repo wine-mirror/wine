@@ -232,6 +232,8 @@ typedef struct _call_frame_t {
 #define EXEC_EVAL              0x0008
 
 HRESULT exec_source(script_ctx_t*,DWORD,bytecode_t*,function_code_t*,scope_chain_t*,IDispatch*,
-        jsdisp_t*,jsdisp_t*,unsigned,jsval_t*,jsdisp_t*,jsval_t*) DECLSPEC_HIDDEN;
+        jsdisp_t*,jsdisp_t*,unsigned,jsval_t*,jsval_t*) DECLSPEC_HIDDEN;
 
 HRESULT create_source_function(script_ctx_t*,bytecode_t*,function_code_t*,scope_chain_t*,jsdisp_t**) DECLSPEC_HIDDEN;
+HRESULT setup_arguments_object(script_ctx_t*,call_frame_t*,unsigned,jsdisp_t*) DECLSPEC_HIDDEN;
+void detach_arguments_object(jsdisp_t*) DECLSPEC_HIDDEN;
