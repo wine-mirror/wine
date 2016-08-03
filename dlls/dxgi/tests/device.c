@@ -37,6 +37,43 @@ static ULONG get_refcount(IUnknown *iface)
     return IUnknown_Release(iface);
 }
 
+#define check_output_desc(a, b) check_output_desc_(__LINE__, a, b)
+static void check_output_desc_(unsigned int line, const DXGI_OUTPUT_DESC *desc,
+        const struct DXGI_OUTPUT_DESC *expected_desc)
+{
+    ok_(__FILE__, line)(!lstrcmpW(desc->DeviceName, expected_desc->DeviceName),
+            "Got unexpected device name %s, expected %s.\n",
+            wine_dbgstr_w(desc->DeviceName), wine_dbgstr_w(expected_desc->DeviceName));
+    ok_(__FILE__, line)(EqualRect(&desc->DesktopCoordinates, &expected_desc->DesktopCoordinates),
+            "Got unexpected desktop coordinates %s, expected %s.\n",
+            wine_dbgstr_rect(&desc->DesktopCoordinates),
+            wine_dbgstr_rect(&expected_desc->DesktopCoordinates));
+}
+
+static BOOL output_belongs_to_adapter(IDXGIOutput *output, IDXGIAdapter *adapter)
+{
+    DXGI_OUTPUT_DESC output_desc, desc;
+    unsigned int output_idx;
+    IDXGIOutput *o;
+    HRESULT hr;
+
+    hr = IDXGIOutput_GetDesc(output, &output_desc);
+    ok(SUCCEEDED(hr), "Failed to get output desc, hr %#x.\n", hr);
+
+    for (output_idx = 0; IDXGIAdapter_EnumOutputs(adapter, output_idx, &o) != DXGI_ERROR_NOT_FOUND; ++output_idx)
+    {
+        hr = IDXGIOutput_GetDesc(o, &desc);
+        ok(SUCCEEDED(hr), "Failed to get output desc, hr %#x.\n", hr);
+        IDXGIOutput_Release(o);
+
+        if (!lstrcmpW(desc.DeviceName, output_desc.DeviceName)
+                && EqualRect(&desc.DesktopCoordinates, &output_desc.DesktopCoordinates))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
 static IDXGIDevice *create_device(void)
 {
     IDXGIDevice *dxgi_device;
@@ -421,6 +458,8 @@ static void test_create_swapchain(void)
     IDXGIAdapter *adapter;
     IDXGIFactory *factory;
     IDXGIDevice *device;
+    IDXGIOutput *target;
+    BOOL fullscreen;
     HRESULT hr;
     UINT i;
 
@@ -501,40 +540,19 @@ static void test_create_swapchain(void)
     refcount = get_refcount((IUnknown *)factory);
     ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
 
-    for (i = 0; i < sizeof(refresh_list)/sizeof(refresh_list[0]); i++)
+    for (i = 0; i < sizeof(refresh_list) / sizeof(*refresh_list); ++i)
     {
         creation_desc.BufferDesc.RefreshRate.Numerator = refresh_list[i].numerator;
         creation_desc.BufferDesc.RefreshRate.Denominator = refresh_list[i].denominator;
 
         hr = IDXGIFactory_CreateSwapChain(factory, obj, &creation_desc, &swapchain);
-        ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Test %u: CreateSwapChain failed, hr %#x.\n", i, hr);
 
         hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
-        ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Test %u: GetDesc failed, hr %#x.\n", i, hr);
 
-        todo_wine_if (!refresh_list[i].numerator_should_pass)
-            ok(result_desc.BufferDesc.RefreshRate.Numerator == refresh_list[i].numerator,
-                "Numerator %u is %u.\n", i, result_desc.BufferDesc.RefreshRate.Numerator);
-
-        todo_wine_if (!refresh_list[i].denominator_should_pass)
-            ok(result_desc.BufferDesc.RefreshRate.Denominator == refresh_list[i].denominator,
-                    "Denominator %u is %u.\n", i ,result_desc.BufferDesc.RefreshRate.Denominator);
-
-        IDXGISwapChain_Release(swapchain);
-    }
-
-    creation_desc.Windowed = FALSE;
-
-    for (i = 0; i < sizeof(refresh_list)/sizeof(refresh_list[0]); i++)
-    {
-        creation_desc.BufferDesc.RefreshRate.Numerator = refresh_list[i].numerator;
-        creation_desc.BufferDesc.RefreshRate.Denominator = refresh_list[i].denominator;
-
-        hr = IDXGIFactory_CreateSwapChain(factory, obj, &creation_desc, &swapchain);
-        ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
-
-        hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
-        ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
+        ok(result_desc.Windowed == creation_desc.Windowed, "Test %u: Got unexpected windowed %#x.\n",
+                i, result_desc.Windowed);
 
         todo_wine_if (!refresh_list[i].numerator_should_pass)
             ok(result_desc.BufferDesc.RefreshRate.Numerator == refresh_list[i].numerator,
@@ -542,10 +560,98 @@ static void test_create_swapchain(void)
 
         todo_wine_if (!refresh_list[i].denominator_should_pass)
             ok(result_desc.BufferDesc.RefreshRate.Denominator == refresh_list[i].denominator,
-                    "Denominator %u is %u.\n", i ,result_desc.BufferDesc.RefreshRate.Denominator);
+                    "Denominator %u is %u.\n", i, result_desc.BufferDesc.RefreshRate.Denominator);
+
+        fullscreen = 0xdeadbeef;
+        target = (void *)0xdeadbeef;
+        hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, &target);
+        ok(hr == S_OK, "Test %u: GetFullscreenState failed, hr %#x.\n", i, hr);
+        ok(!fullscreen, "Test %u: Got unexpected fullscreen %#x.\n", i, fullscreen);
+        ok(!target, "Test %u: Got unexpected target %p.\n", i, target);
+
+        hr = IDXGISwapChain_GetFullscreenState(swapchain, NULL, NULL);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        fullscreen = 0xdeadbeef;
+        hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(!fullscreen, "Test %u: Got unexpected fullscreen %#x.\n", i, fullscreen);
+        target = (void *)0xdeadbeef;
+        hr = IDXGISwapChain_GetFullscreenState(swapchain, NULL, &target);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(!target, "Test %u: Got unexpected target %p.\n", i, target);
+
+        IDXGISwapChain_Release(swapchain);
+    }
+
+    creation_desc.Windowed = FALSE;
+
+    for (i = 0; i < sizeof(refresh_list) / sizeof(*refresh_list); ++i)
+    {
+        creation_desc.BufferDesc.RefreshRate.Numerator = refresh_list[i].numerator;
+        creation_desc.BufferDesc.RefreshRate.Denominator = refresh_list[i].denominator;
+
+        hr = IDXGIFactory_CreateSwapChain(factory, obj, &creation_desc, &swapchain);
+        ok(SUCCEEDED(hr), "Test %u: CreateSwapChain failed, hr %#x.\n", i, hr);
+
+        hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
+        ok(SUCCEEDED(hr), "Test %u: GetDesc failed, hr %#x.\n", i, hr);
+
+        /* When numerator is non-zero and denominator is zero, the windowed mode is used.
+         * Additionally, some versions of WARP seem to always fail to change fullscreen state. */
+        if (result_desc.Windowed != creation_desc.Windowed)
+            trace("Test %u: Failed to change fullscreen state.\n", i);
+
+        todo_wine_if (!refresh_list[i].numerator_should_pass)
+            ok(result_desc.BufferDesc.RefreshRate.Numerator == refresh_list[i].numerator,
+                    "Numerator %u is %u.\n", i, result_desc.BufferDesc.RefreshRate.Numerator);
+
+        todo_wine_if (!refresh_list[i].denominator_should_pass)
+            ok(result_desc.BufferDesc.RefreshRate.Denominator == refresh_list[i].denominator,
+                    "Denominator %u is %u.\n", i, result_desc.BufferDesc.RefreshRate.Denominator);
+
+        fullscreen = FALSE;
+        target = NULL;
+        hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, &target);
+        ok(hr == S_OK, "Test %u: GetFullscreenState failed, hr %#x.\n", i, hr);
+        ok(fullscreen == !result_desc.Windowed, "Test %u: Got fullscreen %#x, expected %#x.\n",
+                i, fullscreen, result_desc.Windowed);
+        ok(result_desc.Windowed ? !target : !!target, "Test %u: Got unexpected target %p.\n", i, target);
+        if (!result_desc.Windowed)
+        {
+            IDXGIOutput *containing_output;
+            hr = IDXGISwapChain_GetContainingOutput(swapchain, &containing_output);
+            ok(SUCCEEDED(hr), "Test %u: GetContainingOutput failed, hr %#x.\n", i, hr);
+            ok(containing_output == target, "Test %u: Got unexpected containing output pointer %p.\n",
+                    i, containing_output);
+            IDXGIOutput_Release(containing_output);
+
+            ok(output_belongs_to_adapter(target, adapter),
+                    "Test %u: Output %p doesn't belong to adapter %p.\n",
+                    i, target, adapter);
+            IDXGIOutput_Release(target);
+
+            hr = IDXGISwapChain_GetFullscreenState(swapchain, NULL, NULL);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+            fullscreen = FALSE;
+            hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+            ok(fullscreen, "Test %u: Got unexpected fullscreen %#x.\n", i, fullscreen);
+            target = NULL;
+            hr = IDXGISwapChain_GetFullscreenState(swapchain, NULL, &target);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+            ok(!!target, "Test %u: Got unexpected target %p.\n", i, target);
+            IDXGIOutput_Release(target);
+        }
 
         hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
-        ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Test %u: SetFullscreenState failed, hr %#x.\n", i, hr);
+
+        fullscreen = 0xdeadbeef;
+        target = (void *)0xdeadbeef;
+        hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, &target);
+        ok(hr == S_OK, "Test %u: GetFullscreenState failed, hr %#x.\n", i, hr);
+        ok(!fullscreen, "Test %u: Got unexpected fullscreen %#x.\n", i, fullscreen);
+        ok(!target, "Test %u: Got unexpected target %p.\n", i, target);
 
         IDXGISwapChain_Release(swapchain);
     }
@@ -643,15 +749,7 @@ static void test_get_containing_output(void)
     ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
     hr = IDXGIOutput_GetDesc(output2, &output_desc2);
     ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
-
-    ok(!lstrcmpW(output_desc.DeviceName, output_desc2.DeviceName),
-            "Got unexpected device name %s, expected %s.\n",
-            wine_dbgstr_w(output_desc.DeviceName), wine_dbgstr_w(output_desc2.DeviceName));
-    ok(!memcmp(&output_desc.DesktopCoordinates, &output_desc2.DesktopCoordinates,
-            sizeof(output_desc.DesktopCoordinates)),
-            "Got unexpected desktop coordinates %s, expected %s.\n",
-            wine_dbgstr_rect(&output_desc.DesktopCoordinates),
-            wine_dbgstr_rect(&output_desc2.DesktopCoordinates));
+    check_output_desc(&output_desc, &output_desc2);
 
     refcount = IDXGIOutput_Release(output2);
     ok(!refcount, "IDXGIOuput has %u references left.\n", refcount);
@@ -1348,7 +1446,8 @@ static void test_swapchain_parameters(void)
 
             hr = IDXGIResource_GetUsage(resource, &usage);
             ok(SUCCEEDED(hr), "Failed to get resource usage, hr %#x, test %u, buffer %u.\n", hr, i, j);
-            ok(usage == expected_usage || broken(usage == broken_usage), "Got usage %x, expected %x, test %u, buffer %u.\n",
+            ok(usage == expected_usage || broken(usage == broken_usage),
+                    "Got usage %x, expected %x, test %u, buffer %u.\n",
                     usage, expected_usage, i, j);
 
             IDXGIResource_Release(resource);
@@ -1487,7 +1586,7 @@ static void test_output_desc(void)
             ok(ret, "Failed to get monitor info.\n");
             ok(!lstrcmpW(desc.DeviceName, monitor_info.szDevice), "Got unexpected device name %s, expected %s.\n",
                     wine_dbgstr_w(desc.DeviceName), wine_dbgstr_w(monitor_info.szDevice));
-            ok(!memcmp(&desc.DesktopCoordinates, &monitor_info.rcMonitor, sizeof(desc.DesktopCoordinates)),
+            ok(EqualRect(&desc.DesktopCoordinates, &monitor_info.rcMonitor),
                     "Got unexpected desktop coordinates %s, expected %s.\n",
                     wine_dbgstr_rect(&desc.DesktopCoordinates),
                     wine_dbgstr_rect(&monitor_info.rcMonitor));
