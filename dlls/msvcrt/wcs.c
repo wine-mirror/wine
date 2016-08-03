@@ -1112,11 +1112,8 @@ int CDECL MSVCRT_vsnwprintf_l(MSVCRT_wchar_t *str, MSVCRT_size_t len,
     return ret;
 }
 
-/*********************************************************************
- *		_vswprintf_p_l (MSVCRT.@)
- */
-int CDECL MSVCRT_vswprintf_p_l(MSVCRT_wchar_t *buffer, MSVCRT_size_t length,
-        const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, __ms_va_list args)
+static int MSVCRT_vswprintf_p_l_opt(MSVCRT_wchar_t *buffer, MSVCRT_size_t length,
+        const MSVCRT_wchar_t *format, DWORD options, MSVCRT__locale_t locale, __ms_va_list args)
 {
     static const MSVCRT_wchar_t nullbyte = '\0';
     printf_arg args_ctx[MSVCRT__ARGMAX+1];
@@ -1131,15 +1128,24 @@ int CDECL MSVCRT_vswprintf_p_l(MSVCRT_wchar_t *buffer, MSVCRT_size_t length,
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return ret;
     } else if(ret == 0)
-        ret = pf_printf_w(puts_clbk_str_w, &puts_ctx, format, locale, MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
+        ret = pf_printf_w(puts_clbk_str_w, &puts_ctx, format, locale, MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER | options,
                 arg_clbk_valist, NULL, &args);
     else
         ret = pf_printf_w(puts_clbk_str_w, &puts_ctx, format, locale,
-                MSVCRT_PRINTF_POSITIONAL_PARAMS | MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
+                MSVCRT_PRINTF_POSITIONAL_PARAMS | MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER | options,
                 arg_clbk_positional, args_ctx, NULL);
 
     puts_clbk_str_w(&puts_ctx, 1, &nullbyte);
     return ret;
+}
+
+/*********************************************************************
+ *		_vswprintf_p_l (MSVCRT.@)
+ */
+int CDECL MSVCRT_vswprintf_p_l(MSVCRT_wchar_t *buffer, MSVCRT_size_t length,
+        const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, __ms_va_list args)
+{
+    return MSVCRT_vswprintf_p_l_opt(buffer, length, format, 0, locale, args);
 }
 
 /*********************************************************************
@@ -1148,9 +1154,21 @@ int CDECL MSVCRT_vswprintf_p_l(MSVCRT_wchar_t *buffer, MSVCRT_size_t length,
 int CDECL MSVCRT__vswprintf_p(MSVCRT_wchar_t *buffer, MSVCRT_size_t length,
         const MSVCRT_wchar_t *format, __ms_va_list args)
 {
-    return MSVCRT_vswprintf_p_l(buffer, length, format, NULL, args);
+    return MSVCRT_vswprintf_p_l_opt(buffer, length, format, 0, NULL, args);
 }
 
+
+/*********************************************************************
+ *		__stdio_common_vswprintf_p (MSVCRT.@)
+ */
+int CDECL MSVCRT__stdio_common_vswprintf_p( unsigned __int64 options,
+        MSVCRT_wchar_t *str, MSVCRT_size_t count, const MSVCRT_wchar_t *format,
+        MSVCRT__locale_t locale, __ms_va_list valist )
+{
+    if (options & ~UCRTBASE_PRINTF_MASK)
+        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+    return MSVCRT_vswprintf_p_l_opt(str, count, format, options & UCRTBASE_PRINTF_MASK, locale, valist);
+}
 
 /*********************************************************************
  *              _vsnwprintf_s_l (MSVCRT.@)
@@ -1399,7 +1417,7 @@ int CDECL MSVCRT__vscwprintf_l( const MSVCRT_wchar_t *format, MSVCRT__locale_t l
  */
 int CDECL MSVCRT__vscwprintf_p_l( const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, __ms_va_list args )
 {
-    return MSVCRT_vswprintf_p_l( NULL, INT_MAX, format, locale, args );
+    return MSVCRT_vswprintf_p_l_opt( NULL, INT_MAX, format, 0, locale, args );
 }
 
 /*********************************************************************
@@ -1407,7 +1425,7 @@ int CDECL MSVCRT__vscwprintf_p_l( const MSVCRT_wchar_t *format, MSVCRT__locale_t
  */
 int CDECL MSVCRT__vscwprintf_p(const MSVCRT_wchar_t *format, __ms_va_list args)
 {
-    return MSVCRT_vswprintf_p_l(NULL, INT_MAX, format, NULL, args);
+    return MSVCRT_vswprintf_p_l_opt(NULL, INT_MAX, format, 0, NULL, args);
 }
 
 /*********************************************************************
@@ -1523,7 +1541,7 @@ int CDECL MSVCRT_swprintf_p_l(MSVCRT_wchar_t *buffer, MSVCRT_size_t length,
     int r;
 
     __ms_va_start(valist, locale);
-    r = MSVCRT_vswprintf_p_l(buffer, length, format, locale, valist);
+    r = MSVCRT_vswprintf_p_l_opt(buffer, length, format, 0, locale, valist);
     __ms_va_end(valist);
 
     return r;
