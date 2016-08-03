@@ -923,6 +923,18 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             return METAFILE_PlaybackUpdateWorldTransform(real_metafile);
         }
+        case EmfPlusRecordTypeScaleWorldTransform:
+        {
+            EmfPlusScaleWorldTransform *record = (EmfPlusScaleWorldTransform*)header;
+            MatrixOrder order = (flags & 0x4) ? MatrixOrderAppend : MatrixOrderPrepend;
+
+            if (dataSize + sizeof(EmfPlusRecordHeader) < sizeof(EmfPlusScaleWorldTransform))
+                return InvalidParameter;
+
+            GdipScaleMatrix(real_metafile->world_transform, record->Sx, record->Sy, order);
+
+            return METAFILE_PlaybackUpdateWorldTransform(real_metafile);
+        }
         default:
             FIXME("Not implemented for record type %x\n", recordType);
             return NotImplemented;
