@@ -161,7 +161,7 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
             emr->emr.iType = EMR_CREATEMONOBRUSH;
             usage = DIB_PAL_MONO;
             /* FIXME: There is an extra DWORD written by native before the BMI.
-             *        Not sure what its meant to contain.
+             *        Not sure what it's meant to contain.
              */
             emr->offBmi = sizeof( EMRCREATEDIBPATTERNBRUSHPT ) + sizeof(DWORD);
             emr->cbBmi = sizeof( BITMAPINFOHEADER );
