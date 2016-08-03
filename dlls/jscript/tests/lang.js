@@ -101,6 +101,10 @@ function testFunc1(x, y) {
     ok(tmp === false, "arguments deleted");
     ok(typeof(arguments) === "object", "typeof(arguments) = " + typeof(arguments));
 
+    x = 2;
+    ok(x === 2, "x = " + x);
+    ok(arguments[0] === 2, "arguments[0] = " + arguments[0]);
+
     return true;
 }
 
@@ -210,6 +214,38 @@ function argumentsTest() {
 }
 
 argumentsTest();
+
+// arguments object detached from its execution context
+(function() {
+    var args, get_x, set_x;
+
+    function test_args(detached) {
+        ok(args[0] === 1, "args[0] = " + args[0]);
+        set_x(2);
+        ok(args[0] === (detached ? 1 : 2), "args[0] = " + args[0] + " expected " + (detached ? 1 : 2));
+        args[0] = 3;
+        ok(get_x() === (detached ? 2 : 3), "get_x() = " + get_x());
+        ok(args[0] === 3, "args[0] = " + args[0]);
+    }
+
+    (function(x) {
+        args = arguments;
+        get_x = function() { return x; };
+        set_x = function(v) { x = v; };
+
+        test_args(false);
+        x = 1;
+    })(1);
+
+    test_args(true);
+})();
+
+// arguments is a regular variable, it may be overwritten
+(function() {
+    ok(typeof(arguments) === "object", "typeof(arguments) = " + typeof(arguments));
+    arguments = 1;
+    ok(arguments === 1, "arguments = " + arguments);
+})();
 
 (function callAsExprTest() {
     ok(callAsExprTest.arguments === null, "callAsExprTest.arguments = " + callAsExprTest.arguments);
