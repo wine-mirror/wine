@@ -2819,6 +2819,7 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
 static HRESULT surface_load_drawable(struct wined3d_surface *surface,
         struct wined3d_context *context)
 {
+    unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     struct wined3d_texture *texture = surface->container;
     RECT r;
 
@@ -2830,7 +2831,7 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
     }
 
     surface_get_rect(surface, NULL, &r);
-    surface_load_location(surface, context, WINED3D_LOCATION_TEXTURE_RGB);
+    wined3d_texture_load_location(texture, sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
     surface_blt_to_drawable(texture->resource.device, context,
             WINED3D_TEXF_POINT, FALSE, surface, &r, surface, &r);
 
