@@ -545,7 +545,7 @@ static void test_create_swapchain(void)
                     "Denominator %u is %u.\n", i ,result_desc.BufferDesc.RefreshRate.Denominator);
 
         hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
-        todo_wine ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
 
         IDXGISwapChain_Release(swapchain);
     }
@@ -1301,7 +1301,7 @@ static void test_swapchain_parameters(void)
         if (FAILED(hr))
         {
             hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
-            todo_wine ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
+            ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
 
             IDXGISwapChain_Release(swapchain);
             continue;
@@ -1357,7 +1357,7 @@ static void test_swapchain_parameters(void)
         ok(hr == DXGI_ERROR_INVALID_CALL, "GetBuffer(%u) returned unexpected hr %#x, test %u.\n", j, hr, i);
 
         hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
-        todo_wine ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
 
         IDXGISwapChain_Release(swapchain);
     }
