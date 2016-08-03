@@ -890,7 +890,7 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
     if ((cooplevel & DDSCL_FULLSCREEN) != (ddraw->cooperative_level & DDSCL_FULLSCREEN) || window != ddraw->dest_window)
     {
         if (ddraw->cooperative_level & DDSCL_FULLSCREEN)
-            wined3d_device_restore_fullscreen_window(ddraw->wined3d_device, ddraw->dest_window);
+            wined3d_device_restore_fullscreen_window(ddraw->wined3d_device, ddraw->dest_window, NULL);
 
         if (cooplevel & DDSCL_FULLSCREEN)
         {

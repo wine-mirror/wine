@@ -77,6 +77,13 @@ static void swapchain_cleanup(struct wined3d_swapchain *swapchain)
         if (FAILED(hr = wined3d_set_adapter_display_mode(swapchain->device->wined3d,
                 swapchain->device->adapter->ordinal, &swapchain->original_mode)))
             ERR("Failed to restore display mode, hr %#x.\n", hr);
+
+        if (swapchain->desc.flags & WINED3D_SWAPCHAIN_RESTORE_WINDOW_RECT)
+        {
+            wined3d_device_restore_fullscreen_window(swapchain->device, swapchain->device_window,
+                    &swapchain->original_window_rect);
+            wined3d_device_release_focus_window(swapchain->device);
+        }
     }
 
     if (swapchain->backup_dc)
@@ -839,6 +846,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
         ERR("Failed to get current display mode, hr %#x.\n", hr);
         goto err;
     }
+    GetWindowRect(window, &swapchain->original_window_rect);
 
     GetClientRect(window, &client_rect);
     if (desc->windowed)
@@ -1472,8 +1480,11 @@ HRESULT CDECL wined3d_swapchain_set_fullscreen(struct wined3d_swapchain *swapcha
     }
     else if (!swapchain->desc.windowed)
     {
+        RECT *window_rect = NULL;
         /* Fullscreen -> windowed switch */
-        wined3d_device_restore_fullscreen_window(device, swapchain->device_window);
+        if (swapchain->desc.flags & WINED3D_SWAPCHAIN_RESTORE_WINDOW_RECT)
+            window_rect = &swapchain->original_window_rect;
+        wined3d_device_restore_fullscreen_window(device, swapchain->device_window, window_rect);
         wined3d_device_release_focus_window(device);
     }
 

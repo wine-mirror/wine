@@ -405,6 +405,8 @@ unsigned int dxgi_swapchain_flags_from_wined3d(unsigned int wined3d_flags)
 {
     unsigned int flags = 0;
 
+    wined3d_flags &= ~WINED3D_SWAPCHAIN_RESTORE_WINDOW_RECT;
+
     if (wined3d_flags & WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH)
     {
         wined3d_flags &= ~WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH;
@@ -419,7 +421,7 @@ unsigned int dxgi_swapchain_flags_from_wined3d(unsigned int wined3d_flags)
 
 unsigned int wined3d_swapchain_flags_from_dxgi(unsigned int flags)
 {
-    unsigned int wined3d_flags = 0; /* WINED3D_SWAPCHAIN_DISCARD_DEPTHSTENCIL? */
+    unsigned int wined3d_flags = WINED3D_SWAPCHAIN_RESTORE_WINDOW_RECT; /* WINED3D_SWAPCHAIN_DISCARD_DEPTHSTENCIL? */
 
     if (flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH)
     {

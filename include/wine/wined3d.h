@@ -825,6 +825,7 @@ enum wined3d_display_rotation
 #define WINED3D_SWAPCHAIN_NOAUTOROTATE                          0x00000020u
 #define WINED3D_SWAPCHAIN_UNPRUNEDMODE                          0x00000040u
 #define WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH                     0x00001000u
+#define WINED3D_SWAPCHAIN_RESTORE_WINDOW_RECT                   0x00002000u
 
 #define WINED3DDP_MAXTEXCOORD                                   8
 
@@ -2252,7 +2253,8 @@ void __cdecl wined3d_device_release_focus_window(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_reset(struct wined3d_device *device,
         const struct wined3d_swapchain_desc *swapchain_desc, const struct wined3d_display_mode *mode,
         wined3d_device_reset_cb callback, BOOL reset_state);
-void __cdecl wined3d_device_restore_fullscreen_window(struct wined3d_device *device, HWND window);
+void __cdecl wined3d_device_restore_fullscreen_window(struct wined3d_device *device, HWND window,
+        const RECT *window_rect);
 void __cdecl wined3d_device_set_base_vertex_index(struct wined3d_device *device, INT base_index);
 HRESULT __cdecl wined3d_device_set_clip_plane(struct wined3d_device *device,
         UINT plane_idx, const struct wined3d_vec4 *plane);

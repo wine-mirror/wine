@@ -911,12 +911,16 @@ void CDECL wined3d_device_setup_fullscreen_window(struct wined3d_device *device,
     device->filter_messages = filter_messages;
 }
 
-void CDECL wined3d_device_restore_fullscreen_window(struct wined3d_device *device, HWND window)
+void CDECL wined3d_device_restore_fullscreen_window(struct wined3d_device *device, HWND window,
+        const RECT *window_rect)
 {
+    unsigned int window_pos_flags = SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOACTIVATE;
     BOOL filter_messages;
     LONG style, exstyle;
+    RECT rect = {0};
 
-    if (!device->style && !device->exStyle) return;
+    if (!device->style && !device->exStyle)
+        return;
 
     style = GetWindowLongW(window, GWL_STYLE);
     exstyle = GetWindowLongW(window, GWL_EXSTYLE);
@@ -945,7 +949,12 @@ void CDECL wined3d_device_restore_fullscreen_window(struct wined3d_device *devic
         SetWindowLongW(window, GWL_STYLE, device->style);
         SetWindowLongW(window, GWL_EXSTYLE, device->exStyle);
     }
-    SetWindowPos(window, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+
+    if (window_rect)
+        rect = *window_rect;
+    else
+        window_pos_flags |= (SWP_NOMOVE | SWP_NOSIZE);
+    SetWindowPos(window, 0, rect.left, rect.top, rect.right, rect.bottom, window_pos_flags);
 
     device->filter_messages = filter_messages;
 
