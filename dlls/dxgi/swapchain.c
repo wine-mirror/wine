@@ -443,8 +443,7 @@ HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device
             WARN("Failed to get adapter parent, hr %#x.\n", hr);
             return hr;
         }
-        swapchain->device = &device->IWineDXGIDevice_iface;
-        IWineDXGIDevice_AddRef(swapchain->device);
+        IWineDXGIDevice_AddRef(swapchain->device = &device->IWineDXGIDevice_iface);
     }
     else
     {
@@ -454,8 +453,6 @@ HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device
 
     swapchain->IDXGISwapChain_iface.lpVtbl = &dxgi_swapchain_vtbl;
     swapchain->refcount = 1;
-    swapchain->fullscreen = FALSE;
-    swapchain->target = NULL;
     wined3d_mutex_lock();
     wined3d_private_store_init(&swapchain->private_store);
 
@@ -463,15 +460,39 @@ HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device
             &dxgi_swapchain_wined3d_parent_ops, &swapchain->wined3d_swapchain)))
     {
         WARN("Failed to create wined3d swapchain, hr %#x.\n", hr);
-        wined3d_private_store_cleanup(&swapchain->private_store);
-        wined3d_mutex_unlock();
-        if (swapchain->factory)
-            IDXGIFactory_Release(swapchain->factory);
-        if (swapchain->device)
-            IWineDXGIDevice_Release(swapchain->device);
-        return hr;
+        goto cleanup;
+    }
+
+    swapchain->fullscreen = !desc->windowed;
+    swapchain->target = NULL;
+    if (swapchain->fullscreen)
+    {
+        if (FAILED(hr = wined3d_swapchain_set_fullscreen(swapchain->wined3d_swapchain,
+                desc, NULL)))
+        {
+            WARN("Failed to set fullscreen state, hr %#x.\n", hr);
+            wined3d_swapchain_decref(swapchain->wined3d_swapchain);
+            goto cleanup;
+        }
+
+        if (FAILED(hr = IDXGISwapChain_GetContainingOutput(&swapchain->IDXGISwapChain_iface,
+                &swapchain->target)))
+        {
+            WARN("Failed to get target output for fullscreen swapchain, hr %#x.\n", hr);
+            wined3d_swapchain_decref(swapchain->wined3d_swapchain);
+            goto cleanup;
+        }
     }
     wined3d_mutex_unlock();
 
     return S_OK;
+
+cleanup:
+    wined3d_private_store_cleanup(&swapchain->private_store);
+    wined3d_mutex_unlock();
+    if (swapchain->factory)
+        IDXGIFactory_Release(swapchain->factory);
+    if (swapchain->device)
+        IWineDXGIDevice_Release(swapchain->device);
+    return hr;
 }
