@@ -344,11 +344,18 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_ResizeTarget(IDXGISwapChain *ifa
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetContainingOutput(IDXGISwapChain *iface, IDXGIOutput **output)
 {
+    struct dxgi_swapchain *swapchain = impl_from_IDXGISwapChain(iface);
     IDXGIAdapter *adapter;
     IDXGIDevice *device;
     HRESULT hr;
 
     TRACE("iface %p, output %p.\n", iface, output);
+
+    if (swapchain->target)
+    {
+        IDXGIOutput_AddRef(*output = swapchain->target);
+        return S_OK;
+    }
 
     if (FAILED(hr = dxgi_swapchain_GetDevice(iface, &IID_IDXGIDevice, (void **)&device)))
         return hr;
