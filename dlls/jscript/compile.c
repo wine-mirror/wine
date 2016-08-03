@@ -54,6 +54,10 @@ typedef struct {
     unsigned labels_size;
     unsigned labels_cnt;
 
+    local_ref_t *locals_buf;
+    unsigned locals_buf_size;
+    unsigned locals_cnt;
+
     statement_ctx_t *stat_ctx;
     function_code_t *func;
 
@@ -1782,6 +1786,46 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx,
     return hres;
 }
 
+static int local_cmp(const void *key, const void *ref)
+{
+    return strcmpW((const WCHAR*)key, ((const local_ref_t*)ref)->name);
+}
+
+static inline local_ref_t *find_local(compiler_ctx_t *ctx, BSTR name)
+{
+    return bsearch(name, ctx->locals_buf, ctx->locals_cnt, sizeof(*ctx->locals_buf), local_cmp);
+}
+
+static BOOL alloc_local(compiler_ctx_t *ctx, BSTR name, int ref)
+{
+    unsigned i;
+
+    if(!ctx->locals_buf_size) {
+        ctx->locals_buf = heap_alloc(4 * sizeof(*ctx->locals_buf));
+        if(!ctx->locals_buf)
+            return FALSE;
+        ctx->locals_buf_size = 4;
+    }else if(ctx->locals_buf_size == ctx->locals_cnt) {
+        local_ref_t *new_buf = heap_realloc(ctx->locals_buf, ctx->locals_buf_size * 2 * sizeof(*ctx->locals_buf));
+        if(!new_buf)
+            return FALSE;
+        ctx->locals_buf = new_buf;
+        ctx->locals_buf_size *= 2;
+    }
+
+    for(i = 0; i < ctx->locals_cnt; i++) {
+        if(strcmpW(ctx->locals_buf[i].name, name) > 0) {
+            memmove(ctx->locals_buf + i+1, ctx->locals_buf + i, (ctx->locals_cnt - i) * sizeof(*ctx->locals_buf));
+            break;
+        }
+    }
+
+    ctx->locals_buf[i].name = name;
+    ctx->locals_buf[i].ref = ref;
+    ctx->locals_cnt++;
+    return TRUE;
+}
+
 static void resolve_labels(compiler_ctx_t *ctx, unsigned off)
 {
     instr_t *instr;
@@ -1856,9 +1900,35 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
     ctx->var_head = ctx->var_tail = NULL;
     ctx->func_head = ctx->func_tail = NULL;
     ctx->from_eval = from_eval;
+    ctx->func = func;
+    ctx->locals_cnt = 0;
+
+    if(func_expr) {
+        parameter_t *param_iter;
+
+        func->source = func_expr->src_str;
+        func->source_len = func_expr->src_len;
+
+        for(param_iter = func_expr->parameter_list; param_iter; param_iter = param_iter->next)
+            func->param_cnt++;
+
+        func->params = compiler_alloc(ctx->code, func->param_cnt * sizeof(*func->params));
+        if(!func->params)
+            return E_OUTOFMEMORY;
+
+        for(param_iter = func_expr->parameter_list, i=0; param_iter; param_iter = param_iter->next, i++) {
+            func->params[i] = compiler_alloc_bstr(ctx, param_iter->identifier);
+            if(!func->params[i])
+                return E_OUTOFMEMORY;
+        }
+    }
+
+    for(i = 0; i < func->param_cnt; i++) {
+        if(!find_local(ctx, func->params[i]) && !alloc_local(ctx, func->params[i], -i-1))
+            return E_OUTOFMEMORY;
+    }
 
     off = ctx->code_off;
-    ctx->func = func;
     hres = compile_block_statement(ctx, source->statement);
     if(FAILED(hres))
         return hres;
@@ -1888,26 +1958,6 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
         }
     }
 
-    if(func_expr) {
-        parameter_t *param_iter;
-
-        func->source = func_expr->src_str;
-        func->source_len = func_expr->src_len;
-
-        for(param_iter = func_expr->parameter_list; param_iter; param_iter = param_iter->next)
-            func->param_cnt++;
-
-        func->params = compiler_alloc(ctx->code, func->param_cnt * sizeof(*func->params));
-        if(!func->params)
-            return E_OUTOFMEMORY;
-
-        for(param_iter = func_expr->parameter_list, i=0; param_iter; param_iter = param_iter->next, i++) {
-            func->params[i] = compiler_alloc_bstr(ctx, param_iter->identifier);
-            if(!func->params[i])
-                return E_OUTOFMEMORY;
-        }
-    }
-
     func->variables = compiler_alloc(ctx->code, func->var_cnt * sizeof(*func->variables));
     if(!func->variables)
         return E_OUTOFMEMORY;
@@ -1919,6 +1969,12 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
     }
 
     assert(i == func->var_cnt);
+
+    func->locals = compiler_alloc(ctx->code, ctx->locals_cnt * sizeof(*func->locals));
+    if(!func->locals)
+        return E_OUTOFMEMORY;
+    func->locals_cnt = ctx->locals_cnt;
+    memcpy(func->locals, ctx->locals_buf, func->locals_cnt * sizeof(*func->locals));
 
     func->funcs = compiler_alloc(ctx->code, func->func_cnt * sizeof(*func->funcs));
     if(!func->funcs)
@@ -2038,6 +2094,7 @@ HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, const WCHAR *args, 
 
     hres = compile_function(&compiler, compiler.parser->source, NULL, from_eval, &compiler.code->global_code);
     parser_release(compiler.parser);
+    heap_free(compiler.locals_buf);
     if(FAILED(hres)) {
         release_bytecode(compiler.code);
         return hres;

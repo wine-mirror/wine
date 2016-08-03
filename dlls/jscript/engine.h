@@ -126,6 +126,11 @@ typedef struct {
     } u;
 } instr_t;
 
+typedef struct {
+    BSTR name;
+    int ref;
+} local_ref_t;
+
 typedef struct _function_code_t {
     BSTR name;
     BSTR event_target;
@@ -142,6 +147,9 @@ typedef struct _function_code_t {
 
     unsigned param_cnt;
     BSTR *params;
+
+    unsigned locals_cnt;
+    local_ref_t *locals;
 } function_code_t;
 
 typedef struct _bytecode_t {

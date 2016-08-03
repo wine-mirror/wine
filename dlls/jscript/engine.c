@@ -589,6 +589,11 @@ static BOOL lookup_global_members(script_ctx_t *ctx, BSTR identifier, exprval_t 
     return FALSE;
 }
 
+static int local_ref_cmp(const void *key, const void *ref)
+{
+    return strcmpW((const WCHAR*)key, ((const local_ref_t*)ref)->name);
+}
+
 /* ECMA-262 3rd Edition    10.1.4 */
 static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *ret)
 {
@@ -603,14 +608,12 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
         for(scope = ctx->call_ctx->scope; scope; scope = scope->next) {
             if(scope->frame) {
                 function_code_t *func = scope->frame->function;
-                int i;
+                local_ref_t *ref = bsearch(identifier, func->locals, func->locals_cnt, sizeof(*func->locals), local_ref_cmp);
 
-                for(i = 0; i < func->param_cnt; i++) {
-                    if(!strcmpW(identifier, func->params[i])) {
-                        ret->type = EXPRVAL_STACK_REF;
-                        ret->u.off = scope->frame->arguments_off+i;
-                        return S_OK;
-                    }
+                if(ref) {
+                    ret->type = EXPRVAL_STACK_REF;
+                    ret->u.off = scope->frame->arguments_off - ref->ref - 1;
+                    return S_OK;
                 }
             }
             if(scope->jsobj)
