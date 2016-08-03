@@ -1267,6 +1267,131 @@ static void test_pagetransform(void)
     expect(Ok, stat);
 }
 
+static const emfplus_record worldtransform_records[] = {
+    {0, EMR_HEADER},
+    {0, EmfPlusRecordTypeHeader},
+    {0, EmfPlusRecordTypeFillRects},
+    {0, EmfPlusRecordTypeScaleWorldTransform},
+    {0, EmfPlusRecordTypeFillRects},
+    {0, EmfPlusRecordTypeEndOfFile},
+    {0, EMR_EOF},
+    {0}
+};
+
+static void test_worldtransform(void)
+{
+    GpStatus stat;
+    GpMetafile *metafile;
+    GpGraphics *graphics;
+    HDC hdc;
+    static const GpRectF frame = {0.0, 0.0, 5.0, 5.0};
+    static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
+    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
+    GpBitmap *bitmap;
+    ARGB color;
+    GpBrush *brush;
+    GpMatrix *transform;
+    BOOL identity;
+    REAL elements[6];
+
+    hdc = CreateCompatibleDC(0);
+
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(Ok, stat);
+
+    DeleteDC(hdc);
+
+    if (stat != Ok)
+        return;
+
+    stat = GdipCreateMatrix(&transform);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    /* initial transform */
+    stat = GdipGetWorldTransform(graphics, transform);
+    expect(Ok, stat);
+
+    stat = GdipIsMatrixIdentity(transform, &identity);
+    expect(Ok, stat);
+    expect(TRUE, identity);
+
+    stat = GdipCreateSolidFill((ARGB)0xff0000ff, (GpSolidFill**)&brush);
+    expect(Ok, stat);
+
+    stat = GdipFillRectangleI(graphics, brush, 0, 0, 1, 1);
+    expect(Ok, stat);
+
+    stat = GdipDeleteBrush(brush);
+    expect(Ok, stat);
+
+    /* scale transform */
+    stat = GdipScaleWorldTransform(graphics, 2.0, 4.0, MatrixOrderPrepend);
+    expect(Ok, stat);
+
+    stat = GdipGetWorldTransform(graphics, transform);
+    expect(Ok, stat);
+
+    stat = GdipGetMatrixElements(transform, elements);
+    expect(Ok, stat);
+    expectf(2.0, elements[0]);
+    expectf(0.0, elements[1]);
+    expectf(0.0, elements[2]);
+    expectf(4.0, elements[3]);
+    expectf(0.0, elements[4]);
+    expectf(0.0, elements[5]);
+
+    stat = GdipCreateSolidFill((ARGB)0xff00ff00, (GpSolidFill**)&brush);
+    expect(Ok, stat);
+
+    stat = GdipFillRectangle(graphics, brush, 0.5, 0.5, 0.5, 0.25);
+    expect(Ok, stat);
+
+    stat = GdipDeleteBrush(brush);
+    expect(Ok, stat);
+
+    stat = GdipDeleteMatrix(transform);
+    expect(Ok, stat);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    check_metafile(metafile, worldtransform_records, "worldtransform metafile", dst_points, &frame, UnitPixel);
+
+    save_metafile(metafile, "worldtransform.emf");
+
+    stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, stat);
+
+    play_metafile(metafile, graphics, worldtransform_records, "worldtransform playback", dst_points, &frame, UnitPixel);
+
+    stat = GdipBitmapGetPixel(bitmap, 80, 80, &color);
+    expect(Ok, stat);
+    expect(0, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 10, 10, &color);
+    expect(Ok, stat);
+    expect(0xff0000ff, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 30, 50, &color);
+    expect(Ok, stat);
+    expect(0xff00ff00, color);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)bitmap);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
+}
+
 static void test_converttoemfplus(void)
 {
     GpStatus (WINAPI *pGdipConvertToEmfPlus)( const GpGraphics *graphics, GpMetafile *metafile, BOOL *succ,
@@ -1437,6 +1562,7 @@ START_TEST(metafile)
     test_clear();
     test_nullframerect();
     test_pagetransform();
+    test_worldtransform();
     test_converttoemfplus();
     test_frameunit();
 
