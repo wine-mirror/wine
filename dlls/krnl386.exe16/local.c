@@ -814,7 +814,7 @@ static UINT16 LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
                     size = pFinalArena->size;
                     LOCAL_RemoveFreeBlock(ptr, finalarena);
                     LOCAL_ShrinkArena( ds, finalarena, movesize );
-                    /* Copy the arena to it's new location */
+                    /* Copy the arena to its new location */
                     memcpy((char *)pFinalArena + ARENA_HEADER_SIZE,
                            (char *)pMoveArena + ARENA_HEADER_SIZE,
                            movesize - ARENA_HEADER_SIZE );
