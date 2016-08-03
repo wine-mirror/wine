@@ -19,8 +19,10 @@
 
 #include "config.h"
 
+#include <errno.h>
 #include <fcntl.h>
 #include <io.h>
+#include <limits.h>
 #include <share.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -3541,12 +3543,61 @@ istream* __thiscall istream_read_str(istream *this, char *str)
     return this;
 }
 
+static LONG istream_internal_read_integer(istream *this, LONG min_value, LONG max_value, BOOL set_flag)
+{
+    ios *base = istream_get_ios(this);
+    char buffer[16];
+    int num_base;
+    LONG ret;
+
+    TRACE("(%p %d %d %d)\n", this, min_value, max_value, set_flag);
+
+    num_base = istream_getint(this, buffer);
+    errno = 0;
+    ret = strtol(buffer, NULL, num_base);
+    /* check for overflow and whether the value fits in the output var */
+    if (set_flag && errno == ERANGE) {
+        base->state |= IOSTATE_failbit;
+    } else if (ret > max_value) {
+        base->state |= IOSTATE_failbit;
+        ret = max_value;
+    } else if (ret < min_value) {
+        base->state |= IOSTATE_failbit;
+        ret = min_value;
+    }
+    return ret;
+}
+
+static ULONG istream_internal_read_unsigned_integer(istream *this, LONG min_value, ULONG max_value)
+{
+    ios *base = istream_get_ios(this);
+    char buffer[16];
+    int num_base;
+    ULONG ret;
+
+    TRACE("(%p %d %u)\n", this, min_value, max_value);
+
+    num_base = istream_getint(this, buffer);
+    errno = 0;
+    ret = strtoul(buffer, NULL, num_base);
+    /* check for overflow and whether the value fits in the output var */
+    if ((ret == ULONG_MAX && errno == ERANGE) ||
+        (ret > max_value && ret < (ULONG) min_value)) {
+        base->state |= IOSTATE_failbit;
+        ret = max_value;
+    }
+    return ret;
+}
+
 /* ??5istream@@QAEAAV0@AAF@Z */
 /* ??5istream@@QEAAAEAV0@AEAF@Z */
 DEFINE_THISCALL_WRAPPER(istream_read_short, 8)
 istream* __thiscall istream_read_short(istream *this, short *p)
 {
-    FIXME("(%p %p) stub\n", this, p);
+    if (istream_ipfx(this, 0)) {
+        *p = istream_internal_read_integer(this, SHRT_MIN, SHRT_MAX, FALSE);
+        istream_isfx(this);
+    }
     return this;
 }
 
@@ -3555,7 +3606,10 @@ istream* __thiscall istream_read_short(istream *this, short *p)
 DEFINE_THISCALL_WRAPPER(istream_read_unsigned_short, 8)
 istream* __thiscall istream_read_unsigned_short(istream *this, unsigned short *p)
 {
-    FIXME("(%p %p) stub\n", this, p);
+    if (istream_ipfx(this, 0)) {
+        *p = istream_internal_read_unsigned_integer(this, SHRT_MIN, USHRT_MAX);
+        istream_isfx(this);
+    }
     return this;
 }
 
@@ -3564,7 +3618,10 @@ istream* __thiscall istream_read_unsigned_short(istream *this, unsigned short *p
 DEFINE_THISCALL_WRAPPER(istream_read_int, 8)
 istream* __thiscall istream_read_int(istream *this, int *p)
 {
-    FIXME("(%p %p) stub\n", this, p);
+    if (istream_ipfx(this, 0)) {
+        *p = istream_internal_read_integer(this, INT_MIN, INT_MAX, FALSE);
+        istream_isfx(this);
+    }
     return this;
 }
 
@@ -3573,7 +3630,10 @@ istream* __thiscall istream_read_int(istream *this, int *p)
 DEFINE_THISCALL_WRAPPER(istream_read_unsigned_int, 8)
 istream* __thiscall istream_read_unsigned_int(istream *this, unsigned int *p)
 {
-    FIXME("(%p %p) stub\n", this, p);
+    if (istream_ipfx(this, 0)) {
+        *p = istream_internal_read_unsigned_integer(this, INT_MIN, UINT_MAX);
+        istream_isfx(this);
+    }
     return this;
 }
 
@@ -3582,7 +3642,10 @@ istream* __thiscall istream_read_unsigned_int(istream *this, unsigned int *p)
 DEFINE_THISCALL_WRAPPER(istream_read_long, 8)
 istream* __thiscall istream_read_long(istream *this, LONG *p)
 {
-    FIXME("(%p %p) stub\n", this, p);
+    if (istream_ipfx(this, 0)) {
+        *p = istream_internal_read_integer(this, LONG_MIN, LONG_MAX, TRUE);
+        istream_isfx(this);
+    }
     return this;
 }
 
@@ -3591,7 +3654,10 @@ istream* __thiscall istream_read_long(istream *this, LONG *p)
 DEFINE_THISCALL_WRAPPER(istream_read_unsigned_long, 8)
 istream* __thiscall istream_read_unsigned_long(istream *this, ULONG *p)
 {
-    FIXME("(%p %p) stub\n", this, p);
+    if (istream_ipfx(this, 0)) {
+        *p = istream_internal_read_unsigned_integer(this, LONG_MIN, ULONG_MAX);
+        istream_isfx(this);
+    }
     return this;
 }
 

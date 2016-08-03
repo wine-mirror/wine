@@ -329,6 +329,12 @@ static int (*__thiscall p_istream_getint)(istream*, char*);
 static int (*__thiscall p_istream_getdouble)(istream*, char*, int);
 static istream* (*__thiscall p_istream_read_char)(istream*, char*);
 static istream* (*__thiscall p_istream_read_str)(istream*, char*);
+static istream* (*__thiscall p_istream_read_short)(istream*, short*);
+static istream* (*__thiscall p_istream_read_unsigned_short)(istream*, unsigned short*);
+static istream* (*__thiscall p_istream_read_int)(istream*, int*);
+static istream* (*__thiscall p_istream_read_unsigned_int)(istream*, unsigned int*);
+static istream* (*__thiscall p_istream_read_long)(istream*, LONG*);
+static istream* (*__thiscall p_istream_read_unsigned_long)(istream*, ULONG*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -546,6 +552,12 @@ static BOOL init(void)
         SET(p_istream_getdouble, "?getdouble@istream@@AEAAHPEADH@Z");
         SET(p_istream_read_char, "??5istream@@QEAAAEAV0@AEAD@Z");
         SET(p_istream_read_str, "??5istream@@QEAAAEAV0@PEAD@Z");
+        SET(p_istream_read_short, "??5istream@@QEAAAEAV0@AEAF@Z");
+        SET(p_istream_read_unsigned_short, "??5istream@@QEAAAEAV0@AEAG@Z");
+        SET(p_istream_read_int, "??5istream@@QEAAAEAV0@AEAH@Z");
+        SET(p_istream_read_unsigned_int, "??5istream@@QEAAAEAV0@AEAI@Z");
+        SET(p_istream_read_long, "??5istream@@QEAAAEAV0@AEAJ@Z");
+        SET(p_istream_read_unsigned_long, "??5istream@@QEAAAEAV0@AEAK@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -685,6 +697,12 @@ static BOOL init(void)
         SET(p_istream_getdouble, "?getdouble@istream@@AAEHPADH@Z");
         SET(p_istream_read_char, "??5istream@@QAEAAV0@AAD@Z");
         SET(p_istream_read_str, "??5istream@@QAEAAV0@PAD@Z");
+        SET(p_istream_read_short, "??5istream@@QAEAAV0@AAF@Z");
+        SET(p_istream_read_unsigned_short, "??5istream@@QAEAAV0@AAG@Z");
+        SET(p_istream_read_int, "??5istream@@QAEAAV0@AAH@Z");
+        SET(p_istream_read_unsigned_int, "??5istream@@QAEAAV0@AAI@Z");
+        SET(p_istream_read_long, "??5istream@@QAEAAV0@AAJ@Z");
+        SET(p_istream_read_unsigned_long, "??5istream@@QAEAAV0@AAK@Z");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -4868,8 +4886,15 @@ static void test_istream_read(void)
 
     char c, st[8], char_out[] = {-85, ' ', 'a', -50};
     const char *str_out[] = {"AAAAAAA", "abc", "a", "abc", "ab", "abcde"};
+    short s, short_out[] = {32767, -32768};
+    unsigned short us, ushort_out[] = {65535u, 65534u, 32768u};
+    int n, int_out[] = {123456789, 0, 1, -500, 0x8000, 2147483646, 2147483647, -2147483647, -2147483647-1, -1};
+    unsigned un, uint_out[] = {4294967295u, 4294967294u, 2147483648u, 1u};
+    LONG l, long_out[] = {2147483647l, -2147483647l-1};
+    ULONG ul, ulong_out[] = {4294967295ul, 4294967294ul, 2147483648ul, 1ul};
     struct istream_read_test {
-        enum { type_chr, type_str } type;
+        enum { type_chr, type_str, type_shrt, type_ushrt, type_int, type_uint,
+            type_long, type_ulong } type;
         const char *stream_content;
         ios_flags flags;
         int width;
@@ -4902,6 +4927,71 @@ static void test_istream_read(void)
         {type_str, "abcde\n", 0,            0, /* "abcde" */   5, IOSTATE_goodbit, 0, 5, FALSE},
         {type_str, "\n",      0,            0, /* "AAAAAAA" */ 0, IOSTATE_failbit, 0, 0, FALSE},
         {type_str, "abcde",   0,           -1, /* "abcde" */   5, IOSTATE_eofbit,  0, 5, FALSE},
+        /* short */
+        {type_shrt, "32767",       0, 6, /* 32767 */  0, IOSTATE_eofbit,  6, 5,  FALSE},
+        {type_shrt, "32768",       0, 6, /* 32767 */  0, IOSTATE_faileof, 6, 5,  FALSE},
+        {type_shrt, "2147483648",  0, 6, /* 32767 */  0, IOSTATE_faileof, 6, 10, FALSE},
+        {type_shrt, "4294967296",  0, 6, /* 32767 */  0, IOSTATE_faileof, 6, 10, FALSE},
+        {type_shrt, "-32768",      0, 6, /* -32768 */ 1, IOSTATE_eofbit,  6, 6,  FALSE},
+        {type_shrt, "-32769",      0, 6, /* -32768 */ 1, IOSTATE_faileof, 6, 6,  FALSE},
+        {type_shrt, "-2147483648", 0, 6, /* -32768 */ 1, IOSTATE_faileof, 6, 11, FALSE},
+        /* unsigned short */
+        {type_ushrt, "65535",          0, 6, /* 65535 */ 0, IOSTATE_eofbit,  6, 5,  FALSE},
+        {type_ushrt, "65536",          0, 6, /* 65535 */ 0, IOSTATE_faileof, 6, 5,  FALSE},
+        {type_ushrt, "12345678",       0, 6, /* 65535 */ 0, IOSTATE_faileof, 6, 8,  FALSE},
+        {type_ushrt, "2147483648",     0, 6, /* 65535 */ 0, IOSTATE_faileof, 6, 10, FALSE},
+        {type_ushrt, "4294967296",     0, 6, /* 65535 */ 0, IOSTATE_faileof, 6, 10, FALSE},
+        {type_ushrt, "99999999999999", 0, 6, /* 65535 */ 0, IOSTATE_faileof, 6, 14, FALSE},
+        {type_ushrt, "-1",             0, 6, /* 65535 */ 0, IOSTATE_eofbit,  6, 2,  TRUE},
+        {type_ushrt, "-2",             0, 6, /* 65534 */ 1, IOSTATE_eofbit,  6, 2,  FALSE},
+        {type_ushrt, "-32768",         0, 6, /* 32768 */ 2, IOSTATE_eofbit,  6, 6,  FALSE},
+        {type_ushrt, "-32769",         0, 6, /* 65535 */ 0, IOSTATE_faileof, 6, 6,  FALSE},
+        {type_ushrt, "-2147483648",    0, 6, /* 65535 */ 0, IOSTATE_faileof, 6, 11, FALSE},
+        /* int */
+        {type_int, "",            FLAGS_skipws, 6, /* 123456789 */   0, IOSTATE_faileof, 6, 0,  FALSE},
+        {type_int, " 0",          FLAGS_skipws, 6, /* 0 */           1, IOSTATE_eofbit,  6, 2,  FALSE},
+        {type_int, " 0",          0,            6, /* 0 */           1, IOSTATE_failbit, 6, 0,  FALSE},
+        {type_int, "+1 ",         0,            6, /* 1 */           2, IOSTATE_goodbit, 6, 2,  FALSE},
+        {type_int, "1L",          0,            6, /* 1 */           2, IOSTATE_goodbit, 6, 1,  FALSE},
+        {type_int, "-500.0",      0,            6, /* -500 */        3, IOSTATE_goodbit, 6, 4,  FALSE},
+        {type_int, "0x8000",      0,            6, /* 0x8000 */      4, IOSTATE_eofbit,  6, 6,  FALSE},
+        {type_int, "0xtest",      0,            6, /* 0 */           1, IOSTATE_failbit, 6, 0,  FALSE},
+        {type_int, "0test",       0,            6, /* 0 */           1, IOSTATE_goodbit, 6, 1,  FALSE},
+        {type_int, "0x7ffffffe",  0,            6, /* 2147483646 */  5, IOSTATE_eofbit,  6, 10, FALSE},
+        {type_int, "0x7fffffff",  0,            6, /* 2147483647 */  6, IOSTATE_eofbit,  6, 10, FALSE},
+        {type_int, "0x80000000",  0,            6, /* 2147483647 */  6, IOSTATE_eofbit,  6, 10, FALSE},
+        {type_int, "0xdeadbeef",  0,            6, /* 2147483647 */  6, IOSTATE_eofbit,  6, 10, FALSE},
+        {type_int, "2147483648",  0,            6, /* 2147483647 */  6, IOSTATE_eofbit,  6, 10, FALSE},
+        {type_int, "4294967295",  0,            6, /* 2147483647 */  6, IOSTATE_eofbit,  6, 10, FALSE},
+        {type_int, "-2147483647", 0,            6, /* -2147483647 */ 7, IOSTATE_eofbit,  6, 11, FALSE},
+        {type_int, "-2147483648", 0,            6, /* -2147483648 */ 8, IOSTATE_eofbit,  6, 11, FALSE},
+        {type_int, "-2147483649", 0,            6, /* -2147483648 */ 8, IOSTATE_eofbit,  6, 11, FALSE},
+        {type_int, "-1f",         FLAGS_dec,    6, /* -1 */          9, IOSTATE_goodbit, 6, 2,  FALSE},
+        /* unsigned int */
+        {type_uint, "4294967295",     0, 6, /* 4294967295 */ 0, IOSTATE_eofbit,  6, 10, TRUE},
+        {type_uint, "4294967296",     0, 6, /* 4294967295 */ 0, IOSTATE_faileof, 6, 10, FALSE},
+        {type_uint, "99999999999999", 0, 6, /* 4294967295 */ 0, IOSTATE_faileof, 6, 14, FALSE},
+        {type_uint, "-1",             0, 6, /* 4294967295 */ 0, IOSTATE_eofbit,  6, 2,  TRUE},
+        {type_uint, "-2",             0, 6, /* 4294967294 */ 1, IOSTATE_eofbit,  6, 2,  FALSE},
+        {type_uint, "-2147483648",    0, 6, /* 2147483648 */ 2, IOSTATE_eofbit,  6, 11, FALSE},
+        {type_uint, "-4294967295",    0, 6, /* 1 */          3, IOSTATE_eofbit,  6, 11, FALSE},
+        {type_uint, "-9999999999999", 0, 6, /* 1 */          3, IOSTATE_eofbit,  6, 14, FALSE},
+        /* long */
+        {type_long, "2147483647",     0, 6, /* 2147483647 */  0, IOSTATE_eofbit,  6, 10, TRUE},
+        {type_long, "2147483648",     0, 6, /* 2147483647 */  0, IOSTATE_faileof, 6, 10, FALSE},
+        {type_long, "4294967295",     0, 6, /* 2147483647 */  0, IOSTATE_faileof, 6, 10, FALSE},
+        {type_long, "-2147483648",    0, 6, /* -2147483648 */ 1, IOSTATE_eofbit,  6, 11, TRUE},
+        {type_long, "-2147483649",    0, 6, /* -2147483648 */ 1, IOSTATE_faileof, 6, 11, FALSE},
+        {type_long, "-9999999999999", 0, 6, /* -2147483648 */ 1, IOSTATE_faileof, 6, 14, FALSE},
+        /* unsigned long */
+        {type_ulong, "4294967295",     0, 6, /* 4294967295 */ 0, IOSTATE_eofbit,  6, 10, TRUE},
+        {type_ulong, "4294967296",     0, 6, /* 4294967295 */ 0, IOSTATE_faileof, 6, 10, FALSE},
+        {type_ulong, "99999999999999", 0, 6, /* 4294967295 */ 0, IOSTATE_faileof, 6, 14, FALSE},
+        {type_ulong, "-1",             0, 6, /* 4294967295 */ 0, IOSTATE_eofbit,  6, 2,  TRUE},
+        {type_ulong, "-2",             0, 6, /* 4294967294 */ 1, IOSTATE_eofbit,  6, 2,  FALSE},
+        {type_ulong, "-2147483648",    0, 6, /* 2147483648 */ 2, IOSTATE_eofbit,  6, 11, FALSE},
+        {type_ulong, "-4294967295",    0, 6, /* 1 */          3, IOSTATE_eofbit,  6, 11, FALSE},
+        {type_ulong, "-9999999999999", 0, 6, /* 1 */          3, IOSTATE_eofbit,  6, 14, FALSE},
     };
 
     pssb = call_func2(p_strstreambuf_dynamic_ctor, &ssb, 64);
@@ -4933,6 +5023,42 @@ static void test_istream_read(void)
             pis = call_func2(p_istream_read_str, &is, st);
             ok(!strcmp(st, str_out[tests[i].expected_val]), "Test %d: expected %s got %s\n", i,
                 str_out[tests[i].expected_val], st);
+            break;
+        case type_shrt:
+            s = 12345;
+            pis = call_func2(p_istream_read_short, &is, &s);
+            ok(s == short_out[tests[i].expected_val], "Test %d: expected %hd got %hd\n", i,
+                short_out[tests[i].expected_val], s);
+            break;
+        case type_ushrt:
+            us = 12345u;
+            pis = call_func2(p_istream_read_unsigned_short, &is, &us);
+            ok(us == ushort_out[tests[i].expected_val], "Test %d: expected %hu got %hu\n", i,
+                ushort_out[tests[i].expected_val], us);
+            break;
+        case type_int:
+            n = 123456789;
+            pis = call_func2(p_istream_read_int, &is, &n);
+            ok(n == int_out[tests[i].expected_val], "Test %d: expected %d got %d\n", i,
+                int_out[tests[i].expected_val], n);
+            break;
+        case type_uint:
+            un = 123456789u;
+            pis = call_func2(p_istream_read_unsigned_int, &is, &un);
+            ok(un == uint_out[tests[i].expected_val], "Test %d: expected %u got %u\n", i,
+                uint_out[tests[i].expected_val], un);
+            break;
+        case type_long:
+            l = 123456789l;
+            pis = call_func2(p_istream_read_long, &is, &l);
+            ok(l == long_out[tests[i].expected_val], "Test %d: expected %d got %d\n", i,
+                long_out[tests[i].expected_val], l);
+            break;
+        case type_ulong:
+            ul = 123456789ul;
+            pis = call_func2(p_istream_read_unsigned_long, &is, &ul);
+            ok(ul == ulong_out[tests[i].expected_val], "Test %d: expected %u got %u\n", i,
+                ulong_out[tests[i].expected_val], ul);
             break;
         }
 
