@@ -39,8 +39,9 @@
 #include "ddk/wdm.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
-#include "wine/list.h"
 #include "wine/debug.h"
+
+#include "wine/rbtree.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
@@ -71,6 +72,56 @@ static DWORD request_thread;
 /* pid/tid of the client thread */
 static DWORD client_tid;
 static DWORD client_pid;
+
+struct wine_driver
+{
+    struct wine_rb_entry entry;
+
+    DRIVER_OBJECT driver_obj;
+    DRIVER_EXTENSION driver_extension;
+};
+
+static struct wine_rb_tree wine_drivers;
+
+static CRITICAL_SECTION drivers_cs;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &drivers_cs,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": drivers_cs") }
+};
+static CRITICAL_SECTION drivers_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+static void *wine_drivers_rb_alloc( size_t size )
+{
+    return HeapAlloc( GetProcessHeap(), 0, size );
+}
+
+static void *wine_drivers_rb_realloc( void *ptr, size_t size )
+{
+    return HeapReAlloc( GetProcessHeap(), 0, ptr, size );
+}
+
+static void wine_drivers_rb_free( void *ptr )
+{
+    HeapFree( GetProcessHeap(), 0, ptr );
+}
+
+static int wine_drivers_rb_compare( const void *key, const struct wine_rb_entry *entry )
+{
+    const struct wine_driver *driver = WINE_RB_ENTRY_VALUE( entry, const struct wine_driver, entry );
+    const UNICODE_STRING *k = key;
+
+    return RtlCompareUnicodeString( k, &driver->driver_obj.DriverName, FALSE );
+}
+
+static const struct wine_rb_functions wine_drivers_rb_functions =
+{
+    wine_drivers_rb_alloc,
+    wine_drivers_rb_realloc,
+    wine_drivers_rb_free,
+    wine_drivers_rb_compare,
+};
 
 #ifdef __i386__
 #define DEFINE_FASTCALL1_ENTRYPOINT( name ) \
@@ -846,41 +897,48 @@ static void build_driver_keypath( const WCHAR *name, UNICODE_STRING *keypath )
     RtlInitUnicodeString( keypath, str );
 }
 
+
 /***********************************************************************
  *           IoCreateDriver   (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI IoCreateDriver( UNICODE_STRING *name, PDRIVER_INITIALIZE init )
 {
-    DRIVER_OBJECT *driver;
-    DRIVER_EXTENSION *extension;
+    struct wine_driver *driver;
     NTSTATUS status;
 
     TRACE("(%s, %p)\n", debugstr_us(name), init);
 
     if (!(driver = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                    sizeof(*driver) + sizeof(*extension) )))
+                                    sizeof(*driver) )))
         return STATUS_NO_MEMORY;
 
-    if ((status = RtlDuplicateUnicodeString( 1, name, &driver->DriverName )))
+    if ((status = RtlDuplicateUnicodeString( 1, name, &driver->driver_obj.DriverName )))
     {
         RtlFreeHeap( GetProcessHeap(), 0, driver );
         return status;
     }
 
-    extension = (DRIVER_EXTENSION *)(driver + 1);
-    driver->Size            = sizeof(*driver);
-    driver->DriverInit      = init;
-    driver->DriverExtension = extension;
-    extension->DriverObject   = driver;
-    build_driver_keypath( driver->DriverName.Buffer, &extension->ServiceKeyName );
+    driver->driver_obj.Size            = sizeof(driver->driver_obj);
+    driver->driver_obj.DriverInit      = init;
+    driver->driver_obj.DriverExtension = &driver->driver_extension;
+    driver->driver_extension.DriverObject   = &driver->driver_obj;
+    build_driver_keypath( driver->driver_obj.DriverName.Buffer, &driver->driver_extension.ServiceKeyName );
 
-    status = driver->DriverInit( driver, &extension->ServiceKeyName );
+    status = driver->driver_obj.DriverInit( &driver->driver_obj, &driver->driver_extension.ServiceKeyName );
 
     if (status)
     {
-        RtlFreeUnicodeString( &driver->DriverName );
+        RtlFreeUnicodeString( &driver->driver_obj.DriverName );
         RtlFreeHeap( GetProcessHeap(), 0, driver );
     }
+    else
+    {
+        EnterCriticalSection( &drivers_cs );
+        if (wine_rb_put( &wine_drivers, &driver->driver_obj.DriverName, &driver->entry ))
+            ERR( "failed to insert driver %s in tree\n", debugstr_us(name) );
+        LeaveCriticalSection( &drivers_cs );
+    }
+
     return status;
 }
 
@@ -888,13 +946,17 @@ NTSTATUS WINAPI IoCreateDriver( UNICODE_STRING *name, PDRIVER_INITIALIZE init )
 /***********************************************************************
  *           IoDeleteDriver   (NTOSKRNL.EXE.@)
  */
-void WINAPI IoDeleteDriver( DRIVER_OBJECT *driver )
+void WINAPI IoDeleteDriver( DRIVER_OBJECT *driver_object )
 {
-    TRACE("(%p)\n", driver);
+    TRACE( "(%p)\n", driver_object );
 
-    RtlFreeUnicodeString( &driver->DriverName );
-    RtlFreeUnicodeString( &driver->DriverExtension->ServiceKeyName );
-    RtlFreeHeap( GetProcessHeap(), 0, driver );
+    EnterCriticalSection( &drivers_cs );
+    wine_rb_remove( &wine_drivers, &driver_object->DriverName );
+    LeaveCriticalSection( &drivers_cs );
+
+    RtlFreeUnicodeString( &driver_object->DriverName );
+    RtlFreeUnicodeString( &driver_object->DriverExtension->ServiceKeyName );
+    RtlFreeHeap( GetProcessHeap(), 0, CONTAINING_RECORD( driver_object, struct wine_driver, driver_obj ) );
 }
 
 
@@ -2344,6 +2406,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( inst );
+        if (wine_rb_init( &wine_drivers, &wine_drivers_rb_functions )) return FALSE;
 #if defined(__i386__) || defined(__x86_64__)
         handler = RtlAddVectoredExceptionHandler( TRUE, vectored_handler );
 #endif
