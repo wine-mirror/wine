@@ -3724,7 +3724,17 @@ istream* __thiscall istream_read_long_double(istream *this, double *ld)
 DEFINE_THISCALL_WRAPPER(istream_read_streambuf, 8)
 istream* __thiscall istream_read_streambuf(istream *this, streambuf *sb)
 {
-    FIXME("(%p %p) stub\n", this, sb);
+    ios *base = istream_get_ios(this);
+    int ch;
+
+    TRACE("(%p %p)\n", this, sb);
+
+    if (istream_ipfx(this, 0)) {
+        while ((ch = streambuf_sbumpc(base->sb)) != EOF)
+            if (streambuf_sputc(sb, ch) == EOF)
+                base->state |= IOSTATE_failbit;
+        istream_isfx(this);
+    }
     return this;
 }
 

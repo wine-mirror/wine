@@ -338,6 +338,7 @@ static istream* (*__thiscall p_istream_read_unsigned_long)(istream*, ULONG*);
 static istream* (*__thiscall p_istream_read_float)(istream*, float*);
 static istream* (*__thiscall p_istream_read_double)(istream*, double*);
 static istream* (*__thiscall p_istream_read_long_double)(istream*, double*);
+static istream* (*__thiscall p_istream_read_streambuf)(istream*, streambuf*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -564,6 +565,7 @@ static BOOL init(void)
         SET(p_istream_read_float, "??5istream@@QEAAAEAV0@AEAM@Z");
         SET(p_istream_read_double, "??5istream@@QEAAAEAV0@AEAN@Z");
         SET(p_istream_read_long_double, "??5istream@@QEAAAEAV0@AEAO@Z");
+        SET(p_istream_read_streambuf, "??5istream@@QEAAAEAV0@PEAVstreambuf@@@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -712,6 +714,7 @@ static BOOL init(void)
         SET(p_istream_read_float, "??5istream@@QAEAAV0@AAM@Z");
         SET(p_istream_read_double, "??5istream@@QAEAAV0@AAN@Z");
         SET(p_istream_read_long_double, "??5istream@@QAEAAV0@AAO@Z");
+        SET(p_istream_read_streambuf, "??5istream@@QAEAAV0@PAVstreambuf@@@Z");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -4887,7 +4890,7 @@ static void test_istream_getdouble(void)
 static void test_istream_read(void)
 {
     istream is, *pis;
-    strstreambuf ssb, *pssb;
+    strstreambuf ssb, ssb_test, *pssb;
     int len, ret, i;
 
     /* makes tables narrower */
@@ -4903,9 +4906,10 @@ static void test_istream_read(void)
     ULONG ul, ulong_out[] = {4294967295ul, 4294967294ul, 2147483648ul, 1ul};
     float f, float_out[] = {123.456f, 0.0f, 1.0f, 0.1f, -1.0f, -0.1f, FLT_MIN, -FLT_MIN, FLT_MAX, -FLT_MAX};
     double d, double_out[] = {1.0, 0.1, 0.0, INFINITY, -INFINITY};
+    const char *sbf_out[] = {"", "abcd\n", "abcdef"};
     struct istream_read_test {
         enum { type_chr, type_str, type_shrt, type_ushrt, type_int, type_uint,
-            type_long, type_ulong, type_flt, type_dbl, type_ldbl } type;
+            type_long, type_ulong, type_flt, type_dbl, type_ldbl, type_sbf } type;
         const char *stream_content;
         ios_flags flags;
         int width;
@@ -5041,8 +5045,19 @@ static void test_istream_read(void)
         {type_ldbl, "-1.69781699841e-1475l",             0, 6, /* 0.0 */  2, IOSTATE_goodbit, 6, 20, FALSE},
         {type_ldbl, "1.69781699841e1475",                0, 6, /* INF */  3, IOSTATE_eofbit,  6, 18, FALSE},
         {type_ldbl, "-1.69781699841e1475",               0, 6, /* -INF */ 4, IOSTATE_eofbit,  6, 19, FALSE},
+        /* streambuf */
+        {type_sbf, "",           FLAGS_skipws, 6, /* "" */      0, IOSTATE_faileof, 6, 0, FALSE},
+        {type_sbf, "  ",         FLAGS_skipws, 6, /* "" */      0, IOSTATE_faileof, 6, 2, FALSE},
+        {type_sbf, "\r\nabcd\n", FLAGS_skipws, 6, /* "abc\n" */ 1, IOSTATE_goodbit, 6, 8, FALSE},
+        {type_sbf, "abcdefg\n",  0,            6, /* "abcde" */ 2, IOSTATE_failbit, 6, 9, FALSE},
+        {type_sbf, "abcdefg\n",  0,            0, /* "" */      0, IOSTATE_failbit, 0, 9, FALSE}
     };
 
+    pssb = call_func2(p_strstreambuf_dynamic_ctor, &ssb_test, 64);
+    ok(pssb == &ssb_test, "wrong return, expected %p got %p\n", &ssb_test, pssb);
+    ret = (int) call_func1(p_streambuf_allocate, &ssb_test.base);
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    ssb_test.dynamic = 0;
     pssb = call_func2(p_strstreambuf_dynamic_ctor, &ssb, 64);
     ok(pssb == &ssb, "wrong return, expected %p got %p\n", &ssb, pssb);
     ret = (int) call_func1(p_streambuf_allocate, &ssb.base);
@@ -5127,6 +5142,16 @@ static void test_istream_read(void)
             ok(d == double_out[tests[i].expected_val], "Test %d: expected %f got %f\n", i,
                 double_out[tests[i].expected_val], d);
             break;
+        case type_sbf:
+            ssb_test.base.pbase = ssb_test.base.pptr = ssb_test.base.base;
+            ssb_test.base.epptr = ssb_test.base.base + tests[i].width;
+            pis = call_func2(p_istream_read_streambuf, &is, &ssb_test.base);
+            len = strlen(sbf_out[tests[i].expected_val]);
+            ok(ssb_test.base.pptr == ssb_test.base.pbase + len, "Test %d: wrong put pointer, expected %p got %p\n",
+                i, ssb_test.base.pbase + len, ssb_test.base.pptr);
+            ok(!strncmp(ssb_test.base.pbase, sbf_out[tests[i].expected_val], len),
+                "Test %d: expected %s got %s\n", i, sbf_out[tests[i].expected_val], ssb_test.base.pbase);
+            break;
         }
 
         ok(pis == &is, "Test %d: wrong return, expected %p got %p\n", i, &is, pis);
@@ -5139,8 +5164,10 @@ static void test_istream_read(void)
             ssb.base.base + tests[i].expected_offset, ssb.base.gptr);
     }
 
+    ssb_test.dynamic = 1;
     call_func1(p_istream_vbase_dtor, &is);
     call_func1(p_strstreambuf_dtor, &ssb);
+    call_func1(p_strstreambuf_dtor, &ssb_test);
 }
 
 START_TEST(msvcirt)
