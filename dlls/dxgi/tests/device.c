@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 #define COBJMACROS
 #include "initguid.h"
 #include "d3d11.h"
@@ -681,15 +682,21 @@ static void test_create_swapchain(void)
 
 static void test_get_containing_output(void)
 {
+    unsigned int output_count, output_idx;
     DXGI_SWAP_CHAIN_DESC swapchain_desc;
     IDXGIOutput *output, *output2;
-    unsigned int output_count;
+    DXGI_OUTPUT_DESC output_desc;
+    MONITORINFOEXW monitor_info;
     IDXGISwapChain *swapchain;
     IDXGIFactory *factory;
     IDXGIAdapter *adapter;
+    POINT points[4 * 16];
     IDXGIDevice *device;
+    unsigned int i, j;
+    HMONITOR monitor;
     ULONG refcount;
     HRESULT hr;
+    BOOL ret;
 
     if (!(device = create_device()))
     {
@@ -703,8 +710,8 @@ static void test_get_containing_output(void)
     hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
     ok(SUCCEEDED(hr), "GetParent failed, hr %#x.\n", hr);
 
-    swapchain_desc.BufferDesc.Width = 800;
-    swapchain_desc.BufferDesc.Height = 600;
+    swapchain_desc.BufferDesc.Width = 100;
+    swapchain_desc.BufferDesc.Height = 100;
     swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
     swapchain_desc.BufferDesc.RefreshRate.Denominator = 60;
     swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -714,7 +721,8 @@ static void test_get_containing_output(void)
     swapchain_desc.SampleDesc.Quality = 0;
     swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapchain_desc.BufferCount = 1;
-    swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test",
+            WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 100, 100, 0, 0, 0, 0);
     swapchain_desc.Windowed = TRUE;
     swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
     swapchain_desc.Flags = 0;
@@ -727,44 +735,147 @@ static void test_get_containing_output(void)
         ++output_count;
     }
 
-    if (output_count != 1)
-    {
-        skip("Adapter has %u outputs.\n", output_count);
-        goto done;
-    }
-
-    hr = IDXGIAdapter_EnumOutputs(adapter, 0, &output);
-    ok(SUCCEEDED(hr), "EnumOutputs failed, hr %#x.\n", hr);
-
-    refcount = get_refcount((IUnknown *)output);
-    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
-
     hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
     ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
 
-    hr = IDXGISwapChain_GetContainingOutput(swapchain, &output2);
+    monitor = MonitorFromWindow(swapchain_desc.OutputWindow, 0);
+    ok(!!monitor, "MonitorFromWindow failed.\n");
+
+    monitor_info.cbSize = sizeof(monitor_info);
+    ret = GetMonitorInfoW(monitor, (MONITORINFO *)&monitor_info);
+    ok(ret, "Failed to get monitor info.\n");
+
+    hr = IDXGISwapChain_GetContainingOutput(swapchain, &output);
     ok(SUCCEEDED(hr) || broken(hr == DXGI_ERROR_UNSUPPORTED) /* Win 7 testbot */,
             "GetContainingOutput failed, hr %#x.\n", hr);
     if (hr == DXGI_ERROR_UNSUPPORTED)
     {
         IDXGISwapChain_Release(swapchain);
-        IDXGIOutput_Release(output);
         goto done;
     }
 
-    refcount = get_refcount((IUnknown *)output);
-    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
-    refcount = get_refcount((IUnknown *)output2);
-    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    hr = IDXGIOutput_GetDesc(output, &output_desc);
+    ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
 
+    hr = IDXGISwapChain_GetContainingOutput(swapchain, &output2);
+    ok(SUCCEEDED(hr), "GetContainingOutput failed, hr %#x.\n", hr);
+    ok(output != output2, "Got unexpected output pointers %p, %p.\n", output, output2);
     check_output_equal(output, output2);
 
+    refcount = IDXGIOutput_Release(output);
+    ok(!refcount, "IDXGIOutput has %u references left.\n", refcount);
     refcount = IDXGIOutput_Release(output2);
-    ok(!refcount, "IDXGIOuput has %u references left.\n", refcount);
+    ok(!refcount, "IDXGIOutput has %u references left.\n", refcount);
+
+    ok(!lstrcmpW(output_desc.DeviceName, monitor_info.szDevice),
+            "Got unexpected device name %s, expected %s.\n",
+            wine_dbgstr_w(output_desc.DeviceName), wine_dbgstr_w(monitor_info.szDevice));
+    ok(EqualRect(&output_desc.DesktopCoordinates, &monitor_info.rcMonitor),
+            "Got unexpected desktop coordinates %s, expected %s.\n",
+            wine_dbgstr_rect(&output_desc.DesktopCoordinates),
+            wine_dbgstr_rect(&monitor_info.rcMonitor));
+
+    output_idx = 0;
+    while ((hr = IDXGIAdapter_EnumOutputs(adapter, output_idx, &output)) != DXGI_ERROR_NOT_FOUND)
+    {
+        ok(SUCCEEDED(hr), "Failed to enumarate output %u, hr %#x.\n", output_idx, hr);
+
+        hr = IDXGIOutput_GetDesc(output, &output_desc);
+        ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
+
+        /* Move the OutputWindow to the current output. */
+        ret = SetWindowPos(swapchain_desc.OutputWindow, 0,
+                output_desc.DesktopCoordinates.left, output_desc.DesktopCoordinates.top,
+                0, 0, SWP_NOSIZE | SWP_NOZORDER);
+        ok(ret, "SetWindowPos failed.\n");
+
+        hr = IDXGISwapChain_GetContainingOutput(swapchain, &output2);
+        ok(SUCCEEDED(hr), "GetContainingOutput failed, hr %#x.\n", hr);
+
+        check_output_equal(output, output2);
+
+        refcount = IDXGIOutput_Release(output2);
+        ok(!refcount, "IDXGIOutput has %u references left.\n", refcount);
+        refcount = IDXGIOutput_Release(output);
+        ok(!refcount, "IDXGIOutput has %u references left.\n", refcount);
+        ++output_idx;
+
+        /* Move the OutputWindow around the corners of the current output desktop coordinates. */
+        for (i = 0; i < 4; ++i)
+        {
+            static const POINT offsets[] =
+            {
+                {  0,   0},
+                {-49,   0}, {-50,   0}, {-51,   0},
+                {  0, -49}, {  0, -50}, {  0, -51},
+                {-49, -49}, {-50, -49}, {-51, -49},
+                {-49, -50}, {-50, -50}, {-51, -50},
+                {-49, -51}, {-50, -51}, {-51, -51},
+            };
+            unsigned int x, y;
+
+            switch (i)
+            {
+                case 0:
+                    x = output_desc.DesktopCoordinates.left;
+                    y = output_desc.DesktopCoordinates.top;
+                    break;
+                case 1:
+                    x = output_desc.DesktopCoordinates.right;
+                    y = output_desc.DesktopCoordinates.top;
+                    break;
+                case 2:
+                    x = output_desc.DesktopCoordinates.right;
+                    y = output_desc.DesktopCoordinates.bottom;
+                    break;
+                case 3:
+                    x = output_desc.DesktopCoordinates.left;
+                    y = output_desc.DesktopCoordinates.bottom;
+                    break;
+            }
+
+            for (j = 0; j < sizeof(offsets) / sizeof(*offsets); ++j)
+            {
+                unsigned int idx = (sizeof(offsets) / sizeof(*offsets)) * i + j;
+                assert(idx < sizeof(points) / sizeof(*points));
+                points[idx].x = x + offsets[j].x;
+                points[idx].y = y + offsets[j].y;
+            }
+        }
+
+        for (i = 0; i < sizeof(points) / sizeof(*points); ++i)
+        {
+            ret = SetWindowPos(swapchain_desc.OutputWindow, 0, points[i].x, points[i].y,
+                    0, 0, SWP_NOSIZE | SWP_NOZORDER);
+            ok(ret, "SetWindowPos failed.\n");
+
+            monitor = MonitorFromWindow(swapchain_desc.OutputWindow, MONITOR_DEFAULTTONEAREST);
+            ok(!!monitor, "MonitorFromWindow failed.\n");
+
+            monitor_info.cbSize = sizeof(monitor_info);
+            ret = GetMonitorInfoW(monitor, (MONITORINFO *)&monitor_info);
+            ok(ret, "Failed to get monitor info.\n");
+
+            hr = IDXGISwapChain_GetContainingOutput(swapchain, &output);
+            ok(SUCCEEDED(hr), "GetContainingOutput failed, hr %#x.\n", hr);
+            ok(!!output, "Got unexpected containing output %p.\n", output);
+            hr = IDXGIOutput_GetDesc(output, &output_desc);
+            ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
+            refcount = IDXGIOutput_Release(output);
+            ok(!refcount, "IDXGIOutput has %u references left.\n", refcount);
+
+            ok(!lstrcmpW(output_desc.DeviceName, monitor_info.szDevice),
+                    "Got unexpected device name %s, expected %s.\n",
+                    wine_dbgstr_w(output_desc.DeviceName), wine_dbgstr_w(monitor_info.szDevice));
+            ok(EqualRect(&output_desc.DesktopCoordinates, &monitor_info.rcMonitor),
+                    "Got unexpected desktop coordinates %s, expected %s.\n",
+                    wine_dbgstr_rect(&output_desc.DesktopCoordinates),
+                    wine_dbgstr_rect(&monitor_info.rcMonitor));
+        }
+    }
+
     refcount = IDXGISwapChain_Release(swapchain);
     ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
-    refcount = IDXGIOutput_Release(output);
-    ok(!refcount, "IDXGIOuput has %u references left.\n", refcount);
 
 done:
     refcount = IDXGIDevice_Release(device);
@@ -1979,7 +2090,7 @@ static void test_output_desc(void)
 
             hr = IDXGIAdapter_EnumOutputs(adapter, j, &output2);
             ok(SUCCEEDED(hr), "Failed to enumerate output %u on adapter %u, hr %#x.\n", j, i, hr);
-            ok(output != output2, "Expected to get new instance of IDXGIOuput, %p == %p.\n", output, output2);
+            ok(output != output2, "Expected to get new instance of IDXGIOutput, %p == %p.\n", output, output2);
             refcount = get_refcount((IUnknown *)output);
             ok(refcount == 1, "Get unexpected refcount %u for output %u, adapter %u.\n", refcount, j, i);
             IDXGIOutput_Release(output2);
