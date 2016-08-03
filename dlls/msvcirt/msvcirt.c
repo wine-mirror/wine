@@ -3514,7 +3514,30 @@ istream* __thiscall istream_read_char(istream *this, char *ch)
 DEFINE_THISCALL_WRAPPER(istream_read_str, 8)
 istream* __thiscall istream_read_str(istream *this, char *str)
 {
-    FIXME("(%p %p) stub\n", this, str);
+    ios *base = istream_get_ios(this);
+    int ch, count = 0;
+
+    TRACE("(%p %p)\n", this, str);
+
+    if (istream_ipfx(this, 0)) {
+        if (str) {
+            for (ch = streambuf_sgetc(base->sb);
+                count < (unsigned int) base->width - 1 && !isspace(ch);
+                ch = streambuf_snextc(base->sb)) {
+                if (ch == EOF) {
+                    base->state |= IOSTATE_eofbit;
+                    break;
+                }
+                str[count++] = ch;
+            }
+        }
+        if (!count) /* nothing to output */
+            base->state |= IOSTATE_failbit;
+        else /* append a null terminator */
+            str[count] = 0;
+        base->width = 0;
+        istream_isfx(this);
+    }
     return this;
 }
 

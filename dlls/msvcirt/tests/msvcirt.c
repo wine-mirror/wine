@@ -328,6 +328,7 @@ static streampos (*__thiscall p_istream_tellg)(istream*);
 static int (*__thiscall p_istream_getint)(istream*, char*);
 static int (*__thiscall p_istream_getdouble)(istream*, char*, int);
 static istream* (*__thiscall p_istream_read_char)(istream*, char*);
+static istream* (*__thiscall p_istream_read_str)(istream*, char*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -544,6 +545,7 @@ static BOOL init(void)
         SET(p_istream_getint, "?getint@istream@@AEAAHPEAD@Z");
         SET(p_istream_getdouble, "?getdouble@istream@@AEAAHPEADH@Z");
         SET(p_istream_read_char, "??5istream@@QEAAAEAV0@AEAD@Z");
+        SET(p_istream_read_str, "??5istream@@QEAAAEAV0@PEAD@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -682,6 +684,7 @@ static BOOL init(void)
         SET(p_istream_getint, "?getint@istream@@AAEHPAD@Z");
         SET(p_istream_getdouble, "?getdouble@istream@@AAEHPADH@Z");
         SET(p_istream_read_char, "??5istream@@QAEAAV0@AAD@Z");
+        SET(p_istream_read_str, "??5istream@@QAEAAV0@PAD@Z");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -4863,9 +4866,10 @@ static void test_istream_read(void)
     /* makes tables narrower */
     const ios_io_state IOSTATE_faileof = IOSTATE_failbit|IOSTATE_eofbit;
 
-    char c, char_out[] = {-85, ' ', 'a', -50};
+    char c, st[8], char_out[] = {-85, ' ', 'a', -50};
+    const char *str_out[] = {"AAAAAAA", "abc", "a", "abc", "ab", "abcde"};
     struct istream_read_test {
-        enum { type_chr } type;
+        enum { type_chr, type_str } type;
         const char *stream_content;
         ios_flags flags;
         int width;
@@ -4882,6 +4886,22 @@ static void test_istream_read(void)
         {type_chr, " abc ", FLAGS_skipws, 6, /* 'a' */ 2, IOSTATE_goodbit, 6, 2, FALSE},
         {type_chr, " a",    FLAGS_skipws, 0, /* 'a' */ 2, IOSTATE_goodbit, 0, 2, FALSE},
         {type_chr, "\xce",  0,            6, /* -50 */ 3, IOSTATE_goodbit, 6, 1, FALSE},
+        /* str */
+        {type_str, "",        FLAGS_skipws, 6, /* "AAAAAAA" */ 0, IOSTATE_faileof, 6, 0, FALSE},
+        {type_str, " ",       FLAGS_skipws, 6, /* "AAAAAAA" */ 0, IOSTATE_faileof, 6, 1, FALSE},
+        {type_str, " abc",    FLAGS_skipws, 6, /* "abc" */     1, IOSTATE_eofbit,  0, 4, FALSE},
+        {type_str, " abc ",   FLAGS_skipws, 6, /* "abc" */     1, IOSTATE_goodbit, 0, 4, FALSE},
+        {type_str, " a\tc",   FLAGS_skipws, 6, /* "a" */       2, IOSTATE_goodbit, 0, 2, FALSE},
+        {type_str, " a\tc",   0,            6, /* "AAAAAAA" */ 0, IOSTATE_failbit, 0, 0, FALSE},
+        {type_str, "abcde\n", 0,            4, /* "abc" */     3, IOSTATE_goodbit, 0, 3, FALSE},
+        {type_str, "abc\n",   0,            4, /* "abc" */     3, IOSTATE_goodbit, 0, 3, FALSE},
+        {type_str, "ab\r\n",  0,            3, /* "ab" */      4, IOSTATE_goodbit, 0, 2, FALSE},
+        {type_str, "abc",     0,            4, /* "abc" */     3, IOSTATE_goodbit, 0, 3, FALSE},
+        {type_str, "abc",     0,            1, /* "AAAAAAA" */ 0, IOSTATE_failbit, 0, 0, FALSE},
+        {type_str, "\n",      0,            1, /* "AAAAAAA" */ 0, IOSTATE_failbit, 0, 0, FALSE},
+        {type_str, "abcde\n", 0,            0, /* "abcde" */   5, IOSTATE_goodbit, 0, 5, FALSE},
+        {type_str, "\n",      0,            0, /* "AAAAAAA" */ 0, IOSTATE_failbit, 0, 0, FALSE},
+        {type_str, "abcde",   0,           -1, /* "abcde" */   5, IOSTATE_eofbit,  0, 5, FALSE},
     };
 
     pssb = call_func2(p_strstreambuf_dynamic_ctor, &ssb, 64);
@@ -4906,6 +4926,13 @@ static void test_istream_read(void)
             pis = call_func2(p_istream_read_char, &is, &c);
             ok(c == char_out[tests[i].expected_val], "Test %d: expected %d got %d\n", i,
                 char_out[tests[i].expected_val], c);
+            break;
+        case type_str:
+            memset(st, 'A', sizeof(st));
+            st[7] = 0;
+            pis = call_func2(p_istream_read_str, &is, st);
+            ok(!strcmp(st, str_out[tests[i].expected_val]), "Test %d: expected %s got %s\n", i,
+                str_out[tests[i].expected_val], st);
             break;
         }
 
