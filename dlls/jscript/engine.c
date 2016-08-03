@@ -545,7 +545,7 @@ static HRESULT equal2_values(jsval_t lval, jsval_t rval, BOOL *ret)
  * Transfers local variables from stack to variable object.
  * It's slow, so we want to avoid it as much as possible.
  */
-HRESULT detach_variable_object(script_ctx_t *ctx, call_frame_t *frame)
+static HRESULT detach_variable_object(script_ctx_t *ctx, call_frame_t *frame)
 {
     unsigned i;
     HRESULT hres;

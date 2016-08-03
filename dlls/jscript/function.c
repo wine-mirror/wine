@@ -89,34 +89,45 @@ static unsigned Arguments_idx_length(jsdisp_t *jsdisp)
     return arguments->function->length;
 }
 
-static HRESULT Arguments_idx_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *res)
+static jsval_t *get_argument_ref(ArgumentsInstance *arguments, unsigned idx)
+{
+    call_frame_t *frame = arguments->scope->frame;
+    return frame
+        ? arguments->jsdisp.ctx->stack + frame->arguments_off + idx
+        : NULL;
+}
+
+static HRESULT Arguments_idx_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *r)
 {
     ArgumentsInstance *arguments = (ArgumentsInstance*)jsdisp;
+    jsval_t *ref;
 
     TRACE("%p[%u]\n", arguments, idx);
 
-    if(arguments->scope->frame) {
-        HRESULT hres;
-        hres = detach_variable_object(jsdisp->ctx, arguments->scope->frame);
-        if(FAILED(hres))
-            return hres;
-    }
+    if((ref = get_argument_ref(arguments, idx)))
+        return jsval_copy(*ref, r);
 
     /* FIXME: Accessing by name won't work for duplicated argument names */
-    return jsdisp_propget_name(arguments->scope->jsobj, arguments->function->func_code->params[idx], res);
+    return jsdisp_propget_name(arguments->scope->jsobj, arguments->function->func_code->params[idx], r);
 }
 
 static HRESULT Arguments_idx_put(jsdisp_t *jsdisp, unsigned idx, jsval_t val)
 {
     ArgumentsInstance *arguments = (ArgumentsInstance*)jsdisp;
+    jsval_t *ref;
+    HRESULT hres;
 
     TRACE("%p[%u] = %s\n", arguments, idx, debugstr_jsval(val));
 
-    if(arguments->scope->frame) {
-        HRESULT hres;
-        hres = detach_variable_object(jsdisp->ctx, arguments->scope->frame);
+    if((ref = get_argument_ref(arguments, idx))) {
+        jsval_t copy;
+        hres = jsval_copy(val, &copy);
         if(FAILED(hres))
             return hres;
+
+        jsval_release(*ref);
+        *ref = copy;
+        return S_OK;
     }
 
     /* FIXME: Accessing by name won't work for duplicated argument names */

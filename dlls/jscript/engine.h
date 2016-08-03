@@ -226,8 +226,6 @@ typedef struct _call_frame_t {
     struct _call_frame_t *prev_frame;
 } call_frame_t;
 
-HRESULT detach_variable_object(script_ctx_t*,call_frame_t*) DECLSPEC_HIDDEN;
-
 #define EXEC_GLOBAL            0x0001
 #define EXEC_CONSTRUCTOR       0x0002
 #define EXEC_RETURN_TO_INTERP  0x0004
