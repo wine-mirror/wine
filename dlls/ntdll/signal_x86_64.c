@@ -81,6 +81,7 @@ typedef EXCEPTION_DISPOSITION (WINAPI *PEXCEPTION_ROUTINE)( EXCEPTION_RECORD *re
                                                             ULONG64 frame,
                                                             CONTEXT *context,
                                                             struct _DISPATCHER_CONTEXT *dispatch );
+typedef void (WINAPI *TERMINATION_HANDLER)( ULONG flags, ULONG64 frame );
 
 typedef struct _DISPATCHER_CONTEXT
 {
@@ -3733,8 +3734,32 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
     TRACE( "%p %lx %p %p\n", rec, frame, context, dispatch );
     if (TRACE_ON(seh)) dump_scope_table( dispatch->ImageBase, table );
 
-    if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))  /* FIXME */
+    if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
+    {
+        for (i = 0; i < table->Count; i++)
+        {
+            if (context->Rip >= dispatch->ImageBase + table->ScopeRecord[i].BeginAddress &&
+                context->Rip < dispatch->ImageBase + table->ScopeRecord[i].EndAddress)
+            {
+                TERMINATION_HANDLER handler;
+
+                if (table->ScopeRecord[i].JumpTarget) continue;
+
+                if (rec->ExceptionFlags & EH_TARGET_UNWIND &&
+                    dispatch->TargetIp >= dispatch->ImageBase + table->ScopeRecord[i].BeginAddress &&
+                    dispatch->TargetIp < dispatch->ImageBase + table->ScopeRecord[i].EndAddress)
+                {
+                    break;
+                }
+
+                handler = (TERMINATION_HANDLER)(dispatch->ImageBase + table->ScopeRecord[i].HandlerAddress);
+
+                TRACE( "calling __finally %p frame %lx\n", handler, frame );
+                handler( 1, frame );
+            }
+        }
         return ExceptionContinueSearch;
+    }
 
     for (i = 0; i < table->Count; i++)
     {
