@@ -5242,6 +5242,8 @@ GpStatus WINGDIPAPI GdipEndContainer(GpGraphics *graphics, GraphicsContainer sta
 GpStatus WINGDIPAPI GdipScaleWorldTransform(GpGraphics *graphics, REAL sx,
     REAL sy, GpMatrixOrder order)
 {
+    GpStatus stat;
+
     TRACE("(%p, %.2f, %.2f, %d)\n", graphics, sx, sy, order);
 
     if(!graphics)
@@ -5249,6 +5251,13 @@ GpStatus WINGDIPAPI GdipScaleWorldTransform(GpGraphics *graphics, REAL sx,
 
     if(graphics->busy)
         return ObjectBusy;
+
+    if (graphics->image && graphics->image->type == ImageTypeMetafile) {
+        stat = METAFILE_ScaleWorldTransform((GpMetafile*)graphics->image, sx, sy, order);
+
+        if (stat != Ok)
+            return stat;
+    }
 
     return GdipScaleMatrix(&graphics->worldtrans, sx, sy, order);
 }

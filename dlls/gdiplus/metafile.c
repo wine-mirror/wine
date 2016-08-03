@@ -84,6 +84,13 @@ typedef struct EmfPlusRect
     SHORT Height;
 } EmfPlusRect;
 
+typedef struct EmfPlusScaleWorldTransform
+{
+    EmfPlusRecordHeader Header;
+    REAL Sx;
+    REAL Sy;
+} EmfPlusScaleWorldTransform;
+
 static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, DWORD size, void **result)
 {
     DWORD size_needed;
@@ -548,6 +555,30 @@ GpStatus METAFILE_SetPageTransform(GpMetafile* metafile, GpUnit unit, REAL scale
         record->Header.Type = EmfPlusRecordTypeSetPageTransform;
         record->Header.Flags = unit;
         record->PageScale = scale;
+
+        METAFILE_WriteRecords(metafile);
+    }
+
+    return Ok;
+}
+
+GpStatus METAFILE_ScaleWorldTransform(GpMetafile* metafile, REAL sx, REAL sy, MatrixOrder order)
+{
+    if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
+    {
+        EmfPlusScaleWorldTransform *record;
+        GpStatus stat;
+
+        stat = METAFILE_AllocateRecord(metafile,
+            sizeof(EmfPlusScaleWorldTransform),
+            (void**)&record);
+        if (stat != Ok)
+            return stat;
+
+        record->Header.Type = EmfPlusRecordTypeScaleWorldTransform;
+        record->Header.Flags = (order == MatrixOrderAppend ? 4 : 0);
+        record->Sx = sx;
+        record->Sy = sy;
 
         METAFILE_WriteRecords(metafile);
     }
