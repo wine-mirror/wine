@@ -159,7 +159,7 @@ static const builtin_info_t Arguments_info = {
     Arguments_idx_put
 };
 
-HRESULT setup_arguments_object(script_ctx_t *ctx, call_frame_t *frame, unsigned argc, jsdisp_t *function_instance)
+HRESULT setup_arguments_object(script_ctx_t *ctx, call_frame_t *frame)
 {
     ArgumentsInstance *args;
     HRESULT hres;
@@ -176,11 +176,11 @@ HRESULT setup_arguments_object(script_ctx_t *ctx, call_frame_t *frame, unsigned 
         return hres;
     }
 
-    args->function = function_from_jsdisp(jsdisp_addref(function_instance));
-    args->argc = argc;
+    args->function = function_from_jsdisp(jsdisp_addref(frame->function_instance));
+    args->argc = frame->argc;
     args->frame = frame;
 
-    hres = jsdisp_propput_dontenum(&args->jsdisp, lengthW, jsval_number(argc));
+    hres = jsdisp_propput_dontenum(&args->jsdisp, lengthW, jsval_number(args->argc));
     if(SUCCEEDED(hres))
         hres = jsdisp_propput_dontenum(&args->jsdisp, caleeW, jsval_disp(to_disp(&args->function->dispex)));
     if(SUCCEEDED(hres))
@@ -561,11 +561,17 @@ static HRESULT Function_get_arguments(script_ctx_t *ctx, jsdisp_t *jsthis, jsval
 {
     FunctionInstance *function = function_from_jsdisp(jsthis);
     call_frame_t *frame;
+    HRESULT hres;
 
     TRACE("\n");
 
     for(frame = ctx->call_ctx; frame; frame = frame->prev_frame) {
         if(frame->function_instance == &function->dispex) {
+            if(!frame->arguments_obj) {
+                hres = setup_arguments_object(ctx, frame);
+                if(FAILED(hres))
+                    return hres;
+            }
             *r = jsval_obj(jsdisp_addref(frame->arguments_obj));
             return S_OK;
         }

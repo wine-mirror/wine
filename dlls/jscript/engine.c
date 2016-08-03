@@ -558,6 +558,12 @@ static HRESULT detach_variable_object(script_ctx_t *ctx, call_frame_t *frame)
     assert(frame == frame->base_scope->frame);
     assert(frame->variable_obj == frame->base_scope->jsobj);
 
+    if(!frame->arguments_obj) {
+        hres = setup_arguments_object(ctx, frame);
+        if(FAILED(hres))
+            return hres;
+    }
+
     frame->base_scope->frame = NULL;
 
     for(i = 0; i < frame->function->param_cnt; i++) {
@@ -609,11 +615,18 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
             if(scope->frame) {
                 function_code_t *func = scope->frame->function;
                 local_ref_t *ref = bsearch(identifier, func->locals, func->locals_cnt, sizeof(*func->locals), local_ref_cmp);
+                static const WCHAR argumentsW[] = {'a','r','g','u','m','e','n','t','s',0};
 
                 if(ref) {
                     ret->type = EXPRVAL_STACK_REF;
                     ret->u.off = scope->frame->arguments_off - ref->ref - 1;
                     return S_OK;
+                }
+
+                if(!strcmpW(identifier, argumentsW)) {
+                    hres = detach_variable_object(ctx, scope->frame);
+                    if(FAILED(hres))
+                        return hres;
                 }
             }
             if(scope->jsobj)
@@ -2701,7 +2714,7 @@ static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdis
     return hres;
 }
 
-static HRESULT setup_scope(script_ctx_t *ctx, call_frame_t *frame, unsigned argc, jsval_t *argv, jsdisp_t *function_instance)
+static HRESULT setup_scope(script_ctx_t *ctx, call_frame_t *frame, unsigned argc, jsval_t *argv)
 {
     const unsigned orig_stack = ctx->stack_top;
     unsigned i;
@@ -2736,7 +2749,7 @@ static HRESULT setup_scope(script_ctx_t *ctx, call_frame_t *frame, unsigned argc
 
     frame->pop_locals = ctx->stack_top - orig_stack;
     frame->base_scope->frame = frame;
-    return setup_arguments_object(ctx, frame, argc, function_instance);
+    return S_OK;
 }
 
 HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, function_code_t *function, scope_chain_t *scope,
@@ -2799,12 +2812,13 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
 
     frame->function = function;
     frame->ret = jsval_undefined();
+    frame->argc = argc;
 
     if(scope) {
         frame->base_scope = frame->scope = scope_addref(scope);
 
         if(!(flags & (EXEC_GLOBAL|EXEC_EVAL))) {
-            hres = setup_scope(ctx, frame, argc, argv, function_instance);
+            hres = setup_scope(ctx, frame, argc, argv);
             if(FAILED(hres)) {
                 heap_free(frame);
                 return hres;
