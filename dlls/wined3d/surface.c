@@ -2908,7 +2908,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
                 == WINED3D_LOCATION_TEXTURE_RGB)
         {
             FIXME_(d3d_perf)("Downloading RGB surface %p to reload it as sRGB.\n", surface);
-            surface_load_location(surface, context, texture->resource.map_binding);
+            wined3d_texture_load_location(texture, sub_resource_idx, context, texture->resource.map_binding);
         }
     }
     else
@@ -2917,7 +2917,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
                 == WINED3D_LOCATION_TEXTURE_SRGB)
         {
             FIXME_(d3d_perf)("Downloading sRGB surface %p to reload it as RGB.\n", surface);
-            surface_load_location(surface, context, texture->resource.map_binding);
+            wined3d_texture_load_location(texture, sub_resource_idx, context, texture->resource.map_binding);
         }
     }
 
@@ -2925,7 +2925,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     {
         WARN("Trying to load a texture from sysmem, but no simple location is valid.\n");
         /* Lets hope we get it from somewhere... */
-        surface_load_location(surface, context, WINED3D_LOCATION_SYSMEM);
+        wined3d_texture_load_location(texture, sub_resource_idx, context, WINED3D_LOCATION_SYSMEM);
     }
 
     wined3d_texture_prepare_texture(texture, context, srgb);
@@ -2943,7 +2943,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     {
         TRACE("Removing the pbo attached to surface %p.\n", surface);
 
-        surface_load_location(surface, context, WINED3D_LOCATION_SYSMEM);
+        wined3d_texture_load_location(texture, sub_resource_idx, context, WINED3D_LOCATION_SYSMEM);
         wined3d_texture_set_map_binding(texture, WINED3D_LOCATION_SYSMEM);
     }
 
