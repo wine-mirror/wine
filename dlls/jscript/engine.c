@@ -175,6 +175,18 @@ static inline HRESULT stack_pop_uint(script_ctx_t *ctx, DWORD *r)
     return to_uint32(ctx, stack_pop(ctx), r);
 }
 
+static inline unsigned local_off(call_frame_t *frame, int ref)
+{
+    return ref < 0
+        ? frame->arguments_off - ref-1
+        : frame->variables_off + ref;
+}
+
+static inline BSTR local_name(call_frame_t *frame, int ref)
+{
+    return ref < 0 ? frame->function->params[-ref-1] : frame->function->variables[ref].name;
+}
+
 /* Steals input reference even on failure. */
 static HRESULT stack_push_exprval(script_ctx_t *ctx, exprval_t *val)
 {
@@ -544,13 +556,6 @@ static HRESULT equal2_values(jsval_t lval, jsval_t rval, BOOL *ret)
     }
 
     return S_OK;
-}
-
-static inline unsigned local_off(call_frame_t *frame, int ref)
-{
-    return ref < 0
-        ? frame->arguments_off - ref-1
-        : frame->variables_off + ref;
 }
 
 /*
@@ -1192,6 +1197,51 @@ static HRESULT interp_this(script_ctx_t *ctx)
     return stack_push(ctx, jsval_disp(frame->this_obj));
 }
 
+static HRESULT interp_identifier_ref(script_ctx_t *ctx, BSTR identifier, unsigned flags)
+{
+    exprval_t exprval;
+    HRESULT hres;
+
+    hres = identifier_eval(ctx, identifier, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    if(exprval.type == EXPRVAL_INVALID && (flags & fdexNameEnsure)) {
+        DISPID id;
+
+        hres = jsdisp_get_id(ctx->global, identifier, fdexNameEnsure, &id);
+        if(FAILED(hres))
+            return hres;
+
+        exprval_set_disp_ref(&exprval, to_disp(ctx->global), id);
+    }
+
+    if(exprval.type == EXPRVAL_JSVAL || exprval.type == EXPRVAL_INVALID) {
+        WARN("invalid ref\n");
+        exprval_release(&exprval);
+        exprval_set_exception(&exprval, JS_E_OBJECT_EXPECTED);
+    }
+
+    return stack_push_exprval(ctx, &exprval);
+}
+
+static HRESULT interp_local_ref(script_ctx_t *ctx)
+{
+    const int arg = get_op_int(ctx, 0);
+    const unsigned flags = get_op_uint(ctx, 1);
+    call_frame_t *frame = ctx->call_ctx;
+    exprval_t ref;
+
+    TRACE("%d\n", arg);
+
+    if(!frame->base_scope || !frame->base_scope->frame)
+        return interp_identifier_ref(ctx, local_name(frame, arg), flags);
+
+    ref.type = EXPRVAL_STACK_REF;
+    ref.u.off = local_off(frame, arg);
+    return stack_push_exprval(ctx, &ref);
+}
+
 /* ECMA-262 3rd Edition    10.1.4 */
 static HRESULT interp_ident(script_ctx_t *ctx)
 {
@@ -1221,32 +1271,10 @@ static HRESULT interp_identid(script_ctx_t *ctx)
 {
     const BSTR arg = get_op_bstr(ctx, 0);
     const unsigned flags = get_op_uint(ctx, 1);
-    exprval_t exprval;
-    HRESULT hres;
 
     TRACE("%s %x\n", debugstr_w(arg), flags);
 
-    hres = identifier_eval(ctx, arg, &exprval);
-    if(FAILED(hres))
-        return hres;
-
-    if(exprval.type == EXPRVAL_INVALID && (flags & fdexNameEnsure)) {
-        DISPID id;
-
-        hres = jsdisp_get_id(ctx->global, arg, fdexNameEnsure, &id);
-        if(FAILED(hres))
-            return hres;
-
-        exprval_set_disp_ref(&exprval, to_disp(ctx->global), id);
-    }
-
-    if(exprval.type == EXPRVAL_JSVAL || exprval.type == EXPRVAL_INVALID) {
-        WARN("invalid ref\n");
-        exprval_release(&exprval);
-        exprval_set_exception(&exprval, JS_E_OBJECT_EXPECTED);
-    }
-
-    return stack_push_exprval(ctx, &exprval);
+    return interp_identifier_ref(ctx, arg, flags);
 }
 
 /* ECMA-262 3rd Edition    7.8.1 */

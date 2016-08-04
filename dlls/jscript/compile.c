@@ -408,6 +408,32 @@ static inline BOOL is_memberid_expr(expression_type_t type)
     return type == EXPR_IDENT || type == EXPR_MEMBER || type == EXPR_ARRAY;
 }
 
+static BOOL bind_local(compiler_ctx_t *ctx, const WCHAR *identifier, int *ret_ref)
+{
+    statement_ctx_t *iter;
+    local_ref_t *ref;
+
+    for(iter = ctx->stat_ctx; iter; iter = iter->next) {
+        if(iter->using_scope)
+            return FALSE;
+    }
+
+    ref = lookup_local(ctx->func, identifier);
+    if(!ref)
+        return FALSE;
+
+    *ret_ref = ref->ref;
+    return TRUE;
+}
+
+static HRESULT emit_identifier_ref(compiler_ctx_t *ctx, const WCHAR *identifier, unsigned flags)
+{
+    int local_ref;
+    if(bind_local(ctx, identifier, &local_ref))
+        return push_instr_int(ctx, OP_local_ref, local_ref);
+    return push_instr_bstr_uint(ctx, OP_identid, identifier, flags);
+}
+
 static HRESULT compile_memberid_expression(compiler_ctx_t *ctx, expression_t *expr, unsigned flags)
 {
     HRESULT hres = S_OK;
@@ -416,7 +442,7 @@ static HRESULT compile_memberid_expression(compiler_ctx_t *ctx, expression_t *ex
     case EXPR_IDENT: {
         identifier_expression_t *ident_expr = (identifier_expression_t*)expr;
 
-        hres = push_instr_bstr_uint(ctx, OP_identid, ident_expr->identifier, flags);
+        hres = emit_identifier_ref(ctx, ident_expr->identifier, flags);
         break;
     }
     case EXPR_ARRAY: {
@@ -1095,7 +1121,7 @@ static HRESULT compile_variable_list(compiler_ctx_t *ctx, variable_declaration_t
         if(!iter->expr)
             continue;
 
-        hres = push_instr_bstr_uint(ctx, OP_identid, iter->identifier, 0);
+        hres = emit_identifier_ref(ctx, iter->identifier, 0);
         if(FAILED(hres))
             return hres;
 
@@ -1304,7 +1330,7 @@ static HRESULT compile_forin_statement(compiler_ctx_t *ctx, forin_statement_t *s
         return hres;
 
     if(stat->variable) {
-        hres = push_instr_bstr_uint(ctx, OP_identid, stat->variable->identifier, fdexNameEnsure);
+        hres = emit_identifier_ref(ctx, stat->variable->identifier, fdexNameEnsure);
         if(FAILED(hres))
             return hres;
     }else if(is_memberid_expr(stat->expr->type)) {
