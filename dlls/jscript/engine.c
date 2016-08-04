@@ -617,7 +617,7 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
                 local_ref_t *ref = bsearch(identifier, func->locals, func->locals_cnt, sizeof(*func->locals), local_ref_cmp);
                 static const WCHAR argumentsW[] = {'a','r','g','u','m','e','n','t','s',0};
 
-                if(ref) {
+                if(ref && ref->ref < 0) {
                     ret->type = EXPRVAL_STACK_REF;
                     ret->u.off = scope->frame->arguments_off - ref->ref - 1;
                     return S_OK;
