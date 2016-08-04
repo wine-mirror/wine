@@ -1374,7 +1374,7 @@ static const char *shader_arb_get_modifier(const struct wined3d_shader_instructi
 
     mod = ins->dst[0].modifiers;
 
-    /* Silently ignore PARTIALPRECISION if its not supported */
+    /* Silently ignore PARTIALPRECISION if it's not supported */
     if(priv->target_version == ARB) mod &= ~WINED3DSPDM_PARTIALPRECISION;
 
     if(mod & WINED3DSPDM_MSAMPCENTROID)
@@ -7237,7 +7237,7 @@ static BOOL gen_yv12_read(struct wined3d_string_buffer *buffer, const struct arb
      *        |     0.5        |       0.5       |
      *
      * So it appears as if there are 4 chroma images, but in fact the odd rows
-     * in the chroma images are in the same row as the even ones. So its is
+     * in the chroma images are in the same row as the even ones. So it is
      * kinda tricky to read
      *
      * When reading from rectangle textures, keep in mind that the input y coordinates
