@@ -1830,9 +1830,7 @@ static LRESULT WINAPI cd_wndproc(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                 clr = GetBkColor(nmlvcd->nmcd.hdc);
                 ok(nmlvcd->clrTextBk == CLR_DEFAULT, "got 0x%x\n", nmlvcd->clrTextBk);
                 ok(nmlvcd->clrText == RGB(0, 255, 0), "got 0x%x\n", nmlvcd->clrText);
-                if (nmlvcd->iSubItem)
-                    todo_wine ok(clr == c0ffee, "clr=%.8x\n", clr);
-                else
+                todo_wine_if(nmlvcd->iSubItem)
                     ok(clr == c0ffee, "clr=%.8x\n", clr);
                 return CDRF_NOTIFYPOSTPAINT;
             case CDDS_ITEMPOSTPAINT | CDDS_SUBITEM:
