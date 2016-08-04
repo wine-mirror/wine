@@ -4648,11 +4648,7 @@ float4 main(float4 color : COLOR) : SV_TARGET
     ID3D10Device_RSGetScissorRects(device, &count, tmp_rect);
     for (i = 0; i < D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE; ++i)
     {
-        if (!i)
-            todo_wine ok(!tmp_rect[i].left && !tmp_rect[i].top && !tmp_rect[i].right && !tmp_rect[i].bottom,
-                    "Got unexpected scissor rect %s in slot %u.\n",
-                    wine_dbgstr_rect(&tmp_rect[i]), i);
-        else
+        todo_wine_if(!i)
             ok(!tmp_rect[i].left && !tmp_rect[i].top && !tmp_rect[i].right && !tmp_rect[i].bottom,
                     "Got unexpected scissor rect %s in slot %u.\n",
                     wine_dbgstr_rect(&tmp_rect[i]), i);
@@ -4664,13 +4660,7 @@ float4 main(float4 color : COLOR) : SV_TARGET
     ID3D10Device_RSGetViewports(device, &count, tmp_viewport);
     for (i = 0; i < D3D10_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE; ++i)
     {
-        if (!i)
-            todo_wine ok(!tmp_viewport[i].TopLeftX && !tmp_viewport[i].TopLeftY && !tmp_viewport[i].Width
-                    && !tmp_viewport[i].Height && !tmp_viewport[i].MinDepth && !tmp_viewport[i].MaxDepth,
-                    "Got unexpected viewport {%d, %d, %u, %u, %.8e, %.8e} in slot %u.\n",
-                    tmp_viewport[i].TopLeftX, tmp_viewport[i].TopLeftY, tmp_viewport[i].Width,
-                    tmp_viewport[i].Height, tmp_viewport[i].MinDepth, tmp_viewport[i].MaxDepth, i);
-        else
+        todo_wine_if(!i)
             ok(!tmp_viewport[i].TopLeftX && !tmp_viewport[i].TopLeftY && !tmp_viewport[i].Width
                     && !tmp_viewport[i].Height && !tmp_viewport[i].MinDepth && !tmp_viewport[i].MaxDepth,
                     "Got unexpected viewport {%d, %d, %u, %u, %.8e, %.8e} in slot %u.\n",
