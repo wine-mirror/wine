@@ -40,11 +40,10 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 extern NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event );
 
-static WCHAR *driver_name;
 static SERVICE_STATUS_HANDLE service_handle;
 static HANDLE stop_event;
-static DRIVER_OBJECT driver_obj;
-static DRIVER_EXTENSION driver_extension;
+static DRIVER_OBJECT *driver_obj;
+static HMODULE driver_module;
 
 /* find the LDR_MODULE corresponding to the driver module */
 static LDR_MODULE *find_ldr_module( HMODULE module )
@@ -132,92 +131,24 @@ error:
     return NULL;
 }
 
-/* call the driver init entry point */
-static NTSTATUS init_driver( HMODULE module, UNICODE_STRING *keyname )
-{
-    unsigned int i;
-    NTSTATUS status;
-    const IMAGE_NT_HEADERS *nt = RtlImageNtHeader( module );
-
-    if (!nt->OptionalHeader.AddressOfEntryPoint) return STATUS_SUCCESS;
-
-    driver_obj.Size            = sizeof(driver_obj);
-    driver_obj.DriverSection   = find_ldr_module( module );
-    driver_obj.DriverInit      = (PDRIVER_INITIALIZE)((char *)module + nt->OptionalHeader.AddressOfEntryPoint);
-    driver_obj.DriverExtension = &driver_extension;
-
-    driver_extension.DriverObject   = &driver_obj;
-    driver_extension.ServiceKeyName = *keyname;
-
-    if (WINE_TRACE_ON(relay))
-        WINE_DPRINTF( "%04x:Call driver init %p (obj=%p,str=%s)\n", GetCurrentThreadId(),
-                      driver_obj.DriverInit, &driver_obj, wine_dbgstr_w(keyname->Buffer) );
-
-    status = driver_obj.DriverInit( &driver_obj, keyname );
-
-    if (WINE_TRACE_ON(relay))
-        WINE_DPRINTF( "%04x:Ret  driver init %p (obj=%p,str=%s) retval=%08x\n", GetCurrentThreadId(),
-                      driver_obj.DriverInit, &driver_obj, wine_dbgstr_w(keyname->Buffer), status );
-
-    WINE_TRACE( "init done for %s obj %p\n", wine_dbgstr_w(driver_name), &driver_obj );
-    WINE_TRACE( "- DriverInit = %p\n", driver_obj.DriverInit );
-    WINE_TRACE( "- DriverStartIo = %p\n", driver_obj.DriverStartIo );
-    WINE_TRACE( "- DriverUnload = %p\n", driver_obj.DriverUnload );
-    for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++)
-        WINE_TRACE( "- MajorFunction[%d] = %p\n", i, driver_obj.MajorFunction[i] );
-
-    return status;
-}
-
-/* call the driver unload function */
-static void unload_driver( HMODULE module, DRIVER_OBJECT *driver_obj )
-{
-    if (driver_obj->DriverUnload)
-    {
-        if (WINE_TRACE_ON(relay))
-            WINE_DPRINTF( "%04x:Call driver unload %p (obj=%p)\n", GetCurrentThreadId(),
-                          driver_obj->DriverUnload, driver_obj );
-
-        driver_obj->DriverUnload( driver_obj );
-
-        if (WINE_TRACE_ON(relay))
-            WINE_DPRINTF( "%04x:Ret  driver unload %p (obj=%p)\n", GetCurrentThreadId(),
-                          driver_obj->DriverUnload, driver_obj );
-    }
-    FreeLibrary( module );
-}
-
 /* load the .sys module for a device driver */
-static HMODULE load_driver(void)
+static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyname )
 {
     static const WCHAR driversW[] = {'\\','d','r','i','v','e','r','s','\\',0};
     static const WCHAR systemrootW[] = {'\\','S','y','s','t','e','m','R','o','o','t','\\',0};
     static const WCHAR postfixW[] = {'.','s','y','s',0};
     static const WCHAR ntprefixW[] = {'\\','?','?','\\',0};
     static const WCHAR ImagePathW[] = {'I','m','a','g','e','P','a','t','h',0};
-    static const WCHAR servicesW[] = {'\\','R','e','g','i','s','t','r','y',
-                                      '\\','M','a','c','h','i','n','e',
-                                      '\\','S','y','s','t','e','m',
-                                      '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
-                                      '\\','S','e','r','v','i','c','e','s','\\',0};
-
-    UNICODE_STRING keypath;
     HKEY driver_hkey;
     HMODULE module;
     LPWSTR path = NULL, str;
     DWORD type, size;
 
-    str = HeapAlloc( GetProcessHeap(), 0, sizeof(servicesW) + strlenW(driver_name)*sizeof(WCHAR) );
-    lstrcpyW( str, servicesW );
-    lstrcatW( str, driver_name );
-
-    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, str + 18 /* skip \registry\machine */, &driver_hkey ))
+    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, keyname->Buffer + 18 /* skip \registry\machine */, &driver_hkey ))
     {
-        WINE_ERR( "cannot open key %s, err=%u\n", wine_dbgstr_w(str), GetLastError() );
-        HeapFree( GetProcessHeap(), 0, str);
+        WINE_ERR( "cannot open key %s, err=%u\n", wine_dbgstr_w(keyname->Buffer), GetLastError() );
         return NULL;
     }
-    RtlInitUnicodeString( &keypath, str );
 
     /* read the executable path from memory */
     size = 0;
@@ -233,7 +164,6 @@ static HMODULE load_driver(void)
         HeapFree( GetProcessHeap(), 0, str );
         if (!path)
         {
-            RtlFreeUnicodeString( &keypath );
             RegCloseKey( driver_hkey );
             return NULL;
         }
@@ -276,19 +206,94 @@ static HMODULE load_driver(void)
 
     module = load_driver_module( str );
     HeapFree( GetProcessHeap(), 0, path );
-    if (!module)
-    {
-        RtlFreeUnicodeString( &keypath );
-        return NULL;
-    }
-
-    init_driver( module, &keypath );
     return module;
+}
+
+/* call the driver init entry point */
+static NTSTATUS WINAPI init_driver( DRIVER_OBJECT *driver_object, UNICODE_STRING *keyname )
+{
+    unsigned int i;
+    NTSTATUS status;
+    const IMAGE_NT_HEADERS *nt;
+    const WCHAR *driver_name;
+
+    /* Retrieve driver name from the keyname */
+    driver_name = strrchrW( keyname->Buffer, '\\' );
+    driver_name++;
+
+    driver_module = load_driver( driver_name, keyname );
+    if (!driver_module)
+        return STATUS_DLL_INIT_FAILED;
+
+    driver_obj = driver_object;
+
+    nt = RtlImageNtHeader( driver_module );
+    if (!nt->OptionalHeader.AddressOfEntryPoint) return STATUS_SUCCESS;
+
+    driver_object->DriverSection   = find_ldr_module( driver_module );
+    driver_object->DriverInit      = (PDRIVER_INITIALIZE)((char *)driver_module + nt->OptionalHeader.AddressOfEntryPoint);
+
+    if (WINE_TRACE_ON(relay))
+        WINE_DPRINTF( "%04x:Call driver init %p (obj=%p,str=%s)\n", GetCurrentThreadId(),
+                      driver_object->DriverInit, driver_object, wine_dbgstr_w(keyname->Buffer) );
+
+    status = driver_object->DriverInit( driver_object, keyname );
+
+    if (WINE_TRACE_ON(relay))
+        WINE_DPRINTF( "%04x:Ret  driver init %p (obj=%p,str=%s) retval=%08x\n", GetCurrentThreadId(),
+                      driver_object->DriverInit, driver_object, wine_dbgstr_w(keyname->Buffer), status );
+
+    WINE_TRACE( "init done for %s obj %p\n", wine_dbgstr_w(driver_name), driver_object );
+    WINE_TRACE( "- DriverInit = %p\n", driver_object->DriverInit );
+    WINE_TRACE( "- DriverStartIo = %p\n", driver_object->DriverStartIo );
+    WINE_TRACE( "- DriverUnload = %p\n", driver_object->DriverUnload );
+    for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++)
+        WINE_TRACE( "- MajorFunction[%d] = %p\n", i, driver_object->MajorFunction[i] );
+
+    return status;
+}
+
+/* call the driver unload function */
+static void unload_driver( HMODULE module, DRIVER_OBJECT *driver_obj )
+{
+    if (driver_obj->DriverUnload)
+    {
+        if (WINE_TRACE_ON(relay))
+            WINE_DPRINTF( "%04x:Call driver unload %p (obj=%p)\n", GetCurrentThreadId(),
+                          driver_obj->DriverUnload, driver_obj );
+
+        driver_obj->DriverUnload( driver_obj );
+
+        if (WINE_TRACE_ON(relay))
+            WINE_DPRINTF( "%04x:Ret  driver unload %p (obj=%p)\n", GetCurrentThreadId(),
+                          driver_obj->DriverUnload, driver_obj );
+    }
+    FreeLibrary( module );
+    IoDeleteDriver( driver_obj );
+}
+
+static NTSTATUS create_driver(const WCHAR *driver_name)
+{
+    static const WCHAR driverW[] = {'\\','D','r','i','v','e','r','\\',0};
+    UNICODE_STRING drv_name;
+    NTSTATUS status;
+    WCHAR *str;
+
+    str = HeapAlloc( GetProcessHeap(), 0, sizeof(driverW) + strlenW(driver_name)*sizeof(WCHAR) );
+    lstrcpyW( str, driverW);
+    lstrcatW( str, driver_name );
+    RtlInitUnicodeString( &drv_name, str );
+
+    status = IoCreateDriver( &drv_name, init_driver );
+
+    RtlFreeUnicodeString( &drv_name );
+    return status;
 }
 
 static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, LPVOID event_data, LPVOID context )
 {
     SERVICE_STATUS status;
+    const WCHAR *driver_name = context;
 
     status.dwServiceType             = SERVICE_WIN32;
     status.dwControlsAccepted        = SERVICE_ACCEPT_STOP;
@@ -318,13 +323,13 @@ static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, LPVOID event_
 static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
 {
     SERVICE_STATUS status;
-    HMODULE driver_module;
+    const WCHAR *driver_name = argv[0];
 
     WINE_TRACE( "starting service %s\n", wine_dbgstr_w(driver_name) );
 
     stop_event = CreateEventW( NULL, TRUE, FALSE, NULL );
 
-    service_handle = RegisterServiceCtrlHandlerExW( driver_name, service_handler, NULL );
+    service_handle = RegisterServiceCtrlHandlerExW( driver_name, service_handler, (void *)driver_name );
     if (!service_handle)
         return;
 
@@ -337,15 +342,14 @@ static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
     status.dwWaitHint                = 10000;
     SetServiceStatus( service_handle, &status );
 
-    driver_module = load_driver();
-    if (driver_module)
+    if (create_driver( driver_name ) == STATUS_SUCCESS)
     {
         status.dwCurrentState     = SERVICE_RUNNING;
         status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
         SetServiceStatus( service_handle, &status );
 
         wine_ntoskrnl_main_loop( stop_event );
-        unload_driver( driver_module, &driver_obj );
+        unload_driver( driver_module, driver_obj );
     }
     else WINE_ERR( "driver %s failed to load\n", wine_dbgstr_w(driver_name) );
 
@@ -359,7 +363,7 @@ int wmain( int argc, WCHAR *argv[] )
 {
     SERVICE_TABLE_ENTRYW service_table[2];
 
-    if (!(driver_name = argv[1]))
+    if (!argv[1])
     {
         WINE_ERR( "missing device name, winedevice isn't supposed to be run manually\n" );
         return 1;
