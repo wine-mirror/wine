@@ -637,12 +637,11 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
 
 static void swapchain_gl_frontbuffer_updated(struct wined3d_swapchain *swapchain)
 {
-    struct wined3d_surface *surface;
+    struct wined3d_texture *front_buffer = swapchain->front_buffer;
     struct wined3d_context *context;
 
-    surface = swapchain->front_buffer->sub_resources[0].u.surface;
-    context = context_acquire(swapchain->device, surface);
-    surface_load_location(surface, context, surface->container->resource.draw_binding);
+    context = context_acquire(swapchain->device, front_buffer->sub_resources[0].u.surface);
+    wined3d_texture_load_location(front_buffer, 0, context, front_buffer->resource.draw_binding);
     context_release(context);
     SetRectEmpty(&swapchain->front_buffer_update);
 }
