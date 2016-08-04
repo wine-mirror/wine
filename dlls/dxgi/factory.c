@@ -180,14 +180,6 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_GetWindowAssociation(IDXGIFactory1
     return E_NOTIMPL;
 }
 
-static UINT dxgi_rational_to_uint(const DXGI_RATIONAL *rational)
-{
-    if (rational->Denominator)
-        return rational->Numerator / rational->Denominator;
-    else
-        return rational->Numerator;
-}
-
 static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IDXGIFactory1 *iface,
         IUnknown *device, DXGI_SWAP_CHAIN_DESC *desc, IDXGISwapChain **swapchain)
 {

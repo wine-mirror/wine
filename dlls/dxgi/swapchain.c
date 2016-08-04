@@ -337,9 +337,31 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_ResizeBuffers(IDXGISwapChain *if
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_ResizeTarget(IDXGISwapChain *iface,
         const DXGI_MODE_DESC *target_mode_desc)
 {
-    FIXME("iface %p, target_mode_desc %p stub!\n", iface, target_mode_desc);
+    struct dxgi_swapchain *swapchain = impl_from_IDXGISwapChain(iface);
+    struct wined3d_display_mode mode;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, target_mode_desc %p.\n", iface, target_mode_desc);
+
+    if (!target_mode_desc)
+        return DXGI_ERROR_INVALID_CALL;
+
+    TRACE("Mode: %s.\n", debug_dxgi_mode(target_mode_desc));
+
+    if (target_mode_desc->Scaling)
+        FIXME("Ignoring scaling %#x.\n", target_mode_desc->Scaling);
+
+    mode.width = target_mode_desc->Width;
+    mode.height = target_mode_desc->Height;
+    mode.refresh_rate = dxgi_rational_to_uint(&target_mode_desc->RefreshRate);
+    mode.format_id = wined3dformat_from_dxgi_format(target_mode_desc->Format);
+    mode.scanline_ordering = wined3d_scanline_ordering_from_dxgi(target_mode_desc->ScanlineOrdering);
+
+    wined3d_mutex_lock();
+    hr = wined3d_swapchain_resize_target(swapchain->wined3d_swapchain, &mode);
+    wined3d_mutex_unlock();
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetContainingOutput(IDXGISwapChain *iface, IDXGIOutput **output)

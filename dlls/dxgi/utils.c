@@ -364,6 +364,14 @@ enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format)
     }
 }
 
+const char *debug_dxgi_mode(const DXGI_MODE_DESC *desc)
+{
+    return wine_dbg_sprintf("resolution %ux%u, refresh rate %u / %u, "
+            "format %s, scanline ordering %#x, scaling %#x",
+            desc->Width, desc->Height, desc->RefreshRate.Numerator, desc->RefreshRate.Denominator,
+            debug_dxgi_format(desc->Format), desc->ScanlineOrdering, desc->Scaling);
+}
+
 void dump_feature_levels(const D3D_FEATURE_LEVEL *feature_levels, unsigned int level_count)
 {
     unsigned int i;
@@ -377,6 +385,28 @@ void dump_feature_levels(const D3D_FEATURE_LEVEL *feature_levels, unsigned int l
     TRACE("Feature levels (count = %u):\n", level_count);
     for (i = 0; i < level_count; ++i)
         TRACE("    [%u] = %s.\n", i, debug_feature_level(feature_levels[i]));
+}
+
+UINT dxgi_rational_to_uint(const DXGI_RATIONAL *rational)
+{
+    if (rational->Denominator)
+        return rational->Numerator / rational->Denominator;
+    else
+        return rational->Numerator;
+}
+
+enum wined3d_scanline_ordering wined3d_scanline_ordering_from_dxgi(DXGI_MODE_SCANLINE_ORDER scanline_order)
+{
+    switch (scanline_order)
+    {
+        case DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED:
+            return WINED3D_SCANLINE_ORDERING_UNKNOWN;
+        case DXGI_MODE_SCANLINE_ORDER_PROGRESSIVE:
+            return WINED3D_SCANLINE_ORDERING_PROGRESSIVE;
+        default:
+            FIXME("Unhandled scanline ordering %#x.\n", scanline_order);
+            return WINED3D_SCANLINE_ORDERING_UNKNOWN;
+    }
 }
 
 void dxgi_sample_desc_from_wined3d(DXGI_SAMPLE_DESC *desc,
