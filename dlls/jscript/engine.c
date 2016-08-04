@@ -217,11 +217,16 @@ static BOOL stack_topn_exprval(script_ctx_t *ctx, unsigned n, exprval_t *r)
 
         if(!frame->base_scope->frame && off >= frame->arguments_off) {
             DISPID id;
+            BSTR name;
             HRESULT hres;
 
             /* Got stack reference in deoptimized code. Need to convert it back to variable object reference. */
 
-            hres = jsdisp_get_id(ctx->call_ctx->base_scope->jsobj, frame->function->params[off - frame->arguments_off], 0, &id);
+            assert(off < frame->variables_off + frame->function->var_cnt);
+            name = off >= frame->variables_off
+                ? frame->function->variables[off - frame->variables_off].name
+                : frame->function->params[off - frame->arguments_off];
+            hres = jsdisp_get_id(ctx->call_ctx->base_scope->jsobj, name, 0, &id);
             if(FAILED(hres)) {
                 r->type = EXPRVAL_INVALID;
                 r->u.hres = hres;
@@ -541,6 +546,13 @@ static HRESULT equal2_values(jsval_t lval, jsval_t rval, BOOL *ret)
     return S_OK;
 }
 
+static inline unsigned local_off(call_frame_t *frame, int ref)
+{
+    return ref < 0
+        ? frame->arguments_off - ref-1
+        : frame->variables_off + ref;
+}
+
 /*
  * Transfers local variables from stack to variable object.
  * It's slow, so we want to avoid it as much as possible.
@@ -566,8 +578,9 @@ static HRESULT detach_variable_object(script_ctx_t *ctx, call_frame_t *frame)
 
     frame->base_scope->frame = NULL;
 
-    for(i = 0; i < frame->function->param_cnt; i++) {
-        hres = jsdisp_propput_name(frame->variable_obj, frame->function->params[i], ctx->stack[frame->arguments_off+i]);
+    for(i = 0; i < frame->function->locals_cnt; i++) {
+        hres = jsdisp_propput_name(frame->variable_obj, frame->function->locals[i].name,
+                                   ctx->stack[local_off(frame, frame->function->locals[i].ref)]);
         if(FAILED(hres))
             return hres;
     }
@@ -622,9 +635,10 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
                 local_ref_t *ref = lookup_local(func, identifier);
                 static const WCHAR argumentsW[] = {'a','r','g','u','m','e','n','t','s',0};
 
-                if(ref && ref->ref < 0) {
+                if(ref) {
                     ret->type = EXPRVAL_STACK_REF;
-                    ret->u.off = scope->frame->arguments_off - ref->ref - 1;
+                    ret->u.off = local_off(scope->frame, ref->ref);
+                    TRACE("returning ref %d for %d\n", ret->u.off, ref->ref);
                     return S_OK;
                 }
 
@@ -2532,20 +2546,24 @@ static void pop_call_frame(script_ctx_t *ctx)
 {
     call_frame_t *frame = ctx->call_ctx;
 
-    if(frame->arguments_obj)
-        detach_arguments_object(frame->arguments_obj);
+    frame->stack_base -= frame->pop_locals + frame->pop_variables;
 
-    if(frame->scope) {
-        /* If current scope will be kept alive, we need to transfer local variables to its variable object. */
-        if(frame->scope->ref > 1) {
-            HRESULT hres = detach_variable_object(ctx, frame);
-            if(FAILED(hres))
-                ERR("Failed to detach variable object: %08x\n", hres);
-        }
-        scope_release(frame->scope);
+    assert(frame->scope == frame->base_scope);
+
+    /* If current scope will be kept alive, we need to transfer local variables to its variable object. */
+    if(frame->scope && frame->scope->ref > 1) {
+        HRESULT hres = detach_variable_object(ctx, frame);
+        if(FAILED(hres))
+            ERR("Failed to detach variable object: %08x\n", hres);
     }
 
-    frame->stack_base -= frame->pop_locals;
+    if(frame->arguments_obj)
+        detach_arguments_object(frame->arguments_obj);
+    if(frame->scope)
+        scope_release(frame->scope);
+
+    if(frame->pop_variables)
+        stack_popn(ctx, frame->pop_variables);
     stack_popn(ctx, frame->pop_locals);
 
     ctx->call_ctx = frame->prev_frame;
@@ -2738,6 +2756,36 @@ static HRESULT setup_scope(script_ctx_t *ctx, call_frame_t *frame, unsigned argc
     }
 
     frame->pop_locals = ctx->stack_top - orig_stack;
+
+    frame->variables_off = ctx->stack_top;
+
+    for(i = 0; i < frame->function->var_cnt; i++) {
+        hres = stack_push(ctx, jsval_undefined());
+        if(FAILED(hres)) {
+            stack_popn(ctx, ctx->stack_top - orig_stack);
+            return hres;
+        }
+    }
+
+    frame->pop_variables = i;
+
+    for(i = 0; i < frame->function->func_cnt; i++) {
+        if(frame->function->funcs[i].name && !frame->function->funcs[i].event_target) {
+            jsdisp_t *func_obj;
+            unsigned off;
+
+            hres = create_source_function(ctx, frame->bytecode, frame->function->funcs+i, frame->base_scope, &func_obj);
+            if(FAILED(hres)) {
+                stack_popn(ctx, ctx->stack_top - orig_stack);
+                return hres;
+            }
+
+            off = local_off(frame, frame->function->funcs[i].local_ref);
+            jsval_release(ctx->stack[off]);
+            ctx->stack[off] = jsval_obj(func_obj);
+        }
+    }
+
     frame->base_scope->frame = frame;
     return S_OK;
 }
@@ -2752,33 +2800,38 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
     for(i = 0; i < function->func_cnt; i++) {
         jsdisp_t *func_obj;
 
-        if(!function->funcs[i].name)
+        if(!function->funcs[i].event_target)
             continue;
 
         hres = create_source_function(ctx, bytecode, function->funcs+i, scope, &func_obj);
         if(FAILED(hres))
             return hres;
 
-        if(function->funcs[i].event_target)
-            hres = bind_event_target(ctx, function->funcs+i, func_obj);
-        else
-            hres = jsdisp_propput_name(variable_obj, function->funcs[i].name, jsval_obj(func_obj));
+        hres = bind_event_target(ctx, function->funcs+i, func_obj);
         jsdisp_release(func_obj);
         if(FAILED(hres))
             return hres;
     }
 
-    for(i=0; i < function->var_cnt; i++) {
-        TRACE("[%d] %s %d\n", i, debugstr_w(function->variables[i].name), function->variables[i].func_id);
-        if(function->variables[i].func_id != -1)
-            continue;
+    if(flags & (EXEC_GLOBAL | EXEC_EVAL)) {
+        for(i=0; i < function->var_cnt; i++) {
+            TRACE("[%d] %s %d\n", i, debugstr_w(function->variables[i].name), function->variables[i].func_id);
+            if(function->variables[i].func_id != -1) {
+                jsdisp_t *func_obj;
 
-        if(!(flags & EXEC_GLOBAL) || !lookup_global_members(ctx, function->variables[i].name, NULL)) {
-            DISPID id = 0;
+                hres = create_source_function(ctx, bytecode, function->funcs+function->variables[i].func_id, scope, &func_obj);
+                if(FAILED(hres))
+                    return hres;
 
-            hres = jsdisp_get_id(variable_obj, function->variables[i].name, fdexNameEnsure, &id);
-            if(FAILED(hres))
-                return hres;
+                hres = jsdisp_propput_name(variable_obj, function->variables[i].name, jsval_obj(func_obj));
+                jsdisp_release(func_obj);
+            }else if(!(flags & EXEC_GLOBAL) || !lookup_global_members(ctx, function->variables[i].name, NULL)) {
+                DISPID id = 0;
+
+                hres = jsdisp_get_id(variable_obj, function->variables[i].name, fdexNameEnsure, &id);
+                if(FAILED(hres))
+                    return hres;
+            }
         }
     }
 
@@ -2807,6 +2860,7 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
     frame->function = function;
     frame->ret = jsval_undefined();
     frame->argc = argc;
+    frame->bytecode = bytecode_addref(bytecode);
 
     if(scope) {
         frame->base_scope = frame->scope = scope_addref(scope);
@@ -2814,13 +2868,13 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
         if(!(flags & (EXEC_GLOBAL|EXEC_EVAL))) {
             hres = setup_scope(ctx, frame, argc, argv);
             if(FAILED(hres)) {
+                release_bytecode(frame->bytecode);
                 heap_free(frame);
                 return hres;
             }
         }
     }
 
-    frame->bytecode = bytecode_addref(bytecode);
     frame->ip = function->instr_off;
     frame->stack_base = ctx->stack_top;
     if(this_obj)

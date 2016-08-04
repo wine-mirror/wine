@@ -225,6 +225,8 @@ typedef struct _call_frame_t {
     unsigned argc;
     unsigned pop_locals;
     unsigned arguments_off;
+    unsigned variables_off;
+    unsigned pop_variables;
 
     bytecode_t *bytecode;
     function_code_t *function;
