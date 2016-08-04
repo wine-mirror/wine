@@ -1825,10 +1825,12 @@ static BOOL alloc_variable(compiler_ctx_t *ctx, const WCHAR *name)
     return alloc_local(ctx, ident, ctx->func->var_cnt++);
 }
 
-static void visit_function_expression(compiler_ctx_t *ctx, function_expression_t *expr)
+static BOOL visit_function_expression(compiler_ctx_t *ctx, function_expression_t *expr)
 {
     expr->func_id = ctx->func->func_cnt++;
     ctx->func_tail = ctx->func_tail ? (ctx->func_tail->next = expr) : (ctx->func_head = expr);
+
+    return !expr->identifier || expr->event_target || alloc_variable(ctx, expr->identifier);
 }
 
 static HRESULT visit_expression(compiler_ctx_t *ctx, expression_t *expr)
@@ -2234,6 +2236,18 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
     if(func_expr) {
         parameter_t *param_iter;
 
+        if(func_expr->identifier) {
+            func->name = compiler_alloc_bstr(ctx, func_expr->identifier);
+            if(!func->name)
+                return E_OUTOFMEMORY;
+        }
+
+        if(func_expr->event_target) {
+            func->event_target = compiler_alloc_bstr(ctx, func_expr->event_target);
+            if(!func->event_target)
+                return E_OUTOFMEMORY;
+        }
+
         func->source = func_expr->src_str;
         func->source_len = func_expr->src_len;
 
@@ -2260,6 +2274,31 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
     if(FAILED(hres))
         return hres;
 
+    func->locals = compiler_alloc(ctx->code, ctx->locals_cnt * sizeof(*func->locals));
+    if(!func->locals)
+        return E_OUTOFMEMORY;
+    func->locals_cnt = ctx->locals_cnt;
+    memcpy(func->locals, ctx->locals_buf, func->locals_cnt * sizeof(*func->locals));
+
+    func->variables = compiler_alloc(ctx->code, func->var_cnt * sizeof(*func->variables));
+    if(!func->variables)
+        return E_OUTOFMEMORY;
+
+    for(i = 0, j = 0; i < func->locals_cnt; i++) {
+        if(func->locals[i].ref < 0)
+            continue; /* skip arguments */
+        func->variables[func->locals[i].ref].name = func->locals[i].name;
+        func->variables[func->locals[i].ref].func_id = -1;
+        j++;
+    }
+
+    assert(j == func->var_cnt);
+
+    func->funcs = compiler_alloc(ctx->code, func->func_cnt * sizeof(*func->funcs));
+    if(!func->funcs)
+        return E_OUTOFMEMORY;
+    memset(func->funcs, 0, func->func_cnt * sizeof(*func->funcs));
+
     off = ctx->code_off;
     hres = compile_block_statement(ctx, source->statement);
     if(FAILED(hres))
@@ -2276,48 +2315,19 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
 
     func->instr_off = off;
 
-    if(func_expr) {
-        if(func_expr->identifier) {
-            func->name = compiler_alloc_bstr(ctx, func_expr->identifier);
-            if(!func->name)
-                return E_OUTOFMEMORY;
-        }
-
-        if(func_expr->event_target) {
-            func->event_target = compiler_alloc_bstr(ctx, func_expr->event_target);
-            if(!func->event_target)
-                return E_OUTOFMEMORY;
-        }
-    }
-
-    func->locals = compiler_alloc(ctx->code, ctx->locals_cnt * sizeof(*func->locals));
-    if(!func->locals)
-        return E_OUTOFMEMORY;
-    func->locals_cnt = ctx->locals_cnt;
-    memcpy(func->locals, ctx->locals_buf, func->locals_cnt * sizeof(*func->locals));
-
-    func->variables = compiler_alloc(ctx->code, func->var_cnt * sizeof(*func->variables));
-    if(!func->variables)
-        return E_OUTOFMEMORY;
-
-    for(i = 0, j = 0; i < func->locals_cnt; i++) {
-        if(func->locals[i].ref < 0)
-            continue; /* skip arguments */
-        func->variables[func->locals[i].ref] = func->locals[i].name;
-        j++;
-    }
-
-    assert(j == func->var_cnt);
-
-    func->funcs = compiler_alloc(ctx->code, func->func_cnt * sizeof(*func->funcs));
-    if(!func->funcs)
-        return E_OUTOFMEMORY;
-    memset(func->funcs, 0, func->func_cnt * sizeof(*func->funcs));
-
     for(iter = ctx->func_head, i=0; iter; iter = iter->next, i++) {
         hres = compile_function(ctx, iter->source_elements, iter, FALSE, func->funcs+i);
         if(FAILED(hres))
             return hres;
+
+        TRACE("[%d] func %s\n", i, debugstr_w(func->funcs[i].name));
+        if(func->funcs[i].name && !func->funcs[i].event_target) {
+            local_ref_t *local_ref = lookup_local(func, func->funcs[i].name);
+            func->funcs[i].local_ref = local_ref->ref;
+            TRACE("found ref %s %d for %s\n", debugstr_w(local_ref->name), local_ref->ref, debugstr_w(func->funcs[i].name));
+            if(local_ref->ref >= 0)
+                func->variables[local_ref->ref].func_id = i;
+        }
     }
 
     assert(i == func->func_cnt);

@@ -2530,6 +2530,8 @@ static BOOL run_tests(void)
     parse_script_a("eval('var testPropGet;');");
     CHECK_CALLED(global_propget_d);
 
+    parse_script_a("var testPropGet; function testPropGet() {}");
+
     SET_EXPECT(global_notexists_d);
     parse_script_a("var notExists; notExists = 1;");
     CHECK_CALLED(global_notexists_d);

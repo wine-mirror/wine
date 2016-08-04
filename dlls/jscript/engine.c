@@ -600,6 +600,11 @@ static int local_ref_cmp(const void *key, const void *ref)
     return strcmpW((const WCHAR*)key, ((const local_ref_t*)ref)->name);
 }
 
+local_ref_t *lookup_local(const function_code_t *function, const WCHAR *identifier)
+{
+    return bsearch(identifier, function->locals, function->locals_cnt, sizeof(*function->locals), local_ref_cmp);
+}
+
 /* ECMA-262 3rd Edition    10.1.4 */
 static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *ret)
 {
@@ -614,7 +619,7 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
         for(scope = ctx->call_ctx->scope; scope; scope = scope->next) {
             if(scope->frame) {
                 function_code_t *func = scope->frame->function;
-                local_ref_t *ref = bsearch(identifier, func->locals, func->locals_cnt, sizeof(*func->locals), local_ref_cmp);
+                local_ref_t *ref = lookup_local(func, identifier);
                 static const WCHAR argumentsW[] = {'a','r','g','u','m','e','n','t','s',0};
 
                 if(ref && ref->ref < 0) {
@@ -2779,10 +2784,14 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
     }
 
     for(i=0; i < function->var_cnt; i++) {
-        if(!(flags & EXEC_GLOBAL) || !lookup_global_members(ctx, function->variables[i], NULL)) {
+        TRACE("[%d] %s %d\n", i, debugstr_w(function->variables[i].name), function->variables[i].func_id);
+        if(function->variables[i].func_id != -1)
+            continue;
+
+        if(!(flags & EXEC_GLOBAL) || !lookup_global_members(ctx, function->variables[i].name, NULL)) {
             DISPID id = 0;
 
-            hres = jsdisp_get_id(variable_obj, function->variables[i], fdexNameEnsure, &id);
+            hres = jsdisp_get_id(variable_obj, function->variables[i].name, fdexNameEnsure, &id);
             if(FAILED(hres))
                 return hres;
         }

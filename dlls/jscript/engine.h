@@ -133,6 +133,7 @@ typedef struct {
 
 typedef struct _function_code_t {
     BSTR name;
+    int local_ref;
     BSTR event_target;
     unsigned instr_off;
 
@@ -143,7 +144,10 @@ typedef struct _function_code_t {
     struct _function_code_t *funcs;
 
     unsigned var_cnt;
-    BSTR *variables;
+    struct {
+        BSTR name;
+        int func_id; /* -1 if not a function */
+    } *variables;
 
     unsigned param_cnt;
     BSTR *params;
@@ -151,6 +155,8 @@ typedef struct _function_code_t {
     unsigned locals_cnt;
     local_ref_t *locals;
 } function_code_t;
+
+local_ref_t *lookup_local(const function_code_t*,const WCHAR*) DECLSPEC_HIDDEN;
 
 typedef struct _bytecode_t {
     LONG ref;
