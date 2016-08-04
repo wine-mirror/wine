@@ -1572,4 +1572,20 @@ const char* CDECL MSVCRT_type_info_name_list(type_info140 *ti, SLIST_HEADER *hea
       TRACE("(%p) returning %s\n", ti, ti->name);
       return ti->name;
 }
+
+/******************************************************************
+ *		__std_type_info_destroy_list  (UCRTBASE.@)
+ */
+void CDECL MSVCRT_type_info_destroy_list(SLIST_HEADER *header)
+{
+    SLIST_ENTRY *cur, *next;
+
+    TRACE("(%p)\n", header);
+
+    for(cur = InterlockedFlushSList(header); cur; cur = next)
+    {
+        next = cur->Next;
+        MSVCRT_free(cur);
+    }
+}
 #endif
