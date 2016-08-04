@@ -369,6 +369,7 @@ static const struct wined3d_format_vertex_info format_vertex_info[] =
     {WINED3DFMT_R32G32_SINT,        WINED3D_FFP_EMIT_INVALID,   2, GL_INT,                         GL_FALSE},
     {WINED3DFMT_R32G32B32_UINT,     WINED3D_FFP_EMIT_INVALID,   3, GL_UNSIGNED_INT,                GL_FALSE},
     {WINED3DFMT_R32G32B32A32_UINT,  WINED3D_FFP_EMIT_INVALID,   4, GL_UNSIGNED_INT,                GL_FALSE},
+    {WINED3DFMT_R32G32B32A32_SINT,  WINED3D_FFP_EMIT_INVALID,   4, GL_INT,                         GL_FALSE},
 };
 
 struct wined3d_format_texture_info
