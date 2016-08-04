@@ -483,14 +483,14 @@ static void wined3d_swapchain_rotate(struct wined3d_swapchain *swapchain, struct
 static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, DWORD flags)
 {
-    struct wined3d_surface *back_buffer = swapchain->back_buffers[0]->sub_resources[0].u.surface;
+    struct wined3d_texture *back_buffer = swapchain->back_buffers[0];
     const struct wined3d_fb_state *fb = &swapchain->device->fb;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_texture *logo_texture;
     struct wined3d_context *context;
     BOOL render_to_fbo;
 
-    context = context_acquire(swapchain->device, back_buffer);
+    context = context_acquire(swapchain->device, back_buffer->sub_resources[0].u.surface);
     if (!context->valid)
     {
         context_release(context);
@@ -505,7 +505,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
         RECT rect = {0, 0, logo_texture->resource.width, logo_texture->resource.height};
 
         /* Blit the logo into the upper left corner of the drawable. */
-        wined3d_texture_blt(swapchain->back_buffers[0], 0, &rect, logo_texture, 0, &rect,
+        wined3d_texture_blt(back_buffer, 0, &rect, logo_texture, 0, &rect,
                 WINED3D_BLT_ALPHA_TEST, NULL, WINED3D_TEXF_POINT);
     }
 
@@ -525,16 +525,14 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
             swapchain->device->cursor_texture->resource.width,
             swapchain->device->cursor_texture->resource.height
         };
-        const RECT clip_rect = {0, 0,
-                swapchain->back_buffers[0]->resource.width,
-                swapchain->back_buffers[0]->resource.height};
+        const RECT clip_rect = {0, 0, back_buffer->resource.width, back_buffer->resource.height};
 
         TRACE("Rendering the software cursor.\n");
 
         if (swapchain->desc.windowed)
             MapWindowPoints(NULL, swapchain->win_handle, (POINT *)&dst_rect, 2);
         if (wined3d_clip_blit(&clip_rect, &dst_rect, &src_rect))
-            wined3d_texture_blt(swapchain->back_buffers[0], 0, &dst_rect,
+            wined3d_texture_blt(back_buffer, 0, &dst_rect,
                     swapchain->device->cursor_texture, 0, &src_rect,
                     WINED3D_BLT_ALPHA_TEST, NULL, WINED3D_TEXF_POINT);
     }
@@ -559,14 +557,14 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
      */
     if (!swapchain->render_to_fbo && render_to_fbo && wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        surface_load_location(back_buffer, context, WINED3D_LOCATION_TEXTURE_RGB);
-        wined3d_texture_invalidate_location(back_buffer->container, 0, WINED3D_LOCATION_DRAWABLE);
+        wined3d_texture_load_location(back_buffer, 0, context, WINED3D_LOCATION_TEXTURE_RGB);
+        wined3d_texture_invalidate_location(back_buffer, 0, WINED3D_LOCATION_DRAWABLE);
         swapchain->render_to_fbo = TRUE;
         swapchain_update_draw_bindings(swapchain);
     }
     else
     {
-        surface_load_location(back_buffer, context, back_buffer->container->resource.draw_binding);
+        wined3d_texture_load_location(back_buffer, 0, context, back_buffer->resource.draw_binding);
     }
 
     if (swapchain->render_to_fbo)
