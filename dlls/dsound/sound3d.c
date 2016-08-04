@@ -294,12 +294,12 @@ if(0)
 	           dsb->ds3db_ds3db.vVelocity.z == dsb->device->ds3dl.vVelocity.z))
 	{
 		/* calculate length of ds3db_ds3db.vVelocity component which causes Doppler Effect
-		   NOTE: if buffer moves TOWARDS the listener, it's velocity component is NEGATIVE
-		         if buffer moves AWAY from listener, it's velocity component is POSITIVE */
+		   NOTE: if buffer moves TOWARDS the listener, its velocity component is NEGATIVE
+		         if buffer moves AWAY from listener, its velocity component is POSITIVE */
 		flBufferVel = ProjectVector(&dsb->ds3db_ds3db.vVelocity, &vDistance);
 		/* calculate length of ds3dl.vVelocity component which causes Doppler Effect
-		   NOTE: if listener moves TOWARDS the buffer, it's velocity component is POSITIVE
-		         if listener moves AWAY from buffer, it's velocity component is NEGATIVE */
+		   NOTE: if listener moves TOWARDS the buffer, its velocity component is POSITIVE
+		         if listener moves AWAY from buffer, its velocity component is NEGATIVE */
 		flListenerVel = ProjectVector(&dsb->device->ds3dl.vVelocity, &vDistance);
 		/* formula taken from Gianicoli D.: Physics, 4th edition: */
 		/* FIXME: replace dsb->freq with appropriate frequency ! */
