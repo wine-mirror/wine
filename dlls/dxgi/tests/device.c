@@ -1003,6 +1003,33 @@ static void check_swapchain_fullscreen_state_(unsigned int line, IDXGISwapChain 
     }
 }
 
+static void compute_expected_swapchain_fullscreen_state_after_fullscreen_change(
+        struct swapchain_fullscreen_state *state, const DXGI_SWAP_CHAIN_DESC *swapchain_desc,
+        const RECT *old_monitor_rect, unsigned int new_width, unsigned int new_height)
+{
+    state->fullscreen = TRUE;
+    if (swapchain_desc->Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH)
+    {
+        unsigned int new_x = (old_monitor_rect->left >= 0)
+                ? old_monitor_rect->left : old_monitor_rect->right - new_width;
+        unsigned new_y = (old_monitor_rect->top >= 0)
+                ? old_monitor_rect->top : old_monitor_rect->bottom - new_height;
+        RECT new_monitor_rect = {0, 0, new_width, new_height};
+        OffsetRect(&new_monitor_rect, new_x, new_y);
+
+        SetRect(&state->fullscreen_state.client_rect, 0, 0, new_width, new_height);
+        state->fullscreen_state.monitor_rect = new_monitor_rect;
+        state->fullscreen_state.window_rect = new_monitor_rect;
+    }
+    else
+    {
+        state->fullscreen_state.window_rect = *old_monitor_rect;
+        SetRect(&state->fullscreen_state.client_rect, 0, 0,
+                old_monitor_rect->right - old_monitor_rect->left,
+                old_monitor_rect->bottom - old_monitor_rect->top);
+    }
+}
+
 static void test_swapchain_fullscreen_state(IDXGISwapChain *swapchain,
         IDXGIAdapter *adapter, const struct swapchain_fullscreen_state *initial_state)
 {
@@ -1012,7 +1039,6 @@ static void test_swapchain_fullscreen_state(IDXGISwapChain *swapchain,
     DXGI_OUTPUT_DESC output_desc;
     unsigned int i, output_count;
     IDXGIOutput *output;
-    RECT monitor_rect;
     HRESULT hr;
     BOOL ret;
 
@@ -1021,42 +1047,14 @@ static void test_swapchain_fullscreen_state(IDXGISwapChain *swapchain,
 
     check_swapchain_fullscreen_state(swapchain, initial_state);
 
-    monitor_rect = initial_state->fullscreen_state.monitor_rect;
-
     expected_state = *initial_state;
-    expected_state.fullscreen = TRUE;
-    if (swapchain_desc.Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH)
-    {
-        SetRect(&expected_state.fullscreen_state.client_rect, 0, 0, 800, 600);
-        expected_state.fullscreen_state.monitor_rect = expected_state.fullscreen_state.client_rect;
-        expected_state.fullscreen_state.window_rect = expected_state.fullscreen_state.monitor_rect;
-    }
-    else
-    {
-        expected_state.fullscreen_state.window_rect = monitor_rect;
-        SetRect(&expected_state.fullscreen_state.client_rect, 0, 0,
-                monitor_rect.right - monitor_rect.left,
-                monitor_rect.bottom - monitor_rect.top);
-    }
+    compute_expected_swapchain_fullscreen_state_after_fullscreen_change(&expected_state,
+            &swapchain_desc, &initial_state->fullscreen_state.monitor_rect, 800, 600);
     hr = IDXGISwapChain_GetContainingOutput(swapchain, &expected_state.target);
     ok(SUCCEEDED(hr), "GetContainingOutput failed, hr %#x.\n", hr);
 
     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
     ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
-    if (swapchain_desc.Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH)
-    {
-        hr = IDXGISwapChain_GetFullscreenState(swapchain, NULL, &output);
-        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-        hr = IDXGIOutput_GetDesc(output, &output_desc);
-        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-        IDXGIOutput_Release(output);
-        monitor_info.cbSize = sizeof(monitor_info);
-        ret = GetMonitorInfoW(output_desc.Monitor, (MONITORINFO *)&monitor_info);
-        ok(ret, "Failed to get monitor info.\n");
-        monitor_rect = monitor_info.rcMonitor;
-        OffsetRect(&expected_state.fullscreen_state.window_rect, monitor_rect.left, monitor_rect.top);
-        OffsetRect(&expected_state.fullscreen_state.monitor_rect, monitor_rect.left, monitor_rect.top);
-    }
     check_swapchain_fullscreen_state(swapchain, &expected_state);
 
     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
@@ -1109,39 +1107,15 @@ static void test_swapchain_fullscreen_state(IDXGISwapChain *swapchain,
         hr = IDXGIOutput_GetDesc(output, &output_desc);
         ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
 
-        monitor_rect = orig_monitor_rect;
-
         expected_state = *initial_state;
-        expected_state.fullscreen = TRUE;
         expected_state.target = output;
         expected_state.fullscreen_state.monitor = output_desc.Monitor;
         expected_state.fullscreen_state.monitor_rect = orig_monitor_rect;
-
-        if (swapchain_desc.Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH)
-        {
-            SetRect(&expected_state.fullscreen_state.client_rect, 0, 0, 800, 600);
-            expected_state.fullscreen_state.monitor_rect = expected_state.fullscreen_state.client_rect;
-            expected_state.fullscreen_state.window_rect = expected_state.fullscreen_state.monitor_rect;
-        }
-        else
-        {
-            expected_state.fullscreen_state.window_rect = monitor_rect;
-            SetRect(&expected_state.fullscreen_state.client_rect, 0, 0,
-                    monitor_rect.right - monitor_rect.left,
-                    monitor_rect.bottom - monitor_rect.top);
-        }
+        compute_expected_swapchain_fullscreen_state_after_fullscreen_change(&expected_state,
+                &swapchain_desc, &orig_monitor_rect, 800, 600);
 
         hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, output);
         ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-        if (swapchain_desc.Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH)
-        {
-            monitor_info.cbSize = sizeof(monitor_info);
-            ret = GetMonitorInfoW(output_desc.Monitor, (MONITORINFO *)&monitor_info);
-            ok(ret, "Failed to get monitor info.\n");
-            monitor_rect = monitor_info.rcMonitor;
-            OffsetRect(&expected_state.fullscreen_state.window_rect, monitor_rect.left, monitor_rect.top);
-            OffsetRect(&expected_state.fullscreen_state.monitor_rect, monitor_rect.left, monitor_rect.top);
-        }
         check_swapchain_fullscreen_state(swapchain, &expected_state);
 
         target = NULL;
@@ -1415,6 +1389,286 @@ done:
     refcount = IDXGIFactory_Release(factory);
     ok(!refcount, "Factory has %u references left.\n", refcount);
     DestroyWindow(swapchain_desc.OutputWindow);
+}
+
+static void test_windowed_resize_target(IDXGISwapChain *swapchain, HWND window,
+        struct swapchain_fullscreen_state *state)
+{
+    struct swapchain_fullscreen_state expected_state;
+    struct fullscreen_state *e;
+    DXGI_MODE_DESC mode;
+    RECT window_rect;
+    unsigned int i;
+    HRESULT hr;
+    BOOL ret;
+
+    static const struct
+    {
+        unsigned int width, height;
+    }
+    sizes[] =
+    {
+        {200, 200},
+        {400, 200},
+        {400, 400},
+        {600, 800},
+        {1000, 600},
+        {1600, 100},
+        {2000, 1000},
+    };
+
+    check_swapchain_fullscreen_state(swapchain, state);
+    expected_state = *state;
+    e = &expected_state.fullscreen_state;
+
+    for (i = 0; i < sizeof(sizes) / sizeof(*sizes); ++i)
+    {
+        SetRect(&e->client_rect, 0, 0, sizes[i].width, sizes[i].height);
+        e->window_rect = e->client_rect;
+        ret = AdjustWindowRectEx(&e->window_rect, GetWindowLongW(window, GWL_STYLE),
+                FALSE, GetWindowLongW(window, GWL_EXSTYLE));
+        ok(ret, "AdjustWindowRectEx failed.\n");
+        if (GetMenu(window))
+            e->client_rect.bottom -= GetSystemMetrics(SM_CYMENU);
+        SetRect(&e->window_rect, 0, 0,
+                e->window_rect.right - e->window_rect.left,
+                e->window_rect.bottom - e->window_rect.top);
+        GetWindowRect(window, &window_rect);
+        OffsetRect(&e->window_rect, window_rect.left, window_rect.top);
+        if (e->window_rect.right >= e->monitor_rect.right
+                || e->window_rect.bottom >= e->monitor_rect.bottom)
+        {
+            skip("Test %u: Window %s does not fit on screen %s.\n",
+                    i, wine_dbgstr_rect(&e->window_rect), wine_dbgstr_rect(&e->monitor_rect));
+            continue;
+        }
+
+        memset(&mode, 0, sizeof(mode));
+        mode.Width = sizes[i].width;
+        mode.Height = sizes[i].height;
+        hr = IDXGISwapChain_ResizeTarget(swapchain, &mode);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        check_swapchain_fullscreen_state(swapchain, &expected_state);
+    }
+
+    ret = MoveWindow(window, 0, 0, 0, 0, TRUE);
+    ok(ret, "MoveWindow failed.\n");
+    GetWindowRect(window, &e->window_rect);
+    GetClientRect(window, &e->client_rect);
+    ret = MoveWindow(window, 0, 0, 200, 200, TRUE);
+
+    memset(&mode, 0, sizeof(mode));
+    hr = IDXGISwapChain_ResizeTarget(swapchain, &mode);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    check_swapchain_fullscreen_state(swapchain, &expected_state);
+
+    GetWindowRect(window, &e->window_rect);
+    GetClientRect(window, &e->client_rect);
+    *state = expected_state;
+}
+
+static void test_fullscreen_resize_target(IDXGISwapChain *swapchain,
+        const struct swapchain_fullscreen_state *initial_state)
+{
+    struct swapchain_fullscreen_state expected_state;
+    DXGI_SWAP_CHAIN_DESC swapchain_desc;
+    DXGI_OUTPUT_DESC output_desc;
+    unsigned int i, mode_count;
+    DXGI_MODE_DESC *modes;
+    IDXGIOutput *target;
+    HRESULT hr;
+
+    hr = IDXGISwapChain_GetDesc(swapchain, &swapchain_desc);
+    ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
+
+    hr = IDXGISwapChain_GetFullscreenState(swapchain, NULL, &target);
+    ok(SUCCEEDED(hr), "GetFullscreenState failed, hr %#x.\n", hr);
+
+    hr = IDXGIOutput_GetDisplayModeList(target, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &mode_count, NULL);
+    ok(SUCCEEDED(hr) || broken(hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE), /* Win 7 testbot */
+            "Failed to list modes, hr %#x.\n", hr);
+    if (hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE)
+    {
+        win_skip("GetDisplayModeList() not supported.\n");
+        IDXGIOutput_Release(target);
+        return;
+    }
+
+    modes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*modes) * mode_count);
+    ok(!!modes, "Failed to allocate memory.\n");
+
+    hr = IDXGIOutput_GetDisplayModeList(target, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &mode_count, modes);
+    ok(SUCCEEDED(hr), "Failed to list modes, hr %#x.\n", hr);
+
+    expected_state = *initial_state;
+    for (i = 0; i < min(mode_count, 20); ++i)
+    {
+        hr = IDXGIOutput_GetDesc(target, &output_desc);
+        ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
+
+        compute_expected_swapchain_fullscreen_state_after_fullscreen_change(&expected_state,
+                &swapchain_desc, &output_desc.DesktopCoordinates, modes[i].Width, modes[i].Height);
+
+        hr = IDXGISwapChain_ResizeTarget(swapchain, &modes[i]);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        check_swapchain_fullscreen_state(swapchain, &expected_state);
+
+        hr = IDXGIOutput_GetDesc(target, &output_desc);
+        ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
+        ok(EqualRect(&output_desc.DesktopCoordinates, &expected_state.fullscreen_state.monitor_rect),
+            "Got desktop coordinates %s, expected %s.\n",
+            wine_dbgstr_rect(&output_desc.DesktopCoordinates),
+            wine_dbgstr_rect(&expected_state.fullscreen_state.monitor_rect));
+    }
+
+    HeapFree(GetProcessHeap(), 0, modes);
+    IDXGIOutput_Release(target);
+}
+
+static void test_resize_target(void)
+{
+    struct swapchain_fullscreen_state initial_state, expected_state;
+    DXGI_SWAP_CHAIN_DESC swapchain_desc;
+    IDXGISwapChain *swapchain;
+    IDXGIFactory *factory;
+    IDXGIAdapter *adapter;
+    IDXGIDevice *device;
+    unsigned int i;
+    ULONG refcount;
+    HRESULT hr;
+
+    static const struct
+    {
+        POINT origin;
+        BOOL fullscreen;
+        BOOL menu;
+        unsigned int flags;
+    }
+    tests[] =
+    {
+        {{ 0,  0}, TRUE,  FALSE, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH},
+        {{10, 10}, TRUE,  FALSE, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH},
+        {{ 0,  0}, FALSE, FALSE, 0},
+        {{ 0,  0}, FALSE, FALSE, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH},
+        {{10, 10}, FALSE, FALSE, 0},
+        {{10, 10}, FALSE, FALSE, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH},
+        {{ 0,  0}, FALSE, TRUE,  0},
+        {{ 0,  0}, FALSE, TRUE,  DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH},
+        {{10, 10}, FALSE, TRUE,  0},
+        {{10, 10}, FALSE, TRUE,  DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH},
+    };
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = IDXGIDevice_GetAdapter(device, &adapter);
+    ok(SUCCEEDED(hr), "GetAdapter failed, hr %#x.\n", hr);
+
+    hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
+    ok(SUCCEEDED(hr), "GetParent failed, hr %#x.\n", hr);
+
+    swapchain_desc.BufferDesc.Width = 800;
+    swapchain_desc.BufferDesc.Height = 600;
+    swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
+    swapchain_desc.BufferDesc.RefreshRate.Denominator = 1;
+    swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapchain_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    swapchain_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    swapchain_desc.SampleDesc.Count = 1;
+    swapchain_desc.SampleDesc.Quality = 0;
+    swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapchain_desc.BufferCount = 1;
+    swapchain_desc.Windowed = TRUE;
+    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.Flags = 0;
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        swapchain_desc.Flags = tests[i].flags;
+        swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0,
+                tests[i].origin.x, tests[i].origin.y, 400, 200, 0, 0, 0, 0);
+        if (tests[i].menu)
+        {
+            HMENU menu_bar = CreateMenu();
+            HMENU menu = CreateMenu();
+            AppendMenuA(menu_bar, MF_POPUP, (UINT_PTR)menu, "Menu");
+            SetMenu(swapchain_desc.OutputWindow, menu_bar);
+        }
+
+        memset(&initial_state, 0, sizeof(initial_state));
+        capture_fullscreen_state(&initial_state.fullscreen_state, swapchain_desc.OutputWindow);
+
+        hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+        ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
+        check_swapchain_fullscreen_state(swapchain, &initial_state);
+
+        expected_state = initial_state;
+        if (tests[i].fullscreen)
+        {
+            expected_state.fullscreen = TRUE;
+            compute_expected_swapchain_fullscreen_state_after_fullscreen_change(&expected_state,
+                    &swapchain_desc, &initial_state.fullscreen_state.monitor_rect, 800, 600);
+            hr = IDXGISwapChain_GetContainingOutput(swapchain, &expected_state.target);
+            ok(SUCCEEDED(hr) || broken(hr == DXGI_ERROR_UNSUPPORTED) /* Win 7 testbot */,
+                    "GetContainingOutput failed, hr %#x.\n", hr);
+            if (hr == DXGI_ERROR_UNSUPPORTED)
+            {
+                win_skip("GetContainingOutput() not supported.\n");
+                IDXGISwapChain_Release(swapchain);
+                DestroyWindow(swapchain_desc.OutputWindow);
+                continue;
+            }
+
+            hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
+            ok(SUCCEEDED(hr) || hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE,
+                    "SetFullscreenState failed, hr %#x.\n", hr);
+            if (hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE)
+            {
+                skip("Could not change fullscreen state.\n");
+                IDXGIOutput_Release(expected_state.target);
+                IDXGISwapChain_Release(swapchain);
+                DestroyWindow(swapchain_desc.OutputWindow);
+                continue;
+            }
+        }
+        check_swapchain_fullscreen_state(swapchain, &expected_state);
+
+        hr = IDXGISwapChain_ResizeTarget(swapchain, NULL);
+        ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+        check_swapchain_fullscreen_state(swapchain, &expected_state);
+
+        if (tests[i].fullscreen)
+        {
+            test_fullscreen_resize_target(swapchain, &expected_state);
+
+            hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+            ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
+            check_swapchain_fullscreen_state(swapchain, &initial_state);
+            IDXGIOutput_Release(expected_state.target);
+            check_swapchain_fullscreen_state(swapchain, &initial_state);
+            expected_state = initial_state;
+        }
+        else
+        {
+            test_windowed_resize_target(swapchain, swapchain_desc.OutputWindow, &expected_state);
+
+            check_swapchain_fullscreen_state(swapchain, &expected_state);
+        }
+
+        refcount = IDXGISwapChain_Release(swapchain);
+        ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+        check_window_fullscreen_state(swapchain_desc.OutputWindow, &expected_state.fullscreen_state);
+        DestroyWindow(swapchain_desc.OutputWindow);
+    }
+
+    IDXGIAdapter_Release(adapter);
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    refcount = IDXGIFactory_Release(factory);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
 }
 
 static void test_create_factory(void)
@@ -2268,6 +2522,7 @@ START_TEST(device)
     test_get_containing_output();
     test_set_fullscreen();
     test_default_fullscreen_target_output();
+    test_resize_target();
     test_create_factory();
     test_private_data();
     test_swapchain_resize();
