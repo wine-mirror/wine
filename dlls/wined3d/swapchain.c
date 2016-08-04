@@ -330,7 +330,7 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
         if (texture->resource.multisample_type)
         {
             location = WINED3D_LOCATION_RB_RESOLVED;
-            surface_load_location(back_buffer, context, location);
+            wined3d_texture_load_location(texture, 0, context, location);
         }
 
         context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, back_buffer, NULL, location);
