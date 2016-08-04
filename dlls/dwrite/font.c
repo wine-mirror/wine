@@ -1596,12 +1596,13 @@ static HRESULT WINAPI dwritefont3_GetFontFaceReference(IDWriteFont3 *iface, IDWr
 static BOOL WINAPI dwritefont3_HasCharacter(IDWriteFont3 *iface, UINT32 ch)
 {
     struct dwrite_font *This = impl_from_IDWriteFont3(iface);
+    HRESULT hr;
     BOOL ret;
 
     TRACE("(%p)->(0x%x)\n", This, ch);
 
-    IDWriteFont_HasCharacter((IDWriteFont*)iface, ch, &ret);
-    return ret;
+    hr = IDWriteFont_HasCharacter((IDWriteFont*)iface, ch, &ret);
+    return hr == S_OK && ret;
 }
 
 static DWRITE_LOCALITY WINAPI dwritefont3_GetLocality(IDWriteFont3 *iface)
