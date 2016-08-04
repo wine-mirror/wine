@@ -3763,10 +3763,8 @@ todo_wine
         expected_width = base_cx * pt.Y;
         expected_height = base_cy * pt.Y;
 
-        if (td[i].unit == UnitDisplay || td[i].unit == UnitPixel)
+        todo_wine_if(td[i].unit != UnitDisplay && td[i].unit != UnitPixel)
             ok(fabs(expected_width - bounds.Width) <= 0.001, "%u: expected %f, got %f\n", i, expected_width, bounds.Width);
-        else
-            todo_wine ok(fabs(expected_width - bounds.Width) <= 0.001, "%u: expected %f, got %f\n", i, expected_width, bounds.Width);
         ok(fabs(expected_height - bounds.Height) <= 0.001, "%u: expected %f, got %f\n", i, expected_height, bounds.Height);
 
         GdipDeleteGraphics(graphics);

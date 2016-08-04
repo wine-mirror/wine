@@ -3167,12 +3167,7 @@ static void test_image_properties(void)
 
         status = GdipGetPropertyCount(image, &prop_count);
         ok(status == Ok, "%u: GdipGetPropertyCount error %d\n", i, status);
-        if (td[i].image_data == pngimage || td[i].image_data == jpgimage)
-        todo_wine
-        ok(td[i].prop_count == prop_count || td[i].prop_count2 == prop_count,
-           " %u: expected property count %u or %u, got %u\n",
-           i, td[i].prop_count, td[i].prop_count2, prop_count);
-        else
+        todo_wine_if(td[i].image_data == pngimage || td[i].image_data == jpgimage)
         ok(td[i].prop_count == prop_count || td[i].prop_count2 == prop_count,
            " %u: expected property count %u or %u, got %u\n",
            i, td[i].prop_count, td[i].prop_count2, prop_count);
