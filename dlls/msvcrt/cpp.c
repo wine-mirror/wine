@@ -575,16 +575,6 @@ int __thiscall MSVCRT_type_info_before(type_info * _this, const type_info * rhs)
 }
 
 /******************************************************************
- *		__std_type_info_compare (MSVCRT.@)
- */
-int CDECL MSVCRT_type_info_compare(type_info * _this, const type_info * rhs)
-{
-    int ret = strcmp(_this->mangled + 1, rhs->mangled + 1);
-    TRACE("(%p %p) returning %d\n", _this, rhs, ret);
-    return ret;
-}
-
-/******************************************************************
  *		??1type_info@@UAE@XZ (MSVCRT.@)
  */
 DEFINE_THISCALL_WRAPPER(MSVCRT_type_info_dtor,4)
@@ -1513,3 +1503,24 @@ void* __cdecl __AdjustPointer(void *obj, const this_ptr_offsets *off)
 {
     return get_this_pointer(off, obj);
 }
+
+#if _MSVCR_VER >= 140
+typedef struct
+{
+    char *name;
+    char mangled[1];
+} type_info140;
+
+/******************************************************************
+ *		__std_type_info_compare (UCRTBASE.@)
+ */
+int CDECL MSVCRT_type_info_compare(const type_info140 *l, const type_info140 *r)
+{
+    int ret;
+
+    if (l == r) ret = 0;
+    else ret = strcmp(l->mangled + 1, r->mangled + 1);
+    TRACE("(%p %p) returning %d\n", l, r, ret);
+    return ret;
+}
+#endif
