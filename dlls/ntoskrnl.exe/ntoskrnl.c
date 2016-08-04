@@ -2107,8 +2107,36 @@ NTSTATUS WINAPI ObReferenceObjectByName( UNICODE_STRING *ObjectName,
                                          void *ParseContext,
                                          void **Object)
 {
-    FIXME("stub\n");
-    return STATUS_NOT_IMPLEMENTED;
+    struct wine_driver *driver;
+    struct wine_rb_entry *entry;
+
+    TRACE("mostly-stub:%s %i %p %i %p %i %p %p\n", debugstr_us(ObjectName),
+        Attributes, AccessState, DesiredAccess, ObjectType, AccessMode,
+        ParseContext, Object);
+
+    if (AccessState) FIXME("Unhandled AccessState\n");
+    if (DesiredAccess) FIXME("Unhandled DesiredAccess\n");
+    if (ParseContext) FIXME("Unhandled ParseContext\n");
+    if (ObjectType) FIXME("Unhandled ObjectType\n");
+
+    if (AccessMode != KernelMode)
+    {
+        FIXME("UserMode access not implemented\n");
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    EnterCriticalSection(&drivers_cs);
+    entry = wine_rb_get(&wine_drivers, ObjectName);
+    LeaveCriticalSection(&drivers_cs);
+    if (!entry)
+    {
+        FIXME("Object (%s) not found, may not be tracked.\n", debugstr_us(ObjectName));
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    driver = WINE_RB_ENTRY_VALUE(entry, struct wine_driver, entry);
+    *Object = &driver->driver_obj;
+    return STATUS_SUCCESS;
 }
 
 
