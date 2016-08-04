@@ -954,7 +954,8 @@ void CDECL wined3d_device_restore_fullscreen_window(struct wined3d_device *devic
         rect = *window_rect;
     else
         window_pos_flags |= (SWP_NOMOVE | SWP_NOSIZE);
-    SetWindowPos(window, 0, rect.left, rect.top, rect.right, rect.bottom, window_pos_flags);
+    SetWindowPos(window, 0, rect.left, rect.top,
+            rect.right - rect.left, rect.bottom - rect.top, window_pos_flags);
 
     device->filter_messages = filter_messages;
 
