@@ -244,10 +244,8 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
         ok(hr == S_OK, "Valid IAudioCaptureClient_GetBuffer returns %08x\n", hr);
         ok(frames2 == frames, "GetBuffer after ReleaseBuffer(0) %u/%u\n", frames2, frames);
         ok(pos2 == pos, "Position after ReleaseBuffer(0) %u/%u\n", (UINT)pos2, (UINT)pos);
-        if(qpc2 != qpc)
+        todo_wine_if(qpc2 != qpc)
             /* FIXME: Some drivers fail */
-            todo_wine ok(qpc2 == qpc, "HPC after ReleaseBuffer(0) %u vs. %u\n", (UINT)qpc2, (UINT)qpc);
-        else
             ok(qpc2 == qpc, "HPC after ReleaseBuffer(0) %u vs. %u\n", (UINT)qpc2, (UINT)qpc);
     }
 
