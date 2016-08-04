@@ -89,7 +89,6 @@
     X(setret,     1, 0,0)                  \
     X(sub,        1, 0,0)                  \
     X(undefined,  1, 0,0)                  \
-    X(var_set,    1, ARG_BSTR,   0)        \
     X(void,       1, 0,0)                  \
     X(xor,        1, 0,0)
 

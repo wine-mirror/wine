@@ -728,21 +728,6 @@ static inline void jmp_abs(script_ctx_t *ctx, unsigned dst)
     ctx->call_ctx->ip = dst;
 }
 
-/* ECMA-262 3rd Edition    12.2 */
-static HRESULT interp_var_set(script_ctx_t *ctx)
-{
-    const BSTR name = get_op_bstr(ctx, 0);
-    jsval_t val;
-    HRESULT hres;
-
-    TRACE("%s\n", debugstr_w(name));
-
-    val = stack_pop(ctx);
-    hres = jsdisp_propput_name(ctx->call_ctx->variable_obj, name, val);
-    jsval_release(val);
-    return hres;
-}
-
 /* ECMA-262 3rd Edition    12.6.4 */
 static HRESULT interp_forin(script_ctx_t *ctx)
 {

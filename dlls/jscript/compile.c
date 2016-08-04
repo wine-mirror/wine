@@ -1095,11 +1095,18 @@ static HRESULT compile_variable_list(compiler_ctx_t *ctx, variable_declaration_t
         if(!iter->expr)
             continue;
 
+        hres = push_instr_bstr_uint(ctx, OP_identid, iter->identifier, 0);
+        if(FAILED(hres))
+            return hres;
+
         hres = compile_expression(ctx, iter->expr, TRUE);
         if(FAILED(hres))
             return hres;
 
-        hres = push_instr_bstr(ctx, OP_var_set, iter->identifier);
+        if(!push_instr(ctx, OP_assign))
+            return E_OUTOFMEMORY;
+
+        hres = push_instr_uint(ctx, OP_pop, 1);
         if(FAILED(hres))
             return hres;
     }
