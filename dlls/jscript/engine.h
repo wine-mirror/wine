@@ -48,6 +48,7 @@
     X(int,        1, ARG_INT,    0)        \
     X(jmp,        0, ARG_ADDR,   0)        \
     X(jmp_z,      0, ARG_ADDR,   0)        \
+    X(local,      1, ARG_INT,    0)        \
     X(local_ref,  1, ARG_INT,    ARG_UINT) \
     X(lshift,     1, 0,0)                  \
     X(lt,         1, 0,0)                  \

@@ -434,6 +434,14 @@ static HRESULT emit_identifier_ref(compiler_ctx_t *ctx, const WCHAR *identifier,
     return push_instr_bstr_uint(ctx, OP_identid, identifier, flags);
 }
 
+static HRESULT emit_identifier(compiler_ctx_t *ctx, const WCHAR *identifier)
+{
+    int local_ref;
+    if(bind_local(ctx, identifier, &local_ref))
+        return push_instr_int(ctx, OP_local, local_ref);
+    return push_instr_bstr(ctx, OP_ident, identifier);
+}
+
 static HRESULT compile_memberid_expression(compiler_ctx_t *ctx, expression_t *expr, unsigned flags)
 {
     HRESULT hres = S_OK;
@@ -994,7 +1002,7 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr, BOOL 
         hres = compile_binary_expression(ctx, (binary_expression_t*)expr, OP_gteq);
         break;
     case EXPR_IDENT:
-        hres = push_instr_bstr(ctx, OP_ident, ((identifier_expression_t*)expr)->identifier);
+        hres = emit_identifier(ctx, ((identifier_expression_t*)expr)->identifier);
         break;
     case EXPR_IN:
         hres = compile_binary_expression(ctx, (binary_expression_t*)expr, OP_in);

@@ -1225,6 +1225,26 @@ static HRESULT interp_identifier_ref(script_ctx_t *ctx, BSTR identifier, unsigne
     return stack_push_exprval(ctx, &exprval);
 }
 
+static HRESULT identifier_value(script_ctx_t *ctx, BSTR identifier)
+{
+    exprval_t exprval;
+    jsval_t v;
+    HRESULT hres;
+
+    hres = identifier_eval(ctx, identifier, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    if(exprval.type == EXPRVAL_INVALID)
+        return throw_type_error(ctx, exprval.u.hres, identifier);
+
+    hres = exprval_to_value(ctx, &exprval, &v);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push(ctx, v);
+}
+
 static HRESULT interp_local_ref(script_ctx_t *ctx)
 {
     const int arg = get_op_int(ctx, 0);
@@ -1242,28 +1262,33 @@ static HRESULT interp_local_ref(script_ctx_t *ctx)
     return stack_push_exprval(ctx, &ref);
 }
 
+static HRESULT interp_local(script_ctx_t *ctx)
+{
+    const int arg = get_op_int(ctx, 0);
+    call_frame_t *frame = ctx->call_ctx;
+    jsval_t copy;
+    HRESULT hres;
+
+    TRACE("%d\n", arg);
+
+    if(!frame->base_scope || !frame->base_scope->frame)
+        return identifier_value(ctx, local_name(frame, arg));
+
+    hres = jsval_copy(ctx->stack[local_off(frame, arg)], &copy);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push(ctx, copy);
+}
+
 /* ECMA-262 3rd Edition    10.1.4 */
 static HRESULT interp_ident(script_ctx_t *ctx)
 {
     const BSTR arg = get_op_bstr(ctx, 0);
-    exprval_t exprval;
-    jsval_t v;
-    HRESULT hres;
 
     TRACE("%s\n", debugstr_w(arg));
 
-    hres = identifier_eval(ctx, arg, &exprval);
-    if(FAILED(hres))
-        return hres;
-
-    if(exprval.type == EXPRVAL_INVALID)
-        return throw_type_error(ctx, exprval.u.hres, arg);
-
-    hres = exprval_to_value(ctx, &exprval, &v);
-    if(FAILED(hres))
-        return hres;
-
-    return stack_push(ctx, v);
+    return identifier_value(ctx, arg);
 }
 
 /* ECMA-262 3rd Edition    10.1.4 */
