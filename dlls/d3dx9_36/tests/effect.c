@@ -22,6 +22,15 @@
 #include "wine/test.h"
 #include "d3dx9.h"
 
+#ifndef INFINITY
+static inline float __port_infinity(void)
+{
+    static const unsigned __inf_bytes = 0x7f800000;
+    return *(const float *)&__inf_bytes;
+}
+#define INFINITY __port_infinity()
+#endif /* INFINITY */
+
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(*arr))
 
 /* helper functions */
@@ -4181,7 +4190,7 @@ static void test_preshader_op(IDirect3DDevice9 *device, const DWORD *sample_effe
 
 static void test_effect_preshader_ops(IDirect3DDevice9 *device)
 {
-    static const struct test_preshader_op_def op_tests[] =
+    const struct test_preshader_op_def op_tests[] =
     {
         {"exp", 0x10500001, 1, {0x3f800000, 0x3f800000, 0x3e5edc66, 0x7f800000},
                 {0.0f, -0.0f, -2.2f, 3.402823466e+38f}, {1.0f, 2.0f, -3.0f, 4.0f}},
