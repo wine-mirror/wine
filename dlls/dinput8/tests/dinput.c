@@ -443,16 +443,21 @@ struct enum_semantics_test
 static DIACTIONA actionMapping[]=
 {
   /* axis */
-  { 0, 0x01008A01 /* DIAXIS_DRIVINGR_STEER */,      0, { "Steer" }   },
+  { 0, 0x01008A01 /* DIAXIS_DRIVINGR_STEER */,      0, { "Steer.\0" }   },
   /* button */
-  { 1, 0x01000C01 /* DIBUTTON_DRIVINGR_SHIFTUP */,  0, { "Upshift" } },
+  { 1, 0x01000C01 /* DIBUTTON_DRIVINGR_SHIFTUP */,  0, { "Upshift.\0" } },
   /* keyboard key */
-  { 2, DIKEYBOARD_SPACE,                            0, { "Missile" } },
+  { 2, DIKEYBOARD_SPACE,                            0, { "Missile.\0" } },
   /* mouse button */
-  { 3, DIMOUSE_BUTTON0,                             0, { "Select" }  },
+  { 3, DIMOUSE_BUTTON0,                             0, { "Select\0" }   },
   /* mouse axis */
-  { 4, DIMOUSE_YAXIS,                               0, { "Y Axis" }  }
+  { 4, DIMOUSE_YAXIS,                               0, { "Y Axis\0" }   }
 };
+/* By placing the memory pointed to by lptszActionName right before memory with PAGE_NOACCESS
+ * one can find out that the regular ansi string termination is not respected by EnumDevicesBySemantics.
+ * Adding a double termination, making it a valid wide string termination, made the test succeed.
+ * Therefore it looks like ansi version of EnumDevicesBySemantics forwards the string to
+ * the wide variant without conversation. */
 
 static BOOL CALLBACK enum_semantics_callback(const DIDEVICEINSTANCEA *lpddi, IDirectInputDevice8A *lpdid, DWORD dwFlags, DWORD dwRemaining, void *context)
 {
