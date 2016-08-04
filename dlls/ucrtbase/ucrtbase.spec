@@ -145,7 +145,7 @@
 @ cdecl __std_type_info_compare(ptr ptr) MSVCRT_type_info_compare
 @ stub __std_type_info_destroy_list
 @ stub __std_type_info_hash
-@ stub __std_type_info_name
+@ cdecl __std_type_info_name(ptr ptr) MSVCRT_type_info_name_list
 @ cdecl __stdio_common_vfprintf(int64 ptr str ptr ptr) MSVCRT__stdio_common_vfprintf
 @ stub __stdio_common_vfprintf_p
 @ stub __stdio_common_vfprintf_s
