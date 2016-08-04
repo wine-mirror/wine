@@ -43,7 +43,6 @@ extern NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event );
 static SERVICE_STATUS_HANDLE service_handle;
 static HANDLE stop_event;
 static DRIVER_OBJECT *driver_obj;
-static HMODULE driver_module;
 
 /* find the LDR_MODULE corresponding to the driver module */
 static LDR_MODULE *find_ldr_module( HMODULE module )
@@ -216,22 +215,22 @@ static NTSTATUS WINAPI init_driver( DRIVER_OBJECT *driver_object, UNICODE_STRING
     NTSTATUS status;
     const IMAGE_NT_HEADERS *nt;
     const WCHAR *driver_name;
+    HMODULE module;
 
     /* Retrieve driver name from the keyname */
     driver_name = strrchrW( keyname->Buffer, '\\' );
     driver_name++;
 
-    driver_module = load_driver( driver_name, keyname );
-    if (!driver_module)
+    module = load_driver( driver_name, keyname );
+    if (!module)
         return STATUS_DLL_INIT_FAILED;
 
     driver_obj = driver_object;
+    driver_object->DriverSection = find_ldr_module( module );
 
-    nt = RtlImageNtHeader( driver_module );
+    nt = RtlImageNtHeader( module );
     if (!nt->OptionalHeader.AddressOfEntryPoint) return STATUS_SUCCESS;
-
-    driver_object->DriverSection   = find_ldr_module( driver_module );
-    driver_object->DriverInit      = (PDRIVER_INITIALIZE)((char *)driver_module + nt->OptionalHeader.AddressOfEntryPoint);
+    driver_object->DriverInit = (PDRIVER_INITIALIZE)((char *)module + nt->OptionalHeader.AddressOfEntryPoint);
 
     if (WINE_TRACE_ON(relay))
         WINE_DPRINTF( "%04x:Call driver init %p (obj=%p,str=%s)\n", GetCurrentThreadId(),
@@ -254,8 +253,10 @@ static NTSTATUS WINAPI init_driver( DRIVER_OBJECT *driver_object, UNICODE_STRING
 }
 
 /* call the driver unload function */
-static void unload_driver( HMODULE module, DRIVER_OBJECT *driver_obj )
+static void unload_driver( DRIVER_OBJECT *driver_obj )
 {
+    LDR_MODULE *ldr = driver_obj->DriverSection;
+
     if (driver_obj->DriverUnload)
     {
         if (WINE_TRACE_ON(relay))
@@ -268,7 +269,8 @@ static void unload_driver( HMODULE module, DRIVER_OBJECT *driver_obj )
             WINE_DPRINTF( "%04x:Ret  driver unload %p (obj=%p)\n", GetCurrentThreadId(),
                           driver_obj->DriverUnload, driver_obj );
     }
-    FreeLibrary( module );
+
+    FreeLibrary( ldr->BaseAddress );
     IoDeleteDriver( driver_obj );
 }
 
@@ -349,7 +351,7 @@ static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
         SetServiceStatus( service_handle, &status );
 
         wine_ntoskrnl_main_loop( stop_event );
-        unload_driver( driver_module, driver_obj );
+        unload_driver( driver_obj );
     }
     else WINE_ERR( "driver %s failed to load\n", wine_dbgstr_w(driver_name) );
 
