@@ -172,7 +172,7 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
     if (res != ICERR_OK)
         ERR("Error occurred during the decompression (%x)\n", res);
 
-    /* Drop sample if its intended to be dropped */
+    /* Drop sample if it's intended to be dropped */
     if (flags & ICDECOMPRESS_HURRYUP) {
         hr = S_OK;
         goto error;
