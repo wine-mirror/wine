@@ -1400,12 +1400,12 @@
 @ stdcall -private -arch=i386 -ret64 _allmul(int64 int64) ntdll._allmul
 @ stdcall -private -arch=i386 -norelay _alloca_probe() ntdll._alloca_probe
 @ stdcall -private -arch=i386 -ret64 _allrem(int64 int64) ntdll._allrem
-@ stub _allshl
-@ stub _allshr
+@ stdcall -private -arch=i386 -ret64 _allshl(int64 long) ntdll._allshl
+@ stdcall -private -arch=i386 -ret64 _allshr(int64 long) ntdll._allshr
 @ stdcall -private -arch=i386 -ret64 _aulldiv(int64 int64) ntdll._aulldiv
 @ stub _aulldvrm
 @ stdcall -private -arch=i386 -ret64 _aullrem(int64 int64) ntdll._aullrem
-@ stub _aullshr
+@ stdcall -private -arch=i386 -ret64 _aullshr(int64 long) ntdll._aullshr
 @ cdecl -private -arch=i386 _except_handler2(ptr ptr ptr ptr) msvcrt._except_handler2
 @ cdecl -private -arch=i386 _except_handler3(ptr ptr ptr ptr) msvcrt._except_handler3
 @ cdecl -private -arch=i386 _global_unwind2(ptr) msvcrt._global_unwind2

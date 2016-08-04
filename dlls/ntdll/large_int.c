@@ -592,6 +592,39 @@ ULONGLONG WINAPI _aulldiv( ULONGLONG a, ULONGLONG b )
     return a / b;
 }
 
+/******************************************************************************
+ *        _allshl   (NTDLL.@)
+ *
+ * Shift a 64 bit integer to the left.
+ *
+ * PARAMS
+ *  a [I] Initial number.
+ *  b [I] Number to shift a by to the left.
+ *
+ * RETURNS
+ *  The left-shifted value.
+ */
+LONGLONG WINAPI _allshl( LONGLONG a, LONG b )
+{
+    return a << b;
+}
+
+/******************************************************************************
+ *        _allshr   (NTDLL.@)
+ *
+ * Shift a 64 bit integer to the right.
+ *
+ * PARAMS
+ *  a [I] Initial number.
+ *  b [I] Number to shift a by to the right.
+ *
+ * RETURNS
+ *  The right-shifted value.
+ */
+LONGLONG WINAPI _allshr( LONGLONG a, LONG b )
+{
+    return a >> b;
+}
 
 /******************************************************************************
  *        _aullrem   (NTDLL.@)
@@ -608,6 +641,23 @@ ULONGLONG WINAPI _aulldiv( ULONGLONG a, ULONGLONG b )
 ULONGLONG WINAPI _aullrem( ULONGLONG a, ULONGLONG b )
 {
     return a % b;
+}
+
+/******************************************************************************
+ *        _aullshr   (NTDLL.@)
+ *
+ * Shift a 64 bit unsigned integer to the right.
+ *
+ * PARAMS
+ *  a [I] Initial number.
+ *  b [I] Number to shift a by to the right.
+ *
+ * RETURNS
+ *  The right-shifted value.
+ */
+ULONGLONG WINAPI _aullshr( ULONGLONG a, LONG b )
+{
+    return a >> b;
 }
 
 #endif  /* __i386__ */

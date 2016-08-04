@@ -1331,13 +1331,13 @@
 @ stdcall -private -arch=i386 -ret64 _allmul(int64 int64)
 @ stdcall -private -arch=i386 -norelay _alloca_probe()
 @ stdcall -private -arch=i386 -ret64 _allrem(int64 int64)
-# @ stub _allshl
-# @ stub _allshr
+@ stdcall -private -arch=i386 -ret64 _allshl(int64 long)
+@ stdcall -private -arch=i386 -ret64 _allshr(int64 long)
 @ cdecl -private -ret64 _atoi64(str)
 @ stdcall -private -arch=i386 -ret64 _aulldiv(int64 int64)
 # @ stub _aulldvrm
 @ stdcall -private -arch=i386 -ret64 _aullrem(int64 int64)
-# @ stub _aullshr
+@ stdcall -private -arch=i386 -ret64 _aullshr(int64 long)
 @ stdcall -private -arch=i386 -norelay _chkstk()
 @ stub _fltused
 @ cdecl -private -arch=i386 -ret64 _ftol() NTDLL__ftol
