@@ -4226,7 +4226,8 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
                         if (!wined3d_resource_is_offscreen(&dst_texture->resource))
                         {
                             struct wined3d_context *context = context_acquire(device, dst_surface);
-                            surface_load_location(dst_surface, context, dst_texture->resource.draw_binding);
+                            wined3d_texture_load_location(dst_texture, dst_sub_resource_idx,
+                                    context, dst_texture->resource.draw_binding);
                             context_release(context);
                         }
                         return WINED3D_OK;
