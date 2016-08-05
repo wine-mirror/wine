@@ -269,6 +269,24 @@ testNoRes();
 testRes() && testRes();
 testNoRes(), testNoRes();
 
+(function() {
+    eval("var x=1;");
+    ok(x === 1, "x = " + x);
+})();
+
+(function() {
+    var e = eval;
+    var r = e(1);
+    ok(r === 1, "r = " + r);
+    (function(x, a) { x(a); })(eval, "2");
+})();
+
+(function(r) {
+    r = eval("1");
+    ok(r === 1, "r = " + r);
+    (function(x, a) { x(a); })(eval, "2");
+})();
+
 tmp = (function(){ return testNoRes(), testRes();})();
 
 var f1, f2;
@@ -383,6 +401,20 @@ ok(typeof(obj2) === "object", "typeof(obj2) = " + typeof(obj2));
 
 var obj3 = new Object;
 ok(typeof(obj3) === "object", "typeof(obj3) is not object");
+
+(function() {
+    ok(typeof(func) === "function", "typeof(func) = " + typeof(func));
+    function func() {}
+    ok(typeof(func) === "function", "typeof(func) = " + typeof(func));
+    func = 0;
+    ok(typeof(func) === "number", "typeof(func) = " + typeof(func));
+})();
+
+(function(f) {
+    ok(typeof(f) === "function", "typeof(f) = " + typeof(f));
+    function f() {};
+    ok(typeof(f) === "function", "typeof(f) = " + typeof(f));
+})(1);
 
 for(var iter in "test")
     ok(false, "unexpected forin call, test = " + iter);
@@ -1286,6 +1318,38 @@ try {
     ok(false, "deleteTest not throwed exception?");
 }catch(ex) {}
 
+(function() {
+    var to_delete = 2;
+    var r = delete to_delete;
+    ok(r === false, "delete 1 returned " + r);
+    if(r)
+        return;
+    ok(to_delete === 2, "to_delete = " + to_delete);
+
+    to_delete = new Object();
+    r = delete to_delete;
+    ok(r === false, "delete 2 returned " + r);
+    ok(typeof(to_delete) === "object", "typeof(to_delete) = " + typeof(to_delete));
+})();
+
+(function(to_delete) {
+    var r = delete to_delete;
+    ok(r === false, "delete 3 returned " + r);
+    ok(to_delete === 2, "to_delete = " + to_delete);
+
+    to_delete = new Object();
+    r = delete to_delete;
+    ok(r === false, "delete 4 returned " + r);
+    ok(typeof(to_delete) === "object", "typeof(to_delete) = " + typeof(to_delete));
+})(2);
+
+(function() {
+    with({to_delete: new Object()}) {
+        var r = delete to_delete;
+        ok(r === true, "delete returned " + r);
+    }
+})();
+
 if (false)
     if (true)
         ok(false, "if evaluated");
@@ -1532,6 +1596,24 @@ tmp = (function() {
         return ret;
 })();
 ok(tmp, "tmp = " + tmp);
+
+(function() {
+    ok(typeof(func) === "function", "typeof(func)  = " + typeof(func));
+    with(new Object()) {
+        var x = false && function func() {};
+    }
+    ok(typeof(func) === "function", "typeof(func)  = " + typeof(func));
+})();
+
+(function() {
+    ok(x === undefined, "x = " + x); // x is declared, but never initialized
+    with({x: 1}) {
+        ok(x === 1, "x = " + x);
+        var x = 2;
+        ok(x === 2, "x = " + x);
+    }
+    ok(x === undefined, "x = " + x);
+})();
 
 /* NoNewline rule parser tests */
 while(true) {
