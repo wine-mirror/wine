@@ -370,17 +370,6 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
             return (LRESULT)oldFrameMenu;
         }
     }
-    else
-    {
-        /* SetMenu() may already have been called, meaning that this window
-         * already has its menu. But they may have done a SetMenu() on
-         * an MDI window, and called MDISetMenu() after the fact, meaning
-         * that the "if" to this "else" wouldn't catch the need to
-         * augment the frame menu.
-         */
-        if( ci->hwndChildMaximized )
-            MDI_AugmentFrameMenu( hwndFrame, ci->hwndChildMaximized );
-    }
 
     return 0;
 }
