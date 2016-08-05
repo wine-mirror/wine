@@ -2869,7 +2869,20 @@ ostream* __cdecl ostream_flush_manip(ostream *this)
 DEFINE_THISCALL_WRAPPER(ostream_withassign_copy_ctor, 12)
 ostream* __thiscall ostream_withassign_copy_ctor(ostream *this, const ostream *copy, BOOL virt_init)
 {
-    FIXME("(%p %p %d) stub\n", this, copy, virt_init);
+    ios *base, *base_copy;
+
+    TRACE("(%p %p %d)\n", this, copy, virt_init);
+
+    base_copy = ostream_get_ios(copy);
+    if (virt_init) {
+        this->vbtable = ostream_vbtable;
+        base = ostream_get_ios(this);
+        ios_copy_ctor(base, base_copy);
+    } else
+        base = ostream_get_ios(this);
+    ios_init(base, base_copy->sb);
+    base->vtable = &MSVCP_ostream_withassign_vtable;
+    this->unknown = 0;
     return this;
 }
 
@@ -2878,7 +2891,13 @@ ostream* __thiscall ostream_withassign_copy_ctor(ostream *this, const ostream *c
 DEFINE_THISCALL_WRAPPER(ostream_withassign_sb_ctor, 12)
 ostream* __thiscall ostream_withassign_sb_ctor(ostream *this, streambuf *sb, BOOL virt_init)
 {
-    FIXME("(%p %p %d) stub\n", this, sb, virt_init);
+    ios *base;
+
+    TRACE("(%p %p %d)\n", this, sb, virt_init);
+
+    ostream_sb_ctor(this, sb, virt_init);
+    base = ostream_get_ios(this);
+    base->vtable = &MSVCP_ostream_withassign_vtable;
     return this;
 }
 
@@ -2887,7 +2906,13 @@ ostream* __thiscall ostream_withassign_sb_ctor(ostream *this, streambuf *sb, BOO
 DEFINE_THISCALL_WRAPPER(ostream_withassign_ctor, 8)
 ostream* __thiscall ostream_withassign_ctor(ostream *this, BOOL virt_init)
 {
-    FIXME("(%p %d) stub\n", this, virt_init);
+    ios *base;
+
+    TRACE("(%p %d)\n", this, virt_init);
+
+    ostream_ctor(this, virt_init);
+    base = ostream_get_ios(this);
+    base->vtable = &MSVCP_ostream_withassign_vtable;
     return this;
 }
 

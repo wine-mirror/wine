@@ -301,6 +301,13 @@ static ostream* (*__thiscall p_ostream_print_double)(ostream*, double);
 static ostream* (*__thiscall p_ostream_print_ptr)(ostream*, const void*);
 static ostream* (*__thiscall p_ostream_print_streambuf)(ostream*, streambuf*);
 
+/* ostream_withassign */
+static ostream* (*__thiscall p_ostream_withassign_sb_ctor)(ostream*, streambuf*, BOOL);
+static ostream* (*__thiscall p_ostream_withassign_copy_ctor)(ostream*, const ostream*, BOOL);
+static ostream* (*__thiscall p_ostream_withassign_ctor)(ostream*, BOOL);
+static void (*__thiscall p_ostream_withassign_dtor)(ios*);
+static void (*__thiscall p_ostream_withassign_vbase_dtor)(ostream*);
+
 /* istream */
 static istream* (*__thiscall p_istream_copy_ctor)(istream*, const istream*, BOOL);
 static istream* (*__thiscall p_istream_ctor)(istream*, BOOL);
@@ -529,6 +536,12 @@ static BOOL init(void)
         SET(p_ostream_print_ptr, "??6ostream@@QEAAAEAV0@PEBX@Z");
         SET(p_ostream_print_streambuf, "??6ostream@@QEAAAEAV0@PEAVstreambuf@@@Z");
 
+        SET(p_ostream_withassign_sb_ctor, "??0ostream_withassign@@QEAA@PEAVstreambuf@@@Z");
+        SET(p_ostream_withassign_copy_ctor, "??0ostream_withassign@@QEAA@AEBV0@@Z");
+        SET(p_ostream_withassign_ctor, "??0ostream_withassign@@QEAA@XZ");
+        SET(p_ostream_withassign_dtor, "??1ostream_withassign@@UEAA@XZ");
+        SET(p_ostream_withassign_vbase_dtor, "??_Dostream_withassign@@QEAAXXZ");
+
         SET(p_istream_copy_ctor, "??0istream@@IEAA@AEBV0@@Z");
         SET(p_istream_ctor, "??0istream@@IEAA@XZ");
         SET(p_istream_sb_ctor, "??0istream@@QEAA@PEAVstreambuf@@@Z");
@@ -677,6 +690,12 @@ static BOOL init(void)
         SET(p_ostream_print_double, "??6ostream@@QAEAAV0@N@Z");
         SET(p_ostream_print_ptr, "??6ostream@@QAEAAV0@PBX@Z");
         SET(p_ostream_print_streambuf, "??6ostream@@QAEAAV0@PAVstreambuf@@@Z");
+
+        SET(p_ostream_withassign_sb_ctor, "??0ostream_withassign@@QAE@PAVstreambuf@@@Z");
+        SET(p_ostream_withassign_copy_ctor, "??0ostream_withassign@@QAE@ABV0@@Z");
+        SET(p_ostream_withassign_ctor, "??0ostream_withassign@@QAE@XZ");
+        SET(p_ostream_withassign_dtor, "??1ostream_withassign@@UAE@XZ");
+        SET(p_ostream_withassign_vbase_dtor, "??_Dostream_withassign@@QAEXXZ");
 
         SET(p_istream_copy_ctor, "??0istream@@IAE@ABV0@@Z");
         SET(p_istream_ctor, "??0istream@@IAE@XZ");
@@ -3494,6 +3513,177 @@ static void test_ostream_print(void)
     call_func1(p_strstreambuf_dtor, &ssb_test3);
 }
 
+static void test_ostream_withassign(void)
+{
+    ostream osa1, osa2, *posa, *pos;
+    streambuf sb, *psb;
+
+    memset(&osa1, 0xab, sizeof(ostream));
+    memset(&osa2, 0xab, sizeof(ostream));
+
+    /* constructors/destructors */
+    posa = call_func3(p_ostream_withassign_sb_ctor, &osa1, NULL, TRUE);
+    ok(posa == &osa1, "wrong return, expected %p got %p\n", &osa1, posa);
+    ok(osa1.unknown == 0, "expected 0 got %d\n", osa1.unknown);
+    ok(osa1.base_ios.sb == NULL, "expected %p got %p\n", NULL, osa1.base_ios.sb);
+    ok(osa1.base_ios.state == IOSTATE_badbit, "expected %d got %d\n", IOSTATE_badbit, osa1.base_ios.state);
+    ok(osa1.base_ios.delbuf == 0, "expected 0 got %d\n", osa1.base_ios.delbuf);
+    ok(osa1.base_ios.tie == NULL, "expected %p got %p\n", NULL, osa1.base_ios.tie);
+    ok(osa1.base_ios.flags == 0, "expected 0 got %x\n", osa1.base_ios.flags);
+    ok(osa1.base_ios.precision == 6, "expected 6 got %d\n", osa1.base_ios.precision);
+    ok(osa1.base_ios.fill == ' ', "expected 32 got %d\n", osa1.base_ios.fill);
+    ok(osa1.base_ios.width == 0, "expected 0 got %d\n", osa1.base_ios.width);
+    ok(osa1.base_ios.do_lock == -1, "expected -1 got %d\n", osa1.base_ios.do_lock);
+    call_func1(p_ostream_withassign_vbase_dtor, &osa1);
+    osa1.unknown = 0xabababab;
+    memset(&osa1.base_ios, 0xab, sizeof(ios));
+    osa1.base_ios.delbuf = 0;
+    posa = call_func3(p_ostream_withassign_sb_ctor, &osa1, NULL, FALSE);
+    ok(posa == &osa1, "wrong return, expected %p got %p\n", &osa1, posa);
+    ok(osa1.unknown == 0, "expected 0 got %d\n", osa1.unknown);
+    ok(osa1.base_ios.sb == NULL, "expected %p got %p\n", NULL, osa1.base_ios.sb);
+    ok(osa1.base_ios.state == (0xabababab|IOSTATE_badbit), "expected %d got %d\n",
+        0xabababab|IOSTATE_badbit, osa1.base_ios.state);
+    ok(osa1.base_ios.delbuf == 0, "expected 0 got %d\n", osa1.base_ios.delbuf);
+    ok(osa1.base_ios.tie == osa2.base_ios.tie, "expected %p got %p\n", osa2.base_ios.tie, osa1.base_ios.tie);
+    ok(osa1.base_ios.flags == 0xabababab, "expected %x got %x\n", 0xabababab, osa1.base_ios.flags);
+    ok(osa1.base_ios.precision == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.precision);
+    ok(osa1.base_ios.fill == (char) 0xab, "expected -85 got %d\n", osa1.base_ios.fill);
+    ok(osa1.base_ios.width == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.width);
+    ok(osa1.base_ios.do_lock == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.do_lock);
+    call_func1(p_ostream_withassign_dtor, &osa1.base_ios);
+    osa1.unknown = 0xabababab;
+    osa1.base_ios.sb = (streambuf*) 0xabababab;
+    posa = call_func3(p_ostream_withassign_sb_ctor, &osa1, &sb, TRUE);
+    ok(posa == &osa1, "wrong return, expected %p got %p\n", &osa1, posa);
+    ok(osa1.unknown == 0, "expected 0 got %d\n", osa1.unknown);
+    ok(osa1.base_ios.sb == &sb, "expected %p got %p\n", &sb, osa1.base_ios.sb);
+    ok(osa1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, osa1.base_ios.state);
+    ok(osa1.base_ios.delbuf == 0, "expected 0 got %d\n", osa1.base_ios.delbuf);
+    ok(osa1.base_ios.tie == NULL, "expected %p got %p\n", NULL, osa1.base_ios.tie);
+    ok(osa1.base_ios.flags == 0, "expected 0 got %x\n", osa1.base_ios.flags);
+    ok(osa1.base_ios.precision == 6, "expected 6 got %d\n", osa1.base_ios.precision);
+    ok(osa1.base_ios.fill == ' ', "expected 32 got %d\n", osa1.base_ios.fill);
+    ok(osa1.base_ios.width == 0, "expected 0 got %d\n", osa1.base_ios.width);
+    ok(osa1.base_ios.do_lock == -1, "expected -1 got %d\n", osa1.base_ios.do_lock);
+    call_func1(p_ostream_withassign_vbase_dtor, &osa1);
+    osa1.unknown = 0xabababab;
+    memset(&osa1.base_ios, 0xab, sizeof(ios));
+    osa1.base_ios.state |= IOSTATE_badbit;
+    osa1.base_ios.delbuf = 0;
+    posa = call_func3(p_ostream_withassign_sb_ctor, &osa1, &sb, FALSE);
+    ok(posa == &osa1, "wrong return, expected %p got %p\n", &osa1, posa);
+    ok(osa1.unknown == 0, "expected 0 got %d\n", osa1.unknown);
+    ok(osa1.base_ios.sb == &sb, "expected %p got %p\n", &sb, osa1.base_ios.sb);
+    ok(osa1.base_ios.state == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.state);
+    ok(osa1.base_ios.delbuf == 0, "expected 0 got %d\n", osa1.base_ios.delbuf);
+    ok(osa1.base_ios.tie == osa2.base_ios.tie, "expected %p got %p\n", osa2.base_ios.tie, osa1.base_ios.tie);
+    ok(osa1.base_ios.flags == 0xabababab, "expected %x got %x\n", 0xabababab, osa1.base_ios.flags);
+    ok(osa1.base_ios.precision == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.precision);
+    ok(osa1.base_ios.fill == (char) 0xab, "expected -85 got %d\n", osa1.base_ios.fill);
+    ok(osa1.base_ios.width == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.width);
+    ok(osa1.base_ios.do_lock == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.do_lock);
+    call_func1(p_ostream_withassign_dtor, &osa1.base_ios);
+    posa = call_func2(p_ostream_withassign_ctor, &osa2, TRUE);
+    ok(posa == &osa2, "wrong return, expected %p got %p\n", &osa2, posa);
+    ok(osa2.unknown == 0, "expected 0 got %d\n", osa2.unknown);
+    ok(osa2.base_ios.sb == NULL, "expected %p got %p\n", NULL, osa2.base_ios.sb);
+    ok(osa2.base_ios.state == IOSTATE_badbit, "expected %d got %d\n", IOSTATE_badbit, osa2.base_ios.state);
+    ok(osa2.base_ios.delbuf == 0, "expected 0 got %d\n", osa2.base_ios.delbuf);
+    ok(osa2.base_ios.tie == NULL, "expected %p got %p\n", NULL, osa2.base_ios.tie);
+    ok(osa2.base_ios.flags == 0, "expected 0 got %x\n", osa2.base_ios.flags);
+    ok(osa2.base_ios.precision == 6, "expected 6 got %d\n", osa2.base_ios.precision);
+    ok(osa2.base_ios.fill == ' ', "expected 32 got %d\n", osa2.base_ios.fill);
+    ok(osa2.base_ios.width == 0, "expected 0 got %d\n", osa2.base_ios.width);
+    ok(osa2.base_ios.do_lock == -1, "expected -1 got %d\n", osa2.base_ios.do_lock);
+    call_func1(p_ostream_withassign_vbase_dtor, &osa2);
+    osa2.unknown = 0xcdcdcdcd;
+    memset(&osa2.base_ios, 0xcd, sizeof(ios));
+    osa2.base_ios.delbuf = 0;
+    psb = osa2.base_ios.sb;
+    pos = osa2.base_ios.tie;
+    posa = call_func2(p_ostream_withassign_ctor, &osa2, FALSE);
+    ok(posa == &osa2, "wrong return, expected %p got %p\n", &osa2, posa);
+    ok(osa2.unknown == 0, "expected 0 got %d\n", osa2.unknown);
+    ok(osa2.base_ios.sb == psb, "expected %p got %p\n", psb, osa2.base_ios.sb);
+    ok(osa2.base_ios.state == 0xcdcdcdcd, "expected %d got %d\n", 0xcdcdcdcd, osa2.base_ios.state);
+    ok(osa2.base_ios.delbuf == 0, "expected 0 got %d\n", osa2.base_ios.delbuf);
+    ok(osa2.base_ios.tie == pos, "expected %p got %p\n", pos, osa2.base_ios.tie);
+    ok(osa2.base_ios.flags == 0xcdcdcdcd, "expected %d got %x\n", 0xcdcdcdcd, osa2.base_ios.flags);
+    ok(osa2.base_ios.precision == 0xcdcdcdcd, "expected %d got %d\n", 0xcdcdcdcd, osa2.base_ios.precision);
+    ok(osa2.base_ios.fill == (char) 0xcd, "expected -51 got %d\n", osa2.base_ios.fill);
+    ok(osa2.base_ios.width == 0xcdcdcdcd, "expected %d got %d\n", 0xcdcdcdcd, osa2.base_ios.width);
+    ok(osa2.base_ios.do_lock == 0xcdcdcdcd, "expected %d got %d\n", 0xcdcdcdcd, osa2.base_ios.do_lock);
+    call_func1(p_ostream_withassign_dtor, &osa2.base_ios);
+    osa1.unknown = 0xabababab;
+    osa2.unknown = osa2.base_ios.delbuf = 0xcdcdcdcd;
+    posa = call_func3(p_ostream_withassign_copy_ctor, &osa1, &osa2, TRUE);
+    ok(posa == &osa1, "wrong return, expected %p got %p\n", &osa1, posa);
+    ok(osa1.unknown == 0, "expected 0 got %d\n", osa1.unknown);
+    ok(osa1.base_ios.sb == osa2.base_ios.sb, "expected %p got %p\n", osa2.base_ios.sb, osa1.base_ios.sb);
+    ok(osa1.base_ios.state == 0xcdcdcdc9, "expected %d got %d\n", 0xcdcdcdc9, osa1.base_ios.state);
+    ok(osa1.base_ios.delbuf == 0, "expected 0 got %d\n", osa1.base_ios.delbuf);
+    ok(osa1.base_ios.tie == osa2.base_ios.tie, "expected %p got %p\n", osa2.base_ios.tie, osa1.base_ios.tie);
+    ok(osa1.base_ios.flags == 0xcdcdcdcd, "expected %x got %x\n", 0xcdcdcdcd, osa1.base_ios.flags);
+    ok(osa1.base_ios.precision == (char) 0xcd, "expected -51 got %d\n", osa1.base_ios.precision);
+    ok(osa1.base_ios.fill == (char) 0xcd, "expected -51 got %d\n", osa1.base_ios.fill);
+    ok(osa1.base_ios.width == (char) 0xcd, "expected -51 got %d\n", osa1.base_ios.width);
+todo_wine
+    ok(osa1.base_ios.do_lock == -1, "expected -1 got %d\n", osa1.base_ios.do_lock);
+    call_func1(p_ostream_withassign_vbase_dtor, &osa1);
+    osa1.unknown = 0xabababab;
+    memset(&osa1.base_ios, 0xab, sizeof(ios));
+    osa1.base_ios.state |= IOSTATE_badbit;
+    osa1.base_ios.delbuf = 0;
+    pos = osa1.base_ios.tie;
+    posa = call_func3(p_ostream_withassign_copy_ctor, &osa1, &osa2, FALSE);
+    ok(posa == &osa1, "wrong return, expected %p got %p\n", &osa1, posa);
+    ok(osa1.unknown == 0, "expected 0 got %d\n", osa1.unknown);
+    ok(osa1.base_ios.sb == osa2.base_ios.sb, "expected %p got %p\n", osa2.base_ios.sb, osa1.base_ios.sb);
+    ok(osa1.base_ios.state == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.state);
+    ok(osa1.base_ios.delbuf == 0, "expected 0 got %d\n", osa1.base_ios.delbuf);
+    ok(osa1.base_ios.tie == pos, "expected %p got %p\n", pos, osa1.base_ios.tie);
+    ok(osa1.base_ios.flags == 0xabababab, "expected %x got %x\n", 0xabababab, osa1.base_ios.flags);
+    ok(osa1.base_ios.precision == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.precision);
+    ok(osa1.base_ios.fill == (char) 0xab, "expected -85 got %d\n", osa1.base_ios.fill);
+    ok(osa1.base_ios.width == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.width);
+    ok(osa1.base_ios.do_lock == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.do_lock);
+    call_func1(p_ostream_withassign_dtor, &osa1.base_ios);
+    osa1.unknown = 0xabababab;
+    osa2.base_ios.sb = NULL;
+    posa = call_func3(p_ostream_withassign_copy_ctor, &osa1, &osa2, TRUE);
+    ok(posa == &osa1, "wrong return, expected %p got %p\n", &osa1, posa);
+    ok(osa1.unknown == 0, "expected 0 got %d\n", osa1.unknown);
+    ok(osa1.base_ios.sb == NULL, "expected %p got %p\n", NULL, osa1.base_ios.sb);
+    ok(osa1.base_ios.state == 0xcdcdcdcd, "expected %d got %d\n", 0xcdcdcdcd, osa1.base_ios.state);
+    ok(osa1.base_ios.delbuf == 0, "expected 0 got %d\n", osa1.base_ios.delbuf);
+    ok(osa1.base_ios.tie == osa2.base_ios.tie, "expected %p got %p\n", osa2.base_ios.tie, osa1.base_ios.tie);
+    ok(osa1.base_ios.flags == 0xcdcdcdcd, "expected %x got %x\n", 0xcdcdcdcd, osa1.base_ios.flags);
+    ok(osa1.base_ios.precision == (char) 0xcd, "expected -51 got %d\n", osa1.base_ios.precision);
+    ok(osa1.base_ios.fill == (char) 0xcd, "expected -51 got %d\n", osa1.base_ios.fill);
+    ok(osa1.base_ios.width == (char) 0xcd, "expected -51 got %d\n", osa1.base_ios.width);
+todo_wine
+    ok(osa1.base_ios.do_lock == -1, "expected -1 got %d\n", osa1.base_ios.do_lock);
+    call_func1(p_ostream_withassign_vbase_dtor, &osa1);
+    osa1.unknown = 0xabababab;
+    memset(&osa1.base_ios, 0xab, sizeof(ios));
+    osa1.base_ios.delbuf = 0;
+    posa = call_func3(p_ostream_withassign_copy_ctor, &osa1, &osa2, FALSE);
+    ok(posa == &osa1, "wrong return, expected %p got %p\n", &osa1, posa);
+    ok(osa1.unknown == 0, "expected 0 got %d\n", osa1.unknown);
+    ok(osa1.base_ios.sb == NULL, "expected %p got %p\n", NULL, osa1.base_ios.sb);
+    ok(osa1.base_ios.state == (0xabababab|IOSTATE_badbit), "expected %d got %d\n",
+        0xabababab|IOSTATE_badbit, osa1.base_ios.state);
+    ok(osa1.base_ios.delbuf == 0, "expected 0 got %d\n", osa1.base_ios.delbuf);
+    ok(osa1.base_ios.tie == pos, "expected %p got %p\n", pos, osa1.base_ios.tie);
+    ok(osa1.base_ios.flags == 0xabababab, "expected %x got %x\n", 0xabababab, osa1.base_ios.flags);
+    ok(osa1.base_ios.precision == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.precision);
+    ok(osa1.base_ios.fill == (char) 0xab, "expected -85 got %d\n", osa1.base_ios.fill);
+    ok(osa1.base_ios.width == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.width);
+    ok(osa1.base_ios.do_lock == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.do_lock);
+    call_func1(p_ostream_withassign_dtor, &osa1.base_ios);
+}
+
 static void test_istream(void)
 {
     istream is1, is2, *pis;
@@ -5182,6 +5372,7 @@ START_TEST(msvcirt)
     test_ios();
     test_ostream();
     test_ostream_print();
+    test_ostream_withassign();
     test_istream();
     test_istream_getint();
     test_istream_getdouble();
