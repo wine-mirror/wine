@@ -33,7 +33,7 @@ ULONG CDECL wined3d_sampler_incref(struct wined3d_sampler *sampler)
     return refcount;
 }
 
-static void wined3d_sample_destroy_object(void *object)
+static void wined3d_sampler_destroy_object(void *object)
 {
     struct wined3d_sampler *sampler = object;
     const struct wined3d_gl_info *gl_info;
@@ -54,7 +54,7 @@ ULONG CDECL wined3d_sampler_decref(struct wined3d_sampler *sampler)
     TRACE("%p decreasing refcount to %u.\n", sampler, refcount);
 
     if (!refcount)
-        wined3d_cs_emit_destroy_object(sampler->device->cs, wined3d_sample_destroy_object, sampler);
+        wined3d_cs_emit_destroy_object(sampler->device->cs, wined3d_sampler_destroy_object, sampler);
 
     return refcount;
 }
