@@ -576,7 +576,7 @@ GpStatus METAFILE_ScaleWorldTransform(GpMetafile* metafile, REAL sx, REAL sy, Ma
             return stat;
 
         record->Header.Type = EmfPlusRecordTypeScaleWorldTransform;
-        record->Header.Flags = (order == MatrixOrderAppend ? 4 : 0);
+        record->Header.Flags = (order == MatrixOrderAppend ? 0x2000 : 0);
         record->Sx = sx;
         record->Sy = sy;
 
@@ -948,7 +948,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
         case EmfPlusRecordTypeScaleWorldTransform:
         {
             EmfPlusScaleWorldTransform *record = (EmfPlusScaleWorldTransform*)header;
-            MatrixOrder order = (flags & 0x4) ? MatrixOrderAppend : MatrixOrderPrepend;
+            MatrixOrder order = (flags & 0x2000) ? MatrixOrderAppend : MatrixOrderPrepend;
 
             if (dataSize + sizeof(EmfPlusRecordHeader) < sizeof(EmfPlusScaleWorldTransform))
                 return InvalidParameter;
