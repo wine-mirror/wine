@@ -187,6 +187,23 @@ HRESULT WINAPI D3DX10CreateDevice(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE drive
     return hr;
 }
 
+HRESULT WINAPI D3DX10CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver_type,
+        HMODULE swrast, unsigned int flags, DXGI_SWAP_CHAIN_DESC *desc, IDXGISwapChain **swapchain,
+        ID3D10Device **device)
+{
+    HRESULT hr;
+
+    TRACE("adapter %p, driver_type %d, swrast %p, flags %#x, desc %p, swapchain %p, device %p.\n",
+            adapter, driver_type, swrast, flags, desc, swapchain, device);
+
+    if (SUCCEEDED(hr = D3D10CreateDeviceAndSwapChain1(adapter, driver_type, swrast, flags, D3D10_FEATURE_LEVEL_10_1,
+            D3D10_1_SDK_VERSION, desc, swapchain, (ID3D10Device1 **)device)))
+        return hr;
+
+    return D3D10CreateDeviceAndSwapChain1(adapter, driver_type, swrast, flags, D3D10_FEATURE_LEVEL_10_0,
+            D3D10_1_SDK_VERSION, desc, swapchain, (ID3D10Device1 **)device);
+}
+
 HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *src_data,
         SIZE_T src_data_size, D3DX10_IMAGE_LOAD_INFO *loadinfo, ID3DX10ThreadPump *pump,
         ID3D10Resource **texture, HRESULT *hresult)

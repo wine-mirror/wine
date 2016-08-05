@@ -19,7 +19,7 @@
 @ stub D3DX10CreateAsyncTextureInfoProcessor(ptr ptr)
 @ stub D3DX10CreateAsyncTextureProcessor(ptr ptr ptr)
 @ stdcall D3DX10CreateDevice(ptr long long long ptr)
-@ stub D3DX10CreateDeviceAndSwapChain(ptr long long long ptr ptr ptr)
+@ stdcall D3DX10CreateDeviceAndSwapChain(ptr long long long ptr ptr ptr)
 @ stdcall D3DX10CreateEffectFromFileA(str ptr ptr str long long ptr ptr ptr ptr ptr ptr)
 @ stdcall D3DX10CreateEffectFromFileW(wstr ptr ptr str long long ptr ptr ptr ptr ptr ptr)
 @ stdcall D3DX10CreateEffectFromMemory(ptr long str ptr ptr str long long ptr ptr ptr ptr ptr ptr)
