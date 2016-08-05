@@ -562,7 +562,7 @@ static HRESULT equal2_values(jsval_t lval, jsval_t rval, BOOL *ret)
  * Transfers local variables from stack to variable object.
  * It's slow, so we want to avoid it as much as possible.
  */
-static HRESULT detach_variable_object(script_ctx_t *ctx, call_frame_t *frame)
+static HRESULT detach_variable_object(script_ctx_t *ctx, call_frame_t *frame, BOOL from_release)
 {
     unsigned i;
     HRESULT hres;
@@ -575,7 +575,7 @@ static HRESULT detach_variable_object(script_ctx_t *ctx, call_frame_t *frame)
     assert(frame == frame->base_scope->frame);
     assert(frame->variable_obj == frame->base_scope->jsobj);
 
-    if(!frame->arguments_obj) {
+    if(!from_release && !frame->arguments_obj) {
         hres = setup_arguments_object(ctx, frame);
         if(FAILED(hres))
             return hres;
@@ -648,7 +648,7 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
                 }
 
                 if(!strcmpW(identifier, argumentsW)) {
-                    hres = detach_variable_object(ctx, scope->frame);
+                    hres = detach_variable_object(ctx, scope->frame, FALSE);
                     if(FAILED(hres))
                         return hres;
                 }
@@ -2605,7 +2605,7 @@ static void pop_call_frame(script_ctx_t *ctx)
 
     /* If current scope will be kept alive, we need to transfer local variables to its variable object. */
     if(frame->scope && frame->scope->ref > 1) {
-        HRESULT hres = detach_variable_object(ctx, frame);
+        HRESULT hres = detach_variable_object(ctx, frame, TRUE);
         if(FAILED(hres))
             ERR("Failed to detach variable object: %08x\n", hres);
     }
@@ -2910,7 +2910,7 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
     }
 
     if(ctx->call_ctx && (flags & EXEC_EVAL)) {
-        hres = detach_variable_object(ctx, ctx->call_ctx);
+        hres = detach_variable_object(ctx, ctx->call_ctx, FALSE);
         if(FAILED(hres))
             return hres;
     }
