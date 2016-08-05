@@ -3734,7 +3734,6 @@ static HRESULT create_outline(struct glyphinfo *glyph, void *raw_outline, int da
                         pt->corner = POINTTYPE_CURVE_END;
                 }
                 outline->count--;
-                lastpt = &outline->items[outline->count - 1];
             } else {
                 /* outline closed with a line from end to start point */
                 attempt_line_merge(outline, outline->count - 1, &pt->pos, FALSE);
