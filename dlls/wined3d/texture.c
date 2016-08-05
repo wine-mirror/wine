@@ -2881,7 +2881,7 @@ HRESULT CDECL wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned i
     if (device->d3d_initialized)
         context = context_acquire(device, NULL);
 
-    surface_load_location(surface, context, texture->resource.map_binding);
+    wined3d_texture_load_location(texture, sub_resource_idx, context, texture->resource.map_binding);
     wined3d_texture_invalidate_location(texture, sub_resource_idx, ~texture->resource.map_binding);
 
     if (!surface->dc)
