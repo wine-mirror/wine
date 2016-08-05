@@ -4544,7 +4544,7 @@ void CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
         if (resource->pool == WINED3D_POOL_MANAGED && !resource->map_count)
         {
             TRACE("Evicting %p.\n", resource);
-            resource->resource_ops->resource_unload(resource);
+            wined3d_cs_emit_unload_resource(device->cs, resource);
         }
     }
 }
