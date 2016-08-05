@@ -307,6 +307,9 @@ static ostream* (*__thiscall p_ostream_withassign_copy_ctor)(ostream*, const ost
 static ostream* (*__thiscall p_ostream_withassign_ctor)(ostream*, BOOL);
 static void (*__thiscall p_ostream_withassign_dtor)(ios*);
 static void (*__thiscall p_ostream_withassign_vbase_dtor)(ostream*);
+static ostream* (*__thiscall p_ostream_withassign_assign_sb)(ostream*, streambuf*);
+static ostream* (*__thiscall p_ostream_withassign_assign_os)(ostream*, const ostream*);
+static ostream* (*__thiscall p_ostream_withassign_assign)(ostream*, const ostream*);
 
 /* istream */
 static istream* (*__thiscall p_istream_copy_ctor)(istream*, const istream*, BOOL);
@@ -541,6 +544,9 @@ static BOOL init(void)
         SET(p_ostream_withassign_ctor, "??0ostream_withassign@@QEAA@XZ");
         SET(p_ostream_withassign_dtor, "??1ostream_withassign@@UEAA@XZ");
         SET(p_ostream_withassign_vbase_dtor, "??_Dostream_withassign@@QEAAXXZ");
+        SET(p_ostream_withassign_assign_sb, "??4ostream_withassign@@QEAAAEAVostream@@PEAVstreambuf@@@Z");
+        SET(p_ostream_withassign_assign_os, "??4ostream_withassign@@QEAAAEAVostream@@AEBV1@@Z");
+        SET(p_ostream_withassign_assign, "??4ostream_withassign@@QEAAAEAV0@AEBV0@@Z");
 
         SET(p_istream_copy_ctor, "??0istream@@IEAA@AEBV0@@Z");
         SET(p_istream_ctor, "??0istream@@IEAA@XZ");
@@ -696,6 +702,9 @@ static BOOL init(void)
         SET(p_ostream_withassign_ctor, "??0ostream_withassign@@QAE@XZ");
         SET(p_ostream_withassign_dtor, "??1ostream_withassign@@UAE@XZ");
         SET(p_ostream_withassign_vbase_dtor, "??_Dostream_withassign@@QAEXXZ");
+        SET(p_ostream_withassign_assign_sb, "??4ostream_withassign@@QAEAAVostream@@PAVstreambuf@@@Z");
+        SET(p_ostream_withassign_assign_os, "??4ostream_withassign@@QAEAAVostream@@ABV1@@Z");
+        SET(p_ostream_withassign_assign, "??4ostream_withassign@@QAEAAV0@ABV0@@Z");
 
         SET(p_istream_copy_ctor, "??0istream@@IAE@ABV0@@Z");
         SET(p_istream_ctor, "??0istream@@IAE@XZ");
@@ -3682,6 +3691,67 @@ todo_wine
     ok(osa1.base_ios.width == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.width);
     ok(osa1.base_ios.do_lock == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.do_lock);
     call_func1(p_ostream_withassign_dtor, &osa1.base_ios);
+
+    /* assignment */
+    osa1.unknown = 0xabababab;
+    osa1.base_ios.sb = (streambuf*) 0xabababab;
+if (0) /* crashes on native */
+    osa1.base_ios.delbuf = 0xabababab;
+    posa = call_func2(p_ostream_withassign_assign_sb, &osa1, &sb);
+    ok(posa == &osa1, "wrong return, expected %p got %p\n", &osa1, posa);
+    ok(osa1.unknown == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.unknown);
+    ok(osa1.base_ios.sb == &sb, "expected %p got %p\n", &sb, osa1.base_ios.sb);
+    ok(osa1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, osa1.base_ios.state);
+    ok(osa1.base_ios.delbuf == 0, "expected 0 got %d\n", osa1.base_ios.delbuf);
+    ok(osa1.base_ios.tie == NULL, "expected %p got %p\n", NULL, osa1.base_ios.tie);
+    ok(osa1.base_ios.flags == 0, "expected 0 got %x\n", osa1.base_ios.flags);
+    ok(osa1.base_ios.precision == 6, "expected 6 got %d\n", osa1.base_ios.precision);
+    ok(osa1.base_ios.fill == ' ', "expected 32 got %d\n", osa1.base_ios.fill);
+    ok(osa1.base_ios.width == 0, "expected 0 got %d\n", osa1.base_ios.width);
+    ok(osa1.base_ios.do_lock == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.do_lock);
+    memset(&osa1.base_ios, 0xab, sizeof(ios));
+    osa1.base_ios.delbuf = 0;
+    posa = call_func2(p_ostream_withassign_assign_sb, &osa1, NULL);
+    ok(posa == &osa1, "wrong return, expected %p got %p\n", &osa1, posa);
+    ok(osa1.unknown == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.unknown);
+    ok(osa1.base_ios.sb == NULL, "expected %p got %p\n", NULL, osa1.base_ios.sb);
+    ok(osa1.base_ios.state == IOSTATE_badbit, "expected %d got %d\n", IOSTATE_badbit, osa1.base_ios.state);
+    ok(osa1.base_ios.delbuf == 0, "expected 0 got %d\n", osa1.base_ios.delbuf);
+    ok(osa1.base_ios.tie == NULL, "expected %p got %p\n", NULL, osa1.base_ios.tie);
+    ok(osa1.base_ios.flags == 0, "expected 0 got %x\n", osa1.base_ios.flags);
+    ok(osa1.base_ios.precision == 6, "expected 6 got %d\n", osa1.base_ios.precision);
+    ok(osa1.base_ios.fill == ' ', "expected 32 got %d\n", osa1.base_ios.fill);
+    ok(osa1.base_ios.width == 0, "expected 0 got %d\n", osa1.base_ios.width);
+    ok(osa1.base_ios.do_lock == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.do_lock);
+    memset(&osa1.base_ios, 0xab, sizeof(ios));
+    osa1.base_ios.delbuf = 0;
+    osa2.base_ios.sb = &sb;
+    posa = call_func2(p_ostream_withassign_assign_os, &osa1, &osa2);
+    ok(posa == &osa1, "wrong return, expected %p got %p\n", &osa1, posa);
+    ok(osa1.unknown == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.unknown);
+    ok(osa1.base_ios.sb == &sb, "expected %p got %p\n", &sb, osa1.base_ios.sb);
+    ok(osa1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, osa1.base_ios.state);
+    ok(osa1.base_ios.delbuf == 0, "expected 0 got %d\n", osa1.base_ios.delbuf);
+    ok(osa1.base_ios.tie == NULL, "expected %p got %p\n", NULL, osa1.base_ios.tie);
+    ok(osa1.base_ios.flags == 0, "expected 0 got %x\n", osa1.base_ios.flags);
+    ok(osa1.base_ios.precision == 6, "expected 6 got %d\n", osa1.base_ios.precision);
+    ok(osa1.base_ios.fill == ' ', "expected 32 got %d\n", osa1.base_ios.fill);
+    ok(osa1.base_ios.width == 0, "expected 0 got %d\n", osa1.base_ios.width);
+    ok(osa1.base_ios.do_lock == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.do_lock);
+    memset(&osa1.base_ios, 0xab, sizeof(ios));
+    osa1.base_ios.delbuf = 0;
+    posa = call_func2(p_ostream_withassign_assign, &osa1, &osa2);
+    ok(posa == &osa1, "wrong return, expected %p got %p\n", &osa1, posa);
+    ok(osa1.unknown == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.unknown);
+    ok(osa1.base_ios.sb == &sb, "expected %p got %p\n", &sb, osa1.base_ios.sb);
+    ok(osa1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, osa1.base_ios.state);
+    ok(osa1.base_ios.delbuf == 0, "expected 0 got %d\n", osa1.base_ios.delbuf);
+    ok(osa1.base_ios.tie == NULL, "expected %p got %p\n", NULL, osa1.base_ios.tie);
+    ok(osa1.base_ios.flags == 0, "expected 0 got %x\n", osa1.base_ios.flags);
+    ok(osa1.base_ios.precision == 6, "expected 6 got %d\n", osa1.base_ios.precision);
+    ok(osa1.base_ios.fill == ' ', "expected 32 got %d\n", osa1.base_ios.fill);
+    ok(osa1.base_ios.width == 0, "expected 0 got %d\n", osa1.base_ios.width);
+    ok(osa1.base_ios.do_lock == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.base_ios.do_lock);
 }
 
 static void test_istream(void)
