@@ -5744,6 +5744,13 @@ GpStatus WINGDIPAPI GdipMultiplyWorldTransform(GpGraphics *graphics, GDIPCONST G
     if(graphics->busy)
         return ObjectBusy;
 
+    if (graphics->image && graphics->image->type == ImageTypeMetafile) {
+        ret = METAFILE_MultiplyWorldTransform((GpMetafile*)graphics->image, matrix, order);
+
+        if (ret != Ok)
+            return ret;
+    }
+
     m = graphics->worldtrans;
 
     ret = GdipMultiplyMatrix(&m, matrix, order);

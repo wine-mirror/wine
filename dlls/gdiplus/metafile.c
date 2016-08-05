@@ -91,6 +91,12 @@ typedef struct EmfPlusScaleWorldTransform
     REAL Sy;
 } EmfPlusScaleWorldTransform;
 
+typedef struct EmfPlusMultiplyWorldTransform
+{
+    EmfPlusRecordHeader Header;
+    REAL MatrixData[6];
+} EmfPlusMultiplyWorldTransform;
+
 static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, DWORD size, void **result)
 {
     DWORD size_needed;
@@ -586,6 +592,29 @@ GpStatus METAFILE_ScaleWorldTransform(GpMetafile* metafile, REAL sx, REAL sy, Ma
     return Ok;
 }
 
+GpStatus METAFILE_MultiplyWorldTransform(GpMetafile* metafile, GDIPCONST GpMatrix* matrix, MatrixOrder order)
+{
+    if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
+    {
+        EmfPlusMultiplyWorldTransform *record;
+        GpStatus stat;
+
+        stat = METAFILE_AllocateRecord(metafile,
+            sizeof(EmfPlusMultiplyWorldTransform),
+            (void**)&record);
+        if (stat != Ok)
+            return stat;
+
+        record->Header.Type = EmfPlusRecordTypeMultiplyWorldTransform;
+        record->Header.Flags = (order == MatrixOrderAppend ? 0x2000 : 0);
+        memcpy(record->MatrixData, matrix->matrix, sizeof(record->MatrixData));
+
+        METAFILE_WriteRecords(metafile);
+    }
+
+    return Ok;
+}
+
 GpStatus METAFILE_ResetWorldTransform(GpMetafile* metafile)
 {
     if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
@@ -954,6 +983,21 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                 return InvalidParameter;
 
             GdipScaleMatrix(real_metafile->world_transform, record->Sx, record->Sy, order);
+
+            return METAFILE_PlaybackUpdateWorldTransform(real_metafile);
+        }
+        case EmfPlusRecordTypeMultiplyWorldTransform:
+        {
+            EmfPlusMultiplyWorldTransform *record = (EmfPlusMultiplyWorldTransform*)header;
+            MatrixOrder order = (flags & 0x2000) ? MatrixOrderAppend : MatrixOrderPrepend;
+            GpMatrix matrix;
+
+            if (dataSize + sizeof(EmfPlusRecordHeader) < sizeof(EmfPlusMultiplyWorldTransform))
+                return InvalidParameter;
+
+            memcpy(matrix.matrix, record->MatrixData, sizeof(matrix.matrix));
+
+            GdipMultiplyMatrix(real_metafile->world_transform, &matrix, order);
 
             return METAFILE_PlaybackUpdateWorldTransform(real_metafile);
         }
