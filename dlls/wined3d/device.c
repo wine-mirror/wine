@@ -4547,9 +4547,6 @@ void CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
             resource->resource_ops->resource_unload(resource);
         }
     }
-
-    /* Invalidate stream sources, the buffer(s) may have been evicted. */
-    device_invalidate_state(device, STATE_STREAMSRC);
 }
 
 static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d_swapchain *swapchain)

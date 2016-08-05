@@ -538,6 +538,14 @@ static void buffer_unload(struct wined3d_resource *resource)
         buffer->stride = 0;
         buffer->conversion_stride = 0;
         buffer->flags &= ~WINED3D_BUFFER_HASDESC;
+
+        /* The stream source state handler might have read the memory of the
+         * vertex buffer already and got the memory in the vbo which is not
+         * valid any longer. Dirtify the stream source to force a reload. This
+         * happens only once per changed vertexbuffer and should occur rather
+         * rarely. */
+        if (resource->bind_count)
+            device_invalidate_state(device, STATE_STREAMSRC);
     }
 
     resource_unload(resource);
@@ -545,18 +553,8 @@ static void buffer_unload(struct wined3d_resource *resource)
 
 static void wined3d_buffer_drop_bo(struct wined3d_buffer *buffer)
 {
-    struct wined3d_device *device = buffer->resource.device;
-
     buffer->flags &= ~WINED3D_BUFFER_USE_BO;
     buffer_unload(&buffer->resource);
-
-    /* The stream source state handler might have read the memory of
-     * the vertex buffer already and got the memory in the vbo which
-     * is not valid any longer. Dirtify the stream source to force a
-     * reload. This happens only once per changed vertexbuffer and
-     * should occur rather rarely. */
-    if (buffer->resource.bind_count)
-        device_invalidate_state(device, STATE_STREAMSRC);
 }
 
 static void wined3d_buffer_destroy_object(void *object)
