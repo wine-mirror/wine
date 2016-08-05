@@ -233,7 +233,6 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
         BOOL is_constructor, BOOL caller_execs_source, jsval_t *r)
 {
     jsdisp_t *var_disp;
-    scope_chain_t *scope;
     DWORD exec_flags = 0;
     HRESULT hres;
 
@@ -251,19 +250,14 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
     if(FAILED(hres))
         return hres;
 
-    hres = scope_push(function->scope_chain, var_disp, to_disp(var_disp), &scope);
-    jsdisp_release(var_disp);
-    if(FAILED(hres))
-        return hres;
-
     if(caller_execs_source)
         exec_flags |= EXEC_RETURN_TO_INTERP;
     if(is_constructor)
         exec_flags |= EXEC_CONSTRUCTOR;
-    hres = exec_source(ctx, exec_flags, function->code, function->func_code, scope, this_obj,
-            &function->dispex, scope->jsobj, argc, argv, r);
+    hres = exec_source(ctx, exec_flags, function->code, function->func_code, function->scope_chain, this_obj,
+            &function->dispex, var_disp, argc, argv, r);
 
-    scope_release(scope);
+    jsdisp_release(var_disp);
     return hres;
 }
 

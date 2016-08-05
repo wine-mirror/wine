@@ -2775,9 +2775,10 @@ static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdis
     return hres;
 }
 
-static HRESULT setup_scope(script_ctx_t *ctx, call_frame_t *frame, unsigned argc, jsval_t *argv)
+static HRESULT setup_scope(script_ctx_t *ctx, call_frame_t *frame, scope_chain_t *scope_chain, jsdisp_t *variable_object, unsigned argc, jsval_t *argv)
 {
     const unsigned orig_stack = ctx->stack_top;
+    scope_chain_t *scope;
     unsigned i;
     jsval_t v;
     HRESULT hres;
@@ -2822,14 +2823,21 @@ static HRESULT setup_scope(script_ctx_t *ctx, call_frame_t *frame, unsigned argc
 
     frame->pop_variables = i;
 
+    hres = scope_push(scope_chain, variable_object, to_disp(variable_object), &scope);
+    if(FAILED(hres)) {
+        stack_popn(ctx, ctx->stack_top - orig_stack);
+        return hres;
+    }
+
     for(i = 0; i < frame->function->func_cnt; i++) {
         if(frame->function->funcs[i].name && !frame->function->funcs[i].event_target) {
             jsdisp_t *func_obj;
             unsigned off;
 
-            hres = create_source_function(ctx, frame->bytecode, frame->function->funcs+i, frame->base_scope, &func_obj);
+            hres = create_source_function(ctx, frame->bytecode, frame->function->funcs+i, scope, &func_obj);
             if(FAILED(hres)) {
                 stack_popn(ctx, ctx->stack_top - orig_stack);
+                scope_release(scope);
                 return hres;
             }
 
@@ -2839,7 +2847,8 @@ static HRESULT setup_scope(script_ctx_t *ctx, call_frame_t *frame, unsigned argc
         }
     }
 
-    frame->base_scope->frame = frame;
+    scope->frame = frame;
+    frame->base_scope = frame->scope = scope;
     return S_OK;
 }
 
@@ -2915,17 +2924,15 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
     frame->argc = argc;
     frame->bytecode = bytecode_addref(bytecode);
 
-    if(scope) {
-        frame->base_scope = frame->scope = scope_addref(scope);
-
-        if(!(flags & (EXEC_GLOBAL|EXEC_EVAL))) {
-            hres = setup_scope(ctx, frame, argc, argv);
-            if(FAILED(hres)) {
-                release_bytecode(frame->bytecode);
-                heap_free(frame);
-                return hres;
-            }
+    if(!(flags & (EXEC_GLOBAL|EXEC_EVAL))) {
+        hres = setup_scope(ctx, frame, scope, variable_obj, argc, argv);
+        if(FAILED(hres)) {
+            release_bytecode(frame->bytecode);
+            heap_free(frame);
+            return hres;
         }
+    }else if(scope) {
+        frame->base_scope = frame->scope = scope_addref(scope);
     }
 
     frame->ip = function->instr_off;
