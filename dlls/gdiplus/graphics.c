@@ -5156,6 +5156,8 @@ GpStatus WINGDIPAPI GdipRestoreGraphics(GpGraphics *graphics, GraphicsState stat
 GpStatus WINGDIPAPI GdipRotateWorldTransform(GpGraphics *graphics, REAL angle,
     GpMatrixOrder order)
 {
+    GpStatus stat;
+
     TRACE("(%p, %.2f, %d)\n", graphics, angle, order);
 
     if(!graphics)
@@ -5163,6 +5165,13 @@ GpStatus WINGDIPAPI GdipRotateWorldTransform(GpGraphics *graphics, REAL angle,
 
     if(graphics->busy)
         return ObjectBusy;
+
+    if (graphics->image && graphics->image->type == ImageTypeMetafile) {
+        stat = METAFILE_RotateWorldTransform((GpMetafile*)graphics->image, angle, order);
+
+        if (stat != Ok)
+            return stat;
+    }
 
     return GdipRotateMatrix(&graphics->worldtrans, angle, order);
 }

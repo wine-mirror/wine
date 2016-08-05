@@ -97,6 +97,12 @@ typedef struct EmfPlusMultiplyWorldTransform
     REAL MatrixData[6];
 } EmfPlusMultiplyWorldTransform;
 
+typedef struct EmfPlusRotateWorldTransform
+{
+    EmfPlusRecordHeader Header;
+    REAL Angle;
+} EmfPlusRotateWorldTransform;
+
 static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, DWORD size, void **result)
 {
     DWORD size_needed;
@@ -615,6 +621,29 @@ GpStatus METAFILE_MultiplyWorldTransform(GpMetafile* metafile, GDIPCONST GpMatri
     return Ok;
 }
 
+GpStatus METAFILE_RotateWorldTransform(GpMetafile* metafile, REAL angle, MatrixOrder order)
+{
+    if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
+    {
+        EmfPlusRotateWorldTransform *record;
+        GpStatus stat;
+
+        stat = METAFILE_AllocateRecord(metafile,
+            sizeof(EmfPlusRotateWorldTransform),
+            (void**)&record);
+        if (stat != Ok)
+            return stat;
+
+        record->Header.Type = EmfPlusRecordTypeRotateWorldTransform;
+        record->Header.Flags = (order == MatrixOrderAppend ? 0x2000 : 0);
+        record->Angle = angle;
+
+        METAFILE_WriteRecords(metafile);
+    }
+
+    return Ok;
+}
+
 GpStatus METAFILE_ResetWorldTransform(GpMetafile* metafile)
 {
     if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
@@ -998,6 +1027,18 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             memcpy(matrix.matrix, record->MatrixData, sizeof(matrix.matrix));
 
             GdipMultiplyMatrix(real_metafile->world_transform, &matrix, order);
+
+            return METAFILE_PlaybackUpdateWorldTransform(real_metafile);
+        }
+        case EmfPlusRecordTypeRotateWorldTransform:
+        {
+            EmfPlusRotateWorldTransform *record = (EmfPlusRotateWorldTransform*)header;
+            MatrixOrder order = (flags & 0x2000) ? MatrixOrderAppend : MatrixOrderPrepend;
+
+            if (dataSize + sizeof(EmfPlusRecordHeader) < sizeof(EmfPlusRotateWorldTransform))
+                return InvalidParameter;
+
+            GdipRotateMatrix(real_metafile->world_transform, record->Angle, order);
 
             return METAFILE_PlaybackUpdateWorldTransform(real_metafile);
         }
