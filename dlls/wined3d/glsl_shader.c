@@ -1784,7 +1784,7 @@ static void shader_glsl_declare_generic_vertex_attribute(struct wined3d_string_b
                 index);
         return;
     }
-    if (e->sysval_semantic)
+    if (e->sysval_semantic && e->sysval_semantic != WINED3D_SV_POSITION)
         FIXME("Unhandled sysval semantic %#x.\n", e->sysval_semantic);
 
     if (shader_glsl_use_explicit_attrib_location(gl_info))
