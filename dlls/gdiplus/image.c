@@ -1290,7 +1290,7 @@ GpStatus WINGDIPAPI GdipCloneBitmapArea(REAL x, REAL y, REAL width, REAL height,
         }
 
         if (stat != Ok)
-            GdipDisposeImage((GpImage*)*dstBitmap);
+            GdipDisposeImage(&(*dstBitmap)->image);
     }
 
     if (stat != Ok)
@@ -1523,8 +1523,8 @@ GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
 
     if (!bitmap || !hbmReturn) return InvalidParameter;
 
-    GdipGetImageWidth((GpImage*)bitmap, &width);
-    GdipGetImageHeight((GpImage*)bitmap, &height);
+    GdipGetImageWidth(&bitmap->image, &width);
+    GdipGetImageHeight(&bitmap->image, &height);
 
     bih.biSize = sizeof(bih);
     bih.biWidth = width;
@@ -1648,7 +1648,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHICON(HICON hicon, GpBitmap** bitmap)
     if (stat != Ok) {
         DeleteObject(iinfo.hbmColor);
         DeleteObject(iinfo.hbmMask);
-        GdipDisposeImage((GpImage*)*bitmap);
+        GdipDisposeImage(&(*bitmap)->image);
         return stat;
     }
 
@@ -3027,7 +3027,7 @@ static void add_property(GpBitmap *bitmap, PropertyItem *item)
         UINT i;
         char *item_value;
 
-        GdipGetPropertySize((GpImage *)bitmap, &prop_size, &prop_count);
+        GdipGetPropertySize(&bitmap->image, &prop_size, &prop_count);
 
         prop_item = heap_alloc_zero(prop_size + item->length + sizeof(PropertyItem));
         if (!prop_item) return;
@@ -3714,11 +3714,11 @@ static GpStatus decode_frame_wic(IWICBitmapDecoder *decoder, BOOL force_conversi
                 }
 
                 if (SUCCEEDED(hr) && status == Ok)
-                    *image = (GpImage*)bitmap;
+                    *image = &bitmap->image;
                 else
                 {
                     *image = NULL;
-                    GdipDisposeImage((GpImage*)bitmap);
+                    GdipDisposeImage(&bitmap->image);
                 }
 
                 if (SUCCEEDED(hr) && status == Ok)
@@ -5047,7 +5047,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
                                           entry[i].peGreen << 8 | entry[i].peBlue;
                 }
 
-                retval = GdipSetImagePalette((GpImage*)*bitmap, palette);
+                retval = GdipSetImagePalette(&(*bitmap)->image, palette);
             }
 
             heap_free(palette);
@@ -5055,7 +5055,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
 
         if (retval != Ok)
         {
-            GdipDisposeImage((GpImage*)*bitmap);
+            GdipDisposeImage(&(*bitmap)->image);
             *bitmap = NULL;
         }
     }
@@ -5310,7 +5310,7 @@ GpStatus WINGDIPAPI GdipImageRotateFlip(GpImage *image, RotateFlipType type)
     if (stat == Ok)
         move_bitmap(bitmap, new_bitmap, FALSE);
     else
-        GdipDisposeImage((GpImage*)new_bitmap);
+        GdipDisposeImage(&new_bitmap->image);
 
     return stat;
 }
