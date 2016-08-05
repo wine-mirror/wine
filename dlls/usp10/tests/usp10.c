@@ -2899,8 +2899,8 @@ static void test_ScriptString(HDC hdc)
     int             Charset;
     DWORD           Flags = SSA_GLYPHS;
     int             ReqWidth = 100;
-    const int       Dx[5] = {10, 10, 10, 10, 10};
-    const BYTE      InClass = 0;
+    static const int Dx[(sizeof(teststr) / sizeof(WCHAR)) - 1];
+    static const BYTE InClass[(sizeof(teststr) / sizeof(WCHAR)) - 1];
     SCRIPT_STRING_ANALYSIS ssa = NULL;
 
     int             X = 10; 
@@ -2919,26 +2919,26 @@ static void test_ScriptString(HDC hdc)
     /* Test without hdc to get E_PENDING */
     hr = ScriptStringAnalyse( NULL, teststr, len, Glyphs, Charset, Flags,
                               ReqWidth, NULL, NULL, Dx, NULL,
-                              &InClass, &ssa);
+                              InClass, &ssa);
     ok(hr == E_PENDING, "ScriptStringAnalyse Stub should return E_PENDING not %08x\n", hr);
 
     /* Test that 0 length string returns E_INVALIDARG  */
     hr = ScriptStringAnalyse( hdc, teststr, 0, Glyphs, Charset, Flags,
                               ReqWidth, NULL, NULL, Dx, NULL,
-                              &InClass, &ssa);
+                              InClass, &ssa);
     ok(hr == E_INVALIDARG, "ScriptStringAnalyse should return E_INVALIDARG not %08x\n", hr);
 
     /* test with hdc, this should be a valid test  */
     hr = ScriptStringAnalyse( hdc, teststr, len, Glyphs, Charset, Flags,
                               ReqWidth, NULL, NULL, Dx, NULL,
-                              &InClass, &ssa);
+                              InClass, &ssa);
     ok(hr == S_OK, "ScriptStringAnalyse should return S_OK not %08x\n", hr);
     ScriptStringFree(&ssa);
 
     /* test makes sure that a call with a valid pssa still works */
     hr = ScriptStringAnalyse( hdc, teststr, len, Glyphs, Charset, Flags,
                               ReqWidth, NULL, NULL, Dx, NULL,
-                              &InClass, &ssa);
+                              InClass, &ssa);
     ok(hr == S_OK, "ScriptStringAnalyse should return S_OK not %08x\n", hr);
     ok(ssa != NULL, "ScriptStringAnalyse pssa should not be NULL\n");
 
@@ -2982,7 +2982,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
     int             Charset = -1;                       /* unicode                        */
     DWORD           Flags = SSA_GLYPHS;
     int             ReqWidth = 100;
-    const BYTE      InClass = 0;
+    static const BYTE InClass[(sizeof(teststr1)/sizeof(WCHAR))-1];
     SCRIPT_STRING_ANALYSIS ssa = NULL;
 
     int             Ch;                                  /* Character position in string */
@@ -2999,7 +2999,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
 
     hr = ScriptStringAnalyse( hdc, String, String_len, Glyphs, Charset, Flags,
                               ReqWidth, NULL, NULL, NULL, NULL,
-                              &InClass, &ssa);
+                              InClass, &ssa);
     ok(hr == S_OK ||
        hr == E_INVALIDARG, /* NT */
        "ScriptStringAnalyse should return S_OK or E_INVALIDARG not %08x\n", hr);
@@ -3139,7 +3139,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
          */
         hr = ScriptStringAnalyse( hdc, String, String_len, Glyphs, Charset, Flags,
                                   ReqWidth, NULL, NULL, NULL, NULL,
-                                  &InClass, &ssa);
+                                  InClass, &ssa);
         ok(hr == S_OK, "ScriptStringAnalyse should return S_OK not %08x\n", hr);
 
         /*
