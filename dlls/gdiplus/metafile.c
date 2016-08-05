@@ -84,6 +84,12 @@ typedef struct EmfPlusRect
     SHORT Height;
 } EmfPlusRect;
 
+typedef struct EmfPlusSetWorldTransform
+{
+    EmfPlusRecordHeader Header;
+    REAL MatrixData[6];
+} EmfPlusSetWorldTransform;
+
 typedef struct EmfPlusScaleWorldTransform
 {
     EmfPlusRecordHeader Header;
@@ -574,6 +580,29 @@ GpStatus METAFILE_SetPageTransform(GpMetafile* metafile, GpUnit unit, REAL scale
     return Ok;
 }
 
+GpStatus METAFILE_SetWorldTransform(GpMetafile* metafile, GDIPCONST GpMatrix* transform)
+{
+    if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
+    {
+        EmfPlusSetWorldTransform *record;
+        GpStatus stat;
+
+        stat = METAFILE_AllocateRecord(metafile,
+            sizeof(EmfPlusSetWorldTransform),
+            (void**)&record);
+        if (stat != Ok)
+            return stat;
+
+        record->Header.Type = EmfPlusRecordTypeSetWorldTransform;
+        record->Header.Flags = 0;
+        memcpy(record->MatrixData, transform->matrix, sizeof(record->MatrixData));
+
+        METAFILE_WriteRecords(metafile);
+    }
+
+    return Ok;
+}
+
 GpStatus METAFILE_ScaleWorldTransform(GpMetafile* metafile, REAL sx, REAL sy, MatrixOrder order)
 {
     if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
@@ -1000,6 +1029,17 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             real_metafile->page_unit = unit;
             real_metafile->page_scale = record->PageScale;
+
+            return METAFILE_PlaybackUpdateWorldTransform(real_metafile);
+        }
+        case EmfPlusRecordTypeSetWorldTransform:
+        {
+            EmfPlusSetWorldTransform *record = (EmfPlusSetWorldTransform*)header;
+
+            if (dataSize + sizeof(EmfPlusRecordHeader) < sizeof(EmfPlusSetWorldTransform))
+                return InvalidParameter;
+
+            memcpy(real_metafile->world_transform->matrix, record->MatrixData, sizeof(record->MatrixData));
 
             return METAFILE_PlaybackUpdateWorldTransform(real_metafile);
         }

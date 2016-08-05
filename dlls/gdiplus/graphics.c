@@ -5488,6 +5488,8 @@ GpStatus WINGDIPAPI GdipSetTextRenderingHint(GpGraphics *graphics,
 
 GpStatus WINGDIPAPI GdipSetWorldTransform(GpGraphics *graphics, GpMatrix *matrix)
 {
+    GpStatus stat;
+
     TRACE("(%p, %p)\n", graphics, matrix);
 
     if(!graphics || !matrix)
@@ -5499,6 +5501,13 @@ GpStatus WINGDIPAPI GdipSetWorldTransform(GpGraphics *graphics, GpMatrix *matrix
     TRACE("%f,%f,%f,%f,%f,%f\n",
           matrix->matrix[0], matrix->matrix[1], matrix->matrix[2],
           matrix->matrix[3], matrix->matrix[4], matrix->matrix[5]);
+
+    if (graphics->image && graphics->image->type == ImageTypeMetafile) {
+        stat = METAFILE_SetWorldTransform((GpMetafile*)graphics->image, matrix);
+
+        if (stat != Ok)
+            return stat;
+    }
 
     graphics->worldtrans = *matrix;
 
