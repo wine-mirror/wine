@@ -3770,7 +3770,7 @@
 @ stub __crtGetSystemTimePreciseAsFileTime
 @ stub __crtGetTickCount64
 @ stub __crtInitOnceExecuteOnce
-@ stub __crtInitializeCriticalSectionEx
+@ cdecl __crtInitializeCriticalSectionEx(ptr long long) MSVCP__crtInitializeCriticalSectionEx
 @ stub __crtIsPackagedApp
 @ cdecl __crtLCMapStringA(long long str long ptr long long long) msvcrt.__crtLCMapStringA
 @ stub __crtLCMapStringEx

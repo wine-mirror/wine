@@ -1066,6 +1066,16 @@ void __asm_dummy_vtables(void) {
 }
 #endif
 
+/*********************************************************************
+ *  __crtInitializeCriticalSectionEx (MSVCP140.@)
+ */
+BOOL CDECL MSVCP__crtInitializeCriticalSectionEx(
+        CRITICAL_SECTION *cs, DWORD spin_count, DWORD flags)
+{
+    TRACE("(%p %x %x)\n", cs, spin_count, flags);
+    return InitializeCriticalSectionEx(cs, spin_count, flags);
+}
+
 void init_misc(void *base)
 {
 #ifdef __x86_64__
