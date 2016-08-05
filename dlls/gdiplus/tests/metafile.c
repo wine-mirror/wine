@@ -29,6 +29,7 @@
 #define expectf(expected, got) expectf_((expected), (got), 0.001)
 
 static BOOL save_metafiles;
+static BOOL load_metafiles;
 
 typedef struct emfplus_record
 {
@@ -239,15 +240,17 @@ static void play_metafile(GpMetafile *metafile, GpGraphics *graphics, const emfp
     expect(Ok, stat);
 }
 
-static void save_metafile(GpMetafile *metafile, const char *filename)
+/* When 'save' or 'load' is specified on the command line, save or
+ * load the specified filename. */
+static void sync_metafile(GpMetafile **metafile, const char *filename)
 {
+    GpStatus stat;
     if (save_metafiles)
     {
         GpMetafile *clone;
         HENHMETAFILE hemf;
-        GpStatus stat;
 
-        stat = GdipCloneImage((GpImage*)metafile, (GpImage**)&clone);
+        stat = GdipCloneImage((GpImage*)*metafile, (GpImage**)&clone);
         expect(Ok, stat);
 
         stat = GdipGetHemfFromMetafile(clone, &hemf);
@@ -258,6 +261,20 @@ static void save_metafile(GpMetafile *metafile, const char *filename)
         DeleteEnhMetaFile(hemf);
 
         stat = GdipDisposeImage((GpImage*)clone);
+        expect(Ok, stat);
+    }
+    else if (load_metafiles)
+    {
+        HENHMETAFILE hemf;
+
+        stat = GdipDisposeImage((GpImage*)*metafile);
+        expect(Ok, stat);
+        *metafile = NULL;
+
+        hemf = GetEnhMetaFileA(filename);
+        ok(hemf != NULL, "%s could not be opened\n", filename);
+
+        stat = GdipCreateMetafileFromEmf(hemf, TRUE, metafile);
         expect(Ok, stat);
     }
 }
@@ -327,7 +344,7 @@ static void test_empty(void)
 
     check_metafile(metafile, empty_records, "empty metafile", dst_points, &frame, UnitPixel);
 
-    save_metafile(metafile, "empty.emf");
+    sync_metafile(&metafile, "empty.emf");
 
     stat = GdipGetImageBounds((GpImage*)metafile, &bounds, &unit);
     expect(Ok, stat);
@@ -479,7 +496,7 @@ static void test_getdc(void)
 
     check_metafile(metafile, getdc_records, "getdc metafile", dst_points, &frame, UnitPixel);
 
-    save_metafile(metafile, "getdc.emf");
+    sync_metafile(&metafile, "getdc.emf");
 
     stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
     expect(Ok, stat);
@@ -617,7 +634,7 @@ static void test_emfonly(void)
 
     check_metafile(metafile, emfonly_records, "emfonly metafile", dst_points, &frame, UnitPixel);
 
-    save_metafile(metafile, "emfonly.emf");
+    sync_metafile(&metafile, "emfonly.emf");
 
     stat = GdipGetImageBounds((GpImage*)metafile, &bounds, &unit);
     expect(Ok, stat);
@@ -806,7 +823,7 @@ static void test_fillrect(void)
 
     check_metafile(metafile, fillrect_records, "fillrect metafile", dst_points, &frame, UnitPixel);
 
-    save_metafile(metafile, "fillrect.emf");
+    sync_metafile(&metafile, "fillrect.emf");
 
     stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
     expect(Ok, stat);
@@ -910,7 +927,7 @@ static void test_clear(void)
     stat = GdipDeleteGraphics(graphics);
     expect(Ok, stat);
 
-    save_metafile(metafile, "clear.emf");
+    sync_metafile(&metafile, "clear.emf");
 
     stat = GdipCreateBitmapFromScan0(30, 30, 0, PixelFormat32bppRGB, NULL, &bitmap);
     expect(Ok, stat);
@@ -1223,7 +1240,7 @@ static void test_pagetransform(void)
 
     check_metafile(metafile, pagetransform_records, "pagetransform metafile", dst_points, &frame, UnitPixel);
 
-    save_metafile(metafile, "pagetransform.emf");
+    sync_metafile(&metafile, "pagetransform.emf");
 
     stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
     expect(Ok, stat);
@@ -1382,7 +1399,7 @@ static void test_worldtransform(void)
 
     check_metafile(metafile, worldtransform_records, "worldtransform metafile", dst_points, &frame, UnitPixel);
 
-    save_metafile(metafile, "worldtransform.emf");
+    sync_metafile(&metafile, "worldtransform.emf");
 
     stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
     expect(Ok, stat);
@@ -1578,8 +1595,13 @@ START_TEST(metafile)
 
     myARGC = winetest_get_mainargs( &myARGV );
 
-    if (myARGC >= 3 && !strcmp(myARGV[2], "save"))
-        save_metafiles = TRUE;
+    if (myARGC >= 3)
+    {
+        if (!strcmp(myARGV[2], "save"))
+            save_metafiles = TRUE;
+        else if (!strcmp(myARGV[2], "load"))
+            load_metafiles = TRUE;
+    }
 
     test_empty();
     test_getdc();
