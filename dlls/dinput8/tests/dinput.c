@@ -99,12 +99,7 @@ static void test_preinitialization(void)
                                            enum_devices_tests[i].lpCallback,
                                            NULL,
                                            enum_devices_tests[i].dwFlags);
-        if (enum_devices_tests[i].todo)
-        {
-            todo_wine
-            ok(hr == enum_devices_tests[i].expected_hr, "[%d] IDirectInput8_EnumDevice returned 0x%08x\n", i, hr);
-        }
-        else
+        todo_wine_if(enum_devices_tests[i].todo)
             ok(hr == enum_devices_tests[i].expected_hr, "[%d] IDirectInput8_EnumDevice returned 0x%08x\n", i, hr);
     }
 
