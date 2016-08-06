@@ -11106,10 +11106,9 @@ basic_iostream_char* __thiscall basic_iostream_char_ctor(basic_iostream_char *th
         basic_ios = basic_istream_char_get_basic_ios(&this->base1);
     }
 
-    basic_ios->base.vtable = &MSVCP_basic_iostream_char_vtable;
-
     basic_istream_char_ctor(&this->base1, strbuf, FALSE, FALSE);
     basic_ostream_char_ctor_uninitialized(&this->base2, 0, FALSE, FALSE);
+    basic_ios->base.vtable = &MSVCP_basic_iostream_char_vtable;
     return this;
 }
 
