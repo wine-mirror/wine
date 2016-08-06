@@ -3099,16 +3099,16 @@ static ULONG64 get_int_reg( CONTEXT *context, int reg )
     return *(&context->Rax + reg);
 }
 
-static void set_int_reg( CONTEXT *context, KNONVOLATILE_CONTEXT_POINTERS *ctx_ptr, int reg, ULONG64 val )
+static void set_int_reg( CONTEXT *context, KNONVOLATILE_CONTEXT_POINTERS *ctx_ptr, int reg, ULONG64 *val )
 {
-    *(&context->Rax + reg) = val;
-    if (ctx_ptr) ctx_ptr->u2.IntegerContext[reg] = &context->Rax + reg;
+    *(&context->Rax + reg) = *val;
+    if (ctx_ptr) ctx_ptr->u2.IntegerContext[reg] = val;
 }
 
-static void set_float_reg( CONTEXT *context, KNONVOLATILE_CONTEXT_POINTERS *ctx_ptr, int reg, M128A val )
+static void set_float_reg( CONTEXT *context, KNONVOLATILE_CONTEXT_POINTERS *ctx_ptr, int reg, M128A *val )
 {
-    *(&context->u.s.Xmm0 + reg) = val;
-    if (ctx_ptr) ctx_ptr->u.FloatingContext[reg] = &context->u.s.Xmm0 + reg;
+    *(&context->u.s.Xmm0 + reg) = *val;
+    if (ctx_ptr) ctx_ptr->u.FloatingContext[reg] = val;
 }
 
 static int get_opcode_size( struct opcode op )
@@ -3224,7 +3224,7 @@ static void interpret_epilog( BYTE *pc, CONTEXT *context, KNONVOLATILE_CONTEXT_P
         case 0x5d: /* pop %rbp/r13 */
         case 0x5e: /* pop %rsi/r14 */
         case 0x5f: /* pop %rdi/r15 */
-            set_int_reg( context, ctx_ptr, *pc - 0x58 + (rex & 1) * 8, *(ULONG64 *)context->Rsp );
+            set_int_reg( context, ctx_ptr, *pc - 0x58 + (rex & 1) * 8, (ULONG64 *)context->Rsp );
             context->Rsp += sizeof(ULONG64);
             pc++;
             continue;
@@ -3322,7 +3322,7 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
             switch (info->opcodes[i].code)
             {
             case UWOP_PUSH_NONVOL:  /* pushq %reg */
-                set_int_reg( context, ctx_ptr, info->opcodes[i].info, *(ULONG64 *)context->Rsp );
+                set_int_reg( context, ctx_ptr, info->opcodes[i].info, (ULONG64 *)context->Rsp );
                 context->Rsp += sizeof(ULONG64);
                 break;
             case UWOP_ALLOC_LARGE:  /* subq $nn,%rsp */
@@ -3337,19 +3337,19 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
                 break;
             case UWOP_SAVE_NONVOL:  /* movq %reg,n(%rsp) */
                 off = frame + *(USHORT *)&info->opcodes[i+1] * 8;
-                set_int_reg( context, ctx_ptr, info->opcodes[i].info, *(ULONG64 *)off );
+                set_int_reg( context, ctx_ptr, info->opcodes[i].info, (ULONG64 *)off );
                 break;
             case UWOP_SAVE_NONVOL_FAR:  /* movq %reg,nn(%rsp) */
                 off = frame + *(DWORD *)&info->opcodes[i+1];
-                set_int_reg( context, ctx_ptr, info->opcodes[i].info, *(ULONG64 *)off );
+                set_int_reg( context, ctx_ptr, info->opcodes[i].info, (ULONG64 *)off );
                 break;
             case UWOP_SAVE_XMM128:  /* movaps %xmmreg,n(%rsp) */
                 off = frame + *(USHORT *)&info->opcodes[i+1] * 16;
-                set_float_reg( context, ctx_ptr, info->opcodes[i].info, *(M128A *)off );
+                set_float_reg( context, ctx_ptr, info->opcodes[i].info, (M128A *)off );
                 break;
             case UWOP_SAVE_XMM128_FAR:  /* movaps %xmmreg,nn(%rsp) */
                 off = frame + *(DWORD *)&info->opcodes[i+1];
-                set_float_reg( context, ctx_ptr, info->opcodes[i].info, *(M128A *)off );
+                set_float_reg( context, ctx_ptr, info->opcodes[i].info, (M128A *)off );
                 break;
             case UWOP_PUSH_MACHFRAME:
                 FIXME( "PUSH_MACHFRAME %u\n", info->opcodes[i].info );
