@@ -1122,6 +1122,16 @@ BOOL CDECL MSVCP__crtInitializeCriticalSectionEx(
     return InitializeCriticalSectionEx(cs, spin_count, flags);
 }
 
+/*********************************************************************
+ *  __crtCreateEventExW (MSVCP140.@)
+ */
+HANDLE CDECL MSVCP__crtCreateEventExW(
+        SECURITY_ATTRIBUTES *attribs, LPCWSTR name, DWORD flags, DWORD access)
+{
+    TRACE("(%p %s 0x%08x 0x%08x)\n", attribs, debugstr_w(name), flags, access);
+    return CreateEventExW(attribs, name, flags, access);
+}
+
 void init_misc(void *base)
 {
 #ifdef __x86_64__

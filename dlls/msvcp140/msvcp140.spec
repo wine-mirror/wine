@@ -3757,7 +3757,7 @@
 @ cdecl __crtCompareStringA(long long str long str long) msvcrt.__crtCompareStringA
 @ stub __crtCompareStringEx
 @ cdecl __crtCompareStringW(long long wstr long wstr long) msvcrt.__crtCompareStringW
-@ stub __crtCreateEventExW
+@ cdecl __crtCreateEventExW(ptr wstr long long) MSVCP__crtCreateEventExW
 @ stub __crtCreateSemaphoreExW
 @ stub __crtCreateSymbolicLinkW
 @ stub __crtCreateThreadpoolTimer
