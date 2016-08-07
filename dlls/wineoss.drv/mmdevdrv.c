@@ -2629,7 +2629,7 @@ static HRESULT WINAPI SimpleAudioVolume_SetMute(ISimpleAudioVolume *iface,
     AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
     AudioSession *session = This->session;
 
-    TRACE("(%p)->(%u, %p)\n", session, mute, context);
+    TRACE("(%p)->(%u, %s)\n", session, mute, debugstr_guid(context));
 
     EnterCriticalSection(&session->lock);
 
