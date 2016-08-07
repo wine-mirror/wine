@@ -4947,6 +4947,19 @@ typedef enum _POWER_ACTION {
 } POWER_ACTION,
 *PPOWER_ACTION;
 
+typedef enum _POWER_PLATFORM_ROLE {
+    PlatformRoleUnspecified,
+    PlatformRoleDesktop,
+    PlatformRoleMobile,
+    PlatformRoleWorkstation,
+    PlatformRoleEnterpriseServer,
+    PlatformRoleSOHOServer,
+    PlatformRoleAppliancePC,
+    PlatformRolePerformanceServer,
+    PlatformRoleSlate,
+    PlatformRoleMaximum
+} POWER_PLATFORM_ROLE, *PPOWER_PLATFORM_ROLE;
+
 typedef enum _SYSTEM_POWER_STATE {
 	PowerSystemUnspecified = 0,
 	PowerSystemWorking = 1,

@@ -137,6 +137,9 @@ BOOLEAN WINAPI WriteGlobalPwrPolicy(PGLOBAL_POWER_POLICY);
 BOOLEAN WINAPI WriteProcessorPwrScheme(UINT, PMACHINE_PROCESSOR_POWER_POLICY);
 BOOLEAN WINAPI WritePwrScheme(PUINT, LPWSTR, LPWSTR, PPOWER_POLICY);
 
+/* Power scheme */
+POWER_PLATFORM_ROLE WINAPI PowerDeterminePlatformRole(void);
+
 #ifdef __cplusplus
 }
 #endif
