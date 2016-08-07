@@ -1132,6 +1132,14 @@ HANDLE CDECL MSVCP__crtCreateEventExW(
     return CreateEventExW(attribs, name, flags, access);
 }
 
+/*********************************************************************
+ *  __crtGetTickCount64 (MSVCP140.@)
+ */
+ULONGLONG CDECL MSVCP__crtGetTickCount64(void)
+{
+    return GetTickCount64();
+}
+
 void init_misc(void *base)
 {
 #ifdef __x86_64__

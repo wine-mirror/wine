@@ -3768,7 +3768,7 @@
 @ stub __crtGetFileInformationByHandleEx
 @ stub __crtGetLocaleInfoEx
 @ stub __crtGetSystemTimePreciseAsFileTime
-@ stub __crtGetTickCount64
+@ cdecl -ret64 __crtGetTickCount64() MSVCP__crtGetTickCount64
 @ stub __crtInitOnceExecuteOnce
 @ cdecl __crtInitializeCriticalSectionEx(ptr long long) MSVCP__crtInitializeCriticalSectionEx
 @ stub __crtIsPackagedApp
