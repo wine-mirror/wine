@@ -27,6 +27,8 @@
 static BOOL is_ddraw64 = sizeof(DWORD) != sizeof(DWORD *);
 static DEVMODEW registry_mode;
 
+static HRESULT (WINAPI *pDwmIsCompositionEnabled)(BOOL *);
+
 struct create_window_thread_param
 {
     HWND window;
@@ -9567,6 +9569,19 @@ done:
     DestroyWindow(window);
 }
 
+static BOOL dwm_enabled(void)
+{
+    BOOL ret = FALSE;
+
+    if (!strcmp(winetest_platform, "wine"))
+        return FALSE;
+    if (!pDwmIsCompositionEnabled)
+        return FALSE;
+    if (FAILED(pDwmIsCompositionEnabled(&ret)))
+        return FALSE;
+    return ret;
+}
+
 static void test_offscreen_overlay(void)
 {
     IDirectDrawSurface *overlay, *offscreen, *primary;
@@ -9628,7 +9643,8 @@ static void test_offscreen_overlay(void)
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n",hr);
 
     hr = IDirectDrawSurface_UpdateOverlay(overlay, NULL, offscreen, NULL, DDOVER_SHOW, NULL);
-    ok(SUCCEEDED(hr), "Failed to update overlay, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr) || broken(hr == DDERR_OUTOFCAPS && dwm_enabled()),
+            "Failed to update overlay, hr %#x.\n", hr);
 
     /* Try to overlay the primary with a non-overlay surface. */
     hr = IDirectDrawSurface_UpdateOverlay(offscreen, NULL, primary, NULL, DDOVER_SHOW, NULL);
@@ -9646,7 +9662,7 @@ done:
 
 static void test_overlay_rect(void)
 {
-    IDirectDrawSurface *overlay, *primary;
+    IDirectDrawSurface *overlay, *primary = NULL;
     DDSURFACEDESC surface_desc;
     RECT rect = {0, 0, 64, 64};
     IDirectDraw2 *ddraw;
@@ -9682,6 +9698,13 @@ static void test_overlay_rect(void)
     ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
     hr = IDirectDrawSurface_ReleaseDC(primary, dc);
     ok(SUCCEEDED(hr), "Failed to release DC, hr %#x.\n", hr);
+
+    /* On Windows 8 and newer DWM can't be turned off, making overlays unusable. */
+    if (dwm_enabled())
+    {
+        win_skip("Cannot disable DWM, skipping overlay test.\n");
+        goto done;
+    }
 
     /* The dx sdk sort of implies that rect must be set when DDOVER_SHOW is
      * used. This is not true in Windows Vista and earlier, but changed in
@@ -9730,9 +9753,10 @@ static void test_overlay_rect(void)
     ok(!pos_x, "Got unexpected pos_x %d.\n", pos_x);
     ok(!pos_y, "Got unexpected pos_y %d.\n", pos_y);
 
-    IDirectDrawSurface_Release(primary);
     IDirectDrawSurface_Release(overlay);
 done:
+    if (primary)
+        IDirectDrawSurface_Release(primary);
     IDirectDraw2_Release(ddraw);
     DestroyWindow(window);
 }
@@ -10224,6 +10248,7 @@ START_TEST(ddraw2)
 {
     IDirectDraw2 *ddraw;
     DEVMODEW current_mode;
+    HMODULE dwmapi;
 
     if (!(ddraw = create_ddraw()))
     {
@@ -10243,6 +10268,9 @@ START_TEST(ddraw2)
         skip("Current mode does not match registry mode, skipping test.\n");
         return;
     }
+
+    if ((dwmapi = LoadLibraryA("dwmapi.dll")))
+        pDwmIsCompositionEnabled = (void *)GetProcAddress(dwmapi, "DwmIsCompositionEnabled");
 
     test_coop_level_create_device_window();
     test_clipper_blt();
