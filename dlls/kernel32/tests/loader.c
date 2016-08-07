@@ -143,9 +143,9 @@ static const IMAGE_NT_HEADERS nt_header_template =
 static IMAGE_SECTION_HEADER section =
 {
     ".rodata", /* Name */
-    { 0x10 }, /* Misc */
+    { 0 }, /* Misc */
     0, /* VirtualAddress */
-    0x0a, /* SizeOfRawData */
+    0, /* SizeOfRawData */
     0, /* PointerToRawData */
     0, /* PointerToRelocations */
     0, /* PointerToLinenumbers */
@@ -196,6 +196,8 @@ static DWORD create_test_dll( const IMAGE_DOS_HEADER *dos_header, UINT dos_size,
     assert(nt_header->FileHeader.NumberOfSections <= 1);
     if (nt_header->FileHeader.NumberOfSections)
     {
+        section.SizeOfRawData = 10;
+
         if (nt_header->OptionalHeader.SectionAlignment >= page_size)
         {
             section.PointerToRawData = dos_size;
@@ -2722,7 +2724,8 @@ static void test_ResolveDelayLoadedAPI(void)
     /* sections */
     section.PointerToRawData = nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].VirtualAddress;
     section.VirtualAddress = nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].VirtualAddress;
-    section.Misc.VirtualSize = nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].Size;
+    section.Misc.VirtualSize = 2 * sizeof(idd);
+    section.SizeOfRawData = section.Misc.VirtualSize;
     section.Characteristics = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ;
     SetLastError(0xdeadbeef);
     ret = WriteFile(hfile, &section, sizeof(section), &dummy, NULL);
@@ -2734,6 +2737,7 @@ static void test_ResolveDelayLoadedAPI(void)
     section.Misc.VirtualSize = sizeof(test_dll) + sizeof(hint) + sizeof(test_func) + sizeof(HMODULE) +
                                2 * (i + 1) * sizeof(IMAGE_THUNK_DATA);
     ok(section.Misc.VirtualSize <= 0x1000, "Too much tests, add a new section!\n");
+    section.SizeOfRawData = section.Misc.VirtualSize;
     section.Characteristics = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE;
     SetLastError(0xdeadbeef);
     ret = WriteFile(hfile, &section, sizeof(section), &dummy, NULL);
