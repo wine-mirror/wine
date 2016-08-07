@@ -2744,12 +2744,7 @@ static void test_ResolveDelayLoadedAPI(void)
     ok(ret, "WriteFile error %d\n", GetLastError());
 
     /* fill up to delay data */
-    file_size = GetFileSize(hfile, NULL);
-    SetLastError(0xdeadbeef);
-    ret = WriteFile(hfile, filler,
-                    nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].VirtualAddress - file_size,
-                    &dummy, NULL);
-    ok(ret, "WriteFile error %d\n", GetLastError());
+    SetFilePointer( hfile, nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].VirtualAddress, NULL, SEEK_SET );
 
     /* delay data */
     idd.Attributes.AllAttributes = 1;
@@ -2770,10 +2765,7 @@ static void test_ResolveDelayLoadedAPI(void)
     ok(ret, "WriteFile error %d\n", GetLastError());
 
     /* fill up to extended delay data */
-    file_size = GetFileSize(hfile, NULL);
-    SetLastError(0xdeadbeef);
-    ret = WriteFile(hfile, filler, idd.DllNameRVA - file_size, &dummy, NULL);
-    ok(ret, "WriteFile error %d\n", GetLastError());
+    SetFilePointer( hfile, idd.DllNameRVA, NULL, SEEK_SET );
 
     /* extended delay data */
     SetLastError(0xdeadbeef);
@@ -2810,10 +2802,8 @@ static void test_ResolveDelayLoadedAPI(void)
     ok(ret, "WriteFile error %d\n", GetLastError());
 
     /* fill up to eof */
-    file_size = GetFileSize(hfile, NULL);
-    SetLastError(0xdeadbeef);
-    ret = WriteFile(hfile, filler, section.VirtualAddress + section.Misc.VirtualSize - file_size, &dummy, NULL);
-    ok(ret, "WriteFile error %d\n", GetLastError());
+    SetFilePointer( hfile, section.VirtualAddress + section.Misc.VirtualSize, NULL, SEEK_SET );
+    SetEndOfFile( hfile );
     CloseHandle(hfile);
 
     SetLastError(0xdeadbeef);
