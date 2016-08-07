@@ -2128,7 +2128,6 @@ static void test_ExitProcess(void)
     } section_data = { 0xb8, dll_entry_point, { 0xff,0xe0 } };
 #endif
 #include "poppack.h"
-    static const char filler[0x1000];
     DWORD dummy, file_align;
     HANDLE file, thread, process, hmap, hmap_dup;
     char temp_path[MAX_PATH], dll_name[MAX_PATH], cmdline[MAX_PATH * 2];
@@ -2630,7 +2629,6 @@ static void test_ResolveDelayLoadedAPI(void)
 {
     static const char test_dll[] = "secur32.dll";
     static const char test_func[] = "SealMessage";
-    static const char filler[0x1000];
     char temp_path[MAX_PATH];
     char dll_name[MAX_PATH];
     IMAGE_DELAYLOAD_DESCRIPTOR idd, *delaydir;
