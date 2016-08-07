@@ -43,3 +43,27 @@ HRESULT WINAPI D3DX10CompileFromMemory(const char *data, SIZE_T data_size, const
     return D3DCompile(data, data_size, filename, defines, include, entry_point, target,
             sflags, eflags, shader, error_messages);
 }
+
+HRESULT WINAPI D3DX10CreateEffectPoolFromFileA(const char *filename, const D3D10_SHADER_MACRO *defines,
+        ID3D10Include *include, const char *profile, UINT hlslflags, UINT fxflags, ID3D10Device *device,
+        ID3DX10ThreadPump *pump, ID3D10EffectPool **effectpool, ID3D10Blob **errors, HRESULT *hresult)
+{
+    FIXME("filename %s, defines %p, include %p, profile %s, hlslflags %#x, fxflags %#x, device %p, "
+            "pump %p, effectpool %p, errors %p, hresult %p, stub!\n",
+            debugstr_a(filename), defines, include, debugstr_a(profile), hlslflags, fxflags, device,
+            pump, effectpool, errors, hresult);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI D3DX10CreateEffectPoolFromFileW(const WCHAR *filename, const D3D10_SHADER_MACRO *defines,
+        ID3D10Include *include, const char *profile, UINT hlslflags, UINT fxflags, ID3D10Device *device,
+        ID3DX10ThreadPump *pump, ID3D10EffectPool **effectpool, ID3D10Blob **errors, HRESULT *hresult)
+{
+    FIXME("filename %s, defines %p, include %p, profile %s, hlslflags %#x, fxflags %#x, device %p, "
+            "pump %p, effectpool %p, errors %p, hresult %p, stub!\n",
+            debugstr_w(filename), defines, include, debugstr_a(profile), hlslflags, fxflags, device,
+            pump, effectpool, errors, hresult);
+
+    return E_NOTIMPL;
+}
