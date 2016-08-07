@@ -1140,6 +1140,18 @@ ULONGLONG CDECL MSVCP__crtGetTickCount64(void)
     return GetTickCount64();
 }
 
+/*********************************************************************
+ *  __crtCreateSemaphoreExW (MSVCP140.@)
+ */
+HANDLE CDECL MSVCP__crtCreateSemaphoreExW(
+        SECURITY_ATTRIBUTES *attribs, LONG initial_count, LONG max_count, LPCWSTR name,
+        DWORD flags, DWORD access)
+{
+    TRACE("(%p %d %d %s 0x%08x 0x%08x)\n", attribs, initial_count, max_count, debugstr_w(name),
+            flags, access);
+    return CreateSemaphoreExW(attribs, initial_count, max_count, name, flags, access);
+}
+
 void init_misc(void *base)
 {
 #ifdef __x86_64__
