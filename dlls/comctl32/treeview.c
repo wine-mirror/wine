@@ -350,6 +350,20 @@ TREEVIEW_IsChildOf(const TREEVIEW_ITEM *parent, const TREEVIEW_ITEM *child)
     return FALSE;
 }
 
+static BOOL
+TREEVIEW_IsFullRowSelect(const TREEVIEW_INFO *infoPtr)
+{
+    return !(infoPtr->dwStyle & TVS_HASLINES) && (infoPtr->dwStyle & TVS_FULLROWSELECT);
+}
+
+static BOOL
+TREEVIEW_IsItemHit(const TREEVIEW_INFO *infoPtr, const TVHITTESTINFO *ht)
+{
+    if (TREEVIEW_IsFullRowSelect(infoPtr))
+        return ht->flags & (TVHT_ONITEMINDENT | TVHT_ONITEMBUTTON | TVHT_ONITEM | TVHT_ONITEMRIGHT);
+    else
+        return ht->flags & TVHT_ONITEM;
+}
 
 /* Tree Traversal *******************************************************/
 
@@ -5328,6 +5342,7 @@ TREEVIEW_MouseMove (TREEVIEW_INFO * infoPtr, LPARAM lParam)
     TRACKMOUSEEVENT trackinfo;
     TREEVIEW_ITEM * item;
     TVHITTESTINFO ht;
+    BOOL item_hit;
 
     if (!(infoPtr->dwStyle & TVS_TRACKSELECT)) return 0;
 
@@ -5356,12 +5371,13 @@ TREEVIEW_MouseMove (TREEVIEW_INFO * infoPtr, LPARAM lParam)
     ht.pt.y = (short)HIWORD(lParam);
 
     item = TREEVIEW_HitTest(infoPtr, &ht);
-    if ((item != infoPtr->hotItem) || !(ht.flags & TVHT_ONITEM))
+    item_hit = TREEVIEW_IsItemHit(infoPtr, &ht);
+    if ((item != infoPtr->hotItem) || !item_hit)
     {
         /* redraw old hot item */
         TREEVIEW_InvalidateItem(infoPtr, infoPtr->hotItem);
         infoPtr->hotItem = NULL;
-        if (item && (ht.flags & TVHT_ONITEM))
+        if (item && item_hit)
         {
             infoPtr->hotItem = item;
             /* redraw new hot item */
@@ -5526,7 +5542,7 @@ TREEVIEW_SetCursor(const TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if (TREEVIEW_SendRealNotify(infoPtr, NM_SETCURSOR, &nmmouse.hdr))
         return 0;
 
-    if (item && (infoPtr->dwStyle & TVS_TRACKSELECT) && (ht.flags & TVHT_ONITEM))
+    if (item && (infoPtr->dwStyle & TVS_TRACKSELECT) && TREEVIEW_IsItemHit(infoPtr, &ht))
     {
         SetCursor(infoPtr->hcurHand);
         return 0;
