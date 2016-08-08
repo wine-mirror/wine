@@ -399,7 +399,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     size = pread( unix_fd, &nt, sizeof(nt), pos );
     if (size < sizeof(nt.Signature) + sizeof(nt.FileHeader)) return STATUS_INVALID_IMAGE_FORMAT;
     /* zero out Optional header in the case it's not present or partial */
-    size = min( size, nt.FileHeader.SizeOfOptionalHeader );
+    size = min( size, sizeof(nt.Signature) + sizeof(nt.FileHeader) + nt.FileHeader.SizeOfOptionalHeader );
     if (size < sizeof(nt)) memset( (char *)&nt + size, 0, sizeof(nt) - size );
     if (nt.Signature != IMAGE_NT_SIGNATURE)
     {

@@ -264,9 +264,13 @@ static void query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
     ok( image.CommittedStackSize == nt_header->OptionalHeader.SizeOfStackCommit || broken(truncated),
         "%u: CommittedStackSize wrong %lx / %lx\n", id,
         image.CommittedStackSize, (SIZE_T)nt_header->OptionalHeader.SizeOfStackCommit );
-    ok( image.SubSystemType == nt_header->OptionalHeader.Subsystem || broken(truncated),
-        "%u: SubSystemType wrong %08x / %08x\n", id,
-        image.SubSystemType, nt_header->OptionalHeader.Subsystem );
+    if (truncated)
+        ok( !image.SubSystemType || broken(truncated),
+            "%u: SubSystemType wrong %08x / 00000000\n", id, image.SubSystemType );
+    else
+        ok( image.SubSystemType == nt_header->OptionalHeader.Subsystem,
+            "%u: SubSystemType wrong %08x / %08x\n", id,
+            image.SubSystemType, nt_header->OptionalHeader.Subsystem );
     ok( image.SubsystemVersionLow == nt_header->OptionalHeader.MinorSubsystemVersion,
         "%u: SubsystemVersionLow wrong %04x / %04x\n", id,
         image.SubsystemVersionLow, nt_header->OptionalHeader.MinorSubsystemVersion );
