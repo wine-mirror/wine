@@ -683,6 +683,23 @@ int CDECL MSVCRT__stdio_common_vsscanf(unsigned __int64 options,
 }
 
 /*********************************************************************
+ *		__stdio_common_vfwscanf (MSVCRT.@)
+ */
+int CDECL MSVCRT__stdio_common_vfwscanf(unsigned __int64 options,
+                                        MSVCRT_FILE *file,
+                                        const MSVCRT_wchar_t *format,
+                                        MSVCRT__locale_t locale,
+                                        __ms_va_list valist)
+{
+    if (options & ~UCRTBASE_SCANF_SECURECRT)
+        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+    if (options & UCRTBASE_SCANF_SECURECRT)
+        return MSVCRT_vfwscanf_s_l(file, format, locale, valist);
+    else
+        return MSVCRT_vfwscanf_l(file, format, locale, valist);
+}
+
+/*********************************************************************
  *		_snwscanf (MSVCRT.@)
  */
 int CDECL MSVCRT__snwscanf(MSVCRT_wchar_t *input, MSVCRT_size_t length,
