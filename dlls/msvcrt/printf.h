@@ -35,7 +35,7 @@ typedef struct FUNC_NAME(pf_flags_t)
     APICHAR Sign, LeftAlign, Alternate, PadZero;
     int FieldLength, Precision;
     APICHAR IntegerLength, IntegerDouble, IntegerNative;
-    APICHAR WideString;
+    APICHAR WideString, NaturalString;
     APICHAR Format;
 } FUNC_NAME(pf_flags);
 
@@ -208,7 +208,8 @@ static inline int FUNC_NAME(pf_output_format_str)(FUNC_NAME(puts_clbk) pf_puts, 
 static inline int FUNC_NAME(pf_handle_string)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
         const void *str, int len, FUNC_NAME(pf_flags) *flags, MSVCRT_pthreadlocinfo locinfo, BOOL legacy_wide)
 {
-    BOOL complement_is_narrow = legacy_wide ? (sizeof(APICHAR)==sizeof(MSVCRT_wchar_t)) : FALSE;
+    BOOL api_is_wide = sizeof(APICHAR) == sizeof(MSVCRT_wchar_t);
+    BOOL complement_is_narrow = legacy_wide ? api_is_wide : FALSE;
 #ifdef PRINTF_WIDE
     static const MSVCRT_wchar_t nullW[] = {'(','n','u','l','l',')',0};
 
@@ -219,9 +220,9 @@ static inline int FUNC_NAME(pf_handle_string)(FUNC_NAME(puts_clbk) pf_puts, void
         return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, "(null)", 6, flags, locinfo);
 #endif
 
-    if(flags->WideString || flags->IntegerLength=='l')
+    if((flags->NaturalString && api_is_wide) || flags->WideString || flags->IntegerLength=='l')
         return FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, str, len, flags, locinfo);
-    if(flags->IntegerLength == 'h')
+    if((flags->NaturalString && !api_is_wide) || flags->IntegerLength == 'h')
         return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, str, len, flags, locinfo);
 
     if((flags->Format=='S' || flags->Format=='C') == complement_is_narrow)
@@ -476,6 +477,8 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
 #if _MSVCR_VER >= 140
             else if(*p == 'z')
                 flags.IntegerNative = *p++;
+            else if(*p == 'T')
+                flags.NaturalString = *p++;
 #endif
             else if((*p == 'F' || *p == 'N') && legacy_msvcrt_compat)
                 p++; /* ignore */

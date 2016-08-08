@@ -660,6 +660,24 @@ static void test_printf_c99(void)
     }
 }
 
+static void test_printf_natural_string(void)
+{
+    const wchar_t wide[] = {'A','B','C','D',0};
+    const char narrow[] = "abcd";
+    const char narrow_fmt[] = "%s %Ts";
+    const char narrow_out[] = "abcd abcd";
+    const wchar_t wide_fmt[] = {'%','s',' ','%','T','s',0};
+    const wchar_t wide_out[] = {'a','b','c','d',' ','A','B','C','D',0};
+    char buffer[20];
+    wchar_t wbuffer[20];
+
+    vsprintf_wrapper(0, buffer, sizeof(buffer), narrow_fmt, narrow, narrow);
+    ok(!strcmp(buffer, narrow_out), "buffer wrong, got=%s\n", buffer);
+
+    vswprintf_wrapper(0, wbuffer, sizeof(wbuffer), wide_fmt, narrow, wide);
+    ok(!lstrcmpW(wbuffer, wide_out), "buffer wrong, got=%s\n", wine_dbgstr_w(wbuffer));
+}
+
 START_TEST(printf)
 {
     if (!init()) return;
@@ -674,4 +692,5 @@ START_TEST(printf)
     test_printf_legacy_msvcrt();
     test_printf_legacy_three_digit_exp();
     test_printf_c99();
+    test_printf_natural_string();
 }
