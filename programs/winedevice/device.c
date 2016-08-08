@@ -42,7 +42,6 @@ extern NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event );
 
 static SERVICE_STATUS_HANDLE service_handle;
 static HANDLE stop_event;
-static DRIVER_OBJECT *driver_obj;
 
 /* find the LDR_MODULE corresponding to the driver module */
 static LDR_MODULE *find_ldr_module( HMODULE module )
@@ -225,7 +224,6 @@ static NTSTATUS WINAPI init_driver( DRIVER_OBJECT *driver_object, UNICODE_STRING
     if (!module)
         return STATUS_DLL_INIT_FAILED;
 
-    driver_obj = driver_object;
     driver_object->DriverSection = find_ldr_module( module );
 
     nt = RtlImageNtHeader( module );
@@ -272,9 +270,10 @@ static void unload_driver( DRIVER_OBJECT *driver_obj )
 
     FreeLibrary( ldr->BaseAddress );
     IoDeleteDriver( driver_obj );
+    ObDereferenceObject( driver_obj );
 }
 
-static NTSTATUS create_driver(const WCHAR *driver_name)
+static NTSTATUS create_driver(const WCHAR *driver_name, DRIVER_OBJECT **driver_obj)
 {
     static const WCHAR driverW[] = {'\\','D','r','i','v','e','r','\\',0};
     UNICODE_STRING drv_name;
@@ -287,6 +286,16 @@ static NTSTATUS create_driver(const WCHAR *driver_name)
     RtlInitUnicodeString( &drv_name, str );
 
     status = IoCreateDriver( &drv_name, init_driver );
+
+    if (status == STATUS_SUCCESS)
+    {
+        status = ObReferenceObjectByName( &drv_name, OBJ_CASE_INSENSITIVE, NULL,
+                                          0, NULL, KernelMode, NULL, (void **)driver_obj );
+        if (status != STATUS_SUCCESS)
+        {
+            ERR("Failed to locate loaded driver (%s)\n", wine_dbgstr_w(driver_name));
+        }
+    }
 
     RtlFreeUnicodeString( &drv_name );
     return status;
@@ -326,6 +335,7 @@ static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
 {
     SERVICE_STATUS status;
     const WCHAR *driver_name = argv[0];
+    DRIVER_OBJECT *driver_obj;
 
     WINE_TRACE( "starting service %s\n", wine_dbgstr_w(driver_name) );
 
@@ -344,7 +354,7 @@ static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
     status.dwWaitHint                = 10000;
     SetServiceStatus( service_handle, &status );
 
-    if (create_driver( driver_name ) == STATUS_SUCCESS)
+    if (create_driver( driver_name, &driver_obj ) == STATUS_SUCCESS)
     {
         status.dwCurrentState     = SERVICE_RUNNING;
         status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
