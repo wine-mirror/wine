@@ -2400,7 +2400,7 @@ static const WCHAR WC_TREEVIEWW[] = { 'S','y','s',
 #define TVHT_ONITEMBUTTON     0x0010
 #define TVHT_ONITEMRIGHT      0x0020
 #define TVHT_ONITEMSTATEICON  0x0040
-#define TVHT_ONITEM           0x0046
+#define TVHT_ONITEM           (TVHT_ONITEMICON | TVHT_ONITEMLABEL | TVHT_ONITEMSTATEICON)
 #define TVHT_ABOVE            0x0100
 #define TVHT_BELOW            0x0200
 #define TVHT_TORIGHT          0x0400
