@@ -30,15 +30,6 @@ WINE_DECLARE_DEBUG_CHANNEL(wc_font);
 
 UINT g_uiDefaultCharset;
 
-/* mapping console colors to RGB values */
-const COLORREF WCUSER_ColorMap[16] =
-{
-    RGB(0x00, 0x00, 0x00), RGB(0x00, 0x00, 0x80), RGB(0x00, 0x80, 0x00), RGB(0x00, 0x80, 0x80),
-    RGB(0x80, 0x00, 0x00), RGB(0x80, 0x00, 0x80), RGB(0x80, 0x80, 0x00), RGB(0xC0, 0xC0, 0xC0),
-    RGB(0x80, 0x80, 0x80), RGB(0x00, 0x00, 0xFF), RGB(0x00, 0xFF, 0x00), RGB(0x00, 0xFF, 0xFF),
-    RGB(0xFF, 0x00, 0x00), RGB(0xFF, 0x00, 0xFF), RGB(0xFF, 0xFF, 0x00), RGB(0xFF, 0xFF, 0xFF),
-};
-
 static BOOL WCUSER_SetFont(struct inner_data* data, const LOGFONTW* font);
 
 /******************************************************************
@@ -76,8 +67,8 @@ static void WCUSER_FillMemDC(const struct inner_data* data, int upd_tp, int upd_
 	for (i = 0; i < data->curcfg.sb_width; i++)
 	{
 	    attr = cell[i].Attributes;
-	    SetBkColor(PRIVATE(data)->hMemDC, WCUSER_ColorMap[(attr>>4)&0x0F]);
-	    SetTextColor(PRIVATE(data)->hMemDC, WCUSER_ColorMap[attr&0x0F]);
+	    SetBkColor(PRIVATE(data)->hMemDC, data->curcfg.color_map[(attr >> 4) & 0x0F]);
+	    SetTextColor(PRIVATE(data)->hMemDC, data->curcfg.color_map[attr & 0x0F]);
 	    for (k = i; k < data->curcfg.sb_width && cell[k].Attributes == attr; k++)
 	    {
 		line[k - i] = cell[k].Char.UnicodeChar;
@@ -86,7 +77,7 @@ static void WCUSER_FillMemDC(const struct inner_data* data, int upd_tp, int upd_
             ExtTextOutW( PRIVATE(data)->hMemDC, i * data->curcfg.cell_width, j * data->curcfg.cell_height,
                          0, NULL, line, k - i, dx );
             if (PRIVATE(data)->ext_leading &&
-                (hbr = CreateSolidBrush(WCUSER_ColorMap[(attr>>4)&0x0F])))
+                (hbr = CreateSolidBrush(data->curcfg.color_map[(attr >> 4) & 0x0F])))
             {
                 r.left   = i * data->curcfg.cell_width;
                 r.top    = (j + 1) * data->curcfg.cell_height - PRIVATE(data)->ext_leading;

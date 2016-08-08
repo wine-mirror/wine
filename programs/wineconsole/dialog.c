@@ -147,6 +147,14 @@ static INT_PTR WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, L
     return TRUE;
 }
 
+static COLORREF get_color(struct dialog_info *di, unsigned int idc)
+{
+    LONG_PTR index;
+
+    index = GetWindowLongPtrW(GetDlgItem(di->hDlg, idc), 0);
+    return di->config.color_map[index];
+}
+
 /******************************************************************
  *		WCUSER_FontPreviewProc
  *
@@ -196,10 +204,10 @@ static LRESULT WINAPI WCUSER_FontPreviewProc(HWND hWnd, UINT msg, WPARAM wParam,
                 int   len;
 
                 hOldFont = SelectObject(ps.hdc, hFont);
-                bkcolor = WCUSER_ColorMap[GetWindowLongW(GetDlgItem(di->hDlg, IDC_FNT_COLOR_BK), 0)];
+                bkcolor = get_color(di, IDC_FNT_COLOR_BK);
                 FillRect(ps.hdc, &ps.rcPaint, CreateSolidBrush(bkcolor));
                 SetBkColor(ps.hdc, bkcolor);
-                SetTextColor(ps.hdc, WCUSER_ColorMap[GetWindowLongW(GetDlgItem(di->hDlg, IDC_FNT_COLOR_FG), 0)]);
+                SetTextColor(ps.hdc, get_color(di, IDC_FNT_COLOR_FG));
                 len = LoadStringW(GetModuleHandleW(NULL), IDS_FNT_PREVIEW,
                                   buf, sizeof(buf) / sizeof(buf[0]));
                 if (len)
@@ -228,14 +236,17 @@ static LRESULT WINAPI WCUSER_ColorPreviewProc(HWND hWnd, UINT msg, WPARAM wParam
     {
     case WM_PAINT:
         {
-            PAINTSTRUCT     ps;
-            int             i, step;
-            RECT            client, r;
-            HBRUSH          hbr;
+            PAINTSTRUCT ps;
+            int i, step;
+            RECT client, r;
+            struct dialog_info *di;
+            HBRUSH hbr;
 
             BeginPaint(hWnd, &ps);
             GetClientRect(hWnd, &client);
             step = client.right / 8;
+
+            di = (struct dialog_info *)GetWindowLongPtrW(GetParent(hWnd), DWLP_USER);
 
             for (i = 0; i < 16; i++)
             {
@@ -243,7 +254,7 @@ static LRESULT WINAPI WCUSER_ColorPreviewProc(HWND hWnd, UINT msg, WPARAM wParam
                 r.bottom = r.top + client.bottom / 2;
                 r.left = (i & 7) * step;
                 r.right = r.left + step;
-                hbr = CreateSolidBrush(WCUSER_ColorMap[i]);
+                hbr = CreateSolidBrush(di->config.color_map[i]);
                 FillRect(ps.hdc, &r, hbr);
                 DeleteObject(hbr);
                 if (GetWindowLongW(hWnd, 0) == i)
