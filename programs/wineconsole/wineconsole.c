@@ -703,6 +703,7 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
         /* fall through */
     case init_success:
         WINECON_GetServerConfig(data);
+        memcpy(data->curcfg.color_map, cfg.color_map, sizeof(data->curcfg.color_map));
         data->cells = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                                 data->curcfg.sb_width * data->curcfg.sb_height * sizeof(CHAR_INFO));
         if (!data->cells) WINECON_Fatal("OOM\n");

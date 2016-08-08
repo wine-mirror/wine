@@ -26,10 +26,12 @@
 #include "winreg.h"
 #include "winecon_private.h"
 
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wineconsole);
 
+static const WCHAR wszColorTable[]        = {'C','o','l','o','r','T','a','b','l','e',0};
 static const WCHAR wszConsole[]           = {'C','o','n','s','o','l','e',0};
 static const WCHAR wszCursorSize[]        = {'C','u','r','s','o','r','S','i','z','e',0};
 static const WCHAR wszCursorVisible[]     = {'C','u','r','s','o','r','V','i','s','i','b','l','e',0};
@@ -46,6 +48,10 @@ static const WCHAR wszQuickEdit[]         = {'Q','u','i','c','k','E','d','i','t'
 static const WCHAR wszScreenBufferSize[]  = {'S','c','r','e','e','n','B','u','f','f','e','r','S','i','z','e',0};
 static const WCHAR wszScreenColors[]      = {'S','c','r','e','e','n','C','o','l','o','r','s',0};
 static const WCHAR wszWindowSize[]        = {'W','i','n','d','o','w','S','i','z','e',0};
+
+static const WCHAR color_name_fmt[] = {'%','s','%','0','2','d',0};
+
+#define NUM_COLORS 16
 
 void WINECON_DumpConfig(const char* pfx, const struct config_data* cfg)
 {
@@ -84,9 +90,17 @@ static LPWSTR   WINECON_CreateKeyName(LPCWSTR kn)
  */
 static void WINECON_RegLoadHelper(HKEY hConKey, struct config_data* cfg)
 {
-    DWORD 	type;
-    DWORD 	count;
-    DWORD       val;
+    int   i;
+    DWORD type, count, val;
+    WCHAR color_name[13];
+
+    for (i = 0; i < NUM_COLORS; i++)
+    {
+        sprintfW(color_name, color_name_fmt, wszColorTable, i);
+        count = sizeof(val);
+        if (!RegQueryValueExW(hConKey, color_name, 0, &type, (LPBYTE)&val, &count))
+            cfg->color_map[i] = val;
+    }
 
     count = sizeof(val);
     if (!RegQueryValueExW(hConKey, wszCursorSize, 0, &type, (LPBYTE)&val, &count))
@@ -166,11 +180,24 @@ static void WINECON_RegLoadHelper(HKEY hConKey, struct config_data* cfg)
  */
 void WINECON_RegLoad(const WCHAR* appname, struct config_data* cfg)
 {
-    HKEY        hConKey;
+    static const COLORREF color_map[NUM_COLORS] =
+    {
+        RGB(0x00, 0x00, 0x00), RGB(0x00, 0x00, 0x80), RGB(0x00, 0x80, 0x00), RGB(0x00, 0x80, 0x80),
+        RGB(0x80, 0x00, 0x00), RGB(0x80, 0x00, 0x80), RGB(0x80, 0x80, 0x00), RGB(0xC0, 0xC0, 0xC0),
+        RGB(0x80, 0x80, 0x80), RGB(0x00, 0x00, 0xFF), RGB(0x00, 0xFF, 0x00), RGB(0x00, 0xFF, 0xFF),
+        RGB(0xFF, 0x00, 0x00), RGB(0xFF, 0x00, 0xFF), RGB(0xFF, 0xFF, 0x00), RGB(0xFF, 0xFF, 0xFF),
+    };
+
+    int  i;
+    HKEY hConKey;
 
     WINE_TRACE("loading %s registry settings.\n", appname ? wine_dbgstr_w(appname) : "default");
 
     /* first set default values */
+    for (i = 0; i < NUM_COLORS; i++)
+    {
+        cfg->color_map[i] = color_map[i];
+    }
     cfg->cursor_size = 25;
     cfg->cursor_visible = 1;
     cfg->exit_on_die = 1;
@@ -221,9 +248,18 @@ void WINECON_RegLoad(const WCHAR* appname, struct config_data* cfg)
  */
 static void WINECON_RegSaveHelper(HKEY hConKey, const struct config_data* cfg)
 {
-    DWORD       val;
+    int   i;
+    DWORD val;
+    WCHAR color_name[13];
 
     WINECON_DumpConfig("save", cfg);
+
+    for (i = 0; i < NUM_COLORS; i++)
+    {
+        sprintfW(color_name, color_name_fmt, wszColorTable, i);
+        val = cfg->color_map[i];
+        RegSetValueExW(hConKey, color_name, 0, REG_DWORD, (LPBYTE)&val, sizeof(val));
+    }
 
     val = cfg->cursor_size;
     RegSetValueExW(hConKey, wszCursorSize, 0, REG_DWORD, (LPBYTE)&val, sizeof(val));

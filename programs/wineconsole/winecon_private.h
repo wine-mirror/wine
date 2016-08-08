@@ -27,6 +27,7 @@
 
 /* this is the configuration stored & loaded into the registry */
 struct config_data {
+    DWORD       color_map[16];  /* console color table */
     unsigned	cell_width;	/* width in pixels of a character */
     unsigned	cell_height;	/* height in pixels of a character */
     int		cursor_size;	/* in % of cell height */
