@@ -8,7 +8,7 @@
 @ cdecl __stdio_common_vfwprintf(int64 ptr wstr ptr ptr) ucrtbase.__stdio_common_vfwprintf
 @ stub __stdio_common_vfwprintf_p
 @ stub __stdio_common_vfwprintf_s
-@ stub __stdio_common_vfwscanf
+@ cdecl __stdio_common_vfwscanf(int64 ptr wstr ptr ptr) ucrtbase.__stdio_common_vfwscanf
 @ cdecl __stdio_common_vsnprintf_s(int64 ptr long long str ptr ptr) ucrtbase.__stdio_common_vsnprintf_s
 @ cdecl __stdio_common_vsnwprintf_s(int64 ptr long long wstr ptr ptr) ucrtbase.__stdio_common_vsnwprintf_s
 @ cdecl __stdio_common_vsprintf(int64 ptr long str ptr ptr) ucrtbase.__stdio_common_vsprintf
