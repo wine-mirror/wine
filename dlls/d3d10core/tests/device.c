@@ -9256,6 +9256,85 @@ static void test_face_culling(void)
     release_test_context(&test_context);
 }
 
+static void test_line_antialiasing_blending(void)
+{
+    struct d3d10core_test_context test_context;
+    ID3D10RasterizerState *rasterizer_state;
+    D3D10_RASTERIZER_DESC rasterizer_desc;
+    ID3D10BlendState *blend_state;
+    D3D10_BLEND_DESC blend_desc;
+    ID3D10Device *device;
+    HRESULT hr;
+
+    static const struct vec4 red = {1.0f, 0.0f, 0.0f, 0.8f};
+    static const struct vec4 green = {0.0f, 1.0f, 0.0f, 0.5f};
+
+    if (!init_test_context(&test_context))
+        return;
+
+    device = test_context.device;
+
+    memset(&blend_desc, 0, sizeof(blend_desc));
+    blend_desc.AlphaToCoverageEnable = FALSE;
+    blend_desc.BlendEnable[0] = TRUE;
+    blend_desc.SrcBlend = D3D10_BLEND_SRC_ALPHA;
+    blend_desc.DestBlend = D3D10_BLEND_DEST_ALPHA;
+    blend_desc.BlendOp = D3D10_BLEND_OP_ADD;
+    blend_desc.SrcBlendAlpha = D3D10_BLEND_SRC_ALPHA;
+    blend_desc.DestBlendAlpha = D3D10_BLEND_DEST_ALPHA;
+    blend_desc.BlendOpAlpha = D3D10_BLEND_OP_ADD;
+    blend_desc.RenderTargetWriteMask[0] = D3D10_COLOR_WRITE_ENABLE_ALL;
+
+    hr = ID3D10Device_CreateBlendState(device, &blend_desc, &blend_state);
+    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+    ID3D10Device_OMSetBlendState(device, blend_state, NULL, D3D10_DEFAULT_SAMPLE_MASK);
+
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xe2007fcc, 1);
+
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &green.x);
+    draw_color_quad(&test_context, &red);
+    check_texture_color(test_context.backbuffer, 0xe2007fcc, 1);
+
+    ID3D10Device_OMSetBlendState(device, NULL, NULL, D3D10_DEFAULT_SAMPLE_MASK);
+    ID3D10BlendState_Release(blend_state);
+
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0x7f00ff00, 1);
+
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &green.x);
+    draw_color_quad(&test_context, &red);
+    check_texture_color(test_context.backbuffer, 0xcc0000ff, 1);
+
+    rasterizer_desc.FillMode = D3D10_FILL_SOLID;
+    rasterizer_desc.CullMode = D3D10_CULL_BACK;
+    rasterizer_desc.FrontCounterClockwise = FALSE;
+    rasterizer_desc.DepthBias = 0;
+    rasterizer_desc.DepthBiasClamp = 0.0f;
+    rasterizer_desc.SlopeScaledDepthBias = 0.0f;
+    rasterizer_desc.DepthClipEnable = TRUE;
+    rasterizer_desc.ScissorEnable = FALSE;
+    rasterizer_desc.MultisampleEnable = FALSE;
+    rasterizer_desc.AntialiasedLineEnable = TRUE;
+
+    hr = ID3D10Device_CreateRasterizerState(device, &rasterizer_desc, &rasterizer_state);
+    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ID3D10Device_RSSetState(device, rasterizer_state);
+
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
+    draw_color_quad(&test_context, &green);
+    todo_wine check_texture_color(test_context.backbuffer, 0x7f00ff00, 1);
+
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &green.x);
+    draw_color_quad(&test_context, &red);
+    todo_wine check_texture_color(test_context.backbuffer, 0xcc0000ff, 1);
+
+    ID3D10RasterizerState_Release(rasterizer_state);
+    release_test_context(&test_context);
+}
+
 START_TEST(device)
 {
     test_feature_level();
@@ -9306,4 +9385,5 @@ START_TEST(device)
     test_uint_shader_instructions();
     test_index_buffer_offset();
     test_face_culling();
+    test_line_antialiasing_blending();
 }
