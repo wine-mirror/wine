@@ -1745,6 +1745,7 @@ ios* __thiscall ios_copy_ctor(ios *this, const ios *copy)
     this->vtable = &MSVCP_ios_vtable;
     this->sb = NULL;
     this->delbuf = 0;
+    this->do_lock = -1;
     InitializeCriticalSection(&this->lock);
     return ios_assign(this, copy);
 }
