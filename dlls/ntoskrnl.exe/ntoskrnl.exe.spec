@@ -798,7 +798,7 @@
 @ stub ObCloseHandle
 @ stub ObCreateObject
 @ stub ObCreateObjectType
-@ stub ObDereferenceObject
+@ stdcall ObDereferenceObject(ptr)
 @ stub ObDereferenceSecurityDescriptor
 @ stub ObFindHandleForObject
 @ stub ObGetObjectSecurity

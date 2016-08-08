@@ -2141,6 +2141,15 @@ NTSTATUS WINAPI ObReferenceObjectByName( UNICODE_STRING *ObjectName,
 
 
 /***********************************************************************
+ *           ObDereferenceObject   (NTOSKRNL.EXE.@)
+ */
+void WINAPI ObDereferenceObject( void *obj )
+{
+    TRACE( "(%p): stub\n", obj );
+}
+
+
+/***********************************************************************
  *           ObfReferenceObject   (NTOSKRNL.EXE.@)
  */
 #ifdef DEFINE_FASTCALL1_ENTRYPOINT
@@ -2164,7 +2173,7 @@ void WINAPI __regs_ObfDereferenceObject( void *obj )
 void WINAPI ObfDereferenceObject( void *obj )
 #endif
 {
-    FIXME( "(%p): stub\n", obj );
+    ObDereferenceObject( obj );
 }
 
 
