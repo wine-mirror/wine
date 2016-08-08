@@ -412,12 +412,35 @@ static GLenum gl_blend_factor(enum wined3d_blend factor, const struct wined3d_fo
     }
 }
 
+static void gl_blend_from_d3d(GLenum *src_blend, GLenum *dst_blend,
+        enum wined3d_blend d3d_src_blend, enum wined3d_blend d3d_dst_blend,
+        const struct wined3d_format *rt_format)
+{
+    /* WINED3D_BLEND_BOTHSRCALPHA and WINED3D_BLEND_BOTHINVSRCALPHA are legacy
+     * source blending values which are still valid up to d3d9. They should
+     * not occur as dest blend values. */
+    if (d3d_src_blend == WINED3D_BLEND_BOTHSRCALPHA)
+    {
+        *src_blend = GL_SRC_ALPHA;
+        *dst_blend = GL_ONE_MINUS_SRC_ALPHA;
+    }
+    else if (d3d_src_blend == WINED3D_BLEND_BOTHINVSRCALPHA)
+    {
+        *src_blend = GL_ONE_MINUS_SRC_ALPHA;
+        *dst_blend = GL_SRC_ALPHA;
+    }
+    else
+    {
+        *src_blend = gl_blend_factor(d3d_src_blend, rt_format);
+        *dst_blend = gl_blend_factor(d3d_dst_blend, rt_format);
+    }
+}
+
 static void state_blend(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_format *rt_format;
-    enum wined3d_blend d3d_blend;
-    GLenum srcBlend, dstBlend;
+    GLenum src_blend, dst_blend;
     unsigned int rt_fmt_flags;
 
     if (!state->fb->render_targets[0])
@@ -458,34 +481,18 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
         return;
     };
 
-    /* WINED3D_BLEND_BOTHSRCALPHA and WINED3D_BLEND_BOTHINVSRCALPHA are legacy
-     * source blending values which are still valid up to d3d9. They should
-     * not occur as dest blend values. */
-    d3d_blend = state->render_states[WINED3D_RS_SRCBLEND];
-    if (d3d_blend == WINED3D_BLEND_BOTHSRCALPHA)
-    {
-        srcBlend = GL_SRC_ALPHA;
-        dstBlend = GL_ONE_MINUS_SRC_ALPHA;
-    }
-    else if (d3d_blend == WINED3D_BLEND_BOTHINVSRCALPHA)
-    {
-        srcBlend = GL_ONE_MINUS_SRC_ALPHA;
-        dstBlend = GL_SRC_ALPHA;
-    }
-    else
-    {
-        srcBlend = gl_blend_factor(d3d_blend, rt_format);
-        dstBlend = gl_blend_factor(state->render_states[WINED3D_RS_DESTBLEND], rt_format);
-    }
+    gl_blend_from_d3d(&src_blend, &dst_blend,
+            state->render_states[WINED3D_RS_SRCBLEND],
+            state->render_states[WINED3D_RS_DESTBLEND], rt_format);
 
     if (state->render_states[WINED3D_RS_EDGEANTIALIAS]
             || state->render_states[WINED3D_RS_ANTIALIASEDLINEENABLE])
     {
         gl_info->gl_ops.gl.p_glEnable(GL_LINE_SMOOTH);
         checkGLcall("glEnable(GL_LINE_SMOOTH)");
-        if (srcBlend != GL_SRC_ALPHA)
+        if (src_blend != GL_SRC_ALPHA)
             WARN("WINED3D_RS_EDGEANTIALIAS enabled, but unexpected src blending param.\n");
-        if (dstBlend != GL_ONE_MINUS_SRC_ALPHA && dstBlend != GL_ONE)
+        if (dst_blend != GL_ONE_MINUS_SRC_ALPHA && dst_blend != GL_ONE)
             WARN("WINED3D_RS_EDGEANTIALIAS enabled, but unexpected dst blending param.\n");
     }
     else
@@ -500,7 +507,7 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
 
     if (state->render_states[WINED3D_RS_SEPARATEALPHABLENDENABLE])
     {
-        GLenum srcBlendAlpha, dstBlendAlpha;
+        GLenum src_blend_alpha, dst_blend_alpha;
 
         /* Separate alpha blending requires GL_EXT_blend_function_separate, so make sure it is around */
         if (!context->gl_info->supported[EXT_BLEND_FUNC_SEPARATE])
@@ -509,33 +516,17 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
             return;
         }
 
-        /* WINED3D_BLEND_BOTHSRCALPHA and WINED3D_BLEND_BOTHINVSRCALPHA are legacy
-         * source blending values which are still valid up to d3d9. They should
-         * not occur as dest blend values. */
-        d3d_blend = state->render_states[WINED3D_RS_SRCBLENDALPHA];
-        if (d3d_blend == WINED3D_BLEND_BOTHSRCALPHA)
-        {
-            srcBlendAlpha = GL_SRC_ALPHA;
-            dstBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;
-        }
-        else if (d3d_blend == WINED3D_BLEND_BOTHINVSRCALPHA)
-        {
-            srcBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;
-            dstBlendAlpha = GL_SRC_ALPHA;
-        }
-        else
-        {
-            srcBlendAlpha = gl_blend_factor(d3d_blend, rt_format);
-            dstBlendAlpha = gl_blend_factor(state->render_states[WINED3D_RS_DESTBLENDALPHA], rt_format);
-        }
+        gl_blend_from_d3d(&src_blend_alpha, &dst_blend_alpha,
+                state->render_states[WINED3D_RS_SRCBLENDALPHA],
+                state->render_states[WINED3D_RS_DESTBLENDALPHA], rt_format);
 
-        GL_EXTCALL(glBlendFuncSeparate(srcBlend, dstBlend, srcBlendAlpha, dstBlendAlpha));
+        GL_EXTCALL(glBlendFuncSeparate(src_blend, dst_blend, src_blend_alpha, dst_blend_alpha));
         checkGLcall("glBlendFuncSeparate");
     }
     else
     {
-        TRACE("glBlendFunc src=%x, dst=%x\n", srcBlend, dstBlend);
-        gl_info->gl_ops.gl.p_glBlendFunc(srcBlend, dstBlend);
+        TRACE("glBlendFunc src=%x, dst=%x.\n", src_blend, dst_blend);
+        gl_info->gl_ops.gl.p_glBlendFunc(src_blend, dst_blend);
         checkGLcall("glBlendFunc");
     }
 
