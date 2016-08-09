@@ -1596,6 +1596,7 @@ static void test_fragmentsize(void)
     rc = waveOutClose(wout);
     ok(rc == MMSYSERR_NOERROR, "waveOutClose failed: %s\n", wave_out_error(rc));
 
+    HeapFree(GetProcessHeap(), 0, hdr[0].lpData);
     CloseHandle(hevent);
 }
 
