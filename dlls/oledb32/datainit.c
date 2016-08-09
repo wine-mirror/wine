@@ -401,17 +401,33 @@ static HRESULT parse_init_string(const WCHAR *initstring, struct dbprops *props)
     while (start && (eq = strchrW(start, '=')))
     {
         static const WCHAR providerW[] = {'P','r','o','v','i','d','e','r',0};
-        WCHAR *scol = strchrW(eq+1, ';');
         BSTR value, name;
+        WCHAR *delim;
 
         name = SysAllocStringLen(start, eq - start);
         /* skip equal sign to get value */
         eq++;
-        value = SysAllocStringLen(eq, scol ? scol - eq : -1);
+
+        if (*eq == '"')
+        {
+            /* for quoted value string, skip opening mark, look for terminating one */
+            eq++;
+            delim = strchrW(eq, '"');
+        }
+        else
+            delim = strchrW(eq, ';');
+
+        value = SysAllocStringLen(eq, delim ? delim - eq : -1);
 
         /* skip semicolon if present */
-        if (scol) scol++;
-        start = scol;
+        if (delim)
+        {
+            if (*delim == '"')
+               delim++;
+            if (*delim == ';')
+               delim++;
+        }
+        start = delim;
 
         if (!strcmpiW(name, providerW))
         {
