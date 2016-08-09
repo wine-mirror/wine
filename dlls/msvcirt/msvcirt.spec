@@ -42,12 +42,12 @@
 @ cdecl -arch=win64 ??0ios@@IEAA@XZ(ptr) ios_ctor
 @ thiscall -arch=win32 ??0ios@@QAE@PAVstreambuf@@@Z(ptr ptr) ios_sb_ctor
 @ cdecl -arch=win64 ??0ios@@QEAA@PEAVstreambuf@@@Z(ptr ptr) ios_sb_ctor
-@ stub -arch=win32 ??0iostream@@IAE@ABV0@@Z  # __thiscall iostream::iostream(class iostream const &)
-@ stub -arch=win64 ??0iostream@@IEAA@AEBV0@@Z
-@ stub -arch=win32 ??0iostream@@IAE@XZ  # __thiscall iostream::iostream(void)
-@ stub -arch=win64 ??0iostream@@IEAA@XZ
-@ stub -arch=win32 ??0iostream@@QAE@PAVstreambuf@@@Z  # __thiscall iostream::iostream(class streambuf *)
-@ stub -arch=win64 ??0iostream@@QEAA@PEAVstreambuf@@@Z
+@ thiscall -arch=win32 ??0iostream@@IAE@ABV0@@Z(ptr ptr long) iostream_copy_ctor
+@ cdecl -arch=win64 ??0iostream@@IEAA@AEBV0@@Z(ptr ptr long) iostream_copy_ctor
+@ thiscall -arch=win32 ??0iostream@@IAE@XZ(ptr long) iostream_ctor
+@ cdecl -arch=win64 ??0iostream@@IEAA@XZ(ptr long) iostream_ctor
+@ thiscall -arch=win32 ??0iostream@@QAE@PAVstreambuf@@@Z(ptr ptr long) iostream_sb_ctor
+@ cdecl -arch=win64 ??0iostream@@QEAA@PEAVstreambuf@@@Z(ptr ptr long) iostream_sb_ctor
 @ thiscall -arch=win32 ??0istream@@IAE@ABV0@@Z(ptr ptr long) istream_copy_ctor
 @ cdecl -arch=win64 ??0istream@@IEAA@AEBV0@@Z(ptr ptr long) istream_copy_ctor
 @ thiscall -arch=win32 ??0istream@@IAE@XZ(ptr long) istream_ctor
@@ -142,8 +142,8 @@
 @ stub -arch=win64 ??1ifstream@@UEAA@XZ
 @ thiscall -arch=win32 ??1ios@@UAE@XZ(ptr) ios_dtor
 @ cdecl -arch=win64 ??1ios@@UEAA@XZ(ptr) ios_dtor
-@ stub -arch=win32 ??1iostream@@UAE@XZ  # virtual __thiscall iostream::~iostream(void)
-@ stub -arch=win64 ??1iostream@@UEAA@XZ
+@ thiscall -arch=win32 ??1iostream@@UAE@XZ(ptr) iostream_dtor
+@ cdecl -arch=win64 ??1iostream@@UEAA@XZ(ptr) iostream_dtor
 @ thiscall -arch=win32 ??1istream@@UAE@XZ(ptr) istream_dtor
 @ cdecl -arch=win64 ??1istream@@UEAA@XZ(ptr) istream_dtor
 @ thiscall -arch=win32 ??1istream_withassign@@UAE@XZ(ptr) istream_dtor
@@ -182,10 +182,10 @@
 @ stub -arch=win64 ??4ifstream@@QEAAAEAV0@AEBV0@@Z
 @ thiscall -arch=win32 ??4ios@@IAEAAV0@ABV0@@Z(ptr ptr) ios_assign
 @ cdecl -arch=win64 ??4ios@@IEAAAEAV0@AEBV0@@Z(ptr ptr) ios_assign
-@ stub -arch=win32 ??4iostream@@IAEAAV0@AAV0@@Z  # class iostream & __thiscall iostream::operator=(class iostream &)
-@ stub -arch=win64 ??4iostream@@IEAAAEAV0@AEAV0@@Z
-@ stub -arch=win32 ??4iostream@@IAEAAV0@PAVstreambuf@@@Z  # class iostream & __thiscall iostream::operator=(class streambuf *)
-@ stub -arch=win64 ??4iostream@@IEAAAEAV0@PEAVstreambuf@@@Z
+@ thiscall -arch=win32 ??4iostream@@IAEAAV0@AAV0@@Z(ptr ptr) iostream_assign
+@ cdecl -arch=win64 ??4iostream@@IEAAAEAV0@AEAV0@@Z(ptr ptr) iostream_assign
+@ thiscall -arch=win32 ??4iostream@@IAEAAV0@PAVstreambuf@@@Z(ptr ptr) iostream_assign_sb
+@ cdecl -arch=win64 ??4iostream@@IEAAAEAV0@PEAVstreambuf@@@Z(ptr ptr) iostream_assign_sb
 @ thiscall -arch=win32 ??4istream@@IAEAAV0@ABV0@@Z(ptr ptr) istream_assign
 @ cdecl -arch=win64 ??4istream@@IEAAAEAV0@AEBV0@@Z(ptr ptr) istream_assign
 @ thiscall -arch=win32 ??4istream@@IAEAAV0@PAVstreambuf@@@Z(ptr ptr) istream_assign_sb
@@ -307,7 +307,7 @@
 # @ extern ??_7fstream@@6B@  # const fstream::`vftable'
 # @ extern ??_7ifstream@@6B@  # const ifstream::`vftable'
 @ extern ??_7ios@@6B@ MSVCP_ios_vtable
-# @ extern ??_7iostream@@6B@  # const iostream::`vftable'
+@ extern ??_7iostream@@6B@ MSVCP_iostream_vtable
 @ extern ??_7istream@@6B@ MSVCP_istream_vtable
 @ extern ??_7istream_withassign@@6B@ MSVCP_istream_vtable
 # @ extern ??_7istrstream@@6B@  # const istrstream::`vftable'
@@ -324,8 +324,8 @@
 # @ extern ??_8fstream@@7Bistream@@@  # const fstream::`vbtable'{for `istream'}
 # @ extern ??_8fstream@@7Bostream@@@  # const fstream::`vbtable'{for `ostream'}
 # @ extern ??_8ifstream@@7B@  # const ifstream::`vbtable'
-# @ extern ??_8iostream@@7Bistream@@@  # const iostream::`vbtable'{for `istream'}
-# @ extern ??_8iostream@@7Bostream@@@  # const iostream::`vbtable'{for `ostream'}
+@ extern ??_8iostream@@7Bistream@@@ iostream_vbtable_istream
+@ extern ??_8iostream@@7Bostream@@@ iostream_vbtable_ostream
 @ extern ??_8istream@@7B@ istream_vbtable
 @ extern ??_8istream_withassign@@7B@ istream_vbtable
 # @ extern ??_8istrstream@@7B@  # const istrstream::`vbtable'
@@ -341,8 +341,8 @@
 @ stub -arch=win64 ??_Dfstream@@QEAAXXZ
 @ stub -arch=win32 ??_Difstream@@QAEXXZ  # void __thiscall ifstream::`vbase destructor'(void)
 @ stub -arch=win64 ??_Difstream@@QEAAXXZ
-@ stub -arch=win32 ??_Diostream@@QAEXXZ  # void __thiscall iostream::`vbase destructor'(void)
-@ stub -arch=win64 ??_Diostream@@QEAAXXZ
+@ thiscall -arch=win32 ??_Diostream@@QAEXXZ(ptr) iostream_vbase_dtor
+@ cdecl -arch=win64 ??_Diostream@@QEAAXXZ(ptr) iostream_vbase_dtor
 @ thiscall -arch=win32 ??_Distream@@QAEXXZ(ptr) istream_vbase_dtor
 @ cdecl -arch=win64 ??_Distream@@QEAAXXZ(ptr) istream_vbase_dtor
 @ thiscall -arch=win32 ??_Distream_withassign@@QAEXXZ(ptr) istream_vbase_dtor
@@ -366,7 +366,7 @@
 @ stub -arch=win32 ??_Efstream@@UAEPAXI@Z  # virtual void * __thiscall fstream::`vector deleting destructor'(unsigned int)
 @ stub -arch=win32 ??_Eifstream@@UAEPAXI@Z  # virtual void * __thiscall ifstream::`vector deleting destructor'(unsigned int)
 @ thiscall -arch=win32 ??_Eios@@UAEPAXI@Z(ptr long) ios_vector_dtor
-@ stub -arch=win32 ??_Eiostream@@UAEPAXI@Z  # virtual void * __thiscall iostream::`vector deleting destructor'(unsigned int)
+@ thiscall -arch=win32 ??_Eiostream@@UAEPAXI@Z(ptr long) iostream_vector_dtor
 @ thiscall -arch=win32 ??_Eistream@@UAEPAXI@Z(ptr long) istream_vector_dtor
 @ thiscall -arch=win32 ??_Eistream_withassign@@UAEPAXI@Z(ptr long) istream_vector_dtor
 @ stub -arch=win32 ??_Eistrstream@@UAEPAXI@Z  # virtual void * __thiscall istrstream::`vector deleting destructor'(unsigned int)
@@ -385,7 +385,7 @@
 @ stub -arch=win32 ??_Gfstream@@UAEPAXI@Z  # virtual void * __thiscall fstream::`scalar deleting destructor'(unsigned int)
 @ stub -arch=win32 ??_Gifstream@@UAEPAXI@Z  # virtual void * __thiscall ifstream::`scalar deleting destructor'(unsigned int)
 @ thiscall -arch=win32 ??_Gios@@UAEPAXI@Z(ptr long) ios_scalar_dtor
-@ stub -arch=win32 ??_Giostream@@UAEPAXI@Z  # virtual void * __thiscall iostream::`scalar deleting destructor'(unsigned int)
+@ thiscall -arch=win32 ??_Giostream@@UAEPAXI@Z(ptr long) iostream_scalar_dtor
 @ thiscall -arch=win32 ??_Gistream@@UAEPAXI@Z(ptr long) istream_scalar_dtor
 @ thiscall -arch=win32 ??_Gistream_withassign@@UAEPAXI@Z(ptr long) istream_scalar_dtor
 @ stub -arch=win32 ??_Gistrstream@@UAEPAXI@Z  # virtual void * __thiscall istrstream::`scalar deleting destructor'(unsigned int)
