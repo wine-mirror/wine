@@ -187,15 +187,8 @@ static void test_ValidPathA(const CHAR *curdir, const CHAR *subdir, const CHAR *
     len=pGetLongPathNameA(fullpath,tmpstr,MAX_PATH);
     if(passfail==NULL) {
       ok(len, "%s: GetLongPathNameA failed\n",errstr);
-      if(HAS_TRAIL_SLASH_A(fullpath)) {
-        ok(lstrcmpiA(fullpathlong,tmpstr)==0,
-           "%s: GetLongPathNameA returned '%s' instead of '%s'\n",
-           errstr,tmpstr,fullpathlong);
-      } else {
-        ok(lstrcmpiA(fullpathlong,tmpstr)==0,
-          "%s: GetLongPathNameA returned '%s' instead of '%s'\n",
-          errstr,tmpstr,fullpathlong);
-      }
+      ok(!lstrcmpiA(fullpathlong, tmpstr), "%s: GetLongPathNameA returned '%s' instead of '%s'\n",
+         errstr, tmpstr, fullpathlong);
     } else {
       passfail->longlen=len;
       passfail->longerror=GetLastError();
