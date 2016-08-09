@@ -1019,7 +1019,7 @@ HRESULT WINAPI ScriptFreeCache(SCRIPT_CACHE *psc)
         {
             heap_free(((ScriptCache *)*psc)->widths[i]);
         }
-        for (i = 0; i < 0x10; i++)
+        for (i = 0; i < NUM_PAGES; i++)
         {
             unsigned int j;
             if (((ScriptCache *)*psc)->page[i])

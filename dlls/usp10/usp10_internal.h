@@ -125,6 +125,8 @@
 #define GLYPH_BLOCK_MASK  (GLYPH_BLOCK_SIZE - 1)
 #define GLYPH_MAX         65536
 
+#define NUM_PAGES         17
+
 #define GSUB_E_NOFEATURE -2
 #define GSUB_E_NOGLYPH -1
 
@@ -169,7 +171,7 @@ typedef struct {
     OUTLINETEXTMETRICW *otm;
     SCRIPT_FONTPROPERTIES sfp;
     BOOL sfnt;
-    CacheGlyphPage *page[0x11];
+    CacheGlyphPage *page[NUM_PAGES];
     ABC *widths[GLYPH_MAX / GLYPH_BLOCK_SIZE];
     LPVOID GSUB_Table;
     LPVOID GDEF_Table;
