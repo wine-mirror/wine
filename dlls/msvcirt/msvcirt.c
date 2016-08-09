@@ -3997,7 +3997,9 @@ void __thiscall iostream_dtor(ios *base)
 DEFINE_THISCALL_WRAPPER(iostream_assign_sb, 8)
 iostream* __thiscall iostream_assign_sb(iostream *this, streambuf *sb)
 {
-    FIXME("(%p %p) stub\n", this, sb);
+    TRACE("(%p %p)\n", this, sb);
+    this->base1.count = 0;
+    ostream_assign_sb(&this->base2, sb);
     return this;
 }
 
@@ -4006,8 +4008,7 @@ iostream* __thiscall iostream_assign_sb(iostream *this, streambuf *sb)
 DEFINE_THISCALL_WRAPPER(iostream_assign, 8)
 iostream* __thiscall iostream_assign(iostream *this, const iostream *rhs)
 {
-    FIXME("(%p %p) stub\n", this, rhs);
-    return this;
+    return iostream_assign_sb(this, istream_get_ios(&rhs->base1)->sb);
 }
 
 /* ??_Diostream@@QAEXXZ */
