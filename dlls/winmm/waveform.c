@@ -1418,6 +1418,8 @@ static HRESULT WINMM_CloseDevice(WINMM_Device *device)
     IAudioClock_Release(device->clock);
     device->clock = NULL;
 
+    HeapFree(GetProcessHeap(), 0, device->orig_fmt);
+
     return S_OK;
 }
 
