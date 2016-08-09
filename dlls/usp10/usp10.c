@@ -3890,16 +3890,33 @@ HRESULT WINAPI ScriptStringGetOrder(SCRIPT_STRING_ANALYSIS ssa, UINT *order)
  *  Failure: a non-zero HRESULT.
  */
 HRESULT WINAPI ScriptGetLogicalWidths(const SCRIPT_ANALYSIS *sa, int nbchars, int nbglyphs,
-                                      const int *glyph_width, const WORD *log_clust,
+                                      const int *advances, const WORD *log_clust,
                                       const SCRIPT_VISATTR *sva, int *widths)
 {
-    int i;
+    int i, next = 0, direction;
 
     TRACE("(%p, %d, %d, %p, %p, %p, %p)\n",
-          sa, nbchars, nbglyphs, glyph_width, log_clust, sva, widths);
+          sa, nbchars, nbglyphs, advances, log_clust, sva, widths);
 
-    /* FIXME */
-    for (i = 0; i < nbchars; i++) widths[i] = glyph_width[i];
+    if (sa->fRTL && !sa->fLogicalOrder)
+        direction = -1;
+    else
+        direction = 1;
+
+    for (i = 0; i < nbchars; i++)
+    {
+        int clust_size = get_cluster_size(log_clust, nbchars, i, direction, NULL, NULL);
+        int advance = get_glyph_cluster_advance(advances, sva, log_clust, nbglyphs, nbchars, log_clust[i], direction);
+        int j;
+
+        for (j = 0; j < clust_size; j++)
+        {
+            widths[next] = advance / clust_size;
+            next++;
+            if (j) i++;
+        }
+    }
+
     return S_OK;
 }
 

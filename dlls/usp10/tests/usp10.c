@@ -3610,6 +3610,58 @@ static void test_ScriptGetFontFunctions(HDC hdc)
     }
 }
 
+struct logical_width_test
+{
+    int char_count;
+    int glyph_count;
+    int advances[3];
+    WORD map[3];
+    int widths[3];
+    BOOL clusterstart[3];
+    BOOL diacritic[3];
+    BOOL zerowidth[3];
+    BOOL todo;
+};
+
+static const struct logical_width_test logical_width_tests[] =
+{
+    { 3, 3, { 6, 9, 12 }, { 0, 1, 2 }, {  6,  9, 12 }, { 1, 1, 1 } },
+    { 3, 3, { 6, 9, 12 }, { 0, 1, 2 }, {  6,  9, 12 }, { 1, 1, 1 }, { 1, 0, 0 } },
+    { 3, 3, { 6, 9, 12 }, { 0, 1, 2 }, {  6,  9, 12 }, { 1, 1, 1 }, { 0 }, { 1, 1, 1 } },
+    { 3, 3, { 6, 9, 12 }, { 0, 1, 2 }, { 27, 21, 12 }, { 0, 0, 0 }, { 0 }, { 0 }, TRUE },
+    { 3, 3, { 6, 9, 12 }, { 0, 1, 2 }, {  6, 21, 12 }, { 0, 1, 0 }, { 0 }, { 0 }, TRUE },
+    { 3, 3, { 6, 9, 12 }, { 0, 1, 2 }, {  6, 21, 12 }, { 1, 1, 0 }, { 0 }, { 0 }, TRUE },
+    { 3, 3, { 6, 9, 12 }, { 0, 2, 2 }, { 15,  6,  6 }, { 1, 0, 1 } },
+};
+
+static void test_ScriptGetLogicalWidths(void)
+{
+    SCRIPT_ANALYSIS sa = { 0 };
+    unsigned int i, j;
+
+    for (i = 0; i < sizeof(logical_width_tests)/sizeof(logical_width_tests[0]); i++)
+    {
+        const struct logical_width_test *ptr = logical_width_tests + i;
+        SCRIPT_VISATTR attrs[3];
+        int widths[3];
+        HRESULT hr;
+
+        memset(attrs, 0, sizeof(attrs));
+        for (j = 0; j < ptr->glyph_count; j++)
+        {
+            attrs[j].fClusterStart = ptr->clusterstart[j];
+            attrs[j].fDiacritic = ptr->diacritic[j];
+            attrs[j].fZeroWidth = ptr->zerowidth[j];
+        }
+
+        hr = ScriptGetLogicalWidths(&sa, ptr->char_count, ptr->glyph_count, ptr->advances, ptr->map, attrs, widths);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        todo_wine_if(ptr->todo)
+            ok(!memcmp(ptr->widths, widths, sizeof(widths)), "test %u: got wrong widths\n", i);
+    }
+}
+
 START_TEST(usp10)
 {
     HWND            hwnd;
@@ -3663,6 +3715,7 @@ START_TEST(usp10)
     test_newlines();
 
     test_ScriptGetFontFunctions(hdc);
+    test_ScriptGetLogicalWidths();
 
     ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);
