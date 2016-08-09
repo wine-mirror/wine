@@ -982,8 +982,8 @@ static void test_CreateTextFormat(void)
         DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-if (0) /* crashes on native */
-    hr = IDWriteTextFormat_GetFontCollection(format, NULL);
+    if (0) /* crashes on native */
+        hr = IDWriteTextFormat_GetFontCollection(format, NULL);
 
     collection = NULL;
     hr = IDWriteTextFormat_GetFontCollection(format, &collection);
@@ -2234,8 +2234,8 @@ static void test_SetLocaleName(void)
     hr = IDWriteTextLayout_GetLocaleName(layout, 0, NULL, 0, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
-if (0) /* crashes on native */
-    hr = IDWriteTextLayout_GetLocaleName(layout, 0, NULL, 1, NULL);
+    if (0) /* crashes on native */
+        hr = IDWriteTextLayout_GetLocaleName(layout, 0, NULL, 1, NULL);
 
     buffW[0] = 0;
     range.length = 0;
@@ -2446,8 +2446,8 @@ static void test_fallback(void)
         return;
     }
 
-if (0) /* crashes on native */
-    hr = IDWriteTextLayout2_GetFontFallback(layout2, NULL);
+    if (0) /* crashes on native */
+        hr = IDWriteTextLayout2_GetFontFallback(layout2, NULL);
 
     fallback = (void*)0xdeadbeef;
     hr = IDWriteTextLayout2_GetFontFallback(layout2, &fallback);
@@ -4370,9 +4370,9 @@ todo_wine {
     ok(scale == 1.0f, "got %f\n", scale);
 todo_wine
     ok(font != NULL, "got %p\n", font);
-if (font)
+if (font) {
     IDWriteFont_Release(font);
-
+}
     /* same latin text, full length */
     g_source = strW;
     mappedlength = 0;
@@ -4387,9 +4387,9 @@ todo_wine {
     ok(scale == 1.0f, "got %f\n", scale);
 todo_wine
     ok(font != NULL, "got %p\n", font);
-if (font)
+if (font) {
     IDWriteFont_Release(font);
-
+}
     /* string 'a\x3058b' */
     g_source = str2W;
     mappedlength = 0;
@@ -4404,9 +4404,9 @@ todo_wine {
     ok(scale == 1.0f, "got %f\n", scale);
 todo_wine
     ok(font != NULL, "got %p\n", font);
-if (font)
+if (font) {
     IDWriteFont_Release(font);
-
+}
     g_source = str2W;
     mappedlength = 0;
     scale = 0.0f;
@@ -4544,8 +4544,8 @@ static void test_FontFallbackBuilder(void)
     hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, NULL, NULL, NULL, 4.0f);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-if (0) /* crashes on native */
-    hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, NULL);
+    if (0) /* crashes on native */
+        hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, NULL);
 
     hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
     ok(hr == S_OK, "got 0x%08x\n", hr);

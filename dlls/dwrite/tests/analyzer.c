@@ -1166,8 +1166,8 @@ static void test_GetScriptProperties(void)
     hr = IDWriteTextAnalyzer1_GetScriptProperties(analyzer1, sa, &props);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
-if (0) /* crashes on native */
-    hr = IDWriteTextAnalyzer1_GetScriptProperties(analyzer1, sa, NULL);
+    if (0) /* crashes on native */
+        hr = IDWriteTextAnalyzer1_GetScriptProperties(analyzer1, sa, NULL);
 
     sa.script = 0;
     hr = IDWriteTextAnalyzer1_GetScriptProperties(analyzer1, sa, &props);
