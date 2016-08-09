@@ -3943,7 +3943,20 @@ static inline iostream* ios_to_iostream(const ios *base)
 DEFINE_THISCALL_WRAPPER(iostream_ctor, 8)
 iostream* __thiscall iostream_ctor(iostream *this, BOOL virt_init)
 {
-    FIXME("(%p %d) stub\n", this, virt_init);
+    ios *base;
+
+    TRACE("(%p %d)\n", this, virt_init);
+
+    if (virt_init) {
+        this->base1.vbtable = iostream_vbtable_istream;
+        this->base2.vbtable = iostream_vbtable_ostream;
+        base = istream_get_ios(&this->base1);
+        ios_ctor(base);
+    } else
+        base = istream_get_ios(&this->base1);
+    istream_ctor(&this->base1, FALSE);
+    ostream_ctor(&this->base2, FALSE);
+    base->vtable = &MSVCP_iostream_vtable;
     return this;
 }
 
@@ -3952,7 +3965,9 @@ iostream* __thiscall iostream_ctor(iostream *this, BOOL virt_init)
 DEFINE_THISCALL_WRAPPER(iostream_sb_ctor, 12)
 iostream* __thiscall iostream_sb_ctor(iostream *this, streambuf *sb, BOOL virt_init)
 {
-    FIXME("(%p %p %d) stub\n", this, sb, virt_init);
+    TRACE("(%p %p %d)\n", this, sb, virt_init);
+    iostream_ctor(this, virt_init);
+    ios_init(istream_get_ios(&this->base1), sb);
     return this;
 }
 
@@ -3961,8 +3976,7 @@ iostream* __thiscall iostream_sb_ctor(iostream *this, streambuf *sb, BOOL virt_i
 DEFINE_THISCALL_WRAPPER(iostream_copy_ctor, 12)
 iostream* __thiscall iostream_copy_ctor(iostream *this, const iostream *copy, BOOL virt_init)
 {
-    FIXME("(%p %p %d) stub\n", this, copy, virt_init);
-    return this;
+    return iostream_sb_ctor(this, istream_get_ios(&copy->base1)->sb, virt_init);
 }
 
 /* ??1iostream@@UAE@XZ */
@@ -3970,7 +3984,12 @@ iostream* __thiscall iostream_copy_ctor(iostream *this, const iostream *copy, BO
 DEFINE_THISCALL_WRAPPER(iostream_dtor, 4)
 void __thiscall iostream_dtor(ios *base)
 {
-    FIXME("(%p) stub\n", base);
+    iostream *this = ios_to_iostream(base);
+
+    TRACE("(%p)\n", this);
+
+    ostream_dtor(ostream_to_ios(&this->base2));
+    istream_dtor(istream_to_ios(&this->base1));
 }
 
 /* ??4iostream@@IAEAAV0@PAVstreambuf@@@Z */
@@ -3996,7 +4015,12 @@ iostream* __thiscall iostream_assign(iostream *this, const iostream *rhs)
 DEFINE_THISCALL_WRAPPER(iostream_vbase_dtor, 4)
 void __thiscall iostream_vbase_dtor(iostream *this)
 {
-    FIXME("(%p) stub\n", this);
+    ios *base = iostream_to_ios(this);
+
+    TRACE("(%p)\n", this);
+
+    iostream_dtor(base);
+    ios_dtor(base);
 }
 
 /* ??_Eiostream@@UAEPAXI@Z */
