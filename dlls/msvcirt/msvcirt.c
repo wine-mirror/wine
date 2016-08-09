@@ -2296,36 +2296,6 @@ static inline ostream* ios_to_ostream(const ios *base)
     return (ostream*)((char*)base - ostream_vbtable[1]);
 }
 
-/* ??0ostream@@QAE@PAVstreambuf@@@Z */
-/* ??0ostream@@QEAA@PEAVstreambuf@@@Z */
-DEFINE_THISCALL_WRAPPER(ostream_sb_ctor, 12)
-ostream* __thiscall ostream_sb_ctor(ostream *this, streambuf *sb, BOOL virt_init)
-{
-    ios *base;
-
-    TRACE("(%p %p %d)\n", this, sb, virt_init);
-
-    if (virt_init) {
-        this->vbtable = ostream_vbtable;
-        base = ostream_get_ios(this);
-        ios_sb_ctor(base, sb);
-    } else {
-        base = ostream_get_ios(this);
-        ios_init(base, sb);
-    }
-    base->vtable = &MSVCP_ostream_vtable;
-    this->unknown = 0;
-    return this;
-}
-
-/* ??0ostream@@IAE@ABV0@@Z */
-/* ??0ostream@@IEAA@AEBV0@@Z */
-DEFINE_THISCALL_WRAPPER(ostream_copy_ctor, 12)
-ostream* __thiscall ostream_copy_ctor(ostream *this, const ostream *copy, BOOL virt_init)
-{
-    return ostream_sb_ctor(this, ostream_get_ios(copy)->sb, virt_init);
-}
-
 /* ??0ostream@@IAE@XZ */
 /* ??0ostream@@IEAA@XZ */
 DEFINE_THISCALL_WRAPPER(ostream_ctor, 8)
@@ -2344,6 +2314,25 @@ ostream* __thiscall ostream_ctor(ostream *this, BOOL virt_init)
     base->vtable = &MSVCP_ostream_vtable;
     this->unknown = 0;
     return this;
+}
+
+/* ??0ostream@@QAE@PAVstreambuf@@@Z */
+/* ??0ostream@@QEAA@PEAVstreambuf@@@Z */
+DEFINE_THISCALL_WRAPPER(ostream_sb_ctor, 12)
+ostream* __thiscall ostream_sb_ctor(ostream *this, streambuf *sb, BOOL virt_init)
+{
+    TRACE("(%p %p %d)\n", this, sb, virt_init);
+    ostream_ctor(this, virt_init);
+    ios_init(ostream_get_ios(this), sb);
+    return this;
+}
+
+/* ??0ostream@@IAE@ABV0@@Z */
+/* ??0ostream@@IEAA@AEBV0@@Z */
+DEFINE_THISCALL_WRAPPER(ostream_copy_ctor, 12)
+ostream* __thiscall ostream_copy_ctor(ostream *this, const ostream *copy, BOOL virt_init)
+{
+    return ostream_sb_ctor(this, ostream_get_ios(copy)->sb, virt_init);
 }
 
 /* ??1ostream@@UAE@XZ */
@@ -2389,11 +2378,7 @@ ostream* __thiscall ostream_assign_sb(ostream *this, streambuf *sb)
 DEFINE_THISCALL_WRAPPER(ostream_assign, 8)
 ostream* __thiscall ostream_assign(ostream *this, const ostream *rhs)
 {
-    ios *base_rhs = ostream_get_ios(rhs);
-
-    TRACE("(%p %p)\n", this, rhs);
-
-    return ostream_assign_sb(this, base_rhs->sb);
+    return ostream_assign_sb(this, ostream_get_ios(rhs)->sb);
 }
 
 /* ??_Dostream@@QAEXXZ */
@@ -2956,38 +2941,6 @@ static inline istream* ios_to_istream(const ios *base)
     return (istream*)((char*)base - istream_vbtable[1]);
 }
 
-/* ??0istream@@QAE@PAVstreambuf@@@Z */
-/* ??0istream@@QEAA@PEAVstreambuf@@@Z */
-DEFINE_THISCALL_WRAPPER(istream_sb_ctor, 12)
-istream* __thiscall istream_sb_ctor(istream *this, streambuf *sb, BOOL virt_init)
-{
-    ios *base;
-
-    TRACE("(%p %p %d)\n", this, sb, virt_init);
-
-    if (virt_init) {
-        this->vbtable = istream_vbtable;
-        base = istream_get_ios(this);
-        ios_sb_ctor(base, sb);
-    } else {
-        base = istream_get_ios(this);
-        ios_init(base, sb);
-    }
-    base->vtable = &MSVCP_istream_vtable;
-    base->flags |= FLAGS_skipws;
-    this->extract_delim = 0;
-    this->count = 0;
-    return this;
-}
-
-/* ??0istream@@IAE@ABV0@@Z */
-/* ??0istream@@IEAA@AEBV0@@Z */
-DEFINE_THISCALL_WRAPPER(istream_copy_ctor, 12)
-istream* __thiscall istream_copy_ctor(istream *this, const istream *copy, BOOL virt_init)
-{
-    return istream_sb_ctor(this, istream_get_ios(copy)->sb, virt_init);
-}
-
 /* ??0istream@@IAE@XZ */
 /* ??0istream@@IEAA@XZ */
 DEFINE_THISCALL_WRAPPER(istream_ctor, 8)
@@ -3008,6 +2961,25 @@ istream* __thiscall istream_ctor(istream *this, BOOL virt_init)
     this->extract_delim = 0;
     this->count = 0;
     return this;
+}
+
+/* ??0istream@@QAE@PAVstreambuf@@@Z */
+/* ??0istream@@QEAA@PEAVstreambuf@@@Z */
+DEFINE_THISCALL_WRAPPER(istream_sb_ctor, 12)
+istream* __thiscall istream_sb_ctor(istream *this, streambuf *sb, BOOL virt_init)
+{
+    TRACE("(%p %p %d)\n", this, sb, virt_init);
+    istream_ctor(this, virt_init);
+    ios_init(istream_get_ios(this), sb);
+    return this;
+}
+
+/* ??0istream@@IAE@ABV0@@Z */
+/* ??0istream@@IEAA@AEBV0@@Z */
+DEFINE_THISCALL_WRAPPER(istream_copy_ctor, 12)
+istream* __thiscall istream_copy_ctor(istream *this, const istream *copy, BOOL virt_init)
+{
+    return istream_sb_ctor(this, istream_get_ios(copy)->sb, virt_init);
 }
 
 /* ??1istream@@UAE@XZ */
