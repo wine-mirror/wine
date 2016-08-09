@@ -914,12 +914,7 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
 
         if (V_I4(pDispParams->rgvarg+1) == CSC_NAVIGATEFORWARD)
         {
-            if(nav_forward_todo) {
-                if(V_BOOL(pDispParams->rgvarg))
-                    todo_wine CHECK_EXPECT2(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_TRUE);
-                else
-                    todo_wine CHECK_EXPECT2(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
-            }else {
+            todo_wine_if(nav_forward_todo) {
                 if(V_BOOL(pDispParams->rgvarg))
                     CHECK_EXPECT2(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_TRUE);
                 else
@@ -928,12 +923,7 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
         }
         else if (V_I4(pDispParams->rgvarg+1) == CSC_NAVIGATEBACK)
         {
-            if(nav_back_todo) {
-                if(V_BOOL(pDispParams->rgvarg))
-                    todo_wine CHECK_EXPECT2(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_TRUE);
-                else
-                    todo_wine CHECK_EXPECT2(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
-            }else {
+            todo_wine_if(nav_back_todo) {
                 if(V_BOOL(pDispParams->rgvarg))
                     CHECK_EXPECT2(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_TRUE);
                 else
@@ -3028,12 +3018,7 @@ static void test_download(DWORD flags)
         CLEAR_CALLED(EnableModeless_FALSE); /* IE 8 */
 
     if(!(flags & DWL_REFRESH)) {
-        if(nav_back_todo) {
-            if(flags & (DWL_FROM_GOFORWARD|DWL_BACK_ENABLE))
-                todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_TRUE);
-            else
-                todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
-        }else {
+        todo_wine_if(nav_back_todo) {
             if(flags & (DWL_FROM_GOFORWARD|DWL_BACK_ENABLE))
                 CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_TRUE);
             else
@@ -3238,24 +3223,14 @@ static void test_go_back(IWebBrowser2 *wb, const char *back_url, int back_enable
     CHECK_CALLED(Invoke_BEFORENAVIGATE2);
     nav_forward_todo = FALSE;
 
-    if(nav_back_todo) {
-        if(back_enable)
-            todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_TRUE);
-        else
-            todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
-    }else {
+    todo_wine_if(nav_back_todo) {
         if(back_enable)
             CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_TRUE);
         else
             CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
     }
 
-    if(forward_todo) {
-        if(forward_enable)
-            todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_TRUE);
-        else
-            todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
-    }else {
+    todo_wine_if(forward_todo) {
         if(forward_enable)
             CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_TRUE);
         else
