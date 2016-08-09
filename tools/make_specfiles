@@ -100,6 +100,7 @@ my @dll_groups =
  ],
  [
   "vcomp",
+  "vcomp140",
   "vcomp120",
   "vcomp110",
   "vcomp100",
