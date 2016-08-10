@@ -4197,9 +4197,9 @@ TREEVIEW_LButtonDoubleClick(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 static LRESULT
 TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 {
+    BOOL do_track, do_select, bDoLabelEdit;
     HWND hwnd = infoPtr->hwnd;
     TVHITTESTINFO ht;
-    BOOL bTrack, bDoLabelEdit;
 
     /* If Edit control is active - kill it and return.
      * The best way to do it is to set focus to itself.
@@ -4219,15 +4219,32 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     TRACE("item %d\n", TREEVIEW_GetItemIndex(infoPtr, ht.hItem));
 
     /* update focusedItem and redraw both items */
-    if(ht.hItem && (ht.flags & TVHT_ONITEM))
+    if (ht.hItem)
     {
-        infoPtr->focusedItem = ht.hItem;
-        TREEVIEW_InvalidateItem(infoPtr, infoPtr->focusedItem);
-        TREEVIEW_InvalidateItem(infoPtr, infoPtr->selectedItem);
+        BOOL do_focus;
+
+        if (TREEVIEW_IsFullRowSelect(infoPtr))
+            do_focus = ht.flags & (TVHT_ONITEMINDENT | TVHT_ONITEM | TVHT_ONITEMRIGHT);
+        else
+            do_focus = ht.flags & TVHT_ONITEM;
+
+        if (do_focus)
+        {
+            infoPtr->focusedItem = ht.hItem;
+            TREEVIEW_InvalidateItem(infoPtr, infoPtr->focusedItem);
+            TREEVIEW_InvalidateItem(infoPtr, infoPtr->selectedItem);
+        }
     }
 
-    bTrack = (ht.flags & TVHT_ONITEM)
-	&& !(infoPtr->dwStyle & TVS_DISABLEDRAGDROP);
+    if (!(infoPtr->dwStyle & TVS_DISABLEDRAGDROP))
+    {
+        if (TREEVIEW_IsFullRowSelect(infoPtr))
+            do_track = ht.flags & (TVHT_ONITEMINDENT | TVHT_ONITEM | TVHT_ONITEMRIGHT);
+        else
+            do_track = ht.flags & TVHT_ONITEM;
+    }
+    else
+        do_track = FALSE;
 
     /*
      * If the style allows editing and the node is already selected
@@ -4237,16 +4254,15 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
         (ht.flags & TVHT_ONITEMLABEL) && (infoPtr->selectedItem == ht.hItem);
 
     /* Send NM_CLICK right away */
-    if (!bTrack)
-	if (TREEVIEW_SendSimpleNotify(infoPtr, NM_CLICK))
-	    goto setfocus;
+    if (!do_track && TREEVIEW_SendSimpleNotify(infoPtr, NM_CLICK))
+        goto setfocus;
 
     if (ht.flags & TVHT_ONITEMBUTTON)
     {
 	TREEVIEW_Toggle(infoPtr, ht.hItem, TRUE);
 	goto setfocus;
     }
-    else if (bTrack)
+    else if (do_track)
     {   /* if TREEVIEW_TrackMouse == 1 dragging occurred and the cursor left the dragged item's rectangle */
 	if (TREEVIEW_TrackMouse(infoPtr, ht.pt))
 	{
@@ -4268,8 +4284,13 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
         }
     }
 
-    if (bTrack && TREEVIEW_SendSimpleNotify(infoPtr, NM_CLICK))
+    if (do_track && TREEVIEW_SendSimpleNotify(infoPtr, NM_CLICK))
         goto setfocus;
+
+    if (TREEVIEW_IsFullRowSelect(infoPtr))
+        do_select = ht.flags & (TVHT_ONITEMINDENT | TVHT_ONITEMICON | TVHT_ONITEMLABEL | TVHT_ONITEMRIGHT);
+    else
+        do_select = ht.flags & (TVHT_ONITEMICON | TVHT_ONITEMLABEL);
 
     if (bDoLabelEdit)
     {
@@ -4279,7 +4300,7 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 	SetTimer(hwnd, TV_EDIT_TIMER, GetDoubleClickTime(), 0);
 	infoPtr->Timer |= TV_EDIT_TIMER_SET;
     }
-    else if (ht.flags & (TVHT_ONITEMICON|TVHT_ONITEMLABEL)) /* select the item if the hit was inside of the icon or text */
+    else if (do_select)
     {
         TREEVIEW_ITEM *selection = infoPtr->selectedItem;
 
