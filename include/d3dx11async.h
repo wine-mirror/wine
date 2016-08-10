@@ -30,6 +30,14 @@ HRESULT WINAPI D3DX11CompileFromMemory(const char *data, SIZE_T data_size, const
         const char *target, UINT sflags, UINT eflags, ID3DX11ThreadPump *pump, ID3D10Blob **shader,
         ID3D10Blob **error_messages, HRESULT *hresult);
 
+HRESULT WINAPI D3DX11CompileFromFileA(const char *filename, const D3D10_SHADER_MACRO *defines,
+        ID3D10Include *include, const char *entry_point, const char *target, UINT sflags, UINT eflags,
+        ID3DX11ThreadPump *pump, ID3D10Blob **shader, ID3D10Blob **error_messages, HRESULT *hresult);
+
+HRESULT WINAPI D3DX11CompileFromFileW(const WCHAR *filename, const D3D10_SHADER_MACRO *defines,
+        ID3D10Include *include, const char *entry_point, const char *target, UINT sflags, UINT eflags,
+        ID3DX11ThreadPump *pump, ID3D10Blob **shader, ID3D10Blob **error_messages, HRESULT *hresult);
+
 #ifdef __cplusplus
 }
 #endif
