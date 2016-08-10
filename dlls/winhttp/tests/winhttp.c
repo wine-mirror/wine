@@ -3822,8 +3822,8 @@ static void test_IWinHttpRequest_Invoke(void)
     ok(hr == DISP_E_UNKNOWNINTERFACE, "error %#x\n", hr);
 
     VariantInit(&ret);
-if (0) /* crashes */
-    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0, DISPATCH_PROPERTYPUT, NULL, &ret, NULL, &err);
+    if (0) /* crashes */
+        hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0, DISPATCH_PROPERTYPUT, NULL, &ret, NULL, &err);
 
     params.cArgs = 1;
     hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &params, &ret, NULL, &err);
