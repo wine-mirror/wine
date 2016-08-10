@@ -1617,10 +1617,36 @@ static void use_connection_set_accessnameW(struct use_connection_context *ctxt, 
         strcpyW(accessname, ctxt->resource->lpRemoteName);
 }
 
+static DWORD wnet_use_provider( struct use_connection_context *ctxt, NETRESOURCEW * netres, WNetProvider *provider, BOOLEAN redirect )
+{
+    DWORD caps, ret;
+
+    caps = provider->getCaps(WNNC_CONNECTION);
+    if (!(caps & (WNNC_CON_ADDCONNECTION | WNNC_CON_ADDCONNECTION3)))
+        return ERROR_BAD_PROVIDER;
+
+    ret = WN_ACCESS_DENIED;
+    do
+    {
+        if ((caps & WNNC_CON_ADDCONNECTION3) && provider->addConnection3)
+            ret = provider->addConnection3(ctxt->hwndOwner, netres, ctxt->password, ctxt->userid, ctxt->flags);
+        else if ((caps & WNNC_CON_ADDCONNECTION) && provider->addConnection)
+            ret = provider->addConnection(netres, ctxt->password, ctxt->userid);
+
+        if (ret == WN_ALREADY_CONNECTED && redirect)
+            netres->lpLocalName[0] -= 1;
+    } while (redirect && ret == WN_ALREADY_CONNECTED && netres->lpLocalName[0] >= 'C');
+
+    if (ret == WN_SUCCESS && ctxt->accessname)
+        ctxt->set_accessname(ctxt, netres->lpLocalName);
+
+    return ret;
+}
+
 static DWORD wnet_use_connection( struct use_connection_context *ctxt )
 {
     WNetProvider *provider;
-    DWORD index, ret, caps;
+    DWORD index, ret = WN_NO_NETWORK;
     BOOL redirect = FALSE;
     WCHAR letter[3] = {'Z', ':', 0};
     NETRESOURCEW netres;
@@ -1647,41 +1673,31 @@ static DWORD wnet_use_connection( struct use_connection_context *ctxt )
         netres.lpLocalName = letter;
     }
 
-    if (!netres.lpProvider)
-    {
-        FIXME("Networking provider selection is not implemented.\n");
-        return WN_NO_NETWORK;
-    }
-
     if (ctxt->flags & CONNECT_INTERACTIVE)
         return ERROR_BAD_NET_NAME;
-
-    index = _findProviderIndexW(netres.lpProvider);
-    if (index == BAD_PROVIDER_INDEX)
-        return ERROR_BAD_PROVIDER;
-
-    provider = &providerTable->table[index];
-    caps = provider->getCaps(WNNC_CONNECTION);
-    if (!(caps & (WNNC_CON_ADDCONNECTION | WNNC_CON_ADDCONNECTION3)))
-        return ERROR_BAD_PROVIDER;
 
     if ((ret = ctxt->pre_set_accessname(ctxt, netres.lpLocalName)))
         return ret;
 
-    ret = WN_ACCESS_DENIED;
-    do
+    if (netres.lpProvider)
     {
-        if ((caps & WNNC_CON_ADDCONNECTION3) && provider->addConnection3)
-            ret = provider->addConnection3(ctxt->hwndOwner, &netres, ctxt->password, ctxt->userid, ctxt->flags);
-        else if ((caps & WNNC_CON_ADDCONNECTION) && provider->addConnection)
-            ret = provider->addConnection(&netres, ctxt->password, ctxt->userid);
+        index = _findProviderIndexW(netres.lpProvider);
+        if (index == BAD_PROVIDER_INDEX)
+            return ERROR_BAD_PROVIDER;
 
-        if (ret != NO_ERROR && redirect)
-            letter[0] -= 1;
-    } while (redirect && ret == WN_ALREADY_CONNECTED && letter[0] >= 'C');
-
-    if (ret == WN_SUCCESS && ctxt->accessname)
-        ctxt->set_accessname(ctxt, netres.lpLocalName);
+        provider = &providerTable->table[index];
+        ret = wnet_use_provider(ctxt, &netres, provider, redirect);
+    }
+    else
+    {
+        for (index = 0; index < providerTable->numProviders; index++)
+        {
+            provider = &providerTable->table[index];
+            ret = wnet_use_provider(ctxt, &netres, provider, redirect);
+            if (ret == WN_SUCCESS || ret == WN_ALREADY_CONNECTED)
+                break;
+        }
+    }
 
     return ret;
 }
