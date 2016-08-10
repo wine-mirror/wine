@@ -29,7 +29,6 @@
 @ cdecl wined3d_buffer_get_resource(ptr)
 @ cdecl wined3d_buffer_incref(ptr)
 @ cdecl wined3d_buffer_map(ptr long long ptr long)
-@ cdecl wined3d_buffer_preload(ptr)
 @ cdecl wined3d_buffer_unmap(ptr)
 
 @ cdecl wined3d_device_acquire_focus_window(ptr ptr)
@@ -188,6 +187,7 @@
 @ cdecl wined3d_resource_get_parent(ptr)
 @ cdecl wined3d_resource_get_priority(ptr)
 @ cdecl wined3d_resource_map(ptr long ptr ptr long)
+@ cdecl wined3d_resource_preload(ptr)
 @ cdecl wined3d_resource_set_parent(ptr ptr)
 @ cdecl wined3d_resource_set_priority(ptr long)
 @ cdecl wined3d_resource_unmap(ptr long)
@@ -265,7 +265,6 @@
 @ cdecl wined3d_texture_get_sub_resource_desc(ptr long ptr)
 @ cdecl wined3d_texture_get_sub_resource_parent(ptr long)
 @ cdecl wined3d_texture_incref(ptr)
-@ cdecl wined3d_texture_preload(ptr)
 @ cdecl wined3d_texture_release_dc(ptr long ptr)
 @ cdecl wined3d_texture_set_autogen_filter_type(ptr long)
 @ cdecl wined3d_texture_set_color_key(ptr long ptr)

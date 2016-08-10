@@ -189,7 +189,7 @@ static void WINAPI d3d9_texture_2d_PreLoad(IDirect3DTexture9 *iface)
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    wined3d_texture_preload(texture->wined3d_texture);
+    wined3d_resource_preload(wined3d_texture_get_resource(texture->wined3d_texture));
     wined3d_mutex_unlock();
 }
 
@@ -578,7 +578,7 @@ static void WINAPI d3d9_texture_cube_PreLoad(IDirect3DCubeTexture9 *iface)
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    wined3d_texture_preload(texture->wined3d_texture);
+    wined3d_resource_preload(wined3d_texture_get_resource(texture->wined3d_texture));
     wined3d_mutex_unlock();
 }
 
@@ -980,7 +980,7 @@ static void WINAPI d3d9_texture_3d_PreLoad(IDirect3DVolumeTexture9 *iface)
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    wined3d_texture_preload(texture->wined3d_texture);
+    wined3d_resource_preload(wined3d_texture_get_resource(texture->wined3d_texture));
     wined3d_mutex_unlock();
 }
 

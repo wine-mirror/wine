@@ -168,7 +168,7 @@ static void WINAPI d3d9_vertexbuffer_PreLoad(IDirect3DVertexBuffer9 *iface)
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    wined3d_buffer_preload(buffer->wined3d_buffer);
+    wined3d_resource_preload(wined3d_buffer_get_resource(buffer->wined3d_buffer));
     wined3d_mutex_unlock();
 }
 
@@ -444,7 +444,7 @@ static void WINAPI d3d9_indexbuffer_PreLoad(IDirect3DIndexBuffer9 *iface)
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    wined3d_buffer_preload(buffer->wined3d_buffer);
+    wined3d_resource_preload(wined3d_buffer_get_resource(buffer->wined3d_buffer));
     wined3d_mutex_unlock();
 }
 

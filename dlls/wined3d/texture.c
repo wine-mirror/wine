@@ -947,14 +947,6 @@ void wined3d_texture_load(struct wined3d_texture *texture,
     texture->flags |= flag;
 }
 
-void CDECL wined3d_texture_preload(struct wined3d_texture *texture)
-{
-    struct wined3d_context *context;
-    context = context_acquire(texture->resource.device, NULL);
-    wined3d_texture_load(texture, context, texture->flags & WINED3D_TEXTURE_IS_SRGB);
-    context_release(context);
-}
-
 void * CDECL wined3d_texture_get_parent(const struct wined3d_texture *texture)
 {
     TRACE("texture %p.\n", texture);
@@ -1580,6 +1572,16 @@ static ULONG texture_resource_decref(struct wined3d_resource *resource)
     return wined3d_texture_decref(texture_from_resource(resource));
 }
 
+static void texture_resource_preload(struct wined3d_resource *resource)
+{
+    struct wined3d_texture *texture = texture_from_resource(resource);
+    struct wined3d_context *context;
+
+    context = context_acquire(resource->device, NULL);
+    wined3d_texture_load(texture, context, texture->flags & WINED3D_TEXTURE_IS_SRGB);
+    context_release(context);
+}
+
 static void wined3d_texture_unload(struct wined3d_resource *resource)
 {
     struct wined3d_texture *texture = texture_from_resource(resource);
@@ -1849,6 +1851,7 @@ static const struct wined3d_resource_ops texture_resource_ops =
 {
     texture_resource_incref,
     texture_resource_decref,
+    texture_resource_preload,
     wined3d_texture_unload,
     texture_resource_sub_resource_map,
     texture_resource_sub_resource_unmap,

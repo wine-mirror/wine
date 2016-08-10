@@ -2133,7 +2133,6 @@ void * __cdecl wined3d_buffer_get_parent(const struct wined3d_buffer *buffer);
 struct wined3d_resource * __cdecl wined3d_buffer_get_resource(struct wined3d_buffer *buffer);
 ULONG __cdecl wined3d_buffer_incref(struct wined3d_buffer *buffer);
 HRESULT __cdecl wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UINT size, BYTE **data, DWORD flags);
-void  __cdecl wined3d_buffer_preload(struct wined3d_buffer *buffer);
 void __cdecl wined3d_buffer_unmap(struct wined3d_buffer *buffer);
 
 HRESULT __cdecl wined3d_device_acquire_focus_window(struct wined3d_device *device, HWND window);
@@ -2447,6 +2446,7 @@ void * __cdecl wined3d_resource_get_parent(const struct wined3d_resource *resour
 DWORD __cdecl wined3d_resource_get_priority(const struct wined3d_resource *resource);
 HRESULT __cdecl wined3d_resource_map(struct wined3d_resource *resource, unsigned int sub_resource_idx,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags);
+void __cdecl wined3d_resource_preload(struct wined3d_resource *resource);
 void __cdecl wined3d_resource_set_parent(struct wined3d_resource *resource, void *parent);
 DWORD __cdecl wined3d_resource_set_priority(struct wined3d_resource *resource, DWORD priority);
 HRESULT __cdecl wined3d_resource_unmap(struct wined3d_resource *resource, unsigned int sub_resource_idx);
@@ -2561,7 +2561,6 @@ HRESULT __cdecl wined3d_texture_get_sub_resource_desc(const struct wined3d_textu
         unsigned int sub_resource_idx, struct wined3d_sub_resource_desc *desc);
 void * __cdecl wined3d_texture_get_sub_resource_parent(struct wined3d_texture *texture, unsigned int sub_resource_idx);
 ULONG __cdecl wined3d_texture_incref(struct wined3d_texture *texture);
-void __cdecl wined3d_texture_preload(struct wined3d_texture *texture);
 HRESULT __cdecl wined3d_texture_release_dc(struct wined3d_texture *texture, unsigned int sub_resource_idx, HDC dc);
 HRESULT __cdecl wined3d_texture_set_autogen_filter_type(struct wined3d_texture *texture,
         enum wined3d_texture_filter_type filter_type);
