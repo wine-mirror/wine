@@ -3311,7 +3311,7 @@ HKLM,Software\Wow6432Node\Microsoft\Notepad\DefaultFonts,"SymbolicLinkValue",0x6
 HKLM,Software\Wow6432Node\Microsoft\OLE,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\OLE"
 HKLM,Software\Wow6432Node\Microsoft\RAS,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\RAS"
 HKLM,Software\Wow6432Node\Microsoft\RPC,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\RPC"
-HKLM,Software\Wow6432Node\Microsoft\Software\Microsoft\Shared Tools\MSInfo,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\Software\Microsoft\Shared Tools\MSInfo"
+HKLM,Software\Wow6432Node\Microsoft\Software\Microsoft\Shared Tools\MSInfo,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\Shared Tools\MSInfo"
 HKLM,Software\Wow6432Node\Microsoft\SystemCertificates,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\SystemCertificates"
 HKLM,Software\Wow6432Node\Microsoft\TermServLicensing,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\TermServLicensing"
 HKLM,Software\Wow6432Node\Microsoft\Transaction Server,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\Transaction Server"
