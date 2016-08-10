@@ -1256,6 +1256,7 @@ static void wined3d_cs_exec_unload_resource(struct wined3d_cs *cs, const void *d
     struct wined3d_resource *resource = op->resource;
 
     resource->resource_ops->resource_unload(resource);
+    wined3d_resource_release(resource);
 }
 
 void wined3d_cs_emit_unload_resource(struct wined3d_cs *cs, struct wined3d_resource *resource)
@@ -1265,6 +1266,8 @@ void wined3d_cs_emit_unload_resource(struct wined3d_cs *cs, struct wined3d_resou
     op = cs->ops->require_space(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_UNLOAD_RESOURCE;
     op->resource = resource;
+
+    wined3d_resource_acquire(resource);
 
     cs->ops->submit(cs);
 }
