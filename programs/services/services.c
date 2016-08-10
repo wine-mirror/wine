@@ -861,17 +861,17 @@ static BOOL process_send_start_message(struct process_entry *process, const WCHA
     len = strlenW(name) + 1;
     for (i=0; i<argc; i++)
         len += strlenW(argv[i])+1;
-    len++;
+    len = (len + 1) * sizeof(WCHAR);
 
     ssi = HeapAlloc(GetProcessHeap(),0,FIELD_OFFSET(service_start_info, data[len]));
     ssi->cmd = WINESERV_STARTINFO;
     ssi->control = 0;
     ssi->total_size = FIELD_OFFSET(service_start_info, data[len]);
     ssi->name_size = strlenW(name) + 1;
-    strcpyW(ssi->data, name);
+    strcpyW((WCHAR *)ssi->data, name);
 
     /* copy service args into a single buffer*/
-    p = &ssi->data[ssi->name_size];
+    p = (WCHAR *)&ssi->data[ssi->name_size * sizeof(WCHAR)];
     for (i=0; i<argc; i++)
     {
         strcpyW(p, argv[i]);

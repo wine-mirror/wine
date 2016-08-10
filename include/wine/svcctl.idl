@@ -46,7 +46,7 @@ typedef struct service_start_info_t
     DWORD                     total_size; /* total request size */
     DWORD                     name_size;  /* size of name in data buffer */
     DWORD                     control;    /* control code */
-    WCHAR                     data[1];
+    BYTE                      data[1];
 } service_start_info;
 
 [

@@ -1046,14 +1046,14 @@ static BOOL process_send_control(struct process_entry *process, const WCHAR *nam
     BOOL r;
 
     /* calculate how much space we need to send the startup info */
-    len = strlenW(name) + 1;
+    len = (strlenW(name) + 1) * sizeof(WCHAR);
 
     ssi = HeapAlloc(GetProcessHeap(),0,FIELD_OFFSET(service_start_info, data[len]));
     ssi->cmd = WINESERV_SENDCONTROL;
     ssi->control = dwControl;
     ssi->total_size = FIELD_OFFSET(service_start_info, data[len]);
     ssi->name_size = strlenW(name) + 1;
-    strcpyW(ssi->data, name);
+    strcpyW((WCHAR *)ssi->data, name);
 
     r = process_send_command(process, ssi, ssi->total_size, result);
     HeapFree( GetProcessHeap(), 0, ssi );
