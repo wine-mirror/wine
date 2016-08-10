@@ -401,14 +401,14 @@ static DWORD service_handle_start(service_data *service, const WCHAR *data, DWOR
 /******************************************************************************
  * service_handle_control
  */
-static DWORD service_handle_control(const service_data *service, DWORD dwControl)
+static DWORD service_handle_control(const service_data *service, DWORD control, void *data)
 {
     DWORD ret = ERROR_INVALID_SERVICE_CONTROL;
 
-    TRACE("%s control %u\n", debugstr_w(service->name), dwControl);
+    TRACE("%s control %u data %p\n", debugstr_w(service->name), control, data);
 
     if (service->handler)
-        ret = service->handler(dwControl, 0, NULL, service->context);
+        ret = service->handler(control, 0, data, service->context);
     return ret;
 }
 
@@ -494,7 +494,8 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
             result = service_handle_start(service, (WCHAR *)data, data_size / sizeof(WCHAR));
             break;
         case WINESERV_SENDCONTROL:
-            result = service_handle_control(service, info.control);
+            result = service_handle_control(service, info.control, (data_size > info.name_size * sizeof(WCHAR)) ?
+                                            &data[info.name_size * sizeof(WCHAR)] : NULL);
             break;
         default:
             ERR("received invalid command %u\n", info.cmd);
@@ -589,13 +590,13 @@ static BOOL service_run_main_thread(void)
                     {
                         FIXME("service should be able to delay shutdown\n");
                         timeout += spi.dwPreshutdownTimeout;
-                        ret = service_handle_control( services[i], SERVICE_CONTROL_PRESHUTDOWN );
+                        ret = service_handle_control( services[i], SERVICE_CONTROL_PRESHUTDOWN, NULL );
                         wait_handles[n++] = services[i]->thread;
                     }
                 }
                 else if (res && (st.dwControlsAccepted & SERVICE_ACCEPT_SHUTDOWN))
                 {
-                    ret = service_handle_control( services[i], SERVICE_CONTROL_SHUTDOWN );
+                    ret = service_handle_control( services[i], SERVICE_CONTROL_SHUTDOWN, NULL );
                     wait_handles[n++] = services[i]->thread;
                 }
             }

@@ -1039,21 +1039,23 @@ BOOL process_send_command(struct process_entry *process, const void *data, DWORD
 /******************************************************************************
  * process_send_control
  */
-static BOOL process_send_control(struct process_entry *process, const WCHAR *name, DWORD dwControl, DWORD *result)
+static BOOL process_send_control(struct process_entry *process, const WCHAR *name, DWORD control,
+                                 const BYTE *data, DWORD data_size, DWORD *result)
 {
     service_start_info *ssi;
     DWORD len;
     BOOL r;
 
     /* calculate how much space we need to send the startup info */
-    len = (strlenW(name) + 1) * sizeof(WCHAR);
+    len = (strlenW(name) + 1) * sizeof(WCHAR) + data_size;
 
     ssi = HeapAlloc(GetProcessHeap(),0,FIELD_OFFSET(service_start_info, data[len]));
     ssi->cmd = WINESERV_SENDCONTROL;
-    ssi->control = dwControl;
+    ssi->control = control;
     ssi->total_size = FIELD_OFFSET(service_start_info, data[len]);
     ssi->name_size = strlenW(name) + 1;
     strcpyW((WCHAR *)ssi->data, name);
+    if (data_size) memcpy(&ssi->data[ssi->name_size * sizeof(WCHAR)], data, data_size);
 
     r = process_send_command(process, ssi, ssi->total_size, result);
     HeapFree( GetProcessHeap(), 0, ssi );
@@ -1185,7 +1187,7 @@ DWORD __cdecl svcctl_ControlService(
         return ERROR_SERVICE_REQUEST_TIMEOUT;
     }
 
-    process_send_control(process, service->service_entry->name, dwControl, &result);
+    process_send_control(process, service->service_entry->name, dwControl, NULL, 0, &result);
 
     if (lpServiceStatus)
     {
