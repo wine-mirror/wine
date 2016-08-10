@@ -3690,8 +3690,8 @@
 @ stub _Mtxunlock
 @ extern _Nan _Nan
 @ stub _Open_dir
-@ stub _Query_perf_counter
-@ stub _Query_perf_frequency
+@ cdecl -ret64 _Query_perf_counter()
+@ cdecl -ret64 _Query_perf_frequency()
 @ stub _Read_dir
 @ stub _Remove_dir
 @ stub _Rename

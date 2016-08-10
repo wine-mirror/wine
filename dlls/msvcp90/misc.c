@@ -1180,3 +1180,19 @@ void free_misc(void)
         NtClose(keyed_event);
 #endif
 }
+
+#if _MSVCP_VER >= 140
+LONGLONG __cdecl _Query_perf_counter(void)
+{
+    LARGE_INTEGER li;
+    QueryPerformanceCounter(&li);
+    return li.QuadPart;
+}
+
+LONGLONG __cdecl _Query_perf_frequency(void)
+{
+    LARGE_INTEGER li;
+    QueryPerformanceFrequency(&li);
+    return li.QuadPart;
+}
+#endif
