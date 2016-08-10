@@ -523,6 +523,74 @@ static void test_WsWriteBody(void)
     WsFreeWriter( writer );
 }
 
+static void test_WsSetHeader(void)
+{
+    static const char expected[] =
+        "<s:Envelope xmlns:a=\"http://www.w3.org/2005/08/addressing\" "
+        "xmlns:s=\"http://www.w3.org/2003/05/soap-envelope\"><s:Header>"
+        "<a:MessageID>urn:uuid:00000000-0000-0000-0000-000000000000</a:MessageID>"
+        "<a:Action s:mustUnderstand=\"1\">action</a:Action></s:Header>"
+        "<s:Body/></s:Envelope>";
+   static const char expected2[] =
+        "<s:Envelope xmlns:a=\"http://www.w3.org/2005/08/addressing\" "
+        "xmlns:s=\"http://www.w3.org/2003/05/soap-envelope\"><s:Header>"
+        "<a:MessageID>urn:uuid:00000000-0000-0000-0000-000000000000</a:MessageID>"
+        "<a:Action s:mustUnderstand=\"1\">action2</a:Action></s:Header>"
+        "<s:Body/></s:Envelope>";
+    static const WCHAR action[] = {'a','c','t','i','o','n',0};
+    static const WS_XML_STRING action2 = {7, (BYTE *)"action2"};
+    HRESULT hr;
+    WS_MESSAGE *msg;
+    WS_XML_WRITER *writer;
+    const WCHAR *ptr = action;
+
+    hr = WsSetHeader( NULL, 0, 0, 0, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateMessage( WS_ADDRESSING_VERSION_1_0, WS_ENVELOPE_VERSION_SOAP_1_2, NULL, 0, &msg,
+                          NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetHeader( msg, 0, 0, 0, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsSetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_WRITE_REQUIRED_POINTER, &ptr,
+                      sizeof(ptr), NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetHeader( msg, 0, WS_WSZ_TYPE, WS_WRITE_REQUIRED_POINTER, &ptr, sizeof(ptr), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsSetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_WRITE_REQUIRED_POINTER, &ptr,
+                      sizeof(ptr), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_header( msg, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, expected, 250, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
+    check_output_header( msg, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
+
+    /* called after WsWriteEnvelopeStart */
+    hr = WsSetHeader( msg, WS_ACTION_HEADER, WS_XML_STRING_TYPE, WS_WRITE_REQUIRED_VALUE, &action2,
+                      sizeof(action2), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, expected, 250, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
+    check_output_header( msg, expected2, -1, strstr(expected2, "urn:uuid:") - expected2, 46, __LINE__ );
+
+    WsFreeMessage( msg );
+    WsFreeWriter( writer );
+}
+
 START_TEST(msg)
 {
     test_WsCreateMessage();
@@ -532,4 +600,5 @@ START_TEST(msg)
     test_WsWriteEnvelopeStart();
     test_WsWriteEnvelopeEnd();
     test_WsWriteBody();
+    test_WsSetHeader();
 }
