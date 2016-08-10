@@ -48,6 +48,12 @@ static const struct prop_desc msg_props[] =
     { sizeof(BOOL), TRUE },                     /* WS_MESSAGE_PROPERTY_IS_ADDRESSED */
 };
 
+struct header
+{
+    WS_HEADER_TYPE   type;
+    WS_XML_UTF8_TEXT text;
+};
+
 struct msg
 {
     WS_MESSAGE_INITIALIZATION init;
@@ -61,10 +67,14 @@ struct msg
     WS_XML_BUFFER            *buf;
     WS_XML_WRITER            *writer;
     WS_XML_WRITER            *writer_body;
+    ULONG                     header_count;
+    ULONG                     header_size;
+    struct header           **header;
     ULONG                     prop_count;
     struct prop               prop[sizeof(msg_props)/sizeof(msg_props[0])];
 };
 
+#define HEADER_ARRAY_SIZE 2
 static struct msg *alloc_msg(void)
 {
     static const ULONG count = sizeof(msg_props)/sizeof(msg_props[0]);
@@ -72,10 +82,22 @@ static struct msg *alloc_msg(void)
     ULONG size = sizeof(*ret) + prop_size( msg_props, count );
 
     if (!(ret = heap_alloc_zero( size ))) return NULL;
-    ret->state = WS_MESSAGE_STATE_EMPTY;
+    if (!(ret->header = heap_alloc( HEADER_ARRAY_SIZE * sizeof(struct header *) )))
+    {
+        heap_free( ret );
+        return NULL;
+    }
+    ret->state       = WS_MESSAGE_STATE_EMPTY;
+    ret->header_size = HEADER_ARRAY_SIZE;
     prop_init( msg_props, count, ret->prop, &ret[1] );
-    ret->prop_count = count;
+    ret->prop_count  = count;
     return ret;
+}
+
+static void free_headers( struct header **header, ULONG count )
+{
+    ULONG i;
+    for (i = 0; i < count; i++) heap_free( header[i] );
 }
 
 static void free_msg( struct msg *msg )
@@ -84,11 +106,12 @@ static void free_msg( struct msg *msg )
     WsFreeWriter( msg->writer );
     WsFreeHeap( msg->heap );
     heap_free( msg->addr.chars );
+    free_headers( msg->header, msg->header_count );
+    heap_free( msg->header );
     heap_free( msg );
 }
 
 #define HEAP_MAX_SIZE (1 << 16)
-
 static HRESULT create_msg( WS_ENVELOPE_VERSION env_version, WS_ADDRESSING_VERSION addr_version,
                            const WS_MESSAGE_PROPERTY *properties, ULONG count, WS_MESSAGE **handle )
 {
@@ -403,6 +426,16 @@ static HRESULT write_envelope_end( struct msg *msg, WS_XML_WRITER *writer )
     return WsWriteEndElement( writer, NULL ); /* </s:Envelope> */
 }
 
+static HRESULT write_envelope( struct msg *msg )
+{
+    HRESULT hr;
+    if (!msg->writer && (hr = WsCreateWriter( NULL, 0, &msg->writer, NULL )) != S_OK) return hr;
+    if (!msg->buf && (hr = WsCreateXmlBuffer( msg->heap, NULL, 0, &msg->buf, NULL )) != S_OK) return hr;
+    if ((hr = WsSetOutputToBuffer( msg->writer, msg->buf, NULL, 0, NULL )) != S_OK) return hr;
+    if ((hr = write_envelope_start( msg, msg->writer )) != S_OK) return hr;
+    return write_envelope_end( msg, msg->writer );
+}
+
 /**************************************************************************
  *          WsWriteEnvelopeStart		[webservices.@]
  */
@@ -420,14 +453,11 @@ HRESULT WINAPI WsWriteEnvelopeStart( WS_MESSAGE *handle, WS_XML_WRITER *writer,
         return E_NOTIMPL;
     }
 
-    if (!handle) return E_INVALIDARG;
+    if (!handle || !writer) return E_INVALIDARG;
     if (msg->state != WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
 
-    if ((hr = WsCreateWriter( NULL, 0, &msg->writer, NULL )) != S_OK) return hr;
-    if ((hr = WsSetOutputToBuffer( msg->writer, msg->buf, NULL, 0, NULL )) != S_OK) return hr;
-    if ((hr = write_envelope_start( msg, msg->writer )) != S_OK) return hr;
+    if ((hr = write_envelope( msg )) != S_OK) return hr;
     if ((hr = write_envelope_start( msg, writer )) != S_OK) return hr;
-    if ((hr = write_envelope_end( msg, msg->writer )) != S_OK) return hr;
 
     msg->writer_body = writer;
     msg->state       = WS_MESSAGE_STATE_WRITING;
@@ -478,4 +508,103 @@ HRESULT WINAPI WsWriteBody( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTION *de
 
     if (desc->elementLocalName) hr = WsWriteEndElement( msg->writer_body, NULL );
     return hr;
+}
+
+static inline void set_utf8_text( WS_XML_UTF8_TEXT *text, BYTE *bytes, ULONG len )
+{
+    text->text.textType = WS_XML_TEXT_TYPE_UTF8;
+    text->value.bytes   = bytes;
+    text->value.length  = len;
+}
+
+static HRESULT alloc_header( WS_HEADER_TYPE type, WS_TYPE value_type, WS_WRITE_OPTION option,
+                             const void *value, ULONG size, struct header **ret )
+{
+    struct header *header;
+
+    switch (value_type)
+    {
+    case WS_WSZ_TYPE:
+    {
+        int len;
+        const WCHAR *src;
+
+        if (option != WS_WRITE_REQUIRED_POINTER || size != sizeof(WCHAR *)) return E_INVALIDARG;
+
+        src = *(const WCHAR **)value;
+        len = WideCharToMultiByte( CP_UTF8, 0, src, -1, NULL, 0, NULL, NULL ) - 1;
+        if (!(header = heap_alloc( sizeof(*header) + len ))) return E_OUTOFMEMORY;
+        set_utf8_text( &header->text, (BYTE *)(header + 1), len );
+        WideCharToMultiByte( CP_UTF8, 0, src, -1, (char *)header->text.value.bytes, len, NULL, NULL );
+        break;
+    }
+    case WS_XML_STRING_TYPE:
+    {
+        const WS_XML_STRING *str = value;
+
+        if (option != WS_WRITE_REQUIRED_VALUE)
+        {
+            FIXME( "unhandled write option %u\n", option );
+            return E_NOTIMPL;
+        }
+        if (size != sizeof(*str)) return E_INVALIDARG;
+        if (!(header = heap_alloc( sizeof(*header) + str->length ))) return E_OUTOFMEMORY;
+        set_utf8_text( &header->text, (BYTE *)(header + 1), str->length );
+        memcpy( header->text.value.bytes, str->bytes, str->length );
+        break;
+    }
+    default:
+        FIXME( "unhandled type %u\n", value_type );
+        return E_NOTIMPL;
+    }
+
+    header->type = type;
+    *ret = header;
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsSetHeader		[webservices.@]
+ */
+HRESULT WINAPI WsSetHeader( WS_MESSAGE *handle, WS_HEADER_TYPE type, WS_TYPE value_type,
+                            WS_WRITE_OPTION option, const void *value, ULONG size, WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+    struct header *header;
+    BOOL found = FALSE;
+    HRESULT hr;
+    ULONG i;
+
+    TRACE( "%p %u %u %08x %p %u %p\n", handle, type, value_type, option, value, size, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!handle || type < WS_ACTION_HEADER || type > WS_FAULT_TO_HEADER) return E_INVALIDARG;
+    if (msg->state < WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
+
+    for (i = 0; i < msg->header_count; i++)
+    {
+        if (msg->header[i]->type == type)
+        {
+            found = TRUE;
+            break;
+        }
+    }
+
+    if (found) heap_free( msg->header[i] );
+    else
+    {
+        if (msg->header_count == msg->header_size)
+        {
+            struct header **tmp;
+            if (!(tmp = heap_realloc( msg->header, 2 * msg->header_size * sizeof(struct header *) )))
+                return E_OUTOFMEMORY;
+            msg->header = tmp;
+            msg->header_size *= 2;
+        }
+        i = msg->header_count++;
+    }
+
+    if ((hr = alloc_header( type, value_type, option, value, size, &header )) != S_OK) return hr;
+    msg->header[i] = header;
+    return write_envelope( msg );
 }
