@@ -613,7 +613,6 @@ unsigned int CDECL __CxxQueryExceptionSize(void)
  *		_setjmp (MSVCRT.@)
  */
 __ASM_GLOBAL_FUNC( MSVCRT__setjmp,
-                   "xorq %rdx,%rdx\n\t"  /* frame */
                    "jmp " __ASM_NAME("MSVCRT__setjmpex") );
 
 /*******************************************************************
