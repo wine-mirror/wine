@@ -379,15 +379,55 @@ static HRESULT get_addr_namespace( WS_ADDRESSING_VERSION ver, WS_XML_STRING *str
     }
 }
 
+static const WS_XML_STRING *get_header_name( WS_HEADER_TYPE type )
+{
+    static const WS_XML_STRING action = {6, (BYTE *)"Action"}, to = {2, (BYTE *)"To"};
+    static const WS_XML_STRING msgid = {9, (BYTE *)"MessageID"}, relto = {9, (BYTE *)"RelatesTo"};
+    static const WS_XML_STRING from = {4, (BYTE *)"From"}, replyto = {7, (BYTE *)"ReplyTo"};
+    static const WS_XML_STRING faultto = {7, (BYTE *)"FaultTo"};
+
+    switch (type)
+    {
+    case WS_ACTION_HEADER:      return &action;
+    case WS_TO_HEADER:          return &to;
+    case WS_MESSAGE_ID_HEADER:  return &msgid;
+    case WS_RELATES_TO_HEADER:  return &relto;
+    case WS_FROM_HEADER:        return &from;
+    case WS_REPLY_TO_HEADER:    return &replyto;
+    case WS_FAULT_TO_HEADER:    return &faultto;
+    default:
+        ERR( "unknown type %u\n", type );
+        return NULL;
+    }
+}
+
+static HRESULT write_header( WS_XML_WRITER *writer, const struct header *header )
+{
+    static const WS_XML_STRING prefix_s = {1, (BYTE *)"s"}, prefix_a = {1, (BYTE *)"a"};
+    static const WS_XML_STRING understand = {14, (BYTE *)"mustUnderstand"}, ns = {0, NULL};
+    const WS_XML_STRING *localname = get_header_name( header->type );
+    WS_XML_INT32_TEXT one = {{WS_XML_TEXT_TYPE_INT32}, 1};
+    HRESULT hr;
+
+    if ((hr = WsWriteStartElement( writer, &prefix_a, localname, &ns, NULL )) != S_OK) return hr;
+    if ((hr = WsWriteStartAttribute( writer, &prefix_s, &understand, &ns, FALSE, NULL )) != S_OK) return hr;
+    if ((hr = WsWriteText( writer, &one.text, NULL )) != S_OK) return hr;
+    if ((hr = WsWriteEndAttribute( writer, NULL )) != S_OK) return hr;
+    if ((hr = WsWriteText( writer, &header->text.text, NULL )) != S_OK) return hr;
+    return WsWriteEndElement( writer, NULL );
+}
+
 static HRESULT write_envelope_start( struct msg *msg, WS_XML_WRITER *writer )
 {
     static const char anonymous[] = "http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous";
-    WS_XML_STRING prefix_s = {1, (BYTE *)"s"}, prefix_a = {1, (BYTE *)"a"}, body = {4, (BYTE *)"Body"};
-    WS_XML_STRING envelope = {8, (BYTE *)"Envelope"}, header = {6, (BYTE *)"Header"};
-    WS_XML_STRING msgid = {9, (BYTE *)"MessageID"}, replyto = {7, (BYTE *)"ReplyTo"};
-    WS_XML_STRING address = {7, (BYTE *)"Address"}, ns_env, ns_addr;
+    static const WS_XML_STRING prefix_s = {1, (BYTE *)"s"}, prefix_a = {1, (BYTE *)"a"};
+    static const WS_XML_STRING envelope = {8, (BYTE *)"Envelope"}, header = {6, (BYTE *)"Header"};
+    static const WS_XML_STRING msgid = {9, (BYTE *)"MessageID"}, replyto = {7, (BYTE *)"ReplyTo"};
+    static const WS_XML_STRING address = {7, (BYTE *)"Address"}, body = {4, (BYTE *)"Body"};
+    WS_XML_STRING ns_env, ns_addr;
     WS_XML_UTF8_TEXT urn, addr;
     HRESULT hr;
+    ULONG i;
 
     if ((hr = get_env_namespace( msg->version_env, &ns_env )) != S_OK) return hr;
     if ((hr = get_addr_namespace( msg->version_addr, &ns_addr )) != S_OK) return hr;
@@ -400,8 +440,13 @@ static HRESULT write_envelope_start( struct msg *msg, WS_XML_WRITER *writer )
     urn.text.textType = WS_XML_TEXT_TYPE_UNIQUE_ID;
     memcpy( &urn.value, &msg->id, sizeof(msg->id) );
     if ((hr = WsWriteText( writer, &urn.text, NULL )) != S_OK) return hr;
-
     if ((hr = WsWriteEndElement( writer, NULL )) != S_OK) return hr; /* </a:MessageID> */
+
+    for (i = 0; i < msg->header_count; i++)
+    {
+        if ((hr = write_header( writer, msg->header[i] )) != S_OK) return hr;
+    }
+
     if (msg->version_addr == WS_ADDRESSING_VERSION_0_9)
     {
         if ((hr = WsWriteStartElement( writer, &prefix_a, &replyto, &ns_addr, NULL )) != S_OK) return hr;
