@@ -1078,6 +1078,11 @@ MSVCRT_size_t CDECL _Strftime(char *str, MSVCRT_size_t max, const char *format,
 
     for(ret=0; *format && ret<max; format++) {
         if(*format != '%') {
+            if(MSVCRT_isleadbyte((unsigned char)*format)) {
+                str[ret++] = *(format++);
+                if(ret == max) continue;
+                if(!str[ret]) goto einval_error;
+            }
             str[ret++] = *format;
             continue;
         }
