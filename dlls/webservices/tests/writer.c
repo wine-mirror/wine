@@ -1576,6 +1576,7 @@ static void test_WsGetWriterPosition(void)
 
 static void test_WsSetWriterPosition(void)
 {
+    WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL};
     WS_HEAP *heap;
     WS_XML_WRITER *writer;
     WS_XML_BUFFER *buf1, *buf2;
@@ -1616,6 +1617,29 @@ static void test_WsSetWriterPosition(void)
     pos.buffer = buf2;
     hr = WsSetWriterPosition( writer, &pos, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsSetOutputToBuffer( writer, buf1, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* try to write at non-final position */
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    pos.buffer = pos.node = NULL;
+    hr = WsGetWriterPosition( writer, &pos, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( pos.buffer == buf1, "wrong buffer\n" );
+    ok( pos.node != NULL, "node not set\n" );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_buffer( buf1, "<t/>", __LINE__ );
+
+    hr = WsSetWriterPosition( writer, &pos, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    todo_wine ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
 
     WsFreeWriter( writer );
     WsFreeHeap( heap );
