@@ -214,13 +214,14 @@ static BOOL WINECON_SetEditionMode(HANDLE hConIn, int edition_mode)
 /******************************************************************
  *		WINECON_SetColors
  *
- *
+ * Sets ColorTable and Pop-up menu colors
  */
 static void WINECON_SetColors(struct inner_data *data, const struct config_data* cfg)
 {
     size_t color_map_size = sizeof(data->curcfg.color_map);
 
     memcpy(data->curcfg.color_map, cfg->color_map, color_map_size);
+    data->curcfg.popup_attr = cfg->popup_attr;
 
     SERVER_START_REQ( set_console_output_info )
     {

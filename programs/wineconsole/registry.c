@@ -44,6 +44,7 @@ static const WCHAR wszHistoryBufferSize[] = {'H','i','s','t','o','r','y','B','u'
 static const WCHAR wszHistoryNoDup[]      = {'H','i','s','t','o','r','y','N','o','D','u','p',0};
 static const WCHAR wszInsertMode[]        = {'I','n','s','e','r','t','M','o','d','e',0};
 static const WCHAR wszMenuMask[]          = {'M','e','n','u','M','a','s','k',0};
+static const WCHAR wszPopupColors[]       = {'P','o','p','u','p','C','o','l','o','r','s',0};
 static const WCHAR wszQuickEdit[]         = {'Q','u','i','c','k','E','d','i','t',0};
 static const WCHAR wszScreenBufferSize[]  = {'S','c','r','e','e','n','B','u','f','f','e','r','S','i','z','e',0};
 static const WCHAR wszScreenColors[]      = {'S','c','r','e','e','n','C','o','l','o','r','s',0};
@@ -55,12 +56,13 @@ static const WCHAR color_name_fmt[] = {'%','s','%','0','2','d',0};
 
 void WINECON_DumpConfig(const char* pfx, const struct config_data* cfg)
 {
-    WINE_TRACE("%s cell=(%u,%u) cursor=(%d,%d) attr=%02x font=%s/%u hist=%u/%d flags=%c%c%c msk=%08x sb=(%u,%u) win=(%u,%u)x(%u,%u) edit=%u registry=%s\n",
+    WINE_TRACE("%s cell=(%u,%u) cursor=(%d,%d) attr=%02x pop-up=%02x font=%s/%u hist=%u/%d flags=%c%c%c "
+               "msk=%08x sb=(%u,%u) win=(%u,%u)x(%u,%u) edit=%u registry=%s\n",
                pfx, cfg->cell_width, cfg->cell_height, cfg->cursor_size, cfg->cursor_visible, cfg->def_attr,
-               wine_dbgstr_w(cfg->face_name), cfg->font_weight, cfg->history_size, cfg->history_nodup ? 1 : 2,
-               cfg->insert_mode ? 'I' : 'i', cfg->quick_edit ? 'Q' : 'q', cfg->exit_on_die ? 'X' : 'x',
-               cfg->menu_mask, cfg->sb_width, cfg->sb_height, cfg->win_pos.X, cfg->win_pos.Y, cfg->win_width, cfg->win_height,
-               cfg->edition_mode,
+               cfg->popup_attr, wine_dbgstr_w(cfg->face_name), cfg->font_weight, cfg->history_size,
+               cfg->history_nodup ? 1 : 2, cfg->insert_mode ? 'I' : 'i', cfg->quick_edit ? 'Q' : 'q',
+               cfg->exit_on_die ? 'X' : 'x', cfg->menu_mask, cfg->sb_width, cfg->sb_height,
+               cfg->win_pos.X, cfg->win_pos.Y, cfg->win_width, cfg->win_height, cfg->edition_mode,
                wine_dbgstr_w(cfg->registry));
 }
 
@@ -149,6 +151,10 @@ static void WINECON_RegLoadHelper(HKEY hConKey, struct config_data* cfg)
         cfg->menu_mask = val;
 
     count = sizeof(val);
+    if (!RegQueryValueExW(hConKey, wszPopupColors, 0, &type, (LPBYTE)&val, &count))
+        cfg->popup_attr = val;
+
+    count = sizeof(val);
     if (!RegQueryValueExW(hConKey, wszQuickEdit, 0, &type, (LPBYTE)&val, &count))
         cfg->quick_edit = val;
 
@@ -209,6 +215,7 @@ void WINECON_RegLoad(const WCHAR* appname, struct config_data* cfg)
     cfg->history_nodup = 0;
     cfg->insert_mode = 1;
     cfg->menu_mask = 0;
+    cfg->popup_attr = 0xF5;
     cfg->quick_edit = 0;
     cfg->sb_height = 25;
     cfg->sb_width  = 80;
@@ -292,6 +299,9 @@ static void WINECON_RegSaveHelper(HKEY hConKey, const struct config_data* cfg)
 
     val = cfg->menu_mask;
     RegSetValueExW(hConKey, wszMenuMask, 0, REG_DWORD, (LPBYTE)&val, sizeof(val));
+
+    val = cfg->popup_attr;
+    RegSetValueExW(hConKey, wszPopupColors, 0, REG_DWORD, (LPBYTE)&val, sizeof(val));
 
     val = cfg->quick_edit;
     RegSetValueExW(hConKey, wszQuickEdit, 0, REG_DWORD, (LPBYTE)&val, sizeof(val));
