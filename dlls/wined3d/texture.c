@@ -1015,6 +1015,7 @@ DWORD CDECL wined3d_texture_set_lod(struct wined3d_texture *texture, DWORD lod)
 
     if (texture->lod != lod)
     {
+        wined3d_resource_wait_idle(&texture->resource);
         texture->lod = lod;
 
         texture->texture_rgb.base_level = ~0u;
