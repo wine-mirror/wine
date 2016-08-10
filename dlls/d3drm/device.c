@@ -213,7 +213,7 @@ static HRESULT d3drm_device_set_ddraw_device_d3d(struct d3drm_device *device, ID
 {
     IDirectDraw *ddraw;
     IDirectDrawSurface *surface;
-    IDirect3DDevice2 *d3d_device2;
+    IDirect3DDevice2 *d3d_device2 = NULL;
     DDSURFACEDESC desc;
     HRESULT hr;
 
@@ -222,9 +222,6 @@ static HRESULT d3drm_device_set_ddraw_device_d3d(struct d3drm_device *device, ID
         return hr;
     IDirect3DRM_AddRef(device->d3drm);
     IDirect3DDevice_AddRef(d3d_device);
-
-    if (device->ddraw)
-        return D3DRMERR_BADOBJECT;
 
     /* Fetch render target and get width/height from there */
     if (FAILED(hr = IDirect3DDevice_QueryInterface(d3d_device, &IID_IDirectDrawSurface, (void **)&surface)))
@@ -237,16 +234,26 @@ static HRESULT d3drm_device_set_ddraw_device_d3d(struct d3drm_device *device, ID
             return hr;
     }
 
+    if (device->ddraw)
+    {
+        if (d3d_device2)
+            IDirectDrawSurface_Release(surface);
+        return D3DRMERR_BADOBJECT;
+    }
+
     desc.dwSize = sizeof(desc);
     hr = IDirectDrawSurface_GetSurfaceDesc(surface, &desc);
-    IDirectDrawSurface_Release(surface);
     if (FAILED(hr))
+    {
+        IDirectDrawSurface_Release(surface);
         return hr;
+    }
 
     device->ddraw = ddraw;
     device->width = desc.dwWidth;
     device->height = desc.dwHeight;
     device->device = d3d_device;
+    device->render_target = surface;
 
     return hr;
 }
