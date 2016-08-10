@@ -1939,6 +1939,7 @@ struct set_console_output_info_request
     short int    width;
     short int    height;
     short int    attr;
+    short int    popup_attr;
     short int    win_left;
     short int    win_top;
     short int    win_right;
@@ -1948,20 +1949,21 @@ struct set_console_output_info_request
     short int    font_width;
     short int    font_height;
     /* VARARG(colors,uints); */
-    char __pad_50[6];
+    char __pad_52[4];
 };
 struct set_console_output_info_reply
 {
     struct reply_header __header;
 };
-#define SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM     0x01
-#define SET_CONSOLE_OUTPUT_INFO_CURSOR_POS      0x02
-#define SET_CONSOLE_OUTPUT_INFO_SIZE            0x04
-#define SET_CONSOLE_OUTPUT_INFO_ATTR            0x08
-#define SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW  0x10
-#define SET_CONSOLE_OUTPUT_INFO_MAX_SIZE        0x20
-#define SET_CONSOLE_OUTPUT_INFO_FONT            0x40
-#define SET_CONSOLE_OUTPUT_INFO_COLORTABLE      0x80
+#define SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM     0x0001
+#define SET_CONSOLE_OUTPUT_INFO_CURSOR_POS      0x0002
+#define SET_CONSOLE_OUTPUT_INFO_SIZE            0x0004
+#define SET_CONSOLE_OUTPUT_INFO_ATTR            0x0008
+#define SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW  0x0010
+#define SET_CONSOLE_OUTPUT_INFO_MAX_SIZE        0x0020
+#define SET_CONSOLE_OUTPUT_INFO_FONT            0x0040
+#define SET_CONSOLE_OUTPUT_INFO_COLORTABLE      0x0080
+#define SET_CONSOLE_OUTPUT_INFO_POPUP_ATTR      0x0100
 
 
 
@@ -1980,6 +1982,7 @@ struct get_console_output_info_reply
     short int    width;
     short int    height;
     short int    attr;
+    short int    popup_attr;
     short int    win_left;
     short int    win_top;
     short int    win_right;
@@ -1989,7 +1992,6 @@ struct get_console_output_info_reply
     short int    font_width;
     short int    font_height;
     /* VARARG(colors,uints); */
-    char __pad_38[2];
 };
 
 
@@ -6248,6 +6250,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 508
+#define SERVER_PROTOCOL_VERSION 509
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

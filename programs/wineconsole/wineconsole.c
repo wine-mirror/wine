@@ -226,7 +226,8 @@ static void WINECON_SetColors(struct inner_data *data, const struct config_data*
     SERVER_START_REQ( set_console_output_info )
     {
         req->handle = wine_server_obj_handle( data->hConOut );
-        req->mask = SET_CONSOLE_OUTPUT_INFO_COLORTABLE;
+        req->mask = SET_CONSOLE_OUTPUT_INFO_COLORTABLE | SET_CONSOLE_OUTPUT_INFO_POPUP_ATTR;
+        req->popup_attr = cfg->popup_attr;
         wine_server_add_data( req, cfg->color_map, color_map_size );
         wine_server_call( req );
     }

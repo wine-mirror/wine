@@ -1528,7 +1528,8 @@ struct console_renderer_event
     short int    cursor_y;
     short int    width;         /* width of the screen buffer */
     short int    height;        /* height of the screen buffer */
-    short int    attr;          /* default attribute */
+    short int    attr;          /* default fill attributes (screen colors) */
+    short int    popup_attr;    /* pop-up color attributes */
     short int    win_left;      /* window actually displayed by renderer */
     short int    win_top;       /* the rect area is expressed within the */
     short int    win_right;     /* boundaries of the screen buffer */
@@ -1539,14 +1540,15 @@ struct console_renderer_event
     short int    font_height;
     VARARG(colors,uints);       /* color table */
 @END
-#define SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM     0x01
-#define SET_CONSOLE_OUTPUT_INFO_CURSOR_POS      0x02
-#define SET_CONSOLE_OUTPUT_INFO_SIZE            0x04
-#define SET_CONSOLE_OUTPUT_INFO_ATTR            0x08
-#define SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW  0x10
-#define SET_CONSOLE_OUTPUT_INFO_MAX_SIZE        0x20
-#define SET_CONSOLE_OUTPUT_INFO_FONT            0x40
-#define SET_CONSOLE_OUTPUT_INFO_COLORTABLE      0x80
+#define SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM     0x0001
+#define SET_CONSOLE_OUTPUT_INFO_CURSOR_POS      0x0002
+#define SET_CONSOLE_OUTPUT_INFO_SIZE            0x0004
+#define SET_CONSOLE_OUTPUT_INFO_ATTR            0x0008
+#define SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW  0x0010
+#define SET_CONSOLE_OUTPUT_INFO_MAX_SIZE        0x0020
+#define SET_CONSOLE_OUTPUT_INFO_FONT            0x0040
+#define SET_CONSOLE_OUTPUT_INFO_COLORTABLE      0x0080
+#define SET_CONSOLE_OUTPUT_INFO_POPUP_ATTR      0x0100
 
 
 /* Get info about a console (output only) */
@@ -1559,7 +1561,8 @@ struct console_renderer_event
     short int    cursor_y;
     short int    width;         /* width of the screen buffer */
     short int    height;        /* height of the screen buffer */
-    short int    attr;          /* default attribute */
+    short int    attr;          /* default fill attributes (screen colors) */
+    short int    popup_attr;    /* pop-up color attributes */
     short int    win_left;      /* window actually displayed by renderer */
     short int    win_top;       /* the rect area is expressed within the */
     short int    win_right;     /* boundaries of the screen buffer */

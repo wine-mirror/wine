@@ -146,7 +146,8 @@ struct screen_buffer
     int                   max_width;     /* size (w-h) of the window given font size */
     int                   max_height;
     char_info_t          *data;          /* the data for each cell - a width x height matrix */
-    unsigned short        attr;          /* default attribute for screen buffer */
+    unsigned short        attr;          /* default fill attributes (screen colors) */
+    unsigned short        popup_attr;    /* pop-up color attributes */
     unsigned int          color_map[16]; /* color table */
     rectangle_t           win;           /* current visible window on the screen buffer *
 					  * as seen in wineconsole */
@@ -420,6 +421,7 @@ static struct screen_buffer *create_console_output( struct console_input *consol
     screen_buffer->cursor_x       = 0;
     screen_buffer->cursor_y       = 0;
     screen_buffer->attr           = 0x0F;
+    screen_buffer->popup_attr     = 0xF5;
     screen_buffer->win.left       = 0;
     screen_buffer->win.right      = screen_buffer->max_width - 1;
     screen_buffer->win.top        = 0;
@@ -998,6 +1000,10 @@ static int set_console_output_info( struct screen_buffer *screen_buffer,
     if (req->mask & SET_CONSOLE_OUTPUT_INFO_ATTR)
     {
 	screen_buffer->attr = req->attr;
+    }
+    if (req->mask & SET_CONSOLE_OUTPUT_INFO_POPUP_ATTR)
+    {
+        screen_buffer->popup_attr = req->popup_attr;
     }
     if (req->mask & SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW)
     {
@@ -1689,6 +1695,7 @@ DECL_HANDLER(get_console_output_info)
         reply->width          = screen_buffer->width;
         reply->height         = screen_buffer->height;
         reply->attr           = screen_buffer->attr;
+        reply->popup_attr     = screen_buffer->popup_attr;
         reply->win_left       = screen_buffer->win.left;
         reply->win_top        = screen_buffer->win.top;
         reply->win_right      = screen_buffer->win.right;

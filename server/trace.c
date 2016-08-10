@@ -2033,6 +2033,7 @@ static void dump_set_console_output_info_request( const struct set_console_outpu
     fprintf( stderr, ", width=%d", req->width );
     fprintf( stderr, ", height=%d", req->height );
     fprintf( stderr, ", attr=%d", req->attr );
+    fprintf( stderr, ", popup_attr=%d", req->popup_attr );
     fprintf( stderr, ", win_left=%d", req->win_left );
     fprintf( stderr, ", win_top=%d", req->win_top );
     fprintf( stderr, ", win_right=%d", req->win_right );
@@ -2058,6 +2059,7 @@ static void dump_get_console_output_info_reply( const struct get_console_output_
     fprintf( stderr, ", width=%d", req->width );
     fprintf( stderr, ", height=%d", req->height );
     fprintf( stderr, ", attr=%d", req->attr );
+    fprintf( stderr, ", popup_attr=%d", req->popup_attr );
     fprintf( stderr, ", win_left=%d", req->win_left );
     fprintf( stderr, ", win_top=%d", req->win_top );
     fprintf( stderr, ", win_right=%d", req->win_right );
