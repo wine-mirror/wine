@@ -19,9 +19,58 @@
 #include <stdarg.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
+#include "winuser.h"
 #include "t2embapi.h"
 #include "wine/test.h"
+
+static int CALLBACK enum_font_proc(ENUMLOGFONTEXA *enumlf, NEWTEXTMETRICEXA *ntm, DWORD type, LPARAM lParam)
+{
+    OUTLINETEXTMETRICA otm;
+    HDC hdc = GetDC(NULL);
+    HFONT hfont, old_font;
+    ULONG status;
+    LONG ret;
+
+    hfont = CreateFontIndirectA(&enumlf->elfLogFont);
+    old_font = SelectObject(hdc, hfont);
+
+    otm.otmSize = sizeof(otm);
+    if (GetOutlineTextMetricsA(hdc, otm.otmSize, &otm))
+    {
+        ULONG expected = 0xffff;
+        UINT fsType = otm.otmfsType & 0xf;
+
+        ret = TTGetEmbeddingType(hdc, &status);
+        ok(ret == E_NONE, "got %d\n", ret);
+
+        if (fsType == LICENSE_INSTALLABLE)
+            expected = EMBED_INSTALLABLE;
+        else if (fsType & LICENSE_EDITABLE)
+            expected = EMBED_EDITABLE;
+        else if (fsType & LICENSE_PREVIEWPRINT)
+            expected = EMBED_PREVIEWPRINT;
+        else if (fsType & LICENSE_NOEMBEDDING)
+            expected = EMBED_NOEMBEDDING;
+
+        ok(expected == status, "%s: status %d, expected %d, fsType %#x\n", enumlf->elfLogFont.lfFaceName, status,
+            expected, otm.otmfsType);
+    }
+    else
+    {
+        status = 0xdeadbeef;
+        ret = TTGetEmbeddingType(hdc, &status);
+        ok(ret == E_NOTATRUETYPEFONT, "%s: got %d\n", enumlf->elfLogFont.lfFaceName, ret);
+        ok(status == 0xdeadbeef, "%s: got status %d\n", enumlf->elfLogFont.lfFaceName, status);
+    }
+
+    SelectObject(hdc, old_font);
+    DeleteObject(hfont);
+    ReleaseDC(NULL, hdc);
+
+    return 1;
+}
 
 static void test_TTGetEmbeddingType(void)
 {
@@ -73,6 +122,12 @@ static void test_TTGetEmbeddingType(void)
 
     SelectObject(hdc, old_font);
     DeleteObject(hfont);
+
+    /* repeat for all system fonts */
+    logfont.lfCharSet = DEFAULT_CHARSET;
+    logfont.lfFaceName[0] = 0;
+    EnumFontFamiliesExA(hdc, &logfont, (FONTENUMPROCA)enum_font_proc, 0, 0);
+
     DeleteDC(hdc);
 }
 

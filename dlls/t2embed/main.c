@@ -33,7 +33,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(t2embed);
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-
     switch (fdwReason)
     {
         case DLL_WINE_PREATTACH:
@@ -89,14 +88,20 @@ LONG WINAPI TTGetEmbeddingType(HDC hDC, ULONG *status)
     if (!status)
         return E_PERMISSIONSINVALID;
 
+    otm.otmfsType &= 0xf;
     if (otm.otmfsType == LICENSE_INSTALLABLE)
         *status = EMBED_INSTALLABLE;
-    else if (otm.otmfsType & LICENSE_NOEMBEDDING)
-        *status = EMBED_NOEMBEDDING;
-    else if (otm.otmfsType & LICENSE_PREVIEWPRINT)
-        *status = EMBED_PREVIEWPRINT;
     else if (otm.otmfsType & LICENSE_EDITABLE)
         *status = EMBED_EDITABLE;
+    else if (otm.otmfsType & LICENSE_PREVIEWPRINT)
+        *status = EMBED_PREVIEWPRINT;
+    else if (otm.otmfsType & LICENSE_NOEMBEDDING)
+        *status = EMBED_NOEMBEDDING;
+    else
+    {
+        WARN("unrecognized flags, %#x\n", otm.otmfsType);
+        *status = EMBED_INSTALLABLE;
+    }
 
     return E_NONE;
 }
