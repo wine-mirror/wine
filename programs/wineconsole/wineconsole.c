@@ -212,6 +212,27 @@ static BOOL WINECON_SetEditionMode(HANDLE hConIn, int edition_mode)
 }
 
 /******************************************************************
+ *		WINECON_SetColors
+ *
+ *
+ */
+static void WINECON_SetColors(struct inner_data *data, const struct config_data* cfg)
+{
+    size_t color_map_size = sizeof(data->curcfg.color_map);
+
+    memcpy(data->curcfg.color_map, cfg->color_map, color_map_size);
+
+    SERVER_START_REQ( set_console_output_info )
+    {
+        req->handle = wine_server_obj_handle( data->hConOut );
+        req->mask = SET_CONSOLE_OUTPUT_INFO_COLORTABLE;
+        wine_server_add_data( req, cfg->color_map, color_map_size );
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
+}
+
+/******************************************************************
  *		WINECON_GrabChanges
  *
  * A change occurs, try to figure out which
@@ -449,6 +470,7 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
         FillConsoleOutputAttribute(data->hConOut, cfg->def_attr, screen_size, top_left, &written);
         SetConsoleTextAttribute(data->hConOut, cfg->def_attr);
     }
+    WINECON_SetColors(data, cfg);
     /* now let's look at the window / sb size changes...
      * since the server checks that sb is always bigger than window, 
      * we have to take care of doing the operations in the right order
@@ -703,7 +725,6 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
         /* fall through */
     case init_success:
         WINECON_GetServerConfig(data);
-        memcpy(data->curcfg.color_map, cfg.color_map, sizeof(data->curcfg.color_map));
         data->cells = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                                 data->curcfg.sb_width * data->curcfg.sb_height * sizeof(CHAR_INFO));
         if (!data->cells) WINECON_Fatal("OOM\n");

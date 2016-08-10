@@ -147,6 +147,7 @@ struct screen_buffer
     int                   max_height;
     char_info_t          *data;          /* the data for each cell - a width x height matrix */
     unsigned short        attr;          /* default attribute for screen buffer */
+    unsigned int          color_map[16]; /* color table */
     rectangle_t           win;           /* current visible window on the screen buffer *
 					  * as seen in wineconsole */
     struct font_info      font;          /* console font information */
@@ -426,6 +427,7 @@ static struct screen_buffer *create_console_output( struct console_input *consol
     screen_buffer->data           = NULL;
     screen_buffer->font.width     = 0;
     screen_buffer->font.height    = 0;
+    memset( screen_buffer->color_map, 0, sizeof(screen_buffer->color_map) );
     list_add_head( &screen_buffer_list, &screen_buffer->entry );
 
     if (fd == -1)
@@ -1031,6 +1033,11 @@ static int set_console_output_info( struct screen_buffer *screen_buffer,
     {
         screen_buffer->font.width  = req->font_width;
         screen_buffer->font.height = req->font_height;
+    }
+    if (req->mask & SET_CONSOLE_OUTPUT_INFO_COLORTABLE)
+    {
+        memcpy( screen_buffer->color_map, get_req_data(),
+                min( sizeof(screen_buffer->color_map), get_req_data_size() ));
     }
 
     return 1;
@@ -1690,6 +1697,8 @@ DECL_HANDLER(get_console_output_info)
         reply->max_height     = screen_buffer->max_height;
         reply->font_width     = screen_buffer->font.width;
         reply->font_height    = screen_buffer->font.height;
+        set_reply_data( screen_buffer->color_map,
+                        min( sizeof(screen_buffer->color_map), get_reply_max_size() ));
         release_object( screen_buffer );
     }
 }

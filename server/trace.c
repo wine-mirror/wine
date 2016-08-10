@@ -58,9 +58,9 @@ static inline void remove_data( data_size_t size )
     cur_size -= size;
 }
 
-static void dump_uints( const int *ptr, int len )
+static void dump_uints( const char *prefix, const unsigned int *ptr, int len )
 {
-    fputc( '{', stderr );
+    fprintf( stderr, "%s{", prefix );
     while (len > 0)
     {
         fprintf( stderr, "%08x", *ptr++ );
@@ -407,6 +407,14 @@ static void dump_varargs_ints( const char *prefix, data_size_t size )
     remove_data( size );
 }
 
+static void dump_varargs_uints( const char *prefix, data_size_t size )
+{
+    const unsigned int *data = cur_data;
+
+    dump_uints( prefix, data, size / sizeof(*data) );
+    remove_data( size );
+}
+
 static void dump_varargs_uints64( const char *prefix, data_size_t size )
 {
     const unsigned __int64 *data = cur_data;
@@ -574,10 +582,8 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
             }
         }
         if (ctx.flags & SERVER_CTX_EXTENDED_REGISTERS)
-        {
-            fprintf( stderr, ",extended=" );
-            dump_uints( (const int *)ctx.ext.i386_regs, sizeof(ctx.ext.i386_regs) / sizeof(int) );
-        }
+            dump_uints( ",extended=", (const unsigned int *)ctx.ext.i386_regs,
+                        sizeof(ctx.ext.i386_regs) / sizeof(int) );
         break;
     case CPU_x86_64:
         if (ctx.flags & SERVER_CTX_CONTROL)
@@ -2035,6 +2041,7 @@ static void dump_set_console_output_info_request( const struct set_console_outpu
     fprintf( stderr, ", max_height=%d", req->max_height );
     fprintf( stderr, ", font_width=%d", req->font_width );
     fprintf( stderr, ", font_height=%d", req->font_height );
+    dump_varargs_uints( ", colors=", cur_size );
 }
 
 static void dump_get_console_output_info_request( const struct get_console_output_info_request *req )
@@ -2059,6 +2066,7 @@ static void dump_get_console_output_info_reply( const struct get_console_output_
     fprintf( stderr, ", max_height=%d", req->max_height );
     fprintf( stderr, ", font_width=%d", req->font_width );
     fprintf( stderr, ", font_height=%d", req->font_height );
+    dump_varargs_uints( ", colors=", cur_size );
 }
 
 static void dump_write_console_input_request( const struct write_console_input_request *req )
