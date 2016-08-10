@@ -1254,15 +1254,14 @@ MSVCRT_size_t CDECL MSVCRT_wcsftime( MSVCRT_wchar_t *str, MSVCRT_size_t max,
 
     TRACE("%p %ld %s %p\n", str, max, debugstr_w(format), mstm );
 
-    len = WideCharToMultiByte( CP_UNIXCP, 0, format, -1, NULL, 0, NULL, NULL );
+    len = MSVCRT_wcstombs( NULL, format, 0 ) + 1;
     if (!(fmt = MSVCRT_malloc( len ))) return 0;
-    WideCharToMultiByte( CP_UNIXCP, 0, format, -1, fmt, len, NULL, NULL );
+    MSVCRT_wcstombs(fmt, format, len);
 
     if ((s = MSVCRT_malloc( max*4 )))
     {
         if (!MSVCRT_strftime( s, max*4, fmt, mstm )) s[0] = 0;
-        len = MultiByteToWideChar( CP_UNIXCP, 0, s, -1, str, max );
-        if (len) len--;
+        len = MSVCRT_mbstowcs( str, s, max );
         MSVCRT_free( s );
     }
     else len = 0;
