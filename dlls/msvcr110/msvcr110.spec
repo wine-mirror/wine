@@ -1697,7 +1697,7 @@
 @ cdecl _strdup(str) MSVCRT__strdup
 @ cdecl _strerror(long) MSVCRT__strerror
 @ stub _strerror_s
-@ stub _strftime_l
+@ cdecl _strftime_l(str long str ptr ptr) MSVCRT__strftime_l
 @ cdecl _stricmp(str str) MSVCRT__stricmp
 @ cdecl _stricmp_l(str str ptr) MSVCRT__stricmp_l
 @ cdecl _stricoll(str str) MSVCRT__stricoll

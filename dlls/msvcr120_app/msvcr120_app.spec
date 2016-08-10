@@ -1419,7 +1419,7 @@
 @ cdecl _strdup(str) msvcr120._strdup
 @ cdecl _strerror(long) msvcr120._strerror
 @ stub _strerror_s
-@ stub _strftime_l
+@ cdecl _strftime_l(str long str ptr ptr) msvcr120._strftime_l
 @ cdecl _stricmp(str str) msvcr120._stricmp
 @ cdecl _stricmp_l(str str ptr) msvcr120._stricmp_l
 @ cdecl _stricoll(str str) msvcr120._stricoll

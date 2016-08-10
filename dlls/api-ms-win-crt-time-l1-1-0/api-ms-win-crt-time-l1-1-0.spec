@@ -42,7 +42,7 @@
 @ cdecl _setsystime(ptr long) ucrtbase._setsystime
 @ cdecl _strdate(ptr) ucrtbase._strdate
 @ cdecl _strdate_s(ptr long) ucrtbase._strdate_s
-@ stub _strftime_l
+@ cdecl _strftime_l(str long str ptr ptr) ucrtbase._strftime_l
 @ cdecl _strtime(ptr) ucrtbase._strtime
 @ cdecl _strtime_s(ptr long) ucrtbase._strtime_s
 @ cdecl _time32(ptr) ucrtbase._time32
