@@ -83,6 +83,9 @@ static DWORD WINAPI service_handler(DWORD ctrl, DWORD event_type, void *event_da
         SetServiceStatus(service_handle, &status);
         SetEvent(service_stop_event);
         return NO_ERROR;
+    case 128:
+        service_event("CUSTOM");
+        return 0xdeadbeef;
     default:
         status.dwCurrentState = SERVICE_RUNNING;
         SetServiceStatus( service_handle, &status );
@@ -345,6 +348,10 @@ static void test_service(void)
             status.dwServiceSpecificExitCode);
     ok(status.dwCheckPoint == 0, "status.dwCheckPoint = %d\n", status.dwCheckPoint);
     todo_wine ok(status.dwWaitHint == 0, "status.dwWaitHint = %d\n", status.dwWaitHint);
+
+    res = ControlService(service_handle, 128, &status);
+    ok(res, "ControlService failed: %u\n", GetLastError());
+    expect_event("CUSTOM");
 
     res = ControlService(service_handle, SERVICE_CONTROL_STOP, &status);
     ok(res, "ControlService failed: %u\n", GetLastError());

@@ -941,6 +941,9 @@ static BOOL service_accepts_control(const struct service_entry *service, DWORD d
 {
     DWORD a = service->status.dwControlsAccepted;
 
+    if (dwControl >= 128 && dwControl <= 255)
+        return TRUE;
+
     switch (dwControl)
     {
     case SERVICE_CONTROL_INTERROGATE:
