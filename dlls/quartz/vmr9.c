@@ -946,7 +946,7 @@ static HRESULT WINAPI Videowindow_QueryInterface(IVideoWindow *iface, REFIID rii
 {
     struct quartz_vmr *This = impl_from_IVideoWindow(iface);
 
-    TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
+    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppvObj);
 
     return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppvObj);
 }
@@ -1024,7 +1024,7 @@ static HRESULT WINAPI Basicvideo_QueryInterface(IBasicVideo *iface, REFIID riid,
 {
     struct quartz_vmr *This = impl_from_IBasicVideo(iface);
 
-    TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
+    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppvObj);
 
     return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppvObj);
 }
