@@ -1751,3 +1751,12 @@ BOOL WINAPI SetupLogErrorW(LPCWSTR message, LogSeverity severity)
     HeapFree(GetProcessHeap(), 0, msg);
     return ret;
 }
+
+/***********************************************************************
+ *      CM_Get_Version (SETUPAPI.@)
+ */
+WORD WINAPI CM_Get_Version(void)
+{
+    TRACE("()\n");
+    return 0x0400;
+}
