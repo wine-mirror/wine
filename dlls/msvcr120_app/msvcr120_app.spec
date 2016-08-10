@@ -1560,7 +1560,7 @@
 @ cdecl _wcsdup(wstr) msvcr120._wcsdup
 @ cdecl _wcserror(long) msvcr120._wcserror
 @ cdecl _wcserror_s(ptr long long) msvcr120._wcserror_s
-@ stub _wcsftime_l
+@ cdecl _wcsftime_l(ptr long wstr ptr ptr) msvcr120._wcsftime_l
 @ cdecl _wcsicmp(wstr wstr) msvcr120._wcsicmp
 @ cdecl _wcsicmp_l(wstr wstr ptr) msvcr120._wcsicmp_l
 @ cdecl _wcsicoll(wstr wstr) msvcr120._wcsicoll

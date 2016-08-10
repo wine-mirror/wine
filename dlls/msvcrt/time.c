@@ -1264,30 +1264,39 @@ MSVCRT_size_t CDECL MSVCRT_strftime( char *str, MSVCRT_size_t max, const char *f
 }
 
 /*********************************************************************
- *		wcsftime (MSVCRT.@)
+ *              _wcsftime_l (MSVCRT.@)
  */
-MSVCRT_size_t CDECL MSVCRT_wcsftime( MSVCRT_wchar_t *str, MSVCRT_size_t max,
-                                     const MSVCRT_wchar_t *format, const struct MSVCRT_tm *mstm )
+MSVCRT_size_t CDECL MSVCRT__wcsftime_l( MSVCRT_wchar_t *str, MSVCRT_size_t max,
+        const MSVCRT_wchar_t *format, const struct MSVCRT_tm *mstm, MSVCRT__locale_t loc )
 {
     char *s, *fmt;
     MSVCRT_size_t len;
 
-    TRACE("%p %ld %s %p\n", str, max, debugstr_w(format), mstm );
+    TRACE("%p %ld %s %p %p\n", str, max, debugstr_w(format), mstm, loc);
 
-    len = MSVCRT_wcstombs( NULL, format, 0 ) + 1;
+    len = MSVCRT__wcstombs_l( NULL, format, 0, loc ) + 1;
     if (!(fmt = MSVCRT_malloc( len ))) return 0;
-    MSVCRT_wcstombs(fmt, format, len);
+    MSVCRT__wcstombs_l(fmt, format, len, loc);
 
     if ((s = MSVCRT_malloc( max*4 )))
     {
-        if (!MSVCRT_strftime( s, max*4, fmt, mstm )) s[0] = 0;
-        len = MSVCRT_mbstowcs( str, s, max );
+        if (!MSVCRT__strftime_l( s, max*4, fmt, mstm, loc )) s[0] = 0;
+        len = MSVCRT__mbstowcs_l( str, s, max, loc );
         MSVCRT_free( s );
     }
     else len = 0;
 
     MSVCRT_free( fmt );
     return len;
+}
+
+/*********************************************************************
+ *     wcsftime (MSVCRT.@)
+ */
+MSVCRT_size_t CDECL MSVCRT_wcsftime( MSVCRT_wchar_t *str, MSVCRT_size_t max,
+                                     const MSVCRT_wchar_t *format, const struct MSVCRT_tm *mstm )
+{
+    return MSVCRT__wcsftime_l(str, max, format, mstm, NULL);
 }
 
 static char* asctime_buf(char *buf, const struct MSVCRT_tm *mstm)
