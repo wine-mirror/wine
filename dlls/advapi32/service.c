@@ -424,7 +424,8 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
     {
         service_data *service;
         service_start_info info;
-        WCHAR *data = NULL;
+        BYTE *data = NULL;
+        WCHAR *name;
         BOOL r;
         DWORD data_size = 0, count, result;
 
@@ -460,16 +461,24 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
             }
         }
 
-        /* find the service */
-
-        if (!(service = find_service_by_name( data )))
+        /* validate service name */
+        name = (WCHAR *)data;
+        if (!info.name_size || data_size < info.name_size * sizeof(WCHAR) || name[info.name_size - 1])
         {
-            FIXME( "got request %u for unknown service %s\n", info.cmd, debugstr_w(data));
+            ERR( "got request without valid service name\n" );
             result = ERROR_INVALID_PARAMETER;
             goto done;
         }
 
-        TRACE( "got request %u for service %s\n", info.cmd, debugstr_w(data) );
+        /* find the service */
+        if (!(service = find_service_by_name( name )))
+        {
+            FIXME( "got request %u for unknown service %s\n", info.cmd, debugstr_w(name));
+            result = ERROR_INVALID_PARAMETER;
+            goto done;
+        }
+
+        TRACE( "got request %u for service %s\n", info.cmd, debugstr_w(name) );
 
         /* handle the request */
         switch (info.cmd)
@@ -477,12 +486,12 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
         case WINESERV_STARTINFO:
             if (!service->handle)
             {
-                if (!(service->handle = OpenServiceW( disp->manager, data, SERVICE_SET_STATUS )) ||
-                    !(service->full_access_handle = OpenServiceW( disp->manager, data,
+                if (!(service->handle = OpenServiceW( disp->manager, name, SERVICE_SET_STATUS )) ||
+                    !(service->full_access_handle = OpenServiceW( disp->manager, name,
                             GENERIC_READ|GENERIC_WRITE )))
-                    FIXME( "failed to open service %s\n", debugstr_w(data) );
+                    FIXME( "failed to open service %s\n", debugstr_w(name) );
             }
-            result = service_handle_start(service, data, data_size / sizeof(WCHAR));
+            result = service_handle_start(service, (WCHAR *)data, data_size / sizeof(WCHAR));
             break;
         case WINESERV_SENDCONTROL:
             result = service_handle_control(service, info.control);
