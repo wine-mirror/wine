@@ -440,65 +440,62 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_format *rt_format;
+    BOOL enable_blend, enable_line_smooth;
     GLenum src_blend, dst_blend;
     unsigned int rt_fmt_flags;
 
-    if (!state->fb->render_targets[0])
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
-        return;
-    }
-
-    rt_format = state->fb->render_targets[0]->format;
-    rt_fmt_flags = state->fb->render_targets[0]->format_flags;
-
-    /* According to the red book, GL_LINE_SMOOTH needs GL_BLEND with specific
-     * blending parameters to work. */
-    if (state->render_states[WINED3D_RS_ALPHABLENDENABLE]
-            || state->render_states[WINED3D_RS_EDGEANTIALIAS]
-            || state->render_states[WINED3D_RS_ANTIALIASEDLINEENABLE])
-    {
-        /* Disable blending in all cases even without pixelshaders.
-         * With blending on we could face a big performance penalty.
-         * The d3d9 visual test confirms the behavior. */
-        if (context->render_offscreen && !(rt_fmt_flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
-        {
-            gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
-            checkGLcall("glDisable GL_BLEND");
-            return;
-        }
-        else
-        {
-            gl_info->gl_ops.gl.p_glEnable(GL_BLEND);
-            checkGLcall("glEnable GL_BLEND");
-        }
-    }
-    else
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
-        checkGLcall("glDisable GL_BLEND");
-        /* Nothing more to do - get out */
-        return;
-    };
-
-    gl_blend_from_d3d(&src_blend, &dst_blend,
-            state->render_states[WINED3D_RS_SRCBLEND],
-            state->render_states[WINED3D_RS_DESTBLEND], rt_format);
-
-    if (state->render_states[WINED3D_RS_EDGEANTIALIAS]
-            || state->render_states[WINED3D_RS_ANTIALIASEDLINEENABLE])
+    enable_line_smooth = state->render_states[WINED3D_RS_EDGEANTIALIAS]
+            || state->render_states[WINED3D_RS_ANTIALIASEDLINEENABLE];
+    if (enable_line_smooth)
     {
         gl_info->gl_ops.gl.p_glEnable(GL_LINE_SMOOTH);
         checkGLcall("glEnable(GL_LINE_SMOOTH)");
-        if (src_blend != GL_SRC_ALPHA)
-            WARN("WINED3D_RS_EDGEANTIALIAS enabled, but unexpected src blending param.\n");
-        if (dst_blend != GL_ONE_MINUS_SRC_ALPHA && dst_blend != GL_ONE)
-            WARN("WINED3D_RS_EDGEANTIALIAS enabled, but unexpected dst blending param.\n");
     }
     else
     {
         gl_info->gl_ops.gl.p_glDisable(GL_LINE_SMOOTH);
         checkGLcall("glDisable(GL_LINE_SMOOTH)");
+    }
+
+    enable_blend = state->fb->render_targets[0] && state->render_states[WINED3D_RS_ALPHABLENDENABLE];
+    if (enable_blend)
+    {
+        rt_format = state->fb->render_targets[0]->format;
+        rt_fmt_flags = state->fb->render_targets[0]->format_flags;
+
+        /* Disable blending in all cases even without pixelshaders.
+         * With blending on we could face a big performance penalty.
+         * The d3d9 visual test confirms the behavior. */
+        if (context->render_offscreen && !(rt_fmt_flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
+            enable_blend = FALSE;
+    }
+
+    if (enable_blend)
+    {
+        gl_info->gl_ops.gl.p_glEnable(GL_BLEND);
+        checkGLcall("glEnable(GL_BLEND)");
+    }
+    else
+    {
+        gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
+        checkGLcall("glDisable(GL_BLEND)");
+        if (enable_line_smooth)
+            WARN("LINE/EDGEANTIALIAS enabled with disabled blending.\n");
+        return;
+    }
+
+    gl_blend_from_d3d(&src_blend, &dst_blend,
+            state->render_states[WINED3D_RS_SRCBLEND],
+            state->render_states[WINED3D_RS_DESTBLEND], rt_format);
+
+    /* According to the red book, GL_LINE_SMOOTH needs GL_BLEND with specific
+     * blending parameters to work. */
+    if (enable_line_smooth)
+    {
+        if (src_blend != GL_SRC_ALPHA)
+            WARN("LINE/EDGEANTIALIAS enabled, but unexpected src blending param.\n");
+        if (dst_blend != GL_ONE_MINUS_SRC_ALPHA && dst_blend != GL_ONE)
+            WARN("LINE/EDGEANTIALIAS enabled, but unexpected dst blending param.\n");
     }
 
     /* Re-apply BLENDOP(ALPHA) because of a possible SEPARATEALPHABLENDENABLE change */

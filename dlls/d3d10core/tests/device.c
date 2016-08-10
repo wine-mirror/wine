@@ -9325,11 +9325,11 @@ static void test_line_antialiasing_blending(void)
 
     ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &red.x);
     draw_color_quad(&test_context, &green);
-    todo_wine check_texture_color(test_context.backbuffer, 0x7f00ff00, 1);
+    check_texture_color(test_context.backbuffer, 0x7f00ff00, 1);
 
     ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &green.x);
     draw_color_quad(&test_context, &red);
-    todo_wine check_texture_color(test_context.backbuffer, 0xcc0000ff, 1);
+    check_texture_color(test_context.backbuffer, 0xcc0000ff, 1);
 
     ID3D10RasterizerState_Release(rasterizer_state);
     release_test_context(&test_context);

@@ -10429,7 +10429,7 @@ static void test_edge_antialiasing_blending(void)
     hr = IDirect3DDevice2_EndScene(device);
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
     color = get_surface_color(offscreen, 320, 240);
-    todo_wine ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
 
     viewport_set_background(device, viewport, green_background);
     hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
@@ -10441,7 +10441,7 @@ static void test_edge_antialiasing_blending(void)
     hr = IDirect3DDevice2_EndScene(device);
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
     color = get_surface_color(offscreen, 320, 240);
-    todo_wine ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
 
     IDirectDrawSurface_Release(offscreen);
     destroy_viewport(device, viewport);

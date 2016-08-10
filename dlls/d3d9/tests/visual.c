@@ -21882,7 +21882,7 @@ static void test_line_antialiasing_blending(void)
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
     color = getPixelColor(device, 320, 240);
-    todo_wine ok(color_match(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(color_match(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x7f00ff00, 0.0f, 0);
     ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
@@ -21893,7 +21893,7 @@ static void test_line_antialiasing_blending(void)
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
     color = getPixelColor(device, 320, 240);
-    todo_wine ok(color_match(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(color_match(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
 
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
