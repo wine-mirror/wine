@@ -954,6 +954,7 @@ void process_terminate(struct process_entry *process)
         service->status.dwProcessId = 0;
         service->status.dwCurrentState = SERVICE_STOPPED;
         service->process = NULL;
+        release_process(process);
     }
     scmdatabase_unlock(db);
 }
