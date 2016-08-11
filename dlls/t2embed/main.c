@@ -171,7 +171,7 @@ LONG WINAPI TTIsEmbeddingEnabled(HDC hDC, BOOL *enabled)
         return E_NOFREEMEMORY;
 
     GetOutlineTextMetricsA(hDC, len, otm);
-    ret = TTIsEmbeddingEnabledForFacename(otm->otmpFaceName, enabled);
+    ret = TTIsEmbeddingEnabledForFacename((LPCSTR)otm + (ULONG_PTR)otm->otmpFaceName, enabled);
     HeapFree(GetProcessHeap(), 0, otm);
     return ret;
 }
