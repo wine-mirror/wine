@@ -7481,6 +7481,49 @@ done:
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_swapchain_views(void)
+{
+    D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
+    struct d3d11_test_context test_context;
+    D3D11_RENDER_TARGET_VIEW_DESC rtv_desc;
+    ID3D11ShaderResourceView *srv;
+    ID3D11DeviceContext *context;
+    ID3D11RenderTargetView *rtv;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    static const struct vec4 color = {0.2f, 0.3f, 0.5f, 1.0f};
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    draw_color_quad(&test_context, &color);
+    check_texture_color(test_context.backbuffer, 0xff7f4c33, 1);
+
+    rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    U(rtv_desc).Texture2D.MipSlice = 0;
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)test_context.backbuffer, &rtv_desc, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
+
+    draw_color_quad(&test_context, &color);
+    todo_wine check_texture_color(test_context.backbuffer, 0xffbc957c, 1);
+
+    srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    rtv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    U(srv_desc).Texture2D.MostDetailedMip = 0;
+    U(srv_desc).Texture2D.MipLevels = 1;
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)test_context.backbuffer, &srv_desc, &srv);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    ID3D11RenderTargetView_Release(rtv);
+    release_test_context(&test_context);
+}
+
 static void test_swapchain_flip(void)
 {
     ID3D11Texture2D *backbuffer_0, *backbuffer_1, *backbuffer_2, *offscreen;
@@ -10383,6 +10426,7 @@ START_TEST(d3d11)
     test_buffer_data_init();
     test_texture_data_init();
     test_check_multisample_quality_levels();
+    test_swapchain_views();
     test_swapchain_flip();
     test_clear_render_target_view();
     test_clear_depth_stencil_view();
