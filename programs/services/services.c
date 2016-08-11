@@ -778,7 +778,7 @@ static DWORD service_start_process(struct service_entry *service_entry, struct p
 
     service_entry->status.dwCurrentState = SERVICE_START_PENDING;
     scmdatabase_add_process(service_entry->db, process);
-    service_entry->process = process;
+    service_entry->process = grab_process(process);
 
     service_unlock(service_entry);
 
@@ -788,6 +788,7 @@ static DWORD service_start_process(struct service_entry *service_entry, struct p
     {
         err = GetLastError();
         process_terminate(process);
+        release_process(process);
         return err;
     }
 
@@ -916,6 +917,8 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
             ReleaseMutex(process->control_mutex);
         else
             process_terminate(process);
+
+        release_process(process);
     }
 
     scmdatabase_unlock_startup(service->db);
