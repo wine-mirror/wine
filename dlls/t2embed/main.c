@@ -75,6 +75,7 @@ LONG WINAPI TTEmbedFont(HDC hDC, ULONG ulFlags, ULONG ulCharSet, ULONG *pulPrivS
 LONG WINAPI TTGetEmbeddingType(HDC hDC, ULONG *status)
 {
     OUTLINETEXTMETRICW otm;
+    WORD fsType;
 
     TRACE("(%p %p)\n", hDC, status);
 
@@ -88,7 +89,7 @@ LONG WINAPI TTGetEmbeddingType(HDC hDC, ULONG *status)
     if (!status)
         return E_PERMISSIONSINVALID;
 
-    otm.otmfsType &= 0xf;
+    otm.otmfsType = (fsType = otm.otmfsType) & 0xf;
     if (otm.otmfsType == LICENSE_INSTALLABLE)
         *status = EMBED_INSTALLABLE;
     else if (otm.otmfsType & LICENSE_EDITABLE)
@@ -103,6 +104,7 @@ LONG WINAPI TTGetEmbeddingType(HDC hDC, ULONG *status)
         *status = EMBED_INSTALLABLE;
     }
 
+    TRACE("fsType 0x%04x, status %u\n", fsType, *status);
     return E_NONE;
 }
 
@@ -124,7 +126,7 @@ LONG WINAPI TTIsEmbeddingEnabledForFacename(LPCSTR facename, BOOL *enabled)
 
     *enabled = TRUE;
     if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, exclusionlistW, 0, GENERIC_READ, &hkey))
-        return E_NONE;
+        goto out;
 
     *enabled = TRUE;
     ret = ERROR_SUCCESS;
@@ -148,6 +150,8 @@ LONG WINAPI TTIsEmbeddingEnabledForFacename(LPCSTR facename, BOOL *enabled)
     }
     RegCloseKey(hkey);
 
+out:
+    TRACE("embedding %s for %s\n", *enabled ? "enabled" : "disabled", debugstr_a(facename));
     return E_NONE;
 }
 
