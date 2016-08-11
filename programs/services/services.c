@@ -787,7 +787,7 @@ static DWORD service_start_process(struct service_entry *service_entry, struct p
     if (!r)
     {
         err = GetLastError();
-        service_terminate(service_entry);
+        process_terminate(process);
         return err;
     }
 
@@ -915,7 +915,7 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
         if (err == ERROR_SUCCESS)
             ReleaseMutex(process->control_mutex);
         else
-            service_terminate(service);
+            process_terminate(process);
     }
 
     scmdatabase_unlock_startup(service->db);
@@ -923,21 +923,6 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
     WINE_TRACE("returning %d\n", err);
 
     return err;
-}
-
-void service_terminate(struct service_entry *service)
-{
-    struct process_entry *process;
-
-    service_lock(service);
-    if ((process = service->process))
-    {
-        TerminateProcess(process->process, 0);
-        release_process(process);
-        service->process = NULL;
-    }
-    service->status.dwCurrentState = SERVICE_STOPPED;
-    service_unlock(service);
 }
 
 void process_terminate(struct process_entry *process)

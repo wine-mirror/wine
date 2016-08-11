@@ -88,7 +88,6 @@ void release_service(struct service_entry *service);
 void service_lock(struct service_entry *service);
 void service_unlock(struct service_entry *service);
 DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *service_argv);
-void service_terminate(struct service_entry *service);
 
 /* Process functions */
 

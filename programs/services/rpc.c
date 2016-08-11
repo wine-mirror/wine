@@ -1137,7 +1137,8 @@ DWORD __cdecl svcctl_ControlService(
     if (result == ERROR_SUCCESS && service->service_entry->force_shutdown)
     {
         result = ERROR_SERVICE_CANNOT_ACCEPT_CTRL;
-        service_terminate(service->service_entry);
+        if ((process = service->service_entry->process))
+            process_terminate(process);
     }
 
     if (result != ERROR_SUCCESS)
