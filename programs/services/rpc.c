@@ -100,21 +100,17 @@ struct timeout_queue_elem
     struct list entry;
 
     FILETIME time;
-    void (*func)(struct process_entry *);
     struct process_entry *process;
 };
 
-static void run_after_timeout(void (*func)(struct process_entry *), struct process_entry *process, DWORD timeout)
+static void terminate_after_timeout(struct process_entry *process, DWORD timeout)
 {
-    struct timeout_queue_elem *elem = HeapAlloc(GetProcessHeap(), 0, sizeof(struct timeout_queue_elem));
+    struct timeout_queue_elem *elem;
     ULARGE_INTEGER time;
 
-    if(!elem) {
-        func(process);
+    if (!(elem = HeapAlloc(GetProcessHeap(), 0, sizeof(*elem))))
         return;
-    }
 
-    elem->func = func;
     elem->process = grab_process(process);
 
     GetSystemTimeAsFileTime(&elem->time);
@@ -765,7 +761,11 @@ DWORD __cdecl svcctl_SetServiceStatus(
     if ((process = service->service_entry->process))
     {
         if (lpServiceStatus->dwCurrentState == SERVICE_STOPPED)
-            run_after_timeout(process_terminate, process, service_kill_timeout);
+        {
+            service->service_entry->process = NULL;
+            terminate_after_timeout(process, service_kill_timeout);
+            release_process(process);
+        }
         else
             SetEvent(process->status_changed_event);
     }
@@ -1943,7 +1943,7 @@ DWORD events_loop(void)
                         (err > WAIT_OBJECT_0 + 1 && idx == err - WAIT_OBJECT_0 - 2))
                 {
                     LeaveCriticalSection(&timeout_queue_cs);
-                    iter->func(iter->process);
+                    process_terminate(iter->process);
                     EnterCriticalSection(&timeout_queue_cs);
 
                     release_process(iter->process);
@@ -1975,7 +1975,7 @@ DWORD events_loop(void)
     LIST_FOR_EACH_ENTRY_SAFE(iter, iter_safe, &timeout_queue, struct timeout_queue_elem, entry)
     {
         LeaveCriticalSection(&timeout_queue_cs);
-        iter->func(iter->process);
+        process_terminate(iter->process);
         EnterCriticalSection(&timeout_queue_cs);
 
         release_process(iter->process);
