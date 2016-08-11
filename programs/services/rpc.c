@@ -1027,7 +1027,6 @@ BOOL process_send_command(struct process_entry *process, const void *data, DWORD
         return FALSE;
     }
 
-    *result = ERROR_SUCCESS;
     return TRUE;
 }
 
@@ -1173,7 +1172,8 @@ DWORD __cdecl svcctl_ControlService(
         return ERROR_SERVICE_REQUEST_TIMEOUT;
     }
 
-    process_send_control(process, service->service_entry->name, dwControl, NULL, 0, &result);
+    if (process_send_control(process, service->service_entry->name, dwControl, NULL, 0, &result))
+        result = ERROR_SUCCESS;
 
     if (lpServiceStatus)
     {
