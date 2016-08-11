@@ -1559,8 +1559,9 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
 
   if (!invalidRTF && !inStream.editstream->dwError)
   {
+    ME_Cursor start;
+    from = ME_GetCursorOfs(&editor->pCursors[0]);
     if (format & SF_RTF) {
-      from = ME_GetCursorOfs(&editor->pCursors[0]);
 
       /* setup the RTF parser */
       memset(&parser, 0, sizeof parser);
@@ -1662,12 +1663,17 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       style = parser.style;
     }
     else if (format & SF_TEXT)
+    {
       num_read = ME_StreamInText(editor, format, &inStream, style);
+      to = ME_GetCursorOfs(&editor->pCursors[0]);
+    }
     else
       ERR("EM_STREAMIN without SF_TEXT or SF_RTF\n");
     /* put the cursor at the top */
     if (!(format & SFF_SELECTION))
       ME_SetSelection(editor, 0, 0);
+    ME_CursorFromCharOfs(editor, from, &start);
+    ME_UpdateLinkAttribute(editor, &start, to - from);
   }
 
   /* Restore saved undo mode */
