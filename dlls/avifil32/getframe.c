@@ -504,7 +504,7 @@ PGETFRAME AVIFILE_CreateGetFrame(PAVISTREAM pStream)
     IAVIStream_AddRef(pStream);
   }
 
-  return (PGETFRAME)pg;
+  return &pg->IGetFrame_iface;
 }
 
 /***********************************************************************/
