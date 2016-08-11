@@ -212,6 +212,7 @@ struct
 void _start(void);
 extern char _end[];
 __ASM_GLOBAL_FUNC(_start,
+                  __ASM_CFI("\t.cfi_undefined %eip\n")
                   "\tmovl $243,%eax\n"        /* SYS_set_thread_area */
                   "\tmovl $thread_ldt,%ebx\n"
                   "\tint $0x80\n"             /* allocate gs segment */
@@ -363,6 +364,7 @@ void *thread_data[256];
 void _start(void);
 extern char _end[];
 __ASM_GLOBAL_FUNC(_start,
+                  __ASM_CFI(".cfi_undefined %rip\n\t")
                   "movq %rsp,%rax\n\t"
                   "leaq -144(%rsp),%rsp\n\t" /* allocate some space for extra aux values */
                   "movq %rax,(%rsp)\n\t"     /* orig stack pointer */
