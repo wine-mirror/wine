@@ -24,47 +24,113 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
-static HRESULT shdr_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
+struct aon9_header
 {
-    struct wined3d_shader_desc *desc = ctx;
+    DWORD chunk_size;
+    DWORD shader_version;
+    DWORD unknown;
+    DWORD byte_code_offset;
+};
+
+struct shader_handler_context
+{
+    D3D_FEATURE_LEVEL feature_level;
+    struct wined3d_shader_desc *desc;
+};
+
+static HRESULT shdr_handler(const char *data, DWORD data_size, DWORD tag, void *context)
+{
+    const struct shader_handler_context *ctx = context;
+    struct wined3d_shader_desc *desc = ctx->desc;
     HRESULT hr;
 
     switch (tag)
     {
         case TAG_ISGN:
+            if (ctx->feature_level <= D3D_FEATURE_LEVEL_9_3)
+            {
+                TRACE("Skipping shader input signature on feature level %#x.\n", ctx->feature_level);
+                break;
+            }
             if (FAILED(hr = shader_parse_signature(data, data_size, &desc->input_signature)))
                 return hr;
             break;
 
         case TAG_OSGN:
+            if (ctx->feature_level <= D3D_FEATURE_LEVEL_9_3)
+            {
+                TRACE("Skipping shader output signature on feature level %#x.\n", ctx->feature_level);
+                break;
+            }
             if (FAILED(hr = shader_parse_signature(data, data_size, &desc->output_signature)))
                 return hr;
             break;
 
         case TAG_SHDR:
         case TAG_SHEX:
+            if (ctx->feature_level <= D3D_FEATURE_LEVEL_9_3)
+            {
+                TRACE("Skipping SM4+ shader code on feature level %#x.\n", ctx->feature_level);
+                break;
+            }
             if (desc->byte_code)
-                FIXME("Multiple SHDR/SHEX chunks.\n");
+                FIXME("Multiple shader code chunks.\n");
             desc->byte_code = (const DWORD *)data;
             break;
 
+        case TAG_AON9:
+            if (ctx->feature_level <= D3D_FEATURE_LEVEL_9_3)
+            {
+                const struct aon9_header *header = (const struct aon9_header *)data;
+                unsigned int unknown_dword_count;
+                const char *byte_code;
+
+                if (data_size < sizeof(*header))
+                {
+                    WARN("Invalid Aon9 data size %#x.\n", data_size);
+                    return E_FAIL;
+                }
+                byte_code = data + header->byte_code_offset;
+                unknown_dword_count = (header->byte_code_offset - sizeof(*header)) / sizeof(DWORD);
+
+                if (data_size - 2 * sizeof(DWORD) < header->byte_code_offset)
+                {
+                    WARN("Invalid byte code offset %#x (size %#x).\n", header->byte_code_offset, data_size);
+                    return E_FAIL;
+                }
+                FIXME("Skipping %u unknown DWORDs.\n", unknown_dword_count);
+
+                if (desc->byte_code)
+                    FIXME("Multiple shader code chunks.\n");
+                desc->byte_code = (const DWORD *)byte_code;
+                TRACE("Feature level 9 shader version 0%08x, 0%08x.\n", header->shader_version, *desc->byte_code);
+            }
+            else
+            {
+                TRACE("Skipping feature level 9 shader code on feature level %#x.\n", ctx->feature_level);
+                break;
+            }
+            break;
+
         default:
-            FIXME("Unhandled chunk %s\n", debugstr_an((const char *)&tag, 4));
+            FIXME("Unhandled chunk %s.\n", debugstr_an((const char *)&tag, 4));
             break;
     }
 
     return S_OK;
 }
 
-static HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, struct wined3d_shader_desc *desc)
+static HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, struct wined3d_shader_desc *desc,
+        D3D_FEATURE_LEVEL feature_level)
 {
+    struct shader_handler_context ctx = {feature_level, desc};
     HRESULT hr;
 
     desc->byte_code = NULL;
     memset(&desc->input_signature, 0, sizeof(desc->input_signature));
     memset(&desc->output_signature, 0, sizeof(desc->output_signature));
 
-    hr = parse_dxbc(dxbc, dxbc_length, shdr_handler, desc);
+    hr = parse_dxbc(dxbc, dxbc_length, shdr_handler, &ctx);
     if (!desc->byte_code)
         hr = E_INVALIDARG;
 
@@ -431,7 +497,7 @@ static HRESULT d3d_vertex_shader_init(struct d3d_vertex_shader *shader, struct d
     wined3d_mutex_lock();
     wined3d_private_store_init(&shader->private_store);
 
-    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &desc)))
+    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &desc, device->feature_level)))
     {
         WARN("Failed to extract shader, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
@@ -637,7 +703,7 @@ static HRESULT d3d11_hull_shader_init(struct d3d11_hull_shader *shader, struct d
     wined3d_mutex_lock();
     wined3d_private_store_init(&shader->private_store);
 
-    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &desc)))
+    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &desc, device->feature_level)))
     {
         WARN("Failed to extract shader, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
@@ -824,7 +890,7 @@ static HRESULT d3d11_domain_shader_init(struct d3d11_domain_shader *shader, stru
     wined3d_mutex_lock();
     wined3d_private_store_init(&shader->private_store);
 
-    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &desc)))
+    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &desc, device->feature_level)))
     {
         WARN("Failed to extract shader, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
@@ -1115,7 +1181,7 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader, stru
     wined3d_mutex_lock();
     wined3d_private_store_init(&shader->private_store);
 
-    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &desc)))
+    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &desc, device->feature_level)))
     {
         WARN("Failed to extract shader, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
@@ -1432,7 +1498,7 @@ static HRESULT d3d_pixel_shader_init(struct d3d_pixel_shader *shader, struct d3d
     wined3d_mutex_lock();
     wined3d_private_store_init(&shader->private_store);
 
-    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &desc)))
+    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &desc, device->feature_level)))
     {
         WARN("Failed to extract shader, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
@@ -1636,7 +1702,7 @@ static HRESULT d3d11_compute_shader_init(struct d3d11_compute_shader *shader, st
     wined3d_mutex_lock();
     wined3d_private_store_init(&shader->private_store);
 
-    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &desc)))
+    if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &desc, device->feature_level)))
     {
         WARN("Failed to extract shader, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
