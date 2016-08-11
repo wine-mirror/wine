@@ -192,7 +192,7 @@ static HRESULT EnumFormatImpl_Create(FORMATETC *fmtetc, UINT fmtetc_cnt, IEnumFO
     ret->fmtetc_cnt = fmtetc_cnt;
     ret->fmtetc = HeapAlloc(GetProcessHeap(), 0, fmtetc_cnt*sizeof(FORMATETC));
     memcpy(ret->fmtetc, fmtetc, fmtetc_cnt*sizeof(FORMATETC));
-    *lplpformatetc = (LPENUMFORMATETC)ret;
+    *lplpformatetc = &ret->IEnumFORMATETC_iface;
     return S_OK;
 }
 
@@ -395,7 +395,7 @@ static HRESULT DataObjectImpl_CreateText(LPCSTR text, LPDATAOBJECT *lplpdataobj)
     obj->fmtetc = HeapAlloc(GetProcessHeap(), 0, obj->fmtetc_cnt*sizeof(FORMATETC));
     InitFormatEtc(obj->fmtetc[0], CF_TEXT, TYMED_HGLOBAL);
 
-    *lplpdataobj = (LPDATAOBJECT)obj;
+    *lplpdataobj = &obj->IDataObject_iface;
     return S_OK;
 }
 
@@ -451,7 +451,7 @@ static HRESULT DataObjectImpl_CreateComplex(LPDATAOBJECT *lplpdataobj)
     InitFormatEtc(obj->fmtetc[7], cf_another, 0xfffff);
     obj->fmtetc[7].dwAspect = DVASPECT_ICON;
 
-    *lplpdataobj = (LPDATAOBJECT)obj;
+    *lplpdataobj = &obj->IDataObject_iface;
     return S_OK;
 }
 
