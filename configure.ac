@@ -2039,6 +2039,7 @@ AC_CHECK_FUNCS(\
 	strtoll \
 	strtoull \
 	symlink \
+	sysinfo \
 	tcdrain \
 	thr_kill2 \
 	timegm \

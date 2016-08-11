@@ -1359,7 +1359,7 @@ void virtual_init_threading(void)
  */
 void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
 {
-#ifdef HAVE_SYS_SYSINFO_H
+#ifdef HAVE_SYSINFO
     struct sysinfo sinfo;
 #endif
 
@@ -1368,7 +1368,7 @@ void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
     info->PageSize                = page_size;
     info->MmLowestPhysicalPage    = 1;
     info->MmHighestPhysicalPage   = 0x7fffffff / page_size;
-#ifdef HAVE_SYS_SYSINFO_H
+#ifdef HAVE_SYSINFO
     if (!sysinfo(&sinfo))
     {
         ULONG64 total = (ULONG64)sinfo.totalram * sinfo.mem_unit;

@@ -15133,6 +15133,7 @@ for ac_func in \
 	strtoll \
 	strtoull \
 	symlink \
+	sysinfo \
 	tcdrain \
 	thr_kill2 \
 	timegm \
