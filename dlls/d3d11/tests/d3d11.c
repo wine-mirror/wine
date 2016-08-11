@@ -10247,6 +10247,106 @@ static void test_line_antialiasing_blending(void)
     release_test_context(&test_context);
 }
 
+struct format_support
+{
+    DXGI_FORMAT format;
+    D3D_FEATURE_LEVEL fl_required;
+    D3D_FEATURE_LEVEL fl_optional;
+};
+
+static void check_format_support(const unsigned int *format_support, D3D_FEATURE_LEVEL feature_level,
+        const struct format_support *formats, unsigned int format_count, unsigned int feature_flag,
+        const char *feature_name)
+{
+    unsigned int i;
+
+    for (i = 0; i < format_count; ++i)
+    {
+        DXGI_FORMAT format = formats[i].format;
+        unsigned int supported = format_support[format] & feature_flag;
+
+        if (formats[i].fl_required <= feature_level)
+        {
+            ok(supported, "Format %#x - %s not supported, feature_level %#x, format support %#x.\n",
+                    format, feature_name, feature_level, format_support[format]);
+            continue;
+        }
+
+        if (formats[i].fl_optional <= feature_level)
+            continue;
+
+        ok(!supported, "Format %#x - %s supported, feature level %#x, format support %#x.\n",
+                format, feature_name, feature_level, format_support[format]);
+    }
+}
+
+static void test_required_format_support(void)
+{
+    unsigned int format_support[DXGI_FORMAT_B4G4R4A4_UNORM + 1];
+    ID3D11Device *device;
+    DXGI_FORMAT format;
+    unsigned int i;
+    ULONG refcount;
+    HRESULT hr;
+
+    static const struct format_support index_buffers[] =
+    {
+        {DXGI_FORMAT_R32_UINT, D3D_FEATURE_LEVEL_9_2},
+        {DXGI_FORMAT_R16_UINT, D3D_FEATURE_LEVEL_9_1},
+    };
+
+    static const struct format_support display[] =
+    {
+        {DXGI_FORMAT_R8G8B8A8_UNORM,             D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,        D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_B8G8R8A8_UNORM,             D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,        D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_R16G16B16A16_FLOAT,         D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R10G10B10A2_UNORM,          D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM, D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0},
+    };
+
+    for (i = 0; i < sizeof(d3d11_feature_levels) / sizeof(*d3d11_feature_levels); ++i)
+    {
+        D3D_FEATURE_LEVEL feature_level = d3d11_feature_levels[i];
+        struct device_desc device_desc;
+
+        device_desc.feature_level = &feature_level;
+        device_desc.flags = 0;
+        if (!(device = create_device(&device_desc)))
+        {
+            skip("Failed to create device for feature level %#x.\n", feature_level);
+            continue;
+        }
+
+        memset(format_support, 0, sizeof(format_support));
+        for (format = DXGI_FORMAT_UNKNOWN; format <= DXGI_FORMAT_B4G4R4A4_UNORM; ++format)
+        {
+            hr = ID3D11Device_CheckFormatSupport(device, format, &format_support[format]);
+            todo_wine ok(hr == S_OK || (hr == E_FAIL && !format_support[format]),
+                    "Got unexpected result for format %#x: hr %#x, format_support %#x.\n",
+                    format, hr, format_support[format]);
+        }
+        if (hr == E_NOTIMPL)
+        {
+            skip("CheckFormatSupport not implemented.\n");
+            ID3D11Device_Release(device);
+            continue;
+        }
+
+        check_format_support(format_support, feature_level,
+                index_buffers, sizeof(index_buffers) / sizeof(*index_buffers),
+                D3D11_FORMAT_SUPPORT_IA_INDEX_BUFFER, "index buffer");
+
+        check_format_support(format_support, feature_level,
+                display, sizeof(display) / sizeof(*display),
+                D3D11_FORMAT_SUPPORT_DISPLAY, "display");
+
+        refcount = ID3D11Device_Release(device);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -10303,4 +10403,5 @@ START_TEST(d3d11)
     test_index_buffer_offset();
     test_face_culling();
     test_line_antialiasing_blending();
+    test_required_format_support();
 }
