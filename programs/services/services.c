@@ -791,7 +791,7 @@ static DWORD service_start_process(struct service_entry *service_entry, struct p
         return err;
     }
 
-    service_entry->status.dwProcessId = pi.dwProcessId;
+    process->process_id = pi.dwProcessId;
     process->process = pi.hProcess;
     CloseHandle( pi.hThread );
 
@@ -936,7 +936,6 @@ void service_terminate(struct service_entry *service)
         release_process(process);
         service->process = NULL;
     }
-    service->status.dwProcessId = 0;
     service->status.dwCurrentState = SERVICE_STOPPED;
     service_unlock(service);
 }
@@ -951,7 +950,6 @@ void process_terminate(struct process_entry *process)
     LIST_FOR_EACH_ENTRY(service, &db->services, struct service_entry, entry)
     {
         if (service->process != process) continue;
-        service->status.dwProcessId = 0;
         service->status.dwCurrentState = SERVICE_STOPPED;
         service->process = NULL;
         release_process(process);

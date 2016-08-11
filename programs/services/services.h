@@ -37,6 +37,7 @@ struct process_entry
     struct list entry;
     struct scmdatabase *db;
     LONG ref_count;
+    DWORD process_id;
     HANDLE process;
     HANDLE control_mutex;
     HANDLE control_pipe;
@@ -50,7 +51,7 @@ struct service_entry
     struct scmdatabase *db;
     LONG ref_count;                    /* number of references - if goes to zero and the service is deleted the structure will be freed */
     LPWSTR name;
-    SERVICE_STATUS_PROCESS status;
+    SERVICE_STATUS status;
     QUERY_SERVICE_CONFIGW config;
     DWORD preshutdown_timeout;
     LPWSTR description;

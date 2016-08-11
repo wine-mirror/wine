@@ -761,13 +761,7 @@ DWORD __cdecl svcctl_SetServiceStatus(
     service_lock(service->service_entry);
     /* FIXME: be a bit more discriminant about what parts of the status we set
      * and check that fields are valid */
-    service->service_entry->status.dwServiceType = lpServiceStatus->dwServiceType;
-    service->service_entry->status.dwCurrentState = lpServiceStatus->dwCurrentState;
-    service->service_entry->status.dwControlsAccepted = lpServiceStatus->dwControlsAccepted;
-    service->service_entry->status.dwWin32ExitCode = lpServiceStatus->dwWin32ExitCode;
-    service->service_entry->status.dwServiceSpecificExitCode = lpServiceStatus->dwServiceSpecificExitCode;
-    service->service_entry->status.dwCheckPoint = lpServiceStatus->dwCheckPoint;
-    service->service_entry->status.dwWaitHint = lpServiceStatus->dwWaitHint;
+    service->service_entry->status = *lpServiceStatus;
     if ((process = service->service_entry->process))
     {
         if (lpServiceStatus->dwCurrentState == SERVICE_STOPPED)
@@ -886,6 +880,14 @@ DWORD __cdecl svcctl_QueryServiceConfig2W( SC_RPC_HANDLE hService, DWORD level,
     return err;
 }
 
+static void fill_status_process(SERVICE_STATUS_PROCESS *status, struct service_entry *service)
+{
+    struct process_entry *process = service->process;
+    memcpy(status, &service->status, sizeof(service->status));
+    status->dwProcessId     = process ? process->process_id : 0;
+    status->dwServiceFlags  = 0;
+}
+
 DWORD __cdecl svcctl_QueryServiceStatusEx(
     SC_RPC_HANDLE hService,
     SC_STATUS_TYPE InfoLevel,
@@ -918,17 +920,7 @@ DWORD __cdecl svcctl_QueryServiceStatusEx(
     }
 
     service_lock(service->service_entry);
-
-    pSvcStatusData->dwServiceType = service->service_entry->status.dwServiceType;
-    pSvcStatusData->dwCurrentState = service->service_entry->status.dwCurrentState;
-    pSvcStatusData->dwControlsAccepted = service->service_entry->status.dwControlsAccepted;
-    pSvcStatusData->dwWin32ExitCode = service->service_entry->status.dwWin32ExitCode;
-    pSvcStatusData->dwServiceSpecificExitCode = service->service_entry->status.dwServiceSpecificExitCode;
-    pSvcStatusData->dwCheckPoint = service->service_entry->status.dwCheckPoint;
-    pSvcStatusData->dwWaitHint = service->service_entry->status.dwWaitHint;
-    pSvcStatusData->dwProcessId = service->service_entry->status.dwProcessId;
-    pSvcStatusData->dwServiceFlags = service->service_entry->status.dwServiceFlags;
-
+    fill_status_process(pSvcStatusData, service->service_entry);
     service_unlock(service->service_entry);
 
     return ERROR_SUCCESS;
@@ -1151,16 +1143,7 @@ DWORD __cdecl svcctl_ControlService(
 
     if (result != ERROR_SUCCESS)
     {
-        if (lpServiceStatus)
-        {
-            lpServiceStatus->dwServiceType = service->service_entry->status.dwServiceType;
-            lpServiceStatus->dwCurrentState = service->service_entry->status.dwCurrentState;
-            lpServiceStatus->dwControlsAccepted = service->service_entry->status.dwControlsAccepted;
-            lpServiceStatus->dwWin32ExitCode = service->service_entry->status.dwWin32ExitCode;
-            lpServiceStatus->dwServiceSpecificExitCode = service->service_entry->status.dwServiceSpecificExitCode;
-            lpServiceStatus->dwCheckPoint = service->service_entry->status.dwCheckPoint;
-            lpServiceStatus->dwWaitHint = service->service_entry->status.dwWaitHint;
-        }
+        if (lpServiceStatus) *lpServiceStatus = service->service_entry->status;
         service_unlock(service->service_entry);
         return result;
     }
@@ -1195,13 +1178,7 @@ DWORD __cdecl svcctl_ControlService(
     if (lpServiceStatus)
     {
         service_lock(service->service_entry);
-        lpServiceStatus->dwServiceType = service->service_entry->status.dwServiceType;
-        lpServiceStatus->dwCurrentState = service->service_entry->status.dwCurrentState;
-        lpServiceStatus->dwControlsAccepted = service->service_entry->status.dwControlsAccepted;
-        lpServiceStatus->dwWin32ExitCode = service->service_entry->status.dwWin32ExitCode;
-        lpServiceStatus->dwServiceSpecificExitCode = service->service_entry->status.dwServiceSpecificExitCode;
-        lpServiceStatus->dwCheckPoint = service->service_entry->status.dwCheckPoint;
-        lpServiceStatus->dwWaitHint = service->service_entry->status.dwWaitHint;
+        *lpServiceStatus = service->service_entry->status;
         service_unlock(service->service_entry);
     }
 
@@ -1365,7 +1342,7 @@ DWORD __cdecl svcctl_EnumServicesStatusW(
                 s->lpDisplayName = (WCHAR *)offset;
                 offset += sz;
             }
-            memcpy(&s->ServiceStatus, &service->status, sizeof(SERVICE_STATUS));
+            s->ServiceStatus = service->status;
             s++;
         }
     }
@@ -1490,7 +1467,7 @@ DWORD __cdecl svcctl_EnumServicesStatusExW(
                 s->lpDisplayName = (WCHAR *)offset;
                 offset += sz;
             }
-            s->ServiceStatusProcess = service->status;
+            fill_status_process(&s->ServiceStatusProcess, service);
             s++;
         }
     }
