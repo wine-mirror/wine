@@ -1947,9 +1947,8 @@ HKL CDECL X11DRV_GetKeyboardLayout(DWORD dwThreadid)
  */
 HKL CDECL X11DRV_LoadKeyboardLayout(LPCWSTR name, UINT flags)
 {
-    FIXME("%s, %04x: stub!\n", debugstr_w(name), flags);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
+    FIXME("%s, %04x: semi-stub! Returning default layout.\n", debugstr_w(name), flags);
+    return get_locale_kbd_layout();
 }
 
 
