@@ -34,8 +34,6 @@
 #include <wine/debug.h>
 #include "regproc.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(regedit);
-
 #define REG_VAL_BUF_SIZE        4096
 
 /* maximal number of characters in hexadecimal data line,
@@ -870,29 +868,6 @@ static void processRegLinesW(FILE *in)
     HeapFree(GetProcessHeap(), 0, buf);
 }
 
-/****************************************************************************
- * REGPROC_print_error
- *
- * Print the message for GetLastError
- */
-
-static void REGPROC_print_error(void)
-{
-    WCHAR *str;
-    DWORD error_code, len;
-
-    error_code = GetLastError();
-    len = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                         NULL, error_code, 0, (WCHAR *)&str, 0, NULL);
-    if (len == 0 && GetLastError() != NO_ERROR) {
-        WINE_FIXME("FormatMessage failed: le=%u, previous=%u\n", GetLastError(), error_code);
-        exit(1);
-    }
-    output_writeconsole(str, len);
-    LocalFree(str);
-    exit(1);
-}
-
 /******************************************************************************
  * Checks whether the buffer has enough room for the string or required size.
  * Resizes the buffer if necessary.
@@ -1097,7 +1072,6 @@ static void export_hkey(FILE *file, HKEY key,
     DWORD max_val_size;
     DWORD curr_len;
     DWORD i;
-    BOOL more_data;
     LONG ret;
     WCHAR key_format[] = {'\r','\n','[','%','s',']','\r','\n',0};
 
@@ -1105,9 +1079,8 @@ static void export_hkey(FILE *file, HKEY key,
     if (RegQueryInfoKeyW(key, NULL, NULL, NULL, NULL,
                         &max_sub_key_len, NULL,
                         NULL, &max_val_name_len, &max_val_size, NULL, NULL
-                       ) != ERROR_SUCCESS) {
-        REGPROC_print_error();
-    }
+                       ) != ERROR_SUCCESS)
+        return;
     curr_len = strlenW(*reg_key_name_buf);
     REGPROC_resize_char_buffer(reg_key_name_buf, reg_key_name_size,
                                max_sub_key_len + curr_len + 1);
@@ -1121,8 +1094,7 @@ static void export_hkey(FILE *file, HKEY key,
 
     /* print all the values */
     i = 0;
-    more_data = TRUE;
-    while(more_data) {
+    for (;;) {
         DWORD value_type;
         DWORD val_name_size1 = *val_name_size;
         DWORD val_size1 = *val_size;
@@ -1132,12 +1104,7 @@ static void export_hkey(FILE *file, HKEY key,
             /* Increase the size of the buffers and retry */
             REGPROC_resize_char_buffer(val_name_buf, val_name_size, val_name_size1);
             REGPROC_resize_binary_buffer(val_buf, val_size, val_size1);
-        } else if (ret != ERROR_SUCCESS) {
-            more_data = FALSE;
-            if (ret != ERROR_NO_MORE_ITEMS) {
-                REGPROC_print_error();
-            }
-        } else {
+        } else if (ret == ERROR_SUCCESS) {
             DWORD line_len;
             i++;
 
@@ -1208,12 +1175,12 @@ static void export_hkey(FILE *file, HKEY key,
             }
             REGPROC_write_line(file, *line_buf, unicode);
         }
+        else break;
     }
 
     i = 0;
-    more_data = TRUE;
     (*reg_key_name_buf)[curr_len] = '\\';
-    while(more_data) {
+    for (;;) {
         DWORD buf_size = *reg_key_name_size - curr_len - 1;
 
         ret = RegEnumKeyExW(key, i, *reg_key_name_buf + curr_len + 1, &buf_size,
@@ -1221,12 +1188,7 @@ static void export_hkey(FILE *file, HKEY key,
         if (ret == ERROR_MORE_DATA) {
             /* Increase the size of the buffer and retry */
             REGPROC_resize_char_buffer(reg_key_name_buf, reg_key_name_size, curr_len + 1 + buf_size);
-        } else if (ret != ERROR_SUCCESS) {
-            more_data = FALSE;
-            if (ret != ERROR_NO_MORE_ITEMS) {
-                REGPROC_print_error();
-            }
-        } else {
+        } else if (ret == ERROR_SUCCESS) {
             HKEY subkey;
 
             i++;
@@ -1236,10 +1198,10 @@ static void export_hkey(FILE *file, HKEY key,
                             val_name_buf, val_name_size, val_buf, val_size,
                             line_buf, line_buf_size, unicode);
                 RegCloseKey(subkey);
-            } else {
-                REGPROC_print_error();
             }
+            else break;
         }
+        else break;
     }
     (*reg_key_name_buf)[curr_len] = '\0';
 }
