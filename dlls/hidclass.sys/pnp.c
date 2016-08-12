@@ -31,16 +31,13 @@
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
 
 static const WCHAR device_enumeratorW[] = {'H','I','D',0};
+static const WCHAR separator_W[] = {'\\',0};
 static const WCHAR device_deviceid_fmtW[] = {'%','s','\\',
     'v','i','d','_','%','0','4','x','&','p','i','d','_','%', '0','4','x'};
-static const WCHAR device_instanceid_fmtW[] = {'%','s','\\',
-    'v','i','d','_','%','0','4','x','&','p','i','d','_','%',
-    '0','4','x','&','%','s','\\','%','i','&','%','s',0};
 
 typedef struct _NATIVE_DEVICE {
     struct list entry;
 
-    DWORD vidpid;
     DEVICE_OBJECT *PDO;
     DEVICE_OBJECT *FDO;
     HID_MINIDRIVER_REGISTRATION *minidriver;
@@ -110,6 +107,37 @@ static NTSTATUS PNP_SendPowerIRP(DEVICE_OBJECT *device, DEVICE_POWER_STATE power
     return SendDeviceIRP(device, irp);
 }
 
+static NTSTATUS get_device_id(DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WCHAR **id)
+{
+    NTSTATUS status;
+    IO_STACK_LOCATION *irpsp;
+    IO_STATUS_BLOCK irp_status;
+    IRP *irp;
+    HANDLE event = CreateEventA(NULL, FALSE, FALSE, NULL);
+
+    irp = IoBuildSynchronousFsdRequest(IRP_MJ_PNP, device, NULL, 0, NULL, NULL, &irp_status);
+    if (irp == NULL)
+        return STATUS_NO_MEMORY;
+
+    irp->UserEvent = event;
+    irpsp = IoGetNextIrpStackLocation(irp);
+    irpsp->MinorFunction = IRP_MN_QUERY_ID;
+    irpsp->Parameters.QueryId.IdType = type;
+    irpsp->CompletionRoutine = internalComplete;
+    irpsp->Control = SL_INVOKE_ON_SUCCESS | SL_INVOKE_ON_ERROR;
+
+    IoCallDriver(device, irp);
+    if (irp->IoStatus.u.Status == STATUS_PENDING)
+        WaitForSingleObject(event, INFINITE);
+
+    *id = (WCHAR*)irp->IoStatus.Information;
+    status = irp->IoStatus.u.Status;
+    IoCompleteRequest(irp, IO_NO_INCREMENT );
+    CloseHandle(event);
+
+    return status;
+}
+
 NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
 {
     DEVICE_OBJECT *device = NULL;
@@ -117,26 +145,28 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     minidriver *minidriver;
     HID_DEVICE_ATTRIBUTES attr;
     BASE_DEVICE_EXTENSION *ext = NULL;
-    WCHAR serial[256];
-    WCHAR interface[256];
-    DWORD index = HID_STRING_ID_ISERIALNUMBER;
-    NATIVE_DEVICE *tracked_device, *ptr;
-    INT interface_index = 1;
+    NATIVE_DEVICE *tracked_device;
     HID_DESCRIPTOR descriptor;
     BYTE *reportDescriptor;
     INT i;
+    WCHAR *PDO_id;
+    WCHAR *id_ptr;
 
-    static const WCHAR ig_fmtW[] = {'I','G','_','%','i',0};
-    static const WCHAR im_fmtW[] = {'I','M','_','%','i',0};
+    status = get_device_id(PDO, BusQueryInstanceID, &PDO_id);
+    if (status != STATUS_SUCCESS)
+    {
+        ERR("Failed to get PDO id(%x)\n",status);
+        return status;
+    }
 
-
-    TRACE("PDO add device(%p)\n", PDO);
+    TRACE("PDO add device(%p:%s)\n", PDO, debugstr_w(PDO_id));
     minidriver = find_minidriver(driver);
 
     status = HID_CreateDevice(PDO, &minidriver->minidriver, &device);
     if (status != STATUS_SUCCESS)
     {
         ERR("Failed to create HID object (%x)\n",status);
+        HeapFree(GetProcessHeap(), 0, PDO_id);
         return status;
     }
 
@@ -148,6 +178,7 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     if (status != STATUS_SUCCESS)
     {
         ERR("Minidriver AddDevice failed (%x)\n",status);
+        HeapFree(GetProcessHeap(), 0, PDO_id);
         HID_DeleteDevice(&minidriver->minidriver, device);
         return status;
     }
@@ -156,6 +187,7 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     if (status != STATUS_SUCCESS)
     {
         ERR("Minidriver IRP_MN_START_DEVICE failed (%x)\n",status);
+        HeapFree(GetProcessHeap(), 0, PDO_id);
         HID_DeleteDevice(&minidriver->minidriver, device);
         return status;
     }
@@ -168,6 +200,7 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
         ERR("Minidriver failed to get Attributes(%x)\n",status);
         PNP_SendPnPIRP(device, IRP_MN_REMOVE_DEVICE);
         HID_DeleteDevice(&minidriver->minidriver, device);
+        HeapFree(GetProcessHeap(), 0, PDO_id);
         return status;
     }
 
@@ -177,14 +210,9 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     ext->information.Polled = minidriver->minidriver.DevicesArePolled;
 
     tracked_device = HeapAlloc(GetProcessHeap(), 0, sizeof(*tracked_device));
-    tracked_device->vidpid = MAKELONG(attr.VendorID, attr.ProductID);
     tracked_device->PDO = PDO;
     tracked_device->FDO = device;
     tracked_device->minidriver = &minidriver->minidriver;
-
-    LIST_FOR_EACH_ENTRY(ptr, &tracked_devices, NATIVE_DEVICE, entry)
-        if (ptr->vidpid == tracked_device->vidpid) interface_index++;
-
     list_add_tail(&tracked_devices, &tracked_device->entry);
 
     status = call_minidriver(IOCTL_HID_GET_DEVICE_DESCRIPTOR, device, NULL, 0,
@@ -194,6 +222,7 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
         ERR("Cannot get Device Descriptor(%x)\n",status);
         PNP_SendPnPIRP(device, IRP_MN_REMOVE_DEVICE);
         HID_DeleteDevice(&minidriver->minidriver, device);
+        HeapFree(GetProcessHeap(), 0, PDO_id);
         return status;
     }
     for (i = 0; i < descriptor.bNumDescriptors; i++)
@@ -205,6 +234,7 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
         ERR("No Report Descriptor found in reply\n");
         PNP_SendPnPIRP(device, IRP_MN_REMOVE_DEVICE);
         HID_DeleteDevice(&minidriver->minidriver, device);
+        HeapFree(GetProcessHeap(), 0, PDO_id);
         return status;
     }
 
@@ -216,6 +246,7 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
         ERR("Cannot get Report Descriptor(%x)\n",status);
         HID_DeleteDevice(&minidriver->minidriver, device);
         HeapFree(GetProcessHeap(), 0, reportDescriptor);
+        HeapFree(GetProcessHeap(), 0, PDO_id);
         return status;
     }
 
@@ -226,28 +257,20 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     {
         ERR("Cannot parse Report Descriptor\n");
         HID_DeleteDevice(&minidriver->minidriver, device);
+        HeapFree(GetProcessHeap(), 0, PDO_id);
         return STATUS_NOT_SUPPORTED;
     }
 
     ext->information.DescriptorSize = ext->preparseData->dwSize;
 
-    serial[0] = 0;
-    status = call_minidriver(IOCTL_HID_GET_STRING, device,
-                             &index, sizeof(DWORD), serial, sizeof(serial));
+    lstrcpyW(ext->instance_id, device_enumeratorW);
+    strcatW(ext->instance_id, separator_W);
+    /* Skip the original enumerator */
+    id_ptr = strchrW(PDO_id, '\\');
+    id_ptr++;
+    strcatW(ext->instance_id, id_ptr);
+    HeapFree(GetProcessHeap(), 0, PDO_id);
 
-    if (serial[0] == 0)
-    {
-        static const WCHAR wZeroSerial[]= {'0','0','0','0',0};
-        lstrcpyW(serial, wZeroSerial);
-    }
-
-    if (ext->preparseData->caps.UsagePage == HID_USAGE_PAGE_GENERIC &&
-        (ext->preparseData->caps.Usage == HID_USAGE_GENERIC_GAMEPAD ||
-         ext->preparseData->caps.Usage == HID_USAGE_GENERIC_JOYSTICK))
-        sprintfW(interface, ig_fmtW, interface_index);
-    else
-        sprintfW(interface, im_fmtW, interface_index);
-    sprintfW(ext->instance_id, device_instanceid_fmtW, device_enumeratorW, ext->information.VendorID, ext->information.ProductID, interface, ext->information.VersionNumber, serial);
     sprintfW(ext->device_id, device_deviceid_fmtW, device_enumeratorW, ext->information.VendorID, ext->information.ProductID);
 
     HID_LinkDevice(device);
