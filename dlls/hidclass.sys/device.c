@@ -75,6 +75,8 @@ NTSTATUS HID_CreateDevice(DEVICE_OBJECT *native_device, HID_MINIDRIVER_REGISTRAT
     lstrcpyW(ext->device_name, dev_name);
     ext->link_name = NULL;
 
+    IoAttachDeviceToDeviceStack(*device, native_device);
+
     return S_OK;
 }
 
