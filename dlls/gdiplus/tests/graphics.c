@@ -326,6 +326,64 @@ static void test_save_restore(void)
 
     log_state(state_a, &state_log);
 
+    /* A state created by SaveGraphics cannot be restored with EndContainer. */
+    GdipCreateFromHDC(hdc, &graphics1);
+    GdipSetInterpolationMode(graphics1, InterpolationModeBilinear);
+    stat = GdipSaveGraphics(graphics1, &state_a);
+    expect(Ok, stat);
+    GdipSetInterpolationMode(graphics1, InterpolationModeBicubic);
+    stat = GdipEndContainer(graphics1, state_a);
+    expect(Ok, stat);
+    GdipGetInterpolationMode(graphics1, &mode);
+    todo_wine expect(InterpolationModeBicubic, mode);
+    stat = GdipRestoreGraphics(graphics1, state_a);
+    expect(Ok, stat);
+    GdipGetInterpolationMode(graphics1, &mode);
+    expect(InterpolationModeBilinear, mode);
+    GdipDeleteGraphics(graphics1);
+
+    log_state(state_a, &state_log);
+
+    /* A state created by BeginContainer cannot be restored with RestoreGraphics. */
+    GdipCreateFromHDC(hdc, &graphics1);
+    GdipSetInterpolationMode(graphics1, InterpolationModeBilinear);
+    stat = GdipBeginContainer2(graphics1, &state_a);
+    expect(Ok, stat);
+    GdipSetInterpolationMode(graphics1, InterpolationModeBicubic);
+    stat = GdipRestoreGraphics(graphics1, state_a);
+    expect(Ok, stat);
+    GdipGetInterpolationMode(graphics1, &mode);
+    todo_wine expect(InterpolationModeBicubic, mode);
+    stat = GdipEndContainer(graphics1, state_a);
+    expect(Ok, stat);
+    GdipGetInterpolationMode(graphics1, &mode);
+    expect(InterpolationModeBilinear, mode);
+    GdipDeleteGraphics(graphics1);
+
+    log_state(state_a, &state_log);
+
+    /* BeginContainer and SaveGraphics use the same stack. */
+    GdipCreateFromHDC(hdc, &graphics1);
+    GdipSetInterpolationMode(graphics1, InterpolationModeBilinear);
+    stat = GdipBeginContainer2(graphics1, &state_a);
+    expect(Ok, stat);
+    GdipSetInterpolationMode(graphics1, InterpolationModeBicubic);
+    stat = GdipSaveGraphics(graphics1, &state_b);
+    expect(Ok, stat);
+    GdipSetInterpolationMode(graphics1, InterpolationModeNearestNeighbor);
+    stat = GdipEndContainer(graphics1, state_a);
+    expect(Ok, stat);
+    GdipGetInterpolationMode(graphics1, &mode);
+    expect(InterpolationModeBilinear, mode);
+    stat = GdipRestoreGraphics(graphics1, state_b);
+    expect(Ok, stat);
+    GdipGetInterpolationMode(graphics1, &mode);
+    expect(InterpolationModeBilinear, mode);
+    GdipDeleteGraphics(graphics1);
+
+    log_state(state_a, &state_log);
+    log_state(state_b, &state_log);
+
     /* The same state value should never be returned twice. */
     todo_wine
         check_no_duplicates(state_log);
