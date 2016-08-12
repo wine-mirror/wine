@@ -210,8 +210,10 @@ MAKE_FUNCPTR(FcPatternGetString);
 
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
+#define GET_BE_DWORD(x) (x)
 #else
 #define GET_BE_WORD(x) RtlUshortByteSwap(x)
+#define GET_BE_DWORD(x) RtlUlongByteSwap(x)
 #endif
 
 #define MS_MAKE_TAG( _x1, _x2, _x3, _x4 ) \
@@ -223,6 +225,7 @@ MAKE_FUNCPTR(FcPatternGetString);
 #define MS_GASP_TAG MS_MAKE_TAG('g', 'a', 's', 'p')
 #define MS_GSUB_TAG MS_MAKE_TAG('G', 'S', 'U', 'B')
 #define MS_KERN_TAG MS_MAKE_TAG('k', 'e', 'r', 'n')
+#define MS_TTCF_TAG MS_MAKE_TAG('t', 't', 'c', 'f')
 #define MS_VDMX_TAG MS_MAKE_TAG('V', 'D', 'M', 'X')
 
 /* 'gasp' flags */
@@ -424,6 +427,7 @@ struct tagGdiFont {
     GdiFont *base_font;
     VOID *GSUB_Table;
     const VOID *vert_feature;
+    ULONG ttc_item_offset; /* 0 if font is not a part of TrueType collection */
     DWORD cache_num;
     DWORD instance_id;
     struct font_fileinfo *fileinfo;
@@ -4549,6 +4553,9 @@ static FT_Face OpenFontFace(GdiFont *font, Face *face, LONG width, LONG height)
     font->ft_face = ft_face;
 
     if(FT_IS_SCALABLE(ft_face)) {
+        FT_ULong len;
+        DWORD header;
+
         /* load the VDMX table if we have one */
         font->ppem = load_VDMX(font, height);
         if(font->ppem == 0)
@@ -4557,6 +4564,20 @@ static FT_Face OpenFontFace(GdiFont *font, Face *face, LONG width, LONG height)
 
         if((err = pFT_Set_Pixel_Sizes(ft_face, 0, font->ppem)) != 0)
             WARN("FT_Set_Pixel_Sizes %d, %d rets %x\n", 0, font->ppem, err);
+
+        /* see if it's a TTC */
+        len = sizeof(header);
+        if (!pFT_Load_Sfnt_Table(ft_face, 0, 0, (void*)&header, &len)) {
+            if (header == MS_TTCF_TAG)
+            {
+                len = sizeof(font->ttc_item_offset);
+                if (pFT_Load_Sfnt_Table(ft_face, 0, (3 + face->face_index) * sizeof(DWORD),
+                        (void*)&font->ttc_item_offset, &len))
+                    font->ttc_item_offset = 0;
+                else
+                    font->ttc_item_offset = GET_BE_DWORD(font->ttc_item_offset);
+            }
+        }
     } else {
         font->ppem = height;
         if((err = pFT_Set_Pixel_Sizes(ft_face, width, height)) != 0)
@@ -4665,6 +4686,16 @@ static DWORD get_font_data( GdiFont *font, DWORD table, DWORD offset, LPVOID buf
         len = 0;
     else
         len = cbData;
+
+    /* if font is a member of TTC, 'ttcf' tag allows reading from beginning of TTC file,
+       0 tag means to read from start of collection member data. */
+    if (font->ttc_item_offset)
+    {
+        if (table == MS_TTCF_TAG)
+            table = 0;
+        else if (table == 0)
+            offset += font->ttc_item_offset;
+    }
 
     table = RtlUlongByteSwap( table );  /* MS tags differ in endianness from FT ones */
 
