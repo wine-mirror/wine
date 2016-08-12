@@ -872,36 +872,36 @@ static void test_import(void)
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
 
-    test_import_wstr("\uFEFFWindows Registry Editor Version 5\n", &r);
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
 
-    test_import_wstr("\uFEFFWindows Registry Editor Version 5.00\n", &r);
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
-    test_import_wstr("\uFEFFWINDOWS Registry Editor Version 5.00\n", &r);
+    test_import_wstr("\xef\xbb\xbfWINDOWS Registry Editor Version 5.00\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
 
-    test_import_wstr(" \uFEFFWindows Registry Editor Version 5.00\n", &r);
+    test_import_wstr(" \xef\xbb\xbfWindows Registry Editor Version 5.00\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
 
-    test_import_wstr("\t\uFEFFWindows Registry Editor Version 5.00\n", &r);
+    test_import_wstr("\t\xef\xbb\xbfWindows Registry Editor Version 5.00\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
 
-    test_import_wstr("\n\uFEFFWindows Registry Editor Version 5.00\n", &r);
+    test_import_wstr("\n\xef\xbb\xbfWindows Registry Editor Version 5.00\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
 
-    test_import_wstr("\uFEFF Windows Registry Editor Version 5.00\n", &r);
+    test_import_wstr("\xef\xbb\xbf Windows Registry Editor Version 5.00\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
-    test_import_wstr("\uFEFF\tWindows Registry Editor Version 5.00\n", &r);
+    test_import_wstr("\xef\xbb\xbf\tWindows Registry Editor Version 5.00\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
-    test_import_wstr("\uFEFF\nWindows Registry Editor Version 5.00\n", &r);
+    test_import_wstr("\xef\xbb\xbf\nWindows Registry Editor Version 5.00\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
 }
