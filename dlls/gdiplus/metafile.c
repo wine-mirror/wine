@@ -109,6 +109,13 @@ typedef struct EmfPlusRotateWorldTransform
     REAL Angle;
 } EmfPlusRotateWorldTransform;
 
+typedef struct EmfPlusTranslateWorldTransform
+{
+    EmfPlusRecordHeader Header;
+    REAL dx;
+    REAL dy;
+} EmfPlusTranslateWorldTransform;
+
 static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, DWORD size, void **result)
 {
     DWORD size_needed;
@@ -673,6 +680,30 @@ GpStatus METAFILE_RotateWorldTransform(GpMetafile* metafile, REAL angle, MatrixO
     return Ok;
 }
 
+GpStatus METAFILE_TranslateWorldTransform(GpMetafile* metafile, REAL dx, REAL dy, MatrixOrder order)
+{
+    if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
+    {
+        EmfPlusTranslateWorldTransform *record;
+        GpStatus stat;
+
+        stat = METAFILE_AllocateRecord(metafile,
+            sizeof(EmfPlusTranslateWorldTransform),
+            (void**)&record);
+        if (stat != Ok)
+            return stat;
+
+        record->Header.Type = EmfPlusRecordTypeTranslateWorldTransform;
+        record->Header.Flags = (order == MatrixOrderAppend ? 0x2000 : 0);
+        record->dx = dx;
+        record->dy = dy;
+
+        METAFILE_WriteRecords(metafile);
+    }
+
+    return Ok;
+}
+
 GpStatus METAFILE_ResetWorldTransform(GpMetafile* metafile)
 {
     if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
@@ -1079,6 +1110,18 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                 return InvalidParameter;
 
             GdipRotateMatrix(real_metafile->world_transform, record->Angle, order);
+
+            return METAFILE_PlaybackUpdateWorldTransform(real_metafile);
+        }
+        case EmfPlusRecordTypeTranslateWorldTransform:
+        {
+            EmfPlusTranslateWorldTransform *record = (EmfPlusTranslateWorldTransform*)header;
+            MatrixOrder order = (flags & 0x2000) ? MatrixOrderAppend : MatrixOrderPrepend;
+
+            if (dataSize + sizeof(EmfPlusRecordHeader) < sizeof(EmfPlusTranslateWorldTransform))
+                return InvalidParameter;
+
+            GdipTranslateMatrix(real_metafile->world_transform, record->dx, record->dy, order);
 
             return METAFILE_PlaybackUpdateWorldTransform(real_metafile);
         }

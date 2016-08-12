@@ -5517,6 +5517,8 @@ GpStatus WINGDIPAPI GdipSetWorldTransform(GpGraphics *graphics, GpMatrix *matrix
 GpStatus WINGDIPAPI GdipTranslateWorldTransform(GpGraphics *graphics, REAL dx,
     REAL dy, GpMatrixOrder order)
 {
+    GpStatus stat;
+
     TRACE("(%p, %.2f, %.2f, %d)\n", graphics, dx, dy, order);
 
     if(!graphics)
@@ -5524,6 +5526,13 @@ GpStatus WINGDIPAPI GdipTranslateWorldTransform(GpGraphics *graphics, REAL dx,
 
     if(graphics->busy)
         return ObjectBusy;
+
+    if (graphics->image && graphics->image->type == ImageTypeMetafile) {
+        stat = METAFILE_TranslateWorldTransform((GpMetafile*)graphics->image, dx, dy, order);
+
+        if (stat != Ok)
+            return stat;
+    }
 
     return GdipTranslateMatrix(&graphics->worldtrans, dx, dy, order);
 }
