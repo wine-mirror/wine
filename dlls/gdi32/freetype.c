@@ -214,6 +214,21 @@ MAKE_FUNCPTR(FcPatternGetString);
 #define GET_BE_WORD(x) RtlUshortByteSwap(x)
 #endif
 
+#define MS_MAKE_TAG( _x1, _x2, _x3, _x4 ) \
+          ( ( (FT_ULong)_x4 << 24 ) |     \
+            ( (FT_ULong)_x3 << 16 ) |     \
+            ( (FT_ULong)_x2 <<  8 ) |     \
+              (FT_ULong)_x1         )
+
+#define MS_GASP_TAG MS_MAKE_TAG('g', 'a', 's', 'p')
+#define MS_GSUB_TAG MS_MAKE_TAG('G', 'S', 'U', 'B')
+#define MS_KERN_TAG MS_MAKE_TAG('k', 'e', 'r', 'n')
+#define MS_VDMX_TAG MS_MAKE_TAG('V', 'D', 'M', 'X')
+
+/* 'gasp' flags */
+#define GASP_GRIDFIT 0x01
+#define GASP_DOGRAY  0x02
+
 #ifndef WINE_FONT_DIR
 #define WINE_FONT_DIR "fonts"
 #endif
@@ -637,7 +652,6 @@ static const WCHAR system_link[] = {'S','o','f','t','w','a','r','e','\\','M','i'
 
 /* These are all structures needed for the GSUB table */
 
-#define GSUB_TAG MS_MAKE_TAG('G', 'S', 'U', 'B')
 
 typedef struct {
     DWORD version;
@@ -4679,13 +4693,7 @@ static DWORD get_font_data( GdiFont *font, DWORD table, DWORD offset, LPVOID buf
  * load the vdmx entry for the specified height
  */
 
-#define MS_MAKE_TAG( _x1, _x2, _x3, _x4 ) \
-          ( ( (FT_ULong)_x4 << 24 ) |     \
-            ( (FT_ULong)_x3 << 16 ) |     \
-            ( (FT_ULong)_x2 <<  8 ) |     \
-              (FT_ULong)_x1         )
 
-#define MS_VDMX_TAG MS_MAKE_TAG('V', 'D', 'M', 'X')
 
 typedef struct {
     WORD version;
@@ -5103,10 +5111,6 @@ static FT_Encoding pick_charmap( FT_Face face, int charset )
     return *encs;
 }
 
-#define GASP_GRIDFIT 0x01
-#define GASP_DOGRAY  0x02
-#define GASP_TAG     MS_MAKE_TAG('g','a','s','p')
-
 static BOOL get_gasp_flags( GdiFont *font, WORD *flags )
 {
     DWORD size;
@@ -5116,7 +5120,7 @@ static BOOL get_gasp_flags( GdiFont *font, WORD *flags )
     BOOL ret = FALSE;
 
     *flags = 0;
-    size = get_font_data( font, GASP_TAG,  0, NULL, 0 );
+    size = get_font_data( font, MS_GASP_TAG,  0, NULL, 0 );
     if (size == GDI_ERROR) return FALSE;
     if (size < 4 * sizeof(WORD)) return FALSE;
     if (size > sizeof(buf))
@@ -5125,7 +5129,7 @@ static BOOL get_gasp_flags( GdiFont *font, WORD *flags )
         if (!ptr) return FALSE;
     }
 
-    get_font_data( font, GASP_TAG, 0, ptr, size );
+    get_font_data( font, MS_GASP_TAG, 0, ptr, size );
 
     version  = GET_BE_WORD( *ptr++ );
     num_recs = GET_BE_WORD( *ptr++ );
@@ -5710,11 +5714,11 @@ found_face:
 
     if (face->flags & ADDFONT_VERTICAL_FONT) /* We need to try to load the GSUB table */
     {
-        int length = get_font_data(ret, GSUB_TAG , 0, NULL, 0);
+        int length = get_font_data(ret, MS_GSUB_TAG , 0, NULL, 0);
         if (length != GDI_ERROR)
         {
             ret->GSUB_Table = HeapAlloc(GetProcessHeap(),0,length);
-            get_font_data(ret, GSUB_TAG , 0, ret->GSUB_Table, length);
+            get_font_data(ret, MS_GSUB_TAG , 0, ret->GSUB_Table, length);
             TRACE("Loaded GSUB table of %i bytes\n",length);
             ret->vert_feature = get_GSUB_vert_feature(ret);
             if (!ret->vert_feature)
@@ -8476,7 +8480,6 @@ BOOL WINAPI GetFontFileInfo( DWORD instance_id, DWORD unknown, struct font_filei
 /*************************************************************************
  * Kerning support for TrueType fonts
  */
-#define MS_KERN_TAG MS_MAKE_TAG('k', 'e', 'r', 'n')
 
 struct TT_kern_table
 {
