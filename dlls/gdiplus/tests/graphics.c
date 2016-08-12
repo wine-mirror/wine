@@ -335,7 +335,7 @@ static void test_save_restore(void)
     stat = GdipEndContainer(graphics1, state_a);
     expect(Ok, stat);
     GdipGetInterpolationMode(graphics1, &mode);
-    todo_wine expect(InterpolationModeBicubic, mode);
+    expect(InterpolationModeBicubic, mode);
     stat = GdipRestoreGraphics(graphics1, state_a);
     expect(Ok, stat);
     GdipGetInterpolationMode(graphics1, &mode);
@@ -353,7 +353,7 @@ static void test_save_restore(void)
     stat = GdipRestoreGraphics(graphics1, state_a);
     expect(Ok, stat);
     GdipGetInterpolationMode(graphics1, &mode);
-    todo_wine expect(InterpolationModeBicubic, mode);
+    expect(InterpolationModeBicubic, mode);
     stat = GdipEndContainer(graphics1, state_a);
     expect(Ok, stat);
     GdipGetInterpolationMode(graphics1, &mode);

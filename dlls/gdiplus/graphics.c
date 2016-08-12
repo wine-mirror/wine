@@ -1924,9 +1924,15 @@ GpStatus trace_path(GpGraphics *graphics, GpPath *path)
     return result;
 }
 
+typedef enum GraphicsContainerType {
+    BEGIN_CONTAINER,
+    SAVE_GRAPHICS
+} GraphicsContainerType;
+
 typedef struct _GraphicsContainerItem {
     struct list entry;
     GraphicsContainer contid;
+    GraphicsContainerType type;
 
     SmoothingMode smoothing;
     CompositingQuality compqual;
@@ -1943,7 +1949,7 @@ typedef struct _GraphicsContainerItem {
 } GraphicsContainerItem;
 
 static GpStatus init_container(GraphicsContainerItem** container,
-        GDIPCONST GpGraphics* graphics){
+        GDIPCONST GpGraphics* graphics, GraphicsContainerType type){
     GpStatus sts;
 
     *container = heap_alloc_zero(sizeof(GraphicsContainerItem));
@@ -1951,6 +1957,7 @@ static GpStatus init_container(GraphicsContainerItem** container,
         return OutOfMemory;
 
     (*container)->contid = graphics->contid + 1;
+    (*container)->type = type;
 
     (*container)->smoothing = graphics->smoothing;
     (*container)->compqual = graphics->compqual;
@@ -5148,11 +5155,6 @@ GpStatus WINGDIPAPI GdipResetWorldTransform(GpGraphics *graphics)
     return GdipSetMatrixElements(&graphics->worldtrans, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 }
 
-GpStatus WINGDIPAPI GdipRestoreGraphics(GpGraphics *graphics, GraphicsState state)
-{
-    return GdipEndContainer(graphics, state);
-}
-
 GpStatus WINGDIPAPI GdipRotateWorldTransform(GpGraphics *graphics, REAL angle,
     GpMatrixOrder order)
 {
@@ -5176,23 +5178,16 @@ GpStatus WINGDIPAPI GdipRotateWorldTransform(GpGraphics *graphics, REAL angle,
     return GdipRotateMatrix(&graphics->worldtrans, angle, order);
 }
 
-GpStatus WINGDIPAPI GdipSaveGraphics(GpGraphics *graphics, GraphicsState *state)
-{
-    return GdipBeginContainer2(graphics, state);
-}
-
-GpStatus WINGDIPAPI GdipBeginContainer2(GpGraphics *graphics,
-        GraphicsContainer *state)
+static GpStatus begin_container(GpGraphics *graphics,
+    GraphicsContainerType type, GraphicsContainer *state)
 {
     GraphicsContainerItem *container;
     GpStatus sts;
 
-    TRACE("(%p, %p)\n", graphics, state);
-
     if(!graphics || !state)
         return InvalidParameter;
 
-    sts = init_container(&container, graphics);
+    sts = init_container(&container, graphics, type);
     if(sts != Ok)
         return sts;
 
@@ -5200,6 +5195,19 @@ GpStatus WINGDIPAPI GdipBeginContainer2(GpGraphics *graphics,
     *state = graphics->contid = container->contid;
 
     return Ok;
+}
+
+GpStatus WINGDIPAPI GdipSaveGraphics(GpGraphics *graphics, GraphicsState *state)
+{
+    TRACE("(%p, %p)\n", graphics, state);
+    return begin_container(graphics, SAVE_GRAPHICS, state);
+}
+
+GpStatus WINGDIPAPI GdipBeginContainer2(GpGraphics *graphics,
+        GraphicsContainer *state)
+{
+    TRACE("(%p, %p)\n", graphics, state);
+    return begin_container(graphics, BEGIN_CONTAINER, state);
 }
 
 GpStatus WINGDIPAPI GdipBeginContainer(GpGraphics *graphics, GDIPCONST GpRectF *dstrect, GDIPCONST GpRectF *srcrect, GpUnit unit, GraphicsContainer *state)
@@ -5220,18 +5228,17 @@ GpStatus WINGDIPAPI GdipComment(GpGraphics *graphics, UINT sizeData, GDIPCONST B
     return NotImplemented;
 }
 
-GpStatus WINGDIPAPI GdipEndContainer(GpGraphics *graphics, GraphicsContainer state)
+static GpStatus end_container(GpGraphics *graphics, GraphicsContainerType type,
+    GraphicsContainer state)
 {
     GpStatus sts;
     GraphicsContainerItem *container, *container2;
-
-    TRACE("(%p, %x)\n", graphics, state);
 
     if(!graphics)
         return InvalidParameter;
 
     LIST_FOR_EACH_ENTRY(container, &graphics->containers, GraphicsContainerItem, entry){
-        if(container->contid == state)
+        if(container->contid == state && container->type == type)
             break;
     }
 
@@ -5255,6 +5262,18 @@ GpStatus WINGDIPAPI GdipEndContainer(GpGraphics *graphics, GraphicsContainer sta
     delete_container(container);
 
     return Ok;
+}
+
+GpStatus WINGDIPAPI GdipEndContainer(GpGraphics *graphics, GraphicsContainer state)
+{
+    TRACE("(%p, %x)\n", graphics, state);
+    return end_container(graphics, BEGIN_CONTAINER, state);
+}
+
+GpStatus WINGDIPAPI GdipRestoreGraphics(GpGraphics *graphics, GraphicsState state)
+{
+    TRACE("(%p, %x)\n", graphics, state);
+    return end_container(graphics, SAVE_GRAPHICS, state);
 }
 
 GpStatus WINGDIPAPI GdipScaleWorldTransform(GpGraphics *graphics, REAL sx,
