@@ -344,12 +344,12 @@ static HRESULT joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINS
         /* check whether we have a joystick */
         if ((fd = open(joystick_devices[id].device, O_RDONLY)) < 0)
         {
-            WARN("open(%s, O_RDONLY) failed: %s\n", joystick_devices[id].name, strerror(errno));
+            WARN("open(%s, O_RDONLY) failed: %s\n", joystick_devices[id].device, strerror(errno));
             return S_FALSE;
         }
         fill_joystick_dideviceinstanceA( lpddi, version, id );
         close(fd);
-        TRACE("Enumerating the linux Joystick device: %s (%s)\n", joystick_devices[id].device, lpddi->tszProductName);
+        TRACE("Enumerating the linux Joystick device: %s (%s)\n", joystick_devices[id].device, joystick_devices[id].name);
         return S_OK;
     }
 
@@ -373,7 +373,7 @@ static HRESULT joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINS
         /* check whether we have a joystick */
         if ((fd = open(joystick_devices[id].device, O_RDONLY)) < 0)
         {
-            WARN("open(%s,O_RDONLY) failed: %s\n", joystick_devices[id].device, strerror(errno));
+            WARN("open(%s, O_RDONLY) failed: %s\n", joystick_devices[id].device, strerror(errno));
             return S_FALSE;
         }
         fill_joystick_dideviceinstanceW( lpddi, version, id );
