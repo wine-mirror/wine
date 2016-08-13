@@ -1083,9 +1083,10 @@ void opentype_get_font_properties(IDWriteFontFileStream *stream, DWRITE_FONT_FAC
         USHORT version = GET_BE_WORD(tt_os2->version);
         USHORT fsSelection = GET_BE_WORD(tt_os2->fsSelection);
         USHORT usWeightClass = GET_BE_WORD(tt_os2->usWeightClass);
+        USHORT usWidthClass = GET_BE_WORD(tt_os2->usWidthClass);
 
-        if (GET_BE_WORD(tt_os2->usWidthClass) <= DWRITE_FONT_STRETCH_ULTRA_EXPANDED)
-            props->stretch = GET_BE_WORD(tt_os2->usWidthClass);
+        if (usWidthClass > DWRITE_FONT_STRETCH_UNDEFINED && usWidthClass <= DWRITE_FONT_STRETCH_ULTRA_EXPANDED)
+            props->stretch = usWidthClass;
 
         if (usWeightClass >= 1 && usWeightClass <= 9)
             usWeightClass *= 100;
