@@ -2760,6 +2760,7 @@ static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
         static const WCHAR ultraexpandedW[] = {'U','l','t','r','a',' ','E','x','p','a','n','d','e','d',0};
 
         static const WCHAR *stretchnamesW[] = {
+            NULL, /* DWRITE_FONT_STRETCH_UNDEFINED */
             ultracondensedW,
             extracondensedW,
             condensedW,
