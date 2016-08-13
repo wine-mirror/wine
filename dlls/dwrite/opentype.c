@@ -1301,7 +1301,7 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
 
         if (usWeightClass > DWRITE_FONT_WEIGHT_ULTRA_BLACK)
             props->weight = DWRITE_FONT_WEIGHT_ULTRA_BLACK;
-        else
+        else if (usWeightClass > 0)
             props->weight = usWeightClass;
 
         if (version >= 4 && (fsSelection & OS2_FSSELECTION_OBLIQUE))
