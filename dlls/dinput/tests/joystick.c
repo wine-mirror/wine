@@ -203,7 +203,21 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
     if (hr!=DI_OK)
         goto DONE;
 
-    trace("---- %s ----\n", lpddi->tszProductName);
+    trace("---- Controller Information ----\n"
+          "Product Name  : %s\n"
+          "Instance Name : %s\n"
+          "devType       : 0x%08x\n"
+          "GUID Product  : %s\n"
+          "GUID Instance : %s\n"
+          "HID Page      : 0x%04x\n"
+          "HID Usage     : 0x%04x\n",
+          lpddi->tszProductName,
+          lpddi->tszInstanceName,
+          lpddi->dwDevType,
+          wine_dbgstr_guid(&lpddi->guidProduct),
+          wine_dbgstr_guid(&lpddi->guidInstance),
+          lpddi->wUsagePage,
+          lpddi->wUsage);
 
     /* Test for joystick ID property */
     ZeroMemory(&dipw, sizeof(dipw));
