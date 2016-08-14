@@ -335,23 +335,12 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath, DWORD longlen
         /* check for path delimiters and reproduce them */
         if (shortpath[sp] == '\\' || shortpath[sp] == '/')
         {
-            if (!lp || (tmplongpath[lp-1] != '\\' && tmplongpath[lp-1] != '/'))
-            {
-                /* strip double delimiters */
-                tmplongpath[lp++] = shortpath[sp];
-            }
+            tmplongpath[lp++] = shortpath[sp++];
             tmplongpath[lp] = 0; /* terminate string */
-            sp++;
             continue;
         }
 
         p = shortpath + sp;
-        if (sp == 0 && p[0] == '.' && (p[1] == '/' || p[1] == '\\'))
-        {
-            tmplongpath[lp++] = *p++;
-            tmplongpath[lp++] = *p++;
-            sp += 2;
-        }
         for (; *p && *p != '/' && *p != '\\'; p++);
         tmplen = p - (shortpath + sp);
         lstrcpynW(tmplongpath + lp, shortpath + sp, tmplen + 1);
@@ -498,24 +487,12 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortl
         /* check for path delimiters and reproduce them */
         if (longpath[lp] == '\\' || longpath[lp] == '/')
         {
-            if (!sp || (tmpshortpath[sp-1] != '\\' && tmpshortpath[sp-1] != '/'))
-            {
-                /* strip double delimiters */
-                tmpshortpath[sp] = longpath[lp];
-                sp++;
-            }
+            tmpshortpath[sp++] = longpath[lp++];
             tmpshortpath[sp] = 0; /* terminate string */
-            lp++;
             continue;
         }
 
         p = longpath + lp;
-        if (lp == 0 && p[0] == '.' && (p[1] == '/' || p[1] == '\\'))
-        {
-            tmpshortpath[sp++] = *p++;
-            tmpshortpath[sp++] = *p++;
-            lp += 2;
-        }
         for (; *p && *p != '/' && *p != '\\'; p++);
         tmplen = p - (longpath + lp);
         lstrcpynW(tmpshortpath + sp, longpath + lp, tmplen + 1);
