@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-11-27 21:38+0800\n"
-"Last-Translator: Boyuan Yang <073plan@gmail.com>\n"
+"PO-Revision-Date: 2016-08-07 17:33+0800\n"
+"Last-Translator: Jeff Bai <jeffbai@aosc.xyz>\n"
 "Language-Team: Chinese (PRC)\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -27,7 +27,7 @@ msgstr "要从软盘，光盘或硬盘安装新程序，请按'安装'。"
 
 #: appwiz.rc:62
 msgid "&Install..."
-msgstr "安装(&I)..."
+msgstr "安装(&I)…"
 
 #: appwiz.rc:65
 msgid ""
@@ -42,7 +42,7 @@ msgstr "技术支持信息(&S)"
 
 #: appwiz.rc:68 regedit.rc:45 regedit.rc:90
 msgid "&Modify..."
-msgstr "修改(&M)..."
+msgstr "修改(&M)…"
 
 #: appwiz.rc:69 appwiz.rc:45 cryptui.rc:346 msacm32.rc:40 winecfg.rc:200
 #: winecfg.rc:237 wordpad.rc:248
@@ -108,7 +108,7 @@ msgstr "备注："
 
 #: appwiz.rc:100
 msgid "Wine Gecko Installer"
-msgstr "Wine Gecko 安装"
+msgstr "Wine Gecko 安装器"
 
 #: appwiz.rc:103
 msgid ""
@@ -151,7 +151,7 @@ msgstr "取消"
 
 #: appwiz.rc:115
 msgid "Wine Mono Installer"
-msgstr "Wine Mono 安装"
+msgstr "Wine Mono 安装器"
 
 #: appwiz.rc:118
 msgid ""
@@ -218,15 +218,15 @@ msgstr "所有文件 (*.*)"
 
 #: appwiz.rc:46
 msgid "&Modify/Remove"
-msgstr "修改或删除 (&M)"
+msgstr "修改或删除(&M)"
 
 #: appwiz.rc:51
 msgid "Downloading..."
-msgstr "正在下载..."
+msgstr "正在下载…"
 
 #: appwiz.rc:52
 msgid "Installing..."
-msgstr "正在安装..."
+msgstr "正在安装…"
 
 #: appwiz.rc:53
 msgid ""
@@ -240,15 +240,15 @@ msgstr "压缩选项"
 
 #: avifil32.rc:45
 msgid "&Choose a stream:"
-msgstr "选择来源(&C)："
+msgstr "选择来源流(&C)："
 
 #: avifil32.rc:48 wordpad.rc:76
 msgid "&Options..."
-msgstr "选项(&O)..."
+msgstr "选项(&O)…"
 
 #: avifil32.rc:49
 msgid "&Interleave every"
-msgstr "交织: 每"
+msgstr "交织(&I)：每"
 
 #: avifil32.rc:51 msvfw32.rc:51
 msgid "frames"
@@ -288,7 +288,7 @@ msgstr "未压缩"
 
 #: browseui.rc:28
 msgid "Canceling..."
-msgstr "正在取消..."
+msgstr "正在取消…"
 
 #: comctl32.rc:52 winefile.rc:160
 msgid "Properties for %s"
@@ -414,7 +414,7 @@ msgstr "只读(&R)"
 
 #: comdlg32.rc:179
 msgid "Save As..."
-msgstr "另存为..."
+msgstr "另存为…"
 
 #: comdlg32.rc:192 comdlg32.rc:145
 msgid "Save As"
@@ -754,7 +754,7 @@ msgstr "下(&B)："
 
 #: comdlg32.rc:454
 msgid "P&rinter..."
-msgstr "打印机(&P)..."
+msgstr "打印机(&P)…"
 
 #: comdlg32.rc:462
 msgid "Look &in:"
@@ -830,7 +830,7 @@ msgstr "文件不存在"
 
 #: comdlg32.rc:40
 msgid "The selection contains a non-folder object"
-msgstr "所选内容中包含非文件夹的对象"
+msgstr "选中项包含非文件夹对象"
 
 #: comdlg32.rc:45
 msgid "Up One Level"
@@ -1024,7 +1024,7 @@ msgstr "选择文件夹"
 
 #: comdlg32.rc:148
 msgid "Font size has to be a number."
-msgstr ""
+msgstr "字体大小必须是数字。"
 
 #: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
@@ -1196,7 +1196,7 @@ msgstr ""
 
 #: credui.rc:34
 msgid "Caps Lock is On"
-msgstr "大写锁定打开"
+msgstr "大写锁定已打开"
 
 #: crypt32.rc:30
 msgid "Authority Key Identifier"
@@ -1204,11 +1204,11 @@ msgstr ""
 
 #: crypt32.rc:31
 msgid "Key Attributes"
-msgstr ""
+msgstr "密钥属性"
 
 #: crypt32.rc:32
 msgid "Key Usage Restriction"
-msgstr ""
+msgstr "密钥使用限制"
 
 #: crypt32.rc:33
 msgid "Subject Alternative Name"
@@ -1220,15 +1220,15 @@ msgstr ""
 
 #: crypt32.rc:35
 msgid "Basic Constraints"
-msgstr ""
+msgstr "基本约束"
 
 #: crypt32.rc:36
 msgid "Key Usage"
-msgstr ""
+msgstr "密钥用法"
 
 #: crypt32.rc:37
 msgid "Certificate Policies"
-msgstr ""
+msgstr "证书策略"
 
 #: crypt32.rc:38
 msgid "Subject Key Identifier"
@@ -1236,15 +1236,15 @@ msgstr ""
 
 #: crypt32.rc:39
 msgid "CRL Reason Code"
-msgstr ""
+msgstr "CRL 原因代码"
 
 #: crypt32.rc:40
 msgid "CRL Distribution Points"
-msgstr "CRL 分布点"
+msgstr "CRL 分发点"
 
 #: crypt32.rc:41
 msgid "Enhanced Key Usage"
-msgstr ""
+msgstr "增强密钥用法"
 
 #: crypt32.rc:42
 msgid "Authority Information Access"
@@ -1252,11 +1252,11 @@ msgstr ""
 
 #: crypt32.rc:43
 msgid "Certificate Extensions"
-msgstr ""
+msgstr "证书扩展"
 
 #: crypt32.rc:44
 msgid "Next Update Location"
-msgstr ""
+msgstr "下一更新位置"
 
 #: crypt32.rc:45
 msgid "Yes or No Trust"
@@ -1268,19 +1268,19 @@ msgstr "电子邮件地址"
 
 #: crypt32.rc:47
 msgid "Unstructured Name"
-msgstr ""
+msgstr "非结构化名称"
 
 #: crypt32.rc:48
 msgid "Content Type"
-msgstr ""
+msgstr "内容类型"
 
 #: crypt32.rc:49
 msgid "Message Digest"
-msgstr ""
+msgstr "消息摘录"
 
 #: crypt32.rc:50
 msgid "Signing Time"
-msgstr ""
+msgstr "签名时间"
 
 #: crypt32.rc:51
 msgid "Counter Sign"
@@ -1288,11 +1288,11 @@ msgstr ""
 
 #: crypt32.rc:52
 msgid "Challenge Password"
-msgstr ""
+msgstr "要求密码"
 
 #: crypt32.rc:53
 msgid "Unstructured Address"
-msgstr ""
+msgstr "非结构化地址"
 
 #: crypt32.rc:54
 msgid "S/MIME Capabilities"
@@ -1300,20 +1300,20 @@ msgstr ""
 
 #: crypt32.rc:55
 msgid "Prefer Signed Data"
-msgstr ""
+msgstr "已签名的数据优先"
 
 #: crypt32.rc:56 cryptdlg.rc:34
 msgctxt "Certification Practice Statement"
 msgid "CPS"
-msgstr ""
+msgstr "CPS"
 
 #: crypt32.rc:57 cryptdlg.rc:35
 msgid "User Notice"
-msgstr ""
+msgstr "用户告示"
 
 #: crypt32.rc:58
 msgid "On-line Certificate Status Protocol"
-msgstr ""
+msgstr "在线证书状态协议"
 
 #: crypt32.rc:59
 msgid "Certification Authority Issuer"
@@ -1321,7 +1321,7 @@ msgstr ""
 
 #: crypt32.rc:60
 msgid "Certification Template Name"
-msgstr ""
+msgstr "证书模板名称"
 
 #: crypt32.rc:61
 msgid "Certificate Type"
@@ -1329,31 +1329,31 @@ msgstr "证书类型"
 
 #: crypt32.rc:62
 msgid "Certificate Manifold"
-msgstr ""
+msgstr "多种证书"
 
 #: crypt32.rc:63
 msgid "Netscape Cert Type"
-msgstr ""
+msgstr "Netscape 证书类型"
 
 #: crypt32.rc:64
 msgid "Netscape Base URL"
-msgstr ""
+msgstr "Netscape 基点 URL"
 
 #: crypt32.rc:65
 msgid "Netscape Revocation URL"
-msgstr ""
+msgstr "Netscape 吊销 URL"
 
 #: crypt32.rc:66
 msgid "Netscape CA Revocation URL"
-msgstr ""
+msgstr "Netscape CA 吊销 URL"
 
 #: crypt32.rc:67
 msgid "Netscape Cert Renewal URL"
-msgstr ""
+msgstr "Netscape 证书续期 URL"
 
 #: crypt32.rc:68
 msgid "Netscape CA Policy URL"
-msgstr ""
+msgstr "Netscape CA 策略 URL"
 
 #: crypt32.rc:69
 msgid "Netscape SSL ServerName"
@@ -1361,7 +1361,7 @@ msgstr ""
 
 #: crypt32.rc:70
 msgid "Netscape Comment"
-msgstr ""
+msgstr "Netscape 注释"
 
 #: crypt32.rc:71
 msgid "Country/Region"
@@ -1381,19 +1381,19 @@ msgstr "通用名"
 
 #: crypt32.rc:75
 msgid "Locality"
-msgstr "位置"
+msgstr "区域"
 
 #: crypt32.rc:76
 msgid "State or Province"
-msgstr "州/省"
+msgstr "州或省"
 
 #: crypt32.rc:77
 msgid "Title"
-msgstr ""
+msgstr "标题"
 
 #: crypt32.rc:78
 msgid "Given Name"
-msgstr "名"
+msgstr "名字"
 
 #: crypt32.rc:79
 msgid "Initials"
@@ -1401,11 +1401,11 @@ msgstr "首字母"
 
 #: crypt32.rc:80
 msgid "Surname"
-msgstr "姓"
+msgstr "姓氏"
 
 #: crypt32.rc:81
 msgid "Domain Component"
-msgstr ""
+msgstr "域组件"
 
 #: crypt32.rc:82
 msgid "Street Address"
@@ -1421,15 +1421,15 @@ msgstr "CA 版本"
 
 #: crypt32.rc:85
 msgid "Cross CA Version"
-msgstr ""
+msgstr "交叉 CA 版本"
 
 #: crypt32.rc:86
 msgid "Serialized Signature Serial Number"
-msgstr ""
+msgstr "序列化的特征序列号"
 
 #: crypt32.rc:87
 msgid "Principal Name"
-msgstr ""
+msgstr "主体名称"
 
 #: crypt32.rc:88
 msgid "Windows Product Update"
@@ -1437,23 +1437,23 @@ msgstr "Windows 产品更新"
 
 #: crypt32.rc:89
 msgid "Enrollment Name Value Pair"
-msgstr ""
+msgstr "注册名称及值配对"
 
 #: crypt32.rc:90
 msgid "OS Version"
-msgstr "OS 版本"
+msgstr "操作系统版本"
 
 #: crypt32.rc:91
 msgid "Enrollment CSP"
-msgstr ""
+msgstr "注册 CSP"
 
 #: crypt32.rc:92
 msgid "CRL Number"
-msgstr ""
+msgstr "CRL 号码"
 
 #: crypt32.rc:93
 msgid "Delta CRL Indicator"
-msgstr ""
+msgstr "增量 CRL 指示器"
 
 #: crypt32.rc:94
 msgid "Issuing Distribution Point"
@@ -1461,67 +1461,67 @@ msgstr ""
 
 #: crypt32.rc:95
 msgid "Freshest CRL"
-msgstr ""
+msgstr "最新 CRL"
 
 #: crypt32.rc:96
 msgid "Name Constraints"
-msgstr ""
+msgstr "名称约束"
 
 #: crypt32.rc:97
 msgid "Policy Mappings"
-msgstr ""
+msgstr "策略映射"
 
 #: crypt32.rc:98
 msgid "Policy Constraints"
-msgstr ""
+msgstr "策略约束"
 
 #: crypt32.rc:99
 msgid "Cross-Certificate Distribution Points"
-msgstr ""
+msgstr "跨证书分发点"
 
 #: crypt32.rc:100
 msgid "Application Policies"
-msgstr ""
+msgstr "应用程序策略"
 
 #: crypt32.rc:101
 msgid "Application Policy Mappings"
-msgstr ""
+msgstr "应用程序策略映射"
 
 #: crypt32.rc:102
 msgid "Application Policy Constraints"
-msgstr ""
+msgstr "应用程序策略约束"
 
 #: crypt32.rc:103
 msgid "CMC Data"
-msgstr ""
+msgstr "CMC 数据"
 
 #: crypt32.rc:104
 msgid "CMC Response"
-msgstr ""
+msgstr "CMC 响应"
 
 #: crypt32.rc:105
 msgid "Unsigned CMC Request"
-msgstr ""
+msgstr "未签名的 CMC 请求"
 
 #: crypt32.rc:106
 msgid "CMC Status Info"
-msgstr ""
+msgstr "CMC 状态信息"
 
 #: crypt32.rc:107
 msgid "CMC Extensions"
-msgstr ""
+msgstr "CMC 扩展"
 
 #: crypt32.rc:108
 msgid "CMC Attributes"
-msgstr ""
+msgstr "CMC 属性"
 
 #: crypt32.rc:109
 msgid "PKCS 7 Data"
-msgstr ""
+msgstr "PKCS 7 数据"
 
 #: crypt32.rc:110
 msgid "PKCS 7 Signed"
-msgstr ""
+msgstr "已签名的 PKCS 7"
 
 #: crypt32.rc:111
 msgid "PKCS 7 Enveloped"
@@ -1533,15 +1533,15 @@ msgstr ""
 
 #: crypt32.rc:113
 msgid "PKCS 7 Digested"
-msgstr ""
+msgstr "已摘录的 PKCS 7"
 
 #: crypt32.rc:114
 msgid "PKCS 7 Encrypted"
-msgstr ""
+msgstr "已加密的 PKCS 7"
 
 #: crypt32.rc:115
 msgid "Previous CA Certificate Hash"
-msgstr ""
+msgstr "上一个 CA 证书哈希值"
 
 #: crypt32.rc:116
 msgid "Virtual Base CRL Number"
@@ -1549,11 +1549,11 @@ msgstr ""
 
 #: crypt32.rc:117
 msgid "Next CRL Publish"
-msgstr ""
+msgstr "下一个 CRL 发行"
 
 #: crypt32.rc:118
 msgid "CA Encryption Certificate"
-msgstr ""
+msgstr "CA 加密证书"
 
 #: crypt32.rc:119 cryptui.rc:148
 msgid "Key Recovery Agent"
@@ -1561,31 +1561,31 @@ msgstr ""
 
 #: crypt32.rc:120
 msgid "Certificate Template Information"
-msgstr ""
+msgstr "证书模板信息"
 
 #: crypt32.rc:121
 msgid "Enterprise Root OID"
-msgstr ""
+msgstr "企业根 OID"
 
 #: crypt32.rc:122
 msgid "Dummy Signer"
-msgstr ""
+msgstr "虚设签名者"
 
 #: crypt32.rc:123
 msgid "Encrypted Private Key"
-msgstr ""
+msgstr "已加密的密钥"
 
 #: crypt32.rc:124
 msgid "Published CRL Locations"
-msgstr ""
+msgstr "已发行的 CRL 位置"
 
 #: crypt32.rc:125
 msgid "Enforce Certificate Chain Policy"
-msgstr ""
+msgstr "强制执行证书链策略"
 
 #: crypt32.rc:126
 msgid "Transaction Id"
-msgstr ""
+msgstr "交易 Id"
 
 #: crypt32.rc:127
 msgid "Sender Nonce"
@@ -1597,111 +1597,111 @@ msgstr ""
 
 #: crypt32.rc:129
 msgid "Reg Info"
-msgstr ""
+msgstr "注册信息"
 
 #: crypt32.rc:130
 msgid "Get Certificate"
-msgstr ""
+msgstr "获取证书"
 
 #: crypt32.rc:131
 msgid "Get CRL"
-msgstr ""
+msgstr "获取 CRL"
 
 #: crypt32.rc:132
 msgid "Revoke Request"
-msgstr ""
+msgstr "撤销请求"
 
 #: crypt32.rc:133
 msgid "Query Pending"
-msgstr ""
+msgstr "正在等待查询"
 
 #: crypt32.rc:134 cryptui.rc:95
 msgid "Certificate Trust List"
-msgstr ""
+msgstr "证书信任列表"
 
 #: crypt32.rc:135
 msgid "Archived Key Certificate Hash"
-msgstr ""
+msgstr "已归档的密钥证书哈希值"
 
 #: crypt32.rc:136
 msgid "Private Key Usage Period"
-msgstr ""
+msgstr "私钥使用期"
 
 #: crypt32.rc:137
 msgid "Client Information"
-msgstr ""
+msgstr "客户端信息"
 
 #: crypt32.rc:138
 msgid "Server Authentication"
-msgstr ""
+msgstr "服务器验证"
 
 #: crypt32.rc:139
 msgid "Client Authentication"
-msgstr ""
+msgstr "客户端认证"
 
 #: crypt32.rc:140
 msgid "Code Signing"
-msgstr ""
+msgstr "代码签名"
 
 #: crypt32.rc:141
 msgid "Secure Email"
-msgstr ""
+msgstr "安全电子邮件"
 
 #: crypt32.rc:142
 msgid "Time Stamping"
-msgstr ""
+msgstr "时间戳"
 
 #: crypt32.rc:143
 msgid "Microsoft Trust List Signing"
-msgstr ""
+msgstr "Microsoft 信任列表签名"
 
 #: crypt32.rc:144
 msgid "Microsoft Time Stamping"
-msgstr ""
+msgstr "Microsoft 时间戳"
 
 #: crypt32.rc:145
 msgid "IP security end system"
-msgstr ""
+msgstr "IP 安全终端系统"
 
 #: crypt32.rc:146
 msgid "IP security tunnel termination"
-msgstr ""
+msgstr "IP 安全隧道终止"
 
 #: crypt32.rc:147
 msgid "IP security user"
-msgstr ""
+msgstr "IP 安全用户"
 
 #: crypt32.rc:148
 msgid "Encrypting File System"
-msgstr ""
+msgstr "正在加密文件系統"
 
 #: crypt32.rc:149 cryptui.rc:133
 msgid "Windows Hardware Driver Verification"
-msgstr ""
+msgstr "Windows 硬件驱动校验"
 
 #: crypt32.rc:150 cryptui.rc:134
 msgid "Windows System Component Verification"
-msgstr ""
+msgstr "Windows 系统组件校验"
 
 #: crypt32.rc:151 cryptui.rc:135
 msgid "OEM Windows System Component Verification"
-msgstr ""
+msgstr "OEM Windows 系统组件校验"
 
 #: crypt32.rc:152 cryptui.rc:136
 msgid "Embedded Windows System Component Verification"
-msgstr ""
+msgstr "嵌入式 Windows 系统组件验证"
 
 #: crypt32.rc:153 cryptui.rc:143
 msgid "Key Pack Licenses"
-msgstr ""
+msgstr "密钥包许可"
 
 #: crypt32.rc:154 cryptui.rc:144
 msgid "License Server Verification"
-msgstr ""
+msgstr "许可服务器校验"
 
 #: crypt32.rc:155 cryptui.rc:146
 msgid "Smart Card Logon"
-msgstr ""
+msgstr "智能卡登录"
 
 #: crypt32.rc:156 cryptui.rc:142
 msgid "Digital Rights"
@@ -1709,35 +1709,35 @@ msgstr "数字权利"
 
 #: crypt32.rc:157 cryptui.rc:138
 msgid "Qualified Subordination"
-msgstr ""
+msgstr "合格从属"
 
 #: crypt32.rc:158 cryptui.rc:139
 msgid "Key Recovery"
-msgstr ""
+msgstr "密钥恢复"
 
 #: crypt32.rc:159 cryptui.rc:140
 msgid "Document Signing"
-msgstr ""
+msgstr "文档签名"
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
-msgstr ""
+msgstr "IP 安全 IKE 中间件"
 
 #: crypt32.rc:161 cryptui.rc:132
 msgid "File Recovery"
-msgstr ""
+msgstr "文件恢复"
 
 #: crypt32.rc:162 cryptui.rc:137
 msgid "Root List Signer"
-msgstr ""
+msgstr "根列表签名者"
 
 #: crypt32.rc:163
 msgid "All application policies"
-msgstr ""
+msgstr "所有应用程序策略"
 
 #: crypt32.rc:164 cryptui.rc:149
 msgid "Directory Service Email Replication"
-msgstr ""
+msgstr "目录服务电子邮件复制"
 
 #: crypt32.rc:165 cryptui.rc:145
 msgid "Certificate Request Agent"
@@ -1745,11 +1745,11 @@ msgstr ""
 
 #: crypt32.rc:166 cryptui.rc:141
 msgid "Lifetime Signing"
-msgstr ""
+msgstr "永久签名"
 
 #: crypt32.rc:167
 msgid "All issuance policies"
-msgstr ""
+msgstr "所有颁发策略"
 
 #: crypt32.rc:172
 msgid "Trusted Root Certification Authorities"
@@ -1757,71 +1757,71 @@ msgstr ""
 
 #: crypt32.rc:173
 msgid "Personal"
-msgstr ""
+msgstr "个人的"
 
 #: crypt32.rc:174
 msgid "Intermediate Certification Authorities"
-msgstr ""
+msgstr "中间证书颁发机构"
 
 #: crypt32.rc:175
 msgid "Other People"
-msgstr ""
+msgstr "其他人"
 
 #: crypt32.rc:176
 msgid "Trusted Publishers"
-msgstr ""
+msgstr "已信任的发布者"
 
 #: crypt32.rc:177
 msgid "Untrusted Certificates"
-msgstr ""
+msgstr "未信任的发布者"
 
 #: crypt32.rc:182
 msgid "KeyID="
-msgstr ""
+msgstr "KeyID="
 
 #: crypt32.rc:183
 msgid "Certificate Issuer"
-msgstr ""
+msgstr "证书颁发者"
 
 #: crypt32.rc:184
 msgid "Certificate Serial Number="
-msgstr ""
+msgstr "证书序列号="
 
 #: crypt32.rc:185
 msgid "Other Name="
-msgstr ""
+msgstr "其他名称="
 
 #: crypt32.rc:186
 msgid "Email Address="
-msgstr ""
+msgstr "电子邮件地址="
 
 #: crypt32.rc:187
 msgid "DNS Name="
-msgstr ""
+msgstr "DNS 名称="
 
 #: crypt32.rc:188
 msgid "Directory Address"
-msgstr ""
+msgstr "目录地址"
 
 #: crypt32.rc:189
 msgid "URL="
-msgstr ""
+msgstr "URL="
 
 #: crypt32.rc:190
 msgid "IP Address="
-msgstr ""
+msgstr "IP 地址="
 
 #: crypt32.rc:191
 msgid "Mask="
-msgstr ""
+msgstr "掩码="
 
 #: crypt32.rc:192
 msgid "Registered ID="
-msgstr ""
+msgstr "注册 ID="
 
 #: crypt32.rc:193
 msgid "Unknown Key Usage"
-msgstr ""
+msgstr "未知密钥用法"
 
 #: crypt32.rc:194
 msgid "Subject Type="
@@ -1830,7 +1830,7 @@ msgstr ""
 #: crypt32.rc:195
 msgctxt "Certificate Authority"
 msgid "CA"
-msgstr ""
+msgstr "CA"
 
 #: crypt32.rc:196
 msgid "End Entity"
@@ -1838,7 +1838,7 @@ msgstr ""
 
 #: crypt32.rc:197
 msgid "Path Length Constraint="
-msgstr ""
+msgstr "目录长度约束="
 
 #: crypt32.rc:198
 msgctxt "path length"
@@ -1847,56 +1847,56 @@ msgstr "无"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
-msgstr ""
+msgstr "信息不可用"
 
 #: crypt32.rc:200
 msgid "Authority Info Access"
-msgstr ""
+msgstr "机构信息访问"
 
 #: crypt32.rc:201
 msgid "Access Method="
-msgstr ""
+msgstr "访问方式="
 
 #: crypt32.rc:202
 msgctxt "Online Certificate Status Protocol"
 msgid "OCSP"
-msgstr ""
+msgstr "OCSP"
 
 #: crypt32.rc:203
 msgid "CA Issuers"
-msgstr ""
+msgstr "CA 颁发者"
 
 #: crypt32.rc:204
 msgid "Unknown Access Method"
-msgstr ""
+msgstr "未知访问方式"
 
 #: crypt32.rc:205
 msgid "Alternative Name"
-msgstr ""
+msgstr "别名"
 
 #: crypt32.rc:206
 msgid "CRL Distribution Point"
-msgstr "CRL 分布点"
+msgstr "CRL 分发点"
 
 #: crypt32.rc:207
 msgid "Distribution Point Name"
-msgstr ""
+msgstr "分发点名称"
 
 #: crypt32.rc:208
 msgid "Full Name"
-msgstr ""
+msgstr "全名"
 
 #: crypt32.rc:209
 msgid "RDN Name"
-msgstr ""
+msgstr "RDN 名称"
 
 #: crypt32.rc:210
 msgid "CRL Reason="
-msgstr ""
+msgstr "CRL 原因="
 
 #: crypt32.rc:211
 msgid "CRL Issuer"
-msgstr ""
+msgstr "CRL 颁发者"
 
 #: crypt32.rc:212
 msgid "Key Compromise"
@@ -1908,19 +1908,19 @@ msgstr ""
 
 #: crypt32.rc:214
 msgid "Affiliation Changed"
-msgstr ""
+msgstr "附属关系已更改"
 
 #: crypt32.rc:215
 msgid "Superseded"
-msgstr ""
+msgstr "已取代"
 
 #: crypt32.rc:216
 msgid "Operation Ceased"
-msgstr ""
+msgstr "操作已停止"
 
 #: crypt32.rc:217
 msgid "Certificate Hold"
-msgstr ""
+msgstr "持有证书"
 
 #: crypt32.rc:218
 msgid "Financial Information="
@@ -1936,7 +1936,7 @@ msgstr "不可用"
 
 #: crypt32.rc:221
 msgid "Meets Criteria="
-msgstr ""
+msgstr "符合标准="
 
 #: crypt32.rc:222 cryptui.rc:166 oleaut32.rc:32 wininet.rc:83 ipconfig.rc:47
 msgid "Yes"
@@ -1948,51 +1948,51 @@ msgstr "否"
 
 #: crypt32.rc:224
 msgid "Digital Signature"
-msgstr ""
+msgstr "数字签名"
 
 #: crypt32.rc:225
 msgid "Non-Repudiation"
-msgstr ""
+msgstr "不可抵赖性"
 
 #: crypt32.rc:226
 msgid "Key Encipherment"
-msgstr ""
+msgstr "密钥加密"
 
 #: crypt32.rc:227
 msgid "Data Encipherment"
-msgstr ""
+msgstr "数据加密"
 
 #: crypt32.rc:228
 msgid "Key Agreement"
-msgstr ""
+msgstr "密钥协议"
 
 #: crypt32.rc:229
 msgid "Certificate Signing"
-msgstr ""
+msgstr "证书签名"
 
 #: crypt32.rc:230
 msgid "Off-line CRL Signing"
-msgstr ""
+msgstr "离线 CRL 签名"
 
 #: crypt32.rc:231
 msgid "CRL Signing"
-msgstr ""
+msgstr "CRL 签名"
 
 #: crypt32.rc:232
 msgid "Encipher Only"
-msgstr ""
+msgstr "仅加密者"
 
 #: crypt32.rc:233
 msgid "Decipher Only"
-msgstr ""
+msgstr "仅解密者"
 
 #: crypt32.rc:234
 msgid "SSL Client Authentication"
-msgstr ""
+msgstr "SSL 客户端认证"
 
 #: crypt32.rc:235
 msgid "SSL Server Authentication"
-msgstr ""
+msgstr "SSL 服务端认证"
 
 #: crypt32.rc:236
 msgid "S/MIME"
@@ -2004,39 +2004,39 @@ msgstr "签名"
 
 #: crypt32.rc:238
 msgid "SSL CA"
-msgstr ""
+msgstr "SSL CA"
 
 #: crypt32.rc:239
 msgid "S/MIME CA"
-msgstr ""
+msgstr "S/MIME CA"
 
 #: crypt32.rc:240
 msgid "Signature CA"
-msgstr ""
+msgstr "签名 CA"
 
 #: cryptdlg.rc:30
 msgid "Certificate Policy"
-msgstr ""
+msgstr "证书策略"
 
 #: cryptdlg.rc:31
 msgid "Policy Identifier: "
-msgstr ""
+msgstr "策略标识符："
 
 #: cryptdlg.rc:32
 msgid "Policy Qualifier Info"
-msgstr ""
+msgstr "策略限定符信息"
 
 #: cryptdlg.rc:33
 msgid "Policy Qualifier Id="
-msgstr ""
+msgstr "策略限定符 ID="
 
 #: cryptdlg.rc:36
 msgid "Qualifier"
-msgstr ""
+msgstr "限定符"
 
 #: cryptdlg.rc:37
 msgid "Notice Reference"
-msgstr ""
+msgstr "公告参考"
 
 #: cryptdlg.rc:38
 msgid "Organization="
@@ -2044,23 +2044,23 @@ msgstr "组织="
 
 #: cryptdlg.rc:39
 msgid "Notice Number="
-msgstr ""
+msgstr "公告号码="
 
 #: cryptdlg.rc:40
 msgid "Notice Text="
-msgstr ""
+msgstr "公告文本="
 
 #: cryptui.rc:180 cryptui.rc:235 inetcpl.rc:46
 msgid "General"
-msgstr ""
+msgstr "通用"
 
 #: cryptui.rc:191
 msgid "&Install Certificate..."
-msgstr "安装证书(&I)..."
+msgstr "安装证书(&I)…"
 
 #: cryptui.rc:192
 msgid "Issuer &Statement"
-msgstr ""
+msgstr "颁发者声明(&S)"
 
 #: cryptui.rc:200
 msgid "&Show:"
@@ -2068,11 +2068,11 @@ msgstr "显示(&S)："
 
 #: cryptui.rc:205
 msgid "&Edit Properties..."
-msgstr "编辑属性(&E)..."
+msgstr "编辑属性(&E)…"
 
 #: cryptui.rc:206
 msgid "&Copy to File..."
-msgstr "复制文件(&C)..."
+msgstr "复制文件(&C)…"
 
 #: cryptui.rc:210
 msgid "Certification Path"
@@ -2112,19 +2112,19 @@ msgstr "证书用途"
 
 #: cryptui.rc:244
 msgid "&Enable all purposes for this certificate"
-msgstr ""
+msgstr "启用此证书的所有用途(&E)"
 
 #: cryptui.rc:246
 msgid "D&isable all purposes for this certificate"
-msgstr ""
+msgstr "禁用此证书的所有用途(&I)"
 
 #: cryptui.rc:248
 msgid "Enable &only the following purposes for this certificate:"
-msgstr ""
+msgstr "仅启用此证书的如下用途(&O)："
 
 #: cryptui.rc:253
 msgid "Add &Purpose..."
-msgstr "添加用途(&P)..."
+msgstr "添加用途(&P)…"
 
 #: cryptui.rc:257
 msgid "Add Purpose"
@@ -2133,19 +2133,19 @@ msgstr "添加用途"
 #: cryptui.rc:260
 msgid ""
 "Add the object identifier (OID) for the certificate purpose you wish to add:"
-msgstr ""
+msgstr "为您要添加的证书用途添加对象识别 (OID) ："
 
 #: cryptui.rc:268 cryptui.rc:69
 msgid "Select Certificate Store"
-msgstr ""
+msgstr "选择证书存储"
 
 #: cryptui.rc:271
 msgid "Select the certificate store you want to use:"
-msgstr ""
+msgstr "选择您要使用的证书存储"
 
 #: cryptui.rc:274
 msgid "&Show physical stores"
-msgstr ""
+msgstr "显示物理存储(&S)"
 
 #: cryptui.rc:280 cryptui.rc:291 cryptui.rc:308 cryptui.rc:322 cryptui.rc:71
 msgid "Certificate Import Wizard"
@@ -2167,6 +2167,12 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"该向导可帮助您从文件将证书、证书吊销列表和证书信任列表导入到证书存储。\n"
+"\n"
+"证书在通信时可让对方辨认您的电脑。证书也可用于认证和为消息签名。证书存储是证"
+"书、证书吊销列表和证书信任列表的集合。\n"
+"\n"
+"按下一步以继续。"
 
 #: cryptui.rc:294 cryptui.rc:430
 msgid "&File name:"
@@ -2174,43 +2180,43 @@ msgstr "文件名(&F)："
 
 #: cryptui.rc:296 cryptui.rc:318 cryptui.rc:432 winecfg.rc:309
 msgid "B&rowse..."
-msgstr "浏览(&R)..."
+msgstr "浏览(&R)…"
 
 #: cryptui.rc:297
 msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
-msgstr ""
+msgstr "注意：如下格式的文件可能包含多个证书、证书吊销列表或证书信任列表："
 
 #: cryptui.rc:299
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
-msgstr ""
+msgstr "加密消息语法标准/PKCS #7 消息 (*.p7b)"
 
 #: cryptui.rc:301
 msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
-msgstr ""
+msgstr "个人信息交换/PKCS #12 (*.pfx; *.p12)"
 
 #: cryptui.rc:303 cryptui.rc:81 cryptui.rc:162
 msgid "Microsoft Serialized Certificate Store (*.sst)"
-msgstr ""
+msgstr "Microsoft 序列化证书存储 (*.sst)"
 
 #: cryptui.rc:311
 msgid ""
 "Wine can automatically select the certificate store, or you can specify a "
 "location for the certificates."
-msgstr ""
+msgstr "Wine 可以自动选择证书存储，您也可以指定证书的位置。"
 
 #: cryptui.rc:313
 msgid "&Automatically select certificate store"
-msgstr ""
+msgstr "自动选择证书存储(&A)"
 
 #: cryptui.rc:315
 msgid "&Place all certificates in the following store:"
-msgstr ""
+msgstr "将所有证书放入此存储(&P)："
 
 #: cryptui.rc:325
 msgid "Completing the Certificate Import Wizard"
-msgstr "完成证书导入向导"
+msgstr "即将完成证书导入向导"
 
 #: cryptui.rc:327
 msgid "You have successfully completed the Certificate Import Wizard."
@@ -2218,7 +2224,7 @@ msgstr "您已成功完成证书导入向导。"
 
 #: cryptui.rc:329 cryptui.rc:443
 msgid "You have specified the following settings:"
-msgstr ""
+msgstr "您已指定如下设置："
 
 #: cryptui.rc:337 cryptui.rc:122 inetcpl.rc:111
 msgid "Certificates"
@@ -2226,19 +2232,19 @@ msgstr "证书"
 
 #: cryptui.rc:340
 msgid "I&ntended purpose:"
-msgstr ""
+msgstr "预期用途："
 
 #: cryptui.rc:344
 msgid "&Import..."
-msgstr "导入(&I)..."
+msgstr "导入(&I)…"
 
 #: cryptui.rc:345 regedit.rc:112
 msgid "&Export..."
-msgstr "导出(&E)..."
+msgstr "导出(&E)…"
 
 #: cryptui.rc:347
 msgid "&Advanced..."
-msgstr "高级(&A)..."
+msgstr "高级(&A)…"
 
 #: cryptui.rc:348
 msgid "Certificate intended purposes"
@@ -2261,7 +2267,7 @@ msgstr "证书用途"
 #: cryptui.rc:359
 msgid ""
 "Select one or more purposes to be listed when Advanced Purposes is selected."
-msgstr ""
+msgstr "选择一个或多个在选中高级用途后要列出的用途。"
 
 #: cryptui.rc:361
 msgid "&Certificate purposes:"
@@ -2288,24 +2294,30 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"该向导可帮助您从证书存储将证书、证书吊销列表和证书信任列表导出到文件。\n"
+"\n"
+"证书在通信时可让对方辨认您的电脑。证书也可用于认证和为消息签名。证书存储是证"
+"书、证书吊销列表和证书信任列表的集合。\n"
+"\n"
+"按下一步以继续。"
 
 #: cryptui.rc:384
 msgid ""
 "If you choose to export the private key, you will be prompted for a password "
 "to protect the private key on a later page."
-msgstr ""
+msgstr "如果您选择导出私钥，将提示您创建密码以保护后页的私钥。"
 
 #: cryptui.rc:385
 msgid "Do you wish to export the private key?"
-msgstr ""
+msgstr "您希望导出私钥吗？"
 
 #: cryptui.rc:386
 msgid "&Yes, export the private key"
-msgstr ""
+msgstr "是，导出私钥(&Y)"
 
 #: cryptui.rc:388
 msgid "N&o, do not export the private key"
-msgstr ""
+msgstr "否，不要导出私钥(&O)"
 
 #: cryptui.rc:399
 msgid "&Confirm password:"
@@ -2313,43 +2325,43 @@ msgstr "确认密码(&C)："
 
 #: cryptui.rc:407
 msgid "Select the format you want to use:"
-msgstr ""
+msgstr "选择您希望使用的格式："
 
 #: cryptui.rc:408
 msgid "&DER-encoded X.509 (*.cer)"
-msgstr ""
+msgstr "&DER 加密的 X.509 (*.cer)"
 
 #: cryptui.rc:410
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr ""
+msgstr "Ba&se64 加密的 X.509 (*.cer)："
 
 #: cryptui.rc:412
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
-msgstr ""
+msgstr "加密消息语法标准/PKCS #7 消息 (&C)(*.p7b)"
 
 #: cryptui.rc:414
 msgid "&Include all certificates in the certification path if possible"
-msgstr ""
+msgstr "尽可能在证书路径中包含所有证书(&I)"
 
 #: cryptui.rc:416
 msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
-msgstr ""
+msgstr "个人信息交换/PKCS #12 (&P)(*.pfx; *.p12)"
 
 #: cryptui.rc:418
 msgid "Incl&ude all certificates in the certification path if possible"
-msgstr ""
+msgstr "尽可能在证书路径中包含所有证书(&U)"
 
 #: cryptui.rc:420
 msgid "&Enable strong encryption"
-msgstr ""
+msgstr "启用强加密(&E)"
 
 #: cryptui.rc:422
 msgid "Delete the private &key if the export is successful"
-msgstr ""
+msgstr "导出成功后删除私钥(&K)"
 
 #: cryptui.rc:439
 msgid "Completing the Certificate Export Wizard"
-msgstr "完成证书导出向导"
+msgstr "即将完成证书导出向导"
 
 #: cryptui.rc:441
 msgid "You have successfully completed the Certificate Export Wizard."
@@ -2357,7 +2369,7 @@ msgstr "您已成功完成证书导出向导。"
 
 #: cryptui.rc:30 cryptui.rc:93
 msgid "Certificate"
-msgstr ""
+msgstr "证书"
 
 #: cryptui.rc:31
 msgid "Certificate Information"
@@ -2367,17 +2379,17 @@ msgstr "证书信息"
 msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
-msgstr ""
+msgstr "该证书带有无效签名。证书可能被篡改或已损坏。"
 
 #: cryptui.rc:33
 msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
-msgstr ""
+msgstr "该根证书不被信任。要信任根证书，将其加入到系统信任的根证书存储。"
 
 #: cryptui.rc:34
 msgid "This certificate could not be validated to a trusted root certificate."
-msgstr ""
+msgstr "无法将该证书验证为根证书。"
 
 #: cryptui.rc:35
 msgid "This certificate's issuer could not be found."
@@ -2385,11 +2397,11 @@ msgstr "找不到这个证书的颁发者。"
 
 #: cryptui.rc:36
 msgid "All the intended purposes of this certificate could not be verified."
-msgstr ""
+msgstr "证书的所有预期用途均无法验证。"
 
 #: cryptui.rc:37
 msgid "This certificate is intended for the following purposes:"
-msgstr ""
+msgstr "该证书的预期用途如下："
 
 #: cryptui.rc:38
 msgid "Issued to: "
@@ -2401,55 +2413,55 @@ msgstr "颁发者："
 
 #: cryptui.rc:40
 msgid "Valid from "
-msgstr ""
+msgstr "有效自 "
 
 #: cryptui.rc:41
 msgid " to "
-msgstr ""
+msgstr " 到 "
 
 #: cryptui.rc:42
 msgid "This certificate has an invalid signature."
-msgstr ""
+msgstr "该证书带有无效签名。"
 
 #: cryptui.rc:43
 msgid "This certificate has expired or is not yet valid."
-msgstr ""
+msgstr "该证书已过期或尚未生效。"
 
 #: cryptui.rc:44
 msgid "This certificate's validity period exceeds that of its issuer."
-msgstr ""
+msgstr "该证书有效期超出颁发者的有效期。"
 
 #: cryptui.rc:45
 msgid "This certificate was revoked by its issuer."
-msgstr ""
+msgstr "该证书已被颁发者吊销。"
 
 #: cryptui.rc:46
 msgid "This certificate is OK."
-msgstr ""
+msgstr "该证书没有问题。"
 
 #: cryptui.rc:47
 msgid "Field"
-msgstr ""
+msgstr "域"
 
 #: cryptui.rc:48
 msgid "Value"
-msgstr ""
+msgstr "亮度"
 
 #: cryptui.rc:49 cryptui.rc:102 cryptui.rc:108
 msgid "<All>"
-msgstr ""
+msgstr "<全部>"
 
 #: cryptui.rc:50
 msgid "Version 1 Fields Only"
-msgstr ""
+msgstr "仅版本 1 域"
 
 #: cryptui.rc:51
 msgid "Extensions Only"
-msgstr ""
+msgstr "仅扩展"
 
 #: cryptui.rc:52
 msgid "Critical Extensions Only"
-msgstr ""
+msgstr "仅重要扩展"
 
 #: cryptui.rc:53
 msgid "Properties Only"
@@ -2457,43 +2469,43 @@ msgstr "仅属性"
 
 #: cryptui.rc:55
 msgid "Serial number"
-msgstr ""
+msgstr "序列号"
 
 #: cryptui.rc:56
 msgid "Issuer"
-msgstr ""
+msgstr "颁发者"
 
 #: cryptui.rc:57
 msgid "Valid from"
-msgstr ""
+msgstr "有效自"
 
 #: cryptui.rc:58
 msgid "Valid to"
-msgstr ""
+msgstr "有效至"
 
 #: cryptui.rc:59
 msgid "Subject"
-msgstr ""
+msgstr "主题"
 
 #: cryptui.rc:60
 msgid "Public key"
-msgstr ""
+msgstr "公钥"
 
 #: cryptui.rc:61
 msgid "%1 (%2!d! bits)"
-msgstr ""
+msgstr "%1（%2!d! 位）"
 
 #: cryptui.rc:62
 msgid "SHA1 hash"
-msgstr ""
+msgstr "SHA1 哈希值"
 
 #: cryptui.rc:63
 msgid "Enhanced key usage (property)"
-msgstr ""
+msgstr "增强密钥用途（财产）"
 
 #: cryptui.rc:64
 msgid "Friendly name"
-msgstr ""
+msgstr "易记名称"
 
 #: cryptui.rc:65 shell32.rc:242 ipconfig.rc:44
 msgid "Description"
@@ -2505,87 +2517,87 @@ msgstr "证书属性"
 
 #: cryptui.rc:67
 msgid "Please enter an OID in the form 1.2.3.4"
-msgstr ""
+msgstr "请使用 1.2.3.4 格式输入 OID"
 
 #: cryptui.rc:68
 msgid "The OID you entered already exists."
-msgstr ""
+msgstr "您输入的 OID 已存在。"
 
 #: cryptui.rc:70
 msgid "Please select a certificate store."
-msgstr ""
+msgstr "请选择证书存储。"
 
 #: cryptui.rc:72
 msgid ""
 "The file contains objects that do not match the given criteria. Please "
 "select another file."
-msgstr ""
+msgstr "文件包含不符合给出的标准。请选择另一个文件。"
 
 #: cryptui.rc:73
 msgid "File to Import"
-msgstr ""
+msgstr "要导入的文件"
 
 #: cryptui.rc:74
 msgid "Specify the file you want to import."
-msgstr ""
+msgstr "指定您希望导入的文件。"
 
 #: cryptui.rc:75 cryptui.rc:98
 msgid "Certificate Store"
-msgstr ""
+msgstr "证书存储"
 
 #: cryptui.rc:76
 msgid ""
 "Certificate stores are collections of certificates, certificate revocation "
 "lists, and certificate trust lists."
-msgstr ""
+msgstr "证书存储是证书、证书吊销列表和证书信任列表的集合。"
 
 #: cryptui.rc:77
 msgid "X.509 Certificate (*.cer; *.crt)"
-msgstr ""
+msgstr "X.509 证书 (*.cer; *.crt)"
 
 #: cryptui.rc:78
 msgid "Personal Information Exchange (*.pfx; *.p12)"
-msgstr ""
+msgstr "个人信息交换 (*.pfx; *.p12)"
 
 #: cryptui.rc:79 cryptui.rc:158
 msgid "Certificate Revocation List (*.crl)"
-msgstr ""
+msgstr "证书吊销列表 (*.crl)"
 
 #: cryptui.rc:80 cryptui.rc:159
 msgid "Certificate Trust List (*.stl)"
-msgstr ""
+msgstr "证书信任列表 (*.stl)"
 
 #: cryptui.rc:82
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
-msgstr ""
+msgstr "CMS/PKCS #7 消息 (*.spc; *.p7b)"
 
 #: cryptui.rc:84
 msgid "Please select a file."
-msgstr ""
+msgstr "请选择一个文件。"
 
 #: cryptui.rc:85
 msgid "The file format is not recognized. Please select another file."
-msgstr ""
+msgstr "无法识别文件格式。请选择另一个文件。"
 
 #: cryptui.rc:86
 msgid "Could not open "
-msgstr "不能打开 "
+msgstr "无法打开 "
 
 #: cryptui.rc:87
 msgid "Determined by the program"
-msgstr ""
+msgstr "由程序确定"
 
 #: cryptui.rc:88
 msgid "Please select a store"
-msgstr ""
+msgstr "请选择存储"
 
 #: cryptui.rc:89
 msgid "Certificate Store Selected"
-msgstr ""
+msgstr "已选中证书存储"
 
 #: cryptui.rc:90
 msgid "Automatically determined by the program"
-msgstr ""
+msgstr "由程序自动确定"
 
 #: cryptui.rc:91 shell32.rc:137
 msgid "File"
@@ -2597,31 +2609,31 @@ msgstr "内容"
 
 #: cryptui.rc:94
 msgid "Certificate Revocation List"
-msgstr ""
+msgstr "证书吊销列表"
 
 #: cryptui.rc:96
 msgid "CMS/PKCS #7 Message"
-msgstr ""
+msgstr "CMS/PKCS #7 消息"
 
 #: cryptui.rc:97
 msgid "Personal Information Exchange"
-msgstr ""
+msgstr "个人信息交换"
 
 #: cryptui.rc:99
 msgid "The import was successful."
-msgstr ""
+msgstr "导入成功。"
 
 #: cryptui.rc:100
 msgid "The import failed."
-msgstr ""
+msgstr "导入失败。"
 
 #: cryptui.rc:101
 msgid "Arial"
-msgstr ""
+msgstr "Arial"
 
 #: cryptui.rc:103
 msgid "<Advanced Purposes>"
-msgstr ""
+msgstr "<高级用途>"
 
 #: cryptui.rc:104
 msgid "Issued To"
@@ -2633,11 +2645,11 @@ msgstr "颁发者"
 
 #: cryptui.rc:106
 msgid "Expiration Date"
-msgstr "过期时间"
+msgstr "截止日期"
 
 #: cryptui.rc:107
 msgid "Friendly Name"
-msgstr ""
+msgstr "易记名称"
 
 #: cryptui.rc:109 cryptui.rc:123
 msgid "<None>"
@@ -2649,6 +2661,8 @@ msgid ""
 "sign messages with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"您已不能使用此证书解密或签名消息。\n"
+"您确实要移除此证书吗？"
 
 #: cryptui.rc:111
 msgid ""
@@ -2656,6 +2670,8 @@ msgid ""
 "sign messages with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"您已不能使用这些证书解密或签名消息。\n"
+"您确实要移除这些证书吗？"
 
 #: cryptui.rc:112
 msgid ""
@@ -2663,6 +2679,8 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"您已不能使用此证书加密或校验消息。\n"
+"您确实要移除此证书吗？"
 
 #: cryptui.rc:113
 msgid ""
@@ -2670,6 +2688,8 @@ msgid ""
 "verify messages signed with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"您已不能使用这些证书加密或校验消息。\n"
+"您确实要移除这些证书吗？"
 
 #: cryptui.rc:114
 msgid ""
@@ -2677,6 +2697,8 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"将不再信任由此证书颁发机构颁发的证书。\n"
+"您确实要移除此证书吗？"
 
 #: cryptui.rc:115
 msgid ""
@@ -2684,6 +2706,8 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"将不再信任由这些证书颁发机构颁发的证书。\n"
+"您确实要移除这些证书吗？"
 
 #: cryptui.rc:116
 msgid ""
@@ -2691,6 +2715,8 @@ msgid ""
 "certification authorities it issued, will no longer be trusted.\n"
 "Are you sure you want to remove this trusted root certificate?"
 msgstr ""
+"将不再信任由此根证书颁发机构颁发的证书或证书颁发机构。\n"
+"您确实要移除此已信任的根证书吗？"
 
 #: cryptui.rc:117
 msgid ""
@@ -2698,64 +2724,72 @@ msgid ""
 "certification authorities they issued, will no longer be trusted.\n"
 "Are you sure you want to remove these trusted root certificates?"
 msgstr ""
+"将不再信任由这些根证书颁发机构颁发的证书或证书颁发机构。\n"
+"您确实要移除这些已信任的根证书吗？"
 
 #: cryptui.rc:118
 msgid ""
 "Software signed by this publisher will no longer be trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
+"将不再信任由此发行商签名的软件。\n"
+"您确实要移除此证书吗？"
 
 #: cryptui.rc:119
 msgid ""
 "Software signed by these publishers will no longer be trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
+"将不再信任由这些发行商签名的软件。\n"
+"您确实要移除这些证书吗？"
 
 #: cryptui.rc:120
 msgid "Are you sure you want to remove this certificate?"
-msgstr ""
+msgstr "您确实要移除此证书吗？"
 
 #: cryptui.rc:121
 msgid "Are you sure you want to remove these certificates?"
-msgstr ""
+msgstr "您确实要移除这些证书吗？"
 
 #: cryptui.rc:124
 msgid "Ensures the identity of a remote computer"
-msgstr ""
+msgstr "确定远程计算机的身份"
 
 #: cryptui.rc:125
 msgid "Proves your identity to a remote computer"
-msgstr ""
+msgstr "证明远程计算机的身份"
 
 #: cryptui.rc:126
 msgid ""
 "Ensures software came from software publisher\n"
 "Protects software from alteration after publication"
 msgstr ""
+"确定软件来自软件发行商\n"
+"确保软件在发行后未被篡改"
 
 #: cryptui.rc:127
 msgid "Protects e-mail messages"
-msgstr ""
+msgstr "保护电子邮件消息"
 
 #: cryptui.rc:128
 msgid "Allows secure communication over the Internet"
-msgstr ""
+msgstr "允许 Internet 上的安全通信"
 
 #: cryptui.rc:129
 msgid "Allows data to be signed with the current time"
-msgstr ""
+msgstr "允许使用当前时间签名数据"
 
 #: cryptui.rc:130
 msgid "Allows you to digitally sign a certificate trust list"
-msgstr ""
+msgstr "允许您为证书信任列表电子签名"
 
 #: cryptui.rc:131
 msgid "Allows data on disk to be encrypted"
-msgstr ""
+msgstr "允许加密磁盘上的数据"
 
 #: cryptui.rc:147
 msgid "Private Key Archival"
-msgstr ""
+msgstr "私钥归档"
 
 #: cryptui.rc:151
 msgid "Export Format"
@@ -2763,15 +2797,15 @@ msgstr "导出格式"
 
 #: cryptui.rc:152
 msgid "Choose the format in which the content will be saved."
-msgstr ""
+msgstr "选择内容保存的格式。"
 
 #: cryptui.rc:153
 msgid "Export Filename"
-msgstr ""
+msgstr "导出文件名"
 
 #: cryptui.rc:154
 msgid "Specify the name of the file in which the content will be saved."
-msgstr ""
+msgstr "指定用于保存内容的文件名称。"
 
 #: cryptui.rc:155
 msgid "The specified file already exists. Do you want to replace it?"
@@ -2779,19 +2813,19 @@ msgstr "指定文件已经存在。是否替换？"
 
 #: cryptui.rc:156
 msgid "DER-Encoded Binary X.509 (*.cer)"
-msgstr ""
+msgstr "DER 加密的 X.509 (*.cer)"
 
 #: cryptui.rc:157
 msgid "Base64-Encoded X.509 (*.cer)"
-msgstr ""
+msgstr "Base64 加密的 X.509 (*.cer)"
 
 #: cryptui.rc:160
 msgid "CMS/PKCS #7 Messages (*.p7b)"
-msgstr ""
+msgstr "CMS/PKCS #7 消息 (*.p7b)"
 
 #: cryptui.rc:161
 msgid "Personal Information Exchange (*.pfx)"
-msgstr ""
+msgstr "个人信息交换 (*.pfx)"
 
 #: cryptui.rc:163
 msgid "File Format"
@@ -2799,11 +2833,11 @@ msgstr "文件格式"
 
 #: cryptui.rc:164
 msgid "Include all certificates in certificate path"
-msgstr ""
+msgstr "包含证书路径中的所有证书"
 
 #: cryptui.rc:165
 msgid "Export keys"
-msgstr ""
+msgstr "导出密钥"
 
 #: cryptui.rc:168
 msgid "The export was successful."
@@ -2821,7 +2855,7 @@ msgstr "导出私钥"
 msgid ""
 "The certificate contains a private key which may be exported along with the "
 "certificate."
-msgstr ""
+msgstr "证书包含可能与证书一同导出的密钥。"
 
 #: cryptui.rc:172
 msgid "Enter Password"
@@ -2829,7 +2863,7 @@ msgstr "输入密码"
 
 #: cryptui.rc:173
 msgid "You may password-protect a private key."
-msgstr ""
+msgstr "您可以使用密码保护私钥。"
 
 #: cryptui.rc:174
 msgid "The passwords do not match."
@@ -2837,27 +2871,27 @@ msgstr "密码不一致。"
 
 #: cryptui.rc:175
 msgid "Note: The private key for this certificate could not be opened."
-msgstr ""
+msgstr "注意：无法打开该证书的私钥。"
 
 #: cryptui.rc:176
 msgid "Note: The private key for this certificate is not exportable."
-msgstr ""
+msgstr "注意：证书的私钥不可导出。"
 
 #: devenum.rc:33
 msgid "Default DirectSound"
-msgstr ""
+msgstr "默认 DirectSound"
 
 #: devenum.rc:34
 msgid "DirectSound: %s"
-msgstr ""
+msgstr "DirectSound：%s"
 
 #: devenum.rc:35
 msgid "Default WaveOut Device"
-msgstr ""
+msgstr "默认 WaveOut 设备"
 
 #: devenum.rc:36
 msgid "Default MidiOut Device"
-msgstr ""
+msgstr "默认 MidiOut 设备"
 
 #: dinput.rc:43
 msgid "Configure Devices"
@@ -2865,12 +2899,11 @@ msgstr "配置设备"
 
 #: dinput.rc:48
 msgid "Reset"
-msgstr "重置"
+msgstr "重设"
 
 #: dinput.rc:51
-#, fuzzy
 msgid "Player"
-msgstr "播放"
+msgstr "播放器"
 
 #: dinput.rc:52 winecfg.rc:89
 msgid "Device"
@@ -2886,7 +2919,7 @@ msgstr "映射"
 
 #: dinput.rc:56
 msgid "Show Assigned First"
-msgstr ""
+msgstr "先显示已分配项"
 
 #: dinput.rc:37
 msgid "Action"
@@ -2902,11 +2935,11 @@ msgstr "区域设置"
 
 #: dxdiagn.rc:29
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr "%1!u!MB 已使用，%2!u!MB 可用"
+msgstr "已使用 %1!u!MB，%2!u!MB 可用"
 
 #: gdi32.rc:28
 msgid "Western"
-msgstr ""
+msgstr "西方"
 
 #: gdi32.rc:29
 msgid "Central European"
@@ -2962,15 +2995,15 @@ msgstr "中文(BIG5)"
 
 #: gdi32.rc:42
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "韩语 (Johab)"
 
 #: gdi32.rc:43
 msgid "Symbol"
-msgstr ""
+msgstr "符号"
 
 #: gdi32.rc:44
 msgid "OEM/DOS"
-msgstr ""
+msgstr "OEM/DOS"
 
 #: gdi32.rc:45 wldap32.rc:110
 msgid "Other"
@@ -3006,7 +3039,7 @@ msgstr "正在传输"
 
 #: gphoto2.rc:46
 msgid "Transferring... Please Wait"
-msgstr "正在传输... 请稍候"
+msgstr "正在传输… 请稍候"
 
 #: gphoto2.rc:51
 msgid "Connecting to camera"
@@ -3014,11 +3047,11 @@ msgstr "连接照相机"
 
 #: gphoto2.rc:55
 msgid "Connecting to camera... Please Wait"
-msgstr "正在连接照相机... 请稍候"
+msgstr "正在连接照相机… 请稍候"
 
 #: hhctrl.rc:59
 msgid "S&ync"
-msgstr "同步(&S)"
+msgstr "同步(&Y)"
 
 #: hhctrl.rc:60 hhctrl.rc:73 shdoclc.rc:41 winhlp32.rc:89
 msgid "&Back"
@@ -3043,7 +3076,7 @@ msgstr "刷新(&R)"
 
 #: hhctrl.rc:65 hhctrl.rc:80 winhlp32.rc:34
 msgid "&Print..."
-msgstr "打印(&P)..."
+msgstr "打印(&P)…"
 
 #: hhctrl.rc:76 hhctrl.rc:90 shdoclc.rc:49 shdoclc.rc:98 shdoclc.rc:120
 #: user32.rc:65
@@ -3158,19 +3191,19 @@ msgstr "窗口(&W)"
 
 #: ieframe.rc:34 view.rc:33 winhlp32.rc:32
 msgid "&Open..."
-msgstr "打开(&O)..."
+msgstr "打开(&O)…"
 
 #: ieframe.rc:36 notepad.rc:33 wordpad.rc:34
 msgid "Save &as..."
-msgstr "另存为(&A)..."
+msgstr "另存为(&A)…"
 
 #: ieframe.rc:38
 msgid "Print &format..."
-msgstr "打印格式(&F)..."
+msgstr "打印格式(&F)…"
 
 #: ieframe.rc:39
 msgid "Pr&int..."
-msgstr "打印(&I)..."
+msgstr "打印(&I)…"
 
 #: ieframe.rc:40 wordpad.rc:37
 msgid "Print previe&w"
@@ -3194,7 +3227,7 @@ msgstr "收藏夹(&F)"
 
 #: ieframe.rc:55 regedit.rc:76
 msgid "&Add to Favorites..."
-msgstr "添加到收藏夹(&A)..."
+msgstr "添加到收藏夹(&A)…"
 
 #: ieframe.rc:60
 msgid "&About Internet Explorer"
@@ -3219,7 +3252,7 @@ msgstr "首页"
 
 #: ieframe.rc:71 winhlp32.rc:69
 msgid "Print..."
-msgstr "打印..."
+msgstr "打印…"
 
 #: ieframe.rc:76
 msgid "Address"
@@ -3271,11 +3304,11 @@ msgstr "您可以删除缓存页面、cookies 以及其它数据。"
 
 #: inetcpl.rc:59
 msgid "Delete &files..."
-msgstr "删除文件(&F)..."
+msgstr "删除文件(&F)…"
 
 #: inetcpl.rc:60
 msgid "&Settings..."
-msgstr "设置(&S)..."
+msgstr "设置(&S)…"
 
 #: inetcpl.rc:68
 msgid "Delete browsing history"
@@ -3338,15 +3371,15 @@ msgstr "证书被用来进行个人身份验证，以及验证证书颁发机构
 
 #: inetcpl.rc:114
 msgid "Certificates..."
-msgstr "证书..."
+msgstr "证书…"
 
 #: inetcpl.rc:115
 msgid "Publishers..."
-msgstr "发布者..."
+msgstr "发布者…"
 
 #: inetcpl.rc:31
 msgid "Internet Settings"
-msgstr "互联网设置"
+msgstr "Internet 设置"
 
 #: inetcpl.rc:32
 msgid "Configure Wine Internet Browser and related settings"
@@ -3362,7 +3395,7 @@ msgstr "自定义"
 
 #: inetcpl.rc:35
 msgid "Very Low"
-msgstr "极低"
+msgstr "非常低"
 
 #: inetcpl.rc:36
 msgid "Low"
@@ -3374,7 +3407,7 @@ msgstr "中"
 
 #: inetcpl.rc:38
 msgid "Increased"
-msgstr ""
+msgstr "较高"
 
 #: inetcpl.rc:39
 msgid "High"
@@ -6652,7 +6685,7 @@ msgstr "声音选择"
 
 #: msacm32.rc:39 winedbg.rc:76
 msgid "&Save As..."
-msgstr "保存为(&S)..."
+msgstr "保存为(&S)…"
 
 #: msacm32.rc:42
 msgid "&Format:"
@@ -6779,7 +6812,7 @@ msgstr "压缩器(&C)："
 
 #: msvfw32.rc:42
 msgid "Con&figure..."
-msgstr "配置(&F)..."
+msgstr "配置(&F)…"
 
 #: msvfw32.rc:43
 msgid "&About"
@@ -6943,7 +6976,7 @@ msgstr "字符"
 
 #: oleacc.rc:64
 msgid "list"
-msgstr ""
+msgstr "列表"
 
 #: oleacc.rc:65
 msgid "list item"
@@ -7081,21 +7114,19 @@ msgid "unavailable"
 msgstr "不可用"
 
 #: oleacc.rc:99
-#, fuzzy
 msgctxt "object state"
 msgid "selected"
-msgstr "选择"
+msgstr "已选中"
 
 #: oleacc.rc:100
-#, fuzzy
 msgctxt "object state"
 msgid "focused"
-msgstr "已暂停"
+msgstr "已聚焦"
 
 #: oleacc.rc:101
 msgctxt "object state"
 msgid "pressed"
-msgstr ""
+msgstr "已按下"
 
 #: oleacc.rc:102
 msgctxt "object state"
@@ -7113,16 +7144,14 @@ msgid "read only"
 msgstr "只读"
 
 #: oleacc.rc:105
-#, fuzzy
 msgctxt "object state"
 msgid "hot tracked"
-msgstr "鼠标拖选框"
+msgstr "鼠标拖选中"
 
 #: oleacc.rc:106
-#, fuzzy
 msgctxt "object state"
 msgid "default"
-msgstr "默认值"
+msgstr "默认"
 
 #: oleacc.rc:107
 msgctxt "object state"
@@ -7150,10 +7179,9 @@ msgid "marqueed"
 msgstr ""
 
 #: oleacc.rc:112
-#, fuzzy
 msgctxt "object state"
 msgid "animated"
-msgstr "动画"
+msgstr "有动画"
 
 #: oleacc.rc:113
 msgctxt "object state"
@@ -7279,7 +7307,7 @@ msgstr "建立于文件"
 
 #: oledlg.rc:72
 msgid "&Add Control..."
-msgstr "添加控件(&A)..."
+msgstr "添加控件(&A)…"
 
 #: oledlg.rc:73
 msgid "Display As Icon"
@@ -7287,7 +7315,7 @@ msgstr "显示为图标"
 
 #: oledlg.rc:75 setupapi.rc:61
 msgid "Browse..."
-msgstr "浏览..."
+msgstr "浏览…"
 
 #: oledlg.rc:76
 msgid "File:"
@@ -7320,7 +7348,7 @@ msgstr "显示为图标(&D)"
 
 #: oledlg.rc:99
 msgid "Change &Icon..."
-msgstr "改变图标(&I)..."
+msgstr "改变图标(&I)…"
 
 #: oledlg.rc:28
 msgid "Insert a new %s object into your document"
@@ -7430,7 +7458,7 @@ msgstr "正在扫描"
 
 #: sane.rc:44
 msgid "SCANNING... Please Wait"
-msgstr "正在扫描... 请稍候"
+msgstr "正在扫描… 请稍候"
 
 #: sane.rc:31
 msgctxt "unit: pixels"
@@ -7483,7 +7511,7 @@ msgstr "停止位"
 
 #: setupapi.rc:39
 msgid "Copying Files..."
-msgstr "复制文件..."
+msgstr "复制文件…"
 
 #: setupapi.rc:45
 msgid "Destination:"
@@ -7525,7 +7553,7 @@ msgstr "向前(&O)"
 
 #: shdoclc.rc:44
 msgid "&Save Background As..."
-msgstr "将背景存为(&S)..."
+msgstr "将背景存为(&S)…"
 
 #: shdoclc.rc:45
 msgid "Set As Back&ground"
@@ -7545,7 +7573,7 @@ msgstr "创建捷径(&T)"
 
 #: shdoclc.rc:53 shdoclc.rc:84 shdoclc.rc:137 shdoclc.rc:164 shdoclc.rc:188
 msgid "Add to &Favorites..."
-msgstr "添加到我的最爱(&F)..."
+msgstr "添加到我的最爱(&F)…"
 
 #: shdoclc.rc:56
 msgid "&Encoding"
@@ -7565,7 +7593,7 @@ msgstr "在新视窗打开链接(&N)"
 
 #: shdoclc.rc:68 shdoclc.rc:129 shdoclc.rc:151 shdoclc.rc:175
 msgid "Save Target &As..."
-msgstr "将目标存为(&A)..."
+msgstr "将目标存为(&A)…"
 
 #: shdoclc.rc:69 shdoclc.rc:130 shdoclc.rc:152 shdoclc.rc:176
 msgid "&Print Target"
@@ -7577,15 +7605,15 @@ msgstr "显示图片(&S)"
 
 #: shdoclc.rc:72 shdoclc.rc:179
 msgid "&Save Picture As..."
-msgstr "将图片存为(&A)..."
+msgstr "将图片存为(&A)…"
 
 #: shdoclc.rc:73
 msgid "&E-mail Picture..."
-msgstr "电邮图片(&E)..."
+msgstr "电邮图片(&E)…"
 
 #: shdoclc.rc:74
 msgid "Pr&int Picture..."
-msgstr "打印图片(&I)..."
+msgstr "打印图片(&I)…"
 
 #: shdoclc.rc:75
 msgid "&Go to My Pictures"
@@ -7597,7 +7625,7 @@ msgstr "设为背景(&G)"
 
 #: shdoclc.rc:77 shdoclc.rc:157 shdoclc.rc:181
 msgid "Set as &Desktop Item..."
-msgstr "设为桌面项目(&D)..."
+msgstr "设为桌面项目(&D)…"
 
 #: shdoclc.rc:81 shdoclc.rc:134 shdoclc.rc:161 shdoclc.rc:185
 msgid "Copy Shor&tcut"
@@ -7653,7 +7681,7 @@ msgstr "剪下"
 
 #: shdoclc.rc:155
 msgid "&Save Video As..."
-msgstr "将视频存为(&V)..."
+msgstr "将视频存为(&V)…"
 
 #: shdoclc.rc:166 shdoclc.rc:190
 msgid "Play"
@@ -7795,7 +7823,7 @@ msgstr "小图标(&M)"
 
 #: shell32.rc:32 shell32.rc:47 shell32.rc:124 shell32.rc:164
 msgid "&List"
-msgstr "列表 (&L)"
+msgstr "列表(&L)"
 
 #: shell32.rc:33 shell32.rc:48 shell32.rc:125 shell32.rc:165 taskmgr.rc:67
 #: taskmgr.rc:112 taskmgr.rc:254
@@ -7804,27 +7832,27 @@ msgstr "详细信息(&D)"
 
 #: shell32.rc:51 winefile.rc:78
 msgid "Arrange &Icons"
-msgstr "排列图标 (&I)"
+msgstr "排列图标(&I)"
 
 #: shell32.rc:53
 msgid "By &Name"
-msgstr "按名字 (&N)"
+msgstr "按名称(&N)"
 
 #: shell32.rc:54
 msgid "By &Type"
-msgstr "按类型 (&T)"
+msgstr "按类型(&T)"
 
 #: shell32.rc:55
 msgid "By &Size"
-msgstr "按大小 (&S)"
+msgstr "按大小(&S)"
 
 #: shell32.rc:56
 msgid "By &Date"
-msgstr "按日期 (&D)"
+msgstr "按日期(&D)"
 
 #: shell32.rc:58
 msgid "&Auto Arrange"
-msgstr "自动排列 (&A)"
+msgstr "自动排列(&A)"
 
 #: shell32.rc:60
 msgid "Line up Icons"
@@ -7840,11 +7868,11 @@ msgstr "新建"
 
 #: shell32.rc:69
 msgid "New &Folder"
-msgstr "新文件夹 (&F)"
+msgstr "新建文件夹(&F)"
 
 #: shell32.rc:70
 msgid "New &Link"
-msgstr "新快捷方式 (&L)"
+msgstr "新建快捷方式(&L)"
 
 #: shell32.rc:74
 msgid "Properties"
@@ -7861,7 +7889,7 @@ msgstr ""
 
 #: shell32.rc:98
 msgid "E&xplore"
-msgstr "文件管理器(&X)"
+msgstr "资源管理器(&X)"
 
 #: shell32.rc:101
 msgid "C&ut"
@@ -7873,7 +7901,7 @@ msgstr "创建快捷方式(&L)"
 
 #: shell32.rc:106 regedit.rc:94
 msgid "&Rename"
-msgstr "改名(&R)"
+msgstr "重命名(&R)"
 
 #: shell32.rc:117 notepad.rc:39 oleview.rc:38 regedit.rc:41 view.rc:34
 #: winefile.rc:40 winemine.rc:49 winhlp32.rc:37 wordpad.rc:40
@@ -7894,7 +7922,7 @@ msgstr "文件夹："
 
 #: shell32.rc:299
 msgid "&Make New Folder"
-msgstr "创建新文件夹 (&M)"
+msgstr "新建文件夹(&M)"
 
 #: shell32.rc:306
 msgid "Message"
@@ -7906,7 +7934,7 @@ msgstr "是(&Y)"
 
 #: shell32.rc:310
 msgid "Yes to &all"
-msgstr "全部选是 (&A)"
+msgstr "全部选是(&A)"
 
 #: shell32.rc:311 shlwapi.rc:47 user32.rc:80
 msgid "&No"
@@ -7941,7 +7969,7 @@ msgstr "打开(&O)："
 #: shell32.rc:342 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
 #: winefile.rc:133
 msgid "&Browse..."
-msgstr "浏览(&B)..."
+msgstr "浏览(&B)…"
 
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
@@ -8079,7 +8107,7 @@ msgstr "公共文件"
 
 #: shell32.rc:219 shell32.rc:150 shell32.rc:235
 msgid "Documents"
-msgstr ""
+msgstr "文档"
 
 #: shell32.rc:220
 msgid "Administrative Tools"
@@ -8091,7 +8119,7 @@ msgstr "音乐"
 
 #: shell32.rc:222
 msgid "Pictures"
-msgstr ""
+msgstr "图片"
 
 #: shell32.rc:223
 msgid "Videos"
@@ -8103,11 +8131,11 @@ msgstr "Program Files (x86)"
 
 #: shell32.rc:224
 msgid "Contacts"
-msgstr ""
+msgstr "联系人"
 
 #: shell32.rc:225 winefile.rc:113
 msgid "Links"
-msgstr ""
+msgstr "链接"
 
 #: shell32.rc:226
 msgid "Slide Shows"
@@ -8151,15 +8179,15 @@ msgstr ""
 
 #: shell32.rc:233
 msgid "Searches"
-msgstr ""
+msgstr "搜索"
 
 #: shell32.rc:234
 msgid "Users"
-msgstr ""
+msgstr "用户"
 
 #: shell32.rc:236
 msgid "Downloads"
-msgstr ""
+msgstr "下载"
 
 #: shell32.rc:169
 msgid "Unable to create new Folder: Permission denied."
@@ -8325,7 +8353,7 @@ msgstr "Wine 使用许可"
 
 #: shell32.rc:158
 msgid "Trash"
-msgstr ""
+msgstr "回收站"
 
 #: shlwapi.rc:38 user32.rc:71 regedit.rc:179 winecfg.rc:87 winefile.rc:97
 msgid "Error"
@@ -8333,7 +8361,7 @@ msgstr "错误"
 
 #: shlwapi.rc:43
 msgid "Don't show me th&is message again"
-msgstr "不要再显示这个讯息"
+msgstr "不要再显示这个讯息(&i)"
 
 #: shlwapi.rc:30
 msgid "%d bytes"
@@ -8451,7 +8479,7 @@ msgstr "选择窗口"
 
 #: user32.rc:72
 msgid "&More Windows..."
-msgstr "更多窗口(&M)..."
+msgstr "更多窗口(&M)…"
 
 #: winemac.rc:32 wineboot.rc:42
 msgid "Wine"
@@ -9340,7 +9368,7 @@ msgstr "数字时钟(&T)"
 
 #: clock.rc:35 notepad.rc:53 winecfg.rc:303 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
-msgstr "字体(&F)..."
+msgstr "字体(&F)…"
 
 #: clock.rc:37
 msgid "&Without Titlebar"
@@ -9620,7 +9648,7 @@ msgstr ""
 
 #: cmd.rc:237
 msgid "TIME sets or shows the current system time.\n"
-msgstr ""
+msgstr "TIME 设置或显示当前系统时间。\n"
 
 #: cmd.rc:240
 msgid "TITLE <string> sets the window title for the cmd window.\n"
@@ -9764,17 +9792,17 @@ msgstr ""
 
 #: cmd.rc:353
 msgid "Are you sure?"
-msgstr ""
+msgstr "确定吗？"
 
 #: cmd.rc:354 reg.rc:50 xcopy.rc:43
 msgctxt "Yes key"
 msgid "Y"
-msgstr ""
+msgstr "Y"
 
 #: cmd.rc:355 reg.rc:51 xcopy.rc:44
 msgctxt "No key"
 msgid "N"
-msgstr ""
+msgstr "N"
 
 #: cmd.rc:356
 msgid "File association missing for extension %1\n"
@@ -9790,7 +9818,7 @@ msgstr "覆盖 %1？"
 
 #: cmd.rc:359
 msgid "More..."
-msgstr "更多..."
+msgstr "更多…"
 
 #: cmd.rc:360
 msgid "Line in Batch processing possibly truncated. Using:\n"
@@ -9944,7 +9972,7 @@ msgstr ""
 
 #: dxdiag.rc:30
 msgid "DirectX Diagnostic Tool"
-msgstr ""
+msgstr "DirectX 诊断工具"
 
 #: dxdiag.rc:31
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
@@ -9952,15 +9980,15 @@ msgstr ""
 
 #: explorer.rc:31
 msgid "Wine Explorer"
-msgstr "Wine Explorer"
+msgstr "Wine 资源管理器"
 
 #: explorer.rc:33
 msgid "Start"
-msgstr ""
+msgstr "起点"
 
 #: explorer.rc:34 winefile.rc:36
 msgid "&Run..."
-msgstr "运行(&R)..."
+msgstr "运行(&R)…"
 
 #: hostname.rc:30
 msgid "Usage: hostname\n"
@@ -10002,7 +10030,7 @@ msgstr "IPv4 地址"
 
 #: ipconfig.rc:37
 msgid "Hostname"
-msgstr ""
+msgstr "主机名"
 
 #: ipconfig.rc:38
 msgid "Node type"
@@ -10010,7 +10038,7 @@ msgstr ""
 
 #: ipconfig.rc:39
 msgid "Broadcast"
-msgstr ""
+msgstr "广播"
 
 #: ipconfig.rc:40
 msgid "Peer-to-peer"
@@ -10018,11 +10046,11 @@ msgstr ""
 
 #: ipconfig.rc:41
 msgid "Mixed"
-msgstr ""
+msgstr "混合"
 
 #: ipconfig.rc:42
 msgid "Hybrid"
-msgstr ""
+msgstr "混合"
 
 #: ipconfig.rc:43
 msgid "IP routing enabled"
@@ -10292,7 +10320,7 @@ msgstr "新建(&N)\tCtrl+N"
 
 #: notepad.rc:31 wordpad.rc:32
 msgid "&Open...\tCtrl+O"
-msgstr "打开(&O)...\tCtrl+O"
+msgstr "打开(&O)…\tCtrl+O"
 
 #: notepad.rc:32 wordpad.rc:33
 msgid "&Save\tCtrl+S"
@@ -10300,15 +10328,15 @@ msgstr "保存(&S)\tCtrl+S"
 
 #: notepad.rc:35 regedit.rc:39 wordpad.rc:36
 msgid "&Print...\tCtrl+P"
-msgstr "打印(&P)...\tCtrl+P"
+msgstr "打印(&P)…\tCtrl+P"
 
 #: notepad.rc:36 wordpad.rc:38
 msgid "Page Se&tup..."
-msgstr "页面设置(&T)..."
+msgstr "页面设置(&T)…"
 
 #: notepad.rc:37
 msgid "P&rinter Setup..."
-msgstr "打印设置(&R)..."
+msgstr "打印设置(&R)…"
 
 #: notepad.rc:41 regedit.rc:43 wineconsole.rc:28 winhlp32.rc:39 wordpad.rc:42
 msgid "&Edit"
@@ -10349,7 +10377,7 @@ msgstr "自动换行(&W)"
 
 #: notepad.rc:56
 msgid "&Search...\tCtrl+F"
-msgstr "搜索(&S)...\tCtrl+F"
+msgstr "搜索(&S)…\tCtrl+F"
 
 #: notepad.rc:57
 msgid "&Search next\tF3"
@@ -10357,7 +10385,7 @@ msgstr "搜索下一个(&S)\tF3"
 
 #: notepad.rc:58 wordpad.rc:55
 msgid "&Replace...\tCtrl+H"
-msgstr "替换(&R)...\tCtrl+H"
+msgstr "替换(&R)…\tCtrl+H"
 
 #: notepad.rc:61 progman.rc:56 regedit.rc:81 winefile.rc:83
 msgid "&Contents\tF1"
@@ -10522,11 +10550,11 @@ msgstr ""
 
 #: oleview.rc:32
 msgid "&Bind to file..."
-msgstr "文件绑定(&B)..."
+msgstr "文件绑定(&B)…"
 
 #: oleview.rc:33
 msgid "&View TypeLib..."
-msgstr "查看 &TypeLib..."
+msgstr "查看 &TypeLib…"
 
 #: oleview.rc:35
 msgid "&System Configuration"
@@ -10566,7 +10594,7 @@ msgstr "创建实例(&I)"
 
 #: oleview.rc:53
 msgid "Create Instance &On..."
-msgstr "创建实例于(&O)..."
+msgstr "创建实例于(&O)…"
 
 #: oleview.rc:54
 msgid "&Release Instance"
@@ -10606,7 +10634,7 @@ msgstr "关于 &OleView"
 
 #: oleview.rc:82
 msgid "&Save as..."
-msgstr "另存为(&S)..."
+msgstr "另存为(&S)…"
 
 #: oleview.rc:87
 msgid "&Group by type kind"
@@ -10859,7 +10887,7 @@ msgstr "按类别分组"
 
 #: progman.rc:33
 msgid "&New..."
-msgstr "新建(&N)..."
+msgstr "新建(&N)…"
 
 #: progman.rc:34
 msgid "O&pen\tEnter"
@@ -10867,11 +10895,11 @@ msgstr "打开(&O)\tEnter"
 
 #: progman.rc:35 winefile.rc:30
 msgid "&Move...\tF7"
-msgstr "移动(&M)...\tF7"
+msgstr "移动(&M)…\tF7"
 
 #: progman.rc:36 winefile.rc:31
 msgid "&Copy...\tF8"
-msgstr "复制(&C)...\tF8"
+msgstr "复制(&C)…\tF8"
 
 #: progman.rc:38
 msgid "&Properties\tAlt+Enter"
@@ -10879,7 +10907,7 @@ msgstr "属性(&P)\tAlt+Enter"
 
 #: progman.rc:40
 msgid "&Execute..."
-msgstr "执行(&E)..."
+msgstr "执行(&E)…"
 
 #: progman.rc:42
 msgid "E&xit Windows"
@@ -10983,7 +11011,7 @@ msgstr "启动后最小化(&M)"
 
 #: progman.rc:183
 msgid "Change &icon..."
-msgstr "修改图标(&I)..."
+msgstr "修改图标(&I)…"
 
 #: progman.rc:192
 msgid "Change Icon"
@@ -11238,11 +11266,11 @@ msgstr "注册表(&R)"
 
 #: regedit.rc:36
 msgid "&Import Registry File..."
-msgstr "导入注册表文件(&I)..."
+msgstr "导入注册表文件(&I)…"
 
 #: regedit.rc:37
 msgid "&Export Registry File..."
-msgstr "导出注册表文件(&E)..."
+msgstr "导出注册表文件(&E)…"
 
 #: regedit.rc:49 regedit.rc:100
 msgid "&Key"
@@ -11278,7 +11306,7 @@ msgstr "复制键名(&C)"
 
 #: regedit.rc:63 regedit.rc:115 wordpad.rc:53
 msgid "&Find...\tCtrl+F"
-msgstr "查找(&F)...\tCtrl+F"
+msgstr "查找(&F)…\tCtrl+F"
 
 #: regedit.rc:64
 msgid "Find Ne&xt\tF3"
@@ -11294,7 +11322,7 @@ msgstr "调整分隔线(&L)"
 
 #: regedit.rc:77
 msgid "&Remove Favorite..."
-msgstr "删除收藏(&R)..."
+msgstr "删除收藏(&R)…"
 
 #: regedit.rc:82
 msgid "&About Registry Editor"
@@ -11302,7 +11330,7 @@ msgstr "关于注册表编辑器(&A)"
 
 #: regedit.rc:91
 msgid "Modify Binary Data..."
-msgstr "修改二进制数据..."
+msgstr "修改二进制数据…"
 
 #: regedit.rc:218
 msgid "Export registry"
@@ -11854,7 +11882,7 @@ msgstr "错误：不允许结束本进程。\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
-msgstr "新任务(&N)..."
+msgstr "新任务(&N)…"
 
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
@@ -11898,7 +11926,7 @@ msgstr "暂停(&P)"
 
 #: taskmgr.rc:68 taskmgr.rc:256
 msgid "&Select Columns..."
-msgstr "选择列项(&S)..."
+msgstr "选择列项(&S)…"
 
 #: taskmgr.rc:69 taskmgr.rc:258
 msgid "&CPU History"
@@ -11982,11 +12010,11 @@ msgstr "低于正常(&B)"
 
 #: taskmgr.rc:169
 msgid "Set &Affinity..."
-msgstr "关联 CPU(&A)..."
+msgstr "关联 CPU(&A)…"
 
 #: taskmgr.rc:170
 msgid "Edit Debug &Channels..."
-msgstr "编辑调试频道(&C)..."
+msgstr "编辑调试频道(&C)…"
 
 #: taskmgr.rc:338 taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
@@ -11994,7 +12022,7 @@ msgstr "任务管理器"
 
 #: taskmgr.rc:351
 msgid "&New Task..."
-msgstr "新任务(&N)..."
+msgstr "新任务(&N)…"
 
 #: taskmgr.rc:364
 msgid "&Show processes from all users"
@@ -12852,7 +12880,7 @@ msgstr "已有的函数库顶替(&O)："
 
 #: winecfg.rc:199
 msgid "&Edit..."
-msgstr "编辑(&E)..."
+msgstr "编辑(&E)…"
 
 #: winecfg.rc:205
 msgid "Edit Override"
@@ -12914,7 +12942,7 @@ msgstr "设备(&V)："
 
 #: winecfg.rc:251
 msgid "Bro&wse..."
-msgstr "浏览(&W)..."
+msgstr "浏览(&W)…"
 
 #: winecfg.rc:253
 msgid "&Label:"
@@ -12974,7 +13002,7 @@ msgstr "主题(&T)："
 
 #: winecfg.rc:291
 msgid "&Install theme..."
-msgstr "安装主题(&I)..."
+msgstr "安装主题(&I)…"
 
 #: winecfg.rc:296
 msgid "It&em:"
@@ -13070,7 +13098,7 @@ msgstr "(系统默认)"
 
 #: winecfg.rc:91
 msgid "5.1 Surround"
-msgstr ""
+msgstr "5.1 环绕声"
 
 #: winecfg.rc:92
 msgid "Quadraphonic"
@@ -13346,9 +13374,8 @@ msgid "&Buffer size:"
 msgstr "缓冲区大小(&B)："
 
 #: wineconsole.rc:72
-#, fuzzy
 msgid "&Remove duplicates"
-msgstr "删除连续相同的命令(&R)"
+msgstr "删除重复(&R)"
 
 #: wineconsole.rc:74
 msgid "Popup menu"
@@ -13612,7 +13639,7 @@ msgstr "打开(&O)\tEnter"
 
 #: winefile.rc:33
 msgid "Re&name..."
-msgstr "改名(&N)..."
+msgstr "改名(&N)…"
 
 #: winefile.rc:34
 msgid "Propert&ies\tAlt+Enter"
@@ -13620,7 +13647,7 @@ msgstr "属性(&I)\tAlt+Enter"
 
 #: winefile.rc:38
 msgid "Cr&eate Directory..."
-msgstr "建立目录(&E)..."
+msgstr "建立目录(&E)…"
 
 #: winefile.rc:43
 msgid "&Disk"
@@ -13628,7 +13655,7 @@ msgstr "磁盘(&D)"
 
 #: winefile.rc:44
 msgid "Connect &Network Drive..."
-msgstr "连接网络驱动器(&N)..."
+msgstr "连接网络驱动器(&N)…"
 
 #: winefile.rc:45
 msgid "&Disconnect Network Drive"
@@ -13660,7 +13687,7 @@ msgstr "按日期排序(&D)"
 
 #: winefile.rc:59
 msgid "Filter by&..."
-msgstr "过滤标准&..."
+msgstr "过滤标准&…"
 
 #: winefile.rc:66
 msgid "&Drive Bar"
@@ -13852,7 +13879,7 @@ msgstr "专家(&E)"
 
 #: winemine.rc:45
 msgid "&Custom..."
-msgstr "自定义(&C)..."
+msgstr "自定义(&C)…"
 
 #: winemine.rc:47
 msgid "&Fastest Times"
@@ -13920,11 +13947,11 @@ msgstr "Copyright 2000 Joshua Thielen"
 
 #: winhlp32.rc:35
 msgid "Printer &setup..."
-msgstr "打印机设置(&S)..."
+msgstr "打印机设置(&S)…"
 
 #: winhlp32.rc:42
 msgid "&Annotate..."
-msgstr "注释(&A)..."
+msgstr "注释(&A)…"
 
 #: winhlp32.rc:44
 msgid "&Bookmark"
@@ -13932,7 +13959,7 @@ msgstr "书签(&B)"
 
 #: winhlp32.rc:45
 msgid "&Define..."
-msgstr "定义(&D)..."
+msgstr "定义(&D)…"
 
 #: winhlp32.rc:48
 msgid "Always on &top"
@@ -13948,7 +13975,7 @@ msgstr "小号"
 
 #: winhlp32.rc:53 winhlp32.rc:73
 msgid "Normal"
-msgstr "中号"
+msgstr "普通"
 
 #: winhlp32.rc:54 winhlp32.rc:74
 msgid "Large"
@@ -13964,7 +13991,7 @@ msgstr "关于 Wine 帮助(&I)"
 
 #: winhlp32.rc:67
 msgid "Annotation..."
-msgstr "注释..."
+msgstr "注释…"
 
 #: winhlp32.rc:68
 msgid "Copy"
@@ -14024,7 +14051,7 @@ msgstr "错误：无效查询\n"
 
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
-msgstr "新建(&N)...\tCtrl+N"
+msgstr "新建(&N)…\tCtrl+N"
 
 #: wordpad.rc:45
 msgid "R&edo\tCtrl+Y"
@@ -14088,7 +14115,7 @@ msgstr "插入(&I)"
 
 #: wordpad.rc:80
 msgid "&Date and time..."
-msgstr "日期时间(&D)..."
+msgstr "日期时间(&D)…"
 
 #: wordpad.rc:82
 msgid "F&ormat"
@@ -14100,11 +14127,11 @@ msgstr "项目符号(&B)"
 
 #: wordpad.rc:86 wordpad.rc:109
 msgid "&Paragraph..."
-msgstr "段落(&P)..."
+msgstr "段落(&P)…"
 
 #: wordpad.rc:87
 msgid "&Tabs..."
-msgstr "制表位(&T)..."
+msgstr "制表位(&T)…"
 
 #: wordpad.rc:88
 msgid "Backgroun&d"
@@ -14184,7 +14211,7 @@ msgstr "自动换行"
 
 #: wordpad.rc:260
 msgid "&No line wrapping"
-msgstr "不要自动换行"
+msgstr "不要自动换行(&N)"
 
 #: wordpad.rc:261
 msgid "Wrap text by the &window border"
