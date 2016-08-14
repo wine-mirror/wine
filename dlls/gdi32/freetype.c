@@ -4709,10 +4709,8 @@ static DWORD get_font_data( GdiFont *font, DWORD table, DWORD offset, LPVOID buf
     err = pFT_Load_Sfnt_Table(ft_face, table, offset, buf, &len);
     if (err)
     {
-        TRACE("Can't find table %c%c%c%c\n",
-              /* bytes were reversed */
-              HIBYTE(HIWORD(table)), LOBYTE(HIWORD(table)),
-              HIBYTE(LOWORD(table)), LOBYTE(LOWORD(table)));
+        table = RtlUlongByteSwap( table );
+        TRACE("Can't find table %s\n", debugstr_an((char*)&table, 4));
 	return GDI_ERROR;
     }
     return len;
@@ -8281,9 +8279,8 @@ static DWORD freetype_GetFontData( PHYSDEV dev, DWORD table, DWORD offset, LPVOI
         return dev->funcs->pGetFontData( dev, table, offset, buf, cbData );
     }
 
-    TRACE("font=%p, table=%c%c%c%c, offset=0x%x, buf=%p, cbData=0x%x\n",
-          physdev->font, LOBYTE(LOWORD(table)), HIBYTE(LOWORD(table)),
-          LOBYTE(HIWORD(table)), HIBYTE(HIWORD(table)), offset, buf, cbData);
+    TRACE("font=%p, table=%s, offset=0x%x, buf=%p, cbData=0x%x\n",
+          physdev->font, debugstr_an((char*)&table, 4), offset, buf, cbData);
 
     return get_font_data( physdev->font, table, offset, buf, cbData );
 }
