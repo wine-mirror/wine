@@ -361,6 +361,22 @@ static BOOL CALLBACK enum_devices_callback(const DIDEVICEINSTANCEA *instance, vo
 {
     struct enum_devices_test *enum_test = context;
 
+    trace("---- Device Information ----\n"
+          "Product Name  : %s\n"
+          "Instance Name : %s\n"
+          "devType       : 0x%08x\n"
+          "GUID Product  : %s\n"
+          "GUID Instance : %s\n"
+          "HID Page      : 0x%04x\n"
+          "HID Usage     : 0x%04x\n",
+          instance->tszProductName,
+          instance->tszInstanceName,
+          instance->dwDevType,
+          wine_dbgstr_guid(&instance->guidProduct),
+          wine_dbgstr_guid(&instance->guidInstance),
+          instance->wUsagePage,
+          instance->wUsage);
+
     enum_test->device_count++;
     return enum_test->return_value;
 }
