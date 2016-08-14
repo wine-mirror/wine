@@ -3096,20 +3096,21 @@ static void update_reg_entries(void)
     LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
         LIST_FOR_EACH_ENTRY( face, &family->faces, Face, entry ) {
             char *buffer;
+            WCHAR *name;
+
             if (!(face->flags & ADDFONT_EXTERNAL_FONT)) continue;
 
-            if(face->FullName)
-            {
-                len = strlenW(face->FullName) + sizeof(TrueType) / sizeof(WCHAR) + 1;
-                valueW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-                strcpyW(valueW, face->FullName);
-            }
-            else
-            {
-                len = strlenW(family->FamilyName) + sizeof(TrueType) / sizeof(WCHAR) + 1;
-                valueW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-                strcpyW(valueW, family->FamilyName);
-            }
+            name = face->FullName ? face->FullName : family->FamilyName;
+
+            len = strlenW(name) + 1;
+            if (face->scalable)
+                len += sizeof(TrueType) / sizeof(WCHAR);
+
+            valueW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+            strcpyW(valueW, name);
+
+            if (face->scalable)
+                strcatW(valueW, TrueType);
 
             buffer = strWtoA( CP_UNIXCP, face->file );
             path = wine_get_dos_file_name( buffer );
