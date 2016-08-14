@@ -645,6 +645,16 @@ static HRESULT WINAPI JoystickLinuxWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface
 
     switch (LOWORD(rguid)) {
 
+        case (DWORD_PTR) DIPROP_VIDPID:
+        {
+            LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
+
+            if (!This->joydev->product_id || !This->joydev->vendor_id)
+                return DIERR_UNSUPPORTED;
+            pd->dwData = MAKELONG(This->joydev->vendor_id, This->joydev->product_id);
+            TRACE("DIPROP_VIDPID(%08x)\n", pd->dwData);
+            break;
+        }
         case (DWORD_PTR) DIPROP_JOYSTICKID:
         {
             LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
