@@ -485,6 +485,8 @@ HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device
     wined3d_mutex_lock();
     wined3d_private_store_init(&swapchain->private_store);
 
+    swapchain->fullscreen = !desc->windowed;
+    desc->windowed = TRUE;
     if (FAILED(hr = wined3d_swapchain_create(device->wined3d_device, desc, swapchain,
             &dxgi_swapchain_wined3d_parent_ops, &swapchain->wined3d_swapchain)))
     {
@@ -492,10 +494,10 @@ HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device
         goto cleanup;
     }
 
-    swapchain->fullscreen = !desc->windowed;
     swapchain->target = NULL;
     if (swapchain->fullscreen)
     {
+        desc->windowed = FALSE;
         if (FAILED(hr = wined3d_swapchain_set_fullscreen(swapchain->wined3d_swapchain,
                 desc, NULL)))
         {
