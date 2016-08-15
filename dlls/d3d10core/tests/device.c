@@ -7257,6 +7257,42 @@ float4 main(const ps_in v) : SV_TARGET
     release_test_context(&test_context);
 }
 
+static void test_swapchain_views(void)
+{
+    struct d3d10core_test_context test_context;
+    D3D10_SHADER_RESOURCE_VIEW_DESC srv_desc;
+    D3D10_RENDER_TARGET_VIEW_DESC rtv_desc;
+    ID3D10ShaderResourceView *srv;
+    ID3D10RenderTargetView *rtv;
+    ID3D10Device *device;
+    HRESULT hr;
+
+    if (!init_test_context(&test_context))
+        return;
+
+    device = test_context.device;
+
+    rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    rtv_desc.ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2D;
+    U(rtv_desc).Texture2D.MipSlice = 0;
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)test_context.backbuffer, &rtv_desc, &rtv);
+    /* This seems to work only on Windows 7. */
+    ok(hr == S_OK || broken(hr == E_INVALIDARG), "Failed to create render target view, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D10RenderTargetView_Release(rtv);
+
+    srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    srv_desc.ViewDimension = D3D10_SRV_DIMENSION_TEXTURE2D;
+    U(srv_desc).Texture2D.MostDetailedMip = 0;
+    U(srv_desc).Texture2D.MipLevels = 1;
+    hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)test_context.backbuffer, &srv_desc, &srv);
+    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D10ShaderResourceView_Release(srv);
+
+    release_test_context(&test_context);
+}
+
 static void test_swapchain_flip(void)
 {
     IDXGISwapChain *swapchain;
@@ -9370,6 +9406,7 @@ START_TEST(device)
     test_texture_data_init();
     test_check_multisample_quality_levels();
     test_cb_relative_addressing();
+    test_swapchain_views();
     test_swapchain_flip();
     test_clear_render_target_view();
     test_clear_depth_stencil_view();
