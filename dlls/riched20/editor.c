@@ -489,7 +489,7 @@ void ME_RTFCharAttrHook(RTF_Info *info)
       {
         RTFColor *c = RTFGetColor(info, info->rtfParam);
         if (c && c->rtfCBlue >= 0)
-          fmt.crTextColor = (c->rtfCBlue<<16)|(c->rtfCGreen<<8)|(c->rtfCRed);
+          fmt.crBackColor = (c->rtfCBlue<<16)|(c->rtfCGreen<<8)|(c->rtfCRed);
         else
           fmt.dwEffects = CFE_AUTOBACKCOLOR;
       }
