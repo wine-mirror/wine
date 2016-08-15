@@ -7523,11 +7523,13 @@ static void test_swapchain_views(void)
     todo_wine check_texture_color(test_context.backbuffer, 0xffbc957c, 1);
 
     srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-    rtv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     U(srv_desc).Texture2D.MostDetailedMip = 0;
     U(srv_desc).Texture2D.MipLevels = 1;
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)test_context.backbuffer, &srv_desc, &srv);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D11ShaderResourceView_Release(srv);
 
     ID3D11RenderTargetView_Release(rtv);
     release_test_context(&test_context);
