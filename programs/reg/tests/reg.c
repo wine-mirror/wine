@@ -856,12 +856,61 @@ static void test_import(void)
     test_import_str("REGEDIT4 FOO\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
 
+    test_import_str("REGEDIT4\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+
+    err = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ, &hkey);
+    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+
+    test_import_str("REGEDIT4\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test1\"=\"Value1\"\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Test1", REG_SZ, "Value1", 7, 0);
+
+    test_import_str("REGEDIT4\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test2\"=\"Value2\"\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Test2", REG_SZ, "Value2", 7, 0);
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test3\"=\"Value3\"\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Test3", REG_SZ, "Value3", 7, 0);
+
     test_import_str("Windows Registry Editor Version 4.00\n", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS) /* WinXP */,
        "got exit code %d, expected 1\n", r);
 
     test_import_str("Windows Registry Editor Version 5.00\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+
+    test_import_str("Windows Registry Editor Version 5.00\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test4\"=\"Value4\"\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Test4", REG_SZ, "Value4", 7, 0);
+
+    test_import_str("Windows Registry Editor Version 5.00\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test5\"=\"Value5\"\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Test5", REG_SZ, "Value5", 7, 0);
+
+    test_import_str("Windows Registry Editor Version 5.00\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test6\"=\"Value6\"\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Test6", REG_SZ, "Value6", 7, 0);
+
+    err = RegCloseKey(hkey);
+    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
+
+    err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
     /* Test file contents - Unicode */
     test_import_wstr("Windows Registry Editor Version 4.00\n", &r);
