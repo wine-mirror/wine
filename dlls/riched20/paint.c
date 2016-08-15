@@ -201,6 +201,21 @@ static COLORREF get_text_color( ME_Context *c, ME_Style *style, BOOL highlight )
     return color;
 }
 
+static COLORREF get_back_color( ME_Context *c, ME_Style *style, BOOL highlight )
+{
+    COLORREF color;
+
+    if (highlight)
+        color = ITextHost_TxGetSysColor( c->editor->texthost, COLOR_HIGHLIGHT );
+    else if ( (style->fmt.dwMask & CFM_BACKCOLOR)
+            && !(style->fmt.dwEffects & CFE_AUTOBACKCOLOR) )
+        color = style->fmt.crBackColor;
+    else
+        color = ITextHost_TxGetSysColor( c->editor->texthost, COLOR_WINDOW );
+
+    return color;
+}
+
 static void get_underline_pen( ME_Style *style, COLORREF color, HPEN *pen )
 {
     *pen = NULL;
@@ -313,14 +328,17 @@ static void get_selection_rect( ME_Context *c, ME_Run *run, int from, int to, in
     return;
 }
 
-
 static void draw_text( ME_Context *c, ME_Run *run, int x, int y, BOOL selected, RECT *sel_rect )
 {
     COLORREF text_color = get_text_color( c, run->style, selected );
-    COLORREF back_color = selected ? ITextHost_TxGetSysColor( c->editor->texthost, COLOR_HIGHLIGHT ) : 0;
+    COLORREF back_color = get_back_color( c, run->style, selected );
     COLORREF old_text, old_back = 0;
     const WCHAR *text = get_text( run, 0 );
     ME_String *masked = NULL;
+    const BOOL paint_bg = ( selected
+        || ( ( run->style->fmt.dwMask & CFM_BACKCOLOR )
+            && !(CFE_AUTOBACKCOLOR & run->style->fmt.dwEffects) )
+        );
 
     if (c->editor->cPasswordMask)
     {
@@ -329,16 +347,16 @@ static void draw_text( ME_Context *c, ME_Run *run, int x, int y, BOOL selected, 
     }
 
     old_text = SetTextColor( c->hDC, text_color );
-    if (selected) old_back = SetBkColor( c->hDC, back_color );
+    if (paint_bg) old_back = SetBkColor( c->hDC, back_color );
 
     if (run->para->nFlags & MEPF_COMPLEX)
-        ScriptTextOut( c->hDC, &run->style->script_cache, x, y, selected ? ETO_OPAQUE : 0, sel_rect,
+        ScriptTextOut( c->hDC, &run->style->script_cache, x, y, paint_bg ? ETO_OPAQUE : 0, sel_rect,
                        &run->script_analysis, NULL, 0, run->glyphs, run->num_glyphs, run->advances,
                        NULL, run->offsets );
     else
-        ExtTextOutW( c->hDC, x, y, selected ? ETO_OPAQUE : 0, sel_rect, text, run->len, NULL );
+        ExtTextOutW( c->hDC, x, y, paint_bg ? ETO_OPAQUE : 0, sel_rect, text, run->len, NULL );
 
-    if (selected) SetBkColor( c->hDC, old_back );
+    if (paint_bg) SetBkColor( c->hDC, old_back );
     SetTextColor( c->hDC, old_text );
 
     draw_underline( c, run, x, y, text_color );
@@ -387,7 +405,18 @@ static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y,
   hOldFont = ME_SelectStyleFont( c, run->style );
 
   if (sel_rgn) ExtSelectClipRgn( hDC, sel_rgn, RGN_DIFF );
-  draw_text( c, run, x, y - yOffset, FALSE, NULL );
+
+  if (!(run->style->fmt.dwEffects & CFE_AUTOBACKCOLOR)
+      && (run->style->fmt.dwMask & CFM_BACKCOLOR) )
+  {
+    RECT tmp_rect;
+    get_selection_rect( c, run, 0, run->len, cy, &tmp_rect );
+    OffsetRect( &tmp_rect, x, ymin );
+    draw_text( c, run, x, y - yOffset, FALSE, &tmp_rect );
+  }
+  else
+    draw_text( c, run, x, y - yOffset, FALSE, NULL );
+
   if (sel_rgn)
   {
     ExtSelectClipRgn( hDC, clip, RGN_COPY );
