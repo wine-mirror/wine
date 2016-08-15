@@ -1503,6 +1503,11 @@ static void test_fullscreen_resize_target(IDXGISwapChain *swapchain,
     expected_state = *initial_state;
     for (i = 0; i < min(mode_count, 20); ++i)
     {
+        /* FIXME: Modes with scaling aren't fully tested. */
+        if (!(swapchain_desc.Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH)
+                && modes[i].Scaling != DXGI_MODE_SCALING_UNSPECIFIED)
+            continue;
+
         hr = IDXGIOutput_GetDesc(target, &output_desc);
         ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
 
@@ -1546,6 +1551,8 @@ static void test_resize_target(void)
     }
     tests[] =
     {
+        {{ 0,  0}, TRUE,  FALSE, 0},
+        {{10, 10}, TRUE,  FALSE, 0},
         {{ 0,  0}, TRUE,  FALSE, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH},
         {{10, 10}, TRUE,  FALSE, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH},
         {{ 0,  0}, FALSE, FALSE, 0},
