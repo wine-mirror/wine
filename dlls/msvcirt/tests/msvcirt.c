@@ -3121,8 +3121,8 @@ static void test_ostream(void) {
     ok(os2.base_ios.do_lock == 0xcdcdcdcd, "expected %d got %d\n", 0xcdcdcdcd, os2.base_ios.do_lock);
 
     /* flush */
-if (0) /* crashes on native */
-    pos = call_func1(p_ostream_flush, &os1);
+    if (0) /* crashes on native */
+        pos = call_func1(p_ostream_flush, &os1);
     os1.base_ios.sb = &fb2.base;
     call_func1(p_filebuf_ctor, &fb2);
     pos = call_func1(p_ostream_flush, &os1);
@@ -3177,8 +3177,8 @@ if (0) /* crashes on native */
     os1.base_ios.state = IOSTATE_goodbit;
     os1.base_ios.tie = &os2;
     os2.base_ios.sb = NULL;
-if (0) /* crashes on native */
-    ret = (int) call_func1(p_ostream_opfx, &os1);
+    if (0) /* crashes on native */
+        ret = (int) call_func1(p_ostream_opfx, &os1);
     os2.base_ios.sb = &fb2.base;
     os2.base_ios.state = IOSTATE_badbit;
     ret = (int) call_func3(p_streambuf_xsputn, &fb1.base, "We've known each other", 22);
@@ -3244,8 +3244,8 @@ if (0) /* crashes on native */
     ok(fb1.base.pbase == fb1.base.base, "wrong put base, expected %p got %p\n", fb1.base.base, fb1.base.pbase);
     ok(fb1.base.pptr == fb1.base.base + 1, "wrong put pointer, expected %p got %p\n", fb1.base.base + 1, fb1.base.pptr);
     os1.base_ios.sb = NULL;
-if (0) /* crashes on native */
-    pos = call_func2(p_ostream_put_char, &os1, 'c');
+    if (0) /* crashes on native */
+        pos = call_func2(p_ostream_put_char, &os1, 'c');
     os1.base_ios.sb = &fb1.base;
     os1.base_ios.width = 5;
     call_func1(p_filebuf_sync, &fb1);
@@ -3276,8 +3276,8 @@ if (0) /* crashes on native */
     ok(fb1.base.pbase == fb1.base.base, "wrong put base, expected %p got %p\n", fb1.base.base, fb1.base.pbase);
     ok(fb1.base.pptr == fb1.base.base + 7, "wrong put pointer, expected %p got %p\n", fb1.base.base + 7, fb1.base.pptr);
     os1.base_ios.sb = NULL;
-if (0) /* crashes on native */
-    pos = call_func3(p_ostream_write_char, &os1, "been", 4);
+    if (0) /* crashes on native */
+        pos = call_func3(p_ostream_write_char, &os1, "been", 4);
     os1.base_ios.sb = &fb1.base;
     os1.base_ios.width = 5;
     call_func1(p_filebuf_sync, &fb1);
@@ -3392,8 +3392,8 @@ if (0) /* crashes on native */
     pos = call_func3(p_ostream_writepad, &os1, "a", "b");
     ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
     ok(!strncmp(fb1.base.pptr - 6, "abzzzz", 6), "expected 'abzzzz' got '%s'\n", fb1.base.pptr - 6);
-if (0) /* crashes on native */
-    pos = call_func3(p_ostream_writepad, &os1, NULL, "o");
+    if (0) /* crashes on native */
+        pos = call_func3(p_ostream_writepad, &os1, NULL, "o");
     pos = call_func3(p_ostream_writepad, &os1, "", "hello");
     ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
     ok(!strncmp(fb1.base.pptr - 6, "helloz", 6), "expected 'helloz' got '%s'\n", fb1.base.pptr - 6);
@@ -3855,8 +3855,8 @@ static void test_ostream_withassign(void)
     /* assignment */
     osa1.unknown = 0xabababab;
     osa1.base_ios.sb = (streambuf*) 0xabababab;
-if (0) /* crashes on native */
-    osa1.base_ios.delbuf = 0xabababab;
+    if (0) /* crashes on native */
+        osa1.base_ios.delbuf = 0xabababab;
     posa = call_func2(p_ostream_withassign_assign_sb, &osa1, &sb);
     ok(posa == &osa1, "wrong return, expected %p got %p\n", &osa1, posa);
     ok(osa1.unknown == 0xabababab, "expected %d got %d\n", 0xabababab, osa1.unknown);
@@ -4035,8 +4035,8 @@ static void test_istream(void)
     ok(is2.base_ios.flags == FLAGS_skipws, "expected %d got %d\n", FLAGS_skipws, is2.base_ios.flags);
     ok(is2.base_ios.precision == 6, "expected 6 got %d\n", is2.base_ios.precision);
     ok(is2.base_ios.width == 0, "expected 0 got %d\n", is2.base_ios.width);
-if (0) /* crashes on native */
-    pis = call_func2(p_istream_assign, &is2, NULL);
+    if (0) /* crashes on native */
+        pis = call_func2(p_istream_assign, &is2, NULL);
     is2.extract_delim = is2.count = 0xabababab;
     is2.base_ios.sb = (streambuf*) 0xabababab;
     is2.base_ios.state = 0xabababab;
@@ -4071,8 +4071,8 @@ if (0) /* crashes on native */
 
     /* eatwhite */
     is1.extract_delim = is1.count = 0;
-if (0) /* crashes on native */
-    is1.base_ios.sb = NULL;
+    if (0) /* crashes on native */
+        is1.base_ios.sb = NULL;
     is1.base_ios.state = IOSTATE_badbit;
     is1.base_ios.flags = 0;
     call_func1(p_istream_eatwhite, &is1);
@@ -4139,8 +4139,8 @@ if (0) /* crashes on native */
     ok(is1.count == 0, "expected 0 got %d\n", is1.count);
     ok(is1.base_ios.state == (IOSTATE_badbit|IOSTATE_failbit), "expected %d got %d\n",
         IOSTATE_badbit|IOSTATE_failbit, is1.base_ios.state);
-if (0) /* crashes on native */
-    is1.base_ios.sb = NULL;
+    if (0) /* crashes on native */
+        is1.base_ios.sb = NULL;
     is1.base_ios.state = IOSTATE_goodbit;
     is1.base_ios.tie = &os;
     pos = call_func3(p_ostream_sb_ctor, &os, &fb2.base, TRUE);
@@ -4406,8 +4406,8 @@ if (0) /* crashes on native */
         IOSTATE_eofbit|IOSTATE_failbit, is1.base_ios.state);
     ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
     ok(buffer[0] == 0, "expected 0 got %d\n", buffer[0]);
-if (0) /* crashes on native */
-    pis = call_func4(p_istream_get_str_delim, &is1, (char*) 0x1, 5, 0);
+    if (0) /* crashes on native */
+        pis = call_func4(p_istream_get_str_delim, &is1, (char*) 0x1, 5, 0);
 
     /* get_str */
     is1.extract_delim = is1.count = 0xabababab;
@@ -4544,8 +4544,8 @@ if (0) /* crashes on native */
     ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
     ok(fb1.base.gptr == fb1.base.base + 3, "wrong get pointer, expected %p got %p\n", fb1.base.base + 3, fb1.base.gptr);
     ok(c == -50, "expected %d got %d\n", -50, c);
-if (0) /* crashes on native */
-    pis = call_func2(p_istream_get_char, &is1, NULL);
+    if (0) /* crashes on native */
+        pis = call_func2(p_istream_get_char, &is1, NULL);
     fb1.base.gptr = fb1.base.base + 30;
     pis = call_func2(p_istream_get_char, &is1, &c);
     ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
@@ -4656,8 +4656,8 @@ if (0) /* crashes on native */
     ok(fb2.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb2.base.pptr);
     ok(fb2.base.epptr == NULL, "wrong put end, expected %p got %p\n", NULL, fb2.base.epptr);
     is1.base_ios.state = IOSTATE_goodbit;
-if (0) /* crashes on native */
-    pis = call_func3(p_istream_get_sb, &is1, NULL, '?');
+    if (0) /* crashes on native */
+        pis = call_func3(p_istream_get_sb, &is1, NULL, '?');
     *fb1.base.gptr = -50;
     pis = call_func3(p_istream_get_sb, &is1, &fb2.base, -50);
     ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
@@ -4850,8 +4850,8 @@ if (0) /* crashes on native */
     ok(is1.count == 0, "expected 0 got %d\n", is1.count);
     ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
     ok(fb1.base.gptr == fb1.base.base, "wrong get pointer, expected %p got %p\n", fb1.base.base, fb1.base.gptr);
-if (0) /* crashes on native */
-    is1.base_ios.sb = NULL;
+    if (0) /* crashes on native */
+        is1.base_ios.sb = NULL;
     fb1.base.gptr = fb1.base.base + 14;
     ret = (int) call_func1(p_istream_peek, &is1);
     ok(ret == 206, "expected 206 got %d\n", ret);
@@ -4895,8 +4895,8 @@ if (0) /* crashes on native */
     ok(is1.base_ios.state == IOSTATE_eofbit, "expected %d got %d\n", IOSTATE_eofbit, is1.base_ios.state);
     ok(fb1.base.gptr == fb1.base.base + 15, "wrong get pointer, expected %p got %p\n", fb1.base.base + 15, fb1.base.gptr);
     is1.base_ios.state = IOSTATE_goodbit;
-if (0) /* crashes on native */
-    is1.base_ios.sb = NULL;
+    if (0) /* crashes on native */
+        is1.base_ios.sb = NULL;
     pis = call_func2(p_istream_putback, &is1, -40);
     ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
     ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
@@ -4953,14 +4953,14 @@ if (0) /* crashes on native */
     ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
     ok(!strncmp(buffer, fb1.base.base, 30), "unexpected buffer content, got '%s'\n", buffer);
     ok(buffer[30] == 'A', "expected 'A' got %d\n", buffer[30]);
-if (0) /* crashes on native */
-    is1.base_ios.sb = NULL;
+    if (0) /* crashes on native */
+        is1.base_ios.sb = NULL;
     is1.base_ios.state = IOSTATE_goodbit;
     fb1.base.eback = fb1.base.gptr = fb1.base.base;
     fb1.base.egptr = fb1.base.base + 30;
     memset(buffer, 'A', sizeof(buffer));
-if (0) /* crashes on native */
-    pis = call_func3(p_istream_read, &is1, buffer, -1);
+    if (0) /* crashes on native */
+        pis = call_func3(p_istream_read, &is1, buffer, -1);
     pis = call_func3(p_istream_read, &is1, buffer, 0);
     ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
     ok(is1.count == 0, "expected 0 got %d\n", is1.count);
@@ -4975,8 +4975,8 @@ if (0) /* crashes on native */
     ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
     ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
     ok(_tell(fb1.fd) == 0, "expected 0 got %d\n", _tell(fb1.fd));
-if (0) /* crashes on native */
-    is1.base_ios.sb = NULL;
+    if (0) /* crashes on native */
+        is1.base_ios.sb = NULL;
     pis = call_func2(p_istream_seekg, &is1, -5);
     ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
     ok(is1.base_ios.state == IOSTATE_failbit, "expected %d got %d\n", IOSTATE_failbit, is1.base_ios.state);
@@ -5008,8 +5008,8 @@ if (0) /* crashes on native */
     ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
     ok(is1.base_ios.state == IOSTATE_failbit, "expected %d got %d\n", IOSTATE_failbit, is1.base_ios.state);
     ok(fb1.base.gptr == fb1.base.base, "wrong get pointer, expected %p got %p\n", fb1.base.base, fb1.base.gptr);
-if (0) /* crashes on native */
-    is1.base_ios.sb = NULL;
+    if (0) /* crashes on native */
+        is1.base_ios.sb = NULL;
     fb1.base.gptr = fb1.base.egptr;
     pis = call_func3(p_istream_seekg_offset, &is1, 0, SEEKDIR_end);
     ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
@@ -5029,8 +5029,8 @@ if (0) /* crashes on native */
     ret = (int) call_func1(p_istream_sync, &is1);
     ok(ret == 0, "expected 0 got %d\n", ret);
     ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
-if (0) /* crashes on native */
-    is1.base_ios.sb = NULL;
+    if (0) /* crashes on native */
+        is1.base_ios.sb = NULL;
     fb1.base.eback = fb1.base.gptr = fb1.base.base;
     fb1.base.egptr = fb1.base.base + 30;
     ret = (int) call_func1(p_istream_sync, &is1);
@@ -5062,8 +5062,8 @@ if (0) /* crashes on native */
     ret = (int) call_func1(p_istream_tellg, &is1);
     ok(ret == 24, "expected 24 got %d\n", ret);
     ok(is1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, is1.base_ios.state);
-if (0) /* crashes on native */
-    is1.base_ios.sb = NULL;
+    if (0) /* crashes on native */
+        is1.base_ios.sb = NULL;
     fb1.base.eback = fb1.base.gptr = fb1.base.base;
     fb1.base.egptr = fb1.base.base + 30;
     ret = (int) call_func1(p_istream_tellg, &is1);
@@ -6014,8 +6014,8 @@ static void test_iostream(void)
     ios2.base1.count = 0xcdcdcdcd;
     memset(&ios2.base_ios, 0xcd, sizeof(ios));
     ios2.base_ios.delbuf = 0;
-if (0) /* crashes on native */
-    pios = call_func2(p_iostream_assign, &ios2, NULL);
+    if (0) /* crashes on native */
+        pios = call_func2(p_iostream_assign, &ios2, NULL);
     pios = call_func2(p_iostream_assign, &ios2, &ios1);
     ok(pios == &ios2, "wrong return, expected %p got %p\n", &ios2, pios);
     ok(ios2.base1.extract_delim == 0xcdcdcdcd, "expected %d got %d\n", 0xcdcdcdcd, ios2.base1.extract_delim);
