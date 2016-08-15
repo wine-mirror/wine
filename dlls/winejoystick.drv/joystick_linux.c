@@ -126,6 +126,7 @@ LRESULT driver_open(LPSTR str, DWORD dwIntf)
 	return 0;
 
     JSTCK_Data[dwIntf].joyIntf = dwIntf;
+    JSTCK_Data[dwIntf].dev = -1;
     JSTCK_Data[dwIntf].in_use = TRUE;
     return (LRESULT)&JSTCK_Data[dwIntf];
 }
@@ -160,25 +161,43 @@ struct js_status
  */
 static	int	JSTCK_OpenDevice(WINE_JSTCK* jstick)
 {
-    char	buf[20];
-    int		flags;
+    char  buf[20];
+    int   flags, fd, found_ix, i;
 
     if (jstick->dev > 0)
       return jstick->dev;
 
-    sprintf(buf, JOYDEV_NEW, jstick->joyIntf);
 #ifdef HAVE_LINUX_22_JOYSTICK_API
     flags = O_RDONLY | O_NONBLOCK;
 #else
     flags = O_RDONLY;
 #endif
-    if ((jstick->dev = open(buf, flags)) < 0) {
-        sprintf(buf, JOYDEV_OLD, jstick->joyIntf);
-        if ((jstick->dev = open(buf, flags)) < 0)
-            return jstick->dev;
+
+    /* The first joystick may not be at /dev/input/js0, find the correct
+     * first or second device. For example the driver for XBOX 360 wireless
+     * receiver creates entries starting at 20.
+     */
+    for (found_ix = i = 0; i < MAXJOYSTICK; i++) {
+        sprintf(buf, JOYDEV_NEW, i);
+        if ((fd = open(buf, flags)) < 0) {
+            sprintf(buf, JOYDEV_OLD, i);
+            if ((fd = open(buf, flags)) < 0)
+                continue;
+        }
+
+        if (found_ix++ == jstick->joyIntf)
+        {
+            TRACE("Found joystick[%d] at %s\n", jstick->joyIntf, buf);
+            jstick->dev = fd;
+            break;
+        }
+
+        close(fd);
     }
+
 #ifdef HAVE_LINUX_22_JOYSTICK_API
-    ioctl(jstick->dev, JSIOCGAXMAP, jstick->axesMap);
+    if (jstick->dev > 0)
+        ioctl(jstick->dev, JSIOCGAXMAP, jstick->axesMap);
 #endif
     return jstick->dev;
 }
