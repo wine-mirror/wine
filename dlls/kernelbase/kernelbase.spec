@@ -265,7 +265,7 @@
 @ stub GetNamedLocaleHashNode
 @ stub GetNamedPipeAttribute
 @ stub GetNamedPipeClientComputerNameW
-@ stub GetNumberFormatEx
+@ stdcall GetNumberFormatEx(wstr long wstr ptr ptr long) kernel32.GetNumberFormatEx
 @ stdcall GetNumberFormatW(long long wstr ptr ptr long) kernel32.GetNumberFormatW
 @ stdcall GetOEMCP() kernel32.GetOEMCP
 @ stdcall GetOverlappedResult(long ptr ptr long) kernel32.GetOverlappedResult

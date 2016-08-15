@@ -1345,6 +1345,25 @@ error:
 }
 
 /**************************************************************************
+ *              GetNumberFormatEx	(KERNEL32.@)
+ */
+INT WINAPI GetNumberFormatEx(LPCWSTR name, DWORD flags,
+                             LPCWSTR value, const NUMBERFMTW *format,
+                             LPWSTR number, int numout)
+{
+  LCID lcid;
+
+  TRACE("(%s,0x%08x,%s,%p,%p,%d)\n", debugstr_w(name), flags,
+        debugstr_w(value), format, number, numout);
+
+  lcid = LocaleNameToLCID(name, 0);
+  if (!lcid)
+    return 0;
+
+  return GetNumberFormatW(lcid, flags, value, format, number, numout);
+}
+
+/**************************************************************************
  *              GetCurrencyFormatA	(KERNEL32.@)
  *
  * Format a currency string for a given locale.

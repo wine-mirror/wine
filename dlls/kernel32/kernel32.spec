@@ -751,7 +751,7 @@
 # @ stub GetNumaProximityNode
 # @ stub GetNumaProximityNodeEx
 @ stdcall GetNumberFormatA(long long str ptr ptr long)
-# @ stub GetNumberFormatEx
+@ stdcall GetNumberFormatEx(wstr long wstr ptr ptr long)
 @ stdcall GetNumberFormatW(long long wstr ptr ptr long)
 @ stdcall GetNumberOfConsoleFonts()
 @ stdcall GetNumberOfConsoleInputEvents(long ptr)
