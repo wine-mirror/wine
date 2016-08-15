@@ -2608,7 +2608,7 @@ static PVOID WINAPI failuredllhook(ULONG ul, DELAYLOAD_INFO* pd)
 
         ok(!!pd->ThunkAddress, "no ThunkAddress supplied\n");
         if (pd->ThunkAddress)
-            ok(pd->ThunkAddress->u1.Ordinal == 0, "expected 0, got %x\n", (UINT)pd->ThunkAddress->u1.Ordinal);
+            ok(pd->ThunkAddress->u1.Ordinal, "no ThunkAddress value supplied\n");
 
         ok(!!pd->TargetDllName, "no TargetDllName supplied\n");
         if (pd->TargetDllName)
@@ -2782,9 +2782,20 @@ static void test_ResolveDelayLoadedAPI(void)
     ret = WriteFile(hfile, test_func, sizeof(test_func), &dummy, NULL);
     ok(ret, "WriteFile error %d\n", GetLastError());
 
-    file_size = GetFileSize(hfile, NULL);
+    SetFilePointer( hfile, idd.ImportAddressTableRVA, NULL, SEEK_SET );
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    {
+        /* 0x1a00 is an empty space between delay data and extended delay data, real thunks are not necessary */
+        itd32.u1.Function = nt_header.OptionalHeader.ImageBase + 0x1a00 + i * 0x20;
+        SetLastError(0xdeadbeef);
+        ret = WriteFile(hfile, &itd32, sizeof(itd32), &dummy, NULL);
+        ok(ret, "WriteFile error %d\n", GetLastError());
+    }
+
+    itd32.u1.Function = 0;
     SetLastError(0xdeadbeef);
-    ret = WriteFile(hfile, filler, idd.ImportNameTableRVA - file_size, &dummy, NULL);
+    ret = WriteFile(hfile, &itd32, sizeof(itd32), &dummy, NULL);
     ok(ret, "WriteFile error %d\n", GetLastError());
 
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
