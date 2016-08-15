@@ -108,7 +108,6 @@ static HRESULT shdr_handler(const char *data, DWORD data_size, DWORD tag, void *
             else
             {
                 TRACE("Skipping feature level 9 shader code on feature level %#x.\n", ctx->feature_level);
-                break;
             }
             break;
 
