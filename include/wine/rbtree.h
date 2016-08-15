@@ -59,8 +59,6 @@ typedef void (wine_rb_traverse_func_t)(struct wine_rb_entry *entry, void *contex
 
 #define WINE_RB_FLAG_RED                0x1
 #define WINE_RB_FLAG_STOP               0x2
-#define WINE_RB_FLAG_TRAVERSED_LEFT     0x4
-#define WINE_RB_FLAG_TRAVERSED_RIGHT    0x8
 
 static inline void wine_rb_stack_clear(struct wine_rb_stack *stack)
 {
@@ -185,37 +183,32 @@ static inline void wine_rb_move_red_right(struct wine_rb_tree *tree, struct wine
     }
 }
 
+static inline struct wine_rb_entry *wine_rb_postorder_head(struct wine_rb_entry *iter)
+{
+    if (!iter) return NULL;
+
+    for (;;) {
+        while (iter->left) iter = iter->left;
+        if (!iter->right) return iter;
+        iter = iter->right;
+    }
+}
+
+static inline struct wine_rb_entry *wine_rb_postorder_next(struct wine_rb_entry *iter)
+{
+    if (!iter->parent) return NULL;
+    if (iter == iter->parent->right || !iter->parent->right) return iter->parent;
+    return wine_rb_postorder_head(iter->parent->right);
+}
+
 static inline void wine_rb_postorder(struct wine_rb_tree *tree, wine_rb_traverse_func_t *callback, void *context)
 {
-    struct wine_rb_entry **entry;
+    struct wine_rb_entry *iter, *next;
 
-    if (!tree->root) return;
-
-    for (entry = &tree->root;;)
+    for (iter = wine_rb_postorder_head(tree->root); iter; iter = next)
     {
-        struct wine_rb_entry *e = *entry;
-
-        if (e->left && !(e->flags & WINE_RB_FLAG_TRAVERSED_LEFT))
-        {
-            wine_rb_stack_push(&tree->stack, entry);
-            e->flags |= WINE_RB_FLAG_TRAVERSED_LEFT;
-            entry = &e->left;
-            continue;
-        }
-
-        if (e->right && !(e->flags & WINE_RB_FLAG_TRAVERSED_RIGHT))
-        {
-            wine_rb_stack_push(&tree->stack, entry);
-            e->flags |= WINE_RB_FLAG_TRAVERSED_RIGHT;
-            entry = &e->right;
-            continue;
-        }
-
-        e->flags &= ~(WINE_RB_FLAG_TRAVERSED_LEFT | WINE_RB_FLAG_TRAVERSED_RIGHT);
-        callback(e, context);
-
-        if (!tree->stack.count) break;
-        entry = tree->stack.entries[--tree->stack.count];
+        next = wine_rb_postorder_next(iter);
+        callback(iter, context);
     }
 }
 
