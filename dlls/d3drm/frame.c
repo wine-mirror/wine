@@ -1339,23 +1339,53 @@ static HRESULT WINAPI d3drm_frame1_GetRotation(IDirect3DRMFrame *iface,
 
 static HRESULT WINAPI d3drm_frame3_GetScene(IDirect3DRMFrame3 *iface, IDirect3DRMFrame3 **scene)
 {
-    FIXME("iface %p, scene %p stub!\n", iface, scene);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, scene %p.\n", iface, scene);
+
+    if (!scene)
+        return D3DRMERR_BADVALUE;
+
+    while (frame->parent)
+        frame = frame->parent;
+
+    *scene = &frame->IDirect3DRMFrame3_iface;
+    IDirect3DRMFrame3_AddRef(*scene);
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm_frame2_GetScene(IDirect3DRMFrame2 *iface, IDirect3DRMFrame **scene)
 {
-    FIXME("iface %p, scene %p stub!\n", iface, scene);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
+    IDirect3DRMFrame3 *frame3;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, scene %p.\n", iface, scene);
+
+    if (!scene)
+        return D3DRMERR_BADVALUE;
+
+    hr = IDirect3DRMFrame3_GetScene(&frame->IDirect3DRMFrame3_iface, &frame3);
+    if (FAILED(hr) || !frame3)
+    {
+        *scene = NULL;
+        return hr;
+    }
+
+    hr = IDirect3DRMFrame3_QueryInterface(frame3, &IID_IDirect3DRMFrame, (void **)scene);
+    IDirect3DRMFrame3_Release(frame3);
+
+    return hr;
 }
 
 static HRESULT WINAPI d3drm_frame1_GetScene(IDirect3DRMFrame *iface, IDirect3DRMFrame **scene)
 {
-    FIXME("iface %p, scene %p stub!\n", iface, scene);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, scene %p.\n", iface, scene);
+
+    return d3drm_frame2_GetScene(&frame->IDirect3DRMFrame2_iface, scene);
 }
 
 static D3DRMSORTMODE WINAPI d3drm_frame3_GetSortMode(IDirect3DRMFrame3 *iface)

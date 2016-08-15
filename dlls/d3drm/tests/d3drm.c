@@ -885,6 +885,7 @@ static void test_Frame(void)
     IDirect3DRMFrame *pFrameP1;
     IDirect3DRMFrame *pFrameP2;
     IDirect3DRMFrame *pFrameTmp;
+    IDirect3DRMFrame *scene_frame;
     IDirect3DRMFrameArray *frame_array;
     IDirect3DRMMeshBuilder *mesh_builder;
     IDirect3DRMVisual *visual1;
@@ -967,6 +968,19 @@ static void test_Frame(void)
     CHECK_REFCOUNT(pFrameP1, 1);
     CHECK_REFCOUNT(pFrameC, 2);
 
+    hr = IDirect3DRMFrame_GetScene(pFrameC, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+    hr = IDirect3DRMFrame_GetScene(pFrameC, &scene_frame);
+    ok(SUCCEEDED(hr), "Cannot get scene (hr == %#x).\n", hr);
+    ok(scene_frame == pFrameP1, "Expected scene frame == %p, got %p.\n", pFrameP1, scene_frame);
+    CHECK_REFCOUNT(pFrameP1, 2);
+    IDirect3DRMFrame_Release(scene_frame);
+    hr = IDirect3DRMFrame_GetScene(pFrameP1, &scene_frame);
+    ok(SUCCEEDED(hr), "Cannot get scene (hr == %#x).\n", hr);
+    ok(scene_frame == pFrameP1, "Expected scene frame == %p, got %p.\n", pFrameP1, scene_frame);
+    CHECK_REFCOUNT(pFrameP1, 2);
+    IDirect3DRMFrame_Release(scene_frame);
+
     frame_array = NULL;
     hr = IDirect3DRMFrame_GetChildren(pFrameP1, &frame_array);
     ok(hr == D3DRM_OK, "Cannot get children (hr = %x)\n", hr);
@@ -1032,6 +1046,16 @@ static void test_Frame(void)
         ok(pFrameTmp == NULL, "pFrameTmp = %p\n", pFrameTmp);
         IDirect3DRMFrameArray_Release(frame_array);
     }
+    hr = IDirect3DRMFrame_GetScene(pFrameC, &scene_frame);
+    ok(SUCCEEDED(hr), "Cannot get scene (hr == %#x).\n", hr);
+    ok(scene_frame == pFrameP2, "Expected scene frame == %p, got %p.\n", pFrameP2, scene_frame);
+    CHECK_REFCOUNT(pFrameP2, 2);
+    IDirect3DRMFrame_Release(scene_frame);
+    hr = IDirect3DRMFrame_GetScene(pFrameP2, &scene_frame);
+    ok(SUCCEEDED(hr), "Cannot get scene (hr == %#x).\n", hr);
+    ok(scene_frame == pFrameP2, "Expected scene frame == %p, got %p.\n", pFrameP2, scene_frame);
+    CHECK_REFCOUNT(pFrameP2, 2);
+    IDirect3DRMFrame_Release(scene_frame);
 
     pFrameTmp = (void*)0xdeadbeef;
     hr = IDirect3DRMFrame_GetParent(pFrameC, &pFrameTmp);
