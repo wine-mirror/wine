@@ -116,6 +116,29 @@ typedef struct EmfPlusTranslateWorldTransform
     REAL dy;
 } EmfPlusTranslateWorldTransform;
 
+typedef struct EmfPlusContainerRecord
+{
+    EmfPlusRecordHeader Header;
+    DWORD StackIndex;
+} EmfPlusContainerRecord;
+
+enum container_type
+{
+    BEGIN_CONTAINER,
+    SAVE_GRAPHICS
+};
+
+typedef struct container
+{
+    struct list entry;
+    DWORD id;
+    enum container_type type;
+    GraphicsContainer state;
+    GpMatrix world_transform;
+    GpUnit page_unit;
+    REAL page_scale;
+} container;
+
 static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, DWORD size, void **result)
 {
     DWORD size_needed;
@@ -308,6 +331,7 @@ GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF 
     (*metafile)->comment_data_size = 0;
     (*metafile)->comment_data_length = 0;
     (*metafile)->hemf = NULL;
+    list_init(&(*metafile)->containers);
 
     if (!frameRect)
     {
@@ -726,6 +750,98 @@ GpStatus METAFILE_ResetWorldTransform(GpMetafile* metafile)
     return Ok;
 }
 
+GpStatus METAFILE_BeginContainerNoParams(GpMetafile* metafile, DWORD StackIndex)
+{
+    if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
+    {
+        EmfPlusContainerRecord *record;
+        GpStatus stat;
+
+        stat = METAFILE_AllocateRecord(metafile,
+            sizeof(EmfPlusContainerRecord),
+            (void**)&record);
+        if (stat != Ok)
+            return stat;
+
+        record->Header.Type = EmfPlusRecordTypeBeginContainerNoParams;
+        record->Header.Flags = 0;
+        record->StackIndex = StackIndex;
+
+        METAFILE_WriteRecords(metafile);
+    }
+
+    return Ok;
+}
+
+GpStatus METAFILE_EndContainer(GpMetafile* metafile, DWORD StackIndex)
+{
+    if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
+    {
+        EmfPlusContainerRecord *record;
+        GpStatus stat;
+
+        stat = METAFILE_AllocateRecord(metafile,
+            sizeof(EmfPlusContainerRecord),
+            (void**)&record);
+        if (stat != Ok)
+            return stat;
+
+        record->Header.Type = EmfPlusRecordTypeEndContainer;
+        record->Header.Flags = 0;
+        record->StackIndex = StackIndex;
+
+        METAFILE_WriteRecords(metafile);
+    }
+
+    return Ok;
+}
+
+GpStatus METAFILE_SaveGraphics(GpMetafile* metafile, DWORD StackIndex)
+{
+    if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
+    {
+        EmfPlusContainerRecord *record;
+        GpStatus stat;
+
+        stat = METAFILE_AllocateRecord(metafile,
+            sizeof(EmfPlusContainerRecord),
+            (void**)&record);
+        if (stat != Ok)
+            return stat;
+
+        record->Header.Type = EmfPlusRecordTypeSave;
+        record->Header.Flags = 0;
+        record->StackIndex = StackIndex;
+
+        METAFILE_WriteRecords(metafile);
+    }
+
+    return Ok;
+}
+
+GpStatus METAFILE_RestoreGraphics(GpMetafile* metafile, DWORD StackIndex)
+{
+    if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
+    {
+        EmfPlusContainerRecord *record;
+        GpStatus stat;
+
+        stat = METAFILE_AllocateRecord(metafile,
+            sizeof(EmfPlusContainerRecord),
+            (void**)&record);
+        if (stat != Ok)
+            return stat;
+
+        record->Header.Type = EmfPlusRecordTypeRestore;
+        record->Header.Flags = 0;
+        record->StackIndex = StackIndex;
+
+        METAFILE_WriteRecords(metafile);
+    }
+
+    return Ok;
+}
+
 GpStatus METAFILE_ReleaseDC(GpMetafile* metafile, HDC hdc)
 {
     if (hdc != metafile->record_dc)
@@ -1131,6 +1247,87 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             return METAFILE_PlaybackUpdateWorldTransform(real_metafile);
         }
+        case EmfPlusRecordTypeBeginContainerNoParams:
+        case EmfPlusRecordTypeSave:
+        {
+            EmfPlusContainerRecord *record = (EmfPlusContainerRecord*)header;
+            container* cont;
+
+            cont = heap_alloc_zero(sizeof(*cont));
+            if (!cont)
+                return OutOfMemory;
+
+            if (recordType == EmfPlusRecordTypeBeginContainerNoParams)
+                stat = GdipBeginContainer2(metafile->playback_graphics, &cont->state);
+            else
+                stat = GdipSaveGraphics(metafile->playback_graphics, &cont->state);
+
+            if (stat != Ok)
+            {
+                heap_free(cont);
+                return stat;
+            }
+
+            cont->id = record->StackIndex;
+            if (recordType == EmfPlusRecordTypeBeginContainerNoParams)
+                cont->type = BEGIN_CONTAINER;
+            else
+                cont->type = SAVE_GRAPHICS;
+            cont->world_transform = *metafile->world_transform;
+            cont->page_unit = metafile->page_unit;
+            cont->page_scale = metafile->page_scale;
+            list_add_head(&real_metafile->containers, &cont->entry);
+
+            break;
+        }
+        case EmfPlusRecordTypeEndContainer:
+        case EmfPlusRecordTypeRestore:
+        {
+            EmfPlusContainerRecord *record = (EmfPlusContainerRecord*)header;
+            container* cont;
+            enum container_type type;
+            BOOL found=FALSE;
+
+            if (recordType == EmfPlusRecordTypeEndContainer)
+                type = BEGIN_CONTAINER;
+            else
+                type = SAVE_GRAPHICS;
+
+            LIST_FOR_EACH_ENTRY(cont, &real_metafile->containers, container, entry)
+            {
+                if (cont->id == record->StackIndex && cont->type == type)
+                {
+                    found = TRUE;
+                    break;
+                }
+            }
+
+            if (found)
+            {
+                container* cont2;
+
+                /* pop any newer items on the stack */
+                while ((cont2 = LIST_ENTRY(list_head(&real_metafile->containers), container, entry)) != cont)
+                {
+                    list_remove(&cont2->entry);
+                    heap_free(cont2);
+                }
+
+                if (type == BEGIN_CONTAINER)
+                    GdipEndContainer(real_metafile->playback_graphics, cont->state);
+                else
+                    GdipRestoreGraphics(real_metafile->playback_graphics, cont->state);
+
+                *real_metafile->world_transform = cont->world_transform;
+                real_metafile->page_unit = cont->page_unit;
+                real_metafile->page_scale = cont->page_scale;
+
+                list_remove(&cont->entry);
+                heap_free(cont);
+            }
+
+            break;
+        }
         default:
             FIXME("Not implemented for record type %x\n", recordType);
             return NotImplemented;
@@ -1308,6 +1505,13 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics *graphics,
 
         GdipDeleteRegion(real_metafile->base_clip);
         real_metafile->base_clip = NULL;
+
+        while (list_head(&real_metafile->containers))
+        {
+            container* cont = LIST_ENTRY(list_head(&real_metafile->containers), container, entry);
+            list_remove(&cont->entry);
+            heap_free(cont);
+        }
 
         GdipEndContainer(graphics, state);
     }
@@ -1553,6 +1757,7 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromEmf(HENHMETAFILE hemf, BOOL delete,
     (*metafile)->metafile_type = header.Type;
     (*metafile)->hemf = hemf;
     (*metafile)->preserve_hemf = !delete;
+    list_init(&(*metafile)->containers);
 
     TRACE("<-- %p\n", *metafile);
 

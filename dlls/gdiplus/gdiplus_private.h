@@ -96,6 +96,10 @@ extern GpStatus METAFILE_MultiplyWorldTransform(GpMetafile* metafile, GDIPCONST 
 extern GpStatus METAFILE_RotateWorldTransform(GpMetafile* metafile, REAL angle, MatrixOrder order) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_TranslateWorldTransform(GpMetafile* metafile, REAL dx, REAL dy, MatrixOrder order) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_ResetWorldTransform(GpMetafile* metafile) DECLSPEC_HIDDEN;
+extern GpStatus METAFILE_BeginContainerNoParams(GpMetafile* metafile, DWORD StackIndex) DECLSPEC_HIDDEN;
+extern GpStatus METAFILE_EndContainer(GpMetafile* metafile, DWORD StackIndex) DECLSPEC_HIDDEN;
+extern GpStatus METAFILE_SaveGraphics(GpMetafile* metafile, DWORD StackIndex) DECLSPEC_HIDDEN;
+extern GpStatus METAFILE_RestoreGraphics(GpMetafile* metafile, DWORD StackIndex) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_GraphicsDeleted(GpMetafile* metafile) DECLSPEC_HIDDEN;
 
 extern void calc_curve_bezier(const GpPointF *pts, REAL tension, REAL *x1,
@@ -368,6 +372,7 @@ struct GpMetafile{
     GpUnit page_unit;
     REAL page_scale;
     GpRegion *base_clip; /* clip region in device space for all metafile output */
+    struct list containers;
 };
 
 struct GpBitmap{

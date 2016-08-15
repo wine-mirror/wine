@@ -4062,6 +4062,7 @@ static GpStatus decode_image_olepicture_metafile(IStream* stream, GpImage **imag
     (*image)->frame_count = 1;
     (*image)->current_frame = 0;
     (*image)->palette = NULL;
+    list_init(&(*(GpMetafile**)image)->containers);
 
     TRACE("<-- %p\n", *image);
 

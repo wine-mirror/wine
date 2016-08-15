@@ -5194,6 +5194,13 @@ static GpStatus begin_container(GpGraphics *graphics,
     list_add_head(&graphics->containers, &container->entry);
     *state = graphics->contid = container->contid;
 
+    if (graphics->image && graphics->image->type == ImageTypeMetafile) {
+        if (type == BEGIN_CONTAINER)
+            METAFILE_BeginContainerNoParams((GpMetafile*)graphics->image, container->contid);
+        else
+            METAFILE_SaveGraphics((GpMetafile*)graphics->image, container->contid);
+    }
+
     return Ok;
 }
 
@@ -5260,6 +5267,13 @@ static GpStatus end_container(GpGraphics *graphics, GraphicsContainerType type,
 
     list_remove(&container->entry);
     delete_container(container);
+
+    if (graphics->image && graphics->image->type == ImageTypeMetafile) {
+        if (type == BEGIN_CONTAINER)
+            METAFILE_EndContainer((GpMetafile*)graphics->image, state);
+        else
+            METAFILE_RestoreGraphics((GpMetafile*)graphics->image, state);
+    }
 
     return Ok;
 }
