@@ -1709,6 +1709,166 @@ static void test_frameunit(void)
     expect(Ok, stat);
 }
 
+static const emfplus_record container_records[] = {
+    {0, EMR_HEADER},
+    {0, EmfPlusRecordTypeHeader},
+    {0, EmfPlusRecordTypeBeginContainerNoParams},
+    {0, EmfPlusRecordTypeScaleWorldTransform},
+    {0, EmfPlusRecordTypeFillRects},
+    {0, EmfPlusRecordTypeEndContainer},
+    {0, EmfPlusRecordTypeScaleWorldTransform},
+    {0, EmfPlusRecordTypeFillRects},
+    {0, EmfPlusRecordTypeSave},
+    {0, EmfPlusRecordTypeRestore},
+    {0, EmfPlusRecordTypeScaleWorldTransform},
+    {0, EmfPlusRecordTypeBeginContainerNoParams},
+    {0, EmfPlusRecordTypeScaleWorldTransform},
+    {0, EmfPlusRecordTypeBeginContainerNoParams},
+    {0, EmfPlusRecordTypeEndContainer},
+    {0, EmfPlusRecordTypeFillRects},
+    {0, EmfPlusRecordTypeBeginContainerNoParams},
+    {0, EmfPlusRecordTypeEndOfFile},
+    {0, EMR_EOF},
+    {0}
+};
+
+static void test_containers(void)
+{
+    GpStatus stat;
+    GpMetafile *metafile;
+    GpGraphics *graphics;
+    GpBitmap *bitmap;
+    GpBrush *brush;
+    ARGB color;
+    HDC hdc;
+    static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
+    static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
+    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
+    GraphicsContainer state1, state2;
+
+    hdc = CreateCompatibleDC(0);
+
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(Ok, stat);
+
+    DeleteDC(hdc);
+
+    if (stat != Ok)
+        return;
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    /* Normal usage */
+    stat = GdipBeginContainer2(graphics, &state1);
+    expect(Ok, stat);
+
+    stat = GdipScaleWorldTransform(graphics, 2.0, 2.0, MatrixOrderPrepend);
+    expect(Ok, stat);
+
+    stat = GdipCreateSolidFill((ARGB)0xff000000, (GpSolidFill**)&brush);
+    expect(Ok, stat);
+
+    stat = GdipFillRectangle(graphics, brush, 5.0, 5.0, 5.0, 5.0);
+    expect(Ok, stat);
+
+    stat = GdipDeleteBrush(brush);
+    expect(Ok, stat);
+
+    stat = GdipEndContainer(graphics, state1);
+    expect(Ok, stat);
+
+    stat = GdipScaleWorldTransform(graphics, 1.0, 1.0, MatrixOrderPrepend);
+    expect(Ok, stat);
+
+    stat = GdipCreateSolidFill((ARGB)0xff0000ff, (GpSolidFill**)&brush);
+    expect(Ok, stat);
+
+    stat = GdipFillRectangle(graphics, brush, 5.0, 5.0, 5.0, 5.0);
+    expect(Ok, stat);
+
+    stat = GdipDeleteBrush(brush);
+    expect(Ok, stat);
+
+    stat = GdipSaveGraphics(graphics, &state1);
+    expect(Ok, stat);
+
+    stat = GdipRestoreGraphics(graphics, state1);
+    expect(Ok, stat);
+
+    /* Popping two states at once */
+    stat = GdipScaleWorldTransform(graphics, 2.0, 2.0, MatrixOrderPrepend);
+    expect(Ok, stat);
+
+    stat = GdipBeginContainer2(graphics, &state1);
+    expect(Ok, stat);
+
+    stat = GdipScaleWorldTransform(graphics, 4.0, 4.0, MatrixOrderPrepend);
+    expect(Ok, stat);
+
+    stat = GdipBeginContainer2(graphics, &state2);
+    expect(Ok, stat);
+
+    stat = GdipEndContainer(graphics, state1);
+    expect(Ok, stat);
+
+    stat = GdipCreateSolidFill((ARGB)0xff00ff00, (GpSolidFill**)&brush);
+    expect(Ok, stat);
+
+    stat = GdipFillRectangle(graphics, brush, 20.0, 20.0, 5.0, 5.0);
+    expect(Ok, stat);
+
+    /* Restoring an invalid state seems to break the graphics object? */
+    if (0) {
+        stat = GdipEndContainer(graphics, state1);
+        expect(Ok, stat);
+    }
+
+    /* Ending metafile with a state open */
+    stat = GdipBeginContainer2(graphics, &state1);
+    expect(Ok, stat);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    check_metafile(metafile, container_records, "container metafile", dst_points, &frame, UnitPixel);
+
+    sync_metafile(&metafile, "container.emf");
+
+    stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, stat);
+
+    play_metafile(metafile, graphics, container_records, "container playback", dst_points, &frame, UnitPixel);
+
+    stat = GdipBitmapGetPixel(bitmap, 80, 80, &color);
+    expect(Ok, stat);
+    expect(0, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 12, 12, &color);
+    expect(Ok, stat);
+    expect(0xff000000, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 8, 8, &color);
+    expect(Ok, stat);
+    expect(0xff0000ff, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 42, 42, &color);
+    expect(Ok, stat);
+    expect(0xff00ff00, color);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)bitmap);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -1743,6 +1903,7 @@ START_TEST(metafile)
     test_worldtransform();
     test_converttoemfplus();
     test_frameunit();
+    test_containers();
 
     GdiplusShutdown(gdiplusToken);
 }
