@@ -4509,7 +4509,7 @@ static void test_istream(void)
     ok(ret == EOF, "expected -1 got %d\n", ret);
     ok(is1.count == 0, "expected 0 got %d\n", is1.count);
     ok(is1.base_ios.state == IOSTATE_eofbit, "expected %d got %d\n", IOSTATE_eofbit, is1.base_ios.state);
-    ok(fb1.base.gptr == (char*) NULL + 1, "wrong get pointer, expected %p got %p\n", (char*) NULL + 1, fb1.base.gptr);
+    ok(fb1.base.gptr == (char*) 1, "wrong get pointer, expected %p got %p\n", (char*) 1, fb1.base.gptr);
 
     /* get_char */
     is1.count = 0xabababab;
@@ -4552,14 +4552,14 @@ static void test_istream(void)
     ok(is1.count == 0, "expected 0 got %d\n", is1.count);
     ok(is1.base_ios.state == (IOSTATE_eofbit|IOSTATE_failbit), "expected %d got %d\n",
         IOSTATE_eofbit|IOSTATE_failbit, is1.base_ios.state);
-    ok(fb1.base.gptr == (char*) NULL + 1, "wrong get pointer, expected %p got %p\n", (char*) NULL + 1, fb1.base.gptr);
+    ok(fb1.base.gptr == (char*) 1, "wrong get pointer, expected %p got %p\n", (char*) 1, fb1.base.gptr);
     ok(c == EOF, "expected -1 got %d\n", c);
     is1.base_ios.state = IOSTATE_failbit;
     pis = call_func2(p_istream_get_char, &is1, NULL);
     ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
     ok(is1.count == 0, "expected 0 got %d\n", is1.count);
     ok(is1.base_ios.state == IOSTATE_failbit, "expected %d got %d\n", IOSTATE_failbit, is1.base_ios.state);
-    ok(fb1.base.gptr == (char*) NULL + 1, "wrong get pointer, expected %p got %p\n", (char*) NULL + 1, fb1.base.gptr);
+    ok(fb1.base.gptr == (char*) 1, "wrong get pointer, expected %p got %p\n", (char*) 1, fb1.base.gptr);
 
     /* get_sb */
     is1.count = 0xabababab;
