@@ -198,30 +198,6 @@ HRESULT WINAPI WsCreateMessageForChannel( WS_CHANNEL *channel_handle, const WS_M
 }
 
 /**************************************************************************
- *          WsInitializeMessage		[webservices.@]
- */
-HRESULT WINAPI WsInitializeMessage( WS_MESSAGE *handle, WS_MESSAGE_INITIALIZATION init,
-                                    WS_MESSAGE *src_handle, WS_ERROR *error )
-{
-    struct msg *msg = (struct msg *)handle;
-
-    TRACE( "%p %u %p %p\n", handle, init, src_handle, error );
-    if (error) FIXME( "ignoring error parameter\n" );
-    if (src_handle)
-    {
-        FIXME( "src message not supported\n" );
-        return E_NOTIMPL;
-    }
-
-    if (!handle || init > WS_FAULT_MESSAGE) return E_INVALIDARG;
-    if (msg->state >= WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
-
-    msg->init  = init;
-    msg->state = WS_MESSAGE_STATE_INITIALIZED;
-    return S_OK;
-}
-
-/**************************************************************************
  *          WsFreeMessage		[webservices.@]
  */
 void WINAPI WsFreeMessage( WS_MESSAGE *handle )
@@ -553,6 +529,30 @@ HRESULT WINAPI WsWriteBody( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTION *de
 
     if (desc->elementLocalName) hr = WsWriteEndElement( msg->writer_body, NULL );
     return hr;
+}
+
+/**************************************************************************
+ *          WsInitializeMessage		[webservices.@]
+ */
+HRESULT WINAPI WsInitializeMessage( WS_MESSAGE *handle, WS_MESSAGE_INITIALIZATION init,
+                                    WS_MESSAGE *src_handle, WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+
+    TRACE( "%p %u %p %p\n", handle, init, src_handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+    if (src_handle)
+    {
+        FIXME( "src message not supported\n" );
+        return E_NOTIMPL;
+    }
+
+    if (!handle || init > WS_FAULT_MESSAGE) return E_INVALIDARG;
+    if (msg->state >= WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
+
+    msg->init  = init;
+    msg->state = WS_MESSAGE_STATE_INITIALIZED;
+    return write_envelope( msg );
 }
 
 static inline void set_utf8_text( WS_XML_UTF8_TEXT *text, BYTE *bytes, ULONG len )
