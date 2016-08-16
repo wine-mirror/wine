@@ -142,6 +142,10 @@ static BOOL CALLBACK EnumAxes(const DIDEVICEOBJECTINSTANCEA *pdidoi, void *pCont
         hr = IDirectInputDevice_SetProperty(info->pJoystick, DIPROP_DEADZONE, &dipdw.diph);
         ok(hr==DI_OK,"IDirectInputDevice_SetProperty() failed: %08x\n", hr);
 
+        /* ensure DIDOI_ASPECTPOSITION is set for axes objects  */
+        ok(pdidoi->dwFlags & DIDOI_ASPECTPOSITION, "Missing DIDOI_ASPECTPOSITION, flags are 0x%x\n",
+           pdidoi->dwFlags);
+
         info->axis++;
     } else if (IsEqualIID(&pdidoi->guidType, &GUID_POV))
         info->pov++;
