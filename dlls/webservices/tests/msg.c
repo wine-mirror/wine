@@ -339,6 +339,8 @@ static void test_WsWriteEnvelopeStart(void)
         "<a:MessageID>urn:uuid:00000000-0000-0000-0000-000000000000</a:MessageID>"
         "<a:ReplyTo><a:Address>http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous</a:Address>"
         "</a:ReplyTo></s:Header><s:Body/></s:Envelope>";
+    static const char expected3[] =
+        "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Header/><s:Body/></s:Envelope>";
     HRESULT hr;
     WS_MESSAGE *msg;
     WS_XML_WRITER *writer;
@@ -375,6 +377,21 @@ static void test_WsWriteEnvelopeStart(void)
     hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( state == WS_MESSAGE_STATE_WRITING, "got %u\n", state );
+    WsFreeMessage( msg );
+
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_TRANSPORT, NULL, 0, &msg,
+                          NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_header( msg, expected3, -1, 0, 0, __LINE__ );
 
     WsFreeMessage( msg );
     WsFreeWriter( writer );

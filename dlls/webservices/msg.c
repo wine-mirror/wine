@@ -349,6 +349,11 @@ static HRESULT get_addr_namespace( WS_ADDRESSING_VERSION ver, WS_XML_STRING *str
         str->length = sizeof(ns_addr_1_0)/sizeof(ns_addr_1_0[0]) - 1;
         return S_OK;
 
+    case WS_ADDRESSING_VERSION_TRANSPORT:
+        str->bytes  = NULL;
+        str->length = 0;
+        return S_OK;
+
     default:
         ERR( "unhandled addressing version %u\n", ver );
         return E_NOTIMPL;
@@ -409,14 +414,18 @@ static HRESULT write_envelope_start( struct msg *msg, WS_XML_WRITER *writer )
     if ((hr = get_addr_namespace( msg->version_addr, &ns_addr )) != S_OK) return hr;
 
     if ((hr = WsWriteStartElement( writer, &prefix_s, &envelope, &ns_env, NULL )) != S_OK) return hr;
-    if ((hr = WsWriteXmlnsAttribute( writer, &prefix_a, &ns_addr, FALSE, NULL )) != S_OK) return hr;
+    if (msg->version_addr < WS_ADDRESSING_VERSION_TRANSPORT &&
+        (hr = WsWriteXmlnsAttribute( writer, &prefix_a, &ns_addr, FALSE, NULL )) != S_OK) return hr;
     if ((hr = WsWriteStartElement( writer, &prefix_s, &header, &ns_env, NULL )) != S_OK) return hr;
-    if ((hr = WsWriteStartElement( writer, &prefix_a, &msgid, &ns_addr, NULL )) != S_OK) return hr;
 
-    urn.text.textType = WS_XML_TEXT_TYPE_UNIQUE_ID;
-    memcpy( &urn.value, &msg->id, sizeof(msg->id) );
-    if ((hr = WsWriteText( writer, &urn.text, NULL )) != S_OK) return hr;
-    if ((hr = WsWriteEndElement( writer, NULL )) != S_OK) return hr; /* </a:MessageID> */
+    if (msg->version_addr < WS_ADDRESSING_VERSION_TRANSPORT)
+    {
+        if ((hr = WsWriteStartElement( writer, &prefix_a, &msgid, &ns_addr, NULL )) != S_OK) return hr;
+        urn.text.textType = WS_XML_TEXT_TYPE_UNIQUE_ID;
+        memcpy( &urn.value, &msg->id, sizeof(msg->id) );
+        if ((hr = WsWriteText( writer, &urn.text, NULL )) != S_OK) return hr;
+        if ((hr = WsWriteEndElement( writer, NULL )) != S_OK) return hr; /* </a:MessageID> */
+    }
 
     for (i = 0; i < msg->header_count; i++)
     {
