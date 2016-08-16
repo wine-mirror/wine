@@ -908,6 +908,58 @@ static void testScreenBuffer(HANDLE hConOut)
     SetConsoleOutputCP(oldcp);
 }
 
+static void CALLBACK signaled_function(void *p, BOOLEAN timeout)
+{
+    HANDLE event = p;
+    SetEvent(event);
+    ok(!timeout, "wait shouldn't have timed out\n");
+}
+
+static void testWaitForConsoleInput(HANDLE input_handle)
+{
+    HANDLE wait_handle;
+    HANDLE complete_event;
+    INPUT_RECORD record;
+    DWORD events_written;
+    DWORD wait_ret;
+    BOOL ret;
+
+    complete_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    /* Test success case */
+    ret = RegisterWaitForSingleObject(&wait_handle, input_handle, signaled_function, complete_event, INFINITE, WT_EXECUTEONLYONCE);
+    ok(ret == TRUE, "Expected RegisterWaitForSingleObject to return TRUE, got %d\n", ret);
+    /* give worker thread a chance to start up */
+    Sleep(100);
+    record.EventType = KEY_EVENT;
+    record.Event.KeyEvent.bKeyDown = 1;
+    record.Event.KeyEvent.wRepeatCount = 1;
+    record.Event.KeyEvent.wVirtualKeyCode = VK_RETURN;
+    record.Event.KeyEvent.wVirtualScanCode = VK_RETURN;
+    record.Event.KeyEvent.uChar.UnicodeChar = '\r';
+    record.Event.KeyEvent.dwControlKeyState = 0;
+    ret = WriteConsoleInputW(input_handle, &record, 1, &events_written);
+    ok(ret == TRUE, "Expected WriteConsoleInputW to return TRUE, got %d\n", ret);
+    wait_ret = WaitForSingleObject(complete_event, INFINITE);
+    ok(wait_ret == WAIT_OBJECT_0, "Expected the handle to be signaled\n");
+    ret = UnregisterWait(wait_handle);
+    /* If the callback is still running, this fails with ERROR_IO_PENDING, but
+       that's ok and expected. */
+    ok(ret != 0 || GetLastError() == ERROR_IO_PENDING,
+        "UnregisterWait failed with error %d\n", GetLastError());
+
+    /* Test timeout case */
+    FlushConsoleInputBuffer(input_handle);
+    ret = RegisterWaitForSingleObject(&wait_handle, input_handle, signaled_function, complete_event, INFINITE, WT_EXECUTEONLYONCE);
+    wait_ret = WaitForSingleObject(complete_event, 100);
+    ok(wait_ret == WAIT_TIMEOUT, "Expected the wait to time out\n");
+    ret = UnregisterWait(wait_handle);
+    ok(ret, "UnregisterWait failed with error %d\n", GetLastError());
+
+    /* Clean up */
+    ok(CloseHandle(complete_event), "Failed to close event handle, last error %d\n", GetLastError());
+}
+
 static void test_GetSetConsoleInputExeName(void)
 {
     BOOL ret;
@@ -3093,6 +3145,8 @@ START_TEST(console)
     testScroll(hConOut, sbi.dwSize);
     /* will test sb creation / modification / codepage handling */
     testScreenBuffer(hConOut);
+    /* Test waiting for a console handle */
+    testWaitForConsoleInput(hConIn);
 
     /* clear duplicated console font table */
     CloseHandle(hConIn);
