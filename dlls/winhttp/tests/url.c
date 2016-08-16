@@ -69,6 +69,9 @@ static const WCHAR url12[] =
 static const WCHAR url13[] =
     {'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o',' ','g','/','p','a','t','h',' ','w','i','t','h',' ','s','p','a','c','e','s',0};
 static const WCHAR url14[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/','t','e','s','t',0};
+static const WCHAR url15[] = {'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g',':','6','5','5','3','6',0};
+static const WCHAR url16[] = {'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g',':','0',0};
+static const WCHAR url17[] = {'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g',':',0};
 
 static const WCHAR url_k1[]  =
     {'h','t','t','p',':','/','/','u','s','e','r','n','a','m','e',':','p','a','s','s','w','o','r','d',
@@ -718,6 +721,25 @@ static void WinHttpCrackUrl_test( void )
     ok( uc.dwUrlPathLength == 0, "unexpected length %u\n", uc.dwUrlPathLength );
     ok( !uc.lpszExtraInfo, "unexpected extra info %s\n", wine_dbgstr_w(uc.lpszExtraInfo) );
     ok( uc.dwExtraInfoLength == 0, "unexpected length %u\n", uc.dwExtraInfoLength );
+
+    reset_url_components( &uc );
+    SetLastError( 0xdeadbeef );
+    ret = WinHttpCrackUrl( url15, 0, 0, &uc );
+    error = GetLastError();
+    ok( !ret, "WinHttpCrackUrl succeeded\n" );
+    ok( error == ERROR_WINHTTP_INVALID_URL, "got %u\n", error );
+
+    reset_url_components( &uc );
+    uc.nPort = 1;
+    ret = WinHttpCrackUrl( url16, 0, 0, &uc );
+    ok( ret, "got %u\n", GetLastError() );
+    ok( !uc.nPort, "got %u\n", uc.nPort );
+
+    reset_url_components( &uc );
+    uc.nPort = 1;
+    ret = WinHttpCrackUrl( url17, 0, 0, &uc );
+    ok( ret, "got %u\n", GetLastError() );
+    todo_wine ok( uc.nPort == 80, "got %u\n", uc.nPort );
 }
 
 START_TEST(url)

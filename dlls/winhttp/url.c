@@ -163,6 +163,19 @@ static WCHAR *escape_url( LPCWSTR url, DWORD *len )
     return ret;
 }
 
+static DWORD parse_port( const WCHAR *str, DWORD len, INTERNET_PORT *ret )
+{
+    const WCHAR *p = str;
+    DWORD port = 0;
+    while (len && isdigitW( *p ))
+    {
+        if ((port = port * 10 + *p - '0') > 65535) return ERROR_WINHTTP_INVALID_URL;
+        p++; len--;
+    }
+    *ret = port;
+    return ERROR_SUCCESS;
+}
+
 /***********************************************************************
  *          WinHttpCrackUrl (winhttp.@)
  */
@@ -172,7 +185,7 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
     DWORD err, scheme_len, user_len, passwd_len, host_len, path_len, extra_len;
     INTERNET_SCHEME scheme = 0;
 
-    TRACE("%s, %d, %x, %p\n", debugstr_w(url), len, flags, uc);
+    TRACE("%s, %d, %x, %p\n", debugstr_wn(url, len), len, flags, uc);
 
     if (!url || !uc || uc->dwStructSize != sizeof(URL_COMPONENTS))
     {
@@ -258,7 +271,7 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
         {
             if ((err = set_component( &uc->lpszHostName, &host_len, p, r - p, flags ))) goto exit;
             r++;
-            uc->nPort = atoiW( r );
+            if ((err = parse_port( r, q - r, &uc->nPort ))) goto exit;
         }
         else
         {
@@ -284,7 +297,7 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
         {
             if ((err = set_component( &uc->lpszHostName, &host_len, p, r - p, flags ))) goto exit;
             r++;
-            uc->nPort = atoiW( r );
+            if ((err = parse_port( r, len - (r - url), &uc->nPort ))) goto exit;
         }
         else
         {
