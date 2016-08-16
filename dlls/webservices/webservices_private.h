@@ -95,7 +95,7 @@ struct channel
     WS_CHANNEL_BINDING      binding;
     WS_CHANNEL_STATE        state;
     ULONG                   prop_count;
-    struct prop             prop[9];
+    struct prop             prop[50];
 };
 
 HRESULT create_channel( WS_CHANNEL_TYPE, WS_CHANNEL_BINDING, const WS_CHANNEL_PROPERTY *,
