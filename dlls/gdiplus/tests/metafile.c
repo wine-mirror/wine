@@ -1869,6 +1869,114 @@ static void test_containers(void)
     expect(Ok, stat);
 }
 
+static const emfplus_record clipping_records[] = {
+    {0, EMR_HEADER},
+    {0, EmfPlusRecordTypeHeader},
+    {0, EmfPlusRecordTypeSave},
+    {0, EmfPlusRecordTypeSetClipRect},
+    {0, EmfPlusRecordTypeFillRects},
+    {0, EmfPlusRecordTypeRestore},
+    {0, EmfPlusRecordTypeSetClipRect},
+    {0, EmfPlusRecordTypeFillRects},
+    {0, EmfPlusRecordTypeEndOfFile},
+    {0, EMR_EOF},
+    {0}
+};
+
+static void test_clipping(void)
+{
+    GpStatus stat;
+    GpMetafile *metafile;
+    GpGraphics *graphics;
+    GpBitmap *bitmap;
+    GpBrush *brush;
+    ARGB color;
+    HDC hdc;
+    static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
+    static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
+    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
+    GraphicsState state;
+
+    hdc = CreateCompatibleDC(0);
+
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(Ok, stat);
+
+    DeleteDC(hdc);
+
+    if (stat != Ok)
+        return;
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipSaveGraphics(graphics, &state);
+    expect(Ok, stat);
+
+    stat = GdipSetClipRect(graphics, 30, 30, 10, 10, CombineModeReplace);
+    expect(Ok, stat);
+
+    stat = GdipCreateSolidFill((ARGB)0xff000000, (GpSolidFill**)&brush);
+    expect(Ok, stat);
+
+    stat = GdipFillRectangle(graphics, brush, 0, 0, 100, 100);
+    expect(Ok, stat);
+
+    stat = GdipDeleteBrush(brush);
+    expect(Ok, stat);
+
+    stat = GdipRestoreGraphics(graphics, state);
+    expect(Ok, stat);
+
+    stat = GdipSetClipRect(graphics, 30, 30, 10, 10, CombineModeXor);
+    expect(Ok, stat);
+
+    stat = GdipCreateSolidFill((ARGB)0xff0000ff, (GpSolidFill**)&brush);
+    expect(Ok, stat);
+
+    stat = GdipFillRectangle(graphics, brush, 30, 30, 20, 10);
+    expect(Ok, stat);
+
+    stat = GdipDeleteBrush(brush);
+    expect(Ok, stat);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    check_metafile(metafile, clipping_records, "clipping metafile", dst_points, &frame, UnitPixel);
+
+    sync_metafile(&metafile, "clipping.emf");
+
+    stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, stat);
+
+    play_metafile(metafile, graphics, clipping_records, "clipping playback", dst_points, &frame, UnitPixel);
+
+    stat = GdipBitmapGetPixel(bitmap, 80, 80, &color);
+    expect(Ok, stat);
+    expect(0, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 35, 35, &color);
+    expect(Ok, stat);
+    expect(0xff000000, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 45, 35, &color);
+    expect(Ok, stat);
+    expect(0xff0000ff, color);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)bitmap);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -1904,6 +2012,7 @@ START_TEST(metafile)
     test_converttoemfplus();
     test_frameunit();
     test_containers();
+    test_clipping();
 
     GdiplusShutdown(gdiplusToken);
 }
