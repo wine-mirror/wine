@@ -598,6 +598,24 @@ static HRESULT alloc_header( WS_HEADER_TYPE type, WS_TYPE value_type, WS_WRITE_O
         memcpy( header->text.value.bytes, str->bytes, str->length );
         break;
     }
+    case WS_STRING_TYPE:
+    {
+        int len;
+        const WS_STRING *str = value;
+
+        if (option != WS_WRITE_REQUIRED_VALUE)
+        {
+            FIXME( "unhandled write option %u\n", option );
+            return E_NOTIMPL;
+        }
+        if (size != sizeof(*str)) return E_INVALIDARG;
+        len = WideCharToMultiByte( CP_UTF8, 0, str->chars, str->length, NULL, 0, NULL, NULL );
+        if (!(header = heap_alloc( sizeof(*header) + len ))) return E_OUTOFMEMORY;
+        set_utf8_text( &header->text, (BYTE *)(header + 1), len );
+        WideCharToMultiByte( CP_UTF8, 0, str->chars, str->length, (char *)header->text.value.bytes,
+                             len, NULL, NULL );
+        break;
+    }
     default:
         FIXME( "unhandled type %u\n", value_type );
         return E_NOTIMPL;
