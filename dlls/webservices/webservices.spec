@@ -128,7 +128,7 @@
 @ stub WsReceiveMessage
 @ stub WsRegisterOperationForCancel
 @ stub WsRemoveCustomHeader
-@ stub WsRemoveHeader
+@ stdcall WsRemoveHeader(ptr long ptr)
 @ stub WsRemoveMappedHeader
 @ stub WsRemoveNode
 @ stub WsRequestReply

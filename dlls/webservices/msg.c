@@ -671,3 +671,35 @@ HRESULT WINAPI WsSetHeader( WS_MESSAGE *handle, WS_HEADER_TYPE type, WS_TYPE val
     msg->header[i] = header;
     return write_envelope( msg );
 }
+
+/**************************************************************************
+ *          WsRemoveHeader		[webservices.@]
+ */
+HRESULT WINAPI WsRemoveHeader( WS_MESSAGE *handle, WS_HEADER_TYPE type, WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+    BOOL removed = FALSE;
+    ULONG i;
+
+    TRACE( "%p %u %p\n", handle, type, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!handle) return E_INVALIDARG;
+    if (msg->state < WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
+    if (type < WS_ACTION_HEADER || type > WS_FAULT_TO_HEADER) return E_INVALIDARG;
+
+    for (i = 0; i < msg->header_count; i++)
+    {
+        if (msg->header[i]->type == type)
+        {
+            heap_free( msg->header[i] );
+            memmove( &msg->header[i], &msg->header[i + 1], (msg->header_count - i) * sizeof(struct header *) );
+            msg->header_count--;
+            removed = TRUE;
+            break;
+        }
+    }
+
+    if (removed) return write_envelope( msg );
+    return S_OK;
+}
