@@ -1176,6 +1176,9 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
 {
     INT dlgCode = 0;
 
+    if (!IsWindow( hwndDlg ))
+        return FALSE;
+
     if (CallMsgFilterW( msg, MSGF_DIALOGBOX )) return TRUE;
 
     hwndDlg = WIN_GetFullHandle( hwndDlg );
