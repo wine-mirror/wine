@@ -51,9 +51,6 @@ static GpStatus draw_driver_string(GpGraphics *graphics, GDIPCONST UINT16 *text,
                                    GDIPCONST GpBrush *brush, GDIPCONST PointF *positions,
                                    INT flags, GDIPCONST GpMatrix *matrix);
 
-static GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_space,
-        GpCoordinateSpace src_space, GpMatrix *matrix);
-
 /* Converts from gdiplus path point type to gdi path point type. */
 static BYTE convert_path_point_type(BYTE type)
 {
@@ -5642,6 +5639,13 @@ GpStatus WINGDIPAPI GdipSetClipRect(GpGraphics *graphics, REAL x, REAL y,
     if(graphics->busy)
         return ObjectBusy;
 
+    if (graphics->image && graphics->image->type == ImageTypeMetafile)
+    {
+        status = METAFILE_SetClipRect((GpMetafile*)graphics->image, x, y, width, height, mode);
+        if (status != Ok)
+            return status;
+    }
+
     rect.X = x;
     rect.Y = y;
     rect.Width  = width;
@@ -5983,7 +5987,7 @@ GpStatus WINGDIPAPI GdipGetClip(GpGraphics *graphics, GpRegion *region)
     return Ok;
 }
 
-static GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_space,
+GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_space,
         GpCoordinateSpace src_space, GpMatrix *matrix)
 {
     GpStatus stat = Ok;

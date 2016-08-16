@@ -81,6 +81,9 @@ extern REAL units_to_pixels(REAL units, GpUnit unit, REAL dpi) DECLSPEC_HIDDEN;
 extern REAL pixels_to_units(REAL pixels, GpUnit unit, REAL dpi) DECLSPEC_HIDDEN;
 extern REAL units_scale(GpUnit from, GpUnit to, REAL dpi) DECLSPEC_HIDDEN;
 
+extern GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_space,
+        GpCoordinateSpace src_space, GpMatrix *matrix) DECLSPEC_HIDDEN;
+
 extern GpStatus graphics_from_image(GpImage *image, GpGraphics **graphics) DECLSPEC_HIDDEN;
 
 extern GpStatus METAFILE_GetGraphicsContext(GpMetafile* metafile, GpGraphics **result) DECLSPEC_HIDDEN;
@@ -89,6 +92,8 @@ extern GpStatus METAFILE_ReleaseDC(GpMetafile* metafile, HDC hdc) DECLSPEC_HIDDE
 extern GpStatus METAFILE_GraphicsClear(GpMetafile* metafile, ARGB color) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_FillRectangles(GpMetafile* metafile, GpBrush* brush,
     GDIPCONST GpRectF* rects, INT count) DECLSPEC_HIDDEN;
+extern GpStatus METAFILE_SetClipRect(GpMetafile* metafile,
+    REAL x, REAL y, REAL width, REAL height, CombineMode mode) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_SetPageTransform(GpMetafile* metafile, GpUnit unit, REAL scale) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_SetWorldTransform(GpMetafile* metafile, GDIPCONST GpMatrix* transform) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_ScaleWorldTransform(GpMetafile* metafile, REAL sx, REAL sy, MatrixOrder order) DECLSPEC_HIDDEN;
@@ -372,6 +377,7 @@ struct GpMetafile{
     GpUnit page_unit;
     REAL page_scale;
     GpRegion *base_clip; /* clip region in device space for all metafile output */
+    GpRegion *clip; /* clip region within the metafile */
     struct list containers;
 };
 

@@ -70,6 +70,12 @@ typedef struct EmfPlusFillRects
     DWORD Count;
 } EmfPlusFillRects;
 
+typedef struct EmfPlusSetClipRect
+{
+    EmfPlusRecordHeader Header;
+    GpRectF ClipRect;
+} EmfPlusSetClipRect;
+
 typedef struct EmfPlusSetPageTransform
 {
     EmfPlusRecordHeader Header;
@@ -137,6 +143,7 @@ typedef struct container
     GpMatrix world_transform;
     GpUnit page_unit;
     REAL page_scale;
+    GpRegion *clip;
 } container;
 
 static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, DWORD size, void **result)
@@ -588,6 +595,32 @@ GpStatus METAFILE_FillRectangles(GpMetafile* metafile, GpBrush* brush,
     return Ok;
 }
 
+GpStatus METAFILE_SetClipRect(GpMetafile* metafile, REAL x, REAL y, REAL width, REAL height, CombineMode mode)
+{
+    if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
+    {
+        EmfPlusSetClipRect *record;
+        GpStatus stat;
+
+        stat = METAFILE_AllocateRecord(metafile,
+            sizeof(EmfPlusSetClipRect),
+            (void**)&record);
+        if (stat != Ok)
+            return stat;
+
+        record->Header.Type = EmfPlusRecordTypeSetClipRect;
+        record->Header.Flags = (mode & 0xf) << 8;
+        record->ClipRect.X = x;
+        record->ClipRect.Y = y;
+        record->ClipRect.Width = width;
+        record->ClipRect.Height = height;
+
+        METAFILE_WriteRecords(metafile);
+    }
+
+    return Ok;
+}
+
 GpStatus METAFILE_SetPageTransform(GpMetafile* metafile, GpUnit unit, REAL scale)
 {
     if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
@@ -1014,7 +1047,11 @@ static void METAFILE_PlaybackReleaseDC(GpMetafile *metafile)
 
 static GpStatus METAFILE_PlaybackUpdateClip(GpMetafile *metafile)
 {
-    return GdipCombineRegionRegion(metafile->playback_graphics->clip, metafile->base_clip, CombineModeReplace);
+    GpStatus stat;
+    stat = GdipCombineRegionRegion(metafile->playback_graphics->clip, metafile->base_clip, CombineModeReplace);
+    if (stat == Ok)
+        stat = GdipCombineRegionRegion(metafile->playback_graphics->clip, metafile->clip, CombineModeIntersect);
+    return stat;
 }
 
 static GpStatus METAFILE_PlaybackUpdateWorldTransform(GpMetafile *metafile)
@@ -1166,6 +1203,32 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             return stat;
         }
+        case EmfPlusRecordTypeSetClipRect:
+        {
+            EmfPlusSetClipRect *record = (EmfPlusSetClipRect*)header;
+            CombineMode mode = (CombineMode)((flags >> 8) & 0xf);
+            GpRegion *region;
+            GpMatrix world_to_device;
+
+            if (dataSize + sizeof(EmfPlusRecordHeader) < sizeof(*record))
+                return InvalidParameter;
+
+            stat = GdipCreateRegionRect(&record->ClipRect, &region);
+
+            if (stat == Ok)
+            {
+                get_graphics_transform(real_metafile->playback_graphics,
+                    CoordinateSpaceDevice, CoordinateSpaceWorld, &world_to_device);
+
+                GdipTransformRegion(region, &world_to_device);
+
+                GdipCombineRegionRegion(real_metafile->clip, region, mode);
+
+                GdipDeleteRegion(region);
+            }
+
+            return METAFILE_PlaybackUpdateClip(real_metafile);
+        }
         case EmfPlusRecordTypeSetPageTransform:
         {
             EmfPlusSetPageTransform *record = (EmfPlusSetPageTransform*)header;
@@ -1257,6 +1320,13 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             if (!cont)
                 return OutOfMemory;
 
+            stat = GdipCloneRegion(metafile->clip, &cont->clip);
+            if (stat != Ok)
+            {
+                heap_free(cont);
+                return stat;
+            }
+
             if (recordType == EmfPlusRecordTypeBeginContainerNoParams)
                 stat = GdipBeginContainer2(metafile->playback_graphics, &cont->state);
             else
@@ -1264,6 +1334,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             if (stat != Ok)
             {
+                GdipDeleteRegion(cont->clip);
                 heap_free(cont);
                 return stat;
             }
@@ -1310,6 +1381,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                 while ((cont2 = LIST_ENTRY(list_head(&real_metafile->containers), container, entry)) != cont)
                 {
                     list_remove(&cont2->entry);
+                    GdipDeleteRegion(cont2->clip);
                     heap_free(cont2);
                 }
 
@@ -1321,8 +1393,10 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                 *real_metafile->world_transform = cont->world_transform;
                 real_metafile->page_unit = cont->page_unit;
                 real_metafile->page_scale = cont->page_scale;
+                GdipCombineRegionRegion(real_metafile->clip, cont->clip, CombineModeReplace);
 
                 list_remove(&cont->entry);
+                GdipDeleteRegion(cont->clip);
                 heap_free(cont);
             }
 
@@ -1453,6 +1527,9 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics *graphics,
             stat = GdipGetClip(graphics, real_metafile->base_clip);
 
         if (stat == Ok)
+            stat = GdipCreateRegion(&real_metafile->clip);
+
+        if (stat == Ok)
             stat = GdipCreatePath(FillModeAlternate, &dst_path);
 
         if (stat == Ok)
@@ -1506,10 +1583,14 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics *graphics,
         GdipDeleteRegion(real_metafile->base_clip);
         real_metafile->base_clip = NULL;
 
+        GdipDeleteRegion(real_metafile->clip);
+        real_metafile->clip = NULL;
+
         while (list_head(&real_metafile->containers))
         {
             container* cont = LIST_ENTRY(list_head(&real_metafile->containers), container, entry);
             list_remove(&cont->entry);
+            GdipDeleteRegion(cont->clip);
             heap_free(cont);
         }
 
