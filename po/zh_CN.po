@@ -3461,7 +3461,7 @@ msgstr "可选效果"
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
-msgstr ""
+msgstr "在控制器上按任意键以激活选中的效果。可根据控制器轴改变效果的方向。"
 
 #: joy.rc:31
 msgid "Game Controllers"
@@ -3469,31 +3469,31 @@ msgstr "游戏控制器"
 
 #: jscript.rc:28
 msgid "Error converting object to primitive type"
-msgstr ""
+msgstr "将对象转换为基本类型时出错"
 
 #: jscript.rc:29
 msgid "Invalid procedure call or argument"
-msgstr ""
+msgstr "过程调用或参数无效"
 
 #: jscript.rc:30
 msgid "Subscript out of range"
-msgstr ""
+msgstr "标记越界"
 
 #: jscript.rc:31
 msgid "Object required"
-msgstr ""
+msgstr "需要对象"
 
 #: jscript.rc:32
 msgid "Automation server can't create object"
-msgstr ""
+msgstr "自动化服务器无法创建对象"
 
 #: jscript.rc:33
 msgid "Object doesn't support this property or method"
-msgstr ""
+msgstr "对象不支持此属性或方式"
 
 #: jscript.rc:34
 msgid "Object doesn't support this action"
-msgstr ""
+msgstr "对象不支持此动作"
 
 #: jscript.rc:35
 msgid "Argument not optional"
@@ -3517,7 +3517,7 @@ msgstr "期望得到 ')'"
 
 #: jscript.rc:40
 msgid "Expected identifier"
-msgstr ""
+msgstr "期望标识符"
 
 #: jscript.rc:41
 msgid "Expected '='"
@@ -3553,7 +3553,7 @@ msgstr "找不到标签"
 
 #: jscript.rc:49
 msgid "Expected '@end'"
-msgstr ""
+msgstr "期望 '@end'"
 
 #: jscript.rc:50
 msgid "Conditional compilation is turned off"
@@ -3561,7 +3561,7 @@ msgstr "条件编译已关闭"
 
 #: jscript.rc:51
 msgid "Expected '@'"
-msgstr ""
+msgstr "期望 '@'"
 
 #: jscript.rc:54
 msgid "Number expected"
@@ -3573,11 +3573,11 @@ msgstr "期望得到函数"
 
 #: jscript.rc:53
 msgid "'[object]' is not a date object"
-msgstr ""
+msgstr "'[object]' 不是日期对象"
 
 #: jscript.rc:55
 msgid "Object expected"
-msgstr ""
+msgstr "期望得到对象"
 
 #: jscript.rc:56
 msgid "Illegal assignment"
@@ -3693,7 +3693,7 @@ msgstr "内存不足。\n"
 
 #: winerror.mc:101
 msgid "Invalid drive.\n"
-msgstr ""
+msgstr "无效的驱动器。\n"
 
 #: winerror.mc:106
 msgid "Can't delete current directory.\n"
@@ -3701,11 +3701,11 @@ msgstr "无法删除当前目录。\n"
 
 #: winerror.mc:111
 msgid "Not same device.\n"
-msgstr ""
+msgstr "不是同一驱动器。\n"
 
 #: winerror.mc:116
 msgid "No more files.\n"
-msgstr ""
+msgstr "没有更多文件。\n"
 
 #: winerror.mc:121
 msgid "Write protected.\n"
@@ -3713,7 +3713,7 @@ msgstr "存在写保护。\n"
 
 #: winerror.mc:126
 msgid "Bad unit.\n"
-msgstr ""
+msgstr "单位错误。\n"
 
 #: winerror.mc:131
 msgid "Not ready.\n"
@@ -3721,7 +3721,7 @@ msgstr "未就绪。\n"
 
 #: winerror.mc:136
 msgid "Bad command.\n"
-msgstr ""
+msgstr "错误指令。\n"
 
 #: winerror.mc:141
 msgid "CRC error.\n"
@@ -3729,7 +3729,7 @@ msgstr "CRC 错误。\n"
 
 #: winerror.mc:146
 msgid "Bad length.\n"
-msgstr ""
+msgstr "长度错误。\n"
 
 #: winerror.mc:151 winerror.mc:526
 msgid "Seek error.\n"
@@ -3737,7 +3737,7 @@ msgstr "定位出错。\n"
 
 #: winerror.mc:156
 msgid "Not DOS disk.\n"
-msgstr ""
+msgstr "不是 DOS 磁盘。\n"
 
 #: winerror.mc:161
 msgid "Sector not found.\n"
@@ -3761,15 +3761,15 @@ msgstr "一般性错误。\n"
 
 #: winerror.mc:186
 msgid "Sharing violation.\n"
-msgstr ""
+msgstr "共享冲突。\n"
 
 #: winerror.mc:191
 msgid "Lock violation.\n"
-msgstr ""
+msgstr "锁定冲突。\n"
 
 #: winerror.mc:196
 msgid "Wrong disk.\n"
-msgstr ""
+msgstr "错误磁盘。\n"
 
 #: winerror.mc:201
 msgid "Sharing buffer exceeded.\n"
@@ -3789,15 +3789,15 @@ msgstr "请求不被支持。\n"
 
 #: winerror.mc:221
 msgid "Remote machine not listening.\n"
-msgstr ""
+msgstr "远程机器未监听。\n"
 
 #: winerror.mc:226
 msgid "Duplicate network name.\n"
-msgstr ""
+msgstr "重复的网络名称。\n"
 
 #: winerror.mc:231
 msgid "Bad network path.\n"
-msgstr ""
+msgstr "网络路径错误。\n"
 
 #: winerror.mc:236
 msgid "Network busy.\n"
@@ -3809,23 +3809,23 @@ msgstr "设备不存在。\n"
 
 #: winerror.mc:246
 msgid "Too many commands.\n"
-msgstr ""
+msgstr "命令过多。\n"
 
 #: winerror.mc:251
 msgid "Adapter hardware error.\n"
-msgstr ""
+msgstr "适配器硬件错误。\n"
 
 #: winerror.mc:256
 msgid "Bad network response.\n"
-msgstr ""
+msgstr "网络响应错误。\n"
 
 #: winerror.mc:261
 msgid "Unexpected network error.\n"
-msgstr ""
+msgstr "未预期的网络错误。\n"
 
 #: winerror.mc:266
 msgid "Bad remote adapter.\n"
-msgstr ""
+msgstr "远程适配器错误。\n"
 
 #: winerror.mc:271
 msgid "Print queue full.\n"
@@ -3833,7 +3833,7 @@ msgstr "打印队列已满。\n"
 
 #: winerror.mc:276
 msgid "No spool space.\n"
-msgstr ""
+msgstr "池空间耗尽。\n"
 
 #: winerror.mc:281
 msgid "Print canceled.\n"
@@ -3849,7 +3849,7 @@ msgstr "网络访问被拒绝。\n"
 
 #: winerror.mc:296
 msgid "Bad device type.\n"
-msgstr ""
+msgstr "设备类型错误。\n"
 
 #: winerror.mc:301
 msgid "Bad network name.\n"
@@ -3857,11 +3857,11 @@ msgstr "错误的网络名。\n"
 
 #: winerror.mc:306
 msgid "Too many network names.\n"
-msgstr ""
+msgstr "网络名称过多。\n"
 
 #: winerror.mc:311
 msgid "Too many network sessions.\n"
-msgstr ""
+msgstr "网络会话过多。\n"
 
 #: winerror.mc:316
 msgid "Sharing paused.\n"
@@ -3869,11 +3869,11 @@ msgstr "共享已暂停。\n"
 
 #: winerror.mc:321
 msgid "Request not accepted.\n"
-msgstr ""
+msgstr "未接受请求。\n"
 
 #: winerror.mc:326
 msgid "Redirector paused.\n"
-msgstr ""
+msgstr "重定向器已暂停。\n"
 
 #: winerror.mc:331
 msgid "File exists.\n"
@@ -3881,7 +3881,7 @@ msgstr "文件已存在。\n"
 
 #: winerror.mc:336
 msgid "Cannot create.\n"
-msgstr ""
+msgstr "无法创建。\n"
 
 #: winerror.mc:341
 msgid "Int24 failure.\n"
@@ -3889,11 +3889,11 @@ msgstr "Int24 错误。\n"
 
 #: winerror.mc:346
 msgid "Out of structures.\n"
-msgstr ""
+msgstr "超出结构。\n"
 
 #: winerror.mc:351
 msgid "Already assigned.\n"
-msgstr ""
+msgstr "已被分配。\n"
 
 #: winerror.mc:356 winerror.mc:1711
 msgid "Invalid password.\n"
@@ -3909,7 +3909,7 @@ msgstr "网络写入错误。\n"
 
 #: winerror.mc:371
 msgid "No process slots.\n"
-msgstr ""
+msgstr "无线程槽。\n"
 
 #: winerror.mc:376
 msgid "Too many semaphores.\n"
@@ -3917,27 +3917,27 @@ msgstr "太多信号量。\n"
 
 #: winerror.mc:381
 msgid "Exclusive semaphore already owned.\n"
-msgstr ""
+msgstr "专属信号已被占用。\n"
 
 #: winerror.mc:386
 msgid "Semaphore is set.\n"
-msgstr ""
+msgstr "信号已设置。\n"
 
 #: winerror.mc:391
 msgid "Too many semaphore requests.\n"
-msgstr ""
+msgstr "信号请求过多。\n"
 
 #: winerror.mc:396
 msgid "Invalid at interrupt time.\n"
-msgstr ""
+msgstr "中断时间无效。\n"
 
 #: winerror.mc:401
 msgid "Semaphore owner died.\n"
-msgstr ""
+msgstr "信号所有者已终止。\n"
 
 #: winerror.mc:406
 msgid "Semaphore user limit.\n"
-msgstr ""
+msgstr "信号用户限制。\n"
 
 #: winerror.mc:411
 msgid "Insert disk for drive %1.\n"
@@ -3945,7 +3945,7 @@ msgstr "插入驱动器 %1 的磁盘。\n"
 
 #: winerror.mc:416
 msgid "Drive locked.\n"
-msgstr ""
+msgstr "驱动器已锁定。\n"
 
 #: winerror.mc:421
 msgid "Broken pipe.\n"
@@ -3961,11 +3961,11 @@ msgstr "缓存溢出。\n"
 
 #: winerror.mc:441
 msgid "No more search handles.\n"
-msgstr ""
+msgstr "搜索句柄耗尽。\n"
 
 #: winerror.mc:446
 msgid "Invalid target handle.\n"
-msgstr ""
+msgstr "无效的目标句柄。\n"
 
 #: winerror.mc:451
 msgid "Invalid IOCTL.\n"
@@ -3973,11 +3973,11 @@ msgstr "无效的 IOCTL。\n"
 
 #: winerror.mc:456
 msgid "Invalid verify switch.\n"
-msgstr ""
+msgstr "无效的验证开关。\n"
 
 #: winerror.mc:461
 msgid "Bad driver level.\n"
-msgstr ""
+msgstr "驱动级别错误。\n"
 
 #: winerror.mc:466
 msgid "Call not implemented.\n"
@@ -3997,7 +3997,7 @@ msgstr "无效名字。\n"
 
 #: winerror.mc:486
 msgid "Invalid level.\n"
-msgstr ""
+msgstr "无效的级别。\n"
 
 #: winerror.mc:491
 msgid "No volume label.\n"
@@ -4013,55 +4013,55 @@ msgstr "找不到过程。\n"
 
 #: winerror.mc:506
 msgid "No children to wait for.\n"
-msgstr ""
+msgstr "没有要等待的子进程。\n"
 
 #: winerror.mc:511
 msgid "Child process has not completed.\n"
-msgstr ""
+msgstr "子进程未完成。\n"
 
 #: winerror.mc:516
 msgid "Invalid use of direct access handle.\n"
-msgstr ""
+msgstr "无效的直接访问句柄使用。\n"
 
 #: winerror.mc:521
 msgid "Negative seek.\n"
-msgstr ""
+msgstr "负寻道。\n"
 
 #: winerror.mc:531
 msgid "Drive is a JOIN target.\n"
-msgstr ""
+msgstr "驱动器不是 JOIN 目标。\n"
 
 #: winerror.mc:536
 msgid "Drive is already JOINed.\n"
-msgstr ""
+msgstr "驱动器已 JOIN。\n"
 
 #: winerror.mc:541
 msgid "Drive is already SUBSTed.\n"
-msgstr ""
+msgstr "驱动器已 SUBST。\n"
 
 #: winerror.mc:546
 msgid "Drive is not JOINed.\n"
-msgstr ""
+msgstr "驱动器未 JOIN。\n"
 
 #: winerror.mc:551
 msgid "Drive is not SUBSTed.\n"
-msgstr ""
+msgstr "驱动器未 SUBST。\n"
 
 #: winerror.mc:556
 msgid "Attempt to JOIN onto a JOINed drive.\n"
-msgstr ""
+msgstr "尝试 JOIN 到已 JOIN 的驱动器。\n"
 
 #: winerror.mc:561
 msgid "Attempt to SUBST onto a SUBSTed drive.\n"
-msgstr ""
+msgstr "尝试 SUBST 到已 SUBST 的驱动器。\n"
 
 #: winerror.mc:566
 msgid "Attempt to JOIN to a SUBSTed drive.\n"
-msgstr ""
+msgstr "尝试 JOIN 到已 SUBST 的驱动器。\n"
 
 #: winerror.mc:571
 msgid "Attempt to SUBST to a JOINed drive.\n"
-msgstr ""
+msgstr "尝试 SUBST 到已 JOIN 的驱动器。\n"
 
 #: winerror.mc:576
 msgid "Drive is busy.\n"
@@ -4073,7 +4073,7 @@ msgstr "同一个驱动器。\n"
 
 #: winerror.mc:586
 msgid "Not top-level directory.\n"
-msgstr ""
+msgstr "不是顶级目录。\n"
 
 #: winerror.mc:591
 msgid "Directory is not empty.\n"
@@ -4081,63 +4081,63 @@ msgstr "目录非空。\n"
 
 #: winerror.mc:596
 msgid "Path is in use as a SUBST.\n"
-msgstr ""
+msgstr "路径已作为 SUBST 使用。\n"
 
 #: winerror.mc:601
 msgid "Path is in use as a JOIN.\n"
-msgstr ""
+msgstr "路径已作为 JOIN 使用。\n"
 
 #: winerror.mc:606
 msgid "Path is busy.\n"
-msgstr ""
+msgstr "路径忙。\n"
 
 #: winerror.mc:611
 msgid "Already a SUBST target.\n"
-msgstr ""
+msgstr "已为 SUBST 目标。\n"
 
 #: winerror.mc:616
 msgid "System trace not specified or disallowed.\n"
-msgstr ""
+msgstr "系统追溯未指定或不被允许。\n"
 
 #: winerror.mc:621
 msgid "Event count for DosMuxSemWait incorrect.\n"
-msgstr ""
+msgstr "DosMuxSemWait 的事件计数不正确。\n"
 
 #: winerror.mc:626
 msgid "Too many waiters for DosMuxSemWait.\n"
-msgstr ""
+msgstr "DosMuxSemWait 的等待项过多。\n"
 
 #: winerror.mc:631
 msgid "DosSemMuxWait list invalid.\n"
-msgstr ""
+msgstr "DosSemMuxWait 列表无效。\n"
 
 #: winerror.mc:636
 msgid "Volume label too long.\n"
-msgstr ""
+msgstr "卷标过长。\n"
 
 #: winerror.mc:641
 msgid "Too many TCBs.\n"
-msgstr ""
+msgstr "TCB 过多。\n"
 
 #: winerror.mc:646
 msgid "Signal refused.\n"
-msgstr ""
+msgstr "信号被拒绝。\n"
 
 #: winerror.mc:651
 msgid "Segment discarded.\n"
-msgstr ""
+msgstr "片段已丢弃。\n"
 
 #: winerror.mc:656
 msgid "Segment not locked.\n"
-msgstr ""
+msgstr "片段未锁定。\n"
 
 #: winerror.mc:661
 msgid "Bad thread ID address.\n"
-msgstr ""
+msgstr "无效的线程 ID 地址。\n"
 
 #: winerror.mc:666
 msgid "Bad arguments to DosExecPgm.\n"
-msgstr ""
+msgstr "DosExecPgm 参数无效。\n"
 
 #: winerror.mc:671
 msgid "Path is invalid.\n"
@@ -4145,7 +4145,7 @@ msgstr "路径无效。\n"
 
 #: winerror.mc:676
 msgid "Signal pending.\n"
-msgstr ""
+msgstr "信号正在等待。\n"
 
 #: winerror.mc:681
 msgid "Max system-wide thread count reached.\n"
@@ -4153,7 +4153,7 @@ msgstr "已达到系统最大线程计数。\n"
 
 #: winerror.mc:686
 msgid "Lock failed.\n"
-msgstr ""
+msgstr "锁定失败。\n"
 
 #: winerror.mc:691
 msgid "Resource in use.\n"
@@ -4161,7 +4161,7 @@ msgstr "资源已被占用。\n"
 
 #: winerror.mc:696
 msgid "Cancel violation.\n"
-msgstr ""
+msgstr "取消冲突。\n"
 
 #: winerror.mc:701
 msgid "Atomic locks not supported.\n"
@@ -4173,7 +4173,7 @@ msgstr "段编号无效。\n"
 
 #: winerror.mc:711
 msgid "Invalid ordinal for %1.\n"
-msgstr ""
+msgstr "%1 的序数词无效。\n"
 
 #: winerror.mc:716
 msgid "File already exists.\n"
@@ -4189,71 +4189,71 @@ msgstr "找不到信号量名字。\n"
 
 #: winerror.mc:731
 msgid "Invalid starting code segment for %1.\n"
-msgstr ""
+msgstr "%1 的起始代码片段无效。\n"
 
 #: winerror.mc:736
 msgid "Invalid starting stack segment for %1.\n"
-msgstr ""
+msgstr "%1 的起始栈片段无效。\n"
 
 #: winerror.mc:741
 msgid "Invalid module type for %1.\n"
-msgstr ""
+msgstr "%1 的模块类型无效。\n"
 
 #: winerror.mc:746
 msgid "Invalid EXE signature in %1.\n"
-msgstr ""
+msgstr "%1 内的 EXE 签名无效。\n"
 
 #: winerror.mc:751
 msgid "EXE %1 is marked invalid.\n"
-msgstr ""
+msgstr "EXE %1 已被标记为无效。\n"
 
 #: winerror.mc:756
 msgid "Bad EXE format for %1.\n"
-msgstr ""
+msgstr "%1 的 EXE 格式无效。\n"
 
 #: winerror.mc:761
 msgid "Iterated data exceeds 64k in %1.\n"
-msgstr ""
+msgstr "%1 中的迭代数据超过 64k。\n"
 
 #: winerror.mc:766
 msgid "Invalid MinAllocSize in %1.\n"
-msgstr ""
+msgstr "%1 中的 MinAllocSize 无效。\n"
 
 #: winerror.mc:771
 msgid "Dynlink from invalid ring.\n"
-msgstr ""
+msgstr "自无效环的动态链接。\n"
 
 #: winerror.mc:776
 msgid "IOPL not enabled.\n"
-msgstr ""
+msgstr "未启用 IOPL。\n"
 
 #: winerror.mc:781
 msgid "Invalid SEGDPL in %1.\n"
-msgstr ""
+msgstr "%1 中的 SEGDPL 无效。\n"
 
 #: winerror.mc:786
 msgid "Auto data segment exceeds 64k.\n"
-msgstr ""
+msgstr "自动数据片段超过 64k。\n"
 
 #: winerror.mc:791
 msgid "Ring 2 segment must be movable.\n"
-msgstr ""
+msgstr "Ring 2 的片段必须为可移动。\n"
 
 #: winerror.mc:796
 msgid "Relocation chain exceeds segment limit in %1.\n"
-msgstr ""
+msgstr "%1 中的重定位链超出片段限制。\n"
 
 #: winerror.mc:801
 msgid "Infinite loop in relocation chain in %1.\n"
-msgstr ""
+msgstr "%1 中的重定位链包含无限循环。\n"
 
 #: winerror.mc:806
 msgid "Environment variable not found.\n"
-msgstr ""
+msgstr "未找到环境变量。\n"
 
 #: winerror.mc:811
 msgid "No signal sent.\n"
-msgstr ""
+msgstr "未发送任何信号。\n"
 
 #: winerror.mc:816
 msgid "File name is too long.\n"
@@ -4261,11 +4261,11 @@ msgstr "文件名过长。\n"
 
 #: winerror.mc:821
 msgid "Ring 2 stack in use.\n"
-msgstr ""
+msgstr "Ring 2 栈正被占用。\n"
 
 #: winerror.mc:826
 msgid "Error in use of filename wildcards.\n"
-msgstr ""
+msgstr "文件名通配符使用错误。\n"
 
 #: winerror.mc:831
 msgid "Invalid signal number.\n"
@@ -4273,11 +4273,11 @@ msgstr "信号编号无效。\n"
 
 #: winerror.mc:836
 msgid "Error setting signal handler.\n"
-msgstr ""
+msgstr "设置信号处理者时出错。\n"
 
 #: winerror.mc:841
 msgid "Segment locked.\n"
-msgstr ""
+msgstr "片段已锁定。\n"
 
 #: winerror.mc:846
 msgid "Too many modules.\n"
@@ -4285,7 +4285,7 @@ msgstr "模块过多。\n"
 
 #: winerror.mc:851
 msgid "Nesting LoadModule calls not allowed.\n"
-msgstr ""
+msgstr "不允许嵌套 LoadModule 调用。\n"
 
 #: winerror.mc:856
 msgid "Machine type mismatch.\n"
@@ -4293,7 +4293,7 @@ msgstr "机器类型不匹配。\n"
 
 #: winerror.mc:861
 msgid "Bad pipe.\n"
-msgstr ""
+msgstr "无效管道。\n"
 
 #: winerror.mc:866
 msgid "Pipe busy.\n"
@@ -4317,11 +4317,11 @@ msgstr "会话取消。\n"
 
 #: winerror.mc:891
 msgid "Invalid extended attribute name.\n"
-msgstr ""
+msgstr "无效的扩展属性名。\n"
 
 #: winerror.mc:896
 msgid "Extended attribute list inconsistent.\n"
-msgstr ""
+msgstr "扩展属性列表不匹配。\n"
 
 #: winerror.mc:901
 msgid "No more data available.\n"
@@ -4337,19 +4337,19 @@ msgstr "目录名无效。\n"
 
 #: winerror.mc:916
 msgid "Extended attributes didn't fit.\n"
-msgstr ""
+msgstr "扩展属性不适用。\n"
 
 #: winerror.mc:921
 msgid "Extended attribute file corrupt.\n"
-msgstr ""
+msgstr "扩展属性文件已损坏。\n"
 
 #: winerror.mc:926
 msgid "Extended attribute table full.\n"
-msgstr ""
+msgstr "扩展属性表已满。\n"
 
 #: winerror.mc:931
 msgid "Invalid extended attribute handle.\n"
-msgstr ""
+msgstr "无效的扩展属性句柄。\n"
 
 #: winerror.mc:936
 msgid "Extended attributes not supported.\n"
@@ -4357,27 +4357,27 @@ msgstr "不支持扩展属性。\n"
 
 #: winerror.mc:941
 msgid "Mutex not owned by caller.\n"
-msgstr ""
+msgstr "互斥锁不由调用者所有。\n"
 
 #: winerror.mc:946
 msgid "Too many posts to semaphore.\n"
-msgstr ""
+msgstr "到信号的 post 过多。\n"
 
 #: winerror.mc:951
 msgid "Read/WriteProcessMemory partially completed.\n"
-msgstr ""
+msgstr "Read/WriteProcessMemory 仅部分完成。\n"
 
 #: winerror.mc:956
 msgid "The oplock wasn't granted.\n"
-msgstr ""
+msgstr "未授权 oplock。\n"
 
 #: winerror.mc:961
 msgid "Invalid oplock message received.\n"
-msgstr ""
+msgstr "收到无效的 oplock 消息。\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2.\n"
-msgstr ""
+msgstr "未在文件 %2 中发现消息 0x%1。\n"
 
 #: winerror.mc:971
 msgid "Invalid address.\n"
@@ -4385,7 +4385,7 @@ msgstr "地址无效。\n"
 
 #: winerror.mc:976
 msgid "Arithmetic overflow.\n"
-msgstr ""
+msgstr "算术溢出。\n"
 
 #: winerror.mc:981
 msgid "Pipe connected.\n"
@@ -4393,11 +4393,11 @@ msgstr "管道已连接。\n"
 
 #: winerror.mc:986
 msgid "Pipe listening.\n"
-msgstr ""
+msgstr "管道正在监听。\n"
 
 #: winerror.mc:991
 msgid "Extended attribute access denied.\n"
-msgstr ""
+msgstr "扩展属性访问被拒绝。\n"
 
 #: winerror.mc:996
 msgid "I/O operation aborted.\n"
@@ -4405,39 +4405,39 @@ msgstr "I/O 操作被终止。\n"
 
 #: winerror.mc:1001
 msgid "Overlapped I/O incomplete.\n"
-msgstr ""
+msgstr "重叠 I/O 不完整。\n"
 
 #: winerror.mc:1006
 msgid "Overlapped I/O pending.\n"
-msgstr ""
+msgstr "重叠 I/O 正在等待。\n"
 
 #: winerror.mc:1011
 msgid "No access to memory location.\n"
-msgstr ""
+msgstr "无法访问内存位置。\n"
 
 #: winerror.mc:1016
 msgid "Swap error.\n"
-msgstr ""
+msgstr "交换错误。\n"
 
 #: winerror.mc:1021
 msgid "Stack overflow.\n"
-msgstr ""
+msgstr "栈溢出。\n"
 
 #: winerror.mc:1026
 msgid "Invalid message.\n"
-msgstr ""
+msgstr "无效消息。\n"
 
 #: winerror.mc:1031
 msgid "Cannot complete.\n"
-msgstr ""
+msgstr "无法完成。\n"
 
 #: winerror.mc:1036
 msgid "Invalid flags.\n"
-msgstr ""
+msgstr "无效的标记。\n"
 
 #: winerror.mc:1041
 msgid "Unrecognized volume.\n"
-msgstr ""
+msgstr "无法识别的卷。\n"
 
 #: winerror.mc:1046
 msgid "File invalid.\n"
@@ -4445,11 +4445,11 @@ msgstr "文件无效。\n"
 
 #: winerror.mc:1051
 msgid "Cannot run full-screen.\n"
-msgstr ""
+msgstr "无法以全屏模式运行。\n"
 
 #: winerror.mc:1056
 msgid "Nonexistent token.\n"
-msgstr ""
+msgstr "不存在的令牌。\n"
 
 #: winerror.mc:1061
 msgid "Registry corrupt.\n"
@@ -4457,7 +4457,7 @@ msgstr "注册表损坏。\n"
 
 #: winerror.mc:1066
 msgid "Invalid key.\n"
-msgstr ""
+msgstr "无效的键。\n"
 
 #: winerror.mc:1071
 msgid "Can't open registry key.\n"
@@ -4473,7 +4473,7 @@ msgstr "无法写入注册表键。\n"
 
 #: winerror.mc:1086
 msgid "Registry has been recovered.\n"
-msgstr ""
+msgstr "注册表已恢复。\n"
 
 #: winerror.mc:1091
 msgid "Registry is corrupt.\n"
@@ -4493,47 +4493,47 @@ msgstr "键已删除。\n"
 
 #: winerror.mc:1111
 msgid "No registry log space.\n"
-msgstr ""
+msgstr "注册表日志空间耗尽。\n"
 
 #: winerror.mc:1116
 msgid "Registry key has subkeys.\n"
-msgstr ""
+msgstr "注册表键包含子键。\n"
 
 #: winerror.mc:1121
 msgid "Subkey must be volatile.\n"
-msgstr ""
+msgstr "子键必须为可变。\n"
 
 #: winerror.mc:1126
 msgid "Notify change request in progress.\n"
-msgstr ""
+msgstr "公告正在进行的更改请求。\n"
 
 #: winerror.mc:1131
 msgid "Dependent services are running.\n"
-msgstr ""
+msgstr "依赖服务仍在运行。\n"
 
 #: winerror.mc:1136
 msgid "Invalid service control.\n"
-msgstr ""
+msgstr "无效的服务控制。\n"
 
 #: winerror.mc:1141
 msgid "Service request timeout.\n"
-msgstr ""
+msgstr "服务请求超时。\n"
 
 #: winerror.mc:1146
 msgid "Cannot create service thread.\n"
-msgstr ""
+msgstr "无法创建服务线程。\n"
 
 #: winerror.mc:1151
 msgid "Service database locked.\n"
-msgstr ""
+msgstr "服务数据库被锁定。\n"
 
 #: winerror.mc:1156
 msgid "Service already running.\n"
-msgstr ""
+msgstr "服务已在运行。\n"
 
 #: winerror.mc:1161
 msgid "Invalid service account.\n"
-msgstr ""
+msgstr "无效的服务帐号。\n"
 
 #: winerror.mc:1166
 msgid "Service is disabled.\n"
@@ -4541,7 +4541,7 @@ msgstr "服务已禁用。\n"
 
 #: winerror.mc:1171
 msgid "Circular dependency.\n"
-msgstr ""
+msgstr "循环依赖。\n"
 
 #: winerror.mc:1176
 msgid "Service does not exist.\n"
@@ -4549,19 +4549,19 @@ msgstr "服务不存在。\n"
 
 #: winerror.mc:1181
 msgid "Service cannot accept control message.\n"
-msgstr ""
+msgstr "服务无法接受控制消息。\n"
 
 #: winerror.mc:1186
 msgid "Service not active.\n"
-msgstr ""
+msgstr "服务非活动。\n"
 
 #: winerror.mc:1191
 msgid "Service controller connect failed.\n"
-msgstr ""
+msgstr "无法连接服务控制器。\n"
 
 #: winerror.mc:1196
 msgid "Exception in service.\n"
-msgstr ""
+msgstr "服务中出现例外。\n"
 
 #: winerror.mc:1201
 msgid "Database does not exist.\n"
@@ -4569,7 +4569,7 @@ msgstr "数据库不存在。\n"
 
 #: winerror.mc:1206
 msgid "Service-specific error.\n"
-msgstr ""
+msgstr "服务专属错误。\n"
 
 #: winerror.mc:1211
 msgid "Process aborted.\n"
@@ -4577,23 +4577,23 @@ msgstr "进程被终止。\n"
 
 #: winerror.mc:1216
 msgid "Service dependency failed.\n"
-msgstr ""
+msgstr "服务依赖故障。\n"
 
 #: winerror.mc:1221
 msgid "Service login failed.\n"
-msgstr ""
+msgstr "服务登录失败。\n"
 
 #: winerror.mc:1226
 msgid "Service start-hang.\n"
-msgstr ""
+msgstr "服务启动挂起。\n"
 
 #: winerror.mc:1231
 msgid "Invalid service lock.\n"
-msgstr ""
+msgstr "无效的服务锁。\n"
 
 #: winerror.mc:1236
 msgid "Service marked for delete.\n"
-msgstr ""
+msgstr "服务已标记删除。\n"
 
 #: winerror.mc:1241
 msgid "Service exists.\n"
@@ -4601,19 +4601,19 @@ msgstr "服务已存在。\n"
 
 #: winerror.mc:1246
 msgid "System running last-known-good config.\n"
-msgstr ""
+msgstr "系统使用最近的正确配置运行。\n"
 
 #: winerror.mc:1251
 msgid "Service dependency deleted.\n"
-msgstr ""
+msgstr "服务依赖已删除。\n"
 
 #: winerror.mc:1256
 msgid "Boot already accepted as last-good config.\n"
-msgstr ""
+msgstr "引导已接受为最近的正确配置。\n"
 
 #: winerror.mc:1261
 msgid "Service not started since last boot.\n"
-msgstr ""
+msgstr "服务自上次引导以来未启动。\n"
 
 #: winerror.mc:1266
 msgid "Duplicate service name.\n"
@@ -4621,11 +4621,11 @@ msgstr "重复的服务名。\n"
 
 #: winerror.mc:1271
 msgid "Different service account.\n"
-msgstr ""
+msgstr "服务帐号不同。\n"
 
 #: winerror.mc:1276
 msgid "Driver failure cannot be detected.\n"
-msgstr ""
+msgstr "驱动故障未被检测到。\n"
 
 #: winerror.mc:1281
 msgid "Process abort cannot be detected.\n"
@@ -4633,7 +4633,7 @@ msgstr "进程中止未被检测到。\n"
 
 #: winerror.mc:1286
 msgid "No recovery program for service.\n"
-msgstr ""
+msgstr "服务无恢复程序。\n"
 
 #: winerror.mc:1291
 msgid "Service not implemented by exe.\n"
@@ -4641,19 +4641,19 @@ msgstr "打印功能未被 exe 实现。\n"
 
 #: winerror.mc:1296
 msgid "End of media.\n"
-msgstr ""
+msgstr "介质结尾。\n"
 
 #: winerror.mc:1301
 msgid "Filemark detected.\n"
-msgstr ""
+msgstr "探测到文件标记。\n"
 
 #: winerror.mc:1306
 msgid "Beginning of media.\n"
-msgstr ""
+msgstr "介质开头。\n"
 
 #: winerror.mc:1311
 msgid "Setmark detected.\n"
-msgstr ""
+msgstr "探测到设置标记。\n"
 
 #: winerror.mc:1316
 msgid "No data detected.\n"
@@ -4661,7 +4661,7 @@ msgstr "未检测到数据。\n"
 
 #: winerror.mc:1321
 msgid "Partition failure.\n"
-msgstr ""
+msgstr "分区故障。\n"
 
 #: winerror.mc:1326
 msgid "Invalid block length.\n"
