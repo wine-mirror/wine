@@ -173,31 +173,28 @@ static inline BOOL is_in_rect( const RECT *rect, int x, int y )
 }
 
 /*
- * number of points to buffer before sending them off
- * to scanlines() :  Must be an even number
- */
-#define NUMPTSTOBUFFER 200
-
-/*
  * used to allocate buffers for points and link
  * the buffers together
  */
 
 struct point_block
 {
-    POINT pts[NUMPTSTOBUFFER];
-    int count;
+    int count, size;
     struct point_block *next;
+    POINT pts[1]; /* Variable sized array - must be last. */
 };
 
 static struct point_block *add_point( struct point_block *block, int x, int y )
 {
-    if (block->count == NUMPTSTOBUFFER)
+    if (block->count == block->size)
     {
-        struct point_block *new = HeapAlloc( GetProcessHeap(), 0, sizeof(*new) );
+        struct point_block *new;
+        int size = block->size * 2;
+        new = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( struct point_block, pts[size] ) );
         if (!new) return NULL;
         block->next = new;
         new->count = 0;
+        new->size = size;
         new->next = NULL;
         block = new;
     }
@@ -2676,6 +2673,9 @@ static WINEREGION *REGION_PtsToRegion( struct point_block *FirstPtBlock )
     return reg;
 }
 
+/* Number of points in the first point buffer.  Must be an even number. */
+#define NUMPTSTOBUFFER 200
+
 /***********************************************************************
  *           CreatePolyPolygonRgn    (GDI32.@)
  */
@@ -2692,7 +2692,8 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
     EdgeTableEntry *pETEs;           /* EdgeTableEntries pool   */
     ScanLineListBlock SLLBlock;      /* header for scanlinelist */
     BOOL fixWAET = FALSE;
-    struct point_block FirstPtBlock, *block; /* PtBlock buffers    */
+    char first_blk_buf[FIELD_OFFSET( struct point_block, pts[NUMPTSTOBUFFER] )];
+    struct point_block *first_block = (struct point_block *)first_blk_buf, *block;
     struct edge_table_entry *active, *next;
     INT poly, total;
 
@@ -2721,9 +2722,10 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
     REGION_CreateEdgeTable(Count, nbpolygons, Pts, &ET, pETEs, &SLLBlock);
     list_init( &AET );
     pSLL = ET.scanlines.next;
-    block = &FirstPtBlock;
-    FirstPtBlock.count = 0;
-    FirstPtBlock.next  = NULL;
+    block = first_block;
+    first_block->count = 0;
+    first_block->size  = NUMPTSTOBUFFER;
+    first_block->next  = NULL;
 
     if (mode != WINDING) {
         /*
@@ -2802,13 +2804,13 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
         }
     }
 
-    if (!(obj = REGION_PtsToRegion( &FirstPtBlock ))) goto done;
+    if (!(obj = REGION_PtsToRegion( first_block ))) goto done;
     if (!(hrgn = alloc_gdi_handle( obj, OBJ_REGION, &region_funcs )))
         free_region( obj );
 
 done:
     REGION_FreeStorage(SLLBlock.next);
-    free_point_blocks( FirstPtBlock.next );
+    free_point_blocks( first_block->next );
     HeapFree( GetProcessHeap(), 0, pETEs );
     return hrgn;
 }
