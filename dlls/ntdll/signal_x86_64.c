@@ -2250,6 +2250,15 @@ static RUNTIME_FUNCTION *lookup_function_info( ULONG64 pc, ULONG64 *base, LDR_MO
     return func;
 }
 
+static DWORD nested_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                       CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+{
+    if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)) return ExceptionContinueSearch;
+
+    /* FIXME */
+    return ExceptionNestedException;
+}
+
 /**********************************************************************
  *           call_handler
  *
@@ -2258,12 +2267,18 @@ static RUNTIME_FUNCTION *lookup_function_info( ULONG64 pc, ULONG64 *base, LDR_MO
  */
 static DWORD call_handler( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
 {
+    EXCEPTION_REGISTRATION_RECORD frame;
     DWORD res;
+
+    frame.Handler = nested_exception_handler;
+    __wine_push_frame( &frame );
 
     TRACE( "calling handler %p (rec=%p, frame=0x%lx context=%p, dispatch=%p)\n",
            dispatch->LanguageHandler, rec, dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
     res = dispatch->LanguageHandler( rec, dispatch->EstablisherFrame, context, dispatch );
     TRACE( "handler at %p returned %u\n", dispatch->LanguageHandler, res );
+
+    __wine_pop_frame( &frame );
     return res;
 }
 
@@ -2392,7 +2407,9 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
                 *orig_context = *dispatch.ContextRecord;
                 return STATUS_SUCCESS;
             case ExceptionContinueSearch:
+                break;
             case ExceptionNestedException:
+                FIXME( "nested exception\n" );
                 break;
             case ExceptionCollidedUnwind: {
                 ULONG64 frame;
@@ -2421,7 +2438,9 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
                 *orig_context = *dispatch.ContextRecord;
                 return STATUS_SUCCESS;
             case ExceptionContinueSearch:
+                break;
             case ExceptionNestedException:
+                FIXME( "nested exception\n" );
                 break;
             case ExceptionCollidedUnwind: {
                 ULONG64 frame;
