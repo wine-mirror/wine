@@ -170,6 +170,8 @@ static double (CDECL *p_remainder)(double, double);
 static int* (CDECL *p_errno)(void);
 static int (CDECL *p_fegetenv)(fenv_t*);
 static int (CDECL *p__clearfp)(void);
+static _locale_t (__cdecl *p_wcreate_locale)(int, const wchar_t *);
+static void (__cdecl *p_free_locale)(_locale_t);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -215,6 +217,8 @@ static BOOL init(void)
     p_wcstof = (void*)GetProcAddress(module, "wcstof");
     p_remainder = (void*)GetProcAddress(module, "remainder");
     p_errno = (void*)GetProcAddress(module, "_errno");
+    p_wcreate_locale = (void*)GetProcAddress(module, "_wcreate_locale");
+    p_free_locale = (void*)GetProcAddress(module, "_free_locale");
     SET(p_fegetenv, "fegetenv");
     SET(p__clearfp, "_clearfp");
     if(sizeof(void*) == 8) { /* 64-bit initialization */
@@ -710,6 +714,50 @@ static void test_fegetenv(void)
     ok(!env.status, "env.status = %x\n", env.status);
 }
 
+static void test__wcreate_locale(void)
+{
+    static const wchar_t c_locale[] = {'C',0};
+    static const wchar_t bogus[] = {'b','o','g','u','s',0};
+    static const wchar_t empty[] = {0};
+    _locale_t lcl;
+    errno_t e;
+
+    /* simple success */
+    errno = -1;
+    lcl = p_wcreate_locale(LC_ALL, c_locale);
+    e = errno;
+    ok(!!lcl, "expected success, but got NULL\n");
+    ok(errno == -1, "expected errno -1, but got %i\n", e);
+    p_free_locale(lcl);
+
+    errno = -1;
+    lcl = p_wcreate_locale(LC_ALL, empty);
+    e = errno;
+    ok(!!lcl, "expected success, but got NULL\n");
+    ok(errno == -1, "expected errno -1, but got %i\n", e);
+    p_free_locale(lcl);
+
+    /* bogus category */
+    errno = -1;
+    lcl = p_wcreate_locale(-1, c_locale);
+    e = errno;
+    ok(!lcl, "expected failure, but got %p\n", lcl);
+    ok(errno == -1, "expected errno -1, but got %i\n", e);
+
+    /* bogus names */
+    errno = -1;
+    lcl = p_wcreate_locale(LC_ALL, bogus);
+    e = errno;
+    ok(!lcl, "expected failure, but got %p\n", lcl);
+    ok(errno == -1, "expected errno -1, but got %i\n", e);
+
+    errno = -1;
+    lcl = p_wcreate_locale(LC_ALL, NULL);
+    e = errno;
+    ok(!lcl, "expected failure, but got %p\n", lcl);
+    ok(errno == -1, "expected errno -1, but got %i\n", e);
+}
+
 START_TEST(msvcr120)
 {
     if (!init()) return;
@@ -724,4 +772,5 @@ START_TEST(msvcr120)
     test_remainder();
     test_critical_section();
     test_fegetenv();
+    test__wcreate_locale();
 }

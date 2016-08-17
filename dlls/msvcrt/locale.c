@@ -1634,6 +1634,31 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
 }
 
 /*********************************************************************
+ *      _wcreate_locale (MSVCRT.@)
+ */
+MSVCRT__locale_t CDECL MSVCRT__wcreate_locale(int category, const MSVCRT_wchar_t *locale)
+{
+    MSVCRT__locale_t loc;
+    MSVCRT_size_t len;
+    char *str;
+
+    if(category<MSVCRT_LC_MIN || category>MSVCRT_LC_MAX || !locale)
+        return NULL;
+
+    len = MSVCRT_wcstombs(NULL, locale, 0);
+    if(len == -1)
+        return NULL;
+    if(!(str = MSVCRT_malloc(++len)))
+        return NULL;
+    MSVCRT_wcstombs(str, locale, len);
+
+    loc = MSVCRT__create_locale(category, str);
+
+    MSVCRT_free(str);
+    return loc;
+}
+
+/*********************************************************************
  *             setlocale (MSVCRT.@)
  */
 char* CDECL MSVCRT_setlocale(int category, const char* locale)

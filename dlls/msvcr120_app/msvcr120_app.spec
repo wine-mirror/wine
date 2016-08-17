@@ -1555,7 +1555,7 @@
 @ cdecl _wchmod(wstr long) msvcr120._wchmod
 @ extern _wcmdln msvcr120._wcmdln
 @ cdecl _wcreat(wstr long) msvcr120._wcreat
-@ stub _wcreate_locale
+@ cdecl _wcreate_locale(long wstr) msvcr120._wcreate_locale
 @ cdecl _wcscoll_l(wstr wstr ptr) msvcr120._wcscoll_l
 @ cdecl _wcsdup(wstr) msvcr120._wcsdup
 @ cdecl _wcserror(long) msvcr120._wcserror
