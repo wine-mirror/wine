@@ -669,6 +669,40 @@ static void test_WsRemoveHeader(void)
     WsFreeMessage( msg );
 }
 
+static void test_WsAddMappedHeader(void)
+{
+    static const WS_XML_STRING header = {6, (BYTE *)"Header"}, value = {5, (BYTE *)"value"};
+    WS_MESSAGE *msg;
+    HRESULT hr;
+
+    hr = WsAddMappedHeader( NULL, NULL, 0, 0, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateMessage( WS_ADDRESSING_VERSION_1_0, WS_ENVELOPE_VERSION_SOAP_1_2, NULL, 0, &msg, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsAddMappedHeader( msg, NULL, 0, 0, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsAddMappedHeader( msg, &header, 0, 0, NULL, 0, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsAddMappedHeader( msg, &header, WS_XML_STRING_TYPE, WS_WRITE_REQUIRED_VALUE, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsAddMappedHeader( msg, &header, WS_XML_STRING_TYPE, WS_WRITE_REQUIRED_VALUE, &value, sizeof(value), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* again */
+    hr = WsAddMappedHeader( msg, &header, WS_XML_STRING_TYPE, WS_WRITE_REQUIRED_VALUE, &value, sizeof(value), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    WsFreeMessage( msg );
+}
+
 START_TEST(msg)
 {
     test_WsCreateMessage();
@@ -680,4 +714,5 @@ START_TEST(msg)
     test_WsWriteBody();
     test_WsSetHeader();
     test_WsRemoveHeader();
+    test_WsAddMappedHeader();
 }

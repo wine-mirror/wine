@@ -7,7 +7,7 @@
 @ stub WsAcceptChannel
 @ stub WsAddCustomHeader
 @ stub WsAddErrorString
-@ stub WsAddMappedHeader
+@ stdcall WsAddMappedHeader(ptr ptr long long ptr long ptr)
 @ stdcall WsAddressMessage(ptr ptr ptr)
 @ stdcall WsAlloc(ptr long ptr ptr)
 @ stub WsAsyncExecute
