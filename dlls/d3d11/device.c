@@ -2784,6 +2784,18 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device *
             threading_data->DriverCommandLists = FALSE;
             return S_OK;
         }
+        case D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS:
+        {
+            D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS *options = feature_support_data;
+            if (feature_support_data_size != sizeof(*options))
+            {
+                WARN("Invalid data size.\n");
+                return E_INVALIDARG;
+            }
+
+            options->ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x = FALSE;
+            return S_OK;
+        }
 
         default:
             FIXME("Unhandled feature %#x.\n", feature);
