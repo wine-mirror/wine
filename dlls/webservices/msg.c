@@ -778,3 +778,32 @@ HRESULT WINAPI WsAddMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *name,
     msg->header[i] = header;
     return S_OK;
 }
+
+/**************************************************************************
+ *          WsRemoveMappedHeader		[webservices.@]
+ */
+HRESULT WINAPI WsRemoveMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *name, WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+    ULONG i;
+
+    TRACE( "%p %s %p\n", handle, debugstr_xmlstr(name), error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!handle || !name) return E_INVALIDARG;
+    if (msg->state < WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
+
+    for (i = 0; i < msg->header_count; i++)
+    {
+        if (msg->header[i]->type || !msg->header[i]->mapped) continue;
+        if (WsXmlStringEquals( name, &msg->header[i]->name, NULL ) == S_OK)
+        {
+            free_header( msg->header[i] );
+            memmove( &msg->header[i], &msg->header[i + 1], (msg->header_count - i) * sizeof(struct header *) );
+            msg->header_count--;
+            break;
+        }
+    }
+
+    return S_OK;
+}
