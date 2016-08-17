@@ -2367,6 +2367,8 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
         newval = style.styleNew;
         /* WS_CLIPSIBLINGS can't be reset on top-level windows */
         if (wndPtr->parent == GetDesktopWindow()) newval |= WS_CLIPSIBLINGS;
+        /* WS_MINIMIZE can't be reset */
+        if (wndPtr->dwStyle & WS_MINIMIZE) newval |= WS_MINIMIZE;
         /* FIXME: changing WS_DLGFRAME | WS_THICKFRAME is supposed to change
            WS_EX_WINDOWEDGE too */
         break;

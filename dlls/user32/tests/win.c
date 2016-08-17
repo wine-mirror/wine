@@ -6281,7 +6281,6 @@ static LRESULT WINAPI check_style_wnd_proc(HWND hwnd, UINT message, WPARAM wPara
     {
         ok(got->styleOld == expected[1].styleOld, "expected old style %#x, got %#x\n",
             expected[1].styleOld, got->styleOld);
-        todo_wine_if(expected[0].styleOld & WS_MINIMIZE)
         ok(got->styleNew == expected[1].styleNew, "expected new style %#x, got %#x\n",
             expected[1].styleNew, got->styleNew);
     }
@@ -6330,13 +6329,9 @@ static void test_set_window_style(void)
 
     for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
     {
-        BOOL todo = FALSE;
         expected_style = tests[i].style;
-        if ((tests[i].creation_style & WS_MINIMIZE) && !(tests[i].style & WS_MINIMIZE))
-        {
-            todo = TRUE;
+        if (tests[i].creation_style & WS_MINIMIZE)
             expected_style |= WS_MINIMIZE;
-        }
 
         expected_stylestruct[0].styleOld = tests[i].creation_style;
         expected_stylestruct[0].styleNew = tests[i].style;
@@ -6352,7 +6347,7 @@ static void test_set_window_style(void)
         ok(old_style == tests[i].creation_style, "expected old style %#x, got %#x\n",
             tests[i].creation_style, old_style);
         new_style = GetWindowLongA(hwnd, GWL_STYLE);
-        todo_wine_if(todo) ok(new_style == expected_style, "expected new style %#x, got %#x\n",
+        ok(new_style == expected_style, "expected new style %#x, got %#x\n",
             expected_style, new_style);
 
         SetWindowLongPtrA(hwnd, GWLP_USERDATA, 0);
