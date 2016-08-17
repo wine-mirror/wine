@@ -1,7 +1,7 @@
-@ stub -arch=win32 ??0Iostream_init@@QAE@AAVios@@H@Z  # __thiscall Iostream_init::Iostream_init(class ios &,int)
-@ stub -arch=win64 ??0Iostream_init@@QEAA@AEAVios@@H@Z
-@ stub -arch=win32 ??0Iostream_init@@QAE@XZ  # __thiscall Iostream_init::Iostream_init(void)
-@ stub -arch=win64 ??0Iostream_init@@QEAA@XZ
+@ thiscall -arch=win32 ??0Iostream_init@@QAE@AAVios@@H@Z(ptr ptr long) Iostream_init_ios_ctor
+@ cdecl -arch=win64 ??0Iostream_init@@QEAA@AEAVios@@H@Z(ptr ptr long) Iostream_init_ios_ctor
+@ thiscall -arch=win32 ??0Iostream_init@@QAE@XZ(ptr) Iostream_init_ctor
+@ cdecl -arch=win64 ??0Iostream_init@@QEAA@XZ(ptr) Iostream_init_ctor
 @ thiscall -arch=i386 ??0exception@@QAE@ABQBD@Z(ptr ptr) MSVCP_exception_ctor
 @ cdecl -arch=win64 ??0exception@@QEAA@AEBQEBD@Z(ptr ptr) MSVCP_exception_ctor
 @ thiscall -arch=i386 ??0exception@@QAE@ABV0@@Z(ptr ptr) MSVCP_exception_copy_ctor
@@ -130,8 +130,8 @@
 @ cdecl -arch=win64 ??0strstreambuf@@QEAA@PEAEH0@Z(ptr ptr long ptr) strstreambuf_ubuffer_ctor
 @ thiscall -arch=win32 ??0strstreambuf@@QAE@XZ(ptr) strstreambuf_ctor
 @ cdecl -arch=win64 ??0strstreambuf@@QEAA@XZ(ptr) strstreambuf_ctor
-@ stub -arch=win32 ??1Iostream_init@@QAE@XZ  # __thiscall Iostream_init::~Iostream_init(void)
-@ stub -arch=win64 ??1Iostream_init@@QEAA@XZ
+@ thiscall -arch=win32 ??1Iostream_init@@QAE@XZ(ptr) Iostream_init_dtor
+@ cdecl -arch=win64 ??1Iostream_init@@QEAA@XZ(ptr) Iostream_init_dtor
 @ thiscall -arch=i386 ??1exception@@UAE@XZ(ptr) MSVCP_exception_dtor
 @ cdecl -arch=win64 ??1exception@@UEAA@XZ(ptr) MSVCP_exception_dtor
 @ thiscall -arch=win32 ??1filebuf@@UAE@XZ(ptr) filebuf_dtor
@@ -170,8 +170,8 @@
 @ stub -arch=win64 ??1strstream@@UEAA@XZ
 @ thiscall -arch=win32 ??1strstreambuf@@UAE@XZ(ptr) strstreambuf_dtor
 @ cdecl -arch=win64 ??1strstreambuf@@UEAA@XZ(ptr) strstreambuf_dtor
-@ stub -arch=win32 ??4Iostream_init@@QAEAAV0@ABV0@@Z  # class Iostream_init & __thiscall Iostream_init::operator=(class Iostream_init const &)
-@ stub -arch=win64 ??4Iostream_init@@QEAAAEAV0@AEBV0@@Z
+@ thiscall -arch=win32 ??4Iostream_init@@QAEAAV0@ABV0@@Z(ptr ptr) Iostream_init_assign
+@ cdecl -arch=win64 ??4Iostream_init@@QEAAAEAV0@AEBV0@@Z(ptr ptr) Iostream_init_assign
 @ thiscall -arch=i386 ??4exception@@QAEAAV0@ABV0@@Z(ptr ptr) MSVCP_exception_assign
 @ cdecl -arch=win64 ??4exception@@QEAAAEAV0@AEBV0@@Z(ptr ptr) MSVCP_exception_assign
 @ thiscall -arch=win32 ??4filebuf@@QAEAAV0@ABV0@@Z(ptr ptr) filebuf_assign

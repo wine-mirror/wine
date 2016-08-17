@@ -1,7 +1,7 @@
-@ stub -arch=win32 ??0Iostream_init@@QAE@AAVios@@H@Z
-@ stub -arch=win64 ??0Iostream_init@@QEAA@AEAVios@@H@Z
-@ stub -arch=win32 ??0Iostream_init@@QAE@XZ
-@ stub -arch=win64 ??0Iostream_init@@QEAA@XZ
+@ thiscall -arch=win32 ??0Iostream_init@@QAE@AAVios@@H@Z(ptr ptr long) msvcirt.??0Iostream_init@@QAE@AAVios@@H@Z
+@ cdecl -arch=win64 ??0Iostream_init@@QEAA@AEAVios@@H@Z(ptr ptr long) msvcirt.??0Iostream_init@@QEAA@AEAVios@@H@Z
+@ thiscall -arch=win32 ??0Iostream_init@@QAE@XZ(ptr) msvcirt.??0Iostream_init@@QAE@XZ
+@ cdecl -arch=win64 ??0Iostream_init@@QEAA@XZ(ptr) msvcirt.??0Iostream_init@@QEAA@XZ
 @ thiscall -arch=win32 ??0filebuf@@QAE@ABV0@@Z(ptr ptr) msvcirt.??0filebuf@@QAE@ABV0@@Z
 @ cdecl -arch=win64 ??0filebuf@@QEAA@AEBV0@@Z(ptr ptr) msvcirt.??0filebuf@@QEAA@AEBV0@@Z
 @ thiscall -arch=win32 ??0filebuf@@QAE@H@Z(ptr long) msvcirt.??0filebuf@@QAE@H@Z
@@ -118,8 +118,8 @@
 @ cdecl -arch=win64 ??0strstreambuf@@QEAA@PEADH0@Z(ptr ptr long ptr) msvcirt.??0strstreambuf@@QEAA@PEADH0@Z
 @ thiscall -arch=win32 ??0strstreambuf@@QAE@XZ(ptr) msvcirt.??0strstreambuf@@QAE@XZ
 @ cdecl -arch=win64 ??0strstreambuf@@QEAA@XZ(ptr) msvcirt.??0strstreambuf@@QEAA@XZ
-@ stub -arch=win32 ??1Iostream_init@@QAE@XZ
-@ stub -arch=win64 ??1Iostream_init@@QEAA@XZ
+@ thiscall -arch=win32 ??1Iostream_init@@QAE@XZ(ptr) msvcirt.??1Iostream_init@@QAE@XZ
+@ cdecl -arch=win64 ??1Iostream_init@@QEAA@XZ(ptr) msvcirt.??1Iostream_init@@QEAA@XZ
 @ thiscall -arch=win32 ??1filebuf@@UAE@XZ(ptr) msvcirt.??1filebuf@@UAE@XZ
 @ cdecl -arch=win64 ??1filebuf@@UEAA@XZ(ptr) msvcirt.??1filebuf@@UEAA@XZ
 @ stub -arch=win32 ??1fstream@@UAE@XZ
@@ -158,8 +158,8 @@
 @ cdecl -arch=win64 ??2@YAPEAX_K@Z(long) msvcrt.??2@YAPEAX_K@Z
 @ cdecl -arch=win32 ??3@YAXPAX@Z(ptr) msvcrt.??3@YAXPAX@Z
 @ cdecl -arch=win64 ??3@YAXPEAX@Z(ptr) msvcrt.??3@YAXPEAX@Z
-@ stub -arch=win32 ??4Iostream_init@@QAEAAV0@ABV0@@Z
-@ stub -arch=win64 ??4Iostream_init@@QEAAAEAV0@AEBV0@@Z
+@ thiscall -arch=win32 ??4Iostream_init@@QAEAAV0@ABV0@@Z(ptr ptr) msvcirt.??4Iostream_init@@QAEAAV0@ABV0@@Z
+@ cdecl -arch=win64 ??4Iostream_init@@QEAAAEAV0@AEBV0@@Z(ptr ptr) msvcirt.??4Iostream_init@@QEAAAEAV0@AEBV0@@Z
 @ thiscall -arch=win32 ??4filebuf@@QAEAAV0@ABV0@@Z(ptr ptr) msvcirt.??4filebuf@@QAEAAV0@ABV0@@Z
 @ cdecl -arch=win64 ??4filebuf@@QEAAAEAV0@AEBV0@@Z(ptr ptr) msvcirt.??4filebuf@@QEAAAEAV0@AEBV0@@Z
 @ stub -arch=win32 ??4fstream@@QAEAAV0@AAV0@@Z

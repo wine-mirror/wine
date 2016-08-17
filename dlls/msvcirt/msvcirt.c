@@ -4032,6 +4032,41 @@ iostream* __thiscall iostream_scalar_dtor(ios *base, unsigned int flags)
     return this;
 }
 
+/* ??0Iostream_init@@QAE@AAVios@@H@Z */
+/* ??0Iostream_init@@QEAA@AEAVios@@H@Z */
+DEFINE_THISCALL_WRAPPER(Iostream_init_ios_ctor, 12)
+void* __thiscall Iostream_init_ios_ctor(void *this, ios *obj, int n)
+{
+    FIXME("(%p %p %d) stub\n", this, obj, n);
+    return this;
+}
+
+/* ??0Iostream_init@@QAE@XZ */
+/* ??0Iostream_init@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(Iostream_init_ctor, 4)
+void* __thiscall Iostream_init_ctor(void *this)
+{
+    TRACE("(%p)\n", this);
+    return this;
+}
+
+/* ??1Iostream_init@@QAE@XZ */
+/* ??1Iostream_init@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(Iostream_init_dtor, 4)
+void __thiscall Iostream_init_dtor(void *this)
+{
+    TRACE("(%p)\n", this);
+}
+
+/* ??4Iostream_init@@QAEAAV0@ABV0@@Z */
+/* ??4Iostream_init@@QEAAAEAV0@AEBV0@@Z */
+DEFINE_THISCALL_WRAPPER(Iostream_init_assign, 8)
+void* __thiscall Iostream_init_assign(void *this, const void *rhs)
+{
+    TRACE("(%p %p)\n", this, rhs);
+    return this;
+}
+
 /******************************************************************
  *		 ??0ostrstream@@QAE@XZ (MSVCRTI.@)
  */
