@@ -625,8 +625,11 @@ static BOOL service_run_main_thread(void)
         }
         else if (ret < n)
         {
-            services[wait_services[ret]]->thread = 0;
-            CloseHandle( wait_handles[ret] );
+            i = wait_services[ret];
+            EnterCriticalSection( &service_cs );
+            CloseHandle( services[i]->thread );
+            services[i]->thread = NULL;
+            LeaveCriticalSection( &service_cs );
         }
         else return FALSE;
     }
