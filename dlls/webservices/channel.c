@@ -188,6 +188,7 @@ HRESULT WINAPI WsGetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
     TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
+    if (!handle) return E_INVALIDARG;
     return prop_get( channel->prop, channel->prop_count, id, buf, size );
 }
 
@@ -202,6 +203,7 @@ HRESULT WINAPI WsSetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
     TRACE( "%p %u %p %u\n", handle, id, value, size );
     if (error) FIXME( "ignoring error parameter\n" );
 
+    if (!handle) return E_INVALIDARG;
     return prop_set( channel->prop, channel->prop_count, id, value, size );
 }
 
@@ -223,7 +225,7 @@ HRESULT WINAPI WsOpenChannel( WS_CHANNEL *handle, const WS_ENDPOINT_ADDRESS *end
     if (error) FIXME( "ignoring error parameter\n" );
     if (ctx) FIXME( "ignoring ctx parameter\n" );
 
-    if (!endpoint) return E_INVALIDARG;
+    if (!handle || !endpoint) return E_INVALIDARG;
     if (channel->state != WS_CHANNEL_STATE_CREATED) return WS_E_INVALID_OPERATION;
 
     return open_channel( channel, endpoint );
@@ -246,5 +248,6 @@ HRESULT WINAPI WsCloseChannel( WS_CHANNEL *handle, const WS_ASYNC_CONTEXT *ctx, 
     if (error) FIXME( "ignoring error parameter\n" );
     if (ctx) FIXME( "ignoring ctx parameter\n" );
 
+    if (!handle) return E_INVALIDARG;
     return close_channel( channel );
 }

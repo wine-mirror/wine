@@ -28,11 +28,11 @@ static void test_WsCreateChannel(void)
     WS_CHANNEL_STATE state;
     ULONG size, value;
 
-    hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, 0, NULL, NULL, NULL ) ;
+    hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, 0, NULL, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
     channel = NULL;
-    hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, 0, NULL, &channel, NULL ) ;
+    hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, 0, NULL, &channel, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( channel != NULL, "channel not set\n" );
 
@@ -64,14 +64,14 @@ static void test_WsOpenChannel(void)
     WS_CHANNEL *channel;
     WS_ENDPOINT_ADDRESS addr;
 
-    hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, 0, NULL, &channel, NULL ) ;
+    hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, 0, NULL, &channel, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsCloseChannel( channel, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     WsFreeChannel( channel );
 
-    hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, 0, NULL, &channel, NULL ) ;
+    hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, 0, NULL, &channel, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsOpenChannel( channel, NULL, NULL, NULL );
@@ -82,6 +82,9 @@ static void test_WsOpenChannel(void)
     addr.headers    = NULL;
     addr.extensions = NULL;
     addr.identity   = NULL;
+    hr = WsOpenChannel( NULL, &addr, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
     hr = WsOpenChannel( channel, &addr, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -93,6 +96,10 @@ static void test_WsOpenChannel(void)
 
     hr = WsCloseChannel( channel, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCloseChannel( NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
     WsFreeChannel( channel );
 }
 
