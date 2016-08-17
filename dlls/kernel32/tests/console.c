@@ -2938,6 +2938,55 @@ static void test_SetConsoleFont(HANDLE std_output)
     todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
 }
 
+static void test_GetConsoleScreenBufferInfoEx(HANDLE std_output)
+{
+    HANDLE hmod;
+    BOOL (WINAPI *pGetConsoleScreenBufferInfoEx)(HANDLE, CONSOLE_SCREEN_BUFFER_INFOEX *);
+    CONSOLE_SCREEN_BUFFER_INFOEX csbix;
+    BOOL ret;
+    HANDLE std_input = GetStdHandle(STD_INPUT_HANDLE);
+
+    hmod = GetModuleHandleA("kernel32.dll");
+    pGetConsoleScreenBufferInfoEx = (void *)GetProcAddress(hmod, "GetConsoleScreenBufferInfoEx");
+    if (!pGetConsoleScreenBufferInfoEx)
+    {
+        win_skip("GetConsoleScreenBufferInfoEx is not available\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = pGetConsoleScreenBufferInfoEx(NULL, &csbix);
+    ok(!ret, "got %d, expected zero\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetConsoleScreenBufferInfoEx(std_input, &csbix);
+    ok(!ret, "got %d, expected zero\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetConsoleScreenBufferInfoEx(std_output, &csbix);
+    ok(!ret, "got %d, expected zero\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+
+    csbix.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
+
+    SetLastError(0xdeadbeef);
+    ret = pGetConsoleScreenBufferInfoEx(NULL, &csbix);
+    ok(!ret, "got %d, expected zero\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetConsoleScreenBufferInfoEx(std_input, &csbix);
+    ok(!ret, "got %d, expected zero\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetConsoleScreenBufferInfoEx(std_output, &csbix);
+    todo_wine ok(ret, "got %d, expected non-zero\n", ret);
+    todo_wine ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+}
+
 START_TEST(console)
 {
     static const char font_name[] = "Lucida Console";
@@ -3086,4 +3135,5 @@ START_TEST(console)
     test_GetLargestConsoleWindowSize(hConOut);
     test_GetConsoleFontInfo(hConOut);
     test_SetConsoleFont(hConOut);
+    test_GetConsoleScreenBufferInfoEx(hConOut);
 }
