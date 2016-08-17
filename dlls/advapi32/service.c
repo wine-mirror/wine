@@ -2360,7 +2360,6 @@ SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExW( LPCWSTR lpServiceNam
 {
     service_data *service;
     SC_HANDLE hService = 0;
-    BOOL found = FALSE;
 
     TRACE("%s %p %p\n", debugstr_w(lpServiceName), lpHandlerProc, lpContext);
 
@@ -2370,12 +2369,10 @@ SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExW( LPCWSTR lpServiceNam
         service->handler = lpHandlerProc;
         service->context = lpContext;
         hService = service->handle;
-        found = TRUE;
     }
     LeaveCriticalSection( &service_cs );
 
-    if (!found) SetLastError(ERROR_SERVICE_DOES_NOT_EXIST);
-
+    if (!hService) SetLastError( ERROR_SERVICE_DOES_NOT_EXIST );
     return (SERVICE_STATUS_HANDLE)hService;
 }
 
