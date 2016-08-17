@@ -580,6 +580,7 @@ static void test_basic_type(void)
     HRESULT hr;
     WS_XML_WRITER *writer;
     WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL};
+    GUID guid;
     ULONG i;
     static const struct
     {
@@ -670,6 +671,21 @@ static void test_basic_type(void)
         ok( hr == S_OK, "got %08x\n", hr );
         check_output( writer, tests[i].result2, __LINE__ );
     }
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    memset( &guid, 0, sizeof(guid) );
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_GUID_TYPE, NULL, WS_WRITE_REQUIRED_VALUE,
+                      &guid, sizeof(guid), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>00000000-0000-0000-0000-000000000000</t>", __LINE__ );
 
     WsFreeWriter( writer );
 }

@@ -1497,6 +1497,23 @@ static HRESULT write_type_uint64( struct writer *writer, WS_TYPE_MAPPING mapping
     return write_type_text( writer, mapping, &utf8.text );
 }
 
+static HRESULT write_type_guid( struct writer *writer, WS_TYPE_MAPPING mapping,
+                                const WS_GUID_DESCRIPTION *desc, const GUID *value )
+{
+    WS_XML_UTF8_TEXT utf8;
+    unsigned char buf[37]; /* "00000000-0000-0000-0000-000000000000" */
+
+    if (desc)
+    {
+        FIXME( "description not supported\n" );
+        return E_NOTIMPL;
+    }
+    utf8.text.textType = WS_XML_TEXT_TYPE_UTF8;
+    utf8.value.bytes   = buf;
+    utf8.value.length  = format_guid( value, buf );
+    return write_type_text( writer, mapping, &utf8.text );
+}
+
 static HRESULT write_type_wsz( struct writer *writer, WS_TYPE_MAPPING mapping,
                                const WS_WSZ_DESCRIPTION *desc, const WCHAR *value )
 {
@@ -1664,14 +1681,14 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
     }
     case WS_INT8_TYPE:
     {
-        const INT8 *ptr = value;
+        const INT8 *ptr;
         if (!option) option = WS_WRITE_REQUIRED_VALUE;
         if ((hr = get_value_ptr( option, value, size, (const void **)&ptr )) != S_OK) return hr;
         return write_type_int8( writer, mapping, desc, ptr );
     }
     case WS_INT16_TYPE:
     {
-        const INT16 *ptr = value;
+        const INT16 *ptr;
         if (!option) option = WS_WRITE_REQUIRED_VALUE;
         if ((hr = get_value_ptr( option, value, size, (const void **)&ptr )) != S_OK) return hr;
         return write_type_int16( writer, mapping, desc, ptr );
@@ -1685,38 +1702,45 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
     }
     case WS_INT64_TYPE:
     {
-        const INT64 *ptr = value;
+        const INT64 *ptr;
         if (!option) option = WS_WRITE_REQUIRED_VALUE;
         if ((hr = get_value_ptr( option, value, size, (const void **)&ptr )) != S_OK) return hr;
         return write_type_int64( writer, mapping, desc, ptr );
     }
     case WS_UINT8_TYPE:
     {
-        const UINT8 *ptr = value;
+        const UINT8 *ptr;
         if (!option) option = WS_WRITE_REQUIRED_VALUE;
         if ((hr = get_value_ptr( option, value, size, (const void **)&ptr )) != S_OK) return hr;
         return write_type_uint8( writer, mapping, desc, ptr );
     }
     case WS_UINT16_TYPE:
     {
-        const UINT16 *ptr = value;
+        const UINT16 *ptr;
         if (!option) option = WS_WRITE_REQUIRED_VALUE;
         if ((hr = get_value_ptr( option, value, size, (const void **)&ptr )) != S_OK) return hr;
         return write_type_uint16( writer, mapping, desc, ptr );
     }
     case WS_UINT32_TYPE:
     {
-        const UINT32 *ptr = value;
+        const UINT32 *ptr;
         if (!option) option = WS_WRITE_REQUIRED_VALUE;
         if ((hr = get_value_ptr( option, value, size, (const void **)&ptr )) != S_OK) return hr;
         return write_type_uint32( writer, mapping, desc, ptr );
     }
     case WS_UINT64_TYPE:
     {
-        const UINT64 *ptr = value;
+        const UINT64 *ptr;
         if (!option) option = WS_WRITE_REQUIRED_VALUE;
         if ((hr = get_value_ptr( option, value, size, (const void **)&ptr )) != S_OK) return hr;
         return write_type_uint64( writer, mapping, desc, ptr );
+    }
+    case WS_GUID_TYPE:
+    {
+        const GUID *ptr;
+        if (!option) option = WS_WRITE_REQUIRED_VALUE;
+        if ((hr = get_value_ptr( option, value, size, (const void **)&ptr )) != S_OK) return hr;
+        return write_type_guid( writer, mapping, desc, ptr );
     }
     case WS_WSZ_TYPE:
     {
