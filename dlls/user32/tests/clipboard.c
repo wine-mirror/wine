@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdio.h>
 #include "wine/test.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -28,6 +29,7 @@ static BOOL (WINAPI *pAddClipboardFormatListener)(HWND hwnd);
 static DWORD (WINAPI *pGetClipboardSequenceNumber)(void);
 
 static int thread_from_line;
+static char *argv0;
 
 static DWORD WINAPI open_clipboard_thread(LPVOID arg)
 {
@@ -80,6 +82,32 @@ static DWORD WINAPI set_clipboard_data_thread(LPVOID arg)
     return 0;
 }
 
+static void set_clipboard_data_process( int arg )
+{
+    HANDLE ret;
+
+    SetLastError( 0xdeadbeef );
+    if (arg)
+    {
+        todo_wine_if( arg == 1 || arg == 3 )
+        ok( IsClipboardFormatAvailable( CF_WAVE ), "process %u: CF_WAVE not available\n", arg );
+        ret = SetClipboardData( CF_WAVE, GlobalAlloc( GMEM_DDESHARE | GMEM_ZEROINIT, 100 ));
+        todo_wine_if( arg == 2 || arg == 4 )
+        ok( ret != 0, "process %u: SetClipboardData failed err %u\n", arg, GetLastError() );
+    }
+    else
+    {
+        SetClipboardData( CF_WAVE, 0 );
+        todo_wine ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "process %u: wrong error %u\n",
+            arg, GetLastError());
+        todo_wine ok( !IsClipboardFormatAvailable( CF_WAVE ), "process %u: SetClipboardData succeeded\n", arg );
+        ret = SetClipboardData( CF_WAVE, GlobalAlloc( GMEM_DDESHARE | GMEM_ZEROINIT, 100 ));
+        ok( !ret, "process %u: SetClipboardData succeeded\n", arg );
+        todo_wine ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "process %u: wrong error %u\n",
+            arg, GetLastError());
+    }
+}
+
 static void run_thread( LPTHREAD_START_ROUTINE func, void *arg, int line )
 {
     DWORD ret;
@@ -100,6 +128,23 @@ static void run_thread( LPTHREAD_START_ROUTINE func, void *arg, int line )
     }
     ok(ret == WAIT_OBJECT_0, "%u: expected WAIT_OBJECT_0, got %u\n", line, ret);
     CloseHandle(thread);
+}
+
+static void run_process( const char *args )
+{
+    char cmd[MAX_PATH];
+    PROCESS_INFORMATION info;
+    STARTUPINFOA startup;
+
+    sprintf( cmd, "%s clipboard %s", argv0, args );
+    memset( &startup, 0, sizeof(startup) );
+    startup.cb = sizeof(startup);
+    ok( CreateProcessA( NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info ),
+        "CreateProcess %s failed\n", cmd );
+
+    winetest_wait_child_process( info.hProcess );
+    CloseHandle( info.hProcess );
+    CloseHandle( info.hThread );
 }
 
 static void test_ClipboardOwner(void)
@@ -137,6 +182,7 @@ static void test_ClipboardOwner(void)
     run_thread( open_clipboard_thread, hWnd1, __LINE__ );
     run_thread( empty_clipboard_thread, 0, __LINE__ );
     run_thread( set_clipboard_data_thread, hWnd1, __LINE__ );
+    run_process( "set_clipboard_data 0" );
     ok(!CloseClipboard(), "CloseClipboard should fail if clipboard wasn't open\n");
     ok(OpenClipboard(hWnd1), "OpenClipboard failed\n");
 
@@ -152,6 +198,7 @@ static void test_ClipboardOwner(void)
     ok(GetClipboardOwner() == hWnd1, "clipboard should be owned by %p, not by %p\n", hWnd1, GetClipboardOwner());
     run_thread( empty_clipboard_thread, 0, __LINE__ );
     run_thread( set_clipboard_data_thread, hWnd1, __LINE__ );
+    run_process( "set_clipboard_data 1" );
 
     SetLastError(0xdeadbeef);
     ret = OpenClipboard(hWnd2);
@@ -170,6 +217,7 @@ static void test_ClipboardOwner(void)
     ok( GetClipboardOwner() == GetDesktopWindow(), "wrong owner %p/%p\n",
         GetClipboardOwner(), GetDesktopWindow() );
     run_thread( set_clipboard_data_thread, GetDesktopWindow(), __LINE__ );
+    run_process( "set_clipboard_data 2" );
     ret = CloseClipboard();
     ok( ret, "CloseClipboard error %d\n", GetLastError());
 
@@ -191,6 +239,7 @@ static void test_ClipboardOwner(void)
     ret = OpenClipboard( 0 );
     ok( ret, "OpenClipboard error %d\n", GetLastError());
     run_thread( set_clipboard_data_thread, 0, __LINE__ );
+    run_process( "set_clipboard_data 3" );
     ret = CloseClipboard();
     ok( ret, "CloseClipboard error %d\n", GetLastError());
 
@@ -199,6 +248,7 @@ static void test_ClipboardOwner(void)
     ret = OpenClipboard( 0 );
     ok( ret, "OpenClipboard error %d\n", GetLastError());
     run_thread( set_clipboard_data_thread, 0, __LINE__ );
+    run_process( "set_clipboard_data 4" );
     ret = EmptyClipboard();
     ok( ret, "EmptyClipboard error %d\n", GetLastError());
     ret = CloseClipboard();
@@ -795,8 +845,56 @@ static DWORD WINAPI test_handles_thread( void *arg )
     return 0;
 }
 
+static DWORD WINAPI test_handles_thread2( void *arg )
+{
+    BOOL r;
+    HANDLE h;
+    char *ptr;
+
+    r = OpenClipboard( 0 );
+    ok( r, "gle %d\n", GetLastError() );
+    h = GetClipboardData( CF_TEXT );
+    ok( is_moveable( h ), "expected moveable mem %p\n", h );
+    ptr = GlobalLock( h );
+    if (ptr) ok( !strcmp( "test", ptr ), "wrong data '%.5s'\n", ptr );
+    GlobalUnlock( h );
+    h = GetClipboardData( format_id );
+    ok( is_moveable( h ), "expected moveable mem %p\n", h );
+    ptr = GlobalLock( h );
+    if (ptr) ok( !strcmp( "test", ptr ), "wrong data '%.5s'\n", ptr );
+    GlobalUnlock( h );
+    r = CloseClipboard();
+    ok( r, "gle %d\n", GetLastError() );
+    return 0;
+}
+
+static void test_handles_process( const char *str )
+{
+    BOOL r;
+    HANDLE h;
+    char *ptr;
+
+    format_id = RegisterClipboardFormatA( "my_cool_clipboard_format" );
+    r = OpenClipboard( 0 );
+    ok( r, "gle %d\n", GetLastError() );
+    h = GetClipboardData( CF_TEXT );
+    todo_wine ok( is_fixed( h ), "expected fixed mem %p\n", h );
+    ptr = GlobalLock( h );
+    if (ptr) todo_wine ok( !strcmp( str, ptr ), "wrong data '%.5s'\n", ptr );
+    GlobalUnlock( h );
+    h = GetClipboardData( format_id );
+    todo_wine ok( is_fixed( h ), "expected fixed mem %p\n", h );
+    ptr = GlobalLock( h );
+    if (ptr) ok( !strcmp( str, ptr ), "wrong data '%.5s'\n", ptr );
+    GlobalUnlock( h );
+    r = CloseClipboard();
+    ok( r, "gle %d\n", GetLastError() );
+}
+
 static void test_data_handles(void)
 {
+    BOOL r;
+    HANDLE h;
     HWND hwnd = CreateWindowA( "static", NULL, WS_POPUP, 0, 0, 10, 10, 0, 0, 0, NULL );
 
     format_id = RegisterClipboardFormatA( "my_cool_clipboard_format" );
@@ -805,15 +903,55 @@ static void test_data_handles(void)
     test_handles( GetDesktopWindow() );
     test_handles( hwnd );
     run_thread( test_handles_thread, hwnd, __LINE__ );
+
+    r = OpenClipboard( hwnd );
+    ok( r, "gle %d\n", GetLastError() );
+    r = EmptyClipboard();
+    ok( r, "gle %d\n", GetLastError() );
+    h = SetClipboardData( CF_TEXT, create_text() );
+    ok( is_moveable( h ), "expected moveable mem %p\n", h );
+    h = SetClipboardData( format_id, create_text() );
+    ok( is_moveable( h ), "expected moveable mem %p\n", h );
+    r = CloseClipboard();
+    ok( r, "gle %d\n", GetLastError() );
+
+    run_thread( test_handles_thread2, 0, __LINE__ );
+    run_process( "handles test" );
+
+    r = OpenClipboard( hwnd );
+    ok( r, "gle %d\n", GetLastError() );
+    h = GetClipboardData( CF_TEXT );
+    ok( is_moveable( h ), "expected moveable mem %p\n", h );
+    h = GetClipboardData( format_id );
+    ok( is_moveable( h ), "expected moveable mem %p\n", h );
+    r = EmptyClipboard();
+    ok( r, "gle %d\n", GetLastError() );
+    r = CloseClipboard();
+    ok( r, "gle %d\n", GetLastError() );
+
     DestroyWindow( hwnd );
 }
 
 START_TEST(clipboard)
 {
+    char **argv;
+    int argc = winetest_get_mainargs( &argv );
     HMODULE mod = GetModuleHandleA( "user32" );
 
+    argv0 = argv[0];
     pAddClipboardFormatListener = (void *)GetProcAddress( mod, "AddClipboardFormatListener" );
     pGetClipboardSequenceNumber = (void *)GetProcAddress( mod, "GetClipboardSequenceNumber" );
+
+    if (argc == 4 && !strcmp( argv[2], "set_clipboard_data" ))
+    {
+        set_clipboard_data_process( atoi( argv[3] ));
+        return;
+    }
+    if (argc == 4 && !strcmp( argv[2], "handles" ))
+    {
+        test_handles_process( argv[3] );
+        return;
+    }
 
     test_RegisterClipboardFormatA();
     test_ClipboardOwner();
