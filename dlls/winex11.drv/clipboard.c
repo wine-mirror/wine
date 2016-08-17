@@ -2298,6 +2298,11 @@ static int is_atom_error( Display *display, XErrorEvent *event, void *arg )
     return (event->error_code == BadAtom);
 }
 
+static int is_window_error( Display *display, XErrorEvent *event, void *arg )
+{
+    return (event->error_code == BadWindow);
+}
+
 /**************************************************************************
  *		X11DRV_CLIPBOARD_InsertSelectionProperties
  *
@@ -3439,6 +3444,8 @@ static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *ev
 
     TRACE("\n");
 
+    X11DRV_expect_error( display, is_window_error, NULL );
+
     /*
      * We can only handle the selection request if :
      * The selection is PRIMARY or CLIPBOARD, AND we can successfully open the clipboard.
@@ -3527,6 +3534,8 @@ END:
         TRACE("Sending SelectionNotify event...\n");
         XSendEvent(display,event->requestor,False,NoEventMask,(XEvent*)&result);
     }
+    XSync( display, False );
+    if (X11DRV_check_error()) WARN( "requestor %lx is no longer valid\n", event->requestor );
 }
 
 
