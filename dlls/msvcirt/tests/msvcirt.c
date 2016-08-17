@@ -383,6 +383,12 @@ static void (*__thiscall p_iostream_vbase_dtor)(iostream*);
 static iostream* (*__thiscall p_iostream_assign_sb)(iostream*, streambuf*);
 static iostream* (*__thiscall p_iostream_assign)(iostream*, const iostream*);
 
+/* Iostream_init */
+static void* (*__thiscall p_Iostream_init_ios_ctor)(void*, ios*, int);
+
+/* Predefined streams */
+static ostream *p_cout;
+
 /* Emulate a __thiscall */
 #ifdef __i386__
 
@@ -635,6 +641,8 @@ static BOOL init(void)
         SET(p_iostream_vbase_dtor, "??_Diostream@@QEAAXXZ");
         SET(p_iostream_assign_sb, "??4iostream@@IEAAAEAV0@PEAVstreambuf@@@Z");
         SET(p_iostream_assign, "??4iostream@@IEAAAEAV0@AEAV0@@Z");
+
+        SET(p_Iostream_init_ios_ctor, "??0Iostream_init@@QEAA@AEAVios@@H@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
         p_operator_delete = (void*)GetProcAddress(msvcrt, "??3@YAXPAX@Z");
@@ -810,6 +818,8 @@ static BOOL init(void)
         SET(p_iostream_vbase_dtor, "??_Diostream@@QAEXXZ");
         SET(p_iostream_assign_sb, "??4iostream@@IAEAAV0@PAVstreambuf@@@Z");
         SET(p_iostream_assign, "??4iostream@@IAEAAV0@AAV0@@Z");
+
+        SET(p_Iostream_init_ios_ctor, "??0Iostream_init@@QAE@AAVios@@H@Z");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -820,6 +830,7 @@ static BOOL init(void)
     SET(p_ios_statebuf, "?x_statebuf@ios@@0PAJA");
     SET(p_ios_xalloc, "?xalloc@ios@@SAHXZ");
     SET(p_ios_fLockcInit, "?fLockcInit@ios@@0HA");
+    SET(p_cout, "?cout@@3Vostream_withassign@@A");
 
     init_thiscall_thunk();
     return TRUE;
@@ -6032,6 +6043,103 @@ static void test_iostream(void)
     ok(ios2.base_ios.do_lock == 0xcdcdcdcd, "expected %d got %d\n", 0xcdcdcdcd, ios2.base_ios.do_lock);
 }
 
+static void test_Iostream_init(void)
+{
+    ios ios_obj;
+    ostream *pos;
+    streambuf *psb;
+    void *pinit;
+
+    memset(&ios_obj, 0xab, sizeof(ios));
+    psb = ios_obj.sb;
+    pinit = call_func3(p_Iostream_init_ios_ctor, NULL, &ios_obj, 0);
+    ok(pinit == NULL, "wrong return, expected %p got %p\n", NULL, pinit);
+    ok(ios_obj.sb == psb, "expected %p got %p\n", psb, ios_obj.sb);
+    ok(ios_obj.state == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.state);
+    ok(ios_obj.special[0] == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.special[0]);
+    ok(ios_obj.special[1] == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.special[1]);
+    ok(ios_obj.delbuf == 1, "expected 1 got %d\n", ios_obj.delbuf);
+todo_wine
+    ok(ios_obj.tie == p_cout, "expected %p got %p\n", p_cout, ios_obj.tie);
+    ok(ios_obj.flags == 0xabababab, "expected %d got %x\n", 0xabababab, ios_obj.flags);
+    ok(ios_obj.precision == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.precision);
+    ok(ios_obj.fill == (char) 0xab, "expected -85 got %d\n", ios_obj.fill);
+    ok(ios_obj.width == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.width);
+    ok(ios_obj.do_lock == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.do_lock);
+
+    memset(&ios_obj, 0xab, sizeof(ios));
+    pos = ios_obj.tie;
+    pinit = call_func3(p_Iostream_init_ios_ctor, NULL, &ios_obj, -1);
+    ok(pinit == NULL, "wrong return, expected %p got %p\n", NULL, pinit);
+    ok(ios_obj.sb == psb, "expected %p got %p\n", psb, ios_obj.sb);
+    ok(ios_obj.state == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.state);
+    ok(ios_obj.special[0] == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.special[0]);
+    ok(ios_obj.special[1] == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.special[1]);
+    ok(ios_obj.delbuf == 1, "expected 1 got %d\n", ios_obj.delbuf);
+    ok(ios_obj.tie == pos, "expected %p got %p\n", pos, ios_obj.tie);
+    ok(ios_obj.flags == 0xabababab, "expected %d got %x\n", 0xabababab, ios_obj.flags);
+    ok(ios_obj.precision == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.precision);
+    ok(ios_obj.fill == (char) 0xab, "expected -85 got %d\n", ios_obj.fill);
+    ok(ios_obj.width == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.width);
+    ok(ios_obj.do_lock == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.do_lock);
+
+    memset(&ios_obj, 0xab, sizeof(ios));
+    pinit = call_func3(p_Iostream_init_ios_ctor, NULL, &ios_obj, -100);
+    ok(pinit == NULL, "wrong return, expected %p got %p\n", NULL, pinit);
+    ok(ios_obj.sb == psb, "expected %p got %p\n", psb, ios_obj.sb);
+    ok(ios_obj.state == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.state);
+    ok(ios_obj.special[0] == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.special[0]);
+    ok(ios_obj.special[1] == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.special[1]);
+    ok(ios_obj.delbuf == 1, "expected 1 got %d\n", ios_obj.delbuf);
+    ok(ios_obj.tie == pos, "expected %p got %p\n", pos, ios_obj.tie);
+    ok(ios_obj.flags == 0xabababab, "expected %d got %x\n", 0xabababab, ios_obj.flags);
+    ok(ios_obj.precision == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.precision);
+    ok(ios_obj.fill == (char) 0xab, "expected -85 got %d\n", ios_obj.fill);
+    ok(ios_obj.width == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.width);
+    ok(ios_obj.do_lock == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.do_lock);
+
+    if (0) /* crashes on native */
+        pinit = call_func3(p_Iostream_init_ios_ctor, NULL, NULL, -1);
+
+    memset(&ios_obj, 0xab, sizeof(ios));
+    ios_obj.flags = 0xcdcdcdcd;
+    ios_obj.do_lock = 0x34343434;
+    pinit = call_func3(p_Iostream_init_ios_ctor, (void*) 0xdeadbeef, &ios_obj, 1);
+    ok(pinit == (void*) 0xdeadbeef, "wrong return, expected %p got %p\n", (void*) 0xdeadbeef, pinit);
+    ok(ios_obj.sb == psb, "expected %p got %p\n", psb, ios_obj.sb);
+    ok(ios_obj.state == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.state);
+    ok(ios_obj.special[0] == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.special[0]);
+    ok(ios_obj.special[1] == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.special[1]);
+    ok(ios_obj.delbuf == 1, "expected 1 got %d\n", ios_obj.delbuf);
+todo_wine
+    ok(ios_obj.tie == p_cout, "expected %p got %p\n", p_cout, ios_obj.tie);
+    ok(ios_obj.flags == (0xcdcdcdcd|FLAGS_unitbuf), "expected %d got %x\n",
+        0xcdcdcdcd|FLAGS_unitbuf, ios_obj.flags);
+    ok(ios_obj.precision == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.precision);
+    ok(ios_obj.fill == (char) 0xab, "expected -85 got %d\n", ios_obj.fill);
+    ok(ios_obj.width == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.width);
+    ok(ios_obj.do_lock == 0x34343434, "expected %d got %d\n", 0x34343434, ios_obj.do_lock);
+
+    memset(&ios_obj, 0xab, sizeof(ios));
+    ios_obj.flags = 0xcdcdcdcd;
+    ios_obj.do_lock = 0x34343434;
+    pinit = call_func3(p_Iostream_init_ios_ctor, (void*) 0xabababab, &ios_obj, 5);
+    ok(pinit == (void*) 0xabababab, "wrong return, expected %p got %p\n", (void*) 0xabababab, pinit);
+    ok(ios_obj.sb == psb, "expected %p got %p\n", psb, ios_obj.sb);
+    ok(ios_obj.state == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.state);
+    ok(ios_obj.special[0] == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.special[0]);
+    ok(ios_obj.special[1] == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.special[1]);
+    ok(ios_obj.delbuf == 1, "expected 1 got %d\n", ios_obj.delbuf);
+todo_wine
+    ok(ios_obj.tie == p_cout, "expected %p got %p\n", p_cout, ios_obj.tie);
+    ok(ios_obj.flags == (0xcdcdcdcd|FLAGS_unitbuf), "expected %d got %x\n",
+        0xcdcdcdcd|FLAGS_unitbuf, ios_obj.flags);
+    ok(ios_obj.precision == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.precision);
+    ok(ios_obj.fill == (char) 0xab, "expected -85 got %d\n", ios_obj.fill);
+    ok(ios_obj.width == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.width);
+    ok(ios_obj.do_lock == 0x34343434, "expected %d got %d\n", 0x34343434, ios_obj.do_lock);
+}
+
 START_TEST(msvcirt)
 {
     if(!init())
@@ -6051,6 +6159,7 @@ START_TEST(msvcirt)
     test_istream_read();
     test_istream_withassign();
     test_iostream();
+    test_Iostream_init();
 
     FreeLibrary(msvcrt);
     FreeLibrary(msvcirt);

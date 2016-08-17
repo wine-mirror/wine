@@ -4037,7 +4037,13 @@ iostream* __thiscall iostream_scalar_dtor(ios *base, unsigned int flags)
 DEFINE_THISCALL_WRAPPER(Iostream_init_ios_ctor, 12)
 void* __thiscall Iostream_init_ios_ctor(void *this, ios *obj, int n)
 {
-    FIXME("(%p %p %d) stub\n", this, obj, n);
+    TRACE("(%p %p %d)\n", this, obj, n);
+    obj->delbuf = 1;
+    if (n >= 0) {
+        obj->tie = NULL; /* FIXME: tie to cout */
+        if (n > 0)
+            ios_setf(obj, FLAGS_unitbuf);
+    }
     return this;
 }
 
