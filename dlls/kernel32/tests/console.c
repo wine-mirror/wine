@@ -2957,34 +2957,34 @@ static void test_GetConsoleScreenBufferInfoEx(HANDLE std_output)
     SetLastError(0xdeadbeef);
     ret = pGetConsoleScreenBufferInfoEx(NULL, &csbix);
     ok(!ret, "got %d, expected zero\n", ret);
-    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleScreenBufferInfoEx(std_input, &csbix);
     ok(!ret, "got %d, expected zero\n", ret);
-    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleScreenBufferInfoEx(std_output, &csbix);
     ok(!ret, "got %d, expected zero\n", ret);
-    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %u, expected 87\n", GetLastError());
 
     csbix.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleScreenBufferInfoEx(NULL, &csbix);
     ok(!ret, "got %d, expected zero\n", ret);
-    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleScreenBufferInfoEx(std_input, &csbix);
     ok(!ret, "got %d, expected zero\n", ret);
-    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleScreenBufferInfoEx(std_output, &csbix);
-    todo_wine ok(ret, "got %d, expected non-zero\n", ret);
-    todo_wine ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    ok(ret, "got %d, expected non-zero\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
 }
 
 START_TEST(console)

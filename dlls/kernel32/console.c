@@ -3356,9 +3356,38 @@ BOOL WINAPI GetConsoleFontInfo(HANDLE hConsole, BOOL maximize, DWORD numfonts, C
 
 BOOL WINAPI GetConsoleScreenBufferInfoEx(HANDLE hConsole, CONSOLE_SCREEN_BUFFER_INFOEX *csbix)
 {
-    FIXME("(%p %p): stub!\n", hConsole, csbix);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    BOOL ret;
+
+    if (csbix->cbSize != sizeof(CONSOLE_SCREEN_BUFFER_INFOEX))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    SERVER_START_REQ(get_console_output_info)
+    {
+        req->handle = console_handle_unmap(hConsole);
+        wine_server_set_reply(req, csbix->ColorTable, sizeof(csbix->ColorTable));
+        if ((ret = !wine_server_call_err(req)))
+        {
+            csbix->dwSize.X              = reply->width;
+            csbix->dwSize.Y              = reply->height;
+            csbix->dwCursorPosition.X    = reply->cursor_x;
+            csbix->dwCursorPosition.Y    = reply->cursor_y;
+            csbix->wAttributes           = reply->attr;
+            csbix->srWindow.Left         = reply->win_left;
+            csbix->srWindow.Top          = reply->win_top;
+            csbix->srWindow.Right        = reply->win_right;
+            csbix->srWindow.Bottom       = reply->win_bottom;
+            csbix->dwMaximumWindowSize.X = min(reply->width, reply->max_width);
+            csbix->dwMaximumWindowSize.Y = min(reply->height, reply->max_height);
+            csbix->wPopupAttributes      = reply->popup_attr;
+            csbix->bFullscreenSupported  = FALSE;
+        }
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 BOOL WINAPI SetConsoleScreenBufferInfoEx(HANDLE hConsole, CONSOLE_SCREEN_BUFFER_INFOEX *csbix)
