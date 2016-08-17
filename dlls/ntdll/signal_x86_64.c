@@ -2312,7 +2312,7 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
     EXCEPTION_REGISTRATION_RECORD *teb_frame = NtCurrentTeb()->Tib.ExceptionList;
     UNWIND_HISTORY_TABLE table;
     DISPATCHER_CONTEXT dispatch;
-    CONTEXT context, new_context;
+    CONTEXT context;
     LDR_MODULE *module;
     NTSTATUS status;
 
@@ -2322,8 +2322,6 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
     dispatch.HistoryTable  = &table;
     for (;;)
     {
-        new_context = context;
-
         /* FIXME: should use the history table to make things faster */
 
         dispatch.ImageBase = 0;
@@ -2332,11 +2330,11 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
 
         /* first look for PE exception information */
 
-        if ((dispatch.FunctionEntry = lookup_function_info( context.Rip, &dispatch.ImageBase, &module )))
+        if ((dispatch.FunctionEntry = lookup_function_info( dispatch.ControlPc, &dispatch.ImageBase, &module )))
         {
             dispatch.LanguageHandler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, dispatch.ImageBase,
-                                                         context.Rip, dispatch.FunctionEntry,
-                                                         &new_context, &dispatch.HandlerData,
+                                                         dispatch.ControlPc, dispatch.FunctionEntry,
+                                                         &context, &dispatch.HandlerData,
                                                          &dispatch.EstablisherFrame, NULL );
             goto unwind_done;
         }
@@ -2347,11 +2345,11 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
         {
             BOOL got_info = FALSE;
             struct dwarf_eh_bases bases;
-            const struct dwarf_fde *fde = _Unwind_Find_FDE( (void *)(context.Rip - 1), &bases );
+            const struct dwarf_fde *fde = _Unwind_Find_FDE( (void *)(dispatch.ControlPc - 1), &bases );
 
             if (fde)
             {
-                status = dwarf_virtual_unwind( context.Rip, &dispatch.EstablisherFrame, &new_context,
+                status = dwarf_virtual_unwind( dispatch.ControlPc, &dispatch.EstablisherFrame, &context,
                                                fde, &bases, &dispatch.LanguageHandler, &dispatch.HandlerData );
                 if (status != STATUS_SUCCESS) return status;
                 got_info = TRUE;
@@ -2359,7 +2357,7 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
 #ifdef HAVE_LIBUNWIND_H
             else
             {
-                status = libunwind_virtual_unwind( context.Rip, &got_info, &dispatch.EstablisherFrame, &new_context,
+                status = libunwind_virtual_unwind( dispatch.ControlPc, &got_info, &dispatch.EstablisherFrame, &context,
                                                    &dispatch.LanguageHandler, &dispatch.HandlerData );
                 if (status != STATUS_SUCCESS) return status;
             }
@@ -2378,11 +2376,9 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
         }
         else WARN( "exception data not found in %s\n", debugstr_w(module->BaseDllName.Buffer) );
 
-        /* no exception information, treat as a leaf function */
-
-        new_context.Rip = *(ULONG64 *)context.Rsp;
-        new_context.Rsp = context.Rsp + sizeof(ULONG64);
-        dispatch.EstablisherFrame = new_context.Rsp;
+        context.Rip = *(ULONG64 *)context.Rsp;
+        context.Rsp = context.Rsp + sizeof(ULONG64);
+        dispatch.EstablisherFrame = context.Rsp;
         dispatch.LanguageHandler = NULL;
 
     unwind_done:
@@ -2426,10 +2422,10 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
             }
         }
         /* hack: call wine handlers registered in the tib list */
-        else while ((ULONG64)teb_frame < new_context.Rsp)
+        else while ((ULONG64)teb_frame < context.Rsp)
         {
             TRACE( "found wine frame %p rsp %lx handler %p\n",
-                   teb_frame, new_context.Rsp, teb_frame->Handler );
+                    teb_frame, context.Rsp, teb_frame->Handler );
             dispatch.EstablisherFrame = (ULONG64)teb_frame;
             switch (call_teb_handler( rec, orig_context, &dispatch, teb_frame ))
             {
@@ -2459,8 +2455,7 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
             teb_frame = teb_frame->Prev;
         }
 
-        if (new_context.Rsp == (ULONG64)NtCurrentTeb()->Tib.StackBase) break;
-        context = new_context;
+        if (context.Rsp == (ULONG64)NtCurrentTeb()->Tib.StackBase) break;
     }
     return STATUS_UNHANDLED_EXCEPTION;
 }
