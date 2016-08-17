@@ -288,6 +288,8 @@ static LONG *p_ios_statebuf;
 static LONG* (*__thiscall p_ios_iword)(const ios*, int);
 static void** (*__thiscall p_ios_pword)(const ios*, int);
 static int (*__cdecl p_ios_xalloc)(void);
+static void (*__cdecl p_ios_sync_with_stdio)(void);
+static int *p_ios_sunk_with_stdio;
 static int *p_ios_fLockcInit;
 
 /* ostream */
@@ -830,6 +832,8 @@ static BOOL init(void)
     SET(p_ios_curindex, "?x_curindex@ios@@0HA");
     SET(p_ios_statebuf, "?x_statebuf@ios@@0PAJA");
     SET(p_ios_xalloc, "?xalloc@ios@@SAHXZ");
+    SET(p_ios_sync_with_stdio, "?sync_with_stdio@ios@@SAXXZ");
+    SET(p_ios_sunk_with_stdio, "?sunk_with_stdio@ios@@0HA");
     SET(p_ios_fLockcInit, "?fLockcInit@ios@@0HA");
     SET(p_cin, "?cin@@3Vistream_withassign@@A");
     SET(p_cout, "?cout@@3Vostream_withassign@@A");
@@ -6147,6 +6151,7 @@ static void test_std_streams(void)
     filebuf *pfb_cout = (filebuf*) p_cout->base_ios.sb;
     filebuf *pfb_cerr = (filebuf*) p_cerr->base_ios.sb;
     filebuf *pfb_clog = (filebuf*) p_clog->base_ios.sb;
+    stdiobuf *pstb_cin, *pstb_cout, *pstb_cerr, *pstb_clog;
 
     ok(p_cin->extract_delim == 0, "expected 0 got %d\n", p_cin->extract_delim);
     ok(p_cin->count == 0, "expected 0 got %d\n", p_cin->count);
@@ -6204,6 +6209,121 @@ static void test_std_streams(void)
     ok(pfb_clog->close == 0, "wrong value, expected 0 got %d\n", pfb_clog->close);
     ok(pfb_clog->base.allocated == 0, "wrong allocate value, expected 0 got %d\n", pfb_clog->base.allocated);
     ok(pfb_clog->base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", pfb_clog->base.unbuffered);
+
+    /* sync_with_stdio */
+    ok(*p_ios_sunk_with_stdio == 0, "expected 0 got %d\n", *p_ios_sunk_with_stdio);
+    p_cin->extract_delim = p_cin->count = 0xabababab;
+    p_cin->base_ios.state = 0xabababab;
+    p_cin->base_ios.precision = p_cin->base_ios.fill = p_cin->base_ios.width = 0xabababab;
+    p_cout->unknown = 0xabababab;
+    p_cout->base_ios.state = 0xabababab;
+    p_cout->base_ios.precision = p_cout->base_ios.fill = p_cout->base_ios.width = 0xabababab;
+    p_cerr->unknown = 0xabababab;
+    p_cerr->base_ios.state = 0xabababab;
+    p_cerr->base_ios.precision = p_cerr->base_ios.fill = p_cerr->base_ios.width = 0xabababab;
+    p_clog->unknown = 0xabababab;
+    p_clog->base_ios.state = 0xabababab;
+    p_clog->base_ios.precision = p_clog->base_ios.fill = p_clog->base_ios.width = 0xabababab;
+    p_ios_sync_with_stdio();
+    ok(*p_ios_sunk_with_stdio == 1, "expected 1 got %d\n", *p_ios_sunk_with_stdio);
+
+    pstb_cin = (stdiobuf*) p_cin->base_ios.sb;
+    ok(p_cin->extract_delim == 0xabababab, "expected %d got %d\n", 0xabababab, p_cin->extract_delim);
+    ok(p_cin->count == 0, "expected 0 got %d\n", p_cin->count);
+    ok(p_cin->base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, p_cin->base_ios.state);
+    ok(p_cin->base_ios.delbuf == 1, "expected 1 got %d\n", p_cin->base_ios.delbuf);
+    ok(p_cin->base_ios.tie == NULL, "expected %p got %p\n", NULL, p_cin->base_ios.tie);
+    ok(p_cin->base_ios.flags == (FLAGS_skipws|FLAGS_stdio), "expected %x got %x\n",
+        FLAGS_skipws|FLAGS_stdio, p_cin->base_ios.flags);
+    ok(p_cin->base_ios.precision == 6, "expected 6 got %d\n", p_cin->base_ios.precision);
+    ok(p_cin->base_ios.fill == ' ', "expected 32 got %d\n", p_cin->base_ios.fill);
+    ok(p_cin->base_ios.width == 0, "expected 0 got %d\n", p_cin->base_ios.width);
+    ok(p_cin->base_ios.do_lock == -1, "expected -1 got %d\n", p_cin->base_ios.do_lock);
+    ok(pstb_cin->file == stdin, "wrong file pointer, expected %p got %p\n", stdin, pstb_cin->file);
+    ok(pstb_cin->base.allocated == 0, "wrong allocate value, expected 0 got %d\n", pstb_cin->base.allocated);
+    ok(pstb_cin->base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", pstb_cin->base.unbuffered);
+    ok(pstb_cin->base.ebuf == NULL, "wrong ebuf pointer, expected %p got %p\n", NULL, pstb_cin->base.eback);
+    ok(pstb_cin->base.eback == NULL, "wrong get base, expected %p got %p\n", NULL, pstb_cin->base.eback);
+    ok(pstb_cin->base.pbase == NULL, "wrong put base, expected %p got %p\n", NULL, pstb_cin->base.pbase);
+
+    pstb_cout = (stdiobuf*) p_cout->base_ios.sb;
+    ok(p_cout->unknown == 0xabababab, "expected %d got %d\n", 0xabababab, p_cout->unknown);
+    ok(p_cout->base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, p_cout->base_ios.state);
+    ok(p_cout->base_ios.delbuf == 1, "expected 1 got %d\n", p_cout->base_ios.delbuf);
+    ok(p_cout->base_ios.tie == NULL, "expected %p got %p\n", NULL, p_cout->base_ios.tie);
+    ok(p_cout->base_ios.flags == (FLAGS_unitbuf|FLAGS_stdio), "expected %x got %x\n",
+        FLAGS_unitbuf|FLAGS_stdio, p_cout->base_ios.flags);
+    ok(p_cout->base_ios.precision == 6, "expected 6 got %d\n", p_cout->base_ios.precision);
+    ok(p_cout->base_ios.fill == ' ', "expected 32 got %d\n", p_cout->base_ios.fill);
+    ok(p_cout->base_ios.width == 0, "expected 0 got %d\n", p_cout->base_ios.width);
+    ok(p_cout->base_ios.do_lock == -1, "expected -1 got %d\n", p_cout->base_ios.do_lock);
+    ok(pstb_cout->file == stdout, "wrong file pointer, expected %p got %p\n", stdout, pstb_cout->file);
+    ok(pstb_cout->base.allocated == 1, "wrong allocate value, expected 1 got %d\n", pstb_cout->base.allocated);
+    ok(pstb_cout->base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", pstb_cout->base.unbuffered);
+    ok(pstb_cout->base.ebuf == pstb_cout->base.base + 80, "wrong ebuf pointer, expected %p got %p\n",
+        pstb_cout->base.base + 80, pstb_cout->base.eback);
+    ok(pstb_cout->base.eback == NULL, "wrong get base, expected %p got %p\n", NULL, pstb_cout->base.eback);
+    ok(pstb_cout->base.pbase == pstb_cout->base.base, "wrong put base, expected %p got %p\n",
+        pstb_cout->base.base, pstb_cout->base.pbase);
+    ok(pstb_cout->base.pptr == pstb_cout->base.base, "wrong put pointer, expected %p got %p\n",
+        pstb_cout->base.base, pstb_cout->base.pptr);
+    ok(pstb_cout->base.epptr == pstb_cout->base.base + 80, "wrong put end, expected %p got %p\n",
+        pstb_cout->base.base + 80, pstb_cout->base.epptr);
+
+    pstb_cerr = (stdiobuf*) p_cerr->base_ios.sb;
+    ok(p_cerr->unknown == 0xabababab, "expected %d got %d\n", 0xabababab, p_cerr->unknown);
+    ok(p_cerr->base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, p_cerr->base_ios.state);
+    ok(p_cerr->base_ios.delbuf == 1, "expected 1 got %d\n", p_cerr->base_ios.delbuf);
+    ok(p_cerr->base_ios.tie == NULL, "expected %p got %p\n", NULL, p_cerr->base_ios.tie);
+    ok(p_cerr->base_ios.flags == (FLAGS_unitbuf|FLAGS_stdio), "expected %x got %x\n",
+        FLAGS_unitbuf|FLAGS_stdio, p_cerr->base_ios.flags);
+    ok(p_cerr->base_ios.precision == 6, "expected 6 got %d\n", p_cerr->base_ios.precision);
+    ok(p_cerr->base_ios.fill == ' ', "expected 32 got %d\n", p_cerr->base_ios.fill);
+    ok(p_cerr->base_ios.width == 0, "expected 0 got %d\n", p_cerr->base_ios.width);
+    ok(p_cerr->base_ios.do_lock == -1, "expected -1 got %d\n", p_cerr->base_ios.do_lock);
+    ok(pstb_cerr->file == stderr, "wrong file pointer, expected %p got %p\n", stderr, pstb_cerr->file);
+    ok(pstb_cerr->base.allocated == 1, "wrong allocate value, expected 1 got %d\n", pstb_cerr->base.allocated);
+    ok(pstb_cerr->base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", pstb_cerr->base.unbuffered);
+    ok(pstb_cerr->base.ebuf == pstb_cerr->base.base + 80, "wrong ebuf pointer, expected %p got %p\n",
+        pstb_cerr->base.base + 80, pstb_cerr->base.eback);
+    ok(pstb_cerr->base.eback == NULL, "wrong get base, expected %p got %p\n", NULL, pstb_cerr->base.eback);
+    ok(pstb_cerr->base.pbase == pstb_cerr->base.base, "wrong put base, expected %p got %p\n",
+        pstb_cerr->base.base, pstb_cerr->base.pbase);
+    ok(pstb_cerr->base.pptr == pstb_cerr->base.base, "wrong put pointer, expected %p got %p\n",
+        pstb_cerr->base.base, pstb_cerr->base.pptr);
+    ok(pstb_cerr->base.epptr == pstb_cerr->base.base + 80, "wrong put end, expected %p got %p\n",
+        pstb_cerr->base.base + 80, pstb_cerr->base.epptr);
+
+    pstb_clog = (stdiobuf*) p_clog->base_ios.sb;
+    ok(p_clog->unknown == 0xabababab, "expected %d got %d\n", 0xabababab, p_clog->unknown);
+    ok(p_clog->base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, p_clog->base_ios.state);
+    ok(p_clog->base_ios.delbuf == 1, "expected 1 got %d\n", p_clog->base_ios.delbuf);
+    ok(p_clog->base_ios.tie == NULL, "expected %p got %p\n", NULL, p_clog->base_ios.tie);
+    ok(p_clog->base_ios.flags == FLAGS_stdio, "expected %x got %x\n", FLAGS_stdio, p_clog->base_ios.flags);
+    ok(p_clog->base_ios.precision == 6, "expected 6 got %d\n", p_clog->base_ios.precision);
+    ok(p_clog->base_ios.fill == ' ', "expected 32 got %d\n", p_clog->base_ios.fill);
+    ok(p_clog->base_ios.width == 0, "expected 0 got %d\n", p_clog->base_ios.width);
+    ok(p_clog->base_ios.do_lock == -1, "expected -1 got %d\n", p_clog->base_ios.do_lock);
+    ok(pstb_clog->file == stderr, "wrong file pointer, expected %p got %p\n", stderr, pstb_clog->file);
+    ok(pstb_clog->base.allocated == 1, "wrong allocate value, expected 1 got %d\n", pstb_clog->base.allocated);
+    ok(pstb_clog->base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", pstb_clog->base.unbuffered);
+    ok(pstb_clog->base.ebuf == pstb_clog->base.base + 512, "wrong ebuf pointer, expected %p got %p\n",
+        pstb_clog->base.base + 512, pstb_clog->base.eback);
+    ok(pstb_clog->base.eback == NULL, "wrong get base, expected %p got %p\n", NULL, pstb_clog->base.eback);
+    ok(pstb_clog->base.pbase == pstb_clog->base.base, "wrong put base, expected %p got %p\n",
+        pstb_clog->base.base, pstb_clog->base.pbase);
+    ok(pstb_clog->base.pptr == pstb_clog->base.base, "wrong put pointer, expected %p got %p\n",
+        pstb_clog->base.base, pstb_clog->base.pptr);
+    ok(pstb_clog->base.epptr == pstb_clog->base.base + 512, "wrong put end, expected %p got %p\n",
+        pstb_clog->base.base + 512, pstb_clog->base.epptr);
+
+    p_cin->count = 0xabababab;
+    p_ios_sync_with_stdio();
+    ok(*p_ios_sunk_with_stdio == 1, "expected 1 got %d\n", *p_ios_sunk_with_stdio);
+    ok(p_cin->count == 0xabababab, "expected %d got %d\n", 0xabababab, p_cin->count);
+    p_ios_sync_with_stdio();
+    ok(*p_ios_sunk_with_stdio == 1, "expected 1 got %d\n", *p_ios_sunk_with_stdio);
+    ok(p_cin->count == 0xabababab, "expected %d got %d\n", 0xabababab, p_cin->count);
 }
 
 START_TEST(msvcirt)

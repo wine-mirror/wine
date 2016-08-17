@@ -60,6 +60,8 @@ const LONG ios_basefield = FLAGS_dec | FLAGS_oct | FLAGS_hex;
 const LONG ios_floatfield = FLAGS_scientific | FLAGS_fixed;
 /* ?fLockcInit@ios@@0HA */
 int ios_fLockcInit = 0;
+/* ?sunk_with_stdio@ios@@0HA */
+int ios_sunk_with_stdio = 0;
 /* ?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A */
 extern CRITICAL_SECTION ios_static_lock;
 CRITICAL_SECTION_DEBUG ios_static_lock_debug =
@@ -2193,12 +2195,6 @@ void __cdecl ios_setlock(ios *this)
         streambuf_setlock(this->sb);
 }
 
-/* ?sync_with_stdio@ios@@SAXXZ */
-void __cdecl ios_sync_with_stdio(void)
-{
-    FIXME("() stub\n");
-}
-
 /* ?tie@ios@@QAEPAVostream@@PAV2@@Z */
 /* ?tie@ios@@QEAAPEAVostream@@PEAV2@@Z */
 DEFINE_THISCALL_WRAPPER(ios_tie_set, 8)
@@ -4085,6 +4081,55 @@ void* __thiscall Iostream_init_assign(void *this, const void *rhs)
 {
     TRACE("(%p %p)\n", this, rhs);
     return this;
+}
+
+/* ?sync_with_stdio@ios@@SAXXZ */
+void __cdecl ios_sync_with_stdio(void)
+{
+    if (!ios_sunk_with_stdio) {
+        stdiobuf *new_buf;
+
+        TRACE("()\n");
+
+        /* run at most once */
+        ios_sunk_with_stdio++;
+
+         /* calls to [io]stream_assign_sb automatically destroy the old buffers */
+        if ((new_buf = MSVCRT_operator_new(sizeof(stdiobuf)))) {
+            stdiobuf_file_ctor(new_buf, stdin);
+            istream_assign_sb(&cin.is, &new_buf->base);
+        } else
+            istream_assign_sb(&cin.is, NULL);
+        cin.vbase.delbuf = 1;
+        ios_setf(&cin.vbase, FLAGS_stdio);
+
+        if ((new_buf = MSVCRT_operator_new(sizeof(stdiobuf)))) {
+            stdiobuf_file_ctor(new_buf, stdout);
+            stdiobuf_setrwbuf(new_buf, 0, 80);
+            ostream_assign_sb(&cout.os, &new_buf->base);
+        } else
+            ostream_assign_sb(&cout.os, NULL);
+        cout.vbase.delbuf = 1;
+        ios_setf(&cout.vbase, FLAGS_unitbuf | FLAGS_stdio);
+
+        if ((new_buf = MSVCRT_operator_new(sizeof(stdiobuf)))) {
+            stdiobuf_file_ctor(new_buf, stderr);
+            stdiobuf_setrwbuf(new_buf, 0, 80);
+            ostream_assign_sb(&cerr.os, &new_buf->base);
+        } else
+            ostream_assign_sb(&cerr.os, NULL);
+        cerr.vbase.delbuf = 1;
+        ios_setf(&cerr.vbase, FLAGS_unitbuf | FLAGS_stdio);
+
+        if ((new_buf = MSVCRT_operator_new(sizeof(stdiobuf)))) {
+            stdiobuf_file_ctor(new_buf, stderr);
+            stdiobuf_setrwbuf(new_buf, 0, 512);
+            ostream_assign_sb(&clog.os, &new_buf->base);
+        } else
+            ostream_assign_sb(&clog.os, NULL);
+        clog.vbase.delbuf = 1;
+        ios_setf(&clog.vbase, FLAGS_stdio);
+    }
 }
 
 /******************************************************************

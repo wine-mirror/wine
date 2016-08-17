@@ -720,7 +720,7 @@
 @ stub -arch=win64 ?str@strstream@@QEAAPEADXZ
 @ thiscall -arch=win32 ?str@strstreambuf@@QAEPADXZ(ptr) strstreambuf_str
 @ cdecl -arch=win64 ?str@strstreambuf@@QEAAPEADXZ(ptr) strstreambuf_str
-# @ extern ?sunk_with_stdio@ios@@0HA  # static int ios::sunk_with_stdio
+@ extern ?sunk_with_stdio@ios@@0HA ios_sunk_with_stdio
 @ thiscall -arch=win32 ?sync@filebuf@@UAEHXZ(ptr) filebuf_sync
 @ cdecl -arch=win64 ?sync@filebuf@@UEAAHXZ(ptr) filebuf_sync
 @ thiscall -arch=win32 ?sync@istream@@QAEHXZ(ptr) istream_sync
