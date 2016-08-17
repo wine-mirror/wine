@@ -223,6 +223,12 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
           lpddi->wUsagePage,
           lpddi->wUsage);
 
+    /* Check if this is a HID device */
+    if (lpddi->dwDevType & DIDEVTYPE_HID)
+        ok(lpddi->wUsagePage == 0x01 && (lpddi->wUsage == 0x04 || lpddi->wUsage == 0x05),
+           "Expected a game controller HID UsagePage and Usage, got page 0x%x usage 0x%x\n",
+           lpddi->wUsagePage, lpddi->wUsage);
+
     /* Test for joystick ID property */
     ZeroMemory(&dipw, sizeof(dipw));
     dipw.diph.dwSize = sizeof(DIPROPDWORD);
