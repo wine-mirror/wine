@@ -6265,6 +6265,103 @@ static void test_SetWindowLong(void)
     }
 }
 
+static LRESULT WINAPI check_style_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    const STYLESTRUCT *expected = (STYLESTRUCT *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    const STYLESTRUCT *got = (STYLESTRUCT *)lParam;
+
+    if (message == WM_STYLECHANGING && wParam == GWL_STYLE)
+    {
+        ok(got->styleOld == expected[0].styleOld, "expected old style %#x, got %#x\n",
+            expected[0].styleOld, got->styleOld);
+        ok(got->styleNew == expected[0].styleNew, "expected new style %#x, got %#x\n",
+            expected[0].styleNew, got->styleNew);
+    }
+    else if (message == WM_STYLECHANGED && wParam == GWL_STYLE)
+    {
+        ok(got->styleOld == expected[1].styleOld, "expected old style %#x, got %#x\n",
+            expected[1].styleOld, got->styleOld);
+        todo_wine_if(expected[0].styleOld & WS_MINIMIZE)
+        ok(got->styleNew == expected[1].styleNew, "expected new style %#x, got %#x\n",
+            expected[1].styleNew, got->styleNew);
+    }
+
+    return DefWindowProcA(hwnd, message, wParam, lParam);
+}
+
+static void test_set_window_style(void)
+{
+    LONG expected_style, new_style, old_style;
+    STYLESTRUCT expected_stylestruct[2];
+    unsigned int i;
+    WNDCLASSA cls;
+    HWND hwnd;
+
+    static const struct
+    {
+        LONG creation_style;
+        LONG style;
+    }
+    tests[] =
+    {
+        { WS_MINIMIZE | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
+          WS_VISIBLE | WS_CLIPSIBLINGS | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX },
+        { WS_MINIMIZE | WS_CLIPSIBLINGS | WS_CAPTION,
+          WS_CLIPSIBLINGS | WS_CAPTION },
+        { WS_MAXIMIZE | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
+          WS_VISIBLE | WS_CLIPSIBLINGS | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX },
+        { WS_MAXIMIZE | WS_CLIPSIBLINGS | WS_CAPTION,
+          WS_CLIPSIBLINGS | WS_CAPTION },
+        { WS_VISIBLE | WS_CLIPSIBLINGS | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
+          WS_MINIMIZE | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX },
+        { WS_CLIPSIBLINGS | WS_CAPTION,
+          WS_MINIMIZE | WS_CLIPSIBLINGS | WS_CAPTION },
+        { WS_VISIBLE | WS_CLIPSIBLINGS | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
+          WS_MAXIMIZE | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX },
+        { WS_CLIPSIBLINGS | WS_CAPTION,
+          WS_MAXIMIZE | WS_CLIPSIBLINGS | WS_CAPTION },
+    };
+
+    memset(&cls, 0, sizeof(cls));
+    cls.lpfnWndProc = check_style_wnd_proc;
+    cls.hInstance = GetModuleHandleA(0);
+    cls.lpszClassName = "TestSetWindowStylesClass";
+    ok(RegisterClassA(&cls), "RegisterClass failed\n");
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    {
+        BOOL todo = FALSE;
+        expected_style = tests[i].style;
+        if ((tests[i].creation_style & WS_MINIMIZE) && !(tests[i].style & WS_MINIMIZE))
+        {
+            todo = TRUE;
+            expected_style |= WS_MINIMIZE;
+        }
+
+        expected_stylestruct[0].styleOld = tests[i].creation_style;
+        expected_stylestruct[0].styleNew = tests[i].style;
+        expected_stylestruct[1].styleOld = tests[i].creation_style;
+        expected_stylestruct[1].styleNew = expected_style;
+
+        hwnd = CreateWindowA(cls.lpszClassName, "Test set styles",
+                             tests[i].creation_style, 100, 100, 200, 200, 0, 0, 0, NULL);
+        ok(hwnd != 0, "CreateWindow failed\n");
+        SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)&expected_stylestruct);
+
+        old_style = SetWindowLongA(hwnd, GWL_STYLE, tests[i].style);
+        ok(old_style == tests[i].creation_style, "expected old style %#x, got %#x\n",
+            tests[i].creation_style, old_style);
+        new_style = GetWindowLongA(hwnd, GWL_STYLE);
+        todo_wine_if(todo) ok(new_style == expected_style, "expected new style %#x, got %#x\n",
+            expected_style, new_style);
+
+        SetWindowLongPtrA(hwnd, GWLP_USERDATA, 0);
+        DestroyWindow(hwnd);
+    }
+
+    UnregisterClassA(cls.lpszClassName, cls.hInstance);
+}
+
 static void test_ShowWindow(void)
 {
     HWND hwnd;
@@ -9355,6 +9452,7 @@ START_TEST(win)
     test_redrawnow();
     test_csparentdc();
     test_SetWindowLong();
+    test_set_window_style();
     test_ShowWindow();
     test_gettext();
     test_GetUpdateRect();
