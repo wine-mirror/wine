@@ -3376,35 +3376,69 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
     return (char *)base + handler_data->handler;
 }
 
+struct unwind_exception_frame
+{
+    EXCEPTION_REGISTRATION_RECORD frame;
+    DISPATCHER_CONTEXT *dispatch;
+};
+
+/**********************************************************************
+ *           unwind_exception_handler
+ *
+ * Handler for exceptions happening while calling an unwind handler.
+ */
+static DWORD unwind_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                       CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+{
+    struct unwind_exception_frame *unwind_frame = (struct unwind_exception_frame *)frame;
+    DISPATCHER_CONTEXT *dispatch = (DISPATCHER_CONTEXT *)dispatcher;
+
+    /* copy the original dispatcher into the current one, except for the TargetIp */
+    dispatch->ControlPc        = unwind_frame->dispatch->ControlPc;
+    dispatch->ImageBase        = unwind_frame->dispatch->ImageBase;
+    dispatch->FunctionEntry    = unwind_frame->dispatch->FunctionEntry;
+    dispatch->EstablisherFrame = unwind_frame->dispatch->EstablisherFrame;
+    dispatch->ContextRecord    = unwind_frame->dispatch->ContextRecord;
+    dispatch->LanguageHandler  = unwind_frame->dispatch->LanguageHandler;
+    dispatch->HandlerData      = unwind_frame->dispatch->HandlerData;
+    dispatch->HistoryTable     = unwind_frame->dispatch->HistoryTable;
+    dispatch->ScopeIndex       = unwind_frame->dispatch->ScopeIndex;
+    TRACE( "detected collided unwind\n" );
+    return ExceptionCollidedUnwind;
+}
 
 /**********************************************************************
  *           call_unwind_handler
  *
  * Call a single unwind handler.
- * FIXME: Handle nested exceptions.
  */
-static void call_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch )
+static DWORD call_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch )
 {
+    struct unwind_exception_frame frame;
     DWORD res;
 
-    dispatch->ControlPc = dispatch->ContextRecord->Rip;
+    frame.frame.Handler = unwind_exception_handler;
+    frame.dispatch = dispatch;
+    __wine_push_frame( &frame.frame );
 
     TRACE( "calling handler %p (rec=%p, frame=0x%lx context=%p, dispatch=%p)\n",
          dispatch->LanguageHandler, rec, dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
     res = dispatch->LanguageHandler( rec, dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
     TRACE( "handler %p returned %x\n", dispatch->LanguageHandler, res );
 
+    __wine_pop_frame( &frame.frame );
+
     switch (res)
     {
     case ExceptionContinueSearch:
-        break;
     case ExceptionCollidedUnwind:
-        FIXME( "ExceptionCollidedUnwind not supported yet\n" );
         break;
     default:
         raise_status( STATUS_INVALID_DISPOSITION, rec );
         break;
     }
+
+    return res;
 }
 
 
@@ -3412,30 +3446,28 @@ static void call_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *disp
  *           call_teb_unwind_handler
  *
  * Call a single unwind handler from the TEB chain.
- * FIXME: Handle nested exceptions.
  */
-static void call_teb_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch,
+static DWORD call_teb_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch,
                                      EXCEPTION_REGISTRATION_RECORD *teb_frame )
 {
-    EXCEPTION_REGISTRATION_RECORD *dispatcher;
     DWORD res;
 
-    TRACE( "calling TEB handler %p (rec=%p, frame=%p context=%p, dispatcher=%p)\n",
-           teb_frame->Handler, rec, teb_frame, dispatch->ContextRecord, &dispatcher );
-    res = teb_frame->Handler( rec, teb_frame, dispatch->ContextRecord, &dispatcher );
+    TRACE( "calling TEB handler %p (rec=%p, frame=%p context=%p, dispatch=%p)\n",
+           teb_frame->Handler, rec, teb_frame, dispatch->ContextRecord, dispatch );
+    res = teb_frame->Handler( rec, teb_frame, dispatch->ContextRecord, (EXCEPTION_REGISTRATION_RECORD**)dispatch );
     TRACE( "handler at %p returned %u\n", teb_frame->Handler, res );
 
     switch (res)
     {
     case ExceptionContinueSearch:
-        break;
     case ExceptionCollidedUnwind:
-        FIXME( "ExceptionCollidedUnwind not supported yet\n" );
         break;
     default:
         raise_status( STATUS_INVALID_DISPOSITION, rec );
         break;
     }
+
+    return res;
 }
 
 
@@ -3588,7 +3620,8 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
         /* FIXME: should use the history table to make things faster */
 
         dispatch.ImageBase = 0;
-        dispatch.ScopeIndex = 0; /* FIXME */
+        dispatch.ScopeIndex = 0;
+        dispatch.ControlPc = context->Rip;
 
         /* first look for PE exception information */
 
@@ -3674,7 +3707,19 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
                 raise_status( STATUS_INVALID_UNWIND_TARGET, rec );
             }
             if (dispatch.EstablisherFrame == (ULONG64)end_frame) rec->ExceptionFlags |= EH_TARGET_UNWIND;
-            call_unwind_handler( rec, &dispatch );
+            if (call_unwind_handler( rec, &dispatch ) == ExceptionCollidedUnwind)
+            {
+                ULONG64 frame;
+
+                *context = new_context = *dispatch.ContextRecord;
+                dispatch.ContextRecord = context;
+                RtlVirtualUnwind( UNW_FLAG_NHANDLER, dispatch.ImageBase,
+                        dispatch.ControlPc, dispatch.FunctionEntry,
+                        &new_context, NULL, &frame, NULL );
+                rec->ExceptionFlags |= EH_COLLIDED_UNWIND;
+                goto unwind_done;
+            }
+            rec->ExceptionFlags &= ~EH_COLLIDED_UNWIND;
         }
         else  /* hack: call builtin handlers registered in the tib list */
         {
@@ -3683,7 +3728,20 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
             {
                 TRACE( "found builtin frame %p handler %p\n", teb_frame, teb_frame->Handler );
                 dispatch.EstablisherFrame = (ULONG64)teb_frame;
-                call_teb_unwind_handler( rec, &dispatch, teb_frame );
+                if (call_teb_unwind_handler( rec, &dispatch, teb_frame ) == ExceptionCollidedUnwind)
+                {
+                    ULONG64 frame;
+
+                    teb_frame = __wine_pop_frame( teb_frame );
+
+                    *context = new_context = *dispatch.ContextRecord;
+                    dispatch.ContextRecord = context;
+                    RtlVirtualUnwind( UNW_FLAG_NHANDLER, dispatch.ImageBase,
+                            dispatch.ControlPc, dispatch.FunctionEntry,
+                            &new_context, NULL, &frame, NULL );
+                    rec->ExceptionFlags |= EH_COLLIDED_UNWIND;
+                    goto unwind_done;
+                }
                 teb_frame = __wine_pop_frame( teb_frame );
             }
             if ((ULONG64)teb_frame == (ULONG64)end_frame && (ULONG64)end_frame < new_context.Rsp) break;
