@@ -461,6 +461,8 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
             }
         }
 
+        EnterCriticalSection( &service_cs );
+
         /* validate service name */
         name = (WCHAR *)data;
         if (!info.name_size || data_size < info.name_size * sizeof(WCHAR) || name[info.name_size - 1])
@@ -504,6 +506,7 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
         }
 
     done:
+        LeaveCriticalSection( &service_cs );
         WriteFile( disp->pipe, &result, sizeof(result), &count, NULL );
         heap_free( data );
     }
