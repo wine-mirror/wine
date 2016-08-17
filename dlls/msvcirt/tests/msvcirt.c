@@ -387,7 +387,8 @@ static iostream* (*__thiscall p_iostream_assign)(iostream*, const iostream*);
 static void* (*__thiscall p_Iostream_init_ios_ctor)(void*, ios*, int);
 
 /* Predefined streams */
-static ostream *p_cout;
+static istream *p_cin;
+static ostream *p_cout, *p_cerr, *p_clog;
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -830,7 +831,10 @@ static BOOL init(void)
     SET(p_ios_statebuf, "?x_statebuf@ios@@0PAJA");
     SET(p_ios_xalloc, "?xalloc@ios@@SAHXZ");
     SET(p_ios_fLockcInit, "?fLockcInit@ios@@0HA");
+    SET(p_cin, "?cin@@3Vistream_withassign@@A");
     SET(p_cout, "?cout@@3Vostream_withassign@@A");
+    SET(p_cerr, "?cerr@@3Vostream_withassign@@A");
+    SET(p_clog, "?clog@@3Vostream_withassign@@A");
 
     init_thiscall_thunk();
     return TRUE;
@@ -6059,7 +6063,6 @@ static void test_Iostream_init(void)
     ok(ios_obj.special[0] == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.special[0]);
     ok(ios_obj.special[1] == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.special[1]);
     ok(ios_obj.delbuf == 1, "expected 1 got %d\n", ios_obj.delbuf);
-todo_wine
     ok(ios_obj.tie == p_cout, "expected %p got %p\n", p_cout, ios_obj.tie);
     ok(ios_obj.flags == 0xabababab, "expected %d got %x\n", 0xabababab, ios_obj.flags);
     ok(ios_obj.precision == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.precision);
@@ -6111,7 +6114,6 @@ todo_wine
     ok(ios_obj.special[0] == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.special[0]);
     ok(ios_obj.special[1] == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.special[1]);
     ok(ios_obj.delbuf == 1, "expected 1 got %d\n", ios_obj.delbuf);
-todo_wine
     ok(ios_obj.tie == p_cout, "expected %p got %p\n", p_cout, ios_obj.tie);
     ok(ios_obj.flags == (0xcdcdcdcd|FLAGS_unitbuf), "expected %d got %x\n",
         0xcdcdcdcd|FLAGS_unitbuf, ios_obj.flags);
@@ -6130,7 +6132,6 @@ todo_wine
     ok(ios_obj.special[0] == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.special[0]);
     ok(ios_obj.special[1] == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.special[1]);
     ok(ios_obj.delbuf == 1, "expected 1 got %d\n", ios_obj.delbuf);
-todo_wine
     ok(ios_obj.tie == p_cout, "expected %p got %p\n", p_cout, ios_obj.tie);
     ok(ios_obj.flags == (0xcdcdcdcd|FLAGS_unitbuf), "expected %d got %x\n",
         0xcdcdcdcd|FLAGS_unitbuf, ios_obj.flags);
@@ -6138,6 +6139,71 @@ todo_wine
     ok(ios_obj.fill == (char) 0xab, "expected -85 got %d\n", ios_obj.fill);
     ok(ios_obj.width == 0xabababab, "expected %d got %d\n", 0xabababab, ios_obj.width);
     ok(ios_obj.do_lock == 0x34343434, "expected %d got %d\n", 0x34343434, ios_obj.do_lock);
+}
+
+static void test_std_streams(void)
+{
+    filebuf *pfb_cin = (filebuf*) p_cin->base_ios.sb;
+    filebuf *pfb_cout = (filebuf*) p_cout->base_ios.sb;
+    filebuf *pfb_cerr = (filebuf*) p_cerr->base_ios.sb;
+    filebuf *pfb_clog = (filebuf*) p_clog->base_ios.sb;
+
+    ok(p_cin->extract_delim == 0, "expected 0 got %d\n", p_cin->extract_delim);
+    ok(p_cin->count == 0, "expected 0 got %d\n", p_cin->count);
+    ok(p_cin->base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, p_cin->base_ios.state);
+    ok(p_cin->base_ios.delbuf == 1, "expected 1 got %d\n", p_cin->base_ios.delbuf);
+    ok(p_cin->base_ios.tie == p_cout, "expected %p got %p\n", p_cout, p_cin->base_ios.tie);
+    ok(p_cin->base_ios.flags == FLAGS_skipws, "expected %x got %x\n", FLAGS_skipws, p_cin->base_ios.flags);
+    ok(p_cin->base_ios.precision == 6, "expected 6 got %d\n", p_cin->base_ios.precision);
+    ok(p_cin->base_ios.fill == ' ', "expected 32 got %d\n", p_cin->base_ios.fill);
+    ok(p_cin->base_ios.width == 0, "expected 0 got %d\n", p_cin->base_ios.width);
+    ok(p_cin->base_ios.do_lock == -1, "expected -1 got %d\n", p_cin->base_ios.do_lock);
+    ok(pfb_cin->fd == 0, "wrong fd, expected 0 got %d\n", pfb_cin->fd);
+    ok(pfb_cin->close == 0, "wrong value, expected 0 got %d\n", pfb_cin->close);
+    ok(pfb_cin->base.allocated == 0, "wrong allocate value, expected 0 got %d\n", pfb_cin->base.allocated);
+    ok(pfb_cin->base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", pfb_cin->base.unbuffered);
+
+    ok(p_cout->unknown == 0, "expected 0 got %d\n", p_cout->unknown);
+    ok(p_cout->base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, p_cout->base_ios.state);
+    ok(p_cout->base_ios.delbuf == 1, "expected 1 got %d\n", p_cout->base_ios.delbuf);
+    ok(p_cout->base_ios.tie == NULL, "expected %p got %p\n", NULL, p_cout->base_ios.tie);
+    ok(p_cout->base_ios.flags == 0, "expected 0 got %x\n", p_cout->base_ios.flags);
+    ok(p_cout->base_ios.precision == 6, "expected 6 got %d\n", p_cout->base_ios.precision);
+    ok(p_cout->base_ios.fill == ' ', "expected 32 got %d\n", p_cout->base_ios.fill);
+    ok(p_cout->base_ios.width == 0, "expected 0 got %d\n", p_cout->base_ios.width);
+    ok(p_cout->base_ios.do_lock == -1, "expected -1 got %d\n", p_cout->base_ios.do_lock);
+    ok(pfb_cout->fd == 1, "wrong fd, expected 1 got %d\n", pfb_cout->fd);
+    ok(pfb_cout->close == 0, "wrong value, expected 0 got %d\n", pfb_cout->close);
+    ok(pfb_cout->base.allocated == 0, "wrong allocate value, expected 0 got %d\n", pfb_cout->base.allocated);
+    ok(pfb_cout->base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", pfb_cout->base.unbuffered);
+
+    ok(p_cerr->unknown == 0, "expected 0 got %d\n", p_cerr->unknown);
+    ok(p_cerr->base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, p_cerr->base_ios.state);
+    ok(p_cerr->base_ios.delbuf == 1, "expected 1 got %d\n", p_cerr->base_ios.delbuf);
+    ok(p_cerr->base_ios.tie == p_cout, "expected %p got %p\n", p_cout, p_cerr->base_ios.tie);
+    ok(p_cerr->base_ios.flags == FLAGS_unitbuf, "expected %x got %x\n", FLAGS_unitbuf, p_cerr->base_ios.flags);
+    ok(p_cerr->base_ios.precision == 6, "expected 6 got %d\n", p_cerr->base_ios.precision);
+    ok(p_cerr->base_ios.fill == ' ', "expected 32 got %d\n", p_cerr->base_ios.fill);
+    ok(p_cerr->base_ios.width == 0, "expected 0 got %d\n", p_cerr->base_ios.width);
+    ok(p_cerr->base_ios.do_lock == -1, "expected -1 got %d\n", p_cerr->base_ios.do_lock);
+    ok(pfb_cerr->fd == 2, "wrong fd, expected 2 got %d\n", pfb_cerr->fd);
+    ok(pfb_cerr->close == 0, "wrong value, expected 0 got %d\n", pfb_cerr->close);
+    ok(pfb_cerr->base.allocated == 0, "wrong allocate value, expected 0 got %d\n", pfb_cerr->base.allocated);
+    ok(pfb_cerr->base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", pfb_cerr->base.unbuffered);
+
+    ok(p_clog->unknown == 0, "expected 0 got %d\n", p_clog->unknown);
+    ok(p_clog->base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, p_clog->base_ios.state);
+    ok(p_clog->base_ios.delbuf == 1, "expected 1 got %d\n", p_clog->base_ios.delbuf);
+    ok(p_clog->base_ios.tie == p_cout, "expected %p got %p\n", p_cout, p_clog->base_ios.tie);
+    ok(p_clog->base_ios.flags == 0, "expected 0 got %x\n", p_clog->base_ios.flags);
+    ok(p_clog->base_ios.precision == 6, "expected 6 got %d\n", p_clog->base_ios.precision);
+    ok(p_clog->base_ios.fill == ' ', "expected 32 got %d\n", p_clog->base_ios.fill);
+    ok(p_clog->base_ios.width == 0, "expected 0 got %d\n", p_clog->base_ios.width);
+    ok(p_clog->base_ios.do_lock == -1, "expected -1 got %d\n", p_clog->base_ios.do_lock);
+    ok(pfb_clog->fd == 2, "wrong fd, expected 2 got %d\n", pfb_clog->fd);
+    ok(pfb_clog->close == 0, "wrong value, expected 0 got %d\n", pfb_clog->close);
+    ok(pfb_clog->base.allocated == 0, "wrong allocate value, expected 0 got %d\n", pfb_clog->base.allocated);
+    ok(pfb_clog->base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", pfb_clog->base.unbuffered);
 }
 
 START_TEST(msvcirt)
@@ -6160,6 +6226,7 @@ START_TEST(msvcirt)
     test_istream_withassign();
     test_iostream();
     test_Iostream_init();
+    test_std_streams();
 
     FreeLibrary(msvcrt);
     FreeLibrary(msvcirt);

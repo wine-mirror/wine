@@ -472,11 +472,11 @@
 @ cdecl ?bitalloc@ios@@SAJXZ() msvcirt.?bitalloc@ios@@SAJXZ
 @ thiscall -arch=win32 ?blen@streambuf@@IBEHXZ(ptr) msvcirt.?blen@streambuf@@IBEHXZ
 @ cdecl -arch=win64 ?blen@streambuf@@IEBAHXZ(ptr) msvcirt.?blen@streambuf@@IEBAHXZ
-@ stub ?cerr@@3Vostream_withassign@@A
-@ stub ?cin@@3Vistream_withassign@@A
+@ extern ?cerr@@3Vostream_withassign@@A msvcirt.?cerr@@3Vostream_withassign@@A
+@ extern ?cin@@3Vistream_withassign@@A msvcirt.?cin@@3Vistream_withassign@@A
 @ thiscall -arch=win32 ?clear@ios@@QAEXH@Z(ptr long) msvcirt.?clear@ios@@QAEXH@Z
 @ cdecl -arch=win64 ?clear@ios@@QEAAXH@Z(ptr long) msvcirt.?clear@ios@@QEAAXH@Z
-@ stub ?clog@@3Vostream_withassign@@A
+@ extern ?clog@@3Vostream_withassign@@A msvcirt.?clog@@3Vostream_withassign@@A
 @ thiscall -arch=win32 ?close@filebuf@@QAEPAV1@XZ(ptr) msvcirt.?close@filebuf@@QAEPAV1@XZ
 @ cdecl -arch=win64 ?close@filebuf@@QEAAPEAV1@XZ(ptr) msvcirt.?close@filebuf@@QEAAPEAV1@XZ
 @ stub -arch=win32 ?close@fstream@@QAEXXZ
@@ -489,7 +489,7 @@
 @ cdecl -arch=win64 ?clrlock@ios@@QEAAXXZ(ptr) msvcirt.?clrlock@ios@@QEAAXXZ
 @ thiscall -arch=win32 ?clrlock@streambuf@@QAEXXZ(ptr) msvcirt.?clrlock@streambuf@@QAEXXZ
 @ cdecl -arch=win64 ?clrlock@streambuf@@QEAAXXZ(ptr) msvcirt.?clrlock@streambuf@@QEAAXXZ
-@ stub ?cout@@3Vostream_withassign@@A
+@ extern ?cout@@3Vostream_withassign@@A msvcirt.?cout@@3Vostream_withassign@@A
 @ thiscall -arch=win32 ?dbp@streambuf@@QAEXXZ(ptr) msvcirt.?dbp@streambuf@@QAEXXZ
 @ cdecl -arch=win64 ?dbp@streambuf@@QEAAXXZ(ptr) msvcirt.?dbp@streambuf@@QEAAXXZ
 @ cdecl -arch=win32 ?dec@@YAAAVios@@AAV1@@Z(ptr) msvcirt.?dec@@YAAAVios@@AAV1@@Z

@@ -59,8 +59,7 @@ const LONG ios_basefield = FLAGS_dec | FLAGS_oct | FLAGS_hex;
 /* ?floatfield@ios@@2JB */
 const LONG ios_floatfield = FLAGS_scientific | FLAGS_fixed;
 /* ?fLockcInit@ios@@0HA */
-/* FIXME: should be initialized to 0 and increased on construction of cin, cout, cerr and clog */
-int ios_fLockcInit = 4;
+int ios_fLockcInit = 0;
 /* ?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A */
 extern CRITICAL_SECTION ios_static_lock;
 CRITICAL_SECTION_DEBUG ios_static_lock_debug =
@@ -286,6 +285,21 @@ DEFINE_RTTI_DATA2(istream_withassign, sizeof(istream),
 DEFINE_RTTI_DATA4(iostream, sizeof(iostream),
     &istream_rtti_base_descriptor, &ios_rtti_base_descriptor,
     &ostream_rtti_base_descriptor, &ios_rtti_base_descriptor, ".?AViostream@@")
+
+/* ?cin@@3Vistream_withassign@@A */
+struct {
+    istream is;
+    ios vbase;
+} cin = { { 0 } };
+
+/* ?cout@@3Vostream_withassign@@A */
+/* ?cerr@@3Vostream_withassign@@A */
+/* ?clog@@3Vostream_withassign@@A */
+struct {
+    ostream os;
+    ios vbase;
+} cout = { { 0 } }, cerr = { { 0 } }, clog = { { 0 } };
+
 
 /* ??0streambuf@@IAE@PADH@Z */
 /* ??0streambuf@@IEAA@PEADH@Z */
@@ -4040,7 +4054,7 @@ void* __thiscall Iostream_init_ios_ctor(void *this, ios *obj, int n)
     TRACE("(%p %p %d)\n", this, obj, n);
     obj->delbuf = 1;
     if (n >= 0) {
-        obj->tie = NULL; /* FIXME: tie to cout */
+        obj->tie = &cout.os;
         if (n > 0)
             ios_setf(obj, FLAGS_unitbuf);
     }
@@ -4141,6 +4155,8 @@ static void init_cxx_funcs(void)
 
 static void init_io(void *base)
 {
+    filebuf *fb;
+
 #ifdef __x86_64__
     init_streambuf_rtti(base);
     init_filebuf_rtti(base);
@@ -4153,6 +4169,43 @@ static void init_io(void *base)
     init_istream_withassign_rtti(base);
     init_iostream_rtti(base);
 #endif
+
+    if ((fb = MSVCRT_operator_new(sizeof(filebuf)))) {
+        filebuf_fd_ctor(fb, 0);
+        istream_withassign_sb_ctor(&cin.is, &fb->base, TRUE);
+    } else
+        istream_withassign_sb_ctor(&cin.is, NULL, TRUE);
+    Iostream_init_ios_ctor(NULL, &cin.vbase, 0);
+
+    if ((fb = MSVCRT_operator_new(sizeof(filebuf)))) {
+        filebuf_fd_ctor(fb, 1);
+        ostream_withassign_sb_ctor(&cout.os, &fb->base, TRUE);
+    } else
+        ostream_withassign_sb_ctor(&cout.os, NULL, TRUE);
+    Iostream_init_ios_ctor(NULL, &cout.vbase, -1);
+
+    if ((fb = MSVCRT_operator_new(sizeof(filebuf)))) {
+        filebuf_fd_ctor(fb, 2);
+        ostream_withassign_sb_ctor(&cerr.os, &fb->base, TRUE);
+    } else
+        ostream_withassign_sb_ctor(&cerr.os, NULL, TRUE);
+    Iostream_init_ios_ctor(NULL, &cerr.vbase, 1);
+
+    if ((fb = MSVCRT_operator_new(sizeof(filebuf)))) {
+        filebuf_fd_ctor(fb, 2);
+        ostream_withassign_sb_ctor(&clog.os, &fb->base, TRUE);
+    } else
+        ostream_withassign_sb_ctor(&clog.os, NULL, TRUE);
+    Iostream_init_ios_ctor(NULL, &clog.vbase, 0);
+}
+
+static void free_io(void)
+{
+    /* destructors take care of deleting the buffers */
+    istream_vbase_dtor(&cin.is);
+    ostream_vbase_dtor(&cout.os);
+    ostream_vbase_dtor(&cerr.os);
+    ostream_vbase_dtor(&clog.os);
 }
 
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
@@ -4166,6 +4219,10 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
        init_exception(inst);
        init_io(inst);
        DisableThreadLibraryCalls( inst );
+       break;
+   case DLL_PROCESS_DETACH:
+       if (reserved) break;
+       free_io();
        break;
    }
    return TRUE;

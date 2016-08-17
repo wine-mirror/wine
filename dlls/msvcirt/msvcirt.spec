@@ -419,11 +419,11 @@
 @ cdecl ?bitalloc@ios@@SAJXZ() ios_bitalloc
 @ thiscall -arch=win32 ?blen@streambuf@@IBEHXZ(ptr) streambuf_blen
 @ cdecl -arch=win64 ?blen@streambuf@@IEBAHXZ(ptr) streambuf_blen
-@ stub ?cerr@@3Vostream_withassign@@A  # class ostream_withassign cerr
-@ stub ?cin@@3Vistream_withassign@@A  # class istream_withassign cin
+@ extern ?cerr@@3Vostream_withassign@@A cerr
+@ extern ?cin@@3Vistream_withassign@@A cin
 @ thiscall -arch=win32 ?clear@ios@@QAEXH@Z(ptr long) ios_clear
 @ cdecl -arch=win64 ?clear@ios@@QEAAXH@Z(ptr long) ios_clear
-@ stub ?clog@@3Vostream_withassign@@A  # class ostream_withassign clog
+@ extern ?clog@@3Vostream_withassign@@A clog
 @ thiscall -arch=win32 ?close@filebuf@@QAEPAV1@XZ(ptr) filebuf_close
 @ cdecl -arch=win64 ?close@filebuf@@QEAAPEAV1@XZ(ptr) filebuf_close
 @ stub -arch=win32 ?close@fstream@@QAEXXZ  # void __thiscall fstream::close(void)
@@ -436,7 +436,7 @@
 @ cdecl -arch=win64 ?clrlock@ios@@QEAAXXZ(ptr) ios_clrlock
 @ thiscall -arch=win32 ?clrlock@streambuf@@QAEXXZ(ptr) streambuf_clrlock
 @ cdecl -arch=win64 ?clrlock@streambuf@@QEAAXXZ(ptr) streambuf_clrlock
-@ stub ?cout@@3Vostream_withassign@@A  # class ostream_withassign cout
+@ extern ?cout@@3Vostream_withassign@@A cout
 @ thiscall -arch=win32 ?dbp@streambuf@@QAEXXZ(ptr) streambuf_dbp
 @ cdecl -arch=win64 ?dbp@streambuf@@QEAAXXZ(ptr) streambuf_dbp
 @ cdecl -arch=win32 ?dec@@YAAAVios@@AAV1@@Z(ptr) ios_dec
