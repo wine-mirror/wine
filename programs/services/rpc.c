@@ -373,9 +373,7 @@ DWORD __cdecl svcctl_OpenServiceW(
         return ERROR_INVALID_NAME;
 
     scmdatabase_lock(manager->db);
-    entry = scmdatabase_find_service(manager->db, lpServiceName);
-    if (entry != NULL)
-        InterlockedIncrement(&entry->ref_count);
+    entry = grab_service(scmdatabase_find_service(manager->db, lpServiceName));
     scmdatabase_unlock(manager->db);
 
     if (entry == NULL)

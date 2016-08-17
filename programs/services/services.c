@@ -346,15 +346,13 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
                     break;
                 services_list = slist_new;
             }
-            services_list[i] = service;
-            InterlockedIncrement(&service->ref_count);
-            i++;
+            services_list[i++] = grab_service(service);
         }
     }
+    size = i;
 
     scmdatabase_unlock(db);
 
-    size = i;
     for (i = 0; i < size; i++)
     {
         DWORD err;
@@ -492,6 +490,13 @@ void release_process(struct process_entry *process)
         free_process_entry(process);
     }
     scmdatabase_unlock(db);
+}
+
+struct service_entry *grab_service(struct service_entry *service)
+{
+    if (service)
+        InterlockedIncrement(&service->ref_count);
+    return service;
 }
 
 void release_service(struct service_entry *service)

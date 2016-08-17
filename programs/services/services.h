@@ -84,6 +84,7 @@ BOOL validate_service_name(LPCWSTR name);
 BOOL validate_service_config(struct service_entry *entry);
 DWORD save_service_config(struct service_entry *entry);
 void free_service_entry(struct service_entry *entry);
+struct service_entry *grab_service(struct service_entry *service);
 void release_service(struct service_entry *service);
 void service_lock(struct service_entry *service);
 void service_unlock(struct service_entry *service);
