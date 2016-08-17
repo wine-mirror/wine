@@ -142,6 +142,30 @@ static struct JoyDev *joystick_devices;
 
 static void joy_polldev(LPDIRECTINPUTDEVICE8A iface);
 
+#define SYS_PATH_FORMAT "/sys/class/input/js%d/device/id/%s"
+static BOOL read_sys_id_variable(int index, const char *property, WORD *value)
+{
+    char sys_path[sizeof(SYS_PATH_FORMAT) + 16], id_str[5];
+    int sys_fd;
+    BOOL ret = FALSE;
+
+    sprintf(sys_path, SYS_PATH_FORMAT, index, property);
+    sys_fd = open(sys_path, O_RDONLY);
+    if (sys_fd > 0)
+    {
+        if (read(sys_fd, id_str, 4) == 4)
+        {
+            id_str[4] = '\0';
+            *value = strtol(id_str, NULL, 16);
+            ret = TRUE;
+        }
+
+        close(sys_fd);
+    }
+    return ret;
+}
+#undef SYS_PATH_FORMAT
+
 static INT find_joystick_devices(void)
 {
     INT i;
@@ -151,10 +175,9 @@ static INT find_joystick_devices(void)
     joystick_devices_count = 0;
     for (i = 0; i < MAX_JOYSTICKS; i++)
     {
-        int fd, sys_fd;
+        int fd;
         struct JoyDev joydev, *new_joydevs;
         BYTE axes_map[ABS_MAX + 1];
-        char sys_path[sizeof("/sys/class/input/js/device/id/product") + 10], id_str[5];
 
         snprintf(joydev.device, sizeof(joydev.device), "%s%d", JOYDEV_NEW, i);
         if ((fd = open(joydev.device, O_RDONLY)) < 0)
@@ -225,31 +248,8 @@ static INT find_joystick_devices(void)
         joydev.vendor_id  = 0;
         joydev.product_id = 0;
 
-        sprintf(sys_path, "/sys/class/input/js%d/device/id/vendor", i);
-        sys_fd = open(sys_path, O_RDONLY);
-        if (sys_fd > 0)
-        {
-            if (read(sys_fd, id_str, 4) == 4)
-            {
-                id_str[4] = '\0';
-                joydev.vendor_id = strtol(id_str, NULL, 16);
-            }
-
-            close(sys_fd);
-        }
-
-        sprintf(sys_path, "/sys/class/input/js%d/device/id/product", i);
-        sys_fd = open(sys_path, O_RDONLY);
-        if (sys_fd > 0)
-        {
-            if (read(sys_fd, id_str, 4) == 4)
-            {
-                id_str[4] = '\0';
-                joydev.product_id = strtol(id_str, NULL, 16);
-            }
-
-            close(sys_fd);
-        }
+        read_sys_id_variable(i, "vendor", &joydev.vendor_id);
+        read_sys_id_variable(i, "product", &joydev.product_id);
 
         if (joydev.vendor_id == 0 || joydev.product_id == 0)
         {
