@@ -521,7 +521,11 @@ static void test_query_handle(void)
     for (i = 0, found = FALSE; i < shi->Count && !found; i++)
         found = (shi->Handle[i].OwnerPid == GetCurrentProcessId()) &&
                 ((HANDLE)(ULONG_PTR)shi->Handle[i].HandleValue == EventHandle);
-    ok( found, "Expected to find event handle in handle list\n" );
+    ok( found, "Expected to find event handle %p (pid %x) in handle list\n", EventHandle, GetCurrentProcessId() );
+
+    if (!found)
+        for (i = 0; i < shi->Count; i++)
+            trace( "%d: handle %x pid %x\n", i, shi->Handle[i].HandleValue, shi->Handle[i].OwnerPid );
 
     CloseHandle(EventHandle);
 
