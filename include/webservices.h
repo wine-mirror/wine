@@ -60,6 +60,7 @@ typedef struct _WS_DOUBLE_DESCRIPTION WS_DOUBLE_DESCRIPTION;
 typedef struct _WS_DATETIME WS_DATETIME;
 typedef struct _WS_DATETIME_DESCRIPTION WS_DATETIME_DESCRIPTION;
 typedef struct _WS_GUID_DESCRIPTION WS_GUID_DESCRIPTION;
+typedef struct _WS_UNIQUE_ID_DESCRIPTION WS_UNIQUE_ID_DESCRIPTION;
 typedef struct _WS_URL WS_URL;
 typedef struct _WS_HTTP_URL WS_HTTP_URL;
 typedef struct _WS_HTTPS_URL WS_HTTPS_URL;
@@ -402,6 +403,15 @@ struct _WS_ENUM_DESCRIPTION {
 struct _WS_DOUBLE_DESCRIPTION {
     double minValue;
     double maxValue;
+};
+
+struct _WS_GUID_DESCRIPTION {
+    GUID value;
+};
+
+struct _WS_UNIQUE_ID_DESCRIPTION {
+    ULONG minCharCount;
+    ULONG maxCharCount;
 };
 
 typedef enum {
@@ -1336,6 +1346,8 @@ typedef enum
 typedef void (CALLBACK *WS_MESSAGE_DONE_CALLBACK)
     (void*);
 
+HRESULT WINAPI WsAddMappedHeader(WS_MESSAGE*, const WS_XML_STRING*, WS_TYPE, WS_WRITE_OPTION,
+                                 const void*, ULONG, WS_ERROR*);
 HRESULT WINAPI WsAddressMessage(WS_MESSAGE*, const WS_ENDPOINT_ADDRESS*, WS_ERROR*);
 HRESULT WINAPI WsAlloc(WS_HEAP*, SIZE_T, void**, WS_ERROR*);
 HRESULT WINAPI WsCall(WS_SERVICE_PROXY*, const WS_OPERATION_DESCRIPTION*, const void**,
@@ -1421,6 +1433,7 @@ HRESULT WINAPI WsReceiveMessage(WS_CHANNEL*, WS_MESSAGE*, const WS_MESSAGE_DESCR
                                 WS_RECEIVE_OPTION, WS_READ_OPTION, WS_HEAP*, void*, ULONG, ULONG*,
                                 const WS_ASYNC_CONTEXT*, WS_ERROR*);
 HRESULT WINAPI WsRemoveHeader(WS_MESSAGE*, WS_HEADER_TYPE, WS_ERROR*);
+HRESULT WINAPI WsRemoveMappedHeader(WS_MESSAGE*, const WS_XML_STRING*, WS_ERROR*);
 HRESULT WINAPI WsRemoveNode(const WS_XML_NODE_POSITION*, WS_ERROR*);
 HRESULT WINAPI WsResetChannel(WS_CHANNEL*, WS_ERROR*);
 HRESULT WINAPI WsResetError(WS_ERROR*);
