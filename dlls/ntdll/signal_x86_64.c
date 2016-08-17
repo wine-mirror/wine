@@ -2256,31 +2256,15 @@ static RUNTIME_FUNCTION *lookup_function_info( ULONG64 pc, ULONG64 *base, LDR_MO
  * Call a single exception handler.
  * FIXME: Handle nested exceptions.
  */
-static NTSTATUS call_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch, CONTEXT *orig_context )
+static DWORD call_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch )
 {
     DWORD res;
-
-    dispatch->ControlPc = dispatch->ContextRecord->Rip;
 
     TRACE( "calling handler %p (rec=%p, frame=0x%lx context=%p, dispatch=%p)\n",
            dispatch->LanguageHandler, rec, dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
     res = dispatch->LanguageHandler( rec, dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
     TRACE( "handler at %p returned %u\n", dispatch->LanguageHandler, res );
-
-    switch (res)
-    {
-    case ExceptionContinueExecution:
-        if (rec->ExceptionFlags & EH_NONCONTINUABLE) return STATUS_NONCONTINUABLE_EXCEPTION;
-        *orig_context = *dispatch->ContextRecord;
-        return STATUS_SUCCESS;
-    case ExceptionContinueSearch:
-        break;
-    case ExceptionNestedException:
-        break;
-    default:
-        return STATUS_INVALID_DISPOSITION;
-    }
-    return STATUS_UNHANDLED_EXCEPTION;
+    return res;
 }
 
 
@@ -2290,31 +2274,16 @@ static NTSTATUS call_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatc
  * Call a single exception handler from the TEB chain.
  * FIXME: Handle nested exceptions.
  */
-static NTSTATUS call_teb_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch,
-                                  EXCEPTION_REGISTRATION_RECORD *teb_frame, CONTEXT *orig_context )
+static DWORD call_teb_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch,
+                                  EXCEPTION_REGISTRATION_RECORD *teb_frame )
 {
-    EXCEPTION_REGISTRATION_RECORD *dispatcher;
     DWORD res;
 
-    TRACE( "calling TEB handler %p (rec=%p, frame=%p context=%p, dispatcher=%p)\n",
-           teb_frame->Handler, rec, teb_frame, dispatch->ContextRecord, &dispatcher );
-    res = teb_frame->Handler( rec, teb_frame, dispatch->ContextRecord, &dispatcher );
+    TRACE( "calling TEB handler %p (rec=%p, frame=%p context=%p, dispatch=%p)\n",
+           teb_frame->Handler, rec, teb_frame, dispatch->ContextRecord, dispatch );
+    res = teb_frame->Handler( rec, teb_frame, dispatch->ContextRecord, (EXCEPTION_REGISTRATION_RECORD**)dispatch );
     TRACE( "handler at %p returned %u\n", teb_frame->Handler, res );
-
-    switch (res)
-    {
-    case ExceptionContinueExecution:
-        if (rec->ExceptionFlags & EH_NONCONTINUABLE) return STATUS_NONCONTINUABLE_EXCEPTION;
-        *orig_context = *dispatch->ContextRecord;
-        return STATUS_SUCCESS;
-    case ExceptionContinueSearch:
-        break;
-    case ExceptionNestedException:
-        break;
-    default:
-        return STATUS_INVALID_DISPOSITION;
-    }
-    return STATUS_UNHANDLED_EXCEPTION;
+    return res;
 }
 
 
@@ -2336,7 +2305,6 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
     dispatch.TargetIp      = 0;
     dispatch.ContextRecord = &context;
     dispatch.HistoryTable  = &table;
-    dispatch.ScopeIndex    = 0; /* FIXME */
     for (;;)
     {
         new_context = context;
@@ -2344,6 +2312,8 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
         /* FIXME: should use the history table to make things faster */
 
         dispatch.ImageBase = 0;
+        dispatch.ControlPc = context.Rip;
+        dispatch.ScopeIndex = 0;
 
         /* first look for PE exception information */
 
@@ -2415,8 +2385,28 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
 
         if (dispatch.LanguageHandler)
         {
-            status = call_handler( rec, &dispatch, orig_context );
-            if (status != STATUS_UNHANDLED_EXCEPTION) return status;
+            switch (call_handler( rec, &dispatch ))
+            {
+            case ExceptionContinueExecution:
+                if (rec->ExceptionFlags & EH_NONCONTINUABLE) return STATUS_NONCONTINUABLE_EXCEPTION;
+                *orig_context = *dispatch.ContextRecord;
+                return STATUS_SUCCESS;
+            case ExceptionContinueSearch:
+            case ExceptionNestedException:
+                break;
+            case ExceptionCollidedUnwind: {
+                ULONG64 frame;
+
+                context = *dispatch.ContextRecord;
+                dispatch.ContextRecord = &context;
+                RtlVirtualUnwind( UNW_FLAG_NHANDLER, dispatch.ImageBase,
+                        dispatch.ControlPc, dispatch.FunctionEntry,
+                        &context, NULL, &frame, NULL );
+                goto unwind_done;
+            }
+            default:
+                return STATUS_INVALID_DISPOSITION;
+            }
         }
         /* hack: call wine handlers registered in the tib list */
         else while ((ULONG64)teb_frame < new_context.Rsp)
@@ -2425,8 +2415,29 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
                    teb_frame, new_context.Rsp, teb_frame->Handler );
             dispatch.EstablisherFrame = (ULONG64)teb_frame;
             context = *orig_context;
-            status = call_teb_handler( rec, &dispatch, teb_frame, orig_context );
-            if (status != STATUS_UNHANDLED_EXCEPTION) return status;
+            switch (call_teb_handler( rec, &dispatch, teb_frame ))
+            {
+            case ExceptionContinueExecution:
+                if (rec->ExceptionFlags & EH_NONCONTINUABLE) return STATUS_NONCONTINUABLE_EXCEPTION;
+                *orig_context = *dispatch.ContextRecord;
+                return STATUS_SUCCESS;
+            case ExceptionContinueSearch:
+            case ExceptionNestedException:
+                break;
+            case ExceptionCollidedUnwind: {
+                ULONG64 frame;
+
+                context = *dispatch.ContextRecord;
+                dispatch.ContextRecord = &context;
+                RtlVirtualUnwind( UNW_FLAG_NHANDLER, dispatch.ImageBase,
+                        dispatch.ControlPc, dispatch.FunctionEntry,
+                        &context, NULL, &frame, NULL );
+                teb_frame = teb_frame->Prev;
+                goto unwind_done;
+            }
+            default:
+                return STATUS_INVALID_DISPOSITION;
+            }
             teb_frame = teb_frame->Prev;
         }
 
