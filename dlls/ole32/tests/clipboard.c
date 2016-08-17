@@ -612,9 +612,7 @@ static void test_enum_fmtetc(IDataObject *src)
     if(src)
     {
         hr = IEnumFORMATETC_Next(src_enum, 1, &src_fmt, NULL);
-        ok(hr == S_FALSE ||
-           broken(hr == S_OK && count == 5), /* win9x and winme don't enumerate duplicated cf's */
-           "%d: got %08x\n", count, hr);
+        ok(hr == S_FALSE, "%d: got %08x\n", count, hr);
         IEnumFORMATETC_Release(src_enum);
     }
 
@@ -795,8 +793,7 @@ static void test_cf_dataobject(IDataObject *data)
             ok(DataObjectImpl_GetDataHere_calls == 1, "got %d\n", DataObjectImpl_GetDataHere_calls);
             ptr = GlobalLock(h);
             size = GlobalSize(h);
-            ok(size == strlen(cmpl_stm_data) ||
-               broken(size > strlen(cmpl_stm_data)), /* win9x, winme */
+            ok(size == strlen(cmpl_stm_data),
                "expected %d got %d\n", lstrlenA(cmpl_stm_data), size);
             ok(!memcmp(ptr, cmpl_stm_data, strlen(cmpl_stm_data)), "mismatch\n");
             GlobalUnlock(h);
@@ -812,8 +809,7 @@ static void test_cf_dataobject(IDataObject *data)
             ok(DataObjectImpl_GetDataHere_calls == 0, "got %d\n", DataObjectImpl_GetDataHere_calls);
             ptr = GlobalLock(h);
             size = GlobalSize(h);
-            ok(size == strlen(cmpl_text_data) + 1 ||
-               broken(size > strlen(cmpl_text_data) + 1), /* win9x, winme */
+            ok(size == strlen(cmpl_text_data) + 1,
                "expected %d got %d\n", lstrlenA(cmpl_text_data) + 1, size);
             ok(!memcmp(ptr, cmpl_text_data, strlen(cmpl_text_data) + 1), "mismatch\n");
             GlobalUnlock(h);
@@ -830,6 +826,7 @@ static void test_set_clipboard(void)
     ULONG ref;
     LPDATAOBJECT data1, data2, data_cmpl;
     HGLOBAL hblob, h;
+    void *ptr;
 
     cf_stream = RegisterClipboardFormatA("stream format");
     cf_storage = RegisterClipboardFormatA("storage format");
@@ -855,10 +852,7 @@ static void test_set_clipboard(void)
 
     CoInitialize(NULL);
     hr = OleSetClipboard(data1);
-    ok(hr == CO_E_NOTINITIALIZED ||
-       hr == CLIPBRD_E_CANT_SET, /* win9x */
-       "OleSetClipboard should have failed with "
-       "CO_E_NOTINITIALIZED or CLIPBRD_E_CANT_SET instead of 0x%08x\n", hr);
+    ok(hr == CO_E_NOTINITIALIZED, "OleSetClipboard failed with 0x%08x\n", hr);
     CoUninitialize();
 
     hr = OleInitialize(NULL);
@@ -890,14 +884,18 @@ static void test_set_clipboard(void)
     /* put a format directly onto the clipboard to show
        OleFlushClipboard doesn't empty the clipboard */
     hblob = GlobalAlloc(GMEM_DDESHARE|GMEM_MOVEABLE|GMEM_ZEROINIT, 10);
-    OpenClipboard(NULL);
+    ptr = GlobalLock( hblob );
+    ok( ptr && ptr != hblob, "got fixed block %p / %p\n", ptr, hblob );
+    GlobalUnlock( hblob );
+    ok( OpenClipboard(NULL), "OpenClipboard failed\n" );
     h = SetClipboardData(cf_onemore, hblob);
     ok(h == hblob, "got %p\n", h);
     h = GetClipboardData(cf_onemore);
-    ok(h == hblob ||
-       broken(h != NULL), /* win9x */
-       "got %p\n", h);
-    CloseClipboard();
+    ok(h == hblob, "got %p / %p\n", h, hblob);
+    ptr = GlobalLock( h );
+    ok( ptr && ptr != h, "got fixed block %p / %p\n", ptr, h );
+    GlobalUnlock( hblob );
+    ok( CloseClipboard(), "CloseClipboard failed\n" );
 
     hr = OleFlushClipboard();
     ok(hr == S_OK, "failed to flush clipboard, hr = 0x%08x\n", hr);
@@ -909,12 +907,13 @@ static void test_set_clipboard(void)
     ok(hr == S_FALSE, "expect S_FALSE, hr = 0x%08x\n", hr);
 
     /* format should survive the flush */
-    OpenClipboard(NULL);
+    ok( OpenClipboard(NULL), "OpenClipboard failed\n" );
     h = GetClipboardData(cf_onemore);
-    ok(h == hblob ||
-       broken(h != NULL), /* win9x */
-       "got %p\n", h);
-    CloseClipboard();
+    ok(h == hblob, "got %p\n", h);
+    ptr = GlobalLock( h );
+    ok( ptr && ptr != h, "got fixed block %p / %p\n", ptr, h );
+    GlobalUnlock( hblob );
+    ok( CloseClipboard(), "CloseClipboard failed\n" );
 
     test_cf_dataobject(NULL);
 
@@ -981,9 +980,7 @@ static void test_consumer_refs(void)
     hr = OleGetClipboard(&get2);
     ok(hr == S_OK, "got %08x\n", hr);
 
-    ok(get1 == get2 ||
-       broken(get1 != get2), /* win9x, winme & nt4 */
-       "data objects differ\n");
+    ok(get1 == get2, "data objects differ\n");
     refs = IDataObject_Release(get2);
     ok(refs == (get1 == get2 ? 1 : 0), "got %d\n", refs);
 
@@ -1359,19 +1356,14 @@ static void test_nonole_clipboard(void)
 
     hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
     ok(hr == S_OK, "got %08x\n", hr);
-    ok(fmt.cfFormat == CF_UNICODETEXT ||
-       broken(fmt.cfFormat == CF_METAFILEPICT), /* win9x and winme don't have CF_UNICODETEXT */
-       "cf %04x\n", fmt.cfFormat);
-    if(fmt.cfFormat == CF_UNICODETEXT)
-    {
-        ok(fmt.ptd == NULL, "ptd %p\n", fmt.ptd);
-        ok(fmt.dwAspect == DVASPECT_CONTENT, "aspect %x\n", fmt.dwAspect);
-        ok(fmt.lindex == -1, "lindex %d\n", fmt.lindex);
-        ok(fmt.tymed == (TYMED_ISTREAM | TYMED_HGLOBAL), "tymed %x\n", fmt.tymed);
+    ok(fmt.cfFormat == CF_UNICODETEXT, "cf %04x\n", fmt.cfFormat);
+    ok(fmt.ptd == NULL, "ptd %p\n", fmt.ptd);
+    ok(fmt.dwAspect == DVASPECT_CONTENT, "aspect %x\n", fmt.dwAspect);
+    ok(fmt.lindex == -1, "lindex %d\n", fmt.lindex);
+    ok(fmt.tymed == (TYMED_ISTREAM | TYMED_HGLOBAL), "tymed %x\n", fmt.tymed);
 
-        hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
-        ok(hr == S_OK, "got %08x\n", hr);
-    }
+    hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
     ok(fmt.cfFormat == CF_METAFILEPICT, "cf %04x\n", fmt.cfFormat);
     ok(fmt.ptd == NULL, "ptd %p\n", fmt.ptd);
     ok(fmt.dwAspect == DVASPECT_CONTENT, "aspect %x\n", fmt.dwAspect);
