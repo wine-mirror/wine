@@ -35,17 +35,6 @@ static const WCHAR separator_W[] = {'\\',0};
 static const WCHAR device_deviceid_fmtW[] = {'%','s','\\',
     'v','i','d','_','%','0','4','x','&','p','i','d','_','%', '0','4','x'};
 
-typedef struct _NATIVE_DEVICE {
-    struct list entry;
-
-    DEVICE_OBJECT *PDO;
-    DEVICE_OBJECT *FDO;
-    HID_MINIDRIVER_REGISTRATION *minidriver;
-
-} NATIVE_DEVICE;
-
-static struct list tracked_devices = LIST_INIT(tracked_devices);
-
 static NTSTATUS WINAPI internalComplete(DEVICE_OBJECT *deviceObject, IRP *irp,
     void *context )
 {
@@ -91,7 +80,6 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     minidriver *minidriver;
     HID_DEVICE_ATTRIBUTES attr;
     BASE_DEVICE_EXTENSION *ext = NULL;
-    NATIVE_DEVICE *tracked_device;
     HID_DESCRIPTOR descriptor;
     BYTE *reportDescriptor;
     INT i;
@@ -144,12 +132,6 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     ext->information.ProductID = attr.ProductID;
     ext->information.VersionNumber = attr.VersionNumber;
     ext->information.Polled = minidriver->minidriver.DevicesArePolled;
-
-    tracked_device = HeapAlloc(GetProcessHeap(), 0, sizeof(*tracked_device));
-    tracked_device->PDO = PDO;
-    tracked_device->FDO = device;
-    tracked_device->minidriver = &minidriver->minidriver;
-    list_add_tail(&tracked_devices, &tracked_device->entry);
 
     status = call_minidriver(IOCTL_HID_GET_DEVICE_DESCRIPTOR, device, NULL, 0,
         &descriptor, sizeof(descriptor));
@@ -218,26 +200,11 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     return STATUS_SUCCESS;
 }
 
-void PNP_CleanupPNP(DRIVER_OBJECT *driver)
-{
-    NATIVE_DEVICE *tracked_device, *ptr;
-
-    LIST_FOR_EACH_ENTRY_SAFE(tracked_device, ptr, &tracked_devices,
-        NATIVE_DEVICE, entry)
-    {
-        if (tracked_device->minidriver->DriverObject == driver)
-        {
-            list_remove(&tracked_device->entry);
-            HID_DeleteDevice(tracked_device->minidriver, tracked_device->FDO);
-            HeapFree(GetProcessHeap(), 0, tracked_device);
-        }
-    }
-}
-
 NTSTATUS WINAPI HID_PNP_Dispatch(DEVICE_OBJECT *device, IRP *irp)
 {
     NTSTATUS rc = STATUS_NOT_SUPPORTED;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
+    minidriver *minidriver = find_minidriver(device->DriverObject);
 
     TRACE("%p, %p\n", device, irp);
 
@@ -286,10 +253,15 @@ NTSTATUS WINAPI HID_PNP_Dispatch(DEVICE_OBJECT *device, IRP *irp)
             }
             break;
         }
+        case IRP_MN_REMOVE_DEVICE:
+        {
+            HID_DeleteDevice(&minidriver->minidriver, device);
+            minidriver->PNPDispatch(device, irp);
+            break;
+        }
         default:
         {
             /* Forward IRP to the minidriver */
-            minidriver *minidriver = find_minidriver(device->DriverObject);
             return minidriver->PNPDispatch(device, irp);
         }
     }

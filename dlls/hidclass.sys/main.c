@@ -51,7 +51,6 @@ static VOID WINAPI UnloadDriver(DRIVER_OBJECT *driver)
     {
         if (md->DriverUnload)
             md->DriverUnload(md->minidriver.DriverObject);
-        PNP_CleanupPNP(md->minidriver.DriverObject);
         list_remove(&md->entry);
         HeapFree( GetProcessHeap(), 0, md );
     }
