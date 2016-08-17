@@ -3787,7 +3787,6 @@ void WINAPI _local_unwind( void *frame, void *target_ip )
     RtlUnwindEx( frame, target_ip, NULL, NULL, &context, NULL );
 }
 
-
 /*******************************************************************
  *		__C_specific_handler (NTDLL.@)
  */
@@ -3804,10 +3803,10 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
 
     if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
     {
-        for (i = 0; i < table->Count; i++)
+        for (i = dispatch->ScopeIndex; i < table->Count; i++)
         {
-            if (context->Rip >= dispatch->ImageBase + table->ScopeRecord[i].BeginAddress &&
-                context->Rip < dispatch->ImageBase + table->ScopeRecord[i].EndAddress)
+            if (dispatch->ControlPc >= dispatch->ImageBase + table->ScopeRecord[i].BeginAddress &&
+                dispatch->ControlPc < dispatch->ImageBase + table->ScopeRecord[i].EndAddress)
             {
                 TERMINATION_HANDLER handler;
 
@@ -3821,6 +3820,7 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
                 }
 
                 handler = (TERMINATION_HANDLER)(dispatch->ImageBase + table->ScopeRecord[i].HandlerAddress);
+                dispatch->ScopeIndex = i+1;
 
                 TRACE( "calling __finally %p frame %lx\n", handler, frame );
                 handler( 1, frame );
@@ -3829,10 +3829,10 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
         return ExceptionContinueSearch;
     }
 
-    for (i = 0; i < table->Count; i++)
+    for (i = dispatch->ScopeIndex; i < table->Count; i++)
     {
-        if (context->Rip >= dispatch->ImageBase + table->ScopeRecord[i].BeginAddress &&
-            context->Rip < dispatch->ImageBase + table->ScopeRecord[i].EndAddress)
+        if (dispatch->ControlPc >= dispatch->ImageBase + table->ScopeRecord[i].BeginAddress &&
+            dispatch->ControlPc < dispatch->ImageBase + table->ScopeRecord[i].EndAddress)
         {
             if (!table->ScopeRecord[i].JumpTarget) continue;
             if (table->ScopeRecord[i].HandlerAddress != EXCEPTION_EXECUTE_HANDLER)
@@ -3856,7 +3856,7 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
             }
             TRACE( "unwinding to target %lx\n", dispatch->ImageBase + table->ScopeRecord[i].JumpTarget );
             RtlUnwindEx( (void *)frame, (char *)dispatch->ImageBase + table->ScopeRecord[i].JumpTarget,
-                         rec, 0, context, dispatch->HistoryTable );
+                         rec, 0, dispatch->ContextRecord, dispatch->HistoryTable );
         }
     }
     return ExceptionContinueSearch;

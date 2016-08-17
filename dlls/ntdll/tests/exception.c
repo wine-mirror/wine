@@ -53,10 +53,37 @@ static NTSTATUS  (WINAPI *pNtSetInformationProcess)(HANDLE, PROCESSINFOCLASS, PV
 static BOOL      (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
 #if defined(__x86_64__)
+typedef struct
+{
+    ULONG Count;
+    struct
+    {
+        ULONG BeginAddress;
+        ULONG EndAddress;
+        ULONG HandlerAddress;
+        ULONG JumpTarget;
+    } ScopeRecord[1];
+} SCOPE_TABLE;
+
+typedef struct
+{
+    ULONG64               ControlPc;
+    ULONG64               ImageBase;
+    PRUNTIME_FUNCTION     FunctionEntry;
+    ULONG64               EstablisherFrame;
+    ULONG64               TargetIp;
+    PCONTEXT              ContextRecord;
+    void* /*PEXCEPTION_ROUTINE*/ LanguageHandler;
+    PVOID                 HandlerData;
+    PUNWIND_HISTORY_TABLE HistoryTable;
+    ULONG                 ScopeIndex;
+} DISPATCHER_CONTEXT;
+
 static BOOLEAN   (CDECL *pRtlAddFunctionTable)(RUNTIME_FUNCTION*, DWORD, DWORD64);
 static BOOLEAN   (CDECL *pRtlDeleteFunctionTable)(RUNTIME_FUNCTION*);
 static BOOLEAN   (CDECL *pRtlInstallFunctionTableCallback)(DWORD64, DWORD64, DWORD, PGET_RUNTIME_FUNCTION_CALLBACK, PVOID, PCWSTR);
 static PRUNTIME_FUNCTION (WINAPI *pRtlLookupFunctionEntry)(ULONG64, ULONG64*, UNWIND_HISTORY_TABLE*);
+static EXCEPTION_DISPOSITION (WINAPI *p__C_specific_handler)(EXCEPTION_RECORD*, ULONG64, CONTEXT*, DISPATCHER_CONTEXT*);
 #endif
 
 #ifdef __i386__
@@ -1747,6 +1774,59 @@ static void test_dynamic_unwind(void)
 
 }
 
+static int termination_handler_called;
+static void WINAPI termination_handler(ULONG flags, ULONG64 frame)
+{
+    termination_handler_called++;
+
+    ok(flags == 1 || broken(flags == 0x401), "flags = %x\n", flags);
+    ok(frame == 0x1234, "frame = %p\n", (void*)frame);
+}
+
+static void test___C_specific_handler(void)
+{
+    DISPATCHER_CONTEXT dispatch;
+    EXCEPTION_RECORD rec;
+    CONTEXT context;
+    ULONG64 frame;
+    EXCEPTION_DISPOSITION ret;
+    SCOPE_TABLE scope_table;
+
+    if (!p__C_specific_handler)
+    {
+        win_skip("__C_specific_handler not available\n");
+        return;
+    }
+
+    memset(&rec, 0, sizeof(rec));
+    rec.ExceptionFlags = 2; /* EH_UNWINDING */
+    frame = 0x1234;
+    memset(&dispatch, 0, sizeof(dispatch));
+    dispatch.ImageBase = (ULONG_PTR)GetModuleHandleA(NULL);
+    dispatch.ControlPc = dispatch.ImageBase + 0x200;
+    dispatch.HandlerData = &scope_table;
+    dispatch.ContextRecord = &context;
+    scope_table.Count = 1;
+    scope_table.ScopeRecord[0].BeginAddress = 0x200;
+    scope_table.ScopeRecord[0].EndAddress = 0x400;
+    scope_table.ScopeRecord[0].HandlerAddress = (ULONG_PTR)termination_handler-dispatch.ImageBase;
+    scope_table.ScopeRecord[0].JumpTarget = 0;
+    memset(&context, 0, sizeof(context));
+
+    termination_handler_called = 0;
+    ret = p__C_specific_handler(&rec, frame, &context, &dispatch);
+    ok(ret == ExceptionContinueSearch, "__C_specific_handler returned %x\n", ret);
+    ok(termination_handler_called == 1, "termination_handler_called = %d\n",
+            termination_handler_called);
+    ok(dispatch.ScopeIndex == 1, "dispatch.ScopeIndex = %d\n", dispatch.ScopeIndex);
+
+    ret = p__C_specific_handler(&rec, frame, &context, &dispatch);
+    ok(ret == ExceptionContinueSearch, "__C_specific_handler returned %x\n", ret);
+    ok(termination_handler_called == 1, "termination_handler_called = %d\n",
+            termination_handler_called);
+    ok(dispatch.ScopeIndex == 1, "dispatch.ScopeIndex = %d\n", dispatch.ScopeIndex);
+}
+
 #endif  /* __x86_64__ */
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -2267,6 +2347,8 @@ START_TEST(exception)
                                                                  "RtlInstallFunctionTableCallback" );
     pRtlLookupFunctionEntry            = (void *)GetProcAddress( hntdll,
                                                                  "RtlLookupFunctionEntry" );
+    p__C_specific_handler              = (void *)GetProcAddress( hntdll,
+                                                                 "__C_specific_handler" );
 
     test_debug_registers();
     test_outputdebugstring(1, FALSE);
@@ -2275,6 +2357,7 @@ START_TEST(exception)
     test_breakpoint(1);
     test_vectored_continue_handler();
     test_virtual_unwind();
+    test___C_specific_handler();
 
     if (pRtlAddFunctionTable && pRtlDeleteFunctionTable && pRtlInstallFunctionTableCallback && pRtlLookupFunctionEntry)
       test_dynamic_unwind();
