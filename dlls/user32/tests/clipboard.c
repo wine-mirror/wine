@@ -682,6 +682,132 @@ static void test_messages(void)
     DeleteCriticalSection(&clipboard_cs);
 }
 
+static BOOL is_moveable( HANDLE handle )
+{
+    void *ptr = GlobalLock( handle );
+    if (ptr) GlobalUnlock( handle );
+    return ptr && ptr != handle;
+}
+
+static BOOL is_fixed( HANDLE handle )
+{
+    void *ptr = GlobalLock( handle );
+    if (ptr) GlobalUnlock( handle );
+    return ptr && ptr == handle;
+}
+
+static BOOL is_freed( HANDLE handle )
+{
+    void *ptr = GlobalLock( handle );
+    if (ptr) GlobalUnlock( handle );
+    return !ptr;
+}
+
+static UINT format_id;
+
+static void test_handles( HWND hwnd )
+{
+    HGLOBAL h, htext, htext2;
+    BOOL r;
+    HANDLE data;
+    DWORD process;
+    BOOL is_owner = (GetWindowThreadProcessId( hwnd, &process ) && process == GetCurrentProcessId());
+
+    trace( "hwnd %p\n", hwnd );
+    htext = create_text();
+    htext2 = create_text();
+
+    r = OpenClipboard( hwnd );
+    ok( r, "gle %d\n", GetLastError() );
+    r = EmptyClipboard();
+    ok( r, "gle %d\n", GetLastError() );
+
+    h = SetClipboardData( CF_TEXT, htext );
+    ok( h == htext, "got %p\n", h );
+    ok( is_moveable( h ), "expected moveable mem %p\n", h );
+    h = SetClipboardData( format_id, htext2 );
+    ok( h == htext2, "got %p\n", h );
+    ok( is_moveable( h ), "expected moveable mem %p\n", h );
+
+    data = GetClipboardData( CF_TEXT );
+    ok( data == htext, "wrong data %p\n", data );
+    ok( is_moveable( data ), "expected moveable mem %p\n", data );
+
+    data = GetClipboardData( format_id );
+    ok( data == htext2, "wrong data %p, cf %08x\n", data, format_id );
+    ok( is_moveable( data ), "expected moveable mem %p\n", data );
+
+    r = CloseClipboard();
+    ok( r, "gle %d\n", GetLastError() );
+
+    /* data handles are still valid */
+    ok( is_moveable( htext ), "expected moveable mem %p\n", htext );
+    ok( is_moveable( htext2 ), "expected moveable mem %p\n", htext );
+
+    r = OpenClipboard( hwnd );
+    ok( r, "gle %d\n", GetLastError() );
+
+    /* and now they are freed, unless we are the owner */
+    if (!is_owner)
+    {
+        todo_wine ok( is_freed( htext ), "expected freed mem %p\n", htext );
+        todo_wine ok( is_freed( htext2 ), "expected freed mem %p\n", htext );
+
+        data = GetClipboardData( CF_TEXT );
+        todo_wine ok( is_fixed( data ), "expected fixed mem %p\n", data );
+
+        data = GetClipboardData( CF_OEMTEXT );
+        todo_wine ok( is_fixed( data ), "expected fixed mem %p\n", data );
+
+        data = GetClipboardData( CF_UNICODETEXT );
+        todo_wine ok( is_fixed( data ), "expected fixed mem %p\n", data );
+
+        data = GetClipboardData( format_id );
+        todo_wine ok( is_fixed( data ), "expected fixed mem %p\n", data );
+    }
+    else
+    {
+        ok( is_moveable( htext ), "expected moveable mem %p\n", htext );
+        ok( is_moveable( htext2 ), "expected moveable mem %p\n", htext );
+
+        data = GetClipboardData( CF_TEXT );
+        ok( data == htext, "wrong data %p\n", data );
+
+        data = GetClipboardData( format_id );
+        ok( data == htext2, "wrong data %p, cf %08x\n", data, format_id );
+    }
+
+    r = EmptyClipboard();
+    ok( r, "gle %d\n", GetLastError() );
+
+    /* w2003, w2008 don't seem to free the data here */
+    ok( is_freed( htext ) || broken( !is_freed( htext )), "expected freed mem %p\n", htext );
+    ok( is_freed( htext2 ) || broken( !is_freed( htext2 )), "expected freed mem %p\n", htext );
+
+    r = CloseClipboard();
+    ok( r, "gle %d\n", GetLastError() );
+}
+
+static DWORD WINAPI test_handles_thread( void *arg )
+{
+    trace( "running from different thread\n" );
+    test_handles( (HWND)arg );
+    return 0;
+}
+
+static void test_data_handles(void)
+{
+    HWND hwnd = CreateWindowA( "static", NULL, WS_POPUP, 0, 0, 10, 10, 0, 0, 0, NULL );
+
+    format_id = RegisterClipboardFormatA( "my_cool_clipboard_format" );
+    ok( hwnd != 0, "window creation failed\n" );
+    test_handles( 0 );
+    test_handles( GetDesktopWindow() );
+    test_handles( hwnd );
+    run_thread( test_handles_thread, hwnd, __LINE__ );
+    DestroyWindow( hwnd );
+}
+
 START_TEST(clipboard)
 {
     HMODULE mod = GetModuleHandleA( "user32" );
@@ -693,4 +819,5 @@ START_TEST(clipboard)
     test_ClipboardOwner();
     test_synthesized();
     test_messages();
+    test_data_handles();
 }
