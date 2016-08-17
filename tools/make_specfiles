@@ -142,6 +142,7 @@ my @dll_groups =
   "api-ms-win-core-synch-l1-1-0",
   "api-ms-win-core-synch-l1-2-0",
   "api-ms-win-core-console-l1-1-0",
+  "api-ms-win-core-console-l2-1-0",
   "api-ms-win-core-file-l1-1-0",
   "api-ms-win-core-file-l1-2-1",
   "api-ms-win-core-file-l1-2-0",
