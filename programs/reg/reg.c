@@ -249,9 +249,9 @@ static LPBYTE get_regdata(const WCHAR *data, DWORD reg_type, WCHAR separator, DW
         case REG_DWORD_BIG_ENDIAN: /* Yes, this is correct! */
         {
             LPWSTR rest;
-            DWORD val;
+            unsigned long val;
             val = strtoulW(data, &rest, (tolowerW(data[1]) == 'x') ? 16 : 10);
-            if (*rest || data[0] == '-' || (val == ~0u && errno == ERANGE)) {
+            if (*rest || data[0] == '-' || (val == ~0u && errno == ERANGE) || val > ~0u) {
                 output_message(STRING_MISSING_INTEGER);
                 break;
             }
