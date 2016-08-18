@@ -406,7 +406,7 @@ HRESULT WINAPI JoystickAGenericImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface, REF
 void _dump_DIDEVCAPS(const DIDEVCAPS *lpDIDevCaps)
 {
     int type = GET_DIDEVICE_TYPE(lpDIDevCaps->dwDevType);
-    const char *str;
+    const char *str, *hid = "";
     TRACE("dwSize: %d\n", lpDIDevCaps->dwSize);
     TRACE("dwFlags: %08x\n", lpDIDevCaps->dwFlags);
     switch(type)
@@ -416,7 +416,6 @@ void _dump_DIDEVCAPS(const DIDEVCAPS *lpDIDevCaps)
         DEBUG_TYPE(DIDEVTYPE_MOUSE);
         DEBUG_TYPE(DIDEVTYPE_KEYBOARD);
         DEBUG_TYPE(DIDEVTYPE_JOYSTICK);
-        DEBUG_TYPE(DIDEVTYPE_HID);
         /* Direct X >= 8 definitions */
         DEBUG_TYPE(DI8DEVTYPE_DEVICE);
         DEBUG_TYPE(DI8DEVTYPE_MOUSE);
@@ -433,7 +432,10 @@ void _dump_DIDEVCAPS(const DIDEVCAPS *lpDIDevCaps)
         default: str = "UNKNOWN";
     }
 
-    TRACE("dwDevType: %08x %s\n", lpDIDevCaps->dwDevType, str);
+    if (lpDIDevCaps->dwDevType & DIDEVTYPE_HID)
+        hid = " (HID)";
+
+    TRACE("dwDevType: %08x %s%s\n", lpDIDevCaps->dwDevType, str, hid);
     TRACE("dwAxes: %d\n", lpDIDevCaps->dwAxes);
     TRACE("dwButtons: %d\n", lpDIDevCaps->dwButtons);
     TRACE("dwPOVs: %d\n", lpDIDevCaps->dwPOVs);
