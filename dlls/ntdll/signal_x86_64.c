@@ -3557,6 +3557,8 @@ __ASM_GLOBAL_FUNC( call_consolidate_callback,
  */
 void WINAPI RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
 {
+    EXCEPTION_REGISTRATION_RECORD *teb_frame = NtCurrentTeb()->Tib.ExceptionList;
+
     if (rec && rec->ExceptionCode == STATUS_LONGJUMP && rec->NumberParameters >= 1)
     {
         struct MSVCRT_JUMP_BUFFER *jmp = (struct MSVCRT_JUMP_BUFFER *)rec->ExceptionInformation[0];
@@ -3586,6 +3588,14 @@ void WINAPI RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
         TRACE( "calling consolidate callback %p (rec=%p)\n", consolidate, rec );
         context->Rip = (ULONG64)call_consolidate_callback( context, consolidate, rec );
     }
+
+    /* hack: remove no longer accessible TEB frames */
+    while ((ULONG64)teb_frame < context->Rsp)
+    {
+        TRACE( "removing TEB frame: %p\n", teb_frame );
+        teb_frame = __wine_pop_frame( teb_frame );
+    }
+
     TRACE( "returning to %lx stack %lx\n", context->Rip, context->Rsp );
     set_cpu_context( context );
 }
