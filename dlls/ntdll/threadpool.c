@@ -1432,7 +1432,7 @@ static void CALLBACK waitqueue_thread_proc( void *param )
                     tp_object_submit( wait, TRUE );
                 }
                 else
-                    ERR("wait object %p triggered while object was destroyed\n", wait);
+                    WARN("wait object %p triggered while object was destroyed\n", wait);
             }
 
             /* Release temporary references to wait objects. */
