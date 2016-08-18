@@ -583,6 +583,7 @@ HRESULT WINAPI JoystickWGenericImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REF
             }
             break;
         }
+        case (DWORD_PTR) DIPROP_PRODUCTNAME:
         case (DWORD_PTR) DIPROP_INSTANCENAME: {
             DIPROPSTRING *ps = (DIPROPSTRING*) pdiph;
             DIDEVICEINSTANCEW didev;
@@ -590,7 +591,10 @@ HRESULT WINAPI JoystickWGenericImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REF
             didev.dwSize = sizeof(didev);
 
             IDirectInputDevice_GetDeviceInfo(iface, &didev);
-            lstrcpynW(ps->wsz, didev.tszInstanceName, MAX_PATH);
+            if (LOWORD(rguid) == (DWORD_PTR) DIPROP_PRODUCTNAME)
+                lstrcpynW(ps->wsz, didev.tszProductName, MAX_PATH);
+            else
+                lstrcpynW(ps->wsz, didev.tszInstanceName, MAX_PATH);
 
             return DI_OK;
         }

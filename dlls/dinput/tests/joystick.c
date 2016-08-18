@@ -253,6 +253,14 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
     ok(!lstrcmpW(nameBuffer, dps.wsz), "DIPROP_INSTANCENAME returned is wrong. Expected: %s Got: %s\n",
                  wine_dbgstr_w(nameBuffer), wine_dbgstr_w(dps.wsz));
 
+    hr = IDirectInputDevice_GetProperty(pJoystick, DIPROP_PRODUCTNAME, &dps.diph);
+    ok(SUCCEEDED(hr), "IDirectInput_GetProperty() for DIPROP_PRODUCTNAME failed: %08x\n", hr);
+
+    /* Test if product name is the same as present in DIDEVICEINSTANCE */
+    MultiByteToWideChar(CP_ACP, 0, lpddi->tszProductName, -1, nameBuffer, MAX_PATH);
+    ok(!lstrcmpW(nameBuffer, dps.wsz), "DIPROP_PRODUCTNAME returned is wrong. Expected: %s Got: %s\n",
+                 wine_dbgstr_w(nameBuffer), wine_dbgstr_w(dps.wsz));
+
     /* Test for GUIDPATH properties */
     memset(&dpg, 0, sizeof(dpg));
     dpg.diph.dwSize = sizeof(DIPROPGUIDANDPATH);
