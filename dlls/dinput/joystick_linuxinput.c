@@ -110,7 +110,7 @@ struct JoyDev {
 	/* data returned by the EVIOCGABS() ioctl */
         struct wine_input_absinfo       axes[ABS_MAX];
 
-        WORD vendor_id, product_id;
+        WORD vendor_id, product_id, bus_type;
 };
 
 struct JoystickImpl
@@ -315,6 +315,7 @@ static void find_joydevs(void)
         {
             joydev.vendor_id = device_id.vendor;
             joydev.product_id = device_id.product;
+            joydev.bus_type = device_id.bustype;
 
             /* Concatenate product_id with vendor_id to mimic Windows behaviour */
             joydev.guid_product       = DInput_Wine_Joystick_Constant_Part_GUID;
@@ -355,6 +356,18 @@ static void fill_joystick_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD ver
         lpddi->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
     else
         lpddi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
+
+    /* Assume the joystick as HID if it is attached to USB bus and has a valid VID/PID */
+    if (joydevs[id].bus_type == BUS_USB &&
+        joydevs[id].vendor_id && joydevs[id].product_id)
+    {
+        lpddi->dwDevType |= DIDEVTYPE_HID;
+        lpddi->wUsagePage = 0x01; /* Desktop */
+        if (lpddi->dwDevType == DI8DEVTYPE_JOYSTICK || lpddi->dwDevType == DIDEVTYPE_JOYSTICK)
+            lpddi->wUsage = 0x04; /* Joystick */
+        else
+            lpddi->wUsage = 0x05; /* Game Pad */
+    }
 
     MultiByteToWideChar(CP_ACP, 0, joydevs[id].name, -1, lpddi->tszInstanceName, MAX_PATH);
     MultiByteToWideChar(CP_ACP, 0, joydevs[id].name, -1, lpddi->tszProductName, MAX_PATH);
