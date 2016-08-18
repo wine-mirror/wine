@@ -863,8 +863,7 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedText(Display *display, UINT wForma
     else
         alloc_size = dst_chars;
 
-    hData = GlobalAlloc(GMEM_ZEROINIT | GMEM_MOVEABLE |
-        GMEM_DDESHARE, alloc_size);
+    hData = GlobalAlloc(GMEM_ZEROINIT | GMEM_FIXED, alloc_size);
 
     lpstrT = GlobalLock(hData);
 
@@ -941,8 +940,7 @@ static HGLOBAL create_dib_from_bitmap(HBITMAP hBmp)
 
     /* Allocate the packed DIB */
     TRACE("\tAllocating packed DIB of size %d\n", cPackedSize);
-    hPackedDIB = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE /*| GMEM_ZEROINIT*/,
-                             cPackedSize );
+    hPackedDIB = GlobalAlloc( GMEM_FIXED, cPackedSize );
     if ( !hPackedDIB )
     {
         WARN("Could not allocate packed DIB!\n");
@@ -1233,7 +1231,7 @@ static HANDLE X11DRV_CLIPBOARD_ImportXAString(Display *display, Window w, Atom p
             inlcount++;
     }
 
-    if ((hText = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, cbytes + inlcount + 1)))
+    if ((hText = GlobalAlloc(GMEM_FIXED, cbytes + inlcount + 1)))
     {
         lpstr = GlobalLock(hText);
 
@@ -1290,7 +1288,7 @@ static HANDLE X11DRV_CLIPBOARD_ImportUTF8(Display *display, Window w, Atom prop)
         }
 
         count = MultiByteToWideChar(CP_UTF8, 0, lpstr, -1, NULL, 0);
-        hUnicodeText = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, count * sizeof(WCHAR));
+        hUnicodeText = GlobalAlloc(GMEM_FIXED, count * sizeof(WCHAR));
 
         if (hUnicodeText)
         {
@@ -1348,7 +1346,7 @@ static HANDLE X11DRV_CLIPBOARD_ImportCompoundText(Display *display, Window w, At
 
     TRACE("lcount = %d, destlen=%d, srcstr %s\n", lcount, destlen, srcstr[0]);
 
-    if ((hUnicodeText = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, (destlen + lcount + 1) * sizeof(WCHAR))))
+    if ((hUnicodeText = GlobalAlloc(GMEM_FIXED, (destlen + lcount + 1) * sizeof(WCHAR))))
     {
         WCHAR *deststr = GlobalLock(hUnicodeText);
         MultiByteToWideChar(CP_UNIXCP, 0, srcstr[0], -1, deststr, destlen);
@@ -1432,8 +1430,7 @@ static HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Display *display, Window w, Atom p
             DWORD info_size = bitmap_info_size( info, DIB_RGB_COLORS );
             BYTE *ptr;
 
-            hClipData = GlobalAlloc( GMEM_MOVEABLE | GMEM_DDESHARE,
-                                     info_size + info->bmiHeader.biSizeImage );
+            hClipData = GlobalAlloc( GMEM_FIXED, info_size + info->bmiHeader.biSizeImage );
             if (hClipData)
             {
                 ptr = GlobalLock( hClipData );
@@ -1614,7 +1611,7 @@ static HANDLE X11DRV_CLIPBOARD_ImportTextUriList(Display *display, Window w, Ato
     if (out && end >= len)
     {
         DROPFILES *dropFiles;
-        handle = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(DROPFILES) + (size + 1)*sizeof(WCHAR));
+        handle = GlobalAlloc(GMEM_FIXED, sizeof(DROPFILES) + (size + 1)*sizeof(WCHAR));
         if (handle)
         {
             dropFiles = (DROPFILES*) GlobalLock(handle);
@@ -1650,8 +1647,7 @@ static HANDLE X11DRV_CLIPBOARD_ImportClipboardData(Display *display, Window w, A
     {
         if (cbytes)
         {
-            /* Turn on the DDESHARE flag to enable shared 32 bit memory */
-            hClipData = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, cbytes);
+            hClipData = GlobalAlloc(GMEM_FIXED, cbytes);
             if (hClipData == 0)
             {
                 HeapFree(GetProcessHeap(), 0, lpdata);
@@ -1716,7 +1712,7 @@ static HANDLE X11DRV_CLIPBOARD_ExportClipboardData(Display *display, Window requ
     {
         datasize = GlobalSize(lpData->hData);
 
-        hClipData = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, datasize);
+        hClipData = GlobalAlloc(GMEM_FIXED, datasize);
         if (hClipData == 0) return NULL;
 
         if ((lpClipData = GlobalLock(hClipData)))
@@ -2182,7 +2178,7 @@ static HANDLE X11DRV_CLIPBOARD_ExportHDROP(Display *display, Window requestor, A
         ERR("Failed to export %04x format\n", lpdata->wFormatID);
         return 0;
     }
-    hClipData = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, textUriListSize);
+    hClipData = GlobalAlloc(GMEM_FIXED, textUriListSize);
     if (hClipData == NULL)
         return 0;
     hDrop = (HDROP) lpdata->hData;

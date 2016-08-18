@@ -846,9 +846,9 @@ static void test_handles( HWND hwnd )
     }
 
     data = GetClipboardData( CF_OEMTEXT );
-    todo_wine ok( is_fixed( data ), "expected fixed mem %p\n", data );
+    ok( is_fixed( data ), "expected fixed mem %p\n", data );
     data = GetClipboardData( CF_UNICODETEXT );
-    todo_wine ok( is_fixed( data ), "expected fixed mem %p\n", data );
+    ok( is_fixed( data ), "expected fixed mem %p\n", data );
     data = GetClipboardData( CF_BITMAP );
     ok( data == bitmap, "expected bitmap %p\n", data );
     data = GetClipboardData( CF_PALETTE );
@@ -858,7 +858,7 @@ static void test_handles( HWND hwnd )
     data = GetClipboardData( CF_GDIOBJFIRST + 2 );
     ok( data == pen, "expected pen %p\n", data );
     data = GetClipboardData( CF_DIB );
-    todo_wine ok( is_fixed( data ), "expected fixed mem %p\n", data );
+    ok( is_fixed( data ), "expected fixed mem %p\n", data );
     data = GetClipboardData( CF_DIBV5 );
     todo_wine ok( is_fixed( data ), "expected fixed mem %p\n", data );
 
@@ -924,7 +924,7 @@ static DWORD WINAPI test_handles_thread2( void *arg )
     ok( h == pen, "different pen %p / %p\n", h, pen );
     trace( "pen %p\n", h );
     h = GetClipboardData( CF_DIB );
-    todo_wine ok( is_fixed( h ), "expected fixed mem %p\n", h );
+    ok( is_fixed( h ), "expected fixed mem %p\n", h );
     h = GetClipboardData( CF_DIBV5 );
     todo_wine ok( is_fixed( h ), "expected fixed mem %p\n", h );
     r = CloseClipboard();
@@ -942,7 +942,7 @@ static void test_handles_process( const char *str )
     r = OpenClipboard( 0 );
     ok( r, "gle %d\n", GetLastError() );
     h = GetClipboardData( CF_TEXT );
-    todo_wine ok( is_fixed( h ), "expected fixed mem %p\n", h );
+    ok( is_fixed( h ), "expected fixed mem %p\n", h );
     ptr = GlobalLock( h );
     if (ptr) todo_wine ok( !strcmp( str, ptr ), "wrong data '%.5s'\n", ptr );
     GlobalUnlock( h );
