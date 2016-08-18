@@ -1,6 +1,6 @@
 MODULE    = gdiplus.dll
 IMPORTLIB = gdiplus
-IMPORTS   = uuid shlwapi oleaut32 ole32 user32 gdi32
+IMPORTS   = uuid shlwapi ole32 user32 gdi32
 DELAYIMPORTS = windowscodecs
 
 C_SRCS = \

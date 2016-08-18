@@ -324,7 +324,6 @@ GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF 
     }
 
     (*metafile)->image.type = ImageTypeMetafile;
-    (*metafile)->image.picture = NULL;
     (*metafile)->image.flags   = ImageFlagsNone;
     (*metafile)->image.palette = NULL;
     (*metafile)->image.xres = dpix;
