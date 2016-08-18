@@ -339,27 +339,6 @@ static void find_joydevs(void)
     }
 }
 
-static void fill_joystick_dideviceinstanceA(LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
-{
-    DWORD dwSize = lpddi->dwSize;
-
-    TRACE("%d %p\n", dwSize, lpddi);
-    memset(lpddi, 0, dwSize);
-
-    lpddi->dwSize       = dwSize;
-    lpddi->guidInstance = joydevs[id].guid;
-    lpddi->guidProduct  = joydevs[id].guid_product;
-    lpddi->guidFFDriver = GUID_NULL;
-
-    if (version >= 0x0800)
-        lpddi->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
-    else
-        lpddi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
-
-    strcpy(lpddi->tszInstanceName, joydevs[id].name);
-    strcpy(lpddi->tszProductName, joydevs[id].name);
-}
-
 static void fill_joystick_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD version, int id)
 {
     DWORD dwSize = lpddi->dwSize;
@@ -379,6 +358,29 @@ static void fill_joystick_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD ver
 
     MultiByteToWideChar(CP_ACP, 0, joydevs[id].name, -1, lpddi->tszInstanceName, MAX_PATH);
     MultiByteToWideChar(CP_ACP, 0, joydevs[id].name, -1, lpddi->tszProductName, MAX_PATH);
+}
+
+static void fill_joystick_dideviceinstanceA(LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
+{
+    DIDEVICEINSTANCEW lpddiW;
+    DWORD dwSize = lpddi->dwSize;
+
+    lpddiW.dwSize = sizeof(lpddiW);
+    fill_joystick_dideviceinstanceW(&lpddiW, version, id);
+
+    TRACE("%d %p\n", dwSize, lpddi);
+    memset(lpddi, 0, dwSize);
+
+    /* Convert W->A */
+    lpddi->dwSize = dwSize;
+    lpddi->guidInstance = lpddiW.guidInstance;
+    lpddi->guidProduct = lpddiW.guidProduct;
+    lpddi->dwDevType = lpddiW.dwDevType;
+    strcpy(lpddi->tszInstanceName, joydevs[id].name);
+    strcpy(lpddi->tszProductName,  joydevs[id].name);
+    lpddi->guidFFDriver = lpddiW.guidFFDriver;
+    lpddi->wUsagePage = lpddiW.wUsagePage;
+    lpddi->wUsage = lpddiW.wUsage;
 }
 
 static HRESULT joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
