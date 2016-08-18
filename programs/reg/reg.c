@@ -902,23 +902,32 @@ static const WCHAR addW[] = {'a','d','d',0};
 static const WCHAR deleteW[] = {'d','e','l','e','t','e',0};
 static const WCHAR queryW[] = {'q','u','e','r','y',0};
 
-static enum operations get_operation(const WCHAR *str)
+static enum operations get_operation(const WCHAR *str, int *op_help)
 {
     if (!lstrcmpiW(str, addW))
+    {
+        *op_help = STRING_ADD_USAGE;
         return REG_ADD;
+    }
 
     if (!lstrcmpiW(str, deleteW))
+    {
+        *op_help = STRING_DELETE_USAGE;
         return REG_DELETE;
+    }
 
     if (!lstrcmpiW(str, queryW))
+    {
+        *op_help = STRING_QUERY_USAGE;
         return REG_QUERY;
+    }
 
     return REG_INVALID;
 }
 
 int wmain(int argc, WCHAR *argvW[])
 {
-    int i, op, ret;
+    int i, op, op_help, ret;
     BOOL show_op_help = FALSE;
     static const WCHAR switchVAW[] = {'v','a',0};
     static const WCHAR switchVEW[] = {'v','e',0};
@@ -939,7 +948,7 @@ int wmain(int argc, WCHAR *argvW[])
         return 0;
     }
 
-    op = get_operation(argvW[1]);
+    op = get_operation(argvW[1], &op_help);
 
     if (op == REG_INVALID)
     {
@@ -959,12 +968,7 @@ int wmain(int argc, WCHAR *argvW[])
     }
     else if (show_op_help)
     {
-        if (op == REG_ADD)
-            output_message(STRING_ADD_USAGE);
-        else if (op == REG_DELETE)
-            output_message(STRING_DELETE_USAGE);
-        else
-            output_message(STRING_QUERY_USAGE);
+        output_message(op_help);
         return 0;
     }
 
