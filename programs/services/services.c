@@ -752,8 +752,9 @@ static DWORD service_start_process(struct service_entry *service_entry, struct p
             service_unlock(service_entry);
             return ERROR_SERVICE_ALREADY_RUNNING;
         }
-        release_process(process);
         service_entry->process = NULL;
+        process->use_count--;
+        release_process(process);
     }
 
     service_entry->force_shutdown = FALSE;
@@ -784,6 +785,7 @@ static DWORD service_start_process(struct service_entry *service_entry, struct p
     service_entry->status.dwCurrentState = SERVICE_START_PENDING;
     scmdatabase_add_process(service_entry->db, process);
     service_entry->process = grab_process(process);
+    process->use_count++;
 
     service_unlock(service_entry);
 
@@ -945,6 +947,7 @@ void process_terminate(struct process_entry *process)
         if (service->process != process) continue;
         service->status.dwCurrentState = SERVICE_STOPPED;
         service->process = NULL;
+        process->use_count--;
         release_process(process);
     }
     scmdatabase_unlock(db);

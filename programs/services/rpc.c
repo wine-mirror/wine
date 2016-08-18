@@ -761,7 +761,8 @@ DWORD __cdecl svcctl_SetServiceStatus(
         if (lpServiceStatus->dwCurrentState == SERVICE_STOPPED)
         {
             service->service_entry->process = NULL;
-            terminate_after_timeout(process, service_kill_timeout);
+            if (!--process->use_count)
+                terminate_after_timeout(process, service_kill_timeout);
             release_process(process);
         }
         else
@@ -1135,7 +1136,11 @@ DWORD __cdecl svcctl_ControlService(
     {
         result = ERROR_SERVICE_CANNOT_ACCEPT_CTRL;
         if ((process = service->service_entry->process))
-            process_terminate(process);
+        {
+            service->service_entry->process = NULL;
+            if (!--process->use_count) process_terminate(process);
+            release_process(process);
+        }
     }
 
     if (result != ERROR_SUCCESS)

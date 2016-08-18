@@ -37,6 +37,7 @@ struct process_entry
     struct list entry;
     struct scmdatabase *db;
     LONG ref_count;
+    LONG use_count;
     DWORD process_id;
     HANDLE process;
     HANDLE control_mutex;
