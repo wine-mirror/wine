@@ -577,38 +577,30 @@ static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData)
 {
     TRACE("%04x\n", lpData->wFormatID);
 
-    if ((lpData->wFormatID >= CF_GDIOBJFIRST &&
-        lpData->wFormatID <= CF_GDIOBJLAST) || 
-        lpData->wFormatID == CF_BITMAP || 
-        lpData->wFormatID == CF_DIB || 
-        lpData->wFormatID == CF_PALETTE)
-    {
-      if (lpData->hData)
-	DeleteObject(lpData->hData);
+    if (!lpData->hData) return;
 
-      if ((lpData->wFormatID == CF_DIB) && lpData->drvData)
-          XFreePixmap(gdi_display, lpData->drvData);
-    }
-    else if (lpData->wFormatID == CF_METAFILEPICT)
+    switch (lpData->wFormatID)
     {
-      if (lpData->hData)
-      {
+    case CF_BITMAP:
+    case CF_PALETTE:
+        DeleteObject(lpData->hData);
+        break;
+    case CF_DIB:
+        if (lpData->drvData) XFreePixmap(gdi_display, lpData->drvData);
+        GlobalFree(lpData->hData);
+        break;
+    case CF_METAFILEPICT:
         DeleteMetaFile(((METAFILEPICT *)GlobalLock( lpData->hData ))->hMF );
         GlobalFree(lpData->hData);
-      }
-    }
-    else if (lpData->wFormatID == CF_ENHMETAFILE)
-    {
-        if (lpData->hData)
-            DeleteEnhMetaFile(lpData->hData);
-    }
-    else if (lpData->wFormatID < CF_PRIVATEFIRST ||
-             lpData->wFormatID > CF_PRIVATELAST)
-    {
-      if (lpData->hData)
+        break;
+    case CF_ENHMETAFILE:
+        DeleteEnhMetaFile(lpData->hData);
+        break;
+    default:
+        if (lpData->wFormatID >= CF_PRIVATEFIRST && lpData->wFormatID <= CF_PRIVATELAST) break;
         GlobalFree(lpData->hData);
+        break;
     }
-
     lpData->hData = 0;
     lpData->drvData = 0;
 }
