@@ -1084,7 +1084,6 @@ DWORD __cdecl svcctl_ControlService(
     struct sc_service_handle *service;
     struct process_entry *process;
     DWORD result;
-    BOOL ret;
 
     WINE_TRACE("(%p, %d, %p)\n", hService, dwControl, lpServiceStatus);
 
@@ -1164,8 +1163,8 @@ DWORD __cdecl svcctl_ControlService(
     if (!process)
         return ERROR_SERVICE_CANNOT_ACCEPT_CTRL;
 
-    ret = WaitForSingleObject(process->control_mutex, 30000);
-    if (ret != WAIT_OBJECT_0)
+    result = WaitForSingleObject(process->control_mutex, 30000);
+    if (result != WAIT_OBJECT_0)
     {
         release_process(process);
         return ERROR_SERVICE_REQUEST_TIMEOUT;
