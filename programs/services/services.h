@@ -72,7 +72,7 @@ struct service_entry *scmdatabase_find_service(struct scmdatabase *db, LPCWSTR n
 struct service_entry *scmdatabase_find_service_by_displayname(struct scmdatabase *db, LPCWSTR name);
 DWORD scmdatabase_add_service(struct scmdatabase *db, struct service_entry *entry);
 
-DWORD scmdatabase_lock_startup(struct scmdatabase *db);
+BOOL scmdatabase_lock_startup(struct scmdatabase *db);
 void scmdatabase_unlock_startup(struct scmdatabase *db);
 
 void scmdatabase_lock(struct scmdatabase *db);

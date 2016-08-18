@@ -352,6 +352,7 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
     size = i;
 
     scmdatabase_unlock(db);
+    while (!scmdatabase_lock_startup(db)) Sleep(10);
 
     for (i = 0; i < size; i++)
     {
@@ -364,6 +365,7 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
         release_service(service);
     }
 
+    scmdatabase_unlock_startup(db);
     HeapFree(GetProcessHeap(), 0, services_list);
 }
 
@@ -608,11 +610,9 @@ static DWORD scmdatabase_load_services(struct scmdatabase *db)
     return ERROR_SUCCESS;
 }
 
-DWORD scmdatabase_lock_startup(struct scmdatabase *db)
+BOOL scmdatabase_lock_startup(struct scmdatabase *db)
 {
-    if (InterlockedCompareExchange(&db->service_start_lock, TRUE, FALSE))
-        return ERROR_SERVICE_DATABASE_LOCKED;
-    return ERROR_SUCCESS;
+    return !InterlockedCompareExchange(&db->service_start_lock, TRUE, FALSE);
 }
 
 void scmdatabase_unlock_startup(struct scmdatabase *db)
@@ -904,10 +904,6 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
     struct process_entry *process = NULL;
     DWORD err;
 
-    err = scmdatabase_lock_startup(service->db);
-    if (err != ERROR_SUCCESS)
-        return err;
-
     err = service_start_process(service, &process);
     if (err == ERROR_SUCCESS)
     {
@@ -928,10 +924,7 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
         release_process(process);
     }
 
-    scmdatabase_unlock_startup(service->db);
-
     WINE_TRACE("returning %d\n", err);
-
     return err;
 }
 
