@@ -318,6 +318,13 @@ static void scmdatabase_remove_service(struct scmdatabase *db, struct service_en
     service->entry.next = service->entry.prev = NULL;
 }
 
+static int compare_tags(const void *a, const void *b)
+{
+    struct service_entry *service_a = *(struct service_entry **)a;
+    struct service_entry *service_b = *(struct service_entry **)b;
+    return service_a->config.dwTagId - service_b->config.dwTagId;
+}
+
 static void scmdatabase_autostart_services(struct scmdatabase *db)
 {
     struct service_entry **services_list;
@@ -352,6 +359,7 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
     size = i;
 
     scmdatabase_unlock(db);
+    qsort(services_list, size, sizeof(services_list[0]), compare_tags);
     while (!scmdatabase_lock_startup(db)) Sleep(10);
 
     for (i = 0; i < size; i++)
