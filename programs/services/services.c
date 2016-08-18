@@ -36,7 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(service);
 
-HANDLE g_hStartedEvent;
 struct scmdatabase *active_database;
 
 DWORD service_pipe_timeout = 10000;
@@ -990,10 +989,10 @@ int main(int argc, char *argv[])
         'C','o','n','t','r','o','l','\\',
         'S','e','r','v','i','c','e','C','u','r','r','e','n','t',0};
     static const WCHAR svcctl_started_event[] = SVCCTL_STARTED_EVENT;
-    HANDLE htok;
+    HANDLE started_event, htok;
     DWORD err;
 
-    g_hStartedEvent = CreateEventW(NULL, TRUE, FALSE, svcctl_started_event);
+    started_event = CreateEventW(NULL, TRUE, FALSE, svcctl_started_event);
 
     if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY|TOKEN_DUPLICATE, &htok))
     {
@@ -1019,8 +1018,10 @@ int main(int argc, char *argv[])
     if ((err = RPC_Init()) == ERROR_SUCCESS)
     {
         scmdatabase_autostart_services(active_database);
-        events_loop();
+        SetEvent(started_event);
+        WaitForSingleObject(exit_event, INFINITE);
         scmdatabase_wait_terminate(active_database);
+        RPC_Stop();
     }
     scmdatabase_destroy(active_database);
     if (env)

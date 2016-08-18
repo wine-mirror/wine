@@ -85,46 +85,51 @@ struct sc_lock
     struct scmdatabase *db;
 };
 
-static HANDLE timeout_queue_event;
-static CRITICAL_SECTION timeout_queue_cs;
-static CRITICAL_SECTION_DEBUG timeout_queue_cs_debug =
+static CRITICAL_SECTION shutdown_cs;
+static CRITICAL_SECTION_DEBUG critsect_debug =
 {
-    0, 0, &timeout_queue_cs,
-    { &timeout_queue_cs_debug.ProcessLocksList, &timeout_queue_cs_debug.ProcessLocksList },
-    0, 0, { (DWORD_PTR)(__FILE__ ": timeout_queue_cs") }
+    0, 0, &shutdown_cs,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": shutdown_cs") }
 };
-static CRITICAL_SECTION timeout_queue_cs = { &timeout_queue_cs_debug, -1, 0, 0, 0, 0 };
-static struct list timeout_queue = LIST_INIT(timeout_queue);
-struct timeout_queue_elem
-{
-    struct list entry;
+static CRITICAL_SECTION shutdown_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
+static BOOL service_shutdown;
 
-    FILETIME time;
-    struct process_entry *process;
-};
+static PTP_CLEANUP_GROUP cleanup_group;
+HANDLE exit_event;
+
+static void CALLBACK terminate_callback(TP_CALLBACK_INSTANCE *instance, void *context,
+                                        TP_WAIT *wait, TP_WAIT_RESULT result)
+{
+    struct process_entry *process = context;
+    if (result == WAIT_TIMEOUT) process_terminate(process);
+    release_process(process);
+
+    /* synchronize with CloseThreadpoolCleanupGroupMembers */
+    EnterCriticalSection(&shutdown_cs);
+    if (!service_shutdown) CloseThreadpoolWait(wait);
+    LeaveCriticalSection(&shutdown_cs);
+}
 
 static void terminate_after_timeout(struct process_entry *process, DWORD timeout)
 {
-    struct timeout_queue_elem *elem;
-    ULARGE_INTEGER time;
+    TP_CALLBACK_ENVIRON environment;
+    LARGE_INTEGER timestamp;
+    TP_WAIT *wait;
+    FILETIME ft;
 
-    if (!(elem = HeapAlloc(GetProcessHeap(), 0, sizeof(*elem))))
-        return;
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.CleanupGroup = cleanup_group;
 
-    elem->process = grab_process(process);
+    timestamp.QuadPart = (ULONGLONG)timeout * -10000;
+    ft.dwLowDateTime   = timestamp.u.LowPart;
+    ft.dwHighDateTime  = timestamp.u.HighPart;
 
-    GetSystemTimeAsFileTime(&elem->time);
-    time.u.LowPart = elem->time.dwLowDateTime;
-    time.u.HighPart = elem->time.dwHighDateTime;
-    time.QuadPart += (ULONGLONG)timeout * 10000;
-    elem->time.dwLowDateTime = time.u.LowPart;
-    elem->time.dwHighDateTime = time.u.HighPart;
-
-    EnterCriticalSection(&timeout_queue_cs);
-    list_add_head(&timeout_queue, &elem->entry);
-    LeaveCriticalSection(&timeout_queue_cs);
-
-    SetEvent(timeout_queue_event);
+    if ((wait = CreateThreadpoolWait(terminate_callback, grab_process(process), &environment)))
+        SetThreadpoolWait(wait, process->process, &ft);
+    else
+        release_process(process);
 }
 
 static void free_service_strings(struct service_entry *old, struct service_entry *new)
@@ -1876,6 +1881,12 @@ DWORD RPC_Init(void)
     WCHAR endpoint[] = SVCCTL_ENDPOINT;
     DWORD err;
 
+    if (!(cleanup_group = CreateThreadpoolCleanupGroup()))
+    {
+        WINE_ERR("CreateThreadpoolCleanupGroup failed with error %u\n", GetLastError());
+        return GetLastError();
+    }
+
     if ((err = RpcServerUseProtseqEpW(transport, 0, endpoint, NULL)) != ERROR_SUCCESS)
     {
         WINE_ERR("RpcServerUseProtseq failed with error %u\n", err);
@@ -1893,106 +1904,24 @@ DWORD RPC_Init(void)
         WINE_ERR("RpcServerListen failed with error %u\n", err);
         return err;
     }
+
+    exit_event = __wine_make_process_system();
     return ERROR_SUCCESS;
 }
 
-DWORD events_loop(void)
+void RPC_Stop(void)
 {
-    struct timeout_queue_elem *iter, *iter_safe;
-    DWORD err;
-    HANDLE wait_handles[MAXIMUM_WAIT_OBJECTS];
-    DWORD timeout = INFINITE;
+    RpcMgmtStopServerListening(NULL);
+    RpcServerUnregisterIf(svcctl_v2_0_s_ifspec, NULL, TRUE);
 
-    wait_handles[0] = __wine_make_process_system();
-    wait_handles[1] = CreateEventW(NULL, FALSE, FALSE, NULL);
-    timeout_queue_event = wait_handles[1];
+    /* synchronize with CloseThreadpoolWait */
+    EnterCriticalSection(&shutdown_cs);
+    service_shutdown = TRUE;
+    LeaveCriticalSection(&shutdown_cs);
 
-    SetEvent(g_hStartedEvent);
-
-    WINE_TRACE("Entered main loop\n");
-
-    do
-    {
-        DWORD num_handles = 2;
-
-        /* monitor tracked process handles for process end */
-        EnterCriticalSection(&timeout_queue_cs);
-        LIST_FOR_EACH_ENTRY(iter, &timeout_queue, struct timeout_queue_elem, entry)
-        {
-            if(num_handles == MAXIMUM_WAIT_OBJECTS){
-                WINE_TRACE("Exceeded maximum wait object count\n");
-                break;
-            }
-            wait_handles[num_handles] = iter->process->process;
-            num_handles++;
-        }
-        LeaveCriticalSection(&timeout_queue_cs);
-
-        err = WaitForMultipleObjects(num_handles, wait_handles, FALSE, timeout);
-        WINE_TRACE("Wait returned %d\n", err);
-
-        if(err > WAIT_OBJECT_0 || err == WAIT_TIMEOUT)
-        {
-            FILETIME cur_time;
-            ULARGE_INTEGER time;
-            DWORD idx = 0;
-
-            GetSystemTimeAsFileTime(&cur_time);
-            time.u.LowPart = cur_time.dwLowDateTime;
-            time.u.HighPart = cur_time.dwHighDateTime;
-
-            EnterCriticalSection(&timeout_queue_cs);
-            timeout = INFINITE;
-            LIST_FOR_EACH_ENTRY_SAFE(iter, iter_safe, &timeout_queue, struct timeout_queue_elem, entry)
-            {
-                if(CompareFileTime(&cur_time, &iter->time) >= 0 ||
-                        (err > WAIT_OBJECT_0 + 1 && idx == err - WAIT_OBJECT_0 - 2))
-                {
-                    LeaveCriticalSection(&timeout_queue_cs);
-                    process_terminate(iter->process);
-                    EnterCriticalSection(&timeout_queue_cs);
-
-                    release_process(iter->process);
-                    list_remove(&iter->entry);
-                    HeapFree(GetProcessHeap(), 0, iter);
-                }
-                else
-                {
-                    ULARGE_INTEGER time_diff;
-
-                    time_diff.u.LowPart = iter->time.dwLowDateTime;
-                    time_diff.u.HighPart = iter->time.dwHighDateTime;
-                    time_diff.QuadPart = (time_diff.QuadPart-time.QuadPart)/10000;
-
-                    if(time_diff.QuadPart < timeout)
-                        timeout = time_diff.QuadPart;
-                }
-                idx++;
-            }
-            LeaveCriticalSection(&timeout_queue_cs);
-
-            if(timeout != INFINITE)
-                timeout += 1000;
-        }
-    } while (err != WAIT_OBJECT_0);
-
-    WINE_TRACE("Object signaled - wine shutdown\n");
-    EnterCriticalSection(&timeout_queue_cs);
-    LIST_FOR_EACH_ENTRY_SAFE(iter, iter_safe, &timeout_queue, struct timeout_queue_elem, entry)
-    {
-        LeaveCriticalSection(&timeout_queue_cs);
-        process_terminate(iter->process);
-        EnterCriticalSection(&timeout_queue_cs);
-
-        release_process(iter->process);
-        list_remove(&iter->entry);
-        HeapFree(GetProcessHeap(), 0, iter);
-    }
-    LeaveCriticalSection(&timeout_queue_cs);
-
-    CloseHandle(wait_handles[0]);
-    CloseHandle(wait_handles[1]);
-    return ERROR_SUCCESS;
+    CloseThreadpoolCleanupGroupMembers(cleanup_group, TRUE, NULL);
+    CloseThreadpoolCleanupGroup(cleanup_group);
+    CloseHandle(exit_event);
 }
 
 void __RPC_USER SC_RPC_HANDLE_rundown(SC_RPC_HANDLE handle)

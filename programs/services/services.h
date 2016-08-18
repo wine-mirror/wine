@@ -98,13 +98,12 @@ void release_process(struct process_entry *process);
 BOOL process_send_command(struct process_entry *process, const void *data, DWORD size, DWORD *result);
 void process_terminate(struct process_entry *process);
 
-extern HANDLE g_hStartedEvent;
-
 extern DWORD service_pipe_timeout;
 extern DWORD service_kill_timeout;
+extern HANDLE exit_event;
 
 DWORD RPC_Init(void);
-DWORD events_loop(void);
+void RPC_Stop(void);
 
 /* from utils.c */
 LPWSTR strdupW(LPCWSTR str);
