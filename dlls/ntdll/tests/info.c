@@ -504,6 +504,7 @@ static void test_query_handle(void)
 
     SystemInformationLength = ReturnLength;
     shi = HeapReAlloc(GetProcessHeap(), 0, shi , SystemInformationLength);
+    memset(shi, 0x55, SystemInformationLength);
 
     ReturnLength = 0xdeadbeef;
     status = pNtQuerySystemInformation(SystemHandleInformation, shi, SystemInformationLength, &ReturnLength);
@@ -511,6 +512,7 @@ static void test_query_handle(void)
     {
         SystemInformationLength *= 2;
         shi = HeapReAlloc(GetProcessHeap(), 0, shi, SystemInformationLength);
+        memset(shi, 0x55, SystemInformationLength);
         status = pNtQuerySystemInformation(SystemHandleInformation, shi, SystemInformationLength, &ReturnLength);
     }
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status );
@@ -518,6 +520,15 @@ static void test_query_handle(void)
     ok( ReturnLength == ExpectedLength || broken(ReturnLength == ExpectedLength - sizeof(DWORD)), /* Vista / 2008 */
         "Expected length %u, got %u\n", ExpectedLength, ReturnLength );
     ok( shi->Count > 1, "Expected more than 1 handle, got %u\n", shi->Count );
+    ok( shi->Handle[1].HandleValue != 0x5555 || broken( shi->Handle[1].HandleValue == 0x5555 ), /* Vista / 2008 */
+        "Uninitialized second handle\n" );
+    if (shi->Handle[1].HandleValue == 0x5555)
+    {
+        win_skip("Skipping broken SYSTEM_HANDLE_INFORMATION\n");
+        CloseHandle(EventHandle);
+        goto done;
+    }
+
     for (i = 0, found = FALSE; i < shi->Count && !found; i++)
         found = (shi->Handle[i].OwnerPid == GetCurrentProcessId()) &&
                 ((HANDLE)(ULONG_PTR)shi->Handle[i].HandleValue == EventHandle);
@@ -546,6 +557,7 @@ static void test_query_handle(void)
     status = pNtQuerySystemInformation(SystemHandleInformation, NULL, SystemInformationLength, &ReturnLength);
     ok( status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got %08x\n", status );
 
+done:
     HeapFree( GetProcessHeap(), 0, shi);
 }
 
