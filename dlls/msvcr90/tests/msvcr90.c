@@ -92,8 +92,10 @@ static int* (__cdecl *p_errno)(void);
 static __msvcrt_ulong* (__cdecl *p_doserrno)(void);
 static void (__cdecl *p_srand)(unsigned int);
 static char* (__cdecl *p_strtok)(char*, const char*);
+static char* (__cdecl *p_strtok_s)(char*, const char*, char**);
 static wchar_t* (__cdecl *p_wcstok)(wchar_t*, const wchar_t*);
 static unsigned char* (__cdecl *p__mbstok)(unsigned char*, const unsigned char*);
+static unsigned char* (__cdecl *p__mbstok_s)(unsigned char*, const unsigned char*, unsigned char**);
 static char* (__cdecl *p_strerror)(int);
 static wchar_t* (__cdecl *p_wcserror)(int);
 static char* (__cdecl *p_tmpnam)(char*);
@@ -355,8 +357,10 @@ static BOOL init(void)
     SET(p_doserrno, "__doserrno");
     SET(p_srand, "srand");
     SET(p_strtok, "strtok");
+    SET(p_strtok_s, "strtok_s");
     SET(p_wcstok, "wcstok");
     SET(p__mbstok, "_mbstok");
+    SET(p__mbstok_s, "_mbstok_s");
     SET(p_strerror, "strerror");
     SET(p_wcserror, "_wcserror");
     SET(p_tmpnam, "tmpnam");
@@ -1547,6 +1551,88 @@ static void test_mbstowcs(void)
     p_setlocale(LC_ALL, "C");
 }
 
+static void test_strtok_s(void)
+{
+    char test[] = "a/b";
+    char empty[] = "";
+    char space[] = " ";
+    char delim[] = "/";
+    char *strret;
+    char *context;
+
+    context = (char*)0xdeadbeef;
+    strret = p_strtok_s( test, delim, &context);
+    ok(strret == test, "Expected test, got %p.\n", strret);
+    ok(context == test+2, "Expected test+2, got %p.\n", context);
+
+    strret = p_strtok_s( NULL, delim, &context);
+    ok(strret == test+2, "Expected test+2, got %p.\n", strret);
+    ok(context == test+3, "Expected test+3, got %p.\n", context);
+
+    strret = p_strtok_s( NULL, delim, &context);
+    ok(strret == NULL, "Expected NULL, got %p.\n", strret);
+    ok(context == test+3, "Expected test+3, got %p.\n", context);
+
+    context = NULL;
+    strret = p_strtok_s( empty, delim, &context);
+    ok(strret == NULL, "Expected NULL, got %p.\n", strret);
+    ok(context == empty, "Expected empty, got %p.\n", context);
+
+    strret = p_strtok_s( NULL, delim, &context);
+    ok(strret == NULL, "Expected NULL, got %p.\n", strret);
+    ok(context == empty, "Expected empty, got %p.\n", context);
+
+    context = NULL;
+    strret = p_strtok_s( space, delim, &context);
+    ok(strret == space, "Expected space, got %p.\n", strret);
+    ok(context == space+1, "Expected space+1, got %p.\n", context);
+
+    strret = p_strtok_s( NULL, delim, &context);
+    ok(strret == NULL, "Expected NULL, got %p.\n", strret);
+    ok(context == space+1, "Expected space+1, got %p.\n", context);
+}
+
+static void test__mbstok_s(void)
+{
+    unsigned char test[] = "a/b";
+    unsigned char empty[] = "";
+    unsigned char space[] = " ";
+    unsigned char delim[] = "/";
+    unsigned char *strret;
+    unsigned char *context;
+
+    context = (unsigned char*)0xdeadbeef;
+    strret = p__mbstok_s( test, delim, &context);
+    ok(strret == test, "Expected test, got %p.\n", strret);
+    ok(context == test+2, "Expected test+2, got %p.\n", context);
+
+    strret = p__mbstok_s( NULL, delim, &context);
+    ok(strret == test+2, "Expected test+2, got %p.\n", strret);
+    ok(context == test+3, "Expected test+3, got %p.\n", context);
+
+    strret = p__mbstok_s( NULL, delim, &context);
+    ok(strret == NULL, "Expected NULL, got %p.\n", strret);
+    ok(context == test+3, "Expected test+3, got %p.\n", context);
+
+    context = NULL;
+    strret = p__mbstok_s( empty, delim, &context);
+    ok(strret == NULL, "Expected NULL, got %p.\n", strret);
+    ok(context == empty, "Expected empty, got %p.\n", context);
+
+    strret = p__mbstok_s( NULL, delim, &context);
+    ok(strret == NULL, "Expected NULL, got %p.\n", strret);
+    ok(context == empty, "Expected empty, got %p.\n", context);
+
+    context = NULL;
+    strret = p__mbstok_s( space, delim, &context);
+    ok(strret == space, "Expected space, got %p.\n", strret);
+    ok(context == space+1, "Expected space+1, got %p.\n", context);
+
+    strret = p__mbstok_s( NULL, delim, &context);
+    ok(strret == NULL, "Expected NULL, got %p.\n", strret);
+    ok(context == space+1, "Expected space+1, got %p.\n", context);
+}
+
 START_TEST(msvcr90)
 {
     if(!init())
@@ -1576,4 +1662,6 @@ START_TEST(msvcr90)
     test_is_exception_typeof();
     test__AdjustPointer();
     test_mbstowcs();
+    test_strtok_s();
+    test__mbstok_s();
 }

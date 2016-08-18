@@ -1205,7 +1205,10 @@ unsigned char* CDECL _mbstok_s_l(unsigned char *str, const unsigned char *delim,
     while((c=_mbsnextc(str)) && _mbschr(delim, c))
         str += c>255 ? 2 : 1;
     if(!*str)
+    {
+        *ctx = str;
         return NULL;
+    }
 
     *ctx = str + (c>255 ? 2 : 1);
     while((c=_mbsnextc(*ctx)) && !_mbschr(delim, c))
