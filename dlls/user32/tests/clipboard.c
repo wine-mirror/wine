@@ -28,6 +28,7 @@
 static BOOL (WINAPI *pAddClipboardFormatListener)(HWND hwnd);
 static DWORD (WINAPI *pGetClipboardSequenceNumber)(void);
 
+static const BOOL is_win64 = sizeof(void *) > sizeof(int);
 static int thread_from_line;
 static char *argv0;
 
@@ -792,12 +793,16 @@ static void test_handles( HWND hwnd )
     h = SetClipboardData( CF_PALETTE, palette );
     ok( h == palette, "got %p\n", h );
     ok( GetObjectType( h ) == OBJ_PAL, "expected palette %p\n", h );
-    h = SetClipboardData( CF_GDIOBJFIRST + 1, bitmap2 );
-    ok( h == bitmap2, "got %p\n", h );
-    ok( GetObjectType( h ) == OBJ_BITMAP, "expected bitmap %p\n", h );
-    h = SetClipboardData( CF_GDIOBJFIRST + 2, pen );
-    ok( h == pen, "got %p\n", h );
-    ok( GetObjectType( h ) == OBJ_PEN, "expected pen %p\n", h );
+    /* setting custom GDI formats crashes on 64-bit Windows */
+    if (!is_win64)
+    {
+        h = SetClipboardData( CF_GDIOBJFIRST + 1, bitmap2 );
+        ok( h == bitmap2, "got %p\n", h );
+        ok( GetObjectType( h ) == OBJ_BITMAP, "expected bitmap %p\n", h );
+        h = SetClipboardData( CF_GDIOBJFIRST + 2, pen );
+        ok( h == pen, "got %p\n", h );
+        ok( GetObjectType( h ) == OBJ_PEN, "expected pen %p\n", h );
+    }
 
     data = GetClipboardData( CF_TEXT );
     ok( data == htext, "wrong data %p\n", data );
@@ -853,10 +858,13 @@ static void test_handles( HWND hwnd )
     ok( data == bitmap, "expected bitmap %p\n", data );
     data = GetClipboardData( CF_PALETTE );
     ok( data == palette, "expected palette %p\n", data );
-    data = GetClipboardData( CF_GDIOBJFIRST + 1 );
-    ok( data == bitmap2, "expected bitmap2 %p\n", data );
-    data = GetClipboardData( CF_GDIOBJFIRST + 2 );
-    ok( data == pen, "expected pen %p\n", data );
+    if (!is_win64)
+    {
+        data = GetClipboardData( CF_GDIOBJFIRST + 1 );
+        ok( data == bitmap2, "expected bitmap2 %p\n", data );
+        data = GetClipboardData( CF_GDIOBJFIRST + 2 );
+        ok( data == pen, "expected pen %p\n", data );
+    }
     data = GetClipboardData( CF_DIB );
     ok( is_fixed( data ), "expected fixed mem %p\n", data );
     data = GetClipboardData( CF_DIBV5 );
@@ -915,14 +923,17 @@ static DWORD WINAPI test_handles_thread2( void *arg )
     ok( GetObjectType( h ) == OBJ_PAL, "expected palette %p\n", h );
     ok( h == palette, "different palette %p / %p\n", h, palette );
     trace( "palette %p\n", h );
-    h = GetClipboardData( CF_GDIOBJFIRST + 1 );
-    ok( GetObjectType( h ) == OBJ_BITMAP, "expected bitmap %p\n", h );
-    ok( h == bitmap2, "different bitmap %p / %p\n", h, bitmap2 );
-    trace( "bitmap2 %p\n", h );
-    h = GetClipboardData( CF_GDIOBJFIRST + 2 );
-    ok( GetObjectType( h ) == OBJ_PEN, "expected pen %p\n", h );
-    ok( h == pen, "different pen %p / %p\n", h, pen );
-    trace( "pen %p\n", h );
+    if (!is_win64)
+    {
+        h = GetClipboardData( CF_GDIOBJFIRST + 1 );
+        ok( GetObjectType( h ) == OBJ_BITMAP, "expected bitmap %p\n", h );
+        ok( h == bitmap2, "different bitmap %p / %p\n", h, bitmap2 );
+        trace( "bitmap2 %p\n", h );
+        h = GetClipboardData( CF_GDIOBJFIRST + 2 );
+        ok( GetObjectType( h ) == OBJ_PEN, "expected pen %p\n", h );
+        ok( h == pen, "different pen %p / %p\n", h, pen );
+        trace( "pen %p\n", h );
+    }
     h = GetClipboardData( CF_DIB );
     ok( is_fixed( h ), "expected fixed mem %p\n", h );
     h = GetClipboardData( CF_DIBV5 );
@@ -942,7 +953,7 @@ static void test_handles_process( const char *str )
     r = OpenClipboard( 0 );
     ok( r, "gle %d\n", GetLastError() );
     h = GetClipboardData( CF_TEXT );
-    ok( is_fixed( h ), "expected fixed mem %p\n", h );
+    todo_wine_if( !h ) ok( is_fixed( h ), "expected fixed mem %p\n", h );
     ptr = GlobalLock( h );
     if (ptr) todo_wine ok( !strcmp( str, ptr ), "wrong data '%.5s'\n", ptr );
     GlobalUnlock( h );
@@ -1001,10 +1012,13 @@ static void test_data_handles(void)
     ok( GetObjectType( h ) == OBJ_BITMAP, "expected bitmap %p\n", h );
     h = SetClipboardData( CF_PALETTE, palette );
     ok( GetObjectType( h ) == OBJ_PAL, "expected palette %p\n", h );
-    h = SetClipboardData( CF_GDIOBJFIRST + 1, bitmap2 );
-    ok( GetObjectType( h ) == OBJ_BITMAP, "expected bitmap %p\n", h );
-    h = SetClipboardData( CF_GDIOBJFIRST + 2, pen );
-    ok( GetObjectType( h ) == OBJ_PEN, "expected pen %p\n", h );
+    if (!is_win64)
+    {
+        h = SetClipboardData( CF_GDIOBJFIRST + 1, bitmap2 );
+        ok( GetObjectType( h ) == OBJ_BITMAP, "expected bitmap %p\n", h );
+        h = SetClipboardData( CF_GDIOBJFIRST + 2, pen );
+        ok( GetObjectType( h ) == OBJ_PEN, "expected pen %p\n", h );
+    }
     r = CloseClipboard();
     ok( r, "gle %d\n", GetLastError() );
 
