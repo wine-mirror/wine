@@ -1819,7 +1819,8 @@ WINBASEAPI BOOL        WINAPI DebugActiveProcessStop(DWORD);
 WINBASEAPI void        WINAPI DebugBreak(void);
 WINBASEAPI BOOL        WINAPI DebugBreakProcess(HANDLE);
 WINBASEAPI BOOL        WINAPI DebugSetProcessKillOnExit(BOOL);
-WINBASEAPI PVOID       WINAPI DecodePointer(PVOID);
+WINBASEAPI void *      WINAPI DecodePointer(void *);
+WINBASEAPI void *      WINAPI DecodeSystemPointer(void *);
 WINADVAPI  BOOL        WINAPI DecryptFileA(LPCSTR,DWORD);
 WINADVAPI  BOOL        WINAPI DecryptFileW(LPCWSTR,DWORD);
 #define                       DecryptFile WINELIB_NAME_AW(DecryptFile)
@@ -1853,7 +1854,8 @@ WINBASEAPI BOOL        WINAPI DuplicateHandle(HANDLE,HANDLE,HANDLE,HANDLE*,DWORD
 WINADVAPI  BOOL        WINAPI DuplicateToken(HANDLE,SECURITY_IMPERSONATION_LEVEL,PHANDLE);
 WINADVAPI  BOOL        WINAPI DuplicateTokenEx(HANDLE,DWORD,LPSECURITY_ATTRIBUTES,SECURITY_IMPERSONATION_LEVEL,TOKEN_TYPE,PHANDLE);
 WINBASEAPI BOOL        WINAPI EscapeCommFunction(HANDLE,UINT);
-WINBASEAPI PVOID       WINAPI EncodePointer(PVOID);
+WINBASEAPI void *      WINAPI EncodePointer(void *);
+WINBASEAPI void *      WINAPI EncodeSystemPointer(void *);
 WINADVAPI  BOOL        WINAPI EncryptFileA(LPCSTR);
 WINADVAPI  BOOL        WINAPI EncryptFileW(LPCWSTR);
 #define                       EncryptFile WINELIB_NAME_AW(EncryptFile)

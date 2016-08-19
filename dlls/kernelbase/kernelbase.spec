@@ -101,7 +101,7 @@
 @ stdcall CreateWellKnownSid(long ptr ptr ptr) advapi32.CreateWellKnownSid
 @ stdcall DebugBreak() kernel32.DebugBreak
 @ stdcall DecodePointer(ptr) kernel32.DecodePointer
-@ stub DecodeSystemPointer
+@ stdcall DecodeSystemPointer(ptr) kernel32.DecodeSystemPointer
 @ stdcall DefineDosDeviceW(long wstr wstr) kernel32.DefineDosDeviceW
 @ stdcall DeleteAce(ptr long) advapi32.DeleteAce
 @ stdcall DeleteCriticalSection(ptr) kernel32.DeleteCriticalSection
@@ -120,7 +120,7 @@
 @ stdcall DuplicateToken(long long ptr) advapi32.DuplicateToken
 @ stdcall DuplicateTokenEx(long long ptr long long ptr) advapi32.DuplicateTokenEx
 @ stdcall EncodePointer(ptr) kernel32.EncodePointer
-@ stub EncodeSystemPointer
+@ stdcall EncodeSystemPointer(ptr) kernel32.EncodeSystemPointer
 @ stdcall EnterCriticalSection(ptr) kernel32.EnterCriticalSection
 @ stdcall EnumCalendarInfoExEx(ptr wstr long wstr long long) kernel32.EnumCalendarInfoExEx
 @ stdcall EnumCalendarInfoExW(ptr long long long) kernel32.EnumCalendarInfoExW

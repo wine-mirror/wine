@@ -355,7 +355,7 @@
 @ stdcall DebugBreakProcess(long)
 @ stdcall DebugSetProcessKillOnExit(long)
 @ stdcall DecodePointer(ptr) ntdll.RtlDecodePointer
-# @ stub DecodeSystemPointer ( -> ntdll.RtlDecodeSystemPointer)
+@ stdcall DecodeSystemPointer(ptr) ntdll.RtlDecodeSystemPointer
 @ stdcall DefineDosDeviceA(long str str)
 @ stdcall DefineDosDeviceW(long wstr wstr)
 @ stdcall DelayLoadFailureHook(str str)
@@ -390,7 +390,7 @@
 @ stdcall DuplicateHandle(long long long ptr long long long)
 # @ stub EnableThreadProfiling
 @ stdcall EncodePointer(ptr) ntdll.RtlEncodePointer
-# @ stub EncodeSystemPointer ( -> ntdll.RtlEncodeSystemPointer)
+@ stdcall EncodeSystemPointer(ptr) ntdll.RtlEncodeSystemPointer
 @ stdcall EndUpdateResourceA(long long)
 @ stdcall EndUpdateResourceW(long long)
 @ stdcall EnterCriticalSection(ptr) ntdll.RtlEnterCriticalSection

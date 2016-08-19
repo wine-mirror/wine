@@ -519,7 +519,7 @@
 @ stub RtlDeactivateActivationContextUnsafeFast
 @ stub RtlDebugPrintTimes
 @ stdcall RtlDecodePointer(ptr)
-# @ stub RtlDecodeSystemPointer
+@ stdcall RtlDecodeSystemPointer(ptr) RtlDecodePointer
 @ stdcall RtlDecompressBuffer(long ptr long ptr long ptr)
 @ stdcall RtlDecompressFragment(long ptr long ptr long long ptr ptr)
 @ stub RtlDefaultNpAcl
@@ -562,7 +562,7 @@
 @ stdcall RtlEmptyAtomTable(ptr long)
 # @ stub RtlEnableEarlyCriticalSectionEventCreation
 @ stdcall RtlEncodePointer(ptr)
-# @ stub RtlEncodeSystemPointer
+@ stdcall RtlEncodeSystemPointer(ptr) RtlEncodePointer
 @ stdcall -arch=win32 -ret64 RtlEnlargedIntegerMultiply(long long)
 @ stdcall -arch=win32 RtlEnlargedUnsignedDivide(int64 long ptr)
 @ stdcall -arch=win32 -ret64 RtlEnlargedUnsignedMultiply(long long)
