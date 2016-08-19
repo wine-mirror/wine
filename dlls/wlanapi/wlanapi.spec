@@ -1,5 +1,5 @@
 @ stub WlanAllocateMemory
-@ stub WlanCloseHandle
+@ stdcall WlanCloseHandle(ptr ptr)
 @ stub WlanConnect
 @ stub WlanDeleteProfile
 @ stub WlanDisconnect

@@ -34,6 +34,12 @@ DWORD WINAPI WlanEnumInterfaces(HANDLE client, void *reserved, WLAN_INTERFACE_IN
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+DWORD WINAPI WlanCloseHandle(HANDLE client_handle, VOID *reserved)
+{
+    FIXME("(%p, %p) stub\n", client_handle, reserved);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 DWORD WINAPI WlanOpenHandle(DWORD clientVersion, PVOID reserved,
         PDWORD negotiatedVersion, PHANDLE clientHandle)
 {
