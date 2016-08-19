@@ -186,6 +186,15 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
     WCHAR nameBuffer[MAX_PATH];
     HWND hWnd = get_hwnd();
     char oldstate[248], curstate[248];
+    DWORD axes[2] = {DIJOFS_X, DIJOFS_Y};
+    LONG  direction[2] = {0, 0};
+    DICONSTANTFORCE force = {0};
+    DIEFFECT eff;
+    LPDIRECTINPUTEFFECT effect = NULL;
+    LONG cnt1, cnt2;
+    HWND real_hWnd;
+    HINSTANCE hInstance = GetModuleHandleW(NULL);
+    DIPROPDWORD dip_gain_set, dip_gain_get;
 
     ok(data->version > 0x0300, "Joysticks not supported in version 0x%04x\n", data->version);
  
@@ -384,54 +393,46 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
         ok(js.rgdwPOV[3] == -1, "Default for unassigned POV should be -1 not: %d\n", js.rgdwPOV[3]);
     }
 
+    trace("Testing force feedback\n");
+    memset(&eff, 0, sizeof(eff));
+    eff.dwSize                = sizeof(eff);
+    eff.dwFlags               = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
+    eff.dwDuration            = INFINITE;
+    eff.dwGain                = DI_FFNOMINALMAX;
+    eff.dwTriggerButton       = DIEB_NOTRIGGER;
+    eff.cAxes                 = sizeof(axes) / sizeof(axes[0]);
+    eff.rgdwAxes              = axes;
+    eff.rglDirection          = direction;
+    eff.cbTypeSpecificParams  = sizeof(force);
+    eff.lpvTypeSpecificParams = &force;
+
+    /* Sending effects to joystick requires
+     * calling IDirectInputEffect_Initialize, which requires
+     * having exclusive access to the device, which requires
+     * - not having acquired the joystick when calling
+     *   IDirectInputDevice_SetCooperativeLevel
+     * - a visible window
+     */
+    real_hWnd = CreateWindowExA(0, "EDIT", "Test text", 0, 10, 10, 300, 300, NULL, NULL,
+                                hInstance, NULL);
+    ok(real_hWnd!=0,"CreateWindowExA failed: %p\n", real_hWnd);
+    ShowWindow(real_hWnd, SW_SHOW);
+    hr = IDirectInputDevice_Unacquire(pJoystick);
+    ok(hr==DI_OK,"IDirectInputDevice_Unacquire() failed: %08x\n", hr);
+    hr = IDirectInputDevice_SetCooperativeLevel(pJoystick, real_hWnd,
+                                                DISCL_EXCLUSIVE | DISCL_FOREGROUND);
+    ok(hr==DI_OK,"IDirectInputDevice_SetCooperativeLevel() failed: %08x\n", hr);
+    hr = IDirectInputDevice_Acquire(pJoystick);
+    ok(hr==DI_OK,"IDirectInputDevice_Acquire() failed: %08x\n", hr);
+
+    cnt1 = get_refcount((IUnknown*)pJoystick);
+
+    effect = (void *)0xdeadbeef;
+    hr = IDirectInputDevice2_CreateEffect((IDirectInputDevice2A*)pJoystick, &GUID_ConstantForce,
+                                          &eff, &effect, NULL);
     if (caps.dwFlags & DIDC_FORCEFEEDBACK)
     {
-        DWORD axes[2] = {DIJOFS_X, DIJOFS_Y};
-        LONG  direction[2] = {0, 0};
-        DICONSTANTFORCE force = {0};
-        DIEFFECT eff;
-        LPDIRECTINPUTEFFECT effect = NULL;
-        LONG cnt1, cnt2;
-        HWND real_hWnd;
-        HINSTANCE hInstance = GetModuleHandleW(NULL);
-        DIPROPDWORD dip_gain_set, dip_gain_get;
-
-        trace("Testing force-feedback\n");
-        memset(&eff, 0, sizeof(eff));
-        eff.dwSize                = sizeof(eff);
-        eff.dwFlags               = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-        eff.dwDuration            = INFINITE;
-        eff.dwGain                = DI_FFNOMINALMAX;
-        eff.dwTriggerButton       = DIEB_NOTRIGGER;
-        eff.cAxes                 = sizeof(axes) / sizeof(axes[0]);
-        eff.rgdwAxes              = axes;
-        eff.rglDirection          = direction;
-        eff.cbTypeSpecificParams  = sizeof(force);
-        eff.lpvTypeSpecificParams = &force;
-
-        /* Sending effects to joystick requires
-         * calling IDirectInputEffect_Initialize, which requires
-         * having exclusive access to the device, which requires
-         * - not having acquired the joystick when calling
-         *   IDirectInputDevice_SetCooperativeLevel
-         * - a visible window
-         */
-        real_hWnd = CreateWindowExA(0, "EDIT", "Test text", 0, 10, 10, 300, 300, NULL, NULL,
-                                    hInstance, NULL);
-        ok(real_hWnd!=0,"CreateWindowExA failed: %p\n", real_hWnd);
-        ShowWindow(real_hWnd, SW_SHOW);
-        hr = IDirectInputDevice_Unacquire(pJoystick);
-        ok(hr==DI_OK,"IDirectInputDevice_Unacquire() failed: %08x\n", hr);
-        hr = IDirectInputDevice_SetCooperativeLevel(pJoystick, real_hWnd,
-                                                    DISCL_EXCLUSIVE | DISCL_FOREGROUND);
-        ok(hr==DI_OK,"IDirectInputDevice_SetCooperativeLevel() failed: %08x\n", hr);
-        hr = IDirectInputDevice_Acquire(pJoystick);
-        ok(hr==DI_OK,"IDirectInputDevice_Acquire() failed: %08x\n", hr);
-
-        cnt1 = get_refcount((IUnknown*)pJoystick);
-
-        hr = IDirectInputDevice2_CreateEffect((IDirectInputDevice2A*)pJoystick, &GUID_ConstantForce,
-                                              &eff, &effect, NULL);
+        trace("force feedback supported\n");
         ok(hr == DI_OK, "IDirectInputDevice_CreateEffect() failed: %08x\n", hr);
         cnt2 = get_refcount((IUnknown*)pJoystick);
         ok(cnt1 == cnt2, "Ref count is wrong %d != %d\n", cnt1, cnt2);
@@ -622,18 +623,27 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
         }
         cnt1 = get_refcount((IUnknown*)pJoystick);
         ok(cnt1 == cnt2, "Ref count is wrong %d != %d\n", cnt1, cnt2);
-
-        /* Before destroying the window, release joystick to revert to
-         * non-exclusive, background cooperative level. */
-        hr = IDirectInputDevice_Unacquire(pJoystick);
-        ok(hr==DI_OK,"IDirectInputDevice_Unacquire() failed: %08x\n", hr);
-        hr = IDirectInputDevice_SetCooperativeLevel(pJoystick, hWnd,
-                                                    DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
-        ok(hr==DI_OK,"IDirectInputDevice_SetCooperativeLevel() failed: %08x\n", hr);
-        DestroyWindow (real_hWnd);
-        hr = IDirectInputDevice_Acquire(pJoystick);
-        ok(hr==DI_OK,"IDirectInputDevice_Acquire() failed: %08x\n", hr);
     }
+    /* No force feedback support, CreateEffect is supposed to fail. Fairy Bloom Freesia
+     * calls CreateEffect without checking the DIDC_FORCEFEEDBACK. It expects the correct
+     * error return to determine if force feedback is unsupported. */
+    else
+    {
+        trace("No force feedback support\n");
+        ok(hr==DIERR_UNSUPPORTED, "IDirectInputDevice_CreateEffect() must fail with DIERR_UNSUPPORTED, got: %08x\n", hr);
+        ok(effect == NULL, "effect must be NULL, got %p\n", effect);
+    }
+
+    /* Before destroying the window, release joystick to revert to
+     * non-exclusive, background cooperative level. */
+    hr = IDirectInputDevice_Unacquire(pJoystick);
+    ok(hr==DI_OK,"IDirectInputDevice_Unacquire() failed: %08x\n", hr);
+    hr = IDirectInputDevice_SetCooperativeLevel(pJoystick, hWnd,
+                                                DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
+    ok(hr==DI_OK,"IDirectInputDevice_SetCooperativeLevel() failed: %08x\n", hr);
+    DestroyWindow (real_hWnd);
+    hr = IDirectInputDevice_Acquire(pJoystick);
+    ok(hr==DI_OK,"IDirectInputDevice_Acquire() failed: %08x\n", hr);
 
     if (winetest_interactive) {
         trace("You have 30 seconds to test all axes, sliders, POVs and buttons\n");

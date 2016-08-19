@@ -1049,10 +1049,16 @@ static HRESULT WINAPI JoystickWImpl_CreateEffect(LPDIRECTINPUTDEVICE8W iface, RE
     JoystickImpl* This = impl_from_IDirectInputDevice8W(iface);
     TRACE("(this=%p,%p,%p,%p,%p)\n", This, rguid, lpeff, ppdef, pUnkOuter);
 
-#ifndef HAVE_STRUCT_FF_EFFECT_DIRECTION
-    TRACE("not available (compiled w/o ff support)\n");
     *ppdef = NULL;
-    return DI_OK;
+    if (!This->joydev->has_ff)
+    {
+        TRACE("No force feedback support\n");
+        return DIERR_UNSUPPORTED;
+    }
+
+#ifndef HAVE_STRUCT_FF_EFFECT_DIRECTION
+    TRACE("not available (compiled w/o force feedback support)\n");
+    return DIERR_UNSUPPORTED;
 #else
 
     if (!(new_effect = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_effect))))

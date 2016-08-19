@@ -1551,7 +1551,10 @@ HRESULT WINAPI IDirectInputDevice2WImpl_CreateEffect(LPDIRECTINPUTDEVICE8W iface
                                                      LPDIRECTINPUTEFFECT *ppdef, LPUNKNOWN pUnkOuter)
 {
     FIXME("(this=%p,%s,%p,%p,%p): stub!\n", iface, debugstr_guid(rguid), lpeff, ppdef, pUnkOuter);
-    return DI_OK;
+
+    FIXME("not available in the generic implementation\n");
+    *ppdef = NULL;
+    return DIERR_UNSUPPORTED;
 }
 
 HRESULT WINAPI IDirectInputDevice2AImpl_CreateEffect(LPDIRECTINPUTDEVICE8A iface, REFGUID rguid, LPCDIEFFECT lpeff,
