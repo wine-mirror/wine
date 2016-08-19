@@ -644,6 +644,16 @@ NTSTATUS  WINAPI NtOpenProcess(PHANDLE handle, ACCESS_MASK access,
 }
 
 /******************************************************************************
+ * NtResumeProcess
+ * ZwResumeProcess
+ */
+NTSTATUS WINAPI NtResumeProcess( HANDLE handle )
+{
+    FIXME("stub: %p\n", handle);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
  * NtSuspendProcess
  * ZwSuspendProcess
  */

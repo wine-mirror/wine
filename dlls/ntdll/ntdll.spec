@@ -311,7 +311,7 @@
 @ stdcall NtResetEvent(long ptr)
 @ stdcall NtResetWriteWatch(long ptr long)
 @ stdcall NtRestoreKey(long long long)
-# @ stub NtResumeProcess
+@ stdcall NtResumeProcess(long)
 @ stdcall NtResumeThread(long long)
 @ stdcall NtSaveKey(long long)
 # @ stub NtSaveKeyEx
@@ -1236,7 +1236,7 @@
 @ stdcall ZwResetEvent(long ptr) NtResetEvent
 @ stdcall ZwResetWriteWatch(long ptr long) NtResetWriteWatch
 @ stdcall ZwRestoreKey(long long long) NtRestoreKey
-# @ stub ZwResumeProcess
+@ stdcall ZwResumeProcess(long) NtResumeProcess
 @ stdcall ZwResumeThread(long long) NtResumeThread
 @ stdcall ZwSaveKey(long long) NtSaveKey
 # @ stub ZwSaveKeyEx
