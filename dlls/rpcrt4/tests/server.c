@@ -744,6 +744,35 @@ void __cdecl s_context_handle_test(void)
 
         pNDRSContextUnmarshall2(binding, buf, NDR_LOCAL_DATA_REPRESENTATION, &server_if2.InterfaceId, 0);
     }
+
+    binding = NULL;
+    status = RpcBindingServerFromClient(NULL, &binding);
+
+    todo_wine
+    {
+        ok(status == RPC_S_OK, "expected RPC_S_OK got %u\n", status);
+        ok(binding != NULL, "binding is NULL\n");
+    }
+
+    if (status == RPC_S_OK && binding != NULL)
+    {
+        unsigned char* string_binding = NULL;
+        unsigned char* computer_name = NULL;
+
+        status = RpcBindingToStringBindingA(binding, &string_binding);
+
+        ok(status == RPC_S_OK, "expected RPC_S_OK got %u\n", status);
+        ok(string_binding != NULL, "string_binding is NULL\n");
+
+        status = RpcStringBindingParseA(string_binding, NULL, NULL, &computer_name, NULL, NULL);
+
+        ok(status == RPC_S_OK, "expected RPC_S_OK got %u\n", status);
+        ok(computer_name != NULL, "computer_name is NULL\n");
+
+        RpcStringFreeA(&string_binding);
+        RpcStringFreeA(&computer_name);
+        RpcBindingFree(&binding);
+    }
 }
 
 void __cdecl s_get_numbers(int length, int size, pints_t n[])
