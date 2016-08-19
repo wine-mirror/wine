@@ -637,6 +637,9 @@ NTSTATUS WINAPI RtlDeregisterWaitEx(HANDLE WaitHandle, HANDLE CompletionEvent)
 
     TRACE( "(%p)\n", WaitHandle );
 
+    if (WaitHandle == NULL)
+        return STATUS_INVALID_HANDLE;
+
     NtSetEvent( wait_work_item->CancelEvent, NULL );
     if (wait_work_item->CallbackInProgress)
     {
