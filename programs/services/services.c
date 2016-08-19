@@ -838,14 +838,13 @@ static DWORD service_is_running(struct service_entry *service)
 /******************************************************************************
  * process_send_start_message
  */
-static BOOL process_send_start_message(struct process_entry *process, const WCHAR *name,
-                                       LPCWSTR *argv, DWORD argc)
+static DWORD process_send_start_message(struct process_entry *process, const WCHAR *name,
+                                        const WCHAR **argv, DWORD argc)
 {
     OVERLAPPED overlapped;
     DWORD i, len, result;
     service_start_info *ssi;
     LPWSTR p;
-    BOOL r;
 
     WINE_TRACE("%p %s %p %d\n", process, wine_dbgstr_w(name), argv, argc);
 
@@ -862,13 +861,13 @@ static BOOL process_send_start_message(struct process_entry *process, const WCHA
             if (!HasOverlappedIoCompleted( &overlapped ))
             {
                 WINE_ERR("service %s failed to start\n", wine_dbgstr_w(name));
-                return FALSE;
+                return ERROR_SERVICE_REQUEST_TIMEOUT;
             }
         }
         else if (GetLastError() != ERROR_PIPE_CONNECTED)
         {
             WINE_ERR("pipe connect failed\n");
-            return FALSE;
+            return ERROR_SERVICE_REQUEST_TIMEOUT;
         }
     }
 
@@ -894,16 +893,11 @@ static BOOL process_send_start_message(struct process_entry *process, const WCHA
     }
     *p=0;
 
-    r = process_send_command( process, ssi, ssi->total_size, &result );
-    if (r && result)
-    {
-        SetLastError(result);
-        r = FALSE;
-    }
+    if (!process_send_command(process, ssi, ssi->total_size, &result))
+        result = ERROR_SERVICE_REQUEST_TIMEOUT;
 
-    HeapFree(GetProcessHeap(),0,ssi);
-
-    return r;
+    HeapFree(GetProcessHeap(), 0, ssi);
+    return result;
 }
 
 DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *service_argv)
@@ -914,8 +908,7 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
     err = service_start_process(service, &process);
     if (err == ERROR_SUCCESS)
     {
-        if (!process_send_start_message(process, service->name, service_argv, service_argc))
-            err = ERROR_SERVICE_REQUEST_TIMEOUT;
+        err = process_send_start_message(process, service->name, service_argv, service_argc);
 
         if (err == ERROR_SUCCESS)
             err = process_wait_for_startup(process);
