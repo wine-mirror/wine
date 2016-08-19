@@ -32,6 +32,8 @@
 #include "winnls.h"
 #include "winsvc.h"
 #include "ddk/wdm.h"
+#include "wine/rbtree.h"
+#include "wine/svcctl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -41,7 +43,48 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 extern NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event );
 
 static SERVICE_STATUS_HANDLE service_handle;
+static SC_HANDLE manager_handle;
 static HANDLE stop_event;
+
+struct wine_driver
+{
+    struct wine_rb_entry entry;
+
+    SERVICE_STATUS_HANDLE handle;
+    DRIVER_OBJECT *driver_obj;
+    WCHAR name[1];
+};
+
+static struct wine_rb_tree wine_drivers;
+
+static void *wine_drivers_rb_alloc( size_t size )
+{
+    return HeapAlloc( GetProcessHeap(), 0, size );
+}
+
+static void *wine_drivers_rb_realloc( void *ptr, size_t size )
+{
+    return HeapReAlloc( GetProcessHeap(), 0, ptr, size );
+}
+
+static void wine_drivers_rb_free( void *ptr )
+{
+    HeapFree( GetProcessHeap(), 0, ptr );
+}
+
+static int wine_drivers_rb_compare( const void *key, const struct wine_rb_entry *entry )
+{
+    const struct wine_driver *driver = WINE_RB_ENTRY_VALUE( entry, const struct wine_driver, entry );
+    return strcmpW( (const WCHAR *)key, driver->name );
+}
+
+static const struct wine_rb_functions wine_drivers_rb_functions =
+{
+    wine_drivers_rb_alloc,
+    wine_drivers_rb_realloc,
+    wine_drivers_rb_free,
+    wine_drivers_rb_compare,
+};
 
 /* find the LDR_MODULE corresponding to the driver module */
 static LDR_MODULE *find_ldr_module( HMODULE module )
@@ -250,10 +293,29 @@ static NTSTATUS WINAPI init_driver( DRIVER_OBJECT *driver_object, UNICODE_STRING
     return status;
 }
 
-/* call the driver unload function */
-static void unload_driver( DRIVER_OBJECT *driver_obj )
+/* helper function to update service status */
+static void set_service_status( SERVICE_STATUS_HANDLE handle, DWORD state, DWORD accepted )
 {
+    SERVICE_STATUS status;
+    status.dwServiceType             = SERVICE_WIN32;
+    status.dwCurrentState            = state;
+    status.dwControlsAccepted        = accepted;
+    status.dwWin32ExitCode           = 0;
+    status.dwServiceSpecificExitCode = 0;
+    status.dwCheckPoint              = 0;
+    status.dwWaitHint                = (state == SERVICE_START_PENDING) ? 10000 : 0;
+    SetServiceStatus( handle, &status );
+}
+
+/* call the driver unload function */
+static void unload_driver( struct wine_rb_entry *entry, void *context )
+{
+    struct wine_driver *driver = WINE_RB_ENTRY_VALUE( entry, struct wine_driver, entry );
+    DRIVER_OBJECT *driver_obj = driver->driver_obj;
     LDR_MODULE *ldr = driver_obj->DriverSection;
+
+    TRACE( "stopping driver %s\n", wine_dbgstr_w(driver->name) );
+    set_service_status( driver->handle, SERVICE_STOP_PENDING, 0 );
 
     if (driver_obj->DriverUnload)
     {
@@ -271,26 +333,60 @@ static void unload_driver( DRIVER_OBJECT *driver_obj )
     FreeLibrary( ldr->BaseAddress );
     IoDeleteDriver( driver_obj );
     ObDereferenceObject( driver_obj );
+
+    set_service_status( driver->handle, SERVICE_STOPPED, 0 );
+    CloseServiceHandle( (void *)driver->handle );
+    HeapFree( GetProcessHeap(), 0, driver );
 }
 
-static NTSTATUS create_driver(const WCHAR *driver_name, DRIVER_OBJECT **driver_obj)
+/* load a driver and notify services.exe about the status change */
+static NTSTATUS create_driver( const WCHAR *driver_name )
 {
     static const WCHAR driverW[] = {'\\','D','r','i','v','e','r','\\',0};
+    struct wine_driver *driver;
     UNICODE_STRING drv_name;
     NTSTATUS status;
+    DWORD length;
     WCHAR *str;
 
-    str = HeapAlloc( GetProcessHeap(), 0, sizeof(driverW) + strlenW(driver_name)*sizeof(WCHAR) );
+    length = FIELD_OFFSET( struct wine_driver, name[strlenW(driver_name) + 1] );
+    if (!(driver = HeapAlloc( GetProcessHeap(), 0, length )))
+        return STATUS_NO_MEMORY;
+
+    strcpyW( driver->name, driver_name );
+    driver->driver_obj = NULL;
+
+    if (!(driver->handle = (void *)OpenServiceW( manager_handle, driver_name, SERVICE_SET_STATUS )))
+    {
+        HeapFree( GetProcessHeap(), 0, driver );
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    if (wine_rb_put( &wine_drivers, driver_name, &driver->entry ))
+    {
+        CloseServiceHandle( (void *)driver->handle );
+        HeapFree( GetProcessHeap(), 0, driver );
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    if (!(str = HeapAlloc( GetProcessHeap(), 0, sizeof(driverW) + strlenW(driver_name)*sizeof(WCHAR) )))
+    {
+        status = STATUS_NO_MEMORY;
+        goto error;
+    }
+
+    TRACE( "starting driver %s\n", wine_dbgstr_w(driver_name) );
+    set_service_status( driver->handle, SERVICE_START_PENDING, 0 );
+
     lstrcpyW( str, driverW);
     lstrcatW( str, driver_name );
     RtlInitUnicodeString( &drv_name, str );
 
     status = IoCreateDriver( &drv_name, init_driver );
-
     if (status == STATUS_SUCCESS)
     {
         status = ObReferenceObjectByName( &drv_name, OBJ_CASE_INSENSITIVE, NULL,
-                                          0, NULL, KernelMode, NULL, (void **)driver_obj );
+                                          0, NULL, KernelMode, NULL, (void **)&driver->driver_obj );
         if (status != STATUS_SUCCESS)
         {
             ERR("Failed to locate loaded driver (%s)\n", wine_dbgstr_w(driver_name));
@@ -298,77 +394,62 @@ static NTSTATUS create_driver(const WCHAR *driver_name, DRIVER_OBJECT **driver_o
     }
 
     RtlFreeUnicodeString( &drv_name );
+
+    if (status == STATUS_SUCCESS)
+    {
+        set_service_status( driver->handle, SERVICE_RUNNING,
+                            SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN );
+        return STATUS_SUCCESS;
+    }
+
+error:
+    set_service_status( driver->handle, SERVICE_STOPPED, 0 );
+    CloseServiceHandle( (void *)driver->handle );
+    wine_rb_remove( &wine_drivers, driver_name );
+    HeapFree( GetProcessHeap(), 0, driver );
     return status;
 }
 
 static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, LPVOID event_data, LPVOID context )
 {
-    SERVICE_STATUS status;
     const WCHAR *driver_name = context;
 
-    status.dwServiceType             = SERVICE_WIN32;
-    status.dwControlsAccepted        = SERVICE_ACCEPT_STOP;
-    status.dwWin32ExitCode           = 0;
-    status.dwServiceSpecificExitCode = 0;
-    status.dwCheckPoint              = 0;
-    status.dwWaitHint                = 0;
-
-    switch(ctrl)
+    switch (ctrl)
     {
     case SERVICE_CONTROL_STOP:
     case SERVICE_CONTROL_SHUTDOWN:
         WINE_TRACE( "shutting down %s\n", wine_dbgstr_w(driver_name) );
-        status.dwCurrentState     = SERVICE_STOP_PENDING;
-        status.dwControlsAccepted = 0;
-        SetServiceStatus( service_handle, &status );
+        set_service_status( service_handle, SERVICE_STOP_PENDING, 0 );
         SetEvent( stop_event );
         return NO_ERROR;
     default:
         WINE_FIXME( "got service ctrl %x for %s\n", ctrl, wine_dbgstr_w(driver_name) );
-        status.dwCurrentState = SERVICE_RUNNING;
-        SetServiceStatus( service_handle, &status );
+        set_service_status( service_handle, SERVICE_RUNNING,
+                            SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN );
         return NO_ERROR;
     }
 }
 
 static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
 {
-    SERVICE_STATUS status;
     const WCHAR *driver_name = argv[0];
-    DRIVER_OBJECT *driver_obj;
 
-    WINE_TRACE( "starting service %s\n", wine_dbgstr_w(driver_name) );
-
-    stop_event = CreateEventW( NULL, TRUE, FALSE, NULL );
-
-    service_handle = RegisterServiceCtrlHandlerExW( driver_name, service_handler, (void *)driver_name );
-    if (!service_handle)
+    if (wine_rb_init( &wine_drivers, &wine_drivers_rb_functions ))
+        return;
+    if (!(stop_event = CreateEventW( NULL, TRUE, FALSE, NULL )))
+        return;
+    if (!(manager_handle = OpenSCManagerW( NULL, NULL, SC_MANAGER_CONNECT )))
+        return;
+    if (!(service_handle = RegisterServiceCtrlHandlerExW( driver_name, service_handler, (void *)driver_name )))
         return;
 
-    status.dwServiceType             = SERVICE_WIN32;
-    status.dwCurrentState            = SERVICE_START_PENDING;
-    status.dwControlsAccepted        = 0;
-    status.dwWin32ExitCode           = 0;
-    status.dwServiceSpecificExitCode = 0;
-    status.dwCheckPoint              = 0;
-    status.dwWaitHint                = 10000;
-    SetServiceStatus( service_handle, &status );
-
-    if (create_driver( driver_name, &driver_obj ) == STATUS_SUCCESS)
-    {
-        status.dwCurrentState     = SERVICE_RUNNING;
-        status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
-        SetServiceStatus( service_handle, &status );
-
+    if (create_driver( driver_name ) == STATUS_SUCCESS)
         wine_ntoskrnl_main_loop( stop_event );
-        unload_driver( driver_obj );
-    }
-    else WINE_ERR( "driver %s failed to load\n", wine_dbgstr_w(driver_name) );
 
-    status.dwCurrentState     = SERVICE_STOPPED;
-    status.dwControlsAccepted = 0;
-    SetServiceStatus( service_handle, &status );
-    WINE_TRACE( "service %s stopped\n", wine_dbgstr_w(driver_name) );
+    wine_rb_destroy( &wine_drivers, unload_driver, NULL );
+    set_service_status( service_handle, SERVICE_STOPPED, 0 );
+    CloseServiceHandle( manager_handle );
+    CloseHandle( stop_event );
 }
 
 int wmain( int argc, WCHAR *argv[] )
