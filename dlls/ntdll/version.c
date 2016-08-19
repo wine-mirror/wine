@@ -187,7 +187,7 @@ static const RTL_OSVERSIONINFOEXW VersionData[NB_WINDOWS_VERSIONS] =
     },
     /* WIN10 */
     {
-        sizeof(RTL_OSVERSIONINFOEXW), 10, 0, 0x2800, VER_PLATFORM_WIN32_NT,
+        sizeof(RTL_OSVERSIONINFOEXW), 10, 0, 0x3839, VER_PLATFORM_WIN32_NT,
         {' ',0},
         0, 0, VER_SUITE_SINGLEUSERTS, VER_NT_WORKSTATION, 0
     },
