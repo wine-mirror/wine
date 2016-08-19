@@ -473,6 +473,9 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
              * - effects are preserved (Download + Start doesn't complain
              *   about incomplete effect)
              */
+            hr = IDirectInputEffect_GetEffectStatus(effect, NULL);
+            ok(hr==E_POINTER,"IDirectInputEffect_GetEffectStatus() must fail with E_POINTER, got: %08x\n", hr);
+            effect_status = 0xdeadbeef;
             hr = IDirectInputEffect_GetEffectStatus(effect, &effect_status);
             ok(hr==DI_OK,"IDirectInputEffect_GetEffectStatus() failed: %08x\n", hr);
             ok(effect_status==0,"IDirectInputEffect_GetEffectStatus() reported effect as started\n");

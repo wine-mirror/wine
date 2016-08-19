@@ -131,6 +131,9 @@ static HRESULT WINAPI LinuxInputEffectImpl_GetEffectStatus(
 {
     TRACE("(this=%p,%p)\n", iface, pdwFlags);
 
+    if (!pdwFlags)
+        return E_POINTER;
+
     /* linux sends the effect status through an event.
      * that event is trapped by our parent joystick driver
      * and there is no clean way to pass it back to us. */
