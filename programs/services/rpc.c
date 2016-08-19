@@ -758,21 +758,21 @@ DWORD __cdecl svcctl_SetServiceStatus(
         return err;
 
     service_lock(service->service_entry);
+
     /* FIXME: be a bit more discriminant about what parts of the status we set
      * and check that fields are valid */
     service->service_entry->status = *lpServiceStatus;
-    if ((process = service->service_entry->process))
+    SetEvent(service->service_entry->status_changed_event);
+
+    if ((process = service->service_entry->process) &&
+        lpServiceStatus->dwCurrentState == SERVICE_STOPPED)
     {
-        if (lpServiceStatus->dwCurrentState == SERVICE_STOPPED)
-        {
-            service->service_entry->process = NULL;
-            if (!--process->use_count)
-                terminate_after_timeout(process, service_kill_timeout);
-            release_process(process);
-        }
-        else
-            SetEvent(process->status_changed_event);
+        service->service_entry->process = NULL;
+        if (!--process->use_count)
+            terminate_after_timeout(process, service_kill_timeout);
+        release_process(process);
     }
+
     service_unlock(service->service_entry);
 
     return ERROR_SUCCESS;

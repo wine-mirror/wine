@@ -82,9 +82,6 @@ static DWORD process_create(const WCHAR *name, struct process_entry **entry)
     (*entry)->overlapped_event = CreateEventW(NULL, TRUE, FALSE, NULL);
     if (!(*entry)->overlapped_event)
         goto error;
-    (*entry)->status_changed_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-    if (!(*entry)->status_changed_event)
-        goto error;
     (*entry)->control_pipe = CreateNamedPipeW(name, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
                                               PIPE_TYPE_BYTE|PIPE_WAIT, 1, 256, 256, 10000, NULL);
     if ((*entry)->control_pipe == INVALID_HANDLE_VALUE)
@@ -98,8 +95,6 @@ error:
         CloseHandle((*entry)->control_mutex);
     if ((*entry)->overlapped_event)
         CloseHandle((*entry)->overlapped_event);
-    if ((*entry)->status_changed_event)
-        CloseHandle((*entry)->status_changed_event);
     HeapFree(GetProcessHeap(), 0, *entry);
     return err;
 }
@@ -110,7 +105,6 @@ static void free_process_entry(struct process_entry *entry)
     CloseHandle(entry->control_mutex);
     CloseHandle(entry->control_pipe);
     CloseHandle(entry->overlapped_event);
-    CloseHandle(entry->status_changed_event);
     HeapFree(GetProcessHeap(), 0, entry);
 }
 
@@ -125,6 +119,13 @@ DWORD service_create(LPCWSTR name, struct service_entry **entry)
         HeapFree(GetProcessHeap(), 0, *entry);
         return ERROR_NOT_ENOUGH_SERVER_MEMORY;
     }
+    (*entry)->status_changed_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    if (!(*entry)->status_changed_event)
+    {
+        HeapFree(GetProcessHeap(), 0, (*entry)->name);
+        HeapFree(GetProcessHeap(), 0, *entry);
+        return GetLastError();
+    }
     (*entry)->ref_count = 1;
     (*entry)->status.dwCurrentState = SERVICE_STOPPED;
     (*entry)->status.dwWin32ExitCode = ERROR_SERVICE_NEVER_STARTED;
@@ -135,6 +136,7 @@ DWORD service_create(LPCWSTR name, struct service_entry **entry)
 
 void free_service_entry(struct service_entry *entry)
 {
+    CloseHandle(entry->status_changed_event);
     HeapFree(GetProcessHeap(), 0, entry->name);
     HeapFree(GetProcessHeap(), 0, entry->config.lpBinaryPathName);
     HeapFree(GetProcessHeap(), 0, entry->config.lpDependencies);
@@ -790,6 +792,9 @@ static DWORD service_start_process(struct service_entry *service_entry, struct p
     }
 
     service_entry->status.dwCurrentState = SERVICE_START_PENDING;
+    service_entry->status.dwControlsAccepted = 0;
+    ResetEvent(service_entry->status_changed_event);
+
     scmdatabase_add_process(service_entry->db, process);
     service_entry->process = grab_process(process);
     process->use_count++;
@@ -814,24 +819,20 @@ static DWORD service_start_process(struct service_entry *service_entry, struct p
     return ERROR_SUCCESS;
 }
 
-static DWORD process_wait_for_startup(struct process_entry *process)
+static DWORD service_wait_for_startup(struct service_entry *service, struct process_entry *process)
 {
-    HANDLE handles[2] = { process->status_changed_event, process->process };
-    DWORD ret;
+    HANDLE handles[2] = { service->status_changed_event, process->process };
+    DWORD result;
 
-    ret = WaitForMultipleObjects( 2, handles, FALSE, service_pipe_timeout );
-    return (ret == WAIT_OBJECT_0) ? ERROR_SUCCESS : ERROR_SERVICE_REQUEST_TIMEOUT;
-}
-
-static DWORD service_is_running(struct service_entry *service)
-{
-    DWORD state;
+    result = WaitForMultipleObjects( 2, handles, FALSE, service_pipe_timeout );
+    if (result != WAIT_OBJECT_0)
+        return ERROR_SERVICE_REQUEST_TIMEOUT;
 
     service_lock(service);
-    state = service->status.dwCurrentState;
+    result = service->status.dwCurrentState;
     service_unlock(service);
 
-    return (state == SERVICE_START_PENDING || state == SERVICE_RUNNING) ?
+    return (result == SERVICE_START_PENDING || result == SERVICE_RUNNING) ?
            ERROR_SUCCESS : ERROR_SERVICE_REQUEST_TIMEOUT;
 }
 
@@ -911,10 +912,7 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
         err = process_send_start_message(process, service->name, service_argv, service_argc);
 
         if (err == ERROR_SUCCESS)
-            err = process_wait_for_startup(process);
-
-        if (err == ERROR_SUCCESS)
-            err = service_is_running(service);
+            err = service_wait_for_startup(service, process);
 
         if (err == ERROR_SUCCESS)
             ReleaseMutex(process->control_mutex);
