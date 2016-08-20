@@ -1,7 +1,7 @@
 /*
  * Unit test suite for thread pool functions
  *
- * Copyright 2015 Sebastian Lackner
+ * Copyright 2015-2016 Sebastian Lackner
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -703,6 +703,112 @@ static void test_tp_work_scheduler(void)
     pTpReleaseWork(work);
     pTpReleaseCleanupGroup(group);
     pTpReleasePool(pool);
+}
+
+static void CALLBACK work_release_cb(TP_CALLBACK_INSTANCE *instance, void *userdata, TP_WORK *work)
+{
+    HANDLE semaphore = userdata;
+    trace("Running work release callback\n");
+    ReleaseSemaphore(semaphore, 1, NULL);
+    Sleep(200); /* wait until main thread is in TpReleaseCleanupGroupMembers */
+    pTpReleaseWork(work);
+}
+
+static void CALLBACK timer_release_cb(TP_CALLBACK_INSTANCE *instance, void *userdata, TP_TIMER *timer)
+{
+    HANDLE semaphore = userdata;
+    trace("Running timer release callback\n");
+    ReleaseSemaphore(semaphore, 1, NULL);
+    Sleep(200); /* wait until main thread is in TpReleaseCleanupGroupMembers */
+    pTpReleaseTimer(timer);
+}
+
+static void CALLBACK wait_release_cb(TP_CALLBACK_INSTANCE *instance, void *userdata,
+                                     TP_WAIT *wait, TP_WAIT_RESULT result)
+{
+    HANDLE semaphore = userdata;
+    trace("Running wait release callback\n");
+    ReleaseSemaphore(semaphore, 1, NULL);
+    Sleep(200); /* wait until main thread is in TpReleaseCleanupGroupMembers */
+    pTpReleaseWait(wait);
+}
+
+static void test_tp_group_wait(void)
+{
+    TP_CALLBACK_ENVIRON environment;
+    TP_CLEANUP_GROUP *group;
+    LARGE_INTEGER when;
+    HANDLE semaphore;
+    NTSTATUS status;
+    TP_TIMER *timer;
+    TP_WAIT *wait;
+    TP_WORK *work;
+    TP_POOL *pool;
+    DWORD result;
+
+    semaphore = CreateSemaphoreA(NULL, 0, 1, NULL);
+    ok(semaphore != NULL, "CreateSemaphoreA failed %u\n", GetLastError());
+
+    /* allocate new threadpool */
+    pool = NULL;
+    status = pTpAllocPool(&pool, NULL);
+    ok(!status, "TpAllocPool failed with status %x\n", status);
+    ok(pool != NULL, "expected pool != NULL\n");
+
+    /* allocate a cleanup group */
+    group = NULL;
+    status = pTpAllocCleanupGroup(&group);
+    ok(!status, "TpAllocCleanupGroup failed with status %x\n", status);
+    ok(group != NULL, "expected pool != NULL\n");
+
+    /* release work object during TpReleaseCleanupGroupMembers */
+    work = NULL;
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    environment.CleanupGroup = group;
+    status = pTpAllocWork(&work, work_release_cb, semaphore, &environment);
+    ok(!status, "TpAllocWork failed with status %x\n", status);
+    ok(work != NULL, "expected work != NULL\n");
+    pTpPostWork(work);
+    result = WaitForSingleObject(semaphore, 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    pTpReleaseCleanupGroupMembers(group, FALSE, NULL);
+
+    /* release timer object during TpReleaseCleanupGroupMembers */
+    timer = NULL;
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    environment.CleanupGroup = group;
+    status = pTpAllocTimer(&timer, timer_release_cb, semaphore, &environment);
+    ok(!status, "TpAllocTimer failed with status %x\n", status);
+    ok(timer != NULL, "expected timer != NULL\n");
+    when.QuadPart = 0;
+    pTpSetTimer(timer, &when, 0, 0);
+    result = WaitForSingleObject(semaphore, 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    pTpReleaseCleanupGroupMembers(group, FALSE, NULL);
+
+    /* release wait object during TpReleaseCleanupGroupMembers */
+    wait = NULL;
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    environment.CleanupGroup = group;
+    status = pTpAllocWait(&wait, wait_release_cb, semaphore, &environment);
+    ok(!status, "TpAllocWait failed with status %x\n", status);
+    ok(wait != NULL, "expected wait != NULL\n");
+    when.QuadPart = 0;
+    pTpSetWait(wait, INVALID_HANDLE_VALUE, &when);
+    result = WaitForSingleObject(semaphore, 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    pTpReleaseCleanupGroupMembers(group, FALSE, NULL);
+
+    /* cleanup */
+    pTpReleaseCleanupGroup(group);
+    pTpReleasePool(pool);
+    CloseHandle(semaphore);
 }
 
 static DWORD group_cancel_tid;
@@ -1679,6 +1785,7 @@ START_TEST(threadpool)
     test_tp_simple();
     test_tp_work();
     test_tp_work_scheduler();
+    test_tp_group_wait();
     test_tp_group_cancel();
     test_tp_instance();
     test_tp_disassociate();
