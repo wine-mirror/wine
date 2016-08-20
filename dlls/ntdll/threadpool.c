@@ -1948,7 +1948,7 @@ static void tp_object_submit( struct threadpool_object *object, BOOL signaled )
  *
  * Cancels all currently pending callbacks for a specific object.
  */
-static void tp_object_cancel( struct threadpool_object *object, BOOL group_cancel, PVOID userdata )
+static void tp_object_cancel( struct threadpool_object *object )
 {
     struct threadpool *pool = object->pool;
     LONG pending_callbacks = 0;
@@ -1964,15 +1964,6 @@ static void tp_object_cancel( struct threadpool_object *object, BOOL group_cance
             object->u.wait.signaled = 0;
     }
     RtlLeaveCriticalSection( &pool->cs );
-
-    /* Execute group cancellation callback if defined, and if this was actually a group cancel. */
-    if (group_cancel && object->group_cancel_callback)
-    {
-        TRACE( "executing group cancel callback %p(%p, %p)\n",
-               object->group_cancel_callback, object->userdata, userdata );
-        object->group_cancel_callback( object->userdata, userdata );
-        TRACE( "callback %p returned\n", object->group_cancel_callback );
-    }
 
     while (pending_callbacks--)
         tp_object_release( object );
@@ -2598,7 +2589,7 @@ VOID WINAPI TpReleaseCleanupGroupMembers( TP_CLEANUP_GROUP *group, BOOL cancel_p
     {
         LIST_FOR_EACH_ENTRY( object, &members, struct threadpool_object, group_entry )
         {
-            tp_object_cancel( object, TRUE, userdata );
+            tp_object_cancel( object );
         }
     }
 
@@ -2606,6 +2597,16 @@ VOID WINAPI TpReleaseCleanupGroupMembers( TP_CLEANUP_GROUP *group, BOOL cancel_p
     LIST_FOR_EACH_ENTRY_SAFE( object, next, &members, struct threadpool_object, group_entry )
     {
         tp_object_wait( object, TRUE );
+
+        /* Execute group cancellation callback if defined, and if this was actually a group cancel. */
+        if ((object->type == TP_OBJECT_TYPE_SIMPLE || !object->shutdown) &&
+            cancel_pending && object->group_cancel_callback)
+        {
+            TRACE( "executing group cancel callback %p(%p, %p)\n",
+                   object->group_cancel_callback, object->userdata, userdata );
+            object->group_cancel_callback( object->userdata, userdata );
+            TRACE( "callback %p returned\n", object->group_cancel_callback );
+        }
 
         if (object->type != TP_OBJECT_TYPE_SIMPLE && !object->shutdown)
             tp_object_release( object );
@@ -2900,7 +2901,7 @@ VOID WINAPI TpWaitForTimer( TP_TIMER *timer, BOOL cancel_pending )
     TRACE( "%p %d\n", timer, cancel_pending );
 
     if (cancel_pending)
-        tp_object_cancel( this, FALSE, NULL );
+        tp_object_cancel( this );
     tp_object_wait( this, FALSE );
 }
 
@@ -2914,7 +2915,7 @@ VOID WINAPI TpWaitForWait( TP_WAIT *wait, BOOL cancel_pending )
     TRACE( "%p %d\n", wait, cancel_pending );
 
     if (cancel_pending)
-        tp_object_cancel( this, FALSE, NULL );
+        tp_object_cancel( this );
     tp_object_wait( this, FALSE );
 }
 
@@ -2928,6 +2929,6 @@ VOID WINAPI TpWaitForWork( TP_WORK *work, BOOL cancel_pending )
     TRACE( "%p %u\n", work, cancel_pending );
 
     if (cancel_pending)
-        tp_object_cancel( this, FALSE, NULL );
+        tp_object_cancel( this );
     tp_object_wait( this, FALSE );
 }
