@@ -1885,11 +1885,7 @@ static void tp_object_initialize( struct threadpool_object *object, struct threa
     }
 
     if (is_simple_callback)
-    {
-        tp_object_prepare_shutdown( object );
-        object->shutdown = TRUE;
         tp_object_release( object );
-    }
 }
 
 /***********************************************************************
@@ -2184,6 +2180,13 @@ static void CALLBACK threadpool_worker_proc( void *param )
         skip_cleanup:
             RtlEnterCriticalSection( &pool->cs );
             pool->num_busy_workers--;
+
+            /* Simple callbacks are automatically shutdown after execution. */
+            if (object->type == TP_OBJECT_TYPE_SIMPLE)
+            {
+                tp_object_prepare_shutdown( object );
+                object->shutdown = TRUE;
+            }
 
             object->num_running_callbacks--;
             if (!object->num_pending_callbacks && !object->num_running_callbacks)
@@ -2598,18 +2601,20 @@ VOID WINAPI TpReleaseCleanupGroupMembers( TP_CLEANUP_GROUP *group, BOOL cancel_p
     {
         tp_object_wait( object, TRUE );
 
-        /* Execute group cancellation callback if defined, and if this was actually a group cancel. */
-        if ((object->type == TP_OBJECT_TYPE_SIMPLE || !object->shutdown) &&
-            cancel_pending && object->group_cancel_callback)
+        if (!object->shutdown)
         {
-            TRACE( "executing group cancel callback %p(%p, %p)\n",
-                   object->group_cancel_callback, object->userdata, userdata );
-            object->group_cancel_callback( object->userdata, userdata );
-            TRACE( "callback %p returned\n", object->group_cancel_callback );
-        }
+            /* Execute group cancellation callback if defined, and if this was actually a group cancel. */
+            if (cancel_pending && object->group_cancel_callback)
+            {
+                TRACE( "executing group cancel callback %p(%p, %p)\n",
+                       object->group_cancel_callback, object->userdata, userdata );
+                object->group_cancel_callback( object->userdata, userdata );
+                TRACE( "callback %p returned\n", object->group_cancel_callback );
+            }
 
-        if (object->type != TP_OBJECT_TYPE_SIMPLE && !object->shutdown)
-            tp_object_release( object );
+            if (object->type != TP_OBJECT_TYPE_SIMPLE)
+                tp_object_release( object );
+        }
 
         object->shutdown = TRUE;
         tp_object_release( object );

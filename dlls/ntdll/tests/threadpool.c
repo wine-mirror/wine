@@ -705,6 +705,14 @@ static void test_tp_work_scheduler(void)
     pTpReleasePool(pool);
 }
 
+static void CALLBACK simple_release_cb(TP_CALLBACK_INSTANCE *instance, void *userdata)
+{
+    HANDLE *semaphores = userdata;
+    trace("Running simple release callback\n");
+    ReleaseSemaphore(semaphores, 1, NULL);
+    Sleep(200); /* wait until main thread is in TpReleaseCleanupGroupMembers */
+}
+
 static void CALLBACK work_release_cb(TP_CALLBACK_INSTANCE *instance, void *userdata, TP_WORK *work)
 {
     HANDLE semaphore = userdata;
@@ -1007,6 +1015,18 @@ static void test_tp_group_cancel(void)
     result = WaitForSingleObject(semaphores[1], 1000);
     ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
     pTpReleaseCleanupGroupMembers(group, TRUE, NULL);
+
+    /* terminated simple callbacks should not trigger the group cancel callback */
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    environment.CleanupGroup = group;
+    environment.CleanupGroupCancelCallback = unexpected_group_cancel_cleanup_cb;
+    status = pTpSimpleTryPost(simple_release_cb, semaphores[1], &environment);
+    ok(!status, "TpSimpleTryPost failed with status %x\n", status);
+    result = WaitForSingleObject(semaphores[1], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    pTpReleaseCleanupGroupMembers(group, TRUE, semaphores);
 
     /* test cancellation callback for objects with multiple instances */
     work = NULL;
