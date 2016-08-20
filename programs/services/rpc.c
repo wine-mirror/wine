@@ -85,18 +85,14 @@ struct sc_lock
     struct scmdatabase *db;
 };
 
-static CRITICAL_SECTION shutdown_cs;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &shutdown_cs,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": shutdown_cs") }
-};
-static CRITICAL_SECTION shutdown_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
-static BOOL service_shutdown;
-
 static PTP_CLEANUP_GROUP cleanup_group;
 HANDLE exit_event;
+
+static void CALLBACK group_cancel_callback(void *object, void *userdata)
+{
+    struct process_entry *process = object;
+    release_process(process);
+}
 
 static void CALLBACK terminate_callback(TP_CALLBACK_INSTANCE *instance, void *context,
                                         TP_WAIT *wait, TP_WAIT_RESULT result)
@@ -104,11 +100,7 @@ static void CALLBACK terminate_callback(TP_CALLBACK_INSTANCE *instance, void *co
     struct process_entry *process = context;
     if (result == WAIT_TIMEOUT) process_terminate(process);
     release_process(process);
-
-    /* synchronize with CloseThreadpoolCleanupGroupMembers */
-    EnterCriticalSection(&shutdown_cs);
-    if (!service_shutdown) CloseThreadpoolWait(wait);
-    LeaveCriticalSection(&shutdown_cs);
+    CloseThreadpoolWait(wait);
 }
 
 static void terminate_after_timeout(struct process_entry *process, DWORD timeout)
@@ -121,6 +113,7 @@ static void terminate_after_timeout(struct process_entry *process, DWORD timeout
     memset(&environment, 0, sizeof(environment));
     environment.Version = 1;
     environment.CleanupGroup = cleanup_group;
+    environment.CleanupGroupCancelCallback = group_cancel_callback;
 
     timestamp.QuadPart = (ULONGLONG)timeout * -10000;
     ft.dwLowDateTime   = timestamp.u.LowPart;
@@ -1913,11 +1906,6 @@ void RPC_Stop(void)
 {
     RpcMgmtStopServerListening(NULL);
     RpcServerUnregisterIf(svcctl_v2_0_s_ifspec, NULL, TRUE);
-
-    /* synchronize with CloseThreadpoolWait */
-    EnterCriticalSection(&shutdown_cs);
-    service_shutdown = TRUE;
-    LeaveCriticalSection(&shutdown_cs);
 
     CloseThreadpoolCleanupGroupMembers(cleanup_group, TRUE, NULL);
     CloseThreadpoolCleanupGroup(cleanup_group);
