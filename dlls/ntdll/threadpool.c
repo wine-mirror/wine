@@ -1966,10 +1966,11 @@ static void tp_object_cancel( struct threadpool_object *object, BOOL group_cance
     RtlLeaveCriticalSection( &pool->cs );
 
     /* Execute group cancellation callback if defined, and if this was actually a group cancel. */
-    if (pending_callbacks && group_cancel && object->group_cancel_callback)
+    if (group_cancel && object->group_cancel_callback)
     {
-        TRACE( "executing group cancel callback %p(%p, %p)\n", object->group_cancel_callback, object, userdata );
-        object->group_cancel_callback( object, userdata );
+        TRACE( "executing group cancel callback %p(%p, %p)\n",
+               object->group_cancel_callback, object->userdata, userdata );
+        object->group_cancel_callback( object->userdata, userdata );
         TRACE( "callback %p returned\n", object->group_cancel_callback );
     }
 

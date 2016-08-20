@@ -813,21 +813,25 @@ static void test_tp_group_wait(void)
 
 static DWORD group_cancel_tid;
 
-static void CALLBACK group_cancel_cb(TP_CALLBACK_INSTANCE *instance, void *userdata)
+static void CALLBACK simple_group_cancel_cb(TP_CALLBACK_INSTANCE *instance, void *userdata)
 {
     HANDLE *semaphores = userdata;
     NTSTATUS status;
     DWORD result;
+    int i;
 
-    trace("Running group cancel callback\n");
+    trace("Running simple group cancel callback\n");
 
     status = pTpCallbackMayRunLong(instance);
     ok(status == STATUS_TOO_MANY_THREADS || broken(status == 1) /* Win Vista / 2008 */,
        "expected STATUS_TOO_MANY_THREADS, got %08x\n", status);
 
     ReleaseSemaphore(semaphores[1], 1, NULL);
-    result = WaitForSingleObject(semaphores[0], 1000);
-    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    for (i = 0; i < 4; i++)
+    {
+        result = WaitForSingleObject(semaphores[0], 1000);
+        ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    }
     ReleaseSemaphore(semaphores[1], 1, NULL);
 }
 
@@ -836,6 +840,7 @@ static void CALLBACK group_cancel_cleanup_release_cb(void *object, void *userdat
     HANDLE *semaphores = userdata;
     trace("Running group cancel cleanup release callback\n");
     group_cancel_tid = GetCurrentThreadId();
+    ok(object == (void *)0xdeadbeef, "expected 0xdeadbeef, got %p\n", object);
     ReleaseSemaphore(semaphores[0], 1, NULL);
 }
 
@@ -846,7 +851,23 @@ static void CALLBACK group_cancel_cleanup_increment_cb(void *object, void *userd
     InterlockedIncrement((LONG *)userdata);
 }
 
-static void CALLBACK unexpected_cb(TP_CALLBACK_INSTANCE *instance, void *userdata)
+static void CALLBACK unexpected_simple_cb(TP_CALLBACK_INSTANCE *instance, void *userdata)
+{
+    ok(0, "Unexpected callback\n");
+}
+
+static void CALLBACK unexpected_work_cb(TP_CALLBACK_INSTANCE *instance, void *userdata, TP_WORK *work)
+{
+    ok(0, "Unexpected callback\n");
+}
+
+static void CALLBACK unexpected_timer_cb(TP_CALLBACK_INSTANCE *instance, void *userdata, TP_TIMER *timer)
+{
+    ok(0, "Unexpected callback\n");
+}
+
+static void CALLBACK unexpected_wait_cb(TP_CALLBACK_INSTANCE *instance, void *userdata,
+                                        TP_WAIT *wait, TP_WAIT_RESULT result)
 {
     ok(0, "Unexpected callback\n");
 }
@@ -858,12 +879,14 @@ static void test_tp_group_cancel(void)
     LONG userdata, userdata2;
     HANDLE semaphores[2];
     NTSTATUS status;
+    TP_TIMER *timer;
+    TP_WAIT *wait;
     TP_WORK *work;
     TP_POOL *pool;
     DWORD result;
     int i;
 
-    semaphores[0] = CreateSemaphoreA(NULL, 0, 1, NULL);
+    semaphores[0] = CreateSemaphoreA(NULL, 0, 4, NULL);
     ok(semaphores[0] != NULL, "CreateSemaphoreA failed %u\n", GetLastError());
     semaphores[1] = CreateSemaphoreA(NULL, 0, 1, NULL);
     ok(semaphores[1] != NULL, "CreateSemaphoreA failed %u\n", GetLastError());
@@ -885,7 +908,7 @@ static void test_tp_group_cancel(void)
     memset(&environment, 0, sizeof(environment));
     environment.Version = 1;
     environment.Pool = pool;
-    status = pTpSimpleTryPost(group_cancel_cb, semaphores, &environment);
+    status = pTpSimpleTryPost(simple_group_cancel_cb, semaphores, &environment);
     ok(!status, "TpSimpleTryPost failed with status %x\n", status);
     result = WaitForSingleObject(semaphores[1], 1000);
     ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
@@ -895,8 +918,23 @@ static void test_tp_group_cancel(void)
     environment.Pool = pool;
     environment.CleanupGroup = group;
     environment.CleanupGroupCancelCallback = group_cancel_cleanup_release_cb;
-    status = pTpSimpleTryPost(unexpected_cb, NULL, &environment);
+    status = pTpSimpleTryPost(unexpected_simple_cb, (void *)0xdeadbeef, &environment);
     ok(!status, "TpSimpleTryPost failed with status %x\n", status);
+
+    work = NULL;
+    status = pTpAllocWork(&work, unexpected_work_cb, (void *)0xdeadbeef, &environment);
+    ok(!status, "TpAllocWork failed with status %x\n", status);
+    ok(work != NULL, "expected work != NULL\n");
+
+    timer = NULL;
+    status = pTpAllocTimer(&timer, unexpected_timer_cb, (void *)0xdeadbeef, &environment);
+    ok(!status, "TpAllocTimer failed with status %x\n", status);
+    ok(timer != NULL, "expected timer != NULL\n");
+
+    wait = NULL;
+    status = pTpAllocWait(&wait, unexpected_wait_cb, (void *)0xdeadbeef, &environment);
+    ok(!status, "TpAllocWait failed with status %x\n", status);
+    ok(wait != NULL, "expected wait != NULL\n");
 
     group_cancel_tid = 0xdeadbeef;
     pTpReleaseCleanupGroupMembers(group, TRUE, semaphores);
