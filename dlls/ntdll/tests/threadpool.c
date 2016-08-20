@@ -579,14 +579,14 @@ static void test_tp_simple(void)
 static void CALLBACK work_cb(TP_CALLBACK_INSTANCE *instance, void *userdata, TP_WORK *work)
 {
     trace("Running work callback\n");
-    Sleep(10);
+    Sleep(100);
     InterlockedIncrement((LONG *)userdata);
 }
 
 static void CALLBACK work2_cb(TP_CALLBACK_INSTANCE *instance, void *userdata, TP_WORK *work)
 {
     trace("Running work2 callback\n");
-    Sleep(10);
+    Sleep(100);
     InterlockedExchangeAdd((LONG *)userdata, 0x10000);
 }
 
@@ -599,11 +599,12 @@ static void test_tp_work(void)
     LONG userdata;
     int i;
 
-    /* allocate new threadpool */
+    /* allocate new threadpool with only one thread */
     pool = NULL;
     status = pTpAllocPool(&pool, NULL);
     ok(!status, "TpAllocPool failed with status %x\n", status);
     ok(pool != NULL, "expected pool != NULL\n");
+    pTpSetPoolMaxThreads(pool, 1);
 
     /* allocate new work item */
     work = NULL;
@@ -614,12 +615,12 @@ static void test_tp_work(void)
     ok(!status, "TpAllocWork failed with status %x\n", status);
     ok(work != NULL, "expected work != NULL\n");
 
-    /* post 10 identical work items at once */
+    /* post 5 identical work items at once */
     userdata = 0;
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < 5; i++)
         pTpPostWork(work);
     pTpWaitForWork(work, FALSE);
-    ok(userdata == 10, "expected userdata = 10, got %u\n", userdata);
+    ok(userdata == 5, "expected userdata = 5, got %u\n", userdata);
 
     /* add more tasks and cancel them immediately */
     userdata = 0;
@@ -643,13 +644,11 @@ static void test_tp_work_scheduler(void)
     LONG userdata;
     int i;
 
-    /* allocate new threadpool */
+    /* allocate new threadpool with only one thread */
     pool = NULL;
     status = pTpAllocPool(&pool, NULL);
     ok(!status, "TpAllocPool failed with status %x\n", status);
     ok(pool != NULL, "expected pool != NULL\n");
-
-    /* we limit the pool to a single thread */
     pTpSetPoolMaxThreads(pool, 1);
 
     /* create a cleanup group */
@@ -683,7 +682,7 @@ static void test_tp_work_scheduler(void)
         pTpPostWork(work);
     for (i = 0; i < 10; i++)
         pTpPostWork(work2);
-    Sleep(30);
+    Sleep(500);
     pTpWaitForWork(work, TRUE);
     pTpWaitForWork(work2, TRUE);
     ok(userdata & 0xffff, "expected userdata & 0xffff != 0, got %u\n", userdata & 0xffff);
@@ -691,14 +690,14 @@ static void test_tp_work_scheduler(void)
 
     /* test TpReleaseCleanupGroupMembers on a work item */
     userdata = 0;
-    for (i = 0; i < 100; i++)
-        pTpPostWork(work);
     for (i = 0; i < 10; i++)
+        pTpPostWork(work);
+    for (i = 0; i < 3; i++)
         pTpPostWork(work2);
     pTpReleaseCleanupGroupMembers(group, FALSE, NULL);
     pTpWaitForWork(work, TRUE);
-    ok((userdata & 0xffff) < 100, "expected userdata & 0xffff < 100, got %u\n", userdata & 0xffff);
-    ok((userdata >> 16) == 10, "expected userdata >> 16 == 10, got %u\n", userdata >> 16);
+    ok((userdata & 0xffff) < 10, "expected userdata & 0xffff < 10, got %u\n", userdata & 0xffff);
+    ok((userdata >> 16) == 3, "expected userdata >> 16 == 3, got %u\n", userdata >> 16);
 
     /* cleanup */
     pTpReleaseWork(work);
@@ -720,6 +719,7 @@ static void CALLBACK group_cancel_cb(TP_CALLBACK_INSTANCE *instance, void *userd
     ok(status == STATUS_TOO_MANY_THREADS || broken(status == 1) /* Win Vista / 2008 */,
        "expected STATUS_TOO_MANY_THREADS, got %08x\n", status);
 
+    ReleaseSemaphore(semaphores[1], 1, NULL);
     result = WaitForSingleObject(semaphores[0], 1000);
     ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
     ReleaseSemaphore(semaphores[1], 1, NULL);
@@ -781,6 +781,8 @@ static void test_tp_group_cancel(void)
     environment.Pool = pool;
     status = pTpSimpleTryPost(group_cancel_cb, semaphores, &environment);
     ok(!status, "TpSimpleTryPost failed with status %x\n", status);
+    result = WaitForSingleObject(semaphores[1], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
 
     memset(&environment, 0, sizeof(environment));
     environment.Version = 1;
@@ -816,7 +818,7 @@ static void test_tp_group_cancel(void)
     /* check if we get multiple cancellation callbacks */
     group_cancel_tid = 0xdeadbeef;
     pTpReleaseCleanupGroupMembers(group, TRUE, &userdata2);
-    ok(userdata <= 8, "expected userdata <= 8, got %u\n", userdata);
+    ok(userdata <= 5, "expected userdata <= 5, got %u\n", userdata);
     ok(userdata2 == 1, "expected only one cancellation callback, got %u\n", userdata2);
     ok(group_cancel_tid == GetCurrentThreadId(), "expected tid %x, got %x\n",
        GetCurrentThreadId(), group_cancel_tid);
