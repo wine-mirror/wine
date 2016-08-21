@@ -1005,13 +1005,8 @@ static HRESULT write_native_icon(IStream *iconStream, ICONDIRENTRY *pIconDirEntr
 
     position.QuadPart = 0;
     hr = IStream_Seek(iconStream, position, STREAM_SEEK_SET, NULL);
-    if (FAILED(hr))
-        goto end;
-    hr = convert_to_native_icon(iconStream, &nIndex, 1, &CLSID_WICPngEncoder, icon_name, szFileName);
-
-end:
-    HeapFree(GetProcessHeap(), 0, pIconDirEntry);
-    return hr;
+    if (FAILED(hr)) return hr;
+    return convert_to_native_icon(iconStream, &nIndex, 1, &CLSID_WICPngEncoder, icon_name, szFileName);
 }
 
 static WCHAR* assoc_query(ASSOCSTR assocStr, LPCWSTR name, LPCWSTR extra)
