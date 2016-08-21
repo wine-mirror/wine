@@ -406,6 +406,7 @@ static HRESULT alloc_device(REFGUID rguid, IDirectInputImpl *dinput,
     HRESULT hr;
     LPDIDATAFORMAT df = NULL;
     int idx = 0;
+    DIDEVICEINSTANCEW ddi;
 
     TRACE("%s %p %p %hu\n", debugstr_guid(rguid), dinput, pdev, index);
 
@@ -496,10 +497,11 @@ static HRESULT alloc_device(REFGUID rguid, IDirectInputImpl *dinput,
 
     newDevice->generic.devcaps.dwSize = sizeof(newDevice->generic.devcaps);
     newDevice->generic.devcaps.dwFlags = DIDC_ATTACHED;
-    if (newDevice->generic.base.dinput->dwVersion >= 0x0800)
-        newDevice->generic.devcaps.dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
-    else
-        newDevice->generic.devcaps.dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
+
+    ddi.dwSize = sizeof(ddi);
+    fill_joystick_dideviceinstanceW(&ddi, newDevice->generic.base.dinput->dwVersion, index);
+    newDevice->generic.devcaps.dwDevType = ddi.dwDevType;
+
     newDevice->generic.devcaps.dwFFSamplePeriod = 0;
     newDevice->generic.devcaps.dwFFMinTimeResolution = 0;
     newDevice->generic.devcaps.dwFirmwareRevision = 0;
