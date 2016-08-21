@@ -52,6 +52,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
 struct async_query_header
 {
+    LPARAM (*func)( struct async_query_header *query );
     HWND   hWnd;
     UINT   uMsg;
     void  *sbuf;
@@ -128,13 +129,6 @@ static int list_dup(char** l_src, char* ref, int item_size)
    return (p - ref);
 }
 
-static DWORD finish_query( struct async_query_header *query, LPARAM lparam )
-{
-    PostMessageW( query->hWnd, query->uMsg, (WPARAM)query->handle, lparam );
-    HeapFree( GetProcessHeap(), 0, query );
-    return 0;
-}
-
 /* ----- hostent */
 
 static LPARAM copy_he(void *base, int size, const struct WS_hostent *he)
@@ -162,20 +156,20 @@ static LPARAM copy_he(void *base, int size, const struct WS_hostent *he)
     return MAKELPARAM( needed, 0 );
 }
 
-static DWORD WINAPI async_gethostbyname(LPVOID arg)
+static LPARAM async_gethostbyname( struct async_query_header *query )
 {
-    struct async_query_gethostbyname *aq = arg;
+    struct async_query_gethostbyname *aq = CONTAINING_RECORD( query, struct async_query_gethostbyname, query );
     struct WS_hostent *he = WS_gethostbyname( aq->host_name );
 
-    return finish_query( &aq->query, copy_he( aq->query.sbuf, aq->query.sbuflen, he ));
+    return copy_he( query->sbuf, query->sbuflen, he );
 }
 
-static DWORD WINAPI async_gethostbyaddr(LPVOID arg)
+static LPARAM async_gethostbyaddr( struct async_query_header *query )
 {
-    struct async_query_gethostbyaddr *aq = arg;
+    struct async_query_gethostbyaddr *aq = CONTAINING_RECORD( query, struct async_query_gethostbyaddr, query );
     struct WS_hostent *he = WS_gethostbyaddr( aq->host_addr, aq->host_len, aq->host_type );
 
-    return finish_query( &aq->query, copy_he( aq->query.sbuf, aq->query.sbuflen, he ));
+    return copy_he( query->sbuf, query->sbuflen, he );
 }
 
 /* ----- protoent */
@@ -200,20 +194,20 @@ static LPARAM copy_pe(void *base, int size, const struct WS_protoent* pe)
     return MAKELPARAM( needed, 0 );
 }
 
-static DWORD WINAPI async_getprotobyname(LPVOID arg)
+static LPARAM async_getprotobyname( struct async_query_header *query )
 {
-    struct async_query_getprotobyname *aq = arg;
+    struct async_query_getprotobyname *aq = CONTAINING_RECORD( query, struct async_query_getprotobyname, query );
     struct WS_protoent *pe = WS_getprotobyname( aq->proto_name );
 
-    return finish_query( &aq->query, copy_pe( aq->query.sbuf, aq->query.sbuflen, pe ));
+    return copy_pe( query->sbuf, query->sbuflen, pe );
 }
 
-static DWORD WINAPI async_getprotobynumber(LPVOID arg)
+static LPARAM async_getprotobynumber( struct async_query_header *query )
 {
-    struct async_query_getprotobynumber *aq = arg;
+    struct async_query_getprotobynumber *aq = CONTAINING_RECORD( query, struct async_query_getprotobynumber, query );
     struct WS_protoent *pe = WS_getprotobynumber( aq->proto_number );
 
-    return finish_query( &aq->query, copy_pe( aq->query.sbuf, aq->query.sbuflen, pe ));
+    return copy_pe( query->sbuf, query->sbuflen, pe );
 }
 
 /* ----- servent */
@@ -240,20 +234,29 @@ static LPARAM copy_se(void *base, int size, const struct WS_servent* se)
     return MAKELPARAM( needed, 0 );
 }
 
-static DWORD WINAPI async_getservbyname(LPVOID arg)
+static LPARAM async_getservbyname( struct async_query_header *query )
 {
-    struct async_query_getservbyname *aq = arg;
+    struct async_query_getservbyname *aq = CONTAINING_RECORD( query, struct async_query_getservbyname, query );
     struct WS_servent *se = WS_getservbyname( aq->serv_name, aq->serv_proto );
 
-    return finish_query( &aq->query, copy_se( aq->query.sbuf, aq->query.sbuflen, se ));
+    return copy_se( query->sbuf, query->sbuflen, se );
 }
 
-static DWORD WINAPI async_getservbyport(LPVOID arg)
+static LPARAM async_getservbyport( struct async_query_header *query )
 {
-    struct async_query_getservbyport *aq = arg;
+    struct async_query_getservbyport *aq = CONTAINING_RECORD( query, struct async_query_getservbyport, query );
     struct WS_servent *se = WS_getservbyport( aq->serv_port, aq->serv_proto );
 
-    return finish_query( &aq->query, copy_se( aq->query.sbuf, aq->query.sbuflen, se ));
+    return copy_se( query->sbuf, query->sbuflen, se );
+}
+
+
+static void WINAPI async_worker( TP_CALLBACK_INSTANCE *instance, void *context )
+{
+    struct async_query_header *query = context;
+    LPARAM lparam = query->func( query );
+    PostMessageW( query->hWnd, query->uMsg, (WPARAM)query->handle, lparam );
+    HeapFree( GetProcessHeap(), 0, query );
 }
 
 
@@ -264,30 +267,28 @@ static DWORD WINAPI async_getservbyport(LPVOID arg)
  * with no thread support. This relies on the fact that PostMessage() does
  * not actually call the windowproc before the function returns.
  */
-static HANDLE run_query( HWND hWnd, UINT uMsg, LPTHREAD_START_ROUTINE func,
+static HANDLE run_query( HWND hWnd, UINT uMsg, LPARAM (*func)(struct async_query_header *),
                          struct async_query_header *query, void *sbuf, INT sbuflen )
 {
     static LONG next_handle = 0xdead;
-    HANDLE thread;
     ULONG handle;
     do
         handle = LOWORD( InterlockedIncrement( &next_handle ));
     while (!handle); /* avoid handle 0 */
 
+    query->func    = func;
     query->hWnd    = hWnd;
     query->uMsg    = uMsg;
     query->handle  = UlongToHandle( handle );
     query->sbuf    = sbuf;
     query->sbuflen = sbuflen;
 
-    thread = CreateThread( NULL, 0, func, query, 0, NULL );
-    if (!thread)
+    if (!TrySubmitThreadpoolCallback( async_worker, query, NULL ))
     {
         SetLastError( WSAEWOULDBLOCK );
         HeapFree( GetProcessHeap(), 0, query );
         return 0;
     }
-    CloseHandle( thread );
     return UlongToHandle( handle );
 }
 
