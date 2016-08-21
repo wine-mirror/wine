@@ -6420,17 +6420,18 @@ static void test_il_append_aligned(void)
     DWORD color;
     HRESULT hr;
 
+    /* Semantic names are case-insensitive. */
     static const D3D11_INPUT_ELEMENT_DESC layout_desc[] =
     {
-        {"COLOR",    2, DXGI_FORMAT_R32G32_FLOAT,       1, D3D11_APPEND_ALIGNED_ELEMENT,
+        {"CoLoR",    2, DXGI_FORMAT_R32G32_FLOAT,       1, D3D11_APPEND_ALIGNED_ELEMENT,
                 D3D11_INPUT_PER_INSTANCE_DATA, 2},
-        {"COLOR",    3, DXGI_FORMAT_R32G32_FLOAT,       2, D3D11_APPEND_ALIGNED_ELEMENT,
+        {"ColoR",    3, DXGI_FORMAT_R32G32_FLOAT,       2, D3D11_APPEND_ALIGNED_ELEMENT,
                 D3D11_INPUT_PER_INSTANCE_DATA, 1},
         {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT,
                 D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"COLOR",    0, DXGI_FORMAT_R32G32_FLOAT,       2, D3D11_APPEND_ALIGNED_ELEMENT,
+        {"ColoR",    0, DXGI_FORMAT_R32G32_FLOAT,       2, D3D11_APPEND_ALIGNED_ELEMENT,
                 D3D11_INPUT_PER_INSTANCE_DATA, 1},
-        {"COLOR",    1, DXGI_FORMAT_R32G32_FLOAT,       1, D3D11_APPEND_ALIGNED_ELEMENT,
+        {"cOLOr",    1, DXGI_FORMAT_R32G32_FLOAT,       1, D3D11_APPEND_ALIGNED_ELEMENT,
                 D3D11_INPUT_PER_INSTANCE_DATA, 2},
     };
     static const DWORD vs_code[] =
