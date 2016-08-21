@@ -44,11 +44,10 @@ static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEME
         struct wined3d_vertex_element **wined3d_elements)
 {
     struct wined3d_shader_signature is;
+    unsigned int i;
     HRESULT hr;
-    UINT i;
 
-    hr = parse_dxbc(shader_byte_code, shader_byte_code_length, isgn_handler, &is);
-    if (FAILED(hr))
+    if (FAILED(hr = parse_dxbc(shader_byte_code, shader_byte_code_length, isgn_handler, &is)))
     {
         ERR("Failed to parse input signature.\n");
         return E_FAIL;
@@ -65,7 +64,7 @@ static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEME
     {
         struct wined3d_vertex_element *e = &(*wined3d_elements)[i];
         const D3D11_INPUT_ELEMENT_DESC *f = &element_descs[i];
-        UINT j;
+        unsigned int j;
 
         e->format = wined3dformat_from_dxgi_format(f->Format);
         e->input_slot = f->InputSlot;
@@ -79,13 +78,16 @@ static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEME
 
         for (j = 0; j < is.element_count; ++j)
         {
-            if (!strcmp(element_descs[i].SemanticName, is.elements[j].semantic_name)
+            if (!strcasecmp(element_descs[i].SemanticName, is.elements[j].semantic_name)
                     && element_descs[i].SemanticIndex == is.elements[j].semantic_idx)
             {
                 e->output_slot = is.elements[j].register_idx;
                 break;
             }
         }
+
+        if (e->output_slot == WINED3D_OUTPUT_SLOT_UNUSED)
+            WARN("Unused input element %u.\n", i);
     }
 
     shader_free_signature(&is);
