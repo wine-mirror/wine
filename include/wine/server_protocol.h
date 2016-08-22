@@ -4493,7 +4493,7 @@ struct set_clipboard_info_request
     struct request_header __header;
     unsigned int   flags;
     user_handle_t  owner;
-    user_handle_t  viewer;
+    char __pad_20[4];
 };
 struct set_clipboard_info_reply
 {
@@ -4506,7 +4506,6 @@ struct set_clipboard_info_reply
     char __pad_28[4];
 };
 
-#define SET_CB_VIEWER    0x004
 #define SET_CB_SEQNO     0x008
 #define SET_CB_RELOWNER  0x010
 #define CB_OPEN          0x040
@@ -4523,6 +4522,22 @@ struct empty_clipboard_request
 struct empty_clipboard_reply
 {
     struct reply_header __header;
+};
+
+
+
+struct set_clipboard_viewer_request
+{
+    struct request_header __header;
+    user_handle_t  viewer;
+    user_handle_t  previous;
+    char __pad_20[4];
+};
+struct set_clipboard_viewer_reply
+{
+    struct reply_header __header;
+    user_handle_t  old_viewer;
+    user_handle_t  owner;
 };
 
 
@@ -5659,6 +5674,7 @@ enum request
     REQ_close_clipboard,
     REQ_set_clipboard_info,
     REQ_empty_clipboard,
+    REQ_set_clipboard_viewer,
     REQ_open_token,
     REQ_set_global_windows,
     REQ_adjust_token_privileges,
@@ -5941,6 +5957,7 @@ union generic_request
     struct close_clipboard_request close_clipboard_request;
     struct set_clipboard_info_request set_clipboard_info_request;
     struct empty_clipboard_request empty_clipboard_request;
+    struct set_clipboard_viewer_request set_clipboard_viewer_request;
     struct open_token_request open_token_request;
     struct set_global_windows_request set_global_windows_request;
     struct adjust_token_privileges_request adjust_token_privileges_request;
@@ -6221,6 +6238,7 @@ union generic_reply
     struct close_clipboard_reply close_clipboard_reply;
     struct set_clipboard_info_reply set_clipboard_info_reply;
     struct empty_clipboard_reply empty_clipboard_reply;
+    struct set_clipboard_viewer_reply set_clipboard_viewer_reply;
     struct open_token_reply open_token_reply;
     struct set_global_windows_reply set_global_windows_reply;
     struct adjust_token_privileges_reply adjust_token_privileges_reply;
@@ -6280,6 +6298,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 510
+#define SERVER_PROTOCOL_VERSION 511
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

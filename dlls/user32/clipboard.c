@@ -110,25 +110,6 @@ void CLIPBOARD_ReleaseOwner( HWND hwnd )
 
 
 /**************************************************************************
- *		CLIPBOARD_SetClipboardViewer
- */
-static HWND CLIPBOARD_SetClipboardViewer( HWND hWnd )
-{
-    HWND hwndPrev = 0;
-
-    SERVER_START_REQ( set_clipboard_info )
-    {
-        req->flags = SET_CB_VIEWER;
-        req->viewer = wine_server_user_handle( hWnd );
-        if (!wine_server_call_err( req ))
-            hwndPrev = wine_server_ptr_handle( reply->old_viewer );
-    }
-    SERVER_END_REQ;
-
-    return hwndPrev;
-}
-
-/**************************************************************************
  *                WIN32 Clipboard implementation
  **************************************************************************/
 
@@ -298,15 +279,25 @@ HWND WINAPI GetOpenClipboardWindow(void)
 /**************************************************************************
  *		SetClipboardViewer (USER32.@)
  */
-HWND WINAPI SetClipboardViewer( HWND hWnd )
+HWND WINAPI SetClipboardViewer( HWND hwnd )
 {
-    HWND hwndPrev = CLIPBOARD_SetClipboardViewer(hWnd);
+    HWND prev = 0, owner = 0;
 
-    if (hWnd)
-        SendNotifyMessageW(hWnd, WM_DRAWCLIPBOARD, (WPARAM) GetClipboardOwner(), 0);
-    TRACE("(%p): returning %p\n", hWnd, hwndPrev);
+    SERVER_START_REQ( set_clipboard_viewer )
+    {
+        req->viewer = wine_server_user_handle( hwnd );
+        if (!wine_server_call_err( req ))
+        {
+            prev = wine_server_ptr_handle( reply->old_viewer );
+            owner = wine_server_ptr_handle( reply->owner );
+        }
+    }
+    SERVER_END_REQ;
 
-    return hwndPrev;
+    if (hwnd) SendNotifyMessageW( hwnd, WM_DRAWCLIPBOARD, (WPARAM)owner, 0 );
+
+    TRACE( "(%p): returning %p\n", hwnd, prev );
+    return prev;
 }
 
 
@@ -333,22 +324,27 @@ HWND WINAPI GetClipboardViewer(void)
 /**************************************************************************
  *              ChangeClipboardChain (USER32.@)
  */
-BOOL WINAPI ChangeClipboardChain(HWND hWnd, HWND hWndNext)
+BOOL WINAPI ChangeClipboardChain( HWND hwnd, HWND next )
 {
-    BOOL bRet = TRUE;
-    HWND hWndViewer = GetClipboardViewer();
+    NTSTATUS status;
+    HWND viewer;
 
-    if (hWndViewer)
+    if (!hwnd) return FALSE;
+
+    SERVER_START_REQ( set_clipboard_viewer )
     {
-        if (WIN_GetFullHandle(hWnd) == hWndViewer)
-            CLIPBOARD_SetClipboardViewer(WIN_GetFullHandle(hWndNext));
-        else
-            bRet = !SendMessageW(hWndViewer, WM_CHANGECBCHAIN, (WPARAM)hWnd, (LPARAM)hWndNext);
+        req->viewer = wine_server_user_handle( next );
+        req->previous = wine_server_user_handle( hwnd );
+        status = wine_server_call( req );
+        viewer = wine_server_ptr_handle( reply->old_viewer );
     }
-    else
-        ERR("hWndViewer is lost\n");
+    SERVER_END_REQ;
 
-    return bRet;
+    if (status == STATUS_PENDING)
+        return !SendMessageW( viewer, WM_CHANGECBCHAIN, (WPARAM)hwnd, (LPARAM)next );
+
+    if (status) SetLastError( RtlNtStatusToDosError( status ));
+    return !status;
 }
 
 

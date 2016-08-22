@@ -219,8 +219,6 @@ DECL_HANDLER(set_clipboard_info)
         if (!release_clipboard_owner( clipboard, req->owner )) return;
     }
 
-    if (req->flags & SET_CB_VIEWER) clipboard->viewer = get_user_full_handle( req->viewer );
-
     if (req->flags & SET_CB_SEQNO) clipboard->seqno++;
 
     reply->seqno = get_seqno( clipboard );
@@ -247,4 +245,21 @@ DECL_HANDLER(empty_clipboard)
     clipboard->owner_win = clipboard->open_win;
     clipboard->owner_thread = clipboard->open_thread;
     clipboard->seqno++;
+}
+
+
+/* set the clipboard viewer window */
+DECL_HANDLER(set_clipboard_viewer)
+{
+    struct clipboard *clipboard = get_process_clipboard();
+
+    if (!clipboard) return;
+
+    reply->old_viewer = clipboard->viewer;
+    reply->owner      = clipboard->owner_win;
+
+    if (!req->previous || clipboard->viewer == get_user_full_handle( req->previous ))
+        clipboard->viewer = get_user_full_handle( req->viewer );
+    else
+        set_error( STATUS_PENDING );  /* need to send message instead */
 }

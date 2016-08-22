@@ -3759,7 +3759,6 @@ static void dump_set_clipboard_info_request( const struct set_clipboard_info_req
 {
     fprintf( stderr, " flags=%08x", req->flags );
     fprintf( stderr, ", owner=%08x", req->owner );
-    fprintf( stderr, ", viewer=%08x", req->viewer );
 }
 
 static void dump_set_clipboard_info_reply( const struct set_clipboard_info_reply *req )
@@ -3773,6 +3772,18 @@ static void dump_set_clipboard_info_reply( const struct set_clipboard_info_reply
 
 static void dump_empty_clipboard_request( const struct empty_clipboard_request *req )
 {
+}
+
+static void dump_set_clipboard_viewer_request( const struct set_clipboard_viewer_request *req )
+{
+    fprintf( stderr, " viewer=%08x", req->viewer );
+    fprintf( stderr, ", previous=%08x", req->previous );
+}
+
+static void dump_set_clipboard_viewer_reply( const struct set_clipboard_viewer_reply *req )
+{
+    fprintf( stderr, " old_viewer=%08x", req->old_viewer );
+    fprintf( stderr, ", owner=%08x", req->owner );
 }
 
 static void dump_open_token_request( const struct open_token_request *req )
@@ -4602,6 +4613,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_close_clipboard_request,
     (dump_func)dump_set_clipboard_info_request,
     (dump_func)dump_empty_clipboard_request,
+    (dump_func)dump_set_clipboard_viewer_request,
     (dump_func)dump_open_token_request,
     (dump_func)dump_set_global_windows_request,
     (dump_func)dump_adjust_token_privileges_request,
@@ -4880,6 +4892,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_close_clipboard_reply,
     (dump_func)dump_set_clipboard_info_reply,
     NULL,
+    (dump_func)dump_set_clipboard_viewer_reply,
     (dump_func)dump_open_token_reply,
     (dump_func)dump_set_global_windows_reply,
     (dump_func)dump_adjust_token_privileges_reply,
@@ -5158,6 +5171,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "close_clipboard",
     "set_clipboard_info",
     "empty_clipboard",
+    "set_clipboard_viewer",
     "open_token",
     "set_global_windows",
     "adjust_token_privileges",

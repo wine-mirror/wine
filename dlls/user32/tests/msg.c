@@ -14027,7 +14027,7 @@ static void test_clipboard_viewers(void)
     expect_HWND(hWnd1, GetClipboardViewer());
 
     ChangeClipboardChain(NULL, hWnd2);
-    ok_sequence(WmEmptySeq, "change chain (viewer=1, remove=NULL, next=2)", TRUE);
+    ok_sequence(WmEmptySeq, "change chain (viewer=1, remove=NULL, next=2)", FALSE);
     expect_HWND(hWnd1, GetClipboardViewer());
 
     /* Actually change clipboard viewer with ChangeClipboardChain. */
