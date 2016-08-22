@@ -3455,6 +3455,15 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_ResetEx(IDirect3DDevice9Ex *
         return D3DERR_INVALIDCALL;
     }
 
+    if (mode && (mode->Width != present_parameters->BackBufferWidth
+            || mode->Height != present_parameters->BackBufferHeight))
+    {
+        WARN("Mode and back buffer mismatch (mode %ux%u, backbuffer %ux%u).\n",
+                mode->Width, mode->Height,
+                present_parameters->BackBufferWidth, present_parameters->BackBufferHeight);
+        return D3DERR_INVALIDCALL;
+    }
+
     return d3d9_device_reset(device, present_parameters, mode);
 }
 
