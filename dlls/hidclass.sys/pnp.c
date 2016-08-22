@@ -47,14 +47,14 @@ static NTSTATUS get_device_id(DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WCH
     NTSTATUS status;
     IO_STACK_LOCATION *irpsp;
     IO_STATUS_BLOCK irp_status;
+    HANDLE event;
     IRP *irp;
-    HANDLE event = CreateEventA(NULL, FALSE, FALSE, NULL);
 
     irp = IoBuildSynchronousFsdRequest(IRP_MJ_PNP, device, NULL, 0, NULL, NULL, &irp_status);
     if (irp == NULL)
         return STATUS_NO_MEMORY;
 
-    irp->UserEvent = event;
+    irp->UserEvent = event = CreateEventA(NULL, FALSE, FALSE, NULL);
     irpsp = IoGetNextIrpStackLocation(irp);
     irpsp->MinorFunction = IRP_MN_QUERY_ID;
     irpsp->Parameters.QueryId.IdType = type;
