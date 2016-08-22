@@ -55,15 +55,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 
-#define  CF_REGFORMATBASE  0xC000
-
-typedef struct
-{
-    HWND hWndOpen;
-    HWND hWndOwner;
-    UINT flags;
-} CLIPBOARDINFO, *LPCLIPBOARDINFO;
-
 /*
  * Indicates if data has changed since open.
  */
@@ -71,26 +62,19 @@ static BOOL bCBHasChanged = FALSE;
 
 
 /**************************************************************************
- *                      CLIPBOARD_GetClipboardInfo
+ *                      get_clipboard_flags
  */
-static BOOL CLIPBOARD_GetClipboardInfo(LPCLIPBOARDINFO cbInfo)
+static UINT get_clipboard_flags(void)
 {
-    BOOL bRet;
+    UINT ret = 0;
 
     SERVER_START_REQ( set_clipboard_info )
     {
-        req->flags = 0;
-
-        if (((bRet = !wine_server_call_err( req ))))
-        {
-            cbInfo->hWndOpen = wine_server_ptr_handle( reply->old_clipboard );
-            cbInfo->hWndOwner = wine_server_ptr_handle( reply->old_owner );
-            cbInfo->flags = reply->flags;
-        }
+        if (!wine_server_call_err( req )) ret = reply->flags;
     }
     SERVER_END_REQ;
 
-    return bRet;
+    return ret;
 }
 
 
@@ -353,8 +337,8 @@ BOOL WINAPI ChangeClipboardChain( HWND hwnd, HWND next )
  */
 HANDLE WINAPI SetClipboardData(UINT wFormat, HANDLE hData)
 {
-    CLIPBOARDINFO cbinfo;
     HANDLE hResult = 0;
+    UINT flags;
 
     TRACE("(%04X, %p) !\n", wFormat, hData);
 
@@ -366,14 +350,14 @@ HANDLE WINAPI SetClipboardData(UINT wFormat, HANDLE hData)
 
     /* If it's not owned, data can only be set if the format isn't
        available and its rendering is not delayed */
-    if (!CLIPBOARD_GetClipboardInfo(&cbinfo) ||
-       (!(cbinfo.flags & CB_OWNER) && !hData))
+    flags = get_clipboard_flags();
+    if (!(flags & CB_OWNER) && !hData)
     {
         WARN("Clipboard not owned by calling task. Operation failed.\n");
         return 0;
     }
 
-    if (USER_Driver->pSetClipboardData(wFormat, hData, cbinfo.flags & CB_OWNER))
+    if (USER_Driver->pSetClipboardData(wFormat, hData, flags & CB_OWNER))
     {
         hResult = hData;
         bCBHasChanged = TRUE;
@@ -399,12 +383,9 @@ INT WINAPI CountClipboardFormats(void)
  */
 UINT WINAPI EnumClipboardFormats(UINT wFormat)
 {
-    CLIPBOARDINFO cbinfo;
-
     TRACE("(%04X)\n", wFormat);
 
-    if (!CLIPBOARD_GetClipboardInfo(&cbinfo) ||
-        (~cbinfo.flags & CB_OPEN))
+    if (!(get_clipboard_flags() & CB_OPEN))
     {
         WARN("Clipboard not opened by calling task.\n");
         SetLastError(ERROR_CLIPBOARD_NOT_OPEN);
@@ -431,12 +412,10 @@ BOOL WINAPI IsClipboardFormatAvailable(UINT wFormat)
 HANDLE WINAPI GetClipboardData(UINT wFormat)
 {
     HANDLE hData = 0;
-    CLIPBOARDINFO cbinfo;
 
     TRACE("%04x\n", wFormat);
 
-    if (!CLIPBOARD_GetClipboardInfo(&cbinfo) ||
-        (~cbinfo.flags & CB_OPEN))
+    if (!(get_clipboard_flags() & CB_OPEN))
     {
         WARN("Clipboard not opened by calling task.\n");
         SetLastError(ERROR_CLIPBOARD_NOT_OPEN);
