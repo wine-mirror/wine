@@ -717,7 +717,7 @@ static BOOL UITOOLS95_DFC_ButtonPush(HDC dc, LPRECT r, UINT uFlags)
 
 static BOOL UITOOLS95_DFC_ButtonCheck(HDC dc, LPRECT r, UINT uFlags)
 {
-    RECT myr, bar;
+    RECT myr;
     UINT flags = BF_RECT | BF_ADJUST;
 
     UITOOLS_MakeSquareRect(r, &myr);
@@ -739,20 +739,30 @@ static BOOL UITOOLS95_DFC_ButtonCheck(HDC dc, LPRECT r, UINT uFlags)
 
     if(uFlags & DFCS_CHECKED)
     {
-        int i, k;
-        i = (uFlags & DFCS_INACTIVE) || (uFlags & 0xff) == DFCS_BUTTON3STATE ?
-		COLOR_BTNSHADOW : COLOR_WINDOWTEXT;
+        POINT pt[6];
+        HPEN old_pen;
+        HBRUSH old_brush;
+        int color = (uFlags & DFCS_INACTIVE) || (uFlags & 0xff) == DFCS_BUTTON3STATE ?
+            COLOR_BTNSHADOW : COLOR_WINDOWTEXT;
 
-        /* draw 7 bars, with h=3w to form the check */
-        bar.left = myr.left;
-	bar.top = myr.top + 2;
-        for (k = 0; k < 7; k++) {
-            bar.left = bar.left + 1;
-	    bar.top = (k < 3) ? bar.top + 1 : bar.top - 1;
-	    bar.bottom = bar.top + 3;
-   	    bar.right = bar.left + 1;
-            FillRect(dc, &bar, GetSysColorBrush(i));
-	}
+        pt[0].x = myr.right - 1;
+        pt[0].y = myr.top;
+        pt[1].x = pt[0].x;
+        pt[1].y = pt[0].y + (myr.bottom - myr.top) / 3;
+        pt[2].x = myr.left + (myr.right - myr.left) / 3;
+        pt[2].y = myr.bottom - 1;
+        pt[3].x = myr.left + 1;
+        pt[3].y = pt[2].y - (pt[2].x - pt[3].x);
+        pt[4].x = pt[3].x;
+        pt[4].y = pt[3].y - (myr.bottom - myr.top) / 3;
+        pt[5].x = pt[2].x;
+        pt[5].y = pt[2].y - (myr.bottom - myr.top) / 3;
+
+        old_brush = SelectObject( dc, GetSysColorBrush( color ) );
+        old_pen = SelectObject( dc, GetStockObject( NULL_PEN ));
+        Polygon( dc, pt, 6 );
+        SelectObject( dc, old_brush );
+        SelectObject( dc, old_pen );
     }
     return TRUE;
 }
