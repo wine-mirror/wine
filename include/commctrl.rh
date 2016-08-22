@@ -78,6 +78,8 @@
 #define TBS_TOOLTIPS        0x0100
 #define TBS_REVERSED        0x0200
 #define TBS_DOWNISLEFT      0x0400
+#define TBS_NOTIFYBEFOREREMOVE 0x0800
+#define TBS_TRANSPARENTBKGND 0x1000
 
 /* UpDown Control */
 #define UDS_WRAP            0x0001
@@ -195,6 +197,7 @@
 #define DTS_SHOWNONE        0x0002
 #define DTS_LONGDATEFORMAT  0x0004
 #define DTS_TIMEFORMAT      0x0009
+#define DTS_SHORTDATECENTURYFORMAT 0x000c
 #define DTS_APPCANPARSE     0x0010
 #define DTS_RIGHTALIGN      0x0020
 

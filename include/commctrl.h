@@ -494,17 +494,19 @@ typedef struct _IMAGELIST *HIMAGELIST;
 #define CLR_DEFAULT      0xFF000000
 #define CLR_HILIGHT      CLR_DEFAULT
 
-#define ILC_MASK          0x0001
-#define ILC_COLOR         0x0000
-#define ILC_COLORDDB      0x00FE
-#define ILC_COLOR4        0x0004
-#define ILC_COLOR8        0x0008
-#define ILC_COLOR16       0x0010
-#define ILC_COLOR24       0x0018
-#define ILC_COLOR32       0x0020
-#define ILC_PALETTE       0x0800  /* no longer supported by M$ */
-#define ILC_MIRROR        0x2000
-#define ILC_PERITEMMIRROR 0x8000
+#define ILC_MASK             0x00000001
+#define ILC_COLOR            0x00000000
+#define ILC_COLORDDB         0x000000fe
+#define ILC_COLOR4           0x00000004
+#define ILC_COLOR8           0x00000008
+#define ILC_COLOR16          0x00000010
+#define ILC_COLOR24          0x00000018
+#define ILC_COLOR32          0x00000020
+#define ILC_PALETTE          0x00000800  /* no longer supported by M$ */
+#define ILC_MIRROR           0x00002000
+#define ILC_PERITEMMIRROR    0x00008000
+#define ILC_ORIGINALSIZE     0x00010000
+#define ILC_HIGHQUALITYSCALE 0x00020000
 
 #define ILD_NORMAL        0x0000
 #define ILD_TRANSPARENT   0x0001
@@ -791,6 +793,10 @@ static const WCHAR WC_HEADERW[] = { 'S','y','s','H','e','a','d','e','r','3','2',
 #define HDM_SETFILTERCHANGETIMEOUT (HDM_FIRST+22)
 #define HDM_EDITFILTER          (HDM_FIRST+23)
 #define HDM_CLEARFILTER         (HDM_FIRST+24)
+#define HDM_GETITEMDROPDOWNRECT (HDM_FIRST+25)
+#define HDM_GETOVERFLOWRECT     (HDM_FIRST+26)
+#define HDM_GETFOCUSEDITEM      (HDM_FIRST+27)
+#define HDM_SETFOCUSEDITEM      (HDM_FIRST+28)
 #define HDM_GETUNICODEFORMAT    CCM_GETUNICODEFORMAT
 #define HDM_SETUNICODEFORMAT    CCM_SETUNICODEFORMAT
 
@@ -831,6 +837,8 @@ static const WCHAR WC_HEADERW[] = { 'S','y','s','H','e','a','d','e','r','3','2',
 #define HDN_ENDFILTEREDIT       (HDN_FIRST-15)
 #define HDN_ITEMSTATEICONCLICK  (HDN_FIRST-16)
 #define HDN_ITEMKEYDOWN         (HDN_FIRST-17)
+#define HDN_DROPDOWN            (HDN_FIRST-18)
+#define HDN_OVERFLOWCLICK       (HDN_FIRST-19)
 
 typedef struct _HD_LAYOUT
 {
@@ -1227,6 +1235,9 @@ static const WCHAR TOOLBARCLASSNAMEW[] = { 'T','o','o','l','b','a','r',
 
 #define TB_GETMETRICS            (WM_USER+101)
 #define TB_SETMETRICS            (WM_USER+102)
+#define TB_GETITEMDROPDOWNRECT   (WM_USER+103)
+#define TB_SETPRESSEDIMAGELIST   (WM_USER+104)
+#define TB_GETPRESSEDIMAGELIST   (WM_USER+105)
 #define TB_SETWINDOWTHEME        CCM_SETWINDOWTHEME
 
 #define TBN_FIRST               (0U-700U)
@@ -1257,7 +1268,11 @@ static const WCHAR TOOLBARCLASSNAMEW[] = { 'T','o','o','l','b','a','r',
 #define TBN_RESTORE	        (TBN_FIRST-21)
 #define TBN_SAVE	        (TBN_FIRST-22)
 #define TBN_INITCUSTOMIZE	(TBN_FIRST-23)
-#define TBN_WRAPHOTITEM         (TBN_FIRST-24) /* this is undocumented and the name is a guess */
+#define TBN_WRAPHOTITEM         (TBN_FIRST-24)
+#define TBN_DUPACCELERATOR      (TBN_FIRST-25)
+#define TBN_WRAPACCELERATOR     (TBN_FIRST-26)
+#define TBN_DRAGOVER            (TBN_FIRST-27)
+#define TBN_MAPACCELERATOR      (TBN_FIRST-28)
 #define TBNRF_HIDEHELP		0x00000001
 
 
@@ -1345,6 +1360,10 @@ typedef struct tagTBADDBITMAP {
 #define IDB_VIEW_LARGE_COLOR    5
 #define IDB_HIST_SMALL_COLOR    8
 #define IDB_HIST_LARGE_COLOR    9
+#define IDB_HIST_NORMAL        12
+#define IDB_HIST_HOT           13
+#define IDB_HIST_DISABLED      14
+#define IDB_HIST_PRESSED       15
 
 #define STD_CUT                 0
 #define STD_COPY                1
@@ -1646,6 +1665,9 @@ static const WCHAR TOOLTIPS_CLASSW[] = { 't','o','o','l','t','i','p','s','_',
 #define TTI_INFO                1
 #define TTI_WARNING             2
 #define TTI_ERROR               3
+#define TTI_INFO_LARGE          4
+#define TTI_WARNING_LARGE       5
+#define TTI_ERROR_LARGE         6
 
 
 #define TTM_ACTIVATE            (WM_USER+1)
@@ -1848,6 +1870,8 @@ static const WCHAR REBARCLASSNAMEW[] = { 'R','e','B','a','r',
 #define RBBIM_IDEALSIZE         0x00000200
 #define RBBIM_LPARAM            0x00000400
 #define RBBIM_HEADERSIZE        0x00000800
+#define RBBIM_CHEVRONLOCATION   0x00001000
+#define RBBIM_CHEVRONSTATE      0x00002000
 
 #define RBBS_BREAK              0x00000001
 #define RBBS_FIXEDSIZE          0x00000002
@@ -1871,6 +1895,7 @@ static const WCHAR REBARCLASSNAMEW[] = { 'R','e','B','a','r',
 #define RBHT_CLIENT             0x0003
 #define RBHT_GRABBER            0x0004
 #define RBHT_CHEVRON            0x0008
+#define RBHT_SPLITTER           0x0010
 
 #define RB_INSERTBANDA          (WM_USER+1)
 #define RB_INSERTBANDW          (WM_USER+10)
@@ -1910,7 +1935,11 @@ static const WCHAR REBARCLASSNAMEW[] = { 'R','e','B','a','r',
 #define RB_GETPALETTE           (WM_USER+38)
 #define RB_MOVEBAND             (WM_USER+39)
 #define RB_GETBANDMARGINS       (WM_USER+40)
+#define RB_SETEXTENDEDSTYLE     (WM_USER+41)
+#define RB_GETEXTENDEDSTYLE     (WM_USER+42)
 #define RB_PUSHCHEVRON          (WM_USER+43)
+#define RB_SETBANDWIDTH         (WM_USER+44)
+
 #define RB_GETDROPTARGET        CCM_GETDROPTARGET
 #define RB_SETCOLORSCHEME       CCM_SETCOLORSCHEME
 #define RB_GETCOLORSCHEME       CCM_GETCOLORSCHEME
@@ -1930,6 +1959,7 @@ static const WCHAR REBARCLASSNAMEW[] = { 'R','e','B','a','r',
 #define RBN_DELETEDBAND         (RBN_FIRST-7)
 #define RBN_CHILDSIZE           (RBN_FIRST-8)
 #define RBN_CHEVRONPUSHED       (RBN_FIRST-10)
+#define RBN_SPLITTERDRAG        (RBN_FIRST-11)
 #define RBN_MINMAX              (RBN_FIRST-21)
 #define RBN_AUTOBREAK           (RBN_FIRST-22)
 
@@ -2138,6 +2168,9 @@ static const WCHAR TRACKBAR_CLASSW[] = { 'm','s','c','t','l','s','_',
 #define TBM_SETUNICODEFORMAT    CCM_SETUNICODEFORMAT
 #define TBM_GETUNICODEFORMAT    CCM_GETUNICODEFORMAT
 
+#define TRBN_FIRST              (0u-1501u)
+#define TRBN_LAST               (0u-1519u)
+#define TRBN_THUMBPOSCHANGING   (TRBN_FIRST-1)
 
 /* Pager control */
 
@@ -2236,6 +2269,9 @@ static const WCHAR WC_TREEVIEWW[] = { 'S','y','s',
 #define TVSIL_NORMAL            0
 #define TVSIL_STATE             2
 
+#define TVSBF_XBORDER           1
+#define TVSBF_YBORDER           2
+
 #define TV_FIRST                0x1100
 #define TVM_INSERTITEMA         (TV_FIRST+0)
 #define TVM_INSERTITEMW         (TV_FIRST+50)
@@ -2281,7 +2317,7 @@ static const WCHAR WC_TREEVIEWW[] = { 'S','y','s',
 #define TVM_GETTEXTCOLOR        (TV_FIRST+32)
 #define TVM_SETSCROLLTIME       (TV_FIRST+33)
 #define TVM_GETSCROLLTIME       (TV_FIRST+34)
-#define TVM_UNKNOWN35           (TV_FIRST+35)
+#define TVM_SETBORDER           (TV_FIRST+35)
 #define TVM_UNKNOWN36           (TV_FIRST+36)
 #define TVM_SETINSERTMARKCOLOR  (TV_FIRST+37)
 #define TVM_GETINSERTMARKCOLOR  (TV_FIRST+38)
@@ -2355,9 +2391,11 @@ static const WCHAR WC_TREEVIEWW[] = { 'S','y','s',
 
 #define TVN_SINGLEEXPAND        (TVN_FIRST-15)
 
-
-
-
+#define TVN_ITEMCHANGINGA       (TVN_FIRST-16)
+#define TVN_ITEMCHANGINGW       (TVN_FIRST-17)
+#define TVN_ITEMCHANGEDA        (TVN_FIRST-18)
+#define TVN_ITEMCHANGEDW        (TVN_FIRST-19)
+#define TVN_ASYNCDRAW           (TVN_FIRST-20)
 
 #define TVIF_TEXT             0x0001
 #define TVIF_IMAGE            0x0002
@@ -2438,6 +2476,7 @@ static const WCHAR WC_TREEVIEWW[] = { 'S','y','s',
 #define TVGN_DROPHILITE       8
 #define TVGN_CARET            9
 #define TVGN_LASTVISIBLE      10
+#define TVGN_NEXTSELECTED     11
 #define TVSI_NOSINGLEEXPAND   0x8000
 
 #define TVC_UNKNOWN           0x00
@@ -2498,6 +2537,7 @@ typedef struct {
       UINT uStateEx;        /* _WIN32_IE >= 0x600 */
       HWND hwnd;            /* _WIN32_IE >= 0x600 */
       INT iExpandedImage;   /* _WIN32_IE >= 0x600 */
+      INT iReserved;
 } TVITEMEXA, *LPTVITEMEXA;
 
 typedef struct {
@@ -2515,6 +2555,7 @@ typedef struct {
       UINT uStateEx;        /* _WIN32_IE >= 0x600 */
       HWND hwnd;            /* _WIN32_IE >= 0x600 */
       INT iExpandedImage;   /* _WIN32_IE >= 0x600 */
+      INT iReserved;
 } TVITEMEXW, *LPTVITEMEXW;
 
 #define TVITEMEX   WINELIB_NAME_AW(TVITEMEX)
@@ -2666,6 +2707,39 @@ typedef struct tagNMTVGETINFOTIPW
 #define NMTVGETINFOTIP WINELIB_NAME_AW(NMTVGETINFOTIP)
 #define LPNMTVGETINFOTIP WINELIB_NAME_AW(LPNMTVGETINFOTIP)
 
+typedef enum _TVITEMPART
+{
+    TVGIPR_BUTTON = 1
+} TVITEMPART;
+
+typedef struct tagTVGETITEMPARTRECTINFO
+{
+    HTREEITEM hti;
+    RECT *prc;
+    TVITEMPART partID;
+} TVGETITEMPARTRECTINFO;
+
+typedef struct tagTVITEMCHANGE
+{
+    NMHDR hdr;
+    UINT uChanged;
+    HTREEITEM hItem;
+    UINT uStateNew;
+    UINT uStateOld;
+    LPARAM lParam;
+} NVTVITEMCHANGE;
+
+typedef struct tagNMTVASYNCDRAW
+{
+    NMHDR hdr;
+    IMAGELISTDRAWPARAMS *pimldp;
+    HRESULT hr;
+    HTREEITEM hItem;
+    LPARAM lParam;
+    DWORD dwRetFlags;
+    int iRetImageIndex;
+} NMTVASYNCDRAW;
+
 #include <pshpack1.h>
 typedef struct tagTVKEYDOWN
 {
@@ -2739,6 +2813,8 @@ typedef struct tagTVKEYDOWN
 		TreeView_GetNextItem(hwnd, NULL, TVGN_ROOT)
 #define TreeView_GetLastVisible(hwnd) \
 		TreeView_GetNextItem(hwnd, NULL, TVGN_LASTVISIBLE)
+#define TreeView_GetNextSelected(hwnd) \
+		TreeView_GetNextItem(hwnd, NULL, TVGN_NEXTSELECTED)
 
 
 #define TreeView_Select(hwnd, hitem, code) \
@@ -2929,6 +3005,8 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVCF_IMAGE              0x0010
 #define LVCF_ORDER              0x0020
 #define LVCF_MINWIDTH           0x0040
+#define LVCF_DEFAULTWIDTH       0x0080
+#define LVCF_IDEALWIDTH         0x0100
 
 #define LVCFMT_LEFT             0x0000
 #define LVCFMT_RIGHT            0x0001
@@ -3244,6 +3322,8 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVN_GETINFOTIP          WINELIB_NAME_AW(LVN_GETINFOTIP)
 #define LVN_INCREMENTALSEARCHA  (LVN_FIRST-62)
 #define LVN_INCREMENTALSEARCHW  (LVN_FIRST-63)
+#define LVN_COLUMNDROPDOWN      (LVN_FIRST-64)
+#define LVN_COLUMNOVERFLOWCLICK (LVN_FIRST-66)
 #define LVN_INCREMENTALSEARCH   WINELIB_NAME_AW(LVN_INCREMENTALSEARCH)
 #define LVN_BEGINSCROLL         (LVN_FIRST-80)
 #define LVN_ENDSCROLL           (LVN_FIRST-81)
@@ -3364,6 +3444,7 @@ typedef struct tagLVBKIMAGEW
 #define LVBKIF_STYLE_MASK       0x00000010
 #define LVBKIF_FLAG_TILEOFFSET  0x00000100
 #define LVBKIF_TYPE_WATERMARK   0x10000000
+#define LVBKIF_FLAG_ALPHABLEND  0x20000000
 
 #define ListView_SetBkImage(hwnd, plvbki) \
     (BOOL)SNDMSG((hwnd), LVM_SETBKIMAGE, 0, (LPARAM)plvbki)
@@ -4557,10 +4638,15 @@ static const WCHAR MONTHCAL_CLASSW[] = { 'S','y','s',
 #define MCM_GETMONTHDELTA     (MCM_FIRST + 19)
 #define MCM_SETMONTHDELTA     (MCM_FIRST + 20)
 #define MCM_GETMAXTODAYWIDTH  (MCM_FIRST + 21)
+#define MCM_GETCURRENTVIEW    (MCM_FIRST + 22)
 #define MCM_GETCALENDARCOUNT  (MCM_FIRST + 23)
+#define MCM_GETCALENDARGRIDINFO (MCM_FIRST + 24)
+#define MCM_GETCALID          (MCM_FIRST + 27)
+#define MCM_SETCALID          (MCM_FIRST + 28)
 #define MCM_SIZERECTTOMIN     (MCM_FIRST + 29)
 #define MCM_SETCALENDARBORDER (MCM_FIRST + 30)
 #define MCM_GETCALENDARBORDER (MCM_FIRST + 31)
+#define MCM_SETCURRENTVIEW    (MCM_FIRST + 32)
 #define MCM_GETUNICODEFORMAT  CCM_GETUNICODEFORMAT
 #define MCM_SETUNICODEFORMAT  CCM_SETUNICODEFORMAT
 
@@ -4582,6 +4668,7 @@ static const WCHAR MONTHCAL_CLASSW[] = { 'S','y','s',
 #define MCHT_TITLE             0x00010000
 #define MCHT_CALENDAR          0x00020000
 #define MCHT_TODAYLINK         0x00030000
+#define MCHT_CALENDARCONTROL   0x00100000
 
 #define MCHT_NEXT              0x01000000
 #define MCHT_PREV              0x02000000
@@ -4598,7 +4685,8 @@ static const WCHAR MONTHCAL_CLASSW[] = { 'S','y','s',
 #define MCHT_CALENDARDATEPREV  (MCHT_CALENDARDATE | MCHT_PREV)
 #define MCHT_CALENDARDAY       (MCHT_CALENDAR | 0x0002)
 #define MCHT_CALENDARWEEKNUM   (MCHT_CALENDAR | 0x0003)
-
+#define MCHT_CALENDARDATEMIN   (MCHT_CALENDAR | 0x0004)
+#define MCHT_CALENDARDATEMAX   (MCHT_CALENDAR | 0x0005)
 
 
 #define GMR_VISIBLE     0
@@ -4724,7 +4812,11 @@ static const WCHAR DATETIMEPICK_CLASSW[] = { 'S','y','s',
 #define DTM_GETMONTHCAL		(DTM_FIRST+8)
 #define DTM_SETMCFONT		(DTM_FIRST+9)
 #define DTM_GETMCFONT		(DTM_FIRST+10)
-
+#define DTM_SETMCSTYLE		(DTM_FIRST+11)
+#define DTM_GETMCSTYLE		(DTM_FIRST+12)
+#define DTM_CLOSEMONTHCAL	(DTM_FIRST+13)
+#define DTM_GETDATETIMEPICKERINFO (DTM_FIRST+14)
+#define DTM_GETIDEALSIZE	(DTM_FIRST+15)
 
 /* Datetime Notifications */
 
@@ -5113,7 +5205,9 @@ enum _TASKDIALOG_FLAGS
     TDF_POSITION_RELATIVE_TO_WINDOW = 0x1000,
     TDF_RTL_LAYOUT                  = 0x2000,
     TDF_NO_DEFAULT_RADIO_BUTTON     = 0x4000,
-    TDF_CAN_BE_MINIMIZED            = 0x8000
+    TDF_CAN_BE_MINIMIZED            = 0x8000,
+    TDF_NO_SET_FOREGROUND           = 0x10000,
+    TDF_SIZE_TO_CONTENT             = 0x01000000
 };
 typedef int TASKDIALOG_FLAGS;
 
