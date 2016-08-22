@@ -851,7 +851,7 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
 {
     RECT rbox, rtext, client;
     HBRUSH hBrush;
-    int delta;
+    int delta, text_offset;
     UINT dtFlags;
     HFONT hFont;
     LONG state = get_button_state( hwnd );
@@ -869,6 +869,8 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
     rbox = rtext = client;
 
     if ((hFont = get_button_font( hwnd ))) SelectObject( hDC, hFont );
+    GetCharWidthW( hDC, '0', '0', &text_offset );
+    text_offset /= 2;
 
     parent = GetParent(hwnd);
     if (!parent) parent = hwnd;
@@ -881,14 +883,12 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
 
     if (style & BS_LEFTTEXT)
     {
-	/* magic +4 is what CTL3D expects */
-
-        rtext.right -= checkBoxWidth + 4;
+        rtext.right -= checkBoxWidth + text_offset;
         rbox.left = rbox.right - checkBoxWidth;
     }
     else
     {
-        rtext.left += checkBoxWidth + 4;
+        rtext.left += checkBoxWidth + text_offset;
         rbox.right = checkBoxWidth;
     }
 
