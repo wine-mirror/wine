@@ -3158,13 +3158,28 @@ enum caret_state
 #define SET_CLASS_EXTRA     0x0010
 
 
+/* Open the clipboard */
+@REQ(open_clipboard)
+    user_handle_t  window;         /* clipboard window */
+@REPLY
+    int            owner;          /* is the process already the owner? */
+@END
+
+
+/* Close the clipboard */
+@REQ(close_clipboard)
+    int            changed;        /* did it change since the open? */
+@REPLY
+    user_handle_t  viewer;         /* first clipboard viewer */
+    int            owner;          /* is the process already the owner? */
+@END
+
+
 /* Set/get clipboard information */
 @REQ(set_clipboard_info)
     unsigned int   flags;       /* flags for fields to set (see below) */
-    user_handle_t  clipboard;   /* clipboard window */
     user_handle_t  owner;       /* clipboard owner */
     user_handle_t  viewer;      /* first clipboard viewer */
-    unsigned int   seqno;       /* change sequence number */
 @REPLY
     unsigned int   flags;           /* status flags (see below) */
     user_handle_t  old_clipboard;   /* old clipboard window */
@@ -3173,11 +3188,9 @@ enum caret_state
     unsigned int   seqno;           /* current sequence number */
 @END
 
-#define SET_CB_OPEN      0x001
 #define SET_CB_VIEWER    0x004
 #define SET_CB_SEQNO     0x008
 #define SET_CB_RELOWNER  0x010
-#define SET_CB_CLOSE     0x020
 #define CB_OPEN          0x040
 #define CB_OWNER         0x080
 #define CB_PROCESS       0x100

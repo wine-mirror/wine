@@ -3734,13 +3734,32 @@ static void dump_set_class_info_reply( const struct set_class_info_reply *req )
     dump_uint64( ", old_extra_value=", &req->old_extra_value );
 }
 
+static void dump_open_clipboard_request( const struct open_clipboard_request *req )
+{
+    fprintf( stderr, " window=%08x", req->window );
+}
+
+static void dump_open_clipboard_reply( const struct open_clipboard_reply *req )
+{
+    fprintf( stderr, " owner=%d", req->owner );
+}
+
+static void dump_close_clipboard_request( const struct close_clipboard_request *req )
+{
+    fprintf( stderr, " changed=%d", req->changed );
+}
+
+static void dump_close_clipboard_reply( const struct close_clipboard_reply *req )
+{
+    fprintf( stderr, " viewer=%08x", req->viewer );
+    fprintf( stderr, ", owner=%d", req->owner );
+}
+
 static void dump_set_clipboard_info_request( const struct set_clipboard_info_request *req )
 {
     fprintf( stderr, " flags=%08x", req->flags );
-    fprintf( stderr, ", clipboard=%08x", req->clipboard );
     fprintf( stderr, ", owner=%08x", req->owner );
     fprintf( stderr, ", viewer=%08x", req->viewer );
-    fprintf( stderr, ", seqno=%08x", req->seqno );
 }
 
 static void dump_set_clipboard_info_reply( const struct set_clipboard_info_reply *req )
@@ -4579,6 +4598,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_class_request,
     (dump_func)dump_destroy_class_request,
     (dump_func)dump_set_class_info_request,
+    (dump_func)dump_open_clipboard_request,
+    (dump_func)dump_close_clipboard_request,
     (dump_func)dump_set_clipboard_info_request,
     (dump_func)dump_empty_clipboard_request,
     (dump_func)dump_open_token_request,
@@ -4855,6 +4876,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_class_reply,
     (dump_func)dump_destroy_class_reply,
     (dump_func)dump_set_class_info_reply,
+    (dump_func)dump_open_clipboard_reply,
+    (dump_func)dump_close_clipboard_reply,
     (dump_func)dump_set_clipboard_info_reply,
     NULL,
     (dump_func)dump_open_token_reply,
@@ -5131,6 +5154,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_class",
     "destroy_class",
     "set_class_info",
+    "open_clipboard",
+    "close_clipboard",
     "set_clipboard_info",
     "empty_clipboard",
     "open_token",

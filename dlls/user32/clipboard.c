@@ -172,33 +172,24 @@ INT WINAPI GetClipboardFormatNameA(UINT wFormat, LPSTR retStr, INT maxlen)
 
 /**************************************************************************
  *		OpenClipboard (USER32.@)
- *
- * Note: Netscape uses NULL hWnd to open the clipboard.
  */
-BOOL WINAPI OpenClipboard( HWND hWnd )
+BOOL WINAPI OpenClipboard( HWND hwnd )
 {
-    BOOL bRet;
-    UINT flags;
+    BOOL ret;
 
-    TRACE("(%p)...\n", hWnd);
+    TRACE( "%p\n", hwnd );
 
-    SERVER_START_REQ( set_clipboard_info )
+    SERVER_START_REQ( open_clipboard )
     {
-        req->flags = SET_CB_OPEN;
-        req->clipboard = wine_server_user_handle( hWnd );
-        if ((bRet = !wine_server_call( req )))
-            flags = reply->flags;
+        req->window = wine_server_user_handle( hwnd );
+        if ((ret = !wine_server_call( req )))
+        {
+            if (!reply->owner) bCBHasChanged = FALSE;
+        }
     }
     SERVER_END_REQ;
 
-    if (bRet && !(flags & CB_PROCESS))
-    {
-        bCBHasChanged = FALSE;
-    }
-
-    TRACE(" returning %i\n", bRet);
-
-    return bRet;
+    return ret;
 }
 
 
@@ -208,26 +199,24 @@ BOOL WINAPI OpenClipboard( HWND hWnd )
 BOOL WINAPI CloseClipboard(void)
 {
     HWND viewer = 0;
-    UINT flags;
-    BOOL ret;
+    BOOL ret, owner = FALSE;
 
     TRACE("() Changed=%d\n", bCBHasChanged);
 
-    SERVER_START_REQ( set_clipboard_info )
+    SERVER_START_REQ( close_clipboard )
     {
-        req->flags = SET_CB_CLOSE;
-        if (bCBHasChanged) req->flags |= SET_CB_SEQNO;
+        req->changed = bCBHasChanged;
         if ((ret = !wine_server_call_err( req )))
         {
-            viewer = wine_server_ptr_handle( reply->old_viewer );
-            flags = reply->flags;
+            viewer = wine_server_ptr_handle( reply->viewer );
+            owner = reply->owner;
         }
     }
     SERVER_END_REQ;
 
     if (!ret) return FALSE;
 
-    if (bCBHasChanged && (flags & CB_PROCESS))
+    if (bCBHasChanged && owner)
     {
         USER_Driver->pEndClipboardUpdate();
         if (viewer) SendNotifyMessageW(viewer, WM_DRAWCLIPBOARD, (WPARAM) GetClipboardOwner(), 0);

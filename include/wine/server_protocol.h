@@ -4460,14 +4460,40 @@ struct set_class_info_reply
 
 
 
+struct open_clipboard_request
+{
+    struct request_header __header;
+    user_handle_t  window;
+};
+struct open_clipboard_reply
+{
+    struct reply_header __header;
+    int            owner;
+    char __pad_12[4];
+};
+
+
+
+struct close_clipboard_request
+{
+    struct request_header __header;
+    int            changed;
+};
+struct close_clipboard_reply
+{
+    struct reply_header __header;
+    user_handle_t  viewer;
+    int            owner;
+};
+
+
+
 struct set_clipboard_info_request
 {
     struct request_header __header;
     unsigned int   flags;
-    user_handle_t  clipboard;
     user_handle_t  owner;
     user_handle_t  viewer;
-    unsigned int   seqno;
 };
 struct set_clipboard_info_reply
 {
@@ -4480,11 +4506,9 @@ struct set_clipboard_info_reply
     char __pad_28[4];
 };
 
-#define SET_CB_OPEN      0x001
 #define SET_CB_VIEWER    0x004
 #define SET_CB_SEQNO     0x008
 #define SET_CB_RELOWNER  0x010
-#define SET_CB_CLOSE     0x020
 #define CB_OPEN          0x040
 #define CB_OWNER         0x080
 #define CB_PROCESS       0x100
@@ -5631,6 +5655,8 @@ enum request
     REQ_create_class,
     REQ_destroy_class,
     REQ_set_class_info,
+    REQ_open_clipboard,
+    REQ_close_clipboard,
     REQ_set_clipboard_info,
     REQ_empty_clipboard,
     REQ_open_token,
@@ -5911,6 +5937,8 @@ union generic_request
     struct create_class_request create_class_request;
     struct destroy_class_request destroy_class_request;
     struct set_class_info_request set_class_info_request;
+    struct open_clipboard_request open_clipboard_request;
+    struct close_clipboard_request close_clipboard_request;
     struct set_clipboard_info_request set_clipboard_info_request;
     struct empty_clipboard_request empty_clipboard_request;
     struct open_token_request open_token_request;
@@ -6189,6 +6217,8 @@ union generic_reply
     struct create_class_reply create_class_reply;
     struct destroy_class_reply destroy_class_reply;
     struct set_class_info_reply set_class_info_reply;
+    struct open_clipboard_reply open_clipboard_reply;
+    struct close_clipboard_reply close_clipboard_reply;
     struct set_clipboard_info_reply set_clipboard_info_reply;
     struct empty_clipboard_reply empty_clipboard_reply;
     struct open_token_reply open_token_reply;
@@ -6250,6 +6280,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 509
+#define SERVER_PROTOCOL_VERSION 510
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
