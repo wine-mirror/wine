@@ -5541,6 +5541,13 @@ static void test_texture(void)
         0x10, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x10, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
         0x10, 0x7f, 0xb6, 0x6d, 0xdb, 0xb6, 0x6d, 0xdb, 0x10, 0x7f, 0xb6, 0x6d, 0xdb, 0xb6, 0x6d, 0xdb,
     };
+    static const BYTE bc7_data[] =
+    {
+        0x02, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x02, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x02, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
+    };
     static const struct texture rgba_texture =
     {
         4, 4, 3, 1, DXGI_FORMAT_R8G8B8A8_UNORM,
@@ -5561,9 +5568,11 @@ static void test_texture(void)
     static const struct texture bc3_texture = {8, 8, 1, 1, DXGI_FORMAT_BC3_UNORM, {{bc3_data, 2 * 16}}};
     static const struct texture bc4_texture = {8, 8, 1, 1, DXGI_FORMAT_BC4_UNORM, {{bc4_data, 2 * 8}}};
     static const struct texture bc5_texture = {8, 8, 1, 1, DXGI_FORMAT_BC5_UNORM, {{bc5_data, 2 * 16}}};
+    static const struct texture bc7_texture = {8, 8, 1, 1, DXGI_FORMAT_BC7_UNORM, {{bc7_data, 2 * 16}}};
     static const struct texture bc1_texture_srgb = {8, 8, 1, 1, DXGI_FORMAT_BC1_UNORM_SRGB, {{bc1_data, 2 * 8}}};
     static const struct texture bc2_texture_srgb = {8, 8, 1, 1, DXGI_FORMAT_BC2_UNORM_SRGB, {{bc2_data, 2 * 16}}};
     static const struct texture bc3_texture_srgb = {8, 8, 1, 1, DXGI_FORMAT_BC3_UNORM_SRGB, {{bc3_data, 2 * 16}}};
+    static const struct texture bc7_texture_srgb = {8, 8, 1, 1, DXGI_FORMAT_BC7_UNORM_SRGB, {{bc7_data, 2 * 16}}};
     static const struct texture bc1_typeless = {8, 8, 1, 1, DXGI_FORMAT_BC1_TYPELESS, {{bc1_data, 2 * 8}}};
     static const struct texture bc2_typeless = {8, 8, 1, 1, DXGI_FORMAT_BC2_TYPELESS, {{bc2_data, 2 * 16}}};
     static const struct texture bc3_typeless = {8, 8, 1, 1, DXGI_FORMAT_BC3_TYPELESS, {{bc3_data, 2 * 16}}};
@@ -5650,6 +5659,13 @@ static void test_texture(void)
         0xff00ffff, 0xff00ffff, 0xff000000, 0xff000000,
         0xff00ffff, 0xff00ffff, 0xff000000, 0xff000000,
     };
+    static const DWORD bc7_colors[] =
+    {
+        0xff0000fc, 0xff0000fc, 0xff00fc00, 0xff00fc00,
+        0xff0000fc, 0xff0000fc, 0xff00fc00, 0xff00fc00,
+        0xfffc0000, 0xfffc0000, 0xffffffff, 0xffffffff,
+        0xfffc0000, 0xfffc0000, 0xffffffff, 0xffffffff,
+    };
     static const DWORD sint8_colors[] =
     {
         0x7e80807e, 0x7e807e7e, 0x7e807e80, 0x7e7e7e80,
@@ -5692,6 +5708,8 @@ static void test_texture(void)
         {&ps_ld,              &bc3_texture_srgb, POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc_colors},
         {&ps_ld,              &bc4_texture,      POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc4_colors},
         {&ps_ld,              &bc5_texture,      POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc5_colors},
+        {&ps_ld,              &bc7_texture,      POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc7_colors},
+        {&ps_ld,              &bc7_texture_srgb, POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc7_colors},
         {&ps_ld,              NULL,              POINT,        0.0f, 0.0f,    0.0f,  0.0f, zero_colors},
         {&ps_ld,              NULL,              POINT,        0.0f, 0.0f, MIP_MAX,  0.0f, zero_colors},
         {&ps_ld_sint8,        &sint8_texture,    POINT,        0.0f, 0.0f,    0.0f,  0.0f, sint8_colors},
@@ -5701,6 +5719,8 @@ static void test_texture(void)
         {&ps_sample,          &bc3_texture,      POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc_colors},
         {&ps_sample,          &bc4_texture,      POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc4_colors},
         {&ps_sample,          &bc5_texture,      POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc5_colors},
+        {&ps_sample,          &bc7_texture,      POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc7_colors},
+        {&ps_sample,          &bc7_texture_srgb, POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc7_colors},
         {&ps_sample,          &rgba_texture,     POINT,        0.0f, 0.0f,    0.0f,  0.0f, rgba_level_0},
         {&ps_sample,          &rgba_texture,     POINT,        0.0f, 0.0f, MIP_MAX,  0.0f, rgba_level_0},
         {&ps_sample,          &rgba_texture,     POINT,        2.0f, 0.0f, MIP_MAX,  0.0f, rgba_level_0},
@@ -5863,6 +5883,14 @@ static void test_texture(void)
     {
         const struct texture_test *test = &texture_tests[i];
 
+        if (test->texture && (test->texture->format == DXGI_FORMAT_BC7_UNORM
+                || test->texture->format == DXGI_FORMAT_BC7_UNORM_SRGB)
+                && feature_level < D3D_FEATURE_LEVEL_11_0)
+        {
+            skip("Feature level >= 11.0 is required for BC7 tests.\n");
+            continue;
+        }
+
         if (current_ps != test->ps)
         {
             if (ps)
@@ -5940,7 +5968,7 @@ static void test_texture(void)
             for (x = 0; x < 4; ++x)
             {
                 color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120);
-                ok(compare_color(color, test->expected_colors[y * 4 + x], 1),
+                ok(compare_color(color, test->expected_colors[y * 4 + x], 2),
                         "Test %u: Got unexpected color 0x%08x at (%u, %u).\n", i, color, x, y);
             }
         }
