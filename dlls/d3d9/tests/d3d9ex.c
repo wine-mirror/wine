@@ -1465,7 +1465,7 @@ static void test_reset_ex(void)
     modes[i].RefreshRate = 0;
     modes[i].ScanLineOrdering = 0;
     hr = IDirect3DDevice9Ex_ResetEx(device, &d3dpp, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_ResetEx(device, &d3dpp, &modes[i]);
     ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_TestCooperativeLevel(device);
@@ -1665,7 +1665,7 @@ static void test_reset_ex(void)
     d3dpp.BackBufferHeight = 400;
     d3dpp.BackBufferFormat = D3DFMT_A8R8G8B8;
     hr = IDirect3DDevice9Ex_ResetEx(device, &d3dpp, &mode);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_ResetEx(device, &d3dpp, NULL);
     ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_TestCooperativeLevel(device);
@@ -1673,8 +1673,8 @@ static void test_reset_ex(void)
 
     width = GetSystemMetrics(SM_CXSCREEN);
     height = GetSystemMetrics(SM_CYSCREEN);
-    todo_wine ok(width == modes[1].Width, "Screen width is %u, expected %u.\n", width, modes[1].Width);
-    todo_wine ok(height == modes[1].Height, "Screen height is %u, expected %u.\n", height, modes[1].Height);
+    ok(width == modes[1].Width, "Screen width is %u, expected %u.\n", width, modes[1].Width);
+    ok(height == modes[1].Height, "Screen height is %u, expected %u.\n", height, modes[1].Height);
 
     hr = IDirect3DDevice9Ex_GetScissorRect(device, &rect);
     ok(SUCCEEDED(hr), "Failed to get scissor rect, hr %#x.\n", hr);

@@ -3449,6 +3449,12 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_ResetEx(IDirect3DDevice9Ex *
 
     TRACE("iface %p, present_parameters %p, mode %p.\n", iface, present_parameters, mode);
 
+    if (!present_parameters->Windowed == !mode)
+    {
+        WARN("Mode can be passed if and only if Windowed is FALSE.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
     return d3d9_device_reset(device, present_parameters, mode);
 }
 
