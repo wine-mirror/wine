@@ -114,3 +114,11 @@ interface IWindowsParentalControls : IWindowsParentalControlsCore
             [in] LPCWSTR pcszSID,
             [out] IWPCGamesSettings **ppSettings) ;
 }
+
+[
+    uuid(e77cc89b-7401-4c04-8ced-149db35add04)
+]
+coclass WindowsParentalControls
+{
+    [default] interface IWindowsParentalControls;
+}

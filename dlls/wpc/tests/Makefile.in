@@ -1,0 +1,4 @@
+TESTDLL = wpc.dll
+IMPORTS = ole32
+
+C_SRCS = wpc.c
