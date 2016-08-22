@@ -1,0 +1,4 @@
+MODULE = wpc.dll
+
+C_SRCS = \
+	wpc.c
