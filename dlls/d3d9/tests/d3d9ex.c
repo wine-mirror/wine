@@ -542,7 +542,7 @@ static void test_get_adapter_displaymode_ex(void)
     D3DDISPLAYMODE mode;
     D3DDISPLAYMODEEX mode_ex;
     D3DDISPLAYROTATION rotation;
-    DEVMODEW startmode;
+    DEVMODEW startmode, devmode;
     LONG retval;
 
     hr = pDirect3DCreate9Ex(D3D_SDK_VERSION, &d3d9ex);
@@ -575,21 +575,22 @@ static void test_get_adapter_displaymode_ex(void)
     ok(retval, "Failed to retrieve current display mode, retval %d.\n", retval);
     if (!retval) goto out;
 
-    startmode.dmFields = DM_DISPLAYORIENTATION | DM_PELSWIDTH | DM_PELSHEIGHT;
-    S2(U1(startmode)).dmDisplayOrientation = DMDO_180;
-    retval = ChangeDisplaySettingsExW(NULL, &startmode, NULL, 0, NULL);
-
-    if(retval == DISP_CHANGE_BADMODE)
+    devmode = startmode;
+    devmode.dmFields = DM_DISPLAYORIENTATION | DM_PELSWIDTH | DM_PELSHEIGHT;
+    S2(U1(devmode)).dmDisplayOrientation = DMDO_180;
+    retval = ChangeDisplaySettingsExW(NULL, &devmode, NULL, 0, NULL);
+    if (retval == DISP_CHANGE_BADMODE)
     {
-        trace(" Test skipped: graphics mode is not supported\n");
+        skip("Graphics mode is not supported.\n");
         goto out;
     }
 
-    ok(retval == DISP_CHANGE_SUCCESSFUL,"ChangeDisplaySettingsEx failed with %d\n", retval);
+    ok(retval == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsEx failed with %d.\n", retval);
     /* try retrieve orientation info with EnumDisplaySettingsEx*/
-    startmode.dmFields = 0;
-    S2(U1(startmode)).dmDisplayOrientation = 0;
-    ok(EnumDisplaySettingsExW(NULL, ENUM_CURRENT_SETTINGS, &startmode, EDS_ROTATEDMODE), "EnumDisplaySettingsEx failed\n");
+    devmode.dmFields = 0;
+    S2(U1(devmode)).dmDisplayOrientation = 0;
+    ok(EnumDisplaySettingsExW(NULL, ENUM_CURRENT_SETTINGS, &devmode, EDS_ROTATEDMODE),
+            "EnumDisplaySettingsEx failed.\n");
 
     /*now that orientation has changed start tests for GetAdapterDisplayModeEx: invalid Size*/
     memset(&mode_ex, 0, sizeof(mode_ex));
@@ -619,8 +620,8 @@ static void test_get_adapter_displaymode_ex(void)
     ok(mode_ex.ScanLineOrdering != 0, "ScanLineOrdering returned 0\n");
     /* Check that orientation is returned correctly by GetAdapterDisplayModeEx
      * and EnumDisplaySettingsEx(). */
-    todo_wine ok(S2(U1(startmode)).dmDisplayOrientation == DMDO_180 && rotation == D3DDISPLAYROTATION_180,
-            "rotation is %d instead of %d\n", rotation, S2(U1(startmode)).dmDisplayOrientation);
+    todo_wine ok(S2(U1(devmode)).dmDisplayOrientation == DMDO_180 && rotation == D3DDISPLAYROTATION_180,
+            "rotation is %d instead of %d\n", rotation, S2(U1(devmode)).dmDisplayOrientation);
 
     trace("GetAdapterDisplayModeEx returned Width = %d, Height = %d, RefreshRate = %d, Format = %x, ScanLineOrdering = %x, rotation = %d\n",
           mode_ex.Width, mode_ex.Height, mode_ex.RefreshRate, mode_ex.Format, mode_ex.ScanLineOrdering, rotation);
@@ -643,10 +644,12 @@ static void test_get_adapter_displaymode_ex(void)
     ok(mode_ex.ScanLineOrdering != 0, "ScanLineOrdering returned 0\n");
 
     /* return to the default mode */
-    ChangeDisplaySettingsExW(NULL, NULL, NULL, 0, NULL);
+    retval = ChangeDisplaySettingsExW(NULL, &startmode, NULL, 0, NULL);
+    ok(retval == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsEx failed with %d.\n", retval);
 out:
     IDirect3D9_Release(d3d9);
     IDirect3D9Ex_Release(d3d9ex);
+    DestroyWindow(window);
 }
 
 static void test_create_depth_stencil_surface_ex(void)
