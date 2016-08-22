@@ -5541,6 +5541,20 @@ static void test_texture(void)
         0x10, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x10, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
         0x10, 0x7f, 0xb6, 0x6d, 0xdb, 0xb6, 0x6d, 0xdb, 0x10, 0x7f, 0xb6, 0x6d, 0xdb, 0xb6, 0x6d, 0xdb,
     };
+    static const BYTE bc6h_u_data[] =
+    {
+        0xe3, 0x5e, 0x00, 0x00, 0x78, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x03, 0x80, 0x7b, 0x01, 0x00, 0xe0, 0x3d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x03, 0x00, 0x00, 0xee, 0x05, 0x00, 0x80, 0xf7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0xe3, 0xde, 0x7b, 0xef, 0x7d, 0xef, 0xbd, 0xf7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    };
+    static const BYTE bc6h_s_data[] =
+    {
+        0x63, 0x2f, 0x00, 0x00, 0xb8, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x03, 0x80, 0xbd, 0x00, 0x00, 0xe0, 0x1e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x03, 0x00, 0x00, 0xf6, 0x02, 0x00, 0x80, 0x7b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x63, 0xaf, 0xbd, 0xf6, 0xba, 0xe7, 0x9e, 0x7b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    };
     static const BYTE bc7_data[] =
     {
         0x02, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -5568,6 +5582,8 @@ static void test_texture(void)
     static const struct texture bc3_texture = {8, 8, 1, 1, DXGI_FORMAT_BC3_UNORM, {{bc3_data, 2 * 16}}};
     static const struct texture bc4_texture = {8, 8, 1, 1, DXGI_FORMAT_BC4_UNORM, {{bc4_data, 2 * 8}}};
     static const struct texture bc5_texture = {8, 8, 1, 1, DXGI_FORMAT_BC5_UNORM, {{bc5_data, 2 * 16}}};
+    static const struct texture bc6h_u_texture = {8, 8, 1, 1, DXGI_FORMAT_BC6H_UF16, {{bc6h_u_data, 2 * 16}}};
+    static const struct texture bc6h_s_texture = {8, 8, 1, 1, DXGI_FORMAT_BC6H_SF16, {{bc6h_s_data, 2 * 16}}};
     static const struct texture bc7_texture = {8, 8, 1, 1, DXGI_FORMAT_BC7_UNORM, {{bc7_data, 2 * 16}}};
     static const struct texture bc1_texture_srgb = {8, 8, 1, 1, DXGI_FORMAT_BC1_UNORM_SRGB, {{bc1_data, 2 * 8}}};
     static const struct texture bc2_texture_srgb = {8, 8, 1, 1, DXGI_FORMAT_BC2_UNORM_SRGB, {{bc2_data, 2 * 16}}};
@@ -5708,6 +5724,8 @@ static void test_texture(void)
         {&ps_ld,              &bc3_texture_srgb, POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc_colors},
         {&ps_ld,              &bc4_texture,      POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc4_colors},
         {&ps_ld,              &bc5_texture,      POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc5_colors},
+        {&ps_ld,              &bc6h_u_texture,   POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc_colors},
+        {&ps_ld,              &bc6h_s_texture,   POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc_colors},
         {&ps_ld,              &bc7_texture,      POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc7_colors},
         {&ps_ld,              &bc7_texture_srgb, POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc7_colors},
         {&ps_ld,              NULL,              POINT,        0.0f, 0.0f,    0.0f,  0.0f, zero_colors},
@@ -5719,6 +5737,8 @@ static void test_texture(void)
         {&ps_sample,          &bc3_texture,      POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc_colors},
         {&ps_sample,          &bc4_texture,      POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc4_colors},
         {&ps_sample,          &bc5_texture,      POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc5_colors},
+        {&ps_sample,          &bc6h_u_texture,   POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc_colors},
+        {&ps_sample,          &bc6h_s_texture,   POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc_colors},
         {&ps_sample,          &bc7_texture,      POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc7_colors},
         {&ps_sample,          &bc7_texture_srgb, POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc7_colors},
         {&ps_sample,          &rgba_texture,     POINT,        0.0f, 0.0f,    0.0f,  0.0f, rgba_level_0},
@@ -5888,6 +5908,14 @@ static void test_texture(void)
                 && feature_level < D3D_FEATURE_LEVEL_11_0)
         {
             skip("Feature level >= 11.0 is required for BC7 tests.\n");
+            continue;
+        }
+
+        if (test->texture && (test->texture->format == DXGI_FORMAT_BC6H_UF16
+                || test->texture->format == DXGI_FORMAT_BC6H_SF16)
+                && feature_level < D3D_FEATURE_LEVEL_11_0)
+        {
+            skip("Feature level >= 11.0 is required for BC6H tests.\n");
             continue;
         }
 
