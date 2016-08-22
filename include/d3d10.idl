@@ -242,7 +242,7 @@ const unsigned int D3D_SPEC_DATE_YEAR                                           
 cpp_quote("#endif")
 
 const unsigned int D3D10_APPEND_ALIGNED_ELEMENT                                         = 0xffffffff;
-const unsigned int _FACD3D10                                                            = 0x87;
+const unsigned int _FACD3D10                                                            = 0x879;
 const unsigned int _FACD3D10DEBUG                                                       = _FACD3D10 + 1;
 const unsigned int D3D10_FILTER_TYPE_MASK                                               = 0x3;
 const unsigned int D3D10_SDK_VERSION                                                    = 29;
