@@ -1282,6 +1282,28 @@ static void CALLBACK timerqueue_thread_proc( void *param )
 }
 
 /***********************************************************************
+ *           tp_new_worker_thread    (internal)
+ *
+ * Create and account a new worker thread for the desired pool.
+ */
+static NTSTATUS tp_new_worker_thread( struct threadpool *pool )
+{
+    HANDLE thread;
+    NTSTATUS status;
+
+    status = RtlCreateUserThread( GetCurrentProcess(), NULL, FALSE, NULL, 0, 0,
+                                  threadpool_worker_proc, pool, &thread, NULL );
+    if (status == STATUS_SUCCESS)
+    {
+        interlocked_inc( &pool->refcount );
+        pool->num_workers++;
+        pool->num_busy_workers++;
+        NtClose( thread );
+    }
+    return status;
+}
+
+/***********************************************************************
  *           tp_timerqueue_lock    (internal)
  *
  * Acquires a lock on the global timerqueue. When the lock is acquired
@@ -1713,18 +1735,7 @@ static NTSTATUS tp_threadpool_lock( struct threadpool **out, TP_CALLBACK_ENVIRON
 
     /* Make sure that the threadpool has at least one thread. */
     if (!pool->num_workers)
-    {
-        HANDLE thread;
-        status = RtlCreateUserThread( GetCurrentProcess(), NULL, FALSE, NULL, 0, 0,
-                                      threadpool_worker_proc, pool, &thread, NULL );
-        if (status == STATUS_SUCCESS)
-        {
-            interlocked_inc( &pool->refcount );
-            pool->num_workers++;
-            pool->num_busy_workers++;
-            NtClose( thread );
-        }
-    }
+        status = tp_new_worker_thread( pool );
 
     /* Keep a reference, and increment objcount to ensure that the
      * last thread doesn't terminate. */
@@ -1910,18 +1921,7 @@ static void tp_object_submit( struct threadpool_object *object, BOOL signaled )
     /* Start new worker threads if required. */
     if (pool->num_busy_workers >= pool->num_workers &&
         pool->num_workers < pool->max_workers)
-    {
-        HANDLE thread;
-        status = RtlCreateUserThread( GetCurrentProcess(), NULL, FALSE, NULL, 0, 0,
-                                      threadpool_worker_proc, pool, &thread, NULL );
-        if (status == STATUS_SUCCESS)
-        {
-            interlocked_inc( &pool->refcount );
-            pool->num_workers++;
-            pool->num_busy_workers++;
-            NtClose( thread );
-        }
-    }
+        status = tp_new_worker_thread( pool );
 
     /* Queue work item and increment refcount. */
     interlocked_inc( &object->refcount );
@@ -2406,16 +2406,7 @@ NTSTATUS WINAPI TpCallbackMayRunLong( TP_CALLBACK_INSTANCE *instance )
     {
         if (pool->num_workers < pool->max_workers)
         {
-            HANDLE thread;
-            status = RtlCreateUserThread( GetCurrentProcess(), NULL, FALSE, NULL, 0, 0,
-                                          threadpool_worker_proc, pool, &thread, NULL );
-            if (status == STATUS_SUCCESS)
-            {
-                interlocked_inc( &pool->refcount );
-                pool->num_workers++;
-                pool->num_busy_workers++;
-                NtClose( thread );
-            }
+            status = tp_new_worker_thread( pool );
         }
         else
         {
@@ -2708,16 +2699,9 @@ BOOL WINAPI TpSetPoolMinThreads( TP_POOL *pool, DWORD minimum )
 
     while (this->num_workers < minimum)
     {
-        HANDLE thread;
-        status = RtlCreateUserThread( GetCurrentProcess(), NULL, FALSE, NULL, 0, 0,
-                                      threadpool_worker_proc, this, &thread, NULL );
+        status = tp_new_worker_thread( this );
         if (status != STATUS_SUCCESS)
             break;
-
-        interlocked_inc( &this->refcount );
-        this->num_workers++;
-        this->num_busy_workers++;
-        NtClose( thread );
     }
 
     if (status == STATUS_SUCCESS)
