@@ -1369,6 +1369,12 @@ static void test_reset(void)
         goto cleanup;
     }
     hr = IDirect3DDevice8_TestCooperativeLevel(device1);
+    /* This skips the test on testbot Win 8 VMs. */
+    if (hr == D3DERR_DEVICELOST)
+    {
+        skip("Device is lost.\n");
+        goto cleanup;
+    }
     ok(SUCCEEDED(hr), "TestCooperativeLevel failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_GetDeviceCaps(device1, &caps);
