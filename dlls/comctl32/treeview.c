@@ -31,7 +31,7 @@
  *   missing notifications: TVN_GETINFOTIP, TVN_KEYDOWN,
  *      TVN_SETDISPINFO
  *
- *   missing styles: TVS_FULLROWSELECT, TVS_INFOTIP, TVS_RTLREADING,
+ *   missing styles: TVS_INFOTIP, TVS_RTLREADING,
  *
  *   missing item styles: TVIS_EXPANDPARTIAL, TVIS_EX_FLAT,
  *      TVIS_EX_DISABLED
@@ -2570,6 +2570,13 @@ TREEVIEW_DrawItem(const TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *item)
 
     if (cditem & CDRF_NEWFONT)
 	TREEVIEW_ComputeTextWidth(infoPtr, item, hdc);
+
+    if (TREEVIEW_IsFullRowSelect(infoPtr))
+    {
+        HBRUSH brush = CreateSolidBrush(nmcdhdr.clrTextBk);
+        FillRect(hdc, &item->rect, brush);
+        DeleteObject(brush);
+    }
 
     TREEVIEW_DrawItemLines(infoPtr, hdc, item);
 
