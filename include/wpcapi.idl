@@ -19,6 +19,10 @@
 import "oaidl.idl";
 import "ocidl.idl";
 
+#ifndef __WIDL__
+#define threading(model)
+#endif
+
 typedef [v1_enum] enum tagWPCFLAG_RESTRICTION {
     WPCFLAG_NO_RESTRICTION    = 0x0000,
     WPCFLAG_LOGGING_REQUIRED  = 0x0001,
@@ -116,6 +120,8 @@ interface IWindowsParentalControls : IWindowsParentalControlsCore
 }
 
 [
+    helpstring("WindowsParentalControls class"),
+    threading(both),
     uuid(e77cc89b-7401-4c04-8ced-149db35add04)
 ]
 coclass WindowsParentalControls

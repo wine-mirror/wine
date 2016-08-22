@@ -2,3 +2,5 @@ MODULE = wpc.dll
 
 C_SRCS = \
 	wpc.c
+
+IDL_SRCS = wpc_classes.idl

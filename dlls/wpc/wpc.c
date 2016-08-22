@@ -17,10 +17,13 @@
  */
 
 #include "wpcapi.h"
+#include "rpcproxy.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wpc);
+
+static HINSTANCE wpc_instance;
 
 /******************************************************************
  *              DllMain
@@ -34,6 +37,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
         return FALSE;  /* prefer native version */
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hInstDLL);
+        wpc_instance = hInstDLL;
         break;
     }
 
@@ -56,4 +60,22 @@ HRESULT WINAPI DllCanUnloadNow(void)
 {
     TRACE("\n");
     return S_FALSE;
+}
+
+/***********************************************************************
+ *          DllRegisterServer (wpc.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    TRACE("()\n");
+    return __wine_register_resources(wpc_instance);
+}
+
+/***********************************************************************
+ *          DllUnregisterServer (wpc.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    TRACE("()\n");
+    return __wine_unregister_resources(wpc_instance);
 }

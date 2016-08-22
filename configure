@@ -18176,7 +18176,7 @@ wine_fn_config_test dlls/wmp/tests wmp_test
 wine_fn_config_dll wmvcore enable_wmvcore
 wine_fn_config_dll wnaspi32 enable_wnaspi32 implib
 wine_fn_config_dll wow32 enable_win16 implib
-wine_fn_config_dll wpc enable_wpc
+wine_fn_config_dll wpc enable_wpc clean
 wine_fn_config_test dlls/wpc/tests wpc_test
 wine_fn_config_dll wpcap enable_wpcap
 wine_fn_config_dll ws2_32 enable_ws2_32 implib
