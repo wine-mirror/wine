@@ -143,10 +143,6 @@ static const pfPaint btnPaintFunc[MAX_BTN_TYPE] =
     OB_Paint     /* BS_OWNERDRAW */
 };
 
-static HBITMAP hbitmapCheckBoxes = 0;
-static WORD checkBoxWidth = 0, checkBoxHeight = 0;
-
-
 /*********************************************************************
  * button class descriptor
  */
@@ -243,14 +239,6 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
         break;
 
     case WM_CREATE:
-        if (!hbitmapCheckBoxes)
-        {
-            BITMAP bmp;
-            hbitmapCheckBoxes = LoadBitmapW(0, MAKEINTRESOURCEW(OBM_CHECKBOXES));
-            GetObjectW( hbitmapCheckBoxes, sizeof(bmp), &bmp );
-            checkBoxWidth  = bmp.bmWidth / 4;
-            checkBoxHeight = bmp.bmHeight / 3;
-        }
         if (btn_type >= MAX_BTN_TYPE)
             return -1; /* abort */
 
@@ -851,7 +839,7 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
 {
     RECT rbox, rtext, client;
     HBRUSH hBrush;
-    int delta, text_offset;
+    int delta, text_offset, checkBoxWidth, checkBoxHeight;
     UINT dtFlags;
     HFONT hFont;
     LONG state = get_button_state( hwnd );
@@ -867,6 +855,9 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
 
     GetClientRect(hwnd, &client);
     rbox = rtext = client;
+
+    checkBoxWidth  = 12 * GetDeviceCaps( hDC, LOGPIXELSX ) / 96 + 1;
+    checkBoxHeight = 12 * GetDeviceCaps( hDC, LOGPIXELSY ) / 96 + 1;
 
     if ((hFont = get_button_font( hwnd ))) SelectObject( hDC, hFont );
     GetCharWidthW( hDC, '0', '0', &text_offset );
