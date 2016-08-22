@@ -188,7 +188,7 @@ void          __cdecl _Exit(int);
 void          __cdecl _exit(int);
 void          __cdecl abort(void);
 int           __cdecl abs(int);
-int           __cdecl atexit(void (*)(void));
+int           __cdecl atexit(void (__cdecl *)(void));
 double        __cdecl atof(const char*);
 int           __cdecl atoi(const char*);
 int           __cdecl _atoi_l(const char*,_locale_t);
@@ -226,8 +226,8 @@ __int64       __cdecl _strtoi64_l(const char*,char**,int,_locale_t);
 unsigned __int64 __cdecl _strtoui64(const char*,char**,int);
 unsigned __int64 __cdecl _strtoui64_l(const char*,char**,int,_locale_t);
 int           __cdecl system(const char*);
-void*         __cdecl bsearch(const void*,const void*,size_t,size_t,int (*)(const void*,const void*));
-void          __cdecl qsort(void*,size_t,size_t,int (*)(const void*,const void*));
+void*         __cdecl bsearch(const void*,const void*,size_t,size_t,int (__cdecl *)(const void*,const void*));
+void          __cdecl qsort(void*,size_t,size_t,int (__cdecl *)(const void*,const void*));
 
 #ifndef _WSTDLIB_DEFINED
 #define _WSTDLIB_DEFINED

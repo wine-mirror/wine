@@ -26,17 +26,19 @@
 extern "C" {
 #endif
 
-void* __cdecl _lfind(const void*,const void*,unsigned int*,unsigned int,int (*)(const void*,const void*));
-void* __cdecl _lsearch(const void*,void*,unsigned int*,unsigned int,int (*)(const void*,const void*));
-void* __cdecl bsearch(const void*,const void*,size_t,size_t,int (*)(const void*,const void*));
-void  __cdecl qsort(void*,size_t,size_t,int (*)(const void*,const void*));
+void* __cdecl _lfind(const void*,const void*,unsigned int*,unsigned int,int (__cdecl *)(const void*,const void*));
+void* __cdecl _lsearch(const void*,void*,unsigned int*,unsigned int,int (__cdecl *)(const void*,const void*));
+void* __cdecl bsearch(const void*,const void*,size_t,size_t,int (__cdecl *)(const void*,const void*));
+void  __cdecl qsort(void*,size_t,size_t,int (__cdecl *)(const void*,const void*));
 
 #ifdef __cplusplus
 }
 #endif
 
 
-static inline void* lfind(const void* match, const void* start, unsigned int* array_size, unsigned int elem_size, int (*cf)(const void*,const void*)) { return _lfind(match, start, array_size, elem_size, cf); }
-static inline void* lsearch(const void* match, void* start, unsigned int* array_size, unsigned int elem_size, int (*cf)(const void*,const void*) ) { return _lsearch(match, start, array_size, elem_size, cf); }
+static inline void* lfind(const void* match, const void* start, unsigned int* array_size, unsigned int elem_size, int (__cdecl *cf)(const void*,const void*))
+    { return _lfind(match, start, array_size, elem_size, cf); }
+static inline void* lsearch(const void* match, void* start, unsigned int* array_size, unsigned int elem_size, int (__cdecl *cf)(const void*,const void*) )
+    { return _lsearch(match, start, array_size, elem_size, cf); }
 
 #endif /* __WINE_SEARCH_H */
