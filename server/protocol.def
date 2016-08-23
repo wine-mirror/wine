@@ -3199,6 +3199,16 @@ enum caret_state
 @END
 
 
+/* Get clipboard information */
+@REQ(get_clipboard_info)
+@REPLY
+    user_handle_t  window;         /* clipboard window */
+    user_handle_t  owner;          /* clipboard owner */
+    user_handle_t  viewer;         /* clipboard viewer */
+    unsigned int   seqno;          /* current sequence number */
+@END
+
+
 /* Set the clipboard viewer window */
 @REQ(set_clipboard_viewer)
     user_handle_t  viewer;         /* clipboard viewer */

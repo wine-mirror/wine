@@ -227,10 +227,9 @@ HWND WINAPI GetClipboardOwner(void)
 {
     HWND hWndOwner = 0;
 
-    SERVER_START_REQ( set_clipboard_info )
+    SERVER_START_REQ( get_clipboard_info )
     {
-        req->flags = 0;
-        if (!wine_server_call_err( req )) hWndOwner = wine_server_ptr_handle( reply->old_owner );
+        if (!wine_server_call_err( req )) hWndOwner = wine_server_ptr_handle( reply->owner );
     }
     SERVER_END_REQ;
 
@@ -247,10 +246,9 @@ HWND WINAPI GetOpenClipboardWindow(void)
 {
     HWND hWndOpen = 0;
 
-    SERVER_START_REQ( set_clipboard_info )
+    SERVER_START_REQ( get_clipboard_info )
     {
-        req->flags = 0;
-        if (!wine_server_call_err( req )) hWndOpen = wine_server_ptr_handle( reply->old_clipboard );
+        if (!wine_server_call_err( req )) hWndOpen = wine_server_ptr_handle( reply->window );
     }
     SERVER_END_REQ;
 
@@ -292,10 +290,9 @@ HWND WINAPI GetClipboardViewer(void)
 {
     HWND hWndViewer = 0;
 
-    SERVER_START_REQ( set_clipboard_info )
+    SERVER_START_REQ( get_clipboard_info )
     {
-        req->flags = 0;
-        if (!wine_server_call_err( req )) hWndViewer = wine_server_ptr_handle( reply->old_viewer );
+        if (!wine_server_call_err( req )) hWndViewer = wine_server_ptr_handle( reply->viewer );
     }
     SERVER_END_REQ;
 
@@ -461,9 +458,8 @@ DWORD WINAPI GetClipboardSequenceNumber(VOID)
 {
     DWORD seqno = 0;
 
-    SERVER_START_REQ( set_clipboard_info )
+    SERVER_START_REQ( get_clipboard_info )
     {
-        req->flags = 0;
         if (!wine_server_call_err( req )) seqno = reply->seqno;
     }
     SERVER_END_REQ;

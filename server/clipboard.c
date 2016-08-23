@@ -248,6 +248,20 @@ DECL_HANDLER(empty_clipboard)
 }
 
 
+/* Get clipboard information */
+DECL_HANDLER(get_clipboard_info)
+{
+    struct clipboard *clipboard = get_process_clipboard();
+
+    if (!clipboard) return;
+
+    reply->window = clipboard->open_win;
+    reply->owner  = clipboard->owner_win;
+    reply->viewer = clipboard->viewer;
+    reply->seqno  = get_seqno( clipboard );
+}
+
+
 /* set the clipboard viewer window */
 DECL_HANDLER(set_clipboard_viewer)
 {

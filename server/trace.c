@@ -3774,6 +3774,18 @@ static void dump_empty_clipboard_request( const struct empty_clipboard_request *
 {
 }
 
+static void dump_get_clipboard_info_request( const struct get_clipboard_info_request *req )
+{
+}
+
+static void dump_get_clipboard_info_reply( const struct get_clipboard_info_reply *req )
+{
+    fprintf( stderr, " window=%08x", req->window );
+    fprintf( stderr, ", owner=%08x", req->owner );
+    fprintf( stderr, ", viewer=%08x", req->viewer );
+    fprintf( stderr, ", seqno=%08x", req->seqno );
+}
+
 static void dump_set_clipboard_viewer_request( const struct set_clipboard_viewer_request *req )
 {
     fprintf( stderr, " viewer=%08x", req->viewer );
@@ -4613,6 +4625,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_close_clipboard_request,
     (dump_func)dump_set_clipboard_info_request,
     (dump_func)dump_empty_clipboard_request,
+    (dump_func)dump_get_clipboard_info_request,
     (dump_func)dump_set_clipboard_viewer_request,
     (dump_func)dump_open_token_request,
     (dump_func)dump_set_global_windows_request,
@@ -4892,6 +4905,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_close_clipboard_reply,
     (dump_func)dump_set_clipboard_info_reply,
     NULL,
+    (dump_func)dump_get_clipboard_info_reply,
     (dump_func)dump_set_clipboard_viewer_reply,
     (dump_func)dump_open_token_reply,
     (dump_func)dump_set_global_windows_reply,
@@ -5171,6 +5185,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "close_clipboard",
     "set_clipboard_info",
     "empty_clipboard",
+    "get_clipboard_info",
     "set_clipboard_viewer",
     "open_token",
     "set_global_windows",

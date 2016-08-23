@@ -4526,6 +4526,22 @@ struct empty_clipboard_reply
 
 
 
+struct get_clipboard_info_request
+{
+    struct request_header __header;
+    char __pad_12[4];
+};
+struct get_clipboard_info_reply
+{
+    struct reply_header __header;
+    user_handle_t  window;
+    user_handle_t  owner;
+    user_handle_t  viewer;
+    unsigned int   seqno;
+};
+
+
+
 struct set_clipboard_viewer_request
 {
     struct request_header __header;
@@ -5674,6 +5690,7 @@ enum request
     REQ_close_clipboard,
     REQ_set_clipboard_info,
     REQ_empty_clipboard,
+    REQ_get_clipboard_info,
     REQ_set_clipboard_viewer,
     REQ_open_token,
     REQ_set_global_windows,
@@ -5957,6 +5974,7 @@ union generic_request
     struct close_clipboard_request close_clipboard_request;
     struct set_clipboard_info_request set_clipboard_info_request;
     struct empty_clipboard_request empty_clipboard_request;
+    struct get_clipboard_info_request get_clipboard_info_request;
     struct set_clipboard_viewer_request set_clipboard_viewer_request;
     struct open_token_request open_token_request;
     struct set_global_windows_request set_global_windows_request;
@@ -6238,6 +6256,7 @@ union generic_reply
     struct close_clipboard_reply close_clipboard_reply;
     struct set_clipboard_info_reply set_clipboard_info_reply;
     struct empty_clipboard_reply empty_clipboard_reply;
+    struct get_clipboard_info_reply get_clipboard_info_reply;
     struct set_clipboard_viewer_reply set_clipboard_viewer_reply;
     struct open_token_reply open_token_reply;
     struct set_global_windows_reply set_global_windows_reply;
@@ -6298,6 +6317,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 511
+#define SERVER_PROTOCOL_VERSION 512
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
