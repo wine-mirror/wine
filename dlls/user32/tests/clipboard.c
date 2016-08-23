@@ -93,7 +93,6 @@ static void set_clipboard_data_process( int arg )
         todo_wine_if( arg == 1 || arg == 3 )
         ok( IsClipboardFormatAvailable( CF_WAVE ), "process %u: CF_WAVE not available\n", arg );
         ret = SetClipboardData( CF_WAVE, GlobalAlloc( GMEM_DDESHARE | GMEM_ZEROINIT, 100 ));
-        todo_wine_if( arg == 2 || arg == 4 )
         ok( ret != 0, "process %u: SetClipboardData failed err %u\n", arg, GetLastError() );
     }
     else

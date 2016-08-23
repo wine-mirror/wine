@@ -3013,26 +3013,9 @@ void CDECL X11DRV_EmptyClipboard(void)
  */
 BOOL CDECL X11DRV_SetClipboardData(UINT wFormat, HANDLE hData, BOOL owner)
 {
-    DWORD flags = 0;
-    BOOL bResult = TRUE;
+    if (!owner) X11DRV_CLIPBOARD_UpdateCache();
 
-    /* If it's not owned, data can only be set if the format data is not already owned */
-    if (!owner)
-    {
-        LPWINE_CLIPDATA lpRender;
-
-        X11DRV_CLIPBOARD_UpdateCache();
-
-        if (((lpRender = X11DRV_CLIPBOARD_LookupData(wFormat)) &&
-            !(lpRender->wFlags & CF_FLAG_UNOWNED)))
-            bResult = FALSE;
-        else
-            flags = CF_FLAG_UNOWNED;
-    }
-
-    bResult &= X11DRV_CLIPBOARD_InsertClipboardData(wFormat, hData, flags, NULL, TRUE);
-
-    return bResult;
+    return X11DRV_CLIPBOARD_InsertClipboardData(wFormat, hData, 0, NULL, TRUE);
 }
 
 
