@@ -72,6 +72,92 @@ static double ff_effect_direction_to_rad(unsigned int dir)
     return (dir & 0xffff) * M_PI / 0x8000;
 }
 
+static void ff_dump_effect(struct ff_effect *effect)
+{
+    const char *type = "(Unknown)", *length = "INFINITE";
+    struct ff_envelope *env = NULL;
+    double angle;
+#define FE(x) case x: type = #x; break
+    switch (effect->type)
+    {
+        FE(FF_RUMBLE);
+        FE(FF_PERIODIC);
+        FE(FF_CONSTANT);
+        FE(FF_SPRING);
+        FE(FF_FRICTION);
+        FE(FF_DAMPER);
+        FE(FF_INERTIA);
+        FE(FF_RAMP);
+    }
+#undef FE
+
+    /* rotate so 0 points right */
+    angle = 360 - ff_effect_direction_to_rad(effect->direction + 0xc000) * 180 / M_PI;
+
+    if (effect->replay.length)
+      length = wine_dbg_sprintf("%u ms", effect->replay.length);
+
+    TRACE("type: 0x%x %s, id %d, direction 0x%x (angle: %.2f), time length %s, start delay %u ms\n",
+          effect->type, type, effect->id, effect->direction, angle, length, effect->replay.delay);
+    if (effect->trigger.button || effect->trigger.interval)
+        TRACE("trigger button %u, re-trigger interval %u ms\n",
+              effect->trigger.button, effect->trigger.interval);
+
+    if (effect->type == FF_PERIODIC)
+    {
+        struct ff_periodic_effect *per = &effect->u.periodic;
+        const char *wave = "(Unknown)";
+#define FE(x) case x: wave = #x; break
+        switch (per->waveform)
+        {
+            FE(FF_SQUARE);
+            FE(FF_TRIANGLE);
+            FE(FF_SINE);
+            FE(FF_SAW_UP);
+            FE(FF_SAW_DOWN);
+            FE(FF_CUSTOM);
+        }
+#undef FE
+        TRACE(" -> waveform 0x%x %s, period %u, magnitude %d, offset %d, phase %u, custom len %d\n",
+              per->waveform, wave, per->period, per->magnitude, per->offset, per->phase, per->custom_len);
+        env = &per->envelope;
+    }
+    else if (effect->type == FF_CONSTANT)
+    {
+        struct ff_constant_effect *cons = &effect->u.constant;
+        TRACE(" -> level %d\n", cons->level);
+        env = &cons->envelope;
+    }
+    else if (effect->type == FF_RAMP)
+    {
+        struct ff_ramp_effect *ramp = &effect->u.ramp;
+        TRACE(" -> start/end level %d/%d\n", ramp->start_level, ramp->end_level);
+        env = &ramp->envelope;
+    }
+    else if (effect->type == FF_RUMBLE)
+    {
+        struct ff_rumble_effect *rumble = &effect->u.rumble;
+        TRACE(" -> strong/weak magnitude %d/%d\n", rumble->strong_magnitude, rumble->weak_magnitude);
+    }
+    else if (effect->type == FF_SPRING || effect->type == FF_FRICTION ||
+             effect->type == FF_DAMPER || effect->type == FF_INERTIA)
+    {
+        struct ff_condition_effect *cond = effect->u.condition;
+        int i;
+        for (i = 0; i < 2; i++)
+        {
+            /* format numbers here to make them align correctly */
+            TRACE(" -> [%d] right/left saturation %5u/%5u, right/left coefficient %5d/%5d,"
+                  " deadband %5u, center %5d\n", i, cond[i].right_saturation, cond[i].left_saturation,
+                  cond[i].right_coeff, cond[i].left_coeff, cond[i].deadband, cond[i].center);
+        }
+    }
+
+    if (env)
+        TRACE(" -> envelope attack length/level %u/%u, fade length/level %u/%u\n",
+              env->attack_length, env->attack_level, env->fade_length, env->fade_level);
+}
+
 /******************************************************************************
  *      LinuxInputEffectImpl 
  */
@@ -89,6 +175,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_Download(
     LinuxInputEffectImpl *This = impl_from_IDirectInputEffect(iface);
 
     TRACE("(this=%p)\n", This);
+    ff_dump_effect(&This->effect);
 
     if (ioctl(*(This->fd), EVIOCSFF, &This->effect) == -1) {
 	if (errno == ENOMEM) {
