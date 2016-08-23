@@ -184,7 +184,7 @@ static HRESULT normalize_dsv_desc(D3D11_DEPTH_STENCIL_VIEW_DESC *desc, ID3D11Res
     {
         case D3D11_DSV_DIMENSION_TEXTURE1DARRAY:
             if (desc->u.Texture1DArray.ArraySize == ~0u && desc->u.Texture1DArray.FirstArraySlice < layer_count)
-                desc->u.Texture1DArray.ArraySize = layer_count - desc->u.Texture1DArray.ArraySize;
+                desc->u.Texture1DArray.ArraySize = layer_count - desc->u.Texture1DArray.FirstArraySlice;
             break;
 
         case D3D11_DSV_DIMENSION_TEXTURE2DARRAY:
@@ -412,7 +412,7 @@ static HRESULT normalize_rtv_desc(D3D11_RENDER_TARGET_VIEW_DESC *desc, ID3D11Res
     {
         case D3D11_RTV_DIMENSION_TEXTURE1DARRAY:
             if (desc->u.Texture1DArray.ArraySize == ~0u && desc->u.Texture1DArray.FirstArraySlice < layer_count)
-                desc->u.Texture1DArray.ArraySize = layer_count - desc->u.Texture1DArray.ArraySize;
+                desc->u.Texture1DArray.ArraySize = layer_count - desc->u.Texture1DArray.FirstArraySlice;
             break;
 
         case D3D11_RTV_DIMENSION_TEXTURE2DARRAY:
@@ -915,7 +915,7 @@ static HRESULT normalize_uav_desc(D3D11_UNORDERED_ACCESS_VIEW_DESC *desc, ID3D11
     {
         case D3D11_UAV_DIMENSION_TEXTURE1DARRAY:
             if (desc->u.Texture1DArray.ArraySize == ~0u && desc->u.Texture1DArray.FirstArraySlice < layer_count)
-                desc->u.Texture1DArray.ArraySize = layer_count - desc->u.Texture1DArray.ArraySize;
+                desc->u.Texture1DArray.ArraySize = layer_count - desc->u.Texture1DArray.FirstArraySlice;
             break;
 
         case D3D11_UAV_DIMENSION_TEXTURE2DARRAY:
