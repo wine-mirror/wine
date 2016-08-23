@@ -173,20 +173,32 @@ static HRESULT WINAPI LinuxInputEffectImpl_Download(
 	LPDIRECTINPUTEFFECT iface)
 {
     LinuxInputEffectImpl *This = impl_from_IDirectInputEffect(iface);
+    int ret;
 
     TRACE("(this=%p)\n", This);
     ff_dump_effect(&This->effect);
 
-    if (ioctl(*(This->fd), EVIOCSFF, &This->effect) == -1) {
-	if (errno == ENOMEM) {
-	    return DIERR_DEVICEFULL;
-	} else {
-            FIXME("Could not upload effect. Assuming a disconnected device %d \"%s\".\n", *This->fd, strerror(errno));
-	    return DIERR_INPUTLOST;
-	}
-    }
+    if (ioctl(*(This->fd), EVIOCSFF, &This->effect) != -1)
+        return DI_OK;
 
-    return DI_OK;
+    switch (errno)
+    {
+        case EINVAL:
+            ret = DIERR_INVALIDPARAM;
+            break;
+        case ENOSPC:
+            ret = DIERR_DEVICEFULL;
+            break;
+        case ENOMEM:
+            ret = DIERR_OUTOFMEMORY;
+            break;
+        default:
+            ret = DIERR_INPUTLOST;
+            break;
+    }
+    TRACE("Could not upload effect to fd %d, errno %d \"%s\", returning 0x%x.\n",
+          *This->fd, errno, strerror(errno), ret);
+    return ret;
 }
 
 static HRESULT WINAPI LinuxInputEffectImpl_Escape(
