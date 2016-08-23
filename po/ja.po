@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-05-05 15:32+0900\n"
+"PO-Revision-Date: 2016-08-20 14:33+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -10183,7 +10183,7 @@ msgstr ""
 "ECHO\t\t文字列を直接コンソール出力にコピー\n"
 "ENDLOCAL\tバッチ ファイルでの環境変更の局所化を終了\n"
 "FTYPE\t\tファイル タイプのオープン コマンドを表示または変更\n"
-"HELP\t\tトピックの詳細なヘルプを表示\n"
+"HELP\t\tトピックについて簡潔なヘルプを表示\n"
 "MD (MKDIR)\tサブディレクトリを作成\n"
 "MORE\t\t出力をページ区切りで表示\n"
 "MOVE\t\tファイルまたはディレクトリ ツリーを移動\n"
@@ -11535,6 +11535,15 @@ msgid ""
 "  REG [operation] /?\n"
 "\n"
 msgstr ""
+"使い方:\n"
+"  REG [操作] [パラメータ]\n"
+"\n"
+"対応している操作:\n"
+"  ADD | DELETE | QUERY\n"
+"\n"
+"特定の操作に対するヘルプは以下を入力:\n"
+"  REG [操作] /?\n"
+"\n"
 
 #: reg.rc:36
 msgid ""
@@ -11574,7 +11583,7 @@ msgstr "reg: システムは指定されたキーまたは値を見つけられ�
 
 #: reg.rc:44
 msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "reg: サポートされていないレジストリのデータ型 [%1]\n"
+msgstr "reg: サポートされていないレジストリ データ型 [%1]\n"
 
 #: reg.rc:45
 msgid "reg: The option [/d] must be followed by a valid integer\n"
@@ -11637,24 +11646,20 @@ msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr "検索が完了しました。該当箇所の数: %1!d!\n"
 
 #: reg.rc:61
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "reg: Invalid syntax. "
-msgstr "reg: キー名が無効です\n"
+msgstr "reg: 無効な構文です。"
 
 #: reg.rc:62
-#, fuzzy
-#| msgid "uninstaller: Invalid option [%1]\n"
 msgid "reg: Invalid option [%1]. "
-msgstr "uninstaller: 無効なオプション [%1]\n"
+msgstr "reg: 無効なオプション [%1]。"
 
 #: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
-msgstr ""
+msgstr "ヘルプは \"REG /?\" と入力してください。\n"
 
 #: reg.rc:64
 msgid "Type \"REG %1 /?\" for help.\n"
-msgstr ""
+msgstr "ヘルプは \"REG %1 /?\" と入力してください。\n"
 
 #: reg.rc:65 regedit.rc:205
 msgid "(value not set)"
@@ -11899,132 +11904,125 @@ msgid ""
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgstr ""
+"使い方:\n"
+"  regedit [オプション] [ファイル名] [レジストリ キー]\n"
+"\n"
+"オプション:\n"
+"  [オプションなし]  このプログラムの GUI 版を起動します。\n"
+"  /L:system.dat     変更する system.dat ファイルの場所。\n"
+"                    他のスイッチと同時に指定できます。無視されます。\n"
+"  /R:user.dat       変更する user.dat ファイルの場所。\n"
+"                    他のスイッチと同時に指定できます。無視されます。\n"
+"  /C                レジストリ ファイルの内容をインポートします。\n"
+"  /D                指定したレジストリ キーを削除します。\n"
+"  /E                指定したレジストリ キーをファイルにエクスポートします。\n"
+"                    キーが未指定の場合、レジストリ全体がエクスポートされま"
+"す。\n"
+"  /S                サイレント モード。メッセージは表示されません。\n"
+"  /V                GUI をアドバンスト モードで起動します。無視されます。\n"
+"  /?                この情報を表示し、終了します。\n"
+"  [ファイル名]      インポートするレジストリ情報を含むファイルの場所。[/E] "
+"と\n"
+"                    同時使用した場合、このオプションはレジストリ情報がエク"
+"ス\n"
+"                    ポートされるファイル位置を指定します。\n"
+"\n"
+"使い方の例:\n"
+"  regedit \"import.reg\"\n"
+"  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 
 #: regedit.rc:360
-#, fuzzy
-#| msgid ""
-#| "regsvr32: Invalid or unrecognized switch [%1]\n"
-#| "\n"
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
-msgstr ""
-"regsvr32: 無効または認識できないスイッチです[%1]\n"
-"\n"
+msgstr "regedit: 無効または認識できないスイッチです [%1]\n"
 
 #: regedit.rc:361
 msgid "Type \"regedit /?\" for help.\n"
-msgstr ""
+msgstr "ヘルプは \"regedit /?\" と入力してください。\n"
 
 #: regedit.rc:362
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: No filename was specified.\n"
-msgstr "コマンドが指定されていません。"
+msgstr "regedit: ファイル名が指定されていません。\n"
 
 #: regedit.rc:363
 msgid "regedit: No registry key was specified for removal.\n"
-msgstr ""
+msgstr "regedit: 削除するレジストリ キーが指定されていません。\n"
 
 #: regedit.rc:364
-#, fuzzy
-#| msgid "uninstaller: The application with GUID '%1' was not found\n"
 msgid "regedit: The file '%1' was not found.\n"
-msgstr "uninstaller: GUID '%1' のアプリケーションは見つかりませんでした\n"
+msgstr "regedit: ファイル '%1' が見つかりません。\n"
 
 #: regedit.rc:365
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to open the file '%1'.\n"
-msgstr "reg: リモート マシンにアクセスできませんでした\n"
+msgstr "regedit: ファイル '%1' をオープンできません。\n"
 
 #: regedit.rc:366
-#, fuzzy
-#| msgid "Invalid handle operation.\n"
 msgid "regedit: Unhandled action.\n"
-msgstr "ハンドル操作が正しくありません。\n"
+msgstr "regedit: 処理されない操作。\n"
 
 #: regedit.rc:367
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
-msgstr ""
+msgstr "regedit: メモリ不足です! (%1!S!, %2!u! 行目)\n"
 
 #: regedit.rc:368
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "regedit: Invalid hexadecimal value.\n"
-msgstr "reg: キー名が無効です\n"
+msgstr "regedit: 16進数値が正しくありません。\n"
 
 #: regedit.rc:369
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 msgstr ""
+"regedit: 16進数のデータを変換できませんでした。正しくない値が\n"
+"'%1' にあります。\n"
 
 #: regedit.rc:370
-#, fuzzy
-#| msgid ""
-#| "regsvr32: Invalid or unrecognized switch [%1]\n"
-#| "\n"
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr ""
-"regsvr32: 無効または認識できないスイッチです[%1]\n"
-"\n"
+msgstr "regedit: 認識できないエスケープ シーケンスです [%1!c!]\n"
 
 #: regedit.rc:371
-#, fuzzy
-#| msgid "reg: Unsupported registry data type [%1]\n"
 msgid "regedit: Unsupported registry data type [%1]\n"
-msgstr "reg: サポートされていないレジストリのデータ型 [%1]\n"
+msgstr "regedit: サポートされていないレジストリ データ型 [%1]\n"
 
 #: regedit.rc:372
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unexpected end of line in '%1'.\n"
-msgstr "reg: リモート マシンにアクセスできませんでした\n"
+msgstr "regedit: 予期していない行末です '%1'。\n"
 
 #: regedit.rc:373
-#, fuzzy
-#| msgid "uninstaller: The application with GUID '%1' was not found\n"
 msgid "regedit: The line '%1' was not recognized.\n"
-msgstr "uninstaller: GUID '%1' のアプリケーションは見つかりませんでした\n"
+msgstr "regedit: '%1' は認識できない行です。\n"
 
 #: regedit.rc:374
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
-msgstr "reg: リモート マシンにアクセスできませんでした\n"
+msgstr "regedit: レジストリ値 '%1' を '%2' に加えられません。\n"
 
 #: regedit.rc:375
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to open the registry key '%1'.\n"
-msgstr "reg: リモート マシンにアクセスできませんでした\n"
+msgstr "regedit: レジストリ キー '%1' を開けません。\n"
 
 #: regedit.rc:376
-#, fuzzy
-#| msgid "reg: Unsupported registry data type [%1]\n"
 msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
-msgstr "reg: サポートされていないレジストリのデータ型 [%1]\n"
+msgstr ""
+"regedit: サポートされていないレジストリ データ型 [%1] が '%2' にあります。\n"
 
 #: regedit.rc:377
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr ""
+"regedit: レジストリ値 '%1' はバイナリデータとしてエクスポートされます。\n"
 
 #: regedit.rc:378
 msgid "regedit: Incorrect registry class specification in '%1'.\n"
-msgstr ""
+msgstr "regedit: レジストリ クラス指定の誤りが '%1' にあります。\n"
 
 #: regedit.rc:379
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
-msgstr "reg: システムは指定されたキーまたは値を見つけられませんでした\n"
+msgstr ""
+"regedit: '%1' をエクスポートできません。指定されたキーが見つかりません。\n"
 
 #: regedit.rc:380
-#, fuzzy
-#| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to delete the registry class '%1'.\n"
-msgstr "reg: リモート マシンにアクセスできませんでした\n"
+msgstr "regedit: レジストリ クラス '%1' を削除できません。\n"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
@@ -13285,19 +13283,19 @@ msgstr "ウィンドウ マネージャがウィンドウを制御するのを�
 
 #: winecfg.rc:173
 msgid "&Emulate a virtual desktop"
-msgstr "仮想デスクトップをエミュレートする(&D)"
+msgstr "仮想デスクトップをエミュレートする(&E)"
 
 #: winecfg.rc:175
 msgid "Desktop &size:"
-msgstr "デスクトップの大きさ(&Z):"
+msgstr "デスクトップの大きさ(&S):"
 
 #: winecfg.rc:180
 msgid "Screen resolution"
-msgstr "画面の解像度(&R)"
+msgstr "画面の解像度"
 
 #: winecfg.rc:184
 msgid "This is a sample text using 10 point Tahoma"
-msgstr "10 ポイントの Thamoa による見本です"
+msgstr "10 ポイントの Tahoma による見本です"
 
 #: winecfg.rc:191
 msgid "DLL overrides"
@@ -13947,7 +13945,7 @@ msgstr "構成エラー"
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
-msgstr "スクリーン バッファのサイズはウィンドウのサイズ以上にしてください"
+msgstr "スクリーン バッファのサイズはウィンドウのサイズ以上にしてください。"
 
 #: wineconsole.rc:37
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
@@ -13955,11 +13953,11 @@ msgstr "それぞれの文字は %1!u! ピクセルの幅、%2!u! ピクセル�
 
 #: wineconsole.rc:38
 msgid "This is a test"
-msgstr "これはテストです。"
+msgstr "これはテストです"
 
 #: wineconsole.rc:44
 msgid "wineconsole: Couldn't parse event id\n"
-msgstr "wineconsole: イベント ID を解析できませんでした。\n"
+msgstr "wineconsole: イベント ID を解析できませんでした\n"
 
 #: wineconsole.rc:45
 msgid "wineconsole: Invalid backend\n"
@@ -14869,11 +14867,11 @@ msgstr "Wordpad の起動に失敗しました"
 
 #: xcopy.rc:30
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr "パラメータの数が違います。xcopy /? で使い方を表示します\n"
+msgstr "パラメータの数が違います。xcopy /? でヘルプを表示します\n"
 
 #: xcopy.rc:31
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr "無効なパラメータ '%1' です。xcopy /? で使い方を表示します\n"
+msgstr "無効なパラメータ '%1' です。xcopy /? でヘルプを表示します\n"
 
 #: xcopy.rc:32
 msgid "Press <Enter> to begin copying\n"
