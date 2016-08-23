@@ -65,7 +65,7 @@ static DWORD WINAPI set_clipboard_data_thread(LPVOID arg)
     if (GetClipboardOwner() == hwnd)
     {
         SetClipboardData( CF_WAVE, 0 );
-        todo_wine ok( IsClipboardFormatAvailable( CF_WAVE ), "%u: SetClipboardData failed\n", thread_from_line );
+        ok( IsClipboardFormatAvailable( CF_WAVE ), "%u: SetClipboardData failed\n", thread_from_line );
         ret = SetClipboardData( CF_WAVE, GlobalAlloc( GMEM_DDESHARE | GMEM_ZEROINIT, 100 ));
         ok( ret != 0, "%u: SetClipboardData failed err %u\n", thread_from_line, GetLastError() );
     }

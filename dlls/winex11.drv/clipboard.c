@@ -3016,16 +3016,14 @@ BOOL CDECL X11DRV_SetClipboardData(UINT wFormat, HANDLE hData, BOOL owner)
     DWORD flags = 0;
     BOOL bResult = TRUE;
 
-    /* If it's not owned, data can only be set if the format data is not already owned
-       and its rendering is not delayed */
+    /* If it's not owned, data can only be set if the format data is not already owned */
     if (!owner)
     {
         LPWINE_CLIPDATA lpRender;
 
         X11DRV_CLIPBOARD_UpdateCache();
 
-        if (!hData ||
-            ((lpRender = X11DRV_CLIPBOARD_LookupData(wFormat)) &&
+        if (((lpRender = X11DRV_CLIPBOARD_LookupData(wFormat)) &&
             !(lpRender->wFlags & CF_FLAG_UNOWNED)))
             bResult = FALSE;
         else

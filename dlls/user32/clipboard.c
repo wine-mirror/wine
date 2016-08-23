@@ -352,14 +352,6 @@ HANDLE WINAPI SetClipboardData(UINT wFormat, HANDLE hData)
         return 0;
     }
 
-    /* If it's not owned, data can only be set if the format isn't
-       available and its rendering is not delayed */
-    if (!(flags & CB_OWNER) && !hData)
-    {
-        WARN("Clipboard not owned by calling task. Operation failed.\n");
-        return 0;
-    }
-
     if (USER_Driver->pSetClipboardData(wFormat, hData, flags & CB_OWNER))
     {
         hResult = hData;
