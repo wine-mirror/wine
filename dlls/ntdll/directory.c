@@ -53,6 +53,9 @@
 # include <sys/sysmacros.h>
 #endif
 #ifdef HAVE_SYS_VNODE_H
+# ifdef HAVE_STDINT_H
+# include <stdint.h>  /* needed for kfreebsd */
+# endif
 /* Work around a conflict with Solaris' system list defined in sys/list.h. */
 #define list SYSLIST
 #define list_next SYSLIST_NEXT
