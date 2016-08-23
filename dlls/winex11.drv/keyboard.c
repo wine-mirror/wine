@@ -1223,7 +1223,7 @@ static void update_key_state( BYTE *keystate, BYTE key, int down )
  * from wine to another application and back.
  * Toggle keys are handled in HandleEvent.
  */
-void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
+BOOL X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
 {
     int i, j;
     BYTE keystate[256];
@@ -1235,7 +1235,7 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
     } modifiers[6]; /* VK_LSHIFT through VK_RMENU are contiguous */
     BOOL lwin_pressed = FALSE, rwin_pressed = FALSE;
 
-    if (!get_async_key_state( keystate )) return;
+    if (!get_async_key_state( keystate )) return FALSE;
 
     memset(modifiers, 0, sizeof(modifiers));
 
@@ -1302,7 +1302,7 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
     }
 
     LeaveCriticalSection( &kbd_section );
-    if (!changed) return;
+    if (!changed) return FALSE;
 
     update_key_state( keystate, VK_CONTROL, (keystate[VK_LCONTROL] | keystate[VK_RCONTROL]) & 0x80 );
     update_key_state( keystate, VK_MENU, (keystate[VK_LMENU] | keystate[VK_RMENU]) & 0x80 );
@@ -1310,6 +1310,7 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
     update_key_state( keystate, VK_LWIN, keystate[VK_LWIN] & 0x80 );
     update_key_state( keystate, VK_RWIN, keystate[VK_RWIN] & 0x80 );
     set_async_key_state( keystate );
+    return TRUE;
 }
 
 static void update_lock_state( HWND hwnd, WORD vkey, UINT state, DWORD time )
@@ -1357,7 +1358,7 @@ static void update_lock_state( HWND hwnd, WORD vkey, UINT state, DWORD time )
  *
  * Handle a X key event
  */
-void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
+BOOL X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
 {
     XKeyEvent *event = &xev->xkey;
     char buf[24];
@@ -1386,7 +1387,7 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
             if (Str == NULL)
             {
                 ERR_(key)("Failed to allocate memory!\n");
-                return;
+                return FALSE;
             }
             ascii_chars = XmbLookupString(xic, event, Str, ascii_chars, &keysym, &status);
         }
@@ -1401,7 +1402,7 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
         X11DRV_XIMLookupChars( Str, ascii_chars );
         if (buf != Str)
             HeapFree(GetProcessHeap(), 0, Str);
-        return;
+        return TRUE;
     }
 
     EnterCriticalSection( &kbd_section );
@@ -1441,7 +1442,7 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
 
     LeaveCriticalSection( &kbd_section );
 
-    if (!vkey) return;
+    if (!vkey) return FALSE;
 
     dwFlags = 0;
     if ( event->type == KeyRelease ) dwFlags |= KEYEVENTF_KEYUP;
@@ -1450,6 +1451,7 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
     update_lock_state( hwnd, vkey, event->state, event_time );
 
     X11DRV_send_keyboard_input( hwnd, vkey & 0xff, bScan, dwFlags, event_time );
+    return TRUE;
 }
 
 /**********************************************************************
@@ -2008,7 +2010,7 @@ HKL CDECL X11DRV_ActivateKeyboardLayout(HKL hkl, UINT flags)
 /***********************************************************************
  *           X11DRV_MappingNotify
  */
-void X11DRV_MappingNotify( HWND dummy, XEvent *event )
+BOOL X11DRV_MappingNotify( HWND dummy, XEvent *event )
 {
     HWND hwnd;
 
@@ -2019,6 +2021,7 @@ void X11DRV_MappingNotify( HWND dummy, XEvent *event )
     if (!hwnd) hwnd = GetActiveWindow();
     PostMessageW(hwnd, WM_INPUTLANGCHANGEREQUEST,
                  0 /*FIXME*/, (LPARAM)X11DRV_GetKeyboardLayout(0));
+    return TRUE;
 }
 
 

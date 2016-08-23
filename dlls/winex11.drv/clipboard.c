@@ -3512,19 +3512,21 @@ END:
 /***********************************************************************
  *           X11DRV_SelectionRequest
  */
-void X11DRV_SelectionRequest( HWND hWnd, XEvent *event )
+BOOL X11DRV_SelectionRequest( HWND hWnd, XEvent *event )
 {
     X11DRV_HandleSelectionRequest( hWnd, &event->xselectionrequest, FALSE );
+    return FALSE;
 }
 
 
 /***********************************************************************
  *           X11DRV_SelectionClear
  */
-void X11DRV_SelectionClear( HWND hWnd, XEvent *xev )
+BOOL X11DRV_SelectionClear( HWND hWnd, XEvent *xev )
 {
     XSelectionClearEvent *event = &xev->xselectionclear;
     if (event->selection == XA_PRIMARY || event->selection == x11drv_atom(CLIPBOARD))
         X11DRV_CLIPBOARD_ReleaseSelection( event->display, event->selection,
                                            event->window, hWnd, event->time );
+    return FALSE;
 }

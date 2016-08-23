@@ -1682,18 +1682,19 @@ void CDECL X11DRV_DestroyWindow( HWND hwnd )
 /***********************************************************************
  *		X11DRV_DestroyNotify
  */
-void X11DRV_DestroyNotify( HWND hwnd, XEvent *event )
+BOOL X11DRV_DestroyNotify( HWND hwnd, XEvent *event )
 {
     struct x11drv_win_data *data;
     BOOL embedded;
 
-    if (!(data = get_win_data( hwnd ))) return;
+    if (!(data = get_win_data( hwnd ))) return FALSE;
     embedded = data->embedded;
     if (!embedded) FIXME( "window %p/%lx destroyed from the outside\n", hwnd, data->whole_window );
 
     destroy_whole_window( data, TRUE );
     release_win_data( data );
     if (embedded) SendMessageW( hwnd, WM_CLOSE, 0, 0 );
+    return TRUE;
 }
 
 

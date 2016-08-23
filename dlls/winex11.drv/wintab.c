@@ -839,13 +839,13 @@ static int cursor_from_device(DWORD deviceid, LPWTI_CURSORS_INFO *cursorp)
     return -1;
 }
 
-static void motion_event( HWND hwnd, XEvent *event )
+static BOOL motion_event( HWND hwnd, XEvent *event )
 {
     XDeviceMotionEvent *motion = (XDeviceMotionEvent *)event;
     LPWTI_CURSORS_INFO cursor;
     int curnum = cursor_from_device(motion->deviceid, &cursor);
     if (curnum < 0)
-        return;
+        return FALSE;
 
     memset(&gMsgPacket,0,sizeof(WTPACKET));
 
@@ -866,15 +866,16 @@ static void motion_event( HWND hwnd, XEvent *event )
     gMsgPacket.pkNormalPressure = motion->axis_data[2];
     gMsgPacket.pkButtons = get_button_state(curnum);
     SendMessageW(hwndTabletDefault,WT_PACKET,gMsgPacket.pkSerialNumber,(LPARAM)hwnd);
+    return TRUE;
 }
 
-static void button_event( HWND hwnd, XEvent *event )
+static BOOL button_event( HWND hwnd, XEvent *event )
 {
     XDeviceButtonEvent *button = (XDeviceButtonEvent *) event;
     LPWTI_CURSORS_INFO cursor;
     int curnum = cursor_from_device(button->deviceid, &cursor);
     if (curnum < 0)
-        return;
+        return FALSE;
 
     memset(&gMsgPacket,0,sizeof(WTPACKET));
 
@@ -895,17 +896,19 @@ static void button_event( HWND hwnd, XEvent *event )
     gMsgPacket.pkNormalPressure = button->axis_data[2];
     gMsgPacket.pkButtons = get_button_state(curnum);
     SendMessageW(hwndTabletDefault,WT_PACKET,gMsgPacket.pkSerialNumber,(LPARAM)hwnd);
+    return TRUE;
 }
 
-static void key_event( HWND hwnd, XEvent *event )
+static BOOL key_event( HWND hwnd, XEvent *event )
 {
     if (event->type == key_press_type)
         FIXME("Received tablet key press event\n");
     else
         FIXME("Received tablet key release event\n");
+    return FALSE;
 }
 
-static void proximity_event( HWND hwnd, XEvent *event )
+static BOOL proximity_event( HWND hwnd, XEvent *event )
 {
     XProximityNotifyEvent *proximity = (XProximityNotifyEvent *) event;
     LPWTI_CURSORS_INFO cursor;
@@ -915,7 +918,7 @@ static void proximity_event( HWND hwnd, XEvent *event )
     TRACE("hwnd=%p\n", hwnd);
 
     if (curnum < 0)
-        return;
+        return FALSE;
 
     memset(&gMsgPacket,0,sizeof(WTPACKET));
 
@@ -944,6 +947,7 @@ static void proximity_event( HWND hwnd, XEvent *event )
     proximity_info = MAKELPARAM((event->type == proximity_in_type),
                      (event->type == proximity_in_type) || (event->type == proximity_out_type));
     SendMessageW(hwndTabletDefault, WT_PROXIMITY, (WPARAM)hwnd, proximity_info);
+    return TRUE;
 }
 
 /***********************************************************************

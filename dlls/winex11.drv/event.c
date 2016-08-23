@@ -91,16 +91,16 @@ Bool (*pXGetEventData)( Display *display, XEvent /*XGenericEventCookie*/ *event 
 void (*pXFreeEventData)( Display *display, XEvent /*XGenericEventCookie*/ *event ) = NULL;
 
   /* Event handlers */
-static void X11DRV_FocusIn( HWND hwnd, XEvent *event );
-static void X11DRV_FocusOut( HWND hwnd, XEvent *event );
-static void X11DRV_Expose( HWND hwnd, XEvent *event );
-static void X11DRV_MapNotify( HWND hwnd, XEvent *event );
-static void X11DRV_UnmapNotify( HWND hwnd, XEvent *event );
-static void X11DRV_ReparentNotify( HWND hwnd, XEvent *event );
-static void X11DRV_ConfigureNotify( HWND hwnd, XEvent *event );
-static void X11DRV_PropertyNotify( HWND hwnd, XEvent *event );
-static void X11DRV_ClientMessage( HWND hwnd, XEvent *event );
-static void X11DRV_GravityNotify( HWND hwnd, XEvent *event );
+static BOOL X11DRV_FocusIn( HWND hwnd, XEvent *event );
+static BOOL X11DRV_FocusOut( HWND hwnd, XEvent *event );
+static BOOL X11DRV_Expose( HWND hwnd, XEvent *event );
+static BOOL X11DRV_MapNotify( HWND hwnd, XEvent *event );
+static BOOL X11DRV_UnmapNotify( HWND hwnd, XEvent *event );
+static BOOL X11DRV_ReparentNotify( HWND hwnd, XEvent *event );
+static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *event );
+static BOOL X11DRV_PropertyNotify( HWND hwnd, XEvent *event );
+static BOOL X11DRV_ClientMessage( HWND hwnd, XEvent *event );
+static BOOL X11DRV_GravityNotify( HWND hwnd, XEvent *event );
 
 #define MAX_EVENT_HANDLERS 128
 
@@ -374,16 +374,17 @@ static enum event_merge_action merge_events( XEvent *prev, XEvent *next )
 /***********************************************************************
  *           call_event_handler
  */
-static inline void call_event_handler( Display *display, XEvent *event )
+static inline BOOL call_event_handler( Display *display, XEvent *event )
 {
     HWND hwnd;
     XEvent *prev;
     struct x11drv_thread_data *thread_data;
+    BOOL ret;
 
     if (!handlers[event->type])
     {
         TRACE( "%s for win %lx, ignoring\n", dbgstr_event( event->type ), event->xany.window );
-        return;  /* no handler, ignore it */
+        return FALSE;  /* no handler, ignore it */
     }
 
     if (XFindContext( display, event->xany.window, winContext, (char **)&hwnd ) != 0)
@@ -395,8 +396,9 @@ static inline void call_event_handler( Display *display, XEvent *event )
     thread_data = x11drv_thread_data();
     prev = thread_data->current_event;
     thread_data->current_event = event;
-    handlers[event->type]( hwnd, event );
+    ret = handlers[event->type]( hwnd, event );
     thread_data->current_event = prev;
+    return ret;
 }
 
 
@@ -407,6 +409,7 @@ static int process_events( Display *display, Bool (*filter)(Display*, XEvent*,XP
 {
     XEvent event, prev_event;
     int count = 0;
+    BOOL queued = FALSE;
     enum event_merge_action action = MERGE_DISCARD;
 
     prev_event.type = 0;
@@ -448,25 +451,25 @@ static int process_events( Display *display, Bool (*filter)(Display*, XEvent*,XP
         switch( action )
         {
         case MERGE_HANDLE:  /* handle prev, keep new */
-            call_event_handler( display, &prev_event );
+            queued |= call_event_handler( display, &prev_event );
             /* fall through */
         case MERGE_DISCARD:  /* discard prev, keep new */
             free_event_data( &prev_event );
             prev_event = event;
             break;
         case MERGE_KEEP:  /* handle new, keep prev for future merging */
-            call_event_handler( display, &event );
+            queued |= call_event_handler( display, &event );
             /* fall through */
         case MERGE_IGNORE: /* ignore new, keep prev for future merging */
             free_event_data( &event );
             break;
         }
     }
-    if (prev_event.type) call_event_handler( display, &prev_event );
+    if (prev_event.type) queued |= call_event_handler( display, &prev_event );
     free_event_data( &prev_event );
     XFlush( gdi_display );
-    if (count) TRACE( "processed %d events\n", count );
-    return count;
+    if (count) TRACE( "%s %d events\n", queued ? "processed" : "ignored", count );
+    return queued;
 }
 
 
@@ -749,23 +752,23 @@ static const char * const focus_details[] =
 /**********************************************************************
  *              X11DRV_FocusIn
  */
-static void X11DRV_FocusIn( HWND hwnd, XEvent *xev )
+static BOOL X11DRV_FocusIn( HWND hwnd, XEvent *xev )
 {
     XFocusChangeEvent *event = &xev->xfocus;
     XIC xic;
 
-    if (!hwnd) return;
+    if (!hwnd) return FALSE;
 
     TRACE( "win %p xwin %lx detail=%s\n", hwnd, event->window, focus_details[event->detail] );
 
-    if (event->detail == NotifyPointer) return;
-    if (hwnd == GetDesktopWindow()) return;
+    if (event->detail == NotifyPointer) return FALSE;
+    if (hwnd == GetDesktopWindow()) return FALSE;
 
     if ((xic = X11DRV_get_ic( hwnd ))) XSetICFocus( xic );
     if (use_take_focus)
     {
         if (hwnd == GetForegroundWindow()) clip_fullscreen_window( hwnd, FALSE );
-        return;
+        return TRUE;
     }
 
     if (!can_activate_window(hwnd))
@@ -777,6 +780,7 @@ static void X11DRV_FocusIn( HWND hwnd, XEvent *xev )
         if (hwnd && can_activate_window(hwnd)) set_focus( event->display, hwnd, CurrentTime );
     }
     else SetForegroundWindow( hwnd );
+    return TRUE;
 }
 
 /**********************************************************************
@@ -831,7 +835,7 @@ static void X11DRV_FocusIn( HWND hwnd, XEvent *xev )
  *
  * Note: only top-level windows get FocusOut events.
  */
-static void X11DRV_FocusOut( HWND hwnd, XEvent *xev )
+static BOOL X11DRV_FocusOut( HWND hwnd, XEvent *xev )
 {
     XFocusChangeEvent *event = &xev->xfocus;
 
@@ -840,17 +844,18 @@ static void X11DRV_FocusOut( HWND hwnd, XEvent *xev )
     if (event->detail == NotifyPointer)
     {
         if (!hwnd && event->window == x11drv_thread_data()->clip_window) reset_clipping_window();
-        return;
+        return TRUE;
     }
-    if (!hwnd) return;
+    if (!hwnd) return FALSE;
     focus_out( event->display, hwnd );
+    return TRUE;
 }
 
 
 /***********************************************************************
  *           X11DRV_Expose
  */
-static void X11DRV_Expose( HWND hwnd, XEvent *xev )
+static BOOL X11DRV_Expose( HWND hwnd, XEvent *xev )
 {
     XExposeEvent *event = &xev->xexpose;
     RECT rect;
@@ -869,7 +874,7 @@ static void X11DRV_Expose( HWND hwnd, XEvent *xev )
     }
     else pos = root_to_virtual_screen( event->x, event->y );
 
-    if (!(data = get_win_data( hwnd ))) return;
+    if (!(data = get_win_data( hwnd ))) return FALSE;
 
     rect.left   = pos.x;
     rect.top    = pos.y;
@@ -914,22 +919,23 @@ static void X11DRV_Expose( HWND hwnd, XEvent *xev )
 
     if (flags) RedrawWindow( hwnd, &rect, surface_region, flags );
     if (surface_region) DeleteObject( surface_region );
+    return TRUE;
 }
 
 
 /**********************************************************************
  *		X11DRV_MapNotify
  */
-static void X11DRV_MapNotify( HWND hwnd, XEvent *event )
+static BOOL X11DRV_MapNotify( HWND hwnd, XEvent *event )
 {
     struct x11drv_win_data *data;
 
     if (event->xany.window == x11drv_thread_data()->clip_window)
     {
         clipping_cursor = TRUE;
-        return;
+        return TRUE;
     }
-    if (!(data = get_win_data( hwnd ))) return;
+    if (!(data = get_win_data( hwnd ))) return FALSE;
 
     if (!data->managed && !data->embedded && data->mapped)
     {
@@ -938,16 +944,18 @@ static void X11DRV_MapNotify( HWND hwnd, XEvent *event )
             set_input_focus( data );
     }
     release_win_data( data );
+    return TRUE;
 }
 
 
 /**********************************************************************
  *		X11DRV_UnmapNotify
  */
-static void X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
+static BOOL X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
 {
     if (event->xany.window == x11drv_thread_data()->clip_window)
         clipping_cursor = FALSE;
+    return TRUE;
 }
 
 
@@ -986,17 +994,17 @@ static void reparent_notify( Display *display, HWND hwnd, Window xparent, int x,
 /***********************************************************************
  *           X11DRV_ReparentNotify
  */
-static void X11DRV_ReparentNotify( HWND hwnd, XEvent *xev )
+static BOOL X11DRV_ReparentNotify( HWND hwnd, XEvent *xev )
 {
     XReparentEvent *event = &xev->xreparent;
     struct x11drv_win_data *data;
 
-    if (!(data = get_win_data( hwnd ))) return;
+    if (!(data = get_win_data( hwnd ))) return FALSE;
 
     if (!data->embedded)
     {
         release_win_data( data );
-        return;
+        return FALSE;
     }
 
     if (data->whole_window)
@@ -1007,7 +1015,7 @@ static void X11DRV_ReparentNotify( HWND hwnd, XEvent *xev )
             data->embedder = 0;
             release_win_data( data );
             SendMessageW( hwnd, WM_CLOSE, 0, 0 );
-            return;
+            return TRUE;
         }
         data->embedder = event->parent;
     }
@@ -1016,13 +1024,14 @@ static void X11DRV_ReparentNotify( HWND hwnd, XEvent *xev )
     release_win_data( data );
 
     reparent_notify( event->display, hwnd, event->parent, event->x, event->y );
+    return TRUE;
 }
 
 
 /***********************************************************************
  *		X11DRV_ConfigureNotify
  */
-void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
+static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 {
     XConfigureEvent *event = &xev->xconfigure;
     struct x11drv_win_data *data;
@@ -1034,8 +1043,8 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     int cx, cy, x = event->x, y = event->y;
     DWORD style;
 
-    if (!hwnd) return;
-    if (!(data = get_win_data( hwnd ))) return;
+    if (!hwnd) return FALSE;
+    if (!(data = get_win_data( hwnd ))) return FALSE;
     if (!data->mapped || data->iconic) goto done;
     if (data->whole_window && !data->managed) goto done;
     /* ignore synthetic events on foreign windows */
@@ -1114,7 +1123,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
                 TRACE( "win %p/%lx is maximized\n", data->hwnd, data->whole_window );
                 release_win_data( data );
                 SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_MAXIMIZE, 0 );
-                return;
+                return TRUE;
             }
         }
         else if (style & WS_MAXIMIZE)
@@ -1122,7 +1131,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
             TRACE( "window %p/%lx is no longer maximized\n", data->hwnd, data->whole_window );
             release_win_data( data );
             SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_RESTORE, 0 );
-            return;
+            return TRUE;
         }
     }
 
@@ -1130,29 +1139,30 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     {
         release_win_data( data );
         SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
-        return;
+        return TRUE;
     }
 
 done:
     release_win_data( data );
+    return FALSE;
 }
 
 
 /**********************************************************************
  *           X11DRV_GravityNotify
  */
-static void X11DRV_GravityNotify( HWND hwnd, XEvent *xev )
+static BOOL X11DRV_GravityNotify( HWND hwnd, XEvent *xev )
 {
     XGravityEvent *event = &xev->xgravity;
     struct x11drv_win_data *data = get_win_data( hwnd );
     RECT rect, window_rect;
 
-    if (!data) return;
+    if (!data) return FALSE;
 
     if (data->whole_window)  /* only handle this for foreign windows */
     {
         release_win_data( data );
-        return;
+        return FALSE;
     }
 
     rect.left   = event->x;
@@ -1171,6 +1181,7 @@ static void X11DRV_GravityNotify( HWND hwnd, XEvent *xev )
     if (window_rect.left != rect.left || window_rect.top != rect.top)
         SetWindowPos( hwnd, 0, rect.left, rect.top, 0, 0,
                       SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOCOPYBITS );
+    return TRUE;
 }
 
 
@@ -1286,12 +1297,13 @@ done:
 /***********************************************************************
  *           X11DRV_PropertyNotify
  */
-static void X11DRV_PropertyNotify( HWND hwnd, XEvent *xev )
+static BOOL X11DRV_PropertyNotify( HWND hwnd, XEvent *xev )
 {
     XPropertyEvent *event = &xev->xproperty;
 
-    if (!hwnd) return;
+    if (!hwnd) return FALSE;
     if (event->atom == x11drv_atom(WM_STATE)) handle_wm_state_notify( hwnd, event, TRUE );
+    return TRUE;
 }
 
 
@@ -1719,17 +1731,17 @@ static const struct client_message_handler client_messages[] =
 /**********************************************************************
  *           X11DRV_ClientMessage
  */
-static void X11DRV_ClientMessage( HWND hwnd, XEvent *xev )
+static BOOL X11DRV_ClientMessage( HWND hwnd, XEvent *xev )
 {
     XClientMessageEvent *event = &xev->xclient;
     unsigned int i;
 
-    if (!hwnd) return;
+    if (!hwnd) return FALSE;
 
     if (event->format != 32)
     {
         WARN( "Don't know how to handle format %d\n", event->format );
-        return;
+        return FALSE;
     }
 
     for (i = 0; i < sizeof(client_messages)/sizeof(client_messages[0]); i++)
@@ -1737,8 +1749,9 @@ static void X11DRV_ClientMessage( HWND hwnd, XEvent *xev )
         if (event->message_type == X11DRV_Atoms[client_messages[i].atom - FIRST_XATOM])
         {
             client_messages[i].handler( hwnd, event );
-            return;
+            return TRUE;
         }
     }
     TRACE( "no handler found for %ld\n", event->message_type );
+    return FALSE;
 }

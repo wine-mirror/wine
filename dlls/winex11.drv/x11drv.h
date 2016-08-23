@@ -495,21 +495,21 @@ extern Atom systray_atom DECLSPEC_HIDDEN;
 
 /* X11 event driver */
 
-typedef void (*x11drv_event_handler)( HWND hwnd, XEvent *event );
+typedef BOOL (*x11drv_event_handler)( HWND hwnd, XEvent *event );
 
 extern void X11DRV_register_event_handler( int type, x11drv_event_handler handler, const char *name ) DECLSPEC_HIDDEN;
 
-extern void X11DRV_ButtonPress( HWND hwnd, XEvent *event ) DECLSPEC_HIDDEN;
-extern void X11DRV_ButtonRelease( HWND hwnd, XEvent *event ) DECLSPEC_HIDDEN;
-extern void X11DRV_MotionNotify( HWND hwnd, XEvent *event ) DECLSPEC_HIDDEN;
-extern void X11DRV_EnterNotify( HWND hwnd, XEvent *event ) DECLSPEC_HIDDEN;
-extern void X11DRV_KeyEvent( HWND hwnd, XEvent *event ) DECLSPEC_HIDDEN;
-extern void X11DRV_KeymapNotify( HWND hwnd, XEvent *event ) DECLSPEC_HIDDEN;
-extern void X11DRV_DestroyNotify( HWND hwnd, XEvent *event ) DECLSPEC_HIDDEN;
-extern void X11DRV_SelectionRequest( HWND hWnd, XEvent *event ) DECLSPEC_HIDDEN;
-extern void X11DRV_SelectionClear( HWND hWnd, XEvent *event ) DECLSPEC_HIDDEN;
-extern void X11DRV_MappingNotify( HWND hWnd, XEvent *event ) DECLSPEC_HIDDEN;
-extern void X11DRV_GenericEvent( HWND hwnd, XEvent *event ) DECLSPEC_HIDDEN;
+extern BOOL X11DRV_ButtonPress( HWND hwnd, XEvent *event ) DECLSPEC_HIDDEN;
+extern BOOL X11DRV_ButtonRelease( HWND hwnd, XEvent *event ) DECLSPEC_HIDDEN;
+extern BOOL X11DRV_MotionNotify( HWND hwnd, XEvent *event ) DECLSPEC_HIDDEN;
+extern BOOL X11DRV_EnterNotify( HWND hwnd, XEvent *event ) DECLSPEC_HIDDEN;
+extern BOOL X11DRV_KeyEvent( HWND hwnd, XEvent *event ) DECLSPEC_HIDDEN;
+extern BOOL X11DRV_KeymapNotify( HWND hwnd, XEvent *event ) DECLSPEC_HIDDEN;
+extern BOOL X11DRV_DestroyNotify( HWND hwnd, XEvent *event ) DECLSPEC_HIDDEN;
+extern BOOL X11DRV_SelectionRequest( HWND hWnd, XEvent *event ) DECLSPEC_HIDDEN;
+extern BOOL X11DRV_SelectionClear( HWND hWnd, XEvent *event ) DECLSPEC_HIDDEN;
+extern BOOL X11DRV_MappingNotify( HWND hWnd, XEvent *event ) DECLSPEC_HIDDEN;
+extern BOOL X11DRV_GenericEvent( HWND hwnd, XEvent *event ) DECLSPEC_HIDDEN;
 
 extern int xinput2_opcode DECLSPEC_HIDDEN;
 extern Bool (*pXGetEventData)( Display *display, XEvent /*XGenericEventCookie*/ *event ) DECLSPEC_HIDDEN;
