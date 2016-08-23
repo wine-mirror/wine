@@ -173,13 +173,18 @@ static HRESULT WINAPI LinuxInputEffectImpl_Download(
 	LPDIRECTINPUTEFFECT iface)
 {
     LinuxInputEffectImpl *This = impl_from_IDirectInputEffect(iface);
-    int ret;
+    int ret, old_effect_id;
 
     TRACE("(this=%p)\n", This);
     ff_dump_effect(&This->effect);
 
+    old_effect_id = This->effect.id;
     if (ioctl(*(This->fd), EVIOCSFF, &This->effect) != -1)
         return DI_OK;
+
+    /* Linux kernel < 3.14 has a bug that incorrectly assigns an effect ID even
+     * on error, restore it here if that is the case. */
+    This->effect.id = old_effect_id;
 
     switch (errno)
     {
