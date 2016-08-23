@@ -529,11 +529,7 @@ static HRESULT WINAPI RecycleBin_GetDisplayNameOf(IShellFolder2 *This, LPCITEMID
     TRACE("(%p, %p, %x, %p)\n", This, pidl, uFlags, pName);
     TRASH_UnpackItemID(&pidl->mkid, &data);
     pName->uType = STRRET_WSTR;
-    pName->u.pOleStr = StrDupW(PathFindFileNameW(data.cFileName));
-    if (pName->u.pOleStr == NULL)
-        return E_OUTOFMEMORY;
-
-    return S_OK;
+    return SHStrDupW(PathFindFileNameW(data.cFileName), &pName->u.pOleStr);
 }
 
 static HRESULT WINAPI RecycleBin_SetNameOf(IShellFolder2 *This, HWND hwnd, LPCITEMIDLIST pidl, LPCOLESTR pszName,
