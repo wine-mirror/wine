@@ -96,6 +96,7 @@ typedef struct _tagIMMThreadData {
     HIMC defaultContext;
     HWND hwndDefault;
     BOOL disableIME;
+    DWORD windowRefs;
 } IMMThreadData;
 
 static struct list ImmHklList = LIST_INIT(ImmHklList);
@@ -1618,27 +1619,51 @@ BOOL WINAPI ImmGetConversionStatus(
     return TRUE;
 }
 
-/***********************************************************************
- *		ImmGetDefaultIMEWnd (IMM32.@)
- */
-HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
+static BOOL needs_ime_window(HWND hwnd)
 {
-    HWND ret, new = NULL;
-    IMMThreadData* thread_data = IMM_GetThreadData(hWnd, 0);
+    WCHAR classW[8];
+
+    if (GetClassNameW(hwnd, classW, sizeof(classW)/sizeof(classW[0])) &&
+        !strcmpW(classW, szwIME))
+        return FALSE;
+    if (GetClassLongPtrW(hwnd, GCL_STYLE) & CS_IME) return FALSE;
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *		__wine_register_window (IMM32.@)
+ */
+BOOL WINAPI __wine_register_window(HWND hwnd)
+{
+    HWND new = NULL;
+    IMMThreadData *thread_data;
+    TRACE("(%p)\n", hwnd);
+
+    if (!needs_ime_window(hwnd))
+        return FALSE;
+
+    thread_data = IMM_GetThreadData(hwnd, 0);
     if (!thread_data)
-        return NULL;
-    if (thread_data->hwndDefault == NULL && thread_data->threadID == GetCurrentThreadId())
+        return FALSE;
+
+    if (thread_data->disableIME || disable_ime)
     {
-        if (thread_data->disableIME || disable_ime)
-        {
-            TRACE("IME for this thread is disabled\n");
-            LeaveCriticalSection(&threaddata_cs);
-            return NULL;
-        }
+        TRACE("IME for this thread is disabled\n");
+        LeaveCriticalSection(&threaddata_cs);
+        return FALSE;
+    }
+    thread_data->windowRefs++;
+    TRACE("windowRefs=%u, hwndDefault=%p\n",
+          thread_data->windowRefs, thread_data->hwndDefault);
+
+    /* Create default IME window */
+    if (thread_data->windowRefs == 1)
+    {
         /* Do not create the window inside of a critical section */
         LeaveCriticalSection(&threaddata_cs);
         new = CreateWindowExW( WS_EX_TOOLWINDOW,
-                    szwIME, NULL, WS_POPUP, 0, 0, 1, 1, 0, 0, 0, 0);
+                               szwIME, NULL, WS_POPUP, 0, 0, 1, 1, 0, 0, 0, 0);
         /* thread_data is in the current thread so we can assume it's still valid */
         EnterCriticalSection(&threaddata_cs);
         /* See if anyone beat us */
@@ -1646,16 +1671,56 @@ HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
         {
             thread_data->hwndDefault = new;
             new = NULL;
+            TRACE("Default is %p\n", thread_data->hwndDefault);
         }
     }
-    ret = thread_data->hwndDefault;
+
     LeaveCriticalSection(&threaddata_cs);
-    TRACE("Default is %p\n",ret);
+
     /* Clean up an unused new window outside of the critical section */
     if (new != NULL)
-    {
         DestroyWindow(new);
+    return TRUE;
+}
+
+/***********************************************************************
+ *		__wine_unregister_window (IMM32.@)
+ */
+void WINAPI __wine_unregister_window(HWND hwnd)
+{
+    HWND to_destroy = 0;
+    IMMThreadData *thread_data;
+    TRACE("(%p)\n", hwnd);
+
+    thread_data = IMM_GetThreadData(hwnd, 0);
+    if (!thread_data) return;
+
+    thread_data->windowRefs--;
+    TRACE("windowRefs=%u, hwndDefault=%p\n",
+          thread_data->windowRefs, thread_data->hwndDefault);
+
+    /* Destroy default IME window */
+    if (thread_data->windowRefs == 0 && thread_data->hwndDefault)
+    {
+        to_destroy = thread_data->hwndDefault;
+        thread_data->hwndDefault = NULL;
     }
+    LeaveCriticalSection(&threaddata_cs);
+
+    if (to_destroy) DestroyWindow( to_destroy );
+}
+
+/***********************************************************************
+ *		ImmGetDefaultIMEWnd (IMM32.@)
+ */
+HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
+{
+    HWND ret;
+    IMMThreadData* thread_data = IMM_GetThreadData(hWnd, 0);
+    if (!thread_data)
+        return NULL;
+    ret = thread_data->hwndDefault;
+    LeaveCriticalSection(&threaddata_cs);
     TRACE("Default is %p\n",ret);
     return ret;
 }

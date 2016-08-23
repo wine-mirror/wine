@@ -41,6 +41,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 #define IMM_INIT_MAGIC 0x19650412
 static HWND (WINAPI *imm_get_ui_window)(HKL);
+BOOL (WINAPI *imm_register_window)(HWND) = NULL;
+void (WINAPI *imm_unregister_window)(HWND) = NULL;
 
 /* MSIME messages */
 static UINT WM_MSIME_SERVICE;
@@ -684,6 +686,8 @@ BOOL WINAPI User32InitializeImmEntryTable(DWORD magic)
 
     /* this part is not compatible with native imm32.dll */
     imm_get_ui_window = (void*)GetProcAddress(imm32, "__wine_get_ui_window");
+    imm_register_window = (void*)GetProcAddress(imm32, "__wine_register_window");
+    imm_unregister_window = (void*)GetProcAddress(imm32, "__wine_unregister_window");
     if (!imm_get_ui_window)
         FIXME("native imm32.dll not supported\n");
     return TRUE;
