@@ -4508,6 +4508,7 @@ struct set_clipboard_info_reply
 
 #define SET_CB_SEQNO     0x008
 #define SET_CB_RELOWNER  0x010
+#define CB_OPEN_ANY      0x020
 #define CB_OPEN          0x040
 #define CB_OWNER         0x080
 #define CB_PROCESS       0x100
@@ -6317,6 +6318,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 512
+#define SERVER_PROTOCOL_VERSION 513
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

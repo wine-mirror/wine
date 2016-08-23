@@ -223,6 +223,7 @@ DECL_HANDLER(set_clipboard_info)
 
     reply->seqno = get_seqno( clipboard );
 
+    if (clipboard->open_thread) reply->flags |= CB_OPEN_ANY;
     if (clipboard->open_thread == current) reply->flags |= CB_OPEN;
     if (clipboard->owner_thread == current) reply->flags |= CB_OWNER;
     if (clipboard->owner_thread && clipboard->owner_thread->process == current->process)

@@ -3189,6 +3189,7 @@ enum caret_state
 
 #define SET_CB_SEQNO     0x008
 #define SET_CB_RELOWNER  0x010
+#define CB_OPEN_ANY      0x020
 #define CB_OPEN          0x040
 #define CB_OWNER         0x080
 #define CB_PROCESS       0x100

@@ -72,13 +72,13 @@ static DWORD WINAPI set_clipboard_data_thread(LPVOID arg)
     else
     {
         SetClipboardData( CF_WAVE, 0 );
-        todo_wine ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "%u: wrong error %u\n",
-                      thread_from_line, GetLastError());
+        ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "%u: wrong error %u\n",
+            thread_from_line, GetLastError());
         ok( !IsClipboardFormatAvailable( CF_WAVE ), "%u: SetClipboardData succeeded\n", thread_from_line );
         ret = SetClipboardData( CF_WAVE, GlobalAlloc( GMEM_DDESHARE | GMEM_ZEROINIT, 100 ));
-        todo_wine ok( !ret, "%u: SetClipboardData succeeded\n", thread_from_line );
-        todo_wine ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "%u: wrong error %u\n",
-                      thread_from_line, GetLastError());
+        ok( !ret, "%u: SetClipboardData succeeded\n", thread_from_line );
+        ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "%u: wrong error %u\n",
+            thread_from_line, GetLastError());
     }
     return 0;
 }
@@ -99,12 +99,12 @@ static void set_clipboard_data_process( int arg )
     else
     {
         SetClipboardData( CF_WAVE, 0 );
-        todo_wine ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "process %u: wrong error %u\n",
+        ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "process %u: wrong error %u\n",
             arg, GetLastError());
-        todo_wine ok( !IsClipboardFormatAvailable( CF_WAVE ), "process %u: SetClipboardData succeeded\n", arg );
+        ok( !IsClipboardFormatAvailable( CF_WAVE ), "process %u: SetClipboardData succeeded\n", arg );
         ret = SetClipboardData( CF_WAVE, GlobalAlloc( GMEM_DDESHARE | GMEM_ZEROINIT, 100 ));
         ok( !ret, "process %u: SetClipboardData succeeded\n", arg );
-        todo_wine ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "process %u: wrong error %u\n",
+        ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "process %u: wrong error %u\n",
             arg, GetLastError());
     }
 }
@@ -256,10 +256,10 @@ static void test_ClipboardOwner(void)
     ok( ret, "CloseClipboard error %d\n", GetLastError());
 
     SetLastError( 0xdeadbeef );
-    todo_wine ok( !SetClipboardData( CF_WAVE, GlobalAlloc( GMEM_DDESHARE | GMEM_ZEROINIT, 100 )),
-                  "SetClipboardData succeeded\n" );
-    todo_wine ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "wrong error %u\n", GetLastError() );
-    todo_wine ok( !IsClipboardFormatAvailable( CF_WAVE ), "SetClipboardData succeeded\n" );
+    ok( !SetClipboardData( CF_WAVE, GlobalAlloc( GMEM_DDESHARE | GMEM_ZEROINIT, 100 )),
+        "SetClipboardData succeeded\n" );
+    ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "wrong error %u\n", GetLastError() );
+    ok( !IsClipboardFormatAvailable( CF_WAVE ), "SetClipboardData succeeded\n" );
 
 }
 

@@ -345,9 +345,15 @@ HANDLE WINAPI SetClipboardData(UINT wFormat, HANDLE hData)
         return 0;
     }
 
+    flags = get_clipboard_flags();
+    if (!(flags & CB_OPEN_ANY))
+    {
+        SetLastError( ERROR_CLIPBOARD_NOT_OPEN );
+        return 0;
+    }
+
     /* If it's not owned, data can only be set if the format isn't
        available and its rendering is not delayed */
-    flags = get_clipboard_flags();
     if (!(flags & CB_OWNER) && !hData)
     {
         WARN("Clipboard not owned by calling task. Operation failed.\n");
