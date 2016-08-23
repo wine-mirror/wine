@@ -597,6 +597,7 @@ static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData)
         DeleteEnhMetaFile(lpData->hData);
         break;
     default:
+        if (lpData->wFormatID >= CF_GDIOBJFIRST && lpData->wFormatID <= CF_GDIOBJLAST) break;
         if (lpData->wFormatID >= CF_PRIVATEFIRST && lpData->wFormatID <= CF_PRIVATELAST) break;
         GlobalFree(lpData->hData);
         break;
