@@ -329,9 +329,8 @@ static HRESULT WINAPI LinuxInputEffectImpl_GetParameters(
     	peff->dwSamplePeriod = 0;
     }
 
-    if (dwFlags & DIEP_STARTDELAY) {
-	peff->dwStartDelay = This->effect.replay.delay * 1000;
-    }
+    if ((dwFlags & DIEP_STARTDELAY) && peff->dwSize > sizeof(DIEFFECT_DX5))
+        peff->dwStartDelay = This->effect.replay.delay * 1000;
 
     if (dwFlags & DIEP_TRIGGERBUTTON) {
 	FIXME("LinuxInput button mapping needs redoing; for now, assuming we're using an actual joystick.\n");
@@ -570,7 +569,8 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
 	TRACE("Sample period requested but no sample period functionality present.\n");
 
     if (dwFlags & DIEP_STARTDELAY)
-	This->effect.replay.delay = peff->dwStartDelay / 1000;
+    if ((dwFlags & DIEP_STARTDELAY) && peff->dwSize > sizeof(DIEFFECT_DX5))
+        This->effect.replay.delay = peff->dwStartDelay / 1000;
 
     if (dwFlags & DIEP_TRIGGERBUTTON) {
 	if (peff->dwTriggerButton != -1) {
