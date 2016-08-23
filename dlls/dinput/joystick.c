@@ -215,10 +215,14 @@ void dump_DIEFFECT(LPCDIEFFECT eff, REFGUID guid, DWORD dwFlags)
             _dump_DIRAMPFORCE(eff->lpvTypeSpecificParams);
         }
     } else if (type == DIEFT_CONDITION) {
-        if (eff->cbTypeSpecificParams != sizeof(DICONDITION)) {
-            WARN("Effect claims to be a condition but the type-specific params are the wrong size!\n");
-        } else {
+        if (eff->cbTypeSpecificParams == sizeof(DICONDITION)) {
             _dump_DICONDITION(eff->lpvTypeSpecificParams);
+        } else if (eff->cbTypeSpecificParams == 2 * sizeof(DICONDITION)) {
+            DICONDITION *condition = eff->lpvTypeSpecificParams;
+            _dump_DICONDITION(&condition[0]);
+            _dump_DICONDITION(&condition[1]);
+        } else {
+            WARN("Effect claims to be a condition but the type-specific params are the wrong size!\n");
         }
     } else if (type == DIEFT_CUSTOMFORCE) {
         if (eff->cbTypeSpecificParams != sizeof(DICUSTOMFORCE)) {
