@@ -916,6 +916,7 @@ enable_api_ms_win_core_misc_l1_1_0
 enable_api_ms_win_core_namedpipe_l1_1_0
 enable_api_ms_win_core_namedpipe_l1_2_0
 enable_api_ms_win_core_namespace_l1_1_0
+enable_api_ms_win_core_normalization_l1_1_0
 enable_api_ms_win_core_path_l1_1_0
 enable_api_ms_win_core_processenvironment_l1_1_0
 enable_api_ms_win_core_processenvironment_l1_2_0
@@ -17455,6 +17456,7 @@ wine_fn_config_dll api-ms-win-core-misc-l1-1-0 enable_api_ms_win_core_misc_l1_1_
 wine_fn_config_dll api-ms-win-core-namedpipe-l1-1-0 enable_api_ms_win_core_namedpipe_l1_1_0
 wine_fn_config_dll api-ms-win-core-namedpipe-l1-2-0 enable_api_ms_win_core_namedpipe_l1_2_0
 wine_fn_config_dll api-ms-win-core-namespace-l1-1-0 enable_api_ms_win_core_namespace_l1_1_0
+wine_fn_config_dll api-ms-win-core-normalization-l1-1-0 enable_api_ms_win_core_normalization_l1_1_0
 wine_fn_config_dll api-ms-win-core-path-l1-1-0 enable_api_ms_win_core_path_l1_1_0
 wine_fn_config_dll api-ms-win-core-processenvironment-l1-1-0 enable_api_ms_win_core_processenvironment_l1_1_0
 wine_fn_config_dll api-ms-win-core-processenvironment-l1-2-0 enable_api_ms_win_core_processenvironment_l1_2_0
