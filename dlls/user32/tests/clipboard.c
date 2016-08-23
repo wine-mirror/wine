@@ -68,6 +68,11 @@ static DWORD WINAPI set_clipboard_data_thread(LPVOID arg)
         ok( IsClipboardFormatAvailable( CF_WAVE ), "%u: SetClipboardData failed\n", thread_from_line );
         ret = SetClipboardData( CF_WAVE, GlobalAlloc( GMEM_DDESHARE | GMEM_ZEROINIT, 100 ));
         ok( ret != 0, "%u: SetClipboardData failed err %u\n", thread_from_line, GetLastError() );
+        SetLastError( 0xdeadbeef );
+        ret = GetClipboardData( CF_WAVE );
+        ok( !ret, "%u: GetClipboardData succeeded\n", thread_from_line );
+        ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "%u: wrong error %u\n",
+            thread_from_line, GetLastError());
     }
     else
     {
@@ -147,6 +152,24 @@ static void run_process( const char *args )
     CloseHandle( info.hThread );
 }
 
+static WNDPROC old_proc;
+static LRESULT CALLBACK winproc_wrapper( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+{
+    static int destroyed;
+
+    if (msg == WM_DESTROY) destroyed = TRUE;
+
+    trace( "%p msg %04x\n", hwnd, msg );
+    if (!destroyed)
+        ok( GetClipboardOwner() == hwnd, "%04x: wrong owner %p/%p\n", msg, GetClipboardOwner(), hwnd );
+    else todo_wine_if (msg == WM_DESTROY)
+        ok( !GetClipboardOwner(), "%04x: wrong owner %p\n", msg, GetClipboardOwner() );
+    ok( GetClipboardViewer() == hwnd, "%04x: wrong viewer %p/%p\n", msg, GetClipboardViewer(), hwnd );
+    ok( GetOpenClipboardWindow() == hwnd, "%04x: wrong open win %p/%p\n",
+        msg, GetOpenClipboardWindow(), hwnd );
+    return old_proc( hwnd, msg, wp, lp );
+}
+
 static void test_ClipboardOwner(void)
 {
     HWND hWnd1, hWnd2;
@@ -182,6 +205,8 @@ static void test_ClipboardOwner(void)
     run_thread( open_clipboard_thread, hWnd1, __LINE__ );
     run_thread( empty_clipboard_thread, 0, __LINE__ );
     run_thread( set_clipboard_data_thread, hWnd1, __LINE__ );
+    ok( !IsClipboardFormatAvailable( CF_WAVE ), "CF_WAVE available\n" );
+    ok( !GetClipboardData( CF_WAVE ), "CF_WAVE data available\n" );
     run_process( "set_clipboard_data 0" );
     ok(!CloseClipboard(), "CloseClipboard should fail if clipboard wasn't open\n");
     ok(OpenClipboard(hWnd1), "OpenClipboard failed\n");
@@ -198,6 +223,8 @@ static void test_ClipboardOwner(void)
     ok(GetClipboardOwner() == hWnd1, "clipboard should be owned by %p, not by %p\n", hWnd1, GetClipboardOwner());
     run_thread( empty_clipboard_thread, 0, __LINE__ );
     run_thread( set_clipboard_data_thread, hWnd1, __LINE__ );
+    ok( IsClipboardFormatAvailable( CF_WAVE ), "CF_WAVE not available\n" );
+    ok( GetClipboardData( CF_WAVE ) != 0, "CF_WAVE data not available\n" );
     run_process( "set_clipboard_data 1" );
 
     SetLastError(0xdeadbeef);
@@ -217,6 +244,8 @@ static void test_ClipboardOwner(void)
     ok( GetClipboardOwner() == GetDesktopWindow(), "wrong owner %p/%p\n",
         GetClipboardOwner(), GetDesktopWindow() );
     run_thread( set_clipboard_data_thread, GetDesktopWindow(), __LINE__ );
+    ok( IsClipboardFormatAvailable( CF_WAVE ), "CF_WAVE not available\n" );
+    ok( GetClipboardData( CF_WAVE ) != 0, "CF_WAVE data not available\n" );
     run_process( "set_clipboard_data 2" );
     ret = CloseClipboard();
     ok( ret, "CloseClipboard error %d\n", GetLastError());
@@ -225,20 +254,31 @@ static void test_ClipboardOwner(void)
     ok( ret, "OpenClipboard error %d\n", GetLastError());
     ret = EmptyClipboard();
     ok( ret, "EmptyClipboard error %d\n", GetLastError());
+    SetClipboardViewer( hWnd1 );
     ok( GetClipboardOwner() == hWnd1, "wrong owner %p/%p\n", GetClipboardOwner(), hWnd1 );
-    ret = CloseClipboard();
-    ok( ret, "CloseClipboard error %d\n", GetLastError());
+    ok( GetClipboardViewer() == hWnd1, "wrong viewer %p/%p\n", GetClipboardViewer(), hWnd1 );
+    ok( GetOpenClipboardWindow() == hWnd1, "wrong open win %p/%p\n", GetOpenClipboardWindow(), hWnd1 );
 
+    old_proc = (WNDPROC)SetWindowLongPtrA( hWnd1, GWLP_WNDPROC, (LONG_PTR)winproc_wrapper );
     ret = DestroyWindow(hWnd1);
     ok( ret, "DestroyWindow error %d\n", GetLastError());
     ret = DestroyWindow(hWnd2);
     ok( ret, "DestroyWindow error %d\n", GetLastError());
     SetLastError(0xdeadbeef);
     ok(!GetClipboardOwner() && GetLastError() == 0xdeadbeef, "clipboard should not be owned\n");
+    todo_wine ok(!GetClipboardViewer() && GetLastError() == 0xdeadbeef, "viewer still exists\n");
+    todo_wine ok(!GetOpenClipboardWindow() && GetLastError() == 0xdeadbeef, "clipboard should not be open\n");
+
+    SetLastError( 0xdeadbeef );
+    ret = CloseClipboard();
+    todo_wine ok( !ret, "CloseClipboard succeeded\n" );
+    todo_wine ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "wrong error %u\n", GetLastError() );
 
     ret = OpenClipboard( 0 );
     ok( ret, "OpenClipboard error %d\n", GetLastError());
     run_thread( set_clipboard_data_thread, 0, __LINE__ );
+    ok( IsClipboardFormatAvailable( CF_WAVE ), "CF_WAVE not available\n" );
+    ok( GetClipboardData( CF_WAVE ) != 0, "CF_WAVE data not available\n" );
     run_process( "set_clipboard_data 3" );
     ret = CloseClipboard();
     ok( ret, "CloseClipboard error %d\n", GetLastError());
@@ -248,6 +288,8 @@ static void test_ClipboardOwner(void)
     ret = OpenClipboard( 0 );
     ok( ret, "OpenClipboard error %d\n", GetLastError());
     run_thread( set_clipboard_data_thread, 0, __LINE__ );
+    ok( IsClipboardFormatAvailable( CF_WAVE ), "CF_WAVE not available\n" );
+    ok( GetClipboardData( CF_WAVE ) != 0, "CF_WAVE data not available\n" );
     run_process( "set_clipboard_data 4" );
     ret = EmptyClipboard();
     ok( ret, "EmptyClipboard error %d\n", GetLastError());
@@ -459,6 +501,7 @@ static LRESULT CALLBACK clipboard_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARA
     static UINT wm_drawclipboard;
     static UINT wm_clipboardupdate;
     static UINT wm_destroyclipboard;
+    static UINT nb_formats;
     LRESULT ret;
 
     switch(msg) {
@@ -476,6 +519,7 @@ static LRESULT CALLBACK clipboard_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARA
     case WM_DESTROYCLIPBOARD:
         wm_destroyclipboard++;
         ok( GetClipboardOwner() == hwnd, "WM_DESTROYCLIPBOARD owner %p\n", GetClipboardOwner() );
+        nb_formats = CountClipboardFormats();
         break;
     case WM_CLIPBOARDUPDATE:
         wm_clipboardupdate++;
@@ -496,6 +540,8 @@ static LRESULT CALLBACK clipboard_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARA
         ret = wm_destroyclipboard;
         wm_destroyclipboard = 0;
         return ret;
+    case WM_USER+4:
+        return nb_formats;
     }
 
     return DefWindowProcA(hwnd, msg, wp, lp);
@@ -506,7 +552,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     HWND win = param;
     BOOL r;
     HANDLE handle;
-    UINT count, old_seq = 0, seq;
+    UINT count, formats, old_seq = 0, seq;
 
     if (pGetClipboardSequenceNumber) old_seq = pGetClipboardSequenceNumber();
 
@@ -575,6 +621,8 @@ static DWORD WINAPI clipboard_thread(void *param)
     ok( !count, "WM_CLIPBOARDUPDATE received\n" );
     count = SendMessageA( win, WM_USER+3, 0, 0 );
     ok( count, "WM_DESTROYCLIPBOARD not received\n" );
+    count = SendMessageA( win, WM_USER+4, 0, 0 );
+    ok( !count, "wrong format count %u on WM_DESTROYCLIPBOARD\n", count );
 
     handle = SetClipboardData( CF_TEXT, create_text() );
     ok(handle != 0, "SetClipboardData failed: %d\n", GetLastError());
@@ -686,12 +734,21 @@ static DWORD WINAPI clipboard_thread(void *param)
     count = SendMessageA( win, WM_USER+2, 0, 0 );
     ok( !count, "WM_CLIPBOARDUPDATE received\n" );
 
+    formats = CountClipboardFormats();
+    count = SendMessageA( win, WM_USER+3, 0, 0 );
+    ok( !count, "WM_DESTROYCLIPBOARD received\n" );
+
     r = OpenClipboard(0);
     ok(r, "OpenClipboard failed: %d\n", GetLastError());
     r = EmptyClipboard();
     ok(r, "EmptyClipboard failed: %d\n", GetLastError());
     r = CloseClipboard();
     ok(r, "CloseClipboard failed: %d\n", GetLastError());
+
+    count = SendMessageA( win, WM_USER+3, 0, 0 );
+    ok( count, "WM_DESTROYCLIPBOARD not received\n" );
+    count = SendMessageA( win, WM_USER+4, 0, 0 );
+    ok( count == formats, "wrong format count %u on WM_DESTROYCLIPBOARD\n", count );
 
     r = PostMessageA(win, WM_USER, 0, 0);
     ok(r, "PostMessage failed: %d\n", GetLastError());
