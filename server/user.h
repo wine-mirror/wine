@@ -91,6 +91,7 @@ extern void free_process_user_handles( struct process *process );
 
 /* clipboard functions */
 
+extern void cleanup_clipboard_window( struct desktop *desktop, user_handle_t window );
 extern void cleanup_clipboard_thread( struct thread *thread );
 
 /* hook functions */

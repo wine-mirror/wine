@@ -266,13 +266,13 @@ static void test_ClipboardOwner(void)
     ok( ret, "DestroyWindow error %d\n", GetLastError());
     SetLastError(0xdeadbeef);
     ok(!GetClipboardOwner() && GetLastError() == 0xdeadbeef, "clipboard should not be owned\n");
-    todo_wine ok(!GetClipboardViewer() && GetLastError() == 0xdeadbeef, "viewer still exists\n");
-    todo_wine ok(!GetOpenClipboardWindow() && GetLastError() == 0xdeadbeef, "clipboard should not be open\n");
+    ok(!GetClipboardViewer() && GetLastError() == 0xdeadbeef, "viewer still exists\n");
+    ok(!GetOpenClipboardWindow() && GetLastError() == 0xdeadbeef, "clipboard should not be open\n");
 
     SetLastError( 0xdeadbeef );
     ret = CloseClipboard();
-    todo_wine ok( !ret, "CloseClipboard succeeded\n" );
-    todo_wine ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "wrong error %u\n", GetLastError() );
+    ok( !ret, "CloseClipboard succeeded\n" );
+    ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "wrong error %u\n", GetLastError() );
 
     ret = OpenClipboard( 0 );
     ok( ret, "OpenClipboard error %d\n", GetLastError());

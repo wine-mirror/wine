@@ -111,6 +111,25 @@ static struct clipboard *get_process_clipboard(void)
     return clipboard;
 }
 
+/* cleanup clipboard information upon window destruction */
+void cleanup_clipboard_window( struct desktop *desktop, user_handle_t window )
+{
+    struct clipboard *clipboard = desktop->winstation->clipboard;
+
+    if (!clipboard) return;
+
+    if (clipboard->open_win == window)
+    {
+        clipboard->open_win = 0;
+        clipboard->open_thread = NULL;
+    }
+    if (clipboard->owner_win == window)
+    {
+        clipboard->owner_win = 0;
+        clipboard->owner_thread = NULL;
+    }
+    if (clipboard->viewer == window) clipboard->viewer = 0;
+}
 
 /* Called when thread terminates to allow release of clipboard */
 void cleanup_clipboard_thread(struct thread *thread)
