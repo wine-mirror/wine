@@ -5264,7 +5264,7 @@ static BOOL gradient_rect_null( const dib_info *dib, const RECT *rc, const TRIVE
 static void mask_rect_32( const dib_info *dst, const RECT *rc,
                           const dib_info *src, const POINT *origin, int rop2 )
 {
-    DWORD *dst_start = get_pixel_ptr_32(dst, rc->left, rc->top), dst_colors[2];
+    DWORD *dst_start = get_pixel_ptr_32(dst, rc->left, rc->top), dst_colors[256];
     DWORD src_val, bit_val, i, full, pos;
     struct rop_codes codes;
     int x, y;
@@ -5274,14 +5274,18 @@ static void mask_rect_32( const dib_info *dst, const RECT *rc,
     get_rop_codes( rop2, &codes );
 
     if (dst->funcs == &funcs_8888)
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < 2; i++)
             dst_colors[i] = color_table[i].rgbRed << 16 | color_table[i].rgbGreen << 8 |
                 color_table[i].rgbBlue;
     else
-        for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        for (i = 0; i < 2; i++)
             dst_colors[i] = put_field(color_table[i].rgbRed,   dst->red_shift,   dst->red_len) |
                             put_field(color_table[i].rgbGreen, dst->green_shift, dst->green_len) |
                             put_field(color_table[i].rgbBlue,  dst->blue_shift,  dst->blue_len);
+
+    /* Creating a BYTE-sized table so we don't need to mask the lsb of bit_val */
+    for (i = 2; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
+        dst_colors[i] = dst_colors[i & 1];
 
     for (y = rc->top; y < rc->bottom; y++)
     {
@@ -5298,21 +5302,21 @@ static void mask_rect_32( const dib_info *dst, const RECT *rc,
         {
             src_val = src_start[pos / 8];
 
-            bit_val = (src_val >> 7) & 1;
+            bit_val = src_val >> 7;
             do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            bit_val = (src_val >> 6) & 1;
+            bit_val = src_val >> 6;
             do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            bit_val = (src_val >> 5) & 1;
+            bit_val = src_val >> 5;
             do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            bit_val = (src_val >> 4) & 1;
+            bit_val = src_val >> 4;
             do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            bit_val = (src_val >> 3) & 1;
+            bit_val = src_val >> 3;
             do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            bit_val = (src_val >> 2) & 1;
+            bit_val = src_val >> 2;
             do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            bit_val = (src_val >> 1) & 1;
+            bit_val = src_val >> 1;
             do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            bit_val = src_val & 1;
+            bit_val = src_val;
             do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
         }
 
