@@ -473,6 +473,7 @@ HEADER_SRCS = \
 	msvcrt/errno.h \
 	msvcrt/fcntl.h \
 	msvcrt/float.h \
+	msvcrt/fpieee.h \
 	msvcrt/io.h \
 	msvcrt/limits.h \
 	msvcrt/locale.h \
