@@ -5267,7 +5267,7 @@ static void mask_rect_32( const dib_info *dst, const RECT *rc,
     DWORD *dst_start = get_pixel_ptr_32(dst, rc->left, rc->top), dst_colors[256];
     DWORD src_val, bit_val, i, full, pos;
     struct rop_codes codes;
-    int x, y;
+    int x, y, origin_end = origin->x + rc->right - rc->left;
     const RGBQUAD *color_table = get_dib_color_table( src );
     BYTE *src_start = get_pixel_ptr_1(src, origin->x, origin->y);
 
@@ -5286,6 +5286,23 @@ static void mask_rect_32( const dib_info *dst, const RECT *rc,
     /* Creating a BYTE-sized table so we don't need to mask the lsb of bit_val */
     for (i = 2; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
         dst_colors[i] = dst_colors[i & 1];
+
+    /* Special case starting and finishing in same byte, neither on byte boundary */
+    if ((origin->x & 7) && (origin_end & 7) && (origin->x & ~7) == (origin_end & ~7))
+    {
+        for (y = rc->top; y < rc->bottom; y++)
+        {
+            pos = origin->x & 7;
+            for (x = 0; x < rc->right - rc->left; x++, pos++)
+            {
+                bit_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
+                do_rop_codes_32( dst_start + x, dst_colors[bit_val], &codes );
+            }
+            dst_start += dst->stride / 4;
+            src_start += src->stride;
+        }
+        return;
+    }
 
     for (y = rc->top; y < rc->bottom; y++)
     {
@@ -5337,12 +5354,32 @@ static void mask_rect_24( const dib_info *dst, const RECT *rc,
     BYTE *dst_start = get_pixel_ptr_24(dst, rc->left, rc->top);
     DWORD src_val, bit_val, i, full, pos;
     struct rop_codes codes;
-    int x, y;
+    int x, y, origin_end = origin->x + rc->right - rc->left;
     const RGBQUAD *color_table = get_dib_color_table( src );
     BYTE *src_start = get_pixel_ptr_1(src, origin->x, origin->y);
     RGBQUAD rgb;
 
     get_rop_codes( rop2, &codes );
+
+    /* Special case starting and finishing in same byte, neither on byte boundary */
+    if ((origin->x & 7) && (origin_end & 7) && (origin->x & ~7) == (origin_end & ~7))
+    {
+        for (y = rc->top; y < rc->bottom; y++)
+        {
+            pos = origin->x & 7;
+            for (x = 0; x < rc->right - rc->left; x++, pos++)
+            {
+                bit_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
+                rgb = color_table[bit_val];
+                do_rop_codes_8( dst_start + x * 3, rgb.rgbBlue, &codes );
+                do_rop_codes_8( dst_start + x * 3 + 1, rgb.rgbGreen, &codes );
+                do_rop_codes_8( dst_start + x * 3 + 2, rgb.rgbRed, &codes );
+            }
+            dst_start += dst->stride;
+            src_start += src->stride;
+        }
+        return;
+    }
 
     for (y = rc->top; y < rc->bottom; y++)
     {
@@ -5439,7 +5476,7 @@ static void mask_rect_16( const dib_info *dst, const RECT *rc,
     WORD *dst_start = get_pixel_ptr_16(dst, rc->left, rc->top), dst_colors[2];
     DWORD src_val, bit_val, i, full, pos;
     struct rop_codes codes;
-    int x, y;
+    int x, y, origin_end = origin->x + rc->right - rc->left;
     const RGBQUAD *color_table = get_dib_color_table( src );
     BYTE *src_start = get_pixel_ptr_1(src, origin->x, origin->y);
 
@@ -5455,6 +5492,23 @@ static void mask_rect_16( const dib_info *dst, const RECT *rc,
             dst_colors[i] = put_field(color_table[i].rgbRed,   dst->red_shift,   dst->red_len) |
                             put_field(color_table[i].rgbGreen, dst->green_shift, dst->green_len) |
                             put_field(color_table[i].rgbBlue,  dst->blue_shift,  dst->blue_len);
+
+    /* Special case starting and finishing in same byte, neither on byte boundary */
+    if ((origin->x & 7) && (origin_end & 7) && (origin->x & ~7) == (origin_end & ~7))
+    {
+        for (y = rc->top; y < rc->bottom; y++)
+        {
+            pos = origin->x & 7;
+            for (x = 0; x < rc->right - rc->left; x++, pos++)
+            {
+                bit_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
+                do_rop_codes_16( dst_start + x, dst_colors[bit_val], &codes );
+            }
+            dst_start += dst->stride / 2;
+            src_start += src->stride;
+        }
+        return;
+    }
 
     for (y = rc->top; y < rc->bottom; y++)
     {
@@ -5506,7 +5560,7 @@ static void mask_rect_8( const dib_info *dst, const RECT *rc,
     BYTE *dst_start = get_pixel_ptr_8(dst, rc->left, rc->top), dst_colors[2];
     DWORD src_val, bit_val, i, full, pos;
     struct rop_codes codes;
-    int x, y;
+    int x, y, origin_end = origin->x + rc->right - rc->left;
     const RGBQUAD *color_table = get_dib_color_table( src );
     BYTE *src_start = get_pixel_ptr_1(src, origin->x, origin->y);
 
@@ -5515,6 +5569,23 @@ static void mask_rect_8( const dib_info *dst, const RECT *rc,
     for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
         dst_colors[i] = rgb_to_pixel_colortable( dst, color_table[i].rgbRed, color_table[i].rgbGreen,
                                                  color_table[i].rgbBlue );
+
+    /* Special case starting and finishing in same byte, neither on byte boundary */
+    if ((origin->x & 7) && (origin_end & 7) && (origin->x & ~7) == (origin_end & ~7))
+    {
+        for (y = rc->top; y < rc->bottom; y++)
+        {
+            pos = origin->x & 7;
+            for (x = 0; x < rc->right - rc->left; x++, pos++)
+            {
+                bit_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
+                do_rop_codes_8( dst_start + x, dst_colors[bit_val], &codes );
+            }
+            dst_start += dst->stride;
+            src_start += src->stride;
+        }
+        return;
+    }
 
     for (y = rc->top; y < rc->bottom; y++)
     {
