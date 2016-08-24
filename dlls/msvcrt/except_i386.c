@@ -1131,4 +1131,15 @@ void __stdcall _seh_longjmp_unwind4(struct MSVCRT___JUMP_BUFFER *jmp)
                           jmp->TryLevel, (void *)jmp->Ebp );
 }
 
+/*********************************************************************
+ *              _fpieee_flt (MSVCRT.@)
+ */
+int __cdecl _fpieee_flt(ULONG exception_code, EXCEPTION_POINTERS *ep,
+        int (__cdecl *handler)(_FPIEEE_RECORD*))
+{
+    FIXME("(%x %p %p) opcode: %x\n", exception_code, ep, handler,
+            *(ULONG*)ep->ContextRecord->FloatSave.ErrorOffset);
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
 #endif  /* __i386__ */

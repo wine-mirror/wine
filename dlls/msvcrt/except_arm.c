@@ -193,4 +193,14 @@ void __cdecl MSVCRT_longjmp(struct MSVCRT___JUMP_BUFFER *jmp, int retval)
     longjmp_set_regs(jmp, retval);
 }
 
+/*********************************************************************
+ *              _fpieee_flt (MSVCRT.@)
+ */
+int __cdecl _fpieee_flt(ULONG exception_code, EXCEPTION_POINTERS *ep,
+        int (__cdecl *handler)(_FPIEEE_RECORD*))
+{
+    FIXME("(%x %p %p)\n", exception_code, ep, handler);
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
 #endif  /* __arm__ */

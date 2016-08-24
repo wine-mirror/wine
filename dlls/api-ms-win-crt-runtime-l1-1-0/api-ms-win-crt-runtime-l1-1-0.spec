@@ -36,7 +36,7 @@
 @ cdecl _errno() ucrtbase._errno
 @ stub _execute_onexit_table
 @ cdecl _exit(long) ucrtbase._exit
-@ cdecl _fpieee_flt(long ptr ptr) ucrtbase._fpieee_flt
+@ cdecl -arch=i386,x86_64,arm _fpieee_flt(long ptr ptr) ucrtbase._fpieee_flt
 @ cdecl _fpreset() ucrtbase._fpreset
 @ cdecl _get_doserrno(ptr) ucrtbase._get_doserrno
 @ cdecl _get_errno(ptr) ucrtbase._get_errno
