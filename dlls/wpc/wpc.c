@@ -28,10 +28,85 @@ WINE_DEFAULT_DEBUG_CHANNEL(wpc);
 
 static HINSTANCE wpc_instance;
 
+static HRESULT WINAPI WindowsParentalControls_QueryInterface(IWindowsParentalControls *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        TRACE("(IID_IUnknown %p)\n", ppv);
+        *ppv = iface;
+    }else if(IsEqualGUID(riid, &IID_IWindowsParentalControlsCore)) {
+        TRACE("(IID_IWindowsParentalControlsCore %p)\n", ppv);
+        *ppv = iface;
+    }else if(IsEqualGUID(riid, &IID_IWindowsParentalControls)) {
+        TRACE("(IID_IWindowsParentalControls %p)\n", ppv);
+        *ppv = iface;
+    }else {
+        FIXME("unsupported iface %s\n", debugstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI WindowsParentalControls_AddRef(IWindowsParentalControls *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI WindowsParentalControls_Release(IWindowsParentalControls *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI WindowsParentalControls_GetVisibility(IWindowsParentalControls *iface, WPCFLAG_VISIBILITY *visibility)
+{
+    FIXME("(%p)\n", visibility);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WindowsParentalControls_GetUserSettings(IWindowsParentalControls *iface, const WCHAR *sid, IWPCSettings **settings)
+{
+    FIXME("(%s %p)\n", debugstr_w(sid), settings);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WindowsParentalControls_GetWebSettings(IWindowsParentalControls *iface, const WCHAR *sid, IWPCWebSettings **settings)
+{
+    FIXME("(%s %p)\n", debugstr_w(sid), settings);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WindowsParentalControls_GetWebFilterInfo(IWindowsParentalControls *iface, GUID *id, WCHAR **name)
+{
+    FIXME("(%p %p)\n", id, name);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WindowsParentalControls_GetGamesSettings(IWindowsParentalControls *iface, const WCHAR *sid, IWPCGamesSettings **settings)
+{
+    FIXME("(%s %p)\n", debugstr_w(sid), settings);
+    return E_NOTIMPL;
+}
+
+static const IWindowsParentalControlsVtbl WindowsParentalControlsVtbl = {
+    WindowsParentalControls_QueryInterface,
+    WindowsParentalControls_AddRef,
+    WindowsParentalControls_Release,
+    WindowsParentalControls_GetVisibility,
+    WindowsParentalControls_GetUserSettings,
+    WindowsParentalControls_GetWebSettings,
+    WindowsParentalControls_GetWebFilterInfo,
+    WindowsParentalControls_GetGamesSettings
+};
+
 static HRESULT WINAPI WindowsParentalControls_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
 {
-    FIXME("(%s %p %p)\n", debugstr_guid(riid), outer, ppv);
-    return E_NOTIMPL;
+    static IWindowsParentalControls wpc = { &WindowsParentalControlsVtbl };
+
+    TRACE("(%s %p %p)\n", debugstr_guid(riid), outer, ppv);
+
+    return IWindowsParentalControls_QueryInterface(&wpc, riid, ppv);
 }
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
