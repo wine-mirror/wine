@@ -325,7 +325,7 @@
 @ cdecl _flushall() MSVCRT__flushall
 @ cdecl _fpclass(double) MSVCRT__fpclass
 @ stub _fpclassf
-@ stub _fpieee_flt(long ptr ptr)
+@ cdecl -arch=i386,x86_64,arm _fpieee_flt(long ptr ptr)
 @ cdecl _fpreset()
 @ cdecl _fputc_nolock(long ptr) MSVCRT__fputc_nolock
 @ cdecl _fputchar(long) MSVCRT__fputchar

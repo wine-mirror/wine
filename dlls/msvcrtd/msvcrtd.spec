@@ -294,7 +294,7 @@
 @ cdecl _flushall() msvcrt._flushall
 @ extern _fmode msvcrt._fmode
 @ cdecl _fpclass(double) msvcrt._fpclass
-@ cdecl _fpieee_flt(long ptr ptr) msvcrt._fpieee_flt
+@ cdecl -arch=i386,x86_64,arm _fpieee_flt(long ptr ptr) msvcrt._fpieee_flt
 @ cdecl _fpreset() msvcrt._fpreset
 @ cdecl _fputchar(long) msvcrt._fputchar
 @ cdecl _fputwchar(long) msvcrt._fputwchar

@@ -1176,4 +1176,94 @@ extern char* __cdecl __unDName(char *,const char*,int,malloc_func_t,free_func_t,
 
 #define UCRTBASE_SCANF_MASK                              (0x0007)
 
+typedef enum {
+    _FpFormatFp32,
+    _FpFormatFp64,
+    _FpFormatFp80,
+    _FpFormatFp128,
+    _FpFormatI16,
+    _FpFormatI32,
+    _FpFormatI64,
+    _FpFormatU16,
+    _FpFormatU32,
+    _FpFormatU64,
+    _FpFormatBcd80,
+    _FpFormatCompare,
+    _FpFormatString,
+} _FPIEEE_FORMAT;
+
+typedef float _FP32;
+typedef double _FP64;
+typedef short _I16;
+typedef int _I32;
+typedef unsigned short _U16;
+typedef unsigned int _U32;
+typedef __int64 _Q64;
+
+typedef struct {
+    unsigned short W[5];
+} _FP80;
+
+typedef struct DECLSPEC_ALIGN(16) {
+    MSVCRT_ulong W[4];
+} _FP128;
+
+typedef struct DECLSPEC_ALIGN(8) {
+    MSVCRT_ulong W[2];
+} _I64;
+
+typedef struct DECLSPEC_ALIGN(8) {
+    MSVCRT_ulong W[2];
+} _U64;
+
+typedef struct {
+    unsigned short W[5];
+} _BCD80;
+
+typedef struct DECLSPEC_ALIGN(16) {
+    _Q64 W[2];
+} _FPQ64;
+
+typedef struct {
+    union {
+        _FP32 Fp32Value;
+        _FP64 Fp64Value;
+        _FP80 Fp80Value;
+        _FP128 Fp128Value;
+        _I16 I16Value;
+        _I32 I32Value;
+        _I64 I64Value;
+        _U16 U16Value;
+        _U32 U32Value;
+        _U64 U64Value;
+        _BCD80 Bcd80Value;
+        char *StringValue;
+        int CompareValue;
+        _Q64 Q64Value;
+        _FPQ64 Fpq64Value;
+    } Value;
+    unsigned int OperandValid : 1;
+    unsigned int Format : 4;
+} _FPIEEE_VALUE;
+
+typedef struct {
+    unsigned int Inexact : 1;
+    unsigned int Underflow : 1;
+    unsigned int Overflow : 1;
+    unsigned int ZeroDivide : 1;
+    unsigned int InvalidOperation : 1;
+} _FPIEEE_EXCEPTION_FLAGS;
+
+typedef struct {
+    unsigned int RoundingMode : 2;
+    unsigned int Precision : 3;
+    unsigned int Operation :12;
+    _FPIEEE_EXCEPTION_FLAGS Cause;
+    _FPIEEE_EXCEPTION_FLAGS Enable;
+    _FPIEEE_EXCEPTION_FLAGS Status;
+    _FPIEEE_VALUE Operand1;
+    _FPIEEE_VALUE Operand2;
+    _FPIEEE_VALUE Result;
+} _FPIEEE_RECORD, *_PFPIEEE_RECORD;
+
 #endif /* __WINE_MSVCRT_H */
