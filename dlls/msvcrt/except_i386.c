@@ -1137,8 +1137,74 @@ void __stdcall _seh_longjmp_unwind4(struct MSVCRT___JUMP_BUFFER *jmp)
 int __cdecl _fpieee_flt(ULONG exception_code, EXCEPTION_POINTERS *ep,
         int (__cdecl *handler)(_FPIEEE_RECORD*))
 {
-    FIXME("(%x %p %p) opcode: %x\n", exception_code, ep, handler,
-            *(ULONG*)ep->ContextRecord->FloatSave.ErrorOffset);
+    FLOATING_SAVE_AREA *ctx = &ep->ContextRecord->FloatSave;
+    _FPIEEE_RECORD rec;
+    int ret;
+
+    TRACE("(%x %p %p)\n", exception_code, ep, handler);
+
+    switch(exception_code) {
+    case STATUS_FLOAT_DIVIDE_BY_ZERO:
+    case STATUS_FLOAT_INEXACT_RESULT:
+    case STATUS_FLOAT_INVALID_OPERATION:
+    case STATUS_FLOAT_OVERFLOW:
+    case STATUS_FLOAT_UNDERFLOW:
+        break;
+    default:
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+
+    memset(&rec, 0, sizeof(rec));
+    rec.RoundingMode = ctx->ControlWord >> 10;
+    switch((ctx->ControlWord >> 8) & 0x3) {
+    case 0: rec.Precision = 2; break;
+    case 1: rec.Precision = 3; break;
+    case 2: rec.Precision = 1; break;
+    case 3: rec.Precision = 0; break;
+    }
+    rec.Status.InvalidOperation = ctx->StatusWord & 0x1;
+    rec.Status.ZeroDivide = ((ctx->StatusWord & 0x4) != 0);
+    rec.Status.Overflow = ((ctx->StatusWord & 0x8) != 0);
+    rec.Status.Underflow = ((ctx->StatusWord & 0x10) != 0);
+    rec.Status.Inexact = ((ctx->StatusWord & 0x20) != 0);
+    rec.Enable.InvalidOperation = ((ctx->ControlWord & 0x1) == 0);
+    rec.Enable.ZeroDivide = ((ctx->ControlWord & 0x4) == 0);
+    rec.Enable.Overflow = ((ctx->ControlWord & 0x8) == 0);
+    rec.Enable.Underflow = ((ctx->ControlWord & 0x10) == 0);
+    rec.Enable.Inexact = ((ctx->ControlWord & 0x20) == 0);
+    rec.Cause.InvalidOperation = rec.Enable.InvalidOperation & rec.Status.InvalidOperation;
+    rec.Cause.ZeroDivide = rec.Enable.ZeroDivide & rec.Status.ZeroDivide;
+    rec.Cause.Overflow = rec.Enable.Overflow & rec.Status.Overflow;
+    rec.Cause.Underflow = rec.Enable.Underflow & rec.Status.Underflow;
+    rec.Cause.Inexact = rec.Enable.Inexact & rec.Status.Inexact;
+
+    TRACE("opcode: %x\n", *(ULONG*)ep->ContextRecord->FloatSave.ErrorOffset);
+
+    if(*(WORD*)ctx->ErrorOffset == 0x35dc) { /* fdiv m64fp */
+        if(exception_code==STATUS_FLOAT_DIVIDE_BY_ZERO || exception_code==STATUS_FLOAT_INVALID_OPERATION) {
+            rec.Operand1.OperandValid = 1;
+            rec.Result.OperandValid = 0;
+        } else {
+            rec.Operand1.OperandValid = 0;
+            rec.Result.OperandValid = 1;
+        }
+        rec.Operand2.OperandValid = 1;
+        rec.Operation = _FpCodeDivide;
+        rec.Operand1.Format = _FpFormatFp80;
+        memcpy(&rec.Operand1.Value.Fp80Value, ctx->RegisterArea, sizeof(rec.Operand1.Value.Fp80Value));
+        rec.Operand2.Format = _FpFormatFp64;
+        rec.Operand2.Value.Fp64Value = *(double*)ctx->DataOffset;
+        rec.Result.Format = _FpFormatFp80;
+        memcpy(&rec.Result.Value.Fp80Value, ctx->RegisterArea, sizeof(rec.Operand1.Value.Fp80Value));
+
+        ret = handler(&rec);
+
+        if(ret == EXCEPTION_CONTINUE_EXECUTION)
+            memcpy(ctx->RegisterArea, &rec.Result.Value.Fp80Value, sizeof(rec.Operand1.Value.Fp80Value));
+        return ret;
+    }
+
+    FIXME("unsupported opcode: %x\n", *(ULONG*)ep->ContextRecord->FloatSave.ErrorOffset);
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
