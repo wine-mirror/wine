@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2007 Alexandre Julliard
  * Copyright (C) 2010 Damjan Jovanovic
+ * Copyright (C) 2016 Sebastian Lackner
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,6 +31,7 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
+#include "winsvc.h"
 #include "winternl.h"
 #include "excpt.h"
 #include "winioctl.h"
@@ -65,6 +67,13 @@ KSERVICE_TABLE_DESCRIPTOR KeServiceDescriptorTable[4] = { { 0 } };
 
 typedef void (WINAPI *PCREATE_PROCESS_NOTIFY_ROUTINE)(HANDLE,HANDLE,BOOLEAN);
 typedef void (WINAPI *PCREATE_THREAD_NOTIFY_ROUTINE)(HANDLE,HANDLE,BOOLEAN);
+
+static const WCHAR servicesW[] = {'\\','R','e','g','i','s','t','r','y',
+                                  '\\','M','a','c','h','i','n','e',
+                                  '\\','S','y','s','t','e','m',
+                                  '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
+                                  '\\','S','e','r','v','i','c','e','s',
+                                  '\\',0};
 
 /* tid of the thread running client request */
 static DWORD request_thread;
@@ -871,12 +880,6 @@ PIRP WINAPI IoBuildSynchronousFsdRequest(ULONG majorfunc, PDEVICE_OBJECT device,
 static void build_driver_keypath( const WCHAR *name, UNICODE_STRING *keypath )
 {
     static const WCHAR driverW[] = {'\\','D','r','i','v','e','r','\\',0};
-    static const WCHAR servicesW[] = {'\\','R','e','g','i','s','t','r','y',
-                                      '\\','M','a','c','h','i','n','e',
-                                      '\\','S','y','s','t','e','m',
-                                      '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
-                                      '\\','S','e','r','v','i','c','e','s',
-                                      '\\',0};
     WCHAR *str;
 
     /* Check what prefix is present */
@@ -2640,4 +2643,172 @@ NTSTATUS WINAPI IoAttachDevice(DEVICE_OBJECT *source, UNICODE_STRING *target, DE
 {
     FIXME("(%p, %s, %p): stub\n", source, debugstr_us(target), attached);
     return STATUS_NOT_IMPLEMENTED;
+}
+
+
+static NTSTATUS open_driver( const UNICODE_STRING *service_name, SC_HANDLE *service )
+{
+    QUERY_SERVICE_CONFIGW *service_config = NULL;
+    SC_HANDLE manager_handle;
+    DWORD config_size = 0;
+    WCHAR *name;
+
+    if (!(name = RtlAllocateHeap( GetProcessHeap(), 0, service_name->Length + sizeof(WCHAR) )))
+        return STATUS_NO_MEMORY;
+
+    memcpy( name, service_name->Buffer, service_name->Length );
+    name[ service_name->Length / sizeof(WCHAR) ] = 0;
+
+    if (strncmpW( name, servicesW, strlenW(servicesW) ))
+    {
+        FIXME( "service name %s is not a keypath\n", debugstr_us(service_name) );
+        RtlFreeHeap( GetProcessHeap(), 0, name );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if (!(manager_handle = OpenSCManagerW( NULL, NULL, SC_MANAGER_CONNECT )))
+    {
+        WARN( "failed to connect to service manager\n" );
+        RtlFreeHeap( GetProcessHeap(), 0, name );
+        return STATUS_NOT_SUPPORTED;
+    }
+
+    *service = OpenServiceW( manager_handle, name + strlenW(servicesW), SERVICE_ALL_ACCESS );
+    RtlFreeHeap( GetProcessHeap(), 0, name );
+    CloseServiceHandle( manager_handle );
+
+    if (!*service)
+    {
+        WARN( "failed to open service %s\n", debugstr_us(service_name) );
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    QueryServiceConfigW( *service, NULL, 0, &config_size );
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+    {
+        WARN( "failed to query service config\n" );
+        goto error;
+    }
+
+    if (!(service_config = RtlAllocateHeap( GetProcessHeap(), 0, config_size )))
+        goto error;
+
+    if (!QueryServiceConfigW( *service, service_config, config_size, &config_size ))
+    {
+        WARN( "failed to query service config\n" );
+        goto error;
+    }
+
+    if (service_config->dwServiceType != SERVICE_KERNEL_DRIVER &&
+        service_config->dwServiceType != SERVICE_FILE_SYSTEM_DRIVER)
+    {
+        WARN( "service %s is not a kernel driver\n", debugstr_us(service_name) );
+        goto error;
+    }
+
+    TRACE( "opened service for driver %s\n", debugstr_us(service_name) );
+    RtlFreeHeap( GetProcessHeap(), 0, service_config );
+    return STATUS_SUCCESS;
+
+error:
+    CloseServiceHandle( *service );
+    RtlFreeHeap( GetProcessHeap(), 0, service_config );
+    return STATUS_UNSUCCESSFUL;
+}
+
+
+/***********************************************************************
+ *           ZwLoadDriver (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI ZwLoadDriver( const UNICODE_STRING *service_name )
+{
+    SERVICE_STATUS_PROCESS service_status;
+    SC_HANDLE service_handle;
+    NTSTATUS status;
+    DWORD bytes;
+    int i;
+
+    TRACE( "(%s)\n", debugstr_us(service_name) );
+
+    if ((status = open_driver( service_name, &service_handle )) != STATUS_SUCCESS)
+        return status;
+
+    TRACE( "trying to start %s\n", debugstr_us(service_name) );
+
+    for (i = 0; i < 100; i++)  /* 10 sec timeout */
+    {
+        if (StartServiceW( service_handle, 0, NULL )) break;
+        if (GetLastError() == ERROR_SERVICE_ALREADY_RUNNING) break;
+        if (GetLastError() != ERROR_SERVICE_DATABASE_LOCKED) goto error;
+        Sleep(100);
+    }
+    if (i == 100) goto error;
+
+    for (i = 0; i < 100; i++)  /* 10 sec timeout */
+    {
+        if (!QueryServiceStatusEx( service_handle, SC_STATUS_PROCESS_INFO,
+                                   (BYTE *)&service_status, sizeof(service_status), &bytes )) goto error;
+        if (service_status.dwCurrentState != SERVICE_START_PENDING) break;
+        Sleep(100);
+    }
+
+    if (service_status.dwCurrentState == SERVICE_RUNNING)
+    {
+        if (service_status.dwProcessId != GetCurrentProcessId())
+            FIXME( "driver %s was loaded into a different process\n", debugstr_us(service_name) );
+
+        status = STATUS_SUCCESS;
+        goto done;
+    }
+
+error:
+    WARN( "failed to start service %s\n", debugstr_us(service_name) );
+    status = STATUS_UNSUCCESSFUL;
+
+done:
+    TRACE( "returning status %08x\n", status );
+    CloseServiceHandle( service_handle );
+    return status;
+}
+
+
+/***********************************************************************
+ *           ZwUnloadDriver (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI ZwUnloadDriver( const UNICODE_STRING *service_name )
+{
+    SERVICE_STATUS service_status;
+    SC_HANDLE service_handle;
+    NTSTATUS status;
+    int i;
+
+    TRACE( "(%s)\n", debugstr_us(service_name) );
+
+    if ((status = open_driver( service_name, &service_handle )) != STATUS_SUCCESS)
+        return status;
+
+    if (!ControlService( service_handle, SERVICE_CONTROL_STOP, &service_status ))
+        goto error;
+
+    for (i = 0; i < 100; i++)  /* 10 sec timeout */
+    {
+        if (!QueryServiceStatus( service_handle, &service_status )) goto error;
+        if (service_status.dwCurrentState != SERVICE_STOP_PENDING) break;
+        Sleep(100);
+    }
+
+    if (service_status.dwCurrentState == SERVICE_STOPPED)
+    {
+        status = STATUS_SUCCESS;
+        goto done;
+    }
+
+error:
+    WARN( "failed to stop service %s\n", debugstr_us(service_name) );
+    status = STATUS_UNSUCCESSFUL;
+
+done:
+    TRACE( "returning status %08x\n", status );
+    CloseServiceHandle( service_handle );
+    return status;
 }

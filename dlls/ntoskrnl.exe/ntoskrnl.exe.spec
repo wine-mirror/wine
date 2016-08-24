@@ -1314,7 +1314,7 @@
 @ stdcall ZwFsControlFile(long long long long long long long long long long) ntdll.ZwFsControlFile
 @ stdcall ZwInitiatePowerAction(long long long long) ntdll.ZwInitiatePowerAction
 @ stdcall ZwIsProcessInJob(long long) ntdll.ZwIsProcessInJob
-@ stdcall ZwLoadDriver(ptr) ntdll.ZwLoadDriver
+@ stdcall ZwLoadDriver(ptr)
 @ stdcall ZwLoadKey(ptr ptr) ntdll.ZwLoadKey
 @ stdcall ZwMakeTemporaryObject(long) ntdll.ZwMakeTemporaryObject
 @ stdcall ZwMapViewOfSection(long long ptr long long ptr ptr long long long) ntdll.ZwMapViewOfSection
@@ -1384,7 +1384,7 @@
 @ stdcall ZwTerminateJobObject(long long) ntdll.ZwTerminateJobObject
 @ stdcall ZwTerminateProcess(long long) ntdll.ZwTerminateProcess
 @ stub ZwTranslateFilePath
-@ stdcall ZwUnloadDriver(ptr) ntdll.ZwUnloadDriver
+@ stdcall ZwUnloadDriver(ptr)
 @ stdcall ZwUnloadKey(long) ntdll.ZwUnloadKey
 @ stdcall ZwUnmapViewOfSection(long ptr) ntdll.ZwUnmapViewOfSection
 @ stdcall ZwWaitForMultipleObjects(long ptr long long ptr) ntdll.ZwWaitForMultipleObjects
