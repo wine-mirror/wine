@@ -45,9 +45,6 @@ static CFMutableDictionaryRef win_datas;
 static DWORD activate_on_focus_time;
 
 
-void CDECL macdrv_SetFocus(HWND hwnd);
-
-
 /***********************************************************************
  *              get_cocoa_window_features
  */
@@ -834,6 +831,27 @@ static struct macdrv_win_data *macdrv_create_win_data(HWND hwnd, const RECT *win
 
 
 /***********************************************************************
+ *              set_focus
+ */
+static void set_focus(HWND hwnd)
+{
+    struct macdrv_win_data *data;
+
+    if (!(hwnd = GetAncestor(hwnd, GA_ROOT))) return;
+    if (!(data = get_win_data(hwnd))) return;
+
+    if (data->cocoa_window && data->on_screen)
+    {
+        BOOL activate = activate_on_focus_time && (GetTickCount() - activate_on_focus_time < 2000);
+        /* Set Mac focus */
+        macdrv_give_cocoa_window_focus(data->cocoa_window, activate);
+        activate_on_focus_time = 0;
+    }
+
+    release_win_data(data);
+}
+
+/***********************************************************************
  *              show_window
  */
 static void show_window(struct macdrv_win_data *data)
@@ -845,7 +863,7 @@ static void show_window(struct macdrv_win_data *data)
         macdrv_window prev_window = NULL;
         macdrv_window next_window = NULL;
         BOOL activate = FALSE;
-        HWND hwndFocus;
+        GUITHREADINFO info;
 
         /* find window that this one must be after */
         prev = GetWindow(data->hwnd, GW_HWNDPREV);
@@ -869,9 +887,10 @@ static void show_window(struct macdrv_win_data *data)
         macdrv_order_cocoa_window(data->cocoa_window, prev_window, next_window, activate);
         data->on_screen = TRUE;
 
-        hwndFocus = GetFocus();
-        if (hwndFocus && (data->hwnd == hwndFocus || IsChild(data->hwnd, hwndFocus)))
-            macdrv_SetFocus(hwndFocus);
+        info.cbSize = sizeof(info);
+        if (GetGUIThreadInfo(GetWindowThreadProcessId(data->hwnd, NULL), &info) && info.hwndFocus &&
+            (data->hwnd == info.hwndFocus || IsChild(data->hwnd, info.hwndFocus)))
+            set_focus(info.hwndFocus);
         if (activate)
             activate_on_focus_time = 0;
     }
@@ -1495,25 +1514,12 @@ void CDECL macdrv_DestroyWindow(HWND hwnd)
 void CDECL macdrv_SetFocus(HWND hwnd)
 {
     struct macdrv_thread_data *thread_data = macdrv_thread_data();
-    struct macdrv_win_data *data;
 
     TRACE("%p\n", hwnd);
 
     if (!thread_data) return;
     thread_data->dead_key_state = 0;
-
-    if (!(hwnd = GetAncestor(hwnd, GA_ROOT))) return;
-    if (!(data = get_win_data(hwnd))) return;
-
-    if (data->cocoa_window && data->on_screen)
-    {
-        BOOL activate = activate_on_focus_time && (GetTickCount() - activate_on_focus_time < 2000);
-        /* Set Mac focus */
-        macdrv_give_cocoa_window_focus(data->cocoa_window, activate);
-        activate_on_focus_time = 0;
-    }
-
-    release_win_data(data);
+    set_focus(hwnd);
 }
 
 
