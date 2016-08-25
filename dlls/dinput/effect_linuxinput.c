@@ -680,8 +680,8 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
                 cond[i].center = (int)(factor[i] * (tsp[j].lOffset / 10) * 32);
                 cond[i].right_coeff = (int)(factor[i] * (tsp[j].lPositiveCoefficient / 10) * 32);
                 cond[i].left_coeff = (int)(factor[i] * (tsp[j].lNegativeCoefficient / 10) * 32);
-                cond[i].right_saturation = (int)(factor[i] * (tsp[j].dwPositiveSaturation / 10) * 32);
-                cond[i].left_saturation = (int)(factor[i] * (tsp[j].dwNegativeSaturation / 10) * 32);
+                cond[i].right_saturation = (int)(factor[i] * (tsp[j].dwPositiveSaturation / 10) * 65);
+                cond[i].left_saturation = (int)(factor[i] * (tsp[j].dwNegativeSaturation / 10) * 65);
                 cond[i].deadband = (int)(factor[i] * (tsp[j].lDeadBand / 10) * 32);
                 if (sources == 2)
                     j++;
