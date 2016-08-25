@@ -1652,11 +1652,7 @@ static HRESULT write_type_struct( struct writer *writer, WS_TYPE_MAPPING mapping
     HRESULT hr;
     const char *ptr;
 
-    if (desc->structOptions)
-    {
-        FIXME( "struct options 0x%x not supported\n", desc->structOptions );
-        return E_NOTIMPL;
-    }
+    if (desc->structOptions) FIXME( "struct options 0x%x not supported\n", desc->structOptions );
 
     for (i = 0; i < desc->fieldCount; i++)
     {
