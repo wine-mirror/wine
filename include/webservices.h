@@ -74,6 +74,7 @@ typedef struct _WS_CUSTOM_HTTP_PROXY WS_CUSTOM_HTTP_PROXY;
 typedef struct _WS_HTTP_MESSAGE_MAPPING WS_HTTP_MESSAGE_MAPPING;
 typedef struct _WS_HTTP_HEADER_MAPPING WS_HTTP_HEADER_MAPPING;
 typedef struct _WS_HTTP_REDIRECT_CALLBACK_CONTEXT WS_HTTP_REDIRECT_CALLBACK_CONTEXT;
+typedef struct _WS_PROXY_MESSAGE_CALLBACK_CONTEXT WS_PROXY_MESSAGE_CALLBACK_CONTEXT;
 
 struct _WS_STRUCT_DESCRIPTION;
 struct _WS_XML_STRING;
@@ -387,6 +388,16 @@ typedef struct _WS_WSZ_DESCRIPTION {
     ULONG minCharCount;
     ULONG maxCharCount;
 } WS_WSZ_DESCRIPTION;
+
+typedef struct _WS_STRING_DESCRIPTION {
+    ULONG minCharCount;
+    ULONG maxCharCount;
+} WS_STRING_DESCRIPTION;
+
+typedef struct _WS_XML_STRING_DESCRIPTION {
+    ULONG minByteCount;
+    ULONG maxByteCount;
+} WS_XML_STRING_DESCRIPTION;
 
 struct _WS_ENUM_VALUE {
     int value;
@@ -1346,6 +1357,17 @@ typedef enum
 typedef void (CALLBACK *WS_MESSAGE_DONE_CALLBACK)
     (void*);
 
+typedef HRESULT (CALLBACK *WS_PROXY_MESSAGE_CALLBACK)
+    (WS_MESSAGE*, WS_HEAP*, void*, WS_ERROR*);
+
+struct _WS_PROXY_MESSAGE_CALLBACK_CONTEXT
+{
+    WS_PROXY_MESSAGE_CALLBACK callback;
+    void *state;
+};
+
+HRESULT WINAPI WsAddCustomHeader(WS_MESSAGE*, const WS_ELEMENT_DESCRIPTION*, WS_WRITE_OPTION,
+                                 const void*, ULONG, ULONG, WS_ERROR*);
 HRESULT WINAPI WsAddMappedHeader(WS_MESSAGE*, const WS_XML_STRING*, WS_TYPE, WS_WRITE_OPTION,
                                  const void*, ULONG, WS_ERROR*);
 HRESULT WINAPI WsAddressMessage(WS_MESSAGE*, const WS_ENDPOINT_ADDRESS*, WS_ERROR*);
@@ -1432,6 +1454,8 @@ HRESULT WINAPI WsReadValue(WS_XML_READER*, WS_VALUE_TYPE, void*, ULONG, WS_ERROR
 HRESULT WINAPI WsReceiveMessage(WS_CHANNEL*, WS_MESSAGE*, const WS_MESSAGE_DESCRIPTION**, ULONG,
                                 WS_RECEIVE_OPTION, WS_READ_OPTION, WS_HEAP*, void*, ULONG, ULONG*,
                                 const WS_ASYNC_CONTEXT*, WS_ERROR*);
+HRESULT WINAPI WsRemoveCustomHeader(WS_MESSAGE*, const WS_XML_STRING*, const WS_XML_STRING*,
+                                    WS_ERROR*);
 HRESULT WINAPI WsRemoveHeader(WS_MESSAGE*, WS_HEADER_TYPE, WS_ERROR*);
 HRESULT WINAPI WsRemoveMappedHeader(WS_MESSAGE*, const WS_XML_STRING*, WS_ERROR*);
 HRESULT WINAPI WsRemoveNode(const WS_XML_NODE_POSITION*, WS_ERROR*);
