@@ -1619,36 +1619,55 @@ static inline void copy_rect_bits_align_1( BYTE *dst_start, int dst_x, const BYT
     dst_start += dst_x / 8;
     full_bytes = (dst_end - ((dst_x + 7) & ~7)) / 8;
 
-    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
+    switch( rop2 )
     {
-        dst = dst_start;
-        src = src_start;
-        if (dst_x & 7)
+    case R2_COPYPEN:
+        for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
         {
-            mask = edge_masks_1[dst_x & 7];
-            do_rop_codes_mask_8( dst, src[0], &codes, mask );
-            src++;
-            dst++;
-        }
-
-        if (rop2 == R2_COPYPEN)
-        {
+            dst = dst_start;
+            src = src_start;
+            if (dst_x & 7)
+            {
+                mask = edge_masks_1[dst_x & 7];
+                do_rop_codes_mask_8( dst, src[0], &codes, mask );
+                src++;
+                dst++;
+            }
             memmove( dst, src, full_bytes );
             src += full_bytes;
             dst += full_bytes;
+            if (dst_end & 7)
+            {
+                mask = ~edge_masks_1[dst_end & 7];
+                do_rop_codes_mask_8( dst, src[0], &codes, mask );
+            }
         }
-        else
-        {
-            for (i = 0; i < full_bytes; i++, src++, dst++)
-                do_rop_codes_8( dst, src[0], &codes );
+        break;
+
+#define LOOP( op )                                                      \
+        for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride) \
+        {                                                               \
+            dst = dst_start;                                            \
+            src = src_start;                                            \
+            if (dst_x & 7)                                              \
+            {                                                           \
+                mask = edge_masks_1[dst_x & 7];                         \
+                do_rop_codes_mask_8( dst, src[0], &codes, mask );       \
+                src++;                                                  \
+                dst++;                                                  \
+            }                                                           \
+            for (i = 0; i < full_bytes; i++, src++, dst++)              \
+                op;                                                     \
+            if (dst_end & 7)                                            \
+            {                                                           \
+                mask = ~edge_masks_1[dst_end & 7];                      \
+                do_rop_codes_mask_8( dst, src[0], &codes, mask );       \
+            }                                                           \
         }
 
-        if (dst_end & 7)
-        {
-            mask = ~edge_masks_1[dst_end & 7];
-            do_rop_codes_mask_8( dst, src[0], &codes, mask );
-        }
+        ROPS_WITHOUT_COPY( dst[0], src[0] );
     }
+#undef LOOP
 }
 
 static inline void copy_rect_bits_shl_1( BYTE *dst_start, int dst_x, const BYTE *src_start, int src_x,
@@ -1666,39 +1685,36 @@ static inline void copy_rect_bits_shl_1( BYTE *dst_start, int dst_x, const BYTE 
     dst_start += dst_x / 8;
     full_bytes = (dst_end - ((dst_x + 7) & ~7)) / 8;
 
-    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
-    {
-        dst = dst_start;
-        src = src_start;
-        if (dst_x & 7)
-        {
-            src_val = (src[0] << off) | (src[1] >> (8 - off));
-            mask = edge_masks_1[dst_x & 7];
-            do_rop_codes_mask_8( dst, src_val, &codes, mask );
-            src++;
-            dst++;
-        }
-
-        if (rop2 == R2_COPYPEN)
-        {
-            for (i = 0; i < full_bytes; i++, src++, dst++)
-                dst[0] = (src[0] << off) | (src[1] >> (8 - off));
-        }
-        else
-        {
-            for (i = 0; i < full_bytes; i++, src++, dst++)
-                do_rop_codes_8( dst, (src[0] << off) | (src[1] >> (8 - off)), &codes );
-        }
-
-        if (dst_end & 7)
-        {
-            src_val = src[0] << off;
-            if ((dst_end & 7) + off > 8)
-                src_val |= (src[1] >> (8 - off));
-            mask = ~edge_masks_1[dst_end & 7];
-            do_rop_codes_mask_8( dst, src_val, &codes, mask );
-        }
+#define LOOP( op )                                                      \
+    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride) \
+    {                                                                   \
+        dst = dst_start;                                                \
+        src = src_start;                                                \
+        if (dst_x & 7)                                                  \
+        {                                                               \
+            src_val = (src[0] << off) | (src[1] >> (8 - off));          \
+            mask = edge_masks_1[dst_x & 7];                             \
+            do_rop_codes_mask_8( dst, src_val, &codes, mask );          \
+            src++;                                                      \
+            dst++;                                                      \
+        }                                                               \
+        for (i = 0; i < full_bytes; i++, src++, dst++)                  \
+            op;                                                         \
+        if (dst_end & 7)                                                \
+        {                                                               \
+            src_val = src[0] << off;                                    \
+            if ((dst_end & 7) + off > 8)                                \
+                src_val |= (src[1] >> (8 - off));                       \
+            mask = ~edge_masks_1[dst_end & 7];                          \
+            do_rop_codes_mask_8( dst, src_val, &codes, mask );          \
+        }                                                               \
     }
+
+    switch( rop2 )
+    {
+        ROPS_ALL( dst[0], ((src[0] << off) | (src[1] >> (8 - off))) );
+    }
+#undef LOOP
 }
 
 static inline void copy_rect_bits_shr_1( BYTE *dst_start, int dst_x, const BYTE *src_start, int src_x,
@@ -1716,48 +1732,41 @@ static inline void copy_rect_bits_shr_1( BYTE *dst_start, int dst_x, const BYTE 
     dst_start += dst_x / 8;
     full_bytes = (dst_end - ((dst_x + 7) & ~7)) / 8;
 
-    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
-    {
-        dst = dst_start;
-        src = src_start;
-        last_src = 0;
-        if (dst_x & 7)
-        {
-            last_src = src[0];
-            mask = edge_masks_1[dst_x & 7];
-            do_rop_codes_mask_8( dst, src[0] >> -off, &codes, mask );
-            src++;
-            dst++;
-        }
-
-        if (rop2 == R2_COPYPEN)
-        {
-            for (i = 0; i < full_bytes; i++, src++, dst++)
-            {
-                src_val = (last_src << (8 + off)) | (src[0] >> -off);
-                last_src = src[0];
-                dst[0] = src_val;
-            }
-        }
-        else
-        {
-            for (i = 0; i < full_bytes; i++, src++, dst++)
-            {
-                src_val = (last_src << (8 + off)) | (src[0] >> -off);
-                last_src = src[0];
-                do_rop_codes_8( dst, src_val, &codes );
-            }
-        }
-
-        if (dst_end & 7)
-        {
-            src_val = last_src << (8 + off);
-            if ((dst_end & 7) + off > 0)
-                src_val |= (src[0] >> -off);
-            mask = ~edge_masks_1[dst_end & 7];
-            do_rop_codes_mask_8( dst, src_val, &codes, mask );
-        }
+#define LOOP( op )                                                      \
+    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride) \
+    {                                                                   \
+        dst = dst_start;                                                \
+        src = src_start;                                                \
+        last_src = 0;                                                   \
+        if (dst_x & 7)                                                  \
+        {                                                               \
+            last_src = src[0];                                          \
+            mask = edge_masks_1[dst_x & 7];                             \
+            do_rop_codes_mask_8( dst, src[0] >> -off, &codes, mask );   \
+            src++;                                                      \
+            dst++;                                                      \
+        }                                                               \
+        for (i = 0; i < full_bytes; i++, src++, dst++)                  \
+        {                                                               \
+            src_val = (last_src << (8 + off)) | (src[0] >> -off);       \
+            last_src = src[0];                                          \
+            op;                                                         \
+        }                                                               \
+        if (dst_end & 7)                                                \
+        {                                                               \
+            src_val = last_src << (8 + off);                            \
+            if ((dst_end & 7) + off > 0)                                \
+                src_val |= (src[0] >> -off);                            \
+            mask = ~edge_masks_1[dst_end & 7];                          \
+            do_rop_codes_mask_8( dst, src_val, &codes, mask );          \
+        }                                                               \
     }
+
+    switch( rop2 )
+    {
+        ROPS_ALL( dst[0], src_val )
+    }
+#undef LOOP
 }
 
 static inline void copy_rect_bits_rev_align_1( BYTE *dst_start, int dst_x, const BYTE *src_start, int src_x,
@@ -1774,36 +1783,55 @@ static inline void copy_rect_bits_rev_align_1( BYTE *dst_start, int dst_x, const
     dst_start += (dst_end - 1) / 8;
     full_bytes = (dst_end - ((dst_x + 7) & ~7)) / 8;
 
-    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
+    switch( rop2 )
     {
-        dst = dst_start;
-        src = src_start;
-        if (dst_end & 7)
+    case R2_COPYPEN:
+        for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
         {
-            mask = ~edge_masks_1[dst_end & 7];
-            do_rop_codes_mask_8( dst, src[0], &codes, mask );
-            src--;
-            dst--;
-        }
-
-        if (rop2 == R2_COPYPEN)
-        {
+            dst = dst_start;
+            src = src_start;
+            if (dst_end & 7)
+            {
+                mask = ~edge_masks_1[dst_end & 7];
+                do_rop_codes_mask_8( dst, src[0], &codes, mask );
+                src--;
+                dst--;
+            }
             memmove( dst, src, full_bytes );
             src -= full_bytes;
             dst -= full_bytes;
+            if (dst_x & 7)
+            {
+                mask = edge_masks_1[dst_x & 7];
+                do_rop_codes_mask_8( dst, src[0], &codes, mask );
+            }
         }
-        else
-        {
-            for (i = 0; i < full_bytes; i++, src--, dst--)
-                do_rop_codes_8( dst, src[0], &codes );
+        break;
+
+#define LOOP( op )                                                      \
+        for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride) \
+        {                                                               \
+            dst = dst_start;                                            \
+            src = src_start;                                            \
+            if (dst_end & 7)                                            \
+            {                                                           \
+                mask = ~edge_masks_1[dst_end & 7];                      \
+                do_rop_codes_mask_8( dst, src[0], &codes, mask );       \
+                src--;                                                  \
+                dst--;                                                  \
+            }                                                           \
+            for (i = 0; i < full_bytes; i++, src--, dst--)              \
+                op;                                                     \
+            if (dst_x & 7)                                              \
+            {                                                           \
+                mask = edge_masks_1[dst_x & 7];                         \
+                do_rop_codes_mask_8( dst, src[0], &codes, mask );       \
+            }                                                           \
         }
 
-        if (dst_x & 7)
-        {
-            mask = edge_masks_1[dst_x & 7];
-            do_rop_codes_mask_8( dst, src[0], &codes, mask );
-        }
+        ROPS_WITHOUT_COPY( dst[0], src[0] );
     }
+#undef LOOP
 }
 
 static inline void copy_rect_bits_rev_shl_1( BYTE *dst_start, int dst_x, const BYTE *src_start, int src_x,
@@ -1821,48 +1849,41 @@ static inline void copy_rect_bits_rev_shl_1( BYTE *dst_start, int dst_x, const B
     dst_start += (dst_end - 1) / 8;
     full_bytes = (dst_end - ((dst_x + 7) & ~7)) / 8;
 
-    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
-    {
-        dst = dst_start;
-        src = src_start;
-        last_src = 0;
-        if (dst_end & 7)
-        {
-            last_src = src[0];
-            mask = ~edge_masks_1[dst_end & 7];
-            do_rop_codes_mask_8( dst, src[0] << off, &codes, mask );
-            src--;
-            dst--;
-        }
-
-        if (rop2 == R2_COPYPEN)
-        {
-            for (i = 0; i < full_bytes; i++, src--, dst--)
-            {
-                src_val = (src[0] << off) | (last_src >> (8 - off));
-                last_src = src[0];
-                dst[0] = src_val;
-            }
-        }
-        else
-        {
-            for (i = 0; i < full_bytes; i++, src--, dst--)
-            {
-                src_val = (src[0] << off) | (last_src >> (8 - off));
-                last_src = src[0];
-                do_rop_codes_8( dst, src_val, &codes );
-            }
-        }
-
-        if (dst_x & 7)
-        {
-            src_val = last_src >> (8 - off);
-            if ((dst_x & 7) + off < 8)
-                src_val |= (src[0] << off);
-            mask = edge_masks_1[dst_x & 7];
-            do_rop_codes_mask_8( dst, src_val, &codes, mask );
-        }
+#define LOOP( op )                                                      \
+    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride) \
+    {                                                                   \
+        dst = dst_start;                                                \
+        src = src_start;                                                \
+        last_src = 0;                                                   \
+        if (dst_end & 7)                                                \
+        {                                                               \
+            last_src = src[0];                                          \
+            mask = ~edge_masks_1[dst_end & 7];                          \
+            do_rop_codes_mask_8( dst, src[0] << off, &codes, mask );    \
+            src--;                                                      \
+            dst--;                                                      \
+        }                                                               \
+        for (i = 0; i < full_bytes; i++, src--, dst--)                  \
+        {                                                               \
+            src_val = (src[0] << off) | (last_src >> (8 - off));        \
+            last_src = src[0];                                          \
+            op;                                                         \
+        }                                                               \
+        if (dst_x & 7)                                                  \
+        {                                                               \
+            src_val = last_src >> (8 - off);                            \
+            if ((dst_x & 7) + off < 8)                                  \
+                src_val |= (src[0] << off);                             \
+            mask = edge_masks_1[dst_x & 7];                             \
+            do_rop_codes_mask_8( dst, src_val, &codes, mask );          \
+        }                                                               \
     }
+
+    switch( rop2 )
+    {
+        ROPS_ALL( dst[0], src_val );
+    }
+#undef LOOP
 }
 
 static inline void copy_rect_bits_rev_shr_1( BYTE *dst_start, int dst_x, const BYTE *src_start, int src_x,
@@ -1880,38 +1901,35 @@ static inline void copy_rect_bits_rev_shr_1( BYTE *dst_start, int dst_x, const B
     dst_start += (dst_end - 1) / 8;
     full_bytes = (dst_end - ((dst_x + 7) & ~7)) / 8;
 
-    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
-    {
-        dst = dst_start;
-        src = src_start;
-        if (dst_end & 7)
-        {
-            mask = edge_masks_1[dst_x & 7];
-            do_rop_codes_mask_8( dst, (src[-1] << (8 + off)) | (src[0] >> -off), &codes, mask );
-            src--;
-            dst--;
-        }
-
-        if (rop2 == R2_COPYPEN)
-        {
-            for (i = 0; i < full_bytes; i++, src--, dst--)
-                dst[0] = (src[-1] << (8 + off)) | (src[0] >> -off);
-        }
-        else
-        {
-            for (i = 0; i < full_bytes; i++, src--, dst--)
-                do_rop_codes_8( dst, (src[-1] << (8 + off)) | (src[0] >> -off), &codes );
-        }
-
-        if (dst_x & 7)
-        {
-            src_val = src[0] >> -off;
-            if ((dst_x & 7) + off < 0)
-                src_val |= (src[-1] << (8 + off));
-            mask = edge_masks_1[dst_x & 7];
-            do_rop_codes_mask_8( dst, src_val, &codes, mask );
-        }
+#define LOOP( op )                                                      \
+    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride) \
+    {                                                                   \
+        dst = dst_start;                                                \
+        src = src_start;                                                \
+        if (dst_end & 7)                                                \
+        {                                                               \
+            mask = edge_masks_1[dst_x & 7];                             \
+            do_rop_codes_mask_8( dst, (src[-1] << (8 + off)) | (src[0] >> -off), &codes, mask ); \
+            src--;                                                      \
+            dst--;                                                      \
+        }                                                               \
+        for (i = 0; i < full_bytes; i++, src--, dst--)                  \
+            op;                                                         \
+        if (dst_x & 7)                                                  \
+        {                                                               \
+            src_val = src[0] >> -off;                                   \
+            if ((dst_x & 7) + off < 0)                                  \
+                src_val |= (src[-1] << (8 + off));                      \
+            mask = edge_masks_1[dst_x & 7];                             \
+            do_rop_codes_mask_8( dst, src_val, &codes, mask );          \
+        }                                                               \
     }
+
+    switch( rop2 )
+    {
+        ROPS_ALL( dst[0], (src[-1] << (8 + off)) | (src[0] >> -off) );
+    }
+#undef LOOP
 }
 
 static void copy_rect_1(const dib_info *dst, const RECT *rc,
