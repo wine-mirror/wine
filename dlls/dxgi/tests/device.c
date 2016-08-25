@@ -225,7 +225,7 @@ static void compute_expected_swapchain_fullscreen_state_after_fullscreen_change_
         mode_desc.Width = new_width;
         mode_desc.Height = new_height;
         hr = IDXGIOutput_FindClosestMatchingMode(target, &mode_desc, &mode_desc, NULL);
-        todo_wine ok_(__FILE__, line)(SUCCEEDED(hr), "FindClosestMatchingMode failed, hr %#x.\n", hr);
+        ok_(__FILE__, line)(SUCCEEDED(hr), "FindClosestMatchingMode failed, hr %#x.\n", hr);
         new_width = mode_desc.Width;
         new_height = mode_desc.Height;
     }
