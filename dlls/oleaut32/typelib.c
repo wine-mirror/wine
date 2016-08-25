@@ -5583,9 +5583,11 @@ static HRESULT WINAPI ITypeInfo_fnQueryInterface(
     else if(IsEqualIID(riid, &IID_ICreateTypeInfo) ||
              IsEqualIID(riid, &IID_ICreateTypeInfo2))
         *ppvObject = &This->ICreateTypeInfo2_iface;
+    else if(IsEqualIID(riid, &IID_ITypeComp))
+        *ppvObject = &This->ITypeComp_iface;
 
     if(*ppvObject){
-        ITypeInfo2_AddRef(iface);
+        IUnknown_AddRef((IUnknown*)*ppvObject);
         TRACE("-- Interface: (%p)->(%p)\n",ppvObject,*ppvObject);
         return S_OK;
     }
