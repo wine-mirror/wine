@@ -829,7 +829,8 @@ enum wined3d_display_rotation
 #define WINED3D_SWAPCHAIN_NOAUTOROTATE                          0x00000020u
 #define WINED3D_SWAPCHAIN_UNPRUNEDMODE                          0x00000040u
 #define WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH                     0x00001000u
-#define WINED3D_SWAPCHAIN_RESTORE_WINDOW_RECT                   0x00002000u
+#define WINED3D_SWAPCHAIN_USE_CLOSEST_MATCHING_MODE             0x00002000u
+#define WINED3D_SWAPCHAIN_RESTORE_WINDOW_RECT                   0x00004000u
 
 #define WINED3DDP_MAXTEXCOORD                                   8
 
