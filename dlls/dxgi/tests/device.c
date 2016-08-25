@@ -38,6 +38,53 @@ static ULONG get_refcount(IUnknown *iface)
     return IUnknown_Release(iface);
 }
 
+#define MODE_DESC_IGNORE_RESOLUTION        0x00000001u
+#define MODE_DESC_IGNORE_REFRESH_RATE      0x00000002u
+#define MODE_DESC_IGNORE_FORMAT            0x00000004u
+#define MODE_DESC_IGNORE_SCANLINE_ORDERING 0x00000008u
+#define MODE_DESC_IGNORE_SCALING           0x00000010u
+
+#define MODE_DESC_CHECK_RESOLUTION         (~MODE_DESC_IGNORE_RESOLUTION)
+#define MODE_DESC_CHECK_FORMAT             (~MODE_DESC_IGNORE_FORMAT)
+
+#define check_mode_desc(a, b, c) check_mode_desc_(__LINE__, a, b, c)
+static void check_mode_desc_(unsigned int line, const DXGI_MODE_DESC *desc,
+        const DXGI_MODE_DESC *expected_desc, unsigned int ignore_flags)
+{
+    if (!(ignore_flags & MODE_DESC_IGNORE_RESOLUTION))
+    {
+        ok_(__FILE__, line)(desc->Width == expected_desc->Width
+                && desc->Height == expected_desc->Height,
+                "Got resolution %ux%u, expected %ux%u.\n",
+                desc->Width, desc->Height, expected_desc->Width, expected_desc->Height);
+    }
+    if (!(ignore_flags & MODE_DESC_IGNORE_REFRESH_RATE))
+    {
+        ok_(__FILE__, line)(desc->RefreshRate.Numerator == expected_desc->RefreshRate.Numerator
+                && desc->RefreshRate.Denominator == expected_desc->RefreshRate.Denominator,
+                "Got refresh rate %u / %u, expected %u / %u.\n",
+                desc->RefreshRate.Numerator, desc->RefreshRate.Denominator,
+                expected_desc->RefreshRate.Denominator, expected_desc->RefreshRate.Denominator);
+    }
+    if (!(ignore_flags & MODE_DESC_IGNORE_FORMAT))
+    {
+        ok_(__FILE__, line)(desc->Format == expected_desc->Format,
+                "Got format %#x, expected %#x.\n", desc->Format, expected_desc->Format);
+    }
+    if (!(ignore_flags & MODE_DESC_IGNORE_SCANLINE_ORDERING))
+    {
+        ok_(__FILE__, line)(desc->ScanlineOrdering == expected_desc->ScanlineOrdering,
+                "Got scanline ordering %#x, expected %#x.\n",
+                desc->ScanlineOrdering, expected_desc->ScanlineOrdering);
+    }
+    if (!(ignore_flags & MODE_DESC_IGNORE_SCALING))
+    {
+        ok_(__FILE__, line)(desc->Scaling == expected_desc->Scaling,
+                "Got scaling %#x, expected %#x.\n",
+                desc->Scaling, expected_desc->Scaling);
+    }
+}
+
 #define check_output_desc(a, b) check_output_desc_(__LINE__, a, b)
 static void check_output_desc_(unsigned int line, const DXGI_OUTPUT_DESC *desc,
         const struct DXGI_OUTPUT_DESC *expected_desc)
@@ -617,6 +664,187 @@ static void test_output(void)
     }
 
     HeapFree(GetProcessHeap(), 0, modes);
+    IDXGIOutput_Release(output);
+    IDXGIAdapter_Release(adapter);
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
+static void test_find_closest_matching_mode(void)
+{
+    DXGI_MODE_DESC *modes, mode, matching_mode;
+    unsigned int i, mode_count;
+    IDXGIAdapter *adapter;
+    IDXGIDevice *device;
+    IDXGIOutput *output;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = IDXGIDevice_GetAdapter(device, &adapter);
+    ok(SUCCEEDED(hr), "GetAdapter failed, hr %#x.\n", hr);
+
+    hr = IDXGIAdapter_EnumOutputs(adapter, 0, &output);
+    if (hr == DXGI_ERROR_NOT_FOUND)
+    {
+        win_skip("Adapter doesn't have any outputs.\n");
+        IDXGIAdapter_Release(adapter);
+        IDXGIDevice_Release(device);
+        return;
+    }
+    ok(SUCCEEDED(hr), "EnumOutputs failed, hr %#x.\n", hr);
+
+    memset(&mode, 0, sizeof(mode));
+    hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
+    ok(hr == DXGI_ERROR_INVALID_CALL || broken(hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE), /* Win 7 testbot */
+            "Got unexpected hr %#x.\n", hr);
+    if (hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE)
+    {
+        win_skip("FindClosestMatchingMode() not supported.\n");
+        goto done;
+    }
+
+    memset(&mode, 0, sizeof(mode));
+    hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, (IUnknown *)device);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &mode_count, NULL);
+    ok(SUCCEEDED(hr), "Failed to list modes, hr %#x.\n", hr);
+
+    modes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*modes) * mode_count);
+
+    hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &mode_count, modes);
+    ok(SUCCEEDED(hr), "Failed to list modes, hr %#x.\n", hr);
+
+    for (i = 0; i < mode_count; ++i)
+    {
+        mode = modes[i];
+        hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        check_mode_desc(&matching_mode, &modes[i], MODE_DESC_IGNORE_SCALING);
+
+        mode.Format = DXGI_FORMAT_UNKNOWN;
+        hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
+        ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+        mode = modes[i];
+        mode.Width = 0;
+        hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
+        ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+        mode = modes[i];
+        mode.Height = 0;
+        hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
+        ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+        mode = modes[i];
+        mode.Width = mode.Height = 0;
+        hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        check_mode_desc(&matching_mode, &modes[i], MODE_DESC_IGNORE_SCALING | MODE_DESC_IGNORE_RESOLUTION);
+        ok(matching_mode.Width > 0 && matching_mode.Height > 0, "Got unexpected resolution %ux%u.\n",
+                matching_mode.Width, matching_mode.Height);
+
+        mode = modes[i];
+        mode.RefreshRate.Numerator = mode.RefreshRate.Denominator = 0;
+        hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        check_mode_desc(&matching_mode, &modes[i], MODE_DESC_IGNORE_SCALING | MODE_DESC_IGNORE_REFRESH_RATE);
+        ok(matching_mode.RefreshRate.Numerator > 0 && matching_mode.RefreshRate.Denominator > 0,
+                "Got unexpected refresh rate %u / %u.\n",
+                matching_mode.RefreshRate.Numerator, matching_mode.RefreshRate.Denominator);
+
+        mode = modes[i];
+        mode.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+        hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        check_mode_desc(&matching_mode, &modes[i], MODE_DESC_IGNORE_SCALING | MODE_DESC_IGNORE_SCANLINE_ORDERING);
+        ok(matching_mode.ScanlineOrdering, "Got unexpected scanline ordering %#x.\n",
+                matching_mode.ScanlineOrdering);
+
+        memset(&mode, 0, sizeof(mode));
+        mode.Width = modes[i].Width;
+        mode.Height = modes[i].Height;
+        mode.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        check_mode_desc(&matching_mode, &modes[i], MODE_DESC_CHECK_RESOLUTION & MODE_DESC_CHECK_FORMAT);
+
+        memset(&mode, 0, sizeof(mode));
+        mode.Width = modes[i].Width - 1;
+        mode.Height = modes[i].Height - 1;
+        mode.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        check_mode_desc(&matching_mode, &modes[i], MODE_DESC_CHECK_RESOLUTION & MODE_DESC_CHECK_FORMAT);
+
+        memset(&mode, 0, sizeof(mode));
+        mode.Width = modes[i].Width + 1;
+        mode.Height = modes[i].Height + 1;
+        mode.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        check_mode_desc(&matching_mode, &modes[i], MODE_DESC_CHECK_RESOLUTION & MODE_DESC_CHECK_FORMAT);
+    }
+
+    memset(&mode, 0, sizeof(mode));
+    mode.Width = mode.Height = 10;
+    mode.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    /* Find mode for the lowest resolution. */
+    mode = modes[0];
+    for (i = 0; i < mode_count; ++i)
+    {
+        if (mode.Width >= modes[i].Width && mode.Height >= modes[i].Height)
+            mode = modes[i];
+    }
+    check_mode_desc(&matching_mode, &mode, MODE_DESC_CHECK_RESOLUTION & MODE_DESC_CHECK_FORMAT);
+
+    memset(&mode, 0, sizeof(mode));
+    mode.Width = modes[0].Width;
+    mode.Height = modes[0].Height;
+    mode.Format = modes[0].Format;
+    mode.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UPPER_FIELD_FIRST;
+    hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    check_mode_desc(&matching_mode, &modes[0], MODE_DESC_CHECK_RESOLUTION & MODE_DESC_CHECK_FORMAT);
+
+    memset(&mode, 0, sizeof(mode));
+    mode.Width = modes[0].Width;
+    mode.Height = modes[0].Height;
+    mode.Format = modes[0].Format;
+    mode.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_LOWER_FIELD_FIRST;
+    hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    check_mode_desc(&matching_mode, &modes[0], MODE_DESC_CHECK_RESOLUTION & MODE_DESC_CHECK_FORMAT);
+
+    memset(&mode, 0, sizeof(mode));
+    mode.Width = modes[0].Width;
+    mode.Height = modes[0].Height;
+    mode.Format = modes[0].Format;
+    mode.Scaling = DXGI_MODE_SCALING_CENTERED;
+    hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    check_mode_desc(&matching_mode, &modes[0], MODE_DESC_CHECK_RESOLUTION & MODE_DESC_CHECK_FORMAT);
+
+    memset(&mode, 0, sizeof(mode));
+    mode.Width = modes[0].Width;
+    mode.Height = modes[0].Height;
+    mode.Format = modes[0].Format;
+    mode.Scaling = DXGI_MODE_SCALING_STRETCHED;
+    hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    check_mode_desc(&matching_mode, &modes[0], MODE_DESC_CHECK_RESOLUTION & MODE_DESC_CHECK_FORMAT);
+
+    HeapFree(GetProcessHeap(), 0, modes);
+
+done:
     IDXGIOutput_Release(output);
     IDXGIAdapter_Release(adapter);
     refcount = IDXGIDevice_Release(device);
@@ -2868,6 +3096,7 @@ START_TEST(device)
     test_create_surface();
     test_parents();
     test_output();
+    test_find_closest_matching_mode();
     test_create_swapchain();
     test_get_containing_output();
     test_set_fullscreen();
