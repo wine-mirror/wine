@@ -67,7 +67,7 @@
 @ stdcall GetBufferedPaintDC(ptr)
 @ stdcall GetBufferedPaintTargetDC(ptr)
 @ stdcall GetBufferedPaintTargetRect(ptr ptr)
-@ stdcall GetCurrentThemeName(wstr long wstr long wstr long)
+@ stdcall GetCurrentThemeName(ptr long ptr long ptr long)
 @ stdcall GetThemeAppProperties()
 @ stdcall GetThemeBackgroundContentRect(ptr ptr long long ptr ptr)
 @ stdcall GetThemeBackgroundExtent(ptr ptr long long ptr ptr)
