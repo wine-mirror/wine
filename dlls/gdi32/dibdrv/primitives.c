@@ -237,278 +237,6 @@ static inline void do_rop_codes_line_rev_4(BYTE *dst, int dst_x, const BYTE *src
     }
 }
 
-/**************************************************
- *             get_src_byte_1
- *
- * Return a byte representing 8 pixels of src data
- * that is aligned with the dst.
- *
- * off is the number of bits that src is ahead of dst
- * measured from the start.  If off is +ve then we need to
- * grab data from src[0] and src[1].  If off is -ve we use
- * last (which is equivalent to src[-1]) and src[0].  For
- * the first call in a line the last component will not be
- * needed so it's safe for the caller to zero-init it.
- *
- * S   |.....xxx|xxxxxxxx
- * D   |..xxxxxx|xxxxxxxx   off = +3
- *
- * S   |..xxxxxx|xxxxxxxx
- * D   |.....xxx|xxxxxxxx   off = -3
- */
-static inline BYTE get_src_byte_1(const BYTE *src, int off, BYTE *last)
-{
-    BYTE src_val;
-
-    if (off == 0)
-        src_val = src[0];
-    else if (off > 0)
-        src_val = (src[0] << off) | (src[1] >> (8 - off));
-    else
-    {
-       src_val = (*last << (8 + off)) | (src[0] >> -off);
-       *last = src[0];
-    }
-
-    return src_val;
-}
-
-static inline void do_rop_codes_line_1(BYTE *dst, int dst_x, const BYTE *src, int src_x,
-                                       struct rop_codes *codes, int len, int rop2)
-{
-    BYTE src_val, last_src = 0;
-    int off = (src_x & 7) - (dst_x & 7), i, full_bytes;
-    int dst_end = dst_x + len;
-    BYTE mask;
-
-    src += src_x / 8;
-    dst += dst_x / 8;
-
-    /* Handle special case of all of dst in one byte. */
-    if ((dst_x & ~7) == ((dst_end - 1) & ~7))
-    {
-        if (off == 0)
-            src_val = src[0];
-        else if (off > 0)
-        {
-            src_val = src[0] << off;
-            if ((dst_end & 7) + off > 8)
-                src_val |= (src[1] >> (8 - off));
-        }
-        else
-            src_val = src[0] >> -off;
-
-        mask = edge_masks_1[dst_x & 7];
-        if (dst_end & 7)
-            mask &= ~edge_masks_1[dst_end & 7];
-        do_rop_codes_mask_8( dst, src_val, codes, mask );
-        return;
-    }
-
-    if (dst_x & 7)
-    {
-        src_val = get_src_byte_1( src, off, &last_src );
-        mask = edge_masks_1[dst_x & 7];
-        do_rop_codes_mask_8( dst, src_val, codes, mask );
-        src++;
-        dst++;
-    }
-
-    full_bytes = (dst_end - ((dst_x + 7) & ~7)) / 8;
-
-    if (off == 0)
-    {
-        if (rop2 == R2_COPYPEN)
-        {
-            memmove( dst, src, full_bytes );
-            src += full_bytes;
-            dst += full_bytes;
-        }
-        else
-        {
-            for (i = 0; i < full_bytes; i++, src++, dst++)
-                do_rop_codes_8( dst, src[0], codes );
-        }
-    }
-    else if (off > 0)
-    {
-        if (rop2 == R2_COPYPEN)
-        {
-            for (i = 0; i < full_bytes; i++, src++, dst++)
-                dst[0] = (src[0] << off) | (src[1] >> (8 - off));
-        }
-        else
-        {
-            for (i = 0; i < full_bytes; i++, src++, dst++)
-                do_rop_codes_8( dst, (src[0] << off) | (src[1] >> (8 - off)), codes );
-        }
-    }
-    else
-    {
-        if (rop2 == R2_COPYPEN)
-        {
-            for (i = 0; i < full_bytes; i++, src++, dst++)
-            {
-                src_val = (last_src << (8 + off)) | (src[0] >> -off);
-                last_src = src[0];
-                dst[0] = src_val;
-            }
-        }
-        else
-        {
-            for (i = 0; i < full_bytes; i++, src++, dst++)
-            {
-                src_val = (last_src << (8 + off)) | (src[0] >> -off);
-                last_src = src[0];
-                do_rop_codes_8( dst, src_val, codes );
-            }
-        }
-    }
-
-    if (dst_end & 7)
-    {
-        if (off > 0 && (dst_end & 7) + off <= 8)
-            /* Don't read src[1] if everything's in src[0]. */
-            src_val = src[0] << off;
-        else if (off < 0 && (dst_end & 7) + off <= 0)
-            /* Don't read src[0] if everything's in last_src. */
-            src_val = last_src << (8 + off);
-        else
-            src_val = get_src_byte_1( src, off, &last_src );
-        mask = ~edge_masks_1[dst_end & 7];
-        do_rop_codes_mask_8( dst, src_val, codes, mask );
-    }
-}
-
-/**************************************************
- *             get_src_byte_rev_1
- *
- * Return a byte representing 8 pixels of src data
- * that is aligned with the dst.
- *
- * off is the number of bits that src is ahead of dst
- * measured from the end.  If off is +ve then we need to
- * grab data from src[0] and last (which is equivalent to src[1]).
- * If off is -ve we use src[-1]) and src[0].  For the first call
- * in a line the last component wil not be needed so it is safe
- * for the caller to zero-init it.
- *
- * S   xxxxxxxx|xxxxxx..|
- * D   xxxxxxxx|xxx.....|   off = +3
- *
- * S   xxxxxxxx|xxx.....|
- * D   xxxxxxxx|xxxxxx..|   off = -3
- */
-static inline BYTE get_src_byte_rev_1(const BYTE *src, int off, BYTE *last)
-{
-    BYTE src_val;
-
-    if (off == 0)
-        src_val = src[0];
-    else if (off > 0)
-    {
-        src_val = (src[0] << off) | (*last >> (8 - off));
-        *last = *src;
-    }
-    else
-        src_val = (src[-1] << (8 + off)) | (src[0] >> -off);
-
-    return src_val;
-}
-
-static inline void do_rop_codes_line_rev_1(BYTE *dst, int dst_x, const BYTE *src, int src_x,
-                                           struct rop_codes *codes, int len, int rop2)
-{
-    BYTE src_val, last_src = 0;
-    int src_end = src_x + len, dst_end = dst_x + len;
-    int off = ((src_end - 1) & 7) - ((dst_end - 1) & 7), i, full_bytes;
-    BYTE mask;
-
-    /* Handle special case of all of dst in one byte. */
-    if ((dst_x & ~7) == ((dst_end - 1) & ~7))
-    {
-        do_rop_codes_line_1(dst, dst_x, src, src_x, codes, len, rop2);
-        return;
-    }
-
-    src += (src_end - 1) / 8;
-    dst += (dst_end - 1) / 8;
-
-    if (dst_end & 7)
-    {
-        src_val = get_src_byte_rev_1( src, off, &last_src );
-        mask = ~edge_masks_1[dst_end & 7];
-        do_rop_codes_mask_8( dst, src_val, codes, mask );
-        src--;
-        dst--;
-    }
-
-    full_bytes = (dst_end - ((dst_x + 7) & ~7)) / 8;
-
-    if (off == 0)
-    {
-        if (rop2 == R2_COPYPEN)
-        {
-            memmove( dst, src, full_bytes );
-            src -= full_bytes;
-            dst -= full_bytes;
-        }
-        else
-        {
-            for (i = 0; i < full_bytes; i++, src--, dst--)
-                do_rop_codes_8( dst, src[0], codes );
-        }
-    }
-    else if (off > 0)
-    {
-        if (rop2 == R2_COPYPEN)
-        {
-            for (i = 0; i < full_bytes; i++, src--, dst--)
-            {
-                src_val = (src[0] << off) | (last_src >> (8 - off));
-                last_src = src[0];
-                dst[0] = src_val;
-            }
-        }
-        else
-        {
-            for (i = 0; i < full_bytes; i++, src--, dst--)
-            {
-                src_val = (src[0] << off) | (last_src >> (8 - off));
-                last_src = src[0];
-                do_rop_codes_8( dst, src_val, codes );
-            }
-        }
-    }
-    else
-    {
-        if (rop2 == R2_COPYPEN)
-        {
-            for (i = 0; i < full_bytes; i++, src--, dst--)
-                dst[0] = (src[-1] << (8 + off)) | (src[0] >> -off);
-        }
-        else
-        {
-            for (i = 0; i < full_bytes; i++, src--, dst--)
-                do_rop_codes_8( dst, (src[-1] << (8 + off)) | (src[0] >> -off), codes );
-        }
-    }
-
-    if (dst_x & 7)
-    {
-        if (off < 0 && (dst_x & 7) + off >= 0)
-            /* Don't read src[-1] if everything's in src[0]. */
-            src_val = src[0] >> -off;
-        else if (off > 0 && (dst_x & 7) + off >= 8)
-            /* Don't read src[0] if everything's in last_src. */
-            src_val = last_src >> (8 - off);
-        else
-            src_val = get_src_byte_rev_1( src, off, &last_src );
-        mask = edge_masks_1[dst_x & 7];
-        do_rop_codes_mask_8( dst, src_val, codes, mask );
-    }
-}
-
 static inline void memset_32( DWORD *start, DWORD val, DWORD size )
 {
 #if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
@@ -1841,15 +1569,360 @@ static void copy_rect_4(const dib_info *dst, const RECT *rc,
     }
 }
 
+static inline void copy_rect_bits_partial_1( BYTE *dst_start, int dst_x, const BYTE *src_start, int src_x,
+                                             const SIZE *size, int dst_stride, int src_stride, int rop2 )
+{
+    const BYTE *src;
+    BYTE *dst, src_val, mask;
+    int dst_end = dst_x + size->cx, y;
+    int off = (src_x & 7) - (dst_x & 7);
+    struct rop_codes codes;
+
+    get_rop_codes( rop2, &codes );
+
+    src_start += src_x / 8;
+    dst_start += dst_x / 8;
+
+    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
+    {
+        dst = dst_start;
+        src = src_start;
+        if (off == 0)
+            src_val = src[0];
+        else if (off > 0)
+        {
+            src_val = src[0] << off;
+            if ((dst_end & 7) + off > 8)
+                src_val |= (src[1] >> (8 - off));
+        }
+        else
+            src_val = src[0] >> -off;
+
+        mask = edge_masks_1[dst_x & 7];
+        if (dst_end & 7)
+            mask &= ~edge_masks_1[dst_end & 7];
+        do_rop_codes_mask_8( dst, src_val, &codes, mask );
+    }
+}
+
+static inline void copy_rect_bits_align_1( BYTE *dst_start, int dst_x, const BYTE *src_start, int src_x,
+                                           const SIZE *size, int dst_stride, int src_stride, int rop2 )
+{
+    const BYTE *src;
+    BYTE *dst, mask;
+    int y, i, full_bytes, dst_end = dst_x + size->cx;
+    struct rop_codes codes;
+
+    get_rop_codes( rop2, &codes );
+
+    src_start += src_x / 8;
+    dst_start += dst_x / 8;
+    full_bytes = (dst_end - ((dst_x + 7) & ~7)) / 8;
+
+    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
+    {
+        dst = dst_start;
+        src = src_start;
+        if (dst_x & 7)
+        {
+            mask = edge_masks_1[dst_x & 7];
+            do_rop_codes_mask_8( dst, src[0], &codes, mask );
+            src++;
+            dst++;
+        }
+
+        if (rop2 == R2_COPYPEN)
+        {
+            memmove( dst, src, full_bytes );
+            src += full_bytes;
+            dst += full_bytes;
+        }
+        else
+        {
+            for (i = 0; i < full_bytes; i++, src++, dst++)
+                do_rop_codes_8( dst, src[0], &codes );
+        }
+
+        if (dst_end & 7)
+        {
+            mask = ~edge_masks_1[dst_end & 7];
+            do_rop_codes_mask_8( dst, src[0], &codes, mask );
+        }
+    }
+}
+
+static inline void copy_rect_bits_shl_1( BYTE *dst_start, int dst_x, const BYTE *src_start, int src_x,
+                                         const SIZE *size, int dst_stride, int src_stride, int rop2 )
+{
+    const BYTE *src;
+    BYTE *dst, mask, src_val;
+    int y, i, full_bytes, dst_end = dst_x + size->cx;
+    int off = (src_x & 7) - (dst_x & 7);
+    struct rop_codes codes;
+
+    get_rop_codes( rop2, &codes );
+
+    src_start += src_x / 8;
+    dst_start += dst_x / 8;
+    full_bytes = (dst_end - ((dst_x + 7) & ~7)) / 8;
+
+    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
+    {
+        dst = dst_start;
+        src = src_start;
+        if (dst_x & 7)
+        {
+            src_val = (src[0] << off) | (src[1] >> (8 - off));
+            mask = edge_masks_1[dst_x & 7];
+            do_rop_codes_mask_8( dst, src_val, &codes, mask );
+            src++;
+            dst++;
+        }
+
+        if (rop2 == R2_COPYPEN)
+        {
+            for (i = 0; i < full_bytes; i++, src++, dst++)
+                dst[0] = (src[0] << off) | (src[1] >> (8 - off));
+        }
+        else
+        {
+            for (i = 0; i < full_bytes; i++, src++, dst++)
+                do_rop_codes_8( dst, (src[0] << off) | (src[1] >> (8 - off)), &codes );
+        }
+
+        if (dst_end & 7)
+        {
+            src_val = src[0] << off;
+            if ((dst_end & 7) + off > 8)
+                src_val |= (src[1] >> (8 - off));
+            mask = ~edge_masks_1[dst_end & 7];
+            do_rop_codes_mask_8( dst, src_val, &codes, mask );
+        }
+    }
+}
+
+static inline void copy_rect_bits_shr_1( BYTE *dst_start, int dst_x, const BYTE *src_start, int src_x,
+                                         const SIZE *size, int dst_stride, int src_stride, int rop2 )
+{
+    const BYTE *src;
+    BYTE *dst, mask, src_val, last_src;
+    int y, i, full_bytes, dst_end = dst_x + size->cx;
+    int off = (src_x & 7) - (dst_x & 7);
+    struct rop_codes codes;
+
+    get_rop_codes( rop2, &codes );
+
+    src_start += src_x / 8;
+    dst_start += dst_x / 8;
+    full_bytes = (dst_end - ((dst_x + 7) & ~7)) / 8;
+
+    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
+    {
+        dst = dst_start;
+        src = src_start;
+        last_src = 0;
+        if (dst_x & 7)
+        {
+            last_src = src[0];
+            mask = edge_masks_1[dst_x & 7];
+            do_rop_codes_mask_8( dst, src[0] >> -off, &codes, mask );
+            src++;
+            dst++;
+        }
+
+        if (rop2 == R2_COPYPEN)
+        {
+            for (i = 0; i < full_bytes; i++, src++, dst++)
+            {
+                src_val = (last_src << (8 + off)) | (src[0] >> -off);
+                last_src = src[0];
+                dst[0] = src_val;
+            }
+        }
+        else
+        {
+            for (i = 0; i < full_bytes; i++, src++, dst++)
+            {
+                src_val = (last_src << (8 + off)) | (src[0] >> -off);
+                last_src = src[0];
+                do_rop_codes_8( dst, src_val, &codes );
+            }
+        }
+
+        if (dst_end & 7)
+        {
+            src_val = last_src << (8 + off);
+            if ((dst_end & 7) + off > 0)
+                src_val |= (src[0] >> -off);
+            mask = ~edge_masks_1[dst_end & 7];
+            do_rop_codes_mask_8( dst, src_val, &codes, mask );
+        }
+    }
+}
+
+static inline void copy_rect_bits_rev_align_1( BYTE *dst_start, int dst_x, const BYTE *src_start, int src_x,
+                                               const SIZE *size, int dst_stride, int src_stride, int rop2 )
+{
+    const BYTE *src;
+    BYTE *dst, mask;
+    int y, i, full_bytes, dst_end = dst_x + size->cx, src_end = src_x + size->cx;
+    struct rop_codes codes;
+
+    get_rop_codes( rop2, &codes );
+
+    src_start += (src_end - 1) / 8;
+    dst_start += (dst_end - 1) / 8;
+    full_bytes = (dst_end - ((dst_x + 7) & ~7)) / 8;
+
+    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
+    {
+        dst = dst_start;
+        src = src_start;
+        if (dst_end & 7)
+        {
+            mask = ~edge_masks_1[dst_end & 7];
+            do_rop_codes_mask_8( dst, src[0], &codes, mask );
+            src--;
+            dst--;
+        }
+
+        if (rop2 == R2_COPYPEN)
+        {
+            memmove( dst, src, full_bytes );
+            src -= full_bytes;
+            dst -= full_bytes;
+        }
+        else
+        {
+            for (i = 0; i < full_bytes; i++, src--, dst--)
+                do_rop_codes_8( dst, src[0], &codes );
+        }
+
+        if (dst_x & 7)
+        {
+            mask = edge_masks_1[dst_x & 7];
+            do_rop_codes_mask_8( dst, src[0], &codes, mask );
+        }
+    }
+}
+
+static inline void copy_rect_bits_rev_shl_1( BYTE *dst_start, int dst_x, const BYTE *src_start, int src_x,
+                                             const SIZE *size, int dst_stride, int src_stride, int rop2 )
+{
+    const BYTE *src;
+    BYTE *dst, mask, src_val, last_src;
+    int y, i, full_bytes, dst_end = dst_x + size->cx, src_end = src_x + size->cx;
+    int off = ((src_end - 1) & 7) - ((dst_end - 1) & 7);
+    struct rop_codes codes;
+
+    get_rop_codes( rop2, &codes );
+
+    src_start += (src_end - 1) / 8;
+    dst_start += (dst_end - 1) / 8;
+    full_bytes = (dst_end - ((dst_x + 7) & ~7)) / 8;
+
+    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
+    {
+        dst = dst_start;
+        src = src_start;
+        last_src = 0;
+        if (dst_end & 7)
+        {
+            last_src = src[0];
+            mask = ~edge_masks_1[dst_end & 7];
+            do_rop_codes_mask_8( dst, src[0] << off, &codes, mask );
+            src--;
+            dst--;
+        }
+
+        if (rop2 == R2_COPYPEN)
+        {
+            for (i = 0; i < full_bytes; i++, src--, dst--)
+            {
+                src_val = (src[0] << off) | (last_src >> (8 - off));
+                last_src = src[0];
+                dst[0] = src_val;
+            }
+        }
+        else
+        {
+            for (i = 0; i < full_bytes; i++, src--, dst--)
+            {
+                src_val = (src[0] << off) | (last_src >> (8 - off));
+                last_src = src[0];
+                do_rop_codes_8( dst, src_val, &codes );
+            }
+        }
+
+        if (dst_x & 7)
+        {
+            src_val = last_src >> (8 - off);
+            if ((dst_x & 7) + off < 8)
+                src_val |= (src[0] << off);
+            mask = edge_masks_1[dst_x & 7];
+            do_rop_codes_mask_8( dst, src_val, &codes, mask );
+        }
+    }
+}
+
+static inline void copy_rect_bits_rev_shr_1( BYTE *dst_start, int dst_x, const BYTE *src_start, int src_x,
+                                             const SIZE *size, int dst_stride, int src_stride, int rop2 )
+{
+    const BYTE *src;
+    BYTE *dst, mask, src_val;
+    int y, i, full_bytes, dst_end = dst_x + size->cx, src_end = src_x + size->cx;
+    int off = ((src_end - 1) & 7) - ((dst_end - 1) & 7);
+    struct rop_codes codes;
+
+    get_rop_codes( rop2, &codes );
+
+    src_start += (src_end - 1) / 8;
+    dst_start += (dst_end - 1) / 8;
+    full_bytes = (dst_end - ((dst_x + 7) & ~7)) / 8;
+
+    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
+    {
+        dst = dst_start;
+        src = src_start;
+        if (dst_end & 7)
+        {
+            mask = edge_masks_1[dst_x & 7];
+            do_rop_codes_mask_8( dst, (src[-1] << (8 + off)) | (src[0] >> -off), &codes, mask );
+            src--;
+            dst--;
+        }
+
+        if (rop2 == R2_COPYPEN)
+        {
+            for (i = 0; i < full_bytes; i++, src--, dst--)
+                dst[0] = (src[-1] << (8 + off)) | (src[0] >> -off);
+        }
+        else
+        {
+            for (i = 0; i < full_bytes; i++, src--, dst--)
+                do_rop_codes_8( dst, (src[-1] << (8 + off)) | (src[0] >> -off), &codes );
+        }
+
+        if (dst_x & 7)
+        {
+            src_val = src[0] >> -off;
+            if ((dst_x & 7) + off < 0)
+                src_val |= (src[-1] << (8 + off));
+            mask = edge_masks_1[dst_x & 7];
+            do_rop_codes_mask_8( dst, src_val, &codes, mask );
+        }
+    }
+}
+
 static void copy_rect_1(const dib_info *dst, const RECT *rc,
                         const dib_info *src, const POINT *origin, int rop2, int overlap)
 {
     BYTE *dst_start, *src_start;
     int y, dst_stride, src_stride;
-    struct rop_codes codes;
     int left = dst->rect.left + rc->left;
     int right = dst->rect.left + rc->right;
     int org_x = src->rect.left + origin->x;
+    SIZE size;
 
     if (overlap & OVERLAP_BELOW)
     {
@@ -1873,13 +1946,33 @@ static void copy_rect_1(const dib_info *dst, const RECT *rc,
         return;
     }
 
-    get_rop_codes( rop2, &codes );
-    for (y = rc->top; y < rc->bottom; y++, dst_start += dst_stride, src_start += src_stride)
+    size.cx = right - left;
+    size.cy = rc->bottom - rc->top;
+
+    /* Special case starting and finishing in same byte, neither on byte boundary */
+    if ((left & 7) && (right & 7) && (left & ~7) == (right & ~7))
+        copy_rect_bits_partial_1( dst_start, left & 7, src_start, org_x & 7, &size, dst_stride, src_stride, rop2 );
+    else if (overlap & OVERLAP_RIGHT)
     {
-        if (overlap & OVERLAP_RIGHT)
-            do_rop_codes_line_rev_1( dst_start, left & 7, src_start, org_x & 7, &codes, right - left, rop2 );
+        int off = ((org_x + right - left - 1) & 7) - ((right - 1) & 7);
+
+        if (off == 0)
+            copy_rect_bits_rev_align_1( dst_start, left & 7, src_start, org_x & 7, &size, dst_stride, src_stride, rop2 );
+        else if (off > 0)
+            copy_rect_bits_rev_shl_1( dst_start, left & 7, src_start, org_x & 7, &size, dst_stride, src_stride, rop2 );
         else
-            do_rop_codes_line_1( dst_start, left & 7, src_start, org_x & 7, &codes, right - left, rop2 );
+            copy_rect_bits_rev_shr_1( dst_start, left & 7, src_start, org_x & 7, &size, dst_stride, src_stride, rop2 );
+    }
+    else
+    {
+        int off = (org_x & 7) - (left & 7);
+
+        if (off == 0)
+            copy_rect_bits_align_1( dst_start, left & 7, src_start, org_x & 7, &size, dst_stride, src_stride, rop2 );
+        else if (off > 0)
+            copy_rect_bits_shl_1( dst_start, left & 7, src_start, org_x & 7, &size, dst_stride, src_stride, rop2 );
+        else
+            copy_rect_bits_shr_1( dst_start, left & 7, src_start, org_x & 7, &size, dst_stride, src_stride, rop2 );
     }
 }
 
