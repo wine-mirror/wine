@@ -838,7 +838,7 @@ static DWORD WINAPI clipboard_thread(void *param)
         old_seq = seq;
     }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
-    todo_wine ok( count, "WM_DRAWCLIPBOARD not received\n" );
+    ok( count, "WM_DRAWCLIPBOARD not received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
     todo_wine ok( count || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
 
@@ -881,7 +881,7 @@ static DWORD WINAPI clipboard_thread(void *param)
         old_seq = seq;
     }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
-    todo_wine ok( count, "WM_DRAWCLIPBOARD not received\n" );
+    ok( count, "WM_DRAWCLIPBOARD not received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
     todo_wine ok( count || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
 
