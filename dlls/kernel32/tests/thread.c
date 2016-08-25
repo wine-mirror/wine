@@ -1248,7 +1248,7 @@ static void test_RegisterWaitForSingleObject(void)
 
     SetLastError(0xdeadbeef);
     ret = pUnregisterWait(NULL);
-    ok(!ret, "Expected UnregisterWait to fail");
+    ok(!ret, "Expected UnregisterWait to fail\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE,
        "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 }
