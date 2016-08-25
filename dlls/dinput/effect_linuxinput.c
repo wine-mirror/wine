@@ -588,19 +588,29 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
     if (dwFlags & DIEP_TRIGGERREPEATINTERVAL)
 	This->effect.trigger.interval = peff->dwTriggerRepeatInterval / 1000;
 
-    if (dwFlags & DIEP_TYPESPECIFICPARAMS) {
-	if (!(peff->lpvTypeSpecificParams))
-	    return DIERR_INCOMPLETEEFFECT;
-	if (type == DIEFT_PERIODIC) {
-            LPCDIPERIODIC tsp;
+    if (dwFlags & DIEP_TYPESPECIFICPARAMS)
+    {
+        if (!(peff->lpvTypeSpecificParams))
+            return DIERR_INCOMPLETEEFFECT;
+
+        if (type == DIEFT_PERIODIC)
+        {
+            DIPERIODIC *tsp;
             if (peff->cbTypeSpecificParams != sizeof(DIPERIODIC))
                 return DIERR_INVALIDPARAM;
             tsp = peff->lpvTypeSpecificParams;
-	    This->effect.u.periodic.magnitude = (tsp->dwMagnitude / 10) * 32;
-	    This->effect.u.periodic.offset = (tsp->lOffset / 10) * 32;
-	    This->effect.u.periodic.phase = (tsp->dwPhase / 9) * 8; /* == (/ 36 * 32) */
-	    This->effect.u.periodic.period = tsp->dwPeriod / 1000;
-	} else if (type == DIEFT_CONSTANTFORCE) {
+
+            This->effect.u.periodic.magnitude = (tsp->dwMagnitude / 10) * 32;
+            This->effect.u.periodic.offset = (tsp->lOffset / 10) * 32;
+            This->effect.u.periodic.phase = (tsp->dwPhase / 9) * 8; /* == (/ 36 * 32) */
+            /* dinput uses microseconds, linux uses miliseconds */
+            if (tsp->dwPeriod <= 1000)
+                This->effect.u.periodic.period = 1;
+            else
+                This->effect.u.periodic.period = tsp->dwPeriod / 1000;
+        }
+        else if (type == DIEFT_CONSTANTFORCE)
+        {
             LPCDICONSTANTFORCE tsp;
             if (peff->cbTypeSpecificParams != sizeof(DICONSTANTFORCE))
                 return DIERR_INVALIDPARAM;
