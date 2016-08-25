@@ -22,6 +22,7 @@
  */
 
 #define WINVER 0x0602 /* for CURSOR_SUPPRESSED */
+#include <stdlib.h>
 #define COBJMACROS
 #include <initguid.h>
 #include <d3d8.h>
@@ -1269,6 +1270,21 @@ static void test_display_modes(void)
     IDirect3D8_Release(d3d);
 }
 
+struct mode
+{
+    unsigned int w;
+    unsigned int h;
+};
+
+static int compare_mode(const void *a, const void *b)
+{
+    const struct mode *mode_a = a;
+    const struct mode *mode_b = b;
+    unsigned int w = mode_a->w - mode_b->w;
+    unsigned int h = mode_b->h - mode_b->h;
+    return abs(w) >= abs(h) ? -w : -h;
+}
+
 static void test_reset(void)
 {
     UINT width, orig_width = GetSystemMetrics(SM_CXSCREEN);
@@ -1303,11 +1319,7 @@ static void test_reset(void)
         D3DVSD_END(),
     };
 
-    struct
-    {
-        UINT w;
-        UINT h;
-    } *modes = NULL;
+    struct mode *modes = NULL;
 
     window = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -1357,6 +1369,9 @@ static void test_reset(void)
         skip("Less than 2 modes supported, skipping mode tests.\n");
         goto cleanup;
     }
+
+    /* Prefer higher resolutions. */
+    qsort(modes, mode_count, sizeof(*modes), compare_mode);
 
     i = 0;
     if (modes[i].w == orig_width && modes[i].h == orig_height) ++i;
