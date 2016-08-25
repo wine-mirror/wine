@@ -10431,11 +10431,13 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(ICreateTypeInfo2 *iface,
     if (tmp_func_desc.funcdesc.oVft != 0)
         tmp_func_desc.funcdesc.oVft |= 1;
 
-    if (funcDesc->cScodes) {
+    if (funcDesc->cScodes && funcDesc->lprgscode) {
         tmp_func_desc.funcdesc.lprgscode = heap_alloc(sizeof(SCODE) * funcDesc->cScodes);
         memcpy(tmp_func_desc.funcdesc.lprgscode, funcDesc->lprgscode, sizeof(SCODE) * funcDesc->cScodes);
-    } else
+    } else {
         tmp_func_desc.funcdesc.lprgscode = NULL;
+        tmp_func_desc.funcdesc.cScodes = 0;
+    }
 
     buf_size = TLB_SizeElemDesc(&funcDesc->elemdescFunc);
     for (i = 0; i < funcDesc->cParams; ++i) {

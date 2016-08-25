@@ -2033,6 +2033,8 @@ static void test_CreateTypeLib(SYSKIND sys) {
     funcdesc.lprgelemdescParam = NULL;
     funcdesc.invkind = INVOKE_FUNC;
     funcdesc.cParams = 0;
+    funcdesc.cScodes = 1;
+    funcdesc.lprgscode = NULL;
     hres = ICreateTypeInfo_AddFuncDesc(createti, 1, &funcdesc);
     ok(hres == S_OK, "got %08x\n", hres);
 
