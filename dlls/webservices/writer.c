@@ -1516,6 +1516,22 @@ static HRESULT write_type_guid( struct writer *writer, WS_TYPE_MAPPING mapping,
     return write_type_text( writer, mapping, &utf8.text );
 }
 
+static HRESULT write_type_string( struct writer *writer, WS_TYPE_MAPPING mapping,
+                                  const WS_STRING_DESCRIPTION *desc, const WS_STRING *value )
+{
+    WS_XML_UTF16_TEXT utf16;
+
+    if (desc)
+    {
+        FIXME( "description not supported\n" );
+        return E_NOTIMPL;
+    }
+    utf16.text.textType = WS_XML_TEXT_TYPE_UTF16;
+    utf16.bytes         = (BYTE *)value->chars;
+    utf16.byteCount     = value->length * sizeof(WCHAR);
+    return write_type_text( writer, mapping, &utf16.text );
+}
+
 static HRESULT write_type_wsz( struct writer *writer, WS_TYPE_MAPPING mapping,
                                const WS_WSZ_DESCRIPTION *desc, const WCHAR *value )
 {
@@ -1530,6 +1546,22 @@ static HRESULT write_type_wsz( struct writer *writer, WS_TYPE_MAPPING mapping,
     utf16.bytes         = (BYTE *)value;
     utf16.byteCount     = strlenW( value ) * sizeof(WCHAR);
     return write_type_text( writer, mapping, &utf16.text );
+}
+
+static HRESULT write_type_xml_string( struct writer *writer, WS_TYPE_MAPPING mapping,
+                                      const WS_XML_STRING_DESCRIPTION *desc, const WS_XML_STRING *value )
+{
+    WS_XML_UTF8_TEXT utf8;
+
+    if (desc)
+    {
+        FIXME( "description not supported\n" );
+        return E_NOTIMPL;
+    }
+    utf8.text.textType = WS_XML_TEXT_TYPE_UTF8;
+    utf8.value.bytes   = value->bytes;
+    utf8.value.length  = value->length;
+    return write_type_text( writer, mapping, &utf8.text );
 }
 
 static HRESULT write_type( struct writer *, WS_TYPE_MAPPING, WS_TYPE, const void *, WS_WRITE_OPTION,
@@ -1744,6 +1776,13 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
         if ((hr = get_value_ptr( option, value, size, (const void **)&ptr )) != S_OK) return hr;
         return write_type_guid( writer, mapping, desc, ptr );
     }
+    case WS_STRING_TYPE:
+    {
+        const WS_STRING *ptr;
+        if (!option) option = WS_WRITE_REQUIRED_VALUE;
+        if ((hr = get_value_ptr( option, value, size, (const void **)&ptr )) != S_OK) return hr;
+        return write_type_string( writer, mapping, desc, ptr );
+    }
     case WS_WSZ_TYPE:
     {
         const WCHAR *ptr;
@@ -1753,6 +1792,13 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
         if (!option) option = WS_WRITE_REQUIRED_POINTER;
         if ((hr = get_value_ptr( option, value, size, (const void **)&ptr )) != S_OK) return hr;
         return write_type_wsz( writer, mapping, desc, ptr );
+    }
+    case WS_XML_STRING_TYPE:
+    {
+        const WS_XML_STRING *ptr;
+        if (!option) option = WS_WRITE_REQUIRED_VALUE;
+        if ((hr = get_value_ptr( option, value, size, (const void **)&ptr )) != S_OK) return hr;
+        return write_type_xml_string( writer, mapping, desc, ptr );
     }
     default:
         FIXME( "type %u not supported\n", type );

@@ -577,10 +577,13 @@ static void test_WsWriteType(void)
 
 static void test_basic_type(void)
 {
+    static WCHAR testW[] = {'t','e','s','t',0};
     HRESULT hr;
     WS_XML_WRITER *writer;
-    WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL};
+    WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL}, xmlstr;
     GUID guid;
+    WCHAR *str;
+    WS_STRING string;
     ULONG i;
     static const struct
     {
@@ -686,6 +689,53 @@ static void test_basic_type(void)
     hr = WsWriteEndElement( writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<t>00000000-0000-0000-0000-000000000000</t>", __LINE__ );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    string.chars  = testW;
+    string.length = 4;
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_STRING_TYPE, NULL, WS_WRITE_REQUIRED_VALUE,
+                      &string, sizeof(string), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>test</t>", __LINE__ );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    str = testW;
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_WSZ_TYPE, NULL, WS_WRITE_REQUIRED_POINTER,
+                      &str, sizeof(str), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>test</t>", __LINE__ );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    xmlstr.bytes  = (BYTE *)"test";
+    xmlstr.length = 4;
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_XML_STRING_TYPE, NULL, WS_WRITE_REQUIRED_VALUE,
+                      &xmlstr, sizeof(xmlstr), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>test</t>", __LINE__ );
 
     WsFreeWriter( writer );
 }
