@@ -481,6 +481,9 @@ HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device
     wined3d_mutex_lock();
     wined3d_private_store_init(&swapchain->private_store);
 
+    if (!desc->windowed && (!desc->backbuffer_width || !desc->backbuffer_height))
+        FIXME("Fullscreen swapchain with back buffer width/height equal to 0 not supported properly.\n");
+
     swapchain->fullscreen = !desc->windowed;
     desc->windowed = TRUE;
     if (FAILED(hr = wined3d_swapchain_create(device->wined3d_device, desc, swapchain,

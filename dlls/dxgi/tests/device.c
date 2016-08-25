@@ -1183,21 +1183,18 @@ static void test_create_swapchain(void)
     expected_height = expected_client_rect->bottom - expected_client_rect->top;
 
     hr = IDXGIFactory_CreateSwapChain(factory, obj, &creation_desc, &swapchain);
-    todo_wine ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
-        ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
-        ok(result_desc.BufferDesc.Width == expected_width, "Got width %u, expected %u.\n",
-                result_desc.BufferDesc.Width, expected_width);
-        ok(result_desc.BufferDesc.Height == expected_height, "Got height %u, expected %u.\n",
-                result_desc.BufferDesc.Height, expected_height);
-        check_swapchain_fullscreen_state(swapchain, &expected_state);
-        hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
-        ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
-        check_swapchain_fullscreen_state(swapchain, &initial_state);
-        IDXGISwapChain_Release(swapchain);
-    }
+    ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
+    hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
+    ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
+    todo_wine ok(result_desc.BufferDesc.Width == expected_width, "Got width %u, expected %u.\n",
+            result_desc.BufferDesc.Width, expected_width);
+    todo_wine ok(result_desc.BufferDesc.Height == expected_height, "Got height %u, expected %u.\n",
+            result_desc.BufferDesc.Height, expected_height);
+    check_swapchain_fullscreen_state(swapchain, &expected_state);
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+    ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
+    check_swapchain_fullscreen_state(swapchain, &initial_state);
+    IDXGISwapChain_Release(swapchain);
 
     IDXGIOutput_Release(expected_state.target);
 
@@ -2161,25 +2158,22 @@ static void test_inexact_modes(void)
                 sizes[i].width, sizes[i].height, output);
 
         hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
-        todo_wine ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
 
-        if (SUCCEEDED(hr))
-        {
-            check_swapchain_fullscreen_state(swapchain, &expected_state);
-            hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
-            ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
-            ok(result_desc.BufferDesc.Width == sizes[i].width, "Got width %u, expected %u.\n",
-                    result_desc.BufferDesc.Width, sizes[i].width);
-            ok(result_desc.BufferDesc.Height == sizes[i].height, "Got height %u, expected %u.\n",
-                    result_desc.BufferDesc.Height, sizes[i].height);
+        check_swapchain_fullscreen_state(swapchain, &expected_state);
+        hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
+        ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
+        ok(result_desc.BufferDesc.Width == sizes[i].width, "Got width %u, expected %u.\n",
+                result_desc.BufferDesc.Width, sizes[i].width);
+        ok(result_desc.BufferDesc.Height == sizes[i].height, "Got height %u, expected %u.\n",
+                result_desc.BufferDesc.Height, sizes[i].height);
 
-            hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
-            ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
-            check_swapchain_fullscreen_state(swapchain, &initial_state);
+        hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+        ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
+        check_swapchain_fullscreen_state(swapchain, &initial_state);
 
-            refcount = IDXGISwapChain_Release(swapchain);
-            ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
-        }
+        refcount = IDXGISwapChain_Release(swapchain);
+        ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
 
         /* Test SetFullscreenState(). */
         swapchain_desc.BufferDesc.Width = sizes[i].width;
@@ -2189,11 +2183,10 @@ static void test_inexact_modes(void)
         hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
         ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
 
-        todo_wine hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, output);
-        todo_wine ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
+        hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, output);
+        ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
 
-        if (SUCCEEDED(hr))
-            check_swapchain_fullscreen_state(swapchain, &expected_state);
+        check_swapchain_fullscreen_state(swapchain, &expected_state);
         hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
         ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
         ok(result_desc.BufferDesc.Width == sizes[i].width, "Got width %u, expected %u.\n",
