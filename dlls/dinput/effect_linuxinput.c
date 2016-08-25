@@ -649,43 +649,49 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
             tsp = peff->lpvTypeSpecificParams;
 	    This->effect.u.ramp.start_level = (tsp->lStart / 10) * 32;
 	    This->effect.u.ramp.end_level = (tsp->lEnd / 10) * 32;
-	} else if (type == DIEFT_CONDITION) {
-            LPCDICONDITION tsp = peff->lpvTypeSpecificParams;
-            if (peff->cbTypeSpecificParams == sizeof(DICONDITION)) {
-		/* One condition block.  This needs to be rotated to direction,
-		 * and expanded to separate x and y conditions. */
-		int i;
-		double factor[2], angle;
-		/* rotate so 0 points right */
-		angle = ff_effect_direction_to_rad(This->effect.direction + 0xc000);
-		factor[0] = sin(angle);
-		factor[1] = -cos(angle);
-                for (i = 0; i < 2; ++i) {
-                    This->effect.u.condition[i].center = (int)(factor[i] * (tsp->lOffset / 10) * 32);
-                    This->effect.u.condition[i].right_coeff = (int)(factor[i] * (tsp->lPositiveCoefficient / 10) * 32);
-                    This->effect.u.condition[i].left_coeff = (int)(factor[i] * (tsp->lNegativeCoefficient / 10) * 32); 
-                    This->effect.u.condition[i].right_saturation = (int)(factor[i] * (tsp->dwPositiveSaturation / 10) * 32);
-                    This->effect.u.condition[i].left_saturation = (int)(factor[i] * (tsp->dwNegativeSaturation / 10) * 32);
-                    This->effect.u.condition[i].deadband = (int)(factor[i] * (tsp->lDeadBand / 10) * 32);
-                }
-	    } else if (peff->cbTypeSpecificParams == 2 * sizeof(DICONDITION)) {
-		/* Two condition blocks.  Direct parameter copy. */
-		int i;
-                for (i = 0; i < 2; ++i) {
-		    This->effect.u.condition[i].center = (tsp[i].lOffset / 10) * 32;
-		    This->effect.u.condition[i].right_coeff = (tsp[i].lPositiveCoefficient / 10) * 32;
-		    This->effect.u.condition[i].left_coeff = (tsp[i].lNegativeCoefficient / 10) * 32;
-		    This->effect.u.condition[i].right_saturation = (tsp[i].dwPositiveSaturation / 10) * 32;
-		    This->effect.u.condition[i].left_saturation = (tsp[i].dwNegativeSaturation / 10) * 32;
-		    This->effect.u.condition[i].deadband = (tsp[i].lDeadBand / 10) * 32;
-		}
-	    } else {
+        }
+        else if (type == DIEFT_CONDITION)
+        {
+            DICONDITION *tsp = peff->lpvTypeSpecificParams;
+            struct ff_condition_effect *cond = This->effect.u.condition;
+            int i, j, sources;
+            double factor[2];
+
+            if (peff->cbTypeSpecificParams == sizeof(DICONDITION))
+            {
+                /* One condition block.  This needs to be rotated to direction,
+                 * and expanded to separate x and y conditions. Ensures 0 points right */
+                double angle = ff_effect_direction_to_rad(This->effect.direction + 0xc000);
+                factor[0] = sin(angle);
+                factor[1] = -cos(angle);
+                sources = 1;
+            }
+            else if (peff->cbTypeSpecificParams == 2 * sizeof(DICONDITION))
+            {
+                /* Direct parameter copy without changes */
+                factor[0] = factor[1] = 1;
+                sources = 2;
+            }
+            else
                 return DIERR_INVALIDPARAM;
-	    }
-	} else {
-	    FIXME("Custom force types are not supported\n");	
-	    return DIERR_INVALIDPARAM;
-	}
+
+            for (i = j = 0; i < 2; ++i)
+            {
+                cond[i].center = (int)(factor[i] * (tsp[j].lOffset / 10) * 32);
+                cond[i].right_coeff = (int)(factor[i] * (tsp[j].lPositiveCoefficient / 10) * 32);
+                cond[i].left_coeff = (int)(factor[i] * (tsp[j].lNegativeCoefficient / 10) * 32);
+                cond[i].right_saturation = (int)(factor[i] * (tsp[j].dwPositiveSaturation / 10) * 32);
+                cond[i].left_saturation = (int)(factor[i] * (tsp[j].dwNegativeSaturation / 10) * 32);
+                cond[i].deadband = (int)(factor[i] * (tsp[j].lDeadBand / 10) * 32);
+                if (sources == 2)
+                    j++;
+            }
+        }
+        else
+        {
+            FIXME("Custom force types are not supported\n");
+            return DIERR_INVALIDPARAM;
+        }
     }
 
     if (!(dwFlags & DIEP_NODOWNLOAD))
