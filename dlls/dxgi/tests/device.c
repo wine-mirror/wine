@@ -1841,6 +1841,186 @@ static void test_resize_target(void)
     ok(!refcount, "Factory has %u references left.\n", refcount);
 }
 
+static void test_inexact_modes(void)
+{
+    struct swapchain_fullscreen_state initial_state, expected_state;
+    DXGI_SWAP_CHAIN_DESC swapchain_desc, result_desc;
+    IDXGIOutput *output = NULL;
+    IDXGISwapChain *swapchain;
+    IDXGIFactory *factory;
+    IDXGIAdapter *adapter;
+    IDXGIDevice *device;
+    unsigned int i;
+    ULONG refcount;
+    HRESULT hr;
+
+    static const struct
+    {
+        unsigned int width, height;
+    }
+    sizes[] =
+    {
+        {101, 101},
+        {203, 204},
+        {799, 601},
+    };
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = IDXGIDevice_GetAdapter(device, &adapter);
+    ok(SUCCEEDED(hr), "GetAdapter failed, hr %#x.\n", hr);
+
+    hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
+    ok(SUCCEEDED(hr), "GetParent failed, hr %#x.\n", hr);
+
+    swapchain_desc.BufferDesc.Width = 800;
+    swapchain_desc.BufferDesc.Height = 600;
+    swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
+    swapchain_desc.BufferDesc.RefreshRate.Denominator = 1;
+    swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapchain_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    swapchain_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    swapchain_desc.SampleDesc.Count = 1;
+    swapchain_desc.SampleDesc.Quality = 0;
+    swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapchain_desc.BufferCount = 1;
+    swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0, 0, 0, 400, 200, 0, 0, 0, 0);
+    swapchain_desc.Windowed = FALSE;
+    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+
+    memset(&initial_state, 0, sizeof(initial_state));
+    capture_fullscreen_state(&initial_state.fullscreen_state, swapchain_desc.OutputWindow);
+
+    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+    ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
+    hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
+    ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+    ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
+    hr = IDXGISwapChain_GetContainingOutput(swapchain, &output);
+    ok(SUCCEEDED(hr) || broken(hr == DXGI_ERROR_UNSUPPORTED) /* Win 7 testbot */,
+            "GetContainingOutput failed, hr %#x.\n", hr);
+    refcount = IDXGISwapChain_Release(swapchain);
+    ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+    if (hr == DXGI_ERROR_UNSUPPORTED)
+    {
+        win_skip("GetContainingOutput() not supported.\n");
+        goto done;
+    }
+    if (result_desc.Windowed)
+    {
+        win_skip("Fullscreen not supported.\n");
+        goto done;
+    }
+
+    check_window_fullscreen_state(swapchain_desc.OutputWindow, &initial_state.fullscreen_state);
+
+    for (i = 0; i < sizeof(sizes) / sizeof(*sizes); ++i)
+    {
+        /* Test CreateSwapChain(). */
+        swapchain_desc.BufferDesc.Width = sizes[i].width;
+        swapchain_desc.BufferDesc.Height = sizes[i].height;
+        swapchain_desc.Windowed = FALSE;
+
+        expected_state = initial_state;
+        compute_expected_swapchain_fullscreen_state_after_fullscreen_change(&expected_state,
+                &swapchain_desc, &initial_state.fullscreen_state.monitor_rect,
+                sizes[i].width, sizes[i].height, output);
+
+        hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+        todo_wine ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
+
+        if (SUCCEEDED(hr))
+        {
+            check_swapchain_fullscreen_state(swapchain, &expected_state);
+            hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
+            ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
+            ok(result_desc.BufferDesc.Width == sizes[i].width, "Got width %u, expected %u.\n",
+                    result_desc.BufferDesc.Width, sizes[i].width);
+            ok(result_desc.BufferDesc.Height == sizes[i].height, "Got height %u, expected %u.\n",
+                    result_desc.BufferDesc.Height, sizes[i].height);
+
+            hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+            ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
+            check_swapchain_fullscreen_state(swapchain, &initial_state);
+
+            refcount = IDXGISwapChain_Release(swapchain);
+            ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+        }
+
+        /* Test SetFullscreenState(). */
+        swapchain_desc.BufferDesc.Width = sizes[i].width;
+        swapchain_desc.BufferDesc.Height = sizes[i].height;
+        swapchain_desc.Windowed = TRUE;
+
+        hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+        ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
+
+        todo_wine hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, output);
+        todo_wine ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
+
+        if (SUCCEEDED(hr))
+            check_swapchain_fullscreen_state(swapchain, &expected_state);
+        hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
+        ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
+        ok(result_desc.BufferDesc.Width == sizes[i].width, "Got width %u, expected %u.\n",
+                result_desc.BufferDesc.Width, sizes[i].width);
+        ok(result_desc.BufferDesc.Height == sizes[i].height, "Got height %u, expected %u.\n",
+                result_desc.BufferDesc.Height, sizes[i].height);
+
+        hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+        ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
+        check_swapchain_fullscreen_state(swapchain, &initial_state);
+
+        refcount = IDXGISwapChain_Release(swapchain);
+        ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+
+        /* Test ResizeTarget(). */
+        swapchain_desc.BufferDesc.Width = 800;
+        swapchain_desc.BufferDesc.Height = 600;
+        swapchain_desc.Windowed = TRUE;
+
+        hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+        ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
+
+        hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, output);
+        ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
+
+        swapchain_desc.BufferDesc.Width = sizes[i].width;
+        swapchain_desc.BufferDesc.Height = sizes[i].height;
+        hr = IDXGISwapChain_ResizeTarget(swapchain, &swapchain_desc.BufferDesc);
+        todo_wine ok(SUCCEEDED(hr), "ResizeTarget failed, hr %#x.\n", hr);
+
+        if (SUCCEEDED(hr))
+            check_swapchain_fullscreen_state(swapchain, &expected_state);
+        hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
+        ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
+        ok(result_desc.BufferDesc.Width == 800, "Got width %u.\n", result_desc.BufferDesc.Width);
+        ok(result_desc.BufferDesc.Height == 600, "Got height %u.\n", result_desc.BufferDesc.Height);
+
+        hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+        ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
+        check_swapchain_fullscreen_state(swapchain, &initial_state);
+
+        refcount = IDXGISwapChain_Release(swapchain);
+        ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+    }
+
+done:
+    if (output)
+        IDXGIOutput_Release(output);
+    IDXGIAdapter_Release(adapter);
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    refcount = IDXGIFactory_Release(factory);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
+}
+
 static void test_create_factory(void)
 {
     IDXGIFactory1 *factory;
@@ -2693,6 +2873,7 @@ START_TEST(device)
     test_set_fullscreen();
     test_default_fullscreen_target_output();
     test_resize_target();
+    test_inexact_modes();
     test_create_factory();
     test_private_data();
     test_swapchain_resize();
