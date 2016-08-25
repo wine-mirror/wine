@@ -155,6 +155,7 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(WindowPosChanging);
         GET_USER_FUNC(WindowPosChanged);
         GET_USER_FUNC(SystemParametersInfo);
+        GET_USER_FUNC(ThreadDetach);
 #undef GET_USER_FUNC
     }
 
@@ -512,6 +513,10 @@ static BOOL CDECL nulldrv_SystemParametersInfo( UINT action, UINT int_param, voi
     return FALSE;
 }
 
+static void CDECL nulldrv_ThreadDetach( void )
+{
+}
+
 static USER_DRIVER null_driver =
 {
     /* keyboard functions */
@@ -572,7 +577,9 @@ static USER_DRIVER null_driver =
     nulldrv_WindowPosChanging,
     nulldrv_WindowPosChanged,
     /* system parameters */
-    nulldrv_SystemParametersInfo
+    nulldrv_SystemParametersInfo,
+    /* thread management */
+    nulldrv_ThreadDetach
 };
 
 
@@ -827,5 +834,7 @@ static USER_DRIVER lazy_load_driver =
     nulldrv_WindowPosChanging,
     nulldrv_WindowPosChanged,
     /* system parameters */
-    nulldrv_SystemParametersInfo
+    nulldrv_SystemParametersInfo,
+    /* thread management */
+    nulldrv_ThreadDetach
 };

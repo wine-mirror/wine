@@ -303,6 +303,7 @@ static void thread_detach(void)
     exiting_thread_id = GetCurrentThreadId();
 
     WDML_NotifyThreadDetach();
+    USER_Driver->pThreadDetach();
 
     if (thread_info->top_window) WIN_DestroyThreadWindows( thread_info->top_window );
     if (thread_info->msg_window) WIN_DestroyThreadWindows( thread_info->msg_window );

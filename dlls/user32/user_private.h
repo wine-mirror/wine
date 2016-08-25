@@ -117,6 +117,8 @@ typedef struct tagUSER_DRIVER {
     void   (CDECL *pWindowPosChanged)(HWND,HWND,UINT,const RECT *,const RECT *,const RECT *,const RECT *,struct window_surface*);
     /* system parameters */
     BOOL   (CDECL *pSystemParametersInfo)(UINT,UINT,void*,UINT);
+    /* thread management */
+    void   (CDECL *pThreadDetach)(void);
 } USER_DRIVER;
 
 extern const USER_DRIVER *USER_Driver DECLSPEC_HIDDEN;
