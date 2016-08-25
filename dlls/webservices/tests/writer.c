@@ -2111,6 +2111,90 @@ static void test_double(void)
     WsFreeWriter( writer );
 }
 
+static void test_field_flags(void)
+{
+    static const char expected[] =
+        "<t><bool a:nil=\"true\" xmlns:a=\"http://www.w3.org/2001/XMLSchema-instance\"/><int32>-1</int32>"
+        "<xmlstr a:nil=\"true\" xmlns:a=\"http://www.w3.org/2001/XMLSchema-instance\"/></t>";
+    HRESULT hr;
+    WS_XML_WRITER *writer;
+    WS_STRUCT_DESCRIPTION s;
+    WS_FIELD_DESCRIPTION f, f2, f3, f4, *fields[4];
+    WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL}, str_guid = {4, (BYTE *)"guid"};
+    WS_XML_STRING str_int32 = {5, (BYTE *)"int32"}, str_bool = {4, (BYTE *)"bool"};
+    WS_XML_STRING str_xmlstr = {6, (BYTE *)"xmlstr"};
+    INT32 val = -1;
+    struct test
+    {
+        GUID           guid;
+        BOOL          *bool_ptr;
+        INT32         *int32_ptr;
+        WS_XML_STRING  xmlstr;
+    } test;
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f.localName = &str_guid;
+    f.ns        = &ns;
+    f.type      = WS_GUID_TYPE;
+    f.options   = WS_FIELD_OPTIONAL;
+    fields[0] = &f;
+
+    memset( &f2, 0, sizeof(f2) );
+    f2.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f2.localName = &str_bool;
+    f2.offset    = FIELD_OFFSET(struct test, bool_ptr);
+    f2.ns        = &ns;
+    f2.type      = WS_BOOL_TYPE;
+    f2.options   = WS_FIELD_POINTER|WS_FIELD_NILLABLE;
+    fields[1] = &f2;
+
+    memset( &f3, 0, sizeof(f3) );
+    f3.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f3.localName = &str_int32;
+    f3.offset    = FIELD_OFFSET(struct test, int32_ptr);
+    f3.ns        = &ns;
+    f3.type      = WS_INT32_TYPE;
+    f3.options   = WS_FIELD_POINTER|WS_FIELD_NILLABLE;
+    fields[2] = &f3;
+
+    memset( &f4, 0, sizeof(f4) );
+    f4.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f4.localName = &str_xmlstr;
+    f4.offset    = FIELD_OFFSET(struct test, xmlstr);
+    f4.ns        = &ns;
+    f4.type      = WS_XML_STRING_TYPE;
+    f4.options   = WS_FIELD_NILLABLE;
+    fields[3] = &f4;
+
+    memset( &s, 0, sizeof(s) );
+    s.size       = sizeof(struct test);
+    s.alignment  = TYPE_ALIGNMENT(struct test);
+    s.fields     = fields;
+    s.fieldCount = 4;
+
+    memset( &test, 0, sizeof(test) );
+    test.int32_ptr = &val;
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s, WS_WRITE_REQUIRED_VALUE,
+                      &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, expected, __LINE__ );
+
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -2137,4 +2221,5 @@ START_TEST(writer)
     test_WsCopyNode();
     test_text_types();
     test_double();
+    test_field_flags();
 }
