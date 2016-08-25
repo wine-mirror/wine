@@ -791,6 +791,21 @@ static void test_simple_struct_type(void)
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<struct>value</struct>", __LINE__ );
 
+    /* required value */
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                      WS_WRITE_REQUIRED_VALUE, test, sizeof(*test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<struct>value</struct>", __LINE__ );
+
     hr = set_output( writer );
     ok( hr == S_OK, "got %08x\n", hr );
 

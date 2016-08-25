@@ -1695,9 +1695,7 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
     case WS_STRUCT_TYPE:
     {
         const void *ptr;
-
-        if (!desc || option == WS_WRITE_REQUIRED_VALUE) return E_INVALIDARG;
-
+        if (!desc) return E_INVALIDARG;
         if (!option) option = WS_WRITE_REQUIRED_POINTER;
         if ((hr = get_value_ptr( option, value, size, (const void **)&ptr )) != S_OK) return hr;
         return write_type_struct( writer, mapping, desc, ptr );
