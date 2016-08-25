@@ -23,6 +23,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
+static void dxgi_mode_from_wined3d(DXGI_MODE_DESC *mode, const struct wined3d_display_mode *wined3d_mode)
+{
+    mode->Width = wined3d_mode->width;
+    mode->Height = wined3d_mode->height;
+    mode->RefreshRate.Numerator = wined3d_mode->refresh_rate;
+    mode->RefreshRate.Denominator = 1;
+    mode->Format = dxgi_format_from_wined3dformat(wined3d_mode->format_id);
+    mode->ScanlineOrdering = wined3d_mode->scanline_ordering;
+    mode->Scaling = DXGI_MODE_SCALING_UNSPECIFIED; /* FIXME */
+}
+
 static inline struct dxgi_output *impl_from_IDXGIOutput(IDXGIOutput *iface)
 {
     return CONTAINING_RECORD(iface, struct dxgi_output, IDXGIOutput_iface);
@@ -154,11 +165,10 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc(IDXGIOutput *iface, DXGI_OU
 static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *iface,
         DXGI_FORMAT format, UINT flags, UINT *mode_count, DXGI_MODE_DESC *desc)
 {
-    struct dxgi_output *This = impl_from_IDXGIOutput(iface);
+    struct dxgi_output *output = impl_from_IDXGIOutput(iface);
     enum wined3d_format_id wined3d_format;
+    unsigned int i, max_count;
     struct wined3d *wined3d;
-    UINT i;
-    UINT max_count;
 
     FIXME("iface %p, format %s, flags %#x, mode_count %p, desc %p partial stub!\n",
             iface, debug_dxgi_format(format), flags, mode_count, desc);
@@ -172,11 +182,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
         return S_OK;
     }
 
-    wined3d = This->adapter->factory->wined3d;
+    wined3d = output->adapter->factory->wined3d;
     wined3d_format = wined3dformat_from_dxgi_format(format);
 
     wined3d_mutex_lock();
-    max_count = wined3d_get_adapter_mode_count(wined3d, This->adapter->ordinal,
+    max_count = wined3d_get_adapter_mode_count(wined3d, output->adapter->ordinal,
             wined3d_format, WINED3D_SCANLINE_ORDERING_UNKNOWN);
 
     if (!desc)
@@ -199,7 +209,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
         struct wined3d_display_mode mode;
         HRESULT hr;
 
-        hr = wined3d_enum_adapter_modes(wined3d, This->adapter->ordinal, wined3d_format,
+        hr = wined3d_enum_adapter_modes(wined3d, output->adapter->ordinal, wined3d_format,
                 WINED3D_SCANLINE_ORDERING_UNKNOWN, i, &mode);
         if (FAILED(hr))
         {
@@ -208,13 +218,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
             return hr;
         }
 
-        desc[i].Width = mode.width;
-        desc[i].Height = mode.height;
-        desc[i].RefreshRate.Numerator = mode.refresh_rate;
-        desc[i].RefreshRate.Denominator = 1;
-        desc[i].Format = format;
-        desc[i].ScanlineOrdering = mode.scanline_ordering;
-        desc[i].Scaling = DXGI_MODE_SCALING_UNSPECIFIED; /* FIXME */
+        dxgi_mode_from_wined3d(&desc[i], &mode);
     }
     wined3d_mutex_unlock();
 

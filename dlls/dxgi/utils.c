@@ -443,6 +443,16 @@ void wined3d_sample_desc_from_dxgi(enum wined3d_multisample_type *wined3d_type,
     }
 }
 
+void wined3d_display_mode_from_dxgi(struct wined3d_display_mode *wined3d_mode,
+        const DXGI_MODE_DESC *mode)
+{
+    wined3d_mode->width = mode->Width;
+    wined3d_mode->height = mode->Height;
+    wined3d_mode->refresh_rate = dxgi_rational_to_uint(&mode->RefreshRate);
+    wined3d_mode->format_id = wined3dformat_from_dxgi_format(mode->Format);
+    wined3d_mode->scanline_ordering = wined3d_scanline_ordering_from_dxgi(mode->ScanlineOrdering);
+}
+
 unsigned int dxgi_swapchain_flags_from_wined3d(unsigned int wined3d_flags)
 {
     unsigned int flags = 0;

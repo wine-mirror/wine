@@ -91,6 +91,8 @@ void dxgi_sample_desc_from_wined3d(DXGI_SAMPLE_DESC *desc,
         enum wined3d_multisample_type wined3d_type, unsigned int wined3d_quality) DECLSPEC_HIDDEN;
 void wined3d_sample_desc_from_dxgi(enum wined3d_multisample_type *wined3d_type,
         unsigned int *wined3d_quality, const DXGI_SAMPLE_DESC *dxgi_desc) DECLSPEC_HIDDEN;
+void wined3d_display_mode_from_dxgi(struct wined3d_display_mode *wined3d_mode,
+        const DXGI_MODE_DESC *mode) DECLSPEC_HIDDEN;
 unsigned int dxgi_swapchain_flags_from_wined3d(unsigned int wined3d_flags) DECLSPEC_HIDDEN;
 unsigned int wined3d_swapchain_flags_from_dxgi(unsigned int flags) DECLSPEC_HIDDEN;
 HRESULT dxgi_get_private_data(struct wined3d_private_store *store,
