@@ -2195,6 +2195,27 @@ static void test_field_flags(void)
     WsFreeWriter( writer );
 }
 
+static void test_WsWriteText(void)
+{
+    HRESULT hr;
+    WS_XML_WRITER *writer;
+    WS_XML_UTF8_TEXT utf8;
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    utf8.text.textType = WS_XML_TEXT_TYPE_UTF8;
+    utf8.value.bytes  = (BYTE *)"test";
+    utf8.value.length = 4;
+    hr = WsWriteText( writer, &utf8.text, NULL );
+    todo_wine ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -2222,4 +2243,5 @@ START_TEST(writer)
     test_text_types();
     test_double();
     test_field_flags();
+    test_WsWriteText();
 }
