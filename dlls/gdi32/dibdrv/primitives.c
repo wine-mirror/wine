@@ -125,6 +125,10 @@ case R2_MERGEPENNOT:  LOOP( (_d) = (~(_d) | (_s)) ) break;              \
 case R2_MERGEPEN:     LOOP( (_d) |= (_s) ) break;                       \
 case R2_WHITE:        LOOP( (_d) = ~0 ) break;
 
+#define ROPS_ALL( _d, _s )                                              \
+case R2_COPYPEN:      LOOP( (_d) = (_s) ) break;                        \
+ROPS_WITHOUT_COPY( (_d), (_s) )
+
 static inline void do_rop_32(DWORD *ptr, DWORD and, DWORD xor)
 {
     *ptr = (*ptr & and) ^ xor;
@@ -5312,12 +5316,9 @@ static void mask_rect_32( const dib_info *dst, const RECT *rc,
 {
     DWORD *dst_start = get_pixel_ptr_32(dst, rc->left, rc->top), dst_colors[256];
     DWORD src_val, bit_val, i, full, pos;
-    struct rop_codes codes;
     int x, y, origin_end = origin->x + rc->right - rc->left;
     const RGBQUAD *color_table = get_dib_color_table( src );
     BYTE *src_start = get_pixel_ptr_1(src, origin->x, origin->y);
-
-    get_rop_codes( rop2, &codes );
 
     if (dst->funcs == &funcs_8888)
         for (i = 0; i < 2; i++)
@@ -5336,6 +5337,10 @@ static void mask_rect_32( const dib_info *dst, const RECT *rc,
     /* Special case starting and finishing in same byte, neither on byte boundary */
     if ((origin->x & 7) && (origin_end & 7) && (origin->x & ~7) == (origin_end & ~7))
     {
+        struct rop_codes codes;
+
+        get_rop_codes( rop2, &codes );
+
         for (y = rc->top; y < rc->bottom; y++)
         {
             pos = origin->x & 7;
@@ -5352,106 +5357,71 @@ static void mask_rect_32( const dib_info *dst, const RECT *rc,
 
     full = ((rc->right - rc->left) - ((8 - (origin->x & 7)) & 7)) / 8;
 
-    for (y = rc->top; y < rc->bottom; y++)
-    {
-        pos = origin->x & 7;
-        src_val = src_start[pos / 8];
-        x = 0;
-
-        switch (pos & 7)
-        {
-        case 1:
-            bit_val = src_val >> 6;
-            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            /* fall through */
-        case 2:
-            bit_val = src_val >> 5;
-            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            /* fall through */
-        case 3:
-            bit_val = src_val >> 4;
-            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            /* fall through */
-        case 4:
-            bit_val = src_val >> 3;
-            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            /* fall through */
-        case 5:
-            bit_val = src_val >> 2;
-            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            /* fall through */
-        case 6:
-            bit_val = src_val >> 1;
-            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            /* fall through */
-        case 7:
-            bit_val = src_val;
-            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            pos = (pos + 7) & ~7;
-        }
-
-        for (i = 0; i < full; i++, pos += 8)
-        {
-            src_val = src_start[pos / 8];
-
-            bit_val = src_val >> 7;
-            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            bit_val = src_val >> 6;
-            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            bit_val = src_val >> 5;
-            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            bit_val = src_val >> 4;
-            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            bit_val = src_val >> 3;
-            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            bit_val = src_val >> 2;
-            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            bit_val = src_val >> 1;
-            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-            bit_val = src_val;
-            do_rop_codes_32( dst_start + x++, dst_colors[bit_val], &codes );
-        }
-
-        if (origin_end & 7)
-        {
-            src_val = src_start[pos / 8];
-            x += (origin_end & 7) - 1;
-
-            switch (origin_end & 7)
-            {
-            case 7:
-                bit_val = src_val >> 1;
-                do_rop_codes_32( dst_start + x--, dst_colors[bit_val], &codes );
-                /* fall through */
-            case 6:
-                bit_val = src_val >> 2;
-                do_rop_codes_32( dst_start + x--, dst_colors[bit_val], &codes );
-                /* fall through */
-            case 5:
-                bit_val = src_val >> 3;
-                do_rop_codes_32( dst_start + x--, dst_colors[bit_val], &codes );
-                /* fall through */
-            case 4:
-                bit_val = src_val >> 4;
-                do_rop_codes_32( dst_start + x--, dst_colors[bit_val], &codes );
-                /* fall through */
-            case 3:
-                bit_val = src_val >> 5;
-                do_rop_codes_32( dst_start + x--, dst_colors[bit_val], &codes );
-                /* fall through */
-            case 2:
-                bit_val = src_val >> 6;
-                do_rop_codes_32( dst_start + x--, dst_colors[bit_val], &codes );
-                /* fall through */
-            case 1:
-                bit_val = src_val >> 7;
-                do_rop_codes_32( dst_start + x, dst_colors[bit_val], &codes );
-            }
-        }
-
-        dst_start += dst->stride / 4;
-        src_start += src->stride;
+#define LOOP( op )                                                      \
+    for (y = rc->top; y < rc->bottom; y++)                              \
+    {                                                                   \
+        pos = origin->x & 7;                                            \
+        src_val = src_start[pos / 8];                                   \
+        x = 0;                                                          \
+        switch (pos & 7)                                                \
+        {                                                               \
+        case 1: bit_val = src_val >> 6; op; x++;                        \
+            /* fall through */                                          \
+        case 2: bit_val = src_val >> 5; op; x++;                        \
+            /* fall through */                                          \
+        case 3: bit_val = src_val >> 4; op; x++;                        \
+            /* fall through */                                          \
+        case 4: bit_val = src_val >> 3; op; x++;                        \
+            /* fall through */                                          \
+        case 5: bit_val = src_val >> 2; op; x++;                        \
+            /* fall through */                                          \
+        case 6: bit_val = src_val >> 1; op; x++;                        \
+            /* fall through */                                          \
+        case 7: bit_val = src_val; op; x++;                             \
+            pos = (pos + 7) & ~7;                                       \
+        }                                                               \
+        for (i = 0; i < full; i++, pos += 8)                            \
+        {                                                               \
+            src_val = src_start[pos / 8];                               \
+            bit_val = src_val >> 7; op; x++;                            \
+            bit_val = src_val >> 6; op; x++;                            \
+            bit_val = src_val >> 5; op; x++;                            \
+            bit_val = src_val >> 4; op; x++;                            \
+            bit_val = src_val >> 3; op; x++;                            \
+            bit_val = src_val >> 2; op; x++;                            \
+            bit_val = src_val >> 1; op; x++;                            \
+            bit_val = src_val; op; x++;                                 \
+        }                                                               \
+        if (origin_end & 7)                                             \
+        {                                                               \
+            src_val = src_start[pos / 8];                               \
+            x += (origin_end & 7) - 1;                                  \
+            switch (origin_end & 7)                                     \
+            {                                                           \
+            case 7: bit_val = src_val >> 1; op; x--;                    \
+                /* fall through */                                      \
+            case 6: bit_val = src_val >> 2; op; x--;                    \
+                /* fall through */                                      \
+            case 5: bit_val = src_val >> 3; op; x--;                    \
+                /* fall through */                                      \
+            case 4: bit_val = src_val >> 4; op; x--;                    \
+                /* fall through */                                      \
+            case 3: bit_val = src_val >> 5; op; x--;                    \
+                /* fall through */                                      \
+            case 2: bit_val = src_val >> 6; op; x--;                    \
+                /* fall through */                                      \
+            case 1: bit_val = src_val >> 7; op;                         \
+            }                                                           \
+        }                                                               \
+        dst_start += dst->stride / 4;                                   \
+        src_start += src->stride;                                       \
     }
+
+    switch (rop2)
+    {
+        ROPS_ALL( dst_start[x], dst_colors[bit_val] )
+    }
+#undef LOOP
 }
 
 static void mask_rect_24( const dib_info *dst, const RECT *rc,
