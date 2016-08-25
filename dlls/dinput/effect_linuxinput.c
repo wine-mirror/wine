@@ -519,23 +519,32 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
 		/* one-axis effects must use cartesian coords */
 		return DIERR_INVALIDPARAM;
 	    }
-	} else { /* two axes */
-	    if (peff->dwFlags & DIEFF_CARTESIAN) {
-		LONG x, y;
-		if (This->first_axis_is_x) {
-		    x = peff->rglDirection[0];
-		    y = peff->rglDirection[1];
-		} else {
-		    x = peff->rglDirection[1];
-		    y = peff->rglDirection[0];
-		}
-		This->effect.direction = (int)((3 * M_PI / 2 - atan2(y, x)) * -0x7FFF / M_PI);
-	    } else {
-		/* Polar and spherical are the same for 2 axes */
-		/* Precision is important here, so we do double math with exact constants */
-		This->effect.direction = (int)(((double)peff->rglDirection[0] - 90) / 35999) * 0x7FFF;
-	    }
-	}
+        }
+        /* two axes */
+        else
+        {
+            if (peff->dwFlags & DIEFF_CARTESIAN)
+            {
+                LONG x, y;
+                if (This->first_axis_is_x)
+                {
+                    x = peff->rglDirection[0];
+                    y = peff->rglDirection[1];
+                }
+                else
+                {
+                    x = peff->rglDirection[1];
+                    y = peff->rglDirection[0];
+                }
+                This->effect.direction = (unsigned int)((M_PI / 2 + atan2(y, x)) * 0x8000 / M_PI);
+            }
+            else
+            {
+                /* Polar and spherical are the same for 2 axes */
+                /* Precision is important here, so we do double math with exact constants */
+                This->effect.direction = (unsigned int)(((double)peff->rglDirection[0] / 18000) * 0x8000);
+            }
+        }
     }
 
     if (dwFlags & DIEP_DURATION)
