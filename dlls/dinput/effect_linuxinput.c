@@ -557,30 +557,36 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
             This->effect.replay.length = 1;
     }
 
-    if (dwFlags & DIEP_ENVELOPE) {
+    if (dwFlags & DIEP_ENVELOPE)
+    {
         struct ff_envelope* env;
-        if (This->effect.type == FF_CONSTANT) env = &This->effect.u.constant.envelope;
-        else if (This->effect.type == FF_PERIODIC) env = &This->effect.u.periodic.envelope;
-        else if (This->effect.type == FF_RAMP) env = &This->effect.u.ramp.envelope;
-        else env = NULL; 
+        if (This->effect.type == FF_CONSTANT)
+            env = &This->effect.u.constant.envelope;
+        else if (This->effect.type == FF_PERIODIC)
+            env = &This->effect.u.periodic.envelope;
+        else if (This->effect.type == FF_RAMP)
+            env = &This->effect.u.ramp.envelope;
+        else
+            env = NULL;
 
-	if (peff->lpEnvelope == NULL) {
-	    /* if this type had an envelope, reset it */
-	    if (env) {
-		env->attack_length = 0;
-		env->attack_level = 0;
-		env->fade_length = 0;
-		env->fade_level = 0;
-	    }
-	} else {
-	    /* did we get passed an envelope for a type that doesn't even have one? */
-	    if (!env) return DIERR_INVALIDPARAM;
-	    /* copy the envelope */
-	    env->attack_length = peff->lpEnvelope->dwAttackTime / 1000;
-	    env->attack_level = (peff->lpEnvelope->dwAttackLevel / 10) * 32;
-	    env->fade_length = peff->lpEnvelope->dwFadeTime / 1000;
-	    env->fade_level = (peff->lpEnvelope->dwFadeLevel / 10) * 32;
-	}
+        /* copy the envelope if it is present and the linux effect supports it */
+        if (peff->lpEnvelope && env)
+        {
+            env->attack_length = peff->lpEnvelope->dwAttackTime / 1000;
+            env->attack_level = (peff->lpEnvelope->dwAttackLevel / 10) * 32;
+            env->fade_length = peff->lpEnvelope->dwFadeTime / 1000;
+            env->fade_level = (peff->lpEnvelope->dwFadeLevel / 10) * 32;
+        }
+        /* if the dinput envelope is NULL we will clear the linux envelope */
+        else if (env)
+        {
+            env->attack_length = 0;
+            env->attack_level = 0;
+            env->fade_length = 0;
+            env->fade_level = 0;
+        }
+        else
+            WARN("Ignoring dinput envelope not supported in the linux effect\n");
     }
 
     /* Gain and Sample Period settings are not supported by the linux
