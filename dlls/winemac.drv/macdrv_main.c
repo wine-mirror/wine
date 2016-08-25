@@ -290,9 +290,9 @@ static BOOL process_attach(void)
 
 
 /***********************************************************************
- *              thread_detach
+ *              ThreadDetach   (MACDRV.@)
  */
-static void thread_detach(void)
+void CDECL macdrv_ThreadDetach(void)
 {
     struct macdrv_thread_data *data = macdrv_thread_data();
 
@@ -382,11 +382,9 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( hinst );
         macdrv_module = hinst;
         ret = process_attach();
-        break;
-    case DLL_THREAD_DETACH:
-        thread_detach();
         break;
     }
     return ret;

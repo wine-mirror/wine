@@ -42,6 +42,7 @@
 @ cdecl ShowWindow(long long ptr long) macdrv_ShowWindow
 @ cdecl SysCommand(long long long) macdrv_SysCommand
 @ cdecl SystemParametersInfo(long long ptr long) macdrv_SystemParametersInfo
+@ cdecl ThreadDetach() macdrv_ThreadDetach
 @ cdecl ToUnicodeEx(long long ptr ptr long long long) macdrv_ToUnicodeEx
 @ cdecl UnregisterHotKey(long long long) macdrv_UnregisterHotKey
 @ cdecl UpdateLayeredWindow(long ptr ptr) macdrv_UpdateLayeredWindow
