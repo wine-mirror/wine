@@ -108,6 +108,23 @@ static const BYTE pixel_masks_4[2] = {0xf0, 0x0f};
 static const BYTE pixel_masks_1[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
 static const BYTE edge_masks_1[8] = {0xff, 0x7f, 0x3f, 0x1f, 0x0f, 0x07, 0x03, 0x01};
 
+#define ROPS_WITHOUT_COPY( _d, _s )                                     \
+case R2_BLACK:        LOOP( (_d) = 0 ) break;                           \
+case R2_NOTMERGEPEN:  LOOP( (_d) = ~((_d) | (_s)) ) break;              \
+case R2_MASKNOTPEN:   LOOP( (_d) &= ~(_s) ) break;                      \
+case R2_NOTCOPYPEN:   LOOP( (_d) = ~(_s) ) break;                       \
+case R2_MASKPENNOT:   LOOP( (_d) = (~(_d) & (_s)) ) break;              \
+case R2_NOT:          LOOP( (_d) = ~(_d) ) break;                       \
+case R2_XORPEN:       LOOP( (_d) ^= (_s) ) break;                       \
+case R2_NOTMASKPEN:   LOOP( (_d) = ~((_d) & (_s)) ) break;              \
+case R2_MASKPEN:      LOOP( (_d) &= (_s) ) break;                       \
+case R2_NOTXORPEN:    LOOP( (_d) = ~((_d) ^ (_s)) ) break;              \
+case R2_NOP:          break;                                            \
+case R2_MERGENOTPEN:  LOOP( (_d) = ((_d) | ~(_s)) ) break;              \
+case R2_MERGEPENNOT:  LOOP( (_d) = (~(_d) | (_s)) ) break;              \
+case R2_MERGEPEN:     LOOP( (_d) |= (_s) ) break;                       \
+case R2_WHITE:        LOOP( (_d) = ~0 ) break;
+
 static inline void do_rop_32(DWORD *ptr, DWORD and, DWORD xor)
 {
     *ptr = (*ptr & and) ^ xor;
@@ -1588,13 +1605,17 @@ static inline void copy_rect_bits_32( DWORD *dst_start, const DWORD *src_start, 
     const DWORD *src;
     DWORD *dst;
     int x, y;
-    struct rop_codes codes;
 
-    get_rop_codes( rop2, &codes );
+#define LOOP( op )                                                                     \
+    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)   \
+        for (x = 0, src = src_start, dst = dst_start; x < size->cx; x++, src++, dst++) \
+            op;
 
-    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
-        for (x = 0, src = src_start, dst = dst_start; x < size->cx; x++, src++, dst++)
-            do_rop_codes_32( dst, *src, &codes );
+    switch (rop2)
+    {
+        ROPS_WITHOUT_COPY( dst[0], src[0] )
+    }
+#undef LOOP
 }
 
 static inline void copy_rect_bits_rev_32( DWORD *dst_start, const DWORD *src_start, const SIZE *size,
@@ -1603,16 +1624,20 @@ static inline void copy_rect_bits_rev_32( DWORD *dst_start, const DWORD *src_sta
     const DWORD *src;
     DWORD *dst;
     int x, y;
-    struct rop_codes codes;
-
-    get_rop_codes( rop2, &codes );
 
     src_start += size->cx - 1;
     dst_start += size->cx - 1;
 
-    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
-        for (x = 0, src = src_start, dst = dst_start; x < size->cx; x++, src--, dst--)
-            do_rop_codes_32( dst, *src, &codes );
+#define LOOP( op )                                                                     \
+    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)   \
+        for (x = 0, src = src_start, dst = dst_start; x < size->cx; x++, src--, dst--) \
+            op;
+
+    switch (rop2)
+    {
+        ROPS_WITHOUT_COPY( dst[0], src[0] )
+    }
+#undef LOOP
 }
 
 static void copy_rect_32(const dib_info *dst, const RECT *rc,
