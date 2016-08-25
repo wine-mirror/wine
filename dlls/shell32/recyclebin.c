@@ -486,7 +486,7 @@ static HRESULT WINAPI RecycleBin_CreateViewObject(IShellFolder2 *iface, HWND hwn
 
         ZeroMemory(&sfv, sizeof(sfv));
         sfv.cbSize = sizeof(sfv);
-        sfv.pshf = (IShellFolder *)This;
+        sfv.pshf = (IShellFolder *)&This->IShellFolder2_iface;
 
         TRACE("Calling SHCreateShellFolderViewEx\n");
         ret = SHCreateShellFolderViewEx(&sfv, &tmp);
