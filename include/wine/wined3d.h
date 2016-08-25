@@ -2105,6 +2105,8 @@ ULONG __cdecl wined3d_decref(struct wined3d *wined3d);
 HRESULT __cdecl wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering,
         UINT mode_idx, struct wined3d_display_mode *mode);
+HRESULT __cdecl wined3d_find_closest_matching_adapter_mode(const struct wined3d *wined3d,
+        unsigned int adapter_idx, struct wined3d_display_mode *mode);
 UINT __cdecl wined3d_get_adapter_count(const struct wined3d *wined3d);
 HRESULT __cdecl wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UINT adapter_idx,
         struct wined3d_display_mode *mode, enum wined3d_display_rotation *rotation);
