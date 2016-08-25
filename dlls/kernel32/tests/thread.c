@@ -1246,9 +1246,11 @@ static void test_RegisterWaitForSingleObject(void)
     ret = pUnregisterWait(wait_handle);
     ok(ret, "UnregisterWait failed with error %d\n", GetLastError());
 
-    ret = pUnregisterWait(0);
-    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
-        "UnregisterWait failed with unexpected error %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = pUnregisterWait(NULL);
+    ok(!ret, "Expected UnregisterWait to fail");
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 }
 
 static DWORD LS_main;
