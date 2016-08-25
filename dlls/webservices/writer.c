@@ -558,6 +558,12 @@ static HRESULT write_add_namespace_attribute( struct writer *writer, const WS_XM
     return S_OK;
 }
 
+static inline BOOL str_equal( const WS_XML_STRING *str1, const WS_XML_STRING *str2 )
+{
+    if (!str1 && !str2) return TRUE;
+    return WsXmlStringEquals( str1, str2, NULL ) == S_OK;
+}
+
 static BOOL namespace_in_scope( const WS_XML_ELEMENT_NODE *elem, const WS_XML_STRING *prefix,
                                 const WS_XML_STRING *ns )
 {
@@ -572,11 +578,8 @@ static BOOL namespace_in_scope( const WS_XML_ELEMENT_NODE *elem, const WS_XML_ST
         for (i = 0; i < elem->attributeCount; i++)
         {
             if (!elem->attributes[i]->isXmlNs) continue;
-            if (WsXmlStringEquals( elem->attributes[i]->prefix, prefix, NULL ) == S_OK &&
-                WsXmlStringEquals( elem->attributes[i]->ns, ns, NULL ) == S_OK)
-            {
-                return TRUE;
-            }
+            if (str_equal( elem->attributes[i]->prefix, prefix ) &&
+                str_equal( elem->attributes[i]->ns, ns )) return TRUE;
         }
     }
     return FALSE;
@@ -587,8 +590,7 @@ static HRESULT write_set_element_namespace( struct writer *writer )
     WS_XML_ELEMENT_NODE *elem = &writer->current->hdr;
     HRESULT hr;
 
-    if (!elem->ns->length || is_current_namespace( writer, elem->ns ) ||
-        namespace_in_scope( elem, elem->prefix, elem->ns )) return S_OK;
+    if (!elem->ns->length || namespace_in_scope( elem, elem->prefix, elem->ns )) return S_OK;
 
     if ((hr = write_add_namespace_attribute( writer, elem->prefix, elem->ns, FALSE )) != S_OK)
         return hr;
