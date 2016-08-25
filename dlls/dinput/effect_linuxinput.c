@@ -302,8 +302,12 @@ static HRESULT WINAPI LinuxInputEffectImpl_GetParameters(
 	}
     }
 
-    if (dwFlags & DIEP_DURATION) {
-	peff->dwDuration = (DWORD)This->effect.replay.length * 1000;
+    if (dwFlags & DIEP_DURATION)
+    {
+        if (!This->effect.replay.length) /* infinite for the linux driver */
+            peff->dwDuration = INFINITE;
+        else
+            peff->dwDuration = (DWORD)This->effect.replay.length * 1000;
     }
 
     if (dwFlags & DIEP_ENVELOPE) {
@@ -535,7 +539,14 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
     }
 
     if (dwFlags & DIEP_DURATION)
-	This->effect.replay.length = peff->dwDuration / 1000;
+    {
+        if (peff->dwDuration == INFINITE)
+            This->effect.replay.length = 0; /* infinite for the linux driver */
+        else if(peff->dwDuration > 1000)
+            This->effect.replay.length = peff->dwDuration / 1000;
+        else
+            This->effect.replay.length = 1;
+    }
 
     if (dwFlags & DIEP_ENVELOPE) {
         struct ff_envelope* env;
