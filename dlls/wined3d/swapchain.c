@@ -1397,20 +1397,44 @@ HRESULT CDECL wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapcha
     return WINED3D_OK;
 }
 
+static HRESULT wined3d_swapchain_set_display_mode(struct wined3d_swapchain *swapchain,
+        struct wined3d_display_mode *mode)
+{
+    struct wined3d_device *device = swapchain->device;
+    HRESULT hr;
+
+    if (swapchain->desc.flags & WINED3D_SWAPCHAIN_USE_CLOSEST_MATCHING_MODE)
+    {
+        if (FAILED(hr = wined3d_find_closest_matching_adapter_mode(device->wined3d,
+                device->adapter->ordinal, mode)))
+        {
+            WARN("Failed to find closest matching mode, hr %#x.\n", hr);
+        }
+    }
+
+    if (FAILED(hr = wined3d_set_adapter_display_mode(device->wined3d,
+            device->adapter->ordinal, mode)))
+    {
+        WARN("Failed to set display mode, hr %#x.\n", hr);
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    return WINED3D_OK;
+}
+
 HRESULT CDECL wined3d_swapchain_resize_target(struct wined3d_swapchain *swapchain,
         const struct wined3d_display_mode *mode)
 {
     struct wined3d_device *device = swapchain->device;
-    struct wined3d_display_mode current_mode;
+    struct wined3d_display_mode actual_mode;
     RECT original_window_rect, window_rect;
     HRESULT hr;
 
     TRACE("swapchain %p, mode %p.\n", swapchain, mode);
 
-    SetRect(&window_rect, 0, 0, mode->width, mode->height);
-
     if (swapchain->desc.windowed)
     {
+        SetRect(&window_rect, 0, 0, mode->width, mode->height);
         AdjustWindowRectEx(&window_rect,
                 GetWindowLongW(swapchain->device_window, GWL_STYLE), FALSE,
                 GetWindowLongW(swapchain->device_window, GWL_EXSTYLE));
@@ -1421,22 +1445,21 @@ HRESULT CDECL wined3d_swapchain_resize_target(struct wined3d_swapchain *swapchai
     }
     else if (swapchain->desc.flags & WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH)
     {
-        if (FAILED(hr = wined3d_set_adapter_display_mode(device->wined3d, device->adapter->ordinal, mode)))
-        {
-            WARN("Failed to set display mode, hr %#x.\n", hr);
-            return WINED3DERR_INVALIDCALL;
-        }
+        actual_mode = *mode;
+        if (FAILED(hr = wined3d_swapchain_set_display_mode(swapchain, &actual_mode)))
+            return hr;
+        SetRect(&window_rect, 0, 0, actual_mode.width, actual_mode.height);
     }
     else
     {
         if (FAILED(hr = wined3d_get_adapter_display_mode(device->wined3d, device->adapter->ordinal,
-                &current_mode, NULL)))
+                &actual_mode, NULL)))
         {
             ERR("Failed to get display mode, hr %#x.\n", hr);
             return WINED3DERR_INVALIDCALL;
         }
 
-        SetRect(&window_rect, 0, 0, current_mode.width, current_mode.height);
+        SetRect(&window_rect, 0, 0, actual_mode.width, actual_mode.height);
     }
 
     MoveWindow(swapchain->device_window, window_rect.left, window_rect.top,
@@ -1477,21 +1500,8 @@ HRESULT CDECL wined3d_swapchain_set_fullscreen(struct wined3d_swapchain *swapcha
             }
         }
 
-        if (swapchain->desc.flags & WINED3D_SWAPCHAIN_USE_CLOSEST_MATCHING_MODE)
-        {
-            if (FAILED(hr = wined3d_find_closest_matching_adapter_mode(device->wined3d,
-                    device->adapter->ordinal, &actual_mode)))
-            {
-                WARN("Failed to find closest matching mode, hr %#x.\n", hr);
-            }
-        }
-
-        if (FAILED(hr = wined3d_set_adapter_display_mode(device->wined3d,
-                device->adapter->ordinal, &actual_mode)))
-        {
-            WARN("Failed to set display mode, hr %#x.\n", hr);
-            return WINED3DERR_INVALIDCALL;
-        }
+        if (FAILED(hr = wined3d_swapchain_set_display_mode(swapchain, &actual_mode)))
+            return hr;
     }
     else
     {

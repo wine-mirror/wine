@@ -2215,10 +2215,9 @@ static void test_inexact_modes(void)
         swapchain_desc.BufferDesc.Width = sizes[i].width;
         swapchain_desc.BufferDesc.Height = sizes[i].height;
         hr = IDXGISwapChain_ResizeTarget(swapchain, &swapchain_desc.BufferDesc);
-        todo_wine ok(SUCCEEDED(hr), "ResizeTarget failed, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "ResizeTarget failed, hr %#x.\n", hr);
 
-        if (SUCCEEDED(hr))
-            check_swapchain_fullscreen_state(swapchain, &expected_state);
+        check_swapchain_fullscreen_state(swapchain, &expected_state);
         hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
         ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
         ok(result_desc.BufferDesc.Width == 800, "Got width %u.\n", result_desc.BufferDesc.Width);
