@@ -1920,6 +1920,7 @@ HRESULT WINAPI WsWriteXmlBuffer( WS_XML_WRITER *handle, WS_XML_BUFFER *buffer, W
 
     if (!writer || !xmlbuf) return E_INVALIDARG;
 
+    if ((hr = write_flush( writer )) != S_OK) return hr;
     if ((hr = write_grow_buffer( writer, xmlbuf->size )) != S_OK) return hr;
     write_bytes( writer, xmlbuf->ptr, xmlbuf->size );
     return S_OK;
