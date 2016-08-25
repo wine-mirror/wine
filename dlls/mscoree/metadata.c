@@ -199,7 +199,7 @@ HRESULT MetaDataDispenser_CreateInstance(IUnknown **ppUnk)
     This->IMetaDataDispenserEx_iface.lpVtbl = &MetaDataDispenserVtbl;
     This->ref = 1;
 
-    *ppUnk = (IUnknown*)This;
+    *ppUnk = (IUnknown*)&This->IMetaDataDispenserEx_iface;
 
     return S_OK;
 }
