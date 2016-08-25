@@ -148,17 +148,6 @@ static inline void do_rop_codes_mask_8(BYTE *dst, BYTE src, struct rop_codes *co
     do_rop_mask_8( dst, (src & codes->a1) ^ codes->a2, (src & codes->x1) ^ codes->x2, mask );
 }
 
-static inline void do_rop_codes_line_32(DWORD *dst, const DWORD *src, struct rop_codes *codes, int len)
-{
-    for (; len > 0; len--, src++, dst++) do_rop_codes_32( dst, *src, codes );
-}
-
-static inline void do_rop_codes_line_rev_32(DWORD *dst, const DWORD *src, struct rop_codes *codes, int len)
-{
-    for (src += len - 1, dst += len - 1; len > 0; len--, src--, dst--)
-        do_rop_codes_32( dst, *src, codes );
-}
-
 static inline void do_rop_codes_line_16(WORD *dst, const WORD *src, struct rop_codes *codes, int len)
 {
     for (; len > 0; len--, src++, dst++) do_rop_codes_16( dst, *src, codes );
@@ -1593,12 +1582,45 @@ static void pattern_rects_null(const dib_info *dib, int num, const RECT *rc, con
     return;
 }
 
+static inline void copy_rect_bits_32( DWORD *dst_start, const DWORD *src_start, const SIZE *size,
+                                      int dst_stride, int src_stride, int rop2 )
+{
+    const DWORD *src;
+    DWORD *dst;
+    int x, y;
+    struct rop_codes codes;
+
+    get_rop_codes( rop2, &codes );
+
+    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
+        for (x = 0, src = src_start, dst = dst_start; x < size->cx; x++, src++, dst++)
+            do_rop_codes_32( dst, *src, &codes );
+}
+
+static inline void copy_rect_bits_rev_32( DWORD *dst_start, const DWORD *src_start, const SIZE *size,
+                                          int dst_stride, int src_stride, int rop2 )
+{
+    const DWORD *src;
+    DWORD *dst;
+    int x, y;
+    struct rop_codes codes;
+
+    get_rop_codes( rop2, &codes );
+
+    src_start += size->cx - 1;
+    dst_start += size->cx - 1;
+
+    for (y = 0; y < size->cy; y++, dst_start += dst_stride, src_start += src_stride)
+        for (x = 0, src = src_start, dst = dst_start; x < size->cx; x++, src--, dst--)
+            do_rop_codes_32( dst, *src, &codes );
+}
+
 static void copy_rect_32(const dib_info *dst, const RECT *rc,
                          const dib_info *src, const POINT *origin, int rop2, int overlap)
 {
     DWORD *dst_start, *src_start;
-    struct rop_codes codes;
     int y, dst_stride, src_stride;
+    SIZE size;
 
     if (overlap & OVERLAP_BELOW)
     {
@@ -1622,14 +1644,13 @@ static void copy_rect_32(const dib_info *dst, const RECT *rc,
         return;
     }
 
-    get_rop_codes( rop2, &codes );
-    for (y = rc->top; y < rc->bottom; y++, dst_start += dst_stride, src_start += src_stride)
-    {
-        if (overlap & OVERLAP_RIGHT)
-            do_rop_codes_line_rev_32( dst_start, src_start, &codes, rc->right - rc->left );
-        else
-            do_rop_codes_line_32( dst_start, src_start, &codes, rc->right - rc->left );
-    }
+    size.cx = rc->right - rc->left;
+    size.cy = rc->bottom - rc->top;
+
+    if (overlap & OVERLAP_RIGHT)
+        copy_rect_bits_rev_32( dst_start, src_start, &size, dst_stride, src_stride, rop2 );
+    else
+        copy_rect_bits_32( dst_start, src_start, &size, dst_stride, src_stride, rop2 );
 }
 
 static void copy_rect_24(const dib_info *dst, const RECT *rc,
