@@ -79,7 +79,7 @@ HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *surface, const RE
         return hr;
     }
     if (surface->palette)
-        wined3d_palette_apply_to_dc(surface->palette->wineD3DPalette, surface_dc);
+        wined3d_palette_apply_to_dc(surface->palette->wined3d_palette, surface_dc);
 
     if (!(screen_dc = GetDC(NULL)))
     {
@@ -472,7 +472,7 @@ static HRESULT ddraw_surface_set_palette(struct ddraw_surface *surface, IDirectD
         if (palette_impl)
             palette_impl->flags |= DDPCAPS_PRIMARYSURFACE;
         wined3d_swapchain_set_palette(surface->ddraw->wined3d_swapchain,
-                palette_impl ? palette_impl->wineD3DPalette : NULL);
+                palette_impl ? palette_impl->wined3d_palette : NULL);
         ddraw_surface_update_frontbuffer(surface, NULL, FALSE);
     }
     if (palette_impl)
@@ -2162,7 +2162,7 @@ static HRESULT WINAPI ddraw_surface7_GetDC(IDirectDrawSurface7 *iface, HDC *dc)
                 palette = NULL;
 
             if (palette)
-                wined3d_palette_apply_to_dc(palette->wineD3DPalette, *dc);
+                wined3d_palette_apply_to_dc(palette->wined3d_palette, *dc);
         }
     }
 
