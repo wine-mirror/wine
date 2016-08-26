@@ -4276,7 +4276,7 @@ static HRESULT d3d_device7_DrawPrimitiveVB(IDirect3DDevice7 *iface, D3DPRIMITIVE
     stride = get_flexible_vertex_size(vb_impl->fvf);
 
     wined3d_mutex_lock();
-    wined3d_device_set_vertex_declaration(device->wined3d_device, vb_impl->wineD3DVertexDeclaration);
+    wined3d_device_set_vertex_declaration(device->wined3d_device, vb_impl->wined3d_declaration);
     if (FAILED(hr = wined3d_device_set_stream_source(device->wined3d_device,
             0, vb_impl->wined3d_buffer, 0, stride)))
     {
@@ -4375,7 +4375,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
 
     wined3d_mutex_lock();
 
-    wined3d_device_set_vertex_declaration(device->wined3d_device, vb_impl->wineD3DVertexDeclaration);
+    wined3d_device_set_vertex_declaration(device->wined3d_device, vb_impl->wined3d_declaration);
 
     hr = d3d_device_prepare_index_buffer(device, index_count * sizeof(WORD));
     if (FAILED(hr))

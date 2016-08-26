@@ -158,7 +158,7 @@ static ULONG WINAPI d3d_vertex_buffer7_Release(IDirect3DVertexBuffer7 *iface)
         if (curVB == buffer->wined3d_buffer)
             wined3d_device_set_stream_source(buffer->ddraw->wined3d_device, 0, NULL, 0, 0);
 
-        wined3d_vertex_declaration_decref(buffer->wineD3DVertexDeclaration);
+        wined3d_vertex_declaration_decref(buffer->wined3d_declaration);
         wined3d_buffer_decref(buffer->wined3d_buffer);
         wined3d_mutex_unlock();
 
@@ -383,7 +383,7 @@ static HRESULT WINAPI d3d_vertex_buffer7_ProcessVertices(IDirect3DVertexBuffer7 
 
     wined3d_device_set_stream_source(device_impl->wined3d_device,
             0, src_buffer_impl->wined3d_buffer, 0, get_flexible_vertex_size(src_buffer_impl->fvf));
-    wined3d_device_set_vertex_declaration(device_impl->wined3d_device, src_buffer_impl->wineD3DVertexDeclaration);
+    wined3d_device_set_vertex_declaration(device_impl->wined3d_device, src_buffer_impl->wined3d_declaration);
     hr = wined3d_device_process_vertices(device_impl->wined3d_device, src_idx, dst_idx,
             count, dst_buffer_impl->wined3d_buffer, NULL, flags, dst_buffer_impl->fvf);
 
@@ -603,15 +603,14 @@ HRESULT d3d_vertex_buffer_create(struct d3d_vertex_buffer **vertex_buf,
         goto end;
     }
 
-    buffer->wineD3DVertexDeclaration = ddraw_find_decl(ddraw, desc->dwFVF);
-    if (!buffer->wineD3DVertexDeclaration)
+    if (!(buffer->wined3d_declaration = ddraw_find_decl(ddraw, desc->dwFVF)))
     {
         ERR("Failed to find vertex declaration for fvf %#x.\n", desc->dwFVF);
         wined3d_buffer_decref(buffer->wined3d_buffer);
         hr = DDERR_INVALIDPARAMS;
         goto end;
     }
-    wined3d_vertex_declaration_incref(buffer->wineD3DVertexDeclaration);
+    wined3d_vertex_declaration_incref(buffer->wined3d_declaration);
 
 end:
     wined3d_mutex_unlock();
