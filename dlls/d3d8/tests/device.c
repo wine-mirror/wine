@@ -7924,9 +7924,11 @@ static void test_miptree_layout(void)
     }
     formats[] =
     {
-        {D3DFMT_A8R8G8B8, "D3DFMT_A8R8G8B8"},
-        {D3DFMT_A8,       "D3DFMT_A8"},
-        {D3DFMT_L8,       "D3DFMT_L8"},
+        {D3DFMT_A8R8G8B8,             "D3DFMT_A8R8G8B8"},
+        {D3DFMT_A8,                   "D3DFMT_A8"},
+        {D3DFMT_L8,                   "D3DFMT_L8"},
+        {MAKEFOURCC('A','T','I','1'), "D3DFMT_ATI1"},
+        {MAKEFOURCC('A','T','I','2'), "D3DFMT_ATI2"},
     };
     static const struct
     {

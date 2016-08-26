@@ -3577,6 +3577,9 @@ UINT wined3d_format_calculate_size(const struct wined3d_format *format, UINT ali
     if (format->id == WINED3DFMT_UNKNOWN)
         return 0;
 
+    if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_BROKEN_PITCH)
+        return width * height * depth * format->byte_count;
+
     wined3d_format_calculate_pitch(format, alignment, width, height, &row_pitch, &slice_pitch);
 
     return slice_pitch * depth;
