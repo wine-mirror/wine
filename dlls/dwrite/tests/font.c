@@ -6303,7 +6303,6 @@ static void test_GetFontSignature(void)
     for (i = 0; i < count; i++) {
         FONTSIGNATURE expected_signature;
         IDWriteLocalizedStrings *names;
-        IDWriteFontFace *fontface;
         IDWriteFontFamily *family;
         IDWriteFont *font;
         WCHAR nameW[256];
@@ -6313,9 +6312,6 @@ static void test_GetFontSignature(void)
 
         hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
             DWRITE_FONT_STYLE_NORMAL, &font);
-        ok(hr == S_OK, "got 0x%08x\n", hr);
-
-        hr = IDWriteFont_CreateFontFace(font, &fontface);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         hr = IDWriteFontFamily_GetFamilyNames(family, &names);
@@ -6345,7 +6341,6 @@ static void test_GetFontSignature(void)
             fontsig.fsCsb[1], expected_signature.fsCsb[1]);
 
         IDWriteFont_Release(font);
-        IDWriteFontFace_Release(fontface);
         IDWriteFontFamily_Release(family);
     }
 
