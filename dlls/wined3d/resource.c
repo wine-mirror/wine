@@ -329,7 +329,7 @@ HRESULT CDECL wined3d_resource_unmap(struct wined3d_resource *resource, unsigned
 
 void CDECL wined3d_resource_preload(struct wined3d_resource *resource)
 {
-    resource->resource_ops->resource_preload(resource);
+    wined3d_cs_emit_preload_resource(resource->device->cs, resource);
 }
 
 BOOL wined3d_resource_allocate_sysmem(struct wined3d_resource *resource)
