@@ -118,7 +118,8 @@ static void test_getat(IPropertyStore *store)
 	if (IsEqualPropertyKey(pkey, DEVPKEY_Device_DeviceDesc))
 	    found_desc = TRUE;
     }
-    ok(found_name, "DEVPKEY_Device_FriendlyName not found\n");
+    ok(found_name ||
+            broken(!found_name) /* vista */, "DEVPKEY_Device_FriendlyName not found\n");
     ok(found_desc, "DEVPKEY_Device_DeviceDesc not found\n");
 }
 
