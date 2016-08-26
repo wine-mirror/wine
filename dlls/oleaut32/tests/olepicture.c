@@ -791,9 +791,7 @@ static void test_Render(void)
     ok(result == expected,
        "Color at 0,0 should be unchanged 0x%06X, but was 0x%06X\n", expected, result);
     result = GetPixel(hdc, 5, 5);
-    ok(result != expected ||
-        broken(result == expected), /* WinNT 4.0 and older may claim they drew */
-                                    /* the icon, even if they didn't. */
+    ok(result != expected,
        "Color at 5,5 should have changed, but still was 0x%06X\n", expected);
     result = GetPixel(hdc, 10, 10);
     ok(result == expected,
