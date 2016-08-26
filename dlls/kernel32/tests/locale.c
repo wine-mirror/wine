@@ -4283,7 +4283,7 @@ static void test_IdnToUnicode(void)
 static void test_GetLocaleInfoEx(void)
 {
     static const WCHAR enW[] = {'e','n',0};
-    WCHAR bufferW[80];
+    WCHAR bufferW[80], buffer2[80];
     INT ret;
 
     if (!pGetLocaleInfoEx)
@@ -4354,6 +4354,12 @@ static void test_GetLocaleInfoEx(void)
             ok(!lstrcmpW(bufferW, ptr->name), "%s: got wrong LOCALE_SNAME %s\n", wine_dbgstr_w(ptr->name), wine_dbgstr_w(bufferW));
             ptr++;
         }
+
+        ret = pGetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SNAME, bufferW, sizeof(bufferW)/sizeof(WCHAR));
+        ok(ret && ret == lstrlenW(bufferW)+1, "got ret value %d\n", ret);
+        ret = GetLocaleInfoW(GetUserDefaultLCID(), LOCALE_SNAME, buffer2, sizeof(buffer2)/sizeof(WCHAR));
+        ok(ret && ret == lstrlenW(buffer2)+1, "got ret value %d\n", ret);
+        ok(!lstrcmpW(bufferW, buffer2), "LOCALE_SNAMEs don't match %s %s\n", wine_dbgstr_w(bufferW), wine_dbgstr_w(buffer2));
     }
 }
 
