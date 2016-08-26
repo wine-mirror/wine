@@ -4501,6 +4501,10 @@ static HRESULT WINAPI localfontfileloader_CreateStreamFromKey(IDWriteLocalFontFi
 
     file_ptr = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
     CloseHandle(mapping);
+    if (!file_ptr) {
+        ERR("mapping failed, file size %s, error %d\n", wine_dbgstr_longlong(size.QuadPart), GetLastError());
+        return E_FAIL;
+    }
 
     stream = heap_alloc(sizeof(*stream));
     if (!stream) {
