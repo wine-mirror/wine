@@ -2400,7 +2400,6 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
             {
             case ExceptionContinueExecution:
                 if (rec->ExceptionFlags & EH_NONCONTINUABLE) return STATUS_NONCONTINUABLE_EXCEPTION;
-                *orig_context = *dispatch.ContextRecord;
                 return STATUS_SUCCESS;
             case ExceptionContinueSearch:
                 break;
@@ -2431,7 +2430,6 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
             {
             case ExceptionContinueExecution:
                 if (rec->ExceptionFlags & EH_NONCONTINUABLE) return STATUS_NONCONTINUABLE_EXCEPTION;
-                *orig_context = *dispatch.ContextRecord;
                 return STATUS_SUCCESS;
             case ExceptionContinueSearch:
                 break;
