@@ -169,6 +169,25 @@ static const unsigned char enhmetafile[] = {
     0x14, 0x00, 0x00, 0x00
 };
 
+static HBITMAP stock_bm;
+
+static HDC create_render_dc( void )
+{
+    HDC dc = CreateCompatibleDC( NULL );
+    BITMAPINFO info = {{sizeof(info.bmiHeader), 100, 100, 1, 32, BI_RGB }};
+    void *bits;
+    HBITMAP dib = CreateDIBSection( NULL, &info, DIB_RGB_COLORS, &bits, NULL, 0 );
+
+    stock_bm = SelectObject( dc, dib );
+    return dc;
+}
+
+static void delete_render_dc( HDC dc )
+{
+    HBITMAP dib = SelectObject( dc, stock_bm );
+    DeleteObject( dib );
+    DeleteDC( dc );
+}
 
 typedef struct NoStatStreamImpl
 {
@@ -480,7 +499,7 @@ static void test_Invoke(void)
     ok(hr == DISP_E_BADPARAMCOUNT, "IPictureDisp_Invoke should have returned DISP_E_BADPARAMCOUNT instead of 0x%08x\n", hr);
 
     /* DISPID_PICT_RENDER */
-    hdc = GetDC(0);
+    hdc = create_render_dc();
 
     for (i = 0; i < sizeof(args)/sizeof(args[0]); i++)
         V_VT(&args[i]) = VT_I4;
@@ -516,7 +535,7 @@ static void test_Invoke(void)
     hr = IPictureDisp_Invoke(picdisp, DISPID_PICT_RENDER, &GUID_NULL, 0, DISPATCH_METHOD, &dispparams, &varresult, NULL, NULL);
     ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08x\n", hr);
 
-    ReleaseDC(NULL, hdc);
+    delete_render_dc(hdc);
     IPictureDisp_Release(picdisp);
 }
 
@@ -700,7 +719,7 @@ static void test_Render(void)
     OLE_XSIZE_HIMETRIC pWidth;
     OLE_YSIZE_HIMETRIC pHeight;
     COLORREF result, expected;
-    HDC hdc = GetDC(0);
+    HDC hdc = create_render_dc();
 
     /* test IPicture::Render return code on uninitialized picture */
     OleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (VOID**)&pic);
@@ -732,7 +751,7 @@ static void test_Render(void)
     desc.u.icon.hicon = LoadIconA(NULL, (LPCSTR)IDI_APPLICATION);
     if(!desc.u.icon.hicon){
         win_skip("LoadIcon failed. Skipping...\n");
-        ReleaseDC(NULL, hdc);
+        delete_render_dc(hdc);
         return;
     }
 
@@ -765,11 +784,7 @@ static void test_Render(void)
     hres = picture_render(pic, hdc, 1, 1, 9, 9, 0, 0, pWidth, -pHeight, NULL);
     ole_expect(hres, S_OK);
 
-    if(hres != S_OK) {
-        IPicture_Release(pic);
-        ReleaseDC(NULL, hdc);
-        return;
-    }
+    if(hres != S_OK) goto done;
 
     /* Evaluate the rendered Icon */
     result = GetPixel(hdc, 0, 0);
@@ -784,8 +799,9 @@ static void test_Render(void)
     ok(result == expected,
        "Color at 10,10 should be unchanged 0x%06X, but was 0x%06X\n", expected, result);
 
+done:
     IPicture_Release(pic);
-    ReleaseDC(NULL, hdc);
+    delete_render_dc(hdc);
 }
 
 static void test_get_Attributes(void)
