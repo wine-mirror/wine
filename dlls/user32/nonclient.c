@@ -1487,8 +1487,6 @@ LRESULT NC_HandleNCRButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
     {
     case HTCAPTION:
     case HTSYSMENU:
-        if (!GetSystemMenu( hwnd, FALSE )) break;
-
         SetCapture( hwnd );
         for (;;)
         {
@@ -1502,7 +1500,7 @@ LRESULT NC_HandleNCRButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
         }
         ReleaseCapture();
         if (hittest == HTCAPTION || hittest == HTSYSMENU)
-            SendMessageW( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU + HTSYSMENU, msg.lParam );
+            SendMessageW( hwnd, WM_CONTEXTMENU, (WPARAM)hwnd, MAKELPARAM(msg.pt.x, msg.pt.y));
         break;
     }
     return 0;

@@ -8199,6 +8199,12 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
         return 0;
     }
 
+    if (message == WM_CONTEXTMENU)
+    {
+        /* don't create context menu */
+        return 0;
+    }
+
     defwndproc_counter++;
     ret = unicode ? DefWindowProcW(hwnd, message, wParam, lParam) 
 		  : DefWindowProcA(hwnd, message, wParam, lParam);
@@ -13887,13 +13893,46 @@ static void test_paintingloop(void)
     DestroyWindow(hwnd);
 }
 
+static const struct message NCRBUTTONDOWNSeq[] =
+{
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_CAPTURECHANGED, sent },
+    { WM_CONTEXTMENU, sent, /*hwnd*/0, -1 },
+    { 0 }
+};
+
 static void test_defwinproc(void)
 {
     HWND hwnd;
     MSG msg;
     BOOL gotwmquit = FALSE;
-    hwnd = CreateWindowExA(0, "static", "test_defwndproc", WS_POPUP, 0,0,0,0,0,0,0, NULL);
+    POINT pos;
+    RECT rect;
+    INT x, y;
+    LRESULT res;
+
+    hwnd = CreateWindowExA(0, "TestWindowClass", "test_defwndproc",
+            WS_VISIBLE | WS_CAPTION | WS_OVERLAPPEDWINDOW, 0,0,500,100,0,0,0, NULL);
     assert(hwnd);
+    flush_events();
+
+    GetCursorPos(&pos);
+    GetWindowRect(hwnd, &rect);
+    x = (rect.left+rect.right) / 2;
+    y = rect.top + GetSystemMetrics(SM_CYFRAME) + 1;
+    SetCursorPos(x, y);
+    flush_events();
+    res = DefWindowProcA( hwnd, WM_NCHITTEST, 0, MAKELPARAM(x, y));
+    ok(res == HTCAPTION, "WM_NCHITTEST returned %ld\n", res);
+
+    flush_sequence();
+    PostMessageA( hwnd, WM_RBUTTONUP, 0, 0);
+    DefWindowProcA( hwnd, WM_NCRBUTTONDOWN, HTCAPTION, MAKELPARAM(x, y));
+    ok_sequence(NCRBUTTONDOWNSeq, "WM_NCRBUTTONDOWN on caption", FALSE);
+
+    SetCursorPos(pos.x, pos.y);
+
     DefWindowProcA( hwnd, WM_ENDSESSION, 1, 0);
     while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) {
         if( msg.message == WM_QUIT) gotwmquit = TRUE;
