@@ -552,7 +552,7 @@ struct d3d_vertex_buffer
     LONG ref;
 
     /*** WineD3D and ddraw links ***/
-    struct wined3d_buffer *wineD3DVertexBuffer;
+    struct wined3d_buffer *wined3d_buffer;
     struct wined3d_vertex_declaration *wineD3DVertexDeclaration;
     struct ddraw *ddraw;
 

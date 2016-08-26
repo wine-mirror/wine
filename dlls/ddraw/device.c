@@ -4277,8 +4277,8 @@ static HRESULT d3d_device7_DrawPrimitiveVB(IDirect3DDevice7 *iface, D3DPRIMITIVE
 
     wined3d_mutex_lock();
     wined3d_device_set_vertex_declaration(device->wined3d_device, vb_impl->wineD3DVertexDeclaration);
-    hr = wined3d_device_set_stream_source(device->wined3d_device, 0, vb_impl->wineD3DVertexBuffer, 0, stride);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_device_set_stream_source(device->wined3d_device,
+            0, vb_impl->wined3d_buffer, 0, stride)))
     {
         WARN("Failed to set stream source, hr %#x.\n", hr);
         wined3d_mutex_unlock();
@@ -4409,8 +4409,8 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     wined3d_device_set_index_buffer(device->wined3d_device, device->index_buffer, WINED3DFMT_R16_UINT, 0);
 
     /* Set the vertex stream source */
-    hr = wined3d_device_set_stream_source(device->wined3d_device, 0, vb_impl->wineD3DVertexBuffer, 0, stride);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_device_set_stream_source(device->wined3d_device,
+            0, vb_impl->wined3d_buffer, 0, stride)))
     {
         ERR("(%p) IDirect3DDevice::SetStreamSource failed with hr = %08x\n", device, hr);
         wined3d_mutex_unlock();
