@@ -645,17 +645,40 @@ HRESULT __RPC_STUB ICreateRow_CreateRow_Stub(ICreateRow* This, IUnknown *pUnkOut
     return hr;
 }
 
-HRESULT CALLBACK IAccessor_AddRefAccessor_Proxy(IAccessor* This, HACCESSOR hAccessor, DBREFCOUNT *pcRefCount)
+HRESULT CALLBACK IAccessor_AddRefAccessor_Proxy(IAccessor* This, HACCESSOR hAccessor, DBREFCOUNT *refcount)
 {
-    FIXME("(%p)->(%08lx, %p): stub\n", This, hAccessor, pcRefCount);
-    return E_NOTIMPL;
+    IErrorInfo *errorinfo;
+    DBREFCOUNT ref;
+    HRESULT hr;
+
+    TRACE("(%p)->(%08lx, %p)\n", This, hAccessor, refcount);
+
+    if (!refcount)
+        refcount = &ref;
+
+    errorinfo = NULL;
+    hr = IAccessor_RemoteAddRefAccessor_Proxy(This, hAccessor, refcount, &errorinfo);
+    if (errorinfo)
+    {
+        SetErrorInfo(0, errorinfo);
+        IErrorInfo_Release(errorinfo);
+    }
+
+    return hr;
 }
 
 HRESULT __RPC_STUB IAccessor_AddRefAccessor_Stub(IAccessor* This, HACCESSOR hAccessor, DBREFCOUNT *pcRefCount,
                                                  IErrorInfo **ppErrorInfoRem)
 {
-    FIXME("(%p)->(%08lx, %p, %p): stub\n", This, hAccessor, pcRefCount, ppErrorInfoRem);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%08lx, %p, %p)\n", This, hAccessor, pcRefCount, ppErrorInfoRem);
+
+    hr = IAccessor_AddRefAccessor(This, hAccessor, pcRefCount);
+    if (FAILED(hr))
+        GetErrorInfo(0, ppErrorInfoRem);
+
+    return hr;
 }
 
 HRESULT CALLBACK IAccessor_CreateAccessor_Proxy(IAccessor* This, DBACCESSORFLAGS dwAccessorFlags, DBCOUNTITEM cBindings,
