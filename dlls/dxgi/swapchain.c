@@ -78,6 +78,11 @@ static ULONG STDMETHODCALLTYPE dxgi_swapchain_Release(IDXGISwapChain *iface)
     if (!refcount)
     {
         IWineDXGIDevice *device = swapchain->device;
+        if (swapchain->target)
+        {
+            WARN("Releasing fullscreen swapchain.\n");
+            IDXGIOutput_Release(swapchain->target);
+        }
         if (swapchain->factory)
             IDXGIFactory_Release(swapchain->factory);
         wined3d_mutex_lock();
