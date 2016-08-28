@@ -312,6 +312,11 @@ MMRESULT WINAPI acmStreamPrepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
         WARN("invalid use of reserved parameter\n");
         return MMSYSERR_INVALFLAG;
     }
+    if (pash->cbSrcLength < was->drvInst.pwfxSrc->nBlockAlign) {
+        WARN("source smaller than block align (%d < %d)\n",
+             pash->cbSrcLength, was->drvInst.pwfxSrc->nBlockAlign);
+        return pash->cbSrcLength ? ACMERR_NOTPOSSIBLE : MMSYSERR_INVALPARAM;
+    }
 
     /* Note: the ACMSTREAMHEADER and ACMDRVSTREAMHEADER structs are of same
      * size. some fields are private to msacm internals, and are exposed
