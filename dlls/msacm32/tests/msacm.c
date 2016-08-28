@@ -601,7 +601,6 @@ todo_wine
 
     hdr.cbSrcLength = src->wfx.nBlockAlign;
     mr = acmStreamPrepareHeader(has, &hdr, 1); /* invalid use of reserved parameter */
-todo_wine
     ok(mr == MMSYSERR_INVALFLAG, "expected 0x0a, got 0x%x\n", mr);
 
     mr = acmStreamPrepareHeader(has, &hdr, 0);

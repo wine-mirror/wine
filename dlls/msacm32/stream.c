@@ -302,14 +302,16 @@ MMRESULT WINAPI acmStreamPrepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
 
     if ((was = ACM_GetStream(has)) == NULL) {
         WARN("invalid handle\n");
-	return MMSYSERR_INVALHANDLE;
+        return MMSYSERR_INVALHANDLE;
     }
     if (!pash || pash->cbStruct < sizeof(ACMSTREAMHEADER)) {
         WARN("invalid parameter\n");
-	return MMSYSERR_INVALPARAM;
+        return MMSYSERR_INVALPARAM;
     }
-    if (fdwPrepare)
-	ret = MMSYSERR_INVALFLAG;
+    if (fdwPrepare) {
+        WARN("invalid use of reserved parameter\n");
+        return MMSYSERR_INVALFLAG;
+    }
 
     /* Note: the ACMSTREAMHEADER and ACMDRVSTREAMHEADER structs are of same
      * size. some fields are private to msacm internals, and are exposed
