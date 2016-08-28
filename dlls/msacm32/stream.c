@@ -50,6 +50,15 @@ static PWINE_ACMSTREAM	ACM_GetStream(HACMSTREAM has)
     return (PWINE_ACMSTREAM)has;
 }
 
+static BOOL ACM_ValidatePointers(PACMDRVSTREAMHEADER padsh)
+{
+    /* check that pointers have not been modified */
+    return !(padsh->pbPreparedSrc != padsh->pbSrc ||
+             padsh->cbPreparedSrcLength < padsh->cbSrcLength ||
+             padsh->pbPreparedDst != padsh->pbDst ||
+             padsh->cbPreparedDstLength < padsh->cbDstLength);
+}
+
 /***********************************************************************
  *           acmStreamClose (MSACM32.@)
  */
@@ -108,13 +117,9 @@ MMRESULT WINAPI acmStreamConvert(HACMSTREAM has, PACMSTREAMHEADER pash,
      */
     padsh = (PACMDRVSTREAMHEADER)pash;
 
-    /* check that pointers have not been modified */
-    if (padsh->pbPreparedSrc != padsh->pbSrc ||
-	padsh->cbPreparedSrcLength < padsh->cbSrcLength ||
-	padsh->pbPreparedDst != padsh->pbDst ||
-	padsh->cbPreparedDstLength < padsh->cbDstLength) {
+    if (!ACM_ValidatePointers(padsh)) {
         WARN("invalid parameter\n");
-	return MMSYSERR_INVALPARAM;
+        return MMSYSERR_INVALPARAM;
     }
 
     padsh->fdwConvert = fdwConvert;
@@ -467,13 +472,9 @@ MMRESULT WINAPI acmStreamUnprepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
      */
     padsh = (PACMDRVSTREAMHEADER)pash;
 
-    /* check that pointers have not been modified */
-    if (padsh->pbPreparedSrc != padsh->pbSrc ||
-	padsh->cbPreparedSrcLength < padsh->cbSrcLength ||
-	padsh->pbPreparedDst != padsh->pbDst ||
-	padsh->cbPreparedDstLength < padsh->cbDstLength) {
+    if (!ACM_ValidatePointers(padsh)) {
         WARN("invalid parameter\n");
-	return MMSYSERR_INVALPARAM;
+        return MMSYSERR_INVALPARAM;
     }
 
     padsh->fdwConvert = fdwUnprepare;
