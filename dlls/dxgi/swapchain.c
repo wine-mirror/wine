@@ -229,16 +229,23 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH dxgi_swapchain_SetFullscreenS
         }
     }
 
-    swapchain->fullscreen = fullscreen;
-    if (swapchain->target)
-        IDXGIOutput_Release(swapchain->target);
-    swapchain->target = target;
-
     wined3d_mutex_lock();
     wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &swapchain_desc);
     swapchain_desc.windowed = !fullscreen;
     hr = wined3d_swapchain_set_fullscreen(swapchain->wined3d_swapchain, &swapchain_desc, NULL);
     wined3d_mutex_unlock();
+
+    if (SUCCEEDED(hr))
+    {
+        swapchain->fullscreen = fullscreen;
+        if (swapchain->target)
+            IDXGIOutput_Release(swapchain->target);
+        swapchain->target = target;
+    }
+    else
+    {
+        IDXGIOutput_Release(target);
+    }
 
     return hr;
 }
