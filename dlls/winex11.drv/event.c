@@ -468,7 +468,7 @@ static int process_events( Display *display, Bool (*filter)(Display*, XEvent*,XP
     if (prev_event.type) queued |= call_event_handler( display, &prev_event );
     free_event_data( &prev_event );
     XFlush( gdi_display );
-    if (count) TRACE( "%s %d events\n", queued ? "processed" : "ignored", count );
+    if (count) TRACE( "processed %d events, returning %d\n", count, queued );
     return queued;
 }
 
