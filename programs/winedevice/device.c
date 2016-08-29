@@ -478,7 +478,13 @@ static NTSTATUS create_driver( const WCHAR *driver_name )
 
 static void wine_drivers_rb_destroy( struct wine_rb_entry *entry, void *context )
 {
-    unload_driver( entry, TRUE );
+    if (unload_driver( entry, TRUE ) != STATUS_SUCCESS)
+    {
+        struct wine_driver *driver = WINE_RB_ENTRY_VALUE( entry, struct wine_driver, entry );
+        ObDereferenceObject( driver->driver_obj );
+        CloseServiceHandle( (void *)driver->handle );
+        HeapFree( GetProcessHeap(), 0, driver );
+    }
 }
 
 static void WINAPI async_shutdown_drivers( PTP_CALLBACK_INSTANCE instance, void *context )
