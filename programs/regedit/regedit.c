@@ -93,6 +93,7 @@ static void PerformRegAction(REGEDIT_ACTION action, WCHAR **argv, int *i)
     case ACTION_ADD: {
             WCHAR *filename = argv[*i];
             WCHAR hyphen[] = {'-',0};
+            WCHAR *realname = NULL;
             FILE *reg_file;
 
             if (!strcmpW(filename, hyphen))
@@ -100,7 +101,6 @@ static void PerformRegAction(REGEDIT_ACTION action, WCHAR **argv, int *i)
             else
             {
                 int size;
-                WCHAR *realname = NULL;
                 WCHAR rb_mode[] = {'r','b',0};
 
                 size = SearchPathW(NULL, filename, NULL, 0, NULL, NULL);
@@ -124,12 +124,12 @@ static void PerformRegAction(REGEDIT_ACTION action, WCHAR **argv, int *i)
                     HeapFree(GetProcessHeap(), 0, realname);
                     return;
                 }
-                import_registry_file(reg_file);
-                if (realname)
-                {
-                    HeapFree(GetProcessHeap(),0,realname);
-                    fclose(reg_file);
-                }
+            }
+            import_registry_file(reg_file);
+            if (realname)
+            {
+                HeapFree(GetProcessHeap(), 0, realname);
+                fclose(reg_file);
             }
             break;
         }
