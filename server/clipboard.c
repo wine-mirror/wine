@@ -185,14 +185,18 @@ static int get_seqno( struct clipboard *clipboard )
 DECL_HANDLER(open_clipboard)
 {
     struct clipboard *clipboard = get_process_clipboard();
-    user_handle_t win;
+    user_handle_t win = req->window;
 
     if (!clipboard) return;
-    win = get_user_full_handle( req->window );
 
+    if (win && !get_user_object_handle( &win, USER_WINDOW ))
+    {
+        set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
+        return;
+    }
     if (clipboard->open_thread && clipboard->open_win != win)
     {
-        set_error( STATUS_WAS_LOCKED );
+        set_error( STATUS_INVALID_LOCK_SEQUENCE );
         return;
     }
     clipboard->open_win = win;
@@ -286,14 +290,27 @@ DECL_HANDLER(get_clipboard_info)
 DECL_HANDLER(set_clipboard_viewer)
 {
     struct clipboard *clipboard = get_process_clipboard();
+    user_handle_t viewer = req->viewer;
+    user_handle_t previous = req->previous;
 
     if (!clipboard) return;
+
+    if (viewer && !get_user_object_handle( &viewer, USER_WINDOW ))
+    {
+        set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
+        return;
+    }
+    if (previous && !get_user_object_handle( &previous, USER_WINDOW ))
+    {
+        set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
+        return;
+    }
 
     reply->old_viewer = clipboard->viewer;
     reply->owner      = clipboard->owner_win;
 
-    if (!req->previous || clipboard->viewer == get_user_full_handle( req->previous ))
-        clipboard->viewer = get_user_full_handle( req->viewer );
+    if (!previous || clipboard->viewer == previous)
+        clipboard->viewer = viewer;
     else
         set_error( STATUS_PENDING );  /* need to send message instead */
 }

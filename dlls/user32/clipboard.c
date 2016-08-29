@@ -147,7 +147,7 @@ BOOL WINAPI OpenClipboard( HWND hwnd )
     SERVER_START_REQ( open_clipboard )
     {
         req->window = wine_server_user_handle( hwnd );
-        if ((ret = !wine_server_call( req )))
+        if ((ret = !wine_server_call_err( req )))
         {
             if (!reply->owner) bCBHasChanged = FALSE;
         }

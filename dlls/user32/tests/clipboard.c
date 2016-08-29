@@ -26,6 +26,7 @@
 #include "winuser.h"
 
 static BOOL (WINAPI *pAddClipboardFormatListener)(HWND hwnd);
+static BOOL (WINAPI *pRemoveClipboardFormatListener)(HWND hwnd);
 static DWORD (WINAPI *pGetClipboardSequenceNumber)(void);
 
 static const BOOL is_win64 = sizeof(void *) > sizeof(int);
@@ -565,7 +566,7 @@ static LRESULT CALLBACK clipboard_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARA
 
 static DWORD WINAPI clipboard_thread(void *param)
 {
-    HWND win = param;
+    HWND ret, win = param;
     BOOL r;
     HANDLE handle;
     UINT count, formats, old_seq = 0, seq;
@@ -577,10 +578,36 @@ static DWORD WINAPI clipboard_thread(void *param)
     next_wnd = SetClipboardViewer(win);
     ok(GetLastError() == 0xdeadbeef, "GetLastError = %d\n", GetLastError());
     LeaveCriticalSection(&clipboard_cs);
+
+    SetLastError( 0xdeadbeef );
+    ret = SetClipboardViewer( (HWND)0xdead );
+    ok( !ret, "SetClipboardViewer succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    r = ChangeClipboardChain( win, (HWND)0xdead );
+    ok( !r, "ChangeClipboardChain succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    r = ChangeClipboardChain( (HWND)0xdead, next_wnd );
+    ok( !r, "ChangeClipboardChain succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError() );
+
     if (pAddClipboardFormatListener)
     {
         r = pAddClipboardFormatListener(win);
         ok( r, "AddClipboardFormatListener failed err %d\n", GetLastError());
+        SetLastError( 0xdeadbeef );
+        r = pAddClipboardFormatListener( win );
+        todo_wine ok( !r, "AddClipboardFormatListener succeeded\n" );
+        todo_wine ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        r = pAddClipboardFormatListener( (HWND)0xdead );
+        todo_wine ok( !r, "AddClipboardFormatListener succeeded\n" );
+        todo_wine ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError() );
+        r = pAddClipboardFormatListener( GetDesktopWindow() );
+        ok( r, "AddClipboardFormatListener failed err %d\n", GetLastError());
+        r = pRemoveClipboardFormatListener( GetDesktopWindow() );
+        ok( r, "RemoveClipboardFormatListener failed err %d\n", GetLastError());
     }
 
     if (pGetClipboardSequenceNumber)
@@ -592,6 +619,11 @@ static DWORD WINAPI clipboard_thread(void *param)
     ok( count, "WM_DRAWCLIPBOARD received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
     ok( !count, "WM_CLIPBOARDUPDATE received\n" );
+
+    SetLastError( 0xdeadbeef );
+    r = OpenClipboard( (HWND)0xdead );
+    ok( !r, "OpenClipboard succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError() );
 
     r = OpenClipboard(win);
     ok(r, "OpenClipboard failed: %d\n", GetLastError());
@@ -887,6 +919,20 @@ static DWORD WINAPI clipboard_thread(void *param)
 
     r = PostMessageA(win, WM_USER, 0, 0);
     ok(r, "PostMessage failed: %d\n", GetLastError());
+
+    if (pRemoveClipboardFormatListener)
+    {
+        r = pRemoveClipboardFormatListener(win);
+        ok( r, "RemoveClipboardFormatListener failed err %d\n", GetLastError());
+        SetLastError( 0xdeadbeef );
+        r = pRemoveClipboardFormatListener(win);
+        todo_wine ok( !r, "RemoveClipboardFormatListener succeeded\n" );
+        todo_wine ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        r = pRemoveClipboardFormatListener( (HWND)0xdead );
+        todo_wine ok( !r, "RemoveClipboardFormatListener succeeded\n" );
+        todo_wine ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError() );
+    }
     return 0;
 }
 
@@ -1238,6 +1284,7 @@ START_TEST(clipboard)
 
     argv0 = argv[0];
     pAddClipboardFormatListener = (void *)GetProcAddress( mod, "AddClipboardFormatListener" );
+    pRemoveClipboardFormatListener = (void *)GetProcAddress( mod, "RemoveClipboardFormatListener" );
     pGetClipboardSequenceNumber = (void *)GetProcAddress( mod, "GetClipboardSequenceNumber" );
 
     if (argc == 4 && !strcmp( argv[2], "set_clipboard_data" ))
