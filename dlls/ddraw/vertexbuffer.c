@@ -227,6 +227,7 @@ static HRESULT WINAPI d3d_vertex_buffer7_Lock(IDirect3DVertexBuffer7 *iface,
     struct d3d_vertex_buffer *buffer = impl_from_IDirect3DVertexBuffer7(iface);
     struct wined3d_resource_desc wined3d_desc;
     struct wined3d_resource *wined3d_resource;
+    struct wined3d_map_desc wined3d_map_desc;
     HRESULT hr;
     DWORD wined3d_flags = 0;
 
@@ -273,7 +274,9 @@ static HRESULT WINAPI d3d_vertex_buffer7_Lock(IDirect3DVertexBuffer7 *iface,
         *data_size = wined3d_desc.size;
     }
 
-    hr = wined3d_buffer_map(buffer->wined3d_buffer, 0, 0, (BYTE **)data, wined3d_flags);
+    hr = wined3d_resource_map(wined3d_buffer_get_resource(buffer->wined3d_buffer),
+            0, &wined3d_map_desc, NULL, wined3d_flags);
+    *data = wined3d_map_desc.data;
 
     wined3d_mutex_unlock();
 
