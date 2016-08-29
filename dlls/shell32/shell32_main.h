@@ -161,24 +161,6 @@ static inline BOOL SHELL_OsIsUnicode(void)
 	  SHFree(*ptr); \
 	  *ptr = NULL; \
 	};
-static inline void __SHCloneStrA(char ** target,const char * source)
-{
-	*target = SHAlloc(strlen(source)+1);
-	strcpy(*target, source);
-}
-
-static inline void __SHCloneStrWtoA(char ** target, const WCHAR * source)
-{
-	int len = WideCharToMultiByte(CP_ACP, 0, source, -1, NULL, 0, NULL, NULL);
-	*target = SHAlloc(len);
-	WideCharToMultiByte(CP_ACP, 0, source, -1, *target, len, NULL, NULL);
-}
-
-static inline void __SHCloneStrW(WCHAR ** target, const WCHAR * source)
-{
-	*target = SHAlloc( (lstrlenW(source)+1) * sizeof(WCHAR) );
-	lstrcpyW(*target, source);
-}
 
 static inline WCHAR * __SHCloneStrAtoW(WCHAR ** target, const char * source)
 {
