@@ -53,6 +53,7 @@
 @ cdecl WindowPosChanging(long long long ptr ptr ptr ptr) X11DRV_WindowPosChanging
 @ cdecl WindowPosChanged(long long long ptr ptr ptr ptr ptr) X11DRV_WindowPosChanged
 @ cdecl SystemParametersInfo(long long ptr long) X11DRV_SystemParametersInfo
+@ cdecl ThreadDetach() X11DRV_ThreadDetach
 
 # WinTab32
 @ cdecl AttachEventQueueToTablet(long) X11DRV_AttachEventQueueToTablet
