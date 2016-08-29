@@ -1515,23 +1515,41 @@ HRESULT __RPC_STUB ITypeComp_Bind_Stub(
 
 HRESULT CALLBACK ITypeComp_BindType_Proxy(
     ITypeComp* This,
-    LPOLESTR szName,
+    LPOLESTR name,
     ULONG lHashVal,
-    ITypeInfo** ppTInfo,
-    ITypeComp** ppTComp)
+    ITypeInfo **ti,
+    ITypeComp **typecomp)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %#x, %p, %p)\n", This, debugstr_w(name), lHashVal, ti, typecomp);
+
+    hr = ITypeComp_RemoteBindType_Proxy(This, name, lHashVal, ti);
+    if (hr == S_OK)
+        ITypeInfo_GetTypeComp(*ti, typecomp);
+    else if (typecomp)
+        *typecomp = NULL;
+
+    return hr;
 }
 
 HRESULT __RPC_STUB ITypeComp_BindType_Stub(
     ITypeComp* This,
-    LPOLESTR szName,
+    LPOLESTR name,
     ULONG lHashVal,
-    ITypeInfo** ppTInfo)
+    ITypeInfo **ti)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    ITypeComp *typecomp = NULL;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %#x, %p)\n", This, debugstr_w(name), lHashVal, ti);
+
+    hr = ITypeComp_BindType(This, name, lHashVal, ti, &typecomp);
+
+    if (typecomp)
+        ITypeComp_Release(typecomp);
+
+    return hr;
 }
 
 /* ITypeInfo */
