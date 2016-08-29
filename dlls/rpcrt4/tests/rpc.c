@@ -862,19 +862,12 @@ static void test_RpcServerInqDefaultPrincName(void)
 {
     RPC_STATUS ret;
     RPC_CSTR principal, saved_principal;
-    BOOLEAN (WINAPI *pGetUserNameExA)(EXTENDED_NAME_FORMAT,LPSTR,PULONG);
     char *username;
     ULONG len = 0;
 
-    pGetUserNameExA = (void *)GetProcAddress( LoadLibraryA("secur32.dll"), "GetUserNameExA" );
-    if (!pGetUserNameExA)
-    {
-        win_skip( "GetUserNameExA not exported\n" );
-        return;
-    }
-    pGetUserNameExA( NameSamCompatible, NULL, &len );
+    GetUserNameExA( NameSamCompatible, NULL, &len );
     username = HeapAlloc( GetProcessHeap(), 0, len );
-    pGetUserNameExA( NameSamCompatible, username, &len );
+    GetUserNameExA( NameSamCompatible, username, &len );
 
     ret = RpcServerInqDefaultPrincNameA( 0, NULL );
     ok( ret == RPC_S_UNKNOWN_AUTHN_SERVICE, "got %u\n", ret );
