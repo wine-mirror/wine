@@ -156,12 +156,6 @@ static inline BOOL SHELL_OsIsUnicode(void)
     return !(GetVersion() & 0x80000000);
 }
 
-#define __SHFreeAndNil(ptr) \
-	{\
-	  SHFree(*ptr); \
-	  *ptr = NULL; \
-	};
-
 static inline WCHAR * __SHCloneStrAtoW(WCHAR ** target, const char * source)
 {
 	int len = MultiByteToWideChar(CP_ACP, 0, source, -1, NULL, 0);

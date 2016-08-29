@@ -1482,9 +1482,15 @@ IFSFldr_PersistFolder3_InitializeEx (IPersistFolder3 * iface,
         pdump (ppfti->pidlTargetFolder);
 
     if (This->pidlRoot)
-        __SHFreeAndNil (&This->pidlRoot);    /* free the old */
+    {
+        SHFree(This->pidlRoot);
+        This->pidlRoot = NULL;
+    }
     if (This->sPathTarget)
-        __SHFreeAndNil (&This->sPathTarget);
+    {
+        SHFree(This->sPathTarget);
+        This->sPathTarget = NULL;
+    }
 
     /*
      * Root path and pidl
