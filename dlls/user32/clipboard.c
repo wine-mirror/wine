@@ -471,8 +471,15 @@ DWORD WINAPI GetClipboardSequenceNumber(VOID)
  */
 BOOL WINAPI AddClipboardFormatListener(HWND hwnd)
 {
-    FIXME("%p: stub\n", hwnd);
-    return TRUE;
+    BOOL ret;
+
+    SERVER_START_REQ( add_clipboard_listener )
+    {
+        req->window = wine_server_user_handle( hwnd );
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /**************************************************************************
@@ -480,6 +487,13 @@ BOOL WINAPI AddClipboardFormatListener(HWND hwnd)
  */
 BOOL WINAPI RemoveClipboardFormatListener(HWND hwnd)
 {
-    FIXME("%p: stub\n", hwnd);
-    return TRUE;
+    BOOL ret;
+
+    SERVER_START_REQ( remove_clipboard_listener )
+    {
+        req->window = wine_server_user_handle( hwnd );
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
 }

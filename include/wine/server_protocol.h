@@ -4559,6 +4559,30 @@ struct set_clipboard_viewer_reply
 
 
 
+struct add_clipboard_listener_request
+{
+    struct request_header __header;
+    user_handle_t  window;
+};
+struct add_clipboard_listener_reply
+{
+    struct reply_header __header;
+};
+
+
+
+struct remove_clipboard_listener_request
+{
+    struct request_header __header;
+    user_handle_t  window;
+};
+struct remove_clipboard_listener_reply
+{
+    struct reply_header __header;
+};
+
+
+
 struct open_token_request
 {
     struct request_header __header;
@@ -5693,6 +5717,8 @@ enum request
     REQ_empty_clipboard,
     REQ_get_clipboard_info,
     REQ_set_clipboard_viewer,
+    REQ_add_clipboard_listener,
+    REQ_remove_clipboard_listener,
     REQ_open_token,
     REQ_set_global_windows,
     REQ_adjust_token_privileges,
@@ -5977,6 +6003,8 @@ union generic_request
     struct empty_clipboard_request empty_clipboard_request;
     struct get_clipboard_info_request get_clipboard_info_request;
     struct set_clipboard_viewer_request set_clipboard_viewer_request;
+    struct add_clipboard_listener_request add_clipboard_listener_request;
+    struct remove_clipboard_listener_request remove_clipboard_listener_request;
     struct open_token_request open_token_request;
     struct set_global_windows_request set_global_windows_request;
     struct adjust_token_privileges_request adjust_token_privileges_request;
@@ -6259,6 +6287,8 @@ union generic_reply
     struct empty_clipboard_reply empty_clipboard_reply;
     struct get_clipboard_info_reply get_clipboard_info_reply;
     struct set_clipboard_viewer_reply set_clipboard_viewer_reply;
+    struct add_clipboard_listener_reply add_clipboard_listener_reply;
+    struct remove_clipboard_listener_reply remove_clipboard_listener_reply;
     struct open_token_reply open_token_reply;
     struct set_global_windows_reply set_global_windows_reply;
     struct adjust_token_privileges_reply adjust_token_privileges_reply;
@@ -6318,6 +6348,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 513
+#define SERVER_PROTOCOL_VERSION 514
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -3220,6 +3220,18 @@ enum caret_state
 @END
 
 
+/* Add a clipboard listener window */
+@REQ(add_clipboard_listener)
+    user_handle_t  window;         /* clipboard listener window */
+@END
+
+
+/* Remove a clipboard listener window */
+@REQ(remove_clipboard_listener)
+    user_handle_t  window;         /* clipboard listener window */
+@END
+
+
 /* Open a security token */
 @REQ(open_token)
     obj_handle_t   handle;    /* handle to the thread or process */

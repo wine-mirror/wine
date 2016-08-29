@@ -3307,6 +3307,7 @@ WINUSERAPI BOOL        WINAPI UpdateLayeredWindowIndirect(HWND,UPDATELAYEREDWIND
 #endif /* defined(_WINGDI_) && !defined(NOGDI) */
 
 WINUSERAPI HKL         WINAPI ActivateKeyboardLayout(HKL,UINT);
+WINUSERAPI BOOL        WINAPI AddClipboardFormatListener(HWND);
 WINUSERAPI BOOL        WINAPI AdjustWindowRect(LPRECT,DWORD,BOOL);
 WINUSERAPI BOOL        WINAPI AdjustWindowRectEx(LPRECT,DWORD,BOOL,DWORD);
 WINUSERAPI BOOL        WINAPI AllowSetForegroundWindow(DWORD);
@@ -3901,6 +3902,7 @@ WINUSERAPI UINT        WINAPI RegisterWindowMessageW(LPCWSTR);
 #define                       RegisterWindowMessage WINELIB_NAME_AW(RegisterWindowMessage)
 WINUSERAPI BOOL        WINAPI ReleaseCapture(void);
 WINUSERAPI INT         WINAPI ReleaseDC(HWND,HDC);
+WINUSERAPI BOOL        WINAPI RemoveClipboardFormatListener(HWND);
 WINUSERAPI BOOL        WINAPI RemoveMenu(HMENU,UINT,UINT);
 WINUSERAPI HANDLE      WINAPI RemovePropA(HWND,LPCSTR);
 WINUSERAPI HANDLE      WINAPI RemovePropW(HWND,LPCWSTR);

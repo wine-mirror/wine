@@ -598,12 +598,12 @@ static DWORD WINAPI clipboard_thread(void *param)
         ok( r, "AddClipboardFormatListener failed err %d\n", GetLastError());
         SetLastError( 0xdeadbeef );
         r = pAddClipboardFormatListener( win );
-        todo_wine ok( !r, "AddClipboardFormatListener succeeded\n" );
-        todo_wine ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        ok( !r, "AddClipboardFormatListener succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
         SetLastError( 0xdeadbeef );
         r = pAddClipboardFormatListener( (HWND)0xdead );
-        todo_wine ok( !r, "AddClipboardFormatListener succeeded\n" );
-        todo_wine ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError() );
+        ok( !r, "AddClipboardFormatListener succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError() );
         r = pAddClipboardFormatListener( GetDesktopWindow() );
         ok( r, "AddClipboardFormatListener failed err %d\n", GetLastError());
         r = pRemoveClipboardFormatListener( GetDesktopWindow() );
@@ -926,12 +926,12 @@ static DWORD WINAPI clipboard_thread(void *param)
         ok( r, "RemoveClipboardFormatListener failed err %d\n", GetLastError());
         SetLastError( 0xdeadbeef );
         r = pRemoveClipboardFormatListener(win);
-        todo_wine ok( !r, "RemoveClipboardFormatListener succeeded\n" );
-        todo_wine ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        ok( !r, "RemoveClipboardFormatListener succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
         SetLastError( 0xdeadbeef );
         r = pRemoveClipboardFormatListener( (HWND)0xdead );
-        todo_wine ok( !r, "RemoveClipboardFormatListener succeeded\n" );
-        todo_wine ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError() );
+        ok( !r, "RemoveClipboardFormatListener succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError() );
     }
     return 0;
 }

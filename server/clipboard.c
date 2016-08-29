@@ -46,9 +46,13 @@ struct clipboard
     user_handle_t  viewer;           /* first window in clipboard viewer list */
     unsigned int   seqno;            /* clipboard change sequence number */
     timeout_t      seqno_timestamp;  /* time stamp of last seqno increment */
+    unsigned int   listen_size;      /* size of listeners array */
+    unsigned int   listen_count;     /* count of listeners */
+    user_handle_t *listeners;        /* array of listener windows */
 };
 
 static void clipboard_dump( struct object *obj, int verbose );
+static void clipboard_destroy( struct object *obj );
 
 static const struct object_ops clipboard_ops =
 {
@@ -69,7 +73,7 @@ static const struct object_ops clipboard_ops =
     NULL,                         /* unlink_name */
     no_open_file,                 /* open_file */
     no_close_handle,              /* close_handle */
-    no_destroy                    /* destroy */
+    clipboard_destroy             /* destroy */
 };
 
 
@@ -83,6 +87,13 @@ static void clipboard_dump( struct object *obj, int verbose )
     fprintf( stderr, "Clipboard open_thread=%p open_win=%08x owner_thread=%p owner_win=%08x viewer=%08x seq=%u\n",
              clipboard->open_thread, clipboard->open_win, clipboard->owner_thread,
              clipboard->owner_win, clipboard->viewer, clipboard->seqno );
+}
+
+static void clipboard_destroy( struct object *obj )
+{
+    struct clipboard *clipboard = (struct clipboard *)obj;
+
+    free( clipboard->listeners );
 }
 
 /* retrieve the clipboard info for the current process, allocating it if needed */
@@ -104,11 +115,56 @@ static struct clipboard *get_process_clipboard(void)
             clipboard->viewer = 0;
             clipboard->seqno = 0;
             clipboard->seqno_timestamp = 0;
+            clipboard->listen_size = 0;
+            clipboard->listen_count = 0;
+            clipboard->listeners = NULL;
             winstation->clipboard = clipboard;
         }
     }
     release_object( winstation );
     return clipboard;
+}
+
+/* add a clipboard listener */
+static void add_listener( struct clipboard *clipboard, user_handle_t window )
+{
+    unsigned int i;
+
+    for (i = 0; i < clipboard->listen_count; i++)
+    {
+        if (clipboard->listeners[i] != window) continue;
+        set_error( STATUS_INVALID_PARAMETER );  /* already set */
+        return;
+    }
+    if (clipboard->listen_size == clipboard->listen_count)
+    {
+        unsigned int new_size = max( 8, clipboard->listen_size * 2 );
+        user_handle_t *new = realloc( clipboard->listeners, new_size * sizeof(*new) );
+        if (!new)
+        {
+            set_error( STATUS_NO_MEMORY );
+            return;
+        }
+        clipboard->listeners = new;
+        clipboard->listen_size = new_size;
+    }
+    clipboard->listeners[clipboard->listen_count++] = window;
+}
+
+/* remove a clipboard listener */
+static int remove_listener( struct clipboard *clipboard, user_handle_t window )
+{
+    unsigned int i;
+
+    for (i = 0; i < clipboard->listen_count; i++)
+    {
+        if (clipboard->listeners[i] != window) continue;
+        memmove( clipboard->listeners + i, clipboard->listeners + i + 1,
+                 (clipboard->listen_count - i - 1) * sizeof(*clipboard->listeners) );
+        clipboard->listen_count--;
+        return 1;
+    }
+    return 0;
 }
 
 /* cleanup clipboard information upon window destruction */
@@ -129,6 +185,7 @@ void cleanup_clipboard_window( struct desktop *desktop, user_handle_t window )
         clipboard->owner_thread = NULL;
     }
     if (clipboard->viewer == window) clipboard->viewer = 0;
+    remove_listener( clipboard, window );
 }
 
 /* Called when thread terminates to allow release of clipboard */
@@ -313,4 +370,40 @@ DECL_HANDLER(set_clipboard_viewer)
         clipboard->viewer = viewer;
     else
         set_error( STATUS_PENDING );  /* need to send message instead */
+}
+
+
+/* add a clipboard listener window */
+DECL_HANDLER(add_clipboard_listener)
+{
+    struct clipboard *clipboard = get_process_clipboard();
+    user_handle_t win = req->window;
+
+    if (!clipboard) return;
+
+    if (!get_user_object_handle( &win, USER_WINDOW ))
+    {
+        set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
+        return;
+    }
+
+    add_listener( clipboard, win );
+}
+
+
+/* remove a clipboard listener window */
+DECL_HANDLER(remove_clipboard_listener)
+{
+    struct clipboard *clipboard = get_process_clipboard();
+    user_handle_t win = req->window;
+
+    if (!clipboard) return;
+
+    if (!get_user_object_handle( &win, USER_WINDOW ))
+    {
+        set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
+        return;
+    }
+
+    if (!remove_listener( clipboard, win )) set_error( STATUS_INVALID_PARAMETER );
 }
