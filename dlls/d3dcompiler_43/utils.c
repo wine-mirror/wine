@@ -1734,12 +1734,7 @@ void push_scope(struct hlsl_parse_ctx *ctx)
     }
     TRACE("Pushing a new scope\n");
     list_init(&new_scope->vars);
-    if (wine_rb_init(&new_scope->types, &hlsl_type_rb_funcs) == -1)
-    {
-        ERR("Failed to initialize types rbtree.\n");
-        d3dcompiler_free(new_scope);
-        return;
-    }
+    wine_rb_init(&new_scope->types, &hlsl_type_rb_funcs);
     new_scope->upper = ctx->cur_scope;
     ctx->cur_scope = new_scope;
     list_add_tail(&ctx->scopes, &new_scope->entry);
@@ -1875,8 +1870,7 @@ static const struct wine_rb_functions function_rb_funcs =
 
 void init_functions_tree(struct wine_rb_tree *funcs)
 {
-    if (wine_rb_init(&hlsl_ctx.functions, &function_rb_funcs) == -1)
-        ERR("Failed to initialize functions rbtree.\n");
+    wine_rb_init(&hlsl_ctx.functions, &function_rb_funcs);
 }
 
 static const char *debug_base_type(const struct hlsl_type *type)
@@ -2513,11 +2507,7 @@ void add_function_decl(struct wine_rb_tree *funcs, char *name, struct hlsl_ir_fu
             TRACE("Function %s redeclared as a user defined function.\n", debugstr_a(name));
             func->intrinsic = intrinsic;
             wine_rb_destroy(&func->overloads, free_function_decl_rb, NULL);
-            if (wine_rb_init(&func->overloads, &hlsl_ir_function_decl_rb_funcs) == -1)
-            {
-                ERR("Failed to initialize function rbtree.\n");
-                return;
-            }
+            wine_rb_init(&func->overloads, &hlsl_ir_function_decl_rb_funcs);
         }
         decl->func = func;
         if ((old_entry = wine_rb_get(&func->overloads, decl->parameters)))
@@ -2540,13 +2530,7 @@ void add_function_decl(struct wine_rb_tree *funcs, char *name, struct hlsl_ir_fu
     }
     func = d3dcompiler_alloc(sizeof(*func));
     func->name = name;
-    if (wine_rb_init(&func->overloads, &hlsl_ir_function_decl_rb_funcs) == -1)
-    {
-        ERR("Failed to initialize function rbtree.\n");
-        d3dcompiler_free(name);
-        d3dcompiler_free(func);
-        return;
-    }
+    wine_rb_init(&func->overloads, &hlsl_ir_function_decl_rb_funcs);
     decl->func = func;
     wine_rb_put(&func->overloads, decl->parameters, &decl->entry);
     func->intrinsic = intrinsic;

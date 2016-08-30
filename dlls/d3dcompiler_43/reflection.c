@@ -1686,11 +1686,7 @@ static HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_refl
     reflection->ID3D11ShaderReflection_iface.lpVtbl = &d3dcompiler_shader_reflection_vtbl;
     reflection->refcount = 1;
 
-    if (wine_rb_init(&reflection->types, &d3dcompiler_shader_reflection_type_rb_functions) == -1)
-    {
-        ERR("Failed to initialize type rbtree.\n");
-        return E_FAIL;
-    }
+    wine_rb_init(&reflection->types, &d3dcompiler_shader_reflection_type_rb_functions);
 
     hr = dxbc_parse(data, data_size, &src_dxbc);
     if (FAILED(hr))
