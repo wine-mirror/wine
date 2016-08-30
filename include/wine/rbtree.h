@@ -44,7 +44,7 @@ struct wine_rb_functions
 
 struct wine_rb_tree
 {
-    const struct wine_rb_functions *functions;
+    int (*compare)(const void *key, const struct wine_rb_entry *entry);
     struct wine_rb_entry *root;
 };
 
@@ -131,7 +131,7 @@ static inline void wine_rb_postorder(struct wine_rb_tree *tree, wine_rb_traverse
 
 static inline int wine_rb_init(struct wine_rb_tree *tree, const struct wine_rb_functions *functions)
 {
-    tree->functions = functions;
+    tree->compare = functions->compare;
     tree->root = NULL;
 
     return 0;
@@ -159,7 +159,7 @@ static inline struct wine_rb_entry *wine_rb_get(const struct wine_rb_tree *tree,
     struct wine_rb_entry *entry = tree->root;
     while (entry)
     {
-        int c = tree->functions->compare(key, entry);
+        int c = tree->compare(key, entry);
         if (!c) return entry;
         entry = c < 0 ? entry->left : entry->right;
     }
@@ -175,7 +175,7 @@ static inline int wine_rb_put(struct wine_rb_tree *tree, const void *key, struct
         int c;
 
         parent = *iter;
-        c = tree->functions->compare(key, parent);
+        c = tree->compare(key, parent);
         if (!c) return -1;
         else if (c < 0) iter = &parent->left;
         else iter = &parent->right;
