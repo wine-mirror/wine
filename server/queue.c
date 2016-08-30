@@ -2685,10 +2685,9 @@ DECL_HANDLER(register_hotkey)
 
     if (win_handle)
     {
-        if (!get_user_object_handle( &win_handle, USER_WINDOW ))
+        if (!(win_handle = get_valid_window_handle( win_handle )))
         {
             release_object( desktop );
-            set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
             return;
         }
 
@@ -2754,10 +2753,9 @@ DECL_HANDLER(unregister_hotkey)
 
     if (win_handle)
     {
-        if (!get_user_object_handle( &win_handle, USER_WINDOW ))
+        if (!(win_handle = get_valid_window_handle( win_handle )))
         {
             release_object( desktop );
-            set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
             return;
         }
 

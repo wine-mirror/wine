@@ -207,4 +207,12 @@ static inline int intersect_rect( rectangle_t *dst, const rectangle_t *src1, con
     return (dst->left < dst->right && dst->top < dst->bottom);
 }
 
+/* validate a window handle and return the full handle */
+static inline user_handle_t get_valid_window_handle( user_handle_t win )
+{
+    if (get_user_object_handle( &win, USER_WINDOW )) return win;
+    set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
+    return 0;
+}
+
 #endif  /* __WINE_SERVER_USER_H */

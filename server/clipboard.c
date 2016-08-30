@@ -258,15 +258,11 @@ static int get_seqno( struct clipboard *clipboard )
 DECL_HANDLER(open_clipboard)
 {
     struct clipboard *clipboard = get_process_clipboard();
-    user_handle_t win = req->window;
+    user_handle_t win = 0;
 
     if (!clipboard) return;
+    if (req->window && !(win = get_valid_window_handle( req->window ))) return;
 
-    if (win && !get_user_object_handle( &win, USER_WINDOW ))
-    {
-        set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
-        return;
-    }
     if (clipboard->open_thread && clipboard->open_win != win)
     {
         set_error( STATUS_INVALID_LOCK_SEQUENCE );
@@ -363,21 +359,11 @@ DECL_HANDLER(get_clipboard_info)
 DECL_HANDLER(set_clipboard_viewer)
 {
     struct clipboard *clipboard = get_process_clipboard();
-    user_handle_t viewer = req->viewer;
-    user_handle_t previous = req->previous;
+    user_handle_t viewer = 0, previous = 0;
 
     if (!clipboard) return;
-
-    if (viewer && !get_user_object_handle( &viewer, USER_WINDOW ))
-    {
-        set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
-        return;
-    }
-    if (previous && !get_user_object_handle( &previous, USER_WINDOW ))
-    {
-        set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
-        return;
-    }
+    if (req->viewer && !(viewer = get_valid_window_handle( req->viewer ))) return;
+    if (req->previous && !(previous = get_valid_window_handle( req->previous ))) return;
 
     reply->old_viewer = clipboard->viewer;
     reply->owner      = clipboard->owner_win;
@@ -393,15 +379,10 @@ DECL_HANDLER(set_clipboard_viewer)
 DECL_HANDLER(add_clipboard_listener)
 {
     struct clipboard *clipboard = get_process_clipboard();
-    user_handle_t win = req->window;
+    user_handle_t win;
 
     if (!clipboard) return;
-
-    if (!get_user_object_handle( &win, USER_WINDOW ))
-    {
-        set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
-        return;
-    }
+    if (!(win = get_valid_window_handle( req->window ))) return;
 
     add_listener( clipboard, win );
 }
@@ -411,15 +392,10 @@ DECL_HANDLER(add_clipboard_listener)
 DECL_HANDLER(remove_clipboard_listener)
 {
     struct clipboard *clipboard = get_process_clipboard();
-    user_handle_t win = req->window;
+    user_handle_t win;
 
     if (!clipboard) return;
-
-    if (!get_user_object_handle( &win, USER_WINDOW ))
-    {
-        set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
-        return;
-    }
+    if (!(win = get_valid_window_handle( req->window ))) return;
 
     if (!remove_listener( clipboard, win )) set_error( STATUS_INVALID_PARAMETER );
 }
