@@ -184,7 +184,7 @@ void write_reply( struct thread *thread )
     }
     if (errno == EPIPE)
         kill_thread( thread, 0 );  /* normal death */
-    else if (errno != EWOULDBLOCK && errno != EAGAIN)
+    else if (errno != EWOULDBLOCK && (EWOULDBLOCK == EAGAIN || errno != EAGAIN))
         fatal_protocol_error( thread, "reply write: %s\n", strerror( errno ));
 }
 
@@ -311,7 +311,7 @@ error:
         kill_thread( thread, 0 );
     else if (ret > 0)
         fatal_protocol_error( thread, "partial read %d\n", ret );
-    else if (errno != EWOULDBLOCK && errno != EAGAIN)
+    else if (errno != EWOULDBLOCK && (EWOULDBLOCK == EAGAIN || errno != EAGAIN))
         fatal_protocol_error( thread, "read: %s\n", strerror( errno ));
 }
 
@@ -392,7 +392,7 @@ int receive_fd( struct process *process )
     }
     else
     {
-        if (errno != EWOULDBLOCK && errno != EAGAIN)
+        if (errno != EWOULDBLOCK && (EWOULDBLOCK == EAGAIN || errno != EAGAIN))
         {
             fprintf( stderr, "Protocol error: process %04x: ", process->id );
             perror( "recvmsg" );

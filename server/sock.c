@@ -1071,8 +1071,8 @@ static void ifchange_poll_event( struct fd *fd, int event )
     r = recv( get_unix_fd(fd), buffer, sizeof(buffer), MSG_DONTWAIT );
     if (r < 0)
     {
-        if (errno == EWOULDBLOCK || errno == EAGAIN)
-            return; /* retry when poll() says the socket is ready */
+        if (errno == EWOULDBLOCK || (EWOULDBLOCK != EAGAIN && errno == EAGAIN))
+            return;  /* retry when poll() says the socket is ready */
         status = sock_get_ntstatus( errno );
     }
     else if (r > 0)
