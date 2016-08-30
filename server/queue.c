@@ -2112,6 +2112,33 @@ void post_message( user_handle_t win, unsigned int message, lparam_t wparam, lpa
     release_object( thread );
 }
 
+/* send a notify message to a window */
+void send_notify_message( user_handle_t win, unsigned int message, lparam_t wparam, lparam_t lparam )
+{
+    struct message *msg;
+    struct thread *thread = get_window_thread( win );
+
+    if (!thread) return;
+
+    if (thread->queue && (msg = mem_alloc( sizeof(*msg) )))
+    {
+        msg->type      = MSG_NOTIFY;
+        msg->win       = get_user_full_handle( win );
+        msg->msg       = message;
+        msg->wparam    = wparam;
+        msg->lparam    = lparam;
+        msg->result    = NULL;
+        msg->data      = NULL;
+        msg->data_size = 0;
+
+        get_message_defaults( thread->queue, &msg->x, &msg->y, &msg->time );
+
+        list_add_tail( &thread->queue->msg_list[SEND_MESSAGE], &msg->entry );
+        set_queue_bits( thread->queue, QS_SENDMESSAGE );
+    }
+    release_object( thread );
+}
+
 /* post a win event */
 void post_win_event( struct thread *thread, unsigned int event,
                      user_handle_t win, unsigned int object_id,

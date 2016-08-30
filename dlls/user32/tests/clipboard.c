@@ -513,33 +513,45 @@ static void test_synthesized(void)
 
 static CRITICAL_SECTION clipboard_cs;
 static HWND next_wnd;
+static UINT wm_drawclipboard;
+static UINT wm_clipboardupdate;
+static UINT wm_destroyclipboard;
+static UINT nb_formats;
+static BOOL cross_thread;
+
 static LRESULT CALLBACK clipboard_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
-    static UINT wm_drawclipboard;
-    static UINT wm_clipboardupdate;
-    static UINT wm_destroyclipboard;
-    static UINT nb_formats;
     LRESULT ret;
+    DWORD msg_flags = InSendMessageEx( NULL );
 
     switch(msg) {
     case WM_DRAWCLIPBOARD:
+        ok( msg_flags == (cross_thread ? ISMEX_NOTIFY : ISMEX_NOSEND),
+            "WM_DRAWCLIPBOARD wrong flags %x\n", msg_flags );
         EnterCriticalSection(&clipboard_cs);
         wm_drawclipboard++;
         LeaveCriticalSection(&clipboard_cs);
         break;
     case WM_CHANGECBCHAIN:
+        ok( msg_flags == (cross_thread ? ISMEX_SEND : ISMEX_NOSEND),
+            "WM_CHANGECBCHAIN wrong flags %x\n", msg_flags );
         if (next_wnd == (HWND)wp)
             next_wnd = (HWND)lp;
         else if (next_wnd)
             SendMessageA(next_wnd, msg, wp, lp);
         break;
     case WM_DESTROYCLIPBOARD:
+        ok( msg_flags == (cross_thread ? ISMEX_SEND : ISMEX_NOSEND),
+            "WM_DESTROYCLIPBOARD wrong flags %x\n", msg_flags );
         wm_destroyclipboard++;
         ok( GetClipboardOwner() == hwnd, "WM_DESTROYCLIPBOARD owner %p\n", GetClipboardOwner() );
         nb_formats = CountClipboardFormats();
         break;
     case WM_CLIPBOARDUPDATE:
+        ok( msg_flags == ISMEX_NOSEND, "WM_CLIPBOARDUPDATE wrong flags %x\n", msg_flags );
+        EnterCriticalSection(&clipboard_cs);
         wm_clipboardupdate++;
+        LeaveCriticalSection(&clipboard_cs);
         break;
     case WM_USER:
         ChangeClipboardChain(hwnd, next_wnd);
@@ -568,8 +580,12 @@ static DWORD WINAPI clipboard_thread(void *param)
 {
     HWND ret, win = param;
     BOOL r;
+    MSG msg;
     HANDLE handle;
     UINT count, formats, old_seq = 0, seq;
+
+    cross_thread = (GetWindowThreadProcessId( win, NULL ) != GetCurrentThreadId());
+    trace( "%s-threaded test\n", cross_thread ? "multi" : "single" );
 
     if (pGetClipboardSequenceNumber) old_seq = pGetClipboardSequenceNumber();
 
@@ -615,8 +631,14 @@ static DWORD WINAPI clipboard_thread(void *param)
         seq = pGetClipboardSequenceNumber();
         ok( seq == old_seq, "sequence changed\n" );
     }
+    if (!cross_thread)
+    {
+        ok( wm_drawclipboard == 1, "WM_DRAWCLIPBOARD not received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+    }
     count = SendMessageA( win, WM_USER + 1, 0, 0 );
-    ok( count, "WM_DRAWCLIPBOARD received\n" );
+    ok( count == 1, "WM_DRAWCLIPBOARD not received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
     ok( !count, "WM_CLIPBOARDUPDATE received\n" );
 
@@ -633,6 +655,12 @@ static DWORD WINAPI clipboard_thread(void *param)
         seq = pGetClipboardSequenceNumber();
         ok( seq == old_seq, "sequence changed\n" );
     }
+    if (!cross_thread)
+    {
+        ok( !wm_drawclipboard, "WM_DRAWCLIPBOARD received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+    }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
     ok( !count, "WM_DRAWCLIPBOARD received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
@@ -646,6 +674,12 @@ static DWORD WINAPI clipboard_thread(void *param)
         seq = pGetClipboardSequenceNumber();
         ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
         old_seq = seq;
+    }
+    if (!cross_thread)
+    {
+        ok( !wm_drawclipboard, "WM_DRAWCLIPBOARD received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
     }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
     ok( !count, "WM_DRAWCLIPBOARD received\n" );
@@ -662,6 +696,12 @@ static DWORD WINAPI clipboard_thread(void *param)
         seq = pGetClipboardSequenceNumber();
         ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
         old_seq = seq;
+    }
+    if (!cross_thread)
+    {
+        ok( !wm_drawclipboard, "WM_DRAWCLIPBOARD received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
     }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
     ok( !count, "WM_DRAWCLIPBOARD received\n" );
@@ -681,6 +721,12 @@ static DWORD WINAPI clipboard_thread(void *param)
         todo_wine ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
         old_seq = seq;
     }
+    if (!cross_thread)
+    {
+        ok( !wm_drawclipboard, "WM_DRAWCLIPBOARD received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+    }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
     ok( !count, "WM_DRAWCLIPBOARD received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
@@ -694,6 +740,12 @@ static DWORD WINAPI clipboard_thread(void *param)
         todo_wine ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
         old_seq = seq;
     }
+    if (!cross_thread)
+    {
+        ok( !wm_drawclipboard, "WM_DRAWCLIPBOARD received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+    }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
     ok( !count, "WM_DRAWCLIPBOARD received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
@@ -706,6 +758,12 @@ static DWORD WINAPI clipboard_thread(void *param)
         seq = pGetClipboardSequenceNumber();
         todo_wine ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
         old_seq = seq;
+    }
+    if (!cross_thread)
+    {
+        ok( !wm_drawclipboard, "WM_DRAWCLIPBOARD received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
     }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
     ok( !count, "WM_DRAWCLIPBOARD received\n" );
@@ -723,10 +781,16 @@ static DWORD WINAPI clipboard_thread(void *param)
         ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
         old_seq = seq;
     }
+    if (!cross_thread)
+    {
+        ok( wm_drawclipboard == 1, "WM_DRAWCLIPBOARD not received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+    }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
-    ok( count, "WM_DRAWCLIPBOARD not received\n" );
+    ok( count == 1, "WM_DRAWCLIPBOARD not received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
-    todo_wine ok( count || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
+    ok( count == 1 || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
 
     r = OpenClipboard(win);
     ok(r, "OpenClipboard failed: %d\n", GetLastError());
@@ -735,6 +799,11 @@ static DWORD WINAPI clipboard_thread(void *param)
     {
         seq = pGetClipboardSequenceNumber();
         ok( seq == old_seq, "sequence changed\n" );
+    }
+    if (!cross_thread)
+    {
+        ok( !wm_drawclipboard, "WM_DRAWCLIPBOARD received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
     }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
     ok( !count, "WM_DRAWCLIPBOARD received\n" );
@@ -747,6 +816,12 @@ static DWORD WINAPI clipboard_thread(void *param)
         seq = pGetClipboardSequenceNumber();
         todo_wine ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
         old_seq = seq;
+    }
+    if (!cross_thread)
+    {
+        ok( !wm_drawclipboard, "WM_DRAWCLIPBOARD received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
     }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
     ok( !count, "WM_DRAWCLIPBOARD received\n" );
@@ -762,10 +837,16 @@ static DWORD WINAPI clipboard_thread(void *param)
         todo_wine ok( seq == old_seq, "sequence changed\n" );
         old_seq = seq;
     }
+    if (!cross_thread)
+    {
+        ok( wm_drawclipboard == 1, "WM_DRAWCLIPBOARD not received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+    }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
-    ok( count, "WM_DRAWCLIPBOARD not received\n" );
+    ok( count == 1, "WM_DRAWCLIPBOARD not received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
-    todo_wine ok( count || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
+    ok( count == 1 || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
 
     r = OpenClipboard(win);
     ok(r, "OpenClipboard failed: %d\n", GetLastError());
@@ -776,6 +857,12 @@ static DWORD WINAPI clipboard_thread(void *param)
     {
         seq = pGetClipboardSequenceNumber();
         ok( seq == old_seq, "sequence changed\n" );
+    }
+    if (!cross_thread)
+    {
+        ok( !wm_drawclipboard, "WM_DRAWCLIPBOARD received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
     }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
     ok( !count, "WM_DRAWCLIPBOARD received\n" );
@@ -792,12 +879,18 @@ static DWORD WINAPI clipboard_thread(void *param)
     r = CloseClipboard();
     ok(r, "CloseClipboard failed: %d\n", GetLastError());
 
+    if (!cross_thread)
+    {
+        ok( wm_drawclipboard == 1, "WM_DRAWCLIPBOARD not received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+    }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
-    ok( count, "WM_DRAWCLIPBOARD not received\n" );
+    ok( count == 1, "WM_DRAWCLIPBOARD not received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
-    todo_wine ok( count || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
+    ok( count == 1 || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
     count = SendMessageA( win, WM_USER+3, 0, 0 );
-    ok( count, "WM_DESTROYCLIPBOARD not received\n" );
+    ok( count == 1, "WM_DESTROYCLIPBOARD not received\n" );
     count = SendMessageA( win, WM_USER+4, 0, 0 );
     ok( count == formats, "wrong format count %u on WM_DESTROYCLIPBOARD\n", count );
 
@@ -810,6 +903,14 @@ static DWORD WINAPI clipboard_thread(void *param)
         ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
         old_seq = seq;
     }
+    if (!cross_thread)
+    {
+        ok( !wm_drawclipboard, "WM_DRAWCLIPBOARD received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+    }
+    count = SendMessageA( win, WM_USER+1, 0, 0 );
+    ok( !count, "WM_DRAWCLIPBOARD received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
     ok( !count, "WM_CLIPBOARDUPDATE received\n" );
     count = SendMessageA( win, WM_USER+3, 0, 0 );
@@ -826,10 +927,16 @@ static DWORD WINAPI clipboard_thread(void *param)
         todo_wine ok( seq == old_seq, "sequence changed\n" );
         old_seq = seq;
     }
+    if (!cross_thread)
+    {
+        ok( wm_drawclipboard == 1, "WM_DRAWCLIPBOARD not received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+    }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
-    ok( count, "WM_DRAWCLIPBOARD not received\n" );
+    ok( count == 1, "WM_DRAWCLIPBOARD not received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
-    todo_wine ok( count || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
+    ok( count == 1 || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
 
     run_process( "grab_clipboard 0" );
 
@@ -839,10 +946,19 @@ static DWORD WINAPI clipboard_thread(void *param)
         ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
         old_seq = seq;
     }
+    if (!cross_thread)
+    {
+        ok( !wm_drawclipboard, "WM_DRAWCLIPBOARD received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        /* in this case we get a cross-thread WM_DRAWCLIPBOARD */
+        cross_thread = TRUE;
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+        cross_thread = FALSE;
+    }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
-    todo_wine ok( count, "WM_DRAWCLIPBOARD not received\n" );
+    ok( count == 1, "WM_DRAWCLIPBOARD not received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
-    todo_wine ok( count || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
+    ok( count == 1 || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
 
     r = OpenClipboard(0);
     ok(r, "OpenClipboard failed: %d\n", GetLastError());
@@ -852,6 +968,12 @@ static DWORD WINAPI clipboard_thread(void *param)
         seq = pGetClipboardSequenceNumber();
         todo_wine ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
         old_seq = seq;
+    }
+    if (!cross_thread)
+    {
+        ok( !wm_drawclipboard, "WM_DRAWCLIPBOARD received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
     }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
     ok( !count, "WM_DRAWCLIPBOARD received\n" );
@@ -869,10 +991,16 @@ static DWORD WINAPI clipboard_thread(void *param)
         todo_wine ok( seq == old_seq, "sequence changed\n" );
         old_seq = seq;
     }
+    if (!cross_thread)
+    {
+        ok( wm_drawclipboard == 1, "WM_DRAWCLIPBOARD received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+    }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
-    ok( count, "WM_DRAWCLIPBOARD not received\n" );
+    ok( count == 1, "WM_DRAWCLIPBOARD not received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
-    todo_wine ok( count || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
+    ok( count == 1 || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
 
     run_process( "grab_clipboard 1" );
 
@@ -882,10 +1010,19 @@ static DWORD WINAPI clipboard_thread(void *param)
         ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
         old_seq = seq;
     }
+    if (!cross_thread)
+    {
+        ok( !wm_drawclipboard, "WM_DRAWCLIPBOARD received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        /* in this case we get a cross-thread WM_DRAWCLIPBOARD */
+        cross_thread = TRUE;
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+        cross_thread = FALSE;
+    }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
-    todo_wine ok( count, "WM_DRAWCLIPBOARD not received\n" );
+    ok( count == 1, "WM_DRAWCLIPBOARD not received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
-    todo_wine ok( count || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
+    ok( count == 1 || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
 
     r = OpenClipboard(0);
     ok(r, "OpenClipboard failed: %d\n", GetLastError());
@@ -895,6 +1032,12 @@ static DWORD WINAPI clipboard_thread(void *param)
         seq = pGetClipboardSequenceNumber();
         todo_wine ok( (int)(seq - old_seq) > 0, "sequence unchanged\n" );
         old_seq = seq;
+    }
+    if (!cross_thread)
+    {
+        ok( !wm_drawclipboard, "WM_DRAWCLIPBOARD received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
     }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
     ok( !count, "WM_DRAWCLIPBOARD received\n" );
@@ -912,10 +1055,16 @@ static DWORD WINAPI clipboard_thread(void *param)
         todo_wine ok( seq == old_seq, "sequence changed\n" );
         old_seq = seq;
     }
+    if (!cross_thread)
+    {
+        ok( wm_drawclipboard == 1, "WM_DRAWCLIPBOARD not received\n" );
+        ok( !wm_clipboardupdate, "WM_CLIPBOARDUPDATE received\n" );
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+    }
     count = SendMessageA( win, WM_USER+1, 0, 0 );
-    ok( count, "WM_DRAWCLIPBOARD not received\n" );
+    ok( count == 1, "WM_DRAWCLIPBOARD not received\n" );
     count = SendMessageA( win, WM_USER+2, 0, 0 );
-    todo_wine ok( count || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
+    ok( count == 1 || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
 
     r = PostMessageA(win, WM_USER, 0, 0);
     ok(r, "PostMessage failed: %d\n", GetLastError());
@@ -958,13 +1107,25 @@ static void test_messages(void)
     thread = CreateThread(NULL, 0, clipboard_thread, (void*)win, 0, &tid);
     ok(thread != NULL, "CreateThread failed: %d\n", GetLastError());
 
-    while(GetMessageA(&msg, NULL, 0, 0)) {
+    while(GetMessageA(&msg, NULL, 0, 0))
+    {
+        ok( msg.message != WM_DRAWCLIPBOARD, "WM_DRAWCLIPBOARD was posted\n" );
         TranslateMessage(&msg);
         DispatchMessageA(&msg);
     }
 
     ok(WaitForSingleObject(thread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
     CloseHandle(thread);
+
+    DestroyWindow( win );
+
+    /* same tests again but inside a single thread */
+
+    win = CreateWindowA( "clipboard_test", NULL, 0, 0, 0, 0, 0, NULL, 0, NULL, 0 );
+    ok( win != NULL, "CreateWindow failed: %d\n", GetLastError() );
+
+    clipboard_thread( win );
+    DestroyWindow( win );
 
     UnregisterClassA("clipboard_test", GetModuleHandleA(NULL));
     DeleteCriticalSection(&clipboard_cs);

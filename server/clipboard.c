@@ -45,6 +45,7 @@ struct clipboard
     user_handle_t  owner_win;        /* window that owns the clipboard data */
     user_handle_t  viewer;           /* first window in clipboard viewer list */
     unsigned int   seqno;            /* clipboard change sequence number */
+    unsigned int   open_seqno;       /* sequence number at open time */
     timeout_t      seqno_timestamp;  /* time stamp of last seqno increment */
     unsigned int   listen_size;      /* size of listeners array */
     unsigned int   listen_count;     /* count of listeners */
@@ -167,6 +168,21 @@ static int remove_listener( struct clipboard *clipboard, user_handle_t window )
     return 0;
 }
 
+/* close the clipboard, and return the viewer window that should be notified if any */
+static user_handle_t close_clipboard( struct clipboard *clipboard )
+{
+    unsigned int i;
+
+    clipboard->open_win = 0;
+    clipboard->open_thread = NULL;
+
+    if (clipboard->seqno == clipboard->open_seqno) return 0;  /* unchanged */
+
+    for (i = 0; i < clipboard->listen_count; i++)
+        post_message( clipboard->listeners[i], WM_CLIPBOARDUPDATE, 0, 0 );
+    return clipboard->viewer;
+}
+
 /* cleanup clipboard information upon window destruction */
 void cleanup_clipboard_window( struct desktop *desktop, user_handle_t window )
 {
@@ -174,18 +190,18 @@ void cleanup_clipboard_window( struct desktop *desktop, user_handle_t window )
 
     if (!clipboard) return;
 
-    if (clipboard->open_win == window)
-    {
-        clipboard->open_win = 0;
-        clipboard->open_thread = NULL;
-    }
+    remove_listener( clipboard, window );
+    if (clipboard->viewer == window) clipboard->viewer = 0;
     if (clipboard->owner_win == window)
     {
         clipboard->owner_win = 0;
         clipboard->owner_thread = NULL;
     }
-    if (clipboard->viewer == window) clipboard->viewer = 0;
-    remove_listener( clipboard, window );
+    if (clipboard->open_win == window)
+    {
+        user_handle_t viewer = close_clipboard( clipboard );
+        if (viewer) send_notify_message( viewer, WM_DRAWCLIPBOARD, clipboard->owner_win, 0 );
+    }
 }
 
 /* Called when thread terminates to allow release of clipboard */
@@ -199,15 +215,15 @@ void cleanup_clipboard_thread(struct thread *thread)
 
     if ((clipboard = winstation->clipboard))
     {
-        if (thread == clipboard->open_thread)
-        {
-            clipboard->open_win = 0;
-            clipboard->open_thread = NULL;
-        }
         if (thread == clipboard->owner_thread)
         {
             clipboard->owner_win = 0;
             clipboard->owner_thread = NULL;
+        }
+        if (thread == clipboard->open_thread)
+        {
+            user_handle_t viewer = close_clipboard( clipboard );
+            if (viewer) send_notify_message( viewer, WM_DRAWCLIPBOARD, clipboard->owner_win, 0 );
         }
     }
     release_object( winstation );
@@ -256,6 +272,8 @@ DECL_HANDLER(open_clipboard)
         set_error( STATUS_INVALID_LOCK_SEQUENCE );
         return;
     }
+
+    if (!clipboard->open_thread) clipboard->open_seqno = clipboard->seqno; /* first open */
     clipboard->open_win = win;
     clipboard->open_thread = current;
 
@@ -276,10 +294,8 @@ DECL_HANDLER(close_clipboard)
         return;
     }
     if (req->changed) clipboard->seqno++;
-    clipboard->open_thread = NULL;
-    clipboard->open_win = 0;
 
-    reply->viewer = clipboard->viewer;
+    reply->viewer = close_clipboard( clipboard );
     reply->owner  = (clipboard->owner_thread && clipboard->owner_thread->process == current->process);
 }
 
