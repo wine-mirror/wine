@@ -3612,7 +3612,7 @@ BOOL WINAPI ReplyMessage( LRESULT result )
  */
 BOOL WINAPI InSendMessage(void)
 {
-    return (InSendMessageEx(NULL) & (ISMEX_SEND|ISMEX_REPLIED)) == ISMEX_SEND;
+    return (InSendMessageEx( NULL ) & (ISMEX_SEND | ISMEX_NOTIFY | ISMEX_CALLBACK)) != 0;
 }
 
 

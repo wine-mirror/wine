@@ -15822,6 +15822,98 @@ todo_wine_if (thread_n == 2)
     flush_sequence();
 }
 
+static LRESULT CALLBACK insendmessage_wnd_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+{
+    DWORD flags = InSendMessageEx( NULL );
+    BOOL ret;
+
+    switch (msg)
+    {
+    case WM_USER:
+        ok( flags == ISMEX_SEND, "wrong flags %x\n", flags );
+        ok( InSendMessage(), "InSendMessage returned false\n" );
+        ret = ReplyMessage( msg );
+        ok( ret, "ReplyMessage failed err %u\n", GetLastError() );
+        flags = InSendMessageEx( NULL );
+        ok( flags == (ISMEX_SEND | ISMEX_REPLIED), "wrong flags %x\n", flags );
+        ok( InSendMessage(), "InSendMessage returned false\n" );
+        break;
+    case WM_USER + 1:
+        ok( flags == ISMEX_NOTIFY, "wrong flags %x\n", flags );
+        ok( InSendMessage(), "InSendMessage returned false\n" );
+        ret = ReplyMessage( msg );
+        ok( ret, "ReplyMessage failed err %u\n", GetLastError() );
+        flags = InSendMessageEx( NULL );
+        ok( flags == ISMEX_NOTIFY, "wrong flags %x\n", flags );
+        ok( InSendMessage(), "InSendMessage returned false\n" );
+        break;
+    case WM_USER + 2:
+        ok( flags == ISMEX_CALLBACK, "wrong flags %x\n", flags );
+        ok( InSendMessage(), "InSendMessage returned false\n" );
+        ret = ReplyMessage( msg );
+        ok( ret, "ReplyMessage failed err %u\n", GetLastError() );
+        flags = InSendMessageEx( NULL );
+        ok( flags == (ISMEX_CALLBACK | ISMEX_REPLIED) || flags == ISMEX_SEND, "wrong flags %x\n", flags );
+        ok( InSendMessage(), "InSendMessage returned false\n" );
+        break;
+    case WM_USER + 3:
+        ok( flags == ISMEX_NOSEND, "wrong flags %x\n", flags );
+        ok( !InSendMessage(), "InSendMessage returned true\n" );
+        ret = ReplyMessage( msg );
+        ok( !ret, "ReplyMessage succeeded\n" );
+        break;
+    }
+
+    return DefWindowProcA( hwnd, msg, wp, lp );
+}
+
+static void CALLBACK msg_callback( HWND hwnd, UINT msg, ULONG_PTR arg, LRESULT result )
+{
+    ok( msg == WM_USER + 2, "wrong msg %x\n", msg );
+    ok( result == WM_USER + 2, "wrong result %lx\n", result );
+}
+
+static DWORD WINAPI send_message_thread( void *arg )
+{
+    HWND win = arg;
+
+    SendMessageA( win, WM_USER, 0, 0 );
+    SendNotifyMessageA( win, WM_USER + 1, 0, 0 );
+    SendMessageCallbackA( win, WM_USER + 2, 0, 0, msg_callback, 0 );
+    PostMessageA( win, WM_USER + 3, 0, 0 );
+    PostMessageA( win, WM_QUIT, 0, 0 );
+    return 0;
+}
+
+static void test_InSendMessage(void)
+{
+    WNDCLASSA cls;
+    HWND win;
+    MSG msg;
+    HANDLE thread;
+    DWORD tid;
+
+    memset(&cls, 0, sizeof(cls));
+    cls.lpfnWndProc = insendmessage_wnd_proc;
+    cls.hInstance = GetModuleHandleA(NULL);
+    cls.lpszClassName = "InSendMessage_test";
+    RegisterClassA(&cls);
+
+    win = CreateWindowA( "InSendMessage_test", NULL, 0, 0, 0, 0, 0, NULL, 0, NULL, 0 );
+    ok( win != NULL, "CreateWindow failed: %d\n", GetLastError() );
+
+    thread = CreateThread( NULL, 0, send_message_thread, win, 0, &tid );
+    ok( thread != NULL, "CreateThread failed: %d\n", GetLastError() );
+
+    while (GetMessageA(&msg, NULL, 0, 0)) DispatchMessageA( &msg );
+
+    ok( WaitForSingleObject( thread, 30000 ) == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+    CloseHandle( thread );
+
+    DestroyWindow( win );
+    UnregisterClassA( "InSendMessage_test", GetModuleHandleA(NULL) );
+}
+
 static const struct message DoubleSetCaptureSeq[] =
 {
     { WM_CAPTURECHANGED, sent },
@@ -15930,6 +16022,7 @@ START_TEST(msg)
 
     test_SendMessage_other_thread(1);
     test_SendMessage_other_thread(2);
+    test_InSendMessage();
     test_SetFocus();
     test_SetParent();
     test_PostMessage();
