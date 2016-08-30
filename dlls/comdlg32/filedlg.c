@@ -2541,6 +2541,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
                 && fodInfos->ofnInfos->Flags & OFN_EXPLORER)
             {
               SendCustomDlgNotificationMessage(hwnd, CDN_FOLDERCHANGE);
+              SendMessageA(fodInfos->DlgInfos.hwndFileName, WM_SETTEXT, 0, (LPARAM)"");
             }
 	  }
 	  else if( nOpenAction == ONOPEN_SEARCH )
