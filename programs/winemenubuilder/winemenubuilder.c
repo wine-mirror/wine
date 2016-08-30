@@ -262,35 +262,12 @@ static int winemenubuilder_rb_string_compare(const void *key, const struct wine_
     return strcmp((char*)key, t->string);
 }
 
-static void *winemenubuilder_rb_alloc(size_t size)
-{
-    return HeapAlloc(GetProcessHeap(), 0, size);
-}
-
-static void *winemenubuilder_rb_realloc(void *ptr, size_t size)
-{
-    return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
-}
-
-static void winemenubuilder_rb_free(void *ptr)
-{
-    HeapFree(GetProcessHeap(), 0, ptr);
-}
-
 static void winemenubuilder_rb_destroy(struct wine_rb_entry *entry, void *context)
 {
     struct rb_string_entry *t = WINE_RB_ENTRY_VALUE(entry, struct rb_string_entry, entry);
     HeapFree(GetProcessHeap(), 0, t->string);
     HeapFree(GetProcessHeap(), 0, t);
 }
-
-static const struct wine_rb_functions winemenubuilder_rb_functions =
-{
-    winemenubuilder_rb_alloc,
-    winemenubuilder_rb_realloc,
-    winemenubuilder_rb_free,
-    winemenubuilder_rb_string_compare,
-};
 
 static void write_xml_text(FILE *file, const char *text)
 {
@@ -2538,19 +2515,12 @@ static BOOL write_freedesktop_association_entry(const char *desktopPath, const c
 static BOOL generate_associations(const char *xdg_data_home, const char *packages_dir, const char *applications_dir)
 {
     static const WCHAR openW[] = {'o','p','e','n',0};
-    struct wine_rb_tree mimeProgidTree;
-    struct list nativeMimeTypes;
+    struct wine_rb_tree mimeProgidTree = { winemenubuilder_rb_string_compare };
+    struct list nativeMimeTypes = LIST_INIT(nativeMimeTypes);
     LSTATUS ret = 0;
     int i;
     BOOL hasChanged = FALSE;
 
-    if (wine_rb_init(&mimeProgidTree, &winemenubuilder_rb_functions))
-    {
-        WINE_ERR("wine_rb_init failed\n");
-        return FALSE;
-    }
-
-    list_init(&nativeMimeTypes);
     if (!build_native_mime_types(xdg_data_home, &nativeMimeTypes))
     {
         WINE_ERR("could not build native MIME types\n");
