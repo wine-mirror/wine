@@ -75,7 +75,6 @@ static HRESULT WINAPI layer_create(enum dxgi_device_layer_id id, void **layer_ba
         void *device_object, REFIID riid, void **device_layer)
 {
     struct d3d_device *object;
-    HRESULT hr;
 
     TRACE("id %#x, layer_base %p, unknown0 %#x, device_object %p, riid %s, device_layer %p\n",
             id, layer_base, unknown0, device_object, debugstr_guid(riid), device_layer);
@@ -88,12 +87,7 @@ static HRESULT WINAPI layer_create(enum dxgi_device_layer_id id, void **layer_ba
     }
 
     object = *layer_base;
-    if (FAILED(hr = d3d_device_init(object, device_object)))
-    {
-        WARN("Failed to initialize device, hr %#x.\n", hr);
-        *device_layer = NULL;
-        return hr;
-    }
+    d3d_device_init(object, device_object);
     *device_layer = &object->IUnknown_inner;
 
     TRACE("Created d3d10 device at %p\n", object);
