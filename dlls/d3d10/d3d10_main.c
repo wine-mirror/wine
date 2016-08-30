@@ -231,13 +231,7 @@ HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT fl
         return E_OUTOFMEMORY;
     }
 
-    if (wine_rb_init(&object->types, &d3d10_effect_type_rb_functions) == -1)
-    {
-        ERR("Failed to initialize type rbtree.\n");
-        HeapFree(GetProcessHeap(), 0, object);
-        return E_FAIL;
-    }
-
+    wine_rb_init(&object->types, &d3d10_effect_type_rb_functions);
     object->ID3D10Effect_iface.lpVtbl = &d3d10_effect_vtbl;
     object->refcount = 1;
     ID3D10Device_AddRef(device);
