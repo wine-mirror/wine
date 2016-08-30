@@ -90,7 +90,15 @@ struct wine_driver
     DRIVER_EXTENSION driver_extension;
 };
 
-static struct wine_rb_tree wine_drivers;
+static int wine_drivers_rb_compare( const void *key, const struct wine_rb_entry *entry )
+{
+    const struct wine_driver *driver = WINE_RB_ENTRY_VALUE( entry, const struct wine_driver, entry );
+    const UNICODE_STRING *k = key;
+
+    return RtlCompareUnicodeString( k, &driver->driver_obj.DriverName, FALSE );
+}
+
+static struct wine_rb_tree wine_drivers = { wine_drivers_rb_compare };
 
 static CRITICAL_SECTION drivers_cs;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -100,37 +108,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": drivers_cs") }
 };
 static CRITICAL_SECTION drivers_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
-
-static void *wine_drivers_rb_alloc( size_t size )
-{
-    return HeapAlloc( GetProcessHeap(), 0, size );
-}
-
-static void *wine_drivers_rb_realloc( void *ptr, size_t size )
-{
-    return HeapReAlloc( GetProcessHeap(), 0, ptr, size );
-}
-
-static void wine_drivers_rb_free( void *ptr )
-{
-    HeapFree( GetProcessHeap(), 0, ptr );
-}
-
-static int wine_drivers_rb_compare( const void *key, const struct wine_rb_entry *entry )
-{
-    const struct wine_driver *driver = WINE_RB_ENTRY_VALUE( entry, const struct wine_driver, entry );
-    const UNICODE_STRING *k = key;
-
-    return RtlCompareUnicodeString( k, &driver->driver_obj.DriverName, FALSE );
-}
-
-static const struct wine_rb_functions wine_drivers_rb_functions =
-{
-    wine_drivers_rb_alloc,
-    wine_drivers_rb_realloc,
-    wine_drivers_rb_free,
-    wine_drivers_rb_compare,
-};
 
 #ifdef __i386__
 #define DEFINE_FASTCALL1_ENTRYPOINT( name ) \
@@ -2447,7 +2424,6 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( inst );
-        if (wine_rb_init( &wine_drivers, &wine_drivers_rb_functions )) return FALSE;
 #if defined(__i386__) || defined(__x86_64__)
         handler = RtlAddVectoredExceptionHandler( TRUE, vectored_handler );
 #endif
