@@ -313,7 +313,7 @@ static void reset_url_components( URL_COMPONENTS *uc )
     memset( uc, 0, sizeof(URL_COMPONENTS) );
     uc->dwStructSize = sizeof(URL_COMPONENTS);
     uc->dwSchemeLength    = ~0u;
-    uc->dwHostNameLength  = ~0u;
+    uc->dwHostNameLength  = 1;
     uc->nPort             =  0;
     uc->dwUserNameLength  = ~0u;
     uc->dwPasswordLength  = ~0u;
@@ -405,6 +405,8 @@ static void WinHttpCrackUrl_test( void )
     ok( uc.dwExtraInfoLength == 0, "unexpected extra info length\n" );
 
     reset_url_components( &uc );
+    uc.dwSchemeLength = uc.dwHostNameLength = uc.dwUserNameLength = 1;
+    uc.dwPasswordLength = uc.dwUrlPathLength = uc.dwExtraInfoLength = 1;
     ret = WinHttpCrackUrl( url_k2, 0, 0,&uc);
     ok( ret, "WinHttpCrackUrl failed le=%u\n", GetLastError() );
     ok( uc.nScheme == INTERNET_SCHEME_HTTP, "unexpected scheme\n" );
