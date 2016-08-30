@@ -55,6 +55,9 @@ double __cdecl asin(double);
 double __cdecl acos(double);
 double __cdecl atan(double);
 double __cdecl atan2(double, double);
+double __cdecl asinh(double);
+double __cdecl acosh(double);
+double __cdecl atanh(double);
 double __cdecl exp(double);
 double __cdecl log(double);
 double __cdecl log10(double);
@@ -107,6 +110,9 @@ float __cdecl asinf(float);
 float __cdecl acosf(float);
 float __cdecl atanf(float);
 float __cdecl atan2f(float, float);
+float __cdecl asinhf(float);
+float __cdecl acoshf(float);
+float __cdecl atanhf(float);
 float __cdecl expf(float);
 float __cdecl logf(float);
 float __cdecl log10f(float);
@@ -132,6 +138,9 @@ float __cdecl fmodf(float, float);
 #define acosf(x) ((float)acos((double)(x)))
 #define atanf(x) ((float)atan((double)(x)))
 #define atan2f(x,y) ((float)atan2((double)(x), (double)(y)))
+#define asinhf(x) ((float)asinh((double)(x)))
+#define acoshf(x) ((float)acosh((double)(x)))
+#define atanhf(x) ((float)atanh((double)(x)))
 #define expf(x) ((float)exp((double)(x)))
 #define logf(x) ((float)log((double)(x)))
 #define log10f(x) ((float)log10((double)(x)))
@@ -174,6 +183,12 @@ static const union {
 #define FP_SUBNORMAL -2
 #define FP_ZERO       0
 
+short __cdecl _dclass(double);
+#define isfinite(x) (_dclass((double)(x)) <= FP_ZERO)
+#define isinf(x)    (_dclass((double)(x)) == FP_INFINITE)
+#define isnan(x)    (_dclass((double)(x)) == FP_NAN)
+#define isnormal(x) (_dclass((double)(x)) == FP_NORMAL)
+
 #ifdef __cplusplus
 }
 #endif
@@ -206,7 +221,7 @@ static inline double jn( int n, double x ) { return _jn( n, x ); }
 static inline double y0( double x ) { return _y0( x ); }
 static inline double y1( double x ) { return _y1( x ); }
 static inline double yn( int n, double x ) { return _yn( n, x ); }
-static inline double cabs(struct _complex z) { return _cabs( z ); }
+static inline double cabs( struct _complex z ) { return _cabs( z ); }
 
 static inline float hypotf( float x, float y ) { return _hypotf( x, y ); }
 
