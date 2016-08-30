@@ -58,7 +58,13 @@ struct wine_driver
     WCHAR name[1];
 };
 
-static struct wine_rb_tree wine_drivers;
+static int wine_drivers_rb_compare( const void *key, const struct wine_rb_entry *entry )
+{
+    const struct wine_driver *driver = WINE_RB_ENTRY_VALUE( entry, const struct wine_driver, entry );
+    return strcmpW( (const WCHAR *)key, driver->name );
+}
+
+static struct wine_rb_tree wine_drivers = { wine_drivers_rb_compare };
 
 static CRITICAL_SECTION drivers_cs;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -68,35 +74,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": drivers_cs") }
 };
 static CRITICAL_SECTION drivers_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
-
-static void *wine_drivers_rb_alloc( size_t size )
-{
-    return HeapAlloc( GetProcessHeap(), 0, size );
-}
-
-static void *wine_drivers_rb_realloc( void *ptr, size_t size )
-{
-    return HeapReAlloc( GetProcessHeap(), 0, ptr, size );
-}
-
-static void wine_drivers_rb_free( void *ptr )
-{
-    HeapFree( GetProcessHeap(), 0, ptr );
-}
-
-static int wine_drivers_rb_compare( const void *key, const struct wine_rb_entry *entry )
-{
-    const struct wine_driver *driver = WINE_RB_ENTRY_VALUE( entry, const struct wine_driver, entry );
-    return strcmpW( (const WCHAR *)key, driver->name );
-}
-
-static const struct wine_rb_functions wine_drivers_rb_functions =
-{
-    wine_drivers_rb_alloc,
-    wine_drivers_rb_realloc,
-    wine_drivers_rb_free,
-    wine_drivers_rb_compare,
-};
 
 /* find the LDR_MODULE corresponding to the driver module */
 static LDR_MODULE *find_ldr_module( HMODULE module )
@@ -534,8 +511,6 @@ static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
     const WCHAR *driver_name = argv[0];
     NTSTATUS status;
 
-    if (wine_rb_init( &wine_drivers, &wine_drivers_rb_functions ))
-        return;
     if (!(stop_event = CreateEventW( NULL, TRUE, FALSE, NULL )))
         return;
     if (!(cleanup_group = CreateThreadpoolCleanupGroup()))
