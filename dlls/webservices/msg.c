@@ -1022,9 +1022,7 @@ HRESULT WINAPI WsAddCustomHeader( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTI
 {
     struct msg *msg = (struct msg *)handle;
     struct header *header;
-    BOOL found = FALSE;
     HRESULT hr;
-    ULONG i;
 
     TRACE( "%p %p %08x %p %u %08x %p\n", handle, desc, option, value, size, attrs, error );
     if (error) FIXME( "ignoring error parameter\n" );
@@ -1032,30 +1030,11 @@ HRESULT WINAPI WsAddCustomHeader( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTI
     if (!handle || !desc) return E_INVALIDARG;
     if (msg->state < WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
 
-    for (i = 0; i < msg->header_count; i++)
-    {
-        if (msg->header[i]->type || msg->header[i]->mapped) continue;
-        if (WsXmlStringEquals( desc->elementLocalName, &msg->header[i]->name, NULL ) &&
-            WsXmlStringEquals( desc->elementNs, &msg->header[i]->ns, NULL ) == S_OK)
-        {
-            found = TRUE;
-            break;
-        }
-    }
-
-    if (!found)
-    {
-        if ((hr = grow_header_array( msg, msg->header_count + 1 )) != S_OK) return hr;
-        i = msg->header_count;
-    }
-
+    if ((hr = grow_header_array( msg, msg->header_count + 1 )) != S_OK) return hr;
     if ((hr = build_custom_header( msg->heap, desc->elementLocalName, desc->elementNs, desc->type,
                                    desc->typeDescription, option, value, size, &header )) != S_OK) return hr;
 
-    if (!found) msg->header_count++;
-    else free_header( msg->header[i] );
-
-    msg->header[i] = header;
+    msg->header[msg->header_count++] = header;
     return write_envelope( msg );
 }
 

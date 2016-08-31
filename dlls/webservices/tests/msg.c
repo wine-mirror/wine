@@ -749,8 +749,22 @@ static void test_WsAddCustomHeader(void)
         "xmlns:s=\"http://www.w3.org/2003/05/soap-envelope\"><s:Header>"
         "<a:MessageID>urn:uuid:00000000-0000-0000-0000-000000000000</a:MessageID>"
         "</s:Header><s:Body/></s:Envelope>";
+    static const char expected3[] =
+        "<s:Envelope xmlns:a=\"http://www.w3.org/2005/08/addressing\" "
+        "xmlns:s=\"http://www.w3.org/2003/05/soap-envelope\"><s:Header>"
+        "<a:MessageID>urn:uuid:00000000-0000-0000-0000-000000000000</a:MessageID>"
+        "<header xmlns=\"ns\">value</header><header xmlns=\"ns\">value2</header>"
+        "</s:Header><s:Body/></s:Envelope>";
+    static const char expected4[] =
+        "<s:Envelope xmlns:a=\"http://www.w3.org/2005/08/addressing\" "
+        "xmlns:s=\"http://www.w3.org/2003/05/soap-envelope\"><s:Header>"
+        "<a:MessageID>urn:uuid:00000000-0000-0000-0000-000000000000</a:MessageID>"
+        "<header xmlns=\"ns\">value</header><header xmlns=\"ns\">value2</header>"
+        "<header2 xmlns=\"ns\">value2</header2></s:Header><s:Body/></s:Envelope>";
     static WS_XML_STRING header = {6, (BYTE *)"header"}, ns = {2, (BYTE *)"ns"};
+    static WS_XML_STRING header2 = {7, (BYTE *)"header2"};
     static WCHAR valueW[] = {'v','a','l','u','e',0};
+    static WCHAR value2W[] = {'v','a','l','u','e','2',0};
     HRESULT hr;
     WS_MESSAGE *msg;
     WS_ELEMENT_DESCRIPTION desc;
@@ -796,6 +810,16 @@ static void test_WsAddCustomHeader(void)
     hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), 0, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output_header( msg, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
+
+    test.value = value2W;
+    hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_header( msg, expected3, -1, strstr(expected3, "urn:uuid:") - expected3, 46, __LINE__ );
+
+    desc.elementLocalName = &header2;
+    hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_header( msg, expected4, -1, strstr(expected4, "urn:uuid:") - expected4, 46, __LINE__ );
 
     hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, NULL, 0, 0, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
