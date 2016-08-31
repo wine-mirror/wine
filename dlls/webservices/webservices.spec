@@ -5,7 +5,7 @@
 @ stub WsAbortServiceHost
 @ stub WsAbortServiceProxy
 @ stub WsAcceptChannel
-@ stub WsAddCustomHeader
+@ stdcall WsAddCustomHeader(ptr ptr long ptr long long ptr)
 @ stub WsAddErrorString
 @ stdcall WsAddMappedHeader(ptr ptr long long ptr long ptr)
 @ stdcall WsAddressMessage(ptr ptr ptr)

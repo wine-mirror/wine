@@ -737,6 +737,72 @@ static void test_WsRemoveMappedHeader(void)
     WsFreeMessage( msg );
 }
 
+static void test_WsAddCustomHeader(void)
+{
+   static const char expected[] =
+        "<s:Envelope xmlns:a=\"http://www.w3.org/2005/08/addressing\" "
+        "xmlns:s=\"http://www.w3.org/2003/05/soap-envelope\"><s:Header>"
+        "<a:MessageID>urn:uuid:00000000-0000-0000-0000-000000000000</a:MessageID>"
+        "<header xmlns=\"ns\">value</header></s:Header><s:Body/></s:Envelope>";
+   static const char expected2[] =
+        "<s:Envelope xmlns:a=\"http://www.w3.org/2005/08/addressing\" "
+        "xmlns:s=\"http://www.w3.org/2003/05/soap-envelope\"><s:Header>"
+        "<a:MessageID>urn:uuid:00000000-0000-0000-0000-000000000000</a:MessageID>"
+        "</s:Header><s:Body/></s:Envelope>";
+    static WS_XML_STRING header = {6, (BYTE *)"header"}, ns = {2, (BYTE *)"ns"};
+    static WCHAR valueW[] = {'v','a','l','u','e',0};
+    HRESULT hr;
+    WS_MESSAGE *msg;
+    WS_ELEMENT_DESCRIPTION desc;
+    WS_STRUCT_DESCRIPTION s;
+    WS_FIELD_DESCRIPTION f, *fields[1];
+    struct header
+    {
+        const WCHAR *value;
+    } test;
+
+    hr = WsAddCustomHeader( NULL, NULL, 0, NULL, 0, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateMessage( WS_ADDRESSING_VERSION_1_0, WS_ENVELOPE_VERSION_SOAP_1_2, NULL, 0, &msg, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsAddCustomHeader( msg, NULL, 0, NULL, 0, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping = WS_TEXT_FIELD_MAPPING;
+    f.type    = WS_WSZ_TYPE;
+    fields[0] = &f;
+
+    memset( &s, 0, sizeof(s) );
+    s.size       = sizeof(struct header);
+    s.alignment  = TYPE_ALIGNMENT(struct header);
+    s.fields     = fields;
+    s.fieldCount = 1;
+
+    desc.elementLocalName = &header;
+    desc.elementNs        = &ns;
+    desc.type             = WS_STRUCT_TYPE;
+    desc.typeDescription  = &s;
+    hr = WsAddCustomHeader( msg, &desc, 0, NULL, 0, 0, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_header( msg, expected2, -1, strstr(expected2, "urn:uuid:") - expected2, 46, __LINE__ );
+
+    test.value = valueW;
+    hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_header( msg, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
+
+    hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, NULL, 0, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    WsFreeMessage( msg );
+}
+
 START_TEST(msg)
 {
     test_WsCreateMessage();
@@ -750,4 +816,5 @@ START_TEST(msg)
     test_WsRemoveHeader();
     test_WsAddMappedHeader();
     test_WsRemoveMappedHeader();
+    test_WsAddCustomHeader();
 }
