@@ -31,6 +31,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(xinput);
 
+struct
+{
+    BOOL connected;
+} controllers[XUSER_MAX_COUNT];
+
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
 {
     switch(reason)
@@ -57,12 +62,12 @@ DWORD WINAPI XInputSetState(DWORD index, XINPUT_VIBRATION* vibration)
 {
     FIXME("(index %u, vibration %p) Stub!\n", index, vibration);
 
-    if (index < XUSER_MAX_COUNT)
-    {
+    if (index >= XUSER_MAX_COUNT)
+        return ERROR_BAD_ARGUMENTS;
+    if (!controllers[index].connected)
         return ERROR_DEVICE_NOT_CONNECTED;
-        /* If controller exists then return ERROR_SUCCESS */
-    }
-    return ERROR_BAD_ARGUMENTS;
+
+    return ERROR_NOT_SUPPORTED;
 }
 
 DWORD WINAPI DECLSPEC_HOTPATCH XInputGetState(DWORD index, XINPUT_STATE* state)
@@ -72,24 +77,24 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetState(DWORD index, XINPUT_STATE* state)
     if (!warn_once++)
         FIXME("(index %u, state %p) Stub!\n", index, state);
 
-    if (index < XUSER_MAX_COUNT)
-    {
+    if (index >= XUSER_MAX_COUNT)
+        return ERROR_BAD_ARGUMENTS;
+    if (!controllers[index].connected)
         return ERROR_DEVICE_NOT_CONNECTED;
-        /* If controller exists then return ERROR_SUCCESS */
-    }
-    return ERROR_BAD_ARGUMENTS;
+
+    return ERROR_NOT_SUPPORTED;
 }
 
 DWORD WINAPI XInputGetKeystroke(DWORD index, DWORD reserved, PXINPUT_KEYSTROKE keystroke)
 {
     FIXME("(index %u, reserved %u, keystroke %p) Stub!\n", index, reserved, keystroke);
 
-    if (index < XUSER_MAX_COUNT)
-    {
+    if (index >= XUSER_MAX_COUNT)
+        return ERROR_BAD_ARGUMENTS;
+    if (!controllers[index].connected)
         return ERROR_DEVICE_NOT_CONNECTED;
-        /* If controller exists then return ERROR_SUCCESS */
-    }
-    return ERROR_BAD_ARGUMENTS;
+
+    return ERROR_NOT_SUPPORTED;
 }
 
 DWORD WINAPI XInputGetCapabilities(DWORD index, DWORD flags, XINPUT_CAPABILITIES* capabilities)
@@ -99,34 +104,34 @@ DWORD WINAPI XInputGetCapabilities(DWORD index, DWORD flags, XINPUT_CAPABILITIES
     if (!warn_once++)
         FIXME("(index %u, flags 0x%x, capabilities %p) Stub!\n", index, flags, capabilities);
 
-    if (index < XUSER_MAX_COUNT)
-    {
+    if (index >= XUSER_MAX_COUNT)
+        return ERROR_BAD_ARGUMENTS;
+    if (!controllers[index].connected)
         return ERROR_DEVICE_NOT_CONNECTED;
-        /* If controller exists then return ERROR_SUCCESS */
-    }
-    return ERROR_BAD_ARGUMENTS;
+
+    return ERROR_NOT_SUPPORTED;
 }
 
 DWORD WINAPI XInputGetDSoundAudioDeviceGuids(DWORD index, GUID* render_guid, GUID* capture_guid)
 {
     FIXME("(index %u, render guid %p, capture guid %p) Stub!\n", index, render_guid, capture_guid);
 
-    if (index < XUSER_MAX_COUNT)
-    {
+    if (index >= XUSER_MAX_COUNT)
+        return ERROR_BAD_ARGUMENTS;
+    if (!controllers[index].connected)
         return ERROR_DEVICE_NOT_CONNECTED;
-        /* If controller exists then return ERROR_SUCCESS */
-    }
-    return ERROR_BAD_ARGUMENTS;
+
+    return ERROR_NOT_SUPPORTED;
 }
 
 DWORD WINAPI XInputGetBatteryInformation(DWORD index, BYTE type, XINPUT_BATTERY_INFORMATION* battery)
 {
     FIXME("(index %u, type %u, battery %p) Stub!\n", index, type, battery);
 
-    if (index < XUSER_MAX_COUNT)
-    {
+    if (index >= XUSER_MAX_COUNT)
+        return ERROR_BAD_ARGUMENTS;
+    if (!controllers[index].connected)
         return ERROR_DEVICE_NOT_CONNECTED;
-        /* If controller exists then return ERROR_SUCCESS */
-    }
-    return ERROR_BAD_ARGUMENTS;
+
+    return ERROR_NOT_SUPPORTED;
 }
