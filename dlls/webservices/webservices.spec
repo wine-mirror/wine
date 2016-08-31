@@ -3,7 +3,7 @@
 @ stub WsAbortChannel
 @ stub WsAbortListener
 @ stub WsAbortServiceHost
-@ stub WsAbortServiceProxy
+@ stdcall WsAbortServiceProxy(ptr ptr)
 @ stub WsAcceptChannel
 @ stdcall WsAddCustomHeader(ptr ptr long ptr long long ptr)
 @ stub WsAddErrorString

@@ -236,6 +236,15 @@ HRESULT WINAPI WsCloseServiceProxy( WS_SERVICE_PROXY *handle, const WS_ASYNC_CON
 }
 
 /**************************************************************************
+ *          WsAbortServiceProxy		[webservices.@]
+ */
+HRESULT WINAPI WsAbortServiceProxy( WS_SERVICE_PROXY *handle, WS_ERROR *error )
+{
+    FIXME( "%p %p\n", handle, error );
+    return E_NOTIMPL;
+}
+
+/**************************************************************************
  *          WsCall		[webservices.@]
  */
 HRESULT WINAPI WsCall( WS_SERVICE_PROXY *handle, const WS_OPERATION_DESCRIPTION *desc, const void **args,

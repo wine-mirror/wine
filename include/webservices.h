@@ -1366,6 +1366,7 @@ struct _WS_PROXY_MESSAGE_CALLBACK_CONTEXT
     void *state;
 };
 
+HRESULT WINAPI WsAbortServiceProxy(WS_SERVICE_PROXY*, WS_ERROR*);
 HRESULT WINAPI WsAddCustomHeader(WS_MESSAGE*, const WS_ELEMENT_DESCRIPTION*, WS_WRITE_OPTION,
                                  const void*, ULONG, ULONG, WS_ERROR*);
 HRESULT WINAPI WsAddMappedHeader(WS_MESSAGE*, const WS_XML_STRING*, WS_TYPE, WS_WRITE_OPTION,
