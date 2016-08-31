@@ -26,6 +26,7 @@
 
 #include "wine/debug.h"
 #include "wine/list.h"
+#include "wine/unicode.h"
 #include "webservices_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
@@ -50,10 +51,15 @@ static const struct prop_desc msg_props[] =
 
 struct header
 {
-    WS_HEADER_TYPE   type;
-    WS_XML_STRING    name;
-    BOOL             mapped;
-    WS_XML_UTF8_TEXT text;
+    WS_HEADER_TYPE type;
+    BOOL           mapped;
+    WS_XML_STRING  name;
+    WS_XML_STRING  ns;
+    union
+    {
+        WS_XML_BUFFER *buf;
+        WS_XML_STRING *text;
+    } u;
 };
 
 struct msg
@@ -99,6 +105,8 @@ static struct msg *alloc_msg(void)
 static void free_header( struct header *header )
 {
     heap_free( header->name.bytes );
+    heap_free( header->ns.bytes );
+    if (header->mapped) heap_free( header->u.text );
     heap_free( header );
 }
 
@@ -385,22 +393,6 @@ static const WS_XML_STRING *get_header_name( WS_HEADER_TYPE type )
     }
 }
 
-static HRESULT write_header( WS_XML_WRITER *writer, const struct header *header )
-{
-    static const WS_XML_STRING prefix_s = {1, (BYTE *)"s"}, prefix_a = {1, (BYTE *)"a"};
-    static const WS_XML_STRING understand = {14, (BYTE *)"mustUnderstand"}, ns = {0, NULL};
-    const WS_XML_STRING *localname = get_header_name( header->type );
-    WS_XML_INT32_TEXT one = {{WS_XML_TEXT_TYPE_INT32}, 1};
-    HRESULT hr;
-
-    if ((hr = WsWriteStartElement( writer, &prefix_a, localname, &ns, NULL )) != S_OK) return hr;
-    if ((hr = WsWriteStartAttribute( writer, &prefix_s, &understand, &ns, FALSE, NULL )) != S_OK) return hr;
-    if ((hr = WsWriteText( writer, &one.text, NULL )) != S_OK) return hr;
-    if ((hr = WsWriteEndAttribute( writer, NULL )) != S_OK) return hr;
-    if ((hr = WsWriteText( writer, &header->text.text, NULL )) != S_OK) return hr;
-    return WsWriteEndElement( writer, NULL );
-}
-
 static HRESULT write_envelope_start( struct msg *msg, WS_XML_WRITER *writer )
 {
     static const char anonymous[] = "http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous";
@@ -432,7 +424,8 @@ static HRESULT write_envelope_start( struct msg *msg, WS_XML_WRITER *writer )
 
     for (i = 0; i < msg->header_count; i++)
     {
-        if (!msg->header[i]->mapped && (hr = write_header( writer, msg->header[i] )) != S_OK) return hr;
+        if (msg->header[i]->mapped) continue;
+        if ((hr = WsWriteXmlBuffer( writer, msg->header[i]->u.buf, NULL )) != S_OK) return hr;
     }
 
     if (msg->version_addr == WS_ADDRESSING_VERSION_0_9)
@@ -452,7 +445,7 @@ static HRESULT write_envelope_start( struct msg *msg, WS_XML_WRITER *writer )
     return WsWriteStartElement( writer, &prefix_s, &body, &ns_env, NULL ); /* <s:Body> */
 }
 
-static HRESULT write_envelope_end( struct msg *msg, WS_XML_WRITER *writer )
+static HRESULT write_envelope_end( WS_XML_WRITER *writer )
 {
     HRESULT hr;
     if ((hr = WsWriteEndElement( writer, NULL )) != S_OK) return hr; /* </s:Body> */
@@ -466,7 +459,7 @@ static HRESULT write_envelope( struct msg *msg )
     if (!msg->buf && (hr = WsCreateXmlBuffer( msg->heap, NULL, 0, &msg->buf, NULL )) != S_OK) return hr;
     if ((hr = WsSetOutputToBuffer( msg->writer, msg->buf, NULL, 0, NULL )) != S_OK) return hr;
     if ((hr = write_envelope_start( msg, msg->writer )) != S_OK) return hr;
-    return write_envelope_end( msg, msg->writer );
+    return write_envelope_end( msg->writer );
 }
 
 /**************************************************************************
@@ -511,7 +504,7 @@ HRESULT WINAPI WsWriteEnvelopeEnd( WS_MESSAGE *handle, WS_ERROR *error )
     if (!handle) return E_INVALIDARG;
     if (msg->state != WS_MESSAGE_STATE_WRITING) return WS_E_INVALID_OPERATION;
 
-    if ((hr = write_envelope_end( msg, msg->writer_body )) != S_OK) return hr;
+    if ((hr = write_envelope_end( msg->writer_body )) != S_OK) return hr;
 
     msg->state = WS_MESSAGE_STATE_DONE;
     return S_OK;
@@ -567,87 +560,89 @@ HRESULT WINAPI WsInitializeMessage( WS_MESSAGE *handle, WS_MESSAGE_INITIALIZATIO
     return write_envelope( msg );
 }
 
-static inline void set_utf8_text( WS_XML_UTF8_TEXT *text, BYTE *bytes, ULONG len )
+static HRESULT grow_header_array( struct msg *msg, ULONG size )
 {
-    text->text.textType = WS_XML_TEXT_TYPE_UTF8;
-    text->value.bytes   = bytes;
-    text->value.length  = len;
+    struct header **tmp;
+    if (size <= msg->header_size) return S_OK;
+    if (!(tmp = heap_realloc( msg->header, 2 * msg->header_size * sizeof(struct header *) )))
+        return E_OUTOFMEMORY;
+    msg->header = tmp;
+    msg->header_size *= 2;
+    return S_OK;
 }
 
-static HRESULT alloc_header( WS_HEADER_TYPE type, const WS_XML_STRING *name, BOOL mapped, WS_TYPE value_type,
-                             WS_WRITE_OPTION option, const void *value, ULONG size, struct header **ret )
+static struct header *alloc_header( WS_HEADER_TYPE type, BOOL mapped, const WS_XML_STRING *name,
+                                    const WS_XML_STRING *ns )
 {
-    struct header *header;
-
-    switch (value_type)
-    {
-    case WS_WSZ_TYPE:
-    {
-        int len;
-        const WCHAR *src;
-
-        if (option != WS_WRITE_REQUIRED_POINTER || size != sizeof(WCHAR *)) return E_INVALIDARG;
-
-        src = *(const WCHAR **)value;
-        len = WideCharToMultiByte( CP_UTF8, 0, src, -1, NULL, 0, NULL, NULL ) - 1;
-        if (!(header = heap_alloc_zero( sizeof(*header) + len ))) return E_OUTOFMEMORY;
-        set_utf8_text( &header->text, (BYTE *)(header + 1), len );
-        WideCharToMultiByte( CP_UTF8, 0, src, -1, (char *)header->text.value.bytes, len, NULL, NULL );
-        break;
-    }
-    case WS_XML_STRING_TYPE:
-    {
-        const WS_XML_STRING *str = value;
-
-        if (option != WS_WRITE_REQUIRED_VALUE)
-        {
-            FIXME( "unhandled write option %u\n", option );
-            return E_NOTIMPL;
-        }
-        if (size != sizeof(*str)) return E_INVALIDARG;
-        if (!(header = heap_alloc_zero( sizeof(*header) + str->length ))) return E_OUTOFMEMORY;
-        set_utf8_text( &header->text, (BYTE *)(header + 1), str->length );
-        memcpy( header->text.value.bytes, str->bytes, str->length );
-        break;
-    }
-    case WS_STRING_TYPE:
-    {
-        int len;
-        const WS_STRING *str = value;
-
-        if (option != WS_WRITE_REQUIRED_VALUE)
-        {
-            FIXME( "unhandled write option %u\n", option );
-            return E_NOTIMPL;
-        }
-        if (size != sizeof(*str)) return E_INVALIDARG;
-        len = WideCharToMultiByte( CP_UTF8, 0, str->chars, str->length, NULL, 0, NULL, NULL );
-        if (!(header = heap_alloc_zero( sizeof(*header) + len ))) return E_OUTOFMEMORY;
-        set_utf8_text( &header->text, (BYTE *)(header + 1), len );
-        WideCharToMultiByte( CP_UTF8, 0, str->chars, str->length, (char *)header->text.value.bytes,
-                             len, NULL, NULL );
-        break;
-    }
-    default:
-        FIXME( "unhandled type %u\n", value_type );
-        return E_NOTIMPL;
-    }
-
+    struct header *ret;
+    if (!(ret = heap_alloc_zero( sizeof(*ret) ))) return NULL;
     if (name && name->length)
     {
-        if (!(header->name.bytes = heap_alloc( name->length )))
+        if (!(ret->name.bytes = heap_alloc( name->length )))
         {
-            heap_free( header );
-            return E_OUTOFMEMORY;
+            free_header( ret );
+            return NULL;
         }
-        memcpy( header->name.bytes, name->bytes, name->length );
-        header->name.length = name->length;
+        memcpy( ret->name.bytes, name->bytes, name->length );
+        ret->name.length = name->length;
     }
-    header->type   = type;
-    header->mapped = mapped;
+    if (ns && ns->length)
+    {
+        if (!(ret->ns.bytes = heap_alloc( ns->length )))
+        {
+            free_header( ret );
+            return NULL;
+        }
+        memcpy( ret->ns.bytes, ns->bytes, ns->length );
+        ret->ns.length = ns->length;
+    }
+    ret->type   = type;
+    ret->mapped = mapped;
+    return ret;
+}
 
-    *ret = header;
-    return S_OK;
+static HRESULT write_standard_header( WS_XML_WRITER *writer, const WS_XML_STRING *name, WS_TYPE value_type,
+                                      WS_WRITE_OPTION option, const void *value, ULONG size )
+{
+    static const WS_XML_STRING prefix_s = {1, (BYTE *)"s"}, prefix_a = {1, (BYTE *)"a"};
+    static const WS_XML_STRING understand = {14, (BYTE *)"mustUnderstand"}, ns = {0, NULL};
+    WS_XML_INT32_TEXT one = {{WS_XML_TEXT_TYPE_INT32}, 1};
+    HRESULT hr;
+
+    if ((hr = WsWriteStartElement( writer, &prefix_a, name, &ns, NULL )) != S_OK) return hr;
+    if ((hr = WsWriteStartAttribute( writer, &prefix_s, &understand, &ns, FALSE, NULL )) != S_OK) return hr;
+    if ((hr = WsWriteText( writer, &one.text, NULL )) != S_OK) return hr;
+    if ((hr = WsWriteEndAttribute( writer, NULL )) != S_OK) return hr;
+    if ((hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, value_type, NULL, option, value, size,
+                           NULL )) != S_OK) return hr;
+    return WsWriteEndElement( writer, NULL );
+}
+
+static HRESULT build_standard_header( WS_HEAP *heap, WS_HEADER_TYPE type, WS_TYPE value_type,
+                                      WS_WRITE_OPTION option, const void *value, ULONG size,
+                                      struct header **ret )
+{
+    const WS_XML_STRING *name = get_header_name( type );
+    struct header *header;
+    WS_XML_WRITER *writer;
+    WS_XML_BUFFER *buf;
+    HRESULT hr;
+
+    if (!(header = alloc_header( type, FALSE, name, NULL ))) return E_OUTOFMEMORY;
+
+    if ((hr = WsCreateWriter( NULL, 0, &writer, NULL )) != S_OK) goto done;
+    if ((hr = WsCreateXmlBuffer( heap, NULL, 0, &buf, NULL )) != S_OK) goto done;
+    if ((hr = WsSetOutputToBuffer( writer, buf, NULL, 0, NULL )) != S_OK) goto done;
+    if ((hr = write_standard_header( writer, name, value_type, option, value, size )) != S_OK)
+        goto done;
+
+    header->u.buf = buf;
+
+done:
+    if (hr != S_OK) free_header( header );
+    else *ret = header;
+    WsFreeWriter( writer );
+    return hr;
 }
 
 /**************************************************************************
@@ -679,23 +674,25 @@ HRESULT WINAPI WsSetHeader( WS_MESSAGE *handle, WS_HEADER_TYPE type, WS_TYPE val
 
     if (!found)
     {
-        if (msg->header_count == msg->header_size)
-        {
-            struct header **tmp;
-            if (!(tmp = heap_realloc( msg->header, 2 * msg->header_size * sizeof(struct header *) )))
-                return E_OUTOFMEMORY;
-            msg->header = tmp;
-            msg->header_size *= 2;
-        }
-        i = msg->header_count++;
+        if ((hr = grow_header_array( msg, msg->header_count + 1 )) != S_OK) return hr;
+        i = msg->header_count;
     }
 
-    if ((hr = alloc_header( type, NULL, FALSE, value_type, option, value, size, &header )) != S_OK)
+    if ((hr = build_standard_header( msg->heap, type, value_type, option, value, size, &header )) != S_OK)
         return hr;
 
-    if (found) free_header( msg->header[i] );
+    if (!found) msg->header_count++;
+    else free_header( msg->header[i] );
+
     msg->header[i] = header;
     return write_envelope( msg );
+}
+
+static void remove_header( struct msg *msg, ULONG i )
+{
+    free_header( msg->header[i] );
+    memmove( &msg->header[i], &msg->header[i + 1], (msg->header_count - i) * sizeof(struct header *) );
+    msg->header_count--;
 }
 
 /**************************************************************************
@@ -718,15 +715,100 @@ HRESULT WINAPI WsRemoveHeader( WS_MESSAGE *handle, WS_HEADER_TYPE type, WS_ERROR
     {
         if (msg->header[i]->type == type)
         {
-            free_header( msg->header[i] );
-            memmove( &msg->header[i], &msg->header[i + 1], (msg->header_count - i) * sizeof(struct header *) );
-            msg->header_count--;
+            remove_header( msg, i );
             removed = TRUE;
             break;
         }
     }
 
     if (removed) return write_envelope( msg );
+    return S_OK;
+}
+
+static HRESULT build_mapped_header( const WS_XML_STRING *name, WS_TYPE type, WS_WRITE_OPTION option,
+                                    const void *value, ULONG size, struct header **ret )
+{
+    struct header *header;
+
+    if (!(header = alloc_header( 0, TRUE, name, NULL ))) return E_OUTOFMEMORY;
+    switch (type)
+    {
+    case WS_WSZ_TYPE:
+    {
+        int len;
+        const WCHAR *src;
+
+        if (option != WS_WRITE_REQUIRED_POINTER || size != sizeof(WCHAR *))
+        {
+            free_header( header );
+            return E_INVALIDARG;
+        }
+        src = *(const WCHAR **)value;
+        len = WideCharToMultiByte( CP_UTF8, 0, src, -1, NULL, 0, NULL, NULL ) - 1;
+        if (!(header->u.text = alloc_xml_string( NULL, len )))
+        {
+            free_header( header );
+            return E_OUTOFMEMORY;
+        }
+        WideCharToMultiByte( CP_UTF8, 0, src, -1, (char *)header->u.text->bytes, len, NULL, NULL );
+        break;
+    }
+    case WS_XML_STRING_TYPE:
+    {
+        const WS_XML_STRING *str = value;
+
+        if (option != WS_WRITE_REQUIRED_VALUE)
+        {
+            FIXME( "unhandled write option %u\n", option );
+            free_header( header );
+            return E_NOTIMPL;
+        }
+        if (size != sizeof(*str))
+        {
+            free_header( header );
+            return E_INVALIDARG;
+        }
+        if (!(header->u.text = alloc_xml_string( NULL, str->length )))
+        {
+            free_header( header );
+            return E_OUTOFMEMORY;
+        }
+        memcpy( header->u.text->bytes, str->bytes, str->length );
+        break;
+    }
+    case WS_STRING_TYPE:
+    {
+        int len;
+        const WS_STRING *str = value;
+
+        if (option != WS_WRITE_REQUIRED_VALUE)
+        {
+            FIXME( "unhandled write option %u\n", option );
+            free_header( header );
+            return E_NOTIMPL;
+        }
+        if (size != sizeof(*str))
+        {
+            free_header( header );
+            return E_INVALIDARG;
+        }
+        len = WideCharToMultiByte( CP_UTF8, 0, str->chars, str->length, NULL, 0, NULL, NULL );
+        if (!(header->u.text = alloc_xml_string( NULL, len )))
+        {
+            free_header( header );
+            return E_OUTOFMEMORY;
+        }
+        WideCharToMultiByte( CP_UTF8, 0, str->chars, str->length, (char *)header->u.text->bytes,
+                             len, NULL, NULL );
+        break;
+    }
+    default:
+        FIXME( "unhandled type %u\n", type );
+        free_header( header );
+        return E_NOTIMPL;
+    }
+
+    *ret = header;
     return S_OK;
 }
 
@@ -760,21 +842,15 @@ HRESULT WINAPI WsAddMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *name,
 
     if (!found)
     {
-        if (msg->header_count == msg->header_size)
-        {
-            struct header **tmp;
-            if (!(tmp = heap_realloc( msg->header, 2 * msg->header_size * sizeof(struct header *) )))
-                return E_OUTOFMEMORY;
-            msg->header = tmp;
-            msg->header_size *= 2;
-        }
-        i = msg->header_count++;
+        if ((hr = grow_header_array( msg, msg->header_count + 1 )) != S_OK) return hr;
+        i = msg->header_count;
     }
 
-    if ((hr = alloc_header( 0, name, TRUE, WS_XML_STRING_TYPE, option, value, size, &header )) != S_OK)
-        return hr;
+    if ((hr = build_mapped_header( name, type, option, value, size, &header )) != S_OK) return hr;
 
-    if (found) free_header( msg->header[i] );
+    if (!found) msg->header_count++;
+    else free_header( msg->header[i] );
+
     msg->header[i] = header;
     return S_OK;
 }
@@ -798,9 +874,7 @@ HRESULT WINAPI WsRemoveMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *na
         if (msg->header[i]->type || !msg->header[i]->mapped) continue;
         if (WsXmlStringEquals( name, &msg->header[i]->name, NULL ) == S_OK)
         {
-            free_header( msg->header[i] );
-            memmove( &msg->header[i], &msg->header[i + 1], (msg->header_count - i) * sizeof(struct header *) );
-            msg->header_count--;
+            remove_header( msg, i );
             break;
         }
     }
