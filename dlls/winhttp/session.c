@@ -1813,6 +1813,7 @@ static BOOL run_script( char *script, DWORD size, const WCHAR *url, WINHTTP_PROX
     char *result, *urlA;
     DWORD len_result;
     struct AUTO_PROXY_SCRIPT_BUFFER buffer;
+    URL_COMPONENTSW uc;
 
     buffer.dwStructSize = sizeof(buffer);
     buffer.lpszScriptBuffer = script;
@@ -1824,10 +1825,23 @@ static BOOL run_script( char *script, DWORD size, const WCHAR *url, WINHTTP_PROX
         heap_free( urlA );
         return FALSE;
     }
-    if ((ret = InternetGetProxyInfo( urlA, strlen(urlA), NULL, 0, &result, &len_result )))
+
+    memset( &uc, 0, sizeof(uc) );
+    uc.dwStructSize = sizeof(uc);
+    uc.dwHostNameLength = -1;
+
+    if (WinHttpCrackUrl( url, 0, 0, &uc ))
     {
-        ret = parse_script_result( result, info );
-        heap_free( result );
+        char *hostnameA = strdupWA_sized( uc.lpszHostName, uc.dwHostNameLength );
+
+        if ((ret = InternetGetProxyInfo( urlA, strlen(urlA),
+                        hostnameA, strlen(hostnameA), &result, &len_result )))
+        {
+            ret = parse_script_result( result, info );
+            heap_free( result );
+        }
+
+        heap_free( hostnameA );
     }
     heap_free( urlA );
     return InternetDeInitializeAutoProxyDll( NULL, 0 );
