@@ -588,6 +588,33 @@ HRESULT WINAPI WsReadEnvelopeStart( WS_MESSAGE *handle, WS_XML_READER *reader, W
     return S_OK;
 }
 
+static HRESULT read_envelope_end( WS_XML_READER *reader )
+{
+    HRESULT hr;
+    if ((hr = WsReadEndElement( reader, NULL )) != S_OK) return hr; /* </s:Body> */
+    return WsReadEndElement( reader, NULL ); /* </s:Envelope> */
+}
+
+/**************************************************************************
+ *          WsReadEnvelopeEnd		[webservices.@]
+ */
+HRESULT WINAPI WsReadEnvelopeEnd( WS_MESSAGE *handle, WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p\n", handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!handle) return E_INVALIDARG;
+    if (msg->state != WS_MESSAGE_STATE_READING) return WS_E_INVALID_OPERATION;
+
+    if ((hr = read_envelope_end( msg->reader_body )) != S_OK) return hr;
+
+    msg->state = WS_MESSAGE_STATE_DONE;
+    return S_OK;
+}
+
 /**************************************************************************
  *          WsInitializeMessage		[webservices.@]
  */

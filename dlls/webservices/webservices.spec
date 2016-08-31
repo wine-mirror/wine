@@ -111,7 +111,7 @@
 @ stdcall WsReadEndAttribute(ptr ptr)
 @ stdcall WsReadEndElement(ptr ptr)
 @ stub WsReadEndpointAddressExtension
-@ stub WsReadEnvelopeEnd
+@ stdcall WsReadEnvelopeEnd(ptr ptr)
 @ stdcall WsReadEnvelopeStart(ptr ptr ptr ptr ptr)
 @ stub WsReadMessageEnd
 @ stub WsReadMessageStart

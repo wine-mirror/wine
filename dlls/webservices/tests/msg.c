@@ -916,6 +916,52 @@ static void test_WsReadEnvelopeStart(void)
     WsFreeReader( reader );
 }
 
+static void test_WsReadEnvelopeEnd(void)
+{
+    static const char xml[] =
+        "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body></s:Body></s:Envelope>";
+    WS_MESSAGE *msg, *msg2;
+    WS_XML_READER *reader;
+    WS_MESSAGE_STATE state;
+    HRESULT hr;
+
+    hr = WsReadEnvelopeEnd( NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL, 0, &msg, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL, 0, &msg2, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_input( reader, xml, strlen(xml) );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadEnvelopeEnd( msg2, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = WsReadEnvelopeStart( msg2, reader, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadEnvelopeEnd( msg2, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    state = 0xdeadbeef;
+    hr = WsGetMessageProperty( msg2, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == WS_MESSAGE_STATE_DONE, "got %u\n", state );
+
+    WsFreeMessage( msg );
+    WsFreeMessage( msg2 );
+    WsFreeReader( reader );
+}
+
 START_TEST(msg)
 {
     test_WsCreateMessage();
@@ -932,4 +978,5 @@ START_TEST(msg)
     test_WsAddCustomHeader();
     test_WsRemoveCustomHeader();
     test_WsReadEnvelopeStart();
+    test_WsReadEnvelopeEnd();
 }
