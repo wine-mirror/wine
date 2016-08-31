@@ -98,9 +98,10 @@ static void WINAPI service_main(DWORD argc, char **argv)
     SERVICE_STATUS status;
     BOOL res;
 
-    service_ok(argc == 1, "argc = %d\n", argc);
-    if(argc)
-        service_ok(!strcmp(argv[0], service_name), "argv[0] = %s, expected %s\n", argv[0], service_name);
+    service_ok(argc == 3, "argc = %u, expected 3\n", argc);
+    service_ok(!strcmp(argv[0], service_name), "argv[0] = '%s', expected '%s'\n", argv[0], service_name);
+    service_ok(!strcmp(argv[1], "param1"), "argv[1] = '%s', expected 'param1'\n", argv[1]);
+    service_ok(!strcmp(argv[2], "param2"), "argv[2] = '%s', expected 'param2'\n", argv[2]);
 
     service_handle = pRegisterServiceCtrlHandlerExA(service_name, service_handler, NULL);
     service_ok(service_handle != NULL, "RegisterServiceCtrlHandlerEx failed: %u\n", GetLastError());
@@ -194,9 +195,8 @@ static void WINAPI no_stop_main(DWORD argc, char **argv)
     SERVICE_STATUS status;
     BOOL res;
 
-    service_ok(argc == 1, "argc = %d\n", argc);
-    if(argc)
-        service_ok(!strcmp(argv[0], service_name), "argv[0] = %s, expected %s\n", argv[0], service_name);
+    service_ok(argc == 1, "argc = %u, expected 1\n", argc);
+    service_ok(!strcmp(argv[0], service_name), "argv[0] = '%s', expected '%s'\n", argv[0], service_name);
 
     service_handle = pRegisterServiceCtrlHandlerExA(service_name, no_stop_handler, NULL);
     service_ok(service_handle != NULL, "RegisterServiceCtrlHandlerEx failed: %u\n", GetLastError());
@@ -278,7 +278,7 @@ static void expect_event(const char *event_name)
 
 static DWORD WINAPI pipe_thread(void *arg)
 {
-    char buf[257], *ptr;
+    char buf[512], *ptr;
     DWORD read;
     BOOL res;
 
@@ -320,6 +320,7 @@ static DWORD WINAPI pipe_thread(void *arg)
 
 static void test_service(void)
 {
+    static const char *argv[2] = {"param1", "param2"};
     SC_HANDLE service_handle = register_service("simple_service");
     SERVICE_STATUS_PROCESS status2;
     SERVICE_STATUS status;
@@ -330,7 +331,7 @@ static void test_service(void)
         return;
 
     trace("starting...\n");
-    res = StartServiceA(service_handle, 0, NULL);
+    res = StartServiceA(service_handle, 2, argv);
     ok(res, "StartService failed: %u\n", GetLastError());
     if(!res) {
         DeleteService(service_handle);
