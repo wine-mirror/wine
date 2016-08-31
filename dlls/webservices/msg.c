@@ -1062,7 +1062,7 @@ HRESULT WINAPI WsRemoveCustomHeader( WS_MESSAGE *handle, const WS_XML_STRING *na
         {
             remove_header( msg, i );
             removed = TRUE;
-            break;
+            i--;
         }
     }
 

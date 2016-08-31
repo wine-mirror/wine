@@ -839,8 +839,15 @@ static void test_WsRemoveCustomHeader(void)
         "xmlns:s=\"http://www.w3.org/2003/05/soap-envelope\"><s:Header>"
         "<a:MessageID>urn:uuid:00000000-0000-0000-0000-000000000000</a:MessageID>"
         "</s:Header><s:Body/></s:Envelope>";
+    static const char expected3[] =
+        "<s:Envelope xmlns:a=\"http://www.w3.org/2005/08/addressing\" "
+        "xmlns:s=\"http://www.w3.org/2003/05/soap-envelope\"><s:Header>"
+        "<a:MessageID>urn:uuid:00000000-0000-0000-0000-000000000000</a:MessageID>"
+        "<test xmlns=\"ns\">value</test><test xmlns=\"ns\">value2</test>"
+        "</s:Header><s:Body/></s:Envelope>";
     static WS_XML_STRING localname = {4, (BYTE *)"test"}, ns = {2, (BYTE *)"ns"};
     static const WS_XML_STRING value = {5, (BYTE *)"value"};
+    static const WS_XML_STRING value2 = {6, (BYTE *)"value2"};
     HRESULT hr;
     WS_MESSAGE *msg;
     WS_ELEMENT_DESCRIPTION desc;
@@ -865,6 +872,10 @@ static void test_WsRemoveCustomHeader(void)
     hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, &value, sizeof(value), 0, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output_header( msg, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
+
+    hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, &value2, sizeof(value2), 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_header( msg, expected3, -1, strstr(expected3, "urn:uuid:") - expected3, 46, __LINE__ );
 
     hr = WsRemoveCustomHeader( msg, NULL, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
