@@ -1,6 +1,6 @@
 MODULE    = rpcss.exe
-APPMODE   = -mconsole
-IMPORTS   = rpcrt4
+APPMODE   = -mconsole -municode
+IMPORTS   = rpcrt4 advapi32
 
 C_SRCS = \
 	epmp.c \

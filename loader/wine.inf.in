@@ -121,6 +121,7 @@ AddReg=\
 AddService=BITS,0,BITSService
 AddService=MSIServer,0,MSIService
 AddService=MountMgr,0x800,MountMgrService
+AddService=RpcSs,0,RpcSsService
 AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
@@ -134,6 +135,7 @@ AddService=Schedule,0,TaskSchedulerService
 AddService=BITS,0,BITSService
 AddService=MSIServer,0,MSIService
 AddService=MountMgr,0x800,MountMgrService
+AddService=RpcSs,0,RpcSsService
 AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
@@ -147,6 +149,7 @@ AddService=Schedule,0,TaskSchedulerService
 AddService=BITS,0,BITSService
 AddService=MSIServer,0,MSIService
 AddService=MountMgr,0x800,MountMgrService
+AddService=RpcSs,0,RpcSsService
 AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
@@ -3165,6 +3168,14 @@ ServiceType=1
 StartType=2
 ErrorControl=1
 
+[RpcSsService]
+Description="RPC service"
+DisplayName="Remote Procedure Call (RPC)"
+ServiceBinary="%11%\rpcss.exe"
+ServiceType=32
+StartType=3
+ErrorControl=1
+
 [SpoolerService]
 Description="Loads files to memory for later printing"
 DisplayName="Print Spooler"
@@ -3258,7 +3269,6 @@ HKLM,%CurrentVersionNT%\SvcHost,"netsvcs",0x00010008,"Schedule"
 HKLM,%CurrentVersion%\RunServices,"winemenubuilder",2,"%11%\winemenubuilder.exe -a -r"
 HKLM,"System\CurrentControlSet\Services\Eventlog\Application",,16
 HKLM,"System\CurrentControlSet\Services\Eventlog\System",,16
-HKLM,"System\CurrentControlSet\Services\RpcSs",,16
 HKLM,"System\CurrentControlSet\Services\Tcpip\Parameters",,16
 HKLM,"System\CurrentControlSet\Services\VxD\MSTCP",,16
 HKLM,"System\CurrentControlSet\Services\Winsock\Parameters",,16
