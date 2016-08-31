@@ -29,6 +29,9 @@
 
 #include "xinput.h"
 
+/* Not defined in the headers, used only by XInputGetStateEx */
+#define XINPUT_GAMEPAD_GUIDE 0x0400
+
 WINE_DEFAULT_DEBUG_CHANNEL(xinput);
 
 struct
@@ -72,17 +75,26 @@ DWORD WINAPI XInputSetState(DWORD index, XINPUT_VIBRATION* vibration)
 
 DWORD WINAPI DECLSPEC_HOTPATCH XInputGetState(DWORD index, XINPUT_STATE* state)
 {
+    union
+    {
+        XINPUT_STATE state;
+        XINPUT_STATE_EX state_ex;
+    } xinput;
+    DWORD ret;
     static int warn_once;
 
     if (!warn_once++)
         FIXME("(index %u, state %p) Stub!\n", index, state);
 
-    if (index >= XUSER_MAX_COUNT)
-        return ERROR_BAD_ARGUMENTS;
-    if (!controllers[index].connected)
-        return ERROR_DEVICE_NOT_CONNECTED;
+    ret = XInputGetStateEx(index, &xinput.state_ex);
+    if (ret != ERROR_SUCCESS)
+        return ret;
 
-    return ERROR_NOT_SUPPORTED;
+    /* The main difference between this and the Ex version is the media guide button */
+    xinput.state.Gamepad.wButtons &= ~XINPUT_GAMEPAD_GUIDE;
+    *state = xinput.state;
+
+    return ERROR_SUCCESS;
 }
 
 DWORD WINAPI DECLSPEC_HOTPATCH XInputGetStateEx(DWORD index, XINPUT_STATE_EX* state_ex)
