@@ -50,14 +50,14 @@ void WINAPI XInputEnable(BOOL enable)
     to the controllers. Setting to true will send the last vibration
     value (sent to XInputSetState) to the controller and allow messages to
     be sent */
-    FIXME("(%d) Stub!\n", enable);
+    FIXME("(enable %d) Stub!\n", enable);
 }
 
-DWORD WINAPI XInputSetState(DWORD dwUserIndex, XINPUT_VIBRATION* pVibration)
+DWORD WINAPI XInputSetState(DWORD index, XINPUT_VIBRATION* vibration)
 {
-    FIXME("(%d %p) Stub!\n", dwUserIndex, pVibration);
+    FIXME("(index %u, vibration %p) Stub!\n", index, vibration);
 
-    if (dwUserIndex < XUSER_MAX_COUNT)
+    if (index < XUSER_MAX_COUNT)
     {
         return ERROR_DEVICE_NOT_CONNECTED;
         /* If controller exists then return ERROR_SUCCESS */
@@ -65,14 +65,14 @@ DWORD WINAPI XInputSetState(DWORD dwUserIndex, XINPUT_VIBRATION* pVibration)
     return ERROR_BAD_ARGUMENTS;
 }
 
-DWORD WINAPI DECLSPEC_HOTPATCH XInputGetState(DWORD dwUserIndex, XINPUT_STATE* pState)
+DWORD WINAPI DECLSPEC_HOTPATCH XInputGetState(DWORD index, XINPUT_STATE* state)
 {
     static int warn_once;
 
     if (!warn_once++)
-        FIXME("(%u %p)\n", dwUserIndex, pState);
+        FIXME("(index %u, state %p) Stub!\n", index, state);
 
-    if (dwUserIndex < XUSER_MAX_COUNT)
+    if (index < XUSER_MAX_COUNT)
     {
         return ERROR_DEVICE_NOT_CONNECTED;
         /* If controller exists then return ERROR_SUCCESS */
@@ -80,11 +80,11 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetState(DWORD dwUserIndex, XINPUT_STATE* p
     return ERROR_BAD_ARGUMENTS;
 }
 
-DWORD WINAPI XInputGetKeystroke(DWORD dwUserIndex, DWORD dwReserve, PXINPUT_KEYSTROKE pKeystroke)
+DWORD WINAPI XInputGetKeystroke(DWORD index, DWORD reserved, PXINPUT_KEYSTROKE keystroke)
 {
-    FIXME("(%d %d %p) Stub!\n", dwUserIndex, dwReserve, pKeystroke);
+    FIXME("(index %u, reserved %u, keystroke %p) Stub!\n", index, reserved, keystroke);
 
-    if (dwUserIndex < XUSER_MAX_COUNT)
+    if (index < XUSER_MAX_COUNT)
     {
         return ERROR_DEVICE_NOT_CONNECTED;
         /* If controller exists then return ERROR_SUCCESS */
@@ -92,14 +92,14 @@ DWORD WINAPI XInputGetKeystroke(DWORD dwUserIndex, DWORD dwReserve, PXINPUT_KEYS
     return ERROR_BAD_ARGUMENTS;
 }
 
-DWORD WINAPI XInputGetCapabilities(DWORD dwUserIndex, DWORD dwFlags, XINPUT_CAPABILITIES* pCapabilities)
+DWORD WINAPI XInputGetCapabilities(DWORD index, DWORD flags, XINPUT_CAPABILITIES* capabilities)
 {
     static int warn_once;
 
     if (!warn_once++)
-        FIXME("(%d %d %p)\n", dwUserIndex, dwFlags, pCapabilities);
+        FIXME("(index %u, flags 0x%x, capabilities %p) Stub!\n", index, flags, capabilities);
 
-    if (dwUserIndex < XUSER_MAX_COUNT)
+    if (index < XUSER_MAX_COUNT)
     {
         return ERROR_DEVICE_NOT_CONNECTED;
         /* If controller exists then return ERROR_SUCCESS */
@@ -107,11 +107,11 @@ DWORD WINAPI XInputGetCapabilities(DWORD dwUserIndex, DWORD dwFlags, XINPUT_CAPA
     return ERROR_BAD_ARGUMENTS;
 }
 
-DWORD WINAPI XInputGetDSoundAudioDeviceGuids(DWORD dwUserIndex, GUID* pDSoundRenderGuid, GUID* pDSoundCaptureGuid)
+DWORD WINAPI XInputGetDSoundAudioDeviceGuids(DWORD index, GUID* render_guid, GUID* capture_guid)
 {
-    FIXME("(%d %p %p) Stub!\n", dwUserIndex, pDSoundRenderGuid, pDSoundCaptureGuid);
+    FIXME("(index %u, render guid %p, capture guid %p) Stub!\n", index, render_guid, capture_guid);
 
-    if (dwUserIndex < XUSER_MAX_COUNT)
+    if (index < XUSER_MAX_COUNT)
     {
         return ERROR_DEVICE_NOT_CONNECTED;
         /* If controller exists then return ERROR_SUCCESS */
@@ -119,11 +119,11 @@ DWORD WINAPI XInputGetDSoundAudioDeviceGuids(DWORD dwUserIndex, GUID* pDSoundRen
     return ERROR_BAD_ARGUMENTS;
 }
 
-DWORD WINAPI XInputGetBatteryInformation(DWORD dwUserIndex, BYTE deviceType, XINPUT_BATTERY_INFORMATION* pBatteryInfo)
+DWORD WINAPI XInputGetBatteryInformation(DWORD index, BYTE type, XINPUT_BATTERY_INFORMATION* battery)
 {
-    FIXME("(%d %u %p) Stub!\n", dwUserIndex, deviceType, pBatteryInfo);
+    FIXME("(index %u, type %u, battery %p) Stub!\n", index, type, battery);
 
-    if (dwUserIndex < XUSER_MAX_COUNT)
+    if (index < XUSER_MAX_COUNT)
     {
         return ERROR_DEVICE_NOT_CONNECTED;
         /* If controller exists then return ERROR_SUCCESS */
