@@ -379,9 +379,9 @@ static DWORD WINAPI service_thread(LPVOID arg)
 /******************************************************************************
  * service_handle_start
  */
-static DWORD service_handle_start(service_data *service, const WCHAR *data, DWORD count)
+static DWORD service_handle_start(service_data *service, const void *data, DWORD data_size)
 {
-    TRACE("%s argsize %u\n", debugstr_w(service->name), count);
+    DWORD count = data_size / sizeof(WCHAR);
 
     if (service->thread)
     {
@@ -390,8 +390,11 @@ static DWORD service_handle_start(service_data *service, const WCHAR *data, DWOR
     }
 
     heap_free(service->args);
-    service->args = heap_alloc(count * sizeof(WCHAR));
-    memcpy( service->args, data, count * sizeof(WCHAR) );
+    service->args = heap_alloc((count + 2) * sizeof(WCHAR));
+    if (count) memcpy( service->args, data, count * sizeof(WCHAR) );
+    service->args[count++] = 0;
+    service->args[count++] = 0;
+
     service->thread = CreateThread( NULL, 0, service_thread,
                                     service, 0, NULL );
     SetEvent( service_event );  /* notify the main loop */
@@ -401,14 +404,16 @@ static DWORD service_handle_start(service_data *service, const WCHAR *data, DWOR
 /******************************************************************************
  * service_handle_control
  */
-static DWORD service_handle_control(const service_data *service, DWORD control, void *data)
+static DWORD service_handle_control(service_data *service, DWORD control, const void *data, DWORD data_size)
 {
     DWORD ret = ERROR_INVALID_SERVICE_CONTROL;
 
-    TRACE("%s control %u data %p\n", debugstr_w(service->name), control, data);
+    TRACE("%s control %u data %p data_size %u\n", debugstr_w(service->name), control, data, data_size);
 
-    if (service->handler)
-        ret = service->handler(control, 0, data, service->context);
+    if (control == SERVICE_CONTROL_START)
+        ret = service_handle_start(service, data, data_size);
+    else if (service->handler)
+        ret = service->handler(control, 0, (void *)data, service->context);
     return ret;
 }
 
@@ -472,38 +477,32 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
             goto done;
         }
 
-        /* find the service */
-        if (!(service = find_service_by_name( name )))
+        if (info.magic != SERVICE_PROTOCOL_MAGIC)
         {
-            FIXME( "got request %u for unknown service %s\n", info.cmd, debugstr_w(name));
+            ERR( "received invalid request for service %s\n", debugstr_w(name) );
             result = ERROR_INVALID_PARAMETER;
             goto done;
         }
 
-        TRACE( "got request %u for service %s\n", info.cmd, debugstr_w(name) );
-
-        /* handle the request */
-        switch (info.cmd)
+        /* find the service */
+        if (!(service = find_service_by_name( name )))
         {
-        case WINESERV_STARTINFO:
-            if (!service->handle)
-            {
-                if (!(service->handle = OpenServiceW( disp->manager, name, SERVICE_SET_STATUS )) ||
-                    !(service->full_access_handle = OpenServiceW( disp->manager, name,
-                            GENERIC_READ|GENERIC_WRITE )))
-                    FIXME( "failed to open service %s\n", debugstr_w(name) );
-            }
-            result = service_handle_start(service, (WCHAR *)data, data_size / sizeof(WCHAR));
-            break;
-        case WINESERV_SENDCONTROL:
-            result = service_handle_control(service, info.control, (data_size > info.name_size * sizeof(WCHAR)) ?
-                                            &data[info.name_size * sizeof(WCHAR)] : NULL);
-            break;
-        default:
-            ERR("received invalid command %u\n", info.cmd);
+            FIXME( "got request for unknown service %s\n", debugstr_w(name) );
             result = ERROR_INVALID_PARAMETER;
-            break;
+            goto done;
         }
+
+        if (!service->handle)
+        {
+            if (!(service->handle = OpenServiceW( disp->manager, name, SERVICE_SET_STATUS )) ||
+                !(service->full_access_handle = OpenServiceW( disp->manager, name,
+                        GENERIC_READ|GENERIC_WRITE )))
+                FIXME( "failed to open service %s\n", debugstr_w(name) );
+        }
+
+        data_size -= info.name_size * sizeof(WCHAR);
+        result = service_handle_control(service, info.control, data_size ?
+                                        &data[info.name_size * sizeof(WCHAR)] : NULL, data_size);
 
     done:
         LeaveCriticalSection( &service_cs );
@@ -592,13 +591,13 @@ static BOOL service_run_main_thread(void)
                     {
                         FIXME("service should be able to delay shutdown\n");
                         timeout += spi.dwPreshutdownTimeout;
-                        ret = service_handle_control( services[i], SERVICE_CONTROL_PRESHUTDOWN, NULL );
+                        ret = service_handle_control( services[i], SERVICE_CONTROL_PRESHUTDOWN, NULL, 0 );
                         wait_handles[n++] = services[i]->thread;
                     }
                 }
                 else if (res && (st.dwControlsAccepted & SERVICE_ACCEPT_SHUTDOWN))
                 {
-                    ret = service_handle_control( services[i], SERVICE_CONTROL_SHUTDOWN, NULL );
+                    ret = service_handle_control( services[i], SERVICE_CONTROL_SHUTDOWN, NULL, 0 );
                     wait_handles[n++] = services[i]->thread;
                 }
             }

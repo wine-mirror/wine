@@ -34,15 +34,12 @@ cpp_quote("#define SVCCTL_ENDPOINTA \"\\\\pipe\\\\svcctl\"")
 cpp_quote("#define SVCCTL_STARTED_EVENT {'_','_','w','i','n','e','_','S','v','c','c','t','l','S','t','a','r','t','e','d',0}")
 
 /* Service startup protocol over control pipe - not compatible with Windows */
-enum service_pipe_command
-{
-    WINESERV_STARTINFO = 1,
-    WINESERV_SENDCONTROL = 2
-};
+cpp_quote("#define SERVICE_PROTOCOL_MAGIC 0x57494e45")
+cpp_quote("#define SERVICE_CONTROL_START 0")
 
 typedef struct service_start_info_t
 {
-    enum service_pipe_command cmd;        /* request code */
+    DWORD                     magic;      /* protocol magic */
     DWORD                     total_size; /* total request size */
     DWORD                     name_size;  /* size of name in data buffer */
     DWORD                     control;    /* control code */

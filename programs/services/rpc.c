@@ -979,7 +979,7 @@ static BOOL service_accepts_control(const struct service_entry *service, DWORD d
 /******************************************************************************
  * process_send_command
  */
-BOOL process_send_command(struct process_entry *process, const void *data, DWORD size, DWORD *result)
+static BOOL process_send_command(struct process_entry *process, const void *data, DWORD size, DWORD *result)
 {
     OVERLAPPED overlapped;
     DWORD count, ret;
@@ -1030,8 +1030,8 @@ BOOL process_send_command(struct process_entry *process, const void *data, DWORD
 /******************************************************************************
  * process_send_control
  */
-static BOOL process_send_control(struct process_entry *process, const WCHAR *name, DWORD control,
-                                 const BYTE *data, DWORD data_size, DWORD *result)
+BOOL process_send_control(struct process_entry *process, const WCHAR *name, DWORD control,
+                          const BYTE *data, DWORD data_size, DWORD *result)
 {
     service_start_info *ssi;
     DWORD len;
@@ -1041,7 +1041,7 @@ static BOOL process_send_control(struct process_entry *process, const WCHAR *nam
     len = (strlenW(name) + 1) * sizeof(WCHAR) + data_size;
 
     ssi = HeapAlloc(GetProcessHeap(),0,FIELD_OFFSET(service_start_info, data[len]));
-    ssi->cmd = WINESERV_SENDCONTROL;
+    ssi->magic = SERVICE_PROTOCOL_MAGIC;
     ssi->control = control;
     ssi->total_size = FIELD_OFFSET(service_start_info, data[len]);
     ssi->name_size = strlenW(name) + 1;

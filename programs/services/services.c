@@ -844,8 +844,7 @@ static DWORD process_send_start_message(struct process_entry *process, const WCH
 {
     OVERLAPPED overlapped;
     DWORD i, len, result;
-    service_start_info *ssi;
-    LPWSTR p;
+    WCHAR *str, *p;
 
     WINE_TRACE("%p %s %p %d\n", process, wine_dbgstr_w(name), argv, argc);
 
@@ -872,32 +871,28 @@ static DWORD process_send_start_message(struct process_entry *process, const WCH
         }
     }
 
-    /* calculate how much space do we need to send the startup info */
     len = strlenW(name) + 1;
-    for (i=0; i<argc; i++)
+    for (i = 0; i < argc; i++)
         len += strlenW(argv[i])+1;
     len = (len + 1) * sizeof(WCHAR);
 
-    ssi = HeapAlloc(GetProcessHeap(),0,FIELD_OFFSET(service_start_info, data[len]));
-    ssi->cmd = WINESERV_STARTINFO;
-    ssi->control = 0;
-    ssi->total_size = FIELD_OFFSET(service_start_info, data[len]);
-    ssi->name_size = strlenW(name) + 1;
-    strcpyW((WCHAR *)ssi->data, name);
+    if (!(str = HeapAlloc(GetProcessHeap(), 0, len)))
+        return ERROR_NOT_ENOUGH_SERVER_MEMORY;
 
-    /* copy service args into a single buffer*/
-    p = (WCHAR *)&ssi->data[ssi->name_size * sizeof(WCHAR)];
-    for (i=0; i<argc; i++)
+    p = str;
+    strcpyW(p, name);
+    p += strlenW(name) + 1;
+    for (i = 0; i < argc; i++)
     {
         strcpyW(p, argv[i]);
         p += strlenW(p) + 1;
     }
-    *p=0;
+    *p = 0;
 
-    if (!process_send_command(process, ssi, ssi->total_size, &result))
+    if (!process_send_control(process, name, SERVICE_CONTROL_START, (const BYTE *)str, len, &result))
         result = ERROR_SERVICE_REQUEST_TIMEOUT;
 
-    HeapFree(GetProcessHeap(), 0, ssi);
+    HeapFree(GetProcessHeap(), 0, str);
     return result;
 }
 
