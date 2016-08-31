@@ -859,6 +859,63 @@ static void test_WsRemoveCustomHeader(void)
     WsFreeMessage( msg );
 }
 
+static HRESULT set_input( WS_XML_READER *reader, const char *data, ULONG size )
+{
+    WS_XML_READER_TEXT_ENCODING text = {{WS_XML_READER_ENCODING_TYPE_TEXT}, WS_CHARSET_AUTO};
+    WS_XML_READER_BUFFER_INPUT buf;
+
+    buf.input.inputType = WS_XML_READER_INPUT_TYPE_BUFFER;
+    buf.encodedData     = (void *)data;
+    buf.encodedDataSize = size;
+    return WsSetInput( reader, &text.encoding, &buf.input, NULL, 0, NULL );
+}
+
+static void test_WsReadEnvelopeStart(void)
+{
+    static const char xml[] =
+        "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body/></s:Envelope>";
+    WS_MESSAGE *msg, *msg2;
+    WS_XML_READER *reader;
+    WS_MESSAGE_STATE state;
+    HRESULT hr;
+
+    hr = WsReadEnvelopeStart( NULL, NULL, NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL, 0, &msg, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadEnvelopeStart( msg, NULL, NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadEnvelopeStart( msg, reader, NULL, NULL, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL, 0, &msg2, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_input( reader, xml, strlen(xml) );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadEnvelopeStart( msg2, reader, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    state = 0xdeadbeef;
+    hr = WsGetMessageProperty( msg2, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == WS_MESSAGE_STATE_READING, "got %u\n", state );
+
+    WsFreeMessage( msg );
+    WsFreeMessage( msg2 );
+    WsFreeReader( reader );
+}
+
 START_TEST(msg)
 {
     test_WsCreateMessage();
@@ -874,4 +931,5 @@ START_TEST(msg)
     test_WsRemoveMappedHeader();
     test_WsAddCustomHeader();
     test_WsRemoveCustomHeader();
+    test_WsReadEnvelopeStart();
 }

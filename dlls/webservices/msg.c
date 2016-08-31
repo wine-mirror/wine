@@ -75,6 +75,7 @@ struct msg
     WS_XML_BUFFER            *buf;
     WS_XML_WRITER            *writer;
     WS_XML_WRITER            *writer_body;
+    WS_XML_READER            *reader_body;
     ULONG                     header_count;
     ULONG                     header_size;
     struct header           **header;
@@ -534,6 +535,57 @@ HRESULT WINAPI WsWriteBody( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTION *de
 
     if (desc->elementLocalName) hr = WsWriteEndElement( msg->writer_body, NULL );
     return hr;
+}
+
+static BOOL match_current_element( WS_XML_READER *reader, const WS_XML_STRING *localname )
+{
+    const WS_XML_NODE *node;
+    const WS_XML_ELEMENT_NODE *elem;
+
+    if (WsGetReaderNode( reader, &node, NULL ) != S_OK) return FALSE;
+    if (node->nodeType != WS_XML_NODE_TYPE_ELEMENT) return FALSE;
+    elem = (const WS_XML_ELEMENT_NODE *)node;
+    return WsXmlStringEquals( elem->localName, localname, NULL ) == S_OK;
+}
+
+static HRESULT read_envelope_start( WS_XML_READER *reader )
+{
+    static const WS_XML_STRING envelope = {8, (BYTE *)"Envelope"}, body = {4, (BYTE *)"Body"};
+    HRESULT hr;
+
+    if ((hr = WsReadNode( reader, NULL )) != S_OK) return hr;
+    if (!match_current_element( reader, &envelope )) return WS_E_INVALID_FORMAT;
+    /* FIXME: read headers */
+    if ((hr = WsReadNode( reader, NULL )) != S_OK) return hr;
+    if (!match_current_element( reader, &body )) return WS_E_INVALID_FORMAT;
+    return WsReadNode( reader, NULL );
+}
+
+/**************************************************************************
+ *          WsReadEnvelopeStart		[webservices.@]
+ */
+HRESULT WINAPI WsReadEnvelopeStart( WS_MESSAGE *handle, WS_XML_READER *reader, WS_MESSAGE_DONE_CALLBACK cb,
+                                    void *state, WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p %p %p %p\n", handle, reader, cb, state, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+    if (cb)
+    {
+        FIXME( "callback not supported\n" );
+        return E_NOTIMPL;
+    }
+
+    if (!handle || !reader) return E_INVALIDARG;
+    if (msg->state != WS_MESSAGE_STATE_EMPTY) return WS_E_INVALID_OPERATION;
+
+    if ((hr = read_envelope_start( reader )) != S_OK) return hr;
+
+    msg->reader_body = reader;
+    msg->state       = WS_MESSAGE_STATE_READING;
+    return S_OK;
 }
 
 /**************************************************************************
