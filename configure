@@ -18016,6 +18016,7 @@ wine_fn_config_dll msvcp120 enable_msvcp120
 wine_fn_config_test dlls/msvcp120/tests msvcp120_test
 wine_fn_config_dll msvcp120_app enable_msvcp120_app
 wine_fn_config_dll msvcp140 enable_msvcp140
+wine_fn_config_test dlls/msvcp140/tests msvcp140_test
 wine_fn_config_dll msvcp60 enable_msvcp60
 wine_fn_config_test dlls/msvcp60/tests msvcp60_test
 wine_fn_config_dll msvcp70 enable_msvcp70

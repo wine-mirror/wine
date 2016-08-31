@@ -988,6 +988,12 @@ unsigned int __cdecl _Thrd_hardware_concurrency(void)
     return val;
 }
 
+unsigned int __cdecl _Thrd_id(void)
+{
+    TRACE("()\n");
+    return GetCurrentThreadId();
+}
+
 /* ??0_Pad@std@@QAE@XZ */
 /* ??0_Pad@std@@QEAA@XZ */
 DEFINE_THISCALL_WRAPPER(_Pad_ctor, 4)
