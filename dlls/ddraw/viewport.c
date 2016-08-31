@@ -381,14 +381,22 @@ static HRESULT WINAPI d3d_viewport_SetViewport(IDirect3DViewport3 *iface, D3DVIE
  *  DDERR_INVALIDPARAMS if no clipping flag is specified
  *
  *****************************************************************************/
+struct transform_vertices_vertex
+{
+    float x, y, z, w; /* w is unused in input data. */
+    struct
+    {
+        DWORD p[4];
+    } payload;
+};
+
 static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
         DWORD dwVertexCount, D3DTRANSFORMDATA *lpData, DWORD dwFlags, DWORD *lpOffScreen)
 {
     struct d3d_viewport *viewport = impl_from_IDirect3DViewport3(iface);
     D3DVIEWPORT vp = viewport->viewports.vp1;
     D3DMATRIX view_mat, world_mat, mat;
-    float *in;
-    float *out;
+    struct transform_vertices_vertex *in, *out;
     float x, y, z, w;
     unsigned int i;
     D3DHVERTEX *outH;
@@ -420,15 +428,16 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
     multiply_matrix(&mat, &view_mat, &world_mat);
     multiply_matrix(&mat, &viewport->active_device->legacy_projection, &mat);
 
-    in = lpData->lpIn;
-    out = lpData->lpOut;
     outH = lpData->lpHOut;
     for(i = 0; i < dwVertexCount; i++)
     {
-        x = (in[0] * mat._11) + (in[1] * mat._21) + (in[2] * mat._31) + mat._41;
-        y = (in[0] * mat._12) + (in[1] * mat._22) + (in[2] * mat._32) + mat._42;
-        z = (in[0] * mat._13) + (in[1] * mat._23) + (in[2] * mat._33) + mat._43;
-        w = (in[0] * mat._14) + (in[1] * mat._24) + (in[2] * mat._34) + mat._44;
+        in = (struct transform_vertices_vertex *)((char *)lpData->lpIn + lpData->dwInSize * i);
+        out = (struct transform_vertices_vertex *)((char *)lpData->lpOut + lpData->dwOutSize * i);
+
+        x = (in->x * mat._11) + (in->y * mat._21) + (in->z * mat._31) + mat._41;
+        y = (in->x * mat._12) + (in->y * mat._22) + (in->z * mat._32) + mat._42;
+        z = (in->x * mat._13) + (in->y * mat._23) + (in->z * mat._33) + mat._43;
+        w = (in->x * mat._14) + (in->y * mat._24) + (in->z * mat._34) + mat._44;
 
         if(dwFlags & D3DTRANSFORM_CLIPPED)
         {
@@ -458,12 +467,10 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
                  * The exact scheme hasn't been figured out yet, but windows
                  * definitely writes something there.
                  */
-                out[0] = x;
-                out[1] = y;
-                out[2] = z;
-                out[3] = w;
-                in = (float *) ((char *) in + lpData->dwInSize);
-                out = (float *) ((char *) out + lpData->dwOutSize);
+                out->x = x;
+                out->y = y;
+                out->z = z;
+                out->w = w;
                 continue;
             }
         }
@@ -471,12 +478,11 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
         w = 1 / w;
         x *= w; y *= w; z *= w;
 
-        out[0] = vp.dwWidth / 2 + vp.dwX + x * vp.dvScaleX;
-        out[1] = vp.dwHeight / 2 + vp.dwY - y * vp.dvScaleY;
-        out[2] = z;
-        out[3] = w;
-        in = (float *) ((char *) in + lpData->dwInSize);
-        out = (float *) ((char *) out + lpData->dwOutSize);
+        out->x = vp.dwWidth / 2 + vp.dwX + x * vp.dvScaleX;
+        out->y = vp.dwHeight / 2 + vp.dwY - y * vp.dvScaleY;
+        out->z = z;
+        out->w = w;
+        out->payload = in->payload;
     }
 
     /* According to the d3d test, the offscreen flag is set only

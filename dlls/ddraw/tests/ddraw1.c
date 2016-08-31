@@ -9210,7 +9210,7 @@ static void test_transform_vertices(void)
         ok(compare_vec4(&cmp[i], out[i].x, out[i].y, out[i].z, out[i].w, 4096),
                 "Vertex %u differs. Got %f %f %f %f.\n", i,
                 out[i].x, out[i].y, out[i].z, out[i].w);
-        todo_wine ok(out[i].v1 == position_tests[i].v1 && out[i].v2 == position_tests[i].v2
+        ok(out[i].v1 == position_tests[i].v1 && out[i].v2 == position_tests[i].v2
                 && out[i].v3 == position_tests[i].v3 && out[i].v4 == position_tests[i].v4,
                 "Vertex %u payload is %u %u %u %u.\n", i, out[i].v1, out[i].v2, out[i].v3, out[i].v4);
         ok(out[i].unused3 == 0xdeadbeef && out[i].unused4 == 0xcafecafe,
