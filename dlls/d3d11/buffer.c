@@ -327,7 +327,7 @@ static void STDMETHODCALLTYPE d3d10_buffer_Unmap(ID3D10Buffer *iface)
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    wined3d_buffer_unmap(buffer->wined3d_buffer);
+    wined3d_resource_unmap(wined3d_buffer_get_resource(buffer->wined3d_buffer), 0);
     wined3d_mutex_unlock();
 }
 
