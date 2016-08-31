@@ -152,6 +152,7 @@ static void test_customdraw(void) {
    DWORD       iterationNumber;
    WNDCLASSA wc;
    LRESULT   lResult;
+   POINT orig_pos;
 
    /* Create a class to use the custom draw wndproc */
    wc.style = CS_HREDRAW | CS_VREDRAW;
@@ -165,6 +166,8 @@ static void test_customdraw(void) {
    wc.lpszClassName = "CustomDrawClass";
    wc.lpfnWndProc = custom_draw_wnd_proc;
    RegisterClassA(&wc);
+
+   GetCursorPos(&orig_pos);
 
    for (iterationNumber = 0;
         iterationNumber < sizeof(expectedResults)/sizeof(expectedResults[0]);
@@ -238,7 +241,7 @@ static void test_customdraw(void) {
        DestroyWindow(parent);
    }
 
-
+   SetCursorPos(orig_pos.x, orig_pos.y);
 }
 
 static const CHAR testcallbackA[]  = "callback";
