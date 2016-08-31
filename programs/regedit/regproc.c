@@ -741,7 +741,6 @@ static void processRegLinesA(FILE *in, char* first_chars)
             HeapFree(GetProcessHeap(), 0, lineW);
             line = s_eol + 1;
             s_eol = 0;
-            continue; /* That is the full virtual line */
         }
     }
     processRegEntry(NULL, FALSE);
@@ -859,7 +858,6 @@ static void processRegLinesW(FILE *in)
             processRegEntry(line, TRUE);
             line = s_eol + 1;
             s_eol = 0;
-            continue; /* That is the full virtual line */
         }
     }
 
