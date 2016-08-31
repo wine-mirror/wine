@@ -127,7 +127,7 @@
 @ stub WsReadXmlBufferFromBytes
 @ stub WsReceiveMessage
 @ stub WsRegisterOperationForCancel
-@ stub WsRemoveCustomHeader
+@ stdcall WsRemoveCustomHeader(ptr ptr ptr ptr)
 @ stdcall WsRemoveHeader(ptr long ptr)
 @ stdcall WsRemoveMappedHeader(ptr ptr ptr)
 @ stub WsRemoveNode

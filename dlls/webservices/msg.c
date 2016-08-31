@@ -962,3 +962,35 @@ HRESULT WINAPI WsAddCustomHeader( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTI
     msg->header[i] = header;
     return write_envelope( msg );
 }
+
+/**************************************************************************
+ *          WsRemoveCustomHeader		[webservices.@]
+ */
+HRESULT WINAPI WsRemoveCustomHeader( WS_MESSAGE *handle, const WS_XML_STRING *name, const WS_XML_STRING *ns,
+                                     WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+    BOOL removed = FALSE;
+    ULONG i;
+
+    TRACE( "%p %s %s %p\n", handle, debugstr_xmlstr(name), debugstr_xmlstr(ns), error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!handle || !name || !ns) return E_INVALIDARG;
+    if (msg->state < WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
+
+    for (i = 0; i < msg->header_count; i++)
+    {
+        if (msg->header[i]->type || msg->header[i]->mapped) continue;
+        if (WsXmlStringEquals( name, &msg->header[i]->name, NULL ) == S_OK &&
+            WsXmlStringEquals( ns, &msg->header[i]->ns, NULL ) == S_OK)
+        {
+            remove_header( msg, i );
+            removed = TRUE;
+            break;
+        }
+    }
+
+    if (removed) return write_envelope( msg );
+    return S_OK;
+}
