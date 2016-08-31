@@ -920,8 +920,8 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_InitAudio(IDirectMusicPerform
 	  if (ppDirectSound)
 	    *ppDirectSound = dsound;  
 	}
-	
-	IDirectMusicPerformance8Impl_Init(iface, ppDirectMusic, dsound, hWnd);
+
+        IDirectMusicPerformance8_Init(iface, ppDirectMusic, dsound, hWnd);
 
 	/* Init increases the ref count of the dsound object. Decrement it if the app doesn't want a pointer to the object. */
 	if (NULL == ppDirectSound) {
