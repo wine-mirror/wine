@@ -9440,9 +9440,61 @@ static void test_transform_vertices(void)
     ok(offscreen == D3DCLIP_RIGHT, "Offscreen is %x.\n", offscreen);
 
     /* Invalid flags. */
+    offscreen = 0xdeadbeef;
     hr = IDirect3DViewport_TransformVertices(viewport, ARRAY_SIZE(position_tests),
             &transformdata, 0, &offscreen);
     ok(hr == DDERR_INVALIDPARAMS, "TransformVertices returned %#x.\n", hr);
+    ok(offscreen == 0xdeadbeef, "Offscreen is %x.\n", offscreen);
+
+    /* NULL transform data. */
+    hr = IDirect3DViewport_TransformVertices(viewport, 1,
+            NULL, D3DTRANSFORM_UNCLIPPED, &offscreen);
+    ok(hr == DDERR_INVALIDPARAMS, "TransformVertices returned %#x.\n", hr);
+    ok(offscreen == 0xdeadbeef, "Offscreen is %x.\n", offscreen);
+    hr = IDirect3DViewport_TransformVertices(viewport, 0,
+            NULL, D3DTRANSFORM_UNCLIPPED, &offscreen);
+    ok(hr == DDERR_INVALIDPARAMS, "TransformVertices returned %#x.\n", hr);
+    ok(offscreen == 0xdeadbeef, "Offscreen is %x.\n", offscreen);
+
+    /* NULL transform data and NULL dwOffscreen.
+     *
+     * Valid transform data + NULL dwOffscreen -> crash. */
+    hr = IDirect3DViewport_TransformVertices(viewport, 1,
+            NULL, D3DTRANSFORM_UNCLIPPED, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "TransformVertices returned %#x.\n", hr);
+
+    /* No vertices. */
+    hr = IDirect3DViewport_TransformVertices(viewport, 0,
+            &transformdata, D3DTRANSFORM_UNCLIPPED, &offscreen);
+    ok(SUCCEEDED(hr), "Failed to transform vertices, hr %#x.\n", hr);
+    ok(!offscreen, "Offscreen is %x.\n", offscreen);
+    hr = IDirect3DViewport_TransformVertices(viewport, 0,
+            &transformdata, D3DTRANSFORM_CLIPPED, &offscreen);
+    ok(SUCCEEDED(hr), "Failed to transform vertices, hr %#x.\n", hr);
+    ok(offscreen == ~0U, "Offscreen is %x.\n", offscreen);
+
+    /* Invalid sizes. */
+    offscreen = 0xdeadbeef;
+    transformdata.dwSize = sizeof(transformdata) - 1;
+    hr = IDirect3DViewport_TransformVertices(viewport, 1,
+            &transformdata, D3DTRANSFORM_UNCLIPPED, &offscreen);
+    ok(hr == DDERR_INVALIDPARAMS, "TransformVertices returned %#x.\n", hr);
+    ok(offscreen == 0xdeadbeef, "Offscreen is %x.\n", offscreen);
+    transformdata.dwSize = sizeof(transformdata) + 1;
+    hr = IDirect3DViewport_TransformVertices(viewport, 1,
+            &transformdata, D3DTRANSFORM_UNCLIPPED, &offscreen);
+    ok(hr == DDERR_INVALIDPARAMS, "TransformVertices returned %#x.\n", hr);
+    ok(offscreen == 0xdeadbeef, "Offscreen is %x.\n", offscreen);
+
+    /* NULL lpIn or lpOut -> crash, except when transforming 0 vertices. */
+    transformdata.dwSize = sizeof(transformdata);
+    transformdata.lpIn = NULL;
+    transformdata.lpOut = NULL;
+    offscreen = 0xdeadbeef;
+    hr = IDirect3DViewport_TransformVertices(viewport, 0,
+            &transformdata, D3DTRANSFORM_CLIPPED, &offscreen);
+    ok(SUCCEEDED(hr), "Failed to transform vertices, hr %#x.\n", hr);
+    ok(offscreen == ~0U, "Offscreen is %x.\n", offscreen);
 
     destroy_viewport(device, viewport);
     refcount = IDirect3DDevice_Release(device);
