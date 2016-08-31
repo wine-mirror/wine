@@ -9362,12 +9362,7 @@ static void test_transform_vertices(void)
     }
 
     /* Finally try to figure out how the DWORD dwOffscreen works.
-     * Apparently no vertex is offscreen with clipping off,
-     * and with clipping on the offscreen flag is set if only one vertex
-     * is transformed, and this vertex is offscreen.
-     *
-     * FIXME: This is wrong. It might be the logical AND of all
-     * output clip flags. */
+     * It is a logical AND of the vertices' dwFlags members. */
     vp_data = vp_template;
     vp_data.dwWidth = 5;
     vp_data.dwHeight = 5;
@@ -9387,17 +9382,38 @@ static void test_transform_vertices(void)
             &transformdata, D3DTRANSFORM_CLIPPED, &offscreen);
     ok(SUCCEEDED(hr), "Failed to transform vertices, hr %#x.\n", hr);
     ok(offscreen == (D3DCLIP_RIGHT | D3DCLIP_TOP), "Offscreen is %x.\n", offscreen);
-
+    offscreen = 0xdeadbeef;
     hr = IDirect3DViewport_TransformVertices(viewport, 2,
             &transformdata, D3DTRANSFORM_CLIPPED, &offscreen);
     ok(SUCCEEDED(hr), "Failed to transform vertices, hr %#x.\n", hr);
-    todo_wine ok(offscreen == (D3DCLIP_RIGHT | D3DCLIP_TOP), "Offscreen is %x.\n", offscreen);
+    ok(offscreen == (D3DCLIP_RIGHT | D3DCLIP_TOP), "Offscreen is %x.\n", offscreen);
+    hr = IDirect3DViewport_TransformVertices(viewport, 3,
+            &transformdata, D3DTRANSFORM_CLIPPED, &offscreen);
+    ok(SUCCEEDED(hr), "Failed to transform vertices, hr %#x.\n", hr);
+    ok(!offscreen, "Offscreen is %x.\n", offscreen);
+
+    transformdata.lpIn = cliptest + 1;
+    hr = IDirect3DViewport_TransformVertices(viewport, 1,
+            &transformdata, D3DTRANSFORM_CLIPPED, &offscreen);
+    ok(SUCCEEDED(hr), "Failed to transform vertices, hr %#x.\n", hr);
+    ok(offscreen == (D3DCLIP_BACK | D3DCLIP_RIGHT | D3DCLIP_TOP), "Offscreen is %x.\n", offscreen);
 
     transformdata.lpIn = cliptest + 2;
     hr = IDirect3DViewport_TransformVertices(viewport, 1,
             &transformdata, D3DTRANSFORM_CLIPPED, &offscreen);
     ok(SUCCEEDED(hr), "Failed to transform vertices, hr %#x.\n", hr);
     ok(offscreen == (D3DCLIP_BOTTOM | D3DCLIP_LEFT), "Offscreen is %x.\n", offscreen);
+    offscreen = 0xdeadbeef;
+    hr = IDirect3DViewport_TransformVertices(viewport, 2,
+            &transformdata, D3DTRANSFORM_CLIPPED, &offscreen);
+    ok(SUCCEEDED(hr), "Failed to transform vertices, hr %#x.\n", hr);
+    ok(offscreen == (D3DCLIP_BOTTOM | D3DCLIP_LEFT), "Offscreen is %x.\n", offscreen);
+
+    transformdata.lpIn = cliptest + 3;
+    hr = IDirect3DViewport_TransformVertices(viewport, 1,
+            &transformdata, D3DTRANSFORM_CLIPPED, &offscreen);
+    ok(SUCCEEDED(hr), "Failed to transform vertices, hr %#x.\n", hr);
+    ok(offscreen == (D3DCLIP_FRONT | D3DCLIP_BOTTOM | D3DCLIP_LEFT), "Offscreen is %x.\n", offscreen);
 
     transformdata.lpIn = offscreentest;
     transformdata.dwInSize = sizeof(offscreentest[0]);

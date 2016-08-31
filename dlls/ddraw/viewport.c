@@ -372,8 +372,8 @@ static HRESULT WINAPI d3d_viewport_SetViewport(IDirect3DViewport3 *iface, D3DVIE
  *  dwVertexCount: The number of vertices to be transformed
  *  lpData: Pointer to the vertex data
  *  dwFlags: D3DTRANSFORM_CLIPPED or D3DTRANSFORM_UNCLIPPED
- *  lpOffScreen: Set to the clipping plane clipping the vertex, if only one
- *               vertex is transformed and clipping is on. 0 otherwise
+ *  offscreen: Logical AND of the planes that clipped the vertices if clipping
+ *          is on. 0 if clipping is off.
  *
  * Returns:
  *  D3D_OK on success
@@ -391,7 +391,7 @@ struct transform_vertices_vertex
 };
 
 static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
-        DWORD dwVertexCount, D3DTRANSFORMDATA *lpData, DWORD dwFlags, DWORD *lpOffScreen)
+        DWORD dwVertexCount, D3DTRANSFORMDATA *lpData, DWORD dwFlags, DWORD *offscreen)
 {
     struct d3d_viewport *viewport = impl_from_IDirect3DViewport3(iface);
     D3DVIEWPORT vp = viewport->viewports.vp1;
@@ -401,8 +401,8 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
     unsigned int i;
     D3DHVERTEX *outH;
 
-    TRACE("iface %p, vertex_count %u, vertex_data %p, flags %#x, clip_plane %p.\n",
-            iface, dwVertexCount, lpData, dwFlags, lpOffScreen);
+    TRACE("iface %p, vertex_count %u, vertex_data %p, flags %#x, offscreen %p.\n",
+            iface, dwVertexCount, lpData, dwFlags, offscreen);
 
     /* Tests on windows show that Windows crashes when this occurs,
      * so don't return the (intuitive) return value
@@ -427,6 +427,12 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
             WINED3D_TS_WORLD_MATRIX(0), (struct wined3d_matrix *)&world_mat);
     multiply_matrix(&mat, &view_mat, &world_mat);
     multiply_matrix(&mat, &viewport->active_device->legacy_projection, &mat);
+
+    /* The pointer is not tested against NULL on Windows. */
+    if (dwFlags & D3DTRANSFORM_CLIPPED)
+        *offscreen = ~0U;
+    else
+        *offscreen = 0;
 
     outH = lpData->lpHOut;
     for(i = 0; i < dwVertexCount; i++)
@@ -460,6 +466,8 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
             if(z > 1.0)
                 outH[i].dwFlags |= D3DCLIP_BACK;
 
+            *offscreen &= outH[i].dwFlags;
+
             if(outH[i].dwFlags)
             {
                 /* Looks like native just drops the vertex, leaves whatever data
@@ -485,22 +493,6 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
         out->payload = in->payload;
     }
 
-    /* According to the d3d test, the offscreen flag is set only
-     * if exactly one vertex is transformed. It's not documented,
-     * but the test shows that the lpOffscreen flag is set to the
-     * flag combination of clipping planes that clips the vertex.
-     *
-     * If clipping is requested, Windows assumes that the offscreen
-     * param is a valid pointer.
-     */
-    if(dwVertexCount == 1 && dwFlags & D3DTRANSFORM_CLIPPED)
-    {
-        *lpOffScreen = outH[0].dwFlags;
-    }
-    else if(*lpOffScreen)
-    {
-        *lpOffScreen = 0;
-    }
     wined3d_mutex_unlock();
 
     TRACE("All done\n");
