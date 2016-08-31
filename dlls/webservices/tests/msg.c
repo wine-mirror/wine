@@ -962,6 +962,95 @@ static void test_WsReadEnvelopeEnd(void)
     WsFreeReader( reader );
 }
 
+static void test_WsReadBody(void)
+{
+    static const char xml[] =
+        "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body>"
+        "<u xmlns=\"ns\"><val>1</val></u></s:Body></s:Envelope>";
+    WS_HEAP *heap;
+    WS_MESSAGE *msg, *msg2;
+    WS_XML_READER *reader;
+    WS_MESSAGE_STATE state;
+    WS_XML_STRING localname = {1, (BYTE *)"t"}, localname2 = {1, (BYTE *)"u"};
+    WS_XML_STRING val = {3, (BYTE *)"val"}, ns = {2, (BYTE *)"ns"};
+    WS_ELEMENT_DESCRIPTION desc;
+    WS_STRUCT_DESCRIPTION s;
+    WS_FIELD_DESCRIPTION f, *fields[1];
+    struct test
+    {
+        UINT32 val;
+    } test;
+    HRESULT hr;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadBody( NULL, NULL, 0, NULL, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL, 0, &msg, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL, 0, &msg2, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadBody( msg2, NULL, 0, NULL, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = set_input( reader, xml, strlen(xml) );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadEnvelopeStart( msg2, reader, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadBody( msg2, NULL, WS_READ_REQUIRED_VALUE, heap, &test, sizeof(test), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f.localName = &val;
+    f.ns        = &ns;
+    f.type      = WS_UINT32_TYPE;
+    fields[0] = &f;
+
+    memset( &s, 0, sizeof(s) );
+    s.size          = sizeof(struct test);
+    s.alignment     = TYPE_ALIGNMENT(struct test);
+    s.fields        = fields;
+    s.fieldCount    = 1;
+    s.typeLocalName = &localname;
+    s.typeNs        = &ns;
+
+    desc.elementLocalName = &localname2;
+    desc.elementNs        = &ns;
+    desc.type             = WS_STRUCT_TYPE;
+    desc.typeDescription  = &s;
+
+    memset( &test, 0, sizeof(test) );
+    hr = WsReadBody( msg2, &desc, WS_READ_REQUIRED_VALUE, heap, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( test.val == 1, "got %u\n", test.val );
+
+    state = 0xdeadbeef;
+    hr = WsGetMessageProperty( msg2, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == WS_MESSAGE_STATE_READING, "got %u\n", state );
+
+    hr = WsReadEnvelopeEnd( msg2, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    WsFreeMessage( msg );
+    WsFreeMessage( msg2 );
+    WsFreeReader( reader );
+    WsFreeHeap( heap );
+}
+
 START_TEST(msg)
 {
     test_WsCreateMessage();
@@ -979,4 +1068,5 @@ START_TEST(msg)
     test_WsRemoveCustomHeader();
     test_WsReadEnvelopeStart();
     test_WsReadEnvelopeEnd();
+    test_WsReadBody();
 }

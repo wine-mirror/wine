@@ -616,6 +616,23 @@ HRESULT WINAPI WsReadEnvelopeEnd( WS_MESSAGE *handle, WS_ERROR *error )
 }
 
 /**************************************************************************
+ *          WsReadBody		[webservices.@]
+ */
+HRESULT WINAPI WsReadBody( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTION *desc, WS_READ_OPTION option,
+                           WS_HEAP *heap, void *value, ULONG size, WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+
+    TRACE( "%p %p %08x %p %p %u %p\n", handle, desc, option, heap, value, size, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!handle || !desc) return E_INVALIDARG;
+    if (msg->state != WS_MESSAGE_STATE_READING) return WS_E_INVALID_OPERATION;
+
+    return WsReadElement( msg->reader_body, desc, option, heap, value, size, NULL );
+}
+
+/**************************************************************************
  *          WsInitializeMessage		[webservices.@]
  */
 HRESULT WINAPI WsInitializeMessage( WS_MESSAGE *handle, WS_MESSAGE_INITIALIZATION init,

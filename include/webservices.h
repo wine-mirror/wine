@@ -1440,6 +1440,8 @@ HRESULT WINAPI WsOpenServiceProxy(WS_SERVICE_PROXY*, const WS_ENDPOINT_ADDRESS*,
                                   WS_ERROR*);
 HRESULT WINAPI WsReadAttribute(WS_XML_READER*, const WS_ATTRIBUTE_DESCRIPTION*, WS_READ_OPTION,
                                WS_HEAP*, void*, ULONG, WS_ERROR*);
+HRESULT WINAPI WsReadBody(WS_MESSAGE*, const WS_ELEMENT_DESCRIPTION*, WS_READ_OPTION, WS_HEAP*, void*,
+                          ULONG, WS_ERROR*);
 HRESULT WINAPI WsReadElement(WS_XML_READER*, const WS_ELEMENT_DESCRIPTION*, WS_READ_OPTION,
                              WS_HEAP*, void*, ULONG, WS_ERROR*);
 HRESULT WINAPI WsReadEndAttribute(WS_XML_READER*, WS_ERROR*);
