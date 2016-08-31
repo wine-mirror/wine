@@ -370,7 +370,7 @@ static HRESULT WINAPI d3d_viewport_SetViewport(IDirect3DViewport3 *iface, D3DVIE
  *
  * Params:
  *  dwVertexCount: The number of vertices to be transformed
- *  lpData: Pointer to the vertex data
+ *  data: Pointer to the vertex input / output data.
  *  dwFlags: D3DTRANSFORM_CLIPPED or D3DTRANSFORM_UNCLIPPED
  *  offscreen: Logical AND of the planes that clipped the vertices if clipping
  *          is on. 0 if clipping is off.
@@ -391,7 +391,7 @@ struct transform_vertices_vertex
 };
 
 static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
-        DWORD dwVertexCount, D3DTRANSFORMDATA *lpData, DWORD dwFlags, DWORD *offscreen)
+        DWORD dwVertexCount, D3DTRANSFORMDATA *data, DWORD dwFlags, DWORD *offscreen)
 {
     struct d3d_viewport *viewport = impl_from_IDirect3DViewport3(iface);
     D3DVIEWPORT vp = viewport->viewports.vp1;
@@ -401,8 +401,8 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
     unsigned int i;
     D3DHVERTEX *outH;
 
-    TRACE("iface %p, vertex_count %u, vertex_data %p, flags %#x, offscreen %p.\n",
-            iface, dwVertexCount, lpData, dwFlags, offscreen);
+    TRACE("iface %p, vertex_count %u, data %p, flags %#x, offscreen %p.\n",
+            iface, dwVertexCount, data, dwFlags, offscreen);
 
     /* Tests on windows show that Windows crashes when this occurs,
      * so don't return the (intuitive) return value
@@ -413,7 +413,12 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
     }
      */
 
-    if(!(dwFlags & (D3DTRANSFORM_UNCLIPPED | D3DTRANSFORM_CLIPPED)))
+    if (!data || data->dwSize != sizeof(*data))
+    {
+        WARN("Transform data is NULL or size is incorrect, returning DDERR_INVALIDPARAMS\n");
+        return DDERR_INVALIDPARAMS;
+    }
+    if (!(dwFlags & (D3DTRANSFORM_UNCLIPPED | D3DTRANSFORM_CLIPPED)))
     {
         WARN("No clipping flag passed, returning DDERR_INVALIDPARAMS\n");
         return DDERR_INVALIDPARAMS;
@@ -434,11 +439,11 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
     else
         *offscreen = 0;
 
-    outH = lpData->lpHOut;
+    outH = data->lpHOut;
     for(i = 0; i < dwVertexCount; i++)
     {
-        in = (struct transform_vertices_vertex *)((char *)lpData->lpIn + lpData->dwInSize * i);
-        out = (struct transform_vertices_vertex *)((char *)lpData->lpOut + lpData->dwOutSize * i);
+        in = (struct transform_vertices_vertex *)((char *)data->lpIn + data->dwInSize * i);
+        out = (struct transform_vertices_vertex *)((char *)data->lpOut + data->dwOutSize * i);
 
         x = (in->x * mat._11) + (in->y * mat._21) + (in->z * mat._31) + mat._41;
         y = (in->x * mat._12) + (in->y * mat._22) + (in->z * mat._32) + mat._42;
