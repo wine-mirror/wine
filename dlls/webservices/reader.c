@@ -3821,12 +3821,7 @@ static HRESULT read_type_struct( struct reader *reader, WS_TYPE_MAPPING mapping,
     char *buf;
 
     if (!desc) return E_INVALIDARG;
-
-    if (desc->structOptions)
-    {
-        FIXME( "struct options %08x not supported\n", desc->structOptions );
-        return E_NOTIMPL;
-    }
+    if (desc->structOptions) FIXME( "struct options %08x not supported\n", desc->structOptions );
 
     switch (option)
     {
