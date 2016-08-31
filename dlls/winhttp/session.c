@@ -1750,6 +1750,8 @@ static char *download_script( const WCHAR *url, DWORD *out_size )
 
     memset( &uc, 0, sizeof(uc) );
     uc.dwStructSize = sizeof(uc);
+    uc.dwHostNameLength = -1;
+    uc.dwUrlPathLength = -1;
     if (!WinHttpCrackUrl( url, 0, 0, &uc )) return NULL;
     if (!(hostname = heap_alloc( (uc.dwHostNameLength + 1) * sizeof(WCHAR) ))) return NULL;
     memcpy( hostname, uc.lpszHostName, uc.dwHostNameLength * sizeof(WCHAR) );
