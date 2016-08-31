@@ -1219,6 +1219,7 @@ enable_msisys_ocx
 enable_msls31
 enable_msnet32
 enable_mspatcha
+enable_msports
 enable_msrle32
 enable_msscript_ocx
 enable_mssign32
@@ -17872,6 +17873,7 @@ wine_fn_config_dll msisys.ocx enable_msisys_ocx
 wine_fn_config_dll msls31 enable_msls31
 wine_fn_config_dll msnet32 enable_msnet32
 wine_fn_config_dll mspatcha enable_mspatcha implib
+wine_fn_config_dll msports enable_msports
 wine_fn_config_dll msrle32 enable_msrle32 clean
 wine_fn_config_test dlls/msrle32/tests msrle32_test
 wine_fn_config_dll msscript.ocx enable_msscript_ocx clean

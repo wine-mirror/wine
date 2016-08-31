@@ -1,0 +1,4 @@
+MODULE    = msports.dll
+
+C_SRCS = \
+	main.c
