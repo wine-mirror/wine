@@ -787,7 +787,7 @@ HRESULT WINAPI WsSetHeader( WS_MESSAGE *handle, WS_HEADER_TYPE type, WS_TYPE val
 static void remove_header( struct msg *msg, ULONG i )
 {
     free_header( msg->header[i] );
-    memmove( &msg->header[i], &msg->header[i + 1], (msg->header_count - i) * sizeof(struct header *) );
+    memmove( &msg->header[i], &msg->header[i + 1], (msg->header_count - i - 1) * sizeof(struct header *) );
     msg->header_count--;
 }
 
