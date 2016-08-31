@@ -24,6 +24,7 @@
 #include "wine/test.h"
 
 static DWORD (WINAPI *pXInputGetState)(DWORD, XINPUT_STATE*);
+static DWORD (WINAPI *pXInputGetStateEx)(DWORD, XINPUT_STATE_EX*);
 static DWORD (WINAPI *pXInputGetCapabilities)(DWORD,DWORD,XINPUT_CAPABILITIES*);
 static DWORD (WINAPI *pXInputSetState)(DWORD, XINPUT_VIBRATION*);
 static void  (WINAPI *pXInputEnable)(BOOL);
@@ -62,41 +63,63 @@ static void test_set_state(void)
 
 static void test_get_state(void)
 {
-
-    XINPUT_STATE controllerState;
-    DWORD controllerNum;
+    union
+    {
+        XINPUT_STATE state;
+        XINPUT_STATE_EX state_ex;
+    } xinput;
+    DWORD controllerNum, i;
     DWORD result;
 
-    for(controllerNum=0; controllerNum < XUSER_MAX_COUNT; controllerNum++)
+    for (i = 0; i < (pXInputGetStateEx ? 2 : 1); i++)
     {
-        ZeroMemory(&controllerState, sizeof(XINPUT_STATE));
-
-        result = pXInputGetState(controllerNum, &controllerState);
-        ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputGetState failed with (%d)\n", result);
-
-        if (ERROR_DEVICE_NOT_CONNECTED == result)
+        for (controllerNum = 0; controllerNum < XUSER_MAX_COUNT; controllerNum++)
         {
-            skip("Controller %d is not connected\n", controllerNum);
-        }
-        else
-        {
+            ZeroMemory(&xinput, sizeof(xinput));
+
+            if (i == 0)
+                result = pXInputGetState(controllerNum, &xinput.state);
+            else
+                result = pXInputGetStateEx(controllerNum, &xinput.state_ex);
+            ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED,
+               "%s failed with (%d)\n", i == 0 ? "XInputGetState" : "XInputGetStateEx", result);
+
+            if (ERROR_DEVICE_NOT_CONNECTED == result)
+            {
+                skip("Controller %d is not connected\n", controllerNum);
+                continue;
+            }
+
             trace("-- Results for controller %d --\n", controllerNum);
-            trace("XInputGetState: %d\n", result);
-            trace("State->dwPacketNumber: %d\n", controllerState.dwPacketNumber);
+            if (i == 0)
+                trace("XInputGetState: %d\n", result);
+            else
+                trace("XInputGetStateEx: %d\n", result);
+            trace("State->dwPacketNumber: %d\n", xinput.state.dwPacketNumber);
             trace("Gamepad Variables --\n");
-            trace("Gamepad.wButtons: %#x\n", controllerState.Gamepad.wButtons);
-            trace("Gamepad.bLeftTrigger: 0x%08x\n", controllerState.Gamepad.bLeftTrigger);
-            trace("Gamepad.bRightTrigger: 0x%08x\n", controllerState.Gamepad.bRightTrigger);
-            trace("Gamepad.sThumbLX: %d\n", controllerState.Gamepad.sThumbLX);
-            trace("Gamepad.sThumbLY: %d\n", controllerState.Gamepad.sThumbLY);
-            trace("Gamepad.sThumbRX: %d\n", controllerState.Gamepad.sThumbRX);
-            trace("Gamepad.sThumbRY: %d\n", controllerState.Gamepad.sThumbRY);
+            trace("Gamepad.wButtons: %#x\n", xinput.state.Gamepad.wButtons);
+            trace("Gamepad.bLeftTrigger: 0x%08x\n", xinput.state.Gamepad.bLeftTrigger);
+            trace("Gamepad.bRightTrigger: 0x%08x\n", xinput.state.Gamepad.bRightTrigger);
+            trace("Gamepad.sThumbLX: %d\n", xinput.state.Gamepad.sThumbLX);
+            trace("Gamepad.sThumbLY: %d\n", xinput.state.Gamepad.sThumbLY);
+            trace("Gamepad.sThumbRX: %d\n", xinput.state.Gamepad.sThumbRX);
+            trace("Gamepad.sThumbRY: %d\n", xinput.state.Gamepad.sThumbRY);
         }
     }
 
-    ZeroMemory(&controllerState, sizeof(XINPUT_STATE));
-    result = pXInputGetState(XUSER_MAX_COUNT+1, &controllerState);
+    result = pXInputGetState(XUSER_MAX_COUNT, &xinput.state);
     ok(result == ERROR_BAD_ARGUMENTS, "XInputGetState returned (%d)\n", result);
+
+    result = pXInputGetState(XUSER_MAX_COUNT+1, &xinput.state);
+    ok(result == ERROR_BAD_ARGUMENTS, "XInputGetState returned (%d)\n", result);
+    if (pXInputGetStateEx)
+    {
+        result = pXInputGetStateEx(XUSER_MAX_COUNT, &xinput.state_ex);
+        ok(result == ERROR_BAD_ARGUMENTS, "XInputGetState returned (%d)\n", result);
+
+        result = pXInputGetStateEx(XUSER_MAX_COUNT+1, &xinput.state_ex);
+        ok(result == ERROR_BAD_ARGUMENTS, "XInputGetState returned (%d)\n", result);
+    }
 }
 
 static void test_get_keystroke(void)
@@ -196,6 +219,7 @@ static void test_get_batteryinformation(void)
 START_TEST(xinput)
 {
     HMODULE hXinput;
+    void *pXInputGetStateEx_Ordinal;
     hXinput = LoadLibraryA( "xinput1_3.dll" );
 
     if (!hXinput)
@@ -207,10 +231,17 @@ START_TEST(xinput)
     pXInputEnable = (void*)GetProcAddress(hXinput, "XInputEnable");
     pXInputSetState = (void*)GetProcAddress(hXinput, "XInputSetState");
     pXInputGetState = (void*)GetProcAddress(hXinput, "XInputGetState");
+    pXInputGetStateEx = (void*)GetProcAddress(hXinput, "XInputGetStateEx"); /* Win >= 8 */
+    pXInputGetStateEx_Ordinal = (void*)GetProcAddress(hXinput, (LPCSTR) 100);
     pXInputGetKeystroke = (void*)GetProcAddress(hXinput, "XInputGetKeystroke");
     pXInputGetCapabilities = (void*)GetProcAddress(hXinput, "XInputGetCapabilities");
     pXInputGetDSoundAudioDeviceGuids = (void*)GetProcAddress(hXinput, "XInputGetDSoundAudioDeviceGuids");
     pXInputGetBatteryInformation = (void*)GetProcAddress(hXinput, "XInputGetBatteryInformation");
+
+    if (pXInputGetStateEx_Ordinal)
+        ok (pXInputGetStateEx_Ordinal == pXInputGetStateEx, "XInputGetStateEx in the wrong ordinal\n");
+    else
+        ok (broken(1), "XInputGetStateEx not found in this dll version\n");
 
     test_set_state();
     test_get_state();

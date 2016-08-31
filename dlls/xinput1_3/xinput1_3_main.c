@@ -85,6 +85,21 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetState(DWORD index, XINPUT_STATE* state)
     return ERROR_NOT_SUPPORTED;
 }
 
+DWORD WINAPI DECLSPEC_HOTPATCH XInputGetStateEx(DWORD index, XINPUT_STATE_EX* state_ex)
+{
+    static int warn_once;
+
+    if (!warn_once++)
+        FIXME("(index %u, state %p) Stub!\n", index, state_ex);
+
+    if (index >= XUSER_MAX_COUNT)
+        return ERROR_BAD_ARGUMENTS;
+    if (!controllers[index].connected)
+        return ERROR_DEVICE_NOT_CONNECTED;
+
+    return ERROR_NOT_SUPPORTED;
+}
+
 DWORD WINAPI XInputGetKeystroke(DWORD index, DWORD reserved, PXINPUT_KEYSTROKE keystroke)
 {
     FIXME("(index %u, reserved %u, keystroke %p) Stub!\n", index, reserved, keystroke);
