@@ -727,17 +727,19 @@ static BOOL test_import_str_(unsigned line, const char *file_contents, DWORD *rc
 #define test_import_wstr(c,r) test_import_wstr_(__LINE__,c,r)
 static BOOL test_import_wstr_(unsigned line, const char *file_contents, DWORD *rc)
 {
-    int len, memsize;
+    int lenA, len, memsize;
     WCHAR *wstr;
     HANDLE regfile;
     DWORD written;
     BOOL ret;
 
-    len = MultiByteToWideChar(CP_UTF8, 0, file_contents, -1, NULL, 0);
+    lenA = strlen(file_contents);
+
+    len = MultiByteToWideChar(CP_UTF8, 0, file_contents, lenA, NULL, 0);
     memsize = len * sizeof(WCHAR);
     wstr = HeapAlloc(GetProcessHeap(), 0, memsize);
     if (!wstr) return FALSE;
-    MultiByteToWideChar(CP_UTF8, 0, file_contents, -1, wstr, memsize);
+    MultiByteToWideChar(CP_UTF8, 0, file_contents, lenA, wstr, memsize);
 
     regfile = CreateFileA("test.reg", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                           FILE_ATTRIBUTE_NORMAL, NULL);
