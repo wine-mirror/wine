@@ -57,6 +57,14 @@ static DWORD WINAPI open_and_empty_clipboard_thread(LPVOID arg)
     return 0;
 }
 
+static DWORD WINAPI open_and_empty_clipboard_win_thread(LPVOID arg)
+{
+    HWND hwnd = CreateWindowA( "static", NULL, WS_POPUP, 0, 0, 10, 10, 0, 0, 0, NULL );
+    ok(OpenClipboard(hwnd), "%u: OpenClipboard failed\n", thread_from_line);
+    ok(EmptyClipboard(), "%u: EmptyClipboard failed\n", thread_from_line );
+    return 0;
+}
+
 static DWORD WINAPI set_clipboard_data_thread(LPVOID arg)
 {
     HWND hwnd = arg;
@@ -329,6 +337,8 @@ static void test_ClipboardOwner(void)
     ok( ret, "CloseClipboard error %d\n", GetLastError());
 
     run_thread( open_and_empty_clipboard_thread, 0, __LINE__ );
+    ok( !GetOpenClipboardWindow(), "wrong open window %p\n", GetOpenClipboardWindow() );
+    ok( !GetClipboardOwner(), "wrong owner window %p\n", GetClipboardOwner() );
 
     ret = OpenClipboard( 0 );
     ok( ret, "OpenClipboard error %d\n", GetLastError());
@@ -347,6 +357,14 @@ static void test_ClipboardOwner(void)
     ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "wrong error %u\n", GetLastError() );
     ok( !IsClipboardFormatAvailable( CF_WAVE ), "SetClipboardData succeeded\n" );
 
+    run_thread( open_and_empty_clipboard_thread, GetDesktopWindow(), __LINE__ );
+    ok( !GetOpenClipboardWindow(), "wrong open window %p\n", GetOpenClipboardWindow() );
+    ok( GetClipboardOwner() == GetDesktopWindow(), "wrong owner window %p / %p\n",
+        GetClipboardOwner(), GetDesktopWindow() );
+
+    run_thread( open_and_empty_clipboard_win_thread, 0, __LINE__ );
+    ok( !GetOpenClipboardWindow(), "wrong open window %p\n", GetOpenClipboardWindow() );
+    ok( !GetClipboardOwner(), "wrong owner window %p\n", GetClipboardOwner() );
 }
 
 static void test_RegisterClipboardFormatA(void)

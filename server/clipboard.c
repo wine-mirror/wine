@@ -220,7 +220,7 @@ void cleanup_clipboard_thread(struct thread *thread)
 
     if ((clipboard = winstation->clipboard))
     {
-        if (thread == clipboard->owner_thread) release_clipboard( clipboard );
+        if (thread == clipboard->owner_thread) clipboard->owner_thread = NULL;
         if (thread == clipboard->open_thread)
         {
             user_handle_t viewer = close_clipboard( clipboard );
