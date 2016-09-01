@@ -59,6 +59,7 @@ struct service_entry
     LPWSTR dependOnServices;
     LPWSTR dependOnGroups;
     struct process_entry *process;
+    BOOL shared_process;
     BOOL force_shutdown;
     BOOL marked_for_delete;
     BOOL is_wow64;
@@ -95,8 +96,8 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
 
 struct process_entry *grab_process(struct process_entry *process);
 void release_process(struct process_entry *process);
-BOOL process_send_control(struct process_entry *process, const WCHAR *name, DWORD control,
-                          const BYTE *data, DWORD data_size, DWORD *result);
+BOOL process_send_control(struct process_entry *process, BOOL winedevice, const WCHAR *name,
+                          DWORD control, const BYTE *data, DWORD data_size, DWORD *result);
 void process_terminate(struct process_entry *process);
 
 extern DWORD service_pipe_timeout;

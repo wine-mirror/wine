@@ -683,35 +683,6 @@ static DWORD get_service_binary_path(const struct service_entry *service_entry, 
 
     ExpandEnvironmentStringsW(service_entry->config.lpBinaryPathName, *path, size);
 
-    if (service_entry->config.dwServiceType == SERVICE_KERNEL_DRIVER ||
-        service_entry->config.dwServiceType == SERVICE_FILE_SYSTEM_DRIVER)
-    {
-        static const WCHAR winedeviceW[] = {'\\','w','i','n','e','d','e','v','i','c','e','.','e','x','e',' ',0};
-        WCHAR system_dir[MAX_PATH];
-        DWORD type, len;
-
-        GetSystemDirectoryW( system_dir, MAX_PATH );
-        if (is_win64)
-        {
-            if (!GetBinaryTypeW( *path, &type ))
-            {
-                HeapFree( GetProcessHeap(), 0, *path );
-                return GetLastError();
-            }
-            if (type == SCS_32BIT_BINARY) GetSystemWow64DirectoryW( system_dir, MAX_PATH );
-        }
-
-        len = strlenW( system_dir ) + sizeof(winedeviceW)/sizeof(WCHAR) + strlenW(service_entry->name);
-        HeapFree( GetProcessHeap(), 0, *path );
-        if (!(*path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
-            return ERROR_NOT_ENOUGH_SERVER_MEMORY;
-
-        lstrcpyW( *path, system_dir );
-        lstrcatW( *path, winedeviceW );
-        lstrcatW( *path, service_entry->name );
-        return ERROR_SUCCESS;
-    }
-
     /* if service image is configured to systemdir, redirect it to wow64 systemdir */
     if (service_entry->is_wow64)
     {
@@ -743,13 +714,83 @@ static DWORD get_service_binary_path(const struct service_entry *service_entry, 
     return ERROR_SUCCESS;
 }
 
-static DWORD service_start_process(struct service_entry *service_entry, struct process_entry **new_process)
+static DWORD get_winedevice_binary_path(WCHAR **path, BOOL *is_wow64)
+{
+    static const WCHAR winedeviceW[] = {'\\','w','i','n','e','d','e','v','i','c','e','.','e','x','e',0};
+    WCHAR system_dir[MAX_PATH];
+    DWORD type;
+
+    if (!is_win64)
+        *is_wow64 = FALSE;
+    else if (GetBinaryTypeW(*path, &type))
+        *is_wow64 = (type == SCS_32BIT_BINARY);
+    else
+        return GetLastError();
+
+    GetSystemDirectoryW(system_dir, MAX_PATH);
+    HeapFree(GetProcessHeap(), 0, *path);
+    if (!(*path = HeapAlloc(GetProcessHeap(), 0, strlenW(system_dir) * sizeof(WCHAR) + sizeof(winedeviceW))))
+       return ERROR_NOT_ENOUGH_SERVER_MEMORY;
+
+    strcpyW(*path, system_dir);
+    strcatW(*path, winedeviceW);
+    return ERROR_SUCCESS;
+}
+
+static DWORD add_winedevice_service(const struct service_entry *service, WCHAR *path, BOOL is_wow64,
+                                    struct service_entry **entry)
+{
+    static const WCHAR format[] = {'W','i','n','e','d','e','v','i','c','e','%','u',0};
+    static WCHAR name[sizeof(format)/sizeof(WCHAR) + 10]; /* strlenW("4294967295") */
+    static DWORD current = 0;
+    struct scmdatabase *db = service->db;
+    DWORD err;
+
+    for (;;)
+    {
+        sprintfW(name, format, ++current);
+        if (!scmdatabase_find_service(db, name)) break;
+    }
+
+    err = service_create(name, entry);
+    if (err != ERROR_SUCCESS)
+        return err;
+
+    (*entry)->is_wow64                  = is_wow64;
+    (*entry)->config.dwServiceType      = SERVICE_WIN32_OWN_PROCESS;
+    (*entry)->config.dwStartType        = SERVICE_DEMAND_START;
+    (*entry)->status.dwServiceType      = (*entry)->config.dwServiceType;
+
+    if (!((*entry)->config.lpBinaryPathName = strdupW(path)))
+        goto error;
+    if (!((*entry)->config.lpServiceStartName = strdupW(SZ_LOCAL_SYSTEM)))
+        goto error;
+    if (!((*entry)->config.lpDisplayName = strdupW(name)))
+        goto error;
+    if (service->config.lpLoadOrderGroup &&
+        !((*entry)->config.lpLoadOrderGroup = strdupW(service->config.lpLoadOrderGroup)))
+        goto error;
+
+    (*entry)->db = db;
+
+    list_add_tail(&db->services, &(*entry)->entry);
+    mark_for_delete(*entry);
+    return ERROR_SUCCESS;
+
+error:
+    free_service_entry(*entry);
+    return ERROR_NOT_ENOUGH_SERVER_MEMORY;
+}
+
+static DWORD service_start_process(struct service_entry *service_entry, struct process_entry **new_process,
+                                   BOOL *shared_process)
 {
     struct process_entry *process;
     PROCESS_INFORMATION pi;
     STARTUPINFOW si;
+    BOOL is_wow64 = FALSE;
     HANDLE token;
-    LPWSTR path = NULL;
+    WCHAR *path;
     DWORD err;
     BOOL r;
 
@@ -769,18 +810,80 @@ static DWORD service_start_process(struct service_entry *service_entry, struct p
 
     service_entry->force_shutdown = FALSE;
 
+    if ((err = get_service_binary_path(service_entry, &path)))
+    {
+        service_unlock(service_entry);
+        return err;
+    }
+
+    if (service_entry->config.dwServiceType == SERVICE_KERNEL_DRIVER ||
+        service_entry->config.dwServiceType == SERVICE_FILE_SYSTEM_DRIVER)
+    {
+        struct service_entry *winedevice_entry;
+        WCHAR *group;
+
+        if ((err = get_winedevice_binary_path(&path, &is_wow64)))
+        {
+            service_unlock(service_entry);
+            HeapFree(GetProcessHeap(), 0, path);
+            return err;
+        }
+
+        err = add_winedevice_service(service_entry, path, is_wow64, &winedevice_entry);
+        HeapFree(GetProcessHeap(), 0, path);
+        if (err != ERROR_SUCCESS)
+        {
+            service_unlock(service_entry);
+            return err;
+        }
+
+        group = strdupW(winedevice_entry->config.lpLoadOrderGroup);
+        service_unlock(service_entry);
+
+        err = service_start(winedevice_entry, group != NULL, (const WCHAR **)&group);
+        HeapFree(GetProcessHeap(), 0, group);
+        if (err != ERROR_SUCCESS)
+        {
+            release_service(winedevice_entry);
+            return err;
+        }
+
+        service_lock(service_entry);
+        process = grab_process(winedevice_entry->process);
+        release_service(winedevice_entry);
+
+        if (!process)
+        {
+            service_unlock(service_entry);
+            return ERROR_SERVICE_REQUEST_TIMEOUT;
+        }
+
+        service_entry->status.dwCurrentState = SERVICE_START_PENDING;
+        service_entry->status.dwControlsAccepted = 0;
+        ResetEvent(service_entry->status_changed_event);
+
+        service_entry->process = grab_process(process);
+        service_entry->shared_process = *shared_process = TRUE;
+        process->use_count++;
+        service_unlock(service_entry);
+
+        err = WaitForSingleObject(process->control_mutex, 30000);
+        if (err != WAIT_OBJECT_0)
+        {
+            release_process(process);
+            return ERROR_SERVICE_REQUEST_TIMEOUT;
+        }
+
+        *new_process = process;
+        return ERROR_SUCCESS;
+    }
+
     if ((err = process_create(service_get_pipe_name(), &process)))
     {
         WINE_ERR("failed to create process object for %s, error = %u\n",
                  wine_dbgstr_w(service_entry->name), err);
         service_unlock(service_entry);
-        return err;
-    }
-
-    if ((err = get_service_binary_path(service_entry, &path)))
-    {
-        service_unlock(service_entry);
-        free_process_entry(process);
+        HeapFree(GetProcessHeap(), 0, path);
         return err;
     }
 
@@ -804,12 +907,12 @@ static DWORD service_start_process(struct service_entry *service_entry, struct p
 
     scmdatabase_add_process(service_entry->db, process);
     service_entry->process = grab_process(process);
+    service_entry->shared_process = *shared_process = FALSE;
     process->use_count++;
-
     service_unlock(service_entry);
 
     r = CreateProcessW(NULL, path, NULL, NULL, FALSE, CREATE_UNICODE_ENVIRONMENT, environment, NULL, &si, &pi);
-    HeapFree(GetProcessHeap(),0,path);
+    HeapFree(GetProcessHeap(), 0, path);
     if (!r)
     {
         err = GetLastError();
@@ -846,8 +949,8 @@ static DWORD service_wait_for_startup(struct service_entry *service, struct proc
 /******************************************************************************
  * process_send_start_message
  */
-static DWORD process_send_start_message(struct process_entry *process, const WCHAR *name,
-                                        const WCHAR **argv, DWORD argc)
+static DWORD process_send_start_message(struct process_entry *process, BOOL shared_process,
+                                        const WCHAR *name, const WCHAR **argv, DWORD argc)
 {
     OVERLAPPED overlapped;
     DWORD i, len, result;
@@ -896,7 +999,8 @@ static DWORD process_send_start_message(struct process_entry *process, const WCH
     }
     *p = 0;
 
-    if (!process_send_control(process, name, SERVICE_CONTROL_START, (const BYTE *)str, len, &result))
+    if (!process_send_control(process, shared_process, name,
+                              SERVICE_CONTROL_START, (const BYTE *)str, len, &result))
         result = ERROR_SERVICE_REQUEST_TIMEOUT;
 
     HeapFree(GetProcessHeap(), 0, str);
@@ -906,21 +1010,28 @@ static DWORD process_send_start_message(struct process_entry *process, const WCH
 DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *service_argv)
 {
     struct process_entry *process = NULL;
+    BOOL shared_process;
     DWORD err;
 
-    err = service_start_process(service, &process);
+    err = service_start_process(service, &process, &shared_process);
     if (err == ERROR_SUCCESS)
     {
-        err = process_send_start_message(process, service->name, service_argv, service_argc);
+        err = process_send_start_message(process, shared_process, service->name, service_argv, service_argc);
 
         if (err == ERROR_SUCCESS)
             err = service_wait_for_startup(service, process);
 
-        if (err == ERROR_SUCCESS)
-            ReleaseMutex(process->control_mutex);
-        else
-            process_terminate(process);
+        if (err != ERROR_SUCCESS)
+        {
+            service_lock(service);
+            service->status.dwCurrentState = SERVICE_STOPPED;
+            service->process = NULL;
+            if (!--process->use_count) process_terminate(process);
+            release_process(process);
+            service_unlock(service);
+        }
 
+        ReleaseMutex(process->control_mutex);
         release_process(process);
     }
 

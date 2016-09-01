@@ -43,6 +43,7 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 extern NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event );
 
+static const WCHAR winedeviceW[] = {'w','i','n','e','d','e','v','i','c','e',0};
 static SERVICE_STATUS_HANDLE service_handle;
 static PTP_CLEANUP_GROUP cleanup_group;
 static SC_HANDLE manager_handle;
@@ -486,20 +487,57 @@ static void shutdown_drivers( void )
     shutdown_in_progress = TRUE;
 }
 
+static DWORD device_handler( DWORD ctrl, const WCHAR *driver_name )
+{
+    struct wine_rb_entry *entry;
+    DWORD result = NO_ERROR;
+
+    if (shutdown_in_progress)
+        return ERROR_SERVICE_CANNOT_ACCEPT_CTRL;
+
+    EnterCriticalSection( &drivers_cs );
+    entry = wine_rb_get( &wine_drivers, driver_name );
+
+    switch (ctrl)
+    {
+    case SERVICE_CONTROL_START:
+        if (entry) break;
+        result = RtlNtStatusToDosError(create_driver( driver_name ));
+        break;
+
+    case SERVICE_CONTROL_STOP:
+        if (!entry) break;
+        result = RtlNtStatusToDosError(unload_driver( entry, FALSE ));
+        break;
+
+    default:
+        FIXME( "got driver ctrl %x for %s\n", ctrl, wine_dbgstr_w(driver_name) );
+        break;
+    }
+    LeaveCriticalSection( &drivers_cs );
+    return result;
+}
+
 static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, LPVOID event_data, LPVOID context )
 {
-    const WCHAR *driver_name = context;
+    const WCHAR *service_group = context;
+
+    if (ctrl & SERVICE_CONTROL_FORWARD_FLAG)
+    {
+        if (!event_data) return ERROR_INVALID_PARAMETER;
+        return device_handler( ctrl & ~SERVICE_CONTROL_FORWARD_FLAG, (const WCHAR *)event_data );
+    }
 
     switch (ctrl)
     {
     case SERVICE_CONTROL_STOP:
     case SERVICE_CONTROL_SHUTDOWN:
-        WINE_TRACE( "shutting down %s\n", wine_dbgstr_w(driver_name) );
+        TRACE( "shutting down %s\n", wine_dbgstr_w(service_group) );
         set_service_status( service_handle, SERVICE_STOP_PENDING, 0 );
         shutdown_drivers();
         return NO_ERROR;
     default:
-        WINE_FIXME( "got service ctrl %x for %s\n", ctrl, wine_dbgstr_w(driver_name) );
+        FIXME( "got service ctrl %x for %s\n", ctrl, wine_dbgstr_w(service_group) );
         set_service_status( service_handle, SERVICE_RUNNING,
                             SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN );
         return NO_ERROR;
@@ -508,8 +546,7 @@ static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, LPVOID event_
 
 static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
 {
-    const WCHAR *driver_name = argv[0];
-    NTSTATUS status;
+    const WCHAR *service_group = (argc >= 2) ? argv[1] : argv[0];
 
     if (!(stop_event = CreateEventW( NULL, TRUE, FALSE, NULL )))
         return;
@@ -517,16 +554,16 @@ static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
         return;
     if (!(manager_handle = OpenSCManagerW( NULL, NULL, SC_MANAGER_CONNECT )))
         return;
-    if (!(service_handle = RegisterServiceCtrlHandlerExW( driver_name, service_handler, (void *)driver_name )))
+    if (!(service_handle = RegisterServiceCtrlHandlerExW( winedeviceW, service_handler, (void *)service_group )))
         return;
 
-    EnterCriticalSection( &drivers_cs );
-    status = create_driver( driver_name );
-    LeaveCriticalSection( &drivers_cs );
+    TRACE( "starting service group %s\n", wine_dbgstr_w(service_group) );
+    set_service_status( service_handle, SERVICE_RUNNING,
+                        SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN );
 
-    if (status == STATUS_SUCCESS)
-        wine_ntoskrnl_main_loop( stop_event );
+    wine_ntoskrnl_main_loop( stop_event );
 
+    TRACE( "service group %s stopped\n", wine_dbgstr_w(service_group) );
     set_service_status( service_handle, SERVICE_STOPPED, 0 );
     CloseServiceHandle( manager_handle );
     CloseThreadpoolCleanupGroup( cleanup_group );
@@ -537,13 +574,7 @@ int wmain( int argc, WCHAR *argv[] )
 {
     SERVICE_TABLE_ENTRYW service_table[2];
 
-    if (!argv[1])
-    {
-        WINE_ERR( "missing device name, winedevice isn't supposed to be run manually\n" );
-        return 1;
-    }
-
-    service_table[0].lpServiceName = argv[1];
+    service_table[0].lpServiceName = (void *)winedeviceW;
     service_table[0].lpServiceProc = ServiceMain;
     service_table[1].lpServiceName = NULL;
     service_table[1].lpServiceProc = NULL;

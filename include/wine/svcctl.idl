@@ -36,6 +36,7 @@ cpp_quote("#define SVCCTL_STARTED_EVENT {'_','_','w','i','n','e','_','S','v','c'
 /* Service startup protocol over control pipe - not compatible with Windows */
 cpp_quote("#define SERVICE_PROTOCOL_MAGIC 0x57494e45")
 cpp_quote("#define SERVICE_CONTROL_START 0")
+cpp_quote("#define SERVICE_CONTROL_FORWARD_FLAG 0x80000000")
 
 typedef struct service_start_info_t
 {

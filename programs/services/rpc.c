@@ -85,6 +85,7 @@ struct sc_lock
     struct scmdatabase *db;
 };
 
+static const WCHAR emptyW[] = {0};
 static PTP_CLEANUP_GROUP cleanup_group;
 HANDLE exit_event;
 
@@ -122,6 +123,44 @@ static void terminate_after_timeout(struct process_entry *process, DWORD timeout
     if ((wait = CreateThreadpoolWait(terminate_callback, grab_process(process), &environment)))
         SetThreadpoolWait(wait, process->process, &ft);
     else
+        release_process(process);
+}
+
+static void CALLBACK shutdown_callback(TP_CALLBACK_INSTANCE *instance, void *context)
+{
+    struct process_entry *process = context;
+    DWORD result;
+
+    result = WaitForSingleObject(process->control_mutex, 30000);
+    if (result == WAIT_OBJECT_0)
+    {
+        process_send_control(process, FALSE, emptyW, SERVICE_CONTROL_STOP, NULL, 0, &result);
+        ReleaseMutex(process->control_mutex);
+    }
+
+    release_process(process);
+}
+
+static void shutdown_shared_process(struct process_entry *process)
+{
+    TP_CALLBACK_ENVIRON environment;
+    struct service_entry *service;
+    struct scmdatabase *db = process->db;
+
+    scmdatabase_lock(db);
+    LIST_FOR_EACH_ENTRY(service, &db->services, struct service_entry, entry)
+    {
+        if (service->process != process) continue;
+        service->status.dwCurrentState = SERVICE_STOP_PENDING;
+    }
+    scmdatabase_unlock(db);
+
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.CleanupGroup = cleanup_group;
+    environment.CleanupGroupCancelCallback = group_cancel_callback;
+
+    if (!TrySubmitThreadpoolCallback(shutdown_callback, grab_process(process), &environment))
         release_process(process);
 }
 
@@ -763,6 +802,8 @@ DWORD __cdecl svcctl_SetServiceStatus(
         service->service_entry->process = NULL;
         if (!--process->use_count)
             terminate_after_timeout(process, service_kill_timeout);
+        if (service->service_entry->shared_process && process->use_count <= 1)
+            shutdown_shared_process(process);
         release_process(process);
     }
 
@@ -1030,12 +1071,20 @@ static BOOL process_send_command(struct process_entry *process, const void *data
 /******************************************************************************
  * process_send_control
  */
-BOOL process_send_control(struct process_entry *process, const WCHAR *name, DWORD control,
-                          const BYTE *data, DWORD data_size, DWORD *result)
+BOOL process_send_control(struct process_entry *process, BOOL shared_process, const WCHAR *name,
+                          DWORD control, const BYTE *data, DWORD data_size, DWORD *result)
 {
     service_start_info *ssi;
     DWORD len;
     BOOL r;
+
+    if (shared_process)
+    {
+        control |= SERVICE_CONTROL_FORWARD_FLAG;
+        data = (BYTE *)name;
+        data_size = (strlenW(name) + 1) * sizeof(WCHAR);
+        name = emptyW;
+    }
 
     /* calculate how much space we need to send the startup info */
     len = (strlenW(name) + 1) * sizeof(WCHAR) + data_size;
@@ -1086,6 +1135,7 @@ DWORD __cdecl svcctl_ControlService(
     DWORD access_required;
     struct sc_service_handle *service;
     struct process_entry *process;
+    BOOL shared_process;
     DWORD result;
 
     WINE_TRACE("(%p, %d, %p)\n", hService, dwControl, lpServiceStatus);
@@ -1165,6 +1215,7 @@ DWORD __cdecl svcctl_ControlService(
 
     /* Hold a reference to the process while sending the command. */
     process = grab_process(service->service_entry->process);
+    shared_process = service->service_entry->shared_process;
     service_unlock(service->service_entry);
 
     if (!process)
@@ -1177,7 +1228,8 @@ DWORD __cdecl svcctl_ControlService(
         return ERROR_SERVICE_REQUEST_TIMEOUT;
     }
 
-    if (process_send_control(process, service->service_entry->name, dwControl, NULL, 0, &result))
+    if (process_send_control(process, shared_process, service->service_entry->name,
+                             dwControl, NULL, 0, &result))
         result = ERROR_SUCCESS;
 
     if (lpServiceStatus)
