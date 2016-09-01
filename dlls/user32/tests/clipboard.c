@@ -172,18 +172,43 @@ static void run_process( const char *args )
 static WNDPROC old_proc;
 static LRESULT CALLBACK winproc_wrapper( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 {
-    static int destroyed;
+    static int wm_renderallformats;
+    static int wm_drawclipboard;
+    static int seqno;
+    DWORD msg_flags = InSendMessageEx( NULL );
 
-    if (msg == WM_DESTROY) destroyed = TRUE;
+    if (!seqno) seqno = GetClipboardSequenceNumber();
 
     trace( "%p msg %04x\n", hwnd, msg );
-    if (!destroyed)
+    if (!wm_renderallformats)
+    {
         ok( GetClipboardOwner() == hwnd, "%04x: wrong owner %p/%p\n", msg, GetClipboardOwner(), hwnd );
-    else todo_wine_if (msg == WM_DESTROY)
+        ok( seqno == GetClipboardSequenceNumber(), "%04x: seqno changed\n", msg );
+    }
+    else
+    {
         ok( !GetClipboardOwner(), "%04x: wrong owner %p\n", msg, GetClipboardOwner() );
+        ok( seqno + 1 == GetClipboardSequenceNumber(), "%04x: seqno unchanged\n", msg );
+    }
     ok( GetClipboardViewer() == hwnd, "%04x: wrong viewer %p/%p\n", msg, GetClipboardViewer(), hwnd );
     ok( GetOpenClipboardWindow() == hwnd, "%04x: wrong open win %p/%p\n",
         msg, GetOpenClipboardWindow(), hwnd );
+
+    switch (msg)
+    {
+    case WM_DESTROY:
+        ok( wm_renderallformats, "didn't receive WM_RENDERALLFORMATS before WM_DESTROY\n" );
+        todo_wine ok( wm_drawclipboard, "didn't receive WM_DRAWCLIPBOARD before WM_DESTROY\n" );
+        break;
+    case WM_DRAWCLIPBOARD:
+        ok( msg_flags == ISMEX_NOSEND, "WM_DRAWCLIPBOARD wrong flags %x\n", msg_flags );
+        wm_drawclipboard++;
+        break;
+    case WM_RENDERALLFORMATS:
+        ok( msg_flags == ISMEX_NOSEND, "WM_RENDERALLFORMATS wrong flags %x\n", msg_flags );
+        wm_renderallformats++;
+        break;
+    }
     return old_proc( hwnd, msg, wp, lp );
 }
 
@@ -271,10 +296,12 @@ static void test_ClipboardOwner(void)
     ok( ret, "OpenClipboard error %d\n", GetLastError());
     ret = EmptyClipboard();
     ok( ret, "EmptyClipboard error %d\n", GetLastError());
+    SetClipboardData( CF_WAVE, 0 );
     SetClipboardViewer( hWnd1 );
     ok( GetClipboardOwner() == hWnd1, "wrong owner %p/%p\n", GetClipboardOwner(), hWnd1 );
     ok( GetClipboardViewer() == hWnd1, "wrong viewer %p/%p\n", GetClipboardViewer(), hWnd1 );
     ok( GetOpenClipboardWindow() == hWnd1, "wrong open win %p/%p\n", GetOpenClipboardWindow(), hWnd1 );
+    ok( IsClipboardFormatAvailable( CF_WAVE ), "CF_WAVE not available\n" );
 
     old_proc = (WNDPROC)SetWindowLongPtrA( hWnd1, GWLP_WNDPROC, (LONG_PTR)winproc_wrapper );
     ret = DestroyWindow(hWnd1);
@@ -285,6 +312,7 @@ static void test_ClipboardOwner(void)
     ok(!GetClipboardOwner() && GetLastError() == 0xdeadbeef, "clipboard should not be owned\n");
     ok(!GetClipboardViewer() && GetLastError() == 0xdeadbeef, "viewer still exists\n");
     ok(!GetOpenClipboardWindow() && GetLastError() == 0xdeadbeef, "clipboard should not be open\n");
+    todo_wine ok( !IsClipboardFormatAvailable( CF_WAVE ), "CF_WAVE available\n" );
 
     SetLastError( 0xdeadbeef );
     ret = CloseClipboard();

@@ -183,6 +183,15 @@ static user_handle_t close_clipboard( struct clipboard *clipboard )
     return clipboard->viewer;
 }
 
+/* release the clipboard owner, and return the viewer window that should be notified if any */
+static user_handle_t release_clipboard( struct clipboard *clipboard )
+{
+    clipboard->owner_win = 0;
+    clipboard->owner_thread = NULL;
+    /* FIXME: free delay-rendered formats if any and notify listeners */
+    return 0;
+}
+
 /* cleanup clipboard information upon window destruction */
 void cleanup_clipboard_window( struct desktop *desktop, user_handle_t window )
 {
@@ -192,11 +201,7 @@ void cleanup_clipboard_window( struct desktop *desktop, user_handle_t window )
 
     remove_listener( clipboard, window );
     if (clipboard->viewer == window) clipboard->viewer = 0;
-    if (clipboard->owner_win == window)
-    {
-        clipboard->owner_win = 0;
-        clipboard->owner_thread = NULL;
-    }
+    if (clipboard->owner_win == window) release_clipboard( clipboard );
     if (clipboard->open_win == window)
     {
         user_handle_t viewer = close_clipboard( clipboard );
@@ -215,11 +220,7 @@ void cleanup_clipboard_thread(struct thread *thread)
 
     if ((clipboard = winstation->clipboard))
     {
-        if (thread == clipboard->owner_thread)
-        {
-            clipboard->owner_win = 0;
-            clipboard->owner_thread = NULL;
-        }
+        if (thread == clipboard->owner_thread) release_clipboard( clipboard );
         if (thread == clipboard->open_thread)
         {
             user_handle_t viewer = close_clipboard( clipboard );
@@ -341,7 +342,24 @@ DECL_HANDLER(empty_clipboard)
 }
 
 
-/* Get clipboard information */
+/* release ownership of the clipboard */
+DECL_HANDLER(release_clipboard)
+{
+    struct clipboard *clipboard = get_process_clipboard();
+    user_handle_t owner;
+
+    if (!clipboard) return;
+
+    if (!(owner = get_valid_window_handle( req->owner ))) return;
+
+    if (clipboard->owner_win == owner)
+        reply->viewer = release_clipboard( clipboard );
+    else
+        set_error( STATUS_INVALID_OWNER );
+}
+
+
+/* get clipboard information */
 DECL_HANDLER(get_clipboard_info)
 {
     struct clipboard *clipboard = get_process_clipboard();

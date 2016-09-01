@@ -4527,6 +4527,20 @@ struct empty_clipboard_reply
 
 
 
+struct release_clipboard_request
+{
+    struct request_header __header;
+    user_handle_t  owner;
+};
+struct release_clipboard_reply
+{
+    struct reply_header __header;
+    user_handle_t  viewer;
+    char __pad_12[4];
+};
+
+
+
 struct get_clipboard_info_request
 {
     struct request_header __header;
@@ -5715,6 +5729,7 @@ enum request
     REQ_close_clipboard,
     REQ_set_clipboard_info,
     REQ_empty_clipboard,
+    REQ_release_clipboard,
     REQ_get_clipboard_info,
     REQ_set_clipboard_viewer,
     REQ_add_clipboard_listener,
@@ -6001,6 +6016,7 @@ union generic_request
     struct close_clipboard_request close_clipboard_request;
     struct set_clipboard_info_request set_clipboard_info_request;
     struct empty_clipboard_request empty_clipboard_request;
+    struct release_clipboard_request release_clipboard_request;
     struct get_clipboard_info_request get_clipboard_info_request;
     struct set_clipboard_viewer_request set_clipboard_viewer_request;
     struct add_clipboard_listener_request add_clipboard_listener_request;
@@ -6285,6 +6301,7 @@ union generic_reply
     struct close_clipboard_reply close_clipboard_reply;
     struct set_clipboard_info_reply set_clipboard_info_reply;
     struct empty_clipboard_reply empty_clipboard_reply;
+    struct release_clipboard_reply release_clipboard_reply;
     struct get_clipboard_info_reply get_clipboard_info_reply;
     struct set_clipboard_viewer_reply set_clipboard_viewer_reply;
     struct add_clipboard_listener_reply add_clipboard_listener_reply;
@@ -6348,6 +6365,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 514
+#define SERVER_PROTOCOL_VERSION 515
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

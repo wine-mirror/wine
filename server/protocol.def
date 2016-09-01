@@ -3200,6 +3200,14 @@ enum caret_state
 @END
 
 
+/* Release ownership of the clipboard */
+@REQ(release_clipboard)
+    user_handle_t  owner;          /* clipboard owner to release */
+@REPLY
+    user_handle_t  viewer;         /* first clipboard viewer */
+@END
+
+
 /* Get clipboard information */
 @REQ(get_clipboard_info)
 @REPLY

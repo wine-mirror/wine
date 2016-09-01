@@ -83,13 +83,18 @@ static UINT get_clipboard_flags(void)
  */
 void CLIPBOARD_ReleaseOwner( HWND hwnd )
 {
-    SERVER_START_REQ( set_clipboard_info )
+    HWND viewer = 0;
+
+    SendMessageW( hwnd, WM_RENDERALLFORMATS, 0, 0 );
+
+    SERVER_START_REQ( release_clipboard )
     {
-        req->flags = SET_CB_RELOWNER | SET_CB_SEQNO;
         req->owner = wine_server_user_handle( hwnd );
-        wine_server_call( req );
+        if (!wine_server_call( req )) viewer = wine_server_ptr_handle( reply->viewer );
     }
     SERVER_END_REQ;
+
+    if (viewer) SendNotifyMessageW( viewer, WM_DRAWCLIPBOARD, (WPARAM)GetClipboardOwner(), 0 );
 }
 
 

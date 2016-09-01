@@ -3774,6 +3774,16 @@ static void dump_empty_clipboard_request( const struct empty_clipboard_request *
 {
 }
 
+static void dump_release_clipboard_request( const struct release_clipboard_request *req )
+{
+    fprintf( stderr, " owner=%08x", req->owner );
+}
+
+static void dump_release_clipboard_reply( const struct release_clipboard_reply *req )
+{
+    fprintf( stderr, " viewer=%08x", req->viewer );
+}
+
 static void dump_get_clipboard_info_request( const struct get_clipboard_info_request *req )
 {
 }
@@ -4635,6 +4645,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_close_clipboard_request,
     (dump_func)dump_set_clipboard_info_request,
     (dump_func)dump_empty_clipboard_request,
+    (dump_func)dump_release_clipboard_request,
     (dump_func)dump_get_clipboard_info_request,
     (dump_func)dump_set_clipboard_viewer_request,
     (dump_func)dump_add_clipboard_listener_request,
@@ -4917,6 +4928,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_close_clipboard_reply,
     (dump_func)dump_set_clipboard_info_reply,
     NULL,
+    (dump_func)dump_release_clipboard_reply,
     (dump_func)dump_get_clipboard_info_reply,
     (dump_func)dump_set_clipboard_viewer_reply,
     NULL,
@@ -5199,6 +5211,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "close_clipboard",
     "set_clipboard_info",
     "empty_clipboard",
+    "release_clipboard",
     "get_clipboard_info",
     "set_clipboard_viewer",
     "add_clipboard_listener",
@@ -5324,6 +5337,7 @@ static const struct
     { "INVALID_IMAGE_PROTECT",       STATUS_INVALID_IMAGE_PROTECT },
     { "INVALID_IMAGE_WIN_64",        STATUS_INVALID_IMAGE_WIN_64 },
     { "INVALID_LOCK_SEQUENCE",       STATUS_INVALID_LOCK_SEQUENCE },
+    { "INVALID_OWNER",               STATUS_INVALID_OWNER },
     { "INVALID_PARAMETER",           STATUS_INVALID_PARAMETER },
     { "INVALID_SECURITY_DESCR",      STATUS_INVALID_SECURITY_DESCR },
     { "IO_TIMEOUT",                  STATUS_IO_TIMEOUT },

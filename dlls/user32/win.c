@@ -1791,6 +1791,8 @@ static void WIN_SendDestroyMsg( HWND hwnd )
         if (hwnd == info.hwndActive) WINPOS_ActivateOtherWindow( hwnd );
     }
 
+    if (hwnd == GetClipboardOwner()) CLIPBOARD_ReleaseOwner( hwnd );
+
     /*
      * Send the WM_DESTROY to the window.
      */
@@ -1900,8 +1902,6 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
     WIN_SendDestroyMsg( hwnd );
     if (!IsWindow( hwnd )) return TRUE;
-
-    CLIPBOARD_ReleaseOwner( hwnd );
 
       /* Destroy the window storage */
 
