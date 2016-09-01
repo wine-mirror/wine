@@ -935,7 +935,7 @@ struct wined3d_resource * CDECL wined3d_buffer_get_resource(struct wined3d_buffe
     return &buffer->resource;
 }
 
-HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UINT size, BYTE **data, DWORD flags)
+static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UINT size, BYTE **data, DWORD flags)
 {
     LONG count;
     BYTE *base;
@@ -1037,7 +1037,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
     return WINED3D_OK;
 }
 
-void CDECL wined3d_buffer_unmap(struct wined3d_buffer *buffer)
+static void wined3d_buffer_unmap(struct wined3d_buffer *buffer)
 {
     ULONG i;
 

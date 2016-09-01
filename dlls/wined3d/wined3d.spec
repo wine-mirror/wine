@@ -29,8 +29,6 @@
 @ cdecl wined3d_buffer_get_parent(ptr)
 @ cdecl wined3d_buffer_get_resource(ptr)
 @ cdecl wined3d_buffer_incref(ptr)
-@ cdecl wined3d_buffer_map(ptr long long ptr long)
-@ cdecl wined3d_buffer_unmap(ptr)
 
 @ cdecl wined3d_device_acquire_focus_window(ptr ptr)
 @ cdecl wined3d_device_begin_scene(ptr)
