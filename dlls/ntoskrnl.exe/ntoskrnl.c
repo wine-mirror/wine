@@ -2701,9 +2701,9 @@ NTSTATUS WINAPI ZwLoadDriver( const UNICODE_STRING *service_name )
 {
     SERVICE_STATUS_PROCESS service_status;
     SC_HANDLE service_handle;
+    ULONGLONG start_time;
     NTSTATUS status;
     DWORD bytes;
-    int i;
 
     TRACE( "(%s)\n", debugstr_us(service_name) );
 
@@ -2712,21 +2712,24 @@ NTSTATUS WINAPI ZwLoadDriver( const UNICODE_STRING *service_name )
 
     TRACE( "trying to start %s\n", debugstr_us(service_name) );
 
-    for (i = 0; i < 100; i++)  /* 10 sec timeout */
+    start_time = GetTickCount64();
+    for (;;)
     {
         if (StartServiceW( service_handle, 0, NULL )) break;
         if (GetLastError() == ERROR_SERVICE_ALREADY_RUNNING) break;
         if (GetLastError() != ERROR_SERVICE_DATABASE_LOCKED) goto error;
-        Sleep(100);
+        if (GetTickCount64() - start_time > 30000) goto error;
+        Sleep( 100 );
     }
-    if (i == 100) goto error;
 
-    for (i = 0; i < 100; i++)  /* 10 sec timeout */
+    start_time = GetTickCount64();
+    for (;;)
     {
         if (!QueryServiceStatusEx( service_handle, SC_STATUS_PROCESS_INFO,
                                    (BYTE *)&service_status, sizeof(service_status), &bytes )) goto error;
         if (service_status.dwCurrentState != SERVICE_START_PENDING) break;
-        Sleep(100);
+        if (GetTickCount64() - start_time > 30000) goto error;
+        Sleep( 100 );
     }
 
     if (service_status.dwCurrentState == SERVICE_RUNNING)
@@ -2756,8 +2759,8 @@ NTSTATUS WINAPI ZwUnloadDriver( const UNICODE_STRING *service_name )
 {
     SERVICE_STATUS service_status;
     SC_HANDLE service_handle;
+    ULONGLONG start_time;
     NTSTATUS status;
-    int i;
 
     TRACE( "(%s)\n", debugstr_us(service_name) );
 
@@ -2767,11 +2770,13 @@ NTSTATUS WINAPI ZwUnloadDriver( const UNICODE_STRING *service_name )
     if (!ControlService( service_handle, SERVICE_CONTROL_STOP, &service_status ))
         goto error;
 
-    for (i = 0; i < 100; i++)  /* 10 sec timeout */
+    start_time = GetTickCount64();
+    for (;;)
     {
         if (!QueryServiceStatus( service_handle, &service_status )) goto error;
         if (service_status.dwCurrentState != SERVICE_STOP_PENDING) break;
-        Sleep(100);
+        if (GetTickCount64() - start_time > 30000) goto error;
+        Sleep( 100 );
     }
 
     if (service_status.dwCurrentState == SERVICE_STOPPED)
