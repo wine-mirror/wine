@@ -4,6 +4,7 @@
  * Copyright (C) 2007 Alexandre Julliard
  * Copyright (C) 2010 Damjan Jovanovic
  * Copyright (C) 2016 Sebastian Lackner
+ * Copyright (C) 2016 CodeWeavers, Aric Stewart
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2787,4 +2788,13 @@ done:
     TRACE( "returning status %08x\n", status );
     CloseServiceHandle( service_handle );
     return status;
+}
+
+
+/***********************************************************************
+ *           IoInvalidateDeviceRelations (NTOSKRNL.EXE.@)
+ */
+void WINAPI IoInvalidateDeviceRelations( DEVICE_OBJECT *device_object, DEVICE_RELATION_TYPE type )
+{
+    FIXME( "(%p, %i): stub\n", device_object, type );
 }

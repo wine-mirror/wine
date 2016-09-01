@@ -400,7 +400,7 @@
 @ stdcall IoInitializeIrp(ptr long long)
 @ stdcall IoInitializeRemoveLockEx(ptr long long long long)
 @ stdcall IoInitializeTimer(ptr ptr ptr)
-@ stub IoInvalidateDeviceRelations
+@ stdcall IoInvalidateDeviceRelations(ptr long)
 @ stub IoInvalidateDeviceState
 @ stub IoIsFileOriginRemote
 @ stub IoIsOperationSynchronous
