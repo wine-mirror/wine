@@ -737,6 +737,31 @@ static DWORD get_winedevice_binary_path(WCHAR **path, BOOL *is_wow64)
     return ERROR_SUCCESS;
 }
 
+static struct process_entry *get_winedevice_process(struct service_entry *service_entry, WCHAR *path, BOOL is_wow64)
+{
+    struct service_entry *winedevice_entry;
+
+    if (!service_entry->config.lpLoadOrderGroup)
+        return NULL;
+
+    LIST_FOR_EACH_ENTRY(winedevice_entry, &service_entry->db->services, struct service_entry, entry)
+    {
+        if (winedevice_entry->status.dwCurrentState != SERVICE_START_PENDING &&
+            winedevice_entry->status.dwCurrentState != SERVICE_RUNNING) continue;
+        if (!winedevice_entry->process) continue;
+
+        if (winedevice_entry->is_wow64 != is_wow64) continue;
+        if (strcmpW(winedevice_entry->config.lpBinaryPathName, path)) continue;
+
+        if (!winedevice_entry->config.lpLoadOrderGroup) continue;
+        if (strcmpW(winedevice_entry->config.lpLoadOrderGroup, service_entry->config.lpLoadOrderGroup)) continue;
+
+        return grab_process(winedevice_entry->process);
+    }
+
+    return NULL;
+}
+
 static DWORD add_winedevice_service(const struct service_entry *service, WCHAR *path, BOOL is_wow64,
                                     struct service_entry **entry)
 {
@@ -829,6 +854,12 @@ static DWORD service_start_process(struct service_entry *service_entry, struct p
             return err;
         }
 
+        if ((process = get_winedevice_process(service_entry, path, is_wow64)))
+        {
+            HeapFree(GetProcessHeap(), 0, path);
+            goto found;
+        }
+
         err = add_winedevice_service(service_entry, path, is_wow64, &winedevice_entry);
         HeapFree(GetProcessHeap(), 0, path);
         if (err != ERROR_SUCCESS)
@@ -858,6 +889,7 @@ static DWORD service_start_process(struct service_entry *service_entry, struct p
             return ERROR_SERVICE_REQUEST_TIMEOUT;
         }
 
+found:
         service_entry->status.dwCurrentState = SERVICE_START_PENDING;
         service_entry->status.dwControlsAccepted = 0;
         ResetEvent(service_entry->status_changed_event);
