@@ -175,8 +175,6 @@ void WINAPI ServiceMain(DWORD argc, LPWSTR *argv)
 {
     TRACE("starting Task Scheduler Service\n");
 
-    if (RPC_init() != RPC_S_OK) return;
-
     schedsvc_handle = RegisterServiceCtrlHandlerW(scheduleW, schedsvc_handler);
     if (!schedsvc_handle)
     {
@@ -186,11 +184,15 @@ void WINAPI ServiceMain(DWORD argc, LPWSTR *argv)
 
     done_event = CreateEventW(NULL, TRUE, FALSE, NULL);
 
-    schedsvc_update_status(SERVICE_RUNNING);
+    schedsvc_update_status(SERVICE_START_PENDING);
 
-    WaitForSingleObject(done_event, INFINITE);
+    if (RPC_init() == RPC_S_OK)
+    {
+        schedsvc_update_status(SERVICE_RUNNING);
+        WaitForSingleObject(done_event, INFINITE);
+        RPC_finish();
+    }
 
-    RPC_finish();
     schedsvc_update_status(SERVICE_STOPPED);
 
     TRACE("exiting Task Scheduler Service\n");
