@@ -499,8 +499,8 @@ static HRESULT d3d_texture2d_init(struct d3d_texture2d *texture, struct d3d_devi
             return E_FAIL;
         }
 
-        hr = IWineDXGIDevice_create_surface(wine_device, wined3d_texture_get_resource(texture->wined3d_texture),
-                0, NULL, (IUnknown *)&texture->ID3D10Texture2D_iface, (void **)&texture->dxgi_surface);
+        hr = IWineDXGIDevice_create_surface(wine_device, texture->wined3d_texture, 0, NULL,
+                (IUnknown *)&texture->ID3D10Texture2D_iface, (void **)&texture->dxgi_surface);
         IWineDXGIDevice_Release(wine_device);
         if (FAILED(hr))
         {

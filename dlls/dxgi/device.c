@@ -279,14 +279,14 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetMaximumFrameLatency(IWineDXGIDev
 /* IWineDXGIDevice methods */
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *iface,
-        struct wined3d_resource *wined3d_resource, DXGI_USAGE usage,
+        struct wined3d_texture *wined3d_texture, DXGI_USAGE usage,
         const DXGI_SHARED_RESOURCE *shared_resource, IUnknown *outer, void **surface)
 {
     struct dxgi_surface *object;
     HRESULT hr;
 
-    TRACE("iface %p, wined3d_resource %p, usage %#x, shared_resource %p, outer %p, surface %p.\n",
-            iface, wined3d_resource, usage, shared_resource, outer, surface);
+    TRACE("iface %p, wined3d_texture %p, usage %#x, shared_resource %p, outer %p, surface %p.\n",
+            iface, wined3d_texture, usage, shared_resource, outer, surface);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
     {
@@ -294,7 +294,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *ifa
         return E_OUTOFMEMORY;
     }
 
-    if (FAILED(hr = dxgi_surface_init(object, (IDXGIDevice *)iface, outer, wined3d_resource)))
+    if (FAILED(hr = dxgi_surface_init(object, (IDXGIDevice *)iface, outer, wined3d_texture)))
     {
         WARN("Failed to initialize surface, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
