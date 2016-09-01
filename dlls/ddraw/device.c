@@ -4372,7 +4372,9 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
     struct d3d_vertex_buffer *vb_impl = unsafe_impl_from_IDirect3DVertexBuffer7(vb);
     DWORD stride = get_flexible_vertex_size(vb_impl->fvf);
-    WORD *index_data;
+    struct wined3d_map_desc wined3d_map_desc;
+    struct wined3d_box wined3d_box = {0};
+    struct wined3d_resource *ib;
     HRESULT hr;
     UINT ib_pos;
 
@@ -4412,16 +4414,18 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
      * method could be created which takes an user pointer containing the
      * indices or a SetData-Method for the index buffer, which overrides the
      * index buffer data with our pointer. */
-    hr = wined3d_buffer_map(device->index_buffer, ib_pos, index_count * sizeof(WORD),
-            (BYTE **)&index_data, ib_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD);
-    if (FAILED(hr))
+    wined3d_box.left = ib_pos;
+    wined3d_box.right = ib_pos + index_count * sizeof(WORD);
+    ib = wined3d_buffer_get_resource(device->index_buffer);
+    if (FAILED(hr = wined3d_resource_map(ib, 0, &wined3d_map_desc, &wined3d_box,
+            ib_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD)))
     {
         ERR("Failed to map buffer, hr %#x.\n", hr);
         wined3d_mutex_unlock();
         return hr;
     }
-    memcpy(index_data, indices, index_count * sizeof(WORD));
-    wined3d_buffer_unmap(device->index_buffer);
+    memcpy(wined3d_map_desc.data, indices, index_count * sizeof(WORD));
+    wined3d_resource_unmap(ib, 0);
     device->index_buffer_pos = ib_pos + index_count * sizeof(WORD);
 
     /* Set the index stream */
