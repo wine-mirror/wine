@@ -68,7 +68,7 @@ static BOOL compare_float(float f, float g, unsigned int ulps)
     return TRUE;
 }
 
-static BOOL compare_vec4(struct vec4 *vec, float x, float y, float z, float w, unsigned int ulps)
+static BOOL compare_vec4(const struct vec4 *vec, float x, float y, float z, float w, unsigned int ulps)
 {
     return compare_float(vec->x, x, ulps)
             && compare_float(vec->y, y, ulps)
