@@ -809,7 +809,7 @@ static void test_UuidCreateSequential(void)
             /* If the call succeeded, there's a valid (non-multicast) MAC
              * address in the uuid:
              */
-            ok(!(guid1.Data4[2] & 0x01),
+            ok(!(guid1.Data4[2] & 0x01) || broken(guid1.Data4[2] & 0x01), /* Win 8.1 */
                "GUID does not appear to contain a MAC address: %s\n",
                wine_dbgstr_guid(&guid1));
         }
