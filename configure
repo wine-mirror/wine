@@ -1383,6 +1383,7 @@ enable_wimgapi
 enable_windowscodecs
 enable_windowscodecsext
 enable_winealsa_drv
+enable_winebus_sys
 enable_winecoreaudio_drv
 enable_wined3d
 enable_winegstreamer
@@ -18148,6 +18149,7 @@ wine_fn_config_test dlls/windowscodecs/tests windowscodecs_test
 wine_fn_config_dll windowscodecsext enable_windowscodecsext implib
 wine_fn_config_test dlls/windowscodecsext/tests windowscodecsext_test
 wine_fn_config_dll winealsa.drv enable_winealsa_drv
+wine_fn_config_dll winebus.sys enable_winebus_sys
 wine_fn_config_dll winecoreaudio.drv enable_winecoreaudio_drv
 wine_fn_config_lib winecrt0
 wine_fn_config_dll wined3d enable_wined3d implib

@@ -130,6 +130,7 @@ AddService=FontCache3.0.0.0,0,WPFFontCacheService
 AddService=LanmanServer,0,LanmanServerService
 AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
+AddService=WineBus,0,WineBusService
 
 [DefaultInstall.NT.Services]
 AddService=BITS,0,BITSService
@@ -144,6 +145,7 @@ AddService=FontCache3.0.0.0,0,WPFFontCacheService
 AddService=LanmanServer,0,LanmanServerService
 AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
+AddService=WineBus,0,WineBusService
 
 [DefaultInstall.ntamd64.Services]
 AddService=BITS,0,BITSService
@@ -158,6 +160,7 @@ AddService=FontCache3.0.0.0,0,WPFFontCacheService
 AddService=LanmanServer,0,LanmanServerService
 AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
+AddService=WineBus,0,WineBusService
 
 [Strings]
 MciExtStr="Software\Microsoft\Windows NT\CurrentVersion\MCI Extensions"
@@ -2518,6 +2521,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 12,,mountmgr.sys,-
 12,,ndis.sys,-
 12,,tdi.sys,-
+12,,winebus.sys,-
 ; skip .NET fake dlls in Wine Mono package
 11,,aspnet_regiis.exe,-
 11,,ngen.exe,-
@@ -2560,6 +2564,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 12,,mountmgr.sys
 12,,ndis.sys
 12,,tdi.sys
+12,,winebus.sys
 ; skip .NET fake dlls in Wine Mono package
 11,,aspnet_regiis.exe,-
 11,,ngen.exe,-
@@ -3173,6 +3178,15 @@ Description="RPC service"
 DisplayName="Remote Procedure Call (RPC)"
 ServiceBinary="%11%\rpcss.exe"
 ServiceType=32
+StartType=3
+ErrorControl=1
+
+[WineBusService]
+Description="Wine Platform Bus Kernel"
+DisplayName="Platform Bus Kernel"
+ServiceBinary="%12%\winebus.sys"
+LoadOrderGroup="WinePlugPlay"
+ServiceType=1
 StartType=3
 ErrorControl=1
 
