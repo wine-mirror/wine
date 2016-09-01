@@ -60,6 +60,9 @@ typedef struct _ldiv_t {
     __msvcrt_long rem;
 } ldiv_t;
 
+
+#define _countof(x) (sizeof(x)/sizeof((x)[0]))
+
 #define __max(a,b) (((a) > (b)) ? (a) : (b))
 #define __min(a,b) (((a) < (b)) ? (a) : (b))
 #ifndef __cplusplus
