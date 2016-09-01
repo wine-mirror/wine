@@ -172,10 +172,6 @@ static inline enum complex_fixup get_complex_fixup(struct color_fixup_desc fixup
     return complex_fixup;
 }
 
-void *wined3d_rb_alloc(size_t size) DECLSPEC_HIDDEN;
-void *wined3d_rb_realloc(void *ptr, size_t size) DECLSPEC_HIDDEN;
-void wined3d_rb_free(void *ptr) DECLSPEC_HIDDEN;
-
 /* Device caps */
 #define MAX_STREAM_OUT              4
 #define MAX_STREAMS                 16
@@ -2248,8 +2244,9 @@ struct ffp_frag_desc
     struct ffp_frag_settings    settings;
 };
 
-extern const struct wine_rb_functions wined3d_ffp_frag_program_rb_functions DECLSPEC_HIDDEN;
-extern const struct wine_rb_functions wined3d_ffp_vertex_program_rb_functions DECLSPEC_HIDDEN;
+int wined3d_ffp_frag_program_key_compare(const void *key, const struct wine_rb_entry *entry) DECLSPEC_HIDDEN;
+int wined3d_ffp_vertex_program_key_compare(const void *key, const struct wine_rb_entry *entry) DECLSPEC_HIDDEN;
+
 extern const struct wined3d_parent_ops wined3d_null_parent_ops DECLSPEC_HIDDEN;
 
 unsigned int wined3d_max_compat_varyings(const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;

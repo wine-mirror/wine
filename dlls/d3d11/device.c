@@ -5271,21 +5271,6 @@ static const struct wined3d_device_parent_ops d3d_wined3d_device_parent_ops =
     device_parent_create_swapchain,
 };
 
-static void *d3d_rb_alloc(size_t size)
-{
-    return HeapAlloc(GetProcessHeap(), 0, size);
-}
-
-static void *d3d_rb_realloc(void *ptr, size_t size)
-{
-    return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
-}
-
-static void d3d_rb_free(void *ptr)
-{
-    HeapFree(GetProcessHeap(), 0, ptr);
-}
-
 static int d3d_sampler_state_compare(const void *key, const struct wine_rb_entry *entry)
 {
     const D3D11_SAMPLER_DESC *ka = key;
@@ -5294,14 +5279,6 @@ static int d3d_sampler_state_compare(const void *key, const struct wine_rb_entry
     return memcmp(ka, kb, sizeof(*ka));
 }
 
-static const struct wine_rb_functions d3d_sampler_state_rb_ops =
-{
-    d3d_rb_alloc,
-    d3d_rb_realloc,
-    d3d_rb_free,
-    d3d_sampler_state_compare,
-};
-
 static int d3d_blend_state_compare(const void *key, const struct wine_rb_entry *entry)
 {
     const D3D11_BLEND_DESC *ka = key;
@@ -5309,14 +5286,6 @@ static int d3d_blend_state_compare(const void *key, const struct wine_rb_entry *
 
     return memcmp(ka, kb, sizeof(*ka));
 }
-
-static const struct wine_rb_functions d3d_blend_state_rb_ops =
-{
-    d3d_rb_alloc,
-    d3d_rb_realloc,
-    d3d_rb_free,
-    d3d_blend_state_compare,
-};
 
 static int d3d_depthstencil_state_compare(const void *key, const struct wine_rb_entry *entry)
 {
@@ -5327,14 +5296,6 @@ static int d3d_depthstencil_state_compare(const void *key, const struct wine_rb_
     return memcmp(ka, kb, sizeof(*ka));
 }
 
-static const struct wine_rb_functions d3d_depthstencil_state_rb_ops =
-{
-    d3d_rb_alloc,
-    d3d_rb_realloc,
-    d3d_rb_free,
-    d3d_depthstencil_state_compare,
-};
-
 static int d3d_rasterizer_state_compare(const void *key, const struct wine_rb_entry *entry)
 {
     const D3D11_RASTERIZER_DESC *ka = key;
@@ -5342,14 +5303,6 @@ static int d3d_rasterizer_state_compare(const void *key, const struct wine_rb_en
 
     return memcmp(ka, kb, sizeof(*ka));
 }
-
-static const struct wine_rb_functions d3d_rasterizer_state_rb_ops =
-{
-    d3d_rb_alloc,
-    d3d_rb_realloc,
-    d3d_rb_free,
-    d3d_rasterizer_state_compare,
-};
 
 void d3d_device_init(struct d3d_device *device, void *outer_unknown)
 {
@@ -5371,8 +5324,8 @@ void d3d_device_init(struct d3d_device *device, void *outer_unknown)
     device->blend_factor[2] = 1.0f;
     device->blend_factor[3] = 1.0f;
 
-    wine_rb_init(&device->blend_states, &d3d_blend_state_rb_ops);
-    wine_rb_init(&device->depthstencil_states, &d3d_depthstencil_state_rb_ops);
-    wine_rb_init(&device->rasterizer_states, &d3d_rasterizer_state_rb_ops);
-    wine_rb_init(&device->sampler_states, &d3d_sampler_state_rb_ops);
+    wine_rb_init(&device->blend_states, d3d_blend_state_compare);
+    wine_rb_init(&device->depthstencil_states, d3d_depthstencil_state_compare);
+    wine_rb_init(&device->rasterizer_states, d3d_rasterizer_state_compare);
+    wine_rb_init(&device->sampler_states, d3d_sampler_state_compare);
 }

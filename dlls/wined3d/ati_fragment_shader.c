@@ -1323,7 +1323,7 @@ static void *atifs_alloc(const struct wined3d_shader_backend_ops *shader_backend
     if (!(priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*priv))))
         return NULL;
 
-    wine_rb_init(&priv->fragment_shaders, &wined3d_ffp_frag_program_rb_functions);
+    wine_rb_init(&priv->fragment_shaders, wined3d_ffp_frag_program_key_compare);
     return priv;
 }
 

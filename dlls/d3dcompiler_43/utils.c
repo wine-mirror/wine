@@ -1701,28 +1701,6 @@ static int compare_hlsl_types_rb(const void *key, const struct wine_rb_entry *en
     return strcmp(name, type->name);
 }
 
-static inline void *d3dcompiler_alloc_rb(size_t size)
-{
-    return d3dcompiler_alloc(size);
-}
-
-static inline void *d3dcompiler_realloc_rb(void *ptr, size_t size)
-{
-    return d3dcompiler_realloc(ptr, size);
-}
-
-static inline void d3dcompiler_free_rb(void *ptr)
-{
-    d3dcompiler_free(ptr);
-}
-static const struct wine_rb_functions hlsl_type_rb_funcs =
-{
-    d3dcompiler_alloc_rb,
-    d3dcompiler_realloc_rb,
-    d3dcompiler_free_rb,
-    compare_hlsl_types_rb,
-};
-
 void push_scope(struct hlsl_parse_ctx *ctx)
 {
     struct hlsl_scope *new_scope = d3dcompiler_alloc(sizeof(*new_scope));
@@ -1734,7 +1712,7 @@ void push_scope(struct hlsl_parse_ctx *ctx)
     }
     TRACE("Pushing a new scope\n");
     list_init(&new_scope->vars);
-    wine_rb_init(&new_scope->types, &hlsl_type_rb_funcs);
+    wine_rb_init(&new_scope->types, compare_hlsl_types_rb);
     new_scope->upper = ctx->cur_scope;
     ctx->cur_scope = new_scope;
     list_add_tail(&ctx->scopes, &new_scope->entry);
@@ -1844,14 +1822,6 @@ static int compare_function_decl_rb(const void *key, const struct wine_rb_entry 
     return 0;
 }
 
-static const struct wine_rb_functions hlsl_ir_function_decl_rb_funcs =
-{
-    d3dcompiler_alloc_rb,
-    d3dcompiler_realloc_rb,
-    d3dcompiler_free_rb,
-    compare_function_decl_rb,
-};
-
 static int compare_function_rb(const void *key, const struct wine_rb_entry *entry)
 {
     const char *name = key;
@@ -1860,17 +1830,9 @@ static int compare_function_rb(const void *key, const struct wine_rb_entry *entr
     return strcmp(name, func->name);
 }
 
-static const struct wine_rb_functions function_rb_funcs =
-{
-    d3dcompiler_alloc_rb,
-    d3dcompiler_realloc_rb,
-    d3dcompiler_free_rb,
-    compare_function_rb,
-};
-
 void init_functions_tree(struct wine_rb_tree *funcs)
 {
-    wine_rb_init(&hlsl_ctx.functions, &function_rb_funcs);
+    wine_rb_init(&hlsl_ctx.functions, compare_function_rb);
 }
 
 static const char *debug_base_type(const struct hlsl_type *type)
@@ -2507,7 +2469,7 @@ void add_function_decl(struct wine_rb_tree *funcs, char *name, struct hlsl_ir_fu
             TRACE("Function %s redeclared as a user defined function.\n", debugstr_a(name));
             func->intrinsic = intrinsic;
             wine_rb_destroy(&func->overloads, free_function_decl_rb, NULL);
-            wine_rb_init(&func->overloads, &hlsl_ir_function_decl_rb_funcs);
+            wine_rb_init(&func->overloads, compare_function_decl_rb);
         }
         decl->func = func;
         if ((old_entry = wine_rb_get(&func->overloads, decl->parameters)))
@@ -2530,7 +2492,7 @@ void add_function_decl(struct wine_rb_tree *funcs, char *name, struct hlsl_ir_fu
     }
     func = d3dcompiler_alloc(sizeof(*func));
     func->name = name;
-    wine_rb_init(&func->overloads, &hlsl_ir_function_decl_rb_funcs);
+    wine_rb_init(&func->overloads, compare_function_decl_rb);
     decl->func = func;
     wine_rb_put(&func->overloads, decl->parameters, &decl->entry);
     func->intrinsic = intrinsic;

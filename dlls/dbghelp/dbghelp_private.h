@@ -349,7 +349,6 @@ struct module_format
     } u;
 };
 
-extern const struct wine_rb_functions source_rb_functions DECLSPEC_HIDDEN;
 struct module
 {
     struct process*             process;
@@ -645,6 +644,7 @@ extern const char*  pe_map_directory(struct module* module, int dirno, DWORD* si
 /* source.c */
 extern unsigned     source_new(struct module* module, const char* basedir, const char* source) DECLSPEC_HIDDEN;
 extern const char*  source_get(const struct module* module, unsigned idx) DECLSPEC_HIDDEN;
+extern int          source_rb_compare(const void *key, const struct wine_rb_entry *entry) DECLSPEC_HIDDEN;
 
 /* stabs.c */
 typedef void (*stabs_def_cb)(struct module* module, unsigned long load_offset,

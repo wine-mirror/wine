@@ -132,21 +132,6 @@ const char *debug_d3d10_device_state_types(D3D10_DEVICE_STATE_TYPES t)
 
 #undef WINE_D3D10_TO_STR
 
-void *d3d10_rb_alloc(size_t size)
-{
-    return HeapAlloc(GetProcessHeap(), 0, size);
-}
-
-void *d3d10_rb_realloc(void *ptr, size_t size)
-{
-    return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
-}
-
-void d3d10_rb_free(void *ptr)
-{
-    HeapFree(GetProcessHeap(), 0, ptr);
-}
-
 void skip_dword_unknown(const char *location, const char **ptr, unsigned int count)
 {
     unsigned int i;

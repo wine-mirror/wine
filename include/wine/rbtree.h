@@ -34,17 +34,11 @@ struct wine_rb_entry
     unsigned int flags;
 };
 
-struct wine_rb_functions
-{
-    void *(*alloc)(size_t size);
-    void *(*realloc)(void *ptr, size_t size);
-    void (*free)(void *ptr);
-    int (*compare)(const void *key, const struct wine_rb_entry *entry);
-};
+typedef int (*wine_rb_compare_func_t)(const void *key, const struct wine_rb_entry *entry);
 
 struct wine_rb_tree
 {
-    int (*compare)(const void *key, const struct wine_rb_entry *entry);
+    wine_rb_compare_func_t compare;
     struct wine_rb_entry *root;
 };
 
@@ -129,12 +123,10 @@ static inline void wine_rb_postorder(struct wine_rb_tree *tree, wine_rb_traverse
     }
 }
 
-static inline int wine_rb_init(struct wine_rb_tree *tree, const struct wine_rb_functions *functions)
+static inline void wine_rb_init(struct wine_rb_tree *tree, wine_rb_compare_func_t compare)
 {
-    tree->compare = functions->compare;
+    tree->compare = compare;
     tree->root = NULL;
-
-    return 0;
 }
 
 static inline void wine_rb_for_each_entry(struct wine_rb_tree *tree, wine_rb_traverse_func_t *callback, void *context)
