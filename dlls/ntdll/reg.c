@@ -911,42 +911,33 @@ NTSTATUS WINAPI NtUnloadKey(IN POBJECT_ATTRIBUTES attr)
 NTSTATUS WINAPI RtlFormatCurrentUserKeyPath( IN OUT PUNICODE_STRING KeyPath)
 {
     static const WCHAR pathW[] = {'\\','R','e','g','i','s','t','r','y','\\','U','s','e','r','\\'};
-    HANDLE token;
+    char buffer[sizeof(TOKEN_USER) + sizeof(SID) + sizeof(DWORD)*SID_MAX_SUB_AUTHORITIES];
+    DWORD len = sizeof(buffer);
     NTSTATUS status;
 
-    status = NtOpenThreadToken(GetCurrentThread(), TOKEN_READ, TRUE, &token);
-    if (status == STATUS_NO_TOKEN)
-        status = NtOpenProcessToken(GetCurrentProcess(), TOKEN_READ, &token);
+    status = NtQueryInformationToken(GetCurrentThreadEffectiveToken(), TokenUser, buffer, len, &len);
     if (status == STATUS_SUCCESS)
     {
-        char buffer[sizeof(TOKEN_USER) + sizeof(SID) + sizeof(DWORD)*SID_MAX_SUB_AUTHORITIES];
-        DWORD len = sizeof(buffer);
-
-        status = NtQueryInformationToken(token, TokenUser, buffer, len, &len);
-        if (status == STATUS_SUCCESS)
+        KeyPath->MaximumLength = 0;
+        status = RtlConvertSidToUnicodeString(KeyPath, ((TOKEN_USER *)buffer)->User.Sid, FALSE);
+        if (status == STATUS_BUFFER_OVERFLOW)
         {
-            KeyPath->MaximumLength = 0;
-            status = RtlConvertSidToUnicodeString(KeyPath, ((TOKEN_USER *)buffer)->User.Sid, FALSE);
-            if (status == STATUS_BUFFER_OVERFLOW)
+            PWCHAR buf = RtlAllocateHeap(GetProcessHeap(), 0,
+                                         sizeof(pathW) + KeyPath->Length + sizeof(WCHAR));
+            if (buf)
             {
-                PWCHAR buf = RtlAllocateHeap(GetProcessHeap(), 0,
-                                             sizeof(pathW) + KeyPath->Length + sizeof(WCHAR));
-                if (buf)
-                {
-                    memcpy(buf, pathW, sizeof(pathW));
-                    KeyPath->MaximumLength = KeyPath->Length + sizeof(WCHAR);
-                    KeyPath->Buffer = (PWCHAR)((LPBYTE)buf + sizeof(pathW));
-                    status = RtlConvertSidToUnicodeString(KeyPath,
-                                                          ((TOKEN_USER *)buffer)->User.Sid, FALSE);
-                    KeyPath->Buffer = buf;
-                    KeyPath->Length += sizeof(pathW);
-                    KeyPath->MaximumLength += sizeof(pathW);
-                }
-                else
-                    status = STATUS_NO_MEMORY;
+                memcpy(buf, pathW, sizeof(pathW));
+                KeyPath->MaximumLength = KeyPath->Length + sizeof(WCHAR);
+                KeyPath->Buffer = (PWCHAR)((LPBYTE)buf + sizeof(pathW));
+                status = RtlConvertSidToUnicodeString(KeyPath,
+                                                      ((TOKEN_USER *)buffer)->User.Sid, FALSE);
+                KeyPath->Buffer = buf;
+                KeyPath->Length += sizeof(pathW);
+                KeyPath->MaximumLength += sizeof(pathW);
             }
+            else
+                status = STATUS_NO_MEMORY;
         }
-        NtClose(token);
     }
     return status;
 }
