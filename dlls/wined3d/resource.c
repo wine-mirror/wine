@@ -317,7 +317,7 @@ HRESULT CDECL wined3d_resource_map(struct wined3d_resource *resource, unsigned i
     TRACE("resource %p, sub_resource_idx %u, map_desc %p, box %s, flags %#x.\n",
             resource, sub_resource_idx, map_desc, debug_box(box), flags);
 
-    return resource->resource_ops->resource_sub_resource_map(resource, sub_resource_idx, map_desc, box, flags);
+    return wined3d_cs_map(resource->device->cs, resource, sub_resource_idx, map_desc, box, flags);
 }
 
 HRESULT CDECL wined3d_resource_unmap(struct wined3d_resource *resource, unsigned int sub_resource_idx)
