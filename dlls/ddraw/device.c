@@ -4143,8 +4143,10 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
     UINT vtx_dst_stride = get_flexible_vertex_size(fvf);
     UINT vtx_dst_size = vertex_count * vtx_dst_stride;
     UINT idx_size = index_count * sizeof(WORD);
+    struct wined3d_map_desc wined3d_map_desc;
+    struct wined3d_box wined3d_box = {0};
+    struct wined3d_resource *ib, *vb;
     UINT vb_pos, align;
-    BYTE *dst_data;
     UINT ib_pos;
     HRESULT hr;
 
@@ -4172,12 +4174,14 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
     else
         vb_pos += align;
 
-    hr = wined3d_buffer_map(device->vertex_buffer, vb_pos, vtx_dst_size, &dst_data,
-            vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD);
-    if (FAILED(hr))
+    wined3d_box.left = vb_pos;
+    wined3d_box.right = vb_pos + vtx_dst_size;
+    vb = wined3d_buffer_get_resource(device->vertex_buffer);
+    if (FAILED(hr = wined3d_resource_map(vb, 0, &wined3d_map_desc, &wined3d_box,
+            vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD)))
         goto done;
-    pack_strided_data(dst_data, vertex_count, strided_data, fvf);
-    wined3d_buffer_unmap(device->vertex_buffer);
+    pack_strided_data(wined3d_map_desc.data, vertex_count, strided_data, fvf);
+    wined3d_resource_unmap(vb, 0);
     device->vertex_buffer_pos = vb_pos + vtx_dst_size;
 
     hr = d3d_device_prepare_index_buffer(device, idx_size);
@@ -4187,12 +4191,14 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
     if (device->index_buffer_size - idx_size < ib_pos)
         ib_pos = 0;
 
-    hr = wined3d_buffer_map(device->index_buffer, ib_pos, idx_size, &dst_data,
-            ib_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD);
-    if (FAILED(hr))
+    wined3d_box.left = ib_pos;
+    wined3d_box.right = ib_pos + idx_size;
+    ib = wined3d_buffer_get_resource(device->index_buffer);
+    if (FAILED(hr = wined3d_resource_map(ib, 0, &wined3d_map_desc, &wined3d_box,
+            ib_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD)))
         goto done;
-    memcpy(dst_data, indices, idx_size);
-    wined3d_buffer_unmap(device->index_buffer);
+    memcpy(wined3d_map_desc.data, indices, idx_size);
+    wined3d_resource_unmap(ib, 0);
     device->index_buffer_pos = ib_pos + idx_size;
 
     hr = wined3d_device_set_stream_source(device->wined3d_device, 0, device->vertex_buffer, 0, vtx_dst_stride);
