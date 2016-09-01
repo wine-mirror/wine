@@ -9130,6 +9130,11 @@ static void test_transform_vertices(void)
     HWND window;
     HRESULT hr;
     IDirect3DViewport *viewport;
+    IDirect3DExecuteBuffer *execute_buffer;
+    D3DEXECUTEBUFFERDESC exec_desc;
+    UINT inst_length;
+    void *ptr;
+    D3DMATRIXHANDLE world_handle, view_handle, proj_handle;
     static struct transform_input position_tests[] =
     {
         { 0.0f,  0.0f,  0.0f, 0.0f,   1,   2,   3,   4,   5},
@@ -9163,6 +9168,28 @@ static void test_transform_vertices(void)
     };
     unsigned int i;
     DWORD offscreen;
+    static D3DMATRIX mat_scale =
+    {
+        2.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 2.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 2.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    },
+    mat_translate1 =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        1.0f, 0.0f, 0.0f, 1.0f,
+    },
+    mat_translate2 =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 1.0f,
+    };
+
 
     for (i = 0; i < ARRAY_SIZE(out); ++i)
     {
@@ -9439,6 +9466,83 @@ static void test_transform_vertices(void)
     ok(SUCCEEDED(hr), "Failed to transform vertices, hr %#x.\n", hr);
     ok(offscreen == D3DCLIP_RIGHT, "Offscreen is %x.\n", offscreen);
 
+    /* Test the effect of Matrices.
+     *
+     * Basically the x coodinate ends up as ((x + 1) * 2 + 0) * 5 and
+     * y as ((y + 0) * 2 + 1) * 5. The 5 comes from dvScaleX/Y, 2 from
+     * the view matrix and the +1's from the world and projection matrix. */
+    vp_data.dwX = 0;
+    vp_data.dwX = 0;
+    vp_data.dwWidth = 256;
+    vp_data.dwHeight = 256;
+    vp_data.dvScaleX = 5.0f;
+    vp_data.dvScaleY = 5.0f;
+    vp_data.dvMinZ = 0.0f;
+    vp_data.dvMaxZ = 1.0f;
+    hr = IDirect3DViewport_SetViewport(viewport, &vp_data);
+    ok(SUCCEEDED(hr), "Failed to set viewport, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice_CreateMatrix(device, &world_handle);
+    ok(hr == D3D_OK, "Creating a matrix object failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice_SetMatrix(device, world_handle, &mat_translate1);
+    ok(hr == D3D_OK, "Setting a matrix object failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice_CreateMatrix(device, &view_handle);
+    ok(hr == D3D_OK, "Creating a matrix object failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice_SetMatrix(device, view_handle, &mat_scale);
+    ok(hr == D3D_OK, "Setting a matrix object failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice_CreateMatrix(device, &proj_handle);
+    ok(hr == D3D_OK, "Creating a matrix object failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice_SetMatrix(device, proj_handle, &mat_translate2);
+    ok(hr == D3D_OK, "Setting a matrix object failed, hr %#x.\n", hr);
+
+    memset(&exec_desc, 0, sizeof(exec_desc));
+    exec_desc.dwSize = sizeof(exec_desc);
+    exec_desc.dwFlags = D3DDEB_BUFSIZE | D3DDEB_CAPS;
+    exec_desc.dwBufferSize = 1024;
+    exec_desc.dwCaps = D3DDEBCAPS_SYSTEMMEMORY;
+    hr = IDirect3DDevice_CreateExecuteBuffer(device, &exec_desc, &execute_buffer, NULL);
+    ok(SUCCEEDED(hr), "Failed to create execute buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+    ptr = (BYTE *)exec_desc.lpData;
+    emit_set_ts(&ptr, D3DTRANSFORMSTATE_WORLD, world_handle);
+    emit_set_ts(&ptr, D3DTRANSFORMSTATE_VIEW, view_handle);
+    emit_set_ts(&ptr, D3DTRANSFORMSTATE_PROJECTION, proj_handle);
+    emit_end(&ptr);
+    inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+    hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+
+    set_execute_data(execute_buffer, 0, 0, inst_length);
+    hr = IDirect3DDevice_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+    hr = IDirect3DDevice_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    transformdata.lpIn = position_tests;
+    transformdata.dwInSize = sizeof(position_tests[0]);
+    hr = IDirect3DViewport_TransformVertices(viewport, ARRAY_SIZE(position_tests),
+            &transformdata, D3DTRANSFORM_UNCLIPPED, &offscreen);
+    ok(SUCCEEDED(hr), "Failed to transform vertices, hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(position_tests); ++i)
+    {
+        static const struct vec4 cmp[] =
+        {
+            {138.0f, 123.0f, 0.0f, 1.0f}, {148.0f, 113.0f,  2.0f, 1.0f}, {128.0f, 133.0f, -2.0f, 1.0f},
+            {143.0f, 118.0f, 1.0f, 1.0f}, {133.0f, 128.0f, -1.0f, 1.0f}, {133.0f, 128.0f,  0.0f, 1.0f}
+        };
+
+        todo_wine ok(compare_vec4(&cmp[i], out[i].x, out[i].y, out[i].z, out[i].w, 4096),
+                "Vertex %u differs. Got %f %f %f %f.\n", i,
+                out[i].x, out[i].y, out[i].z, out[i].w);
+    }
+
     /* Invalid flags. */
     offscreen = 0xdeadbeef;
     hr = IDirect3DViewport_TransformVertices(viewport, ARRAY_SIZE(position_tests),
@@ -9495,6 +9599,11 @@ static void test_transform_vertices(void)
             &transformdata, D3DTRANSFORM_CLIPPED, &offscreen);
     ok(SUCCEEDED(hr), "Failed to transform vertices, hr %#x.\n", hr);
     ok(offscreen == ~0U, "Offscreen is %x.\n", offscreen);
+
+    IDirect3DDevice_DeleteMatrix(device, world_handle);
+    IDirect3DDevice_DeleteMatrix(device, view_handle);
+    IDirect3DDevice_DeleteMatrix(device, proj_handle);
+    IDirect3DExecuteBuffer_Release(execute_buffer);
 
     destroy_viewport(device, viewport);
     refcount = IDirect3DDevice_Release(device);
