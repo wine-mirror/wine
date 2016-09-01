@@ -54,4 +54,10 @@ HRESULT WINAPI D3DX10CreateEffectPoolFromMemory(const void *data, SIZE_T datasiz
         UINT fxflags, ID3D10Device *device, ID3DX10ThreadPump *pump, ID3D10EffectPool **effectpool,
         ID3D10Blob **errors, HRESULT *hresult);
 
+HRESULT WINAPI D3DX10CreateAsyncFileLoaderW(const WCHAR *filename, ID3DX10DataLoader **loader);
+HRESULT WINAPI D3DX10CreateAsyncFileLoaderA(const char *filename, ID3DX10DataLoader **loader);
+HRESULT WINAPI D3DX10CreateAsyncMemoryLoader(const void *data, SIZE_T datasize, ID3DX10DataLoader **loader);
+HRESULT WINAPI D3DX10CreateAsyncResourceLoaderA(HMODULE module, const char *resource, ID3DX10DataLoader **loader);
+HRESULT WINAPI D3DX10CreateAsyncResourceLoaderW(HMODULE module, const WCHAR *resource, ID3DX10DataLoader **loader);
+
 #endif

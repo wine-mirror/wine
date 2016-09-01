@@ -605,7 +605,107 @@ float4 main(float4 color : COLOR) : SV_TARGET
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_D3DX10CreateAsyncMemoryLoader(void)
+{
+    ID3DX10DataLoader *loader;
+    SIZE_T size;
+    DWORD data;
+    HRESULT hr;
+    void *ptr;
+
+    hr = D3DX10CreateAsyncMemoryLoader(NULL, 0, NULL);
+    todo_wine ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+
+    hr = D3DX10CreateAsyncMemoryLoader(NULL, 0, &loader);
+    todo_wine ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+
+    hr = D3DX10CreateAsyncMemoryLoader(&data, 0, &loader);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    if (FAILED(hr))
+        return;
+
+    size = 100;
+    hr = ID3DX10DataLoader_Decompress(loader, &ptr, &size);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(ptr == &data, "Got data pointer %p, original %p.\n", ptr, &data);
+    ok(!size, "Got unexpected data size.\n");
+
+    /* Load() is no-op. */
+    hr = ID3DX10DataLoader_Load(loader);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10DataLoader_Destroy(loader);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    data = 0;
+    hr = D3DX10CreateAsyncMemoryLoader(&data, sizeof(data), &loader);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    /* Load() is no-op. */
+    hr = ID3DX10DataLoader_Load(loader);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10DataLoader_Decompress(loader, &ptr, &size);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(ptr == &data, "Got data pointer %p, original %p.\n", ptr, &data);
+    ok(size == sizeof(data), "Got unexpected data size.\n");
+
+    hr = ID3DX10DataLoader_Destroy(loader);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+}
+
+static void test_D3DX10CreateAsyncFileLoader(void)
+{
+    ID3DX10DataLoader *loader;
+    SIZE_T size;
+    HRESULT hr;
+    void *ptr;
+
+    hr = D3DX10CreateAsyncFileLoaderA(NULL, NULL);
+    todo_wine ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+
+    hr = D3DX10CreateAsyncFileLoaderA(NULL, &loader);
+    todo_wine ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+
+    hr = D3DX10CreateAsyncFileLoaderA("nonexistentfilename", &loader);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    if (FAILED(hr))
+        return;
+
+    hr = ID3DX10DataLoader_Decompress(loader, &ptr, &size);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10DataLoader_Load(loader);
+    ok(hr == D3D10_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10DataLoader_Decompress(loader, &ptr, &size);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10DataLoader_Destroy(loader);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+}
+
+static void test_D3DX10CreateAsyncResourceLoader(void)
+{
+    ID3DX10DataLoader *loader;
+    HRESULT hr;
+
+    hr = D3DX10CreateAsyncResourceLoaderA(NULL, NULL, NULL);
+    todo_wine ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+
+    hr = D3DX10CreateAsyncResourceLoaderA(NULL, NULL, &loader);
+    todo_wine ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
+
+    hr = D3DX10CreateAsyncResourceLoaderA(NULL, "nonexistentresourcename", &loader);
+    todo_wine ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
+}
+
 START_TEST(d3dx10)
 {
     test_D3DX10UnsetAllDeviceObjects();
+    test_D3DX10CreateAsyncMemoryLoader();
+    test_D3DX10CreateAsyncFileLoader();
+    test_D3DX10CreateAsyncResourceLoader();
 }

@@ -67,3 +67,38 @@ HRESULT WINAPI D3DX10CreateEffectPoolFromFileW(const WCHAR *filename, const D3D1
 
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI D3DX10CreateAsyncMemoryLoader(const void *data, SIZE_T data_size, ID3DX10DataLoader **loader)
+{
+    FIXME("data %p, data_size %lu, loader %p stub!\n", data, data_size, loader);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI D3DX10CreateAsyncFileLoaderA(const char *filename, ID3DX10DataLoader **loader)
+{
+    FIXME("filename %s, loader %p stub!\n", debugstr_a(filename), loader);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI D3DX10CreateAsyncFileLoaderW(const WCHAR *filename, ID3DX10DataLoader **loader)
+{
+    FIXME("filename %s, loader %p stub!\n", debugstr_w(filename), loader);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI D3DX10CreateAsyncResourceLoaderA(HMODULE module, const char *resource, ID3DX10DataLoader **loader)
+{
+    FIXME("module %p, resource %s, loader %p stub!\n", module, debugstr_a(resource), loader);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI D3DX10CreateAsyncResourceLoaderW(HMODULE module, const WCHAR *resource, ID3DX10DataLoader **loader)
+{
+    FIXME("module %p, resource %s, loader %p stub!\n", module, debugstr_w(resource), loader);
+
+    return E_NOTIMPL;
+}
