@@ -431,13 +431,10 @@ static void test_I_RpcMapWin32Status(void)
     RPC_STATUS rpc_status;
     BOOL w2k3_up = FALSE;
 
-    /* Windows 2003 and Vista return STATUS_UNSUCCESSFUL if given an unknown status */
+    /* Windows 2003 and above return STATUS_UNSUCCESSFUL if given an unknown status */
     win32status = I_RpcMapWin32Status(9999);
     if (win32status == STATUS_UNSUCCESSFUL)
-    {
-        trace("We are on Windows 2003 or Vista\n");
         w2k3_up = TRUE;
-    }
 
     /* On Windows XP-SP1 and below some statuses are not mapped and return
      * the given status
