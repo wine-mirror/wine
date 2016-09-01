@@ -185,7 +185,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
 {
     TRACE("\n");
 
-    if (STRMBASE_DllCanUnloadNow() && objects_ref == 0)
+    if (STRMBASE_DllCanUnloadNow() == S_OK && objects_ref == 0)
         return S_OK;
     return S_FALSE;
 }
