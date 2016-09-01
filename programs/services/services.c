@@ -41,7 +41,7 @@ struct scmdatabase *active_database;
 DWORD service_pipe_timeout = 10000;
 DWORD service_kill_timeout = 60000;
 static DWORD default_preshutdown_timeout = 180000;
-static void *env = NULL;
+static void *environment = NULL;
 static HKEY service_current_key = NULL;
 
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
@@ -748,6 +748,7 @@ static DWORD service_start_process(struct service_entry *service_entry, struct p
     struct process_entry *process;
     PROCESS_INFORMATION pi;
     STARTUPINFOW si;
+    HANDLE token;
     LPWSTR path = NULL;
     DWORD err;
     BOOL r;
@@ -791,6 +792,12 @@ static DWORD service_start_process(struct service_entry *service_entry, struct p
         si.lpDesktop = desktopW;
     }
 
+    if (!environment && OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY | TOKEN_DUPLICATE, &token))
+    {
+        CreateEnvironmentBlock(&environment, token, FALSE);
+        CloseHandle(token);
+    }
+
     service_entry->status.dwCurrentState = SERVICE_START_PENDING;
     service_entry->status.dwControlsAccepted = 0;
     ResetEvent(service_entry->status_changed_event);
@@ -801,7 +808,7 @@ static DWORD service_start_process(struct service_entry *service_entry, struct p
 
     service_unlock(service_entry);
 
-    r = CreateProcessW(NULL, path, NULL, NULL, FALSE, CREATE_UNICODE_ENVIRONMENT, env, NULL, &si, &pi);
+    r = CreateProcessW(NULL, path, NULL, NULL, FALSE, CREATE_UNICODE_ENVIRONMENT, environment, NULL, &si, &pi);
     HeapFree(GetProcessHeap(),0,path);
     if (!r)
     {
@@ -975,19 +982,10 @@ int main(int argc, char *argv[])
         'C','o','n','t','r','o','l','\\',
         'S','e','r','v','i','c','e','C','u','r','r','e','n','t',0};
     static const WCHAR svcctl_started_event[] = SVCCTL_STARTED_EVENT;
-    HANDLE started_event, htok;
+    HANDLE started_event;
     DWORD err;
 
     started_event = CreateEventW(NULL, TRUE, FALSE, svcctl_started_event);
-
-    if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY|TOKEN_DUPLICATE, &htok))
-    {
-        CreateEnvironmentBlock(&env, htok, FALSE);
-        CloseHandle(htok);
-    }
-
-    if (!env)
-        WINE_ERR("failed to create services environment\n");
 
     err = RegCreateKeyExW(HKEY_LOCAL_MACHINE, service_current_key_str, 0,
         NULL, REG_OPTION_VOLATILE, KEY_SET_VALUE | KEY_QUERY_VALUE, NULL,
@@ -1010,8 +1008,8 @@ int main(int argc, char *argv[])
         RPC_Stop();
     }
     scmdatabase_destroy(active_database);
-    if (env)
-        DestroyEnvironmentBlock(env);
+    if (environment)
+        DestroyEnvironmentBlock(environment);
 
     WINE_TRACE("services.exe exited with code %d\n", err);
     return err;

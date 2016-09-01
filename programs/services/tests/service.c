@@ -96,12 +96,17 @@ static DWORD WINAPI service_handler(DWORD ctrl, DWORD event_type, void *event_da
 static void WINAPI service_main(DWORD argc, char **argv)
 {
     SERVICE_STATUS status;
+    char buf[64];
     BOOL res;
 
     service_ok(argc == 3, "argc = %u, expected 3\n", argc);
     service_ok(!strcmp(argv[0], service_name), "argv[0] = '%s', expected '%s'\n", argv[0], service_name);
     service_ok(!strcmp(argv[1], "param1"), "argv[1] = '%s', expected 'param1'\n", argv[1]);
     service_ok(!strcmp(argv[2], "param2"), "argv[2] = '%s', expected 'param2'\n", argv[2]);
+
+    buf[0] = 0;
+    GetEnvironmentVariableA("PATHEXT", buf, sizeof(buf));
+    service_ok(buf[0], "did not find PATHEXT environment variable\n");
 
     service_handle = pRegisterServiceCtrlHandlerExA(service_name, service_handler, NULL);
     service_ok(service_handle != NULL, "RegisterServiceCtrlHandlerEx failed: %u\n", GetLastError());
