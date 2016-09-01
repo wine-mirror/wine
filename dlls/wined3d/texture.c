@@ -1700,8 +1700,6 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
         return WINED3DERR_INVALIDCALL;
     }
 
-    flags = wined3d_resource_sanitize_map_flags(resource, flags);
-
     if (device->d3d_initialized)
     {
         context = context_acquire(device, NULL);

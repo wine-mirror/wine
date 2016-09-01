@@ -942,7 +942,6 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
 
     TRACE("buffer %p, offset %u, size %u, data %p, flags %#x.\n", buffer, offset, size, data, flags);
 
-    flags = wined3d_resource_sanitize_map_flags(&buffer->resource, flags);
     /* Filter redundant WINED3D_MAP_DISCARD maps. The 3DMark2001 multitexture
      * fill rate test seems to depend on this. When we map a buffer with
      * GL_MAP_INVALIDATE_BUFFER_BIT, the driver is free to discard the
