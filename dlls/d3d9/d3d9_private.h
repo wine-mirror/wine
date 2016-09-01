@@ -43,6 +43,7 @@
 
 extern HRESULT vdecl_convert_fvf(DWORD FVF, D3DVERTEXELEMENT9 **ppVertexElements) DECLSPEC_HIDDEN;
 D3DFORMAT d3dformat_from_wined3dformat(enum wined3d_format_id format) DECLSPEC_HIDDEN;
+BOOL is_gdi_compat_format(D3DFORMAT format) DECLSPEC_HIDDEN;
 enum wined3d_format_id wined3dformat_from_d3dformat(D3DFORMAT format) DECLSPEC_HIDDEN;
 void present_parameters_from_wined3d_swapchain_desc(D3DPRESENT_PARAMETERS *present_parameters,
         const struct wined3d_swapchain_desc *swapchain_desc) DECLSPEC_HIDDEN;
@@ -227,7 +228,6 @@ struct d3d9_surface
     IDirect3DDevice9Ex *parent_device;
     IUnknown *container;
     struct d3d9_texture *texture;
-    BOOL getdc_supported;
 };
 
 struct wined3d_rendertarget_view *d3d9_surface_get_rendertarget_view(struct d3d9_surface *surface) DECLSPEC_HIDDEN;

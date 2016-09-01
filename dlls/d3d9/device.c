@@ -1125,6 +1125,9 @@ static HRESULT d3d9_device_create_surface(struct d3d9_device *device, UINT width
     desc.depth = 1;
     desc.size = 0;
 
+    if (is_gdi_compat_format(format))
+        flags |= WINED3D_TEXTURE_CREATE_GET_DC;
+
     wined3d_mutex_lock();
 
     if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &desc,
@@ -1151,6 +1154,22 @@ static HRESULT d3d9_device_create_surface(struct d3d9_device *device, UINT width
     wined3d_mutex_unlock();
 
     return D3D_OK;
+}
+
+BOOL is_gdi_compat_format(D3DFORMAT format)
+{
+    switch (format)
+    {
+        case D3DFMT_A8R8G8B8:
+        case D3DFMT_X8R8G8B8:
+        case D3DFMT_R5G6B5:
+        case D3DFMT_X1R5G5B5:
+        case D3DFMT_A1R5G5B5:
+        case D3DFMT_R8G8B8:
+            return TRUE;
+        default:
+            return FALSE;
+    }
 }
 
 static HRESULT WINAPI d3d9_device_CreateRenderTarget(IDirect3DDevice9Ex *iface, UINT width, UINT height,
@@ -3722,6 +3741,7 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
         void *container_parent, const struct wined3d_resource_desc *desc, struct wined3d_texture **texture)
 {
     struct d3d9_device *device = device_from_device_parent(device_parent);
+    DWORD flags = WINED3D_TEXTURE_CREATE_MAPPABLE;
     struct d3d9_surface *d3d_surface;
     HRESULT hr;
 
@@ -3731,8 +3751,11 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
     if (container_parent == device_parent)
         container_parent = &device->IDirect3DDevice9Ex_iface;
 
+    if (is_gdi_compat_format(d3dformat_from_wined3dformat(desc->format)))
+        flags |= WINED3D_TEXTURE_CREATE_GET_DC;
+
     if (FAILED(hr = wined3d_texture_create(device->wined3d_device, desc, 1, 1,
-            WINED3D_TEXTURE_CREATE_MAPPABLE, NULL, container_parent, &d3d9_null_wined3d_parent_ops, texture)))
+            flags, NULL, container_parent, &d3d9_null_wined3d_parent_ops, texture)))
     {
         WARN("Failed to create texture, hr %#x.\n", hr);
         return hr;

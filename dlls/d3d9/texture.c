@@ -1257,6 +1257,9 @@ HRESULT texture_init(struct d3d9_texture *texture, struct d3d9_device *device,
     if (pool != D3DPOOL_DEFAULT || (usage & D3DUSAGE_DYNAMIC))
         flags |= WINED3D_TEXTURE_CREATE_MAPPABLE;
 
+    if (is_gdi_compat_format(format))
+        flags |= WINED3D_TEXTURE_CREATE_GET_DC;
+
     if (!levels)
     {
         if (usage & D3DUSAGE_AUTOGENMIPMAP)
@@ -1306,6 +1309,9 @@ HRESULT cubetexture_init(struct d3d9_texture *texture, struct d3d9_device *devic
 
     if (pool != D3DPOOL_DEFAULT || (usage & D3DUSAGE_DYNAMIC))
         flags |= WINED3D_TEXTURE_CREATE_MAPPABLE;
+
+    if (is_gdi_compat_format(format))
+        flags |= WINED3D_TEXTURE_CREATE_GET_DC;
 
     if (!levels)
     {

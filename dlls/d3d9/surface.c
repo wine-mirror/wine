@@ -287,13 +287,6 @@ static HRESULT WINAPI d3d9_surface_GetDC(IDirect3DSurface9 *iface, HDC *dc)
 
     TRACE("iface %p, dc %p.\n", iface, dc);
 
-    if (!surface->getdc_supported)
-    {
-        WARN("Surface does not support GetDC, returning D3DERR_INVALIDCALL\n");
-        /* Don't touch the DC */
-        return D3DERR_INVALIDCALL;
-    }
-
     wined3d_mutex_lock();
     hr = wined3d_texture_get_dc(surface->wined3d_texture, surface->sub_resource_idx, dc);
     wined3d_mutex_unlock();
@@ -354,7 +347,6 @@ static const struct wined3d_parent_ops d3d9_surface_wined3d_parent_ops =
 void surface_init(struct d3d9_surface *surface, struct wined3d_texture *wined3d_texture,
         unsigned int sub_resource_idx, const struct wined3d_parent_ops **parent_ops)
 {
-    struct wined3d_resource_desc desc;
     IDirect3DBaseTexture9 *texture;
 
     surface->IDirect3DSurface9_iface.lpVtbl = &d3d9_surface_vtbl;
@@ -370,23 +362,6 @@ void surface_init(struct d3d9_surface *surface, struct wined3d_texture *wined3d_
     {
         surface->texture = unsafe_impl_from_IDirect3DBaseTexture9(texture);
         IDirect3DBaseTexture9_Release(texture);
-    }
-
-    wined3d_resource_get_desc(wined3d_texture_get_resource(wined3d_texture), &desc);
-    switch (d3dformat_from_wined3dformat(desc.format))
-    {
-        case D3DFMT_A8R8G8B8:
-        case D3DFMT_X8R8G8B8:
-        case D3DFMT_R5G6B5:
-        case D3DFMT_X1R5G5B5:
-        case D3DFMT_A1R5G5B5:
-        case D3DFMT_R8G8B8:
-            surface->getdc_supported = TRUE;
-            break;
-
-        default:
-            surface->getdc_supported = FALSE;
-            break;
     }
 
     *parent_ops = &d3d9_surface_wined3d_parent_ops;
