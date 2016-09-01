@@ -238,10 +238,10 @@ START_TEST(xinput)
     pXInputGetDSoundAudioDeviceGuids = (void*)GetProcAddress(hXinput, "XInputGetDSoundAudioDeviceGuids");
     pXInputGetBatteryInformation = (void*)GetProcAddress(hXinput, "XInputGetBatteryInformation");
 
-    if (pXInputGetStateEx_Ordinal)
-        ok (pXInputGetStateEx_Ordinal == pXInputGetStateEx, "XInputGetStateEx in the wrong ordinal\n");
-    else
-        ok (broken(1), "XInputGetStateEx not found in this dll version\n");
+    /* XInputGetStateEx may not be present by name, use ordinal in this case */
+    if (!pXInputGetStateEx)
+        pXInputGetStateEx = pXInputGetStateEx_Ordinal;
+    ok (pXInputGetStateEx != NULL, "XInputGetStateEx not found in this dll version\n");
 
     test_set_state();
     test_get_state();
