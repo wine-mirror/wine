@@ -233,7 +233,7 @@ HRESULT INetCfg_CreateInstance(IUnknown **ppUnk)
     This->INetCfgLock_iface.lpVtbl = &NetCfgLockVtbl;
     This->ref = 1;
 
-    *ppUnk = (IUnknown*)This;
+    *ppUnk = (IUnknown*)&This->INetCfg_iface;
 
     return S_OK;
 }
