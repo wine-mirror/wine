@@ -48,6 +48,7 @@ typedef NTSTATUS (WINAPI *PDRIVER_INITIALIZE)(struct _DRIVER_OBJECT *, PUNICODE_
 typedef NTSTATUS (WINAPI *PDRIVER_DISPATCH)(struct _DEVICE_OBJECT *, struct _IRP *);
 typedef void (WINAPI *PDRIVER_STARTIO)(struct _DEVICE_OBJECT *, struct _IRP *);
 typedef void (WINAPI *PDRIVER_UNLOAD)(struct _DRIVER_OBJECT *);
+typedef NTSTATUS (WINAPI *PDRIVER_ADD_DEVICE)(struct _DRIVER_OBJECT *, struct _DEVICE_OBJECT *);
 
 typedef struct _DISPATCHER_HEADER {
   UCHAR  Type;
@@ -336,7 +337,7 @@ typedef struct _DEVICE_RELATIONS *PDEVICE_RELATIONS;
 
 typedef struct _DRIVER_EXTENSION {
   struct _DRIVER_OBJECT  *DriverObject;
-  PVOID  AddDevice;
+  PDRIVER_ADD_DEVICE AddDevice;
   ULONG  Count;
   UNICODE_STRING  ServiceKeyName;
 } DRIVER_EXTENSION, *PDRIVER_EXTENSION;
