@@ -1,17 +1,19 @@
-The Wine development release 1.9.17 is now available.
+The Wine development release 1.9.18 is now available.
 
 What's new in this release (see below for details):
-  - Better exception handling on 64-bit.
+  - Support for multiple kernel drivers in a single process.
+  - More WebServices reader support.
   - Various improvements in joystick support.
-  - Some more stream support in the C++ runtime.
-  - Font embedding improvements.
-  - More metafile support in GDI+.
+  - Some more work towards the Direct3D command stream.
+  - GDI performance improvements.
+  - Improved IME window handling.
+  - Compatibility fixes in the clipboard support.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://dl.winehq.org/wine/source/1.9/wine-1.9.17.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/1.9/wine-1.9.17.tar.bz2
+  http://dl.winehq.org/wine/source/1.9/wine-1.9.18.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.9/wine-1.9.18.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -27,436 +29,400 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.9.17 (total 53):
+Bugs fixed in 1.9.18 (total 26):
 
-  13272  Scrapland crashes on startup due to IDirectDrawStreamSample::GetSurface method stub
-  15824  Microsoft Chat's comic mode graphical glitches
-  18018  Gun Metal is unresponsive to joystick
-  18095  VisualFEA's Toolbar is broken (does no line wrapping)
-  20080  Perfect Cherry Blossom controls go crazy
-  22491  Total Commander: Pressing the "Program information" button opens multiple windows instead of just one
-  26365  Geneforge 1 - text gets cut away
-  26762  Shadow Vault has display errors
-  29961  ADO.NET query on a Jet database fails.
-  30844  VirtualDJ Home Free crashes after sitting idle for a few minutes.
-  31693  CAPCOM games using gamepad start with axes X/Y pressed up/left
-  32362  Multiple DirectX9 games need D3D11CreateDevice implementation with D3D_FEATURE_LEVEL_9_x support (Ghost Recon: Future Soldier)
-  32774  Multiple games (Lucius, X Rebirth) don't expect blending to be enabled by RS_EDGEANTIALIAS
-  34281  PlotSoft PDFill 10 fails on startup, reports 'No Fonts found under: C:\\windows\\Fonts' (at least one font name in registry must contain 'truetype' token)
-  34286  dinput doesn't report DIDOI_ASPECT* for joystick axes
-  36421  valgrind shows some leaks in oledb32/tests/database.c
-  36625  can't set text background color in richedit
-  36850  Fury 3 does not recognize Gamepad/Joystick
-  36859  Don't Starve 2.4.0 does not start: Missing Shader 'shaders/font.ksh'.
-  37518  Huge Drop Performance Alan Wake, Alan Wake American Nightmare, Shadow Warrior 2013
-  37847  Shantae - Risky's Revenge has glitchy graphics
-  37954  Test application using old MSVC++ iostream library crashes on startup ('msvcirt.??0ostrstream@@QAE@XZ' takes one argument)
-  38276  IsDialogMessage(NULL,...) must always return FALSE
-  38726  valgrind shows uninitialized memory in qcap/tests/smartteefilter.c
-  39506  King Arthur II demo crashes with unimplemented function d3dx10_43.dll.D3DX10CreateEffectPoolFromFileW
-  39541  Rollercoaster Tycoon - X Error of failed request:  BadValue (integer parameter out of range for operation)
-  40384  dinput8:dinput regression caused by new compiler
-  40385  usp10:usp10 regression caused by new cross-compiler
-  40411  Regedit.exe /e only exports HKLM
-  40665  'INFINITY' undeclared (In function 'test_effect_preshader_ops')
-  40710  Multiple games crashes with unimplemented function d3dx11_43.dll.D3DX11CreateTextureFromMemory
-  40846  Dead by Daylight: Crash on start, needs D3DX11CompileFromFileW
-  40848  S.T.A.L.K.E.R. Call of Pripyat Benchmark needs d3dx10_43.dll.D3DX10CreateDeviceAndSwapChain
-  40989  Adventure Lamp needs ntdll.NtSuspendProcess
-  41002  Worms 2 (GOG version) fails to start, crashes with a Visual C++ runtime error
-  41025  Worms 2 in-game audio no longer works
-  41061  Unimplemented function msvcp140.dll._Mtx_init_in_situ needed by Battle.net
-  41066  Unhandled page fault in RtlWow64EnableFsRedirectionEx when passed bad *old_value pointer
-  41067  Spellforce 2 - Demons of the Past needs d3dx9_34.dll.D3DXFillVolumeTextureTX
-  41072  GOG Galaxy fails to start without setting ucrtbase to (native, builtin)
-  41074  Unimplemented function msvcp140.dll.__crtInitializeCriticalSectionEx needed by Battle.net
-  41078  Unimplemented function msvcp140.dll.__crtCreateEventExW needed by Battle.net
-  41079  Hauppauge Capture crashes on unimplemented function cfgmgr32.dll.CM_Get_Version
-  41084  Unimplemented function msvcp140.dll.__crtCreateSemaphoreExW needed by Battle.net
-  41088  Bug on Startup Buhl Tax2016 on Wine Windows7
-  41089  Regression bug: E-Sword Search now showing a black dialog.
-  41103  Fails to parse Extended Properties since it has quotes around its value.
-  41109  8-bit Armies launches with a very small window
-  41111  CPU-Z driver needs hal.dll.WRITE_PORT_UCHAR
-  41125  unimplemented function inetcomm.dll.MimeOleObjectFromMoniker
-  41128  Art of Murder: Hunt for the Puppeteer (AoM: Cards of Destiny) doesn't stretch fullscreen properly
-  41132  Specific font files can cause Steam to crash unexpectedly
-  41140  gcc6: comctl32 build warnings
+  22461  Microsoft Office 2000 Server Extensions Configuration Wizard 'CFGWIZ.EXE' needs msvcirt.dll?cout@@3Vostream_withassign@@A
+  25105  Loading a 3d model with a test program fails
+  25352  Videos play upside down in multiple games (Fable: The Lost Chapters, Mob Ties Tokyo, Star Wars Republic Commando, SAS: Secure Tomorrow, Hatsune Miku: Project DIVA)
+  32936  SmartMusic 2012/2014 crashes on startup (Core Audio adapter 'PKEY_DeviceInterface_FriendlyName' property not supported)
+  34056  Multiple applications have a problem with typing Chinese/Japanese with IME (Nabeta Jisho for Japanese, YY and Netease POPO for Chinese)
+  35404  Spartan demo: no label on main menu icons
+  35892  sdb2xml (.NET 2.0 app) crashes on unimplemented function apphelp.dll.SdbGetAppPatchDir
+  39672  Folder names not clickable
+  40106  ntdll:info regression
+  40580  TASCAM US-16x08 soundcard controller crashes
+  40686  win7's ehshell.exe needs KERNEL32.dll.EncodeSystemPointer
+  40716  osu! - slightly low-pitched sound when using the ALSA sound driver
+  40741  Wings of Vi - black screen on launch
+  40953  Necropolis crashes at start (needs native xinput1_3.dll)
+  40968  Multiple Games require dxgi_output_FindClosestMatchingMode implementation(Need For Speed: The Run, Magic Duels)
+  40997  Fallout 4 needs DXGI_FORMAT_BC7_UNORM_SRGB
+  41007  Regression in minimum sound latency / HelBuflen value
+  41094  comctl32/treeview: TVS_FULLROWSELECT style does not work
+  41105  Tropico 5 (DX11) starts with only a mouse pointer on a black screen
+  41117  Insufficient check for sysinfo function breaks build on hurd and kfreebsd
+  41118  We Happy Few (UE4) crashes with "D3DRHI->GetFactory()->CreateSwapChain(DXGIDevice,&SwapChainDesc,SwapChain.GetInitReference())"
+  41165  MiTeC System Information X needs unimplemented function wlanapi.dll.WlanCloseHandle
+  41182  Don't export QT_QPA_PLATFORM
+  41189  No Man's Sky fails to start due to a regression in ntdll
+  41228  Rendering is messed up on WineD3D8 for Windows
+  41246  Office 2010 apps show "Configuring" dialog on first run when installed in new prefix
 
 ----------------------------------------------------------------
 
-Changes since 1.9.16:
+Changes since 1.9.17:
 
-Aaryaman Vasishta (3):
-      d3drm: Store reference to render target in IDirect3DRM*::CreateDeviceFromD3D.
-      d3drm: Implement IDirect3DRMFrame*::GetScene.
-      d3drm: Implement IDirect3DRMViewport*::Clear.
+Akihiro Sagawa (6):
+      po: Update Japanese translation.
+      winex11: Return more reliable value from X11DRV_MsgWaitForMultipleObjects.
+      winex11: Fix log message in process_events().
+      winex11: Use proper return type for process_events().
+      user32: Create and destroy the default IME window implicitly.
+      imm32/tests: Add more default IME window tests with message-only window.
 
-Alexander Morozov (1):
-      ntoskrnl.exe: Add stub for ObDereferenceObject.
+Alexandre Julliard (23):
+      server: Add separate requests for opening and closing the clipboard.
+      server: Add a separate request to set the clipboard viewer.
+      user32: Get rid of the CLIPBOARDINFO structure.
+      server: Add a request to return clipboard information.
+      user32: Don't allow SetClipboardData if the clipboard is not open.
+      user32: Don't disallow delayed rendering even when not the clipboard owner.
+      winex11: Don't disallow replacing unowned formats.
+      winex11: Don't try to free custom GDI formats at all.
+      user32/tests: Add a few more clipboard tests.
+      server: Cleanup clipboard information upon window destruction.
+      user32/tests: Add some tests for inter-process clipboard viewer notifications.
+      user32: Notify the clipboard viewer on close even if we are not the owner.
+      server: Add some validation of clipboard window handles.
+      server: Implement Add/RemoveClipboardFormatListener.
+      user32: Fix InSendMessage return value.
+      server: Notify all listeners when the contents of the clipboard have changed.
+      server: Add a helper function to validate a window handle.
+      server: Avoid some compiler warnings when EWOULDBLOCK == EAGAIN.
+      rpcss: Make rpcss a proper service.
+      ole32: Cope with receiving WM_RENDERALLFORMATS even when the clipboard is empty.
+      server: Add a release_clipboard request, and notify the owner and viewer on release.
+      server: Don't release the clipboard owner window when the owner thread terminates.
+      user32/tests: Add some tests for synthesized clipboard formats.
 
-Alexandre Julliard (10):
-      regedit: Don't die if we fail to open a key during exporting.
-      reg/tests: Avoid non-portable Unicode chars.
-      ole32/tests: Make the clipboard test more strict and remove Win9x compatibility cruft.
-      user32/tests: Add tests for clipboard global memory handles.
-      winex11: Don't crash when getting an invalid window in SelectionRequest.
-      user32/tests: Add some cross-process clipboard tests.
-      winex11: Correctly free CF_DIB format, and don't free unknown GDI formats.
-      user32/tests: Add some tests for GDI clipboard formats.
-      winex11: Allocate clipboard data as GMEM_FIXED.
-      user32/tests: Disable custom GDI clipboard formats tests on 64-bit.
+Alistair Leslie-Hughes (1):
+      inetcomm/tests: Add Attachment tests.
 
-Alistair Leslie-Hughes (4):
-      d3dx11: Add D3DX11CompileFromFileA/W stub.
-      d3dx11: Add D3DX11CreateTextureFromMemory stub.
-      inetcomm: Add MimeOleObjectFromMoniker stub.
-      d3d11: Support D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS in ID3D11Device CheckFeatureSupport.
+Andrew Eikum (6):
+      mshtml: Don't crash creating a URI if we have no document.
+      mmdevapi/tests: Fix failure on Vista.
+      winhttp: Indicate that WinHttpCrackUrl should return string pointers.
+      winhttp: Also pass hostname to jsproxy.
+      qcap: Use HRESULT correctly.
+      quartz: Implement IClassFactory::LockServer.
 
-Andrew Church (1):
-      dinput: Report DIDOI_ASPECTPOSITION flag for axes objects.
+André Hentschel (1):
+      ntdll: Bump Win 10 version to 14393.
 
-Andrew Eikum (3):
-      user32: Don't always insert menu items during WM_MDISETMENU.
-      mmdevapi: Fix some DEVPKEY definitions.
-      Revert "dsound: Allow inactive devices to change the primary format.".
-
-Andrey Gusev (2):
-      msi: Use debugstr_guid() in TRACE() messages.
-      d3dx10: Add D3DX10CreateEffectPoolFromFileA/W stubs.
-
-André Hentschel (6):
-      kernel32/tests: Explicitly set SizeOfRawData.
-      kernel32/tests: Use SetFilePointer instead of GetFileSize with WriteFile.
-      kernel32/tests: Remove superfluous filler definitions.
-      ntdll: Implement 64-bit shifts.
-      kernel32/tests: Fill in the delay IAT to succeed on Win10.
-      hal: Add WRITE_PORT_UCHAR stub.
-
-Aric Stewart (6):
-      include: Add declaration for ObReferenceObjectByName.
-      winedevice: Remove static driver_obj variable.
-      hidclass.sys: Use the PDO instance id for the HID instance id.
-      hidclass.sys: Call IoAttachDeviceToDeviceStack when creating HID device.
-      hidclass.sys: Do not send IRP_MJ_PNP ioctls.
-      hidclass.sys: Do not send IRP_MJ_POWER ioctls.
+Aric Stewart (3):
+      hidclass.sys: Handle IRP_MN_REMOVE_DEVICE.
+      include: Fix definition of DRIVER_EXTENSION.
+      ntoskrnl.exe: Stub IoInvalidateDeviceRelations.
 
 Austin English (3):
-      ntdll: Add NtSuspendProcess stub.
-      wlanapi: Add WlanCloseHandle() stub.
-      ntdll: Add NtResumeProcess stub.
+      ntdll: Forward DecodeSystemPointer/EncodeSystemPointer to DecodePointer/EncodePointer.
+      apphelp: Add SdbGetAppPatchDir stub.
+      msports: Add stub dll.
 
-Benjamin Hodgetts (1):
-      wined3d: Add Nvidia 1XXX range to detection list.
+Bernhard Übelacker (1):
+      mlang/tests: Test IMultiLanguage_GetCharsetInfo with malformed charsets.
 
-Bernhard Übelacker (3):
-      usp10/tests: Reserve for InClass a byte for every character in teststr.
-      kernel32/tests: Convert fiber back to thread even when IsThreadAFiber is not available.
-      msvcrt: Fix strtok_s and _mbstok_s for empty strings.
+Bruno Jesus (25):
+      dinput: Return the correct error when CreateEffect is not supported.
+      dinput: Dump the DIOBJECTDATAFORMAT flags.
+      dinput: Get the controller type from the device instance for Linux drivers.
+      ntdll: Use a helper to allocate threadpool workers.
+      dinput: Dump the force feedback effect before upload.
+      dinput: Be more precise when returning effect upload errors.
+      dinput: Do not read/write past the struct for old DX versions.
+      dinput: Restore effect ID on error due to kernel < 3.14 bug.
+      dinput/tests: Use EnumEffects and test a supported effect.
+      dinput: Dump the condition effect correctly for 2 array items.
+      dinput: Fix calculation of too small periods for periodic effect.
+      dinput: Fix infinite effect length handling.
+      dinput: Simplify cartesian and fix polar direction calculations.
+      dinput: Don't give up if we can't translate the effect envelope.
+      msacm32: Add the 16-bit DLL version on acmGetVersion.
+      dinput: Simplify condition effect translation.
+      dinput: Fix saturation range on condition effects.
+      msacm32: Handle invalid use of reserved parameter in acmStreamPrepareHeader.
+      msacm32: Handle invalid source length in acmStreamPrepareHeader.
+      msacm32: Use a helper to validate stream pointers.
+      xinput1_3: Better trace all functions.
+      xinput1_3: Better handle input parameters.
+      xinput1_3: Stub XInputGetStateEx.
+      xinput1_3: Implement XInputGetState using XInputGetStateEx.
+      xinput1_3/tests: Cope with XInputGetStateEx not being present by name.
 
-Bruno Jesus (19):
-      odbc32: Upgrade a WARN into ERR when the library is not found.
-      dinput: Fix some debug output.
-      dinput: Add DirectInput8 device type names to debug.
-      dinput/tests: Improve controller debug information.
-      dinput: Add support for DIPROP_VIDPID property in Linux js implementation.
-      dinput8/tests: Debug device information during enumeration callback.
-      winejoystick.drv: Don't assume the first joystick is at the first device on Linux.
-      winmm/tests: Enumerate all joystick devices during the test.
-      dinput/tests: Test for DIDOI_ASPECTPOSITION on joystick axes.
-      dinput: Use a helper to read information files for the js device.
-      dinput: Implement GetDeviceInfo(A) using the W version in the js driver.
-      dinput: Properly fill the HID information for the controller in the js driver.
-      dinput: Implement GetDeviceInfo(A) using the W version in the event driver.
-      dinput: Properly fill the HID information for the controller in the event driver.
-      dinput: Properly debug DIDEVTYPE_HID in _dump_DIDEVCAPS.
-      include: Add DIPROP_PRODUCTNAME and remove duplicate #defines from dinput.h.
-      dinput: Use the correct index to remap the axis.
-      dinput: Implement DIPROP_PRODUCTNAME in GetProperty.
-      dinput: Cope with NULL flags in LinuxInputEffectImpl_GetEffectStatus.
+Colin Finck (2):
+      include: Add a prototype for RpcBindingServerFromClient.
+      rpcrt4: Add a test for RpcBindingServerFromClient (todo_wine).
 
-Daniel Lehman (16):
-      msvcp140: Implement _Thrd_hardware_concurrency.
-      concrt140: Add concrt140 stub.
-      msvcp140: Load critical_section functions from concrt140.
-      msvcp140: Take _Mtx_t and _Cnd_t directly.
-      msvcp140: Add _Mtx_init/destroy_in_situ.
-      vcomp140: Add vcomp140 stub.
-      msvcp140: Don't redirect _Cnd/Mtx_t to msvcp110.
-      msvcp140: Add _Query_perf_[counter|frequency].
-      ntdll: Call __finally blocks in __C_specific_handler.
-      msvcp140: Forward __ExceptionPtr* to msvcr120.
-      msvcp110: Use sentry in istream<>::tellg.
-      msvcp110: Use sentry in istream<>::seekg.
-      msvcr120: Add forwards for wcstoll and wcstoll_l.
-      msvcr120: Add lgamma.
-      ucrtbase: Add __stdio_common_vfwscanf.
-      kernel32: Add GetNumberFormatEx.
+Daniel Lehman (1):
+      ntdll: Set Rip in for longjmp in RtlRestoreContext.
 
-François Gouget (2):
-      msi: Make parse_platform() static.
-      webservices: A spelling fix for an ERR() message.
+Dmitry Timoshkov (1):
+      gdiplus: Reimplement metafile loading using gdi32 instead of IPicture.
 
-Hadrien Boizard (1):
-      api-ms-win-core-console-l2-1-0: Add stub dll.
-
-Hans Leidekker (17):
-      webservices/tests: Add some tests for WsSetWriterPosition.
+Hans Leidekker (16):
       include: Add missing Web Services declarations.
-      webservices: Implement WsSetHeader.
-      webservices: Also write user supplied headers in WsWriteEnvelopeStart.
-      webservices/tests: Add tests for WsSetHeader.
-      winhttp: Set required buffer length for all components in WinHttpCrackUrl.
-      winhttp: Validate the port number in WinHttpCrackUrl.
-      webservices: Write the envelope in WsInitializeMessage.
-      webservices: Support WS_STRING values in WsSetHeader.
-      webservices: Implement WsRemoveHeader.
-      webservices: Add missing channel properties.
-      webservices: Implement WS_ADDRESSING_VERSION_TRANSPORT.
-      include: Add missing Web Services declarations.
-      webservices: Add support for writing GUID values.
-      webservices: Validate the handle in channel functions.
-      webservices: Implement WsAddMappedHeader.
-      webservices: Implement WsRemoveMappedHeader.
+      webservices: Flush the writer first in WsWriteXmlBuffer.
+      webservices: Fix the condition to determine when to skip writing a namespace attribute.
+      webservices: Add support for writing WS_STRING and WS_XML_STRING values.
+      webservices: Ignore unimplemented struct options in the writer.
+      webservices: Allow structures to be passed by value in WsWriteType.
+      webservices: Add support for optional and nillable fields in the writer.
+      webservices/tests: Add a test for WsWriteText.
+      webservices: Store standard headers in an XML buffer.
+      webservices: Implement WsAddCustomHeader.
+      webservices: Implement WsRemoveCustomHeader.
+      webservices: Add a stub implementation of WsAbortServiceProxy.
+      webservices: Ignore unimplemented struct options in the reader.
+      webservices: Implement WsReadEnvelopeStart.
+      webservices: Implement WsReadEnvelopeEnd.
+      webservices: Implement WsReadBody.
 
-Henri Verbeet (5):
-      wined3d: Use wined3d_cs_emit_unload_resource() in delete_opengl_contexts().
-      wined3d: Use wined3d_cs_emit_unload_resource() in wined3d_texture_update_desc().
-      wined3d: Synchronise WINED3D_CS_OP_UNLOAD_RESOURCE resource access.
-      wined3d: Synchronise texture LOD updates with the command stream.
-      wined3d: Unify resource preloads.
+Henri Verbeet (30):
+      wined3d: Send resource preloads through the command stream.
+      wined3d: Use wined3d_format_calculate_pitch() in wined3d_surface_upload_data().
+      ddraw: Rename "wineD3DPalette" to "wined3d_palette".
+      ddraw: Rename "wineD3DVertexBuffer" to "wined3d_buffer".
+      ddraw: Rename "wineD3DVertexDeclaration" to "wined3d_declaration".
+      wined3d: Use wined3d_resource_map() in d3d_vertex_buffer7_Lock().
+      ddraw: Use wined3d_resource_unmap() in d3d_vertex_buffer7_Unlock().
+      d3d8: Use wined3d_resource_map() in d3d8_vertexbuffer_Lock().
+      d3d8: Use wined3d_resource_unmap() in d3d8_vertexbuffer_Unlock().
+      d3d8: Use wined3d_resource_map() in d3d8_indexbuffer_Lock().
+      d3d8: Use wined3d_resource_unmap() in d3d8_indexbuffer_Unlock().
+      d3d9: Use wined3d_resource_map() in d3d9_vertexbuffer_Lock().
+      d3d9: Use wined3d_resource_unmap() in d3d9_vertexbuffer_Unlock().
+      d3d9: Use wined3d_resource_map() in d3d9_indexbuffer_Lock().
+      d3d9: Use wined3d_resource_unmap() in d3d9_indexbuffer_Unlock().
+      d3d11: Use wined3d_resource_map() in d3d10_buffer_Map().
+      d3d11: Use wined3d_resource_unmap() in d3d10_buffer_Unmap().
+      wined3d: Use resource mapping functions in process_vertices_strided().
+      ddraw: Use resource mapping functions in d3d_device7_DrawPrimitive().
+      ddraw: Use resource mapping functions in d3d_device7_DrawIndexedPrimitive().
+      ddraw: Use resource mapping functions in d3d_device7_DrawPrimitiveStrided().
+      ddraw: Use resource mapping functions in d3d_device7_DrawIndexedPrimitiveStrided().
+      ddraw: Use resource mapping functions in d3d_device7_DrawIndexedPrimitiveVB().
+      d3d8: Use resource mapping functions in d3d8_device_DrawPrimitiveUP().
+      d3d8: Use resource mapping functions in d3d8_device_DrawIndexedPrimitiveUP().
+      d3d9: Use resource mapping functions in d3d9_device_DrawPrimitiveUP().
+      d3d9: Use resource mapping functions in d3d9_device_DrawIndexedPrimitiveUP().
+      wined3d: Send resource maps through the command stream.
+      wined3d: Send resource unmaps through the command stream.
+      wined3d: Sanitise resource map flags in wined3d_resource_map().
 
-Hugh McMaster (12):
-      reg/tests: Add more tests for 'reg import'.
-      wineconsole: Add 'ColorTable' support to the registry.
-      wineconsole: Replace hard-coded WCUSER_ColorMap with registry color_map.
-      server: Get and set the console color table.
-      wineconsole: Add 'PopupColors' support to the registry.
-      server: Get and set the console pop-up color attributes.
-      reg/tests: Add more tests for 'reg import'.
-      reg/tests: Add more Unicode tests for 'reg import'.
-      kernel32/tests: Add tests for GetConsoleScreenBufferInfoEx.
-      kernel32: Implement GetConsoleScreenBufferInfoEx.
-      reg: Fix dword conversion on 64-bit operating systems.
-      reg: Simplify help handling by removing an if-else if-else block.
+Hugh McMaster (6):
+      reg/tests: Remove embedded BOM tests and add other tests for 'reg import'.
+      regedit: Process registry input from stdin.
+      reg/tests: Fix copy/paste error in 'import' tests.
+      regedit: Remove two 'continue' statements from the end of two 'while' loops.
+      regedit: Do not set s_eol to NULL when it will be re-assigned immediately.
+      reg/tests: Exclude the null terminating character from MultiByteToWideChar conversion.
 
-Huw D. M. Davies (6):
-      ucrtbase: Add support for natural string widths.
-      usp10: Free the final page.
-      riched20: Update the auto url detection after a StreamIn.
-      gdi32: Exponentially grow successive point buffers.
-      ntdll/tests: Dump the handle table on failure.
-      ntdll/tests: Skip broken SYSTEM_HANDLE_INFORMATION behaviour.
+Huw D. M. Davies (26):
+      d3dx10/tests: Dynamically load d3d10 and skip if it's not present.
+      user32: Scale the edge thickness of check boxes drawn with DrawFrameControl().
+      user32: Scale the check mark drawn with DrawFrameControl().
+      user32: The offset between the button and the text is half the digit width.
+      user32: Scale the button size with screen resolution.
+      gdi32: Eliminate a masking operation by generating a larger colour table.
+      gdi32: Handle the case of a partial source byte separately.
+      gdi32: Unroll the start- and end-of-line loops.
+      ucrtbase: Add __stdio_common_vswscanf().
+      ucrtbase: Add __stdio_common_vfscanf().
+      gdi32: Move the outer loop into separate functions for each direction.
+      gdi32: Explicitly write out the rops for copy_rect_32().
+      gdi32: Explicitly write out the rops for mask_rect_32().
+      gdi32: Split out the various offset cases for copy_rect_1() into separate functions.
+      gdi32: Explicitly write out the rops for copy_rect_1().
+      uxtheme: Use 'ptr' instead of 'wstr' for [out] pointers.
+      oleaut32/tests: Don't draw on the desktop window.
+      oleaut32/tests: Remove test for broken NT 4.0 behaviour.
+      crypt32/tests: Win 10 accepts carriage returns within a base64 four character block.
+      comctl32/tests: Move the cursor off the parent window to avoid mouse messages.
+      comctl32/tests: Restore the cursor position after moving it.
+      user32: EC_USEFONTINFO behaviour depends on whether the font's charset is CJK or not.
+      rpcrt4/tests: Remove an unnecessary and confusing message.
+      rpcrt4/tests: Mark Win 8.1 behaviour of UuidCreateSequential() as broken.
+      ole32: Mask out the flag bit.
+      ole32/tests: Update tests to the new channel hook info structure.
 
-Iván Matellanes (18):
-      msvcirt: Add a partial implementation of class ostream_withassign.
-      msvcirt: Implement ostream_withassign copy constructor.
-      msvcirt/tests: Add tests of ostream_withassign assignment operators.
-      msvcp90: Set the correct vtable for basic_iostream_char.
-      msvcirt: Add a partial implementation of class istream_withassign.
-      msvcirt: Implement istream_withassign copy constructor.
-      msvcirt/tests: Add tests of istream_withassign assignment operators.
-      msvcirt: Initialize do_lock on ios copy constructor.
-      msvcirt/tests: Add some more tests of ostream constructors.
-      msvcirt: Add stub for class iostream.
-      msvcirt: Implement iostream constructors/destructors.
-      msvcirt: Implement iostream assignment operators.
-      msvcirt: Simplify some constructors and assignments.
-      include/msvcrt: Ensure integer limits are given the correct type.
-      msvcirt: Add a partial implementation of class Iostream_init.
-      msvcirt: Implement Iostream_init constructor.
-      msvcirt: Add predefined streams.
-      msvcirt: Implement ios::sync_with_stdio.
+Jacek Caban (25):
+      wpc: Added stub wpc dll.
+      wpc: Added basic tests.
+      wpc: Register WindowsParentalControls class.
+      wpc: Added class factory stub implementation.
+      wpc: Added IWindowsParentalControls stub implementation.
+      kernel32: Fixed handling LOCALE_NAME_USER_DEFAULT in GetLocaleInfoEx.
+      user32: Introduced ThreadDetach driver entry point.
+      winemac.drv: Added ThreadDetach entry point and use it instead of DllMain.
+      rpcrt4/tests: Don't load GetUserNameEx dynamically.
+      winex11.drv: Added ThreadDetach entry point and use it instead of DllMain.
+      rbtree.h: Store parent entry pointer in each entry.
+      rbtree.h: Use parent pointer instead of stack in wine_rb_postorder.
+      rbtree.h: Rewrite wine_rb_remove to use parent pointers instead of stack.
+      rbtree.h: Rewrite wine_rb_put to use parent pointers instead of stack.
+      rbtree.h: Get rid of no longer needed wine_rb_stack.
+      rbtree.h: Store compare function instead of wine_rb_functions in wine_rb_tree.
+      ntoskrnl.exe: Use static initializer for device_drivers.
+      winemenubuilder: Use static initalizer for mimeProgidTree and nativeMimeTypes.
+      winedevice: Use static initializer for wine_drivers.
+      winhttp: Don't perform buffer size tests for components that don't pass buffer in WinHttpCrackUrl.
+      d3d10: Removed no loner needed wine_rb_init error handling.
+      d3d11: Removed no longer needed wine_rb_init error handling.
+      wined3d: Removed no longer needed wine_rb_init error handling.
+      d3dcompiler_43: Removed no longer needed wine_rb_init error handling.
+      rbtree.h: Pass compare function instead of wine_rb_functions to wine_rb_init.
 
-Jacek Caban (1):
-      wininet: Don't return available data sizes larger than the read buffer.
+Józef Kucia (21):
+      d3d11: Compare semantic names ignoring case.
+      d3d11/tests: Modify existing test to cover case-insensitive input elements matching.
+      d3d10core/tests: Modify existing test to cover case-insensitive input elements matching.
+      d3d8/tests: Skip test_reset() when device is initially lost.
+      d3d8/tests: Add test for regression in IDirect3DDevice8_Reset().
+      d3d9/tests: Restore display rotation in test_get_adapter_displaymode_ex().
+      d3d9/tests: Add test for IDirect3DDevice9Ex_ResetEx().
+      d3d9: Allow passing "mode" to IDirect3DDevice9Ex_ResetEx() iff "Windowed" is FALSE.
+      d3d9: Forbid display mode and back buffer mismatch in IDirect3DDevice9Ex_ResetEx().
+      dxgi/tests: Extend test for creating swapchain.
+      dxgi/tests: Add test for switching display mode to inexact resolution.
+      dxgi: Introduce helper functions for converting wined3d_display_mode.
+      wined3d: Introduce wined3d_find_closest_matching_adapter_mode().
+      dxgi: Implement dxgi_output_FindClosestMatchingMode().
+      dxgi/tests: Add test for IDXGIOutput_FindClosestMatchingMode().
+      wined3d: Optionally use closest matching mode in wined3d_swapchain_set_fullscreen().
+      dxgi: Enable WINED3D_SWAPCHAIN_USE_CLOSEST_MATCHING_MODE.
+      wined3d: Optionally use closest matching mode in wined3d_swapchain_resize_target().
+      d3d8/tests: Prefer higher resolutions in test_reset().
+      dxgi: Update swapchain fullscreen state when state change is successful.
+      dxgi: Release target output when releasing swapchain.
 
-Jeremy Audiger (1):
-      winhttp: Prevent console spamming in get_system_proxy_autoconfig_url.
-
-Joerg Schiermeier (1):
-      loader/wine.inf: Correct wrong symlink.
-
-John Sheu (2):
-      kernel32/tests: Add loader tests for fiber-local storage.
-      kernel32/tests: Add thread tests for fiber-local storage.
-
-Józef Kucia (23):
-      wined3d: Silence false FIXME message.
-      d3d11/tests: Add test for line antialiasing blending.
-      d3d10core/tests: Add test for line antialiasing blending.
-      d3d9/tests: Add test for line antialiasing blending.
-      d3d8/tests: Add test for edge antialiasing blending.
-      wined3d: Introduce gl_blend_from_d3d() helper function.
-      ddraw/tests: Add tests for edge antialiasing blending.
-      wined3d: Do not enable blending for edge/line antialiasing.
-      wined3d: Add few missing formats.
-      d3d11/tests: Add initial test for required formats.
-      d3d11/tests: Add test for swapchain views.
-      d3d11: Add support for feature level 9 shaders.
-      d3d11/tests: Add basic test for drawing on feature level 9.
-      wined3d: Do not switch display mode when windowed is TRUE.
-      d3d9/tests: Add test for regression in IDirect3DDevice9_Reset().
-      d3d10core/tests: Add test for swapchain views.
-      d3d11/tests: Fix copy-paste error in test_swapchain_views().
-      dxgi/tests: Also test IDXGISwapChain_ResizeTarget() in fullscreen with disabled mode switch.
-      dxgi: Properly switch to fullscreen mode when creating fullscreen swapchains.
-      dxgi/tests: Check fullscreen state in test_create_swapchain().
-      d3d11: Remove redundant 'break' statement.
-      user32/tests: Add more tests for setting window styles.
-      user32: Prevent resetting WS_MINIMIZE through SetWindowLong.
-
-Kenneth Haley (1):
-      v4 resend: Riched20: allow setting background text color.
+Ken Thomases (2):
+      winemac: Trace when a window's per-pixel-alpha setting changes.
+      winemac: Set windows to transparent until they have content to draw, to reduce flicker.
 
 Keno Fischer (2):
-      preloader: Add proper CFI instructions to _start functions.
-      kernel32: Fix RegisterWaitForSingleObject for console handles.
+      ntdll: Tolerate null handle in DeregisterWait.
+      kernel32/tests: Improve tests for pUnregisterWait(0).
 
-Matt Robinson (1):
-      ntdll: Catch page fault in RtlWow64EnableFsRedirectionEx.
+Kimmo Myllyvirta (4):
+      wined3d: Add support for WINED3DFMT_BC7_UNORM format.
+      wined3d: Add support for WINED3DFMT_BC6H_UF16/SF16 formats.
+      d3d11: Add tests for WINED3DFMT_BC7_UNORM format.
+      d3d11: Add tests for WINED3DFMT_BC6H_UF16/SF16 formats.
 
-Michael Stefaniuc (17):
-      winealsa.drv: Use debugstr_guid() to trace a guid.
-      wineoss.drv: Use debugstr_guid() to trace a guid.
-      winepulse.drv: Use debugstr_guid() to trace a guid.
-      winecoreaudio.drv: Use debugstr_guid() to trace a guid.
-      kernel32/tests: Use todo_wine_if().
-      kernel32/tests: Remove an identical if / else branch.
-      kernel32/tests: Remove another identical if/else branch.
-      ole32/tests: Use todo_wine_if().
-      quartz: There is no point in tracing the GUID pointer too.
-      user32/tests: Remove an identical if/else branch.
-      comctl32/tests: Use todo_wine_if().
-      ieframe/tests: Use todo_wine_if().
-      avifil32: Avoid a cast from a COM object to an iface.
-      ole32/tests: Avoid casts from COM objects to ifaces.
-      fusion: Avoid using the LPASSEMBLYNAME type.
-      mmdevapi: Another use case for todo_wine_if().
-      msvcirt/tests: Simplify generating a pointer to address 0x1.
+Marcus Meissner (1):
+      winemenubuilder: Avoid double free (Coverity).
 
-Mingcong Bai (2):
-      po: Update Simplified Chinese translation.
-      po: Update Simplified Chinese translation.
+Max Qian (8):
+      api-ms-win-core-job-l1-1-0: Add dll.
+      api-ms-win-core-job-l2-1-0: Add dll.
+      api-ms-win-core-namespace-l1-1-0: Add dll.
+      api-ms-win-core-normalization-l1-1-0: Add dll.
+      api-ms-win-core-string-obsolete-l1-1-0: Add dll.
+      api-ms-win-core-toolhelp-l1-1-0: Add dll.
+      api-ms-win-eventlog-legacy-l1-1-0: Add dll.
+      api-ms-win-shell-shellfolders-l1-1-0: Add dll.
 
-Nikolay Sivov (37):
-      powrprof: Added PowerDeterminePlatformRole() stub.
-      comctl32/tests: Basic test for TVS_FULLROWSELECT style bit.
-      comctl32/treeview: Fix hot-tracking with TVS_FULLROWSELECT.
-      oledb32: Support quoted values in initialisation strings.
-      winmm/tests: Fixed a buffer leak (Valgrind).
-      winmm: Free device format when closing a device (Valgrind).
-      msvcp140: Added __crtCreateEventExW().
-      msvcp140: Added __crtGetTickCount64().
-      msvcp140: Added __crtCreateSemaphoreExW().
-      dwrite/tests: Fix indentation warnings on GCC 6.
-      usp10: Better implementation for ScriptGetLogicalWidths().
-      scrrun/tests: Fix a warning on GCC 6.
-      shell32/tests: Fix indentation warnings on GCC 6.
-      user32/tests: Fix indentation warnings on GCC 6.
-      wshom.ocx/tests: Fix indentation warning on GCC 6.
-      ole32/tests: Fix indentation warning on GCC 6.
-      rpcrt4/tests: Fix indentation warning on GCC 6.
-      winhttp/tests: Fix indentation warning on GCC 6.
-      comctl32/treeview: Fix item dragging and selection for TVS_FULLROWSELECT style.
-      mshtml: Formatting change to get rid of warning on GCC 6.
-      t2embed: Fix embedding type resolution order.
-      setupapi: Added CM_Get_Version().
-      t2embed: Fix TTIsEmbeddingEnabled() to properly use otmpFaceName metrics field.
-      t2embed: Add some traces for fsType and exclusion list test results.
-      shlwapi/tests: Fix indentation warning on GCC 6.
-      shell32/tests: Fix indentation warning on GCC 6.
-      gdi32: Keep font tables tags defined in one place.
-      gdi32: Support special 'ttcf' tag in GetFontData().
-      dwrite: Sanitize specified stretch value, valid range is [1, 9].
-      dwrite: Handle zero specified weight as normal.
-      gdi32: Simplify font table name tracing.
-      gdi32: Append "TrueType" suffix to registry key names.
-      comctl32/listview: Fix indentation warnings on GCC 6.
-      oleaut32/tests: Fix indentation warning on GCC 6.
-      msvcirt/tests: Fix indentation warnings on GCC 6.
-      strmbase: Fix media type leaks when creating IEnumMediaTypes instance (Valgrind).
-      user32: Handle invalid dialog handles in IsDialogMessage().
+Michael Gilbert (1):
+      ntdll: Add missing stdint.h include for kfreebsd architectures.
 
-Nils Kuhnhenn (1):
-      winex11.drv: Return default locale in LoadKeyboardLayout stub instead of 0.
+Michael Müller (2):
+      d3d11: Fix calculation of array size for 1D textures.
+      d3d11: Correctly print unhandled bind flags in wined3d_usage_from_d3d11.
 
-Peter Beutner (2):
-      kernel32/tests: Add path tests for double delimiters.
-      kernel32: Properly handle double delimiters in GetShortPathName/GetLongPathName.
+Michael Stefaniuc (2):
+      dmusic: Avoid using the COM method implementations directly.
+      dmime: Avoid using the COM method implementations directly.
 
-Pierre Schweitzer (5):
-      mpr: Implement local name automatic redirection for disks.
-      mpr: Implement provider selection given remote name.
-      mpr: Implement WNetCancelConnection2W().
-      mpr: Implement WNetCancelConnectionA(), WNetCancelConnectionW(), WNetCancelConnection2A().
-      mpr: Set the CONNECT_LOCALDRIVE flag in case a local redirection is made on connection.
+Nikolay Sivov (29):
+      comctl32/treeview: Fill full row for TVS_FULLROWSELECT style.
+      include: Added some of newer Common Controls definitions.
+      dinput: Explicitly check for -1 as open() failure code.
+      hidclass: Fix handle leak on error path (Coverity).
+      oleaut32: Keep most of typeinfo attributes in TYPEATTR structure.
+      include: Fix facility id for d3d10 HRESULTs.
+      mscoree: Return pointer to interface, not implementation.
+      oleaut32: Support querying for ITypeComp from ITypeInfo.
+      oleaut32: Fix AddFuncDesc() to ignore scodes array length when NULL array pointer is passed.
+      oleaut32: Added PSTypeComp to DllGetClassObject.
+      oleaut32: Implement ITypeComp::Bind() proxy/stub.
+      oleaut32: Implement IClassFactory::QueryInterface() for StdFont object.
+      urlmon: Added proxy/stubs for IBindHost.
+      dwrite: Fail stream creation on file mapping failure.
+      dwrite/tests: Remove unnecessary font face creation.
+      shell32: Use interface pointer instead of implementation one.
+      winegstreamer: Remove some casts that are not needed.
+      msdaps: Added AddRefAccessor() proxy/stub.
+      oleaut32: Added proxy/stub for BindType.
+      include: Updated CAL_* info defines.
+      kernel32: Map from CAL_* constants to LOCALE_*.
+      amstream: Remove some casts.
+      msctf/tests: Return interface pointers instead of pointers to impl structure.
+      netcfgx: Return pointer to interface.
+      msimtf: Return interface pointers.
+      dxgi: Use texture pointer instead of resource pointer for DXGI surface.
+      d3dx10/tests: Basic tests for async loaders.
+      wined3d: Add texture flag to indicate GetDC() capability.
+      quartz: Remove some interface pointer casts.
 
-Piotr Caban (14):
-      ntdll: Fix KNONVOLATILE_CONTEXT_POINTERS parameter handling in RtlVirtualUnwind.
-      server: Fix loading of IMAGE_OPTIONAL_HEADER.
-      msvcrt: Don't set frame to 0 in x86_64 _setjmp.
-      msvcrt: Fix parameters conversion in wcsftime function.
-      msvcrt: Add support for multibyte characters in _Strftime.
-      msvcrt: Add _strftime_l.
-      msvcrt: Add wcsftime_l.
-      msvcrt: Add _wcreate_locale.
-      ntdll: Add support for collided unwinds.
-      ntdll: Add support for ExceptionCollidedUnwind return from exception handler.
-      ntdll: Call exception handler with correct context.
-      ntdll: Add support for exceptions inside termination handlers in __C_specific_handler.
-      ntdll: Print fixme message in case of nested exception.
-      ntdll: Pass updated context inside dispatch.ContextRecord in call_stack_handlers.
+Patrick Rudolph (1):
+      wined3d: Handle WINED3DFMT_FLAG_BROKEN_PITCH in wined3d_format_calculate_size().
 
-Sebastian Lackner (31):
-      vcomp: Prefer builtin version.
-      vcomp120: Prefer builtin version.
-      vcomp110: Prefer builtin version.
-      vcomp100: Prefer builtin version.
-      vcomp90: Prefer builtin version.
-      services: Preparation to allow arbitrary data in service RPC messages.
-      advapi32: Validate received service name.
-      services: Implement functionality to transfer extra data when sending service control.
-      services: Fix handling of user defined service controls.
-      services: Fix leak of process object in process_terminate.
-      services: Store process id in the process object.
-      services: Unlink process immediately after service stopped.
-      services: Ignore error in callback only for ControlService requests.
-      services: Remove service_terminate function.
-      services: Hold an additional process reference while waiting for startup.
-      configure: Explicitly check for sysinfo function.
-      dwrite: Fix font stretch name conversion table.
-      services: Add a grab_service function.
-      advapi32: Simplify RegisterServiceCtrlHandlerExW.
-      advapi32: Hold lock while processing service controls.
-      advapi32: Hold lock while handling service thread shutdown.
-      advapi32: Do not stop service main thread as long as there are still running services.
-      services: WaitForSingleObject returns a DWORD result.
-      services: Track number of services per process.
-      services: Hold startup lock before calling service_start.
-      services: Sort autostart services by dwTagId config value.
-      services: Use threadpool API instead of custom wait implementation.
-      services: Return an error instead of BOOL from process_send_start_message.
-      services: Allocate a separate status_changed_event for each service.
-      winedevice: Track loaded drivers and update their status on load/unload.
-      ntdll: Convert an ERR to a WARN when wait is triggered while destroying threadpool object.
+Piotr Caban (8):
+      ntdll: Remove no longer accessible TEB frames in RtlRestoreContext.
+      include: Add msvcrt/fpieee.h header.
+      msvcrt: Add _fpieee_flt stub.
+      msvcrt: Support fdiv m64fp in i386 _fpieee_flt.
+      msvcr90: Add _fpieee_flt tests.
+      winemac.drv: Fix setting Cocoa focus when window is shown by other thread.
+      ntdll: Don't incorrectly overwrite orig_context in call_stack_handlers.
+      user32: Fix DefWindowProc behavior on WM_NCRBUTTONDOWN message.
 
-Stefan Dösinger (1):
-      ddraw/tests: Skip overlay tests if DWM is on.
+Ruslan Kabatsayev (1):
+      wined3d: Initialise p_wglGetPixelFormat when USE_WIN32_OPENGL is defined.
 
-Vincent Povirk (12):
-      gdiplus: Fix matrix append flag in metafile transform records.
-      gdiplus/tests: Add feature for loading emf files.
-      gdiplus: Implement recording/playback for MultiplyWorldTransform.
-      gdiplus: Implement recording/playback for RotateWorldTransform.
-      gdiplus: Implement recording/playback for SetWorldTransform.
-      gdiplus: Implement recording/playback for TranslateWorldTransform.
-      gdiplus/tests: Test mixing Begin/EndContainer and Save/Restore.
-      gdiplus: Fix mismatched use of Begin/EndContainer and Save/RestoreGraphics.
-      gdiplus: Add support for containers in metafiles.
-      gdiplus/tests: Add test for containers in metafiles.
-      gdiplus: Implement playback/recording for SetClipRect.
-      gdiplus/tests: Add metafile test for SetClipRect.
+Sebastian Lackner (29):
+      ws2_32/tests: Add basic tests for async messages.
+      ws2_32: Do not spawn a separate thread for each async task.
+      ntdll/tests: Use longer waits to reduce risk of random failures on the testbot.
+      ntdll: Allow to release threadpool objects while waiting for group.
+      ntdll/tests: Add tests for releasing threadpool objects during TpReleaseCleanupGroupMembers.
+      ntdll: Call group cancel callback with the correct arguments.
+      ntdll: Group cancel callbacks should be executed after waiting for pending callbacks.
+      ntdll: Do not call group cancel callback for finished simple callbacks.
+      services: Remove synchronization for CloseThreadpoolCleanupGroupMembers.
+      shell32: Use the correct memory allocation function in RecycleBin_GetDisplayNameOf.
+      ntoskrnl.exe: Implement ZwLoadDriver and ZwUnloadDriver based on services API.
+      winedevice: Add support for loading/unloading drivers asynchronously.
+      kernel32/tests: Add a missing linebreak to an ok() message.
+      winedevice: Avoid memory leak when driver cannot be unloaded.
+      shell32: Remove some unused static inline functions.
+      shell32: Remove __SHFreeAndNil macro.
+      services/tests: Add test for passing arguments to a service.
+      advapi32: Unify service startup and control handling.
+      services: Do not create environment block before first service startup.
+      services: Add a separate winedevice service for each kernel driver.
+      services: Load kernel drivers with same load order group into a single process.
+      webservices: Fix handling of duplicate headers in WsAddCustomHeader.
+      webservices: Fix handling of duplicate headers in WsRemoveCustomHeader.
+      webservices: Fix invalid memory access in remove_header.
+      wintrust/tests: Fix test for pfnAddSgnr2Chain.
+      schedsvc: Avoid deadlock when scheduler service starts rpcss.
+      ntoskrnl.exe: Use the same timeout for service startup like in other wine modules.
+      ntdll: Simplify RtlFormatCurrentUserKeyPath using GetCurrentThreadEffectiveToken.
+      user32: Do not create IME window for HWND_MESSAGE windows.
+
+Stefan Dösinger (8):
+      ddraw/tests: Move IDirect3DViewport::TransformVertices tests to ddraw1.c.
+      ddraw: Copy extra vertex data in viewport::TransformVertices.
+      ddraw: Fix offscreen flag handling in TransformVertices.
+      ddraw: Validate the input data in TransformVertices.
+      ddraw/tests: Extend TransformVertices invalid data tests.
+      ddraw/tests: Make the vec parameter of compare_vec4 const.
+      ddraw/tests: Test matrices in TransformVertices.
+      ddraw/tests: Port test_transform_vertices to ddraw2 and ddraw4.
+
+Vincent Povirk (1):
+      gdiplus: Copy remap tables when cloning an ImageAttributes.
 
 --
 Alexandre Julliard
