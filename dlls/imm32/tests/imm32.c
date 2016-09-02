@@ -1024,6 +1024,41 @@ static DWORD WINAPI test_default_ime_disabled_cb(void *arg)
     return 1;
 }
 
+static DWORD WINAPI test_default_ime_with_message_only_window_cb(void *arg)
+{
+    HWND hwnd1, hwnd2, default_ime_wnd;
+
+    test_phase = PHASE_UNKNOWN;
+    hwnd1 = CreateWindowA(wndcls, "Wine imm32.dll test",
+                          WS_OVERLAPPEDWINDOW,
+                          CW_USEDEFAULT, CW_USEDEFAULT,
+                          240, 120, HWND_MESSAGE, NULL, GetModuleHandleW(NULL), NULL);
+    default_ime_wnd = ImmGetDefaultIMEWnd(hwnd1);
+    ok(!IsWindow(default_ime_wnd), "Expected no IME windows, got %p\n", default_ime_wnd);
+
+    hwnd2 = CreateWindowA(wndcls, "Wine imm32.dll test",
+                          WS_OVERLAPPEDWINDOW,
+                          CW_USEDEFAULT, CW_USEDEFAULT,
+                          240, 120, hwnd1, NULL, GetModuleHandleW(NULL), NULL);
+    default_ime_wnd = ImmGetDefaultIMEWnd(hwnd2);
+    ok(IsWindow(default_ime_wnd), "Expected IME window existance\n");
+
+    DestroyWindow(hwnd2);
+    DestroyWindow(hwnd1);
+
+    hwnd1 = CreateWindowA(wndcls, "Wine imm32.dll test",
+                          WS_OVERLAPPEDWINDOW,
+                          CW_USEDEFAULT, CW_USEDEFAULT,
+                          240, 120, NULL, NULL, GetModuleHandleW(NULL), NULL);
+    default_ime_wnd = ImmGetDefaultIMEWnd(hwnd1);
+    ok(IsWindow(default_ime_wnd), "Expected IME window existence\n");
+    SetParent(hwnd1, HWND_MESSAGE);
+    default_ime_wnd = ImmGetDefaultIMEWnd(hwnd1);
+    ok(IsWindow(default_ime_wnd), "Expected IME window existence\n");
+    DestroyWindow(hwnd1);
+    return 1;
+}
+
 static void test_default_ime_window_creation(void)
 {
     HANDLE thread;
@@ -1061,6 +1096,10 @@ static void test_default_ime_window_creation(void)
     }
 
     thread = CreateThread(NULL, 0, test_default_ime_disabled_cb, NULL, 0, NULL);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    thread = CreateThread(NULL, 0, test_default_ime_with_message_only_window_cb, NULL, 0, NULL);
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
 
