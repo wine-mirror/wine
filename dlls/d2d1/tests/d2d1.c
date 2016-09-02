@@ -2626,6 +2626,26 @@ todo_wine
     DestroyWindow(window);
 }
 
+static void create_target_dibsection(HDC hdc, UINT32 width, UINT32 height)
+{
+    char bmibuf[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
+    BITMAPINFO *bmi = (BITMAPINFO*)bmibuf;
+    HBITMAP hbm;
+
+    memset(bmi, 0, sizeof(bmibuf));
+    bmi->bmiHeader.biSize = sizeof(bmi->bmiHeader);
+    bmi->bmiHeader.biHeight = -height;
+    bmi->bmiHeader.biWidth = width;
+    bmi->bmiHeader.biBitCount = 32;
+    bmi->bmiHeader.biPlanes = 1;
+    bmi->bmiHeader.biCompression = BI_RGB;
+
+    hbm = CreateDIBSection(hdc, bmi, DIB_RGB_COLORS, NULL, NULL, 0);
+    ok(hbm != NULL, "Failed to create a dib section.\n");
+
+    DeleteObject(SelectObject(hdc, hbm));
+}
+
 static void test_dc_target(void)
 {
     static const D2D1_PIXEL_FORMAT invalid_formats[] =
@@ -2641,7 +2661,11 @@ static void test_dc_target(void)
     D2D1_COLOR_F color;
     D2D1_SIZE_F size;
     unsigned int i;
+    HDC hdc, hdc2;
+    COLORREF clr;
     HRESULT hr;
+    RECT rect;
+    D2D_RECT_F r;
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
@@ -2686,6 +2710,76 @@ if (SUCCEEDED(hr))
     hr = ID2D1DCRenderTarget_EndDraw(rt, NULL, NULL);
     ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
 
+    ID2D1DCRenderTarget_Release(rt);
+
+    /* BindDC() */
+    hr = ID2D1Factory_CreateDCRenderTarget(factory, &desc, &rt);
+    ok(SUCCEEDED(hr), "Failed to create target, hr %#x.\n", hr);
+
+    hdc = CreateCompatibleDC(NULL);
+    ok(hdc != NULL, "Failed to create an HDC.\n");
+
+    create_target_dibsection(hdc, 16, 16);
+
+    SetRect(&rect, 0, 0, 32, 32);
+    hr = ID2D1DCRenderTarget_BindDC(rt, NULL, &rect);
+    ok(hr == E_INVALIDARG, "BindDC() returned %#x.\n", hr);
+
+    hr = ID2D1DCRenderTarget_BindDC(rt, hdc, &rect);
+    ok(hr == S_OK, "BindDC() returned %#x.\n", hr);
+
+    /* target size comes from specified dimensions, not from selected bitmap size */
+    size = ID2D1DCRenderTarget_GetSize(rt);
+    ok(size.width == 32.0f, "got width %.08e.\n", size.width);
+    ok(size.height == 32.0f, "got height %.08e.\n", size.height);
+
+    /* clear one HDC to red, switch to another one, partially fill it and test contents */
+    ID2D1DCRenderTarget_BeginDraw(rt);
+
+    set_color(&color, 1.0f, 0.0f, 0.0f, 1.0f);
+    ID2D1DCRenderTarget_Clear(rt, &color);
+
+    hr = ID2D1DCRenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "EndDraw() failed, hr %#x.\n", hr);
+
+    clr = GetPixel(hdc, 0, 0);
+    ok(clr == RGB(255, 0, 0), "Got color %#x\n", clr);
+
+    hdc2 = CreateCompatibleDC(NULL);
+    ok(hdc2 != NULL, "Failed to create an HDC.\n");
+
+    create_target_dibsection(hdc2, 16, 16);
+
+    hr = ID2D1DCRenderTarget_BindDC(rt, hdc2, &rect);
+    ok(hr == S_OK, "BindDC() returned %#x.\n", hr);
+
+    clr = GetPixel(hdc2, 0, 0);
+    ok(clr == 0, "Got color %#x\n", clr);
+
+    set_color(&color, 0.0f, 1.0f, 0.0f, 1.0f);
+    hr = ID2D1DCRenderTarget_CreateSolidColorBrush(rt, &color, NULL, &brush);
+    ok(SUCCEEDED(hr), "Failed to create brush, hr %#x.\n", hr);
+
+    ID2D1DCRenderTarget_BeginDraw(rt);
+
+    r.left = r.top = 0.0f;
+    r.bottom = 16.0f;
+    r.right = 8.0f;
+    ID2D1DCRenderTarget_FillRectangle(rt, &r, (ID2D1Brush*)brush);
+
+    hr = ID2D1DCRenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "EndDraw() failed, hr %#x.\n", hr);
+
+    ID2D1SolidColorBrush_Release(brush);
+
+    clr = GetPixel(hdc2, 0, 0);
+    ok(clr == RGB(0, 255, 0), "Got color %#x\n", clr);
+
+    clr = GetPixel(hdc2, 10, 0);
+    ok(clr == 0, "Got color %#x\n", clr);
+
+    DeleteDC(hdc);
+    DeleteDC(hdc2);
     ID2D1DCRenderTarget_Release(rt);
 }
     ID2D1Factory_Release(factory);
