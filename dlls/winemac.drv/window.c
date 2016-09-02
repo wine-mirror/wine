@@ -481,6 +481,7 @@ static void sync_window_opacity(struct macdrv_win_data *data, COLORREF key, BYTE
 
     if (!data->per_pixel_alpha != !per_pixel_alpha)
     {
+        TRACE("setting window %p/%p per-pixel-alpha to %d\n", data->hwnd, data->cocoa_window, per_pixel_alpha);
         macdrv_window_use_per_pixel_alpha(data->cocoa_window, per_pixel_alpha);
         data->per_pixel_alpha = per_pixel_alpha;
         needs_flush = TRUE;
