@@ -1613,7 +1613,8 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
 
     /* create default IME window */
 
-    if (imm_register_window && !is_desktop_window( hwnd ) && imm_register_window( hwnd ))
+    if (imm_register_window && !is_desktop_window( hwnd ) &&
+        parent != get_hwnd_message_parent() && imm_register_window( hwnd ))
     {
         TRACE("register IME window for %p\n", hwnd);
         win_set_flags( hwnd, WIN_HAS_IME_WIN, 0 );
