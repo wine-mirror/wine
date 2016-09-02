@@ -34,6 +34,7 @@
     BOOL fullscreen;
     BOOL pendingMinimize;
     BOOL savedVisibleState;
+    BOOL drawnSinceShown;
     WineWindow* latentParentWindow;
     NSMutableArray* latentChildWindows;
 

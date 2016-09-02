@@ -317,6 +317,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 @property (readwrite, nonatomic) BOOL disabled;
 @property (readwrite, nonatomic) BOOL noActivate;
 @property (readwrite, nonatomic) BOOL floating;
+@property (readwrite, nonatomic) BOOL drawnSinceShown;
 @property (readwrite, getter=isFakingClose, nonatomic) BOOL fakingClose;
 @property (retain, nonatomic) NSWindow* latentParentWindow;
 
@@ -345,6 +346,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
     - (BOOL) becameEligibleParentOrChild;
     - (void) becameIneligibleChild;
+
+    - (void) windowDidDrawContent;
 
 @end
 
@@ -383,7 +386,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         if ([window contentView] != self)
             return;
 
-        if (window.shapeChangedSinceLastDraw && window.shape && !window.colorKeyed && !window.usePerPixelAlpha)
+        if (window.drawnSinceShown && window.shapeChangedSinceLastDraw && window.shape && !window.colorKeyed && !window.usePerPixelAlpha)
         {
             [[NSColor clearColor] setFill];
             NSRectFill(rect);
@@ -441,6 +444,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                         CGImageRelease(image);
                     }
                 }
+
+                [window windowDidDrawContent];
             }
 
             pthread_mutex_unlock(window.surface_mutex);
@@ -449,7 +454,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         // If the window may be transparent, then we have to invalidate the
         // shadow every time we draw.  Also, if this is the first time we've
         // drawn since changing from transparent to opaque.
-        if (window.colorKeyed || window.usePerPixelAlpha || window.shapeChangedSinceLastDraw)
+        if (window.drawnSinceShown && (window.colorKeyed || window.usePerPixelAlpha || window.shapeChangedSinceLastDraw))
         {
             window.shapeChangedSinceLastDraw = FALSE;
             [window invalidateShadow];
@@ -794,6 +799,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     static WineWindow* causing_becomeKeyWindow;
 
     @synthesize disabled, noActivate, floating, fullscreen, fakingClose, latentParentWindow, hwnd, queue;
+    @synthesize drawnSinceShown;
     @synthesize surface, surface_mutex;
     @synthesize shape, shapeData, shapeChangedSinceLastDraw;
     @synthesize colorKeyed, colorKeyRed, colorKeyGreen, colorKeyBlue;
@@ -831,7 +837,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         [window setAcceptsMouseMovedEvents:YES];
         [window setColorSpace:[NSColorSpace genericRGBColorSpace]];
         [window setDelegate:window];
-        [window setAutodisplay:NO];
+        [window setBackgroundColor:[NSColor clearColor]];
+        [window setOpaque:NO];
         window.hwnd = hwnd;
         window.queue = queue;
         window->savedContentMinSize = NSZeroSize;
@@ -1191,6 +1198,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         {
             if ([self level] > [child level])
                 [child setLevel:[self level]];
+            if (![child isVisible])
+                [child setAutodisplay:YES];
             [self addChildWindow:child ordered:NSWindowAbove];
             [child checkWineDisplayLink];
             [latentChildWindows removeObjectIdenticalTo:child];
@@ -1455,6 +1464,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                     // Then the levels get fixed by -adjustWindowLevels.
                     if ([self level] != [other level])
                         [self setLevel:[other level]];
+                    [self setAutodisplay:YES];
                     [self orderWindow:orderingMode relativeTo:[other windowNumber]];
                     [self checkWineDisplayLink];
 
@@ -1474,6 +1484,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                 next = [controller frontWineWindow];
                 if (next && [self level] < [next level])
                     [self setLevel:[next level]];
+                [self setAutodisplay:YES];
                 [self orderFront:nil];
                 [self checkWineDisplayLink];
                 needAdjustWindowLevels = TRUE;
@@ -1530,6 +1541,9 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         else
             [self orderOut:nil];
         [self checkWineDisplayLink];
+        [self setBackgroundColor:[NSColor clearColor]];
+        [self setOpaque:NO];
+        drawnSinceShown = NO;
         savedVisibleState = FALSE;
         if (wasVisible && wasOnActiveSpace && fullscreen)
             [controller updateFullscreenWindows];
@@ -2264,6 +2278,17 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         _lastDisplayTime = [[NSProcessInfo processInfo] systemUptime];
         [super displayIfNeeded];
         [self setAutodisplay:NO];
+    }
+
+    - (void) windowDidDrawContent
+    {
+        if (!drawnSinceShown)
+        {
+            drawnSinceShown = YES;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self checkTransparency];
+            });
+        }
     }
 
     - (NSArray*) childWineWindows
