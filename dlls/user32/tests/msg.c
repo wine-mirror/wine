@@ -6709,7 +6709,8 @@ static void test_paint_messages(void)
      */
     trace("testing ValidateRect(0, NULL)\n");
     SetRectEmpty( &rect );
-    if (ValidateRect(0, &rect))  /* not supported on Win9x */
+    if (ValidateRect(0, &rect) && /* not supported on Win9x */
+        GetUpdateRect(hwnd, NULL, FALSE))  /* or >= Win 8 */
     {
         check_update_rgn( hwnd, hrgn );
         ok_sequence( WmInvalidateErase, "InvalidateErase", FALSE );
