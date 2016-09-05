@@ -6644,7 +6644,7 @@ static const struct message WmSetParentStyle[] = {
 static void test_paint_messages(void)
 {
     BOOL ret;
-    RECT rect;
+    RECT rect, rect2;
     POINT pt;
     MSG msg;
     HWND hparent, hchild;
@@ -7184,15 +7184,21 @@ static void test_paint_messages(void)
     SetRectRgn( hrgn, 10, 10, 40, 40 );
     check_update_rgn( hchild, hrgn );
     MoveWindow( hparent, -20, -20, 200, 200, FALSE );
-    SetRectRgn( hrgn, 20, 20, 100, 100 );
+    GetUpdateRect( hparent, &rect2, FALSE );
+    if (!EqualRect( &rect2, &rect )) /* Win 8 and later don't crop update to screen */
+    {
+        rect.left += 20;
+        rect.top += 20;
+    }
+    SetRectRgn( hrgn, rect.left, rect.top, rect.right, rect.bottom );
     check_update_rgn( hparent, hrgn );
-    SetRectRgn( hrgn, 30, 30, 40, 40 );
+    SetRectRgn( hrgn, rect.left + 10, rect.top + 10, 40, 40 );
     check_update_rgn( hchild, hrgn );
 
     /* invalidated region is cropped by the parent rects */
     SetRect( &rect, 0, 0, 50, 50 );
     RedrawWindow( hchild, &rect, 0, RDW_INVALIDATE | RDW_ERASE );
-    SetRectRgn( hrgn, 30, 30, 50, 50 );
+    SetRectRgn( hrgn, rect2.left + 10, rect2.top + 10, 50, 50 );
     check_update_rgn( hchild, hrgn );
 
     DestroyWindow( hparent );
