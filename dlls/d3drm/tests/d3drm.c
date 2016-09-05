@@ -6273,6 +6273,7 @@ static void test_viewport_clear1(void)
     IDirect3DRMDevice_Release(device1);
     IDirect3DRM_Release(d3drm1);
     IDirectDrawClipper_Release(clipper);
+    IDirectDraw_Release(ddraw);
     DestroyWindow(window);
 }
 
@@ -6518,10 +6519,9 @@ static void test_viewport_clear2(void)
     ok(SUCCEEDED(hr), "Cannot clear viewport (hr = %#x).\n", hr);
 
     IDirectDrawSurface_Release(surface);
+    IDirect3DRMViewport2_Release(viewport2);
     IDirect3DRMDevice3_Release(device3);
     IDirect3DDevice2_Release(d3d_device2);
-    IDirect3D2_Release(d3d2);
-    IDirectDraw2_Release(ddraw2);
 
 cleanup:
     IDirect3DRMFrame3_Release(camera3);
@@ -6529,6 +6529,9 @@ cleanup:
     IDirect3DRM3_Release(d3drm3);
     IDirect3DRM_Release(d3drm1);
     IDirectDrawClipper_Release(clipper);
+    IDirect3D2_Release(d3d2);
+    IDirectDraw2_Release(ddraw2);
+    IDirectDraw_Release(ddraw1);
     DestroyWindow(window);
 }
 
