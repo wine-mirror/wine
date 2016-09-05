@@ -916,6 +916,7 @@ int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
         LOCALE_SMONTHDAY,
         0, /* CAL_SABBREVERASTRING */
     };
+    DWORD localeflags = 0;
     CALTYPE calinfo;
 
     if (CalType & CAL_NOUSEROVERRIDE)
@@ -942,6 +943,9 @@ int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
      * for the CALTYPES not requiring GetLocaleInfoA */
 
     calinfo = CalType & 0xffff;
+
+    if (CalType & CAL_RETURN_GENITIVE_NAMES)
+        localeflags |= LOCALE_RETURN_GENITIVE_NAMES;
 
     switch (calinfo) {
 	case CAL_ICALINTVALUE:
@@ -1002,7 +1006,7 @@ int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
 	case CAL_SABBREVMONTHNAME12:
 	case CAL_SABBREVMONTHNAME13:
 	case CAL_SYEARMONTH:
-            return GetLocaleInfoW(Locale, caltype_lctype_map[calinfo], lpCalData, cchData);
+            return GetLocaleInfoW(Locale, caltype_lctype_map[calinfo] | localeflags, lpCalData, cchData);
 	case CAL_ITWODIGITYEARMAX:
             if (CalType & CAL_RETURN_NUMBER)
             {
