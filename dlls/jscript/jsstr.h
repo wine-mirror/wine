@@ -106,12 +106,8 @@ void jsstr_free(jsstr_t*) DECLSPEC_HIDDEN;
 
 static inline void jsstr_release(jsstr_t *str)
 {
-    if(!--str->ref) {
-        if(jsstr_is_inline(str))
-            heap_free(str);
-        else
-            jsstr_free(str);
-    }
+    if(!--str->ref)
+        jsstr_free(str);
 }
 
 static inline jsstr_t *jsstr_addref(jsstr_t *str)
