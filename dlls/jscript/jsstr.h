@@ -39,7 +39,7 @@ struct _jsstr_t {
 };
 
 #define JSSTR_LENGTH_SHIFT 4
-#define JSSTR_MAX_LENGTH (1 << (32-JSSTR_LENGTH_SHIFT))
+#define JSSTR_MAX_LENGTH ((1 << (32-JSSTR_LENGTH_SHIFT))-1)
 #define JSSTR_FLAGS_MASK ((1 << JSSTR_LENGTH_SHIFT)-1)
 
 #define JSSTR_FLAG_LBIT     1
