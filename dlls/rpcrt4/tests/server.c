@@ -1006,8 +1006,11 @@ basic_tests(void)
 
   if (!old_windows_version)
   {
+      re = 0xdeadbeef;
       get_ranged_enum(&re);
-      ok(re == RE3, "get_ranged_enum() returned %d instead of RE3\n", re);
+      ok(re == RE3 ||
+         broken(re == MAKELONG(re, 0xdead)), /* Win 8, Win 10 */
+         "get_ranged_enum() returned %x instead of RE3\n", re);
   }
 }
 
