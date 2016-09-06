@@ -32,6 +32,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -60,6 +61,162 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
  */
 static BOOL bCBHasChanged = FALSE;
 
+
+/* formats that can be synthesized are: CF_TEXT, CF_OEMTEXT, CF_UNICODETEXT,
+   CF_BITMAP, CF_DIB, CF_DIBV5, CF_ENHMETAFILE, CF_METAFILEPICT */
+
+static UINT synthesized_formats[CF_MAX];
+
+/* add a synthesized format to the list */
+static void add_synthesized_format( UINT format, UINT from )
+{
+    assert( format < CF_MAX );
+    SetClipboardData( format, 0 );
+    synthesized_formats[format] = from;
+}
+
+/* store the current locale in the CF_LOCALE format */
+static void set_clipboard_locale(void)
+{
+    HANDLE data = GlobalAlloc( GMEM_FIXED, sizeof(LCID) );
+
+    if (!data) return;
+    *(LCID *)data = GetUserDefaultLCID();
+    SetClipboardData( CF_LOCALE, data );
+    TRACE( "added CF_LOCALE\n" );
+}
+
+/* get the clipboard locale stored in the CF_LOCALE format */
+static LCID get_clipboard_locale(void)
+{
+    HANDLE data;
+    LCID lcid = GetUserDefaultLCID();
+
+    if ((data = GetClipboardData( CF_LOCALE )))
+    {
+        LCID *ptr = GlobalLock( data );
+        if (ptr && GlobalSize( data ) >= sizeof(*ptr)) lcid = *ptr;
+        GlobalUnlock( data );
+    }
+    return lcid;
+}
+
+/* get the codepage to use for text conversions in the specified format (CF_TEXT or CF_OEMTEXT) */
+static UINT get_format_codepage( LCID lcid, UINT format )
+{
+    LCTYPE type = (format == CF_TEXT) ? LOCALE_IDEFAULTANSICODEPAGE : LOCALE_IDEFAULTCODEPAGE;
+    UINT ret;
+
+    if (!GetLocaleInfoW( lcid, type | LOCALE_RETURN_NUMBER, (LPWSTR)&ret, sizeof(ret)/sizeof(WCHAR) ))
+        ret = (format == CF_TEXT) ? CP_ACP : CP_OEMCP;
+    return ret;
+}
+
+/* add synthesized text formats based on what is already in the clipboard */
+static void add_synthesized_text(void)
+{
+    BOOL has_text = IsClipboardFormatAvailable( CF_TEXT );
+    BOOL has_oemtext = IsClipboardFormatAvailable( CF_OEMTEXT );
+    BOOL has_unicode = IsClipboardFormatAvailable( CF_UNICODETEXT );
+
+    if (!has_text && !has_oemtext && !has_unicode) return;  /* no text, nothing to do */
+
+    if (!IsClipboardFormatAvailable( CF_LOCALE )) set_clipboard_locale();
+
+    if (has_unicode)
+    {
+        if (!has_text) add_synthesized_format( CF_TEXT, CF_UNICODETEXT );
+        if (!has_oemtext) add_synthesized_format( CF_OEMTEXT, CF_UNICODETEXT );
+    }
+    else if (has_text)
+    {
+        if (!has_oemtext) add_synthesized_format( CF_OEMTEXT, CF_TEXT );
+        if (!has_unicode) add_synthesized_format( CF_UNICODETEXT, CF_TEXT );
+    }
+    else
+    {
+        if (!has_text) add_synthesized_format( CF_TEXT, CF_OEMTEXT );
+        if (!has_unicode) add_synthesized_format( CF_UNICODETEXT, CF_OEMTEXT );
+    }
+}
+
+/* render synthesized ANSI text based on the contents of the 'from' format */
+static HANDLE render_synthesized_textA( HANDLE data, UINT format, UINT from )
+{
+    void *src;
+    WCHAR *srcW = NULL;
+    HANDLE ret = 0;
+    LCID lcid = get_clipboard_locale();
+    UINT codepage = get_format_codepage( lcid, format );
+    UINT len, size = GlobalSize( data );
+
+    if (!(src = GlobalLock( data ))) return 0;
+
+    if (from != CF_UNICODETEXT)  /* first convert incoming format to Unicode */
+    {
+        UINT from_codepage = get_format_codepage( lcid, from );
+        len = MultiByteToWideChar( from_codepage, 0, src, size, NULL, 0 );
+        if (!(srcW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) goto done;
+        MultiByteToWideChar( from_codepage, 0, src, size, srcW, len );
+        src = srcW;
+        size = len * sizeof(WCHAR);
+    }
+
+    len = WideCharToMultiByte( codepage, 0, src, size / sizeof(WCHAR), NULL, 0, NULL, NULL );
+    if ((ret = GlobalAlloc( GMEM_FIXED, len )))
+        WideCharToMultiByte( codepage, 0, src, size / sizeof(WCHAR), ret, len, NULL, NULL );
+
+done:
+    HeapFree( GetProcessHeap(), 0, srcW );
+    GlobalUnlock( data );
+    return ret;
+}
+
+/* render synthesized Unicode text based on the contents of the 'from' format */
+static HANDLE render_synthesized_textW( HANDLE data, UINT from )
+{
+    char *src;
+    HANDLE ret;
+    UINT len, size = GlobalSize( data );
+    UINT codepage = get_format_codepage( get_clipboard_locale(), from );
+
+    if (!(src = GlobalLock( data ))) return 0;
+
+    len = MultiByteToWideChar( codepage, 0, src, size, NULL, 0 );
+    if ((ret = GlobalAlloc( GMEM_FIXED, len * sizeof(WCHAR) )))
+        MultiByteToWideChar( codepage, 0, src, size, ret, len );
+
+    GlobalUnlock( data );
+    return ret;
+}
+
+/* render a synthesized format */
+static HANDLE render_synthesized_format( UINT format, UINT from )
+{
+    HANDLE data = GetClipboardData( from );
+
+    if (!data) return 0;
+    TRACE( "rendering %04x from %04x\n", format, from );
+
+    switch (format)
+    {
+    case CF_TEXT:
+    case CF_OEMTEXT:
+        data = render_synthesized_textA( data, format, from );
+        break;
+    case CF_UNICODETEXT:
+        data = render_synthesized_textW( data, from );
+        break;
+    default:
+        assert( 0 );
+    }
+    if (data)
+    {
+        TRACE( "adding %04x %p\n", format, data );
+        SetClipboardData( format, data );
+    }
+    return data;
+}
 
 /**************************************************************************
  *                      get_clipboard_flags
@@ -154,7 +311,11 @@ BOOL WINAPI OpenClipboard( HWND hwnd )
         req->window = wine_server_user_handle( hwnd );
         if ((ret = !wine_server_call_err( req )))
         {
-            if (!reply->owner) bCBHasChanged = FALSE;
+            if (!reply->owner)
+            {
+                bCBHasChanged = FALSE;
+                memset( synthesized_formats, 0, sizeof(synthesized_formats) );
+            }
         }
     }
     SERVER_END_REQ;
@@ -172,6 +333,12 @@ BOOL WINAPI CloseClipboard(void)
     BOOL ret, owner = FALSE;
 
     TRACE("() Changed=%d\n", bCBHasChanged);
+
+    if (bCBHasChanged)
+    {
+        memset( synthesized_formats, 0, sizeof(synthesized_formats) );
+        add_synthesized_text();
+    }
 
     SERVER_START_REQ( close_clipboard )
     {
@@ -219,6 +386,7 @@ BOOL WINAPI EmptyClipboard(void)
     {
         USER_Driver->pEmptyClipboard();
         bCBHasChanged = TRUE;
+        memset( synthesized_formats, 0, sizeof(synthesized_formats) );
     }
     return ret;
 }
@@ -337,14 +505,14 @@ BOOL WINAPI ChangeClipboardChain( HWND hwnd, HWND next )
 /**************************************************************************
  *		SetClipboardData (USER32.@)
  */
-HANDLE WINAPI SetClipboardData(UINT wFormat, HANDLE hData)
+HANDLE WINAPI SetClipboardData( UINT format, HANDLE data )
 {
     HANDLE hResult = 0;
     UINT flags;
 
-    TRACE("(%04X, %p) !\n", wFormat, hData);
+    TRACE( "%04x %p\n", format, data );
 
-    if (!wFormat)
+    if (!format)
     {
         SetLastError( ERROR_CLIPBOARD_NOT_OPEN );
         return 0;
@@ -357,10 +525,11 @@ HANDLE WINAPI SetClipboardData(UINT wFormat, HANDLE hData)
         return 0;
     }
 
-    if (USER_Driver->pSetClipboardData(wFormat, hData, flags & CB_OWNER))
+    if (USER_Driver->pSetClipboardData( format, data, flags & CB_OWNER))
     {
-        hResult = hData;
+        hResult = data;
         bCBHasChanged = TRUE;
+        if (format < CF_MAX) synthesized_formats[format] = 0;
     }
 
     return hResult;
@@ -439,11 +608,11 @@ BOOL WINAPI GetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size
 /**************************************************************************
  *		GetClipboardData (USER32.@)
  */
-HANDLE WINAPI GetClipboardData(UINT wFormat)
+HANDLE WINAPI GetClipboardData( UINT format )
 {
-    HANDLE hData = 0;
+    HANDLE data = 0;
 
-    TRACE("%04x\n", wFormat);
+    TRACE( "%04x\n", format );
 
     if (!(get_clipboard_flags() & CB_OPEN))
     {
@@ -451,11 +620,13 @@ HANDLE WINAPI GetClipboardData(UINT wFormat)
         SetLastError(ERROR_CLIPBOARD_NOT_OPEN);
         return 0;
     }
+    if (format < CF_MAX && synthesized_formats[format])
+        data = render_synthesized_format( format, synthesized_formats[format] );
+    else
+        data = USER_Driver->pGetClipboardData( format );
 
-    hData = USER_Driver->pGetClipboardData( wFormat );
-
-    TRACE("returning %p\n", hData);
-    return hData;
+    TRACE( "returning %p\n", data );
+    return data;
 }
 
 

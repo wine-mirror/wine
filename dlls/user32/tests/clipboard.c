@@ -588,9 +588,9 @@ static void test_synthesized(void)
         UINT todo;
     } tests[] =
     {
-/* 0 */ { CF_TEXT, { CF_TEXT, CF_LOCALE, CF_OEMTEXT, CF_UNICODETEXT }, 1 << 1 },
-        { CF_OEMTEXT, { CF_OEMTEXT, CF_LOCALE, CF_TEXT, CF_UNICODETEXT }, 1 << 1 },
-        { CF_UNICODETEXT, { CF_UNICODETEXT, CF_LOCALE, CF_TEXT, CF_OEMTEXT }, 1 << 1 },
+/* 0 */ { CF_TEXT, { CF_TEXT, CF_LOCALE, CF_OEMTEXT, CF_UNICODETEXT }},
+        { CF_OEMTEXT, { CF_OEMTEXT, CF_LOCALE, CF_TEXT, CF_UNICODETEXT }},
+        { CF_UNICODETEXT, { CF_UNICODETEXT, CF_LOCALE, CF_TEXT, CF_OEMTEXT }},
         { CF_ENHMETAFILE, { CF_ENHMETAFILE, CF_METAFILEPICT }},
         { CF_METAFILEPICT, { CF_METAFILEPICT, CF_ENHMETAFILE }},
 /* 5 */ { CF_BITMAP, { CF_BITMAP, CF_DIB, CF_DIBV5 }, 1 << 2 },
@@ -623,11 +623,11 @@ static void test_synthesized(void)
     ok(r, "gle %d\n", GetLastError());
 
     count = CountClipboardFormats();
-    todo_wine ok( count == 6, "count %u\n", count );
+    ok( count == 6, "count %u\n", count );
     r = IsClipboardFormatAvailable( CF_TEXT );
     ok( r, "CF_TEXT not available err %d\n", GetLastError());
     r = IsClipboardFormatAvailable( CF_LOCALE );
-    todo_wine ok( r, "CF_LOCALE not available err %d\n", GetLastError());
+    ok( r, "CF_LOCALE not available err %d\n", GetLastError());
     r = IsClipboardFormatAvailable( CF_OEMTEXT );
     ok( r, "CF_OEMTEXT not available err %d\n", GetLastError());
     r = IsClipboardFormatAvailable( CF_UNICODETEXT );
@@ -650,13 +650,11 @@ static void test_synthesized(void)
     ok(data != NULL, "couldn't get data, cf %08x\n", cf);
 
     cf = EnumClipboardFormats(cf);
-    todo_wine ok(cf == CF_LOCALE, "cf %08x\n", cf);
-    if(cf == CF_LOCALE)
-    {
-        data = GetClipboardData(cf);
-        ok(data != NULL, "couldn't get data, cf %08x\n", cf);
-        cf = EnumClipboardFormats(cf);
-    }
+    ok(cf == CF_LOCALE, "cf %08x\n", cf);
+    data = GetClipboardData(cf);
+    ok(data != NULL, "couldn't get data, cf %08x\n", cf);
+
+    cf = EnumClipboardFormats(cf);
     ok(cf == CF_OEMTEXT, "cf %08x\n", cf);
     data = GetClipboardData(cf);
     ok(data != NULL, "couldn't get data, cf %08x\n", cf);
@@ -690,8 +688,8 @@ static void test_synthesized(void)
     cf = EnumClipboardFormats(cf);
     ok( cf == CF_OEMTEXT, "cf %08x\n", cf );
     cf = EnumClipboardFormats(cf);
-    todo_wine ok( cf == CF_LOCALE, "cf %08x\n", cf );
-    if (cf == CF_LOCALE) cf = EnumClipboardFormats( cf );
+    ok( cf == CF_LOCALE, "cf %08x\n", cf );
+    cf = EnumClipboardFormats( cf );
     ok( cf == 0, "cf %08x\n", cf );
 
     r = EmptyClipboard();
@@ -1696,7 +1694,7 @@ static void test_handles( HWND hwnd )
     data = GetClipboardData( CF_UNICODETEXT );
     ok( is_fixed( data ), "expected fixed mem %p\n", data );
     data = GetClipboardData( CF_LOCALE );
-    todo_wine ok( is_fixed( data ), "expected fixed mem %p\n", data );
+    ok( is_fixed( data ), "expected fixed mem %p\n", data );
     data = GetClipboardData( CF_BITMAP );
     ok( data == bitmap, "expected bitmap %p\n", data );
     data = GetClipboardData( CF_PALETTE );
@@ -1964,11 +1962,11 @@ static void test_GetUpdatedClipboardFormats(void)
     memset( formats, 0xcc, sizeof(formats) );
     r = pGetUpdatedClipboardFormats( formats, 256, &count );
     ok( r, "gle %d\n", GetLastError() );
-    todo_wine ok( count == 4, "wrong count %u\n", count );
+    ok( count == 4, "wrong count %u\n", count );
     ok( formats[0] == CF_UNICODETEXT, "wrong format %u\n", formats[0] );
     ok( formats[1] == CF_TEXT, "wrong format %u\n", formats[1] );
-    todo_wine ok( formats[2] == CF_LOCALE, "wrong format %u\n", formats[2] );
-    todo_wine ok( formats[3] == CF_OEMTEXT, "wrong format %u\n", formats[3] );
+    ok( formats[2] == CF_LOCALE, "wrong format %u\n", formats[2] );
+    ok( formats[3] == CF_OEMTEXT, "wrong format %u\n", formats[3] );
     ok( formats[4] == 0xcccccccc, "wrong format %u\n", formats[4] );
 
     count = 0xdeadbeef;
@@ -1976,20 +1974,20 @@ static void test_GetUpdatedClipboardFormats(void)
     r = pGetUpdatedClipboardFormats( formats, 2, &count );
     ok( !r, "gle %d\n", GetLastError() );
     ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error %u\n", GetLastError() );
-    todo_wine ok( count == 4, "wrong count %u\n", count );
+    ok( count == 4, "wrong count %u\n", count );
     ok( formats[0] == 0xcccccccc, "wrong format %u\n", formats[0] );
 
     count = 0xdeadbeef;
     r = pGetUpdatedClipboardFormats( NULL, 256, &count );
     ok( !r, "gle %d\n", GetLastError() );
     ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
-    todo_wine ok( count == 4, "wrong count %u\n", count );
+    ok( count == 4, "wrong count %u\n", count );
 
     count = 0xdeadbeef;
     r = pGetUpdatedClipboardFormats( NULL, 256, &count );
     ok( !r, "gle %d\n", GetLastError() );
     ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
-    todo_wine ok( count == 4, "wrong count %u\n", count );
+    ok( count == 4, "wrong count %u\n", count );
 }
 
 START_TEST(clipboard)
