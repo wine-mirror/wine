@@ -561,6 +561,24 @@ static HBITMAP create_dib( BOOL v5 )
     return ret;
 }
 
+static LRESULT CALLBACK renderer_winproc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+{
+    static UINT rendered;
+    UINT ret;
+
+    switch (msg)
+    {
+    case WM_RENDERFORMAT:
+        if (wp < 32) rendered |= (1 << wp);
+        break;
+    case WM_USER:
+        ret = rendered;
+        rendered = 0;
+        return ret;
+    }
+    return DefWindowProcA( hwnd, msg, wp, lp );
+}
+
 static void test_synthesized(void)
 {
     static const struct test
@@ -583,8 +601,12 @@ static void test_synthesized(void)
     HGLOBAL h, htext;
     HENHMETAFILE emf;
     BOOL r;
-    UINT cf, i, j, count;
+    UINT cf, i, j, count, rendered;
     HANDLE data;
+    HWND hwnd;
+
+    hwnd = CreateWindowA( "static", NULL, WS_POPUP, 0, 0, 10, 10, 0, 0, 0, NULL );
+    SetWindowLongPtrA( hwnd, GWLP_WNDPROC, (LONG_PTR)renderer_winproc );
 
     htext = create_textA();
     emf = create_emf();
@@ -653,6 +675,28 @@ static void test_synthesized(void)
     r = EmptyClipboard();
     ok(r, "gle %d\n", GetLastError());
 
+    SetClipboardData( CF_UNICODETEXT, create_textW() );
+    SetClipboardData( CF_TEXT, create_textA() );
+    SetClipboardData( CF_OEMTEXT, create_textA() );
+    r = CloseClipboard();
+    ok(r, "gle %d\n", GetLastError());
+
+    r = OpenClipboard( NULL );
+    ok(r, "gle %d\n", GetLastError());
+    cf = EnumClipboardFormats(0);
+    ok( cf == CF_UNICODETEXT, "cf %08x\n", cf );
+    cf = EnumClipboardFormats(cf);
+    ok( cf == CF_TEXT, "cf %08x\n", cf );
+    cf = EnumClipboardFormats(cf);
+    ok( cf == CF_OEMTEXT, "cf %08x\n", cf );
+    cf = EnumClipboardFormats(cf);
+    todo_wine ok( cf == CF_LOCALE, "cf %08x\n", cf );
+    if (cf == CF_LOCALE) cf = EnumClipboardFormats( cf );
+    ok( cf == 0, "cf %08x\n", cf );
+
+    r = EmptyClipboard();
+    ok(r, "gle %d\n", GetLastError());
+
     r = CloseClipboard();
     ok(r, "gle %d\n", GetLastError());
 
@@ -703,7 +747,7 @@ static void test_synthesized(void)
         todo_wine_if (tests[i].todo)
         ok( count == j, "%u: count %u instead of %u\n", i, count, j );
 
-        r = OpenClipboard(NULL);
+        r = OpenClipboard( hwnd );
         ok(r, "%u: gle %d\n", i, GetLastError());
         cf = 0;
         for (j = 0; tests[i].expected[j]; j++)
@@ -739,13 +783,20 @@ static void test_synthesized(void)
         r = EmptyClipboard();
         ok(r, "%u: gle %d\n", i, GetLastError());
 
+        rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
+        ok( !rendered, "%u: formats %08x have been rendered\n", i, rendered );
+
         SetClipboardData( tests[i].format, 0 );
+        rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
+        ok( !rendered, "%u: formats %08x have been rendered\n", i, rendered );
 
         count = CountClipboardFormats();
         ok( count == 1, "%u: count %u\n", i, count );
 
         r = CloseClipboard();
         ok(r, "%u: gle %d\n", i, GetLastError());
+        rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
+        ok( !rendered, "%u: formats %08x have been rendered\n", i, rendered );
 
         count = CountClipboardFormats();
         for (j = 0; tests[i].expected[j]; j++)
@@ -756,6 +807,8 @@ static void test_synthesized(void)
         }
         todo_wine_if (tests[i].todo)
         ok( count == j, "%u: count %u instead of %u\n", i, count, j );
+        rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
+        ok( !rendered, "%u: formats %08x have been rendered\n", i, rendered );
 
         r = OpenClipboard(NULL);
         ok(r, "%u: gle %d\n", i, GetLastError());
@@ -767,11 +820,28 @@ static void test_synthesized(void)
             ok(cf == tests[i].expected[j], "%u.%u: got %04x instead of %04x\n",
                i, j, cf, tests[i].expected[j] );
             if (cf != tests[i].expected[j]) break;
+            rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
+            ok( !rendered, "%u.%u: formats %08x have been rendered\n", i, j, rendered );
             data = GetClipboardData( cf );
+            rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
             if (cf == CF_LOCALE)
+            {
                 ok(data != NULL, "%u: CF_LOCALE no data\n", i);
+                ok( !rendered, "%u.%u: formats %08x have been rendered\n", i, j, rendered );
+            }
             else
+            {
                 ok(!data, "%u: format %04x got data %p\n", i, cf, data);
+                todo_wine_if( tests[i].format == CF_ENHMETAFILE && tests[i].expected[j] == CF_METAFILEPICT )
+                ok( rendered == (1 << tests[i].format),
+                    "%u.%u: formats %08x have been rendered\n", i, j, rendered );
+                /* try to render a second time */
+                data = GetClipboardData( cf );
+                rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
+                todo_wine_if( i > 2 && j == 1 )
+                ok( rendered == (1 << tests[i].format),
+                    "%u.%u: formats %08x have been rendered\n", i, j, rendered );
+            }
         }
         if (!tests[i].expected[j])
         {
@@ -780,6 +850,8 @@ static void test_synthesized(void)
         }
         r = CloseClipboard();
         ok(r, "%u: gle %d\n", i, GetLastError());
+        rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
+        ok( !rendered, "%u: formats %08x have been rendered\n", i, rendered );
     }
 
     r = OpenClipboard(NULL);
@@ -788,6 +860,7 @@ static void test_synthesized(void)
     ok(r, "gle %d\n", GetLastError());
     r = CloseClipboard();
     ok(r, "gle %d\n", GetLastError());
+    DestroyWindow( hwnd );
 }
 
 static CRITICAL_SECTION clipboard_cs;
@@ -1622,6 +1695,8 @@ static void test_handles( HWND hwnd )
     ok( is_fixed( data ), "expected fixed mem %p\n", data );
     data = GetClipboardData( CF_UNICODETEXT );
     ok( is_fixed( data ), "expected fixed mem %p\n", data );
+    data = GetClipboardData( CF_LOCALE );
+    todo_wine ok( is_fixed( data ), "expected fixed mem %p\n", data );
     data = GetClipboardData( CF_BITMAP );
     ok( data == bitmap, "expected bitmap %p\n", data );
     data = GetClipboardData( CF_PALETTE );
