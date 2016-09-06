@@ -8358,11 +8358,27 @@ float4 main(const ps_in v) : SV_TARGET
 
 static void test_getdc(void)
 {
+    static const struct
+    {
+        const char *name;
+        DXGI_FORMAT format;
+        BOOL getdc_supported;
+    }
+    testdata[] =
+    {
+        {"B8G8R8A8_UNORM",      DXGI_FORMAT_B8G8R8A8_UNORM,      TRUE },
+        {"B8G8R8A8_TYPELESS",   DXGI_FORMAT_B8G8R8A8_TYPELESS,   TRUE },
+        {"B8G8R8A8_UNORM_SRGB", DXGI_FORMAT_B8G8R8A8_UNORM_SRGB, TRUE },
+        {"B8G8R8X8_UNORM",      DXGI_FORMAT_B8G8R8X8_UNORM,      FALSE },
+        {"B8G8R8X8_TYPELESS",   DXGI_FORMAT_B8G8R8X8_TYPELESS,   FALSE },
+        {"B8G8R8X8_UNORM_SRGB", DXGI_FORMAT_B8G8R8X8_UNORM_SRGB, FALSE },
+    };
     struct device_desc device_desc;
     D3D11_TEXTURE2D_DESC desc;
     ID3D11Texture2D *texture;
-    IDXGISurface1 *surface1;
+    IDXGISurface1 *surface;
     ID3D11Device *device;
+    unsigned int i;
     ULONG refcount;
     HRESULT hr;
     HDC dc;
@@ -8390,42 +8406,159 @@ static void test_getdc(void)
     hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
     ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
 
-    hr = ID3D11Texture2D_QueryInterface(texture, &IID_IDXGISurface1, (void**)&surface1);
+    hr = ID3D11Texture2D_QueryInterface(texture, &IID_IDXGISurface1, (void**)&surface);
     ok(SUCCEEDED(hr), "Failed to get IDXGISurface1 interface, hr %#x.\n", hr);
 
-    hr = IDXGISurface1_GetDC(surface1, FALSE, &dc);
+    hr = IDXGISurface1_GetDC(surface, FALSE, &dc);
     todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
 
-    IDXGISurface1_Release(surface1);
+    IDXGISurface1_Release(surface);
     ID3D11Texture2D_Release(texture);
 
     desc.MiscFlags = D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
     hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
     ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
 
-    hr = ID3D11Texture2D_QueryInterface(texture, &IID_IDXGISurface1, (void**)&surface1);
+    hr = ID3D11Texture2D_QueryInterface(texture, &IID_IDXGISurface1, (void**)&surface);
     ok(SUCCEEDED(hr), "Failed to get IDXGISurface1 interface, hr %#x.\n", hr);
 
-    hr = IDXGISurface1_ReleaseDC(surface1, NULL);
+    hr = IDXGISurface1_ReleaseDC(surface, NULL);
     todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
 
-    hr = IDXGISurface1_GetDC(surface1, FALSE, &dc);
+    hr = IDXGISurface1_GetDC(surface, FALSE, &dc);
     todo_wine ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
 
-    /* One more time. */
-    dc = (HDC)0xdeadbeef;
-    hr = IDXGISurface1_GetDC(surface1, FALSE, &dc);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
-    ok(dc == (HDC)0xdeadbeef, "Got unexpected dc %p.\n", dc);
-
-    hr = IDXGISurface1_ReleaseDC(surface1, NULL);
+    hr = IDXGISurface1_ReleaseDC(surface, NULL);
     todo_wine ok(SUCCEEDED(hr), "Failed to release DC, hr %#x.\n", hr);
 
-    hr = IDXGISurface1_ReleaseDC(surface1, NULL);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
-
-    IDXGISurface1_Release(surface1);
+    IDXGISurface1_Release(surface);
     ID3D11Texture2D_Release(texture);
+
+    for (i = 0; i < (sizeof(testdata) / sizeof(*testdata)); ++i)
+    {
+        static const unsigned int bit_count = 32;
+        unsigned int width_bytes;
+        DIBSECTION dib;
+        HBITMAP bitmap;
+        DWORD type;
+        int size;
+
+        desc.Width = 64;
+        desc.Height = 64;
+        desc.MipLevels = 1;
+        desc.ArraySize = 1;
+        desc.Format = testdata[i].format;
+        desc.SampleDesc.Count = 1;
+        desc.SampleDesc.Quality = 0;
+        desc.Usage = D3D11_USAGE_STAGING;
+        desc.BindFlags = 0;
+        desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+        desc.MiscFlags = 0;
+
+        hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
+        ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+        ID3D11Texture2D_Release(texture);
+
+        /* STAGING usage, requesting GDI compatibility mode. */
+        desc.MiscFlags = D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
+        hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
+        todo_wine ok(FAILED(hr), "Expected CreateTexture2D to fail, hr %#x.\n", hr);
+        if (SUCCEEDED(hr))
+            ID3D11Texture2D_Release(texture);
+
+        desc.Usage = D3D11_USAGE_DEFAULT;
+        desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+        desc.CPUAccessFlags = 0;
+        hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
+        if (testdata[i].getdc_supported)
+            ok(SUCCEEDED(hr), "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
+        else
+            todo_wine ok(FAILED(hr), "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
+
+        if (FAILED(hr))
+            continue;
+
+        hr = ID3D11Texture2D_QueryInterface(texture, &IID_IDXGISurface1, (void**)&surface);
+        ok(SUCCEEDED(hr), "Failed to get IDXGISurface1 interface, hr %#x.\n", hr);
+
+        dc = (void *)0x1234;
+        hr = IDXGISurface1_GetDC(surface, FALSE, &dc);
+        todo_wine ok(SUCCEEDED(hr), "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
+
+        if (FAILED(hr))
+        {
+            IDXGISurface1_Release(surface);
+            ID3D11Texture2D_Release(texture);
+            continue;
+        }
+
+        type = GetObjectType(dc);
+        ok(type == OBJ_MEMDC, "Got unexpected object type %#x for format %s.\n", type, testdata[i].name);
+        bitmap = GetCurrentObject(dc, OBJ_BITMAP);
+        type = GetObjectType(bitmap);
+        ok(type == OBJ_BITMAP, "Got unexpected object type %#x for format %s.\n", type, testdata[i].name);
+
+        size = GetObjectA(bitmap, sizeof(dib), &dib);
+        ok(size == sizeof(dib) || broken(size == sizeof(dib.dsBm)), "Got unexpected size %d for format %s.\n", size, testdata[i].name);
+
+        ok(!dib.dsBm.bmType, "Got unexpected type %#x for format %s.\n",
+                dib.dsBm.bmType, testdata[i].name);
+        ok(dib.dsBm.bmWidth == 64, "Got unexpected width %d for format %s.\n",
+                dib.dsBm.bmWidth, testdata[i].name);
+        ok(dib.dsBm.bmHeight == 64, "Got unexpected height %d for format %s.\n",
+                dib.dsBm.bmHeight, testdata[i].name);
+        width_bytes = ((dib.dsBm.bmWidth * bit_count + 31) >> 3) & ~3;
+        ok(dib.dsBm.bmWidthBytes == width_bytes, "Got unexpected width bytes %d for format %s.\n",
+                dib.dsBm.bmWidthBytes, testdata[i].name);
+        ok(dib.dsBm.bmPlanes == 1, "Got unexpected plane count %d for format %s.\n",
+                dib.dsBm.bmPlanes, testdata[i].name);
+        ok(dib.dsBm.bmBitsPixel == bit_count, "Got unexpected bit count %d for format %s.\n",
+                dib.dsBm.bmBitsPixel, testdata[i].name);
+
+        if (size == sizeof(dib))
+            ok(!!dib.dsBm.bmBits, "Got unexpected bits %p for format %s.\n",
+                    dib.dsBm.bmBits, testdata[i].name);
+        else
+            ok(!dib.dsBm.bmBits, "Got unexpected bits %p for format %s.\n",
+                    dib.dsBm.bmBits, testdata[i].name);
+
+        if (size == sizeof(dib))
+        {
+            ok(dib.dsBmih.biSize == sizeof(dib.dsBmih), "Got unexpected size %u for format %s.\n",
+                    dib.dsBmih.biSize, testdata[i].name);
+            ok(dib.dsBmih.biWidth == 64, "Got unexpected width %d for format %s.\n",
+                    dib.dsBmih.biHeight, testdata[i].name);
+            ok(dib.dsBmih.biHeight == 64, "Got unexpected height %d for format %s.\n",
+                    dib.dsBmih.biHeight, testdata[i].name);
+            ok(dib.dsBmih.biPlanes == 1, "Got unexpected plane count %u for format %s.\n",
+                    dib.dsBmih.biPlanes, testdata[i].name);
+            ok(dib.dsBmih.biBitCount == bit_count, "Got unexpected bit count %u for format %s.\n",
+                    dib.dsBmih.biBitCount, testdata[i].name);
+            ok(dib.dsBmih.biCompression == BI_RGB, "Got unexpected compression %#x for format %s.\n",
+                    dib.dsBmih.biCompression, testdata[i].name);
+            ok(!dib.dsBmih.biSizeImage, "Got unexpected image size %u for format %s.\n",
+                    dib.dsBmih.biSizeImage, testdata[i].name);
+            ok(!dib.dsBmih.biXPelsPerMeter, "Got unexpected horizontal resolution %d for format %s.\n",
+                    dib.dsBmih.biXPelsPerMeter, testdata[i].name);
+            ok(!dib.dsBmih.biYPelsPerMeter, "Got unexpected vertical resolution %d for format %s.\n",
+                    dib.dsBmih.biYPelsPerMeter, testdata[i].name);
+            ok(!dib.dsBmih.biClrUsed, "Got unexpected used colour count %u for format %s.\n",
+                    dib.dsBmih.biClrUsed, testdata[i].name);
+            ok(!dib.dsBmih.biClrImportant, "Got unexpected important colour count %u for format %s.\n",
+                    dib.dsBmih.biClrImportant, testdata[i].name);
+            ok(!dib.dsBitfields[0] && !dib.dsBitfields[1] && !dib.dsBitfields[2],
+                    "Got unexpected colour masks 0x%08x 0x%08x 0x%08x for format %s.\n",
+                    dib.dsBitfields[0], dib.dsBitfields[1], dib.dsBitfields[2], testdata[i].name);
+            ok(!dib.dshSection, "Got unexpected section %p for format %s.\n", dib.dshSection, testdata[i].name);
+            ok(!dib.dsOffset, "Got unexpected offset %u for format %s.\n", dib.dsOffset, testdata[i].name);
+        }
+
+        hr = IDXGISurface1_ReleaseDC(surface, NULL);
+        ok(hr == S_OK, "Failed to release DC, hr %#x.\n", hr);
+
+        IDXGISurface1_Release(surface);
+        ID3D11Texture2D_Release(texture);
+    }
 
     refcount = ID3D11Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
