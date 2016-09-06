@@ -281,6 +281,12 @@ static void test_SetupDiCreateDeviceInfoListEx(void)
     devlist = pSetupDiCreateDeviceInfoListExW(NULL, NULL, machine, NULL);
 
     error = GetLastError();
+    if (error == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        /* win10 reports ERROR_CALL_NOT_IMPLEMENTED at first here */
+        win_skip("SetupDiCreateDeviceInfoListExW is not implemented\n");
+        return;
+    }
     ok(devlist == INVALID_HANDLE_VALUE, "SetupDiCreateDeviceInfoListExW failed : %p %d (expected %p)\n", devlist, error, INVALID_HANDLE_VALUE);
     ok(error == ERROR_INVALID_MACHINENAME || error == ERROR_MACHINE_UNAVAILABLE, "GetLastError returned wrong value : %d, (expected %d or %d)\n", error, ERROR_INVALID_MACHINENAME, ERROR_MACHINE_UNAVAILABLE);
 
