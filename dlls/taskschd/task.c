@@ -37,6 +37,149 @@ WINE_DEFAULT_DEBUG_CHANNEL(taskschd);
 
 typedef struct
 {
+    ITriggerCollection ITriggerCollection_iface;
+    LONG ref;
+} trigger_collection;
+
+static inline trigger_collection *impl_from_ITriggerCollection(ITriggerCollection *iface)
+{
+    return CONTAINING_RECORD(iface, trigger_collection, ITriggerCollection_iface);
+}
+
+static HRESULT WINAPI TriggerCollection_QueryInterface(ITriggerCollection *iface, REFIID riid, void **ppv)
+{
+    trigger_collection *This = impl_from_ITriggerCollection(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+
+    if(IsEqualGUID(&IID_IUnknown, riid) ||
+       IsEqualGUID(&IID_IDispatch, riid) ||
+       IsEqualGUID(&IID_ITriggerCollection, riid)) {
+        *ppv = &This->ITriggerCollection_iface;
+    }else {
+        FIXME("unimplemented interface %s\n", debugstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI TriggerCollection_AddRef(ITriggerCollection *iface)
+{
+    trigger_collection *This = impl_from_ITriggerCollection(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI TriggerCollection_Release(ITriggerCollection *iface)
+{
+    trigger_collection *This = impl_from_ITriggerCollection(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI TriggerCollection_GetTypeInfoCount(ITriggerCollection *iface, UINT *count)
+{
+    trigger_collection *This = impl_from_ITriggerCollection(iface);
+    FIXME("(%p)->(%p)\n", This, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TriggerCollection_GetTypeInfo(ITriggerCollection *iface, UINT index, LCID lcid, ITypeInfo **info)
+{
+    trigger_collection *This = impl_from_ITriggerCollection(iface);
+    FIXME("(%p)->(%u %u %p)\n", This, index, lcid, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TriggerCollection_GetIDsOfNames(ITriggerCollection *iface, REFIID riid, LPOLESTR *names,
+                                                   UINT count, LCID lcid, DISPID *dispid)
+{
+    trigger_collection *This = impl_from_ITriggerCollection(iface);
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), names, count, lcid, dispid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TriggerCollection_Invoke(ITriggerCollection *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
+                                               DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
+{
+    trigger_collection *This = impl_from_ITriggerCollection(iface);
+    FIXME("(%p)->(%d %s %x %x %p %p %p %p)\n", This, dispid, debugstr_guid(riid), lcid, flags,
+          params, result, excepinfo, argerr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TriggerCollection_get_Count(ITriggerCollection *iface, LONG *count)
+{
+    trigger_collection *This = impl_from_ITriggerCollection(iface);
+    FIXME("(%p)->(%p)\n", This, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TriggerCollection_get_Item(ITriggerCollection *iface, LONG index, ITrigger **trigger)
+{
+    trigger_collection *This = impl_from_ITriggerCollection(iface);
+    FIXME("(%p)->(%d %p)\n", This, index, trigger);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TriggerCollection_get__NewEnum(ITriggerCollection *iface, IUnknown **penum)
+{
+    trigger_collection *This = impl_from_ITriggerCollection(iface);
+    FIXME("(%p)->(%p)\n", This, penum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TriggerCollection_Create(ITriggerCollection *iface, TASK_TRIGGER_TYPE2 type, ITrigger **trigger)
+{
+    trigger_collection *This = impl_from_ITriggerCollection(iface);
+    FIXME("(%p)->(%d %p)\n", This, type, trigger);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TriggerCollection_Remove(ITriggerCollection *iface, VARIANT index)
+{
+    trigger_collection *This = impl_from_ITriggerCollection(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&index));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TriggerCollection_Clear(ITriggerCollection *iface)
+{
+    trigger_collection *This = impl_from_ITriggerCollection(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static const ITriggerCollectionVtbl TriggerCollection_vtbl = {
+    TriggerCollection_QueryInterface,
+    TriggerCollection_AddRef,
+    TriggerCollection_Release,
+    TriggerCollection_GetTypeInfoCount,
+    TriggerCollection_GetTypeInfo,
+    TriggerCollection_GetIDsOfNames,
+    TriggerCollection_Invoke,
+    TriggerCollection_get_Count,
+    TriggerCollection_get_Item,
+    TriggerCollection_get__NewEnum,
+    TriggerCollection_Create,
+    TriggerCollection_Remove,
+    TriggerCollection_Clear
+};
+
+typedef struct
+{
     IRegistrationInfo IRegistrationInfo_iface;
     LONG ref;
     WCHAR *description, *author, *version, *date, *documentation, *uri, *source;
@@ -1072,8 +1215,24 @@ static HRESULT WINAPI TaskDefinition_put_RegistrationInfo(ITaskDefinition *iface
 
 static HRESULT WINAPI TaskDefinition_get_Triggers(ITaskDefinition *iface, ITriggerCollection **triggers)
 {
-    FIXME("%p,%p: stub\n", iface, triggers);
-    return E_NOTIMPL;
+    TaskDefinition *This = impl_from_ITaskDefinition(iface);
+
+    TRACE("%p,%p\n", This, triggers);
+
+    if (!This->triggers)
+    {
+        trigger_collection *collection;
+
+        collection = heap_alloc(sizeof(*collection));
+        if (!collection) return E_OUTOFMEMORY;
+
+        collection->ITriggerCollection_iface.lpVtbl = &TriggerCollection_vtbl;
+        collection->ref = 1;
+        This->triggers = &collection->ITriggerCollection_iface;
+    }
+
+    ITriggerCollection_AddRef(*triggers = This->triggers);
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskDefinition_put_Triggers(ITaskDefinition *iface, ITriggerCollection *triggers)

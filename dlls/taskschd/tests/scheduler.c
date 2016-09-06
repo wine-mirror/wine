@@ -1291,6 +1291,7 @@ static void test_TaskDefinition(void)
         100, 1, TASK_INSTANCES_STOP_EXISTING, TASK_COMPATIBILITY_V1, VARIANT_FALSE, VARIANT_FALSE,
         VARIANT_FALSE, VARIANT_FALSE, VARIANT_TRUE, VARIANT_TRUE, VARIANT_FALSE, VARIANT_TRUE,
         VARIANT_TRUE, VARIANT_TRUE };
+    ITriggerCollection *trigger_col, *trigger_col2;
     HRESULT hr;
     ITaskService *service;
     ITaskDefinition *taskdef;
@@ -1417,6 +1418,16 @@ if (hr == S_OK)
     ok(hr == S_OK, "get_Description error %#x\n", hr);
 if (hr == S_OK)
     ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
+
+    hr = ITaskDefinition_get_Triggers(taskdef, &trigger_col);
+    ok(hr == S_OK, "get_Triggers failed: %08x\n", hr);
+    ok(trigger_col != NULL, "Trigers = NULL\n");
+    ITriggerCollection_Release(trigger_col);
+
+    hr = ITaskDefinition_get_Triggers(taskdef, &trigger_col2);
+    ok(hr == S_OK, "get_Triggers failed: %08x\n", hr);
+    ok(trigger_col == trigger_col2, "Trigers = NULL\n");
+    ITriggerCollection_Release(trigger_col2);
 
     IRegistrationInfo_Release(reginfo);
     ITaskDefinition_Release(taskdef);
