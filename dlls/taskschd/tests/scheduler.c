@@ -156,7 +156,8 @@ todo_wine
 
     hr = ITaskService_GetFolder(service, dot, &folder);
 todo_wine
-    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), "expected ERROR_INVALID_NAME, got %#x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME) || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) /* win7 */,
+       "expected ERROR_INVALID_NAME, got %#x\n", hr);
 
     hr = ITaskService_GetFolder(service, bslash, &folder);
     ok(hr == S_OK, "GetFolder error %#x\n", hr);
@@ -201,7 +202,8 @@ todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), "expected ERROR_INVALID_NAME, got %#x\n", hr);
 
     hr = ITaskService_GetFolder(service, Wine_Folder1_Folder2, &subfolder);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "expected ERROR_PATH_NOT_FOUND, got %#x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) /* win7 */,
+       "expected ERROR_PATH_NOT_FOUND, got %#x\n", hr);
 
     hr = ITaskFolder_CreateFolder(folder, bslash, v_null, &subfolder);
 todo_wine
@@ -351,7 +353,7 @@ todo_wine
     ok(hr == S_OK, "DeleteFolder error %#x\n", hr);
 
     hr = ITaskFolder_DeleteFolder(folder, Wine, 0);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "expected ERROR_FILE_NOT_FOUND, got %#x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) || hr == S_OK /* win7 */, "expected ERROR_FILE_NOT_FOUND, got %#x\n", hr);
 
     hr = ITaskFolder_DeleteFolder(folder, NULL, 0);
     ok(hr == E_ACCESSDENIED || hr == E_INVALIDARG /* Vista */, "expected E_ACCESSDENIED, got %#x\n", hr);
@@ -764,13 +766,15 @@ static void test_GetTask(void)
     ITaskFolder_DeleteFolder(root, Wine, 0);
 
     hr = ITaskFolder_GetTask(root, Wine_Task1, &task1);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "expected ERROR_PATH_NOT_FOUND, got %#x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) /* win7 */,
+       "expected ERROR_PATH_NOT_FOUND, got %#x\n", hr);
 
     hr = ITaskFolder_CreateFolder(root, Wine, v_null, &folder);
     ok(hr == S_OK, "CreateFolder error %#x\n", hr);
 
     hr = ITaskFolder_GetTask(root, Wine, &task1);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "expected ERROR_PATH_NOT_FOUND, got %#x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) /* win7 */,
+       "expected ERROR_PATH_NOT_FOUND, got %#x\n", hr);
 
     MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
 
@@ -938,7 +942,7 @@ todo_wine
     ok(hr == S_OK, "DeleteTask error %#x\n", hr);
 
     hr = ITaskFolder_DeleteTask(folder, Task2, 0);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "expected ERROR_FILE_NOT_FOUND, got %#x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) || hr == S_OK /* win7 */, "expected ERROR_FILE_NOT_FOUND, got %#x\n", hr);
 
     hr = ITaskFolder_RegisterTask(root, NULL, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
     ok(hr == S_OK, "RegisterTask error %#x\n", hr);
