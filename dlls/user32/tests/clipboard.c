@@ -29,6 +29,7 @@
 static BOOL (WINAPI *pAddClipboardFormatListener)(HWND hwnd);
 static BOOL (WINAPI *pRemoveClipboardFormatListener)(HWND hwnd);
 static DWORD (WINAPI *pGetClipboardSequenceNumber)(void);
+static BOOL (WINAPI *pGetUpdatedClipboardFormats)( UINT *formats, UINT count, UINT *out_count );
 
 static const BOOL is_win64 = sizeof(void *) > sizeof(int);
 static int thread_from_line;
@@ -1806,6 +1807,116 @@ static void test_data_handles(void)
     DestroyWindow( hwnd );
 }
 
+static void test_GetUpdatedClipboardFormats(void)
+{
+    BOOL r;
+    UINT count, formats[256];
+
+    if (!pGetUpdatedClipboardFormats)
+    {
+        win_skip( "GetUpdatedClipboardFormats not supported\n" );
+        return;
+    }
+
+    count = 0xdeadbeef;
+    r = pGetUpdatedClipboardFormats( NULL, 0, &count );
+    ok( r, "gle %d\n", GetLastError() );
+    ok( !count, "wrong count %u\n", count );
+
+    count = 0xdeadbeef;
+    r = pGetUpdatedClipboardFormats( NULL, 256, &count );
+    ok( r, "gle %d\n", GetLastError() );
+    ok( !count, "wrong count %u\n", count );
+
+    SetLastError( 0xdeadbeef );
+    r = pGetUpdatedClipboardFormats( formats, 256, NULL );
+    ok( !r, "succeeded\n" );
+    ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
+
+    count = 0xdeadbeef;
+    r = pGetUpdatedClipboardFormats( formats, 256, &count );
+    ok( r, "gle %d\n", GetLastError() );
+    ok( !count, "wrong count %u\n", count );
+
+    r = OpenClipboard( 0 );
+    ok( r, "gle %d\n", GetLastError() );
+    r = EmptyClipboard();
+    ok( r, "gle %d\n", GetLastError() );
+
+    count = 0xdeadbeef;
+    r = pGetUpdatedClipboardFormats( formats, 256, &count );
+    ok( r, "gle %d\n", GetLastError() );
+    ok( !count, "wrong count %u\n", count );
+
+    SetClipboardData( CF_UNICODETEXT, 0 );
+
+    count = 0xdeadbeef;
+    memset( formats, 0xcc, sizeof(formats) );
+    r = pGetUpdatedClipboardFormats( formats, 256, &count );
+    ok( r, "gle %d\n", GetLastError() );
+    ok( count == 1, "wrong count %u\n", count );
+    ok( formats[0] == CF_UNICODETEXT, "wrong format %u\n", formats[0] );
+    ok( formats[1] == 0xcccccccc, "wrong format %u\n", formats[1] );
+
+    SetClipboardData( CF_TEXT, 0 );
+    count = 0xdeadbeef;
+    memset( formats, 0xcc, sizeof(formats) );
+    r = pGetUpdatedClipboardFormats( formats, 256, &count );
+    ok( r, "gle %d\n", GetLastError() );
+    ok( count == 2, "wrong count %u\n", count );
+    ok( formats[0] == CF_UNICODETEXT, "wrong format %u\n", formats[0] );
+    ok( formats[1] == CF_TEXT, "wrong format %u\n", formats[1] );
+    ok( formats[2] == 0xcccccccc, "wrong format %u\n", formats[2] );
+
+    SetLastError( 0xdeadbeef );
+    count = 0xdeadbeef;
+    r = pGetUpdatedClipboardFormats( formats, 0, &count );
+    ok( !r, "succeeded\n" );
+    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error %u\n", GetLastError() );
+    ok( count == 2, "wrong count %u\n", count );
+
+    SetLastError( 0xdeadbeef );
+    count = 0xdeadbeef;
+    r = pGetUpdatedClipboardFormats( formats, 1, &count );
+    ok( !r, "succeeded\n" );
+    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error %u\n", GetLastError() );
+    ok( count == 2, "wrong count %u\n", count );
+
+    r = CloseClipboard();
+    ok( r, "gle %d\n", GetLastError() );
+
+    count = 0xdeadbeef;
+    memset( formats, 0xcc, sizeof(formats) );
+    r = pGetUpdatedClipboardFormats( formats, 256, &count );
+    ok( r, "gle %d\n", GetLastError() );
+    todo_wine ok( count == 4, "wrong count %u\n", count );
+    ok( formats[0] == CF_UNICODETEXT, "wrong format %u\n", formats[0] );
+    ok( formats[1] == CF_TEXT, "wrong format %u\n", formats[1] );
+    todo_wine ok( formats[2] == CF_LOCALE, "wrong format %u\n", formats[2] );
+    todo_wine ok( formats[3] == CF_OEMTEXT, "wrong format %u\n", formats[3] );
+    ok( formats[4] == 0xcccccccc, "wrong format %u\n", formats[4] );
+
+    count = 0xdeadbeef;
+    memset( formats, 0xcc, sizeof(formats) );
+    r = pGetUpdatedClipboardFormats( formats, 2, &count );
+    ok( !r, "gle %d\n", GetLastError() );
+    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error %u\n", GetLastError() );
+    todo_wine ok( count == 4, "wrong count %u\n", count );
+    ok( formats[0] == 0xcccccccc, "wrong format %u\n", formats[0] );
+
+    count = 0xdeadbeef;
+    r = pGetUpdatedClipboardFormats( NULL, 256, &count );
+    ok( !r, "gle %d\n", GetLastError() );
+    ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
+    todo_wine ok( count == 4, "wrong count %u\n", count );
+
+    count = 0xdeadbeef;
+    r = pGetUpdatedClipboardFormats( NULL, 256, &count );
+    ok( !r, "gle %d\n", GetLastError() );
+    ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
+    todo_wine ok( count == 4, "wrong count %u\n", count );
+}
+
 START_TEST(clipboard)
 {
     char **argv;
@@ -1816,6 +1927,7 @@ START_TEST(clipboard)
     pAddClipboardFormatListener = (void *)GetProcAddress( mod, "AddClipboardFormatListener" );
     pRemoveClipboardFormatListener = (void *)GetProcAddress( mod, "RemoveClipboardFormatListener" );
     pGetClipboardSequenceNumber = (void *)GetProcAddress( mod, "GetClipboardSequenceNumber" );
+    pGetUpdatedClipboardFormats = (void *)GetProcAddress( mod, "GetUpdatedClipboardFormats" );
 
     if (argc == 4 && !strcmp( argv[2], "set_clipboard_data" ))
     {
@@ -1838,4 +1950,5 @@ START_TEST(clipboard)
     test_synthesized();
     test_messages();
     test_data_handles();
+    test_GetUpdatedClipboardFormats();
 }

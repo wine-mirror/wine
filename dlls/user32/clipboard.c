@@ -407,6 +407,36 @@ BOOL WINAPI IsClipboardFormatAvailable(UINT wFormat)
 
 
 /**************************************************************************
+ *		GetUpdatedClipboardFormats (USER32.@)
+ */
+BOOL WINAPI GetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size )
+{
+    UINT i = 0, cf = 0;
+
+    if (!out_size)
+    {
+        SetLastError( ERROR_NOACCESS );
+        return FALSE;
+    }
+    if (!(*out_size = CountClipboardFormats())) return TRUE;  /* nothing else to do */
+
+    if (!formats)
+    {
+        SetLastError( ERROR_NOACCESS );
+        return FALSE;
+    }
+    if (size < *out_size)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+    /* FIXME: format list could change in the meantime */
+    while ((cf = USER_Driver->pEnumClipboardFormats( cf ))) formats[i++] = cf;
+    return TRUE;
+}
+
+
+/**************************************************************************
  *		GetClipboardData (USER32.@)
  */
 HANDLE WINAPI GetClipboardData(UINT wFormat)

@@ -374,6 +374,7 @@
 @ stdcall GetTopWindow(long)
 @ stdcall GetUpdateRect(long ptr long)
 @ stdcall GetUpdateRgn(long long long)
+@ stdcall GetUpdatedClipboardFormats(ptr long ptr)
 @ stdcall GetUserObjectInformationA (long long ptr long ptr)
 @ stdcall GetUserObjectInformationW (long long ptr long ptr)
 @ stdcall GetUserObjectSecurity (long ptr ptr long ptr)

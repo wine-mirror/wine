@@ -3695,6 +3695,7 @@ WINUSERAPI HDESK       WINAPI GetThreadDesktop(DWORD);
 WINUSERAPI HWND        WINAPI GetTopWindow(HWND);
 WINUSERAPI BOOL        WINAPI GetUpdateRect(HWND,LPRECT,BOOL);
 WINUSERAPI INT         WINAPI GetUpdateRgn(HWND,HRGN,BOOL);
+WINUSERAPI BOOL        WINAPI GetUpdatedClipboardFormats(UINT*,UINT,UINT*);
 WINUSERAPI BOOL        WINAPI GetUserObjectInformationA(HANDLE,INT,LPVOID,DWORD,LPDWORD);
 WINUSERAPI BOOL        WINAPI GetUserObjectInformationW(HANDLE,INT,LPVOID,DWORD,LPDWORD);
 #define                       GetUserObjectInformation WINELIB_NAME_AW(GetUserObjectInformation)
