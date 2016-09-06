@@ -109,6 +109,7 @@ static const WCHAR szLayoutTextW[] = {'L','a','y','o','u','t',' ','T','e','x','t
 static const WCHAR szImeRegFmt[] = {'S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\','C','o','n','t','r','o','l','\\','K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','s','\\','%','0','8','l','x',0};
 
 static const WCHAR szwIME[] = {'I','M','E',0};
+static const WCHAR szwDefaultIME[] = {'D','e','f','a','u','l','t',' ','I','M','E',0};
 
 static CRITICAL_SECTION threaddata_cs;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -1662,8 +1663,9 @@ BOOL WINAPI __wine_register_window(HWND hwnd)
     {
         /* Do not create the window inside of a critical section */
         LeaveCriticalSection(&threaddata_cs);
-        new = CreateWindowExW( WS_EX_TOOLWINDOW,
-                               szwIME, NULL, WS_POPUP, 0, 0, 1, 1, 0, 0, 0, 0);
+        new = CreateWindowExW( 0, szwIME, szwDefaultIME,
+                               WS_POPUP | WS_DISABLED | WS_CLIPSIBLINGS,
+                               0, 0, 1, 1, 0, 0, 0, 0);
         /* thread_data is in the current thread so we can assume it's still valid */
         EnterCriticalSection(&threaddata_cs);
         /* See if anyone beat us */

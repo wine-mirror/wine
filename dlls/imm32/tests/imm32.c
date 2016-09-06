@@ -866,6 +866,8 @@ static void test_ImmDefaultHwnd(void)
     HWND def1, def3;
     HANDLE thread;
     HWND hwnd;
+    char title[16];
+    LONG style;
 
     hwnd = CreateWindowExA(WS_EX_CLIENTEDGE, "EDIT", "Wine imm32.dll test",
                            WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -881,6 +883,13 @@ static void test_ImmDefaultHwnd(void)
     }
 
     def1 = ImmGetDefaultIMEWnd(hwnd);
+
+    GetWindowTextA(def1, title, sizeof(title));
+    ok(!strcmp(title, "Default IME"), "got %s\n", title);
+    style = GetWindowLongA(def1, GWL_STYLE);
+    ok(style == (WS_DISABLED | WS_POPUP | WS_CLIPSIBLINGS), "got %08x\n", style);
+    style = GetWindowLongA(def1, GWL_EXSTYLE);
+    ok(style == 0, "got %08x\n", style);
 
     imc2 = ImmCreateContext();
     ImmSetOpenStatus(imc2, TRUE);
