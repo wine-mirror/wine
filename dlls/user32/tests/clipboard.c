@@ -665,7 +665,7 @@ static void test_synthesized(void)
     cf = EnumClipboardFormats(cf);
     ok(cf == CF_METAFILEPICT, "cf %08x\n", cf);
     data = GetClipboardData(cf);
-    todo_wine ok(data != NULL, "couldn't get data, cf %08x\n", cf);
+    ok(data != NULL, "couldn't get data, cf %08x\n", cf);
 
     cf = EnumClipboardFormats(cf);
     ok(cf == 0, "cf %08x\n", cf);
@@ -756,7 +756,6 @@ static void test_synthesized(void)
                i, j, cf, tests[i].expected[j] );
             if (cf != tests[i].expected[j]) break;
             data = GetClipboardData( cf );
-            todo_wine_if (j && cf == CF_METAFILEPICT)
             ok(data != NULL ||
                broken( tests[i].format == CF_DIBV5 && cf == CF_DIB ), /* >= Vista */
                "%u: couldn't get data, cf %04x err %d\n", i, cf, GetLastError());
@@ -830,13 +829,12 @@ static void test_synthesized(void)
             else
             {
                 ok(!data, "%u: format %04x got data %p\n", i, cf, data);
-                todo_wine_if( tests[i].format == CF_ENHMETAFILE && tests[i].expected[j] == CF_METAFILEPICT )
                 ok( rendered == (1 << tests[i].format),
                     "%u.%u: formats %08x have been rendered\n", i, j, rendered );
                 /* try to render a second time */
                 data = GetClipboardData( cf );
                 rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
-                todo_wine_if( i > 2 && j == 1 )
+                todo_wine_if( i > 4 && j == 1 )
                 ok( rendered == (1 << tests[i].format),
                     "%u.%u: formats %08x have been rendered\n", i, j, rendered );
             }

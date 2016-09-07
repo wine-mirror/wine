@@ -140,6 +140,16 @@ static void add_synthesized_text(void)
     }
 }
 
+/* add synthesized metafile formats based on what is already in the clipboard */
+static void add_synthesized_metafile(void)
+{
+    BOOL has_mf = IsClipboardFormatAvailable( CF_METAFILEPICT );
+    BOOL has_emf = IsClipboardFormatAvailable( CF_ENHMETAFILE );
+
+    if (!has_mf && has_emf) add_synthesized_format( CF_METAFILEPICT, CF_ENHMETAFILE );
+    else if (!has_emf && has_mf) add_synthesized_format( CF_ENHMETAFILE, CF_METAFILEPICT );
+}
+
 /* render synthesized ANSI text based on the contents of the 'from' format */
 static HANDLE render_synthesized_textA( HANDLE data, UINT format, UINT from )
 {
@@ -190,6 +200,57 @@ static HANDLE render_synthesized_textW( HANDLE data, UINT from )
     return ret;
 }
 
+/* render a synthesized metafile based on the enhmetafile clipboard data */
+static HANDLE render_synthesized_metafile( HANDLE data )
+{
+    HANDLE ret = 0;
+    UINT size;
+    void *bits;
+    METAFILEPICT *pict;
+    ENHMETAHEADER header;
+    HDC hdc = GetDC( 0 );
+
+    size = GetWinMetaFileBits( data, 0, NULL, MM_ISOTROPIC, hdc );
+    if ((bits = HeapAlloc( GetProcessHeap(), 0, size )))
+    {
+        if (GetEnhMetaFileHeader( data, sizeof(header), &header ) &&
+            GetWinMetaFileBits( data, size, bits, MM_ISOTROPIC, hdc ))
+        {
+            if ((ret = GlobalAlloc( GMEM_FIXED, sizeof(*pict) )))
+            {
+                pict = (METAFILEPICT *)ret;
+                pict->mm   = MM_ISOTROPIC;
+                pict->xExt = header.rclFrame.right - header.rclFrame.left;
+                pict->yExt = header.rclFrame.bottom - header.rclFrame.top;
+                pict->hMF  = SetMetaFileBitsEx( size, bits );
+            }
+        }
+        HeapFree( GetProcessHeap(), 0, bits );
+    }
+    ReleaseDC( 0, hdc );
+    return ret;
+}
+
+/* render a synthesized enhmetafile based on the metafile clipboard data */
+static HANDLE render_synthesized_enhmetafile( HANDLE data )
+{
+    METAFILEPICT *pict;
+    HANDLE ret = 0;
+    UINT size;
+    void *bits;
+
+    if (!(pict = GlobalLock( data ))) return 0;
+
+    size = GetMetaFileBitsEx( pict->hMF, 0, NULL );
+    if ((bits = HeapAlloc( GetProcessHeap(), 0, size )))
+    {
+        GetMetaFileBitsEx( pict->hMF, size, bits );
+        ret = SetWinMetaFileBits( size, bits, NULL, pict );
+        HeapFree( GetProcessHeap(), 0, bits );
+    }
+    return ret;
+}
+
 /* render a synthesized format */
 static HANDLE render_synthesized_format( UINT format, UINT from )
 {
@@ -206,6 +267,12 @@ static HANDLE render_synthesized_format( UINT format, UINT from )
         break;
     case CF_UNICODETEXT:
         data = render_synthesized_textW( data, from );
+        break;
+    case CF_METAFILEPICT:
+        data = render_synthesized_metafile( data );
+        break;
+    case CF_ENHMETAFILE:
+        data = render_synthesized_enhmetafile( data );
         break;
     default:
         assert( 0 );
@@ -338,6 +405,7 @@ BOOL WINAPI CloseClipboard(void)
     {
         memset( synthesized_formats, 0, sizeof(synthesized_formats) );
         add_synthesized_text();
+        add_synthesized_metafile();
     }
 
     SERVER_START_REQ( close_clipboard )
