@@ -8336,16 +8336,10 @@ static void test_sioAddressListChange(void)
     struct in_addr net_address;
     WSAOVERLAPPED overlapped;
     struct hostent *h;
-    DWORD num_bytes;
+    DWORD num_bytes, error;
     SOCKET sock;
     int acount;
     int ret;
-
-    if (!winetest_interactive)
-    {
-        skip("Cannot test SIO_ADDRESS_LIST_CHANGE, interactive tests must be enabled\n");
-        return;
-    }
 
     /* Use gethostbyname to find the list of local network interfaces */
     h = gethostbyname("");
@@ -8361,7 +8355,104 @@ static void test_sioAddressListChange(void)
         skip("Cannot test SIO_ADDRESS_LIST_CHANGE, test requires a network card.\n");
         return;
     }
+
     net_address.s_addr = *(ULONG *) h->h_addr_list[0];
+
+    sock = socket(AF_INET, 0, IPPROTO_TCP);
+    ok(sock != INVALID_SOCKET, "socket() failed\n");
+
+    memset(&bindAddress, 0, sizeof(bindAddress));
+    bindAddress.sin_family = AF_INET;
+    bindAddress.sin_addr.s_addr = net_address.s_addr;
+    SetLastError(0xdeadbeef);
+    ret = bind(sock, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
+    ok (!ret, "bind() failed with error %d\n", GetLastError());
+    set_blocking(sock, FALSE);
+
+    memset(&overlapped, 0, sizeof(overlapped));
+    overlapped.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    SetLastError(0xdeadbeef);
+    ret = WSAIoctl(sock, SIO_ADDRESS_LIST_CHANGE, NULL, 0, NULL, 0, &num_bytes, &overlapped, NULL);
+    error = GetLastError();
+    ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %d\n", error);
+todo_wine
+    ok (error == ERROR_IO_PENDING, "expected 0x3e5, got 0x%x\n", error);
+
+    CloseHandle(overlapped.hEvent);
+    closesocket(sock);
+
+    sock = socket(AF_INET, 0, IPPROTO_TCP);
+    ok(sock != INVALID_SOCKET, "socket() failed\n");
+
+    memset(&bindAddress, 0, sizeof(bindAddress));
+    bindAddress.sin_family = AF_INET;
+    bindAddress.sin_addr.s_addr = net_address.s_addr;
+    SetLastError(0xdeadbeef);
+    ret = bind(sock, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
+    ok (!ret, "bind() failed with error %d\n", GetLastError());
+    set_blocking(sock, TRUE);
+
+    memset(&overlapped, 0, sizeof(overlapped));
+    overlapped.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    SetLastError(0xdeadbeef);
+    ret = WSAIoctl(sock, SIO_ADDRESS_LIST_CHANGE, NULL, 0, NULL, 0, &num_bytes, &overlapped, NULL);
+    error = GetLastError();
+    ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %d\n", error);
+    ok (error == ERROR_IO_PENDING, "expected 0x3e5, got 0x%x\n", error);
+
+    CloseHandle(overlapped.hEvent);
+    closesocket(sock);
+
+    sock = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+    ok(sock != INVALID_SOCKET, "socket() failed\n");
+
+    memset(&bindAddress, 0, sizeof(bindAddress));
+    bindAddress.sin_family = AF_INET;
+    bindAddress.sin_addr.s_addr = net_address.s_addr;
+    SetLastError(0xdeadbeef);
+    ret = bind(sock, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
+    ok (!ret, "bind() failed with error %d\n", GetLastError());
+    set_blocking(sock, FALSE);
+
+    memset(&overlapped, 0, sizeof(overlapped));
+    overlapped.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    SetLastError(0xdeadbeef);
+    ret = WSAIoctl(sock, SIO_ADDRESS_LIST_CHANGE, NULL, 0, NULL, 0, &num_bytes, &overlapped, NULL);
+    error = GetLastError();
+    ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %d\n", error);
+todo_wine
+    ok (error == ERROR_IO_PENDING, "expected 0x3e5, got 0x%x\n", error);
+
+    CloseHandle(overlapped.hEvent);
+    closesocket(sock);
+
+    sock = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+    ok(sock != INVALID_SOCKET, "socket() failed\n");
+
+    memset(&bindAddress, 0, sizeof(bindAddress));
+    bindAddress.sin_family = AF_INET;
+    bindAddress.sin_addr.s_addr = net_address.s_addr;
+    SetLastError(0xdeadbeef);
+    ret = bind(sock, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
+    ok (!ret, "bind() failed with error %d\n", GetLastError());
+    set_blocking(sock, TRUE);
+
+    memset(&overlapped, 0, sizeof(overlapped));
+    overlapped.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    SetLastError(0xdeadbeef);
+    ret = WSAIoctl(sock, SIO_ADDRESS_LIST_CHANGE, NULL, 0, NULL, 0, &num_bytes, &overlapped, NULL);
+    error = GetLastError();
+    ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %d\n", error);
+    ok (error == ERROR_IO_PENDING, "expected 0x3e5, got 0x%x\n", error);
+
+    CloseHandle(overlapped.hEvent);
+    closesocket(sock);
+
+    if (!winetest_interactive)
+    {
+        skip("Cannot test SIO_ADDRESS_LIST_CHANGE, interactive tests must be enabled\n");
+        return;
+    }
 
     /* Bind an overlapped socket to the first found network interface */
     sock = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
