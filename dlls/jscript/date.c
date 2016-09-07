@@ -925,7 +925,7 @@ static HRESULT Date_toLocaleDateString(script_ctx_t *ctx, vdisp_t *jsthis, WORD 
         WCHAR *ptr;
 
         len = GetDateFormatW(ctx->lcid, DATE_LONGDATE, &st, NULL, NULL, 0);
-        date_str = jsstr_alloc_buf(len, &ptr);
+        date_str = jsstr_alloc_buf(len-1, &ptr);
         if(!date_str)
             return E_OUTOFMEMORY;
         GetDateFormatW(ctx->lcid, DATE_LONGDATE, &st, NULL, ptr, len);
@@ -964,7 +964,7 @@ static HRESULT Date_toLocaleTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD 
         WCHAR *ptr;
 
         len = GetTimeFormatW(ctx->lcid, 0, &st, NULL, NULL, 0);
-        date_str = jsstr_alloc_buf(len, &ptr);
+        date_str = jsstr_alloc_buf(len-1, &ptr);
         if(!date_str)
             return E_OUTOFMEMORY;
         GetTimeFormatW(ctx->lcid, 0, &st, NULL, ptr, len);
