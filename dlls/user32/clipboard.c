@@ -89,8 +89,11 @@ static LCID get_clipboard_locale(void)
     if ((data = GetClipboardData( CF_LOCALE )))
     {
         LCID *ptr = GlobalLock( data );
-        if (ptr && GlobalSize( data ) >= sizeof(*ptr)) lcid = *ptr;
-        GlobalUnlock( data );
+        if (ptr)
+        {
+            if (GlobalSize( data ) >= sizeof(*ptr)) lcid = *ptr;
+            GlobalUnlock( data );
+        }
     }
     return lcid;
 }
