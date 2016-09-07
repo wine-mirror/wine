@@ -498,7 +498,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_CreateDevice(IDirect3D9Ex *iface, U
     }
 
     TRACE("Created device %p.\n", object);
-    *device = (IDirect3DDevice9 *)object;
+    *device = (IDirect3DDevice9 *)&object->IDirect3DDevice9Ex_iface;
 
     return D3D_OK;
 }
