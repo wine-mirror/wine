@@ -1105,12 +1105,18 @@ NTSTATUS  WINAPI IoGetDeviceObjectPointer( UNICODE_STRING *name, ACCESS_MASK acc
 /***********************************************************************
  *           IoGetAttachedDevice   (NTOSKRNL.EXE.@)
  */
-PDEVICE_OBJECT WINAPI IoGetAttachedDevice( PDEVICE_OBJECT device )
+DEVICE_OBJECT* WINAPI IoGetAttachedDevice( DEVICE_OBJECT *device )
 {
-    FIXME( "stub: %p\n", device );
+    DEVICE_OBJECT *result = device;
 
-    return device;
+    TRACE( "(%p)\n", device );
+
+    while (result->AttachedDevice)
+        result = result->AttachedDevice;
+
+    return result;
 }
+
 
 /***********************************************************************
  *           IoGetDeviceProperty   (NTOSKRNL.EXE.@)
@@ -2121,6 +2127,12 @@ NTSTATUS WINAPI ObReferenceObjectByName( UNICODE_STRING *ObjectName,
 }
 
 
+static void ObReferenceObject( void *obj )
+{
+    TRACE( "(%p): stub\n", obj );
+}
+
+
 /***********************************************************************
  *           ObDereferenceObject   (NTOSKRNL.EXE.@)
  */
@@ -2140,7 +2152,7 @@ void WINAPI __regs_ObfReferenceObject( void *obj )
 void WINAPI ObfReferenceObject( void *obj )
 #endif
 {
-    FIXME( "(%p): stub\n", obj );
+    ObReferenceObject( obj );
 }
 
 
@@ -2155,6 +2167,17 @@ void WINAPI ObfDereferenceObject( void *obj )
 #endif
 {
     ObDereferenceObject( obj );
+}
+
+
+/***********************************************************************
+ *           IoGetAttachedDeviceReference   (NTOSKRNL.EXE.@)
+ */
+DEVICE_OBJECT* WINAPI IoGetAttachedDeviceReference( DEVICE_OBJECT *device )
+{
+    DEVICE_OBJECT *result = IoGetAttachedDevice( device );
+    ObReferenceObject( result );
+    return result;
 }
 
 

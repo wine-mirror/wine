@@ -374,7 +374,7 @@
 @ stdcall IoFreeMdl(ptr)
 @ stub IoFreeWorkItem
 @ stdcall IoGetAttachedDevice(ptr)
-@ stub IoGetAttachedDeviceReference
+@ stdcall IoGetAttachedDeviceReference(ptr)
 @ stub IoGetBaseFileSystemDeviceObject
 @ stub IoGetBootDiskInformation
 @ stdcall IoGetConfigurationInformation()
