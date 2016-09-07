@@ -28,7 +28,6 @@
 @ cdecl CreateWindow(long) X11DRV_CreateWindow
 @ cdecl DestroyWindow(long) X11DRV_DestroyWindow
 @ cdecl EmptyClipboard() X11DRV_EmptyClipboard
-@ cdecl EndClipboardUpdate() X11DRV_EndClipboardUpdate
 @ cdecl EnumClipboardFormats(long) X11DRV_EnumClipboardFormats
 @ cdecl FlashWindowEx(ptr) X11DRV_FlashWindowEx
 @ cdecl GetClipboardData(long) X11DRV_GetClipboardData
