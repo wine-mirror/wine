@@ -103,7 +103,9 @@ static int   (CDECL   *p_vcomp_get_thread_num)(void);
 static void  (CDECL   *p_vcomp_leave_critsect)(CRITICAL_SECTION *critsect);
 static int   (CDECL   *p_vcomp_master_begin)(void);
 static void  (CDECL   *p_vcomp_master_end)(void);
+static void  (CDECL   *p_vcomp_reduction_i2)(unsigned int flags, short *dest, short val);
 static void  (CDECL   *p_vcomp_reduction_i4)(unsigned int flags, int *dest, int val);
+static void  (CDECL   *p_vcomp_reduction_u2)(unsigned int flags, unsigned short *dest, unsigned short val);
 static void  (CDECL   *p_vcomp_reduction_u4)(unsigned int flags, unsigned int *dest, unsigned int val);
 static void  (CDECL   *p_vcomp_sections_init)(int n);
 static int   (CDECL   *p_vcomp_sections_next)(void);
@@ -346,7 +348,9 @@ static BOOL init_vcomp(void)
     VCOMP_GET_PROC(_vcomp_leave_critsect);
     VCOMP_GET_PROC(_vcomp_master_begin);
     VCOMP_GET_PROC(_vcomp_master_end);
+    VCOMP_GET_PROC(_vcomp_reduction_i2);
     VCOMP_GET_PROC(_vcomp_reduction_i4);
+    VCOMP_GET_PROC(_vcomp_reduction_u2);
     VCOMP_GET_PROC(_vcomp_reduction_u4);
     VCOMP_GET_PROC(_vcomp_sections_init);
     VCOMP_GET_PROC(_vcomp_sections_next);
@@ -1883,6 +1887,50 @@ static void test_atomic_double(void)
     }
 }
 
+static void test_reduction_integer16(void)
+{
+    struct
+    {
+        unsigned int flags;
+        short v1, v2, expected;
+    }
+    tests[] =
+    {
+        { 0x000,                            0x1122,  0x7766, -0x7778 },
+        { VCOMP_REDUCTION_FLAGS_ADD,        0x1122,  0x7766, -0x7778 },
+        { VCOMP_REDUCTION_FLAGS_MUL,        0x1122,  0x7766, -0x5e74 },
+        { VCOMP_REDUCTION_FLAGS_MUL,        0x1122, -0x7766,  0x5e74 },
+        { VCOMP_REDUCTION_FLAGS_AND,        0x1122,  0x7766,  0x1122 },
+        { VCOMP_REDUCTION_FLAGS_OR,         0x1122,  0x7766,  0x7766 },
+        { VCOMP_REDUCTION_FLAGS_XOR,        0x1122,  0x7766,  0x6644 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_AND,        1,       2,       1 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_OR,         0,       2,       1 },
+        { 0x800,                                 0,       2,       1 },
+        { 0x900,                                 0,       2,       1 },
+        { 0xa00,                                 0,       2,       1 },
+        { 0xb00,                                 0,       2,       1 },
+        { 0xc00,                                 0,       2,       1 },
+        { 0xd00,                                 0,       2,       1 },
+        { 0xe00,                                 0,       2,       1 },
+        { 0xf00,                                 0,       2,       1 },
+    };
+    int i;
+
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        short val = tests[i].v1;
+        p_vcomp_reduction_i2(tests[i].flags, &val, tests[i].v2);
+        ok(val == tests[i].expected, "test %d: expected val == %d, got %d\n", i, tests[i].expected, val);
+    }
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        unsigned short val = tests[i].v1;
+        p_vcomp_reduction_u2(tests[i].flags, &val, tests[i].v2);
+        ok(val == (unsigned short)tests[i].expected,
+           "test %d: expected val == %u, got %u\n", i, (unsigned short)tests[i].expected, val);
+    }
+}
+
 static void CDECL reduction_cb(int *a, int *b)
 {
     p_vcomp_reduction_i4(VCOMP_REDUCTION_FLAGS_ADD, a, 1);
@@ -1989,6 +2037,7 @@ START_TEST(vcomp)
     test_atomic_integer64();
     test_atomic_float();
     test_atomic_double();
+    test_reduction_integer16();
     test_reduction_integer32();
 
     release_vcomp();

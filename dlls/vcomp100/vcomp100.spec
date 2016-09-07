@@ -74,13 +74,13 @@
 @ stub _vcomp_ordered_end
 @ stub _vcomp_ordered_loop_end
 @ stub _vcomp_reduction_i1
-@ stub _vcomp_reduction_i2
+@ cdecl _vcomp_reduction_i2(long ptr long) vcomp._vcomp_reduction_i2
 @ cdecl _vcomp_reduction_i4(long ptr long) vcomp._vcomp_reduction_i4
 @ stub _vcomp_reduction_i8
 @ stub _vcomp_reduction_r4
 @ stub _vcomp_reduction_r8
 @ stub _vcomp_reduction_u1
-@ stub _vcomp_reduction_u2
+@ cdecl _vcomp_reduction_u2(long ptr long) vcomp._vcomp_reduction_u2
 @ cdecl _vcomp_reduction_u4(long ptr long) vcomp._vcomp_reduction_u4
 @ stub _vcomp_reduction_u8
 @ cdecl _vcomp_sections_init(long) vcomp._vcomp_sections_init
