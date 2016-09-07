@@ -452,6 +452,36 @@ void CDECL _vcomp_atomic_xor_i1(char *dest, char val)
     do old = *dest; while (interlocked_cmpxchg8(dest, old ^ val, old) != old);
 }
 
+static void CDECL _vcomp_atomic_bool_and_i1(char *dest, char val)
+{
+    char old;
+    do old = *dest; while (interlocked_cmpxchg8(dest, old && val, old) != old);
+}
+
+static void CDECL _vcomp_atomic_bool_or_i1(char *dest, char val)
+{
+    char old;
+    do old = *dest; while (interlocked_cmpxchg8(dest, old ? old : (val != 0), old) != old);
+}
+
+void CDECL _vcomp_reduction_i1(unsigned int flags, char *dest, char val)
+{
+    static void (CDECL * const funcs[])(char *, char) =
+    {
+        _vcomp_atomic_add_i1,
+        _vcomp_atomic_add_i1,
+        _vcomp_atomic_mul_i1,
+        _vcomp_atomic_and_i1,
+        _vcomp_atomic_or_i1,
+        _vcomp_atomic_xor_i1,
+        _vcomp_atomic_bool_and_i1,
+        _vcomp_atomic_bool_or_i1,
+    };
+    unsigned int op = (flags >> 8) & 0xf;
+    op = min(op, sizeof(funcs)/sizeof(funcs[0]) - 1);
+    funcs[op](dest, val);
+}
+
 void CDECL _vcomp_atomic_add_i2(short *dest, short val)
 {
     interlocked_xchg_add16(dest, val);
