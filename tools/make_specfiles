@@ -168,6 +168,7 @@ my @dll_groups =
   "api-ms-win-core-memory-l1-1-2",
   "api-ms-win-core-namespace-l1-1-0",
   "api-ms-win-core-normalization-l1-1-0",
+  "api-ms-win-core-privateprofile-l1-1-1",
   "api-ms-win-core-processenvironment-l1-1-0",
   "api-ms-win-core-processenvironment-l1-2-0",
   "api-ms-win-core-psapi-l1-1-0",
