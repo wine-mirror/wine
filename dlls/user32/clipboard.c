@@ -283,13 +283,16 @@ static HANDLE render_synthesized_dib( HANDLE data, UINT format, UINT from )
         header_size = (format == CF_DIBV5) ? sizeof(BITMAPV5HEADER) :
             offsetof( BITMAPINFO, bmiColors[src->bmiHeader.biCompression == BI_BITFIELDS ? 3 : 0] );
 
-        if (!(ret = GlobalAlloc( GMEM_FIXED, header_size + bits_size ))) goto done;
-        bmi = (BITMAPINFO *)ret;
-        memset( bmi, 0, header_size );
-        memcpy( bmi, src, min( header_size, src_size ));
-        bmi->bmiHeader.biSize = header_size;
-        /* FIXME: convert colors according to DIBv5 color profile */
-        memcpy( (char *)bmi + header_size, (char *)src + src_size, bits_size );
+        if ((ret = GlobalAlloc( GMEM_FIXED, header_size + bits_size )))
+        {
+            bmi = (BITMAPINFO *)ret;
+            memset( bmi, 0, header_size );
+            memcpy( bmi, src, min( header_size, src_size ));
+            bmi->bmiHeader.biSize = header_size;
+            /* FIXME: convert colors according to DIBv5 color profile */
+            memcpy( (char *)bmi + header_size, (char *)src + src_size, bits_size );
+        }
+        GlobalUnlock( data );
     }
 
 done:
