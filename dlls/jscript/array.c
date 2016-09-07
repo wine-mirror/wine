@@ -240,7 +240,7 @@ static HRESULT Array_concat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
 
 static HRESULT array_join(script_ctx_t *ctx, jsdisp_t *array, DWORD length, const WCHAR *sep, jsval_t *r)
 {
-    jsstr_t **str_tab, *ret;
+    jsstr_t **str_tab, *ret = NULL;
     jsval_t val;
     DWORD i;
     HRESULT hres = E_FAIL;
@@ -291,8 +291,8 @@ static HRESULT array_join(script_ctx_t *ctx, jsdisp_t *array, DWORD length, cons
         if(SUCCEEDED(hres)) {
             WCHAR *ptr = NULL;
 
-            ptr = jsstr_alloc_buf(len, &ret);
-            if(ptr) {
+            ret = jsstr_alloc_buf(len, &ptr);
+            if(ret) {
                 if(str_tab[0])
                     ptr += jsstr_flush(str_tab[0], ptr);
 

@@ -302,8 +302,8 @@ static HRESULT function_to_string(FunctionInstance *function, jsstr_t **ret)
         WCHAR *ptr;
 
         name_len = strlenW(function->name);
-        ptr = jsstr_alloc_buf((sizeof(native_prefixW)+sizeof(native_suffixW))/sizeof(WCHAR) + name_len, &str);
-        if(!ptr)
+        str = jsstr_alloc_buf((sizeof(native_prefixW)+sizeof(native_suffixW))/sizeof(WCHAR) + name_len, &ptr);
+        if(!str)
             return E_OUTOFMEMORY;
 
         memcpy(ptr, native_prefixW, sizeof(native_prefixW));

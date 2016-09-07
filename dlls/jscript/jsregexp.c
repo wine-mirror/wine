@@ -374,8 +374,8 @@ static HRESULT RegExp_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     if(f & REG_MULTILINE)
         len++;
 
-    ptr = jsstr_alloc_buf(len, &ret);
-    if(!ptr)
+    ret = jsstr_alloc_buf(len, &ptr);
+    if(!ret)
         return E_OUTOFMEMORY;
 
     *ptr++ = '/';

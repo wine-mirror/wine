@@ -548,8 +548,8 @@ static inline HRESULT date_to_string(DOUBLE time, BOOL show_offset, int offset, 
             offset = -offset;
         }
 
-        date_str = jsstr_alloc_buf(len, &date_jsstr);
-        if(!date_str)
+        date_jsstr = jsstr_alloc_buf(len, &date_str);
+        if(!date_jsstr)
             return E_OUTOFMEMORY;
 
         if(!show_offset)
@@ -627,7 +627,7 @@ static HRESULT Date_toLocaleString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         date_len = GetDateFormatW(ctx->lcid, DATE_LONGDATE, &st, NULL, NULL, 0);
         time_len = GetTimeFormatW(ctx->lcid, 0, &st, NULL, NULL, 0);
 
-        ptr = jsstr_alloc_buf(date_len+time_len-1, &date_str);
+        date_str = jsstr_alloc_buf(date_len+time_len-1, &ptr);
         if(!date_str)
             return E_OUTOFMEMORY;
 
@@ -723,7 +723,7 @@ static inline HRESULT create_utc_string(script_ctx_t *ctx, vdisp_t *jsthis, jsva
         } while(day);
         day = date_from_time(date->time);
 
-        ptr = jsstr_alloc_buf(len, &date_str);
+        date_str = jsstr_alloc_buf(len, &ptr);
         if(!date_str)
             return E_OUTOFMEMORY;
 
@@ -819,8 +819,8 @@ static HRESULT dateobj_to_date_string(DateInstance *date, jsval_t *r)
         } while(day);
         day = date_from_time(time);
 
-        ptr = jsstr_alloc_buf(len, &date_str);
-        if(!ptr)
+        date_str = jsstr_alloc_buf(len, &ptr);
+        if(!date_str)
             return E_OUTOFMEMORY;
         sprintfW(ptr, formatAD?formatADW:formatBCW, week, month, day, year);
 
@@ -870,7 +870,7 @@ static HRESULT Date_toTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     if(r) {
         WCHAR *ptr;
 
-        ptr = jsstr_alloc_buf(17, &date_str);
+        date_str = jsstr_alloc_buf(17, &ptr);
         if(!date_str)
             return E_OUTOFMEMORY;
 
@@ -925,8 +925,8 @@ static HRESULT Date_toLocaleDateString(script_ctx_t *ctx, vdisp_t *jsthis, WORD 
         WCHAR *ptr;
 
         len = GetDateFormatW(ctx->lcid, DATE_LONGDATE, &st, NULL, NULL, 0);
-        ptr = jsstr_alloc_buf(len, &date_str);
-        if(!ptr)
+        date_str = jsstr_alloc_buf(len, &ptr);
+        if(!date_str)
             return E_OUTOFMEMORY;
         GetDateFormatW(ctx->lcid, DATE_LONGDATE, &st, NULL, ptr, len);
 
@@ -964,8 +964,8 @@ static HRESULT Date_toLocaleTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD 
         WCHAR *ptr;
 
         len = GetTimeFormatW(ctx->lcid, 0, &st, NULL, NULL, 0);
-        ptr = jsstr_alloc_buf(len, &date_str);
-        if(!ptr)
+        date_str = jsstr_alloc_buf(len, &ptr);
+        if(!date_str)
             return E_OUTOFMEMORY;
         GetTimeFormatW(ctx->lcid, 0, &st, NULL, ptr, len);
 

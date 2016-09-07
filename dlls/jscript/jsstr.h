@@ -95,7 +95,7 @@ typedef struct {
 } jsstr_rope_t;
 
 jsstr_t *jsstr_alloc_len(const WCHAR*,unsigned) DECLSPEC_HIDDEN;
-WCHAR *jsstr_alloc_buf(unsigned,jsstr_t**) DECLSPEC_HIDDEN;
+jsstr_t *jsstr_alloc_buf(unsigned,WCHAR**) DECLSPEC_HIDDEN;
 
 static inline jsstr_t *jsstr_alloc(const WCHAR *str)
 {
@@ -162,8 +162,8 @@ static inline jsstr_t *jsstr_substr(jsstr_t *str, unsigned off, unsigned len)
     jsstr_t *ret;
     WCHAR *ptr;
 
-    ptr = jsstr_alloc_buf(len, &ret);
-    if(ptr)
+    ret = jsstr_alloc_buf(len, &ptr);
+    if(ret)
         jsstr_extract(str, off, len, ptr);
     return ret;
 }
