@@ -2653,7 +2653,7 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr, int *addrlen32)
         SERVER_END_REQ;
         if (!status)
         {
-            if (addr && WS_getpeername(as, addr, addrlen32))
+            if (addr && addrlen32 && WS_getpeername(as, addr, addrlen32))
             {
                 WS_closesocket(as);
                 return SOCKET_ERROR;

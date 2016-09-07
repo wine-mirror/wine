@@ -4068,7 +4068,7 @@ static void test_accept(void)
     int ret;
     SOCKET server_socket, accepted = INVALID_SOCKET, connector;
     struct sockaddr_in address;
-    SOCKADDR_STORAGE ss;
+    SOCKADDR_STORAGE ss, ss_empty;
     int socklen;
     select_thread_params thread_params;
     HANDLE thread_handle = NULL;
@@ -4199,6 +4199,19 @@ static void test_accept(void)
     ok(accepted != INVALID_SOCKET, "Failed to accept connection, %d\n", WSAGetLastError());
     ok(socklen != sizeof(ss), "unexpected length\n");
     ok(ss.ss_family, "family not set\n");
+    closesocket(accepted);
+    closesocket(connector);
+    accepted = connector = INVALID_SOCKET;
+
+    socklen = sizeof(address);
+    connector = setup_connector_socket(&address, socklen, FALSE);
+    if (connector == INVALID_SOCKET) goto done;
+
+    memset(&ss, 0, sizeof(ss));
+    memset(&ss_empty, 0, sizeof(ss_empty));
+    accepted = accept(server_socket, (struct sockaddr *)&ss, NULL);
+    ok(accepted != INVALID_SOCKET, "Failed to accept connection, %d\n", WSAGetLastError());
+    ok(!memcmp(&ss, &ss_empty, sizeof(ss)), "structure is different\n");
 
 done:
     if (accepted != INVALID_SOCKET)
