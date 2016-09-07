@@ -103,6 +103,8 @@ static int   (CDECL   *p_vcomp_get_thread_num)(void);
 static void  (CDECL   *p_vcomp_leave_critsect)(CRITICAL_SECTION *critsect);
 static int   (CDECL   *p_vcomp_master_begin)(void);
 static void  (CDECL   *p_vcomp_master_end)(void);
+static void  (CDECL   *p_vcomp_reduction_i4)(unsigned int flags, int *dest, int val);
+static void  (CDECL   *p_vcomp_reduction_u4)(unsigned int flags, unsigned int *dest, unsigned int val);
 static void  (CDECL   *p_vcomp_sections_init)(int n);
 static int   (CDECL   *p_vcomp_sections_next)(void);
 static void  (CDECL   *p_vcomp_set_num_threads)(int num_threads);
@@ -130,6 +132,14 @@ static void  (CDECL   *pomp_unset_nest_lock)(omp_nest_lock_t *lock);
 #define VCOMP_DYNAMIC_FLAGS_CHUNKED     0x02
 #define VCOMP_DYNAMIC_FLAGS_GUIDED      0x03
 #define VCOMP_DYNAMIC_FLAGS_INCREMENT   0x40
+
+#define VCOMP_REDUCTION_FLAGS_ADD       0x100
+#define VCOMP_REDUCTION_FLAGS_MUL       0x200
+#define VCOMP_REDUCTION_FLAGS_AND       0x300
+#define VCOMP_REDUCTION_FLAGS_OR        0x400
+#define VCOMP_REDUCTION_FLAGS_XOR       0x500
+#define VCOMP_REDUCTION_FLAGS_BOOL_AND  0x600
+#define VCOMP_REDUCTION_FLAGS_BOOL_OR   0x700
 
 #ifdef __i386__
 #define ARCH "x86"
@@ -336,6 +346,8 @@ static BOOL init_vcomp(void)
     VCOMP_GET_PROC(_vcomp_leave_critsect);
     VCOMP_GET_PROC(_vcomp_master_begin);
     VCOMP_GET_PROC(_vcomp_master_end);
+    VCOMP_GET_PROC(_vcomp_reduction_i4);
+    VCOMP_GET_PROC(_vcomp_reduction_u4);
     VCOMP_GET_PROC(_vcomp_sections_init);
     VCOMP_GET_PROC(_vcomp_sections_next);
     VCOMP_GET_PROC(_vcomp_set_num_threads);
@@ -1871,6 +1883,88 @@ static void test_atomic_double(void)
     }
 }
 
+static void CDECL reduction_cb(int *a, int *b)
+{
+    p_vcomp_reduction_i4(VCOMP_REDUCTION_FLAGS_ADD, a, 1);
+    p_vcomp_reduction_i4(VCOMP_REDUCTION_FLAGS_ADD | 0xfffff0ff, b, 1);
+}
+
+static void test_reduction_integer32(void)
+{
+    struct
+    {
+        unsigned int flags;
+        int v1, v2, expected;
+    }
+    tests[] =
+    {
+        { 0x000,                            0x11223344,  0x77665544, -0x77777778 },
+        { VCOMP_REDUCTION_FLAGS_ADD,        0x11223344,  0x77665544, -0x77777778 },
+        { VCOMP_REDUCTION_FLAGS_MUL,        0x11223344,  0x77665544,  -0xecccdf0 },
+        { VCOMP_REDUCTION_FLAGS_MUL,        0x11223344, -0x77665544,   0xecccdf0 },
+        { VCOMP_REDUCTION_FLAGS_AND,        0x11223344,  0x77665544,  0x11221144 },
+        { VCOMP_REDUCTION_FLAGS_OR,         0x11223344,  0x77665544,  0x77667744 },
+        { VCOMP_REDUCTION_FLAGS_XOR,        0x11223344,  0x77665544,  0x66446600 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_AND,            0,           0,           0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_AND,            0,           2,           0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_AND,            1,           0,           0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_AND,            1,           2,           1 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_AND,            2,           0,           0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_AND,            2,           2,           1 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_OR,             0,           0,           0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_OR,             0,           2,           1 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_OR,             1,           0,           1 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_OR,             1,           2,           1 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_OR,             2,           0,           2 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_OR,             2,           2,           2 },
+        { 0x800,                                     0,           2,           1 },
+        { 0x900,                                     0,           2,           1 },
+        { 0xa00,                                     0,           2,           1 },
+        { 0xb00,                                     0,           2,           1 },
+        { 0xc00,                                     0,           2,           1 },
+        { 0xd00,                                     0,           2,           1 },
+        { 0xe00,                                     0,           2,           1 },
+        { 0xf00,                                     0,           2,           1 },
+    };
+    int max_threads = pomp_get_max_threads();
+    int a, b, i;
+
+    a = b = 42;
+    reduction_cb(&a, &b);
+    ok(a == 43, "expected a == 43, got %d\n", a);
+    ok(b == 43, "expected b == 43, got %d\n", b);
+
+    for (i = 1; i <= 4; i++)
+    {
+        pomp_set_num_threads(i);
+
+        a = b = 42;
+        p_vcomp_fork(TRUE, 2, reduction_cb, &a, &b);
+        ok(a == 42 + i, "expected a == %d, got %d\n", 42 + i, a);
+        ok(b == 42 + i, "expected b == %d, got %d\n", 42 + i, b);
+
+        a = b = 42;
+        p_vcomp_fork(FALSE, 2, reduction_cb, &a, &b);
+        ok(a == 43, "expected a == 43, got %d\n", a);
+        ok(b == 43, "expected b == 43, got %d\n", b);
+    }
+
+    pomp_set_num_threads(max_threads);
+
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        int val = tests[i].v1;
+        p_vcomp_reduction_i4(tests[i].flags, &val, tests[i].v2);
+        ok(val == tests[i].expected, "test %d: expected val == %d, got %d\n", i, tests[i].expected, val);
+    }
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        unsigned int val = tests[i].v1;
+        p_vcomp_reduction_u4(tests[i].flags, &val, tests[i].v2);
+        ok(val == tests[i].expected, "test %d: expected val == %u, got %u\n", i, tests[i].expected, val);
+    }
+}
+
 START_TEST(vcomp)
 {
     if (!init_vcomp())
@@ -1895,6 +1989,7 @@ START_TEST(vcomp)
     test_atomic_integer64();
     test_atomic_float();
     test_atomic_double();
+    test_reduction_integer32();
 
     release_vcomp();
 }
