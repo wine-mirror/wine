@@ -8462,9 +8462,7 @@ static void test_getdc(void)
         /* STAGING usage, requesting GDI compatibility mode. */
         desc.MiscFlags = D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
         hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
-        todo_wine ok(FAILED(hr), "Expected CreateTexture2D to fail, hr %#x.\n", hr);
-        if (SUCCEEDED(hr))
-            ID3D11Texture2D_Release(texture);
+        ok(FAILED(hr), "Expected CreateTexture2D to fail, hr %#x.\n", hr);
 
         desc.Usage = D3D11_USAGE_DEFAULT;
         desc.BindFlags = D3D11_BIND_RENDER_TARGET;
@@ -8473,7 +8471,7 @@ static void test_getdc(void)
         if (testdata[i].getdc_supported)
             ok(SUCCEEDED(hr), "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
         else
-            todo_wine ok(FAILED(hr), "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
+            ok(FAILED(hr), "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
 
         if (FAILED(hr))
             continue;
