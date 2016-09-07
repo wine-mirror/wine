@@ -343,6 +343,7 @@ typedef struct
 
 #include "poppack.h"
 
+extern int bitmap_info_size( const BITMAPINFO * info, WORD coloruse ) DECLSPEC_HIDDEN;
 extern BOOL get_icon_size( HICON handle, SIZE *size ) DECLSPEC_HIDDEN;
 
 /* Mingw's assert() imports MessageBoxA and gets confused by user32 exporting it */

@@ -306,7 +306,7 @@ static int get_dib_image_size( int width, int height, int depth )
  *
  * Return the size of the bitmap info structure including color table.
  */
-static int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
+int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
 {
     unsigned int colors, size, masks = 0;
 

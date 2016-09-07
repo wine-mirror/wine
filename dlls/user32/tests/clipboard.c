@@ -585,7 +585,6 @@ static void test_synthesized(void)
     {
         UINT format;
         UINT expected[8];
-        UINT todo;
     } tests[] =
     {
 /* 0 */ { CF_TEXT, { CF_TEXT, CF_LOCALE, CF_OEMTEXT, CF_UNICODETEXT }},
@@ -593,9 +592,9 @@ static void test_synthesized(void)
         { CF_UNICODETEXT, { CF_UNICODETEXT, CF_LOCALE, CF_TEXT, CF_OEMTEXT }},
         { CF_ENHMETAFILE, { CF_ENHMETAFILE, CF_METAFILEPICT }},
         { CF_METAFILEPICT, { CF_METAFILEPICT, CF_ENHMETAFILE }},
-/* 5 */ { CF_BITMAP, { CF_BITMAP, CF_DIB, CF_DIBV5 }, 1 << 2 },
-        { CF_DIB, { CF_DIB, CF_BITMAP, CF_DIBV5 }, 1 << 2 },
-        { CF_DIBV5, { CF_DIBV5, CF_BITMAP, CF_DIB }, (1 << 1) | (1 << 2) },
+/* 5 */ { CF_BITMAP, { CF_BITMAP, CF_DIB, CF_DIBV5 }},
+        { CF_DIB, { CF_DIB, CF_BITMAP, CF_DIBV5 }},
+        { CF_DIBV5, { CF_DIBV5, CF_BITMAP, CF_DIB }},
     };
 
     HGLOBAL h, htext;
@@ -739,10 +738,8 @@ static void test_synthesized(void)
         for (j = 0; tests[i].expected[j]; j++)
         {
             r = IsClipboardFormatAvailable( tests[i].expected[j] );
-            todo_wine_if (tests[i].todo & (1 << j))
             ok( r, "%u: %04x not available\n", i, tests[i].expected[j] );
         }
-        todo_wine_if (tests[i].todo)
         ok( count == j, "%u: count %u instead of %u\n", i, count, j );
 
         r = OpenClipboard( hwnd );
@@ -751,7 +748,6 @@ static void test_synthesized(void)
         for (j = 0; tests[i].expected[j]; j++)
         {
             cf = EnumClipboardFormats( cf );
-            todo_wine_if (tests[i].todo & (1 << j))
             ok(cf == tests[i].expected[j], "%u.%u: got %04x instead of %04x\n",
                i, j, cf, tests[i].expected[j] );
             if (cf != tests[i].expected[j]) break;
@@ -799,10 +795,8 @@ static void test_synthesized(void)
         for (j = 0; tests[i].expected[j]; j++)
         {
             r = IsClipboardFormatAvailable( tests[i].expected[j] );
-            todo_wine_if (tests[i].todo & (1 << j))
             ok( r, "%u: %04x not available\n", i, tests[i].expected[j] );
         }
-        todo_wine_if (tests[i].todo)
         ok( count == j, "%u: count %u instead of %u\n", i, count, j );
         rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
         ok( !rendered, "%u: formats %08x have been rendered\n", i, rendered );
@@ -813,7 +807,6 @@ static void test_synthesized(void)
         for (j = 0; tests[i].expected[j]; j++)
         {
             cf = EnumClipboardFormats( cf );
-            todo_wine_if (tests[i].todo & (1 << j))
             ok(cf == tests[i].expected[j], "%u.%u: got %04x instead of %04x\n",
                i, j, cf, tests[i].expected[j] );
             if (cf != tests[i].expected[j]) break;
@@ -834,7 +827,6 @@ static void test_synthesized(void)
                 /* try to render a second time */
                 data = GetClipboardData( cf );
                 rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
-                todo_wine_if( i > 4 && j == 1 )
                 ok( rendered == (1 << tests[i].format),
                     "%u.%u: formats %08x have been rendered\n", i, j, rendered );
             }
@@ -1707,7 +1699,7 @@ static void test_handles( HWND hwnd )
     data = GetClipboardData( CF_DIB );
     ok( is_fixed( data ), "expected fixed mem %p\n", data );
     data = GetClipboardData( CF_DIBV5 );
-    todo_wine ok( is_fixed( data ), "expected fixed mem %p\n", data );
+    ok( is_fixed( data ), "expected fixed mem %p\n", data );
 
     ok( GetObjectType( bitmap ) == OBJ_BITMAP, "expected bitmap %p\n", bitmap );
     ok( GetObjectType( bitmap2 ) == OBJ_BITMAP, "expected bitmap %p\n", bitmap2 );
@@ -1776,7 +1768,7 @@ static DWORD WINAPI test_handles_thread2( void *arg )
     h = GetClipboardData( CF_DIB );
     ok( is_fixed( h ), "expected fixed mem %p\n", h );
     h = GetClipboardData( CF_DIBV5 );
-    todo_wine ok( is_fixed( h ), "expected fixed mem %p\n", h );
+    ok( is_fixed( h ), "expected fixed mem %p\n", h );
     r = CloseClipboard();
     ok( r, "gle %d\n", GetLastError() );
     return 0;

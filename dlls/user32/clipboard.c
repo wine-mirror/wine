@@ -2,9 +2,10 @@
  * WIN32 clipboard implementation
  *
  * Copyright 1994 Martin Ayotte
- *	     1996 Alex Korobka
- *	     1999 Noel Borthwick
- *	     2003 Ulrich Czekalla for CodeWeavers
+ * Copyright 1996 Alex Korobka
+ * Copyright 1999 Noel Borthwick
+ * Copyright 2003 Ulrich Czekalla for CodeWeavers
+ * Copyright 2016 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,13 +21,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
- * NOTES:
- *    This file contains the implementation for the WIN32 Clipboard API
- * and Wine's internal clipboard cache.
- * The actual contents of the clipboard are held in the clipboard cache.
- * The internal implementation talks to a "clipboard driver" to fill or
- * expose the cache to the native device. (Currently only the X11 and
- * TTY clipboard  driver are available)
  */
 
 #include "config.h"
@@ -140,6 +134,33 @@ static void add_synthesized_text(void)
     }
 }
 
+/* add synthesized bitmap formats based on what is already in the clipboard */
+static void add_synthesized_bitmap(void)
+{
+    BOOL has_dib = IsClipboardFormatAvailable( CF_DIB );
+    BOOL has_dibv5 = IsClipboardFormatAvailable( CF_DIBV5 );
+    BOOL has_bitmap = IsClipboardFormatAvailable( CF_BITMAP );
+
+    if (!has_bitmap && !has_dib && !has_dibv5) return;  /* nothing to do */
+    if (has_bitmap && has_dib && has_dibv5) return;  /* nothing to synthesize */
+
+    if (has_bitmap)
+    {
+        if (!has_dib) add_synthesized_format( CF_DIB, CF_BITMAP );
+        if (!has_dibv5) add_synthesized_format( CF_DIBV5, CF_BITMAP );
+    }
+    else if (has_dib)
+    {
+        if (!has_bitmap) add_synthesized_format( CF_BITMAP, CF_DIB );
+        if (!has_dibv5) add_synthesized_format( CF_DIBV5, CF_DIB );
+    }
+    else
+    {
+        if (!has_bitmap) add_synthesized_format( CF_BITMAP, CF_DIBV5 );
+        if (!has_dib) add_synthesized_format( CF_DIB, CF_DIBV5 );
+    }
+}
+
 /* add synthesized metafile formats based on what is already in the clipboard */
 static void add_synthesized_metafile(void)
 {
@@ -197,6 +218,79 @@ static HANDLE render_synthesized_textW( HANDLE data, UINT from )
         MultiByteToWideChar( codepage, 0, src, size, ret, len );
 
     GlobalUnlock( data );
+    return ret;
+}
+
+/* render a synthesized bitmap based on the DIB clipboard data */
+static HANDLE render_synthesized_bitmap( HANDLE data, UINT from )
+{
+    BITMAPINFO *bmi;
+    HANDLE ret = 0;
+    HDC hdc = GetDC( 0 );
+
+    if ((bmi = GlobalLock( data )))
+    {
+        /* FIXME: validate data size */
+        ret = CreateDIBitmap( hdc, &bmi->bmiHeader, CBM_INIT,
+                              (char *)bmi + bitmap_info_size( bmi, DIB_RGB_COLORS ),
+                              bmi, DIB_RGB_COLORS );
+        GlobalUnlock( data );
+    }
+    ReleaseDC( 0, hdc );
+    return ret;
+}
+
+/* render a synthesized DIB based on the clipboard data */
+static HANDLE render_synthesized_dib( HANDLE data, UINT format, UINT from )
+{
+    BITMAPINFO *bmi, *src;
+    DWORD src_size, header_size, bits_size;
+    HANDLE ret = 0;
+    HDC hdc = GetDC( 0 );
+
+    if (from == CF_BITMAP)
+    {
+        BITMAP bmp;
+
+        if (!GetObjectW( data, sizeof(bmp), &bmp )) goto done;
+
+        bits_size = abs( bmp.bmHeight ) * (((bmp.bmWidth * bmp.bmBitsPixel + 31) / 8) & ~3);
+        if (bmp.bmBitsPixel <= 8)
+            header_size = offsetof( BITMAPINFO, bmiColors[1 << bmp.bmBitsPixel] );
+        else
+            header_size = (format == CF_DIBV5) ? sizeof(BITMAPV5HEADER) : sizeof(BITMAPINFOHEADER);
+
+        if (!(ret = GlobalAlloc( GMEM_FIXED, header_size + bits_size ))) goto done;
+        bmi = (BITMAPINFO *)ret;
+        memset( bmi, 0, header_size );
+        bmi->bmiHeader.biSize        = header_size;
+        bmi->bmiHeader.biWidth       = bmp.bmWidth;
+        bmi->bmiHeader.biHeight      = bmp.bmHeight;
+        bmi->bmiHeader.biPlanes      = 1;
+        bmi->bmiHeader.biBitCount    = bmp.bmBitsPixel;
+        bmi->bmiHeader.biCompression = BI_RGB;
+        GetDIBits( hdc, data, 0, bmp.bmHeight, (char *)bmi + header_size, bmi, DIB_RGB_COLORS );
+    }
+    else
+    {
+        if (!(src = GlobalLock( data ))) goto done;
+
+        src_size = bitmap_info_size( src, DIB_RGB_COLORS );
+        bits_size = GlobalSize( data ) - src_size;
+        header_size = (format == CF_DIBV5) ? sizeof(BITMAPV5HEADER) :
+            offsetof( BITMAPINFO, bmiColors[src->bmiHeader.biCompression == BI_BITFIELDS ? 3 : 0] );
+
+        if (!(ret = GlobalAlloc( GMEM_FIXED, header_size + bits_size ))) goto done;
+        bmi = (BITMAPINFO *)ret;
+        memset( bmi, 0, header_size );
+        memcpy( bmi, src, min( header_size, src_size ));
+        bmi->bmiHeader.biSize = header_size;
+        /* FIXME: convert colors according to DIBv5 color profile */
+        memcpy( (char *)bmi + header_size, (char *)src + src_size, bits_size );
+    }
+
+done:
+    ReleaseDC( 0, hdc );
     return ret;
 }
 
@@ -267,6 +361,13 @@ static HANDLE render_synthesized_format( UINT format, UINT from )
         break;
     case CF_UNICODETEXT:
         data = render_synthesized_textW( data, from );
+        break;
+    case CF_BITMAP:
+        data = render_synthesized_bitmap( data, from );
+        break;
+    case CF_DIB:
+    case CF_DIBV5:
+        data = render_synthesized_dib( data, format, from );
         break;
     case CF_METAFILEPICT:
         data = render_synthesized_metafile( data );
@@ -405,6 +506,7 @@ BOOL WINAPI CloseClipboard(void)
     {
         memset( synthesized_formats, 0, sizeof(synthesized_formats) );
         add_synthesized_text();
+        add_synthesized_bitmap();
         add_synthesized_metafile();
     }
 
