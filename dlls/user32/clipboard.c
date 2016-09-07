@@ -348,6 +348,8 @@ static HANDLE render_synthesized_enhmetafile( HANDLE data )
         ret = SetWinMetaFileBits( size, bits, NULL, pict );
         HeapFree( GetProcessHeap(), 0, bits );
     }
+
+    GlobalUnlock( data );
     return ret;
 }
 
