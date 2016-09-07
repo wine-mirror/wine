@@ -205,6 +205,12 @@ static BOOL session_set_option( object_header_t *hdr, DWORD option, LPVOID buffe
         TRACE("WINHTTP_OPTION_UNLOAD_NOTIFY_EVENT: %p\n", *(HANDLE *)buffer);
         session->unload_event = *(HANDLE *)buffer;
         return TRUE;
+    case WINHTTP_OPTION_MAX_CONNS_PER_SERVER:
+        FIXME("WINHTTP_OPTION_MAX_CONNS_PER_SERVER: %d\n", *(DWORD *)buffer);
+        return TRUE;
+    case WINHTTP_OPTION_MAX_CONNS_PER_1_0_SERVER:
+        FIXME("WINHTTP_OPTION_MAX_CONNS_PER_1_0_SERVER: %d\n", *(DWORD *)buffer);
+        return TRUE;
     default:
         FIXME("unimplemented option %u\n", option);
         set_last_error( ERROR_INVALID_PARAMETER );
