@@ -104,7 +104,6 @@ struct process_snapshot
     int             threads;  /* number of threads */
     int             priority; /* priority class */
     int             handles;  /* number of handles */
-    int             unix_pid; /* Unix pid */
 };
 
 #define CPU_FLAG(cpu) (1 << (cpu))

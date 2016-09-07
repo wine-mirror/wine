@@ -1067,7 +1067,6 @@ struct process_snapshot *process_snap( int *count )
         ptr->count    = process->obj.refcount;
         ptr->priority = process->priority;
         ptr->handles  = get_handle_table_count(process);
-        ptr->unix_pid = process->unix_pid;
         grab_object( process );
         ptr++;
     }
