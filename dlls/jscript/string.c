@@ -1402,17 +1402,19 @@ static HRESULT String_toLowerCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         return hres;
 
     if(r) {
+        unsigned len = jsstr_length(str);
         jsstr_t *ret;
         WCHAR *buf;
 
-        ret = jsstr_alloc_buf(jsstr_length(str), &buf);
+        ret = jsstr_alloc_buf(len, &buf);
         if(!ret) {
             jsstr_release(str);
             return E_OUTOFMEMORY;
         }
 
         jsstr_flush(str, buf);
-        strlwrW(buf);
+        for (; len--; buf++) *buf = tolowerW(*buf);
+
         *r = jsval_string(ret);
     }
     jsstr_release(str);
@@ -1432,17 +1434,19 @@ static HRESULT String_toUpperCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         return hres;
 
     if(r) {
+        unsigned len = jsstr_length(str);
         jsstr_t *ret;
         WCHAR *buf;
 
-        ret = jsstr_alloc_buf(jsstr_length(str), &buf);
+        ret = jsstr_alloc_buf(len, &buf);
         if(!ret) {
             jsstr_release(str);
             return E_OUTOFMEMORY;
         }
 
         jsstr_flush(str, buf);
-        struprW(buf);
+        for (; len--; buf++) *buf = toupperW(*buf);
+
         *r = jsval_string(ret);
     }
     jsstr_release(str);
