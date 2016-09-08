@@ -163,9 +163,16 @@ static	int	JSTCK_OpenDevice(WINE_JSTCK* jstick)
 {
     char  buf[20];
     int   flags, fd, found_ix, i;
+    static DWORD last_attempt;
+    DWORD now;
 
     if (jstick->dev > 0)
       return jstick->dev;
+
+    now = GetTickCount();
+    if (now - last_attempt < 2000)
+      return -1;
+    last_attempt = now;
 
 #ifdef HAVE_LINUX_22_JOYSTICK_API
     flags = O_RDONLY | O_NONBLOCK;
@@ -189,6 +196,7 @@ static	int	JSTCK_OpenDevice(WINE_JSTCK* jstick)
         {
             TRACE("Found joystick[%d] at %s\n", jstick->joyIntf, buf);
             jstick->dev = fd;
+            last_attempt = 0;
             break;
         }
 
