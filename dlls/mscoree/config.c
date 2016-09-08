@@ -73,18 +73,19 @@ static inline ConfigFileHandler *impl_from_ISAXErrorHandler(ISAXErrorHandler *if
 static HRESULT WINAPI ConfigFileHandler_QueryInterface(ISAXContentHandler *iface,
     REFIID riid, void **ppvObject)
 {
-    if (IsEqualGUID(riid, &IID_ISAXContentHandler) ||
-        IsEqualGUID(riid, &IID_IUnknown))
-    {
-        *ppvObject = iface;
-    }
+    ConfigFileHandler *This = impl_from_ISAXContentHandler(iface);
+
+    if (IsEqualGUID(riid, &IID_ISAXContentHandler) || IsEqualGUID(riid, &IID_IUnknown))
+        *ppvObject = &This->ISAXContentHandler_iface;
+    else if (IsEqualGUID(riid, &IID_ISAXErrorHandler))
+        *ppvObject = &This->ISAXErrorHandler_iface;
     else
     {
         WARN("Unsupported interface %s\n", debugstr_guid(riid));
         return E_NOINTERFACE;
     }
 
-    ISAXContentHandler_AddRef(iface);
+    IUnknown_AddRef((IUnknown*)*ppvObject);
 
     return S_OK;
 }
@@ -377,20 +378,8 @@ static const struct ISAXContentHandlerVtbl ConfigFileHandlerVtbl =
 static HRESULT WINAPI ConfigFileHandler_Error_QueryInterface(ISAXErrorHandler *iface,
     REFIID riid, void **ppvObject)
 {
-    if (IsEqualGUID(riid, &IID_ISAXErrorHandler) ||
-        IsEqualGUID(riid, &IID_IUnknown))
-    {
-        *ppvObject = iface;
-    }
-    else
-    {
-        WARN("Unsupported interface %s\n", debugstr_guid(riid));
-        return E_NOINTERFACE;
-    }
-
-    ISAXErrorHandler_AddRef(iface);
-
-    return S_OK;
+    ConfigFileHandler *This = impl_from_ISAXErrorHandler(iface);
+    return ISAXContentHandler_QueryInterface(&This->ISAXContentHandler_iface, riid, ppvObject);
 }
 
 static ULONG WINAPI ConfigFileHandler_Error_AddRef(ISAXErrorHandler *iface)
