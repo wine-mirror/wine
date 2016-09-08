@@ -22,6 +22,7 @@
 #include <stddef.h>
 #include "windows.h"
 #include "mmsystem.h"
+#include "objbase.h"
 #include "wine/test.h"
 
 extern const char* mmsys_error(MMRESULT error); /* from wave.c */
@@ -835,10 +836,15 @@ static void test_midi_outfns(HWND hwnd)
 START_TEST(midi)
 {
     HWND hwnd = 0;
+
+    CoInitialize(NULL); /* Needed for Win 10 */
+
     if (1) /* select 1 for CALLBACK_WINDOW or 0 for CALLBACK_FUNCTION */
     hwnd = CreateWindowExA(0, "static", "winmm midi test", WS_POPUP, 0,0,100,100,
                            0, 0, 0, NULL);
     test_midi_infns(hwnd);
     test_midi_outfns(hwnd);
     if (hwnd) DestroyWindow(hwnd);
+
+    CoUninitialize();
 }
