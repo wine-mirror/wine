@@ -396,13 +396,13 @@ static HRESULT WINAPI ConfigFileHandler_Error_QueryInterface(ISAXErrorHandler *i
 static ULONG WINAPI ConfigFileHandler_Error_AddRef(ISAXErrorHandler *iface)
 {
     ConfigFileHandler *This = impl_from_ISAXErrorHandler(iface);
-    return IUnknown_AddRef((IUnknown*)This);
+    return ISAXContentHandler_AddRef(&This->ISAXContentHandler_iface);
 }
 
 static ULONG WINAPI ConfigFileHandler_Error_Release(ISAXErrorHandler *iface)
 {
     ConfigFileHandler *This = impl_from_ISAXErrorHandler(iface);
-    return IUnknown_Release((IUnknown*)This);
+    return ISAXContentHandler_Release(&This->ISAXContentHandler_iface);
 }
 
 static HRESULT WINAPI ConfigFileHandler_error(ISAXErrorHandler *iface,
