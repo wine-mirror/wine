@@ -629,6 +629,12 @@ tmp = "abcd".indexOf();
 ok(tmp == -1, "indexOf = " + tmp);
 tmp = "abcd".indexOf("b", bigInt);
 ok(tmp == -1, "indexOf = " + tmp);
+tmp = "abcd".indexOf("abcd",0);
+ok(tmp === 0, "indexOf = " + tmp);
+tmp = "abcd".indexOf("abcd",1);
+ok(tmp === -1, "indexOf = " + tmp);
+tmp = ("ab" + String.fromCharCode(0) + "cd").indexOf(String.fromCharCode(0));
+ok(tmp === 2, "indexOf = " + tmp);
 
 tmp = "abcd".lastIndexOf("bc",1);
 ok(tmp === 1, "lastIndexOf = " + tmp);
@@ -649,6 +655,12 @@ ok(tmp == 2, "lastIndexOf = " + tmp);
 tmp = strObj.lastIndexOf("b");
 ok(tmp === 1, "lastIndexOf = " + tmp);
 tmp = "bbb".lastIndexOf("b", bigInt);
+ok(tmp === 2, "lastIndexOf = " + tmp);
+tmp = "abcd".lastIndexOf("abcd",4);
+ok(tmp === 0, "lastIndexOf = " + tmp);
+tmp = "abcd".lastIndexOf("abcd",0);
+ok(tmp === 0, "lastIndexOf = " + tmp);
+tmp = ("ab" + String.fromCharCode(0) + "cd").lastIndexOf(String.fromCharCode(0));
 ok(tmp === 2, "lastIndexOf = " + tmp);
 
 tmp = "".toLowerCase();

@@ -486,9 +486,9 @@ static HRESULT String_fontsize(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
 static HRESULT String_indexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
+    unsigned pos = 0, search_len, length;
     jsstr_t *search_jsstr, *jsstr;
     const WCHAR *search_str, *str;
-    int length, pos = 0;
     INT ret = -1;
     HRESULT hres;
 
@@ -498,7 +498,6 @@ static HRESULT String_indexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     if(FAILED(hres))
         return hres;
 
-    length = jsstr_length(jsstr);
     if(!argc) {
         if(r)
             *r = jsval_number(-1);
@@ -512,6 +511,9 @@ static HRESULT String_indexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
         return hres;
     }
 
+    search_len = jsstr_length(search_jsstr);
+    length = jsstr_length(jsstr);
+
     if(argc >= 2) {
         double d;
 
@@ -520,14 +522,16 @@ static HRESULT String_indexOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
             pos = is_int32(d) ? min(length, d) : length;
     }
 
-    if(SUCCEEDED(hres)) {
+    if(SUCCEEDED(hres) && length >= search_len) {
+        const WCHAR *end = str+length-search_len;
         const WCHAR *ptr;
 
-        ptr = strstrW(str+pos, search_str);
-        if(ptr)
-            ret = ptr - str;
-        else
-            ret = -1;
+        for(ptr = str+pos; ptr <= end; ptr++) {
+            if(!memcmp(ptr, search_str, search_len*sizeof(WCHAR))) {
+                ret = ptr-str;
+                break;
+            }
+        }
     }
 
     jsstr_release(search_jsstr);
