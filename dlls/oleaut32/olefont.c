@@ -1014,8 +1014,10 @@ static HRESULT WINAPI OLEFontImpl_Clone(
 
   newObject->pPropertyNotifyCP = NULL;
   newObject->pFontEventsCP = NULL;
-  CreateConnectionPoint((IUnknown*)newObject, &IID_IPropertyNotifySink, &newObject->pPropertyNotifyCP);
-  CreateConnectionPoint((IUnknown*)newObject, &IID_IFontEventsDisp, &newObject->pFontEventsCP);
+  CreateConnectionPoint((IUnknown*)&newObject->IFont_iface, &IID_IPropertyNotifySink,
+                         &newObject->pPropertyNotifyCP);
+  CreateConnectionPoint((IUnknown*)&newObject->IFont_iface, &IID_IFontEventsDisp,
+                         &newObject->pFontEventsCP);
 
   if (!newObject->pPropertyNotifyCP || !newObject->pFontEventsCP)
   {
