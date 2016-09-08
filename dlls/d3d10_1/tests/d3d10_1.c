@@ -720,7 +720,7 @@ static void test_getdc(void)
     todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
 
     hr = IDXGISurface1_GetDC(surface1, FALSE, &dc);
-    todo_wine ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
 
     /* One more time. */
     dc = (HDC)0xdeadbeef;
@@ -729,7 +729,7 @@ static void test_getdc(void)
     ok(dc == (HDC)0xdeadbeef, "Got unexpected dc %p.\n", dc);
 
     hr = IDXGISurface1_ReleaseDC(surface1, NULL);
-    todo_wine ok(SUCCEEDED(hr), "Failed to release DC, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to release DC, hr %#x.\n", hr);
 
     hr = IDXGISurface1_ReleaseDC(surface1, NULL);
     todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);

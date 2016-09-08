@@ -184,6 +184,7 @@ struct dxgi_surface
     struct wined3d_private_store private_store;
     IDXGIDevice *device;
     struct wined3d_texture *wined3d_texture;
+    HDC dc;
 };
 
 HRESULT dxgi_surface_init(struct dxgi_surface *surface, IDXGIDevice *device,

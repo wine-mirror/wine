@@ -8426,10 +8426,10 @@ static void test_getdc(void)
     todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
 
     hr = IDXGISurface1_GetDC(surface, FALSE, &dc);
-    todo_wine ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
 
     hr = IDXGISurface1_ReleaseDC(surface, NULL);
-    todo_wine ok(SUCCEEDED(hr), "Failed to release DC, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to release DC, hr %#x.\n", hr);
 
     IDXGISurface1_Release(surface);
     ID3D11Texture2D_Release(texture);
@@ -8481,7 +8481,7 @@ static void test_getdc(void)
 
         dc = (void *)0x1234;
         hr = IDXGISurface1_GetDC(surface, FALSE, &dc);
-        todo_wine ok(SUCCEEDED(hr), "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
+        ok(SUCCEEDED(hr), "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
 
         if (FAILED(hr))
         {

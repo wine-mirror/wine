@@ -197,16 +197,39 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_Unmap(IDXGISurface1 *iface)
 /* IDXGISurface1 methods */
 static HRESULT STDMETHODCALLTYPE dxgi_surface_GetDC(IDXGISurface1 *iface, BOOL discard, HDC *hdc)
 {
-    FIXME("iface %p, discard %d, hdc %p stub!\n", iface, discard, hdc);
+    struct dxgi_surface *surface = impl_from_IDXGISurface1(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    FIXME("iface %p, discard %d, hdc %p semi-stub!\n", iface, discard, hdc);
+
+    if (!hdc)
+        return E_INVALIDARG;
+
+    wined3d_mutex_lock();
+    hr = wined3d_texture_get_dc(surface->wined3d_texture, 0, hdc);
+    wined3d_mutex_unlock();
+
+    if (SUCCEEDED(hr))
+       surface->dc = *hdc;
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_surface_ReleaseDC(IDXGISurface1 *iface, RECT *dirty_rect)
 {
-    FIXME("iface %p, rect %p stub!\n", iface, dirty_rect);
+    struct dxgi_surface *surface = impl_from_IDXGISurface1(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, rect %s\n", iface, wine_dbgstr_rect(dirty_rect));
+
+    if (!IsRectEmpty(dirty_rect))
+        FIXME("dirty rectangle is ignored.\n");
+
+    wined3d_mutex_lock();
+    hr = wined3d_texture_release_dc(surface->wined3d_texture, 0, surface->dc);
+    wined3d_mutex_unlock();
+
+    return hr;
 }
 
 static const struct IDXGISurface1Vtbl dxgi_surface_vtbl =
@@ -249,6 +272,7 @@ HRESULT dxgi_surface_init(struct dxgi_surface *surface, IDXGIDevice *device,
     surface->outer_unknown = outer ? outer : &surface->IUnknown_iface;
     surface->device = device;
     surface->wined3d_texture = wined3d_texture;
+    surface->dc = NULL;
 
     return S_OK;
 }
