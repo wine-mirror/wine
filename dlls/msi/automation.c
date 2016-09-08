@@ -1031,7 +1031,7 @@ static HRESULT list_invoke(
         EXCEPINFO* pExcepInfo,
         UINT* puArgErr)
 {
-    ListObject *list = (ListObject*)This;
+    ListObject *list = CONTAINING_RECORD(This, ListObject, autoobj);
     IUnknown *pUnk = NULL;
     HRESULT hr;
 
@@ -1079,7 +1079,7 @@ static HRESULT list_invoke(
 
 static void list_free(AutomationObject *This)
 {
-    ListObject *list = (ListObject*)This;
+    ListObject *list = CONTAINING_RECORD(This, ListObject, autoobj);
     int i;
 
     for (i = 0; i < list->count; i++)
@@ -1367,7 +1367,7 @@ static HRESULT session_invoke(
         EXCEPINFO* pExcepInfo,
         UINT* puArgErr)
 {
-    SessionObject *session = (SessionObject*)This;
+    SessionObject *session = CONTAINING_RECORD(This, SessionObject, autoobj);
     WCHAR *szString;
     DWORD dwLen = 0;
     MSIHANDLE msiHandle;
