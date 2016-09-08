@@ -736,6 +736,36 @@ void CDECL _vcomp_atomic_xor_i8(LONG64 *dest, LONG64 val)
     do old = *dest; while (interlocked_cmpxchg64(dest, old ^ val, old) != old);
 }
 
+static void CDECL _vcomp_atomic_bool_and_i8(LONG64 *dest, LONG64 val)
+{
+    LONG64 old;
+    do old = *dest; while (interlocked_cmpxchg64(dest, old && val, old) != old);
+}
+
+static void CDECL _vcomp_atomic_bool_or_i8(LONG64 *dest, LONG64 val)
+{
+    LONG64 old;
+    do old = *dest; while (interlocked_cmpxchg64(dest, old ? old : (val != 0), old) != old);
+}
+
+void CDECL _vcomp_reduction_i8(unsigned int flags, LONG64 *dest, LONG64 val)
+{
+    static void (CDECL * const funcs[])(LONG64 *, LONG64) =
+    {
+        _vcomp_atomic_add_i8,
+        _vcomp_atomic_add_i8,
+        _vcomp_atomic_mul_i8,
+        _vcomp_atomic_and_i8,
+        _vcomp_atomic_or_i8,
+        _vcomp_atomic_xor_i8,
+        _vcomp_atomic_bool_and_i8,
+        _vcomp_atomic_bool_or_i8,
+    };
+    unsigned int op = (flags >> 8) & 0xf;
+    op = min(op, sizeof(funcs)/sizeof(funcs[0]) - 1);
+    funcs[op](dest, val);
+}
+
 void CDECL _vcomp_atomic_add_r4(float *dest, float val)
 {
     int old, new;

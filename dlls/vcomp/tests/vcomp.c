@@ -106,9 +106,11 @@ static void  (CDECL   *p_vcomp_master_end)(void);
 static void  (CDECL   *p_vcomp_reduction_i1)(unsigned int flags, char *dest, char val);
 static void  (CDECL   *p_vcomp_reduction_i2)(unsigned int flags, short *dest, short val);
 static void  (CDECL   *p_vcomp_reduction_i4)(unsigned int flags, int *dest, int val);
+static void  (CDECL   *p_vcomp_reduction_i8)(unsigned int flags, LONG64 *dest, LONG64 val);
 static void  (CDECL   *p_vcomp_reduction_u1)(unsigned int flags, unsigned char *dest, unsigned char val);
 static void  (CDECL   *p_vcomp_reduction_u2)(unsigned int flags, unsigned short *dest, unsigned short val);
 static void  (CDECL   *p_vcomp_reduction_u4)(unsigned int flags, unsigned int *dest, unsigned int val);
+static void  (CDECL   *p_vcomp_reduction_u8)(unsigned int flags, ULONG64 *dest, ULONG64 val);
 static void  (CDECL   *p_vcomp_sections_init)(int n);
 static int   (CDECL   *p_vcomp_sections_next)(void);
 static void  (CDECL   *p_vcomp_set_num_threads)(int num_threads);
@@ -353,9 +355,11 @@ static BOOL init_vcomp(void)
     VCOMP_GET_PROC(_vcomp_reduction_i1);
     VCOMP_GET_PROC(_vcomp_reduction_i2);
     VCOMP_GET_PROC(_vcomp_reduction_i4);
+    VCOMP_GET_PROC(_vcomp_reduction_i8);
     VCOMP_GET_PROC(_vcomp_reduction_u1);
     VCOMP_GET_PROC(_vcomp_reduction_u2);
     VCOMP_GET_PROC(_vcomp_reduction_u4);
+    VCOMP_GET_PROC(_vcomp_reduction_u8);
     VCOMP_GET_PROC(_vcomp_sections_init);
     VCOMP_GET_PROC(_vcomp_sections_next);
     VCOMP_GET_PROC(_vcomp_set_num_threads);
@@ -1893,7 +1897,7 @@ static void test_atomic_double(void)
 
 static void test_reduction_integer8(void)
 {
-    struct
+    static const struct
     {
         unsigned int flags;
         char v1, v2, expected;
@@ -1937,7 +1941,7 @@ static void test_reduction_integer8(void)
 
 static void test_reduction_integer16(void)
 {
-    struct
+    static const struct
     {
         unsigned int flags;
         short v1, v2, expected;
@@ -1987,7 +1991,7 @@ static void CDECL reduction_cb(int *a, int *b)
 
 static void test_reduction_integer32(void)
 {
-    struct
+    static const struct
     {
         unsigned int flags;
         int v1, v2, expected;
@@ -2061,6 +2065,49 @@ static void test_reduction_integer32(void)
     }
 }
 
+static void test_reduction_integer64(void)
+{
+    static const struct
+    {
+        unsigned int flags;
+        LONG64 v1, v2, expected;
+    }
+    tests[] =
+    {
+        { 0x000,                            0x1122334455667788,  0x7766554433221100, -0x7777777777777778 },
+        { VCOMP_REDUCTION_FLAGS_ADD,        0x1122334455667788,  0x7766554433221100, -0x7777777777777778 },
+        { VCOMP_REDUCTION_FLAGS_MUL,        0x1122334455667788,  0x7766554433221100,  0x3e963337c6000800 },
+        { VCOMP_REDUCTION_FLAGS_MUL,        0x1122334455667788, -0x7766554433221100,  0xc169ccc839fff800 },
+        { VCOMP_REDUCTION_FLAGS_AND,        0x1122334455667788,  0x7766554433221100,  0x1122114411221100 },
+        { VCOMP_REDUCTION_FLAGS_OR,         0x1122334455667788,  0x7766554433221100,  0x7766774477667788 },
+        { VCOMP_REDUCTION_FLAGS_XOR,        0x1122334455667788,  0x7766554433221100,  0x6644660066446688 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_AND,                    1,                   2,                   1 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_OR,                     0,                   2,                   1 },
+        { 0x800,                                             0,                   2,                   1 },
+        { 0x900,                                             0,                   2,                   1 },
+        { 0xa00,                                             0,                   2,                   1 },
+        { 0xb00,                                             0,                   2,                   1 },
+        { 0xc00,                                             0,                   2,                   1 },
+        { 0xd00,                                             0,                   2,                   1 },
+        { 0xe00,                                             0,                   2,                   1 },
+        { 0xf00,                                             0,                   2,                   1 },
+    };
+    int i;
+
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        LONG64 val = tests[i].v1;
+        p_vcomp_reduction_i8(tests[i].flags, &val, tests[i].v2);
+        ok(val == tests[i].expected, "test %d: unexpectedly got %s\n", i, debugstr_longlong(val));
+    }
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        ULONG64 val = tests[i].v1;
+        p_vcomp_reduction_u8(tests[i].flags, &val, tests[i].v2);
+        ok(val == tests[i].expected, "test %d: unexpectedly got %s\n", i, debugstr_longlong(val));
+    }
+}
+
 START_TEST(vcomp)
 {
     if (!init_vcomp())
@@ -2088,6 +2135,7 @@ START_TEST(vcomp)
     test_reduction_integer8();
     test_reduction_integer16();
     test_reduction_integer32();
+    test_reduction_integer64();
 
     release_vcomp();
 }

@@ -76,13 +76,13 @@
 @ cdecl _vcomp_reduction_i1(long ptr long) vcomp._vcomp_reduction_i1
 @ cdecl _vcomp_reduction_i2(long ptr long) vcomp._vcomp_reduction_i2
 @ cdecl _vcomp_reduction_i4(long ptr long) vcomp._vcomp_reduction_i4
-@ stub _vcomp_reduction_i8
+@ cdecl _vcomp_reduction_i8(long ptr int64) vcomp._vcomp_reduction_i8
 @ stub _vcomp_reduction_r4
 @ stub _vcomp_reduction_r8
 @ cdecl _vcomp_reduction_u1(long ptr long) vcomp._vcomp_reduction_u1
 @ cdecl _vcomp_reduction_u2(long ptr long) vcomp._vcomp_reduction_u2
 @ cdecl _vcomp_reduction_u4(long ptr long) vcomp._vcomp_reduction_u4
-@ stub _vcomp_reduction_u8
+@ cdecl _vcomp_reduction_u8(long ptr int64) vcomp._vcomp_reduction_u8
 @ cdecl _vcomp_sections_init(long) vcomp._vcomp_sections_init
 @ cdecl _vcomp_sections_next() vcomp._vcomp_sections_next
 @ cdecl _vcomp_set_num_threads(long) vcomp._vcomp_set_num_threads
