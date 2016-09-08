@@ -346,7 +346,7 @@ static void test_items(void)
     ok(r == S_OK, "Folder::Items failed: %08x\n", r);
     ok(!!items, "items is null\n");
     r = FolderItems_QueryInterface(items, &IID_FolderItems2, (void**)&items2);
-    ok(r == S_OK || broken(E_NOINTERFACE) /* xp and later */, "FolderItems::QueryInterface failed: %08x\n", r);
+    ok(r == S_OK || broken(r == E_NOINTERFACE) /* xp and later */, "FolderItems::QueryInterface failed: %08x\n", r);
     ok(!!items2 || broken(!items2) /* xp and later */, "items2 is null\n");
     r = FolderItems_QueryInterface(items, &IID_FolderItems3, (void**)&items3);
     ok(r == S_OK, "FolderItems::QueryInterface failed: %08x\n", r);
