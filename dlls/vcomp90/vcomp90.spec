@@ -78,7 +78,7 @@
 @ cdecl _vcomp_reduction_i4(long ptr long) vcomp._vcomp_reduction_i4
 @ cdecl _vcomp_reduction_i8(long ptr int64) vcomp._vcomp_reduction_i8
 @ cdecl _vcomp_reduction_r4(long ptr float) vcomp._vcomp_reduction_r4
-@ stub _vcomp_reduction_r8
+@ cdecl _vcomp_reduction_r8(long ptr double) vcomp._vcomp_reduction_r8
 @ cdecl _vcomp_reduction_u1(long ptr long) vcomp._vcomp_reduction_u1
 @ cdecl _vcomp_reduction_u2(long ptr long) vcomp._vcomp_reduction_u2
 @ cdecl _vcomp_reduction_u4(long ptr long) vcomp._vcomp_reduction_u4

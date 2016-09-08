@@ -108,6 +108,7 @@ static void  (CDECL   *p_vcomp_reduction_i2)(unsigned int flags, short *dest, sh
 static void  (CDECL   *p_vcomp_reduction_i4)(unsigned int flags, int *dest, int val);
 static void  (CDECL   *p_vcomp_reduction_i8)(unsigned int flags, LONG64 *dest, LONG64 val);
 static void  (CDECL   *p_vcomp_reduction_r4)(unsigned int flags, float *dest, float val);
+static void  (CDECL   *p_vcomp_reduction_r8)(unsigned int flags, double *dest, double val);
 static void  (CDECL   *p_vcomp_reduction_u1)(unsigned int flags, unsigned char *dest, unsigned char val);
 static void  (CDECL   *p_vcomp_reduction_u2)(unsigned int flags, unsigned short *dest, unsigned short val);
 static void  (CDECL   *p_vcomp_reduction_u4)(unsigned int flags, unsigned int *dest, unsigned int val);
@@ -358,6 +359,7 @@ static BOOL init_vcomp(void)
     VCOMP_GET_PROC(_vcomp_reduction_i4);
     VCOMP_GET_PROC(_vcomp_reduction_i8);
     VCOMP_GET_PROC(_vcomp_reduction_r4);
+    VCOMP_GET_PROC(_vcomp_reduction_r8);
     VCOMP_GET_PROC(_vcomp_reduction_u1);
     VCOMP_GET_PROC(_vcomp_reduction_u2);
     VCOMP_GET_PROC(_vcomp_reduction_u4);
@@ -2110,7 +2112,7 @@ static void test_reduction_integer64(void)
     }
 }
 
-static void test_reduction_float(void)
+static void test_reduction_float_double(void)
 {
     static const struct
     {
@@ -2161,6 +2163,13 @@ static void test_reduction_float(void)
         ok(tests[i].expected - 0.001 < val && val < tests[i].expected + 0.001,
            "test %d: expected val == %f, got %f\n", i, tests[i].expected, val);
     }
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        double val = tests[i].v1;
+        p_vcomp_reduction_r8(tests[i].flags, &val, tests[i].v2);
+        ok(tests[i].expected - 0.001 < val && val < tests[i].expected + 0.001,
+           "test %d: expected val == %f, got %f\n", i, tests[i].expected, val);
+    }
 }
 
 START_TEST(vcomp)
@@ -2191,7 +2200,7 @@ START_TEST(vcomp)
     test_reduction_integer16();
     test_reduction_integer32();
     test_reduction_integer64();
-    test_reduction_float();
+    test_reduction_float_double();
 
     release_vcomp();
 }

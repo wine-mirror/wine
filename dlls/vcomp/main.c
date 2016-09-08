@@ -894,6 +894,46 @@ void CDECL _vcomp_atomic_sub_r8(double *dest, double val)
     while (interlocked_cmpxchg64((LONG64 *)dest, new, old) != old);
 }
 
+static void CDECL _vcomp_atomic_bool_and_r8(double *dest, double val)
+{
+    LONG64 old, new;
+    do
+    {
+        old = *(LONG64 *)dest;
+        *(double *)&new = (*(double *)&old != 0.0) ? (val != 0.0) : 0.0;
+    }
+    while (interlocked_cmpxchg64((LONG64 *)dest, new, old) != old);
+}
+
+static void CDECL _vcomp_atomic_bool_or_r8(double *dest, double val)
+{
+    LONG64 old, new;
+    do
+    {
+        old = *(LONG64 *)dest;
+        *(double *)&new = (*(double *)&old != 0.0) ? *(double *)&old : (val != 0.0);
+    }
+    while (interlocked_cmpxchg64((LONG64 *)dest, new, old) != old);
+}
+
+void CDECL _vcomp_reduction_r8(unsigned int flags, double *dest, double val)
+{
+    static void (CDECL * const funcs[])(double *, double) =
+    {
+        _vcomp_atomic_add_r8,
+        _vcomp_atomic_add_r8,
+        _vcomp_atomic_mul_r8,
+        _vcomp_atomic_bool_or_r8,
+        _vcomp_atomic_bool_or_r8,
+        _vcomp_atomic_bool_or_r8,
+        _vcomp_atomic_bool_and_r8,
+        _vcomp_atomic_bool_or_r8,
+    };
+    unsigned int op = (flags >> 8) & 0xf;
+    op = min(op, sizeof(funcs)/sizeof(funcs[0]) - 1);
+    funcs[op](dest, val);
+}
+
 int CDECL omp_get_dynamic(void)
 {
     TRACE("stub\n");
