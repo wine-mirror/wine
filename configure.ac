@@ -75,6 +75,7 @@ AC_ARG_WITH(pthread,   AS_HELP_STRING([--without-pthread],[do not use the pthrea
 AC_ARG_WITH(pulse,     AS_HELP_STRING([--without-pulse],[do not use PulseAudio sound support]))
 AC_ARG_WITH(sane,      AS_HELP_STRING([--without-sane],[do not use SANE (scanner support)]))
 AC_ARG_WITH(tiff,      AS_HELP_STRING([--without-tiff],[do not use TIFF]))
+AC_ARG_WITH(udev,      AS_HELP_STRING([--without-udev],[do not use udev (play and play support)]))
 AC_ARG_WITH(v4l,       AS_HELP_STRING([--without-v4l],[do not use v4l1 (v4l support)]))
 AC_ARG_WITH(xcomposite,AS_HELP_STRING([--without-xcomposite],[do not use the Xcomposite extension]),
             [if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_Xcomposite_h=no; fi])
@@ -1518,6 +1519,19 @@ fi
 WINE_NOTICE_WITH(oss,[test "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes],
                  [OSS sound system found but too old (OSSv4 needed), OSS won't be supported.],
                  [enable_wineoss_drv])
+
+dnl **** Check for libudev ****
+if test "x$with_udev" != "xno"
+then
+    WINE_PACKAGE_FLAGS(UDEV,[libudev],,,,
+        [AC_CHECK_HEADERS(libudev.h,
+            [AC_CHECK_LIB(udev,udev_new,
+                AC_DEFINE(HAVE_UDEV,1,[Define to 1 if you have the `udev' library (-ludev).]),
+                [UDEV_LIBS=""],[$UDEV_LIBS])],
+            [UDEV_LIBS=""])])
+fi
+WINE_NOTICE_WITH(udev,[test "x$UDEV_LIBS" = "x"],
+                 [libudev ${notice_platform}development files not found, plug and play won't be supported.])
 
 dnl **** Check for capi4linux ****
 if test "x$with_capi" != "xno"

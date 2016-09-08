@@ -1,5 +1,7 @@
 MODULE    = winebus.sys
+IMPORTS   = ntoskrnl
 EXTRADLLFLAGS = -Wb,--subsystem,native
 
 C_SRCS = \
+	bus_udev.c \
 	main.c

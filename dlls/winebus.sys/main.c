@@ -20,6 +20,8 @@
 
 #include <stdarg.h>
 
+#define NONAMELESSUNION
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -28,11 +30,43 @@
 #include "ddk/wdm.h"
 #include "wine/debug.h"
 
+#include "bus.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
+
+NTSTATUS WINAPI common_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
+{
+    NTSTATUS status = irp->IoStatus.u.Status;
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
+
+    switch (irpsp->MinorFunction)
+    {
+        case IRP_MN_QUERY_DEVICE_RELATIONS:
+            TRACE("IRP_MN_QUERY_DEVICE_RELATIONS\n");
+            break;
+        case IRP_MN_QUERY_ID:
+            TRACE("IRP_MN_QUERY_ID\n");
+            break;
+        case IRP_MN_QUERY_CAPABILITIES:
+            TRACE("IRP_MN_QUERY_CAPABILITIES\n");
+            break;
+        default:
+            FIXME("Unhandled function %08x\n", irpsp->MinorFunction);
+            break;
+    }
+
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    return status;
+}
 
 NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
+    static const WCHAR udevW[] = {'\\','D','r','i','v','e','r','\\','U','D','E','V',0};
+    static UNICODE_STRING udev = {sizeof(udevW) - sizeof(WCHAR), sizeof(udevW), (WCHAR *)udevW};
+
     TRACE( "(%p, %s)\n", driver, debugstr_w(path->Buffer) );
+
+    IoCreateDriver(&udev, udev_driver_init);
 
     return STATUS_SUCCESS;
 }

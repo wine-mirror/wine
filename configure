@@ -652,6 +652,8 @@ FONTCONFIG_CFLAGS
 CUPS_CFLAGS
 CAPI20_LIBS
 CAPI20_CFLAGS
+UDEV_LIBS
+UDEV_CFLAGS
 OSS4_CFLAGS
 ALSA_LIBS
 GSTREAMER_LIBS
@@ -846,6 +848,7 @@ with_pthread
 with_pulse
 with_sane
 with_tiff
+with_udev
 with_v4l
 with_xcomposite
 with_xcursor
@@ -1590,6 +1593,8 @@ PULSE_CFLAGS
 PULSE_LIBS
 GSTREAMER_CFLAGS
 GSTREAMER_LIBS
+UDEV_CFLAGS
+UDEV_LIBS
 CAPI20_CFLAGS
 CAPI20_LIBS
 FONTCONFIG_CFLAGS
@@ -2275,6 +2280,7 @@ Optional Packages:
   --without-pulse         do not use PulseAudio sound support
   --without-sane          do not use SANE (scanner support)
   --without-tiff          do not use TIFF
+  --without-udev          do not use udev (play and play support)
   --without-v4l           do not use v4l1 (v4l support)
   --without-xcomposite    do not use the Xcomposite extension
   --without-xcursor       do not use the Xcursor extension
@@ -2342,6 +2348,8 @@ Some influential environment variables:
   GSTREAMER_LIBS
               Linker flags for gstreamer-1.0 gstreamer-video-1.0
               gstreamer-audio-1.0, overriding pkg-config
+  UDEV_CFLAGS C compiler flags for libudev, overriding pkg-config
+  UDEV_LIBS   Linker flags for libudev, overriding pkg-config
   CAPI20_CFLAGS
               C compiler flags for capi20, overriding pkg-config
   CAPI20_LIBS Linker flags for capi20, overriding pkg-config
@@ -3543,6 +3551,12 @@ fi
 # Check whether --with-tiff was given.
 if test "${with_tiff+set}" = set; then :
   withval=$with_tiff;
+fi
+
+
+# Check whether --with-udev was given.
+if test "${with_udev+set}" = set; then :
+  withval=$with_udev;
 fi
 
 
@@ -12902,6 +12916,97 @@ esac
 enable_wineoss_drv=${enable_wineoss_drv:-no}
 fi
 
+if test "x$with_udev" != "xno"
+then
+    if ${UDEV_CFLAGS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  UDEV_CFLAGS=`$PKG_CONFIG --cflags libudev 2>/dev/null`
+fi
+fi
+
+if ${UDEV_LIBS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  UDEV_LIBS=`$PKG_CONFIG --libs libudev 2>/dev/null`
+fi
+fi
+
+
+$as_echo "$as_me:${as_lineno-$LINENO}: libudev cflags: $UDEV_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libudev libs: $UDEV_LIBS" >&5
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $UDEV_CFLAGS"
+for ac_header in libudev.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "libudev.h" "ac_cv_header_libudev_h" "$ac_includes_default"
+if test "x$ac_cv_header_libudev_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBUDEV_H 1
+_ACEOF
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking for udev_new in -ludev" >&5
+$as_echo_n "checking for udev_new in -ludev... " >&6; }
+if ${ac_cv_lib_udev_udev_new+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ludev $UDEV_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char udev_new ();
+int
+main ()
+{
+return udev_new ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_udev_udev_new=yes
+else
+  ac_cv_lib_udev_udev_new=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_udev_udev_new" >&5
+$as_echo "$ac_cv_lib_udev_udev_new" >&6; }
+if test "x$ac_cv_lib_udev_udev_new" = xyes; then :
+
+$as_echo "#define HAVE_UDEV 1" >>confdefs.h
+
+else
+  UDEV_LIBS=""
+fi
+
+else
+  UDEV_LIBS=""
+fi
+
+done
+
+CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$UDEV_CFLAGS" || UDEV_CFLAGS=`echo " $UDEV_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$UDEV_LIBS" || UDEV_LIBS=`echo " $UDEV_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
+
+fi
+if test "x$UDEV_LIBS" = "x"; then :
+  case "x$with_udev" in
+  x)   as_fn_append wine_notices "|libudev ${notice_platform}development files not found, plug and play won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "libudev ${notice_platform}development files not found, plug and play won't be supported.
+This is an error since --with-udev was requested." "$LINENO" 5 ;;
+esac
+
+fi
+
 if test "x$with_capi" != "xno"
 then
     if ${CAPI20_CFLAGS:+false} :; then :
@@ -17350,6 +17455,8 @@ GSTREAMER_CFLAGS = $GSTREAMER_CFLAGS
 GSTREAMER_LIBS = $GSTREAMER_LIBS
 ALSA_LIBS = $ALSA_LIBS
 OSS4_CFLAGS = $OSS4_CFLAGS
+UDEV_CFLAGS = $UDEV_CFLAGS
+UDEV_LIBS = $UDEV_LIBS
 CAPI20_CFLAGS = $CAPI20_CFLAGS
 CAPI20_LIBS = $CAPI20_LIBS
 CUPS_CFLAGS = $CUPS_CFLAGS
