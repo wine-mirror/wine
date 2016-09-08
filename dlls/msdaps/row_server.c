@@ -757,19 +757,19 @@ static const IRowVtbl row_vtbl =
 static HRESULT WINAPI row_change_QueryInterface(IRowChange *iface, REFIID iid, void **obj)
 {
     row_proxy *This = impl_from_IRowChange(iface);
-    return IUnknown_QueryInterface((IUnknown *)This, iid, obj);
+    return IRow_QueryInterface(&This->IRow_iface, iid, obj);
 }
 
 static ULONG WINAPI row_change_AddRef(IRowChange *iface)
 {
     row_proxy *This = impl_from_IRowChange(iface);
-    return IUnknown_AddRef((IUnknown*)This);
+    return IRow_AddRef(&This->IRow_iface);
 }
 
 static ULONG WINAPI row_change_Release(IRowChange *iface)
 {
     row_proxy *This = impl_from_IRowChange(iface);
-    return IUnknown_Release((IUnknown*)This);
+    return IRow_Release(&This->IRow_iface);
 }
 
 static HRESULT WINAPI row_change_SetColumns(IRowChange *iface, DBORDINAL cColumns,
@@ -1110,19 +1110,19 @@ static const IRowsetLocateVtbl rowsetlocate_vtbl =
 static HRESULT WINAPI rowsetinfo_QueryInterface(IRowsetInfo *iface, REFIID iid, void **obj)
 {
     rowset_proxy *This = impl_from_IRowsetInfo(iface);
-    return IUnknown_QueryInterface((IUnknown *)This, iid, obj);
+    return IRowsetLocate_QueryInterface(&This->IRowsetLocate_iface, iid, obj);
 }
 
 static ULONG WINAPI rowsetinfo_AddRef(IRowsetInfo *iface)
 {
     rowset_proxy *This = impl_from_IRowsetInfo(iface);
-    return IUnknown_AddRef((IUnknown *)This);
+    return IRowsetLocate_AddRef(&This->IRowsetLocate_iface);
 }
 
 static ULONG WINAPI rowsetinfo_Release(IRowsetInfo *iface)
 {
     rowset_proxy *This = impl_from_IRowsetInfo(iface);
-    return IUnknown_Release((IUnknown *)This);
+    return IRowsetLocate_Release(&This->IRowsetLocate_iface);
 }
 
 static HRESULT WINAPI rowsetinfo_GetProperties(IRowsetInfo *iface, const ULONG cPropertyIDSets,
@@ -1167,19 +1167,19 @@ static const IRowsetInfoVtbl rowsetinfo_vtbl =
 static HRESULT WINAPI accessor_QueryInterface(IAccessor *iface, REFIID iid, void **obj)
 {
     rowset_proxy *This = impl_from_IAccessor(iface);
-    return IUnknown_QueryInterface((IUnknown *)This, iid, obj);
+    return IRowsetLocate_QueryInterface(&This->IRowsetLocate_iface, iid, obj);
 }
 
 static ULONG WINAPI accessor_AddRef(IAccessor *iface)
 {
     rowset_proxy *This = impl_from_IAccessor(iface);
-    return IUnknown_AddRef((IUnknown *)This);
+    return IRowsetLocate_AddRef(&This->IRowsetLocate_iface);
 }
 
 static ULONG WINAPI accessor_Release(IAccessor *iface)
 {
     rowset_proxy *This = impl_from_IAccessor(iface);
-    return IUnknown_Release((IUnknown *)This);
+    return IRowsetLocate_Release(&This->IRowsetLocate_iface);
 }
 
 static HRESULT WINAPI accessor_AddRefAccessor(IAccessor *iface, HACCESSOR hAccessor, DBREFCOUNT *pcRefCount)
