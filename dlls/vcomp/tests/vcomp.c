@@ -107,6 +107,7 @@ static void  (CDECL   *p_vcomp_reduction_i1)(unsigned int flags, char *dest, cha
 static void  (CDECL   *p_vcomp_reduction_i2)(unsigned int flags, short *dest, short val);
 static void  (CDECL   *p_vcomp_reduction_i4)(unsigned int flags, int *dest, int val);
 static void  (CDECL   *p_vcomp_reduction_i8)(unsigned int flags, LONG64 *dest, LONG64 val);
+static void  (CDECL   *p_vcomp_reduction_r4)(unsigned int flags, float *dest, float val);
 static void  (CDECL   *p_vcomp_reduction_u1)(unsigned int flags, unsigned char *dest, unsigned char val);
 static void  (CDECL   *p_vcomp_reduction_u2)(unsigned int flags, unsigned short *dest, unsigned short val);
 static void  (CDECL   *p_vcomp_reduction_u4)(unsigned int flags, unsigned int *dest, unsigned int val);
@@ -356,6 +357,7 @@ static BOOL init_vcomp(void)
     VCOMP_GET_PROC(_vcomp_reduction_i2);
     VCOMP_GET_PROC(_vcomp_reduction_i4);
     VCOMP_GET_PROC(_vcomp_reduction_i8);
+    VCOMP_GET_PROC(_vcomp_reduction_r4);
     VCOMP_GET_PROC(_vcomp_reduction_u1);
     VCOMP_GET_PROC(_vcomp_reduction_u2);
     VCOMP_GET_PROC(_vcomp_reduction_u4);
@@ -2108,6 +2110,59 @@ static void test_reduction_integer64(void)
     }
 }
 
+static void test_reduction_float(void)
+{
+    static const struct
+    {
+        unsigned int flags;
+        float v1, v2, expected;
+    }
+    tests[] =
+    {
+        { 0x000,                            42.0,   17.0, 42.0 + 17.0 },
+        { VCOMP_REDUCTION_FLAGS_ADD,        42.0,   17.0, 42.0 + 17.0 },
+        { VCOMP_REDUCTION_FLAGS_MUL,        42.0,   17.0, 42.0 * 17.0 },
+        { 0x300,                             0.0,    2.0,         1.0 },
+        { 0x400,                             0.0,    2.0,         1.0 },
+        { 0x500,                             0.0,    2.0,         1.0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_AND,   -0.0,    1.0,         0.0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_AND,    0.0,    0.0,         0.0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_AND,    0.0,    2.0,         0.0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_AND,    1.0,   -0.0,         0.0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_AND,    1.0,    0.0,         0.0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_AND,    1.0, 1.0e-5,         1.0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_AND,    1.0,    2.0,         1.0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_AND,    2.0,    0.0,         0.0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_AND,    2.0,    2.0,         1.0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_OR,    -0.0,    0.0,         0.0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_OR,     0.0,   -0.0,         0.0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_OR,     0.0,    0.0,         0.0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_OR,     0.0, 1.0e-5,         1.0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_OR,     0.0,    2.0,         1.0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_OR,     1.0,    0.0,         1.0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_OR,     1.0,    2.0,         1.0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_OR,     2.0,    0.0,         2.0 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_OR,     2.0,    2.0,         2.0 },
+        { 0x800,                             0.0,    2.0,         1.0 },
+        { 0x900,                             0.0,    2.0,         1.0 },
+        { 0xa00,                             0.0,    2.0,         1.0 },
+        { 0xb00,                             0.0,    2.0,         1.0 },
+        { 0xc00,                             0.0,    2.0,         1.0 },
+        { 0xd00,                             0.0,    2.0,         1.0 },
+        { 0xe00,                             0.0,    2.0,         1.0 },
+        { 0xf00,                             0.0,    2.0,         1.0 },
+    };
+    int i;
+
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        float val = tests[i].v1;
+        p_vcomp_reduction_r4(tests[i].flags, &val, tests[i].v2);
+        ok(tests[i].expected - 0.001 < val && val < tests[i].expected + 0.001,
+           "test %d: expected val == %f, got %f\n", i, tests[i].expected, val);
+    }
+}
+
 START_TEST(vcomp)
 {
     if (!init_vcomp())
@@ -2136,6 +2191,7 @@ START_TEST(vcomp)
     test_reduction_integer16();
     test_reduction_integer32();
     test_reduction_integer64();
+    test_reduction_float();
 
     release_vcomp();
 }
