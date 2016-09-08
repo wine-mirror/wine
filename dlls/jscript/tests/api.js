@@ -2147,9 +2147,11 @@ ok(Date.parse("Tue, 22 Mar 2016 09:57:55 +0400") === Date.parse("Tue, 22 Mar 201
         "Date.parse(\"Tue, 22 Mar 2016 09:57:55 +0400\") = " + Date.parse("Tue, 22 Mar 2016 09:57:55 +0400"));
 
 tmp = (new Date()).toLocaleDateString();
-ok(tmp.charCodeAt(tmp.length-1) != 0, "invalid null byte");
+ok(tmp.indexOf(String.fromCharCode(0)) == -1, "invalid null byte");
 tmp = (new Date()).toLocaleTimeString();
-ok(tmp.charCodeAt(tmp.length-1) != 0, "invalid null byte");
+ok(tmp.indexOf(String.fromCharCode(0)) == -1, "invalid null byte");
+tmp = (new Date()).toTimeString();
+ok(tmp.indexOf(String.fromCharCode(0)) == -1, "invalid null byte");
 
 ok(typeof(Math.PI) === "number", "typeof(Math.PI) = " + typeof(Math.PI));
 ok(Math.floor(Math.PI*100) === 314, "Math.PI = " + Math.PI);

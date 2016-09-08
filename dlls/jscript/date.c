@@ -850,6 +850,7 @@ static HRESULT Date_toTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         ':','%','0','2','d',' ','U','T','C',0 };
     DateInstance *date;
     jsstr_t *date_str;
+    WCHAR buf[32];
     DOUBLE time;
     WCHAR sign;
     int offset;
@@ -868,12 +869,6 @@ static HRESULT Date_toTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     time = local_time(date->time, date);
 
     if(r) {
-        WCHAR *ptr;
-
-        date_str = jsstr_alloc_buf(17, &ptr);
-        if(!date_str)
-            return E_OUTOFMEMORY;
-
         offset = date->bias +
             daylight_saving_ta(time, date);
 
@@ -884,12 +879,16 @@ static HRESULT Date_toTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         else sign = '-';
 
         if(offset)
-            sprintfW(ptr, formatW, (int)hour_from_time(time),
+            sprintfW(buf, formatW, (int)hour_from_time(time),
                     (int)min_from_time(time), (int)sec_from_time(time),
                     sign, offset/60, offset%60);
         else
-            sprintfW(ptr, formatUTCW, (int)hour_from_time(time),
+            sprintfW(buf, formatUTCW, (int)hour_from_time(time),
                     (int)min_from_time(time), (int)sec_from_time(time));
+
+        date_str = jsstr_alloc(buf);
+        if(!date_str)
+            return E_OUTOFMEMORY;
 
         *r = jsval_string(date_str);
     }
