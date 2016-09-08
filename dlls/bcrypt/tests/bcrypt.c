@@ -61,11 +61,45 @@ static void test_BCryptGenRandom(void)
 
 static void test_BCryptGetFipsAlgorithmMode(void)
 {
-    NTSTATUS ret;
+    static const WCHAR policyKeyVistaW[] = {
+        'S','y','s','t','e','m','\\',
+        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+        'C','o','n','t','r','o','l','\\',
+        'L','s','a','\\',
+        'F','I','P','S','A','l','g','o','r','i','t','h','m','P','o','l','i','c','y',0};
+    static const WCHAR policyValueVistaW[] = {'E','n','a','b','l','e','d',0};
+    static const WCHAR policyKeyXPW[] = {
+        'S','y','s','t','e','m','\\',
+        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+        'C','o','n','t','r','o','l','\\',
+        'L','s','a',0};
+    static const WCHAR policyValueXPW[] = {
+        'F','I','P','S','A','l','g','o','r','i','t','h','m','P','o','l','i','c','y',0};
+    BOOLEAN expected;
     BOOLEAN enabled;
+    DWORD value, count[2] = {sizeof(value), sizeof(value)};
+    NTSTATUS ret;
+
+    if (!RegGetValueW(HKEY_LOCAL_MACHINE, policyKeyVistaW, policyValueVistaW,
+        RRF_RT_REG_DWORD, NULL, &value, &count[0]))
+    {
+        expected = !!value;
+    }
+    else if (!RegGetValueW(HKEY_LOCAL_MACHINE, policyKeyXPW, policyValueXPW,
+             RRF_RT_REG_DWORD, NULL, &value, &count[1]))
+    {
+        expected = !!value;
+    }
+    else
+    {
+        expected = FALSE;
+todo_wine
+        ok(0, "Neither XP or Vista key is present\n");
+    }
 
     ret = BCryptGetFipsAlgorithmMode(&enabled);
     ok(ret == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got 0x%x\n", ret);
+    ok(enabled == expected, "expected result %d, got %d\n", expected, enabled);
 
     ret = BCryptGetFipsAlgorithmMode(NULL);
     ok(ret == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got 0x%x\n", ret);
