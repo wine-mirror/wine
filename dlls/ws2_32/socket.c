@@ -4701,19 +4701,17 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
                         addr = inet_addr(ptr->IpAddressList.IpAddress.String);
                         mask = inet_addr(ptr->IpAddressList.IpMask.String);
                         bcast = addr | ~mask;
-                        intArray->iiAddress.AddressIn.sin_family = AF_INET;
+                        intArray->iiAddress.AddressIn.sin_family = WS_AF_INET;
                         intArray->iiAddress.AddressIn.sin_port = 0;
-                        intArray->iiAddress.AddressIn.sin_addr.WS_s_addr =
-                         addr;
-                        intArray->iiNetmask.AddressIn.sin_family = AF_INET;
+                        intArray->iiAddress.AddressIn.sin_addr.WS_s_addr = addr;
+
+                        intArray->iiNetmask.AddressIn.sin_family = WS_AF_INET;
                         intArray->iiNetmask.AddressIn.sin_port = 0;
-                        intArray->iiNetmask.AddressIn.sin_addr.WS_s_addr =
-                         mask;
-                        intArray->iiBroadcastAddress.AddressIn.sin_family =
-                         AF_INET;
+                        intArray->iiNetmask.AddressIn.sin_addr.WS_s_addr = mask;
+
+                        intArray->iiBroadcastAddress.AddressIn.sin_family = WS_AF_INET;
                         intArray->iiBroadcastAddress.AddressIn.sin_port = 0;
-                        intArray->iiBroadcastAddress.AddressIn.sin_addr.
-                         WS_s_addr = bcast;
+                        intArray->iiBroadcastAddress.AddressIn.sin_addr.WS_s_addr = bcast;
                         intArray++;
                         numInt++;
                      }
@@ -4797,7 +4795,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
                 sa[i].lpSockaddr = (SOCKADDR *)&sockaddr[i];
                 sa[i].iSockaddrLength = sizeof(SOCKADDR);
 
-                sockaddr[i].sin_family = AF_INET;
+                sockaddr[i].sin_family = WS_AF_INET;
                 sockaddr[i].sin_port = 0;
                 sockaddr[i].sin_addr.WS_s_addr = inet_addr(p->IpAddressList.IpAddress.String);
                 i++;
@@ -4936,7 +4934,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
            SetLastError(WSAEFAULT);
            return SOCKET_ERROR;
        }
-       if (daddr->sa_family != AF_INET)
+       if (daddr->sa_family != WS_AF_INET)
        {
            FIXME("unsupported address family %d\n", daddr->sa_family);
            status = WSAEAFNOSUPPORT;
@@ -4969,7 +4967,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
            status = WSAEFAULT;
            break;
        }
-       saddr_in->sin_family = AF_INET;
+       saddr_in->sin_family = WS_AF_INET;
        saddr_in->sin_addr.S_un.S_addr = ipAddrTable->table[found_index].dwAddr;
        saddr_in->sin_port = 0;
        total = sizeof(struct WS_sockaddr_in);
