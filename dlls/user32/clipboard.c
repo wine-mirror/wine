@@ -738,6 +738,7 @@ UINT WINAPI EnumClipboardFormats(UINT wFormat)
         SetLastError(ERROR_CLIPBOARD_NOT_OPEN);
         return 0;
     }
+    SetLastError( 0 );
     return USER_Driver->pEnumClipboardFormats(wFormat);
 }
 

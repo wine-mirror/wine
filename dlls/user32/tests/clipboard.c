@@ -680,16 +680,30 @@ static void test_synthesized(void)
 
     r = OpenClipboard( NULL );
     ok(r, "gle %d\n", GetLastError());
+    SetLastError( 0xdeadbeef );
     cf = EnumClipboardFormats(0);
     ok( cf == CF_UNICODETEXT, "cf %08x\n", cf );
+    ok( GetLastError() == ERROR_SUCCESS, "wrong error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
     cf = EnumClipboardFormats(cf);
     ok( cf == CF_TEXT, "cf %08x\n", cf );
+    ok( GetLastError() == ERROR_SUCCESS, "wrong error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
     cf = EnumClipboardFormats(cf);
     ok( cf == CF_OEMTEXT, "cf %08x\n", cf );
+    ok( GetLastError() == ERROR_SUCCESS, "wrong error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
     cf = EnumClipboardFormats(cf);
     ok( cf == CF_LOCALE, "cf %08x\n", cf );
+    ok( GetLastError() == ERROR_SUCCESS, "wrong error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
     cf = EnumClipboardFormats( cf );
     ok( cf == 0, "cf %08x\n", cf );
+    ok( GetLastError() == ERROR_SUCCESS, "wrong error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    cf = EnumClipboardFormats( 0xdead );
+    ok( cf == 0, "cf %08x\n", cf );
+    ok( GetLastError() == ERROR_SUCCESS, "wrong error %u\n", GetLastError() );
 
     r = EmptyClipboard();
     ok(r, "gle %d\n", GetLastError());
