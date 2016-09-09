@@ -1465,17 +1465,17 @@ static void test_loadwmf(void)
     expect(Ok, stat);
     if (stat == Ok)
     {
-        todo_wine expect(MetafileTypeWmfPlaceable, header.Type);
+        expect(MetafileTypeWmfPlaceable, header.Type);
         todo_wine expect(sizeof(wmfimage)-sizeof(WmfPlaceableFileHeader), header.Size);
         todo_wine expect(0x300, header.Version);
         expect(0, header.EmfPlusFlags);
-        todo_wine expectf(1440.0, header.DpiX);
-        todo_wine expectf(1440.0, header.DpiY);
+        expectf(1440.0, header.DpiX);
+        expectf(1440.0, header.DpiY);
         expect(0, header.X);
         expect(0, header.Y);
-        todo_wine expect(320, header.Width);
-        todo_wine expect(320, header.Height);
-        todo_wine expect(1, U(header).WmfHeader.mtType);
+        expect(320, header.Width);
+        expect(320, header.Height);
+        expect(1, U(header).WmfHeader.mtType);
         expect(0, header.EmfPlusHeaderSize);
         expect(0, header.LogicalDpiX);
         expect(0, header.LogicalDpiY);
@@ -1523,17 +1523,17 @@ static void test_createfromwmf(void)
     expect(Ok, stat);
     if (stat == Ok)
     {
-        todo_wine expect(MetafileTypeWmfPlaceable, header.Type);
+        expect(MetafileTypeWmfPlaceable, header.Type);
         todo_wine expect(sizeof(wmfimage)-sizeof(WmfPlaceableFileHeader), header.Size);
         todo_wine expect(0x300, header.Version);
         expect(0, header.EmfPlusFlags);
-        todo_wine expectf(1440.0, header.DpiX);
-        todo_wine expectf(1440.0, header.DpiY);
+        expectf(1440.0, header.DpiX);
+        expectf(1440.0, header.DpiY);
         expect(0, header.X);
         expect(0, header.Y);
-        todo_wine expect(320, header.Width);
-        todo_wine expect(320, header.Height);
-        todo_wine expect(1, U(header).WmfHeader.mtType);
+        expect(320, header.Width);
+        expect(320, header.Height);
+        expect(1, U(header).WmfHeader.mtType);
         expect(0, header.EmfPlusHeaderSize);
         expect(0, header.LogicalDpiX);
         expect(0, header.LogicalDpiY);
