@@ -1917,8 +1917,21 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromFile(GDIPCONST WCHAR *file,
 GpStatus WINGDIPAPI GdipCreateMetafileFromStream(IStream *stream,
     GpMetafile **metafile)
 {
-    FIXME("(%p, %p): stub\n", stream, metafile);
-    return NotImplemented;
+    GpStatus stat;
+
+    TRACE("%p %p\n", stream, metafile);
+
+    stat = GdipLoadImageFromStream(stream, (GpImage **)metafile);
+    if (stat != Ok) return stat;
+
+    if ((*metafile)->image.type != ImageTypeMetafile)
+    {
+        GdipDisposeImage(&(*metafile)->image);
+        *metafile = NULL;
+        return GenericError;
+    }
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipSetMetafileDownLevelRasterizationLimit(GpMetafile *metafile,
