@@ -224,6 +224,7 @@ my @dll_groups =
   "shlwapi",
   "api-ms-win-downlevel-shlwapi-l1-1-0",
   "api-ms-win-downlevel-shlwapi-l2-1-0",
+  "api-ms-win-core-registryuserspecific-l1-1-0",
   "api-ms-win-core-shlwapi-legacy-l1-1-0",
   "api-ms-win-core-shlwapi-obsolete-l1-1-0",
   "api-ms-win-core-url-l1-1-0",
