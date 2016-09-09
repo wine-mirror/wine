@@ -2281,7 +2281,7 @@ Optional Packages:
   --without-pulse         do not use PulseAudio sound support
   --without-sane          do not use SANE (scanner support)
   --without-tiff          do not use TIFF
-  --without-udev          do not use udev (play and play support)
+  --without-udev          do not use udev (plug and play support)
   --without-v4l           do not use v4l1 (v4l support)
   --without-xcomposite    do not use the Xcomposite extension
   --without-xcursor       do not use the Xcursor extension
