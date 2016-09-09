@@ -1922,8 +1922,22 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmfFile(GDIPCONST WCHAR *file,
 GpStatus WINGDIPAPI GdipCreateMetafileFromFile(GDIPCONST WCHAR *file,
     GpMetafile **metafile)
 {
-    FIXME("(%p, %p): stub\n", file, metafile);
-    return NotImplemented;
+    GpStatus status;
+    IStream *stream;
+
+    TRACE("(%p, %p)\n", file, metafile);
+
+    if (!file || !metafile) return InvalidParameter;
+
+    *metafile = NULL;
+
+    status = GdipCreateStreamOnFile(file, GENERIC_READ, &stream);
+    if (status == Ok)
+    {
+        status = GdipCreateMetafileFromStream(stream, metafile);
+        IStream_Release(stream);
+    }
+    return status;
 }
 
 GpStatus WINGDIPAPI GdipCreateMetafileFromStream(IStream *stream,
