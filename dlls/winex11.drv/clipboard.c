@@ -569,6 +569,7 @@ static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData)
     switch (lpData->wFormatID)
     {
     case CF_BITMAP:
+    case CF_DSPBITMAP:
     case CF_PALETTE:
         DeleteObject(lpData->hData);
         break;
@@ -577,15 +578,15 @@ static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData)
         GlobalFree(lpData->hData);
         break;
     case CF_METAFILEPICT:
+    case CF_DSPMETAFILEPICT:
         DeleteMetaFile(((METAFILEPICT *)GlobalLock( lpData->hData ))->hMF );
         GlobalFree(lpData->hData);
         break;
     case CF_ENHMETAFILE:
+    case CF_DSPENHMETAFILE:
         DeleteEnhMetaFile(lpData->hData);
         break;
     default:
-        if (lpData->wFormatID >= CF_GDIOBJFIRST && lpData->wFormatID <= CF_GDIOBJLAST) break;
-        if (lpData->wFormatID >= CF_PRIVATEFIRST && lpData->wFormatID <= CF_PRIVATELAST) break;
         GlobalFree(lpData->hData);
         break;
     }
