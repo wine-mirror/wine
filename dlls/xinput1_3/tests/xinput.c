@@ -133,7 +133,8 @@ static void test_get_keystroke(void)
         ZeroMemory(&keystroke, sizeof(XINPUT_KEYSTROKE));
 
         result = pXInputGetKeystroke(controllerNum, XINPUT_FLAG_GAMEPAD, &keystroke);
-        ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputGetKeystroke failed with (%d)\n", result);
+        ok(result == ERROR_EMPTY || result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED,
+           "XInputGetKeystroke failed with (%d)\n", result);
 
         if (ERROR_DEVICE_NOT_CONNECTED == result)
         {
