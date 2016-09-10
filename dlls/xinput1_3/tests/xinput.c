@@ -47,14 +47,14 @@ static void test_set_state(void)
         result = pXInputSetState(controllerNum, &vibrator);
         ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputSetState failed with (%d)\n", result);
 
-        pXInputEnable(0);
+        if (pXInputEnable) pXInputEnable(0);
 
         vibrator.wLeftMotorSpeed = 65535;
         vibrator.wRightMotorSpeed = 65535;
         result = pXInputSetState(controllerNum, &vibrator);
         ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputSetState failed with (%d)\n", result);
 
-        pXInputEnable(1);
+        if (pXInputEnable) pXInputEnable(1);
     }
 
     result = pXInputSetState(XUSER_MAX_COUNT+1, &vibrator);
@@ -218,37 +218,70 @@ static void test_get_batteryinformation(void)
 
 START_TEST(xinput)
 {
+    struct
+    {
+        const char *name;
+        int version;
+    } libs[] = {
+        { "xinput1_1.dll",   1 },
+        { "xinput1_2.dll",   2 },
+        { "xinput1_3.dll",   3 },
+        { "xinput1_4.dll",   4 },
+        { "xinput9_1_0.dll", 0 } /* legacy for XP/Vista */
+    };
     HMODULE hXinput;
     void *pXInputGetStateEx_Ordinal;
-    hXinput = LoadLibraryA( "xinput1_3.dll" );
+    int i;
 
-    if (!hXinput)
+    for (i = 0; i < sizeof(libs) / sizeof(libs[0]); i++)
     {
-        win_skip("Could not load xinput1_3.dll\n");
-        return;
+        hXinput = LoadLibraryA( libs[i].name );
+
+        if (!hXinput)
+        {
+            win_skip("Could not load %s\n", libs[i].name);
+            continue;
+        }
+        trace("Testing %s\n", libs[i].name);
+
+        pXInputEnable = (void*)GetProcAddress(hXinput, "XInputEnable");
+        pXInputSetState = (void*)GetProcAddress(hXinput, "XInputSetState");
+        pXInputGetState = (void*)GetProcAddress(hXinput, "XInputGetState");
+        pXInputGetStateEx = (void*)GetProcAddress(hXinput, "XInputGetStateEx"); /* Win >= 8 */
+        pXInputGetStateEx_Ordinal = (void*)GetProcAddress(hXinput, (LPCSTR) 100);
+        pXInputGetKeystroke = (void*)GetProcAddress(hXinput, "XInputGetKeystroke");
+        pXInputGetCapabilities = (void*)GetProcAddress(hXinput, "XInputGetCapabilities");
+        pXInputGetDSoundAudioDeviceGuids = (void*)GetProcAddress(hXinput, "XInputGetDSoundAudioDeviceGuids");
+        pXInputGetBatteryInformation = (void*)GetProcAddress(hXinput, "XInputGetBatteryInformation");
+
+        /* XInputGetStateEx may not be present by name, use ordinal in this case */
+        if (!pXInputGetStateEx)
+            pXInputGetStateEx = pXInputGetStateEx_Ordinal;
+
+        test_set_state();
+        test_get_state();
+        test_get_capabilities();
+
+        if (libs[i].version != 4)
+            test_get_dsoundaudiodevice();
+        else
+            ok(!pXInputGetDSoundAudioDeviceGuids, "XInputGetDSoundAudioDeviceGuids exists in %s\n", libs[i].name);
+
+        if (libs[i].version > 2)
+        {
+            test_get_keystroke();
+            test_get_batteryinformation();
+            ok(pXInputGetStateEx != NULL, "XInputGetStateEx not found in %s\n", libs[i].name);
+        }
+        else
+        {
+            ok(!pXInputGetKeystroke, "XInputGetKeystroke exists in %s\n", libs[i].name);
+            ok(!pXInputGetStateEx, "XInputGetStateEx exists in %s\n", libs[i].name);
+            ok(!pXInputGetBatteryInformation, "XInputGetBatteryInformation exists in %s\n", libs[i].name);
+            if (libs[i].version == 0)
+                ok(!pXInputEnable, "XInputEnable exists in %s\n", libs[i].name);
+        }
+
+        FreeLibrary(hXinput);
     }
-
-    pXInputEnable = (void*)GetProcAddress(hXinput, "XInputEnable");
-    pXInputSetState = (void*)GetProcAddress(hXinput, "XInputSetState");
-    pXInputGetState = (void*)GetProcAddress(hXinput, "XInputGetState");
-    pXInputGetStateEx = (void*)GetProcAddress(hXinput, "XInputGetStateEx"); /* Win >= 8 */
-    pXInputGetStateEx_Ordinal = (void*)GetProcAddress(hXinput, (LPCSTR) 100);
-    pXInputGetKeystroke = (void*)GetProcAddress(hXinput, "XInputGetKeystroke");
-    pXInputGetCapabilities = (void*)GetProcAddress(hXinput, "XInputGetCapabilities");
-    pXInputGetDSoundAudioDeviceGuids = (void*)GetProcAddress(hXinput, "XInputGetDSoundAudioDeviceGuids");
-    pXInputGetBatteryInformation = (void*)GetProcAddress(hXinput, "XInputGetBatteryInformation");
-
-    /* XInputGetStateEx may not be present by name, use ordinal in this case */
-    if (!pXInputGetStateEx)
-        pXInputGetStateEx = pXInputGetStateEx_Ordinal;
-    ok (pXInputGetStateEx != NULL, "XInputGetStateEx not found in this dll version\n");
-
-    test_set_state();
-    test_get_state();
-    test_get_keystroke();
-    test_get_capabilities();
-    test_get_dsoundaudiodevice();
-    test_get_batteryinformation();
-
-    FreeLibrary(hXinput);
 }
