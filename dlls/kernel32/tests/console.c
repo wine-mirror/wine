@@ -957,7 +957,7 @@ static void testWaitForConsoleInput(HANDLE input_handle)
     ok(ret, "UnregisterWait failed with error %d\n", GetLastError());
 
     /* Clean up */
-    ok(CloseHandle(complete_event), "Failed to close event handle, last error %d\n", GetLastError());
+    CloseHandle(complete_event);
 }
 
 static void test_GetSetConsoleInputExeName(void)
