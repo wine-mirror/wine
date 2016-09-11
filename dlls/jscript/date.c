@@ -494,8 +494,9 @@ static inline HRESULT date_to_string(DOUBLE time, BOOL show_offset, int offset, 
 
     BOOL formatAD = TRUE;
     WCHAR week[64], month[64];
+    WCHAR buf[192];
     jsstr_t *date_jsstr;
-    int len, size, year, day;
+    int year, day;
     DWORD lcid_en;
     WCHAR sign = '-';
 
@@ -506,65 +507,44 @@ static inline HRESULT date_to_string(DOUBLE time, BOOL show_offset, int offset, 
     }
 
     if(r) {
-        WCHAR *date_str;
-
-        len = 21;
-
         lcid_en = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
 
-        size = GetLocaleInfoW(lcid_en, week_ids[(int)week_day(time)], week, sizeof(week)/sizeof(*week));
-        assert(size);
-        len += size-1;
+        week[0] = 0;
+        GetLocaleInfoW(lcid_en, week_ids[(int)week_day(time)], week, sizeof(week)/sizeof(*week));
 
-        size = GetLocaleInfoW(lcid_en, month_ids[(int)month_from_time(time)], month, sizeof(month)/sizeof(*month));
-        len += size-1;
-
-        year = year_from_time(time);
-        if(year<0)
-            year = -year+1;
-        do {
-            year /= 10;
-            len++;
-        } while(year);
+        month[0] = 0;
+        GetLocaleInfoW(lcid_en, month_ids[(int)month_from_time(time)], month, sizeof(month)/sizeof(*month));
 
         year = year_from_time(time);
         if(year<0) {
             formatAD = FALSE;
             year = -year+1;
-            len += 5;
         }
 
         day = date_from_time(time);
-        do {
-            day /= 10;
-            len++;
-        } while(day);
-        day = date_from_time(time);
 
-        if(!show_offset) len -= 9;
-        else if(offset == 0) len -= 5;
-        else if(offset < 0) {
+        if(offset < 0) {
             sign = '+';
             offset = -offset;
         }
 
-        date_jsstr = jsstr_alloc_buf(len, &date_str);
-        if(!date_jsstr)
-            return E_OUTOFMEMORY;
-
         if(!show_offset)
-            sprintfW(date_str, formatNoOffsetW, week, month, day,
+            sprintfW(buf, formatNoOffsetW, week, month, day,
                     (int)hour_from_time(time), (int)min_from_time(time),
                     (int)sec_from_time(time), year, formatAD?ADW:BCW);
         else if(offset)
-            sprintfW(date_str, formatW, week, month, day,
+            sprintfW(buf, formatW, week, month, day,
                     (int)hour_from_time(time), (int)min_from_time(time),
                     (int)sec_from_time(time), sign, offset/60, offset%60,
                     year, formatAD?ADW:BCW);
         else
-            sprintfW(date_str, formatUTCW, week, month, day,
+            sprintfW(buf, formatUTCW, week, month, day,
                     (int)hour_from_time(time), (int)min_from_time(time),
                     (int)sec_from_time(time), year, formatAD?ADW:BCW);
+
+        date_jsstr = jsstr_alloc(buf);
+        if(!date_jsstr)
+            return E_OUTOFMEMORY;
 
         *r = jsval_string(date_jsstr);
     }
