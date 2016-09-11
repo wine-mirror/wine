@@ -238,7 +238,8 @@ static HRESULT Array_concat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
     return S_OK;
 }
 
-static HRESULT array_join(script_ctx_t *ctx, jsdisp_t *array, DWORD length, const WCHAR *sep, jsval_t *r)
+static HRESULT array_join(script_ctx_t *ctx, jsdisp_t *array, DWORD length, const WCHAR *sep,
+        unsigned seplen, jsval_t *r)
 {
     jsstr_t **str_tab, *ret = NULL;
     jsval_t val;
@@ -272,9 +273,7 @@ static HRESULT array_join(script_ctx_t *ctx, jsdisp_t *array, DWORD length, cons
     }
 
     if(SUCCEEDED(hres)) {
-        DWORD seplen = 0, len = 0;
-
-        seplen = strlenW(sep);
+        DWORD len = 0;
 
         if(str_tab[0])
             len = jsstr_length(str_tab[0]);
@@ -350,11 +349,11 @@ static HRESULT Array_join(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
         if(FAILED(hres))
             return hres;
 
-        hres = array_join(ctx, jsthis, length, sep, r);
+        hres = array_join(ctx, jsthis, length, sep, jsstr_length(sep_str), r);
 
         jsstr_release(sep_str);
     }else {
-        hres = array_join(ctx, jsthis, length, default_separatorW, r);
+        hres = array_join(ctx, jsthis, length, default_separatorW, strlenW(default_separatorW), r);
     }
 
     return hres;
@@ -935,7 +934,8 @@ static HRESULT Array_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     if(!array)
         return throw_type_error(ctx, JS_E_ARRAY_EXPECTED, NULL);
 
-    return array_join(ctx, &array->dispex, array->length, default_separatorW, r);
+    return array_join(ctx, &array->dispex, array->length, default_separatorW,
+                      strlenW(default_separatorW), r);
 }
 
 static HRESULT Array_toLocaleString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv,
@@ -1011,7 +1011,8 @@ static HRESULT Array_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 
     TRACE("\n");
 
-    return array_join(ctx, &array->dispex, array->length, default_separatorW, r);
+    return array_join(ctx, &array->dispex, array->length, default_separatorW,
+                      strlenW(default_separatorW), r);
 }
 
 static void Array_destructor(jsdisp_t *dispex)

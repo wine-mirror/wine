@@ -933,6 +933,11 @@ ok(tmp === "1,2,,false,,,a", "arr.toString() = " + tmp);
 tmp = arr.toString("test");
 ok(tmp === "1,2,,false,,,a", "arr.toString() = " + tmp);
 
+arr = ["a", "b"];
+
+tmp = arr.join(String.fromCharCode(0));
+ok(tmp === "a" + String.fromCharCode(0) + "b", "arr.join(String.fromCharCode(0)) = " + tmp);
+
 arr = new Object();
 arr.length = 3;
 arr[0] = "aa";
