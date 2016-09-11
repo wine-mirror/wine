@@ -769,9 +769,10 @@ static HRESULT dateobj_to_date_string(DateInstance *date, jsval_t *r)
 
     BOOL formatAD = TRUE;
     WCHAR week[64], month[64];
+    WCHAR buf[192];
     jsstr_t *date_str;
     DOUBLE time;
-    int len, size, year, day;
+    int year, day;
     DWORD lcid_en;
 
     if(isnan(date->time)) {
@@ -783,46 +784,27 @@ static HRESULT dateobj_to_date_string(DateInstance *date, jsval_t *r)
     time = local_time(date->time, date);
 
     if(r) {
-        WCHAR *ptr;
-
-        len = 5;
-
         lcid_en = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
 
-        size = GetLocaleInfoW(lcid_en, week_ids[(int)week_day(time)], week, sizeof(week)/sizeof(*week));
-        assert(size);
-        len += size-1;
+        week[0] = 0;
+        GetLocaleInfoW(lcid_en, week_ids[(int)week_day(time)], week, sizeof(week)/sizeof(*week));
 
-        size = GetLocaleInfoW(lcid_en, month_ids[(int)month_from_time(time)], month, sizeof(month)/sizeof(*month));
-        assert(size);
-        len += size-1;
-
-        year = year_from_time(time);
-        if(year<0)
-            year = -year+1;
-        do {
-            year /= 10;
-            len++;
-        } while(year);
+        month[0] = 0;
+        GetLocaleInfoW(lcid_en, month_ids[(int)month_from_time(time)], month, sizeof(month)/sizeof(*month));
 
         year = year_from_time(time);
         if(year<0) {
             formatAD = FALSE;
             year = -year+1;
-            len += 5;
         }
 
         day = date_from_time(time);
-        do {
-            day /= 10;
-            len++;
-        } while(day);
-        day = date_from_time(time);
 
-        date_str = jsstr_alloc_buf(len, &ptr);
+        sprintfW(buf, formatAD ? formatADW : formatBCW, week, month, day, year);
+
+        date_str = jsstr_alloc(buf);
         if(!date_str)
             return E_OUTOFMEMORY;
-        sprintfW(ptr, formatAD?formatADW:formatBCW, week, month, day, year);
 
         *r = jsval_string(date_str);
     }

@@ -2153,6 +2153,8 @@ ok(Date.parse("Tue, 22 Mar 2016 09:57:55 +0400") === Date.parse("Tue, 22 Mar 201
 
 tmp = (new Date()).toLocaleDateString();
 ok(tmp.indexOf(String.fromCharCode(0)) == -1, "invalid null byte");
+tmp = (new Date(1600, 1, 1, 0, 0, 0, 0)).toLocaleDateString();
+ok(tmp.indexOf(String.fromCharCode(0)) == -1, "invalid null byte");
 tmp = (new Date()).toLocaleTimeString();
 ok(tmp.indexOf(String.fromCharCode(0)) == -1, "invalid null byte");
 tmp = (new Date()).toTimeString();
