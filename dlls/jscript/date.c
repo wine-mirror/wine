@@ -654,9 +654,10 @@ static inline HRESULT create_utc_string(script_ctx_t *ctx, vdisp_t *jsthis, jsva
 
     BOOL formatAD = TRUE;
     WCHAR week[64], month[64];
+    WCHAR buf[192];
     DateInstance *date;
     jsstr_t *date_str;
-    int len, size, year, day;
+    int year, day;
     DWORD lcid_en;
 
     if(!(date = date_this(jsthis)))
@@ -669,47 +670,29 @@ static inline HRESULT create_utc_string(script_ctx_t *ctx, vdisp_t *jsthis, jsva
     }
 
     if(r) {
-        WCHAR *ptr;
-
-        len = 17;
-
         lcid_en = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
 
-        size = GetLocaleInfoW(lcid_en, week_ids[(int)week_day(date->time)], week, sizeof(week)/sizeof(*week));
-        len += size-1;
+        week[0] = 0;
+        GetLocaleInfoW(lcid_en, week_ids[(int)week_day(date->time)], week, sizeof(week)/sizeof(*week));
 
-        size = GetLocaleInfoW(lcid_en, month_ids[(int)month_from_time(date->time)], month, sizeof(month)/sizeof(*month));
-        len += size-1;
-
-        year = year_from_time(date->time);
-        if(year<0)
-            year = -year+1;
-        do {
-            year /= 10;
-            len++;
-        } while(year);
+        month[0] = 0;
+        GetLocaleInfoW(lcid_en, month_ids[(int)month_from_time(date->time)], month, sizeof(month)/sizeof(*month));
 
         year = year_from_time(date->time);
         if(year<0) {
             formatAD = FALSE;
             year = -year+1;
-            len += 5;
         }
 
         day = date_from_time(date->time);
-        do {
-            day /= 10;
-            len++;
-        } while(day);
-        day = date_from_time(date->time);
 
-        date_str = jsstr_alloc_buf(len, &ptr);
-        if(!date_str)
-            return E_OUTOFMEMORY;
-
-        sprintfW(ptr, formatAD?formatADW:formatBCW, week, day, month, year,
+        sprintfW(buf, formatAD ? formatADW : formatBCW, week, day, month, year,
                 (int)hour_from_time(date->time), (int)min_from_time(date->time),
                 (int)sec_from_time(date->time));
+
+        date_str = jsstr_alloc(buf);
+        if(!date_str)
+            return E_OUTOFMEMORY;
 
         *r = jsval_string(date_str);
     }
