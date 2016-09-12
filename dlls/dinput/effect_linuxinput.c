@@ -585,9 +585,12 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
             env->fade_length = 0;
             env->fade_level = 0;
         }
-        else if(peff->lpEnvelope->dwAttackTime || peff->lpEnvelope->dwAttackLevel ||
-                peff->lpEnvelope->dwFadeTime || peff->lpEnvelope->dwFadeLevel)
-            WARN("Ignoring dinput envelope not supported in the linux effect\n");
+        else if(peff->lpEnvelope)
+        {
+            if(peff->lpEnvelope->dwAttackTime || peff->lpEnvelope->dwAttackLevel ||
+               peff->lpEnvelope->dwFadeTime || peff->lpEnvelope->dwFadeLevel)
+                WARN("Ignoring dinput envelope not supported in the linux effect\n");
+        }
     }
 
     /* Gain and Sample Period settings are not supported by the linux
