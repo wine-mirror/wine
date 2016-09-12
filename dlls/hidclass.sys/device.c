@@ -77,7 +77,7 @@ NTSTATUS HID_CreateDevice(DEVICE_OBJECT *native_device, HID_MINIDRIVER_REGISTRAT
 
     IoAttachDeviceToDeviceStack(*device, native_device);
 
-    return S_OK;
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
@@ -118,7 +118,7 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
     if (!devinfo)
     {
         FIXME( "failed to get ClassDevs %x\n", GetLastError());
-        return GetLastError();
+        return STATUS_UNSUCCESSFUL;
     }
     Data.cbSize = sizeof(Data);
     if (!SetupDiCreateDeviceInfoW(devinfo, ext->instance_id, &GUID_DEVCLASS_HIDCLASS, NULL, NULL, DICD_INHERIT_CLASSDRVS, &Data))
@@ -126,24 +126,28 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
         if (GetLastError() == ERROR_DEVINST_ALREADY_EXISTS)
         {
             SetupDiDestroyDeviceInfoList(devinfo);
-            return ERROR_SUCCESS;
+            return STATUS_SUCCESS;
         }
         FIXME( "failed to Create Device Info %x\n", GetLastError());
-        return GetLastError();
+        goto error;
     }
     if (!SetupDiRegisterDeviceInfo( devinfo, &Data, 0, NULL, NULL, NULL ))
     {
         FIXME( "failed to Register Device Info %x\n", GetLastError());
-        return GetLastError();
+        goto error;
     }
     if (!SetupDiCreateDeviceInterfaceW( devinfo, &Data,  &hidGuid, NULL, 0, NULL))
     {
         FIXME( "failed to Create Device Interface %x\n", GetLastError());
-        return GetLastError();
+        goto error;
     }
-    SetupDiDestroyDeviceInfoList(devinfo);
 
-    return S_OK;
+    SetupDiDestroyDeviceInfoList(devinfo);
+    return STATUS_SUCCESS;
+
+error:
+    SetupDiDestroyDeviceInfoList(devinfo);
+    return STATUS_UNSUCCESSFUL;
 }
 
 void HID_DeleteDevice(HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT *device)
