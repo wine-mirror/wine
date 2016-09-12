@@ -953,6 +953,7 @@ enable_api_ms_win_core_toolhelp_l1_1_0
 enable_api_ms_win_core_url_l1_1_0
 enable_api_ms_win_core_util_l1_1_0
 enable_api_ms_win_core_version_l1_1_0
+enable_api_ms_win_core_versionansi_l1_1_0
 enable_api_ms_win_core_winrt_error_l1_1_0
 enable_api_ms_win_core_winrt_error_l1_1_1
 enable_api_ms_win_core_winrt_l1_1_0
@@ -17609,6 +17610,7 @@ wine_fn_config_dll api-ms-win-core-toolhelp-l1-1-0 enable_api_ms_win_core_toolhe
 wine_fn_config_dll api-ms-win-core-url-l1-1-0 enable_api_ms_win_core_url_l1_1_0
 wine_fn_config_dll api-ms-win-core-util-l1-1-0 enable_api_ms_win_core_util_l1_1_0
 wine_fn_config_dll api-ms-win-core-version-l1-1-0 enable_api_ms_win_core_version_l1_1_0
+wine_fn_config_dll api-ms-win-core-versionansi-l1-1-0 enable_api_ms_win_core_versionansi_l1_1_0
 wine_fn_config_dll api-ms-win-core-winrt-error-l1-1-0 enable_api_ms_win_core_winrt_error_l1_1_0
 wine_fn_config_dll api-ms-win-core-winrt-error-l1-1-1 enable_api_ms_win_core_winrt_error_l1_1_1
 wine_fn_config_dll api-ms-win-core-winrt-l1-1-0 enable_api_ms_win_core_winrt_l1_1_0
