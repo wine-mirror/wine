@@ -451,7 +451,6 @@ static void testCreateDeviceInfo(void)
         DWORD i;
         static GUID deadbeef =
          {0xdeadbeef, 0xdead, 0xbeef, {0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef}};
-        LONG res;
         HKEY key;
         static const WCHAR bogus0000[] = {'S','y','s','t','e','m','\\',
          'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
@@ -459,8 +458,13 @@ static void testCreateDeviceInfo(void)
          'L','E','G','A','C','Y','_','B','O','G','U','S','\\','0','0','0','0',0};
 
         /* So we know we have a clean start */
-        res = RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus0000, &key);
-        ok(res != ERROR_SUCCESS, "Expected key to not exist\n");
+        if (!RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus0000, &key))
+        {
+            trace("Expected LEGACY_BOGUS\\0000 key to not exist, will be removed now\n");
+            change_reg_permissions(bogus0000);
+            ok(!RegDeleteKeyW(HKEY_LOCAL_MACHINE, bogus0000), "Could not delete LEGACY_BOGUS\\0000 key\n");
+        }
+
         /* No GUID given */
         SetLastError(0xdeadbeef);
         ret = pSetupDiCreateDeviceInfoA(set, "Root\\LEGACY_BOGUS\\0000", NULL,
