@@ -667,7 +667,7 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
         if (!pDSoundRender->blocked || FAILED(hr))
         {
-            IUnknown_Release((IUnknown *)pDSoundRender);
+            IBaseFilter_Release(&pDSoundRender->renderer.filter.IBaseFilter_iface);
             return HRESULT_FROM_WIN32(GetLastError());
         }
 
@@ -1281,17 +1281,17 @@ static const IAMDirectSoundVtbl IAMDirectSound_Vtbl =
 
 static HRESULT WINAPI AMFilterMiscFlags_QueryInterface(IAMFilterMiscFlags *iface, REFIID riid, void **ppv) {
     DSoundRenderImpl *This = impl_from_IAMFilterMiscFlags(iface);
-    return IUnknown_QueryInterface((IUnknown*)This, riid, ppv);
+    return IBaseFilter_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
 }
 
 static ULONG WINAPI AMFilterMiscFlags_AddRef(IAMFilterMiscFlags *iface) {
     DSoundRenderImpl *This = impl_from_IAMFilterMiscFlags(iface);
-    return IUnknown_AddRef((IUnknown*)This);
+    return IBaseFilter_AddRef(&This->renderer.filter.IBaseFilter_iface);
 }
 
 static ULONG WINAPI AMFilterMiscFlags_Release(IAMFilterMiscFlags *iface) {
     DSoundRenderImpl *This = impl_from_IAMFilterMiscFlags(iface);
-    return IUnknown_Release((IUnknown*)This);
+    return IBaseFilter_Release(&This->renderer.filter.IBaseFilter_iface);
 }
 
 static ULONG WINAPI AMFilterMiscFlags_GetMiscFlags(IAMFilterMiscFlags *iface) {
