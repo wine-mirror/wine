@@ -2483,7 +2483,7 @@ void add_function_decl(struct wine_rb_tree *funcs, char *name, struct hlsl_ir_fu
                 d3dcompiler_free(name);
                 return;
             }
-            wine_rb_remove(&func->overloads, decl->parameters);
+            wine_rb_remove(&func->overloads, old_entry);
             free_function_decl(old_decl);
         }
         wine_rb_put(&func->overloads, decl->parameters, &decl->entry);

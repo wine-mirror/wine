@@ -350,7 +350,7 @@ static NTSTATUS unload_driver( struct wine_rb_entry *entry, BOOL destroy )
         return STATUS_SUCCESS;
     }
 
-    wine_rb_remove( &wine_drivers, driver->name );
+    wine_rb_remove( &wine_drivers, &driver->entry );
 
     memset( &environment, 0, sizeof(environment) );
     environment.Version = 1;
@@ -405,7 +405,7 @@ static void WINAPI async_create_driver( PTP_CALLBACK_INSTANCE instance, void *co
 
 error:
     EnterCriticalSection( &drivers_cs );
-    wine_rb_remove( &wine_drivers, driver->name );
+    wine_rb_remove( &wine_drivers, &driver->entry );
     LeaveCriticalSection( &drivers_cs );
 
     set_service_status( driver->handle, SERVICE_STOPPED, 0 );

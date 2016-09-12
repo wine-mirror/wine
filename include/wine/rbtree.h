@@ -226,12 +226,10 @@ static inline int wine_rb_put(struct wine_rb_tree *tree, const void *key, struct
     return 0;
 }
 
-static inline void wine_rb_remove(struct wine_rb_tree *tree, const void *key)
+static inline void wine_rb_remove(struct wine_rb_tree *tree, struct wine_rb_entry *entry)
 {
-    struct wine_rb_entry *entry, *iter, *child, *parent, *w;
+    struct wine_rb_entry *iter, *child, *parent, *w;
     int need_fixup;
-
-    if (!(entry = wine_rb_get(tree, key))) return;
 
     if (entry->right && entry->left)
         for(iter = entry->right; iter->left; iter = iter->left);
@@ -335,6 +333,12 @@ static inline void wine_rb_remove(struct wine_rb_tree *tree, const void *key)
     }
 
     if (tree->root) tree->root->flags &= ~WINE_RB_FLAG_RED;
+}
+
+static inline void wine_rb_remove_key(struct wine_rb_tree *tree, const void *key)
+{
+    struct wine_rb_entry *entry = wine_rb_get(tree, key);
+    if (entry) wine_rb_remove(tree, entry);
 }
 
 #endif  /* __WINE_WINE_RBTREE_H */

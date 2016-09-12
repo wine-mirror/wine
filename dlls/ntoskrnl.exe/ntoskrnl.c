@@ -933,7 +933,7 @@ void WINAPI IoDeleteDriver( DRIVER_OBJECT *driver_object )
     TRACE( "(%p)\n", driver_object );
 
     EnterCriticalSection( &drivers_cs );
-    wine_rb_remove( &wine_drivers, &driver_object->DriverName );
+    wine_rb_remove_key( &wine_drivers, &driver_object->DriverName );
     LeaveCriticalSection( &drivers_cs );
 
     RtlFreeUnicodeString( &driver_object->DriverName );
