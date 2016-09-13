@@ -538,7 +538,7 @@ void WINAPI RegisterSystemThread(DWORD flags, DWORD reserved)
 /***********************************************************************
  *           RegisterShellHookWindow			[USER32.@]
  */
-BOOL WINAPI RegisterShellHookWindow ( HWND hWnd )
+BOOL WINAPI RegisterShellHookWindow(HWND hWnd)
 {
     FIXME("(%p): stub\n", hWnd);
     return FALSE;
@@ -548,11 +548,10 @@ BOOL WINAPI RegisterShellHookWindow ( HWND hWnd )
 /***********************************************************************
  *           DeregisterShellHookWindow			[USER32.@]
  */
-HRESULT WINAPI DeregisterShellHookWindow ( DWORD u )
+BOOL WINAPI DeregisterShellHookWindow(HWND hWnd)
 {
-    FIXME("0x%08x stub\n",u);
-    return 0;
-
+    FIXME("(%p): stub\n", hWnd);
+    return FALSE;
 }
 
 
