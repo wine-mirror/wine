@@ -1564,13 +1564,6 @@ static HRESULT write_type_xml_string( struct writer *writer, WS_TYPE_MAPPING map
     return write_type_text( writer, mapping, &utf8.text );
 }
 
-static inline BOOL is_nil_value( const char *value, ULONG size )
-{
-    ULONG i;
-    for (i = 0; i < size; i++) if (value[i]) return FALSE;
-    return TRUE;
-}
-
 static HRESULT write_add_nil_attribute( struct writer *writer )
 {
     static const WS_XML_STRING prefix = {1, (BYTE *)"a"};

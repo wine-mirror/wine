@@ -105,6 +105,13 @@ void free_channel( struct channel * ) DECLSPEC_HIDDEN;
 HRESULT open_channel( struct channel *, const WS_ENDPOINT_ADDRESS * ) DECLSPEC_HIDDEN;
 HRESULT close_channel( struct channel * ) DECLSPEC_HIDDEN;
 
+static inline BOOL is_nil_value( const char *value, ULONG size )
+{
+    ULONG i;
+    for (i = 0; i < size; i++) if (value[i]) return FALSE;
+    return TRUE;
+}
+
 static inline void *heap_alloc( SIZE_T size )
 {
     return HeapAlloc( GetProcessHeap(), 0, size );
