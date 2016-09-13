@@ -5378,7 +5378,20 @@ int WINAPI WSAPoll(WSAPOLLFD *wfds, ULONG count, int timeout)
         if (ufds[i].fd != -1)
         {
             release_sock_fd(wfds[i].fd, ufds[i].fd);
-            wfds[i].revents = convert_poll_u2w(ufds[i].revents);
+            if (ufds[i].revents & POLLHUP)
+            {
+                /* Check if the socket still exists */
+                int fd = get_sock_fd(wfds[i].fd, 0, NULL);
+                if (fd != -1)
+                {
+                    wfds[i].revents = WS_POLLHUP;
+                    release_sock_fd(wfds[i].fd, fd);
+                }
+                else
+                    wfds[i].revents = WS_POLLNVAL;
+            }
+            else
+                wfds[i].revents = convert_poll_u2w(ufds[i].revents);
         }
         else
             wfds[i].revents = WS_POLLNVAL;
