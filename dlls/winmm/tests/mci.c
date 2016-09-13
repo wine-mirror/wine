@@ -1116,6 +1116,8 @@ static void test_asyncWAVE(HWND hwnd)
     trace("position after resume: %sms\n",buf);
     test_notification(hwnd,"play (aborted by pause/resume/pause)",0);
 
+    /* A small Sleep() here prevents the notification test failing with MCI_NOTIFY_SUCCESSFUL */
+    Sleep(10);
     err = mciSendStringA("close mysound wait", NULL, 0, NULL);
     ok(!err,"mci close wait returned %s\n", dbg_mcierr(err));
     test_notification(hwnd,"play (aborted by close)",MCI_NOTIFY_ABORTED);
