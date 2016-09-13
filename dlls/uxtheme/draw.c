@@ -1626,7 +1626,7 @@ HRESULT WINAPI DrawThemeIcon(HTHEME hTheme, HDC hdc, int iPartId, int iStateId,
     FIXME("%d %d: stub\n", iPartId, iStateId);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    return E_NOTIMPL;
 }
 
 /***********************************************************************

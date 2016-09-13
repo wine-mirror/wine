@@ -762,7 +762,7 @@ HRESULT WINAPI HitTestThemeBackground(HTHEME hTheme, HDC hdc, int iPartId,
     FIXME("%d %d 0x%08x: stub\n", iPartId, iStateId, dwOptions);
     if(!hTheme)
         return E_HANDLE;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    return E_NOTIMPL;
 }
 
 /***********************************************************************
@@ -1188,7 +1188,7 @@ HRESULT WINAPI ParseThemeIniFile(LPCWSTR pszIniFileName, LPWSTR pszUnknown,
                                  ParseThemeIniFileProc callback, LPVOID lpData)
 {
     FIXME("%s %s: stub\n", debugstr_w(pszIniFileName), debugstr_w(pszUnknown));
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    return E_NOTIMPL;
 }
 
 /**********************************************************************
