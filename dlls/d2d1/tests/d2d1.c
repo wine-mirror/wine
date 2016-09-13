@@ -2661,8 +2661,10 @@ static void test_dc_target(void)
     ID2D1SolidColorBrush *brush;
     ID2D1DCRenderTarget *rt;
     ID2D1Factory *factory;
+    ID3D10Device1 *device;
     FLOAT dpi_x, dpi_y;
     D2D1_COLOR_F color;
+    D2D1_SIZE_U sizeu;
     D2D1_SIZE_F size;
     D2D1_TAG t1, t2;
     unsigned int i;
@@ -2671,6 +2673,13 @@ static void test_dc_target(void)
     COLORREF clr;
     HRESULT hr;
     RECT rect;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+    ID3D10Device1_Release(device);
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
@@ -2685,7 +2694,6 @@ static void test_dc_target(void)
         desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
 
         hr = ID2D1Factory_CreateDCRenderTarget(factory, &desc, &rt);
-    todo_wine
         ok(hr == D2DERR_UNSUPPORTED_PIXEL_FORMAT, "Got unexpected hr %#x.\n", hr);
     }
 
@@ -2697,13 +2705,15 @@ static void test_dc_target(void)
     desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
     desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
     hr = ID2D1Factory_CreateDCRenderTarget(factory, &desc, &rt);
-todo_wine
     ok(SUCCEEDED(hr), "Failed to create target, hr %#x.\n", hr);
-if (SUCCEEDED(hr))
-{
+
     size = ID2D1DCRenderTarget_GetSize(rt);
     ok(size.width == 0.0f, "got width %.08e.\n", size.width);
     ok(size.height == 0.0f, "got height %.08e.\n", size.height);
+
+    sizeu = ID2D1DCRenderTarget_GetPixelSize(rt);
+    ok(sizeu.width == 0, "got width %u.\n", sizeu.width);
+    ok(sizeu.height == 0, "got height %u.\n", sizeu.height);
 
     /* object creation methods work without BindDC() */
     set_color(&color, 0.0f, 0.0f, 0.0f, 0.0f);
@@ -2818,7 +2828,6 @@ if (SUCCEEDED(hr))
     DeleteDC(hdc);
     DeleteDC(hdc2);
     ID2D1DCRenderTarget_Release(rt);
-}
     ID2D1Factory_Release(factory);
 }
 

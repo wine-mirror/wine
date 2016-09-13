@@ -1,11 +1,12 @@
 MODULE    = d2d1.dll
 IMPORTLIB = d2d1
-IMPORTS   = d3d10_1 dxguid uuid
+IMPORTS   = d3d10_1 dxguid uuid gdi32
 DELAYIMPORTS = dwrite
 
 C_SRCS = \
 	bitmap.c \
 	brush.c \
+	dc_render_target.c \
 	factory.c \
 	geometry.c \
 	mesh.c \

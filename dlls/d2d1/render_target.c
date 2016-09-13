@@ -2180,3 +2180,39 @@ err:
     ID2D1Factory_Release(render_target->factory);
     return hr;
 }
+
+HRESULT d2d_d3d_render_target_update_surface(ID2D1RenderTarget *iface, IDXGISurface1 *surface)
+{
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+    DXGI_SURFACE_DESC surface_desc;
+    ID3D10RenderTargetView *view;
+    ID3D10Resource *resource;
+    HRESULT hr;
+
+    if (FAILED(hr = IDXGISurface1_GetDesc(surface, &surface_desc)))
+    {
+        WARN("Failed to get surface desc, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = IDXGISurface1_QueryInterface(surface, &IID_ID3D10Resource, (void **)&resource)))
+    {
+        WARN("Failed to get ID3D10Resource interface, hr %#x.\n", hr);
+        return hr;
+    }
+
+    hr = ID3D10Device_CreateRenderTargetView(render_target->device, resource, NULL, &view);
+    ID3D10Resource_Release(resource);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create rendertarget view, hr %#x.\n", hr);
+        return hr;
+    }
+
+    render_target->pixel_size.width = surface_desc.Width;
+    render_target->pixel_size.height = surface_desc.Height;
+    ID3D10RenderTargetView_Release(render_target->view);
+    render_target->view = view;
+
+    return S_OK;
+}
