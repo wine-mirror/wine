@@ -234,7 +234,7 @@ static void initialize_disabled_joysticks_list(HWND hwnd)
     static const WCHAR disabled_str[] = {'d','i','s','a','b','l','e','d','\0'};
     HKEY hkey, appkey;
     DWORD values = 0;
-    HRESULT hr;
+    LSTATUS status;
     DWORD i;
 
     SendDlgItemMessageW(hwnd, IDC_DISABLEDLIST, LB_RESETCONTENT, 0, 0);
@@ -248,9 +248,9 @@ static void initialize_disabled_joysticks_list(HWND hwnd)
         DWORD name_len = MAX_PATH, data_len = MAX_PATH;
         WCHAR buf_name[MAX_PATH + 9], buf_data[MAX_PATH];
 
-        hr = RegEnumValueW(hkey, i, buf_name, &name_len, NULL, NULL, (BYTE*) buf_data, &data_len);
+        status = RegEnumValueW(hkey, i, buf_name, &name_len, NULL, NULL, (BYTE*) buf_data, &data_len);
 
-        if (SUCCEEDED(hr) && !lstrcmpW(disabled_str, buf_data))
+        if (status == ERROR_SUCCESS && !lstrcmpW(disabled_str, buf_data))
             SendDlgItemMessageW(hwnd, IDC_DISABLEDLIST, LB_ADDSTRING, 0, (LPARAM) buf_name);
     }
 
