@@ -2831,6 +2831,11 @@ static void test_repeating_element(void)
         struct service3 *service;
         ULONG            service_count;
     } *test3;
+    struct services4
+    {
+        struct service **service;
+        ULONG            service_count;
+    } *test4;
 
     hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -2880,8 +2885,24 @@ static void test_repeating_element(void)
     ok( test->service[0].id == 1, "got %u\n", test->service[0].id );
     ok( test->service[1].id == 2, "got %u\n", test->service[1].id );
 
+    /* array of pointers */
+    prepare_struct_type_test( reader, data12 );
+    f.options = WS_FIELD_POINTER;
+    test4 = NULL;
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test4, sizeof(test4), NULL );
+    ok( hr == S_OK || broken(hr == E_INVALIDARG) /* win7 */, "got %08x\n", hr );
+    if (test4)
+    {
+        ok( test4->service != NULL, "service not set\n" );
+        ok( test4->service_count == 2, "got %u\n", test4->service_count );
+        ok( test4->service[0]->id == 1, "got %u\n", test4->service[0]->id );
+        ok( test4->service[1]->id == 2, "got %u\n", test4->service[1]->id );
+    }
+
     /* item range */
     prepare_struct_type_test( reader, data13 );
+    f.options = 0;
     range.minItemCount = 0;
     range.maxItemCount = 1;
     f.itemRange = &range;
