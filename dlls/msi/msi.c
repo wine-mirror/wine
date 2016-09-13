@@ -2543,7 +2543,7 @@ HRESULT WINAPI MsiGetFileSignatureInformationA( LPCSTR path, DWORD flags, PCCERT
 
     TRACE("%s %08x %p %p %p\n", debugstr_a(path), flags, cert, hash, hashlen);
 
-    if (path && !(pathW = strdupAtoW( path ))) return ERROR_OUTOFMEMORY;
+    if (path && !(pathW = strdupAtoW( path ))) return E_OUTOFMEMORY;
     r = MsiGetFileSignatureInformationW( pathW, flags, cert, hash, hashlen );
     msi_free( pathW );
     return r;
