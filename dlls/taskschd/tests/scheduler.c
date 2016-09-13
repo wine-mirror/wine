@@ -217,7 +217,6 @@ todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#x\n", hr);
 
     hr = ITaskFolder_CreateFolder(folder, Wine_Folder1_, v_null, &subfolder);
-todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), "expected ERROR_INVALID_NAME, got %#x\n", hr);
 
     hr = ITaskFolder_CreateFolder(folder, Wine, v_null, &subfolder);
@@ -297,7 +296,6 @@ todo_wine
     SysFreeString(bstr);
 
     hr = ITaskFolder_GetFolder(subfolder, bslash, &subfolder2);
-todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), "expected ERROR_INVALID_NAME, got %#x\n", hr);
 
     hr = ITaskFolder_GetFolder(subfolder, NULL, &subfolder2);

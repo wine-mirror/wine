@@ -417,7 +417,7 @@ HRESULT TaskFolder_create(const WCHAR *parent, const WCHAR *path, ITaskFolder **
     if (path)
     {
         int len = strlenW(path);
-        if (len && path[len - 1] == '\\') return ERROR_INVALID_NAME;
+        if (len && path[len - 1] == '\\') return HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
     }
 
     folder_path = get_full_path(parent, path);
