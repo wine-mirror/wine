@@ -2964,7 +2964,7 @@ msgstr "Reiniciar"
 
 #: dinput.rc:51
 msgid "Player"
-msgstr "Tocador"
+msgstr "Jogador"
 
 #: dinput.rc:52 winecfg.rc:89
 msgid "Device"
@@ -7469,16 +7469,12 @@ msgid "&Convert..."
 msgstr "&Converter..."
 
 #: oledlg.rc:36
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 %2 &Object"
-msgstr "&Objeto"
+msgstr "%1 %2 &Objeto"
 
 #: oledlg.rc:34
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 &Object"
-msgstr "&Objeto"
+msgstr "%1 &Objeto"
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
@@ -8598,58 +8594,44 @@ msgid "Wine"
 msgstr "Wine"
 
 #: winemac.rc:33
-#, fuzzy
-#| msgid "Hide"
 msgid "Hide %@"
-msgstr "Ocultar"
+msgstr "Ocultar %@"
 
 #: winemac.rc:35
-#, fuzzy
-#| msgid "Other"
 msgid "Hide Others"
-msgstr "Outro"
+msgstr "Esconder Outras"
 
 #: winemac.rc:36
-#, fuzzy
-#| msgid "Show"
 msgid "Show All"
-msgstr "Mostrar"
+msgstr "Mostrar Todas"
 
 #: winemac.rc:37
 msgid "Quit %@"
-msgstr ""
+msgstr "Sair de %@"
 
 #: winemac.rc:38
 msgid "Quit"
-msgstr ""
+msgstr "Sair"
 
 #: winemac.rc:40
-#, fuzzy
-#| msgid "&Window"
 msgid "Window"
-msgstr "&Janela"
+msgstr "Janela"
 
 #: winemac.rc:41
-#, fuzzy
-#| msgid "&Minimize"
 msgid "Minimize"
-msgstr "&Minimizar"
+msgstr "Minimizar"
 
 #: winemac.rc:42
-#, fuzzy
-#| msgid "Zoom in"
 msgid "Zoom"
-msgstr "Mais zoom"
+msgstr "Zoom"
 
 #: winemac.rc:43
 msgid "Enter Full Screen"
-msgstr ""
+msgstr "Modo de Tela Cheia"
 
 #: winemac.rc:44
-#, fuzzy
-#| msgid "&Bring To Front"
 msgid "Bring All to Front"
-msgstr "&Trazer para a Frente"
+msgstr "Trazer Tudo Para Frente"
 
 #: wineps.rc:31
 msgid "Paper Si&ze:"
@@ -11646,122 +11628,103 @@ msgid "The operation completed successfully\n"
 msgstr "A operação foi completada com sucesso\n"
 
 #: reg.rc:40
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid key name\n"
-msgstr "Erro: Nome de chave inválido\n"
+msgstr "reg: Nome de chave inválido\n"
 
 #: reg.rc:41
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "reg: Invalid command line parameters\n"
-msgstr "Erro: Parâmetros da linha de comandos inválidos\n"
+msgstr "reg: Parâmetros da linha de comandos inválidos\n"
 
 #: reg.rc:42
-#, fuzzy
-#| msgid "Error: Unable to access remote machine\n"
 msgid "reg: Unable to access remote machine\n"
-msgstr "Erro: Não foi possível acessar a máquina remota\n"
+msgstr "reg: Não foi possível acessar a máquina remota\n"
 
 #: reg.rc:43
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
 "reg: The system was unable to find the specified registry key or value\n"
 msgstr ""
-"Erro: O sistema foi incapaz de encontrar a chave de registo ou valor "
+"reg: O sistema foi incapaz de encontrar a chave de registo ou valor "
 "especificado\n"
 
 #: reg.rc:44
-#, fuzzy
-#| msgid "Error: Unsupported type\n"
 msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "Erro: Tipo não suportado.\n"
+msgstr "reg: Tipo de dado de registro não suportado [%1].\n"
 
 #: reg.rc:45
 msgid "reg: The option [/d] must be followed by a valid integer\n"
-msgstr ""
+msgstr "reg: A opção [/d] precisa ser seguida de um inteiro válido\n"
 
 #: reg.rc:46
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
-msgstr ""
+msgstr "reg: A opção [/d] precisa ser seguida de um valor hexadecimal válido\n"
 
 #: reg.rc:47
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
-msgstr ""
+msgstr "reg: Tipo de dado de registro não suportado [/t 0x%1!x!, /d %2]\n"
 
 #: reg.rc:48
-#, fuzzy
-#| msgid "The specified file already exists. Do you want to replace it?"
 msgid "The registry value '%1' already exists. Do you want to overwrite it?"
-msgstr "O arquivo especificado já existe. Deseja substituí-lo?"
+msgstr "O valor do registro '%1' já existe. Deseja sobrescrevê-lo?"
 
 #: reg.rc:52
 msgid "The registry operation was cancelled\n"
-msgstr ""
+msgstr "A operação de registro foi cancelada\n"
 
 #: reg.rc:53 regedit.rc:204
 msgid "(Default)"
 msgstr "(Padrão)"
 
 #: reg.rc:54
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
-msgstr "Tem certeza que deseja excluir estes valores?"
+msgstr "Tem certeza que deseja excluir o valor do registro '%1'?"
 
 #: reg.rc:55
-#, fuzzy
-#| msgid "Are you sure you want to delete value '%s'?"
 msgid "Are you sure you want to delete all registry values in '%1'?"
-msgstr "Tem certeza que deseja excluir o valor '%s'?"
+msgstr "Tem certeza que deseja excluir todos os valores em '%1'?"
 
 #: reg.rc:56
-#, fuzzy
-#| msgid "Are you sure you want to delete '%1'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
-msgstr "Você tem certeza que deseja excluir '%1'?"
+msgstr "Você tem certeza que deseja excluir a chave de registro '%1'?"
 
 #: reg.rc:57
 msgid "reg: The option [/d] must be followed by a valid string\n"
-msgstr ""
+msgstr "reg: A opção [/d] precisa ser seguida de uma string válida\n"
 
 #: reg.rc:58
 msgid ""
 "reg: Unable to delete all registry values in '%1'. An unexpected error "
 "occurred.\n"
 msgstr ""
+"reg: Não foi possível remover todos os valores de registro em '%1'. Um erro "
+"inesperado aconteceu.\n"
 
 #: reg.rc:59
 msgid ""
 "reg: Unable to complete the specified operation. An unexpected error "
 "occurred.\n"
 msgstr ""
+"reg: Não foi possível completar a operação especificada. Um erro inesperado "
+"aconteceu.\n"
 
 #: reg.rc:60
 msgid "Search complete. Number of matches found: %1!d!\n"
-msgstr ""
+msgstr "Busca terminada. Número de ocorrências encontradas: %1!d!\n"
 
 #: reg.rc:61
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid syntax. "
-msgstr "Erro: Nome de chave inválido\n"
+msgstr "reg: Sintaxe inválida. "
 
 #: reg.rc:62
-#, fuzzy
-#| msgid "uninstaller: Invalid option [%1]\n"
 msgid "reg: Invalid option [%1]. "
-msgstr "uninstaller: Opção inválida [%1].\n"
+msgstr "reg: Opção inválida [%1]. "
 
 #: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
-msgstr ""
+msgstr "Digite \"REG /?\" para ajuda.\n"
 
 #: reg.rc:64
 msgid "Type \"REG %1 /?\" for help.\n"
-msgstr ""
+msgstr "Digite \"REG %1 /?\" para ajuda.\n"
 
 #: reg.rc:65 regedit.rc:205
 msgid "(value not set)"
@@ -13358,10 +13321,8 @@ msgstr ""
 "configurações globais ou por aplicativo também nessas abas."
 
 #: winecfg.rc:159
-#, fuzzy
-#| msgid "&Add application..."
 msgid "Add appli&cation..."
-msgstr "&Adicionar aplicativo..."
+msgstr "Adicionar apli&cativo..."
 
 #: winecfg.rc:160
 msgid "&Remove application"
@@ -13596,10 +13557,8 @@ msgid "Select the Unix target directory, please."
 msgstr "Por favor, selecione o diretório Unix alvo."
 
 #: winecfg.rc:37
-#, fuzzy
-#| msgid "Hide &Advanced"
 msgid "Hide Advan&ced"
-msgstr "&Ocultar"
+msgstr "&Ocultar Avançado"
 
 #: winecfg.rc:39
 msgid "(No Theme)"
