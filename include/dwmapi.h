@@ -136,7 +136,7 @@ typedef struct _DWM_PRESENT_PARAMETERS {
 
 #include <poppack.h>
 
-DWMAPI DwmDefWindowProc(HWND, UINT, WPARAM, LPARAM, LRESULT*);
+DWMAPI_(BOOL) DwmDefWindowProc(HWND, UINT, WPARAM, LPARAM, LRESULT*);
 DWMAPI DwmEnableBlurBehindWindow(HWND, const DWM_BLURBEHIND *);
 DWMAPI DwmEnableComposition(UINT);
 DWMAPI DwmEnableMMCSS(BOOL);
