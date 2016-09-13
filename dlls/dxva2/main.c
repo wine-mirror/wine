@@ -187,8 +187,7 @@ HRESULT WINAPI GetPhysicalMonitorsFromIDirect3DDevice9( IDirect3DDevice9 *device
 {
     FIXME("(%p, 0x%x, %p): stub\n", device, arraySize, array);
 
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    return E_NOTIMPL;
 }
 
 BOOL WINAPI GetTimingReport( HMONITOR monitor, LPMC_TIMING_REPORT timingReport )
