@@ -164,7 +164,7 @@
 @ stub WsStartWriterCanonicalization
 @ stub WsTrimXmlWhitespace
 @ stub WsVerifyXmlNCName
-@ stub WsWriteArray
+@ stdcall WsWriteArray(ptr ptr ptr long ptr long long long ptr)
 @ stdcall WsWriteAttribute(ptr ptr long ptr long ptr)
 @ stdcall WsWriteBody(ptr ptr long ptr long ptr)
 @ stub WsWriteBytes

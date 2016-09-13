@@ -3561,7 +3561,7 @@ static HRESULT read_type_next_element_node( struct reader *reader, const WS_XML_
     return WS_E_INVALID_FORMAT;
 }
 
-static ULONG get_type_size( WS_TYPE type, const WS_STRUCT_DESCRIPTION *desc )
+ULONG get_type_size( WS_TYPE type, const WS_STRUCT_DESCRIPTION *desc )
 {
     switch (type)
     {

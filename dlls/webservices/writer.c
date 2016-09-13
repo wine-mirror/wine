@@ -1997,6 +1997,41 @@ HRESULT WINAPI WsWriteValue( WS_XML_WRITER *handle, WS_VALUE_TYPE value_type, co
 }
 
 /**************************************************************************
+ *          WsWriteArray		[webservices.@]
+ */
+HRESULT WINAPI WsWriteArray( WS_XML_WRITER *handle, const WS_XML_STRING *localname, const WS_XML_STRING *ns,
+                             WS_VALUE_TYPE value_type, const void *array, ULONG size, ULONG offset,
+                             ULONG count, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    WS_TYPE type;
+    ULONG type_size, i;
+    HRESULT hr;
+
+    TRACE( "%p %s %s %u %p %u %u %u %p\n", handle, debugstr_xmlstr(localname), debugstr_xmlstr(ns),
+           value_type, array, size, offset, count, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer) return E_INVALIDARG;
+    if (!writer->output_type) return WS_E_INVALID_OPERATION;
+    if (!localname || !ns || (type = map_value_type( value_type )) == ~0u) return E_INVALIDARG;
+
+    type_size = get_type_size( type, NULL );
+    if (size % type_size || (offset + count) * type_size > size || (count && !array)) return E_INVALIDARG;
+
+    for (i = offset; i < count; i++)
+    {
+        const char *ptr = (const char *)array + (offset + i) * type_size;
+        if ((hr = write_element_node( writer, NULL, localname, ns )) != S_OK) return hr;
+        if ((hr = write_type( writer, WS_ELEMENT_TYPE_MAPPING, type, NULL, WS_WRITE_REQUIRED_POINTER,
+                              &ptr, sizeof(ptr) )) != S_OK) return hr;
+        if ((hr = write_endelement_node( writer )) != S_OK) return hr;
+    }
+
+    return S_OK;
+}
+
+/**************************************************************************
  *          WsWriteXmlBuffer		[webservices.@]
  */
 HRESULT WINAPI WsWriteXmlBuffer( WS_XML_WRITER *handle, WS_XML_BUFFER *buffer, WS_ERROR *error )

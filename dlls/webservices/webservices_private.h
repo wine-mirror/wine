@@ -35,6 +35,7 @@ void free_attribute( WS_XML_ATTRIBUTE * ) DECLSPEC_HIDDEN;
 WS_TYPE map_value_type( WS_VALUE_TYPE ) DECLSPEC_HIDDEN;
 BOOL set_fp_rounding( unsigned short * ) DECLSPEC_HIDDEN;
 void restore_fp_rounding( unsigned short ) DECLSPEC_HIDDEN;
+ULONG get_type_size( WS_TYPE, const WS_STRUCT_DESCRIPTION * ) DECLSPEC_HIDDEN;
 
 struct node
 {

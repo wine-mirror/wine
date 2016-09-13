@@ -2223,6 +2223,92 @@ static void test_WsWriteText(void)
     WsFreeWriter( writer );
 }
 
+static void test_WsWriteArray(void)
+{
+    static const WS_XML_STRING localname = {4, (BYTE *)"item"}, localname2 = {5, (BYTE *)"array"};
+    static const WS_XML_STRING ns = {0, NULL};
+    WS_XML_WRITER *writer;
+    BOOL array_bool[2];
+    HRESULT hr;
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteArray( writer, NULL, NULL, 0, NULL, 0, 0, 0, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteArray( writer, NULL, NULL, 0, NULL, 0, 0, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteArray( writer, &localname, NULL, 0, NULL, 0, 0, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteArray( writer, &localname, &ns, 0, NULL, 0, 0, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "", __LINE__ );
+
+    hr = WsWriteArray( writer, &localname, &ns, ~0u, NULL, 0, 0, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteArray( writer, &localname, &ns, WS_BOOL_VALUE_TYPE, NULL, 0, 0, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "", __LINE__ );
+
+    array_bool[0] = FALSE;
+    hr = WsWriteArray( writer, &localname, &ns, WS_BOOL_VALUE_TYPE, array_bool, 0, 0, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "", __LINE__ );
+
+    hr = WsWriteArray( writer, &localname, &ns, WS_BOOL_VALUE_TYPE, array_bool, sizeof(array_bool), 0, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "", __LINE__ );
+
+    hr = WsWriteArray( writer, &localname, &ns, WS_BOOL_VALUE_TYPE, NULL, sizeof(array_bool), 0, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "", __LINE__ );
+
+    hr = WsWriteArray( writer, &localname, &ns, WS_BOOL_VALUE_TYPE, NULL, sizeof(array_bool), 0, 1, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteArray( writer, &localname, &ns, WS_BOOL_VALUE_TYPE, array_bool, sizeof(array_bool), 0, 1, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<item>false</item>", __LINE__ );
+
+    hr = WsWriteArray( writer, &localname, &ns, WS_BOOL_VALUE_TYPE, array_bool, sizeof(array_bool) - 1, 0, 2, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteArray( writer, &localname, &ns, WS_BOOL_VALUE_TYPE, array_bool, sizeof(array_bool), 0, 3, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, NULL, &localname2, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    array_bool[1] = TRUE;
+    hr = WsWriteArray( writer, &localname, &ns, WS_BOOL_VALUE_TYPE, array_bool, sizeof(array_bool), 0, 2, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<array><item>false</item><item>true</item></array>", __LINE__ );
+
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -2251,4 +2337,5 @@ START_TEST(writer)
     test_double();
     test_field_flags();
     test_WsWriteText();
+    test_WsWriteArray();
 }
