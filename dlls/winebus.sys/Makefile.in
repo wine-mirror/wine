@@ -1,5 +1,7 @@
 MODULE    = winebus.sys
 IMPORTS   = ntoskrnl
+EXTRALIBS = $(UDEV_LIBS)
+EXTRAINCL = $(UDEV_CFLAGS)
 EXTRADLLFLAGS = -Wb,--subsystem,native
 
 C_SRCS = \
