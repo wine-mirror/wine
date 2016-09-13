@@ -557,7 +557,7 @@ HGLOBAL WINAPI GlobalHandle(
         /* GlobalAlloc with GMEM_MOVEABLE then magic test in HeapValidate  */
         /* will fail.                                                      */
         if (ISPOINTER(pmem)) {
-            if (HeapValidate( GetProcessHeap(), 0, pmem )) {
+            if (HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, pmem )) {
                 handle = (HGLOBAL)pmem;  /* valid fixed block */
                 break;
             }
@@ -569,8 +569,8 @@ HGLOBAL WINAPI GlobalHandle(
         maybe_intern = HANDLE_TO_INTERN( handle );
         if (maybe_intern->Magic == MAGIC_GLOBAL_USED) {
             test = maybe_intern->Pointer;
-            if (HeapValidate( GetProcessHeap(), 0, (const char *)test - HGLOBAL_STORAGE ) && /* obj(-handle) valid arena? */
-                HeapValidate( GetProcessHeap(), 0, maybe_intern ))  /* intern valid arena? */
+            if (HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, (const char *)test - HGLOBAL_STORAGE ) && /* obj(-handle) valid arena? */
+                HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, maybe_intern ))  /* intern valid arena? */
                 break;  /* valid moveable block */
         }
         handle = 0;
@@ -749,7 +749,7 @@ HGLOBAL WINAPI GlobalFree(HGLOBAL hmem)
         hreturned = 0;
         if(ISPOINTER(hmem)) /* POINTER */
         {
-            if(!HeapFree(GetProcessHeap(), 0, hmem))
+            if(!HeapFree(GetProcessHeap(), HEAP_NO_SERIALIZE, hmem))
             {
                 SetLastError(ERROR_INVALID_HANDLE);
                 hreturned = hmem;
@@ -769,9 +769,9 @@ HGLOBAL WINAPI GlobalFree(HGLOBAL hmem)
                 /*    SetLastError(ERROR_INVALID_HANDLE);  */
 
                 if(pintern->Pointer)
-                    if(!HeapFree(GetProcessHeap(), 0, (char *)(pintern->Pointer)-HGLOBAL_STORAGE))
+                    if(!HeapFree(GetProcessHeap(), HEAP_NO_SERIALIZE, (char *)(pintern->Pointer)-HGLOBAL_STORAGE))
                         hreturned=hmem;
-                if(!HeapFree(GetProcessHeap(), 0, pintern))
+                if(!HeapFree(GetProcessHeap(), HEAP_NO_SERIALIZE, pintern))
                     hreturned=hmem;
             }
             else
