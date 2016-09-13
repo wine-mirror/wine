@@ -1019,7 +1019,7 @@ LSTATUS WINAPI RegQueryMultipleValuesA( HKEY hkey, PVALENTA val_list, DWORD num_
 {
     unsigned int i;
     DWORD maxBytes = *ldwTotsize;
-    HRESULT status;
+    LSTATUS status;
     LPSTR bufptr = lpValueBuf;
     *ldwTotsize = 0;
 
@@ -1065,7 +1065,7 @@ LSTATUS WINAPI RegQueryMultipleValuesW( HKEY hkey, PVALENTW val_list, DWORD num_
 {
     unsigned int i;
     DWORD maxBytes = *ldwTotsize;
-    HRESULT status;
+    LSTATUS status;
     LPSTR bufptr = (LPSTR)lpValueBuf;
     *ldwTotsize = 0;
 
