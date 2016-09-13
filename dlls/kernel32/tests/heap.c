@@ -306,6 +306,12 @@ static void test_heap(void)
            "Expected ERROR_INVALID_HANDLE or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     }
 
+    gbl = GlobalAlloc( GMEM_FIXED, 0 );
+    SetLastError(0xdeadbeef);
+    size = GlobalSize( gbl );
+    ok( size == 1, "wrong size %lu\n", size );
+    GlobalFree( gbl );
+
     /* ####################################### */
     /* Local*() functions */
     gbl = LocalAlloc(LMEM_MOVEABLE, 0);
@@ -437,6 +443,13 @@ static void test_heap(void)
     ok(GetLastError() == ERROR_NOT_LOCKED ||
        broken(GetLastError() == 0xdeadbeef) /* win9x */, "got %d\n", GetLastError());
     LocalFree(gbl);
+
+    gbl = LocalAlloc( LMEM_FIXED, 0 );
+    SetLastError(0xdeadbeef);
+    size = LocalSize( gbl );
+    ok( !size || broken(size == 1), /* vistau64 */
+        "wrong size %lu\n", size );
+    LocalFree( gbl );
 
     /* trying to lock empty memory should give an error */
     gbl = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT,0);

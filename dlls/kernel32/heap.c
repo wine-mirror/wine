@@ -362,7 +362,7 @@ HGLOBAL WINAPI GlobalAlloc(
 
    if((flags & GMEM_MOVEABLE)==0) /* POINTER */
    {
-      palloc=HeapAlloc(GetProcessHeap(), hpflags, size);
+      palloc = HeapAlloc( GetProcessHeap(), hpflags, max( 1, size ));
       TRACE( "(flags=%04x) returning %p\n",  flags, palloc );
       return palloc;
    }
@@ -961,10 +961,16 @@ SIZE_T WINAPI GlobalCompact( DWORD minfree )
  *  Windows memory management does not provide a separate local heap
  *  and global heap.
  */
-HLOCAL WINAPI LocalAlloc(
-                UINT flags, /* [in] Allocation attributes */
-                SIZE_T size /* [in] Number of bytes to allocate */
-) {
+HLOCAL WINAPI LocalAlloc( UINT flags, SIZE_T size )
+{
+    /* LocalAlloc allows a 0-size fixed block, but GlobalAlloc doesn't */
+    if (!(flags & LMEM_MOVEABLE))
+    {
+        DWORD heap_flags = (flags & LMEM_ZEROINIT) ? HEAP_ZERO_MEMORY : 0;
+        void *ret = HeapAlloc( GetProcessHeap(), heap_flags, size );
+        TRACE( "(flags=%04x) returning %p\n",  flags, ret );
+        return ret;
+    }
     return GlobalAlloc( flags, size );
 }
 
