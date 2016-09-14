@@ -21,3 +21,6 @@ NTSTATUS WINAPI udev_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry
 
 /* HID Plug and Play Bus */
 NTSTATUS WINAPI common_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
+DEVICE_OBJECT *bus_create_hid_device(DRIVER_OBJECT *driver, const WCHAR *busidW, void *native, WORD vid,
+                                     WORD pid, DWORD version, DWORD uid, const WCHAR *serialW, BOOL is_gamepad,
+                                     const GUID *class) DECLSPEC_HIDDEN;

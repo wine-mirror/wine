@@ -1,5 +1,5 @@
 MODULE    = winebus.sys
-IMPORTS   = ntoskrnl
+IMPORTS   = ntoskrnl setupapi
 EXTRALIBS = $(UDEV_LIBS)
 EXTRAINCL = $(UDEV_CFLAGS)
 EXTRADLLFLAGS = -Wb,--subsystem,native

@@ -50,6 +50,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 static struct udev *udev_context = NULL;
 static DRIVER_OBJECT *udev_driver_obj = NULL;
 
+static const WCHAR hidraw_busidW[] = {'H','I','D','R','A','W',0};
+
+#include "initguid.h"
+DEFINE_GUID(GUID_DEVCLASS_HIDRAW, 0x3def44ad,0x242e,0x46e5,0x82,0x6d,0x70,0x72,0x13,0xf3,0xaa,0x81);
+
 static DWORD get_sysattr_dword(struct udev_device *dev, const char *sysattr, int base)
 {
     const char *attr = udev_device_get_sysattr_value(dev, sysattr);
@@ -81,6 +86,8 @@ static void try_add_device(struct udev_device *dev)
 {
     DWORD vid = 0, pid = 0, version = 0;
     struct udev_device *usbdev;
+    DEVICE_OBJECT *device = NULL;
+    const char *subsystem;
     const char *devnode;
     WCHAR *serial = NULL;
     int fd;
@@ -106,6 +113,18 @@ static void try_add_device(struct udev_device *dev)
 
     TRACE("Found udev device %s (vid %04x, pid %04x, version %u, serial %s)\n",
           debugstr_a(devnode), vid, pid, version, debugstr_w(serial));
+
+    subsystem = udev_device_get_subsystem(dev);
+    if (strcmp(subsystem, "hidraw") == 0)
+    {
+        device = bus_create_hid_device(udev_driver_obj, hidraw_busidW, dev, vid, pid,
+                                       version, 0, serial, FALSE, &GUID_DEVCLASS_HIDRAW);
+    }
+
+    if (device)
+        udev_device_ref(dev);
+    else
+        WARN("Ignoring device %s with subsystem %s\n", debugstr_a(devnode), subsystem);
 
     HeapFree(GetProcessHeap(), 0, serial);
 }
