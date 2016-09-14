@@ -1667,11 +1667,13 @@ static void test_handles( HWND hwnd )
     todo_wine ok( !h, "got %p\n", h );
     GlobalFree( empty_moveable );
 
-    ptr = HeapAlloc( GetProcessHeap(), 0, 0 );
-    h = SetClipboardData( format_id2, ptr );
-    /* some platforms don't allocate a 0-size block correctly */
-    todo_wine ok( !h || broken( HeapSize( GetProcessHeap(), 0, ptr ) == 1), "got %p\n", h );
-    HeapFree( GetProcessHeap(), 0, ptr );
+    if (0)  /* crashes on vista64 */
+    {
+        ptr = HeapAlloc( GetProcessHeap(), 0, 0 );
+        h = SetClipboardData( format_id2, ptr );
+        ok( !h, "got %p\n", h );
+        HeapFree( GetProcessHeap(), 0, ptr );
+    }
 
     h = SetClipboardData( format_id2, empty_fixed );
     ok( h == empty_fixed, "got %p\n", h );
