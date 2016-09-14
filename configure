@@ -905,6 +905,7 @@ enable_api_ms_win_core_job_l1_1_0
 enable_api_ms_win_core_job_l2_1_0
 enable_api_ms_win_core_kernel32_legacy_l1_1_0
 enable_api_ms_win_core_kernel32_legacy_l1_1_1
+enable_api_ms_win_core_kernel32_private_l1_1_1
 enable_api_ms_win_core_libraryloader_l1_1_0
 enable_api_ms_win_core_libraryloader_l1_1_1
 enable_api_ms_win_core_libraryloader_l1_2_0
@@ -17564,6 +17565,7 @@ wine_fn_config_dll api-ms-win-core-job-l1-1-0 enable_api_ms_win_core_job_l1_1_0
 wine_fn_config_dll api-ms-win-core-job-l2-1-0 enable_api_ms_win_core_job_l2_1_0
 wine_fn_config_dll api-ms-win-core-kernel32-legacy-l1-1-0 enable_api_ms_win_core_kernel32_legacy_l1_1_0
 wine_fn_config_dll api-ms-win-core-kernel32-legacy-l1-1-1 enable_api_ms_win_core_kernel32_legacy_l1_1_1
+wine_fn_config_dll api-ms-win-core-kernel32-private-l1-1-1 enable_api_ms_win_core_kernel32_private_l1_1_1
 wine_fn_config_dll api-ms-win-core-libraryloader-l1-1-0 enable_api_ms_win_core_libraryloader_l1_1_0
 wine_fn_config_dll api-ms-win-core-libraryloader-l1-1-1 enable_api_ms_win_core_libraryloader_l1_1_1
 wine_fn_config_dll api-ms-win-core-libraryloader-l1-2-0 enable_api_ms_win_core_libraryloader_l1_2_0
