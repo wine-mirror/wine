@@ -2046,6 +2046,7 @@ C_ASSERT( sizeof(struct empty_clipboard_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct release_clipboard_request, owner) == 12 );
 C_ASSERT( sizeof(struct release_clipboard_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct release_clipboard_reply, viewer) == 8 );
+C_ASSERT( FIELD_OFFSET(struct release_clipboard_reply, owner) == 12 );
 C_ASSERT( sizeof(struct release_clipboard_reply) == 16 );
 C_ASSERT( sizeof(struct get_clipboard_info_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_clipboard_info_reply, window) == 8 );

@@ -3205,6 +3205,7 @@ enum caret_state
     user_handle_t  owner;          /* clipboard owner to release */
 @REPLY
     user_handle_t  viewer;         /* first clipboard viewer */
+    user_handle_t  owner;          /* current clipboard owner */
 @END
 
 
