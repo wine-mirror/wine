@@ -456,20 +456,20 @@ UINT WINAPI RegisterClipboardFormatA( LPCSTR name )
 /**************************************************************************
  *		GetClipboardFormatNameW (USER32.@)
  */
-INT WINAPI GetClipboardFormatNameW(UINT wFormat, LPWSTR retStr, INT maxlen)
+INT WINAPI GetClipboardFormatNameW( UINT format, LPWSTR buffer, INT maxlen )
 {
-    if (wFormat < MAXINTATOM) return 0;
-    return GlobalGetAtomNameW( wFormat, retStr, maxlen );
+    if (format < MAXINTATOM || format > 0xffff) return 0;
+    return GlobalGetAtomNameW( format, buffer, maxlen );
 }
 
 
 /**************************************************************************
  *		GetClipboardFormatNameA (USER32.@)
  */
-INT WINAPI GetClipboardFormatNameA(UINT wFormat, LPSTR retStr, INT maxlen)
+INT WINAPI GetClipboardFormatNameA( UINT format, LPSTR buffer, INT maxlen )
 {
-    if (wFormat < MAXINTATOM) return 0;
-    return GlobalGetAtomNameA( wFormat, retStr, maxlen );
+    if (format < MAXINTATOM || format > 0xffff) return 0;
+    return GlobalGetAtomNameA( format, buffer, maxlen );
 }
 
 

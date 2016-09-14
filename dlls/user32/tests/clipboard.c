@@ -416,12 +416,12 @@ todo_wine
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "err %d\n", GetLastError());
     }
 
-    for (format_id = 0; format_id < 0xffff; format_id++)
+    for (format_id = 0; format_id < 0x10fff; format_id++)
     {
         SetLastError(0xdeadbeef);
         len = GetClipboardFormatNameA(format_id, buf, 256);
 
-        if (format_id < 0xc000)
+        if (format_id < 0xc000 || format_id > 0xffff)
             ok(!len, "GetClipboardFormatNameA should fail, but it returned %d (%s)\n", len, buf);
         else if (len && winetest_debug > 1)
             trace("%04x: %s\n", format_id, len ? buf : "");
