@@ -55,6 +55,43 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
  */
 static BOOL bCBHasChanged = FALSE;
 
+/* get a debug string for a format id */
+static const char *debugstr_format( UINT id )
+{
+    WCHAR buffer[256];
+
+    if (GetClipboardFormatNameW( id, buffer, 256 ))
+        return wine_dbg_sprintf( "%04x %s", id, debugstr_w(buffer) );
+
+    switch (id)
+    {
+#define BUILTIN(id) case id: return #id;
+    BUILTIN(CF_TEXT)
+    BUILTIN(CF_BITMAP)
+    BUILTIN(CF_METAFILEPICT)
+    BUILTIN(CF_SYLK)
+    BUILTIN(CF_DIF)
+    BUILTIN(CF_TIFF)
+    BUILTIN(CF_OEMTEXT)
+    BUILTIN(CF_DIB)
+    BUILTIN(CF_PALETTE)
+    BUILTIN(CF_PENDATA)
+    BUILTIN(CF_RIFF)
+    BUILTIN(CF_WAVE)
+    BUILTIN(CF_UNICODETEXT)
+    BUILTIN(CF_ENHMETAFILE)
+    BUILTIN(CF_HDROP)
+    BUILTIN(CF_LOCALE)
+    BUILTIN(CF_DIBV5)
+    BUILTIN(CF_OWNERDISPLAY)
+    BUILTIN(CF_DSPTEXT)
+    BUILTIN(CF_DSPBITMAP)
+    BUILTIN(CF_DSPMETAFILEPICT)
+    BUILTIN(CF_DSPENHMETAFILE)
+#undef BUILTIN
+    default: return wine_dbg_sprintf( "%04x", id );
+    }
+}
 
 /* formats that can be synthesized are: CF_TEXT, CF_OEMTEXT, CF_UNICODETEXT,
    CF_BITMAP, CF_DIB, CF_DIBV5, CF_ENHMETAFILE, CF_METAFILEPICT */
@@ -359,7 +396,7 @@ static HANDLE render_synthesized_format( UINT format, UINT from )
     HANDLE data = GetClipboardData( from );
 
     if (!data) return 0;
-    TRACE( "rendering %04x from %04x\n", format, from );
+    TRACE( "rendering %s from %s\n", debugstr_format( format ), debugstr_format( from ));
 
     switch (format)
     {
@@ -388,7 +425,7 @@ static HANDLE render_synthesized_format( UINT format, UINT from )
     }
     if (data)
     {
-        TRACE( "adding %04x %p\n", format, data );
+        TRACE( "adding %s %p\n", debugstr_format( format ), data );
         SetClipboardData( format, data );
     }
     return data;
@@ -550,7 +587,7 @@ BOOL WINAPI EmptyClipboard(void)
     BOOL ret;
     HWND owner = GetClipboardOwner();
 
-    TRACE("()\n");
+    TRACE( "owner %p\n", owner );
 
     if (owner) SendMessageTimeoutW( owner, WM_DESTROYCLIPBOARD, 0, 0, SMTO_ABORTIFHUNG, 5000, NULL );
 
@@ -572,7 +609,6 @@ BOOL WINAPI EmptyClipboard(void)
 
 /**************************************************************************
  *		GetClipboardOwner (USER32.@)
- *  FIXME: Can't return the owner if the clipboard is owned by an external X-app
  */
 HWND WINAPI GetClipboardOwner(void)
 {
@@ -584,7 +620,7 @@ HWND WINAPI GetClipboardOwner(void)
     }
     SERVER_END_REQ;
 
-    TRACE(" hWndOwner(%p)\n", hWndOwner);
+    TRACE( "returning %p\n", hWndOwner );
 
     return hWndOwner;
 }
@@ -603,7 +639,7 @@ HWND WINAPI GetOpenClipboardWindow(void)
     }
     SERVER_END_REQ;
 
-    TRACE(" hWndClipWindow(%p)\n", hWndOpen);
+    TRACE( "returning %p\n", hWndOpen );
 
     return hWndOpen;
 }
@@ -629,7 +665,7 @@ HWND WINAPI SetClipboardViewer( HWND hwnd )
 
     if (hwnd) SendNotifyMessageW( hwnd, WM_DRAWCLIPBOARD, (WPARAM)owner, 0 );
 
-    TRACE( "(%p): returning %p\n", hwnd, prev );
+    TRACE( "%p returning %p\n", hwnd, prev );
     return prev;
 }
 
@@ -647,7 +683,7 @@ HWND WINAPI GetClipboardViewer(void)
     }
     SERVER_END_REQ;
 
-    TRACE(" hWndViewer=%p\n", hWndViewer);
+    TRACE( "returning %p\n", hWndViewer );
 
     return hWndViewer;
 }
@@ -688,7 +724,7 @@ HANDLE WINAPI SetClipboardData( UINT format, HANDLE data )
     HANDLE hResult = 0;
     UINT flags;
 
-    TRACE( "%04x %p\n", format, data );
+    TRACE( "%s %p\n", debugstr_format( format ), data );
 
     if (!format)
     {
@@ -728,9 +764,9 @@ INT WINAPI CountClipboardFormats(void)
 /**************************************************************************
  *		EnumClipboardFormats (USER32.@)
  */
-UINT WINAPI EnumClipboardFormats(UINT wFormat)
+UINT WINAPI EnumClipboardFormats( UINT format )
 {
-    TRACE("(%04X)\n", wFormat);
+    UINT ret = 0;
 
     if (!(get_clipboard_flags() & CB_OPEN))
     {
@@ -739,18 +775,20 @@ UINT WINAPI EnumClipboardFormats(UINT wFormat)
         return 0;
     }
     SetLastError( 0 );
-    return USER_Driver->pEnumClipboardFormats(wFormat);
+    ret = USER_Driver->pEnumClipboardFormats( format );
+    TRACE( "%s -> %s\n", debugstr_format( format ), debugstr_format( ret ));
+    return ret;
 }
 
 
 /**************************************************************************
  *		IsClipboardFormatAvailable (USER32.@)
  */
-BOOL WINAPI IsClipboardFormatAvailable(UINT wFormat)
+BOOL WINAPI IsClipboardFormatAvailable( UINT format )
 {
-    BOOL bret = USER_Driver->pIsClipboardFormatAvailable(wFormat);
-    TRACE("%04x, returning %d\n", wFormat, bret);
-    return bret;
+    BOOL ret = USER_Driver->pIsClipboardFormatAvailable( format );
+    TRACE( "%s -> %u\n", debugstr_format( format ), ret );
+    return ret;
 }
 
 
@@ -791,7 +829,7 @@ HANDLE WINAPI GetClipboardData( UINT format )
 {
     HANDLE data = 0;
 
-    TRACE( "%04x\n", format );
+    TRACE( "%s\n", debugstr_format( format ));
 
     if (!(get_clipboard_flags() & CB_OPEN))
     {
@@ -816,7 +854,7 @@ INT WINAPI GetPriorityClipboardFormat(UINT *list, INT nCount)
 {
     int i;
 
-    TRACE("()\n");
+    TRACE( "%p %u\n", list, nCount );
 
     if(CountClipboardFormats() == 0)
         return 0;
@@ -847,7 +885,7 @@ DWORD WINAPI GetClipboardSequenceNumber(VOID)
     }
     SERVER_END_REQ;
 
-    TRACE("returning %x\n", seqno);
+    TRACE( "returning %u\n", seqno );
     return seqno;
 }
 
