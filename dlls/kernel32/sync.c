@@ -1555,7 +1555,7 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
     status = NtOpenFile( &pipe_dev, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr,
                          &iosb, FILE_SHARE_READ | FILE_SHARE_WRITE,
                          FILE_SYNCHRONOUS_IO_NONALERT);
-    if (status != ERROR_SUCCESS)
+    if (status != STATUS_SUCCESS)
     {
         HeapFree( GetProcessHeap(), 0, pipe_wait);
         RtlFreeUnicodeString( &nt_name );
