@@ -1799,19 +1799,21 @@ GpStatus WINGDIPAPI GdipGetMetafileHeaderFromWmf(HMETAFILE hwmf,
 GpStatus WINGDIPAPI GdipGetMetafileHeaderFromFile(GDIPCONST WCHAR *filename,
     MetafileHeader *header)
 {
-    static int calls;
+    GpStatus status;
+    GpMetafile *metafile;
 
     TRACE("(%s,%p)\n", debugstr_w(filename), header);
 
-    if(!filename || !header)
+    if (!filename || !header)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
-
-    memset(header, 0, sizeof(MetafileHeader));
-
-    return Ok;
+    status = GdipCreateMetafileFromFile(filename, &metafile);
+    if (status == Ok)
+    {
+        status = GdipGetMetafileHeaderFromMetafile(metafile, header);
+        GdipDisposeImage(&metafile->image);
+    }
+    return status;
 }
 
 GpStatus WINGDIPAPI GdipGetMetafileHeaderFromStream(IStream *stream,
