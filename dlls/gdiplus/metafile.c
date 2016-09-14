@@ -1779,6 +1779,23 @@ GpStatus WINGDIPAPI GdipGetMetafileHeaderFromEmf(HENHMETAFILE hemf,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetMetafileHeaderFromWmf(HMETAFILE hwmf,
+    GDIPCONST WmfPlaceableFileHeader *placeable, MetafileHeader *header)
+{
+    GpStatus status;
+    GpMetafile *metafile;
+
+    TRACE("(%p,%p,%p)\n", hwmf, placeable, header);
+
+    status = GdipCreateMetafileFromWmf(hwmf, FALSE, placeable, &metafile);
+    if (status == Ok)
+    {
+        status = GdipGetMetafileHeaderFromMetafile(metafile, header);
+        GdipDisposeImage(&metafile->image);
+    }
+    return status;
+}
+
 GpStatus WINGDIPAPI GdipGetMetafileHeaderFromFile(GDIPCONST WCHAR *filename,
     MetafileHeader *header)
 {
