@@ -111,6 +111,52 @@ static WCHAR *get_instance_id(DEVICE_OBJECT *device)
     return dst;
 }
 
+static WCHAR *get_device_id(DEVICE_OBJECT *device)
+{
+    static const WCHAR formatW[] =  {'%','s','\\','V','i','d','_','%','0','4','x','&','P','i','d','_','%','0','4','x',0};
+    struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
+    DWORD len = strlenW(ext->busid) + 19;
+    WCHAR *dst;
+
+    if ((dst = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+        sprintfW(dst, formatW, ext->busid, ext->vid, ext->pid);
+
+    return dst;
+}
+
+static WCHAR *get_compatible_ids(DEVICE_OBJECT *device)
+{
+    struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
+    WCHAR *iid, *did, *dst, *ptr;
+    DWORD len;
+
+    if (!(iid = get_instance_id(device)))
+        return NULL;
+
+    if (!(did = get_device_id(device)))
+    {
+        HeapFree(GetProcessHeap(), 0, iid);
+        return NULL;
+    }
+
+    len = strlenW(iid) + strlenW(did) + strlenW(ext->busid) + 4;
+    if ((dst = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+    {
+        ptr = dst;
+        strcpyW(ptr, iid);
+        ptr += strlenW(iid) + 1;
+        strcpyW(ptr, did);
+        ptr += strlenW(did) + 1;
+        strcpyW(ptr, ext->busid);
+        ptr += strlenW(ext->busid) + 1;
+        *ptr = 0;
+    }
+
+    HeapFree(GetProcessHeap(), 0, iid);
+    HeapFree(GetProcessHeap(), 0, did);
+    return dst;
+}
+
 DEVICE_OBJECT *bus_create_hid_device(DRIVER_OBJECT *driver, const WCHAR *busidW, void *native, WORD vid,
                                      WORD pid, DWORD version, DWORD uid, const WCHAR *serialW, BOOL is_gamepad,
                                      const GUID *class)
@@ -184,6 +230,41 @@ DEVICE_OBJECT *bus_create_hid_device(DRIVER_OBJECT *driver, const WCHAR *busidW,
     return device;
 }
 
+static NTSTATUS handle_IRP_MN_QUERY_ID(DEVICE_OBJECT *device, IRP *irp)
+{
+    NTSTATUS status = irp->IoStatus.u.Status;
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    BUS_QUERY_ID_TYPE type = irpsp->Parameters.QueryId.IdType;
+
+    TRACE("(%p, %p)\n", device, irp);
+
+    switch (type)
+    {
+        case BusQueryHardwareIDs:
+            TRACE("BusQueryHardwareIDs\n");
+            irp->IoStatus.Information = (ULONG_PTR)get_compatible_ids(device);
+            break;
+        case BusQueryCompatibleIDs:
+            TRACE("BusQueryCompatibleIDs\n");
+            irp->IoStatus.Information = (ULONG_PTR)get_compatible_ids(device);
+            break;
+        case BusQueryDeviceID:
+            TRACE("BusQueryDeviceID\n");
+            irp->IoStatus.Information = (ULONG_PTR)get_device_id(device);
+            break;
+        case BusQueryInstanceID:
+            TRACE("BusQueryInstanceID\n");
+            irp->IoStatus.Information = (ULONG_PTR)get_instance_id(device);
+            break;
+        default:
+            FIXME("Unhandled type %08x\n", type);
+            return status;
+    }
+
+    status = irp->IoStatus.Information ? STATUS_SUCCESS : STATUS_NO_MEMORY;
+    return status;
+}
+
 NTSTATUS WINAPI common_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 {
     NTSTATUS status = irp->IoStatus.u.Status;
@@ -196,6 +277,8 @@ NTSTATUS WINAPI common_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
             break;
         case IRP_MN_QUERY_ID:
             TRACE("IRP_MN_QUERY_ID\n");
+            status = handle_IRP_MN_QUERY_ID(device, irp);
+            irp->IoStatus.u.Status = status;
             break;
         case IRP_MN_QUERY_CAPABILITIES:
             TRACE("IRP_MN_QUERY_CAPABILITIES\n");
