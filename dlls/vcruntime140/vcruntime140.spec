@@ -41,7 +41,7 @@
 @ stub __std_terminate
 @ cdecl __std_type_info_compare(ptr ptr) ucrtbase.__std_type_info_compare
 @ cdecl __std_type_info_destroy_list(ptr) ucrtbase.__std_type_info_destroy_list
-@ stub __std_type_info_hash
+@ cdecl __std_type_info_hash(ptr) ucrtbase.__std_type_info_hash
 @ cdecl __std_type_info_name(ptr ptr) ucrtbase.__std_type_info_name
 @ cdecl __telemetry_main_invoke_trigger(ptr)
 @ cdecl __telemetry_main_return_trigger(ptr)

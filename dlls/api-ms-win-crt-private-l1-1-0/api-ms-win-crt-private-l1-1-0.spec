@@ -46,7 +46,7 @@
 @ cdecl __std_exception_destroy(ptr) ucrtbase.__std_exception_destroy
 @ cdecl __std_type_info_compare(ptr ptr) ucrtbase.__std_type_info_compare
 @ cdecl __std_type_info_destroy_list(ptr) ucrtbase.__std_type_info_destroy_list
-@ stub __std_type_info_hash
+@ cdecl __std_type_info_hash(ptr) ucrtbase.__std_type_info_hash
 @ cdecl __std_type_info_name(ptr ptr) ucrtbase.__std_type_info_name
 @ cdecl __unDName(ptr str long ptr ptr long) ucrtbase.__unDName
 @ cdecl __unDNameEx(ptr str long ptr ptr ptr long) ucrtbase.__unDNameEx

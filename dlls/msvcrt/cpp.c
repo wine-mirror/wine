@@ -1588,4 +1588,23 @@ void CDECL MSVCRT_type_info_destroy_list(SLIST_HEADER *header)
         MSVCRT_free(cur);
     }
 }
+
+/******************************************************************
+ *              __std_type_info_hash (UCRTBASE.@)
+ *
+ * TODO: 64-bit version of the function uses different constants
+ */
+MSVCRT_size_t CDECL MSVCRT_type_info_hash(const type_info140 *ti)
+{
+    MSVCRT_size_t hash = 0x811c9dc5;
+    const char *p;
+
+    TRACE("(%p)->%s\n", ti, ti->mangled);
+
+    for(p = ti->mangled+1; *p; p++) {
+        hash ^= *p;
+        hash *= 0x1000193;
+    }
+    return hash;
+}
 #endif

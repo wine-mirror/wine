@@ -51,6 +51,7 @@ static void (CDECL *p___std_exception_destroy)(__std_exception_data*);
 static int (CDECL *p___std_type_info_compare)(const type_info140*, const type_info140*);
 static const char* (CDECL *p___std_type_info_name)(type_info140*, SLIST_HEADER*);
 static void (CDECL *p___std_type_info_destroy_list)(SLIST_HEADER*);
+static size_t (CDECL *p___std_type_info_hash)(type_info140*);
 
 
 static BOOL init(void)
@@ -70,6 +71,7 @@ static BOOL init(void)
     p___std_type_info_compare = (void*)GetProcAddress(module, "__std_type_info_compare");
     p___std_type_info_name = (void*)GetProcAddress(module, "__std_type_info_name");
     p___std_type_info_destroy_list = (void*)GetProcAddress(module, "__std_type_info_destroy_list");
+    p___std_type_info_hash = (void*)GetProcAddress(module, "__std_type_info_hash");
     return TRUE;
 }
 
@@ -125,6 +127,7 @@ static void test___std_type_info(void)
     SLIST_HEADER header;
     type_info_list *elem;
     const char *ret;
+    size_t hash1, hash2;
     int eq;
 
 
@@ -154,6 +157,33 @@ static void test___std_type_info(void)
 
     eq = p___std_type_info_compare(&ti1, &ti3);
     ok(eq == 0, "__std_type_info_compare(&ti1, &ti3) = %d\n", eq);
+
+    ti1.mangled[0] = 0;
+    ti1.mangled[1] = 0;
+    ti1.mangled[2] = 0;
+    hash1 = p___std_type_info_hash(&ti1);
+#ifdef _WIN64
+    todo_wine ok(hash1 == 0xcbf29ce44fd0bfc1, "hash = %p\n", (void*)hash1);
+#else
+    ok(hash1 == 0x811c9dc5, "hash = %p\n", (void*)hash1);
+#endif
+
+    ti1.mangled[0] = 1;
+    hash2 = p___std_type_info_hash(&ti1);
+    ok(hash1 == hash2, "hash1 != hash2 (first char not ignorred)\n");
+
+    ti1.mangled[1] = 1;
+    hash1 = p___std_type_info_hash(&ti1);
+    if(sizeof(void*) == sizeof(int))
+        ok(hash1 == 0x40c5b8c, "hash = %p\n", (void*)hash1);
+    ok(hash1 != hash2, "hash1 == hash2 for different strings\n");
+
+    ti1.mangled[1] = 2;
+    hash2 = p___std_type_info_hash(&ti1);
+    ok(hash1 != hash2, "hash1 == hash2 for different strings\n");
+
+    hash1 = p___std_type_info_hash(&ti2);
+    ok(hash1 != hash2, "hash1 == hash2 for different strings\n");
 }
 
 START_TEST(cpp)
