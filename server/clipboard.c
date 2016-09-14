@@ -293,7 +293,7 @@ DECL_HANDLER(close_clipboard)
     if (req->changed) clipboard->seqno++;
 
     reply->viewer = close_clipboard( clipboard );
-    reply->owner  = (clipboard->owner_thread && clipboard->owner_thread->process == current->process);
+    reply->owner  = clipboard->owner_win;
 }
 
 

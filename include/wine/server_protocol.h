@@ -4483,7 +4483,7 @@ struct close_clipboard_reply
 {
     struct reply_header __header;
     user_handle_t  viewer;
-    int            owner;
+    user_handle_t  owner;
 };
 
 
@@ -6365,6 +6365,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 516
+#define SERVER_PROTOCOL_VERSION 517
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

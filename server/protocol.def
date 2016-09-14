@@ -3171,7 +3171,7 @@ enum caret_state
     int            changed;        /* did it change since the open? */
 @REPLY
     user_handle_t  viewer;         /* first clipboard viewer */
-    int            owner;          /* is the process already the owner? */
+    user_handle_t  owner;          /* current clipboard owner */
 @END
 
 

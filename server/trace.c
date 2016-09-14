@@ -3752,7 +3752,7 @@ static void dump_close_clipboard_request( const struct close_clipboard_request *
 static void dump_close_clipboard_reply( const struct close_clipboard_reply *req )
 {
     fprintf( stderr, " viewer=%08x", req->viewer );
-    fprintf( stderr, ", owner=%d", req->owner );
+    fprintf( stderr, ", owner=%08x", req->owner );
 }
 
 static void dump_set_clipboard_info_request( const struct set_clipboard_info_request *req )

@@ -546,8 +546,8 @@ BOOL WINAPI OpenClipboard( HWND hwnd )
  */
 BOOL WINAPI CloseClipboard(void)
 {
-    HWND viewer = 0;
-    BOOL ret, owner = FALSE;
+    HWND viewer = 0, owner = 0;
+    BOOL ret;
 
     TRACE("() Changed=%d\n", bCBHasChanged);
 
@@ -565,7 +565,7 @@ BOOL WINAPI CloseClipboard(void)
         if ((ret = !wine_server_call_err( req )))
         {
             viewer = wine_server_ptr_handle( reply->viewer );
-            owner = reply->owner;
+            owner = wine_server_ptr_handle( reply->owner );
         }
     }
     SERVER_END_REQ;
@@ -574,10 +574,10 @@ BOOL WINAPI CloseClipboard(void)
 
     if (bCBHasChanged)
     {
-        if (owner) USER_Driver->pEndClipboardUpdate();
+        USER_Driver->pEndClipboardUpdate();
         bCBHasChanged = FALSE;
     }
-    if (viewer) SendNotifyMessageW( viewer, WM_DRAWCLIPBOARD, (WPARAM)GetClipboardOwner(), 0 );
+    if (viewer) SendNotifyMessageW( viewer, WM_DRAWCLIPBOARD, (WPARAM)owner, 0 );
     return TRUE;
 }
 
