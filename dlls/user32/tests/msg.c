@@ -13909,6 +13909,25 @@ static const struct message NCRBUTTONDOWNSeq[] =
     { 0 }
 };
 
+struct rbuttonup_thread_data
+{
+    HWND hwnd;
+    HANDLE wndproc_finished;
+};
+
+static DWORD CALLBACK post_rbuttonup_msg( void *arg )
+{
+    struct rbuttonup_thread_data *data = arg;
+    DWORD ret;
+
+    ret = WaitForSingleObject( data->wndproc_finished, 500 );
+    todo_wine ok( ret == WAIT_OBJECT_0, "WaitForSingleObject returned %x\n", ret );
+    if( ret == WAIT_OBJECT_0 ) return 0;
+
+    PostMessageA( data->hwnd, WM_RBUTTONUP, 0, 0 );
+    return 0;
+}
+
 static void test_defwinproc(void)
 {
     HWND hwnd;
@@ -13918,6 +13937,8 @@ static void test_defwinproc(void)
     RECT rect;
     INT x, y;
     LRESULT res;
+    struct rbuttonup_thread_data data;
+    HANDLE thread;
 
     hwnd = CreateWindowExA(0, "TestWindowClass", "test_defwndproc",
             WS_VISIBLE | WS_CAPTION | WS_OVERLAPPEDWINDOW, 0,0,500,100,0,0,0, NULL);
@@ -13933,10 +13954,24 @@ static void test_defwinproc(void)
     res = DefWindowProcA( hwnd, WM_NCHITTEST, 0, MAKELPARAM(x, y));
     ok(res == HTCAPTION, "WM_NCHITTEST returned %ld\n", res);
 
+    mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
+    mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
+    flush_events();
+
     flush_sequence();
-    PostMessageA( hwnd, WM_RBUTTONUP, 0, 0);
+    mouse_event( MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0 );
+    /* workaround for missing support for clicking on window frame */
+    data.hwnd = hwnd;
+    data.wndproc_finished = CreateEventA( NULL, FALSE, FALSE, NULL );
+    thread = CreateThread( NULL, 0, post_rbuttonup_msg, (void*)&data, 0, NULL );
+
     DefWindowProcA( hwnd, WM_NCRBUTTONDOWN, HTCAPTION, MAKELPARAM(x, y));
     ok_sequence(NCRBUTTONDOWNSeq, "WM_NCRBUTTONDOWN on caption", FALSE);
+
+    SetEvent( data.wndproc_finished );
+    WaitForSingleObject( thread, 1000 );
+    CloseHandle( data.wndproc_finished );
+    CloseHandle( thread );
 
     SetCursorPos(pos.x, pos.y);
 
