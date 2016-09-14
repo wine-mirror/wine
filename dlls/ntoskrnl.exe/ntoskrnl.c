@@ -48,6 +48,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
+WINE_DECLARE_DEBUG_CHANNEL(plugplay);
 
 BOOLEAN KdDebuggerEnabled = FALSE;
 ULONG InitSafeBootMode = 0;
@@ -75,6 +76,8 @@ static const WCHAR servicesW[] = {'\\','R','e','g','i','s','t','r','y',
                                   '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
                                   '\\','S','e','r','v','i','c','e','s',
                                   '\\',0};
+
+#define MAX_SERVICE_NAME 260
 
 /* tid of the thread running client request */
 static DWORD request_thread;
@@ -2819,10 +2822,192 @@ done:
 }
 
 
+static NTSTATUS WINAPI internal_complete( DEVICE_OBJECT *device, IRP *irp, void *context )
+{
+    SetEvent( irp->UserEvent );
+    return STATUS_MORE_PROCESSING_REQUIRED;
+}
+
+
+static NTSTATUS send_device_irp( DEVICE_OBJECT *device, IRP *irp, ULONG_PTR *info )
+{
+    NTSTATUS status;
+    IO_STACK_LOCATION *irpsp;
+    HANDLE event = CreateEventA( NULL, FALSE, FALSE, NULL );
+    DEVICE_OBJECT *toplevel_device;
+
+    irp->UserEvent = event;
+    irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+    irpsp = IoGetNextIrpStackLocation( irp );
+    irpsp->CompletionRoutine = internal_complete;
+    irpsp->Control = SL_INVOKE_ON_SUCCESS | SL_INVOKE_ON_ERROR | SL_INVOKE_ON_CANCEL;
+
+    toplevel_device = IoGetAttachedDeviceReference( device );
+    status = IoCallDriver( toplevel_device, irp );
+
+    if (status == STATUS_PENDING)
+        WaitForSingleObject( event, INFINITE );
+
+    status = irp->IoStatus.u.Status;
+    if (info)
+        *info = irp->IoStatus.Information;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    ObDereferenceObject( toplevel_device );
+    CloseHandle( event );
+    return status;
+}
+
+
+static NTSTATUS get_device_id( DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WCHAR **id )
+{
+    IO_STACK_LOCATION *irpsp;
+    IO_STATUS_BLOCK irp_status;
+    IRP *irp;
+
+    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_PNP, device, NULL, 0, NULL, NULL, &irp_status )))
+        return STATUS_NO_MEMORY;
+
+    irpsp = IoGetNextIrpStackLocation( irp );
+    irpsp->MinorFunction = IRP_MN_QUERY_ID;
+    irpsp->Parameters.QueryId.IdType = type;
+
+    return send_device_irp( device, irp, (ULONG_PTR *)id );
+}
+
+
+static BOOL get_driver_for_id( const WCHAR *id, WCHAR *driver )
+{
+    static const WCHAR serviceW[] = {'S','e','r','v','i','c','e',0};
+    static const UNICODE_STRING service_str = { sizeof(serviceW) - sizeof(WCHAR), sizeof(serviceW), (WCHAR *)serviceW };
+    static const WCHAR critical_fmtW[] =
+        {'\\','R','e','g','i','s','t','r','y',
+         '\\','M','a','c','h','i','n','e',
+         '\\','S','y','s','t','e','m',
+         '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
+         '\\','C','o','n','t','r','o','l',
+         '\\','C','r','i','t','i','c','a','l','D','e','v','i','c','e','D','a','t','a','b','a','s','e',
+         '\\','%','s',0};
+    WCHAR buffer[FIELD_OFFSET( KEY_VALUE_PARTIAL_INFORMATION, Data[MAX_SERVICE_NAME * sizeof(WCHAR)] )];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING key;
+    NTSTATUS status;
+    HANDLE hkey;
+    WCHAR *keyW;
+    DWORD len;
+
+    if (!(keyW = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(critical_fmtW) + strlenW(id) * sizeof(WCHAR) )))
+        return STATUS_NO_MEMORY;
+
+    sprintfW( keyW, critical_fmtW, id );
+    RtlInitUnicodeString( &key, keyW );
+    InitializeObjectAttributes( &attr, &key, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL );
+
+    status = NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr );
+    RtlFreeUnicodeString( &key );
+    if (status != STATUS_SUCCESS)
+    {
+        TRACE_(plugplay)( "no driver found for %s\n", debugstr_w(id) );
+        return FALSE;
+    }
+
+    status = NtQueryValueKey( hkey, &service_str, KeyValuePartialInformation,
+                              info, sizeof(buffer) - sizeof(WCHAR), &len );
+    NtClose( hkey );
+    if (status != STATUS_SUCCESS || info->Type != REG_SZ)
+    {
+        TRACE_(plugplay)( "no driver found for %s\n", debugstr_w(id) );
+        return FALSE;
+    }
+
+    memcpy( driver, info->Data, info->DataLength );
+    driver[ info->DataLength / sizeof(WCHAR) ] = 0;
+    TRACE_(plugplay)( "found driver %s for %s\n", debugstr_w(driver), debugstr_w(id) );
+    return TRUE;
+}
+
+
+static void handle_bus_relations( DEVICE_OBJECT *device )
+{
+    static const WCHAR driverW[] = {'\\','D','r','i','v','e','r','\\',0};
+    WCHAR buffer[MAX_SERVICE_NAME + sizeof(servicesW)/sizeof(WCHAR)];
+    WCHAR driver[MAX_SERVICE_NAME] = {0};
+    DRIVER_OBJECT *driver_obj;
+    UNICODE_STRING string;
+    WCHAR *ids, *ptr;
+    NTSTATUS status;
+
+    TRACE_(plugplay)( "(%p)\n", device );
+
+    /* We could (should?) do a full IRP_MN_QUERY_DEVICE_RELATIONS query,
+     * but we don't have to, we have the DEVICE_OBJECT of the new device
+     * so we can simply handle the process here */
+
+    status = get_device_id( device, BusQueryCompatibleIDs, &ids );
+    if (status != STATUS_SUCCESS || !ids)
+    {
+        ERR_(plugplay)( "Failed to get device IDs\n" );
+        return;
+    }
+
+    for (ptr = ids; *ptr; ptr += strlenW(ptr) + 1)
+    {
+        if (get_driver_for_id( ptr, driver ))
+            break;
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, ids );
+
+    if (!driver[0])
+    {
+        ERR_(plugplay)( "No matching driver found for device\n" );
+        return;
+    }
+
+    strcpyW( buffer, servicesW );
+    strcatW( buffer, driver );
+    RtlInitUnicodeString( &string, buffer );
+    if (ZwLoadDriver( &string ) != STATUS_SUCCESS)
+    {
+        ERR_(plugplay)( "Failed to load driver %s\n", debugstr_w(driver) );
+        return;
+    }
+
+    strcpyW( buffer, driverW );
+    strcatW( buffer, driver );
+    RtlInitUnicodeString( &string, buffer );
+    if (ObReferenceObjectByName( &string, OBJ_CASE_INSENSITIVE, NULL,
+                                 0, NULL, KernelMode, NULL, (void **)&driver_obj ) != STATUS_SUCCESS)
+    {
+        ERR_(plugplay)( "Failed to locate loaded driver %s\n", debugstr_w(driver) );
+        return;
+    }
+
+    if (driver_obj->DriverExtension->AddDevice)
+        status = driver_obj->DriverExtension->AddDevice( driver_obj, device );
+    else
+        status = STATUS_NOT_IMPLEMENTED;
+
+    ObDereferenceObject( driver_obj );
+
+    if (status != STATUS_SUCCESS)
+        ERR_(plugplay)( "AddDevice failed for driver %s\n", debugstr_w(driver) );
+}
+
+
 /***********************************************************************
  *           IoInvalidateDeviceRelations (NTOSKRNL.EXE.@)
  */
 void WINAPI IoInvalidateDeviceRelations( DEVICE_OBJECT *device_object, DEVICE_RELATION_TYPE type )
 {
-    FIXME( "(%p, %i): stub\n", device_object, type );
+    TRACE( "(%p, %i)\n", device_object, type );
+
+    switch (type)
+    {
+        case BusRelations:
+            handle_bus_relations( device_object );
+            break;
+        default:
+            FIXME( "unhandled relation %i\n", type );
+            break;
+    }
 }
