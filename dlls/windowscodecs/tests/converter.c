@@ -323,6 +323,18 @@ static const float bits_32bppGrayFloat[] = {
 static const struct bitmap_data testdata_32bppGrayFloat = {
     &GUID_WICPixelFormat32bppGrayFloat, 32, (const BYTE *)bits_32bppGrayFloat, 4, 2, 96.0, 96.0, &testdata_32bppGrayFloat_xp};
 
+static const BYTE bits_8bppGray_xp[] = {
+    29,150,76,0,
+    226,105,179,255};
+static const struct bitmap_data testdata_8bppGray_xp = {
+    &GUID_WICPixelFormat8bppGray, 8, bits_8bppGray_xp, 4, 2, 96.0, 96.0};
+
+static const BYTE bits_8bppGray[] = {
+    76,220,127,0,
+    247,145,230,255};
+static const struct bitmap_data testdata_8bppGray = {
+    &GUID_WICPixelFormat8bppGray, 8, bits_8bppGray, 4, 2, 96.0, 96.0, &testdata_8bppGray_xp};
+
 static void test_conversion(const struct bitmap_data *src, const struct bitmap_data *dst, const char *name, BOOL todo)
 {
     BitmapTestSrc *src_obj;
@@ -765,6 +777,9 @@ START_TEST(converter)
 
     test_conversion(&testdata_24bppRGB, &testdata_32bppGrayFloat, "24bppRGB -> 32bppGrayFloat", FALSE);
     test_conversion(&testdata_32bppBGR, &testdata_32bppGrayFloat, "32bppBGR -> 32bppGrayFloat", FALSE);
+
+    test_conversion(&testdata_24bppBGR, &testdata_8bppGray, "24bppBGR -> 8bppGray", FALSE);
+    test_conversion(&testdata_32bppBGR, &testdata_8bppGray, "32bppBGR -> 8bppGray", FALSE);
 
     test_invalid_conversion();
     test_default_converter();

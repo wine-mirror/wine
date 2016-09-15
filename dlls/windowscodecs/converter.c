@@ -1,5 +1,6 @@
 /*
  * Copyright 2009 Vincent Povirk
+ * Copyright 2016 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,6 +20,7 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <math.h>
 
 #define COBJMACROS
 
@@ -77,6 +79,55 @@ typedef struct FormatConverter {
     WICBitmapPaletteType palette_type;
     CRITICAL_SECTION lock; /* must be held when initialized */
 } FormatConverter;
+
+/* https://www.w3.org/Graphics/Color/srgb */
+static inline float from_sRGB_component(float f)
+{
+    if (f <= 0.04045f) return f / 12.92f;
+    return powf((f + 0.055f) / 1.055f, 2.4f);
+}
+
+static inline float to_sRGB_component(float f)
+{
+    if (f <= 0.0031308f) return 12.92f * f;
+    return 1.055f * powf(f, 1.0f/2.4f) - 0.055f;
+}
+
+#if 0 /* FIXME: enable once needed */
+static void from_sRGB(BYTE *bgr)
+{
+    float r, g, b;
+
+    r = bgr[2] / 255.0f;
+    g = bgr[1] / 255.0f;
+    b = bgr[0] / 255.0f;
+
+    r = from_sRGB_component(r);
+    g = from_sRGB_component(g);
+    b = from_sRGB_component(b);
+
+    bgr[2] = (BYTE)(r * 255.0f);
+    bgr[1] = (BYTE)(g * 255.0f);
+    bgr[0] = (BYTE)(b * 255.0f);
+}
+
+static void to_sRGB(BYTE *bgr)
+{
+    float r, g, b;
+
+    r = bgr[2] / 255.0f;
+    g = bgr[1] / 255.0f;
+    b = bgr[0] / 255.0f;
+
+    r = to_sRGB_component(r);
+    g = to_sRGB_component(g);
+    b = to_sRGB_component(b);
+
+    bgr[2] = (BYTE)(r * 255.0f);
+    bgr[1] = (BYTE)(g * 255.0f);
+    bgr[0] = (BYTE)(b * 255.0f);
+}
+#endif
 
 static inline FormatConverter *impl_from_IWICFormatConverter(IWICFormatConverter *iface)
 {
@@ -1040,6 +1091,54 @@ static HRESULT copypixels_to_32bppGrayFloat(struct FormatConverter *This, const 
     return hr;
 }
 
+static HRESULT copypixels_to_8bppGray(struct FormatConverter *This, const WICRect *prc,
+    UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer, enum pixelformat source_format)
+{
+    HRESULT hr;
+    BYTE *srcdata;
+    UINT srcstride, srcdatasize;
+
+    if (source_format == format_8bppGray)
+    {
+        if (prc)
+            return IWICBitmapSource_CopyPixels(This->source, prc, cbStride, cbBufferSize, pbBuffer);
+
+        return S_OK;
+    }
+
+    srcstride = 3 * prc->Width;
+    srcdatasize = srcstride * prc->Height;
+
+    srcdata = HeapAlloc(GetProcessHeap(), 0, srcdatasize);
+    if (!srcdata) return E_OUTOFMEMORY;
+
+    hr = copypixels_to_24bppBGR(This, prc, srcstride, srcdatasize, srcdata, source_format);
+    if (SUCCEEDED(hr) && prc)
+    {
+        INT x, y;
+        BYTE *src = srcdata, *dst = pbBuffer;
+
+        for (y = 0; y < prc->Height; y++)
+        {
+            BYTE *bgr = src;
+
+            for (x = 0; x < prc->Width; x++)
+            {
+                float gray = (bgr[2] * 0.2126f + bgr[1] * 0.7152f + bgr[0] * 0.0722f) / 255.0f;
+
+                gray = to_sRGB_component(gray) * 255.0f;
+                dst[x] = (BYTE)floorf(gray + 0.51f);
+                bgr += 3;
+            }
+            src += srcstride;
+            dst += cbStride;
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, srcdata);
+    return hr;
+}
+
 static const struct pixelformatinfo supported_formats[] = {
     {format_1bppIndexed, &GUID_WICPixelFormat1bppIndexed, NULL},
     {format_2bppIndexed, &GUID_WICPixelFormat2bppIndexed, NULL},
@@ -1048,7 +1147,7 @@ static const struct pixelformatinfo supported_formats[] = {
     {format_BlackWhite, &GUID_WICPixelFormatBlackWhite, NULL},
     {format_2bppGray, &GUID_WICPixelFormat2bppGray, NULL},
     {format_4bppGray, &GUID_WICPixelFormat4bppGray, NULL},
-    {format_8bppGray, &GUID_WICPixelFormat8bppGray, NULL},
+    {format_8bppGray, &GUID_WICPixelFormat8bppGray, copypixels_to_8bppGray},
     {format_16bppGray, &GUID_WICPixelFormat16bppGray, NULL},
     {format_16bppBGR555, &GUID_WICPixelFormat16bppBGR555, NULL},
     {format_16bppBGR565, &GUID_WICPixelFormat16bppBGR565, NULL},
