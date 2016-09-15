@@ -969,6 +969,49 @@ static HRESULT copypixels_to_24bppBGR(struct FormatConverter *This, const WICRec
             return res;
         }
         return S_OK;
+
+    case format_32bppGrayFloat:
+        if (prc)
+        {
+            BYTE *srcdata;
+            UINT srcstride, srcdatasize;
+
+            srcstride = 4 * prc->Width;
+            srcdatasize = srcstride * prc->Height;
+
+            srcdata = HeapAlloc(GetProcessHeap(), 0, srcdatasize);
+            if (!srcdata) return E_OUTOFMEMORY;
+
+            hr = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+
+            if (SUCCEEDED(hr))
+            {
+                INT x, y;
+                BYTE *src = srcdata, *dst = pbBuffer;
+
+                for (y = 0; y < prc->Height; y++)
+                {
+                    float *gray_float = (float *)src;
+                    BYTE *bgr = dst;
+
+                    for (x = 0; x < prc->Width; x++)
+                    {
+                        BYTE gray = (BYTE)floorf(to_sRGB_component(gray_float[x]) * 255.0f + 0.51f);
+                        *bgr++ = gray;
+                        *bgr++ = gray;
+                        *bgr++ = gray;
+                    }
+                    src += srcstride;
+                    dst += cbStride;
+                }
+            }
+
+            HeapFree(GetProcessHeap(), 0, srcdata);
+
+            return hr;
+        }
+        return S_OK;
+
     default:
         FIXME("Unimplemented conversion path!\n");
         return WINCODEC_ERR_UNSUPPORTEDOPERATION;
