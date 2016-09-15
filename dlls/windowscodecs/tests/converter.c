@@ -196,6 +196,29 @@ static void DeleteTestBitmap(BitmapTestSrc *This)
     HeapFree(GetProcessHeap(), 0, This);
 }
 
+static BOOL compare_bits(const struct bitmap_data *expect, UINT buffersize, const BYTE *converted_bits)
+{
+    BOOL equal;
+
+    if (IsEqualGUID(expect->format, &GUID_WICPixelFormat32bppBGR))
+    {
+        /* ignore the padding byte when comparing data */
+        UINT i;
+        const DWORD *a=(const DWORD*)expect->bits, *b=(const DWORD*)converted_bits;
+        equal=TRUE;
+        for (i=0; i<(buffersize/4); i++)
+            if ((a[i]&0xffffff) != (b[i]&0xffffff))
+            {
+                equal = FALSE;
+                break;
+            }
+    }
+    else
+        equal = (memcmp(expect->bits, converted_bits, buffersize) == 0);
+
+    return equal;
+}
+
 static void compare_bitmap_data(const struct bitmap_data *expect, IWICBitmapSource *source, const char *name)
 {
     BYTE *converted_bits;
@@ -231,42 +254,13 @@ static void compare_bitmap_data(const struct bitmap_data *expect, IWICBitmapSour
     converted_bits = HeapAlloc(GetProcessHeap(), 0, buffersize);
     hr = IWICBitmapSource_CopyPixels(source, &prc, stride, buffersize, converted_bits);
     ok(SUCCEEDED(hr), "CopyPixels(%s) failed, hr=%x\n", name, hr);
-    if (IsEqualGUID(expect->format, &GUID_WICPixelFormat32bppBGR))
-    {
-        /* ignore the padding byte when comparing data */
-        UINT i;
-        BOOL equal=TRUE;
-        const DWORD *a=(const DWORD*)expect->bits, *b=(const DWORD*)converted_bits;
-        for (i=0; i<(buffersize/4); i++)
-            if ((a[i]&0xffffff) != (b[i]&0xffffff))
-            {
-                equal = FALSE;
-                break;
-            }
-        ok(equal, "unexpected pixel data (%s)\n", name);
-    }
-    else
-        ok(memcmp(expect->bits, converted_bits, buffersize) == 0, "unexpected pixel data (%s)\n", name);
+    ok(compare_bits(expect, buffersize, converted_bits), "unexpected pixel data (%s)\n", name);
 
     /* Test with NULL rectangle - should copy the whole bitmap */
+    memset(converted_bits, 0xaa, buffersize);
     hr = IWICBitmapSource_CopyPixels(source, NULL, stride, buffersize, converted_bits);
     ok(SUCCEEDED(hr), "CopyPixels(%s,rc=NULL) failed, hr=%x\n", name, hr);
-    if (IsEqualGUID(expect->format, &GUID_WICPixelFormat32bppBGR))
-    {
-        /* ignore the padding byte when comparing data */
-        UINT i;
-        BOOL equal=TRUE;
-        const DWORD *a=(const DWORD*)expect->bits, *b=(const DWORD*)converted_bits;
-        for (i=0; i<(buffersize/4); i++)
-            if ((a[i]&0xffffff) != (b[i]&0xffffff))
-            {
-                equal = FALSE;
-                break;
-            }
-        ok(equal, "unexpected pixel data with rc=NULL (%s)\n", name);
-    }
-    else
-        ok(memcmp(expect->bits, converted_bits, buffersize) == 0, "unexpected pixel data with rc=NULL (%s)\n", name);
+    ok(compare_bits(expect, buffersize, converted_bits), "unexpected pixel data (%s)\n", name);
 
     HeapFree(GetProcessHeap(), 0, converted_bits);
 }
