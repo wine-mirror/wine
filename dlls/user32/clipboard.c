@@ -290,33 +290,33 @@ static HANDLE render_synthesized_dib( HANDLE data, UINT format, UINT from )
 
     if (from == CF_BITMAP)
     {
-        BITMAP bmp;
+        BITMAPV5HEADER header;
 
-        if (!GetObjectW( data, sizeof(bmp), &bmp )) goto done;
+        memset( &header, 0, sizeof(header) );
+        header.bV5Size = (format == CF_DIBV5) ? sizeof(BITMAPV5HEADER) : sizeof(BITMAPINFOHEADER);
+        if (!GetDIBits( hdc, data, 0, 0, NULL, (BITMAPINFO *)&header, DIB_RGB_COLORS )) goto done;
 
-        bits_size = abs( bmp.bmHeight ) * (((bmp.bmWidth * bmp.bmBitsPixel + 31) / 8) & ~3);
-        if (bmp.bmBitsPixel <= 8)
-            header_size = offsetof( BITMAPINFO, bmiColors[1 << bmp.bmBitsPixel] );
-        else
-            header_size = (format == CF_DIBV5) ? sizeof(BITMAPV5HEADER) : sizeof(BITMAPINFOHEADER);
-
-        if (!(ret = GlobalAlloc( GMEM_FIXED, header_size + bits_size ))) goto done;
+        header_size = bitmap_info_size( (BITMAPINFO *)&header, DIB_RGB_COLORS );
+        if (!(ret = GlobalAlloc( GMEM_FIXED, header_size + header.bV5SizeImage ))) goto done;
         bmi = (BITMAPINFO *)ret;
         memset( bmi, 0, header_size );
-        bmi->bmiHeader.biSize        = header_size;
-        bmi->bmiHeader.biWidth       = bmp.bmWidth;
-        bmi->bmiHeader.biHeight      = bmp.bmHeight;
-        bmi->bmiHeader.biPlanes      = 1;
-        bmi->bmiHeader.biBitCount    = bmp.bmBitsPixel;
-        bmi->bmiHeader.biCompression = BI_RGB;
-        GetDIBits( hdc, data, 0, bmp.bmHeight, (char *)bmi + header_size, bmi, DIB_RGB_COLORS );
+        memcpy( bmi, &header, header.bV5Size );
+        GetDIBits( hdc, data, 0, abs(header.bV5Height), (char *)bmi + header_size, bmi, DIB_RGB_COLORS );
     }
     else
     {
+        SIZE_T size = GlobalSize( data );
+
+        if (size < sizeof(*bmi)) goto done;
         if (!(src = GlobalLock( data ))) goto done;
 
         src_size = bitmap_info_size( src, DIB_RGB_COLORS );
-        bits_size = GlobalSize( data ) - src_size;
+        if (size <= src_size)
+        {
+            GlobalUnlock( data );
+            goto done;
+        }
+        bits_size = size - src_size;
         header_size = (format == CF_DIBV5) ? sizeof(BITMAPV5HEADER) :
             offsetof( BITMAPINFO, bmiColors[src->bmiHeader.biCompression == BI_BITFIELDS ? 3 : 0] );
 
