@@ -2927,6 +2927,44 @@ static BOOL get_driver_for_id( const WCHAR *id, WCHAR *driver )
 }
 
 
+static NTSTATUS send_pnp_irp( DEVICE_OBJECT *device, UCHAR minor )
+{
+    IO_STACK_LOCATION *irpsp;
+    IO_STATUS_BLOCK irp_status;
+    IRP *irp;
+
+    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_PNP, device, NULL, 0, NULL, NULL, &irp_status )))
+        return STATUS_NO_MEMORY;
+
+    irpsp = IoGetNextIrpStackLocation( irp );
+    irpsp->MinorFunction = minor;
+
+    irpsp->Parameters.StartDevice.AllocatedResources = NULL;
+    irpsp->Parameters.StartDevice.AllocatedResourcesTranslated = NULL;
+
+    return send_device_irp( device, irp, NULL );
+}
+
+
+static NTSTATUS send_power_irp( DEVICE_OBJECT *device, DEVICE_POWER_STATE power )
+{
+    IO_STATUS_BLOCK irp_status;
+    IO_STACK_LOCATION *irpsp;
+    IRP *irp;
+
+    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_POWER, device, NULL, 0, NULL, NULL, &irp_status )))
+        return STATUS_NO_MEMORY;
+
+    irpsp = IoGetNextIrpStackLocation( irp );
+    irpsp->MinorFunction = IRP_MN_SET_POWER;
+
+    irpsp->Parameters.Power.Type = DevicePowerState;
+    irpsp->Parameters.Power.State.DeviceState = power;
+
+    return send_device_irp( device, irp, NULL );
+}
+
+
 static void handle_bus_relations( DEVICE_OBJECT *device )
 {
     static const WCHAR driverW[] = {'\\','D','r','i','v','e','r','\\',0};
@@ -2990,7 +3028,13 @@ static void handle_bus_relations( DEVICE_OBJECT *device )
     ObDereferenceObject( driver_obj );
 
     if (status != STATUS_SUCCESS)
+    {
         ERR_(plugplay)( "AddDevice failed for driver %s\n", debugstr_w(driver) );
+        return;
+    }
+
+    send_pnp_irp( device, IRP_MN_START_DEVICE );
+    send_power_irp( device, PowerDeviceD0 );
 }
 
 
