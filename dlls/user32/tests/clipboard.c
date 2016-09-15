@@ -1600,7 +1600,7 @@ static BOOL is_freed( HANDLE handle )
 static UINT format_id;
 static HBITMAP bitmap, bitmap2;
 static HPALETTE palette;
-static const LOGPALETTE logpalette = { 0x300, 1 };
+static const LOGPALETTE logpalette = { 0x300, 1, {{ 0x12, 0x34, 0x56, 0x78 }}};
 
 static void test_handles( HWND hwnd )
 {
@@ -1609,6 +1609,7 @@ static void test_handles( HWND hwnd )
     UINT format_id2 = RegisterClipboardFormatA( "another format" );
     BOOL r;
     HANDLE data;
+    HBITMAP bitmap_temp;
     DWORD process;
     BOOL is_owner = (GetWindowThreadProcessId( hwnd, &process ) && process == GetCurrentProcessId());
 
@@ -1648,9 +1649,14 @@ static void test_handles( HWND hwnd )
     h = SetClipboardData( format_id, htext2 );
     ok( h == htext2, "got %p\n", h );
     ok( is_moveable( h ), "expected moveable mem %p\n", h );
+    bitmap_temp = CreateBitmap( 10, 10, 1, 1, NULL );
+    h = SetClipboardData( CF_BITMAP, bitmap_temp );
+    ok( h == bitmap_temp, "got %p\n", h );
+    ok( GetObjectType( h ) == OBJ_BITMAP, "expected bitmap %p\n", h );
     h = SetClipboardData( CF_BITMAP, bitmap );
     ok( h == bitmap, "got %p\n", h );
     ok( GetObjectType( h ) == OBJ_BITMAP, "expected bitmap %p\n", h );
+    ok( !GetObjectType( bitmap_temp ), "expected free object %p\n", bitmap_temp );
     h = SetClipboardData( CF_DSPBITMAP, bitmap2 );
     ok( h == bitmap2, "got %p\n", h );
     ok( GetObjectType( h ) == OBJ_BITMAP, "expected bitmap %p\n", h );
@@ -1923,6 +1929,9 @@ static void test_handles_process( const char *str )
     BOOL r;
     HANDLE h;
     char *ptr;
+    BITMAP bm;
+    PALETTEENTRY entry;
+    BYTE buffer[1024];
 
     format_id = RegisterClipboardFormatA( "my_cool_clipboard_format" );
     r = OpenClipboard( 0 );
@@ -1951,13 +1960,44 @@ static void test_handles_process( const char *str )
     trace( "private %p\n", h );
     h = GetClipboardData( CF_BITMAP );
     todo_wine ok( GetObjectType( h ) == OBJ_BITMAP, "expected bitmap %p\n", h );
+    todo_wine ok( GetObjectW( h, sizeof(bm), &bm ) == sizeof(bm), "GetObject %p failed\n", h );
+    todo_wine ok( bm.bmWidth == 13 && bm.bmHeight == 17, "wrong bitmap %ux%u\n", bm.bmWidth, bm.bmHeight );
     trace( "bitmap %p\n", h );
     h = GetClipboardData( CF_DSPBITMAP );
     ok( !GetObjectType( h ), "expected invalid object %p\n", h );
     trace( "bitmap2 %p\n", h );
     h = GetClipboardData( CF_PALETTE );
     todo_wine ok( GetObjectType( h ) == OBJ_PAL, "expected palette %p\n", h );
+    todo_wine ok( GetPaletteEntries( h, 0, 1, &entry ) == 1, "GetPaletteEntries %p failed\n", h );
+    todo_wine ok( entry.peRed == 0x12 && entry.peGreen == 0x34 && entry.peBlue == 0x56,
+        "wrong color %02x,%02x,%02x\n", entry.peRed, entry.peGreen, entry.peBlue );
     trace( "palette %p\n", h );
+    h = GetClipboardData( CF_METAFILEPICT );
+    todo_wine ok( is_fixed( h ), "expected fixed mem %p\n", h );
+    if (h)
+    ok( GetObjectType( ((METAFILEPICT *)h)->hMF ) == OBJ_METAFILE,
+        "wrong object %p\n", ((METAFILEPICT *)h)->hMF );
+    trace( "metafile %p\n", h );
+    h = GetClipboardData( CF_DSPMETAFILEPICT );
+    todo_wine ok( is_fixed( h ), "expected fixed mem %p\n", h );
+    if (h)
+    ok( GetObjectType( ((METAFILEPICT *)h)->hMF ) == OBJ_METAFILE,
+        "wrong object %p\n", ((METAFILEPICT *)h)->hMF );
+    trace( "metafile2 %p\n", h );
+    h = GetClipboardData( CF_ENHMETAFILE );
+    todo_wine ok( GetObjectType( h ) == OBJ_ENHMETAFILE, "expected enhmetafile %p\n", h );
+    todo_wine ok( GetEnhMetaFileBits( h, sizeof(buffer), buffer ) > sizeof(ENHMETAHEADER),
+        "GetEnhMetaFileBits failed on %p\n", h );
+    todo_wine ok( ((ENHMETAHEADER *)buffer)->nRecords == 3,
+        "wrong records %u\n", ((ENHMETAHEADER *)buffer)->nRecords );
+    trace( "enhmetafile %p\n", h );
+    h = GetClipboardData( CF_DSPENHMETAFILE );
+    todo_wine ok( GetObjectType( h ) == OBJ_ENHMETAFILE, "expected enhmetafile %p\n", h );
+    todo_wine ok( GetEnhMetaFileBits( h, sizeof(buffer), buffer ) > sizeof(ENHMETAHEADER),
+        "GetEnhMetaFileBits failed on %p\n", h );
+    todo_wine ok( ((ENHMETAHEADER *)buffer)->nRecords == 3,
+        "wrong records %u\n", ((ENHMETAHEADER *)buffer)->nRecords );
+    trace( "enhmetafile2 %p\n", h );
     h = GetClipboardData( CF_DIB );
     todo_wine ok( is_fixed( h ), "expected fixed mem %p\n", h );
     h = GetClipboardData( CF_DIBV5 );
@@ -1980,12 +2020,28 @@ static void test_handles_process_open( const char *str )
     ok( is_moveable( h ), "expected moveable mem %p\n", h );
 }
 
+static void test_handles_process_dib( const char *str )
+{
+    BOOL r;
+    HANDLE h;
+
+    r = OpenClipboard( 0 );
+    ok( r, "gle %d\n", GetLastError() );
+    h = GetClipboardData( CF_BITMAP );
+    ok( !GetObjectType( h ), "expected invalid object %p\n", h );
+    trace( "dibsection %p\n", h );
+    r = CloseClipboard();
+    ok( r, "gle %d\n", GetLastError() );
+}
+
 static void test_data_handles(void)
 {
     BOOL r;
     char *ptr;
     HANDLE h, text;
     HWND hwnd = CreateWindowA( "static", NULL, WS_POPUP, 0, 0, 10, 10, 0, 0, 0, NULL );
+    BITMAPINFO bmi;
+    void *bits;
 
     ok( hwnd != 0, "window creation failed\n" );
     format_id = RegisterClipboardFormatA( "my_cool_clipboard_format" );
@@ -1994,7 +2050,7 @@ static void test_data_handles(void)
     test_handles( hwnd );
     run_thread( test_handles_thread, hwnd, __LINE__ );
 
-    bitmap = CreateBitmap( 10, 10, 1, 1, NULL );
+    bitmap = CreateBitmap( 13, 17, 1, 1, NULL );
     bitmap2 = CreateBitmap( 10, 10, 1, 1, NULL );
     palette = CreatePalette( &logpalette );
 
@@ -2012,6 +2068,18 @@ static void test_data_handles(void)
     ok( GetObjectType( h ) == OBJ_BITMAP, "expected bitmap %p\n", h );
     h = SetClipboardData( CF_PALETTE, palette );
     ok( GetObjectType( h ) == OBJ_PAL, "expected palette %p\n", h );
+    h = SetClipboardData( CF_METAFILEPICT, create_metafile() );
+    ok( is_moveable( h ), "expected moveable mem %p\n", h );
+    trace( "metafile %p\n", h );
+    h = SetClipboardData( CF_DSPMETAFILEPICT, create_metafile() );
+    ok( is_moveable( h ), "expected moveable mem %p\n", h );
+    trace( "metafile2 %p\n", h );
+    h = SetClipboardData( CF_ENHMETAFILE, create_emf() );
+    ok( GetObjectType( h ) == OBJ_ENHMETAFILE, "expected enhmetafile %p\n", h );
+    trace( "enhmetafile %p\n", h );
+    h = SetClipboardData( CF_DSPENHMETAFILE, create_emf() );
+    ok( GetObjectType( h ) == OBJ_ENHMETAFILE, "expected enhmetafile %p\n", h );
+    trace( "enhmetafile2 %p\n", h );
     h = SetClipboardData( CF_GDIOBJFIRST + 3, create_textA() );
     ok( is_moveable( h ), "expected moveable mem %p\n", h );
     h = SetClipboardData( CF_PRIVATEFIRST + 7, create_textA() );
@@ -2054,6 +2122,36 @@ static void test_data_handles(void)
     todo_wine ok( is_fixed( h ), "expected free mem %p\n", h );
     ok( is_freed( text ) || broken( is_moveable(text) ), /* w2003, w2008 */
         "expected free mem %p\n", text );
+    r = CloseClipboard();
+    ok( r, "gle %d\n", GetLastError() );
+
+    /* test CF_BITMAP with a DIB section */
+    memset( &bmi, 0, sizeof(bmi) );
+    bmi.bmiHeader.biSize = sizeof( bmi.bmiHeader );
+    bmi.bmiHeader.biWidth = 29;
+    bmi.bmiHeader.biHeight = 13;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bitmap = CreateDIBSection( 0, &bmi, DIB_RGB_COLORS, &bits, 0, 0 );
+
+    r = OpenClipboard( hwnd );
+    ok( r, "gle %d\n", GetLastError() );
+    r = EmptyClipboard();
+    ok( r, "gle %d\n", GetLastError() );
+    h = SetClipboardData( CF_BITMAP, bitmap );
+    ok( GetObjectType( h ) == OBJ_BITMAP, "expected bitmap %p\n", h );
+    trace( "dibsection %p\n", h );
+    r = CloseClipboard();
+    ok( r, "gle %d\n", GetLastError() );
+
+    run_process( "handles_dib dummy" );
+
+    r = OpenClipboard( hwnd );
+    ok( r, "gle %d\n", GetLastError() );
+    ok( GetObjectType( bitmap ) == OBJ_BITMAP, "expected bitmap %p\n", bitmap );
+    r = EmptyClipboard();
+    ok( r, "gle %d\n", GetLastError() );
+    ok( !GetObjectType( bitmap ), "expected deleted %p\n", bitmap );
     r = CloseClipboard();
     ok( r, "gle %d\n", GetLastError() );
 
@@ -2200,6 +2298,11 @@ START_TEST(clipboard)
     if (argc == 4 && !strcmp( argv[2], "handles_open" ))
     {
         test_handles_process_open( argv[3] );
+        return;
+    }
+    if (argc == 4 && !strcmp( argv[2], "handles_dib" ))
+    {
+        test_handles_process_dib( argv[3] );
         return;
     }
 
