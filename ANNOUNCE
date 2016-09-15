@@ -1,13 +1,12 @@
-The Wine maintenance release 1.8.4 is now available.
+The Wine maintenance release 1.8.5 is now available.
 
 What's new in this release (see below for details):
   - Various bug fixes.
-  - A few more cards added to the GPU description table.
 
 The source is available from the following locations:
 
-  http://dl.winehq.org/wine/source/1.8/wine-1.8.4.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/1.8/wine-1.8.4.tar.bz2
+  http://dl.winehq.org/wine/source/1.8/wine-1.8.5.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.8/wine-1.8.5.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -23,193 +22,182 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.8.4 (total 50):
+Bugs fixed in 1.8.5 (total 58):
 
-  18745  64-bit Mortal Kombat X crashes on unimplemented function KERNEL32.dll.GetLargePageMinimum
-  20977  Bad hlp table rendering
-  22819  Some applications like Heroes of Might and Magic 2 display loopback.
-  25396  Safrosoft RoX freezes at start.
-  26268  Multiple applications need ntdll.ZwSetLdtEntries stub (kwiksupport.me, Ragnarok Online patcher)
-  26965  Dragon Age 2 demo - sound in cutscenes is muffled
-  27680  Multiple 64-bit applications crash on startup (violation of the Windows 64-bit ABI, stack pointer (RSP) must be 16-byte aligned when making a call to Win64 API)
-  28082  OCCT Perestroïka needs hal.dll.READ_PORT_ULONG
-  34052  The Witcher: Character models are sometimes invisible
-  36556  valgrind shows a definite leak in comctl32/tests/syslink.c
-  36838  TOCA Touring Car Championship: installer copies one file from CD and then shows an error
-  37063  NTLM EncryptMessage/DecryptMessage failure
-  37090  Multiple applications crash with built-in amstream (Shogun: Total War, Medieval: Total War)
-  37271  Applications get IP address of 127.12.34.56 when lo0 is up on OSX
-  38102  Process Hacker 2.x needs winsta.dll.WinStationEnumerateW
-  38137  WBaduk: "Could not obtain OLE control window handle" regression
-  38811  Java JRE 8 installer 'jre-8uXX-windows-i586.exe' crashes on startup (GetThreadPreferredUILanguages is a stub)
-  38962  expr.c:234 and 235 attempted computation of 1 << 31 should be 1u << 31
-  39543  Multiple games and applications crash on unimplemented function KERNEL32.dll.FreeUserPhysicalPages (Microsoft Office 2007 diagnosis service, Eden Eternal)
-  39579  iNode 3.6 client needs ndis.sys.NdisAllocateMemoryWithTag
-  39842  Skype for windows doesn't work (needs ndis.sys.NdisSystemProcessorCount)
-  39911  dxd9 PresentationInterval not propagated on device Reset
-  39933  iNode 3.6 client needs ndis.sys.NdisAllocateSpinLock
-  40048  Camtasia Studio 8 : crashes on unimplemented function dwmapi.dll.DwmSetPresentParameters
-  40301  wxDatePickerCtrl (wxWidgets) generates an assert on DTM_GETRANGE message result
-  40380  Wine should take dosbox's configuration instead of creating a new one
-  40389  cmd.exe (native): Unimplemented function KERNEL32.dll.GetConsoleAliasExesLengthW
-  40487  3dmark Vantage Benchmark: unimplemented functions hal.dll.READ and WRITE PORT
-  40497  "Trainz: A New Era" needs msvcr120.dll.?__ExceptionPtrToBool@@YA_NPEBX@Z
-  40511  Application that copies files from one place to another stoped working in wine versions greater then 1.6.2
-  40532  Microsoft Word Viewer 11.8 does not show text on file properties dialog until the text is selected
-  40557  KSP Trajectory Optimization Tool (MATLAB Runtime (MCR)) crashes at launch
-  40562  AkelPad: [ToolBar plugin] tooltips for toolbar buttons have some extra text
-  40581  Regression: dsound input recording from microphone lags with 2 seconds delay
-  40614  Cisco Jabber 11.6 crashes due to missing dbghelp.dll.EnumerateLoadedModulesExW
-  40618  Autodesk 123D Design needs msvcr100.dll.mbsrtowcs_s
-  40659  Window with CS_OWNDC style cause DC leak when GetDC/ReleaseDC is used.
-  40691  DVDFab 9.2.4.4 pre-check FabCheck.exe executable fails, needs setupapi.dll.CM_Get_DevNode_Status
-  40745  Python 3.5.1 interpreter crashes, needs _set_thread_local_invalid_parameter_handler
-  40747  Microsoft Expression Web 4 crashes on startup, needs gdiplus.dll.GdipGetImageAttributesAdjustedPalette
-  40754  GOG Galaxy crashes with unimplemented function api-ms-win-crt-locale-l1-1-0.dll._lock_locales
-  40755  GOG Galaxy crashes with unimplemented function ucrtbase.dll._lock_locales
-  40756  GOG Galaxy crashes with unimplemented function api-ms-win-crt-heap-l1-1-0.dll._calloc_base
-  40770  Nvidia GeForce GT 730 not recognized properly
-  40796  Python 3.5.1 interpreter crashes when importing pyqtSlot
-  40830  Conflict between kVK_RightCommand and macOS 10.12 Sierra in carbon framework
-  40833  Batman: Arkham Origins Blackgate no sound during gameplay (except cutscenes)
-  40851  macOS 10.12 Build Failure in winspool.drv with cupsGetPPD
-  40923  Alone in the Dark (2008) crashes on launch with msvcrt assertion
-  41132  Specific font files can cause Steam to crash unexpectedly
+  16971  Windows Movie Maker 2.x needs ole32.dll.StgOpenPropStg
+  19538  Microsoft Publisher 2007 and 2010 crash when opening documents/templates (TSF manager 'ITextStoreACPSink' must support QI with 'IID_ITextStoreACPServices')
+  20896  Use-after-free in DdeClientTransaction in user32 dde tests
+  23298  Windows utility 'relog.exe' crashes on unimplemented function 'pdh.dll.PdhGetLogFileTypeW'
+  24645  PDF Factory 3.x/4.x installer fails to install printer drivers (winspool.SetPrinterW lacks support for level 8, global default printer settings)
+  31693  CAPCOM games using gamepad start with axes X/Y pressed up/left
+  31913  EasyPal version August 6 2012 crashes on unimplemented function msvcp60.dll.??Dstd@@YA?AV?$complex@N@0@ABNABV10@@Z
+  32491  dbghelp doesn't support DW_FORM_flag_present
+  32936  SmartMusic 2012/2014 crashes on startup (Core Audio adapter 'PKEY_DeviceInterface_FriendlyName' property not supported)
+  33140  Photos opened in Nikon Capture NX 2.4 have inverted red and blue channel for displaying.
+  33398  Word / Excel 2010: crash when clicked (2nd or 3rd times) on a link
+  33457  An integer overflow @line 268 of dsa.c ?
+  34281  PlotSoft PDFill 10 fails on startup, reports 'No Fonts found under: C:\\windows\\Fonts' (at least one font name in registry must contain 'truetype' token)
+  34286  dinput doesn't report DIDOI_ASPECT* for joystick axes
+  34504  __unDName doesn't support function pointer with type "P8"
+  34507  __unDName doesn't support data type "$$B"
+  34870  Multiple games and applications crash on unimplemented function msvcr100.dll _crt_debugger_hook (ArchiCAD 16, Far Cry 4)
+  35286  Borderlands (Steam) crashes on unimplemented function msvcr90.dll._crt_debugger_hook
+  35824  UltraISO 'ISODrive.sys' crashes in entry point (SCM doesn't start SERVICE_FILE_SYSTEM_DRIVER type services with winedevice hosting process)
+  35892  sdb2xml (.NET 2.0 app) crashes on unimplemented function apphelp.dll.SdbGetAppPatchDir
+  36625  can't set text background color in richedit
+  38276  IsDialogMessage(NULL,...) must always return FALSE
+  38310  Trackbar control (msctls_trackbar32) does not send WM_CTLCOLORSTATIC as it does in Windows
+  39034  SuperTux 0.3.5a crashes on startup
+  39074  IXMLDOMDocument::cloneNode crash
+  39181  "When Monster Strikes", "The Vanishing of Ethan Carter Redux" require msvcr120.dll._set_FMA3_enable
+  39195  msvcr120.dll.nextafter is needed by Sonkwo
+  39475  PhysX 9.15.0428 installer does not run ('advapi32.RegOpenCurrentUser' must return a real handle instead of 'HKEY_CURRENT_USER' for user root key)
+  39677  Zararadio crashes when it has to change from a playlist to another.
+  39744  No sound with winepulse.drv in multiple applications when PulseAudio fails to allocate full buffer
+  39792  Saturn PCB Design Toolkit 6.86 fails to load, reporting missing 'SHCore.dll' dependency (import descriptors with empty thunk list must be ignored)
+  39823  "fixme:nls:CompareStringEx semi-stub behavor for flag(s) 0x10000000" appears thousands of times in terminal when running the Lego Mindstorms EV3 software
+  39852  3DMark03: Mother Nature test: waterfall has no transparency if AllwaysOffScreen=disabled
+  39861  Windows utility 'relog.exe' crashes on unimplemented function 'pdh.dll.PdhBindInputDataSourceW'
+  39874  Alien Shooter crashes often with access violation
+  39892  UFile crashes with runtime error when rendering certain pages
+  39950  Cabal II can't be opened, needs msvcp100.dll.?lowest@?$numeric_limits@M@std@@SAMXZ
+  40034  Linksys usb wireless adapter installer needs wlanapi.dll.WlanEnumInterfaces
+  40035  VMware shared folders network provider fails loading in MPR
+  40411  Regedit.exe /e only exports HKLM
+  40580  TASCAM US-16x08 soundcard controller crashes
+  40734  Unreal Tournament 3 doesn't quit properly when Pulseaudio is used
+  40757  GOG Galaxy crashes with unimplemented function api-ms-win-crt-stdio-l1-1-0.dll.__stdio_common_vsnwprintf_s
+  40758  GOG Galaxy crashes with unimplemented function api-ms-win-crt-runtime-l1-1-0.dll._get_wide_winmain_command_line
+  40815  comctl32: Leftmost position of trackbar not selectable with mouse, slider initial position wrong
+  40882  Nvidia GT 740M is not correctly recognized
+  40905  Multiple applications need api-ms-win-crt-runtime-l1-1-0.dll._get_narrow_winmain_command_line (PCSX2 1.4.0, Battle.Net Launcher)
+  41010  TVS_TRACKSELECT uses wrong hittest region
+  41015  comctl32/treeview: Alt-Up/Down keyboard shortcuts don't work
+  41040  VariantChangeTypeEx lead to error when casting IUnknown(nil) -> IDispatch
+  41044  Age of Mythology: Extended Edition needs api-ms-win-crt-stdio-l1-1-0.dll.__stdio_common_vswprintf_s
+  41066  Unhandled page fault in RtlWow64EnableFsRedirectionEx when passed bad *old_value pointer
+  41079  Hauppauge Capture crashes on unimplemented function cfgmgr32.dll.CM_Get_Version
+  41094  comctl32/treeview: TVS_FULLROWSELECT style does not work
+  41103  Fails to parse Extended Properties since it has quotes around its value.
+  41111  CPU-Z driver needs hal.dll.WRITE_PORT_UCHAR
+  41165  MiTeC System Information X needs unimplemented function wlanapi.dll.WlanCloseHandle
+  41182  Don't export QT_QPA_PLATFORM
 
 ----------------------------------------------------------------
 
-Changes since 1.8.3:
+Changes since 1.8.4:
 
-Alex Henrie (6):
-      msvcrt: Stub out _(get|set)_thread_local_invalid_parameter_handler.
-      ucrtbase: Implement _(un)lock_locales.
-      ucrtbase: Implement _calloc_base.
-      ucrtbase: Implement _malloc_base.
-      ucrtbase: Implement _free_base.
-      riched20: Don't call UpdateWindow after setting the background color.
+Akihiro Sagawa (1):
+      comctl32: Prevent invalid focus change notifications from LVS_OWNERDATA lists.
 
-Alexandre Julliard (1):
-      user32: Completely free owned DCEs when the corresponding window/class is destroyed.
+Alex Henrie (2):
+      ole32: Implement StgCreatePropStg.
+      ole32: Implement StgOpenPropStg.
 
-Alistair Leslie-Hughes (2):
-      wininet: Free socket when connection is freed.
-      wined3d: Correct memory size for Geforce 9600 GT.
+Alistair Leslie-Hughes (1):
+      comctl32/trackbar: Use WM_CTLCOLORSTATIC when painting background.
+
+Andrew Church (1):
+      dinput: Report DIDOI_ASPECTPOSITION flag for axes objects.
 
 Andrew Eikum (3):
-      dsound: Support downmixing 5.1 to stereo.
-      dsound: Capture all available data on each period callback.
-      xaudio2: Always set current OpenAL context before making AL calls.
+      winepulse.drv: Buffer data locally when needed.
+      winepulse.drv: Don't hold PA-owned buffer between capture callbacks.
+      mmdevapi: Fix some DEVPKEY definitions.
 
-André Hentschel (1):
-      ndis.sys: Implement NdisSystemProcessorCount.
+Andrey Melnikov (1):
+      gdi32: Handle NULL filename in GetICMProfileA().
 
-Austin English (12):
-      hal: Add READ_PORT_ULONG stub.
-      hal: Add READ_PORT_UCHAR stub.
-      hal: Add WRITE_PORT_ULONG stub.
-      kernel32: Add FreeUserPhysicalPages stub.
-      winsta: Add a stub for WinStationEnumerateW.
-      dwmapi: Add DwmSetPresentParameters stub.
-      kernel32: Add GetConsoleAliasExesLengthA/W stubs.
-      ntdll: Add NtSetLdtEntries/ZwSetLdtEntries stub.
-      dbghelp: Add forwards for EnumerateLoadedModulesEx/EnumerateLoadedModulesExW.
-      kernel32: Implement GetLargePageMinimum.
-      ndis.sys: Add NdisAllocateMemoryWithTag stub.
-      ndis.sys: Add NdisAllocateSpinLock stub.
+André Hentschel (3):
+      winspool: Implement SetPrinterW for level 8.
+      hal: Add WRITE_PORT_UCHAR stub.
+      msvcrt: Don't continue on demangle failure (Coverity).
+
+Austin English (6):
+      pdh: Add PdhGetLogFileTypeA/W stubs.
+      pdh: Add PdhBindInputDataSourceA/W stubs.
+      kernel32: Make CompareStringEx semi-stub flag FIXME only show once.
+      wlanapi: Add a stub for WlanEnumInterfaces.
+      wlanapi: Add WlanCloseHandle() stub.
+      apphelp: Add SdbGetAppPatchDir stub.
 
 Benjamin Hodgetts (1):
-      wined3d: Add Intel Iris chips to identification list.
+      wined3d: Add Nvidia 1XXX range to detection list.
 
 Bruno Jesus (1):
-      ws2_32: Ensure default route IP addresses are returned first in gethostbyname.
+      dinput: Use the correct index to remap the axis.
 
-Béla Gyebrószki (2):
-      wined3d: Add Nvidia GeForce GTS 250.
-      wined3d: Add Nvidia GeForce GT 730 (GK208).
+Daniel Lehman (1):
+      ucrtbase: Add some wide functions called on startup.
 
-David Woodhouse (1):
-      secur32: Fix handling of ANSI NTLM credentials.
+Jacek Caban (2):
+      mshtml: Fixed OnStopBinding if it's called called after we aborted document binding.
+      mshtml: Properly convert VT_NULL to string in get_elem_attr_value_by_dispid.
 
-Fabian Maurer (1):
-      msacm32: Added converter for ADPCM to PCM 8 bit mono.
+Jeremy Audiger (1):
+      wined3d: Add Nvidia GT 740M to the GPU list.
 
-Grazvydas Ignotas (3):
-      wined3d: Use Intel data returned by Windows driver.
-      wined3d: Add some more Intel GPUs.
-      wined3d: Add a fallback for Skylake.
+Joerg Schiermeier (1):
+      loader/wine.inf: Correct wrong symlink.
 
-Hans Leidekker (1):
-      kernel32: Improve the stub for GetThreadPreferredUILanguages.
+Kenneth Haley (1):
+      v4 resend: Riched20: allow setting background text color.
 
-Henri Verbeet (1):
-      wined3d: Also update the swap interval when not recreating the context in wined3d_device_reset().
+Matt Robinson (1):
+      ntdll: Catch page fault in RtlWow64EnableFsRedirectionEx.
 
-Jarkko Korpi (1):
-      widl: Fix overflow when left-shifting.
+Nikolay Sivov (21):
+      gdi32: Keep font tables tags defined in one place.
+      gdi32: Support special 'ttcf' tag in GetFontData().
+      oleaut32: Fix return value when converting from NULL interface pointers.
+      ucrtbase: Added __stdio_common_vsnwprintf_s().
+      ucrtbase: Added __stdio_common_vswprintf_s().
+      comctl32/treeview: Handle WM_SYSKEYDOWN.
+      comctl32/treeview: Set hot item when hovering over item, not entire row.
+      ucrtbase: Implement _get_narrow_winmain_command_line/_get_wide_winmain_command_line.
+      comctl32/trackbar: Update thumb on range change.
+      comctl32/trackbar: Fix mouse position to thumb position conversion rounding.
+      dbghelp: Recognize DW_FORM_flag_present.
+      oledb32: Support quoted values in initialisation strings.
+      setupapi: Added CM_Get_Version().
+      user32: Handle invalid dialog handles in IsDialogMessage().
+      gdi32: Append "TrueType" suffix to registry key names.
+      advapi32: Make RegOpenCurrentUser() return real key handles for current SID.
+      msxml3: Fix cloneNode() for document nodes.
+      comctl32/treeview: Fix hot-tracking with TVS_FULLROWSELECT.
+      comctl32/treeview: Fill full row for TVS_FULLROWSELECT style.
+      msctf: Make ITextStoreACPSink a part of context object.
+      msctf: Added stub ITextStoreACPServices support for context ITextStoreACPSink.
 
-Jean-Christophe Cardot (6):
-      winhlp32: Replace magic numbers by symbols.
-      winhlp32: Add some trace calls.
-      winhlp32: Add a warning trace.
-      winhlp32: Prepare winhlp32 for more font types.
-      winhlp32: Rework and rename HLPFILE_HalfPointsToTwips.
-      winhlp32: Fix table formatting.
+Pierre Schweitzer (1):
+      mpr: Add support for REG_EXPAND_SZ for providers path.
 
-Justas Lavišius (1):
-      include: Force stack alignment on x86_64.
+Piotr Caban (7):
+      msvcp100: Add numeric_limits<*>::lowest implementation.
+      msvcp60: Export more complex numbers operators.
+      msvcr120: Add _set_FMA3_enable stub.
+      msvcrt: Add support for member function pointers demangling in unDName function.
+      msvcrt: Add support for $$B datatype description format in unDName.
+      msvcp120: Add vtordisp field to classes with virtual base.
+      msvcrt: Add _crt_debugger_hook implementation.
 
-Ken Thomases (2):
-      winspool.drv: Include <cups/ppd.h> to fix building against the macOS 10.12 SDK.
-      winemac: Don't define kVK_RightCommand when building against the macOS 10.12 SDK.
+Sebastian Lackner (3):
+      kernel32: Do not inherit QT_* environment variables to Windows environment.
+      ntdll: Skip unused import descriptors when loading libraries.
+      services: Start SERVICE_FILE_SYSTEM_DRIVER services with winedevice.
 
-Luis Sahagun (1):
-      winevdm: Tell dosbox to read the current user's config.
+Stefan Dösinger (2):
+      d3d8: Don't validate 2D texture lock coordinates.
+      wined3d: Rotate through swapchain buffers.
 
-Matteo Bruni (1):
-      wined3d: Add a setting to check relative addressing indices when accessing uniforms.
+Thomas Faller (1):
+      dde: Fix use-after-free.
 
-Michael Cronenworth (1):
-      secur32: Provide a static declaration for gnutls_cipher_get_block_size.
+Xiaoshan Sun (1):
+      comctl32/dsa: Handle overflow in DSA_InsertItem().
 
-Michael Müller (1):
-      amstream: Implement IDirectDrawMediaStream::GetMultiMediaStream.
-
-Michael Stefaniuc (1):
-      tools: Get the bug list for ANNOUNCE from the stable-notes git notes.
-
-Nikolay Sivov (4):
-      comctl32/datetime: Use MCM_GETRANGE result directly in DTM_GETRANGE.
-      comctl32/tooltips: Cut tooltip text at first tab char unless TTS_NOPREFIX is used.
-      t2embed: Fix TTIsEmbeddingEnabled() to properly use otmpFaceName metrics field.
-      dwrite: Sanitize specified stretch value, valid range is [1, 9].
-
-Olivier F. R. Dierick (1):
-      shell32: Set last error explicitly in SHFileOperation().
-
-Piotr Caban (6):
-      msvcrt: Add mbsrtowcs_s implementation.
-      msvcp110: Fix num_put<char> structure layout.
-      msvcrt: Fix mbtowc behavior for buffers containing more than one character.
-      ieframe: Restore closed IOleClientSite in DoVerb.
-      msvcr120: Add __ExceptionPtrToBool implementation.
-      msvcrt: Return error when previously parsed type is accessed while demangling simple data type.
-
-Rob Walker (1):
-      setupapi: Add stub for setupapi.dll.CM_Get_DevNode_Status.
-
-Sebastian Lackner (4):
-      comctl32/syslink: Fix a blocks leak (Valgrind).
-      amstream/tests: Add tests for GetMultiMediaStream methods.
-      server: Fix assignment of primary_group in token_duplicate.
-      dwrite: Fix font stretch name conversion table.
-
-Stefan Leichter (3):
-      kernel32: Add stub for GetSystemPreferredUILanguages.
-      kernel32/tests: Add tests for GetSystemPreferredUILanguages.
-      kernel32: Return a dummy value in GetSystemPreferredUILanguages.
-
-Vincent Povirk (1):
-      gdiplus: Implement GdipGetImageAttributesAdjustedPalette.
+YongHao Hu (1):
+      msvcr120: Enable MSVCRT__nextafterf when _MSVCR_VER>=120.
 
 --
 Michael Stefaniuc
