@@ -61,7 +61,7 @@ AntiMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
 {
     AntiMonikerImpl *This = impl_from_IMoniker(iface);
 
-    TRACE("(%p,%p,%p)\n",This,riid,ppvObject);
+    TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppvObject);
 
     /* Perform a sanity check on the parameters.*/
     if ( ppvObject==0 )
@@ -229,7 +229,7 @@ static HRESULT WINAPI
 AntiMonikerImpl_BindToObject(IMoniker* iface, IBindCtx* pbc, IMoniker* pmkToLeft,
                              REFIID riid, VOID** ppvResult)
 {
-    TRACE("(%p,%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,riid,ppvResult);
+    TRACE("(%p,%p,%p,%s,%p)\n",iface,pbc,pmkToLeft,debugstr_guid(riid),ppvResult);
     return E_NOTIMPL;
 }
 
@@ -240,7 +240,7 @@ static HRESULT WINAPI
 AntiMonikerImpl_BindToStorage(IMoniker* iface, IBindCtx* pbc, IMoniker* pmkToLeft,
                               REFIID riid, VOID** ppvResult)
 {
-    TRACE("(%p,%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,riid,ppvResult);
+    TRACE("(%p,%p,%p,%s,%p)\n",iface,pbc,pmkToLeft,debugstr_guid(riid),ppvResult);
     return E_NOTIMPL;
 }
 
@@ -495,7 +495,7 @@ AntiMonikerROTDataImpl_QueryInterface(IROTData *iface,REFIID riid,VOID** ppvObje
 {
     AntiMonikerImpl *This = impl_from_IROTData(iface);
 
-    TRACE("(%p,%p,%p)\n",iface,riid,ppvObject);
+    TRACE("(%p,%s,%p)\n",iface,debugstr_guid(riid),ppvObject);
 
     return AntiMonikerImpl_QueryInterface(&This->IMoniker_iface, riid, ppvObject);
 }

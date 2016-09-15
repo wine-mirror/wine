@@ -326,7 +326,7 @@ RunningObjectTableImpl_QueryInterface(IRunningObjectTable* iface,
 {
     RunningObjectTableImpl *This = impl_from_IRunningObjectTable(iface);
 
-    TRACE("(%p,%p,%p)\n",This,riid,ppvObject);
+    TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppvObject);
 
     /* validate arguments */
 
@@ -1314,7 +1314,7 @@ static HRESULT WINAPI EnumMonikerImpl_QueryInterface(IEnumMoniker* iface,REFIID 
 {
     EnumMonikerImpl *This = impl_from_IEnumMoniker(iface);
 
-    TRACE("(%p,%p,%p)\n",This,riid,ppvObject);
+    TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppvObject);
 
     /* validate arguments */
     if (ppvObject == NULL)
