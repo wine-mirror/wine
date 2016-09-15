@@ -733,6 +733,7 @@ START_TEST(converter)
 
     test_conversion(&testdata_32bppBGR, &testdata_24bppRGB, "32bppBGR -> 24bppRGB", FALSE);
     test_conversion(&testdata_24bppRGB, &testdata_32bppBGR, "24bppRGB -> 32bppBGR", FALSE);
+    test_conversion(&testdata_32bppBGRA, &testdata_24bppRGB, "32bppBGRA -> 24bppRGB", FALSE);
 
     test_invalid_conversion();
     test_default_converter();

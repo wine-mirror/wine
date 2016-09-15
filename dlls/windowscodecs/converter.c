@@ -953,6 +953,7 @@ static HRESULT copypixels_to_24bppRGB(struct FormatConverter *This, const WICRec
             const BYTE *srcpixel;
             BYTE *dstrow;
             BYTE *dstpixel;
+            BYTE tmppixel[3];
 
             srcstride = 4 * prc->Width;
             srcdatasize = srcstride * prc->Height;
@@ -970,16 +971,18 @@ static HRESULT copypixels_to_24bppRGB(struct FormatConverter *This, const WICRec
                     srcpixel=srcrow;
                     dstpixel=dstrow;
                     for (x=0; x<prc->Width; x++) {
-                        *dstpixel++=*srcpixel++; /* blue */
-                        *dstpixel++=*srcpixel++; /* green */
-                        *dstpixel++=*srcpixel++; /* red */
+                        tmppixel[0]=*srcpixel++; /* blue */
+                        tmppixel[1]=*srcpixel++; /* green */
+                        tmppixel[2]=*srcpixel++; /* red */
                         srcpixel++; /* alpha */
+
+                        *dstpixel++=tmppixel[2]; /* red */
+                        *dstpixel++=tmppixel[1]; /* green */
+                        *dstpixel++=tmppixel[0]; /* blue */
                     }
                     srcrow += srcstride;
                     dstrow += cbStride;
                 }
-
-                reverse_bgr8(3, pbBuffer, prc->Width, prc->Height, cbStride);
             }
 
             HeapFree(GetProcessHeap(), 0, srcdata);
