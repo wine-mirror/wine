@@ -35,6 +35,7 @@ typedef struct bitmap_data {
     UINT height;
     double xres;
     double yres;
+    const struct bitmap_data *alt_data;
 } bitmap_data;
 
 typedef struct BitmapTestSrc {
@@ -42,6 +43,11 @@ typedef struct BitmapTestSrc {
     LONG ref;
     const bitmap_data *data;
 } BitmapTestSrc;
+
+static BOOL near_equal(float a, float b)
+{
+    return fabsf(a - b) < 0.001;
+}
 
 static inline BitmapTestSrc *impl_from_IWICBitmapSource(IWICBitmapSource *iface)
 {
@@ -213,8 +219,23 @@ static BOOL compare_bits(const struct bitmap_data *expect, UINT buffersize, cons
                 break;
             }
     }
+    else if (IsEqualGUID(expect->format, &GUID_WICPixelFormat32bppGrayFloat))
+    {
+        UINT i;
+        const float *a=(const float*)expect->bits, *b=(const float*)converted_bits;
+        equal=TRUE;
+        for (i=0; i<(buffersize/4); i++)
+            if (!near_equal(a[i], b[i]))
+            {
+                equal = FALSE;
+                break;
+            }
+    }
     else
         equal = (memcmp(expect->bits, converted_bits, buffersize) == 0);
+
+    if (!equal && expect->alt_data)
+        equal = compare_bits(expect->alt_data, buffersize, converted_bits);
 
     return equal;
 }
@@ -288,6 +309,19 @@ static const BYTE bits_32bppBGRA[] = {
     0,255,255,255, 255,0,255,255, 255,255,0,255, 255,255,255,255};
 static const struct bitmap_data testdata_32bppBGRA = {
     &GUID_WICPixelFormat32bppBGRA, 32, bits_32bppBGRA, 4, 2, 96.0, 96.0};
+
+/* XP and 2003 use linear color conversion, later versions use sRGB gamma */
+static const float bits_32bppGrayFloat_xp[] = {
+    0.114000f,0.587000f,0.299000f,0.000000f,
+    0.886000f,0.413000f,0.701000f,1.000000f};
+static const struct bitmap_data testdata_32bppGrayFloat_xp = {
+    &GUID_WICPixelFormat32bppGrayFloat, 32, (const BYTE *)bits_32bppGrayFloat_xp, 4, 2, 96.0, 96.0};
+
+static const float bits_32bppGrayFloat[] = {
+    0.072200f,0.715200f,0.212600f,0.000000f,
+    0.927800f,0.284800f,0.787400f,1.000000f};
+static const struct bitmap_data testdata_32bppGrayFloat = {
+    &GUID_WICPixelFormat32bppGrayFloat, 32, (const BYTE *)bits_32bppGrayFloat, 4, 2, 96.0, 96.0, &testdata_32bppGrayFloat_xp};
 
 static void test_conversion(const struct bitmap_data *src, const struct bitmap_data *dst, const char *name, BOOL todo)
 {
@@ -728,6 +762,9 @@ START_TEST(converter)
     test_conversion(&testdata_32bppBGR, &testdata_24bppRGB, "32bppBGR -> 24bppRGB", FALSE);
     test_conversion(&testdata_24bppRGB, &testdata_32bppBGR, "24bppRGB -> 32bppBGR", FALSE);
     test_conversion(&testdata_32bppBGRA, &testdata_24bppRGB, "32bppBGRA -> 24bppRGB", FALSE);
+
+    test_conversion(&testdata_24bppRGB, &testdata_32bppGrayFloat, "24bppRGB -> 32bppGrayFloat", FALSE);
+    test_conversion(&testdata_32bppBGR, &testdata_32bppGrayFloat, "32bppBGR -> 32bppGrayFloat", FALSE);
 
     test_invalid_conversion();
     test_default_converter();
