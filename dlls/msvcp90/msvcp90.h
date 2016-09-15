@@ -258,6 +258,9 @@ wchar_t __thiscall ctype_wchar_widen_ch(const ctype_wchar*, char);
 /* class locale */
 typedef struct
 {
+#if _MSVCP_VER >= 140
+    int unused;
+#endif
     struct _locale__Locimp *ptr;
 } locale;
 
