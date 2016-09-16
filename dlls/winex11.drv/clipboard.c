@@ -105,7 +105,8 @@ typedef HANDLE (*DRVEXPORTFUNC)(Display *display, Window requestor, Atom aTarget
     struct tagWINE_CLIPDATA* lpData, LPDWORD lpBytes);
 typedef HANDLE (*DRVIMPORTFUNC)(Display *d, Window w, Atom prop);
 
-typedef struct tagWINE_CLIPFORMAT {
+typedef struct clipboard_format
+{
     struct list entry;
     UINT        wFormatID;
     UINT        drvData;
@@ -125,32 +126,33 @@ static int selectionAcquired = 0;              /* Contains the current selection
 static Window selectionWindow = None;          /* The top level X window which owns the selection */
 static Atom selectionCacheSrc = XA_PRIMARY;    /* The selection source from which the clipboard cache was filled */
 
-static HANDLE X11DRV_CLIPBOARD_ImportClipboardData(Display *d, Window w, Atom prop);
-static HANDLE X11DRV_CLIPBOARD_ImportEnhMetaFile(Display *d, Window w, Atom prop);
-static HANDLE X11DRV_CLIPBOARD_ImportMetaFilePict(Display *d, Window w, Atom prop);
-static HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Display *d, Window w, Atom prop);
-static HANDLE X11DRV_CLIPBOARD_ImportImageBmp(Display *d, Window w, Atom prop);
-static HANDLE X11DRV_CLIPBOARD_ImportXAString(Display *d, Window w, Atom prop);
-static HANDLE X11DRV_CLIPBOARD_ImportUTF8(Display *d, Window w, Atom prop);
-static HANDLE X11DRV_CLIPBOARD_ImportCompoundText(Display *d, Window w, Atom prop);
-static HANDLE X11DRV_CLIPBOARD_ImportTextUriList(Display *display, Window w, Atom prop);
-static HANDLE X11DRV_CLIPBOARD_ExportClipboardData(Display *display, Window requestor, Atom aTarget,
-    Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
-static HANDLE X11DRV_CLIPBOARD_ExportString(Display *display, Window requestor, Atom aTarget,
-    Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
-static HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Display *display, Window requestor, Atom aTarget,
-    Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
-static HANDLE X11DRV_CLIPBOARD_ExportImageBmp(Display *display, Window requestor, Atom aTarget,
-    Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
-static HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(Display *display, Window requestor, Atom aTarget,
-    Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
-static HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(Display *display, Window requestor, Atom aTarget,
-    Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
-static HANDLE X11DRV_CLIPBOARD_ExportTextHtml(Display *display, Window requestor, Atom aTarget,
-    Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
-static HANDLE X11DRV_CLIPBOARD_ExportHDROP(Display *display, Window requestor, Atom aTarget,
-    Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
-static WINE_CLIPFORMAT *X11DRV_CLIPBOARD_InsertClipboardFormat(UINT id, Atom prop);
+static HANDLE import_data(Display *d, Window w, Atom prop);
+static HANDLE import_enhmetafile(Display *d, Window w, Atom prop);
+static HANDLE import_metafile(Display *d, Window w, Atom prop);
+static HANDLE import_pixmap(Display *d, Window w, Atom prop);
+static HANDLE import_image_bmp(Display *d, Window w, Atom prop);
+static HANDLE import_string(Display *d, Window w, Atom prop);
+static HANDLE import_utf8_string(Display *d, Window w, Atom prop);
+static HANDLE import_compound_text(Display *d, Window w, Atom prop);
+static HANDLE import_text_uri_list(Display *display, Window w, Atom prop);
+
+static HANDLE export_data(Display *display, Window requestor, Atom aTarget,
+                          Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
+static HANDLE export_string(Display *display, Window requestor, Atom aTarget,
+                            Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
+static HANDLE export_pixmap(Display *display, Window requestor, Atom aTarget,
+                            Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
+static HANDLE export_image_bmp(Display *display, Window requestor, Atom aTarget,
+                               Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
+static HANDLE export_metafile(Display *display, Window requestor, Atom aTarget,
+                              Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
+static HANDLE export_enhmetafile(Display *display, Window requestor, Atom aTarget,
+                                 Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
+static HANDLE export_text_html(Display *display, Window requestor, Atom aTarget,
+                               Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
+static HANDLE export_hdrop(Display *display, Window requestor, Atom aTarget,
+                           Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
+
 static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData);
 static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display);
 static BOOL X11DRV_CLIPBOARD_ReadSelectionData(Display *display, LPWINE_CLIPDATA lpData);
@@ -163,65 +165,58 @@ static void empty_clipboard(void);
 
 /* Clipboard formats */
 
+static const WCHAR RichTextFormatW[] = {'R','i','c','h',' ','T','e','x','t',' ','F','o','r','m','a','t',0};
+static const WCHAR GIFW[] = {'G','I','F',0};
+static const WCHAR JFIFW[] = {'J','F','I','F',0};
+static const WCHAR PNGW[] = {'P','N','G',0};
+static const WCHAR HTMLFormatW[] = {'H','T','M','L',' ','F','o','r','m','a','t',0};
+
 static const struct
 {
+    const WCHAR  *name;
     UINT          id;
     UINT          data;
     DRVIMPORTFUNC import;
     DRVEXPORTFUNC export;
 } builtin_formats[] =
 {
-    { CF_TEXT, XA_STRING, X11DRV_CLIPBOARD_ImportXAString, X11DRV_CLIPBOARD_ExportString},
-    { CF_TEXT, XATOM_text_plain, X11DRV_CLIPBOARD_ImportXAString, X11DRV_CLIPBOARD_ExportString},
-    { CF_BITMAP, XATOM_WCF_BITMAP, X11DRV_CLIPBOARD_ImportClipboardData, NULL},
-    { CF_METAFILEPICT, XATOM_WCF_METAFILEPICT, X11DRV_CLIPBOARD_ImportMetaFilePict, X11DRV_CLIPBOARD_ExportMetaFilePict },
-    { CF_SYLK, XATOM_WCF_SYLK, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_DIF, XATOM_WCF_DIF, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_TIFF, XATOM_WCF_TIFF, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_OEMTEXT, XATOM_WCF_OEMTEXT, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_DIB, XA_PIXMAP, X11DRV_CLIPBOARD_ImportXAPIXMAP, X11DRV_CLIPBOARD_ExportXAPIXMAP },
-    { CF_PALETTE, XATOM_WCF_PALETTE, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_PENDATA, XATOM_WCF_PENDATA, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_RIFF, XATOM_WCF_RIFF, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_WAVE, XATOM_WCF_WAVE, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_UNICODETEXT, XATOM_UTF8_STRING, X11DRV_CLIPBOARD_ImportUTF8, X11DRV_CLIPBOARD_ExportString },
-    /* If UTF8_STRING is not available, attempt COMPOUND_TEXT */
-    { CF_UNICODETEXT, XATOM_COMPOUND_TEXT, X11DRV_CLIPBOARD_ImportCompoundText, X11DRV_CLIPBOARD_ExportString },
-    { CF_ENHMETAFILE, XATOM_WCF_ENHMETAFILE, X11DRV_CLIPBOARD_ImportEnhMetaFile, X11DRV_CLIPBOARD_ExportEnhMetaFile },
-    { CF_HDROP, XATOM_text_uri_list, X11DRV_CLIPBOARD_ImportTextUriList, X11DRV_CLIPBOARD_ExportHDROP },
-    { CF_LOCALE, XATOM_WCF_LOCALE, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_DIBV5, XATOM_WCF_DIBV5, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_OWNERDISPLAY, XATOM_WCF_OWNERDISPLAY, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_DSPTEXT, XATOM_WCF_DSPTEXT, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_DSPBITMAP, XATOM_WCF_DSPBITMAP, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_DSPMETAFILEPICT, XATOM_WCF_DSPMETAFILEPICT, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_DSPENHMETAFILE, XATOM_WCF_DSPENHMETAFILE, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_DIB, XATOM_image_bmp, X11DRV_CLIPBOARD_ImportImageBmp, X11DRV_CLIPBOARD_ExportImageBmp },
+    { 0, CF_TEXT,            XA_STRING,                 import_string,        export_string },
+    { 0, CF_TEXT,            XATOM_text_plain,          import_string,        export_string },
+    { 0, CF_BITMAP,          XATOM_WCF_BITMAP,          import_data,          NULL },
+    { 0, CF_METAFILEPICT,    XATOM_WCF_METAFILEPICT,    import_metafile,      export_metafile },
+    { 0, CF_SYLK,            XATOM_WCF_SYLK,            import_data,          export_data },
+    { 0, CF_DIF,             XATOM_WCF_DIF,             import_data,          export_data },
+    { 0, CF_TIFF,            XATOM_WCF_TIFF,            import_data,          export_data },
+    { 0, CF_OEMTEXT,         XATOM_WCF_OEMTEXT,         import_data,          export_data },
+    { 0, CF_DIB,             XA_PIXMAP,                 import_pixmap,        export_pixmap },
+    { 0, CF_PALETTE,         XATOM_WCF_PALETTE,         import_data,          export_data },
+    { 0, CF_PENDATA,         XATOM_WCF_PENDATA,         import_data,          export_data },
+    { 0, CF_RIFF,            XATOM_WCF_RIFF,            import_data,          export_data },
+    { 0, CF_WAVE,            XATOM_WCF_WAVE,            import_data,          export_data },
+    { 0, CF_UNICODETEXT,     XATOM_UTF8_STRING,         import_utf8_string,   export_string },
+    { 0, CF_UNICODETEXT,     XATOM_COMPOUND_TEXT,       import_compound_text, export_string },
+    { 0, CF_ENHMETAFILE,     XATOM_WCF_ENHMETAFILE,     import_enhmetafile,   export_enhmetafile },
+    { 0, CF_HDROP,           XATOM_text_uri_list,       import_text_uri_list, export_hdrop },
+    { 0, CF_LOCALE,          XATOM_WCF_LOCALE,          import_data,          export_data },
+    { 0, CF_DIBV5,           XATOM_WCF_DIBV5,           import_data,          export_data },
+    { 0, CF_OWNERDISPLAY,    XATOM_WCF_OWNERDISPLAY,    import_data,          export_data },
+    { 0, CF_DSPTEXT,         XATOM_WCF_DSPTEXT,         import_data,          export_data },
+    { 0, CF_DSPBITMAP,       XATOM_WCF_DSPBITMAP,       import_data,          export_data },
+    { 0, CF_DSPMETAFILEPICT, XATOM_WCF_DSPMETAFILEPICT, import_data,          export_data },
+    { 0, CF_DSPENHMETAFILE,  XATOM_WCF_DSPENHMETAFILE,  import_data,          export_data },
+    { 0, CF_DIB,             XATOM_image_bmp,           import_image_bmp,     export_image_bmp },
+    { RichTextFormatW, 0,    XATOM_text_rtf,            import_data,          export_data },
+    { RichTextFormatW, 0,    XATOM_text_richtext,       import_data,          export_data },
+    { GIFW, 0,               XATOM_image_gif,           import_data,          export_data },
+    { JFIFW, 0,              XATOM_image_jpeg,          import_data,          export_data },
+    { PNGW, 0,               XATOM_image_png,           import_data,          export_data },
+    { HTMLFormatW, 0,        XATOM_HTML_Format,         import_data,          export_data },
+    { HTMLFormatW, 0,        XATOM_text_html,           import_data,          export_text_html },
 };
 
 static struct list format_list = LIST_INIT( format_list );
 
 #define GET_ATOM(prop)  (((prop) < FIRST_XATOM) ? (Atom)(prop) : X11DRV_Atoms[(prop) - FIRST_XATOM])
-
-/* Maps X properties to Windows formats */
-static const WCHAR wszRichTextFormat[] = {'R','i','c','h',' ','T','e','x','t',' ','F','o','r','m','a','t',0};
-static const WCHAR wszGIF[] = {'G','I','F',0};
-static const WCHAR wszJFIF[] = {'J','F','I','F',0};
-static const WCHAR wszPNG[] = {'P','N','G',0};
-static const WCHAR wszHTMLFormat[] = {'H','T','M','L',' ','F','o','r','m','a','t',0};
-static const struct
-{
-    LPCWSTR lpszFormat;
-    UINT   prop;
-} PropertyFormatMap[] =
-{
-    { wszRichTextFormat, XATOM_text_rtf },
-    { wszRichTextFormat, XATOM_text_richtext },
-    { wszGIF, XATOM_image_gif },
-    { wszJFIF, XATOM_image_jpeg },
-    { wszPNG, XATOM_image_png },
-    { wszHTMLFormat, XATOM_HTML_Format }, /* prefer this to text/html */
-};
 
 
 /*
@@ -303,29 +298,24 @@ static const char *debugstr_format( UINT id )
  */
 void X11DRV_InitClipboard(void)
 {
+    static const unsigned int count = sizeof(builtin_formats) / sizeof(builtin_formats[0]);
+    struct clipboard_format *formats;
     UINT i;
-    WINE_CLIPFORMAT *format;
 
-    /* Register built-in formats */
-    for (i = 0; i < sizeof(builtin_formats)/sizeof(builtin_formats[0]); i++)
+    if (!(formats = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*formats)))) return;
+
+    for (i = 0; i < count; i++)
     {
-        if (!(format = HeapAlloc( GetProcessHeap(), 0, sizeof(*format )))) break;
-        format->wFormatID       = builtin_formats[i].id;
-        format->drvData         = GET_ATOM(builtin_formats[i].data);
-        format->lpDrvImportFunc = builtin_formats[i].import;
-        format->lpDrvExportFunc = builtin_formats[i].export;
-        list_add_tail( &format_list, &format->entry );
+        if (builtin_formats[i].name)
+            formats[i].wFormatID = RegisterClipboardFormatW( builtin_formats[i].name );
+        else
+            formats[i].wFormatID = builtin_formats[i].id;
+
+        formats[i].drvData = GET_ATOM(builtin_formats[i].data);
+        formats[i].lpDrvImportFunc = builtin_formats[i].import;
+        formats[i].lpDrvExportFunc = builtin_formats[i].export;
+        list_add_tail( &format_list, &formats[i].entry );
     }
-
-    /* Register known mapping between window formats and X properties */
-    for (i = 0; i < sizeof(PropertyFormatMap)/sizeof(PropertyFormatMap[0]); i++)
-        X11DRV_CLIPBOARD_InsertClipboardFormat( RegisterClipboardFormatW(PropertyFormatMap[i].lpszFormat),
-                                                GET_ATOM(PropertyFormatMap[i].prop));
-
-    /* Set up a conversion function from "HTML Format" to "text/html" */
-    format = X11DRV_CLIPBOARD_InsertClipboardFormat( RegisterClipboardFormatW(wszHTMLFormat),
-                                                     GET_ATOM(XATOM_text_html));
-    format->lpDrvExportFunc = X11DRV_CLIPBOARD_ExportTextHtml;
 }
 
 
@@ -392,15 +382,23 @@ static void intern_atoms(void)
  *
  * Register a custom X clipboard format.
  */
-static WINE_CLIPFORMAT *register_format( UINT id, Atom prop )
+static struct clipboard_format *register_format( UINT id, Atom prop )
 {
-    LPWINE_CLIPFORMAT lpFormat;
+    struct clipboard_format *format;
 
     /* walk format chain to see if it's already registered */
-    LIST_FOR_EACH_ENTRY( lpFormat, &format_list, WINE_CLIPFORMAT, entry )
-        if (lpFormat->wFormatID == id) return lpFormat;
+    LIST_FOR_EACH_ENTRY( format, &format_list, struct clipboard_format, entry )
+        if (format->wFormatID == id) return format;
 
-    return X11DRV_CLIPBOARD_InsertClipboardFormat(id, prop);
+    if (!(format = HeapAlloc( GetProcessHeap(), 0, sizeof(*format) ))) return NULL;
+    format->wFormatID = id;
+    format->drvData = prop;
+    format->lpDrvImportFunc = import_data;
+    format->lpDrvExportFunc = export_data;
+    list_add_tail( &format_list, &format->entry );
+
+    TRACE( "Registering format %s atom %lx\n", debugstr_format(id), prop );
+    return format;
 }
 
 
@@ -439,37 +437,6 @@ static LPWINE_CLIPDATA X11DRV_CLIPBOARD_LookupData(DWORD wID)
 
     return NULL;
 }
-
-
-/**************************************************************************
- *		InsertClipboardFormat
- */
-static WINE_CLIPFORMAT *X11DRV_CLIPBOARD_InsertClipboardFormat( UINT id, Atom prop )
-{
-    LPWINE_CLIPFORMAT lpNewFormat;
-
-    /* allocate storage for new format entry */
-    lpNewFormat = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_CLIPFORMAT));
-
-    if(lpNewFormat == NULL) 
-    {
-        WARN("No more memory for a new format!\n");
-        return NULL;
-    }
-    lpNewFormat->wFormatID = id;
-    lpNewFormat->drvData = prop;
-    lpNewFormat->lpDrvImportFunc = X11DRV_CLIPBOARD_ImportClipboardData;
-    lpNewFormat->lpDrvExportFunc = X11DRV_CLIPBOARD_ExportClipboardData;
-
-    list_add_tail( &format_list, &lpNewFormat->entry );
-
-    TRACE("Registering format %s drvData %d\n",
-          debugstr_format(lpNewFormat->wFormatID), lpNewFormat->drvData);
-
-    return lpNewFormat;
-}
-
-
 
 
 /**************************************************************************
@@ -865,11 +832,11 @@ static WCHAR* uri_to_dos(char *encodedURI)
 
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ImportXAString
+ *		import_string
  *
  *  Import XA_STRING, converting the string to CF_TEXT.
  */
-static HANDLE X11DRV_CLIPBOARD_ImportXAString(Display *display, Window w, Atom prop)
+static HANDLE import_string(Display *display, Window w, Atom prop)
 {
     LPBYTE lpdata;
     unsigned long cbytes;
@@ -909,11 +876,11 @@ static HANDLE X11DRV_CLIPBOARD_ImportXAString(Display *display, Window w, Atom p
 
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ImportUTF8
+ *		import_utf8_string
  *
- *  Import XA_STRING, converting the string to CF_UNICODE.
+ *  Import XA_UTF8_STRING, converting the string to CF_UNICODE.
  */
-static HANDLE X11DRV_CLIPBOARD_ImportUTF8(Display *display, Window w, Atom prop)
+static HANDLE import_utf8_string(Display *display, Window w, Atom prop)
 {
     LPBYTE lpdata;
     unsigned long cbytes;
@@ -963,11 +930,11 @@ static HANDLE X11DRV_CLIPBOARD_ImportUTF8(Display *display, Window w, Atom prop)
 
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ImportCompoundText
+ *		import_compound_text
  *
  *  Import COMPOUND_TEXT to CF_UNICODE
  */
-static HANDLE X11DRV_CLIPBOARD_ImportCompoundText(Display *display, Window w, Atom prop)
+static HANDLE import_compound_text(Display *display, Window w, Atom prop)
 {
     int i, j, ret;
     char** srcstr;
@@ -1027,11 +994,11 @@ static HANDLE X11DRV_CLIPBOARD_ImportCompoundText(Display *display, Window w, At
 
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ImportXAPIXMAP
+ *		import_pixmap
  *
  *  Import XA_PIXMAP, converting the image to CF_DIB.
  */
-static HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Display *display, Window w, Atom prop)
+static HANDLE import_pixmap(Display *display, Window w, Atom prop)
 {
     LPBYTE lpdata;
     unsigned long cbytes;
@@ -1104,11 +1071,11 @@ static HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Display *display, Window w, Atom p
 
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ImportImageBmp
+ *		import_image_bmp
  *
  *  Import image/bmp, converting the image to CF_DIB.
  */
-static HANDLE X11DRV_CLIPBOARD_ImportImageBmp(Display *display, Window w, Atom prop)
+static HANDLE import_image_bmp(Display *display, Window w, Atom prop)
 {
     LPBYTE lpdata;
     unsigned long cbytes;
@@ -1150,11 +1117,9 @@ static HANDLE X11DRV_CLIPBOARD_ImportImageBmp(Display *display, Window w, Atom p
 
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ImportMetaFilePict
- *
- *  Import MetaFilePict.
+ *		import_metafile
  */
-static HANDLE X11DRV_CLIPBOARD_ImportMetaFilePict(Display *display, Window w, Atom prop)
+static HANDLE import_metafile(Display *display, Window w, Atom prop)
 {
     LPBYTE lpdata;
     unsigned long cbytes;
@@ -1174,11 +1139,9 @@ static HANDLE X11DRV_CLIPBOARD_ImportMetaFilePict(Display *display, Window w, At
 
 
 /**************************************************************************
- *		X11DRV_ImportEnhMetaFile
- *
- *  Import EnhMetaFile.
+ *		import_enhmetafile
  */
-static HANDLE X11DRV_CLIPBOARD_ImportEnhMetaFile(Display *display, Window w, Atom prop)
+static HANDLE import_enhmetafile(Display *display, Window w, Atom prop)
 {
     LPBYTE lpdata;
     unsigned long cbytes;
@@ -1198,11 +1161,11 @@ static HANDLE X11DRV_CLIPBOARD_ImportEnhMetaFile(Display *display, Window w, Ato
 
 
 /**************************************************************************
- *      X11DRV_CLIPBOARD_ImportTextUriList
+ *      import_text_uri_list
  *
  *  Import text/uri-list.
  */
-static HANDLE X11DRV_CLIPBOARD_ImportTextUriList(Display *display, Window w, Atom prop)
+static HANDLE import_text_uri_list(Display *display, Window w, Atom prop)
 {
     char *uriList;
     unsigned long len;
@@ -1287,11 +1250,11 @@ static HANDLE X11DRV_CLIPBOARD_ImportTextUriList(Display *display, Window w, Ato
 
 
 /**************************************************************************
- *		X11DRV_ImportClipbordaData
+ *		import_data
  *
  *  Generic import clipboard data routine.
  */
-static HANDLE X11DRV_CLIPBOARD_ImportClipboardData(Display *display, Window w, Atom prop)
+static HANDLE import_data(Display *display, Window w, Atom prop)
 {
     LPVOID lpClipData;
     LPBYTE lpdata;
@@ -1348,12 +1311,12 @@ HANDLE X11DRV_CLIPBOARD_ImportSelection(Display *d, Atom target, Window w, Atom 
 
 
 /**************************************************************************
- 		X11DRV_CLIPBOARD_ExportClipboardData
+ *		export_data
  *
  *  Generic export clipboard data routine.
  */
-static HANDLE X11DRV_CLIPBOARD_ExportClipboardData(Display *display, Window requestor, Atom aTarget,
-                                            Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
+static HANDLE export_data(Display *display, Window requestor, Atom aTarget,
+                          Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
 {
     LPVOID lpClipData;
     UINT datasize = 0;
@@ -1393,7 +1356,7 @@ static HANDLE X11DRV_CLIPBOARD_ExportClipboardData(Display *display, Window requ
  *		X11DRV_CLIPBOARD_ExportXAString
  *
  *  Export CF_TEXT converting the string to XA_STRING.
- *  Helper function for X11DRV_CLIPBOARD_ExportString.
+ *  Helper function for export_string.
  */
 static HANDLE X11DRV_CLIPBOARD_ExportXAString(LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
 {
@@ -1432,7 +1395,7 @@ done:
  *		X11DRV_CLIPBOARD_ExportUTF8String
  *
  *  Export CF_UNICODE converting the string to UTF8.
- *  Helper function for X11DRV_CLIPBOARD_ExportString.
+ *  Helper function for export_string.
  */
 static HANDLE X11DRV_CLIPBOARD_ExportUTF8String(LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
 {
@@ -1480,7 +1443,7 @@ done:
  *		X11DRV_CLIPBOARD_ExportCompoundText
  *
  *  Export CF_UNICODE to COMPOUND_TEXT
- *  Helper function for X11DRV_CLIPBOARD_ExportString.
+ *  Helper function for export_string.
  */
 static HANDLE X11DRV_CLIPBOARD_ExportCompoundText(Display *display, Window requestor, Atom aTarget, Atom rprop,
     LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
@@ -1530,12 +1493,12 @@ static HANDLE X11DRV_CLIPBOARD_ExportCompoundText(Display *display, Window reque
 }
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ExportString
+ *		export_string
  *
  *  Export string
  */
-static HANDLE X11DRV_CLIPBOARD_ExportString(Display *display, Window requestor, Atom aTarget, Atom rprop,
-                                     LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
+static HANDLE export_string(Display *display, Window requestor, Atom aTarget, Atom rprop,
+                            LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
 {
     if (X11DRV_CLIPBOARD_RenderFormat(display, lpData))
     {
@@ -1558,12 +1521,12 @@ static HANDLE X11DRV_CLIPBOARD_ExportString(Display *display, Window requestor, 
 
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ExportXAPIXMAP
+ *		export_pixmap
  *
  *  Export CF_DIB to XA_PIXMAP.
  */
-static HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Display *display, Window requestor, Atom aTarget, Atom rprop,
-    LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+static HANDLE export_pixmap(Display *display, Window requestor, Atom aTarget, Atom rprop,
+                            LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
 {
     HANDLE hData;
     unsigned char* lpData;
@@ -1602,12 +1565,12 @@ static HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Display *display, Window requestor
 
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ExportImageBmp
+ *		export_image_bmp
  *
  *  Export CF_DIB to image/bmp.
  */
-static HANDLE X11DRV_CLIPBOARD_ExportImageBmp(Display *display, Window requestor, Atom aTarget, Atom rprop,
-    LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+static HANDLE export_image_bmp(Display *display, Window requestor, Atom aTarget, Atom rprop,
+                               LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
 {
     HANDLE hpackeddib;
     LPBYTE dibdata;
@@ -1671,12 +1634,12 @@ static HANDLE X11DRV_CLIPBOARD_ExportImageBmp(Display *display, Window requestor
 
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ExportMetaFilePict
+ *		export_metafile
  *
  *  Export MetaFilePict.
  */
-static HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(Display *display, Window requestor, Atom aTarget, Atom rprop,
-                                           LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+static HANDLE export_metafile(Display *display, Window requestor, Atom aTarget, Atom rprop,
+                              LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
 {
     if (!X11DRV_CLIPBOARD_RenderFormat(display, lpdata))
     {
@@ -1689,12 +1652,12 @@ static HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(Display *display, Window reque
 
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ExportEnhMetaFile
+ *		export_enhmetafile
  *
  *  Export EnhMetaFile.
  */
-static HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(Display *display, Window requestor, Atom aTarget, Atom rprop,
-                                          LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+static HANDLE export_enhmetafile(Display *display, Window requestor, Atom aTarget, Atom rprop,
+                                 LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
 {
     if (!X11DRV_CLIPBOARD_RenderFormat(display, lpdata))
     {
@@ -1729,14 +1692,14 @@ static LPCSTR get_html_description_field(LPCSTR data, LPCSTR keyword)
 
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ExportTextHtml
+ *		export_text_html
  *
  *  Export HTML Format to text/html.
  *
  * FIXME: We should attempt to add an <a base> tag and convert windows paths.
  */
-static HANDLE X11DRV_CLIPBOARD_ExportTextHtml(Display *display, Window requestor, Atom aTarget,
-    Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+static HANDLE export_text_html(Display *display, Window requestor, Atom aTarget,
+                               Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
 {
     HANDLE hdata;
     LPCSTR data, field_value;
@@ -1811,12 +1774,12 @@ end:
 
 
 /**************************************************************************
- *      X11DRV_CLIPBOARD_ExportHDROP
+ *      export_hdrop
  *
  *  Export CF_HDROP format to text/uri-list.
  */
-static HANDLE X11DRV_CLIPBOARD_ExportHDROP(Display *display, Window requestor, Atom aTarget,
-    Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+static HANDLE export_hdrop(Display *display, Window requestor, Atom aTarget,
+                           Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
 {
     HDROP hDrop;
     UINT i;
