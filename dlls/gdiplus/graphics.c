@@ -5200,14 +5200,68 @@ GpStatus WINGDIPAPI GdipBeginContainer2(GpGraphics *graphics,
 
 GpStatus WINGDIPAPI GdipBeginContainer(GpGraphics *graphics, GDIPCONST GpRectF *dstrect, GDIPCONST GpRectF *srcrect, GpUnit unit, GraphicsContainer *state)
 {
-    FIXME("(%p, %p, %p, %d, %p): stub\n", graphics, dstrect, srcrect, unit, state);
-    return NotImplemented;
+    GraphicsContainerItem *container;
+    GpMatrix transform;
+    GpStatus stat;
+    GpRectF scaled_srcrect;
+    REAL scale_x, scale_y;
+
+    TRACE("(%p, %s, %s, %d, %p)\n", graphics, debugstr_rectf(dstrect), debugstr_rectf(srcrect), unit, state);
+
+    if(!graphics || !dstrect || !srcrect || unit < UnitPixel || unit > UnitMillimeter || !state)
+        return InvalidParameter;
+
+    stat = init_container(&container, graphics, BEGIN_CONTAINER);
+    if(stat != Ok)
+        return stat;
+
+    list_add_head(&graphics->containers, &container->entry);
+    *state = graphics->contid = container->contid;
+
+    scale_x = units_to_pixels(1.0, unit, graphics->xres);
+    scale_y = units_to_pixels(1.0, unit, graphics->yres);
+
+    scaled_srcrect.X = scale_x * srcrect->X;
+    scaled_srcrect.Y = scale_y * srcrect->Y;
+    scaled_srcrect.Width = scale_x * srcrect->Width;
+    scaled_srcrect.Height = scale_y * srcrect->Height;
+
+    transform.matrix[0] = dstrect->Width / scaled_srcrect.Width;
+    transform.matrix[1] = 0.0;
+    transform.matrix[2] = 0.0;
+    transform.matrix[3] = dstrect->Height / scaled_srcrect.Height;
+    transform.matrix[4] = dstrect->X - scaled_srcrect.X;
+    transform.matrix[5] = dstrect->Y - scaled_srcrect.Y;
+
+    GdipMultiplyMatrix(&graphics->worldtrans, &transform, MatrixOrderPrepend);
+
+    if (graphics->image && graphics->image->type == ImageTypeMetafile) {
+        FIXME("Write to metafile\n");
+    }
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipBeginContainerI(GpGraphics *graphics, GDIPCONST GpRect *dstrect, GDIPCONST GpRect *srcrect, GpUnit unit, GraphicsContainer *state)
 {
-    FIXME("(%p, %p, %p, %d, %p): stub\n", graphics, dstrect, srcrect, unit, state);
-    return NotImplemented;
+    GpRectF dstrectf, srcrectf;
+
+    TRACE("(%p, %p, %p, %d, %p)\n", graphics, dstrect, srcrect, unit, state);
+
+    if (!dstrect || !srcrect)
+        return InvalidParameter;
+
+    dstrectf.X = dstrect->X;
+    dstrectf.Y = dstrect->Y;
+    dstrectf.Width = dstrect->Width;
+    dstrectf.Height = dstrect->Height;
+
+    srcrectf.X = srcrect->X;
+    srcrectf.Y = srcrect->Y;
+    srcrectf.Width = srcrect->Width;
+    srcrectf.Height = srcrect->Height;
+
+    return GdipBeginContainer(graphics, &dstrectf, &srcrectf, unit, state);
 }
 
 GpStatus WINGDIPAPI GdipComment(GpGraphics *graphics, UINT sizeData, GDIPCONST BYTE *data)
