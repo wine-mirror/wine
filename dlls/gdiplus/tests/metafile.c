@@ -211,12 +211,16 @@ static BOOL CALLBACK play_metafile_proc(EmfPlusRecordType record_type, unsigned 
     {
         todo_wine_if (state->expected[state->count].playback_todo)
             ok(stat == Ok, "%s.%i: GdipPlayMetafileRecord failed with stat %i\n", state->desc, state->count, stat);
+        todo_wine_if (state->expected[state->count].todo)
+            ok(state->expected[state->count].record_type == record_type,
+                "%s.%i: expected record type 0x%x, got 0x%x\n", state->desc, state->count,
+                state->expected[state->count].record_type, record_type);
         state->count++;
     }
     else
     {
         todo_wine_if (state->expected[state->count].playback_todo)
-            ok(0, "%s: too many records\n", state->desc);
+            ok(0, "%s: unexpected record 0x%x\n", state->desc, record_type);
 
         return FALSE;
     }
