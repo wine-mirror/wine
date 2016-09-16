@@ -159,7 +159,6 @@ static BOOL X11DRV_CLIPBOARD_ReadSelectionData(Display *display, LPWINE_CLIPDATA
 static BOOL X11DRV_CLIPBOARD_ReadProperty(Display *display, Window w, Atom prop,
     unsigned char** data, unsigned long* datasize);
 static BOOL X11DRV_CLIPBOARD_RenderFormat(Display *display, LPWINE_CLIPDATA lpData);
-static HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, LPDWORD lpcbytes, BOOL out);
 static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BOOL bIsMultiple );
 static void empty_clipboard(void);
 
@@ -1128,7 +1127,20 @@ static HANDLE import_metafile(Display *display, Window w, Atom prop)
     if (X11DRV_CLIPBOARD_ReadProperty(display, w, prop, &lpdata, &cbytes))
     {
         if (cbytes)
-            hClipData = X11DRV_CLIPBOARD_SerializeMetafile(CF_METAFILEPICT, lpdata, (LPDWORD)&cbytes, FALSE);
+        {
+            hClipData = GlobalAlloc(0, sizeof(METAFILEPICT));
+            if (hClipData)
+            {
+                unsigned int wiresize;
+                LPMETAFILEPICT lpmfp = GlobalLock(hClipData);
+
+                memcpy(lpmfp, lpdata, sizeof(METAFILEPICT));
+                wiresize = cbytes - sizeof(METAFILEPICT);
+                lpmfp->hMF = SetMetaFileBitsEx(wiresize,
+                    ((const BYTE *)lpdata) + sizeof(METAFILEPICT));
+                GlobalUnlock(hClipData);
+            }
+        }
 
         /* Free the retrieved property data */
         HeapFree(GetProcessHeap(), 0, lpdata);
@@ -1150,7 +1162,7 @@ static HANDLE import_enhmetafile(Display *display, Window w, Atom prop)
     if (X11DRV_CLIPBOARD_ReadProperty(display, w, prop, &lpdata, &cbytes))
     {
         if (cbytes)
-            hClipData = X11DRV_CLIPBOARD_SerializeMetafile(CF_ENHMETAFILE, lpdata, (LPDWORD)&cbytes, FALSE);
+            hClipData = SetEnhMetaFileBits(cbytes, lpdata);
 
         /* Free the retrieved property data */
         HeapFree(GetProcessHeap(), 0, lpdata);
@@ -1641,13 +1653,36 @@ static HANDLE export_image_bmp(Display *display, Window requestor, Atom aTarget,
 static HANDLE export_metafile(Display *display, Window requestor, Atom aTarget, Atom rprop,
                               LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
 {
+    LPMETAFILEPICT lpmfp;
+    unsigned int size;
+    HANDLE h;
+
     if (!X11DRV_CLIPBOARD_RenderFormat(display, lpdata))
     {
         ERR("Failed to export %04x format\n", lpdata->wFormatID);
         return 0;
     }
 
-    return X11DRV_CLIPBOARD_SerializeMetafile(CF_METAFILEPICT, lpdata->hData, lpBytes, TRUE);
+    *lpBytes = 0; /* Assume failure */
+
+    lpmfp = GlobalLock(lpdata->hData);
+    size = GetMetaFileBitsEx(lpmfp->hMF, 0, NULL);
+
+    h = GlobalAlloc(0, size + sizeof(METAFILEPICT));
+    if (h)
+    {
+        char *pdata = GlobalLock(h);
+
+        memcpy(pdata, lpmfp, sizeof(METAFILEPICT));
+        GetMetaFileBitsEx(lpmfp->hMF, size, pdata + sizeof(METAFILEPICT));
+
+        *lpBytes = size + sizeof(METAFILEPICT);
+
+        GlobalUnlock(h);
+    }
+    GlobalUnlock(lpdata->hData);
+
+    return h;
 }
 
 
@@ -1659,13 +1694,29 @@ static HANDLE export_metafile(Display *display, Window requestor, Atom aTarget, 
 static HANDLE export_enhmetafile(Display *display, Window requestor, Atom aTarget, Atom rprop,
                                  LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
 {
+    unsigned int size;
+    HANDLE h;
+
     if (!X11DRV_CLIPBOARD_RenderFormat(display, lpdata))
     {
         ERR("Failed to export %04x format\n", lpdata->wFormatID);
         return 0;
     }
 
-    return X11DRV_CLIPBOARD_SerializeMetafile(CF_ENHMETAFILE, lpdata->hData, lpBytes, TRUE);
+    *lpBytes = 0; /* Assume failure */
+
+    size = GetEnhMetaFileBits(lpdata->hData, 0, NULL);
+    h = GlobalAlloc(0, size);
+    if (h)
+    {
+        LPVOID pdata = GlobalLock(h);
+
+        GetEnhMetaFileBits(lpdata->hData, size, pdata);
+        *lpBytes = size;
+
+        GlobalUnlock(h);
+    }
+    return h;
 }
 
 
@@ -2344,82 +2395,6 @@ static BOOL X11DRV_CLIPBOARD_ReadProperty(Display *display, Window w, Atom prop,
     }
 
     return TRUE;
-}
-
-
-/**************************************************************************
- *		CLIPBOARD_SerializeMetafile
- */
-static HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, LPDWORD lpcbytes, BOOL out)
-{
-    HANDLE h = 0;
-
-    TRACE(" wFormat=%d hdata=%p out=%d\n", wformat, hdata, out);
-
-    if (out) /* Serialize out, caller should free memory */
-    {
-        *lpcbytes = 0; /* Assume failure */
-
-        if (wformat == CF_METAFILEPICT)
-        {
-            LPMETAFILEPICT lpmfp = GlobalLock(hdata);
-            unsigned int size = GetMetaFileBitsEx(lpmfp->hMF, 0, NULL);
-
-            h = GlobalAlloc(0, size + sizeof(METAFILEPICT));
-            if (h)
-            {
-                char *pdata = GlobalLock(h);
-
-                memcpy(pdata, lpmfp, sizeof(METAFILEPICT));
-                GetMetaFileBitsEx(lpmfp->hMF, size, pdata + sizeof(METAFILEPICT));
-
-                *lpcbytes = size + sizeof(METAFILEPICT);
-
-                GlobalUnlock(h);
-            }
-
-            GlobalUnlock(hdata);
-        }
-        else if (wformat == CF_ENHMETAFILE)
-        {
-            int size = GetEnhMetaFileBits(hdata, 0, NULL);
-
-            h = GlobalAlloc(0, size);
-            if (h)
-            {
-                LPVOID pdata = GlobalLock(h);
-
-                GetEnhMetaFileBits(hdata, size, pdata);
-                *lpcbytes = size;
-
-                GlobalUnlock(h);
-            }
-        }
-    }
-    else
-    {
-        if (wformat == CF_METAFILEPICT)
-        {
-            h = GlobalAlloc(0, sizeof(METAFILEPICT));
-            if (h)
-            {
-                unsigned int wiresize;
-                LPMETAFILEPICT lpmfp = GlobalLock(h);
-
-                memcpy(lpmfp, hdata, sizeof(METAFILEPICT));
-                wiresize = *lpcbytes - sizeof(METAFILEPICT);
-                lpmfp->hMF = SetMetaFileBitsEx(wiresize,
-                    ((const BYTE *)hdata) + sizeof(METAFILEPICT));
-                GlobalUnlock(h);
-            }
-        }
-        else if (wformat == CF_ENHMETAFILE)
-        {
-            h = SetEnhMetaFileBits(*lpcbytes, hdata);
-        }
-    }
-
-    return h;
 }
 
 
