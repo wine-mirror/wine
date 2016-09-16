@@ -83,6 +83,7 @@ typedef struct {
 
 typedef struct {
     BYTE data[32*32*4];
+    BYTE mask_data[32*32/8];
 } ani_data32x32x32;
 
 typedef struct {
