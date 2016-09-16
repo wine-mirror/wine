@@ -5236,7 +5236,7 @@ GpStatus WINGDIPAPI GdipBeginContainer(GpGraphics *graphics, GDIPCONST GpRectF *
     GdipMultiplyMatrix(&graphics->worldtrans, &transform, MatrixOrderPrepend);
 
     if (graphics->image && graphics->image->type == ImageTypeMetafile) {
-        FIXME("Write to metafile\n");
+        METAFILE_BeginContainer((GpMetafile*)graphics->image, dstrect, srcrect, unit, container->contid);
     }
 
     return Ok;

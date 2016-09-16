@@ -101,6 +101,8 @@ extern GpStatus METAFILE_MultiplyWorldTransform(GpMetafile* metafile, GDIPCONST 
 extern GpStatus METAFILE_RotateWorldTransform(GpMetafile* metafile, REAL angle, MatrixOrder order) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_TranslateWorldTransform(GpMetafile* metafile, REAL dx, REAL dy, MatrixOrder order) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_ResetWorldTransform(GpMetafile* metafile) DECLSPEC_HIDDEN;
+extern GpStatus METAFILE_BeginContainer(GpMetafile* metafile, GDIPCONST GpRectF *dstrect,
+    GDIPCONST GpRectF *srcrect, GpUnit unit, DWORD StackIndex) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_BeginContainerNoParams(GpMetafile* metafile, DWORD StackIndex) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_EndContainer(GpMetafile* metafile, DWORD StackIndex) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_SaveGraphics(GpMetafile* metafile, DWORD StackIndex) DECLSPEC_HIDDEN;
