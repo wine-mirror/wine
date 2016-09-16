@@ -5897,6 +5897,178 @@ static void test_GdipGetVisibleClipBounds_memoryDC(void)
     ReleaseDC(hwnd, dc);
 }
 
+static void test_container_rects(void)
+{
+    GpStatus status;
+    GpGraphics *graphics;
+    HDC hdc = GetDC( hwnd );
+    GpRectF dstrect, srcrect;
+    GraphicsContainer state;
+    static const GpPointF test_points[3] = {{0.0,0.0}, {1.0,0.0}, {0.0,1.0}};
+    GpPointF points[3];
+    REAL dpix, dpiy;
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+
+    dstrect.X = 0.0;
+    dstrect.Y = 0.0;
+    dstrect.Width = 1.0;
+    dstrect.Height = 1.0;
+    srcrect = dstrect;
+
+    status = GdipGetDpiX(graphics, &dpix);
+    expect(Ok, status);
+
+    status = GdipGetDpiY(graphics, &dpiy);
+    expect(Ok, status);
+
+    status = GdipBeginContainer(graphics, &dstrect, &srcrect, UnitWorld, &state);
+    expect(InvalidParameter, status);
+
+    status = GdipBeginContainer(graphics, &dstrect, &srcrect, UnitDisplay, &state);
+    expect(InvalidParameter, status);
+
+    status = GdipBeginContainer(graphics, &dstrect, &srcrect, UnitMillimeter+1, &state);
+    expect(InvalidParameter, status);
+
+    status = GdipBeginContainer(NULL, &dstrect, &srcrect, UnitPixel, &state);
+    expect(InvalidParameter, status);
+
+    status = GdipBeginContainer(graphics, NULL, &srcrect, UnitPixel, &state);
+    expect(InvalidParameter, status);
+
+    status = GdipBeginContainer(graphics, &dstrect, NULL, UnitPixel, &state);
+    expect(InvalidParameter, status);
+
+    status = GdipBeginContainer(graphics, &dstrect, &srcrect, -1, &state);
+    expect(InvalidParameter, status);
+
+    status = GdipBeginContainer(graphics, &dstrect, &srcrect, UnitPixel, NULL);
+    expect(InvalidParameter, status);
+
+    status = GdipBeginContainer(graphics, &dstrect, &srcrect, UnitPixel, &state);
+    expect(Ok, status);
+
+    memcpy(points, test_points, sizeof(points));
+    status = GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, points, 3);
+    expect(Ok, status);
+    expectf(0.0, points[0].X);
+    expectf(0.0, points[0].Y);
+    expectf(1.0, points[1].X);
+    expectf(0.0, points[1].Y);
+    expectf(0.0, points[2].X);
+    expectf(1.0, points[2].Y);
+
+    status = GdipEndContainer(graphics, state);
+    expect(Ok, status);
+
+    status = GdipBeginContainer(graphics, &dstrect, &srcrect, UnitInch, &state);
+    expect(Ok, status);
+
+    memcpy(points, test_points, sizeof(points));
+    status = GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, points, 3);
+    expect(Ok, status);
+    expectf(0.0, points[0].X);
+    expectf(0.0, points[0].Y);
+    expectf(1.0/dpix, points[1].X);
+    expectf(0.0, points[1].Y);
+    expectf(0.0, points[2].X);
+    expectf(1.0/dpiy, points[2].Y);
+
+    status = GdipEndContainer(graphics, state);
+    expect(Ok, status);
+
+    status = GdipScaleWorldTransform(graphics, 2.0, 2.0, MatrixOrderPrepend);
+    expect(Ok, status);
+
+    dstrect.X = 1.0;
+    dstrect.Height = 3.0;
+    status = GdipBeginContainer(graphics, &dstrect, &srcrect, UnitPixel, &state);
+    expect(Ok, status);
+
+    memcpy(points, test_points, sizeof(points));
+    status = GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, points, 3);
+    expect(Ok, status);
+    expectf(2.0, points[0].X);
+    expectf(0.0, points[0].Y);
+    expectf(4.0, points[1].X);
+    expectf(0.0, points[1].Y);
+    expectf(2.0, points[2].X);
+    expectf(6.0, points[2].Y);
+
+    status = GdipEndContainer(graphics, state);
+    expect(Ok, status);
+
+    memcpy(points, test_points, sizeof(points));
+    status = GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, points, 3);
+    expect(Ok, status);
+    expectf(0.0, points[0].X);
+    expectf(0.0, points[0].Y);
+    expectf(2.0, points[1].X);
+    expectf(0.0, points[1].Y);
+    expectf(0.0, points[2].X);
+    expectf(2.0, points[2].Y);
+
+    status = GdipResetWorldTransform(graphics);
+    expect(Ok, status);
+
+    status = GdipBeginContainer(graphics, &dstrect, &srcrect, UnitInch, &state);
+    expect(Ok, status);
+
+    memcpy(points, test_points, sizeof(points));
+    status = GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, points, 3);
+    expect(Ok, status);
+    expectf(1.0, points[0].X);
+    expectf(0.0, points[0].Y);
+    expectf((dpix+1.0)/dpix, points[1].X);
+    expectf(0.0, points[1].Y);
+    expectf(1.0, points[2].X);
+    expectf(3.0/dpiy, points[2].Y);
+
+    status = GdipEndContainer(graphics, state);
+    expect(Ok, status);
+
+    status = GdipSetPageUnit(graphics, UnitInch);
+    expect(Ok, status);
+
+    status = GdipBeginContainer(graphics, &dstrect, &srcrect, UnitPixel, &state);
+    expect(Ok, status);
+
+    memcpy(points, test_points, sizeof(points));
+    status = GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, points, 3);
+    expect(Ok, status);
+    expectf(dpix, points[0].X);
+    expectf(0.0, points[0].Y);
+    expectf(dpix*2, points[1].X);
+    expectf(0.0, points[1].Y);
+    expectf(dpix, points[2].X);
+    expectf(dpiy*3, points[2].Y);
+
+    status = GdipEndContainer(graphics, state);
+    expect(Ok, status);
+
+    status = GdipBeginContainer(graphics, &dstrect, &srcrect, UnitInch, &state);
+    expect(Ok, status);
+
+    memcpy(points, test_points, sizeof(points));
+    status = GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, points, 3);
+    expect(Ok, status);
+    expectf(dpix, points[0].X);
+    expectf(0.0, points[0].Y);
+    expectf(dpix+1.0, points[1].X);
+    expectf(0.0, points[1].Y);
+    expectf(dpix, points[2].X);
+    expectf(3.0, points[2].Y);
+
+    status = GdipEndContainer(graphics, state);
+    expect(Ok, status);
+
+    GdipDeleteGraphics(graphics);
+
+    ReleaseDC(hwnd, hdc);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -5970,6 +6142,7 @@ START_TEST(graphics)
     test_bitmapfromgraphics();
     test_GdipFillRectangles();
     test_GdipGetVisibleClipBounds_memoryDC();
+    test_container_rects();
 
     GdiplusShutdown(gdiplusToken);
     DestroyWindow( hwnd );
