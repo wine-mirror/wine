@@ -280,7 +280,7 @@
 # @ stub EventWriteEx
 # @ stub EventWriteStartScenario
 # @ stub EventWriteString
-# @ stub EventWriteTransfer
+@ stdcall EventWriteTransfer(int64 ptr ptr ptr long ptr)
 @ stdcall FileEncryptionStatusA(str ptr)
 @ stdcall FileEncryptionStatusW(wstr ptr)
 @ stdcall FindFirstFreeAce(ptr ptr)

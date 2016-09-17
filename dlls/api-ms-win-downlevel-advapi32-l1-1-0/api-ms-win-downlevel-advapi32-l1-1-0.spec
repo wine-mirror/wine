@@ -45,7 +45,7 @@
 @ stdcall EventUnregister(int64) advapi32.EventUnregister
 @ stdcall EventWrite(int64 ptr long ptr) advapi32.EventWrite
 @ stub EventWriteString
-@ stub EventWriteTransfer
+@ stdcall EventWriteTransfer(int64 ptr ptr ptr long ptr) advapi32.EventWriteTransfer
 @ stdcall FindFirstFreeAce(ptr ptr) advapi32.FindFirstFreeAce
 @ stdcall FreeSid(ptr) advapi32.FreeSid
 @ stdcall GetAce(ptr long ptr) advapi32.GetAce

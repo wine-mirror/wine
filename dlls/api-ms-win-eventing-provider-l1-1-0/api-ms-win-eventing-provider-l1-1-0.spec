@@ -7,4 +7,4 @@
 @ stdcall EventWrite(int64 ptr long ptr) advapi32.EventWrite
 @ stub EventWriteEx
 @ stub EventWriteString
-@ stub EventWriteTransfer
+@ stdcall EventWriteTransfer(int64 ptr ptr ptr long ptr) advapi32.EventWriteTransfer

@@ -875,6 +875,17 @@ ULONG WINAPI EventWrite( REGHANDLE handle, PCEVENT_DESCRIPTOR descriptor, ULONG 
 }
 
 /******************************************************************************
+ * EventWriteTransfer [ADVAPI32.@]
+ */
+ULONG WINAPI EventWriteTransfer( REGHANDLE handle, PCEVENT_DESCRIPTOR descriptor, LPCGUID activity,
+                                 LPCGUID related, ULONG count, PEVENT_DATA_DESCRIPTOR data )
+{
+    FIXME("%s, %p, %s, %s, %u, %p: stub\n", wine_dbgstr_longlong(handle), descriptor,
+          debugstr_guid(activity), debugstr_guid(related), count, data);
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
  * EventSetInformation [ADVAPI32.@]
  */
 ULONG WINAPI EventSetInformation( REGHANDLE handle, EVENT_INFO_CLASS class, PVOID info,
