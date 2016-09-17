@@ -140,6 +140,10 @@ static HANDLE export_data(Display *display, Window requestor, Atom aTarget,
                           Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
 static HANDLE export_string(Display *display, Window requestor, Atom aTarget,
                             Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
+static HANDLE export_utf8_string(Display *display, Window requestor, Atom aTarget,
+                                 Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
+static HANDLE export_compound_text(Display *display, Window requestor, Atom aTarget,
+                                   Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
 static HANDLE export_pixmap(Display *display, Window requestor, Atom aTarget,
                             Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
 static HANDLE export_image_bmp(Display *display, Window requestor, Atom aTarget,
@@ -192,8 +196,8 @@ static const struct
     { 0, CF_PENDATA,         XATOM_WCF_PENDATA,         import_data,          export_data },
     { 0, CF_RIFF,            XATOM_WCF_RIFF,            import_data,          export_data },
     { 0, CF_WAVE,            XATOM_WCF_WAVE,            import_data,          export_data },
-    { 0, CF_UNICODETEXT,     XATOM_UTF8_STRING,         import_utf8_string,   export_string },
-    { 0, CF_UNICODETEXT,     XATOM_COMPOUND_TEXT,       import_compound_text, export_string },
+    { 0, CF_UNICODETEXT,     XATOM_UTF8_STRING,         import_utf8_string,   export_utf8_string },
+    { 0, CF_UNICODETEXT,     XATOM_COMPOUND_TEXT,       import_compound_text, export_compound_text },
     { 0, CF_ENHMETAFILE,     XATOM_WCF_ENHMETAFILE,     import_enhmetafile,   export_enhmetafile },
     { 0, CF_HDROP,           XATOM_text_uri_list,       import_text_uri_list, export_hdrop },
     { 0, CF_LOCALE,          XATOM_WCF_LOCALE,          import_data,          export_data },
@@ -1365,16 +1369,18 @@ static HANDLE export_data(Display *display, Window requestor, Atom aTarget,
 
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ExportXAString
+ *		export_string
  *
  *  Export CF_TEXT converting the string to XA_STRING.
- *  Helper function for export_string.
  */
-static HANDLE X11DRV_CLIPBOARD_ExportXAString(LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
+static HANDLE export_string(Display *display, Window requestor, Atom aTarget, Atom rprop,
+                            LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
 {
     UINT i, j;
     UINT size;
     LPSTR text, lpstr = NULL;
+
+    if (!X11DRV_CLIPBOARD_RenderFormat(display, lpData)) return 0;
 
     *lpBytes = 0; /* Assume return has zero bytes */
 
@@ -1404,17 +1410,19 @@ done:
 
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ExportUTF8String
+ *		export_utf8_string
  *
  *  Export CF_UNICODE converting the string to UTF8.
- *  Helper function for export_string.
  */
-static HANDLE X11DRV_CLIPBOARD_ExportUTF8String(LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
+static HANDLE export_utf8_string(Display *display, Window requestor, Atom aTarget, Atom rprop,
+                                 LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
 {
     UINT i, j;
     UINT size;
     LPWSTR uni_text;
     LPSTR text, lpstr = NULL;
+
+    if (!X11DRV_CLIPBOARD_RenderFormat(display, lpData)) return 0;
 
     *lpBytes = 0; /* Assume return has zero bytes */
 
@@ -1452,13 +1460,12 @@ done:
 
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ExportCompoundText
+ *		export_compound_text
  *
  *  Export CF_UNICODE to COMPOUND_TEXT
- *  Helper function for export_string.
  */
-static HANDLE X11DRV_CLIPBOARD_ExportCompoundText(Display *display, Window requestor, Atom aTarget, Atom rprop,
-    LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
+static HANDLE export_compound_text(Display *display, Window requestor, Atom aTarget, Atom rprop,
+                                   LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
 {
     char* lpstr = 0;
     XTextProperty prop;
@@ -1466,6 +1473,8 @@ static HANDLE X11DRV_CLIPBOARD_ExportCompoundText(Display *display, Window reque
     UINT i, j;
     UINT size;
     LPWSTR uni_text;
+
+    if (!X11DRV_CLIPBOARD_RenderFormat(display, lpData)) return 0;
 
     uni_text = GlobalLock(lpData->hData);
 
@@ -1500,33 +1509,6 @@ static HANDLE X11DRV_CLIPBOARD_ExportCompoundText(Display *display, Window reque
     }
 
     HeapFree(GetProcessHeap(), 0, lpstr);
-
-    return 0;
-}
-
-/**************************************************************************
- *		export_string
- *
- *  Export string
- */
-static HANDLE export_string(Display *display, Window requestor, Atom aTarget, Atom rprop,
-                            LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
-{
-    if (X11DRV_CLIPBOARD_RenderFormat(display, lpData))
-    {
-        if (aTarget == XA_STRING)
-            return X11DRV_CLIPBOARD_ExportXAString(lpData, lpBytes);
-        else if (aTarget == x11drv_atom(COMPOUND_TEXT) || aTarget == x11drv_atom(TEXT))
-            return X11DRV_CLIPBOARD_ExportCompoundText(display, requestor, aTarget,
-                rprop, lpData, lpBytes);
-        else
-        {
-            TRACE("Exporting target %ld to default UTF8_STRING\n", aTarget);
-            return X11DRV_CLIPBOARD_ExportUTF8String(lpData, lpBytes);
-        }
-    }
-    else
-        ERR("Failed to render %04x format\n", lpData->wFormatID);
 
     return 0;
 }
