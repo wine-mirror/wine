@@ -33,17 +33,6 @@
 
 #define SWAPCHAIN_FLAG_SHADER_INPUT             0x1
 
-static const D3D_FEATURE_LEVEL d3d11_feature_levels[] =
-{
-    D3D_FEATURE_LEVEL_11_1,
-    D3D_FEATURE_LEVEL_11_0,
-    D3D_FEATURE_LEVEL_10_1,
-    D3D_FEATURE_LEVEL_10_0,
-    D3D_FEATURE_LEVEL_9_3,
-    D3D_FEATURE_LEVEL_9_2,
-    D3D_FEATURE_LEVEL_9_1
-};
-
 struct format_support
 {
     DXGI_FORMAT format;
@@ -1464,95 +1453,85 @@ static void test_create_device(void)
     DestroyWindow(window);
 }
 
-static void test_device_interfaces(void)
+static void test_device_interfaces(const D3D_FEATURE_LEVEL feature_level)
 {
+    struct device_desc device_desc;
     IDXGIAdapter *dxgi_adapter;
     IDXGIDevice *dxgi_device;
     ID3D11Device *device;
     IUnknown *iface;
     ULONG refcount;
-    unsigned int i;
     HRESULT hr;
 
-    for (i = 0; i < sizeof(d3d11_feature_levels) / sizeof(*d3d11_feature_levels); ++i)
+    device_desc.feature_level = &feature_level;
+    device_desc.flags = 0;
+    if (!(device = create_device(&device_desc)))
     {
-        struct device_desc device_desc;
-
-        device_desc.feature_level = &d3d11_feature_levels[i];
-        device_desc.flags = 0;
-        if (!(device = create_device(&device_desc)))
-        {
-            skip("Failed to create device for feature level %#x.\n", d3d11_feature_levels[i]);
-            continue;
-        }
-
-        hr = ID3D11Device_QueryInterface(device, &IID_IUnknown, (void **)&iface);
-        ok(SUCCEEDED(hr), "Device should implement IUnknown interface, hr %#x.\n", hr);
-        IUnknown_Release(iface);
-
-        hr = ID3D11Device_QueryInterface(device, &IID_IDXGIObject, (void **)&iface);
-        ok(SUCCEEDED(hr), "Device should implement IDXGIObject interface, hr %#x.\n", hr);
-        IUnknown_Release(iface);
-
-        hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
-        ok(SUCCEEDED(hr), "Device should implement IDXGIDevice.\n");
-        hr = IDXGIDevice_GetParent(dxgi_device, &IID_IDXGIAdapter, (void **)&dxgi_adapter);
-        ok(SUCCEEDED(hr), "Device parent should implement IDXGIAdapter.\n");
-        hr = IDXGIAdapter_GetParent(dxgi_adapter, &IID_IDXGIFactory, (void **)&iface);
-        ok(SUCCEEDED(hr), "Adapter parent should implement IDXGIFactory.\n");
-        IUnknown_Release(iface);
-        IDXGIAdapter_Release(dxgi_adapter);
-        hr = IDXGIDevice_GetParent(dxgi_device, &IID_IDXGIAdapter1, (void **)&dxgi_adapter);
-        ok(SUCCEEDED(hr), "Device parent should implement IDXGIAdapter1.\n");
-        hr = IDXGIAdapter_GetParent(dxgi_adapter, &IID_IDXGIFactory1, (void **)&iface);
-        ok(SUCCEEDED(hr), "Adapter parent should implement IDXGIFactory1.\n");
-        IUnknown_Release(iface);
-        IDXGIAdapter_Release(dxgi_adapter);
-        IDXGIDevice_Release(dxgi_device);
-
-        hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice1, (void **)&iface);
-        ok(SUCCEEDED(hr), "Device should implement IDXGIDevice1.\n");
-        IUnknown_Release(iface);
-
-        hr = ID3D11Device_QueryInterface(device, &IID_ID3D10Multithread, (void **)&iface);
-        ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-                "Device should implement ID3D10Multithread interface, hr %#x.\n", hr);
-        if (SUCCEEDED(hr)) IUnknown_Release(iface);
-
-        hr = ID3D11Device_QueryInterface(device, &IID_ID3D10Device, (void **)&iface);
-        todo_wine ok(hr == E_NOINTERFACE, "Device should not implement ID3D10Device interface, hr %#x.\n", hr);
-        if (SUCCEEDED(hr)) IUnknown_Release(iface);
-
-        hr = ID3D11Device_QueryInterface(device, &IID_ID3D11InfoQueue, (void **)&iface);
-        ok(hr == E_NOINTERFACE, "Found ID3D11InfoQueue interface in non-debug mode, hr %#x.\n", hr);
-
-        hr = ID3D11Device_QueryInterface(device, &IID_ID3D10Device1, (void **)&iface);
-        todo_wine ok(hr == E_NOINTERFACE, "Device should not implement ID3D10Device1 interface, hr %#x.\n", hr);
-        if (SUCCEEDED(hr)) IUnknown_Release(iface);
-
-        refcount = ID3D11Device_Release(device);
-        ok(!refcount, "Device has %u references left.\n", refcount);
+        skip("Failed to create device for feature level %#x.\n", feature_level);
+        return;
     }
 
-    for (i = 0; i < sizeof(d3d11_feature_levels) / sizeof(*d3d11_feature_levels); ++i)
+    hr = ID3D11Device_QueryInterface(device, &IID_IUnknown, (void **)&iface);
+    ok(SUCCEEDED(hr), "Device should implement IUnknown interface, hr %#x.\n", hr);
+    IUnknown_Release(iface);
+
+    hr = ID3D11Device_QueryInterface(device, &IID_IDXGIObject, (void **)&iface);
+    ok(SUCCEEDED(hr), "Device should implement IDXGIObject interface, hr %#x.\n", hr);
+    IUnknown_Release(iface);
+
+    hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
+    ok(SUCCEEDED(hr), "Device should implement IDXGIDevice.\n");
+    hr = IDXGIDevice_GetParent(dxgi_device, &IID_IDXGIAdapter, (void **)&dxgi_adapter);
+    ok(SUCCEEDED(hr), "Device parent should implement IDXGIAdapter.\n");
+    hr = IDXGIAdapter_GetParent(dxgi_adapter, &IID_IDXGIFactory, (void **)&iface);
+    ok(SUCCEEDED(hr), "Adapter parent should implement IDXGIFactory.\n");
+    IUnknown_Release(iface);
+    IDXGIAdapter_Release(dxgi_adapter);
+    hr = IDXGIDevice_GetParent(dxgi_device, &IID_IDXGIAdapter1, (void **)&dxgi_adapter);
+    ok(SUCCEEDED(hr), "Device parent should implement IDXGIAdapter1.\n");
+    hr = IDXGIAdapter_GetParent(dxgi_adapter, &IID_IDXGIFactory1, (void **)&iface);
+    ok(SUCCEEDED(hr), "Adapter parent should implement IDXGIFactory1.\n");
+    IUnknown_Release(iface);
+    IDXGIAdapter_Release(dxgi_adapter);
+    IDXGIDevice_Release(dxgi_device);
+
+    hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice1, (void **)&iface);
+    ok(SUCCEEDED(hr), "Device should implement IDXGIDevice1.\n");
+    IUnknown_Release(iface);
+
+    hr = ID3D11Device_QueryInterface(device, &IID_ID3D10Multithread, (void **)&iface);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Device should implement ID3D10Multithread interface, hr %#x.\n", hr);
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
+    hr = ID3D11Device_QueryInterface(device, &IID_ID3D10Device, (void **)&iface);
+    todo_wine ok(hr == E_NOINTERFACE, "Device should not implement ID3D10Device interface, hr %#x.\n", hr);
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
+    hr = ID3D11Device_QueryInterface(device, &IID_ID3D11InfoQueue, (void **)&iface);
+    ok(hr == E_NOINTERFACE, "Found ID3D11InfoQueue interface in non-debug mode, hr %#x.\n", hr);
+
+    hr = ID3D11Device_QueryInterface(device, &IID_ID3D10Device1, (void **)&iface);
+    todo_wine ok(hr == E_NOINTERFACE, "Device should not implement ID3D10Device1 interface, hr %#x.\n", hr);
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+    device_desc.feature_level = &feature_level;
+    device_desc.flags = D3D11_CREATE_DEVICE_DEBUG;
+    if (!(device = create_device(&device_desc)))
     {
-        struct device_desc device_desc;
-
-        device_desc.feature_level = &d3d11_feature_levels[i];
-        device_desc.flags = D3D11_CREATE_DEVICE_DEBUG;
-        if (!(device = create_device(&device_desc)))
-        {
-            skip("Failed to create debug device for feature level %#x.\n", d3d11_feature_levels[i]);
-            continue;
-        }
-
-        hr = ID3D11Device_QueryInterface(device, &IID_ID3D11InfoQueue, (void **)&iface);
-        todo_wine ok(hr == S_OK, "Device should implement ID3D11InfoQueue interface, hr %#x.\n", hr);
-        if (SUCCEEDED(hr)) IUnknown_Release(iface);
-
-        refcount = ID3D11Device_Release(device);
-        ok(!refcount, "Device has %u references left.\n", refcount);
+        skip("Failed to create debug device for feature level %#x.\n", feature_level);
+        return;
     }
+
+    hr = ID3D11Device_QueryInterface(device, &IID_ID3D11InfoQueue, (void **)&iface);
+    todo_wine ok(hr == S_OK, "Device should implement ID3D11InfoQueue interface, hr %#x.\n", hr);
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
 static void test_get_immediate_context(void)
@@ -3491,7 +3470,7 @@ static void test_create_shader_resource_view(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-static void test_create_shader(void)
+static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
 {
 #if 0
     float4 light;
@@ -3737,198 +3716,190 @@ static void test_create_shader(void)
     };
 
     ULONG refcount, expected_refcount;
+    struct device_desc device_desc;
     ID3D11Device *device, *tmp;
     ID3D11GeometryShader *gs;
     ID3D11VertexShader *vs;
     ID3D11PixelShader *ps;
     IUnknown *iface;
-    unsigned int i;
     HRESULT hr;
 
-    for (i = 0; i < sizeof(d3d11_feature_levels) / sizeof(*d3d11_feature_levels); ++i)
+    device_desc.feature_level = &feature_level;
+    device_desc.flags = 0;
+    if (!(device = create_device(&device_desc)))
     {
-        D3D_FEATURE_LEVEL feature_level = d3d11_feature_levels[i];
-        struct device_desc device_desc;
+        skip("Failed to create device for feature level %#x.\n", feature_level);
+        return;
+    }
 
-        device_desc.feature_level = &feature_level;
-        device_desc.flags = 0;
-        if (!(device = create_device(&device_desc)))
-        {
-            skip("Failed to create device for feature level %#x.\n", feature_level);
-            continue;
-        }
+    /* level_9 shaders */
+    hr = ID3D11Device_CreatePixelShader(device, ps_4_0_level_9_0, sizeof(ps_4_0_level_9_0), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create ps_4_0_level_9_0 shader, hr %#x, feature level %#x.\n", hr, feature_level);
+    ID3D11PixelShader_Release(ps);
 
-        /* level_9 shaders */
-        hr = ID3D11Device_CreatePixelShader(device, ps_4_0_level_9_0, sizeof(ps_4_0_level_9_0), NULL, &ps);
-        ok(SUCCEEDED(hr), "Failed to create ps_4_0_level_9_0 shader, hr %#x, feature level %#x.\n", hr, feature_level);
-        if (SUCCEEDED(hr))
-            ID3D11PixelShader_Release(ps);
+    hr = ID3D11Device_CreatePixelShader(device, ps_4_0_level_9_1, sizeof(ps_4_0_level_9_1), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create ps_4_0_level_9_1 shader, hr %#x, feature level %#x.\n", hr, feature_level);
+    ID3D11PixelShader_Release(ps);
 
-        hr = ID3D11Device_CreatePixelShader(device, ps_4_0_level_9_1, sizeof(ps_4_0_level_9_1), NULL, &ps);
-        ok(SUCCEEDED(hr), "Failed to create ps_4_0_level_9_1 shader, hr %#x, feature level %#x.\n", hr, feature_level);
-        if (SUCCEEDED(hr))
-            ID3D11PixelShader_Release(ps);
+    hr = ID3D11Device_CreatePixelShader(device, ps_4_0_level_9_3, sizeof(ps_4_0_level_9_3), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create ps_4_0_level_9_3 shader, hr %#x, feature level %#x.\n", hr, feature_level);
+    ID3D11PixelShader_Release(ps);
 
-        hr = ID3D11Device_CreatePixelShader(device, ps_4_0_level_9_3, sizeof(ps_4_0_level_9_3), NULL, &ps);
-        ok(SUCCEEDED(hr), "Failed to create ps_4_0_level_9_3 shader, hr %#x, feature level %#x.\n", hr, feature_level);
-        if (SUCCEEDED(hr))
-            ID3D11PixelShader_Release(ps);
+    /* vertex shader */
+    hr = ID3D11Device_CreateVertexShader(device, vs_2_0, sizeof(vs_2_0), NULL, &vs);
+    ok(hr == E_INVALIDARG, "Created a SM2 vertex shader, hr %#x, feature level %#x.\n", hr, feature_level);
 
-        /* vertex shader */
-        hr = ID3D11Device_CreateVertexShader(device, vs_2_0, sizeof(vs_2_0), NULL, &vs);
-        ok(hr == E_INVALIDARG, "Created a SM2 vertex shader, hr %#x, feature level %#x.\n", hr, feature_level);
+    hr = ID3D11Device_CreateVertexShader(device, vs_3_0, sizeof(vs_3_0), NULL, &vs);
+    ok(hr == E_INVALIDARG, "Created a SM3 vertex shader, hr %#x, feature level %#x.\n", hr, feature_level);
 
-        hr = ID3D11Device_CreateVertexShader(device, vs_3_0, sizeof(vs_3_0), NULL, &vs);
-        ok(hr == E_INVALIDARG, "Created a SM3 vertex shader, hr %#x, feature level %#x.\n", hr, feature_level);
+    hr = ID3D11Device_CreateVertexShader(device, ps_4_0, sizeof(ps_4_0), NULL, &vs);
+    ok(hr == E_INVALIDARG, "Created a SM4 vertex shader from a pixel shader source, hr %#x, feature level %#x.\n",
+            hr, feature_level);
 
-        hr = ID3D11Device_CreateVertexShader(device, ps_4_0, sizeof(ps_4_0), NULL, &vs);
-        ok(hr == E_INVALIDARG, "Created a SM4 vertex shader from a pixel shader source, hr %#x, feature level %#x.\n",
+    expected_refcount = get_refcount((IUnknown *)device) + (feature_level >= D3D_FEATURE_LEVEL_10_0);
+    hr = ID3D11Device_CreateVertexShader(device, vs_4_0, sizeof(vs_4_0), NULL, &vs);
+    if (feature_level >= D3D_FEATURE_LEVEL_10_0)
+        ok(SUCCEEDED(hr), "Failed to create SM4 vertex shader, hr %#x, feature level %#x.\n", hr, feature_level);
+    else
+        ok(hr == E_INVALIDARG, "Created a SM4 vertex shader, hr %#x, feature level %#x.\n", hr, feature_level);
+
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n",
+            refcount, expected_refcount);
+    if (feature_level >= D3D_FEATURE_LEVEL_10_0)
+    {
+        tmp = NULL;
+        expected_refcount = refcount + 1;
+        ID3D11VertexShader_GetDevice(vs, &tmp);
+        ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
+        refcount = get_refcount((IUnknown *)device);
+        ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n",
+                refcount, expected_refcount);
+        ID3D11Device_Release(tmp);
+
+        hr = ID3D11VertexShader_QueryInterface(vs, &IID_ID3D10VertexShader, (void **)&iface);
+        ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+                "Vertex shader should implement ID3D10VertexShader.\n");
+        if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
+        refcount = ID3D11VertexShader_Release(vs);
+        ok(!refcount, "Vertex shader has %u references left.\n", refcount);
+    }
+
+    hr = ID3D11Device_CreateVertexShader(device, vs_4_1, sizeof(vs_4_1), NULL, &vs);
+    if (feature_level >= D3D_FEATURE_LEVEL_10_1)
+    {
+        ok(SUCCEEDED(hr), "Failed to create SM4.1 vertex shader, hr %#x, feature level %#x.\n",
                 hr, feature_level);
-
-        expected_refcount = get_refcount((IUnknown *)device) + (feature_level >= D3D_FEATURE_LEVEL_10_0);
-        hr = ID3D11Device_CreateVertexShader(device, vs_4_0, sizeof(vs_4_0), NULL, &vs);
-        if (feature_level >= D3D_FEATURE_LEVEL_10_0)
-            ok(SUCCEEDED(hr), "Failed to create SM4 vertex shader, hr %#x, feature level %#x.\n", hr, feature_level);
-        else
-            ok(hr == E_INVALIDARG, "Created a SM4 vertex shader, hr %#x, feature level %#x.\n", hr, feature_level);
-
-        refcount = get_refcount((IUnknown *)device);
-        ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n",
-                refcount, expected_refcount);
-        if (feature_level >= D3D_FEATURE_LEVEL_10_0)
-        {
-            tmp = NULL;
-            expected_refcount = refcount + 1;
-            ID3D11VertexShader_GetDevice(vs, &tmp);
-            ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
-            refcount = get_refcount((IUnknown *)device);
-            ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n",
-                    refcount, expected_refcount);
-            ID3D11Device_Release(tmp);
-
-            hr = ID3D11VertexShader_QueryInterface(vs, &IID_ID3D10VertexShader, (void **)&iface);
-            ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-                    "Vertex shader should implement ID3D10VertexShader.\n");
-            if (SUCCEEDED(hr)) IUnknown_Release(iface);
-
-            refcount = ID3D11VertexShader_Release(vs);
-            ok(!refcount, "Vertex shader has %u references left.\n", refcount);
-        }
-
-        hr = ID3D11Device_CreateVertexShader(device, vs_4_1, sizeof(vs_4_1), NULL, &vs);
-        if (feature_level >= D3D_FEATURE_LEVEL_10_1)
-        {
-            ok(SUCCEEDED(hr), "Failed to create SM4.1 vertex shader, hr %#x, feature level %#x.\n",
+        refcount = ID3D11VertexShader_Release(vs);
+        ok(!refcount, "Vertex shader has %u references left.\n", refcount);
+    }
+    else
+    {
+        todo_wine_if(feature_level >= D3D_FEATURE_LEVEL_10_0)
+            ok(hr == E_INVALIDARG, "Created a SM4.1 vertex shader, hr %#x, feature level %#x.\n",
                     hr, feature_level);
-            refcount = ID3D11VertexShader_Release(vs);
-            ok(!refcount, "Vertex shader has %u references left.\n", refcount);
-        }
-        else
-        {
-            todo_wine_if(feature_level >= D3D_FEATURE_LEVEL_10_0)
-            ok(hr == E_INVALIDARG, "Created a SM4.1 vertex shader, hr %#x, feature level %#x.\n", hr, feature_level);
-            if (SUCCEEDED(hr))
-                ID3D11VertexShader_Release(vs);
-        }
+        if (SUCCEEDED(hr))
+            ID3D11VertexShader_Release(vs);
+    }
 
-        /* pixel shader */
-        expected_refcount = get_refcount((IUnknown *)device) + (feature_level >= D3D_FEATURE_LEVEL_10_0);
-        hr = ID3D11Device_CreatePixelShader(device, ps_4_0, sizeof(ps_4_0), NULL, &ps);
-        if (feature_level >= D3D_FEATURE_LEVEL_10_0)
-            ok(SUCCEEDED(hr), "Failed to create SM4 pixel shader, hr %#x, feature level %#x.\n", hr, feature_level);
-        else
-            ok(hr == E_INVALIDARG, "Created a SM4 pixel shader, hr %#x, feature level %#x.\n", hr, feature_level);
+    /* pixel shader */
+    expected_refcount = get_refcount((IUnknown *)device) + (feature_level >= D3D_FEATURE_LEVEL_10_0);
+    hr = ID3D11Device_CreatePixelShader(device, ps_4_0, sizeof(ps_4_0), NULL, &ps);
+    if (feature_level >= D3D_FEATURE_LEVEL_10_0)
+        ok(SUCCEEDED(hr), "Failed to create SM4 pixel shader, hr %#x, feature level %#x.\n", hr, feature_level);
+    else
+        ok(hr == E_INVALIDARG, "Created a SM4 pixel shader, hr %#x, feature level %#x.\n", hr, feature_level);
 
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n",
+            refcount, expected_refcount);
+    if (feature_level >= D3D_FEATURE_LEVEL_10_0)
+    {
+        tmp = NULL;
+        expected_refcount = refcount + 1;
+        ID3D11PixelShader_GetDevice(ps, &tmp);
+        ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
         refcount = get_refcount((IUnknown *)device);
-        ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n",
+        ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n",
                 refcount, expected_refcount);
-        if (feature_level >= D3D_FEATURE_LEVEL_10_0)
-        {
-            tmp = NULL;
-            expected_refcount = refcount + 1;
-            ID3D11PixelShader_GetDevice(ps, &tmp);
-            ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
-            refcount = get_refcount((IUnknown *)device);
-            ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n",
-                    refcount, expected_refcount);
-            ID3D11Device_Release(tmp);
+        ID3D11Device_Release(tmp);
 
-            hr = ID3D11PixelShader_QueryInterface(ps, &IID_ID3D10PixelShader, (void **)&iface);
-            ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-                    "Pixel shader should implement ID3D10PixelShader.\n");
-            if (SUCCEEDED(hr)) IUnknown_Release(iface);
+        hr = ID3D11PixelShader_QueryInterface(ps, &IID_ID3D10PixelShader, (void **)&iface);
+        ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+                "Pixel shader should implement ID3D10PixelShader.\n");
+        if (SUCCEEDED(hr)) IUnknown_Release(iface);
 
-            refcount = ID3D11PixelShader_Release(ps);
-            ok(!refcount, "Pixel shader has %u references left.\n", refcount);
-        }
+        refcount = ID3D11PixelShader_Release(ps);
+        ok(!refcount, "Pixel shader has %u references left.\n", refcount);
+    }
 
-        hr = ID3D11Device_CreatePixelShader(device, ps_4_1, sizeof(ps_4_1), NULL, &ps);
-        if (feature_level >= D3D_FEATURE_LEVEL_10_1)
-        {
-            ok(SUCCEEDED(hr), "Failed to create SM4.1 pixel shader, hr %#x, feature level %#x.\n",
-                    hr, feature_level);
-            refcount = ID3D11PixelShader_Release(ps);
-            ok(!refcount, "Pixel shader has %u references left.\n", refcount);
-        }
-        else
-        {
-            todo_wine_if(feature_level >= D3D_FEATURE_LEVEL_10_0)
+    hr = ID3D11Device_CreatePixelShader(device, ps_4_1, sizeof(ps_4_1), NULL, &ps);
+    if (feature_level >= D3D_FEATURE_LEVEL_10_1)
+    {
+        ok(SUCCEEDED(hr), "Failed to create SM4.1 pixel shader, hr %#x, feature level %#x.\n",
+                hr, feature_level);
+        refcount = ID3D11PixelShader_Release(ps);
+        ok(!refcount, "Pixel shader has %u references left.\n", refcount);
+    }
+    else
+    {
+        todo_wine_if(feature_level >= D3D_FEATURE_LEVEL_10_0)
             ok(hr == E_INVALIDARG, "Created a SM4.1 pixel shader, hr %#x, feature level %#x.\n", hr, feature_level);
-            if (SUCCEEDED(hr))
-                ID3D11PixelShader_Release(ps);
-        }
+        if (SUCCEEDED(hr))
+            ID3D11PixelShader_Release(ps);
+    }
 
-        /* geometry shader */
-        expected_refcount = get_refcount((IUnknown *)device) + (feature_level >= D3D_FEATURE_LEVEL_10_0);
-        hr = ID3D11Device_CreateGeometryShader(device, gs_4_0, sizeof(gs_4_0), NULL, &gs);
-        if (feature_level >= D3D_FEATURE_LEVEL_10_0)
-            ok(SUCCEEDED(hr), "Failed to create SM4 geometry shader, hr %#x, feature level %#x.\n", hr, feature_level);
-        else
-            ok(hr == E_INVALIDARG, "Created a SM4 geometry shader, hr %#x, feature level %#x.\n", hr, feature_level);
+    /* geometry shader */
+    expected_refcount = get_refcount((IUnknown *)device) + (feature_level >= D3D_FEATURE_LEVEL_10_0);
+    hr = ID3D11Device_CreateGeometryShader(device, gs_4_0, sizeof(gs_4_0), NULL, &gs);
+    if (feature_level >= D3D_FEATURE_LEVEL_10_0)
+        ok(SUCCEEDED(hr), "Failed to create SM4 geometry shader, hr %#x, feature level %#x.\n", hr, feature_level);
+    else
+        ok(hr == E_INVALIDARG, "Created a SM4 geometry shader, hr %#x, feature level %#x.\n", hr, feature_level);
 
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n",
+            refcount, expected_refcount);
+    if (feature_level >= D3D_FEATURE_LEVEL_10_0)
+    {
+        tmp = NULL;
+        expected_refcount = refcount + 1;
+        ID3D11GeometryShader_GetDevice(gs, &tmp);
+        ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
         refcount = get_refcount((IUnknown *)device);
-        ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n",
+        ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n",
                 refcount, expected_refcount);
-        if (feature_level >= D3D_FEATURE_LEVEL_10_0)
-        {
-            tmp = NULL;
-            expected_refcount = refcount + 1;
-            ID3D11GeometryShader_GetDevice(gs, &tmp);
-            ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
-            refcount = get_refcount((IUnknown *)device);
-            ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n",
-                    refcount, expected_refcount);
-            ID3D11Device_Release(tmp);
+        ID3D11Device_Release(tmp);
 
-            hr = ID3D11GeometryShader_QueryInterface(gs, &IID_ID3D10GeometryShader, (void **)&iface);
-            ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-                    "Geometry shader should implement ID3D10GeometryShader.\n");
-            if (SUCCEEDED(hr)) IUnknown_Release(iface);
+        hr = ID3D11GeometryShader_QueryInterface(gs, &IID_ID3D10GeometryShader, (void **)&iface);
+        ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+                "Geometry shader should implement ID3D10GeometryShader.\n");
+        if (SUCCEEDED(hr)) IUnknown_Release(iface);
 
-            refcount = ID3D11GeometryShader_Release(gs);
-            ok(!refcount, "Geometry shader has %u references left.\n", refcount);
-        }
+        refcount = ID3D11GeometryShader_Release(gs);
+        ok(!refcount, "Geometry shader has %u references left.\n", refcount);
+    }
 
-        hr = ID3D11Device_CreateGeometryShader(device, gs_4_1, sizeof(gs_4_1), NULL, &gs);
-        if (feature_level >= D3D_FEATURE_LEVEL_10_1)
-        {
-            ok(SUCCEEDED(hr), "Failed to create SM4.1 geometry shader, hr %#x, feature level %#x.\n",
-                    hr, feature_level);
-            refcount = ID3D11GeometryShader_Release(gs);
-            ok(!refcount, "Geometry shader has %u references left.\n", refcount);
-        }
-        else
-        {
-            todo_wine_if(feature_level >= D3D_FEATURE_LEVEL_10_0)
+    hr = ID3D11Device_CreateGeometryShader(device, gs_4_1, sizeof(gs_4_1), NULL, &gs);
+    if (feature_level >= D3D_FEATURE_LEVEL_10_1)
+    {
+        ok(SUCCEEDED(hr), "Failed to create SM4.1 geometry shader, hr %#x, feature level %#x.\n",
+                hr, feature_level);
+        refcount = ID3D11GeometryShader_Release(gs);
+        ok(!refcount, "Geometry shader has %u references left.\n", refcount);
+    }
+    else
+    {
+        todo_wine_if(feature_level >= D3D_FEATURE_LEVEL_10_0)
             ok(hr == E_INVALIDARG, "Created a SM4.1 geometry shader, hr %#x, feature level %#x.\n",
                     hr, feature_level);
-            if (SUCCEEDED(hr))
-                ID3D11GeometryShader_Release(gs);
-        }
-
-        refcount = ID3D11Device_Release(device);
-        ok(!refcount, "Device has %u references left.\n", refcount);
+        if (SUCCEEDED(hr))
+            ID3D11GeometryShader_Release(gs);
     }
+
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
 static void test_create_sampler_state(void)
@@ -7565,16 +7536,17 @@ done:
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-static void test_swapchain_formats(void)
+static void test_swapchain_formats(const D3D_FEATURE_LEVEL feature_level)
 {
     DXGI_SWAP_CHAIN_DESC swapchain_desc;
+    struct device_desc device_desc;
     IDXGISwapChain *swapchain;
     IDXGIDevice *dxgi_device;
     HRESULT hr, expected_hr;
     IDXGIAdapter *adapter;
     IDXGIFactory *factory;
     ID3D11Device *device;
-    unsigned int i, j;
+    unsigned int i;
     ULONG refcount;
 
     swapchain_desc.BufferDesc.Width = 800;
@@ -7592,76 +7564,69 @@ static void test_swapchain_formats(void)
     swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
     swapchain_desc.Flags = 0;
 
-    for (i = 0; i < sizeof(d3d11_feature_levels) / sizeof(*d3d11_feature_levels); ++i)
+    device_desc.feature_level = &feature_level;
+    device_desc.flags = 0;
+    if (!(device = create_device(&device_desc)))
     {
-        const D3D_FEATURE_LEVEL feature_level = d3d11_feature_levels[i];
-        struct device_desc device_desc;
+        skip("Failed to create device for feature level %#x.\n", feature_level);
+        return;
+    }
 
-        device_desc.feature_level = &feature_level;
-        device_desc.flags = 0;
-        if (!(device = create_device(&device_desc)))
+    hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
+    ok(SUCCEEDED(hr), "Failed to query IDXGIDevice, hr %#x.\n", hr);
+    hr = IDXGIDevice_GetAdapter(dxgi_device, &adapter);
+    ok(SUCCEEDED(hr), "GetAdapter failed, hr %#x.\n", hr);
+    IDXGIDevice_Release(dxgi_device);
+    hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
+    ok(SUCCEEDED(hr), "GetParent failed, hr %#x.\n", hr);
+    IDXGIAdapter_Release(adapter);
+
+    swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_TYPELESS;
+    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x for typeless format (feature level %#x).\n",
+            hr, feature_level);
+    if (SUCCEEDED(hr))
+        IDXGISwapChain_Release(swapchain);
+
+    for (i = 0; i < sizeof(display_format_support) / sizeof(*display_format_support); ++i)
+    {
+        DXGI_FORMAT format = display_format_support[i].format;
+        BOOL todo = FALSE;
+
+        if (display_format_support[i].fl_required <= feature_level)
         {
-            skip("Failed to create device for feature level %#x.\n", feature_level);
+            expected_hr = S_OK;
+            if (format == DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM)
+                todo = TRUE;
+        }
+        else if (!display_format_support[i].fl_optional
+                || display_format_support[i].fl_optional > feature_level)
+        {
+            expected_hr = E_INVALIDARG;
+            if (format != DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM)
+                todo = TRUE;
+        }
+        else
+        {
             continue;
         }
 
-        hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
-        ok(SUCCEEDED(hr), "Failed to query IDXGIDevice, hr %#x.\n", hr);
-        hr = IDXGIDevice_GetAdapter(dxgi_device, &adapter);
-        ok(SUCCEEDED(hr), "GetAdapter failed, hr %#x.\n", hr);
-        IDXGIDevice_Release(dxgi_device);
-        hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
-        ok(SUCCEEDED(hr), "GetParent failed, hr %#x.\n", hr);
-        IDXGIAdapter_Release(adapter);
-
-        swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_TYPELESS;
+        swapchain_desc.BufferDesc.Format = format;
         hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
-        todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x for typeless format (feature level %#x).\n",
-                hr, d3d11_feature_levels[i]);
-        if (SUCCEEDED(hr))
-            IDXGISwapChain_Release(swapchain);
-
-        for (j = 0; j < sizeof(display_format_support) / sizeof(*display_format_support); ++j)
-        {
-            DXGI_FORMAT format = display_format_support[j].format;
-            BOOL todo = FALSE;
-
-            if (display_format_support[j].fl_required <= feature_level)
-            {
-                expected_hr = S_OK;
-                if (format == DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM)
-                    todo = TRUE;
-            }
-            else if (!display_format_support[j].fl_optional
-                    || display_format_support[j].fl_optional > feature_level)
-            {
-                expected_hr = E_INVALIDARG;
-                if (format != DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM)
-                    todo = TRUE;
-            }
-            else
-            {
-                continue;
-            }
-
-            swapchain_desc.BufferDesc.Format = format;
-            hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
-            todo_wine_if(todo)
+        todo_wine_if(todo)
             ok(hr == expected_hr || broken(hr == E_OUTOFMEMORY),
                     "Got hr %#x, expected %#x (feature level %#x, format %#x).\n",
                     hr, expected_hr, feature_level, format);
-            if (FAILED(hr))
-                continue;
-            refcount = IDXGISwapChain_Release(swapchain);
-            ok(!refcount, "Swapchain has %u references left.\n", refcount);
-        }
-
-        refcount = ID3D11Device_Release(device);
-        ok(!refcount, "Device has %u references left.\n", refcount);
-        refcount = IDXGIFactory_Release(factory);
-        ok(!refcount, "Factory has %u references left.\n", refcount);
+        if (FAILED(hr))
+            continue;
+        refcount = IDXGISwapChain_Release(swapchain);
+        ok(!refcount, "Swapchain has %u references left.\n", refcount);
     }
 
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    refcount = IDXGIFactory_Release(factory);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
     DestroyWindow(swapchain_desc.OutputWindow);
 }
 
@@ -10651,12 +10616,12 @@ static void check_format_support(const unsigned int *format_support, D3D_FEATURE
     }
 }
 
-static void test_required_format_support(void)
+static void test_required_format_support(const D3D_FEATURE_LEVEL feature_level)
 {
     unsigned int format_support[DXGI_FORMAT_B4G4R4A4_UNORM + 1];
+    struct device_desc device_desc;
     ID3D11Device *device;
     DXGI_FORMAT format;
-    unsigned int i;
     ULONG refcount;
     HRESULT hr;
 
@@ -10666,62 +10631,49 @@ static void test_required_format_support(void)
         {DXGI_FORMAT_R16_UINT, D3D_FEATURE_LEVEL_9_1},
     };
 
-    for (i = 0; i < sizeof(d3d11_feature_levels) / sizeof(*d3d11_feature_levels); ++i)
+    device_desc.feature_level = &feature_level;
+    device_desc.flags = 0;
+    if (!(device = create_device(&device_desc)))
     {
-        D3D_FEATURE_LEVEL feature_level = d3d11_feature_levels[i];
-        struct device_desc device_desc;
-
-        device_desc.feature_level = &feature_level;
-        device_desc.flags = 0;
-        if (!(device = create_device(&device_desc)))
-        {
-            skip("Failed to create device for feature level %#x.\n", feature_level);
-            continue;
-        }
-
-        memset(format_support, 0, sizeof(format_support));
-        for (format = DXGI_FORMAT_UNKNOWN; format <= DXGI_FORMAT_B4G4R4A4_UNORM; ++format)
-        {
-            hr = ID3D11Device_CheckFormatSupport(device, format, &format_support[format]);
-            todo_wine ok(hr == S_OK || (hr == E_FAIL && !format_support[format]),
-                    "Got unexpected result for format %#x: hr %#x, format_support %#x.\n",
-                    format, hr, format_support[format]);
-        }
-        if (hr == E_NOTIMPL)
-        {
-            skip("CheckFormatSupport not implemented.\n");
-            ID3D11Device_Release(device);
-            continue;
-        }
-
-        check_format_support(format_support, feature_level,
-                index_buffers, sizeof(index_buffers) / sizeof(*index_buffers),
-                D3D11_FORMAT_SUPPORT_IA_INDEX_BUFFER, "index buffer");
-
-        check_format_support(format_support, feature_level,
-                display_format_support, sizeof(display_format_support) / sizeof(*display_format_support),
-                D3D11_FORMAT_SUPPORT_DISPLAY, "display");
-
-        refcount = ID3D11Device_Release(device);
-        ok(!refcount, "Device has %u references left.\n", refcount);
+        skip("Failed to create device for feature level %#x.\n", feature_level);
+        return;
     }
+
+    memset(format_support, 0, sizeof(format_support));
+    for (format = DXGI_FORMAT_UNKNOWN; format <= DXGI_FORMAT_B4G4R4A4_UNORM; ++format)
+    {
+        hr = ID3D11Device_CheckFormatSupport(device, format, &format_support[format]);
+        todo_wine ok(hr == S_OK || (hr == E_FAIL && !format_support[format]),
+                "Got unexpected result for format %#x: hr %#x, format_support %#x.\n",
+                format, hr, format_support[format]);
+    }
+    if (hr == E_NOTIMPL)
+    {
+        skip("CheckFormatSupport not implemented.\n");
+        ID3D11Device_Release(device);
+        return;
+    }
+
+    check_format_support(format_support, feature_level,
+            index_buffers, sizeof(index_buffers) / sizeof(*index_buffers),
+            D3D11_FORMAT_SUPPORT_IA_INDEX_BUFFER, "index buffer");
+
+    check_format_support(format_support, feature_level,
+            display_format_support, sizeof(display_format_support) / sizeof(*display_format_support),
+            D3D11_FORMAT_SUPPORT_DISPLAY, "display");
+
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-static void test_fl9_draw(void)
+static void test_fl9_draw(const D3D_FEATURE_LEVEL feature_level)
 {
     struct d3d11_test_context test_context;
     ID3D11DeviceContext *context;
     ID3D11PixelShader *ps;
     ID3D11Device *device;
-    unsigned int i;
     HRESULT hr;
 
-    static const D3D_FEATURE_LEVEL feature_levels[] =
-    {
-        D3D_FEATURE_LEVEL_9_3,
-        D3D_FEATURE_LEVEL_9_2,
-        D3D_FEATURE_LEVEL_9_1,
-    };
     static const struct vec4 color = {0.2f, 0.3f, 0.0f, 1.0f};
     static const DWORD ps_code[] =
     {
@@ -10745,33 +10697,62 @@ static void test_fl9_draw(void)
         0x45475241, 0xabab0054,
     };
 
-    for (i = 0; i < sizeof(feature_levels) / sizeof(*feature_levels); ++i)
+    if (!init_test_context(&test_context, &feature_level))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x, feature level %#x.\n",
+            hr, feature_level);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+    draw_quad(&test_context);
+    check_texture_color(test_context.backbuffer, 0x7f0000ff, 1);
+    ID3D11PixelShader_Release(ps);
+
+    draw_color_quad(&test_context, &color);
+    todo_wine check_texture_color(test_context.backbuffer, 0xff004c33, 1);
+
+    release_test_context(&test_context);
+}
+
+static void run_for_each_feature_level(void (*test_func)(const D3D_FEATURE_LEVEL fl))
+{
+    static const D3D_FEATURE_LEVEL feature_levels[] =
     {
-        if (!init_test_context(&test_context, &feature_levels[i]))
-            return;
+        D3D_FEATURE_LEVEL_11_1,
+        D3D_FEATURE_LEVEL_11_0,
+        D3D_FEATURE_LEVEL_10_1,
+        D3D_FEATURE_LEVEL_10_0,
+        D3D_FEATURE_LEVEL_9_3,
+        D3D_FEATURE_LEVEL_9_2,
+        D3D_FEATURE_LEVEL_9_1
+    };
+    unsigned int i;
 
-        device = test_context.device;
-        context = test_context.immediate_context;
+    for (i = 0; i < sizeof(feature_levels) / sizeof(*feature_levels); ++i)
+        test_func(feature_levels[i]);
+}
 
-        hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-        ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x, feature level %#x.\n",
-                hr, feature_levels[i]);
-        ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
-        draw_quad(&test_context);
-        check_texture_color(test_context.backbuffer, 0x7f0000ff, 1);
-        ID3D11PixelShader_Release(ps);
+static void run_for_each_9_x_feature_level(void (*test_func)(const D3D_FEATURE_LEVEL fl))
+{
+    static const D3D_FEATURE_LEVEL feature_levels[] =
+    {
+        D3D_FEATURE_LEVEL_9_3,
+        D3D_FEATURE_LEVEL_9_2,
+        D3D_FEATURE_LEVEL_9_1,
+    };
+    unsigned int i;
 
-        draw_color_quad(&test_context, &color);
-        todo_wine check_texture_color(test_context.backbuffer, 0xff004c33, 1);
-
-        release_test_context(&test_context);
-    }
+    for (i = 0; i < sizeof(feature_levels) / sizeof(*feature_levels); ++i)
+        test_func(feature_levels[i]);
 }
 
 START_TEST(d3d11)
 {
     test_create_device();
-    test_device_interfaces();
+    run_for_each_feature_level(test_device_interfaces);
     test_get_immediate_context();
     test_create_texture2d();
     test_texture2d_interfaces();
@@ -10782,7 +10763,7 @@ START_TEST(d3d11)
     test_depthstencil_view_interfaces();
     test_create_rendertarget_view();
     test_create_shader_resource_view();
-    test_create_shader();
+    run_for_each_feature_level(test_create_shader);
     test_create_sampler_state();
     test_create_blend_state();
     test_create_depthstencil_state();
@@ -10804,7 +10785,7 @@ START_TEST(d3d11)
     test_buffer_data_init();
     test_texture_data_init();
     test_check_multisample_quality_levels();
-    test_swapchain_formats();
+    run_for_each_feature_level(test_swapchain_formats);
     test_swapchain_views();
     test_swapchain_flip();
     test_clear_render_target_view();
@@ -10826,6 +10807,6 @@ START_TEST(d3d11)
     test_index_buffer_offset();
     test_face_culling();
     test_line_antialiasing_blending();
-    test_required_format_support();
-    test_fl9_draw();
+    run_for_each_feature_level(test_required_format_support);
+    run_for_each_9_x_feature_level(test_fl9_draw);
 }
