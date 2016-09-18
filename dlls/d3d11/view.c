@@ -2061,6 +2061,16 @@ static const struct ID3D10ShaderResourceView1Vtbl d3d10_shader_resource_view_vtb
     d3d10_shader_resource_view_GetDesc1,
 };
 
+static unsigned int wined3d_view_flags_from_d3d11_bufferex_flags(unsigned int d3d11_flags)
+{
+    unsigned int wined3d_flags = d3d11_flags & WINED3D_VIEW_BUFFER_RAW;
+
+    if (d3d11_flags != wined3d_flags)
+        FIXME("Unhandled flags %#x.\n", d3d11_flags & ~wined3d_flags);
+
+    return wined3d_flags;
+}
+
 static HRESULT wined3d_shader_resource_view_desc_from_d3d11(struct wined3d_shader_resource_view_desc *wined3d_desc,
         const D3D11_SHADER_RESOURCE_VIEW_DESC *desc)
 {
@@ -2143,7 +2153,7 @@ static HRESULT wined3d_shader_resource_view_desc_from_d3d11(struct wined3d_shade
             break;
 
         case D3D11_SRV_DIMENSION_BUFFEREX:
-            wined3d_desc->flags = desc->u.BufferEx.Flags;
+            wined3d_desc->flags = wined3d_view_flags_from_d3d11_bufferex_flags(desc->u.BufferEx.Flags);
             wined3d_desc->u.buffer.start_idx = desc->u.BufferEx.FirstElement;
             wined3d_desc->u.buffer.count = desc->u.BufferEx.NumElements;
             break;
@@ -2381,6 +2391,17 @@ static const struct ID3D11UnorderedAccessViewVtbl d3d11_unordered_access_view_vt
     d3d11_unordered_access_view_GetDesc,
 };
 
+static unsigned int wined3d_view_flags_from_d3d11_buffer_uav_flags(unsigned int d3d11_flags)
+{
+    unsigned int wined3d_flags = d3d11_flags & (WINED3D_VIEW_BUFFER_RAW
+            | WINED3D_VIEW_BUFFER_APPEND | WINED3D_VIEW_BUFFER_COUNTER);
+
+    if (d3d11_flags != wined3d_flags)
+        FIXME("Unhandled flags %#x.\n", d3d11_flags & ~wined3d_flags);
+
+    return wined3d_flags;
+}
+
 static HRESULT wined3d_unordered_access_view_desc_from_d3d11(struct wined3d_unordered_access_view_desc *wined3d_desc,
         const D3D11_UNORDERED_ACCESS_VIEW_DESC *desc)
 {
@@ -2390,7 +2411,7 @@ static HRESULT wined3d_unordered_access_view_desc_from_d3d11(struct wined3d_unor
     switch (desc->ViewDimension)
     {
         case D3D11_UAV_DIMENSION_BUFFER:
-            wined3d_desc->flags = desc->u.Buffer.Flags;
+            wined3d_desc->flags = wined3d_view_flags_from_d3d11_buffer_uav_flags(desc->u.Buffer.Flags);
             wined3d_desc->u.buffer.start_idx = desc->u.Buffer.FirstElement;
             wined3d_desc->u.buffer.count = desc->u.Buffer.NumElements;
             break;
