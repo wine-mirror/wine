@@ -30,6 +30,23 @@
 #define BITS_N1_0 0xbf800000
 #define BITS_1_0  0x3f800000
 
+struct format_support
+{
+    DXGI_FORMAT format;
+    BOOL optional;
+};
+
+static const struct format_support display_format_support[] =
+{
+    {DXGI_FORMAT_R8G8B8A8_UNORM},
+    {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
+    {DXGI_FORMAT_B8G8R8A8_UNORM,             TRUE},
+    {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,        TRUE},
+    {DXGI_FORMAT_R16G16B16A16_FLOAT},
+    {DXGI_FORMAT_R10G10B10A2_UNORM},
+    {DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM, TRUE},
+};
+
 struct vec2
 {
     float x, y;
@@ -9372,6 +9389,76 @@ static void test_line_antialiasing_blending(void)
     release_test_context(&test_context);
 }
 
+static void check_format_support(const unsigned int *format_support,
+        const struct format_support *formats, unsigned int format_count,
+        unsigned int feature_flag, const char *feature_name)
+{
+    unsigned int i;
+
+    for (i = 0; i < format_count; ++i)
+    {
+        DXGI_FORMAT format = formats[i].format;
+        unsigned int supported = format_support[format] & feature_flag;
+
+        if (formats[i].optional)
+        {
+            if (supported)
+                trace("Optional format %#x - %s supported.\n", format, feature_name);
+            continue;
+        }
+
+        ok(supported, "Format %#x - %s supported, format support %#x.\n",
+                format, feature_name, format_support[format]);
+    }
+}
+
+static void test_required_format_support(void)
+{
+    unsigned int format_support[DXGI_FORMAT_B4G4R4A4_UNORM + 1];
+    ID3D10Device *device;
+    DXGI_FORMAT format;
+    ULONG refcount;
+    HRESULT hr;
+
+    static const struct format_support index_buffers[] =
+    {
+        {DXGI_FORMAT_R32_UINT},
+        {DXGI_FORMAT_R16_UINT},
+    };
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    memset(format_support, 0, sizeof(format_support));
+    for (format = DXGI_FORMAT_UNKNOWN; format <= DXGI_FORMAT_B4G4R4A4_UNORM; ++format)
+    {
+        hr = ID3D10Device_CheckFormatSupport(device, format, &format_support[format]);
+        todo_wine ok(hr == S_OK || (hr == E_FAIL && !format_support[format]),
+                "Got unexpected result for format %#x: hr %#x, format_support %#x.\n",
+                format, hr, format_support[format]);
+    }
+    if (hr == E_NOTIMPL)
+    {
+        skip("CheckFormatSupport not implemented.\n");
+        ID3D10Device_Release(device);
+        return;
+    }
+
+    check_format_support(format_support, index_buffers,
+            sizeof(index_buffers) / sizeof(*index_buffers),
+            D3D10_FORMAT_SUPPORT_IA_INDEX_BUFFER, "index buffer");
+
+    check_format_support(format_support, display_format_support,
+            sizeof(display_format_support) / sizeof(*display_format_support),
+            D3D10_FORMAT_SUPPORT_DISPLAY, "display");
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(device)
 {
     test_feature_level();
@@ -9424,4 +9511,5 @@ START_TEST(device)
     test_index_buffer_offset();
     test_face_culling();
     test_line_antialiasing_blending();
+    test_required_format_support();
 }
