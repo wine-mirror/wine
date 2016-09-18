@@ -10609,7 +10609,12 @@ static void check_format_support(const unsigned int *format_support, D3D_FEATURE
         }
 
         if (formats[i].fl_optional && formats[i].fl_optional <= feature_level)
+        {
+            if (supported)
+                trace("Optional format %#x - %s supported, feature level %#x.\n",
+                        format, feature_name, feature_level);
             continue;
+        }
 
         ok(!supported, "Format %#x - %s supported, feature level %#x, format support %#x.\n",
                 format, feature_name, feature_level, format_support[format]);
