@@ -296,6 +296,18 @@ static const char *debugstr_format( UINT id )
     }
 }
 
+static const char *debugstr_xatom( Atom atom )
+{
+    const char *ret;
+    char *name;
+
+    if (!atom) return "(None)";
+    name = XGetAtomName( thread_display(), atom );
+    ret = debugstr_a( name );
+    XFree( name );
+    return ret;
+}
+
 /**************************************************************************
  *		X11DRV_InitClipboard
  */
@@ -1967,8 +1979,8 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
               */
              while (lpFormat)
              {
-                 TRACE( "atom #%d property(%ld) -> format %s\n",
-                        i, lpFormat->atom, debugstr_format(lpFormat->id) );
+                 TRACE( "property %s -> format %s\n",
+                        debugstr_xatom( lpFormat->atom ), debugstr_format( lpFormat->id ));
                  X11DRV_CLIPBOARD_InsertClipboardData( lpFormat->id, 0, lpFormat, FALSE );
                  lpFormat = X11DRV_CLIPBOARD_LookupProperty(lpFormat, properties[i]);
              }
@@ -2010,8 +2022,8 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
                      ERR("Failed to register %s property. Type will not be cached.\n", names[i]);
                      continue;
                  }
-                 TRACE( "atom #%d property(%ld) -> format %s\n",
-                        i, lpFormat->atom, debugstr_format(lpFormat->id) );
+                 TRACE( "property %s -> format %s\n",
+                        debugstr_xatom( lpFormat->atom ), debugstr_format( lpFormat->id ));
                  X11DRV_CLIPBOARD_InsertClipboardData( lpFormat->id, 0, lpFormat, FALSE );
              }
              for (i = 0; i < nb_atoms; i++) XFree( names[i] );
@@ -2094,8 +2106,8 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display)
         0, 0x3FFF, True, AnyPropertyType/*XA_ATOM*/, &atype, &aformat, &cSelectionTargets, 
         &remain, (unsigned char**)&targetList))
     {
-       TRACE("Type %lx,Format %d,nItems %ld, Remain %ld\n",
-             atype, aformat, cSelectionTargets, remain);
+       TRACE( "type %s format %d count %ld remain %ld\n",
+              debugstr_xatom( atype ), aformat, cSelectionTargets, remain);
        /*
         * The TARGETS property should have returned us a list of atoms
         * corresponding to each selection target format supported.
@@ -2159,8 +2171,8 @@ static BOOL X11DRV_CLIPBOARD_ReadSelectionData(Display *display, LPWINE_CLIPDATA
             return FALSE;
         }
 
-        TRACE("Requesting conversion of %s property (%ld) from selection type %08x\n",
-              debugstr_format(lpData->lpFormat->id), lpData->lpFormat->atom,
+        TRACE("Requesting conversion of %s property %s from selection type %08x\n",
+              debugstr_format( lpData->lpFormat->id ), debugstr_xatom( lpData->lpFormat->atom ),
               (UINT)selectionCacheSrc);
 
         XConvertSelection(display, selectionCacheSrc, lpData->lpFormat->atom,
@@ -2222,7 +2234,7 @@ static BOOL X11DRV_CLIPBOARD_GetProperty(Display *display, Window w, Atom prop,
     unsigned long pos = 0, nitems, remain, count;
     unsigned char *val = NULL, *buffer;
 
-    TRACE("Reading property %lu from X window %lx\n", prop, w);
+    TRACE( "Reading property %s from X window %lx\n", debugstr_xatom( prop ), w );
 
     for (;;)
     {
@@ -2763,18 +2775,11 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
         LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
             if ((format->id == lpData->wFormatID) &&
                 format->lpDrvExportFunc && format->atom)
+            {
+                TRACE( "%d: %s -> %s\n", i, debugstr_format( format->id ),
+                       debugstr_xatom( format->atom ));
                 targets[i++] = format->atom;
-
-    if (TRACE_ON(clipboard))
-    {
-        unsigned int i;
-        for ( i = 0; i < cTargets; i++)
-        {
-            char *itemFmtName = XGetAtomName(display, targets[i]);
-            TRACE("\tAtom# %d:  Property %ld Type %s\n", i, targets[i], itemFmtName);
-            XFree(itemFmtName);
-        }
-    }
+            }
 
     /* We may want to consider setting the type to xaTargets instead,
      * in case some apps expect this instead of XA_ATOM */
@@ -2826,13 +2831,8 @@ static Atom X11DRV_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent 
                             &cTargetPropList, &remain,
                             (unsigned char**)&targetPropList))
     {
-        if (TRACE_ON(clipboard))
-        {
-            char * const typeName = XGetAtomName(display, atype);
-            TRACE("\tType %s,Format %d,nItems %ld, Remain %ld\n",
-                  typeName, aformat, cTargetPropList, remain);
-            XFree(typeName);
-        }
+        TRACE( "type %s format %d count %ld remain %ld\n",
+               debugstr_xatom( atype ), aformat, cTargetPropList, remain );
 
         /*
          * Make sure we got what we expect.
@@ -2853,16 +2853,8 @@ static Atom X11DRV_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent 
             {
                 XSelectionRequestEvent event;
 
-                if (TRACE_ON(clipboard))
-                {
-                    char *targetName, *propName;
-                    targetName = XGetAtomName(display, targetPropList[i]);
-                    propName = XGetAtomName(display, targetPropList[i+1]);
-                    TRACE("MULTIPLE(%d): Target='%s' Prop='%s'\n",
-                          i/2, targetName, propName);
-                    XFree(targetName);
-                    XFree(propName);
-                }
+                TRACE( "MULTIPLE(%d): target %s property %s\n",
+                       i/2, debugstr_xatom( targetPropList[i] ), debugstr_xatom( targetPropList[i + 1] ));
 
                 /* We must have a non "None" property to service a MULTIPLE target atom */
                 if ( !targetPropList[i+1] )
