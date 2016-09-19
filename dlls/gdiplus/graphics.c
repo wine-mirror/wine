@@ -3083,6 +3083,8 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             HDC hdc;
             BOOL temp_hdc = FALSE, temp_bitmap = FALSE;
             HBITMAP hbitmap, old_hbm=NULL;
+            HRGN hrgn;
+            INT save_state;
 
             if (!(bitmap->format == PixelFormat16bppRGB555 ||
                   bitmap->format == PixelFormat24bppRGB ||
@@ -3143,6 +3145,16 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 old_hbm = SelectObject(hdc, hbitmap);
             }
 
+            save_state = SaveDC(graphics->hdc);
+
+            stat = get_clip_hrgn(graphics, &hrgn);
+
+            if (stat == Ok && hrgn)
+            {
+                ExtSelectClipRgn(graphics->hdc, hrgn, RGN_AND);
+                DeleteObject(hrgn);
+            }
+
             if (bitmap->format & (PixelFormatAlpha|PixelFormatPAlpha))
             {
                 gdi_alpha_blend(graphics, pti[0].x, pti[0].y, pti[1].x - pti[0].x, pti[2].y - pti[0].y,
@@ -3153,6 +3165,8 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 StretchBlt(graphics->hdc, pti[0].x, pti[0].y, pti[1].x-pti[0].x, pti[2].y-pti[0].y,
                     hdc, srcx, srcy, srcwidth, srcheight, SRCCOPY);
             }
+
+            RestoreDC(graphics->hdc, save_state);
 
             if (temp_hdc)
             {
