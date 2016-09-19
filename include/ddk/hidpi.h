@@ -136,6 +136,34 @@ typedef struct _HIDP_CAPS
     USHORT  NumberFeatureDataIndices;
 } HIDP_CAPS, *PHIDP_CAPS;
 
+typedef enum _HIDP_KEYBOARD_DIRECTION {
+    HidP_Keyboard_Break,
+    HidP_Keyboard_Make
+} HIDP_KEYBOARD_DIRECTION;
+
+typedef struct _HIDP_KEYBOARD_MODIFIER_STATE {
+    union {
+        struct {
+            ULONG LeftControl: 1;
+            ULONG LeftShift: 1;
+            ULONG LeftAlt: 1;
+            ULONG LeftGUI: 1;
+            ULONG RightControl: 1;
+            ULONG RightShift: 1;
+            ULONG RightAlt: 1;
+            ULONG RigthGUI: 1;
+            ULONG CapsLock: 1;
+            ULONG ScollLock: 1;
+            ULONG NumLock: 1;
+            ULONG Reserved: 21;
+        } DUMMYSTRUCTNAME;
+        ULONG ul;
+    } DUMMYUNIONNAME;
+} HIDP_KEYBOARD_MODIFIER_STATE, *PHIDP_KEYBOARD_MODIFIER_STATE;
+
+typedef BOOLEAN (NTAPI *PHIDP_INSERT_SCANCODES) (VOID *Context, CHAR *NewScanCodes, ULONG Length);
+
+
 NTSTATUS WINAPI HidP_GetButtonCaps(HIDP_REPORT_TYPE ReportType, PHIDP_BUTTON_CAPS ButtonCaps, PUSHORT  ButtonCapsLength, PHIDP_PREPARSED_DATA PreparsedData);
 NTSTATUS WINAPI HidP_GetCaps(PHIDP_PREPARSED_DATA PreparsedData, PHIDP_CAPS Capabilities);
 NTSTATUS WINAPI HidP_GetUsages(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USHORT LinkCollection, PUSAGE UsageList, PULONG UsageLength, PHIDP_PREPARSED_DATA PreparsedData, PCHAR Report, ULONG ReportLength);
@@ -144,6 +172,7 @@ NTSTATUS WINAPI HidP_GetValueCaps(HIDP_REPORT_TYPE ReportType, PHIDP_VALUE_CAPS 
 NTSTATUS WINAPI HidP_InitializeReportForID(HIDP_REPORT_TYPE ReportType, UCHAR ReportID, PHIDP_PREPARSED_DATA PreparsedData, PCHAR Report, ULONG ReportLength);
 ULONG WINAPI HidP_MaxUsageListLength(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, PHIDP_PREPARSED_DATA PreparsedData);
 NTSTATUS WINAPI HidP_GetScaledUsageValue(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USHORT LinkCollection, USAGE Usage, PLONG UsageValue, PHIDP_PREPARSED_DATA PreparsedData, PCHAR Report, ULONG ReportLength);
+NTSTATUS WINAPI HidP_TranslateUsagesToI8042ScanCodes(USAGE *ChangedUsageList, ULONG UsageListLength, HIDP_KEYBOARD_DIRECTION KeyAction, HIDP_KEYBOARD_MODIFIER_STATE *ModifierState, PHIDP_INSERT_SCANCODES InsertCodesProcedure, VOID *InsertCodesContext);
 
 #ifndef FACILITY_HID_ERROR_CODE
 #define FACILITY_HID_ERROR_CODE 0x11

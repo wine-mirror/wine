@@ -23,6 +23,7 @@
 #include <stdarg.h>
 
 #define NONAMELESSUNION
+#include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
@@ -518,4 +519,15 @@ ULONG WINAPI HidP_MaxUsageListLength(HIDP_REPORT_TYPE ReportType, USAGE UsagePag
         report = HID_NEXT_REPORT(data, report);
     }
     return count;
+}
+
+NTSTATUS WINAPI HidP_TranslateUsagesToI8042ScanCodes(USAGE *ChangedUsageList,
+    ULONG UsageListLength, HIDP_KEYBOARD_DIRECTION KeyAction,
+    HIDP_KEYBOARD_MODIFIER_STATE *ModifierState,
+    PHIDP_INSERT_SCANCODES InsertCodesProcedure, VOID *InsertCodesContext)
+{
+    FIXME("stub: %p, %i, %i, %p, %p, %p\n", ChangedUsageList, UsageListLength,
+        KeyAction, ModifierState, InsertCodesProcedure, InsertCodesContext);
+
+    return STATUS_NOT_IMPLEMENTED;
 }
