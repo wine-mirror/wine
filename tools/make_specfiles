@@ -222,6 +222,7 @@ my @dll_groups =
   "api-ms-win-core-com-l1-1-0",
   "api-ms-win-core-com-l1-1-1",
   "combase",
+  "iprop",
  ],
  [
   "shell32",
