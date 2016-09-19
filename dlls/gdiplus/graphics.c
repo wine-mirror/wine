@@ -3942,6 +3942,23 @@ static GpStatus GDI32_GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
 
     ExtSelectClipRgn(graphics->hdc, hrgn, RGN_AND);
 
+    DeleteObject(hrgn);
+
+    hrgn = NULL;
+    status = get_clip_hrgn(graphics, &hrgn);
+
+    if (status != Ok)
+    {
+        RestoreDC(graphics->hdc, save_state);
+        return status;
+    }
+
+    if (hrgn)
+    {
+        ExtSelectClipRgn(graphics->hdc, hrgn, RGN_AND);
+        DeleteObject(hrgn);
+    }
+
     if (GetClipBox(graphics->hdc, &rc) != NULLREGION)
     {
         BeginPath(graphics->hdc);
@@ -3953,7 +3970,6 @@ static GpStatus GDI32_GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
 
     RestoreDC(graphics->hdc, save_state);
 
-    DeleteObject(hrgn);
 
     return Ok;
 }
