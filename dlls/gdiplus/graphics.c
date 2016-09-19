@@ -6321,6 +6321,8 @@ static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT1
     GpPointF pt;
     HFONT hfont;
     UINT eto_flags=0;
+    GpStatus status;
+    HRGN hrgn;
 
     if (flags & unsupported_flags)
         FIXME("Ignoring flags %x\n", flags & unsupported_flags);
@@ -6331,6 +6333,14 @@ static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT1
     save_state = SaveDC(graphics->hdc);
     SetBkMode(graphics->hdc, TRANSPARENT);
     SetTextColor(graphics->hdc, get_gdi_brush_color(brush));
+
+    status = get_clip_hrgn(graphics, &hrgn);
+
+    if (status == Ok && hrgn)
+    {
+        ExtSelectClipRgn(graphics->hdc, hrgn, RGN_AND);
+        DeleteObject(hrgn);
+    }
 
     pt = positions[0];
     GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, &pt, 1);
