@@ -108,8 +108,8 @@ typedef HANDLE (*DRVIMPORTFUNC)(Display *d, Window w, Atom prop);
 typedef struct clipboard_format
 {
     struct list entry;
-    UINT        wFormatID;
-    UINT        drvData;
+    UINT        id;
+    Atom        atom;
     DRVIMPORTFUNC  lpDrvImportFunc;
     DRVEXPORTFUNC  lpDrvExportFunc;
 } WINE_CLIPFORMAT, *LPWINE_CLIPFORMAT;
@@ -310,11 +310,11 @@ void X11DRV_InitClipboard(void)
     for (i = 0; i < count; i++)
     {
         if (builtin_formats[i].name)
-            formats[i].wFormatID = RegisterClipboardFormatW( builtin_formats[i].name );
+            formats[i].id = RegisterClipboardFormatW( builtin_formats[i].name );
         else
-            formats[i].wFormatID = builtin_formats[i].id;
+            formats[i].id = builtin_formats[i].id;
 
-        formats[i].drvData = GET_ATOM(builtin_formats[i].data);
+        formats[i].atom   = GET_ATOM(builtin_formats[i].data);
         formats[i].lpDrvImportFunc = builtin_formats[i].import;
         formats[i].lpDrvExportFunc = builtin_formats[i].export;
         list_add_tail( &format_list, &formats[i].entry );
@@ -338,7 +338,7 @@ static void intern_atoms(void)
 
     count = 0;
     LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
-        if (!format->drvData) count++;
+        if (!format->atom) count++;
     if (!count) return;
 
     display = thread_init_display();
@@ -348,8 +348,8 @@ static void intern_atoms(void)
 
     i = 0;
     LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
-        if (!format->drvData) {
-            if (GetClipboardFormatNameW(format->wFormatID, buffer, 256) > 0)
+        if (!format->atom) {
+            if (GetClipboardFormatNameW( format->id, buffer, 256 ) > 0)
             {
                 /* use defined format name */
                 len = WideCharToMultiByte(CP_UNIXCP, 0, buffer, -1, NULL, 0, NULL, NULL);
@@ -360,7 +360,7 @@ static void intern_atoms(void)
                  * which is normally used by GetClipboardFormatNameW
                  */
                 static const WCHAR fmt[] = {'#','%','u',0};
-                len = sprintfW(buffer, fmt, format->wFormatID) + 1;
+                len = sprintfW(buffer, fmt, format->id) + 1;
             }
             names[i] = HeapAlloc(GetProcessHeap(), 0, len);
             WideCharToMultiByte(CP_UNIXCP, 0, buffer, -1, names[i++], len, NULL, NULL);
@@ -370,9 +370,9 @@ static void intern_atoms(void)
 
     i = 0;
     LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
-        if (!format->drvData) {
+        if (!format->atom) {
             HeapFree(GetProcessHeap(), 0, names[i]);
-            format->drvData = atoms[i++];
+            format->atom = atoms[i++];
         }
 
     HeapFree( GetProcessHeap(), 0, names );
@@ -391,16 +391,16 @@ static struct clipboard_format *register_format( UINT id, Atom prop )
 
     /* walk format chain to see if it's already registered */
     LIST_FOR_EACH_ENTRY( format, &format_list, struct clipboard_format, entry )
-        if (format->wFormatID == id) return format;
+        if (format->id == id) return format;
 
     if (!(format = HeapAlloc( GetProcessHeap(), 0, sizeof(*format) ))) return NULL;
-    format->wFormatID = id;
-    format->drvData = prop;
+    format->id     = id;
+    format->atom   = prop;
     format->lpDrvImportFunc = import_data;
     format->lpDrvExportFunc = export_data;
     list_add_tail( &format_list, &format->entry );
 
-    TRACE( "Registering format %s atom %lx\n", debugstr_format(id), prop );
+    TRACE( "Registering format %s atom %ld\n", debugstr_format(id), prop );
     return format;
 }
 
@@ -408,7 +408,7 @@ static struct clipboard_format *register_format( UINT id, Atom prop )
 /**************************************************************************
  *                X11DRV_CLIPBOARD_LookupProperty
  */
-static LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupProperty(LPWINE_CLIPFORMAT current, UINT drvData)
+static struct clipboard_format *X11DRV_CLIPBOARD_LookupProperty( struct clipboard_format *current, Atom prop )
 {
     for (;;)
     {
@@ -417,9 +417,9 @@ static LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupProperty(LPWINE_CLIPFORMAT curre
 
         while ((ptr = list_next( &format_list, ptr )))
         {
-            LPWINE_CLIPFORMAT lpFormat = LIST_ENTRY( ptr, WINE_CLIPFORMAT, entry );
-            if (lpFormat->drvData == drvData) return lpFormat;
-            if (!lpFormat->drvData) need_intern = TRUE;
+            struct clipboard_format *format = LIST_ENTRY( ptr, struct clipboard_format, entry );
+            if (format->atom == prop) return format;
+            if (!format->atom) need_intern = TRUE;
         }
         if (!need_intern) return NULL;
         intern_atoms();
@@ -1319,7 +1319,7 @@ HANDLE X11DRV_CLIPBOARD_ImportSelection(Display *d, Atom target, Window w, Atom 
     clipFormat = X11DRV_CLIPBOARD_LookupProperty(NULL, target);
     if (clipFormat)
     {
-        *windowsFormat = clipFormat->wFormatID;
+        *windowsFormat = clipFormat->id;
         return clipFormat->lpDrvImportFunc(d, w, prop);
     }
     return NULL;
@@ -1967,9 +1967,9 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
               */
              while (lpFormat)
              {
-                 TRACE("Atom#%d Property(%d): --> Format %s\n",
-                       i, lpFormat->drvData, debugstr_format(lpFormat->wFormatID));
-                 X11DRV_CLIPBOARD_InsertClipboardData(lpFormat->wFormatID, 0, lpFormat, FALSE);
+                 TRACE( "atom #%d property(%ld) -> format %s\n",
+                        i, lpFormat->atom, debugstr_format(lpFormat->id) );
+                 X11DRV_CLIPBOARD_InsertClipboardData( lpFormat->id, 0, lpFormat, FALSE );
                  lpFormat = X11DRV_CLIPBOARD_LookupProperty(lpFormat, properties[i]);
              }
          }
@@ -2010,9 +2010,9 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
                      ERR("Failed to register %s property. Type will not be cached.\n", names[i]);
                      continue;
                  }
-                 TRACE("Atom#%d Property(%d): --> Format %s\n",
-                       i, lpFormat->drvData, debugstr_format(lpFormat->wFormatID));
-                 X11DRV_CLIPBOARD_InsertClipboardData(lpFormat->wFormatID, 0, lpFormat, FALSE);
+                 TRACE( "atom #%d property(%ld) -> format %s\n",
+                        i, lpFormat->atom, debugstr_format(lpFormat->id) );
+                 X11DRV_CLIPBOARD_InsertClipboardData( lpFormat->id, 0, lpFormat, FALSE );
              }
              for (i = 0; i < nb_atoms; i++) XFree( names[i] );
              HeapFree( GetProcessHeap(), 0, names );
@@ -2159,11 +2159,11 @@ static BOOL X11DRV_CLIPBOARD_ReadSelectionData(Display *display, LPWINE_CLIPDATA
             return FALSE;
         }
 
-        TRACE("Requesting conversion of %s property (%d) from selection type %08x\n",
-              debugstr_format(lpData->lpFormat->wFormatID), lpData->lpFormat->drvData,
+        TRACE("Requesting conversion of %s property (%ld) from selection type %08x\n",
+              debugstr_format(lpData->lpFormat->id), lpData->lpFormat->atom,
               (UINT)selectionCacheSrc);
 
-        XConvertSelection(display, selectionCacheSrc, lpData->lpFormat->drvData,
+        XConvertSelection(display, selectionCacheSrc, lpData->lpFormat->atom,
                           x11drv_atom(SELECTION_DATA), w, CurrentTime);
 
         /* wait until SelectionNotify is received */
@@ -2745,8 +2745,8 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
 
     LIST_FOR_EACH_ENTRY( lpData, &data_list, WINE_CLIPDATA, entry )
         LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
-            if ((format->wFormatID == lpData->wFormatID) &&
-                format->lpDrvExportFunc && format->drvData)
+            if ((format->id == lpData->wFormatID) &&
+                format->lpDrvExportFunc && format->atom)
                 cTargets++;
 
     TRACE(" found %d formats\n", cTargets);
@@ -2761,9 +2761,9 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
 
     LIST_FOR_EACH_ENTRY( lpData, &data_list, WINE_CLIPDATA, entry )
         LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
-            if ((format->wFormatID == lpData->wFormatID) &&
-                format->lpDrvExportFunc && format->drvData)
-                targets[i++] = format->drvData;
+            if ((format->id == lpData->wFormatID) &&
+                format->lpDrvExportFunc && format->atom)
+                targets[i++] = format->atom;
 
     if (TRACE_ON(clipboard))
     {
@@ -2947,7 +2947,7 @@ static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *ev
 
         if (lpFormat && lpFormat->lpDrvExportFunc)
         {
-            LPWINE_CLIPDATA lpData = X11DRV_CLIPBOARD_LookupData(lpFormat->wFormatID);
+            LPWINE_CLIPDATA lpData = X11DRV_CLIPBOARD_LookupData(lpFormat->id);
 
             if (lpData)
             {
@@ -2961,7 +2961,7 @@ static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *ev
                     int mode = PropModeReplace;
 
                     TRACE("\tUpdating property %s, %d bytes\n",
-                          debugstr_format(lpFormat->wFormatID), cBytes);
+                          debugstr_format(lpFormat->id), cBytes);
                     do
                     {
                         int nelements = min(cBytes, 65536);
