@@ -39,6 +39,6 @@
 @ stub HidP_SetUsageValue
 @ stub HidP_SetUsageValueArray
 @ stub HidP_SetUsages
-@ stub HidP_TranslateUsagesToI8042ScanCodes
+@ stdcall HidP_TranslateUsagesToI8042ScanCodes(ptr long long ptr ptr ptr)
 @ stub HidP_UnsetUsages
 @ stub HidP_UsageListDifference
