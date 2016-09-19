@@ -36,7 +36,7 @@ static const WCHAR uboundW[] = {'u','b','o','u','n','d',0};
 
 static inline VBArrayInstance *vbarray_from_vdisp(vdisp_t *vdisp)
 {
-    return (VBArrayInstance*)vdisp->u.jsdisp;
+    return CONTAINING_RECORD(vdisp->u.jsdisp, VBArrayInstance, dispex);
 }
 
 static inline VBArrayInstance *vbarray_this(vdisp_t *jsthis)
