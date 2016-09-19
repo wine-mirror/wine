@@ -94,6 +94,8 @@ struct wine_driver
     DRIVER_EXTENSION driver_extension;
 };
 
+static NTSTATUS get_device_id( DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WCHAR **id );
+
 static int wine_drivers_rb_compare( const void *key, const struct wine_rb_entry *entry )
 {
     const struct wine_driver *driver = WINE_RB_ENTRY_VALUE( entry, const struct wine_driver, entry );
@@ -1132,6 +1134,30 @@ NTSTATUS WINAPI IoGetDeviceProperty( DEVICE_OBJECT *device, DEVICE_REGISTRY_PROP
            property_buffer, result_length );
     switch (device_property)
     {
+        case DevicePropertyEnumeratorName:
+        {
+            WCHAR *id, *ptr;
+
+            status = get_device_id( device, BusQueryInstanceID, &id );
+            if (status != STATUS_SUCCESS)
+            {
+                ERR( "Failed to get device id\n" );
+                break;
+            }
+
+            struprW( id );
+            ptr = strchrW( id, '\\' );
+            if (ptr) *ptr = 0;
+
+            *result_length = sizeof(WCHAR) * (strlenW(id) + 1);
+            if (buffer_length >= *result_length)
+                memcpy( property_buffer, id, *result_length );
+            else
+                status = STATUS_BUFFER_TOO_SMALL;
+
+            HeapFree( GetProcessHeap(), 0, id );
+            break;
+        }
         case DevicePropertyPhysicalDeviceObjectName:
         {
             ULONG used_len, len = buffer_length + sizeof(OBJECT_NAME_INFORMATION);
