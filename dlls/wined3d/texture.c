@@ -2821,7 +2821,6 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
     if (data)
     {
         unsigned int sub_count = level_count * layer_count;
-        struct wined3d_context *context;
         unsigned int i;
 
         for (i = 0; i < sub_count; ++i)
@@ -2835,21 +2834,11 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
             }
         }
 
-        context = context_acquire(device, NULL);
-
-        wined3d_texture_prepare_texture(object, context, FALSE);
-        wined3d_texture_bind_and_dirtify(object, context, FALSE);
-
         for (i = 0; i < sub_count; ++i)
         {
-            const struct wined3d_const_bo_address addr = {0, data[i].data};
-
-            wined3d_texture_upload_data(object, i, context, &addr, data[i].row_pitch, data[i].slice_pitch);
-            wined3d_texture_validate_location(object, i, WINED3D_LOCATION_TEXTURE_RGB);
-            wined3d_texture_invalidate_location(object, i, ~WINED3D_LOCATION_TEXTURE_RGB);
+            wined3d_device_update_sub_resource(device, &object->resource,
+                    i, NULL, data[i].data, data[i].row_pitch, data[i].slice_pitch);
         }
-
-        context_release(context);
     }
 
     TRACE("Created texture %p.\n", object);
