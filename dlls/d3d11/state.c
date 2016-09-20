@@ -78,7 +78,7 @@ static ULONG STDMETHODCALLTYPE d3d11_blend_state_Release(ID3D11BlendState *iface
     {
         struct d3d_device *device = impl_from_ID3D11Device(state->device);
         wined3d_mutex_lock();
-        wine_rb_remove_key(&device->blend_states, &state->desc);
+        wine_rb_remove(&device->blend_states, &state->entry);
         ID3D11Device_Release(state->device);
         wined3d_private_store_cleanup(&state->private_store);
         wined3d_mutex_unlock();
@@ -379,7 +379,7 @@ static ULONG STDMETHODCALLTYPE d3d11_depthstencil_state_Release(ID3D11DepthStenc
     {
         struct d3d_device *device = impl_from_ID3D11Device(state->device);
         wined3d_mutex_lock();
-        wine_rb_remove_key(&device->depthstencil_states, &state->desc);
+        wine_rb_remove(&device->depthstencil_states, &state->entry);
         ID3D11Device_Release(state->device);
         wined3d_private_store_cleanup(&state->private_store);
         wined3d_mutex_unlock();
@@ -663,7 +663,7 @@ static ULONG STDMETHODCALLTYPE d3d11_rasterizer_state_Release(ID3D11RasterizerSt
     {
         struct d3d_device *device = impl_from_ID3D11Device(state->device);
         wined3d_mutex_lock();
-        wine_rb_remove_key(&device->rasterizer_states, &state->desc);
+        wine_rb_remove(&device->rasterizer_states, &state->entry);
         wined3d_rasterizer_state_decref(state->wined3d_state);
         wined3d_private_store_cleanup(&state->private_store);
         wined3d_mutex_unlock();
@@ -963,7 +963,7 @@ static ULONG STDMETHODCALLTYPE d3d11_sampler_state_Release(ID3D11SamplerState *i
 
         wined3d_mutex_lock();
         wined3d_sampler_decref(state->wined3d_sampler);
-        wine_rb_remove_key(&device->sampler_states, &state->desc);
+        wine_rb_remove(&device->sampler_states, &state->entry);
         ID3D11Device_Release(state->device);
         wined3d_private_store_cleanup(&state->private_store);
         wined3d_mutex_unlock();
