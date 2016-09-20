@@ -1398,6 +1398,7 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_INTEL,      CARD_INTEL_HWM,                 "Intel(R) HD Graphics 4600",                                 DRIVER_INTEL_HD4000,  1536},
     {HW_VENDOR_INTEL,      CARD_INTEL_IG6100,              "Intel(R) Iris(TM) Graphics 6100",                           DRIVER_INTEL_HD4000,  2048},
     {HW_VENDOR_INTEL,      CARD_INTEL_IP6200,              "Intel(R) Iris(TM) Pro Graphics 6200",                       DRIVER_INTEL_HD4000,  2048},
+    {HW_VENDOR_INTEL,      CARD_INTEL_IPP6300,             "Intel(R) Iris(TM) Pro Graphics P6300",                      DRIVER_INTEL_HD4000,  2048},
     {HW_VENDOR_INTEL,      CARD_INTEL_HD520,               "Intel(R) HD Graphics 520",                                  DRIVER_INTEL_HD4000,  2048},
     {HW_VENDOR_INTEL,      CARD_INTEL_HD530_1,             "Intel(R) HD Graphics 530",                                  DRIVER_INTEL_HD4000,  2048},
     {HW_VENDOR_INTEL,      CARD_INTEL_HD530_2,             "Intel(R) HD Graphics 530",                                  DRIVER_INTEL_HD4000,  2048},
@@ -2016,6 +2017,7 @@ cards_intel[] =
     {"Iris Pro Graphics P580",      CARD_INTEL_IPP580},
     {"Skylake",                     CARD_INTEL_HD520},
     /* Broadwell */
+    {"Iris Pro P6300",              CARD_INTEL_IPP6300},
     {"Iris Pro 6200",               CARD_INTEL_IP6200},
     {"Iris 6100",                   CARD_INTEL_IG6100},
     {"Iris(TM) Graphics 6100",      CARD_INTEL_IG6100}, /* MacOS */
