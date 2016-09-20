@@ -655,6 +655,33 @@ static BOOL X11DRV_CLIPBOARD_RenderFormat(Display *display, LPWINE_CLIPDATA lpDa
 }
 
 
+/**************************************************************************
+ *		put_property
+ *
+ * Put data as a property on the specified window.
+ */
+static void put_property( Display *display, Window win, Atom prop, Atom type, int format,
+                          const void *ptr, size_t size )
+{
+    const unsigned char *data = ptr;
+    int mode = PropModeReplace;
+    size_t width = (format == 32) ? sizeof(long) : format / 8;
+    size_t max_size = XExtendedMaxRequestSize( display ) * 4;
+
+    if (!max_size) max_size = XMaxRequestSize( display ) * 4;
+    max_size -= 64; /* request overhead */
+
+    do
+    {
+        size_t count = min( size, max_size / width );
+        XChangeProperty( display, win, prop, type, format, mode, data, count );
+        mode = PropModeAppend;
+        size -= count;
+        data += count * width;
+    } while (size > 0);
+}
+
+
 /***********************************************************************
  *           bitmap_info_size
  *
@@ -2781,10 +2808,7 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
                 targets[i++] = format->atom;
             }
 
-    /* We may want to consider setting the type to xaTargets instead,
-     * in case some apps expect this instead of XA_ATOM */
-    XChangeProperty(display, requestor, rprop, XA_ATOM, 32,
-                    PropModeReplace, (unsigned char *)targets, cTargets);
+    put_property( display, requestor, rprop, XA_ATOM, 32, targets, cTargets );
 
     HeapFree(GetProcessHeap(), 0, targets);
 
@@ -2950,19 +2974,10 @@ static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *ev
 
                 if (hClipData && (lpClipData = GlobalLock(hClipData)))
                 {
-                    int mode = PropModeReplace;
-
                     TRACE("\tUpdating property %s, %d bytes\n",
                           debugstr_format(lpFormat->id), cBytes);
-                    do
-                    {
-                        int nelements = min(cBytes, 65536);
-                        XChangeProperty(display, request, rprop, event->target,
-                                        8, mode, lpClipData, nelements);
-                        mode = PropModeAppend;
-                        cBytes -= nelements;
-                        lpClipData += nelements;
-                    } while (cBytes > 0);
+
+                    put_property( display, request, rprop, event->target, 8, lpClipData, cBytes );
 
                     GlobalUnlock(hClipData);
                     GlobalFree(hClipData);
