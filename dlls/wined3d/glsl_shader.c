@@ -5384,12 +5384,7 @@ static struct glsl_shader_prog_link *get_glsl_program_entry(const struct shader_
 static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const struct wined3d_gl_info *gl_info,
         struct glsl_shader_prog_link *entry)
 {
-    struct glsl_program_key key;
-
-    key.vs_id = entry->vs.id;
-    key.gs_id = entry->gs.id;
-    key.ps_id = entry->ps.id;
-    wine_rb_remove_key(&priv->program_lookup, &key);
+    wine_rb_remove(&priv->program_lookup, &entry->program_lookup_entry);
 
     GL_EXTCALL(glDeleteProgram(entry->id));
     if (entry->vs.id)
