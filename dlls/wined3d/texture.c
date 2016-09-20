@@ -871,6 +871,12 @@ ULONG CDECL wined3d_texture_decref(struct wined3d_texture *texture)
 
     if (!refcount)
     {
+        /* Wait for the texture to become idle if it's using user memory,
+         * since the application is allowed to free that memory once the
+         * texture is destroyed. Note that this implies that
+         * wined3d_texture_destroy_object() can't access that memory either. */
+        if (texture->user_memory)
+            wined3d_resource_wait_idle(&texture->resource);
         wined3d_texture_sub_resources_destroyed(texture);
         texture->resource.parent_ops->wined3d_object_destroyed(texture->resource.parent);
         resource_cleanup(&texture->resource);
