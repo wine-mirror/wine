@@ -1137,6 +1137,7 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
 
     if (device->d3d_initialized)
         wined3d_cs_emit_unload_resource(device->cs, &texture->resource);
+    wined3d_resource_wait_idle(&texture->resource);
 
     sub_resource = &texture->sub_resources[0];
     surface = sub_resource->u.surface;
