@@ -102,14 +102,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 struct tagWINE_CLIPDATA; /* Forward */
 
 typedef BOOL (*EXPORTFUNC)( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
-typedef HANDLE (*DRVIMPORTFUNC)(Display *d, Window w, Atom prop);
+typedef HANDLE (*IMPORTFUNC)( Atom type, const void *data, size_t size );
 
 typedef struct clipboard_format
 {
     struct list entry;
     UINT        id;
     Atom        atom;
-    DRVIMPORTFUNC  lpDrvImportFunc;
+    IMPORTFUNC  import;
     EXPORTFUNC  export;
 } WINE_CLIPFORMAT, *LPWINE_CLIPFORMAT;
 
@@ -125,15 +125,15 @@ static int selectionAcquired = 0;              /* Contains the current selection
 static Window selectionWindow = None;          /* The top level X window which owns the selection */
 static Atom selectionCacheSrc = XA_PRIMARY;    /* The selection source from which the clipboard cache was filled */
 
-static HANDLE import_data(Display *d, Window w, Atom prop);
-static HANDLE import_enhmetafile(Display *d, Window w, Atom prop);
-static HANDLE import_metafile(Display *d, Window w, Atom prop);
-static HANDLE import_pixmap(Display *d, Window w, Atom prop);
-static HANDLE import_image_bmp(Display *d, Window w, Atom prop);
-static HANDLE import_string(Display *d, Window w, Atom prop);
-static HANDLE import_utf8_string(Display *d, Window w, Atom prop);
-static HANDLE import_compound_text(Display *d, Window w, Atom prop);
-static HANDLE import_text_uri_list(Display *display, Window w, Atom prop);
+static HANDLE import_data( Atom type, const void *data, size_t size );
+static HANDLE import_enhmetafile( Atom type, const void *data, size_t size );
+static HANDLE import_metafile( Atom type, const void *data, size_t size );
+static HANDLE import_pixmap( Atom type, const void *data, size_t size );
+static HANDLE import_image_bmp( Atom type, const void *data, size_t size );
+static HANDLE import_string( Atom type, const void *data, size_t size );
+static HANDLE import_utf8_string( Atom type, const void *data, size_t size );
+static HANDLE import_compound_text( Atom type, const void *data, size_t size );
+static HANDLE import_text_uri_list( Atom type, const void *data, size_t size );
 
 static BOOL export_data( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_string( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
@@ -149,8 +149,8 @@ static BOOL export_hdrop( Display *display, Window win, Atom prop, Atom target, 
 static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData);
 static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display);
 static BOOL X11DRV_CLIPBOARD_ReadSelectionData(Display *display, LPWINE_CLIPDATA lpData);
-static BOOL X11DRV_CLIPBOARD_ReadProperty(Display *display, Window w, Atom prop,
-    unsigned char** data, unsigned long* datasize);
+static BOOL X11DRV_CLIPBOARD_ReadProperty( Display *display, Window w, Atom prop,
+                                           Atom *type, unsigned char **data, unsigned long *datasize );
 static BOOL X11DRV_CLIPBOARD_RenderFormat(Display *display, LPWINE_CLIPDATA lpData);
 static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BOOL bIsMultiple );
 static void empty_clipboard(void);
@@ -168,7 +168,7 @@ static const struct
     const WCHAR  *name;
     UINT          id;
     UINT          data;
-    DRVIMPORTFUNC import;
+    IMPORTFUNC    import;
     EXPORTFUNC    export;
 } builtin_formats[] =
 {
@@ -317,7 +317,7 @@ void X11DRV_InitClipboard(void)
             formats[i].id = builtin_formats[i].id;
 
         formats[i].atom   = GET_ATOM(builtin_formats[i].data);
-        formats[i].lpDrvImportFunc = builtin_formats[i].import;
+        formats[i].import = builtin_formats[i].import;
         formats[i].export = builtin_formats[i].export;
         list_add_tail( &format_list, &formats[i].entry );
     }
@@ -398,7 +398,7 @@ static struct clipboard_format *register_format( UINT id, Atom prop )
     if (!(format = HeapAlloc( GetProcessHeap(), 0, sizeof(*format) ))) return NULL;
     format->id     = id;
     format->atom   = prop;
-    format->lpDrvImportFunc = import_data;
+    format->import = import_data;
     format->export = export_data;
     list_add_tail( &format_list, &format->entry );
 
@@ -890,42 +890,30 @@ static WCHAR* uri_to_dos(char *encodedURI)
  *
  *  Import XA_STRING, converting the string to CF_TEXT.
  */
-static HANDLE import_string(Display *display, Window w, Atom prop)
+static HANDLE import_string( Atom type, const void *data, size_t size )
 {
-    LPBYTE lpdata;
-    unsigned long cbytes;
+    const char *lpdata = data;
     LPSTR lpstr;
-    unsigned long i, inlcount = 0;
-    HANDLE hText = 0;
+    size_t i, inlcount = 0;
 
-    if (!X11DRV_CLIPBOARD_ReadProperty(display, w, prop, &lpdata, &cbytes))
-        return 0;
-
-    for (i = 0; i <= cbytes; i++)
+    for (i = 0; i < size; i++)
     {
         if (lpdata[i] == '\n')
             inlcount++;
     }
 
-    if ((hText = GlobalAlloc(GMEM_FIXED, cbytes + inlcount + 1)))
+    if ((lpstr = GlobalAlloc( GMEM_FIXED, size + inlcount + 1 )))
     {
-        lpstr = GlobalLock(hText);
-
-        for (i = 0, inlcount = 0; i <= cbytes; i++)
+        for (i = 0, inlcount = 0; i < size; i++)
         {
             if (lpdata[i] == '\n')
                 lpstr[inlcount++] = '\r';
 
             lpstr[inlcount++] = lpdata[i];
         }
-
-        GlobalUnlock(hText);
+        lpstr[inlcount] = 0;
     }
-
-    /* Free the retrieved property data */
-    HeapFree(GetProcessHeap(), 0, lpdata);
-
-    return hText;
+    return lpstr;
 }
 
 
@@ -934,52 +922,38 @@ static HANDLE import_string(Display *display, Window w, Atom prop)
  *
  *  Import XA_UTF8_STRING, converting the string to CF_UNICODE.
  */
-static HANDLE import_utf8_string(Display *display, Window w, Atom prop)
+static HANDLE import_utf8_string( Atom type, const void *data, size_t size )
 {
-    LPBYTE lpdata;
-    unsigned long cbytes;
+    const char *lpdata = data;
     LPSTR lpstr;
-    unsigned long i, inlcount = 0;
-    HANDLE hUnicodeText = 0;
+    size_t i, inlcount = 0;
+    WCHAR *textW = NULL;
 
-    if (!X11DRV_CLIPBOARD_ReadProperty(display, w, prop, &lpdata, &cbytes))
-        return 0;
-
-    for (i = 0; i <= cbytes; i++)
+    for (i = 0; i < size; i++)
     {
         if (lpdata[i] == '\n')
             inlcount++;
     }
 
-    if ((lpstr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cbytes + inlcount + 1)))
+    if ((lpstr = HeapAlloc( GetProcessHeap(), 0, size + inlcount + 1 )))
     {
         UINT count;
 
-        for (i = 0, inlcount = 0; i <= cbytes; i++)
+        for (i = 0, inlcount = 0; i < size; i++)
         {
             if (lpdata[i] == '\n')
                 lpstr[inlcount++] = '\r';
 
             lpstr[inlcount++] = lpdata[i];
         }
+        lpstr[inlcount] = 0;
 
         count = MultiByteToWideChar(CP_UTF8, 0, lpstr, -1, NULL, 0);
-        hUnicodeText = GlobalAlloc(GMEM_FIXED, count * sizeof(WCHAR));
-
-        if (hUnicodeText)
-        {
-            WCHAR *textW = GlobalLock(hUnicodeText);
-            MultiByteToWideChar(CP_UTF8, 0, lpstr, -1, textW, count);
-            GlobalUnlock(hUnicodeText);
-        }
-
+        textW = GlobalAlloc( GMEM_FIXED, count * sizeof(WCHAR) );
+        if (textW) MultiByteToWideChar( CP_UTF8, 0, lpstr, -1, textW, count );
         HeapFree(GetProcessHeap(), 0, lpstr);
     }
-
-    /* Free the retrieved property data */
-    HeapFree(GetProcessHeap(), 0, lpdata);
-
-    return hUnicodeText;
+    return textW;
 }
 
 
@@ -988,25 +962,21 @@ static HANDLE import_utf8_string(Display *display, Window w, Atom prop)
  *
  *  Import COMPOUND_TEXT to CF_UNICODE
  */
-static HANDLE import_compound_text(Display *display, Window w, Atom prop)
+static HANDLE import_compound_text( Atom type, const void *data, size_t size )
 {
-    int i, j, ret;
+    int i, j;
     char** srcstr;
     int count, lcount;
     int srclen, destlen;
-    HANDLE hUnicodeText;
+    WCHAR *deststr;
     XTextProperty txtprop;
 
-    if (!X11DRV_CLIPBOARD_ReadProperty(display, w, prop, &txtprop.value, &txtprop.nitems))
-    {
-        return 0;
-    }
-
+    txtprop.value = (BYTE *)data;
+    txtprop.nitems = size;
     txtprop.encoding = x11drv_atom(COMPOUND_TEXT);
     txtprop.format = 8;
-    ret = XmbTextPropertyToTextList(display, &txtprop, &srcstr, &count);
-    HeapFree(GetProcessHeap(), 0, txtprop.value);
-    if (ret != Success || !count) return 0;
+    if (XmbTextPropertyToTextList( thread_display(), &txtprop, &srcstr, &count ) != Success) return 0;
+    if (!count) return 0;
 
     TRACE("Importing %d line(s)\n", count);
 
@@ -1022,9 +992,8 @@ static HANDLE import_compound_text(Display *display, Window w, Atom prop)
 
     TRACE("lcount = %d, destlen=%d, srcstr %s\n", lcount, destlen, srcstr[0]);
 
-    if ((hUnicodeText = GlobalAlloc(GMEM_FIXED, (destlen + lcount + 1) * sizeof(WCHAR))))
+    if ((deststr = GlobalAlloc( GMEM_FIXED, (destlen + lcount + 1) * sizeof(WCHAR) )))
     {
-        WCHAR *deststr = GlobalLock(hUnicodeText);
         MultiByteToWideChar(CP_UNIXCP, 0, srcstr[0], -1, deststr, destlen);
 
         if (lcount)
@@ -1037,13 +1006,11 @@ static HANDLE import_compound_text(Display *display, Window w, Atom prop)
                     deststr[--j] = '\r';
             }
         }
-
-        GlobalUnlock(hUnicodeText);
     }
 
     XFreeStringList(srcstr);
 
-    return hUnicodeText;
+    return deststr;
 }
 
 
@@ -1052,36 +1019,28 @@ static HANDLE import_compound_text(Display *display, Window w, Atom prop)
  *
  *  Import XA_PIXMAP, converting the image to CF_DIB.
  */
-static HANDLE import_pixmap(Display *display, Window w, Atom prop)
+static HANDLE import_pixmap( Atom type, const void *data, size_t size )
 {
-    LPBYTE lpdata;
-    unsigned long cbytes;
-    Pixmap *pPixmap;
-    HANDLE hClipData = 0;
+    const Pixmap *pPixmap = (const Pixmap *)data;
+    BYTE *ptr = NULL;
+    XVisualInfo vis = default_visual;
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
+    struct gdi_image_bits bits;
+    Window root;
+    int x,y;               /* Unused */
+    unsigned border_width; /* Unused */
+    unsigned int depth, width, height;
 
-    if (X11DRV_CLIPBOARD_ReadProperty(display, w, prop, &lpdata, &cbytes))
+    /* Get the Pixmap dimensions and bit depth */
+    if (!XGetGeometry(gdi_display, *pPixmap, &root, &x, &y, &width, &height,
+                      &border_width, &depth)) depth = 0;
+    if (!pixmap_formats[depth]) return 0;
+
+    TRACE( "pixmap properties: width=%d, height=%d, depth=%d\n", width, height, depth );
+
+    if (depth != vis.depth) switch (pixmap_formats[depth]->bits_per_pixel)
     {
-        XVisualInfo vis = default_visual;
-        char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
-        BITMAPINFO *info = (BITMAPINFO *)buffer;
-        struct gdi_image_bits bits;
-        Window root;
-        int x,y;               /* Unused */
-        unsigned border_width; /* Unused */
-        unsigned int depth, width, height;
-
-        pPixmap = (Pixmap *) lpdata;
-
-        /* Get the Pixmap dimensions and bit depth */
-        if (!XGetGeometry(gdi_display, *pPixmap, &root, &x, &y, &width, &height,
-                          &border_width, &depth)) depth = 0;
-        if (!pixmap_formats[depth]) return 0;
-
-        TRACE("\tPixmap properties: width=%d, height=%d, depth=%d\n",
-              width, height, depth);
-
-        if (depth != vis.depth) switch (pixmap_formats[depth]->bits_per_pixel)
-        {
         case 1:
         case 4:
         case 8:
@@ -1099,28 +1058,21 @@ static HANDLE import_pixmap(Display *display, Window w, Atom prop)
             break;
         default:
             return 0;
-        }
-
-        if (!get_pixmap_image( *pPixmap, width, height, &vis, info, &bits ))
-        {
-            DWORD info_size = bitmap_info_size( info, DIB_RGB_COLORS );
-            BYTE *ptr;
-
-            hClipData = GlobalAlloc( GMEM_FIXED, info_size + info->bmiHeader.biSizeImage );
-            if (hClipData)
-            {
-                ptr = GlobalLock( hClipData );
-                memcpy( ptr, info, info_size );
-                memcpy( ptr + info_size, bits.ptr, info->bmiHeader.biSizeImage );
-                GlobalUnlock( hClipData );
-            }
-            if (bits.free) bits.free( &bits );
-        }
-
-        HeapFree(GetProcessHeap(), 0, lpdata);
     }
 
-    return hClipData;
+    if (!get_pixmap_image( *pPixmap, width, height, &vis, info, &bits ))
+    {
+        DWORD info_size = bitmap_info_size( info, DIB_RGB_COLORS );
+
+        ptr = GlobalAlloc( GMEM_FIXED, info_size + info->bmiHeader.biSizeImage );
+        if (ptr)
+        {
+            memcpy( ptr, info, info_size );
+            memcpy( ptr + info_size, bits.ptr, info->bmiHeader.biSizeImage );
+        }
+        if (bits.free) bits.free( &bits );
+    }
+    return ptr;
 }
 
 
@@ -1129,43 +1081,26 @@ static HANDLE import_pixmap(Display *display, Window w, Atom prop)
  *
  *  Import image/bmp, converting the image to CF_DIB.
  */
-static HANDLE import_image_bmp(Display *display, Window w, Atom prop)
+static HANDLE import_image_bmp( Atom type, const void *data, size_t size )
 {
-    LPBYTE lpdata;
-    unsigned long cbytes;
     HANDLE hClipData = 0;
+    const BITMAPFILEHEADER *bfh = data;
 
-    if (X11DRV_CLIPBOARD_ReadProperty(display, w, prop, &lpdata, &cbytes))
+    if (size >= sizeof(BITMAPFILEHEADER)+sizeof(BITMAPCOREHEADER) &&
+        bfh->bfType == 0x4d42 /* "BM" */)
     {
-        BITMAPFILEHEADER *bfh = (BITMAPFILEHEADER*)lpdata;
+        const BITMAPINFO *bmi = (const BITMAPINFO *)(bfh + 1);
+        HBITMAP hbmp;
+        HDC hdc = GetDC(0);
 
-        if (cbytes >= sizeof(BITMAPFILEHEADER)+sizeof(BITMAPCOREHEADER) &&
-            bfh->bfType == 0x4d42 /* "BM" */)
+        if ((hbmp = CreateDIBitmap( hdc, &bmi->bmiHeader, CBM_INIT,
+                                    (const BYTE *)data + bfh->bfOffBits, bmi, DIB_RGB_COLORS )))
         {
-            BITMAPINFO *bmi = (BITMAPINFO*)(bfh+1);
-            HBITMAP hbmp;
-            HDC hdc;
-
-            hdc = GetDC(0);
-            hbmp = CreateDIBitmap(
-                hdc,
-                &(bmi->bmiHeader),
-                CBM_INIT,
-                lpdata+bfh->bfOffBits,
-                bmi,
-                DIB_RGB_COLORS
-                );
-
             hClipData = create_dib_from_bitmap( hbmp );
-
             DeleteObject(hbmp);
-            ReleaseDC(0, hdc);
         }
-
-        /* Free the retrieved property data */
-        HeapFree(GetProcessHeap(), 0, lpdata);
+        ReleaseDC(0, hdc);
     }
-
     return hClipData;
 }
 
@@ -1173,57 +1108,27 @@ static HANDLE import_image_bmp(Display *display, Window w, Atom prop)
 /**************************************************************************
  *		import_metafile
  */
-static HANDLE import_metafile(Display *display, Window w, Atom prop)
+static HANDLE import_metafile( Atom type, const void *data, size_t size )
 {
-    LPBYTE lpdata;
-    unsigned long cbytes;
-    HANDLE hClipData = 0;
+    METAFILEPICT *mf;
 
-    if (X11DRV_CLIPBOARD_ReadProperty(display, w, prop, &lpdata, &cbytes))
+    if (size < sizeof(METAFILEPICT)) return 0;
+    if ((mf = GlobalAlloc( GMEM_FIXED, sizeof(METAFILEPICT) )))
     {
-        if (cbytes)
-        {
-            hClipData = GlobalAlloc(0, sizeof(METAFILEPICT));
-            if (hClipData)
-            {
-                unsigned int wiresize;
-                LPMETAFILEPICT lpmfp = GlobalLock(hClipData);
-
-                memcpy(lpmfp, lpdata, sizeof(METAFILEPICT));
-                wiresize = cbytes - sizeof(METAFILEPICT);
-                lpmfp->hMF = SetMetaFileBitsEx(wiresize,
-                    ((const BYTE *)lpdata) + sizeof(METAFILEPICT));
-                GlobalUnlock(hClipData);
-            }
-        }
-
-        /* Free the retrieved property data */
-        HeapFree(GetProcessHeap(), 0, lpdata);
+        memcpy( mf, data, sizeof(METAFILEPICT) );
+        mf->hMF = SetMetaFileBitsEx( size - sizeof(METAFILEPICT),
+                                     (const BYTE *)data + sizeof(METAFILEPICT) );
     }
-
-    return hClipData;
+    return mf;
 }
 
 
 /**************************************************************************
  *		import_enhmetafile
  */
-static HANDLE import_enhmetafile(Display *display, Window w, Atom prop)
+static HANDLE import_enhmetafile( Atom type, const void *data, size_t size )
 {
-    LPBYTE lpdata;
-    unsigned long cbytes;
-    HANDLE hClipData = 0;
-
-    if (X11DRV_CLIPBOARD_ReadProperty(display, w, prop, &lpdata, &cbytes))
-    {
-        if (cbytes)
-            hClipData = SetEnhMetaFileBits(cbytes, lpdata);
-
-        /* Free the retrieved property data */
-        HeapFree(GetProcessHeap(), 0, lpdata);
-    }
-
-    return hClipData;
+    return SetEnhMetaFileBits( size, data );
 }
 
 
@@ -1232,33 +1137,25 @@ static HANDLE import_enhmetafile(Display *display, Window w, Atom prop)
  *
  *  Import text/uri-list.
  */
-static HANDLE import_text_uri_list(Display *display, Window w, Atom prop)
+static HANDLE import_text_uri_list( Atom type, const void *data, size_t size )
 {
-    char *uriList;
-    unsigned long len;
+    const char *uriList = data;
     char *uri;
     WCHAR *path;
     WCHAR *out = NULL;
-    int size = 0;
+    int total = 0;
     int capacity = 4096;
     int start = 0;
     int end = 0;
-    HANDLE handle = NULL;
+    DROPFILES *dropFiles = NULL;
 
-    if (!X11DRV_CLIPBOARD_ReadProperty(display, w, prop, (LPBYTE*)&uriList, &len))
-        return 0;
+    if (!(out = HeapAlloc(GetProcessHeap(), 0, capacity * sizeof(WCHAR)))) return 0;
 
-    out = HeapAlloc(GetProcessHeap(), 0, capacity * sizeof(WCHAR));
-    if (out == NULL) {
-        HeapFree(GetProcessHeap(), 0, uriList);
-        return 0;
-    }
-
-    while (end < len)
+    while (end < size)
     {
-        while (end < len && uriList[end] != '\r')
+        while (end < size && uriList[end] != '\r')
             ++end;
-        if (end < (len - 1) && uriList[end+1] != '\n')
+        if (end < (size - 1) && uriList[end+1] != '\n')
         {
             WARN("URI list line doesn't end in \\r\\n\n");
             break;
@@ -1275,15 +1172,15 @@ static HANDLE import_text_uri_list(Display *display, Window w, Atom prop)
         if (path)
         {
             int pathSize = strlenW(path) + 1;
-            if (pathSize > capacity-size)
+            if (pathSize > capacity - total)
             {
                 capacity = 2*capacity + pathSize;
                 out = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, out, (capacity + 1)*sizeof(WCHAR));
                 if (out == NULL)
                     goto done;
             }
-            memcpy(&out[size], path, pathSize * sizeof(WCHAR));
-            size += pathSize;
+            memcpy(&out[total], path, pathSize * sizeof(WCHAR));
+            total += pathSize;
         done:
             HeapFree(GetProcessHeap(), 0, path);
             if (out == NULL)
@@ -1293,26 +1190,21 @@ static HANDLE import_text_uri_list(Display *display, Window w, Atom prop)
         start = end + 2;
         end = start;
     }
-    if (out && end >= len)
+    if (out && end >= size)
     {
-        DROPFILES *dropFiles;
-        handle = GlobalAlloc(GMEM_FIXED, sizeof(DROPFILES) + (size + 1)*sizeof(WCHAR));
-        if (handle)
+        if ((dropFiles = GlobalAlloc( GMEM_FIXED, sizeof(DROPFILES) + (total + 1) * sizeof(WCHAR) )))
         {
-            dropFiles = (DROPFILES*) GlobalLock(handle);
             dropFiles->pFiles = sizeof(DROPFILES);
             dropFiles->pt.x = 0;
             dropFiles->pt.y = 0;
             dropFiles->fNC = 0;
             dropFiles->fWide = TRUE;
-            out[size] = '\0';
-            memcpy(((char*)dropFiles) + dropFiles->pFiles, out, (size + 1)*sizeof(WCHAR));
-            GlobalUnlock(handle);
+            out[total] = '\0';
+            memcpy( (char*)dropFiles + dropFiles->pFiles, out, (total + 1) * sizeof(WCHAR) );
         }
     }
     HeapFree(GetProcessHeap(), 0, out);
-    HeapFree(GetProcessHeap(), 0, uriList);
-    return handle;
+    return dropFiles;
 }
 
 
@@ -1321,59 +1213,46 @@ static HANDLE import_text_uri_list(Display *display, Window w, Atom prop)
  *
  *  Generic import clipboard data routine.
  */
-static HANDLE import_data(Display *display, Window w, Atom prop)
+static HANDLE import_data( Atom type, const void *data, size_t size )
 {
-    LPVOID lpClipData;
-    LPBYTE lpdata;
-    unsigned long cbytes;
-    HANDLE hClipData = 0;
+    void *ret = GlobalAlloc( GMEM_FIXED, size );
 
-    if (X11DRV_CLIPBOARD_ReadProperty(display, w, prop, &lpdata, &cbytes))
-    {
-        if (cbytes)
-        {
-            hClipData = GlobalAlloc(GMEM_FIXED, cbytes);
-            if (hClipData == 0)
-            {
-                HeapFree(GetProcessHeap(), 0, lpdata);
-                return NULL;
-            }
-
-            if ((lpClipData = GlobalLock(hClipData)))
-            {
-                memcpy(lpClipData, lpdata, cbytes);
-                GlobalUnlock(hClipData);
-            }
-            else
-            {
-                GlobalFree(hClipData);
-                hClipData = 0;
-            }
-        }
-
-        /* Free the retrieved property data */
-        HeapFree(GetProcessHeap(), 0, lpdata);
-    }
-
-    return hClipData;
+    if (ret) memcpy( ret, data, size );
+    return ret;
 }
+
+
+/**************************************************************************
+ *		import_selection
+ *
+ * Import a selection target, depending on its type.
+ */
+static HANDLE import_selection( Display *display, Window win, Atom prop, struct clipboard_format *format )
+{
+    unsigned char *data;
+    unsigned long size;
+    Atom type;
+    HANDLE ret;
+
+    if (!format->import) return 0;
+    if (!X11DRV_CLIPBOARD_ReadProperty( display, win, prop, &type, &data, &size )) return 0;
+    ret = format->import( type, data, size );
+    HeapFree( GetProcessHeap(), 0, data );
+    return ret;
+}
+
 
 /**************************************************************************
  *      X11DRV_CLIPBOARD_ImportSelection
  *
  *  Import the X selection into the clipboard format registered for the given X target.
  */
-HANDLE X11DRV_CLIPBOARD_ImportSelection(Display *d, Atom target, Window w, Atom prop, UINT *windowsFormat)
+HANDLE X11DRV_CLIPBOARD_ImportSelection(Display *display, Atom target, Window win, Atom prop, UINT *windowsFormat)
 {
-    WINE_CLIPFORMAT *clipFormat;
-
-    clipFormat = X11DRV_CLIPBOARD_LookupProperty(NULL, target);
-    if (clipFormat)
-    {
-        *windowsFormat = clipFormat->id;
-        return clipFormat->lpDrvImportFunc(d, w, prop);
-    }
-    return NULL;
+    struct clipboard_format *format = X11DRV_CLIPBOARD_LookupProperty( NULL, target );
+    if (!format) return 0;
+    *windowsFormat = format->id;
+    return import_selection( display, win, prop, format );
 }
 
 
@@ -2025,11 +1904,11 @@ static BOOL X11DRV_CLIPBOARD_ReadSelectionData(Display *display, LPWINE_CLIPDATA
              *  into WINE's clipboard cache and converting the 
              *  data format if necessary.
              */
-            HANDLE hData = lpData->lpFormat->lpDrvImportFunc(display, w, prop );
-             if (hData)
-                 bRet = X11DRV_CLIPBOARD_InsertClipboardData(lpData->wFormatID, hData, lpData->lpFormat, TRUE);
-             else
-                 TRACE("Import function failed\n");
+            HANDLE hData = import_selection( display, w, prop, lpData->lpFormat );
+            if (hData)
+                bRet = X11DRV_CLIPBOARD_InsertClipboardData(lpData->wFormatID, hData, lpData->lpFormat, TRUE);
+            else
+                TRACE("Import function failed\n");
         }
         else
         {
@@ -2109,10 +1988,9 @@ struct clipboard_data_packet {
  *		X11DRV_CLIPBOARD_ReadProperty
  *  Reads the contents of the X selection property.
  */
-static BOOL X11DRV_CLIPBOARD_ReadProperty(Display *display, Window w, Atom prop,
-    unsigned char** data, unsigned long* datasize)
+static BOOL X11DRV_CLIPBOARD_ReadProperty( Display *display, Window w, Atom prop,
+                                           Atom *type, unsigned char** data, unsigned long* datasize )
 {
-    Atom atype;
     XEvent xe;
 
     if (prop == None)
@@ -2121,10 +1999,10 @@ static BOOL X11DRV_CLIPBOARD_ReadProperty(Display *display, Window w, Atom prop,
     while (XCheckTypedWindowEvent(display, w, PropertyNotify, &xe))
         ;
 
-    if (!X11DRV_CLIPBOARD_GetProperty(display, w, prop, &atype, data, datasize))
+    if (!X11DRV_CLIPBOARD_GetProperty(display, w, prop, type, data, datasize))
         return FALSE;
 
-    if (atype == x11drv_atom(INCR))
+    if (*type == x11drv_atom(INCR))
     {
         unsigned char *buf;
         unsigned long bufsize = 0;
@@ -2156,7 +2034,7 @@ static BOOL X11DRV_CLIPBOARD_ReadProperty(Display *display, Window w, Atom prop,
             }
 
             if (i >= SELECTION_RETRIES ||
-                !X11DRV_CLIPBOARD_GetProperty(display, w, prop, &atype, &prop_data, &prop_size))
+                !X11DRV_CLIPBOARD_GetProperty(display, w, prop, type, &prop_data, &prop_size))
             {
                 res = FALSE;
                 break;
