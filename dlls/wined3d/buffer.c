@@ -1347,15 +1347,9 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
     }
     buffer->maps_size = 1;
 
-    if (data && FAILED(hr = wined3d_buffer_upload_data(buffer, NULL, data->data)))
-    {
-        ERR("Failed to upload data, hr %#x.\n", hr);
-        buffer_unload(&buffer->resource);
-        resource_cleanup(&buffer->resource);
-        wined3d_resource_wait_idle(&buffer->resource);
-        HeapFree(GetProcessHeap(), 0, buffer->maps);
-        return hr;
-    }
+    if (data)
+        wined3d_device_update_sub_resource(device, &buffer->resource,
+                0, NULL, data->data, data->row_pitch, data->slice_pitch);
 
     return WINED3D_OK;
 }
