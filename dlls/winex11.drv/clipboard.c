@@ -682,6 +682,28 @@ static void put_property( Display *display, Window win, Atom prop, Atom type, in
 }
 
 
+/**************************************************************************
+ *		convert_selection
+ */
+static Atom convert_selection( Display *display, Window win, Atom selection, Atom target )
+{
+    int i;
+    XEvent event;
+
+    XConvertSelection( display, selection, target, x11drv_atom(SELECTION_DATA), win, CurrentTime );
+
+    for (i = 0; i < SELECTION_RETRIES; i++)
+    {
+        Bool res = XCheckTypedWindowEvent( display, win, SelectionNotify, &event );
+        if (res && event.xselection.selection == selection && event.xselection.target == target)
+            return event.xselection.property;
+        usleep( SELECTION_WAIT );
+    }
+    ERR( "Timed out waiting for SelectionNotify event\n" );
+    return None;
+}
+
+
 /***********************************************************************
  *           bitmap_info_size
  *
@@ -1933,44 +1955,6 @@ failed:
 }
 
 
-/**************************************************************************
- *		X11DRV_CLIPBOARD_QueryTargets
- */
-static BOOL X11DRV_CLIPBOARD_QueryTargets(Display *display, Window w, Atom selection,
-    Atom target, XEvent *xe)
-{
-    INT i;
-
-    XConvertSelection(display, selection, target, x11drv_atom(SELECTION_DATA), w, CurrentTime);
-
-    /*
-     * Wait until SelectionNotify is received
-     */
-    for (i = 0; i < SELECTION_RETRIES; i++)
-    {
-        Bool res = XCheckTypedWindowEvent(display, w, SelectionNotify, xe);
-        if (res && xe->xselection.selection == selection) break;
-
-        usleep(SELECTION_WAIT);
-    }
-
-    if (i == SELECTION_RETRIES)
-    {
-        ERR("Timed out waiting for SelectionNotify event\n");
-        return FALSE;
-    }
-    /* Verify that the selection returned a valid TARGETS property */
-    if ((xe->xselection.target != target) || (xe->xselection.property == None))
-    {
-        /* Selection owner failed to respond or we missed the SelectionNotify */
-        WARN("Failed to retrieve TARGETS for selection %ld.\n", selection);
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-
 static int is_atom_error( Display *display, XErrorEvent *event, void *arg )
 {
     return (event->error_code == BadAtom);
@@ -2070,13 +2054,13 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
  */
 static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display)
 {
-    XEvent         xe;
     Atom           atype=AnyPropertyType;
     int		   aformat;
     unsigned long  remain;
     Atom*	   targetList=NULL;
     Window         w;
     unsigned long  cSelectionTargets = 0;
+    Atom prop;
 
     if (selectionAcquired & (S_PRIMARY | S_CLIPBOARD))
     {
@@ -2098,22 +2082,22 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display)
     if ((use_primary_selection && XGetSelectionOwner(display,XA_PRIMARY)) ||
         XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)))
     {
-        if (use_primary_selection && (X11DRV_CLIPBOARD_QueryTargets(display, w, XA_PRIMARY, x11drv_atom(TARGETS), &xe)))
+        if (use_primary_selection && (prop = convert_selection( display, w, XA_PRIMARY, x11drv_atom(TARGETS) )))
             selectionCacheSrc = XA_PRIMARY;
-        else if (X11DRV_CLIPBOARD_QueryTargets(display, w, x11drv_atom(CLIPBOARD), x11drv_atom(TARGETS), &xe))
+        else if ((prop = convert_selection( display, w, x11drv_atom(CLIPBOARD), x11drv_atom(TARGETS) )))
             selectionCacheSrc = x11drv_atom(CLIPBOARD);
         else
         {
             Atom xstr = XA_STRING;
 
             /* Selection Owner doesn't understand TARGETS, try retrieving XA_STRING */
-            if (X11DRV_CLIPBOARD_QueryTargets(display, w, XA_PRIMARY, XA_STRING, &xe))
+            if (convert_selection( display, w, XA_PRIMARY, XA_STRING ))
             {
                 X11DRV_CLIPBOARD_InsertSelectionProperties(display, &xstr, 1);
                 selectionCacheSrc = XA_PRIMARY;
                 return 1;
             }
-            else if (X11DRV_CLIPBOARD_QueryTargets(display, w, x11drv_atom(CLIPBOARD), XA_STRING, &xe))
+            else if (convert_selection( display, w, x11drv_atom(CLIPBOARD), XA_STRING ))
             {
                 X11DRV_CLIPBOARD_InsertSelectionProperties(display, &xstr, 1);
                 selectionCacheSrc = x11drv_atom(CLIPBOARD);
@@ -2129,7 +2113,7 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display)
     else return 0; /* No selection owner so report 0 targets available */
 
     /* Read the TARGETS property contents */
-    if (!XGetWindowProperty(display, xe.xselection.requestor, xe.xselection.property,
+    if (!XGetWindowProperty(display, w, prop,
         0, 0x3FFF, True, AnyPropertyType/*XA_ATOM*/, &atype, &aformat, &cSelectionTargets, 
         &remain, (unsigned char**)&targetList))
     {
@@ -2175,10 +2159,8 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display)
  */
 static BOOL X11DRV_CLIPBOARD_ReadSelectionData(Display *display, LPWINE_CLIPDATA lpData)
 {
-    Bool res;
-    DWORD i;
-    XEvent xe;
     BOOL bRet = FALSE;
+    Atom prop;
 
     TRACE("%04x\n", lpData->wFormatID);
 
@@ -2202,33 +2184,15 @@ static BOOL X11DRV_CLIPBOARD_ReadSelectionData(Display *display, LPWINE_CLIPDATA
               debugstr_format( lpData->lpFormat->id ), debugstr_xatom( lpData->lpFormat->atom ),
               (UINT)selectionCacheSrc);
 
-        XConvertSelection(display, selectionCacheSrc, lpData->lpFormat->atom,
-                          x11drv_atom(SELECTION_DATA), w, CurrentTime);
-
-        /* wait until SelectionNotify is received */
-        for (i = 0; i < SELECTION_RETRIES; i++)
-        {
-            res = XCheckTypedWindowEvent(display, w, SelectionNotify, &xe);
-            if (res && xe.xselection.selection == selectionCacheSrc) break;
-
-            usleep(SELECTION_WAIT);
-        }
-
-        if (i == SELECTION_RETRIES)
-        {
-            ERR("Timed out waiting for SelectionNotify event\n");
-        }
-        /* Verify that the selection returned a valid TARGETS property */
-        else if (xe.xselection.property != None)
+        prop = convert_selection( display, w, selectionCacheSrc, lpData->lpFormat->atom );
+        if (prop != None)
         {
             /*
              *  Read the contents of the X selection property 
              *  into WINE's clipboard cache and converting the 
              *  data format if necessary.
              */
-             HANDLE hData = lpData->lpFormat->lpDrvImportFunc(display, xe.xselection.requestor,
-                 xe.xselection.property);
-
+            HANDLE hData = lpData->lpFormat->lpDrvImportFunc(display, w, prop );
              if (hData)
                  bRet = X11DRV_CLIPBOARD_InsertClipboardData(lpData->wFormatID, hData, lpData->lpFormat, TRUE);
              else
