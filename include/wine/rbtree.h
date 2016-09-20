@@ -94,6 +94,20 @@ static inline void wine_rb_flip_color(struct wine_rb_entry *entry)
     entry->right->flags ^= WINE_RB_FLAG_RED;
 }
 
+static inline struct wine_rb_entry *wine_rb_head(struct wine_rb_entry *iter)
+{
+    if (!iter) return NULL;
+    while (iter->left) iter = iter->left;
+    return iter;
+}
+
+static inline struct wine_rb_entry *wine_rb_next(struct wine_rb_entry *iter)
+{
+    if (iter->right) return wine_rb_head(iter->right);
+    while (iter->parent && iter->parent->right == iter) iter = iter->parent;
+    return iter->parent;
+}
+
 static inline struct wine_rb_entry *wine_rb_postorder_head(struct wine_rb_entry *iter)
 {
     if (!iter) return NULL;
@@ -111,6 +125,17 @@ static inline struct wine_rb_entry *wine_rb_postorder_next(struct wine_rb_entry 
     if (iter == iter->parent->right || !iter->parent->right) return iter->parent;
     return wine_rb_postorder_head(iter->parent->right);
 }
+
+/* iterate through the tree */
+#define WINE_RB_FOR_EACH(cursor, tree) \
+    for ((cursor) = wine_rb_head((tree)->root); (cursor); (cursor) = wine_rb_next(cursor))
+
+/* iterate through the tree using a tree entry */
+#define WINE_RB_FOR_EACH_ENTRY(elem, tree, type, field) \
+    for ((elem) = WINE_RB_ENTRY_VALUE(wine_rb_head((tree)->root), type, field); \
+         &(elem)->field; \
+         (elem) = WINE_RB_ENTRY_VALUE(wine_rb_next(&elem->field), type, field))
+
 
 static inline void wine_rb_postorder(struct wine_rb_tree *tree, wine_rb_traverse_func_t *callback, void *context)
 {
@@ -131,7 +156,8 @@ static inline void wine_rb_init(struct wine_rb_tree *tree, wine_rb_compare_func_
 
 static inline void wine_rb_for_each_entry(struct wine_rb_tree *tree, wine_rb_traverse_func_t *callback, void *context)
 {
-    wine_rb_postorder(tree, callback, context);
+    struct wine_rb_entry *iter;
+    WINE_RB_FOR_EACH(iter, tree) callback(iter, context);
 }
 
 static inline void wine_rb_clear(struct wine_rb_tree *tree, wine_rb_traverse_func_t *callback, void *context)
