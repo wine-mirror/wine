@@ -1993,6 +1993,7 @@ enum wined3d_pci_device
     CARD_INTEL_HWM                  = 0x0416,
     CARD_INTEL_IG6100               = 0x162b,
     CARD_INTEL_IP6200               = 0x1622,
+    CARD_INTEL_IPP6300              = 0x162a,
     CARD_INTEL_HD520                = 0x1916,
     CARD_INTEL_HD530_1              = 0x1912,
     CARD_INTEL_HD530_2              = 0x191b,
