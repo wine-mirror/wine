@@ -2042,13 +2042,13 @@ static void test_lost_device(void)
     hr = IDirect3DDevice9Ex_TestCooperativeLevel(device);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_Present(device, NULL, NULL, NULL, NULL);
-    todo_wine ok(hr == S_PRESENT_MODE_CHANGED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_PRESENT_MODE_CHANGED || hr == D3D_OK /* Win10 */, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_PresentEx(device, NULL, NULL, NULL, NULL, 0);
-    todo_wine ok(hr == S_PRESENT_MODE_CHANGED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_PRESENT_MODE_CHANGED || hr == D3D_OK /* Win10 */, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
-    todo_wine ok(hr == S_PRESENT_MODE_CHANGED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_PRESENT_MODE_CHANGED || hr == D3D_OK /* Win10 */, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
-    todo_wine ok(hr == S_PRESENT_MODE_CHANGED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_PRESENT_MODE_CHANGED || hr == D3D_OK /* Win10 */, "Got unexpected hr %#x.\n", hr);
 
     hr = reset_device(device, &desc);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
