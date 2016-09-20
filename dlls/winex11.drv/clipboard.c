@@ -101,8 +101,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 
 struct tagWINE_CLIPDATA; /* Forward */
 
-typedef HANDLE (*DRVEXPORTFUNC)(Display *display, Window requestor, Atom aTarget, Atom rprop,
-    struct tagWINE_CLIPDATA* lpData, LPDWORD lpBytes);
+typedef BOOL (*EXPORTFUNC)( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 typedef HANDLE (*DRVIMPORTFUNC)(Display *d, Window w, Atom prop);
 
 typedef struct clipboard_format
@@ -111,7 +110,7 @@ typedef struct clipboard_format
     UINT        id;
     Atom        atom;
     DRVIMPORTFUNC  lpDrvImportFunc;
-    DRVEXPORTFUNC  lpDrvExportFunc;
+    EXPORTFUNC  export;
 } WINE_CLIPFORMAT, *LPWINE_CLIPFORMAT;
 
 typedef struct tagWINE_CLIPDATA {
@@ -136,26 +135,16 @@ static HANDLE import_utf8_string(Display *d, Window w, Atom prop);
 static HANDLE import_compound_text(Display *d, Window w, Atom prop);
 static HANDLE import_text_uri_list(Display *display, Window w, Atom prop);
 
-static HANDLE export_data(Display *display, Window requestor, Atom aTarget,
-                          Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
-static HANDLE export_string(Display *display, Window requestor, Atom aTarget,
-                            Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
-static HANDLE export_utf8_string(Display *display, Window requestor, Atom aTarget,
-                                 Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
-static HANDLE export_compound_text(Display *display, Window requestor, Atom aTarget,
-                                   Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
-static HANDLE export_pixmap(Display *display, Window requestor, Atom aTarget,
-                            Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
-static HANDLE export_image_bmp(Display *display, Window requestor, Atom aTarget,
-                               Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
-static HANDLE export_metafile(Display *display, Window requestor, Atom aTarget,
-                              Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
-static HANDLE export_enhmetafile(Display *display, Window requestor, Atom aTarget,
-                                 Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
-static HANDLE export_text_html(Display *display, Window requestor, Atom aTarget,
-                               Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
-static HANDLE export_hdrop(Display *display, Window requestor, Atom aTarget,
-                           Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
+static BOOL export_data( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
+static BOOL export_string( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
+static BOOL export_utf8_string( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
+static BOOL export_compound_text( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
+static BOOL export_pixmap( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
+static BOOL export_image_bmp( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
+static BOOL export_metafile( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
+static BOOL export_enhmetafile( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
+static BOOL export_text_html( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
+static BOOL export_hdrop( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 
 static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData);
 static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display);
@@ -180,7 +169,7 @@ static const struct
     UINT          id;
     UINT          data;
     DRVIMPORTFUNC import;
-    DRVEXPORTFUNC export;
+    EXPORTFUNC    export;
 } builtin_formats[] =
 {
     { 0, CF_TEXT,            XA_STRING,                 import_string,        export_string },
@@ -268,6 +257,7 @@ static const char *debugstr_format( UINT id )
 
     switch (id)
     {
+    case 0: return "(none)";
 #define BUILTIN(id) case id: return #id;
     BUILTIN(CF_TEXT)
     BUILTIN(CF_BITMAP)
@@ -328,7 +318,7 @@ void X11DRV_InitClipboard(void)
 
         formats[i].atom   = GET_ATOM(builtin_formats[i].data);
         formats[i].lpDrvImportFunc = builtin_formats[i].import;
-        formats[i].lpDrvExportFunc = builtin_formats[i].export;
+        formats[i].export = builtin_formats[i].export;
         list_add_tail( &format_list, &formats[i].entry );
     }
 }
@@ -409,7 +399,7 @@ static struct clipboard_format *register_format( UINT id, Atom prop )
     format->id     = id;
     format->atom   = prop;
     format->lpDrvImportFunc = import_data;
-    format->lpDrvExportFunc = export_data;
+    format->export = export_data;
     list_add_tail( &format_list, &format->entry );
 
     TRACE( "Registering format %s atom %ld\n", debugstr_format(id), prop );
@@ -1392,40 +1382,14 @@ HANDLE X11DRV_CLIPBOARD_ImportSelection(Display *d, Atom target, Window w, Atom 
  *
  *  Generic export clipboard data routine.
  */
-static HANDLE export_data(Display *display, Window requestor, Atom aTarget,
-                          Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
+static BOOL export_data( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
 {
-    LPVOID lpClipData;
-    UINT datasize = 0;
-    HANDLE hClipData = 0;
+    void *ptr = GlobalLock( handle );
 
-    *lpBytes = 0; /* Assume failure */
-
-    if (!X11DRV_CLIPBOARD_RenderFormat(display, lpData))
-        ERR("Failed to export %04x format\n", lpData->wFormatID);
-    else
-    {
-        datasize = GlobalSize(lpData->hData);
-
-        hClipData = GlobalAlloc(GMEM_FIXED, datasize);
-        if (hClipData == 0) return NULL;
-
-        if ((lpClipData = GlobalLock(hClipData)))
-        {
-            LPVOID lpdata = GlobalLock(lpData->hData);
-
-            memcpy(lpClipData, lpdata, datasize);
-            *lpBytes = datasize;
-
-            GlobalUnlock(lpData->hData);
-            GlobalUnlock(hClipData);
-        } else {
-            GlobalFree(hClipData);
-            hClipData = 0;
-        }
-    }
-
-    return hClipData;
+    if (!ptr) return FALSE;
+    put_property( display, win, prop, target, 8, ptr, GlobalSize( handle ));
+    GlobalUnlock( handle );
+    return TRUE;
 }
 
 
@@ -1434,39 +1398,32 @@ static HANDLE export_data(Display *display, Window requestor, Atom aTarget,
  *
  *  Export CF_TEXT converting the string to XA_STRING.
  */
-static HANDLE export_string(Display *display, Window requestor, Atom aTarget, Atom rprop,
-                            LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
+static BOOL export_string( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
 {
     UINT i, j;
     UINT size;
     LPSTR text, lpstr = NULL;
 
-    if (!X11DRV_CLIPBOARD_RenderFormat(display, lpData)) return 0;
-
-    *lpBytes = 0; /* Assume return has zero bytes */
-
-    text = GlobalLock(lpData->hData);
+    text = GlobalLock( handle );
     size = strlen(text);
 
     /* remove carriage returns */
     lpstr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size + 1);
     if (lpstr == NULL)
-        goto done;
-
+    {
+        GlobalUnlock( handle );
+        return FALSE;
+    }
     for (i = 0,j = 0; i < size && text[i]; i++)
     {
         if (text[i] == '\r' && (text[i+1] == '\n' || text[i+1] == '\0'))
             continue;
         lpstr[j++] = text[i];
     }
-
-    lpstr[j]='\0';
-    *lpBytes = j; /* Number of bytes in string */
-
-done:
-    GlobalUnlock(lpData->hData);
-
-    return lpstr;
+    put_property( display, win, prop, target, 8, lpstr, j );
+    HeapFree( GetProcessHeap(), 0, lpstr );
+    GlobalUnlock( handle );
+    return TRUE;
 }
 
 
@@ -1475,49 +1432,43 @@ done:
  *
  *  Export CF_UNICODE converting the string to UTF8.
  */
-static HANDLE export_utf8_string(Display *display, Window requestor, Atom aTarget, Atom rprop,
-                                 LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
+static BOOL export_utf8_string( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
 {
     UINT i, j;
     UINT size;
-    LPWSTR uni_text;
-    LPSTR text, lpstr = NULL;
-
-    if (!X11DRV_CLIPBOARD_RenderFormat(display, lpData)) return 0;
-
-    *lpBytes = 0; /* Assume return has zero bytes */
-
-    uni_text = GlobalLock(lpData->hData);
+    LPSTR text, lpstr;
+    LPWSTR uni_text = GlobalLock( handle );
 
     size = WideCharToMultiByte(CP_UTF8, 0, uni_text, -1, NULL, 0, NULL, NULL);
-
     text = HeapAlloc(GetProcessHeap(), 0, size);
     if (!text)
-        goto done;
+    {
+        GlobalUnlock( handle );
+        return FALSE;
+    }
+
     WideCharToMultiByte(CP_UTF8, 0, uni_text, -1, text, size, NULL, NULL);
+    GlobalUnlock( handle );
 
     /* remove carriage returns */
     lpstr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size--);
     if (lpstr == NULL)
-        goto done;
-
+    {
+        HeapFree(GetProcessHeap(), 0, text);
+        return FALSE;
+    }
     for (i = 0,j = 0; i < size && text[i]; i++)
     {
         if (text[i] == '\r' && (text[i+1] == '\n' || text[i+1] == '\0'))
             continue;
         lpstr[j++] = text[i];
     }
-    lpstr[j]='\0';
-
-    *lpBytes = j; /* Number of bytes in string */
-
-done:
+    put_property( display, win, prop, target, 8, lpstr, j );
+    HeapFree(GetProcessHeap(), 0, lpstr);
     HeapFree(GetProcessHeap(), 0, text);
-    GlobalUnlock(lpData->hData);
-
-    return lpstr;
+    GlobalUnlock( handle );
+    return TRUE;
 }
-
 
 
 /**************************************************************************
@@ -1525,24 +1476,22 @@ done:
  *
  *  Export CF_UNICODE to COMPOUND_TEXT
  */
-static HANDLE export_compound_text(Display *display, Window requestor, Atom aTarget, Atom rprop,
-                                   LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
+static BOOL export_compound_text( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
 {
-    char* lpstr = 0;
-    XTextProperty prop;
+    char* lpstr;
+    XTextProperty textprop;
     XICCEncodingStyle style;
     UINT i, j;
     UINT size;
-    LPWSTR uni_text;
-
-    if (!X11DRV_CLIPBOARD_RenderFormat(display, lpData)) return 0;
-
-    uni_text = GlobalLock(lpData->hData);
+    LPWSTR uni_text = GlobalLock( handle );
 
     size = WideCharToMultiByte(CP_UNIXCP, 0, uni_text, -1, NULL, 0, NULL, NULL);
     lpstr = HeapAlloc(GetProcessHeap(), 0, size);
     if (!lpstr)
-        return 0;
+    {
+        GlobalUnlock( handle );
+        return FALSE;
+    }
 
     WideCharToMultiByte(CP_UNIXCP, 0, uni_text, -1, lpstr, size, NULL, NULL);
 
@@ -1555,23 +1504,22 @@ static HANDLE export_compound_text(Display *display, Window requestor, Atom aTar
     }
     lpstr[j]='\0';
 
-    GlobalUnlock(lpData->hData);
+    GlobalUnlock( handle );
 
-    if (aTarget == x11drv_atom(COMPOUND_TEXT))
+    if (target == x11drv_atom(COMPOUND_TEXT))
         style = XCompoundTextStyle;
     else
         style = XStdICCTextStyle;
 
     /* Update the X property */
-    if (XmbTextListToTextProperty(display, &lpstr, 1, style, &prop) == Success)
+    if (XmbTextListToTextProperty( display, &lpstr, 1, style, &textprop ) == Success)
     {
-        XSetTextProperty(display, requestor, &prop, rprop);
-        XFree(prop.value);
+        XSetTextProperty( display, win, &textprop, prop );
+        XFree( textprop.value );
     }
 
     HeapFree(GetProcessHeap(), 0, lpstr);
-
-    return 0;
+    return TRUE;
 }
 
 
@@ -1580,42 +1528,22 @@ static HANDLE export_compound_text(Display *display, Window requestor, Atom aTar
  *
  *  Export CF_DIB to XA_PIXMAP.
  */
-static HANDLE export_pixmap(Display *display, Window requestor, Atom aTarget, Atom rprop,
-                            LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+static BOOL export_pixmap( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
 {
-    HANDLE hData;
-    unsigned char* lpData;
+    Pixmap pixmap;
+    BITMAPINFO *pbmi;
+    struct gdi_image_bits bits;
 
-    if (!X11DRV_CLIPBOARD_RenderFormat(display, lpdata))
-    {
-        ERR("Failed to export %04x format\n", lpdata->wFormatID);
-        return 0;
-    }
+    pbmi = GlobalLock( handle );
+    bits.ptr = (LPBYTE)pbmi + bitmap_info_size( pbmi, DIB_RGB_COLORS );
+    bits.free = NULL;
+    bits.is_copy = FALSE;
+    pixmap = create_pixmap_from_image( 0, &default_visual, pbmi, &bits, DIB_RGB_COLORS );
+    GlobalUnlock( handle );
 
-    if (!lpdata->drvData) /* If not already rendered */
-    {
-        Pixmap pixmap;
-        LPBITMAPINFO pbmi;
-        struct gdi_image_bits bits;
-
-        pbmi = GlobalLock( lpdata->hData );
-        bits.ptr = (LPBYTE)pbmi + bitmap_info_size( pbmi, DIB_RGB_COLORS );
-        bits.free = NULL;
-        bits.is_copy = FALSE;
-        pixmap = create_pixmap_from_image( 0, &default_visual, pbmi, &bits, DIB_RGB_COLORS );
-        GlobalUnlock( lpdata->hData );
-        lpdata->drvData = pixmap;
-    }
-
-    *lpBytes = sizeof(Pixmap); /* pixmap is a 32bit value */
-
-    /* Wrap pixmap so we can return a handle */
-    hData = GlobalAlloc(0, *lpBytes);
-    lpData = GlobalLock(hData);
-    memcpy(lpData, &lpdata->drvData, *lpBytes);
-    GlobalUnlock(hData);
-
-    return hData;
+    put_property( display, win, prop, target, 32, &pixmap, 1 );
+    /* FIXME: free the pixmap when the property is deleted */
+    return TRUE;
 }
 
 
@@ -1624,50 +1552,17 @@ static HANDLE export_pixmap(Display *display, Window requestor, Atom aTarget, At
  *
  *  Export CF_DIB to image/bmp.
  */
-static HANDLE export_image_bmp(Display *display, Window requestor, Atom aTarget, Atom rprop,
-                               LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+static BOOL export_image_bmp( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
 {
-    HANDLE hpackeddib;
-    LPBYTE dibdata;
+    LPBYTE dibdata = GlobalLock( handle );
     UINT bmpsize;
-    HANDLE hbmpdata;
-    LPBYTE bmpdata;
     BITMAPFILEHEADER *bfh;
 
-    *lpBytes = 0;
-
-    if (!X11DRV_CLIPBOARD_RenderFormat(display, lpdata))
+    bmpsize = sizeof(BITMAPFILEHEADER) + GlobalSize( handle );
+    bfh = HeapAlloc( GetProcessHeap(), 0, bmpsize );
+    if (bfh)
     {
-        ERR("Failed to export %04x format\n", lpdata->wFormatID);
-        return 0;
-    }
-
-    hpackeddib = lpdata->hData;
-
-    dibdata = GlobalLock(hpackeddib);
-    if (!dibdata)
-    {
-        ERR("Failed to lock packed DIB\n");
-        return 0;
-    }
-
-    bmpsize = sizeof(BITMAPFILEHEADER) + GlobalSize(hpackeddib);
-
-    hbmpdata = GlobalAlloc(0, bmpsize);
-
-    if (hbmpdata)
-    {
-        bmpdata = GlobalLock(hbmpdata);
-
-        if (!bmpdata)
-        {
-            GlobalFree(hbmpdata);
-            GlobalUnlock(hpackeddib);
-            return 0;
-        }
-
         /* bitmap file header */
-        bfh = (BITMAPFILEHEADER*)bmpdata;
         bfh->bfType = 0x4d42; /* "BM" */
         bfh->bfSize = bmpsize;
         bfh->bfReserved1 = 0;
@@ -1676,15 +1571,11 @@ static HANDLE export_image_bmp(Display *display, Window requestor, Atom aTarget,
 
         /* rest of bitmap is the same as the packed dib */
         memcpy(bfh+1, dibdata, bmpsize-sizeof(BITMAPFILEHEADER));
-
-        *lpBytes = bmpsize;
-
-        GlobalUnlock(hbmpdata);
     }
-
-    GlobalUnlock(hpackeddib);
-
-    return hbmpdata;
+    GlobalUnlock( handle );
+    put_property( display, win, prop, target, 8, bfh, bmpsize );
+    HeapFree( GetProcessHeap(), 0, bfh );
+    return TRUE;
 }
 
 
@@ -1693,39 +1584,24 @@ static HANDLE export_image_bmp(Display *display, Window requestor, Atom aTarget,
  *
  *  Export MetaFilePict.
  */
-static HANDLE export_metafile(Display *display, Window requestor, Atom aTarget, Atom rprop,
-                              LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+static BOOL export_metafile( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
 {
-    LPMETAFILEPICT lpmfp;
+    METAFILEPICT *src, *dst;
     unsigned int size;
-    HANDLE h;
 
-    if (!X11DRV_CLIPBOARD_RenderFormat(display, lpdata))
+    src = GlobalLock( handle );
+    size = GetMetaFileBitsEx(src->hMF, 0, NULL);
+
+    dst = HeapAlloc( GetProcessHeap(), 0, size + sizeof(*dst) );
+    if (dst)
     {
-        ERR("Failed to export %04x format\n", lpdata->wFormatID);
-        return 0;
+        *dst = *src;
+        GetMetaFileBitsEx( src->hMF, size, dst + 1 );
     }
-
-    *lpBytes = 0; /* Assume failure */
-
-    lpmfp = GlobalLock(lpdata->hData);
-    size = GetMetaFileBitsEx(lpmfp->hMF, 0, NULL);
-
-    h = GlobalAlloc(0, size + sizeof(METAFILEPICT));
-    if (h)
-    {
-        char *pdata = GlobalLock(h);
-
-        memcpy(pdata, lpmfp, sizeof(METAFILEPICT));
-        GetMetaFileBitsEx(lpmfp->hMF, size, pdata + sizeof(METAFILEPICT));
-
-        *lpBytes = size + sizeof(METAFILEPICT);
-
-        GlobalUnlock(h);
-    }
-    GlobalUnlock(lpdata->hData);
-
-    return h;
+    GlobalUnlock( handle );
+    put_property( display, win, prop, target, 8, dst, size + sizeof(*dst) );
+    HeapFree( GetProcessHeap(), 0, dst );
+    return TRUE;
 }
 
 
@@ -1734,32 +1610,18 @@ static HANDLE export_metafile(Display *display, Window requestor, Atom aTarget, 
  *
  *  Export EnhMetaFile.
  */
-static HANDLE export_enhmetafile(Display *display, Window requestor, Atom aTarget, Atom rprop,
-                                 LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+static BOOL export_enhmetafile( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
 {
     unsigned int size;
-    HANDLE h;
+    void *ptr;
 
-    if (!X11DRV_CLIPBOARD_RenderFormat(display, lpdata))
-    {
-        ERR("Failed to export %04x format\n", lpdata->wFormatID);
-        return 0;
-    }
+    if (!(size = GetEnhMetaFileBits( handle, 0, NULL ))) return FALSE;
+    if (!(ptr = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
 
-    *lpBytes = 0; /* Assume failure */
-
-    size = GetEnhMetaFileBits(lpdata->hData, 0, NULL);
-    h = GlobalAlloc(0, size);
-    if (h)
-    {
-        LPVOID pdata = GlobalLock(h);
-
-        GetEnhMetaFileBits(lpdata->hData, size, pdata);
-        *lpBytes = size;
-
-        GlobalUnlock(h);
-    }
-    return h;
+    GetEnhMetaFileBits( handle, size, ptr );
+    put_property( display, win, prop, target, 8, ptr, size );
+    HeapFree( GetProcessHeap(), 0, ptr );
+    return TRUE;
 }
 
 
@@ -1792,38 +1654,19 @@ static LPCSTR get_html_description_field(LPCSTR data, LPCSTR keyword)
  *
  * FIXME: We should attempt to add an <a base> tag and convert windows paths.
  */
-static HANDLE export_text_html(Display *display, Window requestor, Atom aTarget,
-                               Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+static BOOL export_text_html( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
 {
-    HANDLE hdata;
     LPCSTR data, field_value;
-    UINT fragmentstart, fragmentend, htmlsize;
-    HANDLE hhtmldata=NULL;
-    LPSTR htmldata;
+    UINT fragmentstart, fragmentend;
 
-    *lpBytes = 0;
-
-    if (!X11DRV_CLIPBOARD_RenderFormat(display, lpdata))
-    {
-        ERR("Failed to export %04x format\n", lpdata->wFormatID);
-        return 0;
-    }
-
-    hdata = lpdata->hData;
-
-    data = GlobalLock(hdata);
-    if (!data)
-    {
-        ERR("Failed to lock HTML Format data\n");
-        return 0;
-    }
+    data = GlobalLock( handle );
 
     /* read the important fields */
     field_value = get_html_description_field(data, "StartFragment:");
     if (!field_value)
     {
         ERR("Couldn't find StartFragment value\n");
-        goto end;
+        goto failed;
     }
     fragmentstart = atoi(field_value);
 
@@ -1831,39 +1674,18 @@ static HANDLE export_text_html(Display *display, Window requestor, Atom aTarget,
     if (!field_value)
     {
         ERR("Couldn't find EndFragment value\n");
-        goto end;
+        goto failed;
     }
     fragmentend = atoi(field_value);
 
     /* export only the fragment */
-    htmlsize = fragmentend - fragmentstart + 1;
+    put_property( display, win, prop, target, 8, &data[fragmentstart], fragmentend - fragmentstart );
+    GlobalUnlock( handle );
+    return TRUE;
 
-    hhtmldata = GlobalAlloc(0, htmlsize);
-
-    if (hhtmldata)
-    {
-        htmldata = GlobalLock(hhtmldata);
-
-        if (!htmldata)
-        {
-            GlobalFree(hhtmldata);
-            htmldata = NULL;
-            goto end;
-        }
-
-        memcpy(htmldata, &data[fragmentstart], fragmentend-fragmentstart);
-        htmldata[htmlsize-1] = '\0';
-
-        *lpBytes = htmlsize;
-
-        GlobalUnlock(htmldata);
-    }
-
-end:
-
-    GlobalUnlock(hdata);
-
-    return hhtmldata;
+failed:
+    GlobalUnlock( handle );
+    return FALSE;
 }
 
 
@@ -1872,29 +1694,17 @@ end:
  *
  *  Export CF_HDROP format to text/uri-list.
  */
-static HANDLE export_hdrop(Display *display, Window requestor, Atom aTarget,
-                           Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+static BOOL export_hdrop( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
 {
-    HDROP hDrop;
     UINT i;
     UINT numFiles;
-    HGLOBAL hClipData = NULL;
-    char *textUriList = NULL;
+    char *textUriList;
     UINT textUriListSize = 32;
     UINT next = 0;
 
-    *lpBytes = 0;
-
-    if (!X11DRV_CLIPBOARD_RenderFormat(display, lpdata))
-    {
-        ERR("Failed to export %04x format\n", lpdata->wFormatID);
-        return 0;
-    }
-    hClipData = GlobalAlloc(GMEM_FIXED, textUriListSize);
-    if (hClipData == NULL)
-        return 0;
-    hDrop = (HDROP) lpdata->hData;
-    numFiles = DragQueryFileW(hDrop, 0xFFFFFFFF, NULL, 0);
+    textUriList = HeapAlloc( GetProcessHeap(), 0, textUriListSize );
+    if (!textUriList) return FALSE;
+    numFiles = DragQueryFileW( handle, 0xFFFFFFFF, NULL, 0 );
     for (i = 0; i < numFiles; i++)
     {
         UINT dosFilenameSize;
@@ -1903,10 +1713,10 @@ static HANDLE export_hdrop(Display *display, Window requestor, Atom aTarget,
         UINT uriSize;
         UINT u;
 
-        dosFilenameSize = 1 + DragQueryFileW(hDrop, i, NULL, 0);
+        dosFilenameSize = 1 + DragQueryFileW( handle, i, NULL, 0 );
         dosFilename = HeapAlloc(GetProcessHeap(), 0, dosFilenameSize*sizeof(WCHAR));
         if (dosFilename == NULL) goto failed;
-        DragQueryFileW(hDrop, i, dosFilename, dosFilenameSize);
+        DragQueryFileW( handle, i, dosFilename, dosFilenameSize );
         unixFilename = wine_get_unix_file_name(dosFilename);
         HeapFree(GetProcessHeap(), 0, dosFilename);
         if (unixFilename == NULL) goto failed;
@@ -1916,10 +1726,10 @@ static HANDLE export_hdrop(Display *display, Window requestor, Atom aTarget,
         if ((next + uriSize) > textUriListSize)
         {
             UINT biggerSize = max( 2 * textUriListSize, next + uriSize );
-            HGLOBAL bigger = GlobalReAlloc(hClipData, biggerSize, 0);
+            void *bigger = HeapReAlloc( GetProcessHeap(), 0, textUriList, biggerSize );
             if (bigger)
             {
-                hClipData = bigger;
+                textUriList = bigger;
                 textUriListSize = biggerSize;
             }
             else
@@ -1928,7 +1738,6 @@ static HANDLE export_hdrop(Display *display, Window requestor, Atom aTarget,
                 goto failed;
             }
         }
-        textUriList = GlobalLock(hClipData);
         lstrcpyA(&textUriList[next], "file:///");
         next += 8;
         /* URL encode everything - unnecessary, but easier/lighter than linking in shlwapi, and can't hurt */
@@ -1941,17 +1750,41 @@ static HANDLE export_hdrop(Display *display, Window requestor, Atom aTarget,
         }
         textUriList[next++] = '\r';
         textUriList[next++] = '\n';
-        GlobalUnlock(hClipData);
         HeapFree(GetProcessHeap(), 0, unixFilename);
     }
-
-    *lpBytes = next;
-    return hClipData;
+    put_property( display, win, prop, target, 8, textUriList, next );
+    HeapFree( GetProcessHeap(), 0, textUriList );
+    return TRUE;
 
 failed:
-    GlobalFree(hClipData);
-    *lpBytes = 0;
-    return 0;
+    HeapFree( GetProcessHeap(), 0, textUriList );
+    return FALSE;
+}
+
+
+/**************************************************************************
+ *      export_selection
+ *
+ * Export selection data, depending on the target type.
+ */
+static BOOL export_selection( Display *display, Window win, Atom prop, Atom target )
+{
+    struct clipboard_format *format = X11DRV_CLIPBOARD_LookupProperty( NULL, target );
+    HANDLE handle = 0;
+
+    if (!format || !format->export) return FALSE;
+
+    TRACE( "win %lx prop %s target %s exporting %s\n", win,
+           debugstr_xatom( prop ), debugstr_xatom( target ), debugstr_format( format->id ) );
+
+    if (format->id)
+    {
+        LPWINE_CLIPDATA data = X11DRV_CLIPBOARD_LookupData( format->id );
+        if (!data) return FALSE;
+        if (!X11DRV_CLIPBOARD_RenderFormat( display, data )) return FALSE;
+        handle = data->hData;
+    }
+    return format->export( display, win, prop, target, handle );
 }
 
 
@@ -2748,8 +2581,7 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
 
     LIST_FOR_EACH_ENTRY( lpData, &data_list, WINE_CLIPDATA, entry )
         LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
-            if ((format->id == lpData->wFormatID) &&
-                format->lpDrvExportFunc && format->atom)
+            if (format->id == lpData->wFormatID && format->export && format->atom)
                 cTargets++;
 
     TRACE(" found %d formats\n", cTargets);
@@ -2764,8 +2596,7 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
 
     LIST_FOR_EACH_ENTRY( lpData, &data_list, WINE_CLIPDATA, entry )
         LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
-            if ((format->id == lpData->wFormatID) &&
-                format->lpDrvExportFunc && format->atom)
+            if (format->id == lpData->wFormatID && format->export && format->atom)
             {
                 TRACE( "%d: %s -> %s\n", i, debugstr_format( format->id ),
                        debugstr_xatom( format->atom ));
@@ -2920,39 +2751,8 @@ static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *ev
         /* MULTIPLE selection request */
         rprop = X11DRV_SelectionRequest_MULTIPLE( hWnd, event );
     }
-    else
-    {
-        LPWINE_CLIPFORMAT lpFormat = X11DRV_CLIPBOARD_LookupProperty(NULL, event->target);
-        BOOL success = FALSE;
-
-        if (lpFormat && lpFormat->lpDrvExportFunc)
-        {
-            LPWINE_CLIPDATA lpData = X11DRV_CLIPBOARD_LookupData(lpFormat->id);
-
-            if (lpData)
-            {
-                unsigned char* lpClipData;
-                DWORD cBytes;
-                HANDLE hClipData = lpFormat->lpDrvExportFunc(display, request, event->target,
-                                                             rprop, lpData, &cBytes);
-
-                if (hClipData && (lpClipData = GlobalLock(hClipData)))
-                {
-                    TRACE("\tUpdating property %s, %d bytes\n",
-                          debugstr_format(lpFormat->id), cBytes);
-
-                    put_property( display, request, rprop, event->target, 8, lpClipData, cBytes );
-
-                    GlobalUnlock(hClipData);
-                    GlobalFree(hClipData);
-                    success = TRUE;
-                }
-            }
-        }
-
-        if (!success)
-            rprop = None;  /* report failure to client */
-    }
+    else if (!export_selection( display, event->requestor, rprop, event->target ))
+        rprop = None;  /* report failure to client */
 
 END:
     /* reply to sender
