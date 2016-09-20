@@ -1075,7 +1075,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     device->swapchains[0] = swapchain;
     device_init_swapchain_state(device, swapchain);
 
-    context = context_acquire(device, swapchain->front_buffer->sub_resources[0].u.surface);
+    context = context_acquire(device, NULL);
 
     create_dummy_textures(device, context);
     create_default_samplers(device);
