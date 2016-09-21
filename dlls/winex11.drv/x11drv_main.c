@@ -167,7 +167,6 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
     "XdndActionAsk",
     "XdndActionPrivate",
     "XdndSelection",
-    "XdndTarget",
     "XdndTypeList",
     "HTML Format",
     "WCF_BITMAP",

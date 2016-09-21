@@ -1225,17 +1225,32 @@ static HANDLE import_data( Atom type, const void *data, size_t size )
 /**************************************************************************
  *		import_selection
  *
- * Import a selection target, depending on its type.
+ * Import the specified format from the selection and return a global handle to the data.
  */
-static HANDLE import_selection( Display *display, Window win, Atom prop, struct clipboard_format *format )
+static HANDLE import_selection( Display *display, Window win, Atom selection,
+                                struct clipboard_format *format )
 {
     unsigned char *data;
     unsigned long size;
-    Atom type;
+    Atom prop, type;
     HANDLE ret;
 
     if (!format->import) return 0;
-    if (!X11DRV_CLIPBOARD_ReadProperty( display, win, prop, &type, &data, &size )) return 0;
+
+    TRACE( "import %s from %s win %lx to format %s\n",
+           debugstr_xatom( format->atom ), debugstr_xatom( selection ),
+           win, debugstr_format( format->id ) );
+
+    if ((prop = convert_selection( display, win, selection, format->atom )) == None)
+    {
+        TRACE( "failed to convert selection\n" );
+        return 0;
+    }
+    if (!X11DRV_CLIPBOARD_ReadProperty( display, win, prop, &type, &data, &size ))
+    {
+        TRACE( "failed to read property\n" );
+        return 0;
+    }
     ret = format->import( type, data, size );
     HeapFree( GetProcessHeap(), 0, data );
     return ret;
@@ -1247,12 +1262,13 @@ static HANDLE import_selection( Display *display, Window win, Atom prop, struct 
  *
  *  Import the X selection into the clipboard format registered for the given X target.
  */
-HANDLE X11DRV_CLIPBOARD_ImportSelection(Display *display, Atom target, Window win, Atom prop, UINT *windowsFormat)
+HANDLE X11DRV_CLIPBOARD_ImportSelection( Display *display, Window win, Atom selection,
+                                         Atom target, UINT *windowsFormat )
 {
     struct clipboard_format *format = X11DRV_CLIPBOARD_LookupProperty( NULL, target );
     if (!format) return 0;
     *windowsFormat = format->id;
-    return import_selection( display, win, prop, format );
+    return import_selection( display, win, selection, format );
 }
 
 
@@ -1872,9 +1888,7 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display)
 static BOOL X11DRV_CLIPBOARD_ReadSelectionData(Display *display, LPWINE_CLIPDATA lpData)
 {
     BOOL bRet = FALSE;
-    Atom prop;
-
-    TRACE("%04x\n", lpData->wFormatID);
+    HANDLE hData;
 
     if (!lpData->lpFormat)
     {
@@ -1892,28 +1906,9 @@ static BOOL X11DRV_CLIPBOARD_ReadSelectionData(Display *display, LPWINE_CLIPDATA
             return FALSE;
         }
 
-        TRACE("Requesting conversion of %s property %s from selection type %08x\n",
-              debugstr_format( lpData->lpFormat->id ), debugstr_xatom( lpData->lpFormat->atom ),
-              (UINT)selectionCacheSrc);
-
-        prop = convert_selection( display, w, selectionCacheSrc, lpData->lpFormat->atom );
-        if (prop != None)
-        {
-            /*
-             *  Read the contents of the X selection property 
-             *  into WINE's clipboard cache and converting the 
-             *  data format if necessary.
-             */
-            HANDLE hData = import_selection( display, w, prop, lpData->lpFormat );
-            if (hData)
-                bRet = X11DRV_CLIPBOARD_InsertClipboardData(lpData->wFormatID, hData, lpData->lpFormat, TRUE);
-            else
-                TRACE("Import function failed\n");
-        }
-        else
-        {
-            TRACE("Failed to convert selection\n");
-        }
+        hData = import_selection( display, w, selectionCacheSrc, lpData->lpFormat );
+        if (hData)
+            bRet = X11DRV_CLIPBOARD_InsertClipboardData(lpData->wFormatID, hData, lpData->lpFormat, TRUE);
     }
     else
     {
@@ -1936,8 +1931,6 @@ static BOOL X11DRV_CLIPBOARD_GetProperty(Display *display, Window w, Atom prop,
     int aformat;
     unsigned long pos = 0, nitems, remain, count;
     unsigned char *val = NULL, *buffer;
-
-    TRACE( "Reading property %s from X window %lx\n", debugstr_xatom( prop ), w );
 
     for (;;)
     {
@@ -1970,6 +1963,9 @@ static BOOL X11DRV_CLIPBOARD_GetProperty(Display *display, Window w, Atom prop,
         }
         pos += count / sizeof(int);
     }
+
+    TRACE( "got property %s type %s format %u len %lu from window %lx\n",
+           debugstr_xatom( prop ), debugstr_xatom( *atype ), aformat, *datasize, w );
 
     /* Delete the property on the window now that we are done
      * This will send a PropertyNotify event to the selection owner. */

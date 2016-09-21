@@ -49,10 +49,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(xdnd);
 
-/* Maximum wait time for selection notify */
-#define SELECTION_RETRIES 500  /* wait for .1 seconds */
-#define SELECTION_WAIT    1000 /* us */
-
 typedef struct tagXDNDDATA
 {
     int cf_win;
@@ -496,9 +492,7 @@ void X11DRV_XDND_LeaveEvent( HWND hWnd, XClientMessageEvent *event )
 static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
                                         Atom *types, unsigned long count)
 {
-    unsigned int i, j;
-    BOOL res;
-    XEvent xe;
+    unsigned int i;
     XDNDDATA *current, *next;
     BOOL haveHDROP = FALSE;
 
@@ -516,24 +510,8 @@ static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
         if (types[i] == 0)
             continue;
 
-        XConvertSelection(display, x11drv_atom(XdndSelection), types[i],
-                          x11drv_atom(XdndTarget), xwin, /*tm*/CurrentTime);
-
-        /*
-         * Wait for SelectionNotify
-         */
-        for (j = 0; j < SELECTION_RETRIES; j++)
-        {
-            res = XCheckTypedWindowEvent(display, xwin, SelectionNotify, &xe);
-            if (res && xe.xselection.selection == x11drv_atom(XdndSelection)) break;
-
-            usleep(SELECTION_WAIT);
-        }
-
-        if (xe.xselection.property == None)
-            continue;
-
-        contents = X11DRV_CLIPBOARD_ImportSelection(display, types[i], xwin, x11drv_atom(XdndTarget), &windowsFormat);
+        contents = X11DRV_CLIPBOARD_ImportSelection( display, xwin, x11drv_atom(XdndSelection),
+                                                     types[i], &windowsFormat );
         if (contents)
             X11DRV_XDND_InsertXDNDData(types[i], windowsFormat, contents);
     }

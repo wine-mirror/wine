@@ -239,7 +239,8 @@ extern void X11DRV_XDND_EnterEvent( HWND hWnd, XClientMessageEvent *event ) DECL
 extern void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event ) DECLSPEC_HIDDEN;
 extern void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event ) DECLSPEC_HIDDEN;
 extern void X11DRV_XDND_LeaveEvent( HWND hWnd, XClientMessageEvent *event ) DECLSPEC_HIDDEN;
-extern HANDLE X11DRV_CLIPBOARD_ImportSelection(Display *d, Atom target, Window w, Atom prop, UINT *windowsFormat) DECLSPEC_HIDDEN;
+extern HANDLE X11DRV_CLIPBOARD_ImportSelection( Display *display, Window win, Atom selection,
+                                                Atom target, UINT *windowsFormat ) DECLSPEC_HIDDEN;
 
 /**************************************************************************
  * X11 GDI driver
@@ -453,7 +454,6 @@ enum x11drv_atoms
     XATOM_XdndActionAsk,
     XATOM_XdndActionPrivate,
     XATOM_XdndSelection,
-    XATOM_XdndTarget,
     XATOM_XdndTypeList,
     XATOM_HTML_Format,
     XATOM_WCF_BITMAP,
