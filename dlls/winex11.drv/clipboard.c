@@ -2,10 +2,11 @@
  * X11 clipboard windows driver
  *
  * Copyright 1994 Martin Ayotte
- *	     1996 Alex Korobka
- *	     1999 Noel Borthwick
- *           2003 Ulrich Czekalla for CodeWeavers
- *           2014 Damjan Jovanovic
+ * Copyright 1996 Alex Korobka
+ * Copyright 1999 Noel Borthwick
+ * Copyright 2003 Ulrich Czekalla for CodeWeavers
+ * Copyright 2014 Damjan Jovanovic
+ * Copyright 2016 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -211,6 +212,7 @@ static const struct
 
 static struct list format_list = LIST_INIT( format_list );
 
+#define NB_BUILTIN_FORMATS (sizeof(builtin_formats) / sizeof(builtin_formats[0]))
 #define GET_ATOM(prop)  (((prop) < FIRST_XATOM) ? (Atom)(prop) : X11DRV_Atoms[(prop) - FIRST_XATOM])
 
 
@@ -306,13 +308,12 @@ static const char *debugstr_xatom( Atom atom )
  */
 void X11DRV_InitClipboard(void)
 {
-    static const unsigned int count = sizeof(builtin_formats) / sizeof(builtin_formats[0]);
     struct clipboard_format *formats;
     UINT i;
 
-    if (!(formats = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*formats)))) return;
+    if (!(formats = HeapAlloc( GetProcessHeap(), 0, NB_BUILTIN_FORMATS * sizeof(*formats)))) return;
 
-    for (i = 0; i < count; i++)
+    for (i = 0; i < NB_BUILTIN_FORMATS; i++)
     {
         if (builtin_formats[i].name)
             formats[i].id = RegisterClipboardFormatW( builtin_formats[i].name );
@@ -1660,6 +1661,80 @@ failed:
 }
 
 
+/***********************************************************************
+ *           get_clipboard_formats
+ *
+ * Return a list of all formats currently available on the Win32 clipboard.
+ * Helper for export_targets.
+ */
+static UINT *get_clipboard_formats( UINT *size )
+{
+    UINT *ids;
+
+    *size = 256;
+    for (;;)
+    {
+        if (!(ids = HeapAlloc( GetProcessHeap(), 0, *size * sizeof(*ids) ))) return NULL;
+        if (GetUpdatedClipboardFormats( ids, *size, size )) break;
+        HeapFree( GetProcessHeap(), 0, ids );
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return NULL;
+    }
+    return ids;
+}
+
+
+/***********************************************************************
+ *           is_format_available
+ *
+ * Check if a clipboard format is included in the list.
+ * Helper for export_targets.
+ */
+static BOOL is_format_available( UINT format, const UINT *ids, unsigned int count )
+{
+    while (count--) if (*ids++ == format) return TRUE;
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *           export_targets
+ *
+ *  Service a TARGETS selection request event
+ */
+static BOOL export_targets( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
+{
+    struct clipboard_format *format;
+    UINT pos, count, *formats;
+    Atom *targets;
+
+    intern_atoms();
+
+    if (!(formats = get_clipboard_formats( &count ))) return FALSE;
+
+    /* the builtin formats contain duplicates, so allocate some extra space */
+    if (!(targets = HeapAlloc( GetProcessHeap(), 0, (count + NB_BUILTIN_FORMATS) * sizeof(*targets) )))
+    {
+        HeapFree( GetProcessHeap(), 0, formats );
+        return FALSE;
+    }
+
+    pos = 0;
+    LIST_FOR_EACH_ENTRY( format, &format_list, struct clipboard_format, entry )
+    {
+        if (!format->export) continue;
+        /* formats with id==0 are always exported */
+        if (format->id && !is_format_available( format->id, formats, count )) continue;
+        TRACE( "%d: %s -> %s\n", pos, debugstr_format( format->id ), debugstr_xatom( format->atom ));
+        targets[pos++] = format->atom;
+    }
+
+    put_property( display, win, prop, XA_ATOM, 32, targets, pos );
+    HeapFree( GetProcessHeap(), 0, targets );
+    HeapFree( GetProcessHeap(), 0, formats );
+    return TRUE;
+}
+
+
 /**************************************************************************
  *      export_selection
  *
@@ -2481,64 +2556,6 @@ void X11DRV_ResetSelectionOwner(void)
 
     X11DRV_CLIPBOARD_ReleaseOwnership();
     empty_clipboard();
-}
-
-
-/***********************************************************************
- *           export_targets
- *
- *  Service a TARGETS selection request event
- */
-static BOOL export_targets( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
-{
-    UINT i;
-    Atom* targets;
-    ULONG cTargets;
-    LPWINE_CLIPFORMAT format;
-    LPWINE_CLIPDATA lpData;
-
-    /* Create X atoms for any clipboard types which don't have atoms yet.
-     * This avoids sending bogus zero atoms.
-     * Without this, copying might not have access to all clipboard types.
-     * FIXME: is it safe to call this here?
-     */
-    intern_atoms();
-
-    /*
-     * Count the number of items we wish to expose as selection targets.
-     */
-    cTargets = 1; /* Include TARGETS */
-
-    if (!list_head( &data_list )) return FALSE;
-
-    LIST_FOR_EACH_ENTRY( lpData, &data_list, WINE_CLIPDATA, entry )
-        LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
-            if (format->id == lpData->wFormatID && format->export && format->atom)
-                cTargets++;
-
-    TRACE(" found %d formats\n", cTargets);
-
-    /* Allocate temp buffer */
-    targets = HeapAlloc( GetProcessHeap(), 0, cTargets * sizeof(Atom));
-    if(targets == NULL)
-        return FALSE;
-
-    i = 0;
-    targets[i++] = x11drv_atom(TARGETS);
-
-    LIST_FOR_EACH_ENTRY( lpData, &data_list, WINE_CLIPDATA, entry )
-        LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
-            if (format->id == lpData->wFormatID && format->export && format->atom)
-            {
-                TRACE( "%d: %s -> %s\n", i, debugstr_format( format->id ),
-                       debugstr_xatom( format->atom ));
-                targets[i++] = format->atom;
-            }
-
-    put_property( display, win, prop, XA_ATOM, 32, targets, cTargets );
-
-    HeapFree(GetProcessHeap(), 0, targets);
-    return TRUE;
 }
 
 
