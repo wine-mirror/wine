@@ -1,7 +1,7 @@
 @ stub DeviceInternetSettingUiW
 @ stub DiInstallDevice
-@ stub DiInstallDriverA
-@ stub DiInstallDriverW
+@ stdcall DiInstallDriverA(long ptr ptr ptr long ptr)
+@ stdcall DiInstallDriverW(long ptr ptr ptr long ptr)
 @ stub DiRollbackDriver
 @ stub DiShowUpdateDevice
 @ stub DiUninstallDevice
