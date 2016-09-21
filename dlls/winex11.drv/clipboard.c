@@ -1744,20 +1744,26 @@ static BOOL export_selection( Display *display, Window win, Atom prop, Atom targ
 {
     struct clipboard_format *format = X11DRV_CLIPBOARD_LookupProperty( NULL, target );
     HANDLE handle = 0;
+    BOOL ret = FALSE;
 
     if (!format || !format->export) return FALSE;
 
     TRACE( "win %lx prop %s target %s exporting %s\n", win,
            debugstr_xatom( prop ), debugstr_xatom( target ), debugstr_format( format->id ) );
 
-    if (format->id)
+    if (!format->id) return format->export( display, win, prop, target, 0 );
+
+    if (!OpenClipboard( 0 ))
     {
-        LPWINE_CLIPDATA data = X11DRV_CLIPBOARD_LookupData( format->id );
-        if (!data) return FALSE;
-        if (!X11DRV_CLIPBOARD_RenderFormat( display, data )) return FALSE;
-        handle = data->hData;
+        ERR( "failed to open clipboard for %s\n", debugstr_format( format->id ));
+        return FALSE;
     }
-    return format->export( display, win, prop, target, handle );
+
+    if ((handle = GetClipboardData( format->id )))
+        ret = format->export( display, win, prop, target, handle );
+
+    CloseClipboard();
+    return ret;
 }
 
 
