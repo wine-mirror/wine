@@ -145,6 +145,7 @@ static BOOL export_metafile( Display *display, Window win, Atom prop, Atom targe
 static BOOL export_enhmetafile( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_text_html( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_hdrop( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
+static BOOL export_targets( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_multiple( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 
 static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData);
@@ -204,6 +205,7 @@ static const struct
     { PNGW, 0,               XATOM_image_png,           import_data,          export_data },
     { HTMLFormatW, 0,        XATOM_HTML_Format,         import_data,          export_data },
     { HTMLFormatW, 0,        XATOM_text_html,           import_data,          export_text_html },
+    { 0, 0,                  XATOM_TARGETS,             NULL,                 export_targets },
     { 0, 0,                  XATOM_MULTIPLE,            NULL,                 export_multiple },
 };
 
@@ -2483,11 +2485,11 @@ void X11DRV_ResetSelectionOwner(void)
 
 
 /***********************************************************************
- *           X11DRV_SelectionRequest_TARGETS
+ *           export_targets
+ *
  *  Service a TARGETS selection request event
  */
-static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
-                                             Atom target, Atom rprop )
+static BOOL export_targets( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
 {
     UINT i;
     Atom* targets;
@@ -2507,7 +2509,7 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
      */
     cTargets = 1; /* Include TARGETS */
 
-    if (!list_head( &data_list )) return None;
+    if (!list_head( &data_list )) return FALSE;
 
     LIST_FOR_EACH_ENTRY( lpData, &data_list, WINE_CLIPDATA, entry )
         LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
@@ -2519,7 +2521,7 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
     /* Allocate temp buffer */
     targets = HeapAlloc( GetProcessHeap(), 0, cTargets * sizeof(Atom));
     if(targets == NULL)
-        return None;
+        return FALSE;
 
     i = 0;
     targets[i++] = x11drv_atom(TARGETS);
@@ -2533,11 +2535,10 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
                 targets[i++] = format->atom;
             }
 
-    put_property( display, requestor, rprop, XA_ATOM, 32, targets, cTargets );
+    put_property( display, win, prop, XA_ATOM, 32, targets, cTargets );
 
     HeapFree(GetProcessHeap(), 0, targets);
-
-    return rprop;
+    return TRUE;
 }
 
 
@@ -2550,7 +2551,6 @@ BOOL X11DRV_SelectionRequest( HWND hwnd, XEvent *xev )
     Display *display = event->display;
     XEvent result;
     Atom rprop = None;
-    Window request = event->requestor;
 
     X11DRV_expect_error( display, is_window_error, NULL );
 
@@ -2568,12 +2568,7 @@ BOOL X11DRV_SelectionRequest( HWND hwnd, XEvent *xev )
     if( rprop == None )
         rprop = event->target;
 
-    if(event->target == x11drv_atom(TARGETS))  /*  Return a list of all supported targets */
-    {
-        /* TARGETS selection request */
-        rprop = X11DRV_SelectionRequest_TARGETS( display, request, event->target, rprop );
-    }
-    else if (!export_selection( display, event->requestor, rprop, event->target ))
+    if (!export_selection( display, event->requestor, rprop, event->target ))
         rprop = None;  /* report failure to client */
 
 done:
