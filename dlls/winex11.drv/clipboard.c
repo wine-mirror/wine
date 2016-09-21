@@ -145,6 +145,7 @@ static BOOL export_metafile( Display *display, Window win, Atom prop, Atom targe
 static BOOL export_enhmetafile( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_text_html( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_hdrop( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
+static BOOL export_multiple( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 
 static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData);
 static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display);
@@ -152,7 +153,6 @@ static BOOL X11DRV_CLIPBOARD_ReadSelectionData(Display *display, LPWINE_CLIPDATA
 static BOOL X11DRV_CLIPBOARD_ReadProperty( Display *display, Window w, Atom prop,
                                            Atom *type, unsigned char **data, unsigned long *datasize );
 static BOOL X11DRV_CLIPBOARD_RenderFormat(Display *display, LPWINE_CLIPDATA lpData);
-static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BOOL bIsMultiple );
 static void empty_clipboard(void);
 
 /* Clipboard formats */
@@ -204,6 +204,7 @@ static const struct
     { PNGW, 0,               XATOM_image_png,           import_data,          export_data },
     { HTMLFormatW, 0,        XATOM_HTML_Format,         import_data,          export_data },
     { HTMLFormatW, 0,        XATOM_text_html,           import_data,          export_text_html },
+    { 0, 0,                  XATOM_MULTIPLE,            NULL,                 export_multiple },
 };
 
 static struct list format_list = LIST_INIT( format_list );
@@ -1683,6 +1684,60 @@ static BOOL export_selection( Display *display, Window win, Atom prop, Atom targ
 }
 
 
+/***********************************************************************
+ *           export_multiple
+ *
+ *  Service a MULTIPLE selection request event
+ *  prop contains a list of (target,property) atom pairs.
+ *  The first atom names a target and the second names a property.
+ *  The effect is as if we have received a sequence of SelectionRequest events
+ *  (one for each atom pair) except that:
+ *  1. We reply with a SelectionNotify only when all the requested conversions
+ *  have been performed.
+ *  2. If we fail to convert the target named by an atom in the MULTIPLE property,
+ *  we replace the atom in the property by None.
+ */
+static BOOL export_multiple( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
+{
+    Atom atype;
+    int aformat;
+    Atom *list;
+    unsigned long i, count, failed, remain;
+
+    /* Read the MULTIPLE property contents. This should contain a list of
+     * (target,property) atom pairs.
+     */
+    if (XGetWindowProperty( display, win, prop, 0, 0x3FFF, False, AnyPropertyType, &atype, &aformat,
+                            &count, &remain, (unsigned char**)&list ))
+        return FALSE;
+
+    TRACE( "type %s format %d count %ld remain %ld\n",
+           debugstr_xatom( atype ), aformat, count, remain );
+
+    /*
+     * Make sure we got what we expect.
+     * NOTE: According to the X-ICCCM Version 2.0 documentation the property sent
+     * in a MULTIPLE selection request should be of type ATOM_PAIR.
+     * However some X apps(such as XPaint) are not compliant with this and return
+     * a user defined atom in atype when XGetWindowProperty is called.
+     * The data *is* an atom pair but is not denoted as such.
+     */
+    if (aformat == 32 /* atype == xAtomPair */ )
+    {
+        for (i = failed = 0; i < count; i += 2)
+        {
+            if (list[i+1] == None) continue;
+            if (export_selection( display, win, list[i + 1], list[i] )) continue;
+            failed++;
+            list[i + 1] = None;
+        }
+        if (failed) put_property( display, win, prop, atype, 32, list, count );
+    }
+    XFree( list );
+    return TRUE;
+}
+
+
 static int is_atom_error( Display *display, XErrorEvent *event, void *arg )
 {
     return (event->error_code == BadAtom);
@@ -1720,7 +1775,8 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
              {
                  TRACE( "property %s -> format %s\n",
                         debugstr_xatom( lpFormat->atom ), debugstr_format( lpFormat->id ));
-                 X11DRV_CLIPBOARD_InsertClipboardData( lpFormat->id, 0, lpFormat, FALSE );
+                 if (lpFormat->id)
+                     X11DRV_CLIPBOARD_InsertClipboardData( lpFormat->id, 0, lpFormat, FALSE );
                  lpFormat = X11DRV_CLIPBOARD_LookupProperty(lpFormat, properties[i]);
              }
          }
@@ -2486,127 +2542,24 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
 
 
 /***********************************************************************
- *           X11DRV_SelectionRequest_MULTIPLE
- *  Service a MULTIPLE selection request event
- *  rprop contains a list of (target,property) atom pairs.
- *  The first atom names a target and the second names a property.
- *  The effect is as if we have received a sequence of SelectionRequest events
- *  (one for each atom pair) except that:
- *  1. We reply with a SelectionNotify only when all the requested conversions
- *  have been performed.
- *  2. If we fail to convert the target named by an atom in the MULTIPLE property,
- *  we replace the atom in the property by None.
- */
-static Atom X11DRV_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent *pevent )
-{
-    Display *display = pevent->display;
-    Atom           rprop;
-    Atom           atype=AnyPropertyType;
-    int            aformat;
-    unsigned long  remain;
-    Atom*          targetPropList=NULL;
-    unsigned long  cTargetPropList = 0;
-
-    /* If the specified property is None the requestor is an obsolete client.
-     * We support these by using the specified target atom as the reply property.
-     */
-    rprop = pevent->property;
-    if( rprop == None )
-        rprop = pevent->target;
-    if (!rprop)
-        return 0;
-
-    /* Read the MULTIPLE property contents. This should contain a list of
-     * (target,property) atom pairs.
-     */
-    if (!XGetWindowProperty(display, pevent->requestor, rprop,
-                            0, 0x3FFF, False, AnyPropertyType, &atype,&aformat,
-                            &cTargetPropList, &remain,
-                            (unsigned char**)&targetPropList))
-    {
-        TRACE( "type %s format %d count %ld remain %ld\n",
-               debugstr_xatom( atype ), aformat, cTargetPropList, remain );
-
-        /*
-         * Make sure we got what we expect.
-         * NOTE: According to the X-ICCCM Version 2.0 documentation the property sent
-         * in a MULTIPLE selection request should be of type ATOM_PAIR.
-         * However some X apps(such as XPaint) are not compliant with this and return
-         * a user defined atom in atype when XGetWindowProperty is called.
-         * The data *is* an atom pair but is not denoted as such.
-         */
-        if(aformat == 32 /* atype == xAtomPair */ )
-        {
-            unsigned int i;
-
-            /* Iterate through the ATOM_PAIR list and execute a SelectionRequest
-             * for each (target,property) pair */
-
-            for (i = 0; i < cTargetPropList; i+=2)
-            {
-                XSelectionRequestEvent event;
-
-                TRACE( "MULTIPLE(%d): target %s property %s\n",
-                       i/2, debugstr_xatom( targetPropList[i] ), debugstr_xatom( targetPropList[i + 1] ));
-
-                /* We must have a non "None" property to service a MULTIPLE target atom */
-                if ( !targetPropList[i+1] )
-                {
-                    TRACE("\tMULTIPLE(%d): Skipping target with empty property!\n", i);
-                    continue;
-                }
-
-                /* Set up an XSelectionRequestEvent for this (target,property) pair */
-                event = *pevent;
-                event.target = targetPropList[i];
-                event.property = targetPropList[i+1];
-
-                /* Fire a SelectionRequest, informing the handler that we are processing
-                 * a MULTIPLE selection request event.
-                 */
-                X11DRV_HandleSelectionRequest( hWnd, &event, TRUE );
-            }
-        }
-
-        /* Free the list of targets/properties */
-        XFree(targetPropList);
-    }
-    else TRACE("Couldn't read MULTIPLE property\n");
-
-    return rprop;
-}
-
-
-/***********************************************************************
  *           X11DRV_HandleSelectionRequest
- *  Process an event selection request event.
- *  The bIsMultiple flag is used to signal when EVENT_SelectionRequest is called
- *  recursively while servicing a "MULTIPLE" selection target.
- *
- *  Note: We only receive this event when WINE owns the X selection
  */
-static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BOOL bIsMultiple )
+BOOL X11DRV_SelectionRequest( HWND hwnd, XEvent *xev )
 {
+    XSelectionRequestEvent *event = &xev->xselectionrequest;
     Display *display = event->display;
-    XSelectionEvent result;
+    XEvent result;
     Atom rprop = None;
     Window request = event->requestor;
-
-    TRACE("\n");
 
     X11DRV_expect_error( display, is_window_error, NULL );
 
     /*
      * We can only handle the selection request if :
      * The selection is PRIMARY or CLIPBOARD, AND we can successfully open the clipboard.
-     * Don't do these checks or open the clipboard while recursively processing MULTIPLE,
-     * since this has been already done.
      */
-    if ( !bIsMultiple )
-    {
-        if (((event->selection != XA_PRIMARY) && (event->selection != x11drv_atom(CLIPBOARD))))
-            goto END;
-    }
+    if (((event->selection != XA_PRIMARY) && (event->selection != x11drv_atom(CLIPBOARD))))
+        goto done;
 
     /* If the specified property is None the requestor is an obsolete client.
      * We support these by using the specified target atom as the reply property.
@@ -2620,41 +2573,21 @@ static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *ev
         /* TARGETS selection request */
         rprop = X11DRV_SelectionRequest_TARGETS( display, request, event->target, rprop );
     }
-    else if(event->target == x11drv_atom(MULTIPLE))  /*  rprop contains a list of (target, property) atom pairs */
-    {
-        /* MULTIPLE selection request */
-        rprop = X11DRV_SelectionRequest_MULTIPLE( hWnd, event );
-    }
     else if (!export_selection( display, event->requestor, rprop, event->target ))
         rprop = None;  /* report failure to client */
 
-END:
-    /* reply to sender
-     * SelectionNotify should be sent only at the end of a MULTIPLE request
-     */
-    if ( !bIsMultiple )
-    {
-        result.type = SelectionNotify;
-        result.display = display;
-        result.requestor = request;
-        result.selection = event->selection;
-        result.property = rprop;
-        result.target = event->target;
-        result.time = event->time;
-        TRACE("Sending SelectionNotify event...\n");
-        XSendEvent(display,event->requestor,False,NoEventMask,(XEvent*)&result);
-    }
+done:
+    result.xselection.type = SelectionNotify;
+    result.xselection.display = display;
+    result.xselection.requestor = event->requestor;
+    result.xselection.selection = event->selection;
+    result.xselection.property = rprop;
+    result.xselection.target = event->target;
+    result.xselection.time = event->time;
+    TRACE( "sending SelectionNotify for %s to %lx\n", debugstr_xatom( rprop ), event->requestor );
+    XSendEvent( display, event->requestor, False, NoEventMask, &result );
     XSync( display, False );
     if (X11DRV_check_error()) WARN( "requestor %lx is no longer valid\n", event->requestor );
-}
-
-
-/***********************************************************************
- *           X11DRV_SelectionRequest
- */
-BOOL X11DRV_SelectionRequest( HWND hWnd, XEvent *event )
-{
-    X11DRV_HandleSelectionRequest( hWnd, &event->xselectionrequest, FALSE );
     return FALSE;
 }
 
