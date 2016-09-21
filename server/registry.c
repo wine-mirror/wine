@@ -1805,6 +1805,7 @@ void init_registry(void)
     WCHAR *current_user_path;
     struct unicode_str current_user_str;
     struct key *key, *hklm, *hkcu;
+    char *p;
 
     /* switch to the config dir */
 
@@ -1821,7 +1822,12 @@ void init_registry(void)
         fatal_error( "could not create Machine registry key\n" );
 
     if (!load_init_registry_from_file( "system.reg", hklm ))
-        prefix_type = sizeof(void *) > sizeof(int) ? PREFIX_64BIT : PREFIX_32BIT;
+    {
+        if ((p = getenv( "WINEARCH" )) && !strcmp( p, "win32" ))
+            prefix_type = PREFIX_32BIT;
+        else
+            prefix_type = sizeof(void *) > sizeof(int) ? PREFIX_64BIT : PREFIX_32BIT;
+    }
     else if (prefix_type == PREFIX_UNKNOWN)
         prefix_type = PREFIX_32BIT;
 

@@ -1139,17 +1139,6 @@ static void setup_config_dir(void)
         mkdir( config_dir, 0777 );
         if (chdir( config_dir ) == -1) fatal_perror( "chdir to %s\n", config_dir );
 
-        if ((p = getenv( "WINEARCH" )) && !strcmp( p, "win32" ))
-        {
-            /* force creation of a 32-bit prefix */
-            int fd = open( "system.reg", O_WRONLY | O_CREAT | O_EXCL, 0666 );
-            if (fd != -1)
-            {
-                static const char regfile[] = "WINE REGISTRY Version 2\n\n#arch=win32\n";
-                write( fd, regfile, sizeof(regfile) - 1 );
-                close( fd );
-            }
-        }
         MESSAGE( "wine: created the configuration directory '%s'\n", config_dir );
     }
 
