@@ -3064,6 +3064,16 @@ static void handle_bus_relations( DEVICE_OBJECT *device )
 }
 
 
+static void handle_removal_relations( DEVICE_OBJECT *device )
+{
+    TRACE_(plugplay)( "(%p)\n", device );
+
+    send_power_irp( device, PowerDeviceD3 );
+    send_pnp_irp( device, IRP_MN_SURPRISE_REMOVAL );
+    send_pnp_irp( device, IRP_MN_REMOVE_DEVICE );
+}
+
+
 /***********************************************************************
  *           IoInvalidateDeviceRelations (NTOSKRNL.EXE.@)
  */
@@ -3075,6 +3085,9 @@ void WINAPI IoInvalidateDeviceRelations( DEVICE_OBJECT *device_object, DEVICE_RE
     {
         case BusRelations:
             handle_bus_relations( device_object );
+            break;
+        case RemovalRelations:
+            handle_removal_relations( device_object );
             break;
         default:
             FIXME( "unhandled relation %i\n", type );
