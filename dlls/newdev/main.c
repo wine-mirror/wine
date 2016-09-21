@@ -70,3 +70,24 @@ BOOL WINAPI UpdateDriverForPlugAndPlayDevicesW(HWND hwndParent, LPCWSTR Hardware
     FIXME("Stub! %s %s 0x%08x\n", debugstr_w(HardwareId), debugstr_w(FullInfPath), InstallFlags);
     return TRUE;
 }
+
+
+/***********************************************************************
+ *           DiInstallDriverA (NEWDEV.@)
+ */
+BOOL WINAPI DiInstallDriverA(HWND parent, HDEVINFO deviceinfo, PSP_DEVINFO_DATA devicedata,
+    PSP_DRVINFO_DATA_A driverdata, DWORD flags, BOOL *reboot)
+{
+    FIXME("Stub! %p %p %p %p 0x%08x %p\n", parent, deviceinfo, devicedata, driverdata, flags, reboot);
+    return TRUE;
+}
+
+/***********************************************************************
+ *           DiInstallDriverW (NEWDEV.@)
+ */
+BOOL WINAPI DiInstallDriverW(HWND parent, HDEVINFO deviceinfo, PSP_DEVINFO_DATA devicedata,
+    PSP_DRVINFO_DATA_W driverdata, DWORD flags, BOOL *reboot)
+{
+    FIXME("Stub! %p %p %p %p 0x%08x %p\n", parent, deviceinfo, devicedata, driverdata, flags, reboot);
+    return TRUE;
+}
