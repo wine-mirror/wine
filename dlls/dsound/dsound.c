@@ -367,6 +367,9 @@ static HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGU
     device->drvcaps.dwFlags |= DSCAPS_SECONDARYMONO | DSCAPS_SECONDARYSTEREO;
     device->drvcaps.dwFlags |= DSCAPS_CONTINUOUSRATE;
 
+    /* pretend that the driver is certified */
+    device->drvcaps.dwFlags |= DSCAPS_CERTIFIED;
+
     device->drvcaps.dwPrimaryBuffers = 1;
     device->drvcaps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
     device->drvcaps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
