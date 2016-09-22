@@ -111,7 +111,7 @@ static HRESULT get_string_flat_val(script_ctx_t *ctx, vdisp_t *jsthis, jsstr_t *
 
 static HRESULT String_get_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
-    StringInstance *string = (StringInstance*)jsthis;
+    StringInstance *string = string_from_jsdisp(jsthis);
 
     TRACE("%p\n", jsthis);
 
@@ -1480,7 +1480,7 @@ static HRESULT String_localeCompare(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
 
 static HRESULT String_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
-    StringInstance *This = (StringInstance*)jsthis;
+    StringInstance *This = string_from_jsdisp(jsthis);
 
     TRACE("\n");
 
@@ -1490,7 +1490,7 @@ static HRESULT String_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 
 static void String_destructor(jsdisp_t *dispex)
 {
-    StringInstance *This = (StringInstance*)dispex;
+    StringInstance *This = string_from_jsdisp(dispex);
 
     jsstr_release(This->str);
     heap_free(This);
@@ -1498,7 +1498,7 @@ static void String_destructor(jsdisp_t *dispex)
 
 static unsigned String_idx_length(jsdisp_t *jsdisp)
 {
-    StringInstance *string = (StringInstance*)jsdisp;
+    StringInstance *string = string_from_jsdisp(jsdisp);
 
     /*
      * NOTE: For invoke version < 2, indexed array is not implemented at all.
@@ -1512,7 +1512,7 @@ static unsigned String_idx_length(jsdisp_t *jsdisp)
 
 static HRESULT String_idx_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *r)
 {
-    StringInstance *string = (StringInstance*)jsdisp;
+    StringInstance *string = string_from_jsdisp(jsdisp);
     jsstr_t *ret;
 
     ret = jsstr_substr(string->str, idx, 1);

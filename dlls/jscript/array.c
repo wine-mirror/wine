@@ -103,7 +103,7 @@ static HRESULT get_length(script_ctx_t *ctx, vdisp_t *vdisp, jsdisp_t **jsthis, 
 static HRESULT set_length(jsdisp_t *obj, DWORD length)
 {
     if(is_class(obj, JSCLASS_ARRAY)) {
-        ((ArrayInstance*)obj)->length = length;
+        array_from_jsdisp(obj)->length = length;
         return S_OK;
     }
 
@@ -191,7 +191,7 @@ static HRESULT concat_obj(jsdisp_t *array, IDispatch *obj, DWORD *len)
     jsobj = iface_to_jsdisp(obj);
     if(jsobj) {
         if(is_class(jsobj, JSCLASS_ARRAY)) {
-            hres = concat_array(array, (ArrayInstance*)jsobj, len);
+            hres = concat_array(array, array_from_jsdisp(jsobj), len);
             jsdisp_release(jsobj);
             return hres;
         }
@@ -1022,7 +1022,7 @@ static void Array_destructor(jsdisp_t *dispex)
 
 static void Array_on_put(jsdisp_t *dispex, const WCHAR *name)
 {
-    ArrayInstance *array = (ArrayInstance*)dispex;
+    ArrayInstance *array = array_from_jsdisp(dispex);
     const WCHAR *ptr = name;
     DWORD id = 0;
 

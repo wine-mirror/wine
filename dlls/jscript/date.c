@@ -2424,7 +2424,7 @@ static HRESULT DateConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
             if(FAILED(hres))
                 return hres;
 
-            di = (DateInstance*)date;
+            di = date_from_jsdisp(date);
             di->time = utc(di->time, di);
         }
         }
