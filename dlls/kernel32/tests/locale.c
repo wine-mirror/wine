@@ -2196,6 +2196,7 @@ static void test_CompareStringEx(void)
 }
 
 static const DWORD lcmap_invalid_flags[] = {
+    0,
     LCMAP_HIRAGANA | LCMAP_KATAKANA,
     LCMAP_HALFWIDTH | LCMAP_FULLWIDTH,
     LCMAP_TRADITIONAL_CHINESE | LCMAP_SIMPLIFIED_CHINESE,
