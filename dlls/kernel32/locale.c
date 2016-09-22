@@ -3207,17 +3207,22 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
     {
         INT len;
 
-        for (len = 0; srclen; src++, srclen--)
+        if (flags & NORM_IGNORESYMBOLS)
         {
-            WCHAR wch = *src;
-            /* tests show that win2k just ignores NORM_IGNORENONSPACE,
-             * and skips white space and punctuation characters for
-             * NORM_IGNORESYMBOLS.
-             */
-            if ((flags & NORM_IGNORESYMBOLS) && (get_char_typeW(wch) & (C1_PUNCT | C1_SPACE)))
-                continue;
-            len++;
+            for (len = 0; srclen; src++, srclen--)
+            {
+                WCHAR wch = *src;
+                /* tests show that win2k just ignores NORM_IGNORENONSPACE,
+                 * and skips white space and punctuation characters for
+                 * NORM_IGNORESYMBOLS.
+                 */
+                if (get_char_typeW(wch) & (C1_PUNCT | C1_SPACE))
+                    continue;
+                len++;
+            }
         }
+        else
+            len = srclen;
         return len;
     }
 
