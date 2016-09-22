@@ -551,7 +551,7 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context,
                 rt_texture = render_targets[i]->container;
                 TRACE("    Color attachment %u: %p format %s, %s %u, %ux%u, %u samples.\n",
                         i, render_targets[i], debug_d3dformat(rt_texture->resource.format->id),
-                        context->fbo_key->rb_namespace & (1 << (i + 1)) ? "renderbuffer" : "texure",
+                        context->fbo_key->rb_namespace & (1 << (i + 1)) ? "renderbuffer" : "texture",
                         context->fbo_key->objects[i + 1].object,
                         wined3d_texture_get_level_pow2_width(rt_texture, render_targets[i]->texture_level),
                         wined3d_texture_get_level_pow2_height(rt_texture, render_targets[i]->texture_level),
@@ -563,7 +563,7 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context,
             ds_texture = depth_stencil->container;
             TRACE("    Depth attachment: %p format %s, %s %u, %ux%u, %u samples.\n",
                     depth_stencil, debug_d3dformat(ds_texture->resource.format->id),
-                    context->fbo_key->rb_namespace & (1 << 0) ? "renderbuffer" : "texure",
+                    context->fbo_key->rb_namespace & (1 << 0) ? "renderbuffer" : "texture",
                     context->fbo_key->objects[0].object,
                     wined3d_texture_get_level_pow2_width(ds_texture, depth_stencil->texture_level),
                     wined3d_texture_get_level_pow2_height(ds_texture, depth_stencil->texture_level),
@@ -1920,7 +1920,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_ALIGNMENT, device->surface_alignment);
     checkGLcall("glPixelStorei(GL_PACK_ALIGNMENT, device->surface_alignment);");
     gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    checkGLcall("glPixelStorei(GL_UNPACK_ALIGNMENT, device->surface_alignment);");
+    checkGLcall("glPixelStorei(GL_UNPACK_ALIGNMENT, 1);");
 
     if (gl_info->supported[ARB_VERTEX_BLEND])
     {

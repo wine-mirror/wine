@@ -3662,7 +3662,7 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
         {
             /* Note that WINED3D_SAMP_MAX_MIP_LEVEL specifies the largest mipmap
              * (default 0), while GL_TEXTURE_MAX_LEVEL specifies the smallest
-             * mimap used (default 1000). So WINED3D_SAMP_MAX_MIP_LEVEL
+             * mipmap used (default 1000). So WINED3D_SAMP_MAX_MIP_LEVEL
              * corresponds to GL_TEXTURE_BASE_LEVEL. */
             gl_info->gl_ops.gl.p_glTexParameteri(texture->target, GL_TEXTURE_BASE_LEVEL, base_level);
             gl_tex->base_level = base_level;

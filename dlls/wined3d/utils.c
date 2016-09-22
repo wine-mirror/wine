@@ -1882,8 +1882,7 @@ static void create_and_bind_fbo_attachment(const struct wined3d_gl_info *gl_info
         case WINED3D_GL_RES_TYPE_TEX_3D:
             gl_info->gl_ops.gl.p_glGenTextures(1, object);
             gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_3D, *object);
-            GL_EXTCALL(glTexImage3D)(GL_TEXTURE_3D, 0, internal, 16, 16, 16, 0,
-                    format, type, NULL);
+            GL_EXTCALL(glTexImage3D(GL_TEXTURE_3D, 0, internal, 16, 16, 16, 0, format, type, NULL));
             gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -2321,7 +2320,7 @@ static void check_fbo_compat(struct wined3d_caps_gl_ctx *ctx, struct wined3d_for
         }
 
         delete_fbo_attachment(gl_info, type, object);
-        checkGLcall("Framebuffer format check cleaup");
+        checkGLcall("Framebuffer format check cleanup");
     }
 
     if (fallback_fmt_used && regular_fmt_used)
