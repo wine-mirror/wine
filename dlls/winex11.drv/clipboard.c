@@ -305,6 +305,17 @@ static const char *debugstr_xatom( Atom atom )
 }
 
 
+static int is_atom_error( Display *display, XErrorEvent *event, void *arg )
+{
+    return (event->error_code == BadAtom);
+}
+
+static int is_window_error( Display *display, XErrorEvent *event, void *arg )
+{
+    return (event->error_code == BadWindow);
+}
+
+
 /**************************************************************************
  *		find_win32_format
  */
@@ -314,6 +325,19 @@ static struct clipboard_format *find_win32_format( UINT id )
 
     LIST_FOR_EACH_ENTRY( format, &format_list, struct clipboard_format, entry )
         if (format->id == id) return format;
+    return NULL;
+}
+
+
+/**************************************************************************
+ *		find_x11_format
+ */
+static struct clipboard_format *find_x11_format( Atom atom )
+{
+    struct clipboard_format *format;
+
+    LIST_FOR_EACH_ENTRY( format, &format_list, struct clipboard_format, entry )
+        if (format->atom == atom) return format;
     return NULL;
 }
 
@@ -369,6 +393,47 @@ static void register_win32_formats( const UINT *ids, UINT size )
         XInternAtoms( thread_display(), names, count, False, atoms );
         register_formats( new_ids, atoms, count );
         while (count) HeapFree( GetProcessHeap(), 0, names[--count] );
+    }
+}
+
+
+/**************************************************************************
+ *		register_x11_formats
+ *
+ * Register X11 atom formats the first time we encounter them.
+ */
+static void register_x11_formats( const Atom *atoms, UINT size )
+{
+    Display *display = thread_display();
+    unsigned int i, pos, count;
+    char *names[256];
+    UINT ids[256];
+    Atom new_atoms[256];
+    WCHAR buffer[256];
+
+    while (size)
+    {
+        for (count = 0; count < 256 && size; atoms++, size--)
+            if (!find_x11_format( *atoms )) new_atoms[count++] = *atoms;
+
+        if (!count) return;
+
+        X11DRV_expect_error( display, is_atom_error, NULL );
+        if (!XGetAtomNames( display, new_atoms, count, names )) count = 0;
+        if (X11DRV_check_error())
+        {
+            WARN( "got some bad atoms, ignoring\n" );
+            count = 0;
+        }
+
+        for (i = pos = 0; i < count; i++)
+        {
+            if (MultiByteToWideChar( CP_UNIXCP, 0, names[i], -1, buffer, 256 ) &&
+                (ids[pos] = RegisterClipboardFormatW( buffer )))
+                new_atoms[pos++] = new_atoms[i];
+            XFree( names[i] );
+        }
+        register_formats( ids, new_atoms, pos );
     }
 }
 
@@ -1342,9 +1407,11 @@ void X11DRV_CLIPBOARD_ImportSelection( Display *display, Window win, Atom select
     HANDLE handle;
     struct clipboard_format *format;
 
+    register_x11_formats( targets, count );
+
     for (i = 0; i < count; i++)
     {
-        if (!(format = X11DRV_CLIPBOARD_LookupProperty( NULL, targets[i] ))) continue;
+        if (!(format = find_x11_format( targets[i] ))) continue;
         if (!format->id) continue;
         if (!(handle = import_selection( display, win, selection, format ))) continue;
         callback( targets[i], format->id, handle );
@@ -1898,16 +1965,6 @@ static BOOL export_multiple( Display *display, Window win, Atom prop, Atom targe
 }
 
 
-static int is_atom_error( Display *display, XErrorEvent *event, void *arg )
-{
-    return (event->error_code == BadAtom);
-}
-
-static int is_window_error( Display *display, XErrorEvent *event, void *arg )
-{
-    return (event->error_code == BadWindow);
-}
-
 /**************************************************************************
  *		import_targets
  *
@@ -1915,12 +1972,12 @@ static int is_window_error( Display *display, XErrorEvent *event, void *arg )
  */
 static HANDLE import_targets( Atom type, const void *data, size_t size )
 {
-    UINT count = size / sizeof(Atom);
+    UINT i, count = size / sizeof(Atom);
     const Atom *properties = data;
-    UINT i, nb_atoms = 0;
-    Atom *atoms = NULL;
 
     if (type != XA_ATOM && type != x11drv_atom(TARGETS)) return 0;
+
+    register_x11_formats( properties, count );
 
      /* Cache these formats in the clipboard cache */
      for (i = 0; i < count; i++)
@@ -1944,54 +2001,8 @@ static HANDLE import_targets( Atom type, const void *data, size_t size )
                  lpFormat = X11DRV_CLIPBOARD_LookupProperty(lpFormat, properties[i]);
              }
          }
-         else if (properties[i])
-         {
-             /* add it to the list of atoms that we don't know about yet */
-             if (!atoms) atoms = HeapAlloc( GetProcessHeap(), 0,
-                                            (count - i) * sizeof(*atoms) );
-             if (atoms) atoms[nb_atoms++] = properties[i];
-         }
      }
 
-     /* query all unknown atoms in one go */
-     if (atoms)
-     {
-         char **names = HeapAlloc( GetProcessHeap(), 0, nb_atoms * sizeof(*names) );
-         if (names)
-         {
-             Display *display = thread_display();
-
-             X11DRV_expect_error( display, is_atom_error, NULL );
-             if (!XGetAtomNames( display, atoms, nb_atoms, names )) nb_atoms = 0;
-             if (X11DRV_check_error())
-             {
-                 WARN( "got some bad atoms, ignoring\n" );
-                 nb_atoms = 0;
-             }
-             for (i = 0; i < nb_atoms; i++)
-             {
-                 WINE_CLIPFORMAT *lpFormat;
-                 LPWSTR wname;
-                 int len = MultiByteToWideChar(CP_UNIXCP, 0, names[i], -1, NULL, 0);
-                 wname = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-                 MultiByteToWideChar(CP_UNIXCP, 0, names[i], -1, wname, len);
-
-                 lpFormat = register_format( RegisterClipboardFormatW(wname), atoms[i] );
-                 HeapFree(GetProcessHeap(), 0, wname);
-                 if (!lpFormat)
-                 {
-                     ERR("Failed to register %s property. Type will not be cached.\n", names[i]);
-                     continue;
-                 }
-                 TRACE( "property %s -> format %s\n",
-                        debugstr_xatom( lpFormat->atom ), debugstr_format( lpFormat->id ));
-                 X11DRV_CLIPBOARD_InsertClipboardData( lpFormat->id, 0, lpFormat, FALSE );
-             }
-             for (i = 0; i < nb_atoms; i++) XFree( names[i] );
-             HeapFree( GetProcessHeap(), 0, names );
-         }
-         HeapFree( GetProcessHeap(), 0, atoms );
-     }
      return (HANDLE)1;
 }
 
@@ -2027,7 +2038,7 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display)
     if ((use_primary_selection && XGetSelectionOwner(display,XA_PRIMARY)) ||
         XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)))
     {
-        struct clipboard_format *format = X11DRV_CLIPBOARD_LookupProperty( NULL, x11drv_atom(TARGETS) );
+        struct clipboard_format *format = find_x11_format( x11drv_atom(TARGETS) );
 
         assert( format );
         if (use_primary_selection && import_selection( display, w, XA_PRIMARY, format ))
@@ -2038,7 +2049,7 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display)
         {
             HANDLE handle;
 
-            format = X11DRV_CLIPBOARD_LookupProperty( NULL, XA_STRING );
+            format = find_x11_format( XA_STRING );
             assert( format );
             /* Selection Owner doesn't understand TARGETS, try retrieving XA_STRING */
             if (use_primary_selection && (handle = import_selection( display, w, XA_PRIMARY, format )))
