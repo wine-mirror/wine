@@ -2195,9 +2195,16 @@ static void test_CompareStringEx(void)
 
 }
 
+static const DWORD lcmap_invalid_flags[] = {
+    LCMAP_HIRAGANA | LCMAP_KATAKANA,
+    LCMAP_HALFWIDTH | LCMAP_FULLWIDTH,
+    LCMAP_TRADITIONAL_CHINESE | LCMAP_SIMPLIFIED_CHINESE,
+    LCMAP_LOWERCASE | SORT_STRINGSORT,
+};
+
 static void test_LCMapStringA(void)
 {
-    int ret, ret2;
+    int ret, ret2, i;
     char buf[256], buf2[256];
     static const char upper_case[] = "\tJUST! A, TEST; STRING 1/*+-.\r\n";
     static const char lower_case[] = "\tjust! a, test; string 1/*+-.\r\n";
@@ -2217,30 +2224,18 @@ static void test_LCMapStringA(void)
     ok(GetLastError() == ERROR_INVALID_FLAGS,
        "unexpected error code %d\n", GetLastError());
 
-    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_HIRAGANA | LCMAP_KATAKANA,
-                       upper_case, -1, buf, sizeof(buf));
-    ok(!ret, "LCMAP_HIRAGANA and LCMAP_KATAKANA are mutually exclusive\n");
-    ok(GetLastError() == ERROR_INVALID_FLAGS,
-       "unexpected error code %d\n", GetLastError());
-
-    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_HALFWIDTH | LCMAP_FULLWIDTH,
-                       upper_case, -1, buf, sizeof(buf));
-    ok(!ret, "LCMAP_HALFWIDTH | LCMAP_FULLWIDTH are mutually exclusive\n");
-    ok(GetLastError() == ERROR_INVALID_FLAGS,
-       "unexpected error code %d\n", GetLastError());
-
-    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_TRADITIONAL_CHINESE | LCMAP_SIMPLIFIED_CHINESE,
-                       upper_case, -1, buf, sizeof(buf));
-    ok(!ret, "LCMAP_TRADITIONAL_CHINESE and LCMAP_SIMPLIFIED_CHINESE are mutually exclusive\n");
-    ok(GetLastError() == ERROR_INVALID_FLAGS,
-       "unexpected error code %d\n", GetLastError());
-
-    /* SORT_STRINGSORT must be used exclusively with LCMAP_SORTKEY */
-    SetLastError(0xdeadbeef);
-    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE | SORT_STRINGSORT,
-                       upper_case, -1, buf, sizeof(buf));
-    ok(GetLastError() == ERROR_INVALID_FLAGS, "expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
-    ok(!ret, "SORT_STRINGSORT without LCMAP_SORTKEY must fail\n");
+    /* test invalid flag combinations */
+    for (i = 0; i < sizeof(lcmap_invalid_flags)/sizeof(lcmap_invalid_flags[0]); i++) {
+        lstrcpyA(buf, "foo");
+        SetLastError(0xdeadbeef);
+        ret = LCMapStringA(LOCALE_USER_DEFAULT, lcmap_invalid_flags[i],
+                           lower_case, -1, buf, sizeof(buf));
+        ok(GetLastError() == ERROR_INVALID_FLAGS,
+           "LCMapStringA (flag %08x) unexpected error code %d\n",
+           lcmap_invalid_flags[i], GetLastError());
+        ok(!ret, "LCMapStringA (flag %08x) should return 0, got %d\n",
+           lcmap_invalid_flags[i], ret);
+    }
 
     /* test LCMAP_LOWERCASE */
     ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE,
@@ -2363,7 +2358,7 @@ typedef INT (*lcmapstring_wrapper)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 
 static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *func_name)
 {
-    int ret, ret2;
+    int ret, ret2, i;
     WCHAR buf[256], buf2[256];
     char *p_buf = (char *)buf, *p_buf2 = (char *)buf2;
 
@@ -2378,32 +2373,18 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
            func_name, GetLastError());
     }
 
-    ret = func_ptr(LCMAP_HIRAGANA | LCMAP_KATAKANA,
-                       upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
-    ok(!ret, "%s LCMAP_HIRAGANA and LCMAP_KATAKANA are mutually exclusive\n", func_name);
-    ok(GetLastError() == ERROR_INVALID_FLAGS, "%s unexpected error code %d\n",
-       func_name, GetLastError());
-
-    ret = func_ptr(LCMAP_HALFWIDTH | LCMAP_FULLWIDTH,
-                       upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
-    ok(!ret, "%s LCMAP_HALFWIDTH | LCMAP_FULLWIDTH are mutually exclusive\n", func_name);
-    ok(GetLastError() == ERROR_INVALID_FLAGS, "%s unexpected error code %d\n",
-       func_name, GetLastError());
-
-    ret = func_ptr(LCMAP_TRADITIONAL_CHINESE | LCMAP_SIMPLIFIED_CHINESE,
-                       upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
-    ok(!ret, "%s LCMAP_TRADITIONAL_CHINESE and LCMAP_SIMPLIFIED_CHINESE are mutually exclusive\n",
-       func_name);
-    ok(GetLastError() == ERROR_INVALID_FLAGS, "%s unexpected error code %d\n",
-       func_name, GetLastError());
-
-    /* SORT_STRINGSORT must be used exclusively with LCMAP_SORTKEY */
-    SetLastError(0xdeadbeef);
-    ret = func_ptr(LCMAP_LOWERCASE | SORT_STRINGSORT,
-                       upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
-    ok(GetLastError() == ERROR_INVALID_FLAGS, "%s expected ERROR_INVALID_FLAGS, got %d\n",
-       func_name, GetLastError());
-    ok(!ret, "%s SORT_STRINGSORT without LCMAP_SORTKEY must fail\n", func_name);
+    /* test invalid flag combinations */
+    for (i = 0; i < sizeof(lcmap_invalid_flags)/sizeof(lcmap_invalid_flags[0]); i++) {
+        lstrcpyW(buf, fooW);
+        SetLastError(0xdeadbeef);
+        ret = func_ptr(lcmap_invalid_flags[i],
+                           lower_case, -1, buf, sizeof(buf));
+        ok(GetLastError() == ERROR_INVALID_FLAGS,
+           "%s (flag %08x) unexpected error code %d\n",
+           func_name, lcmap_invalid_flags[i], GetLastError());
+        ok(!ret, "%s (flag %08x) should return 0, got %d\n",
+           func_name, lcmap_invalid_flags[i], ret);
+    }
 
     /* test LCMAP_LOWERCASE */
     ret = func_ptr(LCMAP_LOWERCASE,
