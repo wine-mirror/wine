@@ -128,6 +128,10 @@ my @dll_groups =
   "api-ms-win-service-winsvc-l1-2-0",
  ],
  [
+  "ntdll",
+  "api-ms-win-core-xstate-l1-1-0",
+ ],
+ [
   "kernel32",
   "api-ms-win-downlevel-normaliz-l1-1-0",
   "api-ms-win-core-processthreads-l1-1-0",
