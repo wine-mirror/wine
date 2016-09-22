@@ -304,6 +304,75 @@ static const char *debugstr_xatom( Atom atom )
     return ret;
 }
 
+
+/**************************************************************************
+ *		find_win32_format
+ */
+static struct clipboard_format *find_win32_format( UINT id )
+{
+    struct clipboard_format *format;
+
+    LIST_FOR_EACH_ENTRY( format, &format_list, struct clipboard_format, entry )
+        if (format->id == id) return format;
+    return NULL;
+}
+
+
+/**************************************************************************
+ *		register_formats
+ */
+static void register_formats( const UINT *ids, const Atom *atoms, unsigned int count )
+{
+    struct clipboard_format *formats;
+    unsigned int i;
+
+    if (!(formats = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*formats)))) return;
+
+    for (i = 0; i < count; i++)
+    {
+        formats[i].id     = ids[i];
+        formats[i].atom   = atoms[i];
+        formats[i].import = import_data;
+        formats[i].export = export_data;
+        list_add_tail( &format_list, &formats[i].entry );
+        TRACE( "registered %s atom %s\n", debugstr_format( ids[i] ), debugstr_xatom( atoms[i] ));
+    }
+}
+
+
+/**************************************************************************
+ *		register_win32_formats
+ *
+ * Register Win32 clipboard formats the first time we encounter them.
+ */
+static void register_win32_formats( const UINT *ids, UINT size )
+{
+    unsigned int count, len;
+    UINT new_ids[256];
+    char *names[256];
+    Atom atoms[256];
+    WCHAR buffer[256];
+
+    while (size)
+    {
+        for (count = 0; count < 256 && size; ids++, size--)
+        {
+            if (find_win32_format( *ids )) continue;  /* it already exists */
+            if (!GetClipboardFormatNameW( *ids, buffer, 256 )) continue;  /* not a named format */
+            if (!(len = WideCharToMultiByte( CP_UNIXCP, 0, buffer, -1, NULL, 0, NULL, NULL ))) continue;
+            if (!(names[count] = HeapAlloc( GetProcessHeap(), 0, len ))) continue;
+            WideCharToMultiByte( CP_UNIXCP, 0, buffer, -1, names[count], len, NULL, NULL );
+            new_ids[count++] = *ids;
+        }
+        if (!count) return;
+
+        XInternAtoms( thread_display(), names, count, False, atoms );
+        register_formats( new_ids, atoms, count );
+        while (count) HeapFree( GetProcessHeap(), 0, names[--count] );
+    }
+}
+
+
 /**************************************************************************
  *		X11DRV_InitClipboard
  */
@@ -394,11 +463,9 @@ static void intern_atoms(void)
  */
 static struct clipboard_format *register_format( UINT id, Atom prop )
 {
-    struct clipboard_format *format;
+    struct clipboard_format *format = find_win32_format( id );
 
-    /* walk format chain to see if it's already registered */
-    LIST_FOR_EACH_ENTRY( format, &format_list, struct clipboard_format, entry )
-        if (format->id == id) return format;
+    if (format) return format;
 
     if (!(format = HeapAlloc( GetProcessHeap(), 0, sizeof(*format) ))) return NULL;
     format->id     = id;
@@ -1688,6 +1755,7 @@ static UINT *get_clipboard_formats( UINT *size )
         HeapFree( GetProcessHeap(), 0, ids );
         if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return NULL;
     }
+    register_win32_formats( ids, *size );
     return ids;
 }
 
