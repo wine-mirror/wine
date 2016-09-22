@@ -884,9 +884,22 @@ WORD WINAPI VkKeyScanExW(WCHAR cChar, HKL dwhkl)
 /**********************************************************************
  *		OemKeyScan (USER32.@)
  */
-DWORD WINAPI OemKeyScan(WORD wOemChar)
+DWORD WINAPI OemKeyScan( WORD oem )
 {
-    return wOemChar;
+    WCHAR wchr;
+    DWORD vkey, scan;
+    char oem_char = LOBYTE( oem );
+
+    if (!OemToCharBuffW( &oem_char, &wchr, 1 ))
+        return -1;
+
+    vkey = VkKeyScanW( wchr );
+    scan = MapVirtualKeyW( LOBYTE( vkey ), MAPVK_VK_TO_VSC );
+    if (!scan) return -1;
+
+    vkey &= 0xff00;
+    vkey <<= 8;
+    return vkey | scan;
 }
 
 /******************************************************************************

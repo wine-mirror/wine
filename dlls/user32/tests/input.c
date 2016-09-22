@@ -53,6 +53,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winnls.h"
 
 #include "wine/test.h"
 
@@ -2493,6 +2494,36 @@ static void test_GetKeyState(void)
     CloseHandle(semaphores[1]);
 }
 
+static void test_OemKeyScan(void)
+{
+    DWORD ret, expect, vkey, scan;
+    WCHAR oem, wchr;
+    char oem_char;
+
+    for (oem = 0; oem < 0x200; oem++)
+    {
+        ret = OemKeyScan( oem );
+
+        oem_char = LOBYTE( oem );
+        if (!OemToCharBuffW( &oem_char, &wchr, 1 ))
+            expect = -1;
+        else
+        {
+            vkey = VkKeyScanW( wchr );
+            scan = MapVirtualKeyW( LOBYTE( vkey ), MAPVK_VK_TO_VSC );
+            if (!scan)
+                expect = -1;
+            else
+            {
+                vkey &= 0xff00;
+                vkey <<= 8;
+                expect = vkey | scan;
+            }
+        }
+        ok( ret == expect, "%04x: got %08x expected %08x\n", oem, ret, expect );
+    }
+}
+
 START_TEST(input)
 {
     init_function_pointers();
@@ -2516,6 +2547,7 @@ START_TEST(input)
     test_key_names();
     test_attach_input();
     test_GetKeyState();
+    test_OemKeyScan();
 
     if(pGetMouseMovePointsEx)
         test_GetMouseMovePointsEx();
