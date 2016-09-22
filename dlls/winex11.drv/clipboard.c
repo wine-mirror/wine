@@ -464,106 +464,18 @@ void X11DRV_InitClipboard(void)
 
 
 /**************************************************************************
- *                intern_atoms
- *
- * Intern atoms for formats that don't have one yet.
- */
-static void intern_atoms(void)
-{
-    LPWINE_CLIPFORMAT format;
-    int i, count, len;
-    char **names;
-    Atom *atoms;
-    Display *display;
-    WCHAR buffer[256];
-
-    count = 0;
-    LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
-        if (!format->atom) count++;
-    if (!count) return;
-
-    display = thread_init_display();
-
-    names = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*names) );
-    atoms = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*atoms) );
-
-    i = 0;
-    LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
-        if (!format->atom) {
-            if (GetClipboardFormatNameW( format->id, buffer, 256 ) > 0)
-            {
-                /* use defined format name */
-                len = WideCharToMultiByte(CP_UNIXCP, 0, buffer, -1, NULL, 0, NULL, NULL);
-            }
-            else
-            {
-                /* create a name in the same way as ntdll/atom.c:integral_atom_name
-                 * which is normally used by GetClipboardFormatNameW
-                 */
-                static const WCHAR fmt[] = {'#','%','u',0};
-                len = sprintfW(buffer, fmt, format->id) + 1;
-            }
-            names[i] = HeapAlloc(GetProcessHeap(), 0, len);
-            WideCharToMultiByte(CP_UNIXCP, 0, buffer, -1, names[i++], len, NULL, NULL);
-        }
-
-    XInternAtoms( display, names, count, False, atoms );
-
-    i = 0;
-    LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
-        if (!format->atom) {
-            HeapFree(GetProcessHeap(), 0, names[i]);
-            format->atom = atoms[i++];
-        }
-
-    HeapFree( GetProcessHeap(), 0, names );
-    HeapFree( GetProcessHeap(), 0, atoms );
-}
-
-
-/**************************************************************************
- *		register_format
- *
- * Register a custom X clipboard format.
- */
-static struct clipboard_format *register_format( UINT id, Atom prop )
-{
-    struct clipboard_format *format = find_win32_format( id );
-
-    if (format) return format;
-
-    if (!(format = HeapAlloc( GetProcessHeap(), 0, sizeof(*format) ))) return NULL;
-    format->id     = id;
-    format->atom   = prop;
-    format->import = import_data;
-    format->export = export_data;
-    list_add_tail( &format_list, &format->entry );
-
-    TRACE( "Registering format %s atom %ld\n", debugstr_format(id), prop );
-    return format;
-}
-
-
-/**************************************************************************
  *                X11DRV_CLIPBOARD_LookupProperty
  */
 static struct clipboard_format *X11DRV_CLIPBOARD_LookupProperty( struct clipboard_format *current, Atom prop )
 {
-    for (;;)
-    {
-        struct list *ptr = current ? &current->entry : &format_list;
-        BOOL need_intern = FALSE;
+    struct list *ptr = current ? &current->entry : &format_list;
 
-        while ((ptr = list_next( &format_list, ptr )))
-        {
-            struct clipboard_format *format = LIST_ENTRY( ptr, struct clipboard_format, entry );
-            if (format->atom == prop) return format;
-            if (!format->atom) need_intern = TRUE;
-        }
-        if (!need_intern) return NULL;
-        intern_atoms();
-        /* restart the search for the new atoms */
+    while ((ptr = list_next( &format_list, ptr )))
+    {
+        struct clipboard_format *format = LIST_ENTRY( ptr, struct clipboard_format, entry );
+        if (format->atom == prop) return format;
     }
+    return NULL;
 }
 
 
@@ -634,9 +546,6 @@ static BOOL X11DRV_CLIPBOARD_InsertClipboardData(UINT wFormatID, HANDLE hData,
 
     TRACE("format=%04x lpData=%p hData=%p lpFormat=%p override=%d\n",
         wFormatID, lpData, hData, lpFormat, override);
-
-    /* make sure the format exists */
-    if (!lpFormat) register_format( wFormatID, 0 );
 
     if (lpData && !override)
         return TRUE;
@@ -1850,8 +1759,6 @@ static BOOL export_targets( Display *display, Window win, Atom prop, Atom target
     struct clipboard_format *format;
     UINT pos, count, *formats;
     Atom *targets;
-
-    intern_atoms();
 
     if (!(formats = get_clipboard_formats( &count ))) return FALSE;
 
