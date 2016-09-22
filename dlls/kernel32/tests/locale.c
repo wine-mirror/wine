@@ -2210,6 +2210,10 @@ static const DWORD lcmap_invalid_flags[] = {
     LCMAP_HIRAGANA | NORM_IGNORESYMBOLS,
     LCMAP_HIRAGANA | LCMAP_SIMPLIFIED_CHINESE,
     LCMAP_HIRAGANA | LCMAP_TRADITIONAL_CHINESE,
+    LCMAP_KATAKANA | NORM_IGNORENONSPACE,
+    LCMAP_KATAKANA | NORM_IGNORESYMBOLS,
+    LCMAP_KATAKANA | LCMAP_SIMPLIFIED_CHINESE,
+    LCMAP_KATAKANA | LCMAP_TRADITIONAL_CHINESE,
 };
 
 static void test_LCMapStringA(void)
@@ -2452,7 +2456,7 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
                    japanese_text, -1, buf, sizeof(buf)/sizeof(WCHAR));
     ok(ret == lstrlenW(katakana_text) + 1, "%s ret %d, error %d, expected value %d\n", func_name,
        ret, GetLastError(), lstrlenW(katakana_text) + 1);
-    todo_wine ok(!lstrcmpW(buf, katakana_text), "%s string compare mismatch\n", func_name);
+    ok(!lstrcmpW(buf, katakana_text), "%s string compare mismatch\n", func_name);
 
     /* test LCMAP_FULLWIDTH */
     ret = func_ptr(LCMAP_FULLWIDTH,

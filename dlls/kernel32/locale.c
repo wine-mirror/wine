@@ -3194,7 +3194,7 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
     }
     if (((flags & (NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS)) &&
          (flags & ~(NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS))) ||
-        ((flags & LCMAP_HIRAGANA) &&
+        ((flags & (LCMAP_HIRAGANA | LCMAP_KATAKANA)) &&
          (flags & (LCMAP_SIMPLIFIED_CHINESE | LCMAP_TRADITIONAL_CHINESE))))
     {
         SetLastError(ERROR_INVALID_FLAGS);
@@ -3279,6 +3279,17 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
             if ((*dst_ptr >= 0x30A1 && *dst_ptr <= 0x30F6) ||
                 *dst_ptr == 0x30FD || *dst_ptr == 0x30FE)
                 *dst_ptr -= 0x60;
+        }
+    }
+    else if (flags & LCMAP_KATAKANA)
+    {
+        /* map hiragana to katakana, e.g. U+3041 -> U+30A1.
+           we can't use C3_HIRAGANA as some characters can't map to katakana */
+        for (len = dst_ptr - dst, dst_ptr = dst; len; len--, dst_ptr++)
+        {
+            if ((*dst_ptr >= 0x3041 && *dst_ptr <= 0x3096) ||
+                *dst_ptr == 0x309D || *dst_ptr == 0x309E)
+                *dst_ptr += 0x60;
         }
     }
 
