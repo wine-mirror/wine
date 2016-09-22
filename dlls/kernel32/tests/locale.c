@@ -2206,6 +2206,10 @@ static const DWORD lcmap_invalid_flags[] = {
     LCMAP_LOWERCASE | NORM_IGNORESYMBOLS,
     LCMAP_UPPERCASE | NORM_IGNORENONSPACE,
     LCMAP_LOWERCASE | NORM_IGNORENONSPACE,
+    LCMAP_HIRAGANA | NORM_IGNORENONSPACE,
+    LCMAP_HIRAGANA | NORM_IGNORESYMBOLS,
+    LCMAP_HIRAGANA | LCMAP_SIMPLIFIED_CHINESE,
+    LCMAP_HIRAGANA | LCMAP_TRADITIONAL_CHINESE,
 };
 
 static void test_LCMapStringA(void)
@@ -2433,14 +2437,14 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
                    japanese_text, -1, buf, sizeof(buf)/sizeof(WCHAR));
     ok(ret == lstrlenW(hiragana_text) + 1, "%s ret %d, error %d, expected value %d\n", func_name,
        ret, GetLastError(), lstrlenW(hiragana_text) + 1);
-    todo_wine ok(!lstrcmpW(buf, hiragana_text), "%s string compare mismatch\n", func_name);
+    ok(!lstrcmpW(buf, hiragana_text), "%s string compare mismatch\n", func_name);
 
     buf[0] = 0x30f5; /* KATAKANA LETTER SMALL KA */
     ret = func_ptr(LCMAP_HIRAGANA, buf, 1, buf2, 1);
     ok(ret == 1, "%s ret %d, error %d, expected value 1\n", func_name,
        ret, GetLastError());
     /* U+3095: HIRAGANA LETTER SMALL KA was added in Unicode 3.2 */
-    todo_wine ok(buf2[0] == 0x3095 || broken(buf2[0] == 0x30f5 /* Vista and earlier versions */),
+    ok(buf2[0] == 0x3095 || broken(buf2[0] == 0x30f5 /* Vista and earlier versions */),
        "%s expected %04x, got %04x\n", func_name, 0x3095, buf2[0]);
 
     /* test LCMAP_KATAKANA | LCMAP_LOWERCASE */
