@@ -1267,13 +1267,21 @@ static HANDLE import_selection( Display *display, Window win, Atom selection,
  *
  *  Import the X selection into the clipboard format registered for the given X target.
  */
-HANDLE X11DRV_CLIPBOARD_ImportSelection( Display *display, Window win, Atom selection,
-                                         Atom target, UINT *windowsFormat )
+void X11DRV_CLIPBOARD_ImportSelection( Display *display, Window win, Atom selection,
+                                       Atom *targets, UINT count,
+                                       void (*callback)( Atom, UINT, HANDLE ))
 {
-    struct clipboard_format *format = X11DRV_CLIPBOARD_LookupProperty( NULL, target );
-    if (!format) return 0;
-    *windowsFormat = format->id;
-    return import_selection( display, win, selection, format );
+    UINT i;
+    HANDLE handle;
+    struct clipboard_format *format;
+
+    for (i = 0; i < count; i++)
+    {
+        if (!(format = X11DRV_CLIPBOARD_LookupProperty( NULL, targets[i] ))) continue;
+        if (!format->id) continue;
+        if (!(handle = import_selection( display, win, selection, format ))) continue;
+        callback( targets[i], format->id, handle );
+    }
 }
 
 
