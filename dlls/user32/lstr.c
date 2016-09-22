@@ -218,7 +218,7 @@ BOOL WINAPI OemToCharBuffA( LPCSTR s, LPSTR d, DWORD len )
 BOOL WINAPI OemToCharBuffW( LPCSTR s, LPWSTR d, DWORD len )
 {
     if (!s || !d) return FALSE;
-    MultiByteToWideChar( CP_OEMCP, 0, s, len, d, len );
+    MultiByteToWideChar( CP_OEMCP, MB_PRECOMPOSED | MB_USEGLYPHCHARS, s, len, d, len );
     return TRUE;
 }
 
