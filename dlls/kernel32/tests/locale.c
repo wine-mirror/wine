@@ -2372,6 +2372,22 @@ typedef INT (*lcmapstring_wrapper)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 
 static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *func_name)
 {
+    const static WCHAR japanese_text[] = {
+        0x3044, 0x309d, 0x3084, 0x3001, 0x30a4, 0x30fc, 0x30cf,
+        0x30c8, 0x30fc, 0x30f4, 0x30a9, 0x306e, 0x2026, 0
+    };
+    const static WCHAR hiragana_text[] = {
+        0x3044, 0x309d, 0x3084, 0x3001, 0x3044, 0x30fc, 0x306f,
+        0x3068, 0x30fc, 0x3094, 0x3049, 0x306e, 0x2026, 0
+    };
+    const static WCHAR katakana_text[] = {
+        0x30a4, 0x30fd, 0x30e4, 0x3001, 0x30a4, 0x30fc, 0x30cf,
+        0x30c8, 0x30fc, 0x30f4, 0x30a9, 0x30ce, 0x2026, 0
+    };
+    const static WCHAR halfwidth_text[] = {
+        0x3044, 0x309d, 0x3084, 0xff64, 0xff72, 0xff70, 0xff8a,
+        0xff84, 0xff70, 0xff73, 0xff9e, 0xff6b, 0x306e, 0x2026, 0
+    };
     int ret, ret2, i;
     WCHAR buf[256], buf2[256];
     char *p_buf = (char *)buf, *p_buf2 = (char *)buf2;
@@ -2412,11 +2428,72 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
        ret, GetLastError(), lstrlenW(lower_case) + 1);
     ok(!lstrcmpW(buf, upper_case), "%s string compare mismatch\n", func_name);
 
+    /* test LCMAP_HIRAGANA */
+    ret = func_ptr(LCMAP_HIRAGANA,
+                   japanese_text, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    ok(ret == lstrlenW(hiragana_text) + 1, "%s ret %d, error %d, expected value %d\n", func_name,
+       ret, GetLastError(), lstrlenW(hiragana_text) + 1);
+    todo_wine ok(!lstrcmpW(buf, hiragana_text), "%s string compare mismatch\n", func_name);
+
+    buf[0] = 0x30f5; /* KATAKANA LETTER SMALL KA */
+    ret = func_ptr(LCMAP_HIRAGANA, buf, 1, buf2, 1);
+    ok(ret == 1, "%s ret %d, error %d, expected value 1\n", func_name,
+       ret, GetLastError());
+    /* U+3095: HIRAGANA LETTER SMALL KA was added in Unicode 3.2 */
+    todo_wine ok(buf2[0] == 0x3095 || broken(buf2[0] == 0x30f5 /* Vista and earlier versions */),
+       "%s expected %04x, got %04x\n", func_name, 0x3095, buf2[0]);
+
+    /* test LCMAP_KATAKANA | LCMAP_LOWERCASE */
+    ret = func_ptr(LCMAP_KATAKANA | LCMAP_LOWERCASE,
+                   japanese_text, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    ok(ret == lstrlenW(katakana_text) + 1, "%s ret %d, error %d, expected value %d\n", func_name,
+       ret, GetLastError(), lstrlenW(katakana_text) + 1);
+    todo_wine ok(!lstrcmpW(buf, katakana_text), "%s string compare mismatch\n", func_name);
+
+    /* test LCMAP_FULLWIDTH */
+    ret = func_ptr(LCMAP_FULLWIDTH,
+                   halfwidth_text, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    todo_wine ok(ret == lstrlenW(japanese_text) + 1, "%s ret %d, error %d, expected value %d\n", func_name,
+       ret, GetLastError(), lstrlenW(japanese_text) + 1);
+    todo_wine ok(!lstrcmpW(buf, japanese_text), "%s string compare mismatch\n", func_name);
+
+    ret2 = func_ptr(LCMAP_FULLWIDTH, halfwidth_text, -1, NULL, 0);
+    ok(ret == ret2, "%s ret %d, expected value %d\n", func_name, ret2, ret);
+
+    /* test LCMAP_FULLWIDTH | LCMAP_HIRAGANA
+       (half-width katakana is converted into full-wdith hiragana) */
+    ret = func_ptr(LCMAP_FULLWIDTH | LCMAP_HIRAGANA,
+                   halfwidth_text, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    todo_wine ok(ret == lstrlenW(hiragana_text) + 1, "%s ret %d, error %d, expected value %d\n", func_name,
+       ret, GetLastError(), lstrlenW(hiragana_text) + 1);
+    todo_wine ok(!lstrcmpW(buf, hiragana_text), "%s string compare mismatch\n", func_name);
+
+    ret2 = func_ptr(LCMAP_FULLWIDTH | LCMAP_HIRAGANA, halfwidth_text, -1, NULL, 0);
+    ok(ret == ret2, "%s ret %d, expected value %d\n", func_name, ret, ret2);
+
+    /* test LCMAP_HALFWIDTH */
+    ret = func_ptr(LCMAP_HALFWIDTH,
+                   japanese_text, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    todo_wine ok(ret == lstrlenW(halfwidth_text) + 1, "%s ret %d, error %d, expected value %d\n", func_name,
+       ret, GetLastError(), lstrlenW(halfwidth_text) + 1);
+    todo_wine ok(!lstrcmpW(buf, halfwidth_text), "%s string compare mismatch\n", func_name);
+
+    ret2 = func_ptr(LCMAP_HALFWIDTH, japanese_text, -1, NULL, 0);
+    ok(ret == ret2, "%s ret %d, expected value %d\n", func_name, ret, ret2);
+
     /* test buffer overflow */
     SetLastError(0xdeadbeef);
     ret = func_ptr(LCMAP_UPPERCASE,
                        lower_case, -1, buf, 4);
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "%s should return 0 and ERROR_INSUFFICIENT_BUFFER, got %d\n", func_name, ret);
+
+    /* KATAKANA LETTER GA (U+30AC) is converted into two half-width characters.
+       Thus, it requires two WCHARs. */
+    buf[0] = 0x30ac;
+    SetLastError(0xdeadbeef);
+    ret = func_ptr(LCMAP_HALFWIDTH, buf, 1, buf2, 1);
+    todo_wine ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "%s should return 0 and ERROR_INSUFFICIENT_BUFFER, got %d\n", func_name, ret);
 
     /* LCMAP_UPPERCASE or LCMAP_LOWERCASE should accept src == dst */
