@@ -3135,6 +3135,7 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
                          LPNLSVERSIONINFO version, LPVOID reserved, LPARAM lparam)
 {
     LPWSTR dst_ptr;
+    INT len;
 
     if (version) FIXME("unsupported version structure %p\n", version);
     if (reserved) FIXME("unsupported reserved pointer %p\n", reserved);
@@ -3205,8 +3206,6 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
 
     if (!dst) /* return required string length */
     {
-        INT len;
-
         if (flags & NORM_IGNORESYMBOLS)
         {
             for (len = 0; srclen; src++, srclen--)
@@ -3226,39 +3225,50 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
         return len;
     }
 
-    if (flags & LCMAP_UPPERCASE)
+    if (src == dst && (flags & ~(LCMAP_LOWERCASE | LCMAP_UPPERCASE)))
     {
-        for (dst_ptr = dst; srclen && dstlen; src++, srclen--)
-        {
-            *dst_ptr++ = toupperW(*src);
-            dstlen--;
-        }
+        SetLastError(ERROR_INVALID_FLAGS);
+        return 0;
     }
-    else if (flags & LCMAP_LOWERCASE)
+
+    if (flags & (NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS))
     {
-        for (dst_ptr = dst; srclen && dstlen; src++, srclen--)
-        {
-            *dst_ptr++ = tolowerW(*src);
-            dstlen--;
-        }
-    }
-    else
-    {
-        if (src == dst)
-        {
-            SetLastError(ERROR_INVALID_FLAGS);
-            return 0;
-        }
-        for (dst_ptr = dst; srclen && dstlen; src++, srclen--)
+        for (len = dstlen, dst_ptr = dst; srclen && len; src++, srclen--)
         {
             WCHAR wch = *src;
             if ((flags & NORM_IGNORESYMBOLS) && (get_char_typeW(wch) & (C1_PUNCT | C1_SPACE)))
                 continue;
             *dst_ptr++ = wch;
-            dstlen--;
+            len--;
         }
+        goto done;
     }
 
+    if (flags & LCMAP_UPPERCASE)
+    {
+        for (len = dstlen, dst_ptr = dst; srclen && len; src++, srclen--)
+        {
+            *dst_ptr++ = toupperW(*src);
+            len--;
+        }
+    }
+    else if (flags & LCMAP_LOWERCASE)
+    {
+        for (len = dstlen, dst_ptr = dst; srclen && len; src++, srclen--)
+        {
+            *dst_ptr++ = tolowerW(*src);
+            len--;
+        }
+    }
+    else
+    {
+        len = min(srclen, dstlen);
+        memcpy(dst, src, len * sizeof(WCHAR));
+        dst_ptr = dst + len;
+        srclen -= len;
+    }
+
+done:
     if (srclen)
     {
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
