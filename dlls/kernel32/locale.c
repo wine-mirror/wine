@@ -3190,6 +3190,12 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
         SetLastError(ERROR_INVALID_FLAGS);
         return 0;
     }
+    if ((flags & (NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS)) &&
+        (flags & ~(NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS)))
+    {
+        SetLastError(ERROR_INVALID_FLAGS);
+        return 0;
+    }
 
     if (srclen < 0) srclen = strlenW(src) + 1;
 
@@ -3218,10 +3224,7 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
     {
         for (dst_ptr = dst; srclen && dstlen; src++, srclen--)
         {
-            WCHAR wch = *src;
-            if ((flags & NORM_IGNORESYMBOLS) && (get_char_typeW(wch) & (C1_PUNCT | C1_SPACE)))
-                continue;
-            *dst_ptr++ = toupperW(wch);
+            *dst_ptr++ = toupperW(*src);
             dstlen--;
         }
     }
@@ -3229,10 +3232,7 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
     {
         for (dst_ptr = dst; srclen && dstlen; src++, srclen--)
         {
-            WCHAR wch = *src;
-            if ((flags & NORM_IGNORESYMBOLS) && (get_char_typeW(wch) & (C1_PUNCT | C1_SPACE)))
-                continue;
-            *dst_ptr++ = tolowerW(wch);
+            *dst_ptr++ = tolowerW(*src);
             dstlen--;
         }
     }

@@ -2200,6 +2200,10 @@ static const DWORD lcmap_invalid_flags[] = {
     LCMAP_HALFWIDTH | LCMAP_FULLWIDTH,
     LCMAP_TRADITIONAL_CHINESE | LCMAP_SIMPLIFIED_CHINESE,
     LCMAP_LOWERCASE | SORT_STRINGSORT,
+    LCMAP_UPPERCASE | NORM_IGNORESYMBOLS,
+    LCMAP_LOWERCASE | NORM_IGNORESYMBOLS,
+    LCMAP_UPPERCASE | NORM_IGNORENONSPACE,
+    LCMAP_LOWERCASE | NORM_IGNORENONSPACE,
 };
 
 static void test_LCMapStringA(void)
@@ -2346,6 +2350,14 @@ static void test_LCMapStringA(void)
 	lstrlenA(symbols_stripped) + 1, ret);
     ok(!lstrcmpA(buf, symbols_stripped), "LCMapStringA should return %s, but not %s\n", lower_case, buf);
 
+    /* test NORM_IGNORESYMBOLS | NORM_IGNORENONSPACE */
+    lstrcpyA(buf, "foo");
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, NORM_IGNORESYMBOLS | NORM_IGNORENONSPACE,
+                       lower_case, -1, buf, sizeof(buf));
+    ok(ret == lstrlenA(symbols_stripped) + 1, "LCMapStringA should return %d, ret = %d\n",
+	lstrlenA(symbols_stripped) + 1, ret);
+    ok(!lstrcmpA(buf, symbols_stripped), "LCMapStringA should return %s, but not %s\n", lower_case, buf);
+
     /* test srclen = 0 */
     SetLastError(0xdeadbeef);
     ret = LCMapStringA(LOCALE_USER_DEFAULT, 0, upper_case, 0, buf, sizeof(buf));
@@ -2475,6 +2487,14 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
     /* test NORM_IGNORESYMBOLS */
     lstrcpyW(buf, fooW);
     ret = func_ptr(NORM_IGNORESYMBOLS,
+                       lower_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    ok(ret == lstrlenW(symbols_stripped) + 1, "%s func_ptr should return %d, ret = %d\n", func_name,
+    lstrlenW(symbols_stripped) + 1, ret);
+    ok(!lstrcmpW(buf, symbols_stripped), "%s string comparison mismatch\n", func_name);
+
+    /* test NORM_IGNORESYMBOLS | NORM_IGNORENONSPACE */
+    lstrcpyW(buf, fooW);
+    ret = func_ptr(NORM_IGNORESYMBOLS | NORM_IGNORENONSPACE,
                        lower_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
     ok(ret == lstrlenW(symbols_stripped) + 1, "%s func_ptr should return %d, ret = %d\n", func_name,
     lstrlenW(symbols_stripped) + 1, ret);
