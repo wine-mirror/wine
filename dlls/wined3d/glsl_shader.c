@@ -9163,7 +9163,7 @@ static void glsl_vertex_pointsprite_core(struct wined3d_context *context,
 static void glsl_vertex_pipe_shademode(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
-    context->shader_update_mask |= 1 << WINED3D_SHADER_TYPE_VERTEX;
+    context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
 }
 
 static void glsl_vertex_pipe_clip_plane(struct wined3d_context *context,
@@ -9591,7 +9591,7 @@ static void glsl_fragment_pipe_color_key(struct wined3d_context *context,
 static void glsl_fragment_pipe_shademode(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
-    context->shader_update_mask |= 1 << WINED3D_SHADER_TYPE_PIXEL;
+    context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
 }
 
 static const struct StateEntryTemplate glsl_fragment_pipe_state_template[] =
