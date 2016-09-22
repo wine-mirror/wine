@@ -38,6 +38,7 @@
 
 static const WCHAR upper_case[] = {'\t','J','U','S','T','!',' ','A',',',' ','T','E','S','T',';',' ','S','T','R','I','N','G',' ','1','/','*','+','-','.','\r','\n',0};
 static const WCHAR lower_case[] = {'\t','j','u','s','t','!',' ','a',',',' ','t','e','s','t',';',' ','s','t','r','i','n','g',' ','1','/','*','+','-','.','\r','\n',0};
+static const WCHAR title_case[] = {'\t','J','u','s','t','!',' ','A',',',' ','T','e','s','t',';',' ','S','t','r','i','n','g',' ','1','/','*','+','-','.','\r','\n',0};
 static const WCHAR symbols_stripped[] = {'j','u','s','t','a','t','e','s','t','s','t','r','i','n','g','1',0};
 static const WCHAR localeW[] = {'e','n','-','U','S',0};
 static const WCHAR fooW[] = {'f','o','o',0};
@@ -2375,16 +2376,14 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
     WCHAR buf[256], buf2[256];
     char *p_buf = (char *)buf, *p_buf2 = (char *)buf2;
 
+    /* LCMAP_LOWERCASE | LCMAP_UPPERCASE makes LCMAP_TITLECASE, so it's valid now. */
     ret = func_ptr(LCMAP_LOWERCASE | LCMAP_UPPERCASE,
-                       upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
-    if (broken(ret))
-        ok(lstrcmpW(buf, upper_case) == 0, "Expected upper case string\n");
-    else
-    {
-        ok(!ret, "%s LCMAP_LOWERCASE and LCMAP_UPPERCASE are mutually exclusive\n", func_name);
-        ok(GetLastError() == ERROR_INVALID_FLAGS, "%s unexpected error code %d\n",
-           func_name, GetLastError());
-    }
+                       lower_case, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    todo_wine ok(ret == lstrlenW(title_case) + 1 || broken(!ret),
+       "%s ret %d, error %d, expected value %d\n", func_name,
+       ret, GetLastError(), lstrlenW(title_case) + 1);
+    todo_wine ok(lstrcmpW(buf, title_case) == 0 || broken(!ret),
+       "Expected title case string\n");
 
     /* test invalid flag combinations */
     for (i = 0; i < sizeof(lcmap_invalid_flags)/sizeof(lcmap_invalid_flags[0]); i++) {
