@@ -135,6 +135,7 @@ static HANDLE import_string( Atom type, const void *data, size_t size );
 static HANDLE import_utf8_string( Atom type, const void *data, size_t size );
 static HANDLE import_compound_text( Atom type, const void *data, size_t size );
 static HANDLE import_text_uri_list( Atom type, const void *data, size_t size );
+static HANDLE import_targets( Atom type, const void *data, size_t size );
 
 static BOOL export_data( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_string( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
@@ -206,7 +207,7 @@ static const struct
     { PNGW, 0,               XATOM_image_png,           import_data,          export_data },
     { HTMLFormatW, 0,        XATOM_HTML_Format,         import_data,          export_data },
     { HTMLFormatW, 0,        XATOM_text_html,           import_data,          export_text_html },
-    { 0, 0,                  XATOM_TARGETS,             NULL,                 export_targets },
+    { 0, 0,                  XATOM_TARGETS,             import_targets,       export_targets },
     { 0, 0,                  XATOM_MULTIPLE,            NULL,                 export_multiple },
 };
 
@@ -1832,14 +1833,18 @@ static int is_window_error( Display *display, XErrorEvent *event, void *arg )
 }
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_InsertSelectionProperties
+ *		import_targets
  *
- * Mark properties available for future retrieval.
+ *  Import TARGETS and mark the corresponding clipboard formats as available.
  */
-static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* properties, UINT count)
+static HANDLE import_targets( Atom type, const void *data, size_t size )
 {
-     UINT i, nb_atoms = 0;
-     Atom *atoms = NULL;
+    UINT count = size / sizeof(Atom);
+    const Atom *properties = data;
+    UINT i, nb_atoms = 0;
+    Atom *atoms = NULL;
+
+    if (type != XA_ATOM && type != x11drv_atom(TARGETS)) return 0;
 
      /* Cache these formats in the clipboard cache */
      for (i = 0; i < count; i++)
@@ -1878,6 +1883,8 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
          char **names = HeapAlloc( GetProcessHeap(), 0, nb_atoms * sizeof(*names) );
          if (names)
          {
+             Display *display = thread_display();
+
              X11DRV_expect_error( display, is_atom_error, NULL );
              if (!XGetAtomNames( display, atoms, nb_atoms, names )) nb_atoms = 0;
              if (X11DRV_check_error())
@@ -1909,6 +1916,7 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
          }
          HeapFree( GetProcessHeap(), 0, atoms );
      }
+     return (HANDLE)1;
 }
 
 
@@ -1921,13 +1929,7 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
  */
 static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display)
 {
-    Atom           atype=AnyPropertyType;
-    int		   aformat;
-    unsigned long  remain;
-    Atom*	   targetList=NULL;
     Window         w;
-    unsigned long  cSelectionTargets = 0;
-    Atom prop;
 
     if (selectionAcquired & (S_PRIMARY | S_CLIPBOARD))
     {
@@ -1949,26 +1951,29 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display)
     if ((use_primary_selection && XGetSelectionOwner(display,XA_PRIMARY)) ||
         XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)))
     {
-        if (use_primary_selection && (prop = convert_selection( display, w, XA_PRIMARY, x11drv_atom(TARGETS) )))
+        struct clipboard_format *format = X11DRV_CLIPBOARD_LookupProperty( NULL, x11drv_atom(TARGETS) );
+
+        assert( format );
+        if (use_primary_selection && import_selection( display, w, XA_PRIMARY, format ))
             selectionCacheSrc = XA_PRIMARY;
-        else if ((prop = convert_selection( display, w, x11drv_atom(CLIPBOARD), x11drv_atom(TARGETS) )))
+        else if (import_selection( display, w, x11drv_atom(CLIPBOARD), format ))
             selectionCacheSrc = x11drv_atom(CLIPBOARD);
         else
         {
-            Atom xstr = XA_STRING;
+            HANDLE handle;
 
+            format = X11DRV_CLIPBOARD_LookupProperty( NULL, XA_STRING );
+            assert( format );
             /* Selection Owner doesn't understand TARGETS, try retrieving XA_STRING */
-            if (convert_selection( display, w, XA_PRIMARY, XA_STRING ))
+            if (use_primary_selection && (handle = import_selection( display, w, XA_PRIMARY, format )))
             {
-                X11DRV_CLIPBOARD_InsertSelectionProperties(display, &xstr, 1);
+                X11DRV_CLIPBOARD_InsertClipboardData( format->id, handle, format, TRUE );
                 selectionCacheSrc = XA_PRIMARY;
-                return 1;
             }
-            else if (convert_selection( display, w, x11drv_atom(CLIPBOARD), XA_STRING ))
+            else if ((handle = import_selection( display, w, x11drv_atom(CLIPBOARD), format )))
             {
-                X11DRV_CLIPBOARD_InsertSelectionProperties(display, &xstr, 1);
+                X11DRV_CLIPBOARD_InsertClipboardData( format->id, handle, format, TRUE );
                 selectionCacheSrc = x11drv_atom(CLIPBOARD);
-                return 1;
             }
             else
             {
@@ -1976,43 +1981,9 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display)
                 return -1;
             }
         }
+        return 1;
     }
     else return 0; /* No selection owner so report 0 targets available */
-
-    /* Read the TARGETS property contents */
-    if (!XGetWindowProperty(display, w, prop,
-        0, 0x3FFF, True, AnyPropertyType/*XA_ATOM*/, &atype, &aformat, &cSelectionTargets, 
-        &remain, (unsigned char**)&targetList))
-    {
-       TRACE( "type %s format %d count %ld remain %ld\n",
-              debugstr_xatom( atype ), aformat, cSelectionTargets, remain);
-       /*
-        * The TARGETS property should have returned us a list of atoms
-        * corresponding to each selection target format supported.
-        */
-       if (atype == XA_ATOM || atype == x11drv_atom(TARGETS))
-       {
-           if (aformat == 32)
-           {
-               X11DRV_CLIPBOARD_InsertSelectionProperties(display, targetList, cSelectionTargets);
-           }
-           else if (aformat == 8)  /* work around quartz-wm brain damage */
-           {
-               unsigned long i, count = cSelectionTargets / sizeof(CARD32);
-               Atom *atoms = HeapAlloc( GetProcessHeap(), 0, count * sizeof(Atom) );
-               for (i = 0; i < count; i++)
-                   atoms[i] = ((CARD32 *)targetList)[i];  /* FIXME: byte swapping */
-               X11DRV_CLIPBOARD_InsertSelectionProperties( display, atoms, count );
-               HeapFree( GetProcessHeap(), 0, atoms );
-           }
-       }
-
-       /* Free the list of targets */
-       XFree(targetList);
-    }
-    else WARN("Failed to read TARGETS property\n");
-
-    return cSelectionTargets;
 }
 
 
