@@ -1011,6 +1011,7 @@ enable_api_ms_win_security_base_private_l1_1_1
 enable_api_ms_win_security_lsalookup_l1_1_0
 enable_api_ms_win_security_lsalookup_l1_1_1
 enable_api_ms_win_security_sddl_l1_1_0
+enable_api_ms_win_service_core_l1_1_0
 enable_api_ms_win_service_core_l1_1_1
 enable_api_ms_win_service_management_l1_1_0
 enable_api_ms_win_service_winsvc_l1_2_0
@@ -17688,6 +17689,7 @@ wine_fn_config_dll api-ms-win-security-base-private-l1-1-1 enable_api_ms_win_sec
 wine_fn_config_dll api-ms-win-security-lsalookup-l1-1-0 enable_api_ms_win_security_lsalookup_l1_1_0
 wine_fn_config_dll api-ms-win-security-lsalookup-l1-1-1 enable_api_ms_win_security_lsalookup_l1_1_1
 wine_fn_config_dll api-ms-win-security-sddl-l1-1-0 enable_api_ms_win_security_sddl_l1_1_0
+wine_fn_config_dll api-ms-win-service-core-l1-1-0 enable_api_ms_win_service_core_l1_1_0
 wine_fn_config_dll api-ms-win-service-core-l1-1-1 enable_api_ms_win_service_core_l1_1_1
 wine_fn_config_dll api-ms-win-service-management-l1-1-0 enable_api_ms_win_service_management_l1_1_0
 wine_fn_config_dll api-ms-win-service-winsvc-l1-2-0 enable_api_ms_win_service_winsvc_l1_2_0
