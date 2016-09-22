@@ -118,6 +118,7 @@ my @dll_groups =
   "api-ms-win-eventing-controller-l1-1-0",
   "api-ms-win-eventing-provider-l1-1-0",
   "api-ms-win-eventlog-legacy-l1-1-0",
+  "api-ms-win-security-audit-l1-1-1",
   "api-ms-win-security-base-l1-2-0",
   "api-ms-win-security-lsalookup-l1-1-0",
   "api-ms-win-security-sddl-l1-1-0",

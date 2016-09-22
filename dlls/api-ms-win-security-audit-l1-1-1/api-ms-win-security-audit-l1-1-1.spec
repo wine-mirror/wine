@@ -1,0 +1,15 @@
+@ stub AuditComputeEffectivePolicyBySid
+@ stub AuditEnumerateCategories
+@ stub AuditEnumeratePerUserPolicy
+@ stub AuditEnumerateSubCategories
+@ stub AuditFree
+@ stub AuditLookupCategoryNameW
+@ stub AuditLookupSubCategoryNameW
+@ stub AuditQueryGlobalSaclW
+@ stub AuditQueryPerUserPolicy
+@ stub AuditQuerySecurity
+@ stub AuditQuerySystemPolicy
+@ stub AuditSetGlobalSaclW
+@ stub AuditSetPerUserPolicy
+@ stub AuditSetSecurity
+@ stub AuditSetSystemPolicy
