@@ -864,7 +864,7 @@ void ME_RTFParAttrHook(RTF_Info *info)
     info->fmt.wEffects |= PFE_RTLPARA;
     break;
   case rtfLTRPar:
-    info->fmt.dwMask = PFM_RTLPARA;
+    info->fmt.dwMask |= PFM_RTLPARA;
     info->fmt.wEffects &= ~PFE_RTLPARA;
     break;
   }
