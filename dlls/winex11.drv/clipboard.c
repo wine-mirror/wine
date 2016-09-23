@@ -118,8 +118,6 @@ typedef struct tagWINE_CLIPDATA {
     struct list entry;
     UINT        wFormatID;
     HANDLE      hData;
-    UINT        drvData;
-    LPWINE_CLIPFORMAT lpFormat;
 } WINE_CLIPDATA, *LPWINE_CLIPDATA;
 
 static int selectionAcquired = 0;              /* Contains the current selection masks */
@@ -215,6 +213,9 @@ static struct list format_list = LIST_INIT( format_list );
 
 #define NB_BUILTIN_FORMATS (sizeof(builtin_formats) / sizeof(builtin_formats[0]))
 #define GET_ATOM(prop)  (((prop) < FIRST_XATOM) ? (Atom)(prop) : X11DRV_Atoms[(prop) - FIRST_XATOM])
+
+static struct clipboard_format **current_x11_formats;
+static unsigned int nb_current_x11_formats;
 
 
 /*
@@ -523,16 +524,11 @@ static BOOL X11DRV_CLIPBOARD_ReleaseOwnership(void)
  *
  * Caller *must* have the clipboard open and be the owner.
  */
-static BOOL X11DRV_CLIPBOARD_InsertClipboardData(UINT wFormatID, HANDLE hData,
-                                                 LPWINE_CLIPFORMAT lpFormat, BOOL override)
+static BOOL X11DRV_CLIPBOARD_InsertClipboardData( UINT wFormatID, HANDLE hData )
 {
     LPWINE_CLIPDATA lpData = X11DRV_CLIPBOARD_LookupData(wFormatID);
 
-    TRACE("format=%04x lpData=%p hData=%p lpFormat=%p override=%d\n",
-        wFormatID, lpData, hData, lpFormat, override);
-
-    if (lpData && !override)
-        return TRUE;
+    TRACE("format=%04x lpData=%p hData=%p\n", wFormatID, lpData, hData);
 
     if (lpData)
     {
@@ -546,8 +542,6 @@ static BOOL X11DRV_CLIPBOARD_InsertClipboardData(UINT wFormatID, HANDLE hData,
 
         lpData->wFormatID = wFormatID;
         lpData->hData = hData;
-        lpData->lpFormat = lpFormat;
-        lpData->drvData = 0;
 
         list_add_tail( &data_list, &lpData->entry );
         ClipDataCount++;
@@ -575,10 +569,6 @@ static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData)
     case CF_PALETTE:
         DeleteObject(lpData->hData);
         break;
-    case CF_DIB:
-        if (lpData->drvData) XFreePixmap(gdi_display, lpData->drvData);
-        GlobalFree(lpData->hData);
-        break;
     case CF_METAFILEPICT:
     case CF_DSPMETAFILEPICT:
         DeleteMetaFile(((METAFILEPICT *)GlobalLock( lpData->hData ))->hMF );
@@ -593,7 +583,6 @@ static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData)
         break;
     }
     lpData->hData = 0;
-    lpData->drvData = 0;
 }
 
 
@@ -1245,14 +1234,19 @@ static HANDLE import_text_uri_list( Atom type, const void *data, size_t size )
  */
 static HANDLE import_targets( Atom type, const void *data, size_t size )
 {
-    UINT i, count = size / sizeof(Atom);
+    UINT i, pos, count = size / sizeof(Atom);
     const Atom *properties = data;
-    struct clipboard_format *format;
+    struct clipboard_format *format, **formats;
 
     if (type != XA_ATOM && type != x11drv_atom(TARGETS)) return 0;
 
     register_x11_formats( properties, count );
 
+    /* the builtin formats contain duplicates, so allocate some extra space */
+    if (!(formats = HeapAlloc( GetProcessHeap(), 0, (count + NB_BUILTIN_FORMATS) * sizeof(*formats ))))
+        return 0;
+
+    pos = 0;
     LIST_FOR_EACH_ENTRY( format, &format_list, struct clipboard_format, entry )
     {
         for (i = 0; i < count; i++) if (properties[i] == format->atom) break;
@@ -1261,10 +1255,15 @@ static HANDLE import_targets( Atom type, const void *data, size_t size )
         {
             TRACE( "property %s -> format %s\n",
                    debugstr_xatom( properties[i] ), debugstr_format( format->id ));
-            X11DRV_CLIPBOARD_InsertClipboardData( format->id, 0, format, FALSE );
+            X11DRV_CLIPBOARD_InsertClipboardData( format->id, 0 );
+            formats[pos++] = format;
         }
         else TRACE( "property %s (ignoring)\n", debugstr_xatom( properties[i] ));
     }
+
+    HeapFree( GetProcessHeap(), 0, current_x11_formats );
+    current_x11_formats = formats;
+    nb_current_x11_formats = pos;
     return (HANDLE)1;
 }
 
@@ -1340,6 +1339,25 @@ void X11DRV_CLIPBOARD_ImportSelection( Display *display, Window win, Atom select
         if (!(handle = import_selection( display, win, selection, format ))) continue;
         callback( targets[i], format->id, handle );
     }
+}
+
+
+/**************************************************************************
+ *		render_format
+ */
+static BOOL render_format( Display *display, Window win, Atom selection, UINT id )
+{
+    unsigned int i;
+    HANDLE handle = 0;
+
+    for (i = 0; i < nb_current_x11_formats; i++)
+    {
+        if (current_x11_formats[i]->id != id) continue;
+        handle = import_selection( display, win, selection, current_x11_formats[i] );
+        break;
+    }
+    if (handle) X11DRV_CLIPBOARD_InsertClipboardData( id, handle );
+    return handle != 0;
 }
 
 
@@ -1944,12 +1962,12 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display)
             /* Selection Owner doesn't understand TARGETS, try retrieving XA_STRING */
             if (use_primary_selection && (handle = import_selection( display, w, XA_PRIMARY, format )))
             {
-                X11DRV_CLIPBOARD_InsertClipboardData( format->id, handle, format, TRUE );
+                X11DRV_CLIPBOARD_InsertClipboardData( format->id, handle );
                 selectionCacheSrc = XA_PRIMARY;
             }
             else if ((handle = import_selection( display, w, x11drv_atom(CLIPBOARD), format )))
             {
-                X11DRV_CLIPBOARD_InsertClipboardData( format->id, handle, format, TRUE );
+                X11DRV_CLIPBOARD_InsertClipboardData( format->id, handle );
                 selectionCacheSrc = x11drv_atom(CLIPBOARD);
             }
             else
@@ -1974,37 +1992,14 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display)
  */
 static BOOL X11DRV_CLIPBOARD_ReadSelectionData(Display *display, LPWINE_CLIPDATA lpData)
 {
-    BOOL bRet = FALSE;
-    HANDLE hData;
+    Window w = thread_selection_wnd();
 
-    if (!lpData->lpFormat)
+    if (!w)
     {
-        ERR("Requesting format %04x but no source format linked to data.\n",
-            lpData->wFormatID);
+        ERR("No window available to read selection data!\n");
         return FALSE;
     }
-
-    if (!selectionAcquired)
-    {
-        Window w = thread_selection_wnd();
-        if(!w)
-        {
-            ERR("No window available to read selection data!\n");
-            return FALSE;
-        }
-
-        hData = import_selection( display, w, selectionCacheSrc, lpData->lpFormat );
-        if (hData)
-            bRet = X11DRV_CLIPBOARD_InsertClipboardData(lpData->wFormatID, hData, lpData->lpFormat, TRUE);
-    }
-    else
-    {
-        ERR("Received request to cache selection data but process is owner\n");
-    }
-
-    TRACE("Returning %d\n", bRet);
-
-    return bRet;
+    return render_format( display, w, selectionCacheSrc, lpData->wFormatID );
 }
 
 
@@ -2386,7 +2381,7 @@ BOOL CDECL X11DRV_SetClipboardData(UINT wFormat, HANDLE hData, BOOL owner)
 {
     if (!owner) X11DRV_CLIPBOARD_UpdateCache();
 
-    return X11DRV_CLIPBOARD_InsertClipboardData(wFormat, hData, NULL, TRUE);
+    return X11DRV_CLIPBOARD_InsertClipboardData( wFormat, hData );
 }
 
 
