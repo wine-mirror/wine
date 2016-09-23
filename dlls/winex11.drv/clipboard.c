@@ -95,6 +95,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 #define SELECTION_RETRIES 500  /* wait for .5 seconds */
 #define SELECTION_WAIT    1000 /* us */
 
+#define SELECTION_UPDATE_DELAY 2000   /* delay between checks of the X11 selection */
+
 /* Selection masks */
 #define S_NOSELECTION    0
 #define S_PRIMARY        1
@@ -224,10 +226,6 @@ static unsigned int nb_current_x11_formats;
 static struct list data_list = LIST_INIT( data_list );
 static UINT ClipDataCount = 0;
 
-/*
- * Clipboard sequence number
- */
-static UINT wSeqNo = 0;
 
 /**************************************************************************
  *                Internal Clipboard implementation methods
@@ -583,39 +581,6 @@ static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData)
         break;
     }
     lpData->hData = 0;
-}
-
-
-/**************************************************************************
- *			X11DRV_CLIPBOARD_UpdateCache
- */
-static BOOL X11DRV_CLIPBOARD_UpdateCache(void)
-{
-    BOOL bret = TRUE;
-
-    if (!selectionAcquired)
-    {
-        DWORD seqno = GetClipboardSequenceNumber();
-
-        if (!seqno)
-        {
-            ERR("Failed to retrieve clipboard information.\n");
-            bret = FALSE;
-        }
-        else if (wSeqNo < seqno)
-        {
-            empty_clipboard();
-
-            if (X11DRV_CLIPBOARD_QueryAvailableData(thread_init_display()) < 0)
-            {
-                ERR("Failed to cache clipboard data owned by another process.\n");
-                bret = FALSE;
-            }
-            wSeqNo = seqno;
-        }
-    }
-
-    return bret;
 }
 
 
@@ -2379,8 +2344,6 @@ void CDECL X11DRV_EmptyClipboard(void)
  */
 BOOL CDECL X11DRV_SetClipboardData(UINT wFormat, HANDLE hData, BOOL owner)
 {
-    if (!owner) X11DRV_CLIPBOARD_UpdateCache();
-
     return X11DRV_CLIPBOARD_InsertClipboardData( wFormat, hData );
 }
 
@@ -2390,10 +2353,6 @@ BOOL CDECL X11DRV_SetClipboardData(UINT wFormat, HANDLE hData, BOOL owner)
  */
 INT CDECL X11DRV_CountClipboardFormats(void)
 {
-    X11DRV_CLIPBOARD_UpdateCache();
-
-    TRACE(" count=%d\n", ClipDataCount);
-
     return ClipDataCount;
 }
 
@@ -2404,10 +2363,6 @@ INT CDECL X11DRV_CountClipboardFormats(void)
 UINT CDECL X11DRV_EnumClipboardFormats(UINT wFormat)
 {
     struct list *ptr = NULL;
-
-    TRACE("(%04X)\n", wFormat);
-
-    X11DRV_CLIPBOARD_UpdateCache();
 
     if (!wFormat)
     {
@@ -2431,10 +2386,6 @@ BOOL CDECL X11DRV_IsClipboardFormatAvailable(UINT wFormat)
 {
     BOOL bRet = FALSE;
 
-    TRACE("(%04X)\n", wFormat);
-
-    X11DRV_CLIPBOARD_UpdateCache();
-
     if (wFormat != 0 && X11DRV_CLIPBOARD_LookupData(wFormat))
         bRet = TRUE;
 
@@ -2453,8 +2404,6 @@ HANDLE CDECL X11DRV_GetClipboardData(UINT wFormat)
 
     TRACE("(%04X)\n", wFormat);
 
-    X11DRV_CLIPBOARD_UpdateCache();
-
     if ((lpRender = X11DRV_CLIPBOARD_LookupData(wFormat)))
     {
         if ( !lpRender->hData )
@@ -2465,6 +2414,25 @@ HANDLE CDECL X11DRV_GetClipboardData(UINT wFormat)
     }
 
     return 0;
+}
+
+
+/**************************************************************************
+ *		X11DRV_UpdateClipboard
+ */
+void CDECL X11DRV_UpdateClipboard(void)
+{
+    static ULONG last_update;
+    ULONG now;
+
+    if (selectionAcquired) return;
+    now = GetTickCount();
+    if ((int)(now - last_update) <= SELECTION_UPDATE_DELAY) return;
+    last_update = now;
+
+    empty_clipboard();
+    if (X11DRV_CLIPBOARD_QueryAvailableData(thread_init_display()) < 0)
+        ERR("Failed to cache clipboard data owned by another process.\n");
 }
 
 
