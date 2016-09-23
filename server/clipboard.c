@@ -46,7 +46,6 @@ struct clipboard
     user_handle_t  viewer;           /* first window in clipboard viewer list */
     unsigned int   seqno;            /* clipboard change sequence number */
     unsigned int   open_seqno;       /* sequence number at open time */
-    timeout_t      seqno_timestamp;  /* time stamp of last seqno increment */
     unsigned int   listen_size;      /* size of listeners array */
     unsigned int   listen_count;     /* count of listeners */
     user_handle_t *listeners;        /* array of listener windows */
@@ -77,8 +76,6 @@ static const struct object_ops clipboard_ops =
     clipboard_destroy             /* destroy */
 };
 
-
-#define MINUPDATELAPSE (2 * TICKS_PER_SEC)
 
 /* dump a clipboard object */
 static void clipboard_dump( struct object *obj, int verbose )
@@ -115,7 +112,6 @@ static struct clipboard *get_process_clipboard(void)
             clipboard->owner_win = 0;
             clipboard->viewer = 0;
             clipboard->seqno = 0;
-            clipboard->seqno_timestamp = 0;
             clipboard->listen_size = 0;
             clipboard->listen_count = 0;
             clipboard->listeners = NULL;
@@ -244,17 +240,6 @@ static int release_clipboard_owner( struct clipboard *clipboard, user_handle_t w
 }
 
 
-static int get_seqno( struct clipboard *clipboard )
-{
-    if (!clipboard->owner_thread && (current_time - clipboard->seqno_timestamp > MINUPDATELAPSE))
-    {
-        clipboard->seqno_timestamp = current_time;
-        clipboard->seqno++;
-    }
-    return clipboard->seqno;
-}
-
-
 /* open the clipboard */
 DECL_HANDLER(open_clipboard)
 {
@@ -314,7 +299,7 @@ DECL_HANDLER(set_clipboard_info)
 
     if (req->flags & SET_CB_SEQNO) clipboard->seqno++;
 
-    reply->seqno = get_seqno( clipboard );
+    reply->seqno = clipboard->seqno;
 
     if (clipboard->open_thread) reply->flags |= CB_OPEN_ANY;
     if (clipboard->open_thread == current) reply->flags |= CB_OPEN;
@@ -371,7 +356,7 @@ DECL_HANDLER(get_clipboard_info)
     reply->window = clipboard->open_win;
     reply->owner  = clipboard->owner_win;
     reply->viewer = clipboard->viewer;
-    reply->seqno  = get_seqno( clipboard );
+    reply->seqno  = clipboard->seqno;
 }
 
 
