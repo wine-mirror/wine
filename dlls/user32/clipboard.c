@@ -523,6 +523,8 @@ BOOL WINAPI OpenClipboard( HWND hwnd )
 
     TRACE( "%p\n", hwnd );
 
+    USER_Driver->pUpdateClipboard();
+
     SERVER_START_REQ( open_clipboard )
     {
         req->window = wine_server_user_handle( hwnd );
@@ -759,7 +761,11 @@ HANDLE WINAPI SetClipboardData( UINT format, HANDLE data )
  */
 INT WINAPI CountClipboardFormats(void)
 {
-    INT count = USER_Driver->pCountClipboardFormats();
+    INT count;
+
+    USER_Driver->pUpdateClipboard();
+
+    count = USER_Driver->pCountClipboardFormats();
     TRACE("returning %d\n", count);
     return count;
 }
@@ -790,7 +796,11 @@ UINT WINAPI EnumClipboardFormats( UINT format )
  */
 BOOL WINAPI IsClipboardFormatAvailable( UINT format )
 {
-    BOOL ret = USER_Driver->pIsClipboardFormatAvailable( format );
+    BOOL ret;
+
+    USER_Driver->pUpdateClipboard();
+
+    ret = USER_Driver->pIsClipboardFormatAvailable( format );
     TRACE( "%s -> %u\n", debugstr_format( format ), ret );
     return ret;
 }

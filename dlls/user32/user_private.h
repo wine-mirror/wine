@@ -87,6 +87,7 @@ typedef struct tagUSER_DRIVER {
     HANDLE (CDECL *pGetClipboardData)(UINT);                     /* Get specified selection data */
     BOOL   (CDECL *pIsClipboardFormatAvailable)(UINT);           /* Check if specified format is available */
     BOOL   (CDECL *pSetClipboardData)(UINT, HANDLE, BOOL);       /* Set specified selection data */
+    void   (CDECL *pUpdateClipboard)(void);
     /* display modes */
     LONG   (CDECL *pChangeDisplaySettingsEx)(LPCWSTR,LPDEVMODEW,HWND,DWORD,LPVOID);
     BOOL   (CDECL *pEnumDisplayMonitors)(HDC,LPRECT,MONITORENUMPROC,LPARAM);
