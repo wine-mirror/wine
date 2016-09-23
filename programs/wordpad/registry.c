@@ -283,7 +283,7 @@ void registry_set_filelist(LPCWSTR newFile, HWND hMainWnd)
         for(i = 0; i < FILELIST_ENTRIES; i++)
             pFiles[i] = NULL;
 
-        for(i = 0; GetMenuItemInfoW(hMenu, ID_FILE_RECENT1+i, FALSE, &mi); i++)
+        for(i = 0; i < FILELIST_ENTRIES && GetMenuItemInfoW(hMenu, ID_FILE_RECENT1+i, FALSE, &mi); i++)
             pFiles[i] = (LPWSTR)mi.dwItemData;
 
         if(lstrcmpiW(newFile, pFiles[0]))
