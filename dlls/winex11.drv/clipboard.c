@@ -1793,27 +1793,37 @@ static BOOL export_targets( Display *display, Window win, Atom prop, Atom target
  */
 static BOOL export_selection( Display *display, Window win, Atom prop, Atom target )
 {
-    struct clipboard_format *format = X11DRV_CLIPBOARD_LookupProperty( NULL, target );
+    struct clipboard_format *format;
     HANDLE handle = 0;
-    BOOL ret = FALSE;
+    BOOL open = FALSE, ret = FALSE;
 
-    if (!format || !format->export) return FALSE;
-
-    TRACE( "win %lx prop %s target %s exporting %s\n", win,
-           debugstr_xatom( prop ), debugstr_xatom( target ), debugstr_format( format->id ) );
-
-    if (!format->id) return format->export( display, win, prop, target, 0 );
-
-    if (!OpenClipboard( 0 ))
+    LIST_FOR_EACH_ENTRY( format, &format_list, struct clipboard_format, entry )
     {
-        ERR( "failed to open clipboard for %s\n", debugstr_format( format->id ));
-        return FALSE;
+        if (format->atom != target) continue;
+        if (!format->export) continue;
+        if (!format->id)
+        {
+            TRACE( "win %lx prop %s target %s\n", win, debugstr_xatom( prop ), debugstr_xatom( target ));
+            ret = format->export( display, win, prop, target, 0 );
+            break;
+        }
+        if (!open && !(open = OpenClipboard( 0 )))
+        {
+            ERR( "failed to open clipboard for %s\n", debugstr_xatom( target ));
+            return FALSE;
+        }
+        if ((handle = GetClipboardData( format->id )))
+        {
+            TRACE( "win %lx prop %s target %s exporting %s %p\n",
+                   win, debugstr_xatom( prop ), debugstr_xatom( target ),
+                   debugstr_format( format->id ), handle );
+
+            ret = format->export( display, win, prop, target, handle );
+            break;
+        }
+        /* keep looking for another Win32 format mapping to the same target */
     }
-
-    if ((handle = GetClipboardData( format->id )))
-        ret = format->export( display, win, prop, target, handle );
-
-    CloseClipboard();
+    if (open) CloseClipboard();
     return ret;
 }
 
