@@ -3163,7 +3163,7 @@ DEFINE_THISCALL_WRAPPER(codecvt_base_do_always_noconv, 4)
 MSVCP_bool __thiscall codecvt_base_do_always_noconv(const codecvt_base *this)
 {
     TRACE("(%p)\n", this);
-    return TRUE;
+    return _MSVCP_VER <= 100;
 }
 
 /* ?always_noconv@codecvt_base@std@@QBE_NXZ */
@@ -3349,6 +3349,15 @@ codecvt_char* codecvt_char_use_facet(const locale *loc)
     _Lockit_dtor(&lock);
 
     return obj;
+}
+
+/* ?do_always_noconv@?$codecvt@DDH@std@@MBE_NXZ */
+/* ?do_always_noconv@?$codecvt@DDH@std@@MEBA_NXZ */
+DEFINE_THISCALL_WRAPPER(codecvt_char_do_always_noconv, 4)
+MSVCP_bool __thiscall codecvt_char_do_always_noconv(const codecvt_char *this)
+{
+    TRACE("(%p)\n", this);
+    return TRUE;
 }
 
 /* ?do_in@?$codecvt@DDH@std@@MBEHAAHPBD1AAPBDPAD3AAPAD@Z */
@@ -11335,8 +11344,10 @@ void __asm_dummy_vtables(void) {
 #if _MSVCP_VER >= 110
             VTABLE_ADD_FUNC(locale_facet__Incref)
             VTABLE_ADD_FUNC(locale_facet__Decref)
-#endif
+            VTABLE_ADD_FUNC(codecvt_char_do_always_noconv)
+#else
             VTABLE_ADD_FUNC(codecvt_base_do_always_noconv)
+#endif
             VTABLE_ADD_FUNC(codecvt_base_do_max_length)
             VTABLE_ADD_FUNC(codecvt_base_do_encoding)
             VTABLE_ADD_FUNC(codecvt_char_do_in)
