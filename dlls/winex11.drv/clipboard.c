@@ -464,22 +464,6 @@ void X11DRV_InitClipboard(void)
 
 
 /**************************************************************************
- *                X11DRV_CLIPBOARD_LookupProperty
- */
-static struct clipboard_format *X11DRV_CLIPBOARD_LookupProperty( struct clipboard_format *current, Atom prop )
-{
-    struct list *ptr = current ? &current->entry : &format_list;
-
-    while ((ptr = list_next( &format_list, ptr )))
-    {
-        struct clipboard_format *format = LIST_ENTRY( ptr, struct clipboard_format, entry );
-        if (format->atom == prop) return format;
-    }
-    return NULL;
-}
-
-
-/**************************************************************************
  *               X11DRV_CLIPBOARD_LookupData
  */
 static LPWINE_CLIPDATA X11DRV_CLIPBOARD_LookupData(DWORD wID)
@@ -1255,6 +1239,37 @@ static HANDLE import_text_uri_list( Atom type, const void *data, size_t size )
 
 
 /**************************************************************************
+ *		import_targets
+ *
+ *  Import TARGETS and mark the corresponding clipboard formats as available.
+ */
+static HANDLE import_targets( Atom type, const void *data, size_t size )
+{
+    UINT i, count = size / sizeof(Atom);
+    const Atom *properties = data;
+    struct clipboard_format *format;
+
+    if (type != XA_ATOM && type != x11drv_atom(TARGETS)) return 0;
+
+    register_x11_formats( properties, count );
+
+    LIST_FOR_EACH_ENTRY( format, &format_list, struct clipboard_format, entry )
+    {
+        for (i = 0; i < count; i++) if (properties[i] == format->atom) break;
+        if (i == count) continue;
+        if (format->import && format->id)
+        {
+            TRACE( "property %s -> format %s\n",
+                   debugstr_xatom( properties[i] ), debugstr_format( format->id ));
+            X11DRV_CLIPBOARD_InsertClipboardData( format->id, 0, format, FALSE );
+        }
+        else TRACE( "property %s (ignoring)\n", debugstr_xatom( properties[i] ));
+    }
+    return (HANDLE)1;
+}
+
+
+/**************************************************************************
  *		import_data
  *
  *  Generic import clipboard data routine.
@@ -1879,48 +1894,6 @@ static BOOL export_multiple( Display *display, Window win, Atom prop, Atom targe
     }
     XFree( list );
     return TRUE;
-}
-
-
-/**************************************************************************
- *		import_targets
- *
- *  Import TARGETS and mark the corresponding clipboard formats as available.
- */
-static HANDLE import_targets( Atom type, const void *data, size_t size )
-{
-    UINT i, count = size / sizeof(Atom);
-    const Atom *properties = data;
-
-    if (type != XA_ATOM && type != x11drv_atom(TARGETS)) return 0;
-
-    register_x11_formats( properties, count );
-
-     /* Cache these formats in the clipboard cache */
-     for (i = 0; i < count; i++)
-     {
-         LPWINE_CLIPFORMAT lpFormat = X11DRV_CLIPBOARD_LookupProperty(NULL, properties[i]);
-
-         if (lpFormat)
-         {
-             /* We found at least one Window's format that mapps to the property.
-              * Continue looking for more.
-              *
-              * If more than one property map to a Window's format then we use the first 
-              * one and ignore the rest.
-              */
-             while (lpFormat)
-             {
-                 TRACE( "property %s -> format %s\n",
-                        debugstr_xatom( lpFormat->atom ), debugstr_format( lpFormat->id ));
-                 if (lpFormat->id)
-                     X11DRV_CLIPBOARD_InsertClipboardData( lpFormat->id, 0, lpFormat, FALSE );
-                 lpFormat = X11DRV_CLIPBOARD_LookupProperty(lpFormat, properties[i]);
-             }
-         }
-     }
-
-     return (HANDLE)1;
 }
 
 
