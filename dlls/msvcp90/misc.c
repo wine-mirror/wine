@@ -584,10 +584,9 @@ typedef _Cnd_t *_Cnd_arg_t;
 
 static HANDLE keyed_event;
 
-int __cdecl _Cnd_init(_Cnd_t *cnd)
+void __cdecl _Cnd_init_in_situ(_Cnd_t cnd)
 {
-    *cnd = MSVCRT_operator_new(sizeof(**cnd));
-    InitializeConditionVariable(&(*cnd)->cv);
+    InitializeConditionVariable(&cnd->cv);
 
     if(!keyed_event) {
         HANDLE event;
@@ -596,7 +595,12 @@ int __cdecl _Cnd_init(_Cnd_t *cnd)
         if(InterlockedCompareExchangePointer(&keyed_event, event, NULL) != NULL)
             NtClose(event);
     }
+}
 
+int __cdecl _Cnd_init(_Cnd_t *cnd)
+{
+    *cnd = MSVCRT_operator_new(sizeof(**cnd));
+    _Cnd_init_in_situ(*cnd);
     return 0;
 }
 

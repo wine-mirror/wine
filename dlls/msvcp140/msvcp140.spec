@@ -3626,7 +3626,7 @@
 @ stub _Cnd_destroy_in_situ
 @ stub _Cnd_do_broadcast_at_thread_exit
 @ cdecl _Cnd_init(ptr) _Cnd_init
-@ stub _Cnd_init_in_situ
+@ cdecl _Cnd_init_in_situ(ptr)
 @ stub _Cnd_register_at_thread_exit
 @ cdecl _Cnd_signal(ptr) _Cnd_signal
 @ cdecl _Cnd_timedwait(ptr ptr ptr) _Cnd_timedwait
