@@ -875,6 +875,7 @@ enable_advapi32
 enable_advpack
 enable_amstream
 enable_api_ms_win_core_apiquery_l1_1_0
+enable_api_ms_win_core_appinit_l1_1_0
 enable_api_ms_win_core_atoms_l1_1_0
 enable_api_ms_win_core_com_l1_1_0
 enable_api_ms_win_core_com_l1_1_1
@@ -17555,6 +17556,7 @@ wine_fn_config_test dlls/advpack/tests advpack_test
 wine_fn_config_dll amstream enable_amstream clean
 wine_fn_config_test dlls/amstream/tests amstream_test
 wine_fn_config_dll api-ms-win-core-apiquery-l1-1-0 enable_api_ms_win_core_apiquery_l1_1_0
+wine_fn_config_dll api-ms-win-core-appinit-l1-1-0 enable_api_ms_win_core_appinit_l1_1_0
 wine_fn_config_dll api-ms-win-core-atoms-l1-1-0 enable_api_ms_win_core_atoms_l1_1_0
 wine_fn_config_dll api-ms-win-core-com-l1-1-0 enable_api_ms_win_core_com_l1_1_0
 wine_fn_config_dll api-ms-win-core-com-l1-1-1 enable_api_ms_win_core_com_l1_1_1
