@@ -265,6 +265,7 @@ my @dll_groups =
   "version",
   "api-ms-win-core-versionansi-l1-1-0",
   "api-ms-win-core-version-l1-1-0",
+  "api-ms-win-core-version-private-l1-1-0",
   "api-ms-win-downlevel-version-l1-1-0",
  ],
  [
