@@ -121,13 +121,6 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(GetCursorPos);
         GET_USER_FUNC(SetCursorPos);
         GET_USER_FUNC(ClipCursor);
-        GET_USER_FUNC(EmptyClipboard);
-        GET_USER_FUNC(SetClipboardData);
-        GET_USER_FUNC(GetClipboardData);
-        GET_USER_FUNC(CountClipboardFormats);
-        GET_USER_FUNC(EnumClipboardFormats);
-        GET_USER_FUNC(IsClipboardFormatAvailable);
-        GET_USER_FUNC(EndClipboardUpdate);
         GET_USER_FUNC(UpdateClipboard);
         GET_USER_FUNC(ChangeDisplaySettingsEx);
         GET_USER_FUNC(EnumDisplayMonitors);
@@ -337,39 +330,6 @@ static BOOL CDECL nulldrv_ClipCursor( LPCRECT clip )
     return FALSE;
 }
 
-static BOOL CDECL nulldrv_CountClipboardFormats(void)
-{
-    return 0;
-}
-
-static void CDECL nulldrv_EmptyClipboard(void)
-{
-}
-
-static void CDECL nulldrv_EndClipboardUpdate(void)
-{
-}
-
-static UINT CDECL nulldrv_EnumClipboardFormats( UINT format )
-{
-    return 0;
-}
-
-static HANDLE CDECL nulldrv_GetClipboardData( UINT format )
-{
-    return 0;
-}
-
-static BOOL CDECL nulldrv_IsClipboardFormatAvailable( UINT format )
-{
-    return FALSE;
-}
-
-static BOOL CDECL nulldrv_SetClipboardData( UINT format, HANDLE handle, BOOL owner )
-{
-    return FALSE;
-}
-
 static void CDECL nulldrv_UpdateClipboard(void)
 {
 }
@@ -546,13 +506,6 @@ static USER_DRIVER null_driver =
     nulldrv_SetCursorPos,
     nulldrv_ClipCursor,
     /* clipboard functions */
-    nulldrv_CountClipboardFormats,
-    nulldrv_EmptyClipboard,
-    nulldrv_EndClipboardUpdate,
-    nulldrv_EnumClipboardFormats,
-    nulldrv_GetClipboardData,
-    nulldrv_IsClipboardFormatAvailable,
-    nulldrv_SetClipboardData,
     nulldrv_UpdateClipboard,
     /* display modes */
     nulldrv_ChangeDisplaySettingsEx,
@@ -687,41 +640,6 @@ static BOOL CDECL loaderdrv_ClipCursor( LPCRECT clip )
     return load_driver()->pClipCursor( clip );
 }
 
-static BOOL CDECL loaderdrv_CountClipboardFormats(void)
-{
-    return load_driver()->pCountClipboardFormats();
-}
-
-static void CDECL loaderdrv_EmptyClipboard(void)
-{
-    load_driver()->pEmptyClipboard();
-}
-
-static void CDECL loaderdrv_EndClipboardUpdate(void)
-{
-    load_driver()->pEndClipboardUpdate();
-}
-
-static UINT CDECL loaderdrv_EnumClipboardFormats( UINT format )
-{
-    return load_driver()->pEnumClipboardFormats( format );
-}
-
-static HANDLE CDECL loaderdrv_GetClipboardData( UINT format )
-{
-    return load_driver()->pGetClipboardData( format );
-}
-
-static BOOL CDECL loaderdrv_IsClipboardFormatAvailable( UINT format )
-{
-    return load_driver()->pIsClipboardFormatAvailable( format );
-}
-
-static BOOL CDECL loaderdrv_SetClipboardData( UINT format, HANDLE handle, BOOL owner )
-{
-    return load_driver()->pSetClipboardData( format, handle, owner );
-}
-
 static void CDECL loaderdrv_UpdateClipboard(void)
 {
     load_driver()->pUpdateClipboard();
@@ -809,13 +727,6 @@ static USER_DRIVER lazy_load_driver =
     loaderdrv_SetCursorPos,
     loaderdrv_ClipCursor,
     /* clipboard functions */
-    loaderdrv_CountClipboardFormats,
-    loaderdrv_EmptyClipboard,
-    loaderdrv_EndClipboardUpdate,
-    loaderdrv_EnumClipboardFormats,
-    loaderdrv_GetClipboardData,
-    loaderdrv_IsClipboardFormatAvailable,
-    loaderdrv_SetClipboardData,
     loaderdrv_UpdateClipboard,
     /* display modes */
     loaderdrv_ChangeDisplaySettingsEx,
