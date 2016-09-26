@@ -3629,7 +3629,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
 
     if (gl_version >= MAKEDWORD_VERSION(3, 2))
     {
-        glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &context_profile);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &context_profile);
         checkGLcall("Querying context profile");
     }
     if (context_profile & GL_CONTEXT_CORE_PROFILE_BIT)
