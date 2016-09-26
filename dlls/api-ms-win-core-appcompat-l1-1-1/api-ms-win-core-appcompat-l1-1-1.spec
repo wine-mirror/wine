@@ -1,0 +1,10 @@
+@ stub BaseCheckAppcompatCache
+@ stub BaseCheckAppcompatCacheEx
+@ stub BaseCleanupAppcompatCacheSupport
+@ stub BaseDumpAppcompatCache
+@ stub BaseFlushAppcompatCache
+@ stub BaseFreeAppCompatDataForProcess
+@ stub BaseInitAppcompatCacheSupport
+@ stub BaseIsAppcompatInfrastructureDisabled
+@ stub BaseReadAppCompatDataForProcess
+@ stub BaseUpdateAppcompatCache
