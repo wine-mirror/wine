@@ -3168,7 +3168,6 @@ enum caret_state
 
 /* Close the clipboard */
 @REQ(close_clipboard)
-    int            changed;        /* did it change since the open? */
 @REPLY
     user_handle_t  viewer;         /* first clipboard viewer */
     user_handle_t  owner;          /* current clipboard owner */
@@ -3197,6 +3196,13 @@ enum caret_state
 
 /* Empty the clipboard and grab ownership */
 @REQ(empty_clipboard)
+@END
+
+
+/* Add a data format to the clipboard */
+@REQ(set_clipboard_data)
+    unsigned int   format;         /* clipboard format of the data */
+    VARARG(data,bytes);            /* data contents */
 @END
 
 

@@ -207,7 +207,7 @@ static LRESULT CALLBACK winproc_wrapper( HWND hwnd, UINT msg, WPARAM wp, LPARAM 
     {
     case WM_DESTROY:
         ok( wm_renderallformats, "didn't receive WM_RENDERALLFORMATS before WM_DESTROY\n" );
-        todo_wine ok( wm_drawclipboard, "didn't receive WM_DRAWCLIPBOARD before WM_DESTROY\n" );
+        ok( wm_drawclipboard, "didn't receive WM_DRAWCLIPBOARD before WM_DESTROY\n" );
         break;
     case WM_DRAWCLIPBOARD:
         ok( msg_flags == ISMEX_NOSEND, "WM_DRAWCLIPBOARD wrong flags %x\n", msg_flags );
@@ -1092,7 +1092,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     if (pGetClipboardSequenceNumber)
     {
         seq = pGetClipboardSequenceNumber();
-        todo_wine ok( (int)(seq - old_seq) == 1, "sequence diff %d\n", seq - old_seq );
+        ok( (int)(seq - old_seq) == 1, "sequence diff %d\n", seq - old_seq );
         old_seq = seq;
     }
     if (!cross_thread)
@@ -1114,7 +1114,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     if (pGetClipboardSequenceNumber)
     {
         seq = pGetClipboardSequenceNumber();
-        todo_wine ok( (int)(seq - old_seq) == 1, "sequence diff %d\n", seq - old_seq );
+        ok( (int)(seq - old_seq) == 1, "sequence diff %d\n", seq - old_seq );
         old_seq = seq;
     }
     if (!cross_thread)
@@ -1136,7 +1136,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     if (pGetClipboardSequenceNumber)
     {
         seq = pGetClipboardSequenceNumber();
-        todo_wine ok( (int)(seq - old_seq) == 1, "sequence diff %d\n", seq - old_seq );
+        ok( (int)(seq - old_seq) == 1, "sequence diff %d\n", seq - old_seq );
         old_seq = seq;
     }
     if (!cross_thread)
@@ -1165,7 +1165,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     if (pGetClipboardSequenceNumber)
     {
         seq = pGetClipboardSequenceNumber();
-        todo_wine ok( (int)(seq - old_seq) == 2, "sequence diff %d\n", seq - old_seq );
+        ok( (int)(seq - old_seq) == 2, "sequence diff %d\n", seq - old_seq );
         old_seq = seq;
     }
     if (!cross_thread)
@@ -1222,7 +1222,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     if (pGetClipboardSequenceNumber)
     {
         seq = pGetClipboardSequenceNumber();
-        todo_wine ok( (int)(seq - old_seq) == 1, "sequence diff %d\n", seq - old_seq );
+        ok( (int)(seq - old_seq) == 1, "sequence diff %d\n", seq - old_seq );
         old_seq = seq;
     }
     if (!cross_thread)
@@ -1245,7 +1245,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     {
         /* no synthesized format, so CloseClipboard doesn't change the sequence */
         seq = pGetClipboardSequenceNumber();
-        todo_wine ok( seq == old_seq, "sequence changed\n" );
+        ok( seq == old_seq, "sequence changed\n" );
         old_seq = seq;
     }
     if (!cross_thread)
@@ -1347,7 +1347,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     if (pGetClipboardSequenceNumber)
     {
         seq = pGetClipboardSequenceNumber();
-        todo_wine ok( seq == old_seq, "sequence changed\n" );
+        ok( seq == old_seq, "sequence changed\n" );
         old_seq = seq;
     }
     if (!cross_thread)
@@ -1395,7 +1395,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     if (pGetClipboardSequenceNumber)
     {
         seq = pGetClipboardSequenceNumber();
-        todo_wine ok( (int)(seq - old_seq) == 1, "sequence diff %d\n", seq - old_seq );
+        ok( (int)(seq - old_seq) == 1, "sequence diff %d\n", seq - old_seq );
         old_seq = seq;
     }
     if (!cross_thread)
@@ -1420,7 +1420,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     if (pGetClipboardSequenceNumber)
     {
         seq = pGetClipboardSequenceNumber();
-        todo_wine ok( seq == old_seq, "sequence changed\n" );
+        ok( seq == old_seq, "sequence changed\n" );
         old_seq = seq;
     }
     if (!cross_thread)
@@ -1442,7 +1442,6 @@ static DWORD WINAPI clipboard_thread(void *param)
     if (pGetClipboardSequenceNumber)
     {
         seq = pGetClipboardSequenceNumber();
-        todo_wine_if (!cross_thread)
         ok( (int)(seq - old_seq) == 2, "sequence diff %d\n", seq - old_seq );
         old_seq = seq;
     }
@@ -1469,7 +1468,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     if (pGetClipboardSequenceNumber)
     {
         seq = pGetClipboardSequenceNumber();
-        todo_wine ok( (int)(seq - old_seq) == 1, "sequence diff %d\n", seq - old_seq );
+        ok( (int)(seq - old_seq) == 1, "sequence diff %d\n", seq - old_seq );
         old_seq = seq;
     }
     if (!cross_thread)
@@ -1494,7 +1493,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     if (pGetClipboardSequenceNumber)
     {
         seq = pGetClipboardSequenceNumber();
-        todo_wine ok( seq == old_seq, "sequence changed\n" );
+        ok( seq == old_seq, "sequence changed\n" );
         old_seq = seq;
     }
     if (!cross_thread)
@@ -1670,7 +1669,7 @@ static void test_handles( HWND hwnd )
     ok( h == htext5, "got %p\n", h );
     ok( is_moveable( h ), "expected moveable mem %p\n", h );
     h = SetClipboardData( format_id2, empty_moveable );
-    todo_wine ok( !h, "got %p\n", h );
+    ok( !h, "got %p\n", h );
     GlobalFree( empty_moveable );
 
     if (0)  /* crashes on vista64 */

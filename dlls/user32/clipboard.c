@@ -93,6 +93,76 @@ static const char *debugstr_format( UINT id )
     }
 }
 
+/* build the data to send to the server in SetClipboardData */
+static HANDLE marshal_data( UINT format, HANDLE handle, data_size_t *ret_size )
+{
+    SIZE_T size;
+
+    switch (format)
+    {
+    case CF_BITMAP:
+    case CF_DSPBITMAP:
+        {
+            BITMAP bitmap, *bm;
+            if (!GetObjectW( handle, sizeof(bitmap), &bitmap )) return 0;
+            size = abs( bitmap.bmHeight ) * ((((bitmap.bmWidth * bitmap.bmBitsPixel) + 15) >> 3) & ~1);
+            *ret_size = sizeof(bitmap) + size;
+            if (!(bm = GlobalAlloc( GMEM_FIXED, *ret_size ))) return 0;
+            *bm = bitmap;
+            GetBitmapBits( handle, size, bm + 1 );
+            return bm;
+        }
+    case CF_PALETTE:
+        {
+            LOGPALETTE *pal;
+            if (!(size = GetPaletteEntries( handle, 0, 0, NULL ))) return 0;
+            *ret_size = offsetof( LOGPALETTE, palPalEntry[size] );
+            if (!(pal = GlobalAlloc( GMEM_FIXED, *ret_size ))) return 0;
+            pal->palVersion = 0x300;
+            pal->palNumEntries = size;
+            GetPaletteEntries( handle, 0, size, pal->palPalEntry );
+            return pal;
+        }
+    case CF_ENHMETAFILE:
+    case CF_DSPENHMETAFILE:
+        {
+            BYTE *ret;
+            if (!(size = GetEnhMetaFileBits( handle, 0, NULL ))) return 0;
+            if (!(ret = GlobalAlloc( GMEM_FIXED, size ))) return 0;
+            GetEnhMetaFileBits( handle, size, ret );
+            *ret_size = size;
+            return ret;
+        }
+    case CF_METAFILEPICT:
+    case CF_DSPMETAFILEPICT:
+        {
+            METAFILEPICT *mf, *mfbits;
+            if (!(mf = GlobalLock( handle ))) return 0;
+            if (!(size = GetMetaFileBitsEx( mf->hMF, 0, NULL )))
+            {
+                GlobalUnlock( handle );
+                return 0;
+            }
+            *ret_size = sizeof(*mf) + size;
+            if (!(mfbits = GlobalAlloc( GMEM_FIXED, *ret_size )))
+            {
+                GlobalUnlock( handle );
+                return 0;
+            }
+            *mfbits = *mf;
+            GetMetaFileBitsEx( mf->hMF, size, mfbits + 1 );
+            GlobalUnlock( handle );
+            return mfbits;
+        }
+    default:
+        if (!(size = GlobalSize( handle ))) return 0;
+        if ((data_size_t)size != size) return 0;
+        *ret_size = size;
+        return handle;
+    }
+}
+
+
 /* formats that can be synthesized are: CF_TEXT, CF_OEMTEXT, CF_UNICODETEXT,
    CF_BITMAP, CF_DIB, CF_DIBV5, CF_ENHMETAFILE, CF_METAFILEPICT */
 
@@ -563,7 +633,6 @@ BOOL WINAPI CloseClipboard(void)
 
     SERVER_START_REQ( close_clipboard )
     {
-        req->changed = bCBHasChanged;
         if ((ret = !wine_server_call_err( req )))
         {
             viewer = wine_server_ptr_handle( reply->viewer );
@@ -727,32 +796,38 @@ BOOL WINAPI ChangeClipboardChain( HWND hwnd, HWND next )
  */
 HANDLE WINAPI SetClipboardData( UINT format, HANDLE data )
 {
-    HANDLE hResult = 0;
-    UINT flags;
+    void *ptr = NULL;
+    data_size_t size = 0;
+    HANDLE handle = data, retval = 0;
+    BOOL ret;
 
     TRACE( "%s %p\n", debugstr_format( format ), data );
 
-    if (!format)
+    if (data)
     {
-        SetLastError( ERROR_CLIPBOARD_NOT_OPEN );
-        return 0;
+        if (!(handle = marshal_data( format, data, &size ))) return 0;
+        if (!(ptr = GlobalLock( handle ))) goto done;
     }
 
-    flags = get_clipboard_flags();
-    if (!(flags & CB_OPEN_ANY))
+    SERVER_START_REQ( set_clipboard_data )
     {
-        SetLastError( ERROR_CLIPBOARD_NOT_OPEN );
-        return 0;
+        req->format = format;
+        wine_server_add_data( req, ptr, size );
+        ret = !wine_server_call_err( req );
     }
+    SERVER_END_REQ;
 
-    if (USER_Driver->pSetClipboardData( format, data, flags & CB_OWNER))
+    if (ret && USER_Driver->pSetClipboardData( format, data, TRUE ))
     {
-        hResult = data;
         bCBHasChanged = TRUE;
         if (format < CF_MAX) synthesized_formats[format] = 0;
+        retval = data;
     }
 
-    return hResult;
+done:
+    if (ptr) GlobalUnlock( ptr );
+    if (handle != data) GlobalFree( handle );
+    return retval;
 }
 
 

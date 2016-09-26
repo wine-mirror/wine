@@ -3746,7 +3746,6 @@ static void dump_open_clipboard_reply( const struct open_clipboard_reply *req )
 
 static void dump_close_clipboard_request( const struct close_clipboard_request *req )
 {
-    fprintf( stderr, " changed=%d", req->changed );
 }
 
 static void dump_close_clipboard_reply( const struct close_clipboard_reply *req )
@@ -3772,6 +3771,12 @@ static void dump_set_clipboard_info_reply( const struct set_clipboard_info_reply
 
 static void dump_empty_clipboard_request( const struct empty_clipboard_request *req )
 {
+}
+
+static void dump_set_clipboard_data_request( const struct set_clipboard_data_request *req )
+{
+    fprintf( stderr, " format=%08x", req->format );
+    dump_varargs_bytes( ", data=", cur_size );
 }
 
 static void dump_release_clipboard_request( const struct release_clipboard_request *req )
@@ -4646,6 +4651,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_close_clipboard_request,
     (dump_func)dump_set_clipboard_info_request,
     (dump_func)dump_empty_clipboard_request,
+    (dump_func)dump_set_clipboard_data_request,
     (dump_func)dump_release_clipboard_request,
     (dump_func)dump_get_clipboard_info_request,
     (dump_func)dump_set_clipboard_viewer_request,
@@ -4928,6 +4934,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_clipboard_reply,
     (dump_func)dump_close_clipboard_reply,
     (dump_func)dump_set_clipboard_info_reply,
+    NULL,
     NULL,
     (dump_func)dump_release_clipboard_reply,
     (dump_func)dump_get_clipboard_info_reply,
@@ -5212,6 +5219,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "close_clipboard",
     "set_clipboard_info",
     "empty_clipboard",
+    "set_clipboard_data",
     "release_clipboard",
     "get_clipboard_info",
     "set_clipboard_viewer",
