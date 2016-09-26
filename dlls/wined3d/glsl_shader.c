@@ -315,15 +315,34 @@ static const char *shader_glsl_get_prefix(enum wined3d_shader_type type)
     }
 }
 
-static const char *shader_glsl_get_version(const struct wined3d_gl_info *gl_info,
+static unsigned int shader_glsl_get_version(const struct wined3d_gl_info *gl_info,
         const struct wined3d_shader_version *version)
 {
     if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
-        return "#version 150";
+        return 150;
     else if (gl_info->glsl_version >= MAKEDWORD_VERSION(1, 30) && version && version->major >= 4)
-        return "#version 130";
+        return 130;
     else
-        return "#version 120";
+        return 120;
+}
+
+static const char *shader_glsl_get_version_declaration(const struct wined3d_gl_info *gl_info,
+        const struct wined3d_shader_version *version)
+{
+    unsigned int glsl_version;
+
+    switch (glsl_version = shader_glsl_get_version(gl_info, version))
+    {
+        case 150:
+            return "#version 150";
+        case 130:
+            return "#version 130";
+        case 120:
+            return "#version 120";
+        default:
+            FIXME("Unexpected GLSL version %u requested.\n", glsl_version);
+            return "";
+    }
 }
 
 static void shader_glsl_append_imm_vec4(struct wined3d_string_buffer *buffer, const float *values)
@@ -3400,12 +3419,12 @@ static void shader_glsl_mov(const struct wined3d_shader_instruction *ins)
             shader_addline(buffer, "int(floor(%s)));\n", src0_param.param_str);
         }
     }
-    else if(ins->handler_idx == WINED3DSIH_MOVA)
+    else if (ins->handler_idx == WINED3DSIH_MOVA)
     {
-        /* We need to *round* to the nearest int here. */
+        const struct wined3d_shader_version *version = &ins->ctx->shader->reg_maps.shader_version;
         unsigned int mask_size = shader_glsl_get_write_mask_size(write_mask);
 
-        if (gl_info->supported[EXT_GPU_SHADER4])
+        if (shader_glsl_get_version(gl_info, version) >= 130 || gl_info->supported[EXT_GPU_SHADER4])
         {
             if (mask_size > 1)
                 shader_addline(buffer, "ivec%d(round(%s)));\n", mask_size, src0_param.param_str);
@@ -5615,7 +5634,7 @@ static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl
 
     string_buffer_clear(buffer);
 
-    shader_addline(buffer, "%s\n", shader_glsl_get_version(gl_info, &vs->reg_maps.shader_version));
+    shader_addline(buffer, "%s\n", shader_glsl_get_version_declaration(gl_info, &vs->reg_maps.shader_version));
 
     if (per_vertex_point_size)
     {
@@ -5867,7 +5886,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     priv_ctx.cur_np2fixup_info = np2fixup_info;
     priv_ctx.string_buffers = string_buffers;
 
-    shader_addline(buffer, "%s\n", shader_glsl_get_version(gl_info, &reg_maps->shader_version));
+    shader_addline(buffer, "%s\n", shader_glsl_get_version_declaration(gl_info, &reg_maps->shader_version));
 
     shader_glsl_enable_extensions(buffer, gl_info);
     if (gl_info->supported[ARB_DERIVATIVE_CONTROL])
@@ -5986,7 +6005,7 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     /* Create the hw GLSL shader program and assign it as the shader->prgId */
     GLuint shader_id = GL_EXTCALL(glCreateShader(GL_VERTEX_SHADER));
 
-    shader_addline(buffer, "%s\n", shader_glsl_get_version(gl_info, &reg_maps->shader_version));
+    shader_addline(buffer, "%s\n", shader_glsl_get_version_declaration(gl_info, &reg_maps->shader_version));
 
     shader_glsl_enable_extensions(buffer, gl_info);
     if (gl_info->supported[ARB_DRAW_INSTANCED])
@@ -6073,7 +6092,7 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context 
 
     shader_id = GL_EXTCALL(glCreateShader(GL_GEOMETRY_SHADER));
 
-    shader_addline(buffer, "%s\n", shader_glsl_get_version(gl_info, &reg_maps->shader_version));
+    shader_addline(buffer, "%s\n", shader_glsl_get_version_declaration(gl_info, &reg_maps->shader_version));
 
     shader_glsl_enable_extensions(buffer, gl_info);
     if (gl_info->supported[ARB_GEOMETRY_SHADER4])
@@ -6512,7 +6531,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
 
     string_buffer_clear(buffer);
 
-    shader_addline(buffer, "%s\n", shader_glsl_get_version(gl_info, NULL));
+    shader_addline(buffer, "%s\n", shader_glsl_get_version_declaration(gl_info, NULL));
 
     if (shader_glsl_use_explicit_attrib_location(gl_info))
         shader_addline(buffer, "#extension GL_ARB_explicit_attrib_location : enable\n");
@@ -7074,7 +7093,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
     }
     lowest_disabled_stage = stage;
 
-    shader_addline(buffer, "%s\n", shader_glsl_get_version(gl_info, NULL));
+    shader_addline(buffer, "%s\n", shader_glsl_get_version_declaration(gl_info, NULL));
 
     if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
         shader_addline(buffer, "#extension GL_ARB_texture_rectangle : enable\n");
