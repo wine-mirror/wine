@@ -26,5 +26,5 @@
 @ stdcall LockResource(long) kernel32.LockResource
 @ stub QueryOptionalDelayLoadedAPI
 @ stub RemoveDllDirectory
-@ stub SetDefaultDllDirectories
+@ stdcall SetDefaultDllDirectories(long) kernel32.SetDefaultDllDirectories
 @ stdcall SizeofResource(long long) kernel32.SizeofResource

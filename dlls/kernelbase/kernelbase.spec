@@ -506,7 +506,7 @@
 @ stdcall SetCriticalSectionSpinCount(ptr long) kernel32.SetCriticalSectionSpinCount
 @ stdcall SetCurrentDirectoryA(str) kernel32.SetCurrentDirectoryA
 @ stdcall SetCurrentDirectoryW(wstr) kernel32.SetCurrentDirectoryW
-@ stub SetDefaultDllDirectories
+@ stdcall SetDefaultDllDirectories(long) kernel32.SetDefaultDllDirectories
 @ stdcall SetEndOfFile(long) kernel32.SetEndOfFile
 @ stub SetEnvironmentStringsW
 @ stdcall SetEnvironmentVariableA(str str) kernel32.SetEnvironmentVariableA

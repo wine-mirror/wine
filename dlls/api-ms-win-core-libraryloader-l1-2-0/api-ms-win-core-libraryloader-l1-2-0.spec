@@ -25,5 +25,5 @@
 @ stdcall LoadStringW(long long ptr long) user32.LoadStringW
 @ stdcall LockResource(long) kernel32.LockResource
 @ stub RemoveDllDirectory
-@ stub SetDefaultDllDirectories
+@ stdcall SetDefaultDllDirectories(long) kernel32.SetDefaultDllDirectories
 @ stdcall SizeofResource(long long) kernel32.SizeofResource
