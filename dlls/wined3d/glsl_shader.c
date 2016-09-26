@@ -2881,6 +2881,12 @@ static const char *shader_glsl_get_rel_op(enum wined3d_shader_rel_op op)
     }
 }
 
+static BOOL shader_glsl_has_core_grad(const struct wined3d_gl_info *gl_info,
+        const struct wined3d_shader_version *version)
+{
+    return shader_glsl_get_version(gl_info, version) >= 130 || gl_info->supported[EXT_GPU_SHADER4];
+}
+
 static void shader_glsl_get_sample_function(const struct wined3d_shader_context *ctx,
         DWORD resource_idx, DWORD sampler_idx, DWORD flags, struct glsl_sample_function *sample_function)
 {
@@ -2942,7 +2948,7 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
         if (!type_part[0])
             FIXME("Unhandled resource type %#x.\n", resource_type);
 
-        if (!lod && grad && !gl_info->supported[EXT_GPU_SHADER4])
+        if (!lod && grad && !shader_glsl_has_core_grad(gl_info, &ctx->shader->reg_maps.shader_version))
         {
             if (gl_info->supported[ARB_SHADER_TEXTURE_LOD])
                 suffix = "ARB";
@@ -4558,7 +4564,8 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
     DWORD sampler_idx;
     DWORD swizzle = ins->src[1].swizzle;
 
-    if (!gl_info->supported[ARB_SHADER_TEXTURE_LOD] && !gl_info->supported[EXT_GPU_SHADER4])
+    if (!shader_glsl_has_core_grad(gl_info, &ins->ctx->shader->reg_maps.shader_version)
+            && !gl_info->supported[ARB_SHADER_TEXTURE_LOD])
     {
         FIXME("texldd used, but not supported by hardware. Falling back to regular tex\n");
         shader_glsl_tex(ins);
@@ -4579,11 +4586,12 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
 
 static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
 {
+    const struct wined3d_shader_version *shader_version = &ins->ctx->reg_maps->shader_version;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     struct glsl_src_param coord_param, lod_param;
     struct glsl_sample_function sample_function;
-    DWORD sampler_idx;
     DWORD swizzle = ins->src[1].swizzle;
+    DWORD sampler_idx;
 
     sampler_idx = ins->src[1].reg.idx[0].offset;
 
@@ -4592,8 +4600,8 @@ static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
 
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &lod_param);
 
-    if (!gl_info->supported[ARB_SHADER_TEXTURE_LOD] && !gl_info->supported[EXT_GPU_SHADER4]
-            && ins->ctx->reg_maps->shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
+    if (shader_version->type == WINED3D_SHADER_TYPE_PIXEL && !shader_glsl_has_core_grad(gl_info, shader_version)
+            && !gl_info->supported[ARB_SHADER_TEXTURE_LOD])
     {
         /* Plain GLSL only supports Lod sampling functions in vertex shaders.
          * However, the NVIDIA drivers allow them in fragment shaders as well,
@@ -8581,9 +8589,9 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
             && gl_info->supported[ARB_SHADER_BIT_ENCODING] && gl_info->supported[ARB_SAMPLER_OBJECTS]
             && gl_info->supported[ARB_TEXTURE_SWIZZLE])
         shader_model = 4;
-    /* ARB_shader_texture_lod or EXT_gpu_shader4 is required for the SM3
-     * texldd and texldl instructions. */
-    else if (gl_info->supported[ARB_SHADER_TEXTURE_LOD] || gl_info->supported[EXT_GPU_SHADER4])
+    /* Support for texldd and texldl instructions in pixel shaders is required
+     * for SM3. */
+    else if (shader_glsl_has_core_grad(gl_info, NULL) || gl_info->supported[ARB_SHADER_TEXTURE_LOD])
         shader_model = 3;
     else
         shader_model = 2;
