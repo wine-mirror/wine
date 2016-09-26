@@ -836,11 +836,17 @@ done:
  */
 INT WINAPI CountClipboardFormats(void)
 {
-    INT count;
+    INT count = 0;
 
     USER_Driver->pUpdateClipboard();
 
-    count = USER_Driver->pCountClipboardFormats();
+    SERVER_START_REQ( get_clipboard_formats )
+    {
+        wine_server_call( req );
+        count = reply->count;
+    }
+    SERVER_END_REQ;
+
     TRACE("returning %d\n", count);
     return count;
 }
@@ -853,14 +859,17 @@ UINT WINAPI EnumClipboardFormats( UINT format )
 {
     UINT ret = 0;
 
-    if (!(get_clipboard_flags() & CB_OPEN))
+    SERVER_START_REQ( enum_clipboard_formats )
     {
-        WARN("Clipboard not opened by calling task.\n");
-        SetLastError(ERROR_CLIPBOARD_NOT_OPEN);
-        return 0;
+        req->previous = format;
+        if (!wine_server_call_err( req ))
+        {
+            ret = reply->format;
+            SetLastError( ERROR_SUCCESS );
+        }
     }
-    SetLastError( 0 );
-    ret = USER_Driver->pEnumClipboardFormats( format );
+    SERVER_END_REQ;
+
     TRACE( "%s -> %s\n", debugstr_format( format ), debugstr_format( ret ));
     return ret;
 }
@@ -871,11 +880,18 @@ UINT WINAPI EnumClipboardFormats( UINT format )
  */
 BOOL WINAPI IsClipboardFormatAvailable( UINT format )
 {
-    BOOL ret;
+    BOOL ret = FALSE;
+
+    if (!format) return FALSE;
 
     USER_Driver->pUpdateClipboard();
 
-    ret = USER_Driver->pIsClipboardFormatAvailable( format );
+    SERVER_START_REQ( get_clipboard_formats )
+    {
+        req->format = format;
+        if (!wine_server_call_err( req )) ret = (reply->count > 0);
+    }
+    SERVER_END_REQ;
     TRACE( "%s -> %u\n", debugstr_format( format ), ret );
     return ret;
 }
@@ -886,28 +902,27 @@ BOOL WINAPI IsClipboardFormatAvailable( UINT format )
  */
 BOOL WINAPI GetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size )
 {
-    UINT i = 0, cf = 0;
+    BOOL ret;
 
     if (!out_size)
     {
         SetLastError( ERROR_NOACCESS );
         return FALSE;
     }
-    if (!(*out_size = CountClipboardFormats())) return TRUE;  /* nothing else to do */
 
-    if (!formats)
+    USER_Driver->pUpdateClipboard();
+
+    SERVER_START_REQ( get_clipboard_formats )
     {
-        SetLastError( ERROR_NOACCESS );
-        return FALSE;
+        if (formats) wine_server_set_reply( req, formats, size * sizeof(*formats) );
+        ret = !wine_server_call_err( req );
+        *out_size = reply->count;
     }
-    if (size < *out_size)
-    {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        return FALSE;
-    }
-    /* FIXME: format list could change in the meantime */
-    while ((cf = USER_Driver->pEnumClipboardFormats( cf ))) formats[i++] = cf;
-    return TRUE;
+    SERVER_END_REQ;
+
+    TRACE( "%p %u returning %u formats, ret %u\n", formats, size, *out_size, ret );
+    if (!ret && !formats && *out_size) SetLastError( ERROR_NOACCESS );
+    return ret;
 }
 
 

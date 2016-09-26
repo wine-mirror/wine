@@ -411,6 +411,61 @@ DECL_HANDLER(set_clipboard_data)
 }
 
 
+/* retrieve a list of available formats */
+DECL_HANDLER(get_clipboard_formats)
+{
+    struct clipboard *clipboard = get_process_clipboard();
+
+    if (!clipboard) return;
+
+    if (!req->format)
+    {
+        struct clip_format *format;
+        unsigned int i = 0, *ptr;
+        data_size_t size = clipboard->format_count * sizeof(unsigned int);
+
+        reply->count = clipboard->format_count;
+        if (size <= get_reply_max_size())
+        {
+            if ((ptr = mem_alloc( size )))
+            {
+                LIST_FOR_EACH_ENTRY( format, &clipboard->formats, struct clip_format, entry )
+                    ptr[i++] = format->id;
+                assert( i == clipboard->format_count );
+                set_reply_data_ptr( ptr, size );
+            }
+        }
+        else set_error( STATUS_BUFFER_TOO_SMALL );
+    }
+    else reply->count = (get_format( clipboard, req->format ) != NULL);  /* query a single format */
+}
+
+
+/* retrieve the next available format */
+DECL_HANDLER(enum_clipboard_formats)
+{
+    struct list *ptr;
+    struct clipboard *clipboard = get_process_clipboard();
+
+    if (!clipboard) return;
+
+    if (clipboard->open_thread != current)
+    {
+        set_win32_error( ERROR_CLIPBOARD_NOT_OPEN );
+        return;
+    }
+
+    ptr = list_head( &clipboard->formats );
+    if (req->previous)
+    {
+        while (ptr && LIST_ENTRY( ptr, struct clip_format, entry )->id != req->previous)
+            ptr = list_next( &clipboard->formats, ptr );
+        if (ptr) ptr = list_next( &clipboard->formats, ptr );
+    }
+    if (ptr) reply->format = LIST_ENTRY( ptr, struct clip_format, entry )->id;
+}
+
+
 /* empty the clipboard and grab ownership */
 DECL_HANDLER(empty_clipboard)
 {

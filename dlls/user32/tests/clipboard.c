@@ -105,7 +105,6 @@ static void set_clipboard_data_process( int arg )
     SetLastError( 0xdeadbeef );
     if (arg)
     {
-        todo_wine_if( arg == 1 || arg == 3 )
         ok( IsClipboardFormatAvailable( CF_WAVE ), "process %u: CF_WAVE not available\n", arg );
         ret = SetClipboardData( CF_WAVE, GlobalAlloc( GMEM_DDESHARE | GMEM_ZEROINIT, 100 ));
         ok( ret != 0, "process %u: SetClipboardData failed err %u\n", arg, GetLastError() );
@@ -321,7 +320,7 @@ static void test_ClipboardOwner(void)
     ok(!GetClipboardOwner() && GetLastError() == 0xdeadbeef, "clipboard should not be owned\n");
     ok(!GetClipboardViewer() && GetLastError() == 0xdeadbeef, "viewer still exists\n");
     ok(!GetOpenClipboardWindow() && GetLastError() == 0xdeadbeef, "clipboard should not be open\n");
-    todo_wine ok( !IsClipboardFormatAvailable( CF_WAVE ), "CF_WAVE available\n" );
+    ok( !IsClipboardFormatAvailable( CF_WAVE ), "CF_WAVE available\n" );
 
     SetLastError( 0xdeadbeef );
     ret = CloseClipboard();

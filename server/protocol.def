@@ -3206,6 +3206,23 @@ enum caret_state
 @END
 
 
+/* Retrieve a list of available formats */
+@REQ(get_clipboard_formats)
+    unsigned int   format;         /* specific format to query, return all if 0 */
+@REPLY
+    unsigned int   count;          /* count of available formats */
+    VARARG(formats,uints);         /* array of available formats */
+@END
+
+
+/* Retrieve the next available format */
+@REQ(enum_clipboard_formats)
+    unsigned int   previous;       /* previous format, or first if 0 */
+@REPLY
+    unsigned int   format;         /* next format */
+@END
+
+
 /* Release ownership of the clipboard */
 @REQ(release_clipboard)
     user_handle_t  owner;          /* clipboard owner to release */
