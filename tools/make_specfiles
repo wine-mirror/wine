@@ -231,6 +231,7 @@ my @dll_groups =
   "advapi32",
   "user32",
   "kernelbase",
+  "api-ms-win-core-bem-l1-1-0",
  ],
  [
   "ole32",
