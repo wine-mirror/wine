@@ -411,6 +411,31 @@ DECL_HANDLER(set_clipboard_data)
 }
 
 
+/* fetch a data format from the clipboard */
+DECL_HANDLER(get_clipboard_data)
+{
+    struct clip_format *format;
+    struct clipboard *clipboard = get_process_clipboard();
+
+    if (!clipboard) return;
+
+    if (clipboard->open_thread != current)
+    {
+        set_win32_error( ERROR_CLIPBOARD_NOT_OPEN );
+        return;
+    }
+    if (!(format = get_format( clipboard, req->format )))
+    {
+        set_error( STATUS_OBJECT_NAME_NOT_FOUND );
+        return;
+    }
+    reply->total  = format->size;
+    if (!format->data) reply->owner = clipboard->owner_win;
+    if (format->size <= get_reply_max_size()) set_reply_data( format->data, format->size );
+    else set_error( STATUS_BUFFER_OVERFLOW );
+}
+
+
 /* retrieve a list of available formats */
 DECL_HANDLER(get_clipboard_formats)
 {

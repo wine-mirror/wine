@@ -1762,16 +1762,16 @@ static void test_handles( HWND hwnd )
         todo_wine ok( is_freed( hmoveable ), "expected freed mem %p\n", hmoveable );
 
         data = GetClipboardData( CF_TEXT );
-        todo_wine ok( is_fixed( data ), "expected fixed mem %p\n", data );
+        ok( is_fixed( data ), "expected fixed mem %p\n", data );
 
         data = GetClipboardData( format_id );
-        todo_wine ok( is_fixed( data ), "expected fixed mem %p\n", data );
+        ok( is_fixed( data ), "expected fixed mem %p\n", data );
 
         data = GetClipboardData( CF_GDIOBJFIRST + 3 );
-        todo_wine ok( is_fixed( data ), "expected fixed mem %p\n", data );
+        ok( is_fixed( data ), "expected fixed mem %p\n", data );
 
         data = GetClipboardData( CF_PRIVATEFIRST + 7 );
-        todo_wine ok( is_fixed( data ), "expected fixed mem %p\n", data );
+        ok( is_fixed( data ), "expected fixed mem %p\n", data );
 
         data = GetClipboardData( format_id2 );
         ok( is_fixed( data ), "expected fixed mem %p\n", data );
@@ -1782,7 +1782,7 @@ static void test_handles( HWND hwnd )
         ok( GlobalSize( data ) == 17, "wrong size %lu\n", GlobalSize( data ));
 
         data = GetClipboardData( 0xdeadbabe );
-        todo_wine ok( is_fixed( data ), "expected fixed mem %p\n", data );
+        ok( is_fixed( data ), "expected fixed mem %p\n", data );
         ok( GlobalSize( data ) == 23, "wrong size %lu\n", GlobalSize( data ));
 
         data = GetClipboardData( 0xdeadfade );
@@ -1937,69 +1937,69 @@ static void test_handles_process( const char *str )
     h = GetClipboardData( CF_TEXT );
     todo_wine_if( !h ) ok( is_fixed( h ), "expected fixed mem %p\n", h );
     ptr = GlobalLock( h );
-    if (ptr) todo_wine ok( !strcmp( str, ptr ), "wrong data '%.5s'\n", ptr );
+    ok( !strcmp( str, ptr ), "wrong data '%.5s'\n", ptr );
     GlobalUnlock( h );
     h = GetClipboardData( format_id );
-    todo_wine ok( is_fixed( h ), "expected fixed mem %p\n", h );
+    ok( is_fixed( h ), "expected fixed mem %p\n", h );
     ptr = GlobalLock( h );
     if (ptr) ok( !strcmp( str, ptr ), "wrong data '%.5s'\n", ptr );
     GlobalUnlock( h );
     h = GetClipboardData( CF_GDIOBJFIRST + 3 );
     todo_wine_if( !h ) ok( is_fixed( h ), "expected fixed mem %p\n", h );
     ptr = GlobalLock( h );
-    if (ptr) todo_wine ok( !strcmp( str, ptr ), "wrong data '%.5s'\n", ptr );
+    ok( !strcmp( str, ptr ), "wrong data '%.5s'\n", ptr );
     GlobalUnlock( h );
     trace( "gdiobj %p\n", h );
     h = GetClipboardData( CF_PRIVATEFIRST + 7 );
     todo_wine_if( !h ) ok( is_fixed( h ), "expected fixed mem %p\n", h );
     ptr = GlobalLock( h );
-    if (ptr) todo_wine ok( !strcmp( str, ptr ), "wrong data '%.5s'\n", ptr );
+    ok( !strcmp( str, ptr ), "wrong data '%.5s'\n", ptr );
     GlobalUnlock( h );
     trace( "private %p\n", h );
     h = GetClipboardData( CF_BITMAP );
-    todo_wine ok( GetObjectType( h ) == OBJ_BITMAP, "expected bitmap %p\n", h );
-    todo_wine ok( GetObjectW( h, sizeof(bm), &bm ) == sizeof(bm), "GetObject %p failed\n", h );
-    todo_wine ok( bm.bmWidth == 13 && bm.bmHeight == 17, "wrong bitmap %ux%u\n", bm.bmWidth, bm.bmHeight );
+    ok( GetObjectType( h ) == OBJ_BITMAP, "expected bitmap %p\n", h );
+    ok( GetObjectW( h, sizeof(bm), &bm ) == sizeof(bm), "GetObject %p failed\n", h );
+    ok( bm.bmWidth == 13 && bm.bmHeight == 17, "wrong bitmap %ux%u\n", bm.bmWidth, bm.bmHeight );
     trace( "bitmap %p\n", h );
     h = GetClipboardData( CF_DSPBITMAP );
     ok( !GetObjectType( h ), "expected invalid object %p\n", h );
     trace( "bitmap2 %p\n", h );
     h = GetClipboardData( CF_PALETTE );
-    todo_wine ok( GetObjectType( h ) == OBJ_PAL, "expected palette %p\n", h );
-    todo_wine ok( GetPaletteEntries( h, 0, 1, &entry ) == 1, "GetPaletteEntries %p failed\n", h );
-    todo_wine ok( entry.peRed == 0x12 && entry.peGreen == 0x34 && entry.peBlue == 0x56,
+    ok( GetObjectType( h ) == OBJ_PAL, "expected palette %p\n", h );
+    ok( GetPaletteEntries( h, 0, 1, &entry ) == 1, "GetPaletteEntries %p failed\n", h );
+    ok( entry.peRed == 0x12 && entry.peGreen == 0x34 && entry.peBlue == 0x56,
         "wrong color %02x,%02x,%02x\n", entry.peRed, entry.peGreen, entry.peBlue );
     trace( "palette %p\n", h );
     h = GetClipboardData( CF_METAFILEPICT );
-    todo_wine ok( is_fixed( h ), "expected fixed mem %p\n", h );
+    ok( is_fixed( h ), "expected fixed mem %p\n", h );
     if (h)
     ok( GetObjectType( ((METAFILEPICT *)h)->hMF ) == OBJ_METAFILE,
         "wrong object %p\n", ((METAFILEPICT *)h)->hMF );
     trace( "metafile %p\n", h );
     h = GetClipboardData( CF_DSPMETAFILEPICT );
-    todo_wine ok( is_fixed( h ), "expected fixed mem %p\n", h );
+    ok( is_fixed( h ), "expected fixed mem %p\n", h );
     if (h)
     ok( GetObjectType( ((METAFILEPICT *)h)->hMF ) == OBJ_METAFILE,
         "wrong object %p\n", ((METAFILEPICT *)h)->hMF );
     trace( "metafile2 %p\n", h );
     h = GetClipboardData( CF_ENHMETAFILE );
-    todo_wine ok( GetObjectType( h ) == OBJ_ENHMETAFILE, "expected enhmetafile %p\n", h );
-    todo_wine ok( GetEnhMetaFileBits( h, sizeof(buffer), buffer ) > sizeof(ENHMETAHEADER),
+    ok( GetObjectType( h ) == OBJ_ENHMETAFILE, "expected enhmetafile %p\n", h );
+    ok( GetEnhMetaFileBits( h, sizeof(buffer), buffer ) > sizeof(ENHMETAHEADER),
         "GetEnhMetaFileBits failed on %p\n", h );
-    todo_wine ok( ((ENHMETAHEADER *)buffer)->nRecords == 3,
+    ok( ((ENHMETAHEADER *)buffer)->nRecords == 3,
         "wrong records %u\n", ((ENHMETAHEADER *)buffer)->nRecords );
     trace( "enhmetafile %p\n", h );
     h = GetClipboardData( CF_DSPENHMETAFILE );
-    todo_wine ok( GetObjectType( h ) == OBJ_ENHMETAFILE, "expected enhmetafile %p\n", h );
-    todo_wine ok( GetEnhMetaFileBits( h, sizeof(buffer), buffer ) > sizeof(ENHMETAHEADER),
+    ok( GetObjectType( h ) == OBJ_ENHMETAFILE, "expected enhmetafile %p\n", h );
+    ok( GetEnhMetaFileBits( h, sizeof(buffer), buffer ) > sizeof(ENHMETAHEADER),
         "GetEnhMetaFileBits failed on %p\n", h );
-    todo_wine ok( ((ENHMETAHEADER *)buffer)->nRecords == 3,
+    ok( ((ENHMETAHEADER *)buffer)->nRecords == 3,
         "wrong records %u\n", ((ENHMETAHEADER *)buffer)->nRecords );
     trace( "enhmetafile2 %p\n", h );
     h = GetClipboardData( CF_DIB );
-    todo_wine ok( is_fixed( h ), "expected fixed mem %p\n", h );
+    ok( is_fixed( h ), "expected fixed mem %p\n", h );
     h = GetClipboardData( CF_DIBV5 );
-    todo_wine ok( is_fixed( h ), "expected fixed mem %p\n", h );
+    ok( is_fixed( h ), "expected fixed mem %p\n", h );
     r = CloseClipboard();
     ok( r, "gle %d\n", GetLastError() );
 }
@@ -2109,15 +2109,15 @@ static void test_data_handles(void)
 
     ok( is_moveable( text ), "expected moveable mem %p\n", text );
     h = GetClipboardData( CF_TEXT );
-    todo_wine ok( is_fixed( h ), "expected fixed mem %p\n", h );
+    ok( is_fixed( h ), "expected fixed mem %p\n", h );
     ok( is_moveable( text ), "expected moveable mem %p\n", text );
     ptr = GlobalLock( h );
-    if (ptr) todo_wine ok( !strcmp( ptr, "foobar" ), "wrong data '%.8s'\n", ptr );
+    ok( !strcmp( ptr, "foobar" ), "wrong data '%.8s'\n", ptr );
     GlobalUnlock( h );
 
     r = EmptyClipboard();
     ok( r, "gle %d\n", GetLastError() );
-    todo_wine ok( is_fixed( h ), "expected free mem %p\n", h );
+    ok( is_fixed( h ), "expected free mem %p\n", h );
     ok( is_freed( text ) || broken( is_moveable(text) ), /* w2003, w2008 */
         "expected free mem %p\n", text );
     r = CloseClipboard();

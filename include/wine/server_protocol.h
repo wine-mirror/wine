@@ -4540,6 +4540,21 @@ struct set_clipboard_data_reply
 
 
 
+struct get_clipboard_data_request
+{
+    struct request_header __header;
+    unsigned int   format;
+};
+struct get_clipboard_data_reply
+{
+    struct reply_header __header;
+    user_handle_t  owner;
+    data_size_t    total;
+    /* VARARG(data,bytes); */
+};
+
+
+
 struct get_clipboard_formats_request
 {
     struct request_header __header;
@@ -5772,6 +5787,7 @@ enum request
     REQ_set_clipboard_info,
     REQ_empty_clipboard,
     REQ_set_clipboard_data,
+    REQ_get_clipboard_data,
     REQ_get_clipboard_formats,
     REQ_enum_clipboard_formats,
     REQ_release_clipboard,
@@ -6062,6 +6078,7 @@ union generic_request
     struct set_clipboard_info_request set_clipboard_info_request;
     struct empty_clipboard_request empty_clipboard_request;
     struct set_clipboard_data_request set_clipboard_data_request;
+    struct get_clipboard_data_request get_clipboard_data_request;
     struct get_clipboard_formats_request get_clipboard_formats_request;
     struct enum_clipboard_formats_request enum_clipboard_formats_request;
     struct release_clipboard_request release_clipboard_request;
@@ -6350,6 +6367,7 @@ union generic_reply
     struct set_clipboard_info_reply set_clipboard_info_reply;
     struct empty_clipboard_reply empty_clipboard_reply;
     struct set_clipboard_data_reply set_clipboard_data_reply;
+    struct get_clipboard_data_reply get_clipboard_data_reply;
     struct get_clipboard_formats_reply get_clipboard_formats_reply;
     struct enum_clipboard_formats_reply enum_clipboard_formats_reply;
     struct release_clipboard_reply release_clipboard_reply;
@@ -6416,6 +6434,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 519
+#define SERVER_PROTOCOL_VERSION 520
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

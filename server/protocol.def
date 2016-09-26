@@ -3206,6 +3206,16 @@ enum caret_state
 @END
 
 
+/* Fetch a data format from the clipboard */
+@REQ(get_clipboard_data)
+    unsigned int   format;         /* clipboard format of the data */
+@REPLY
+    user_handle_t  owner;          /* clipboard owner for delayed-rendered formats */
+    data_size_t    total;          /* total data size */
+    VARARG(data,bytes);            /* data contents */
+@END
+
+
 /* Retrieve a list of available formats */
 @REQ(get_clipboard_formats)
     unsigned int   format;         /* specific format to query, return all if 0 */
