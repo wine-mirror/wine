@@ -3162,7 +3162,7 @@ enum caret_state
 @REQ(open_clipboard)
     user_handle_t  window;         /* clipboard window */
 @REPLY
-    int            owner;          /* is the process already the owner? */
+    user_handle_t  owner;          /* current clipboard owner */
 @END
 
 
@@ -3204,15 +3204,20 @@ enum caret_state
     unsigned int   format;         /* clipboard format of the data */
     unsigned int   lcid;           /* locale id to use for synthesizing text formats */
     VARARG(data,bytes);            /* data contents */
+@REPLY
+    unsigned int   seqno;          /* sequence number for the set data */
 @END
 
 
 /* Fetch a data format from the clipboard */
 @REQ(get_clipboard_data)
     unsigned int   format;         /* clipboard format of the data */
+    int            cached;         /* do we already have it in the client-side cache? */
+    unsigned int   seqno;          /* sequence number for the data in the cache */
 @REPLY
     unsigned int   from;           /* for synthesized data, format to generate it from */
     user_handle_t  owner;          /* clipboard owner for delayed-rendered formats */
+    unsigned int   seqno;          /* sequence number for the originally set data */
     data_size_t    total;          /* total data size */
     VARARG(data,bytes);            /* data contents */
 @END

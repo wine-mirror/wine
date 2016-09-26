@@ -3741,7 +3741,7 @@ static void dump_open_clipboard_request( const struct open_clipboard_request *re
 
 static void dump_open_clipboard_reply( const struct open_clipboard_reply *req )
 {
-    fprintf( stderr, " owner=%d", req->owner );
+    fprintf( stderr, " owner=%08x", req->owner );
 }
 
 static void dump_close_clipboard_request( const struct close_clipboard_request *req )
@@ -3780,15 +3780,23 @@ static void dump_set_clipboard_data_request( const struct set_clipboard_data_req
     dump_varargs_bytes( ", data=", cur_size );
 }
 
+static void dump_set_clipboard_data_reply( const struct set_clipboard_data_reply *req )
+{
+    fprintf( stderr, " seqno=%08x", req->seqno );
+}
+
 static void dump_get_clipboard_data_request( const struct get_clipboard_data_request *req )
 {
     fprintf( stderr, " format=%08x", req->format );
+    fprintf( stderr, ", cached=%d", req->cached );
+    fprintf( stderr, ", seqno=%08x", req->seqno );
 }
 
 static void dump_get_clipboard_data_reply( const struct get_clipboard_data_reply *req )
 {
     fprintf( stderr, " from=%08x", req->from );
     fprintf( stderr, ", owner=%08x", req->owner );
+    fprintf( stderr, ", seqno=%08x", req->seqno );
     fprintf( stderr, ", total=%u", req->total );
     dump_varargs_bytes( ", data=", cur_size );
 }
@@ -4973,7 +4981,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_close_clipboard_reply,
     (dump_func)dump_set_clipboard_info_reply,
     NULL,
-    NULL,
+    (dump_func)dump_set_clipboard_data_reply,
     (dump_func)dump_get_clipboard_data_reply,
     (dump_func)dump_get_clipboard_formats_reply,
     (dump_func)dump_enum_clipboard_formats_reply,

@@ -42,6 +42,7 @@ struct clip_format
     struct list    entry;            /* entry in format list */
     unsigned int   id;               /* format id */
     unsigned int   from;             /* for synthesized data, format to generate it from */
+    unsigned int   seqno;            /* sequence number when the data was set */
     data_size_t    size;             /* size of the data block */
     void          *data;             /* data contents, or NULL for delay-rendered */
 };
@@ -207,7 +208,7 @@ static int synthesize_formats( struct clipboard *clipboard )
         void *data = memdup( &clipboard->lcid, sizeof(clipboard->lcid) );
         if ((format = add_format( clipboard, CF_LOCALE )))
         {
-            clipboard->seqno++;
+            format->seqno = clipboard->seqno++;
             format->data  = data;
             format->size  = sizeof(clipboard->lcid);
         }
@@ -222,6 +223,7 @@ static int synthesize_formats( struct clipboard *clipboard )
         else continue;
         if (!(format = add_format( clipboard, formats[i][0] ))) continue;
         format->from = from;
+        format->seqno = clipboard->seqno;
         total++;
     }
     return total;
@@ -385,7 +387,7 @@ DECL_HANDLER(open_clipboard)
     clipboard->open_win = win;
     clipboard->open_thread = current;
 
-    reply->owner = (clipboard->owner_thread && clipboard->owner_thread->process == current->process);
+    reply->owner = clipboard->owner_win;
 }
 
 
@@ -459,13 +461,15 @@ DECL_HANDLER(set_clipboard_data)
         }
     }
 
-    clipboard->seqno++;
     format->from   = 0;
+    format->seqno  = clipboard->seqno++;
     format->size   = get_req_data_size();
     format->data   = data;
 
     if (req->format == CF_TEXT || req->format == CF_OEMTEXT || req->format == CF_UNICODETEXT)
         clipboard->lcid = req->lcid;
+
+    reply->seqno = format->seqno;
 }
 
 
@@ -489,7 +493,9 @@ DECL_HANDLER(get_clipboard_data)
     }
     reply->from   = format->from;
     reply->total  = format->size;
+    reply->seqno  = format->seqno;
     if (!format->data && !format->from) reply->owner = clipboard->owner_win;
+    if (req->cached && req->seqno == format->seqno) return;  /* client-side cache still valid */
     if (format->size <= get_reply_max_size()) set_reply_data( format->data, format->size );
     else set_error( STATUS_BUFFER_OVERFLOW );
 }

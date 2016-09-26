@@ -1755,11 +1755,11 @@ static void test_handles( HWND hwnd )
     /* and now they are freed, unless we are the owner */
     if (!is_owner)
     {
-        todo_wine ok( is_freed( htext ), "expected freed mem %p\n", htext );
-        todo_wine ok( is_freed( htext2 ), "expected freed mem %p\n", htext2 );
-        todo_wine ok( is_freed( htext3 ), "expected freed mem %p\n", htext3 );
-        todo_wine ok( is_freed( htext4 ), "expected freed mem %p\n", htext4 );
-        todo_wine ok( is_freed( hmoveable ), "expected freed mem %p\n", hmoveable );
+        ok( is_freed( htext ), "expected freed mem %p\n", htext );
+        ok( is_freed( htext2 ), "expected freed mem %p\n", htext2 );
+        ok( is_freed( htext3 ), "expected freed mem %p\n", htext3 );
+        ok( is_freed( htext4 ), "expected freed mem %p\n", htext4 );
+        ok( is_freed( hmoveable ), "expected freed mem %p\n", hmoveable );
 
         data = GetClipboardData( CF_TEXT );
         ok( is_fixed( data ), "expected fixed mem %p\n", data );
@@ -1935,7 +1935,7 @@ static void test_handles_process( const char *str )
     r = OpenClipboard( 0 );
     ok( r, "gle %d\n", GetLastError() );
     h = GetClipboardData( CF_TEXT );
-    todo_wine_if( !h ) ok( is_fixed( h ), "expected fixed mem %p\n", h );
+    ok( is_fixed( h ), "expected fixed mem %p\n", h );
     ptr = GlobalLock( h );
     ok( !strcmp( str, ptr ), "wrong data '%.5s'\n", ptr );
     GlobalUnlock( h );
@@ -1945,13 +1945,13 @@ static void test_handles_process( const char *str )
     if (ptr) ok( !strcmp( str, ptr ), "wrong data '%.5s'\n", ptr );
     GlobalUnlock( h );
     h = GetClipboardData( CF_GDIOBJFIRST + 3 );
-    todo_wine_if( !h ) ok( is_fixed( h ), "expected fixed mem %p\n", h );
+    ok( is_fixed( h ), "expected fixed mem %p\n", h );
     ptr = GlobalLock( h );
     ok( !strcmp( str, ptr ), "wrong data '%.5s'\n", ptr );
     GlobalUnlock( h );
     trace( "gdiobj %p\n", h );
     h = GetClipboardData( CF_PRIVATEFIRST + 7 );
-    todo_wine_if( !h ) ok( is_fixed( h ), "expected fixed mem %p\n", h );
+    ok( is_fixed( h ), "expected fixed mem %p\n", h );
     ptr = GlobalLock( h );
     ok( !strcmp( str, ptr ), "wrong data '%.5s'\n", ptr );
     GlobalUnlock( h );
@@ -1972,13 +1972,11 @@ static void test_handles_process( const char *str )
     trace( "palette %p\n", h );
     h = GetClipboardData( CF_METAFILEPICT );
     ok( is_fixed( h ), "expected fixed mem %p\n", h );
-    if (h)
     ok( GetObjectType( ((METAFILEPICT *)h)->hMF ) == OBJ_METAFILE,
         "wrong object %p\n", ((METAFILEPICT *)h)->hMF );
     trace( "metafile %p\n", h );
     h = GetClipboardData( CF_DSPMETAFILEPICT );
     ok( is_fixed( h ), "expected fixed mem %p\n", h );
-    if (h)
     ok( GetObjectType( ((METAFILEPICT *)h)->hMF ) == OBJ_METAFILE,
         "wrong object %p\n", ((METAFILEPICT *)h)->hMF );
     trace( "metafile2 %p\n", h );
