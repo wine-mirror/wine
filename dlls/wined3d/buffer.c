@@ -1308,10 +1308,10 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
 
     if (device->create_parms.flags & WINED3DCREATE_SOFTWARE_VERTEXPROCESSING || pool == WINED3D_POOL_MANAGED)
     {
-        /* SWvp always returns the same pointer in buffer maps and retains data in DISCARD maps.
-         * Keep a system memory copy of the buffer to provide the same behavior to the application.
-         * Still use a VBO to support OpenGL 3 core contexts. */
-        TRACE("Using doublebuffer mode because of software vertex processing.\n");
+        /* SWvp and managed buffers always return the same pointer in buffer
+         * maps and retain data in DISCARD maps. Keep a system memory copy of
+         * the buffer to provide the same behavior to the application. */
+        TRACE("Using doublebuffer mode.\n");
         buffer->flags |= WINED3D_BUFFER_DOUBLEBUFFER;
     }
 
