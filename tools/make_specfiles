@@ -127,6 +127,7 @@ my @dll_groups =
   "api-ms-win-service-core-l1-1-1",
   "api-ms-win-service-management-l1-1-0",
   "api-ms-win-service-management-l2-1-0",
+  "api-ms-win-service-private-l1-1-1",
   "api-ms-win-service-winsvc-l1-1-0",
   "api-ms-win-service-winsvc-l1-2-0",
  ],
