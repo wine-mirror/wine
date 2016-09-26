@@ -52,10 +52,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 
-/*
- * Indicates if data has changed since open.
- */
-static BOOL bCBHasChanged = FALSE;
 
 /* get a debug string for a format id */
 static const char *debugstr_format( UINT id )
@@ -205,30 +201,6 @@ static HANDLE unmarshal_data( UINT format, void *data, data_size_t size )
 }
 
 
-/* formats that can be synthesized are: CF_TEXT, CF_OEMTEXT, CF_UNICODETEXT,
-   CF_BITMAP, CF_DIB, CF_DIBV5, CF_ENHMETAFILE, CF_METAFILEPICT */
-
-static UINT synthesized_formats[CF_MAX];
-
-/* add a synthesized format to the list */
-static void add_synthesized_format( UINT format, UINT from )
-{
-    assert( format < CF_MAX );
-    SetClipboardData( format, 0 );
-    synthesized_formats[format] = from;
-}
-
-/* store the current locale in the CF_LOCALE format */
-static void set_clipboard_locale(void)
-{
-    HANDLE data = GlobalAlloc( GMEM_FIXED, sizeof(LCID) );
-
-    if (!data) return;
-    *(LCID *)data = GetUserDefaultLCID();
-    SetClipboardData( CF_LOCALE, data );
-    TRACE( "added CF_LOCALE\n" );
-}
-
 /* get the clipboard locale stored in the CF_LOCALE format */
 static LCID get_clipboard_locale(void)
 {
@@ -256,71 +228,6 @@ static UINT get_format_codepage( LCID lcid, UINT format )
     if (!GetLocaleInfoW( lcid, type | LOCALE_RETURN_NUMBER, (LPWSTR)&ret, sizeof(ret)/sizeof(WCHAR) ))
         ret = (format == CF_TEXT) ? CP_ACP : CP_OEMCP;
     return ret;
-}
-
-/* add synthesized text formats based on what is already in the clipboard */
-static void add_synthesized_text(void)
-{
-    BOOL has_text = IsClipboardFormatAvailable( CF_TEXT );
-    BOOL has_oemtext = IsClipboardFormatAvailable( CF_OEMTEXT );
-    BOOL has_unicode = IsClipboardFormatAvailable( CF_UNICODETEXT );
-
-    if (!has_text && !has_oemtext && !has_unicode) return;  /* no text, nothing to do */
-
-    if (!IsClipboardFormatAvailable( CF_LOCALE )) set_clipboard_locale();
-
-    if (has_unicode)
-    {
-        if (!has_text) add_synthesized_format( CF_TEXT, CF_UNICODETEXT );
-        if (!has_oemtext) add_synthesized_format( CF_OEMTEXT, CF_UNICODETEXT );
-    }
-    else if (has_text)
-    {
-        if (!has_oemtext) add_synthesized_format( CF_OEMTEXT, CF_TEXT );
-        if (!has_unicode) add_synthesized_format( CF_UNICODETEXT, CF_TEXT );
-    }
-    else
-    {
-        if (!has_text) add_synthesized_format( CF_TEXT, CF_OEMTEXT );
-        if (!has_unicode) add_synthesized_format( CF_UNICODETEXT, CF_OEMTEXT );
-    }
-}
-
-/* add synthesized bitmap formats based on what is already in the clipboard */
-static void add_synthesized_bitmap(void)
-{
-    BOOL has_dib = IsClipboardFormatAvailable( CF_DIB );
-    BOOL has_dibv5 = IsClipboardFormatAvailable( CF_DIBV5 );
-    BOOL has_bitmap = IsClipboardFormatAvailable( CF_BITMAP );
-
-    if (!has_bitmap && !has_dib && !has_dibv5) return;  /* nothing to do */
-    if (has_bitmap && has_dib && has_dibv5) return;  /* nothing to synthesize */
-
-    if (has_bitmap)
-    {
-        if (!has_dib) add_synthesized_format( CF_DIB, CF_BITMAP );
-        if (!has_dibv5) add_synthesized_format( CF_DIBV5, CF_BITMAP );
-    }
-    else if (has_dib)
-    {
-        if (!has_bitmap) add_synthesized_format( CF_BITMAP, CF_DIB );
-        if (!has_dibv5) add_synthesized_format( CF_DIBV5, CF_DIB );
-    }
-    else
-    {
-        if (!has_bitmap) add_synthesized_format( CF_BITMAP, CF_DIBV5 );
-        if (!has_dib) add_synthesized_format( CF_DIB, CF_DIBV5 );
-    }
-}
-
-/* add synthesized metafile formats based on what is already in the clipboard */
-static void add_synthesized_metafile(void)
-{
-    BOOL has_mf = IsClipboardFormatAvailable( CF_METAFILEPICT );
-    BOOL has_emf = IsClipboardFormatAvailable( CF_ENHMETAFILE );
-
-    if (!has_mf && has_emf) add_synthesized_format( CF_METAFILEPICT, CF_ENHMETAFILE );
-    else if (!has_emf && has_mf) add_synthesized_format( CF_ENHMETAFILE, CF_METAFILEPICT );
 }
 
 /* render synthesized ANSI text based on the contents of the 'from' format */
@@ -619,14 +526,7 @@ BOOL WINAPI OpenClipboard( HWND hwnd )
     SERVER_START_REQ( open_clipboard )
     {
         req->window = wine_server_user_handle( hwnd );
-        if ((ret = !wine_server_call_err( req )))
-        {
-            if (!reply->owner)
-            {
-                bCBHasChanged = FALSE;
-                memset( synthesized_formats, 0, sizeof(synthesized_formats) );
-            }
-        }
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
 
@@ -642,15 +542,7 @@ BOOL WINAPI CloseClipboard(void)
     HWND viewer = 0, owner = 0;
     BOOL ret;
 
-    TRACE("() Changed=%d\n", bCBHasChanged);
-
-    if (bCBHasChanged)
-    {
-        memset( synthesized_formats, 0, sizeof(synthesized_formats) );
-        add_synthesized_text();
-        add_synthesized_bitmap();
-        add_synthesized_metafile();
-    }
+    TRACE( "\n" );
 
     SERVER_START_REQ( close_clipboard )
     {
@@ -662,12 +554,8 @@ BOOL WINAPI CloseClipboard(void)
     }
     SERVER_END_REQ;
 
-    if (!ret) return FALSE;
-
-    bCBHasChanged = FALSE;
-
     if (viewer) SendNotifyMessageW( viewer, WM_DRAWCLIPBOARD, (WPARAM)owner, 0 );
-    return TRUE;
+    return ret;
 }
 
 
@@ -690,11 +578,6 @@ BOOL WINAPI EmptyClipboard(void)
     }
     SERVER_END_REQ;
 
-    if (ret)
-    {
-        bCBHasChanged = TRUE;
-        memset( synthesized_formats, 0, sizeof(synthesized_formats) );
-    }
     return ret;
 }
 
@@ -829,17 +712,14 @@ HANDLE WINAPI SetClipboardData( UINT format, HANDLE data )
     SERVER_START_REQ( set_clipboard_data )
     {
         req->format = format;
+        req->lcid = GetUserDefaultLCID();
         wine_server_add_data( req, ptr, size );
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
 
     if (ret)
-    {
-        bCBHasChanged = TRUE;
-        if (format < CF_MAX) synthesized_formats[format] = 0;
         retval = data;
-    }
 
 done:
     if (ptr) GlobalUnlock( ptr );
@@ -949,13 +829,11 @@ BOOL WINAPI GetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size
 HANDLE WINAPI GetClipboardData( UINT format )
 {
     NTSTATUS status;
+    UINT from;
     HWND owner;
     HANDLE data;
     UINT size = 1024;
     BOOL render = TRUE;
-
-    if (format < CF_MAX && synthesized_formats[format])
-        return render_synthesized_format( format, synthesized_formats[format] );
 
     for (;;)
     {
@@ -966,6 +844,7 @@ HANDLE WINAPI GetClipboardData( UINT format )
             req->format = format;
             wine_server_set_reply( req, data, size );
             status = wine_server_call( req );
+            from = reply->from;
             size = reply->total;
             owner = wine_server_ptr_handle( reply->owner );
         }
@@ -995,6 +874,7 @@ HANDLE WINAPI GetClipboardData( UINT format )
                 SendMessageW( owner, WM_RENDERFORMAT, format, 0 );
                 continue;
             }
+            if (from) return render_synthesized_format( format, from );
         }
         TRACE( "%s returning 0\n", debugstr_format( format ));
         return 0;
@@ -1024,11 +904,6 @@ INT WINAPI GetPriorityClipboardFormat(UINT *list, INT nCount)
 
 /**************************************************************************
  *		GetClipboardSequenceNumber (USER32.@)
- * Supported on Win2k/Win98
- * MSDN: Windows clipboard code keeps a serial number for the clipboard
- * for each window station.  The number is incremented whenever the
- * contents change or are emptied.
- * If you do not have WINSTA_ACCESSCLIPBOARD then the function returns 0
  */
 DWORD WINAPI GetClipboardSequenceNumber(VOID)
 {

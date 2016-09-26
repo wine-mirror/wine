@@ -3776,6 +3776,7 @@ static void dump_empty_clipboard_request( const struct empty_clipboard_request *
 static void dump_set_clipboard_data_request( const struct set_clipboard_data_request *req )
 {
     fprintf( stderr, " format=%08x", req->format );
+    fprintf( stderr, ", lcid=%08x", req->lcid );
     dump_varargs_bytes( ", data=", cur_size );
 }
 
@@ -3786,7 +3787,8 @@ static void dump_get_clipboard_data_request( const struct get_clipboard_data_req
 
 static void dump_get_clipboard_data_reply( const struct get_clipboard_data_reply *req )
 {
-    fprintf( stderr, " owner=%08x", req->owner );
+    fprintf( stderr, " from=%08x", req->from );
+    fprintf( stderr, ", owner=%08x", req->owner );
     fprintf( stderr, ", total=%u", req->total );
     dump_varargs_bytes( ", data=", cur_size );
 }

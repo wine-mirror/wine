@@ -4531,7 +4531,9 @@ struct set_clipboard_data_request
 {
     struct request_header __header;
     unsigned int   format;
+    unsigned int   lcid;
     /* VARARG(data,bytes); */
+    char __pad_20[4];
 };
 struct set_clipboard_data_reply
 {
@@ -4548,9 +4550,11 @@ struct get_clipboard_data_request
 struct get_clipboard_data_reply
 {
     struct reply_header __header;
+    unsigned int   from;
     user_handle_t  owner;
     data_size_t    total;
     /* VARARG(data,bytes); */
+    char __pad_20[4];
 };
 
 
@@ -6434,6 +6438,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 520
+#define SERVER_PROTOCOL_VERSION 521
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

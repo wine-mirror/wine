@@ -41,6 +41,7 @@ struct clip_format
 {
     struct list    entry;            /* entry in format list */
     unsigned int   id;               /* format id */
+    unsigned int   from;             /* for synthesized data, format to generate it from */
     data_size_t    size;             /* size of the data block */
     void          *data;             /* data contents, or NULL for delay-rendered */
 };
@@ -53,10 +54,12 @@ struct clipboard
     struct thread *owner_thread;     /* thread id that owns the clipboard */
     user_handle_t  owner_win;        /* window that owns the clipboard data */
     user_handle_t  viewer;           /* first window in clipboard viewer list */
+    unsigned int   lcid;             /* locale id to use for synthesizing text formats */
     unsigned int   seqno;            /* clipboard change sequence number */
     unsigned int   open_seqno;       /* sequence number at open time */
     struct list    formats;          /* list of data formats */
     unsigned int   format_count;     /* count of data formats */
+    unsigned int   format_map;       /* existence bitmap for formats < CF_MAX */
     unsigned int   listen_size;      /* size of listeners array */
     unsigned int   listen_count;     /* count of listeners */
     user_handle_t *listeners;        /* array of listener windows */
@@ -88,6 +91,8 @@ static const struct object_ops clipboard_ops =
 };
 
 
+#define HAS_FORMAT(map,id) ((map) & (1 << (id)))  /* only for formats < CF_MAX */
+
 /* find a data format in the clipboard */
 static struct clip_format *get_format( struct clipboard *clipboard, unsigned int id )
 {
@@ -106,10 +111,12 @@ static struct clip_format *add_format( struct clipboard *clipboard, unsigned int
 
     if (!(format = mem_alloc( sizeof(*format )))) return NULL;
     format->id   = id;
+    format->from = 0;
     format->size = 0;
     format->data = NULL;
     list_add_tail( &clipboard->formats, &format->entry );
     clipboard->format_count++;
+    if (id < CF_MAX) clipboard->format_map |= 1 << id;
     return format;
 }
 
@@ -125,6 +132,7 @@ static void free_clipboard_formats( struct clipboard *clipboard )
         free( format );
     }
     clipboard->format_count = 0;
+    clipboard->format_map = 0;
 }
 
 /* dump a clipboard object */
@@ -164,6 +172,7 @@ static struct clipboard *get_process_clipboard(void)
             clipboard->viewer = 0;
             clipboard->seqno = 0;
             clipboard->format_count = 0;
+            clipboard->format_map = 0;
             clipboard->listen_size = 0;
             clipboard->listen_count = 0;
             clipboard->listeners = NULL;
@@ -173,6 +182,49 @@ static struct clipboard *get_process_clipboard(void)
     }
     release_object( winstation );
     return clipboard;
+}
+
+/* add synthesized formats upon clipboard close */
+static int synthesize_formats( struct clipboard *clipboard )
+{
+    static const unsigned int formats[][3] =
+    {
+        { CF_TEXT, CF_OEMTEXT, CF_UNICODETEXT },
+        { CF_OEMTEXT, CF_UNICODETEXT, CF_TEXT },
+        { CF_UNICODETEXT, CF_TEXT, CF_OEMTEXT },
+        { CF_METAFILEPICT, CF_ENHMETAFILE },
+        { CF_ENHMETAFILE, CF_METAFILEPICT },
+        { CF_BITMAP, CF_DIB, CF_DIBV5 },
+        { CF_DIB, CF_BITMAP, CF_DIBV5 },
+        { CF_DIBV5, CF_BITMAP, CF_DIB }
+    };
+    unsigned int i, from, total = 0, map = clipboard->format_map;
+    struct clip_format *format;
+
+    if (!HAS_FORMAT( map, CF_LOCALE ) &&
+        (HAS_FORMAT( map, CF_TEXT ) || HAS_FORMAT( map, CF_OEMTEXT ) || HAS_FORMAT( map, CF_UNICODETEXT )))
+    {
+        void *data = memdup( &clipboard->lcid, sizeof(clipboard->lcid) );
+        if ((format = add_format( clipboard, CF_LOCALE )))
+        {
+            clipboard->seqno++;
+            format->data  = data;
+            format->size  = sizeof(clipboard->lcid);
+        }
+        else free( data );
+    }
+
+    for (i = 0; i < sizeof(formats) / sizeof(formats[0]); i++)
+    {
+        if (HAS_FORMAT( map, formats[i][0] )) continue;
+        if (HAS_FORMAT( map, formats[i][1] )) from = formats[i][1];
+        else if (HAS_FORMAT( map, formats[i][2] )) from = formats[i][2];
+        else continue;
+        if (!(format = add_format( clipboard, formats[i][0] ))) continue;
+        format->from = from;
+        total++;
+    }
+    return total;
 }
 
 /* add a clipboard listener */
@@ -233,6 +285,7 @@ static user_handle_t close_clipboard( struct clipboard *clipboard )
     clipboard->open_win = 0;
     clipboard->open_thread = NULL;
     if (clipboard->seqno == clipboard->open_seqno) return 0;  /* unchanged */
+    if (synthesize_formats( clipboard )) clipboard->seqno++;
     return notify_listeners( clipboard );
 }
 
@@ -248,8 +301,9 @@ static user_handle_t release_clipboard( struct clipboard *clipboard )
     /* free the delayed-rendered formats, since we no longer have an owner to render them */
     LIST_FOR_EACH_ENTRY_SAFE( format, next, &clipboard->formats, struct clip_format, entry )
     {
-        if (format->data) continue;
+        if (format->data || format->from) continue;
         list_remove( &format->entry );
+        if (format->id < CF_MAX) clipboard->format_map &= ~(1 << format->id);
         clipboard->format_count--;
         free( format );
         changed = 1;
@@ -406,8 +460,12 @@ DECL_HANDLER(set_clipboard_data)
     }
 
     clipboard->seqno++;
+    format->from   = 0;
     format->size   = get_req_data_size();
     format->data   = data;
+
+    if (req->format == CF_TEXT || req->format == CF_OEMTEXT || req->format == CF_UNICODETEXT)
+        clipboard->lcid = req->lcid;
 }
 
 
@@ -429,8 +487,9 @@ DECL_HANDLER(get_clipboard_data)
         set_error( STATUS_OBJECT_NAME_NOT_FOUND );
         return;
     }
+    reply->from   = format->from;
     reply->total  = format->size;
-    if (!format->data) reply->owner = clipboard->owner_win;
+    if (!format->data && !format->from) reply->owner = clipboard->owner_win;
     if (format->size <= get_reply_max_size()) set_reply_data( format->data, format->size );
     else set_error( STATUS_BUFFER_OVERFLOW );
 }

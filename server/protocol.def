@@ -3202,6 +3202,7 @@ enum caret_state
 /* Add a data format to the clipboard */
 @REQ(set_clipboard_data)
     unsigned int   format;         /* clipboard format of the data */
+    unsigned int   lcid;           /* locale id to use for synthesizing text formats */
     VARARG(data,bytes);            /* data contents */
 @END
 
@@ -3210,6 +3211,7 @@ enum caret_state
 @REQ(get_clipboard_data)
     unsigned int   format;         /* clipboard format of the data */
 @REPLY
+    unsigned int   from;           /* for synthesized data, format to generate it from */
     user_handle_t  owner;          /* clipboard owner for delayed-rendered formats */
     data_size_t    total;          /* total data size */
     VARARG(data,bytes);            /* data contents */
