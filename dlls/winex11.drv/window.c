@@ -1794,6 +1794,7 @@ BOOL CDECL X11DRV_CreateWindow( HWND hwnd )
                                            CWOverrideRedirect | CWEventMask, &attr );
         XFlush( data->display );
         SetPropA( hwnd, clip_window_prop, (HANDLE)data->clip_window );
+        X11DRV_InitClipboard();
     }
     return TRUE;
 }
@@ -2660,9 +2661,8 @@ LRESULT CDECL X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 
     switch(msg)
     {
-    case WM_X11DRV_ACQUIRE_SELECTION:
-        X11DRV_AcquireClipboard( hwnd );
-        return 0;
+    case WM_X11DRV_UPDATE_CLIPBOARD:
+        return update_clipboard( hwnd );
     case WM_X11DRV_SET_WIN_REGION:
         if ((data = get_win_data( hwnd )))
         {

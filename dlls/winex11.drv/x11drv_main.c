@@ -588,7 +588,6 @@ static BOOL process_attach(void)
     if (use_xkb) use_xkb = XkbUseExtension( gdi_display, NULL, NULL );
 #endif
     X11DRV_InitKeyboard( gdi_display );
-    X11DRV_InitClipboard();
     if (use_xim) use_xim = X11DRV_InitXIM( input_style );
 
     return TRUE;
@@ -604,7 +603,6 @@ void CDECL X11DRV_ThreadDetach(void)
 
     if (data)
     {
-        X11DRV_ResetSelectionOwner();
         if (data->xim) XCloseIM( data->xim );
         if (data->font_set) XFreeFontSet( data->display, data->font_set );
         XCloseDisplay( data->display );

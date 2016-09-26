@@ -87,7 +87,6 @@
 #include "wine/list.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
-#include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 
@@ -97,25 +96,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 
 #define SELECTION_UPDATE_DELAY 2000   /* delay between checks of the X11 selection */
 
-/* Selection masks */
-#define S_NOSELECTION    0
-#define S_PRIMARY        1
-#define S_CLIPBOARD      2
-
 typedef BOOL (*EXPORTFUNC)( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 typedef HANDLE (*IMPORTFUNC)( Atom type, const void *data, size_t size );
 
-typedef struct clipboard_format
+struct clipboard_format
 {
     struct list entry;
     UINT        id;
     Atom        atom;
     IMPORTFUNC  import;
     EXPORTFUNC  export;
-} WINE_CLIPFORMAT, *LPWINE_CLIPFORMAT;
-
-static int selectionAcquired = 0;              /* Contains the current selection masks */
-static Window selectionWindow = None;          /* The top level X window which owns the selection */
+};
 
 static HANDLE import_data( Atom type, const void *data, size_t size );
 static HANDLE import_enhmetafile( Atom type, const void *data, size_t size );
@@ -202,35 +193,15 @@ static struct list format_list = LIST_INIT( format_list );
 #define NB_BUILTIN_FORMATS (sizeof(builtin_formats) / sizeof(builtin_formats[0]))
 #define GET_ATOM(prop)  (((prop) < FIRST_XATOM) ? (Atom)(prop) : X11DRV_Atoms[(prop) - FIRST_XATOM])
 
+static DWORD clipboard_thread_id;
+static HWND clipboard_hwnd;
+static BOOL is_clipboard_owner;
+static Window selection_window;
+static Window import_window;
+static Atom current_selection;
+static ULONG64 last_clipboard_update;
 static struct clipboard_format **current_x11_formats;
 static unsigned int nb_current_x11_formats;
-
-
-/**************************************************************************
- *                Internal Clipboard implementation methods
- **************************************************************************/
-
-static Window thread_selection_wnd(void)
-{
-    struct x11drv_thread_data *thread_data = x11drv_init_thread_data();
-    Window w = thread_data->selection_wnd;
-
-    if (!w)
-    {
-        w = XCreateWindow(thread_data->display, root_window, 0, 0, 1, 1, 0, CopyFromParent,
-                          InputOnly, CopyFromParent, 0, NULL);
-        if (w)
-        {
-            thread_data->selection_wnd = w;
-
-            XSelectInput(thread_data->display, w, PropertyChangeMask);
-        }
-        else
-            FIXME("Failed to create window. Fetching selection data will fail.\n");
-    }
-
-    return w;
-}
 
 static const char *debugstr_format( UINT id )
 {
@@ -442,15 +413,6 @@ static void register_x11_formats( const Atom *atoms, UINT size )
         }
         register_formats( ids, new_atoms, pos );
     }
-}
-
-
-/**************************************************************************
- *		X11DRV_InitClipboard
- */
-void X11DRV_InitClipboard(void)
-{
-    register_builtin_formats();
 }
 
 
@@ -1135,19 +1097,21 @@ void X11DRV_CLIPBOARD_ImportSelection( Display *display, Window win, Atom select
 /**************************************************************************
  *		render_format
  */
-BOOL render_format( Display *display, Window win, Atom selection, UINT id )
+static void render_format( UINT id )
 {
+    Display *display = thread_display();
     unsigned int i;
     HANDLE handle = 0;
+
+    if (!current_selection) return;
 
     for (i = 0; i < nb_current_x11_formats; i++)
     {
         if (current_x11_formats[i]->id != id) continue;
-        handle = import_selection( display, win, selection, current_x11_formats[i] );
+        handle = import_selection( display, import_window, current_selection, current_x11_formats[i] );
         if (handle) SetClipboardData( id, handle );
         break;
     }
-    return handle != 0;
 }
 
 
@@ -1630,7 +1594,7 @@ static BOOL export_selection( Display *display, Window win, Atom prop, Atom targ
             ret = format->export( display, win, prop, target, 0 );
             break;
         }
-        if (!open && !(open = OpenClipboard( 0 )))
+        if (!open && !(open = OpenClipboard( clipboard_hwnd )))
         {
             ERR( "failed to open clipboard for %s\n", debugstr_xatom( target ));
             return FALSE;
@@ -1875,159 +1839,211 @@ static BOOL X11DRV_CLIPBOARD_ReadProperty( Display *display, Window w, Atom prop
 
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ReleaseSelection
+ *		acquire_selection
  *
- * Release XA_CLIPBOARD and XA_PRIMARY in response to a SelectionClear event.
+ * Acquire the X11 selection when the Win32 clipboard has changed.
  */
-static void X11DRV_CLIPBOARD_ReleaseSelection(Display *display, Atom selType, Window w, HWND hwnd, Time time)
+static void acquire_selection( Display *display )
 {
-    /* w is the window that lost the selection
-     */
-    TRACE("event->window = %08x (selectionWindow = %08x) selectionAcquired=0x%08x\n",
-	  (unsigned)w, (unsigned)selectionWindow, (unsigned)selectionAcquired);
+    if (selection_window) XDestroyWindow( display, selection_window );
 
-    if (selectionAcquired && (w == selectionWindow))
-    {
-        /* completely give up the selection */
-        TRACE("Lost CLIPBOARD (+PRIMARY) selection\n");
+    selection_window = XCreateWindow( display, root_window, 0, 0, 1, 1, 0, CopyFromParent,
+                                      InputOutput, CopyFromParent, 0, NULL );
+    if (!selection_window) return;
 
-        if ((selType == x11drv_atom(CLIPBOARD)) && (selectionAcquired & S_PRIMARY))
-        {
-            TRACE("Lost clipboard. Check if we need to release PRIMARY\n");
-
-            if (selectionWindow == XGetSelectionOwner(display, XA_PRIMARY))
-            {
-                TRACE("We still own PRIMARY. Releasing PRIMARY.\n");
-                XSetSelectionOwner(display, XA_PRIMARY, None, time);
-            }
-            else
-                TRACE("We no longer own PRIMARY\n");
-        }
-        else if ((selType == XA_PRIMARY) && (selectionAcquired & S_CLIPBOARD))
-        {
-            TRACE("Lost PRIMARY. Check if we need to release CLIPBOARD\n");
-
-            if (selectionWindow == XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)))
-            {
-                TRACE("We still own CLIPBOARD. Releasing CLIPBOARD.\n");
-                XSetSelectionOwner(display, x11drv_atom(CLIPBOARD), None, time);
-            }
-            else
-                TRACE("We no longer own CLIPBOARD\n");
-        }
-
-        selectionWindow = None;
-
-        /* Reset the selection flags now that we are done */
-        selectionAcquired = S_NOSELECTION;
-    }
+    XSetSelectionOwner( display, x11drv_atom(CLIPBOARD), selection_window, CurrentTime );
+    if (use_primary_selection) XSetSelectionOwner( display, XA_PRIMARY, selection_window, CurrentTime );
+    TRACE( "win %lx\n", selection_window );
 }
 
 
 /**************************************************************************
- *                X11DRV Clipboard Exports
- **************************************************************************/
-
-
-static void selection_acquire(void)
+ *		release_selection
+ *
+ * Release the X11 selection when some other X11 app has grabbed it.
+ */
+static void release_selection( Display *display, Time time )
 {
-    Window owner;
-    Display *display;
+    assert( selection_window );
 
-    owner = thread_selection_wnd();
-    display = thread_display();
+    TRACE( "win %lx\n", selection_window );
 
-    selectionAcquired = 0;
-    selectionWindow = 0;
+    /* release PRIMARY if we still own it */
+    if (use_primary_selection && XGetSelectionOwner( display, XA_PRIMARY ) == selection_window)
+        XSetSelectionOwner( display, XA_PRIMARY, None, time );
 
-    /* Grab PRIMARY selection if not owned */
-    if (use_primary_selection)
-        XSetSelectionOwner(display, XA_PRIMARY, owner, CurrentTime);
-
-    /* Grab CLIPBOARD selection if not owned */
-    XSetSelectionOwner(display, x11drv_atom(CLIPBOARD), owner, CurrentTime);
-
-    if (use_primary_selection && XGetSelectionOwner(display, XA_PRIMARY) == owner)
-        selectionAcquired |= S_PRIMARY;
-
-    if (XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)) == owner)
-        selectionAcquired |= S_CLIPBOARD;
-
-    if (selectionAcquired)
-    {
-        selectionWindow = owner;
-        TRACE("Grabbed X selection, owner=(%08x)\n", (unsigned) owner);
-    }
+    XDestroyWindow( display, selection_window );
+    selection_window = 0;
 }
 
-static DWORD WINAPI selection_thread_proc(LPVOID p)
-{
-    HANDLE event = p;
-
-    TRACE("\n");
-
-    selection_acquire();
-    SetEvent(event);
-
-    while (selectionAcquired)
-    {
-        MsgWaitForMultipleObjectsEx(0, NULL, INFINITE, QS_SENDMESSAGE, 0);
-    }
-
-    return 0;
-}
 
 /**************************************************************************
- *		X11DRV_AcquireClipboard
+ *		request_selection_contents
+ *
+ * Retrieve the contents of the X11 selection when it's owned by an X11 app.
  */
-void X11DRV_AcquireClipboard(HWND hWndClipWindow)
+static void request_selection_contents( Display *display )
 {
-    DWORD procid;
-    HANDLE selectionThread;
+    struct clipboard_format *targets = find_x11_format( x11drv_atom(TARGETS) );
+    struct clipboard_format *string = find_x11_format( XA_STRING );
 
-    TRACE(" %p\n", hWndClipWindow);
+    assert( targets );
+    assert( string );
 
-    /*
-     * It's important that the selection get acquired from the thread
-     * that owns the clipboard window. The primary reason is that we know 
-     * it is running a message loop and therefore can process the 
-     * X selection events.
-     */
-    if (hWndClipWindow &&
-        GetCurrentThreadId() != GetWindowThreadProcessId(hWndClipWindow, &procid))
+    current_selection = 0;
+    if (use_primary_selection && XGetSelectionOwner( display, XA_PRIMARY ))
     {
-        if (procid != GetCurrentProcessId())
-        {
-            WARN("Setting clipboard owner to other process is not supported\n");
-            hWndClipWindow = NULL;
-        }
+        if (import_selection( display, import_window, XA_PRIMARY, targets ))
+            current_selection = XA_PRIMARY;
         else
-        {
-            TRACE("Thread %x is acquiring selection with thread %x's window %p\n",
-                GetCurrentThreadId(),
-                GetWindowThreadProcessId(hWndClipWindow, NULL), hWndClipWindow);
-
-            SendMessageW(hWndClipWindow, WM_X11DRV_ACQUIRE_SELECTION, 0, 0);
-            return;
-        }
+            import_selection( display, import_window, XA_PRIMARY, string );
     }
-
-    if (hWndClipWindow)
+    else if (XGetSelectionOwner( display, x11drv_atom(CLIPBOARD) ))
     {
-        selection_acquire();
+        if (import_selection( display, import_window, x11drv_atom(CLIPBOARD), targets ))
+            current_selection = x11drv_atom(CLIPBOARD);
+        else
+            import_selection( display, import_window, x11drv_atom(CLIPBOARD), string );
     }
-    else
-    {
-        HANDLE event = CreateEventW(NULL, FALSE, FALSE, NULL);
-        selectionThread = CreateThread(NULL, 0, selection_thread_proc, event, 0, NULL);
+}
 
-        if (selectionThread)
-        {
-            WaitForSingleObject(event, INFINITE);
-            CloseHandle(selectionThread);
-        }
-        CloseHandle(event);
+
+/**************************************************************************
+ *		grab_win32_clipboard
+ *
+ * Grab the Win32 clipboard when an X11 app has grabbed the X11 selection,
+ * and fill it with the selection contents.
+ */
+static BOOL grab_win32_clipboard( Display *display )
+{
+    if (!OpenClipboard( clipboard_hwnd )) return FALSE;
+    EmptyClipboard();
+    is_clipboard_owner = TRUE;
+    last_clipboard_update = GetTickCount64();
+    request_selection_contents( display );
+    CloseClipboard();
+    return TRUE;
+}
+
+
+/**************************************************************************
+ *		update_clipboard
+ *
+ * Periodically update the clipboard while the selection is owned by an X11 app.
+ */
+BOOL update_clipboard( HWND hwnd )
+{
+    if (hwnd != clipboard_hwnd) return TRUE;
+    if (!is_clipboard_owner) return TRUE;
+    if (GetTickCount64() - last_clipboard_update <= SELECTION_UPDATE_DELAY) return TRUE;
+    return grab_win32_clipboard( thread_display() );
+}
+
+
+/**************************************************************************
+ *		clipboard_wndproc
+ *
+ * Window procedure for the clipboard manager.
+ */
+static LRESULT CALLBACK clipboard_wndproc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+{
+    switch (msg)
+    {
+    case WM_NCCREATE:
+        return TRUE;
+    case WM_CLIPBOARDUPDATE:
+        if (is_clipboard_owner) break;  /* ignore our own changes */
+        acquire_selection( thread_init_display() );
+        break;
+    case WM_RENDERFORMAT:
+        render_format( wp );
+        break;
+    case WM_DESTROYCLIPBOARD:
+        TRACE( "WM_DESTROYCLIPBOARD: lost ownership\n" );
+        is_clipboard_owner = FALSE;
+        break;
     }
+    return DefWindowProcW( hwnd, msg, wp, lp );
+}
+
+
+/**************************************************************************
+ *		wait_clipboard_mutex
+ *
+ * Make sure that there's only one clipboard thread per window station.
+ */
+static BOOL wait_clipboard_mutex(void)
+{
+    static const WCHAR prefix[] = {'_','_','w','i','n','e','_','c','l','i','p','b','o','a','r','d','_'};
+    WCHAR buffer[MAX_PATH + sizeof(prefix) / sizeof(WCHAR)];
+    HANDLE mutex;
+
+    memcpy( buffer, prefix, sizeof(prefix) );
+    if (!GetUserObjectInformationW( GetProcessWindowStation(), UOI_NAME,
+                                    buffer + sizeof(prefix) / sizeof(WCHAR),
+                                    sizeof(buffer) - sizeof(prefix), NULL ))
+    {
+        ERR( "failed to get winstation name\n" );
+        return FALSE;
+    }
+    mutex = CreateMutexW( NULL, TRUE, buffer );
+    if (GetLastError() == ERROR_ALREADY_EXISTS)
+    {
+        TRACE( "waiting for mutex %s\n", debugstr_w( buffer ));
+        WaitForSingleObject( mutex, INFINITE );
+    }
+    return TRUE;
+}
+
+
+/**************************************************************************
+ *		clipboard_thread
+ *
+ * Thread running inside the desktop process to manage the clipboard
+ */
+static DWORD WINAPI clipboard_thread( void *arg )
+{
+    static const WCHAR clipboard_classname[] = {'_','_','w','i','n','e','_','c','l','i','p','b','o','a','r','d','_','m','a','n','a','g','e','r',0};
+    XSetWindowAttributes attr;
+    WNDCLASSW class;
+    MSG msg;
+    Display *display = thread_init_display();
+
+    if (!wait_clipboard_mutex()) return 0;
+
+    attr.event_mask = PropertyChangeMask;
+    import_window = XCreateWindow( display, root_window, 0, 0, 1, 1, 0, CopyFromParent,
+                                   InputOutput, CopyFromParent, CWEventMask, &attr );
+    if (!import_window)
+    {
+        ERR( "failed to create import window\n" );
+        return 0;
+    }
+
+    memset( &class, 0, sizeof(class) );
+    class.lpfnWndProc   = clipboard_wndproc;
+    class.lpszClassName = clipboard_classname;
+
+    if (!RegisterClassW( &class ) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
+    {
+        ERR( "could not register clipboard window class err %u\n", GetLastError() );
+        return 0;
+    }
+    if (!(clipboard_hwnd = CreateWindowW( clipboard_classname, NULL, 0, 0, 0, 0, 0,
+                                          HWND_MESSAGE, 0, 0, NULL )))
+    {
+        ERR( "failed to create clipboard window err %u\n", GetLastError() );
+        return 0;
+    }
+
+    clipboard_thread_id = GetCurrentThreadId();
+    AddClipboardFormatListener( clipboard_hwnd );
+    register_builtin_formats();
+    grab_win32_clipboard( display );
+
+    TRACE( "clipboard thread %04x running\n", GetCurrentThreadId() );
+    while (GetMessageW( &msg, 0, 0, 0 )) DispatchMessageW( &msg );
+    return 0;
 }
 
 
@@ -2038,48 +2054,14 @@ void CDECL X11DRV_UpdateClipboard(void)
 {
     static ULONG last_update;
     ULONG now;
+    DWORD_PTR ret;
 
-    if (selectionAcquired) return;
+    if (GetCurrentThreadId() == clipboard_thread_id) return;
     now = GetTickCount();
     if ((int)(now - last_update) <= SELECTION_UPDATE_DELAY) return;
-    last_update = now;
-}
-
-
-/**************************************************************************
- *		ResetSelectionOwner
- *
- * Called when the thread owning the selection is destroyed and we need to
- * preserve the selection ownership. We look for another top level window
- * in this process and send it a message to acquire the selection.
- */
-void X11DRV_ResetSelectionOwner(void)
-{
-    HWND hwnd;
-    DWORD procid;
-
-    TRACE("\n");
-
-    if (!selectionAcquired  || thread_selection_wnd() != selectionWindow)
-        return;
-
-    selectionAcquired = S_NOSELECTION;
-    selectionWindow = 0;
-
-    hwnd = GetWindow(GetDesktopWindow(), GW_CHILD);
-    do
-    {
-        if (GetCurrentThreadId() != GetWindowThreadProcessId(hwnd, &procid))
-        {
-            if (GetCurrentProcessId() == procid)
-            {
-                if (SendMessageW(hwnd, WM_X11DRV_ACQUIRE_SELECTION, 0, 0))
-                    return;
-            }
-        }
-    } while ((hwnd = GetWindow(hwnd, GW_HWNDNEXT)) != NULL);
-
-    WARN("Failed to find another thread to take selection ownership. Clipboard data will be lost.\n");
+    if (SendMessageTimeoutW( GetClipboardOwner(), WM_X11DRV_UPDATE_CLIPBOARD, 0, 0,
+                             SMTO_ABORTIFHUNG, 5000, &ret ) && ret)
+        last_update = now;
 }
 
 
@@ -2095,12 +2077,13 @@ BOOL X11DRV_SelectionRequest( HWND hwnd, XEvent *xev )
 
     X11DRV_expect_error( display, is_window_error, NULL );
 
-    /*
-     * We can only handle the selection request if :
-     * The selection is PRIMARY or CLIPBOARD, AND we can successfully open the clipboard.
-     */
-    if (((event->selection != XA_PRIMARY) && (event->selection != x11drv_atom(CLIPBOARD))))
-        goto done;
+    TRACE( "got request on %lx for selection %s target %s win %lx prop %s\n",
+           event->owner, debugstr_xatom( event->selection ), debugstr_xatom( event->target ),
+           event->requestor, debugstr_xatom( event->property ));
+
+    if (event->owner != selection_window) goto done;
+    if ((event->selection != x11drv_atom(CLIPBOARD)) &&
+        (!use_primary_selection || event->selection != XA_PRIMARY)) goto done;
 
     /* If the specified property is None the requestor is an obsolete client.
      * We support these by using the specified target atom as the reply property.
@@ -2131,11 +2114,27 @@ done:
 /***********************************************************************
  *           X11DRV_SelectionClear
  */
-BOOL X11DRV_SelectionClear( HWND hWnd, XEvent *xev )
+BOOL X11DRV_SelectionClear( HWND hwnd, XEvent *xev )
 {
     XSelectionClearEvent *event = &xev->xselectionclear;
-    if (event->selection == XA_PRIMARY || event->selection == x11drv_atom(CLIPBOARD))
-        X11DRV_CLIPBOARD_ReleaseSelection( event->display, event->selection,
-                                           event->window, hWnd, event->time );
+
+    if (event->window != selection_window) return FALSE;
+    if (event->selection != x11drv_atom(CLIPBOARD)) return FALSE;
+
+    release_selection( event->display, event->time );
+    grab_win32_clipboard( event->display );
     return FALSE;
+}
+
+
+/**************************************************************************
+ *		X11DRV_InitClipboard
+ */
+void X11DRV_InitClipboard(void)
+{
+    DWORD id;
+    HANDLE handle = CreateThread( NULL, 0, clipboard_thread, NULL, 0, &id );
+
+    if (handle) CloseHandle( handle );
+    else ERR( "failed to create clipboard thread\n" );
 }
