@@ -203,6 +203,8 @@ static ULONG64 last_clipboard_update;
 static struct clipboard_format **current_x11_formats;
 static unsigned int nb_current_x11_formats;
 
+Display *clipboard_display = NULL;
+
 static const char *debugstr_format( UINT id )
 {
     WCHAR buffer[256];
@@ -257,11 +259,6 @@ static const char *debugstr_xatom( Atom atom )
 static int is_atom_error( Display *display, XErrorEvent *event, void *arg )
 {
     return (event->error_code == BadAtom);
-}
-
-static int is_window_error( Display *display, XErrorEvent *event, void *arg )
-{
-    return (event->error_code == BadWindow);
 }
 
 
@@ -2007,12 +2004,12 @@ static DWORD WINAPI clipboard_thread( void *arg )
     XSetWindowAttributes attr;
     WNDCLASSW class;
     MSG msg;
-    Display *display = thread_init_display();
 
     if (!wait_clipboard_mutex()) return 0;
 
+    clipboard_display = thread_init_display();
     attr.event_mask = PropertyChangeMask;
-    import_window = XCreateWindow( display, root_window, 0, 0, 1, 1, 0, CopyFromParent,
+    import_window = XCreateWindow( clipboard_display, root_window, 0, 0, 1, 1, 0, CopyFromParent,
                                    InputOutput, CopyFromParent, CWEventMask, &attr );
     if (!import_window)
     {
@@ -2039,7 +2036,7 @@ static DWORD WINAPI clipboard_thread( void *arg )
     clipboard_thread_id = GetCurrentThreadId();
     AddClipboardFormatListener( clipboard_hwnd );
     register_builtin_formats();
-    grab_win32_clipboard( display );
+    grab_win32_clipboard( clipboard_display );
 
     TRACE( "clipboard thread %04x running\n", GetCurrentThreadId() );
     while (GetMessageW( &msg, 0, 0, 0 )) DispatchMessageW( &msg );
@@ -2075,8 +2072,6 @@ BOOL X11DRV_SelectionRequest( HWND hwnd, XEvent *xev )
     XEvent result;
     Atom rprop = None;
 
-    X11DRV_expect_error( display, is_window_error, NULL );
-
     TRACE( "got request on %lx for selection %s target %s win %lx prop %s\n",
            event->owner, debugstr_xatom( event->selection ), debugstr_xatom( event->target ),
            event->requestor, debugstr_xatom( event->property ));
@@ -2105,8 +2100,6 @@ done:
     result.xselection.time = event->time;
     TRACE( "sending SelectionNotify for %s to %lx\n", debugstr_xatom( rprop ), event->requestor );
     XSendEvent( display, event->requestor, False, NoEventMask, &result );
-    XSync( display, False );
-    if (X11DRV_check_error()) WARN( "requestor %lx is no longer valid\n", event->requestor );
     return FALSE;
 }
 

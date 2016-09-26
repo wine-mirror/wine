@@ -210,6 +210,9 @@ static inline BOOL ignore_error( Display *display, XErrorEvent *event )
     if ((event->request_code == X_SetInputFocus || event->request_code == X_ChangeWindowAttributes) &&
         (event->error_code == BadMatch || event->error_code == BadWindow)) return TRUE;
 
+    /* the clipboard display interacts with external windows, ignore all errors */
+    if (display == clipboard_display) return TRUE;
+
     /* ignore a number of errors on gdi display caused by creating/destroying windows */
     if (display == gdi_display)
     {
