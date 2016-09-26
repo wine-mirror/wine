@@ -1145,9 +1145,9 @@
 @ cdecl -arch=arm ?_Empty@?$_Yarn@_W@std@@QBA_NXZ(ptr) _Yarn_wchar__Empty
 @ thiscall -arch=i386 ?_Empty@?$_Yarn@_W@std@@QBE_NXZ(ptr) _Yarn_wchar__Empty
 @ cdecl -arch=win64 ?_Empty@?$_Yarn@_W@std@@QEBA_NXZ(ptr) _Yarn_wchar__Empty
-@ stub -arch=arm ?_Execute_once@std@@YAHAAUonce_flag@1@P6AHPAX1PAPAX@Z1@Z
-@ stub -arch=i386 ?_Execute_once@std@@YAHAAUonce_flag@1@P6GHPAX1PAPAX@Z1@Z
-@ stub -arch=win64 ?_Execute_once@std@@YAHAEAUonce_flag@1@P6AHPEAX1PEAPEAX@Z1@Z
+@ cdecl -arch=arm ?_Execute_once@std@@YAHAAUonce_flag@1@P6AHPAX1PAPAX@Z1@Z(ptr ptr ptr) _Execute_once
+@ cdecl -arch=i386 ?_Execute_once@std@@YAHAAUonce_flag@1@P6GHPAX1PAPAX@Z1@Z(ptr ptr ptr) _Execute_once
+@ cdecl -arch=win64 ?_Execute_once@std@@YAHAEAUonce_flag@1@P6AHPEAX1PEAPEAX@Z1@Z(ptr ptr ptr) _Execute_once
 @ cdecl -arch=win32 ?_Ffmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAPADPADDH@Z(ptr ptr long long) num_put_char__Ffmt
 @ cdecl -arch=win64 ?_Ffmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAPEADPEADDH@Z(ptr ptr long long) num_put_char__Ffmt
 @ cdecl -arch=win32 ?_Ffmt@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABAPADPADDH@Z(ptr ptr long long) num_put_wchar__Ffmt

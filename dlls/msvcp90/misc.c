@@ -1162,6 +1162,13 @@ HANDLE CDECL MSVCP__crtCreateSemaphoreExW(
     return CreateSemaphoreExW(attribs, initial_count, max_count, name, flags, access);
 }
 
+/* ?_Execute_once@std@@YAHAAUonce_flag@1@P6GHPAX1PAPAX@Z1@Z */
+/* ?_Execute_once@std@@YAHAEAUonce_flag@1@P6AHPEAX1PEAPEAX@Z1@Z */
+BOOL __cdecl _Execute_once(INIT_ONCE *flag, PINIT_ONCE_FN func, void *param)
+{
+    return InitOnceExecuteOnce(flag, func, param, NULL);
+}
+
 void init_misc(void *base)
 {
 #ifdef __x86_64__
