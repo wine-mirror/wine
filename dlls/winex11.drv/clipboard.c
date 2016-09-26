@@ -342,6 +342,31 @@ static struct clipboard_format *find_x11_format( Atom atom )
 
 
 /**************************************************************************
+ *		register_builtin_formats
+ */
+static void register_builtin_formats(void)
+{
+    struct clipboard_format *formats;
+    unsigned int i;
+
+    if (!(formats = HeapAlloc( GetProcessHeap(), 0, NB_BUILTIN_FORMATS * sizeof(*formats)))) return;
+
+    for (i = 0; i < NB_BUILTIN_FORMATS; i++)
+    {
+        if (builtin_formats[i].name)
+            formats[i].id = RegisterClipboardFormatW( builtin_formats[i].name );
+        else
+            formats[i].id = builtin_formats[i].id;
+
+        formats[i].atom   = GET_ATOM(builtin_formats[i].data);
+        formats[i].import = builtin_formats[i].import;
+        formats[i].export = builtin_formats[i].export;
+        list_add_tail( &format_list, &formats[i].entry );
+    }
+}
+
+
+/**************************************************************************
  *		register_formats
  */
 static void register_formats( const UINT *ids, const Atom *atoms, unsigned int count )
@@ -375,6 +400,8 @@ static void register_win32_formats( const UINT *ids, UINT size )
     char *names[256];
     Atom atoms[256];
     WCHAR buffer[256];
+
+    if (list_empty( &format_list)) register_builtin_formats();
 
     while (size)
     {
@@ -410,6 +437,8 @@ static void register_x11_formats( const Atom *atoms, UINT size )
     Atom new_atoms[256];
     WCHAR buffer[256];
 
+    if (list_empty( &format_list)) register_builtin_formats();
+
     while (size)
     {
         for (count = 0; count < 256 && size; atoms++, size--)
@@ -442,23 +471,7 @@ static void register_x11_formats( const Atom *atoms, UINT size )
  */
 void X11DRV_InitClipboard(void)
 {
-    struct clipboard_format *formats;
-    UINT i;
-
-    if (!(formats = HeapAlloc( GetProcessHeap(), 0, NB_BUILTIN_FORMATS * sizeof(*formats)))) return;
-
-    for (i = 0; i < NB_BUILTIN_FORMATS; i++)
-    {
-        if (builtin_formats[i].name)
-            formats[i].id = RegisterClipboardFormatW( builtin_formats[i].name );
-        else
-            formats[i].id = builtin_formats[i].id;
-
-        formats[i].atom   = GET_ATOM(builtin_formats[i].data);
-        formats[i].import = builtin_formats[i].import;
-        formats[i].export = builtin_formats[i].export;
-        list_add_tail( &format_list, &formats[i].entry );
-    }
+    register_builtin_formats();
 }
 
 
