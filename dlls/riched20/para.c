@@ -127,12 +127,12 @@ static void ME_UpdateTableFlags(ME_DisplayItem *para)
     para->member.para.pFmt->wEffects &= ~PFE_TABLE;
 }
 
-static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, const PARAFORMAT2 *pFmt)
+static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_Paragraph *para, const PARAFORMAT2 *pFmt)
 {
   PARAFORMAT2 copy;
   DWORD dwMask;
 
-  assert(para->member.para.pFmt->cbSize == sizeof(PARAFORMAT2));
+  assert(para->pFmt->cbSize == sizeof(PARAFORMAT2));
   dwMask = pFmt->dwMask;
   if (pFmt->cbSize < sizeof(PARAFORMAT))
     return FALSE;
@@ -141,27 +141,27 @@ static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, const 
   else
     dwMask &= PFM_ALL2;
 
-  add_undo_set_para_fmt( editor, &para->member.para );
+  add_undo_set_para_fmt( editor, para );
 
-  copy = *para->member.para.pFmt;
+  copy = *para->pFmt;
 
 #define COPY_FIELD(m, f) \
   if (dwMask & (m)) {                           \
-    para->member.para.pFmt->dwMask |= m;        \
-    para->member.para.pFmt->f = pFmt->f;        \
+    para->pFmt->dwMask |= m;                    \
+    para->pFmt->f = pFmt->f;                    \
   }
 
   COPY_FIELD(PFM_NUMBERING, wNumbering);
   COPY_FIELD(PFM_STARTINDENT, dxStartIndent);
   if (dwMask & PFM_OFFSETINDENT)
-    para->member.para.pFmt->dxStartIndent += pFmt->dxStartIndent;
+    para->pFmt->dxStartIndent += pFmt->dxStartIndent;
   COPY_FIELD(PFM_RIGHTINDENT, dxRightIndent);
   COPY_FIELD(PFM_OFFSET, dxOffset);
   COPY_FIELD(PFM_ALIGNMENT, wAlignment);
   if (dwMask & PFM_TABSTOPS)
   {
-    para->member.para.pFmt->cTabCount = pFmt->cTabCount;
-    memcpy(para->member.para.pFmt->rgxTabs, pFmt->rgxTabs, pFmt->cTabCount*sizeof(LONG));
+    para->pFmt->cTabCount = pFmt->cTabCount;
+    memcpy(para->pFmt->rgxTabs, pFmt->rgxTabs, pFmt->cTabCount*sizeof(LONG));
   }
 
 #define EFFECTS_MASK (PFM_RTLPARA|PFM_KEEP|PFM_KEEPNEXT|PFM_PAGEBREAKBEFORE| \
@@ -170,9 +170,9 @@ static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, const 
   /* we take for granted that PFE_xxx is the hiword of the corresponding PFM_xxx */
   if (dwMask & EFFECTS_MASK)
   {
-    para->member.para.pFmt->dwMask |= dwMask & EFFECTS_MASK;
-    para->member.para.pFmt->wEffects &= ~HIWORD(dwMask);
-    para->member.para.pFmt->wEffects |= pFmt->wEffects & HIWORD(dwMask);
+    para->pFmt->dwMask |= dwMask & EFFECTS_MASK;
+    para->pFmt->wEffects &= ~HIWORD(dwMask);
+    para->pFmt->wEffects |= pFmt->wEffects & HIWORD(dwMask);
   }
 #undef EFFECTS_MASK
 
@@ -190,11 +190,11 @@ static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_DisplayItem *para, const 
   COPY_FIELD(PFM_BORDER, wBorderWidth);
   COPY_FIELD(PFM_BORDER, wBorders);
 
-  para->member.para.pFmt->dwMask |= dwMask;
+  para->pFmt->dwMask |= dwMask;
 #undef COPY_FIELD
 
-  if (memcmp(&copy, para->member.para.pFmt, sizeof(PARAFORMAT2)))
-    para->member.para.nFlags |= MEPF_REWRAP;
+  if (memcmp(&copy, para->pFmt, sizeof(PARAFORMAT2)))
+    para->nFlags |= MEPF_REWRAP;
 
   return TRUE;
 }
@@ -551,7 +551,7 @@ BOOL ME_SetSelectionParaFormat(ME_TextEditor *editor, const PARAFORMAT2 *pFmt)
   ME_GetSelectionParas(editor, &para, &para_end);
 
   do {
-    ME_SetParaFormat(editor, para, pFmt);
+    ME_SetParaFormat(editor, &para->member.para, pFmt);
     if (para == para_end)
       break;
     para = para->member.para.next_para;
