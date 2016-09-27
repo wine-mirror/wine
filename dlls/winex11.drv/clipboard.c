@@ -654,6 +654,33 @@ static WCHAR* uri_to_dos(char *encodedURI)
 
 
 /**************************************************************************
+ *		unicode_text_from_string
+ *
+ * Convert a string in the specified encoding to CF_UNICODETEXT format.
+ */
+static HANDLE unicode_text_from_string( UINT codepage, const void *data, size_t size )
+{
+    DWORD i, j, count;
+    WCHAR *strW;
+
+    count = MultiByteToWideChar( codepage, 0, data, size, NULL, 0);
+
+    if (!(strW = GlobalAlloc( GMEM_FIXED, (count * 2 + 1) * sizeof(WCHAR) ))) return 0;
+
+    MultiByteToWideChar( codepage, 0, data, size, strW + count, count );
+    for (i = j = 0; i < count; i++)
+    {
+        if (strW[i + count] == '\n') strW[j++] = '\r';
+        strW[j++] = strW[i + count];
+    }
+    strW[j++] = 0;
+    GlobalReAlloc( strW, j * sizeof(WCHAR), GMEM_FIXED );  /* release unused space */
+    TRACE( "returning %s\n", debugstr_wn( strW, j - 1 ));
+    return strW;
+}
+
+
+/**************************************************************************
  *		import_string
  *
  *  Import XA_STRING, converting the string to CF_TEXT.
@@ -688,55 +715,24 @@ static HANDLE import_string( Atom type, const void *data, size_t size )
 /**************************************************************************
  *		import_utf8_string
  *
- *  Import XA_UTF8_STRING, converting the string to CF_UNICODE.
+ * Import XA_UTF8_STRING, converting the string to CF_UNICODETEXT.
  */
 static HANDLE import_utf8_string( Atom type, const void *data, size_t size )
 {
-    const char *lpdata = data;
-    LPSTR lpstr;
-    size_t i, inlcount = 0;
-    WCHAR *textW = NULL;
-
-    for (i = 0; i < size; i++)
-    {
-        if (lpdata[i] == '\n')
-            inlcount++;
-    }
-
-    if ((lpstr = HeapAlloc( GetProcessHeap(), 0, size + inlcount + 1 )))
-    {
-        UINT count;
-
-        for (i = 0, inlcount = 0; i < size; i++)
-        {
-            if (lpdata[i] == '\n')
-                lpstr[inlcount++] = '\r';
-
-            lpstr[inlcount++] = lpdata[i];
-        }
-        lpstr[inlcount] = 0;
-
-        count = MultiByteToWideChar(CP_UTF8, 0, lpstr, -1, NULL, 0);
-        textW = GlobalAlloc( GMEM_FIXED, count * sizeof(WCHAR) );
-        if (textW) MultiByteToWideChar( CP_UTF8, 0, lpstr, -1, textW, count );
-        HeapFree(GetProcessHeap(), 0, lpstr);
-    }
-    return textW;
+    return unicode_text_from_string( CP_UTF8, data, size );
 }
 
 
 /**************************************************************************
  *		import_compound_text
  *
- *  Import COMPOUND_TEXT to CF_UNICODE
+ * Import COMPOUND_TEXT to CF_UNICODETEXT.
  */
 static HANDLE import_compound_text( Atom type, const void *data, size_t size )
 {
-    int i, j;
     char** srcstr;
-    int count, lcount;
-    int srclen, destlen;
-    WCHAR *deststr;
+    int count;
+    HANDLE ret;
     XTextProperty txtprop;
 
     txtprop.value = (BYTE *)data;
@@ -746,39 +742,9 @@ static HANDLE import_compound_text( Atom type, const void *data, size_t size )
     if (XmbTextPropertyToTextList( thread_display(), &txtprop, &srcstr, &count ) != Success) return 0;
     if (!count) return 0;
 
-    TRACE("Importing %d line(s)\n", count);
-
-    /* Compute number of lines */
-    srclen = strlen(srcstr[0]);
-    for (i = 0, lcount = 0; i <= srclen; i++)
-    {
-        if (srcstr[0][i] == '\n')
-            lcount++;
-    }
-
-    destlen = MultiByteToWideChar(CP_UNIXCP, 0, srcstr[0], -1, NULL, 0);
-
-    TRACE("lcount = %d, destlen=%d, srcstr %s\n", lcount, destlen, srcstr[0]);
-
-    if ((deststr = GlobalAlloc( GMEM_FIXED, (destlen + lcount + 1) * sizeof(WCHAR) )))
-    {
-        MultiByteToWideChar(CP_UNIXCP, 0, srcstr[0], -1, deststr, destlen);
-
-        if (lcount)
-        {
-            for (i = destlen - 1, j = destlen + lcount - 1; i >= 0; i--, j--)
-            {
-                deststr[j] = deststr[i];
-
-                if (deststr[i] == '\n')
-                    deststr[--j] = '\r';
-            }
-        }
-    }
-
+    ret = unicode_text_from_string( CP_UNIXCP, srcstr[0], strlen(srcstr[0]) + 1 );
     XFreeStringList(srcstr);
-
-    return deststr;
+    return ret;
 }
 
 
