@@ -461,6 +461,7 @@ DECL_HANDLER(set_clipboard_data)
         }
     }
 
+    free( format->data );
     format->from   = 0;
     format->seqno  = clipboard->seqno++;
     format->size   = get_req_data_size();
