@@ -2264,6 +2264,130 @@ static void test_GetUpdatedClipboardFormats(void)
     ok( count == 4, "wrong count %u\n", count );
 }
 
+static const struct
+{
+    char strA[12];
+    WCHAR strW[12];
+    UINT  len;
+} test_data[] =
+{
+    { "foo", {}, 3 },      /* 0 */
+    { "foo", {}, 4 },
+    { "foo\0bar", {}, 7 },
+    { "foo\0bar", {}, 8 },
+    { "", {'f','o','o'}, 3 * sizeof(WCHAR) },
+    { "", {'f','o','o',0}, 4 * sizeof(WCHAR) },     /* 5 */
+    { "", {'f','o','o',0,'b','a','r'}, 7 * sizeof(WCHAR) },
+    { "", {'f','o','o',0,'b','a','r',0}, 8 * sizeof(WCHAR) },
+    { "", {'f','o','o'}, 1 },
+    { "", {'f','o','o'}, 2 },
+    { "", {'f','o','o'}, 5 },     /* 10 */
+    { "", {'f','o','o',0}, 7 },
+    { "", {'f','o','o',0}, 9 },
+};
+
+static void test_string_data(void)
+{
+    UINT i;
+    BOOL r;
+    HANDLE data;
+    char cmd[16];
+    char bufferA[12];
+    WCHAR bufferW[12];
+
+    for (i = 0; i < sizeof(test_data) / sizeof(test_data[0]); i++)
+    {
+        /* 1-byte Unicode strings crash on Win64 */
+#ifdef _WIN64
+        if (!test_data[i].strA[0] && test_data[i].len < sizeof(WCHAR)) continue;
+#endif
+        r = OpenClipboard( 0 );
+        ok( r, "gle %d\n", GetLastError() );
+        r = EmptyClipboard();
+        ok( r, "gle %d\n", GetLastError() );
+        data = GlobalAlloc( GMEM_FIXED, test_data[i].len );
+        if (test_data[i].strA[0])
+        {
+            memcpy( data, test_data[i].strA, test_data[i].len );
+            SetClipboardData( CF_TEXT, data );
+            memcpy( bufferA, test_data[i].strA, test_data[i].len );
+            bufferA[test_data[i].len - 1] = 0;
+            ok( !memcmp( data, bufferA, test_data[i].len ),
+                "%u: wrong data %.*s\n", i, test_data[i].len, (char *)data );
+        }
+        else
+        {
+            memcpy( data, test_data[i].strW, test_data[i].len );
+            SetClipboardData( CF_UNICODETEXT, data );
+            memcpy( bufferW, test_data[i].strW, test_data[i].len );
+            bufferW[(test_data[i].len + 1) / sizeof(WCHAR) - 1] = 0;
+            ok( !memcmp( data, bufferW, test_data[i].len ),
+                "%u: wrong data %s\n", i, wine_dbgstr_wn( data, (test_data[i].len + 1) / sizeof(WCHAR) ));
+        }
+        r = CloseClipboard();
+        ok( r, "gle %d\n", GetLastError() );
+        sprintf( cmd, "string_data %u", i );
+        run_process( cmd );
+    }
+}
+
+static void test_string_data_process( int i )
+{
+    BOOL r;
+    HANDLE data;
+    UINT len, len2;
+    char bufferA[12];
+    WCHAR bufferW[12];
+
+    r = OpenClipboard( 0 );
+    ok( r, "gle %d\n", GetLastError() );
+    if (test_data[i].strA[0])
+    {
+        data = GetClipboardData( CF_TEXT );
+        ok( data != 0, "%u: could not get data\n", i );
+        len = GlobalSize( data );
+        ok( len == test_data[i].len, "%u: wrong size %u / %u\n", i, len, test_data[i].len );
+        memcpy( bufferA, test_data[i].strA, test_data[i].len );
+        bufferA[test_data[i].len - 1] = 0;
+        ok( !memcmp( data, bufferA, len ), "%u: wrong data %.*s\n", i, len, (char *)data );
+        data = GetClipboardData( CF_UNICODETEXT );
+        ok( data != 0, "%u: could not get data\n", i );
+        len = GlobalSize( data );
+        len2 = MultiByteToWideChar( CP_ACP, 0, bufferA, test_data[i].len, bufferW, 12 );
+        ok( len == len2 * sizeof(WCHAR), "%u: wrong size %u / %u\n", i, len, len2 );
+        ok( !memcmp( data, bufferW, len ), "%u: wrong data %s\n", i, wine_dbgstr_wn( data, len2 ));
+    }
+    else
+    {
+        data = GetClipboardData( CF_UNICODETEXT );
+        ok( data != 0, "%u: could not get data\n", i );
+        len = GlobalSize( data );
+        ok( len == test_data[i].len, "%u: wrong size %u / %u\n", i, len, test_data[i].len );
+        memcpy( bufferW, test_data[i].strW, test_data[i].len );
+        bufferW[(test_data[i].len + 1) / sizeof(WCHAR) - 1] = 0;
+        ok( !memcmp( data, bufferW, len ),
+            "%u: wrong data %s\n", i, wine_dbgstr_wn( data, (len + 1) / sizeof(WCHAR) ));
+        data = GetClipboardData( CF_TEXT );
+        if (test_data[i].len >= sizeof(WCHAR))
+        {
+            ok( data != 0, "%u: could not get data\n", i );
+            len = GlobalSize( data );
+            len2 = WideCharToMultiByte( CP_ACP, 0, bufferW, test_data[i].len / sizeof(WCHAR),
+                                        bufferA, 12, NULL, NULL );
+            bufferA[len2 - 1] = 0;
+            ok( len == len2, "%u: wrong size %u / %u\n", i, len, len2 );
+            ok( !memcmp( data, bufferA, len ), "%u: wrong data %.*s\n", i, len, (char *)data );
+        }
+        else
+        {
+            ok( !data, "%u: got data for empty string\n", i );
+            ok( IsClipboardFormatAvailable( CF_TEXT ), "%u: text not available\n", i );
+        }
+    }
+    r = CloseClipboard();
+    ok( r, "gle %d\n", GetLastError() );
+}
+
 START_TEST(clipboard)
 {
     char **argv;
@@ -2301,6 +2425,11 @@ START_TEST(clipboard)
         test_handles_process_dib( argv[3] );
         return;
     }
+    if (argc == 4 && !strcmp( argv[2], "string_data" ))
+    {
+        test_string_data_process( atoi( argv[3] ));
+        return;
+    }
 
     test_RegisterClipboardFormatA();
     test_ClipboardOwner();
@@ -2308,4 +2437,5 @@ START_TEST(clipboard)
     test_messages();
     test_data_handles();
     test_GetUpdatedClipboardFormats();
+    test_string_data();
 }

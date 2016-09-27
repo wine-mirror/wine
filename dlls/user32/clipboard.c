@@ -173,6 +173,29 @@ static HANDLE marshal_data( UINT format, HANDLE handle, data_size_t *ret_size )
             GlobalUnlock( handle );
             return mfbits;
         }
+    case CF_UNICODETEXT:
+        {
+            WCHAR *ptr;
+            if (!(size = GlobalSize( handle ))) return 0;
+            if ((data_size_t)size != size) return 0;
+            if (!(ptr = GlobalLock( handle ))) return 0;
+            ptr[(size + 1) / sizeof(WCHAR) - 1] = 0;  /* enforce null-termination */
+            GlobalUnlock( handle );
+            *ret_size = size;
+            return handle;
+        }
+    case CF_TEXT:
+    case CF_OEMTEXT:
+        {
+            char *ptr;
+            if (!(size = GlobalSize( handle ))) return 0;
+            if ((data_size_t)size != size) return 0;
+            if (!(ptr = GlobalLock( handle ))) return 0;
+            ptr[size - 1] = 0;  /* enforce null-termination */
+            GlobalUnlock( handle );
+            *ret_size = size;
+            return handle;
+        }
     default:
         if (!(size = GlobalSize( handle ))) return 0;
         if ((data_size_t)size != size) return 0;
@@ -382,9 +405,11 @@ static HANDLE render_synthesized_textA( HANDLE data, UINT format, UINT from )
         size = len * sizeof(WCHAR);
     }
 
-    len = WideCharToMultiByte( codepage, 0, src, size / sizeof(WCHAR), NULL, 0, NULL, NULL );
-    if ((ret = GlobalAlloc( GMEM_FIXED, len )))
-        WideCharToMultiByte( codepage, 0, src, size / sizeof(WCHAR), ret, len, NULL, NULL );
+    if ((len = WideCharToMultiByte( codepage, 0, src, size / sizeof(WCHAR), NULL, 0, NULL, NULL )))
+    {
+        if ((ret = GlobalAlloc( GMEM_FIXED, len )))
+            WideCharToMultiByte( codepage, 0, src, size / sizeof(WCHAR), ret, len, NULL, NULL );
+    }
 
 done:
     HeapFree( GetProcessHeap(), 0, srcW );
@@ -396,16 +421,17 @@ done:
 static HANDLE render_synthesized_textW( HANDLE data, UINT from )
 {
     char *src;
-    HANDLE ret;
+    HANDLE ret = 0;
     UINT len, size = GlobalSize( data );
     UINT codepage = get_format_codepage( get_clipboard_locale(), from );
 
     if (!(src = GlobalLock( data ))) return 0;
 
-    len = MultiByteToWideChar( codepage, 0, src, size, NULL, 0 );
-    if ((ret = GlobalAlloc( GMEM_FIXED, len * sizeof(WCHAR) )))
-        MultiByteToWideChar( codepage, 0, src, size, ret, len );
-
+    if ((len = MultiByteToWideChar( codepage, 0, src, size, NULL, 0 )))
+    {
+        if ((ret = GlobalAlloc( GMEM_FIXED, len * sizeof(WCHAR) )))
+            MultiByteToWideChar( codepage, 0, src, size, ret, len );
+    }
     GlobalUnlock( data );
     return ret;
 }
