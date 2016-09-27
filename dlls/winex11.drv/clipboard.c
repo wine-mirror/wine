@@ -152,8 +152,10 @@ static const struct
     EXPORTFUNC    export;
 } builtin_formats[] =
 {
-    { 0, CF_TEXT,            XA_STRING,                 import_string,        export_string },
-    { 0, CF_TEXT,            XATOM_text_plain,          import_string,        export_string },
+    { 0, CF_UNICODETEXT,     XATOM_UTF8_STRING,         import_utf8_string,   export_utf8_string },
+    { 0, CF_UNICODETEXT,     XATOM_COMPOUND_TEXT,       import_compound_text, export_compound_text },
+    { 0, CF_UNICODETEXT,     XA_STRING,                 import_string,        export_string },
+    { 0, CF_UNICODETEXT,     XATOM_text_plain,          import_string,        export_string },
     { 0, CF_BITMAP,          XATOM_WCF_BITMAP,          import_data,          NULL },
     { 0, CF_METAFILEPICT,    XATOM_WCF_METAFILEPICT,    import_metafile,      export_metafile },
     { 0, CF_SYLK,            XATOM_WCF_SYLK,            import_data,          export_data },
@@ -165,8 +167,6 @@ static const struct
     { 0, CF_PENDATA,         XATOM_WCF_PENDATA,         import_data,          export_data },
     { 0, CF_RIFF,            XATOM_WCF_RIFF,            import_data,          export_data },
     { 0, CF_WAVE,            XATOM_WCF_WAVE,            import_data,          export_data },
-    { 0, CF_UNICODETEXT,     XATOM_UTF8_STRING,         import_utf8_string,   export_utf8_string },
-    { 0, CF_UNICODETEXT,     XATOM_COMPOUND_TEXT,       import_compound_text, export_compound_text },
     { 0, CF_ENHMETAFILE,     XATOM_WCF_ENHMETAFILE,     import_enhmetafile,   export_enhmetafile },
     { 0, CF_HDROP,           XATOM_text_uri_list,       import_text_uri_list, export_hdrop },
     { 0, CF_LOCALE,          XATOM_WCF_LOCALE,          import_data,          export_data },
@@ -683,32 +683,11 @@ static HANDLE unicode_text_from_string( UINT codepage, const void *data, size_t 
 /**************************************************************************
  *		import_string
  *
- *  Import XA_STRING, converting the string to CF_TEXT.
+ * Import XA_STRING, converting the string to CF_UNICODETEXT.
  */
 static HANDLE import_string( Atom type, const void *data, size_t size )
 {
-    const char *lpdata = data;
-    LPSTR lpstr;
-    size_t i, inlcount = 0;
-
-    for (i = 0; i < size; i++)
-    {
-        if (lpdata[i] == '\n')
-            inlcount++;
-    }
-
-    if ((lpstr = GlobalAlloc( GMEM_FIXED, size + inlcount + 1 )))
-    {
-        for (i = 0, inlcount = 0; i < size; i++)
-        {
-            if (lpdata[i] == '\n')
-                lpstr[inlcount++] = '\r';
-
-            lpstr[inlcount++] = lpdata[i];
-        }
-        lpstr[inlcount] = 0;
-    }
-    return lpstr;
+    return unicode_text_from_string( 28591, data, size );
 }
 
 
@@ -1130,32 +1109,16 @@ static char *string_from_unicode_text( UINT codepage, HANDLE handle, UINT *size 
 /**************************************************************************
  *		export_string
  *
- *  Export CF_TEXT converting the string to XA_STRING.
+ * Export CF_UNICODETEXT converting the string to XA_STRING.
  */
 static BOOL export_string( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
 {
-    UINT i, j;
     UINT size;
-    LPSTR text, lpstr = NULL;
+    char *text = string_from_unicode_text( 28591, handle, &size );
 
-    text = GlobalLock( handle );
-    size = strlen(text);
-
-    /* remove carriage returns */
-    lpstr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size + 1);
-    if (lpstr == NULL)
-    {
-        GlobalUnlock( handle );
-        return FALSE;
-    }
-    for (i = 0,j = 0; i < size && text[i]; i++)
-    {
-        if (text[i] == '\r' && (text[i+1] == '\n' || text[i+1] == '\0'))
-            continue;
-        lpstr[j++] = text[i];
-    }
-    put_property( display, win, prop, target, 8, lpstr, j );
-    HeapFree( GetProcessHeap(), 0, lpstr );
+    if (!text) return FALSE;
+    put_property( display, win, prop, target, 8, text, size );
+    HeapFree( GetProcessHeap(), 0, text );
     GlobalUnlock( handle );
     return TRUE;
 }
