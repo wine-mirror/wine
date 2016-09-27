@@ -77,7 +77,7 @@ static HRESULT WINAPI SeekInner_QueryInterface(IUnknown * iface,
 					  REFIID riid,
 					  LPVOID *ppvObj) {
     PassThruImpl *This = impl_from_IUnknown_inner(iface);
-    TRACE("(%p)->(%s (%p), %p)\n", This, debugstr_guid(riid), riid, ppvObj);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppvObj);
 
     if (This->bAggregatable)
         This->bUnkOuterValid = TRUE;
@@ -184,7 +184,7 @@ static HRESULT WINAPI SeekingPassThru_QueryInterface(ISeekingPassThru *iface, RE
 {
     PassThruImpl *This = impl_from_ISeekingPassThru(iface);
 
-    TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
+    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppvObj);
 
     return SeekOuter_QueryInterface(This, riid, ppvObj);
 }
@@ -276,7 +276,7 @@ static HRESULT WINAPI MediaSeekingPassThru_QueryInterface(IMediaSeeking *iface, 
 {
     PassThruImpl *This = impl_from_IMediaSeeking(iface);
 
-    TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
+    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppvObj);
 
     return SeekOuter_QueryInterface(This, riid, ppvObj);
 }
@@ -659,7 +659,7 @@ static HRESULT WINAPI MediaPositionPassThru_QueryInterface(IMediaPosition *iface
 {
     PassThruImpl *This = impl_from_IMediaPosition(iface);
 
-    TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
+    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppvObj);
 
     return SeekOuter_QueryInterface(This, riid, ppvObj);
 }
