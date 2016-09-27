@@ -335,10 +335,8 @@ static void test_dc_visrgn(void)
     GetClipBox( hdc, &parent_rect );
     ReleaseDC( hwnd_parent, hdc );
 
-    ok( rect.left == parent_rect.left, "rect.left = %d, expected %d\n", rect.left, parent_rect.left );
-    ok( rect.top == parent_rect.top, "rect.top = %d, expected %d\n", rect.top, parent_rect.top );
-    ok( rect.right == parent_rect.right, "rect.right = %d, expected %d\n", rect.right, parent_rect.right );
-    ok( rect.bottom == parent_rect.bottom, "rect.bottom = %d, expected %d\n", rect.bottom, parent_rect.bottom );
+    ok( EqualRect( &rect, &parent_rect ), "rect = %s, expected %s\n", wine_dbgstr_rect( &rect ),
+        wine_dbgstr_rect( &parent_rect ));
 }
 
 
