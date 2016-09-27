@@ -257,6 +257,9 @@ static int (__cdecl *p__Cnd_wait)(_Cnd_t*, _Mtx_t*);
 static int (__cdecl *p__Cnd_timedwait)(_Cnd_t*, _Mtx_t*, const xtime*);
 static int (__cdecl *p__Cnd_broadcast)(_Cnd_t*);
 static int (__cdecl *p__Cnd_signal)(_Cnd_t*);
+static void (__cdecl *p__Cnd_register_at_thread_exit)(_Cnd_t*, _Mtx_t*, int*);
+static void (__cdecl *p__Cnd_unregister_at_thread_exit)(_Mtx_t*);
+static void (__cdecl *p__Cnd_do_broadcast_at_thread_exit)(void);
 
 /* _Pad */
 typedef void (*vtable_ptr)(void);
@@ -513,6 +516,12 @@ static BOOL init(void)
             "_Cnd_broadcast");
     SET(p__Cnd_signal,
             "_Cnd_signal");
+    SET(p__Cnd_register_at_thread_exit,
+            "_Cnd_register_at_thread_exit");
+    SET(p__Cnd_unregister_at_thread_exit,
+            "_Cnd_unregister_at_thread_exit");
+    SET(p__Cnd_do_broadcast_at_thread_exit,
+            "_Cnd_do_broadcast_at_thread_exit");
 
     hdll = GetModuleHandleA("msvcr120.dll");
     p_setlocale = (void*)GetProcAddress(hdll, "setlocale");
@@ -1885,10 +1894,36 @@ static void test_cnd(void)
     ok(!r, "failed to signal\n");
     p__Thrd_join(threads[0], NULL);
 
+    /* test _Cnd_do_broadcast_at_thread_exit */
+    cm.started = 0;
+    cm.timed_wait = FALSE;
+    p__Thrd_create(&threads[0], cnd_wait_thread, (void*)&cm);
+
+    WaitForSingleObject(cm.initialized, INFINITE);
+    p__Mtx_lock(&mtx);
+
+    r = 0xcafe;
+    p__Cnd_unregister_at_thread_exit((_Mtx_t*)0xdeadbeef);
+    p__Cnd_register_at_thread_exit(&cnd, &mtx, &r);
+    ok(r == 0xcafe, "r = %x\n", r);
+    p__Cnd_register_at_thread_exit(&cnd, &mtx, &r);
+    p__Cnd_unregister_at_thread_exit(&mtx);
+    p__Cnd_do_broadcast_at_thread_exit();
+    ok(mtx->count == 1, "mtx.count = %d\n", mtx->count);
+
+    p__Cnd_register_at_thread_exit(&cnd, &mtx, &r);
+    ok(r == 0xcafe, "r = %x\n", r);
+
+    p__Cnd_do_broadcast_at_thread_exit();
+    ok(r == 1, "r = %x\n", r);
+    p__Thrd_join(threads[0], NULL);
+
+    /* crash if _Cnd_do_broadcast_at_thread_exit is called on exit */
+    p__Cnd_register_at_thread_exit((_Cnd_t*)0xdeadbeef, (_Mtx_t*)0xdeadbeef, (int*)0xdeadbeef);
+
     /* test _Cnd_broadcast */
     cm.started = 0;
     cm.thread_no = NUM_THREADS;
-    cm.timed_wait = FALSE;
 
     for(i = 0; i < cm.thread_no; i++)
         p__Thrd_create(&threads[i], cnd_wait_thread, (void*)&cm);
