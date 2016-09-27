@@ -102,7 +102,7 @@ static IClassFactoryImpl DPVOICE_CFS[] =
 
 HRESULT WINAPI DirectPlayVoiceCreate(LPCGUID pIID, void **ppvInterface)
 {
-    FIXME("(%p, %p) stub\n", pIID, ppvInterface);
+    FIXME("(%s, %p) stub\n", debugstr_guid(pIID), ppvInterface);
     return E_NOTIMPL;
 }
 

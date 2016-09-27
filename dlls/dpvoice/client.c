@@ -286,7 +286,8 @@ static HRESULT WINAPI dpvtest_CheckAudioSetup(IDirectPlayVoiceTest *iface, const
                      HWND hwndParent, DWORD dwFlags)
 {
     IDirectPlayVoiceTestImpl *This = impl_from_IDirectPlayVoiceTest(iface);
-    FIXME("%p %p %p %p %d\n", This, pguidPlaybackDevice, pguidCaptureDevice, hwndParent, dwFlags);
+    FIXME("%p %s %s %p %d\n", This, debugstr_guid(pguidPlaybackDevice),
+            debugstr_guid(pguidCaptureDevice), hwndParent, dwFlags);
     return E_NOTIMPL;
 }
 
