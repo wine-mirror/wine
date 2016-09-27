@@ -3624,13 +3624,13 @@
 @ cdecl _Cnd_broadcast(ptr) _Cnd_broadcast
 @ cdecl _Cnd_destroy(ptr) _Cnd_destroy
 @ stub _Cnd_destroy_in_situ
-@ stub _Cnd_do_broadcast_at_thread_exit
+@ cdecl _Cnd_do_broadcast_at_thread_exit()
 @ cdecl _Cnd_init(ptr) _Cnd_init
 @ cdecl _Cnd_init_in_situ(ptr)
-@ stub _Cnd_register_at_thread_exit
+@ cdecl _Cnd_register_at_thread_exit(ptr ptr ptr)
 @ cdecl _Cnd_signal(ptr) _Cnd_signal
 @ cdecl _Cnd_timedwait(ptr ptr ptr) _Cnd_timedwait
-@ stub _Cnd_unregister_at_thread_exit
+@ cdecl _Cnd_unregister_at_thread_exit(ptr)
 @ cdecl _Cnd_wait(ptr ptr) _Cnd_wait
 @ stub _Copy_file
 @ stub _Cosh

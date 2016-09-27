@@ -3672,12 +3672,12 @@
 @ cdecl _Call_onceEx(ptr ptr ptr) msvcp120._Call_onceEx
 @ cdecl _Cnd_broadcast(ptr) msvcp120._Cnd_broadcast
 @ cdecl _Cnd_destroy(ptr) msvcp120._Cnd_destroy
-@ stub _Cnd_do_broadcast_at_thread_exit
+@ cdecl _Cnd_do_broadcast_at_thread_exit() msvcp120._Cnd_do_broadcast_at_thread_exit
 @ cdecl _Cnd_init(ptr) msvcp120._Cnd_init
-@ stub _Cnd_register_at_thread_exit
+@ cdecl _Cnd_register_at_thread_exit(ptr ptr ptr) msvcp120._Cnd_register_at_thread_exit
 @ cdecl _Cnd_signal(ptr) msvcp120._Cnd_signal
 @ cdecl _Cnd_timedwait(ptr ptr ptr) msvcp120._Cnd_timedwait
-@ stub _Cnd_unregister_at_thread_exit
+@ cdecl _Cnd_unregister_at_thread_exit(ptr) msvcp120._Cnd_unregister_at_thread_exit
 @ cdecl _Cnd_wait(ptr ptr) msvcp120._Cnd_wait
 @ stub _Cosh
 @ extern _Denorm msvcp120._Denorm
