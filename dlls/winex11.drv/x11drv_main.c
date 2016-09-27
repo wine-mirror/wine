@@ -172,8 +172,6 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
     "WCF_DIF",
     "WCF_ENHMETAFILE",
     "WCF_HDROP",
-    "WCF_LOCALE",
-    "WCF_OEMTEXT",
     "WCF_PENDATA",
     "WCF_RIFF",
     "WCF_SYLK",
