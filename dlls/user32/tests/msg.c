@@ -6463,7 +6463,7 @@ void dump_region(HRGN hrgn)
     GetRegionData( hrgn, size, data );
     printf("%d rects:", data->rdh.nCount );
     for (i = 0, rect = (RECT *)data->Buffer; i < data->rdh.nCount; i++, rect++)
-        printf( " (%d,%d)-(%d,%d)", rect->left, rect->top, rect->right, rect->bottom );
+        printf( " %s", wine_dbgstr_rect( rect ));
     printf("\n");
     HeapFree( GetProcessHeap(), 0, data );
 }
@@ -12067,9 +12067,8 @@ static void test_ShowWindow(void)
         SetLastError(0xdeadbeef);
         ret = pGetMonitorInfoA(hmon, &mi);
         ok(ret, "GetMonitorInfo error %u\n", GetLastError());
-        trace("monitor (%d,%d-%d,%d), work (%d,%d-%d,%d)\n",
-            mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom,
-            mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom);
+        trace("monitor %s, work %s\n", wine_dbgstr_rect(&mi.rcMonitor),
+              wine_dbgstr_rect(&mi.rcWork));
         work_rc = mi.rcWork;
     }
 
@@ -12087,11 +12086,8 @@ static void test_ShowWindow(void)
     ok(wp.ptMaxPosition.x == -1 && wp.ptMaxPosition.y == -1,
        "expected -1,-1 got %d,%d\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
     todo_wine_if (work_rc.left || work_rc.top) /* FIXME: remove once Wine is fixed */
-    ok(EqualRect(&win_rc, &wp.rcNormalPosition),
-       "expected %d,%d-%d,%d got %d,%d-%d,%d\n",
-        win_rc.left, win_rc.top, win_rc.right, win_rc.bottom,
-        wp.rcNormalPosition.left, wp.rcNormalPosition.top,
-        wp.rcNormalPosition.right, wp.rcNormalPosition.bottom);
+    ok(EqualRect(&win_rc, &wp.rcNormalPosition), "expected %s got %s\n", wine_dbgstr_rect(&win_rc),
+       wine_dbgstr_rect(&wp.rcNormalPosition));
 
     for (i = 0; i < sizeof(sw)/sizeof(sw[0]); i++)
     {
@@ -12143,11 +12139,8 @@ static void test_ShowWindow(void)
            "expected %d,%d got %d,%d\n", sw[i].wp_max.x, sw[i].wp_max.y, wp.ptMaxPosition.x, wp.ptMaxPosition.y);
 
 if (0) /* FIXME: Wine behaves completely different here */
-        ok(EqualRect(&win_rc, &wp.rcNormalPosition),
-           "expected %d,%d-%d,%d got %d,%d-%d,%d\n",
-            win_rc.left, win_rc.top, win_rc.right, win_rc.bottom,
-            wp.rcNormalPosition.left, wp.rcNormalPosition.top,
-            wp.rcNormalPosition.right, wp.rcNormalPosition.bottom);
+        ok(EqualRect(&win_rc, &wp.rcNormalPosition), "expected %s got %s\n",
+           wine_dbgstr_rect(&win_rc), wine_dbgstr_rect(&wp.rcNormalPosition));
     }
     DestroyWindow(hwnd);
     flush_events();
