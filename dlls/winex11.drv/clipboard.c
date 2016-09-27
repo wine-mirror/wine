@@ -1095,6 +1095,39 @@ static BOOL export_data( Display *display, Window win, Atom prop, Atom target, H
 
 
 /**************************************************************************
+ *		string_from_unicode_text
+ *
+ * Convert CF_UNICODETEXT data to a string in the specified codepage.
+ */
+static char *string_from_unicode_text( UINT codepage, HANDLE handle, UINT *size )
+{
+    UINT i, j;
+    char *str;
+    WCHAR *strW = GlobalLock( handle );
+    UINT lenW = GlobalSize( handle ) / sizeof(WCHAR);
+    DWORD len = WideCharToMultiByte( codepage, 0, strW, lenW, NULL, 0, NULL, NULL );
+
+    if ((str = HeapAlloc( GetProcessHeap(), 0, len )))
+    {
+        WideCharToMultiByte( codepage, 0, strW, lenW, str, len, NULL, NULL);
+        GlobalUnlock( handle );
+
+        /* remove carriage returns */
+        for (i = j = 0; i < len; i++)
+        {
+            if (str[i] == '\r' && (i == len - 1 || str[i + 1] == '\n')) continue;
+            str[j++] = str[i];
+        }
+        if (j && !str[j - 1]) j--;  /* remove trailing null */
+        *size = j;
+        TRACE( "returning %s\n", debugstr_an( str, j ));
+    }
+    GlobalUnlock( handle );
+    return str;
+}
+
+
+/**************************************************************************
  *		export_string
  *
  *  Export CF_TEXT converting the string to XA_STRING.
@@ -1135,38 +1168,12 @@ static BOOL export_string( Display *display, Window win, Atom prop, Atom target,
  */
 static BOOL export_utf8_string( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
 {
-    UINT i, j;
     UINT size;
-    LPSTR text, lpstr;
-    LPWSTR uni_text = GlobalLock( handle );
+    char *text = string_from_unicode_text( CP_UTF8, handle, &size );
 
-    size = WideCharToMultiByte(CP_UTF8, 0, uni_text, -1, NULL, 0, NULL, NULL);
-    text = HeapAlloc(GetProcessHeap(), 0, size);
-    if (!text)
-    {
-        GlobalUnlock( handle );
-        return FALSE;
-    }
-
-    WideCharToMultiByte(CP_UTF8, 0, uni_text, -1, text, size, NULL, NULL);
-    GlobalUnlock( handle );
-
-    /* remove carriage returns */
-    lpstr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size--);
-    if (lpstr == NULL)
-    {
-        HeapFree(GetProcessHeap(), 0, text);
-        return FALSE;
-    }
-    for (i = 0,j = 0; i < size && text[i]; i++)
-    {
-        if (text[i] == '\r' && (text[i+1] == '\n' || text[i+1] == '\0'))
-            continue;
-        lpstr[j++] = text[i];
-    }
-    put_property( display, win, prop, target, 8, lpstr, j );
-    HeapFree(GetProcessHeap(), 0, lpstr);
-    HeapFree(GetProcessHeap(), 0, text);
+    if (!text) return FALSE;
+    put_property( display, win, prop, target, 8, text, size );
+    HeapFree( GetProcessHeap(), 0, text );
     GlobalUnlock( handle );
     return TRUE;
 }
@@ -1179,47 +1186,25 @@ static BOOL export_utf8_string( Display *display, Window win, Atom prop, Atom ta
  */
 static BOOL export_compound_text( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
 {
-    char* lpstr;
     XTextProperty textprop;
     XICCEncodingStyle style;
-    UINT i, j;
     UINT size;
-    LPWSTR uni_text = GlobalLock( handle );
+    char *text = string_from_unicode_text( CP_UNIXCP, handle, &size );
 
-    size = WideCharToMultiByte(CP_UNIXCP, 0, uni_text, -1, NULL, 0, NULL, NULL);
-    lpstr = HeapAlloc(GetProcessHeap(), 0, size);
-    if (!lpstr)
-    {
-        GlobalUnlock( handle );
-        return FALSE;
-    }
-
-    WideCharToMultiByte(CP_UNIXCP, 0, uni_text, -1, lpstr, size, NULL, NULL);
-
-    /* remove carriage returns */
-    for (i = 0, j = 0; i < size && lpstr[i]; i++)
-    {
-        if (lpstr[i] == '\r' && (lpstr[i+1] == '\n' || lpstr[i+1] == '\0'))
-            continue;
-        lpstr[j++] = lpstr[i];
-    }
-    lpstr[j]='\0';
-
-    GlobalUnlock( handle );
-
+    if (!text) return FALSE;
     if (target == x11drv_atom(COMPOUND_TEXT))
         style = XCompoundTextStyle;
     else
         style = XStdICCTextStyle;
 
     /* Update the X property */
-    if (XmbTextListToTextProperty( display, &lpstr, 1, style, &textprop ) == Success)
+    if (XmbTextListToTextProperty( display, &text, 1, style, &textprop ) == Success)
     {
         XSetTextProperty( display, win, &textprop, prop );
         XFree( textprop.value );
     }
 
-    HeapFree(GetProcessHeap(), 0, lpstr);
+    HeapFree( GetProcessHeap(), 0, text );
     return TRUE;
 }
 
