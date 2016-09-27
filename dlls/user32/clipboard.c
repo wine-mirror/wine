@@ -868,7 +868,7 @@ HANDLE WINAPI SetClipboardData( UINT format, HANDLE data )
     void *ptr = NULL;
     data_size_t size = 0;
     HANDLE handle = data, retval = 0;
-    BOOL ret;
+    NTSTATUS status = STATUS_SUCCESS;
 
     TRACE( "%s %p\n", debugstr_format( format ), data );
 
@@ -888,14 +888,14 @@ HANDLE WINAPI SetClipboardData( UINT format, HANDLE data )
         req->format = format;
         req->lcid = GetUserDefaultLCID();
         wine_server_add_data( req, ptr, size );
-        if ((ret = !wine_server_call_err( req )))
+        if (!(status = wine_server_call( req )))
         {
             if (cache) cache->seqno = reply->seqno;
         }
     }
     SERVER_END_REQ;
 
-    if (ret)
+    if (!status)
     {
         /* free the previous entry if any */
         struct cached_format *prev;
@@ -909,8 +909,9 @@ HANDLE WINAPI SetClipboardData( UINT format, HANDLE data )
     LeaveCriticalSection( &clipboard_cs );
 
 done:
-    if (ptr) GlobalUnlock( ptr );
+    if (ptr) GlobalUnlock( handle );
     if (handle != data) GlobalFree( handle );
+    if (status) SetLastError( RtlNtStatusToDosError( status ));
     return retval;
 }
 
