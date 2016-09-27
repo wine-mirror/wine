@@ -110,7 +110,6 @@ struct clipboard_format
 
 static HANDLE import_data( Atom type, const void *data, size_t size );
 static HANDLE import_enhmetafile( Atom type, const void *data, size_t size );
-static HANDLE import_metafile( Atom type, const void *data, size_t size );
 static HANDLE import_pixmap( Atom type, const void *data, size_t size );
 static HANDLE import_image_bmp( Atom type, const void *data, size_t size );
 static HANDLE import_string( Atom type, const void *data, size_t size );
@@ -125,7 +124,6 @@ static BOOL export_utf8_string( Display *display, Window win, Atom prop, Atom ta
 static BOOL export_compound_text( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_pixmap( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_image_bmp( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
-static BOOL export_metafile( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_enhmetafile( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_text_html( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_hdrop( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
@@ -157,7 +155,6 @@ static const struct
     { 0, CF_UNICODETEXT,     XA_STRING,                 import_string,        export_string },
     { 0, CF_UNICODETEXT,     XATOM_text_plain,          import_string,        export_string },
     { 0, CF_BITMAP,          XATOM_WCF_BITMAP,          import_data,          NULL },
-    { 0, CF_METAFILEPICT,    XATOM_WCF_METAFILEPICT,    import_metafile,      export_metafile },
     { 0, CF_SYLK,            XATOM_WCF_SYLK,            import_data,          export_data },
     { 0, CF_DIF,             XATOM_WCF_DIF,             import_data,          export_data },
     { 0, CF_TIFF,            XATOM_WCF_TIFF,            import_data,          export_data },
@@ -814,24 +811,6 @@ static HANDLE import_image_bmp( Atom type, const void *data, size_t size )
 
 
 /**************************************************************************
- *		import_metafile
- */
-static HANDLE import_metafile( Atom type, const void *data, size_t size )
-{
-    METAFILEPICT *mf;
-
-    if (size < sizeof(METAFILEPICT)) return 0;
-    if ((mf = GlobalAlloc( GMEM_FIXED, sizeof(METAFILEPICT) )))
-    {
-        memcpy( mf, data, sizeof(METAFILEPICT) );
-        mf->hMF = SetMetaFileBitsEx( size - sizeof(METAFILEPICT),
-                                     (const BYTE *)data + sizeof(METAFILEPICT) );
-    }
-    return mf;
-}
-
-
-/**************************************************************************
  *		import_enhmetafile
  */
 static HANDLE import_enhmetafile( Atom type, const void *data, size_t size )
@@ -1219,32 +1198,6 @@ static BOOL export_image_bmp( Display *display, Window win, Atom prop, Atom targ
     GlobalUnlock( handle );
     put_property( display, win, prop, target, 8, bfh, bmpsize );
     HeapFree( GetProcessHeap(), 0, bfh );
-    return TRUE;
-}
-
-
-/**************************************************************************
- *		export_metafile
- *
- *  Export MetaFilePict.
- */
-static BOOL export_metafile( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
-{
-    METAFILEPICT *src, *dst;
-    unsigned int size;
-
-    src = GlobalLock( handle );
-    size = GetMetaFileBitsEx(src->hMF, 0, NULL);
-
-    dst = HeapAlloc( GetProcessHeap(), 0, size + sizeof(*dst) );
-    if (dst)
-    {
-        *dst = *src;
-        GetMetaFileBitsEx( src->hMF, size, dst + 1 );
-    }
-    GlobalUnlock( handle );
-    put_property( display, win, prop, target, 8, dst, size + sizeof(*dst) );
-    HeapFree( GetProcessHeap(), 0, dst );
     return TRUE;
 }
 
