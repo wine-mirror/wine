@@ -670,6 +670,7 @@ HKLM,Software\Microsoft\Transaction Server,,16
 HKLM,Software\Microsoft\WBEM,"Installation Directory",2,"%11%\wbem"
 HKLM,Software\Policies,,16
 HKLM,Software\Registered Applications,,16
+HKLM,System\CurrentControlSet\Control\hivelist,,16
 HKLM,System\CurrentControlSet\Control\Lsa,,16
 HKLM,System\CurrentControlSet\Control\SecurityProviders\Schannel\Protocols\SSL 2.0\Client,"DisabledByDefault",0x10003,1
 HKLM,System\CurrentControlSet\Control\ServiceGroupOrder,"List",0x00010000,"TDI"
