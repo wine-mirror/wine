@@ -425,6 +425,45 @@ static inline void write_bytes( struct writer *writer, const BYTE *bytes, ULONG 
     writer->write_pos += len;
 }
 
+struct escape
+{
+    char        ch;
+    const char *entity;
+    ULONG       len;
+};
+static const struct escape escape_lt = { '<', "&lt;", 4 };
+static const struct escape escape_gt = { '>', "&gt;", 4 };
+static const struct escape escape_amp = { '&', "&amp;", 5 };
+static const struct escape escape_apos = { '\'', "&apos;", 6 };
+static const struct escape escape_quot = { '"', "&quot;", 6 };
+
+static HRESULT write_bytes_escape( struct writer *writer, const BYTE *bytes, ULONG len,
+                                   const struct escape **escapes, ULONG nb_escapes )
+{
+    ULONG i, j, size;
+    const BYTE *ptr;
+    HRESULT hr;
+
+    for (i = 0; i < len; i++)
+    {
+        ptr = &bytes[i];
+        size = 1;
+        for (j = 0; j < nb_escapes; j++)
+        {
+            if (bytes[i] == escapes[j]->ch)
+            {
+                ptr = (const BYTE *)escapes[j]->entity;
+                size = escapes[j]->len;
+                break;
+            }
+        }
+        if ((hr = write_grow_buffer( writer, size )) != S_OK) return hr;
+        write_bytes( writer, ptr, size );
+    }
+
+    return S_OK;
+}
+
 static HRESULT write_attribute( struct writer *writer, WS_XML_ATTRIBUTE *attr )
 {
     WS_XML_UTF8_TEXT *text = (WS_XML_UTF8_TEXT *)attr->value;
@@ -452,10 +491,17 @@ static HRESULT write_attribute( struct writer *writer, WS_XML_ATTRIBUTE *attr )
     write_bytes( writer, attr->localName->bytes, attr->localName->length );
     write_char( writer, '=' );
     write_char( writer, quote );
-    if (text) write_bytes( writer, text->value.bytes, text->value.length );
+    if (text)
+    {
+        const struct escape *escapes[3];
+        escapes[0] = attr->singleQuote ? &escape_apos : &escape_quot;
+        escapes[1] = &escape_lt;
+        escapes[2] = &escape_amp;
+        hr = write_bytes_escape( writer, text->value.bytes, text->value.length, escapes, 3 );
+    }
     write_char( writer, quote );
 
-    return S_OK;
+    return hr;
 }
 
 static inline BOOL is_current_namespace( struct writer *writer, const WS_XML_STRING *ns )
@@ -1285,9 +1331,20 @@ static HRESULT write_text( struct writer *writer )
     const WS_XML_UTF8_TEXT *utf8 = (const WS_XML_UTF8_TEXT *)text->text;
     HRESULT hr;
 
-    if ((hr = write_grow_buffer( writer, utf8->value.length )) != S_OK) return hr;
-    write_bytes( writer, utf8->value.bytes, utf8->value.length );
-    return S_OK;
+    if (!writer->current->parent) return WS_E_INVALID_FORMAT;
+    if (node_type( writer->current->parent ) == WS_XML_NODE_TYPE_ELEMENT)
+    {
+        const struct escape *escapes[3] = { &escape_lt, &escape_gt, &escape_amp };
+        return write_bytes_escape( writer, utf8->value.bytes, utf8->value.length, escapes, 3 );
+    }
+    else if (node_type( writer->current->parent ) == WS_XML_NODE_TYPE_CDATA)
+    {
+        if ((hr = write_grow_buffer( writer, utf8->value.length )) != S_OK) return hr;
+        write_bytes( writer, utf8->value.bytes, utf8->value.length );
+        return S_OK;
+    }
+
+    return WS_E_INVALID_FORMAT;
 }
 
 static HRESULT write_text_node( struct writer *writer, const WS_XML_TEXT *text )
