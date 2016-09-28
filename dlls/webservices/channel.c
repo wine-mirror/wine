@@ -84,6 +84,15 @@ static const struct prop_desc channel_props[] =
     { sizeof(ULONG), FALSE }                                /* WS_CHANNEL_PROPERTY_MAX_HTTP_REQUEST_HEADERS_BUFFER_SIZE */
 };
 
+struct channel
+{
+    WS_CHANNEL_TYPE         type;
+    WS_CHANNEL_BINDING      binding;
+    WS_CHANNEL_STATE        state;
+    ULONG                   prop_count;
+    struct prop             prop[sizeof(channel_props)/sizeof(channel_props[0])];
+};
+
 static struct channel *alloc_channel(void)
 {
     static const ULONG count = sizeof(channel_props)/sizeof(channel_props[0]);
@@ -96,13 +105,14 @@ static struct channel *alloc_channel(void)
     return ret;
 }
 
-void free_channel( struct channel *channel )
+static void free_channel( struct channel *channel )
 {
+    if (!channel) return;
     heap_free( channel );
 }
 
-HRESULT create_channel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding,
-                        const WS_CHANNEL_PROPERTY *properties, ULONG count, struct channel **ret )
+static HRESULT create_channel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding,
+                               const WS_CHANNEL_PROPERTY *properties, ULONG count, struct channel **ret )
 {
     struct channel *channel;
     ULONG i, msg_size = 65536;
@@ -207,8 +217,14 @@ HRESULT WINAPI WsSetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
     return prop_set( channel->prop, channel->prop_count, id, value, size );
 }
 
-HRESULT open_channel( struct channel *channel, const WS_ENDPOINT_ADDRESS *endpoint )
+static HRESULT open_channel( struct channel *channel, const WS_ENDPOINT_ADDRESS *endpoint )
 {
+    if (endpoint->headers || endpoint->extensions || endpoint->identity)
+    {
+        FIXME( "headers, extensions or identity not supported\n" );
+        return E_NOTIMPL;
+    }
+
     channel->state = WS_CHANNEL_STATE_OPEN;
     return S_OK;
 }
@@ -231,7 +247,7 @@ HRESULT WINAPI WsOpenChannel( WS_CHANNEL *handle, const WS_ENDPOINT_ADDRESS *end
     return open_channel( channel, endpoint );
 }
 
-HRESULT close_channel( struct channel *channel )
+static HRESULT close_channel( struct channel *channel )
 {
     channel->state = WS_CHANNEL_STATE_CLOSED;
     return S_OK;

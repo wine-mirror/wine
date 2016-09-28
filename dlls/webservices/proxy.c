@@ -43,7 +43,7 @@ static const struct prop_desc proxy_props[] =
 
 struct proxy
 {
-    struct channel *channel;
+    WS_CHANNEL     *channel;
     ULONG           prop_count;
     struct prop     prop[sizeof(proxy_props)/sizeof(proxy_props[0])];
 };
@@ -62,11 +62,12 @@ static struct proxy *alloc_proxy(void)
 
 static void free_proxy( struct proxy *proxy )
 {
-    free_channel( proxy->channel );
+    if (!proxy) return;
+    WsFreeChannel( proxy->channel );
     heap_free( proxy );
 }
 
-static HRESULT create_proxy( struct channel *channel, const WS_PROXY_PROPERTY *properties, ULONG count,
+static HRESULT create_proxy( WS_CHANNEL *channel, const WS_PROXY_PROPERTY *properties, ULONG count,
                              WS_SERVICE_PROXY **handle )
 {
     struct proxy *proxy;
@@ -102,7 +103,7 @@ HRESULT WINAPI WsCreateServiceProxy( const WS_CHANNEL_TYPE type, const WS_CHANNE
                                      const ULONG channel_props_count, WS_SERVICE_PROXY **handle,
                                      WS_ERROR *error )
 {
-    struct channel *channel;
+    WS_CHANNEL *channel;
     HRESULT hr;
 
     TRACE( "%u %u %p %p %u %p %u %p %p\n", type, binding, desc, proxy_props, proxy_props_count,
@@ -112,11 +113,11 @@ HRESULT WINAPI WsCreateServiceProxy( const WS_CHANNEL_TYPE type, const WS_CHANNE
 
     if (!handle) return E_INVALIDARG;
 
-    if ((hr = create_channel( type, binding, channel_props, channel_props_count, &channel )) != S_OK)
-        return hr;
+    if ((hr = WsCreateChannel( type, binding, channel_props, channel_props_count, NULL, &channel,
+                               NULL )) != S_OK) return hr;
 
     if ((hr = create_proxy( channel, proxy_props, proxy_props_count, handle )) != S_OK)
-        free_channel( channel );
+        WsFreeChannel( channel );
 
     return hr;
 }
@@ -133,7 +134,7 @@ HRESULT WINAPI WsCreateServiceProxyFromTemplate( WS_CHANNEL_TYPE channel_type,
     const WS_CHANNEL_PROPERTY *channel_props = NULL;
     ULONG channel_props_count = 0;
     WS_CHANNEL_BINDING binding;
-    struct channel *channel;
+    WS_CHANNEL *channel;
     HRESULT hr;
 
     TRACE( "%u %p %u %u %p %u %p %u %p %p\n", channel_type, properties, count, type, value, size, desc,
@@ -172,12 +173,10 @@ HRESULT WINAPI WsCreateServiceProxyFromTemplate( WS_CHANNEL_TYPE channel_type,
         return E_NOTIMPL;
     }
 
-    if ((hr = create_channel( channel_type, binding, channel_props, channel_props_count, &channel )) != S_OK)
-        return hr;
+    if ((hr = WsCreateChannel( channel_type, binding, channel_props, channel_props_count, NULL,
+                               &channel, NULL )) != S_OK) return hr;
 
-    if ((hr = create_proxy( channel, properties, count, handle )) != S_OK)
-        free_channel( channel );
-
+    if ((hr = create_proxy( channel, properties, count, handle )) != S_OK) WsFreeChannel( channel );
     return hr;
 }
 
@@ -218,7 +217,8 @@ HRESULT WINAPI WsOpenServiceProxy( WS_SERVICE_PROXY *handle, const WS_ENDPOINT_A
     if (error) FIXME( "ignoring error parameter\n" );
     if (ctx) FIXME( "ignoring ctx parameter\n" );
 
-    return open_channel( proxy->channel, endpoint );
+    if (!handle || !endpoint) return E_INVALIDARG;
+    return WsOpenChannel( proxy->channel, endpoint, NULL, NULL );
 }
 
 /**************************************************************************
@@ -232,7 +232,8 @@ HRESULT WINAPI WsCloseServiceProxy( WS_SERVICE_PROXY *handle, const WS_ASYNC_CON
     if (error) FIXME( "ignoring error parameter\n" );
     if (ctx) FIXME( "ignoring ctx parameter\n" );
 
-    return close_channel( proxy->channel );
+    if (!handle) return E_INVALIDARG;
+    return WsCloseChannel( proxy->channel, NULL, NULL );
 }
 
 /**************************************************************************
