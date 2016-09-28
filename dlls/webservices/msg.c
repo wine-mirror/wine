@@ -451,7 +451,7 @@ static HRESULT write_headers( struct msg *msg, const WS_XML_STRING *ns_env, cons
 static HRESULT write_headers_transport( struct msg *msg, const WS_XML_STRING *ns_env, WS_XML_WRITER *writer )
 {
     static const WS_XML_STRING prefix = {1, (BYTE *)"s"}, header = {6, (BYTE *)"Header"};
-    HRESULT hr;
+    HRESULT hr = S_OK;
     ULONG i;
 
     if ((msg->header_count || !msg->action.length) &&
