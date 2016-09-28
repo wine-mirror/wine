@@ -502,7 +502,7 @@ static HRESULT receive_message( struct channel *channel, ULONG max_len, char **r
         if (*ret_len + len > size)
         {
             char *tmp;
-            DWORD new_size = max( len, size * 2 );
+            DWORD new_size = max( *ret_len + len, size * 2 );
             if (!(tmp = heap_realloc( buf, new_size )))
             {
                 heap_free( buf );
