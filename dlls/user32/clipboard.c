@@ -74,6 +74,15 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION clipboard_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+/* platform-independent version of METAFILEPICT */
+struct metafile_pict
+{
+    LONG       mm;
+    LONG       xExt;
+    LONG       yExt;
+    BYTE       bits[1];
+};
+
 /* get a debug string for a format id */
 static const char *debugstr_format( UINT id )
 {
@@ -155,21 +164,24 @@ static HANDLE marshal_data( UINT format, HANDLE handle, data_size_t *ret_size )
     case CF_METAFILEPICT:
     case CF_DSPMETAFILEPICT:
         {
-            METAFILEPICT *mf, *mfbits;
+            METAFILEPICT *mf;
+            struct metafile_pict *mfbits;
             if (!(mf = GlobalLock( handle ))) return 0;
             if (!(size = GetMetaFileBitsEx( mf->hMF, 0, NULL )))
             {
                 GlobalUnlock( handle );
                 return 0;
             }
-            *ret_size = sizeof(*mf) + size;
+            *ret_size = offsetof( struct metafile_pict, bits[size] );
             if (!(mfbits = GlobalAlloc( GMEM_FIXED, *ret_size )))
             {
                 GlobalUnlock( handle );
                 return 0;
             }
-            *mfbits = *mf;
-            GetMetaFileBitsEx( mf->hMF, size, mfbits + 1 );
+            mfbits->mm   = mf->mm;
+            mfbits->xExt = mf->xExt;
+            mfbits->yExt = mf->yExt;
+            GetMetaFileBitsEx( mf->hMF, size, mfbits->bits );
             GlobalUnlock( handle );
             return mfbits;
         }
@@ -235,9 +247,14 @@ static HANDLE unmarshal_data( UINT format, void *data, data_size_t size )
     case CF_METAFILEPICT:
     case CF_DSPMETAFILEPICT:
         {
-            METAFILEPICT *mf = handle;
-            if (size <= sizeof(*mf)) break;
-            mf->hMF = SetMetaFileBitsEx( size - sizeof(*mf), (BYTE *)(mf + 1) );
+            METAFILEPICT mf;
+            struct metafile_pict *mfbits = handle;
+            if (size <= sizeof(*mfbits)) break;
+            mf.mm   = mfbits->mm;
+            mf.xExt = mfbits->xExt;
+            mf.yExt = mfbits->yExt;
+            mf.hMF  = SetMetaFileBitsEx( size - offsetof( struct metafile_pict, bits ), mfbits->bits );
+            *(METAFILEPICT *)handle = mf;
             return handle;
         }
     }
