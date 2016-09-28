@@ -26,6 +26,7 @@
 
 #include "wine/debug.h"
 #include "wine/list.h"
+#include "wine/unicode.h"
 #include "webservices_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
@@ -89,6 +90,11 @@ struct channel
     WS_CHANNEL_TYPE         type;
     WS_CHANNEL_BINDING      binding;
     WS_CHANNEL_STATE        state;
+    WS_ENDPOINT_ADDRESS     addr;
+    WS_XML_WRITER          *writer;
+    HINTERNET               http_session;
+    HINTERNET               http_connect;
+    HINTERNET               http_request;
     ULONG                   prop_count;
     struct prop             prop[sizeof(channel_props)/sizeof(channel_props[0])];
 };
@@ -108,6 +114,11 @@ static struct channel *alloc_channel(void)
 static void free_channel( struct channel *channel )
 {
     if (!channel) return;
+    WsFreeWriter( channel->writer );
+    WinHttpCloseHandle( channel->http_request );
+    WinHttpCloseHandle( channel->http_connect );
+    WinHttpCloseHandle( channel->http_session );
+    heap_free( channel->addr.url.chars );
     heap_free( channel );
 }
 
@@ -225,6 +236,10 @@ static HRESULT open_channel( struct channel *channel, const WS_ENDPOINT_ADDRESS 
         return E_NOTIMPL;
     }
 
+    if (!(channel->addr.url.chars = heap_alloc( endpoint->url.length * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+    memcpy( channel->addr.url.chars, endpoint->url.chars, endpoint->url.length * sizeof(WCHAR) );
+    channel->addr.url.length = endpoint->url.length;
+
     channel->state = WS_CHANNEL_STATE_OPEN;
     return S_OK;
 }
@@ -249,6 +264,17 @@ HRESULT WINAPI WsOpenChannel( WS_CHANNEL *handle, const WS_ENDPOINT_ADDRESS *end
 
 static HRESULT close_channel( struct channel *channel )
 {
+    WinHttpCloseHandle( channel->http_request );
+    channel->http_request = NULL;
+    WinHttpCloseHandle( channel->http_connect );
+    channel->http_connect = NULL;
+    WinHttpCloseHandle( channel->http_session );
+    channel->http_session = NULL;
+
+    heap_free( channel->addr.url.chars );
+    channel->addr.url.chars  = NULL;
+    channel->addr.url.length = 0;
+
     channel->state = WS_CHANNEL_STATE_CLOSED;
     return S_OK;
 }
@@ -266,4 +292,186 @@ HRESULT WINAPI WsCloseChannel( WS_CHANNEL *handle, const WS_ASYNC_CONTEXT *ctx, 
 
     if (!handle) return E_INVALIDARG;
     return close_channel( channel );
+}
+
+static HRESULT parse_url( const WCHAR *url, ULONG len, URL_COMPONENTS *uc )
+{
+    HRESULT hr = E_OUTOFMEMORY;
+    WCHAR *tmp;
+    DWORD err;
+
+    memset( uc, 0, sizeof(*uc) );
+    uc->dwStructSize      = sizeof(*uc);
+    uc->dwHostNameLength  = 128;
+    uc->lpszHostName      = heap_alloc( uc->dwHostNameLength * sizeof(WCHAR) );
+    uc->dwUrlPathLength   = 128;
+    uc->lpszUrlPath       = heap_alloc( uc->dwUrlPathLength * sizeof(WCHAR) );
+    uc->dwExtraInfoLength = 128;
+    uc->lpszExtraInfo     = heap_alloc( uc->dwExtraInfoLength * sizeof(WCHAR) );
+    if (!uc->lpszHostName || !uc->lpszUrlPath || !uc->lpszExtraInfo) goto error;
+
+    if (!WinHttpCrackUrl( url, len, ICU_DECODE, uc ))
+    {
+        if ((err = GetLastError()) != ERROR_INSUFFICIENT_BUFFER)
+        {
+            hr = HRESULT_FROM_WIN32( err );
+            goto error;
+        }
+        if (!(tmp = heap_realloc( uc->lpszHostName, uc->dwHostNameLength * sizeof(WCHAR) ))) goto error;
+        uc->lpszHostName = tmp;
+        if (!(tmp = heap_realloc( uc->lpszUrlPath, uc->dwUrlPathLength * sizeof(WCHAR) ))) goto error;
+        uc->lpszUrlPath = tmp;
+        if (!(tmp = heap_realloc( uc->lpszExtraInfo, uc->dwExtraInfoLength * sizeof(WCHAR) ))) goto error;
+        uc->lpszExtraInfo = tmp;
+        WinHttpCrackUrl( url, len, ICU_DECODE, uc );
+    }
+
+    return S_OK;
+
+error:
+    heap_free( uc->lpszHostName );
+    heap_free( uc->lpszUrlPath );
+    heap_free( uc->lpszExtraInfo );
+    return hr;
+}
+
+static HRESULT connect_channel( struct channel *channel, WS_MESSAGE *msg )
+{
+    static const WCHAR agentW[] =
+        {'M','S','-','W','e','b','S','e','r','v','i','c','e','s','/','1','.','0',0};
+    static const WCHAR postW[] =
+        {'P','O','S','T',0};
+    HINTERNET ses = NULL, con = NULL, req = NULL;
+    WCHAR *path;
+    URL_COMPONENTS uc;
+    DWORD flags = 0;
+    HRESULT hr;
+
+    if ((hr = parse_url( channel->addr.url.chars, channel->addr.url.length, &uc )) != S_OK) return hr;
+    if (!uc.dwExtraInfoLength) path = uc.lpszUrlPath;
+    else if (!(path = heap_alloc( (uc.dwUrlPathLength + uc.dwExtraInfoLength + 1) * sizeof(WCHAR) )))
+    {
+        hr = E_OUTOFMEMORY;
+        goto done;
+    }
+    else
+    {
+        strcpyW( path, uc.lpszUrlPath );
+        strcatW( path, uc.lpszExtraInfo );
+    }
+
+    switch (uc.nScheme)
+    {
+    case INTERNET_SCHEME_HTTP: break;
+    case INTERNET_SCHEME_HTTPS:
+        flags |= WINHTTP_FLAG_SECURE;
+        break;
+
+    default:
+        FIXME( "scheme %u not supported\n", uc.nScheme );
+        hr = E_NOTIMPL;
+        goto done;
+    }
+
+    if (!(ses = WinHttpOpen( agentW, 0, NULL, NULL, 0 )))
+    {
+        hr = HRESULT_FROM_WIN32( GetLastError() );
+        goto done;
+    }
+    if (!(con = WinHttpConnect( ses, uc.lpszHostName, uc.nPort, 0 )))
+    {
+        hr = HRESULT_FROM_WIN32( GetLastError() );
+        goto done;
+    }
+    if (!(req = WinHttpOpenRequest( con, postW, path, NULL, NULL, NULL, flags )))
+    {
+        hr = HRESULT_FROM_WIN32( GetLastError() );
+        goto done;
+    }
+
+    if ((hr = message_insert_http_headers( msg, req )) != S_OK) goto done;
+
+    channel->http_session = ses;
+    channel->http_connect = con;
+    channel->http_request = req;
+
+done:
+    if (hr != S_OK)
+    {
+        WinHttpCloseHandle( req );
+        WinHttpCloseHandle( con );
+        WinHttpCloseHandle( ses );
+    }
+    heap_free( uc.lpszHostName );
+    heap_free( uc.lpszUrlPath );
+    heap_free( uc.lpszExtraInfo );
+    if (path != uc.lpszUrlPath) heap_free( path );
+    return hr;
+}
+
+HRESULT set_output( WS_XML_WRITER *writer )
+{
+    WS_XML_WRITER_TEXT_ENCODING text = { {WS_XML_WRITER_ENCODING_TYPE_TEXT}, WS_CHARSET_UTF8 };
+    WS_XML_WRITER_BUFFER_OUTPUT buf = { {WS_XML_WRITER_OUTPUT_TYPE_BUFFER} };
+    return WsSetOutput( writer, &text.encoding, &buf.output, NULL, 0, NULL );
+}
+
+static HRESULT write_message( WS_MESSAGE *handle, WS_XML_WRITER *writer, const WS_ELEMENT_DESCRIPTION *desc,
+                              WS_WRITE_OPTION option, const void *body, ULONG size )
+{
+    HRESULT hr;
+    if ((hr = WsWriteEnvelopeStart( handle, writer, NULL, NULL, NULL )) != S_OK) return hr;
+    if ((hr = WsWriteBody( handle, desc, option, body, size, NULL )) != S_OK) return hr;
+    return WsWriteEnvelopeEnd( handle, NULL );
+}
+
+static HRESULT send_message( struct channel *channel, BYTE *data, ULONG len )
+{
+    if (!WinHttpSendRequest( channel->http_request, NULL, 0, data, len, len, 0 ))
+        return HRESULT_FROM_WIN32( GetLastError() );
+
+    if (!WinHttpReceiveResponse( channel->http_request, NULL ))
+        return HRESULT_FROM_WIN32( GetLastError() );
+    return S_OK;
+}
+
+HRESULT channel_send_message( WS_CHANNEL *handle, WS_MESSAGE *msg )
+{
+    struct channel *channel = (struct channel *)handle;
+    WS_XML_WRITER *writer;
+    WS_BYTES buf;
+    HRESULT hr;
+
+    if ((hr = connect_channel( channel, msg )) != S_OK) return hr;
+    WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_BODY_WRITER, &writer, sizeof(writer), NULL );
+    WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_BYTES, &buf, sizeof(buf), NULL );
+    return send_message( channel, buf.bytes, buf.length );
+}
+
+/**************************************************************************
+ *          WsSendMessage		[webservices.@]
+ */
+HRESULT WINAPI WsSendMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_MESSAGE_DESCRIPTION *desc,
+                              WS_WRITE_OPTION option, const void *body, ULONG size, const WS_ASYNC_CONTEXT *ctx,
+                              WS_ERROR *error )
+{
+    struct channel *channel = (struct channel *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p %p %08x %p %u %p %p\n", handle, msg, desc, option, body, size, ctx, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+    if (ctx) FIXME( "ignoring ctx parameter\n" );
+
+    if (!handle || !msg || !desc) return E_INVALIDARG;
+
+    WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    if ((hr = WsAddressMessage( msg, &channel->addr, NULL )) != S_OK) return hr;
+    if ((hr = message_set_action( msg, desc->action )) != S_OK) return hr;
+
+    if (!channel->writer && (hr = WsCreateWriter( NULL, 0, &channel->writer, NULL )) != S_OK) return hr;
+    if ((hr = set_output( channel->writer )) != S_OK) return hr;
+    if ((hr = write_message( msg, channel->writer, desc->bodyElementDescription, option, body, size )) != S_OK)
+        return hr;
+
+    return channel_send_message( handle, msg );
 }

@@ -1110,3 +1110,125 @@ HRESULT WINAPI WsRemoveCustomHeader( WS_MESSAGE *handle, const WS_XML_STRING *na
     if (removed) return write_envelope( msg );
     return S_OK;
 }
+
+static WCHAR *build_http_header( const WCHAR *name, const WCHAR *value, ULONG *ret_len )
+{
+    static const WCHAR fmtW[] = {'%','s',':',' ','%','s',0};
+    WCHAR *ret = heap_alloc( (strlenW(name) + strlenW(value) + 3) * sizeof(WCHAR) );
+    if (ret) *ret_len = sprintfW( ret, fmtW, name, value );
+    return ret;
+}
+
+HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
+{
+    static const WCHAR contenttypeW[] =
+        {'C','o','n','t','e','n','t','-','T','y','p','e',0};
+    static const WCHAR soapxmlW[] =
+        {'a','p','p','l','i','c','a','t','i','o','n','/','s','o','a','p','+','x','m','l',0};
+    static const WCHAR textxmlW[] =
+        {'t','e','x','t','/','x','m','l',0};
+    static const WCHAR charsetW[] =
+        {'c','h','a','r','s','e','t','=','u','t','f','-','8',0};
+    struct msg *msg = (struct msg *)handle;
+    WCHAR *header, *buf;
+    ULONG len;
+    BOOL ret;
+
+    switch (msg->version_env)
+    {
+    case WS_ENVELOPE_VERSION_SOAP_1_1:
+        header = build_http_header( contenttypeW, textxmlW, &len );
+        break;
+
+    case WS_ENVELOPE_VERSION_SOAP_1_2:
+        header = build_http_header( contenttypeW, soapxmlW, &len );
+        break;
+
+    default:
+        FIXME( "unhandled envelope version %u\n", msg->version_env );
+        return E_NOTIMPL;
+    }
+    if (!header) return E_OUTOFMEMORY;
+
+    ret = WinHttpAddRequestHeaders( req, header, len, WINHTTP_ADDREQ_FLAG_ADD );
+    heap_free( header );
+    if (!ret) return HRESULT_FROM_WIN32( GetLastError() );
+
+    if (!(header = build_http_header( contenttypeW, charsetW, &len ))) return E_OUTOFMEMORY;
+    ret = WinHttpAddRequestHeaders( req, header, len, WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON );
+    heap_free( header );
+    if (!ret) return HRESULT_FROM_WIN32( GetLastError() );
+
+    switch (msg->version_env)
+    {
+    case WS_ENVELOPE_VERSION_SOAP_1_1:
+    {
+        static const WCHAR soapactionW[] = {'S','O','A','P','A','c','t','i','o','n',0};
+
+        if (!(len = msg->action.length)) break;
+        if (!(buf = heap_alloc( (len + 3) * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+        buf[0] = '"';
+        memcpy( buf + 1, msg->action.chars, len * sizeof(WCHAR) );
+        buf[len + 1] = '"';
+        buf[len + 2] = 0;
+        header = build_http_header( soapactionW, buf, &len );
+        heap_free( buf );
+        if (!header) return E_OUTOFMEMORY;
+
+        ret = WinHttpAddRequestHeaders( req, header, len, WINHTTP_ADDREQ_FLAG_ADD );
+        heap_free( header );
+        if (!ret) return HRESULT_FROM_WIN32( GetLastError() );
+        break;
+    }
+    case WS_ENVELOPE_VERSION_SOAP_1_2:
+    {
+        static const WCHAR actionW[] = {'a','c','t','i','o','n','=','"'};
+        ULONG len_action = sizeof(actionW)/sizeof(actionW[0]);
+
+        if (!(len = msg->action.length)) break;
+        if (!(buf = heap_alloc( (len + len_action + 2) * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+        memcpy( buf, actionW, len_action * sizeof(WCHAR) );
+        memcpy( buf + len_action, msg->action.chars, len * sizeof(WCHAR) );
+        len += len_action;
+        buf[len++] = '"';
+        buf[len] = 0;
+        header = build_http_header( contenttypeW, buf, &len );
+        heap_free( buf );
+        if (!header) return E_OUTOFMEMORY;
+
+        ret = WinHttpAddRequestHeaders( req, header, len, WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON );
+        heap_free( header );
+        if (!ret) return HRESULT_FROM_WIN32( GetLastError() );
+        break;
+    }
+    default:
+        FIXME( "unhandled envelope version %u\n", msg->version_env );
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
+HRESULT message_set_action( WS_MESSAGE *handle, const WS_XML_STRING *action )
+{
+    struct msg *msg = (struct msg *)handle;
+    WCHAR *chars;
+    int len;
+
+    if (!action || !action->length)
+    {
+        heap_free( msg->action.chars );
+        msg->action.chars  = NULL;
+        msg->action.length = 0;
+        return S_OK;
+    }
+    len = MultiByteToWideChar( CP_UTF8, 0, (char *)action->bytes, action->length, NULL, 0 );
+    if (!(chars = heap_alloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+    MultiByteToWideChar( CP_UTF8, 0, (char *)action->bytes, action->length, chars, len );
+
+    heap_free( msg->action.chars );
+    msg->action.chars  = chars;
+    msg->action.length = len;
+
+    return S_OK;
+}

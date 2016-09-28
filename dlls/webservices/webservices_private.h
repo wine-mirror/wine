@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "winhttp.h"
+
 struct xmlbuf
 {
     WS_HEAP *heap;
@@ -35,6 +37,7 @@ void free_attribute( WS_XML_ATTRIBUTE * ) DECLSPEC_HIDDEN;
 WS_TYPE map_value_type( WS_VALUE_TYPE ) DECLSPEC_HIDDEN;
 BOOL set_fp_rounding( unsigned short * ) DECLSPEC_HIDDEN;
 void restore_fp_rounding( unsigned short ) DECLSPEC_HIDDEN;
+HRESULT set_output( WS_XML_WRITER * ) DECLSPEC_HIDDEN;
 ULONG get_type_size( WS_TYPE, const WS_STRUCT_DESCRIPTION * ) DECLSPEC_HIDDEN;
 
 struct node
@@ -89,6 +92,11 @@ ULONG prop_size( const struct prop_desc *, ULONG ) DECLSPEC_HIDDEN;
 void prop_init( const struct prop_desc *, ULONG, struct prop *, void * ) DECLSPEC_HIDDEN;
 HRESULT prop_set( const struct prop *, ULONG, ULONG, const void *, ULONG ) DECLSPEC_HIDDEN;
 HRESULT prop_get( const struct prop *, ULONG, ULONG, void *, ULONG ) DECLSPEC_HIDDEN;
+
+HRESULT message_set_action( WS_MESSAGE *, const WS_XML_STRING * ) DECLSPEC_HIDDEN;
+HRESULT message_insert_http_headers( WS_MESSAGE *, HINTERNET ) DECLSPEC_HIDDEN;
+
+HRESULT channel_send_message( WS_CHANNEL *, WS_MESSAGE * ) DECLSPEC_HIDDEN;
 
 static inline BOOL is_nil_value( const char *value, ULONG size )
 {

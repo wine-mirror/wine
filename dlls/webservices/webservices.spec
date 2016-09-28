@@ -143,7 +143,7 @@
 @ stub WsResetServiceProxy
 @ stub WsRevokeSecurityContext
 @ stub WsSendFaultMessageForError
-@ stub WsSendMessage
+@ stdcall WsSendMessage(ptr ptr ptr long ptr long ptr ptr)
 @ stub WsSendReplyMessage
 @ stdcall WsSetChannelProperty(ptr long ptr long ptr)
 @ stdcall WsSetErrorProperty(ptr long ptr long)
