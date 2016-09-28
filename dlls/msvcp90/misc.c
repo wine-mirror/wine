@@ -655,6 +655,11 @@ int __cdecl _Cnd_signal(_Cnd_arg_t cnd)
     return 0;
 }
 
+void __cdecl _Cnd_destroy_in_situ(_Cnd_t cnd)
+{
+    _Cnd_broadcast(CND_T_TO_ARG(cnd));
+}
+
 void __cdecl _Cnd_destroy(_Cnd_arg_t cnd)
 {
     if(cnd) {
