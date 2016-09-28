@@ -1,5 +1,5 @@
 TESTDLL   = webservices.dll
-IMPORTS   = webservices
+IMPORTS   = webservices user32 ws2_32
 
 C_SRCS = \
 	channel.c \
