@@ -115,12 +115,14 @@ static HANDLE import_image_bmp( Atom type, const void *data, size_t size );
 static HANDLE import_string( Atom type, const void *data, size_t size );
 static HANDLE import_utf8_string( Atom type, const void *data, size_t size );
 static HANDLE import_compound_text( Atom type, const void *data, size_t size );
+static HANDLE import_text( Atom type, const void *data, size_t size );
 static HANDLE import_text_uri_list( Atom type, const void *data, size_t size );
 static HANDLE import_targets( Atom type, const void *data, size_t size );
 
 static BOOL export_data( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_string( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_utf8_string( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
+static BOOL export_text( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_compound_text( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_pixmap( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_image_bmp( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
@@ -154,6 +156,7 @@ static const struct
     { 0, CF_UNICODETEXT,     XATOM_COMPOUND_TEXT,       import_compound_text, export_compound_text },
     { 0, CF_UNICODETEXT,     XA_STRING,                 import_string,        export_string },
     { 0, CF_UNICODETEXT,     XATOM_text_plain,          import_string,        export_string },
+    { 0, CF_UNICODETEXT,     XATOM_TEXT,                import_text,          export_text },
     { 0, CF_SYLK,            XATOM_WCF_SYLK,            import_data,          export_data },
     { 0, CF_DIF,             XATOM_WCF_DIF,             import_data,          export_data },
     { 0, CF_TIFF,            XATOM_WCF_TIFF,            import_data,          export_data },
@@ -715,6 +718,21 @@ static HANDLE import_compound_text( Atom type, const void *data, size_t size )
 
 
 /**************************************************************************
+ *		import_text
+ *
+ * Import XA_TEXT, converting the string to CF_UNICODETEXT.
+ */
+static HANDLE import_text( Atom type, const void *data, size_t size )
+{
+    if (type == XA_STRING) return import_string( type, data, size );
+    if (type == x11drv_atom(UTF8_STRING)) return import_utf8_string( type, data, size );
+    if (type == x11drv_atom(COMPOUND_TEXT)) return import_compound_text( type, data, size );
+    FIXME( "unsupported TEXT type %s\n", debugstr_xatom( type ));
+    return 0;
+}
+
+
+/**************************************************************************
  *		import_pixmap
  *
  *  Import XA_PIXMAP, converting the image to CF_DIB.
@@ -1108,6 +1126,17 @@ static BOOL export_utf8_string( Display *display, Window win, Atom prop, Atom ta
     HeapFree( GetProcessHeap(), 0, text );
     GlobalUnlock( handle );
     return TRUE;
+}
+
+
+/**************************************************************************
+ *		export_text
+ *
+ *  Export CF_UNICODE to the polymorphic TEXT type, using UTF8.
+ */
+static BOOL export_text( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
+{
+    return export_utf8_string( display, win, prop, x11drv_atom(UTF8_STRING), handle );
 }
 
 
