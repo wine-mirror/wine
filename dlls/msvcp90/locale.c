@@ -158,7 +158,9 @@ typedef struct {
 typedef struct {
     locale_facet facet;
     _Timevec time;
+#if _MSVCP_VER <= 100
     _Cvtvec cvt;
+#endif
 } time_put;
 
 typedef struct {
@@ -8973,7 +8975,9 @@ void __thiscall time_put_char__Init(time_put *this, const _Locinfo *locinfo)
 {
     TRACE("(%p %p)\n", this, locinfo);
     _Locinfo__Gettnames(locinfo, &this->time);
+#if _MSVCP_VER <= 100
     _Locinfo__Getcvt(locinfo, &this->cvt);
+#endif
 }
 
 /* ??0?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAE@ABV_Locinfo@1@I@Z */
@@ -9286,7 +9290,9 @@ void __thiscall time_put_wchar__Init(time_put *this, const _Locinfo *locinfo)
 {
     TRACE("(%p %p)\n", this, locinfo);
     _Locinfo__Gettnames(locinfo, &this->time);
+#if _MSVCP_VER <= 100
     _Locinfo__Getcvt(locinfo, &this->cvt);
+#endif
 }
 
 /* ??0?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QAE@ABV_Locinfo@1@I@Z */
@@ -9546,6 +9552,7 @@ ostreambuf_iterator_wchar* __thiscall time_put_wchar_do_put(const time_put *this
 {
     char buf[64], fmt[4], *p = fmt;
     MSVCP_size_t i, len;
+    const _Cvtvec *cvt;
     wchar_t c;
 
     TRACE("(%p %p %p %c %p %c %c)\n", this, ret, base, fill, t, spec, mod);
@@ -9556,9 +9563,15 @@ ostreambuf_iterator_wchar* __thiscall time_put_wchar_do_put(const time_put *this
     *p++ = spec;
     *p++ = 0;
 
+#if _MSVCP_VER <= 100
+    cvt = &this->cvt;
+#else
+    cvt = &ctype_wchar_use_facet(base->loc)->cvt;
+#endif
+
     len = _Strftime(buf, sizeof(buf), fmt, t, this->time.timeptr);
     for(i=0; i<len; i++) {
-        c = mb_to_wc(buf[i], &this->cvt);
+        c = mb_to_wc(buf[i], cvt);
         ostreambuf_iterator_wchar_put(&dest, c);
     }
 
@@ -9596,23 +9609,31 @@ ostreambuf_iterator_wchar* __thiscall time_put_wchar_put_format(const time_put *
         ostreambuf_iterator_wchar *ret, ostreambuf_iterator_wchar dest, ios_base *base,
         wchar_t fill, const struct tm *t, const wchar_t *pat, const wchar_t *pat_end)
 {
-    wchar_t percent = mb_to_wc('%', &this->cvt);
+    wchar_t percent;
     char c[MB_LEN_MAX];
+    const _Cvtvec *cvt;
 
     TRACE("(%p %p %p %c %p %s)\n", this, ret, base, fill, t, debugstr_wn(pat, pat_end-pat));
 
+#if _MSVCP_VER <= 100
+    cvt = &this->cvt;
+#else
+    cvt = &ctype_wchar_use_facet(base->loc)->cvt;
+#endif
+
+    percent = mb_to_wc('%', cvt);
     while(pat < pat_end) {
         if(*pat != percent) {
             ostreambuf_iterator_wchar_put(&dest, *pat++);
         }else if(++pat == pat_end) {
             ostreambuf_iterator_wchar_put(&dest, percent);
-        }else if(_Wcrtomb(c, *pat, NULL, &this->cvt)!=1 || (*c=='#' && pat+1==pat_end)) {
+        }else if(_Wcrtomb(c, *pat, NULL, cvt)!=1 || (*c=='#' && pat+1==pat_end)) {
             ostreambuf_iterator_wchar_put(&dest, percent);
             ostreambuf_iterator_wchar_put(&dest, *pat++);
         }else {
             pat++;
             if(*c == '#') {
-                if(_Wcrtomb(c, *pat++, NULL, &this->cvt) != 1) {
+                if(_Wcrtomb(c, *pat++, NULL, cvt) != 1) {
                     ostreambuf_iterator_wchar_put(&dest, percent);
                     ostreambuf_iterator_wchar_put(&dest, *(pat-2));
                     ostreambuf_iterator_wchar_put(&dest, *(pat-1));
