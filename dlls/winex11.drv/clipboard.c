@@ -131,6 +131,7 @@ static BOOL export_text_html( Display *display, Window win, Atom prop, Atom targ
 static BOOL export_hdrop( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_targets( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_multiple( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
+static BOOL export_timestamp( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 
 static BOOL X11DRV_CLIPBOARD_ReadProperty( Display *display, Window w, Atom prop,
                                            Atom *type, unsigned char **data, unsigned long *datasize );
@@ -176,6 +177,7 @@ static const struct
     { HTMLFormatW, 0,        XATOM_text_html,           import_data,          export_text_html },
     { 0, 0,                  XATOM_TARGETS,             import_targets,       export_targets },
     { 0, 0,                  XATOM_MULTIPLE,            NULL,                 export_multiple },
+    { 0, 0,                  XATOM_TIMESTAMP,           NULL,                 export_timestamp },
 };
 
 static struct list format_list = LIST_INIT( format_list );
@@ -1548,6 +1550,19 @@ static BOOL export_multiple( Display *display, Window win, Atom prop, Atom targe
         if (failed) put_property( display, win, prop, atype, 32, list, count );
     }
     XFree( list );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           export_timestamp
+ *
+ * Export the timestamp that was used to acquire the selection
+ */
+static BOOL export_timestamp( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
+{
+    Time time = CurrentTime;  /* FIXME */
+    put_property( display, win, prop, XA_INTEGER, 32, &time, 1 );
     return TRUE;
 }
 

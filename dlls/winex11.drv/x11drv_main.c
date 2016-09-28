@@ -111,6 +111,7 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
     "SELECTION_DATA",
     "TARGETS",
     "TEXT",
+    "TIMESTAMP",
     "UTF8_STRING",
     "RAW_ASCENT",
     "RAW_DESCENT",
