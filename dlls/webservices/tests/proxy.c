@@ -191,6 +191,64 @@ static void test_WsSendMessage( int port, WS_XML_STRING *action )
     WsFreeMessage( msg );
 }
 
+static void test_WsReceiveMessage( int port )
+{
+    WS_XML_STRING req = {9, (BYTE *)"req_test1"}, resp = {10, (BYTE *)"resp_test1"}, ns = {2, (BYTE *)"ns"};
+    WS_CHANNEL *channel;
+    WS_MESSAGE *msg;
+    WS_ELEMENT_DESCRIPTION body;
+    WS_MESSAGE_DESCRIPTION desc_req, desc_resp;
+    const WS_MESSAGE_DESCRIPTION *desc[1];
+    INT32 val = -1;
+    HRESULT hr;
+
+    hr = create_channel( port, &channel );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    body.elementLocalName = &req;
+    body.elementNs        = &ns;
+    body.type             = WS_INT32_TYPE;
+    body.typeDescription  = NULL;
+    desc_req.action                 = &req;
+    desc_req.bodyElementDescription = &body;
+    hr = WsSendMessage( channel, msg, &desc_req, WS_WRITE_REQUIRED_VALUE, &val, sizeof(val), NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    WsFreeMessage( msg );
+
+    hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    body.elementLocalName = &resp;
+    desc_resp.action                 = &resp;
+    desc_resp.bodyElementDescription = &body;
+    desc[0] = &desc_resp;
+    hr = WsReceiveMessage( NULL, msg, desc, 1, WS_RECEIVE_REQUIRED_MESSAGE, WS_READ_REQUIRED_VALUE,
+                           NULL, &val, sizeof(val), NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsReceiveMessage( channel, NULL, desc, 1, WS_RECEIVE_REQUIRED_MESSAGE, WS_READ_REQUIRED_VALUE,
+                           NULL, &val, sizeof(val), NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsReceiveMessage( channel, msg, NULL, 1, WS_RECEIVE_REQUIRED_MESSAGE, WS_READ_REQUIRED_VALUE,
+                           NULL, &val, sizeof(val), NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsReceiveMessage( channel, msg, desc, 1, WS_RECEIVE_REQUIRED_MESSAGE, WS_READ_REQUIRED_VALUE,
+                           NULL, &val, sizeof(val), NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( val == -2, "got %d\n", val );
+
+    hr = WsCloseChannel( channel, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    WsFreeChannel( channel );
+    WsFreeMessage( msg );
+}
+
 static const struct
 {
     const char   *req_action;
@@ -324,6 +382,8 @@ START_TEST(proxy)
     if (ret != WAIT_OBJECT_0) return;
 
     test_WsSendMessage( info.port, &test1 );
+    test_WsReceiveMessage( info.port );
+
     test_WsSendMessage( info.port, &quit );
     WaitForSingleObject( thread, 3000 );
 }

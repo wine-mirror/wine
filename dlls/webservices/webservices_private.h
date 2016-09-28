@@ -38,6 +38,7 @@ WS_TYPE map_value_type( WS_VALUE_TYPE ) DECLSPEC_HIDDEN;
 BOOL set_fp_rounding( unsigned short * ) DECLSPEC_HIDDEN;
 void restore_fp_rounding( unsigned short ) DECLSPEC_HIDDEN;
 HRESULT set_output( WS_XML_WRITER * ) DECLSPEC_HIDDEN;
+HRESULT set_input( WS_XML_READER *, char *, ULONG ) DECLSPEC_HIDDEN;
 ULONG get_type_size( WS_TYPE, const WS_STRUCT_DESCRIPTION * ) DECLSPEC_HIDDEN;
 
 struct node
@@ -97,6 +98,7 @@ HRESULT message_set_action( WS_MESSAGE *, const WS_XML_STRING * ) DECLSPEC_HIDDE
 HRESULT message_insert_http_headers( WS_MESSAGE *, HINTERNET ) DECLSPEC_HIDDEN;
 
 HRESULT channel_send_message( WS_CHANNEL *, WS_MESSAGE * ) DECLSPEC_HIDDEN;
+HRESULT channel_receive_message( WS_CHANNEL *, char **, ULONG * ) DECLSPEC_HIDDEN;
 
 static inline BOOL is_nil_value( const char *value, ULONG size )
 {
