@@ -260,6 +260,16 @@ HRESULT WINAPI WsGetMessageProperty( WS_MESSAGE *handle, WS_MESSAGE_PROPERTY_ID 
         *(WS_XML_BUFFER **)buf = msg->buf;
         return S_OK;
 
+    case WS_MESSAGE_PROPERTY_BODY_READER:
+        if (!buf || size != sizeof(msg->reader_body)) return E_INVALIDARG;
+        *(WS_XML_READER **)buf = msg->reader_body;
+        return S_OK;
+
+    case WS_MESSAGE_PROPERTY_BODY_WRITER:
+        if (!buf || size != sizeof(msg->writer_body)) return E_INVALIDARG;
+        *(WS_XML_WRITER **)buf = msg->writer_body;
+        return S_OK;
+
     case WS_MESSAGE_PROPERTY_IS_ADDRESSED:
         if (msg->state < WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
         *(BOOL *)buf = msg->is_addressed;
