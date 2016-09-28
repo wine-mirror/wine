@@ -746,7 +746,7 @@ static void destroy_cocoa_window(struct macdrv_win_data *data)
  */
 static void create_cocoa_view(struct macdrv_win_data *data)
 {
-    BOOL equal = !memcmp(&data->window_rect, &data->client_rect, sizeof(data->whole_rect));
+    BOOL equal = EqualRect(&data->window_rect, &data->client_rect);
     CGRect frame = cgrect_from_rect(data->window_rect);
 
     data->shaped = FALSE;
@@ -1055,7 +1055,7 @@ static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags, c
     else
     {
         BOOL were_equal = (data->cocoa_view == data->client_cocoa_view);
-        BOOL now_equal = !memcmp(&data->whole_rect, &data->client_rect, sizeof(data->whole_rect));
+        BOOL now_equal = EqualRect(&data->whole_rect, &data->client_rect);
 
         if (were_equal && !now_equal)
         {
@@ -1781,7 +1781,7 @@ BOOL CDECL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *
     OffsetRect(&rect, -window_rect->left, -window_rect->top);
 
     surface = data->surface;
-    if (!surface || memcmp(&surface->rect, &rect, sizeof(RECT)))
+    if (!surface || !EqualRect(&surface->rect, &rect))
     {
         data->surface = create_surface(data->cocoa_window, &rect, NULL, TRUE);
         set_window_surface(data->cocoa_window, data->surface);
@@ -1967,7 +1967,7 @@ void CDECL macdrv_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags
     surface_rect = get_surface_rect(visible_rect);
     if (data->surface)
     {
-        if (!memcmp(&data->surface->rect, &surface_rect, sizeof(surface_rect)))
+        if (EqualRect(&data->surface->rect, &surface_rect))
         {
             /* existing surface is good enough */
             surface_clip_to_visible_rect(data->surface, visible_rect);
@@ -2051,7 +2051,7 @@ void CDECL macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
             old_client_rect.right  - data->client_rect.right  == x_offset &&
             old_client_rect.top    - data->client_rect.top    == y_offset &&
             old_client_rect.bottom - data->client_rect.bottom == y_offset &&
-            !memcmp(&valid_rects[0], &data->client_rect, sizeof(RECT)))
+            EqualRect(&valid_rects[0], &data->client_rect))
         {
             /* A Cocoa window's bits are moved automatically */
             if (!window && (x_offset != 0 || y_offset != 0))

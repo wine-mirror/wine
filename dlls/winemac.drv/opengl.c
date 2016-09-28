@@ -1652,7 +1652,7 @@ static BOOL sync_context_rect(struct wgl_context *context)
         {
             RECT rect = data->client_rect;
             OffsetRect(&rect, -data->whole_rect.left, -data->whole_rect.top);
-            if (memcmp(&context->draw_rect, &rect, sizeof(context->draw_rect)))
+            if (!EqualRect(&context->draw_rect, &rect))
             {
                 context->draw_rect = rect;
                 ret = TRUE;
@@ -4327,7 +4327,7 @@ void sync_gl_view(struct macdrv_win_data* data, const RECT* old_whole_rect, cons
 
         OffsetRect(&old, -old_whole_rect->left, -old_whole_rect->top);
         OffsetRect(&new, -data->whole_rect.left, -data->whole_rect.top);
-        if (memcmp(&old, &new, sizeof(old)))
+        if (!EqualRect(&old, &new))
         {
             TRACE("GL view %p changed position; marking contexts\n", data->client_cocoa_view);
             mark_contexts_for_moved_view(data->client_cocoa_view);
