@@ -163,7 +163,6 @@ void ME_DestroyDisplayItem(ME_DisplayItem *item)
     TRACE("type=%s\n", ME_GetDITypeName(item->type));
   if (item->type==diParagraph)
   {
-    FREE_OBJ(item->member.para.pFmt);
     ME_DestroyString(item->member.para.text);
   }
 

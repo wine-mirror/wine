@@ -189,7 +189,7 @@ typedef struct tagME_BorderRect
 
 typedef struct tagME_Paragraph
 {
-  PARAFORMAT2 *pFmt;
+  PARAFORMAT2 fmt;
   ME_String *text;
 
   struct tagME_DisplayItem *pCell; /* v4.1 */

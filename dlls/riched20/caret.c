@@ -445,7 +445,7 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
       continue;
     }
   }
-  if (delete_all) ME_SetDefaultParaFormat( editor, start_para->member.para.pFmt );
+  if (delete_all) ME_SetDefaultParaFormat( editor, &start_para->member.para.fmt );
   return TRUE;
 }
 
@@ -908,8 +908,8 @@ static ME_DisplayItem* ME_FindPixelPosInTableRow(int x, int y,
   /* Return table row delimiter */
   para = ME_FindItemFwd(cell, diParagraph);
   assert(para->member.para.nFlags & MEPF_ROWEND);
-  assert(para->member.para.pFmt->dwMask & PFM_TABLEROWDELIMITER);
-  assert(para->member.para.pFmt->wEffects & PFE_TABLEROWDELIMITER);
+  assert(para->member.para.fmt.dwMask & PFM_TABLEROWDELIMITER);
+  assert(para->member.para.fmt.wEffects & PFE_TABLEROWDELIMITER);
   return para;
 }
 

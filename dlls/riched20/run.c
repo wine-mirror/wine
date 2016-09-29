@@ -642,7 +642,7 @@ SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run *run, i
   if (run->nFlags & MERF_TAB)
   {
     int pos = 0, i = 0, ppos, shift = 0;
-    PARAFORMAT2 *pFmt = para->pFmt;
+    const PARAFORMAT2 *pFmt = &para->fmt;
 
     if (c->editor->bEmulateVersion10 && /* v1.0 - 3.0 */
         pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE)

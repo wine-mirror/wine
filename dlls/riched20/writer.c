@@ -349,7 +349,7 @@ ME_StreamOutRTFTableProps(ME_TextEditor *editor, ME_OutStream *pStream,
   if (!ME_StreamOutPrint(pStream, "\\trowd"))
     return FALSE;
   if (!editor->bEmulateVersion10) { /* v4.1 */
-    PARAFORMAT2 *pFmt = ME_GetTableRowEnd(para)->member.para.pFmt;
+    PARAFORMAT2 *pFmt = &ME_GetTableRowEnd(para)->member.para.fmt;
     para = ME_GetTableRowStart(para);
     cell = para->member.para.next_para->member.para.pCell;
     assert(cell);
@@ -387,7 +387,7 @@ ME_StreamOutRTFTableProps(ME_TextEditor *editor, ME_OutStream *pStream,
                                     &para->member.para.border.left,
                                     &para->member.para.border.bottom,
                                     &para->member.para.border.right };
-    PARAFORMAT2 *pFmt = para->member.para.pFmt;
+    PARAFORMAT2 *pFmt = &para->member.para.fmt;
 
     assert(!(para->member.para.nFlags & (MEPF_ROWSTART|MEPF_ROWEND|MEPF_CELL)));
     if (pFmt->dxOffset)
@@ -426,7 +426,7 @@ static BOOL
 ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
                          ME_DisplayItem *para)
 {
-  PARAFORMAT2 *fmt = para->member.para.pFmt;
+  PARAFORMAT2 *fmt = &para->member.para.fmt;
   char props[STREAMOUT_BUFFER_SIZE] = "";
   int i;
 
@@ -454,8 +454,8 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
       return TRUE;
     }
   } else { /* v1.0 - 3.0 */
-    if (para->member.para.pFmt->dwMask & PFM_TABLE &&
-        para->member.para.pFmt->wEffects & PFE_TABLE)
+    if (para->member.para.fmt.dwMask & PFM_TABLE &&
+        para->member.para.fmt.wEffects & PFE_TABLE)
     {
       if (!ME_StreamOutRTFTableProps(editor, pStream, para))
         return FALSE;
@@ -929,8 +929,8 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
         return FALSE;
     } else if (cursor.pRun->member.run.nFlags & MERF_TAB) {
       if (editor->bEmulateVersion10 && /* v1.0 - 3.0 */
-          cursor.pPara->member.para.pFmt->dwMask & PFM_TABLE &&
-          cursor.pPara->member.para.pFmt->wEffects & PFE_TABLE)
+          cursor.pPara->member.para.fmt.dwMask & PFM_TABLE &&
+          cursor.pPara->member.para.fmt.wEffects & PFE_TABLE)
       {
         if (!ME_StreamOutPrint(pStream, "\\cell "))
           return FALSE;
@@ -948,8 +948,8 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
       }
       nChars--;
     } else if (cursor.pRun->member.run.nFlags & MERF_ENDPARA) {
-      if (cursor.pPara->member.para.pFmt->dwMask & PFM_TABLE &&
-          cursor.pPara->member.para.pFmt->wEffects & PFE_TABLE &&
+      if (cursor.pPara->member.para.fmt.dwMask & PFM_TABLE &&
+          cursor.pPara->member.para.fmt.wEffects & PFE_TABLE &&
           !(cursor.pPara->member.para.nFlags & (MEPF_ROWSTART|MEPF_ROWEND|MEPF_CELL)))
       {
         if (!ME_StreamOutPrint(pStream, "\\row \r\n"))

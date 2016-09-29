@@ -902,7 +902,7 @@ void ME_RTFTblAttrHook(RTF_Info *info)
         /* Tab stops were used to store cell positions before v4.1 but v4.1
          * still seems to set the tabstops without using them. */
         ME_DisplayItem *para = info->editor->pCursors[0].pPara;
-        PARAFORMAT2 *pFmt = para->member.para.pFmt;
+        PARAFORMAT2 *pFmt = &para->member.para.fmt;
         pFmt->rgxTabs[cellNum] &= ~0x00FFFFFF;
         pFmt->rgxTabs[cellNum] |= 0x00FFFFFF & info->rtfParam;
       }
@@ -973,7 +973,7 @@ void ME_RTFSpecialCharHook(RTF_Info *info)
         }
       } else { /* v1.0 - v3.0 */
         ME_DisplayItem *para = info->editor->pCursors[0].pPara;
-        PARAFORMAT2 *pFmt = para->member.para.pFmt;
+        PARAFORMAT2 *pFmt = &para->member.para.fmt;
         if (pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE &&
             tableDef->numCellsInserted < tableDef->numCellsDefined)
         {
@@ -1059,8 +1059,8 @@ void ME_RTFSpecialCharHook(RTF_Info *info)
         }
 
         para = ME_InsertTableRowEndFromCursor(info->editor);
-        para->member.para.pFmt->dxOffset = abs(info->tableDef->gapH);
-        para->member.para.pFmt->dxStartIndent = info->tableDef->leftEdge;
+        para->member.para.fmt.dxOffset = abs(info->tableDef->gapH);
+        para->member.para.fmt.dxStartIndent = info->tableDef->leftEdge;
         ME_ApplyBorderProperties(info, &para->member.para.border,
                                  tableDef->border);
         info->nestingLevel--;
@@ -1082,7 +1082,7 @@ void ME_RTFSpecialCharHook(RTF_Info *info)
       } else { /* v1.0 - v3.0 */
         WCHAR endl = '\r';
         ME_DisplayItem *para = info->editor->pCursors[0].pPara;
-        PARAFORMAT2 *pFmt = para->member.para.pFmt;
+        PARAFORMAT2 *pFmt = &para->member.para.fmt;
         pFmt->dxOffset = info->tableDef->gapH;
         pFmt->dxStartIndent = info->tableDef->leftEdge;
 
@@ -1109,7 +1109,7 @@ void ME_RTFSpecialCharHook(RTF_Info *info)
         PARAFORMAT2 *pFmt;
         RTFFlushOutputBuffer(info);
         para = info->editor->pCursors[0].pPara;
-        pFmt = para->member.para.pFmt;
+        pFmt = &para->member.para.fmt;
         if (pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE)
         {
           /* rtfPar is treated like a space within a table. */
@@ -1526,7 +1526,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
                           ME_GetTextLength(editor), FALSE);
     from = to = 0;
     ME_ClearTempStyle(editor);
-    ME_SetDefaultParaFormat(editor, editor->pCursors[0].pPara->member.para.pFmt);
+    ME_SetDefaultParaFormat(editor, &editor->pCursors[0].pPara->member.para.fmt);
   }
 
 
@@ -2333,7 +2333,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
               ME_InsertTextFromCursor(editor, 0, &endl, 1,
                                       editor->pCursors[0].pRun->member.run.style);
               para = editor->pBuffer->pFirst->member.para.next_para;
-              ME_SetDefaultParaFormat(editor, para->member.para.pFmt);
+              ME_SetDefaultParaFormat(editor, &para->member.para.fmt);
               para->member.para.nFlags = MEPF_REWRAP;
               editor->pCursors[0].pPara = para;
               editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);

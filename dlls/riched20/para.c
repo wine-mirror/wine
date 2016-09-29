@@ -27,8 +27,7 @@ static ME_DisplayItem *make_para(ME_TextEditor *editor)
 {
     ME_DisplayItem *item = ME_MakeDI(diParagraph);
 
-    item->member.para.pFmt = ALLOC_OBJ(PARAFORMAT2);
-    ME_SetDefaultParaFormat(editor, item->member.para.pFmt);
+    ME_SetDefaultParaFormat(editor, &item->member.para.fmt);
     item->member.para.nFlags = MEPF_REWRAP;
     return item;
 }
@@ -110,21 +109,21 @@ void ME_MarkAllForWrapping(ME_TextEditor *editor)
 
 static void ME_UpdateTableFlags(ME_DisplayItem *para)
 {
-  para->member.para.pFmt->dwMask |= PFM_TABLE|PFM_TABLEROWDELIMITER;
+  para->member.para.fmt.dwMask |= PFM_TABLE|PFM_TABLEROWDELIMITER;
   if (para->member.para.pCell) {
     para->member.para.nFlags |= MEPF_CELL;
   } else {
     para->member.para.nFlags &= ~MEPF_CELL;
   }
   if (para->member.para.nFlags & MEPF_ROWEND) {
-    para->member.para.pFmt->wEffects |= PFE_TABLEROWDELIMITER;
+    para->member.para.fmt.wEffects |= PFE_TABLEROWDELIMITER;
   } else {
-    para->member.para.pFmt->wEffects &= ~PFE_TABLEROWDELIMITER;
+    para->member.para.fmt.wEffects &= ~PFE_TABLEROWDELIMITER;
   }
   if (para->member.para.nFlags & (MEPF_ROWSTART|MEPF_CELL|MEPF_ROWEND))
-    para->member.para.pFmt->wEffects |= PFE_TABLE;
+    para->member.para.fmt.wEffects |= PFE_TABLE;
   else
-    para->member.para.pFmt->wEffects &= ~PFE_TABLE;
+    para->member.para.fmt.wEffects &= ~PFE_TABLE;
 }
 
 static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_Paragraph *para, const PARAFORMAT2 *pFmt)
@@ -132,7 +131,7 @@ static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_Paragraph *para, const PA
   PARAFORMAT2 copy;
   DWORD dwMask;
 
-  assert(para->pFmt->cbSize == sizeof(PARAFORMAT2));
+  assert(para->fmt.cbSize == sizeof(PARAFORMAT2));
   dwMask = pFmt->dwMask;
   if (pFmt->cbSize < sizeof(PARAFORMAT))
     return FALSE;
@@ -143,25 +142,25 @@ static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_Paragraph *para, const PA
 
   add_undo_set_para_fmt( editor, para );
 
-  copy = *para->pFmt;
+  copy = para->fmt;
 
 #define COPY_FIELD(m, f) \
   if (dwMask & (m)) {                           \
-    para->pFmt->dwMask |= m;                    \
-    para->pFmt->f = pFmt->f;                    \
+    para->fmt.dwMask |= m;                      \
+    para->fmt.f = pFmt->f;                      \
   }
 
   COPY_FIELD(PFM_NUMBERING, wNumbering);
   COPY_FIELD(PFM_STARTINDENT, dxStartIndent);
   if (dwMask & PFM_OFFSETINDENT)
-    para->pFmt->dxStartIndent += pFmt->dxStartIndent;
+    para->fmt.dxStartIndent += pFmt->dxStartIndent;
   COPY_FIELD(PFM_RIGHTINDENT, dxRightIndent);
   COPY_FIELD(PFM_OFFSET, dxOffset);
   COPY_FIELD(PFM_ALIGNMENT, wAlignment);
   if (dwMask & PFM_TABSTOPS)
   {
-    para->pFmt->cTabCount = pFmt->cTabCount;
-    memcpy(para->pFmt->rgxTabs, pFmt->rgxTabs, pFmt->cTabCount*sizeof(LONG));
+    para->fmt.cTabCount = pFmt->cTabCount;
+    memcpy(para->fmt.rgxTabs, pFmt->rgxTabs, pFmt->cTabCount*sizeof(LONG));
   }
 
 #define EFFECTS_MASK (PFM_RTLPARA|PFM_KEEP|PFM_KEEPNEXT|PFM_PAGEBREAKBEFORE| \
@@ -170,9 +169,9 @@ static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_Paragraph *para, const PA
   /* we take for granted that PFE_xxx is the hiword of the corresponding PFM_xxx */
   if (dwMask & EFFECTS_MASK)
   {
-    para->pFmt->dwMask |= dwMask & EFFECTS_MASK;
-    para->pFmt->wEffects &= ~HIWORD(dwMask);
-    para->pFmt->wEffects |= pFmt->wEffects & HIWORD(dwMask);
+    para->fmt.dwMask |= dwMask & EFFECTS_MASK;
+    para->fmt.wEffects &= ~HIWORD(dwMask);
+    para->fmt.wEffects |= pFmt->wEffects & HIWORD(dwMask);
   }
 #undef EFFECTS_MASK
 
@@ -190,10 +189,10 @@ static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_Paragraph *para, const PA
   COPY_FIELD(PFM_BORDER, wBorderWidth);
   COPY_FIELD(PFM_BORDER, wBorders);
 
-  para->pFmt->dwMask |= dwMask;
+  para->fmt.dwMask |= dwMask;
 #undef COPY_FIELD
 
-  if (memcmp(&copy, para->pFmt, sizeof(PARAFORMAT2)))
+  if (memcmp(&copy, &para->fmt, sizeof(PARAFORMAT2)))
     para->nFlags |= MEPF_REWRAP;
 
   return TRUE;
@@ -225,7 +224,7 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   }
   assert(run->type == diRun);
   run_para = ME_GetParagraph(run);
-  assert(run_para->member.para.pFmt->cbSize == sizeof(PARAFORMAT2));
+  assert(run_para->member.para.fmt.cbSize == sizeof(PARAFORMAT2));
 
   new_para->member.para.text = ME_VSplitString( run_para->member.para.text, run->member.run.nCharOfs );
 
@@ -260,7 +259,7 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   new_para->member.para.nFlags = MEPF_REWRAP;
 
   /* FIXME initialize format style and call ME_SetParaFormat blah blah */
-  *new_para->member.para.pFmt = *run_para->member.para.pFmt;
+  new_para->member.para.fmt = run_para->member.para.fmt;
   new_para->member.para.border = run_para->member.para.border;
 
   /* insert paragraph into paragraph double linked list */
@@ -399,7 +398,7 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
   if (!keepFirstParaFormat)
   {
     add_undo_set_para_fmt( editor, &tp->member.para );
-    *tp->member.para.pFmt = *pNext->member.para.pFmt;
+    tp->member.para.fmt = pNext->member.para.fmt;
     tp->member.para.border = pNext->member.para.border;
   }
 
@@ -566,9 +565,9 @@ static void ME_GetParaFormat(ME_TextEditor *editor,
 {
   UINT cbSize = pFmt->cbSize;
   if (pFmt->cbSize >= sizeof(PARAFORMAT2)) {
-    *pFmt = *para->member.para.pFmt;
+    *pFmt = para->member.para.fmt;
   } else {
-    CopyMemory(pFmt, para->member.para.pFmt, pFmt->cbSize);
+    CopyMemory(pFmt, &para->member.para.fmt, pFmt->cbSize);
     pFmt->dwMask &= PFM_ALL;
   }
   pFmt->cbSize = cbSize;
@@ -592,7 +591,7 @@ void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)
   while (para != para_end)
   {
     para = para->member.para.next_para;
-    curFmt = para->member.para.pFmt;
+    curFmt = &para->member.para.fmt;
 
 #define CHECK_FIELD(m, f) \
     if (pFmt->f != curFmt->f) pFmt->dwMask &= ~(m);
@@ -603,7 +602,7 @@ void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)
     CHECK_FIELD(PFM_OFFSET, dxOffset);
     CHECK_FIELD(PFM_ALIGNMENT, wAlignment);
     if (pFmt->dwMask & PFM_TABSTOPS) {
-      if (pFmt->cTabCount != para->member.para.pFmt->cTabCount ||
+      if (pFmt->cTabCount != para->member.para.fmt.cTabCount ||
           memcmp(pFmt->rgxTabs, curFmt->rgxTabs, curFmt->cTabCount*sizeof(int)))
         pFmt->dwMask &= ~PFM_TABSTOPS;
     }

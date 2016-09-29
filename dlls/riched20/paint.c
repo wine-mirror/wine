@@ -553,16 +553,16 @@ static void ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, RECT
   BOOL          hasParaBorder;
 
   SetRectEmpty(bounds);
-  if (!(para->pFmt->dwMask & (PFM_BORDER | PFM_SPACEBEFORE | PFM_SPACEAFTER))) return;
+  if (!(para->fmt.dwMask & (PFM_BORDER | PFM_SPACEBEFORE | PFM_SPACEAFTER))) return;
 
   border_width = top_border = bottom_border = 0;
-  idx = (para->pFmt->wBorders >> 8) & 0xF;
+  idx = (para->fmt.wBorders >> 8) & 0xF;
   hasParaBorder = (!(c->editor->bEmulateVersion10 &&
-                     para->pFmt->dwMask & PFM_TABLE &&
-                     para->pFmt->wEffects & PFE_TABLE) &&
-                   (para->pFmt->dwMask & PFM_BORDER) &&
+                     para->fmt.dwMask & PFM_TABLE &&
+                     para->fmt.wEffects & PFE_TABLE) &&
+                   (para->fmt.dwMask & PFM_BORDER) &&
                     idx != 0 &&
-                    (para->pFmt->wBorders & 0xF));
+                    (para->fmt.wBorders & 0xF));
   if (hasParaBorder)
   {
     /* FIXME: wBorders is not stored as MSDN says in v1.0 - 4.1 of richedit
@@ -589,29 +589,29 @@ static void ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, RECT
      *     0x0F00     bottom      right
      *     0xF000     right       bottom
      */
-    if (para->pFmt->wBorders & 0x00B0)
-      FIXME("Unsupported border flags %x\n", para->pFmt->wBorders);
-    border_width = ME_GetParaBorderWidth(c, para->pFmt->wBorders);
-    if (para->pFmt->wBorders & 4)       top_border = border_width;
-    if (para->pFmt->wBorders & 8)       bottom_border = border_width;
+    if (para->fmt.wBorders & 0x00B0)
+      FIXME("Unsupported border flags %x\n", para->fmt.wBorders);
+    border_width = ME_GetParaBorderWidth(c, para->fmt.wBorders);
+    if (para->fmt.wBorders & 4)       top_border = border_width;
+    if (para->fmt.wBorders & 8)       bottom_border = border_width;
   }
 
-  if (para->pFmt->dwMask & PFM_SPACEBEFORE)
+  if (para->fmt.dwMask & PFM_SPACEBEFORE)
   {
     rc.left = c->rcView.left;
     rc.right = c->rcView.right;
     rc.top = y;
-    bounds->top = ME_twips2pointsY(c, para->pFmt->dySpaceBefore);
+    bounds->top = ME_twips2pointsY(c, para->fmt.dySpaceBefore);
     rc.bottom = y + bounds->top + top_border;
     FillRect(c->hDC, &rc, c->editor->hbrBackground);
   }
 
-  if (para->pFmt->dwMask & PFM_SPACEAFTER)
+  if (para->fmt.dwMask & PFM_SPACEAFTER)
   {
     rc.left = c->rcView.left;
     rc.right = c->rcView.right;
     rc.bottom = y + para->nHeight;
-    bounds->bottom = ME_twips2pointsY(c, para->pFmt->dySpaceAfter);
+    bounds->bottom = ME_twips2pointsY(c, para->fmt.dySpaceAfter);
     rc.top = rc.bottom - bounds->bottom - bottom_border;
     FillRect(c->hDC, &rc, c->editor->hbrBackground);
   }
@@ -624,11 +624,11 @@ static void ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, RECT
     HPEN        pen = NULL, oldpen = NULL;
     POINT       pt;
 
-    if (para->pFmt->wBorders & 64) /* autocolor */
+    if (para->fmt.wBorders & 64) /* autocolor */
       pencr = ITextHost_TxGetSysColor(c->editor->texthost,
                                       COLOR_WINDOWTEXT);
     else
-      pencr = pen_colors[(para->pFmt->wBorders >> 12) & 0xF];
+      pencr = pen_colors[(para->fmt.wBorders >> 12) & 0xF];
 
     rightEdge = c->pt.x + max(c->editor->sizeWindow.cx,
                               c->editor->nTotalWidth);
@@ -641,9 +641,9 @@ static void ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, RECT
     /* before & after spaces are not included in border */
 
     /* helper to draw the double lines in case of corner */
-#define DD(x)   ((para->pFmt->wBorders & (x)) ? (pen_width + 1) : 0)
+#define DD(x)   ((para->fmt.wBorders & (x)) ? (pen_width + 1) : 0)
 
-    if (para->pFmt->wBorders & 1)
+    if (para->fmt.wBorders & 1)
     {
       MoveToEx(c->hDC, c->pt.x, y + bounds->top, NULL);
       LineTo(c->hDC, c->pt.x, y + para->nHeight - bounds->bottom);
@@ -658,7 +658,7 @@ static void ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, RECT
       }
       bounds->left += border_width;
     }
-    if (para->pFmt->wBorders & 2)
+    if (para->fmt.wBorders & 2)
     {
       MoveToEx(c->hDC, rightEdge - 1, y + bounds->top, NULL);
       LineTo(c->hDC, rightEdge - 1, y + para->nHeight - bounds->bottom);
@@ -673,7 +673,7 @@ static void ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, RECT
       }
       bounds->right += border_width;
     }
-    if (para->pFmt->wBorders & 4)
+    if (para->fmt.wBorders & 4)
     {
       MoveToEx(c->hDC, c->pt.x, y + bounds->top, NULL);
       LineTo(c->hDC, rightEdge, y + bounds->top);
@@ -683,7 +683,7 @@ static void ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, RECT
       }
       bounds->top += border_width;
     }
-    if (para->pFmt->wBorders & 8)
+    if (para->fmt.wBorders & 8)
     {
       MoveToEx(c->hDC, c->pt.x, y + para->nHeight - bounds->bottom - 1, NULL);
       LineTo(c->hDC, rightEdge, y + para->nHeight - bounds->bottom - 1);
@@ -841,7 +841,7 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
     }
   } else { /* v1.0 - 3.0 */
     /* Draw simple table border */
-    if (para->pFmt->dwMask & PFM_TABLE && para->pFmt->wEffects & PFE_TABLE) {
+    if (para->fmt.dwMask & PFM_TABLE && para->fmt.wEffects & PFE_TABLE) {
       HPEN pen = NULL, oldpen = NULL;
       int i, firstX, startX, endX, rowY, rowBottom, nHeight;
       POINT oldPt;
@@ -853,21 +853,21 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
       /* Find the start relative to the text */
       firstX = c->pt.x + ME_FindItemFwd(paragraph, diRun)->member.run.pt.x;
       /* Go back by the horizontal gap, which is stored in dxOffset */
-      firstX -= ME_twips2pointsX(c, para->pFmt->dxOffset);
+      firstX -= ME_twips2pointsX(c, para->fmt.dxOffset);
       /* The left edge, stored in dxStartIndent affected just the first edge */
-      startX = firstX - ME_twips2pointsX(c, para->pFmt->dxStartIndent);
+      startX = firstX - ME_twips2pointsX(c, para->fmt.dxStartIndent);
       rowY = c->pt.y + para->pt.y;
-      if (para->pFmt->dwMask & PFM_SPACEBEFORE)
-        rowY += ME_twips2pointsY(c, para->pFmt->dySpaceBefore);
+      if (para->fmt.dwMask & PFM_SPACEBEFORE)
+        rowY += ME_twips2pointsY(c, para->fmt.dySpaceBefore);
       nHeight = ME_FindItemFwd(paragraph, diStartRow)->member.row.nHeight;
       rowBottom = rowY + nHeight;
 
       /* Draw horizontal lines */
       MoveToEx(c->hDC, firstX, rowY, &oldPt);
-      i = para->pFmt->cTabCount - 1;
-      endX = startX + ME_twips2pointsX(c, para->pFmt->rgxTabs[i] & 0x00ffffff) + 1;
+      i = para->fmt.cTabCount - 1;
+      endX = startX + ME_twips2pointsX(c, para->fmt.rgxTabs[i] & 0x00ffffff) + 1;
       LineTo(c->hDC, endX, rowY);
-      pNextFmt = para->next_para->member.para.pFmt;
+      pNextFmt = &para->next_para->member.para.fmt;
       /* The bottom of the row only needs to be drawn if the next row is
        * not a table. */
       if (!(pNextFmt && pNextFmt->dwMask & PFM_TABLE && pNextFmt->wEffects &&
@@ -883,9 +883,9 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
       /* Draw vertical lines */
       MoveToEx(c->hDC, firstX, rowY, NULL);
       LineTo(c->hDC, firstX, rowBottom);
-      for (i = 0; i < para->pFmt->cTabCount; i++)
+      for (i = 0; i < para->fmt.cTabCount; i++)
       {
-        int rightBoundary = para->pFmt->rgxTabs[i] & 0x00ffffff;
+        int rightBoundary = para->fmt.rgxTabs[i] & 0x00ffffff;
         endX = startX + ME_twips2pointsX(c, rightBoundary);
         MoveToEx(c->hDC, endX, rowY, NULL);
         LineTo(c->hDC, endX, rowBottom);
