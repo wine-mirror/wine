@@ -1055,6 +1055,9 @@ BOOL dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
 
     TRACE( "(%p, %d, %d, %08x, %d)\n", pdev, x, y, color, type );
 
+    if (x < 0 || x >= pdev->dib.rect.right - pdev->dib.rect.left ||
+        y < 0 || y >= pdev->dib.rect.bottom - pdev->dib.rect.top) return FALSE;
+
     if (!is_interior( &pdev->dib, pdev->clip, x, y, pixel, type )) return FALSE;
 
     if (!(rgn = CreateRectRgn( 0, 0, 0, 0 ))) return FALSE;
