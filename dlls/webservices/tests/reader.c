@@ -1590,7 +1590,7 @@ static void test_WsReadType(void)
     hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_GUID_TYPE, NULL,
                      WS_READ_REQUIRED_VALUE, heap, &val_guid, sizeof(val_guid), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !memcmp( &val_guid, &guid1, sizeof(val_guid) ), "wrong guid\n" );
+    ok( IsEqualGUID( &val_guid, &guid1 ), "wrong guid\n" );
 
     memset( &val_guid, 0, sizeof(val_guid) );
     prepare_type_test( reader, "<t>00000000-0000-0000-0000-0000000000a1</t>",
@@ -1598,7 +1598,7 @@ static void test_WsReadType(void)
     hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_GUID_TYPE, NULL,
                      WS_READ_REQUIRED_VALUE, heap, &val_guid, sizeof(val_guid), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !memcmp( &val_guid, &guid2, sizeof(val_guid) ), "wrong guid\n" );
+    ok( IsEqualGUID( &val_guid, &guid2 ), "wrong guid\n" );
 
     memset( &val_guid, 0, sizeof(val_guid) );
     prepare_type_test( reader, "<t>00000000-0000-0000-0000-0000000000A1</t>",
@@ -1606,7 +1606,7 @@ static void test_WsReadType(void)
     hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_GUID_TYPE, NULL,
                      WS_READ_REQUIRED_VALUE, heap, &val_guid, sizeof(val_guid), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !memcmp( &val_guid, &guid2, sizeof(val_guid) ), "wrong guid\n" );
+    ok( IsEqualGUID( &val_guid, &guid2 ), "wrong guid\n" );
 
     WsFreeReader( reader );
     WsFreeHeap( heap );
