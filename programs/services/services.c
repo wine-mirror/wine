@@ -751,6 +751,7 @@ static struct process_entry *get_winedevice_process(struct service_entry *servic
         if (!winedevice_entry->process) continue;
 
         if (winedevice_entry->is_wow64 != is_wow64) continue;
+        if (!winedevice_entry->config.lpBinaryPathName) continue;
         if (strcmpW(winedevice_entry->config.lpBinaryPathName, path)) continue;
 
         if (!winedevice_entry->config.lpLoadOrderGroup) continue;
