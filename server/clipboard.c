@@ -206,7 +206,7 @@ static int synthesize_formats( struct clipboard *clipboard )
         (HAS_FORMAT( map, CF_TEXT ) || HAS_FORMAT( map, CF_OEMTEXT ) || HAS_FORMAT( map, CF_UNICODETEXT )))
     {
         void *data = memdup( &clipboard->lcid, sizeof(clipboard->lcid) );
-        if ((format = add_format( clipboard, CF_LOCALE )))
+        if (data && (format = add_format( clipboard, CF_LOCALE )))
         {
             format->seqno = clipboard->seqno++;
             format->data  = data;
