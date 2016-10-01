@@ -395,18 +395,20 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
 {
     struct d3d_viewport *viewport = impl_from_IDirect3DViewport3(iface);
     D3DVIEWPORT vp = viewport->viewports.vp1;
-    D3DMATRIX view_mat, world_mat, mat;
+    D3DMATRIX view_mat, world_mat, proj_mat, mat;
     struct transform_vertices_vertex *in, *out;
     float x, y, z, w;
     unsigned int i;
     D3DHVERTEX *outH;
+    struct d3d_device *device = viewport->active_device;
+    BOOL activate = device->current_viewport != viewport;
 
     TRACE("iface %p, vertex_count %u, data %p, flags %#x, offscreen %p.\n",
             iface, dwVertexCount, data, dwFlags, offscreen);
 
     /* Tests on windows show that Windows crashes when this occurs,
      * so don't return the (intuitive) return value
-    if (!viewport->active_device)
+    if (!device)
     {
         WARN("No device active, returning D3DERR_VIEWPORTHASNODEVICE\n");
         return D3DERR_VIEWPORTHASNODEVICE;
@@ -424,14 +426,18 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
         return DDERR_INVALIDPARAMS;
     }
 
-
     wined3d_mutex_lock();
-    wined3d_device_get_transform(viewport->active_device->wined3d_device,
+    if (activate)
+        viewport_activate(viewport, TRUE);
+
+    wined3d_device_get_transform(device->wined3d_device,
             D3DTRANSFORMSTATE_VIEW, (struct wined3d_matrix *)&view_mat);
-    wined3d_device_get_transform(viewport->active_device->wined3d_device,
+    wined3d_device_get_transform(device->wined3d_device,
             WINED3D_TS_WORLD_MATRIX(0), (struct wined3d_matrix *)&world_mat);
+    wined3d_device_get_transform(device->wined3d_device,
+            WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&proj_mat);
     multiply_matrix(&mat, &view_mat, &world_mat);
-    multiply_matrix(&mat, &viewport->active_device->legacy_projection, &mat);
+    multiply_matrix(&mat, &proj_mat, &mat);
 
     /* The pointer is not tested against NULL on Windows. */
     if (dwFlags & D3DTRANSFORM_CLIPPED)
@@ -453,22 +459,23 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
         if(dwFlags & D3DTRANSFORM_CLIPPED)
         {
             /* If clipping is enabled, Windows assumes that outH is
-             * a valid pointer
-             */
-            outH[i].u1.hx = x; outH[i].u2.hy = y; outH[i].u3.hz = z;
+             * a valid pointer. */
+            outH[i].u1.hx = (x - device->legacy_clipspace._41 * w) / device->legacy_clipspace._11;
+            outH[i].u2.hy = (y - device->legacy_clipspace._42 * w) / device->legacy_clipspace._22;
+            outH[i].u3.hz = (z - device->legacy_clipspace._43 * w) / device->legacy_clipspace._33;
 
             outH[i].dwFlags = 0;
-            if(x * vp.dvScaleX > ((float) vp.dwWidth * 0.5))
+            if (x > w)
                 outH[i].dwFlags |= D3DCLIP_RIGHT;
-            if(x * vp.dvScaleX <= -((float) vp.dwWidth) * 0.5)
+            if (x < -w)
                 outH[i].dwFlags |= D3DCLIP_LEFT;
-            if(y * vp.dvScaleY > ((float) vp.dwHeight * 0.5))
+            if (y > w)
                 outH[i].dwFlags |= D3DCLIP_TOP;
-            if(y * vp.dvScaleY <= -((float) vp.dwHeight) * 0.5)
+            if (y < -w)
                 outH[i].dwFlags |= D3DCLIP_BOTTOM;
-            if(z < 0.0)
+            if (z < 0.0f)
                 outH[i].dwFlags |= D3DCLIP_FRONT;
-            if(z > 1.0)
+            if (z > w)
                 outH[i].dwFlags |= D3DCLIP_BACK;
 
             *offscreen &= outH[i].dwFlags;
@@ -491,12 +498,15 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
         w = 1 / w;
         x *= w; y *= w; z *= w;
 
-        out->x = vp.dwWidth / 2 + vp.dwX + x * vp.dvScaleX;
-        out->y = vp.dwHeight / 2 + vp.dwY - y * vp.dvScaleY;
+        out->x = (x + 1.0f) * vp.dwWidth * 0.5 + vp.dwX;
+        out->y = (-y + 1.0f) * vp.dwHeight * 0.5 + vp.dwY;
         out->z = z;
         out->w = w;
         out->payload = in->payload;
     }
+
+    if (activate && device->current_viewport)
+        viewport_activate(device->current_viewport, TRUE);
 
     wined3d_mutex_unlock();
 
