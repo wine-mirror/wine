@@ -1,16 +1,15 @@
-The Wine development release 1.9.19 is now available.
+The Wine development release 1.9.20 is now available.
 
 What's new in this release (see below for details):
-  - Initial version of a udev bus driver for HID.
-  - Various improvements in joystick support.
-  - Initial implementation of DC rendering in Direct2D.
-  - Improved metafile support in GDI+.
+  - Reimplementation of the clipboard API.
+  - Message handling in WebServices.
+  - Many more API Set libraries.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://dl.winehq.org/wine/source/1.9/wine-1.9.19.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/1.9/wine-1.9.19.tar.bz2
+  http://dl.winehq.org/wine/source/1.9/wine-1.9.20.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.9/wine-1.9.20.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -26,246 +25,247 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.9.19 (total 19):
+Bugs fixed in 1.9.20 (total 18):
 
-  10643  WinUAE settings window reappears after being dismissed
-  17351  PDF Export problem on Delphi 7 applications
-  19998  stamps.com installer hangs
-  27415  The Geometer's Sketchpad 5.03 does not display pictures. "fixme:gdiplus:GdipGetMetafileHeaderFromMetafile not implemented"
-  29916  ElsterFormular cannot make use of default PDF viewer (e. g. Okular)
-  34489  Can't use VSTi altiverb fst.exe crashes
-  37259  Multiple Direct2D applications need ID2D1DCRenderTarget::BindDC implementation
-  37628  KORG Legacy Collection - MS-20 v1.3.0 'Authorizer' app crashes, No Limits 2 help system does not render ('d2d_factory_CreateDCRenderTarget' is a stub)
-  39246  user32:edit fails in Japanese and Korean locales
-  40325  Captvty v3 (.Net4.5) crashes at start
-  40533  Microsoft PowerPoint Viewer 14.0 shows error dialog when clicking System Info button (msinfo32.exe unimplemented)
-  40746  Microsoft Expression Web 4 crashes when opening site, needs rpcrt4.dll.NdrAsyncServerCall
-  41085  Unimplemented function msvcp140.dll._Thrd_id needed by Battle.net
-  41217  Xebra ALSA underrun occurred
-  41224  WineD3D8 crashes on Windows with GTAVC and i915-class video
-  41274  QQ Lite version called unimplemented function vcomp100.dll._vcomp_reduction_r8, aborting
-  41284  dbghelp_dwarf: parse_cie_details unknown CIE version 4 (clang/mesa/valgrind)
-  41287  2050 IP Softphone - UI does not render correctly
-  41296  World of Tanks (9.16) crashes with unimplemented function vcruntime140.dll.__std_type_info_hash
+  27671  ComboFix fails to install
+  29661  wineboot unable to create win32 prefix if the directory already exists
+  30368  AMD Radeon 6480g detected as ATI Radeon 3200
+  32694  NVIDIA GTX 690 not in the list of recognized cards.
+  39447  Unimplemented function hid.dll.HidP_TranslateUsagesToI8042ScanCodes
+  41050  Age of Mythology: Extended Edition needs api-ms-win-crt-stdio-l1-1-0.dll.__stdio_common_vswscanf
+  41086  Unimplemented function msvcp140.dll.??0?$codecvt@_WDU_Mbstatet@@@std@@QAE@I@Z needed by Battle.net
+  41136  GOG Galaxy installer crashes with "wine: Call from 0x7b43c7cc to unimplemented function msvcp140.dll.?_Execute_once@std@@YAHAAUonce_flag@1@P6GHPAX1PAPAX@Z1@Z"
+  41273  Texted added to clipboard in Wine not pasting in native Linux applictions.
+  41315  Windows 10 DISM doesn't launch, needs advapi32.EventWriteTransfer
+  41333  MeterBasic (Tonne Software) crashes at start
+  41336  Windows 10 DISM pkgmgr.exe doesn't launch, needs api-ms-win-core-libraryloader-l1-2-2.dll
+  41343  Ellisys Visual USB needs unimplemented function newdev.dll.DiInstallDriverA
+  41352  World of Tanks crashes with unimplemented function msvcp140.dll.?_Getcat@?$codecvt@DDU_Mbstatet@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z
+  41381  Marvelous Designer 6 needs msvcp140.dll.?_Getcat@?$codecvt@DDU_Mbstatet@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z
+  41389  ComboFix fails to install: complains about missing HKLM\System\CurrentControlSet\Control\hivelist
+  41396  Sony Xperia Companion needs KERNEL32.dll.SetDefaultDllDirectories
+  41399  GOG Galaxy crashes with unimplemented function msvcp140.dll.?tellg@?$basic_istream@DU?$char_traits@D@std@@@std@@QAE?AV?$fpos@U_Mbstatet@@@2@XZ
 
 ----------------------------------------------------------------
 
-Changes since 1.9.18:
+Changes since 1.9.19:
 
-Akihiro Sagawa (1):
-      imm32: Set the default IME window title and styles as in native.
+Akihiro Sagawa (9):
+      kernel32/tests: Consolidate duplicated code for invalid LCMapString flag tests.
+      kernel32: Do not allow to combine NORM_IGNORENONSPACE and/or NORM_IGNORESYMBOLS with other LCMAP flags.
+      kernel32: Zero is an invalid flag value.
+      kernel32/tests: Add LCMAP_TITLECASE test.
+      kernel32/tests: Add more mapping tests for LCMapString.
+      kernel32: Short circuit required length calculation.
+      kernel32: Refactor the codepath and a variable usage.
+      kernel32: Implement LCMAP_HIRAGANA.
+      kernel32: Implement LCMAP_KATAKANA.
 
-Alexandre Julliard (21):
-      user32: Implement GetUpdatedClipboardFormats.
-      user32/tests: Add a few more tests for synthesized formats rendering.
-      user32: Synthesize text clipboard formats on the user32 side.
-      user32: Synthesize metafile clipboard formats on the user32 side.
-      user32: Synthesize bitmap clipboard formats on the user32 side.
-      winex11: Remove support for synthesizing clipboard formats.
-      user32: Clear last error in EnumClipboardFormats.
-      user32/tests: Make the clipboard sequence tests more strict.
-      user32/tests: Add more tests for GDI and private clipboard formats.
-      kernel32: GMEM_FIXED blocks cannot be 0 size.
-      kernel32: Avoid getting the heap lock inside an exception handler block.
-      user32/tests: Add more tests for clipboard data storage.
-      user32/tests: Comment out a test that crashes on 64-bit Vista.
-      user32: Fix GetClipboardFormatName behavior for integer formats.
-      user32: Clean up clipboard debug traces.
-      server: Return the owner window in the release_clipboard request.
-      server: Return the owner window in the close_clipboard request.
-      user32/tests: Add some tests for the contents of the clipboard data.
-      user32: Use GetDIBits to retrieve the bitmap header when synthesizing a DIB.
-      winex11: Merge named formats into the builtin clipboard formats table.
-      winex11: Get rid of the X11DRV_CLIPBOARD_SerializeMetafile helper.
+Alexandre Julliard (44):
+      winex11: Add separate export functions for the various string types.
+      winex11: Use the correct data type for property atoms.
+      winex11: Add a debug helper to trace atom names.
+      winex11: Add a helper function to store property data.
+      winex11: Add a helper function to convert the selection.
+      winex11: Move common code out of the export functions and simplify their usage.
+      winex11: Move common code out of the import functions and simplify their usage.
+      winex11: Merge converting the selection and importing it.
+      winex11: Use a standard export function to handle MULTIPLE requests.
+      winex11: Use a standard export function to handle TARGETS requests.
+      winex11: Reimplement targets enumeration using standard clipboard APIs.
+      winex11: Use standard clipboard APIs to retrieve the data to export.
+      winex11: Use a standard import function to retrieve the TARGETS property.
+      winex11: Support import multiple drag&drop properties in a single call.
+      winex11: Add helper functions to find and register Win32 clipboard formats.
+      winex11: Add helper functions to find and register X11 clipboard formats.
+      winex11: Get rid of support for reigstering Win32 formats without a corresponding atom.
+      winex11: If multiple clipboard formats can be exported, use the first available one.
+      winex11: Reimplement import_targets to go through the format list in the standard way.
+      winex11: Store the list of X11 formats when retrieving the TARGETS property.
+      user32: Add an UpdateClipboard entry point to allow the driver to refresh the clipboard before it's open.
+      winex11: Implement the UpdateClipboard entry point to refresh the cache.
+      server: Get rid of the clipboard sequence number update hack.
+      user32: Store clipboard data on the server side.
+      user32: Retrieve available clipboard formats from the server.
+      user32: Retrieve clipboard data from the server.
+      user32: Add synthesized clipboard formats on the server side.
+      user32: Cache clipboard data on the client side.
+      user32: Remove no longer used clipboard driver entry points.
+      winex11: Add a helper function to register builtin clipboard formats.
+      winex11: Remove the driver-side clipboard data storage.
+      winex11: Run a single clipboard manager thread per window station, inside the explorer process.
+      winex11: Ignore X11 errors happening on the clipboard display connection.
+      user32: Enforce null termination of strings added to the clipboard.
+      winex11: Add a helper function to import a Unicode string.
+      winex11: Add a helper function to export a Unicode string.
+      winex11: Always go through Unicode for clipboard strings.
+      winex11: Remove support for owner-displayed clipboard formats.
+      winex11: Remove support for exporting the CF_METAFILEPICT format.
+      winex11: Remove support for exporting the CF_BITMAP, CF_PALETTE and CF_DIBV5 formats.
+      winex11: Remove support for exporting the CF_OEMTEXT and CF_LOCALE formats.
+      user32: Fix METAFILEPICT marshalling for 64-bit.
+      winex11: Add clipboard support for the polymorphic TEXT format.
+      winex11: Export the TIMESTAMP clipboard property.
 
-Alistair Leslie-Hughes (3):
-      ws2_32: Accept shouldn't fail when addrlen32 is NULL.
-      comdlg32: Clear the filename text on OPEN_BROWSE.
-      comdlg: Select all text when enter is pressed.
+Andrew Eikum (1):
+      wininet: Don't crash by debug printing too long URLs.
 
-Andrey Gusev (16):
-      api-ms-win-core-shlwapi-obsolete-l1-1-0: Add dll.
-      api-ms-win-core-localization-obsolete-l1-2-0: Add dll.
-      api-ms-win-core-privateprofile-l1-1-1: Add dll.
-      api-ms-win-core-registryuserspecific-l1-1-0: Add dll.
-      api-ms-win-core-sidebyside-l1-1-0: Add dll.
-      api-ms-win-core-stringansi-l1-1-0: Add dll.
-      api-ms-win-core-versionansi-l1-1-0: Add dll.
-      api-ms-win-core-atoms-l1-1-0: Add dll.
-      api-ms-win-core-kernel32-private-l1-1-1: Add dll.
-      api-ms-win-core-apiquery-l1-1-0: Add dll.
-      api-ms-win-core-realtime-l1-1-0: Add dll.
-      api-ms-win-core-localization-l2-1-0: Add dll.
-      api-ms-win-shell-shellcom-l1-1-0: Add dll.
-      api-ms-win-core-winrt-errorprivate-l1-1-1: Add dll.
-      api-ms-win-core-windowserrorreporting-l1-1-0: Add dll.
-      api-ms-win-core-localization-private-l1-1-0: Add dll.
+Andrew Kanaber (1):
+      wined3d: Add id for Broadwell Xeon E3 GPU.
 
-André Hentschel (5):
-      kernel32/tests: Allow ERROR_ACCESS_DENIED for GetThreadContext.
-      setupapi/tests: Also check for ERROR_CALL_NOT_IMPLEMENTED at the second call to SetupDiCreateDeviceInfoListExW.
-      loader/wine.inf: Open pdf files using winebrowser.
-      kernel32/tests: Don't test CloseHandle.
-      setupapi/tests: Try to delete pre-existing key.
+Andrey Gusev (10):
+      api-ms-win-eventing-consumer-l1-1-0: Add dll.
+      api-ms-win-eventing-controller-l1-1-0: Add dll.
+      api-ms-win-security-audit-l1-1-1: Add dll.
+      api-ms-win-security-base-private-l1-1-1: Add dll.
+      api-ms-win-core-appinit-l1-1-0: Add dll.
+      api-ms-win-core-version-private-l1-1-0: Add dll.
+      api-ms-win-core-appcompat-l1-1-1: Add dll.
+      api-ms-win-core-bem-l1-1-0: Add dll.
+      api-ms-win-service-private-l1-1-1: Add dll.
+      user32/tests: Fix incorrect usage of broken() function.
 
-Aric Stewart (7):
-      winebus.sys: Add stub driver.
-      ntoskrnl.exe: Implement IoGetAttachedDevice and IoGetAttachedDeviceReference.
-      winebus.sys: Add initial udev stub driver.
-      winebus.sys: Implement udev device enumeration.
-      winebus.sys: Create bus devices.
-      winebus.sys: Implement IRP_MN_QUERY_ID.
-      ntoskrnl.exe: Implement loading plug and play devices.
+André Hentschel (2):
+      urlmon/tests: Mark data53 test as broken on Win10.
+      d3d9/tests: Allow D3D_OK for lost device present (Win10).
 
-Austin English (2):
-      msinfo32: Add stub program.
-      api-ms-win-core-threadpool-l1-1-0: Add dll.
+Aric Stewart (4):
+      ntoskrnl.exe: Send PnP and Power IRPs to plug and play devices.
+      ntoskrnl.exe: Implement DevicePropertyEnumeratorName for IoGetDeviceProperty.
+      ntoskrnl.exe: Implement removing plug and play devices.
+      hid: Stub HidP_TranslateUsagesToI8042ScanCodes.
 
-Bruno Jesus (15):
-      ws2_32: Debug the ioctl code name whenever possible.
-      dinput: Only complain for unsupported effect envelope if it really is useful.
-      ws2_32/tests: Add non-interactive SIO_ADDRESS_LIST_CHANGE tests.
-      winejoystick.drv: Test for new joysticks in intervals of 2 seconds.
-      ws2_32: Use correct WS_ prefixed family.
-      xinput1_4: Remove XInputGetDSoundAudioDeviceGuids and add XInputGetStateEx to spec file.
-      xinput1_3: Test every xinput DLL version.
-      xinput1_3: Test proper no new data error from XInputGetKeystroke.
-      dinput: Handle NULL effect envelope before testing its parameters.
-      dinput: Remove trailing space from debug string.
-      po: Update Brazilian Portuguese translation.
-      ws2_32/tests: Add more SIO_ADDRESS_LIST_CHANGE tests.
-      ws2_32: Fix handling of POLLHUP in WSAPoll.
-      dinput: Fix phase conversion on periodic effects.
-      dinput: Improve linux effect debugging.
+Austin English (11):
+      advapi32: Add EventWriteTransfer stub.
+      api-ms-win-core-delayload-l1-1-0: Add dll.
+      api-ms-win-core-libraryloader-l1-2-2: Add dll.
+      newdev: Add DiInstallDriverA/W stubs.
+      api-ms-win-core-io-l1-1-0: Add dll.
+      api-ms-win-core-xstate-l1-1-0: Add stub dll.
+      api-ms-win-service-core-l1-1-0: Add dll.
+      api-ms-win-service-management-l2-1-0: Add dll.
+      api-ms-win-service-winsvc-l1-1-0: Add dll.
+      kernel32: Add SetDefaultDllDirectories stub.
+      wine.inf: Add HKLM\System\CurrentControlSet\Control\hivelist key.
 
-Daniel Lehman (1):
-      msvcp140: Add _Thrd_id.
+Detlef Riekenberg (2):
+      ntdll/tests: Use case insensitive compare for filenames.
+      scrrun/tests: Use case insensitive compare for filenames.
 
-David Keijser (1):
-      kernel32: Forward CAL_RETURN_GENITIVE_NAMES to GetLocaleInfo().
+Filip Frąckiewicz (5):
+      wined3d: Add NVIDIA GTX 690 (GK104) to the GPU list.
+      wined3d: Add NVIDIA GTX 675MX to the GPU list.
+      wined3d: Add NVIDIA GTX 760 Ti to the GPU list.
+      wined3d: Add AMD Radeon HD 6480G IGP.
+      wined3d: Add NVIDIA GTX 980 Ti.
 
-Dmitry Timoshkov (10):
-      gdiplus: Implement GdipCreateMetafileFromStream.
-      gdiplus: Implement GdipGetMetafileHeaderFromMetafile.
-      gdiplus: Implement GdipCreateMetafileFromFile.
-      gdiplus: Implement GdipGetMetafileHeaderFromWmf.
-      gdiplus: Implement GdipGetMetafileHeaderFromStream.
-      gdiplus: Implement GdipGetMetafileHeaderFromFile.
-      windowscodecs: Avoid extra conversion step BGR->RGB when converting 32bpp BGRA to 24bpp RGB.
-      windowscodecs: Add support for 32bppGrayFloat format.
-      windowscodecs: Add support for converting to 8bpp grayscale format.
-      windowscodecs: Add support for converting 32bpp grayscale float to 24bpp BGR format.
+Hadrien Boizard (1):
+      ole32: Use debugstr_guid() in TRACES.
 
-Hans Leidekker (7):
-      webservices: Implement WsWriteArray.
-      webservices: Add support for optional and nillable fields in the reader.
-      webservices/tests: Add another repeating element test.
-      include: Fix aligment of some Web Services structures.
-      msi: Use proper return types in msi_table_apply_transform.
-      msi: Use proper return types in MSI_RecordSetStreamFromFileW.
-      qmgr: Job error codes are HRESULT values.
+Hans Leidekker (8):
+      webservices: Escape XML special characters where needed.
+      webservices: Fix corner cases in write option handling.
+      webservices: Use public channel functions in the service proxy implementation.
+      webservices: Add support for WS_MESSAGE_PROPERTY_BODY_READER/WRITER in WsGetMessageProperty.
+      webservices: Don't write an empty header element for messages that have an action.
+      webservices: Implement WsSendMessage.
+      webservices/tests: Add tests for WsSendMessage.
+      webservices: Implement WsReceiveMessage.
 
-Henri Verbeet (1):
-      d3drm/tests: Fix some reference leaks.
+Henri Verbeet (7):
+      d3d11: Use wine_rb_remove() in state object cleanup.
+      wined3d: Use wine_rb_remove() in delete_glsl_program_entry().
+      wined3d: Implement the initial texture data upload on top of wined3d_device_update_sub_resource().
+      wined3d: Implement the initial buffer data upload on top of wined3d_device_update_sub_resource().
+      wined3d: Don't require a specific context in wined3d_device_init_3d().
+      wined3d: Wait for the resource to become idle when destroying user memory textures.
+      wined3d: Wait for the texture to become idle before modifying it in wined3d_texture_update_desc().
 
 Huw D. M. Davies (9):
-      user32/tests: ValidateRect(NULL, &rect) on >= Win 8 no longer invalidates all windows.
-      user32/tests: On Win 8 and later, moving a window off-screen doesn't crop its update region.
-      webservices/tests: Initialise dictionary to NULL.
-      rpcrt4/tests: Win 8 and 10 do not correctly unmarshal a ranged enum16.
-      winmm/tests: Pass the full size of MIDIHDR to midiOutPrepareHeader().
-      winmm/tests: Call CoInitialize() to enable tests to run on Win 10.
-      winmm/tests: Add a small Sleep() to prevent a notification test from failing.
-      winmm/tests: Remove a test that can crash on Win 8 and 10.
-      user32/tests: Add space for the mask data to prevent failures on Win 8 and 10.
+      user32/tests: BITMAPCOREINFO icons are no longer supported on Win 8.
+      user32: Use MB_USEGLYPHCHARS in OemToCharBuffW().
+      user32: Implement OemKeyScan().
+      wordpad: Only read up to the maximum number of recent files from the menu.
+      riched20: Don't clear the existing mask when reading a \ltrpar .
+      riched20: Pass a ME_Paragraph structure to ME_SetParaFormat().
+      gdi32: Check that ExtFloodFill()'s initial co-ordinates lie within the dib.
+      riched20: Embed PARAFORMAT2 in the paragraph struct rather than its ptr.
+      riched20: Add checks for allocation failures.
 
-Jacek Caban (8):
-      dbghelp: Removed no longer needed wine_rb_destroy call.
-      msctf: Added IID_ITfThreadFocusSink support to AdviseSink.
-      taskschd: Added ITaskDefinition::get_Triggers implementation.
-      taskschd/tests: Fixed tests on win10.
-      winhttp: Added WINHTTP_OPTION_MAX_CONNS_PER_SERVER and WINHTTP_OPTION_MAX_CONNS_PER_1_0_SERVER options stub.
-      rbtree.h: Take wine_rb_entry as wine_rb_remove argument type and add new wine_rb_remove_key helper using key.
-      mshtml: Use rb tree instead of list to map nsIDOMWindowProxy to HTMLOuterWindow.
-      mshtml: Use IUnknownVtbl in wrapper_vtbl.
+Jacek Caban (2):
+      rbtree.h: Added ordered iteration functions and macros.
+      jscript: Use wine_rb_tree to store local variables in compiler_ctx_t.
 
-Kai Blaschke (1):
-      bcrypt/tests: Show that BCryptGetFipsAlgorithmMode checks a registry key.
+Józef Kucia (7):
+      d3d11: Sanitize buffer view flags.
+      d3d11/tests: Add test for swapchain formats.
+      include/d3d10: Add D3D10_FORMAT_SUPPORT enum.
+      d3d10core/tests: Port test_required_format_support() from d3d11.
+      d3d10core/tests: Port test_swapchain_formats() from d3d11.
+      d3d11/tests: Run test_*() functions for each feature level separately.
+      d3d11/tests: Trace optional format support.
+
+Matteo Bruni (8):
+      wined3d: Fix a bunch of typos.
+      wined3d: Update the Mesa d3d level detection hack.
+      wined3d: Use unsigned constants in shifts.
+      wined3d: Use round() on core profile.
+      wined3d: Enable lod and grad texture lookups on core profile.
+      wined3d: Fix ps_3_0 packed inputs limit.
+      wined3d: Fix doublebuffer mode trace.
+      wined3d: Call glGetIntegerv() through the gl_info function pointer.
+
+Michael Müller (2):
+      dsound: Pretend that the driver is certified.
+      ntdll: Open current working directory with FILE_TRAVERSE access.
 
 Michael Stefaniuc (11):
-      mshtml: Avoid using the COM method implementations directly.
-      d3d9: Avoid a cast from a COM object to an interface.
-      sti: Standardize COM aggregation in StillImage.
-      msdaps: Use the proper COM method wrappers.
-      oleaut32: Avoid casts from COM objects to interfaces.
-      urlmon: Avoid a cast from a COM object to an iface.
-      mscoree: Use the proper COM method wrappers.
-      mscoree: There can be only one QI implementation in a COM object.
-      msi: Use CONTAINING_RECORD() to get from a field to a struct.
-      quartz: Use the proper COM method wrappers.
-      oleaut32/tests: Avoid casts from COM object to interface.
+      mshtml: Avoid casts from COM objects to interfaces.
+      jscript: Use CONTAINING_RECORD() to get from a field to a struct.
+      jscript: Use the existing helpers to get from a jsdisp_t to an Instance.
+      jscript: Add more jsdisp_t to Instance helpers.
+      user32/tests: Remove two commented out printf().
+      user32/tests: Use EqualRect() instead of open coding it.
+      user32/tests: Use wine_dbgstr_rect() to print rects.
+      dpvoice: Use debugstr_guid() to trace GUIDs.
+      strmbase: Don't bother tracing the GUID pointers too.
+      quartz: Avoid using CopyRect().
+      webservices/tests: Use IsEqualGUID() to compare GUIDs.
 
-Nikolay Sivov (8):
-      d2d1/tests: A DC target test for switching from one HDC to another.
-      dbghelp: Support CIE version 4 in parse_cie_details().
-      d3d11/tests: Extend GetDC() tests.
-      d2d1/tests: Test that target properties are kept during BindDC().
-      d3d11: Enabled GetDC() capability for 2D textures.
-      dxgi: Added partial implementation of GetDC()/ReleaseDC().
-      d2d1: Initial implementation of DC render target.
-      mshtml: Use proper constants as HRESULT return values.
+Piotr Caban (13):
+      msvcp140: Add codecvt<char,char,_Mbstatet> exports.
+      msvcp140: Add _Cnd_init_in_situ implementation.
+      msvcp140: Add _Execute_once implementation.
+      msvcp140: Introduce _Mbstatet structure.
+      msvcp140: Add codecvt<wchar_t,char,_Mbstatet> exports.
+      msvcp140: Add codecvt<short,char,_Mbstatet> exports.
+      msvcp110: Add _Cnd_{do_broadcast,register,unregister}_at_thread_exit implementation.
+      msvcp120: Add _Cnd_{do_broadcast,register,unregister}_at_thread_exit tests.
+      msvcp140: Add _Cnd_destroy_in_situ implementation.
+      msvcp140: Fix codecvt RTTI data.
+      msvcp140: Add more missing exports.
+      msvcp140: Fix time_put structure layout.
+      msvcp120: Don't add basic_ios::_Add_vtordisp virtual functions.
 
-Piotr Caban (3):
-      user32: Fix DefWindowProc(WM_NCRBUTTONDOWN) tests on Win 8 and 10.
-      ucrtbase: Add __std_type_info_hash implementation.
-      msvcp140: Fix locale class structure.
+Sebastian Lackner (8):
+      server: Allow to create win32 prefix when directory already exists.
+      server: Fix leak of old clipboard data when replacing existing format.
+      user32: Call GlobalUnlock with the correct argument in SetClipboardData.
+      webservices: Do not return uninitialized hr from write_headers_transport.
+      webservices: Correctly grow buffer size in receive_message.
+      services: Check for services without lpBinaryPathName in get_winedevice_process.
+      server: Handle error when memdup fails in synthesize_formats.
+      user32: Also release GMEM_FIXED data in free_cached_data.
 
-Sebastian Lackner (41):
-      jscript: Simplify jsstr_release implementation.
-      jscript: Fix definition of JSSTR_MAX_LENGTH.
-      vcomp: Implement _vcomp_reduction_{u,i}4 and add tests.
-      vcomp: Implement _vcomp_reduction_{u,i}2 and add tests.
-      vcomp: Implement _vcomp_reduction_{u,i}1 and add tests.
-      server: Do not store unix_pid in process_snapshot struct.
-      jscript: Change prototype of jsstr_alloc_buf and fix some error handling issues.
-      jscript: Do not include terminating \0 in result returned by Date_toLocale{Date,Time}String.
-      user32: Only call GlobalUnlock when GlobalLock was successful.
-      user32: Add missing calls to GlobalUnlock in render_synthesized_dib.
-      user32: Add missing call to GlobalUnlock in render_synthesized_enhmetafile.
-      shell32/tests: Fix incorrect usage of broken() function.
-      comctl32/tests: Fix incorrect usage of broken() function.
-      oledb32/tests: Fix incorrect usage of broken() function.
-      vcomp: Implement _vcomp_reduction_{u,i}8 and add tests.
-      vcomp: Implement _vcomp_reduction_r4 and add tests.
-      vcomp: Implement _vcomp_reduction_r8 and add tests.
-      mshtml/tests: Fix incorrect usage of broken() function.
-      jscript/tests: Remove an invalid win2k broken() check.
-      jscript: Properly handle \0 characters in String to{Lower,Upper}Case methods.
-      jscript: Properly handle \0 characters in String indexOf method.
-      jscript: Allocate string of correct size in Date toTimeString method.
-      configure: Fix a typo in the udev help message.
-      jscript: Properly handle \0 characters in Array join method.
-      jscript: Allocate string of correct size in Date toLocaleDateString method.
-      jscript: Simplify date_to_string and add basic tests.
-      jscript: Simplify create_utc_string and add basic tests.
-      hidclass.sys: Do not return last error / HRESULT values in NTSTATUS functions.
-      oledlg: Properly use SUCCEEDED macro to check HRESULT.
-      wbemprox: Do not return error in HRESULT functions.
-      advapi32: Use variable of correct type to store LSTATUS result.
-      dinput: Use variable of correct type to store HRESULT value.
-      joy.cpl: Use variable of correct type to store LSTATUS value.
-      user32: Fix definition of DeregisterShellHookWindow.
-      dxva2: Return E_NOTIMPL from GetPhysicalMonitorsFromIDirect3DDevice9 stub.
-      include: Fix declaration of DwmDefWindowProc.
-      shlwapi: Return E_NOTIMPL for unknown types in StrRetToBuf{A,W}.
-      uxtheme: Return E_NOTIMPL in HRESULT stub functions.
-      taskschd: Do not return ERROR_* constant in HRESULT function.
-      kernel32: NtOpenFile returns STATUS_SUCCESS on success.
-      msi: Do not return ERROR_* constant in HRESULT function.
-
-Vincent Povirk (2):
-      gdiplus: Add more tests for GdipGetMetafileHeaderFromMetafile.
-      windowscodecs/tests: Add a helper function for comparing bits.
+Vincent Povirk (8):
+      gdiplus: Implement GdipBeginContainer.
+      gdiplus/tests: Add tests for GdipBeginContainer.
+      gdiplus: Implement BeginContainer metafile record.
+      gdiplus/tests: Check record types in playback tests.
+      gdiplus: Add clipping to GDI32_GdipFillRegion.
+      gdiplus: Add clipping to GDI32_GdipDrawDriverString.
+      gdiplus: Add clipping to GdipDrawImage.
+      iprop: Add dll.
 
 --
 Alexandre Julliard
