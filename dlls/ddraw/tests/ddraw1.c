@@ -9125,12 +9125,15 @@ struct transform_output
 static void test_transform_vertices(void)
 {
     IDirect3DDevice *device;
+    IDirectDrawSurface *rt;
     IDirectDraw *ddraw;
     ULONG refcount;
     HWND window;
     HRESULT hr;
+    D3DCOLOR color;
     IDirect3DViewport *viewport;
     IDirect3DExecuteBuffer *execute_buffer;
+    IDirect3DMaterial *background;
     D3DEXECUTEBUFFERDESC exec_desc;
     UINT inst_length;
     void *ptr;
@@ -9189,6 +9192,14 @@ static void test_transform_vertices(void)
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 1.0f,
     };
+    static const D3DLVERTEX quad[] =
+    {
+        {{-0.75f},{-0.5f }, {0.0f}, 0, {0xffff0000}},
+        {{-0.75f},{ 0.25f}, {0.0f}, 0, {0xffff0000}},
+        {{ 0.5f}, {-0.5f }, {0.0f}, 0, {0xffff0000}},
+        {{ 0.5f}, { 0.25f}, {0.0f}, 0, {0xffff0000}},
+    };
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
 
 
     for (i = 0; i < ARRAY_SIZE(out); ++i)
@@ -9208,6 +9219,9 @@ static void test_transform_vertices(void)
         DestroyWindow(window);
         return;
     }
+
+    hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
 
     viewport = create_viewport(device, 0, 0, 256, 256);
     hr = IDirect3DViewport_SetViewport(viewport, &vp_data);
@@ -9600,12 +9614,68 @@ static void test_transform_vertices(void)
     ok(SUCCEEDED(hr), "Failed to transform vertices, hr %#x.\n", hr);
     ok(offscreen == ~0U, "Offscreen is %x.\n", offscreen);
 
+    /* Test how vertices are transformed by execute buffers. */
+    vp_data.dwX = 20;
+    vp_data.dwY = 20;
+    vp_data.dwWidth = 200;
+    vp_data.dwHeight = 400;
+    vp_data.dvScaleX = 20.0f;
+    vp_data.dvScaleY = 50.0f;
+    vp_data.dvMinZ = 0.0f;
+    vp_data.dvMaxZ = 1.0f;
+    hr = IDirect3DViewport_SetViewport(viewport, &vp_data);
+    ok(SUCCEEDED(hr), "Failed to set viewport, hr %#x.\n", hr);
+
+    background = create_diffuse_material(device, 0.0f, 0.0f, 1.0f, 0.0f);
+    viewport_set_background(device, viewport, background);
+    hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+
+    hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+    memcpy(exec_desc.lpData, quad, sizeof(quad));
+    ptr = ((BYTE *)exec_desc.lpData) + sizeof(quad);
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_TRANSFORM, 0, 4);
+    emit_tquad(&ptr, 0);
+    emit_end(&ptr);
+    inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+    hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+
+    set_execute_data(execute_buffer, 4, sizeof(quad), inst_length);
+    hr = IDirect3DDevice_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+    hr = IDirect3DDevice_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 128, 143);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 132, 143);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 128, 147);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 132, 147);
+    todo_wine ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+
+    color = get_surface_color(rt, 177, 217);
+    todo_wine ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 181, 217);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 177, 221);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 181, 221);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+
     IDirect3DDevice_DeleteMatrix(device, world_handle);
     IDirect3DDevice_DeleteMatrix(device, view_handle);
     IDirect3DDevice_DeleteMatrix(device, proj_handle);
     IDirect3DExecuteBuffer_Release(execute_buffer);
 
+    IDirectDrawSurface_Release(rt);
     destroy_viewport(device, viewport);
+    IDirect3DMaterial_Release(background);
     refcount = IDirect3DDevice_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     IDirectDraw_Release(ddraw);
