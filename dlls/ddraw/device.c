@@ -3230,7 +3230,7 @@ static HRESULT WINAPI d3d_device2_SetTransform(IDirect3DDevice2 *iface,
 
     TRACE("iface %p, state %#x, matrix %p.\n", iface, state, matrix);
 
-    return IDirect3DDevice7_SetTransform(&device->IDirect3DDevice7_iface, state, matrix);
+    return IDirect3DDevice3_SetTransform(&device->IDirect3DDevice3_iface, state, matrix);
 }
 
 /*****************************************************************************
@@ -3334,7 +3334,7 @@ static HRESULT WINAPI d3d_device2_GetTransform(IDirect3DDevice2 *iface,
 
     TRACE("iface %p, state %#x, matrix %p.\n", iface, state, matrix);
 
-    return IDirect3DDevice7_GetTransform(&device->IDirect3DDevice7_iface, state, matrix);
+    return IDirect3DDevice3_GetTransform(&device->IDirect3DDevice3_iface, state, matrix);
 }
 
 /*****************************************************************************
@@ -3441,7 +3441,7 @@ static HRESULT WINAPI d3d_device2_MultiplyTransform(IDirect3DDevice2 *iface,
 
     TRACE("iface %p, state %#x, matrix %p.\n", iface, state, matrix);
 
-    return IDirect3DDevice7_MultiplyTransform(&device->IDirect3DDevice7_iface, state, matrix);
+    return IDirect3DDevice3_MultiplyTransform(&device->IDirect3DDevice3_iface, state, matrix);
 }
 
 /*****************************************************************************
