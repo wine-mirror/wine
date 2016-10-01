@@ -1590,9 +1590,7 @@ static BOOL is_fixed( HANDLE handle )
 
 static BOOL is_freed( HANDLE handle )
 {
-    void *ptr = GlobalLock( handle );
-    if (ptr) GlobalUnlock( handle );
-    return !ptr;
+    return !GlobalSize( handle );
 }
 
 static UINT format_id;
@@ -1602,7 +1600,8 @@ static const LOGPALETTE logpalette = { 0x300, 1, {{ 0x12, 0x34, 0x56, 0x78 }}};
 
 static void test_handles( HWND hwnd )
 {
-    HGLOBAL h, htext, htext2, htext3, htext4, htext5, hfixed, hmoveable, empty_fixed, empty_moveable;
+    HGLOBAL h, htext, htext2, htext3, htext4, htext5;
+    HGLOBAL hfixed, hfixed2, hmoveable, empty_fixed, empty_moveable;
     void *ptr;
     UINT format_id2 = RegisterClipboardFormatA( "another format" );
     BOOL r;
@@ -1622,6 +1621,7 @@ static void test_handles( HWND hwnd )
     palette = CreatePalette( &logpalette );
 
     hfixed = GlobalAlloc( GMEM_FIXED, 17 );
+    hfixed2 = GlobalAlloc( GMEM_FIXED, 17 );
     ok( is_fixed( hfixed ), "expected fixed mem %p\n", hfixed );
     ok( GlobalSize( hfixed ) == 17, "wrong size %lu\n", GlobalSize( hfixed ));
 
@@ -1682,8 +1682,8 @@ static void test_handles( HWND hwnd )
     h = SetClipboardData( format_id2, empty_fixed );
     ok( h == empty_fixed, "got %p\n", h );
     ok( is_fixed( h ), "expected fixed mem %p\n", h );
-    h = SetClipboardData( 0xdeadbeef, hfixed );
-    ok( h == hfixed, "got %p\n", h );
+    h = SetClipboardData( 0xdeadbeef, hfixed2 );
+    ok( h == hfixed2, "got %p\n", h );
     ok( is_fixed( h ), "expected fixed mem %p\n", h );
     h = SetClipboardData( 0xdeadbabe, hmoveable );
     ok( h == hmoveable, "got %p\n", h );
@@ -1719,7 +1719,7 @@ static void test_handles( HWND hwnd )
     ok( is_fixed( data ), "expected fixed mem %p\n", data );
 
     data = GetClipboardData( 0xdeadbeef );
-    ok( data == hfixed, "wrong data %p\n", data );
+    ok( data == hfixed2, "wrong data %p\n", data );
     ok( is_fixed( data ), "expected fixed mem %p\n", data );
 
     data = GetClipboardData( 0xdeadbabe );
@@ -1733,6 +1733,11 @@ static void test_handles( HWND hwnd )
     ok( h == htext4, "got %p\n", h );
     ok( is_moveable( h ), "expected moveable mem %p\n", h );
     ok( is_freed( htext5 ), "expected freed mem %p\n", htext5 );
+
+    h = SetClipboardData( 0xdeadbeef, hfixed );
+    ok( h == hfixed, "got %p\n", h );
+    ok( is_fixed( h ), "expected fixed mem %p\n", h );
+    ok( is_freed( hfixed2 ) || broken( !is_freed( hfixed2 )) /* < Vista */, "expected freed mem %p\n", hfixed2 );
 
     r = CloseClipboard();
     ok( r, "gle %d\n", GetLastError() );

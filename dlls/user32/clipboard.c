@@ -326,11 +326,7 @@ static void free_cached_data( struct cached_format *cache )
         GlobalFree( cache->handle );
         break;
     default:
-        if ((ptr = GlobalLock( cache->handle )) && ptr != cache->handle)
-        {
-            GlobalUnlock( cache->handle );
-            GlobalFree( cache->handle );
-        }
+        GlobalFree( cache->handle );
         break;
     }
     list_remove( &cache->entry );
