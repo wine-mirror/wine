@@ -56,10 +56,11 @@ static void transform_vertex(D3DTLVERTEX *dst, const D3DMATRIX *mat,
     dst->u3.sz = (x * mat->_13) + (y * mat->_23) + (z * mat->_33) + mat->_43;
     dst->u4.rhw = (x * mat->_14) + (y * mat->_24) + (z * mat->_34) + mat->_44;
 
-    dst->u1.sx = dst->u1.sx / dst->u4.rhw * vp->dvScaleX + vp->dwX + vp->dwWidth / 2;
-    dst->u2.sy = -dst->u2.sy / dst->u4.rhw * vp->dvScaleY + vp->dwY + vp->dwHeight / 2;
-    dst->u3.sz /= dst->u4.rhw;
     dst->u4.rhw = 1.0f / dst->u4.rhw;
+
+    dst->u1.sx = (dst->u1.sx * dst->u4.rhw + 1.0f) * vp->dwWidth * 0.5 + vp->dwX;
+    dst->u2.sy = (-dst->u2.sy * dst->u4.rhw + 1.0f) * vp->dwHeight * 0.5 + vp->dwY;
+    dst->u3.sz *= dst->u4.rhw;
 }
 
 HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
@@ -203,7 +204,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                             device->view = ci->u2.dwArg[0];
                         if (ci->u1.dtstTransformStateType == D3DTRANSFORMSTATE_PROJECTION)
                             device->proj = ci->u2.dwArg[0];
-                        IDirect3DDevice7_SetTransform(&device->IDirect3DDevice7_iface,
+                        IDirect3DDevice3_SetTransform(&device->IDirect3DDevice3_iface,
                                 ci->u1.dtstTransformStateType, m);
                     }
 
@@ -247,8 +248,8 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 
                 TRACE("PROCESSVERTICES  (%d)\n", count);
 
-                /* Get the transform and world matrix */
-                /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
+                /* Note that the projection set in wined3d has the legacy clip space
+                 * adjustment built in. */
                 wined3d_device_get_transform(device->wined3d_device,
                         D3DTRANSFORMSTATE_VIEW, (struct wined3d_matrix *)&view_mat);
                 wined3d_device_get_transform(device->wined3d_device,

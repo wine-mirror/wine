@@ -9552,7 +9552,7 @@ static void test_transform_vertices(void)
             {143.0f, 118.0f, 1.0f, 1.0f}, {133.0f, 128.0f, -1.0f, 1.0f}, {133.0f, 128.0f,  0.0f, 1.0f}
         };
 
-        todo_wine ok(compare_vec4(&cmp[i], out[i].x, out[i].y, out[i].z, out[i].w, 4096),
+        ok(compare_vec4(&cmp[i], out[i].x, out[i].y, out[i].z, out[i].w, 4096),
                 "Vertex %u differs. Got %f %f %f %f.\n", i,
                 out[i].x, out[i].y, out[i].z, out[i].w);
     }
@@ -9657,10 +9657,10 @@ static void test_transform_vertices(void)
     color = get_surface_color(rt, 128, 147);
     ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(rt, 132, 147);
-    todo_wine ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
 
     color = get_surface_color(rt, 177, 217);
-    todo_wine ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(rt, 181, 217);
     ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(rt, 177, 221);
