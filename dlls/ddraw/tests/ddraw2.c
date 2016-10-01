@@ -10507,11 +10507,14 @@ struct transform_output
 static void test_transform_vertices(void)
 {
     IDirect3DDevice2 *device;
+    IDirectDrawSurface *rt;
     IDirectDraw2 *ddraw;
     ULONG refcount;
     HWND window;
     HRESULT hr;
+    D3DCOLOR color;
     IDirect3DViewport2 *viewport;
+    IDirect3DMaterial2 *background;
     static struct transform_input position_tests[] =
     {
         { 0.0f,  0.0f,  0.0f, 0.0f,   1,   2,   3,   4,   5},
@@ -10566,6 +10569,14 @@ static void test_transform_vertices(void)
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 1.0f,
     };
+    static D3DLVERTEX quad[] =
+    {
+        {{-0.75f},{-0.5f }, {0.0f}, 0, {0xffff0000}},
+        {{-0.75f},{ 0.25f}, {0.0f}, 0, {0xffff0000}},
+        {{ 0.5f}, {-0.5f }, {0.0f}, 0, {0xffff0000}},
+        {{ 0.5f}, { 0.25f}, {0.0f}, 0, {0xffff0000}},
+    };
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
 
 
     for (i = 0; i < ARRAY_SIZE(out); ++i)
@@ -10585,6 +10596,8 @@ static void test_transform_vertices(void)
         DestroyWindow(window);
         return;
     }
+    hr = IDirect3DDevice2_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
 
     viewport = create_viewport(device, 0, 0, 256, 256);
     hr = IDirect3DViewport2_SetViewport(viewport, &vp_data);
@@ -10942,7 +10955,54 @@ static void test_transform_vertices(void)
     ok(SUCCEEDED(hr), "Failed to transform vertices, hr %#x.\n", hr);
     ok(offscreen == ~0U, "Offscreen is %x.\n", offscreen);
 
+    /* Test how vertices are transformed during draws. */
+    vp_data.dwX = 20;
+    vp_data.dwY = 20;
+    vp_data.dwWidth = 200;
+    vp_data.dwHeight = 400;
+    vp_data.dvScaleX = 20.0f;
+    vp_data.dvScaleY = 50.0f;
+    vp_data.dvMinZ = 0.0f;
+    vp_data.dvMaxZ = 1.0f;
+    hr = IDirect3DViewport2_SetViewport(viewport, &vp_data);
+    ok(SUCCEEDED(hr), "Failed to set viewport, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to activate the viewport, hr %#x.\n", hr);
+
+    ok(SUCCEEDED(hr), "Failed to clear the render target, hr %#x.\n", hr);
+    background = create_diffuse_material(device, 0.0f, 0.0f, 1.0f, 0.0f);
+    viewport_set_background(device, viewport, background);
+    hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice2_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DVT_LVERTEX, quad, 4, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 128, 143);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 132, 143);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 128, 147);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 132, 147);
+    todo_wine ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+
+    color = get_surface_color(rt, 177, 217);
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 181, 217);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 177, 221);
+    todo_wine ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 181, 221);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+
+    IDirectDrawSurface_Release(rt);
     destroy_viewport(device, viewport);
+    IDirect3DMaterial2_Release(background);
     refcount = IDirect3DDevice_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     IDirectDraw2_Release(ddraw);

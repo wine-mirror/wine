@@ -11809,9 +11809,11 @@ struct transform_output
 static void test_transform_vertices(void)
 {
     IDirect3DDevice3 *device;
+    IDirectDrawSurface4 *rt;
     ULONG refcount;
     HWND window;
     HRESULT hr;
+    D3DCOLOR color;
     IDirect3DViewport3 *viewport;
     static struct transform_input position_tests[] =
     {
@@ -11867,7 +11869,19 @@ static void test_transform_vertices(void)
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 1.0f,
     };
-
+    static struct
+    {
+        struct vec3 position;
+        DWORD color;
+    }
+    quad[] =
+    {
+        {{-0.75f, -0.5f , 0.0f}, 0xffff0000},
+        {{-0.75f,  0.25f, 0.0f}, 0xffff0000},
+        {{ 0.5f,  -0.5f , 0.0f}, 0xffff0000},
+        {{ 0.5f,   0.25f, 0.0f}, 0xffff0000},
+    };
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
 
     for (i = 0; i < ARRAY_SIZE(out); ++i)
     {
@@ -11883,6 +11897,8 @@ static void test_transform_vertices(void)
         DestroyWindow(window);
         return;
     }
+    hr = IDirect3DDevice3_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
 
     viewport = create_viewport(device, 0, 0, 256, 256);
     hr = IDirect3DViewport2_SetViewport(viewport, &vp_data);
@@ -12240,7 +12256,51 @@ static void test_transform_vertices(void)
     ok(SUCCEEDED(hr), "Failed to transform vertices, hr %#x.\n", hr);
     ok(offscreen == ~0U, "Offscreen is %x.\n", offscreen);
 
+    /* Test how vertices are transformed during draws. */
+    vp_data.dwX = 20;
+    vp_data.dwY = 20;
+    vp_data.dwWidth = 200;
+    vp_data.dwHeight = 400;
+    vp_data.dvScaleX = 20.0f;
+    vp_data.dvScaleY = 50.0f;
+    vp_data.dvMinZ = 0.0f;
+    vp_data.dvMaxZ = 1.0f;
+    hr = IDirect3DViewport3_SetViewport(viewport, &vp_data);
+    ok(SUCCEEDED(hr), "Failed to set viewport, hr %#x.\n", hr);
+    hr = IDirect3DDevice3_SetCurrentViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to activate the viewport, hr %#x.\n", hr);
+
+    hr = IDirect3DViewport3_Clear2(viewport, 1, &clear_rect, D3DCLEAR_TARGET, 0x000000ff, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice3_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice3_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ | D3DFVF_DIFFUSE,
+            quad, 4, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice3_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 128, 143);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 132, 143);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 128, 147);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 132, 147);
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+
+    color = get_surface_color(rt, 177, 217);
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 181, 217);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 177, 221);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 181, 221);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+
     destroy_viewport(device, viewport);
+    IDirectDrawSurface4_Release(rt);
     refcount = IDirect3DDevice3_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     DestroyWindow(window);
