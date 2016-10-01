@@ -10515,6 +10515,7 @@ static void test_transform_vertices(void)
     D3DCOLOR color;
     IDirect3DViewport2 *viewport;
     IDirect3DMaterial2 *background;
+    D3DMATERIAL mat;
     static struct transform_input position_tests[] =
     {
         { 0.0f,  0.0f,  0.0f, 0.0f,   1,   2,   3,   4,   5},
@@ -10546,6 +10547,7 @@ static void test_transform_vertices(void)
     {
         sizeof(vp_data), 0, 0, 256, 256, 1.0f, 1.0f, 256.0f, 256.0f, 0.0f, 1.0f
     };
+    D3DVIEWPORT2 vp2_data;
     unsigned int i;
     DWORD offscreen;
     static D3DMATRIX mat_scale =
@@ -10568,6 +10570,20 @@ static void test_transform_vertices(void)
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 1.0f,
+    },
+    mat_transform3 =
+    {
+        1.0f,  0.0f, 0.0f, 0.0f,
+        0.0f,  1.0f, 0.0f, 0.0f,
+        0.0f,  0.0f, 1.0f, 0.0f,
+        0.0f, 19.2f, 0.0f, 2.0f,
+    },
+    mat_identity =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
     };
     static D3DLVERTEX quad[] =
     {
@@ -10999,6 +11015,117 @@ static void test_transform_vertices(void)
     ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(rt, 181, 221);
     ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+
+    /* Test D3DVIEWPORT2 behavior. */
+    vp2_data.dwSize = sizeof(vp2_data);
+    vp2_data.dwX = 20;
+    vp2_data.dwY = 20;
+    vp2_data.dwWidth = 200;
+    vp2_data.dwHeight = 400;
+    vp2_data.dvClipX = -0.5f;
+    vp2_data.dvClipY = 4.0f;
+    vp2_data.dvClipWidth = 5.0f;
+    vp2_data.dvClipHeight = 10.0f;
+    vp2_data.dvMinZ = 0.0f;
+    vp2_data.dvMaxZ = 2.0f;
+    hr = IDirect3DViewport2_SetViewport2(viewport, &vp2_data);
+    ok(SUCCEEDED(hr), "Failed to set viewport data, hr %#x.\n", hr);
+    transformdata.lpIn = position_tests;
+    transformdata.lpOut = out;
+    hr = IDirect3DViewport2_TransformVertices(viewport, ARRAY_SIZE(position_tests),
+            &transformdata, D3DTRANSFORM_UNCLIPPED, &offscreen);
+    ok(SUCCEEDED(hr), "Failed to transform vertices, hr %#x.\n", hr);
+    for (i = 0; i < ARRAY_SIZE(position_tests); ++i)
+    {
+        static const struct vec4 cmp[] =
+        {
+            {120.0f, 140.0f, 0.0f, 1.0f}, {200.0f,  60.0f,  1.0f, 1.0f}, {40.0f, 220.0f, -1.0f, 1.0f},
+            {160.0f, 100.0f, 0.5f, 1.0f}, { 80.0f, 180.0f, -0.5f, 1.0f}, {80.0f, 180.0f,  0.0f, 1.0f}
+        };
+
+        ok(compare_vec4(&cmp[i], out[i].x, out[i].y, out[i].z, out[i].w, 4096),
+                "Vertex %u differs. Got %f %f %f %f.\n", i,
+                out[i].x, out[i].y, out[i].z, out[i].w);
+    }
+
+    memset(&mat, 0, sizeof(mat));
+    mat.dwSize = sizeof(mat);
+    U1(U(mat).diffuse).r = 0.0f;
+    U2(U(mat).diffuse).g = 1.0f;
+    U3(U(mat).diffuse).b = 0.0f;
+    U4(U(mat).diffuse).a = 0.0f;
+    hr = IDirect3DMaterial2_SetMaterial(background, &mat);
+    ok(SUCCEEDED(hr), "Failed to set material data, hr %#x.\n", hr);
+    hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice2_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DVT_LVERTEX, quad, 4, 0);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 58, 118);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 62, 118);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 58, 122);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 62, 122);
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+
+    color = get_surface_color(rt, 157, 177);
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 161, 177);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 157, 181);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(rt, 161, 181);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice2_SetTransform(device, D3DTRANSFORMSTATE_WORLD, &mat_identity);
+    ok(SUCCEEDED(hr), "Failed to set world transform, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_SetTransform(device, D3DTRANSFORMSTATE_VIEW, &mat_identity);
+    ok(SUCCEEDED(hr), "Failed to set world transform, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &mat_transform3);
+    ok(SUCCEEDED(hr), "Failed to set world transform, hr %#x.\n", hr);
+
+    vp2_data.dwX = 0.0;
+    vp2_data.dwY = 0.0;
+    vp2_data.dwWidth = 1;
+    vp2_data.dwHeight = 1;
+    vp2_data.dvClipX = -12.8f;
+    vp2_data.dvClipY = 12.8f + mat_transform3._42 / mat_transform3._44;
+    vp2_data.dvClipWidth = 25.6f;
+    vp2_data.dvClipHeight = 25.6f;
+    vp2_data.dvMinZ = 0.0f;
+    vp2_data.dvMaxZ = 0.5f;
+    hr = IDirect3DViewport2_SetViewport2(viewport, &vp2_data);
+    ok(SUCCEEDED(hr), "Failed to set viewport data, hr %#x.\n", hr);
+    transformdata.lpIn = cliptest;
+    transformdata.dwInSize = sizeof(cliptest[0]);
+    offscreen = 0xdeadbeef;
+    hr = IDirect3DViewport2_TransformVertices(viewport, ARRAY_SIZE(cliptest),
+            &transformdata, D3DTRANSFORM_CLIPPED, &offscreen);
+    ok(SUCCEEDED(hr), "Failed to transform vertices, hr %#x.\n", hr);
+    ok(!offscreen, "Offscreen is %x.\n", offscreen);
+    for (i = 0; i < ARRAY_SIZE(cliptest); ++i)
+    {
+        static const D3DHVERTEX cmp_h[] =
+        {
+            {0,                                            { 25.59f}, { 44.79f}, { 1.0f }},
+            {D3DCLIP_RIGHT | D3DCLIP_TOP | D3DCLIP_BACK,   { 25.61f}, { 44.81f}, { 1.01f}},
+            {0,                                            {-25.59f}, {-6.39f }, { 0.0f }},
+            {D3DCLIP_LEFT | D3DCLIP_BOTTOM | D3DCLIP_FRONT,{-25.61f}, {-6.41f }, {-0.01f}},
+        };
+        ok(compare_float(U1(cmp_h[i]).hx, U1(out_h[i]).hx, 4096)
+                && compare_float(U1(cmp_h[i]).hy, U1(out_h[i]).hy, 4096)
+                && compare_float(U1(cmp_h[i]).hz, U1(out_h[i]).hz, 4096)
+                && cmp_h[i].dwFlags == out_h[i].dwFlags,
+                "HVertex %u differs. Got %#x %f %f %f.\n", i,
+                out_h[i].dwFlags, U1(out_h[i]).hx, U2(out_h[i]).hy, U3(out_h[i]).hz);
+    }
 
     IDirectDrawSurface_Release(rt);
     destroy_viewport(device, viewport);
