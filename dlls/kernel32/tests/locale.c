@@ -2214,6 +2214,10 @@ static const DWORD lcmap_invalid_flags[] = {
     LCMAP_KATAKANA | NORM_IGNORESYMBOLS,
     LCMAP_KATAKANA | LCMAP_SIMPLIFIED_CHINESE,
     LCMAP_KATAKANA | LCMAP_TRADITIONAL_CHINESE,
+    LCMAP_FULLWIDTH | NORM_IGNORENONSPACE,
+    LCMAP_FULLWIDTH | NORM_IGNORESYMBOLS,
+    LCMAP_FULLWIDTH | LCMAP_SIMPLIFIED_CHINESE,
+    LCMAP_FULLWIDTH | LCMAP_TRADITIONAL_CHINESE,
 };
 
 static void test_LCMapStringA(void)
@@ -2461,9 +2465,9 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
     /* test LCMAP_FULLWIDTH */
     ret = func_ptr(LCMAP_FULLWIDTH,
                    halfwidth_text, -1, buf, sizeof(buf)/sizeof(WCHAR));
-    todo_wine ok(ret == lstrlenW(japanese_text) + 1, "%s ret %d, error %d, expected value %d\n", func_name,
+    ok(ret == lstrlenW(japanese_text) + 1, "%s ret %d, error %d, expected value %d\n", func_name,
        ret, GetLastError(), lstrlenW(japanese_text) + 1);
-    todo_wine ok(!lstrcmpW(buf, japanese_text), "%s string compare mismatch\n", func_name);
+    ok(!lstrcmpW(buf, japanese_text), "%s string compare mismatch\n", func_name);
 
     ret2 = func_ptr(LCMAP_FULLWIDTH, halfwidth_text, -1, NULL, 0);
     ok(ret == ret2, "%s ret %d, expected value %d\n", func_name, ret2, ret);
@@ -2472,9 +2476,9 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
        (half-width katakana is converted into full-wdith hiragana) */
     ret = func_ptr(LCMAP_FULLWIDTH | LCMAP_HIRAGANA,
                    halfwidth_text, -1, buf, sizeof(buf)/sizeof(WCHAR));
-    todo_wine ok(ret == lstrlenW(hiragana_text) + 1, "%s ret %d, error %d, expected value %d\n", func_name,
+    ok(ret == lstrlenW(hiragana_text) + 1, "%s ret %d, error %d, expected value %d\n", func_name,
        ret, GetLastError(), lstrlenW(hiragana_text) + 1);
-    todo_wine ok(!lstrcmpW(buf, hiragana_text), "%s string compare mismatch\n", func_name);
+    ok(!lstrcmpW(buf, hiragana_text), "%s string compare mismatch\n", func_name);
 
     ret2 = func_ptr(LCMAP_FULLWIDTH | LCMAP_HIRAGANA, halfwidth_text, -1, NULL, 0);
     ok(ret == ret2, "%s ret %d, expected value %d\n", func_name, ret, ret2);
