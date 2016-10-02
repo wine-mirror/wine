@@ -1710,7 +1710,7 @@ static void packet_query_monitor_wnd(struct gdb_context* gdbctx, int len, const 
 static void packet_query_monitor_process(struct gdb_context* gdbctx, int len, const char* str)
 {
     HANDLE              snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    char                buffer[128];
+    char                buffer[31+MAX_PATH];
     char                deco;
     PROCESSENTRY32      entry;
     BOOL                ok;
