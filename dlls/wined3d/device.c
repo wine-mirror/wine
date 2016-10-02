@@ -794,9 +794,9 @@ static void destroy_dummy_textures(struct wined3d_device *device, const struct w
 }
 
 /* Context activation is done by the caller. */
-static void create_default_samplers(struct wined3d_device *device)
+static void create_default_samplers(struct wined3d_device *device, struct wined3d_context *context)
 {
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
 
     if (gl_info->supported[ARB_SAMPLER_OBJECTS])
     {
@@ -1058,7 +1058,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     context = context_acquire(device, NULL);
 
     create_dummy_textures(device, context);
-    create_default_samplers(device);
+    create_default_samplers(device, context);
 
     device->contexts[0]->last_was_rhw = 0;
 
@@ -4620,7 +4620,7 @@ static HRESULT create_primary_opengl_context(struct wined3d_device *device, stru
     swapchain->context[0] = context;
     swapchain->num_contexts = 1;
     create_dummy_textures(device, context);
-    create_default_samplers(device);
+    create_default_samplers(device, context);
     context_release(context);
 
     return WINED3D_OK;
