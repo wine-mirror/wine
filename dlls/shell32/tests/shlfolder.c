@@ -1588,7 +1588,8 @@ static void test_FolderShortcut(void) {
     if (hr != S_OK) return;
 
     hr = IShellFolder_GetDisplayNameOf(pShellFolder, NULL, SHGDN_FORPARSING, &strret);
-    ok(hr == S_OK, "IShellFolder_GetDisplayNameOf(NULL) failed! hr = %08x\n", hr);
+    ok(hr == S_OK || broken(hr == E_INVALIDARG) /* win10 */,
+       "IShellFolder_GetDisplayNameOf(NULL) failed! hr = %08x\n", hr);
     if (hr != S_OK) {
         IShellFolder_Release(pShellFolder);
         return;
