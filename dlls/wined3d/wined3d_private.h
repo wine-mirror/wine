@@ -1720,6 +1720,8 @@ void context_apply_fbo_state_blit(struct wined3d_context *context, GLenum target
         struct wined3d_surface *render_target, struct wined3d_surface *depth_stencil, DWORD location) DECLSPEC_HIDDEN;
 void context_active_texture(struct wined3d_context *context, const struct wined3d_gl_info *gl_info,
         unsigned int unit) DECLSPEC_HIDDEN;
+void context_bind_dummy_textures(const struct wined3d_device *device,
+        const struct wined3d_context *context) DECLSPEC_HIDDEN;
 void context_bind_texture(struct wined3d_context *context, GLenum target, GLuint name) DECLSPEC_HIDDEN;
 void context_check_fbo_status(const struct wined3d_context *context, GLenum target) DECLSPEC_HIDDEN;
 struct wined3d_context *context_create(struct wined3d_swapchain *swapchain, struct wined3d_texture *target,
@@ -2484,11 +2486,14 @@ struct wined3d_device
     struct wined3d_texture *logo_texture;
 
     /* Textures for when no other textures are mapped */
-    GLuint dummy_texture_2d[MAX_COMBINED_SAMPLERS];
-    GLuint dummy_texture_rect[MAX_COMBINED_SAMPLERS];
-    GLuint dummy_texture_3d[MAX_COMBINED_SAMPLERS];
-    GLuint dummy_texture_cube[MAX_COMBINED_SAMPLERS];
-    GLuint dummy_texture_2d_array[MAX_COMBINED_SAMPLERS];
+    struct
+    {
+        GLuint tex_2d;
+        GLuint tex_rect;
+        GLuint tex_3d;
+        GLuint tex_cube;
+        GLuint tex_2d_array;
+    } dummy_textures;
 
     /* Default sampler used to emulate the direct resource access without using wined3d_sampler */
     GLuint default_sampler;
