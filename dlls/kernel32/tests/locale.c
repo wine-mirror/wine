@@ -2218,6 +2218,10 @@ static const DWORD lcmap_invalid_flags[] = {
     LCMAP_FULLWIDTH | NORM_IGNORESYMBOLS,
     LCMAP_FULLWIDTH | LCMAP_SIMPLIFIED_CHINESE,
     LCMAP_FULLWIDTH | LCMAP_TRADITIONAL_CHINESE,
+    LCMAP_HALFWIDTH | NORM_IGNORENONSPACE,
+    LCMAP_HALFWIDTH | NORM_IGNORESYMBOLS,
+    LCMAP_HALFWIDTH | LCMAP_SIMPLIFIED_CHINESE,
+    LCMAP_HALFWIDTH | LCMAP_TRADITIONAL_CHINESE,
 };
 
 static void test_LCMapStringA(void)
@@ -2486,9 +2490,9 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
     /* test LCMAP_HALFWIDTH */
     ret = func_ptr(LCMAP_HALFWIDTH,
                    japanese_text, -1, buf, sizeof(buf)/sizeof(WCHAR));
-    todo_wine ok(ret == lstrlenW(halfwidth_text) + 1, "%s ret %d, error %d, expected value %d\n", func_name,
+    ok(ret == lstrlenW(halfwidth_text) + 1, "%s ret %d, error %d, expected value %d\n", func_name,
        ret, GetLastError(), lstrlenW(halfwidth_text) + 1);
-    todo_wine ok(!lstrcmpW(buf, halfwidth_text), "%s string compare mismatch\n", func_name);
+    ok(!lstrcmpW(buf, halfwidth_text), "%s string compare mismatch\n", func_name);
 
     ret2 = func_ptr(LCMAP_HALFWIDTH, japanese_text, -1, NULL, 0);
     ok(ret == ret2, "%s ret %d, expected value %d\n", func_name, ret, ret2);
@@ -2505,7 +2509,7 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
     buf[0] = 0x30ac;
     SetLastError(0xdeadbeef);
     ret = func_ptr(LCMAP_HALFWIDTH, buf, 1, buf2, 1);
-    todo_wine ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "%s should return 0 and ERROR_INSUFFICIENT_BUFFER, got %d\n", func_name, ret);
 
     /* LCMAP_UPPERCASE or LCMAP_LOWERCASE should accept src == dst */

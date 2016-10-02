@@ -3227,6 +3227,100 @@ static INT map_to_fullwidth( LPCWSTR src, INT srclen, LPWSTR dst )
     return 1;
 }
 
+/* decompose a full-width katakana character into one or two half-width characters. */
+static INT decompose_katakana( WCHAR c, LPWSTR dst, INT dstlen )
+{
+    const static BYTE katakana_map[] = {
+        /* */ 0x9e, 0x9f, 0x9e, 0x9f, 0x00, 0x00, 0x00, /* U+3099- */
+        0x00, 0x67, 0x71, 0x68, 0x72, 0x69, 0x73, 0x6a, /* U+30a1- */
+        0x74, 0x6b, 0x75, 0x76, 0x01, 0x77, 0x01, 0x78, /* U+30a8- */
+        0x01, 0x79, 0x01, 0x7a, 0x01, 0x7b, 0x01, 0x7c, /* U+30b0- */
+        0x01, 0x7d, 0x01, 0x7e, 0x01, 0x7f, 0x01, 0x80, /* U+30b8- */
+        0x01, 0x81, 0x01, 0x6f, 0x82, 0x01, 0x83, 0x01, /* U+30c0- */
+        0x84, 0x01, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, /* U+30c8- */
+        0x01, 0x02, 0x8b, 0x01, 0x02, 0x8c, 0x01, 0x02, /* U+30d0- */
+        0x8d, 0x01, 0x02, 0x8e, 0x01, 0x02, 0x8f, 0x90, /* U+30d8- */
+        0x91, 0x92, 0x93, 0x6c, 0x94, 0x6d, 0x95, 0x6e, /* U+30e0- */
+        0x96, 0x97, 0x98, 0x99, 0x9a, 0x9b, 0x00, 0x9c, /* U+30e8- */
+        0x00, 0x00, 0x66, 0x9d, 0x4e, 0x00, 0x00, 0x08, /* U+30f0- */
+        0x58, 0x58, 0x08, 0x65, 0x70, 0x00, 0x51        /* U+30f8- */
+    };
+    INT len = 0, shift = c - 0x3099;
+    BYTE k;
+
+    if (shift < 0 || shift >= sizeof(katakana_map)/sizeof(katakana_map[0]))
+        return 0;
+
+    k = katakana_map[shift];
+
+    if (!k)
+    {
+        if (dstlen > 0)
+            *dst = c;
+        len++;
+    }
+    else if (k > 0x60)
+    {
+        if (dstlen > 0)
+            *dst = k | 0xff00;
+        len++;
+    }
+    else
+    {
+        if (dstlen >= 2)
+        {
+            dst[0] = (k > 0x50) ? (c - (k & 0xf)) : (katakana_map[shift - k] | 0xff00);
+            dst[1] = (k == 2) ? 0xff9f : 0xff9e;
+        }
+        len += 2;
+    }
+    return len;
+}
+
+/* map single full-width character to single or double half-width characters. */
+static INT map_to_halfwidth(WCHAR c, LPWSTR dst, INT dstlen)
+{
+    INT n = decompose_katakana(c, dst, dstlen);
+    if (n > 0)
+        return n;
+
+    if (c == 0x3000)
+        *dst = ' ';
+    else if (c == 0x3001)
+        *dst = 0xff64;
+    else if (c == 0x3002)
+        *dst = 0xff61;
+    else if (c == 0x300c || c == 0x300d)
+        *dst = (c - 0x300c) + 0xff62;
+    else if (c >= 0x3131 && c <= 0x3163)
+    {
+        *dst = c - 0x3131 + 0xffa1;
+        if (*dst >= 0xffbf) *dst += 3;
+        if (*dst >= 0xffc8) *dst += 2;
+        if (*dst >= 0xffd0) *dst += 2;
+        if (*dst >= 0xffd8) *dst += 2;
+    }
+    else if (c == 0x3164)
+        *dst = 0xffa0;
+    else if (c == 0x2019)
+        *dst = '\'';
+    else if (c == 0x201d)
+        *dst = '"';
+    else if (c > 0xff00 && c < 0xff5f && c != 0xff3c)
+        *dst = c - 0xff00 + 0x20;
+    else if (c >= 0xffe0 && c <= 0xffe6)
+    {
+        const static WCHAR misc_symbol_map[] = {
+            0x00a2, 0x00a3, 0x00ac, 0x00af, 0x00a6, 0x00a5, 0x20a9
+        };
+        *dst = misc_symbol_map[c - 0xffe0];
+    }
+    else
+        *dst = c;
+
+    return 1;
+}
+
 /*************************************************************************
  *           LCMapStringEx   (KERNEL32.@)
  *
@@ -3310,7 +3404,7 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
     }
     if (((flags & (NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS)) &&
          (flags & ~(NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS))) ||
-        ((flags & (LCMAP_HIRAGANA | LCMAP_KATAKANA | LCMAP_FULLWIDTH)) &&
+        ((flags & (LCMAP_HIRAGANA | LCMAP_KATAKANA | LCMAP_HALFWIDTH | LCMAP_FULLWIDTH)) &&
          (flags & (LCMAP_SIMPLIFIED_CHINESE | LCMAP_TRADITIONAL_CHINESE))))
     {
         SetLastError(ERROR_INVALID_FLAGS);
@@ -3348,6 +3442,12 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
                     srclen--;
                 }
             }
+        }
+        else if (flags & LCMAP_HALFWIDTH)
+        {
+            for (len = 0; srclen; src++, srclen--, len++)
+                if (decompose_katakana(*src, NULL, 0) == 2)
+                    len++;
         }
         else
             len = srclen;
@@ -3407,7 +3507,24 @@ INT WINAPI LCMapStringEx(LPCWSTR name, DWORD flags, LPCWSTR src, INT srclen, LPW
                     wch == 0x30FD || wch == 0x30FE)
                     wch -= 0x60;
             }
-            *dst_ptr = wch;
+
+            if (flags & LCMAP_HALFWIDTH)
+            {
+                /* map full-width character to half-width one,
+                   e.g. U+30A2 -> U+FF71, U+30D7 -> U+FF8C U+FF9F. */
+                if (map_to_halfwidth(wch, dst_ptr, dstlen) == 2)
+                {
+                    dstlen--;
+                    dst_ptr++;
+                    if (!dstlen)
+                    {
+                        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                        return 0;
+                    }
+                }
+            }
+            else
+                *dst_ptr = wch;
         }
         if (!(flags & (LCMAP_UPPERCASE | LCMAP_LOWERCASE)))
             goto done;
