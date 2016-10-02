@@ -200,7 +200,7 @@ static BOOL proxy_active(void)
 static void _test_status_code(unsigned line, HINTERNET req, DWORD excode, BOOL is_todo)
 {
     DWORD code, size, index;
-    char exbuf[10], bufa[10];
+    char exbuf[12], bufa[10];
     WCHAR bufw[10];
     BOOL res;
 
