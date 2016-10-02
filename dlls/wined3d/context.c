@@ -1514,9 +1514,9 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
 void context_bind_dummy_textures(const struct wined3d_device *device, const struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    unsigned int i, count = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers);
+    unsigned int i;
 
-    for (i = 0; i < count; ++i)
+    for (i = 0; i < gl_info->limits.combined_samplers; ++i)
     {
         GL_EXTCALL(glActiveTexture(GL_TEXTURE0 + i));
         checkGLcall("glActiveTexture");
