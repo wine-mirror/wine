@@ -5934,8 +5934,8 @@ static void arbfp_get_caps(const struct wined3d_gl_info *gl_info, struct fragmen
 
     /* TODO: Implement WINED3DTEXOPCAPS_PREMODULATE */
 
-    caps->MaxTextureBlendStages   = 8;
-    caps->MaxSimultaneousTextures = min(gl_info->limits.fragment_samplers, 8);
+    caps->MaxTextureBlendStages   = MAX_TEXTURES;
+    caps->MaxSimultaneousTextures = min(gl_info->limits.fragment_samplers, MAX_TEXTURES);
 }
 
 static DWORD arbfp_get_emul_mask(const struct wined3d_gl_info *gl_info)
