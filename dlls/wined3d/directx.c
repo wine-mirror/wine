@@ -3056,10 +3056,12 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glDeleteShader)             /* OpenGL 2.0 */
     USE_GL_FUNC(glDeleteVertexArrays)       /* OpenGL 3.0 */
     USE_GL_FUNC(glDetachShader)             /* OpenGL 2.0 */
+    USE_GL_FUNC(glDisablei)                 /* OpenGL 3.0 */
     USE_GL_FUNC(glDisableVertexAttribArray) /* OpenGL 2.0 */
     USE_GL_FUNC(glDrawArraysInstanced)      /* OpenGL 3.1 */
     USE_GL_FUNC(glDrawBuffers)              /* OpenGL 2.0 */
     USE_GL_FUNC(glDrawElementsInstanced)    /* OpenGL 3.1 */
+    USE_GL_FUNC(glEnablei)                  /* OpenGL 3.0 */
     USE_GL_FUNC(glEnableVertexAttribArray)  /* OpenGL 2.0 */
     USE_GL_FUNC(glEndQuery)                 /* OpenGL 1.5 */
     USE_GL_FUNC(glGenBuffers)               /* OpenGL 1.5 */
@@ -3068,9 +3070,11 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glGetActiveUniform)         /* OpenGL 2.0 */
     USE_GL_FUNC(glGetAttachedShaders)       /* OpenGL 2.0 */
     USE_GL_FUNC(glGetAttribLocation)        /* OpenGL 2.0 */
+    USE_GL_FUNC(glGetBooleani_v)            /* OpenGL 3.0 */
     USE_GL_FUNC(glGetBufferSubData)         /* OpenGL 1.5 */
     USE_GL_FUNC(glGetCompressedTexImage)    /* OpenGL 1.3 */
     USE_GL_FUNC(glGetDebugMessageLog)       /* OpenGL 4.3 */
+    USE_GL_FUNC(glGetIntegeri_v)            /* OpenGL 3.0 */
     USE_GL_FUNC(glGetProgramInfoLog)        /* OpenGL 2.0 */
     USE_GL_FUNC(glGetProgramiv)             /* OpenGL 2.0 */
     USE_GL_FUNC(glGetQueryiv)               /* OpenGL 1.5 */
@@ -3082,6 +3086,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glGetUniformfv)             /* OpenGL 2.0 */
     USE_GL_FUNC(glGetUniformiv)             /* OpenGL 2.0 */
     USE_GL_FUNC(glGetUniformLocation)       /* OpenGL 2.0 */
+    USE_GL_FUNC(glIsEnabledi)               /* OpenGL 3.0 */
     USE_GL_FUNC(glLinkProgram)              /* OpenGL 2.0 */
     USE_GL_FUNC(glMapBuffer)                /* OpenGL 1.5 */
     USE_GL_FUNC(glPointParameteri)          /* OpenGL 1.4 */
@@ -3178,10 +3183,12 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     MAP_GL_FUNCTION(glDeleteQueries, glDeleteQueriesARB);
     MAP_GL_FUNCTION(glDeleteShader, glDeleteObjectARB);
     MAP_GL_FUNCTION(glDetachShader, glDetachObjectARB);
+    MAP_GL_FUNCTION(glDisablei, glDisableIndexedEXT);
     MAP_GL_FUNCTION(glDisableVertexAttribArray, glDisableVertexAttribArrayARB);
     MAP_GL_FUNCTION(glDrawArraysInstanced, glDrawArraysInstancedARB);
     MAP_GL_FUNCTION(glDrawBuffers, glDrawBuffersARB);
     MAP_GL_FUNCTION(glDrawElementsInstanced, glDrawElementsInstancedARB);
+    MAP_GL_FUNCTION(glEnablei, glEnableIndexedEXT);
     MAP_GL_FUNCTION(glEnableVertexAttribArray, glEnableVertexAttribArrayARB);
     MAP_GL_FUNCTION(glEndQuery, glEndQueryARB);
     MAP_GL_FUNCTION(glGenBuffers, glGenBuffersARB);
@@ -3189,9 +3196,11 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     MAP_GL_FUNCTION(glGetActiveUniform, glGetActiveUniformARB);
     MAP_GL_FUNCTION(glGetAttachedShaders, glGetAttachedObjectsARB);
     MAP_GL_FUNCTION(glGetAttribLocation, glGetAttribLocationARB);
+    MAP_GL_FUNCTION(glGetBooleani_v, glGetBooleanIndexedvEXT);
     MAP_GL_FUNCTION(glGetBufferSubData, glGetBufferSubDataARB);
     MAP_GL_FUNCTION(glGetCompressedTexImage, glGetCompressedTexImageARB);
     MAP_GL_FUNCTION(glGetDebugMessageLog, glGetDebugMessageLogARB);
+    MAP_GL_FUNCTION(glGetIntegeri_v, glGetIntegerIndexedvEXT);
     MAP_GL_FUNCTION(glGetProgramInfoLog, glGetInfoLogARB);
     MAP_GL_FUNCTION(glGetProgramiv, glGetObjectParameterivARB);
     MAP_GL_FUNCTION(glGetQueryiv, glGetQueryivARB);
@@ -3202,6 +3211,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     MAP_GL_FUNCTION(glGetUniformfv, glGetUniformfvARB);
     MAP_GL_FUNCTION(glGetUniformiv, glGetUniformivARB);
     MAP_GL_FUNCTION(glGetUniformLocation, glGetUniformLocationARB);
+    MAP_GL_FUNCTION(glIsEnabledi, glIsEnabledIndexedEXT);
     MAP_GL_FUNCTION(glLinkProgram, glLinkProgramARB);
     MAP_GL_FUNCTION(glMapBuffer, glMapBufferARB);
     MAP_GL_FUNCTION_CAST(glShaderSource, glShaderSourceARB);
