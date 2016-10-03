@@ -120,6 +120,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_draw_instanced",               ARB_DRAW_INSTANCED            },
     {"GL_ARB_ES2_compatibility",            ARB_ES2_COMPATIBILITY         },
     {"GL_ARB_explicit_attrib_location",     ARB_EXPLICIT_ATTRIB_LOCATION  },
+    {"GL_ARB_fragment_coord_conventions",   ARB_FRAGMENT_COORD_CONVENTIONS},
     {"GL_ARB_fragment_program",             ARB_FRAGMENT_PROGRAM          },
     {"GL_ARB_fragment_shader",              ARB_FRAGMENT_SHADER           },
     {"GL_ARB_framebuffer_object",           ARB_FRAMEBUFFER_OBJECT        },
@@ -3556,6 +3557,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
         /* ARB_geometry_shader4 exposes a somewhat different API compared to 3.2
          * core geometry shaders so it's not really correct to expose the
          * extension for core-only support. */
+        {ARB_FRAGMENT_COORD_CONVENTIONS,   MAKEDWORD_VERSION(3, 2)},
         {ARB_PROVOKING_VERTEX,             MAKEDWORD_VERSION(3, 2)},
         {ARB_SYNC,                         MAKEDWORD_VERSION(3, 2)},
         {ARB_VERTEX_ARRAY_BGRA,            MAKEDWORD_VERSION(3, 2)},
