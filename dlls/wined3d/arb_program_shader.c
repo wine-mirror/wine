@@ -3264,22 +3264,24 @@ static void vshader_add_footer(struct shader_arb_ctx_priv *priv_ctx,
      * 1.0 or -1.0 to turn the rendering upside down for offscreen rendering. PosFixup.x
      * contains 1.0 to allow a mad, but arb vs swizzles are too restricted for that.
      */
-    shader_addline(buffer, "MUL TA, posFixup, TMP_OUT.w;\n");
-    shader_addline(buffer, "ADD TMP_OUT.x, TMP_OUT.x, TA.z;\n");
-    shader_addline(buffer, "MAD TMP_OUT.y, TMP_OUT.y, posFixup.y, TA.w;\n");
+    if (!gl_info->supported[ARB_CLIP_CONTROL])
+    {
+        shader_addline(buffer, "MUL TA, posFixup, TMP_OUT.w;\n");
+        shader_addline(buffer, "ADD TMP_OUT.x, TMP_OUT.x, TA.z;\n");
+        shader_addline(buffer, "MAD TMP_OUT.y, TMP_OUT.y, posFixup.y, TA.w;\n");
 
-    /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
-     * and the glsl equivalent
-     */
-    if (need_helper_const(shader_data, reg_maps, gl_info))
-    {
-        const char *two = arb_get_helper_value(WINED3D_SHADER_TYPE_VERTEX, ARB_TWO);
-        shader_addline(buffer, "MAD TMP_OUT.z, TMP_OUT.z, %s, -TMP_OUT.w;\n", two);
-    }
-    else
-    {
-        shader_addline(buffer, "ADD TMP_OUT.z, TMP_OUT.z, TMP_OUT.z;\n");
-        shader_addline(buffer, "ADD TMP_OUT.z, TMP_OUT.z, -TMP_OUT.w;\n");
+        /* Z coord [0;1]->[-1;1] mapping, see comment in
+         * get_projection_matrix() in utils.c. */
+        if (need_helper_const(shader_data, reg_maps, gl_info))
+        {
+            const char *two = arb_get_helper_value(WINED3D_SHADER_TYPE_VERTEX, ARB_TWO);
+            shader_addline(buffer, "MAD TMP_OUT.z, TMP_OUT.z, %s, -TMP_OUT.w;\n", two);
+        }
+        else
+        {
+            shader_addline(buffer, "ADD TMP_OUT.z, TMP_OUT.z, TMP_OUT.z;\n");
+            shader_addline(buffer, "ADD TMP_OUT.z, TMP_OUT.z, -TMP_OUT.w;\n");
+        }
     }
 
     shader_addline(buffer, "MOV result.position, TMP_OUT;\n");

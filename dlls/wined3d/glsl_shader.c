@@ -4398,7 +4398,8 @@ static void shader_glsl_emit(const struct wined3d_shader_instruction *ins)
     unsigned int stream = ins->handler_idx == WINED3DSIH_EMIT ? 0 : ins->src[0].reg.idx[0].offset;
 
     shader_addline(ins->ctx->buffer, "setup_gs_output(gs_out);\n");
-    shader_glsl_fixup_position(ins->ctx->buffer);
+    if (!ins->ctx->gl_info->supported[ARB_CLIP_CONTROL])
+        shader_glsl_fixup_position(ins->ctx->buffer);
 
     if (!stream)
         shader_addline(ins->ctx->buffer, "EmitVertex();\n");
@@ -6046,7 +6047,7 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     /* Base Declarations */
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
 
-    if (args->next_shader_type == WINED3D_SHADER_TYPE_PIXEL)
+    if (args->next_shader_type == WINED3D_SHADER_TYPE_PIXEL && !gl_info->supported[ARB_CLIP_CONTROL])
         shader_addline(buffer, "uniform vec4 pos_fixup;\n");
 
     if (reg_maps->shader_version.major >= 4)
@@ -6093,7 +6094,7 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     if (args->point_size && !args->per_vertex_point_size)
         shader_addline(buffer, "gl_PointSize = clamp(ffp_point.size, ffp_point.size_min, ffp_point.size_max);\n");
 
-    if (args->next_shader_type == WINED3D_SHADER_TYPE_PIXEL)
+    if (args->next_shader_type == WINED3D_SHADER_TYPE_PIXEL && !gl_info->supported[ARB_CLIP_CONTROL])
         shader_glsl_fixup_position(buffer);
 
     shader_addline(buffer, "}\n");
@@ -6127,7 +6128,8 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.string_buffers = string_buffers;
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
-    shader_addline(buffer, "uniform vec4 pos_fixup;\n");
+    if (!gl_info->supported[ARB_CLIP_CONTROL])
+        shader_addline(buffer, "uniform vec4 pos_fixup;\n");
     shader_glsl_generate_sm4_rasterizer_input_setup(priv, shader, args->ps_input_count, gl_info);
     shader_addline(buffer, "void main()\n{\n");
     shader_generate_main(shader, buffer, reg_maps, function, &priv_ctx);
@@ -6767,12 +6769,21 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
 
         case WINED3D_FFP_VS_FOG_DEPTH:
             if (settings->ortho_fog)
-                /* Need to undo the [0.0 - 1.0] -> [-1.0 - 1.0] transformation from D3D to GL coordinates. */
-                shader_addline(buffer, "ffp_varying_fogcoord = gl_Position.z * 0.5 + 0.5;\n");
+            {
+                if (gl_info->supported[ARB_CLIP_CONTROL])
+                    shader_addline(buffer, "ffp_varying_fogcoord = gl_Position.z;\n");
+                else
+                    /* Need to undo the [0.0 - 1.0] -> [-1.0 - 1.0] transformation from D3D to GL coordinates. */
+                    shader_addline(buffer, "ffp_varying_fogcoord = gl_Position.z * 0.5 + 0.5;\n");
+            }
             else if (settings->transformed)
+            {
                 shader_addline(buffer, "ffp_varying_fogcoord = ec_pos.z;\n");
+            }
             else
+            {
                 shader_addline(buffer, "ffp_varying_fogcoord = abs(ec_pos.z);\n");
+            }
             break;
 
         default:
@@ -7994,7 +8005,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
 
     if (gshader)
     {
-        entry->constant_update_mask |= WINED3D_SHADER_CONST_POS_FIXUP;
+        if (entry->gs.pos_fixup_location != -1)
+            entry->constant_update_mask |= WINED3D_SHADER_CONST_POS_FIXUP;
         shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &gshader->reg_maps);
         shader_glsl_load_icb(gl_info, priv, program_id, &gshader->reg_maps);
     }

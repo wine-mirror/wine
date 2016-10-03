@@ -1971,6 +1971,8 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     {
         GL_EXTCALL(glProvokingVertexEXT(GL_FIRST_VERTEX_CONVENTION_EXT));
     }
+    if (gl_info->supported[ARB_CLIP_CONTROL])
+        GL_EXTCALL(glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, GL_LOWER_LEFT));
     device->shader_backend->shader_init_context_state(ret);
     ret->shader_update_mask = (1u << WINED3D_SHADER_TYPE_PIXEL)
             | (1u << WINED3D_SHADER_TYPE_VERTEX)
@@ -2261,6 +2263,10 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
     gl_info->gl_ops.gl.p_glDisable(GL_CLIP_PLANE5); checkGLcall("glDisable(clip plane 5)");
     context_invalidate_state(context, STATE_RENDER(WINED3D_RS_CLIPPING));
 
+    /* FIXME: Make draw_textured_quad() able to work with a upper left origin. */
+    if (gl_info->supported[ARB_CLIP_CONTROL])
+        GL_EXTCALL(glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE));
+
     set_blit_dimension(gl_info, rt_size.cx, rt_size.cy);
 
     /* Disable shaders */
@@ -2413,11 +2419,14 @@ static void context_set_render_offscreen(struct wined3d_context *context, BOOL o
 {
     if (context->render_offscreen == offscreen) return;
 
-    context_invalidate_state(context, STATE_POINTSPRITECOORDORIGIN);
-    context_invalidate_state(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
     context_invalidate_state(context, STATE_VIEWPORT);
     context_invalidate_state(context, STATE_SCISSORRECT);
-    context_invalidate_state(context, STATE_FRONTFACE);
+    if (!context->gl_info->supported[ARB_CLIP_CONTROL])
+    {
+        context_invalidate_state(context, STATE_FRONTFACE);
+        context_invalidate_state(context, STATE_POINTSPRITECOORDORIGIN);
+        context_invalidate_state(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
+    }
     if (context->gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
         context_invalidate_state(context, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
     context->render_offscreen = offscreen;

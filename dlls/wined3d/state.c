@@ -4648,6 +4648,55 @@ static void viewport_miscpart(struct wined3d_context *context, const struct wine
     checkGLcall("glViewport");
 }
 
+static void viewport_miscpart_cc(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
+{
+    const struct wined3d_rendertarget_view *depth_stencil = state->fb->depth_stencil;
+    const struct wined3d_rendertarget_view *target = state->fb->render_targets[0];
+    float pixel_center_offset = context->swapchain->device->wined3d->flags
+            & WINED3D_PIXEL_CENTER_INTEGER ? 0.5f : 0.0f;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_viewport vp = state->viewport;
+    unsigned int width, height;
+
+    if (target)
+    {
+        if (vp.width > target->width)
+            vp.width = target->width;
+        if (vp.height > target->height)
+            vp.height = target->height;
+
+        surface_get_drawable_size(wined3d_rendertarget_view_get_surface(target), context, &width, &height);
+    }
+    else if (depth_stencil)
+    {
+        width = depth_stencil->width;
+        height = depth_stencil->height;
+    }
+    else
+    {
+        FIXME("No attachments draw calls not supported.\n");
+        return;
+    }
+
+    gl_info->gl_ops.gl.p_glDepthRange(vp.min_z, vp.max_z);
+    checkGLcall("glDepthRange");
+
+    if (context->render_offscreen)
+    {
+        GL_EXTCALL(glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE));
+        GL_EXTCALL(glViewportIndexedf(0, vp.x + pixel_center_offset, vp.y + pixel_center_offset,
+                vp.width, vp.height));
+    }
+    else
+    {
+        GL_EXTCALL(glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE));
+        GL_EXTCALL(glViewportIndexedf(0, vp.x + pixel_center_offset,
+                (height - (vp.y + vp.height)) + pixel_center_offset, vp.width, vp.height));
+    }
+    checkGLcall("setting clip space and viewport");
+}
+
 static void viewport_vertexpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     if (!isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION)))
@@ -4837,6 +4886,17 @@ static void frontface(struct wined3d_context *context, const struct wined3d_stat
     checkGLcall("glFrontFace");
 }
 
+static void frontface_cc(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    GLenum mode;
+
+    mode = state->rasterizer_state && state->rasterizer_state->desc.front_ccw ? GL_CCW : GL_CW;
+
+    gl_info->gl_ops.gl.p_glFrontFace(mode);
+    checkGLcall("glFrontFace");
+}
+
 static void psorigin_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     static BOOL warned;
@@ -4923,8 +4983,10 @@ const struct StateEntryTemplate misc_state_template[] =
     { STATE_RENDER(WINED3D_RS_BLENDOPALPHA),              { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_STREAMSRC,                                    { STATE_STREAMSRC,                                    streamsrc           }, WINED3D_GL_EXT_NONE             },
     { STATE_VDECL,                                        { STATE_VDECL,                                        vdecl_miscpart      }, WINED3D_GL_EXT_NONE             },
+    { STATE_FRONTFACE,                                    { STATE_FRONTFACE,                                    frontface_cc        }, ARB_CLIP_CONTROL                },
     { STATE_FRONTFACE,                                    { STATE_FRONTFACE,                                    frontface           }, WINED3D_GL_EXT_NONE             },
     { STATE_SCISSORRECT,                                  { STATE_SCISSORRECT,                                  scissorrect         }, WINED3D_GL_EXT_NONE             },
+    { STATE_POINTSPRITECOORDORIGIN,                       { STATE_POINTSPRITECOORDORIGIN,                       state_nop           }, ARB_CLIP_CONTROL                },
     { STATE_POINTSPRITECOORDORIGIN,                       { STATE_POINTSPRITECOORDORIGIN,                       psorigin            }, WINED3D_GL_VERSION_2_0          },
     { STATE_POINTSPRITECOORDORIGIN,                       { STATE_POINTSPRITECOORDORIGIN,                       psorigin_w          }, WINED3D_GL_EXT_NONE             },
 
@@ -4980,6 +5042,7 @@ const struct StateEntryTemplate misc_state_template[] =
     { STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_LSCALE),  { STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_LSCALE),  shader_bumpenv      }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_LOFFSET), { STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_LSCALE),  NULL                }, WINED3D_GL_EXT_NONE             },
 
+    { STATE_VIEWPORT,                                     { STATE_VIEWPORT,                                     viewport_miscpart_cc}, ARB_CLIP_CONTROL                },
     { STATE_VIEWPORT,                                     { STATE_VIEWPORT,                                     viewport_miscpart   }, WINED3D_GL_EXT_NONE             },
     { STATE_INDEXBUFFER,                                  { STATE_INDEXBUFFER,                                  indexbuffer         }, ARB_VERTEX_BUFFER_OBJECT        },
     { STATE_INDEXBUFFER,                                  { STATE_INDEXBUFFER,                                  state_nop           }, WINED3D_GL_EXT_NONE             },

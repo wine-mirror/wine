@@ -4494,6 +4494,8 @@ void get_modelview_matrix(const struct wined3d_context *context, const struct wi
 void get_projection_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
         struct wined3d_matrix *mat)
 {
+    BOOL clip_control = context->gl_info->supported[ARB_CLIP_CONTROL];
+    BOOL flip = !clip_control && context->render_offscreen;
     float center_offset;
 
     /* There are a couple of additional things we have to take into account
@@ -4511,7 +4513,7 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
      * driver, but small enough to prevent it from interfering with any
      * anti-aliasing. */
 
-    if (context->swapchain->device->wined3d->flags & WINED3D_PIXEL_CENTER_INTEGER)
+    if (!clip_control && context->swapchain->device->wined3d->flags & WINED3D_PIXEL_CENTER_INTEGER)
         center_offset = 63.0f / 64.0f;
     else
         center_offset = -1.0f / 64.0f;
@@ -4525,14 +4527,14 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
         float h = state->viewport.height;
         float x_scale = 2.0f / w;
         float x_offset = (center_offset - (2.0f * x) - w) / w;
-        float y_scale = context->render_offscreen ? 2.0f / h : 2.0f / -h;
-        float y_offset = context->render_offscreen
+        float y_scale = flip ? 2.0f / h : 2.0f / -h;
+        float y_offset = flip
                 ? (center_offset - (2.0f * y) - h) / h
                 : (center_offset - (2.0f * y) - h) / -h;
         enum wined3d_depth_buffer_type zenable = state->fb->depth_stencil ?
                 state->render_states[WINED3D_RS_ZENABLE] : WINED3D_ZB_FALSE;
-        float z_scale = zenable ? 2.0f : 0.0f;
-        float z_offset = zenable ? -1.0f : 0.0f;
+        float z_scale = zenable ? clip_control ? 1.0f : 2.0f : 0.0f;
+        float z_offset = zenable ? clip_control ? 0.0f : -1.0f : 0.0f;
         const struct wined3d_matrix projection =
         {
              x_scale,     0.0f,      0.0f, 0.0f,
@@ -4545,17 +4547,19 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
     }
     else
     {
-        float y_scale = context->render_offscreen ? -1.0f : 1.0f;
+        float y_scale = flip ? -1.0f : 1.0f;
         float x_offset = center_offset / state->viewport.width;
-        float y_offset = context->render_offscreen
+        float y_offset = flip
                 ? center_offset / state->viewport.height
                 : -center_offset / state->viewport.height;
+        float z_scale = clip_control ? 1.0f : 2.0f;
+        float z_offset = clip_control ? 0.0f : -1.0f;
         const struct wined3d_matrix projection =
         {
-                1.0f,     0.0f,  0.0f, 0.0f,
-                0.0f,  y_scale,  0.0f, 0.0f,
-                0.0f,     0.0f,  2.0f, 0.0f,
-            x_offset, y_offset, -1.0f, 1.0f,
+                1.0f,     0.0f,     0.0f, 0.0f,
+                0.0f,  y_scale,     0.0f, 0.0f,
+                0.0f,     0.0f,  z_scale, 0.0f,
+            x_offset, y_offset, z_offset, 1.0f,
         };
 
         multiply_matrix(mat, &projection, &state->transforms[WINED3D_TS_PROJECTION]);

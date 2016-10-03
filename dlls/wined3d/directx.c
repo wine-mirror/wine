@@ -3856,6 +3856,23 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
         if (!counter_bits)
             gl_info->supported[ARB_TIMER_QUERY] = FALSE;
     }
+    if (gl_info->supported[ARB_VIEWPORT_ARRAY])
+    {
+        GLint subpixel_bits;
+
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_VIEWPORT_SUBPIXEL_BITS, &subpixel_bits);
+        TRACE("Viewport supports %d subpixel bits.\n", subpixel_bits);
+        if (!subpixel_bits)
+            gl_info->supported[ARB_VIEWPORT_ARRAY] = FALSE;
+    }
+    if (gl_info->supported[ARB_CLIP_CONTROL] && !gl_info->supported[ARB_VIEWPORT_ARRAY])
+    {
+        /* When using ARB_clip_control we need the float viewport parameters
+         * introduced by ARB_viewport_array to take care of the shifted pixel
+         * coordinates. */
+        TRACE("Disabling ARB_clip_control because ARB_viewport_array is not supported.\n");
+        gl_info->supported[ARB_CLIP_CONTROL] = FALSE;
+    }
     if (!gl_info->supported[ATI_TEXTURE_MIRROR_ONCE] && gl_info->supported[EXT_TEXTURE_MIRROR_CLAMP])
     {
         TRACE(" IMPLIED: ATI_texture_mirror_once support (by EXT_texture_mirror_clamp).\n");
