@@ -1401,7 +1401,7 @@ static void test_enum_svc(void)
 
         /* lpServiceName and lpDisplayName should always be filled */
         ok(services[i].lpServiceName[0], "Expected a service name\n");
-        ok(services[i].lpDisplayName[0], "Expected a display name\n");
+        ok(services[i].lpDisplayName && services[i].lpDisplayName[0], "Expected a display name\n");
 
         /* Decrement the counters to see if the functions calls return the same
          * numbers as the contents of these structures.
@@ -1704,7 +1704,7 @@ static void test_enum_svc(void)
 
         /* lpServiceName and lpDisplayName should always be filled */
         ok(exservices[i].lpServiceName[0], "Expected a service name\n");
-        ok(exservices[i].lpDisplayName[0], "Expected a display name\n");
+        ok(exservices[i].lpDisplayName && exservices[i].lpDisplayName[0], "Expected a display name\n");
 
         /* Decrement the counters to see if the functions calls return the
          * same numbers as the contents of these structures.
