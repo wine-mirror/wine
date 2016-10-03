@@ -61,6 +61,16 @@ static const WCHAR hidraw_busidW[] = {'H','I','D','R','A','W',0};
 #include "initguid.h"
 DEFINE_GUID(GUID_DEVCLASS_HIDRAW, 0x3def44ad,0x242e,0x46e5,0x82,0x6d,0x70,0x72,0x13,0xf3,0xaa,0x81);
 
+struct platform_private
+{
+    struct udev_device *udev_device;
+};
+
+static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
+{
+    return (struct platform_private *)get_platform_private(device);
+}
+
 static DWORD get_sysattr_dword(struct udev_device *dev, const char *sysattr, int base)
 {
     const char *attr = udev_device_get_sysattr_value(dev, sysattr);
@@ -87,6 +97,18 @@ static WCHAR *get_sysattr_string(struct udev_device *dev, const char *sysattr)
         MultiByteToWideChar(CP_UNIXCP, 0, attr, -1, dst, len);
     return dst;
 }
+
+static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
+{
+    struct udev_device *dev1 = impl_from_DEVICE_OBJECT(device)->udev_device;
+    struct udev_device *dev2 = platform_dev;
+    return strcmp(udev_device_get_syspath(dev1), udev_device_get_syspath(dev2));
+}
+
+static const platform_vtbl hidraw_vtbl =
+{
+    compare_platform_device,
+};
 
 static void try_add_device(struct udev_device *dev)
 {
@@ -123,12 +145,15 @@ static void try_add_device(struct udev_device *dev)
     subsystem = udev_device_get_subsystem(dev);
     if (strcmp(subsystem, "hidraw") == 0)
     {
-        device = bus_create_hid_device(udev_driver_obj, hidraw_busidW, dev, vid, pid,
-                                       version, 0, serial, FALSE, &GUID_DEVCLASS_HIDRAW);
+        device = bus_create_hid_device(udev_driver_obj, hidraw_busidW, vid, pid, version, 0, serial, FALSE,
+                                       &GUID_DEVCLASS_HIDRAW, &hidraw_vtbl, sizeof(struct platform_private));
     }
 
     if (device)
-        udev_device_ref(dev);
+    {
+        impl_from_DEVICE_OBJECT(device)->udev_device = udev_device_ref(dev);
+        IoInvalidateDeviceRelations(device, BusRelations);
+    }
     else
         WARN("Ignoring device %s with subsystem %s\n", debugstr_a(devnode), subsystem);
 
@@ -137,7 +162,12 @@ static void try_add_device(struct udev_device *dev)
 
 static void try_remove_device(struct udev_device *dev)
 {
-    /* FIXME */
+    DEVICE_OBJECT *device = bus_find_hid_device(&hidraw_vtbl, dev);
+    if (!device) return;
+
+    dev = impl_from_DEVICE_OBJECT(device)->udev_device;
+    bus_remove_hid_device(device);
+    udev_device_unref(dev);
 }
 
 static void build_initial_deviceset(void)
