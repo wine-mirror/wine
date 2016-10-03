@@ -1107,7 +1107,8 @@ struct ps_compile_args {
     DWORD pointsprite : 1;
     DWORD flatshading : 1;
     DWORD alpha_test_func : 3;
-    DWORD padding : 27;
+    DWORD render_offscreen : 1;
+    DWORD padding : 26;
 };
 
 enum fog_src_type {

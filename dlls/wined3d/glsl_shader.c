@@ -2194,9 +2194,23 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         }
         if (reg_maps->vpos || reg_maps->usesdsy)
         {
-            ++extra_constants_needed;
-            shader_addline(buffer, "uniform vec4 ycorrection;\n");
-            shader_addline(buffer, "vec4 vpos;\n");
+            if (reg_maps->usesdsy || !gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
+            {
+                ++extra_constants_needed;
+                shader_addline(buffer, "uniform vec4 ycorrection;\n");
+            }
+            if (reg_maps->vpos)
+            {
+                if (gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
+                {
+                    if (shader->device->wined3d->flags & WINED3D_PIXEL_CENTER_INTEGER)
+                        shader_addline(buffer, "layout(%spixel_center_integer) in vec4 gl_FragCoord;\n",
+                                ps_args->render_offscreen ? "" : "origin_upper_left, ");
+                    else if (!ps_args->render_offscreen)
+                        shader_addline(buffer, "layout(origin_upper_left) in vec4 gl_FragCoord;\n");
+                }
+                shader_addline(buffer, "vec4 vpos;\n");
+            }
         }
 
         if (ps_args->alpha_test_func + 1 != WINED3D_CMP_ALWAYS)
@@ -5899,6 +5913,8 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     shader_glsl_enable_extensions(buffer, gl_info);
     if (gl_info->supported[ARB_DERIVATIVE_CONTROL])
         shader_addline(buffer, "#extension GL_ARB_derivative_control : enable\n");
+    if (gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
+        shader_addline(buffer, "#extension GL_ARB_fragment_coord_conventions : enable\n");
     if (gl_info->supported[ARB_SHADER_TEXTURE_LOD])
         shader_addline(buffer, "#extension GL_ARB_shader_texture_lod : enable\n");
     /* The spec says that it doesn't have to be explicitly enabled, but the
@@ -5929,7 +5945,9 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
      * on drivers that returns integer values. */
     if (reg_maps->vpos)
     {
-        if (shader->device->wined3d->flags & WINED3D_PIXEL_CENTER_INTEGER)
+        if (gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
+            shader_addline(buffer, "vpos = gl_FragCoord;\n");
+        else if (shader->device->wined3d->flags & WINED3D_PIXEL_CENTER_INTEGER)
             shader_addline(buffer,
                     "vpos = floor(vec4(0, ycorrection[0], 0, 0) + gl_FragCoord * vec4(1, ycorrection[1], 1, 1));\n");
         else

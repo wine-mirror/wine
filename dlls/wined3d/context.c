@@ -2418,6 +2418,8 @@ static void context_set_render_offscreen(struct wined3d_context *context, BOOL o
     context_invalidate_state(context, STATE_VIEWPORT);
     context_invalidate_state(context, STATE_SCISSORRECT);
     context_invalidate_state(context, STATE_FRONTFACE);
+    if (context->gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
+        context_invalidate_state(context, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
     context->render_offscreen = offscreen;
 }
 
