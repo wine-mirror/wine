@@ -172,6 +172,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_vertex_program",               ARB_VERTEX_PROGRAM            },
     {"GL_ARB_vertex_shader",                ARB_VERTEX_SHADER             },
     {"GL_ARB_vertex_type_2_10_10_10_rev",   ARB_VERTEX_TYPE_2_10_10_10_REV},
+    {"GL_ARB_viewport_array",               ARB_VIEWPORT_ARRAY            },
 
     /* ATI */
     {"GL_ATI_fragment_shader",              ATI_FRAGMENT_SHADER           },
@@ -2829,6 +2830,17 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glVertexAttrib4uivARB)
     USE_GL_FUNC(glVertexAttrib4usvARB)
     USE_GL_FUNC(glVertexAttribPointerARB)
+    /* GL_ARB_viewport_array */
+    USE_GL_FUNC(glDepthRangeArrayv)
+    USE_GL_FUNC(glDepthRangeIndexed)
+    USE_GL_FUNC(glGetDoublei_v)
+    USE_GL_FUNC(glGetFloati_v)
+    USE_GL_FUNC(glScissorArrayv)
+    USE_GL_FUNC(glScissorIndexed)
+    USE_GL_FUNC(glScissorIndexedv)
+    USE_GL_FUNC(glViewportArrayv)
+    USE_GL_FUNC(glViewportIndexedf)
+    USE_GL_FUNC(glViewportIndexedfv)
     /* GL_ATI_fragment_shader */
     USE_GL_FUNC(glAlphaFragmentOp1ATI)
     USE_GL_FUNC(glAlphaFragmentOp2ATI)
@@ -3583,6 +3595,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
         {ARB_VERTEX_TYPE_2_10_10_10_REV,   MAKEDWORD_VERSION(3, 3)},
 
         {ARB_ES2_COMPATIBILITY,            MAKEDWORD_VERSION(4, 1)},
+        {ARB_VIEWPORT_ARRAY,               MAKEDWORD_VERSION(4, 1)},
 
         {ARB_INTERNALFORMAT_QUERY,         MAKEDWORD_VERSION(4, 2)},
         {ARB_MAP_BUFFER_ALIGNMENT,         MAKEDWORD_VERSION(4, 2)},
