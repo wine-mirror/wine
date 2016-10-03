@@ -26,6 +26,12 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#ifdef HAVE_POLL_H
+# include <poll.h>
+#endif
+#ifdef HAVE_SYS_POLL_H
+# include <sys/poll.h>
+#endif
 #ifdef HAVE_LIBUDEV_H
 # include <libudev.h>
 #endif
@@ -129,6 +135,11 @@ static void try_add_device(struct udev_device *dev)
     HeapFree(GetProcessHeap(), 0, serial);
 }
 
+static void try_remove_device(struct udev_device *dev)
+{
+    /* FIXME */
+}
+
 static void build_initial_deviceset(void)
 {
     struct udev_enumerate *enumerate;
@@ -164,13 +175,82 @@ static void build_initial_deviceset(void)
     udev_enumerate_unref(enumerate);
 }
 
+static struct udev_monitor *create_monitor(struct pollfd *pfd)
+{
+    struct udev_monitor *monitor;
+
+    monitor = udev_monitor_new_from_netlink(udev_context, "udev");
+    if (!monitor)
+    {
+        WARN("Unable to get udev monitor object\n");
+        return NULL;
+    }
+
+    if (udev_monitor_filter_add_match_subsystem_devtype(monitor, "hidraw", NULL) < 0)
+        WARN("Failed to add subsystem 'hidraw' to monitor\n");
+
+    if (udev_monitor_enable_receiving(monitor) < 0)
+        goto error;
+
+    if ((pfd->fd = udev_monitor_get_fd(monitor)) >= 0)
+    {
+        pfd->events = POLLIN;
+        return monitor;
+    }
+
+error:
+    WARN("Failed to start monitoring\n");
+    udev_monitor_unref(monitor);
+    return NULL;
+}
+
+static void process_monitor_event(struct udev_monitor *monitor)
+{
+    struct udev_device *dev;
+    const char *action;
+
+    dev = udev_monitor_receive_device(monitor);
+    if (!dev)
+    {
+        FIXME("Failed to get device that has changed\n");
+        return;
+    }
+
+    action = udev_device_get_action(dev);
+    TRACE("Received action %s for udev device %s\n", debugstr_a(action),
+          debugstr_a(udev_device_get_devnode(dev)));
+
+    if (!action)
+        WARN("No action received\n");
+    else if (strcmp(action, "add") == 0)
+        try_add_device(dev);
+    else if (strcmp(action, "remove") == 0)
+        try_remove_device(dev);
+    else
+        WARN("Unhandled action %s\n", debugstr_a(action));
+
+    udev_device_unref(dev);
+}
+
 static DWORD CALLBACK deviceloop_thread(void *args)
 {
+    struct udev_monitor *monitor;
     HANDLE init_done = args;
+    struct pollfd pfd;
 
+    monitor = create_monitor(&pfd);
     build_initial_deviceset();
     SetEvent(init_done);
 
+    while (monitor)
+    {
+        if (poll(&pfd, 1, -1) <= 0) continue;
+        process_monitor_event(monitor);
+    }
+
+    TRACE("Monitor thread exiting\n");
+    if (monitor)
+        udev_monitor_unref(monitor);
     return 0;
 }
 
