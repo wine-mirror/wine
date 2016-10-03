@@ -44,6 +44,7 @@ enum wined3d_gl_extension
     APPLE_YCBCR_422,
     /* ARB */
     ARB_BLEND_FUNC_EXTENDED,
+    ARB_CLIP_CONTROL,
     ARB_COLOR_BUFFER_FLOAT,
     ARB_COPY_BUFFER,
     ARB_DEBUG_OUTPUT,
