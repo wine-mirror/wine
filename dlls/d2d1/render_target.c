@@ -2181,13 +2181,20 @@ err:
     return hr;
 }
 
-HRESULT d2d_d3d_render_target_update_surface(ID2D1RenderTarget *iface, IDXGISurface1 *surface)
+HRESULT d2d_d3d_render_target_create_rtv(ID2D1RenderTarget *iface, IDXGISurface1 *surface)
 {
     struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
     DXGI_SURFACE_DESC surface_desc;
     ID3D10RenderTargetView *view;
     ID3D10Resource *resource;
     HRESULT hr;
+
+    if (!surface)
+    {
+        ID3D10RenderTargetView_Release(render_target->view);
+        render_target->view = NULL;
+        return S_OK;
+    }
 
     if (FAILED(hr = IDXGISurface1_GetDesc(surface, &surface_desc)))
     {

@@ -731,7 +731,7 @@ static HRESULT STDMETHODCALLTYPE d2d_dc_render_target_BindDC(ID2D1DCRenderTarget
     }
 
     /* Switch dxgi target to new surface. */
-    if (FAILED(hr = d2d_d3d_render_target_update_surface(render_target->dxgi_target, dxgi_surface)))
+    if (FAILED(hr = d2d_d3d_render_target_create_rtv(render_target->dxgi_target, dxgi_surface)))
     {
         WARN("Failed to set new surface, hr %#x.\n", hr);
         IDXGISurface1_Release(dxgi_surface);

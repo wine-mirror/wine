@@ -2831,6 +2831,56 @@ static void test_dc_target(void)
     ID2D1Factory_Release(factory);
 }
 
+static void test_hwnd_target(void)
+{
+    D2D1_HWND_RENDER_TARGET_PROPERTIES hwnd_rt_desc;
+    D2D1_RENDER_TARGET_PROPERTIES desc;
+    ID2D1HwndRenderTarget *rt;
+    ID2D1Factory *factory;
+    ID3D10Device1 *device;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+    ID3D10Device1_Release(device);
+
+    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
+    ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
+
+    desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+    desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+    desc.dpiX = 0.0f;
+    desc.dpiY = 0.0f;
+    desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+    desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+
+    hwnd_rt_desc.hwnd = NULL;
+    hwnd_rt_desc.pixelSize.width = 64;
+    hwnd_rt_desc.pixelSize.height = 64;
+    hwnd_rt_desc.presentOptions = D2D1_PRESENT_OPTIONS_NONE;
+
+    hr = ID2D1Factory_CreateHwndRenderTarget(factory, &desc, &hwnd_rt_desc, &rt);
+    ok(FAILED(hr), "Target creation should fail, hr %#x.\n", hr);
+
+    hwnd_rt_desc.hwnd = (HWND)0xdeadbeef;
+    hr = ID2D1Factory_CreateHwndRenderTarget(factory, &desc, &hwnd_rt_desc, &rt);
+    ok(FAILED(hr), "Target creation should fail, hr %#x.\n", hr);
+
+    hwnd_rt_desc.hwnd = CreateWindowA("static", "d2d_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    ok(!!hwnd_rt_desc.hwnd, "Failed to create target window.\n");
+    hr = ID2D1Factory_CreateHwndRenderTarget(factory, &desc, &hwnd_rt_desc, &rt);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+
+    ID2D1HwndRenderTarget_Release(rt);
+
+    DestroyWindow(hwnd_rt_desc.hwnd);
+    ID2D1Factory_Release(factory);
+}
+
 START_TEST(d2d1)
 {
     test_clip();
@@ -2846,4 +2896,5 @@ START_TEST(d2d1)
     test_create_target();
     test_draw_text_layout();
     test_dc_target();
+    test_hwnd_target();
 }

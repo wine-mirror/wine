@@ -96,7 +96,7 @@ struct d2d_d3d_render_target
 
 HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, ID2D1Factory *factory,
         IDXGISurface *surface, const D2D1_RENDER_TARGET_PROPERTIES *desc) DECLSPEC_HIDDEN;
-HRESULT d2d_d3d_render_target_update_surface(ID2D1RenderTarget *render_target, IDXGISurface1 *surface) DECLSPEC_HIDDEN;
+HRESULT d2d_d3d_render_target_create_rtv(ID2D1RenderTarget *render_target, IDXGISurface1 *surface) DECLSPEC_HIDDEN;
 
 struct d2d_wic_render_target
 {
@@ -130,6 +130,21 @@ struct d2d_dc_render_target
 
 HRESULT d2d_dc_render_target_init(struct d2d_dc_render_target *render_target, ID2D1Factory *factory,
         ID3D10Device1 *device, const D2D1_RENDER_TARGET_PROPERTIES *desc) DECLSPEC_HIDDEN;
+
+struct d2d_hwnd_render_target
+{
+    ID2D1HwndRenderTarget ID2D1HwndRenderTarget_iface;
+    LONG refcount;
+
+    ID2D1RenderTarget *dxgi_target;
+    IDXGISwapChain *swapchain;
+    UINT sync_interval;
+    HWND hwnd;
+};
+
+HRESULT d2d_hwnd_render_target_init(struct d2d_hwnd_render_target *render_target, ID2D1Factory *factory,
+        ID3D10Device1 *device, const D2D1_RENDER_TARGET_PROPERTIES *desc,
+        const D2D1_HWND_RENDER_TARGET_PROPERTIES *hwnd_desc) DECLSPEC_HIDDEN;
 
 struct d2d_gradient
 {

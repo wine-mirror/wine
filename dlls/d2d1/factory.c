@@ -271,9 +271,30 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateHwndRenderTarget(ID2D1Factory
         const D2D1_RENDER_TARGET_PROPERTIES *desc, const D2D1_HWND_RENDER_TARGET_PROPERTIES *hwnd_rt_desc,
         ID2D1HwndRenderTarget **render_target)
 {
-    FIXME("iface %p, desc %p, hwnd_rt_desc %p, render_target %p stub!\n", iface, desc, hwnd_rt_desc, render_target);
+    struct d2d_factory *factory = impl_from_ID2D1Factory(iface);
+    struct d2d_hwnd_render_target *object;
+    ID3D10Device1 *device;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p, hwnd_rt_desc %p, render_target %p.\n", iface, desc, hwnd_rt_desc, render_target);
+
+    if (FAILED(hr = d2d_factory_get_device(factory, &device)))
+        return hr;
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d2d_hwnd_render_target_init(object, iface, device, desc, hwnd_rt_desc)))
+    {
+        WARN("Failed to initialize render target, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created render target %p.\n", object);
+    *render_target = &object->ID2D1HwndRenderTarget_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDxgiSurfaceRenderTarget(ID2D1Factory *iface,
