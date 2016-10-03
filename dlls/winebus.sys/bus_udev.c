@@ -164,8 +164,21 @@ static void build_initial_deviceset(void)
     udev_enumerate_unref(enumerate);
 }
 
+static DWORD CALLBACK deviceloop_thread(void *args)
+{
+    HANDLE init_done = args;
+
+    build_initial_deviceset();
+    SetEvent(init_done);
+
+    return 0;
+}
+
 NTSTATUS WINAPI udev_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry_path)
 {
+    HANDLE events[2];
+    DWORD result;
+
     TRACE("(%p, %s)\n", driver, debugstr_w(registry_path->Buffer));
 
     if (!(udev_context = udev_new()))
@@ -177,8 +190,29 @@ NTSTATUS WINAPI udev_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry
     udev_driver_obj = driver;
     driver->MajorFunction[IRP_MJ_PNP] = common_pnp_dispatch;
 
-    build_initial_deviceset();
-    return STATUS_SUCCESS;
+    if (!(events[0] = CreateEventW(NULL, TRUE, FALSE, NULL)))
+        goto error;
+    if (!(events[1] = CreateThread(NULL, 0, deviceloop_thread, events[0], 0, NULL)))
+    {
+        CloseHandle(events[0]);
+        goto error;
+    }
+
+    result = WaitForMultipleObjects(2, events, FALSE, INFINITE);
+    CloseHandle(events[0]);
+    CloseHandle(events[1]);
+    if (result == WAIT_OBJECT_0)
+    {
+        TRACE("Initialization successful\n");
+        return STATUS_SUCCESS;
+    }
+
+error:
+    ERR("Failed to initialize udev device thread\n");
+    udev_unref(udev_context);
+    udev_context = NULL;
+    udev_driver_obj = NULL;
+    return STATUS_UNSUCCESSFUL;
 }
 
 #else
