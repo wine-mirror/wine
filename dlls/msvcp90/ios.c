@@ -15138,8 +15138,12 @@ static basic_filebuf_char filebuf_char_stdin;
 /* ?cin@std@@3V?$basic_istream@DU?$char_traits@D@std@@@1@A */
 struct {
     basic_istream_char obj;
+#if _MSVCP_VER >= 110
+    int vtordisp;
+#endif
     basic_ios_char vbase;
 } cin = { { 0 } };
+C_ASSERT(sizeof(cin) == VBTABLE_BASIC_IOS_ENTRY(basic_istream_char, 0)+sizeof(basic_ios_char));
 /* ?_Ptr_cin@std@@3PAV?$basic_istream@DU?$char_traits@D@std@@@1@A */
 /* ?_Ptr_cin@std@@3PEAV?$basic_istream@DU?$char_traits@D@std@@@1@EA */
 basic_istream_char *_Ptr_cin = &cin.obj;
@@ -15148,8 +15152,12 @@ static basic_filebuf_wchar filebuf_short_stdin;
 /* ?wcin@std@@3V?$basic_istream@GU?$char_traits@G@std@@@1@A */
 struct {
     basic_istream_wchar obj;
+#if _MSVCP_VER >= 110
+    int vtordisp;
+#endif
     basic_ios_wchar vbase;
 } ucin = { { 0 } };
+C_ASSERT(sizeof(ucin) == VBTABLE_BASIC_IOS_ENTRY(basic_istream_wchar, 0)+sizeof(basic_ios_wchar));
 /* ?_Ptr_wcin@std@@3PAV?$basic_istream@GU?$char_traits@G@std@@@1@A */
 /* ?_Ptr_wcin@std@@3PEAV?$basic_istream@GU?$char_traits@G@std@@@1@EA */
 basic_istream_wchar *_Ptr_ucin = &ucin.obj;
@@ -15158,8 +15166,12 @@ static basic_filebuf_wchar filebuf_wchar_stdin;
 /* ?wcin@std@@3V?$basic_istream@_WU?$char_traits@_W@std@@@1@A */
 struct {
     basic_istream_wchar obj;
+#if _MSVCP_VER >= 110
+    int vtordisp;
+#endif
     basic_ios_wchar vbase;
 } wcin = { { 0 } };
+C_ASSERT(sizeof(wcin) == VBTABLE_BASIC_IOS_ENTRY(basic_istream_wchar, 0)+sizeof(basic_ios_wchar));
 /* ?_Ptr_wcin@std@@3PAV?$basic_istream@_WU?$char_traits@_W@std@@@1@A */
 /* ?_Ptr_wcin@std@@3PEAV?$basic_istream@_WU?$char_traits@_W@std@@@1@EA */
 basic_istream_wchar *_Ptr_wcin = &wcin.obj;
@@ -15168,8 +15180,12 @@ static basic_filebuf_char filebuf_char_stdout;
 /* ?cout@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A */
 struct {
     basic_ostream_char obj;
+#if _MSVCP_VER >= 110
+    int vtordisp;
+#endif
     basic_ios_char vbase;
 } cout = { { 0 } };
+C_ASSERT(sizeof(cout) == VBTABLE_BASIC_IOS_ENTRY(basic_ostream_char, 0)+sizeof(basic_ios_char));
 /* ?_Ptr_cout@std@@3PAV?$basic_ostream@DU?$char_traits@D@std@@@1@A */
 /* ?_Ptr_cout@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA */
 basic_ostream_char *_Ptr_cout = &cout.obj;
@@ -15178,8 +15194,12 @@ static basic_filebuf_wchar filebuf_short_stdout;
 /* ?wcout@std@@3V?$basic_ostream@GU?$char_traits@G@std@@@1@A */
 struct {
     basic_ostream_wchar obj;
+#if _MSVCP_VER >= 110
+    int vtordisp;
+#endif
     basic_ios_wchar vbase;
 } ucout = { { 0 } };
+C_ASSERT(sizeof(ucout) == VBTABLE_BASIC_IOS_ENTRY(basic_ostream_wchar, 0)+sizeof(basic_ios_wchar));
 /* ?_Ptr_wcout@std@@3PAV?$basic_ostream@GU?$char_traits@G@std@@@1@A */
 /* ?_Ptr_wcout@std@@3PEAV?$basic_ostream@GU?$char_traits@G@std@@@1@EA */
 basic_ostream_wchar *_Ptr_ucout = &ucout.obj;
@@ -15188,8 +15208,12 @@ static basic_filebuf_wchar filebuf_wchar_stdout;
 /* ?wcout@std@@3V?$basic_ostream@_WU?$char_traits@_W@std@@@1@A */
 struct {
     basic_ostream_wchar obj;
+#if _MSVCP_VER >= 110
+    int vtordisp;
+#endif
     basic_ios_wchar vbase;
 } wcout = { { 0 } };
+C_ASSERT(sizeof(wcout) == VBTABLE_BASIC_IOS_ENTRY(basic_ostream_wchar, 0)+sizeof(basic_ios_wchar));
 /* ?_Ptr_wcout@std@@3PAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@A */
 /* ?_Ptr_wcout@std@@3PEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@EA */
 basic_ostream_wchar *_Ptr_wcout = &wcout.obj;
@@ -15198,8 +15222,12 @@ static basic_filebuf_char filebuf_char_stderr;
 /* ?cerr@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A */
 struct {
     basic_ostream_char obj;
+#if _MSVCP_VER >= 110
+    int vtordisp;
+#endif
     basic_ios_char vbase;
 } cerr = { { 0 } };
+C_ASSERT(sizeof(cerr) == VBTABLE_BASIC_IOS_ENTRY(basic_ostream_char, 0)+sizeof(basic_ios_char));
 /* ?_Ptr_cerr@std@@3PAV?$basic_ostream@DU?$char_traits@D@std@@@1@A */
 /* ?_Ptr_cerr@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA */
 basic_ostream_char *_Ptr_cerr = &cerr.obj;
@@ -15208,8 +15236,12 @@ static basic_filebuf_wchar filebuf_short_stderr;
 /* ?wcerr@std@@3V?$basic_ostream@GU?$char_traits@G@std@@@1@A */
 struct {
     basic_ostream_wchar obj;
+#if _MSVCP_VER >= 110
+    int vtordisp;
+#endif
     basic_ios_wchar vbase;
 } ucerr = { { 0 } };
+C_ASSERT(sizeof(ucerr) == VBTABLE_BASIC_IOS_ENTRY(basic_ostream_wchar, 0)+sizeof(basic_ios_wchar));
 /* ?_Ptr_wcerr@std@@3PAV?$basic_ostream@GU?$char_traits@G@std@@@1@A */
 /* ?_Ptr_wcerr@std@@3PEAV?$basic_ostream@GU?$char_traits@G@std@@@1@EA */
 basic_ostream_wchar *_Ptr_ucerr = &ucerr.obj;
@@ -15218,8 +15250,12 @@ static basic_filebuf_wchar filebuf_wchar_stderr;
 /* ?wcerr@std@@3V?$basic_ostream@_WU?$char_traits@_W@std@@@1@A */
 struct {
     basic_ostream_wchar obj;
+#if _MSVCP_VER >= 110
+    int vtordisp;
+#endif
     basic_ios_wchar vbase;
 } wcerr = { { 0 } };
+C_ASSERT(sizeof(wcerr) == VBTABLE_BASIC_IOS_ENTRY(basic_ostream_wchar, 0)+sizeof(basic_ios_wchar));
 /* ?_Ptr_wcerr@std@@3PAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@A */
 /* ?_Ptr_wcerr@std@@3PEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@EA */
 basic_ostream_wchar *_Ptr_wcerr = &wcerr.obj;
@@ -15228,8 +15264,12 @@ static basic_filebuf_char filebuf_char_log;
 /* ?clog@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A */
 struct {
     basic_ostream_char obj;
+#if _MSVCP_VER >= 110
+    int vtordisp;
+#endif
     basic_ios_char vbase;
 } clog = { { 0 } };
+C_ASSERT(sizeof(clog) == VBTABLE_BASIC_IOS_ENTRY(basic_ostream_char, 0)+sizeof(basic_ios_char));
 /* ?_Ptr_clog@std@@3PAV?$basic_ostream@DU?$char_traits@D@std@@@1@A */
 /* ?_Ptr_clog@std@@3PEAV?$basic_ostream@DU?$char_traits@D@std@@@1@EA */
 basic_ostream_char *_Ptr_clog = &clog.obj;
@@ -15238,8 +15278,12 @@ static basic_filebuf_wchar filebuf_short_log;
 /* ?wclog@std@@3V?$basic_ostream@GU?$char_traits@G@std@@@1@A */
 struct {
     basic_ostream_wchar obj;
+#if _MSVCP_VER >= 110
+    int vtordisp;
+#endif
     basic_ios_wchar vbase;
 } uclog = { { 0 } };
+C_ASSERT(sizeof(uclog) == VBTABLE_BASIC_IOS_ENTRY(basic_ostream_wchar, 0)+sizeof(basic_ios_wchar));
 /* ?_Ptr_wclog@std@@3PAV?$basic_ostream@GU?$char_traits@G@std@@@1@A */
 /* ?_Ptr_wclog@std@@3PEAV?$basic_ostream@GU?$char_traits@G@std@@@1@EA */
 basic_ostream_wchar *_Ptr_uclog = &uclog.obj;
@@ -15248,8 +15292,12 @@ static basic_filebuf_wchar filebuf_wchar_log;
 /* ?wclog@std@@3V?$basic_ostream@_WU?$char_traits@_W@std@@@1@A */
 struct {
     basic_ostream_wchar obj;
+#if _MSVCP_VER >= 110
+    int vtordisp;
+#endif
     basic_ios_wchar vbase;
 } wclog = { { 0 } };
+C_ASSERT(sizeof(wclog) == VBTABLE_BASIC_IOS_ENTRY(basic_ostream_wchar, 0)+sizeof(basic_ios_wchar));
 /* ?_Ptr_wclog@std@@3PAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@A */
 /* ?_Ptr_wclog@std@@3PEAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@EA */
 basic_ostream_wchar *_Ptr_wclog = &wclog.obj;
