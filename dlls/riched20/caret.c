@@ -200,7 +200,7 @@ int ME_SetSelection(ME_TextEditor *editor, int from, int to)
 
   ME_CursorFromCharOfs(editor, from, &editor->pCursors[1]);
   editor->pCursors[0] = editor->pCursors[1];
-  ME_MoveCursorChars(editor, &editor->pCursors[0], to - from);
+  ME_MoveCursorChars(editor, &editor->pCursors[0], to - from, FALSE);
   /* Selection is not allowed in the middle of an end paragraph run. */
   if (editor->pCursors[1].pRun->member.run.nFlags & MERF_ENDPARA)
     editor->pCursors[1].nOffset = 0;
@@ -627,10 +627,11 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
 }
 
 /* Move the cursor nRelOfs characters (either forwards or backwards)
+ * If final_eop is TRUE, allow moving the cursor to the end of the final eop.
  *
  * returns the actual number of characters moved.
  **/
-int ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
+int ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs, BOOL final_eop)
 {
   cursor->nOffset += nRelOfs;
   if (cursor->nOffset < 0)
@@ -682,11 +683,11 @@ int ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
       return nRelOfs;
     }
 
-    if (new_offset >= ME_GetTextLength(editor))
+    if (new_offset >= ME_GetTextLength(editor) + (final_eop ? 1 : 0))
     {
       /* new offset at the end of the text */
-      ME_SetCursorToEnd(editor, cursor, FALSE);
-      nRelOfs -= new_offset - ME_GetTextLength(editor);
+      ME_SetCursorToEnd(editor, cursor, final_eop);
+      nRelOfs -= new_offset - (ME_GetTextLength(editor) + (final_eop ? 1 : 0));
       return nRelOfs;
     }
 
@@ -1547,14 +1548,14 @@ ME_ArrowKey(ME_TextEditor *editor, int nVKey, BOOL extend, BOOL ctrl)
       if (ctrl)
         success = ME_MoveCursorWords(editor, &tmp_curs, -1);
       else
-        success = ME_MoveCursorChars(editor, &tmp_curs, -1);
+        success = ME_MoveCursorChars(editor, &tmp_curs, -1, extend);
       break;
     case VK_RIGHT:
       editor->bCaretAtEnd = FALSE;
       if (ctrl)
         success = ME_MoveCursorWords(editor, &tmp_curs, +1);
       else
-        success = ME_MoveCursorChars(editor, &tmp_curs, +1);
+        success = ME_MoveCursorChars(editor, &tmp_curs, +1, extend);
       break;
     case VK_UP:
       ME_MoveCursorLines(editor, &tmp_curs, -1);

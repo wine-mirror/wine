@@ -881,11 +881,8 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
   ME_Cursor cursor = *start;
   ME_DisplayItem *prev_para = cursor.pPara;
   ME_Cursor endCur = cursor;
-  int actual_chars;
 
-  actual_chars = ME_MoveCursorChars(editor, &endCur, nChars);
-  /* Include the final \r which MoveCursorChars will ignore. */
-  if (actual_chars != nChars) endCur.nOffset++;
+  ME_MoveCursorChars(editor, &endCur, nChars, TRUE);
 
   if (!ME_StreamOutRTFHeader(pStream, dwFormat))
     return FALSE;

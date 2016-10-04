@@ -291,7 +291,7 @@ void ME_ProtectPartialTableDeletion(ME_TextEditor *editor, ME_Cursor *c, int *nC
   ME_DisplayItem *this_para = c->pPara;
   ME_DisplayItem *end_para;
 
-  ME_MoveCursorChars(editor, &c2, *nChars);
+  ME_MoveCursorChars(editor, &c2, *nChars, FALSE);
   end_para = c2.pPara;
   if (c2.pRun->member.run.nFlags & MERF_ENDPARA) {
     /* End offset might be in the middle of the end paragraph run.

@@ -349,7 +349,7 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, struct undo_item *undo)
     ME_Cursor start, end;
     ME_CursorFromCharOfs(editor, undo->u.set_char_fmt.pos, &start);
     end = start;
-    ME_MoveCursorChars(editor, &end, undo->u.set_char_fmt.len);
+    ME_MoveCursorChars(editor, &end, undo->u.set_char_fmt.len, FALSE);
     ME_SetCharFormat(editor, &start, &end, &undo->u.set_char_fmt.fmt);
     break;
   }

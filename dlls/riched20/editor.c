@@ -1650,7 +1650,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
           int linebreakSize = editor->bEmulateVersion10 ? 2 : 1;
           ME_Cursor linebreakCursor = *selEnd;
 
-          ME_MoveCursorChars(editor, &linebreakCursor, -linebreakSize);
+          ME_MoveCursorChars(editor, &linebreakCursor, -linebreakSize, FALSE);
           ME_GetTextW(editor, lastchar, 2, &linebreakCursor, linebreakSize, FALSE, FALSE);
           if (lastchar[0] == '\r' && (lastchar[1] == '\n' || lastchar[1] == '\0')) {
             ME_InternalDeleteText(editor, &linebreakCursor, linebreakSize, FALSE);
@@ -1805,7 +1805,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
     {
       ME_CursorFromCharOfs(editor, nMin - 1, &cursor);
       wLastChar = *get_text( &cursor.pRun->member.run, cursor.nOffset );
-      ME_MoveCursorChars(editor, &cursor, 1);
+      ME_MoveCursorChars(editor, &cursor, 1, FALSE);
     } else {
       ME_CursorFromCharOfs(editor, nMin, &cursor);
     }
@@ -1881,7 +1881,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
     {
       ME_CursorFromCharOfs(editor, nMax + 1, &cursor);
       wLastChar = *get_text( &cursor.pRun->member.run, cursor.nOffset );
-      ME_MoveCursorChars(editor, &cursor, -1);
+      ME_MoveCursorChars(editor, &cursor, -1, FALSE);
     } else {
       ME_CursorFromCharOfs(editor, nMax, &cursor);
     }
