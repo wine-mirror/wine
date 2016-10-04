@@ -611,17 +611,16 @@ SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run *run, i
                          int startx, int *pAscent, int *pDescent)
 {
   SIZE size;
-  int nMaxLen = run->len;
+  WCHAR spaceW[] = {' ',0};
 
-  if (nLen>nMaxLen)
-    nLen = nMaxLen;
+  nLen = min( nLen, run->len );
 
-  /* FIXME the following call also ensures that TEXTMETRIC structure is filled
-   * this is wasteful for MERF_NONTEXT runs, but that shouldn't matter
-   * in practice
-   */
-
-  if (para->nFlags & MEPF_COMPLEX)
+  if (run->nFlags & MERF_ENDPARA)
+  {
+      nLen = min( nLen, 1 );
+      ME_GetTextExtent(c, spaceW, nLen, run->style, &size);
+  }
+  else if (para->nFlags & MEPF_COMPLEX)
   {
       size.cx = run->nWidth;
   }
