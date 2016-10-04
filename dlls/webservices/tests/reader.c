@@ -1339,6 +1339,7 @@ static void test_WsReadType(void)
     UINT32 val_uint32;
     UINT64 val_uint64;
     GUID val_guid;
+    WS_BYTES val_bytes;
 
     hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -1607,6 +1608,27 @@ static void test_WsReadType(void)
                      WS_READ_REQUIRED_VALUE, heap, &val_guid, sizeof(val_guid), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( IsEqualGUID( &val_guid, &guid2 ), "wrong guid\n" );
+
+    memset( &val_bytes, 0, sizeof(val_bytes) );
+    prepare_type_test( reader, "<t>dGVzdA==</t>", sizeof("<t>dGVzdA==</t>") - 1 );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_BYTES_TYPE, NULL,
+                     WS_READ_REQUIRED_VALUE, heap, &val_bytes, sizeof(val_bytes), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( val_bytes.length == 4, "got %u\n", val_bytes.length );
+    ok( !memcmp( val_bytes.bytes, "test", 4 ), "wrong data\n" );
+
+    memset( &val_bytes, 0, sizeof(val_bytes) );
+    prepare_type_test( reader, "<t> dGVzdA== </t>", sizeof("<t> dGVzdA== </t>") - 1 );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_BYTES_TYPE, NULL,
+                     WS_READ_REQUIRED_VALUE, heap, &val_bytes, sizeof(val_bytes), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( val_bytes.length == 4, "got %u\n", val_bytes.length );
+    ok( !memcmp( val_bytes.bytes, "test", 4 ), "wrong data\n" );
+
+    prepare_type_test( reader, "<t>dGVzdA===</t>", sizeof("<t>dGVzdA===</t>") - 1 );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_BYTES_TYPE, NULL,
+                     WS_READ_REQUIRED_VALUE, heap, &val_bytes, sizeof(val_bytes), NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
 
     WsFreeReader( reader );
     WsFreeHeap( heap );
