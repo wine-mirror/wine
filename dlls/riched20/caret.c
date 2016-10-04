@@ -31,11 +31,11 @@ void ME_SetCursorToStart(ME_TextEditor *editor, ME_Cursor *cursor)
   cursor->nOffset = 0;
 }
 
-static void ME_SetCursorToEnd(ME_TextEditor *editor, ME_Cursor *cursor)
+static void ME_SetCursorToEnd(ME_TextEditor *editor, ME_Cursor *cursor, BOOL final_eop)
 {
   cursor->pPara = editor->pBuffer->pLast->member.para.prev_para;
   cursor->pRun = ME_FindItemBack(editor->pBuffer->pLast, diRun);
-  cursor->nOffset = 0;
+  cursor->nOffset = final_eop ? cursor->pRun->member.run.len : 0;
 }
 
 
@@ -83,7 +83,7 @@ int ME_GetSelection(ME_TextEditor *editor, ME_Cursor **from, ME_Cursor **to)
 int ME_GetTextLength(ME_TextEditor *editor)
 {
   ME_Cursor cursor;
-  ME_SetCursorToEnd(editor, &cursor);
+  ME_SetCursorToEnd(editor, &cursor, FALSE);
   return ME_GetCursorOfs(&cursor);
 }
 
@@ -138,8 +138,7 @@ int ME_SetSelection(ME_TextEditor *editor, int from, int to)
   if (from == 0 && to == -1)
   {
     ME_SetCursorToStart(editor, &editor->pCursors[1]);
-    ME_SetCursorToEnd(editor, &editor->pCursors[0]);
-    editor->pCursors[0].nOffset = editor->pCursors[0].pRun->member.run.len;
+    ME_SetCursorToEnd(editor, &editor->pCursors[0], TRUE);
     ME_InvalidateSelection(editor);
     return len + 1;
   }
@@ -193,7 +192,7 @@ int ME_SetSelection(ME_TextEditor *editor, int from, int to)
 
   if (selectionEnd)
   {
-    ME_SetCursorToEnd(editor, &editor->pCursors[0]);
+    ME_SetCursorToEnd(editor, &editor->pCursors[0], FALSE);
     editor->pCursors[1] = editor->pCursors[0];
     ME_InvalidateSelection(editor);
     return len;
@@ -686,7 +685,7 @@ int ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
     if (new_offset >= ME_GetTextLength(editor))
     {
       /* new offset at the end of the text */
-      ME_SetCursorToEnd(editor, cursor);
+      ME_SetCursorToEnd(editor, cursor, FALSE);
       nRelOfs -= new_offset - ME_GetTextLength(editor);
       return nRelOfs;
     }
@@ -859,7 +858,7 @@ ME_SelectByType(ME_TextEditor *editor, ME_SelectionType selectionType)
       /* Select everything with cursor anchored from the start of the text */
       editor->nSelectionType = stDocument;
       ME_SetCursorToStart(editor, &editor->pCursors[1]);
-      ME_SetCursorToEnd(editor, &editor->pCursors[0]);
+      ME_SetCursorToEnd(editor, &editor->pCursors[0], FALSE);
       break;
     default: assert(0);
   }
@@ -1383,7 +1382,7 @@ static void ME_ArrowPageDown(ME_TextEditor *editor, ME_Cursor *pCursor)
 
   if (editor->vert_si.nPos >= y - editor->sizeWindow.cy)
   {
-    ME_SetCursorToEnd(editor, pCursor);
+    ME_SetCursorToEnd(editor, pCursor, FALSE);
     editor->bCaretAtEnd = FALSE;
   } else {
     ME_DisplayItem *pRun = pCursor->pRun;
@@ -1480,7 +1479,7 @@ static void ME_ArrowEnd(ME_TextEditor *editor, ME_Cursor *pCursor)
 
 static void ME_ArrowCtrlEnd(ME_TextEditor *editor, ME_Cursor *pCursor)
 {
-  ME_SetCursorToEnd(editor, pCursor);
+  ME_SetCursorToEnd(editor, pCursor, FALSE);
   editor->bCaretAtEnd = FALSE;
 }
 
