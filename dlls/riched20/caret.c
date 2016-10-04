@@ -1237,7 +1237,7 @@ static int ME_GetXForArrow(ME_TextEditor *editor, ME_Cursor *pCursor)
 
 
 static void
-ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs)
+ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs, BOOL extend)
 {
   ME_DisplayItem *pRun = pCursor->pRun;
   ME_DisplayItem *pOldPara = pCursor->pPara;
@@ -1255,8 +1255,12 @@ ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs)
     assert(pItem);
     /* start of the previous row */
     pItem = ME_FindItemBack(pItem, diStartRow);
-    if (!pItem)
-      return; /* row not found - ignore */
+    if (!pItem) /* row not found */
+    {
+      if (extend)
+        ME_SetCursorToStart(editor, pCursor);
+      return;
+    }
     pNewPara = ME_GetParagraph(pItem);
     if (pOldPara->member.para.nFlags & MEPF_ROWEND ||
         (pOldPara->member.para.pCell &&
@@ -1282,8 +1286,12 @@ ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs)
   {
     /* start of the next row */
     pItem = ME_FindItemFwd(pRun, diStartRow);
-    if (!pItem)
-      return; /* row not found - ignore */
+    if (!pItem) /* row not found */
+    {
+      if (extend)
+        ME_SetCursorToEnd(editor, pCursor, TRUE);
+      return;
+    }
     pNewPara = ME_GetParagraph(pItem);
     if (pOldPara->member.para.nFlags & MEPF_ROWSTART ||
         (pOldPara->member.para.pCell &&
@@ -1558,10 +1566,10 @@ ME_ArrowKey(ME_TextEditor *editor, int nVKey, BOOL extend, BOOL ctrl)
         success = ME_MoveCursorChars(editor, &tmp_curs, +1, extend);
       break;
     case VK_UP:
-      ME_MoveCursorLines(editor, &tmp_curs, -1);
+      ME_MoveCursorLines(editor, &tmp_curs, -1, extend);
       break;
     case VK_DOWN:
-      ME_MoveCursorLines(editor, &tmp_curs, +1);
+      ME_MoveCursorLines(editor, &tmp_curs, +1, extend);
       break;
     case VK_PRIOR:
       ME_ArrowPageUp(editor, &tmp_curs);
