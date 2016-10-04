@@ -1515,9 +1515,6 @@ void ME_SendSelChange(ME_TextEditor *editor)
 {
   SELCHANGE sc;
 
-  if (!(editor->nEventMask & ENM_SELCHANGE))
-    return;
-
   sc.nmhdr.hwndFrom = NULL;
   sc.nmhdr.idFrom = 0;
   sc.nmhdr.code = EN_SELCHANGE;
@@ -1527,16 +1524,21 @@ void ME_SendSelChange(ME_TextEditor *editor)
     sc.seltyp |= SEL_TEXT;
   if (sc.chrg.cpMin < sc.chrg.cpMax+1) /* what were RICHEDIT authors thinking ? */
     sc.seltyp |= SEL_MULTICHAR;
-  TRACE("cpMin=%d cpMax=%d seltyp=%d (%s %s)\n",
-    sc.chrg.cpMin, sc.chrg.cpMax, sc.seltyp,
-    (sc.seltyp & SEL_TEXT) ? "SEL_TEXT" : "",
-    (sc.seltyp & SEL_MULTICHAR) ? "SEL_MULTICHAR" : "");
+
   if (sc.chrg.cpMin != editor->notified_cr.cpMin || sc.chrg.cpMax != editor->notified_cr.cpMax)
   {
     ME_ClearTempStyle(editor);
 
     editor->notified_cr = sc.chrg;
-    ITextHost_TxNotify(editor->texthost, sc.nmhdr.code, &sc);
+
+    if (editor->nEventMask & ENM_SELCHANGE)
+    {
+      TRACE("cpMin=%d cpMax=%d seltyp=%d (%s %s)\n",
+            sc.chrg.cpMin, sc.chrg.cpMax, sc.seltyp,
+            (sc.seltyp & SEL_TEXT) ? "SEL_TEXT" : "",
+            (sc.seltyp & SEL_MULTICHAR) ? "SEL_MULTICHAR" : "");
+      ITextHost_TxNotify(editor->texthost, sc.nmhdr.code, &sc);
+    }
   }
 }
 
