@@ -1,5 +1,5 @@
 @ stdcall ControlTraceW(int64 wstr ptr long) advapi32.ControlTraceW
-@ stub EnableTraceEx2
+@ stdcall EnableTraceEx2(int64 ptr long long int64 int64 long ptr) advapi32.EnableTraceEx2
 @ stub EnumerateTraceGuidsEx
 @ stub EventAccessControl
 @ stub EventAccessQuery

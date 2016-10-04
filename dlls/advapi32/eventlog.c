@@ -239,6 +239,20 @@ ULONG WINAPI EnableTraceEx( LPCGUID provider, LPCGUID source, TRACEHANDLE hSessi
 }
 
 /******************************************************************************
+ * EnableTraceEx2 [ADVAPI32.@]
+ */
+ULONG WINAPI EnableTraceEx2( TRACEHANDLE handle, LPCGUID provider, ULONG control, UCHAR level,
+                             ULONGLONG match_any, ULONGLONG match_all, ULONG timeout,
+                             PENABLE_TRACE_PARAMETERS params )
+{
+    FIXME("(%s, %s, %u, %c, %s, %s, %u, %p): stub\n", wine_dbgstr_longlong(handle),
+          debugstr_guid(provider), control, level, wine_dbgstr_longlong(match_any),
+          wine_dbgstr_longlong(match_all), timeout, params);
+
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
  * EnableTrace [ADVAPI32.@]
  */
 ULONG WINAPI EnableTrace( ULONG enable, ULONG flag, ULONG level, LPCGUID guid, TRACEHANDLE hSession )
