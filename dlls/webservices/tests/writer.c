@@ -2547,6 +2547,93 @@ static void test_write_option(void)
     WsFreeWriter( writer );
 }
 
+static BOOL check_result( WS_XML_WRITER *writer, const char *expected )
+{
+    WS_BYTES bytes;
+    ULONG size = sizeof(bytes);
+    int len = strlen( expected );
+
+    memset( &bytes, 0, sizeof(bytes) );
+    WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_BYTES, &bytes, size, NULL );
+    if (bytes.length != len) return FALSE;
+    return !memcmp( bytes.bytes, expected, len );
+}
+
+static void test_datetime(void)
+{
+    WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL};
+    static const struct
+    {
+        unsigned __int64   ticks;
+        WS_DATETIME_FORMAT format;
+        HRESULT            hr;
+        const char        *result;
+        const char        *result2;
+    }
+    tests[] =
+    {
+        { 0, WS_DATETIME_FORMAT_UTC, S_OK, "<t>0001-01-01T00:00:00Z</t>" },
+        { 0, WS_DATETIME_FORMAT_LOCAL, S_OK, "<t>0001-01-01T00:00:00+00:00</t>" },
+        { 0, WS_DATETIME_FORMAT_NONE, S_OK, "<t>0001-01-01T00:00:00</t>" },
+        { 1, WS_DATETIME_FORMAT_UTC, S_OK, "<t>0001-01-01T00:00:00.0000001Z</t>" },
+        { 1, WS_DATETIME_FORMAT_LOCAL, S_OK, "<t>0001-01-01T00:00:00.0000001+00:00</t>" },
+        { 1, WS_DATETIME_FORMAT_NONE, S_OK, "<t>0001-01-01T00:00:00.0000001</t>" },
+        { 0x23c34600, WS_DATETIME_FORMAT_LOCAL, S_OK, "<t>0001-01-01T00:01:00+00:00</t>" },
+        { 0x861c46800, WS_DATETIME_FORMAT_LOCAL, S_OK, "<t>0001-01-01T01:00:00+00:00</t>" },
+        { 0x430e234000, WS_DATETIME_FORMAT_LOCAL, S_OK, "<t>0001-01-01T08:00:00+00:00</t>" },
+        { 0x4b6fe7a800, WS_DATETIME_FORMAT_LOCAL, S_OK, "<t>0001-01-01T09:00:00+00:00</t>" },
+        { 0x989680, WS_DATETIME_FORMAT_NONE, S_OK, "<t>0001-01-01T00:00:01</t>" },
+        { 0x23c34600, WS_DATETIME_FORMAT_NONE, S_OK, "<t>0001-01-01T00:01:00</t>" },
+        { 0x861c46800, WS_DATETIME_FORMAT_NONE, S_OK, "<t>0001-01-01T01:00:00</t>" },
+        { 0xc92a69c000, WS_DATETIME_FORMAT_NONE, S_OK, "<t>0001-01-02T00:00:00</t>" },
+        { 0x11ed178c6c000, WS_DATETIME_FORMAT_NONE, S_OK, "<t>0002-01-01T00:00:00</t>" },
+        { 0x2bca2875f4373fff, WS_DATETIME_FORMAT_UTC, S_OK, "<t>9999-12-31T23:59:59.9999999Z</t>" },
+        { 0x2bca2875f4373fff, WS_DATETIME_FORMAT_LOCAL, S_OK, "<t>9999-12-31T15:59:59.9999999-08:00</t>",
+          "<t>9999-12-31T17:59:59.9999999-06:00</t>" /* win7 */ },
+        { 0x2bca2875f4373fff, WS_DATETIME_FORMAT_NONE, S_OK, "<t>9999-12-31T23:59:59.9999999</t>" },
+        { 0x2bca2875f4374000, WS_DATETIME_FORMAT_UTC, WS_E_INVALID_FORMAT },
+        { 0x2bca2875f4374000, WS_DATETIME_FORMAT_LOCAL, WS_E_INVALID_FORMAT },
+        { 0x2bca2875f4374000, WS_DATETIME_FORMAT_NONE, WS_E_INVALID_FORMAT },
+        { 0x8d3123e7df74000, WS_DATETIME_FORMAT_LOCAL, S_OK, "<t>2015-12-31T16:00:00-08:00</t>",
+          "<t>2015-12-31T18:00:00-06:00</t>" /* win7 */ },
+        { 0x701ce1722770000, WS_DATETIME_FORMAT_LOCAL, S_OK, "<t>1601-01-01T00:00:00+00:00</t>" },
+        { 0x701ce5a309a4000, WS_DATETIME_FORMAT_LOCAL, S_OK, "<t>1601-01-01T00:00:00-08:00</t>",
+          "<t>1601-01-01T02:00:00-06:00</t>" /* win7 */ },
+        { 0x701ce5e617c7400, WS_DATETIME_FORMAT_LOCAL, S_OK, "<t>1601-01-01T00:30:00-08:00</t>",
+          "<t>1601-01-01T02:30:00-06:00</t>" /* win7 */ },
+        { 0x701ce51ced5d800, WS_DATETIME_FORMAT_LOCAL, S_OK, "<t>1601-01-01T07:00:00+00:00</t>",
+          "<t>1601-01-01T01:00:00-06:00</t>" /* win7 */ },
+        { 0, WS_DATETIME_FORMAT_NONE + 1, WS_E_INVALID_FORMAT },
+    };
+    HRESULT hr;
+    WS_XML_WRITER *writer;
+    WS_DATETIME date;
+    ULONG i;
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        hr = set_output( writer );
+        ok( hr == S_OK, "got %08x\n", hr );
+
+        date.ticks  = tests[i].ticks;
+        date.format = tests[i].format;
+        WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+        hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_DATETIME_TYPE, NULL, WS_WRITE_REQUIRED_VALUE,
+                          &date, sizeof(date), NULL );
+        WsWriteEndElement( writer, NULL );
+        ok( hr == tests[i].hr, "%u: got %08x\n", i, hr );
+        if (hr == S_OK)
+        {
+            ok( check_result( writer, tests[i].result ) || broken(check_result( writer, tests[i].result2 )),
+                "%u: wrong result\n", i );
+        }
+    }
+
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -2578,4 +2665,5 @@ START_TEST(writer)
     test_WsWriteArray();
     test_escapes();
     test_write_option();
+    test_datetime();
 }

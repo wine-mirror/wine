@@ -1187,6 +1187,68 @@ static ULONG format_double( const double *ptr, unsigned char *buf )
 #endif
 }
 
+static inline int year_size( int year )
+{
+    return leap_year( year ) ? 366 : 365;
+}
+
+#define TZ_OFFSET 8
+static ULONG format_datetime( const WS_DATETIME *ptr, unsigned char *buf )
+{
+    static const char fmt[] = "%04u-%02u-%02uT%02u:%02u:%02u";
+    int day, hour, min, sec, sec_frac, month = 1, year = 1, tz_hour;
+    unsigned __int64 ticks, day_ticks;
+    ULONG len;
+
+    if (ptr->format == WS_DATETIME_FORMAT_LOCAL &&
+        ptr->ticks >= TICKS_1601_01_01 + TZ_OFFSET * TICKS_PER_HOUR)
+    {
+        ticks = ptr->ticks - TZ_OFFSET * TICKS_PER_HOUR;
+        tz_hour = TZ_OFFSET;
+    }
+    else
+    {
+        ticks = ptr->ticks;
+        tz_hour = 0;
+    }
+    day = ticks / TICKS_PER_DAY;
+    day_ticks = ticks % TICKS_PER_DAY;
+    hour = day_ticks / TICKS_PER_HOUR;
+    min = (day_ticks % TICKS_PER_HOUR) / TICKS_PER_MIN;
+    sec = (day_ticks % TICKS_PER_MIN) / TICKS_PER_SEC;
+    sec_frac = day_ticks % TICKS_PER_SEC;
+
+    while (day >= year_size( year ))
+    {
+        day -= year_size( year );
+        year++;
+    }
+    while (day >= month_days[leap_year( year )][month])
+    {
+        day -= month_days[leap_year( year )][month];
+        month++;
+    }
+    day++;
+
+    len = sprintf( (char *)buf, fmt, year, month, day, hour, min, sec );
+    if (sec_frac)
+    {
+        static const char fmt_frac[] = ".%07u";
+        len += sprintf( (char *)buf + len, fmt_frac, sec_frac );
+    }
+    if (ptr->format == WS_DATETIME_FORMAT_UTC)
+    {
+        buf[len++] = 'Z';
+    }
+    else if (ptr->format == WS_DATETIME_FORMAT_LOCAL)
+    {
+        static const char fmt_tz[] = "%c%02u:00";
+        len += sprintf( (char *)buf + len, fmt_tz, tz_hour ? '-' : '+', tz_hour );
+    }
+
+    return len;
+}
+
 static ULONG format_guid( const GUID *ptr, unsigned char *buf )
 {
     static const char fmt[] = "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x";
@@ -1282,6 +1344,13 @@ static HRESULT text_to_utf8text( const WS_XML_TEXT *text, WS_XML_UTF8_TEXT **ret
         const WS_XML_UNIQUE_ID_TEXT *id = (const WS_XML_UNIQUE_ID_TEXT *)text;
         if (!(*ret = alloc_utf8_text( NULL, 46 ))) return E_OUTOFMEMORY;
         (*ret)->value.length = format_urn( &id->value, (*ret)->value.bytes );
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_DATETIME:
+    {
+        const WS_XML_DATETIME_TEXT *dt = (const WS_XML_DATETIME_TEXT *)text;
+        if (!(*ret = alloc_utf8_text( NULL, 34 ))) return E_OUTOFMEMORY;
+        (*ret)->value.length = format_datetime( &dt->value, (*ret)->value.bytes );
         return S_OK;
     }
     default:
@@ -1666,6 +1735,32 @@ static HRESULT write_type_uint64( struct writer *writer, WS_TYPE_MAPPING mapping
     return write_type_text( writer, mapping, &utf8.text );
 }
 
+static HRESULT write_type_datetime( struct writer *writer, WS_TYPE_MAPPING mapping,
+                                    const WS_DATETIME_DESCRIPTION *desc, WS_WRITE_OPTION option,
+                                    const void *value, ULONG size )
+{
+    WS_XML_UTF8_TEXT utf8;
+    unsigned char buf[34]; /* "0000-00-00T00:00:00.0000000-00:00" */
+    const WS_DATETIME *ptr;
+    HRESULT hr;
+
+    if (desc)
+    {
+        FIXME( "description not supported\n" );
+        return E_NOTIMPL;
+    }
+
+    if (!option || option == WS_WRITE_NILLABLE_VALUE) return E_INVALIDARG;
+    if ((hr = get_value_ptr( option, value, size, sizeof(WS_DATETIME), (const void **)&ptr )) != S_OK) return hr;
+    if (option == WS_WRITE_NILLABLE_POINTER && !ptr) return write_add_nil_attribute( writer );
+    if (ptr->ticks > TICKS_MAX || ptr->format > WS_DATETIME_FORMAT_NONE) return WS_E_INVALID_FORMAT;
+
+    utf8.text.textType = WS_XML_TEXT_TYPE_UTF8;
+    utf8.value.bytes   = buf;
+    utf8.value.length  = format_datetime( ptr, buf );
+    return write_type_text( writer, mapping, &utf8.text );
+}
+
 static HRESULT write_type_guid( struct writer *writer, WS_TYPE_MAPPING mapping,
                                 const WS_GUID_DESCRIPTION *desc, WS_WRITE_OPTION option,
                                 const void *value, ULONG size )
@@ -1930,6 +2025,9 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
 
     case WS_UINT64_TYPE:
         return write_type_uint64( writer, mapping, desc, option, value, size );
+
+    case WS_DATETIME_TYPE:
+        return write_type_datetime( writer, mapping, desc, option, value, size );
 
     case WS_GUID_TYPE:
         return write_type_guid( writer, mapping, desc, option, value, size );

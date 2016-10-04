@@ -100,6 +100,24 @@ HRESULT message_insert_http_headers( WS_MESSAGE *, HINTERNET ) DECLSPEC_HIDDEN;
 HRESULT channel_send_message( WS_CHANNEL *, WS_MESSAGE * ) DECLSPEC_HIDDEN;
 HRESULT channel_receive_message( WS_CHANNEL *, char **, ULONG * ) DECLSPEC_HIDDEN;
 
+#define TICKS_PER_SEC       10000000
+#define TICKS_PER_MIN       (60 * (ULONGLONG)TICKS_PER_SEC)
+#define TICKS_PER_HOUR      (3600 * (ULONGLONG)TICKS_PER_SEC)
+#define TICKS_PER_DAY       (86400 * (ULONGLONG)TICKS_PER_SEC)
+#define TICKS_MAX           3155378975999999999
+#define TICKS_1601_01_01    504911232000000000
+
+static const int month_days[2][12] =
+{
+    {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
+    {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
+};
+
+static inline int leap_year( int year )
+{
+    return !(year % 4) && (year % 100 || !(year % 400));
+}
+
 static inline BOOL is_nil_value( const char *value, ULONG size )
 {
     ULONG i;

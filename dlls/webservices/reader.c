@@ -2468,32 +2468,15 @@ static HRESULT str_to_guid( const unsigned char *str, ULONG len, GUID *ret )
     return S_OK;
 }
 
-#define TICKS_PER_SEC   10000000
-#define TICKS_PER_MIN   (60 * (ULONGLONG)TICKS_PER_SEC)
-#define TICKS_PER_HOUR  (3600 * (ULONGLONG)TICKS_PER_SEC)
-#define TICKS_PER_DAY   (86400 * (ULONGLONG)TICKS_PER_SEC)
-#define TICKS_MAX       3155378975999999999
-
 static const int month_offsets[2][12] =
 {
     {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334},
     {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335}
 };
 
-static const int month_days[2][12] =
-{
-    {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
-    {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
-};
-
-static inline int is_leap_year( int year )
-{
-    return !(year % 4) && (year % 100 || !(year % 400));
-}
-
 static inline int valid_day( int year, int month, int day )
 {
-    return day > 0 && day <= month_days[is_leap_year( year )][month - 1];
+    return day > 0 && day <= month_days[leap_year( year )][month - 1];
 }
 
 static inline int leap_days_before( int year )
@@ -2585,7 +2568,7 @@ static HRESULT str_to_datetime( const unsigned char *bytes, ULONG len, WS_DATETI
     else return WS_E_INVALID_FORMAT;
 
     ret->ticks = ((year - 1) * 365 + leap_days_before( year )) * TICKS_PER_DAY;
-    ret->ticks += month_offsets[is_leap_year( year )][month - 1] * TICKS_PER_DAY;
+    ret->ticks += month_offsets[leap_year( year )][month - 1] * TICKS_PER_DAY;
     ret->ticks += (day - 1) * TICKS_PER_DAY;
     ret->ticks += hour * TICKS_PER_HOUR;
     ret->ticks += min * TICKS_PER_MIN;
@@ -2609,8 +2592,6 @@ static HRESULT str_to_datetime( const unsigned char *bytes, ULONG len, WS_DATETI
 
     return S_OK;
 }
-
-#define TICKS_1601_01_01    504911232000000000
 
 /**************************************************************************
  *          WsDateTimeToFileTime               [webservices.@]
