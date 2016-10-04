@@ -961,11 +961,13 @@ static BOOL ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pRow,
  * x & y are pixel positions in virtual coordinates into the rich edit control,
  * so client coordinates must first be adjusted by the scroll position.
  *
+ * If final_eop is TRUE consider the final end-of-paragraph.
+ *
  * returns TRUE if the result was exactly under the cursor, otherwise returns
  * FALSE, and result is set to the closest position to the coordinates.
  */
 static BOOL ME_FindPixelPos(ME_TextEditor *editor, int x, int y,
-                            ME_Cursor *result, BOOL *is_eol)
+                            ME_Cursor *result, BOOL *is_eol, BOOL final_eop)
 {
   ME_DisplayItem *p = editor->pBuffer->pFirst->member.para.next_para;
   BOOL isExact = TRUE;
@@ -1001,7 +1003,7 @@ static BOOL ME_FindPixelPos(ME_TextEditor *editor, int x, int y,
     if (!pp) break;
     p = pp;
   }
-  if (p == editor->pBuffer->pLast)
+  if (p == editor->pBuffer->pLast && !final_eop)
   {
     /* The position is below the last paragraph, so the last row will be used
      * rather than the end of the text, so the x position will be used to
@@ -1016,10 +1018,7 @@ static BOOL ME_FindPixelPos(ME_TextEditor *editor, int x, int y,
   if( p->type == diStartRow )
       return ME_FindRunInRow( editor, p, x, result, is_eol ) && isExact;
 
-  result->pRun = ME_FindItemBack(p, diRun);
-  result->pPara = ME_GetParagraph(result->pRun);
-  result->nOffset = 0;
-  assert(result->pRun->member.run.nFlags & MERF_ENDPARA);
+  ME_SetCursorToEnd(editor, result, TRUE);
   return FALSE;
 }
 
@@ -1047,7 +1046,7 @@ BOOL ME_CharFromPos(ME_TextEditor *editor, int x, int y,
   }
   x += editor->horz_si.nPos;
   y += editor->vert_si.nPos;
-  bResult = ME_FindPixelPos(editor, x, y, cursor, NULL);
+  bResult = ME_FindPixelPos(editor, x, y, cursor, NULL, FALSE);
   if (isExact) *isExact = bResult;
   return TRUE;
 }
@@ -1130,7 +1129,7 @@ void ME_LButtonDown(ME_TextEditor *editor, int x, int y, int clickNum)
   is_selection = ME_IsSelection(editor);
   is_shift = GetKeyState(VK_SHIFT) < 0;
 
-  ME_FindPixelPos(editor, x, y, &editor->pCursors[0], &editor->bCaretAtEnd);
+  ME_FindPixelPos(editor, x, y, &editor->pCursors[0], &editor->bCaretAtEnd, FALSE);
 
   if (x >= editor->rcFormat.left || is_shift)
   {
@@ -1190,7 +1189,7 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y)
 
   tmp_cursor = editor->pCursors[0];
   /* FIXME: do something with the return value of ME_FindPixelPos */
-  ME_FindPixelPos(editor, x, y, &tmp_cursor, &editor->bCaretAtEnd);
+  ME_FindPixelPos(editor, x, y, &tmp_cursor, &editor->bCaretAtEnd, TRUE);
 
   ME_InvalidateSelection(editor);
   editor->pCursors[0] = tmp_cursor;
