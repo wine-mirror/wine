@@ -1265,6 +1265,38 @@ static ULONG format_urn( const GUID *ptr, unsigned char *buf )
                     ptr->Data4[4], ptr->Data4[5], ptr->Data4[6], ptr->Data4[7] );
 }
 
+static ULONG encode_base64( const unsigned char *bin, ULONG len, unsigned char *buf )
+{
+    static const char base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    ULONG i = 0, x;
+
+    while (len > 0)
+    {
+        buf[i++] = base64[(bin[0] & 0xfc) >> 2];
+        x = (bin[0] & 3) << 4;
+        if (len == 1)
+        {
+            buf[i++] = base64[x];
+            buf[i++] = '=';
+            buf[i++] = '=';
+            break;
+        }
+        buf[i++] = base64[x | ((bin[1] & 0xf0) >> 4)];
+        x = (bin[1] & 0x0f) << 2;
+        if (len == 2)
+        {
+            buf[i++] = base64[x];
+            buf[i++] = '=';
+            break;
+        }
+        buf[i++] = base64[x | ((bin[2] & 0xc0) >> 6)];
+        buf[i++] = base64[bin[2] & 0x3f];
+        bin += 3;
+        len -= 3;
+    }
+    return i;
+}
+
 static HRESULT text_to_utf8text( const WS_XML_TEXT *text, WS_XML_UTF8_TEXT **ret )
 {
     switch (text->textType)
@@ -1285,6 +1317,14 @@ static HRESULT text_to_utf8text( const WS_XML_TEXT *text, WS_XML_UTF8_TEXT **ret
         len_utf8 = WideCharToMultiByte( CP_UTF8, 0, str, len, NULL, 0, NULL, NULL );
         if (!(*ret = alloc_utf8_text( NULL, len_utf8 ))) return E_OUTOFMEMORY;
         WideCharToMultiByte( CP_UTF8, 0, str, len, (char *)(*ret)->value.bytes, (*ret)->value.length, NULL, NULL );
+        return S_OK;
+    }
+    case WS_XML_TEXT_TYPE_BASE64:
+    {
+        const WS_XML_BASE64_TEXT *base64 = (const WS_XML_BASE64_TEXT *)text;
+        ULONG len = ((4 * base64->length / 3) + 3) & ~3;
+        if (!(*ret = alloc_utf8_text( NULL, len ))) return E_OUTOFMEMORY;
+        (*ret)->value.length = encode_base64( base64->bytes, base64->length, (*ret)->value.bytes );
         return S_OK;
     }
     case WS_XML_TEXT_TYPE_BOOL:
@@ -1837,6 +1877,32 @@ static HRESULT write_type_wsz( struct writer *writer, WS_TYPE_MAPPING mapping,
     return write_type_text( writer, mapping, &utf16.text );
 }
 
+static HRESULT write_type_bytes( struct writer *writer, WS_TYPE_MAPPING mapping,
+                                 const WS_BYTES_DESCRIPTION *desc, WS_WRITE_OPTION option,
+                                 const void *value, ULONG size )
+{
+    WS_XML_BASE64_TEXT base64;
+    const WS_BYTES *ptr;
+    HRESULT hr;
+
+    if (desc)
+    {
+        FIXME( "description not supported\n" );
+        return E_NOTIMPL;
+    }
+
+    if (!option) return E_INVALIDARG;
+    if ((hr = get_value_ptr( option, value, size, sizeof(WS_BYTES), (const void **)&ptr )) != S_OK) return hr;
+    if ((option == WS_WRITE_NILLABLE_VALUE && is_nil_value( value, size )) ||
+        (option == WS_WRITE_NILLABLE_POINTER && !ptr)) return write_add_nil_attribute( writer );
+    if (!ptr->length) return S_OK;
+
+    base64.text.textType = WS_XML_TEXT_TYPE_BASE64;
+    base64.bytes         = ptr->bytes;
+    base64.length        = ptr->length;
+    return write_type_text( writer, mapping, &base64.text );
+}
+
 static HRESULT write_type_xml_string( struct writer *writer, WS_TYPE_MAPPING mapping,
                                       const WS_XML_STRING_DESCRIPTION *desc, WS_WRITE_OPTION option,
                                       const void *value, ULONG size )
@@ -1996,9 +2062,6 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
 {
     switch (type)
     {
-    case WS_STRUCT_TYPE:
-        return write_type_struct( writer, mapping, desc, option, value, size );
-
     case WS_BOOL_TYPE:
         return write_type_bool( writer, mapping, desc, option, value, size );
 
@@ -2038,8 +2101,14 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
     case WS_WSZ_TYPE:
         return write_type_wsz( writer, mapping, desc, option, value, size );
 
+    case WS_BYTES_TYPE:
+        return write_type_bytes( writer, mapping, desc, option, value, size );
+
     case WS_XML_STRING_TYPE:
         return write_type_xml_string( writer, mapping, desc, option, value, size );
+
+    case WS_STRUCT_TYPE:
+        return write_type_struct( writer, mapping, desc, option, value, size );
 
     default:
         FIXME( "type %u not supported\n", type );

@@ -574,6 +574,17 @@ static void test_WsWriteType(void)
     WsFreeWriter( writer );
 }
 
+static void prepare_basic_type_test( WS_XML_WRITER *writer )
+{
+    WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL};
+    HRESULT hr;
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+}
+
 static void test_basic_type(void)
 {
     static WCHAR testW[] = {'t','e','s','t',0};
@@ -583,6 +594,7 @@ static void test_basic_type(void)
     GUID guid;
     WCHAR *str;
     WS_STRING string;
+    WS_BYTES bytes;
     ULONG i;
     static const struct
     {
@@ -615,12 +627,7 @@ static void test_basic_type(void)
     /* element content type mapping */
     for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
     {
-        hr = set_output( writer );
-        ok( hr == S_OK, "got %08x\n", hr );
-
-        hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
-        ok( hr == S_OK, "got %08x\n", hr );
-
+        prepare_basic_type_test( writer );
         hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, tests[i].type, NULL,
                           WS_WRITE_REQUIRED_VALUE, &tests[i].val, tests[i].size, NULL );
         ok( hr == S_OK, "%u: got %08x\n", i, hr );
@@ -635,12 +642,7 @@ static void test_basic_type(void)
     {
         const INT64 *ptr = &tests[i].val;
 
-        hr = set_output( writer );
-        ok( hr == S_OK, "got %08x\n", hr );
-
-        hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
-        ok( hr == S_OK, "got %08x\n", hr );
-
+        prepare_basic_type_test( writer );
         hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, tests[i].type, NULL,
                           WS_WRITE_REQUIRED_POINTER, &ptr, sizeof(ptr), NULL );
         ok( hr == S_OK, "%u: got %08x\n", i, hr );
@@ -653,12 +655,7 @@ static void test_basic_type(void)
     /* attribute type mapping */
     for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
     {
-        hr = set_output( writer );
-        ok( hr == S_OK, "got %08x\n", hr );
-
-        hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
-        ok( hr == S_OK, "got %08x\n", hr );
-
+        prepare_basic_type_test( writer );
         hr = WsWriteStartAttribute( writer, NULL, &localname, &ns, FALSE, NULL );
         ok( hr == S_OK, "got %08x\n", hr );
 
@@ -674,67 +671,80 @@ static void test_basic_type(void)
         check_output( writer, tests[i].result2, __LINE__ );
     }
 
-    hr = set_output( writer );
-    ok( hr == S_OK, "got %08x\n", hr );
-
-    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
-
+    prepare_basic_type_test( writer );
     memset( &guid, 0, sizeof(guid) );
     hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_GUID_TYPE, NULL, WS_WRITE_REQUIRED_VALUE,
                       &guid, sizeof(guid), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-
     hr = WsWriteEndElement( writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<t>00000000-0000-0000-0000-000000000000</t>", __LINE__ );
 
-    hr = set_output( writer );
-    ok( hr == S_OK, "got %08x\n", hr );
-
-    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
-
+    prepare_basic_type_test( writer );
     string.chars  = testW;
     string.length = 4;
     hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_STRING_TYPE, NULL, WS_WRITE_REQUIRED_VALUE,
                       &string, sizeof(string), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-
     hr = WsWriteEndElement( writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<t>test</t>", __LINE__ );
 
-    hr = set_output( writer );
-    ok( hr == S_OK, "got %08x\n", hr );
-
-    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
-
+    prepare_basic_type_test( writer );
     str = testW;
     hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_WSZ_TYPE, NULL, WS_WRITE_REQUIRED_POINTER,
                       &str, sizeof(str), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-
     hr = WsWriteEndElement( writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<t>test</t>", __LINE__ );
 
-    hr = set_output( writer );
-    ok( hr == S_OK, "got %08x\n", hr );
-
-    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
-
+    prepare_basic_type_test( writer );
     xmlstr.bytes  = (BYTE *)"test";
     xmlstr.length = 4;
     hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_XML_STRING_TYPE, NULL, WS_WRITE_REQUIRED_VALUE,
                       &xmlstr, sizeof(xmlstr), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-
     hr = WsWriteEndElement( writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<t>test</t>", __LINE__ );
+
+    prepare_basic_type_test( writer );
+    bytes.bytes  = (BYTE *)"test";
+    bytes.length = 4;
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_BYTES_TYPE, NULL, WS_WRITE_REQUIRED_VALUE,
+                      &bytes, sizeof(bytes), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>dGVzdA==</t>", __LINE__ );
+
+    prepare_basic_type_test( writer );
+    bytes.length = 0;
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_BYTES_TYPE, NULL, WS_WRITE_REQUIRED_VALUE,
+                      &bytes, sizeof(bytes), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t/>", __LINE__ );
+
+    prepare_basic_type_test( writer );
+    bytes.bytes  = NULL;
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_BYTES_TYPE, NULL, WS_WRITE_REQUIRED_VALUE,
+                      &bytes, sizeof(bytes), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t/>", __LINE__ );
+
+    prepare_basic_type_test( writer );
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_BYTES_TYPE, NULL, WS_WRITE_NILLABLE_VALUE,
+                      &bytes, sizeof(bytes), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t a:nil=\"true\" xmlns:a=\"http://www.w3.org/2001/XMLSchema-instance\"/>",
+                  __LINE__ );
 
     WsFreeWriter( writer );
 }
