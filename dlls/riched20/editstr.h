@@ -460,19 +460,4 @@ typedef struct tagME_Context
   ME_TextEditor *editor;
 } ME_Context;
 
-typedef struct tagME_WrapContext
-{
-  ME_Style *style;
-  ME_Context *context;
-  int nLeftMargin, nRightMargin, nFirstMargin;
-  int nAvailWidth;
-  int nRow;
-  POINT pt;
-  BOOL bOverflown, bWordWrap;
-  ME_DisplayItem *pPara;
-  ME_DisplayItem *pRowStart;
-
-  ME_DisplayItem *pLastSplittableRun;
-} ME_WrapContext;
-
 #endif

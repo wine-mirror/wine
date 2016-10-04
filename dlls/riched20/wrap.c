@@ -33,6 +33,20 @@ WINE_DECLARE_DEBUG_CHANNEL(richedit_check);
  * - no tabs
  */
 
+typedef struct tagME_WrapContext
+{
+  ME_Style *style;
+  ME_Context *context;
+  int nLeftMargin, nRightMargin, nFirstMargin;
+  int nAvailWidth;
+  int nRow;
+  POINT pt;
+  BOOL bOverflown, bWordWrap;
+  ME_DisplayItem *pPara;
+  ME_DisplayItem *pRowStart;
+
+  ME_DisplayItem *pLastSplittableRun;
+} ME_WrapContext;
 
 static BOOL get_run_glyph_buffers( ME_Run *run )
 {
