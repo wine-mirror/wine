@@ -8372,6 +8372,42 @@ static void test_background(void)
     DestroyWindow(hwndRichEdit);
 }
 
+static void test_eop_char_fmt(void)
+{
+    HWND edit = new_richedit( NULL );
+    const char *rtf = "{\\rtf1{\\fonttbl{\\f0\\fswiss\\fprq2\\fcharset0 Arial;}{\\f1\\fnil\\fcharset2 Symbol;}}"
+        "{\\fs10{\\pard\\fs16\\fi200\\li360\\f0 First\\par"
+        "\\f0\\fs25 Second\\par"
+        "{\\f0\\fs26 Third}\\par"
+        "{\\f0\\fs22 Fourth}\\par}}}";
+    EDITSTREAM es;
+    CHARFORMAT2W cf;
+    int i, num, expect_height;
+
+    es.dwCookie = (DWORD_PTR)&rtf;
+    es.dwError = 0;
+    es.pfnCallback = test_EM_STREAMIN_esCallback;
+    num = SendMessageA( edit, EM_STREAMIN, SF_RTF, (LPARAM)&es );
+    ok( num == 25, "got %d\n", num );
+
+    for (i = 0; i <= num; i++)
+    {
+        SendMessageW( edit, EM_SETSEL, i, i + 1 );
+        cf.cbSize = sizeof(cf);
+        cf.dwMask = CFM_SIZE;
+        SendMessageW( edit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf );
+        ok( cf.dwMask & CFM_SIZE, "%d: got %08x\n", i, cf.dwMask );
+        if (i < 6) expect_height = 160;
+        else if (i < 13) expect_height = 250;
+        else if (i < 18) expect_height = 260;
+        else if (i == 18 || i == 25) expect_height = 250;
+        else expect_height = 220;
+        ok( cf.yHeight == expect_height, "%d: got %d\n", i, cf.yHeight );
+    }
+
+    DestroyWindow( edit );
+}
+
 START_TEST( editor )
 {
   BOOL ret;
@@ -8443,6 +8479,7 @@ START_TEST( editor )
   test_alignment_style();
   test_rtf_specials();
   test_background();
+  test_eop_char_fmt();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.

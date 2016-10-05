@@ -1648,7 +1648,17 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
         if (newto > to + (editor->bEmulateVersion10 ? 1 : 0)) {
           WCHAR lastchar[3] = {'\0', '\0'};
           int linebreakSize = editor->bEmulateVersion10 ? 2 : 1;
-          ME_Cursor linebreakCursor = *selEnd;
+          ME_Cursor linebreakCursor = *selEnd, lastcharCursor = *selEnd;
+          CHARFORMAT2W cf;
+
+          /* Set the final eop to the char fmt of the last char */
+          cf.cbSize = sizeof(cf);
+          cf.dwMask = CFM_ALL2;
+          ME_MoveCursorChars(editor, &lastcharCursor, -1, FALSE);
+          ME_GetCharFormat(editor, &lastcharCursor, &linebreakCursor, &cf);
+          ME_SetSelection(editor, newto, -1);
+          ME_SetSelectionCharFormat(editor, &cf);
+          ME_SetSelection(editor, newto, newto);
 
           ME_MoveCursorChars(editor, &linebreakCursor, -linebreakSize, FALSE);
           ME_GetTextW(editor, lastchar, 2, &linebreakCursor, linebreakSize, FALSE, FALSE);
