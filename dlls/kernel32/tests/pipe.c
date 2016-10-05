@@ -2250,6 +2250,77 @@ static void test_NamedPipeHandleState(void)
     CloseHandle(server);
 }
 
+#define test_pipe_info(a,b,c,d,e) _test_pipe_info(__LINE__,a,b,c,d,e)
+static void _test_pipe_info(unsigned line, HANDLE pipe, DWORD ex_flags, DWORD ex_out_buf_size, DWORD ex_in_buf_size, DWORD ex_max_instances)
+{
+    DWORD flags = 0xdeadbeef, out_buf_size = 0xdeadbeef, in_buf_size = 0xdeadbeef, max_instances = 0xdeadbeef;
+    BOOL res;
+
+    res = GetNamedPipeInfo(pipe, &flags, &out_buf_size, &in_buf_size, &max_instances);
+    ok_(__FILE__,line)(res, "GetNamedPipeInfo failed: %x\n", res);
+    ok_(__FILE__,line)(flags == ex_flags, "flags = %x, expected %x\n", flags, ex_flags);
+    ok_(__FILE__,line)(out_buf_size == ex_out_buf_size, "out_buf_size = %x, expected %u\n", out_buf_size, ex_out_buf_size);
+    ok_(__FILE__,line)(in_buf_size == ex_in_buf_size, "in_buf_size = %x, expected %u\n", in_buf_size, ex_in_buf_size);
+    ok_(__FILE__,line)(max_instances == ex_max_instances, "max_instances = %x, expected %u\n", max_instances, ex_max_instances);
+}
+
+static void test_GetNamedPipeInfo(void)
+{
+    HANDLE server;
+
+    server = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX,
+        /* dwOpenMode */ PIPE_TYPE_BYTE | PIPE_WAIT,
+        /* nMaxInstances */ 1,
+        /* nOutBufSize */ 1024,
+        /* nInBufSize */ 1024,
+        /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
+        /* lpSecurityAttrib */ NULL);
+    ok(server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
+
+    test_pipe_info(server, PIPE_SERVER_END | PIPE_TYPE_BYTE, 1024, 1024, 1);
+
+    CloseHandle(server);
+
+    server = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX,
+        /* dwOpenMode */ PIPE_TYPE_MESSAGE | PIPE_NOWAIT,
+        /* nMaxInstances */ 3,
+        /* nOutBufSize */ 1024,
+        /* nInBufSize */ 1024,
+        /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
+        /* lpSecurityAttrib */ NULL);
+    ok(server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
+
+    test_pipe_info(server, PIPE_SERVER_END | PIPE_TYPE_MESSAGE, 1024, 1024, 3);
+
+    CloseHandle(server);
+
+    server = CreateNamedPipeA(PIPENAME, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_DUPLEX,
+        /* dwOpenMode */ PIPE_TYPE_MESSAGE | PIPE_WAIT,
+        /* nMaxInstances */ 1,
+        /* nOutBufSize */ 0,
+        /* nInBufSize */ 0,
+        /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
+        /* lpSecurityAttrib */ NULL);
+    ok(server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
+
+    test_pipe_info(server, PIPE_SERVER_END | PIPE_TYPE_MESSAGE, 0, 0, 1);
+
+    CloseHandle(server);
+
+    server = CreateNamedPipeA(PIPENAME, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_DUPLEX,
+        /* dwOpenMode */ PIPE_TYPE_MESSAGE | PIPE_WAIT,
+        /* nMaxInstances */ 1,
+        /* nOutBufSize */ 0xf000,
+        /* nInBufSize */ 0xf000,
+        /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
+        /* lpSecurityAttrib */ NULL);
+    ok(server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
+
+    test_pipe_info(server, PIPE_SERVER_END | PIPE_TYPE_MESSAGE, 0xf000, 0xf000, 1);
+
+    CloseHandle(server);
+}
+
 static void test_readfileex_pending(void)
 {
     HANDLE server, client, event;
@@ -2432,5 +2503,6 @@ START_TEST(pipe)
     test_overlapped();
     test_overlapped_error();
     test_NamedPipeHandleState();
+    test_GetNamedPipeInfo();
     test_readfileex_pending();
 }
