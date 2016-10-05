@@ -1554,6 +1554,7 @@ enable_services
 enable_shutdown
 enable_spoolsv
 enable_start
+enable_subst
 enable_svchost
 enable_systeminfo
 enable_taskkill
@@ -18489,6 +18490,7 @@ wine_fn_config_test programs/services/tests services.exe_test
 wine_fn_config_program shutdown enable_shutdown install
 wine_fn_config_program spoolsv enable_spoolsv install
 wine_fn_config_program start enable_start clean,install
+wine_fn_config_program subst enable_subst install
 wine_fn_config_program svchost enable_svchost install
 wine_fn_config_program systeminfo enable_systeminfo install
 wine_fn_config_program taskkill enable_taskkill clean,install
