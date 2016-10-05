@@ -1185,13 +1185,9 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     destroy_dummy_textures(device, gl_info);
     destroy_default_samplers(device);
 
-    /* Release the context again as soon as possible. In particular,
-     * releasing the render target views below may release the last reference
-     * to the swapchain associated with this context, which in turn will
-     * destroy the context. */
     context_release(context);
 
-    /* Release the buffers (with sanity checks)*/
+    /* Release the buffers (with sanity checks) */
     if (device->onscreen_depth_stencil)
     {
         surface = device->onscreen_depth_stencil;

@@ -1354,6 +1354,12 @@ void context_release(struct wined3d_context *context)
             context->restore_ctx = NULL;
             context->restore_dc = NULL;
         }
+
+        if (context->destroy_delayed)
+        {
+            TRACE("Destroying context %p.\n", context);
+            context_destroy(context->device, context);
+        }
     }
 }
 
@@ -2011,6 +2017,17 @@ void context_destroy(struct wined3d_device *device, struct wined3d_context *cont
     BOOL destroy;
 
     TRACE("Destroying ctx %p\n", context);
+
+    /* We delay destroying a context when it is active. The context_release()
+     * function invokes context_destroy() again while leaving the last level. */
+    if (context->level)
+    {
+        TRACE("Delaying destruction of context %p.\n", context);
+        context->destroy_delayed = 1;
+        /* FIXME: Get rid of a pointer to swapchain from wined3d_context. */
+        context->swapchain = NULL;
+        return;
+    }
 
     if (context->tid == GetCurrentThreadId() || !context->current)
     {
