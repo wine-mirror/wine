@@ -827,9 +827,9 @@ static void create_default_samplers(struct wined3d_device *device, struct wined3
 }
 
 /* Context activation is done by the caller. */
-static void destroy_default_samplers(struct wined3d_device *device)
+static void destroy_default_samplers(struct wined3d_device *device, struct wined3d_context *context)
 {
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
 
     if (gl_info->supported[ARB_SAMPLER_OBJECTS])
     {
@@ -1183,7 +1183,7 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     device->blitter->free_private(device);
     device->shader_backend->shader_free_private(device);
     destroy_dummy_textures(device, gl_info);
-    destroy_default_samplers(device);
+    destroy_default_samplers(device, context);
 
     context_release(context);
 
@@ -4560,7 +4560,7 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
     device->blitter->free_private(device);
     device->shader_backend->shader_free_private(device);
     destroy_dummy_textures(device, gl_info);
-    destroy_default_samplers(device);
+    destroy_default_samplers(device, context);
 
     context_release(context);
 
