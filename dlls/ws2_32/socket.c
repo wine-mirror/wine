@@ -7880,7 +7880,7 @@ int WINAPI WSAInstallServiceClassW(LPWSASERVICECLASSINFOW info)
  */
 int WINAPI WSARemoveServiceClass(LPGUID info)
 {
-    FIXME("Request to remove service %p\n",info);
+    FIXME("Request to remove service %s\n", debugstr_guid(info));
     SetLastError(WSATYPE_NOT_FOUND);
     return SOCKET_ERROR;
 }
@@ -8569,7 +8569,7 @@ INT WINAPI WSCInstallNameSpace( LPWSTR identifier, LPWSTR path, DWORD namespace,
  */
 INT WINAPI WSCUnInstallNameSpace( LPGUID lpProviderId )
 {
-    FIXME("(%p) Stub!\n", lpProviderId);
+    FIXME("(%s) Stub!\n", debugstr_guid(lpProviderId));
     return NO_ERROR;
 }
 
