@@ -8108,7 +8108,7 @@ msgstr "Min datamaskin"
 
 #: shell32.rc:159
 msgid "Control Panel"
-msgstr "Control Panel"
+msgstr "Kontrollpanel"
 
 #: shell32.rc:166
 msgid "Select"
@@ -8462,7 +8462,7 @@ msgstr "%d byte"
 #: shlwapi.rc:31
 msgctxt "time unit: hours"
 msgid " hr"
-msgstr " hr"
+msgstr " t"
 
 #: shlwapi.rc:32
 msgctxt "time unit: minutes"
@@ -8472,7 +8472,7 @@ msgstr " min"
 #: shlwapi.rc:33
 msgctxt "time unit: seconds"
 msgid " sec"
-msgstr " sec"
+msgstr " sek"
 
 #: urlmon.rc:32 wininet.rc:77
 msgid "Security Warning"
@@ -10217,7 +10217,7 @@ msgstr ""
 "XCOPY\t\tKopierer kildefiler eller et katalogtre til et mål\n"
 "EXIT\t\tAvslutter CMD\n"
 "\n"
-"Skriv HELP <kommando> for mer informasjon om kommandoene ovenfor\n"
+"Skriv HELP <kommando> for mer informasjon om kommandoene ovenfor.\n"
 
 #: cmd.rc:353
 msgid "Are you sure?"
@@ -11936,8 +11936,8 @@ msgstr ""
 "  /?             Vis denne informasjonen og avslutt.\n"
 "  [filnavn]      Plasseringen til filen som inneholder registerinformasjonen "
 "som\n"
-"                 skal importeres. Når brukt med [/E], spesifiserer dette \n"
-"                 alternativet plasseringen hvor registerinformasjonen vil \n"
+"                 skal importeres. Når brukt med [/E], spesifiserer dette\n"
+"                 alternativet plasseringen hvor registerinformasjonen vil\n"
 "                 bli eksportert.\n"
 "  [reg_key]      Registernøkkelen som skal modifiseres.\n"
 "\n"
@@ -11987,8 +11987,8 @@ msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 msgstr ""
-"regedit: Kan ikke konvertere heksadesimale data. En ugyldig verdi "
-"inntraffved \"%1\".\n"
+"regedit: Kan ikke konvertere heksadesimale data. En ugyldig verdi inntraff "
+"ved \"%1\".\n"
 
 #: regedit.rc:370
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
@@ -12206,7 +12206,9 @@ msgstr ""
 msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
-msgstr "regsvr32: Ugyldig eller ukjent bryter [%1]\n"
+msgstr ""
+"regsvr32: Ugyldig eller ukjent bryter [%1]\n"
+"\n"
 
 #: regsvr32.rc:42
 msgid "regsvr32: Failed to load DLL '%1'\n"
