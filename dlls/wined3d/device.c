@@ -4570,7 +4570,10 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
 
     while (device->context_count)
     {
-        swapchain_destroy_contexts(device->contexts[0]->swapchain);
+        if (device->contexts[0]->swapchain)
+            swapchain_destroy_contexts(device->contexts[0]->swapchain);
+        else
+            context_destroy(device, device->contexts[0]);
     }
 
     HeapFree(GetProcessHeap(), 0, swapchain->context);
