@@ -2392,7 +2392,6 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
           }
 
           style = ME_GetInsertStyle(editor, 0);
-          ME_SaveTempStyle(editor, style);
           ME_ContinueCoalescingTransaction(editor);
           if (shift_is_down)
             ME_InsertEndRowFromCursor(editor, 0);
@@ -2401,12 +2400,13 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
               ME_InsertTextFromCursor(editor, 0, &endl, 1, style);
             else
               ME_InsertTextFromCursor(editor, 0, endlv10, 2, style);
-          ME_ReleaseStyle(style);
           ME_CommitCoalescingUndo(editor);
           SetCursor(NULL);
 
           ME_UpdateSelectionLinkAttribute(editor);
           ME_UpdateRepaint(editor, FALSE);
+          ME_SaveTempStyle(editor, style); /* set the temp insert style for the new para */
+          ME_ReleaseStyle(style);
         }
         return TRUE;
       }
