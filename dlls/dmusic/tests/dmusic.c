@@ -379,6 +379,65 @@ static BOOL missing_dmusic(void)
     return TRUE;
 }
 
+static void test_COM_synthport(void)
+{
+    IDirectMusic *dmusic = NULL;
+    IDirectMusicPort *port = NULL;
+    IDirectMusicPortDownload *dmpd;
+    IDirectMusicThru *dmt;
+    IKsControl *iksc;
+    IReferenceClock *clock;
+    IUnknown *unk;
+    DMUS_PORTPARAMS port_params;
+    ULONG refcount;
+    HRESULT hr;
+
+    /* Create a IDirectMusicPort */
+    hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic,
+            (void**)&dmusic);
+    ok(hr == S_OK, "Cannot create DirectMusic object (%x)\n", hr);
+    port_params.dwSize = sizeof(port_params);
+    port_params.dwValidParams = DMUS_PORTPARAMS_CHANNELGROUPS | DMUS_PORTPARAMS_AUDIOCHANNELS;
+    port_params.dwChannelGroups = 1;
+    port_params.dwAudioChannels = 2;
+    hr = IDirectMusic_SetDirectSound(dmusic, NULL, NULL);
+    ok(hr == S_OK, "IDirectMusic_SetDirectSound returned: %x\n", hr);
+    hr = IDirectMusic_CreatePort(dmusic, &GUID_NULL, &port_params, &port, NULL);
+    ok(hr == S_OK, "IDirectMusic_CreatePort returned: %x\n", hr);
+
+    /* Same refcount for all DirectMusicPort interfaces */
+    refcount = IDirectMusicPort_AddRef(port);
+    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+
+    hr = IDirectMusicPort_QueryInterface(port, &IID_IDirectMusicPortDownload, (void**)&dmpd);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectMusicPortDownload failed: %08x\n", hr);
+    refcount = IDirectMusicPortDownload_AddRef(dmpd);
+    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    IDirectMusicPortDownload_Release(dmpd);
+
+    hr = IDirectMusicPort_QueryInterface(port, &IID_IKsControl, (void**)&iksc);
+    todo_wine ok(hr == S_OK, "QueryInterface for IID_IKsControl failed: %08x\n", hr);
+    if (hr == S_OK) {
+        refcount = IKsControl_AddRef(iksc);
+        ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
+        IKsControl_Release(iksc);
+    }
+
+    hr = IDirectMusicPort_QueryInterface(port, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    refcount = IUnknown_AddRef(unk);
+    todo_wine ok(refcount == 6, "refcount == %u, expected 6\n", refcount);
+    IUnknown_Release(unk);
+
+    /* Unsupported interface */
+    hr = IDirectMusicPort_QueryInterface(port, &IID_IDirectMusicThru, (void**)&dmt);
+    todo_wine ok(hr == E_NOINTERFACE, "QueryInterface for IID_IDirectMusicThru failed: %08x\n", hr);
+    hr = IDirectMusicPort_QueryInterface(port, &IID_IReferenceClock, (void**)&clock);
+    ok(hr == E_NOINTERFACE, "QueryInterface for IID_IReferenceClock failed: %08x\n", hr);
+
+    while (IDirectMusicPort_Release(port));
+}
+
 START_TEST(dmusic)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -391,6 +450,7 @@ START_TEST(dmusic)
     }
     test_COM();
     test_COM_dmcoll();
+    test_COM_synthport();
     test_dmusic();
     test_dmbuffer();
     test_dmcoll();
