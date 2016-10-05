@@ -772,8 +772,10 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
 }
 
 /* Context activation is done by the caller. */
-static void destroy_dummy_textures(struct wined3d_device *device, const struct wined3d_gl_info *gl_info)
+static void destroy_dummy_textures(struct wined3d_device *device, struct wined3d_context *context)
 {
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
     if (gl_info->supported[EXT_TEXTURE_ARRAY])
         gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->dummy_textures.tex_2d_array);
 
@@ -1182,7 +1184,7 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     /* Destroy the shader backend. Note that this has to happen after all shaders are destroyed. */
     device->blitter->free_private(device);
     device->shader_backend->shader_free_private(device);
-    destroy_dummy_textures(device, gl_info);
+    destroy_dummy_textures(device, context);
     destroy_default_samplers(device, context);
 
     context_release(context);
@@ -4559,7 +4561,7 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
 
     device->blitter->free_private(device);
     device->shader_backend->shader_free_private(device);
-    destroy_dummy_textures(device, gl_info);
+    destroy_dummy_textures(device, context);
     destroy_default_samplers(device, context);
 
     context_release(context);
