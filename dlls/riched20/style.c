@@ -513,12 +513,13 @@ ME_Style *ME_GetInsertStyle(ME_TextEditor *editor, int nCursor)
   }
 }
 
-void ME_SaveTempStyle(ME_TextEditor *editor)
+void ME_SaveTempStyle(ME_TextEditor *editor, ME_Style *style)
 {
   ME_Style *old_style = editor->pBuffer->pCharStyle;
-  editor->pBuffer->pCharStyle = ME_GetInsertStyle(editor, 0);
-  if (old_style)
-    ME_ReleaseStyle(old_style);
+
+  if (style) ME_AddRefStyle( style );
+  editor->pBuffer->pCharStyle = style;
+  if (old_style) ME_ReleaseStyle( old_style );
 }
 
 void ME_ClearTempStyle(ME_TextEditor *editor)

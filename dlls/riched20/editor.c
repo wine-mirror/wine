@@ -2392,7 +2392,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
           }
 
           style = ME_GetInsertStyle(editor, 0);
-          ME_SaveTempStyle(editor);
+          ME_SaveTempStyle(editor, style);
           ME_ContinueCoalescingTransaction(editor);
           if (shift_is_down)
             ME_InsertEndRowFromCursor(editor, 0);
@@ -2566,7 +2566,7 @@ static LRESULT ME_Char(ME_TextEditor *editor, WPARAM charCode,
     if(editor->nTextLimit > ME_GetTextLength(editor) - (to-from))
     {
       ME_Style *style = ME_GetInsertStyle(editor, 0);
-      ME_SaveTempStyle(editor);
+      ME_SaveTempStyle(editor, style);
       ME_ContinueCoalescingTransaction(editor);
       ME_InsertTextFromCursor(editor, 0, &wstr, 1, style);
       ME_ReleaseStyle(style);
@@ -4538,7 +4538,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     ME_Style *style = ME_GetInsertStyle(editor, 0);
     hIMC = ITextHost_TxImmGetContext(editor->texthost);
     ME_DeleteSelection(editor);
-    ME_SaveTempStyle(editor);
+    ME_SaveTempStyle(editor, style);
     if (lParam & (GCS_RESULTSTR|GCS_COMPSTR))
     {
         LPWSTR lpCompStr = NULL;

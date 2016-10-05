@@ -76,7 +76,7 @@ ME_Style *ME_ApplyStyle(ME_TextEditor *ed, ME_Style *sSrc, CHARFORMAT2W *style) 
 HFONT ME_SelectStyleFont(ME_Context *c, ME_Style *s) DECLSPEC_HIDDEN;
 void ME_UnselectStyleFont(ME_Context *c, ME_Style *s, HFONT hOldFont) DECLSPEC_HIDDEN;
 void ME_InitCharFormat2W(CHARFORMAT2W *pFmt) DECLSPEC_HIDDEN;
-void ME_SaveTempStyle(ME_TextEditor *editor) DECLSPEC_HIDDEN;
+void ME_SaveTempStyle(ME_TextEditor *editor, ME_Style *style) DECLSPEC_HIDDEN;
 void ME_ClearTempStyle(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_DumpStyleToBuf(CHARFORMAT2W *pFmt, char buf[2048]) DECLSPEC_HIDDEN;
 void ME_DumpStyle(ME_Style *s) DECLSPEC_HIDDEN;
