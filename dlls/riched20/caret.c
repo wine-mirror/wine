@@ -549,7 +549,6 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
       pos++;
     } else { /* handle EOLs */
       ME_DisplayItem *tp, *end_run, *run, *prev;
-      ME_Style *tmp_style;
       int eol_len = 0;
 
       /* Find number of CR and LF in end of paragraph run */
@@ -594,13 +593,9 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
           run = p->pRun;
         }
 
-        tmp_style = ME_GetInsertStyle(editor, nCursor);
-        /* ME_SplitParagraph increases style refcount */
-        tp = ME_SplitParagraph(editor, run, run->member.run.style, eol_str, eol_len, 0);
+        tp = ME_SplitParagraph(editor, run, style, eol_str, eol_len, 0);
 
         end_run = ME_FindItemBack(tp, diRun);
-        ME_ReleaseStyle(end_run->member.run.style);
-        end_run->member.run.style = tmp_style;
 
         /* Move any cursors that were at the end of the previous run to the beginning of the new para */
         prev = ME_FindItemBack( end_run, diRun );
