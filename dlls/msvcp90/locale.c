@@ -4926,7 +4926,9 @@ DEFINE_THISCALL_WRAPPER(num_get_wchar__Init, 8)
 void __thiscall num_get_wchar__Init(num_get *this, const _Locinfo *locinfo)
 {
     TRACE("(%p %p)\n", this, locinfo);
+#if _MSVCP_VER <= 100
     _Locinfo__Getcvt(locinfo, &this->cvt);
+#endif
 }
 
 /* ??0?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QAE@ABV_Locinfo@1@I@Z */
@@ -5145,11 +5147,18 @@ static int num_get__Getffld(const num_get *this, char *dest, istreambuf_iterator
     wchar_t sep = 0, digits[11], *digits_pos;
     const char *grouping, *groups;
     BOOL error = FALSE, got_digit = FALSE, got_nonzero = FALSE;
+    const _Cvtvec *cvt;
 
     TRACE("(%p %p %p %p)\n", dest, first, last, loc);
 
+#if _MSVCP_VER <= 100
+    cvt = &this->cvt;
+#else
+    cvt = &ctype_wchar_use_facet(loc)->cvt;
+#endif
+
     for(i=0; i<10; i++)
-        digits[i] = mb_to_wc('0'+i, &this->cvt);
+        digits[i] = mb_to_wc('0'+i, cvt);
     digits[10] = 0;
 
     numpunct_wchar_grouping(numpunct, &grouping_bstr);
@@ -5163,10 +5172,10 @@ static int num_get__Getffld(const num_get *this, char *dest, istreambuf_iterator
 
     istreambuf_iterator_wchar_val(first);
     /* get sign */
-    if(first->strbuf && first->val==mb_to_wc('-', &this->cvt)) {
+    if(first->strbuf && first->val==mb_to_wc('-', cvt)) {
         *dest++ = '-';
         istreambuf_iterator_wchar_inc(first);
-    }else if(first->strbuf && first->val==mb_to_wc('+', &this->cvt)) {
+    }else if(first->strbuf && first->val==mb_to_wc('+', cvt)) {
         *dest++ = '+';
         istreambuf_iterator_wchar_inc(first);
     }
@@ -5222,14 +5231,14 @@ static int num_get__Getffld(const num_get *this, char *dest, istreambuf_iterator
     }
 
     /* read exponent, if any */
-    if(first->strbuf && (first->val==mb_to_wc('e', &this->cvt) || first->val==mb_to_wc('E', &this->cvt))) {
+    if(first->strbuf && (first->val==mb_to_wc('e', cvt) || first->val==mb_to_wc('E', cvt))) {
         *dest++ = 'e';
         istreambuf_iterator_wchar_inc(first);
 
-        if(first->strbuf && first->val==mb_to_wc('-', &this->cvt)) {
+        if(first->strbuf && first->val==mb_to_wc('-', cvt)) {
             *dest++ = '-';
             istreambuf_iterator_wchar_inc(first);
-        }else if(first->strbuf && first->val==mb_to_wc('+', &this->cvt)) {
+        }else if(first->strbuf && first->val==mb_to_wc('+', cvt)) {
             *dest++ = '+';
             istreambuf_iterator_wchar_inc(first);
         }
@@ -5326,14 +5335,21 @@ static int num_get__Getifld(const num_get *this, char *dest, istreambuf_iterator
     char *dest_beg = dest, *dest_end = dest+24;
     const char *grouping, *groups;
     BOOL error = TRUE, dest_empty = TRUE, found_zero = FALSE;
+    const _Cvtvec *cvt;
 
     TRACE("(%p %p %p %04x %p)\n", dest, first, last, fmtflags, loc);
 
+#if _MSVCP_VER <= 100
+    cvt = &this->cvt;
+#else
+    cvt = &ctype_wchar_use_facet(loc)->cvt;
+#endif
+
     for(i=0; i<10; i++)
-        digits[i] = mb_to_wc('0'+i, &this->cvt);
+        digits[i] = mb_to_wc('0'+i, cvt);
     for(i=0; i<6; i++) {
-        digits[10+i] = mb_to_wc('a'+i, &this->cvt);
-        digits[16+i] = mb_to_wc('A'+i, &this->cvt);
+        digits[10+i] = mb_to_wc('a'+i, cvt);
+        digits[16+i] = mb_to_wc('A'+i, cvt);
     }
 
     numpunct_wchar_grouping(numpunct, &grouping_bstr);
@@ -5353,10 +5369,10 @@ static int num_get__Getifld(const num_get *this, char *dest, istreambuf_iterator
         base = 10;
 
     istreambuf_iterator_wchar_val(first);
-    if(first->strbuf && first->val==mb_to_wc('-', &this->cvt)) {
+    if(first->strbuf && first->val==mb_to_wc('-', cvt)) {
         *dest++ = '-';
         istreambuf_iterator_wchar_inc(first);
-    }else if(first->strbuf && first->val==mb_to_wc('+', &this->cvt)) {
+    }else if(first->strbuf && first->val==mb_to_wc('+', cvt)) {
         *dest++ = '+';
         istreambuf_iterator_wchar_inc(first);
     }
@@ -5364,7 +5380,7 @@ static int num_get__Getifld(const num_get *this, char *dest, istreambuf_iterator
     if(first->strbuf && first->val==digits[0]) {
         found_zero = TRUE;
         istreambuf_iterator_wchar_inc(first);
-        if(first->strbuf && (first->val==mb_to_wc('x', &this->cvt) || first->val==mb_to_wc('X', &this->cvt))) {
+        if(first->strbuf && (first->val==mb_to_wc('x', cvt) || first->val==mb_to_wc('X', cvt))) {
             if(!base || base == 22) {
                 found_zero = FALSE;
                 istreambuf_iterator_wchar_inc(first);
@@ -6191,7 +6207,9 @@ DEFINE_THISCALL_WRAPPER(num_get_char__Init, 8)
 void __thiscall num_get_char__Init(num_get *this, const _Locinfo *locinfo)
 {
     TRACE("(%p %p)\n", this, locinfo);
+#if _MSVCP_VER <= 100
     _Locinfo__Getcvt(locinfo, &this->cvt);
+#endif
 }
 
 /* ??0?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QAE@ABV_Locinfo@1@I@Z */

@@ -510,7 +510,9 @@ unsigned short __thiscall basic_streambuf_wchar_sputc(basic_streambuf_wchar*, wc
 /* class num_get<char> */
 typedef struct {
     locale_facet facet;
+#if _MSVCP_VER <= 100
     _Cvtvec cvt;
+#endif
 } num_get;
 
 num_get* num_get_char_use_facet(const locale*);
