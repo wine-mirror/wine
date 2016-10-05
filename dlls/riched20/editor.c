@@ -2576,7 +2576,6 @@ static LRESULT ME_Char(ME_TextEditor *editor, WPARAM charCode,
     if(editor->nTextLimit > ME_GetTextLength(editor) - (to-from))
     {
       ME_Style *style = ME_GetInsertStyle(editor, 0);
-      ME_SaveTempStyle(editor, style);
       ME_ContinueCoalescingTransaction(editor);
       ME_InsertTextFromCursor(editor, 0, &wstr, 1, style);
       ME_ReleaseStyle(style);
