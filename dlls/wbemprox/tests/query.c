@@ -310,7 +310,6 @@ static void test_Win32_Bios( IWbemServices *services )
     VariantInit( &val );
     hr = IWbemClassObject_Get( obj, identificationcodeW, 0, &val, &type, NULL );
     ok( hr == S_OK, "failed to get identication code %08x\n", hr );
-    todo_wine
     ok( V_VT( &val ) == VT_NULL, "unexpected variant type 0x%x\n", V_VT( &val ) );
     ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
     VariantClear( &val );
