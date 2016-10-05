@@ -1462,6 +1462,7 @@ struct wined3d_context
     DWORD                   numDirtyEntries;
     DWORD isStateDirty[STATE_HIGHEST / (sizeof(DWORD) * CHAR_BIT) + 1]; /* Bitmap to find out quickly if a state is dirty */
 
+    struct wined3d_device *device;
     struct wined3d_swapchain *swapchain;
     struct
     {
@@ -3522,7 +3523,7 @@ static inline void shader_get_position_fixup(const struct wined3d_context *conte
 {
     float center_offset;
 
-    if (context->swapchain->device->wined3d->flags & WINED3D_PIXEL_CENTER_INTEGER)
+    if (context->device->wined3d->flags & WINED3D_PIXEL_CENTER_INTEGER)
         center_offset = 63.0f / 64.0f;
     else
         center_offset = -1.0f / 64.0f;

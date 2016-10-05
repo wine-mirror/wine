@@ -4513,7 +4513,7 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
      * driver, but small enough to prevent it from interfering with any
      * anti-aliasing. */
 
-    if (!clip_control && context->swapchain->device->wined3d->flags & WINED3D_PIXEL_CENTER_INTEGER)
+    if (!clip_control && context->device->wined3d->flags & WINED3D_PIXEL_CENTER_INTEGER)
         center_offset = 63.0f / 64.0f;
     else
         center_offset = -1.0f / 64.0f;
@@ -4682,7 +4682,7 @@ static void compute_texture_matrix(const struct wined3d_gl_info *gl_info, const 
 void get_texture_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
         unsigned int tex, struct wined3d_matrix *mat)
 {
-    const struct wined3d_device *device = context->swapchain->device;
+    const struct wined3d_device *device = context->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     BOOL generated = (state->texture_states[tex][WINED3D_TSS_TEXCOORD_INDEX] & 0xffff0000)
             != WINED3DTSS_TCI_PASSTHRU;

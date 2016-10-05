@@ -1712,7 +1712,7 @@ static void state_depthbias(struct wined3d_context *context, const struct wined3
         gl_info->gl_ops.gl.p_glEnable(GL_POLYGON_OFFSET_FILL);
         checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL)");
 
-        if (context->swapchain->device->wined3d->flags & WINED3D_LEGACY_DEPTH_BIAS)
+        if (context->device->wined3d->flags & WINED3D_LEGACY_DEPTH_BIAS)
         {
             float bias = -(float)const_bias.d;
             gl_info->gl_ops.gl.p_glPolygonOffset(bias, bias);
@@ -3620,7 +3620,7 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
         }
         else
         {
-            struct wined3d_device *device = context->swapchain->device;
+            struct wined3d_device *device = context->device;
             struct wined3d_sampler *sampler;
             struct wine_rb_entry *entry;
 
@@ -3841,8 +3841,8 @@ static void state_vertexblend_w(struct wined3d_context *context, const struct wi
 static void state_vertexblend(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     enum wined3d_vertex_blend_flags val = state->render_states[WINED3D_RS_VERTEXBLEND];
-    struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_device *device = context->device;
     static unsigned int once;
 
     switch (val)
@@ -3934,7 +3934,7 @@ static void transform_view(struct wined3d_context *context, const struct wined3d
         transform_world(context, state, STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(0)));
 
     /* Avoid looping over a number of matrices if the app never used the functionality */
-    if (context->swapchain->device->vertexBlendUsed)
+    if (context->device->vertexBlendUsed)
     {
         for (k = 1; k < gl_info->limits.blends; ++k)
         {
@@ -4653,7 +4653,7 @@ static void viewport_miscpart_cc(struct wined3d_context *context,
 {
     const struct wined3d_rendertarget_view *depth_stencil = state->fb->depth_stencil;
     const struct wined3d_rendertarget_view *target = state->fb->render_targets[0];
-    float pixel_center_offset = context->swapchain->device->wined3d->flags
+    float pixel_center_offset = context->device->wined3d->flags
             & WINED3D_PIXEL_CENTER_INTEGER ? 0.5f : 0.0f;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_viewport vp = state->viewport;
@@ -5870,15 +5870,15 @@ static unsigned int num_handlers(const APPLYSTATEFUNC *funcs)
 
 static void multistate_apply_2(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    context->swapchain->device->multistate_funcs[state_id][0](context, state, state_id);
-    context->swapchain->device->multistate_funcs[state_id][1](context, state, state_id);
+    context->device->multistate_funcs[state_id][0](context, state, state_id);
+    context->device->multistate_funcs[state_id][1](context, state, state_id);
 }
 
 static void multistate_apply_3(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    context->swapchain->device->multistate_funcs[state_id][0](context, state, state_id);
-    context->swapchain->device->multistate_funcs[state_id][1](context, state, state_id);
-    context->swapchain->device->multistate_funcs[state_id][2](context, state, state_id);
+    context->device->multistate_funcs[state_id][0](context, state, state_id);
+    context->device->multistate_funcs[state_id][1](context, state, state_id);
+    context->device->multistate_funcs[state_id][2](context, state, state_id);
 }
 
 static void prune_invalid_states(struct StateEntry *state_table, const struct wined3d_gl_info *gl_info,

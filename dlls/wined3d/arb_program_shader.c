@@ -732,7 +732,8 @@ static void shader_arb_update_float_vertex_constants(struct wined3d_device *devi
 
     /* We don't want shader constant dirtification to be an O(contexts), so just dirtify the active
      * context. On a context switch the old context will be fully dirtified */
-    if (!context || context->swapchain->device != device) return;
+    if (!context || context->device != device)
+        return;
 
     memset(priv->vshader_const_dirty + start, 1, sizeof(*priv->vshader_const_dirty) * count);
     priv->highest_dirty_vs_const = max(priv->highest_dirty_vs_const, start + count);
@@ -745,7 +746,8 @@ static void shader_arb_update_float_pixel_constants(struct wined3d_device *devic
 
     /* We don't want shader constant dirtification to be an O(contexts), so just dirtify the active
      * context. On a context switch the old context will be fully dirtified */
-    if (!context || context->swapchain->device != device) return;
+    if (!context || context->device != device)
+        return;
 
     memset(priv->pshader_const_dirty + start, 1, sizeof(*priv->pshader_const_dirty) * count);
     priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, start + count);
@@ -5051,10 +5053,7 @@ static void shader_arb_free_context_data(struct wined3d_context *context)
 {
     struct shader_arb_priv *priv;
 
-    if (!context->swapchain)
-        return;
-
-    priv = context->swapchain->device->shader_priv;
+    priv = context->device->shader_priv;
     if (priv->last_context == context)
         priv->last_context = NULL;
 }
@@ -5948,8 +5947,8 @@ static DWORD arbfp_get_emul_mask(const struct wined3d_gl_info *gl_info)
 static void state_texfactor_arbfp(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
-    struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_device *device = context->device;
     struct wined3d_color color;
 
     if (device->shader_backend == &arb_program_shader_backend)
@@ -5975,8 +5974,8 @@ static void state_tss_constant_arbfp(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
     DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_device *device = context->device;
     struct wined3d_color color;
 
     if (device->shader_backend == &arb_program_shader_backend)
@@ -6002,8 +6001,8 @@ static void state_tss_constant_arbfp(struct wined3d_context *context,
 static void state_arb_specularenable(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
-    struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_device *device = context->device;
     float col[4];
 
     if (device->shader_backend == &arb_program_shader_backend)
@@ -6037,8 +6036,8 @@ static void state_arb_specularenable(struct wined3d_context *context,
 static void set_bumpmat_arbfp(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_device *device = context->device;
     float mat[2][2];
 
     context->constant_update_mask |= WINED3D_SHADER_CONST_PS_BUMP_ENV;
@@ -6068,8 +6067,8 @@ static void tex_bumpenvlum_arbfp(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
     DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_device *device = context->device;
     float param[4];
 
     context->constant_update_mask |= WINED3D_SHADER_CONST_PS_BUMP_ENV;
@@ -6127,10 +6126,10 @@ static void alpha_test_arbfp(struct wined3d_context *context, const struct wined
 
 static void color_key_arbfp(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    struct wined3d_device *device = context->swapchain->device;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    struct wined3d_color float_key[2];
     const struct wined3d_texture *texture = state->textures[0];
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_device *device = context->device;
+    struct wined3d_color float_key[2];
 
     if (!texture)
         return;
@@ -6682,8 +6681,8 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
 
 static void fragment_prog_arbfp(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_device *device = context->device;
     struct shader_arb_priv *priv = device->fragment_priv;
     BOOL use_pshader = use_ps(state);
     struct ffp_frag_settings settings;

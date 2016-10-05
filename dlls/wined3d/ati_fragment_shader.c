@@ -1012,7 +1012,7 @@ static void atifs_stage_constant(struct wined3d_context *context, const struct w
 
 static void set_tex_op_atifs(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_device *device = context->swapchain->device;
+    const struct wined3d_device *device = context->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     struct atifs_context_private_data *ctx_priv = context->fragment_pipe_data;

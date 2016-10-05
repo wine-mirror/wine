@@ -1160,7 +1160,7 @@ static void shader_glsl_ffp_vertex_normalmatrix_uniform(const struct wined3d_con
         return;
 
     get_modelview_matrix(context, state, 0, &mv);
-    if (context->swapchain->device->wined3d->flags & WINED3D_LEGACY_FFP_LIGHTING)
+    if (context->device->wined3d->flags & WINED3D_LEGACY_FFP_LIGHTING)
         invert_matrix_3d(&mv, &mv);
     else
         invert_matrix(&mv, &mv);

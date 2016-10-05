@@ -1827,6 +1827,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
             context_invalidate_state(ret, state);
     }
 
+    ret->device = device;
     ret->swapchain = swapchain;
     ret->current_rt.texture = target;
     ret->current_rt.sub_resource_idx = 0;
@@ -2380,7 +2381,7 @@ void context_bind_texture(struct wined3d_context *context, GLenum target, GLuint
 
     if (old_texture_type != target)
     {
-        const struct wined3d_device *device = context->swapchain->device;
+        const struct wined3d_device *device = context->device;
 
         switch (old_texture_type)
         {
@@ -3307,8 +3308,8 @@ static void context_load_shader_resources(struct wined3d_context *context, const
 
 static void context_bind_shader_resources(struct wined3d_context *context, const struct wined3d_state *state)
 {
-    const struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_device *device = context->device;
     struct wined3d_shader_sampler_map_entry *entry;
     struct wined3d_shader_resource_view *view;
     struct wined3d_sampler *sampler;
@@ -3536,7 +3537,7 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device, str
     {
         if (current_context
                 && current_context->current_rt.texture
-                && current_context->swapchain->device == device)
+                && current_context->device == device)
         {
             target_texture = current_context->current_rt.texture;
             target_sub_resource_idx = current_context->current_rt.sub_resource_idx;
@@ -3569,7 +3570,7 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device, str
 
         /* Stay with the current context if possible. Otherwise use the
          * context for the primary swapchain. */
-        if (current_context && current_context->swapchain->device == device)
+        if (current_context && current_context->device == device)
             context = current_context;
         else
             context = swapchain_get_context(device->swapchains[0]);
