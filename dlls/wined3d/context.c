@@ -1114,18 +1114,18 @@ static void context_restore_gl_context(const struct wined3d_gl_info *gl_info, HD
     }
 }
 
-static void context_update_window(struct wined3d_context *context)
+static void context_update_window(struct wined3d_context *context, HWND win_handle)
 {
-    if (context->win_handle == context->swapchain->win_handle)
+    if (context->win_handle == win_handle)
         return;
 
     TRACE("Updating context %p window from %p to %p.\n",
-            context, context->win_handle, context->swapchain->win_handle);
+            context, context->win_handle, win_handle);
 
     if (context->hdc)
         wined3d_release_dc(context->win_handle, context->hdc);
 
-    context->win_handle = context->swapchain->win_handle;
+    context->win_handle = win_handle;
     context->hdc_is_private = FALSE;
     context->hdc_has_format = FALSE;
     context->needs_set = 1;
@@ -3519,6 +3519,7 @@ static void context_setup_target(struct wined3d_context *context,
 struct wined3d_context *context_acquire(const struct wined3d_device *device, struct wined3d_surface *target)
 {
     struct wined3d_context *current_context = context_get_current();
+    struct wined3d_swapchain *swapchain = NULL;
     struct wined3d_texture *target_texture;
     unsigned int target_sub_resource_idx;
     struct wined3d_context *context;
@@ -3558,11 +3559,11 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device, str
     {
         context = current_context;
     }
-    else if (target_texture->swapchain)
+    else if ((swapchain = target_texture->swapchain))
     {
         TRACE("Rendering onscreen.\n");
 
-        context = swapchain_get_context(target_texture->swapchain);
+        context = swapchain_get_context(swapchain);
     }
     else
     {
@@ -3571,13 +3572,19 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device, str
         /* Stay with the current context if possible. Otherwise use the
          * context for the primary swapchain. */
         if (current_context && current_context->device == device)
+        {
             context = current_context;
+        }
         else
-            context = swapchain_get_context(device->swapchains[0]);
+        {
+            swapchain = device->swapchains[0];
+            context = swapchain_get_context(swapchain);
+        }
     }
 
     context_enter(context);
-    context_update_window(context);
+    if (swapchain)
+        context_update_window(context, swapchain->win_handle);
     context_setup_target(context, target_texture, target_sub_resource_idx);
     if (!context->valid) return context;
 
