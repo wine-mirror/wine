@@ -163,19 +163,22 @@ static void test___std_type_info(void)
     ti1.mangled[2] = 0;
     hash1 = p___std_type_info_hash(&ti1);
 #ifdef _WIN64
-    todo_wine ok(hash1 == 0xcbf29ce44fd0bfc1, "hash = %p\n", (void*)hash1);
+    ok(hash1 == 0xcbf29ce44fd0bfc1, "hash = %p\n", (void*)hash1);
 #else
     ok(hash1 == 0x811c9dc5, "hash = %p\n", (void*)hash1);
 #endif
 
     ti1.mangled[0] = 1;
     hash2 = p___std_type_info_hash(&ti1);
-    ok(hash1 == hash2, "hash1 != hash2 (first char not ignorred)\n");
+    ok(hash1 == hash2, "hash1 != hash2 (first char not ignored)\n");
 
     ti1.mangled[1] = 1;
     hash1 = p___std_type_info_hash(&ti1);
-    if(sizeof(void*) == sizeof(int))
-        ok(hash1 == 0x40c5b8c, "hash = %p\n", (void*)hash1);
+#ifdef _WIN64
+    ok(hash1 == 0xaf63bc4c29620a60, "hash = %p\n", (void*)hash1);
+#else
+    ok(hash1 == 0x40c5b8c, "hash = %p\n", (void*)hash1);
+#endif
     ok(hash1 != hash2, "hash1 == hash2 for different strings\n");
 
     ti1.mangled[1] = 2;
