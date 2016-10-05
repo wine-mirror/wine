@@ -10653,6 +10653,12 @@ msgstr "Alapértelmezett átjáró"
 msgid "IPv6 address"
 msgstr "IP cím"
 
+#: msinfo32.rc:28
+#, fuzzy
+#| msgid "System Configuration"
+msgid "System Information"
+msgstr "Rendszer konfiguráció"
+
 #: net.rc:30
 msgid ""
 "The syntax of this command is:\n"

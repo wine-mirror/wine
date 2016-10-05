@@ -10602,6 +10602,12 @@ msgstr "Passarel·la per defecte"
 msgid "IPv6 address"
 msgstr "Adreça IPv6"
 
+#: msinfo32.rc:28
+#, fuzzy
+#| msgid "System Configuration"
+msgid "System Information"
+msgstr "Configuració de sistema"
+
 #: net.rc:30
 msgid ""
 "The syntax of this command is:\n"

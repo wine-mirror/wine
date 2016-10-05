@@ -10410,6 +10410,12 @@ msgstr "Förvald gateway"
 msgid "IPv6 address"
 msgstr "IPv6-adress"
 
+#: msinfo32.rc:28
+#, fuzzy
+#| msgid "System Configuration"
+msgid "System Information"
+msgstr "Systeminställning"
+
 #: net.rc:30
 msgid ""
 "The syntax of this command is:\n"

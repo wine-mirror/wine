@@ -10518,6 +10518,12 @@ msgstr "Numatytasis šliuzas"
 msgid "IPv6 address"
 msgstr "IPv6 adresas"
 
+#: msinfo32.rc:28
+#, fuzzy
+#| msgid "System Configuration"
+msgid "System Information"
+msgstr "Sistemos konfigūracija"
+
 #: net.rc:30
 msgid ""
 "The syntax of this command is:\n"

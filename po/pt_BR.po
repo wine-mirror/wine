@@ -10566,6 +10566,12 @@ msgstr "Porta de ligação padrão"
 msgid "IPv6 address"
 msgstr "Endereço IPv6"
 
+#: msinfo32.rc:28
+#, fuzzy
+#| msgid "System Configuration"
+msgid "System Information"
+msgstr "Configuração do Sistema"
+
 #: net.rc:30
 msgid ""
 "The syntax of this command is:\n"

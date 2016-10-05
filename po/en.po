@@ -10509,6 +10509,10 @@ msgstr "Default gateway"
 msgid "IPv6 address"
 msgstr "IPv6 address"
 
+#: msinfo32.rc:28
+msgid "System Information"
+msgstr "System Information"
+
 #: net.rc:30
 msgid ""
 "The syntax of this command is:\n"

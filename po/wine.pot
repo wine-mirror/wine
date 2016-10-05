@@ -9946,6 +9946,10 @@ msgstr ""
 msgid "IPv6 address"
 msgstr ""
 
+#: msinfo32.rc:28
+msgid "System Information"
+msgstr ""
+
 #: net.rc:30
 msgid ""
 "The syntax of this command is:\n"

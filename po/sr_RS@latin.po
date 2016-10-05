@@ -10666,6 +10666,15 @@ msgstr "Podrazumevani mrežni prolaz"
 msgid "IPv6 address"
 msgstr "IP adresa"
 
+#: msinfo32.rc:28
+#, fuzzy
+msgid "System Information"
+msgstr ""
+"#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
+"Podaci\n"
+"#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
+"Informacija"
+
 #: net.rc:30
 msgid ""
 "The syntax of this command is:\n"

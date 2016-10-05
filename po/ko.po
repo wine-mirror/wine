@@ -10768,6 +10768,12 @@ msgstr "기본 게이트웨이"
 msgid "IPv6 address"
 msgstr "IPv6 주소"
 
+#: msinfo32.rc:28
+#, fuzzy
+#| msgid "System Configuration"
+msgid "System Information"
+msgstr "시스템 설정"
+
 #: net.rc:30
 msgid ""
 "The syntax of this command is:\n"

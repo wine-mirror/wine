@@ -10745,6 +10745,12 @@ msgstr "البوابة الافتراضية"
 msgid "IPv6 address"
 msgstr "عنوان IP الجيل السادس"
 
+#: msinfo32.rc:28
+#, fuzzy
+#| msgid "System Configuration"
+msgid "System Information"
+msgstr "إعدادات النظام"
+
 #: net.rc:30
 msgid ""
 "The syntax of this command is:\n"

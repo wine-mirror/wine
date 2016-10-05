@@ -10435,6 +10435,12 @@ msgstr "Výchozí brána"
 msgid "IPv6 address"
 msgstr "Adresa IP verze 6"
 
+#: msinfo32.rc:28
+#, fuzzy
+#| msgid "System Configuration"
+msgid "System Information"
+msgstr "Nastavení systému"
+
 #: net.rc:30
 msgid ""
 "The syntax of this command is:\n"

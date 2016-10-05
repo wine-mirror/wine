@@ -10734,6 +10734,12 @@ msgstr "Puerta de enlace por defecto"
 msgid "IPv6 address"
 msgstr "dirección IP"
 
+#: msinfo32.rc:28
+#, fuzzy
+#| msgid "System Configuration"
+msgid "System Information"
+msgstr "Configuración del Sistema"
+
 #: net.rc:30
 msgid ""
 "The syntax of this command is:\n"

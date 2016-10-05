@@ -10771,6 +10771,12 @@ msgstr ""
 msgid "IPv6 address"
 msgstr "adresă IPv6"
 
+#: msinfo32.rc:28
+#, fuzzy
+#| msgid "System Configuration"
+msgid "System Information"
+msgstr "Configurare sistem"
+
 #: net.rc:30
 #, fuzzy
 msgid ""

@@ -1,5 +1,8 @@
 MODULE    = msinfo32.exe
 APPMODE   = -mwindows -municode
+IMPORTS   = shell32 user32
 
 C_SRCS = \
 	main.c
+
+RC_SRCS = msinfo32.rc

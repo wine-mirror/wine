@@ -10736,6 +10736,12 @@ msgstr "Gateway predefinito"
 msgid "IPv6 address"
 msgstr "Indirizzo IP"
 
+#: msinfo32.rc:28
+#, fuzzy
+#| msgid "System Configuration"
+msgid "System Information"
+msgstr "Configurazione di sistema"
+
 #: net.rc:30
 msgid ""
 "The syntax of this command is:\n"

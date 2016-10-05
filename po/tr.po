@@ -10535,6 +10535,12 @@ msgstr "Öntanımlı ağ geçidi"
 msgid "IPv6 address"
 msgstr "IPv6 adresi"
 
+#: msinfo32.rc:28
+#, fuzzy
+#| msgid "System Configuration"
+msgid "System Information"
+msgstr "Sistem Yapılandırma"
+
 #: net.rc:30
 msgid ""
 "The syntax of this command is:\n"
