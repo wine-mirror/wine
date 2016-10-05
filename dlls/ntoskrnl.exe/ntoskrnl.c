@@ -884,6 +884,15 @@ static void build_driver_keypath( const WCHAR *name, UNICODE_STRING *keypath )
 }
 
 
+static NTSTATUS WINAPI unhandled_irp( DEVICE_OBJECT *device, IRP *irp )
+{
+    TRACE( "(%p, %p)\n", device, irp );
+    irp->IoStatus.u.Status = STATUS_INVALID_DEVICE_REQUEST;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return STATUS_INVALID_DEVICE_REQUEST;
+}
+
+
 /***********************************************************************
  *           IoCreateDriver   (NTOSKRNL.EXE.@)
  */
@@ -891,6 +900,7 @@ NTSTATUS WINAPI IoCreateDriver( UNICODE_STRING *name, PDRIVER_INITIALIZE init )
 {
     struct wine_driver *driver;
     NTSTATUS status;
+    unsigned int i;
 
     TRACE("(%s, %p)\n", debugstr_us(name), init);
 
@@ -909,24 +919,29 @@ NTSTATUS WINAPI IoCreateDriver( UNICODE_STRING *name, PDRIVER_INITIALIZE init )
     driver->driver_obj.DriverExtension = &driver->driver_extension;
     driver->driver_extension.DriverObject   = &driver->driver_obj;
     build_driver_keypath( driver->driver_obj.DriverName.Buffer, &driver->driver_extension.ServiceKeyName );
+    for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++)
+        driver->driver_obj.MajorFunction[i] = unhandled_irp;
 
     status = driver->driver_obj.DriverInit( &driver->driver_obj, &driver->driver_extension.ServiceKeyName );
-
     if (status)
     {
         RtlFreeUnicodeString( &driver->driver_obj.DriverName );
         RtlFreeUnicodeString( &driver->driver_extension.ServiceKeyName );
         RtlFreeHeap( GetProcessHeap(), 0, driver );
-    }
-    else
-    {
-        EnterCriticalSection( &drivers_cs );
-        if (wine_rb_put( &wine_drivers, &driver->driver_obj.DriverName, &driver->entry ))
-            ERR( "failed to insert driver %s in tree\n", debugstr_us(name) );
-        LeaveCriticalSection( &drivers_cs );
+        return status;
     }
 
-    return status;
+    for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++)
+    {
+        if (driver->driver_obj.MajorFunction[i]) continue;
+        driver->driver_obj.MajorFunction[i] = unhandled_irp;
+    }
+
+    EnterCriticalSection( &drivers_cs );
+    if (wine_rb_put( &wine_drivers, &driver->driver_obj.DriverName, &driver->entry ))
+        ERR( "failed to insert driver %s in tree\n", debugstr_us(name) );
+    LeaveCriticalSection( &drivers_cs );
+    return STATUS_SUCCESS;
 }
 
 
