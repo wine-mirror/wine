@@ -494,16 +494,16 @@ static const struct column col_networkadapterconfig[] =
 };
 static const struct column col_os[] =
 {
-    { prop_buildnumberW,            CIM_STRING },
-    { prop_captionW,                CIM_STRING },
+    { prop_buildnumberW,            CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_captionW,                CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_codesetW,                CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_countrycodeW,            CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_csdversionW,             CIM_STRING },
+    { prop_csdversionW,             CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_installdateW,            CIM_DATETIME },
     { prop_lastbootuptimeW,         CIM_DATETIME|COL_FLAG_DYNAMIC },
     { prop_localdatetimeW,          CIM_DATETIME|COL_FLAG_DYNAMIC },
     { prop_localeW,                 CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_nameW,                   CIM_STRING },
+    { prop_nameW,                   CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_osarchitectureW,         CIM_STRING },
     { prop_oslanguageW,             CIM_UINT32, VT_I4 },
     { prop_osproductsuiteW,         CIM_UINT32, VT_I4 },
@@ -515,7 +515,7 @@ static const struct column col_os[] =
     { prop_suitemaskW,              CIM_UINT32, VT_I4 },
     { prop_systemdirectoryW,        CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_totalvisiblememorysizeW, CIM_UINT64 },
-    { prop_versionW,                CIM_STRING }
+    { prop_versionW,                CIM_STRING|COL_FLAG_DYNAMIC }
 };
 static const struct column col_param[] =
 {
@@ -729,24 +729,10 @@ static const WCHAR os_32bitW[] =
     {'3','2','-','b','i','t',0};
 static const WCHAR os_64bitW[] =
     {'6','4','-','b','i','t',0};
-static const WCHAR os_buildnumberW[] =
-    {'2','6','0','0',0};
-static const WCHAR os_captionW[] =
-    {'M','i','c','r','o','s','o','f','t',' ','W','i','n','d','o','w','s',' ','X','P',' ',
-     'V','e','r','s','i','o','n',' ','=',' ','5','.','1','.','2','6','0','0',0};
-static const WCHAR os_csdversionW[] =
-    {'S','e','r','v','i','c','e',' ','P','a','c','k',' ','3',0};
 static const WCHAR os_installdateW[] =
     {'2','0','1','4','0','1','0','1','0','0','0','0','0','0','.','0','0','0','0','0','0','+','0','0','0',0};
-static const WCHAR os_nameW[] =
-    {'M','i','c','r','o','s','o','f','t',' ','W','i','n','d','o','w','s',' ','X','P',' ',
-     'P','r','o','f','e','s','s','i','o','n','a','l','|','C',':','\\','W','I','N','D','O','W','S',
-     '|','\\','D','e','v','i','c','e','\\','H','a','r','d','d','i','s','k','0',
-     '\\','P','a','r','t','i','t','i','o','n','1',0};
 static const WCHAR os_serialnumberW[] =
     {'1','2','3','4','5','-','O','E','M','-','1','2','3','4','5','6','7','-','1','2','3','4','5',0};
-static const WCHAR os_versionW[] =
-    {'5','.','1','.','2','6','0','0',0};
 static const WCHAR physicalmedia_tagW[] =
     {'\\','\\','.','\\','P','H','Y','S','I','C','A','L','D','R','I','V','E','0',0};
 static const WCHAR sounddevice_productnameW[] =
@@ -2624,38 +2610,122 @@ static WCHAR *get_locale(void)
     if (ret) GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_ILANGUAGE, ret, 5 );
     return ret;
 }
+static WCHAR *get_osbuildnumber( OSVERSIONINFOEXW *ver )
+{
+    static const WCHAR fmtW[] = {'%','u',0};
+    WCHAR *ret = heap_alloc( 11 * sizeof(WCHAR) );
+    if (ret) sprintfW( ret, fmtW, ver->dwBuildNumber );
+    return ret;
+}
+static WCHAR *get_oscaption( OSVERSIONINFOEXW *ver )
+{
+    static const WCHAR windowsW[] =
+        {'M','i','c','r','o','s','o','f','t',' ','W','i','n','d','o','w','s',' '};
+    static const WCHAR win2000W[] =
+        {'2','0','0','0',' ','P','r','o','f','e','s','s','i','o','n','a','l',0};
+    static const WCHAR win2003W[] =
+        {'S','e','r','v','e','r',' ','2','0','0','3',' ','S','t','a','n','d','a','r','d',' ','E','d','i','t','i','o','n',0};
+    static const WCHAR winxpW[] =
+        {'X','P',' ','P','r','o','f','e','s','s','i','o','n','a','l',0};
+    static const WCHAR winxp64W[] =
+        {'X','P',' ','P','r','o','f','e','s','s','i','o','n','a','l',' ','x','6','4',' ','E','d','i','t','i','o','n',0};
+    static const WCHAR vistaW[] =
+        {'V','i','s','t','a',' ','U','l','t','i','m','a','t','e',0};
+    static const WCHAR win2008W[] =
+        {'S','e','r','v','e','r',' ','2','0','0','8',' ','S','t','a','n','d','a','r','d',0};
+    static const WCHAR win7W[] =
+        {'7',' ','P','r','o','f','e','s','s','i','o','n','a','l',0};
+    static const WCHAR win2008r2W[] =
+        {'S','e','r','v','e','r',' ','2','0','0','8',' ','R','2',' ','S','t','a','n','d','a','r','d',0};
+    static const WCHAR win8W[] =
+        {'8',' ','P','r','o',0};
+    static const WCHAR win81W[] =
+        {'8','.','1',' ','P','r','o',0};
+    static const WCHAR win10W[] =
+        {'1','0',' ','P','r','o',0};
+    int len = sizeof(windowsW)/sizeof(windowsW[0]);
+    WCHAR *ret;
+
+    if (!(ret = heap_alloc( len * sizeof(WCHAR) + sizeof(win2003W) ))) return NULL;
+    memcpy( ret, windowsW, sizeof(windowsW) );
+    if (ver->dwMajorVersion == 10 && ver->dwMinorVersion == 0) memcpy( ret + len, win10W, sizeof(win10W) );
+    else if (ver->dwMajorVersion == 6 && ver->dwMinorVersion == 3) memcpy( ret + len, win8W, sizeof(win8W) );
+    else if (ver->dwMajorVersion == 6 && ver->dwMinorVersion == 2) memcpy( ret + len, win81W, sizeof(win81W) );
+    else if (ver->dwMajorVersion == 6 && ver->dwMinorVersion == 1)
+    {
+        if (ver->wProductType == VER_NT_WORKSTATION) memcpy( ret + len, win7W, sizeof(win7W) );
+        else memcpy( ret + len, win2008r2W, sizeof(win2008r2W) );
+    }
+    else if (ver->dwMajorVersion == 6 && ver->dwMinorVersion == 0)
+    {
+        if (ver->wProductType == VER_NT_WORKSTATION) memcpy( ret + len, vistaW, sizeof(vistaW) );
+        else memcpy( ret + len, win2008W, sizeof(win2008W) );
+    }
+    else if (ver->dwMajorVersion == 5 && ver->dwMinorVersion == 2)
+    {
+        if (ver->wProductType == VER_NT_WORKSTATION) memcpy( ret + len, winxp64W, sizeof(winxp64W) );
+        else memcpy( ret + len, win2003W, sizeof(win2003W) );
+    }
+    else if (ver->dwMajorVersion == 5 && ver->dwMinorVersion == 1) memcpy( ret + len, winxpW, sizeof(winxpW) );
+    else memcpy( ret + len, win2000W, sizeof(win2000W) );
+    return ret;
+}
+static WCHAR *get_osname( const WCHAR *caption )
+{
+    static const WCHAR partitionW[] =
+        {'|','C',':','\\','W','I','N','D','O','W','S','|','\\','D','e','v','i','c','e','\\',
+         'H','a','r','d','d','i','s','k','0','\\','P','a','r','t','i','t','i','o','n','1',0};
+    int len = strlenW( caption );
+    WCHAR *ret;
+
+    if (!(ret = heap_alloc( len * sizeof(WCHAR) + sizeof(partitionW) ))) return NULL;
+    memcpy( ret, caption, len * sizeof(WCHAR) );
+    memcpy( ret + len, partitionW, sizeof(partitionW) );
+    return ret;
+}
+static WCHAR *get_osversion( OSVERSIONINFOEXW *ver )
+{
+    static const WCHAR fmtW[] = {'%','u','.','%','u','.','%','u',0};
+    WCHAR *ret = heap_alloc( 33 * sizeof(WCHAR) );
+    if (ret) sprintfW( ret, fmtW, ver->dwMajorVersion, ver->dwMinorVersion, ver->dwBuildNumber );
+    return ret;
+}
 
 static enum fill_status fill_os( struct table *table, const struct expr *cond )
 {
     struct record_operatingsystem *rec;
     enum fill_status status = FILL_STATUS_UNFILTERED;
+    OSVERSIONINFOEXW ver;
     UINT row = 0;
 
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
+    ver.dwOSVersionInfoSize = sizeof(ver);
+    GetVersionExW( (OSVERSIONINFOW *)&ver );
+
     rec = (struct record_operatingsystem *)table->data;
-    rec->buildnumber            = os_buildnumberW;
-    rec->caption                = os_captionW;
+    rec->buildnumber            = get_osbuildnumber( &ver );
+    rec->caption                = get_oscaption( &ver );
     rec->codeset                = get_codeset();
     rec->countrycode            = get_countrycode();
-    rec->csdversion             = os_csdversionW;
+    rec->csdversion             = ver.szCSDVersion[0] ? heap_strdupW( ver.szCSDVersion ) : NULL;
     rec->installdate            = os_installdateW;
     rec->lastbootuptime         = get_lastbootuptime();
     rec->localdatetime          = get_localdatetime();
     rec->locale                 = get_locale();
-    rec->name                   = os_nameW;
+    rec->name                   = get_osname( rec->caption );
     rec->osarchitecture         = get_osarchitecture();
     rec->oslanguage             = GetSystemDefaultLangID();
     rec->osproductsuite         = 2461140; /* Windows XP Professional  */
     rec->ostype                 = 18;      /* WINNT */
     rec->primary                = -1;
     rec->serialnumber           = os_serialnumberW;
-    rec->servicepackmajor       = 3;
-    rec->servicepackminor       = 0;
+    rec->servicepackmajor       = ver.wServicePackMajor;
+    rec->servicepackminor       = ver.wServicePackMinor;
     rec->suitemask              = 272;     /* Single User + Terminal */
     rec->systemdirectory        = get_systemdirectory();
     rec->totalvisiblememorysize = get_total_physical_memory() / 1024;
-    rec->version                = os_versionW;
+    rec->version                = get_osversion( &ver );
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
 
