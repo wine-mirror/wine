@@ -629,7 +629,7 @@ static const struct column col_stdregprov[] =
 static const struct column col_systemenclosure[] =
 {
     { prop_captionW,      CIM_STRING },
-    { prop_chassistypesW, CIM_UINT16|CIM_FLAG_ARRAY },
+    { prop_chassistypesW, CIM_UINT16|CIM_FLAG_ARRAY, VT_I4|VT_ARRAY },
     { prop_descriptionW,  CIM_STRING },
     { prop_lockpresentW,  CIM_BOOLEAN },
     { prop_manufacturerW, CIM_STRING },

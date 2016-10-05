@@ -590,7 +590,6 @@ static void test_Win32_SystemEnclosure( IWbemServices *services )
     VariantInit( &val );
     hr = IWbemClassObject_Get( obj, chassistypesW, 0, &val, &type, NULL );
     ok( hr == S_OK, "failed to get chassis types %08x\n", hr );
-    todo_wine
     ok( V_VT( &val ) == (VT_I4|VT_ARRAY), "unexpected variant type 0x%x\n", V_VT( &val ) );
     ok( type == (CIM_UINT16|CIM_FLAG_ARRAY), "unexpected type 0x%x\n", type );
     hr = SafeArrayAccessData( V_ARRAY( &val ), (void **)&data );
