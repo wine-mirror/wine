@@ -28,6 +28,7 @@ typedef struct SynthPortImpl {
     IDirectMusicPort IDirectMusicPort_iface;
     IDirectMusicPortDownload IDirectMusicPortDownload_iface;
     IDirectMusicThru IDirectMusicThru_iface;
+    IKsControl IKsControl_iface;
     LONG ref;
     IDirectSound *pDirectSound;
     IReferenceClock *pLatencyClock;
@@ -58,6 +59,11 @@ static inline SynthPortImpl *impl_from_SynthPortImpl_IDirectMusicPortDownload(ID
 static inline SynthPortImpl *impl_from_SynthPortImpl_IDirectMusicThru(IDirectMusicThru *iface)
 {
     return CONTAINING_RECORD(iface, SynthPortImpl, IDirectMusicThru_iface);
+}
+
+static inline SynthPortImpl *impl_from_IKsControl(IKsControl *iface)
+{
+    return CONTAINING_RECORD(iface, SynthPortImpl, IKsControl_iface);
 }
 
 /* IDirectMusicDownloadedInstrument IUnknown part follows: */
@@ -152,6 +158,8 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_QueryInterface(LPDIRECTMUSI
         *ret_iface = &This->IDirectMusicPortDownload_iface;
     else if (IsEqualGUID(riid, &IID_IDirectMusicThru))
         *ret_iface = &This->IDirectMusicThru_iface;
+    else if (IsEqualGUID(riid, &IID_IKsControl))
+        *ret_iface = &This->IKsControl_iface;
     else {
         WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ret_iface);
         *ret_iface = NULL;
@@ -686,6 +694,75 @@ static const IDirectMusicThruVtbl SynthPortImpl_DirectMusicThru_Vtbl = {
     SynthPortImpl_IDirectMusicThru_ThruChannel
 };
 
+static HRESULT WINAPI IKsControlImpl_QueryInterface(IKsControl *iface, REFIID riid,
+        void **ret_iface)
+{
+    SynthPortImpl *This = impl_from_IKsControl(iface);
+
+    return IDirectMusicPort_QueryInterface(&This->IDirectMusicPort_iface, riid, ret_iface);
+}
+
+static ULONG WINAPI IKsControlImpl_AddRef(IKsControl *iface)
+{
+    SynthPortImpl *This = impl_from_IKsControl(iface);
+
+    return IDirectMusicPort_AddRef(&This->IDirectMusicPort_iface);
+}
+
+static ULONG WINAPI IKsControlImpl_Release(IKsControl *iface)
+{
+    SynthPortImpl *This = impl_from_IKsControl(iface);
+
+    return IDirectMusicPort_Release(&This->IDirectMusicPort_iface);
+}
+
+static HRESULT WINAPI IKsControlImpl_KsProperty(IKsControl *iface, KSPROPERTY *prop,
+        ULONG prop_len, void *data, ULONG data_len, ULONG *ret_len)
+{
+    TRACE("(%p)->(%p, %u, %p, %u, %p)\n", iface, prop, prop_len, data, data_len, ret_len);
+    TRACE("prop = %s - %u - %u\n", debugstr_guid(&prop->Set), prop->Id, prop->Flags);
+
+    if (prop->Flags != KSPROPERTY_TYPE_GET)
+    {
+        FIXME("prop flags %u not yet supported\n", prop->Flags);
+        return S_FALSE;
+    }
+
+    if (data_len <  sizeof(DWORD))
+        return E_NOT_SUFFICIENT_BUFFER;
+
+    FIXME("Unknown property %s\n", debugstr_guid(&prop->Set));
+    *(DWORD*)data = FALSE;
+    *ret_len = sizeof(DWORD);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI IKsControlImpl_KsMethod(IKsControl *iface, KSMETHOD *method,
+        ULONG method_len, void *data, ULONG data_len, ULONG *ret_len)
+{
+    FIXME("(%p)->(%p, %u, %p, %u, %p): stub\n", iface, method, method_len, data, data_len, ret_len);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IKsControlImpl_KsEvent(IKsControl *iface, KSEVENT *event, ULONG event_len,
+        void *data, ULONG data_len, ULONG *ret_len)
+{
+    FIXME("(%p)->(%p, %u, %p, %u, %p): stub\n", iface, event, event_len, data, data_len, ret_len);
+
+    return E_NOTIMPL;
+}
+
+static const IKsControlVtbl ikscontrol_vtbl = {
+    IKsControlImpl_QueryInterface,
+    IKsControlImpl_AddRef,
+    IKsControlImpl_Release,
+    IKsControlImpl_KsProperty,
+    IKsControlImpl_KsMethod,
+    IKsControlImpl_KsEvent
+};
+
 HRESULT DMUSIC_CreateSynthPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkouter, LPDMUS_PORTPARAMS port_params, LPDMUS_PORTCAPS port_caps, DWORD device)
 {
     SynthPortImpl *obj;
@@ -704,6 +781,7 @@ HRESULT DMUSIC_CreateSynthPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkou
     obj->IDirectMusicPort_iface.lpVtbl = &SynthPortImpl_DirectMusicPort_Vtbl;
     obj->IDirectMusicPortDownload_iface.lpVtbl = &SynthPortImpl_DirectMusicPortDownload_Vtbl;
     obj->IDirectMusicThru_iface.lpVtbl = &SynthPortImpl_DirectMusicThru_Vtbl;
+    obj->IKsControl_iface.lpVtbl = &ikscontrol_vtbl;
     obj->ref = 0;  /* Will be inited by QueryInterface */
     obj->fActive = FALSE;
     obj->params = *port_params;

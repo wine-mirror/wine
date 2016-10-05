@@ -416,17 +416,15 @@ static void test_COM_synthport(void)
     IDirectMusicPortDownload_Release(dmpd);
 
     hr = IDirectMusicPort_QueryInterface(port, &IID_IKsControl, (void**)&iksc);
-    todo_wine ok(hr == S_OK, "QueryInterface for IID_IKsControl failed: %08x\n", hr);
-    if (hr == S_OK) {
-        refcount = IKsControl_AddRef(iksc);
-        ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
-        IKsControl_Release(iksc);
-    }
+    ok(hr == S_OK, "QueryInterface for IID_IKsControl failed: %08x\n", hr);
+    refcount = IKsControl_AddRef(iksc);
+    ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
+    IKsControl_Release(iksc);
 
     hr = IDirectMusicPort_QueryInterface(port, &IID_IUnknown, (void**)&unk);
     ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
     refcount = IUnknown_AddRef(unk);
-    todo_wine ok(refcount == 6, "refcount == %u, expected 6\n", refcount);
+    ok(refcount == 6, "refcount == %u, expected 6\n", refcount);
     IUnknown_Release(unk);
 
     /* Unsupported interface */

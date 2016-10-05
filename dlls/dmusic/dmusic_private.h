@@ -41,6 +41,7 @@
 #include "dmusici.h"
 #include "dmusicf.h"
 #include "dmusics.h"
+#include "dmksctrl.h"
 
 /*****************************************************************************
  * Interfaces
