@@ -130,23 +130,21 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_QueryInterface(LPDIRECTMUSI
 
     TRACE("(%p/%p)->(%s, %p)\n", iface, This, debugstr_dmguid(riid), ret_iface);
 
-    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicPort)) {
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicPort))
         *ret_iface = &This->IDirectMusicPort_iface;
-        IDirectMusicPort_AddRef((LPDIRECTMUSICPORT)*ret_iface);
-        return S_OK;
-    } else if (IsEqualGUID(riid, &IID_IDirectMusicPortDownload)) {
+    else if (IsEqualGUID(riid, &IID_IDirectMusicPortDownload))
         *ret_iface = &This->IDirectMusicPortDownload_iface;
-        IDirectMusicPortDownload_AddRef((LPDIRECTMUSICPORTDOWNLOAD)*ret_iface);
-        return S_OK;
-    } else if (IsEqualGUID(riid, &IID_IDirectMusicThru)) {
+    else if (IsEqualGUID(riid, &IID_IDirectMusicThru))
         *ret_iface = &This->IDirectMusicThru_iface;
-        IDirectMusicThru_AddRef((LPDIRECTMUSICTHRU)*ret_iface);
-        return S_OK;
+    else {
+        WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ret_iface);
+        *ret_iface = NULL;
+        return E_NOINTERFACE;
     }
 
-    WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ret_iface);
+    IUnknown_AddRef((IUnknown*)*ret_iface);
 
-    return E_NOINTERFACE;
+    return S_OK;
 }
 
 static ULONG WINAPI SynthPortImpl_IDirectMusicPort_AddRef(LPDIRECTMUSICPORT iface)
