@@ -24,6 +24,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
+typedef struct SynthPortImpl {
+    IDirectMusicPort IDirectMusicPort_iface;
+    IDirectMusicPortDownload IDirectMusicPortDownload_iface;
+    IDirectMusicThru IDirectMusicThru_iface;
+    LONG ref;
+    IDirectSound *pDirectSound;
+    IReferenceClock *pLatencyClock;
+    IDirectMusicSynth *synth;
+    IDirectMusicSynthSink *synth_sink;
+    BOOL fActive;
+    DMUS_PORTCAPS caps;
+    DMUS_PORTPARAMS params;
+    int nrofgroups;
+    DMUSIC_PRIVATE_CHANNEL_GROUP group[1];
+} SynthPortImpl;
+
 static inline IDirectMusicDownloadedInstrumentImpl* impl_from_IDirectMusicDownloadedInstrument(IDirectMusicDownloadedInstrument *iface)
 {
     return CONTAINING_RECORD(iface, IDirectMusicDownloadedInstrumentImpl, IDirectMusicDownloadedInstrument_iface);
