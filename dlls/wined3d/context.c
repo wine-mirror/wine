@@ -2758,6 +2758,7 @@ void context_state_fb(struct wined3d_context *context, const struct wined3d_stat
         context_apply_draw_buffers(context, rt_mask);
         *cur_mask = rt_mask;
     }
+    context->constant_update_mask |= WINED3D_SHADER_CONST_PS_Y_CORR;
 }
 
 static void context_map_stage(struct wined3d_context *context, DWORD stage, DWORD unit)
