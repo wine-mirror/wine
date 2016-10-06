@@ -77,6 +77,8 @@
 # define ioctlsocket ioctl
 #endif /* defined(__MINGW32__) || defined (_MSC_VER) */
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -445,22 +447,20 @@ static int rpcrt4_conn_np_read(RpcConnection *Connection,
                         void *buffer, unsigned int count)
 {
   RpcConnection_np *npc = (RpcConnection_np *) Connection;
+  IO_STATUS_BLOCK io_status;
   char *buf = buffer;
-  BOOL ret = TRUE;
   unsigned int bytes_left = count;
+  NTSTATUS status;
 
   while (bytes_left)
   {
-    DWORD bytes_read;
-    ret = ReadFile(npc->pipe, buf, bytes_left, &bytes_read, NULL);
-    if (!ret && GetLastError() == ERROR_MORE_DATA)
-        ret = TRUE;
-    if (!ret || !bytes_read)
-        break;
-    bytes_left -= bytes_read;
-    buf += bytes_read;
+    status = NtReadFile(npc->pipe, NULL, NULL, NULL, &io_status, buf, bytes_left, NULL, NULL);
+    if (status && status != STATUS_BUFFER_OVERFLOW)
+      return -1;
+    bytes_left -= io_status.Information;
+    buf += io_status.Information;
   }
-  return ret ? count : -1;
+  return count;
 }
 
 static int rpcrt4_conn_np_write(RpcConnection *Connection,
