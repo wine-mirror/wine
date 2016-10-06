@@ -17,6 +17,7 @@
  */
 
 #define COBJMACROS
+#include <limits.h>
 #include <math.h>
 #include "d2d1.h"
 #include "wincrypt.h"
@@ -76,6 +77,12 @@ static void set_size_u(D2D1_SIZE_U *size, unsigned int w, unsigned int h)
     size->height = h;
 }
 
+static void set_size_f(D2D1_SIZE_F *size, float w, float h)
+{
+    size->width = w;
+    size->height = h;
+}
+
 static void set_matrix_identity(D2D1_MATRIX_3X2_F *matrix)
 {
     matrix->_11 = 1.0f;
@@ -113,6 +120,22 @@ static void translate_matrix(D2D1_MATRIX_3X2_F *matrix, float x, float y)
 {
     matrix->_31 += x * matrix->_11 + y * matrix->_21;
     matrix->_32 += x * matrix->_12 + y * matrix->_22;
+}
+
+static BOOL compare_float(float f, float g, unsigned int ulps)
+{
+    int x = *(int *)&f;
+    int y = *(int *)&g;
+
+    if (x < 0)
+        x = INT_MIN - x;
+    if (y < 0)
+        y = INT_MIN - y;
+
+    if (abs(x - y) > ulps)
+        return FALSE;
+
+    return TRUE;
 }
 
 static BOOL compare_sha1(void *data, unsigned int pitch, unsigned int bpp,
@@ -2881,6 +2904,157 @@ static void test_hwnd_target(void)
     ID2D1Factory_Release(factory);
 }
 
+static void test_bitmap_target(void)
+{
+    D2D1_HWND_RENDER_TARGET_PROPERTIES hwnd_rt_desc;
+    D2D1_SIZE_U pixel_size, pixel_size2;
+    D2D1_RENDER_TARGET_PROPERTIES desc;
+    ID2D1HwndRenderTarget *hwnd_rt;
+    ID2D1Bitmap *bitmap, *bitmap2;
+    ID2D1BitmapRenderTarget *rt;
+    D2D1_SIZE_F size, size2;
+    ID2D1Factory *factory;
+    ID3D10Device1 *device;
+    float dpi[2], dpi2[2];
+    D2D1_COLOR_F color;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+    ID3D10Device1_Release(device);
+
+    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
+    ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
+
+    desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+    desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+    desc.dpiX = 96.0f;
+    desc.dpiY = 192.0f;
+    desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+    desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+
+    hwnd_rt_desc.hwnd = CreateWindowA("static", "d2d_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    ok(!!hwnd_rt_desc.hwnd, "Failed to create target window.\n");
+    hwnd_rt_desc.pixelSize.width = 64;
+    hwnd_rt_desc.pixelSize.height = 64;
+    hwnd_rt_desc.presentOptions = D2D1_PRESENT_OPTIONS_NONE;
+
+    hr = ID2D1Factory_CreateHwndRenderTarget(factory, &desc, &hwnd_rt_desc, &hwnd_rt);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+
+    hr = ID2D1HwndRenderTarget_CreateCompatibleRenderTarget(hwnd_rt, NULL, NULL, NULL,
+            D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, &rt);
+todo_wine
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+
+    if (FAILED(hr))
+    {
+        ID2D1HwndRenderTarget_Release(hwnd_rt);
+        DestroyWindow(hwnd_rt_desc.hwnd);
+        ID2D1Factory_Release(factory);
+        return;
+    }
+
+    /* See if parent target is referenced. */
+    ID2D1HwndRenderTarget_AddRef(hwnd_rt);
+    refcount = ID2D1HwndRenderTarget_Release(hwnd_rt);
+    ok(refcount == 1, "Target should not have been referenced, got %u.\n", refcount);
+
+    /* Size was not specified, should match parent. */
+    pixel_size = ID2D1HwndRenderTarget_GetPixelSize(hwnd_rt);
+    pixel_size2 = ID2D1BitmapRenderTarget_GetPixelSize(rt);
+    ok(!memcmp(&pixel_size, &pixel_size2, sizeof(pixel_size)), "Got target pixel size mismatch.\n");
+
+    size = ID2D1HwndRenderTarget_GetSize(hwnd_rt);
+    size2 = ID2D1BitmapRenderTarget_GetSize(rt);
+    ok(!memcmp(&size, &size2, sizeof(size)), "Got target DIP size mismatch.\n");
+
+    ID2D1HwndRenderTarget_GetDpi(hwnd_rt, dpi, dpi + 1);
+    ID2D1BitmapRenderTarget_GetDpi(rt, dpi2, dpi2 + 1);
+    ok(!memcmp(dpi, dpi2, sizeof(dpi)), "Got dpi mismatch.\n");
+
+    ID2D1BitmapRenderTarget_Release(rt);
+
+    /* Pixel size specified. */
+    set_size_u(&pixel_size, 32, 32);
+    hr = ID2D1HwndRenderTarget_CreateCompatibleRenderTarget(hwnd_rt, NULL, &pixel_size, NULL,
+            D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, &rt);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+
+    pixel_size2 = ID2D1BitmapRenderTarget_GetPixelSize(rt);
+    ok(!memcmp(&pixel_size, &pixel_size2, sizeof(pixel_size)), "Got target pixel size mismatch.\n");
+
+    ID2D1BitmapRenderTarget_GetDpi(rt, dpi2, dpi2 + 1);
+    ok(!memcmp(dpi, dpi2, sizeof(dpi)), "Got dpi mismatch.\n");
+
+    ID2D1BitmapRenderTarget_Release(rt);
+
+    /* Both pixel size and DIP size are specified. */
+    set_size_u(&pixel_size, 128, 128);
+    hr = ID2D1HwndRenderTarget_CreateCompatibleRenderTarget(hwnd_rt, &size, &pixel_size, NULL,
+            D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, &rt);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+
+    /* Doubled pixel size dimensions with the same DIP size give doubled dpi. */
+    ID2D1BitmapRenderTarget_GetDpi(rt, dpi2, dpi2 + 1);
+    ok(dpi[0] == dpi2[0] / 2.0f && dpi[1] == dpi2[1] / 2.0f, "Got dpi mismatch.\n");
+
+    ID2D1BitmapRenderTarget_Release(rt);
+
+    /* DIP size is specified, fractional. */
+    set_size_f(&size, 70.1f, 70.4f);
+    hr = ID2D1HwndRenderTarget_CreateCompatibleRenderTarget(hwnd_rt, &size, NULL, NULL,
+            D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, &rt);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+
+    ID2D1BitmapRenderTarget_GetDpi(rt, dpi2, dpi2 + 1);
+
+    pixel_size = ID2D1BitmapRenderTarget_GetPixelSize(rt);
+    ok(pixel_size.width == ceilf(size.width * dpi2[0] / 96.0f)
+            && pixel_size.height == ceilf(size.height * dpi2[1] / 96.0f), "Wrong pixel size %ux%u\n",
+            pixel_size.width, pixel_size.height);
+
+    dpi[0] *= (pixel_size.width / size.width) * (96.0f / dpi[0]);
+    dpi[1] *= (pixel_size.height / size.height) * (96.0f / dpi[1]);
+
+    ok(compare_float(dpi[0], dpi2[0], 1) && compare_float(dpi[1], dpi2[1], 1), "Got dpi mismatch.\n");
+
+    ID2D1HwndRenderTarget_Release(hwnd_rt);
+
+    /* Check if GetBitmap() returns same instance. */
+    hr = ID2D1BitmapRenderTarget_GetBitmap(rt, &bitmap);
+    ok(SUCCEEDED(hr), "GetBitmap() failed, hr %#x.\n", hr);
+    hr = ID2D1BitmapRenderTarget_GetBitmap(rt, &bitmap2);
+    ok(SUCCEEDED(hr), "GetBitmap() failed, hr %#x.\n", hr);
+    ok(bitmap == bitmap2, "Got different bitmap instances.\n");
+
+    /* Draw something, see if bitmap instance is retained. */
+    ID2D1BitmapRenderTarget_BeginDraw(rt);
+    set_color(&color, 1.0f, 1.0f, 0.0f, 1.0f);
+    ID2D1BitmapRenderTarget_Clear(rt, &color);
+    hr = ID2D1BitmapRenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "EndDraw() failed, hr %#x.\n", hr);
+
+    ID2D1Bitmap_Release(bitmap2);
+    hr = ID2D1BitmapRenderTarget_GetBitmap(rt, &bitmap2);
+    ok(SUCCEEDED(hr), "GetBitmap() failed, hr %#x.\n", hr);
+    ok(bitmap == bitmap2, "Got different bitmap instances.\n");
+
+    ID2D1Bitmap_Release(bitmap);
+    ID2D1Bitmap_Release(bitmap2);
+
+    refcount = ID2D1BitmapRenderTarget_Release(rt);
+    ok(!refcount, "Target should be released, got %u.\n", refcount);
+
+    DestroyWindow(hwnd_rt_desc.hwnd);
+    ID2D1Factory_Release(factory);
+}
+
 START_TEST(d2d1)
 {
     test_clip();
@@ -2897,4 +3071,5 @@ START_TEST(d2d1)
     test_draw_text_layout();
     test_dc_target();
     test_hwnd_target();
+    test_bitmap_target();
 }
