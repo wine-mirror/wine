@@ -999,6 +999,14 @@ static BOOL request_set_option( object_header_t *hdr, DWORD option, LPVOID buffe
         if (!(session->proxy_password = buffer_to_str( buffer, buflen ))) return FALSE;
         return TRUE;
     }
+    case WINHTTP_OPTION_CLIENT_CERT_CONTEXT:
+        if (!(hdr->flags & WINHTTP_FLAG_SECURE))
+        {
+            SetLastError( ERROR_WINHTTP_INCORRECT_HANDLE_STATE );
+            return FALSE;
+        }
+        FIXME("WINHTTP_OPTION_CLIENT_CERT_CONTEXT\n");
+        return TRUE;
     default:
         FIXME("unimplemented option %u\n", option);
         set_last_error( ERROR_INVALID_PARAMETER );
@@ -1224,7 +1232,7 @@ static BOOL set_option( object_header_t *hdr, DWORD option, LPVOID buffer, DWORD
 {
     BOOL ret = TRUE;
 
-    if (!buffer)
+    if (!buffer && buflen)
     {
         set_last_error( ERROR_INVALID_PARAMETER );
         return FALSE;
