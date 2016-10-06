@@ -51,16 +51,14 @@ struct vec4
 
 static HWND create_window(void)
 {
-    WNDCLASSA wc = {0};
-    HWND ret;
-    wc.lpfnWndProc = DefWindowProcA;
-    wc.lpszClassName = "d3d9_test_wc";
-    RegisterClassA(&wc);
+    HWND hwnd;
+    RECT rect;
 
-    ret = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_SYSMENU | WS_POPUP,
-            0, 0, 640, 480, 0, 0, 0, 0);
-    ShowWindow(ret, SW_SHOW);
-    return ret;
+    SetRect(&rect, 0, 0, 640, 480);
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW | WS_VISIBLE, FALSE);
+    hwnd = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, rect.right - rect.left, rect.bottom - rect.top, 0, 0, 0, 0);
+    return hwnd;
 }
 
 static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
@@ -256,8 +254,7 @@ static void test_sanity(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -414,8 +411,7 @@ static void lighting_test(void)
         {&mat_nonaffine, translatedquad, sizeof(translatedquad[0]), 0x00000000, "Lit quad with non-affine matrix"},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -790,8 +786,7 @@ static void test_specular_lighting(void)
         }
     }
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -907,8 +902,7 @@ static void clear_test(void)
     ULONG refcount;
     HWND window;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -1346,8 +1340,7 @@ static void color_fill_test(void)
     DWORD *surface_data;
     static const RECT rect = {4, 4, 8, 8}, rect2 = {5, 5, 7, 7};
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -1581,8 +1574,7 @@ static void test_mova(void)
         D3DDECL_END()
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -1795,8 +1787,7 @@ static void fog_test(void)
         12, 13, 14, 14, 15, 12,
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -2242,8 +2233,7 @@ static void test_cube_wrap(void)
         {D3DTADDRESS_MIRRORONCE, "D3DTADDRESS_MIRRORONCE"},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -2404,8 +2394,7 @@ static void offscreen_test(void)
         { 0.5f,  0.5f, 0.1f, 1.0f, 1.0f},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -2791,8 +2780,7 @@ static void fog_with_shader_test(void)
         0.0f, 0.0f, 0.0f, 1.0f,
     }}};
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -3051,8 +3039,7 @@ static void texbem_test(void)
         },
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -3349,8 +3336,7 @@ static void z_range_test(void)
     static const float color_const_1[] = {1.0f, 0.0f, 0.0f, 1.0f};
     static const float color_const_2[] = {0.0f, 0.0f, 1.0f, 1.0f};
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -3583,8 +3569,7 @@ static void stretchrect_test(void)
     static const RECT dst_rect64 = {0, 0, 64, 64};
     static const RECT dst_rect64_flipy = {0, 64, 64, 0};
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -4106,8 +4091,7 @@ static void maxmip_test(void)
         }},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -4339,8 +4323,7 @@ static void release_buffer_test(void)
         {{ 1.0f,  1.0f, 0.1f}, 0xff00ff00},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -4430,8 +4413,7 @@ static void float_texture_test(void)
          1.0f,  1.0f, 0.1f, 1.0f, 1.0f,
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -4510,8 +4492,7 @@ static void g16r16_texture_test(void)
          1.0f,  1.0f, 0.1f, 1.0f, 1.0f,
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -4797,8 +4778,7 @@ static void texture_transform_flags_test(void)
         0.0f, 0.0f, 0.0f, 1.0f,
     }}};
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -5487,8 +5467,7 @@ static void texdepth_test(void)
          1.0f,  1.0f, 1.0f,
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -5712,8 +5691,7 @@ static void texkill_test(void)
         0x0000ffff                                                              /* end                        */
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -5880,8 +5858,7 @@ static void autogen_mipmap_test(void)
          0.5f,  0.5f, 0.1f, 1.0f, 1.0f,
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -6067,8 +6044,7 @@ static void test_constant_clamp_vs(void)
     static const float test_data_c1[4] = { 1.25f, -0.50f, -1.50f, 1.0f};
     static const float test_data_c2[4] = {-0.50f,  1.25f,  2.00f, 1.0f};
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -6248,8 +6224,7 @@ static void constant_clamp_ps_test(void)
     static const float test_data_c1[4] = { 1.25f, -0.50f, -1.50f, 1.0f};
     static const float test_data_c2[4] = {-0.50f,  1.25f,  2.00f, 1.0f};
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -6398,8 +6373,7 @@ static void dp2add_ps_test(void)
          1.0f,    1.0f,   0.1f,
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -6686,8 +6660,7 @@ static void cnd_test(void)
     static const float test_data_c1_coi[4] = {0.0f, 1.0f, 0.0f, 0.0f};
     static const float test_data_c2_coi[4] = {1.0f, 0.0f, 1.0f, 1.0f};
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -7056,8 +7029,7 @@ static void nested_loop_test(void)
          1.0f,  1.0f, 0.1f,
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -7323,8 +7295,7 @@ static void pretransformed_varying_test(void)
     HRESULT hr;
     BOOL warp;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -7486,8 +7457,7 @@ static void test_compare_instructions(void)
     static const float const0[4] = {0.8f, 0.2f, 0.2f, 0.2f};
     static const float const1[4] = {0.2f, 0.8f, 0.2f, 0.2f};
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -7834,8 +7804,7 @@ static void test_vshader_input(void)
     static const float normalize[4] = {1.0f / 256.0f, 1.0f / 256.0f, 1.0f / 256.0f, 1.0f / 256.0f};
     static const float no_normalize[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -8169,8 +8138,7 @@ static void srgbtexture_test(void)
          1.0f,  1.0f, 0.0f, 1.0f, 0.0f,
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -8354,8 +8322,7 @@ static void test_shademode(void)
         {&vs_3, &ps_3, D3DPT_TRIANGLESTRIP, D3DSHADE_GOURAUD, 0x000dca28, 0x000d45c7, FALSE},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -8531,8 +8498,7 @@ static void test_blend(void)
         { 1.0f,  1.0f, 0.1f, 1.0f, 0.0f},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -8811,8 +8777,7 @@ static void fixed_function_decl_test(void)
         {{570.0f, 300.0f, 0.1f, 2.0f}, 0x00ffff00},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -9352,8 +9317,7 @@ static void test_vshader_float16(void)
         {  0.0,    1.0,     0.1,        0x00000000, 0x3c000000 },
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -9482,8 +9446,7 @@ static void conditional_np2_repeat_test(void)
          1.0f,  1.0f, 0.1f,  1.2f,  1.2f,
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -9664,8 +9627,7 @@ static void vface_register_test(void)
          1.0f,  1.0f, 0.1f, 1.0f, 1.0f,
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -9795,8 +9757,7 @@ static void fixed_function_bumpmap_test(void)
     /* use asymmetric matrix to test loading */
     static const float bumpenvmat[4] = {0.0f, 0.5f, -0.5f, 0.0f};
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -10071,8 +10032,7 @@ static void stencil_cull_test(void)
     unsigned int i;
     DWORD color;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -10286,8 +10246,7 @@ static void test_fragment_coords(void)
     };
     float constant[4] = {1.0, 0.0, 320, 240};
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -10657,8 +10616,7 @@ static void test_pointsize(void)
                 -1.0f,           1.0f, 0.0f, 1.0f,
     }}};
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -11078,8 +11036,7 @@ static void multiple_rendertargets_test(void)
          1.0f,  1.0f, 0.1f, 1.0f, 1.0f,
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -11305,8 +11262,7 @@ static void pixelshader_blending_test(void)
         {{ 1.0f,  1.0f, 0.1f}, 0x80201000},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -11471,8 +11427,7 @@ static void tssargtemp_test(void)
         {{ 1.0f,  1.0f, 0.1f}, 0x00ff0000},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -11640,8 +11595,7 @@ static void stream_test(void)
         D3DDECL_END()
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -11867,8 +11821,7 @@ static void np2_stretch_rect_test(void)
          1.0f,  1.0f, 0.1f, 1.0f, 1.0f,
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -12025,8 +11978,7 @@ static void texop_test(void)
         {D3DTOP_LERP,                      "LERP",                      D3DTEXOPCAPS_LERP,                      D3DCOLOR_ARGB(0x00, 0x00, 0x33, 0x33)},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -12173,8 +12125,7 @@ static void yuv_color_test(void)
         {0x1c6b1cff, D3DFMT_YUY2, "D3DFMT_YUY2", 0x006dff45, 0x0000d500},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -12310,8 +12261,7 @@ static void yuv_layout_test(void)
         { MAKEFOURCC('N','V','1','2'), "D3DFMT_NV12", },
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -12476,8 +12426,7 @@ static void texop_range_test(void)
         { 1.0f,  1.0f, 0.1f, D3DCOLOR_ARGB(0xff, 0xff, 0xff, 0xff)}
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -12610,8 +12559,7 @@ static void alphareplicate_test(void)
         {{ 1.0f,  1.0f, 0.1f}, 0x80ff00ff},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -12674,8 +12622,7 @@ static void dp3_alpha_test(void)
         {{ 1.0f,  1.0f, 0.1f}, 0x408080c0},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -12778,8 +12725,7 @@ static void zwriteenable_test(void)
         {{ 1.0f,  1.0f, 0.9f}, 0x0000ff00},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -12880,8 +12826,7 @@ static void alphatest_test(void)
         {{ 1.0f,  1.0f, 0.1f}, ALPHATEST_PASSED | 0x80000000},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -13030,8 +12975,7 @@ static void sincos_test(void)
     static const float sincosc1[4] = {D3DSINCOSCONST1};
     static const float sincosc2[4] = {D3DSINCOSCONST2};
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -13134,8 +13078,7 @@ static void loop_index_test(void)
     static const float one[4] = {1.0f, 1.0f, 1.0f, 1.0f};
     static const int i0[4] = {2, 10, -3, 0};
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -13256,8 +13199,7 @@ static void sgn_test(void)
          1.0f,  1.0f, 0.1f,
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -13323,8 +13265,7 @@ static void viewport_test(void)
          0.5f,  0.5f, 0.1f,
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -13479,8 +13420,7 @@ static void depth_clamp_test(void)
         {{ 1.0f, 0.25f, 10.0f}, 0xfff91414},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -13641,8 +13581,7 @@ static void depth_bounds_test(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
@@ -13781,8 +13720,7 @@ static void depth_buffer_test(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -13917,8 +13855,7 @@ static void depth_buffer2_test(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -14050,8 +13987,7 @@ static void depth_blit_test(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -14241,8 +14177,7 @@ static void intz_test(void)
     HRESULT hr;
     UINT i;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
@@ -14562,8 +14497,7 @@ static void shadow_test(void)
     HRESULT hr;
     UINT i;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -14783,8 +14717,7 @@ static void clip_planes_test(void)
         0x0000ffff                              /* end */
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -15001,8 +14934,7 @@ static void fp_special_test(void)
     HRESULT hr;
     UINT i;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -15130,8 +15062,7 @@ static void srgbwrite_format_test(void)
         { 1.0f,   1.0f,  0.1f,   1.0f,   1.0f}
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -15251,8 +15182,7 @@ static void ds_size_test(void)
         { 1.0f,  1.0f, 0.0f},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -15400,8 +15330,7 @@ static void unbound_sampler_test(void)
         { 1.0f,   1.0f,  0.1f,   1.0f,   1.0f}
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -15568,8 +15497,7 @@ static void update_surface_test(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
@@ -15705,8 +15633,7 @@ static void multisample_get_rtdata_test(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (FAILED(IDirect3D9_CheckDeviceMultiSampleType(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
@@ -16578,8 +16505,7 @@ static void zenable_test(void)
     UINT test;
     IDirect3DSurface9 *ds;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -16813,8 +16739,7 @@ static void fog_special_test(void)
     D3DCAPS9 caps;
     HWND window;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -16974,8 +16899,7 @@ static void volume_srgb_test(void)
         {{ 1.0f,  1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
@@ -17101,8 +17025,7 @@ static void volume_dxt5_test(void)
     };
     static const DWORD expected_colors[] = {0x00ff0000, 0x0000ff00, 0x000000ff, 0x00ffffff};
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
@@ -17210,8 +17133,7 @@ static void volume_v16u16_test(void)
         0x0000ffff                                                      /* end                  */
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -17373,8 +17295,7 @@ static void add_dirty_rect_test(void)
     static const RECT part_rect = {96, 96, 160, 160};
     DWORD color;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -17701,8 +17622,7 @@ static void test_per_stage_constant(void)
         {{ 1.0f,  1.0f, 0.1f}, 0xffff0000},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -17877,8 +17797,7 @@ static void test_3dc_formats(void)
     HRESULT hr;
     unsigned int i;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
@@ -18036,8 +17955,7 @@ static void test_fog_interpolation(void)
     }}};
     D3DCAPS9 caps;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
 
@@ -18211,8 +18129,7 @@ static void test_negative_fixedfunction_fog(void)
     };
     D3DCAPS9 caps;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
 
@@ -18376,8 +18293,7 @@ static void test_position_index(void)
     HRESULT hr;
     unsigned int i;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -18540,8 +18456,7 @@ static void test_table_fog_zw(void)
     };
     unsigned int i;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-        0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
 
@@ -18798,8 +18713,7 @@ static void test_signed_formats(void)
     };
     D3DCOLOR expected_color;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
 
@@ -19018,8 +18932,7 @@ static void test_multisample_mismatch(void)
         {{  1.0f,   1.0f,  1.0f}, 0x000000ff},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (FAILED(IDirect3D9_CheckDeviceMultiSampleType(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
@@ -19246,8 +19159,7 @@ static void test_texcoordindex(void)
     D3DCOLOR color;
     DWORD *ptr;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d9, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d9, window, window, TRUE)))
@@ -19550,8 +19462,7 @@ static void test_vertex_blending(void)
         },
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -19757,8 +19668,7 @@ static void test_updatetexture(void)
          quad, sizeof(*quad), D3DPTEXTURECAPS_VOLUMEMAP, "Volume"}
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d9, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d9, window, window, TRUE)))
@@ -20031,8 +19941,7 @@ static void test_depthbias(void)
         DWORD d;
     } conv;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -20171,8 +20080,7 @@ static void test_flip(void)
     D3DCOLOR color;
     D3DPRESENT_PARAMETERS present_parameters = {0};
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
 
@@ -20501,8 +20409,7 @@ static void test_uninitialized_varyings(void)
     D3DCOLOR color;
     BOOL warp;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -20624,8 +20531,7 @@ static void test_multisample_init(void)
     struct surface_readback rb;
     BOOL all_zero = TRUE;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
 
@@ -21360,8 +21266,7 @@ static void test_texture_blending(void)
         },
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d, window, window, TRUE)))
@@ -21610,8 +21515,7 @@ static void test_color_clamping(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d9, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d9, window, window, TRUE)))
@@ -21767,8 +21671,7 @@ static void test_line_antialiasing_blending(void)
         {{ 1.0f,  1.0f, 0.1f}, D3DCOLOR_ARGB(0xcc, 0xff, 0x00, 0x00)},
     };
 
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d9, "Failed to create a D3D object.\n");
     if (!(device = create_device(d3d9, window, window, TRUE)))
