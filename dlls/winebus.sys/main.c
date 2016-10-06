@@ -30,7 +30,9 @@
 #include "winternl.h"
 #include "winreg.h"
 #include "setupapi.h"
+#include "winioctl.h"
 #include "ddk/wdm.h"
+#include "ddk/hidport.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "wine/list.h"
@@ -343,6 +345,50 @@ NTSTATUS WINAPI common_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
     }
 
     IoCompleteRequest(irp, IO_NO_INCREMENT);
+    return status;
+}
+
+NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
+{
+    NTSTATUS status = irp->IoStatus.u.Status;
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
+    struct device_extension *extension = (struct device_extension *)device->DeviceExtension;
+
+    TRACE("(%p, %p)\n", device, irp);
+
+    switch (irpsp->Parameters.DeviceIoControl.IoControlCode)
+    {
+        case IOCTL_HID_GET_DEVICE_ATTRIBUTES:
+        {
+            HID_DEVICE_ATTRIBUTES *attr = (HID_DEVICE_ATTRIBUTES *)irp->UserBuffer;
+            TRACE("IOCTL_HID_GET_DEVICE_ATTRIBUTES\n");
+
+            if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(*attr))
+            {
+                irp->IoStatus.u.Status = status = STATUS_BUFFER_TOO_SMALL;
+                break;
+            }
+
+            memset(attr, 0, sizeof(*attr));
+            attr->Size = sizeof(HID_DEVICE_ATTRIBUTES);
+            attr->VendorID = extension->vid;
+            attr->ProductID = extension->pid;
+            attr->VersionNumber = extension->version;
+            irp->IoStatus.u.Status = status = STATUS_SUCCESS;
+            irp->IoStatus.Information = sizeof(HID_DEVICE_ATTRIBUTES);
+            break;
+        }
+        default:
+        {
+            ULONG code = irpsp->Parameters.DeviceIoControl.IoControlCode;
+            FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
+                  code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
+            break;
+        }
+    }
+
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+
     return status;
 }
 

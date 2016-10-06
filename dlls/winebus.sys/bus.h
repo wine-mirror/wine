@@ -34,3 +34,4 @@ DEVICE_OBJECT *bus_create_hid_device(DRIVER_OBJECT *driver, const WCHAR *busidW,
                                      const GUID *class, const platform_vtbl *vtbl, DWORD platform_data_size) DECLSPEC_HIDDEN;
 DEVICE_OBJECT *bus_find_hid_device(const platform_vtbl *vtbl, void *platform_dev) DECLSPEC_HIDDEN;
 void bus_remove_hid_device(DEVICE_OBJECT *device) DECLSPEC_HIDDEN;
+NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;

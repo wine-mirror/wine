@@ -299,6 +299,7 @@ NTSTATUS WINAPI udev_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry
 
     udev_driver_obj = driver;
     driver->MajorFunction[IRP_MJ_PNP] = common_pnp_dispatch;
+    driver->MajorFunction[IRP_MJ_INTERNAL_DEVICE_CONTROL] = hid_internal_dispatch;
 
     if (!(events[0] = CreateEventW(NULL, TRUE, FALSE, NULL)))
         goto error;
