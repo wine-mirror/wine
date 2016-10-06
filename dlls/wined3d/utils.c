@@ -4502,8 +4502,8 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
      * here besides the projection transformation itself:
      *   - We need to flip along the y-axis in case of offscreen rendering.
      *   - OpenGL Z range is {-Wc,...,Wc} while D3D Z range is {0,...,Wc}.
-     *   - D3D coordinates refer to pixel centers while GL coordinates refer
-     *     to pixel corners.
+     *   - <= D3D9 coordinates refer to pixel centers while GL coordinates
+     *     refer to pixel corners.
      *   - D3D has a top-left filling convention. We need to maintain this
      *     even after the y-flip mentioned above.
      * In order to handle the last two points, we translate by

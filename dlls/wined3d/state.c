@@ -4653,8 +4653,10 @@ static void viewport_miscpart_cc(struct wined3d_context *context,
 {
     const struct wined3d_rendertarget_view *depth_stencil = state->fb->depth_stencil;
     const struct wined3d_rendertarget_view *target = state->fb->render_targets[0];
+    /* See get_projection_matrix() in utils.c for a discussion about those
+     * values. */
     float pixel_center_offset = context->device->wined3d->flags
-            & WINED3D_PIXEL_CENTER_INTEGER ? 0.5f : 0.0f;
+            & WINED3D_PIXEL_CENTER_INTEGER ? 63.0f / 128.0f : -1.0f / 128.0f;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_viewport vp = state->viewport;
     unsigned int width, height;

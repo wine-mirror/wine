@@ -3862,7 +3862,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
 
         gl_info->gl_ops.gl.p_glGetIntegerv(GL_VIEWPORT_SUBPIXEL_BITS, &subpixel_bits);
         TRACE("Viewport supports %d subpixel bits.\n", subpixel_bits);
-        if (!subpixel_bits)
+        if (subpixel_bits < 8)
             gl_info->supported[ARB_VIEWPORT_ARRAY] = FALSE;
     }
     if (gl_info->supported[ARB_CLIP_CONTROL] && !gl_info->supported[ARB_VIEWPORT_ARRAY])
