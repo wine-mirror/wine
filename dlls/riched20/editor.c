@@ -763,18 +763,6 @@ void ME_RTFParAttrHook(RTF_Info *info)
     info->fmt.dwMask |= PFM_NUMBERING;
     info->fmt.wNumbering = 2; /* FIXME: MSDN says it's not used ?? */
     break;
-  case rtfParNumDecimal:
-    info->fmt.dwMask |= PFM_NUMBERING;
-    info->fmt.wNumbering = 2; /* FIXME: MSDN says it's not used ?? */
-    break;
-  case rtfParNumIndent:
-    info->fmt.dwMask |= PFM_NUMBERINGTAB;
-    info->fmt.wNumberingTab = info->rtfParam;
-    break;
-  case rtfParNumStartAt:
-    info->fmt.dwMask |= PFM_NUMBERINGSTART;
-    info->fmt.wNumberingStart = info->rtfParam;
-    break;
   case rtfBorderLeft:
     info->borderType = RTFBorderParaLeft;
     info->fmt.wBorders |= 1;
@@ -1432,6 +1420,110 @@ static void ME_RTFReadObjectGroup(RTF_Info *info)
   RTFRouteToken(info);	/* feed "}" back to router */
 }
 
+static void ME_RTFReadParnumGroup( RTF_Info *info )
+{
+    int level = 1, type = -1;
+    WORD indent = 0, start = 1;
+    WCHAR txt_before = 0, txt_after = 0;
+
+    for (;;)
+    {
+        RTFGetToken( info );
+
+        if (RTFCheckCMM( info, rtfControl, rtfDestination, rtfParNumTextBefore ) ||
+            RTFCheckCMM( info, rtfControl, rtfDestination, rtfParNumTextAfter ))
+        {
+            int loc = info->rtfMinor;
+
+            RTFGetToken( info );
+            if (info->rtfClass == rtfText)
+            {
+                if (loc == rtfParNumTextBefore)
+                    txt_before = info->rtfMajor;
+                else
+                    txt_after = info->rtfMajor;
+                continue;
+            }
+            /* falling through to catch EOFs and group level changes */
+        }
+
+        if (info->rtfClass == rtfEOF)
+            return;
+
+        if (RTFCheckCM( info, rtfGroup, rtfEndGroup ))
+        {
+            if (--level == 0) break;
+            continue;
+        }
+
+        if (RTFCheckCM( info, rtfGroup, rtfBeginGroup ))
+        {
+            level++;
+            continue;
+        }
+
+        /* Ignore non para-attr */
+        if (!RTFCheckCM( info, rtfControl, rtfParAttr ))
+            continue;
+
+        switch (info->rtfMinor)
+        {
+        case rtfParLevel: /* Para level is ignored */
+        case rtfParSimple:
+            break;
+        case rtfParBullet:
+            type = PFN_BULLET;
+            break;
+
+        case rtfParNumDecimal:
+            type = PFN_ARABIC;
+            break;
+        case rtfParNumULetter:
+            type = PFN_UCLETTER;
+            break;
+        case rtfParNumURoman:
+            type = PFN_UCROMAN;
+            break;
+        case rtfParNumLLetter:
+            type = PFN_LCLETTER;
+            break;
+        case rtfParNumLRoman:
+            type = PFN_LCROMAN;
+            break;
+
+        case rtfParNumIndent:
+            indent = info->rtfParam;
+            break;
+        case rtfParNumStartAt:
+            start = info->rtfParam;
+            break;
+        }
+    }
+
+    if (type != -1)
+    {
+        info->fmt.dwMask |= (PFM_NUMBERING | PFM_NUMBERINGSTART | PFM_NUMBERINGSTYLE | PFM_NUMBERINGTAB);
+        info->fmt.wNumbering = type;
+        info->fmt.wNumberingStart = start;
+        info->fmt.wNumberingStyle = PFNS_PAREN;
+        if (type != PFN_BULLET)
+        {
+            if (txt_before == 0 && txt_after == 0)
+                info->fmt.wNumberingStyle = PFNS_PLAIN;
+            else if (txt_after == '.')
+                info->fmt.wNumberingStyle = PFNS_PERIOD;
+            else if (txt_before == '(' && txt_after == ')')
+                info->fmt.wNumberingStyle = PFNS_PARENS;
+        }
+        info->fmt.wNumberingTab = indent;
+    }
+
+    TRACE("type %d indent %d start %d txt before %04x txt after %04x\n",
+          type, indent, start, txt_before, txt_after);
+
+    RTFRouteToken( info );     /* feed "}" back to router */
+}
+
 static void ME_RTFReadHook(RTF_Info *info)
 {
   switch(info->rtfClass)
@@ -1581,6 +1673,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       RTFSetDestinationCallback(&parser, rtfShpPict, ME_RTFReadShpPictGroup);
       RTFSetDestinationCallback(&parser, rtfPict, ME_RTFReadPictGroup);
       RTFSetDestinationCallback(&parser, rtfObject, ME_RTFReadObjectGroup);
+      RTFSetDestinationCallback(&parser, rtfParNumbering, ME_RTFReadParnumGroup);
       if (!parser.editor->bEmulateVersion10) /* v4.1 */
       {
         RTFSetDestinationCallback(&parser, rtfNoNestTables, RTFSkipGroup);

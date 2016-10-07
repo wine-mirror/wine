@@ -8414,6 +8414,74 @@ static void test_eop_char_fmt(void)
     DestroyWindow( edit );
 }
 
+static void test_para_numbering(void)
+{
+    HWND edit = new_richeditW( NULL );
+    const char *numbers = "{\\rtf1{\\fonttbl{\\f0\\fswiss\\fprq2\\fcharset0 Arial;}{\\f1\\fnil\\fcharset2 Symbol;}}"
+        "\\pard{\\pntext\\f0 3.\\tab}{\\*\\pn\\pnlvlbody\\pnfs32\\pnf0\\pnindent1000\\pnstart2\\pndec{\\pntxta.}}"
+        "\\fs20\\fi200\\li360\\f0 First\\par"
+        "{\\pntext\\f0 4.\\tab}\\f0 Second\\par"
+        "{\\pntext\\f0 6.\\tab}\\f0 Third\\par}";
+    const WCHAR expect_numbers_txt[] = {'F','i','r','s','t','\r','S','e','c','o','n','d','\r','T','h','i','r','d',0};
+    EDITSTREAM es;
+    WCHAR buf[80];
+    LRESULT result;
+    PARAFORMAT2 fmt, fmt2;
+    GETTEXTEX get_text;
+    CHARFORMAT2W cf;
+
+    get_text.cb = sizeof(buf);
+    get_text.flags = GT_RAWTEXT;
+    get_text.codepage = 1200;
+    get_text.lpDefaultChar = NULL;
+    get_text.lpUsedDefChar = NULL;
+
+    es.dwCookie = (DWORD_PTR)&numbers;
+    es.dwError = 0;
+    es.pfnCallback = test_EM_STREAMIN_esCallback;
+    result = SendMessageA( edit, EM_STREAMIN, SF_RTF, (LPARAM)&es );
+    ok( result == lstrlenW( expect_numbers_txt ), "got %ld\n", result );
+
+    result = SendMessageW( edit, EM_GETTEXTEX, (WPARAM)&get_text, (LPARAM)buf );
+    ok( result == lstrlenW( expect_numbers_txt ), "got %ld\n", result );
+    ok( !lstrcmpW( buf, expect_numbers_txt ), "got %s\n", wine_dbgstr_w(buf) );
+
+    SendMessageW( edit, EM_SETSEL, 1, 1 );
+    memset( &fmt, 0, sizeof(fmt) );
+    fmt.cbSize = sizeof(fmt);
+    fmt.dwMask = PFM_ALL2;
+    SendMessageW( edit, EM_GETPARAFORMAT, 0, (LPARAM)&fmt );
+    ok( fmt.wNumbering == PFN_ARABIC, "got %d\n", fmt.wNumbering );
+    ok( fmt.wNumberingStart == 2, "got %d\n", fmt.wNumberingStart );
+    ok( fmt.wNumberingStyle == PFNS_PERIOD, "got %04x\n", fmt.wNumberingStyle );
+    ok( fmt.wNumberingTab == 1000, "got %d\n", fmt.wNumberingTab );
+    ok( fmt.dxStartIndent == 560, "got %d\n", fmt.dxStartIndent );
+    ok( fmt.dxOffset == -200, "got %d\n", fmt.dxOffset );
+
+    /* Second para should have identical fmt */
+    SendMessageW( edit, EM_SETSEL, 10, 10 );
+    memset( &fmt2, 0, sizeof(fmt2) );
+    fmt2.cbSize = sizeof(fmt2);
+    fmt2.dwMask = PFM_ALL2;
+    SendMessageW( edit, EM_GETPARAFORMAT, 0, (LPARAM)&fmt2 );
+    ok( !memcmp( &fmt, &fmt2, sizeof(fmt) ), "format mismatch\n" );
+
+    /* Check the eop heights - this determines the label height */
+    SendMessageW( edit, EM_SETSEL, 12, 13 );
+    cf.cbSize = sizeof(cf);
+    cf.dwMask = CFM_SIZE;
+    SendMessageW( edit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf );
+    ok( cf.yHeight == 200, "got %d\n", cf.yHeight );
+
+    SendMessageW( edit, EM_SETSEL, 18, 19 );
+    cf.cbSize = sizeof(cf);
+    cf.dwMask = CFM_SIZE;
+    SendMessageW( edit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf );
+    ok( cf.yHeight == 200, "got %d\n", cf.yHeight );
+
+    DestroyWindow( edit );
+}
+
 START_TEST( editor )
 {
   BOOL ret;
@@ -8486,6 +8554,7 @@ START_TEST( editor )
   test_rtf_specials();
   test_background();
   test_eop_char_fmt();
+  test_para_numbering();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
