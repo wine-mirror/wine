@@ -358,7 +358,7 @@ static NTSTATUS dispatch_flush( const irp_params_t *params, void *in_buff, ULONG
     TRACE( "device %p file %p\n", device, file );
 
     /* note: we abuse UserIosb to store the server irp handle */
-    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_FLUSH_BUFFERS, device, in_buff, in_size,
+    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_FLUSH_BUFFERS, device, NULL, 0,
                                               NULL, NULL, irp_handle )))
         return STATUS_NO_MEMORY;
 
