@@ -553,8 +553,9 @@ void ME_RTFParAttrHook(RTF_Info *info)
       info->borderType = RTFBorderParaTop;
     info->fmt.dwMask = PFM_ALIGNMENT | PFM_BORDER | PFM_LINESPACING | PFM_TABSTOPS |
         PFM_OFFSET | PFM_RIGHTINDENT | PFM_SPACEAFTER | PFM_SPACEBEFORE |
-        PFM_STARTINDENT | PFM_RTLPARA;
-    /* TODO: numbering, shading */
+        PFM_STARTINDENT | PFM_RTLPARA | PFM_NUMBERING | PFM_NUMBERINGSTART |
+        PFM_NUMBERINGSTYLE | PFM_NUMBERINGTAB;
+    /* TODO: shading */
     info->fmt.wAlignment = PFA_LEFT;
     info->fmt.cTabCount = 0;
     info->fmt.dxOffset = info->fmt.dxStartIndent = info->fmt.dxRightIndent = 0;
@@ -564,6 +565,11 @@ void ME_RTFParAttrHook(RTF_Info *info)
     info->fmt.dySpaceBefore = info->fmt.dySpaceAfter = 0;
     info->fmt.dyLineSpacing = 0;
     info->fmt.wEffects &= ~PFE_RTLPARA;
+    info->fmt.wNumbering = 0;
+    info->fmt.wNumberingStart = 0;
+    info->fmt.wNumberingStyle = 0;
+    info->fmt.wNumberingTab = 0;
+
     if (!info->editor->bEmulateVersion10) /* v4.1 */
     {
       if (info->tableDef && info->tableDef->tableRowStart &&

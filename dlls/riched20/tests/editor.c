@@ -1307,6 +1307,12 @@ static void test_SETPARAFORMAT(void)
   ok(ret == expectedMask, "expected %x got %x\n", expectedMask, ret);
   ok(fmt.dwMask == expectedMask, "expected %x got %x\n", expectedMask, fmt.dwMask);
 
+  /* Test some other paraformat field defaults */
+  ok( fmt.wNumbering == 0, "got %d\n", fmt.wNumbering );
+  ok( fmt.wNumberingStart == 0, "got %d\n", fmt.wNumberingStart );
+  ok( fmt.wNumberingStyle == 0, "got %04x\n", fmt.wNumberingStyle );
+  ok( fmt.wNumberingTab == 0, "got %d\n", fmt.wNumberingTab );
+
   DestroyWindow(hwndRichEdit);
 }
 
