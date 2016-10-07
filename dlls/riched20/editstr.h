@@ -201,6 +201,7 @@ typedef struct tagME_Paragraph
   POINT pt;
   int nHeight, nWidth;
   int nRows;
+  ME_Run *eop_run; /* ptr to the end-of-para run */
   struct tagME_DisplayItem *prev_para, *next_para;
 } ME_Paragraph;
 

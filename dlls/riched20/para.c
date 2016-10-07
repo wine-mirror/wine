@@ -81,6 +81,8 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   run->member.run.len = eol_len;
   run->member.run.para = &para->member.para;
 
+  para->member.para.eop_run = &run->member.run;
+
   ME_InsertBefore(text->pLast, para);
   ME_InsertBefore(text->pLast, run);
   para->member.para.prev_para = text->pFirst;
@@ -272,6 +274,10 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   ME_InsertBefore(run, new_para);
   ME_InsertBefore(new_para, end_run);
 
+  /* Fix up the paras' eop_run ptrs */
+  new_para->member.para.eop_run = run_para->member.para.eop_run;
+  run_para->member.para.eop_run = &end_run->member.run;
+
   if (!editor->bEmulateVersion10) { /* v4.1 */
     if (paraFlags & (MEPF_ROWSTART|MEPF_CELL))
     {
@@ -428,6 +434,9 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
     pTmp->member.run.nCharOfs += shift;
     pTmp->member.run.para = &tp->member.para;
   } while(1);
+
+  /* Fix up the para's eop_run ptr */
+  tp->member.para.eop_run = pNext->member.para.eop_run;
 
   ME_Remove(pRun);
   ME_DestroyDisplayItem(pRun);
