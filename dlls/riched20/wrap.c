@@ -624,8 +624,8 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
       wc->pt.x + run->nWidth - wc->context->pt.x > wc->nAvailWidth)
   {
     int loc = wc->context->pt.x + wc->nAvailWidth - wc->pt.x;
-    /* total white run ? */
-    if (run->nFlags & MERF_WHITESPACE) {
+    /* total white run or end para */
+    if (run->nFlags & (MERF_WHITESPACE | MERF_ENDPARA)) {
       /* let the overflow logic handle it */
       wc->bOverflown = TRUE;
       return p;
