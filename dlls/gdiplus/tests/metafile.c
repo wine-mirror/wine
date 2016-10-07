@@ -36,6 +36,8 @@ typedef struct emfplus_record
     BOOL  todo;
     ULONG record_type;
     BOOL  playback_todo;
+    void (*playback_fn)(GpMetafile* metafile, EmfPlusRecordType record_type,
+        unsigned int flags, unsigned int dataSize, const unsigned char *pStr);
 } emfplus_record;
 
 typedef struct emfplus_check_state
@@ -205,12 +207,19 @@ static BOOL CALLBACK play_metafile_proc(EmfPlusRecordType record_type, unsigned 
     emfplus_check_state *state = (emfplus_check_state*)userdata;
     GpStatus stat;
 
-    stat = GdipPlayMetafileRecord(state->metafile, record_type, flags, dataSize, pStr);
-
     if (state->expected[state->count].record_type)
     {
-        todo_wine_if (state->expected[state->count].playback_todo)
-            ok(stat == Ok, "%s.%i: GdipPlayMetafileRecord failed with stat %i\n", state->desc, state->count, stat);
+        BOOL match = (state->expected[state->count].record_type == record_type);
+
+        if (match && state->expected[state->count].playback_fn)
+            state->expected[state->count].playback_fn(state->metafile, record_type, flags, dataSize, pStr);
+        else
+        {
+            stat = GdipPlayMetafileRecord(state->metafile, record_type, flags, dataSize, pStr);
+            todo_wine_if (state->expected[state->count].playback_todo)
+                ok(stat == Ok, "%s.%i: GdipPlayMetafileRecord failed with stat %i\n", state->desc, state->count, stat);
+        }
+
         todo_wine_if (state->expected[state->count].todo)
             ok(state->expected[state->count].record_type == record_type,
                 "%s.%i: expected record type 0x%x, got 0x%x\n", state->desc, state->count,
@@ -2145,6 +2154,124 @@ static void test_clipping(void)
     expect(Ok, stat);
 }
 
+static void test_gditransform_cb(GpMetafile* metafile, EmfPlusRecordType record_type,
+    unsigned int flags, unsigned int dataSize, const unsigned char *pStr)
+{
+    static const XFORM xform = {0.5, 0, 0, 0.5, 0, 0};
+    static const RECTL rectangle = {0,0,100,100};
+    GpStatus stat;
+
+    stat = GdipPlayMetafileRecord(metafile, EMR_SETWORLDTRANSFORM, 0, sizeof(xform), (void*)&xform);
+    expect(Ok, stat);
+
+    stat = GdipPlayMetafileRecord(metafile, EMR_RECTANGLE, 0, sizeof(rectangle), (void*)&rectangle);
+    expect(Ok, stat);
+}
+
+static const emfplus_record gditransform_records[] = {
+    {0, EMR_HEADER},
+    {0, EMR_CREATEBRUSHINDIRECT},
+    {0, EMR_SELECTOBJECT},
+    {0, EMR_GDICOMMENT, 0, test_gditransform_cb},
+    {0, EMR_SELECTOBJECT},
+    {0, EMR_DELETEOBJECT},
+    {0, EMR_EOF},
+    {0}
+};
+
+static void test_gditransform(void)
+{
+    GpStatus stat;
+    GpMetafile *metafile;
+    GpGraphics *graphics;
+    HDC hdc, metafile_dc;
+    HENHMETAFILE hemf;
+    MetafileHeader header;
+    static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
+    static const GpPointF dst_points[3] = {{0.0,0.0},{40.0,0.0},{0.0,40.0}};
+    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
+    HBRUSH hbrush, holdbrush;
+    GpBitmap *bitmap;
+    ARGB color;
+
+    hdc = CreateCompatibleDC(0);
+
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(Ok, stat);
+
+    DeleteDC(hdc);
+
+    if (stat != Ok)
+            return;
+
+    stat = GdipGetHemfFromMetafile(metafile, &hemf);
+    expect(InvalidParameter, stat);
+
+    memset(&header, 0xaa, sizeof(header));
+    stat = GdipGetMetafileHeaderFromMetafile(metafile, &header);
+    expect(Ok, stat);
+    expect(MetafileTypeEmf, header.Type);
+    ok(header.Version == 0xdbc01001 || header.Version == 0xdbc01002, "Unexpected version %x\n", header.Version);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipGetDC(graphics, &metafile_dc);
+    expect(Ok, stat);
+
+    if (stat != Ok)
+    {
+        GdipDeleteGraphics(graphics);
+        GdipDisposeImage((GpImage*)metafile);
+        return;
+    }
+
+    hbrush = CreateSolidBrush(0xff);
+
+    holdbrush = SelectObject(metafile_dc, hbrush);
+
+    GdiComment(metafile_dc, 8, (const BYTE*)"winetest");
+
+    SelectObject(metafile_dc, holdbrush);
+
+    DeleteObject(hbrush);
+
+    stat = GdipReleaseDC(graphics, metafile_dc);
+    expect(Ok, stat);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    check_metafile(metafile, gditransform_records, "gditransform metafile", dst_points, &frame, UnitPixel);
+
+    sync_metafile(&metafile, "gditransform.emf");
+
+    stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, stat);
+
+    play_metafile(metafile, graphics, gditransform_records, "gditransform playback", dst_points, &frame, UnitPixel);
+
+    stat = GdipBitmapGetPixel(bitmap, 10, 10, &color);
+    expect(Ok, stat);
+    expect(0xffff0000, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 30, 30, &color);
+    expect(Ok, stat);
+    todo_wine expect(0x00000000, color);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)bitmap);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -2181,6 +2308,7 @@ START_TEST(metafile)
     test_frameunit();
     test_containers();
     test_clipping();
+    test_gditransform();
 
     GdiplusShutdown(gdiplusToken);
 }
