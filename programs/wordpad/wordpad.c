@@ -2353,22 +2353,28 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     case ID_BULLET:
         {
-            PARAFORMAT pf;
+            PARAFORMAT2 pf;
 
             pf.cbSize = sizeof(pf);
             pf.dwMask = PFM_NUMBERING;
             SendMessageW(hwndEditor, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
 
-            pf.dwMask |=  PFM_OFFSET;
+            pf.dwMask = PFM_NUMBERING | PFM_NUMBERINGSTART | PFM_NUMBERINGTAB | PFM_OFFSET | PFM_OFFSETINDENT;
 
             if(pf.wNumbering == PFN_BULLET)
             {
                 pf.wNumbering = 0;
+                pf.wNumberingStart = 0;
+                pf.wNumberingTab = 0;
                 pf.dxOffset = 0;
+                pf.dxStartIndent = -360;
             } else
             {
                 pf.wNumbering = PFN_BULLET;
-                pf.dxOffset = 720;
+                pf.wNumberingStart = 1;
+                pf.wNumberingTab = 360;
+                pf.dxOffset = 360;
+                pf.dxStartIndent = 360;
             }
 
             SendMessageW(hwndEditor, EM_SETPARAFORMAT, 0, (LPARAM)&pf);
