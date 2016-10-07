@@ -1040,6 +1040,30 @@ GpStatus WINGDIPAPI GdipGetHemfFromMetafile(GpMetafile *metafile, HENHMETAFILE *
     return Ok;
 }
 
+static GpStatus METAFILE_PlaybackUpdateGdiTransform(GpMetafile *metafile)
+{
+    XFORM combined, final;
+    const GpRectF *rect;
+    const GpPointF *pt;
+
+    /* This transforms metafile device space to output points. */
+    rect = &metafile->src_rect;
+    pt = metafile->playback_points;
+    final.eM11 = (pt[1].X - pt[0].X) / rect->Width;
+    final.eM21 = (pt[2].X - pt[0].X) / rect->Height;
+    final.eDx = pt[0].X - final.eM11 * rect->X - final.eM21 * rect->Y;
+    final.eM12 = (pt[1].Y - pt[0].Y) / rect->Width;
+    final.eM22 = (pt[2].Y - pt[0].Y) / rect->Height;
+    final.eDy = pt[0].Y - final.eM12 * rect->X - final.eM22 * rect->Y;
+
+    CombineTransform(&combined, &metafile->gdiworldtransform, &final);
+
+    SetGraphicsMode(metafile->playback_dc, GM_ADVANCED);
+    SetWorldTransform(metafile->playback_dc, &combined);
+
+    return Ok;
+}
+
 static GpStatus METAFILE_PlaybackGetDC(GpMetafile *metafile)
 {
     GpStatus stat = Ok;
@@ -1048,20 +1072,10 @@ static GpStatus METAFILE_PlaybackGetDC(GpMetafile *metafile)
 
     if (stat == Ok)
     {
-        /* The result of GdipGetDC always expects device co-ordinates, but the
-         * device co-ordinates of the source metafile do not correspond to
-         * device co-ordinates of the destination. Therefore, we set up the DC
-         * so that the metafile's bounds map to the destination points where we
-         * are drawing this metafile. */
-        SetMapMode(metafile->playback_dc, MM_ANISOTROPIC);
+        static const XFORM identity = {1, 0, 0, 1, 0, 0};
 
-        SetWindowOrgEx(metafile->playback_dc, metafile->bounds.X, metafile->bounds.Y, NULL);
-        SetWindowExtEx(metafile->playback_dc, metafile->bounds.Width, metafile->bounds.Height, NULL);
-
-        SetViewportOrgEx(metafile->playback_dc, metafile->playback_points[0].X, metafile->playback_points[0].Y, NULL);
-        SetViewportExtEx(metafile->playback_dc,
-            metafile->playback_points[1].X - metafile->playback_points[0].X,
-            metafile->playback_points[2].Y - metafile->playback_points[0].Y, NULL);
+        metafile->gdiworldtransform = identity;
+        METAFILE_PlaybackUpdateGdiTransform(metafile);
     }
 
     return stat;
@@ -1141,12 +1155,18 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             case EMR_SETVIEWPORTORGEX:
             case EMR_SETVIEWPORTEXTEX:
             case EMR_EXTSELECTCLIPRGN:
-            case EMR_SETWORLDTRANSFORM:
             case EMR_SCALEVIEWPORTEXTEX:
             case EMR_SCALEWINDOWEXTEX:
             case EMR_MODIFYWORLDTRANSFORM:
                 FIXME("not implemented for record type %x\n", recordType);
                 break;
+            case EMR_SETWORLDTRANSFORM:
+            {
+                const XFORM* xform = (void*)data;
+                real_metafile->gdiworldtransform = *xform;
+                METAFILE_PlaybackUpdateGdiTransform(real_metafile);
+                break;
+            }
             default:
                 break;
             }

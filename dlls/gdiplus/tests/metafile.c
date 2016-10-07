@@ -2260,7 +2260,7 @@ static void test_gditransform(void)
 
     stat = GdipBitmapGetPixel(bitmap, 30, 30, &color);
     expect(Ok, stat);
-    todo_wine expect(0x00000000, color);
+    expect(0x00000000, color);
 
     stat = GdipDeleteGraphics(graphics);
     expect(Ok, stat);
