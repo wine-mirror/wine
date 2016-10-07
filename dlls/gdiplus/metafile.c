@@ -1131,6 +1131,26 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
         {
             ENHMETARECORD *record;
 
+            switch (recordType)
+            {
+            case EMR_SETMAPMODE:
+            case EMR_SAVEDC:
+            case EMR_RESTOREDC:
+            case EMR_SETWINDOWORGEX:
+            case EMR_SETWINDOWEXTEX:
+            case EMR_SETVIEWPORTORGEX:
+            case EMR_SETVIEWPORTEXTEX:
+            case EMR_EXTSELECTCLIPRGN:
+            case EMR_SETWORLDTRANSFORM:
+            case EMR_SCALEVIEWPORTEXTEX:
+            case EMR_SCALEWINDOWEXTEX:
+            case EMR_MODIFYWORLDTRANSFORM:
+                FIXME("not implemented for record type %x\n", recordType);
+                break;
+            default:
+                break;
+            }
+
             record = heap_alloc_zero(dataSize + 8);
 
             if (record)
