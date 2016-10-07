@@ -58,6 +58,7 @@ typedef struct tagME_String
 {
   WCHAR *szData;
   int nLen, nBuffer;
+  void (*free)(struct tagME_String *);
 } ME_String;
 
 typedef struct tagME_FontCacheItem

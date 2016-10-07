@@ -27,10 +27,37 @@ static int ME_GetOptimalBuffer(int nLen)
   return ((sizeof(WCHAR) * nLen) + 128) & ~63;
 }
 
+static ME_String *make_string( void (*free)(ME_String *) )
+{
+  ME_String *s = heap_alloc( sizeof(*s) );
+
+  if (s) s->free = free;
+  return s;
+}
+
+/* Create a ME_String using the const string provided.
+ * str must exist for the lifetime of the returned ME_String.
+ */
+ME_String *ME_MakeStringConst(const WCHAR *str, int len)
+{
+  ME_String *s = make_string( NULL );
+  if (!s) return NULL;
+
+  s->szData = (WCHAR *)str;
+  s->nLen = len;
+  s->nBuffer = 0;
+  return s;
+}
+
+static void heap_string_free(ME_String *s)
+{
+  heap_free( s->szData );
+}
+
 /* Create a buffer (uninitialized string) of size nMaxChars */
 static ME_String *ME_MakeStringB(int nMaxChars)
 {
-  ME_String *s = heap_alloc( sizeof(*s) );
+  ME_String *s = make_string( heap_string_free );
 
   if (!s) return NULL;
   s->nLen = nMaxChars;
@@ -69,7 +96,7 @@ ME_String *ME_MakeStringR(WCHAR cRepeat, int nMaxChars)
 void ME_DestroyString(ME_String *s)
 {
   if (!s) return;
-  heap_free( s->szData );
+  if (s->free) s->free( s );
   heap_free( s );
 }
 
@@ -78,6 +105,7 @@ BOOL ME_InsertString(ME_String *s, int ofs, const WCHAR *insert, int len)
     DWORD new_len = s->nLen + len + 1;
     WCHAR *new;
 
+    assert( s->nBuffer ); /* Not a const string */
     assert( ofs <= s->nLen );
 
     if( new_len > s->nBuffer )
@@ -104,9 +132,7 @@ ME_String *ME_VSplitString(ME_String *orig, int charidx)
 {
   ME_String *s;
 
-  /*if (charidx<0) charidx = 0;
-  if (charidx>orig->nLen) charidx = orig->nLen;
-  */
+  assert(orig->nBuffer); /* Not a const string */
   assert(charidx>=0);
   assert(charidx<=orig->nLen);
 
@@ -122,6 +148,7 @@ void ME_StrDeleteV(ME_String *s, int nVChar, int nChars)
 {
   int end_ofs = nVChar + nChars;
 
+  assert(s->nBuffer); /* Not a const string */
   assert(nChars >= 0);
   assert(nVChar >= 0);
   assert(end_ofs <= s->nLen);
