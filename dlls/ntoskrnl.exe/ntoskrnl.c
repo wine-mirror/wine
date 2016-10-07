@@ -172,7 +172,7 @@ static HANDLE get_device_manager(void)
     return ret;
 }
 
-static NTSTATUS dispatch_irp( DEVICE_OBJECT *device, IRP *irp )
+static void dispatch_irp( DEVICE_OBJECT *device, IRP *irp )
 {
     LARGE_INTEGER count;
 
@@ -183,8 +183,6 @@ static NTSTATUS dispatch_irp( DEVICE_OBJECT *device, IRP *irp )
     IoCallDriver( device, irp );
 
     device->CurrentIrp = NULL;
-
-    return STATUS_SUCCESS;
 }
 
 /* process a create request for a given file */
@@ -227,10 +225,8 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
     irp->UserIosb = irp_handle; /* note: we abuse UserIosb to store the server irp handle */
     irp->UserEvent = NULL;
 
-    if (device->DriverObject->MajorFunction[IRP_MJ_CREATE]) return dispatch_irp( device, irp );
+    dispatch_irp( device, irp );
 
-    irp->IoStatus.u.Status = STATUS_SUCCESS;
-    IoCompleteRequest( irp, IO_NO_INCREMENT );
     return STATUS_SUCCESS;
 }
 
@@ -267,12 +263,7 @@ static NTSTATUS dispatch_close( const irp_params_t *params, void *in_buff, ULONG
     irp->UserIosb = irp_handle; /* note: we abuse UserIosb to store the server irp handle */
     irp->UserEvent = NULL;
 
-    if (!device->DriverObject->MajorFunction[IRP_MJ_CLOSE])
-    {
-        irp->IoStatus.u.Status = STATUS_SUCCESS;
-        IoCompleteRequest( irp, IO_NO_INCREMENT );
-    }
-    else dispatch_irp( device, irp );
+    dispatch_irp( device, irp );
 
     HeapFree( GetProcessHeap(), 0, file );  /* FIXME: async close processing not supported */
     return STATUS_SUCCESS;
@@ -292,7 +283,6 @@ static NTSTATUS dispatch_read( const irp_params_t *params, void *in_buff, ULONG 
     if (!file) return STATUS_INVALID_HANDLE;
 
     device = file->DeviceObject;
-    if (!device->DriverObject->MajorFunction[IRP_MJ_READ]) return STATUS_NOT_SUPPORTED;
 
     TRACE( "device %p file %p size %u\n", device, file, out_size );
 
@@ -314,7 +304,9 @@ static NTSTATUS dispatch_read( const irp_params_t *params, void *in_buff, ULONG 
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->Parameters.Read.Key = params->read.key;
 
-    return dispatch_irp( device, irp );
+    dispatch_irp( device, irp );
+
+    return STATUS_SUCCESS;
 }
 
 /* process a write request for a given device */
@@ -330,7 +322,6 @@ static NTSTATUS dispatch_write( const irp_params_t *params, void *in_buff, ULONG
     if (!file) return STATUS_INVALID_HANDLE;
 
     device = file->DeviceObject;
-    if (!device->DriverObject->MajorFunction[IRP_MJ_WRITE]) return STATUS_NOT_SUPPORTED;
 
     TRACE( "device %p file %p size %u\n", device, file, in_size );
 
@@ -347,7 +338,9 @@ static NTSTATUS dispatch_write( const irp_params_t *params, void *in_buff, ULONG
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->Parameters.Write.Key = params->write.key;
 
-    return dispatch_irp( device, irp );
+    dispatch_irp( device, irp );
+
+    return STATUS_SUCCESS;
 }
 
 /* process a flush request for a given device */
@@ -361,7 +354,6 @@ static NTSTATUS dispatch_flush( const irp_params_t *params, void *in_buff, ULONG
     if (!file) return STATUS_INVALID_HANDLE;
 
     device = file->DeviceObject;
-    if (!device->DriverObject->MajorFunction[IRP_MJ_FLUSH_BUFFERS]) return STATUS_NOT_SUPPORTED;
 
     TRACE( "device %p file %p\n", device, file );
 
@@ -373,7 +365,9 @@ static NTSTATUS dispatch_flush( const irp_params_t *params, void *in_buff, ULONG
     irp->Tail.Overlay.OriginalFileObject = file;
     irp->RequestorMode = UserMode;
 
-    return dispatch_irp( device, irp );
+    dispatch_irp( device, irp );
+
+    return STATUS_SUCCESS;
 }
 
 /* process an ioctl request for a given device */
@@ -388,7 +382,6 @@ static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG
     if (!file) return STATUS_INVALID_HANDLE;
 
     device = file->DeviceObject;
-    if (!device->DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL]) return STATUS_NOT_SUPPORTED;
 
     TRACE( "ioctl %x device %p file %p in_size %u out_size %u\n",
            params->ioctl.code, device, file, in_size, out_size );
@@ -417,7 +410,9 @@ static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG
     irp->Tail.Overlay.OriginalFileObject = file;
     irp->RequestorMode = UserMode;
 
-    return dispatch_irp( device, irp );
+    dispatch_irp( device, irp );
+
+    return STATUS_SUCCESS;
 }
 
 typedef NTSTATUS (*dispatch_func)( const irp_params_t *params, void *in_buff, ULONG in_size,
