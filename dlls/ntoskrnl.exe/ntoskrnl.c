@@ -259,11 +259,6 @@ static NTSTATUS dispatch_close( const irp_params_t *params, void *in_buff, ULONG
     irpsp->MajorFunction = IRP_MJ_CLOSE;
     irpsp->DeviceObject = device;
     irpsp->CompletionRoutine = NULL;
-    irpsp->Parameters.Create.SecurityContext = NULL;  /* FIXME */
-    irpsp->Parameters.Create.Options = params->create.options;
-    irpsp->Parameters.Create.ShareAccess = params->create.sharing;
-    irpsp->Parameters.Create.FileAttributes = 0;
-    irpsp->Parameters.Create.EaLength = 0;
 
     irp->Tail.Overlay.OriginalFileObject = file;
     irp->RequestorMode = UserMode;
