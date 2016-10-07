@@ -898,6 +898,25 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
   }
 }
 
+static void draw_para_number( ME_Context *c, ME_DisplayItem *p )
+{
+    ME_Paragraph *para = &p->member.para;
+    HFONT old_font;
+    int x, y;
+
+    if (para->fmt.wNumbering)
+    {
+        old_font = ME_SelectStyleFont( c, para->para_num.style );
+
+        x = c->pt.x + para->para_num.pt.x;
+        y = c->pt.y + para->pt.y + para->para_num.pt.y;
+
+        ExtTextOutW( c->hDC, x, y, 0, NULL, para->para_num.text->szData, para->para_num.text->nLen, NULL );
+
+        ME_UnselectStyleFont( c, para->para_num.style, old_font );
+    }
+}
+
 static void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph)
 {
   int align = SetTextAlign(c->hDC, TA_BASELINE);
@@ -1023,6 +1042,7 @@ static void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph)
   }
 
   ME_DrawTableBorders(c, paragraph);
+  draw_para_number(c, paragraph);
 
   SetTextAlign(c->hDC, align);
 }

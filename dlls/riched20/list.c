@@ -164,6 +164,7 @@ void ME_DestroyDisplayItem(ME_DisplayItem *item)
   if (item->type==diParagraph)
   {
     ME_DestroyString(item->member.para.text);
+    para_num_clear( &item->member.para.para_num );
   }
 
   if (item->type==diRun)

@@ -188,6 +188,14 @@ typedef struct tagME_BorderRect
   ME_Border right;
 } ME_BorderRect;
 
+struct para_num
+{
+    ME_Style *style;
+    ME_String *text;
+    INT width;
+    POINT pt;
+};
+
 typedef struct tagME_Paragraph
 {
   PARAFORMAT2 fmt;
@@ -201,6 +209,7 @@ typedef struct tagME_Paragraph
   POINT pt;
   int nHeight, nWidth;
   int nRows;
+  struct para_num para_num;
   ME_Run *eop_run; /* ptr to the end-of-para run */
   struct tagME_DisplayItem *prev_para, *next_para;
 } ME_Paragraph;

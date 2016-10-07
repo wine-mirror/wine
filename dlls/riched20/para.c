@@ -128,6 +128,55 @@ static void ME_UpdateTableFlags(ME_DisplayItem *para)
     para->member.para.fmt.wEffects &= ~PFE_TABLE;
 }
 
+void para_num_init( ME_Context *c, ME_Paragraph *para )
+{
+    ME_Style *style;
+    CHARFORMAT2W cf;
+    static const WCHAR bullet_font[] = {'S','y','m','b','o','l',0};
+    static const WCHAR bullet_str[] = {0xb7, 0};
+    static const WCHAR spaceW[] = {' ', 0};
+    HFONT old_font;
+    SIZE sz;
+
+    if (para->para_num.style && para->para_num.text) return;
+
+    if (!para->para_num.style)
+    {
+        style = para->eop_run->style;
+
+        cf.cbSize = sizeof(cf);
+        cf.dwMask = CFM_FACE | CFM_CHARSET;
+        memcpy( cf.szFaceName, bullet_font, sizeof(bullet_font) );
+        cf.bCharSet = SYMBOL_CHARSET;
+        style = ME_ApplyStyle( c->editor, style, &cf );
+
+        para->para_num.style = style;
+    }
+
+    if (!para->para_num.text)
+    {
+        para->para_num.text = ME_MakeStringConst( bullet_str, 1 );
+    }
+
+    old_font = ME_SelectStyleFont( c, para->para_num.style );
+    GetTextExtentPointW( c->hDC, para->para_num.text->szData, para->para_num.text->nLen, &sz );
+    para->para_num.width = sz.cx;
+    GetTextExtentPointW( c->hDC, spaceW, 1, &sz );
+    para->para_num.width += sz.cx;
+    ME_UnselectStyleFont( c, para->para_num.style, old_font );
+}
+
+void para_num_clear( struct para_num *pn )
+{
+    if (pn->style)
+    {
+        ME_ReleaseStyle( pn->style );
+        pn->style = NULL;
+    }
+    ME_DestroyString( pn->text );
+    pn->text = NULL;
+}
+
 static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_Paragraph *para, const PARAFORMAT2 *pFmt)
 {
   PARAFORMAT2 copy;
