@@ -753,12 +753,20 @@ void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, C
   for (run = start_run; run != end_run; run = ME_FindItemFwd( run, diRun ))
   {
     ME_Style *new_style = ME_ApplyStyle(editor, run->member.run.style, pFmt);
+    ME_Paragraph *para = run->member.run.para;
 
     add_undo_set_char_fmt( editor, run->member.run.para->nCharOfs + run->member.run.nCharOfs,
                            run->member.run.len, &run->member.run.style->fmt );
     ME_ReleaseStyle(run->member.run.style);
     run->member.run.style = new_style;
-    run->member.run.para->nFlags |= MEPF_REWRAP;
+
+    /* The para numbering style depends on the eop style */
+    if ((run->member.run.nFlags & MERF_ENDPARA) && para->para_num.style)
+    {
+      ME_ReleaseStyle(para->para_num.style);
+      para->para_num.style = NULL;
+    }
+    para->nFlags |= MEPF_REWRAP;
   }
 }
 
