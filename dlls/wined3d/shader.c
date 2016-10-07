@@ -1663,7 +1663,7 @@ static void shader_dump_decl_usage(struct wined3d_string_buffer *buffer,
 
             default:
                 shader_addline(buffer, "<unknown_semantic(%#x)>", semantic->usage);
-                FIXME("unknown_semantics(0x%08x)", semantic->usage);
+                FIXME("Unrecognised semantic usage %#x.\n", semantic->usage);
         }
     }
 }
@@ -2087,7 +2087,7 @@ static void shader_dump_ins_modifiers(struct wined3d_string_buffer *buffer,
     if (mmask & WINED3DSPDM_MSAMPCENTROID)    shader_addline(buffer, "_centroid");
 
     mmask &= ~(WINED3DSPDM_SATURATE | WINED3DSPDM_PARTIALPRECISION | WINED3DSPDM_MSAMPCENTROID);
-    if (mmask) FIXME("_unrecognized_modifier(%#x)", mmask);
+    if (mmask) FIXME("Unrecognised modifier %#x.\n", mmask);
 }
 
 static void shader_dump_primitive_type(struct wined3d_string_buffer *buffer,
