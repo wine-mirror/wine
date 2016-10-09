@@ -29,12 +29,6 @@ typedef struct D3DCOLORVALUE
 
 typedef D3DCOLORVALUE D2D_COLOR_F;
 
-typedef struct D2D_POINT_2F
-{
-    FLOAT x;
-    FLOAT y;
-} D2D_POINT_2F;
-
 typedef struct D2D_MATRIX_3X2_F
 {
     float _11;
@@ -58,12 +52,6 @@ typedef struct D2D_SIZE_F
     float width;
     float height;
 } D2D_SIZE_F;
-
-typedef struct D2D_SIZE_U
-{
-    UINT32 width;
-    UINT32 height;
-} D2D_SIZE_U;
 
 typedef struct D2D_POINT_2U
 {

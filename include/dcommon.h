@@ -43,4 +43,18 @@ typedef struct D2D1_PIXEL_FORMAT
     D2D1_ALPHA_MODE alphaMode;
 } D2D1_PIXEL_FORMAT;
 
+typedef struct D2D_POINT_2F
+{
+    FLOAT x;
+    FLOAT y;
+} D2D_POINT_2F, D2D1_POINT_2F;
+
+typedef POINT D2D_POINT_2L, D2D1_POINT_2L;
+
+typedef struct D2D_SIZE_U
+{
+    UINT32 width;
+    UINT32 height;
+} D2D_SIZE_U, D2D1_SIZE_U;
+
 #endif /* __WINE_DCOMMON_H */
