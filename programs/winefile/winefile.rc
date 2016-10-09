@@ -114,9 +114,6 @@ STRINGTABLE
     IDS_COL_SEC             "Security"
 
     IDS_FREE_SPACE_FMT      "%1 of %2 free"
-    IDS_UNIT_KB             "#msgctxt#unit kilobyte#kB"
-    IDS_UNIT_MB             "#msgctxt#unit megabyte#MB"
-    IDS_UNIT_GB             "#msgctxt#unit gigabyte#GB"
 }
 
 IDD_SELECT_DESTINATION DIALOG 15, 13, 210, 63

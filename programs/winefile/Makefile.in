@@ -1,7 +1,7 @@
 EXTRADEFS = -D__WINE__
 MODULE    = winefile.exe
 APPMODE   = -mwindows -municode
-IMPORTS   = uuid shell32 comdlg32 comctl32 ole32 mpr version user32 gdi32 advapi32
+IMPORTS   = uuid shell32 comdlg32 comctl32 ole32 mpr version user32 gdi32 advapi32 shlwapi
 
 C_SRCS = \
 	splitpath.c \

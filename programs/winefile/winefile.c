@@ -2640,39 +2640,6 @@ static int insert_entries(Pane* pane, Entry* dir, LPCWSTR pattern, int filter_fl
 	return idx;
 }
 
-
-static void format_bytes(LPWSTR buffer, LONGLONG bytes)
-{
-	static const WCHAR sFmtSmall[]  = {'%', 'u', 0};
-	static const WCHAR sFmtBig[] = {'%', '.', '1', 'f', ' ', '%', 's', '\0'};
-
-	if (bytes < 1024)
-		sprintfW(buffer, sFmtSmall, (DWORD)bytes);
-	else
-	{
-		WCHAR unit[64];
-		UINT resid;
-		float fBytes;
-		if (bytes >= 1073741824)	/* 1 GB */
-		{
-			fBytes = ((float)bytes)/1073741824.f+.5f;
-			resid = IDS_UNIT_GB;
-		}
-		else if (bytes >= 1048576)	/* 1 MB */
-		{
-			fBytes = ((float)bytes)/1048576.f+.5f;
-			resid = IDS_UNIT_MB;
-		}
-		else /* bytes >= 1024 */	/* 1 kB */
-		{
-			fBytes = ((float)bytes)/1024.f+.5f;
-			resid = IDS_UNIT_KB;
-		}
-		LoadStringW(Globals.hInstance, resid, unit, sizeof(unit)/sizeof(*unit));
-		sprintfW(buffer, sFmtBig, fBytes, unit);
-	}
-}
-
 static void set_space_status(void)
 {
 	ULARGE_INTEGER ulFreeBytesToCaller, ulTotalBytes, ulFreeBytes;
@@ -2680,10 +2647,10 @@ static void set_space_status(void)
 
 	if (GetDiskFreeSpaceExW(NULL, &ulFreeBytesToCaller, &ulTotalBytes, &ulFreeBytes)) {
 		DWORD_PTR args[2];
-		format_bytes(b1, ulFreeBytesToCaller.QuadPart);
-		format_bytes(b2, ulTotalBytes.QuadPart);
-		args[0] = (DWORD_PTR)b1;
-		args[1] = (DWORD_PTR)b2;
+
+		args[0] = (DWORD_PTR)StrFormatByteSizeW(ulFreeBytesToCaller.QuadPart, b1, sizeof(b1)/sizeof(*b1));
+		args[1] = (DWORD_PTR)StrFormatByteSizeW(ulTotalBytes.QuadPart,        b2, sizeof(b2)/sizeof(*b2));
+
 		FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
 		               RS(fmt,IDS_FREE_SPACE_FMT), 0, 0, buffer,
 		               sizeof(buffer)/sizeof(*buffer), (__ms_va_list*)args);

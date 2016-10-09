@@ -38,6 +38,7 @@
 #include <locale.h>
 #include <time.h>
 
+#include <shlwapi.h>
 #include <shellapi.h>   /* for ShellExecuteW() */
 #include <shlobj.h>
 

@@ -72,8 +72,8 @@ msgstr "Informoj pri Helpo"
 #: progman.rc:106 progman.rc:124 progman.rc:142 progman.rc:158 progman.rc:180
 #: progman.rc:199 progman.rc:216 regedit.rc:247 regedit.rc:258 regedit.rc:271
 #: regedit.rc:287 regedit.rc:300 regedit.rc:313 taskmgr.rc:442 taskmgr.rc:517
-#: winecfg.rc:214 winecfg.rc:224 wineconsole.rc:135 winefile.rc:131
-#: winefile.rc:154 winefile.rc:184 winemine.rc:71 winemine.rc:81 winemine.rc:95
+#: winecfg.rc:214 winecfg.rc:224 wineconsole.rc:135 winefile.rc:128
+#: winefile.rc:151 winefile.rc:181 winemine.rc:71 winemine.rc:81 winemine.rc:95
 #: wordpad.rc:215 wordpad.rc:226 wordpad.rc:244 wordpad.rc:257
 msgid "OK"
 msgstr "Bone"
@@ -86,7 +86,7 @@ msgstr "La jenaj informoj povas uziĝi por atingi teknikan helpon por %s:"
 msgid "Publisher:"
 msgstr "Eldonisto:"
 
-#: appwiz.rc:81 winefile.rc:169
+#: appwiz.rc:81 winefile.rc:166
 msgid "Version:"
 msgstr "Eldono:"
 
@@ -147,8 +147,8 @@ msgstr "&Instali"
 #: progman.rc:125 progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200
 #: progman.rc:217 regedit.rc:248 regedit.rc:259 regedit.rc:272 regedit.rc:288
 #: regedit.rc:301 regedit.rc:314 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34
-#: winecfg.rc:215 winecfg.rc:225 wineconsole.rc:136 winefile.rc:132
-#: winefile.rc:155 winefile.rc:185 winemine.rc:96 wordpad.rc:216 wordpad.rc:227
+#: winecfg.rc:215 winecfg.rc:225 wineconsole.rc:136 winefile.rc:129
+#: winefile.rc:152 winefile.rc:182 winemine.rc:96 wordpad.rc:216 wordpad.rc:227
 #: wordpad.rc:245 wordpad.rc:258
 msgid "Cancel"
 msgstr "Rezigni"
@@ -295,7 +295,7 @@ msgstr ""
 msgid "Canceling..."
 msgstr "Nuligante..."
 
-#: comctl32.rc:52 winefile.rc:160
+#: comctl32.rc:52 winefile.rc:157
 msgid "Properties for %s"
 msgstr "Ecoj laŭ %s"
 
@@ -413,7 +413,7 @@ msgstr "Dosier&speco:"
 msgid "Dri&ves:"
 msgstr "&Aparatoj:"
 
-#: comdlg32.rc:173 comdlg32.rc:195 winefile.rc:176
+#: comdlg32.rc:173 comdlg32.rc:195 winefile.rc:173
 msgid "&Read Only"
 msgstr "Nur &legebla"
 
@@ -665,7 +665,7 @@ msgstr "Eligi al &dosiero"
 msgid "&Properties"
 msgstr "&Ecoj"
 
-#: comdlg32.rc:366 comdlg32.rc:404 msacm32.rc:34 winefile.rc:141
+#: comdlg32.rc:366 comdlg32.rc:404 msacm32.rc:34 winefile.rc:138
 msgid "&Name:"
 msgstr "&Nomo:"
 
@@ -7962,7 +7962,7 @@ msgid "&Open:"
 msgstr "&Malfermi:"
 
 #: shell32.rc:342 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
-#: winefile.rc:133
+#: winefile.rc:130
 msgid "&Browse..."
 msgstr "&Foliumi..."
 
@@ -7978,7 +7978,7 @@ msgstr "Tipo"
 msgid "Modified"
 msgstr "Modifita"
 
-#: shell32.rc:141 winefile.rc:175 winefile.rc:114
+#: shell32.rc:141 winefile.rc:172 winefile.rc:114
 msgid "Attributes"
 msgstr "Atributoj"
 
@@ -13638,79 +13638,79 @@ msgstr "&Vertikale kvadratigi\tStir+A"
 msgid "&About Wine File Manager"
 msgstr "Pri Dosiera Administrilo de Wine"
 
-#: winefile.rc:125
+#: winefile.rc:122
 msgid "Select destination"
 msgstr ""
 
-#: winefile.rc:138
+#: winefile.rc:135
 msgid "By File Type"
 msgstr "Laŭ &Dosiertipo"
 
-#: winefile.rc:143
+#: winefile.rc:140
 msgid "File type"
 msgstr "Dosiertipo"
 
-#: winefile.rc:144
+#: winefile.rc:141
 msgid "&Directories"
 msgstr ""
 
-#: winefile.rc:146
+#: winefile.rc:143
 msgid "&Programs"
 msgstr "&Programoj"
 
-#: winefile.rc:148
+#: winefile.rc:145
 msgid "Docu&ments"
 msgstr "Doku&mentoj"
 
-#: winefile.rc:150
+#: winefile.rc:147
 msgid "&Other files"
 msgstr ""
 
-#: winefile.rc:152
+#: winefile.rc:149
 msgid "Show Hidden/&System Files"
 msgstr ""
 
-#: winefile.rc:163
+#: winefile.rc:160
 msgid "&File Name:"
 msgstr "&Dosiernomo:"
 
-#: winefile.rc:165
+#: winefile.rc:162
 msgid "Full &Path:"
 msgstr ""
 
-#: winefile.rc:167
+#: winefile.rc:164
 msgid "Last Change:"
 msgstr ""
 
-#: winefile.rc:171
+#: winefile.rc:168
 msgid "Cop&yright:"
 msgstr "Kop&irajto:"
 
-#: winefile.rc:173
+#: winefile.rc:170
 msgid "Size:"
 msgstr "Grando:"
 
-#: winefile.rc:177
+#: winefile.rc:174
 msgid "H&idden"
 msgstr ""
 
-#: winefile.rc:178
+#: winefile.rc:175
 msgid "&Archive"
 msgstr ""
 
-#: winefile.rc:179
+#: winefile.rc:176
 msgid "&System"
 msgstr "&Sistemo"
 
-#: winefile.rc:180
+#: winefile.rc:177
 msgid "&Compressed"
 msgstr ""
 
-#: winefile.rc:181
+#: winefile.rc:178
 msgid "Version information"
 msgstr "Eldonaj informoj"
 
-#: winefile.rc:197
+#: winefile.rc:194
 msgctxt "accelerator Fullscreen"
 msgid "S"
 msgstr ""
@@ -13766,21 +13766,6 @@ msgstr ""
 #: winefile.rc:117
 msgid "%1 of %2 free"
 msgstr ""
-
-#: winefile.rc:118
-msgctxt "unit kilobyte"
-msgid "kB"
-msgstr "kB"
-
-#: winefile.rc:119
-msgctxt "unit megabyte"
-msgid "MB"
-msgstr "MB"
-
-#: winefile.rc:120
-msgctxt "unit gigabyte"
-msgid "GB"
-msgstr "GB"
 
 #: winemine.rc:37
 msgid "&Game"
