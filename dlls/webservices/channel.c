@@ -466,7 +466,7 @@ HRESULT WINAPI WsSendMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_MESS
 
     if (!handle || !msg || !desc) return E_INVALIDARG;
 
-    WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    if ((hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL )) != S_OK) return hr;
     if ((hr = WsAddressMessage( msg, &channel->addr, NULL )) != S_OK) return hr;
     if ((hr = message_set_action( msg, desc->action )) != S_OK) return hr;
 
