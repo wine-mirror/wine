@@ -1361,7 +1361,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                 return stat;
             }
 
-            GdipBeginContainer2(metafile->playback_graphics, &cont->state);
+            stat = GdipBeginContainer2(metafile->playback_graphics, &cont->state);
 
             if (stat != Ok)
             {
