@@ -65,6 +65,7 @@ struct tray_icon
     UINT           info_flags;      /* flags for info balloon */
     UINT           info_timeout;    /* timeout for info balloon */
     HICON          info_icon;       /* info balloon icon */
+    UINT           version;         /* notify icon api version */
 };
 
 static struct list icon_list = LIST_INIT( icon_list );
@@ -484,15 +485,37 @@ static LRESULT WINAPI tray_icon_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     case WM_LBUTTONDBLCLK:
     case WM_RBUTTONDBLCLK:
     case WM_MBUTTONDBLCLK:
-        /* notify the owner hwnd of the message */
-        TRACE("relaying 0x%x\n", msg);
-        ret = PostMessageW(icon->owner, icon->callback_message, icon->id, msg);
-        if (!ret && (GetLastError() == ERROR_INVALID_WINDOW_HANDLE))
         {
-            WARN( "application window was destroyed, removing icon %u\n", icon->id );
-            delete_icon( icon );
+            WPARAM wpar;
+            BOOL oldver;
+
+            oldver = icon->version <= NOTIFY_VERSION;
+            if (oldver) {
+                /* 0 up to NOTIFYICON_VERSION (=3) */
+                wpar = icon->id;
+            } else {
+                /* NOTIFYICON_VERSION_4 */
+                RECT rect;
+                WORD x, y;
+
+                GetWindowRect( icon->window, &rect );
+                x = rect.left + LOWORD(lparam);
+                y = rect.top + HIWORD(lparam);
+                wpar = MAKEWPARAM(x, y);
+            }
+
+            /* notify the owner hwnd of the message */
+            TRACE("relaying 0x%x\n", msg);
+            ret = PostMessageW(icon->owner, icon->callback_message, wpar,
+                               oldver ? msg : MAKELPARAM(msg, icon->id));
+
+            if (!ret && (GetLastError() == ERROR_INVALID_WINDOW_HANDLE))
+            {
+                WARN( "application window was destroyed, removing icon %u\n", icon->id );
+                delete_icon( icon );
+            }
+            return 0;
         }
-        return 0;
 
     case WM_WINDOWPOSCHANGED:
         update_systray_balloon_position();
@@ -833,6 +856,13 @@ int CDECL wine_notify_icon( DWORD msg, NOTIFYICONDATAW *data )
         break;
     case NIM_MODIFY:
         if ((icon = get_icon( data->hWnd, data->uID ))) ret = modify_icon( icon, data );
+        break;
+    case NIM_SETVERSION:
+        if ((icon = get_icon( data->hWnd, data->uID )))
+        {
+            icon->version = data->u.uVersion;
+            ret = TRUE;
+        }
         break;
     case 0xdead:  /* Wine extension: owner window has died */
         cleanup_icons( data->hWnd );
