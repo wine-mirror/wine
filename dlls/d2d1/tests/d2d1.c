@@ -2046,8 +2046,10 @@ static void test_shared_bitmap(void)
     ID3D10Device1 *device1, *device2;
     IWICImagingFactory *wic_factory;
     ID2D1Bitmap *bitmap1, *bitmap2;
+    DXGI_SURFACE_DESC surface_desc;
     ID2D1RenderTarget *rt1, *rt2;
     D2D1_SIZE_U size = {4, 4};
+    IDXGISurface1 *surface3;
     HWND window1, window2;
     HRESULT hr;
 
@@ -2169,6 +2171,48 @@ static void test_shared_bitmap(void)
     hr = ID2D1RenderTarget_CreateSharedBitmap(rt2, &IID_ID2D1Bitmap, bitmap1, NULL, &bitmap2);
     ok(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
     ID2D1Bitmap_Release(bitmap2);
+    ID2D1RenderTarget_Release(rt2);
+
+    /* Shared DXGI surface. */
+    desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+    desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+    desc.dpiX = 0.0f;
+    desc.dpiY = 0.0f;
+    desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+    desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+
+    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory1, surface2, &desc, &rt2);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+
+    bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+    bitmap_desc.dpiX = 0.0f;
+    bitmap_desc.dpiY = 0.0f;
+
+    hr = ID2D1RenderTarget_CreateSharedBitmap(rt2, &IID_IDXGISurface, surface2, &bitmap_desc, &bitmap2);
+    ok(SUCCEEDED(hr) || broken(hr == E_INVALIDARG) /* vista */, "Failed to create bitmap, hr %#x.\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        size = ID2D1Bitmap_GetPixelSize(bitmap2);
+        hr = IDXGISurface_GetDesc(surface2, &surface_desc);
+        ok(SUCCEEDED(hr), "Failed to get surface description, hr %#x.\n", hr);
+        ok(size.width == surface_desc.Width && size.height == surface_desc.Height, "Got wrong bitmap size.\n");
+
+        ID2D1Bitmap_Release(bitmap2);
+
+        /* IDXGISurface1 is supported too. */
+        if (IDXGISurface_QueryInterface(surface2, &IID_IDXGISurface1, (void **)&surface3) == S_OK)
+        {
+            hr = ID2D1RenderTarget_CreateSharedBitmap(rt2, &IID_IDXGISurface1, surface3, &bitmap_desc, &bitmap2);
+            ok(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
+
+            ID2D1Bitmap_Release(bitmap2);
+            IDXGISurface1_Release(surface3);
+        }
+    }
+
     ID2D1RenderTarget_Release(rt2);
 
     ID2D1Bitmap_Release(bitmap1);

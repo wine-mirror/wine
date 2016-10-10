@@ -296,22 +296,32 @@ HRESULT d2d_bitmap_create(ID2D1Factory *factory, ID3D10Device *device, D2D1_SIZE
     return *bitmap ? S_OK : E_OUTOFMEMORY;
 }
 
-HRESULT d2d_bitmap_create_shared(ID2D1Factory *factory, ID3D10Device *target_device,
+HRESULT d2d_bitmap_create_shared(ID2D1RenderTarget *render_target, ID3D10Device *target_device,
         REFIID iid, void *data, const D2D1_BITMAP_PROPERTIES *desc, struct d2d_bitmap **bitmap)
 {
+    D2D1_BITMAP_PROPERTIES d;
+    ID2D1Factory *factory;
+
     if (IsEqualGUID(iid, &IID_ID2D1Bitmap))
     {
         struct d2d_bitmap *src_impl = unsafe_impl_from_ID2D1Bitmap(data);
-        D2D1_BITMAP_PROPERTIES d;
         ID3D10Device *device;
+        HRESULT hr = S_OK;
 
+        ID2D1RenderTarget_GetFactory(render_target, &factory);
         if (src_impl->factory != factory)
-            return D2DERR_WRONG_FACTORY;
+        {
+            hr = D2DERR_WRONG_FACTORY;
+            goto failed;
+        }
 
         ID3D10ShaderResourceView_GetDevice(src_impl->view, &device);
         ID3D10Device_Release(device);
         if (device != target_device)
-            return D2DERR_UNSUPPORTED_OPERATION;
+        {
+            hr = D2DERR_UNSUPPORTED_OPERATION;
+            goto failed;
+        }
 
         if (!desc)
         {
@@ -325,13 +335,88 @@ HRESULT d2d_bitmap_create_shared(ID2D1Factory *factory, ID3D10Device *target_dev
         {
             WARN("Tried to create bitmap with unsupported format {%#x / %#x}.\n",
                     desc->pixelFormat.format, desc->pixelFormat.alphaMode);
-            return D2DERR_UNSUPPORTED_PIXEL_FORMAT;
+            hr = D2DERR_UNSUPPORTED_PIXEL_FORMAT;
+            goto failed;
         }
 
         if (!(*bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**bitmap))))
-            return E_OUTOFMEMORY;
+        {
+            hr = E_OUTOFMEMORY;
+            goto failed;
+        }
 
         d2d_bitmap_init(*bitmap, factory, src_impl->view, src_impl->pixel_size, desc);
+        TRACE("Created bitmap %p.\n", *bitmap);
+
+    failed:
+        ID2D1Factory_Release(factory);
+        return hr;
+    }
+
+    if (IsEqualGUID(iid, &IID_IDXGISurface) || IsEqualGUID(iid, &IID_IDXGISurface1))
+    {
+        ID3D10ShaderResourceView *view;
+        DXGI_SURFACE_DESC surface_desc;
+        IDXGISurface *surface = data;
+        ID3D10Resource *resource;
+        D2D1_SIZE_U pixel_size;
+        ID3D10Device *device;
+        HRESULT hr;
+
+        if (FAILED(IDXGISurface_QueryInterface(surface, &IID_ID3D10Resource, (void **)&resource)))
+        {
+            WARN("Failed to get d3d resource from dxgi surface.\n");
+            return E_FAIL;
+        }
+
+        ID3D10Resource_GetDevice(resource, &device);
+        ID3D10Device_Release(device);
+        if (device != target_device)
+        {
+            ID3D10Resource_Release(resource);
+            return D2DERR_UNSUPPORTED_OPERATION;
+        }
+
+        hr = ID3D10Device_CreateShaderResourceView(target_device, resource, NULL, &view);
+        ID3D10Resource_Release(resource);
+        if (FAILED(hr))
+        {
+            WARN("Failed to create shader resource view, hr %#x.\n", hr);
+            return hr;
+        }
+
+        if (!(*bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**bitmap))))
+        {
+            ID3D10ShaderResourceView_Release(view);
+            return E_OUTOFMEMORY;
+        }
+
+        d = *desc;
+        if (d.dpiX == 0.0f || d.dpiY == 0.0f)
+        {
+            float dpi_x, dpi_y;
+
+            ID2D1RenderTarget_GetDpi(render_target, &dpi_x, &dpi_y);
+            if (d.dpiX == 0.0f)
+                d.dpiX = dpi_x;
+            if (d.dpiY == 0.0f)
+                d.dpiY = dpi_y;
+        }
+
+        if (FAILED(hr = IDXGISurface_GetDesc(surface, &surface_desc)))
+        {
+            WARN("Failed to get surface desc, hr %#x.\n", hr);
+            ID3D10ShaderResourceView_Release(view);
+            return hr;
+        }
+
+        pixel_size.width = surface_desc.Width;
+        pixel_size.height = surface_desc.Height;
+
+        ID2D1RenderTarget_GetFactory(render_target, &factory);
+        d2d_bitmap_init(*bitmap, factory, view, pixel_size, &d);
+        ID3D10ShaderResourceView_Release(view);
+        ID2D1Factory_Release(factory);
         TRACE("Created bitmap %p.\n", *bitmap);
 
         return S_OK;

@@ -341,7 +341,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateSharedBitmap(ID2D1R
     TRACE("iface %p, iid %s, data %p, desc %p, bitmap %p.\n",
             iface, debugstr_guid(iid), data, desc, bitmap);
 
-    if (SUCCEEDED(hr = d2d_bitmap_create_shared(render_target->factory, render_target->device, iid, data, desc, &object)))
+    if (SUCCEEDED(hr = d2d_bitmap_create_shared(iface, render_target->device, iid, data, desc, &object)))
         *bitmap = &object->ID2D1Bitmap_iface;
 
     return hr;

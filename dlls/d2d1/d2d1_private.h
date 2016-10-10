@@ -236,7 +236,7 @@ struct d2d_bitmap
 
 HRESULT d2d_bitmap_create(ID2D1Factory *factory, ID3D10Device *device, D2D1_SIZE_U size, const void *src_data,
         UINT32 pitch, const D2D1_BITMAP_PROPERTIES *desc, struct d2d_bitmap **bitmap) DECLSPEC_HIDDEN;
-HRESULT d2d_bitmap_create_shared(ID2D1Factory *factory, ID3D10Device *device, REFIID iid, void *data,
+HRESULT d2d_bitmap_create_shared(ID2D1RenderTarget *render_target, ID3D10Device *device, REFIID iid, void *data,
         const D2D1_BITMAP_PROPERTIES *desc, struct d2d_bitmap **bitmap) DECLSPEC_HIDDEN;
 HRESULT d2d_bitmap_create_from_wic_bitmap(ID2D1Factory *factory, ID3D10Device *device, IWICBitmapSource *bitmap_source,
         const D2D1_BITMAP_PROPERTIES *desc, struct d2d_bitmap **bitmap) DECLSPEC_HIDDEN;
