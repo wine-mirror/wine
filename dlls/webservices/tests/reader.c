@@ -3610,6 +3610,7 @@ static void test_entities(void)
     static const char str25[] = "<t>&#xfffe;</t>";
     static const char str26[] = "<t>&#xffff;</t>";
     static const char str27[] = "<t>&LT;</t>";
+    static const char str28[] = "<t>&#x0;</t>";
     static const char res4[] = {0xea, 0xaa, 0xaa, 0x00};
     static const char res5[] = {0xf2, 0xaa, 0xaa, 0xaa, 0x00};
     static const char res21[] = {0xed, 0x9f, 0xbf, 0x00};
@@ -3649,6 +3650,7 @@ static void test_entities(void)
         { str25, WS_E_INVALID_FORMAT },
         { str26, WS_E_INVALID_FORMAT },
         { str27, WS_E_INVALID_FORMAT },
+        { str28, WS_E_INVALID_FORMAT },
     };
     HRESULT hr;
     WS_XML_READER *reader;

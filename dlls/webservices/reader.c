@@ -1166,6 +1166,8 @@ static HRESULT parse_name( const unsigned char *str, unsigned int len,
 
 static int codepoint_to_utf8( int cp, unsigned char *dst )
 {
+    if (!cp)
+        return -1;
     if (cp < 0x80)
     {
         *dst = cp;
