@@ -266,10 +266,10 @@ static void context_dump_fbo_attachment(const struct wined3d_gl_info *gl_info, G
         {
             gl_info->gl_ops.gl.p_glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP, &old_texture);
 
-            glBindTexture(GL_TEXTURE_CUBE_MAP, name);
-            glGetTexLevelParameteriv(face, level, GL_TEXTURE_INTERNAL_FORMAT, &fmt);
-            glGetTexLevelParameteriv(face, level, GL_TEXTURE_WIDTH, &width);
-            glGetTexLevelParameteriv(face, level, GL_TEXTURE_HEIGHT, &height);
+            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_CUBE_MAP, name);
+            gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(face, level, GL_TEXTURE_INTERNAL_FORMAT, &fmt);
+            gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(face, level, GL_TEXTURE_WIDTH, &width);
+            gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(face, level, GL_TEXTURE_HEIGHT, &height);
 
             tex_target = GL_TEXTURE_CUBE_MAP;
             tex_type_str = "cube";
@@ -287,14 +287,14 @@ static void context_dump_fbo_attachment(const struct wined3d_gl_info *gl_info, G
                 gl_info->gl_ops.gl.p_glGetIntegerv(texture_type[i].binding, &old_texture);
                 while (gl_info->gl_ops.gl.p_glGetError());
 
-                glBindTexture(texture_type[i].target, name);
+                gl_info->gl_ops.gl.p_glBindTexture(texture_type[i].target, name);
                 if (!gl_info->gl_ops.gl.p_glGetError())
                 {
                     tex_target = texture_type[i].target;
                     tex_type_str = texture_type[i].str;
                     break;
                 }
-                glBindTexture(texture_type[i].target, old_texture);
+                gl_info->gl_ops.gl.p_glBindTexture(texture_type[i].target, old_texture);
             }
             if (!tex_type_str)
             {
@@ -302,15 +302,15 @@ static void context_dump_fbo_attachment(const struct wined3d_gl_info *gl_info, G
                 return;
             }
 
-            glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_INTERNAL_FORMAT, &fmt);
-            glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_WIDTH, &width);
-            glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_HEIGHT, &height);
+            gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_INTERNAL_FORMAT, &fmt);
+            gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_WIDTH, &width);
+            gl_info->gl_ops.gl.p_glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_HEIGHT, &height);
         }
 
         FIXME("    %s: %s texture %d, %dx%d, format %#x.\n", debug_fboattachment(attachment),
                 tex_type_str, name, width, height, fmt);
 
-        glBindTexture(tex_target, old_texture);
+        gl_info->gl_ops.gl.p_glBindTexture(tex_target, old_texture);
         checkGLcall("Guess texture type");
     }
     else if (type == GL_NONE)
