@@ -1160,7 +1160,7 @@ static void shader_glsl_ffp_vertex_normalmatrix_uniform(const struct wined3d_con
         return;
 
     get_modelview_matrix(context, state, 0, &mv);
-    if (context->device->wined3d->flags & WINED3D_LEGACY_FFP_LIGHTING)
+    if (context->d3d_info->wined3d_creation_flags & WINED3D_LEGACY_FFP_LIGHTING)
         invert_matrix_3d(&mv, &mv);
     else
         invert_matrix(&mv, &mv);
@@ -2203,7 +2203,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             {
                 if (gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
                 {
-                    if (shader->device->wined3d->flags & WINED3D_PIXEL_CENTER_INTEGER)
+                    if (context->d3d_info->wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER)
                         shader_addline(buffer, "layout(%spixel_center_integer) in vec4 gl_FragCoord;\n",
                                 ps_args->render_offscreen ? "" : "origin_upper_left, ");
                     else if (!ps_args->render_offscreen)
@@ -5948,7 +5948,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     {
         if (gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
             shader_addline(buffer, "vpos = gl_FragCoord;\n");
-        else if (shader->device->wined3d->flags & WINED3D_PIXEL_CENTER_INTEGER)
+        else if (context->d3d_info->wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER)
             shader_addline(buffer,
                     "vpos = floor(vec4(0, ycorrection[0], 0, 0) + gl_FragCoord * vec4(1, ycorrection[1], 1, 1));\n");
         else

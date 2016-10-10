@@ -1712,7 +1712,7 @@ static void state_depthbias(struct wined3d_context *context, const struct wined3
         gl_info->gl_ops.gl.p_glEnable(GL_POLYGON_OFFSET_FILL);
         checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL)");
 
-        if (context->device->wined3d->flags & WINED3D_LEGACY_DEPTH_BIAS)
+        if (context->d3d_info->wined3d_creation_flags & WINED3D_LEGACY_DEPTH_BIAS)
         {
             float bias = -(float)const_bias.d;
             gl_info->gl_ops.gl.p_glPolygonOffset(bias, bias);
@@ -4655,7 +4655,7 @@ static void viewport_miscpart_cc(struct wined3d_context *context,
     const struct wined3d_rendertarget_view *target = state->fb->render_targets[0];
     /* See get_projection_matrix() in utils.c for a discussion about those
      * values. */
-    float pixel_center_offset = context->device->wined3d->flags
+    float pixel_center_offset = context->d3d_info->wined3d_creation_flags
             & WINED3D_PIXEL_CENTER_INTEGER ? 63.0f / 128.0f : -1.0f / 128.0f;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_viewport vp = state->viewport;

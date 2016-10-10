@@ -4513,7 +4513,7 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
      * driver, but small enough to prevent it from interfering with any
      * anti-aliasing. */
 
-    if (!clip_control && context->device->wined3d->flags & WINED3D_PIXEL_CENTER_INTEGER)
+    if (!clip_control && context->d3d_info->wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER)
         center_offset = 63.0f / 64.0f;
     else
         center_offset = -1.0f / 64.0f;
