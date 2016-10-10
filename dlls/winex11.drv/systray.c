@@ -509,6 +509,25 @@ static LRESULT WINAPI tray_icon_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
             ret = PostMessageW(icon->owner, icon->callback_message, wpar,
                                oldver ? msg : MAKELPARAM(msg, icon->id));
 
+            if (ret && icon->version > 0) {
+                switch (msg) {
+                    case WM_RBUTTONUP:
+                        /* notify the owner hwnd of the message */
+                        TRACE("relaying 0x%x\n", WM_CONTEXTMENU);
+                        ret = PostMessageW(icon->owner, icon->callback_message, wpar,
+                                           oldver ? WM_CONTEXTMENU : MAKELPARAM(WM_CONTEXTMENU, icon->id));
+                        break;
+                    case WM_LBUTTONUP:
+                        /* notify the owner hwnd of the message */
+                        TRACE("relaying 0x%x\n", NIN_SELECT);
+                        ret = PostMessageW(icon->owner, icon->callback_message, wpar,
+                                           oldver ? NIN_SELECT : MAKELPARAM(NIN_SELECT, icon->id));
+                        break;
+                    default:
+                        break;
+                }
+            }
+
             if (!ret && (GetLastError() == ERROR_INVALID_WINDOW_HANDLE))
             {
                 WARN( "application window was destroyed, removing icon %u\n", icon->id );
