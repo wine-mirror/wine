@@ -155,13 +155,46 @@ static ME_String *para_num_get_str( ME_Paragraph *para, WORD num )
     ME_String *str = ME_MakeStringEmpty( 5 + 2 );
     WCHAR *p = str->szData;
     static const WCHAR fmtW[] = {'%', 'd', 0};
+    static const WORD letter_base[] = { 1, 26, 26 * 26, 26 * 26 * 26 };
+    int i, len;
+    WORD letter, total, char_offset = 0;
 
     if (!str) return NULL;
 
     if ((para->fmt.wNumberingStyle & 0xf00) == PFNS_PARENS)
         *p++ = '(';
 
-    p += sprintfW( p, fmtW, num );
+    switch (para->fmt.wNumbering)
+    {
+    case PFN_ARABIC:
+    default:
+        p += sprintfW( p, fmtW, num );
+        break;
+
+    case PFN_LCLETTER:
+        char_offset = 'a' - 'A';
+        /* fall through */
+    case PFN_UCLETTER:
+        if (!num) num = 1;
+
+        /* This is not base-26 (or 27) as zeros don't count unless they are leading zeros.
+           It's simplest to start with the least significant letter, so first calculate how many letters are needed. */
+        for (i = 0, total = 0; i < sizeof(letter_base) / sizeof(letter_base[0]); i++)
+        {
+            total += letter_base[i];
+            if (num < total) break;
+        }
+        len = i;
+        for (i = 0; i < len; i++)
+        {
+            num -= letter_base[i];
+            letter = (num / letter_base[i]) % 26;
+            p[len - i - 1] = letter + 'A' + char_offset;
+        }
+        p += len;
+        *p = 0;
+        break;
+    }
 
     switch (para->fmt.wNumberingStyle & 0xf00)
     {
