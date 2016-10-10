@@ -1190,6 +1190,7 @@ static int codepoint_to_utf8( int cp, unsigned char *dst )
         dst[0] = 0xe0 | cp;
         return 3;
     }
+    if (cp >= 0x110000) return -1;
     dst[3] = 0x80 | (cp & 0x3f);
     cp >>= 6;
     dst[2] = 0x80 | (cp & 0x3f);
@@ -1259,7 +1260,7 @@ static HRESULT decode_text( const unsigned char *str, ULONG len, unsigned char *
                     if (!len) return WS_E_INVALID_FORMAT;
 
                     p -= nb_digits = start - len;
-                    if (!nb_digits || nb_digits > 5 || p[nb_digits] != ';') return WS_E_INVALID_FORMAT;
+                    if (!nb_digits || nb_digits > 6 || p[nb_digits] != ';') return WS_E_INVALID_FORMAT;
                     for (i = 0; i < nb_digits; i++)
                     {
                         cp *= 16;

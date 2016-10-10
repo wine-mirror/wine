@@ -3614,11 +3614,16 @@ static void test_entities(void)
     static const char str29[] = "<t>&#0;</t>";
     static const char str30[] = "<t>&#65;</t>";
     static const char str31[] = "<t>&#65393;</t>";
+    static const char str32[] = "<t>&#x10ffff;</t>";
+    static const char str33[] = "<t>&#x110000;</t>";
+    static const char str34[] = "<t>&#1114111;</t>";
+    static const char str35[] = "<t>&#1114112;</t>";
     static const char res4[] = {0xea, 0xaa, 0xaa, 0x00};
     static const char res5[] = {0xf2, 0xaa, 0xaa, 0xaa, 0x00};
     static const char res21[] = {0xed, 0x9f, 0xbf, 0x00};
     static const char res24[] = {0xee, 0x80, 0x80, 0x00};
     static const char res31[] = {0xef, 0xbd, 0xb1, 0x00};
+    static const char res32[] = {0xf4, 0x8f, 0xbf, 0xbf, 0x00};
     static const struct
     {
         const char *str;
@@ -3658,6 +3663,10 @@ static void test_entities(void)
         { str29, WS_E_INVALID_FORMAT },
         { str30, S_OK, "A" },
         { str31, S_OK, res31 },
+        { str32, S_OK, res32 },
+        { str33, WS_E_INVALID_FORMAT },
+        { str34, S_OK, res32 },
+        { str35, WS_E_INVALID_FORMAT },
     };
     HRESULT hr;
     WS_XML_READER *reader;
