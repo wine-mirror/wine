@@ -77,6 +77,7 @@ struct icon
     UINT           info_flags;      /* flags for info balloon */
     UINT           info_timeout;    /* timeout for info balloon */
     HICON          info_icon;       /* info balloon icon */
+    UINT           version;         /* notify icon api version */
 };
 
 static struct list icon_list = LIST_INIT( icon_list );
@@ -586,6 +587,10 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
     case NIM_MODIFY:
         if (icon) ret = modify_icon( icon, &nid );
         break;
+    case NIM_SETVERSION:
+        icon->version = nid.u.uVersion;
+        ret = TRUE;
+        break;
     default:
         WINE_FIXME("unhandled tray message: %ld\n", cds->dwData);
         break;
@@ -790,6 +795,9 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     case WM_RBUTTONDBLCLK:
     case WM_MBUTTONDBLCLK:
         {
+            WPARAM wpar;
+            BOOL oldver;
+            BOOL ret;
             MSG message;
             struct icon *icon = icon_from_point( (short)LOWORD(lparam), (short)HIWORD(lparam) );
             if (!icon) break;
@@ -803,8 +811,26 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
             message.lParam = lparam;
             SendMessageW( icon->tooltip, TTM_RELAYEVENT, 0, (LPARAM)&message );
 
-            if (!PostMessageW( icon->owner, icon->callback_message, (WPARAM) icon->id, (LPARAM) msg ) &&
-                GetLastError() == ERROR_INVALID_WINDOW_HANDLE)
+            oldver = icon->version <= NOTIFY_VERSION;
+            if (oldver) {
+                /* 0 up to NOTIFYICON_VERSION (=3) */
+                wpar = icon->id;
+            } else {
+                /* NOTIFYICON_VERSION_4 */
+                RECT rect;
+                WORD x, y;
+
+                rect = get_icon_rect( icon );
+                MapWindowPoints( tray_window, 0, (POINT *)&rect, 2 );
+                x = rect.left + LOWORD(lparam);
+                y = rect.top + HIWORD(lparam);
+                wpar = MAKEWPARAM(x, y);
+            }
+
+            ret = PostMessageW(icon->owner, icon->callback_message, wpar,
+                               oldver ? msg : MAKELPARAM(msg, icon->id));
+
+            if (!ret && (GetLastError() == ERROR_INVALID_WINDOW_HANDLE))
             {
                 WINE_WARN("application window was destroyed without removing "
                           "notification icon, removing automatically\n");
