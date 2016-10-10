@@ -2546,7 +2546,7 @@ static void enumerate_gl_extensions(struct wined3d_gl_info *gl_info,
     unsigned int i, j;
     GLint extensions_count;
 
-    glGetIntegerv(GL_NUM_EXTENSIONS, &extensions_count);
+    gl_info->gl_ops.gl.p_glGetIntegerv(GL_NUM_EXTENSIONS, &extensions_count);
     for (i = 0; i < extensions_count; ++i)
     {
         gl_extension_name = (const char *)GL_EXTCALL(glGetStringi(GL_EXTENSIONS, i));
