@@ -234,6 +234,8 @@ noicon:
     }
     if (data->uFlags & NIF_GUID)
         data->guidItem = nid->guidItem;
+    if (dwMessage == NIM_SETVERSION)
+        data->u.uVersion = nid->u.uVersion;
     /* FIXME: balloon icon */
 
     cds.lpData = data;
