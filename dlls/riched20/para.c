@@ -128,6 +128,59 @@ static void ME_UpdateTableFlags(ME_DisplayItem *para)
     para->member.para.fmt.wEffects &= ~PFE_TABLE;
 }
 
+static inline BOOL para_num_same_list( const PARAFORMAT2 *item, const PARAFORMAT2 *base )
+{
+    return item->wNumbering == base->wNumbering &&
+        item->wNumberingStart == base->wNumberingStart &&
+        item->wNumberingStyle == base->wNumberingStyle &&
+        !(item->wNumberingStyle & PFNS_NEWNUMBER);
+}
+
+static int para_num_get_num( ME_Paragraph *para )
+{
+    ME_DisplayItem *prev;
+    int num = para->fmt.wNumberingStart;
+
+    for (prev = para->prev_para; prev->type == diParagraph;
+         para = &prev->member.para, prev = prev->member.para.prev_para, num++)
+    {
+        if (!para_num_same_list( &prev->member.para.fmt, &para->fmt )) break;
+    }
+    return num;
+}
+
+static ME_String *para_num_get_str( ME_Paragraph *para, WORD num )
+{
+    /* max 5 digits + '(' + ')' */
+    ME_String *str = ME_MakeStringEmpty( 5 + 2 );
+    WCHAR *p = str->szData;
+    static const WCHAR fmtW[] = {'%', 'd', 0};
+
+    if (!str) return NULL;
+
+    if ((para->fmt.wNumberingStyle & 0xf00) == PFNS_PARENS)
+        *p++ = '(';
+
+    p += sprintfW( p, fmtW, num );
+
+    switch (para->fmt.wNumberingStyle & 0xf00)
+    {
+    case PFNS_PARENS:
+    case PFNS_PAREN:
+        *p++ = ')';
+        *p = 0;
+        break;
+
+    case PFNS_PERIOD:
+        *p++ = '.';
+        *p = 0;
+        break;
+    }
+
+    str->nLen = p - str->szData;
+    return str;
+}
+
 void para_num_init( ME_Context *c, ME_Paragraph *para )
 {
     ME_Style *style;
@@ -144,18 +197,28 @@ void para_num_init( ME_Context *c, ME_Paragraph *para )
     {
         style = para->eop_run->style;
 
-        cf.cbSize = sizeof(cf);
-        cf.dwMask = CFM_FACE | CFM_CHARSET;
-        memcpy( cf.szFaceName, bullet_font, sizeof(bullet_font) );
-        cf.bCharSet = SYMBOL_CHARSET;
-        style = ME_ApplyStyle( c->editor, style, &cf );
+        if (para->fmt.wNumbering == PFN_BULLET)
+        {
+            cf.cbSize = sizeof(cf);
+            cf.dwMask = CFM_FACE | CFM_CHARSET;
+            memcpy( cf.szFaceName, bullet_font, sizeof(bullet_font) );
+            cf.bCharSet = SYMBOL_CHARSET;
+            style = ME_ApplyStyle( c->editor, style, &cf );
+        }
+        else
+        {
+            ME_AddRefStyle( style );
+        }
 
         para->para_num.style = style;
     }
 
     if (!para->para_num.text)
     {
-        para->para_num.text = ME_MakeStringConst( bullet_str, 1 );
+        if (para->fmt.wNumbering != PFN_BULLET)
+            para->para_num.text = para_num_get_str( para, para_num_get_num( para ) );
+        else
+            para->para_num.text = ME_MakeStringConst( bullet_str, 1 );
     }
 
     old_font = ME_SelectStyleFont( c, para->para_num.style );
@@ -175,6 +238,17 @@ void para_num_clear( struct para_num *pn )
     }
     ME_DestroyString( pn->text );
     pn->text = NULL;
+}
+
+static void para_num_clear_list( ME_Paragraph *para, const PARAFORMAT2 *orig_fmt )
+{
+    do
+    {
+        para->nFlags |= MEPF_REWRAP;
+        para_num_clear( &para->para_num );
+        if (para->next_para->type != diParagraph) break;
+        para = &para->next_para->member.para;
+    } while (para_num_same_list( &para->fmt, orig_fmt ));
 }
 
 static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_Paragraph *para, const PARAFORMAT2 *pFmt)
@@ -244,7 +318,15 @@ static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_Paragraph *para, const PA
 #undef COPY_FIELD
 
   if (memcmp(&copy, &para->fmt, sizeof(PARAFORMAT2)))
+  {
     para->nFlags |= MEPF_REWRAP;
+    if (((dwMask & PFM_NUMBERING)      && (copy.wNumbering != para->fmt.wNumbering)) ||
+        ((dwMask & PFM_NUMBERINGSTART) && (copy.wNumberingStart != para->fmt.wNumberingStart)) ||
+        ((dwMask & PFM_NUMBERINGSTYLE) && (copy.wNumberingStyle != para->fmt.wNumberingStyle)))
+    {
+        para_num_clear_list( para, &copy );
+    }
+  }
 
   return TRUE;
 }
@@ -276,6 +358,10 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   assert(run->type == diRun);
   run_para = ME_GetParagraph(run);
   assert(run_para->member.para.fmt.cbSize == sizeof(PARAFORMAT2));
+
+  /* Clear any cached para numbering following this paragraph */
+  if (run_para->member.para.fmt.wNumbering)
+      para_num_clear_list( &run_para->member.para, &run_para->member.para.fmt );
 
   new_para->member.para.text = ME_VSplitString( run_para->member.para.text, run->member.run.nCharOfs );
 
@@ -398,6 +484,10 @@ ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
   assert(tp->type == diParagraph);
   assert(tp->member.para.next_para);
   assert(tp->member.para.next_para->type == diParagraph);
+
+  /* Clear any cached para numbering following this paragraph */
+  if (tp->member.para.fmt.wNumbering)
+      para_num_clear_list( &tp->member.para, &tp->member.para.fmt );
 
   pNext = tp->member.para.next_para;
 

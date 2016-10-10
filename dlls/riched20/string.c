@@ -55,7 +55,7 @@ static void heap_string_free(ME_String *s)
 }
 
 /* Create a buffer (uninitialized string) of size nMaxChars */
-static ME_String *ME_MakeStringB(int nMaxChars)
+ME_String *ME_MakeStringEmpty(int nMaxChars)
 {
   ME_String *s = make_string( heap_string_free );
 
@@ -74,7 +74,7 @@ static ME_String *ME_MakeStringB(int nMaxChars)
 
 ME_String *ME_MakeStringN(LPCWSTR szText, int nMaxChars)
 {
-  ME_String *s = ME_MakeStringB(nMaxChars);
+  ME_String *s = ME_MakeStringEmpty(nMaxChars);
 
   if (!s) return NULL;
   memcpy(s->szData, szText, s->nLen * sizeof(WCHAR));
@@ -85,7 +85,7 @@ ME_String *ME_MakeStringN(LPCWSTR szText, int nMaxChars)
 ME_String *ME_MakeStringR(WCHAR cRepeat, int nMaxChars)
 {
   int i;
-  ME_String *s = ME_MakeStringB(nMaxChars);
+  ME_String *s = ME_MakeStringEmpty(nMaxChars);
 
   if (!s) return NULL;
   for (i = 0; i < nMaxChars; i++)
