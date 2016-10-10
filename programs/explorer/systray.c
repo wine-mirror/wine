@@ -830,6 +830,25 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
             ret = PostMessageW(icon->owner, icon->callback_message, wpar,
                                oldver ? msg : MAKELPARAM(msg, icon->id));
 
+            if (ret && icon->version > 0) {
+                switch (msg) {
+                    case WM_RBUTTONUP:
+                        /* notify the owner hwnd of the message */
+                        WINE_TRACE("relaying 0x%x\n", WM_CONTEXTMENU);
+                        ret = PostMessageW(icon->owner, icon->callback_message, wpar,
+                                           oldver ? WM_CONTEXTMENU : MAKELPARAM(WM_CONTEXTMENU, icon->id));
+                        break;
+                    case WM_LBUTTONUP:
+                        /* notify the owner hwnd of the message */
+                        WINE_TRACE("relaying 0x%x\n", NIN_SELECT);
+                        ret = PostMessageW(icon->owner, icon->callback_message, wpar,
+                                          oldver ? NIN_SELECT : MAKELPARAM(NIN_SELECT, icon->id));
+                        break;
+                    default:
+                        break;
+                }
+            }
+
             if (!ret && (GetLastError() == ERROR_INVALID_WINDOW_HANDLE))
             {
                 WINE_WARN("application window was destroyed without removing "
