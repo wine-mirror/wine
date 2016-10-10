@@ -1249,23 +1249,45 @@ static HRESULT decode_text( const unsigned char *str, ULONG len, unsigned char *
                 int len_utf8, cp = 0;
 
                 p++; len--;
-                if (!len || *p != 'x') return WS_E_INVALID_FORMAT;
-                p++; len--;
-
-                start = len;
-                while (len && isxdigit( *p )) { p++; len--; };
                 if (!len) return WS_E_INVALID_FORMAT;
-
-                p -= nb_digits = start - len;
-                if (!nb_digits || nb_digits > 5 || p[nb_digits] != ';') return WS_E_INVALID_FORMAT;
-                for (i = 0; i < nb_digits; i++)
+                else if (*p == 'x')
                 {
-                    cp *= 16;
-                    if (*p >= '0' && *p <= '9') cp += *p - '0';
-                    else if (*p >= 'a' && *p <= 'f') cp += *p - 'a' + 10;
-                    else cp += *p - 'A' + 10;
-                    p++;
+                    p++; len--;
+
+                    start = len;
+                    while (len && isxdigit( *p )) { p++; len--; };
+                    if (!len) return WS_E_INVALID_FORMAT;
+
+                    p -= nb_digits = start - len;
+                    if (!nb_digits || nb_digits > 5 || p[nb_digits] != ';') return WS_E_INVALID_FORMAT;
+                    for (i = 0; i < nb_digits; i++)
+                    {
+                        cp *= 16;
+                        if (*p >= '0' && *p <= '9') cp += *p - '0';
+                        else if (*p >= 'a' && *p <= 'f') cp += *p - 'a' + 10;
+                        else cp += *p - 'A' + 10;
+                        p++;
+                    }
                 }
+                else if (isdigit( *p ))
+                {
+                    while (len && *p == '0') { p++; len--; };
+                    if (!len) return WS_E_INVALID_FORMAT;
+
+                    start = len;
+                    while (len && isdigit( *p )) { p++; len--; };
+                    if (!len) return WS_E_INVALID_FORMAT;
+
+                    p -= nb_digits = start - len;
+                    if (!nb_digits || nb_digits > 7 || p[nb_digits] != ';') return WS_E_INVALID_FORMAT;
+                    for (i = 0; i < nb_digits; i++)
+                    {
+                        cp *= 10;
+                        cp += *p - '0';
+                        p++;
+                    }
+                }
+                else return WS_E_INVALID_FORMAT;
                 p++; len--;
                 if ((len_utf8 = codepoint_to_utf8( cp, q )) < 0) return WS_E_INVALID_FORMAT;
                 *ret_len += len_utf8;
