@@ -79,6 +79,8 @@ static WCHAR units_inW[MAX_STRING_LEN];
 static WCHAR units_inchW[MAX_STRING_LEN];
 static WCHAR units_ptW[MAX_STRING_LEN];
 
+static int last_bullet = PFN_BULLET;
+
 static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam );
 
 typedef enum
@@ -1886,7 +1888,7 @@ static LRESULT OnCreate( HWND hWnd )
     AddButton(hFormatBarWnd, 5, ID_ALIGN_CENTER);
     AddButton(hFormatBarWnd, 6, ID_ALIGN_RIGHT);
     AddSeparator(hFormatBarWnd);
-    AddButton(hFormatBarWnd, 7, ID_BULLET);
+    AddButton(hFormatBarWnd, 7, ID_BULLETONOFF);
 
     SendMessageW(hFormatBarWnd, TB_AUTOSIZE, 0, 0);
 
@@ -1994,7 +1996,7 @@ static LRESULT OnUser( HWND hWnd )
     SendMessageW(hwndFormatBar, TB_CHECKBUTTON, ID_ALIGN_CENTER, (pf.wAlignment == PFA_CENTER));
     SendMessageW(hwndFormatBar, TB_CHECKBUTTON, ID_ALIGN_RIGHT, (pf.wAlignment == PFA_RIGHT));
 
-    SendMessageW(hwndFormatBar, TB_CHECKBUTTON, ID_BULLET, (pf.wNumbering & PFN_BULLET));
+    SendMessageW(hwndFormatBar, TB_CHECKBUTTON, ID_BULLETONOFF, pf.wNumbering ? TRUE : FALSE);
     return 0;
 }
 
@@ -2351,30 +2353,45 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         SendMessageW(hwndEditor, EM_REDO, 0, 0);
         return 0;
 
+    case ID_BULLETONOFF:
     case ID_BULLET:
+    case ID_NUMBERING:
+    case ID_LCLETTER:
+    case ID_UCLETTER:
+    case ID_LCROMAN:
+    case ID_UCROMAN:
         {
             PARAFORMAT2 pf;
-
+            WORD new_number = LOWORD(wParam) - ID_BULLET + PFN_BULLET;
             pf.cbSize = sizeof(pf);
             pf.dwMask = PFM_NUMBERING;
             SendMessageW(hwndEditor, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
 
-            pf.dwMask = PFM_NUMBERING | PFM_NUMBERINGSTART | PFM_NUMBERINGTAB | PFM_OFFSET | PFM_OFFSETINDENT;
+            pf.dwMask = PFM_NUMBERING | PFM_NUMBERINGSTART | PFM_NUMBERINGSTYLE | PFM_NUMBERINGTAB | PFM_OFFSET | PFM_OFFSETINDENT;
 
-            if(pf.wNumbering == PFN_BULLET)
+            if(pf.wNumbering && ((pf.wNumbering == new_number) || (LOWORD(wParam) == ID_BULLETONOFF)))
             {
                 pf.wNumbering = 0;
                 pf.wNumberingStart = 0;
+                pf.wNumberingStyle = 0;
                 pf.wNumberingTab = 0;
                 pf.dxOffset = 0;
                 pf.dxStartIndent = -360;
             } else
             {
-                pf.wNumbering = PFN_BULLET;
+                pf.dxStartIndent = pf.wNumbering ? 0 : 360;
+
+                if (LOWORD(wParam) == ID_BULLETONOFF)
+                    pf.wNumbering = last_bullet;
+                else
+                {
+                    pf.wNumbering = new_number;
+                    last_bullet = pf.wNumbering;
+                }
                 pf.wNumberingStart = 1;
+                pf.wNumberingStyle = PFNS_PERIOD;
                 pf.wNumberingTab = 360;
                 pf.dxOffset = 360;
-                pf.dxStartIndent = 360;
             }
 
             SendMessageW(hwndEditor, EM_SETPARAFORMAT, 0, (LPARAM)&pf);
@@ -2502,7 +2519,14 @@ static LRESULT OnInitPopupMenu( HWND hWnd, WPARAM wParam )
     CheckMenuItem(hMenu, ID_ALIGN_LEFT, (nAlignment == PFA_LEFT) ?  MF_CHECKED : MF_UNCHECKED);
     CheckMenuItem(hMenu, ID_ALIGN_CENTER, (nAlignment == PFA_CENTER) ?  MF_CHECKED : MF_UNCHECKED);
     CheckMenuItem(hMenu, ID_ALIGN_RIGHT, (nAlignment == PFA_RIGHT) ?  MF_CHECKED : MF_UNCHECKED);
+
     CheckMenuItem(hMenu, ID_BULLET, ((pf.wNumbering == PFN_BULLET) ?  MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hMenu, ID_NUMBERING, ((pf.wNumbering == PFN_ARABIC) ?  MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hMenu, ID_LCLETTER, ((pf.wNumbering == PFN_LCLETTER) ?  MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hMenu, ID_UCLETTER, ((pf.wNumbering == PFN_UCLETTER) ?  MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hMenu, ID_LCROMAN, ((pf.wNumbering == PFN_LCROMAN) ?  MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hMenu, ID_UCROMAN, ((pf.wNumbering == PFN_UCROMAN) ?  MF_CHECKED : MF_UNCHECKED));
+
     EnableMenuItem(hMenu, ID_EDIT_UNDO, SendMessageW(hwndEditor, EM_CANUNDO, 0, 0) ?
             MF_ENABLED : MF_GRAYED);
     EnableMenuItem(hMenu, ID_EDIT_REDO, SendMessageW(hwndEditor, EM_CANREDO, 0, 0) ?

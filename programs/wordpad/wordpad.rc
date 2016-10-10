@@ -81,7 +81,15 @@ BEGIN
     POPUP "F&ormat"
     BEGIN
         MENUITEM "&Font...",                     ID_FONTSETTINGS
-        MENUITEM "&Bullet points"                ID_BULLET
+        POPUP "&Lists"
+        BEGIN
+            MENUITEM "&Bullet points"                ID_BULLET
+            MENUITEM "Numbers"                       ID_NUMBERING
+            MENUITEM "Letters - lower case"          ID_LCLETTER
+            MENUITEM "Letters - upper case"          ID_UCLETTER
+            MENUITEM "Roman numerals - lower case"   ID_LCROMAN
+            MENUITEM "Roman numerals - upper case"   ID_UCROMAN
+        END
         MENUITEM "&Paragraph..."                 ID_PARAFORMAT
         MENUITEM "&Tabs..."                      ID_TABSTOPS
         POPUP "Backgroun&d"
