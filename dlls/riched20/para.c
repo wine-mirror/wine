@@ -151,11 +151,24 @@ static int para_num_get_num( ME_Paragraph *para )
 
 static ME_String *para_num_get_str( ME_Paragraph *para, WORD num )
 {
-    /* max 5 digits + '(' + ')' */
-    ME_String *str = ME_MakeStringEmpty( 5 + 2 );
+    /* max 4 Roman letters (representing '8') / decade + '(' + ')' */
+    ME_String *str = ME_MakeStringEmpty( 20 + 2 );
     WCHAR *p = str->szData;
     static const WCHAR fmtW[] = {'%', 'd', 0};
     static const WORD letter_base[] = { 1, 26, 26 * 26, 26 * 26 * 26 };
+    /* roman_base should start on a '5' not a '1', otherwise the 'total' code will need adjusting.
+       'N' and 'O' are what MS uses for 5000 and 10000, their version doesn't work well above 30000,
+       but we'll use 'P' as the obvious extension, this gets us up to 2^16, which is all we care about. */
+    static const struct
+    {
+        int base;
+        char letter;
+    }
+    roman_base[] =
+    {
+        {50000, 'P'}, {10000, 'O'}, {5000, 'N'}, {1000, 'M'},
+        {500, 'D'}, {100, 'C'}, {50, 'L'}, {10, 'X'}, {5, 'V'}, {1, 'I'}
+    };
     int i, len;
     WORD letter, total, char_offset = 0;
 
@@ -192,6 +205,40 @@ static ME_String *para_num_get_str( ME_Paragraph *para, WORD num )
             p[len - i - 1] = letter + 'A' + char_offset;
         }
         p += len;
+        *p = 0;
+        break;
+
+    case PFN_LCROMAN:
+        char_offset = 'a' - 'A';
+        /* fall through */
+    case PFN_UCROMAN:
+        if (!num) num = 1;
+
+        for (i = 0; i < sizeof(roman_base) / sizeof(roman_base[0]); i++)
+        {
+            if (i > 0)
+            {
+                if (i % 2 == 0) /* eg 5000, check for 9000 */
+                    total = roman_base[i].base + 4 * roman_base[i + 1].base;
+                else  /* eg 1000, check for 4000 */
+                    total = 4 * roman_base[i].base;
+
+                if (num / total)
+                {
+                    *p++ = roman_base[(i & ~1) + 1].letter + char_offset;
+                    *p++ = roman_base[i - 1].letter + char_offset;
+                    num -= total;
+                    continue;
+                }
+            }
+
+            len = num / roman_base[i].base;
+            while (len--)
+            {
+                *p++ = roman_base[i].letter + char_offset;
+                num -= roman_base[i].base;
+            }
+        }
         *p = 0;
         break;
     }
