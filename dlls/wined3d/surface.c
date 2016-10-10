@@ -3266,6 +3266,7 @@ static void ffp_blit_blit_surface(struct wined3d_device *device, enum wined3d_bl
     unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
     struct wined3d_texture *dst_texture = dst_surface->container;
     struct wined3d_texture *src_texture = src_surface->container;
+    const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
 
     /* Blit from offscreen surface to render target */
@@ -3277,15 +3278,16 @@ static void ffp_blit_blit_surface(struct wined3d_device *device, enum wined3d_bl
     wined3d_texture_set_color_key(src_texture, WINED3D_CKEY_SRC_BLT, color_key);
 
     context = context_acquire(device, dst_surface);
+    gl_info = context->gl_info;
 
     if (op == WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST)
-        glEnable(GL_ALPHA_TEST);
+        gl_info->gl_ops.gl.p_glEnable(GL_ALPHA_TEST);
 
     surface_blt_to_drawable(device, context, filter,
             !!color_key, src_surface, src_rect, dst_surface, dst_rect);
 
     if (op == WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST)
-        glDisable(GL_ALPHA_TEST);
+        gl_info->gl_ops.gl.p_glDisable(GL_ALPHA_TEST);
 
     context_release(context);
 
