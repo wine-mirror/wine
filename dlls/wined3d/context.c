@@ -1296,8 +1296,9 @@ BOOL context_set_current(struct wined3d_context *ctx)
         {
             if (wglGetCurrentContext())
             {
+                const struct wined3d_gl_info *gl_info = old->gl_info;
                 TRACE("Flushing context %p before switching to %p.\n", old, ctx);
-                glFlush();
+                gl_info->gl_ops.gl.p_glFlush();
             }
             old->current = 0;
         }
@@ -1316,7 +1317,7 @@ BOOL context_set_current(struct wined3d_context *ctx)
             return FALSE;
         ctx->current = 1;
     }
-    else if(wglGetCurrentContext())
+    else if (wglGetCurrentContext())
     {
         TRACE("Clearing current D3D context.\n");
         if (!wglMakeCurrent(NULL, NULL))
