@@ -172,16 +172,40 @@ static HANDLE get_device_manager(void)
     return ret;
 }
 
-static void dispatch_irp( DEVICE_OBJECT *device, IRP *irp )
+/* transfer result of IRP back to wineserver */
+static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp, void *context )
+{
+    FILE_OBJECT *file = irp->Tail.Overlay.OriginalFileObject;
+    void *out_buff = irp->UserBuffer;
+    HANDLE handle = context;
+
+    SERVER_START_REQ( set_irp_result )
+    {
+        req->handle   = wine_server_obj_handle( handle );
+        req->status   = irp->IoStatus.u.Status;
+        req->file_ptr = wine_server_client_ptr( file );
+        if (irp->IoStatus.u.Status >= 0)
+        {
+            req->size = irp->IoStatus.Information;
+            if (out_buff) wine_server_add_data( req, out_buff, irp->IoStatus.Information );
+        }
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    HeapFree( GetProcessHeap(), 0, out_buff );
+    return STATUS_SUCCESS;
+}
+
+static void dispatch_irp( DEVICE_OBJECT *device, IRP *irp, HANDLE irp_handle )
 {
     LARGE_INTEGER count;
 
+    IoSetCompletionRoutine( irp, dispatch_irp_completion, irp_handle, TRUE, TRUE, TRUE );
     KeQueryTickCount( &count );  /* update the global KeTickCount */
 
     device->CurrentIrp = irp;
-
     IoCallDriver( device, irp );
-
     device->CurrentIrp = NULL;
 }
 
@@ -211,7 +235,6 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->MajorFunction = IRP_MJ_CREATE;
     irpsp->DeviceObject = device;
-    irpsp->CompletionRoutine = NULL;
     irpsp->Parameters.Create.SecurityContext = NULL;  /* FIXME */
     irpsp->Parameters.Create.Options = params->create.options;
     irpsp->Parameters.Create.ShareAccess = params->create.sharing;
@@ -222,10 +245,10 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
     irp->RequestorMode = UserMode;
     irp->AssociatedIrp.SystemBuffer = NULL;
     irp->UserBuffer = NULL;
-    irp->UserIosb = irp_handle; /* note: we abuse UserIosb to store the server irp handle */
+    irp->UserIosb = NULL;
     irp->UserEvent = NULL;
 
-    dispatch_irp( device, irp );
+    dispatch_irp( device, irp, irp_handle );
 
     return STATUS_SUCCESS;
 }
@@ -254,16 +277,15 @@ static NTSTATUS dispatch_close( const irp_params_t *params, void *in_buff, ULONG
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->MajorFunction = IRP_MJ_CLOSE;
     irpsp->DeviceObject = device;
-    irpsp->CompletionRoutine = NULL;
 
     irp->Tail.Overlay.OriginalFileObject = file;
     irp->RequestorMode = UserMode;
     irp->AssociatedIrp.SystemBuffer = NULL;
     irp->UserBuffer = NULL;
-    irp->UserIosb = irp_handle; /* note: we abuse UserIosb to store the server irp handle */
+    irp->UserIosb = NULL;
     irp->UserEvent = NULL;
 
-    dispatch_irp( device, irp );
+    dispatch_irp( device, irp, irp_handle );
 
     HeapFree( GetProcessHeap(), 0, file );  /* FIXME: async close processing not supported */
     return STATUS_SUCCESS;
@@ -290,9 +312,8 @@ static NTSTATUS dispatch_read( const irp_params_t *params, void *in_buff, ULONG 
 
     offset.QuadPart = params->read.pos;
 
-    /* note: we abuse UserIosb to store the server irp handle */
     if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_READ, device, out_buff, out_size,
-                                              &offset, NULL, irp_handle )))
+                                              &offset, NULL, NULL )))
     {
         HeapFree( GetProcessHeap(), 0, out_buff );
         return STATUS_NO_MEMORY;
@@ -304,7 +325,7 @@ static NTSTATUS dispatch_read( const irp_params_t *params, void *in_buff, ULONG 
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->Parameters.Read.Key = params->read.key;
 
-    dispatch_irp( device, irp );
+    dispatch_irp( device, irp, irp_handle );
 
     return STATUS_SUCCESS;
 }
@@ -327,9 +348,8 @@ static NTSTATUS dispatch_write( const irp_params_t *params, void *in_buff, ULONG
 
     offset.QuadPart = params->write.pos;
 
-    /* note: we abuse UserIosb to store the server irp handle */
     if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_WRITE, device, in_buff, in_size,
-                                              &offset, NULL, irp_handle )))
+                                              &offset, NULL, NULL )))
         return STATUS_NO_MEMORY;
 
     irp->Tail.Overlay.OriginalFileObject = file;
@@ -338,7 +358,7 @@ static NTSTATUS dispatch_write( const irp_params_t *params, void *in_buff, ULONG
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->Parameters.Write.Key = params->write.key;
 
-    dispatch_irp( device, irp );
+    dispatch_irp( device, irp, irp_handle );
 
     return STATUS_SUCCESS;
 }
@@ -357,15 +377,14 @@ static NTSTATUS dispatch_flush( const irp_params_t *params, void *in_buff, ULONG
 
     TRACE( "device %p file %p\n", device, file );
 
-    /* note: we abuse UserIosb to store the server irp handle */
     if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_FLUSH_BUFFERS, device, NULL, 0,
-                                              NULL, NULL, irp_handle )))
+                                              NULL, NULL, NULL )))
         return STATUS_NO_MEMORY;
 
     irp->Tail.Overlay.OriginalFileObject = file;
     irp->RequestorMode = UserMode;
 
-    dispatch_irp( device, irp );
+    dispatch_irp( device, irp, irp_handle );
 
     return STATUS_SUCCESS;
 }
@@ -398,9 +417,8 @@ static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG
         }
     }
 
-    /* note: we abuse UserIosb to store the server handle to the ioctl */
     irp = IoBuildDeviceIoControlRequest( params->ioctl.code, device, in_buff, in_size, out_buff, out_size,
-                                         FALSE, NULL, irp_handle );
+                                         FALSE, NULL, NULL );
     if (!irp)
     {
         HeapFree( GetProcessHeap(), 0, out_buff );
@@ -410,7 +428,7 @@ static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG
     irp->Tail.Overlay.OriginalFileObject = file;
     irp->RequestorMode = UserMode;
 
-    dispatch_irp( device, irp );
+    dispatch_irp( device, irp, irp_handle );
 
     return STATUS_SUCCESS;
 }
@@ -1390,7 +1408,6 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
     IO_STACK_LOCATION *irpsp;
     PIO_COMPLETION_ROUTINE routine;
     NTSTATUS status, stat;
-    HANDLE handle;
     int call_flag = 0;
 
     TRACE( "%p %u\n", irp, priority_boost );
@@ -1420,28 +1437,6 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
             if (STATUS_MORE_PROCESSING_REQUIRED == stat)
                 return;
         }
-    }
-
-    handle = (HANDLE)irp->UserIosb;
-    if (handle)
-    {
-        void *out_buff = irp->UserBuffer;
-        FILE_OBJECT *file = irp->Tail.Overlay.OriginalFileObject;
-
-        SERVER_START_REQ( set_irp_result )
-        {
-            req->handle   = wine_server_obj_handle( handle );
-            req->status   = irp->IoStatus.u.Status;
-            req->file_ptr = wine_server_client_ptr( file );
-            if (irp->IoStatus.u.Status >= 0)
-            {
-                req->size = irp->IoStatus.Information;
-                if (out_buff) wine_server_add_data( req, out_buff, irp->IoStatus.Information );
-            }
-            wine_server_call( req );
-        }
-        SERVER_END_REQ;
-        HeapFree( GetProcessHeap(), 0, out_buff );
     }
 
     IoFreeIrp( irp );

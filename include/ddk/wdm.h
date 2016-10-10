@@ -1189,6 +1189,18 @@ NTSTATUS WINAPI ObCloseHandle(IN HANDLE handle);
 # endif
 #endif
 
+static inline void IoSetCompletionRoutine(IRP *irp, PIO_COMPLETION_ROUTINE routine, void *context,
+                                          BOOLEAN on_success, BOOLEAN on_error, BOOLEAN on_cancel)
+{
+    IO_STACK_LOCATION *irpsp = IoGetNextIrpStackLocation(irp);
+    irpsp->CompletionRoutine = routine;
+    irpsp->Context = context;
+    irpsp->Control = 0;
+    if (on_success) irpsp->Control |= SL_INVOKE_ON_SUCCESS;
+    if (on_error)   irpsp->Control |= SL_INVOKE_ON_ERROR;
+    if (on_cancel)  irpsp->Control |= SL_INVOKE_ON_CANCEL;
+}
+
 #define KernelMode 0
 #define UserMode   1
 
