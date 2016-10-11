@@ -429,6 +429,10 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
   PARAFORMAT2 *fmt = &para->member.para.fmt;
   char props[STREAMOUT_BUFFER_SIZE] = "";
   int i;
+  ME_Paragraph *prev_para = NULL;
+
+  if (para->member.para.prev_para->type == diParagraph)
+      prev_para = &para->member.para.prev_para->member.para;
 
   if (!editor->bEmulateVersion10) { /* v4.1 */
     if (para->member.para.nFlags & MEPF_ROWSTART) {
@@ -462,7 +466,9 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
     }
   }
 
-  /* TODO: Don't emit anything if the last PARAFORMAT2 is inherited */
+  if (prev_para && !memcmp( fmt, &prev_para->fmt, sizeof(*fmt) ))
+    return TRUE;
+
   if (!ME_StreamOutPrint(pStream, "\\pard"))
     return FALSE;
 
