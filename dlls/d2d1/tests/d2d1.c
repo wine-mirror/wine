@@ -3099,6 +3099,22 @@ todo_wine
     ID2D1Factory_Release(factory);
 }
 
+static void test_desktop_dpi(void)
+{
+    ID2D1Factory *factory;
+    float dpi_x, dpi_y;
+    HRESULT hr;
+
+    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
+    ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
+
+    dpi_x = dpi_y = 0.0f;
+    ID2D1Factory_GetDesktopDpi(factory, &dpi_x, &dpi_y);
+    ok(dpi_x > 0.0f && dpi_y > 0.0f, "Got wrong dpi %f x %f.\n", dpi_x, dpi_y);
+
+    ID2D1Factory_Release(factory);
+}
+
 START_TEST(d2d1)
 {
     test_clip();
@@ -3116,4 +3132,5 @@ START_TEST(d2d1)
     test_dc_target();
     test_hwnd_target();
     test_bitmap_target();
+    test_desktop_dpi();
 }

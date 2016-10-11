@@ -30,11 +30,32 @@ struct d2d_factory
     LONG refcount;
 
     ID3D10Device1 *device;
+
+    float dpi_x;
+    float dpi_y;
 };
 
 static inline struct d2d_factory *impl_from_ID2D1Factory(ID2D1Factory *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_factory, ID2D1Factory_iface);
+}
+
+static HRESULT d2d_factory_reload_sysmetrics(struct d2d_factory *factory)
+{
+    HDC hdc;
+
+    if (!(hdc = GetDC(NULL)))
+    {
+        factory->dpi_x = factory->dpi_y = 96.0f;
+        return E_FAIL;
+    }
+
+    factory->dpi_x = GetDeviceCaps(hdc, LOGPIXELSX);
+    factory->dpi_y = GetDeviceCaps(hdc, LOGPIXELSY);
+
+    ReleaseDC(NULL, hdc);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_QueryInterface(ID2D1Factory *iface, REFIID iid, void **out)
@@ -84,17 +105,21 @@ static ULONG STDMETHODCALLTYPE d2d_factory_Release(ID2D1Factory *iface)
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_ReloadSystemMetrics(ID2D1Factory *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d2d_factory *factory = impl_from_ID2D1Factory(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p.\n", iface);
+
+    return d2d_factory_reload_sysmetrics(factory);
 }
 
 static void STDMETHODCALLTYPE d2d_factory_GetDesktopDpi(ID2D1Factory *iface, float *dpi_x, float *dpi_y)
 {
-    FIXME("iface %p, dpi_x %p, dpi_y %p stub!\n", iface, dpi_x, dpi_y);
+    struct d2d_factory *factory = impl_from_ID2D1Factory(iface);
 
-    *dpi_x = 96.0f;
-    *dpi_y = 96.0f;
+    TRACE("iface %p, dpi_x %p, dpi_y %p.\n", iface, dpi_x, dpi_y);
+
+    *dpi_x = factory->dpi_x;
+    *dpi_y = factory->dpi_y;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateRectangleGeometry(ID2D1Factory *iface,
@@ -381,6 +406,7 @@ static void d2d_factory_init(struct d2d_factory *factory, D2D1_FACTORY_TYPE fact
 
     factory->ID2D1Factory_iface.lpVtbl = &d2d_factory_vtbl;
     factory->refcount = 1;
+    d2d_factory_reload_sysmetrics(factory);
 }
 
 HRESULT WINAPI D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
