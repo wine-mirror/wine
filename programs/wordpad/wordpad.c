@@ -156,7 +156,7 @@ static int MessageBoxWithResStringW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption
 }
 
 
-static void AddButton(HWND hwndToolBar, int nImage, int nCommand)
+static void AddButtonStyle(HWND hwndToolBar, int nImage, int nCommand, BYTE style)
 {
     TBBUTTON button;
 
@@ -164,10 +164,15 @@ static void AddButton(HWND hwndToolBar, int nImage, int nCommand)
     button.iBitmap = nImage;
     button.idCommand = nCommand;
     button.fsState = TBSTATE_ENABLED;
-    button.fsStyle = BTNS_BUTTON;
+    button.fsStyle = style;
     button.dwData = 0;
     button.iString = -1;
     SendMessageW(hwndToolBar, TB_ADDBUTTONSW, 1, (LPARAM)&button);
+}
+
+static void AddButton(HWND hwndToolBar, int nImage, int nCommand)
+{
+    AddButtonStyle(hwndToolBar, nImage, nCommand, BTNS_BUTTON);
 }
 
 static void AddSeparator(HWND hwndToolBar)
@@ -1879,6 +1884,8 @@ static LRESULT OnCreate( HWND hWnd )
          CCS_NOPARENTALIGN | CCS_NOMOVEY | WS_VISIBLE | TBSTYLE_TOOLTIPS,
          IDC_FORMATBAR, 8, hInstance, IDB_FORMATBAR, NULL, 0, 16, 16, 16, 16, sizeof(TBBUTTON));
 
+    SendMessageW(hFormatBarWnd, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_DRAWDDARROWS);
+
     AddButton(hFormatBarWnd, 0, ID_FORMAT_BOLD);
     AddButton(hFormatBarWnd, 1, ID_FORMAT_ITALIC);
     AddButton(hFormatBarWnd, 2, ID_FORMAT_UNDERLINE);
@@ -1888,7 +1895,7 @@ static LRESULT OnCreate( HWND hWnd )
     AddButton(hFormatBarWnd, 5, ID_ALIGN_CENTER);
     AddButton(hFormatBarWnd, 6, ID_ALIGN_RIGHT);
     AddSeparator(hFormatBarWnd);
-    AddButton(hFormatBarWnd, 7, ID_BULLETONOFF);
+    AddButtonStyle(hFormatBarWnd, 7, ID_BULLETONOFF, BTNS_DROPDOWN);
 
     SendMessageW(hFormatBarWnd, TB_AUTOSIZE, 0, 0);
 
@@ -2007,6 +2014,7 @@ static LRESULT OnNotify( HWND hWnd, LPARAM lParam)
     NMHDR *pHdr = (NMHDR *)lParam;
     HWND hwndFontList = GetDlgItem(hwndReBar, IDC_FONTLIST);
     HWND hwndSizeList = GetDlgItem(hwndReBar, IDC_SIZELIST);
+    HWND hwndFormatBar = GetDlgItem(hwndReBar, IDC_FORMATBAR);
 
     if (pHdr->hwndFrom == hwndFontList || pHdr->hwndFrom == hwndSizeList)
     {
@@ -2024,22 +2032,51 @@ static LRESULT OnNotify( HWND hWnd, LPARAM lParam)
         return 0;
     }
 
-    if (pHdr->hwndFrom != hwndEditor)
-        return 0;
-
-    if (pHdr->code == EN_SELCHANGE)
+    if (pHdr->hwndFrom == hwndFormatBar)
     {
-        SELCHANGE *pSC = (SELCHANGE *)lParam;
-        char buf[128];
+        if (pHdr->code == TBN_DROPDOWN)
+        {
+            NMTOOLBARW *tb_notify = (NMTOOLBARW *)lParam;
+            HMENU menu = GetMenu( hWnd );
+            MENUITEMINFOW info;
+            TPMPARAMS params;
+            RECT rc;
 
-        update_font_list();
+            if (!menu) return 0;
+            info.cbSize = sizeof(info);
+            info.fMask = MIIM_SUBMENU;
+            GetMenuItemInfoW( menu, ID_LISTMENU, FALSE, &info );
+            if (!info.hSubMenu) return 0;
 
-        sprintf( buf,"selection = %d..%d, line count=%ld",
-                 pSC->chrg.cpMin, pSC->chrg.cpMax,
-                SendMessageW(hwndEditor, EM_GETLINECOUNT, 0, 0));
-        SetWindowTextA(GetDlgItem(hWnd, IDC_STATUSBAR), buf);
-        SendMessageW(hWnd, WM_USER, 0, 0);
-        return 1;
+            SendMessageW( tb_notify->hdr.hwndFrom, TB_GETRECT, (WPARAM)tb_notify->iItem, (LPARAM)&rc );
+            MapWindowPoints( tb_notify->hdr.hwndFrom, HWND_DESKTOP, (LPPOINT)&rc, 2 );
+
+            params.cbSize = sizeof(params);
+            params.rcExclude = rc;
+            TrackPopupMenuEx( info.hSubMenu,
+                              TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_VERTICAL,
+                              rc.left, rc.bottom, hWnd, &params );
+        }
+
+        return 0;
+    }
+
+    if (pHdr->hwndFrom == hwndEditor)
+    {
+        if (pHdr->code == EN_SELCHANGE)
+        {
+            SELCHANGE *pSC = (SELCHANGE *)lParam;
+            char buf[128];
+
+            update_font_list();
+
+            sprintf( buf,"selection = %d..%d, line count=%ld",
+                     pSC->chrg.cpMin, pSC->chrg.cpMax,
+                     SendMessageW(hwndEditor, EM_GETLINECOUNT, 0, 0));
+            SetWindowTextA(GetDlgItem(hWnd, IDC_STATUSBAR), buf);
+            SendMessageW(hWnd, WM_USER, 0, 0);
+            return 1;
+        }
     }
     return 0;
 }
