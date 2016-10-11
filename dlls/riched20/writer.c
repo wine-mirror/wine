@@ -213,6 +213,29 @@ ME_StreamOutRTFHeader(ME_OutStream *pStream, int dwFormat)
   return TRUE;
 }
 
+static void add_font_to_fonttbl( ME_OutStream *stream, ME_Style *style )
+{
+    ME_FontTableItem *table = stream->fonttbl;
+    CHARFORMAT2W *fmt = &style->fmt;
+    WCHAR *face = fmt->szFaceName;
+    BYTE charset = (fmt->dwMask & CFM_CHARSET) ? fmt->bCharSet : DEFAULT_CHARSET;
+    int i;
+
+    if (fmt->dwMask & CFM_FACE)
+    {
+        for (i = 0; i < stream->nFontTblLen; i++)
+            if (table[i].bCharSet == charset
+                && (table[i].szFaceName == face || !lstrcmpW(table[i].szFaceName, face)))
+                break;
+
+        if (i == stream->nFontTblLen && i < STREAMOUT_FONTTBL_SIZE)
+        {
+            table[i].bCharSet = charset;
+            table[i].szFaceName = face;
+            stream->nFontTblLen++;
+        }
+    }
+}
 
 static BOOL
 ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
@@ -223,26 +246,13 @@ ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
   unsigned int i;
   ME_DisplayItem *pLastPara = ME_GetParagraph(pLastRun);
   ME_DisplayItem *pCell = NULL;
-  
+
   do {
     CHARFORMAT2W *fmt = &item->member.run.style->fmt;
     COLORREF crColor;
 
-    if (fmt->dwMask & CFM_FACE) {
-      WCHAR *face = fmt->szFaceName;
-      BYTE bCharSet = (fmt->dwMask & CFM_CHARSET) ? fmt->bCharSet : DEFAULT_CHARSET;
-  
-      for (i = 0; i < pStream->nFontTblLen; i++)
-        if (table[i].bCharSet == bCharSet
-            && (table[i].szFaceName == face || !lstrcmpW(table[i].szFaceName, face)))
-          break;
-      if (i == pStream->nFontTblLen && i < STREAMOUT_FONTTBL_SIZE) {
-        table[i].bCharSet = bCharSet;
-        table[i].szFaceName = face;
-        pStream->nFontTblLen++;
-      }
-    }
-    
+    add_font_to_fonttbl( pStream, item->member.run.style );
+
     if (fmt->dwMask & CFM_COLOR && !(fmt->dwEffects & CFE_AUTOCOLOR)) {
       crColor = fmt->crTextColor;
       for (i = 1; i < pStream->nColorTblLen; i++)
