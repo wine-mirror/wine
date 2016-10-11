@@ -1842,6 +1842,30 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         macdrv_release_event(event);
     }
 
+    - (void) postWindowFrameChanged:(NSRect)frame fullscreen:(BOOL)isFullscreen resizing:(BOOL)resizing
+    {
+        macdrv_event* event;
+        NSUInteger style = self.styleMask;
+
+        if (isFullscreen)
+            style |= NSFullScreenWindowMask;
+        else
+            style &= ~NSFullScreenWindowMask;
+        frame = [[self class] contentRectForFrameRect:frame styleMask:style];
+        [[WineApplicationController sharedController] flipRect:&frame];
+
+        /* Coalesce events by discarding any previous ones still in the queue. */
+        [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_FRAME_CHANGED)
+                               forWindow:self];
+
+        event = macdrv_create_event(WINDOW_FRAME_CHANGED, self);
+        event->window_frame_changed.frame = cgrect_win_from_mac(NSRectToCGRect(frame));
+        event->window_frame_changed.fullscreen = isFullscreen;
+        event->window_frame_changed.in_resize = resizing;
+        [queue postEvent:event];
+        macdrv_release_event(event);
+    }
+
     - (void) updateForCursorClipping
     {
         [self adjustFeaturesForState];
@@ -2589,7 +2613,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
     - (void)windowDidResize:(NSNotification *)notification
     {
-        macdrv_event* event;
         NSRect frame = self.wine_fractionalFrame;
 
         if ([self inLiveResize])
@@ -2600,28 +2623,18 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                 resizingFromTop = TRUE;
         }
 
-        frame = [self contentRectForFrameRect:frame];
-
         if (ignore_windowResize || exitingFullScreen) return;
 
         if ([self preventResizing])
         {
-            [self setContentMinSize:frame.size];
-            [self setContentMaxSize:frame.size];
+            NSRect contentRect = [self contentRectForFrameRect:frame];
+            [self setContentMinSize:contentRect.size];
+            [self setContentMaxSize:contentRect.size];
         }
 
-        [[WineApplicationController sharedController] flipRect:&frame];
-
-        /* Coalesce events by discarding any previous ones still in the queue. */
-        [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_FRAME_CHANGED)
-                               forWindow:self];
-
-        event = macdrv_create_event(WINDOW_FRAME_CHANGED, self);
-        event->window_frame_changed.frame = cgrect_win_from_mac(NSRectToCGRect(frame));
-        event->window_frame_changed.fullscreen = ([self styleMask] & NSFullScreenWindowMask) != 0;
-        event->window_frame_changed.in_resize = [self inLiveResize];
-        [queue postEvent:event];
-        macdrv_release_event(event);
+        [self postWindowFrameChanged:frame
+                          fullscreen:([self styleMask] & NSFullScreenWindowMask) != 0
+                            resizing:[self inLiveResize]];
 
         [[[self contentView] inputContext] invalidateCharacterCoordinates];
         [self updateFullscreen];
@@ -2683,6 +2696,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     - (void) windowWillExitFullScreen:(NSNotification*)notification
     {
         exitingFullScreen = TRUE;
+        [self postWindowFrameChanged:nonFullscreenFrame fullscreen:FALSE resizing:FALSE];
     }
 
     - (void)windowWillMiniaturize:(NSNotification *)notification
