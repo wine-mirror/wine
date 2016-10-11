@@ -549,11 +549,11 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
   if (!(editor->bEmulateVersion10 && /* v1.0 - 3.0 */
         fmt->dwMask & PFM_TABLE && fmt->wEffects & PFE_TABLE))
   {
-    if (fmt->dwMask & PFM_OFFSET)
+    if (fmt->dxOffset)
       sprintf(props + strlen(props), "\\li%d", fmt->dxOffset);
-    if (fmt->dwMask & PFM_OFFSETINDENT || fmt->dwMask & PFM_STARTINDENT)
+    if (fmt->dxStartIndent)
       sprintf(props + strlen(props), "\\fi%d", fmt->dxStartIndent);
-    if (fmt->dwMask & PFM_RIGHTINDENT)
+    if (fmt->dxRightIndent)
       sprintf(props + strlen(props), "\\ri%d", fmt->dxRightIndent);
     if (fmt->dwMask & PFM_TABSTOPS) {
       static const char * const leader[6] = { "", "\\tldot", "\\tlhyph", "\\tlul", "\\tlth", "\\tleq" };
@@ -579,11 +579,11 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
       }
     }
   }
-  if (fmt->dwMask & PFM_SPACEAFTER)
+  if (fmt->dySpaceAfter)
     sprintf(props + strlen(props), "\\sa%d", fmt->dySpaceAfter);
-  if (fmt->dwMask & PFM_SPACEBEFORE)
+  if (fmt->dySpaceBefore)
     sprintf(props + strlen(props), "\\sb%d", fmt->dySpaceBefore);
-  if (fmt->dwMask & PFM_STYLE)
+  if (fmt->sStyle != -1)
     sprintf(props + strlen(props), "\\s%d", fmt->sStyle);
   
   if (fmt->dwMask & PFM_SHADING) {
