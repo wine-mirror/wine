@@ -426,6 +426,7 @@ AC_CHECK_HEADERS(\
 	linux/compiler.h \
 	linux/filter.h \
 	linux/hdreg.h \
+	linux/hidraw.h \
 	linux/input.h \
 	linux/ioctl.h \
 	linux/joystick.h \

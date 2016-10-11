@@ -23,6 +23,7 @@ NTSTATUS WINAPI udev_driver_init(DRIVER_OBJECT *driver, UNICODE_STRING *registry
 typedef struct
 {
     int (*compare_platform_device)(DEVICE_OBJECT *device, void *platform_dev);
+    NTSTATUS (*get_reportdescriptor)(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length);
 } platform_vtbl;
 
 void *get_platform_private(DEVICE_OBJECT *device) DECLSPEC_HIDDEN;

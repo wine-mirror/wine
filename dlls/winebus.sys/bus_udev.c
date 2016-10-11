@@ -35,6 +35,12 @@
 #ifdef HAVE_LIBUDEV_H
 # include <libudev.h>
 #endif
+#ifdef HAVE_LINUX_HIDRAW_H
+# include <linux/hidraw.h>
+#endif
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
 
 #define NONAMELESSUNION
 
@@ -64,6 +70,7 @@ DEFINE_GUID(GUID_DEVCLASS_HIDRAW, 0x3def44ad,0x242e,0x46e5,0x82,0x6d,0x70,0x72,0
 struct platform_private
 {
     struct udev_device *udev_device;
+    int device_fd;
 };
 
 static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
@@ -105,9 +112,42 @@ static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
     return strcmp(udev_device_get_syspath(dev1), udev_device_get_syspath(dev2));
 }
 
+static NTSTATUS hidraw_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length)
+{
+#ifdef HAVE_LINUX_HIDRAW_H
+    struct hidraw_report_descriptor descriptor;
+    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+
+    if (ioctl(private->device_fd, HIDIOCGRDESCSIZE, &descriptor.size) == -1)
+    {
+        WARN("ioctl(HIDIOCGRDESCSIZE) failed: %d %s\n", errno, strerror(errno));
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    *out_length = descriptor.size;
+
+    if (length < descriptor.size)
+        return STATUS_BUFFER_TOO_SMALL;
+    if (!descriptor.size)
+        return STATUS_SUCCESS;
+
+    if (ioctl(private->device_fd, HIDIOCGRDESC, &descriptor) == -1)
+    {
+        WARN("ioctl(HIDIOCGRDESC) failed: %d %s\n", errno, strerror(errno));
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    memcpy(buffer, descriptor.value, descriptor.size);
+    return STATUS_SUCCESS;
+#else
+    return STATUS_NOT_IMPLEMENTED;
+#endif
+}
+
 static const platform_vtbl hidraw_vtbl =
 {
     compare_platform_device,
+    hidraw_get_reportdescriptor,
 };
 
 static void try_add_device(struct udev_device *dev)
@@ -128,7 +168,6 @@ static void try_add_device(struct udev_device *dev)
         WARN("Unable to open udev device %s: %s\n", debugstr_a(devnode), strerror(errno));
         return;
     }
-    close(fd);
 
     usbdev = udev_device_get_parent_with_subsystem_devtype(dev, "usb", "usb_device");
     if (usbdev)
@@ -151,11 +190,16 @@ static void try_add_device(struct udev_device *dev)
 
     if (device)
     {
-        impl_from_DEVICE_OBJECT(device)->udev_device = udev_device_ref(dev);
+        struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+        private->udev_device = udev_device_ref(dev);
+        private->device_fd = fd;
         IoInvalidateDeviceRelations(device, BusRelations);
     }
     else
+    {
         WARN("Ignoring device %s with subsystem %s\n", debugstr_a(devnode), subsystem);
+        close(fd);
+    }
 
     HeapFree(GetProcessHeap(), 0, serial);
 }
@@ -163,9 +207,12 @@ static void try_add_device(struct udev_device *dev)
 static void try_remove_device(struct udev_device *dev)
 {
     DEVICE_OBJECT *device = bus_find_hid_device(&hidraw_vtbl, dev);
+    struct platform_private *private;
     if (!device) return;
 
-    dev = impl_from_DEVICE_OBJECT(device)->udev_device;
+    private = impl_from_DEVICE_OBJECT(device);
+    dev = private->udev_device;
+    close(private->device_fd);
     bus_remove_hid_device(device);
     udev_device_unref(dev);
 }
