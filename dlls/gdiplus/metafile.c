@@ -1040,21 +1040,27 @@ GpStatus WINGDIPAPI GdipGetHemfFromMetafile(GpMetafile *metafile, HENHMETAFILE *
     return Ok;
 }
 
-static GpStatus METAFILE_PlaybackUpdateGdiTransform(GpMetafile *metafile)
+static void METAFILE_GetFinalGdiTransform(const GpMetafile *metafile, XFORM *result)
 {
-    XFORM combined, final;
     const GpRectF *rect;
     const GpPointF *pt;
 
     /* This transforms metafile device space to output points. */
     rect = &metafile->src_rect;
     pt = metafile->playback_points;
-    final.eM11 = (pt[1].X - pt[0].X) / rect->Width;
-    final.eM21 = (pt[2].X - pt[0].X) / rect->Height;
-    final.eDx = pt[0].X - final.eM11 * rect->X - final.eM21 * rect->Y;
-    final.eM12 = (pt[1].Y - pt[0].Y) / rect->Width;
-    final.eM22 = (pt[2].Y - pt[0].Y) / rect->Height;
-    final.eDy = pt[0].Y - final.eM12 * rect->X - final.eM22 * rect->Y;
+    result->eM11 = (pt[1].X - pt[0].X) / rect->Width;
+    result->eM21 = (pt[2].X - pt[0].X) / rect->Height;
+    result->eDx = pt[0].X - result->eM11 * rect->X - result->eM21 * rect->Y;
+    result->eM12 = (pt[1].Y - pt[0].Y) / rect->Width;
+    result->eM22 = (pt[2].Y - pt[0].Y) / rect->Height;
+    result->eDy = pt[0].Y - result->eM12 * rect->X - result->eM22 * rect->Y;
+}
+
+static GpStatus METAFILE_PlaybackUpdateGdiTransform(GpMetafile *metafile)
+{
+    XFORM combined, final;
+
+    METAFILE_GetFinalGdiTransform(metafile, &final);
 
     CombineTransform(&combined, &metafile->gdiworldtransform, &final);
 
@@ -1154,7 +1160,6 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             case EMR_SETWINDOWEXTEX:
             case EMR_SETVIEWPORTORGEX:
             case EMR_SETVIEWPORTEXTEX:
-            case EMR_EXTSELECTCLIPRGN:
             case EMR_SCALEVIEWPORTEXTEX:
             case EMR_SCALEWINDOWEXTEX:
             case EMR_MODIFYWORLDTRANSFORM:
@@ -1166,6 +1171,28 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                 real_metafile->gdiworldtransform = *xform;
                 METAFILE_PlaybackUpdateGdiTransform(real_metafile);
                 break;
+            }
+            case EMR_EXTSELECTCLIPRGN:
+            {
+                DWORD rgndatasize = *(DWORD*)data;
+                DWORD mode = *(DWORD*)(data + 4);
+                const RGNDATA *rgndata = (const RGNDATA*)(data + 8);
+                HRGN hrgn = NULL;
+
+                if (dataSize > 8)
+                {
+                    XFORM final;
+
+                    METAFILE_GetFinalGdiTransform(metafile, &final);
+
+                    hrgn = ExtCreateRegion(&final, rgndatasize, rgndata);
+                }
+
+                ExtSelectClipRgn(metafile->playback_dc, hrgn, mode);
+
+                DeleteObject(hrgn);
+
+                return Ok;
             }
             default:
                 break;
