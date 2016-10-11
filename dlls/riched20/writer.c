@@ -237,6 +237,21 @@ static void add_font_to_fonttbl( ME_OutStream *stream, ME_Style *style )
     }
 }
 
+static void add_color_to_colortbl( ME_OutStream *stream, COLORREF color )
+{
+    int i;
+
+    for (i = 1; i < stream->nColorTblLen; i++)
+        if (stream->colortbl[i] == color)
+            break;
+
+    if (i == stream->nColorTblLen && i < STREAMOUT_COLORTBL_SIZE)
+    {
+        stream->colortbl[i] = color;
+        stream->nColorTblLen++;
+    }
+}
+
 static BOOL
 ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
                                ME_DisplayItem *pLastRun)
@@ -249,30 +264,13 @@ ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
 
   do {
     CHARFORMAT2W *fmt = &item->member.run.style->fmt;
-    COLORREF crColor;
 
     add_font_to_fonttbl( pStream, item->member.run.style );
 
-    if (fmt->dwMask & CFM_COLOR && !(fmt->dwEffects & CFE_AUTOCOLOR)) {
-      crColor = fmt->crTextColor;
-      for (i = 1; i < pStream->nColorTblLen; i++)
-        if (pStream->colortbl[i] == crColor)
-          break;
-      if (i == pStream->nColorTblLen && i < STREAMOUT_COLORTBL_SIZE) {
-        pStream->colortbl[i] = crColor;
-        pStream->nColorTblLen++;
-      }
-    }
-    if (fmt->dwMask & CFM_BACKCOLOR && !(fmt->dwEffects & CFE_AUTOBACKCOLOR)) {
-      crColor = fmt->crBackColor;
-      for (i = 1; i < pStream->nColorTblLen; i++)
-        if (pStream->colortbl[i] == crColor)
-          break;
-      if (i == pStream->nColorTblLen && i < STREAMOUT_COLORTBL_SIZE) {
-        pStream->colortbl[i] = crColor;
-        pStream->nColorTblLen++;
-      }
-    }
+    if (fmt->dwMask & CFM_COLOR && !(fmt->dwEffects & CFE_AUTOCOLOR))
+      add_color_to_colortbl( pStream, fmt->crTextColor );
+    if (fmt->dwMask & CFM_BACKCOLOR && !(fmt->dwEffects & CFE_AUTOBACKCOLOR))
+      add_color_to_colortbl( pStream, fmt->crBackColor );
 
     if (item == pLastRun)
       break;
@@ -287,20 +285,8 @@ ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
                                   &pCell->member.cell.border.bottom,
                                   &pCell->member.cell.border.right };
         for (i = 0; i < 4; i++)
-        {
           if (borders[i]->width > 0)
-          {
-            unsigned int j;
-            COLORREF crColor = borders[i]->colorRef;
-            for (j = 1; j < pStream->nColorTblLen; j++)
-              if (pStream->colortbl[j] == crColor)
-                break;
-            if (j == pStream->nColorTblLen && j < STREAMOUT_COLORTBL_SIZE) {
-              pStream->colortbl[j] = crColor;
-              pStream->nColorTblLen++;
-            }
-          }
-        }
+            add_color_to_colortbl( pStream, borders[i]->colorRef );
     }
     if (item == pLastPara)
       break;
