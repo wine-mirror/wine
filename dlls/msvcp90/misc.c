@@ -1318,3 +1318,24 @@ LONGLONG __cdecl _Query_perf_frequency(void)
     return li.QuadPart;
 }
 #endif
+
+void __cdecl threads__Mtx_new(void **mtx)
+{
+    *mtx = MSVCRT_operator_new(sizeof(CRITICAL_SECTION));
+    InitializeCriticalSection(*mtx);
+}
+
+void __cdecl threads__Mtx_delete(void *mtx)
+{
+    DeleteCriticalSection(mtx);
+}
+
+void __cdecl threads__Mtx_lock(void *mtx)
+{
+    EnterCriticalSection(mtx);
+}
+
+void __cdecl threads__Mtx_unlock(void *mtx)
+{
+    LeaveCriticalSection(mtx);
+}

@@ -279,6 +279,11 @@ static _Pad* (__thiscall *p__Pad_op_assign)(_Pad*, const _Pad*);
 static void (__thiscall *p__Pad__Launch)(_Pad*, _Thrd_t*);
 static void (__thiscall *p__Pad__Release)(_Pad*);
 
+static void (__cdecl *p_threads__Mtx_new)(void **mtx);
+static void (__cdecl *p_threads__Mtx_delete)(void *mtx);
+static void (__cdecl *p_threads__Mtx_lock)(void *mtx);
+static void (__cdecl *p_threads__Mtx_unlock)(void *mtx);
+
 static BOOLEAN (WINAPI *pCreateSymbolicLinkA)(LPCSTR,LPCSTR,DWORD);
 
 static HMODULE msvcp;
@@ -388,6 +393,14 @@ static BOOL init(void)
                 "?_Launch@_Pad@std@@QEAAXPEAU_Thrd_imp_t@@@Z");
         SET(p__Pad__Release,
                 "?_Release@_Pad@std@@QEAAXXZ");
+        SET(p_threads__Mtx_new,
+                "?_Mtx_new@threads@stdext@@YAXAEAPEAX@Z");
+        SET(p_threads__Mtx_delete,
+                "?_Mtx_delete@threads@stdext@@YAXPEAX@Z");
+        SET(p_threads__Mtx_lock,
+                "?_Mtx_lock@threads@stdext@@YAXPEAX@Z");
+        SET(p_threads__Mtx_unlock,
+                "?_Mtx_unlock@threads@stdext@@YAXPEAX@Z");
     } else {
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPBD@Z");
@@ -449,6 +462,14 @@ static BOOL init(void)
                 "?_Symlink@sys@tr2@std@@YAHPBD0@Z");
         SET(p_tr2_sys__Unlink,
                 "?_Unlink@sys@tr2@std@@YAHPBD@Z");
+        SET(p_threads__Mtx_new,
+                "?_Mtx_new@threads@stdext@@YAXAAPAX@Z");
+        SET(p_threads__Mtx_delete,
+                "?_Mtx_delete@threads@stdext@@YAXPAX@Z");
+        SET(p_threads__Mtx_lock,
+                "?_Mtx_lock@threads@stdext@@YAXPAX@Z");
+        SET(p_threads__Mtx_unlock,
+                "?_Mtx_unlock@threads@stdext@@YAXPAX@Z");
 #ifdef __i386__
         SET(p_i386_Thrd_current,
                 "_Thrd_current");
@@ -2065,6 +2086,22 @@ static void test__Pad(void)
     CloseHandle(_Pad__Launch_returned);
 }
 
+static void test_threads__Mtx(void)
+{
+    void *mtx = NULL;
+
+    p_threads__Mtx_new(&mtx);
+    ok(mtx != NULL, "mtx == NULL\n");
+
+    p_threads__Mtx_lock(mtx);
+    p_threads__Mtx_lock(mtx);
+    p_threads__Mtx_unlock(mtx);
+    p_threads__Mtx_unlock(mtx);
+    p_threads__Mtx_unlock(mtx);
+
+    p_threads__Mtx_delete(mtx);
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -2096,6 +2133,7 @@ START_TEST(msvcp120)
     test_thrd();
     test_cnd();
     test__Pad();
+    test_threads__Mtx();
 
     test_vbtable_size_exports();
 
