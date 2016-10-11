@@ -259,8 +259,8 @@ ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
   ME_DisplayItem *item = pFirstRun;
   ME_FontTableItem *table = pStream->fonttbl;
   unsigned int i;
-  ME_DisplayItem *pLastPara = ME_GetParagraph(pLastRun);
   ME_DisplayItem *pCell = NULL;
+  ME_Paragraph *prev_para = NULL;
 
   do {
     CHARFORMAT2W *fmt = &item->member.run.style->fmt;
@@ -272,14 +272,10 @@ ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
     if (fmt->dwMask & CFM_BACKCOLOR && !(fmt->dwEffects & CFE_AUTOBACKCOLOR))
       add_color_to_colortbl( pStream, fmt->crBackColor );
 
-    if (item == pLastRun)
-      break;
-    item = ME_FindItemFwd(item, diRun);
-  } while (item);
-  item = ME_GetParagraph(pFirstRun);
-  do {
-    if ((pCell = item->member.para.pCell))
+    if (item->member.run.para != prev_para)
     {
+      if ((pCell = item->member.para.pCell))
+      {
         ME_Border* borders[4] = { &pCell->member.cell.border.top,
                                   &pCell->member.cell.border.left,
                                   &pCell->member.cell.border.bottom,
@@ -287,12 +283,16 @@ ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
         for (i = 0; i < 4; i++)
           if (borders[i]->width > 0)
             add_color_to_colortbl( pStream, borders[i]->colorRef );
+      }
+
+      prev_para = item->member.run.para;
     }
-    if (item == pLastPara)
+
+    if (item == pLastRun)
       break;
-    item = item->member.para.next_para;
+    item = ME_FindItemFwd(item, diRun);
   } while (item);
-        
+
   if (!ME_StreamOutPrint(pStream, "{\\fonttbl"))
     return FALSE;
   
