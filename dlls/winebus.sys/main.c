@@ -412,6 +412,15 @@ NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             irp->IoStatus.Information = sizeof(*descriptor);
             break;
         }
+        case IOCTL_HID_GET_REPORT_DESCRIPTOR:
+        {
+            DWORD length = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
+            TRACE("IOCTL_HID_GET_REPORT_DESCRIPTOR\n");
+
+            irp->IoStatus.u.Status = status = ext->vtbl->get_reportdescriptor(device, irp->UserBuffer, length, &length);
+            irp->IoStatus.Information = length;
+            break;
+        }
         default:
         {
             ULONG code = irpsp->Parameters.DeviceIoControl.IoControlCode;
