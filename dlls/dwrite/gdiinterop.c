@@ -599,14 +599,14 @@ static ULONG WINAPI gdiinterop_AddRef(IDWriteGdiInterop1 *iface)
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
     TRACE("(%p)\n", This);
-    return IDWriteFactory3_AddRef(This->factory);
+    return IDWriteFactory4_AddRef(This->factory);
 }
 
 static ULONG WINAPI gdiinterop_Release(IDWriteGdiInterop1 *iface)
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
     TRACE("(%p)\n", This);
-    return IDWriteFactory3_Release(This->factory);
+    return IDWriteFactory4_Release(This->factory);
 }
 
 static HRESULT WINAPI gdiinterop_CreateFontFromLOGFONT(IDWriteGdiInterop1 *iface,
@@ -805,7 +805,7 @@ static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop1 *iface
         return E_FAIL;
     }
 
-    hr = IDWriteFactory3_CreateFontFileReference(This->factory, fileinfo->path, &fileinfo->writetime,
+    hr = IDWriteFactory4_CreateFontFileReference(This->factory, fileinfo->path, &fileinfo->writetime,
         &file);
     heap_free(fileinfo);
     if (FAILED(hr))
@@ -819,7 +819,7 @@ static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop1 *iface
     }
 
     /* Simulations flags values match DWRITE_FONT_SIMULATIONS */
-    hr = IDWriteFactory3_CreateFontFace(This->factory, facetype, 1, &file, info.face_index, info.simulations,
+    hr = IDWriteFactory4_CreateFontFace(This->factory, facetype, 1, &file, info.face_index, info.simulations,
         fontface);
     IDWriteFontFile_Release(file);
     return hr;
@@ -852,7 +852,7 @@ static HRESULT WINAPI gdiinterop1_CreateFontFromLOGFONT(IDWriteGdiInterop1 *ifac
     if (collection)
         IDWriteFontCollection_AddRef(collection);
     else {
-        hr = IDWriteFactory3_GetSystemFontCollection(This->factory, FALSE, (IDWriteFontCollection1**)&collection, FALSE);
+        hr = IDWriteFactory4_GetSystemFontCollection(This->factory, FALSE, (IDWriteFontCollection1**)&collection, FALSE);
         if (FAILED(hr)) {
             ERR("failed to get system font collection: 0x%08x.\n", hr);
             return hr;
@@ -957,7 +957,7 @@ static const struct IDWriteGdiInterop1Vtbl gdiinteropvtbl = {
     gdiinterop1_GetMatchingFontsByLOGFONT
 };
 
-void gdiinterop_init(struct gdiinterop *interop, IDWriteFactory3 *factory)
+void gdiinterop_init(struct gdiinterop *interop, IDWriteFactory4 *factory)
 {
     interop->IDWriteGdiInterop1_iface.lpVtbl = &gdiinteropvtbl;
     /* Interop is a part of a factory, sharing its refcount.

@@ -121,12 +121,12 @@ static inline BOOL is_simulation_valid(DWRITE_FONT_SIMULATIONS simulations)
 struct gdiinterop
 {
     IDWriteGdiInterop1 IDWriteGdiInterop1_iface;
-    IDWriteFactory3 *factory;
+    IDWriteFactory4 *factory;
 };
 
 struct textlayout_desc
 {
-    IDWriteFactory3 *factory;
+    IDWriteFactory4 *factory;
     const WCHAR *string;
     UINT32 length;
     IDWriteTextFormat *format;
@@ -154,7 +154,7 @@ struct glyphrunanalysis_desc
 
 struct fontface_desc
 {
-    IDWriteFactory3 *factory;
+    IDWriteFactory4 *factory;
     DWRITE_FONT_FACE_TYPE face_type;
     IDWriteFontFile * const *files;
     UINT32 files_number;
@@ -168,20 +168,20 @@ extern HRESULT create_numbersubstitution(DWRITE_NUMBER_SUBSTITUTION_METHOD,const
 extern HRESULT create_textformat(const WCHAR*,IDWriteFontCollection*,DWRITE_FONT_WEIGHT,DWRITE_FONT_STYLE,DWRITE_FONT_STRETCH,
                                  FLOAT,const WCHAR*,IDWriteTextFormat**) DECLSPEC_HIDDEN;
 extern HRESULT create_textlayout(const struct textlayout_desc*,IDWriteTextLayout**) DECLSPEC_HIDDEN;
-extern HRESULT create_trimmingsign(IDWriteFactory3*,IDWriteTextFormat*,IDWriteInlineObject**) DECLSPEC_HIDDEN;
+extern HRESULT create_trimmingsign(IDWriteFactory4*,IDWriteTextFormat*,IDWriteInlineObject**) DECLSPEC_HIDDEN;
 extern HRESULT create_typography(IDWriteTypography**) DECLSPEC_HIDDEN;
-extern void    gdiinterop_init(struct gdiinterop*,IDWriteFactory3*) DECLSPEC_HIDDEN;
+extern void    gdiinterop_init(struct gdiinterop*,IDWriteFactory4*) DECLSPEC_HIDDEN;
 extern HRESULT create_localizedstrings(IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 extern HRESULT add_localizedstring(IDWriteLocalizedStrings*,const WCHAR*,const WCHAR*) DECLSPEC_HIDDEN;
 extern HRESULT clone_localizedstring(IDWriteLocalizedStrings *iface, IDWriteLocalizedStrings **strings) DECLSPEC_HIDDEN;
 extern void    set_en_localizedstring(IDWriteLocalizedStrings*,const WCHAR*) DECLSPEC_HIDDEN;
-extern HRESULT get_system_fontcollection(IDWriteFactory3*,IDWriteFontCollection1**) DECLSPEC_HIDDEN;
-extern HRESULT get_eudc_fontcollection(IDWriteFactory3*,IDWriteFontCollection**) DECLSPEC_HIDDEN;
+extern HRESULT get_system_fontcollection(IDWriteFactory4*,IDWriteFontCollection1**) DECLSPEC_HIDDEN;
+extern HRESULT get_eudc_fontcollection(IDWriteFactory4*,IDWriteFontCollection**) DECLSPEC_HIDDEN;
 extern HRESULT get_textanalyzer(IDWriteTextAnalyzer**) DECLSPEC_HIDDEN;
 extern HRESULT create_font_file(IDWriteFontFileLoader *loader, const void *reference_key, UINT32 key_size, IDWriteFontFile **font_file) DECLSPEC_HIDDEN;
 extern HRESULT create_localfontfileloader(IDWriteLocalFontFileLoader** iface) DECLSPEC_HIDDEN;
 extern HRESULT create_fontface(const struct fontface_desc*,IDWriteFontFace3**) DECLSPEC_HIDDEN;
-extern HRESULT create_font_collection(IDWriteFactory3*,IDWriteFontFileEnumerator*,BOOL,IDWriteFontCollection1**) DECLSPEC_HIDDEN;
+extern HRESULT create_font_collection(IDWriteFactory4*,IDWriteFontFileEnumerator*,BOOL,IDWriteFontCollection1**) DECLSPEC_HIDDEN;
 extern HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc*,IDWriteGlyphRunAnalysis**) DECLSPEC_HIDDEN;
 extern BOOL    is_system_collection(IDWriteFontCollection*) DECLSPEC_HIDDEN;
 extern HRESULT get_local_refkey(const WCHAR*,const FILETIME*,void**,UINT32*) DECLSPEC_HIDDEN;
@@ -191,13 +191,13 @@ extern HRESULT get_family_names_from_stream(IDWriteFontFileStream*,UINT32,DWRITE
 extern HRESULT create_colorglyphenum(FLOAT,FLOAT,const DWRITE_GLYPH_RUN*,const DWRITE_GLYPH_RUN_DESCRIPTION*,DWRITE_MEASURING_MODE,
     const DWRITE_MATRIX*,UINT32,IDWriteColorGlyphRunEnumerator**) DECLSPEC_HIDDEN;
 extern BOOL lb_is_newline_char(WCHAR) DECLSPEC_HIDDEN;
-extern HRESULT create_system_fontfallback(IDWriteFactory3*,IDWriteFontFallback**) DECLSPEC_HIDDEN;
+extern HRESULT create_system_fontfallback(IDWriteFactory4*,IDWriteFontFallback**) DECLSPEC_HIDDEN;
 extern void    release_system_fontfallback(IDWriteFontFallback*) DECLSPEC_HIDDEN;
 extern HRESULT create_matching_font(IDWriteFontCollection*,const WCHAR*,DWRITE_FONT_WEIGHT,DWRITE_FONT_STYLE,DWRITE_FONT_STRETCH,
     IDWriteFont**) DECLSPEC_HIDDEN;
-extern HRESULT create_fontfacereference(IDWriteFactory3*,IDWriteFontFile*,UINT32,DWRITE_FONT_SIMULATIONS,
+extern HRESULT create_fontfacereference(IDWriteFactory4*,IDWriteFontFile*,UINT32,DWRITE_FONT_SIMULATIONS,
     IDWriteFontFaceReference**) DECLSPEC_HIDDEN;
-extern HRESULT factory_get_cached_fontface(IDWriteFactory3*,IDWriteFontFile*const*,UINT32,DWRITE_FONT_SIMULATIONS,IDWriteFontFace**,
+extern HRESULT factory_get_cached_fontface(IDWriteFactory4*,IDWriteFontFile*const*,UINT32,DWRITE_FONT_SIMULATIONS,IDWriteFontFace**,
     struct list**) DECLSPEC_HIDDEN;
 extern void    factory_cache_fontface(struct list*,IDWriteFontFace3*) DECLSPEC_HIDDEN;
 
