@@ -2404,7 +2404,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
         int from, to;
         const WCHAR endl = '\r';
         const WCHAR endlv10[] = {'\r','\n'};
-        ME_Style *style;
+        ME_Style *style, *eop_style;
 
         if (editor->styleFlags & ES_READONLY) {
           MessageBeep(MB_ICONERROR);
@@ -2501,14 +2501,22 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
           }
 
           style = ME_GetInsertStyle(editor, 0);
+
+          /* Normally the new eop style is the insert style, however in a list it is copied from the existing
+             eop style (this prevents the list label style changing when the new eop is inserted).
+             No extra ref is taken here on eop_style. */
+          if (para->member.para.fmt.wNumbering)
+              eop_style = para->member.para.eop_run->style;
+          else
+              eop_style = style;
           ME_ContinueCoalescingTransaction(editor);
           if (shift_is_down)
             ME_InsertEndRowFromCursor(editor, 0);
           else
             if (!editor->bEmulateVersion10)
-              ME_InsertTextFromCursor(editor, 0, &endl, 1, style);
+              ME_InsertTextFromCursor(editor, 0, &endl, 1, eop_style);
             else
-              ME_InsertTextFromCursor(editor, 0, endlv10, 2, style);
+              ME_InsertTextFromCursor(editor, 0, endlv10, 2, eop_style);
           ME_CommitCoalescingUndo(editor);
           SetCursor(NULL);
 
