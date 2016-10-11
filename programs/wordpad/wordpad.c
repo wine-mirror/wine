@@ -1579,8 +1579,15 @@ static INT_PTR CALLBACK paraformat_proc(HWND hWnd, UINT message, WPARAM wParam, 
                         int index;
                         float num;
                         int ret = 0;
-                        PARAFORMAT pf;
+                        PARAFORMAT2 pf;
                         UNIT unit;
+                        BOOL in_list = FALSE;
+
+                        pf.cbSize = sizeof(pf);
+                        pf.dwMask = PFM_NUMBERING;
+                        SendMessageW(hEditorWnd, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
+                        if ((pf.dwMask & PFM_NUMBERING) && pf.wNumbering)
+                            in_list = TRUE;
 
                         index = SendMessageW(hListWnd, CB_GETCURSEL, 0, 0);
                         pf.wAlignment = ALIGNMENT_VALUES[index];
@@ -1630,6 +1637,12 @@ static INT_PTR CALLBACK paraformat_proc(HWND hWnd, UINT message, WPARAM wParam, 
                             pf.cbSize = sizeof(pf);
                             pf.dwMask = PFM_ALIGNMENT | PFM_OFFSET | PFM_RIGHTINDENT |
                                         PFM_STARTINDENT;
+                            if (in_list)
+                            {
+                                pf.wNumberingTab = max(pf.dxOffset, 0);
+                                pf.dwMask |= PFM_NUMBERINGTAB;
+                            }
+
                             SendMessageW(hEditorWnd, EM_SETPARAFORMAT, 0, (LPARAM)&pf);
                         }
                     }
