@@ -42,12 +42,10 @@ cpp_quote("#ifndef __dwrite_h__")
 typedef struct DWRITE_GLYPH_RUN DWRITE_GLYPH_RUN;
 cpp_quote("#endif /* __dwrite_h__ */")
 
-typedef D2D_POINT_2F D2D1_POINT_2F;
 typedef D2D_MATRIX_3X2_F D2D1_MATRIX_3X2_F;
 typedef D2D_RECT_F D2D1_RECT_F;
 typedef D2D_SIZE_F D2D1_SIZE_F;
 typedef UINT64 D2D1_TAG;
-typedef D2D_SIZE_U D2D1_SIZE_U;
 typedef D2D_POINT_2U D2D1_POINT_2U;
 typedef D2D_RECT_U D2D1_RECT_U;
 typedef D2D_COLOR_F D2D1_COLOR_F;
