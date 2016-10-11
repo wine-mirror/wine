@@ -412,6 +412,7 @@
 @ stdcall SHQueryRecycleBinA(str ptr)
 @ stdcall SHQueryRecycleBinW(wstr ptr)
 @ stdcall SHQueryUserNotificationState(ptr)
+@ stdcall SHRemoveLocalizedName(wstr)
 @ stdcall SHSetLocalizedName(wstr wstr long)
 @ stdcall SHSetUnreadMailCountW(wstr long wstr)
 @ stdcall SHUpdateRecycleBinIcon()

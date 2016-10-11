@@ -2119,6 +2119,15 @@ DWORD WINAPI SHFormatDrive(HWND hwnd, UINT drive, UINT fmtID, UINT options)
 }
 
 /*************************************************************************
+ *              SHRemoveLocalizedName (SHELL32.@)
+ */
+HRESULT WINAPI SHRemoveLocalizedName(const WCHAR *path)
+{
+    FIXME("%s stub\n", debugstr_w(path));
+    return S_OK;
+}
+
+/*************************************************************************
  *              SHSetLocalizedName (SHELL32.@)
  */
 HRESULT WINAPI SHSetLocalizedName(LPWSTR pszPath, LPCWSTR pszResModule, int idsRes)
