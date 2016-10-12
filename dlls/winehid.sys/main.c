@@ -26,13 +26,30 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "ddk/wdm.h"
+#include "ddk/hidport.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
 
+static NTSTATUS WINAPI add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *device)
+{
+    TRACE("(%p, %p)\n", driver, device);
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
 {
+    HID_MINIDRIVER_REGISTRATION registration;
+
     TRACE("(%p, %s)\n", driver, debugstr_w(path->Buffer));
 
-    return STATUS_SUCCESS;
+    driver->DriverExtension->AddDevice = add_device;
+
+    memset(&registration, 0, sizeof(registration));
+    registration.DriverObject = driver;
+    registration.RegistryPath = path;
+    registration.DeviceExtensionSize = sizeof(HID_DEVICE_EXTENSION);
+    registration.DevicesArePolled = FALSE;
+
+    return HidRegisterMinidriver(&registration);
 }

@@ -1,4 +1,5 @@
 MODULE    = winehid.sys
+IMPORTS   = hidclass
 EXTRADLLFLAGS = -Wb,--subsystem,native
 
 C_SRCS = \
