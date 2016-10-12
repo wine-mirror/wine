@@ -436,11 +436,35 @@ done:
     if (dib) DeleteObject( dib );
 }
 
+static BOOL notify_owner( struct tray_icon *icon, UINT msg, LPARAM lparam )
+{
+    WPARAM wp = icon->id;
+    LPARAM lp = msg;
+
+    if (icon->version >= NOTIFY_VERSION_4)
+    {
+        POINT pt = { (short)LOWORD(lparam), (short)HIWORD(lparam) };
+
+        ClientToScreen( icon->window, &pt );
+        wp = MAKEWPARAM( pt.x, pt.y );
+        lp = MAKELPARAM( msg, icon->id );
+    }
+
+    TRACE( "relaying 0x%x\n", msg );
+    if (!PostMessageW( icon->owner, icon->callback_message, wp, lp ) &&
+        (GetLastError() == ERROR_INVALID_WINDOW_HANDLE))
+    {
+        WARN( "application window was destroyed, removing icon %u\n", icon->id );
+        delete_icon( icon );
+        return FALSE;
+    }
+    return TRUE;
+}
+
 /* window procedure for the individual tray icon window */
 static LRESULT WINAPI tray_icon_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     struct tray_icon *icon = NULL;
-    BOOL ret;
 
     TRACE("hwnd=%p, msg=0x%x\n", hwnd, msg);
 
@@ -477,64 +501,24 @@ static LRESULT WINAPI tray_icon_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 
     case WM_MOUSEMOVE:
     case WM_LBUTTONDOWN:
-    case WM_LBUTTONUP:
     case WM_RBUTTONDOWN:
-    case WM_RBUTTONUP:
     case WM_MBUTTONDOWN:
     case WM_MBUTTONUP:
     case WM_LBUTTONDBLCLK:
     case WM_RBUTTONDBLCLK:
     case WM_MBUTTONDBLCLK:
-        {
-            WPARAM wpar;
-            BOOL oldver;
+        notify_owner( icon, msg, lparam );
+        break;
 
-            oldver = icon->version <= NOTIFY_VERSION;
-            if (oldver) {
-                /* 0 up to NOTIFYICON_VERSION (=3) */
-                wpar = icon->id;
-            } else {
-                /* NOTIFYICON_VERSION_4 */
-                RECT rect;
-                WORD x, y;
+    case WM_LBUTTONUP:
+        if (!notify_owner( icon, msg, lparam )) break;
+        if (icon->version > 0) notify_owner( icon, NIN_SELECT, lparam );
+        break;
 
-                GetWindowRect( icon->window, &rect );
-                x = rect.left + LOWORD(lparam);
-                y = rect.top + HIWORD(lparam);
-                wpar = MAKEWPARAM(x, y);
-            }
-
-            /* notify the owner hwnd of the message */
-            TRACE("relaying 0x%x\n", msg);
-            ret = PostMessageW(icon->owner, icon->callback_message, wpar,
-                               oldver ? msg : MAKELPARAM(msg, icon->id));
-
-            if (ret && icon->version > 0) {
-                switch (msg) {
-                    case WM_RBUTTONUP:
-                        /* notify the owner hwnd of the message */
-                        TRACE("relaying 0x%x\n", WM_CONTEXTMENU);
-                        ret = PostMessageW(icon->owner, icon->callback_message, wpar,
-                                           oldver ? WM_CONTEXTMENU : MAKELPARAM(WM_CONTEXTMENU, icon->id));
-                        break;
-                    case WM_LBUTTONUP:
-                        /* notify the owner hwnd of the message */
-                        TRACE("relaying 0x%x\n", NIN_SELECT);
-                        ret = PostMessageW(icon->owner, icon->callback_message, wpar,
-                                           oldver ? NIN_SELECT : MAKELPARAM(NIN_SELECT, icon->id));
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            if (!ret && (GetLastError() == ERROR_INVALID_WINDOW_HANDLE))
-            {
-                WARN( "application window was destroyed, removing icon %u\n", icon->id );
-                delete_icon( icon );
-            }
-            return 0;
-        }
+    case WM_RBUTTONUP:
+        if (!notify_owner( icon, msg, lparam )) break;
+        if (icon->version > 0) notify_owner( icon, WM_CONTEXTMENU, lparam );
+        break;
 
     case WM_WINDOWPOSCHANGED:
         update_systray_balloon_position();
