@@ -1235,6 +1235,7 @@ static ULONG format_datetime( const WS_DATETIME *ptr, unsigned char *buf )
     {
         static const char fmt_frac[] = ".%07u";
         len += sprintf( (char *)buf + len, fmt_frac, sec_frac );
+        while (buf[len - 1] == '0') len--;
     }
     if (ptr->format == WS_DATETIME_FORMAT_UTC)
     {

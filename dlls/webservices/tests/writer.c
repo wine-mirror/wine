@@ -2588,6 +2588,8 @@ static void test_datetime(void)
         { 1, WS_DATETIME_FORMAT_UTC, S_OK, "<t>0001-01-01T00:00:00.0000001Z</t>" },
         { 1, WS_DATETIME_FORMAT_LOCAL, S_OK, "<t>0001-01-01T00:00:00.0000001+00:00</t>" },
         { 1, WS_DATETIME_FORMAT_NONE, S_OK, "<t>0001-01-01T00:00:00.0000001</t>" },
+        { 10, WS_DATETIME_FORMAT_NONE, S_OK, "<t>0001-01-01T00:00:00.000001</t>" },
+        { 1000000, WS_DATETIME_FORMAT_NONE, S_OK, "<t>0001-01-01T00:00:00.1</t>" },
         { 0x23c34600, WS_DATETIME_FORMAT_LOCAL, S_OK, "<t>0001-01-01T00:01:00+00:00</t>" },
         { 0x861c46800, WS_DATETIME_FORMAT_LOCAL, S_OK, "<t>0001-01-01T01:00:00+00:00</t>" },
         { 0x430e234000, WS_DATETIME_FORMAT_LOCAL, S_OK, "<t>0001-01-01T08:00:00+00:00</t>" },
@@ -2636,7 +2638,8 @@ static void test_datetime(void)
         ok( hr == tests[i].hr, "%u: got %08x\n", i, hr );
         if (hr == S_OK)
         {
-            ok( check_result( writer, tests[i].result ) || broken(check_result( writer, tests[i].result2 )),
+            ok( check_result( writer, tests[i].result ) ||
+                (tests[i].result2 && broken(check_result( writer, tests[i].result2 ))),
                 "%u: wrong result\n", i );
         }
     }
