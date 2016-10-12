@@ -745,29 +745,40 @@ void __cdecl s_context_handle_test(void)
     binding = NULL;
     status = RpcBindingServerFromClient(NULL, &binding);
 
-    todo_wine
-    {
-        ok(status == RPC_S_OK, "expected RPC_S_OK got %u\n", status);
-        ok(binding != NULL, "binding is NULL\n");
-    }
+    ok(status == RPC_S_OK, "expected RPC_S_OK got %u\n", status);
+    ok(binding != NULL, "binding is NULL\n");
 
     if (status == RPC_S_OK && binding != NULL)
     {
         unsigned char* string_binding = NULL;
-        unsigned char* computer_name = NULL;
+        unsigned char* object_uuid = NULL;
+        unsigned char* protseq = NULL;
+        unsigned char* network_address = NULL;
+        unsigned char* endpoint = NULL;
+        unsigned char* network_options = NULL;
 
         status = RpcBindingToStringBindingA(binding, &string_binding);
-
         ok(status == RPC_S_OK, "expected RPC_S_OK got %u\n", status);
         ok(string_binding != NULL, "string_binding is NULL\n");
 
-        status = RpcStringBindingParseA(string_binding, NULL, NULL, &computer_name, NULL, NULL);
-
+        status = RpcStringBindingParseA(string_binding, &object_uuid, &protseq, &network_address, &endpoint, &network_options);
         ok(status == RPC_S_OK, "expected RPC_S_OK got %u\n", status);
-        ok(computer_name != NULL, "computer_name is NULL\n");
+        ok(protseq != NULL && *protseq != '\0', "protseq is %s\n", protseq);
+        ok(network_address != NULL && *network_address != '\0', "network_address is %s\n", network_address);
+
+        todo_wine
+        {
+            ok(object_uuid != NULL && *object_uuid == '\0', "object_uuid is %s\n", object_uuid);
+            ok(endpoint != NULL && *endpoint == '\0', "endpoint is %s\n", endpoint);
+            ok(network_options != NULL && *network_options == '\0', "network_options is %s\n", network_options);
+        }
 
         RpcStringFreeA(&string_binding);
-        RpcStringFreeA(&computer_name);
+        RpcStringFreeA(&object_uuid);
+        RpcStringFreeA(&protseq);
+        RpcStringFreeA(&network_address);
+        RpcStringFreeA(&endpoint);
+        RpcStringFreeA(&network_options);
         RpcBindingFree(&binding);
     }
 }
