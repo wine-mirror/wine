@@ -716,6 +716,29 @@ static void do_hide_systray(void)
                   0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
 }
 
+static BOOL notify_owner( struct icon *icon, UINT msg, POINT pt )
+{
+    WPARAM wp = icon->id;
+    LPARAM lp = msg;
+
+    if (icon->version >= NOTIFY_VERSION_4)
+    {
+        ClientToScreen( tray_window, &pt );
+        wp = MAKEWPARAM( pt.x, pt.y );
+        lp = MAKELPARAM( msg, icon->id );
+    }
+
+    TRACE( "relaying 0x%x\n", msg );
+    if (!PostMessageW( icon->owner, icon->callback_message, wp, lp ) &&
+        (GetLastError() == ERROR_INVALID_WINDOW_HANDLE))
+    {
+        WARN( "application window was destroyed, removing icon %u\n", icon->id );
+        delete_icon( icon );
+        return FALSE;
+    }
+    return TRUE;
+}
+
 static void do_show_systray(void)
 {
     SIZE size;
@@ -795,15 +818,10 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     case WM_RBUTTONDBLCLK:
     case WM_MBUTTONDBLCLK:
         {
-            WPARAM wpar;
-            BOOL oldver;
-            BOOL ret;
             MSG message;
-            struct icon *icon = icon_from_point( (short)LOWORD(lparam), (short)HIWORD(lparam) );
+            POINT pt = { (short)LOWORD(lparam), (short)HIWORD(lparam) };
+            struct icon *icon = icon_from_point( pt.x, pt.y );
             if (!icon) break;
-
-            /* notify the owner hwnd of the message */
-            WINE_TRACE("relaying 0x%x\n", msg);
 
             message.hwnd = hwnd;
             message.message = msg;
@@ -811,49 +829,19 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
             message.lParam = lparam;
             SendMessageW( icon->tooltip, TTM_RELAYEVENT, 0, (LPARAM)&message );
 
-            oldver = icon->version <= NOTIFY_VERSION;
-            if (oldver) {
-                /* 0 up to NOTIFYICON_VERSION (=3) */
-                wpar = icon->id;
-            } else {
-                /* NOTIFYICON_VERSION_4 */
-                RECT rect;
-                WORD x, y;
+            if (!notify_owner( icon, msg, pt )) break;
 
-                rect = get_icon_rect( icon );
-                MapWindowPoints( tray_window, 0, (POINT *)&rect, 2 );
-                x = rect.left + LOWORD(lparam);
-                y = rect.top + HIWORD(lparam);
-                wpar = MAKEWPARAM(x, y);
-            }
-
-            ret = PostMessageW(icon->owner, icon->callback_message, wpar,
-                               oldver ? msg : MAKELPARAM(msg, icon->id));
-
-            if (ret && icon->version > 0) {
-                switch (msg) {
-                    case WM_RBUTTONUP:
-                        /* notify the owner hwnd of the message */
-                        WINE_TRACE("relaying 0x%x\n", WM_CONTEXTMENU);
-                        ret = PostMessageW(icon->owner, icon->callback_message, wpar,
-                                           oldver ? WM_CONTEXTMENU : MAKELPARAM(WM_CONTEXTMENU, icon->id));
-                        break;
-                    case WM_LBUTTONUP:
-                        /* notify the owner hwnd of the message */
-                        WINE_TRACE("relaying 0x%x\n", NIN_SELECT);
-                        ret = PostMessageW(icon->owner, icon->callback_message, wpar,
-                                          oldver ? NIN_SELECT : MAKELPARAM(NIN_SELECT, icon->id));
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            if (!ret && (GetLastError() == ERROR_INVALID_WINDOW_HANDLE))
+            if (icon->version > 0)
             {
-                WINE_WARN("application window was destroyed without removing "
-                          "notification icon, removing automatically\n");
-                delete_icon( icon );
+                switch (msg)
+                {
+                case WM_RBUTTONUP:
+                    notify_owner( icon, WM_CONTEXTMENU, pt );
+                    break;
+                case WM_LBUTTONUP:
+                    notify_owner( icon, NIN_SELECT, pt );
+                    break;
+                }
             }
             break;
         }
