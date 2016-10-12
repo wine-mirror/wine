@@ -1056,6 +1056,7 @@ static BOOL init_test_context_(unsigned int line, struct d3d11_test_context *con
     struct device_desc device_desc;
     D3D11_VIEWPORT vp;
     HRESULT hr;
+    RECT rect;
 
     memset(context, 0, sizeof(*context));
 
@@ -1066,8 +1067,10 @@ static BOOL init_test_context_(unsigned int line, struct d3d11_test_context *con
         skip_(__FILE__, line)("Failed to create device.\n");
         return FALSE;
     }
+    SetRect(&rect, 0, 0, 640, 480);
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW | WS_VISIBLE, FALSE);
     context->window = CreateWindowA("static", "d3d11_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+            0, 0, rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
     context->swapchain = create_swapchain(context->device, context->window, NULL);
     hr = IDXGISwapChain_GetBuffer(context->swapchain, 0, &IID_ID3D11Texture2D, (void **)&context->backbuffer);
     ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
@@ -7695,6 +7698,7 @@ static void test_swapchain_flip(void)
     DWORD color;
     HWND window;
     HRESULT hr;
+    RECT rect;
 
     static const D3D11_INPUT_ELEMENT_DESC layout_desc[] =
     {
@@ -7774,8 +7778,10 @@ static void test_swapchain_flip(void)
         skip("Failed to create device, skipping tests.\n");
         return;
     }
+    SetRect(&rect, 0, 0, 640, 480);
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW | WS_VISIBLE, FALSE);
     window = CreateWindowA("static", "d3d11_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+            0, 0, rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
     desc.buffer_count = 3;
     desc.swap_effect = DXGI_SWAP_EFFECT_SEQUENTIAL;
     desc.windowed = TRUE;
