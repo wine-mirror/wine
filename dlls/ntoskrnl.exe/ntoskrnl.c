@@ -176,12 +176,15 @@ static HANDLE get_device_manager(void)
 static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp, void *context )
 {
     FILE_OBJECT *file = irp->Tail.Overlay.OriginalFileObject;
+    HANDLE irp_handle = context;
     void *out_buff = irp->UserBuffer;
-    HANDLE handle = context;
+
+    if (irp->Flags & IRP_WRITE_OPERATION)
+        out_buff = NULL;  /* do not transfer back input buffer */
 
     SERVER_START_REQ( set_irp_result )
     {
-        req->handle   = wine_server_obj_handle( handle );
+        req->handle   = wine_server_obj_handle( irp_handle );
         req->status   = irp->IoStatus.u.Status;
         req->file_ptr = wine_server_client_ptr( file );
         if (irp->IoStatus.u.Status >= 0)
@@ -193,7 +196,7 @@ static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp,
     }
     SERVER_END_REQ;
 
-    HeapFree( GetProcessHeap(), 0, out_buff );
+    HeapFree( GetProcessHeap(), 0, irp->UserBuffer );
     return STATUS_SUCCESS;
 }
 
@@ -248,6 +251,7 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
     irp->UserIosb = NULL;
     irp->UserEvent = NULL;
 
+    irp->Flags |= IRP_CREATE_OPERATION;
     dispatch_irp( device, irp, irp_handle );
 
     return STATUS_SUCCESS;
@@ -285,6 +289,7 @@ static NTSTATUS dispatch_close( const irp_params_t *params, void *in_buff, ULONG
     irp->UserIosb = NULL;
     irp->UserEvent = NULL;
 
+    irp->Flags |= IRP_CLOSE_OPERATION;
     dispatch_irp( device, irp, irp_handle );
 
     HeapFree( GetProcessHeap(), 0, file );  /* FIXME: async close processing not supported */
@@ -325,6 +330,7 @@ static NTSTATUS dispatch_read( const irp_params_t *params, void *in_buff, ULONG 
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->Parameters.Read.Key = params->read.key;
 
+    irp->Flags |= IRP_READ_OPERATION;
     dispatch_irp( device, irp, irp_handle );
 
     return STATUS_SUCCESS;
@@ -358,6 +364,7 @@ static NTSTATUS dispatch_write( const irp_params_t *params, void *in_buff, ULONG
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->Parameters.Write.Key = params->write.key;
 
+    irp->Flags |= IRP_WRITE_OPERATION;
     dispatch_irp( device, irp, irp_handle );
 
     return STATUS_SUCCESS;

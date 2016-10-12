@@ -457,6 +457,23 @@ typedef struct _IRP {
 } IRP;
 typedef struct _IRP *PIRP;
 
+#define IRP_NOCACHE               0x0001
+#define IRP_PAGING_IO             0x0002
+#define IRP_MOUNT_COMPLETION      0x0002
+#define IRP_SYNCHRONOUS_API       0x0004
+#define IRP_ASSOCIATED_IRP        0x0008
+#define IRP_BUFFERED_IO           0x0010
+#define IRP_DEALLOCATE_BUFFER     0x0020
+#define IRP_INPUT_OPERATION       0x0040
+#define IRP_SYNCHRONOUS_PAGING_IO 0x0040
+#define IRP_CREATE_OPERATION      0x0080
+#define IRP_READ_OPERATION        0x0100
+#define IRP_WRITE_OPERATION       0x0200
+#define IRP_CLOSE_OPERATION       0x0400
+#define IRP_DEFER_IO_COMPLETION   0x0800
+#define IRP_OB_QUERY_NAME         0x1000
+#define IRP_HOLD_DEVICE_QUEUE     0x2000
+
 typedef VOID (WINAPI *PINTERFACE_REFERENCE)(
   PVOID  Context);
 
