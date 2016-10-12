@@ -10760,6 +10760,246 @@ static void run_for_each_9_x_feature_level(void (*test_func)(const D3D_FEATURE_L
         test_func(feature_levels[i]);
 }
 
+static void test_ddy(void)
+{
+    static const struct
+    {
+        struct vec4 position;
+        unsigned int color;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.0f, 1.0f}, 0x00ff0000},
+        {{-1.0f,  1.0f, 0.0f, 1.0f}, 0x0000ff00},
+        {{ 1.0f, -1.0f, 0.0f, 1.0f}, 0x00ff0000},
+        {{ 1.0f,  1.0f, 0.0f, 1.0f}, 0x0000ff00},
+    };
+    static const D3D11_INPUT_ELEMENT_DESC layout_desc[] =
+    {
+        {"SV_POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"COLOR",       0, DXGI_FORMAT_R8G8B8A8_UNORM,     0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    };
+#if 0
+struct vs_data
+{
+    float4 pos : SV_POSITION;
+    float4 color : COLOR;
+};
+
+void main(in struct vs_data vs_input, out struct vs_data vs_output)
+{
+    vs_output.pos = vs_input.pos;
+    vs_output.color = vs_input.color;
+}
+#endif
+    static const DWORD vs_code[] =
+    {
+        0x43425844, 0xd5b32785, 0x35332906, 0x4d05e031, 0xf66a58af, 0x00000001, 0x00000144, 0x00000003,
+        0x0000002c, 0x00000080, 0x000000d4, 0x4e475349, 0x0000004c, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x00000044, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x4f4c4f43, 0xabab0052,
+        0x4e47534f, 0x0000004c, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x0000000f,
+        0x505f5653, 0x5449534f, 0x004e4f49, 0x4f4c4f43, 0xabab0052, 0x52444853, 0x00000068, 0x00010040,
+        0x0000001a, 0x0300005f, 0x001010f2, 0x00000000, 0x0300005f, 0x001010f2, 0x00000001, 0x04000067,
+        0x001020f2, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000001, 0x05000036, 0x001020f2,
+        0x00000000, 0x00101e46, 0x00000000, 0x05000036, 0x001020f2, 0x00000001, 0x00101e46, 0x00000001,
+        0x0100003e,
+    };
+#if 0
+struct ps_data
+{
+    float4 pos : SV_POSITION;
+    float4 color : COLOR;
+};
+
+float4 main(struct ps_data ps_input) : SV_Target
+{
+    return ddy(ps_input.color) * 240.0 + 0.5;
+}
+#endif
+    static const DWORD ps_code_ddy[] =
+    {
+        0x43425844, 0x423712f6, 0x786c59c2, 0xa6023c60, 0xb79faad2, 0x00000001, 0x00000138, 0x00000003,
+        0x0000002c, 0x00000080, 0x000000b4, 0x4e475349, 0x0000004c, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x4f4c4f43, 0xabab0052,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x0000007c, 0x00000040,
+        0x0000001f, 0x03001062, 0x001010f2, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068,
+        0x00000001, 0x0500000c, 0x001000f2, 0x00000000, 0x00101e46, 0x00000001, 0x0f000032, 0x001020f2,
+        0x00000000, 0x00100e46, 0x00000000, 0x00004002, 0x43700000, 0x43700000, 0x43700000, 0x43700000,
+        0x00004002, 0x3f000000, 0x3f000000, 0x3f000000, 0x3f000000, 0x0100003e,
+    };
+#if 0
+struct ps_data
+{
+    float4 pos : SV_POSITION;
+    float4 color : COLOR;
+};
+
+float4 main(struct ps_data ps_input) : SV_Target
+{
+    return ddy_coarse(ps_input.color) * 240.0 + 0.5;
+}
+#endif
+    static const DWORD ps_code_ddy_coarse[] =
+    {
+        0x43425844, 0xbf9a31cb, 0xb42695b6, 0x629119b8, 0x6962d5dd, 0x00000001, 0x0000013c, 0x00000003,
+        0x0000002c, 0x00000080, 0x000000b4, 0x4e475349, 0x0000004c, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x4f4c4f43, 0xabab0052,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x58454853, 0x00000080, 0x00000050,
+        0x00000020, 0x0100086a, 0x03001062, 0x001010f2, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
+        0x02000068, 0x00000001, 0x0500007c, 0x001000f2, 0x00000000, 0x00101e46, 0x00000001, 0x0f000032,
+        0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x00004002, 0x43700000, 0x43700000, 0x43700000,
+        0x43700000, 0x00004002, 0x3f000000, 0x3f000000, 0x3f000000, 0x3f000000, 0x0100003e,
+    };
+#if 0
+struct ps_data
+{
+    float4 pos : SV_POSITION;
+    float4 color : COLOR;
+};
+
+float4 main(struct ps_data ps_input) : SV_Target
+{
+    return ddy_fine(ps_input.color) * 240.0 + 0.5;
+}
+#endif
+    static const DWORD ps_code_ddy_fine[] =
+    {
+        0x43425844, 0xea6563ae, 0x3ee0da50, 0x4c2b3ef3, 0xa69a4077, 0x00000001, 0x0000013c, 0x00000003,
+        0x0000002c, 0x00000080, 0x000000b4, 0x4e475349, 0x0000004c, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x4f4c4f43, 0xabab0052,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x58454853, 0x00000080, 0x00000050,
+        0x00000020, 0x0100086a, 0x03001062, 0x001010f2, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
+        0x02000068, 0x00000001, 0x0500007d, 0x001000f2, 0x00000000, 0x00101e46, 0x00000001, 0x0f000032,
+        0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x00004002, 0x43700000, 0x43700000, 0x43700000,
+        0x43700000, 0x00004002, 0x3f000000, 0x3f000000, 0x3f000000, 0x3f000000, 0x0100003e,
+    };
+    static const struct
+    {
+        D3D_FEATURE_LEVEL min_feature_level;
+        const DWORD *ps_code;
+        unsigned int ps_code_size;
+    }
+    tests[] =
+    {
+        {D3D_FEATURE_LEVEL_10_0, ps_code_ddy, sizeof(ps_code_ddy)},
+        {D3D_FEATURE_LEVEL_11_0, ps_code_ddy_coarse, sizeof(ps_code_ddy_coarse)},
+        {D3D_FEATURE_LEVEL_11_0, ps_code_ddy_fine, sizeof(ps_code_ddy_fine)},
+    };
+    static const float red[] = {1.0f, 0.0f, 0.0f, 1.0f};
+    struct d3d11_test_context test_context;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    D3D_FEATURE_LEVEL feature_level;
+    ID3D11InputLayout *input_layout;
+    ID3D11DeviceContext *context;
+    unsigned int stride, offset;
+    struct resource_readback rb;
+    ID3D11RenderTargetView *rtv;
+    ID3D11Texture2D *texture;
+    ID3D11VertexShader *vs;
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    ID3D11Buffer *vb;
+    unsigned int i;
+    DWORD color;
+    HRESULT hr;
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+    feature_level = ID3D11Device_GetFeatureLevel(device);
+
+    ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, sizeof(layout_desc) / sizeof(*layout_desc),
+            vs_code, sizeof(vs_code), &input_layout);
+    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+
+    vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(quad), quad);
+
+    hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_IASetInputLayout(context, input_layout);
+    ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    stride = sizeof(*quad);
+    offset = 0;
+    ID3D11DeviceContext_IASetVertexBuffers(context, 0, 1, &vb, &stride, &offset);
+    ID3D11DeviceContext_VSSetShader(context, vs, NULL, 0);
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        if (feature_level < tests[i].min_feature_level)
+        {
+            skip("Skipping test %u, feature_level %#x lower than minimum required %#x.\n", i,
+                    feature_level, tests[i].min_feature_level);
+            continue;
+        }
+
+        hr = ID3D11Device_CreatePixelShader(device, tests[i].ps_code, tests[i].ps_code_size, NULL, &ps);
+        ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+
+        ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+        ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
+        ID3D11DeviceContext_ClearRenderTargetView(context, rtv, red);
+        ID3D11DeviceContext_Draw(context, 4, 0);
+
+        get_texture_readback(texture, 0, &rb);
+        color = get_readback_color(&rb, 320, 190);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        color = get_readback_color(&rb, 255, 240);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        color = get_readback_color(&rb, 320, 240);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        color = get_readback_color(&rb, 385, 240);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        color = get_readback_color(&rb, 320, 290);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        release_resource_readback(&rb);
+
+        ID3D11DeviceContext_OMSetRenderTargets(context, 1, &test_context.backbuffer_rtv, NULL);
+        ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
+        ID3D11DeviceContext_Draw(context, 4, 0);
+
+        get_texture_readback(test_context.backbuffer, 0, &rb);
+        color = get_readback_color(&rb, 320, 190);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        color = get_readback_color(&rb, 255, 240);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        color = get_readback_color(&rb, 320, 240);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        color = get_readback_color(&rb, 385, 240);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        color = get_readback_color(&rb, 320, 290);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        release_resource_readback(&rb);
+
+        ID3D11PixelShader_Release(ps);
+    }
+
+    ID3D11VertexShader_Release(vs);
+    ID3D11Buffer_Release(vb);
+    ID3D11InputLayout_Release(input_layout);
+    ID3D11Texture2D_Release(texture);
+    ID3D11RenderTargetView_Release(rtv);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -10820,4 +11060,5 @@ START_TEST(d3d11)
     test_line_antialiasing_blending();
     run_for_each_feature_level(test_required_format_support);
     run_for_each_9_x_feature_level(test_fl9_draw);
+    test_ddy();
 }
