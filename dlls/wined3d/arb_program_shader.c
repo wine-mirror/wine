@@ -822,7 +822,7 @@ static void shader_generate_arb_declarations(const struct wined3d_shader *shader
             if(use_nv_clip(gl_info) && ctx->target_version >= NV2)
             {
                 if(ctx->cur_vs_args->super.clip_enabled)
-                    clip_limit = gl_info->limits.clipplanes;
+                    clip_limit = gl_info->limits.user_clip_distances;
                 else
                     clip_limit = 0;
             }
@@ -835,13 +835,16 @@ static void shader_generate_arb_declarations(const struct wined3d_shader *shader
             max_constantsF -= *num_clipplanes;
             if(*num_clipplanes < clip_limit)
             {
-                WARN("Only %u clipplanes out of %u enabled\n", *num_clipplanes, gl_info->limits.clipplanes);
+                WARN("Only %u clip planes out of %u enabled.\n", *num_clipplanes,
+                        gl_info->limits.user_clip_distances);
             }
         }
         else
         {
-            if (ctx->target_version >= NV2) *num_clipplanes = gl_info->limits.clipplanes;
-            else *num_clipplanes = min(gl_info->limits.clipplanes, 4);
+            if (ctx->target_version >= NV2)
+                *num_clipplanes = gl_info->limits.user_clip_distances;
+            else
+                *num_clipplanes = min(gl_info->limits.user_clip_distances, 4);
         }
     }
 
@@ -3232,7 +3235,7 @@ static void vshader_add_footer(struct shader_arb_ctx_priv *priv_ctx,
         unsigned int cur_clip = 0;
         const char *zero = arb_get_helper_value(WINED3D_SHADER_TYPE_VERTEX, ARB_ZERO);
 
-        for (i = 0; i < gl_info->limits.clipplanes; ++i)
+        for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
         {
             if (args->clip.boolclip.clipplane_mask & (1u << i))
             {

@@ -609,7 +609,7 @@ void state_alpha_test(struct wined3d_context *context, const struct wined3d_stat
 void state_clipping(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    unsigned int clipplane_count = gl_info->limits.clipplanes;
+    unsigned int clipplane_count = gl_info->limits.user_clip_distances;
     unsigned int i, enable_mask, disable_mask;
 
     if (use_vs(state) && !context->d3d_info->vs_clipping)
@@ -3760,7 +3760,7 @@ void clipplane(struct wined3d_context *context, const struct wined3d_state *stat
     UINT index = state_id - STATE_CLIPPLANE(0);
     GLdouble plane[4];
 
-    if (isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_VIEW)) || index >= gl_info->limits.clipplanes)
+    if (isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_VIEW)) || index >= gl_info->limits.user_clip_distances)
         return;
 
     gl_info->gl_ops.gl.p_glMatrixMode(GL_MODELVIEW);
@@ -3914,7 +3914,7 @@ static void transform_view(struct wined3d_context *context, const struct wined3d
     }
 
     /* Reset Clipping Planes  */
-    for (k = 0; k < gl_info->limits.clipplanes; ++k)
+    for (k = 0; k < gl_info->limits.user_clip_distances; ++k)
     {
         if (!isStateDirty(context, STATE_CLIPPLANE(k)))
             clipplane(context, state, STATE_CLIPPLANE(k));
@@ -4531,7 +4531,7 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
                 state_clipping(context, state, STATE_RENDER(WINED3D_RS_CLIPPLANEENABLE));
             }
 
-            for (i = 0; i < gl_info->limits.clipplanes; ++i)
+            for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
             {
                 clipplane(context, state, STATE_CLIPPLANE(i));
             }
@@ -4548,7 +4548,7 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
                 /* Disable all clip planes to get defined results on all drivers. See comment in the
                  * state_clipping state handler
                  */
-                for (i = 0; i < gl_info->limits.clipplanes; ++i)
+                for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
                 {
                     gl_info->gl_ops.gl.p_glDisable(GL_CLIP_PLANE0 + i);
                     checkGLcall("glDisable(GL_CLIP_PLANE0 + i)");
@@ -4580,7 +4580,7 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
              * (Note: ARB shaders can read the clip planes for clipping emulation even if
              * device->vs_clipping is false.
              */
-            for (i = 0; i < gl_info->limits.clipplanes; ++i)
+            for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
             {
                 clipplane(context, state, STATE_CLIPPLANE(i));
             }
@@ -5699,7 +5699,7 @@ static void vp_ffp_get_caps(const struct wined3d_gl_info *gl_info, struct wined3
             | WINED3DVTXPCAPS_TEXGEN
             | WINED3DVTXPCAPS_TEXGEN_SPHEREMAP;
     caps->fvf_caps = WINED3DFVFCAPS_PSIZE | 0x0008; /* 8 texture coords */
-    caps->max_user_clip_planes = gl_info->limits.clipplanes;
+    caps->max_user_clip_planes = gl_info->limits.user_clip_distances;
     caps->raster_caps = 0;
     if (gl_info->supported[NV_FOG_DISTANCE])
         caps->raster_caps |= WINED3DPRASTERCAPS_FOGRANGE;

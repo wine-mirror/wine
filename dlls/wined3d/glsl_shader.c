@@ -1407,7 +1407,7 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
 
     if (update_mask & WINED3D_SHADER_CONST_VS_CLIP_PLANES)
     {
-        for (i = 0; i < gl_info->limits.clipplanes; ++i)
+        for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
             shader_glsl_clip_plane_uniform(context, state, i, prog);
     }
 
@@ -1894,7 +1894,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                  * clipplane as well. */
                 max_constantsF = gl_info->limits.glsl_vs_float_constants - 3;
                 if (vs_args->clip_enabled)
-                    max_constantsF -= gl_info->limits.clipplanes;
+                    max_constantsF -= gl_info->limits.user_clip_distances;
                 max_constantsF -= wined3d_popcount(reg_maps->integer_constants);
                 /* Strictly speaking a bool only uses one scalar, but the nvidia(Linux) compiler doesn't pack them properly,
                  * so each scalar requires a full vec4. We could work around this by packing the booleans ourselves, but
@@ -2097,7 +2097,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
         {
             if (vs_args->clip_enabled)
-                shader_addline(buffer, "uniform vec4 clip_planes[%u];\n", gl_info->limits.clipplanes);
+                shader_addline(buffer, "uniform vec4 clip_planes[%u];\n", gl_info->limits.user_clip_distances);
 
             if (version->major < 3)
             {
@@ -6087,7 +6087,7 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
         if (legacy_context)
             shader_addline(buffer, "gl_ClipVertex = gl_Position;\n");
         else
-            for (i = 0; i < gl_info->limits.clipplanes; ++i)
+            for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
                 shader_addline(buffer, "gl_ClipDistance[%u] = dot(gl_Position, clip_planes[%u]);\n", i, i);
     }
 
@@ -6625,7 +6625,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
     else
     {
         if (settings->clipping)
-            shader_addline(buffer, "uniform vec4 clip_planes[%u];\n", gl_info->limits.clipplanes);
+            shader_addline(buffer, "uniform vec4 clip_planes[%u];\n", gl_info->limits.user_clip_distances);
 
         declare_out_varying(gl_info, buffer, settings->flatshading, "vec4 ffp_varying_diffuse;\n");
         declare_out_varying(gl_info, buffer, settings->flatshading, "vec4 ffp_varying_specular;\n");
@@ -6674,7 +6674,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
             if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
                 shader_addline(buffer, "gl_ClipVertex = ec_pos;\n");
             else
-                for (i = 0; i < gl_info->limits.clipplanes; ++i)
+                for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
                     shader_addline(buffer, "gl_ClipDistance[%u] = dot(ec_pos, clip_planes[%u]);\n", i, i);
         }
         shader_addline(buffer, "ec_pos /= ec_pos.w;\n");
@@ -8943,7 +8943,7 @@ static void glsl_vertex_pipe_vp_get_caps(const struct wined3d_gl_info *gl_info, 
             | WINED3DVTXPCAPS_LOCALVIEWER
             | WINED3DVTXPCAPS_TEXGEN_SPHEREMAP;
     caps->fvf_caps = WINED3DFVFCAPS_PSIZE | 8; /* 8 texture coordinates. */
-    caps->max_user_clip_planes = gl_info->limits.clipplanes;
+    caps->max_user_clip_planes = gl_info->limits.user_clip_distances;
     caps->raster_caps = WINED3DPRASTERCAPS_FOGRANGE;
 }
 
@@ -9032,7 +9032,7 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
         if (context->last_was_vshader)
         {
             if (legacy_context)
-                for (i = 0; i < gl_info->limits.clipplanes; ++i)
+                for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
                     clipplane(context, state, STATE_CLIPPLANE(i));
             else
                 context->constant_update_mask |= WINED3D_SHADER_CONST_VS_CLIP_PLANES;
@@ -9058,7 +9058,7 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
         {
             /* Vertex shader clipping ignores the view matrix. Update all clip planes. */
             if (legacy_context)
-                for (i = 0; i < gl_info->limits.clipplanes; ++i)
+                for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
                     clipplane(context, state, STATE_CLIPPLANE(i));
             else
                 context->constant_update_mask |= WINED3D_SHADER_CONST_VS_CLIP_PLANES;
@@ -9119,7 +9119,7 @@ static void glsl_vertex_pipe_view(struct wined3d_context *context, const struct 
 
     if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
     {
-        for (k = 0; k < gl_info->limits.clipplanes; ++k)
+        for (k = 0; k < gl_info->limits.user_clip_distances; ++k)
         {
             if (!isStateDirty(context, STATE_CLIPPLANE(k)))
                 clipplane(context, state, STATE_CLIPPLANE(k));
@@ -9229,7 +9229,7 @@ static void glsl_vertex_pipe_clip_plane(struct wined3d_context *context,
     const struct wined3d_gl_info *gl_info = context->gl_info;
     UINT index = state_id - STATE_CLIPPLANE(0);
 
-    if (index >= gl_info->limits.clipplanes)
+    if (index >= gl_info->limits.user_clip_distances)
         return;
 
     context->constant_update_mask |= WINED3D_SHADER_CONST_VS_CLIP_PLANES;
