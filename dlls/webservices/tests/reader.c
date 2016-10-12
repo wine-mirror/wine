@@ -71,6 +71,12 @@ static const char data11[] =
     "</o:services>"
     "</o:OfficeConfig>";
 
+static const char data11b[] =
+    "<o:OfficeConfig xmlns:o=\"urn:schemas-microsoft-com:office:office\">"
+    "<o:services o:GenerationTime=\"2015-09-03T18:47:54\"></o:services>"
+    "<trailing>content</trailing>"
+    "</o:OfficeConfig>";
+
 static const char data12[] =
     "<services>"
     "<service><id>1</id></service>"
@@ -2069,11 +2075,22 @@ static void test_simple_struct_type(void)
     s.typeLocalName = &localname2;
     s.typeNs        = &ns;
 
-    test = NULL;
     prepare_struct_type_test( reader, "<?xml version=\"1.0\" encoding=\"utf-8\"?><str>test</str><str>test2</str>" );
     hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
                      WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), NULL );
     ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    prepare_struct_type_test( reader, "<?xml version=\"1.0\" encoding=\"utf-8\"?><str>test</str><str>test2</str>" );
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    s.structOptions = WS_STRUCT_IGNORE_TRAILING_ELEMENT_CONTENT;
+    prepare_struct_type_test( reader, "<?xml version=\"1.0\" encoding=\"utf-8\"?><str>test</str><str>test2</str>" );
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+    s.structOptions = 0;
 
     test = NULL;
     prepare_struct_type_test( reader, "<?xml version=\"1.0\" encoding=\"utf-8\"?><str>test</str>" );
@@ -2814,6 +2831,29 @@ static void test_complex_struct_type(void)
     hr = WsGetReaderNode( reader, &node, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
+
+    /* trailing content */
+    prepare_struct_type_test( reader, data11b );
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    s.structOptions = WS_STRUCT_IGNORE_TRAILING_ELEMENT_CONTENT;
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), error );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
+
+    prepare_struct_type_test( reader, data11b );
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    s.structOptions = 0;
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), error );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
 
     WsFreeReader( reader );
     WsFreeHeap( heap );

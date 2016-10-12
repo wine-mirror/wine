@@ -41,12 +41,18 @@ HRESULT set_output( WS_XML_WRITER * ) DECLSPEC_HIDDEN;
 HRESULT set_input( WS_XML_READER *, char *, ULONG ) DECLSPEC_HIDDEN;
 ULONG get_type_size( WS_TYPE, const WS_STRUCT_DESCRIPTION * ) DECLSPEC_HIDDEN;
 
+enum node_flag
+{
+    NODE_FLAG_IGNORE_TRAILING_ELEMENT_CONTENT   = 0x1,
+};
+
 struct node
 {
     WS_XML_ELEMENT_NODE hdr;
     struct list         entry;
     struct node        *parent;
     struct list         children;
+    ULONG               flags;
 };
 
 struct node *alloc_node( WS_XML_NODE_TYPE ) DECLSPEC_HIDDEN;

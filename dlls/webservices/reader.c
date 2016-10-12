@@ -4000,7 +4000,11 @@ static HRESULT read_type_struct( struct reader *reader, WS_TYPE_MAPPING mapping,
     char *buf;
 
     if (!desc) return E_INVALIDARG;
-    if (desc->structOptions) FIXME( "struct options %08x not supported\n", desc->structOptions );
+    if (desc->structOptions & ~WS_STRUCT_IGNORE_TRAILING_ELEMENT_CONTENT)
+    {
+        FIXME( "struct options %08x not supported\n",
+               desc->structOptions & ~WS_STRUCT_IGNORE_TRAILING_ELEMENT_CONTENT );
+    }
 
     switch (option)
     {
@@ -4037,7 +4041,7 @@ static HRESULT read_type_struct( struct reader *reader, WS_TYPE_MAPPING mapping,
             return hr;
         }
         *(char **)ret = buf;
-        return S_OK;
+        break;
 
     case WS_READ_OPTIONAL_POINTER:
     case WS_READ_NILLABLE_POINTER:
@@ -4047,15 +4051,76 @@ static HRESULT read_type_struct( struct reader *reader, WS_TYPE_MAPPING mapping,
             buf = NULL;
         }
         *(char **)ret = buf;
-        return S_OK;
+        break;
 
     case WS_READ_REQUIRED_VALUE:
     case WS_READ_NILLABLE_VALUE:
-        return hr;
+        if (hr != S_OK) return hr;
+        break;
 
     default:
         ERR( "unhandled read option %u\n", option );
         return E_NOTIMPL;
+    }
+
+    if (desc->structOptions & WS_STRUCT_IGNORE_TRAILING_ELEMENT_CONTENT)
+    {
+        struct node *parent = find_parent( reader );
+        parent->flags |= NODE_FLAG_IGNORE_TRAILING_ELEMENT_CONTENT;
+    }
+    return S_OK;
+}
+
+static HRESULT start_mapping( struct reader *reader, WS_TYPE_MAPPING mapping, const WS_XML_STRING *localname,
+                              const WS_XML_STRING *ns )
+{
+    switch (mapping)
+    {
+    case WS_ELEMENT_TYPE_MAPPING:
+    case WS_ELEMENT_CONTENT_TYPE_MAPPING:
+        return read_type_next_element_node( reader, localname, ns );
+
+    case WS_ANY_ELEMENT_TYPE_MAPPING:
+    case WS_ATTRIBUTE_TYPE_MAPPING:
+        return S_OK;
+
+    default:
+        FIXME( "unhandled mapping %u\n", mapping );
+        return E_NOTIMPL;
+    }
+}
+
+static HRESULT read_type_endelement_node( struct reader *reader )
+{
+    const struct node *parent = find_parent( reader );
+    HRESULT hr;
+
+    for (;;)
+    {
+        if ((hr = read_type_next_node( reader )) != S_OK) return hr;
+        if (node_type( reader->current ) == WS_XML_NODE_TYPE_END_ELEMENT && reader->current->parent == parent)
+        {
+            return S_OK;
+        }
+        if (read_end_of_data( reader ) || !(parent->flags & NODE_FLAG_IGNORE_TRAILING_ELEMENT_CONTENT)) break;
+    }
+
+    return WS_E_INVALID_FORMAT;
+}
+
+static HRESULT end_mapping( struct reader *reader, WS_TYPE_MAPPING mapping )
+{
+    switch (mapping)
+    {
+    case WS_ELEMENT_TYPE_MAPPING:
+        return read_type_endelement_node( reader );
+
+    case WS_ELEMENT_CONTENT_TYPE_MAPPING:
+        return read_type_next_node( reader );
+
+    case WS_ATTRIBUTE_TYPE_MAPPING:
+    default:
+        return S_OK;
     }
 }
 
@@ -4078,28 +4143,17 @@ static HRESULT is_nil_element( const WS_XML_ELEMENT_NODE *elem )
 }
 
 static HRESULT read_type( struct reader *reader, WS_TYPE_MAPPING mapping, WS_TYPE type,
-                          const WS_XML_STRING *localname, const WS_XML_STRING *ns,
-                          const void *desc, WS_READ_OPTION option, WS_HEAP *heap,
-                          void *value, ULONG size )
+                          const WS_XML_STRING *localname, const WS_XML_STRING *ns, const void *desc,
+                          WS_READ_OPTION option, WS_HEAP *heap, void *value, ULONG size )
 {
     HRESULT hr;
 
-    switch (mapping)
+    if ((hr = start_mapping( reader, mapping, localname, ns )) != S_OK) return hr;
+
+    if (mapping == WS_ELEMENT_TYPE_MAPPING && is_nil_element( &reader->current->hdr ))
     {
-    case WS_ELEMENT_TYPE_MAPPING:
-    case WS_ELEMENT_CONTENT_TYPE_MAPPING:
-        if ((hr = read_type_next_element_node( reader, localname, ns )) != S_OK) return hr;
-        if ((option == WS_READ_NILLABLE_POINTER || option == WS_READ_NILLABLE_VALUE) &&
-            is_nil_element( &reader->current->hdr )) return read_type_next_node( reader );
-        break;
-
-    case WS_ANY_ELEMENT_TYPE_MAPPING:
-    case WS_ATTRIBUTE_TYPE_MAPPING:
-        break;
-
-    default:
-        FIXME( "unhandled mapping %u\n", mapping );
-        return E_NOTIMPL;
+        if (option != WS_READ_NILLABLE_POINTER && option != WS_READ_NILLABLE_VALUE) return WS_E_INVALID_FORMAT;
+        return end_mapping( reader, mapping );
     }
 
     switch (type)
@@ -4189,16 +4243,7 @@ static HRESULT read_type( struct reader *reader, WS_TYPE_MAPPING mapping, WS_TYP
         return E_NOTIMPL;
     }
 
-    switch (mapping)
-    {
-    case WS_ELEMENT_TYPE_MAPPING:
-    case WS_ELEMENT_CONTENT_TYPE_MAPPING:
-        return read_type_next_node( reader );
-
-    case WS_ATTRIBUTE_TYPE_MAPPING:
-    default:
-        return S_OK;
-    }
+    return end_mapping( reader, mapping );
 }
 
 /**************************************************************************
