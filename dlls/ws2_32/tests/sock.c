@@ -8387,7 +8387,6 @@ static void test_sioAddressListChange(void)
     ret = WSAIoctl(sock, SIO_ADDRESS_LIST_CHANGE, NULL, 0, NULL, 0, &num_bytes, &overlapped, NULL);
     error = GetLastError();
     ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %d\n", error);
-todo_wine
     ok (error == ERROR_IO_PENDING, "expected 0x3e5, got 0x%x\n", error);
 
     CloseHandle(overlapped.hEvent);
@@ -8426,7 +8425,6 @@ todo_wine
     ret = WSAIoctl(sock, SIO_ADDRESS_LIST_CHANGE, NULL, 0, NULL, 0, &num_bytes, &overlapped, NULL);
     error = GetLastError();
     ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %d\n", error);
-todo_wine
     ok (error == ERROR_IO_PENDING, "expected 0x3e5, got 0x%x\n", error);
 
     CloseHandle(overlapped.hEvent);
