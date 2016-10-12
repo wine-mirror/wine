@@ -903,16 +903,19 @@ static void draw_para_number( ME_Context *c, ME_DisplayItem *p )
     ME_Paragraph *para = &p->member.para;
     HFONT old_font;
     int x, y;
+    COLORREF old_text;
 
     if (para->fmt.wNumbering)
     {
         old_font = ME_SelectStyleFont( c, para->para_num.style );
+        old_text = SetTextColor( c->hDC, get_text_color( c, para->para_num.style, FALSE ) );
 
         x = c->pt.x + para->para_num.pt.x;
         y = c->pt.y + para->pt.y + para->para_num.pt.y;
 
         ExtTextOutW( c->hDC, x, y, 0, NULL, para->para_num.text->szData, para->para_num.text->nLen, NULL );
 
+        SetTextColor( c->hDC, old_text );
         ME_UnselectStyleFont( c, para->para_num.style, old_font );
     }
 }
