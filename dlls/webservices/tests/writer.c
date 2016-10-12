@@ -1980,6 +1980,9 @@ static void test_text_types(void)
     static const WS_XML_INT32_TEXT val_int32 = { {WS_XML_TEXT_TYPE_INT32}, -2147483647 - 1 };
     static const WS_XML_INT64_TEXT val_int64 = { {WS_XML_TEXT_TYPE_INT64}, -9223372036854775807 - 1 };
     static const WS_XML_UINT64_TEXT val_uint64 = { {WS_XML_TEXT_TYPE_UINT64}, ~0 };
+    static const WS_XML_DATETIME_TEXT val_datetime = { {WS_XML_TEXT_TYPE_DATETIME}, {0, WS_DATETIME_FORMAT_UTC} };
+    static const WS_XML_DOUBLE_TEXT val_double = { {WS_XML_TEXT_TYPE_DOUBLE}, 1.1 };
+    static const WS_XML_BASE64_TEXT val_base64 = { {WS_XML_TEXT_TYPE_BASE64}, (BYTE *)"test", 4 };
     static const struct
     {
         const WS_XML_TEXT *text;
@@ -1995,6 +1998,9 @@ static void test_text_types(void)
         { &val_int32.text,  "<t>-2147483648</t>" },
         { &val_int64.text,  "<t>-9223372036854775808</t>" },
         { &val_uint64.text, "<t>18446744073709551615</t>" },
+        { &val_datetime.text, "<t>0001-01-01T00:00:00Z</t>" },
+        { &val_double.text, "<t>1.1</t>" },
+        { &val_base64.text, "<t>dGVzdA==</t>" },
     };
     HRESULT hr;
     ULONG i;
