@@ -3775,11 +3775,17 @@ ULONG get_type_size( WS_TYPE type, const WS_STRUCT_DESCRIPTION *desc )
     case WS_GUID_TYPE:
         return sizeof(GUID);
 
+    case WS_STRING_TYPE:
+        return sizeof(WS_STRING);
+
     case WS_WSZ_TYPE:
         return sizeof(WCHAR *);
 
     case WS_BYTES_TYPE:
         return sizeof(WS_BYTES);
+
+    case WS_XML_STRING_TYPE:
+        return sizeof(WS_XML_STRING);
 
     case WS_STRUCT_TYPE:
         return desc->size;
@@ -3813,7 +3819,9 @@ static WS_READ_OPTION get_field_read_option( WS_TYPE type, ULONG options )
     case WS_DOUBLE_TYPE:
     case WS_DATETIME_TYPE:
     case WS_GUID_TYPE:
+    case WS_STRING_TYPE:
     case WS_BYTES_TYPE:
+    case WS_XML_STRING_TYPE:
     case WS_STRUCT_TYPE:
     case WS_ENUM_TYPE:
         if (options & (WS_FIELD_OPTIONAL|WS_FIELD_NILLABLE)) return WS_READ_NILLABLE_VALUE;

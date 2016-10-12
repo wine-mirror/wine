@@ -2023,10 +2023,70 @@ static HRESULT write_type_struct_field( struct writer *writer, const WS_FIELD_DE
     return S_OK;
 }
 
-static ULONG get_field_size( const WS_STRUCT_DESCRIPTION *desc, ULONG index )
+static WS_WRITE_OPTION get_field_write_option( WS_TYPE type, ULONG options )
 {
-    if (index < desc->fieldCount - 1) return desc->fields[index + 1]->offset - desc->fields[index]->offset;
-    return desc->size - desc->fields[index]->offset;
+    if (options & WS_FIELD_POINTER)
+    {
+        if (options & (WS_FIELD_OPTIONAL|WS_FIELD_NILLABLE)) return WS_WRITE_NILLABLE_POINTER;
+        return WS_WRITE_REQUIRED_POINTER;
+    }
+
+    switch (type)
+    {
+    case WS_BOOL_TYPE:
+    case WS_INT8_TYPE:
+    case WS_INT16_TYPE:
+    case WS_INT32_TYPE:
+    case WS_INT64_TYPE:
+    case WS_UINT8_TYPE:
+    case WS_UINT16_TYPE:
+    case WS_UINT32_TYPE:
+    case WS_UINT64_TYPE:
+    case WS_DOUBLE_TYPE:
+    case WS_DATETIME_TYPE:
+    case WS_GUID_TYPE:
+    case WS_STRING_TYPE:
+    case WS_BYTES_TYPE:
+    case WS_XML_STRING_TYPE:
+    case WS_STRUCT_TYPE:
+    case WS_ENUM_TYPE:
+        if (options & (WS_FIELD_OPTIONAL|WS_FIELD_NILLABLE)) return WS_WRITE_NILLABLE_VALUE;
+        return WS_WRITE_REQUIRED_VALUE;
+
+    case WS_WSZ_TYPE:
+    case WS_DESCRIPTION_TYPE:
+        if (options & (WS_FIELD_OPTIONAL|WS_FIELD_NILLABLE)) return WS_WRITE_NILLABLE_POINTER;
+        return WS_WRITE_REQUIRED_POINTER;
+
+    default:
+        FIXME( "unhandled type %u\n", type );
+        return 0;
+    }
+}
+
+static ULONG get_field_size( const WS_FIELD_DESCRIPTION *desc )
+{
+    WS_WRITE_OPTION option;
+    ULONG size;
+
+    switch ((option = get_field_write_option( desc->type, desc->options )))
+    {
+    case WS_WRITE_REQUIRED_POINTER:
+    case WS_WRITE_NILLABLE_POINTER:
+        size = sizeof(const void *);
+        break;
+
+    case WS_WRITE_REQUIRED_VALUE:
+    case WS_WRITE_NILLABLE_VALUE:
+        size = get_type_size( desc->type, desc->typeDescription );
+        break;
+
+    default:
+        WARN( "unhandled option %u\n", option );
+        return 0;
+    }
+
+    return size;
 }
 
 static HRESULT write_type_struct( struct writer *writer, WS_TYPE_MAPPING mapping,
@@ -2045,7 +2105,7 @@ static HRESULT write_type_struct( struct writer *writer, WS_TYPE_MAPPING mapping
     for (i = 0; i < desc->fieldCount; i++)
     {
         field_ptr = (const char *)ptr + desc->fields[i]->offset;
-        field_size = get_field_size( desc, i );
+        field_size = get_field_size( desc->fields[i] );
         if ((hr = write_type_struct_field( writer, desc->fields[i], field_ptr, field_size )) != S_OK)
             return hr;
     }
