@@ -4052,6 +4052,24 @@ static HRESULT read_type_struct( struct reader *reader, WS_TYPE_MAPPING mapping,
     }
 }
 
+static HRESULT is_nil_element( const WS_XML_ELEMENT_NODE *elem )
+{
+    static const WS_XML_STRING localname = {3, (BYTE *)"nil"};
+    static const WS_XML_STRING ns = {41, (BYTE *)"http://www.w3.org/2001/XMLSchema-instance"};
+    ULONG i;
+
+    for (i = 0; i < elem->attributeCount; i++)
+    {
+        const WS_XML_UTF8_TEXT *text = (WS_XML_UTF8_TEXT *)elem->attributes[i]->value;
+
+        if (elem->attributes[i]->isXmlNs) continue;
+        if (WsXmlStringEquals( elem->attributes[i]->localName, &localname, NULL ) == S_OK &&
+            WsXmlStringEquals( elem->attributes[i]->ns, &ns, NULL ) == S_OK &&
+            text->value.length == 4 && !memcmp( text->value.bytes, "true", 4 )) return TRUE;
+    }
+    return FALSE;
+}
+
 static HRESULT read_type( struct reader *reader, WS_TYPE_MAPPING mapping, WS_TYPE type,
                           const WS_XML_STRING *localname, const WS_XML_STRING *ns,
                           const void *desc, WS_READ_OPTION option, WS_HEAP *heap,
@@ -4064,6 +4082,8 @@ static HRESULT read_type( struct reader *reader, WS_TYPE_MAPPING mapping, WS_TYP
     case WS_ELEMENT_TYPE_MAPPING:
     case WS_ELEMENT_CONTENT_TYPE_MAPPING:
         if ((hr = read_type_next_element_node( reader, localname, ns )) != S_OK) return hr;
+        if ((option == WS_READ_NILLABLE_POINTER || option == WS_READ_NILLABLE_VALUE) &&
+            is_nil_element( &reader->current->hdr )) return read_type_next_node( reader );
         break;
 
     case WS_ANY_ELEMENT_TYPE_MAPPING:
