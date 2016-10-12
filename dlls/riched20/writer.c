@@ -456,6 +456,76 @@ ME_StreamOutRTFTableProps(ME_TextEditor *editor, ME_OutStream *pStream,
   return TRUE;
 }
 
+static BOOL stream_out_para_num( ME_OutStream *stream, ME_Paragraph *para, BOOL pn_dest )
+{
+    static const char fmt_label[] = "{\\*\\pn\\pnlvlbody\\pnf%u\\pnindent%d\\pnstart%d%s%s}";
+    static const char fmt_bullet[] = "{\\*\\pn\\pnlvlblt\\pnf%u\\pnindent%d{\\pntxtb\\'b7}}";
+    static const char dec[] = "\\pndec";
+    static const char lcltr[] = "\\pnlcltr";
+    static const char ucltr[] = "\\pnucltr";
+    static const char lcrm[] = "\\pnlcrm";
+    static const char ucrm[] = "\\pnucrm";
+    static const char period[] = "{\\pntxta.}";
+    static const char paren[] = "{\\pntxta)}";
+    static const char parens[] = "{\\pntxtb(}{\\pntxta)}";
+    const char *type, *style = "";
+    unsigned int idx;
+
+    find_font_in_fonttbl( stream, &para->para_num.style->fmt, &idx );
+
+    if (!ME_StreamOutPrint( stream, "{\\pntext\\f%u ", idx )) return FALSE;
+    if (!ME_StreamOutRTFText( stream, para->para_num.text->szData, para->para_num.text->nLen ))
+        return FALSE;
+    if (!ME_StreamOutPrint( stream, "\\tab}" )) return FALSE;
+
+    if (!pn_dest) return TRUE;
+
+    if (para->fmt.wNumbering == PFN_BULLET)
+    {
+        if (!ME_StreamOutPrint( stream, fmt_bullet, idx, para->fmt.wNumberingTab ))
+            return FALSE;
+    }
+    else
+    {
+        switch (para->fmt.wNumbering)
+        {
+        case PFN_ARABIC:
+        default:
+            type = dec;
+            break;
+        case PFN_LCLETTER:
+            type = lcltr;
+            break;
+        case PFN_UCLETTER:
+            type = ucltr;
+            break;
+        case PFN_LCROMAN:
+            type = lcrm;
+            break;
+        case PFN_UCROMAN:
+            type = ucrm;
+            break;
+        }
+        switch (para->fmt.wNumberingStyle & 0xf00)
+        {
+        case PFNS_PERIOD:
+            style = period;
+            break;
+        case PFNS_PAREN:
+            style = paren;
+            break;
+        case PFNS_PARENS:
+            style = parens;
+            break;
+        }
+
+        if (!ME_StreamOutPrint( stream, fmt_label, idx, para->fmt.wNumberingTab,
+                                para->fmt.wNumberingStart, type, style ))
+            return FALSE;
+    }
+    return TRUE;
+}
+
 static BOOL
 ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
                          ME_DisplayItem *para)
@@ -501,10 +571,17 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
   }
 
   if (prev_para && !memcmp( fmt, &prev_para->fmt, sizeof(*fmt) ))
+  {
+    if (fmt->wNumbering)
+      return stream_out_para_num( pStream, &para->member.para, FALSE );
     return TRUE;
+  }
 
   if (!ME_StreamOutPrint(pStream, "\\pard"))
     return FALSE;
+
+  if (fmt->wNumbering)
+    if (!stream_out_para_num( pStream, &para->member.para, TRUE )) return FALSE;
 
   if (!editor->bEmulateVersion10) { /* v4.1 */
     if (pStream->nNestingLevel > 0)
@@ -515,7 +592,7 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
     if (fmt->dwMask & PFM_TABLE && fmt->wEffects & PFE_TABLE)
       strcat(props, "\\intbl");
   }
-  
+
   /* TODO: PFM_BORDER. M$ does not emit any keywords for these properties, and
    * when streaming border keywords in, PFM_BORDER is set, but wBorder field is
    * set very different from the documentation.
