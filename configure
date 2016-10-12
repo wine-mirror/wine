@@ -1424,6 +1424,7 @@ enable_winebus_sys
 enable_winecoreaudio_drv
 enable_wined3d
 enable_winegstreamer
+enable_winehid_sys
 enable_winejoystick_drv
 enable_winemac_drv
 enable_winemapi
@@ -18333,6 +18334,7 @@ wine_fn_config_dll winecoreaudio.drv enable_winecoreaudio_drv
 wine_fn_config_lib winecrt0
 wine_fn_config_dll wined3d enable_wined3d implib
 wine_fn_config_dll winegstreamer enable_winegstreamer
+wine_fn_config_dll winehid.sys enable_winehid_sys
 wine_fn_config_dll winejoystick.drv enable_winejoystick_drv
 wine_fn_config_dll winemac.drv enable_winemac_drv clean
 wine_fn_config_dll winemapi enable_winemapi

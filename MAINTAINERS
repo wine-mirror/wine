@@ -122,6 +122,7 @@ HID support
 M:	Aric Stewart <aric@codeweavers.com>
 F:	dlls/hid/
 F:	dlls/hidclass.sys/
+F:	dlls/winehid.sys/
 
 HTML rendering (Gecko)
 M:	Jacek Caban <jacek@codeweavers.com>

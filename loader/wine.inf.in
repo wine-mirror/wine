@@ -131,6 +131,7 @@ AddService=LanmanServer,0,LanmanServerService
 AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
 AddService=WineBus,0,WineBusService
+AddService=WineHID,0,WineHIDService
 
 [DefaultInstall.NT.Services]
 AddService=BITS,0,BITSService
@@ -146,6 +147,7 @@ AddService=LanmanServer,0,LanmanServerService
 AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
 AddService=WineBus,0,WineBusService
+AddService=WineHID,0,WineHIDService
 
 [DefaultInstall.ntamd64.Services]
 AddService=BITS,0,BITSService
@@ -161,6 +163,7 @@ AddService=LanmanServer,0,LanmanServerService
 AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
 AddService=WineBus,0,WineBusService
+AddService=WineHID,0,WineHIDService
 
 [Strings]
 MciExtStr="Software\Microsoft\Windows NT\CurrentVersion\MCI Extensions"
@@ -2530,6 +2533,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 12,,ndis.sys,-
 12,,tdi.sys,-
 12,,winebus.sys,-
+12,,winehid.sys,-
 ; skip .NET fake dlls in Wine Mono package
 11,,aspnet_regiis.exe,-
 11,,ngen.exe,-
@@ -2573,6 +2577,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 12,,ndis.sys
 12,,tdi.sys
 12,,winebus.sys
+12,,winehid.sys
 ; skip .NET fake dlls in Wine Mono package
 11,,aspnet_regiis.exe,-
 11,,ngen.exe,-
@@ -3193,6 +3198,15 @@ ErrorControl=1
 Description="Wine Platform Bus Kernel"
 DisplayName="Platform Bus Kernel"
 ServiceBinary="%12%\winebus.sys"
+LoadOrderGroup="WinePlugPlay"
+ServiceType=1
+StartType=3
+ErrorControl=1
+
+[WineHIDService]
+Description="Wine HID Minidriver"
+DisplayName="Wine HID"
+ServiceBinary="%12%\winehid.sys"
 LoadOrderGroup="WinePlugPlay"
 ServiceType=1
 StartType=3
