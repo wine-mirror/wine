@@ -606,7 +606,9 @@ static void sock_queue_async( struct fd *fd, const async_data_t *data, int type,
 static void sock_reselect_async( struct fd *fd, struct async_queue *queue )
 {
     struct sock *sock = get_fd_user( fd );
-    sock_reselect( sock );
+    /* ignore reselect on ifchange queue */
+    if (sock->ifchange_q != queue)
+        sock_reselect( sock );
 }
 
 static int sock_cancel_async( struct fd *fd, struct process *process, struct thread *thread, client_ptr_t iosb )
@@ -640,6 +642,7 @@ static void sock_destroy( struct object *obj )
 
     free_async_queue( sock->read_q );
     free_async_queue( sock->write_q );
+    async_wake_up( sock->ifchange_q, STATUS_CANCELLED );
     sock_destroy_ifchange_q( sock );
     if (sock->event) release_object( sock->event );
     if (sock->fd)
@@ -973,7 +976,6 @@ static void ifchange_destroy( struct object *obj );
 
 static int ifchange_get_poll_events( struct fd *fd );
 static void ifchange_poll_event( struct fd *fd, int event );
-static void ifchange_reselect_async( struct fd *fd, struct async_queue *queue );
 
 struct ifchange
 {
@@ -1014,7 +1016,7 @@ static const struct fd_ops ifchange_fd_ops =
     no_fd_flush,              /* flush */
     no_fd_ioctl,              /* ioctl */
     NULL,                     /* queue_async */
-    ifchange_reselect_async,  /* reselect_async */
+    NULL,                     /* reselect_async */
     NULL                      /* cancel_async */
 };
 
@@ -1096,11 +1098,6 @@ static void ifchange_poll_event( struct fd *fd, int event )
     if (status != STATUS_PENDING) ifchange_wake_up( ifchange, status );
 }
 
-static void ifchange_reselect_async( struct fd *fd, struct async_queue *queue )
-{
-    /* do nothing, this object is about to disappear */
-}
-
 #endif
 
 /* we only need one of these interface notification objects, all of the sockets dependent upon
@@ -1174,7 +1171,6 @@ static void ifchange_add_sock( struct object *obj, struct sock *sock )
 static struct async_queue *sock_get_ifchange_q( struct sock *sock )
 {
     struct object *ifchange;
-    struct fd *fd;
 
     if (sock->ifchange_q) /* reuse existing ifchange_q for this socket */
         return sock->ifchange_q;
@@ -1183,9 +1179,7 @@ static struct async_queue *sock_get_ifchange_q( struct sock *sock )
         return NULL;
 
     /* create the ifchange notification queue */
-    fd = get_obj_fd( ifchange );
-    sock->ifchange_q = create_async_queue( fd );
-    release_object( fd );
+    sock->ifchange_q = create_async_queue( sock->fd );
     if (!sock->ifchange_q)
     {
         release_object( ifchange );

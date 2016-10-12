@@ -8345,12 +8345,15 @@ static void test_sioAddressListChange(void)
 {
     struct sockaddr_in bindAddress;
     struct in_addr net_address;
-    WSAOVERLAPPED overlapped;
+    WSAOVERLAPPED overlapped, *olp;
     struct hostent *h;
     DWORD num_bytes, error, tick;
     SOCKET sock, sock2, sock3;
     WSAEVENT event2, event3;
+    HANDLE io_port;
+    ULONG_PTR key;
     int acount;
+    BOOL bret;
     int ret;
 
     /* Use gethostbyname to find the list of local network interfaces */
@@ -8465,7 +8468,32 @@ static void test_sioAddressListChange(void)
     ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %d\n", error);
     ok (error == WSAEWOULDBLOCK, "expected 10035, got %d\n", error);
 
+    io_port = CreateIoCompletionPort( (HANDLE)sock, NULL, 0, 0 );
+    ok (io_port != NULL, "failed to create completion port %u\n", GetLastError());
+
+    set_blocking(sock, FALSE);
+    memset(&overlapped, 0, sizeof(overlapped));
+    SetLastError(0xdeadbeef);
+    ret = WSAIoctl(sock, SIO_ADDRESS_LIST_CHANGE, NULL, 0, NULL, 0, &num_bytes, &overlapped, NULL);
+    error = GetLastError();
+    ok (ret == SOCKET_ERROR, "WSAIoctl(SIO_ADDRESS_LIST_CHANGE) failed with error %u\n", error);
+    ok (error == ERROR_IO_PENDING, "expected ERROR_IO_PENDING got %u\n", error);
+
+    olp = (WSAOVERLAPPED *)0xdeadbeef;
+    bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 0 );
+    ok(!bret, "failed to get completion status %u\n", bret);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
+    ok(!olp, "Overlapped structure is at %p\n", olp);
+
     closesocket(sock);
+
+    olp = (WSAOVERLAPPED *)0xdeadbeef;
+    bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 0 );
+    ok(!bret, "failed to get completion status %u\n", bret);
+    ok(GetLastError() == ERROR_OPERATION_ABORTED, "Last error was %u\n", GetLastError());
+    ok(olp == &overlapped, "Overlapped structure is at %p\n", olp);
+
+    CloseHandle(io_port);
 
     /* Misuse of the API by using a blocking socket and not using an overlapped structure,
      * this leads to a hang forever. */
