@@ -237,6 +237,31 @@ static void add_font_to_fonttbl( ME_OutStream *stream, ME_Style *style )
     }
 }
 
+static BOOL find_font_in_fonttbl( ME_OutStream *stream, CHARFORMAT2W *fmt, unsigned int *idx )
+{
+    WCHAR *facename;
+    int i;
+
+    *idx = 0;
+    if (fmt->dwMask & CFM_FACE)
+        facename = fmt->szFaceName;
+    else
+        facename = stream->fonttbl[0].szFaceName;
+    for (i = 0; i < stream->nFontTblLen; i++)
+    {
+        if (facename == stream->fonttbl[i].szFaceName
+            || !lstrcmpW(facename, stream->fonttbl[i].szFaceName))
+            if (!(fmt->dwMask & CFM_CHARSET)
+                || fmt->bCharSet == stream->fonttbl[i].bCharSet)
+            {
+                *idx = i;
+                break;
+            }
+    }
+
+    return i < stream->nFontTblLen;
+}
+
 static void add_color_to_colortbl( ME_OutStream *stream, COLORREF color )
 {
     int i;
@@ -713,21 +738,9 @@ ME_StreamOutRTFCharProps(ME_OutStream *pStream, CHARFORMAT2W *fmt)
   }
   /* FIXME: How to emit CFM_WEIGHT? */
   
-  if (fmt->dwMask & CFM_FACE || fmt->dwMask & CFM_CHARSET) {
-    WCHAR *szFaceName;
-    
-    if (fmt->dwMask & CFM_FACE)
-      szFaceName = fmt->szFaceName;
-    else
-      szFaceName = pStream->fonttbl[0].szFaceName;
-    for (i = 0; i < pStream->nFontTblLen; i++) {
-      if (szFaceName == pStream->fonttbl[i].szFaceName
-          || !lstrcmpW(szFaceName, pStream->fonttbl[i].szFaceName))
-        if (!(fmt->dwMask & CFM_CHARSET)
-            || fmt->bCharSet == pStream->fonttbl[i].bCharSet)
-          break;
-    }
-    if (i < pStream->nFontTblLen)
+  if (fmt->dwMask & CFM_FACE || fmt->dwMask & CFM_CHARSET)
+  {
+    if (find_font_in_fonttbl( pStream, fmt, &i ))
     {
       if (i != pStream->nDefaultFont)
         sprintf(props + strlen(props), "\\f%u", i);
