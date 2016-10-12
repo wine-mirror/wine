@@ -274,6 +274,10 @@ ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
 
     if (item->member.run.para != prev_para)
     {
+      /* check for any para numbering text */
+      if (item->member.run.para->fmt.wNumbering)
+        add_font_to_fonttbl( pStream, item->member.run.para->para_num.style );
+
       if ((pCell = item->member.para.pCell))
       {
         ME_Border* borders[4] = { &pCell->member.cell.border.top,
