@@ -75,6 +75,7 @@ static NTSTATUS (WINAPI *pNtCreateNamedPipeFile) (PHANDLE handle, ULONG access,
 static NTSTATUS (WINAPI *pNtQueryInformationFile) (IN HANDLE FileHandle, OUT PIO_STATUS_BLOCK IoStatusBlock, OUT PVOID FileInformation, IN ULONG Length, IN FILE_INFORMATION_CLASS FileInformationClass);
 static NTSTATUS (WINAPI *pNtSetInformationFile) (HANDLE handle, PIO_STATUS_BLOCK io, PVOID ptr, ULONG len, FILE_INFORMATION_CLASS class);
 static NTSTATUS (WINAPI *pNtCancelIoFile) (HANDLE hFile, PIO_STATUS_BLOCK io_status);
+static NTSTATUS (WINAPI *pNtCancelIoFileEx) (HANDLE hFile, IO_STATUS_BLOCK *iosb, IO_STATUS_BLOCK *io_status);
 static void (WINAPI *pRtlInitUnicodeString) (PUNICODE_STRING target, PCWSTR source);
 
 static HANDLE (WINAPI *pOpenThread)(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwThreadId);
@@ -95,6 +96,7 @@ static BOOL init_func_ptrs(void)
     loadfunc(NtQueryInformationFile)
     loadfunc(NtSetInformationFile)
     loadfunc(NtCancelIoFile)
+    loadfunc(NtCancelIoFileEx)
     loadfunc(RtlInitUnicodeString)
 
     /* not fatal */
@@ -497,6 +499,21 @@ static void test_cancelio(void)
     SleepEx(0, TRUE); /* alertable wait state */
 
     ok(ioapc_called, "IOAPC didn't run\n");
+
+    CloseHandle(hPipe);
+
+    res = create_pipe(&hPipe, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 /* OVERLAPPED */);
+    ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
+
+    memset(&iosb, 0x55, sizeof(iosb));
+    res = listen_pipe(hPipe, hEvent, &iosb, FALSE);
+    ok(res == STATUS_PENDING, "NtFsControlFile returned %x\n", res);
+
+    res = pNtCancelIoFileEx(hPipe, &iosb, &cancel_sb);
+    ok(!res, "NtCancelIoFileEx returned %x\n", res);
+
+    ok(U(iosb).Status == STATUS_CANCELLED, "Wrong iostatus %x\n", U(iosb).Status);
+    ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
 
     CloseHandle(hEvent);
     CloseHandle(hPipe);
