@@ -52,7 +52,6 @@ struct node
 struct node *alloc_node( WS_XML_NODE_TYPE ) DECLSPEC_HIDDEN;
 void free_node( struct node * ) DECLSPEC_HIDDEN;
 void destroy_nodes( struct node * ) DECLSPEC_HIDDEN;
-struct node *find_parent( struct node * ) DECLSPEC_HIDDEN;
 HRESULT copy_node( WS_XML_READER *, struct node ** ) DECLSPEC_HIDDEN;
 
 static inline WS_XML_NODE_TYPE node_type( const struct node *node )
@@ -123,6 +122,12 @@ static inline BOOL is_nil_value( const char *value, ULONG size )
     ULONG i;
     for (i = 0; i < size; i++) if (value[i]) return FALSE;
     return TRUE;
+}
+
+static inline BOOL is_valid_parent( const struct node *node )
+{
+    if (!node) return FALSE;
+    return (node_type( node ) == WS_XML_NODE_TYPE_ELEMENT || node_type( node ) == WS_XML_NODE_TYPE_BOF);
 }
 
 static inline void *heap_alloc( SIZE_T size )

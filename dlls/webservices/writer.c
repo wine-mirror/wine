@@ -130,6 +130,13 @@ static void write_insert_node( struct writer *writer, struct node *parent, struc
     writer->current = node;
 }
 
+static struct node *find_parent( struct writer *writer )
+{
+    if (is_valid_parent( writer->current )) return writer->current;
+    if (is_valid_parent( writer->current->parent )) return writer->current->parent;
+    return NULL;
+}
+
 static HRESULT write_init_state( struct writer *writer )
 {
     struct node *node;
@@ -890,7 +897,7 @@ static HRESULT write_flush( struct writer *writer )
 static HRESULT write_add_cdata_node( struct writer *writer )
 {
     struct node *node, *parent;
-    if (!(parent = find_parent( writer->current ))) return WS_E_INVALID_FORMAT;
+    if (!(parent = find_parent( writer ))) return WS_E_INVALID_FORMAT;
     if (!(node = alloc_node( WS_XML_NODE_TYPE_CDATA ))) return E_OUTOFMEMORY;
     write_insert_node( writer, parent, node );
     return S_OK;
@@ -977,7 +984,7 @@ static HRESULT write_add_element_node( struct writer *writer, const WS_XML_STRIN
     struct node *node, *parent;
     WS_XML_ELEMENT_NODE *elem;
 
-    if (!(parent = find_parent( writer->current ))) return WS_E_INVALID_FORMAT;
+    if (!(parent = find_parent( writer ))) return WS_E_INVALID_FORMAT;
 
     if (!prefix && node_type( parent ) == WS_XML_NODE_TYPE_ELEMENT)
     {
@@ -2563,7 +2570,7 @@ static HRESULT write_add_comment_node( struct writer *writer, const WS_XML_STRIN
     struct node *node, *parent;
     WS_XML_COMMENT_NODE *comment;
 
-    if (!(parent = find_parent( writer->current ))) return WS_E_INVALID_FORMAT;
+    if (!(parent = find_parent( writer ))) return WS_E_INVALID_FORMAT;
     if (!(node = alloc_node( WS_XML_NODE_TYPE_COMMENT ))) return E_OUTOFMEMORY;
     comment = (WS_XML_COMMENT_NODE *)node;
 
@@ -2774,7 +2781,7 @@ HRESULT WINAPI WsCopyNode( WS_XML_WRITER *handle, WS_XML_READER *reader, WS_ERRO
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!writer) return E_INVALIDARG;
-    if (!(parent = find_parent( writer->current ))) return WS_E_INVALID_FORMAT;
+    if (!(parent = find_parent( writer ))) return WS_E_INVALID_FORMAT;
 
     if ((hr = copy_node( reader, &node )) != S_OK) return hr;
     write_insert_node( writer, parent, node );
