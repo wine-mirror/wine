@@ -196,6 +196,12 @@ static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp,
     }
     SERVER_END_REQ;
 
+    if (irp->Flags & IRP_CLOSE_OPERATION)
+    {
+        HeapFree( GetProcessHeap(), 0, file );
+        irp->Tail.Overlay.OriginalFileObject = NULL;
+    }
+
     HeapFree( GetProcessHeap(), 0, irp->UserBuffer );
     return STATUS_SUCCESS;
 }
@@ -292,7 +298,6 @@ static NTSTATUS dispatch_close( const irp_params_t *params, void *in_buff, ULONG
     irp->Flags |= IRP_CLOSE_OPERATION;
     dispatch_irp( device, irp, irp_handle );
 
-    HeapFree( GetProcessHeap(), 0, file );  /* FIXME: async close processing not supported */
     return STATUS_SUCCESS;
 }
 
