@@ -202,7 +202,11 @@ static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp,
         irp->Tail.Overlay.OriginalFileObject = NULL;
     }
 
-    HeapFree( GetProcessHeap(), 0, irp->UserBuffer );
+    if (irp->UserBuffer != irp->AssociatedIrp.SystemBuffer)
+    {
+        HeapFree( GetProcessHeap(), 0, irp->UserBuffer );
+        irp->UserBuffer = NULL;
+    }
     return STATUS_SUCCESS;
 }
 
@@ -260,6 +264,7 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
     irp->Flags |= IRP_CREATE_OPERATION;
     dispatch_irp( device, irp, irp_handle );
 
+    HeapFree( GetProcessHeap(), 0, in_buff );
     return STATUS_SUCCESS;
 }
 
@@ -298,6 +303,7 @@ static NTSTATUS dispatch_close( const irp_params_t *params, void *in_buff, ULONG
     irp->Flags |= IRP_CLOSE_OPERATION;
     dispatch_irp( device, irp, irp_handle );
 
+    HeapFree( GetProcessHeap(), 0, in_buff );
     return STATUS_SUCCESS;
 }
 
@@ -336,8 +342,10 @@ static NTSTATUS dispatch_read( const irp_params_t *params, void *in_buff, ULONG 
     irpsp->Parameters.Read.Key = params->read.key;
 
     irp->Flags |= IRP_READ_OPERATION;
+    irp->Flags |= IRP_DEALLOCATE_BUFFER;  /* deallocate out_buff */
     dispatch_irp( device, irp, irp_handle );
 
+    HeapFree( GetProcessHeap(), 0, in_buff );
     return STATUS_SUCCESS;
 }
 
@@ -370,6 +378,7 @@ static NTSTATUS dispatch_write( const irp_params_t *params, void *in_buff, ULONG
     irpsp->Parameters.Write.Key = params->write.key;
 
     irp->Flags |= IRP_WRITE_OPERATION;
+    irp->Flags |= IRP_DEALLOCATE_BUFFER;  /* deallocate in_buff */
     dispatch_irp( device, irp, irp_handle );
 
     return STATUS_SUCCESS;
@@ -398,6 +407,7 @@ static NTSTATUS dispatch_flush( const irp_params_t *params, void *in_buff, ULONG
 
     dispatch_irp( device, irp, irp_handle );
 
+    HeapFree( GetProcessHeap(), 0, in_buff );
     return STATUS_SUCCESS;
 }
 
@@ -425,6 +435,7 @@ static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG
         if ((params->ioctl.code & 3) == METHOD_BUFFERED)
         {
             memcpy( out_buff, in_buff, in_size );
+            HeapFree( GetProcessHeap(), 0, in_buff );
             in_buff = out_buff;
         }
     }
@@ -439,7 +450,9 @@ static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG
 
     irp->Tail.Overlay.OriginalFileObject = file;
     irp->RequestorMode = UserMode;
+    irp->AssociatedIrp.SystemBuffer = in_buff;
 
+    irp->Flags |= IRP_DEALLOCATE_BUFFER;  /* deallocate in_buff */
     dispatch_irp( device, irp, irp_handle );
 
     return STATUS_SUCCESS;
@@ -490,23 +503,23 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
     HANDLE irp = 0;
     NTSTATUS status = STATUS_SUCCESS;
     irp_params_t irp_params;
-    void *in_buff;
     ULONG in_size = 4096, out_size = 0;
+    void *in_buff = NULL;
     HANDLE handles[2];
 
     request_thread = GetCurrentThreadId();
-
-    if (!(in_buff = HeapAlloc( GetProcessHeap(), 0, in_size )))
-    {
-        ERR( "failed to allocate buffer\n" );
-        return STATUS_NO_MEMORY;
-    }
 
     handles[0] = stop_event;
     handles[1] = manager;
 
     for (;;)
     {
+        if (!in_buff && !(in_buff = HeapAlloc( GetProcessHeap(), 0, in_size )))
+        {
+            ERR( "failed to allocate buffer\n" );
+            return STATUS_NO_MEMORY;
+        }
+
         SERVER_START_REQ( get_next_device_request )
         {
             req->manager = wine_server_obj_handle( manager );
@@ -525,13 +538,13 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
             else
             {
                 irp = 0; /* no previous irp */
-                out_size = 0;
-                in_size = reply->in_size;
+                if (status == STATUS_BUFFER_OVERFLOW)
+                    in_size = reply->in_size;
             }
         }
         SERVER_END_REQ;
 
-        switch(status)
+        switch (status)
         {
         case STATUS_SUCCESS:
             if (irp_params.major > IRP_MJ_MAXIMUM_FUNCTION || !dispatch_funcs[irp_params.major])
@@ -541,11 +554,16 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
                 break;
             }
             status = dispatch_funcs[irp_params.major]( &irp_params, in_buff, in_size, out_size, irp );
-            if (status == STATUS_SUCCESS) irp = 0;  /* status reported by IoCompleteRequest */
+            if (status == STATUS_SUCCESS)
+            {
+                irp = 0;  /* status reported by IoCompleteRequest */
+                in_size = 4096;
+                in_buff = NULL;
+            }
             break;
         case STATUS_BUFFER_OVERFLOW:
             HeapFree( GetProcessHeap(), 0, in_buff );
-            in_buff = HeapAlloc( GetProcessHeap(), 0, in_size );
+            in_buff = NULL;
             /* restart with larger buffer */
             break;
         case STATUS_PENDING:
@@ -1450,6 +1468,9 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
                 return;
         }
     }
+
+    if (irp->Flags & IRP_DEALLOCATE_BUFFER)
+        HeapFree( GetProcessHeap(), 0, irp->AssociatedIrp.SystemBuffer );
 
     IoFreeIrp( irp );
 }
