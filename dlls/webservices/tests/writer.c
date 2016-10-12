@@ -2122,7 +2122,7 @@ static void test_double(void)
     WsFreeWriter( writer );
 }
 
-static void test_field_flags(void)
+static void test_field_options(void)
 {
     static const char expected[] =
         "<t><bool a:nil=\"true\" xmlns:a=\"http://www.w3.org/2001/XMLSchema-instance\"/><int32>-1</int32>"
@@ -2130,10 +2130,10 @@ static void test_field_flags(void)
     HRESULT hr;
     WS_XML_WRITER *writer;
     WS_STRUCT_DESCRIPTION s;
-    WS_FIELD_DESCRIPTION f, f2, f3, f4, *fields[4];
+    WS_FIELD_DESCRIPTION f, f2, f3, f4, f5, *fields[5];
     WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL}, str_guid = {4, (BYTE *)"guid"};
     WS_XML_STRING str_int32 = {5, (BYTE *)"int32"}, str_bool = {4, (BYTE *)"bool"};
-    WS_XML_STRING str_xmlstr = {6, (BYTE *)"xmlstr"};
+    WS_XML_STRING str_xmlstr = {6, (BYTE *)"xmlstr"}, str_str = {3, (BYTE *)"str"};
     INT32 val = -1;
     struct test
     {
@@ -2141,6 +2141,7 @@ static void test_field_flags(void)
         BOOL          *bool_ptr;
         INT32         *int32_ptr;
         WS_XML_STRING  xmlstr;
+        WCHAR         *str;
     } test;
 
     hr = WsCreateWriter( NULL, 0, &writer, NULL );
@@ -2187,11 +2188,20 @@ static void test_field_flags(void)
     f4.options   = WS_FIELD_NILLABLE;
     fields[3] = &f4;
 
+    memset( &f5, 0, sizeof(f5) );
+    f5.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f5.localName = &str_str;
+    f5.offset    = FIELD_OFFSET(struct test, str);
+    f5.ns        = &ns;
+    f5.type      = WS_WSZ_TYPE;
+    f5.options   = WS_FIELD_OPTIONAL|WS_FIELD_NILLABLE;
+    fields[4] = &f5;
+
     memset( &s, 0, sizeof(s) );
     s.size       = sizeof(struct test);
     s.alignment  = TYPE_ALIGNMENT(struct test);
     s.fields     = fields;
-    s.fieldCount = 4;
+    s.fieldCount = 5;
 
     memset( &test, 0, sizeof(test) );
     test.int32_ptr = &val;
@@ -2679,7 +2689,7 @@ START_TEST(writer)
     test_WsCopyNode();
     test_text_types();
     test_double();
-    test_field_flags();
+    test_field_options();
     test_WsWriteText();
     test_WsWriteArray();
     test_escapes();

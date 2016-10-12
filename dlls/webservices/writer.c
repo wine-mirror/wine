@@ -1952,16 +1952,13 @@ static HRESULT write_type_struct_field( struct writer *writer, const WS_FIELD_DE
 
     if (is_nil_value( value, size ))
     {
+        if (field_options & WS_FIELD_OPTIONAL) return S_OK;
         if (field_options & WS_FIELD_NILLABLE)
         {
             if (field_options & WS_FIELD_POINTER) option = WS_WRITE_NILLABLE_POINTER;
             else option = WS_WRITE_NILLABLE_VALUE;
         }
-        else
-        {
-            if (field_options & WS_FIELD_OPTIONAL) return S_OK;
-            return E_INVALIDARG;
-        }
+        else return E_INVALIDARG;
     }
     else
     {
