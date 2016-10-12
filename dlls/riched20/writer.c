@@ -277,6 +277,23 @@ static void add_color_to_colortbl( ME_OutStream *stream, COLORREF color )
     }
 }
 
+static BOOL find_color_in_colortbl( ME_OutStream *stream, COLORREF color, unsigned int *idx )
+{
+    int i;
+
+    *idx = 0;
+    for (i = 1; i < stream->nColorTblLen; i++)
+    {
+        if (stream->colortbl[i] == color)
+        {
+            *idx = i;
+            break;
+        }
+    }
+
+    return i < stream->nFontTblLen;
+}
+
 static BOOL
 ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
                                ME_DisplayItem *pLastRun)
@@ -391,17 +408,13 @@ ME_StreamOutRTFTableProps(ME_TextEditor *editor, ME_OutStream *pStream,
       {
         if (borders[i]->width)
         {
-          unsigned int j;
+          unsigned int idx;
           COLORREF crColor = borders[i]->colorRef;
           sprintf(props + strlen(props), "\\clbrdr%c", sideChar[i]);
           sprintf(props + strlen(props), "\\brdrs");
           sprintf(props + strlen(props), "\\brdrw%d", borders[i]->width);
-          for (j = 1; j < pStream->nColorTblLen; j++) {
-            if (pStream->colortbl[j] == crColor) {
-              sprintf(props + strlen(props), "\\brdrcf%u", j);
-              break;
-            }
-          }
+          if (find_color_in_colortbl( pStream, crColor, &idx ))
+            sprintf(props + strlen(props), "\\brdrcf%u", idx);
         }
       }
       sprintf(props + strlen(props), "\\cellx%d", cell->member.cell.nRightBoundary);
@@ -423,17 +436,13 @@ ME_StreamOutRTFTableProps(ME_TextEditor *editor, ME_OutStream *pStream,
     {
       if (borders[i]->width)
       {
-        unsigned int j;
+        unsigned int idx;
         COLORREF crColor = borders[i]->colorRef;
         sprintf(props + strlen(props), "\\trbrdr%c", sideChar[i]);
         sprintf(props + strlen(props), "\\brdrs");
         sprintf(props + strlen(props), "\\brdrw%d", borders[i]->width);
-        for (j = 1; j < pStream->nColorTblLen; j++) {
-          if (pStream->colortbl[j] == crColor) {
-            sprintf(props + strlen(props), "\\brdrcf%u", j);
-            break;
-          }
-        }
+        if (find_color_in_colortbl( pStream, crColor, &idx ))
+          sprintf(props + strlen(props), "\\brdrcf%u", idx);
       }
     }
     for (i = 0; i < pFmt->cTabCount; i++)
@@ -642,26 +651,15 @@ ME_StreamOutRTFCharProps(ME_OutStream *pStream, CHARFORMAT2W *fmt)
     strcat(props, "\\caps");
   if (fmt->dwMask & CFM_ANIMATION)
     sprintf(props + strlen(props), "\\animtext%u", fmt->bAnimation);
-  if (fmt->dwMask & CFM_BACKCOLOR) {
-    if (!(fmt->dwEffects & CFE_AUTOBACKCOLOR)) {
-      for (i = 1; i < pStream->nColorTblLen; i++)
-        if (pStream->colortbl[i] == fmt->crBackColor) {
-          sprintf(props + strlen(props), "\\cb%u", i);
-          break;
-        }
-    }
-  }
+  if ((fmt->dwMask & CFM_BACKCOLOR) && !(fmt->dwEffects & CFE_AUTOBACKCOLOR))
+    if (find_color_in_colortbl( pStream, fmt->crBackColor, &i ))
+      sprintf(props + strlen(props), "\\cb%u", i);
   if (fmt->dwMask & CFM_BOLD && fmt->dwEffects & CFE_BOLD)
     strcat(props, "\\b");
-  if (fmt->dwMask & CFM_COLOR) {
-    if (!(fmt->dwEffects & CFE_AUTOCOLOR)) {
-      for (i = 1; i < pStream->nColorTblLen; i++)
-        if (pStream->colortbl[i] == fmt->crTextColor) {
-          sprintf(props + strlen(props), "\\cf%u", i);
-          break;
-        }
-    }
-  }
+  if ((fmt->dwMask & CFM_COLOR) && !(fmt->dwEffects & CFE_AUTOCOLOR))
+    if (find_color_in_colortbl( pStream, fmt->crTextColor, &i ))
+      sprintf(props + strlen(props), "\\cf%u", i);
+
   /* TODO: CFM_DISABLED */
   if (fmt->dwMask & CFM_EMBOSS && fmt->dwEffects & CFE_EMBOSS)
     strcat(props, "\\embo");
