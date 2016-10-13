@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-10-13 08:19+0300\n"
+"PO-Revision-Date: 2016-10-13 22:35+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -10519,10 +10519,8 @@ msgid "IPv6 address"
 msgstr "IPv6 adresas"
 
 #: msinfo32.rc:28
-#, fuzzy
-#| msgid "System Configuration"
 msgid "System Information"
-msgstr "Sistemos konfigūracija"
+msgstr "Sistemos informacija"
 
 #: net.rc:30
 msgid ""
