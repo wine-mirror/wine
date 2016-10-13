@@ -287,6 +287,7 @@ typedef struct _charformat2a {
     BYTE       bCharSet;
     BYTE       bPitchAndFamily;
     char       szFaceName[LF_FACESIZE];
+    WORD       pad; /* Not in MS's C version, but needed to ensure that wWeight is at the correct offset to match the C++ version */
     WORD       wWeight;
     SHORT      sSpacing;
     COLORREF   crBackColor;
@@ -309,6 +310,7 @@ typedef struct _charformat2w {
     BYTE       bCharSet;
     BYTE       bPitchAndFamily;
     WCHAR      szFaceName[LF_FACESIZE];
+    WORD       pad; /* Not in MS's C version, but needed to ensure that wWeight is at the correct offset to match the C++ version */
     WORD       wWeight;
     SHORT      sSpacing;
     COLORREF   crBackColor;

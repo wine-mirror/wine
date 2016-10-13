@@ -747,6 +747,7 @@ static void test_EM_SETCHARFORMAT(void)
 {
   HWND hwndRichEdit = new_richedit(NULL);
   CHARFORMAT2A cf2;
+  CHARFORMAT2W cfW;
   int rc = 0;
   int tested_effects[] = {
     CFE_BOLD,
@@ -1195,6 +1196,48 @@ static void test_EM_SETCHARFORMAT(void)
       "%d, cf2.dwMask == 0x%08x expected mask 0x%08x\n", i, cf2.dwMask, CFM_BOLD);
   ok((cf2.dwEffects & CFE_BOLD) == CFE_BOLD,
       "%d, cf2.dwEffects == 0x%08x expected effect 0x%08x\n", i, cf2.dwEffects, CFE_BOLD);
+
+  /* show that wWeight is at the correct offset in CHARFORMAT2A */
+  memset(&cf2, 0, sizeof(cf2));
+  cf2.cbSize = sizeof(cf2);
+  cf2.dwMask = CFM_WEIGHT;
+  cf2.wWeight = 100;
+  SendMessageA(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
+  memset(&cf2, 0, sizeof(cf2));
+  cf2.cbSize = sizeof(cf2);
+  SendMessageA(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
+  ok(cf2.wWeight == 100, "got %d\n", cf2.wWeight);
+
+  memset(&cf2, 0, sizeof(cf2));
+  cf2.cbSize = sizeof(cf2);
+  cf2.dwMask = CFM_SPACING;
+  cf2.sSpacing = 10;
+  SendMessageA(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
+  memset(&cf2, 0, sizeof(cf2));
+  cf2.cbSize = sizeof(cf2);
+  SendMessageA(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
+  ok(cf2.sSpacing == 10, "got %d\n", cf2.sSpacing);
+
+  /* show that wWeight is at the correct offset in CHARFORMAT2W */
+  memset(&cfW, 0, sizeof(cfW));
+  cfW.cbSize = sizeof(cfW);
+  cfW.dwMask = CFM_WEIGHT;
+  cfW.wWeight = 100;
+  SendMessageA(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cfW);
+  memset(&cfW, 0, sizeof(cfW));
+  cfW.cbSize = sizeof(cfW);
+  SendMessageA(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cfW);
+  ok(cfW.wWeight == 100, "got %d\n", cfW.wWeight);
+
+  memset(&cfW, 0, sizeof(cfW));
+  cfW.cbSize = sizeof(cfW);
+  cfW.dwMask = CFM_SPACING;
+  cfW.sSpacing = 10;
+  SendMessageA(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cfW);
+  memset(&cfW, 0, sizeof(cfW));
+  cfW.cbSize = sizeof(cfW);
+  SendMessageA(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cfW);
+  ok(cfW.sSpacing == 10, "got %d\n", cfW.sSpacing);
 
   DestroyWindow(hwndRichEdit);
 }
