@@ -2035,8 +2035,10 @@ cards_intel[] =
     {"Iris Pro P6300",              CARD_INTEL_IPP6300},
     {"Iris Pro 6200",               CARD_INTEL_IP6200},
     {"Iris 6100",                   CARD_INTEL_IG6100},
+    {"Iris(TM) Graphics 6100",      CARD_INTEL_IG6100}, /* MacOS */
     /* Haswell */
     {"Haswell Mobile",              CARD_INTEL_HWM},
+    {"Iris OpenGL Engine",          CARD_INTEL_HWM},    /* MacOS */
     /* Ivybridge */
     {"Ivybridge Server",            CARD_INTEL_IVBS},
     {"Ivybridge Mobile",            CARD_INTEL_IVBM},
