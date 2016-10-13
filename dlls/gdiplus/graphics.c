@@ -3306,6 +3306,12 @@ GpStatus WINGDIPAPI GdipDrawLine(GpGraphics *graphics, GpPen *pen, REAL x1,
 
     TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f)\n", graphics, pen, x1, y1, x2, y2);
 
+    if (!pen)
+        return InvalidParameter;
+
+    if (pen->unit == UnitPixel && pen->width <= 0.0)
+        return Ok;
+
     pt[0].X = x1;
     pt[0].Y = y1;
     pt[1].X = x2;
