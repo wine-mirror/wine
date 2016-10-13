@@ -3375,25 +3375,11 @@ GpStatus WINGDIPAPI GdipDrawLinesI(GpGraphics *graphics, GpPen *pen, GDIPCONST
     return retval;
 }
 
-GpStatus WINGDIPAPI GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
+GpStatus GDI32_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
 {
     INT save_state;
     GpStatus retval;
     HRGN hrgn=NULL;
-
-    TRACE("(%p, %p, %p)\n", graphics, pen, path);
-
-    if(!pen || !graphics)
-        return InvalidParameter;
-
-    if(graphics->busy)
-        return ObjectBusy;
-
-    if (!graphics->hdc)
-    {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
-    }
 
     save_state = prepare_dc(graphics, pen);
 
@@ -3411,6 +3397,74 @@ GpStatus WINGDIPAPI GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
 end:
     restore_dc(graphics, save_state);
     DeleteObject(hrgn);
+
+    return retval;
+}
+
+GpStatus SOFTWARE_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
+{
+    GpStatus stat;
+    GpPath *wide_path;
+    GpMatrix *transform=NULL;
+
+    stat = GdipClonePath(path, &wide_path);
+
+    if (stat != Ok)
+        return stat;
+
+    if (pen->unit == UnitPixel)
+    {
+        /* We have to transform this to device coordinates to get the widths right. */
+        stat = GdipCreateMatrix(&transform);
+
+        if (stat == Ok)
+            stat = get_graphics_transform(graphics, CoordinateSpaceDevice,
+                CoordinateSpaceWorld, transform);
+    }
+
+    if (stat == Ok)
+        stat = GdipWidenPath(wide_path, pen, transform, 1.0);
+
+    if (pen->unit == UnitPixel)
+    {
+        /* Transform the path back to world coordinates */
+        if (stat == Ok)
+            stat = GdipInvertMatrix(transform);
+
+        if (stat == Ok)
+            stat = GdipTransformPath(wide_path, transform);
+    }
+
+    /* Actually draw the path */
+    if (stat == Ok)
+        stat = GdipFillPath(graphics, pen->brush, wide_path);
+
+    GdipDeleteMatrix(transform);
+
+    GdipDeletePath(wide_path);
+
+    return stat;
+}
+
+GpStatus WINGDIPAPI GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
+{
+    GpStatus retval;
+
+    TRACE("(%p, %p, %p)\n", graphics, pen, path);
+
+    if(!pen || !graphics)
+        return InvalidParameter;
+
+    if(graphics->busy)
+        return ObjectBusy;
+
+    if (path->pathdata.Count == 0)
+        return Ok;
+
+    if (!graphics->hdc)
+        retval = SOFTWARE_GdipDrawPath(graphics, pen, path);
+    else
+        retval = GDI32_GdipDrawPath(graphics, pen, path);
 
     return retval;
 }
