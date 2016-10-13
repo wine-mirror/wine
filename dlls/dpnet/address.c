@@ -377,9 +377,9 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_GetComponentByName(IDirectPlay8Add
     struct component *entry;
     DWORD i;
 
-    TRACE("(%p)->(%p %p %p %p)\n", This, pwszName, pvBuffer, pdwBufferSize, pdwDataType);
+    TRACE("(%p)->(%s %p %p %p)\n", This, debugstr_w(pwszName), pvBuffer, pdwBufferSize, pdwDataType);
 
-    if(!pwszName || !pdwBufferSize || !pdwDataType || (!pvBuffer && pdwBufferSize))
+    if(!pwszName || !pdwBufferSize || !pdwDataType || (!pvBuffer && *pdwBufferSize))
         return E_POINTER;
 
     for(i=0; i < This->comp_count; i++)
