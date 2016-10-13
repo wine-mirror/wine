@@ -1888,7 +1888,7 @@ static void widen_closed_figure(GpPath *path, GpPen *pen, int start, int end,
     int i;
     path_list_node_t *prev_point;
 
-    if (end <= start+1)
+    if (end <= start)
         return;
 
     /* left outline */
