@@ -3899,15 +3899,18 @@ static void test_pen_thickness(void)
         REAL res_x, res_y, scale;
         GpUnit pen_unit, page_unit;
         REAL pen_width;
-        INT cx, cy;
+        INT cx, cy, path_cx, path_cy;
     } td[] =
     {
-        { 10.0, 10.0, 1.0, UnitPixel, UnitPixel, 1.0, 1, 1 },
-        { 10.0, 10.0, 3.0, UnitPixel, UnitPixel, 2.0, 2, 2 },
-        { 10.0, 10.0, 30.0, UnitPixel, UnitInch, 1.0, 1, 1 },
-        { 10.0, 10.0, 1.0, UnitWorld, UnitPixel, 1.0, 1, 1 },
-        { 10.0, 10.0, 3.0, UnitWorld, UnitPixel, 2.0, 6, 6 },
-        { 10.0, 10.0, 2.0, UnitWorld, UnitInch, 1.0, 20, 20 },
+        { 10.0, 10.0, 1.0, UnitPixel, UnitPixel, 1.0, 1, 1, 1, 1 },
+        { 10.0, 10.0, 1.0, UnitPixel, UnitPixel, 0.0, 0, 0, 1, 1 },
+        { 10.0, 10.0, 1.0, UnitPixel, UnitPixel, 0.1, 1, 1, 1, 1 },
+        { 10.0, 10.0, 3.0, UnitPixel, UnitPixel, 2.0, 2, 2, 2, 2 },
+        { 10.0, 10.0, 30.0, UnitPixel, UnitInch, 1.0, 1, 1, 1, 1 },
+        { 10.0, 10.0, 1.0, UnitWorld, UnitPixel, 1.0, 1, 1, 1, 1 },
+        { 10.0, 10.0, 1.0, UnitWorld, UnitPixel, 0.0, 1, 1, 1, 1 },
+        { 10.0, 10.0, 3.0, UnitWorld, UnitPixel, 2.0, 6, 6, 6, 6 },
+        { 10.0, 10.0, 2.0, UnitWorld, UnitInch, 1.0, 20, 20, 20, 20 },
     };
     GpStatus status;
     int i, j;
@@ -3919,6 +3922,7 @@ static void test_pen_thickness(void)
     } u;
     GpPen *pen;
     GpPointF corner;
+    GpPath *path;
     BitmapData bd;
     INT min, max, size;
 
@@ -4004,6 +4008,82 @@ static void test_pen_thickness(void)
         size = max-min+1;
 
         ok(size == td[i].cy, "%u: expected %d, got %d\n", i, td[i].cy, size);
+
+        status = GdipBitmapUnlockBits(u.bitmap, &bd);
+        expect(Ok, status);
+
+        status = GdipGraphicsClear(graphics, 0xff000000);
+        expect(Ok, status);
+
+        status = GdipCreatePath(FillModeAlternate, &path);
+        expect(Ok, status);
+
+        status = GdipAddPathLine(path, corner.X/2, 0, corner.X/2, corner.Y);
+        expect(Ok, status);
+
+        status = GdipClosePathFigure(path);
+        expect(Ok, status);
+
+        status = GdipAddPathLine(path, 0, corner.Y/2, corner.X, corner.Y/2);
+        expect(Ok, status);
+
+        status = GdipDrawPath(graphics, pen, path);
+        expect(Ok, status);
+
+        GdipDeletePath(path);
+
+        status = GdipBitmapLockBits(u.bitmap, NULL, ImageLockModeRead, PixelFormat24bppRGB, &bd);
+        expect(Ok, status);
+
+        min = -1;
+        max = -2;
+
+        for (j=0; j<100; j++)
+        {
+            if (((BYTE*)bd.Scan0)[j*3] == 0xff)
+            {
+                min = j;
+                break;
+            }
+        }
+
+        for (j=99; j>=0; j--)
+        {
+            if (((BYTE*)bd.Scan0)[j*3] == 0xff)
+            {
+                max = j;
+                break;
+            }
+        }
+
+        size = max-min+1;
+
+        ok(size == td[i].path_cx, "%u: expected %d, got %d\n", i, td[i].path_cx, size);
+
+        min = -1;
+        max = -2;
+
+        for (j=0; j<100; j++)
+        {
+            if (((BYTE*)bd.Scan0)[bd.Stride*j] == 0xff)
+            {
+                min = j;
+                break;
+            }
+        }
+
+        for (j=99; j>=0; j--)
+        {
+            if (((BYTE*)bd.Scan0)[bd.Stride*j] == 0xff)
+            {
+                max = j;
+                break;
+            }
+        }
+
+        size = max-min+1;
+
+        ok(size == td[i].path_cy, "%u: expected %d, got %d\n", i, td[i].path_cy, size);
 
         status = GdipBitmapUnlockBits(u.bitmap, &bd);
         expect(Ok, status);
