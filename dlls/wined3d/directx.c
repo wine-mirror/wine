@@ -61,6 +61,7 @@ enum wined3d_display_driver
 
 enum wined3d_driver_model
 {
+    DRIVER_MODEL_GENERIC,
     DRIVER_MODEL_WIN9X,
     DRIVER_MODEL_NT40,
     DRIVER_MODEL_NT5X,
@@ -1444,7 +1445,8 @@ static const struct driver_version_information *get_driver_version_info(enum win
     {
         const struct driver_version_information *entry = &driver_version_table[i];
 
-        if (entry->driver == driver && entry->driver_model == driver_model)
+        if (entry->driver == driver && (driver_model == DRIVER_MODEL_GENERIC
+                || entry->driver_model == driver_model))
         {
             TRACE("Found driver \"%s\", version %u, subversion %u, build %u.\n",
                     entry->driver_name, entry->version, entry->subversion, entry->build);
@@ -1619,8 +1621,7 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
      *   This could be an indication that our database is not up to date, so this should be fixed.
      */
     if ((version_info = get_driver_version_info(driver, driver_model))
-            || (version_info = get_driver_version_info(driver, DRIVER_MODEL_NT5X))
-            || (version_info = get_driver_version_info(driver, DRIVER_MODEL_NT6X)))
+            || (version_info = get_driver_version_info(driver, DRIVER_MODEL_GENERIC)))
     {
         driver_info->name = version_info->driver_name;
         driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, version_info->version);
