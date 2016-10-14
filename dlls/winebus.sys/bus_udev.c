@@ -78,6 +78,17 @@ static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *de
     return (struct platform_private *)get_platform_private(device);
 }
 
+static inline WCHAR *strdupAtoW(const char *src)
+{
+    WCHAR *dst;
+    DWORD len;
+    if (!src) return NULL;
+    len = MultiByteToWideChar(CP_UNIXCP, 0, src, -1, NULL, 0);
+    if ((dst = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+        MultiByteToWideChar(CP_UNIXCP, 0, src, -1, dst, len);
+    return dst;
+}
+
 static DWORD get_sysattr_dword(struct udev_device *dev, const char *sysattr, int base)
 {
     const char *attr = udev_device_get_sysattr_value(dev, sysattr);
@@ -92,17 +103,12 @@ static DWORD get_sysattr_dword(struct udev_device *dev, const char *sysattr, int
 static WCHAR *get_sysattr_string(struct udev_device *dev, const char *sysattr)
 {
     const char *attr = udev_device_get_sysattr_value(dev, sysattr);
-    WCHAR *dst;
-    DWORD len;
     if (!attr)
     {
         WARN("Could not get %s from device\n", sysattr);
         return NULL;
     }
-    len = MultiByteToWideChar(CP_UNIXCP, 0, attr, -1, NULL, 0);
-    if ((dst = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
-        MultiByteToWideChar(CP_UNIXCP, 0, attr, -1, dst, len);
-    return dst;
+    return strdupAtoW(attr);
 }
 
 static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
