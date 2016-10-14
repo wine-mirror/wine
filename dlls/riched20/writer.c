@@ -1012,7 +1012,7 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
                             const ME_Cursor *start, int nChars, int dwFormat)
 {
   ME_Cursor cursor = *start;
-  ME_DisplayItem *prev_para = cursor.pPara;
+  ME_DisplayItem *prev_para = NULL;
   ME_Cursor endCur = cursor;
 
   ME_MoveCursorChars(editor, &endCur, nChars, TRUE);
@@ -1036,9 +1036,6 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
   /* FIXME: We have only one document section */
 
   /* TODO: section formatting properties */
-
-  if (!ME_StreamOutRTFParaProps(editor, pStream, cursor.pPara))
-    return FALSE;
 
   do {
     if (cursor.pPara != prev_para)
