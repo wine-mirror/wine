@@ -2883,7 +2883,8 @@ done:
 
 static NTSTATUS WINAPI internal_complete( DEVICE_OBJECT *device, IRP *irp, void *context )
 {
-    SetEvent( irp->UserEvent );
+    HANDLE event = context;
+    SetEvent( event );
     return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
@@ -2891,15 +2892,11 @@ static NTSTATUS WINAPI internal_complete( DEVICE_OBJECT *device, IRP *irp, void 
 static NTSTATUS send_device_irp( DEVICE_OBJECT *device, IRP *irp, ULONG_PTR *info )
 {
     NTSTATUS status;
-    IO_STACK_LOCATION *irpsp;
     HANDLE event = CreateEventA( NULL, FALSE, FALSE, NULL );
     DEVICE_OBJECT *toplevel_device;
 
-    irp->UserEvent = event;
     irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
-    irpsp = IoGetNextIrpStackLocation( irp );
-    irpsp->CompletionRoutine = internal_complete;
-    irpsp->Control = SL_INVOKE_ON_SUCCESS | SL_INVOKE_ON_ERROR | SL_INVOKE_ON_CANCEL;
+    IoSetCompletionRoutine( irp, internal_complete, event, TRUE, TRUE, TRUE );
 
     toplevel_device = IoGetAttachedDeviceReference( device );
     status = IoCallDriver( toplevel_device, irp );
