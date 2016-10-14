@@ -580,7 +580,7 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
         if (!ME_StreamOutPrint(pStream, "\\nestrow}{\\nonesttables\\par}\r\n"))
           return FALSE;
       } else {
-        if (!ME_StreamOutPrint(pStream, "\\row \r\n"))
+        if (!ME_StreamOutPrint(pStream, "\\row\r\n"))
           return FALSE;
       }
       return TRUE;
@@ -1078,7 +1078,7 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
           cursor.pPara->member.para.fmt.wEffects & PFE_TABLE &&
           !(cursor.pPara->member.para.nFlags & (MEPF_ROWSTART|MEPF_ROWEND|MEPF_CELL)))
       {
-        if (!ME_StreamOutPrint(pStream, "\\row \r\n"))
+        if (!ME_StreamOutPrint(pStream, "\\row\r\n"))
           return FALSE;
       } else {
         if (!ME_StreamOutPrint(pStream, "\\par\r\n"))
@@ -1087,7 +1087,7 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
       /* Skip as many characters as required by current line break */
       nChars = max(0, nChars - cursor.pRun->member.run.len);
     } else if (cursor.pRun->member.run.nFlags & MERF_ENDROW) {
-      if (!ME_StreamOutPrint(pStream, "\\line \r\n"))
+      if (!ME_StreamOutPrint(pStream, "\\line\r\n"))
         return FALSE;
       nChars--;
     } else {
