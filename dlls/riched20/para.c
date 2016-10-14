@@ -52,11 +52,12 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   GetObjectW(hf, sizeof(LOGFONTW), &lf);
   ZeroMemory(&cf, sizeof(cf));
   cf.cbSize = sizeof(cf);
-  cf.dwMask = CFM_BACKCOLOR|CFM_COLOR|CFM_FACE|CFM_SIZE|CFM_CHARSET;
+  cf.dwMask = CFM_ANIMATION|CFM_BACKCOLOR|CFM_CHARSET|CFM_COLOR|CFM_FACE|CFM_KERNING|CFM_LCID|CFM_OFFSET;
+  cf.dwMask |= CFM_REVAUTHOR|CFM_SIZE|CFM_SPACING|CFM_STYLE|CFM_UNDERLINETYPE|CFM_WEIGHT;
   cf.dwMask |= CFM_ALLCAPS|CFM_BOLD|CFM_DISABLED|CFM_EMBOSS|CFM_HIDDEN;
   cf.dwMask |= CFM_IMPRINT|CFM_ITALIC|CFM_LINK|CFM_OUTLINE|CFM_PROTECTED;
   cf.dwMask |= CFM_REVISED|CFM_SHADOW|CFM_SMALLCAPS|CFM_STRIKEOUT;
-  cf.dwMask |= CFM_SUBSCRIPT|CFM_UNDERLINETYPE|CFM_WEIGHT;
+  cf.dwMask |= CFM_SUBSCRIPT|CFM_UNDERLINE;
   
   cf.dwEffects = CFE_AUTOCOLOR | CFE_AUTOBACKCOLOR;
   lstrcpyW(cf.szFaceName, lf.lfFaceName);
@@ -69,6 +70,7 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   if (lf.lfStrikeOut) cf.dwEffects |= CFE_STRIKEOUT;
   cf.bPitchAndFamily = lf.lfPitchAndFamily;
   cf.bCharSet = lf.lfCharSet;
+  cf.lcid = GetSystemDefaultLCID();
 
   style = ME_MakeStyle(&cf);
   text->pDefaultStyle = style;

@@ -764,10 +764,27 @@ static void test_EM_SETCHARFORMAT(void)
   CHARRANGE cr;
   LOCALESIGNATURE sig;
   BOOL rtl;
+  DWORD expect_effects;
 
   rtl = (GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_FONTSIGNATURE,
                         (LPSTR) &sig, sizeof(LOCALESIGNATURE)) &&
          (sig.lsUsb[3] & 0x08000000) != 0);
+
+  /* check charformat defaults */
+  memset(&cf2, 0, sizeof(CHARFORMAT2A));
+  cf2.cbSize = sizeof(CHARFORMAT2A);
+  SendMessageA(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
+  ok(cf2.dwMask == CFM_ALL2, "got %08x\n", cf2.dwMask);
+  expect_effects = CFE_AUTOCOLOR | CFE_AUTOBACKCOLOR;
+  if (cf2.wWeight > 550) expect_effects |= CFE_BOLD;
+  ok(cf2.dwEffects == expect_effects, "got %08x\n", cf2.dwEffects);
+  ok(cf2.yOffset == 0, "got %d\n", cf2.yOffset);
+  ok(cf2.sSpacing == 0, "got %d\n", cf2.sSpacing);
+  ok(cf2.lcid == GetSystemDefaultLCID(), "got %x\n", cf2.lcid);
+  ok(cf2.sStyle == 0, "got %d\n", cf2.sStyle);
+  ok(cf2.wKerning == 0, "got %d\n", cf2.wKerning);
+  ok(cf2.bAnimation == 0, "got %d\n", cf2.bAnimation);
+  ok(cf2.bRevAuthor == 0, "got %d\n", cf2.bRevAuthor);
 
   /* Invalid flags, CHARFORMAT2 structure blanked out */
   memset(&cf2, 0, sizeof(cf2));
