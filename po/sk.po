@@ -14177,6 +14177,12 @@ msgstr "Súbor nenájdený.\n"
 msgid "Error: Invalid query\n"
 msgstr ""
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "Invalid name.\n"
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "Nesprávny názov.\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nový...\tCtrl+N"

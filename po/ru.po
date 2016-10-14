@@ -14505,6 +14505,12 @@ msgstr "Ошибка: псевдоним не найден\n"
 msgid "Error: Invalid query\n"
 msgstr "Ошибка: некорректный запрос\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "reg: Invalid syntax. "
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "reg: неверный синтаксис. "
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "Созд&ать...\tCtrl+N"

@@ -14773,6 +14773,12 @@ msgstr "Fout: Alias niet gevonden\n"
 msgid "Error: Invalid query\n"
 msgstr "Fout: Foutieve zoekopdracht\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "Fout: Foutieve sleutelnaam\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nieuw...\tCtrl+N"

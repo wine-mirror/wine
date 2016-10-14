@@ -14810,6 +14810,12 @@ msgstr "Insieme di proprietà non trovato.\n"
 msgid "Error: Invalid query\n"
 msgstr "Errore: nome della chiave non valido\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "Errore: nome della chiave non valido\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nuovo...\tCtrl+N"

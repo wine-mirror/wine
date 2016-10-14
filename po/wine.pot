@@ -13747,6 +13747,10 @@ msgstr ""
 msgid "Error: Invalid query\n"
 msgstr ""
 
+#: wmic.rc:31
+msgid "Error: Invalid syntax for PATH\n"
+msgstr ""
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr ""

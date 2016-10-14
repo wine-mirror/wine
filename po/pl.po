@@ -14613,6 +14613,12 @@ msgstr "Błąd: Nie znaleziono aliasu\n"
 msgid "Error: Invalid query\n"
 msgstr "Błąd: Nieprawidłowe zapytanie\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "Błąd: Niewłaściwa nazwa klucza\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nowy...\tCtrl+N"

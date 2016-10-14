@@ -14571,6 +14571,12 @@ msgstr "Erro: apelido não encontrado\n"
 msgid "Error: Invalid query\n"
 msgstr "Erro: Consulta inválida\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "reg: Invalid syntax. "
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "reg: Sintaxe inválida. "
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Novo...\tCtrl+N"

@@ -14512,6 +14512,12 @@ msgstr "Klaida: Alternatyvusis vardas nerastas\n"
 msgid "Error: Invalid query\n"
 msgstr "Klaida: Netinkama užklausa\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "reg: Invalid syntax. "
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "reg: Netinkama sintaksė. "
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Naujas...\tVald+N"

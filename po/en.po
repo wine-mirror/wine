@@ -14502,6 +14502,10 @@ msgstr "Error: Alias not found\n"
 msgid "Error: Invalid query\n"
 msgstr "Error: Invalid query\n"
 
+#: wmic.rc:31
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "Error: Invalid syntax for PATH\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&New...\tCtrl+N"

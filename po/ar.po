@@ -14736,6 +14736,12 @@ msgstr "خطأ : الاسم المستعار غير موجود\n"
 msgid "Error: Invalid query\n"
 msgstr "خطأ : استعلام غير سلبم\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "خطأ : اسم المفتاح غير سليم\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&جديد...\tCtrl+N"

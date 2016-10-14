@@ -14749,6 +14749,12 @@ msgstr "오류: Alias를 찾을 수 없음\n"
 msgid "Error: Invalid query\n"
 msgstr "오류: 올바르지 않은 질의\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "오류: 올바르지 않은 키 이름\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "새 파일(&N)...\tCtrl+N"

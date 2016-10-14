@@ -14505,6 +14505,12 @@ msgstr "Feil: Klarte ikke finne aliaset\n"
 msgid "Error: Invalid query\n"
 msgstr "Feil: Ugyldig spørring\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "reg: Invalid syntax. "
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "reg: Ugyldig syntaks. "
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Ny...\tCtrl+N"

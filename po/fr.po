@@ -14680,6 +14680,12 @@ msgstr "Erreur : alias non trouvé\n"
 msgid "Error: Invalid query\n"
 msgstr "Erreur : requête invalide\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "reg: Invalid key name\n"
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "reg : nom de clé invalide\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nouveau...\tCtrl+N"

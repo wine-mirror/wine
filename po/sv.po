@@ -14358,6 +14358,12 @@ msgstr "Fel: Aliaset hittades inte\n"
 msgid "Error: Invalid query\n"
 msgstr "Fel: Ogiltig fråga\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "reg: Invalid key name\n"
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "reg: Ogiltigt nyckelnamn\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nytt...\tCtrl+N"

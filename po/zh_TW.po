@@ -14620,6 +14620,12 @@ msgstr "錯誤：找不到別名\n"
 msgid "Error: Invalid query\n"
 msgstr "錯誤：無效的查詢\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "錯誤：無效的索引鍵名稱\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "新增(&N)...\tCtrl+N"

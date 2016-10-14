@@ -14436,6 +14436,12 @@ msgstr "Chyba: alternativní název nenalezen.\n"
 msgid "Error: Invalid query\n"
 msgstr "Chyba: chybný dotaz\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "Chyba: Neplatný název klíče\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nový...\tCtrl+N"

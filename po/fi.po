@@ -14470,6 +14470,12 @@ msgstr "Virhe: Aliasta ei löydy\n"
 msgid "Error: Invalid query\n"
 msgstr "Virhe: Virheellinen kysely\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "reg: Invalid syntax. "
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "reg: Syntaksi ei kelpaa. "
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Uusi...\tCtrl+N"

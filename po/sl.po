@@ -14743,6 +14743,12 @@ msgstr "Nastavljene lastnosti ni mogoče najti.\n"
 msgid "Error: Invalid query\n"
 msgstr "Napaka: neveljavno ime ključa\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "Napaka: neveljavno ime ključa\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nova ...\tCtrl+N"

@@ -14490,6 +14490,12 @@ msgstr "別名が見つかりません。\n"
 msgid "Error: Invalid query\n"
 msgstr "エラー: クエリが無効です\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "reg: Invalid syntax. "
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "reg: 無効な構文です。"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "新規作成(&N)...\tCtrl+N"

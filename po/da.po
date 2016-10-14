@@ -14717,6 +14717,12 @@ msgstr "Egenskabs sæt ikke fundet.\n"
 msgid "Error: Invalid query\n"
 msgstr "Fejl: Ugyldigt nøgle navn\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "Fejl: Ugyldigt nøgle navn\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Ny...\tCtrl+N"

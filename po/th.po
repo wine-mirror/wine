@@ -14115,6 +14115,10 @@ msgstr "ไม่พบแฟ้ม.\n"
 msgid "Error: Invalid query\n"
 msgstr ""
 
+#: wmic.rc:31
+msgid "Error: Invalid syntax for PATH\n"
+msgstr ""
+
 #: wordpad.rc:31
 #, fuzzy
 msgid "&New...\tCtrl+N"

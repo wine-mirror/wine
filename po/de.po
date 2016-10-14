@@ -14575,6 +14575,12 @@ msgstr "Fehler: Alias nicht gefunden\n"
 msgid "Error: Invalid query\n"
 msgstr "Fehler: Ungültige Anfrage\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "reg: Invalid syntax. "
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "reg: Ungültige Syntax. "
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Neu...\tStrg+N"

@@ -14040,6 +14040,12 @@ msgstr "错误：找不到该别名\n"
 msgid "Error: Invalid query\n"
 msgstr "错误：无效查询\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "错误：键名无效\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "新建(&N)…\tCtrl+N"

@@ -13973,6 +13973,12 @@ msgstr "Ecaro ne estis trovita.\n"
 msgid "Error: Invalid query\n"
 msgstr "Nevalida menda sintakso.\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "Invalid share name.\n"
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "Nevalida nomo de kunuzata aparato.\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nova...\tStir+N"

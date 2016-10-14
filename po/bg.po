@@ -14361,6 +14361,11 @@ msgstr "Файлът не е намерен.\n"
 msgid "Error: Invalid query\n"
 msgstr "Невалидни знаци в пътя.\n"
 
+#: wmic.rc:31
+#, fuzzy
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "Невалидни знаци в пътя.\n"
+
 #: wordpad.rc:31
 #, fuzzy
 msgid "&New...\tCtrl+N"

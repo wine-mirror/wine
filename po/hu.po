@@ -14715,6 +14715,12 @@ msgstr "Beállítás nem található.\n"
 msgid "Error: Invalid query\n"
 msgstr "Hiba: Érvénytelen kulcsnév\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "Hiba: Érvénytelen kulcsnév\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Új...\tCtrl+N"

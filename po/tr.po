@@ -14572,6 +14572,12 @@ msgstr "Hata: Takma ad bulunamadı\n"
 msgid "Error: Invalid query\n"
 msgstr "Hata: Geçersiz sorgu\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "Hata: Geçersiz anahtar adı\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Yeni...\tCtrl+N"

@@ -14853,6 +14853,11 @@ msgstr "Datoteka nije pronađena.\n"
 msgid "Error: Invalid query\n"
 msgstr "Neispravna sintaksa.\n"
 
+#: wmic.rc:31
+#, fuzzy
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "Neispravna sintaksa.\n"
+
 #: wordpad.rc:31
 #, fuzzy
 msgid "&New...\tCtrl+N"

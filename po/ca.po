@@ -14676,6 +14676,12 @@ msgstr "Error: Àlies no trobat\n"
 msgid "Error: Invalid query\n"
 msgstr "Error: Cerca invàlida\n"
 
+#: wmic.rc:31
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "Error: Nom de clau invàlid\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nou...\tCtrl+N"

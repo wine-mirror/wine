@@ -14066,6 +14066,11 @@ msgstr "Το αρχείο δε βρέθηκε.\n"
 msgid "Error: Invalid query\n"
 msgstr "Μη έγγυρος(οι) χαρακτήρας(ες) στο μονοπάτι.\n"
 
+#: wmic.rc:31
+#, fuzzy
+msgid "Error: Invalid syntax for PATH\n"
+msgstr "Μη έγγυρος(οι) χαρακτήρας(ες) στο μονοπάτι.\n"
+
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr ""
