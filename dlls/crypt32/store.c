@@ -1390,6 +1390,51 @@ BOOL WINAPI CertRegisterPhysicalStore(const void *pvSystemStore, DWORD dwFlags,
     return FALSE;
 }
 
+BOOL WINAPI CertRegisterSystemStore(const void *pvSystemStore, DWORD dwFlags,
+  PCERT_SYSTEM_STORE_INFO pStoreInfo, void *pvReserved)
+{
+    HCERTSTORE hstore;
+
+    if (dwFlags & CERT_SYSTEM_STORE_RELOCATE_FLAG )
+    {
+        FIXME("(%p, %08x, %p, %p): flag not supported\n", pvSystemStore, dwFlags, pStoreInfo, pvReserved);
+        return FALSE;
+    }
+
+    TRACE("(%s, %08x, %p, %p)\n", debugstr_w(pvSystemStore), dwFlags, pStoreInfo, pvReserved);
+
+    hstore = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_W, 0, 0, dwFlags, pvSystemStore);
+    if (hstore)
+    {
+        CertCloseStore(hstore, 0);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+BOOL WINAPI CertUnregisterSystemStore(void *pvSystemStore, DWORD dwFlags)
+{
+    HCERTSTORE hstore;
+
+    if (dwFlags & CERT_SYSTEM_STORE_RELOCATE_FLAG)
+    {
+        FIXME("(%p, %08x): flag not supported\n", pvSystemStore, dwFlags);
+        return FALSE;
+    }
+    TRACE("(%s, %08x)\n", debugstr_w(pvSystemStore), dwFlags);
+
+    hstore = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_W, 0, 0, dwFlags | CERT_STORE_OPEN_EXISTING_FLAG, pvSystemStore);
+    if (hstore == NULL)
+        return FALSE;
+
+    hstore = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_W, 0, 0, dwFlags | CERT_STORE_DELETE_FLAG, pvSystemStore);
+    if (hstore == NULL && GetLastError() == 0)
+        return TRUE;
+
+    return FALSE;
+}
+
 static void EmptyStore_addref(WINECRYPT_CERTSTORE *store)
 {
     TRACE("(%p)\n", store);
