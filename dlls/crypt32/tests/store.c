@@ -123,6 +123,8 @@ static BOOL (WINAPI *pCertGetStoreProperty)(HCERTSTORE,DWORD,void*,DWORD*);
 static void (WINAPI *pCertRemoveStoreFromCollection)(HCERTSTORE,HCERTSTORE);
 static BOOL (WINAPI *pCertSetStoreProperty)(HCERTSTORE,DWORD,DWORD,const void*);
 static BOOL (WINAPI *pCertAddCertificateLinkToStore)(HCERTSTORE,PCCERT_CONTEXT,DWORD,PCCERT_CONTEXT*);
+static BOOL (WINAPI *pCertRegisterSystemStore)(const void*,DWORD,void*,void*);
+static BOOL (WINAPI *pCertUnregisterSystemStore)(const void*,DWORD);
 
 #define test_store_is_empty(store) _test_store_is_empty(__LINE__,store)
 static void _test_store_is_empty(unsigned line, HCERTSTORE store)
@@ -1868,6 +1870,88 @@ static void testCertOpenSystemStore(void)
     RegDeleteKeyW(HKEY_CURRENT_USER, BogusPathW);
 }
 
+static const struct
+{
+    DWORD cert_store;
+    BOOL expected;
+    BOOL todo;
+} reg_system_store_test_data[] = {
+    { CERT_SYSTEM_STORE_CURRENT_USER,  TRUE, 0},
+    /* Following tests could require administrator privileges and thus could be skipped */
+    { CERT_SYSTEM_STORE_CURRENT_SERVICE, TRUE, 1},
+    { CERT_SYSTEM_STORE_LOCAL_MACHINE, TRUE, 0},
+    { CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY, TRUE, 0},
+    { CERT_SYSTEM_STORE_CURRENT_USER_GROUP_POLICY, TRUE, 0},
+    { CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE, TRUE, 1}
+};
+
+static void testCertRegisterSystemStore(void)
+{
+    BOOL ret, cur_flag;
+    DWORD err = 0;
+    HCERTSTORE hstore;
+    static const WCHAR WineTestW[] = {'W','i','n','e','T','e','s','t',0};
+    const CERT_CONTEXT *cert, *cert2;
+    unsigned int i;
+
+    if (!pCertRegisterSystemStore || !pCertUnregisterSystemStore)
+    {
+        win_skip("CertRegisterSystemStore() or CertUnregisterSystemStore() is not available\n");
+        return;
+    }
+
+    for (i = 0; i < sizeof(reg_system_store_test_data) / sizeof(reg_system_store_test_data[0]); i++) {
+        cur_flag = reg_system_store_test_data[i].cert_store;
+        ret = pCertRegisterSystemStore(WineTestW, cur_flag, NULL, NULL);
+        if (!ret)
+        {
+            err = GetLastError();
+            if (err == ERROR_ACCESS_DENIED)
+            {
+                win_skip("Insufficient privileges for the flag %08x test\n", cur_flag);
+                continue;
+            }
+        }
+        todo_wine_if (reg_system_store_test_data[i].todo)
+            ok (ret == reg_system_store_test_data[i].expected,
+                "Store registration (dwFlags=%08x) failed, last error %x\n", cur_flag, err);
+        if (!ret)
+        {
+            skip("Nothing to test without registered store at %08x\n", cur_flag);
+            continue;
+        }
+
+        hstore = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, CERT_STORE_OPEN_EXISTING_FLAG | cur_flag, WineTestW);
+        ok (hstore != NULL, "Opening just registered store at %08x failed, last error %x\n", cur_flag, GetLastError());
+
+        cert = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert, sizeof(bigCert));
+        ok (cert != NULL, "Failed creating cert at %08x, last error: %x\n", cur_flag, GetLastError());
+        if (cert)
+        {
+            ret = CertAddCertificateContextToStore(hstore, cert, CERT_STORE_ADD_NEW, NULL);
+            ok (ret, "Failed to add cert at %08x, last error: %x\n", cur_flag, GetLastError());
+
+            cert2 = CertEnumCertificatesInStore(hstore, NULL);
+            ok (cert2 != NULL && cert2->cbCertEncoded == cert->cbCertEncoded,
+                "Unexpected cert encoded size at %08x, last error: %x\n", cur_flag, GetLastError());
+
+            ret = CertDeleteCertificateFromStore(cert2);
+            ok (ret, "Failed to delete certificate from the new store at %08x, last error: %x\n", cur_flag, GetLastError());
+
+            CertFreeCertificateContext(cert);
+        }
+
+        ret = CertCloseStore(hstore, 0);
+        ok (ret, "CertCloseStore failed at %08x, last error %x", cur_flag, GetLastError());
+
+        ret = pCertUnregisterSystemStore(WineTestW, cur_flag );
+        todo_wine_if (reg_system_store_test_data[i].todo)
+            ok( ret == reg_system_store_test_data[i].expected,
+                "Unregistering failed at %08x, last error %d\n", cur_flag, GetLastError());
+     }
+
+}
+
 struct EnumSystemStoreInfo
 {
     BOOL  goOn;
@@ -2587,8 +2671,6 @@ static void testEmptyStore(void)
     ok(res, "CertDeleteCertificateContextFromStore failed\n");
     ok(cert3->hCertStore == cert->hCertStore, "Unexpected hCertStore\n");
 
-    CertFreeCertificateContext(cert3);
-
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
     ok(store != NULL, "CertOpenStore failed\n");
 
@@ -2600,8 +2682,6 @@ static void testEmptyStore(void)
     res = CertDeleteCertificateFromStore(cert3);
     ok(res, "CertDeleteCertificateContextFromStore failed\n");
     ok(cert3->hCertStore == store, "Unexpected hCertStore\n");
-
-    CertFreeCertificateContext(cert3);
 
     CertCloseStore(store, 0);
 
@@ -2808,6 +2888,8 @@ START_TEST(store)
     pCertRemoveStoreFromCollection = (void*)GetProcAddress(hdll, "CertRemoveStoreFromCollection");
     pCertSetStoreProperty = (void*)GetProcAddress(hdll, "CertSetStoreProperty");
     pCertAddCertificateLinkToStore = (void*)GetProcAddress(hdll, "CertAddCertificateLinkToStore");
+    pCertRegisterSystemStore = (void*)GetProcAddress(hdll, "CertRegisterSystemStore");
+    pCertUnregisterSystemStore = (void*)GetProcAddress(hdll, "CertUnregisterSystemStore");
 
     /* various combinations of CertOpenStore */
     testMemStore();
@@ -2820,6 +2902,8 @@ START_TEST(store)
     testMessageStore();
     testSerializedStore();
     testCloseStore();
+
+    testCertRegisterSystemStore();
 
     testCertOpenSystemStore();
     testCertEnumSystemStore();
