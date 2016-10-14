@@ -874,6 +874,7 @@ enable_actxprxy
 enable_advapi32
 enable_advpack
 enable_amstream
+enable_api_ms_win_appmodel_runtime_l1_1_1
 enable_api_ms_win_core_apiquery_l1_1_0
 enable_api_ms_win_core_appcompat_l1_1_1
 enable_api_ms_win_core_appinit_l1_1_0
@@ -17562,6 +17563,7 @@ wine_fn_config_dll advpack enable_advpack implib
 wine_fn_config_test dlls/advpack/tests advpack_test
 wine_fn_config_dll amstream enable_amstream clean
 wine_fn_config_test dlls/amstream/tests amstream_test
+wine_fn_config_dll api-ms-win-appmodel-runtime-l1-1-1 enable_api_ms_win_appmodel_runtime_l1_1_1
 wine_fn_config_dll api-ms-win-core-apiquery-l1-1-0 enable_api_ms_win_core_apiquery_l1_1_0
 wine_fn_config_dll api-ms-win-core-appcompat-l1-1-1 enable_api_ms_win_core_appcompat_l1_1_1
 wine_fn_config_dll api-ms-win-core-appinit-l1-1-0 enable_api_ms_win_core_appinit_l1_1_0
@@ -18462,7 +18464,7 @@ wine_fn_config_program lodctr enable_lodctr install
 wine_fn_config_program mofcomp enable_mofcomp install
 wine_fn_config_program mshta enable_mshta install
 wine_fn_config_program msiexec enable_msiexec install,installbin,manpage
-wine_fn_config_program msinfo32 enable_msinfo32 install
+wine_fn_config_program msinfo32 enable_msinfo32 clean,install
 wine_fn_config_program net enable_net clean,install
 wine_fn_config_program netsh enable_netsh install
 wine_fn_config_program netstat enable_netstat clean,install
