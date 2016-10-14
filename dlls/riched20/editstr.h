@@ -373,27 +373,6 @@ struct tagME_InStream {
 };
 typedef struct tagME_InStream ME_InStream;
 
-
-#define STREAMOUT_BUFFER_SIZE 4096
-#define STREAMOUT_FONTTBL_SIZE 8192
-#define STREAMOUT_COLORTBL_SIZE 1024
-
-typedef struct tagME_OutStream {
-  EDITSTREAM *stream;
-  char buffer[STREAMOUT_BUFFER_SIZE];
-  UINT pos, written;
-  UINT nCodePage;
-  UINT nFontTblLen;
-  ME_FontTableItem fonttbl[STREAMOUT_FONTTBL_SIZE];
-  UINT nColorTblLen;
-  COLORREF colortbl[STREAMOUT_COLORTBL_SIZE];
-  UINT nDefaultFont;
-  UINT nDefaultCodePage;
-  /* nNestingLevel = 0 means we aren't in a cell, 1 means we are in a cell,
-   * an greater numbers mean we are in a cell nested within a cell. */
-  UINT nNestingLevel;
-} ME_OutStream;
-
 typedef struct tagME_TextEditor
 {
   HWND hWnd, hwndParent;

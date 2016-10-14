@@ -28,6 +28,27 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
+#define STREAMOUT_BUFFER_SIZE 4096
+#define STREAMOUT_FONTTBL_SIZE 8192
+#define STREAMOUT_COLORTBL_SIZE 1024
+
+typedef struct tagME_OutStream
+{
+    EDITSTREAM *stream;
+    char buffer[STREAMOUT_BUFFER_SIZE];
+    UINT pos, written;
+    UINT nCodePage;
+    UINT nFontTblLen;
+    ME_FontTableItem fonttbl[STREAMOUT_FONTTBL_SIZE];
+    UINT nColorTblLen;
+    COLORREF colortbl[STREAMOUT_COLORTBL_SIZE];
+    UINT nDefaultFont;
+    UINT nDefaultCodePage;
+    /* nNestingLevel = 0 means we aren't in a cell, 1 means we are in a cell,
+     * an greater numbers mean we are in a cell nested within a cell. */
+    UINT nNestingLevel;
+    CHARFORMAT2W cur_fmt; /* current character format */
+} ME_OutStream;
 
 static BOOL
 ME_StreamOutRTFText(ME_OutStream *pStream, const WCHAR *text, LONG nChars);
@@ -44,6 +65,9 @@ ME_StreamOutInit(ME_TextEditor *editor, EDITSTREAM *stream)
   pStream->nFontTblLen = 0;
   pStream->nColorTblLen = 1;
   pStream->nNestingLevel = 0;
+  memset(&pStream->cur_fmt, 0, sizeof(pStream->cur_fmt));
+  pStream->cur_fmt.dwEffects = CFE_AUTOCOLOR | CFE_AUTOBACKCOLOR;
+  pStream->cur_fmt.bUnderlineType = CFU_UNDERLINE;
   return pStream;
 }
 
@@ -710,6 +734,8 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
     sprintf(props + strlen(props), "\\cfpat%d\\cbpat%d",
             (fmt->wShadingStyle >> 4) & 0xF, (fmt->wShadingStyle >> 8) & 0xF);
   }
+  if (*props)
+    strcat(props, " ");
   
   if (*props && !ME_StreamOutPrint(pStream, props))
     return FALSE;
@@ -723,73 +749,87 @@ ME_StreamOutRTFCharProps(ME_OutStream *pStream, CHARFORMAT2W *fmt)
 {
   char props[STREAMOUT_BUFFER_SIZE] = "";
   unsigned int i;
+  CHARFORMAT2W *old_fmt = &pStream->cur_fmt;
+  static const struct
+  {
+      DWORD effect;
+      const char *on, *off;
+  } effects[] =
+  {
+      { CFE_ALLCAPS,     "\\caps",     "\\caps0"     },
+      { CFE_BOLD,        "\\b",        "\\b0"        },
+      { CFE_DISABLED,    "\\disabled", "\\disabled0" },
+      { CFE_EMBOSS,      "\\embo",     "\\embo0"     },
+      { CFE_HIDDEN,      "\\v",        "\\v0"        },
+      { CFE_IMPRINT,     "\\impr",     "\\impr0"     },
+      { CFE_ITALIC,      "\\i",        "\\i0"        },
+      { CFE_OUTLINE,     "\\outl",     "\\outl0"     },
+      { CFE_PROTECTED,   "\\protect",  "\\protect0"  },
+      { CFE_SHADOW,      "\\shad",     "\\shad0"     },
+      { CFE_SMALLCAPS,   "\\scaps",    "\\scaps0"    },
+      { CFE_STRIKEOUT,   "\\strike",   "\\strike0"   },
+  };
 
-  if (fmt->dwMask & CFM_ALLCAPS && fmt->dwEffects & CFE_ALLCAPS)
-    strcat(props, "\\caps");
-  if (fmt->dwMask & CFM_ANIMATION)
-    sprintf(props + strlen(props), "\\animtext%u", fmt->bAnimation);
-  if ((fmt->dwMask & CFM_BACKCOLOR) && !(fmt->dwEffects & CFE_AUTOBACKCOLOR))
-    if (find_color_in_colortbl( pStream, fmt->crBackColor, &i ))
+  for (i = 0; i < sizeof(effects) / sizeof(effects[0]); i++)
+  {
+      if ((old_fmt->dwEffects ^ fmt->dwEffects) & effects[i].effect)
+          strcat( props, fmt->dwEffects & effects[i].effect ? effects[i].on : effects[i].off );
+  }
+
+  if ((old_fmt->dwEffects ^ fmt->dwEffects) & CFE_AUTOBACKCOLOR ||
+      old_fmt->crBackColor != fmt->crBackColor)
+  {
+      if (fmt->dwEffects & CFE_AUTOBACKCOLOR) i = 0;
+      else find_color_in_colortbl( pStream, fmt->crBackColor, &i );
       sprintf(props + strlen(props), "\\cb%u", i);
-  if (fmt->dwMask & CFM_BOLD && fmt->dwEffects & CFE_BOLD)
-    strcat(props, "\\b");
-  if ((fmt->dwMask & CFM_COLOR) && !(fmt->dwEffects & CFE_AUTOCOLOR))
-    if (find_color_in_colortbl( pStream, fmt->crTextColor, &i ))
+  }
+  if ((old_fmt->dwEffects ^ fmt->dwEffects) & CFE_AUTOCOLOR ||
+      old_fmt->crTextColor != fmt->crTextColor)
+  {
+      if (fmt->dwEffects & CFE_AUTOCOLOR) i = 0;
+      else find_color_in_colortbl( pStream, fmt->crTextColor, &i );
       sprintf(props + strlen(props), "\\cf%u", i);
+  }
 
-  /* TODO: CFM_DISABLED */
-  if (fmt->dwMask & CFM_EMBOSS && fmt->dwEffects & CFE_EMBOSS)
-    strcat(props, "\\embo");
-  if (fmt->dwMask & CFM_HIDDEN && fmt->dwEffects & CFE_HIDDEN)
-    strcat(props, "\\v");
-  if (fmt->dwMask & CFM_IMPRINT && fmt->dwEffects & CFE_IMPRINT)
-    strcat(props, "\\impr");
-  if (fmt->dwMask & CFM_ITALIC && fmt->dwEffects & CFE_ITALIC)
-    strcat(props, "\\i");
-  if (fmt->dwMask & CFM_KERNING)
+  if (old_fmt->bAnimation != fmt->bAnimation)
+    sprintf(props + strlen(props), "\\animtext%u", fmt->bAnimation);
+  if (old_fmt->wKerning != fmt->wKerning)
     sprintf(props + strlen(props), "\\kerning%u", fmt->wKerning);
-  if (fmt->dwMask & CFM_LCID) {
+
+  if (old_fmt->lcid != fmt->lcid)
+  {
     /* TODO: handle SFF_PLAINRTF */
     if (LOWORD(fmt->lcid) == 1024)
       strcat(props, "\\noproof\\lang1024\\langnp1024\\langfe1024\\langfenp1024");
     else
       sprintf(props + strlen(props), "\\lang%u", LOWORD(fmt->lcid));
   }
-  /* CFM_LINK is not streamed out by M$ */
-  if (fmt->dwMask & CFM_OFFSET) {
+
+  if (old_fmt->yOffset != fmt->yOffset)
+  {
     if (fmt->yOffset >= 0)
       sprintf(props + strlen(props), "\\up%d", fmt->yOffset);
     else
       sprintf(props + strlen(props), "\\dn%d", -fmt->yOffset);
   }
-  if (fmt->dwMask & CFM_OUTLINE && fmt->dwEffects & CFE_OUTLINE)
-    strcat(props, "\\outl");
-  if (fmt->dwMask & CFM_PROTECTED && fmt->dwEffects & CFE_PROTECTED)
-    strcat(props, "\\protect");
-  /* TODO: CFM_REVISED CFM_REVAUTHOR - probably using rsidtbl? */
-  if (fmt->dwMask & CFM_SHADOW && fmt->dwEffects & CFE_SHADOW)
-    strcat(props, "\\shad");
-  if (fmt->dwMask & CFM_SIZE)
+  if (old_fmt->yHeight != fmt->yHeight)
     sprintf(props + strlen(props), "\\fs%d", fmt->yHeight / 10);
-  if (fmt->dwMask & CFM_SMALLCAPS && fmt->dwEffects & CFE_SMALLCAPS)
-    strcat(props, "\\scaps");
-  if (fmt->dwMask & CFM_SPACING)
+  if (old_fmt->sSpacing != fmt->sSpacing)
     sprintf(props + strlen(props), "\\expnd%u\\expndtw%u", fmt->sSpacing / 5, fmt->sSpacing);
-  if (fmt->dwMask & CFM_STRIKEOUT && fmt->dwEffects & CFE_STRIKEOUT)
-    strcat(props, "\\strike");
-  if (fmt->dwMask & CFM_STYLE) {
-    sprintf(props + strlen(props), "\\cs%u", fmt->sStyle);
-    /* TODO: emit style contents here */
-  }
-  if (fmt->dwMask & (CFM_SUBSCRIPT | CFM_SUPERSCRIPT)) {
+  if ((old_fmt->dwEffects ^ fmt->dwEffects) & (CFM_SUBSCRIPT | CFM_SUPERSCRIPT))
+  {
     if (fmt->dwEffects & CFE_SUBSCRIPT)
       strcat(props, "\\sub");
     else if (fmt->dwEffects & CFE_SUPERSCRIPT)
       strcat(props, "\\super");
+    else
+      strcat(props, "\\nosupersub");
   }
-  if (fmt->dwEffects & CFE_UNDERLINE)
+  if ((old_fmt->dwEffects ^ fmt->dwEffects) & CFE_UNDERLINE ||
+      old_fmt->bUnderlineType != fmt->bUnderlineType)
   {
-      switch (fmt->bUnderlineType)
+      BYTE type = (fmt->dwEffects & CFE_UNDERLINE) ? fmt->bUnderlineType : CFU_UNDERLINENONE;
+      switch (type)
       {
       case CFU_UNDERLINE:
           strcat(props, "\\ul");
@@ -810,14 +850,13 @@ ME_StreamOutRTFCharProps(ME_OutStream *pStream, CHARFORMAT2W *fmt)
           break;
       }
   }
-  /* FIXME: How to emit CFM_WEIGHT? */
   
-  if (fmt->dwMask & CFM_FACE || fmt->dwMask & CFM_CHARSET)
+  if (strcmpW(old_fmt->szFaceName, fmt->szFaceName) ||
+      old_fmt->bCharSet != fmt->bCharSet)
   {
     if (find_font_in_fonttbl( pStream, fmt, &i ))
     {
-      if (i != pStream->nDefaultFont)
-        sprintf(props + strlen(props), "\\f%u", i);
+      sprintf(props + strlen(props), "\\f%u", i);
 
       /* In UTF-8 mode, charsets/codepages are not used */
       if (pStream->nDefaultCodePage != CP_UTF8)
@@ -833,6 +872,7 @@ ME_StreamOutRTFCharProps(ME_OutStream *pStream, CHARFORMAT2W *fmt)
     strcat(props, " ");
   if (!ME_StreamOutPrint(pStream, props))
     return FALSE;
+  *old_fmt = *fmt;
   return TRUE;
 }
 
@@ -1045,7 +1085,7 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
         if (!ME_StreamOutPrint(pStream, "\\row \r\n"))
           return FALSE;
       } else {
-        if (!ME_StreamOutPrint(pStream, "\r\n\\par"))
+        if (!ME_StreamOutPrint(pStream, "\\par\r\n"))
           return FALSE;
       }
       /* Skip as many characters as required by current line break */
@@ -1057,8 +1097,6 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
     } else {
       int nEnd;
 
-      if (!ME_StreamOutPrint(pStream, "{"))
-        return FALSE;
       TRACE("style %p\n", cursor.pRun->member.run.style);
       if (!ME_StreamOutRTFCharProps(pStream, &cursor.pRun->member.run.style->fmt))
         return FALSE;
@@ -1068,8 +1106,6 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
                                nEnd - cursor.nOffset))
         return FALSE;
       cursor.nOffset = 0;
-      if (!ME_StreamOutPrint(pStream, "}"))
-        return FALSE;
     }
   } while (cursor.pRun != endCur.pRun && ME_NextRun(&cursor.pPara, &cursor.pRun, TRUE));
 
