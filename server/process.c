@@ -1469,7 +1469,7 @@ DECL_HANDLER(get_dll_info)
 {
     struct process *process;
 
-    if ((process = get_process_from_handle( req->handle, PROCESS_QUERY_INFORMATION )))
+    if ((process = get_process_from_handle( req->handle, PROCESS_QUERY_LIMITED_INFORMATION )))
     {
         struct process_dll *dll;
 

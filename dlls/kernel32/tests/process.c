@@ -1953,7 +1953,7 @@ static void test_QueryFullProcessImageNameW(void)
     expect_eq_d(lstrlenW(buf), size);
     expect_eq_ws_i(buf, module_name);
 
-    hSelf = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, GetCurrentProcessId());
+    hSelf = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, GetCurrentProcessId());
     /* Real handle */
     size = sizeof(buf) / sizeof(buf[0]);
     expect_eq_d(TRUE, pQueryFullProcessImageNameW(hSelf, 0, buf, &size));
@@ -3061,11 +3061,7 @@ static void test_process_info(void)
         case ProcessWow64Information:
         case ProcessDefaultHardErrorMode:
         case ProcessHandleCount:
-            ok(status == STATUS_SUCCESS, "for info %u expected STATUS_SUCCESS, got %08x (ret_len %u)\n", i, status, ret_len);
-            break;
-
         case ProcessImageFileName:
-todo_wine
             ok(status == STATUS_SUCCESS, "for info %u expected STATUS_SUCCESS, got %08x (ret_len %u)\n", i, status, ret_len);
             break;
 
