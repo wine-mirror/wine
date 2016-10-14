@@ -421,6 +421,17 @@ NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             irp->IoStatus.Information = length;
             break;
         }
+        case IOCTL_HID_GET_STRING:
+        {
+            DWORD length = irpsp->Parameters.DeviceIoControl.OutputBufferLength / sizeof(WCHAR);
+            DWORD index = (ULONG_PTR)irpsp->Parameters.DeviceIoControl.Type3InputBuffer;
+            TRACE("IOCTL_HID_GET_STRING[%08x]\n", index);
+
+            irp->IoStatus.u.Status = status = ext->vtbl->get_string(device, index, (WCHAR *)irp->UserBuffer, length);
+            if (status == STATUS_SUCCESS)
+                irp->IoStatus.Information = (strlenW((WCHAR *)irp->UserBuffer) + 1) * sizeof(WCHAR);
+            break;
+        }
         default:
         {
             ULONG code = irpsp->Parameters.DeviceIoControl.IoControlCode;

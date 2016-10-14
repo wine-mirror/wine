@@ -51,7 +51,9 @@
 #include "winnls.h"
 #include "winternl.h"
 #include "ddk/wdm.h"
+#include "ddk/hidtypes.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 #include "bus.h"
 
@@ -150,10 +152,81 @@ static NTSTATUS hidraw_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer,
 #endif
 }
 
+static NTSTATUS hidraw_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
+{
+    struct udev_device *usbdev;
+    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    WCHAR *str = NULL;
+
+    usbdev = udev_device_get_parent_with_subsystem_devtype(private->udev_device, "usb", "usb_device");
+    if (usbdev)
+    {
+        switch (index)
+        {
+            case HID_STRING_ID_IPRODUCT:
+                str = get_sysattr_string(usbdev, "product");
+                break;
+            case HID_STRING_ID_IMANUFACTURER:
+                str = get_sysattr_string(usbdev, "manufacturer");
+                break;
+            case HID_STRING_ID_ISERIALNUMBER:
+                str = get_sysattr_string(usbdev, "serial");
+                break;
+            default:
+                ERR("Unhandled string index %08x\n", index);
+                return STATUS_NOT_IMPLEMENTED;
+        }
+    }
+    else
+    {
+#ifdef HAVE_LINUX_HIDRAW_H
+        switch (index)
+        {
+            case HID_STRING_ID_IPRODUCT:
+            {
+                char buf[MAX_PATH];
+                if (ioctl(private->device_fd, HIDIOCGRAWNAME(MAX_PATH), buf) == -1)
+                    WARN("ioctl(HIDIOCGRAWNAME) failed: %d %s\n", errno, strerror(errno));
+                else
+                    str = strdupAtoW(buf);
+                break;
+            }
+            case HID_STRING_ID_IMANUFACTURER:
+                break;
+            case HID_STRING_ID_ISERIALNUMBER:
+                break;
+            default:
+                ERR("Unhandled string index %08x\n", index);
+                return STATUS_NOT_IMPLEMENTED;
+        }
+#else
+        return STATUS_NOT_IMPLEMENTED;
+#endif
+    }
+
+    if (!str)
+    {
+        if (!length) return STATUS_BUFFER_TOO_SMALL;
+        buffer[0] = 0;
+        return STATUS_SUCCESS;
+    }
+
+    if (length <= strlenW(str))
+    {
+        HeapFree(GetProcessHeap(), 0, str);
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+
+    strcpyW(buffer, str);
+    HeapFree(GetProcessHeap(), 0, str);
+    return STATUS_SUCCESS;
+}
+
 static const platform_vtbl hidraw_vtbl =
 {
     compare_platform_device,
     hidraw_get_reportdescriptor,
+    hidraw_get_string,
 };
 
 static void try_add_device(struct udev_device *dev)
