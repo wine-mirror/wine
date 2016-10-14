@@ -1025,8 +1025,7 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
 
   /* TODO: stylesheet table */
 
-  /* FIXME: maybe emit something smarter for the generator? */
-  if (!ME_StreamOutPrint(pStream, "{\\*\\generator Wine Riched20 2.0.????;}"))
+  if (!ME_StreamOutPrint(pStream, "{\\*\\generator Wine Riched20 2.0;}"))
     return FALSE;
 
   /* TODO: information group */
