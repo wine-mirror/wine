@@ -20,16 +20,53 @@
 
 #include <stdarg.h>
 
+#define NONAMELESSUNION
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
+#include "winioctl.h"
 #include "ddk/wdm.h"
 #include "ddk/hidport.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
+
+static NTSTATUS WINAPI internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
+{
+    NTSTATUS status = irp->IoStatus.u.Status;
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
+    ULONG code = irpsp->Parameters.DeviceIoControl.IoControlCode;
+
+    switch (code)
+    {
+    case IOCTL_GET_PHYSICAL_DESCRIPTOR:
+    case IOCTL_HID_ACTIVATE_DEVICE:
+    case IOCTL_HID_DEACTIVATE_DEVICE:
+    case IOCTL_HID_GET_INDEXED_STRING:
+    case IOCTL_HID_GET_DEVICE_ATTRIBUTES:
+    case IOCTL_HID_GET_DEVICE_DESCRIPTOR:
+    case IOCTL_HID_GET_REPORT_DESCRIPTOR:
+    case IOCTL_HID_GET_STRING:
+    case IOCTL_HID_GET_INPUT_REPORT:
+    case IOCTL_HID_READ_REPORT:
+    case IOCTL_HID_SET_OUTPUT_REPORT:
+    case IOCTL_HID_WRITE_REPORT:
+    case IOCTL_HID_GET_FEATURE:
+    case IOCTL_HID_SET_FEATURE:
+        /* All these are handled by the lower level driver */
+        IoSkipCurrentIrpStackLocation(irp);
+        return IoCallDriver(((HID_DEVICE_EXTENSION *)device->DeviceExtension)->NextDeviceObject, irp);
+
+    default:
+        FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
+              code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+        return status;
+    }
+}
 
 static NTSTATUS WINAPI add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *device)
 {
@@ -43,6 +80,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
 
     TRACE("(%p, %s)\n", driver, debugstr_w(path->Buffer));
 
+    driver->MajorFunction[IRP_MJ_INTERNAL_DEVICE_CONTROL] = internal_ioctl;
     driver->DriverExtension->AddDevice = add_device;
 
     memset(&registration, 0, sizeof(registration));
