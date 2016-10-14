@@ -66,7 +66,8 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   if (lf.lfWeight > FW_NORMAL) cf.dwEffects |= CFE_BOLD;
   cf.wWeight = lf.lfWeight;
   if (lf.lfItalic) cf.dwEffects |= CFE_ITALIC;
-  cf.bUnderlineType = (lf.lfUnderline) ? CFU_CF1UNDERLINE : CFU_UNDERLINENONE;
+  if (lf.lfUnderline) cf.dwEffects |= CFE_UNDERLINE;
+  cf.bUnderlineType = CFU_UNDERLINE;
   if (lf.lfStrikeOut) cf.dwEffects |= CFE_STRIKEOUT;
   cf.bPitchAndFamily = lf.lfPitchAndFamily;
   cf.bCharSet = lf.lfCharSet;

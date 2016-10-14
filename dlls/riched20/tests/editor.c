@@ -1256,6 +1256,85 @@ static void test_EM_SETCHARFORMAT(void)
   SendMessageA(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cfW);
   ok(cfW.sSpacing == 10, "got %d\n", cfW.sSpacing);
 
+  /* test CFE_UNDERLINE and bUnderlineType interaction */
+  /* clear bold, italic */
+  SendMessageA(hwndRichEdit, EM_SETSEL, 0, -1);
+  memset(&cf2, 0, sizeof(CHARFORMAT2A));
+  cf2.cbSize = sizeof(CHARFORMAT2A);
+  cf2.dwMask = CFM_BOLD | CFM_ITALIC;
+  cf2.dwEffects = 0;
+  SendMessageA(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
+
+  /* check CFE_UNDERLINE is clear and bUnderlineType is CFU_UNDERLINE */
+  memset(&cf2, 0, sizeof(CHARFORMAT2A));
+  cf2.cbSize = sizeof(CHARFORMAT2A);
+  SendMessageA(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
+  ok((cf2.dwMask & (CFM_UNDERLINE | CFM_UNDERLINETYPE)) == (CFM_UNDERLINE | CFM_UNDERLINETYPE),
+     "got %08x\n", cf2.dwMask);
+  ok(!(cf2.dwEffects & CFE_UNDERLINE), "got %08x\n", cf2.dwEffects);
+  ok(cf2.bUnderlineType == CFU_UNDERLINE, "got %x\n", cf2.bUnderlineType);
+
+  /* simply touching bUnderlineType will toggle CFE_UNDERLINE */
+  cf2.dwMask = CFM_UNDERLINETYPE;
+  cf2.bUnderlineType = CFU_UNDERLINE;
+  SendMessageA(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
+  memset(&cf2, 0, sizeof(CHARFORMAT2A));
+  cf2.cbSize = sizeof(CHARFORMAT2A);
+  SendMessageA(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
+  ok((cf2.dwMask & (CFM_UNDERLINE | CFM_UNDERLINETYPE)) == (CFM_UNDERLINE | CFM_UNDERLINETYPE),
+     "got %08x\n", cf2.dwMask);
+  ok(cf2.dwEffects & CFE_UNDERLINE, "got %08x\n", cf2.dwEffects);
+  ok(cf2.bUnderlineType == CFU_UNDERLINE, "got %x\n", cf2.bUnderlineType);
+
+  /* setting bUnderline to CFU_UNDERLINENONE clears CFE_UNDERLINE */
+  cf2.dwMask = CFM_UNDERLINETYPE;
+  cf2.bUnderlineType = CFU_UNDERLINENONE;
+  SendMessageA(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
+  memset(&cf2, 0, sizeof(CHARFORMAT2A));
+  cf2.cbSize = sizeof(CHARFORMAT2A);
+  SendMessageA(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
+  ok((cf2.dwMask & (CFM_UNDERLINE | CFM_UNDERLINETYPE)) == (CFM_UNDERLINE | CFM_UNDERLINETYPE),
+     "got %08x\n", cf2.dwMask);
+  ok(!(cf2.dwEffects & CFE_UNDERLINE), "got %08x\n", cf2.dwEffects);
+  ok(cf2.bUnderlineType == CFU_UNDERLINENONE, "got %x\n", cf2.bUnderlineType);
+
+  /* another underline type also sets CFE_UNDERLINE */
+  cf2.dwMask = CFM_UNDERLINETYPE;
+  cf2.bUnderlineType = CFU_UNDERLINEDOUBLE;
+  SendMessageA(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
+  memset(&cf2, 0, sizeof(CHARFORMAT2A));
+  cf2.cbSize = sizeof(CHARFORMAT2A);
+  SendMessageA(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
+  ok((cf2.dwMask & (CFM_UNDERLINE | CFM_UNDERLINETYPE)) == (CFM_UNDERLINE | CFM_UNDERLINETYPE),
+     "got %08x\n", cf2.dwMask);
+  ok(cf2.dwEffects & CFE_UNDERLINE, "got %08x\n", cf2.dwEffects);
+  ok(cf2.bUnderlineType == CFU_UNDERLINEDOUBLE, "got %x\n", cf2.bUnderlineType);
+
+  /* However explicitly clearing CFE_UNDERLINE results in it remaining cleared */
+  cf2.dwMask = CFM_UNDERLINETYPE | CFM_UNDERLINE;
+  cf2.bUnderlineType = CFU_UNDERLINEDOUBLE;
+  cf2.dwEffects = 0;
+  SendMessageA(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
+  memset(&cf2, 0, sizeof(CHARFORMAT2A));
+  cf2.cbSize = sizeof(CHARFORMAT2A);
+  SendMessageA(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
+  ok((cf2.dwMask & (CFM_UNDERLINE | CFM_UNDERLINETYPE)) == (CFM_UNDERLINE | CFM_UNDERLINETYPE),
+     "got %08x\n", cf2.dwMask);
+  ok(!(cf2.dwEffects & CFE_UNDERLINE), "got %08x\n", cf2.dwEffects);
+  ok(cf2.bUnderlineType == CFU_UNDERLINEDOUBLE, "got %x\n", cf2.bUnderlineType);
+
+  /* And turing it back on again by just setting CFE_UNDERLINE */
+  cf2.dwMask = CFM_UNDERLINE;
+  cf2.dwEffects = CFE_UNDERLINE;
+  SendMessageA(hwndRichEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
+  memset(&cf2, 0, sizeof(CHARFORMAT2A));
+  cf2.cbSize = sizeof(CHARFORMAT2A);
+  SendMessageA(hwndRichEdit, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2);
+  ok((cf2.dwMask & (CFM_UNDERLINE | CFM_UNDERLINETYPE)) == (CFM_UNDERLINE | CFM_UNDERLINETYPE),
+     "got %08x\n", cf2.dwMask);
+  ok(cf2.dwEffects & CFE_UNDERLINE, "got %08x\n", cf2.dwEffects);
+  ok(cf2.bUnderlineType == CFU_UNDERLINEDOUBLE, "got %x\n", cf2.bUnderlineType);
+
   DestroyWindow(hwndRichEdit);
 }
 

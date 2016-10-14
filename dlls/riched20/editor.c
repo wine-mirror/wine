@@ -427,11 +427,12 @@ void ME_RTFCharAttrHook(RTF_Info *info)
   {
     case rtfPlain:
       /* FIXME add more flags once they're implemented */
-      fmt.dwMask = CFM_BOLD | CFM_ITALIC | CFM_UNDERLINETYPE | CFM_STRIKEOUT | CFM_COLOR | CFM_BACKCOLOR | CFM_SIZE | CFM_WEIGHT;
+      fmt.dwMask = CFM_BOLD | CFM_ITALIC | CFM_UNDERLINE | CFM_UNDERLINETYPE | CFM_STRIKEOUT |
+          CFM_COLOR | CFM_BACKCOLOR | CFM_SIZE | CFM_WEIGHT;
       fmt.dwEffects = CFE_AUTOCOLOR | CFE_AUTOBACKCOLOR;
       fmt.yHeight = 12*20; /* 12pt */
       fmt.wWeight = FW_NORMAL;
-      fmt.bUnderlineType = CFU_UNDERLINENONE;
+      fmt.bUnderlineType = CFU_UNDERLINE;
       break;
     case rtfBold:
       fmt.dwMask = CFM_BOLD | CFM_WEIGHT;
@@ -443,24 +444,28 @@ void ME_RTFCharAttrHook(RTF_Info *info)
       fmt.dwEffects = info->rtfParam ? fmt.dwMask : 0;
       break;
     case rtfUnderline:
-      fmt.dwMask = CFM_UNDERLINETYPE;
-      fmt.bUnderlineType = info->rtfParam ? CFU_CF1UNDERLINE : CFU_UNDERLINENONE;
+      fmt.dwMask = CFM_UNDERLINETYPE | CFM_UNDERLINE;
+      fmt.bUnderlineType = CFU_UNDERLINE;
+      fmt.dwEffects = info->rtfParam ? CFE_UNDERLINE : 0;
       break;
     case rtfDotUnderline:
-      fmt.dwMask = CFM_UNDERLINETYPE;
-      fmt.bUnderlineType = info->rtfParam ? CFU_UNDERLINEDOTTED : CFU_UNDERLINENONE;
+      fmt.dwMask = CFM_UNDERLINETYPE | CFM_UNDERLINE;
+      fmt.bUnderlineType = CFU_UNDERLINEDOTTED;
+      fmt.dwEffects = info->rtfParam ? CFE_UNDERLINE : 0;
       break;
     case rtfDbUnderline:
-      fmt.dwMask = CFM_UNDERLINETYPE;
-      fmt.bUnderlineType = info->rtfParam ? CFU_UNDERLINEDOUBLE : CFU_UNDERLINENONE;
+      fmt.dwMask = CFM_UNDERLINETYPE | CFM_UNDERLINE;
+      fmt.bUnderlineType = CFU_UNDERLINEDOUBLE;
+      fmt.dwEffects = info->rtfParam ? CFE_UNDERLINE : 0;
       break;
     case rtfWordUnderline:
-      fmt.dwMask = CFM_UNDERLINETYPE;
-      fmt.bUnderlineType = info->rtfParam ? CFU_UNDERLINEWORD : CFU_UNDERLINENONE;
+      fmt.dwMask = CFM_UNDERLINETYPE | CFM_UNDERLINE;
+      fmt.bUnderlineType = CFU_UNDERLINEWORD;
+      fmt.dwEffects = info->rtfParam ? CFE_UNDERLINE : 0;
       break;
     case rtfNoUnderline:
-      fmt.dwMask = CFM_UNDERLINETYPE;
-      fmt.bUnderlineType = CFU_UNDERLINENONE;
+      fmt.dwMask = CFM_UNDERLINE;
+      fmt.dwEffects = 0;
       break;
     case rtfStrikeThru:
       fmt.dwMask = CFM_STRIKEOUT;

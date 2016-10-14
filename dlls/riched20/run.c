@@ -773,16 +773,6 @@ void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, C
 static void ME_GetRunCharFormat(ME_TextEditor *editor, ME_DisplayItem *run, CHARFORMAT2W *pFmt)
 {
   ME_CopyCharFormat(pFmt, &run->member.run.style->fmt);
-  if ((pFmt->dwMask & CFM_UNDERLINETYPE) && (pFmt->bUnderlineType == CFU_CF1UNDERLINE))
-  {
-    pFmt->dwMask |= CFM_UNDERLINE;
-    pFmt->dwEffects |= CFE_UNDERLINE;
-  }
-  if ((pFmt->dwMask & CFM_UNDERLINETYPE) && (pFmt->bUnderlineType == CFU_UNDERLINENONE))
-  {
-    pFmt->dwMask |= CFM_UNDERLINE;
-    pFmt->dwEffects &= ~CFE_UNDERLINE;
-  }
 }
 
 /******************************************************************************

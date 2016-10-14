@@ -787,29 +787,28 @@ ME_StreamOutRTFCharProps(ME_OutStream *pStream, CHARFORMAT2W *fmt)
     else if (fmt->dwEffects & CFE_SUPERSCRIPT)
       strcat(props, "\\super");
   }
-  if (fmt->dwMask & CFM_UNDERLINE || fmt->dwMask & CFM_UNDERLINETYPE) {
-    if (fmt->dwMask & CFM_UNDERLINETYPE)
-      switch (fmt->bUnderlineType) {
-        case CFU_CF1UNDERLINE:
-        case CFU_UNDERLINE:
+  if (fmt->dwEffects & CFE_UNDERLINE)
+  {
+      switch (fmt->bUnderlineType)
+      {
+      case CFU_UNDERLINE:
           strcat(props, "\\ul");
           break;
-        case CFU_UNDERLINEDOTTED:
+      case CFU_UNDERLINEDOTTED:
           strcat(props, "\\uld");
           break;
-        case CFU_UNDERLINEDOUBLE:
+      case CFU_UNDERLINEDOUBLE:
           strcat(props, "\\uldb");
           break;
-        case CFU_UNDERLINEWORD:
+      case CFU_UNDERLINEWORD:
           strcat(props, "\\ulw");
           break;
-        case CFU_UNDERLINENONE:
-        default:
+      case CFU_CF1UNDERLINE:
+      case CFU_UNDERLINENONE:
+      default:
           strcat(props, "\\ulnone");
           break;
       }
-    else if (fmt->dwEffects & CFE_UNDERLINE)
-      strcat(props, "\\ul");
   }
   /* FIXME: How to emit CFM_WEIGHT? */
   

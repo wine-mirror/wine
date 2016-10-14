@@ -220,7 +220,7 @@ static void get_underline_pen( ME_Style *style, COLORREF color, HPEN *pen )
 {
     *pen = NULL;
     /* Choose the pen type for underlining the text. */
-    if (style->fmt.dwMask & CFM_UNDERLINETYPE)
+    if (style->fmt.dwEffects & CFE_UNDERLINE)
     {
         switch (style->fmt.bUnderlineType)
         {
