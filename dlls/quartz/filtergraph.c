@@ -690,14 +690,14 @@ static HRESULT WINAPI FilterGraph2_ConnectDirect(IFilterGraph2 *iface, IPin *ppi
         if (FAILED(hr))
             return hr;
 
-        TRACE("Filter owning first pin => %p\n", PinInfo.pFilter);
+        TRACE("Filter owning ppinIn(%p) => %p\n", ppinIn, PinInfo.pFilter);
         IBaseFilter_Release(PinInfo.pFilter);
 
         hr = IPin_QueryPinInfo(ppinOut, &PinInfo);
         if (FAILED(hr))
             return hr;
 
-        TRACE("Filter owning second pin => %p\n", PinInfo.pFilter);
+        TRACE("Filter owning ppinOut(%p) => %p\n", ppinOut, PinInfo.pFilter);
         IBaseFilter_Release(PinInfo.pFilter);
     }
 
@@ -919,14 +919,14 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
         if (FAILED(hr))
             return hr;
 
-        TRACE("Filter owning first pin => %p\n", PinInfo.pFilter);
+        TRACE("Filter owning ppinIn(%p) => %p\n", ppinIn, PinInfo.pFilter);
         IBaseFilter_Release(PinInfo.pFilter);
 
         hr = IPin_QueryPinInfo(ppinOut, &PinInfo);
         if (FAILED(hr))
             return hr;
 
-        TRACE("Filter owning second pin => %p\n", PinInfo.pFilter);
+        TRACE("Filter owning ppinOut(%p) => %p\n", ppinOut, PinInfo.pFilter);
         IBaseFilter_Release(PinInfo.pFilter);
     }
 
@@ -946,6 +946,8 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
     if (dir == PINDIR_INPUT)
     {
         IPin *temp;
+
+        TRACE("Directions seem backwards, swapping pins\n");
 
         temp = ppinIn;
         ppinIn = ppinOut;
