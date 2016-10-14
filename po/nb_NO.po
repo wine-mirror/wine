@@ -10506,10 +10506,8 @@ msgid "IPv6 address"
 msgstr "IPv6-adresse"
 
 #: msinfo32.rc:28
-#, fuzzy
-#| msgid "System Configuration"
 msgid "System Information"
-msgstr "Systemoppsett"
+msgstr "Systeminformasjon"
 
 #: net.rc:30
 msgid ""
@@ -14584,36 +14582,32 @@ msgid "F&ormat"
 msgstr "F&ormat"
 
 #: wordpad.rc:85
-#, fuzzy
-#| msgid "&List"
 msgid "&Lists"
-msgstr "&Liste"
+msgstr "&Lister"
 
 #: wordpad.rc:87 wordpad.rc:116
 msgid "&Bullet points"
 msgstr "&Punktmerking"
 
 #: wordpad.rc:88
-#, fuzzy
-#| msgid "CRL Number"
 msgid "Numbers"
-msgstr "CRL-nummer"
+msgstr "Numre"
 
 #: wordpad.rc:89
 msgid "Letters - lower case"
-msgstr ""
+msgstr "Små bokstaver"
 
 #: wordpad.rc:90
 msgid "Letters - upper case"
-msgstr ""
+msgstr "Store bokstaver"
 
 #: wordpad.rc:91
 msgid "Roman numerals - lower case"
-msgstr ""
+msgstr "Små romertall"
 
 #: wordpad.rc:92
 msgid "Roman numerals - upper case"
-msgstr ""
+msgstr "Store romertall"
 
 #: wordpad.rc:94 wordpad.rc:117
 msgid "&Paragraph..."
