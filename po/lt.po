@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-10-13 22:35+0300\n"
+"PO-Revision-Date: 2016-10-14 22:22+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -14513,10 +14513,8 @@ msgid "Error: Invalid query\n"
 msgstr "Klaida: Netinkama užklausa\n"
 
 #: wmic.rc:31
-#, fuzzy
-#| msgid "reg: Invalid syntax. "
 msgid "Error: Invalid syntax for PATH\n"
-msgstr "reg: Netinkama sintaksė. "
+msgstr "Klaida: Netinkama PATH sintaksė\n"
 
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
