@@ -135,7 +135,7 @@ static void draw_primitive_arrays(struct wined3d_context *context, const struct 
             element = &si->elements[element_idx];
             ptr = element->data.addr + element->stride * i;
             if (element->data.buffer_object)
-                ptr += (ULONG_PTR)buffer_get_sysmem(state->streams[element->stream_idx].buffer, context);
+                ptr += (ULONG_PTR)wined3d_buffer_load_sysmem(state->streams[element->stream_idx].buffer, context);
             ops->generic[element->format->emit_idx](element_idx, ptr);
         }
 
@@ -201,7 +201,7 @@ static void draw_primitive_immediate_mode(struct wined3d_context *context, const
      * supported or other reason), or with user pointer drawing idx_data
      * will be non-NULL. */
     if (idx_size && !idx_data)
-        idx_data = buffer_get_sysmem(state->index_buffer, context);
+        idx_data = wined3d_buffer_load_sysmem(state->index_buffer, context);
 
     ops = &d3d_info->ffp_attrib_ops;
 
@@ -402,7 +402,7 @@ static void remove_vbos(struct wined3d_context *context,
         {
             struct wined3d_buffer *vb = state->streams[e->stream_idx].buffer;
             e->data.buffer_object = 0;
-            e->data.addr = (BYTE *)((ULONG_PTR)e->data.addr + (ULONG_PTR)buffer_get_sysmem(vb, context));
+            e->data.addr = (BYTE *)((ULONG_PTR)e->data.addr + (ULONG_PTR)wined3d_buffer_load_sysmem(vb, context));
         }
     }
 }

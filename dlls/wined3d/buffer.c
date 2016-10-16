@@ -493,7 +493,7 @@ ULONG CDECL wined3d_buffer_incref(struct wined3d_buffer *buffer)
 }
 
 /* Context activation is done by the caller. */
-BYTE *buffer_get_sysmem(struct wined3d_buffer *buffer, struct wined3d_context *context)
+BYTE *wined3d_buffer_load_sysmem(struct wined3d_buffer *buffer, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -528,7 +528,7 @@ static void buffer_unload(struct wined3d_resource *resource)
         /* Download the buffer, but don't permanently enable double buffering */
         if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
         {
-            buffer_get_sysmem(buffer, context);
+            wined3d_buffer_load_sysmem(buffer, context);
             buffer->flags &= ~WINED3D_BUFFER_DOUBLEBUFFER;
         }
 
@@ -875,7 +875,7 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
         ERR("Converting data in non-vertex buffer.\n");
 
     if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
-        buffer_get_sysmem(buffer, context);
+        wined3d_buffer_load_sysmem(buffer, context);
 
     /* Now for each vertex in the buffer that needs conversion */
     vertex_count = buffer->resource.size / buffer->stride;
@@ -1010,7 +1010,7 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
                     else
                     {
                         TRACE("Falling back to doublebuffered operation.\n");
-                        buffer_get_sysmem(buffer, context);
+                        wined3d_buffer_load_sysmem(buffer, context);
                     }
                     TRACE("New pointer is %p.\n", buffer->resource.heap_memory);
                     buffer->map_ptr = NULL;

@@ -3194,7 +3194,7 @@ static void context_update_stream_info(struct wined3d_context *context, const st
             WARN_(d3d_perf)("load_base_vertex_index is < 0 (%d), not using VBOs.\n",
                     state->load_base_vertex_index);
             element->data.buffer_object = 0;
-            element->data.addr += (ULONG_PTR)buffer_get_sysmem(buffer, context);
+            element->data.addr += (ULONG_PTR)wined3d_buffer_load_sysmem(buffer, context);
             if ((UINT_PTR)element->data.addr < -state->load_base_vertex_index * element->stride)
                 FIXME("System memory vertex data load offset is negative!\n");
         }
@@ -3432,7 +3432,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context,
         if (context->stream_info.all_vbo)
             wined3d_buffer_load(state->index_buffer, context, state);
         else
-            buffer_get_sysmem(state->index_buffer, context);
+            wined3d_buffer_load_sysmem(state->index_buffer, context);
     }
 
     for (i = 0; i < context->numDirtyEntries; ++i)

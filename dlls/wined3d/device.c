@@ -3174,7 +3174,7 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
         e = &stream_info.elements[i];
         buffer = state->streams[e->stream_idx].buffer;
         e->data.buffer_object = 0;
-        e->data.addr += (ULONG_PTR)buffer_get_sysmem(buffer, context);
+        e->data.addr += (ULONG_PTR)wined3d_buffer_load_sysmem(buffer, context);
         if (buffer->buffer_object)
         {
             GL_EXTCALL(glDeleteBuffers(1, &buffer->buffer_object));

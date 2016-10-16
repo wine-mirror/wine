@@ -4081,7 +4081,7 @@ static void load_numbered_arrays(struct wined3d_context *context,
              * figure out the system memory address. */
             const BYTE *ptr = element->data.addr;
             if (element->data.buffer_object)
-                ptr += (ULONG_PTR)buffer_get_sysmem(stream->buffer, context);
+                ptr += (ULONG_PTR)wined3d_buffer_load_sysmem(stream->buffer, context);
 
             if (context->numbered_array_mask & (1u << i))
                 unload_numbered_array(context, i);
