@@ -740,7 +740,7 @@ void buffer_mark_used(struct wined3d_buffer *buffer)
 }
 
 /* Context activation is done by the caller. */
-void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_context *context,
+void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const struct wined3d_state *state)
 {
     DWORD flags = buffer->flags & (WINED3D_BUFFER_SYNC | WINED3D_BUFFER_DISCARD);
@@ -1219,7 +1219,7 @@ static void buffer_resource_preload(struct wined3d_resource *resource)
     struct wined3d_context *context;
 
     context = context_acquire(resource->device, NULL);
-    buffer_internal_preload(buffer_from_resource(resource), context, NULL);
+    wined3d_buffer_load(buffer_from_resource(resource), context, NULL);
     context_release(context);
 }
 
