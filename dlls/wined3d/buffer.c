@@ -422,7 +422,7 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This, const struct wined3d_s
     return ret;
 }
 
-static inline void fixup_d3dcolor(DWORD *dst_color)
+static inline unsigned int fixup_d3dcolor(DWORD *dst_color)
 {
     DWORD src_color = *dst_color;
 
@@ -439,9 +439,11 @@ static inline void fixup_d3dcolor(DWORD *dst_color)
     *dst_color |= (src_color & 0xff00ff00u);         /* Alpha Green */
     *dst_color |= (src_color & 0x00ff0000u) >> 16;   /* Red */
     *dst_color |= (src_color & 0x000000ffu) << 16;   /* Blue */
+
+    return sizeof(*dst_color);
 }
 
-static inline void fixup_transformed_pos(float *p)
+static inline unsigned int fixup_transformed_pos(float *p)
 {
     /* rhw conversion like in position_float4(). */
     if (p[3] != 1.0f && p[3] != 0.0f)
@@ -452,6 +454,8 @@ static inline void fixup_transformed_pos(float *p)
         p[2] *= w;
         p[3] = w;
     }
+
+    return 4 * sizeof(*p);
 }
 
 /* Context activation is done by the caller. */
@@ -741,10 +745,8 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
 {
     DWORD flags = buffer->flags & (WINED3D_BUFFER_SYNC | WINED3D_BUFFER_DISCARD);
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    struct wined3d_device *device = buffer->resource.device;
-    UINT start, end, len, vertices;
+    unsigned int i, j, start, end, len, vertex_count;
     BOOL decl_changed = FALSE;
-    unsigned int i, j;
     BYTE *data;
 
     TRACE("buffer %p.\n", buffer);
@@ -851,9 +853,6 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
         }
     }
 
-    if (buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
-        device_invalidate_state(device, STATE_INDEXBUFFER);
-
     if (!buffer->conversion_map)
     {
         /* That means that there is nothing to fixup. Just upload from
@@ -871,17 +870,23 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
         return;
     }
 
-    if(!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
-    {
+    /* This would potentially invalidate the element array buffer binding. */
+    if (buffer->buffer_type_hint != GL_ARRAY_BUFFER)
+        ERR("Converting data in non-vertex buffer.\n");
+
+    if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
         buffer_get_sysmem(buffer, context);
-    }
 
     /* Now for each vertex in the buffer that needs conversion */
-    vertices = buffer->resource.size / buffer->stride;
+    vertex_count = buffer->resource.size / buffer->stride;
 
-    data = HeapAlloc(GetProcessHeap(), 0, buffer->resource.size);
+    if (!(data = HeapAlloc(GetProcessHeap(), 0, buffer->resource.size)))
+    {
+        ERR("Out of memory.\n");
+        return;
+    }
 
-    while(buffer->modified_areas)
+    while (buffer->modified_areas)
     {
         buffer->modified_areas--;
         start = buffer->maps[buffer->modified_areas].offset;
@@ -889,27 +894,25 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
         end = start + len;
 
         memcpy(data + start, (BYTE *)buffer->resource.heap_memory + start, end - start);
-        for (i = start / buffer->stride; i < min((end / buffer->stride) + 1, vertices); ++i)
+        for (i = start / buffer->stride; i < min((end / buffer->stride) + 1, vertex_count); ++i)
         {
-            for (j = 0; j < buffer->stride; ++j)
+            for (j = 0; j < buffer->stride;)
             {
                 switch (buffer->conversion_map[j])
                 {
                     case CONV_NONE:
                         /* Done already */
-                        j += 3;
+                        j += sizeof(DWORD);
                         break;
                     case CONV_D3DCOLOR:
-                        fixup_d3dcolor((DWORD *) (data + i * buffer->stride + j));
-                        j += 3;
+                        j += fixup_d3dcolor((DWORD *) (data + i * buffer->stride + j));
                         break;
-
                     case CONV_POSITIONT:
-                        fixup_transformed_pos((float *) (data + i * buffer->stride + j));
-                        j += 15;
+                        j += fixup_transformed_pos((float *) (data + i * buffer->stride + j));
                         break;
                     default:
-                        FIXME("Unimplemented conversion %d in shifted conversion\n", buffer->conversion_map[j]);
+                        FIXME("Unimplemented conversion %d in shifted conversion.\n", buffer->conversion_map[j]);
+                        ++j;
                 }
             }
         }
