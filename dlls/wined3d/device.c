@@ -3179,6 +3179,7 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
         {
             GL_EXTCALL(glDeleteBuffers(1, &buffer->buffer_object));
             buffer->buffer_object = 0;
+            wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_BUFFER);
         }
         if (e->data.addr)
             e->data.addr += e->stride * src_start_idx;

@@ -93,6 +93,46 @@ static BOOL buffer_is_fully_dirty(const struct wined3d_buffer *buffer)
             && !buffer->maps->offset && buffer->maps->size == buffer->resource.size;
 }
 
+void wined3d_buffer_validate_location(struct wined3d_buffer *buffer, DWORD location)
+{
+    TRACE("buffer %p, location %s.\n", buffer, wined3d_debug_location(location));
+
+    if (location & WINED3D_LOCATION_BUFFER)
+        buffer_clear_dirty_areas(buffer);
+
+    buffer->locations |= location;
+
+    TRACE("New locations flags are %s.\n", wined3d_debug_location(buffer->locations));
+}
+
+static void wined3d_buffer_invalidate_range(struct wined3d_buffer *buffer, DWORD location,
+        unsigned int offset, unsigned int size)
+{
+    TRACE("buffer %p, location %s, offset %u, size %u.\n",
+            buffer, wined3d_debug_location(location), offset, size);
+
+    if ((offset || size) && (location & ~WINED3D_LOCATION_BUFFER))
+    {
+        ERR("Range can be invalidated only for WINED3D_LOCATION_BUFFER.\n");
+        return;
+    }
+
+    if (location & WINED3D_LOCATION_BUFFER)
+        buffer_invalidate_bo_range(buffer, offset, size);
+
+    buffer->locations &= ~location;
+
+    TRACE("New locations flags are %s.\n", wined3d_debug_location(buffer->locations));
+
+    if (!buffer->locations)
+        ERR("Buffer %p does not have any up to date location.\n", buffer);
+}
+
+void wined3d_buffer_invalidate_location(struct wined3d_buffer *buffer, DWORD location)
+{
+    wined3d_buffer_invalidate_range(buffer, location, 0, 0);
+}
+
 /* Context activation is done by the caller. */
 static void buffer_bind(struct wined3d_buffer *buffer, struct wined3d_context *context)
 {
@@ -192,15 +232,21 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, struct wine
     This->buffer_object_usage = gl_usage;
 
     if (This->flags & WINED3D_BUFFER_DOUBLEBUFFER)
+    {
         buffer_invalidate_bo_range(This, 0, 0);
+    }
     else
+    {
         wined3d_resource_free_sysmem(&This->resource);
+        wined3d_buffer_validate_location(This, WINED3D_LOCATION_BUFFER);
+        wined3d_buffer_invalidate_location(This, WINED3D_LOCATION_SYSMEM);
+    }
 
     return;
 
 fail:
     /* Clean up all VBO init, but continue because we can work without a VBO :-) */
-    ERR("Failed to create a vertex buffer object. Continuing, but performance issues may occur\n");
+    ERR("Failed to create a vertex buffer object. Continuing, but performance issues may occur.\n");
     This->flags &= ~WINED3D_BUFFER_USE_BO;
     delete_gl_buffer(This, gl_info);
     buffer_clear_dirty_areas(This);
@@ -509,6 +555,8 @@ BYTE *wined3d_buffer_load_sysmem(struct wined3d_buffer *buffer, struct wined3d_c
     checkGLcall("buffer download");
     buffer->flags |= WINED3D_BUFFER_DOUBLEBUFFER;
 
+    wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_SYSMEM);
+
     return buffer->resource.heap_memory;
 }
 
@@ -532,6 +580,7 @@ static void buffer_unload(struct wined3d_resource *resource)
             buffer->flags &= ~WINED3D_BUFFER_DOUBLEBUFFER;
         }
 
+        wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_BUFFER);
         delete_gl_buffer(buffer, context->gl_info);
         buffer_clear_dirty_areas(buffer);
 
@@ -707,7 +756,7 @@ static void buffer_direct_upload(struct wined3d_buffer *This, struct wined3d_con
     }
     if (!map)
     {
-        ERR("Failed to map opengl buffer\n");
+        ERR("Failed to map OpenGL buffer.\n");
         return;
     }
 
@@ -732,6 +781,8 @@ static void buffer_direct_upload(struct wined3d_buffer *This, struct wined3d_con
     }
     GL_EXTCALL(glUnmapBuffer(This->buffer_type_hint));
     checkGLcall("glUnmapBuffer");
+
+    wined3d_buffer_validate_location(This, WINED3D_LOCATION_BUFFER);
 }
 
 void buffer_mark_used(struct wined3d_buffer *buffer)
@@ -924,6 +975,8 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
     }
 
     HeapFree(GetProcessHeap(), 0, data);
+
+    wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_BUFFER);
 }
 
 struct wined3d_resource * CDECL wined3d_buffer_get_resource(struct wined3d_buffer *buffer)
@@ -952,17 +1005,28 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
 
     if (buffer->buffer_object)
     {
+        unsigned int dirty_offset = offset, dirty_size = size;
+
         /* DISCARD invalidates the entire buffer, regardless of the specified
          * offset and size. Some applications also depend on the entire buffer
          * being uploaded in that case. Two such applications are Port Royale
          * and Darkstar One. */
         if (flags & WINED3D_MAP_DISCARD)
-            buffer_invalidate_bo_range(buffer, 0, 0);
-        else if (!(flags & WINED3D_MAP_READONLY))
-            buffer_invalidate_bo_range(buffer, offset, size);
-
-        if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
         {
+            dirty_offset = 0;
+            dirty_size = 0;
+        }
+
+        if (buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER)
+        {
+            if (!(flags & WINED3D_MAP_READONLY))
+                wined3d_buffer_invalidate_range(buffer, WINED3D_LOCATION_BUFFER, dirty_offset, dirty_size);
+        }
+        else
+        {
+            if (!(flags & WINED3D_MAP_READONLY))
+                buffer_invalidate_bo_range(buffer, dirty_offset, dirty_size);
+
             if (count == 1)
             {
                 struct wined3d_device *device = buffer->resource.device;
@@ -1171,7 +1235,7 @@ HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_
     }
 
     if (dst_buffer_mem)
-        buffer_invalidate_bo_range(dst_buffer, dst_offset, size);
+        wined3d_buffer_invalidate_range(dst_buffer, WINED3D_LOCATION_BUFFER, dst_offset, size);
 
     context_release(context);
     return WINED3D_OK;
@@ -1300,6 +1364,7 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
         return hr;
     }
     buffer->buffer_type_hint = bind_hint;
+    buffer->locations = WINED3D_LOCATION_SYSMEM;
 
     TRACE("size %#x, usage %#x, format %s, memory @ %p, iface @ %p.\n", buffer->resource.size, buffer->resource.usage,
             debug_d3dformat(buffer->resource.format->id), buffer->resource.heap_memory, buffer);
