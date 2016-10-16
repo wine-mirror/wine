@@ -1561,6 +1561,8 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
         req->async.event    = wine_server_obj_handle( event );
         req->async.cvalue   = cvalue;
         wine_server_add_data( req, in_buffer, in_size );
+        if ((code & 3) != METHOD_BUFFERED)
+            wine_server_add_data( req, out_buffer, out_size );
         wine_server_set_reply( req, out_buffer, out_size );
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );

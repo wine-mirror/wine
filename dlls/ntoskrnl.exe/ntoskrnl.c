@@ -428,16 +428,26 @@ static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG
     TRACE( "ioctl %x device %p file %p in_size %u out_size %u\n",
            params->ioctl.code, device, file, in_size, out_size );
 
-    if ((params->ioctl.code & 3) == METHOD_BUFFERED) out_size = max( in_size, out_size );
-
     if (out_size)
     {
-        if (!(out_buff = HeapAlloc( GetProcessHeap(), 0, out_size ))) return STATUS_NO_MEMORY;
-        if ((params->ioctl.code & 3) == METHOD_BUFFERED)
+        if ((params->ioctl.code & 3) != METHOD_BUFFERED)
         {
+            if (in_size < out_size) return STATUS_INVALID_DEVICE_REQUEST;
+            in_size -= out_size;
+            if (!(out_buff = HeapAlloc( GetProcessHeap(), 0, out_size ))) return STATUS_NO_MEMORY;
+            memcpy( out_buff, (char *)in_buff + in_size, out_size );
+        }
+        else if (out_size > in_size)
+        {
+            if (!(out_buff = HeapAlloc( GetProcessHeap(), 0, out_size ))) return STATUS_NO_MEMORY;
             memcpy( out_buff, in_buff, in_size );
             to_free = in_buff;
             in_buff = out_buff;
+        }
+        else
+        {
+            out_buff = in_buff;
+            out_size = in_size;
         }
     }
 
@@ -448,6 +458,9 @@ static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG
         HeapFree( GetProcessHeap(), 0, out_buff );
         return STATUS_NO_MEMORY;
     }
+
+    if (out_size && (params->ioctl.code & 3) != METHOD_BUFFERED)
+        HeapReAlloc( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, in_buff, in_size );
 
     irp->Tail.Overlay.OriginalFileObject = file;
     irp->RequestorMode = UserMode;
