@@ -419,7 +419,7 @@ static NTSTATUS handle_minidriver_string(DEVICE_OBJECT *device, IRP *irp, SHORT 
 
     if (status == STATUS_SUCCESS)
     {
-        WCHAR *out_buffer = (WCHAR*)(((BYTE*)irp->MdlAddress->StartVa) + irp->MdlAddress->ByteOffset);
+        WCHAR *out_buffer = MmGetSystemAddressForMdlSafe(irp->MdlAddress, NormalPagePriority);
         int length = irpsp->Parameters.DeviceIoControl.OutputBufferLength/sizeof(WCHAR);
         TRACE("got string %s from minidriver\n",debugstr_w(buffer));
         lstrcpynW(out_buffer, buffer, length);
@@ -440,7 +440,7 @@ static NTSTATUS HID_get_feature(DEVICE_OBJECT *device, IRP *irp)
 
     irp->IoStatus.Information = 0;
 
-    out_buffer = (((BYTE*)irp->MdlAddress->StartVa) + irp->MdlAddress->ByteOffset);
+    out_buffer = MmGetSystemAddressForMdlSafe(irp->MdlAddress, NormalPagePriority);
     TRACE_(hid_report)("Device %p Buffer length %i Buffer %p\n", device, irpsp->Parameters.DeviceIoControl.OutputBufferLength, out_buffer);
 
     len = sizeof(*packet) + irpsp->Parameters.DeviceIoControl.OutputBufferLength;
@@ -569,7 +569,7 @@ NTSTATUS WINAPI HID_Device_ioctl(DEVICE_OBJECT *device, IRP *irp)
         case IOCTL_HID_GET_INPUT_REPORT:
         {
             HID_XFER_PACKET packet;
-            BYTE* buffer = ((BYTE*)irp->MdlAddress->StartVa) + irp->MdlAddress->ByteOffset;
+            BYTE *buffer = MmGetSystemAddressForMdlSafe(irp->MdlAddress, NormalPagePriority);
 
             if (extension->preparseData->InputReports[0].reportID)
                 packet.reportId = buffer[0];
