@@ -417,6 +417,7 @@ static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG
 {
     IRP *irp;
     void *out_buff = NULL;
+    void *to_free = NULL;
     DEVICE_OBJECT *device;
     FILE_OBJECT *file = wine_server_get_ptr( params->ioctl.file );
 
@@ -435,7 +436,7 @@ static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG
         if ((params->ioctl.code & 3) == METHOD_BUFFERED)
         {
             memcpy( out_buff, in_buff, in_size );
-            HeapFree( GetProcessHeap(), 0, in_buff );
+            to_free = in_buff;
             in_buff = out_buff;
         }
     }
@@ -455,6 +456,7 @@ static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG
     irp->Flags |= IRP_DEALLOCATE_BUFFER;  /* deallocate in_buff */
     dispatch_irp( device, irp, irp_handle );
 
+    HeapFree( GetProcessHeap(), 0, to_free );
     return STATUS_SUCCESS;
 }
 
