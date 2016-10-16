@@ -28,6 +28,16 @@
 #define POINTER_ALIGNMENT
 #endif
 
+/* FIXME: We suppose that page size is 4096 */
+#undef PAGE_SIZE
+#define PAGE_SIZE   0x1000
+#define PAGE_SHIFT  12
+
+#define BYTE_OFFSET(va) ((ULONG)((ULONG_PTR)(va) & (PAGE_SIZE - 1)))
+#define PAGE_ALIGN(va)  ((PVOID)((ULONG_PTR)(va) & ~(PAGE_SIZE - 1)))
+#define ADDRESS_AND_SIZE_TO_SPAN_PAGES(va, length) \
+    ((BYTE_OFFSET(va) + ((SIZE_T)(length)) + (PAGE_SIZE - 1)) >> PAGE_SHIFT)
+
 typedef LONG KPRIORITY;
 
 typedef ULONG_PTR KSPIN_LOCK, *PKSPIN_LOCK;
@@ -1035,6 +1045,17 @@ typedef struct _MDL {
 } MDL, *PMDL;
 
 typedef MDL *PMDLX;
+typedef ULONG PFN_NUMBER, *PPFN_NUMBER;
+
+static inline void MmInitializeMdl(MDL *mdl, void *va, SIZE_T length)
+{
+    mdl->Next       = NULL;
+    mdl->Size       = sizeof(MDL) + sizeof(PFN_NUMBER) * ADDRESS_AND_SIZE_TO_SPAN_PAGES(va, length);
+    mdl->MdlFlags   = 0;
+    mdl->StartVa    = (void *)PAGE_ALIGN(va);
+    mdl->ByteOffset = BYTE_OFFSET(va);
+    mdl->ByteCount  = length;
+}
 
 typedef struct _KTIMER {
     DISPATCHER_HEADER Header;

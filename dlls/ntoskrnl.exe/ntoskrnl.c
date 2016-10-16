@@ -744,31 +744,20 @@ PVOID WINAPI IoAllocateErrorLogEntry( PVOID IoObject, UCHAR EntrySize )
  */
 PMDL WINAPI IoAllocateMdl( PVOID va, ULONG length, BOOLEAN secondary, BOOLEAN charge_quota, IRP *irp )
 {
+    SIZE_T mdl_size;
     PMDL mdl;
-    ULONG_PTR address = (ULONG_PTR)va;
-    ULONG_PTR page_address;
-    SIZE_T nb_pages, mdl_size;
 
     TRACE("(%p, %u, %i, %i, %p)\n", va, length, secondary, charge_quota, irp);
 
     if (charge_quota)
         FIXME("Charge quota is not yet supported\n");
 
-    /* FIXME: We suppose that page size is 4096 */
-    page_address = address & ~(4096 - 1);
-    nb_pages = (((address + length - 1) & ~(4096 - 1)) - page_address) / 4096 + 1;
-
-    mdl_size = sizeof(MDL) + nb_pages * sizeof(PVOID);
-
-    mdl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mdl_size);
+    mdl_size = sizeof(MDL) + sizeof(PFN_NUMBER) * ADDRESS_AND_SIZE_TO_SPAN_PAGES(va, length);
+    mdl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, mdl_size );
     if (!mdl)
         return NULL;
 
-    mdl->Size = mdl_size;
-    mdl->Process = NULL; /* FIXME: IoGetCurrentProcess */
-    mdl->StartVa = (PVOID)page_address;
-    mdl->ByteCount = length;
-    mdl->ByteOffset = address - page_address;
+    MmInitializeMdl( mdl, va, length );
 
     if (!irp) return mdl;
 
