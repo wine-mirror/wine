@@ -668,15 +668,13 @@ drop_query:
 }
 
 /* The caller provides a GL context */
-static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined3d_gl_info *gl_info, DWORD flags)
+static void buffer_direct_upload(struct wined3d_buffer *This, struct wined3d_context *context, DWORD flags)
 {
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    unsigned int start, len;
     BYTE *map;
-    UINT start, len;
 
-    /* This potentially invalidates the element array buffer binding, but the
-     * caller always takes care of this. */
-    GL_EXTCALL(glBindBuffer(This->buffer_type_hint, This->buffer_object));
-    checkGLcall("glBindBuffer");
+    buffer_bind(This, context);
     if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
     {
         GLbitfield mapflags;
@@ -686,7 +684,7 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
         else if (!(flags & WINED3D_BUFFER_SYNC))
             mapflags |= GL_MAP_UNSYNCHRONIZED_BIT;
         map = GL_EXTCALL(glMapBufferRange(This->buffer_type_hint, 0,
-                    This->resource.size, mapflags));
+                This->resource.size, mapflags));
         checkGLcall("glMapBufferRange");
     }
     else
@@ -867,12 +865,9 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
 
         /* Nothing to do because we locked directly into the vbo */
         if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
-        {
             return;
-        }
 
-        buffer_direct_upload(buffer, gl_info, flags);
-
+        buffer_direct_upload(buffer, context, flags);
         return;
     }
 
