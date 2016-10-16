@@ -104,7 +104,7 @@ static HRESULT WINAPI WindowsParentalControls_CreateInstance(IClassFactory *ifac
 {
     static IWindowsParentalControls wpc = { &WindowsParentalControlsVtbl };
 
-    TRACE("(%s %p %p)\n", debugstr_guid(riid), outer, ppv);
+    TRACE("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
 
     return IWindowsParentalControls_QueryInterface(&wpc, riid, ppv);
 }
