@@ -820,6 +820,7 @@ PIRP WINAPI IoBuildDeviceIoControlRequest( ULONG code, PDEVICE_OBJECT device,
 {
     PIRP irp;
     PIO_STACK_LOCATION irpsp;
+    MDL *mdl;
 
     TRACE( "%x, %p, %p, %u, %p, %u, %u, %p, %p\n",
            code, device, in_buff, in_len, out_buff, out_len, internal, event, iosb );
@@ -847,7 +848,16 @@ PIRP WINAPI IoBuildDeviceIoControlRequest( ULONG code, PDEVICE_OBJECT device,
     case METHOD_IN_DIRECT:
     case METHOD_OUT_DIRECT:
         irp->AssociatedIrp.SystemBuffer = in_buff;
-        IoAllocateMdl( out_buff, out_len, FALSE, FALSE, irp );
+
+        mdl = IoAllocateMdl( out_buff, out_len, FALSE, FALSE, irp );
+        if (!mdl)
+        {
+            IoFreeIrp( irp );
+            return NULL;
+        }
+
+        mdl->MdlFlags |= MDL_MAPPED_TO_SYSTEM_VA;
+        mdl->MappedSystemVa = out_buff;
         break;
     case METHOD_NEITHER:
         irpsp->Parameters.DeviceIoControl.Type3InputBuffer = in_buff;
@@ -882,7 +892,19 @@ PIRP WINAPI IoBuildSynchronousFsdRequest(ULONG majorfunc, PDEVICE_OBJECT device,
     irpsp->CompletionRoutine = NULL;
 
     irp->AssociatedIrp.SystemBuffer = buffer;
-    if (device->Flags & DO_DIRECT_IO) IoAllocateMdl( buffer, length, FALSE, FALSE, irp );
+
+    if (device->Flags & DO_DIRECT_IO)
+    {
+        MDL *mdl = IoAllocateMdl( buffer, length, FALSE, FALSE, irp );
+        if (!mdl)
+        {
+            IoFreeIrp( irp );
+            return NULL;
+        }
+
+        mdl->MdlFlags |= MDL_MAPPED_TO_SYSTEM_VA;
+        mdl->MappedSystemVa = buffer;
+    }
 
     switch (majorfunc)
     {
