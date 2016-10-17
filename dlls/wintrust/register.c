@@ -811,7 +811,7 @@ static FARPROC WINTRUST_ReadProviderFromReg(WCHAR *GuidString, const WCHAR *Func
     lstrcatW(ProvKey, GuidString);
 
     Res = RegOpenKeyExW(HKEY_LOCAL_MACHINE, ProvKey, 0, KEY_READ, &Key);
-    if (Res != ERROR_SUCCESS) goto error_close_key;
+    if (Res != ERROR_SUCCESS) return NULL;
 
     /* Read the $DLL entry */
     Size = sizeof(DllName);
