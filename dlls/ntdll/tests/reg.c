@@ -1135,6 +1135,40 @@ static void test_symlinks(void)
         "wrong len %u\n", len );
     pNtClose( key );
 
+    if (pNtOpenKeyEx)
+    {
+        /* REG_OPTION_OPEN_LINK flag doesn't matter */
+        status = pNtOpenKeyEx( &key, KEY_ALL_ACCESS, &attr, REG_OPTION_OPEN_LINK );
+        ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+
+        len = sizeof(buffer);
+        status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
+        ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+        ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
+            "wrong len %u\n", len );
+        pNtClose( key );
+
+        status = pNtOpenKeyEx( &key, KEY_ALL_ACCESS, &attr, 0 );
+        ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+
+        len = sizeof(buffer);
+        status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
+        ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+        ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
+            "wrong len %u\n", len );
+        pNtClose( key );
+
+        attr.Attributes = 0;
+        status = pNtOpenKeyEx( &key, KEY_ALL_ACCESS, &attr, REG_OPTION_OPEN_LINK );
+        ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+
+        len = sizeof(buffer);
+        status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
+        ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey failed: 0x%08x\n", status );
+        pNtClose( key );
+    }
+
+    attr.Attributes = OBJ_OPENLINK;
     status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
     len = sizeof(buffer);
@@ -1143,6 +1177,36 @@ static void test_symlinks(void)
     ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
         "wrong len %u\n", len );
     pNtClose( key );
+
+    /* delete target and create by NtCreateKey on link */
+    attr.ObjectName = &target_str;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+    status = pNtDeleteKey( key );
+    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08x\n", status );
+    pNtClose( key );
+
+    attr.ObjectName = &link_str;
+    attr.Attributes = 0;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey wrong status 0x%08x\n", status );
+
+    status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    todo_wine ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    pNtClose( key );
+    if (status) /* can be removed once todo_wine above is fixed */
+    {
+        attr.ObjectName = &target_str;
+        attr.Attributes = OBJ_OPENLINK;
+        status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+        pNtClose( key );
+    }
+
+    attr.ObjectName = &target_str;
+    attr.Attributes = OBJ_OPENLINK;
+    status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
+    ok( status == STATUS_SUCCESS, "NtOpenKey wrong status 0x%08x\n", status );
 
     if (0)  /* crashes the Windows kernel on some Vista systems */
     {

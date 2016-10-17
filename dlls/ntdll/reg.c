@@ -129,7 +129,7 @@ static NTSTATUS open_key( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRI
 
     TRACE( "(%p,%s,%x,%p)\n", attr->RootDirectory,
            debugstr_us(attr->ObjectName), access, retkey );
-    if (options)
+    if (options & ~REG_OPTION_OPEN_LINK)
         FIXME("options %x not implemented\n", options);
 
     SERVER_START_REQ( open_key )
