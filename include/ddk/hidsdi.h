@@ -19,13 +19,13 @@
 #ifndef __WINE_HIDSDI_H
 #define __WINE_HIDSDI_H
 
-#include <hidusage.h>
-#include <ddk/hidpi.h>
-
 #ifndef WINE_NTSTATUS_DECLARED
 #define WINE_NTSTATUS_DECLARED
 typedef LONG NTSTATUS;
 #endif
+
+#include <hidusage.h>
+#include <ddk/hidpi.h>
 
 typedef struct _HIDD_ATTRIBUTES {
   ULONG  Size;
