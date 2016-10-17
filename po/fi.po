@@ -10487,10 +10487,8 @@ msgid "IPv6 address"
 msgstr "IPv6-osoite"
 
 #: msinfo32.rc:28
-#, fuzzy
-#| msgid "System Configuration"
 msgid "System Information"
-msgstr "Järjestelmän kokoonpano"
+msgstr "Järjestelmätiedot"
 
 #: net.rc:30
 msgid ""
@@ -14471,10 +14469,8 @@ msgid "Error: Invalid query\n"
 msgstr "Virhe: Virheellinen kysely\n"
 
 #: wmic.rc:31
-#, fuzzy
-#| msgid "reg: Invalid syntax. "
 msgid "Error: Invalid syntax for PATH\n"
-msgstr "reg: Syntaksi ei kelpaa. "
+msgstr "Virhe: Virheellinen syntaksi komennolle PATH\n"
 
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
@@ -14549,36 +14545,32 @@ msgid "F&ormat"
 msgstr "&Muotoile"
 
 #: wordpad.rc:85
-#, fuzzy
-#| msgid "&List"
 msgid "&Lists"
-msgstr "&Lista"
+msgstr "&Listat"
 
 #: wordpad.rc:87 wordpad.rc:116
 msgid "&Bullet points"
 msgstr "&Listan kohdat"
 
 #: wordpad.rc:88
-#, fuzzy
-#| msgid "CRL Number"
 msgid "Numbers"
-msgstr "Sulkulistan numero"
+msgstr "Luvut"
 
 #: wordpad.rc:89
 msgid "Letters - lower case"
-msgstr ""
+msgstr "Kirjaimet - pienaakkoset"
 
 #: wordpad.rc:90
 msgid "Letters - upper case"
-msgstr ""
+msgstr "Kirjaimet - suuraakkoset"
 
 #: wordpad.rc:91
 msgid "Roman numerals - lower case"
-msgstr ""
+msgstr "Roomalaiset numerot - pienaakkoset"
 
 #: wordpad.rc:92
 msgid "Roman numerals - upper case"
-msgstr ""
+msgstr "Roomalaiset numerot - suuraakkoset"
 
 #: wordpad.rc:94 wordpad.rc:117
 msgid "&Paragraph..."
