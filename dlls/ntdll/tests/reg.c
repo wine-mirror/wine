@@ -364,16 +364,22 @@ static void test_NtOpenKey(void)
 
     /* Zero accessmask */
     attr.Length = sizeof(attr);
+    key = (HANDLE)0xdeadbeef;
     status = pNtOpenKey(&key, 0, &attr);
 todo_wine
     ok(status == STATUS_ACCESS_DENIED, "Expected STATUS_ACCESS_DENIED, got: 0x%08x\n", status);
+todo_wine
+    ok(!key, "key = %p\n", key);
     if (status == STATUS_SUCCESS) NtClose(key);
 
     /* Calling without parent key requres full registry path. */
     pRtlCreateUnicodeStringFromAsciiz( &str, "Machine" );
     InitializeObjectAttributes(&attr, &str, 0, 0, 0);
+    key = (HANDLE)0xdeadbeef;
     status = pNtOpenKey(&key, KEY_READ, &attr);
     todo_wine ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NtOpenKey Failed: 0x%08x\n", status);
+todo_wine
+    ok(!key, "key = %p\n", key);
     pRtlFreeUnicodeString( &str );
 
     /* Open is case sensitive unless OBJ_CASE_INSENSITIVE is specified. */
@@ -1070,8 +1076,10 @@ static void test_symlinks(void)
     /* try opening the target through the link */
 
     attr.ObjectName = &link_str;
+    key = (HANDLE)0xdeadbeef;
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
     ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey wrong status 0x%08x\n", status );
+    ok( !key, "key = %p\n", key );
 
     attr.ObjectName = &target_str;
     status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
@@ -1271,8 +1279,10 @@ static void test_symlinks(void)
     ok( status == STATUS_SUCCESS || status == STATUS_OBJECT_NAME_NOT_FOUND,
         "NtOpenKey wrong status 0x%08x\n", status );
 
-    status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, REG_OPTION_CREATE_LINK, 0 );
+    key = (HKEY)0xdeadbeef;
+    status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, REG_OPTION_CREATE_LINK, NULL );
     ok( status == STATUS_OBJECT_NAME_COLLISION, "NtCreateKey failed: 0x%08x\n", status );
+    ok( !key, "key = %p\n", key );
 
     status = pNtDeleteKey( link );
     ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08x\n", status );

@@ -71,11 +71,9 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
         req->options    = options;
         wine_server_add_data( req, objattr, len );
         if (class) wine_server_add_data( req, class->Buffer, class->Length );
-        if (!(ret = wine_server_call( req )))
-        {
-            *retkey = wine_server_ptr_handle( reply->hkey );
-            if (dispos) *dispos = reply->created ? REG_CREATED_NEW_KEY : REG_OPENED_EXISTING_KEY;
-        }
+        ret = wine_server_call( req );
+        *retkey = wine_server_ptr_handle( reply->hkey );
+        if (dispos && !ret) *dispos = reply->created ? REG_CREATED_NEW_KEY : REG_OPENED_EXISTING_KEY;
     }
     SERVER_END_REQ;
 
