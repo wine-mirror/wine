@@ -212,6 +212,8 @@ static NTSTATUS open_key( HKEY *retkey, DWORD options, ACCESS_MASK access, OBJEC
     DWORD pos = 0, i = 0, len = attr->ObjectName->Length / sizeof(WCHAR);
     UNICODE_STRING str;
 
+    *retkey = NULL;
+
     if (!force_wow32)
     {
         if (options & REG_OPTION_OPEN_LINK) attr->Attributes |= OBJ_OPENLINK;
