@@ -50,6 +50,7 @@
 
 500 stub     WEP
 
+@ stdcall FreeAddrInfoExW(ptr)
 @ stdcall FreeAddrInfoW(ptr)
 @ stdcall GetAddrInfoExW(wstr wstr long ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall GetAddrInfoW(wstr wstr ptr ptr)

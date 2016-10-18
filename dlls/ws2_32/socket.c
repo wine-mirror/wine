@@ -6810,6 +6810,14 @@ void WINAPI FreeAddrInfoW(PADDRINFOW ai)
     }
 }
 
+/***********************************************************************
+ *      FreeAddrInfoExW      (WS2_32.@)
+ */
+void WINAPI FreeAddrInfoExW(ADDRINFOEXW *ai)
+{
+    FIXME("%p\n", ai);
+}
+
 int WINAPI WS_getnameinfo(const SOCKADDR *sa, WS_socklen_t salen, PCHAR host,
                           DWORD hostlen, PCHAR serv, DWORD servlen, INT flags)
 {
