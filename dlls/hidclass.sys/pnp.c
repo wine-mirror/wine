@@ -36,9 +36,10 @@ static const WCHAR device_deviceid_fmtW[] = {'%','s','\\',
     'v','i','d','_','%','0','4','x','&','p','i','d','_','%', '0','4','x'};
 
 static NTSTATUS WINAPI internalComplete(DEVICE_OBJECT *deviceObject, IRP *irp,
-    void *context )
+    void *context)
 {
-    SetEvent(irp->UserEvent);
+    HANDLE event = context;
+    SetEvent(event);
     return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
@@ -54,13 +55,12 @@ static NTSTATUS get_device_id(DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WCH
     if (irp == NULL)
         return STATUS_NO_MEMORY;
 
-    irp->UserEvent = event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    event = CreateEventA(NULL, FALSE, FALSE, NULL);
     irpsp = IoGetNextIrpStackLocation(irp);
     irpsp->MinorFunction = IRP_MN_QUERY_ID;
     irpsp->Parameters.QueryId.IdType = type;
-    irpsp->CompletionRoutine = internalComplete;
-    irpsp->Control = SL_INVOKE_ON_SUCCESS | SL_INVOKE_ON_ERROR;
 
+    IoSetCompletionRoutine(irp, internalComplete, event, TRUE, TRUE, TRUE);
     IoCallDriver(device, irp);
     if (irp->IoStatus.u.Status == STATUS_PENDING)
         WaitForSingleObject(event, INFINITE);

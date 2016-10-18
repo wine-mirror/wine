@@ -242,9 +242,10 @@ static void HID_Device_processQueue(DEVICE_OBJECT *device)
     HeapFree(GetProcessHeap(), 0, packet);
 }
 
-static NTSTATUS WINAPI read_Completion(DEVICE_OBJECT *deviceObject, IRP *irp, void *context )
+static NTSTATUS WINAPI read_Completion(DEVICE_OBJECT *deviceObject, IRP *irp, void *context)
 {
-    SetEvent(irp->UserEvent);
+    HANDLE event = context;
+    SetEvent(event);
     return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
@@ -254,7 +255,6 @@ static DWORD CALLBACK hid_device_thread(void *args)
 
     IRP *irp;
     IO_STATUS_BLOCK irp_status;
-    IO_STACK_LOCATION *irpsp;
     DWORD rc;
     HANDLE events[2];
     NTSTATUS ntrc;
@@ -276,13 +276,10 @@ static DWORD CALLBACK hid_device_thread(void *args)
             packet->reportId = 0;
 
             irp = IoBuildDeviceIoControlRequest(IOCTL_HID_GET_INPUT_REPORT,
-                device, NULL, 0, packet, sizeof(*packet), TRUE, events[0],
+                device, NULL, 0, packet, sizeof(*packet), TRUE, NULL,
                 &irp_status);
 
-            irpsp = IoGetNextIrpStackLocation(irp);
-            irpsp->CompletionRoutine = read_Completion;
-            irpsp->Control = SL_INVOKE_ON_SUCCESS | SL_INVOKE_ON_ERROR;
-
+            IoSetCompletionRoutine(irp, read_Completion, events[0], TRUE, TRUE, TRUE);
             ntrc = IoCallDriver(device, irp);
 
             if (ntrc == STATUS_PENDING)
@@ -324,13 +321,10 @@ static DWORD CALLBACK hid_device_thread(void *args)
 
             irp = IoBuildDeviceIoControlRequest(IOCTL_HID_READ_REPORT,
                 device, NULL, 0, buffer,
-                ext->preparseData->caps.InputReportByteLength, TRUE, events[0],
+                ext->preparseData->caps.InputReportByteLength, TRUE, NULL,
                 &irp_status);
 
-            irpsp = IoGetNextIrpStackLocation(irp);
-            irpsp->CompletionRoutine = read_Completion;
-            irpsp->Control = SL_INVOKE_ON_SUCCESS | SL_INVOKE_ON_ERROR;
-
+            IoSetCompletionRoutine(irp, read_Completion, events[0], TRUE, TRUE, TRUE);
             ntrc = IoCallDriver(device, irp);
 
             if (ntrc == STATUS_PENDING)

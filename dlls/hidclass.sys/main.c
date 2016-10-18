@@ -86,9 +86,10 @@ NTSTATUS WINAPI HidRegisterMinidriver(HID_MINIDRIVER_REGISTRATION *registration)
 }
 
 static NTSTATUS WINAPI internalComplete(DEVICE_OBJECT *deviceObject, IRP *irp,
-    void *context )
+    void *context)
 {
-    SetEvent(irp->UserEvent);
+    HANDLE event = context;
+    SetEvent(event);
     return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
@@ -96,7 +97,6 @@ NTSTATUS call_minidriver(ULONG code, DEVICE_OBJECT *device, void *in_buff, ULONG
 {
     IRP *irp;
     IO_STATUS_BLOCK irp_status;
-    IO_STACK_LOCATION *irpsp;
     NTSTATUS status;
     void *buffer = NULL;
 
@@ -109,12 +109,9 @@ NTSTATUS call_minidriver(ULONG code, DEVICE_OBJECT *device, void *in_buff, ULONG
     }
 
     irp = IoBuildDeviceIoControlRequest(code, device, in_buff, in_size,
-        buffer, out_size, TRUE, event, &irp_status);
+        buffer, out_size, TRUE, NULL, &irp_status);
 
-    irpsp = IoGetNextIrpStackLocation(irp);
-    irpsp->CompletionRoutine = internalComplete;
-    irpsp->Control = SL_INVOKE_ON_SUCCESS | SL_INVOKE_ON_ERROR;
-
+    IoSetCompletionRoutine(irp, internalComplete, event, TRUE, TRUE, TRUE);
     IoCallDriver(device, irp);
 
     if (irp->IoStatus.u.Status == STATUS_PENDING)
