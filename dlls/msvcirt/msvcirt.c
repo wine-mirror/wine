@@ -185,6 +185,8 @@ extern const vtable_ptr MSVCP_ios_vtable;
 extern const vtable_ptr MSVCP_ostream_vtable;
 /* ??_7ostream_withassign@@6B@ */
 extern const vtable_ptr MSVCP_ostream_withassign_vtable;
+/* ??_7ostrstream@@6B@ */
+extern const vtable_ptr MSVCP_ostrstream_vtable;
 /* ??_7istream@@6B@ */
 extern const vtable_ptr MSVCP_istream_vtable;
 /* ??_7istream_withassign@@6B@ */
@@ -249,6 +251,8 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ostream_vector_dtor));
     __ASM_VTABLE(ostream_withassign,
             VTABLE_ADD_FUNC(ostream_vector_dtor));
+    __ASM_VTABLE(ostrstream,
+            VTABLE_ADD_FUNC(ostream_vector_dtor));
     __ASM_VTABLE(istream,
             VTABLE_ADD_FUNC(istream_vector_dtor));
     __ASM_VTABLE(istream_withassign,
@@ -264,6 +268,7 @@ void __asm_dummy_vtables(void) {
 
 /* ??_8ostream@@7B@ */
 /* ??_8ostream_withassign@@7B@ */
+/* ??_8ostrstream@@7B@ */
 const int ostream_vbtable[] = {0, VBTABLE_ENTRY(ostream, FIELD_OFFSET(ostream, vbtable), ios)};
 /* ??_8istream@@7B@ */
 /* ??_8istream_withassign@@7B@ */
@@ -281,6 +286,8 @@ DEFINE_RTTI_DATA0(ios, 0, ".?AVios@@")
 DEFINE_RTTI_DATA1(ostream, sizeof(ostream), &ios_rtti_base_descriptor, ".?AVostream@@")
 DEFINE_RTTI_DATA2(ostream_withassign, sizeof(ostream),
     &ostream_rtti_base_descriptor, &ios_rtti_base_descriptor, ".?AVostream_withassign@@")
+DEFINE_RTTI_DATA2(ostrstream, sizeof(ostream),
+    &ostream_rtti_base_descriptor, &ios_rtti_base_descriptor, ".?AVostrstream@@")
 DEFINE_RTTI_DATA1(istream, sizeof(istream), &ios_rtti_base_descriptor, ".?AVistream@@")
 DEFINE_RTTI_DATA2(istream_withassign, sizeof(istream),
     &istream_rtti_base_descriptor, &ios_rtti_base_descriptor, ".?AVistream_withassign@@")
@@ -2349,6 +2356,8 @@ ostream* __thiscall ostream_copy_ctor(ostream *this, const ostream *copy, BOOL v
 /* ??1ostream@@UEAA@XZ */
 /* ??1ostream_withassign@@UAE@XZ */
 /* ??1ostream_withassign@@UEAA@XZ */
+/* ??1ostrstream@@UAE@XZ */
+/* ??1ostrstream@@UEAA@XZ */
 DEFINE_THISCALL_WRAPPER(ostream_dtor, 4)
 void __thiscall ostream_dtor(ios *base)
 {
@@ -2385,6 +2394,8 @@ ostream* __thiscall ostream_assign_sb(ostream *this, streambuf *sb)
 /* ??4ostream_withassign@@QEAAAEAV0@AEBV0@@Z */
 /* ??4ostream_withassign@@QAEAAVostream@@ABV1@@Z */
 /* ??4ostream_withassign@@QEAAAEAVostream@@AEBV1@@Z */
+/* ??4ostrstream@@QAEAAV0@ABV0@@Z */
+/* ??4ostrstream@@QEAAAEAV0@AEBV0@@Z */
 DEFINE_THISCALL_WRAPPER(ostream_assign, 8)
 ostream* __thiscall ostream_assign(ostream *this, const ostream *rhs)
 {
@@ -2395,6 +2406,8 @@ ostream* __thiscall ostream_assign(ostream *this, const ostream *rhs)
 /* ??_Dostream@@QEAAXXZ */
 /* ??_Dostream_withassign@@QAEXXZ */
 /* ??_Dostream_withassign@@QEAAXXZ */
+/* ??_Dostrstream@@QAEXXZ */
+/* ??_Dostrstream@@QEAAXXZ */
 DEFINE_THISCALL_WRAPPER(ostream_vbase_dtor, 4)
 void __thiscall ostream_vbase_dtor(ostream *this)
 {
@@ -2408,6 +2421,7 @@ void __thiscall ostream_vbase_dtor(ostream *this)
 
 /* ??_Eostream@@UAEPAXI@Z */
 /* ??_Eostream_withassign@@UAEPAXI@Z */
+/* ??_Eostrstream@@UAEPAXI@Z */
 DEFINE_THISCALL_WRAPPER(ostream_vector_dtor, 8)
 ostream* __thiscall ostream_vector_dtor(ios *base, unsigned int flags)
 {
@@ -2432,6 +2446,7 @@ ostream* __thiscall ostream_vector_dtor(ios *base, unsigned int flags)
 
 /* ??_Gostream@@UAEPAXI@Z */
 /* ??_Gostream_withassign@@UAEPAXI@Z */
+/* ??_Gostrstream@@UAEPAXI@Z */
 DEFINE_THISCALL_WRAPPER(ostream_scalar_dtor, 8)
 ostream* __thiscall ostream_scalar_dtor(ios *base, unsigned int flags)
 {
@@ -2934,6 +2949,57 @@ ostream* __thiscall ostream_withassign_ctor(ostream *this, BOOL virt_init)
     base = ostream_get_ios(this);
     base->vtable = &MSVCP_ostream_withassign_vtable;
     return this;
+}
+
+/* ??0ostrstream@@QAE@ABV0@@Z */
+/* ??0ostrstream@@QEAA@AEBV0@@Z */
+DEFINE_THISCALL_WRAPPER(ostrstream_copy_ctor, 12)
+ostream* __thiscall ostrstream_copy_ctor(ostream *this, const ostream *copy, BOOL virt_init)
+{
+    FIXME("(%p %p %d) stub\n", this, copy, virt_init);
+    return this;
+}
+
+/* ??0ostrstream@@QAE@PADHH@Z */
+/* ??0ostrstream@@QEAA@PEADHH@Z */
+DEFINE_THISCALL_WRAPPER(ostrstream_buffer_ctor, 20)
+ostream* __thiscall ostrstream_buffer_ctor(ostream *this, char *buffer, int length, int mode, BOOL virt_init)
+{
+    FIXME("(%p %p %d %d %d) stub\n", this, buffer, length, mode, virt_init);
+    return this;
+}
+
+/* ??0ostrstream@@QAE@XZ */
+/* ??0ostrstream@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(ostrstream_ctor, 8)
+ostream* __thiscall ostrstream_ctor(ostream *this, BOOL virt_init)
+{
+    FIXME("(%p %d) stub\n", this, virt_init);
+    return this;
+}
+
+/* ?pcount@ostrstream@@QBEHXZ */
+/* ?pcount@ostrstream@@QEBAHXZ */
+DEFINE_THISCALL_WRAPPER(ostrstream_pcount, 4)
+int __thiscall ostrstream_pcount(const ostream *this)
+{
+    return streambuf_out_waiting(ostream_get_ios(this)->sb);
+}
+
+/* ?rdbuf@ostrstream@@QBEPAVstrstreambuf@@XZ */
+/* ?rdbuf@ostrstream@@QEBAPEAVstrstreambuf@@XZ */
+DEFINE_THISCALL_WRAPPER(ostrstream_rdbuf, 4)
+strstreambuf* __thiscall ostrstream_rdbuf(const ostream *this)
+{
+    return (strstreambuf*) ostream_get_ios(this)->sb;
+}
+
+/* ?str@ostrstream@@QAEPADXZ */
+/* ?str@ostrstream@@QEAAPEADXZ */
+DEFINE_THISCALL_WRAPPER(ostrstream_str, 4)
+char* __thiscall ostrstream_str(ostream *this)
+{
+    return strstreambuf_str(ostrstream_rdbuf(this));
 }
 
 static inline ios* istream_get_ios(const istream *this)
@@ -4132,24 +4198,6 @@ void __cdecl ios_sync_with_stdio(void)
     }
 }
 
-/******************************************************************
- *		 ??0ostrstream@@QAE@XZ (MSVCRTI.@)
- */
-DEFINE_THISCALL_WRAPPER(MSVCIRT_ostrstream_ctor,8)
-void * __thiscall MSVCIRT_ostrstream_ctor(ostream *this, BOOL virt_init)
-{
-   FIXME("(%p %x) stub\n", this, virt_init);
-   return this;
-}
-
-/******************************************************************
- *		 ??1ostrstream@@UAE@XZ (MSVCRTI.@)
- */
-DEFINE_THISCALL_WRAPPER(MSVCIRT_ostrstream_dtor,4)
-void __thiscall MSVCIRT_ostrstream_dtor(ios *base)
-{
-    FIXME("(%p) stub\n", base);
-}
 
 #ifdef __i386__
 
@@ -4210,6 +4258,7 @@ static void init_io(void *base)
     init_ios_rtti(base);
     init_ostream_rtti(base);
     init_ostream_withassign_rtti(base);
+    init_ostrstream_rtti(base);
     init_istream_rtti(base);
     init_istream_withassign_rtti(base);
     init_iostream_rtti(base);
