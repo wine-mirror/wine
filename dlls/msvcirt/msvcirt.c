@@ -2951,12 +2951,28 @@ ostream* __thiscall ostream_withassign_ctor(ostream *this, BOOL virt_init)
     return this;
 }
 
+static ostream* ostrstream_internal_sb_ctor(ostream *this, strstreambuf *ssb, BOOL virt_init)
+{
+    ios *base;
+
+    if (ssb)
+        ostream_sb_ctor(this, &ssb->base, virt_init);
+    else
+        ostream_ctor(this, virt_init);
+    base = ostream_get_ios(this);
+    base->vtable = &MSVCP_ostrstream_vtable;
+    base->delbuf = 1;
+    return this;
+}
+
 /* ??0ostrstream@@QAE@ABV0@@Z */
 /* ??0ostrstream@@QEAA@AEBV0@@Z */
 DEFINE_THISCALL_WRAPPER(ostrstream_copy_ctor, 12)
 ostream* __thiscall ostrstream_copy_ctor(ostream *this, const ostream *copy, BOOL virt_init)
 {
-    FIXME("(%p %p %d) stub\n", this, copy, virt_init);
+    TRACE("(%p %p %d)\n", this, copy, virt_init);
+    ostream_withassign_copy_ctor(this, copy, virt_init);
+    ostream_get_ios(this)->vtable = &MSVCP_ostrstream_vtable;
     return this;
 }
 
@@ -2965,8 +2981,16 @@ ostream* __thiscall ostrstream_copy_ctor(ostream *this, const ostream *copy, BOO
 DEFINE_THISCALL_WRAPPER(ostrstream_buffer_ctor, 20)
 ostream* __thiscall ostrstream_buffer_ctor(ostream *this, char *buffer, int length, int mode, BOOL virt_init)
 {
-    FIXME("(%p %p %d %d %d) stub\n", this, buffer, length, mode, virt_init);
-    return this;
+    strstreambuf *ssb = MSVCRT_operator_new(sizeof(strstreambuf));
+
+    TRACE("(%p %p %d %d %d)\n", this, buffer, length, mode, virt_init);
+
+    if (ssb) {
+        strstreambuf_buffer_ctor(ssb, buffer, length, buffer);
+        if (mode & (OPENMODE_app|OPENMODE_ate))
+            ssb->base.pptr = buffer + strlen(buffer);
+    }
+    return ostrstream_internal_sb_ctor(this, ssb, virt_init);
 }
 
 /* ??0ostrstream@@QAE@XZ */
@@ -2974,8 +2998,13 @@ ostream* __thiscall ostrstream_buffer_ctor(ostream *this, char *buffer, int leng
 DEFINE_THISCALL_WRAPPER(ostrstream_ctor, 8)
 ostream* __thiscall ostrstream_ctor(ostream *this, BOOL virt_init)
 {
-    FIXME("(%p %d) stub\n", this, virt_init);
-    return this;
+    strstreambuf *ssb = MSVCRT_operator_new(sizeof(strstreambuf));
+
+    TRACE("(%p %d)\n", this, virt_init);
+
+    if (ssb)
+        strstreambuf_ctor(ssb);
+    return ostrstream_internal_sb_ctor(this, ssb, virt_init);
 }
 
 /* ?pcount@ostrstream@@QBEHXZ */
