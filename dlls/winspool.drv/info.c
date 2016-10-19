@@ -583,31 +583,38 @@ WINSPOOL_SetDefaultPrinter(const char *devname, const char *name, BOOL force) {
 static BOOL add_printer_driver(const WCHAR *name, WCHAR *ppd)
 {
     DRIVER_INFO_3W di3;
+    unsigned int i;
+    BOOL res;
 
     ZeroMemory(&di3, sizeof(DRIVER_INFO_3W));
     di3.cVersion         = 3;
     di3.pName            = (WCHAR*)name;
-    di3.pEnvironment     = envname_x86W;
     di3.pDriverPath      = driver_nt;
     di3.pDataFile        = ppd;
     di3.pConfigFile      = driver_nt;
     di3.pDefaultDataType = rawW;
 
-    if (AddPrinterDriverExW( NULL, 3, (LPBYTE)&di3, APD_COPY_NEW_FILES | APD_COPY_FROM_DIRECTORY ) ||
-        (GetLastError() ==  ERROR_PRINTER_DRIVER_ALREADY_INSTALLED ))
+    for (i = 0; i < sizeof(all_printenv)/sizeof(all_printenv[0]); i++)
     {
-        di3.cVersion     = 0;
-        di3.pEnvironment = envname_win40W;
-        di3.pDriverPath  = driver_9x;
-        di3.pConfigFile  = driver_9x;
-        if (AddPrinterDriverExW( NULL, 3, (LPBYTE)&di3, APD_COPY_NEW_FILES | APD_COPY_FROM_DIRECTORY ) ||
-            (GetLastError() ==  ERROR_PRINTER_DRIVER_ALREADY_INSTALLED ))
+        di3.pEnvironment = (WCHAR *) all_printenv[i]->envname;
+        if (all_printenv[i]->envname == envname_win40W)
         {
-            return TRUE;
+            /* We use wineps16.drv as driver for 16 bit */
+            di3.pDriverPath      = driver_9x;
+            di3.pConfigFile      = driver_9x;
+        }
+        res = AddPrinterDriverExW( NULL, 3, (LPBYTE)&di3, APD_COPY_NEW_FILES | APD_COPY_FROM_DIRECTORY );
+        TRACE("got %d and %d for %s (%s)\n", res, GetLastError(), debugstr_w(name), debugstr_w(di3.pEnvironment));
+
+        if (!res & (GetLastError() != ERROR_PRINTER_DRIVER_ALREADY_INSTALLED))
+        {
+            ERR("failed with %u for %s (%s) %s\n", GetLastError(), debugstr_w(name),
+                debugstr_w(di3.pEnvironment), debugstr_w(di3.pDriverPath));
+                return FALSE;
         }
     }
-    ERR("failed with %u for %s (%s)\n", GetLastError(), debugstr_w(di3.pDriverPath), debugstr_w(di3.pEnvironment));
-    return FALSE;
+
+    return TRUE;
 }
 
 static inline char *expand_env_string( char *str, DWORD type )
