@@ -156,7 +156,7 @@ static ME_String *para_num_get_str( ME_Paragraph *para, WORD num )
 {
     /* max 4 Roman letters (representing '8') / decade + '(' + ')' */
     ME_String *str = ME_MakeStringEmpty( 20 + 2 );
-    WCHAR *p = str->szData;
+    WCHAR *p;
     static const WCHAR fmtW[] = {'%', 'd', 0};
     static const WORD letter_base[] = { 1, 26, 26 * 26, 26 * 26 * 26 };
     /* roman_base should start on a '5' not a '1', otherwise the 'total' code will need adjusting.
@@ -176,6 +176,8 @@ static ME_String *para_num_get_str( ME_Paragraph *para, WORD num )
     WORD letter, total, char_offset = 0;
 
     if (!str) return NULL;
+
+    p = str->szData;
 
     if ((para->fmt.wNumberingStyle & 0xf00) == PFNS_PARENS)
         *p++ = '(';
