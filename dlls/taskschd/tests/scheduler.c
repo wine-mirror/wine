@@ -1174,10 +1174,34 @@ todo_wine
 static void test_daily_trigger(ITrigger *trigger)
 {
     IDailyTrigger *daily_trigger;
+    short interval;
     HRESULT hr;
 
     hr = ITrigger_QueryInterface(trigger, &IID_IDailyTrigger, (void**)&daily_trigger);
     ok(hr == S_OK, "Could not get IDailyTrigger iface: %08x\n", hr);
+
+    interval = -1;
+    hr = IDailyTrigger_get_DaysInterval(daily_trigger, &interval);
+    ok(hr == S_OK, "get_DaysInterval failed: %08x\n", hr);
+    ok(interval == 1, "interval = %d\n", interval);
+
+    hr = IDailyTrigger_put_DaysInterval(daily_trigger, -2);
+    ok(hr == E_INVALIDARG, "put_DaysInterval failed: %08x\n", hr);
+    hr = IDailyTrigger_put_DaysInterval(daily_trigger, 0);
+    ok(hr == E_INVALIDARG, "put_DaysInterval failed: %08x\n", hr);
+
+    interval = -1;
+    hr = IDailyTrigger_get_DaysInterval(daily_trigger, &interval);
+    ok(hr == S_OK, "get_DaysInterval failed: %08x\n", hr);
+    ok(interval == 1, "interval = %d\n", interval);
+
+    hr = IDailyTrigger_put_DaysInterval(daily_trigger, 2);
+    ok(hr == S_OK, "put_DaysInterval failed: %08x\n", hr);
+
+    interval = -1;
+    hr = IDailyTrigger_get_DaysInterval(daily_trigger, &interval);
+    ok(hr == S_OK, "get_DaysInterval failed: %08x\n", hr);
+    ok(interval == 2, "interval = %d\n", interval);
 
     IDailyTrigger_Release(daily_trigger);
 }

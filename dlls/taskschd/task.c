@@ -38,6 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(taskschd);
 typedef struct {
     IDailyTrigger IDailyTrigger_iface;
     LONG ref;
+    short interval;
 } DailyTrigger;
 
 static inline DailyTrigger *impl_from_IDailyTrigger(IDailyTrigger *iface)
@@ -217,15 +218,24 @@ static HRESULT WINAPI DailyTrigger_put_Enabled(IDailyTrigger *iface, VARIANT_BOO
 static HRESULT WINAPI DailyTrigger_get_DaysInterval(IDailyTrigger *iface, short *days)
 {
     DailyTrigger *This = impl_from_IDailyTrigger(iface);
-    FIXME("(%p)->(%p)\n", This, days);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, days);
+
+    *days = This->interval;
+    return S_OK;
 }
 
 static HRESULT WINAPI DailyTrigger_put_DaysInterval(IDailyTrigger *iface, short days)
 {
     DailyTrigger *This = impl_from_IDailyTrigger(iface);
-    FIXME("(%p)->(%d)\n", This, days);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, days);
+
+    if(days <= 0)
+        return E_INVALIDARG;
+
+    This->interval = days;
+    return S_OK;
 }
 
 static HRESULT WINAPI DailyTrigger_get_RandomDelay(IDailyTrigger *iface, BSTR *pRandomDelay)
@@ -279,6 +289,7 @@ static HRESULT DailyTrigger_create(ITrigger **trigger)
 
     daily_trigger->IDailyTrigger_iface.lpVtbl = &DailyTrigger_vtbl;
     daily_trigger->ref = 1;
+    daily_trigger->interval = 1;
 
     *trigger = (ITrigger*)&daily_trigger->IDailyTrigger_iface;
     return S_OK;
