@@ -200,7 +200,9 @@ static int (*__thiscall p_streambuf_allocate)(streambuf*);
 static void (*__thiscall p_streambuf_clrclock)(streambuf*);
 static int (*__thiscall p_streambuf_doallocate)(streambuf*);
 static void (*__thiscall p_streambuf_gbump)(streambuf*, int);
+static int (*__thiscall p_streambuf_in_avail)(const streambuf*);
 static void (*__thiscall p_streambuf_lock)(streambuf*);
+static int (*__thiscall p_streambuf_out_waiting)(const streambuf*);
 static int (*__thiscall p_streambuf_pbackfail)(streambuf*, int);
 static void (*__thiscall p_streambuf_pbump)(streambuf*, int);
 static int (*__thiscall p_streambuf_sbumpc)(streambuf*);
@@ -480,7 +482,9 @@ static BOOL init(void)
         SET(p_streambuf_clrclock, "?clrlock@streambuf@@QEAAXXZ");
         SET(p_streambuf_doallocate, "?doallocate@streambuf@@MEAAHXZ");
         SET(p_streambuf_gbump, "?gbump@streambuf@@IEAAXH@Z");
+        SET(p_streambuf_in_avail, "?in_avail@streambuf@@QEBAHXZ");
         SET(p_streambuf_lock, "?lock@streambuf@@QEAAXXZ");
+        SET(p_streambuf_out_waiting, "?out_waiting@streambuf@@QEBAHXZ");
         SET(p_streambuf_pbackfail, "?pbackfail@streambuf@@UEAAHH@Z");
         SET(p_streambuf_pbump, "?pbump@streambuf@@IEAAXH@Z");
         SET(p_streambuf_sbumpc, "?sbumpc@streambuf@@QEAAHXZ");
@@ -657,7 +661,9 @@ static BOOL init(void)
         SET(p_streambuf_clrclock, "?clrlock@streambuf@@QAEXXZ");
         SET(p_streambuf_doallocate, "?doallocate@streambuf@@MAEHXZ");
         SET(p_streambuf_gbump, "?gbump@streambuf@@IAEXH@Z");
+        SET(p_streambuf_in_avail, "?in_avail@streambuf@@QBEHXZ");
         SET(p_streambuf_lock, "?lock@streambuf@@QAEXXZ");
+        SET(p_streambuf_out_waiting, "?out_waiting@streambuf@@QBEHXZ");
         SET(p_streambuf_pbackfail, "?pbackfail@streambuf@@UAEHH@Z");
         SET(p_streambuf_pbump, "?pbump@streambuf@@IAEXH@Z");
         SET(p_streambuf_sbumpc, "?sbumpc@streambuf@@QAEHXZ");
@@ -1387,6 +1393,36 @@ static void test_streambuf(void)
     ok(ret == 'X', "expected 'X' got '%c'\n", ret);
     ok(sb2.gptr == sb2.egptr, "wrong get pointer, expected %p got %p\n", sb2.egptr, sb2.gptr);
     ok(*sb2.gptr == 'X', "expected 'X' in the get area, got %c\n", *sb2.gptr);
+
+    /* out_waiting */
+    ret = (int) call_func1(p_streambuf_out_waiting, &sb);
+    ok(ret == 9, "expected 9 got %d\n", ret);
+    sb.pptr = sb.pbase;
+    ret = (int) call_func1(p_streambuf_out_waiting, &sb);
+    ok(ret == 0, "expected 0 got %d\n", ret);
+    sb.pptr = sb.pbase - 1;
+    ret = (int) call_func1(p_streambuf_out_waiting, &sb);
+    ok(ret == 0, "expected 0 got %d\n", ret);
+    sb.pptr = NULL;
+    ret = (int) call_func1(p_streambuf_out_waiting, &sb);
+    ok(ret == 0, "expected 0 got %d\n", ret);
+    sb.pptr = sb.epptr;
+    sb.pbase = NULL;
+    ret = (int) call_func1(p_streambuf_out_waiting, &sb);
+    ok(ret == (int)(sb.pptr - sb.pbase), "expected %d got %d\n", (int)(sb.pptr - sb.pbase), ret);
+
+    /* in_avail */
+    ret = (int) call_func1(p_streambuf_in_avail, &sb);
+    ok(ret == 256, "expected 256 got %d\n", ret);
+    sb.gptr = sb.egptr;
+    ret = (int) call_func1(p_streambuf_in_avail, &sb);
+    ok(ret == 0, "expected 0 got %d\n", ret);
+    sb.gptr = sb.egptr + 1;
+    ret = (int) call_func1(p_streambuf_in_avail, &sb);
+    ok(ret == 0, "expected 0 got %d\n", ret);
+    sb.egptr = NULL;
+    ret = (int) call_func1(p_streambuf_in_avail, &sb);
+    ok(ret == 0, "expected 0 got %d\n", ret);
 
     SetEvent(lock_arg.test[3]);
     WaitForSingleObject(thread, INFINITE);

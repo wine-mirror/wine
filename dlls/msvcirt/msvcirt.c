@@ -556,7 +556,7 @@ DEFINE_THISCALL_WRAPPER(streambuf_in_avail, 4)
 int __thiscall streambuf_in_avail(const streambuf *this)
 {
     TRACE("(%p)\n", this);
-    return this->egptr - this->gptr;
+    return (this->egptr - this->gptr > 0) ? this->egptr - this->gptr : 0;
 }
 
 /* ?out_waiting@streambuf@@QBEHXZ */
@@ -565,7 +565,7 @@ DEFINE_THISCALL_WRAPPER(streambuf_out_waiting, 4)
 int __thiscall streambuf_out_waiting(const streambuf *this)
 {
     TRACE("(%p)\n", this);
-    return this->pptr - this->pbase;
+    return (this->pptr - this->pbase > 0) ? this->pptr - this->pbase : 0;
 }
 
 /* Unexported */
