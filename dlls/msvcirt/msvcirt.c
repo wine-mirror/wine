@@ -4025,7 +4025,9 @@ istream* __thiscall istream_withassign_ctor(istream *this, BOOL virt_init)
 DEFINE_THISCALL_WRAPPER(istrstream_copy_ctor, 12)
 istream* __thiscall istrstream_copy_ctor(istream *this, const istream *copy, BOOL virt_init)
 {
-    FIXME("(%p %p %d) stub\n", this, copy, virt_init);
+    TRACE("(%p %p %d)\n", this, copy, virt_init);
+    istream_withassign_copy_ctor(this, copy, virt_init);
+    istream_get_ios(this)->vtable = &MSVCP_istrstream_vtable;
     return this;
 }
 
@@ -4034,7 +4036,19 @@ istream* __thiscall istrstream_copy_ctor(istream *this, const istream *copy, BOO
 DEFINE_THISCALL_WRAPPER(istrstream_buffer_ctor, 16)
 istream* __thiscall istrstream_buffer_ctor(istream *this, char *buffer, int length, BOOL virt_init)
 {
-    FIXME("(%p %p %d %d) stub\n", this, buffer, length, virt_init);
+    ios *base;
+    strstreambuf *ssb = MSVCRT_operator_new(sizeof(strstreambuf));
+
+    TRACE("(%p %p %d %d)\n", this, buffer, length, virt_init);
+
+    if (ssb) {
+        strstreambuf_buffer_ctor(ssb, buffer, length, NULL);
+        istream_sb_ctor(this, &ssb->base, virt_init);
+    } else
+        istream_ctor(this, virt_init);
+    base = istream_get_ios(this);
+    base->vtable = &MSVCP_istrstream_vtable;
+    base->delbuf = 1;
     return this;
 }
 
@@ -4043,8 +4057,7 @@ istream* __thiscall istrstream_buffer_ctor(istream *this, char *buffer, int leng
 DEFINE_THISCALL_WRAPPER(istrstream_str_ctor, 12)
 istream* __thiscall istrstream_str_ctor(istream *this, char *str, BOOL virt_init)
 {
-    FIXME("(%p %p %d) stub\n", this, str, virt_init);
-    return this;
+    return istrstream_buffer_ctor(this, str, 0, virt_init);
 }
 
 /* ?rdbuf@istrstream@@QBEPAVstrstreambuf@@XZ */
