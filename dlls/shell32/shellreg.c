@@ -147,3 +147,14 @@ HRESULT WINAPI SHRegCloseKey (HKEY hkey)
 	TRACE("%p\n",hkey);
 	return RegCloseKey( hkey );
 }
+
+/*************************************************************************
+ * SHCreateSessionKey                   [SHELL32.723]
+ *
+ */
+HRESULT WINAPI SHCreateSessionKey(REGSAM access, HKEY *hkey)
+{
+    FIXME("stub: %d %p\n", access, hkey);
+    *hkey = NULL;
+    return E_NOTIMPL;
+}
