@@ -6164,8 +6164,8 @@ GpStatus WINGDIPAPI GdipSetClipRegion(GpGraphics *graphics, GpRegion *region,
 GpStatus WINGDIPAPI GdipDrawPolygon(GpGraphics *graphics,GpPen *pen,GDIPCONST GpPointF *points,
     INT count)
 {
-    INT save_state;
-    POINT *pti;
+    GpStatus status;
+    GpPath* path;
 
     TRACE("(%p, %p, %d)\n", graphics, points, count);
 
@@ -6175,24 +6175,16 @@ GpStatus WINGDIPAPI GdipDrawPolygon(GpGraphics *graphics,GpPen *pen,GDIPCONST Gp
     if(graphics->busy)
         return ObjectBusy;
 
-    if (!graphics->hdc)
-    {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
-    }
+    status = GdipCreatePath(FillModeAlternate, &path);
+    if (status != Ok) return status;
 
-    pti = heap_alloc_zero(sizeof(POINT) * count);
+    status = GdipAddPathPolygon(path, points, count);
+    if (status == Ok)
+        status = GdipDrawPath(graphics, pen, path);
 
-    save_state = prepare_dc(graphics, pen);
-    SelectObject(graphics->hdc, GetStockObject(NULL_BRUSH));
+    GdipDeletePath(path);
 
-    transform_and_round_points(graphics, pti, (GpPointF*)points, count);
-    Polygon(graphics->hdc, pti, count);
-
-    restore_dc(graphics, save_state);
-    heap_free(pti);
-
-    return Ok;
+    return status;
 }
 
 GpStatus WINGDIPAPI GdipDrawPolygonI(GpGraphics *graphics,GpPen *pen,GDIPCONST GpPoint *points,
