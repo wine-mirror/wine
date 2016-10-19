@@ -87,11 +87,9 @@ struct d2d_d3d_render_target
     IDWriteRenderingParams *text_rendering_params;
     IDWriteRenderingParams *default_text_rendering_params;
 
-    D2D1_PIXEL_FORMAT format;
+    D2D1_RENDER_TARGET_PROPERTIES desc;
     D2D1_SIZE_U pixel_size;
     struct d2d_clip_stack clip_stack;
-    float dpi_x;
-    float dpi_y;
 };
 
 HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, ID2D1Factory *factory,
@@ -145,6 +143,20 @@ struct d2d_hwnd_render_target
 HRESULT d2d_hwnd_render_target_init(struct d2d_hwnd_render_target *render_target, ID2D1Factory *factory,
         ID3D10Device1 *device, const D2D1_RENDER_TARGET_PROPERTIES *desc,
         const D2D1_HWND_RENDER_TARGET_PROPERTIES *hwnd_desc) DECLSPEC_HIDDEN;
+
+struct d2d_bitmap_render_target
+{
+    ID2D1BitmapRenderTarget ID2D1BitmapRenderTarget_iface;
+    LONG refcount;
+
+    ID2D1RenderTarget *dxgi_target;
+    ID2D1Bitmap *bitmap;
+};
+
+HRESULT d2d_bitmap_render_target_init(struct d2d_bitmap_render_target *render_target,
+        const struct d2d_d3d_render_target *parent_target, const D2D1_SIZE_F *size,
+        const D2D1_SIZE_U *pixel_size, const D2D1_PIXEL_FORMAT *format,
+        D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS options) DECLSPEC_HIDDEN;
 
 struct d2d_gradient
 {

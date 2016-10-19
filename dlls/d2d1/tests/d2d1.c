@@ -2993,16 +2993,7 @@ static void test_bitmap_target(void)
 
     hr = ID2D1HwndRenderTarget_CreateCompatibleRenderTarget(hwnd_rt, NULL, NULL, NULL,
             D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, &rt);
-todo_wine
     ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
-
-    if (FAILED(hr))
-    {
-        ID2D1HwndRenderTarget_Release(hwnd_rt);
-        DestroyWindow(hwnd_rt_desc.hwnd);
-        ID2D1Factory_Release(factory);
-        return;
-    }
 
     /* See if parent target is referenced. */
     ID2D1HwndRenderTarget_AddRef(hwnd_rt);
@@ -3059,8 +3050,8 @@ todo_wine
     ID2D1BitmapRenderTarget_GetDpi(rt, dpi2, dpi2 + 1);
 
     pixel_size = ID2D1BitmapRenderTarget_GetPixelSize(rt);
-    ok(pixel_size.width == ceilf(size.width * dpi2[0] / 96.0f)
-            && pixel_size.height == ceilf(size.height * dpi2[1] / 96.0f), "Wrong pixel size %ux%u\n",
+    ok(pixel_size.width == ceilf(size.width * dpi[0] / 96.0f)
+            && pixel_size.height == ceilf(size.height * dpi[1] / 96.0f), "Wrong pixel size %ux%u\n",
             pixel_size.width, pixel_size.height);
 
     dpi[0] *= (pixel_size.width / size.width) * (96.0f / dpi[0]);

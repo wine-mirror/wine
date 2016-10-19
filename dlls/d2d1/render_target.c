@@ -426,12 +426,30 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateRadialGradientBrush
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateCompatibleRenderTarget(ID2D1RenderTarget *iface,
         const D2D1_SIZE_F *size, const D2D1_SIZE_U *pixel_size, const D2D1_PIXEL_FORMAT *format,
-        D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS options, ID2D1BitmapRenderTarget **render_target)
+        D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS options, ID2D1BitmapRenderTarget **rt)
 {
-    FIXME("iface %p, size %p, pixel_size %p, format %p, options %#x, render_target %p stub!\n",
-            iface, size, pixel_size, format, options, render_target);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+    struct d2d_bitmap_render_target *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, size %p, pixel_size %p, format %p, options %#x, render_target %p.\n",
+            iface, size, pixel_size, format, options, rt);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d2d_bitmap_render_target_init(object, render_target, size, pixel_size,
+            format, options)))
+    {
+        WARN("Failed to initialize render target, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created render target %p.\n", object);
+    *rt = &object->ID2D1BitmapRenderTarget_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateLayer(ID2D1RenderTarget *iface,
@@ -602,8 +620,8 @@ static void d2d_rt_fill_geometry(struct d2d_d3d_render_target *render_target,
         float _12, _22, _32, pad1;
     } transform;
 
-    tmp_x =  (2.0f * render_target->dpi_x) / (96.0f * render_target->pixel_size.width);
-    tmp_y = -(2.0f * render_target->dpi_y) / (96.0f * render_target->pixel_size.height);
+    tmp_x =  (2.0f * render_target->desc.dpiX) / (96.0f * render_target->pixel_size.width);
+    tmp_y = -(2.0f * render_target->desc.dpiY) / (96.0f * render_target->pixel_size.height);
     w = render_target->drawing_state.transform;
     w._11 *= tmp_x;
     w._21 *= tmp_x;
@@ -826,7 +844,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawText(ID2D1RenderTarget *
                 layout_rect->right - layout_rect->left, layout_rect->bottom - layout_rect->top, &text_layout);
     else
         hr = IDWriteFactory_CreateGdiCompatibleTextLayout(dwrite_factory, string, string_len, text_format,
-                layout_rect->right - layout_rect->left, layout_rect->bottom - layout_rect->top, render_target->dpi_x / 96.0f,
+                layout_rect->right - layout_rect->left, layout_rect->bottom - layout_rect->top, render_target->desc.dpiX / 96.0f,
                 (DWRITE_MATRIX*)&render_target->drawing_state.transform, measuring_mode == DWRITE_MEASURING_MODE_GDI_NATURAL, &text_layout);
     IDWriteFactory_Release(dwrite_factory);
     if (FAILED(hr))
@@ -975,10 +993,10 @@ static void d2d_rt_draw_glyph_run_bitmap(struct d2d_d3d_render_target *render_ta
 
     bitmap_desc.pixelFormat.format = DXGI_FORMAT_A8_UNORM;
     bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
-    bitmap_desc.dpiX = render_target->dpi_x;
+    bitmap_desc.dpiX = render_target->desc.dpiX;
     if (texture_type == DWRITE_TEXTURE_CLEARTYPE_3x1)
         bitmap_desc.dpiX *= 3.0f;
-    bitmap_desc.dpiY = render_target->dpi_y;
+    bitmap_desc.dpiY = render_target->desc.dpiY;
     if (FAILED(hr = d2d_d3d_render_target_CreateBitmap(&render_target->ID2D1RenderTarget_iface,
             bitmap_size, opacity_values, bitmap_size.width, &bitmap_desc, &opacity_bitmap)))
     {
@@ -1040,7 +1058,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawGlyphRun(ID2D1RenderTarg
     if (render_target->drawing_state.textAntialiasMode != D2D1_TEXT_ANTIALIAS_MODE_DEFAULT)
         FIXME("Ignoring text antialiasing mode %#x.\n", render_target->drawing_state.textAntialiasMode);
 
-    ppd = max(render_target->dpi_x, render_target->dpi_y) / 96.0f;
+    ppd = max(render_target->desc.dpiX, render_target->desc.dpiY) / 96.0f;
     rendering_params = render_target->text_rendering_params ? render_target->text_rendering_params
             : render_target->default_text_rendering_params;
     if (FAILED(hr = IDWriteFontFace_GetRecommendedRenderingMode(glyph_run->fontFace, glyph_run->fontEmSize,
@@ -1223,8 +1241,8 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_PushAxisAlignedClip(ID2D1Ren
     if (antialias_mode != D2D1_ANTIALIAS_MODE_ALIASED)
         FIXME("Ignoring antialias_mode %#x.\n", antialias_mode);
 
-    x_scale = render_target->dpi_x / 96.0f;
-    y_scale = render_target->dpi_y / 96.0f;
+    x_scale = render_target->desc.dpiX / 96.0f;
+    y_scale = render_target->desc.dpiY / 96.0f;
     d2d_point_transform(&point, &render_target->drawing_state.transform,
             clip_rect->left * x_scale, clip_rect->top * y_scale);
     d2d_rect_set(&transformed_rect, point.x, point.y, point.x, point.y);
@@ -1286,7 +1304,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *ifa
 
     if (color)
         c = *color;
-    if (render_target->format.alphaMode == D2D1_ALPHA_MODE_IGNORE)
+    if (render_target->desc.pixelFormat.alphaMode == D2D1_ALPHA_MODE_IGNORE)
         c.a = 1.0f;
     c.r *= c.a;
     c.g *= c.a;
@@ -1339,7 +1357,7 @@ static D2D1_PIXEL_FORMAT * STDMETHODCALLTYPE d2d_d3d_render_target_GetPixelForma
 
     TRACE("iface %p, format %p.\n", iface, format);
 
-    *format = render_target->format;
+    *format = render_target->desc.pixelFormat;
     return format;
 }
 
@@ -1357,8 +1375,8 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_SetDpi(ID2D1RenderTarget *if
     else if (dpi_x <= 0.0f || dpi_y <= 0.0f)
         return;
 
-    render_target->dpi_x = dpi_x;
-    render_target->dpi_y = dpi_y;
+    render_target->desc.dpiX = dpi_x;
+    render_target->desc.dpiY = dpi_y;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_GetDpi(ID2D1RenderTarget *iface, float *dpi_x, float *dpi_y)
@@ -1367,8 +1385,8 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_GetDpi(ID2D1RenderTarget *if
 
     TRACE("iface %p, dpi_x %p, dpi_y %p.\n", iface, dpi_x, dpi_y);
 
-    *dpi_x = render_target->dpi_x;
-    *dpi_y = render_target->dpi_y;
+    *dpi_x = render_target->desc.dpiX;
+    *dpi_y = render_target->desc.dpiY;
 }
 
 static D2D1_SIZE_F * STDMETHODCALLTYPE d2d_d3d_render_target_GetSize(ID2D1RenderTarget *iface, D2D1_SIZE_F *size)
@@ -1377,8 +1395,8 @@ static D2D1_SIZE_F * STDMETHODCALLTYPE d2d_d3d_render_target_GetSize(ID2D1Render
 
     TRACE("iface %p, size %p.\n", iface, size);
 
-    size->width = render_target->pixel_size.width / (render_target->dpi_x / 96.0f);
-    size->height = render_target->pixel_size.height / (render_target->dpi_y / 96.0f);
+    size->width = render_target->pixel_size.width / (render_target->desc.dpiX / 96.0f);
+    size->height = render_target->pixel_size.height / (render_target->desc.dpiY / 96.0f);
     return size;
 }
 
@@ -1541,7 +1559,7 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_GetPixelsPerDip(IDWriteTextRe
 
     TRACE("iface %p, ctx %p, ppd %p.\n", iface, ctx, ppd);
 
-    *ppd = render_target->dpi_y / 96.0f;
+    *ppd = render_target->desc.dpiY / 96.0f;
 
     return S_OK;
 }
@@ -1590,7 +1608,7 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawUnderline(IDWriteTextRend
             iface, ctx, baseline_origin_x, baseline_origin_y, underline, effect);
 
     /* minimal thickness in DIPs that will result in at least 1 pixel thick line */
-    min_thickness = 96.0f / (render_target->dpi_y * sqrtf(m->_21 * m->_21 + m->_22 * m->_22));
+    min_thickness = 96.0f / (render_target->desc.dpiY * sqrtf(m->_21 * m->_21 + m->_22 * m->_22));
 
     rect.left   = baseline_origin_x;
     rect.top    = baseline_origin_y + underline->offset;
@@ -2167,7 +2185,7 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
         goto err;
     }
 
-    render_target->format = desc->pixelFormat;
+    render_target->desc.pixelFormat = desc->pixelFormat;
     render_target->pixel_size.width = surface_desc.Width;
     render_target->pixel_size.height = surface_desc.Height;
     render_target->drawing_state.transform = identity;
@@ -2179,8 +2197,8 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
         goto err;
     }
 
-    render_target->dpi_x = dpi_x;
-    render_target->dpi_y = dpi_y;
+    render_target->desc.dpiX = dpi_x;
+    render_target->desc.dpiY = dpi_y;
 
     return S_OK;
 

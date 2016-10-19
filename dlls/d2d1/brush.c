@@ -789,11 +789,11 @@ static BOOL d2d_brush_fill_cb(struct d2d_brush *brush, struct d2d_d3d_render_tar
 
         /* Scale for dpi. */
         w = render_target->drawing_state.transform;
-        dpi_scale = render_target->dpi_x / 96.0f;
+        dpi_scale = render_target->desc.dpiX / 96.0f;
         w._11 *= dpi_scale;
         w._21 *= dpi_scale;
         w._31 *= dpi_scale;
-        dpi_scale = render_target->dpi_y / 96.0f;
+        dpi_scale = render_target->desc.dpiY / 96.0f;
         w._12 *= dpi_scale;
         w._22 *= dpi_scale;
         w._32 *= dpi_scale;
