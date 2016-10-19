@@ -406,11 +406,12 @@ HEADER_DrawItem (HEADER_INFO *infoPtr, HDC hdc, INT iItem, BOOL bHotTrack, LRESU
 
     /* Now text and image */
     {
-	UINT rw, rh, /* width and height of r */
-	     *x = NULL, *w = NULL; /* x and width of the pic (bmp or img) which is part of cnt */
+	INT rw, rh; /* width and height of r */
+        INT *x = NULL; /* x and ... */
+        UINT *w = NULL; /* ...  width of the pic (bmp or img) which is part of cnt */
 	  /* cnt,txt,img,bmp */
-	UINT cx, tx, ix, bx,
-	     cw, tw, iw, bw;
+        INT  cx, tx, ix, bx;
+	UINT cw, tw, iw, bw;
         INT img_cx, img_cy;
 	BITMAP bmp;
 
@@ -501,14 +502,14 @@ HEADER_DrawItem (HEADER_INFO *infoPtr, HDC hdc, INT iItem, BOOL bHotTrack, LRESU
 	    if (bw) {
 	        HDC hdcBitmap = CreateCompatibleDC (hClipDC);
 	        SelectObject (hdcBitmap, phdi->hbm);
-	        BitBlt (hClipDC, bx, r.top + ((INT)rh - bmp.bmHeight) / 2, 
+	        BitBlt (hClipDC, bx, r.top + (rh - bmp.bmHeight) / 2,
 		        bmp.bmWidth, bmp.bmHeight, hdcBitmap, 0, 0, SRCCOPY);
 	        DeleteDC (hdcBitmap);
 	    }
 
 	    if (iw) {
 	        ImageList_DrawEx (infoPtr->himl, phdi->iImage, hClipDC, 
-	                          ix, r.top + ((INT)rh - img_cy) / 2,
+	                          ix, r.top + (rh - img_cy) / 2,
 	                          img_cx, img_cy, CLR_DEFAULT, CLR_DEFAULT, 0);
 	    }
 
