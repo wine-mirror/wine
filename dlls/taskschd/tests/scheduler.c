@@ -1171,6 +1171,17 @@ todo_wine
     ITaskSettings_Release(set);
 }
 
+static void test_daily_trigger(ITrigger *trigger)
+{
+    IDailyTrigger *daily_trigger;
+    HRESULT hr;
+
+    hr = ITrigger_QueryInterface(trigger, &IID_IDailyTrigger, (void**)&daily_trigger);
+    ok(hr == S_OK, "Could not get IDailyTrigger iface: %08x\n", hr);
+
+    IDailyTrigger_Release(daily_trigger);
+}
+
 static void create_action(ITaskDefinition *taskdef)
 {
     static WCHAR task1_exe[] = { 't','a','s','k','1','.','e','x','e',0 };
@@ -1298,6 +1309,7 @@ static void test_TaskDefinition(void)
     ITaskService *service;
     ITaskDefinition *taskdef;
     IRegistrationInfo *reginfo;
+    ITrigger *trigger;
     BSTR xml, bstr;
     VARIANT var;
     WCHAR xmlW[sizeof(xml1)];
@@ -1424,6 +1436,12 @@ if (hr == S_OK)
     hr = ITaskDefinition_get_Triggers(taskdef, &trigger_col);
     ok(hr == S_OK, "get_Triggers failed: %08x\n", hr);
     ok(trigger_col != NULL, "Trigers = NULL\n");
+
+    hr = ITriggerCollection_Create(trigger_col, TASK_TRIGGER_DAILY, &trigger);
+    ok(hr == S_OK, "Create failed: %08x\n", hr);
+    ok(trigger != NULL, "trigger = NULL\n");
+    test_daily_trigger(trigger);
+    ITrigger_Release(trigger);
     ITriggerCollection_Release(trigger_col);
 
     hr = ITaskDefinition_get_Triggers(taskdef, &trigger_col2);

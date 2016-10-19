@@ -35,6 +35,255 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(taskschd);
 
+typedef struct {
+    IDailyTrigger IDailyTrigger_iface;
+    LONG ref;
+} DailyTrigger;
+
+static inline DailyTrigger *impl_from_IDailyTrigger(IDailyTrigger *iface)
+{
+    return CONTAINING_RECORD(iface, DailyTrigger, IDailyTrigger_iface);
+}
+
+static HRESULT WINAPI DailyTrigger_QueryInterface(IDailyTrigger *iface, REFIID riid, void **ppv)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+
+    if(IsEqualGUID(&IID_IUnknown, riid) ||
+       IsEqualGUID(&IID_IDispatch, riid) ||
+       IsEqualGUID(&IID_ITrigger, riid) ||
+       IsEqualGUID(&IID_IDailyTrigger, riid))
+    {
+        *ppv = &This->IDailyTrigger_iface;
+    }
+    else
+    {
+        FIXME("unsupported riid %s\n", debugstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI DailyTrigger_AddRef(IDailyTrigger *iface)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI DailyTrigger_Release(IDailyTrigger *iface)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI DailyTrigger_GetTypeInfoCount(IDailyTrigger *iface, UINT *count)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%p)\n", This, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_GetTypeInfo(IDailyTrigger *iface, UINT index, LCID lcid, ITypeInfo **info)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%u %u %p)\n", This, index, lcid, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_GetIDsOfNames(IDailyTrigger *iface, REFIID riid, LPOLESTR *names,
+                                            UINT count, LCID lcid, DISPID *dispid)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), names, count, lcid, dispid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_Invoke(IDailyTrigger *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
+                                     DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%d %s %x %x %p %p %p %p)\n", This, dispid, debugstr_guid(riid), lcid, flags,
+          params, result, excepinfo, argerr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_get_Type(IDailyTrigger *iface, TASK_TRIGGER_TYPE2 *type)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%p)\n", This, type);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_get_Id(IDailyTrigger *iface, BSTR *id)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%p)\n", This, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_put_Id(IDailyTrigger *iface, BSTR id)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(id));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_get_Repetition(IDailyTrigger *iface, IRepetitionPattern **repeat)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%p)\n", This, repeat);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_put_Repetition(IDailyTrigger *iface, IRepetitionPattern *repeat)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%p)\n", This, repeat);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_get_ExecutionTimeLimit(IDailyTrigger *iface, BSTR *limit)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%p)\n", This, limit);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_put_ExecutionTimeLimit(IDailyTrigger *iface, BSTR limit)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(limit));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_get_StartBoundary(IDailyTrigger *iface, BSTR *start)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%p)\n", This, start);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_put_StartBoundary(IDailyTrigger *iface, BSTR start)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(start));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_get_EndBoundary(IDailyTrigger *iface, BSTR *end)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%p)\n", This, end);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_put_EndBoundary(IDailyTrigger *iface, BSTR end)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(end));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_get_Enabled(IDailyTrigger *iface, VARIANT_BOOL *enabled)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%p)\n", This, enabled);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_put_Enabled(IDailyTrigger *iface, VARIANT_BOOL enabled)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%x)\n", This, enabled);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_get_DaysInterval(IDailyTrigger *iface, short *days)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%p)\n", This, days);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_put_DaysInterval(IDailyTrigger *iface, short days)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%d)\n", This, days);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_get_RandomDelay(IDailyTrigger *iface, BSTR *pRandomDelay)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%p)\n", This, pRandomDelay);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DailyTrigger_put_RandomDelay(IDailyTrigger *iface, BSTR randomDelay)
+{
+    DailyTrigger *This = impl_from_IDailyTrigger(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(randomDelay));
+    return E_NOTIMPL;
+}
+
+static const IDailyTriggerVtbl DailyTrigger_vtbl = {
+    DailyTrigger_QueryInterface,
+    DailyTrigger_AddRef,
+    DailyTrigger_Release,
+    DailyTrigger_GetTypeInfoCount,
+    DailyTrigger_GetTypeInfo,
+    DailyTrigger_GetIDsOfNames,
+    DailyTrigger_Invoke,
+    DailyTrigger_get_Type,
+    DailyTrigger_get_Id,
+    DailyTrigger_put_Id,
+    DailyTrigger_get_Repetition,
+    DailyTrigger_put_Repetition,
+    DailyTrigger_get_ExecutionTimeLimit,
+    DailyTrigger_put_ExecutionTimeLimit,
+    DailyTrigger_get_StartBoundary,
+    DailyTrigger_put_StartBoundary,
+    DailyTrigger_get_EndBoundary,
+    DailyTrigger_put_EndBoundary,
+    DailyTrigger_get_Enabled,
+    DailyTrigger_put_Enabled,
+    DailyTrigger_get_DaysInterval,
+    DailyTrigger_put_DaysInterval,
+    DailyTrigger_get_RandomDelay,
+    DailyTrigger_put_RandomDelay
+};
+
+static HRESULT DailyTrigger_create(ITrigger **trigger)
+{
+    DailyTrigger *daily_trigger;
+
+    daily_trigger = heap_alloc(sizeof(*daily_trigger));
+    if (!daily_trigger)
+        return E_OUTOFMEMORY;
+
+    daily_trigger->IDailyTrigger_iface.lpVtbl = &DailyTrigger_vtbl;
+    daily_trigger->ref = 1;
+
+    *trigger = (ITrigger*)&daily_trigger->IDailyTrigger_iface;
+    return S_OK;
+}
+
 typedef struct
 {
     ITriggerCollection ITriggerCollection_iface;
@@ -144,8 +393,18 @@ static HRESULT WINAPI TriggerCollection_get__NewEnum(ITriggerCollection *iface, 
 static HRESULT WINAPI TriggerCollection_Create(ITriggerCollection *iface, TASK_TRIGGER_TYPE2 type, ITrigger **trigger)
 {
     trigger_collection *This = impl_from_ITriggerCollection(iface);
-    FIXME("(%p)->(%d %p)\n", This, type, trigger);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %p)\n", This, type, trigger);
+
+    switch(type) {
+    case TASK_TRIGGER_DAILY:
+        return DailyTrigger_create(trigger);
+    default:
+        FIXME("Unimplemented type %d\n", type);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TriggerCollection_Remove(ITriggerCollection *iface, VARIANT index)
