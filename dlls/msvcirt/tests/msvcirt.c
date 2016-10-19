@@ -336,6 +336,7 @@ static ostream* (*__thiscall p_ostrstream_ctor)(ostream*, BOOL);
 static void (*__thiscall p_ostrstream_dtor)(ios*);
 static void (*__thiscall p_ostrstream_vbase_dtor)(ostream*);
 static ostream* (*__thiscall p_ostrstream_assign)(ostream*, const ostream*);
+static int (*__thiscall p_ostrstream_pcount)(const ostream*);
 
 /* istream */
 static istream* (*__thiscall p_istream_copy_ctor)(istream*, const istream*, BOOL);
@@ -608,6 +609,7 @@ static BOOL init(void)
         SET(p_ostrstream_dtor, "??1ostrstream@@UEAA@XZ");
         SET(p_ostrstream_vbase_dtor, "??_Dostrstream@@QEAAXXZ");
         SET(p_ostrstream_assign, "??4ostrstream@@QEAAAEAV0@AEBV0@@Z");
+        SET(p_ostrstream_pcount, "?pcount@ostrstream@@QEBAHXZ");
 
         SET(p_istream_copy_ctor, "??0istream@@IEAA@AEBV0@@Z");
         SET(p_istream_ctor, "??0istream@@IEAA@XZ");
@@ -794,6 +796,7 @@ static BOOL init(void)
         SET(p_ostrstream_dtor, "??1ostrstream@@UAE@XZ");
         SET(p_ostrstream_vbase_dtor, "??_Dostrstream@@QAEXXZ");
         SET(p_ostrstream_assign, "??4ostrstream@@QAEAAV0@ABV0@@Z");
+        SET(p_ostrstream_pcount, "?pcount@ostrstream@@QBEHXZ");
 
         SET(p_istream_copy_ctor, "??0istream@@IAE@ABV0@@Z");
         SET(p_istream_ctor, "??0istream@@IAE@XZ");
@@ -3996,6 +3999,7 @@ static void test_ostrstream(void)
     ostream os1, os2, *pos, *pos2;
     strstreambuf *pssb;
     char buffer[32];
+    int ret;
 
     memset(&os1, 0xab, sizeof(ostream));
     memset(&os2, 0xab, sizeof(ostream));
@@ -4253,6 +4257,28 @@ static void test_ostrstream(void)
     ok(os2.base_ios.fill == ' ', "expected 32 got %d\n", os2.base_ios.fill);
     ok(os2.base_ios.width == 0, "expected 0 got %d\n", os2.base_ios.width);
     ok(os2.base_ios.do_lock == 0xabababab, "expected %d got %d\n", 0xabababab, os2.base_ios.do_lock);
+
+    /* pcount */
+    pos = call_func2(p_ostrstream_ctor, &os1, TRUE);
+    ok(pos == &os1, "wrong return, expected %p got %p\n", &os1, pos);
+    ret = (int) call_func1(p_ostrstream_pcount, &os1);
+    ok(ret == 0, "expected 0 got %d\n", ret);
+    pssb = (strstreambuf*) os1.base_ios.sb;
+    pssb->base.pptr = (char*) 5;
+    ret = (int) call_func1(p_ostrstream_pcount, &os1);
+    ok(ret == 5, "expected 5 got %d\n", ret);
+    pssb->base.pbase = (char*) 2;
+    ret = (int) call_func1(p_ostrstream_pcount, &os1);
+    ok(ret == 3, "expected 3 got %d\n", ret);
+    pssb->base.pptr = NULL;
+    ret = (int) call_func1(p_ostrstream_pcount, &os1);
+    ok(ret == 0, "expected 0 got %d\n", ret);
+    if (0) /* crashes on native */
+        os1.base_ios.sb = NULL;
+    pssb->base.pptr = (char*) 1;
+    ret = (int) call_func1(p_ostrstream_pcount, &os1);
+    ok(ret == 0, "expected 0 got %d\n", ret);
+    call_func1(p_ostrstream_vbase_dtor, &os1);
 }
 
 static void test_istream(void)
