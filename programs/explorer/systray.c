@@ -588,8 +588,11 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
         if (icon) ret = modify_icon( icon, &nid );
         break;
     case NIM_SETVERSION:
-        icon->version = nid.u.uVersion;
-        ret = TRUE;
+        if (icon)
+        {
+            icon->version = nid.u.uVersion;
+            ret = TRUE;
+        }
         break;
     default:
         WINE_FIXME("unhandled tray message: %ld\n", cds->dwData);
