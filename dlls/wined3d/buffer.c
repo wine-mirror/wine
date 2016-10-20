@@ -162,20 +162,20 @@ static void delete_gl_buffer(struct wined3d_buffer *This, const struct wined3d_g
 }
 
 /* Context activation is done by the caller. */
-static void buffer_create_buffer_object(struct wined3d_buffer *This, struct wined3d_context *context)
+static BOOL buffer_create_buffer_object(struct wined3d_buffer *buffer, struct wined3d_context *context)
 {
-    GLenum gl_usage = GL_STATIC_DRAW_ARB;
-    GLenum error;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    GLenum gl_usage = GL_STATIC_DRAW;
+    GLenum error;
 
-    TRACE("Creating an OpenGL vertex buffer object for wined3d_buffer %p with usage %s.\n",
-            This, debug_d3dusage(This->resource.usage));
+    TRACE("Creating an OpenGL buffer object for wined3d_buffer %p with usage %s.\n",
+            buffer, debug_d3dusage(buffer->resource.usage));
 
     /* Make sure that the gl error is cleared. Do not use checkGLcall
-    * here because checkGLcall just prints a fixme and continues. However,
-    * if an error during VBO creation occurs we can fall back to non-vbo operation
-    * with full functionality(but performance loss)
-    */
+     * here because checkGLcall just prints a fixme and continues. However,
+     * if an error during VBO creation occurs we can fall back to non-VBO operation
+     * with full functionality(but performance loss).
+     */
     while (gl_info->gl_ops.gl.p_glGetError() != GL_NO_ERROR);
 
     /* Basically the FVF parameter passed to CreateVertexBuffer is no good.
@@ -184,72 +184,72 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, struct wine
      * to be verified to check if the rhw and color values are in the correct
      * format. */
 
-    GL_EXTCALL(glGenBuffers(1, &This->buffer_object));
+    GL_EXTCALL(glGenBuffers(1, &buffer->buffer_object));
     error = gl_info->gl_ops.gl.p_glGetError();
-    if (!This->buffer_object || error != GL_NO_ERROR)
+    if (!buffer->buffer_object || error != GL_NO_ERROR)
     {
-        ERR("Failed to create a VBO with error %s (%#x)\n", debug_glerror(error), error);
+        ERR("Failed to create a BO with error %s (%#x).\n", debug_glerror(error), error);
         goto fail;
     }
 
-    buffer_bind(This, context);
+    buffer_bind(buffer, context);
     error = gl_info->gl_ops.gl.p_glGetError();
     if (error != GL_NO_ERROR)
     {
-        ERR("Failed to bind the VBO with error %s (%#x)\n", debug_glerror(error), error);
+        ERR("Failed to bind the BO with error %s (%#x).\n", debug_glerror(error), error);
         goto fail;
     }
 
-    if (This->resource.usage & WINED3DUSAGE_DYNAMIC)
+    if (buffer->resource.usage & WINED3DUSAGE_DYNAMIC)
     {
         TRACE("Buffer has WINED3DUSAGE_DYNAMIC set.\n");
         gl_usage = GL_STREAM_DRAW_ARB;
 
-        if(gl_info->supported[APPLE_FLUSH_BUFFER_RANGE])
+        if (gl_info->supported[APPLE_FLUSH_BUFFER_RANGE])
         {
-            GL_EXTCALL(glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE));
-            checkGLcall("glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE)");
-            GL_EXTCALL(glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_FALSE));
-            checkGLcall("glBufferParameteriAPPLE(This->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_FALSE)");
-            This->flags |= WINED3D_BUFFER_APPLESYNC;
+            GL_EXTCALL(glBufferParameteriAPPLE(buffer->buffer_type_hint, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE));
+            GL_EXTCALL(glBufferParameteriAPPLE(buffer->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_FALSE));
+            checkGLcall("glBufferParameteriAPPLE");
+            buffer->flags |= WINED3D_BUFFER_APPLESYNC;
         }
-        /* No setup is needed here for GL_ARB_map_buffer_range */
+        /* No setup is needed here for GL_ARB_map_buffer_range. */
     }
 
     /* Reserve memory for the buffer. The amount of data won't change
      * so we are safe with calling glBufferData once and
      * calling glBufferSubData on updates. Upload the actual data in case
-     * we're not double buffering, so we can release the heap mem afterwards
+     * we're not double buffering, so we can release the heap mem afterwards.
      */
-    GL_EXTCALL(glBufferData(This->buffer_type_hint, This->resource.size, This->resource.heap_memory, gl_usage));
+    GL_EXTCALL(glBufferData(buffer->buffer_type_hint, buffer->resource.size, buffer->resource.heap_memory, gl_usage));
     error = gl_info->gl_ops.gl.p_glGetError();
     if (error != GL_NO_ERROR)
     {
-        ERR("glBufferData failed with error %s (%#x)\n", debug_glerror(error), error);
+        ERR("glBufferData failed with error %s (%#x).\n", debug_glerror(error), error);
         goto fail;
     }
 
-    This->buffer_object_usage = gl_usage;
+    buffer->buffer_object_usage = gl_usage;
 
-    if (This->flags & WINED3D_BUFFER_DOUBLEBUFFER)
+    if (buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER)
     {
-        buffer_invalidate_bo_range(This, 0, 0);
+        buffer_invalidate_bo_range(buffer, 0, 0);
     }
     else
     {
-        wined3d_resource_free_sysmem(&This->resource);
-        wined3d_buffer_validate_location(This, WINED3D_LOCATION_BUFFER);
-        wined3d_buffer_invalidate_location(This, WINED3D_LOCATION_SYSMEM);
+        wined3d_resource_free_sysmem(&buffer->resource);
+        wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_BUFFER);
+        wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_SYSMEM);
     }
 
-    return;
+    return TRUE;
 
 fail:
-    /* Clean up all VBO init, but continue because we can work without a VBO :-) */
-    ERR("Failed to create a vertex buffer object. Continuing, but performance issues may occur.\n");
-    This->flags &= ~WINED3D_BUFFER_USE_BO;
-    delete_gl_buffer(This, gl_info);
-    buffer_clear_dirty_areas(This);
+    /* Clean up all BO init, but continue because we can work without a BO :-) */
+    ERR("Failed to create a buffer object. Continuing, but performance issues may occur.\n");
+    buffer->flags &= ~WINED3D_BUFFER_USE_BO;
+    delete_gl_buffer(buffer, gl_info);
+    buffer_clear_dirty_areas(buffer);
+    return FALSE;
 }
 
 static BOOL buffer_process_converted_attribute(struct wined3d_buffer *buffer,
@@ -530,8 +530,15 @@ static BOOL wined3d_buffer_prepare_location(struct wined3d_buffer *buffer,
             return TRUE;
 
         case WINED3D_LOCATION_BUFFER:
-            FIXME("Not implemented yet.\n");
-            return FALSE;
+            if (buffer->buffer_object)
+                return TRUE;
+
+            if (!(buffer->flags & WINED3D_BUFFER_USE_BO))
+            {
+                WARN("Trying to create BO for buffer %p with no WINED3D_BUFFER_USE_BO.\n", buffer);
+                return FALSE;
+            }
+            return buffer_create_buffer_object(buffer, context);
 
         default:
             ERR("Invalid location %s.\n", wined3d_debug_location(location));
@@ -612,7 +619,7 @@ void buffer_get_memory(struct wined3d_buffer *buffer, struct wined3d_context *co
     {
         if ((buffer->flags & WINED3D_BUFFER_USE_BO) && !buffer->resource.map_count)
         {
-            buffer_create_buffer_object(buffer, context);
+            wined3d_buffer_prepare_location(buffer, context, WINED3D_LOCATION_BUFFER);
             if (buffer->buffer_object)
             {
                 data->buffer_object = buffer->buffer_object;
@@ -878,19 +885,14 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
 
     buffer_mark_used(buffer);
 
-    if (!buffer->buffer_object)
+    /* TODO: Make converting independent from VBOs */
+    if (!(buffer->flags & WINED3D_BUFFER_USE_BO))
     {
-        /* TODO: Make converting independent from VBOs */
-        if (buffer->flags & WINED3D_BUFFER_USE_BO)
-        {
-            buffer_create_buffer_object(buffer, context);
-        }
-        else
-        {
-            /* Not doing any conversion */
-            return;
-        }
+        /* Not doing any conversion */
+        return;
     }
+
+    wined3d_buffer_prepare_location(buffer, context, WINED3D_LOCATION_BUFFER);
 
     /* Reading the declaration makes only sense if we have valid state information
      * (i.e., if this function is called during draws). */
