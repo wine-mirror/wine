@@ -844,6 +844,7 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
     HFONT hFont;
     LONG state = get_button_state( hwnd );
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
+    LONG ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
     HWND parent;
     HRGN hrgn;
 
@@ -872,7 +873,7 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
 					(WPARAM)hDC, (LPARAM)hwnd );
     hrgn = set_control_clipping( hDC, &client );
 
-    if (style & BS_LEFTTEXT)
+    if (style & BS_LEFTTEXT || ex_style & WS_EX_RIGHT)
     {
         rtext.right -= checkBoxWidth + text_offset;
         rbox.left = rbox.right - checkBoxWidth;
