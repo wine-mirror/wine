@@ -60,7 +60,6 @@ enum pipe_state
     ps_wait_open,
     ps_connected_server,
     ps_wait_disconnect,
-    ps_disconnected_server,
     ps_wait_connect
 };
 
@@ -344,7 +343,6 @@ static void set_server_state( struct pipe_server *server, enum pipe_state state 
         assert( !server->fd );
         set_no_fd_status( server->ioctl_fd, STATUS_PIPE_LISTENING );
         break;
-    case ps_disconnected_server:
     case ps_wait_connect:
         assert( !server->fd );
         set_no_fd_status( server->ioctl_fd, STATUS_PIPE_DISCONNECTED );
@@ -429,9 +427,6 @@ static void pipe_client_destroy( struct object *obj)
             /* Don't destroy the server's fd here as we can't
                do a successful flush without it. */
             set_server_state( server, ps_wait_disconnect );
-            break;
-        case ps_disconnected_server:
-            set_server_state( server, ps_wait_connect );
             break;
         case ps_idle_server:
         case ps_wait_open:
@@ -623,9 +618,6 @@ static obj_handle_t pipe_server_ioctl( struct fd *fd, ioctl_code_t code, const a
         case ps_connected_server:
             set_error( STATUS_PIPE_CONNECTED );
             break;
-        case ps_disconnected_server:
-            set_error( STATUS_PIPE_BUSY );
-            break;
         case ps_wait_disconnect:
             set_error( STATUS_NO_DATA_DETECTED );
             break;
@@ -644,10 +636,11 @@ static obj_handle_t pipe_server_ioctl( struct fd *fd, ioctl_code_t code, const a
 
             notify_empty( server );
 
-            /* dump the client and server fds, but keep the pointers
-               around - client loses all waiting data */
+            /* dump the client and server fds - client loses all waiting data */
             do_disconnect( server );
-            set_server_state( server, ps_disconnected_server );
+            server->client->server = NULL;
+            server->client = NULL;
+            set_server_state( server, ps_wait_connect );
             break;
         case ps_wait_disconnect:
             assert( !server->client );
@@ -658,7 +651,6 @@ static obj_handle_t pipe_server_ioctl( struct fd *fd, ioctl_code_t code, const a
         case ps_wait_open:
             set_error( STATUS_PIPE_LISTENING );
             break;
-        case ps_disconnected_server:
         case ps_wait_connect:
             set_error( STATUS_PIPE_DISCONNECTED );
             break;
