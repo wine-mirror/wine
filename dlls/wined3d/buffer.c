@@ -504,31 +504,6 @@ static inline unsigned int fixup_transformed_pos(float *p)
     return 4 * sizeof(*p);
 }
 
-/* Context activation is done by the caller. */
-void buffer_get_memory(struct wined3d_buffer *buffer, struct wined3d_context *context,
-        struct wined3d_bo_address *data)
-{
-    data->buffer_object = buffer->buffer_object;
-    if (!buffer->buffer_object)
-    {
-        if ((buffer->flags & WINED3D_BUFFER_USE_BO) && !buffer->resource.map_count)
-        {
-            buffer_create_buffer_object(buffer, context);
-            if (buffer->buffer_object)
-            {
-                data->buffer_object = buffer->buffer_object;
-                data->addr = NULL;
-                return;
-            }
-        }
-        data->addr = buffer->resource.heap_memory;
-    }
-    else
-    {
-        data->addr = NULL;
-    }
-}
-
 ULONG CDECL wined3d_buffer_incref(struct wined3d_buffer *buffer)
 {
     ULONG refcount = InterlockedIncrement(&buffer->resource.ref);
@@ -626,6 +601,31 @@ BYTE *wined3d_buffer_load_sysmem(struct wined3d_buffer *buffer, struct wined3d_c
 {
     wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
     return buffer->resource.heap_memory;
+}
+
+/* Context activation is done by the caller. */
+void buffer_get_memory(struct wined3d_buffer *buffer, struct wined3d_context *context,
+        struct wined3d_bo_address *data)
+{
+    data->buffer_object = buffer->buffer_object;
+    if (!buffer->buffer_object)
+    {
+        if ((buffer->flags & WINED3D_BUFFER_USE_BO) && !buffer->resource.map_count)
+        {
+            buffer_create_buffer_object(buffer, context);
+            if (buffer->buffer_object)
+            {
+                data->buffer_object = buffer->buffer_object;
+                data->addr = NULL;
+                return;
+            }
+        }
+        data->addr = buffer->resource.heap_memory;
+    }
+    else
+    {
+        data->addr = NULL;
+    }
 }
 
 static void buffer_unload(struct wined3d_resource *resource)
