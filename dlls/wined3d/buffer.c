@@ -564,25 +564,67 @@ static BOOL wined3d_buffer_prepare_location(struct wined3d_buffer *buffer,
     }
 }
 
-/* Context activation is done by the caller. */
-BYTE *wined3d_buffer_load_sysmem(struct wined3d_buffer *buffer, struct wined3d_context *context)
+BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
+        struct wined3d_context *context, DWORD location)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    /* Heap_memory exists if the buffer is double buffered or has no buffer object at all. */
-    if (buffer->resource.heap_memory)
-        return buffer->resource.heap_memory;
+    TRACE("buffer %p, context %p, location %s.\n",
+            buffer, context, wined3d_debug_location(location));
 
-    if (!wined3d_buffer_prepare_location(buffer, context, WINED3D_LOCATION_SYSMEM))
-        return NULL;
+    if (buffer->locations & location)
+    {
+        TRACE("Location (%#x) is already up to date.\n", location);
+        return WINED3D_OK;
+    }
 
-    buffer_bind(buffer, context);
-    GL_EXTCALL(glGetBufferSubData(buffer->buffer_type_hint, 0, buffer->resource.size, buffer->resource.heap_memory));
-    checkGLcall("buffer download");
-    buffer->flags |= WINED3D_BUFFER_DOUBLEBUFFER;
+    if (!buffer->locations)
+    {
+        ERR("Buffer %p does not have any up to date location.\n", buffer);
+        wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_DISCARDED);
+        return wined3d_buffer_load_location(buffer, context, location);
+    }
 
-    wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_SYSMEM);
+    TRACE("Current buffer location %s.\n", wined3d_debug_location(buffer->locations));
 
+    if (!wined3d_buffer_prepare_location(buffer, context, location))
+        return FALSE;
+
+    if (buffer->locations & WINED3D_LOCATION_DISCARDED)
+    {
+        TRACE("Buffer previously discarded, nothing to do.\n");
+        wined3d_buffer_validate_location(buffer, location);
+        wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_DISCARDED);
+        return TRUE;
+    }
+
+    switch (location)
+    {
+        case WINED3D_LOCATION_SYSMEM:
+            buffer_bind(buffer, context);
+            GL_EXTCALL(glGetBufferSubData(buffer->buffer_type_hint, 0, buffer->resource.size,
+                    buffer->resource.heap_memory));
+            checkGLcall("buffer download");
+            buffer->flags |= WINED3D_BUFFER_DOUBLEBUFFER;
+            break;
+
+        case WINED3D_LOCATION_BUFFER:
+            FIXME("Not implemented yet.\n");
+            return FALSE;
+
+        default:
+            ERR("Invalid location %s.\n", wined3d_debug_location(location));
+            return FALSE;
+    }
+
+    wined3d_buffer_validate_location(buffer, location);
+    return TRUE;
+}
+
+/* Context activation is done by the caller. */
+BYTE *wined3d_buffer_load_sysmem(struct wined3d_buffer *buffer, struct wined3d_context *context)
+{
+    wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
     return buffer->resource.heap_memory;
 }
 
