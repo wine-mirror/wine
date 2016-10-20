@@ -975,13 +975,13 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
     if (!buffer->conversion_map)
     {
         /* That means that there is nothing to fixup. Just upload from
-         * buffer->resource.heap_memory directly into the vbo. Do not
+         * buffer->resource.heap_memory directly into the BO. Do not
          * free the system memory copy because drawPrimitive may need it if
          * the stride is 0, for instancing emulation, vertex blending
          * emulation or shader emulation. */
         TRACE("No conversion needed.\n");
 
-        /* Nothing to do because we locked directly into the vbo */
+        /* Nothing to do because heap memory exists if the buffer is double buffer or has no BO at all. */
         if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
             return;
 
@@ -1056,6 +1056,8 @@ struct wined3d_resource * CDECL wined3d_buffer_get_resource(struct wined3d_buffe
 
 static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UINT size, BYTE **data, DWORD flags)
 {
+    struct wined3d_device *device = buffer->resource.device;
+    struct wined3d_context *context;
     LONG count;
     BYTE *base;
 
@@ -1087,6 +1089,13 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
 
         if (buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER)
         {
+            if (!(buffer->locations & WINED3D_LOCATION_SYSMEM))
+            {
+                context = context_acquire(device, NULL);
+                wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
+                context_release(context);
+            }
+
             if (!(flags & WINED3D_MAP_READONLY))
                 wined3d_buffer_invalidate_range(buffer, WINED3D_LOCATION_BUFFER, dirty_offset, dirty_size);
         }
@@ -1097,8 +1106,6 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
 
             if (count == 1)
             {
-                struct wined3d_device *device = buffer->resource.device;
-                struct wined3d_context *context;
                 const struct wined3d_gl_info *gl_info;
 
                 context = context_acquire(device, NULL);
@@ -1253,6 +1260,11 @@ HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_
 
     dst_buffer_mem = dst_buffer->resource.heap_memory;
     src_buffer_mem = src_buffer->resource.heap_memory;
+
+    if (dst_buffer_mem && (dst_offset || size != dst_buffer->resource.size))
+        wined3d_buffer_load_location(dst_buffer, context, WINED3D_LOCATION_SYSMEM);
+    if (src_buffer_mem)
+        wined3d_buffer_load_location(src_buffer, context, WINED3D_LOCATION_SYSMEM);
 
     if (!dst_buffer_mem && !src_buffer_mem)
     {
