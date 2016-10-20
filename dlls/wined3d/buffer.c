@@ -538,6 +538,32 @@ ULONG CDECL wined3d_buffer_incref(struct wined3d_buffer *buffer)
     return refcount;
 }
 
+static BOOL wined3d_buffer_prepare_location(struct wined3d_buffer *buffer,
+        struct wined3d_context *context, DWORD location)
+{
+    switch (location)
+    {
+        case WINED3D_LOCATION_SYSMEM:
+            if (buffer->resource.heap_memory)
+                return TRUE;
+
+            if (!wined3d_resource_allocate_sysmem(&buffer->resource))
+            {
+                ERR("Failed to allocate system memory.\n");
+                return FALSE;
+            }
+            return TRUE;
+
+        case WINED3D_LOCATION_BUFFER:
+            FIXME("Not implemented yet.\n");
+            return FALSE;
+
+        default:
+            ERR("Invalid location %s.\n", wined3d_debug_location(location));
+            return FALSE;
+    }
+}
+
 /* Context activation is done by the caller. */
 BYTE *wined3d_buffer_load_sysmem(struct wined3d_buffer *buffer, struct wined3d_context *context)
 {
@@ -547,8 +573,8 @@ BYTE *wined3d_buffer_load_sysmem(struct wined3d_buffer *buffer, struct wined3d_c
     if (buffer->resource.heap_memory)
         return buffer->resource.heap_memory;
 
-    if (!wined3d_resource_allocate_sysmem(&buffer->resource))
-        ERR("Failed to allocate system memory.\n");
+    if (!wined3d_buffer_prepare_location(buffer, context, WINED3D_LOCATION_SYSMEM))
+        return NULL;
 
     buffer_bind(buffer, context);
     GL_EXTCALL(glGetBufferSubData(buffer->buffer_type_hint, 0, buffer->resource.size, buffer->resource.heap_memory));
