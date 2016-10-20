@@ -2060,6 +2060,20 @@ static DWORD CALLBACK overlapped_server(LPVOID arg)
     ok(ret == 1, "ret %d\n", ret);
 
     DisconnectNamedPipe(pipe);
+
+    ret = ConnectNamedPipe(pipe, &ol);
+    err = GetLastError();
+    ok(ret == 0, "ret %d\n", ret);
+    ok(err == ERROR_IO_PENDING, "gle %d\n", err);
+    CancelIo(pipe);
+    ret = WaitForSingleObjectEx(ol.hEvent, INFINITE, 1);
+    ok(ret == WAIT_OBJECT_0, "ret %x\n", ret);
+
+    ret = GetOverlappedResult(pipe, &ol, &num, 1);
+    err = GetLastError();
+    ok(ret == 0, "ret %d\n", ret);
+    ok(err == ERROR_OPERATION_ABORTED, "gle %d\n", err);
+
     CloseHandle(ol.hEvent);
     CloseHandle(pipe);
     return 1;
