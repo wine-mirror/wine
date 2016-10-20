@@ -4448,7 +4448,7 @@ TREEVIEW_DoSelectItem(TREEVIEW_INFO *infoPtr, INT action, HTREEITEM newSelect,
 
     assert(newSelect == NULL || TREEVIEW_ValidItem(infoPtr, newSelect));
 
-    TRACE("Entering item %p (%s), flag 0x%x, cause 0x%x, state %d\n",
+    TRACE("Entering item %p (%s), flag 0x%x, cause 0x%x, state 0x%x\n",
 	  newSelect, TREEVIEW_ItemName(newSelect), action, cause,
 	  newSelect ? newSelect->state : 0);
 
@@ -4523,7 +4523,7 @@ TREEVIEW_DoSelectItem(TREEVIEW_INFO *infoPtr, INT action, HTREEITEM newSelect,
 	break;
     }
 
-    TRACE("Leaving state %d\n", newSelect ? newSelect->state : 0);
+    TRACE("Leaving state 0x%x\n", newSelect ? newSelect->state : 0);
     return TRUE;
 }
 
