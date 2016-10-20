@@ -111,12 +111,6 @@ static void wined3d_buffer_invalidate_range(struct wined3d_buffer *buffer, DWORD
     TRACE("buffer %p, location %s, offset %u, size %u.\n",
             buffer, wined3d_debug_location(location), offset, size);
 
-    if ((offset || size) && (location & ~WINED3D_LOCATION_BUFFER))
-    {
-        ERR("Range can be invalidated only for WINED3D_LOCATION_BUFFER.\n");
-        return;
-    }
-
     if (location & WINED3D_LOCATION_BUFFER)
         buffer_invalidate_bo_range(buffer, offset, size);
 
@@ -608,31 +602,6 @@ BYTE *wined3d_buffer_load_sysmem(struct wined3d_buffer *buffer, struct wined3d_c
 {
     wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
     return buffer->resource.heap_memory;
-}
-
-/* Context activation is done by the caller. */
-static void buffer_get_memory(struct wined3d_buffer *buffer, struct wined3d_context *context,
-        struct wined3d_bo_address *data)
-{
-    data->buffer_object = buffer->buffer_object;
-    if (!buffer->buffer_object)
-    {
-        if ((buffer->flags & WINED3D_BUFFER_USE_BO) && !buffer->resource.map_count)
-        {
-            wined3d_buffer_prepare_location(buffer, context, WINED3D_LOCATION_BUFFER);
-            if (buffer->buffer_object)
-            {
-                data->buffer_object = buffer->buffer_object;
-                data->addr = NULL;
-                return;
-            }
-        }
-        data->addr = buffer->resource.heap_memory;
-    }
-    else
-    {
-        data->addr = NULL;
-    }
 }
 
 void wined3d_buffer_get_memory(struct wined3d_buffer *buffer,
@@ -1269,11 +1238,12 @@ static void wined3d_buffer_unmap(struct wined3d_buffer *buffer)
 HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_offset,
         struct wined3d_buffer *src_buffer, unsigned int src_offset, unsigned int size)
 {
-    BYTE *dst_buffer_mem, *src_buffer_mem, *dst_ptr, *src_ptr;
-    struct wined3d_bo_address dst_bo_address, src_bo_address;
     const struct wined3d_gl_info *gl_info;
+    struct wined3d_bo_address dst, src;
     struct wined3d_context *context;
     struct wined3d_device *device;
+    BYTE *dst_ptr, *src_ptr;
+    DWORD dst_location;
     HRESULT hr;
 
     device = dst_buffer->resource.device;
@@ -1281,24 +1251,17 @@ HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_
     context = context_acquire(device, NULL);
     gl_info = context->gl_info;
 
-    buffer_get_memory(dst_buffer, context, &dst_bo_address);
-    buffer_get_memory(src_buffer, context, &src_bo_address);
+    wined3d_buffer_get_memory(dst_buffer, &dst, dst_buffer->locations);
+    wined3d_buffer_get_memory(src_buffer, &src, src_buffer->locations);
 
-    dst_buffer_mem = dst_buffer->resource.heap_memory;
-    src_buffer_mem = src_buffer->resource.heap_memory;
-
-    if (dst_buffer_mem && (dst_offset || size != dst_buffer->resource.size))
-        wined3d_buffer_load_location(dst_buffer, context, WINED3D_LOCATION_SYSMEM);
-    if (src_buffer_mem)
-        wined3d_buffer_load_location(src_buffer, context, WINED3D_LOCATION_SYSMEM);
-
-    if (!dst_buffer_mem && !src_buffer_mem)
+    if (dst.buffer_object && src.buffer_object)
     {
         if (gl_info->supported[ARB_COPY_BUFFER])
         {
-            GL_EXTCALL(glBindBuffer(GL_COPY_READ_BUFFER, src_bo_address.buffer_object));
-            GL_EXTCALL(glBindBuffer(GL_COPY_WRITE_BUFFER, dst_bo_address.buffer_object));
-            GL_EXTCALL(glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, src_offset, dst_offset, size));
+            GL_EXTCALL(glBindBuffer(GL_COPY_READ_BUFFER, src.buffer_object));
+            GL_EXTCALL(glBindBuffer(GL_COPY_WRITE_BUFFER, dst.buffer_object));
+            GL_EXTCALL(glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER,
+                    src_offset, dst_offset, size));
             checkGLcall("direct buffer copy");
         }
         else
@@ -1323,25 +1286,25 @@ HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_
             wined3d_buffer_unmap(dst_buffer);
         }
     }
-    else if (dst_buffer_mem && !src_buffer_mem)
+    else if (!dst.buffer_object && src.buffer_object)
     {
         buffer_bind(src_buffer, context);
-        GL_EXTCALL(glGetBufferSubData(src_buffer->buffer_type_hint, src_offset, size, dst_buffer_mem + dst_offset));
+        GL_EXTCALL(glGetBufferSubData(src_buffer->buffer_type_hint, src_offset, size, dst.addr + dst_offset));
         checkGLcall("buffer download");
     }
-    else if (!dst_buffer_mem && src_buffer_mem)
+    else if (dst.buffer_object && !src.buffer_object)
     {
         buffer_bind(dst_buffer, context);
-        GL_EXTCALL(glBufferSubData(dst_buffer->buffer_type_hint, dst_offset, size, src_buffer_mem + src_offset));
+        GL_EXTCALL(glBufferSubData(dst_buffer->buffer_type_hint, dst_offset, size, src.addr + src_offset));
         checkGLcall("buffer upload");
     }
     else
     {
-        memcpy(dst_buffer_mem + dst_offset, src_buffer_mem + src_offset, size);
+        memcpy(dst.addr + dst_offset, src.addr + src_offset, size);
     }
 
-    if (dst_buffer_mem)
-        wined3d_buffer_invalidate_range(dst_buffer, WINED3D_LOCATION_BUFFER, dst_offset, size);
+    dst_location = dst.buffer_object ? WINED3D_LOCATION_BUFFER : WINED3D_LOCATION_SYSMEM;
+    wined3d_buffer_invalidate_range(dst_buffer, ~dst_location, dst_offset, size);
 
     context_release(context);
     return WINED3D_OK;
