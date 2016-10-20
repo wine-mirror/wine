@@ -3179,9 +3179,9 @@ static inline struct wined3d_buffer *buffer_from_resource(struct wined3d_resourc
     return CONTAINING_RECORD(resource, struct wined3d_buffer, resource);
 }
 
-void buffer_get_memory(struct wined3d_buffer *buffer, struct wined3d_context *context,
-        struct wined3d_bo_address *data) DECLSPEC_HIDDEN;
 void buffer_mark_used(struct wined3d_buffer *buffer) DECLSPEC_HIDDEN;
+void wined3d_buffer_get_memory(struct wined3d_buffer *buffer,
+        struct wined3d_bo_address *data, DWORD locations) DECLSPEC_HIDDEN;
 void wined3d_buffer_invalidate_location(struct wined3d_buffer *buffer, DWORD location) DECLSPEC_HIDDEN;
 void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const struct wined3d_state *state) DECLSPEC_HIDDEN;

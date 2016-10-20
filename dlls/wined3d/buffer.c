@@ -611,7 +611,7 @@ BYTE *wined3d_buffer_load_sysmem(struct wined3d_buffer *buffer, struct wined3d_c
 }
 
 /* Context activation is done by the caller. */
-void buffer_get_memory(struct wined3d_buffer *buffer, struct wined3d_context *context,
+static void buffer_get_memory(struct wined3d_buffer *buffer, struct wined3d_context *context,
         struct wined3d_bo_address *data)
 {
     data->buffer_object = buffer->buffer_object;
@@ -633,6 +633,30 @@ void buffer_get_memory(struct wined3d_buffer *buffer, struct wined3d_context *co
     {
         data->addr = NULL;
     }
+}
+
+void wined3d_buffer_get_memory(struct wined3d_buffer *buffer,
+        struct wined3d_bo_address *data, DWORD locations)
+{
+    TRACE("buffer %p, data %p, locations %s.\n",
+            buffer, data, wined3d_debug_location(locations));
+
+    if (locations & WINED3D_LOCATION_BUFFER)
+    {
+        data->buffer_object = buffer->buffer_object;
+        data->addr = NULL;
+        return;
+    }
+    if (locations & WINED3D_LOCATION_SYSMEM)
+    {
+        data->buffer_object = 0;
+        data->addr = buffer->resource.heap_memory;
+        return;
+    }
+
+    ERR("Unexpected locations %s.\n", wined3d_debug_location(locations));
+    data->buffer_object = 0;
+    data->addr = NULL;
 }
 
 static void buffer_unload(struct wined3d_resource *resource)
