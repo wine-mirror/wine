@@ -4225,13 +4225,44 @@ iostream* __thiscall iostream_scalar_dtor(ios *base, unsigned int flags)
     return this;
 }
 
+static iostream* iostream_internal_copy_ctor(iostream *this, const iostream *copy, const vtable_ptr *vtbl, BOOL virt_init)
+{
+    ios *base, *base_copy = istream_get_ios(&copy->base1);
+
+    if (virt_init) {
+        this->base1.vbtable = iostream_vbtable_istream;
+        this->base2.vbtable = iostream_vbtable_ostream;
+        base = istream_get_ios(&this->base1);
+        ios_copy_ctor(base, base_copy);
+    } else
+        base = istream_get_ios(&this->base1);
+    ios_init(base, base_copy->sb);
+    istream_ctor(&this->base1, FALSE);
+    ostream_ctor(&this->base2, FALSE);
+    base->vtable = vtbl;
+    return this;
+}
+
+static iostream* iostream_internal_sb_ctor(iostream *this, streambuf *sb, const vtable_ptr *vtbl, BOOL virt_init)
+{
+    ios *base;
+
+    iostream_ctor(this, virt_init);
+    base = istream_get_ios(&this->base1);
+    if (sb)
+        ios_init(base, sb);
+    base->vtable = vtbl;
+    base->delbuf = 1;
+    return this;
+}
+
 /* ??0strstream@@QAE@ABV0@@Z */
 /* ??0strstream@@QEAA@AEBV0@@Z */
 DEFINE_THISCALL_WRAPPER(strstream_copy_ctor, 12)
 iostream* __thiscall strstream_copy_ctor(iostream *this, const iostream *copy, BOOL virt_init)
 {
-    FIXME("(%p %p %d) stub\n", this, copy, virt_init);
-    return this;
+    TRACE("(%p %p %d)\n", this, copy, virt_init);
+    return iostream_internal_copy_ctor(this, copy, &MSVCP_strstream_vtable, virt_init);
 }
 
 /* ??0strstream@@QAE@PADHH@Z */
@@ -4239,8 +4270,17 @@ iostream* __thiscall strstream_copy_ctor(iostream *this, const iostream *copy, B
 DEFINE_THISCALL_WRAPPER(strstream_buffer_ctor, 20)
 iostream* __thiscall strstream_buffer_ctor(iostream *this, char *buffer, int length, int mode, BOOL virt_init)
 {
-    FIXME("(%p %p %d %d %d) stub\n", this, buffer, length, mode, virt_init);
-    return this;
+    strstreambuf *ssb = MSVCRT_operator_new(sizeof(strstreambuf));
+
+    TRACE("(%p %p %d %d %d)\n", this, buffer, length, mode, virt_init);
+
+    if (ssb) {
+        strstreambuf_buffer_ctor(ssb, buffer, length, buffer);
+        if ((mode & OPENMODE_out) && (mode & (OPENMODE_app|OPENMODE_ate)))
+            ssb->base.pptr = buffer + strlen(buffer);
+        return iostream_internal_sb_ctor(this, &ssb->base, &MSVCP_strstream_vtable, virt_init);
+    }
+    return iostream_internal_sb_ctor(this, NULL, &MSVCP_strstream_vtable, virt_init);
 }
 
 /* ??0strstream@@QAE@XZ */
@@ -4248,8 +4288,15 @@ iostream* __thiscall strstream_buffer_ctor(iostream *this, char *buffer, int len
 DEFINE_THISCALL_WRAPPER(strstream_ctor, 8)
 iostream* __thiscall strstream_ctor(iostream *this, BOOL virt_init)
 {
-    FIXME("(%p %d) stub\n", this, virt_init);
-    return this;
+    strstreambuf *ssb = MSVCRT_operator_new(sizeof(strstreambuf));
+
+    TRACE("(%p %d)\n", this, virt_init);
+
+    if (ssb) {
+        strstreambuf_ctor(ssb);
+        return iostream_internal_sb_ctor(this, &ssb->base, &MSVCP_strstream_vtable, virt_init);
+    }
+    return iostream_internal_sb_ctor(this, NULL, &MSVCP_strstream_vtable, virt_init);
 }
 
 /* ?pcount@strstream@@QBEHXZ */
