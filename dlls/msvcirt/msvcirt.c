@@ -197,6 +197,8 @@ extern const vtable_ptr MSVCP_istrstream_vtable;
 extern const vtable_ptr MSVCP_iostream_vtable;
 /* ??_7strstream@@6B@ */
 extern const vtable_ptr MSVCP_strstream_vtable;
+/* ??_7stdiostream@@6B@ */
+extern const vtable_ptr MSVCP_stdiostream_vtable;
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
@@ -267,6 +269,8 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(iostream_vector_dtor));
     __ASM_VTABLE(strstream,
             VTABLE_ADD_FUNC(iostream_vector_dtor));
+    __ASM_VTABLE(stdiostream,
+            VTABLE_ADD_FUNC(iostream_vector_dtor));
 #ifndef __GNUC__
 }
 #endif
@@ -283,9 +287,11 @@ const int ostream_vbtable[] = {0, VBTABLE_ENTRY(ostream, FIELD_OFFSET(ostream, v
 /* ??_8istrstream@@7B@ */
 const int istream_vbtable[] = {0, VBTABLE_ENTRY(istream, FIELD_OFFSET(istream, vbtable), ios)};
 /* ??_8iostream@@7Bistream@@@ */
+/* ??_8stdiostream@@7Bistream@@@ */
 /* ??_8strstream@@7Bistream@@@ */
 const int iostream_vbtable_istream[] = {0, VBTABLE_ENTRY(iostream, FIELD_OFFSET(iostream, base1), ios)};
 /* ??_8iostream@@7Bostream@@@ */
+/* ??_8stdiostream@@7Bostream@@@ */
 /* ??_8strstream@@7Bostream@@@ */
 const int iostream_vbtable_ostream[] = {0, VBTABLE_ENTRY(iostream, FIELD_OFFSET(iostream, base2), ios)};
 
@@ -310,6 +316,9 @@ DEFINE_RTTI_DATA4(iostream, sizeof(iostream),
 DEFINE_RTTI_DATA4(strstream, sizeof(iostream),
     &istream_rtti_base_descriptor, &ios_rtti_base_descriptor,
     &ostream_rtti_base_descriptor, &ios_rtti_base_descriptor, ".?AVstrstream@@")
+DEFINE_RTTI_DATA4(stdiostream, sizeof(iostream),
+    &istream_rtti_base_descriptor, &ios_rtti_base_descriptor,
+    &ostream_rtti_base_descriptor, &ios_rtti_base_descriptor, ".?AVstdiostream@@")
 
 /* ?cin@@3Vistream_withassign@@A */
 struct {
@@ -4138,6 +4147,8 @@ iostream* __thiscall iostream_copy_ctor(iostream *this, const iostream *copy, BO
 
 /* ??1iostream@@UAE@XZ */
 /* ??1iostream@@UEAA@XZ */
+/* ??1stdiostream@@UAE@XZ */
+/* ??1stdiostream@@UEAA@XZ */
 /* ??1strstream@@UAE@XZ */
 /* ??1strstream@@UEAA@XZ */
 DEFINE_THISCALL_WRAPPER(iostream_dtor, 4)
@@ -4164,6 +4175,8 @@ iostream* __thiscall iostream_assign_sb(iostream *this, streambuf *sb)
 
 /* ??4iostream@@IAEAAV0@AAV0@@Z */
 /* ??4iostream@@IEAAAEAV0@AEAV0@@Z */
+/* ??4stdiostream@@QAEAAV0@AAV0@@Z */
+/* ??4stdiostream@@QEAAAEAV0@AEAV0@@Z */
 /* ??4strstream@@QAEAAV0@ABV0@@Z */
 /* ??4strstream@@QEAAAEAV0@AEBV0@@Z */
 DEFINE_THISCALL_WRAPPER(iostream_assign, 8)
@@ -4174,6 +4187,8 @@ iostream* __thiscall iostream_assign(iostream *this, const iostream *rhs)
 
 /* ??_Diostream@@QAEXXZ */
 /* ??_Diostream@@QEAAXXZ */
+/* ??_Dstdiostream@@QAEXXZ */
+/* ??_Dstdiostream@@QEAAXXZ */
 /* ??_Dstrstream@@QAEXXZ */
 /* ??_Dstrstream@@QEAAXXZ */
 DEFINE_THISCALL_WRAPPER(iostream_vbase_dtor, 4)
@@ -4188,6 +4203,7 @@ void __thiscall iostream_vbase_dtor(iostream *this)
 }
 
 /* ??_Eiostream@@UAEPAXI@Z */
+/* ??_Estdiostream@@UAEPAXI@Z */
 /* ??_Estrstream@@UAEPAXI@Z */
 DEFINE_THISCALL_WRAPPER(iostream_vector_dtor, 8)
 iostream* __thiscall iostream_vector_dtor(ios *base, unsigned int flags)
@@ -4212,6 +4228,7 @@ iostream* __thiscall iostream_vector_dtor(ios *base, unsigned int flags)
 }
 
 /* ??_Giostream@@UAEPAXI@Z */
+/* ??_Gstdiostream@@UAEPAXI@Z */
 /* ??_Gstrstream@@UAEPAXI@Z */
 DEFINE_THISCALL_WRAPPER(iostream_scalar_dtor, 8)
 iostream* __thiscall iostream_scalar_dtor(ios *base, unsigned int flags)
@@ -4321,6 +4338,32 @@ DEFINE_THISCALL_WRAPPER(strstream_str, 4)
 char* __thiscall strstream_str(iostream *this)
 {
     return strstreambuf_str(strstream_rdbuf(this));
+}
+
+/* ??0stdiostream@@QAE@ABV0@@Z */
+/* ??0stdiostream@@QEAA@AEBV0@@Z */
+DEFINE_THISCALL_WRAPPER(stdiostream_copy_ctor, 12)
+iostream* __thiscall stdiostream_copy_ctor(iostream *this, const iostream *copy, BOOL virt_init)
+{
+    FIXME("(%p %p %d) stub\n", this, copy, virt_init);
+    return this;
+}
+
+/* ??0stdiostream@@QAE@PAU_iobuf@@@Z */
+/* ??0stdiostream@@QEAA@PEAU_iobuf@@@Z */
+DEFINE_THISCALL_WRAPPER(stdiostream_file_ctor, 12)
+iostream* __thiscall stdiostream_file_ctor(iostream *this, FILE *file, BOOL virt_init)
+{
+    FIXME("(%p %p %d) stub\n", this, file, virt_init);
+    return this;
+}
+
+/* ?rdbuf@stdiostream@@QBEPAVstdiobuf@@XZ */
+/* ?rdbuf@stdiostream@@QEBAPEAVstdiobuf@@XZ */
+DEFINE_THISCALL_WRAPPER(stdiostream_rdbuf, 4)
+stdiobuf* __thiscall stdiostream_rdbuf(const iostream *this)
+{
+    return (stdiobuf*) istream_get_ios(&this->base1)->sb;
 }
 
 /* ??0Iostream_init@@QAE@AAVios@@H@Z */
@@ -4479,6 +4522,7 @@ static void init_io(void *base)
     init_istrstream_rtti(base);
     init_iostream_rtti(base);
     init_strstream_rtti(base);
+    init_stdiostream_rtti(base);
 #endif
 
     if ((fb = MSVCRT_operator_new(sizeof(filebuf)))) {
