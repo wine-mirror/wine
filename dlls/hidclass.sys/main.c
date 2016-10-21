@@ -112,9 +112,9 @@ NTSTATUS call_minidriver(ULONG code, DEVICE_OBJECT *device, void *in_buff, ULONG
         buffer, out_size, TRUE, NULL, &irp_status);
 
     IoSetCompletionRoutine(irp, internalComplete, event, TRUE, TRUE, TRUE);
-    IoCallDriver(device, irp);
+    status = IoCallDriver(device, irp);
 
-    if (irp->IoStatus.u.Status == STATUS_PENDING)
+    if (status == STATUS_PENDING)
         WaitForSingleObject(event, INFINITE);
 
     memcpy(out_buff, buffer, out_size);

@@ -61,8 +61,8 @@ static NTSTATUS get_device_id(DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WCH
     irpsp->Parameters.QueryId.IdType = type;
 
     IoSetCompletionRoutine(irp, internalComplete, event, TRUE, TRUE, TRUE);
-    IoCallDriver(device, irp);
-    if (irp->IoStatus.u.Status == STATUS_PENDING)
+    status = IoCallDriver(device, irp);
+    if (status == STATUS_PENDING)
         WaitForSingleObject(event, INFINITE);
 
     *id = (WCHAR*)irp->IoStatus.Information;
