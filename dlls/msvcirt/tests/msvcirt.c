@@ -412,6 +412,13 @@ static void (*__thiscall p_strstream_dtor)(ios*);
 static void (*__thiscall p_strstream_vbase_dtor)(iostream*);
 static iostream* (*__thiscall p_strstream_assign)(iostream*, const iostream*);
 
+/* stdiostream */
+static iostream* (*__thiscall p_stdiostream_copy_ctor)(iostream*, const iostream*, BOOL);
+static iostream* (*__thiscall p_stdiostream_file_ctor)(iostream*, FILE*, BOOL);
+static void (*__thiscall p_stdiostream_dtor)(ios*);
+static void (*__thiscall p_stdiostream_vbase_dtor)(iostream*);
+static iostream* (*__thiscall p_stdiostream_assign)(iostream*, const iostream*);
+
 /* Iostream_init */
 static void* (*__thiscall p_Iostream_init_ios_ctor)(void*, ios*, int);
 
@@ -696,6 +703,12 @@ static BOOL init(void)
         SET(p_strstream_vbase_dtor, "??_Dstrstream@@QEAAXXZ");
         SET(p_strstream_assign, "??4strstream@@QEAAAEAV0@AEAV0@@Z");
 
+        SET(p_stdiostream_copy_ctor, "??0stdiostream@@QEAA@AEBV0@@Z");
+        SET(p_stdiostream_file_ctor, "??0stdiostream@@QEAA@PEAU_iobuf@@@Z");
+        SET(p_stdiostream_dtor, "??1stdiostream@@UEAA@XZ");
+        SET(p_stdiostream_vbase_dtor, "??_Dstdiostream@@QEAAXXZ");
+        SET(p_stdiostream_assign, "??4stdiostream@@QEAAAEAV0@AEAV0@@Z");
+
         SET(p_Iostream_init_ios_ctor, "??0Iostream_init@@QEAA@AEAVios@@H@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
@@ -896,6 +909,12 @@ static BOOL init(void)
         SET(p_strstream_dtor, "??1strstream@@UAE@XZ");
         SET(p_strstream_vbase_dtor, "??_Dstrstream@@QAEXXZ");
         SET(p_strstream_assign, "??4strstream@@QAEAAV0@AAV0@@Z");
+
+        SET(p_stdiostream_copy_ctor, "??0stdiostream@@QAE@ABV0@@Z");
+        SET(p_stdiostream_file_ctor, "??0stdiostream@@QAE@PAU_iobuf@@@Z");
+        SET(p_stdiostream_dtor, "??1stdiostream@@UAE@XZ");
+        SET(p_stdiostream_vbase_dtor, "??_Dstdiostream@@QAEXXZ");
+        SET(p_stdiostream_assign, "??4stdiostream@@QAEAAV0@AAV0@@Z");
 
         SET(p_Iostream_init_ios_ctor, "??0Iostream_init@@QAE@AAVios@@H@Z");
     }
@@ -7013,6 +7032,163 @@ static void test_strstream(void)
     ok(ios2.base_ios.do_lock == 0xabababab, "expected %d got %d\n", 0xabababab, ios2.base_ios.do_lock);
 }
 
+static void test_stdiostream(void)
+{
+    iostream ios1, ios2, *pios;
+    ostream *pos;
+    stdiobuf *pstb;
+    FILE *file;
+    const char filename[] = "stdiostream_test";
+
+    memset(&ios1, 0xab, sizeof(iostream));
+    memset(&ios2, 0xab, sizeof(iostream));
+
+    file = fopen(filename, "w+");
+    ok(file != NULL, "Couldn't open the file named '%s'\n", filename);
+
+    /* constructors/destructors */
+    pios = call_func3(p_stdiostream_file_ctor, &ios1, file, TRUE);
+    pstb = (stdiobuf*) ios1.base_ios.sb;
+    ok(pios == &ios1, "wrong return, expected %p got %p\n", &ios1, pios);
+    ok(ios1.base1.extract_delim == 0, "expected 0 got %d\n", ios1.base1.extract_delim);
+    ok(ios1.base1.count == 0, "expected 0 got %d\n", ios1.base1.count);
+    ok(ios1.base2.unknown == 0, "expected 0 got %d\n", ios1.base2.unknown);
+    ok(ios1.base_ios.sb != NULL, "expected not %p got %p\n", NULL, ios1.base_ios.sb);
+    ok(ios1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ios1.base_ios.state);
+    ok(ios1.base_ios.delbuf == 1, "expected 1 got %d\n", ios1.base_ios.delbuf);
+    ok(ios1.base_ios.tie == NULL, "expected %p got %p\n", NULL, ios1.base_ios.tie);
+    ok(ios1.base_ios.flags == FLAGS_skipws, "expected %x got %x\n", FLAGS_skipws, ios1.base_ios.flags);
+    ok(ios1.base_ios.precision == 6, "expected 6 got %d\n", ios1.base_ios.precision);
+    ok(ios1.base_ios.fill == ' ', "expected 32 got %d\n", ios1.base_ios.fill);
+    ok(ios1.base_ios.width == 0, "expected 0 got %d\n", ios1.base_ios.width);
+    ok(ios1.base_ios.do_lock == -1, "expected -1 got %d\n", ios1.base_ios.do_lock);
+    ok(pstb->file == file, "expected %p, got %p\n", file, pstb->file);
+    ok(pstb->base.allocated == 0, "wrong allocate value, expected 0 got %d\n", pstb->base.allocated);
+    ok(pstb->base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", pstb->base.unbuffered);
+    ok(pstb->base.base == NULL, "wrong buffer, expected %p got %p\n", NULL, pstb->base.base);
+    ok(pstb->base.ebuf == NULL, "wrong buffer end, expected %p got %p\n", NULL, pstb->base.ebuf);
+    ok(pstb->base.do_lock == -1, "expected -1 got %d\n", pstb->base.do_lock);
+    call_func1(p_stdiostream_vbase_dtor, &ios1);
+    ok(ios1.base_ios.sb == NULL, "expected %p got %p\n", NULL, ios1.base_ios.sb);
+    ok(ios1.base_ios.state == IOSTATE_badbit, "expected %d got %d\n", IOSTATE_badbit, ios1.base_ios.state);
+    ios1.base1.extract_delim = ios1.base1.count = 0xabababab;
+    ios1.base2.unknown = 0xabababab;
+    memset(&ios1.base_ios, 0xab, sizeof(ios));
+    ios1.base_ios.delbuf = 0;
+    pios = call_func3(p_stdiostream_file_ctor, &ios1, file, FALSE);
+    pstb = (stdiobuf*) ios1.base_ios.sb;
+    ok(pios == &ios1, "wrong return, expected %p got %p\n", &ios1, pios);
+    ok(ios1.base1.extract_delim == 0, "expected 0 got %d\n", ios1.base1.extract_delim);
+    ok(ios1.base1.count == 0, "expected 0 got %d\n", ios1.base1.count);
+    ok(ios1.base2.unknown == 0, "expected 0 got %d\n", ios1.base2.unknown);
+    ok(ios1.base_ios.sb != NULL, "expected not %p got %p\n", NULL, ios1.base_ios.sb);
+    ok(ios1.base_ios.state == 0xabababab, "expected %d got %d\n", 0xabababab, ios1.base_ios.state);
+    ok(ios1.base_ios.delbuf == 1, "expected 1 got %d\n", ios1.base_ios.delbuf);
+    ok(ios1.base_ios.tie == ios2.base_ios.tie, "expected %p got %p\n", ios2.base_ios.tie, ios1.base_ios.tie);
+    ok(ios1.base_ios.flags == 0xabababab, "expected %x got %x\n", 0xabababab, ios1.base_ios.flags);
+    ok(ios1.base_ios.precision == 0xabababab, "expected %d got %d\n", 0xabababab, ios1.base_ios.precision);
+    ok(ios1.base_ios.fill == (char) 0xab, "expected -85 got %d\n", ios1.base_ios.fill);
+    ok(ios1.base_ios.width == 0xabababab, "expected %d got %d\n", 0xabababab, ios1.base_ios.width);
+    ok(ios1.base_ios.do_lock == 0xabababab, "expected %d got %d\n", 0xabababab, ios1.base_ios.do_lock);
+    ok(pstb->file == file, "expected %p, got %p\n", file, pstb->file);
+    ok(pstb->base.allocated == 0, "wrong allocate value, expected 0 got %d\n", pstb->base.allocated);
+    ok(pstb->base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", pstb->base.unbuffered);
+    ok(pstb->base.base == NULL, "wrong buffer, expected %p got %p\n", NULL, pstb->base.base);
+    ok(pstb->base.ebuf == NULL, "wrong buffer end, expected %p got %p\n", NULL, pstb->base.ebuf);
+    ok(pstb->base.do_lock == -1, "expected -1 got %d\n", pstb->base.do_lock);
+    call_func1(p_stdiostream_dtor, &ios1.base_ios);
+    ok(ios1.base_ios.sb == &pstb->base, "expected %p got %p\n", &pstb->base, ios1.base_ios.sb);
+    ok(ios1.base_ios.state == 0xabababab, "expected %d got %d\n", 0xabababab, ios1.base_ios.state);
+    call_func1(p_stdiobuf_dtor, pstb);
+    p_operator_delete(pstb);
+    memset(&ios1, 0xab, sizeof(iostream));
+    pios = call_func3(p_stdiostream_file_ctor, &ios1, NULL, TRUE);
+    pstb = (stdiobuf*) ios1.base_ios.sb;
+    ok(pios == &ios1, "wrong return, expected %p got %p\n", &ios1, pios);
+    ok(ios1.base1.extract_delim == 0, "expected 0 got %d\n", ios1.base1.extract_delim);
+    ok(ios1.base1.count == 0, "expected 0 got %d\n", ios1.base1.count);
+    ok(ios1.base2.unknown == 0, "expected 0 got %d\n", ios1.base2.unknown);
+    ok(ios1.base_ios.sb != NULL, "expected not %p got %p\n", NULL, ios1.base_ios.sb);
+    ok(ios1.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ios1.base_ios.state);
+    ok(ios1.base_ios.delbuf == 1, "expected 1 got %d\n", ios1.base_ios.delbuf);
+    ok(ios1.base_ios.tie == NULL, "expected %p got %p\n", NULL, ios1.base_ios.tie);
+    ok(ios1.base_ios.flags == FLAGS_skipws, "expected %x got %x\n", FLAGS_skipws, ios1.base_ios.flags);
+    ok(ios1.base_ios.precision == 6, "expected 6 got %d\n", ios1.base_ios.precision);
+    ok(ios1.base_ios.fill == ' ', "expected 32 got %d\n", ios1.base_ios.fill);
+    ok(ios1.base_ios.width == 0, "expected 0 got %d\n", ios1.base_ios.width);
+    ok(ios1.base_ios.do_lock == -1, "expected -1 got %d\n", ios1.base_ios.do_lock);
+    ok(pstb->file == NULL, "expected %p, got %p\n", NULL, pstb->file);
+    ok(pstb->base.allocated == 0, "wrong allocate value, expected 0 got %d\n", pstb->base.allocated);
+    ok(pstb->base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", pstb->base.unbuffered);
+    ok(pstb->base.base == NULL, "wrong buffer, expected %p got %p\n", NULL, pstb->base.base);
+    ok(pstb->base.ebuf == NULL, "wrong buffer end, expected %p got %p\n", NULL, pstb->base.ebuf);
+    ok(pstb->base.do_lock == -1, "expected -1 got %d\n", pstb->base.do_lock);
+    call_func1(p_stdiostream_vbase_dtor, &ios1);
+    ok(ios1.base_ios.sb == NULL, "expected %p got %p\n", NULL, ios1.base_ios.sb);
+    ok(ios1.base_ios.state == IOSTATE_badbit, "expected %d got %d\n", IOSTATE_badbit, ios1.base_ios.state);
+
+    ios1.base1.extract_delim = ios1.base1.count = 0xcdcdcdcd;
+    ios1.base2.unknown = 0xcdcdcdcd;
+    memset(&ios1.base_ios, 0xcd, sizeof(ios));
+    pios = call_func3(p_stdiostream_copy_ctor, &ios2, &ios1, TRUE);
+    ok(pios == &ios2, "wrong return, expected %p got %p\n", &ios2, pios);
+    ok(ios2.base1.extract_delim == 0, "expected 0 got %d\n", ios2.base1.extract_delim);
+    ok(ios2.base1.count == 0, "expected 0 got %d\n", ios2.base1.count);
+    ok(ios2.base2.unknown == 0, "expected 0 got %d\n", ios2.base2.unknown);
+    ok(ios2.base_ios.sb == ios1.base_ios.sb, "expected %p got %p\n", ios1.base_ios.sb, ios2.base_ios.sb);
+    ok(ios2.base_ios.state == 0xcdcdcdc9, "expected %d got %d\n", 0xcdcdcdc9, ios2.base_ios.state);
+    ok(ios2.base_ios.delbuf == 0, "expected 0 got %d\n", ios2.base_ios.delbuf);
+    ok(ios2.base_ios.tie == ios1.base_ios.tie, "expected %p got %p\n", ios1.base_ios.tie, ios2.base_ios.tie);
+    ok(ios2.base_ios.flags == 0xcdcdcdcd, "expected %x got %x\n", 0xcdcdcdcd, ios2.base_ios.flags);
+    ok(ios2.base_ios.precision == (char) 0xcd, "expected -51 got %d\n", ios2.base_ios.precision);
+    ok(ios2.base_ios.fill == (char) 0xcd, "expected -51 got %d\n", ios2.base_ios.fill);
+    ok(ios2.base_ios.width == (char) 0xcd, "expected -51 got %d\n", ios2.base_ios.width);
+    ok(ios2.base_ios.do_lock == -1, "expected -1 got %d\n", ios2.base_ios.do_lock);
+    call_func1(p_stdiostream_vbase_dtor, &ios2);
+    ios2.base1.extract_delim = ios2.base1.count = 0xabababab;
+    ios2.base2.unknown = 0xabababab;
+    memset(&ios2.base_ios, 0xab, sizeof(ios));
+    ios2.base_ios.delbuf = 0;
+    pos = ios2.base_ios.tie;
+    pios = call_func3(p_stdiostream_copy_ctor, &ios2, &ios1, FALSE);
+    ok(pios == &ios2, "wrong return, expected %p got %p\n", &ios2, pios);
+    ok(ios2.base1.extract_delim == 0, "expected 0 got %d\n", ios2.base1.extract_delim);
+    ok(ios2.base1.count == 0, "expected 0 got %d\n", ios2.base1.count);
+    ok(ios2.base2.unknown == 0, "expected 0 got %d\n", ios2.base2.unknown);
+    ok(ios2.base_ios.sb == ios1.base_ios.sb, "expected %p got %p\n", ios1.base_ios.sb, ios2.base_ios.sb);
+    ok(ios2.base_ios.state == 0xabababab, "expected %d got %d\n", 0xabababab, ios2.base_ios.state);
+    ok(ios2.base_ios.delbuf == 0, "expected 0 got %d\n", ios2.base_ios.delbuf);
+    ok(ios2.base_ios.tie == pos, "expected %p got %p\n", pos, ios2.base_ios.tie);
+    ok(ios2.base_ios.flags == 0xabababab, "expected %x got %x\n", 0xabababab, ios2.base_ios.flags);
+    ok(ios2.base_ios.precision == 0xabababab, "expected %d got %d\n", 0xabababab, ios2.base_ios.precision);
+    ok(ios2.base_ios.fill == (char) 0xab, "expected -85 got %d\n", ios2.base_ios.fill);
+    ok(ios2.base_ios.width == 0xabababab, "expected %d got %d\n", 0xabababab, ios2.base_ios.width);
+    ok(ios2.base_ios.do_lock == 0xabababab, "expected %d got %d\n", 0xabababab, ios2.base_ios.do_lock);
+    call_func1(p_stdiostream_dtor, &ios2.base_ios);
+
+    /* assignment */
+    ios2.base1.extract_delim = ios2.base1.count = 0xabababab;
+    ios2.base2.unknown = 0xabababab;
+    memset(&ios2.base_ios, 0xab, sizeof(ios));
+    ios2.base_ios.delbuf = 0;
+    pios = call_func2(p_stdiostream_assign, &ios2, &ios1);
+    ok(ios2.base1.extract_delim == 0xabababab, "expected %d got %d\n", 0xabababab, ios2.base1.extract_delim);
+    ok(ios2.base1.count == 0, "expected 0 got %d\n", ios2.base1.count);
+    ok(ios2.base2.unknown == 0xabababab, "expected %d got %d\n", 0xabababab, ios2.base2.unknown);
+    ok(ios2.base_ios.sb == ios1.base_ios.sb, "expected %p got %p\n", ios1.base_ios.sb, ios2.base_ios.sb);
+    ok(ios2.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ios2.base_ios.state);
+    ok(ios2.base_ios.delbuf == 0, "expected 0 got %d\n", ios2.base_ios.delbuf);
+    ok(ios2.base_ios.tie == NULL, "expected %p got %p\n", NULL, ios2.base_ios.tie);
+    ok(ios2.base_ios.flags == 0, "expected 0 got %x\n", ios2.base_ios.flags);
+    ok(ios2.base_ios.precision == 6, "expected 6 got %d\n", ios2.base_ios.precision);
+    ok(ios2.base_ios.fill == ' ', "expected 32 got %d\n", ios2.base_ios.fill);
+    ok(ios2.base_ios.width == 0, "expected 0 got %d\n", ios2.base_ios.width);
+    ok(ios2.base_ios.do_lock == 0xabababab, "expected %d got %d\n", 0xabababab, ios2.base_ios.do_lock);
+
+    fclose(file);
+    ok(_unlink(filename) == 0, "Couldn't unlink file named '%s'\n", filename);
+}
+
 static void test_Iostream_init(void)
 {
     ios ios_obj;
@@ -7310,6 +7486,7 @@ START_TEST(msvcirt)
     test_istrstream();
     test_iostream();
     test_strstream();
+    test_stdiostream();
     test_Iostream_init();
     test_std_streams();
 

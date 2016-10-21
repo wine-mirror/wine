@@ -4345,8 +4345,8 @@ char* __thiscall strstream_str(iostream *this)
 DEFINE_THISCALL_WRAPPER(stdiostream_copy_ctor, 12)
 iostream* __thiscall stdiostream_copy_ctor(iostream *this, const iostream *copy, BOOL virt_init)
 {
-    FIXME("(%p %p %d) stub\n", this, copy, virt_init);
-    return this;
+    TRACE("(%p %p %d)\n", this, copy, virt_init);
+    return iostream_internal_copy_ctor(this, copy, &MSVCP_stdiostream_vtable, virt_init);
 }
 
 /* ??0stdiostream@@QAE@PAU_iobuf@@@Z */
@@ -4354,8 +4354,15 @@ iostream* __thiscall stdiostream_copy_ctor(iostream *this, const iostream *copy,
 DEFINE_THISCALL_WRAPPER(stdiostream_file_ctor, 12)
 iostream* __thiscall stdiostream_file_ctor(iostream *this, FILE *file, BOOL virt_init)
 {
-    FIXME("(%p %p %d) stub\n", this, file, virt_init);
-    return this;
+    stdiobuf *stb = MSVCRT_operator_new(sizeof(stdiobuf));
+
+    TRACE("(%p %p %d)\n", this, file, virt_init);
+
+    if (stb) {
+        stdiobuf_file_ctor(stb, file);
+        return iostream_internal_sb_ctor(this, &stb->base, &MSVCP_stdiostream_vtable, virt_init);
+    }
+    return iostream_internal_sb_ctor(this, NULL, &MSVCP_stdiostream_vtable, virt_init);
 }
 
 /* ?rdbuf@stdiostream@@QBEPAVstdiobuf@@XZ */
